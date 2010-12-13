@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.2 2010/12/12 12:51:19 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.3 2010/12/13 13:39:42 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,8 +37,7 @@ basic_body()
 
 	export RUMP_SERVER=unix://commsock
 
-	atf_check -s exit:0 \
-	    $(atf_get_srcdir)/h_server/h_simpleserver ${RUMP_SERVER}
+	atf_check -s exit:0 rump_server ${RUMP_SERVER}
 
 	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_simplecli
 }
@@ -62,8 +61,7 @@ stress_body()
 
 	export RUMP_SERVER=unix://commsock
 
-	atf_check -s exit:0 \
-	    $(atf_get_srcdir)/h_server/h_simpleserver ${RUMP_SERVER}
+	atf_check -s exit:0 rump_server ${RUMP_SERVER}
 
 	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_stresscli ${stresst}
 }

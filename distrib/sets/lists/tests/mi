@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.171 2010/12/12 12:53:35 pooka Exp $
+# $NetBSD: mi,v 1.172 2010/12/13 13:39:42 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -415,8 +415,8 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_reboot.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_simplecli.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_stresscli.debug			tests-syscall-debug	debug,atf
-./usr/libdata/debug/usr/tests/rump/rumpkern/h_server			tests-syscall-debug
-./usr/libdata/debug/usr/tests/rump/rumpkern/h_server/h_simpleserver.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_server			tests-obsolete	obsolete
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_server/h_simpleserver.debug			tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/rump/rumpvfs				tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf
@@ -1653,8 +1653,8 @@
 ./usr/tests/rump/rumpkern/h_client/h_reboot		tests-obsolete		obsolete
 ./usr/tests/rump/rumpkern/h_client/h_simplecli		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/h_client/h_stresscli		tests-rump-tests	atf
-./usr/tests/rump/rumpkern/h_server			tests-rump-tests
-./usr/tests/rump/rumpkern/h_server/h_simpleserver		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/h_server			tests-obsolete	obsolete
+./usr/tests/rump/rumpkern/h_server/h_simpleserver		tests-obsolete	obsolete
 ./usr/tests/rump/rumpvfs			tests-rump-tests
 ./usr/tests/rump/rumpvfs/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_etfs		tests-rump-tests	atf
