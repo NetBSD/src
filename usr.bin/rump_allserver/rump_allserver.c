@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.5 2010/12/12 18:33:44 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.6 2010/12/13 13:32:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.5 2010/12/12 18:33:44 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.6 2010/12/13 13:32:25 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.5 2010/12/12 18:33:44 pooka Exp $");
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
+#include <dlfcn.h>
 #include <err.h>
 #include <errno.h>
 #include <semaphore.h>
@@ -80,8 +81,13 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "s")) != -1) {
+	while ((ch = getopt(argc, argv, "l:s")) != -1) {
 		switch (ch) {
+		case 'l':
+			if (dlopen(optarg, RTLD_LAZY|RTLD_GLOBAL) == NULL)
+				errx(1, "dlopen %s failed: %s",
+				    optarg, dlerror());
+			break;
 		case 's':
 			sflag = 1;
 			break;
