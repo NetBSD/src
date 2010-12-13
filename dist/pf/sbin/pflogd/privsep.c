@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.6 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: privsep.c,v 1.7 2010/12/13 01:45:39 christos Exp $	*/
 /*	$OpenBSD: privsep.c,v 1.16 2006/10/25 20:55:04 moritz Exp $	*/
 
 /*
@@ -64,8 +64,8 @@ static void sig_chld(int);
 static int  may_read(int, void *, size_t);
 static void must_read(int, void *, size_t);
 static void must_write(int, void *, size_t);
-static int  set_snaplen(int snap);
-static int  move_log(const char *name);
+static int  set_snaplen(uint32_t);
+static int  move_log(const char *);
 
 extern char *filename;
 extern pcap_t *hpcap;
@@ -192,7 +192,7 @@ priv_init(void)
 
 /* this is called from parent */
 static int
-set_snaplen(int snap)
+set_snaplen(uint32_t snap)
 {
 	if (hpcap == NULL)
 		return (1);
@@ -214,7 +214,7 @@ move_log(const char *name)
 
 		len = snprintf(ren, sizeof(ren), "%s.bad.%08x",
 		    name, arc4random());
-		if (len >= sizeof(ren)) {
+		if ((size_t)len >= sizeof(ren)) {
 			logmsg(LOG_ERR, "[priv] new name too long");
 			return (1);
 		}
@@ -326,7 +326,7 @@ may_read(int fd, void *buf, size_t n)
 	char *s = buf;
 	ssize_t res, pos = 0;
 
-	while (n > pos) {
+	while (n > (size_t)pos) {
 		res = read(fd, s + pos, n - pos);
 		switch (res) {
 		case -1:
@@ -349,7 +349,7 @@ must_read(int fd, void *buf, size_t n)
 	char *s = buf;
 	ssize_t res, pos = 0;
 
-	while (n > pos) {
+	while (n > (size_t)pos) {
 		res = read(fd, s + pos, n - pos);
 		switch (res) {
 		case -1:
@@ -371,7 +371,7 @@ must_write(int fd, void *buf, size_t n)
 	char *s = buf;
 	ssize_t res, pos = 0;
 
-	while (n > pos) {
+	while (n > (size_t)pos) {
 		res = write(fd, s + pos, n - pos);
 		switch (res) {
 		case -1:
