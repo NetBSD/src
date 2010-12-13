@@ -1,0 +1,107 @@
+.\"	$NetBSD: rump_allserver.1,v 1.1 2010/12/13 19:36:34 pooka Exp $
+.\"
+.\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd December 13, 2010
+.Dt RUMP_SERVER 1
+.Os
+.Sh NAME
+.Nm rump_server ,
+.Nm rump_allserver
+.Nd rump kernel server
+.Sh SYNOPSIS
+.Nm
+.Op Fl s
+.Op Fl l Ar library
+.Op Fl m Ar module
+.Ar url
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to provide a rump kernel service.
+Clients can use the system calls provided by
+.Nm
+via
+.Ar url .
+.Pp
+The difference between
+.Nm
+and
+.Nm rump_allserver
+is that
+.Nm
+offers only a minimalistic set of features,
+while
+.Nm rump_allserver
+provides all rump kernel components which were available when the
+system was built.
+At execution time it is possible to load components from the command
+line as described in the options section.
+.Bl -tag -width indent
+.It Fl l Ar library
+Call
+.Fn dlopen
+on library before initializing the rump kernel.
+In case
+.Ar library
+provides a kernel module, it will appear as a builtin module in the
+rump kernel.
+Any rump component present in
+.Ar library
+will also be initialized.
+.Pp
+The argument
+.Ar library
+can contain a full path or a filename, in which case the standard
+dynamic library search path will be used.
+Libraries are loaded in the order they are given.
+Dependencies are not autoloaded, and the order must be specified
+correctly.
+.It Fl m Ar module
+Load and link a kernel module after the rump kernel is initialized.
+For this to work, the rump kernel must include the vfs faction,
+since the module is loaded using kernel vfs code (see EXAMPLES).
+.It Fl s
+Do not detach from the terminal.
+By default,
+.Nm
+detaches from the terminal once the service is running on
+.Ar url .
+.El
+.Pp
+After use,
+.Nm
+can be made to exit using
+.Xr rump.halt .
+.Sh EXAMPLES
+Start a server and load the tmpfs file system module, and halt the
+server immediately afterwards:
+.Bd -literal -offset indent
+$ rump_server -lrumpvfs -m /modules/tmpfs.kmod unix://sock
+$ env RUMP_SERVER=unix://sock rump.halt
+.Ed
+.Sh SEE ALSO
+.Xr rump.halt 1 ,
+.Xr dlopen 3 ,
+.Xr rump 3

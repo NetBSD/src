@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1266 2010/12/13 06:30:44 mrg Exp $
+# $NetBSD: mi,v 1.1267 2010/12/13 19:36:34 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -445,6 +445,8 @@
 ./usr/share/man/cat1/rsh.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/rtld.0			man-shlib-catman	.cat
 ./usr/share/man/cat1/rump.halt.0			man-netutil-catman	.cat
+./usr/share/man/cat1/rump_allserver.0			man-netutil-catman	.cat
+./usr/share/man/cat1/rump_server.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/rup.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/ruptime.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/rusers.0			man-netutil-catman	.cat
@@ -3224,6 +3226,8 @@
 ./usr/share/man/html1/rsh.html			man-netutil-htmlman	html
 ./usr/share/man/html1/rtld.html			man-shlib-htmlman	html
 ./usr/share/man/html1/rump.halt.html			man-netutil-htmlman	html
+./usr/share/man/html1/rump_allserver.html			man-netutil-htmlman	html
+./usr/share/man/html1/rump_server.html			man-netutil-htmlman	html
 ./usr/share/man/html1/rup.html			man-netutil-htmlman	html
 ./usr/share/man/html1/ruptime.html		man-netutil-htmlman	html
 ./usr/share/man/html1/rusers.html		man-netutil-htmlman	html
@@ -5661,6 +5665,8 @@
 ./usr/share/man/man1/rsh.1			man-netutil-man		.man
 ./usr/share/man/man1/rtld.1			man-shlib-man		.man
 ./usr/share/man/man1/rump.halt.1			man-netutil-man		.man
+./usr/share/man/man1/rump_allserver.1			man-netutil-man		.man
+./usr/share/man/man1/rump_server.1			man-netutil-man		.man
 ./usr/share/man/man1/rup.1			man-netutil-man		.man
 ./usr/share/man/man1/ruptime.1			man-netutil-man		.man
 ./usr/share/man/man1/rusers.1			man-netutil-man		.man
