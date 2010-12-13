@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.10 2010/06/27 06:52:38 kefren Exp $	*/
+/*	$NetBSD: show.c,v 1.11 2010/12/13 21:15:30 pooka Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <unistd.h>
 
 #include "netstat.h"
+#include "prog_ops.h"
 
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
@@ -123,12 +124,12 @@ p_rttables(int paf)
 	mib[3] = paf;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed > 0) {
 		if ((buf = malloc(needed)) == 0)
 			err(1, NULL);
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 			err(1, "sysctl of routing table");
 		lim = buf + needed;
 	}
@@ -157,7 +158,7 @@ p_rttables(int paf)
 	mib[3] = NET_KEY_SPD_DUMP;
 	mib[4] = mib[5] = 0;
 
-	if (sysctl(mib, 4, NULL, &needed, NULL, 0) == -1) {
+	if (prog_sysctl(mib, 4, NULL, &needed, NULL, 0) == -1) {
 		if (errno == ENOPROTOOPT)
 			return;
 		err(1, "spd-sysctl-estimate");
@@ -165,7 +166,7 @@ p_rttables(int paf)
 	if (needed > 0) {
 		if ((buf = malloc(needed)) == 0)
 			err(1, NULL);
-		if (sysctl(mib, 4, buf, &needed, NULL, 0) == -1)
+		if (prog_sysctl(mib, 4, buf, &needed, NULL, 0) == -1)
 			err(1,"sysctl of spd");
 		lim = buf + needed;
 	}
