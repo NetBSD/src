@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.106 2010/10/16 10:27:08 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.107 2010/12/13 19:37:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -344,6 +344,7 @@ typedef struct {
 #define	PT_NUM		8
 
 #define	PT_LOOS         0x60000000	/* OS-specific range */
+#define	PT_GNU_EH_FRAME	0x6474e550	/* GNU-specific EH frame segment */
 #define	PT_HIOS         0x6fffffff
 #define	PT_LOPROC	0x70000000	/* Processor-specific range */
 #define	PT_HIPROC	0x7fffffff
