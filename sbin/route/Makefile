@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.24 2010/11/04 23:36:10 pooka Exp $
+#	$NetBSD: Makefile,v 1.25 2010/12/13 17:39:47 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
 
-PROG=	route
+RUMPPRG=route
 MAN=	route.8
 SRCS=	route.c show.c keywords.c
 
@@ -19,16 +19,5 @@ CPPFLAGS+=-DINET6
 # CLEANFILES+= keywords.c keywords.h
 # keywords.c keywords.h : keywords.sh
 # 	${HOST_SH} keywords.sh
-
-#
-# Compile-time debug flag.  If compiled with "make RUMP_ACTION=1",
-# make rump system calls.
-#
-.ifdef RUMP_ACTION
-CPPFLAGS+=      -DRUMP_SYS_NETWORKING -DRUMP_SYS_READWRITE -DRUMP_SYS_CLOSE
-CPPFLAGS+=      -DRUMP_ACTION -DSMALL -Dsysctl=rump_sys___sysctl
-LDADD+=         -lrumpclient
-DBG=            -g
-.endif
 
 .include <bsd.prog.mk>

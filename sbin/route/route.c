@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.126 2010/11/12 16:32:18 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.127 2010/12/13 17:39:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.126 2010/11/12 16:32:18 roy Exp $");
+__RCSID("$NetBSD: route.c,v 1.127 2010/12/13 17:39:47 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,14 +71,13 @@ __RCSID("$NetBSD: route.c,v 1.126 2010/11/12 16:32:18 roy Exp $");
 #include <paths.h>
 #include <err.h>
 
-#ifdef RUMP_ACTION
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 #include <rump/rumpclient.h>
-#endif
 
 #include "keywords.h"
 #include "extern.h"
+#include "prog_ops.h"
 
 union sockunion {
 	struct	sockaddr sa;
@@ -162,11 +161,6 @@ main(int argc, char * const *argv)
 {
 	int ch;
 
-#ifdef RUMP_ACTION
-	if (rumpclient_init() == -1)
-		err(1, "rump client init");
-#endif
-
 	if (argc < 2)
 		usage(NULL);
 
@@ -204,11 +198,14 @@ main(int argc, char * const *argv)
 	argc -= optind;
 	argv += optind;
 
-	pid = getpid();
+	if (prog_init && prog_init() == -1)
+		err(1, "init failed");
+
+	pid = prog_getpid();
 	if (tflag)
-		sock = open("/dev/null", O_WRONLY, 0);
+		sock = prog_open("/dev/null", O_WRONLY, 0);
 	else
-		sock = socket(PF_ROUTE, SOCK_RAW, 0);
+		sock = prog_socket(PF_ROUTE, SOCK_RAW, 0);
 	if (sock < 0)
 		err(EXIT_FAILURE, "socket");
 
@@ -269,7 +266,8 @@ flushroutes(int argc, char * const argv[], int doall)
 
 	flags = 0;
 	af = AF_UNSPEC;
-	shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
+	/* Don't want to read back our messages */
+	prog_shutdown(sock, SHUT_RD);
 	parse_show_opts(argc, argv, &af, &flags, &afname, false);
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -277,13 +275,13 @@ flushroutes(int argc, char * const argv[], int doall)
 	mib[3] = 0;		/* wildcard address family */
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;		/* no flags */
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(EXIT_FAILURE, "route-sysctl-estimate");
 	buf = lim = NULL;
 	if (needed) {
 		if ((buf = malloc(needed)) == NULL)
 			err(EXIT_FAILURE, "malloc");
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
 			err(EXIT_FAILURE, "actual retrieval of routing table");
 		lim = buf + needed;
 	}
@@ -311,7 +309,8 @@ flushroutes(int argc, char * const argv[], int doall)
 			continue;
 		rtm->rtm_type = RTM_DELETE;
 		rtm->rtm_seq = seqno;
-		if ((rlen = write(sock, next, rtm->rtm_msglen)) < 0) {
+		if ((rlen = prog_write(sock, next,
+		    rtm->rtm_msglen)) < 0) {
 			warnx("writing to routing socket: %s",
 			    route_strerror(errno));
 			return 1;
@@ -801,8 +800,10 @@ newroute(int argc, char *const *argv)
 
 	cmd = argv[0];
 	af = AF_UNSPEC;
-	if (*cmd != 'g')
-		shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
+	if (*cmd != 'g') {
+		/* Don't want to read back our messages */
+		prog_shutdown(sock, SHUT_RD);
+	}
 	while (--argc > 0) {
 		if (**(++argv)== '-') {
 			switch (key = keyword(1 + *argv)) {
@@ -1419,12 +1420,12 @@ interfaces(void)
 	mib[3] = 0;		/* wildcard address family */
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = 0;		/* no flags */
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(EXIT_FAILURE, "route-sysctl-estimate");
 	if (needed) {
 		if ((buf = malloc(needed)) == NULL)
 			err(EXIT_FAILURE, "malloc");
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
+		if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
 			err(EXIT_FAILURE,
 			    "actual retrieval of interface table");
 		}
@@ -1453,7 +1454,7 @@ monitor(void)
 	}
 	for(;;) {
 		time_t now;
-		n = read(sock, &u, sizeof(u));
+		n = prog_read(sock, &u, sizeof(u));
 		now = time(NULL);
 		(void)printf("got message of size %d on %s", n, ctime(&now));
 		print_rtmsg(&u.hdr, n);
@@ -1529,7 +1530,7 @@ rtmsg(int cmd, int flags, struct sou *soup)
 	}
 	if (debugonly)
 		return 0;
-	if ((rlen = write(sock, (char *)&m_rtmsg, l)) < 0) {
+	if ((rlen = prog_write(sock, (char *)&m_rtmsg, l)) < 0) {
 		warnx("writing to routing socket: %s", route_strerror(errno));
 		return -1;
 	}
@@ -1540,7 +1541,8 @@ rtmsg(int cmd, int flags, struct sou *soup)
 #ifndef	SMALL
 	if (cmd == RTM_GET) {
 		do {
-			l = read(sock, (char *)&m_rtmsg, sizeof(m_rtmsg));
+			l = prog_read(sock,
+			    (char *)&m_rtmsg, sizeof(m_rtmsg));
 		} while (l > 0 && (rtm.rtm_seq != seq || rtm.rtm_pid != pid));
 		if (l < 0)
 			err(EXIT_FAILURE, "read from routing socket");
