@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.7 2009/08/07 16:37:12 minskim Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.8 2010/12/13 01:45:38 christos Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
@@ -63,14 +63,14 @@ pcap_t *hpcap;
 static FILE *dpcap;
 
 int Debug = 0;
-static int snaplen = DEF_SNAPLEN;
-static int cur_snaplen = DEF_SNAPLEN;
+static uint32_t snaplen = DEF_SNAPLEN;
+static uint32_t cur_snaplen = DEF_SNAPLEN;
 
 volatile sig_atomic_t gotsig_close, gotsig_alrm, gotsig_hup;
 
-char *filename = PFLOGD_LOG_FILE;
-char *interface = PFLOGD_DEFAULT_IF;
-char *filter = NULL;
+const char *filename = PFLOGD_LOG_FILE;
+const char *interface = PFLOGD_DEFAULT_IF;
+const char *filter = NULL;
 
 char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -81,13 +81,13 @@ char *copy_argv(char * const *);
 void  dump_packet(u_char *, const struct pcap_pkthdr *, const u_char *);
 void  dump_packet_nobuf(u_char *, const struct pcap_pkthdr *, const u_char *);
 int   flush_buffer(FILE *);
-int   if_exists(char *);
+int   if_exists(const char *);
 int   init_pcap(void);
 void  logmsg(int, const char *, ...);
 void  purge_buffer(void);
 int   reset_dump(int);
 int   scan_dump(FILE *, off_t);
-int   set_snaplen(int);
+int   set_snaplen(uint32_t);
 void  set_suspended(int);
 void  sig_alrm(int);
 void  sig_close(int);
@@ -97,11 +97,11 @@ void  usage(void);
 static int try_reset_dump(int);
 
 /* buffer must always be greater than snaplen */
-static int    bufpkt = 0;	/* number of packets in buffer */
-static int    buflen = 0;	/* allocated size of buffer */
+static size_t bufpkt = 0;	/* number of packets in buffer */
+static size_t buflen = 0;	/* allocated size of buffer */
 static char  *buffer = NULL;	/* packet buffer */
 static char  *bufpos = NULL;	/* position in buffer */
-static int    bufleft = 0;	/* bytes left in buffer */
+static size_t bufleft = 0;	/* bytes left in buffer */
 
 /* if error, stop logging but count dropped packets */
 static int suspended = -1;
@@ -201,7 +201,7 @@ set_pcap_filter(void)
 }
 
 int
-if_exists(char *ifname)
+if_exists(const char *ifname)
 {
 	int s;
 #ifdef SIOCGIFDATA
@@ -261,7 +261,7 @@ init_pcap(void)
 }
 
 int
-set_snaplen(int snap)
+set_snaplen(uint32_t snap)
 {
 	if (priv_set_snaplen(snap))
 		return (1);
@@ -405,7 +405,7 @@ scan_dump(FILE *fp, off_t size)
 	if (hdr.magic != TCPDUMP_MAGIC ||
 	    hdr.version_major != PCAP_VERSION_MAJOR ||
 	    hdr.version_minor != PCAP_VERSION_MINOR ||
-	    hdr.linktype != hpcap->linktype ||
+	    hdr.linktype != (uint32_t)hpcap->linktype ||
 	    hdr.snaplen > PFLOGD_MAXSNAPLEN) {
 		return (1);
 	}
@@ -475,7 +475,7 @@ dump_packet_nobuf(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 	if (fwrite(&sf_hdr, sizeof(sf_hdr), 1, f) != 1) {
 #endif
 		/* try to undo header to prevent corruption */
-		off_t pos = ftello(f);
+		size_t pos = (size_t)ftello(f);
 #ifdef __OpenBSD__
 		if (pos < sizeof(*h) ||
 		    ftruncate(fileno(f), pos - sizeof(*h))) {
@@ -491,7 +491,7 @@ dump_packet_nobuf(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 		goto error;
 	}
 
-	if (fwrite((char *)sp, h->caplen, 1, f) != 1)
+	if (fwrite(sp, h->caplen, 1, f) != 1)
 		goto error;
 
 	return;
