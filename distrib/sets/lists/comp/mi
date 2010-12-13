@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1538 2010/12/13 17:51:40 pooka Exp $
+#	$NetBSD: mi,v 1.1539 2010/12/13 18:02:04 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3610,6 +3610,7 @@
 ./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/edquota.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/envstat.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/rump.envstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/eshconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/extattrctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/faithd.debug	comp-router-debug	inet6,debug
