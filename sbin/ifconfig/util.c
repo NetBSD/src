@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.15 2010/07/01 16:44:05 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.16 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.15 2010/07/01 16:44:05 dyoung Exp $");
+__RCSID("$NetBSD: util.c,v 1.16 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: util.c,v 1.15 2010/07/01 16:44:05 dyoung Exp $");
 #include "env.h"
 #include "extern.h"
 #include "util.h"
+#include "prog_ops.h"
 
 int
 getsock(int naf)
@@ -64,12 +65,12 @@ getsock(int naf)
 		return s;
 
 	if (oaf != -1)
-		close(s);
+		prog_close(s);
 
 	if (naf == AF_UNSPEC)
 		naf = AF_INET;
 
-	s = socket(naf, SOCK_DGRAM, 0);
+	s = prog_socket(naf, SOCK_DGRAM, 0);
 	if (s == -1)
 		oaf = -1;
 	else
@@ -223,7 +224,7 @@ direct_ioctl(prop_dictionary_t env, unsigned long cmd, void *data)
 
 	estrlcpy(data, ifname, IFNAMSIZ);
 
-	return ioctl(s, cmd, data);
+	return prog_ioctl(s, cmd, data);
 }
 
 int
@@ -274,7 +275,7 @@ print_link_addresses(prop_dictionary_t env, bool print_active_only)
 		iflr.flags = IFLR_PREFIX;
 		iflr.prefixlen = sdl->sdl_alen * NBBY;
 
-		if (ioctl(s, SIOCGLIFADDR, &iflr) == -1)
+		if (prog_ioctl(s, SIOCGLIFADDR, &iflr) == -1)
 			err(EXIT_FAILURE, "%s: ioctl", __func__);
 
 		if (((iflr.flags & IFLR_ACTIVE) != 0) != print_active_only)
@@ -305,7 +306,7 @@ ifa_get_preference(const char *ifname, const struct sockaddr *sa)
 	memset(&ifap, 0, sizeof(ifap));
 	estrlcpy(ifap.ifap_name, ifname, sizeof(ifap.ifap_name));
 	memcpy(&ifap.ifap_addr, sa, MIN(sizeof(ifap.ifap_addr), sa->sa_len));
-	if (ioctl(s, SIOCGIFADDRPREF, &ifap) == -1) {
+	if (prog_ioctl(s, SIOCGIFADDRPREF, &ifap) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT)
 			return 0;
 		warn("SIOCGIFADDRPREF");
