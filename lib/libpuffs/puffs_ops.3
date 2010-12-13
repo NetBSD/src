@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.26 2010/05/21 11:20:50 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.27 2010/12/13 09:06:51 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 21, 2010
+.Dd December 13, 2010
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -175,6 +175,11 @@
 .Fo puffs_node_write
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "uint8_t *buf"
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
+.Fc
+.Ft int
+.Fo puffs_node_abortop
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
 .Fo puffs_node_getextattr
@@ -728,6 +733,11 @@ with it may be freed.
 In case the file
 .Fa opc
 has a link count of zero, it may be safely removed now.
+.It Fn puffs_node_abortop "pu" "opc" "pcn"
+In case the operation following lookup (e.g. mkdir or remove) is not
+executed for some reason, abortop will be issued.
+This is useful only for servers which cache state between lookup
+and a directory operation and is generally left unimplemented.
 .It Fn puffs_node_inactive "pu" "opc"
 The node
 .Fa opc
