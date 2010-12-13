@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2006/11/09 20:33:25 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2010/12/13 01:44:25 christos Exp $
 #	$OpenBSD: Makefile,v 1.6 2003/11/20 23:23:09 avsm Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
-CPPFLAGS+=-I${NETBSDSRCDIR}/dist/pf/sbin/pflogd -I${NETBSDSRCDIR}/dist/libpcap
+WARNS ?= 4
+CPPFLAGS+=-I${NETBSDSRCDIR}/dist/pf/sbin/pflogd
+CPPFLAGS+=-I${NETBSDSRCDIR}/external/bsd/libpcap/dist
 
 LDADD+= -lpcap -lutil
 DPAPP+=	${LIBPCAP} ${LIBUTIL}
