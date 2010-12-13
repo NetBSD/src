@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.167 2010/12/13 03:35:13 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.168 2010/12/13 03:36:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.167 2010/12/13 03:35:13 dholland Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.168 2010/12/13 03:36:39 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.167 2010/12/13 03:35:13 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.168 2010/12/13 03:36:39 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -281,7 +281,7 @@ Lst defIncPath;		/* default for sysIncPath */
  * the 'op' field is the operator to apply to the list of targets if the
  * keyword is used as a source ("0" if the keyword isn't special as a source)
  */
-static struct {
+static const struct {
     const char   *name;    	/* Name of keyword */
     ParseSpecial  spec;	    	/* Type when used as a target */
     int	    	  op;	    	/* Operator when used as a source */
