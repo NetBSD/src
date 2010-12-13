@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2009/06/11 08:12:00 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2010/12/13 20:48:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13 2009/06/11 08:12:00 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2010/12/13 20:48:44 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: main.c,v 1.13 2009/06/11 08:12:00 wiz Exp $");
 #include <err.h>
 
 #include <prop/proplib.h>
+
+#include "prog_ops.h"
 
 int		main(int, char **);
 static void	parse_bool_param(prop_dictionary_t, const char *,
@@ -160,12 +162,14 @@ main(int argc, char **argv)
 	} else {
 		if (argc != 1)
 			usage();
+		if (prog_init && prog_init() == -1)
+			err(1, "prog init failed");
 		cmdargs.ml_filename = argv[0];
 		cmdargs.ml_flags = flags;
 		cmdargs.ml_props = propsstr;
 		cmdargs.ml_propslen = strlen(propsstr);
 
-		if (modctl(MODCTL_LOAD, &cmdargs)) {
+		if (prog_modctl(MODCTL_LOAD, &cmdargs)) {
 			err(EXIT_FAILURE, NULL);
 		}
 	}
