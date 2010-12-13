@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.7 2010/12/13 14:13:21 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.8 2010/12/13 14:26:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.7 2010/12/13 14:13:21 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.8 2010/12/13 14:26:22 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -87,9 +87,16 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "l:m:s")) != -1) {
 		switch (ch) {
 		case 'l':
-			if (dlopen(optarg, RTLD_LAZY|RTLD_GLOBAL) == NULL)
-				errx(1, "dlopen %s failed: %s",
-				    optarg, dlerror());
+			if (dlopen(optarg, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
+				char pb[MAXPATHLEN];
+				/* try to mimic linker -l syntax */
+
+				snprintf(pb, sizeof(pb), "lib%s.so", optarg);
+				if (dlopen(pb, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
+					errx(1, "dlopen %s failed: %s",
+					    pb, dlerror());
+				}
+			}
 			break;
 		case 'm':
 			if (nmods - curmod == 0) {
