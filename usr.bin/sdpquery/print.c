@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 2009/11/22 18:53:44 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.6 2010/12/13 21:08:37 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.5 2009/11/22 18:53:44 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.6 2010/12/13 21:08:37 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -111,6 +111,7 @@ static void print_net_access_type(sdp_data_t *);
 static void print_pnp_source(sdp_data_t *);
 static void print_mas_types(sdp_data_t *);
 static void print_supported_repositories(sdp_data_t *);
+static void print_character_repertoires(sdp_data_t *);
 
 static void print_rfcomm(sdp_data_t *);
 static void print_bnep(sdp_data_t *);
@@ -238,6 +239,27 @@ attr_t gn_attrs[] = {	/* Group Network */
 	{ 0x030e, "IPv6Subnet",				print_string },
 };
 
+attr_t bp_attrs[] = {	/* Basic Printing */
+	{ 0x0350, "DocumentFormatsSupported",		print_string },
+	{ 0x0352, "CharacterRepertoiresSupported",	print_character_repertoires },
+	{ 0x0354, "XHTML-PrintImageFormatsSupported",	print_string },
+	{ 0x0356, "ColorSupported",			print_bool },
+	{ 0x0358, "1284ID",				print_string },
+	{ 0x035a, "PrinterName",			print_string },
+	{ 0x035c, "PrinterLocation",			print_string },
+	{ 0x035e, "DuplexSupported",			print_bool },
+	{ 0x0360, "MediaTypesSupported",		print_string },
+	{ 0x0362, "MaxMediaWidth",			print_uint16d },
+	{ 0x0364, "MaxMediaLength",			print_uint16d },
+	{ 0x0366, "EnhancedLayoutSupport",		print_bool },
+	{ 0x0368, "RUIFormatsSupported",		print_string },
+	{ 0x0370, "ReferencePrintingRUISupported",	print_bool },
+	{ 0x0372, "DirectPrintingRUISupported",		print_bool },
+	{ 0x0374, "ReferencePrintingTopURL",		print_url },
+	{ 0x0376, "DirectPrintingTopURL",		print_url },
+	{ 0x037a, "DeviceName",				print_string },
+};
+
 attr_t hf_attrs[] = {	/* Handsfree */
 	{ 0x0311, "SupportedFeatures",			print_hf_features },
 };
@@ -245,6 +267,11 @@ attr_t hf_attrs[] = {	/* Handsfree */
 attr_t hfag_attrs[] = {	/* Handsfree Audio Gateway */
 	{ 0x0301, "Network",				print_hfag_network },
 	{ 0x0311, "SupportedFeatures",			print_hfag_features },
+};
+
+attr_t rui_attrs[] = {	/* Reflected User Interface */
+	{ 0x0368, "RUIFormatsSupported",		print_string },
+	{ 0x0378, "PrinterAdminRUITopURL",		print_url },
 };
 
 attr_t hid_attrs[] = {	/* Human Interface Device */
@@ -312,7 +339,7 @@ service_t service_list[] = {
 	{ 0x1116, "Network Access Point",		A(nap_attrs) },
 	{ 0x1117, "Group Network",			A(gn_attrs) },
 	{ 0x1118, "Direct Printing",			NULL, 0 },
-	{ 0x1119, "Reference Printing",			NULL, 0 },
+	{ 0x1119, "Reference Printing",			A(bp_attrs) },
 	{ 0x111a, "Imaging",				NULL, 0 },
 	{ 0x111b, "Imaging Responder",			NULL, 0 },
 	{ 0x111c, "Imaging Automatic Archive",		NULL, 0 },
@@ -320,7 +347,7 @@ service_t service_list[] = {
 	{ 0x111e, "Handsfree",				A(hf_attrs) },
 	{ 0x111f, "Handsfree Audio Gateway",		A(hfag_attrs) },
 	{ 0x1120, "Direct Printing Reference Objects",	NULL, 0 },
-	{ 0x1121, "Reflected User Interface",		NULL, 0 },
+	{ 0x1121, "Reflected User Interface",		A(rui_attrs) },
 	{ 0x1122, "Basic Printing",			NULL, 0 },
 	{ 0x1123, "Printing Status",			NULL, 0 },
 	{ 0x1124, "Human Interface Device",		A(hid_attrs) },
@@ -1343,6 +1370,50 @@ print_supported_repositories(sdp_data_t *data)
 	printf("\n");
 	if (v & (1<<0))	printf("    Local Phonebook\n");
 	if (v & (1<<1))	printf("    SIM Card\n");
+}
+
+static void
+print_character_repertoires(sdp_data_t *data)
+{
+	sdp_data_t d;
+	uint32_t v0, v1, v2, v3;
+
+	/*
+	 * we have no uint128 type, so need to decode it manually
+	 */
+
+	if (sdp_data_type(data) != SDP_DATA_UINT128)
+		return;
+
+	sdp_get_data(data, &d);
+	v0 = be32dec(d.next + 1);
+	v1 = be32dec(d.next + 5);
+	v2 = be32dec(d.next + 9);
+	v3 = be32dec(d.next + 13);
+
+	if (Nflag)
+		printf("(0x%08x%08x%08x%08x)", v0, v1, v2, v3);
+
+	printf("\n");
+
+	if (v0 & (1<< 0)) printf("    ISO-8859-1\n");
+	if (v0 & (1<< 1)) printf("    ISO-8859-2\n");
+	if (v0 & (1<< 2)) printf("    ISO-8859-3\n");
+	if (v0 & (1<< 3)) printf("    ISO-8859-4\n");
+	if (v0 & (1<< 4)) printf("    ISO-8859-5\n");
+	if (v0 & (1<< 5)) printf("    ISO-8859-6\n");
+	if (v0 & (1<< 6)) printf("    ISO-8859-7\n");
+	if (v0 & (1<< 7)) printf("    ISO-8859-8\n");
+	if (v0 & (1<< 8)) printf("    ISO-8859-9\n");
+	if (v0 & (1<< 9)) printf("    ISO-8859-10\n");
+	if (v0 & (1<<10)) printf("    ISO-8859-13\n");
+	if (v0 & (1<<11)) printf("    ISO-8859-14\n");
+	if (v0 & (1<<12)) printf("    ISO-8859-15\n");
+	if (v0 & (1<<13)) printf("    GB18030\n");
+	if (v0 & (1<<14)) printf("    JIS X0208-1990, JIS X0201-1976\n");
+	if (v0 & (1<<15)) printf("    KSC 5601-1992\n");
+	if (v0 & (1<<16)) printf("    Big5\n");
+	if (v0 & (1<<17)) printf("    TIS-620\n");
 }
 
 static void
