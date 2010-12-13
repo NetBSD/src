@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
+/* $NetBSD: fsm.c,v 1.3 2010/12/13 01:25:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -82,44 +82,45 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 		/* Just update timer */
 		hi->keepalive = LDP_HELLO_KEEP;
 
-	if (ht->length > 4) {	/* Common hello parameters */
-		ht->ch.type = ntohs(ht->ch.type);
-		ht->ch.length = ntohs(ht->ch.length);
-		ht->ch.holdtime = ntohs(ht->ch.holdtime);
-		ht->ch.res = ntohs(ht->ch.res);
-		debugp("Common hello Type: 0x%.4X Length: %.2d R:%d T:%d"
-		    "Hold time: %d\n", ht->ch.type, ht->ch.length,
-		    ht->ch.tr / 2, ht->ch.tr % 2, ht->ch.holdtime);
-		if (ht->ch.holdtime)
-			hi->keepalive = ht->ch.holdtime;
-		if (!get_ldp_peer(&pduid->ldp_id)) {
-			/* First of all set peer_addr to announced LDP_ID */
-			memcpy(&peer_addr, &pduid->ldp_id,
-			    sizeof(struct in_addr));
-			/*
-			 * Now let's see if there is any transport TLV in
-			 * there
-			 */
-			if (pduid->length - PDU_PAYLOAD_LENGTH -
-			    sizeof(struct hello_tlv) > 3) {
-				trtlv = (struct transport_address_tlv *) &ht[1];
-				if (trtlv->type == TLV_IPV4_TRANSPORT)
-					memcpy(&peer_addr, &trtlv->address,
-					    sizeof(struct in_addr));
-			}
-			/*
-			 * RFC says: If A1 > A2, LSR1 plays the active role;
-			 * otherwise it is passive.
-			 */
-			if (ntohl(peer_addr.s_addr) < ntohl(ladd->s_addr)) {
+	if (ht->length <= 4)	/* Common hello parameters */
+		return;
+	ht->ch.type = ntohs(ht->ch.type);
+	ht->ch.length = ntohs(ht->ch.length);
+	ht->ch.holdtime = ntohs(ht->ch.holdtime);
+	ht->ch.res = ntohs(ht->ch.res);
+	debugp("Common hello Type: 0x%.4X Length: %.2d R:%d T:%d"
+	    "Hold time: %d\n", ht->ch.type, ht->ch.length,
+	    ht->ch.tr / 2, ht->ch.tr % 2, ht->ch.holdtime);
+	if (ht->ch.holdtime)
+		hi->keepalive = ht->ch.holdtime;
+	if (!get_ldp_peer(&pduid->ldp_id)) {
+		/* First of all set peer_addr to announced LDP_ID */
+		memcpy(&peer_addr, &pduid->ldp_id,
+		    sizeof(struct in_addr));
+		/*
+		 * Now let's see if there is any transport TLV in
+		 * there
+		 */
+		if (pduid->length - PDU_PAYLOAD_LENGTH -
+		    sizeof(struct hello_tlv) > 3) {
+			trtlv = (struct transport_address_tlv *) &ht[1];
+			if (trtlv->type == TLV_IPV4_TRANSPORT)
+				memcpy(&peer_addr, &trtlv->address,
+				    sizeof(struct in_addr));
+		} else
+			trtlv = NULL;
+		/*
+		 * RFC says: If A1 > A2, LSR1 plays the active role;
+		 * otherwise it is passive.
+		 */
+		if (ntohl(peer_addr.s_addr) < ntohl(ladd->s_addr)) {
 #define	TRADDR (trtlv && trtlv->type == TLV_IPV4_TRANSPORT) ? &peer_addr : NULL
-				peer = ldp_peer_new(&pduid->ldp_id, padd,
-					TRADDR, ht->ch.holdtime, 0);
-				if (!peer)
-					return;
-				if (peer && peer->state == LDP_PEER_CONNECTED)
-					send_initialize(peer);
-			}
+			peer = ldp_peer_new(&pduid->ldp_id, padd,
+				TRADDR, ht->ch.holdtime, 0);
+			if (!peer)
+				return;
+			if (peer && peer->state == LDP_PEER_CONNECTED)
+				send_initialize(peer);
 		}
 	}
 }
