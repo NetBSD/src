@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.6 2006/09/19 00:55:35 mrg Exp $ */
+/*	$NetBSD: trap.h,v 1.7 2010/12/13 06:40:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -52,12 +52,12 @@
 #define T_CLEAN_WINDOW	0x024	/* (10) clean window exception */
 /*	through		0x027	   unused */
 #define T_IDIV0		0x028	/* (15) division by 0 */
-/*			0x02a	   unused */
+/*			0x029	   unused */
 /*	through		0x02f	   unused */
 #define	T_DATAFAULT	0x030	/* (12) address fault during data fetch */
-/*			0x031	   unused */
-#define T_DATA_ERROR	0x032
-#define T_DATA_PROT	0x033	/* Data protection ??? */
+#define	T_DATA_MMU_MISS	0x031	/* (N/A) address fault during data fetch [USIII] */
+#define	T_DATA_ERROR	0x032	/* (12) data access error */
+#define	T_DATA_PROT	0x033	/* (12) Data protection ??? */
 #define	T_ALIGN		0x034	/* (10) address not properly aligned */
 #define	T_LDDF_ALIGN	0x035	/* (10) LDDF address not properly aligned */
 #define	T_STDF_ALIGN	0x036	/* (10) STDF address not properly aligned */
@@ -93,6 +93,9 @@
 #define T_FDMMU_PROT	0x06c	/* (2) fast data access protection */
 /*	through		0x06f	   unused */
 /*  0x070...0x07f implementation dependent exceptions */
+#define T_FAST_ECC_ERROR 0x070	/* (2) fast ECC error [USIII] */
+#define T_DC_PAR_ERR	0x071	/* (2) dcache parity error [USIII] */
+#define T_IC_PAR_ERR	0x072	/* (2) icache parity error [USIII] */
 #define T_SPILL_N_NORM	0x080	/* (9) spill (n=0..7) normal */
 /*	through		0x09f	   unused */
 #define T_SPILL_N_OTHER	0x0a0	/* (9) spill (n=0..7) other */
