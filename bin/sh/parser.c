@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.78 2010/11/17 13:40:48 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.79 2010/12/13 16:54:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.78 2010/11/17 13:40:48 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.79 2010/12/13 16:54:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -814,8 +814,6 @@ xxreadtoken(void)
 	startlinno = plinno;
 	for (;;) {	/* until token or start of word found */
 		c = pgetc_macro();
-		if (c == ' ' || c == '\t')
-			continue;		/* quick check for white space first */
 		switch (c) {
 		case ' ': case '\t':
 			continue;
