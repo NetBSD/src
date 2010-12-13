@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.92 2009/12/07 18:48:45 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.93 2010/12/13 21:15:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.92 2009/12/07 18:48:45 christos Exp $");
+__RCSID("$NetBSD: inet.c,v 1.93 2010/12/13 21:15:30 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ __RCSID("$NetBSD: inet.c,v 1.92 2009/12/07 18:48:45 christos Exp $");
 #include <stdlib.h>
 #include <err.h>
 #include "netstat.h"
+#include "prog_ops.h"
 
 char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, u_int16_t, const char *, int);
@@ -194,8 +195,8 @@ protopr(u_long off, const char *name)
 		if (sysctlnametomib(mibname, mib, &namelen) == -1)
 			err(1, "sysctlnametomib: %s", mibname);
 
-		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
-			   NULL, 0) == -1)
+		if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib),
+		    NULL, &size, NULL, 0) == -1)
 			err(1, "sysctl (query)");
 
 		if ((pcblist = malloc(size)) == NULL)
@@ -205,8 +206,8 @@ protopr(u_long off, const char *name)
 	        mib[6] = sizeof(*pcblist);
         	mib[7] = size / sizeof(*pcblist);
 
-		if (sysctl(mib, sizeof(mib) / sizeof(*mib), pcblist,
-			   &size, NULL, 0) == -1)
+		if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib),
+		    pcblist, &size, NULL, 0) == -1)
 			err(1, "sysctl (copy)");
 
 		for (i = 0; i < size / sizeof(*pcblist); i++) {

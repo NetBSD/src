@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.29 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.30 2010/12/13 21:15:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.29 2009/04/12 16:08:37 lukem Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.30 2010/12/13 21:15:30 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: mbuf.c,v 1.29 2009/04/12 16:08:37 lukem Exp $");
 #include <err.h>
 #include <stdbool.h>
 #include "netstat.h"
+#include "prog_ops.h"
 
 #define	YES	1
 
@@ -109,7 +110,7 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 
 	if (use_sysctl) {
 		size_t mbstatlen = sizeof(mbstat);
-		if (sysctl(mbstats_ctl,
+		if (prog_sysctl(mbstats_ctl,
 			    sizeof(mbstats_ctl) / sizeof(mbstats_ctl[0]),
 			    &mbstat, &mbstatlen, NULL, 0) < 0) {
 			warn("mbstat: sysctl failed");
@@ -202,8 +203,9 @@ dump_drain:
 	if (!use_sysctl)
 		return;
 
-	if (sysctl(mowners_ctl, sizeof(mowners_ctl)/sizeof(mowners_ctl[0]),
-		    NULL, &len, NULL, 0) < 0) {
+	if (prog_sysctl(mowners_ctl,
+	    sizeof(mowners_ctl)/sizeof(mowners_ctl[0]),
+	    NULL, &len, NULL, 0) < 0) {
 		if (errno == ENOENT)
 			return;
 		warn("mowners: sysctl test");
@@ -216,8 +218,9 @@ dump_drain:
 		return;
 	}
 
-	if (sysctl(mowners_ctl, sizeof(mowners_ctl)/sizeof(mowners_ctl[0]),
-		    data, &len, NULL, 0) < 0) {
+	if (prog_sysctl(mowners_ctl,
+	    sizeof(mowners_ctl)/sizeof(mowners_ctl[0]),
+	    data, &len, NULL, 0) < 0) {
 		warn("mowners: sysctl get");
 		free(data);
 		return;

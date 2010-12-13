@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.9 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: bpf.c,v 1.10 2010/12/13 21:15:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <net/bpfdesc.h>
 #include <net/bpf.h>
 #include "netstat.h"
+#include "prog_ops.h"
 
 void
 bpf_stats(void)
@@ -92,7 +93,8 @@ bpf_dump(const char *bpfif)
 		v = NULL;
 		sz = 0;
 		do {
-			rc = sysctl(&name[0], namelen, v, &sz, NULL, 0);
+			rc = prog_sysctl(&name[0], namelen,
+			    v, &sz, NULL, 0);
 			if (rc == -1 && errno != ENOMEM)
 				err(1, "sysctl: net.bpf.peers");
 			if (rc == -1 && v != NULL) {
@@ -158,7 +160,7 @@ bpf_dump(const char *bpfif)
 			name[namelen++] = szproc;
 			name[namelen++] = 1;
 
-			if (sysctl(&name[0], namelen, &p, &szproc, 
+			if (prog_sysctl(&name[0], namelen, &p, &szproc, 
 			    NULL, 0) == -1)
 				printf("-\n");
 			else

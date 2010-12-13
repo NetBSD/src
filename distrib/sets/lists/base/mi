@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.903 2010/12/13 20:51:11 pooka Exp $
+# $NetBSD: mi,v 1.904 2010/12/13 21:15:30 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -534,6 +534,7 @@
 ./usr/bin/netpgpkeys				base-crypto-bin		crypto
 ./usr/bin/netpgpverify				base-crypto-bin		crypto
 ./usr/bin/netstat				base-netutil-bin
+./usr/bin/rump.netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
