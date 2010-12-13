@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.30 2010/04/22 14:37:06 plunky Exp $	*/
+/*	$NetBSD: unix.c,v 1.31 2010/12/13 21:15:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.30 2010/04/22 14:37:06 plunky Exp $");
+__RCSID("$NetBSD: unix.c,v 1.31 2010/12/13 21:15:30 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: unix.c,v 1.30 2010/04/22 14:37:06 plunky Exp $");
 #include <kvm.h>
 #include <err.h>
 #include "netstat.h"
+#include "prog_ops.h"
 
 static	void unixdomainprhdr(void);
 static	void unixdomainpr0(u_long, u_long, u_long, u_long, u_long, u_long,
@@ -163,8 +164,8 @@ unixpr(off)
 				    &namelen) == -1)
 			err(1, "sysctlnametomib: %s", mibname);
 
-		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
-			   NULL, 0) == -1)
+		if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib),
+		    NULL, &size, NULL, 0) == -1)
 			err(1, "sysctl (query)");
 
 		if ((pcblist = malloc(size)) == NULL)
@@ -174,7 +175,7 @@ unixpr(off)
 		mib[6] = sizeof(*pcblist);
 		mib[7] = size / sizeof(*pcblist);
 
-		if (sysctl(mib, sizeof(mib) / sizeof(*mib), pcblist,
+		if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib), pcblist,
 			   &size, NULL, 0) == -1)
 			err(1, "sysctl (copy)");
 

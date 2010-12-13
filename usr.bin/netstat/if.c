@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.69 2010/07/09 07:04:30 enami Exp $	*/
+/*	$NetBSD: if.c,v 1.70 2010/12/13 21:15:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.69 2010/07/09 07:04:30 enami Exp $");
+__RCSID("$NetBSD: if.c,v 1.70 2010/12/13 21:15:30 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: if.c,v 1.69 2010/07/09 07:04:30 enami Exp $");
 #include <err.h>
 
 #include "netstat.h"
+#include "prog_ops.h"
 
 #define	MAXIF	100
 
@@ -163,11 +164,11 @@ intpr_sysctl(void)
 	size_t len;
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
 
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
+	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 	if ((buf = malloc(len)) == NULL)
 		err(1, NULL);
-	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1)
+	if (prog_sysctl(mib, 6, buf, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 
 	intpr_header();
@@ -983,11 +984,11 @@ fetchifs(void)
 	char name[IFNAMSIZ];
 	size_t len;
 
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
+	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 	if ((buf = malloc(len)) == NULL)
 		err(1, NULL);
-	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1)
+	if (prog_sysctl(mib, 6, buf, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 
 	lim = buf + len;

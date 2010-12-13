@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.76 2010/06/29 12:38:12 kefren Exp $	*/
+/*	$NetBSD: main.c,v 1.77 2010/12/13 21:15:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.76 2010/06/29 12:38:12 kefren Exp $");
+__RCSID("$NetBSD: main.c,v 1.77 2010/12/13 21:15:30 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: main.c,v 1.76 2010/06/29 12:38:12 kefren Exp $");
 #include <string.h>
 #include <unistd.h>
 #include "netstat.h"
+#include "prog_ops.h"
 
 struct nlist nl[] = {
 #define	N_MBSTAT	0
@@ -421,6 +422,12 @@ main(argc, argv)
 	char *nlistf = NULL, *memf = NULL;
 	char *cp;
 	u_long pcbaddr;
+
+	if (prog_init) {
+		if (prog_init() == -1)
+			err(1, "init failed");
+		force_sysctl = 1; /* cheap trick */
+	}
 
 	egid = getegid();
 	(void)setegid(getgid());
