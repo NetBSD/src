@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.17 2010/11/09 06:48:19 uebayasi Exp $ */
+/* $NetBSD: plb.c,v 1.18 2010/12/13 07:29:12 kiyohara Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.17 2010/11/09 06:48:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.18 2010/12/13 07:29:12 kiyohara Exp $");
 
 #include "locators.h"
 #include "emac.h"
@@ -180,7 +180,7 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	while (local_plb_devs && local_plb_devs->plb_name != NULL) {
-		if (plb_devs[i].plb_pvr != pvr)
+		if (local_plb_devs->plb_pvr != pvr)
 			continue;
 
 		paa.plb_name = local_plb_devs->plb_name;
