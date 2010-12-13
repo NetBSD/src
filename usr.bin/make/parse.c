@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.166 2010/12/13 03:32:25 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.167 2010/12/13 03:35:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.166 2010/12/13 03:32:25 dholland Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.167 2010/12/13 03:35:13 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.166 2010/12/13 03:32:25 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.167 2010/12/13 03:35:13 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -135,8 +135,6 @@ __RCSID("$NetBSD: parse.c,v 1.166 2010/12/13 03:32:25 dholland Exp $");
 #include "job.h"
 #include "buf.h"
 #include "pathnames.h"
-
-extern int  maxJobs;
 
 ////////////////////////////////////////////////////////////
 // types and constants
