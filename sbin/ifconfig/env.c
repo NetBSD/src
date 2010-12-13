@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.6 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: env.c,v 1.7 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: env.c,v 1.6 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: env.c,v 1.7 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: env.c,v 1.6 2008/07/02 07:44:14 dyoung Exp $");
 
 #include "env.h"
 #include "util.h"
+#include "prog_ops.h"
 
 prop_dictionary_t
 prop_dictionary_augment(prop_dictionary_t bottom, prop_dictionary_t top)
@@ -92,7 +93,7 @@ getifflags(prop_dictionary_t env, prop_dictionary_t oenv,
 
 	memset(&ifr, 0, sizeof(ifr));
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFFLAGS, &ifr) == -1)
+	if (prog_ioctl(s, SIOCGIFFLAGS, &ifr) == -1)
 		return -1;
 
 	*flagsp = (unsigned short)ifr.ifr_flags;
