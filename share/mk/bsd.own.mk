@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.645 2010/12/05 09:54:34 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.646 2010/12/13 17:22:26 pooka Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -441,6 +441,13 @@ BINGRP?=	wheel
 BINOWN?=	root
 BINMODE?=	555
 NONBINMODE?=	444
+
+# These are here mainly because we don't want suid root in case
+# a Makefile defines BINMODE.
+RUMPBINGRP?=	wheel
+RUMPBINOWN?=	root
+RUMPBINMODE?=	555
+RUMPNONBINMODE?=444
 
 MANDIR?=	/usr/share/man
 MANGRP?=	wheel
