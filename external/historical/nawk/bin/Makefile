@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/12/12 19:01:03 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2010/12/13 06:30:44 mrg Exp $
 
 WARNS?= 4
 
@@ -18,6 +18,20 @@ DPADD+=	${LIBM}
 YHEADER=	yes
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS+=	-Wno-pointer-sign
+.endif
+
+# info file originally from GNU awk 3.1.3, adjusted for nawk slightly
+.PATH:	${NETBSDSRCDIR}/external/gpl2/gawk/dist
+TEXINFO=        awk.info
+
+# During the tools build (from src/tools/awk/Makefile),
+# src/tools/Makefile.host changes .CURDIR back and forth between
+# src/tools/awk and src/usr.bin/awk.  For some unknown reason, including
+# bsd.info.mk here leads to the obj dir being created at the wrong time,
+# while .CURDIR is src/usr.bin/awk.  Work around the problem by not
+# including bsd.info.mk when MKINFO=no.
+.if ${MKINFO} != "no"
+.include <bsd.info.mk>
 .endif
 
 .include <bsd.prog.mk>
