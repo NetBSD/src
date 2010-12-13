@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.24 2010/07/01 16:44:05 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.25 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.24 2010/07/01 16:44:05 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.25 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: ieee80211.c,v 1.24 2010/07/01 16:44:05 dyoung Exp $");
 #include "parse.h"
 #include "env.h"
 #include "util.h"
+#include "prog_ops.h"
 
 static void ieee80211_statistics(prop_dictionary_t);
 static void ieee80211_status(prop_dictionary_t, prop_dictionary_t);
@@ -725,7 +726,7 @@ scan_and_wait(prop_dictionary_t env)
 {
 	int sroute;
 
-	sroute = socket(PF_ROUTE, SOCK_RAW, 0);
+	sroute = prog_socket(PF_ROUTE, SOCK_RAW, 0);
 	if (sroute < 0) {
 		perror("socket(PF_ROUTE,SOCK_RAW)");
 		return;
@@ -737,7 +738,7 @@ scan_and_wait(prop_dictionary_t env)
 		struct rt_msghdr *rtm;
 
 		do {
-			if (read(sroute, buf, sizeof(buf)) < 0) {
+			if (prog_read(sroute, buf, sizeof(buf)) < 0) {
 				perror("read(PF_ROUTE)");
 				break;
 			}
@@ -748,7 +749,7 @@ scan_and_wait(prop_dictionary_t env)
 		} while (rtm->rtm_type != RTM_IEEE80211 ||
 		    ifan->ifan_what != RTM_IEEE80211_SCAN);
 	}
-	close(sroute);
+	prog_close(sroute);
 }
 
 static void
