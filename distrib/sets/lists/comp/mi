@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1537 2010/12/13 13:38:19 pooka Exp $
+#	$NetBSD: mi,v 1.1538 2010/12/13 17:51:40 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2975,6 +2975,7 @@
 ./usr/libdata/debug/sbin/fsirand.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/gpt.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/ifconfig.debug		comp-netutil-debug	debug
+./usr/libdata/debug/sbin/rump.ifconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/init.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/ipf.debug		comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/sbin/lvm.debug		comp-sysutil-debug	lvm,debug
@@ -3020,6 +3021,7 @@
 ./usr/libdata/debug/sbin/pflogd.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pfs.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/ping.debug		comp-netutil-debug	debug
+./usr/libdata/debug/sbin/rump.ping.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/ping6.debug		comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/sbin/pppoectl.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/raidctl.debug		comp-sysutil-debug	debug
@@ -3030,6 +3032,7 @@
 ./usr/libdata/debug/sbin/restore.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/rndctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/route.debug		comp-netutil-debug	debug
+./usr/libdata/debug/sbin/rump.route.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/routed.debug		comp-router-debug	debug
 ./usr/libdata/debug/sbin/rtsol.debug		comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/sbin/savecore.debug		comp-sysutil-debug	debug
@@ -3041,6 +3044,7 @@
 ./usr/libdata/debug/sbin/svhlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/swapctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/sysctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/rump.sysctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/tbrconfig.debug	comp-router-debug	debug
 ./usr/libdata/debug/sbin/ttyflags.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/tunefs.debug		comp-sysutil-debug	debug
