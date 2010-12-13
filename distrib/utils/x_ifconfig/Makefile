@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2010/12/13 17:35:31 pooka Exp $
+# $NetBSD: Makefile,v 1.31 2010/12/13 21:47:32 pooka Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ SRCDIR=		${.CURDIR}/../../../sbin/ifconfig
 
 
 .if defined(SMALLPROG_INET6) && (${USE_INET6} != "no")
-CPPFLAGS+=	-DINET6
+CPPFLAGS+=	-DINET6 -DCRUNCHOPS
 SRCS+= af_inet6.c
 .endif
 
