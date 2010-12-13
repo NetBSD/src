@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2010/03/19 16:25:33 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2010/12/13 20:48:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 2010/03/19 16:25:33 pooka Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2010/12/13 20:48:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -38,6 +38,8 @@ __RCSID("$NetBSD: main.c,v 1.10 2010/03/19 16:25:33 pooka Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+
+#include "prog_ops.h"
 
 int	main(int, char **);
 static void	usage(void) __dead;
@@ -88,10 +90,13 @@ main(int argc, char **argv)
 	if (argc != 0)
 		usage();
 
+	if (prog_init && prog_init() == -1)
+		err(1, "prog init failed");
+
 	for (len = 8192;;) {
 		iov.iov_base = malloc(len);
 		iov.iov_len = len;
-		if (modctl(MODCTL_STAT, &iov)) {
+		if (prog_modctl(MODCTL_STAT, &iov)) {
 			err(EXIT_FAILURE, "modctl(MODCTL_STAT)");
 		}
 		if (len >= iov.iov_len) {
