@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.900 2010/12/13 13:38:18 pooka Exp $
+# $NetBSD: mi,v 1.901 2010/12/13 17:51:39 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -233,6 +233,7 @@
 ./sbin/gpt					base-sysutil-root
 ./sbin/halt					base-sysutil-root
 ./sbin/ifconfig					base-netutil-root
+./sbin/rump.ifconfig					base-netutil-root
 ./sbin/init					base-sysutil-root
 ./sbin/ipf					base-ipf-root		ipfilter
 ./sbin/ipppctl					base-netutil-root
@@ -290,6 +291,7 @@
 ./sbin/pflogd					base-pf-root		pf
 ./sbin/pfs						base-pf-root		pf
 ./sbin/ping					base-netutil-root
+./sbin/rump.ping					base-netutil-root
 ./sbin/ping6					base-netutil-root	use_inet6
 ./sbin/poweroff					base-sysutil-root
 ./sbin/pppoectl					base-netutil-root
@@ -305,6 +307,7 @@
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
 ./sbin/route					base-netutil-root
+./sbin/rump.route					base-netutil-root
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
 ./sbin/rtsol					base-netutil-root	use_inet6
@@ -319,6 +322,7 @@
 ./sbin/swapctl					base-sysutil-root
 ./sbin/swapon					base-sysutil-root
 ./sbin/sysctl					base-sysutil-root
+./sbin/rump.sysctl					base-sysutil-root
 ./sbin/tbrconfig				base-router-root
 ./sbin/ttyflags					base-sysutil-root
 ./sbin/tunefs					base-sysutil-root
