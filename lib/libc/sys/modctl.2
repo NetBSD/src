@@ -1,4 +1,4 @@
-.\"	$NetBSD: modctl.2,v 1.6 2010/11/28 00:26:38 jnemeth Exp $
+.\"	$NetBSD: modctl.2,v 1.7 2010/12/13 10:07:46 jruoho Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 27, 2010
+.Dd December 13, 2010
 .Dt MODCTL 2
 .Os
 .Sh NAME
@@ -269,6 +269,9 @@ structure does not include
 and the requested module does not match the current kernel's version
 information.
 .El
+.Sh SEE ALSO
+.Xr module 4 ,
+.Xr module 9
 .Sh HISTORY
 The
 .Fn modctl
