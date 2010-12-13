@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.82 2010/11/05 13:52:42 pooka Exp $ */
+/* $NetBSD: envstat.c,v 1.83 2010/12/13 18:00:38 pooka Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.82 2010/11/05 13:52:42 pooka Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.83 2010/12/13 18:00:38 pooka Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -48,12 +48,7 @@ __RCSID("$NetBSD: envstat.c,v 1.82 2010/11/05 13:52:42 pooka Exp $");
 #include <prop/proplib.h>
 
 #include "envstat.h"
-
-#ifdef RUMP_ACTION
-#include <rump/rump.h>
-#include <rump/rumpclient.h>
-#include <rump/rump_syscalls.h>
-#endif
+#include "prog_ops.h"
 
 #define ENVSYS_DFLAG	0x00000001	/* list registered devices */
 #define ENVSYS_FFLAG	0x00000002	/* show temp in farenheit */
@@ -123,8 +118,6 @@ static int 		usage(void);
 static int		sysmonfd; /* fd of /dev/sysmon */
 
 /* sneak in between ioctl() */
-#ifdef RUMP_ACTION
-#include <sys/syscall.h>
 int
 ioctl(int fd, unsigned long request, ...)
 {
@@ -132,15 +125,11 @@ ioctl(int fd, unsigned long request, ...)
 	int rv;
 
 	va_start(ap, request);
-	if (fd == sysmonfd)
-		rv = rump_sys_ioctl(fd, request, va_arg(ap, void *));
-	else
-		rv = syscall(SYS_ioctl, fd, request, va_arg(ap, void *));
+	rv = prog_ioctl(fd, request, va_arg(ap, void *));
 	va_end(ap);
 
 	return rv;
 }
-#endif
 
 int main(int argc, char **argv)
 {
@@ -149,10 +138,8 @@ int main(int argc, char **argv)
 	char *endptr, *configfile = NULL;
 	FILE *cf;
 
-#ifdef RUMP_ACTION
-	if (rumpclient_init() == -1)
-		err(1, "rumpclient init failed");
-#endif
+	if (prog_init && prog_init() == -1)
+		err(1, "init failed");
 
 	setprogname(argv[0]);
 
@@ -241,7 +228,7 @@ int main(int argc, char **argv)
 		errx(EXIT_FAILURE, "-d flag cannot be used with -s");
 
 	/* Open the device in ro mode */
-	if ((sysmonfd = open(_PATH_SYSMON, O_RDONLY)) == -1)
+	if ((sysmonfd = prog_open(_PATH_SYSMON, O_RDONLY)) == -1)
 		err(EXIT_FAILURE, "%s", _PATH_SYSMON);
 
 	/* Print dictionary in raw mode */
@@ -257,10 +244,10 @@ int main(int argc, char **argv)
 	/* Remove all properties set in dictionary */
 	} else if (flags & ENVSYS_SFLAG) {
 		/* Close the ro descriptor */
-		(void)close(sysmonfd);
+		(void)prog_close(sysmonfd);
 
 		/* open the fd in rw mode */
-		if ((sysmonfd = open(_PATH_SYSMON, O_RDWR)) == -1)
+		if ((sysmonfd = prog_open(_PATH_SYSMON, O_RDWR)) == -1)
 			err(EXIT_FAILURE, "%s", _PATH_SYSMON);
 
 		dict = prop_dictionary_create();
@@ -311,7 +298,7 @@ int main(int argc, char **argv)
 		free(sensors);
 	if (mydevname)
 		free(mydevname);
-	(void)close(sysmonfd);
+	(void)prog_close(sysmonfd);
 
 	return rval ? EXIT_FAILURE : EXIT_SUCCESS;
 }
@@ -338,8 +325,8 @@ send_dictionary(FILE *cf)
 	/*
 	 * Close the read only descriptor and open a new one read write.
 	 */
-	(void)close(sysmonfd);
-	if ((sysmonfd = open(_PATH_SYSMON, O_RDWR)) == -1) {
+	(void)prog_close(sysmonfd);
+	if ((sysmonfd = prog_open(_PATH_SYSMON, O_RDWR)) == -1) {
 		error = errno;
 		warn("%s", _PATH_SYSMON);
 		return error;
