@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.254 2010/12/10 20:08:17 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.255 2010/12/13 17:22:26 pooka Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -179,6 +179,11 @@ __proginstall: .USE
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${STRIPFLAG} ${.ALLSRC} ${.TARGET}
 
+__progrumpinstall: .USE
+	${_MKTARGET_INSTALL}
+	${INSTALL_FILE} -o ${RUMPBINOWN} -g ${RUMPBINGRP} -m ${RUMPBINMODE} \
+		${STRIPFLAG} ${.ALLSRC} ${.TARGET}
+
 __progdebuginstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${DEBUGOWN} -g ${DEBUGGRP} -m ${DEBUGMODE} \
@@ -204,6 +209,22 @@ PROG=		${PROG_CXX}
 _CCLINK=	${CXX} ${_CCLINKFLAGS}
 .endif
 
+.if defined(RUMPPRG)
+PROG=			${RUMPPRG}
+PROGS=			${RUMPPRG} rump.${RUMPPRG}
+. if defined(SRCS)
+SRCS.rump.${PROG}:=	${SRCS} ${PROG}_rumpops.c ${RUMPSRCS}
+SRCS+=			${PROG}_hostops.c
+. else
+SRCS=			${PROG}.c ${PROG}_hostops.c
+SRCS.rump.${PROG}=	${PROG}.c ${PROG}_rumpops.c ${RUMPSRCS}
+. endif
+LDADD.rump.${PROG}+=	-lrumpclient
+DPADD.rump.${PROG}+=	${LIBRUMPCLIENT}
+MAN.rump.${PROG}=	# defined but feeling empty
+_RUMPINSTALL.rump.${PROG}=# defined
+.endif
+
 .if defined(PROG)
 _CCLINK?=	${CC} ${_CCLINKFLAGS}
 .  if defined(MAN)
@@ -224,13 +245,13 @@ _APPEND_SRCS=	no
 
 # Turn the single-program PROG and PROG_CXX variables into their multi-word
 # counterparts, PROGS and PROGS_CXX.
-.if defined(PROG_CXX) && !defined(PROGS_CXX)
+.if !defined(RUMPPRG)
+.  if defined(PROG_CXX) && !defined(PROGS_CXX)
 PROGS_CXX=	${PROG_CXX}
-.elif defined(PROG) && !defined(PROGS)
+.  elif defined(PROG) && !defined(PROGS)
 PROGS=		${PROG}
+.  endif
 .endif
-
-
 
 #
 # Per-program definitions and targets.
@@ -351,7 +372,11 @@ proginstall-${_P}::	${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}} \
 		${_PROGDEBUG.${_P}:D${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}}
 
 .if ${MKUPDATE} == "no"
+.if defined(_RUMPINSTALL.${_P})
+${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}! ${_P} __progrumpinstall
+.else
 ${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}! ${_P} __proginstall
+.endif
 .if !defined(BUILD) && !make(all) && !make(${_P})
 ${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}! .MADE
 .endif
@@ -362,7 +387,11 @@ ${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}! .MADE
 .endif
 .endif	#  define(_PROGDEBUG.${_P})
 .else	# MKUPDATE != no
+.if defined(_RUMPINSTALL.${_P})
+${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}: ${_P} __progrumpinstall
+.else
 ${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}: ${_P} __proginstall
+.endif
 .if !defined(BUILD) && !make(all) && !make(${_P})
 ${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}: .MADE
 .endif
