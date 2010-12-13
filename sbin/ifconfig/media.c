@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.4 2010/07/01 16:44:05 dyoung Exp $");
+__RCSID("$NetBSD: media.c,v 1.5 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -24,6 +24,7 @@ __RCSID("$NetBSD: media.c,v 1.4 2010/07/01 16:44:05 dyoung Exp $");
 #include "media.h"
 #include "parse.h"
 #include "util.h"
+#include "prog_ops.h"
 
 static void init_current_media(prop_dictionary_t, prop_dictionary_t);
 static void media_constructor(void) __attribute__((constructor));
@@ -363,7 +364,7 @@ media_status(prop_dictionary_t env, prop_dictionary_t oenv)
 	memset(&ifmr, 0, sizeof(ifmr));
 	estrlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 
-	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
+	if (prog_ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
 		/*
 		 * Interface doesn't support SIOC{G,S}IFMEDIA.
 		 */
@@ -380,7 +381,7 @@ media_status(prop_dictionary_t env, prop_dictionary_t oenv)
 		err(EXIT_FAILURE, "malloc");
 	ifmr.ifm_ulist = media_list;
 
-	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1)
+	if (prog_ioctl(s, SIOCGIFMEDIA, &ifmr) == -1)
 		err(EXIT_FAILURE, "SIOCGIFMEDIA");
 
 	printf("\tmedia: %s ", get_media_type_string(ifmr.ifm_current));

@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.7 2009/09/16 14:59:45 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2010/12/13 17:35:08 pooka Exp $
 
 # shared stuff with src/distrib/utils/x_ifconfig for install media.
 # stuff not required by install media should be into Makefile.
-
-PROG=	ifconfig
 
 DPADD+=${LIBUTIL}
 DPADD+=${LIBPROP}

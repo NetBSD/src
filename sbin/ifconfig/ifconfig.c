@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.223 2010/11/15 22:42:37 pooka Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.224 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.223 2010/11/15 22:42:37 pooka Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.224 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -100,6 +100,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.223 2010/11/15 22:42:37 pooka Exp $");
 #include "media.h"
 #include "parse.h"
 #include "env.h"
+#include "prog_ops.h"
 
 static bool bflag, dflag, hflag, sflag, uflag;
 bool lflag, Nflag, vflag, zflag;
@@ -549,10 +550,6 @@ main(int argc, char **argv)
 	prop_dictionary_t env, oenv;
 	const char *ifname;
 
-#ifdef RUMP_ACTION
-	if (rumpclient_init() == -1)
-		err(1, "rump client init");
-#endif
 	memset(match, 0, sizeof(match));
 
 	init_afs();
@@ -664,6 +661,9 @@ main(int argc, char **argv)
 	rc = parse(argc, argv, start, match, &nmatch, &narg);
 	if (rc != 0)
 		usage();
+
+	if (prog_init && prog_init() == -1)
+		err(1, "rump client init");
 
 	if ((oenv = prop_dictionary_create()) == NULL)
 		err(EXIT_FAILURE, "%s: prop_dictionary_create", __func__);
@@ -818,7 +818,7 @@ list_cloners(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	s = getsock(AF_INET);
 
-	if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
+	if (prog_ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
 		err(EXIT_FAILURE, "SIOCIFGCLONERS for count");
 
 	buf = malloc(ifcr.ifcr_total * IFNAMSIZ);
@@ -828,7 +828,7 @@ list_cloners(prop_dictionary_t env, prop_dictionary_t oenv)
 	ifcr.ifcr_count = ifcr.ifcr_total;
 	ifcr.ifcr_buffer = buf;
 
-	if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
+	if (prog_ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
 		err(EXIT_FAILURE, "SIOCIFGCLONERS for names");
 
 	/*
@@ -1193,13 +1193,13 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	printf("%s: flags=%s", ifname, &fbuf[2]);
 
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFMETRIC, &ifr) == -1)
+	if (prog_ioctl(s, SIOCGIFMETRIC, &ifr) == -1)
 		warn("SIOCGIFMETRIC %s", ifr.ifr_name);
 	else if (ifr.ifr_metric != 0)
 		printf(" metric %d", ifr.ifr_metric);
 
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFMTU, &ifr) != -1 && ifr.ifr_mtu != 0)
+	if (prog_ioctl(s, SIOCGIFMTU, &ifr) != -1 && ifr.ifr_mtu != 0)
 		printf(" mtu %d", ifr.ifr_mtu);
 	printf("\n");
 
@@ -1225,7 +1225,7 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	ifdrv.ifd_len = 0;
 	ifdrv.ifd_data = NULL;
 	/* interface supports linkstr? */
-	if (ioctl(s, SIOCGLINKSTR, &ifdrv) != -1) {
+	if (prog_ioctl(s, SIOCGLINKSTR, &ifdrv) != -1) {
 		char *p;
 
 		p = malloc(ifdrv.ifd_len);
@@ -1233,7 +1233,7 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 			err(EXIT_FAILURE, "malloc linkstr buf failed");
 		ifdrv.ifd_data = p;
 		ifdrv.ifd_cmd = 0;
-		if (ioctl(s, SIOCGLINKSTR, &ifdrv) == -1)
+		if (prog_ioctl(s, SIOCGLINKSTR, &ifdrv) == -1)
 			err(EXIT_FAILURE, "failed to query linkstr");
 		printf("\tlinkstr: %s\n", (char *)ifdrv.ifd_data);
 		free(p);
@@ -1246,7 +1246,7 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 
 	estrlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name));
 
-	if (ioctl(s, zflag ? SIOCZIFDATA : SIOCGIFDATA, &ifdr) == -1)
+	if (prog_ioctl(s, zflag ? SIOCZIFDATA : SIOCGIFDATA, &ifdr) == -1)
 		err(EXIT_FAILURE, zflag ? "SIOCZIFDATA" : "SIOCGIFDATA");
 
 	ifi = &ifdr.ifdr_data;

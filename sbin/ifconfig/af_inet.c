@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.14 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.15 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.14 2009/09/11 22:06:29 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.15 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: af_inet.c,v 1.14 2009/09/11 22:06:29 dyoung Exp $");
 #include "env.h"
 #include "extern.h"
 #include "af_inetany.h"
+#include "prog_ops.h"
 
 static void in_constructor(void) __attribute__((constructor));
 static void in_status(prop_dictionary_t, prop_dictionary_t, bool);
@@ -97,7 +98,7 @@ in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	}
 	memset(&ifr, 0, sizeof(ifr));
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
+	if (prog_ioctl(s, SIOCGIFADDR, &ifr) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT)
 			return;
 		warn("SIOCGIFADDR");
@@ -106,7 +107,7 @@ in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	if (memcmp(&ifr.ifr_addr, &creq->ifra_addr, sizeof(ifr.ifr_addr)) == 0)
 		alias = false;
 	in_addreq = *creq;
-	if (ioctl(s, SIOCGIFALIAS, &in_addreq) == -1) {
+	if (prog_ioctl(s, SIOCGIFALIAS, &in_addreq) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			return;
 		} else

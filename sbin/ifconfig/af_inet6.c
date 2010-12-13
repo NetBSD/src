@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.26 2010/01/22 23:50:07 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.27 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.26 2010/01/22 23:50:07 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.27 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: af_inet6.c,v 1.26 2010/01/22 23:50:07 dyoung Exp $");
 #include "parse.h"
 #include "extern.h"
 #include "af_inetany.h"
+#include "prog_ops.h"
 
 static void in6_constructor(void) __attribute__((constructor));
 static void in6_alias(const char *, prop_dictionary_t, prop_dictionary_t,
@@ -302,7 +303,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 
 	if (flags & IFF_POINTOPOINT) {
 		ifr6 = *creq;
-		if (ioctl(s, SIOCGIFDSTADDR_IN6, &ifr6) == -1) {
+		if (prog_ioctl(s, SIOCGIFDSTADDR_IN6, &ifr6) == -1) {
 			if (errno != EADDRNOTAVAIL)
 				warn("SIOCGIFDSTADDR_IN6");
 			memset(&ifr6.ifr_addr, 0, sizeof(ifr6.ifr_addr));
@@ -319,7 +320,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	}
 
 	ifr6 = *creq;
-	if (ioctl(s, SIOCGIFNETMASK_IN6, &ifr6) == -1) {
+	if (prog_ioctl(s, SIOCGIFNETMASK_IN6, &ifr6) == -1) {
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFNETMASK_IN6");
 	} else {
@@ -329,7 +330,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	}
 
 	ifr6 = *creq;
-	if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) == -1) {
+	if (prog_ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) == -1) {
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFAFLAG_IN6");
 	} else {
@@ -352,7 +353,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 		struct in6_addrlifetime *lifetime;
 		ifr6 = *creq;
 		lifetime = &ifr6.ifr_ifru.ifru_lifetime;
-		if (ioctl(s, SIOCGIFALIFETIME_IN6, &ifr6) == -1) {
+		if (prog_ioctl(s, SIOCGIFALIFETIME_IN6, &ifr6) == -1) {
 			if (errno != EADDRNOTAVAIL)
 				warn("SIOCGIFALIFETIME_IN6");
 		} else if (lifetime->ia6t_preferred || lifetime->ia6t_expire) {

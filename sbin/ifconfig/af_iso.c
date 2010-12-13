@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.13 2008/07/15 21:27:58 dyoung Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.14 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.13 2008/07/15 21:27:58 dyoung Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.14 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: af_iso.c,v 1.13 2008/07/15 21:27:58 dyoung Exp $");
 #include "parse.h"
 #include "extern.h"
 #include "af_inetany.h"
+#include "prog_ops.h"
 
 #define	DEFNSELLEN	1
 
@@ -177,7 +178,7 @@ iso_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	}
 	memset(&isoifr, 0, sizeof(isoifr));
 	estrlcpy(isoifr.ifr_name, ifname, sizeof(isoifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR_ISO, &isoifr) == -1) {
+	if (prog_ioctl(s, SIOCGIFADDR_ISO, &isoifr) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
@@ -188,7 +189,7 @@ iso_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	strlcpy(isoifr.ifr_name, ifname, sizeof(isoifr.ifr_name));
 	siso = &isoifr.ifr_Addr;
 	printf("\tiso %s", iso_ntoa(&siso->siso_addr));
-	if (ioctl(s, SIOCGIFNETMASK_ISO, &isoifr) == -1) {
+	if (prog_ioctl(s, SIOCGIFNETMASK_ISO, &isoifr) == -1) {
 		if (errno == EADDRNOTAVAIL)
 			memset(&isoifr.ifr_Addr, 0, sizeof(isoifr.ifr_Addr));
 		else
@@ -201,7 +202,7 @@ iso_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	}
 
 	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR_ISO, &isoifr) == -1) {
+		if (prog_ioctl(s, SIOCGIFDSTADDR_ISO, &isoifr) == -1) {
 			if (errno == EADDRNOTAVAIL)
 			    memset(&isoifr.ifr_Addr, 0,
 				sizeof(isoifr.ifr_Addr));

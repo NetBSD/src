@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.16 2010/01/30 18:30:33 is Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.17 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.16 2010/01/30 18:30:33 is Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.17 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: af_atalk.c,v 1.16 2010/01/30 18:30:33 is Exp $");
 #include "af_inetany.h"
 #include "parse.h"
 #include "extern.h"
+#include "prog_ops.h"
 
 #ifndef satocsat
 #define	satocsat(__sa) ((const struct sockaddr_at *)(__sa))
@@ -209,7 +210,7 @@ at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	memset(&ifr, 0, sizeof(ifr));
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_addr.sa_family = AF_APPLETALK;
-	if (ioctl(s, SIOCGIFADDR, &ifr) != -1)
+	if (prog_ioctl(s, SIOCGIFADDR, &ifr) != -1)
 		;
 	else if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 		if (!force)
@@ -223,7 +224,7 @@ at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 
 	if (flags & IFF_POINTOPOINT) {
 		estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-		if (ioctl(s, SIOCGIFDSTADDR, &ifr) == -1) {
+		if (prog_ioctl(s, SIOCGIFDSTADDR, &ifr) == -1) {
 			if (errno == EADDRNOTAVAIL)
 				memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			else
