@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.11 2010/12/13 11:51:23 cegger Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.12 2010/12/13 16:52:53 christos Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 //__FBSDID("$FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.c,v 1.23 2006/10/26 22:33:38 imp Exp $");
-__RCSID("$NetBSD: fwcontrol.c,v 1.11 2010/12/13 11:51:23 cegger Exp $");
+__RCSID("$NetBSD: fwcontrol.c,v 1.12 2010/12/13 16:52:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -111,7 +111,8 @@ str2node(int fd, const char *nodestr)
 	struct eui64 eui, tmpeui;
 	struct fw_devlstreq *data;
 	char *endptr;
-	int i, node;
+	int i;
+	long node;
 
 	if (nodestr == '\0')
 		return -1;
@@ -129,7 +130,7 @@ str2node(int fd, const char *nodestr)
 	if (eui64_hostton(nodestr, &eui) != 0 && eui64_aton(nodestr, &eui) != 0)
 		return -1;
 
-	data = (struct fw_devlstreq *)malloc(sizeof(struct fw_devlstreq));
+	data = malloc(sizeof(*data));
 	if (data == NULL)
 		err(EX_SOFTWARE, "%s: data malloc", __func__);
 	get_dev(fd,data);
@@ -153,7 +154,7 @@ gotnode:
 	if (node < 0 || node > 63)
 		return -1;
 	else
-		return node;
+		return (int)node;
 }
 
 static void
@@ -165,7 +166,7 @@ list_dev(int fd)
 	char addr[EUI64_SIZ], hostname[40];
 	int i;
 
-	data = (struct fw_devlstreq *)malloc(sizeof(struct fw_devlstreq));
+	data = malloc(sizeof(*data));
 	if (data == NULL)
 		err(EX_SOFTWARE, "%s:data malloc", __func__);
 	get_dev(fd, data);
@@ -178,10 +179,10 @@ list_dev(int fd)
 		if (eui64_ntohost(hostname, sizeof(hostname), &eui))
 			hostname[0] = 0;
 		printf("%4d  %s %6d    %s\n",
-			(devinfo->status || i == 0) ? devinfo->dst : -1,
-			addr, devinfo->status, hostname);
+		    (devinfo->status || i == 0) ? devinfo->dst : -1,
+		    addr, devinfo->status, hostname);
 	}
-	free((void *)data);
+	free(data);
 }
 
 static uint32_t
@@ -191,7 +192,7 @@ read_write_quad(int fd, struct fw_eui64 eui, uint32_t addr_lo, int readmode,
         struct fw_asyreq *asyreq;
 	uint32_t *qld, res;
 
-	asyreq = (struct fw_asyreq *)malloc(sizeof(struct fw_asyreq_t) + 16);
+	asyreq = malloc(sizeof(struct fw_asyreq_t) + 16);
 	if (asyreq == NULL)
 		err(EX_SOFTWARE, "%s:asyreq malloc", __func__);
 	asyreq->req.len = 16;
@@ -245,7 +246,7 @@ send_phy_config(int fd, int root_node, int gap_count)
 {
         struct fw_asyreq *asyreq;
 
-	asyreq = (struct fw_asyreq *)malloc(sizeof(struct fw_asyreq_t) + 12);
+	asyreq = malloc(sizeof(struct fw_asyreq_t) + 12);
 	if (asyreq == NULL)
 		err(EX_SOFTWARE, "%s:asyreq malloc", __func__);
 	asyreq->req.len = 12;
@@ -272,7 +273,7 @@ link_on(int fd, int node)
 {
         struct fw_asyreq *asyreq;
 
-	asyreq = (struct fw_asyreq *)malloc(sizeof(struct fw_asyreq_t) + 12);
+	asyreq = malloc(sizeof(struct fw_asyreq_t) + 12);
 	if (asyreq == NULL)
 		err(EX_SOFTWARE, "%s:asyreq malloc", __func__);
 	asyreq->req.len = 12;
@@ -291,7 +292,7 @@ reset_start(int fd, int node)
 {
         struct fw_asyreq *asyreq;
 
-	asyreq = (struct fw_asyreq *)malloc(sizeof(struct fw_asyreq_t) + 16);
+	asyreq = malloc(sizeof(struct fw_asyreq_t) + 16);
 	if (asyreq == NULL)
 		err(EX_SOFTWARE, "%s:asyreq malloc", __func__);
 	asyreq->req.len = 16;
@@ -320,7 +321,7 @@ set_pri_req(int fd, uint32_t pri_req)
 	uint32_t max, reg, old;
 	int i;
 
-	data = (struct fw_devlstreq *)malloc(sizeof(struct fw_devlstreq));
+	data = malloc(sizeof(*data));
 	if (data == NULL)
 		err(EX_SOFTWARE, "%s:data malloc", __func__);
 	get_dev(fd, data);
@@ -345,7 +346,7 @@ set_pri_req(int fd, uint32_t pri_req)
 			printf("\n");
 		}
 	}
-	free((void *)data);
+	free(data);
 }
 
 static void
@@ -377,7 +378,7 @@ get_crom(int fd, int node, void *crom_buf, int len)
 	int i, error;
 	struct fw_devlstreq *data;
 
-	data = (struct fw_devlstreq *)malloc(sizeof(struct fw_devlstreq));
+	data = malloc(sizeof(*data));
 	if (data == NULL)
 		err(EX_SOFTWARE, "%s:data malloc", __func__);
 	get_dev(fd, data);
@@ -492,7 +493,7 @@ load_crom(const char *filename, uint32_t *p)
 		fscanf(file, DUMP_FORMAT, p, p+1, p+2, p+3, p+4, p+5, p+6, p+7);
 		p += 8;
 	}
-	fclose(file);
+	(void)fclose(file);
 }
 
 static void
@@ -506,7 +507,7 @@ show_topology_map(int fd)
 					"-1W", "-2W", "-5W", "-9W"};
 	static const char *speed[] = {"S100", "S200", "S400", "S800"};
 
-	tmap = malloc(sizeof(struct fw_topology_map));
+	tmap = malloc(sizeof(*tmap));
 	if (tmap == NULL)
 		err(EX_SOFTWARE, "%s:tmap malloc", __func__);
 	if (ioctl(fd, FW_GTPMAP, tmap) < 0)
@@ -675,7 +676,7 @@ detect_recv_fn(int fd, char ich)
 	if (ioctl(fd, FW_SRSTREAM, &isoreq) < 0)
 		err(EX_IOERR, "%s: ioctl FW_SRSTREAM", __func__);
 
-	buf = (char *)malloc(RECV_NUM_PACKET * RECV_PACKET_SZ);
+	buf = malloc(RECV_NUM_PACKET * RECV_PACKET_SZ);
 	if (buf == NULL)
 		err(EX_SOFTWARE, "%s:buf malloc", __func__);
 	/*
@@ -787,7 +788,7 @@ main(int argc, char **argv)
 			display_board_only = false;
 			break;
 		case 'c':
-			crom_string = malloc(strlen(optarg)+1);
+			crom_string = strdup(optarg);
 			if (crom_string == NULL)
 				err(EX_SOFTWARE, "%s:crom_string malloc",
 				    __func__);
@@ -795,18 +796,16 @@ main(int argc, char **argv)
 			    strtol(crom_string, NULL, 0) > MAX_BOARDS)
 				errx(EX_USAGE, "%s:Invalid value for node",
 				    __func__);
-			strcpy(crom_string, optarg);
 			display_crom = 1;
 			open_needed = true;
 			command_set = true;
 			display_board_only = false;
 			break;
 		case 'd':
-			crom_string_hex = malloc(strlen(optarg)+1);
+			crom_string_hex = strdup(optarg);
 			if (crom_string_hex == NULL)
 				err(EX_SOFTWARE, "%s:crom_string_hex malloc",
 				    __func__);
-			strcpy(crom_string_hex, optarg);
 			display_crom_hex = 1;
 			open_needed = true;
 			command_set = true;
@@ -906,21 +905,19 @@ main(int argc, char **argv)
 			display_board_only = false;
 			break;
 		case 'R':
-			recv_data = malloc(strlen(optarg)+1);
+			recv_data = strdup(optarg);
 			if (recv_data == NULL)
 				err(EX_SOFTWARE, "%s:recv_data malloc",
 				    __func__);
-			strcpy(recv_data, optarg);
 			open_needed = false;
 			command_set = true;
 			display_board_only = false;
 			break;
 		case 'S':
-			send_data = malloc(strlen(optarg)+1);
+			send_data = strdup(optarg);
 			if (send_data == NULL)
 				err(EX_SOFTWARE, "%s:send_data malloc",
 				    __func__);
-			strcpy(send_data, optarg);
 			open_needed = true;
 			command_set = true;
 			display_board_only = false;
