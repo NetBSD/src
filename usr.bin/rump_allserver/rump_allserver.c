@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.6 2010/12/13 13:32:25 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.7 2010/12/13 14:13:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,11 +27,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.6 2010/12/13 13:32:25 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.7 2010/12/13 14:13:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <sys/module.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -75,18 +76,30 @@ int
 main(int argc, char *argv[])
 {
 	const char *serverurl;
+	char **modarray = NULL;
+	unsigned nmods = 0, curmod = 0, i;
 	int error;
 	int ch, sflag;
 
 	setprogname(argv[0]);
 
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "l:s")) != -1) {
+	while ((ch = getopt(argc, argv, "l:m:s")) != -1) {
 		switch (ch) {
 		case 'l':
 			if (dlopen(optarg, RTLD_LAZY|RTLD_GLOBAL) == NULL)
 				errx(1, "dlopen %s failed: %s",
 				    optarg, dlerror());
+			break;
+		case 'm':
+			if (nmods - curmod == 0) {
+				modarray = realloc(modarray,
+				    (nmods+16) * sizeof(char *));
+				if (modarray == NULL)
+					err(1, "realloc");
+				nmods += 16;
+			}
+			modarray[curmod++] = optarg;
 			break;
 		case 's':
 			sflag = 1;
@@ -114,6 +127,21 @@ main(int argc, char *argv[])
 	error = rump_init();
 	if (error)
 		die(sflag, error, "rump init failed");
+
+	for (i = 0; i < curmod; i++) {
+		struct modctl_load ml;
+
+#define ETFSKEY "/module.mod"
+		if ((error = rump_pub_etfs_register(ETFSKEY,
+		    modarray[0], RUMP_ETFS_REG)) != 0)
+			die(sflag, error, "module etfs register failed");
+		memset(&ml, 0, sizeof(ml));
+		ml.ml_filename = ETFSKEY;
+		if (rump_sys_modctl(MODCTL_LOAD, &ml) == -1)
+			die(sflag, errno, "module load failed");
+		rump_pub_etfs_remove(ETFSKEY);
+	}
+
 	error = rump_init_server(serverurl);
 	if (error)
 		die(sflag, error, "rump server init failed");
