@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.4 2010/12/13 20:48:45 pooka Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.1 2010/12/13 20:48:44 pooka Exp $	*/
 
-/*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,48 +26,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: main.c,v 1.4 2010/12/13 20:48:45 pooka Exp $");
-#endif /* !lint */
+#ifndef _PROG_OPS_H_
+#define _PROG_OPS_H_
 
-#include <sys/module.h>
+#include <sys/types.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <err.h>
+struct prog_ops {
+	int (*op_init)(void);
 
-#include "prog_ops.h"
+	int (*op_modctl)(int, void *);
+};
+extern const struct prog_ops prog_ops;
 
-int	main(int, char **);
-static void	usage(void) __dead;
+#define prog_init prog_ops.op_init
+#define prog_modctl prog_ops.op_modctl
 
-int
-main(int argc, char **argv)
-{
-	int i;
-
-	if (argc < 2)
-		usage();
-
-	if (prog_init && prog_init() == -1)
-		err(1, "init failed");
-
-	for (i = 1; i < argc; i++) {
-		if (prog_modctl(MODCTL_UNLOAD, argv[i])) {
-			err(EXIT_FAILURE, NULL);
-		}
-	}
-
-	exit(EXIT_SUCCESS);
-}
-
-static void
-usage(void)
-{
-
-	(void)fprintf(stderr, "Usage: %s <module_name ...>\n", getprogname());
-	exit(EXIT_FAILURE);
-}
+#endif /* _PROG_OPS_H_ */

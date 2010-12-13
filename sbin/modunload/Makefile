@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 2008/11/12 12:35:53 ad Exp $
+#	$NetBSD: Makefile,v 1.14 2010/12/13 20:48:45 pooka Exp $
 
-PROG=	modunload
+RUMPPRG=modunload
 SRCS=	main.c
 MAN=	modunload.8
 

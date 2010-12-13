@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.14 2008/11/12 12:35:53 ad Exp $
+#	$NetBSD: Makefile,v 1.15 2010/12/13 20:48:44 pooka Exp $
 
 .include <bsd.own.mk>
 
-PROG=	modload
+RUMPPRG=modload
 SRCS=	main.c
 MAN=	modload.8
 LDADD=	-lprop
