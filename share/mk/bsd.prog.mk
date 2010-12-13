@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.255 2010/12/13 17:22:26 pooka Exp $
+#	$NetBSD: bsd.prog.mk,v 1.256 2010/12/13 21:47:04 pooka Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -211,6 +211,7 @@ _CCLINK=	${CXX} ${_CCLINKFLAGS}
 
 .if defined(RUMPPRG)
 PROG=			${RUMPPRG}
+.ifndef CRUNCHEDPROG
 PROGS=			${RUMPPRG} rump.${RUMPPRG}
 . if defined(SRCS)
 SRCS.rump.${PROG}:=	${SRCS} ${PROG}_rumpops.c ${RUMPSRCS}
@@ -223,6 +224,10 @@ LDADD.rump.${PROG}+=	-lrumpclient
 DPADD.rump.${PROG}+=	${LIBRUMPCLIENT}
 MAN.rump.${PROG}=	# defined but feeling empty
 _RUMPINSTALL.rump.${PROG}=# defined
+.else # CRUNCHEDPROG
+PROGS=			${PROG}
+CPPFLAGS+=		-DCRUNCHOPS
+.endif
 .endif
 
 .if defined(PROG)
