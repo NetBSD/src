@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.191 2010/12/09 22:30:16 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.192 2010/12/13 01:48:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.191 2010/12/09 22:30:16 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.192 2010/12/13 01:48:50 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.191 2010/12/09 22:30:16 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.192 2010/12/13 01:48:50 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -769,7 +769,7 @@ main(int argc, char **argv)
 	struct stat sb, sa;
 	char *p1, *path, *pwd;
 	char mdpath[MAXPATHLEN];
-    	char *machine = getenv("MACHINE");
+    	const char *machine = getenv("MACHINE");
 	const char *machine_arch = getenv("MACHINE_ARCH");
 	char *syspath = getenv("MAKESYSPATH");
 	Lst sysMkPath;			/* Path of sys.mk */
