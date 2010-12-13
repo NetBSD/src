@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.10 2010/08/26 07:04:04 cegger Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.11 2010/12/13 11:51:23 cegger Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 //__FBSDID("$FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.c,v 1.23 2006/10/26 22:33:38 imp Exp $");
-__RCSID("$NetBSD: fwcontrol.c,v 1.10 2010/08/26 07:04:04 cegger Exp $");
+__RCSID("$NetBSD: fwcontrol.c,v 1.11 2010/12/13 11:51:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -492,6 +492,7 @@ load_crom(const char *filename, uint32_t *p)
 		fscanf(file, DUMP_FORMAT, p, p+1, p+2, p+3, p+4, p+5, p+6, p+7);
 		p += 8;
 	}
+	fclose(file);
 }
 
 static void
