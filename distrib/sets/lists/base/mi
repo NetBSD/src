@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.902 2010/12/13 18:02:04 pooka Exp $
+# $NetBSD: mi,v 1.903 2010/12/13 20:51:11 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -245,6 +245,9 @@
 ./sbin/modload					base-sysutil-root
 ./sbin/modstat					base-sysutil-root
 ./sbin/modunload				base-sysutil-root
+./sbin/rump.modload					base-sysutil-root
+./sbin/rump.modstat					base-sysutil-root
+./sbin/rump.modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
 ./sbin/mount_ados				base-adosfs-root
 ./sbin/mount_cd9660				base-sysutil-root
