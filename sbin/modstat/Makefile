@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/01/16 12:34:57 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2010/12/13 20:48:45 pooka Exp $
 
-PROG=	modstat
+RUMPPRG=modstat
 SRCS=	main.c
 MAN=	modstat.8
 
