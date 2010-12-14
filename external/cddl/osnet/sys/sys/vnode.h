@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.6 2010/11/19 06:44:33 dholland Exp $	*/
+/*	$NetBSD: vnode.h,v 1.7 2010/12/14 01:21:02 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -108,6 +108,8 @@
 #include <sys/proc.h>
 #include <sys/filedesc.h>
 #include <sys/buf.h>
+#include <sys/debug.h>
+
 
 #ifdef _KERNEL
 #include <sys/vfs_syscalls.h>
@@ -117,7 +119,7 @@ typedef	struct vattr	vattr_t;
 typedef	enum vtype	vtype_t;
 typedef	void		caller_context_t;
 
-typedef	int (**vnodeops_t)(void *);
+typedef int (**vnodeops_t)(void *);
 
 #define	vop_fid		vop_vptofh
 #define	vop_fid_args	vop_vptofh_args
@@ -155,6 +157,9 @@ typedef struct vsecattr {
 	size_t		vsa_aclentsz;	/* ACE size in bytes of vsa_aclentp */
 	uint_t		vsa_aclflags;	/* ACE ACL flags */
 } vsecattr_t;
+
+#define V_XATTRDIR      0x0000  /* attribute unnamed directory */
+#define IS_XATTRDIR(vp)	(0)
 
 #define	AV_SCANSTAMP_SZ	32		/* length of anti-virus scanstamp */
 
@@ -265,8 +270,22 @@ typedef struct xvattr {
 
 #define v_lock v_interlock
 
+/*
+ * vnode flags.
+ */
+#define VROOT		VV_ROOT/* root of its file system */
+#define VNOCACHE	0x00/* don't keep cache pages on vnode */
+#define VNOMAP		VV_MAPPED/* file cannot be mapped/faulted */
+#define VDUP		0x00/* file should be dup'ed rather then opened */
+#define VNOSWAP		0x00/* file cannot be used as virtual swap device */
+#define VNOMOUNT	0x00/* file cannot be covered by mount */
+#define VISSWAP		0x00/* vnode is being used for swap */
+#define VSWAPLIKE	0x00/* vnode acts like swap (but may not be) */
+
 int	vn_is_readonly(vnode_t *);
 
+#define	vn_free(vp)		vrele((vp))
+#define	vn_setops(vp, ops)	(0)
 #define	vn_vfswlock(vp)		(0)
 #define	vn_vfsunlock(vp)	do { } while (0)
 #define	vn_ismntpt(vp)		((vp)->v_type == VDIR && (vp)->v_mountedhere != NULL)
@@ -277,6 +296,7 @@ int	vn_is_readonly(vnode_t *);
 #define	VN_HOLD(v)	vref(v)
 #define	VN_RELE(v)	vrele(v)
 #define	VN_URELE(v)	vput(v)
+#define	VN_SET_VFS_TYPE_DEV(vp, vfs, type, flag)	(0)
 
 #define VI_LOCK(vp)     mutex_enter(&(vp)->v_interlock)
 #define VI_UNLOCK(vp)   mutex_exit(&(vp)->v_interlock)
