@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.173 2010/12/14 05:57:31 skrll Exp $
+# $NetBSD: mi,v 1.174 2010/12/14 10:02:02 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -380,8 +380,6 @@
 ./usr/libdata/debug/usr/tests/lib/libutil/t_sockaddr_snprintf.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/libexec					tests-lib-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so				tests-libexec-debug
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_df_1_noopen1.debug	tests-libexec-debug	debug,atf
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_df_1_noopen2.debug	tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlerror-cleared.debug	tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlerror-false.debug	tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf
@@ -1613,9 +1611,6 @@
 ./usr/tests/libexec/Atffile			tests-lib-tests		atf
 ./usr/tests/libexec/ld.elf_so			tests-libexec-tests
 ./usr/tests/libexec/ld.elf_so/Atffile		tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_df_1_noopen1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/h_df_1_noopen2	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/t_df_1_noopen	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/t_dlerror-cleared	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/t_dlerror-false	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-tests	atf
