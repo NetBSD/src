@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_nmi.c,v 1.7 2008/03/11 05:34:02 matt Exp $	   */
+/*	$NetBSD: bi_nmi.c,v 1.8 2010/12/14 23:38:30 matt Exp $	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,18 +31,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi_nmi.c,v 1.7 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi_nmi.c,v 1.8 2010/12/14 23:38:30 matt Exp $");
+
+#define _VAX_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 
-#define	_VAX_BUS_DMA_PRIVATE
-#include <machine/bus.h>
 #include <machine/nexus.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
-#include <machine/cpu.h>
 #include <machine/ka88.h>
 
 #include <dev/bi/bivar.h>
