@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.6 2010/12/13 21:08:37 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.7 2010/12/14 15:18:20 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.6 2010/12/13 21:08:37 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.7 2010/12/14 15:18:20 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -1375,45 +1375,39 @@ print_supported_repositories(sdp_data_t *data)
 static void
 print_character_repertoires(sdp_data_t *data)
 {
-	sdp_data_t d;
-	uint32_t v0, v1, v2, v3;
+	uintmax_t v;
 
 	/*
-	 * we have no uint128 type, so need to decode it manually
+	 * we have no uint128 type so use uintmax as only
+	 * only 17-bits are currently defined, and if the
+	 * value is out of bounds it will be printed anyway
 	 */
-
-	if (sdp_data_type(data) != SDP_DATA_UINT128)
+	if (sdp_data_type(data) != SDP_DATA_UINT128
+	    || !sdp_get_uint(data, &v))
 		return;
 
-	sdp_get_data(data, &d);
-	v0 = be32dec(d.next + 1);
-	v1 = be32dec(d.next + 5);
-	v2 = be32dec(d.next + 9);
-	v3 = be32dec(d.next + 13);
-
 	if (Nflag)
-		printf("(0x%08x%08x%08x%08x)", v0, v1, v2, v3);
+		printf("(0x%016jx)", v);
 
 	printf("\n");
-
-	if (v0 & (1<< 0)) printf("    ISO-8859-1\n");
-	if (v0 & (1<< 1)) printf("    ISO-8859-2\n");
-	if (v0 & (1<< 2)) printf("    ISO-8859-3\n");
-	if (v0 & (1<< 3)) printf("    ISO-8859-4\n");
-	if (v0 & (1<< 4)) printf("    ISO-8859-5\n");
-	if (v0 & (1<< 5)) printf("    ISO-8859-6\n");
-	if (v0 & (1<< 6)) printf("    ISO-8859-7\n");
-	if (v0 & (1<< 7)) printf("    ISO-8859-8\n");
-	if (v0 & (1<< 8)) printf("    ISO-8859-9\n");
-	if (v0 & (1<< 9)) printf("    ISO-8859-10\n");
-	if (v0 & (1<<10)) printf("    ISO-8859-13\n");
-	if (v0 & (1<<11)) printf("    ISO-8859-14\n");
-	if (v0 & (1<<12)) printf("    ISO-8859-15\n");
-	if (v0 & (1<<13)) printf("    GB18030\n");
-	if (v0 & (1<<14)) printf("    JIS X0208-1990, JIS X0201-1976\n");
-	if (v0 & (1<<15)) printf("    KSC 5601-1992\n");
-	if (v0 & (1<<16)) printf("    Big5\n");
-	if (v0 & (1<<17)) printf("    TIS-620\n");
+	if (v & (1<< 0)) printf("    ISO-8859-1\n");
+	if (v & (1<< 1)) printf("    ISO-8859-2\n");
+	if (v & (1<< 2)) printf("    ISO-8859-3\n");
+	if (v & (1<< 3)) printf("    ISO-8859-4\n");
+	if (v & (1<< 4)) printf("    ISO-8859-5\n");
+	if (v & (1<< 5)) printf("    ISO-8859-6\n");
+	if (v & (1<< 6)) printf("    ISO-8859-7\n");
+	if (v & (1<< 7)) printf("    ISO-8859-8\n");
+	if (v & (1<< 8)) printf("    ISO-8859-9\n");
+	if (v & (1<< 9)) printf("    ISO-8859-10\n");
+	if (v & (1<<10)) printf("    ISO-8859-13\n");
+	if (v & (1<<11)) printf("    ISO-8859-14\n");
+	if (v & (1<<12)) printf("    ISO-8859-15\n");
+	if (v & (1<<13)) printf("    GB18030\n");
+	if (v & (1<<14)) printf("    JIS X0208-1990, JIS X0201-1976\n");
+	if (v & (1<<15)) printf("    KSC 5601-1992\n");
+	if (v & (1<<16)) printf("    Big5\n");
+	if (v & (1<<17)) printf("    TIS-620\n");
 }
 
 static void
