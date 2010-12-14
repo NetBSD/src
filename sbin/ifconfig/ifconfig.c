@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.224 2010/12/13 17:35:08 pooka Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.225 2010/12/14 10:51:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.224 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.225 2010/12/14 10:51:51 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1316,9 +1316,9 @@ static int
 setlinkstr(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ifdrv ifdrv;
-	const char *linkstr;
 	size_t linkstrlen;
 	prop_data_t data;
+	char *linkstr;
 
 	data = (prop_data_t)prop_dictionary_get(env, "linkstr");
 	if (data == NULL) {
@@ -1326,7 +1326,12 @@ setlinkstr(prop_dictionary_t env, prop_dictionary_t oenv)
 		return -1;
 	}
 	linkstrlen = prop_data_size(data)+1;
-	linkstr = prop_data_data_nocopy(data);
+
+	linkstr = malloc(linkstrlen);
+	if (linkstr == NULL)
+		err(EXIT_FAILURE, "malloc linkstr space");
+	if (getargstr(env, "linkstr", linkstr, linkstrlen) == -1)
+		errx(EXIT_FAILURE, "getargstr linkstr failed");
 
 	ifdrv.ifd_cmd = 0;
 	ifdrv.ifd_len = linkstrlen;
@@ -1334,6 +1339,7 @@ setlinkstr(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	if (direct_ioctl(env, SIOCSLINKSTR, &ifdrv) == -1)
 		err(EXIT_FAILURE, "SIOCSLINKSTR");
+	free(linkstr);
 
 	return 0;
 }
