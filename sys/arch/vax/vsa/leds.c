@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.8 2008/05/04 00:10:42 jklos Exp $	*/
+/*	$NetBSD: leds.c,v 1.9 2010/12/14 23:31:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,17 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.8 2008/05/04 00:10:42 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.9 2010/12/14 23:31:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
+#include <sys/cpu.h>
 #include <sys/conf.h>
-#include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <machine/cpu.h>
 #include <machine/sid.h>
 #include <machine/leds.h>
 
