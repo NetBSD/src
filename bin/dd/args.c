@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.29 2010/12/09 10:24:56 enami Exp $	*/
+/*	$NetBSD: args.c,v 1.30 2010/12/14 19:03:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.29 2010/12/09 10:24:56 enami Exp $");
+__RCSID("$NetBSD: args.c,v 1.30 2010/12/14 19:03:21 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,9 @@ __RCSID("$NetBSD: args.c,v 1.29 2010/12/09 10:24:56 enami Exp $");
 #include "dd.h"
 #include "extern.h"
 
-#ifndef SMALL
+#if !defined(SMALL) && defined(__NetBSD__)
+#define _HAVE_RUMPOPS
+
 #include <rump/rumpclient.h>
 #endif
 
@@ -76,7 +78,7 @@ static void	f_seek(char *);
 static void	f_skip(char *);
 static void	f_progress(char *);
 
-#ifndef SMALL
+#ifdef _HAVE_RUMPOPS
 static void	f_rif(char *);
 static void	f_rof(char *);
 #endif
@@ -98,7 +100,7 @@ static const struct arg {
 	{ "obs",	f_obs,		C_OBS,	 C_BS|C_OBS },
 	{ "of",		f_of,		C_OF,	 C_OF|C_ROF },
 	{ "progress",	f_progress,	0,	 0 },
-#ifndef SMALL
+#ifdef _HAVE_RUMPOPS
 	{ "rif",	f_rif,		C_RIF|C_RUMP,	 C_RIF|C_IF },
 	{ "rof",	f_rof,		C_ROF|C_RUMP,	 C_ROF|C_OF },
 #endif
@@ -199,7 +201,7 @@ jcl(char **argv)
 	 *	errx(1, "seek offsets cannot be larger than %d", INT_MAX);
 	 */
 	
-#ifndef SMALL
+#ifdef _HAVE_RUMPOPS
 	if (ddflags & C_RUMP)
 		if (rumpclient_init() == -1)
 			err(1, "rumpclient init failed");
@@ -276,7 +278,7 @@ f_of(char *arg)
 	out.name = arg;
 }
 
-#ifndef SMALL
+#ifdef _HAVE_RUMPOPS
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
