@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.50 2009/04/02 13:00:40 tsutsui Exp $	*/
+/*	$NetBSD: gencons.c,v 1.51 2010/12/14 23:44:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,29 +36,27 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.50 2009/04/02 13:00:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.51 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/file.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
 
 #include <dev/cons.h>
 
-#include <machine/mtpr.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
 #include <machine/scb.h>
 #include <vax/vax/gencons.h>
 

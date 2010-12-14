@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.16 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: ka680.c,v 1.17 2010/12/14 23:44:49 matt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -35,20 +35,16 @@
 /* minor modifications for KA690 cache support by isildur@vaxpower.org */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.16 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.17 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
+#include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/systm.h>
 
-#include <machine/pte.h>
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/nexus.h>
-#include <machine/uvax.h>
 #include <machine/ka680.h>
 #include <machine/clock.h>
 #include <machine/scb.h>

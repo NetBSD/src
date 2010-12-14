@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.2 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3 2010/12/14 23:44:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.2 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3 2010/12/14 23:44:49 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -95,41 +95,22 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.2 2009/11/21 04:45:39 rmind 
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/proc.h>
-#include <sys/time.h>
 #include <sys/signal.h>
-#include <sys/kernel.h>
-#include <sys/msgbuf.h>
-#include <sys/buf.h>
-#include <sys/mbuf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/exec.h>
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <sys/ptrace.h>
-#include <sys/ksyms.h>
+#include <sys/sysctl.h>
+#include <sys/time.h>
 
 #include <dev/cons.h>
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
-
-#include <machine/sid.h>
-#include <machine/pte.h>
-#include <machine/mtpr.h>
-#include <machine/cpu.h>
 #include <machine/macros.h>
-#include <machine/trap.h>
 #include <machine/reg.h>
-#include <machine/db_machdep.h>
-#include <machine/scb.h>
-#include <machine/signal.h>
 #include <vax/vax/gencons.h>
 
 /*
