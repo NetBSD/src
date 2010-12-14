@@ -25,7 +25,9 @@
 /*****
  ***** Platform-dependent defines.
  *****/
+#ifdef ISC_PLATFORM_USE_THREADS
 #include <sys/atomic.h>
+#endif
 
 /***
  *** Network.
