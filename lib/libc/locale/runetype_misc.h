@@ -1,4 +1,4 @@
-/* $NetBSD: runetype_misc.h,v 1.1 2010/06/20 02:23:15 tnozaki Exp $ */
+/* $NetBSD: runetype_misc.h,v 1.2 2010/12/14 02:28:57 joerg Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -49,19 +49,19 @@ _runetype_to_ctype(_RuneType bits)
 		return 0;
 	ret = 0;
 	if (bits & _RUNETYPE_U)
-		ret |= _U;
+		ret |= _CTYPE_U;
 	if (bits & _RUNETYPE_L)
-		ret |= _L;
+		ret |= _CTYPE_L;
 	if (bits & _RUNETYPE_D)
-		ret |= _N;
+		ret |= _CTYPE_N;
 	if (bits & _RUNETYPE_S)
-		ret |= _S;
+		ret |= _CTYPE_S;
 	if (bits & _RUNETYPE_P)
-		ret |= _P;
+		ret |= _CTYPE_P;
 	if (bits & _RUNETYPE_C)
-		ret |= _C;
+		ret |= _CTYPE_C;
 	if (bits & _RUNETYPE_X)
-		ret |= _X;
+		ret |= _CTYPE_X;
 	/*
 	 * TWEAK!  _B has been used incorrectly (or with older
 	 * declaration) in ctype.h isprint() macro.
@@ -71,10 +71,10 @@ _runetype_to_ctype(_RuneType bits)
 	 */
 #if 1
 	if ((bits & (_RUNETYPE_R | _RUNETYPE_G)) == _RUNETYPE_R)
-		ret |= _B;
+		ret |= _CTYPE_B;
 #else
 	if (bits & _RUNETYPE_B)
-		ret |= _B;
+		ret |= _CTYPE_B;
 #endif
 	return ret;
 }
@@ -97,29 +97,30 @@ _runetype_from_ctype(int bits, int ch)
 	 */
 
 	ret = (_RuneType)0;
-	if (bits & _U)
+	if (bits & _CTYPE_U)
 		ret |= _RUNETYPE_U;
-	if (bits & _L)
+	if (bits & _CTYPE_L)
 		ret |= _RUNETYPE_L;
-	if (bits & _N)
+	if (bits & _CTYPE_N)
 		ret |= _RUNETYPE_D;
-	if (bits & _S)
+	if (bits & _CTYPE_S)
 		ret |= _RUNETYPE_S;
-	if (bits & _P)
+	if (bits & _CTYPE_P)
 		ret |= _RUNETYPE_P;
-	if (bits & _C)
+	if (bits & _CTYPE_C)
 		ret |= _RUNETYPE_C;
 	/* derived flag bits, duplicate of ctype.h */
-	if (bits & (_U|_L))
+	if (bits & (_CTYPE_U|_CTYPE_L))
 		ret |= _RUNETYPE_A;
-	if (bits & (_N|_X))
+	if (bits & (_CTYPE_N|_CTYPE_X))
 		ret |= _RUNETYPE_X;
-	if (bits & (_P|_U|_L|_N))
+	if (bits & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N))
 		ret |= _RUNETYPE_G;
 	/* we don't really trust _B in the file.  see above. */
-	if (bits & _B)
+	if (bits & _CTYPE_B)
 		ret |= _RUNETYPE_B;
-	if ((bits & (_P|_U|_L|_N|_B)) || ch == ' ')
+	if ((bits & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N|_CTYPE_B)) ||
+	    ch == ' ')
 		ret |= (_RUNETYPE_R | _RUNETYPE_SW1);
 	if (ch == ' ' || ch == '\t')
 		ret |= _RUNETYPE_B;
