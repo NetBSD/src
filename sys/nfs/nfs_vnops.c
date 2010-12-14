@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.288 2010/12/14 16:25:18 cegger Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.289 2010/12/14 16:58:58 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.288 2010/12/14 16:25:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.289 2010/12/14 16:58:58 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1278,10 +1278,6 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, bool pageprotected
 	int rlen, commit;
 #endif
 
-	mutex_init(&ctx.nwc_lock, MUTEX_DRIVER, IPL_VM);
-	cv_init(&ctx.nwc_cv, "nfsmblk");
-	ctx.nwc_mbufcount = 1;
-
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		panic("writerpc readonly vp %p", vp);
 	}
@@ -1292,7 +1288,12 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, bool pageprotected
 #endif
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
-		return (EFBIG);
+		return EFBIG;
+
+	mutex_init(&ctx.nwc_lock, MUTEX_DRIVER, IPL_VM);
+	cv_init(&ctx.nwc_cv, "nfsmblk");
+	ctx.nwc_mbufcount = 1;
+
 retry:
 	origresid = uiop->uio_resid;
 	KASSERT(origresid == uiop->uio_iov->iov_len);
