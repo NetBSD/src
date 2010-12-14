@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54 2010/11/19 03:31:24 uwe Exp $	 */
+/*	$NetBSD: clock.c,v 1.55 2010/12/14 23:44:49 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,19 +30,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54 2010/11/19 03:31:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.55 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/timetc.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
+#include <sys/kernel.h>
 
-#include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/clock.h>
-#include <machine/cpu.h>
-#include <machine/uvax.h>
 
 #include "opt_cputype.h"
 

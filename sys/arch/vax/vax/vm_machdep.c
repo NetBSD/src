@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.112 2010/03/20 23:31:30 chs Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.113 2010/12/14 23:44:50 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,41 +31,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.112 2010/03/20 23:31:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113 2010/12/14 23:44:50 matt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
+#include "opt_cputype.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/core.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
-#include <sys/vnode.h>
-#include <sys/core.h>
-#include <sys/mount.h>
-#include <sys/device.h>
-#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/vmparam.h>
-#include <machine/mtpr.h>
-#include <machine/pmap.h>
-#include <machine/pte.h>
 #include <machine/macros.h>
-#include <machine/trap.h>
-#include <machine/pcb.h>
 #include <machine/frame.h>
-#include <machine/cpu.h>
 #include <machine/sid.h>
-
-#include <sys/syscallargs.h>
-
-#include "opt_cputype.h"
 
 /*
  * Finish a fork operation, with process p2 nearly set up.

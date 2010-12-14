@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.3 2009/11/21 04:45:39 rmind Exp $	     */
+/*	$NetBSD: core_machdep.c,v 1.4 2010/12/14 23:44:49 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,32 +31,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2010/12/14 23:44:49 matt Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
-#include <sys/vnode.h>
 #include <sys/core.h>
-#include <sys/mount.h>
-#include <sys/device.h>
 
 #include <sys/exec_aout.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/vmparam.h>
-#include <machine/mtpr.h>
-#include <machine/pmap.h>
-#include <machine/pte.h>
-#include <machine/macros.h>
-#include <machine/trap.h>
 #include <machine/pcb.h>
 #include <machine/frame.h>
-#include <machine/cpu.h>
-#include <machine/sid.h>
 
 /*
  * Dump the machine specific header information at the start of a core dump.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.35 2008/12/16 22:35:28 christos Exp $	*/
+/*	$NetBSD: ka650.c,v 1.36 2010/12/14 23:44:49 matt Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,21 +38,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.35 2008/12/16 22:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.36 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
+#include <sys/kernel.h>
+#include <sys/time.h>
 
 #include <machine/ka650.h>
 #include <machine/clock.h>
-#include <machine/cpu.h>
-#include <machine/psl.h>
-#include <machine/mtpr.h>
 #include <machine/sid.h>
 
 struct	ka650_merr *ka650merr_ptr;

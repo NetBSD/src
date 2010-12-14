@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.78 2009/11/27 03:23:14 rmind Exp $	*/
+/*	$NetBSD: locore.c,v 1.79 2010/12/14 23:44:49 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,25 +32,20 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.78 2009/11/27 03:23:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.79 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
-#include <sys/reboot.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/sid.h>
-#include <machine/param.h>
-#include <machine/vmparam.h>
-#include <machine/pcb.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
 #include <machine/nexus.h>
 #include <machine/rpb.h>
 

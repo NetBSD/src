@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.14 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.15 2010/12/14 23:44:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,24 +40,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.14 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.15 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/time.h>
 
 #include <machine/ka670.h>
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <machine/nexus.h>
 #include <machine/clock.h>
 #include <machine/scb.h>
-#include <machine/bus.h>
 #include <machine/sid.h>
 #include <machine/cca.h>
 #include <machine/rpb.h>

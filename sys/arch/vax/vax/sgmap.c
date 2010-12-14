@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.15 2008/04/28 20:23:39 martin Exp $ */
+/* $NetBSD: sgmap.c,v 1.16 2010/12/14 23:44:50 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,17 +31,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.15 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.16 2010/12/14 23:44:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/sgmap.h>
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.17 2006/03/12 17:14:41 matt Exp $ */
+/*	$NetBSD: scb.c,v 1.18 2010/12/14 23:44:49 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,19 +34,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scb.c,v 1.17 2006/03/12 17:14:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scb.c,v 1.18 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 
 #include <machine/trap.h>
 #include <machine/scb.h>
 #include <machine/frame.h>
-#include <machine/cpu.h>
 #include <machine/sid.h>
-#include <machine/mtpr.h>
 
 struct scb *scb;
 struct ivec_dsp *scb_vec;

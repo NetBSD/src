@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.66 2008/08/12 17:54:47 hans Exp $	*/
+/*	$NetBSD: conf.c,v 1.67 2010/12/14 23:44:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -32,13 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.66 2008/08/12 17:54:47 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.67 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 /*
  * Console routines for VAX console.

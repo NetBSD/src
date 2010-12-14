@@ -34,23 +34,16 @@
 /*** needs to be completed MK-990306 ***/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.20 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.21 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
+#include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/systm.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/pte.h>
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <machine/sid.h>
-#include <machine/pmap.h>
 #include <machine/nexus.h>
-#include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/ka420.h>
 #include <machine/ka48.h>

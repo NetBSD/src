@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.91 2010/07/01 19:50:12 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.92 2010/12/14 23:44:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,16 +31,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91 2010/07/01 19:50:12 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
@@ -49,10 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91 2010/07/01 19:50:12 ragge Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/sid.h>
-#include <machine/param.h>
-#include <machine/vmparam.h>
 #include <machine/nexus.h>
 #include <machine/ioa.h>
 #include <machine/ka820.h>
@@ -60,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91 2010/07/01 19:50:12 ragge Exp $");
 #include <machine/ka650.h>
 #include <machine/clock.h>
 #include <machine/rpb.h>
-#include <machine/bus.h>
 #include <machine/mainbus.h>
 
 #include <vax/vax/gencons.h>
