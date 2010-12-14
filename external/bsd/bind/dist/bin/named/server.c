@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.6 2010/12/02 14:52:18 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.7 2010/12/14 23:18:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -6894,7 +6894,7 @@ ns_server_del_zone(ns_server_t *server, char *args) {
 	/* Rewrite zone list */
 	result = isc_stdio_open(filename, "r", &ifp);
 	if (ifp != NULL && result == ISC_R_SUCCESS) {
-		char *found = NULL, *p;
+		char *found = NULL, *p = NULL;	/* XXX: gcc */
 		size_t n;
 
 		/* Create a temporary file */
