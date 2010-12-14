@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.13 2009/10/11 12:13:45 bad Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.14 2010/12/14 08:04:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -42,6 +42,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#ifdef RUMP_ACTION
+#include <rump/rump_syscalls.h>
+#define ioctl(a,b,c) rump_sys_ioctl(a,b,c)
+#endif
 
 static int
 _prop_object_externalize_to_pref(prop_object_t obj, struct plistref *pref, char **bufp)
