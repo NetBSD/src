@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.1.1.3 2010/08/05 20:12:13 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.2 2010/12/14 23:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -320,7 +320,7 @@ dns_name_ismailbox(const dns_name_t *name) {
 		return (ISC_FALSE);
 
 	/*
-	 * RFC292/RFC1123 hostname.
+	 * RFC952/RFC1123 hostname.
 	 */
 	while (ndata < (name->ndata + name->length)) {
 		n = *ndata++;
