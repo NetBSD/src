@@ -1,4 +1,4 @@
-.\" $NetBSD: orders.7,v 1.1 2010/11/30 20:19:31 jruoho Exp $
+.\" $NetBSD: orders.7,v 1.2 2010/12/14 09:21:30 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,14 +27,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 30, 2010
+.Dd December 14, 2010
 .Dt ORDERS 7
 .Os
 .Sh NAME
 .Nm orders
 .Nd orders of magnitude
 .Sh DESCRIPTION
-The following table lists common multiple of bytes.
+The following table lists common multiples of bytes.
 .Bl -column -offset 2n \
 "Kilobyte" "Prefix" "Power of 2" "Power of 10"
 .It Sy Name Ta Sy Prefix Ta Sy Power of 2 Ta Sy Power of 10
@@ -52,27 +52,27 @@ The following table lists common orders of magnitude as a power of ten.
 .Bl -column -offset 2n \
 "Septillionth" "Order" "Prefix" "Symbol" "Decimal"
 .It Sy Name Ta Sy Order Ta Sy Prefix Ta Sy Symbol Ta Sy Decimal
-.It Septillionth Ta -24 Ta yocto Ta y Ta 0.000000000000000000000001
-.It Sextillionth Ta -21 Ta zepto Ta z Ta 0.000000000000000000001
-.It Quintillionth Ta -18 Ta atto Ta a Ta 0.000000000000000001
-.It Quadrillionth Ta -15 Ta femto Ta f Ta 0.000000000000001
-.It Trillionth Ta -12 Ta pico Ta p Ta 0.000000000001
-.It Billionth Ta -9 Ta nano Ta n Ta 0.000000001
-.It Millionth Ta -6 Ta micro  Ta mu Ta 0.000001
-.It Thousandth Ta -3 Ta milli Ta m Ta 0.001
-.It Hundredth Ta -2 Ta centi Ta c Ta 0.01
-.It Tenth Ta -1 Ta deci Ta d Ta 0.1
-.It One Ta 0 Ta - Ta - Ta 1
-.It Ten Ta 1 Ta deca Ta da Ta 10
-.It Hundred Ta 2 Ta hecto Ta h Ta 100
-.It Thousand Ta 3 Ta kilo Ta k Ta 1000
-.It Million Ta 6 Ta mega Ta M Ta 1000000
-.It Billion Ta 9 Ta giga Ta G Ta 1 000000000
-.It Trillion Ta 12 Ta tera Ta T Ta 1000000000000
-.It Quadrillion Ta 15 Ta peta Ta P Ta 1000000000000000
-.It Quintillion Ta 18 Ta exa Ta E Ta 1000000000000000000
-.It Sextillion Ta 21 Ta zetta Ta Z Ta 1000000000000000000000
-.It Septillion Ta 24 Ta yotta Ta Y Ta 1000000000000000000000000
+.It Septillionth Ta 10^-24 Ta yocto Ta y Ta 0.000000000000000000000001
+.It Sextillionth Ta 10^-21 Ta zepto Ta z Ta 0.000000000000000000001
+.It Quintillionth Ta 10^-18 Ta atto Ta a Ta 0.000000000000000001
+.It Quadrillionth Ta 10^-15 Ta femto Ta f Ta 0.000000000000001
+.It Trillionth Ta 10^-12 Ta pico Ta p Ta 0.000000000001
+.It Billionth Ta 10^-9 Ta nano Ta n Ta 0.000000001
+.It Millionth Ta 10^-6 Ta micro  Ta mu Ta 0.000001
+.It Thousandth Ta 10^-3 Ta milli Ta m Ta 0.001
+.It Hundredth Ta 10^-2 Ta centi Ta c Ta 0.01
+.It Tenth Ta 10^-1 Ta deci Ta d Ta 0.1
+.It One Ta 10^0 Ta - Ta - Ta 1
+.It Ten Ta 10^1 Ta deca Ta da Ta 10
+.It Hundred Ta 10^2 Ta hecto Ta h Ta 100
+.It Thousand Ta 10^3 Ta kilo Ta k Ta 1000
+.It Million Ta 10^6 Ta mega Ta M Ta 1000000
+.It Billion Ta 10^9 Ta giga Ta G Ta 1 000000000
+.It Trillion Ta 10^12 Ta tera Ta T Ta 1000000000000
+.It Quadrillion Ta 10^15 Ta peta Ta P Ta 1000000000000000
+.It Quintillion Ta 10^18 Ta exa Ta E Ta 1000000000000000000
+.It Sextillion Ta 10^21 Ta zetta Ta Z Ta 1000000000000000000000
+.It Septillion Ta 10^24 Ta yotta Ta Y Ta 1000000000000000000000000
 .El
 .Sh STANDARDS
 There have been various attempts to standardize the set of binary prefixes.
@@ -85,3 +85,6 @@ have proposed new prefixes such as
 and
 .Dq yobi ,
 but the adoption has been slow at best.
+.Sh SEE ALSO
+.Xr number 1 ,
+.Xr units 1
