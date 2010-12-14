@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.83 2010/12/13 18:00:38 pooka Exp $ */
+/* $NetBSD: envstat.c,v 1.84 2010/12/14 08:04:14 pooka Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.83 2010/12/13 18:00:38 pooka Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.84 2010/12/14 08:04:14 pooka Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -116,20 +116,6 @@ static int 		check_sensors(char *);
 static int 		usage(void);
 
 static int		sysmonfd; /* fd of /dev/sysmon */
-
-/* sneak in between ioctl() */
-int
-ioctl(int fd, unsigned long request, ...)
-{
-	va_list ap;
-	int rv;
-
-	va_start(ap, request);
-	rv = prog_ioctl(fd, request, va_arg(ap, void *));
-	va_end(ap);
-
-	return rv;
-}
 
 int main(int argc, char **argv)
 {
