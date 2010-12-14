@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.21 2010/12/12 22:48:59 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.22 2010/12/14 04:04:20 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -948,8 +948,6 @@ grow(void)
 		oldcgsize = oldsb->fs_size % oldsb->fs_fpg;
 		set_bits(cg_blksfree(cg, 0), oldcgsize, newcgsize - oldcgsize);
 		cg->cg_old_ncyl = oldsb->fs_old_cpg;
-		if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)
-			cg->cg_old_ncyl = newsb->fs_old_ncyl % newsb->fs_old_cpg;
 		cg->cg_ndblk = newcgsize;
 	}
 	/* Fix up the csum info, if necessary. */
