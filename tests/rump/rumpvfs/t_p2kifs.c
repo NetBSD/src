@@ -1,4 +1,4 @@
-/*	$NetBSD: t_p2kifs.c,v 1.1 2010/11/30 16:16:33 pooka Exp $	*/
+/*	$NetBSD: t_p2kifs.c,v 1.2 2010/12/14 20:09:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ ATF_TC_HEAD(makecn, tc)
 ATF_TC_BODY(makecn, tc)
 {
 	struct componentname *cn;
-	char pathstr[] = TESTFILE;
+	char pathstr[MAXPATHLEN] = TESTFILE;
 	struct vnode *vp;
 	extern struct vnode *rumpns_rootvnode;
 
