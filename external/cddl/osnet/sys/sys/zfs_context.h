@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.6 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.7 2010/12/14 01:23:43 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -569,10 +569,6 @@ typedef void			*di_devlink_handle_t;
 
 extern char *kmem_asprintf(const char *fmt, ...);
 #define strfree(str) kmem_free((str), strlen(str)+1)
-
-//#define print_timestamp(a)	0
-
-extern void print_timestamp(int);
 
 #define DEV_PHYS_PATH "phys_path"
 
