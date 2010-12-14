@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.52 2009/12/12 14:44:09 tsutsui Exp $	*/
+/*	$NetBSD: ka820.c,v 1.53 2010/12/14 23:44:49 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,27 +39,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.52 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.53 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/ka820.h>
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <machine/nexus.h>
 #include <machine/clock.h>
 #include <machine/scb.h>
-#include <machine/bus.h>
 #include <machine/mainbus.h>
 
 #include <dev/cons.h>

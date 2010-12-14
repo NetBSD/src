@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.15 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: ka53.c,v 1.16 2010/12/14 23:44:49 matt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -38,18 +38,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.15 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.16 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 
 #include <machine/clock.h>
-#include <machine/cpu.h>
 #include <machine/scb.h>
 #include <machine/sid.h>
-#include <machine/mtpr.h>
 
 static void    ka53_conf(void);
 static void    ka53_memerr(void);
