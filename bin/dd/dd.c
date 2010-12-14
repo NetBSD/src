@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.44 2010/11/22 21:04:27 pooka Exp $	*/
+/*	$NetBSD: dd.c,v 1.45 2010/12/14 19:04:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.44 2010/11/22 21:04:27 pooka Exp $");
+__RCSID("$NetBSD: dd.c,v 1.45 2010/12/14 19:04:05 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,6 @@ static const struct ddfops ddfops_host = {
 	.op_read = read,
 	.op_write = write,
 };
-
-#include <rump/rumpclient.h>
 
 int
 main(int argc, char *argv[])
