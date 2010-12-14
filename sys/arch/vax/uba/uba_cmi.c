@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.14 2008/03/11 05:34:02 matt Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.15 2010/12/14 23:38:30 matt Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,17 +68,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_cmi.c,v 1.14 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_cmi.c,v 1.15 2010/12/14 23:38:30 matt Exp $");
+
+#define _VAX_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
-#define	_VAX_BUS_DMA_PRIVATE
-#include <machine/bus.h>
-#include <machine/mtpr.h>
 #include <machine/nexus.h>
-#include <machine/cpu.h>
 #include <machine/sgmap.h>
 
 #include <dev/qbus/ubavar.h>

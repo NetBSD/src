@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.38 2009/01/13 13:35:52 yamt Exp $ */
+/*	$NetBSD: mba.c,v 1.39 2010/12/14 23:38:30 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,25 +38,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.38 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.39 2010/12/14 23:38:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/bus.h>
 #include <machine/scb.h>
 #include <machine/nexus.h>
 #include <machine/pte.h>
-#include <machine/pcb.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
+#include <machine/sid.h>
 
 #include <vax/mba/mbareg.h>
 #include <vax/mba/mbavar.h>
