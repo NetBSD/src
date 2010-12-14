@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: string.c,v 1.2 2010/12/14 01:01:40 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -70,4 +70,26 @@ strident_canon(char *s, size_t n)
 			*s = '_';
 	}
 	*s = 0;
+}
+
+/*
+ * Simple-minded conversion of a long into a null-terminated character
+ * string.  Caller must ensure there's enough space to hold the result.
+ */
+void
+numtos(unsigned long num, char *s)
+{
+	char prbuf[40];
+
+	char *cp = prbuf;
+
+	do {
+		*cp++ = "0123456789"[num % 10];
+		num /= 10;
+	} while (num);
+
+	do {
+		*s++ = *--cp;
+	} while (cp > prbuf);
+	*s = '\0';
 }

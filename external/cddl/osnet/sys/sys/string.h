@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: string.h,v 1.4 2010/12/14 01:01:41 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -33,5 +33,6 @@
 
 char	*strpbrk(const char *, const char *);
 void	 strident_canon(char *s, size_t n);
+void	numtos(unsigned long num, char *s);
 
 #endif	/* _OPENSOLARIS_SYS_STRING_H_ */
