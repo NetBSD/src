@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.904 2010/12/13 21:15:30 pooka Exp $
+# $NetBSD: mi,v 1.905 2010/12/14 17:52:06 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -206,6 +206,7 @@
 ./sbin/brconfig					base-netutil-root
 ./sbin/ccdconfig				base-sysutil-root
 ./sbin/cgdconfig				base-sysutil-root	crypto
+./sbin/rump.cgdconfig				base-sysutil-root	crypto
 ./sbin/clri					base-sysutil-root
 ./sbin/dhclient					base-dhclient-root
 ./sbin/dhclient-script				base-dhclient-root
