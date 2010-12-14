@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.90 2010/11/13 02:23:27 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.91 2010/12/14 23:27:37 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/queue.h>
-#include <sys/device.h>
+#include <sys/device_if.h>
 #include <sys/cpu_data.h>
 
 #include <machine/mtpr.h>
