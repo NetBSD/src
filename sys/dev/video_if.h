@@ -1,4 +1,4 @@
-/* $NetBSD: video_if.h,v 1.5 2008/09/20 18:13:40 jmcneill Exp $ */
+/* $NetBSD: video_if.h,v 1.6 2010/12/14 03:25:16 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -199,6 +199,35 @@ enum video_pixel_format {
 	VIDEO_FORMAT_MPEG
 };
 
+/* video standards */
+enum video_standard {
+	VIDEO_STANDARD_PAL_B		= 0x00000001,
+	VIDEO_STANDARD_PAL_B1		= 0x00000002,
+	VIDEO_STANDARD_PAL_G		= 0x00000004,
+	VIDEO_STANDARD_PAL_H		= 0x00000008,
+	VIDEO_STANDARD_PAL_I		= 0x00000010,
+	VIDEO_STANDARD_PAL_D		= 0x00000020,
+	VIDEO_STANDARD_PAL_D1		= 0x00000040,
+	VIDEO_STANDARD_PAL_K		= 0x00000080,
+	VIDEO_STANDARD_PAL_M		= 0x00000100,
+	VIDEO_STANDARD_PAL_N		= 0x00000200,
+	VIDEO_STANDARD_PAL_Nc		= 0x00000400,
+	VIDEO_STANDARD_PAL_60		= 0x00000800,
+	VIDEO_STANDARD_NTSC_M		= 0x00001000,
+	VIDEO_STANDARD_NTSC_M_JP	= 0x00002000,
+	VIDEO_STANDARD_NTSC_443		= 0x00004000,
+	VIDEO_STANDARD_NTSC_M_KR	= 0x00008000,
+	VIDEO_STANDARD_SECAM_B		= 0x00010000,
+	VIDEO_STANDARD_SECAM_D		= 0x00020000,
+	VIDEO_STANDARD_SECAM_G		= 0x00040000,
+	VIDEO_STANDARD_SECAM_H		= 0x00080000,
+	VIDEO_STANDARD_SECAM_K		= 0x00100000,
+	VIDEO_STANDARD_SECAM_K1		= 0x00200000,
+	VIDEO_STANDARD_SECAM_L		= 0x00400000,
+
+	VIDEO_STANDARD_UNKNOWN		= 0x00000000
+};
+
 /* interlace_flags bits are allocated like this:
       7 6 5 4 3 2 1 0
 	    \_/ | | |interlaced or progressive
@@ -360,6 +389,66 @@ struct video_payload {
 					 * payload in the frame. */
 };
 
+/* tuner frequency, frequencies are in units of 62.5 kHz */
+struct video_frequency {
+	uint32_t	tuner_index;
+	uint32_t	frequency;
+};
+
+/* video tuner capability flags */
+#define	VIDEO_TUNER_F_MONO	(1 << 0)
+#define	VIDEO_TUNER_F_STEREO	(1 << 1)
+#define	VIDEO_TUNER_F_LANG1	(1 << 2)
+#define	VIDEO_TUNER_F_LANG2	(1 << 3)
+
+/* Video tuner definition */
+struct video_tuner {
+	uint32_t	index;
+	char		name[32];	/* tuner name */
+	uint32_t	freq_lo;	/* lowest tunable frequency */
+	uint32_t	freq_hi;	/* highest tunable frequency */
+	uint32_t	caps;		/* capability flags */
+	uint32_t	mode;		/* audio mode flags */
+	uint32_t	signal;		/* signal strength */
+	int32_t		afc;		/* automatic frequency control */
+};
+
+/* Video input capability flags */
+enum video_input_type {
+	VIDEO_INPUT_TYPE_TUNER,		/* RF demodulator */
+	VIDEO_INPUT_TYPE_BASEBAND,	/* analog baseband */
+	VIDEO_INPUT_TYPE_CAMERA = VIDEO_INPUT_TYPE_BASEBAND,
+};
+
+#define VIDEO_STATUS_NO_POWER		(1 << 0)
+#define	VIDEO_STATUS_NO_SIGNAL		(1 << 1)
+#define	VIDEO_STATUS_NO_COLOR		(1 << 2)
+#define	VIDEO_STATUS_NO_HLOCK		(1 << 3)
+#define	VIDEO_STATUS_MACROVISION	(1 << 4)
+
+/* Video input definition */
+struct video_input {
+	uint32_t	index;
+	char		name[32];	/* video input name */
+	enum video_input_type type;	/* input type */
+	uint32_t	audiomask;	/* bitmask of assoc. audio inputs */
+	uint32_t	tuner_index;	/* tuner index if applicable */
+	uint64_t	standards;	/* all supported standards */
+	uint32_t	status;		/* input status */
+};
+
+/* Audio input capability flags */
+#define	VIDEO_AUDIO_F_STEREO	(1 << 0)
+#define	VIDEO_AUDIO_F_AVL	(1 << 1)
+
+/* Audio input definition */
+struct video_audio {
+	uint32_t	index;
+	char		name[32];	/* audio input name */
+	uint32_t	caps;		/* capabilities flags */
+	uint32_t	mode;		/* audio mode flags */
+};
+
 struct video_hw_if {
 	int	(*open)(void *, int); /* open hardware */
 	void	(*close)(void *);     /* close hardware */
@@ -371,6 +460,10 @@ struct video_hw_if {
 	int	(*set_format)(void *, struct video_format *);
 	int	(*try_format)(void *, struct video_format *);
 
+	int	(*enum_standard)(void *, uint32_t, enum video_standard *);
+	int	(*get_standard)(void *, enum video_standard *);
+	int	(*set_standard)(void *, enum video_standard);
+
 	int	(*start_transfer)(void *);
 	int	(*stop_transfer)(void *);
 
@@ -380,6 +473,20 @@ struct video_hw_if {
 					  struct video_control_desc_group *);
 	int	(*get_control_group)(void *, struct video_control_group *);
 	int	(*set_control_group)(void *, const struct video_control_group *);
+
+	int	(*enum_input)(void *, uint32_t, struct video_input *);
+	int	(*get_input)(void *, struct video_input *);
+	int	(*set_input)(void *, struct video_input *);
+
+	int	(*enum_audio)(void *, uint32_t, struct video_audio *);
+	int	(*get_audio)(void *, struct video_audio *);
+	int	(*set_audio)(void *, struct video_audio *);
+
+	int	(*get_tuner)(void *, struct video_tuner *);
+	int	(*set_tuner)(void *, struct video_tuner *);
+
+	int	(*get_frequency)(void *, struct video_frequency *);
+	int	(*set_frequency)(void *, struct video_frequency *);
 };
 
 struct video_attach_args {
