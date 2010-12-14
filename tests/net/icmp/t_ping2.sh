@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping2.sh,v 1.1 2010/12/14 11:03:17 pooka Exp $
+#	$NetBSD: t_ping2.sh,v 1.2 2010/12/14 19:08:22 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,9 +56,9 @@ basic_body()
 	docfg unix://commsock2 1.2.3.5
 
 	atf-check -s exit:0 -o ignore \
-	    env RUMP_SERVER=unix://commsock1 rump.ping -c 1 1.2.3.5
+	    env RUMP_SERVER=unix://commsock1 rump.ping -n -c 1 1.2.3.5
 	atf-check -s exit:0 -o ignore \
-	    env RUMP_SERVER=unix://commsock2 rump.ping -c 1 1.2.3.5
+	    env RUMP_SERVER=unix://commsock2 rump.ping -n -c 1 1.2.3.5
 }
 
 basic_cleanup()
