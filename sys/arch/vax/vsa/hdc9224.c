@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.50 2009/11/21 04:45:39 rmind Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.51 2010/12/14 23:31:16 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,33 +51,29 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.50 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.51 2010/12/14 23:31:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/stat.h> 
-#include <sys/ioctl.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/stat.h> 
 #include <sys/syslog.h>
-#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <ufs/ufs/dinode.h> /* For BBSIZE */
 #include <ufs/ffs/fs.h>
 
-#include <machine/pte.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
-#include <machine/uvax.h>
 #include <machine/ka410.h>
 #include <machine/vsbus.h>
 #include <machine/rpb.h>
