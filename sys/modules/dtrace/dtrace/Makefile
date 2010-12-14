@@ -27,6 +27,8 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 
 CPPFLAGS+=	-DSMP -DDEBUG
 
+CPPFLAGS+=	-Wno-unknown-pragmas
+
 EXPORT_SYMS=	dtrace_register \
 		dtrace_unregister \
 		dtrace_probe_lookup
