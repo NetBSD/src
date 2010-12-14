@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.6 2010/05/03 09:28:38 darran Exp $	*/
+/*	$NetBSD: fbt.c,v 1.7 2010/12/14 14:08:42 tron Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -72,6 +72,7 @@
 #include <sys/dtrace.h>
 #include <sys/dtrace_bsd.h>
 #include <sys/kern_ctf.h>
+#include <sys/dtrace_impl.h>
 
 mod_ctf_t *modptr;
 

@@ -47,10 +47,12 @@ extern "C" {
 #if defined(__STDC__)
 extern int assfail(const char *, const char *, int);
 #define	VERIFY(EX) ((void)((EX) || assfail(#EX, __FILE__, __LINE__)))
+#ifndef ASSERT
 #if DEBUG
 #define	ASSERT(EX) ((void)((EX) || assfail(#EX, __FILE__, __LINE__)))
 #else
 #define	ASSERT(x)  ((void)0)
+#endif
 #endif
 #else	/* defined(__STDC__) */
 extern int assfail();
