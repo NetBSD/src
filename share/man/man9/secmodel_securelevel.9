@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_securelevel.9,v 1.7 2009/10/02 20:31:19 elad Exp $
+.\" $NetBSD: secmodel_securelevel.9,v 1.8 2010/12/14 09:09:52 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright (c) 2000 Hugh Graham
@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 10, 2009
+.Dd December 14, 2009
 .Dt SECMODEL_SECURELEVEL 9
 .Os
 .Sh NAME
@@ -45,88 +45,99 @@ but only
 .Xr init 8
 can lower it.
 .Pp
-.Nm
-provides four levels of securelevel, defined as follows:
+Four security levels are provided.
 .Bl -tag -width flag
 .It \&-1 Em Permanently insecure mode
-.Bl -hyphen -compact
+.Bl -bullet
 .It
 Don't raise the securelevel on boot
 .El
 .It \ 0 Em Insecure mode
-.Bl -hyphen -compact
+.Bl -bullet
 .It
 The init process (PID 1) may not be traced or accessed by
 .Xr ptrace 2
 or procfs.
 .It
-Immutable and append-only file flags may be changed
+Immutable and append-only file flags may be changed by
+.Xr chflags 1
+or by other means.
 .It
-All devices may be read or written subject to their permissions
+All devices may be read or written subject to their permissions.
 .It
-GPIO pins can be set and device drivers can be attached to them
+All
+.Xr gpio 4
+pins can be set and device drivers can be attached to them.
+.It
+On architectures that support
+.Xr module 4 ,
+kernel modules can be loaded and unloaded.
 .El
 .It \ 1 Em Secure mode
-.Bl -hyphen -compact
+.Bl -bullet
 .It
-All effects of securelevel 0
+All effects of securelevel 0.
 .It
+The
+.Xr kmem 4
+memory files
 .Pa /dev/mem
 and
 .Pa /dev/kmem
-may not be written to
+may not be written to.
 .It
-Raw disk devices of mounted file systems are read-only
+Raw disk devices of mounted file systems are read-only.
 .It
-Immutable and append-only file flags may not be removed
+Immutable and append-only file flags may not be removed.
 .It
-Kernel modules may not be loaded or unloaded
+Kernel modules may not be loaded or unloaded.
 .It
 The
 .Va net.inet.ip.sourceroute
 .Xr sysctl 8
-variable may not be changed
+variable may not be changed.
 .It
 Adding or removing
 .Xr sysctl 9
-nodes is denied
+nodes is denied.
 .It
-The RTC offset may not be changed
+The RTC offset may not be changed.
 .It
-Set-id coredump settings may not be altered
+Set-id coredump settings may not be altered.
 .It
 Attaching the IP-based kernel debugger,
 .Xr ipkdb 4 ,
-is not allowed
+is not allowed.
 .It
 Device
 .Dq pass-thru
-requests that may be used to perform raw disk and/or memory access are denied
+requests that may be used to perform raw disk and/or memory access are denied.
 .It
+The
 .Em iopl
 and
 .Em ioperm
-calls are denied
+calls are denied.
 .It
-Access to unmanaged memory is denied
+Access to unmanaged memory is denied.
 .It
-Only GPIO pins that have been set at securelevel 0 can be accessed
+Only GPIO pins that have been set at securelevel 0 can be accessed.
 .El
 .It \ 2 Em Highly secure mode
-.Bl -hyphen -compact
+.Bl -bullet
 .It
-All effects of securelevel 1
+All effects of securelevel 1.
 .It
-Raw disk devices are always read-only whether mounted or not
+Raw disk devices are always read-only whether mounted or not.
 .It
 New disks may not be mounted, and existing mounts may only be downgraded
-from read-write to read-only
+from read-write to read-only.
 .It
-The system clock may not be set backwards or close to overflow
+The system clock may not be set backwards or close to overflow.
 .It
-Per-process coredump name may not be changed
+Per-process coredump name may not be changed.
 .It
-Packet filtering and NAT rules may not be altered
+Packet filtering and NAT rules may not be altered.
 .El
 .El
 .Pp
