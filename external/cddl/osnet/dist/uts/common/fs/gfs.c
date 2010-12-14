@@ -121,6 +121,7 @@
  * both the caller and the vnode type provider need to access gfsv_ops
  * and gfsv_template, and the caller also needs to know gfsv_name.
  */
+#ifdef PORT_SOLARIS
 int
 gfs_make_opsvec(gfs_opsvec_t *vec)
 {
@@ -143,6 +144,7 @@ gfs_make_opsvec(gfs_opsvec_t *vec)
 	}
 	return (error);
 }
+#endif
 
 /*
  * Low level directory routines
@@ -257,15 +259,17 @@ gfs_readdir_init(gfs_readdir_state_t *st, int name_max, int ureclen,
 static int
 gfs_readdir_emit_int(gfs_readdir_state_t *st, uio_t *uiop, offset_t next)
 {
-	int reclen;
+	int reclen, namelen;
 	dirent64_t *dp;
 	edirent_t *edp;
 
 	if (st->grd_flags & V_RDDIR_ENTFLAGS) {
 		edp = st->grd_dirent;
+		namelen = strlen(edp->ed_name);
 		reclen = EDIRENT_RECLEN(strlen(edp->ed_name));
 	} else {
 		dp = st->grd_dirent;
+		namelen = strlen(dp->d_name);
 		reclen = DIRENT64_RECLEN(strlen(dp->d_name));
 	}
 
@@ -282,8 +286,9 @@ gfs_readdir_emit_int(gfs_readdir_state_t *st, uio_t *uiop, offset_t next)
 		edp->ed_off = next;
 		edp->ed_reclen = (ushort_t)reclen;
 	} else {
-		dp->d_off = next;
 		dp->d_reclen = (ushort_t)reclen;
+		dp->d_type = DT_DIR;
+		dp->d_namlen = namelen;
 	}
 
 	if (uiomove((caddr_t)st->grd_dirent, reclen, UIO_READ, uiop))
@@ -458,12 +463,17 @@ gfs_file_create(size_t size, vnode_t *pvp, vnodeops_t *ops)
 {
 	gfs_file_t *fp;
 	vnode_t *vp;
+	int error;
 
 	/*
 	 * Allocate vnode and internal data structure
 	 */
 	fp = kmem_zalloc(size, KM_SLEEP);
-	vp = vn_alloc(KM_SLEEP);
+	/* XXX FreeBSD adds vfs_t * as parameter to gfs_file_create and
+	   gfs_dir_create */
+	error = getnewvnode(VT_ZFS, pvp->v_vfsp, ops, &vp);
+	ASSERT(error == 0);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
 	 * Set up various pointers
@@ -639,6 +649,7 @@ found:
 		mutex_enter(&fp->gfs_parent->v_lock);
 	}
 	mutex_enter(&vp->v_lock);
+#ifdef PORT_SOLARIS
 	if (vp->v_count == 1) {
 		/*
 		 * Really remove this vnode
@@ -680,6 +691,7 @@ found:
 		if (dp)
 			gfs_dir_unlock(dp);
 	}
+#endif
 
 	return (data);
 }
@@ -1093,6 +1105,7 @@ gfs_vop_readdir(vnode_t *vp, uio_t *uiop, cred_t *cr, int *eofp,
  * putpage() routines.
  */
 /* ARGSUSED */
+#ifdef PORT_SOLARIS
 int
 gfs_vop_map(vnode_t *vp, offset_t off, struct as *as, caddr_t *addrp,
     size_t len, uchar_t prot, uchar_t maxprot, uint_t flags, cred_t *cred,
@@ -1154,7 +1167,7 @@ gfs_vop_map(vnode_t *vp, offset_t off, struct as *as, caddr_t *addrp,
 
 	return (rv);
 }
-
+#endif
 /*
  * gfs_vop_inactive: VOP_INACTIVE() entry point
  *
