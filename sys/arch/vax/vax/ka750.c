@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.43 2008/03/15 00:23:17 matt Exp $ */
+/*	$NetBSD: ka750.c,v 1.44 2010/12/14 23:44:49 matt Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,16 +68,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.43 2008/03/15 00:23:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.44 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 
-#include <machine/bus.h>
 #include <machine/ka750.h>
-#include <machine/mtpr.h>
-#include <machine/cpu.h>
 #include <machine/clock.h>
 #include <machine/sid.h>
 
