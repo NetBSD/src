@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.68 2010/09/21 00:18:05 jym Exp $	*/
+/*	$NetBSD: types.h,v 1.69 2010/12/14 15:50:07 haad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -107,12 +107,12 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
+#define __HAVE_ATOMIC64_OPS
 #define	__HAVE_ATOMIC_AS_MEMBAR
 #define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_INTR_CONTROL
 
 #if defined(_KERNEL)
-#define	__HAVE_ATOMIC64_OPS		/* not true for i486 in userspace */
 #define	__HAVE_RAS
 #endif
 
