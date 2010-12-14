@@ -55,6 +55,12 @@ _mutex_held(mutex_t *mp)
 	return (1);
 }
 
+int
+mutex_owned(mutex_t *mp)
+{
+	return (1);
+}
+
 /*ARGSUSED*/
 int
 mutex_lock(mutex_t *mp)
