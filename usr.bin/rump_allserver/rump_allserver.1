@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.2 2010/12/14 09:39:53 wiz Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.3 2010/12/14 16:40:05 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -33,6 +33,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl s
+.Op Fl d Ar drivespec
 .Op Fl l Ar library
 .Op Fl m Ar module
 .Ar url
@@ -59,6 +60,30 @@ system was built.
 At execution time it is possible to load components from the command
 line as described in the options section.
 .Bl -tag -width indent
+.It Fl d Ar drivespec
+The argument
+.Ar drivespec
+maps a host file a block device in the rump fs namespace.
+The string
+.Ar drivespec
+must be of comma-separated
+.Dq name=value
+format and must contain the following tokens:
+.Bl -tag -width hostpath1234
+.It Ar key
+Block device path in rump namespace.
+This must be specified according to the rules for a key in
+.Xr rump_etfs 3 .
+.It Ar hostpath
+Host file used for storage.
+If the file does not exist, it will be created.
+.It Ar size
+Size of the mapping.
+The host file will be truncated to the size indicated.
+Similar to
+.Xr dd 1 ,
+this argument accepts a suffix as the multiplier for the number.
+.El
 .It Fl l Ar library
 Call
 .Fn dlopen
@@ -101,6 +126,15 @@ server immediately afterwards:
 .Bd -literal -offset indent
 $ rump_server -lrumpvfs -m /modules/tmpfs.kmod unix://sock
 $ env RUMP_SERVER=unix://sock rump.halt
+.Ed
+.Pp
+Start a server with the one gigabyte host file
+.Pa dk.img
+mapped as the block device
+.Pa /dev/dk
+in the rump kernel.
+.Bd -literal -offset indent
+$ rump_allserver -d key=/dev/dk,hostpath=dk.img,size=1g unix://sock
 .Ed
 .Sh SEE ALSO
 .Xr rump.halt 1 ,
