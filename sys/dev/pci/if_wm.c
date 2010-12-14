@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.216 2010/11/13 13:52:07 uebayasi Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.217 2010/12/14 02:51:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.216 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.217 2010/12/14 02:51:46 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -514,6 +514,7 @@ static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_tick(void *);
 
 static void	wm_set_filter(struct wm_softc *);
+static void	wm_set_vlan(struct wm_softc *);
 
 static int	wm_intr(void *);
 static void	wm_txintr(struct wm_softc *);
@@ -2736,14 +2737,17 @@ wm_ifflags_cb(struct ethercom *ec)
 	struct wm_softc *sc = ifp->if_softc;
 	int change = ifp->if_flags ^ sc->sc_if_flags;
 
+	if (change != 0)
+		sc->sc_if_flags = ifp->if_flags;
+
 	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
 		return ENETRESET;
-	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) == 0)
-		return 0;
 
-	wm_set_filter(sc);
+	if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
+		wm_set_filter(sc);
 
-	sc->sc_if_flags = ifp->if_flags;
+	wm_set_vlan(sc);
+
 	return 0;
 }
 
@@ -3702,6 +3706,19 @@ wm_reset(struct wm_softc *sc)
 	/* XXX need special handling for 82580 */
 }
 
+static void
+wm_set_vlan(struct wm_softc *sc)
+{
+	/* Deal with VLAN enables. */
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
+		sc->sc_ctrl |= CTRL_VME;
+	else
+		sc->sc_ctrl &= ~CTRL_VME;
+
+	/* Write the control registers. */
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+}
+
 /*
  * wm_init:		[ifnet interface function]
  *
@@ -3919,14 +3936,8 @@ wm_init(struct ifnet *ifp)
 	else
 		CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
 
-	/* Deal with VLAN enables. */
-	if (VLAN_ATTACHED(&sc->sc_ethercom))
-		sc->sc_ctrl |= CTRL_VME;
-	else
-		sc->sc_ctrl &= ~CTRL_VME;
-
-	/* Write the control register. */
-	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	/* Writes the control register. */
+	wm_set_vlan(sc);
 
 	if (sc->sc_flags & WM_F_HAS_MII) {
 		int val;
