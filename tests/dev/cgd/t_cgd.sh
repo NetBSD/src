@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.1 2010/11/11 22:38:47 pooka Exp $
+#	$NetBSD: t_cgd.sh,v 1.2 2010/12/14 17:48:31 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,13 +36,22 @@ basic_body()
 {
 
 	d=$(atf_get_srcdir)
+	atf_check -s exit:0 \
+	    rump_allserver -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
+
+	export RUMP_SERVER=unix://csock
 	atf_check -s exit:0 sh -c "echo 12345 | \
-	    $d/h_img2cgd/h_img2cgd $d/h_img2cgd/cgd.conf write \
-	    enc.img $d/h_img2cgd/cgd.conf"
-	atf_check -s exit:0 sh -c "echo 12345 | \
-	    $d/h_img2cgd/h_img2cgd $d/h_img2cgd/cgd.conf read \
-	    enc.img clear.txt"
-	atf_check -s exit:0 cmp clear.txt $d/h_img2cgd/cgd.conf
+	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
+	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd rof=/dev/rcgd0d count=2
+	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd of=testfile count=2
+	atf_check -s exit:0 -e ignore -o file:testfile \
+	    dd rif=/dev/rcgd0d count=2
+}
+
+basic_cleanup()
+{
+
+	env RUMP_SERVER=unix://csock rump.halt
 }
 
 atf_test_case wrongpass
@@ -57,13 +66,22 @@ wrongpass_body()
 {
 
 	d=$(atf_get_srcdir)
+	atf_check -s exit:0 \
+	    rump_allserver -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
+
+	export RUMP_SERVER=unix://csock
 	atf_check -s exit:0 sh -c "echo 12345 | \
-	    $d/h_img2cgd/h_img2cgd $d/h_img2cgd/cgd.conf write \
-	    enc.img $d/h_img2cgd/cgd.conf"
+	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
+	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd rof=/dev/rcgd0d count=2
+
+	# unconfig and reconfig cgd
+	atf_check -s exit:0 rump.cgdconfig -u cgd0
 	atf_check -s exit:0 sh -c "echo 54321 | \
-	    $d/h_img2cgd/h_img2cgd $d/h_img2cgd/cgd.conf read \
-	    enc.img clear.txt"
-	atf_check -s not-exit:0 cmp -s clear.txt $d/h_img2cgd/cgd.conf
+	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
+
+	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd of=testfile count=2
+	atf_check -s exit:0 -e ignore -o not-file:testfile \
+	    dd rif=/dev/rcgd0d count=2
 }
 
 atf_init_test_cases()
