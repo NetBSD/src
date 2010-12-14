@@ -111,16 +111,13 @@ snapentry_compare(const void *a, const void *b)
 		return (0);
 }
 
-vnodeops_t *zfsctl_ops_root;
-vnodeops_t *zfsctl_ops_snapdir;
-vnodeops_t *zfsctl_ops_snapshot;
-vnodeops_t *zfsctl_ops_shares;
-vnodeops_t *zfsctl_ops_shares_dir;
+//vnodeops_t *zfsctl_ops_shares_dir;
 
-static const fs_operation_def_t zfsctl_tops_root[];
-static const fs_operation_def_t zfsctl_tops_snapdir[];
-static const fs_operation_def_t zfsctl_tops_snapshot[];
-static const fs_operation_def_t zfsctl_tops_shares[];
+static struct vnodeopv_entry_desc zfsctl_ops_root;
+static struct vnodeopv_entry_desc zfsctl_ops_snapdir;
+static struct vnodeopv_entry_desc zfsctl_ops_snapshot;
+static struct vnodeopv_entry_desc zfsctl_ops_shares;
+
 
 static vnode_t *zfsctl_mknode_snapdir(vnode_t *);
 static vnode_t *zfsctl_mknode_shares(vnode_t *);
@@ -159,31 +156,11 @@ static gfs_dirent_t zfsctl_root_entries[] = {
 void
 zfsctl_init(void)
 {
-	VERIFY(gfs_make_opsvec(zfsctl_opsvec) == 0);
 }
 
 void
 zfsctl_fini(void)
 {
-	/*
-	 * Remove vfsctl vnode ops
-	 */
-	if (zfsctl_ops_root)
-		vn_freevnodeops(zfsctl_ops_root);
-	if (zfsctl_ops_snapdir)
-		vn_freevnodeops(zfsctl_ops_snapdir);
-	if (zfsctl_ops_snapshot)
-		vn_freevnodeops(zfsctl_ops_snapshot);
-	if (zfsctl_ops_shares)
-		vn_freevnodeops(zfsctl_ops_shares);
-	if (zfsctl_ops_shares_dir)
-		vn_freevnodeops(zfsctl_ops_shares_dir);
-
-	zfsctl_ops_root = NULL;
-	zfsctl_ops_snapdir = NULL;
-	zfsctl_ops_snapshot = NULL;
-	zfsctl_ops_shares = NULL;
-	zfsctl_ops_shares_dir = NULL;
 }
 
 /*
@@ -1123,6 +1100,7 @@ zfsctl_snapdir_inactive(vnode_t *vp, cred_t *cr, caller_context_t *ct)
 	}
 }
 
+#ifndef __NetBSD__
 static const fs_operation_def_t zfsctl_tops_snapdir[] = {
 	{ VOPNAME_OPEN,		{ .vop_open = zfsctl_common_open }	},
 	{ VOPNAME_CLOSE,	{ .vop_close = zfsctl_common_close }	},
@@ -1153,7 +1131,7 @@ static const fs_operation_def_t zfsctl_tops_shares[] = {
 	{ VOPNAME_FID,		{ .vop_fid = zfsctl_shares_fid } },
 	{ NULL }
 };
-
+#endif
 /*
  * pvp is the GFS vnode '.zfs/snapshot'.
  *
@@ -1220,7 +1198,7 @@ zfsctl_snapshot_inactive(vnode_t *vp, cred_t *cr, caller_context_t *ct)
 	gfs_vop_inactive(vp, cr, ct);
 }
 
-
+#ifndef __NetBSD__
 /*
  * These VP's should never see the light of day.  They should always
  * be covered.
@@ -1229,6 +1207,7 @@ static const fs_operation_def_t zfsctl_tops_snapshot[] = {
 	VOPNAME_INACTIVE, { .vop_inactive =  zfsctl_snapshot_inactive },
 	NULL, NULL
 };
+#endif
 
 int
 zfsctl_lookup_objset(vfs_t *vfsp, uint64_t objsetid, zfsvfs_t **zfsvfsp)
