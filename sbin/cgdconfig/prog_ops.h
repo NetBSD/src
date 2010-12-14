@@ -1,4 +1,4 @@
-/*      $NetBSD: cgd_kernelops.h,v 1.3 2009/10/13 22:04:31 pooka Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.1 2010/12/14 17:46:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -26,20 +26,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _CGD_KERNEL_OPS_H_
-#define _CGD_KERNEL_OPS_H_
+#ifndef _PROG_OPS_H_
+#define _PROG_OPS_H_
 
 #include <sys/types.h>
-#include <sys/socket.h>
 
 #include <fcntl.h>
 
-struct cgd_kernelops {
-	int (*ko_open)(const char *, int, ...);
-	int (*ko_ioctl)(int, unsigned long, ...);
-	int (*ko_close)(int);
-	ssize_t (*ko_pread)(int, void *, size_t, off_t);
+#ifndef CRUNCHOPS
+struct prog_ops {
+	int (*op_init)(void);
+	int (*op_open)(const char *, int, ...);
+	int (*op_ioctl)(int, unsigned long, ...);
+	int (*op_close)(int);
+	ssize_t (*op_pread)(int, void *, size_t, off_t);
 };
-extern const struct cgd_kernelops cgd_kops;
+extern const struct prog_ops prog_ops;
 
-#endif /* _CGD_KERNEL_OPS_H_ */
+#define prog_init prog_ops.op_init
+#define prog_open prog_ops.op_open
+#define prog_ioctl prog_ops.op_ioctl
+#define prog_close prog_ops.op_close
+#define prog_pread prog_ops.op_pread
+#else
+#define prog_init ((int (*)(void))NULL)
+#define prog_open open
+#define prog_ioctl ioctl
+#define prog_close close
+#define prog_pread pread
+#endif
+
+#endif /* _PROG_OPS_H_ */
