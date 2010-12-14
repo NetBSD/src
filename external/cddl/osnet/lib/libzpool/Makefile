@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/21 01:46:35 darran Exp $
+#	$NetBSD: Makefile,v 1.5 2010/12/14 09:19:14 haad Exp $
 
 .include "${.CURDIR}/../../dist/uts/common/Makefile.files"
 .include "../../Makefile.zfs"
@@ -13,6 +13,7 @@ LIB=		zpool
 DPADD=		${LIBPTHREAD} ${LIBZ}
 LDADD=		-lpthread -lz
 CPPFLAGS+=	-std=c99
+#CPPFLAGS+=-Wall -Wno-unknown-pragmas
 
 # Local stuff
 SRCS=		kernel.c kernel2.c
@@ -26,7 +27,7 @@ SRCS+=		taskq.c util.c list.o u8_textprep.o
 .if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-D__HAVE_ATOMIC64_OPS	# add NetBSD 64 add operations on i386
 .PATH: ${NETBSDSRCDIR}/common/lib/libc/atomic
-SRCS+= atomic_add_64_cas.c atomic_add_64_nv_cas.c atomic_inc_64_add.c atomic_dec_64_add.c
+SRCS+= atomic_add_64_cas.c atomic_add_64_nv_cas.c atomic_inc_64_cas.c atomic_dec_64_cas.c
 .endif
 
 print:
