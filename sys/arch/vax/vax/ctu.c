@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.30 2009/01/13 13:35:52 yamt Exp $ */
+/*	$NetBSD: ctu.c,v 1.31 2010/12/14 23:44:49 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,25 +40,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.30 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.31 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
-#include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/fcntl.h>
-#include <sys/malloc.h>
-#include <sys/ioctl.h>
-#include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
 
-#include <machine/mtpr.h>
 #include <machine/rsp.h>
 #include <machine/scb.h>
-#include <machine/trap.h>
 
 #undef TUDEBUG
 

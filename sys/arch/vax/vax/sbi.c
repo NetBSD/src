@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.35 2010/07/01 19:50:12 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.36 2010/12/14 23:44:49 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,16 +38,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.35 2010/07/01 19:50:12 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.36 2010/12/14 23:44:49 matt Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 
-#include <machine/bus.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
 #include <machine/nexus.h>
 #include <machine/mainbus.h>
 #include <machine/ioa.h>

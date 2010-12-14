@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.29 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: ka630.c,v 1.30 2010/12/14 23:44:49 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,21 +31,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.29 2008/03/11 05:34:03 matt Exp $");
-
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/time.h>
-#include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
+__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.30 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_cputype.h"
 
-#include <machine/cpu.h>
-#include <machine/pmap.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/time.h>
+
 #include <machine/ka630.h>
 #include <machine/clock.h>
 #include <machine/vsbus.h>
