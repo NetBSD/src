@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.12 2009/10/21 01:07:47 snj Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.13 2010/12/14 02:28:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -63,21 +63,21 @@ static const struct toklist {
 	    char *, size_t lno));
 	int	  arg;
 } tokens[] = {
-	{ "LC_CTYPE",		setfilename,	0	},
-	{ "isupper",		addattr,	_U	},
-	{ "islower",		addattr,	_L	},
-	{ "isdigit",		addattr,	_N	},
-	{ "isspace",		addattr,	_S	},
-	{ "ispunct",		addattr,	_P	},
-	{ "iscntrl",		addattr,	_C	},
-	{ "isblank",		addattr,	_B	},
-	{ "isxdigit",		addattr,	_X	},
-	{ "ul",			uplow,		0	},
-	{ "cswidth",		cswidth,	0	},
-	{ "LC_NUMERIC",		setfilename,	1	},
-	{ "decimal_point",	numeric,	0	},
-	{ "thousands_sep",	numeric,	0	},
-	{ NULL,			NULL,		0	}
+	{ "LC_CTYPE",		setfilename,	0		},
+	{ "isupper",		addattr,	_CTYPE_U	},
+	{ "islower",		addattr,	_CTYPE_L	},
+	{ "isdigit",		addattr,	_CTYPE_N	},
+	{ "isspace",		addattr,	_CTYPE_S	},
+	{ "ispunct",		addattr,	_CTYPE_P	},
+	{ "iscntrl",		addattr,	_CTYPE_C	},
+	{ "isblank",		addattr,	_CTYPE_B	},
+	{ "isxdigit",		addattr,	_CTYPE_X	},
+	{ "ul",			uplow,		0		},
+	{ "cswidth",		cswidth,	0		},
+	{ "LC_NUMERIC",		setfilename,	1		},
+	{ "decimal_point",	numeric,	0		},
+	{ "thousands_sep",	numeric,	0		},
+	{ NULL,			NULL,		0		}
 };
 
 /* usage():
@@ -331,7 +331,7 @@ printctype(fp, ct)
 {
 	int did = 0;
 
-#define DO(a)	if (__CONCAT(_,a) & ct) {			\
+#define DO(a)	if (__CONCAT(_CTYPE_,a) & ct) {			\
 			if (did)				\
 				(void) fputc('|', fp);		\
 			did = 1;				\

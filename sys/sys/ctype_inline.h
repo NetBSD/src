@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_inline.h,v 1.1 2010/06/01 13:52:08 tnozaki Exp $ */
+/* $NetBSD: ctype_inline.h,v 1.2 2010/12/14 02:28:57 joerg Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -45,17 +45,17 @@
 
 #include <sys/ctype_bits.h>
 
-#define	isdigit(c)	((int)((_ctype_ + 1)[(c)] & _N))
-#define	islower(c)	((int)((_ctype_ + 1)[(c)] & _L))
-#define	isspace(c)	((int)((_ctype_ + 1)[(c)] & _S))
-#define	ispunct(c)	((int)((_ctype_ + 1)[(c)] & _P))
-#define	isupper(c)	((int)((_ctype_ + 1)[(c)] & _U))
-#define	isalpha(c)	((int)((_ctype_ + 1)[(c)] & (_U|_L)))
-#define	isxdigit(c)	((int)((_ctype_ + 1)[(c)] & (_N|_X)))
-#define	isalnum(c)	((int)((_ctype_ + 1)[(c)] & (_U|_L|_N)))
-#define	isprint(c)	((int)((_ctype_ + 1)[(c)] & (_P|_U|_L|_N|_B)))
-#define	isgraph(c)	((int)((_ctype_ + 1)[(c)] & (_P|_U|_L|_N)))
-#define	iscntrl(c)	((int)((_ctype_ + 1)[(c)] & _C))
+#define	isdigit(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_N))
+#define	islower(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_L))
+#define	isspace(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_S))
+#define	ispunct(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_P))
+#define	isupper(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_U))
+#define	isalpha(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_U|_CTYPE_L)))
+#define	isxdigit(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_N|_CTYPE_X)))
+#define	isalnum(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_U|_CTYPE_L|_CTYPE_N)))
+#define	isprint(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N|_CTYPE_B)))
+#define	isgraph(c)	((int)((_ctype_ + 1)[(c)] & (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N)))
+#define	iscntrl(c)	((int)((_ctype_ + 1)[(c)] & _CTYPE_C))
 #define	tolower(c)	((int)((_tolower_tab_ + 1)[(c)]))
 #define	toupper(c)	((int)((_toupper_tab_ + 1)[(c)]))
 
