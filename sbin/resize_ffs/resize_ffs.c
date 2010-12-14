@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.22 2010/12/14 04:04:20 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.23 2010/12/14 20:45:22 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -64,7 +64,7 @@
 /* new size of filesystem, in sectors */
 static uint32_t newsize;
 
-/* fd open onto disk device */
+/* fd open onto disk device or file */
 static int fd;
 
 /* must we break up big I/O operations - see checksmallio() */
@@ -130,6 +130,10 @@ static unsigned char *iflags;
  */ 
 #define NSPB(fs)	((fs)->fs_old_nspf << (fs)->fs_fragshift)
 #define NSPF(fs)	((fs)->fs_old_nspf)
+
+/* global flags */
+int is_ufs2 = 0;
+int needswap = 0;
 
 static void usage(void) __dead;
 
@@ -1873,7 +1877,7 @@ main(int argc, char **argv)
 	int SFlag;
 	size_t i;
 
-	char *device;
+	char *special;
 	char reply[5];
 	
 	newsize = 0;
@@ -1905,10 +1909,10 @@ main(int argc, char **argv)
 		usage();
 	}
 
-	device = *argv;
+	special = *argv;
 
 	if (ExpertFlag == 0) {
-		printf("It's required to manually run fsck on filesystem device "
+		printf("It's required to manually run fsck on filesystem "
 		    "before you can resize it\n\n"
 		    " Did you run fsck on your disk (Yes/No) ? ");
 		fgets(reply, (int)sizeof(reply), stdin);
@@ -1918,13 +1922,13 @@ main(int argc, char **argv)
 		}
 	}
 	
-	fd = open(device, O_RDWR, 0);
+	fd = open(special, O_RDWR, 0);
 	if (fd < 0)
-		err(EXIT_FAILURE, "Can't open `%s'", device);
+		err(EXIT_FAILURE, "Can't open `%s'", special);
 	checksmallio();
 
 	if (SFlag == 0) {
-		newsize = get_dev_size(device);
+		newsize = get_dev_size(special);
 		if (newsize == 0)
 			err(EXIT_FAILURE,
 			    "Can't resize filesystem, newsize not known.");
@@ -1934,10 +1938,25 @@ main(int argc, char **argv)
 	newsb = (struct fs *) (SBLOCKSIZE + (char *) &sbbuf);
 	for (where = search[i = 0]; search[i] != -1; where = search[++i]) {
 		readat(where / DEV_BSIZE, oldsb, SBLOCKSIZE);
-		if (where == SBLOCK_UFS2 && (oldsb->fs_magic == FS_UFS1_MAGIC))
-			continue;
-		if (oldsb->fs_magic == FS_UFS1_MAGIC)
+		switch (oldsb->fs_magic) {
+		case FS_UFS2_MAGIC:
+			/* FALLTHROUGH */
+			is_ufs2 = 1;
+		case FS_UFS1_MAGIC:
+			needswap = 0;
 			break;
+		case FS_UFS2_MAGIC_SWAPPED:
+ 			is_ufs2 = 1;
+			/* FALLTHROUGH */
+		case FS_UFS1_MAGIC_SWAPPED:
+			needswap = 1;
+			break;
+		default:
+			continue;
+		}
+		if (!is_ufs2 && where == SBLOCK_UFS2)
+			continue;
+		break;
 	}
 	if (where == (off_t)-1)
 		errx(EXIT_FAILURE, "Bad magic number");
@@ -1953,6 +1972,11 @@ main(int argc, char **argv)
 		/* any others? */
 		printf("Resizing with ffsv1 superblock\n");
 	}
+	if (is_ufs2)
+		errx(EXIT_FAILURE, "ffsv2 file systems currently unsupported.");
+	if (needswap)
+		errx(EXIT_FAILURE, "Swapped byte order file system detected"
+		    " - currently unsupported.");
 	oldsb->fs_qbmask = ~(int64_t) oldsb->fs_bmask;
 	oldsb->fs_qfmask = ~(int64_t) oldsb->fs_fmask;
 	if (oldsb->fs_ipg % INOPB(oldsb)) {
@@ -1982,6 +2006,6 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-y] [-s size] device\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-y] [-s size] special\n", getprogname());
 	exit(EXIT_FAILURE);
 }
