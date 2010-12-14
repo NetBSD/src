@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.h,v 1.12 2008/02/20 16:37:52 matt Exp $	*/
+/*	$NetBSD: scb.h,v 1.13 2010/12/14 23:29:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -29,8 +29,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _VAX_SCB_H
 #define	_VAX_SCB_H
+
+#include <sys/evcnt.h>
 
 /*
  * Definition of the System Control Block. More about it can be
