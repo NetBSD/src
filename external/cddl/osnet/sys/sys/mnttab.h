@@ -1,4 +1,4 @@
-/*	$NetBSD: mnttab.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: mnttab.h,v 1.4 2010/12/14 01:00:26 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -42,7 +42,7 @@
 extern "C" {
 #endif
 
-#define	MNTTAB	"/etc/mnttab"
+#define	MNTTAB	"/dev/null"
 #define	MNT_LINE_MAX	1024
 
 #define	MNT_TOOLONG	1	/* entry exceeds MNT_LINE_MAX */
