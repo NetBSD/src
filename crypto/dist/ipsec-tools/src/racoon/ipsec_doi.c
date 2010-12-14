@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.45 2010/10/11 14:16:30 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.46 2010/12/14 17:57:31 tteras Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -4166,8 +4166,13 @@ ipsecdoi_id2sockaddr(buf, saddr, prefixlen, ul_proto)
 	u_int8_t *prefixlen;
 	u_int16_t *ul_proto;
 {
-	struct ipsecdoi_id_b *id_b = (struct ipsecdoi_id_b *)buf->v;
+	struct ipsecdoi_id_b *id_b = NULL;
 	u_int plen = 0;
+
+	if (buf == NULL)
+		return ISAKMP_INTERNAL_ERROR;
+
+	id_b = (struct ipsecdoi_id_b *)buf->v;
 
 	/*
 	 * When a ID payload of subnet type with a IP address of full bit
