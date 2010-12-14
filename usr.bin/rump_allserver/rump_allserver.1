@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.1 2010/12/13 19:36:34 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.2 2010/12/14 09:39:53 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -81,7 +81,8 @@ correctly.
 .It Fl m Ar module
 Load and link a kernel module after the rump kernel is initialized.
 For this to work, the rump kernel must include the vfs faction,
-since the module is loaded using kernel vfs code (see EXAMPLES).
+since the module is loaded using kernel vfs code (see
+.Sx EXAMPLES ) .
 .It Fl s
 Do not detach from the terminal.
 By default,
@@ -93,7 +94,7 @@ detaches from the terminal once the service is running on
 After use,
 .Nm
 can be made to exit using
-.Xr rump.halt .
+.Xr rump.halt 1 .
 .Sh EXAMPLES
 Start a server and load the tmpfs file system module, and halt the
 server immediately afterwards:
