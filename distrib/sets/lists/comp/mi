@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1541 2010/12/13 21:15:30 pooka Exp $
+#	$NetBSD: mi,v 1.1542 2010/12/14 17:09:27 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7235,7 +7235,9 @@
 ./usr/share/man/cat3/magic_load.0		comp-c-catman		.cat
 ./usr/share/man/cat3/magic_open.0		comp-c-catman		.cat
 ./usr/share/man/cat3/magic_setflags.0		comp-c-catman		.cat
+./usr/share/man/cat3/major.0			comp-c-catman		.cat
 ./usr/share/man/cat3/makecontext.0		comp-c-catman		.cat
+./usr/share/man/cat3/makedev.0			comp-c-catman		.cat
 ./usr/share/man/cat3/malloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/man.0			comp-mdocml-catman	.cat
 ./usr/share/man/cat3/math.0			comp-c-catman		.cat
@@ -7290,6 +7292,7 @@
 ./usr/share/man/cat3/mergesort.0		comp-c-catman		.cat
 ./usr/share/man/cat3/meta.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mi_vector_hash.0		comp-c-catman		.cat
+./usr/share/man/cat3/minor.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mkdtemp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mkstemp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mktemp.0			comp-c-catman		.cat
@@ -13199,7 +13202,9 @@
 ./usr/share/man/html3/magic_load.html		comp-c-htmlman		html
 ./usr/share/man/html3/magic_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/magic_setflags.html	comp-c-htmlman		html
+./usr/share/man/html3/major.html		comp-c-htmlman		html
 ./usr/share/man/html3/makecontext.html		comp-c-htmlman		html
+./usr/share/man/html3/makedev.html		comp-c-htmlman		html
 ./usr/share/man/html3/malloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/man.html			comp-mdocml-htmlman	html
 ./usr/share/man/html3/math.html			comp-c-htmlman		html
@@ -13253,6 +13258,7 @@
 ./usr/share/man/html3/mergesort.html		comp-c-htmlman		html
 ./usr/share/man/html3/meta.html			comp-c-htmlman		html
 ./usr/share/man/html3/mi_vector_hash.html	comp-c-htmlman		html
+./usr/share/man/html3/minor.html		comp-c-htmlman		html
 ./usr/share/man/html3/mkdtemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mkstemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktemp.html		comp-c-htmlman		html
@@ -19149,7 +19155,9 @@
 ./usr/share/man/man3/magic_load.3		comp-c-man		.man
 ./usr/share/man/man3/magic_open.3		comp-c-man		.man
 ./usr/share/man/man3/magic_setflags.3		comp-c-man		.man
+./usr/share/man/man3/major.3			comp-c-man		.man
 ./usr/share/man/man3/makecontext.3		comp-c-man		.man
+./usr/share/man/man3/makedev.3			comp-c-man		.man
 ./usr/share/man/man3/malloc.3			comp-c-man		.man
 ./usr/share/man/man3/man.3			comp-mdocml-man		.man
 ./usr/share/man/man3/math.3			comp-c-man		.man
@@ -19204,6 +19212,7 @@
 ./usr/share/man/man3/mergesort.3		comp-c-man		.man
 ./usr/share/man/man3/meta.3			comp-c-man		.man
 ./usr/share/man/man3/mi_vector_hash.3		comp-c-man		.man
+./usr/share/man/man3/minor.3			comp-c-man		.man
 ./usr/share/man/man3/mkdtemp.3			comp-c-man		.man
 ./usr/share/man/man3/mkstemp.3			comp-c-man		.man
 ./usr/share/man/man3/mktemp.3			comp-c-man		.man
