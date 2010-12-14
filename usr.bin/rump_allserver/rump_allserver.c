@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.8 2010/12/13 14:26:22 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.9 2010/12/14 16:40:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.8 2010/12/13 14:26:22 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.9 2010/12/14 16:40:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.8 2010/12/13 14:26:22 pooka Exp $");
 #include <dlfcn.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +51,8 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [args] bindurl\n", getprogname());
+	fprintf(stderr, "usage: %s [-d drivespec] [-l libs] [-m modules] [-s] "
+	    "bindurl\n", getprogname());
 	exit(1);
 }
 
@@ -72,20 +74,88 @@ sigreboot(int sig)
 	sem_post(&sigsem);
 }
 
+static const char *const disktokens[] = {
+#define DKEY 0
+	"key",
+#define DFILE 1
+	"hostpath",
+#define DSIZE 2
+	"size",
+	NULL
+};
+
+struct etfsreg {
+	const char *key;
+	const char *hostpath;
+	off_t flen;
+	enum rump_etfs_type type;
+};
+
 int
 main(int argc, char *argv[])
 {
 	const char *serverurl;
 	char **modarray = NULL;
 	unsigned nmods = 0, curmod = 0, i;
+	struct etfsreg *etfs = NULL;
+	unsigned netfs = 0, curetfs = 0;
 	int error;
 	int ch, sflag;
 
 	setprogname(argv[0]);
 
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "l:m:s")) != -1) {
+	while ((ch = getopt(argc, argv, "d:l:m:s")) != -1) {
 		switch (ch) {
+		case 'd': {
+			char *options, *value;
+			char *key, *hostpath;
+			long long flen;
+
+			flen = 0;
+			key = hostpath = NULL;
+			options = optarg;
+			while (*options) {
+				switch (getsubopt(&options,
+				    __UNCONST(disktokens), &value)) {
+				case DKEY:
+					key = value;
+					break;
+				case DFILE:
+					hostpath = value;
+					break;
+				case DSIZE:
+					/* XXX: off_t max? */
+					flen = strsuftoll("-d size", value,
+					    0, LLONG_MAX);
+					break;
+				default:
+					fprintf(stderr, "invalid dtoken\n");
+					usage();
+					break;
+				}
+			}
+
+			if (key == NULL || hostpath == NULL || flen == 0) {
+				fprintf(stderr, "incomplete drivespec\n");
+				usage();
+			}
+
+			if (netfs - curetfs == 0) {
+				etfs = realloc(etfs, (netfs+16)*sizeof(*etfs));
+				if (etfs == NULL)
+					err(1, "realloc etfs");
+				netfs += 16;
+			}
+
+			etfs[curetfs].key = key;
+			etfs[curetfs].hostpath = hostpath;
+			etfs[curetfs].flen = flen;
+			etfs[curetfs].type = RUMP_ETFS_BLK;
+			curetfs++;
+
+			break;
+		}
 		case 'l':
 			if (dlopen(optarg, RTLD_LAZY|RTLD_GLOBAL) == NULL) {
 				char pb[MAXPATHLEN];
@@ -135,6 +205,7 @@ main(int argc, char *argv[])
 	if (error)
 		die(sflag, error, "rump init failed");
 
+	/* load modules */
 	for (i = 0; i < curmod; i++) {
 		struct modctl_load ml;
 
@@ -147,6 +218,23 @@ main(int argc, char *argv[])
 		if (rump_sys_modctl(MODCTL_LOAD, &ml) == -1)
 			die(sflag, errno, "module load failed");
 		rump_pub_etfs_remove(ETFSKEY);
+#undef ETFSKEY
+	}
+
+	/* register host drives */
+	for (i = 0; i < curetfs; i++) {
+		int fd;
+
+		fd = open(etfs[i].hostpath, O_RDWR | O_CREAT, 0755);
+		if (fd == -1)
+			die(sflag, error, "etfs hostpath create");
+		if (ftruncate(fd, etfs[i].flen) == -1)
+			die(sflag, error, "truncate");
+		close(fd);
+
+		if ((error = rump_pub_etfs_register(etfs[i].key,
+		    etfs[i].hostpath, etfs[i].type)) != 0)
+			die(sflag, error, "etfs register");
 	}
 
 	error = rump_init_server(serverurl);
