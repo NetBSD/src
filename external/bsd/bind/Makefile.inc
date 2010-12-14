@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2010/11/06 21:32:49 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2010/12/14 23:17:20 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -17,7 +17,11 @@ NAMED_USE_OPENSSL?=no
 NAMED_USE_OPENSSL?=yes
 .endif
 
+.if exists(/usr/include/sys/atomic.h)
 NAMED_USE_PTHREADS?=yes
+.else
+NAMED_USE_PTHREADS?=no
+.endif
 
 IDIST=		${NETBSDSRCDIR}/external/bsd/bind/dist
 BIND_SRCDIR=	${NETBSDSRCDIR}/external/bsd/bind
@@ -89,7 +93,11 @@ CPPFLAGS+=-DOPENSSL
 LDADD+= -lcrypto
 DPADD+= ${LIBCRYPTO}
 .else
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+.if exists(${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto)
+LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypt)
+.else
+LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/lib/libcrypto
+.endif
 .endif
 .endif
 
