@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.23 2010/12/14 20:45:22 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.24 2010/12/14 21:49:21 wiz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -13,9 +13,9 @@
 /*
  * resize_ffs:
  *
- * Resize a filesystem.  Is capable of both growing and shrinking.
+ * Resize a file system.  Is capable of both growing and shrinking.
  *
- * Usage: resize_ffs [-s newsize] [-y] filesystem
+ * Usage: resize_ffs [-s newsize] [-y] file_system
  *
  * Example: resize_ffs -s 29574 /dev/rsd1e
  *
@@ -27,7 +27,7 @@
  *  definitions (which in at least a few cases depend on the lexical
  *  scoping gcc provides, so they can't be trivially moved outside).
  *
- * It will not do anything useful with filesystems in other than
+ * It will not do anything useful with file systems in other than
  *  host-native byte order.  This really should be fixed (it's largely
  *  a historical accident; the original version of this program is
  *  older than bi-endian support in FFS).
@@ -61,7 +61,7 @@
 #include <strings.h>
 #include <unistd.h>
 
-/* new size of filesystem, in sectors */
+/* new size of file system, in sectors */
 static uint32_t newsize;
 
 /* fd open onto disk device or file */
@@ -584,8 +584,8 @@ initcg(int cgn)
  *  takes up more than a whole block (is the csum info allowed to begin
  *  partway through a block and continue into the following block?).
  *
- * If we wrap off the end of the filesystem back to the beginning, we
- *  can end up searching the end of the filesystem twice.  I ignore
+ * If we wrap off the end of the file system back to the beginning, we
+ *  can end up searching the end of the file system twice.  I ignore
  *  this inefficiency, since if that happens we're going to croak with
  *  a no-space error anyway, so it happens at most once.
  */
@@ -782,9 +782,9 @@ csum_fixup(void)
 		return;
 	}
 	/* We must be growing.  Check to see that the new csum area fits
-	 * within the filesystem.  I think this can never happen, since for
+	 * within the file system.  I think this can never happen, since for
 	 * the csum area to grow, we must be adding at least one cg, so the
-	 * old csum area can't be this close to the end of the new filesystem.
+	 * old csum area can't be this close to the end of the new file system.
 	 * But it's a cheap check. */
 	/* XXX what if csum info is at end of cg and grows into next cg, what
 	 * if it spills over onto the next cg's backup superblock?  Can this
@@ -867,7 +867,7 @@ timestamp(void)
 	return (t);
 }
 /*
- * Grow the filesystem.
+ * Grow the file system.
  */
 static void
 grow(void)
@@ -902,7 +902,7 @@ grow(void)
 	newsb->fs_ncg = howmany(newsb->fs_old_ncyl, newsb->fs_old_cpg);
 	/* Does the last cg end before the end of its inode area? There is no
 	 * reason why this couldn't be handled, but it would complicate a lot
-	 * of code (in all filesystem code - fsck, kernel, etc) because of the
+	 * of code (in all file system code - fsck, kernel, etc) because of the
 	 * potential partial inode area, and the gain in space would be
 	 * minimal, at most the pre-sb data area. */
 	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
@@ -962,7 +962,7 @@ grow(void)
 /*
  * Call (*fn)() for each inode, passing the inode and its inumber.  The
  *  number of cylinder groups is pased in, so this can be used to map
- *  over either the old or the new filesystem's set of inodes.
+ *  over either the old or the new file system's set of inodes.
  */
 static void
 map_inodes(void (*fn) (struct ufs1_dinode * di, unsigned int, void *arg),
@@ -1144,7 +1144,7 @@ loadinodes(void)
 	}
 }
 /*
- * Report a filesystem-too-full problem.
+ * Report a file-system-too-full problem.
  */
 static void
 toofull(void)
@@ -1253,10 +1253,10 @@ evict_data(struct cg * cg, unsigned int minfrag, unsigned int nfrag)
  *  blocks that will be moved.  We call this before
  *  update_for_data_move, and update_for_data_move does inodes first,
  *  then indirect blocks in preorder, so as to make sure that the
- *  filesystem is self-consistent at all points, for better crash
+ *  file system is self-consistent at all points, for better crash
  *  tolerance.  (We can get away with this only because all the writes
  *  done by perform_data_move() are writing into space that's not used
- *  by the old filesystem.)  If we crash, some things may point to the
+ *  by the old file system.)  If we crash, some things may point to the
  *  old data and some to the new, but both copies are the same.  The
  *  only wrong things should be csum info and free bitmaps, which fsck
  *  is entirely capable of cleaning up.
@@ -1412,7 +1412,7 @@ flush_inodes(void)
 /*
  * Evict all inodes from the specified cg.  shrink() already checked
  *  that there were enough free inodes, so the no-free-inodes check is
- *  a can't-happen.  If it does trip, the filesystem should be in good
+ *  a can't-happen.  If it does trip, the file system should be in good
  *  enough shape for fsck to fix; see the comment on perform_data_move
  *  for the considerations in question.
  */
@@ -1429,7 +1429,7 @@ evict_inodes(struct cg * cg)
 			fi = find_freeinode();
 			if (fi < 0) {
 				printf("Sorry, inodes evaporated - "
-				    "filesystem probably needs fsck\n");
+				    "file system probably needs fsck\n");
 				exit(EXIT_FAILURE);
 			}
 			inomove[inum] = fi;
@@ -1523,7 +1523,7 @@ update_for_inode_move(void)
 	map_inodes(&dirmove_callback, newsb->fs_ncg, NULL);
 }
 /*
- * Shrink the filesystem.
+ * Shrink the file system.
  */
 static void
 shrink(void)
@@ -1552,7 +1552,7 @@ shrink(void)
 	}
 	/* Let's make sure we're not being shrunk into oblivion. */
 	if (newsb->fs_ncg < 1) {
-		printf("Size too small - filesystem would have no cylinders\n");
+		printf("Size too small - file system would have no cylinders\n");
 		exit(EXIT_FAILURE);
 	}
 	/* Initialize for block motion. */
@@ -1599,7 +1599,7 @@ shrink(void)
 		clr_bits(cg_blksfree(cg, 0), newcgsize, oldcgsize - newcgsize);
 	}
 	/* Find out whether we would run out of inodes.  (Note we haven't
-	 * actually done anything to the filesystem yet; all those evict_data
+	 * actually done anything to the file system yet; all those evict_data
 	 * calls just update blkmove.) */
 	{
 		int slop;
@@ -1912,7 +1912,7 @@ main(int argc, char **argv)
 	special = *argv;
 
 	if (ExpertFlag == 0) {
-		printf("It's required to manually run fsck on filesystem "
+		printf("It's required to manually run fsck on file system "
 		    "before you can resize it\n\n"
 		    " Did you run fsck on your disk (Yes/No) ? ");
 		fgets(reply, (int)sizeof(reply), stdin);
@@ -1931,7 +1931,7 @@ main(int argc, char **argv)
 		newsize = get_dev_size(special);
 		if (newsize == 0)
 			err(EXIT_FAILURE,
-			    "Can't resize filesystem, newsize not known.");
+			    "Can't resize file system, newsize not known.");
 	}
 	
 	oldsb = (struct fs *) & sbbuf;
