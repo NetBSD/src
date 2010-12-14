@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.174 2010/12/14 10:02:02 skrll Exp $
+# $NetBSD: mi,v 1.175 2010/12/14 11:03:17 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1628,6 +1628,7 @@
 ./usr/tests/net/icmp/Atffile			tests-net-tests		atf
 ./usr/tests/net/icmp/t_forward		tests-net-tests		atf
 ./usr/tests/net/icmp/t_ping		tests-net-tests		atf
+./usr/tests/net/icmp/t_ping2		tests-net-tests		atf
 ./usr/tests/net/if			tests-net-tests
 ./usr/tests/net/if/Atffile			tests-net-tests		atf
 ./usr/tests/net/if/t_compat		tests-net-tests		atf
