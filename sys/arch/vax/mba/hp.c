@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.47 2009/01/13 13:35:52 yamt Exp $ */
+/*	$NetBSD: hp.c,v 1.48 2010/12/14 23:38:30 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,10 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.47 2009/01/13 13:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.48 2010/12/14 23:38:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -55,16 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.47 2009/01/13 13:35:52 yamt Exp $");
 #include <sys/stat.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
-#include <sys/syslog.h>
-#include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/event.h>
-
-#include <machine/bus.h>
-#include <machine/trap.h>
-#include <machine/pte.h>
-#include <machine/mtpr.h>
-#include <machine/cpu.h>
+#include <sys/syslog.h>
 
 #include <vax/mba/mbavar.h>
 #include <vax/mba/mbareg.h>

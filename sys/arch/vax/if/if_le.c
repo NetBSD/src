@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.36 2010/01/19 22:06:23 pooka Exp $	*/
+/*	$NetBSD: if_le.c,v 1.37 2010/12/14 23:38:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,15 +65,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.36 2010/01/19 22:06:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.37 2010/12/14 23:38:30 matt Exp $");
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/socket.h>
-#include <sys/device.h>
-#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.36 2010/01/19 22:06:23 pooka Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/cpu.h>
 #include <machine/nexus.h>
 #include <machine/scb.h>
 #include <machine/mainbus.h>
