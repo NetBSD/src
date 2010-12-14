@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.23 2009/12/06 22:42:48 dyoung Exp $ */
+/* $NetBSD: video.c,v 1.24 2010/12/14 03:25:16 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.23 2009/12/06 22:42:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.24 2010/12/14 03:25:16 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -224,8 +224,24 @@ static void	v4l2_format_to_video_format(const struct v4l2_format *,
 					    struct video_format *);
 static void	video_format_to_v4l2_format(const struct video_format *,
 					    struct v4l2_format *);
+static void	v4l2_standard_to_video_standard(v4l2_std_id,
+						enum video_standard *);
+static void	video_standard_to_v4l2_standard(enum video_standard,
+						struct v4l2_standard *);
+static void	v4l2_input_to_video_input(const struct v4l2_input *,
+					  struct video_input *);
+static void	video_input_to_v4l2_input(const struct video_input *,
+					  struct v4l2_input *);
+static void	v4l2_audio_to_video_audio(const struct v4l2_audio *,
+					  struct video_audio *);
+static void	video_audio_to_v4l2_audio(const struct video_audio *,
+					  struct v4l2_audio *);
+static void	v4l2_tuner_to_video_tuner(const struct v4l2_tuner *,
+					  struct video_tuner *);
+static void	video_tuner_to_v4l2_tuner(const struct video_tuner *,
+					  struct v4l2_tuner *);
 
-/* V4L2 api functions, typically called from videoioclt() */
+/* V4L2 api functions, typically called from videoioctl() */
 static int	video_enum_format(struct video_softc *, struct v4l2_fmtdesc *);
 static int	video_get_format(struct video_softc *,
 				 struct v4l2_format *);
@@ -233,6 +249,22 @@ static int	video_set_format(struct video_softc *,
 				 struct v4l2_format *);
 static int	video_try_format(struct video_softc *,
 				 struct v4l2_format *);
+static int	video_enum_standard(struct video_softc *,
+				    struct v4l2_standard *);
+static int	video_get_standard(struct video_softc *, v4l2_std_id *);
+static int	video_set_standard(struct video_softc *, v4l2_std_id);
+static int	video_enum_input(struct video_softc *, struct v4l2_input *);
+static int	video_get_input(struct video_softc *, int *);
+static int	video_set_input(struct video_softc *, int);
+static int	video_enum_audio(struct video_softc *, struct v4l2_audio *);
+static int	video_get_audio(struct video_softc *, struct v4l2_audio *);
+static int	video_set_audio(struct video_softc *, struct v4l2_audio *);
+static int	video_get_tuner(struct video_softc *, struct v4l2_tuner *);
+static int	video_set_tuner(struct video_softc *, struct v4l2_tuner *);
+static int	video_get_frequency(struct video_softc *,
+				    struct v4l2_frequency *);
+static int	video_set_frequency(struct video_softc *,
+				    struct v4l2_frequency *);
 static int	video_query_control(struct video_softc *,
 				    struct v4l2_queryctrl *);
 static int	video_get_control(struct video_softc *,
@@ -586,14 +618,25 @@ video_format_to_v4l2_format(const struct video_format *src,
 	dest->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dest->fmt.pix.width = src->width;
 	dest->fmt.pix.height = src->height;
-	dest->fmt.pix.field = V4L2_FIELD_NONE; /* TODO: for now,
-						  * just set to
-						  * progressive */
+	if (VIDEO_INTERLACED(src->interlace_flags))
+		dest->fmt.pix.field = V4L2_FIELD_INTERLACED;
+	else
+		dest->fmt.pix.field = V4L2_FIELD_NONE;
 	dest->fmt.pix.bytesperline = src->stride;
 	dest->fmt.pix.sizeimage = src->sample_size;
-	dest->fmt.pix.colorspace = 0;	/* XXX */
 	dest->fmt.pix.priv = src->priv;
 	
+	switch (src->color.primaries) {
+	case VIDEO_COLOR_PRIMARIES_SMPTE_170M:
+		dest->fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
+		break;
+	/* XXX */
+	case VIDEO_COLOR_PRIMARIES_UNSPECIFIED:
+	default:
+		dest->fmt.pix.colorspace = 0;
+		break;
+	}
+
 	switch (src->pixel_format) {
 	case VIDEO_FORMAT_UYVY:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_UYVY;
@@ -651,6 +694,23 @@ v4l2_format_to_video_format(const struct v4l2_format *src,
 
 		dest->stride = src->fmt.pix.bytesperline;
 		dest->sample_size = src->fmt.pix.sizeimage;
+
+		if (src->fmt.pix.field == V4L2_FIELD_INTERLACED)
+			dest->interlace_flags = VIDEO_INTERLACE_ON;
+		else
+			dest->interlace_flags = VIDEO_INTERLACE_OFF;
+
+		switch (src->fmt.pix.colorspace) {
+		case V4L2_COLORSPACE_SMPTE170M:
+			dest->color.primaries =
+			    VIDEO_COLOR_PRIMARIES_SMPTE_170M;
+			break;
+		/* XXX */
+		default:
+			dest->color.primaries =
+			    VIDEO_COLOR_PRIMARIES_UNSPECIFIED;
+			break;
+		}
 
 		switch (src->fmt.pix.pixelformat) {
 		case V4L2_PIX_FMT_UYVY:
@@ -720,6 +780,7 @@ video_enum_format(struct video_softc *sc, struct v4l2_fmtdesc *fmtdesc)
 	video_format_to_v4l2_format(&vfmt, &fmt);
 
 	fmtdesc->type = V4L2_BUF_TYPE_VIDEO_CAPTURE; /* TODO: only one type for now */
+	fmtdesc->flags = 0;
 	if (vfmt.pixel_format >= VIDEO_FORMAT_MJPEG)
 		fmtdesc->flags = V4L2_FMT_FLAG_COMPRESSED;
 	strlcpy(fmtdesc->description,
@@ -796,6 +857,475 @@ video_try_format(struct video_softc *sc,
 	video_format_to_v4l2_format(&vfmt, format);
 
 	return 0;
+}
+
+static void
+v4l2_standard_to_video_standard(v4l2_std_id stdid,
+    enum video_standard *vstd)
+{
+#define VSTD(id, vid)	case (id):	*vstd = (vid); break;
+	switch (stdid) {
+	VSTD(V4L2_STD_NTSC_M, VIDEO_STANDARD_NTSC_M)
+	default:
+		*vstd = VIDEO_STANDARD_UNKNOWN;
+		break;
+	}
+#undef VSTD
+}
+
+static void
+video_standard_to_v4l2_standard(enum video_standard vstd,
+    struct v4l2_standard *std)
+{
+	switch (vstd) {
+	case VIDEO_STANDARD_NTSC_M:
+		std->id = V4L2_STD_NTSC_M;
+		strlcpy(std->name, "NTSC-M", sizeof(std->name));
+		std->frameperiod.numerator = 1001;
+		std->frameperiod.denominator = 30000;
+		std->framelines = 525;
+		break;
+	default:
+		std->id = V4L2_STD_UNKNOWN;
+		strlcpy(std->name, "Unknown", sizeof(std->name));
+		break;
+	}
+}
+
+static int
+video_enum_standard(struct video_softc *sc, struct v4l2_standard *std)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	enum video_standard vstd;
+	int err;
+
+	/* simple webcam drivers don't need to implement this callback */
+	if (hw->enum_standard == NULL) {
+		if (std->index != 0)
+			return EINVAL;
+		std->id = V4L2_STD_UNKNOWN;
+		strlcpy(std->name, "webcam", sizeof(std->name));
+		return 0;
+	}
+
+	v4l2_standard_to_video_standard(std->id, &vstd);
+
+	err = hw->enum_standard(sc->hw_softc, std->index, &vstd);
+	if (err != 0)
+		return err;
+
+	video_standard_to_v4l2_standard(vstd, std);
+
+	return 0;
+}
+
+static int
+video_get_standard(struct video_softc *sc, v4l2_std_id *stdid)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct v4l2_standard std;
+	enum video_standard vstd;
+	int err;
+
+	/* simple webcam drivers don't need to implement this callback */
+	if (hw->get_standard == NULL) {
+		*stdid = V4L2_STD_UNKNOWN;
+		return 0;
+	}
+
+	err = hw->get_standard(sc->hw_softc, &vstd);
+	if (err != 0)
+		return err;
+
+	video_standard_to_v4l2_standard(vstd, &std);
+	*stdid = std.id;
+	
+	return 0;
+}
+
+static int
+video_set_standard(struct video_softc *sc, v4l2_std_id stdid)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	enum video_standard vstd;
+
+	/* simple webcam drivers don't need to implement this callback */
+	if (hw->set_standard == NULL) {
+		if (stdid != V4L2_STD_UNKNOWN)
+			return EINVAL;
+		return 0;
+	}
+
+	v4l2_standard_to_video_standard(stdid, &vstd);
+
+	return hw->set_standard(sc->hw_softc, vstd);
+}
+
+static void
+v4l2_input_to_video_input(const struct v4l2_input *input,
+    struct video_input *vi)
+{
+	vi->index = input->index;
+	strlcpy(vi->name, input->name, sizeof(vi->name));
+	switch (input->type) {
+	case V4L2_INPUT_TYPE_TUNER:
+		vi->type = VIDEO_INPUT_TYPE_TUNER;
+		break;
+	case V4L2_INPUT_TYPE_CAMERA:
+		vi->type = VIDEO_INPUT_TYPE_CAMERA;
+		break;
+	}
+	vi->audiomask = input->audioset;
+	vi->tuner_index = input->tuner;
+	vi->standards = input->std;	/* ... values are the same */
+	vi->status = 0;
+	if (input->status & V4L2_IN_ST_NO_POWER)
+		vi->status |= VIDEO_STATUS_NO_POWER;
+	if (input->status & V4L2_IN_ST_NO_SIGNAL)
+		vi->status |= VIDEO_STATUS_NO_SIGNAL;
+	if (input->status & V4L2_IN_ST_NO_COLOR)
+		vi->status |= VIDEO_STATUS_NO_COLOR;
+	if (input->status & V4L2_IN_ST_NO_H_LOCK)
+		vi->status |= VIDEO_STATUS_NO_HLOCK;
+	if (input->status & V4L2_IN_ST_MACROVISION)
+		vi->status |= VIDEO_STATUS_MACROVISION;
+}
+
+static void
+video_input_to_v4l2_input(const struct video_input *vi,
+    struct v4l2_input *input)
+{
+	input->index = vi->index;
+	strlcpy(input->name, vi->name, sizeof(input->name));
+	switch (vi->type) {
+	case VIDEO_INPUT_TYPE_TUNER:
+		input->type = V4L2_INPUT_TYPE_TUNER;
+		break;
+	case VIDEO_INPUT_TYPE_CAMERA:
+		input->type = V4L2_INPUT_TYPE_CAMERA;
+		break;
+	}
+	input->audioset = vi->audiomask;
+	input->tuner = vi->tuner_index;
+	input->std = vi->standards;	/* ... values are the same */
+	input->status = 0;
+	if (vi->status & VIDEO_STATUS_NO_POWER)
+		input->status |= V4L2_IN_ST_NO_POWER;
+	if (vi->status & VIDEO_STATUS_NO_SIGNAL)
+		input->status |= V4L2_IN_ST_NO_SIGNAL;
+	if (vi->status & VIDEO_STATUS_NO_COLOR)
+		input->status |= V4L2_IN_ST_NO_COLOR;
+	if (vi->status & VIDEO_STATUS_NO_HLOCK)
+		input->status |= V4L2_IN_ST_NO_H_LOCK;
+	if (vi->status & VIDEO_STATUS_MACROVISION)
+		input->status |= V4L2_IN_ST_MACROVISION;
+}
+
+static int
+video_enum_input(struct video_softc *sc, struct v4l2_input *input)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_input vi;
+	int err;
+
+	/* simple webcam drivers don't need to implement this callback */
+	if (hw->enum_input == NULL) {
+		if (input->index != 0)
+			return EINVAL;
+		memset(input, 0, sizeof(*input));
+		input->index = 0;
+		strlcpy(input->name, "Camera", sizeof(input->name));
+		input->type = V4L2_INPUT_TYPE_CAMERA;
+		return 0;
+	}
+
+	v4l2_input_to_video_input(input, &vi);
+
+	err = hw->enum_input(sc->hw_softc, input->index, &vi);
+	if (err != 0)
+		return err;
+
+	video_input_to_v4l2_input(&vi, input);
+
+	return 0;
+}
+
+static int
+video_get_input(struct video_softc *sc, int *index)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_input vi;
+	struct v4l2_input input;
+	int err;
+
+	/* simple webcam drivers don't need to implement this callback */
+	if (hw->get_input == NULL) {
+		*index = 0;
+		return 0;
+	}
+
+	input.index = *index;
+	v4l2_input_to_video_input(&input, &vi);
+
+	err = hw->get_input(sc->hw_softc, &vi);
+	if (err != 0)
+		return err;
+
+	video_input_to_v4l2_input(&vi, &input);
+	*index = input.index;
+
+	return 0;
+}
+
+static int
+video_set_input(struct video_softc *sc, int index)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_input vi;
+	struct v4l2_input input;
+
+	/* simple webcam drivers don't need to implement this callback */
+	if (hw->set_input == NULL) {
+		if (index != 0)
+			return EINVAL;
+		return 0;
+	}
+
+	input.index = index;
+	v4l2_input_to_video_input(&input, &vi);
+
+	return hw->set_input(sc->hw_softc, &vi);
+}
+
+static void
+v4l2_audio_to_video_audio(const struct v4l2_audio *audio,
+    struct video_audio *va)
+{
+	va->index = audio->index;
+	strlcpy(va->name, audio->name, sizeof(va->name));
+	va->caps = va->mode = 0;
+	if (audio->capability & V4L2_AUDCAP_STEREO)
+		va->caps |= VIDEO_AUDIO_F_STEREO;
+	if (audio->capability & V4L2_AUDCAP_AVL)
+		va->caps |= VIDEO_AUDIO_F_AVL;
+	if (audio->mode & V4L2_AUDMODE_AVL)
+		va->mode |= VIDEO_AUDIO_F_AVL;
+}
+
+static void
+video_audio_to_v4l2_audio(const struct video_audio *va,
+    struct v4l2_audio *audio)
+{
+	audio->index = va->index;
+	strlcpy(audio->name, va->name, sizeof(audio->name));
+	audio->capability = audio->mode = 0;
+	if (va->caps & VIDEO_AUDIO_F_STEREO)
+		audio->capability |= V4L2_AUDCAP_STEREO;
+	if (va->caps & VIDEO_AUDIO_F_AVL)
+		audio->capability |= V4L2_AUDCAP_AVL;
+	if (va->mode & VIDEO_AUDIO_F_AVL)
+		audio->mode |= V4L2_AUDMODE_AVL;
+}
+
+static int
+video_enum_audio(struct video_softc *sc, struct v4l2_audio *audio)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_audio va;
+	int err;
+
+	if (hw->enum_audio == NULL)
+		return ENOTTY;
+
+	v4l2_audio_to_video_audio(audio, &va);
+
+	err = hw->enum_audio(sc->hw_softc, audio->index, &va);
+	if (err != 0)
+		return err;
+
+	video_audio_to_v4l2_audio(&va, audio);
+
+	return 0;
+}
+
+static int
+video_get_audio(struct video_softc *sc, struct v4l2_audio *audio)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_audio va;
+	int err;
+
+	if (hw->get_audio == NULL)
+		return ENOTTY;
+
+	v4l2_audio_to_video_audio(audio, &va);
+
+	err = hw->get_audio(sc->hw_softc, &va);
+	if (err != 0)
+		return err;
+
+	video_audio_to_v4l2_audio(&va, audio);
+
+	return 0;
+}
+
+static int
+video_set_audio(struct video_softc *sc, struct v4l2_audio *audio)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_audio va;
+
+	if (hw->set_audio == NULL)
+		return ENOTTY;
+
+	v4l2_audio_to_video_audio(audio, &va);
+
+	return hw->set_audio(sc->hw_softc, &va);
+}
+
+static void
+v4l2_tuner_to_video_tuner(const struct v4l2_tuner *tuner,
+    struct video_tuner *vt)
+{
+	vt->index = tuner->index;
+	strlcpy(vt->name, tuner->name, sizeof(vt->name));
+	vt->freq_lo = tuner->rangelow;
+	vt->freq_hi = tuner->rangehigh;
+	vt->signal = tuner->signal;
+	vt->afc = tuner->afc;
+	vt->caps = 0;
+	if (tuner->capability & V4L2_TUNER_CAP_STEREO)
+		vt->caps |= VIDEO_TUNER_F_STEREO;
+	if (tuner->capability & V4L2_TUNER_CAP_LANG1)
+		vt->caps |= VIDEO_TUNER_F_LANG1;
+	if (tuner->capability & V4L2_TUNER_CAP_LANG2)
+		vt->caps |= VIDEO_TUNER_F_LANG2;
+	switch (tuner->audmode) {
+	case V4L2_TUNER_MODE_MONO:
+		vt->mode = VIDEO_TUNER_F_MONO;
+		break;
+	case V4L2_TUNER_MODE_STEREO:
+		vt->mode = VIDEO_TUNER_F_STEREO;
+		break;
+	case V4L2_TUNER_MODE_LANG1:
+		vt->mode = VIDEO_TUNER_F_LANG1;
+		break;
+	case V4L2_TUNER_MODE_LANG2:
+		vt->mode = VIDEO_TUNER_F_LANG2;
+		break;
+	case V4L2_TUNER_MODE_LANG1_LANG2:
+		vt->mode = VIDEO_TUNER_F_LANG1 | VIDEO_TUNER_F_LANG2;
+		break;
+	}
+}
+
+static void
+video_tuner_to_v4l2_tuner(const struct video_tuner *vt,
+    struct v4l2_tuner *tuner)
+{
+	tuner->index = vt->index;
+	strlcpy(tuner->name, vt->name, sizeof(tuner->name));
+	tuner->rangelow = vt->freq_lo;
+	tuner->rangehigh = vt->freq_hi;
+	tuner->signal = vt->signal;
+	tuner->afc = vt->afc;
+	tuner->capability = 0;
+	if (vt->caps & VIDEO_TUNER_F_STEREO)
+		tuner->capability |= V4L2_TUNER_CAP_STEREO;
+	if (vt->caps & VIDEO_TUNER_F_LANG1)
+		tuner->capability |= V4L2_TUNER_CAP_LANG1;
+	if (vt->caps & VIDEO_TUNER_F_LANG2)
+		tuner->capability |= V4L2_TUNER_CAP_LANG2;
+	switch (vt->mode) {
+	case VIDEO_TUNER_F_MONO:
+		tuner->audmode = V4L2_TUNER_MODE_MONO;
+		break;
+	case VIDEO_TUNER_F_STEREO:
+		tuner->audmode = V4L2_TUNER_MODE_STEREO;
+		break;
+	case VIDEO_TUNER_F_LANG1:
+		tuner->audmode = V4L2_TUNER_MODE_LANG1;
+		break;
+	case VIDEO_TUNER_F_LANG2:
+		tuner->audmode = V4L2_TUNER_MODE_LANG2;
+		break;
+	case VIDEO_TUNER_F_LANG1|VIDEO_TUNER_F_LANG2:
+		tuner->audmode = V4L2_TUNER_MODE_LANG1_LANG2;
+		break;
+	}
+}
+
+static int
+video_get_tuner(struct video_softc *sc, struct v4l2_tuner *tuner)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_tuner vt;
+	int err;
+
+	if (hw->get_tuner == NULL)
+		return ENOTTY;
+
+	v4l2_tuner_to_video_tuner(tuner, &vt);
+
+	err = hw->get_tuner(sc->hw_softc, &vt);
+	if (err != 0)
+		return err;
+
+	video_tuner_to_v4l2_tuner(&vt, tuner);
+
+	return 0;
+}
+
+static int
+video_set_tuner(struct video_softc *sc, struct v4l2_tuner *tuner)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_tuner vt;
+
+	if (hw->set_tuner == NULL)
+		return ENOTTY;
+
+	v4l2_tuner_to_video_tuner(tuner, &vt);
+
+	return hw->set_tuner(sc->hw_softc, &vt);
+}
+
+static int
+video_get_frequency(struct video_softc *sc, struct v4l2_frequency *freq)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_frequency vfreq;
+	int err;
+
+	if (hw->get_frequency == NULL)
+		return ENOTTY;
+
+	err = hw->get_frequency(sc->hw_softc, &vfreq);
+	if (err)
+		return err;
+
+	freq->tuner = vfreq.tuner_index;
+	freq->type = V4L2_TUNER_ANALOG_TV;
+	freq->frequency = vfreq.frequency;
+
+	return 0;
+}
+
+static int
+video_set_frequency(struct video_softc *sc, struct v4l2_frequency *freq)
+{
+	const struct video_hw_if *hw = sc->hw_if;
+	struct video_frequency vfreq;
+
+	if (hw->set_frequency == NULL)
+		return ENOTTY;
+	if (freq->type != V4L2_TUNER_ANALOG_TV)
+		return EINVAL;
+
+	vfreq.tuner_index = freq->tuner;
+	vfreq.frequency = freq->frequency;
+
+	return hw->set_frequency(sc->hw_softc, &vfreq);
 }
 
 /* Takes a single Video4Linux2 control, converts it to a struct
@@ -1290,6 +1820,9 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct v4l2_format *fmt;
 	struct v4l2_standard *std;
 	struct v4l2_input *input;
+	struct v4l2_audio *audio;
+	struct v4l2_tuner *tuner;
+	struct v4l2_frequency *freq;
 	struct v4l2_control *control;
 	struct v4l2_queryctrl *query;
 	struct v4l2_requestbuffers *reqbufs;
@@ -1322,6 +1855,11 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (hw->start_transfer != NULL && hw->stop_transfer != NULL)
 			cap->capabilities |= V4L2_CAP_VIDEO_CAPTURE |
 			    V4L2_CAP_READWRITE | V4L2_CAP_STREAMING;
+		if (hw->set_tuner != NULL && hw->get_tuner != NULL)
+			cap->capabilities |= V4L2_CAP_TUNER;
+		if (hw->set_audio != NULL && hw->get_audio != NULL &&
+		    hw->enum_audio != NULL)
+			cap->capabilities |= V4L2_CAP_AUDIO;
 		return 0;
 	case VIDIOC_ENUM_FMT:
 		/* TODO: for now, just enumerate one default format */
@@ -1331,7 +1869,7 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return video_enum_format(sc, fmtdesc);
 	case VIDIOC_G_FMT:
 		fmt = data;
-		return (video_get_format(sc, fmt));
+		return video_get_format(sc, fmt);
 	case VIDIOC_S_FMT:
 		fmt = data;
 		if ((flag & FWRITE) == 0)
@@ -1339,47 +1877,56 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return video_set_format(sc, fmt);
 	case VIDIOC_TRY_FMT:
 		fmt = data;
-		return (video_try_format(sc, fmt));
+		return video_try_format(sc, fmt);
 	case VIDIOC_ENUMSTD:
-		/* TODO: implement properly */
 		std = data;
-		if (std->index != 0)
-			return EINVAL;
-		std->id = V4L2_STD_UNKNOWN;
-		strlcpy(std->name, "webcam", sizeof(std->name));
-		return 0;
+		return video_enum_standard(sc, std);
 	case VIDIOC_G_STD:
-		/* TODO: implement properly */
 		stdid = data;
-		*stdid = V4L2_STD_UNKNOWN;
-		return 0;
+		return video_get_standard(sc, stdid);
 	case VIDIOC_S_STD:
-		/* TODO: implement properly */
 		stdid = data;
-		if (*stdid != V4L2_STD_UNKNOWN)
-			return EINVAL;
-		return 0;
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+		return video_set_standard(sc, *stdid);
 	case VIDIOC_ENUMINPUT:
-		/* TODO: implement properly */
 		input = data;
-		if (input->index != 0)
-			return EINVAL;
-		memset(input, 0, sizeof(*input));
-		input->index = 0;
-		strlcpy(input->name, "Camera", sizeof(input->name));
-		input->type = V4L2_INPUT_TYPE_CAMERA;
-		return 0;
+		return video_enum_input(sc, input);
 	case VIDIOC_G_INPUT:
-		/* TODO: implement properly */
 		ip = data;
-		*ip = 0;
-		return 0;
+		return video_get_input(sc, ip);
 	case VIDIOC_S_INPUT:
-		/* TODO: implement properly */
 		ip = data;
-		if (*ip != 0)
-			return EINVAL;
-		return 0;
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+		return video_set_input(sc, *ip);
+	case VIDIOC_ENUMAUDIO:
+		audio = data;
+		return video_enum_audio(sc, audio);
+	case VIDIOC_G_AUDIO:
+		audio = data;
+		return video_get_audio(sc, audio);
+	case VIDIOC_S_AUDIO:
+		audio = data;
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+		return video_set_audio(sc, audio);
+	case VIDIOC_G_TUNER:
+		tuner = data;
+		return video_get_tuner(sc, tuner);
+	case VIDIOC_S_TUNER:
+		tuner = data;
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+		return video_set_tuner(sc, tuner);
+	case VIDIOC_G_FREQUENCY:
+		freq = data;
+		return video_get_frequency(sc, freq);
+	case VIDIOC_S_FREQUENCY:
+		freq = data;
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+		return video_set_frequency(sc, freq);
 	case VIDIOC_QUERYCTRL:
 		query = data;
 		return (video_query_control(sc, query));
@@ -1937,8 +2484,10 @@ video_stream_write(struct video_stream *vs,
 	mutex_enter(&vs->vs_lock);
 
 	/* change of frameno implies end of current frame */
-	if (vs->vs_frameno > 0 && vs->vs_frameno != payload->frameno)
+	if (vs->vs_frameno >= 0 && vs->vs_frameno != payload->frameno)
 		video_stream_sample_done(vs);
+
+	vs->vs_frameno = payload->frameno;
 	
 	if (vs->vs_drop || SIMPLEQ_EMPTY(&vs->vs_ingress)) {
 		/* DPRINTF(("video_stream_write: dropping sample %d\n",
