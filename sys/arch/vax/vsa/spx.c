@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.3 2010/05/09 22:19:46 hans Exp $ */
+/*	$NetBSD: spx.c,v 1.4 2010/12/14 23:31:16 matt Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,22 +32,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.3 2010/05/09 22:19:46 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.4 2010/12/14 23:31:16 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/time.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
-#include <sys/kernel.h>
-
-#include <uvm/uvm.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/time.h>
 
 #include <machine/vsbus.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
 #include <machine/ka420.h>
 
 #include <dev/cons.h>

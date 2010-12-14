@@ -1,4 +1,4 @@
-/* $NetBSD: vsbus_dma.c,v 1.15 2008/04/28 20:23:39 martin Exp $ */
+/* $NetBSD: vsbus_dma.c,v 1.16 2010/12/14 23:31:17 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,18 +31,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus_dma.c,v 1.15 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus_dma.c,v 1.16 2010/12/14 23:31:17 matt Exp $");
+
+#define _VAX_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/malloc.h>
+
 #include <uvm/uvm_extern.h>
 
-#define _VAX_BUS_DMA_PRIVATE
-#include <machine/bus.h>
-#include <machine/cpu.h>
 #include <machine/sid.h>
 #include <machine/sgmap.h>
 #include <machine/vsbus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.47 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: ncr.c,v 1.48 2010/12/14 23:31:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,15 +42,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.47 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.48 2010/12/14 23:31:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
-#include <sys/buf.h>
 #include <sys/proc.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -61,9 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.47 2009/11/21 04:45:39 rmind Exp $");
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
-#include <machine/cpu.h>
 #include <machine/vsbus.h>
-#include <machine/bus.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
 #include <machine/clock.h>

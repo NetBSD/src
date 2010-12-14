@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.41 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.42 2010/12/14 23:31:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,35 +31,30 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.41 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.42 2010/12/14 23:31:16 matt Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/queue.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/bus.h>
-#include <machine/vmparam.h>
-
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <machine/cpu.h>
+#include <machine/vmparam.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
 #include <machine/vsbus.h>

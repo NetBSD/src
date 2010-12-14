@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.53 2009/10/26 19:16:58 cegger Exp $ */
+/*	$NetBSD: smg.c,v 1.54 2010/12/14 23:31:16 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,20 +31,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.53 2009/10/26 19:16:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.54 2010/12/14 23:31:16 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/time.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/time.h>
 
 #include <machine/vsbus.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
 #include <machine/ka420.h>
 
 #include <dev/cons.h>
