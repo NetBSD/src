@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.2 2010/12/14 21:32:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -284,43 +284,47 @@ static void echo_on(int s)
 int
 command_match(struct com_func *cf, int s, char *orig, char *next)
 {
-	int i, matched = 0, last_match;
+	size_t i, len;
+	int last_match = -1;
+	const char *msg = NULL;
 
-	if (orig == NULL || orig[0] == '\0') {
-		send_prompt(s);
-		return 0;
-	}
+	if (orig == NULL || orig[0] == '\0')
+		goto out;
 
 	if (!strcmp(orig, "?")) {
-		for (i=0; cf[i].func != NULL; i++) {
+		for (i = 0; cf[i].func != NULL; i++) {
 			snprintf(sendspace, MAXSEND, "\t%s\n", cf[i].com);
 			writestr(s, sendspace);
 		}
-		send_prompt(s);
-		return 0;
+		goto out;
 	}
 
-	for (i=0; cf[i].func != NULL; i++)
-		if(strncasecmp(orig, cf[i].com, strlen(orig)) == 0) {
-			matched++;
-			last_match = i;
+	len = strlen(orig);
+	for (i = 0; cf[i].func != NULL; i++) {
+		if (strncasecmp(orig, cf[i].com, len) == 0) {
+			if (last_match != -1) {
+				msg = "Ambiguous";
+				goto out;
+			} else
+				last_match = i;
 		}
-	if (!matched) {
-		writestr(s, "Unknown command. Use ? for help\n");
-		send_prompt(s);
-		return 0;
 	}
 
-	if (matched > 1) {
-		writestr(s, "Ambiguous command. Use ? for help\n");
-		send_prompt(s);
-		return 0;
+	if (last_match == -1) {
+		msg = "Unknown";
+		goto out;
 	}
 
-	if(cf[last_match].func(s, next) != 0)
+	if (cf[last_match].func(s, next) != 0)
 		send_prompt(s);
 	return 1;
-
+out:
+	if (msg) {
+		writestr(s, msg);
+		writestr(s, " command. Use ? for help\n");
+	}
+	send_prompt(s);
+	return 0;
 }
 
 /*
