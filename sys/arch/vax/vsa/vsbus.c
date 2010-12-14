@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.58 2009/11/21 04:45:39 rmind Exp $ */
+/*	$NetBSD: vsbus.c,v 1.59 2010/12/14 23:31:17 matt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,29 +33,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.58 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.59 2010/12/14 23:31:17 matt Exp $");
+
+#include "opt_cputype.h"
+
+#define _VAX_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <sys/proc.h>
+#include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/disklabel.h>
-#include <sys/syslog.h>
-#include <sys/stat.h>
 
 #include <uvm/uvm_extern.h>
 
-#define _VAX_BUS_DMA_PRIVATE
-#include <machine/bus.h>
-#include <machine/pte.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
-#include <machine/cpu.h>
-#include <machine/trap.h>
 #include <machine/nexus.h>
 
 #include <machine/uvax.h>
@@ -68,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.58 2009/11/21 04:45:39 rmind Exp $");
 
 #include "ioconf.h"
 #include "locators.h"
-#include "opt_cputype.h"
 
 static int	vsbus_match(device_t, cfdata_t, void *);
 static void	vsbus_attach(device_t, device_t, void *);
