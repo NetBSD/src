@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.56 2010/07/01 02:38:28 rmind Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.57 2010/12/14 23:44:49 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,26 +39,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.56 2010/07/01 02:38:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.57 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>		 /* just for boothowto --eichin */
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/intr.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/systm.h> /* just for boothowto --eichin */
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
 #include <machine/db_machdep.h>
 #include <machine/trap.h>
 #include <machine/frame.h>
-#include <machine/pcb.h>
-#include <machine/intr.h>
 #include <machine/rpb.h>
 #include <vax/vax/gencons.h>
 

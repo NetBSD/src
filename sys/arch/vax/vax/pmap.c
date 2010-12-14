@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.178 2010/11/10 09:27:24 uebayasi Exp $	   */
+/*	$NetBSD: pmap.c,v 1.179 2010/12/14 23:44:49 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2010/11/10 09:27:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2010/12/14 23:44:49 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -39,15 +39,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2010/11/10 09:27:24 uebayasi Exp $");
 #include "opt_lockdebug.h"
 #include "opt_pipe.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
-#include <sys/extent.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
@@ -55,14 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2010/11/10 09:27:24 uebayasi Exp $");
 #include <dev/cons.h>
 #endif
 
-#include <uvm/uvm.h>
-
-#include <machine/pte.h>
-#include <machine/pcb.h>
-#include <machine/mtpr.h>
 #include <machine/macros.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
 #include <machine/scb.h>
 #include <machine/rpb.h>
 

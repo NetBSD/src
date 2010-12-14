@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.15 2008/12/16 22:35:28 christos Exp $	*/
+/*	$NetBSD: ka670.c,v 1.16 2010/12/14 23:44:49 matt Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,23 +33,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.15 2008/12/16 22:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.16 2010/12/14 23:44:49 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
+#include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/systm.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/pte.h>
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <machine/sid.h>
-#include <machine/pmap.h>
 #include <machine/nexus.h>
-#include <machine/uvax.h>
 #include <machine/vsbus.h>
 #include <machine/ka670.h>
 #include <machine/clock.h>
