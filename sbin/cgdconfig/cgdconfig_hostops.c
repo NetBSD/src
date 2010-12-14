@@ -1,4 +1,4 @@
-/*	$NetBSD: cgd_rumpops.c,v 1.1 2009/12/19 15:03:34 pooka Exp $	*/
+/*	$NetBSD: cgdconfig_hostops.c,v 1.1 2010/12/14 17:46:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgd_rumpops.c,v 1.1 2009/12/19 15:03:34 pooka Exp $");
+__RCSID("$NetBSD: cgdconfig_hostops.c,v 1.1 2010/12/14 17:46:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -37,13 +37,11 @@ __RCSID("$NetBSD: cgd_rumpops.c,v 1.1 2009/12/19 15:03:34 pooka Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <rump/rump_syscalls.h>
+#include "prog_ops.h"
 
-#include "cgd_kernelops.h"
-
-const struct cgd_kernelops cgd_kops = {
-	.ko_open = rump_sys_open,
-	.ko_ioctl = rump_sys_ioctl,
-	.ko_pread = rump_sys_pread,
-	.ko_close = rump_sys_close,
+const struct prog_ops prog_ops = {
+	.op_open = open,
+	.op_ioctl = ioctl,
+	.op_pread = pread,
+	.op_close = close,
 };
