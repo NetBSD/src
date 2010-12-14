@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: uio.h,v 1.5 2010/12/14 01:21:25 haad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include_next <sys/uio.h>
 #include <sys/sysmacros.h>
-#include <sys/debug.h>
+
 
 #ifndef _KERNEL
 #include <assert.h>
