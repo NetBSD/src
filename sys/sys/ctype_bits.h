@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_bits.h,v 1.1 2010/06/01 13:52:08 tnozaki Exp $ */
+/* $NetBSD: ctype_bits.h,v 1.2 2010/12/14 02:28:57 joerg Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,14 +40,14 @@
 #ifndef _SYS_CTYPE_BITS_H_
 #define _SYS_CTYPE_BITS_H_
 
-#define	_U	0x01
-#define	_L	0x02
-#define	_N	0x04
-#define	_S	0x08
-#define	_P	0x10
-#define	_C	0x20
-#define	_X	0x40
-#define	_B	0x80
+#define	_CTYPE_U	0x01
+#define	_CTYPE_L	0x02
+#define	_CTYPE_N	0x04
+#define	_CTYPE_S	0x08
+#define	_CTYPE_P	0x10
+#define	_CTYPE_C	0x20
+#define	_CTYPE_X	0x40
+#define	_CTYPE_B	0x80
 
 extern const unsigned char	*_ctype_;
 extern const short	*_tolower_tab_;
