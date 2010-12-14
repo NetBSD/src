@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/ddi.h>
+#include <sys/debug.h>
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
