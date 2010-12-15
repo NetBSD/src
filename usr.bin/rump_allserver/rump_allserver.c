@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.10 2010/12/15 09:40:21 wiz Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.11 2010/12/15 19:07:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.10 2010/12/15 09:40:21 wiz Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.11 2010/12/15 19:07:43 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -119,12 +119,27 @@ main(int argc, char *argv[])
 				switch (getsubopt(&options,
 				    __UNCONST(disktokens), &value)) {
 				case DKEY:
+					if (key != NULL) {
+						fprintf(stderr,
+						    "key already given\n");
+						usage();
+					}
 					key = value;
 					break;
 				case DFILE:
+					if (hostpath != NULL) {
+						fprintf(stderr,
+						    "hostpath already given\n");
+						usage();
+					}
 					hostpath = value;
 					break;
 				case DSIZE:
+					if (flen != 0) {
+						fprintf(stderr,
+						    "size already given\n");
+						usage();
+					}
 					/* XXX: off_t max? */
 					flen = strsuftoll("-d size", value,
 					    0, LLONG_MAX);
