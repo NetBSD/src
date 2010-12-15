@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.9 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.10 2010/12/15 01:29:37 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.9 2009/03/14 14:45:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.10 2010/12/15 01:29:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.9 2009/03/14 14:45:52 dsl Exp $"
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-
-#include <uvm/uvm_extern.h>
 
 extern	paddr_t avail_end;
 
