@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.24 2008/03/11 05:34:01 matt Exp $ */
+/*	$NetBSD: bi.c,v 1.25 2010/12/15 00:08:43 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,13 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.24 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.25 2010/12/15 00:08:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <sys/bus.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <dev/bi/bireg.h>
 #include <dev/bi/bivar.h>
