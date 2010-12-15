@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.117 2010/12/15 13:13:28 pooka Exp $	*/
+/*	$NetBSD: inetd.c,v 1.118 2010/12/15 15:36:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.117 2010/12/15 13:13:28 pooka Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.118 2010/12/15 15:36:15 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,10 +194,6 @@ __RCSID("$NetBSD: inetd.c,v 1.117 2010/12/15 13:13:28 pooka Exp $");
 #include <sys/resource.h>
 #include <sys/event.h>
 
-#ifndef RLIMIT_NOFILE
-#define RLIMIT_NOFILE	RLIMIT_OFILE
-#endif
-
 #ifndef NO_RPC
 #define RPC
 #endif
@@ -279,9 +275,7 @@ const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
 #define FD_MARGIN	(8)
 rlim_t		rlim_ofile_cur = OPEN_MAX;
 
-#ifdef RLIMIT_NOFILE
 struct rlimit	rlim_ofile;
-#endif
 
 struct kevent	changebuf[64];
 size_t		changes;
@@ -470,7 +464,6 @@ main(int argc, char *argv[])
 		return (EXIT_FAILURE);
 	}
 
-#ifdef RLIMIT_NOFILE
 	if (getrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0) {
 		syslog(LOG_ERR, "getrlimit: %m");
 	} else {
@@ -478,7 +471,6 @@ main(int argc, char *argv[])
 		if (rlim_ofile_cur == RLIM_INFINITY)	/* ! */
 			rlim_ofile_cur = OPEN_MAX;
 	}
-#endif
 
 	for (n = 0; n < (int)A_CNT(my_signals); n++) {
 		int	signum;
@@ -738,11 +730,9 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 		}
 		dup2(0, 1);
 		dup2(0, 2);
-#ifdef RLIMIT_NOFILE
 		if (rlim_ofile.rlim_cur != rlim_ofile_cur &&
 		    setrlimit(RLIMIT_NOFILE, &rlim_ofile) < 0)
 			syslog(LOG_ERR, "setrlimit: %m");
-#endif
 		execv(sep->se_server, sep->se_argv);
 		syslog(LOG_ERR, "cannot execute %s: %m", sep->se_server);
 	reject:
@@ -1776,10 +1766,7 @@ inetd_setproctitle(char *a, int s)
 static void
 bump_nofile(void)
 {
-#ifdef RLIMIT_NOFILE
-
 #define FD_CHUNK	32
-
 	struct rlimit rl;
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
@@ -1801,11 +1788,6 @@ bump_nofile(void)
 
 	rlim_ofile_cur = rl.rlim_cur;
 	return;
-
-#else
-	syslog(LOG_ERR, "bump_nofile: cannot extend file limit");
-	return;
-#endif
 }
 
 /*
