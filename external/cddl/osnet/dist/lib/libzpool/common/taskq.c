@@ -76,7 +76,10 @@ task_alloc(taskq_t *tq, int tqflags)
 			 */
 			delay(hz);
 		}
-		t = kmem_alloc(sizeof (task_t), tqflags);
+		
+		/* Clean up TQ_FRONT from tqflags before passing it to kmem */
+		t = kmem_alloc(sizeof (task_t),
+		    tqflags & (KM_SLEEP | KM_NOSLEEP));
 		mutex_enter(&tq->tq_lock);
 		if (t != NULL)
 			tq->tq_nalloc++;
