@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.16 2009/04/22 15:23:09 lukem Exp $	
+#	$NetBSD: Makefile,v 1.17 2010/12/15 00:09:41 pooka Exp $	
 
 WARNS?=	1	# XXX: out of date third-party program 
 
 USE_FORT?= yes	# network client
 
-PROG=	traceroute
+RUMPPRG=traceroute
 MAN=	traceroute.8 
 
 CPPFLAGS+=-DHAVE_MALLOC_H=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_SYS_SOCKIO_H=1
@@ -20,6 +20,10 @@ BINMODE=4555
 
 SRCS=	traceroute.c ifaddrlist.c 
 SRCS+= version.c as.c
+
+.PATH: ${.CURDIR}/../../lib/libc/net
+RUMPSRCS= getifaddrs.c
+CPPFLAGS+= -DRUMP_ACTION
 
 AWKS=	median.awk mean.awk 
 
