@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat_hostops.c,v 1.1 2010/12/13 18:00:38 pooka Exp $	*/
+/*	$NetBSD: envstat_hostops.c,v 1.2 2010/12/15 15:07:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat_hostops.c,v 1.1 2010/12/13 18:00:38 pooka Exp $");
+__RCSID("$NetBSD: envstat_hostops.c,v 1.2 2010/12/15 15:07:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -42,5 +42,4 @@ __RCSID("$NetBSD: envstat_hostops.c,v 1.1 2010/12/13 18:00:38 pooka Exp $");
 const struct prog_ops prog_ops = {
 	.op_open = open,
 	.op_close = close,
-	.op_ioctl = ioctl,
 };
