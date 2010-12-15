@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.14 2010/04/24 20:44:33 jruoho Exp $	*/
+/*	$NetBSD: powerd.c,v 1.15 2010/12/15 17:12:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,6 +39,8 @@
  * Power management daemon for sysmon.
  */
 
+#define SYSLOG_NAMES
+
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/event.h>
@@ -54,8 +56,10 @@
 #include <unistd.h>
 #include <util.h>
 #include <prop/proplib.h>
+#include <stdarg.h>
+#include <string.h>
 
-int	debug;
+int	debug, no_scripts;
 
 static int kq;
 
@@ -67,6 +71,7 @@ static struct kevent *allocchange(void);
 static int wait_for_events(struct kevent *, size_t);
 static void dispatch_dev_power(struct kevent *);
 static void dispatch_power_event_state_change(int, power_event_t *);
+static void powerd_log(int, const char *, ...);
 
 static const char *script_paths[] = {
 	NULL,
@@ -83,10 +88,14 @@ main(int argc, char *argv[])
 
 	setprogname(*argv);
 
-	while ((ch = getopt(argc, argv, "d")) != -1) {
+	while ((ch = getopt(argc, argv, "dn")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
+			break;
+
+		case 'n':
+			no_scripts = 1;
 			break;
 
 		default:
@@ -99,36 +108,40 @@ main(int argc, char *argv[])
 	if (argc)
 		usage();
 
-	if (debug == 0)
+	if (debug == 0) {
 		(void)daemon(0, 0);
 
-	openlog("powerd", LOG_PID | LOG_NOWAIT, LOG_DAEMON);
-	(void)pidfile(NULL);
+		openlog("powerd", LOG_PID | LOG_NOWAIT, LOG_DAEMON);
+		(void)pidfile(NULL);
+	}
 
 	if ((kq = kqueue()) == -1) {
-		syslog(LOG_ERR, "kqueue: %m");
+		powerd_log(LOG_ERR, "kqueue: %s", strerror(errno));
 		exit(EX_OSERR);
 	}
 
 	if ((fd = open(_PATH_POWER, O_RDONLY|O_NONBLOCK, 0600)) == -1) {
-		syslog(LOG_ERR, "open %s: %m", _PATH_POWER);
+		powerd_log(LOG_ERR, "open %s: %s", _PATH_POWER,
+		    strerror(errno));
 		exit(EX_OSERR);
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		syslog(LOG_ERR, "Cannot set close on exec in power fd: %m");
+		powerd_log(LOG_ERR, "Cannot set close on exec in power fd: %s",
+		    strerror(errno));
 		exit(EX_OSERR);
 	}
 
 	if (ioctl(fd, POWER_IOC_GET_TYPE, &power_type) == -1) {
-		syslog(LOG_ERR, "POWER_IOC_GET_TYPE: %m");
+		powerd_log(LOG_ERR, "POWER_IOC_GET_TYPE: %s", strerror(errno));
 		exit(EX_OSERR);
 	}
 
 	(void)asprintf(&cp, "%s/%s", _PATH_POWERD_SCRIPTS,
 	    power_type.power_type);
 	if (cp == NULL) {
-		syslog(LOG_ERR, "allocating script path: %m");
+		powerd_log(LOG_ERR, "allocating script path: %s",
+		    strerror(errno));
 		exit(EX_OSERR);
 	}
 	script_paths[0] = cp;
@@ -153,7 +166,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-d]\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-dn]\n", getprogname());
 	exit(EX_USAGE);
 }
 
@@ -173,16 +186,19 @@ run_script(const char *argv[])
 			argv[0] = path;
 
 			if (debug) {
-				(void)fprintf(stderr, "running script: %s",
-				    argv[0]);
+				(void)fprintf(stderr, "%srunning script: %s",
+				    no_scripts?"not ":"", argv[0]);
 				for (j = 1; argv[j] != NULL; j++)
 					(void)fprintf(stderr, " %s", argv[j]);
 				(void)fprintf(stderr, "\n");
 			}
+			if (no_scripts != 0)
+				return;
 
 			switch ((pid = vfork())) {
 			case -1:
-				syslog(LOG_ERR, "fork to run script: %m");
+				powerd_log(LOG_ERR, "fork to run script: %s",
+				    strerror(errno));
 				return;
 
 			case 0:
@@ -194,17 +210,18 @@ run_script(const char *argv[])
 			default:
 				/* Parent. */
 				if (waitpid(pid, &status, 0) == -1) {
-					syslog(LOG_ERR, "waitpid for %s: %m",
-					    path);
+					powerd_log(LOG_ERR,
+					    "waitpid for %s: %s", path,
+					    strerror(errno));
 					break;
 				}
 				if (WIFEXITED(status) &&
 				    WEXITSTATUS(status) != 0) {
-					syslog(LOG_ERR,
+					powerd_log(LOG_ERR,
 					    "%s exited with status %d",
 					    path, WEXITSTATUS(status));
 				} else if (!WIFEXITED(status)) {
-					syslog(LOG_ERR,
+					powerd_log(LOG_ERR,
 					    "%s terminated abnormally", path);
 				}
 				break;
@@ -214,9 +231,7 @@ run_script(const char *argv[])
 		}
 	}
 
-	syslog(LOG_ERR, "no script for %s", argv[0]);
-	if (debug)
-		(void)fprintf(stderr, "no script for %s\n", argv[0]);
+	powerd_log(LOG_ERR, "no script for %s", argv[0]);
 }
 
 static struct kevent changebuf[8];
@@ -243,7 +258,7 @@ wait_for_events(struct kevent *events, size_t nevents)
 	    events, nevents, NULL)) < 0) {
 		nchanges = 0;
 		if (errno != EINTR) {
-			syslog(LOG_ERR, "kevent: %m");
+			powerd_log(LOG_ERR, "kevent: %s", strerror(errno));
 			exit(EX_OSERR);
 		}
 	}
@@ -266,7 +281,8 @@ dispatch_dev_power(struct kevent *ev)
 	if (read(fd, &pev, sizeof(pev)) != sizeof(pev)) {
 		if (errno == EWOULDBLOCK)
 			return;
-		syslog(LOG_ERR, "read of %s: %m", _PATH_POWER);
+		powerd_log(LOG_ERR, "read of %s: %s", _PATH_POWER,
+		    strerror(errno));
 		exit(EX_OSERR);
 	}
 
@@ -280,7 +296,7 @@ dispatch_dev_power(struct kevent *ev)
 		dispatch_power_event_state_change(fd, &pev);
 		break;
 	default:
-		syslog(LOG_INFO, "unknown %s event type: %d",
+		powerd_log(LOG_INFO, "unknown %s event type: %d",
 		    _PATH_POWER, pev.pev_type);
 	}
 
@@ -328,4 +344,24 @@ dispatch_power_event_state_change(int fd, power_event_t *pev)
 	argv[5] = NULL;
 
 	run_script(argv);
+}
+
+static void
+powerd_log(int pri, const char *msg, ...)
+{
+	va_list arglist;
+	unsigned int i;
+
+	va_start(arglist, msg);
+	if (debug == 0)
+		vsyslog(pri, msg, arglist);
+	else {
+		for (i = 0; i < __arraycount(prioritynames); i++)
+			if (prioritynames[i].c_val == pri)
+				break;
+		fprintf(stderr, "%s: ",
+		    (prioritynames[i].c_val == -1) ?
+			    "UNKNOWN" : prioritynames[i].c_name);
+		vfprintf(stderr, msg, arglist);
+	}
 }
