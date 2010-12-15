@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.18 2009/12/10 05:10:00 rmind Exp $
+# $NetBSD: genassym.cf,v 1.19 2010/12/15 01:33:37 matt Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -80,7 +80,6 @@ include <machine/frame.h>
 include <machine/rpb.h>
 include <machine/vmparam.h>
 
-include <uvm/uvm.h>
 include <uvm/uvm_extern.h>
 
 # general constants 
