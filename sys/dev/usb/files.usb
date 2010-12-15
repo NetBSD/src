@@ -1,10 +1,11 @@
-#	$NetBSD: files.usb,v 1.102 2010/11/03 19:59:34 christos Exp $
+#	$NetBSD: files.usb,v 1.103 2010/12/15 23:38:15 matt Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
 
 defflag	USBVERBOSE
+defflag	opt_usb.h	USB_FRAG_DMA_WORKAROUND
 
 defflag	opt_uvideo.h	UVIDEO_DEBUG
 
