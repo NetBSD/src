@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.2 2010/12/14 17:48:31 pooka Exp $
+#	$NetBSD: t_cgd.sh,v 1.3 2010/12/15 19:14:37 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-atf_test_case basic
+atf_test_case basic cleanup
 basic_head()
 {
 
@@ -54,7 +54,7 @@ basic_cleanup()
 	env RUMP_SERVER=unix://csock rump.halt
 }
 
-atf_test_case wrongpass
+atf_test_case wrongpass cleanup
 wrongpass_head()
 {
 
@@ -82,6 +82,12 @@ wrongpass_body()
 	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd of=testfile count=2
 	atf_check -s exit:0 -e ignore -o not-file:testfile \
 	    dd rif=/dev/rcgd0d count=2
+}
+
+wrongpass_cleanup()
+{
+
+	env RUMP_SERVER=unix://csock rump.halt
 }
 
 atf_init_test_cases()
