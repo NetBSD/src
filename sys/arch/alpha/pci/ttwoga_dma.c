@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_dma.c,v 1.4 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: ttwoga_dma.c,v 1.5 2010/12/15 01:27:19 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,14 +31,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.4 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.5 2010/12/15 01:27:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h> 
-
-#include <uvm/uvm_extern.h>
 
 #define	_ALPHA_BUS_DMA_PRIVATE
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_up1000.c,v 1.10 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_up1000.c,v 1.11 2010/12/15 01:27:19 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.10 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.11 2010/12/15 01:27:19 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.10 2008/04/28 20:23:11 martin Exp $
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

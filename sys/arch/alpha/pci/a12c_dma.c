@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_dma.c,v 1.6 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: a12c_dma.c,v 1.7 2010/12/15 01:27:18 matt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,15 +44,13 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_dma.c,v 1.6 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_dma.c,v 1.7 2010/12/15 01:27:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <machine/bus.h>

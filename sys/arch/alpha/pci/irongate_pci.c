@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_pci.c,v 1.6 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: irongate_pci.c,v 1.7 2010/12/15 01:27:19 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,14 +36,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.6 2009/03/14 14:45:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.7 2010/12/15 01:27:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
