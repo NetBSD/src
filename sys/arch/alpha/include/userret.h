@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.8 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: userret.h,v 1.9 2010/12/15 01:29:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #define	_ALPHA_USERRET_H_
 
 #include <sys/userret.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Define the code needed before returning to user mode, for

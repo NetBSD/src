@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.18 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.19 2010/12/15 01:29:37 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.18 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2010/12/15 01:29:37 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.18 2009/03/14 21:04:02 dsl Exp $")
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/isa/isavar.h>
 
