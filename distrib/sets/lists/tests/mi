@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.176 2010/12/14 17:52:06 pooka Exp $
+# $NetBSD: mi,v 1.177 2010/12/15 00:17:34 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -427,6 +427,7 @@
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-util-debug	debug
@@ -1685,6 +1686,10 @@
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
+./usr/tests/usr.sbin				tests-util-tests
+./usr/tests/usr.sbin/traceroute			tests-util-tests
+./usr/tests/usr.sbin/traceroute/Atffile		tests-util-tests	atf
+./usr/tests/usr.sbin/traceroute/t_traceroute	tests-util-tests	atf
 ./usr/tests/util				tests-util-tests
 ./usr/tests/util/Atffile			tests-util-tests
 ./usr/tests/util/awk				tests-util-tests
