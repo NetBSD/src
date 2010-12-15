@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.116 2010/03/25 16:36:00 dholland Exp $	*/
+/*	$NetBSD: inetd.c,v 1.117 2010/12/15 13:13:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.116 2010/03/25 16:36:00 dholland Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.117 2010/12/15 13:13:28 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,10 +325,6 @@ struct	servtab {
 	int	se_max;			/* max # of instances of this service */
 	int	se_count;		/* number started since se_time */
 	struct	timeval se_time;	/* start of se_count */
-#ifdef MULOG
-	int	se_log;
-#define MULOG_RFC931	0x40000000
-#endif
 	struct	servtab *se_next;
 } *servtab;
 
@@ -383,11 +379,6 @@ static int	my_kevent(const struct kevent *, size_t, struct kevent *,
 static struct kevent *	allocchange(void);
 static int	get_line(int, char *, int);
 static void	spawn(struct servtab *, int);
-#ifdef MULOG
-static void	dolog(struct servtab *, int);
-static void	timeout(int);
-static char    *rfc931_name(struct sockaddr *, int);
-#endif
 
 struct biltin {
 	const char *bi_service;		/* internally provided service name */
@@ -736,10 +727,6 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 		if (debug)
 			fprintf(stderr, "%d execl %s\n",
 			    getpid(), sep->se_server);
-#ifdef MULOG
-		if (sep->se_log)
-			dolog(sep, ctrl);
-#endif
 		/* Set our control descriptor to not close-on-exec... */
 		if (fcntl(ctrl, F_SETFD, 0) < 0)
 			syslog(LOG_ERR, "fcntl (%d, F_SETFD, 0): %m", ctrl);
@@ -1332,33 +1319,6 @@ more:
 #endif
 		if (*cp == '#' || *cp == '\0')
 			continue;
-#ifdef MULOG
-		/* Avoid use of `skip' if there is a danger of it looking
-		 * at continuation lines.
-		 */
-		do {
-			cp++;
-		} while (*cp == ' ' || *cp == '\t');
-		if (*cp == '\0')
-			continue;
-		if ((arg = skip(&cp)) == NULL)
-			continue;
-		if (strcmp(arg, "DOMAIN"))
-			continue;
-		if (curdom)
-			free(curdom);
-		curdom = NULL;
-		while (*cp == ' ' || *cp == '\t')
-			cp++;
-		if (*cp == '\0')
-			continue;
-		arg = cp;
-		while (*cp && *cp != ' ' && *cp != '\t')
-			cp++;
-		if (*cp != '\0')
-			*cp++ = '\0';
-		curdom = newstr(arg);
-#endif
 		break;
 	}
 	if (cp == NULL)
@@ -1667,36 +1627,6 @@ do { \
 		sep->se_bi = NULL;
 	argc = 0;
 	for (arg = skip(&cp); cp; arg = skip(&cp)) {
-#if MULOG
-		char *colon;
-
-		if (argc == 0 && (colon = strrchr(arg, ':'))) {
-			while (arg < colon) {
-				int	x;
-				char	*ccp;
-
-				switch (*arg++) {
-				case 'l':
-					x = 1;
-					if (isdigit(*arg)) {
-						x = strtol(arg, &ccp, 0);
-						if (ccp == arg)
-							break;
-						arg = ccp;
-					}
-					sep->se_log &= ~MULOG_RFC931;
-					sep->se_log |= x;
-					break;
-				case 'a':
-					sep->se_log |= MULOG_RFC931;
-					break;
-				default:
-					break;
-				}
-			}
-			arg = colon + 1;
-		}
-#endif
 		if (argc < MAXARGV)
 			sep->se_argv[argc++] = newstr(arg);
 	}
@@ -2242,246 +2172,6 @@ tcpmux(int ctrl, struct servtab *sep)
 reject:
 	_exit(1);
 }
-
-#ifdef MULOG
-void
-dolog(struct servtab *sep, int ctrl)
-{
-	struct sockaddr_storage	ss;
-	struct sockaddr		*sa = (struct sockaddr *)&ss;
-	socklen_t		len = sizeof(ss);
-	char			*host, *dp, buf[BUFSIZ], abuf[BUFSIZ];
-	int			connected = 1;
-
-	switch (sep->se_family) {
-	case AF_INET:
-#ifdef INET6
-	case AF_INET6:
-#endif
-		break;
-	default:
-		return;
-	}
-
-	if (getpeername(ctrl, sa, &len) < 0) {
-		if (errno != ENOTCONN) {
-			syslog(LOG_ERR, "getpeername: %m");
-			return;
-		}
-		if (recvfrom(ctrl, buf, sizeof(buf), MSG_PEEK, sa, &len) < 0) {
-			syslog(LOG_ERR, "recvfrom: %m");
-			return;
-		}
-		connected = 0;
-	}
-	switch (sa->sa_family) {
-	case AF_INET:
-#ifdef INET6
-	case AF_INET6:
-#endif
-		break;
-	default:
-		syslog(LOG_ERR, "unexpected address family %u", sa->sa_family);
-		return;
-	}
-
-	if (getnameinfo(sa, len, buf, sizeof(buf), NULL, 0, 0) != 0)
-		strlcpy(buf, "?", sizeof(buf));
-	host = buf;
-
-	switch (sep->se_log & ~MULOG_RFC931) {
-	case 0:
-		return;
-	case 1:
-		if (curdom == NULL || *curdom == '\0')
-			break;
-		dp = host + strlen(host) - strlen(curdom);
-		if (dp < host)
-			break;
-		if (debug)
-			fprintf(stderr, "check \"%s\" against curdom \"%s\"\n",
-			    host, curdom);
-		if (strcasecmp(dp, curdom) == 0)
-			return;
-		break;
-	case 2:
-	default:
-		break;
-	}
-
-	openlog("", LOG_NOWAIT, MULOG);
-
-	sockaddr_snprintf(abuf, sizeof(abuf), "%a", sa);
-	if (connected && (sep->se_log & MULOG_RFC931))
-		syslog(LOG_INFO, "%s@%s(%s) wants %s",
-		    rfc931_name(sa, ctrl), host, abuf, sep->se_service);
-	else
-		syslog(LOG_INFO, "%s(%s) wants %s",
-		    host, abuf, sep->se_service);
-}
-
-/*
- * From tcp_log by
- *  Wietse Venema, Eindhoven University of Technology, The Netherlands.
- */
-#if 0
-static char sccsid[] = "@(#) rfc931.c 1.3 92/08/31 22:54:46";
-#endif
-
-#include <setjmp.h>
-
-#define	RFC931_PORT	113		/* Semi-well-known port */
-#define	TIMEOUT		4
-#define	TIMEOUT2	10
-
-static jmp_buf timebuf;
-
-/* timeout - handle timeouts */
-
-static void
-timeout(int sig)
-{
-	longjmp(timebuf, sig);
-}
-
-/* rfc931_name - return remote user name */
-
-char *
-rfc931_name(struct sockaddr *there,	/* remote link information */
-    int ctrl)
-{
-	struct sockaddr_storage here;	/* local link information */
-	struct sockaddr_storage sin;	/* for talking to RFC931 daemon */
-	socklen_t	length;
-	int		s;
-	unsigned	remote;
-	unsigned	local;
-	static char	user[256];		/* XXX */
-	char		buf[256];
-	char		*cp;
-	char		*result = "USER_UNKNOWN";
-	int		len;
-	u_int16_t	myport, hisport;
-
-	/* Find out local port number of our stdin. */
-
-	length = sizeof(here);
-	if (getsockname(ctrl, (struct sockaddr *) &here, &length) == -1) {
-		syslog(LOG_ERR, "getsockname: %m");
-		return (result);
-	}
-	switch (here.ss_family) {
-	case AF_INET:
-		myport = ((struct sockaddr_in *)&here)->sin_port;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		myport = ((struct sockaddr_in6 *)&here)->sin6_port;
-		break;
-#endif
-	}
-	switch (there->sa_family) {
-	case AF_INET:
-		hisport = ((struct sockaddr_in *)&there)->sin_port;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		hisport = ((struct sockaddr_in6 *)&there)->sin6_port;
-		break;
-#endif
-	}
-	/* Set up timer so we won't get stuck. */
-
-	if ((s = socket(here.ss_family, SOCK_STREAM, 0)) == -1) {
-		syslog(LOG_ERR, "socket: %m");
-		return (result);
-	}
-
-	sin = here;
-	switch (sin.ss_family) {
-	case AF_INET:
-		((struct sockaddr_in *)&sin)->sin_port = htons(0);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		((struct sockaddr_in6 *)&sin)->sin6_port = htons(0);
-		break;
-#endif
-	}
-	if (bind(s, (struct sockaddr *) &sin, sin.ss_len) == -1) {
-		syslog(LOG_ERR, "bind: %m");
-		return (result);
-	}
-
-	signal(SIGALRM, timeout);
-	if (setjmp(timebuf)) {
-		close(s);			/* not: fclose(fp) */
-		return (result);
-	}
-	alarm(TIMEOUT);
-
-	/* Connect to the RFC931 daemon. */
-
-	memcpy(&sin, there, there->sa_len);
-	switch (sin.ss_family) {
-	case AF_INET:
-		((struct sockaddr_in *)&sin)->sin_port = htons(RFC931_PORT);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		((struct sockaddr_in6 *)&sin)->sin6_port = htons(RFC931_PORT);
-		break;
-#endif
-	}
-	if (connect(s, (struct sockaddr *) &sin, sin.ss_len) == -1) {
-		close(s);
-		alarm(0);
-		return (result);
-	}
-
-	/* Query the RFC 931 server. Would 13-byte writes ever be broken up? */
-	(void)snprintf(buf, sizeof buf, "%u,%u\r\n", ntohs(hisport),
-	    ntohs(myport));
-
-	for (len = 0, cp = buf; len < strlen(buf); ) {
-		int	n;
-
-		if ((n = write(s, cp, strlen(buf) - len)) == -1) {
-			close(s);
-			alarm(0);
-			return (result);
-		}
-		cp += n;
-		len += n;
-	}
-
-	/* Read response */
-	for (cp = buf; cp < buf + sizeof(buf) - 1; ) {
-		char	c;
-		if (read(s, &c, 1) != 1) {
-			close(s);
-			alarm(0);
-			return (result);
-		}
-		if (c == '\n')
-			break;
-		*cp++ = c;
-	}
-	*cp = '\0';
-
-	if (sscanf(buf, "%u , %u : USERID :%*[^:]:%255s", &remote, &local,
-	    user) == 3 && ntohs(hisport) == remote && ntohs(myport) == local) {
-		/* Strip trailing carriage return. */
-		if ((cp = strchr(user, '\r')) != NULL)
-			*cp = 0;
-		result = user;
-	}
-
-	alarm(0);
-	close(s);
-	return (result);
-}
-#endif
 
 /*
  * check if the address/port where send data to is one of the obvious ports
