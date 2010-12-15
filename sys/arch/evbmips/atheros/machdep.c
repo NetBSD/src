@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.22 2010/02/08 19:02:27 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.23 2010/12/15 00:04:51 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2010/02/08 19:02:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2010/12/15 00:04:51 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -218,8 +218,6 @@ mach_init(void)
 {
 	void *kernend;
 	u_long first, last;
-	struct pcb *pcb0;
-	vaddr_t v;
 	uint32_t memsize;
 
 	extern char edata[], end[];	/* XXX */
