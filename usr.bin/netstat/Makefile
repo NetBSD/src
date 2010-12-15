@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2010/12/15 09:15:05 he Exp $
+#	$NetBSD: Makefile,v 1.32 2010/12/15 11:22:41 pooka Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -22,10 +22,6 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/sys/dist/pf
 CPPFLAGS+= -DRUMP_ACTION
 RUMPSRCS+= sysctlbyname.c sysctlgetmibinfo.c sysctlnametomib.c
 RUMPSRCS+= if_indextoname.c getifaddrs.c
-
-.if defined(CRUNCHEDPROG)
-SRCS+=	netstat_hostops.c
-.endif
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+= -DINET6
