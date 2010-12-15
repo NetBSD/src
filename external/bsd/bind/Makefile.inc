@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2010/12/15 02:08:16 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2010/12/15 07:36:51 enami Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -94,7 +94,7 @@ LDADD+= -lcrypto
 DPADD+= ${LIBCRYPTO}
 .else
 .if exists(${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto)
-LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypt)
+LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
 .else
 LIBDPLIBS+=	crypto ${NETBSDSRCDIR}/lib/libcrypto
 .endif
