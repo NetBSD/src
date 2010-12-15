@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.109 2010/12/11 15:17:15 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.110 2010/12/15 17:17:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.109 2010/12/11 15:17:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.110 2010/12/15 17:17:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -520,21 +520,16 @@ sysmon_envsys_destroy(struct sysmon_envsys *sme)
 int
 sysmon_envsys_sensor_attach(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	const struct sme_description_table *sdt_units;
+	const struct sme_descr_entry *sdt_units;
 	envsys_data_t *oedata;
-	int i;
 
 	KASSERT(sme != NULL || edata != NULL);
 
 	/* 
 	 * Find the correct units for this sensor.
 	 */
-	sdt_units = sme_get_description_table(SME_DESC_UNITS);
-	for (i = 0; sdt_units[i].type != -1; i++)
-		if (sdt_units[i].type == edata->units)
-			break;
-
-	if (strcmp(sdt_units[i].desc, "unknown") == 0)
+	sdt_units = sme_find_table_entry(SME_DESC_UNITS, edata->units);
+	if (sdt_units->type == -1)
 		return EINVAL;
 
 	/*
@@ -567,7 +562,7 @@ sysmon_envsys_sensor_attach(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	DPRINTF(("%s: attached #%d (%s), units=%d (%s)\n",
 	    __func__, edata->sensor, edata->desc,
-	    sdt_units[i].type, sdt_units[i].desc));
+	    sdt_units->type, sdt_units->desc));
 
 	return 0;
 }
@@ -1054,9 +1049,9 @@ sme_remove_userprops(void)
 	envsys_data_t *edata = NULL;
 	char tmp[ENVSYS_DESCLEN];
 	sysmon_envsys_lim_t lims;
-	const struct sme_description_table *sdt_units;
+	const struct sme_descr_entry *sdt_units;
 	uint32_t props;
-	int ptype, i;
+	int ptype;
 
 	mutex_enter(&sme_global_mtx);
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
@@ -1166,15 +1161,12 @@ sme_remove_userprops(void)
 				/*
 				 * Find the correct units for this sensor.
 				 */
-				sdt_units =
-				    sme_get_description_table(SME_DESC_UNITS);
-				for (i = 0; sdt_units[i].type != -1; i++)
-					if (sdt_units[i].type == edata->units)
-						break;
+				sdt_units = sme_find_table_entry(SME_DESC_UNITS,
+				    edata->units);
 
 				sme_event_register(sdict, edata, sme,
 				    &lims, props, PENVSYS_EVENT_LIMITS,
-				    sdt_units[i].crittype);
+				    sdt_units->crittype);
 			}
 		}
 
@@ -1267,18 +1259,15 @@ static sme_event_drv_t *
 sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		    	  prop_dictionary_t dict, envsys_data_t *edata)
 {
-	const struct sme_description_table *sdt, *sdt_units;
+	const struct sme_descr_entry *sdt_state, *sdt_units, *sdt_battcap;
+	const struct sme_descr_entry *sdt_drive;
 	sme_event_drv_t *sme_evdrv_t = NULL;
-	int i, j;
 	char indexstr[ENVSYS_DESCLEN];
 
 	/* 
 	 * Find the correct units for this sensor.
 	 */
-	sdt_units = sme_get_description_table(SME_DESC_UNITS);
-	for (i = 0; sdt_units[i].type != -1; i++)
-		if (sdt_units[i].type == edata->units)
-			break;
+	sdt_units = sme_find_table_entry(SME_DESC_UNITS, edata->units);
 
 	/*
 	 * Add the index sensor string.
@@ -1300,7 +1289,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<string>blah blah</string>
 	 * 		...
 	 */
-	if (sme_sensor_upstring(dict, "type", sdt_units[i].desc))
+	if (sme_sensor_upstring(dict, "type", sdt_units->desc))
 		goto bad;
 
 	if (sme_sensor_upstring(dict, "description", edata->desc))
@@ -1314,15 +1303,12 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<string>valid</string>
 	 * 		...
 	 */
-	sdt = sme_get_description_table(SME_DESC_STATES);
-	for (j = 0; sdt[j].type != -1; j++)
-		if (sdt[j].type == edata->state) 
-			break;
+	sdt_state = sme_find_table_entry(SME_DESC_STATES, edata->state);
 
 	DPRINTF(("%s: sensor desc=%s type=%d state=%d\n",
 	    __func__, edata->desc, edata->units, edata->state));
 
-	if (sme_sensor_upstring(dict, "state", sdt[j].desc))
+	if (sme_sensor_upstring(dict, "state", sdt_state->desc))
 		goto bad;
 
 	/*
@@ -1391,12 +1377,10 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		...
 	 */
 	if (edata->units == ENVSYS_BATTERY_CAPACITY) {
-		sdt = sme_get_description_table(SME_DESC_BATTERY_CAPACITY);
-		for (j = 0; sdt[j].type != -1; j++)
-			if (sdt[j].type == edata->value_cur)
-				break;
-
-		if (sme_sensor_upstring(dict, "battery-capacity", sdt[j].desc))
+		sdt_battcap = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
+		    edata->value_cur);
+		if (sme_sensor_upstring(dict, "battery-capacity",
+					sdt_battcap->desc))
 			goto out;
 	}
 
@@ -1409,12 +1393,9 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		...
 	 */
 	if (edata->units == ENVSYS_DRIVE) {
-		sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
-		for (j = 0; sdt[j].type != -1; j++)
-			if (sdt[j].type == edata->value_cur)
-				break;
-
-		if (sme_sensor_upstring(dict, "drive-state", sdt[j].desc))
+		sdt_drive = sme_find_table_entry(SME_DESC_DRIVE_STATES,
+		    edata->value_cur);
+		if (sme_sensor_upstring(dict, "drive-state", sdt_drive->desc))
 			goto out;
 	}
 
@@ -1494,7 +1475,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		sme_evdrv_t->sed_sdict = dict;
 		sme_evdrv_t->sed_edata = edata;
 		sme_evdrv_t->sed_sme = sme;
-		sme_evdrv_t->sed_powertype = sdt_units[i].crittype;
+		sme_evdrv_t->sed_powertype = sdt_units->crittype;
 	}
 
 out:
@@ -1579,10 +1560,10 @@ sme_get_max_value(struct sysmon_envsys *sme,
 int
 sme_update_dictionary(struct sysmon_envsys *sme)
 {
-	const struct sme_description_table *sdt;
+	const struct sme_descr_entry *sdt;
 	envsys_data_t *edata;
 	prop_object_t array, dict, obj, obj2;
-	int j, error = 0;
+	int error = 0;
 
 	/* 
 	 * Retrieve the array of dictionaries in device.
@@ -1652,31 +1633,25 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		/* 
 		 * update sensor's state.
 		 */
-		sdt = sme_get_description_table(SME_DESC_STATES);
-		for (j = 0; sdt[j].type != -1; j++)
-			if (sdt[j].type == edata->state)
-				break;
+		sdt = sme_find_table_entry(SME_DESC_STATES, edata->state);
 
 		DPRINTFOBJ(("%s: sensor #%d type=%d (%s) flags=%d\n",
-		    __func__, edata->sensor, sdt[j].type, sdt[j].desc,
+		    __func__, edata->sensor, sdt->type, sdt->desc,
 		    edata->flags));
 
-		error = sme_sensor_upstring(dict, "state", sdt[j].desc);
+		error = sme_sensor_upstring(dict, "state", sdt->desc);
 		if (error)
 			break;
 
 		/* 
 		 * update sensor's type.
 		 */
-		sdt = sme_get_description_table(SME_DESC_UNITS);
-		for (j = 0; sdt[j].type != -1; j++)
-			if (sdt[j].type == edata->units)
-				break;
+		sdt = sme_find_table_entry(SME_DESC_UNITS, edata->units);
 
 		DPRINTFOBJ(("%s: sensor #%d units=%d (%s)\n",
-		    __func__, edata->sensor, sdt[j].type, sdt[j].desc));
+		    __func__, edata->sensor, sdt->type, sdt->desc));
 
-		error = sme_sensor_upstring(dict, "type", sdt[j].desc);
+		error = sme_sensor_upstring(dict, "type", sdt->desc);
 		if (error)
 			break;
 
@@ -1763,14 +1738,10 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		 * update 'drive-state' only for ENVSYS_DRIVE sensors.
 		 */
 		if (edata->units == ENVSYS_DRIVE) {
-			sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
-			for (j = 0; sdt[j].type != -1; j++)
-				if (sdt[j].type == edata->value_cur)
-					break;
-
-			error = sme_sensor_upstring(dict,
-						    "drive-state",
-						    sdt[j].desc);
+			sdt = sme_find_table_entry(SME_DESC_DRIVE_STATES,
+			    edata->value_cur);
+			error = sme_sensor_upstring(dict, "drive-state",
+						    sdt->desc);
 			if (error)
 				break;
 		}
@@ -1780,15 +1751,10 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		 * sensors.
 		 */
 		if (edata->units == ENVSYS_BATTERY_CAPACITY) {
-			sdt =
-			  sme_get_description_table(SME_DESC_BATTERY_CAPACITY);
-			for (j = 0; sdt[j].type != -1; j++)
-				if (sdt[j].type == edata->value_cur)
-					break;
-
-			error = sme_sensor_upstring(dict,
-						    "battery-capacity",
-						    sdt[j].desc);
+			sdt = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
+			    edata->value_cur);
+			error = sme_sensor_upstring(dict, "battery-capacity",
+						    sdt->desc);
 			if (error)
 				break;
 		}
@@ -1807,7 +1773,7 @@ int
 sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		       prop_array_t array)
 {
-	const struct sme_description_table *sdt;
+	const struct sme_descr_entry *sdt;
 	envsys_data_t *edata;
 	prop_dictionary_t dict, tdict = NULL;
 	prop_object_t obj, obj1, obj2, tobj = NULL;
@@ -1940,10 +1906,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			}
 		}
 
-		sdt = sme_get_description_table(SME_DESC_UNITS);
-		for (i = 0; sdt[i].type != -1; i++)
-			if (sdt[i].type == edata->units)
-				break;
+		sdt = sme_find_table_entry(SME_DESC_UNITS, edata->units);
 
 		/* 
 		 * did the user want to set a critical capacity event?
@@ -2035,7 +1998,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 					(edata->flags & ENVSYS_FPERCENT)?
 						PENVSYS_EVENT_CAPACITY:
 						PENVSYS_EVENT_LIMITS,
-					sdt[i].crittype);
+					sdt->crittype);
 			if (error == EEXIST)
 				error = 0;
 			if (error) 
