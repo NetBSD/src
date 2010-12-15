@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.36 2010/04/10 19:01:01 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.37 2010/12/15 17:17:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -40,7 +40,7 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
 
-enum sme_description_types {
+enum sme_descr_type {
 	SME_DESC_UNITS = 1,
 	SME_DESC_STATES,
 	SME_DESC_DRIVE_STATES,
@@ -90,7 +90,7 @@ typedef struct sme_event_drv {
 	int			sed_powertype;
 } sme_event_drv_t;
 
-struct sme_description_table {
+struct sme_descr_entry {
 	int 		type;
 	int 		crittype;
 	const char 	*desc;
@@ -142,6 +142,6 @@ int	sme_sensor_upint32(prop_dictionary_t, const char *, int32_t);
 int	sme_sensor_upuint32(prop_dictionary_t, const char *, uint32_t);
 int	sme_sensor_upstring(prop_dictionary_t, const char *, const char *);
 
-const struct	sme_description_table *sme_get_description_table(int);
+const struct sme_descr_entry *sme_find_table_entry(enum sme_descr_type, int);
 
 #endif /* _DEV_SYSMON_ENVSYSVAR_H_ */

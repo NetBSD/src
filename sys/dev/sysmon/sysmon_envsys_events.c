@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.95 2010/12/08 00:09:14 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.96 2010/12/15 17:17:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.95 2010/12/08 00:09:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.96 2010/12/15 17:17:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -751,7 +751,7 @@ void
 sme_deliver_event(sme_event_t *see)
 {
 	envsys_data_t *edata = see->see_edata;
-	const struct sme_description_table *sdt = NULL;
+	const struct sme_descr_entry *sdt = NULL;
 	const struct sme_sensor_event *sse = sme_sensor_event;
 	int i, state = 0;
 
@@ -819,12 +819,13 @@ sme_deliver_event(sme_event_t *see)
 
 		switch (edata->units) {
 		case ENVSYS_DRIVE:
-			sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
+			sdt = sme_find_table_entry(SME_DESC_DRIVE_STATES,
+			    edata->value_cur);
 			state = ENVSYS_DRIVE_ONLINE;
 			break;
 		case ENVSYS_BATTERY_CAPACITY:
-			sdt = sme_get_description_table(
-			    SME_DESC_BATTERY_CAPACITY);
+			sdt = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
+			    edata->value_cur);
 			state = ENVSYS_BATTERY_CAPACITY_NORMAL;
 			break;
 		default:
@@ -832,17 +833,13 @@ sme_deliver_event(sme_event_t *see)
 			    __func__);
 		}
 
-		for (i = 0; sdt[i].type != -1; i++)
-			if (sdt[i].type == edata->value_cur)
-				break;
-
-		if (sdt[i].type == -1)
+		if (sdt->type == -1)
 			break;
 
 		/* 
 		 * copy current state description.
 		 */
-		(void)strlcpy(see->see_pes.pes_statedesc, sdt[i].desc,
+		(void)strlcpy(see->see_pes.pes_statedesc, sdt->desc,
 		    sizeof(see->see_pes.pes_statedesc));
 
 		if (edata->value_cur == state)
