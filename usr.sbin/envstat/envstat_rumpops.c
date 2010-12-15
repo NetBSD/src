@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat_rumpops.c,v 1.1 2010/12/13 18:00:38 pooka Exp $	*/
+/*	$NetBSD: envstat_rumpops.c,v 1.2 2010/12/15 15:07:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat_rumpops.c,v 1.1 2010/12/13 18:00:38 pooka Exp $");
+__RCSID("$NetBSD: envstat_rumpops.c,v 1.2 2010/12/15 15:07:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -44,5 +44,4 @@ const struct prog_ops prog_ops = {
 
 	.op_open =	rump_sys_open,
 	.op_close =	rump_sys_close,
-	.op_ioctl =	rump_sys_ioctl,
 };
