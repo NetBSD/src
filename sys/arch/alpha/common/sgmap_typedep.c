@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.36 2010/10/07 19:39:30 hans Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.37 2010/12/15 01:28:24 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.36 2010/10/07 19:39:30 hans Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.37 2010/12/15 01:28:24 matt Exp $");
 
 #include "opt_ddb.h"
+
+#include <uvm/uvm_extern.h>
 
 #ifdef SGMAP_DEBUG
 int			__C(SGMAP_TYPE,_debug) = 0;
