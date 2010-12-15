@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.175 2010/06/22 18:34:50 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.176 2010/12/15 13:44:17 pooka Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.175 2010/06/22 18:34:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.176 2010/12/15 13:44:17 pooka Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1587,11 +1587,6 @@ uvm_fault_lower(
 		uvm_fault_lower_lookup(ufi, flt, pages);
 		uobjpage = pages[flt->centeridx];
 	}
-
-	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
-	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
-	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * note that at this point we are done with any front or back pages.
