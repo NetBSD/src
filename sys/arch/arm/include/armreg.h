@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.45 2010/10/02 05:37:58 kiyohara Exp $	*/
+/*	$NetBSD: armreg.h,v 1.46 2010/12/15 15:43:13 bsh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -296,9 +296,9 @@
 #define CPU_CONTROL_VECRELOC	0x00002000 /* V: Vector relocation */
 #define CPU_CONTROL_ROUNDROBIN	0x00004000 /* RR: Predictable replacement */
 #define CPU_CONTROL_V4COMPAT	0x00008000 /* L4: ARMv4 compat LDR R15 etc */
-#define CPU_CONTROL_UNAL_ENABLE	0x00040000 /* U: unaligned data access */
-#define CPU_CONTROL_XP_ENABLE	0x00080000 /* XP: extended page table */
 #define CPU_CONTROL_FI_ENABLE	0x00200000 /* FI: Low interrupt latency */
+#define CPU_CONTROL_UNAL_ENABLE	0x00400000 /* U: unaligned data access */
+#define CPU_CONTROL_XP_ENABLE	0x00800000 /* XP: extended page table */
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
