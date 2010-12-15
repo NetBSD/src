@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.14 2009/04/14 22:15:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2010/12/15 08:09:23 he Exp $
 
 WARNS?=	1	# fails -Wshadow -Wcast-qual
 
 .include <bsd.own.mk>
 
-DIST=	${NETBSDSRCDIR}/dist
-.PATH:	${DIST}/nawk
+DIST=	${NETBSDSRCDIR}/external/historical/nawk/dist/
+.PATH:	${DIST}
 
 PROG=	awk
 SRCS=	awkgram.y b.c lex.c lib.c main.c parse.c proctab.c run.c tran.c
-CPPFLAGS+=	-I${DIST}/nawk -I. -DHAS_ISBLANK
+CPPFLAGS+=	-I${DIST} -I. -DHAS_ISBLANK
 LDADD+=	-lm
 .if !defined(HOSTPROG)
 DPADD+=	${LIBM}
