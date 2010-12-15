@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.49 2010/11/08 12:42:35 pooka Exp $   */
+/*      $NetBSD: raidctl.c,v 1.50 2010/12/15 18:37:55 pooka Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.49 2010/11/08 12:42:35 pooka Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.50 2010/12/15 18:37:55 pooka Exp $");
 #endif
 
 
@@ -58,15 +58,10 @@ __RCSID("$NetBSD: raidctl.c,v 1.49 2010/11/08 12:42:35 pooka Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#ifdef RUMP_ACTION
-#include <rump/rump.h>
-#include <rump/rumpclient.h>
-#include <rump/rump_syscalls.h>
-#endif
-
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
 #include "rf_configure.h"
+#include "prog_ops.h"
 
 void	do_ioctl(int, u_long, void *, const char *);
 static  void rf_configure(int, char*, int);
@@ -126,11 +121,6 @@ main(int argc,char *argv[])
 	serial_number = 0;
 	force = 0;
 	openmode = O_RDWR;	/* default to read/write */
-
-#ifdef RUMP_ACTION
-	if (rumpclient_init() == -1)
-		err(1, "rump client init failed");
-#endif
 
 	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:mM:r:R:sSpPuv")) 
 	       != -1)
@@ -267,13 +257,12 @@ main(int argc,char *argv[])
 	if ((num_options > 1) || (argc == 0)) 
 		usage();
 
+	if (prog_init && prog_init() == -1)
+		err(1, "init failed");
+
 	strlcpy(name, argv[0], sizeof(name));
-#ifdef RUMP_ACTION
 	fd = opendisk1(name, openmode, dev_name, sizeof(dev_name), 0,
-	    rump_sys_open);
-#else
-	fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 0);
-#endif
+	    prog_open);
 	if (fd == -1)
 		err(1, "Unable to open device file: %s", name);
 	if (fstat(fd, &st) == -1)
@@ -355,14 +344,14 @@ main(int argc,char *argv[])
 		break;
 	}
 
-	close(fd);
+	prog_close(fd);
 	exit(0);
 }
 
 void
 do_ioctl(int fd, unsigned long command, void *arg, const char *ioctl_name)
 {
-	if (ioctl(fd, command, arg) == -1)
+	if (prog_ioctl(fd, command, arg) == -1)
 		err(1, "ioctl (%s) failed", ioctl_name);
 }
 
@@ -491,7 +480,7 @@ rf_output_pmstat(int fd, int raidID)
 	int dis, dr;
 	struct rf_pmstat st;
 
-	if (ioctl(fd, RAIDFRAME_PARITYMAP_STATUS, &st) == -1) {
+	if (prog_ioctl(fd, RAIDFRAME_PARITYMAP_STATUS, &st) == -1) {
 		if (errno == EINVAL) {
 			printf("raid%d: has no parity; parity map disabled\n",
 				raidID);
