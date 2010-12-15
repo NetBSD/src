@@ -574,7 +574,7 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
     }
     getcwd(cwd, sizeof(cwd));
     Var_Set(".ERROR_CWD", cwd, VAR_GLOBAL, 0);
-    if (pbm) {
+    if (pbm && pbm->meta_fname[0]) {
 	Var_Set(".ERROR_META_FILE", pbm->meta_fname, VAR_GLOBAL, 0);
     }
 }
@@ -644,6 +644,7 @@ meta_job_finish(Job *job)
 	meta_cmd_finish(pbm);
 	fclose(pbm->mfp);
 	pbm->mfp = NULL;
+	pbm->meta_fname[0] = '\0';
     }
 }
 
