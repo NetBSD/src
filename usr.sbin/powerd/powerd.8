@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.22 2010/01/27 06:52:24 wiz Exp $
+.\"	$NetBSD: powerd.8,v 1.23 2010/12/15 17:12:40 pgoyette Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 26, 2010
+.Dd December 15, 2010
 .Dt POWERD 8
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
+.Op Fl n
 .Sh DESCRIPTION
 .Nm
 acts upon power management events posted by the kernel's power management
@@ -58,9 +59,13 @@ supports the following option:
 .Bl -tag -width xxxx
 .It Fl d
 Enable debugging mode.
-Verbose messages will be sent to stderr and
+Verbose messages and all messages intended for
+.Xr syslog 8
+will be sent to stderr, and
 .Nm
 will stay in the foreground of the controlling terminal.
+.It Fl n
+Prevent execution of power management scripts.
 .El
 .Sh CONFIGURATION SCRIPTS
 All configuration of
