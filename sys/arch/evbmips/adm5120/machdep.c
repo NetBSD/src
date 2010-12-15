@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17 2010/05/19 20:41:59 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.18 2010/12/15 00:04:28 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2010/05/19 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2010/12/15 00:04:28 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -308,11 +308,9 @@ void
 mach_init(int argc, char **argv, void *a2, void *a3)
 {
 	struct adm5120_config *admc = &adm5120_configuration;
-	struct pcb *pcb0;
 	uint32_t memsize;
 	vaddr_t kernend;
 	u_long first, last;
-	vaddr_t v;
 
 	extern char edata[], end[];	/* XXX */
 
