@@ -76,7 +76,7 @@ task_alloc(taskq_t *tq, int tqflags)
 			 */
 			delay(hz);
 		}
-		
+
 		/* Clean up TQ_FRONT from tqflags before passing it to kmem */
 		t = kmem_alloc(sizeof (task_t),
 		    tqflags & (KM_SLEEP | KM_NOSLEEP));
