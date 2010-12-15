@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.40 2010/11/13 13:52:12 uebayasi Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.41 2010/12/15 23:38:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,15 +38,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.40 2010/11/13 13:52:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.41 2010/12/15 23:38:15 matt Exp $");
+
+#include "opt_usb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/device.h>		/* for usbdivar.h */
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #ifdef __NetBSD__
 #include <sys/extent.h>
@@ -108,7 +111,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 		     (u_long)size, (u_long)align));
 
 #ifdef DIAGNOSTIC
-	if (!curproc) {
+	if (cpu_intr_p()) {
 		printf("usb_block_allocmem: in interrupt context, size=%lu\n",
 		    (unsigned long) size);
 	}
@@ -130,14 +133,14 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	splx(s);
 
 #ifdef DIAGNOSTIC
-	if (!curproc) {
+	if (cpu_intr_p()) {
 		printf("usb_block_allocmem: in interrupt context, failed\n");
 		return (USBD_NOMEM);
 	}
 #endif
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
-	p = malloc(sizeof *p, M_USB, M_NOWAIT);
+	p = kmem_zalloc(sizeof *p, KM_NOSLEEP);
 	if (p == NULL)
 		return (USBD_NOMEM);
 
@@ -166,6 +169,9 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 		goto destroy;
 
 	*dmap = p;
+#ifdef USB_FRAG_DMA_WORKAROUND
+	memset(p->kaddr, 0, p->size);
+#endif
 	return (USBD_NORMAL_COMPLETION);
 
  destroy:
@@ -175,7 +181,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
  free1:
 	bus_dmamem_free(tag, p->segs, p->nsegs);
  free0:
-	free(p, M_USB);
+	kmem_free(p, sizeof(*p));
 	return (USBD_NOMEM);
 }
 
@@ -184,7 +190,7 @@ void
 usb_block_real_freemem(usb_dma_block_t *p)
 {
 #ifdef DIAGNOSTIC
-	if (!curproc) {
+	if (cpu_intr_p()) {
 		printf("usb_block_real_freemem: in interrupt context\n");
 		return;
 	}
@@ -193,7 +199,7 @@ usb_block_real_freemem(usb_dma_block_t *p)
 	bus_dmamap_destroy(p->tag, p->map);
 	bus_dmamem_unmap(p->tag, p->kaddr, p->size);
 	bus_dmamem_free(p->tag, p->segs, p->nsegs);
-	free(p, M_USB);
+	kmem_free(p, sizeof(*p));
 }
 #endif
 
@@ -238,9 +244,10 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 
 	s = splusb();
 	/* Check for free fragments. */
-	for (f = LIST_FIRST(&usb_frag_freelist); f; f = LIST_NEXT(f, next))
+	for (f = LIST_FIRST(&usb_frag_freelist); f; f = LIST_NEXT(f, next)) {
 		if (f->block->tag == tag)
 			break;
+	}
 	if (f == NULL) {
 		DPRINTFN(1, ("usb_allocmem: adding fragments\n"));
 		err = usb_block_allocmem(tag, USB_MEM_BLOCK, USB_MEM_SMALL,&b);
@@ -254,11 +261,17 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 			f->block = b;
 			f->offs = i;
 			LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
+#ifdef USB_FRAG_DMA_WORKAROUND
+			i += 1 * USB_MEM_SMALL;
+#endif
 		}
 		f = LIST_FIRST(&usb_frag_freelist);
 	}
 	p->block = f->block;
 	p->offs = f->offs;
+#ifdef USB_FRAG_DMA_WORKAROUND
+	p->offs += USB_MEM_SMALL;
+#endif
 	p->block->flags &= ~USB_DMA_RESERVE;
 	LIST_REMOVE(f, next);
 	splx(s);
@@ -277,9 +290,16 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 		usb_block_freemem(p->block);
 		return;
 	}
+	//usb_syncmem(p, 0, USB_MEM_SMALL, BUS_DMASYNC_POSTREAD);
 	f = KERNADDR(p, 0);
+#ifdef USB_FRAG_DMA_WORKAROUND
+	f = (void *)((uintptr_t)f - USB_MEM_SMALL);
+#endif
 	f->block = p->block;
 	f->offs = p->offs;
+#if def USB_FRAG_DMA_WORKAROUND
+	f->offs -= USB_MEM_SMALL;
+#endif
 	s = splusb();
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
 	splx(s);
@@ -305,7 +325,7 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	if (rs->vaddr == 0 || size > USB_MEM_RESERVE)
 		return USBD_NOMEM;
 
-	dma->block = malloc(sizeof *dma->block, M_USB, M_ZERO | M_NOWAIT);
+	dma->block = kmem_zalloc(sizeof *dma->block, KM_NOSLEEP);
 	if (dma->block == NULL)
 		return USBD_NOMEM;
 
@@ -341,7 +361,7 @@ usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
 
 	error = extent_free(rs->extent,
 	    (u_long)(rs->paddr + dma->offs), dma->block->size, 0);
-	free(dma->block, M_USB);
+	kmem_free(dma->block, sizeof(*dma->block));
 }
 
 int
