@@ -1,4 +1,4 @@
-/* $NetBSD: kgdb_machdep.c,v 1.6 2009/01/11 23:20:37 cegger Exp $ */
+/* $NetBSD: kgdb_machdep.c,v 1.7 2010/12/15 01:32:31 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.6 2009/01/11 23:20:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.7 2010/12/15 01:32:31 matt Exp $");
 
 #include "com.h"
 
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.6 2009/01/11 23:20:37 cegger Exp 
 
 #include <machine/bus.h>
 #include <machine/db_machdep.h>
-
-#include <uvm/uvm_extern.h>
 
 #if NCOM > 0
 #include <dev/ic/comreg.h>

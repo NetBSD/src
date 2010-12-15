@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.88 2009/11/26 00:19:11 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.89 2010/12/15 01:32:31 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.89 2010/12/15 01:32:31 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -71,8 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2009/11/26 00:19:11 matt Exp $");
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpuvar.h>
