@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.4 2010/12/15 00:19:05 pooka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.5 2010/12/15 20:42:23 pooka Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -102,6 +102,7 @@
 ./usr/tests/dev/audio
 ./usr/tests/dev/cgd
 ./usr/tests/dev/md
+./usr/tests/dev/raidframe
 ./usr/tests/dev/scsipi
 ./usr/tests/dev/sysmon
 ./usr/tests/fs

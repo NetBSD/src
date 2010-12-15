@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.178 2010/12/15 10:42:56 haad Exp $
+# $NetBSD: mi,v 1.179 2010/12/15 20:42:24 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1047,6 +1047,9 @@
 ./usr/tests/dev/md/Atffile			tests-fs-tests		atf
 ./usr/tests/dev/md/h_mdserv			tests-fs-tests		atf
 ./usr/tests/dev/md/t_md			tests-fs-tests		atf
+./usr/tests/dev/raidframe				tests-fs-tests
+./usr/tests/dev/raidframe/Atffile			tests-fs-tests		atf
+./usr/tests/dev/raidframe/t_raid			tests-fs-tests		atf
 ./usr/tests/dev/scsipi				tests-fs-tests
 ./usr/tests/dev/scsipi/Atffile			tests-fs-tests		atf
 ./usr/tests/dev/scsipi/t_cd			tests-fs-tests		atf
