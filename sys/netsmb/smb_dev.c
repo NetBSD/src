@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.35 2010/12/11 04:21:17 christos Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.36 2010/12/15 12:58:13 ahoka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.35 2010/12/11 04:21:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.36 2010/12/15 12:58:13 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -462,6 +462,46 @@ nsmb_dev_load(module_t mod, int cmd, void *arg)
 }
 
 DEV_MODULE (dev_netsmb, nsmb_dev_load, 0);
+#else
+
+#ifdef _MODULE
+
+#include <sys/module.h>
+
+MODULE(MODULE_CLASS_MISC, nsmb, NULL);
+
+static int
+nsmb_modcmd(modcmd_t cmd, void *arg)
+{
+	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
+	int error = 0;
+
+	switch (cmd) {
+	    case MODULE_CMD_INIT:
+		nsmbattach(1);
+		error =
+		    devsw_attach("nsmb", NULL, &bmajor, &nsmb_cdevsw, &cmajor);
+		if (error)
+			return error;
+
+		break;
+	    case MODULE_CMD_FINI:
+		smb_iod_done();
+		smb_sm_done();
+		smb_rqpool_fini();
+		error = devsw_detach(NULL, &nsmb_cdevsw);
+		free(smb_devtbl, M_NSMBDEV);
+		break;
+	    default:
+		error = ENOTTY;
+		break;
+	}
+	return error;
+	return 0;
+
+}
+#endif /* _MODULE */
+
 #endif /* !__NetBSD__ */
 
 /*
