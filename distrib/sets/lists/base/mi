@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.905 2010/12/14 17:52:06 pooka Exp $
+# $NetBSD: mi,v 1.906 2010/12/15 00:11:59 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1403,6 +1403,7 @@
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
 ./usr/sbin/traceroute				base-netutil-bin
+./usr/sbin/rump.traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete

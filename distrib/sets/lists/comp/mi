@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1543 2010/12/14 17:52:06 pooka Exp $
+#	$NetBSD: mi,v 1.1544 2010/12/15 00:12:00 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3815,6 +3815,7 @@
 ./usr/libdata/debug/usr/sbin/timed.debug	comp-timed-debug	debug
 ./usr/libdata/debug/usr/sbin/timedc.debug	comp-timed-debug	debug
 ./usr/libdata/debug/usr/sbin/traceroute.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/rump.traceroute.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/traceroute6.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/trpt.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/trsp.debug		comp-obsolete		obsolete
