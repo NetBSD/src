@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1544 2010/12/15 00:12:00 pooka Exp $
+#	$NetBSD: mi,v 1.1545 2010/12/15 18:39:28 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3029,6 +3029,7 @@
 ./usr/libdata/debug/sbin/ping6.debug		comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/sbin/pppoectl.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/raidctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/rump.raidctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/rcorder.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/reboot.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/resize_ffs.debug	comp-sysutil-debug	debug

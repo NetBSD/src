@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.906 2010/12/15 00:11:59 pooka Exp $
+# $NetBSD: mi,v 1.907 2010/12/15 18:39:27 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -301,6 +301,7 @@
 ./sbin/pppoectl					base-netutil-root
 ./sbin/quotacheck				base-obsolete		obsolete
 ./sbin/raidctl					base-sysutil-root
+./sbin/rump.raidctl					base-sysutil-root
 ./sbin/rcorder					base-sysutil-root
 ./sbin/rdump					base-sysutil-root
 ./sbin/rdump_lfs				base-sysutil-root
