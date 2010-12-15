@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_bus_io.c,v 1.12 2000/06/29 08:58:46 mrg Exp $ */
+/* $NetBSD: dwlpx_bus_io.c,v 1.13 2010/12/15 01:27:18 matt Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,15 +32,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_io.c,v 1.12 2000/06/29 08:58:46 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_io.c,v 1.13 2010/12/15 01:27:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
