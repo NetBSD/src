@@ -1,4 +1,4 @@
-/* $NetBSD: pci_sgmap_pte64.c,v 1.6 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_sgmap_pte64.c,v 1.7 2010/12/15 01:27:19 matt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: pci_sgmap_pte64.c,v 1.6 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_sgmap_pte64.c,v 1.7 2010/12/15 01:27:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(1, "$NetBSD: pci_sgmap_pte64.c,v 1.6 2008/04/28 20:23:11 martin E
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

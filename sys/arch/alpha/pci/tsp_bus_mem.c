@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_mem.c,v 1.9 2009/10/30 18:55:45 mhitch Exp $ */
+/* $NetBSD: tsp_bus_mem.c,v 1.10 2010/12/15 01:27:19 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -32,15 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.9 2009/10/30 18:55:45 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.10 2010/12/15 01:27:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
