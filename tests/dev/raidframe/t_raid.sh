@@ -1,4 +1,4 @@
-#	$NetBSD: t_raid.sh,v 1.1 2010/12/15 20:37:52 pooka Exp $
+#	$NetBSD: t_raid.sh,v 1.1 2010/12/15 20:40:18 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
