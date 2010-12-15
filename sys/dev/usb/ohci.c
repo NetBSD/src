@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.210 2010/11/13 13:52:12 uebayasi Exp $	*/
+/*	$NetBSD: ohci.c,v 1.211 2010/12/15 23:48:15 matt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.210 2010/11/13 13:52:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.211 2010/12/15 23:48:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -897,7 +897,7 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_control = sc->sc_intre = 0;
 
 	/* Finally, turn on interrupts. */
-	DPRINTFN(1,("ohci_init: enabling\n"));
+	DPRINTFN(1,("ohci_init: enabling %#x\n", sc->sc_eintrs | OHCI_MIE));
 	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, sc->sc_eintrs | OHCI_MIE);
 
 	return (USBD_NORMAL_COMPLETION);
@@ -1145,15 +1145,17 @@ ohci_intr1(ohci_softc_t *sc)
 
 	OWRITE4(sc, OHCI_INTERRUPT_STATUS, intrs & ~(OHCI_MIE|OHCI_WDH)); /* Acknowledge */
 	eintrs = intrs & sc->sc_eintrs;
-	if (!eintrs)
+	DPRINTFN(7, ("ohci_intr: sc=%p intrs=%#x(%#x) eintrs=%#x(%#x)\n",
+		     sc, (u_int)intrs, OREAD4(sc, OHCI_INTERRUPT_STATUS),
+		     (u_int)eintrs, sc->sc_eintrs));
+
+	if (!eintrs) {
+		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_MIE); /* Disable */
 		return (0);
+	}
 
 	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
-	DPRINTFN(7, ("ohci_intr: sc=%p intrs=0x%x(0x%x) eintrs=0x%x\n",
-		     sc, (u_int)intrs, OREAD4(sc, OHCI_INTERRUPT_STATUS),
-		     (u_int)eintrs));
-
 	if (eintrs & OHCI_SO) {
 		sc->sc_overrun_cnt++;
 		if (usbd_ratecheck(&sc->sc_overrun_ntc)) {
