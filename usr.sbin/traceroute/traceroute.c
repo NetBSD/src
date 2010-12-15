@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.75 2010/07/02 12:13:11 kefren Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.76 2010/12/15 00:09:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: traceroute.c,v 1.75 2010/07/02 12:13:11 kefren Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.76 2010/12/15 00:09:41 pooka Exp $");
 #endif
 #endif
 
@@ -222,6 +222,7 @@ __RCSID("$NetBSD: traceroute.c,v 1.75 2010/07/02 12:13:11 kefren Exp $");
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -245,6 +246,7 @@ __RCSID("$NetBSD: traceroute.c,v 1.75 2010/07/02 12:13:11 kefren Exp $");
 
 #include "ifaddrlist.h"
 #include "as.h"
+#include "prog_ops.h"
 
 /* Maximum number of gateways (include room for one noop) */
 #define NGATEWAYS ((int)((MAX_IPOPTLEN - IPOPT_MINOFF - 1) / sizeof(u_int32_t)))
@@ -453,7 +455,10 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	prog = getprogname();
 
-	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
+	if (prog_init && prog_init() == -1)
+		err(1, "init failed");
+
+	if ((s = prog_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
 		Fprintf(stderr, "%s: icmp socket: %s\n", prog, strerror(errno));
 		exit(1);
 	}
@@ -463,7 +468,7 @@ main(int argc, char **argv)
 	 * running our traceroute code will forgive us.
 	 */
 #ifndef __hpux
-	sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	sndsock = prog_socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
 #else
 	sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW
 	    useicmp ? IPPROTO_ICMP : IPPROTO_UDP);
@@ -476,7 +481,7 @@ main(int argc, char **argv)
 	/* Revert to non-privileged user after opening sockets */
 	setuid(getuid());
 
-	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
+	(void) prog_sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
 	    NULL, 0);
 
 	opterr = 0;
@@ -711,7 +716,7 @@ main(int argc, char **argv)
 	}
 
 	if (options & SO_DEBUG)
-		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&on,
+		(void)prog_setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&on,
 		    sizeof(on));
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
@@ -727,19 +732,19 @@ main(int argc, char **argv)
     {
 	int level = IPSEC_LEVEL_AVAIL;
 
-	(void)setsockopt(s, IPPROTO_IP, IP_ESP_TRANS_LEVEL, &level,
+	(void)prog_setsockopt(s, IPPROTO_IP, IP_ESP_TRANS_LEVEL, &level,
 		sizeof(level));
-	(void)setsockopt(s, IPPROTO_IP, IP_ESP_NETWORK_LEVEL, &level,
+	(void)prog_setsockopt(s, IPPROTO_IP, IP_ESP_NETWORK_LEVEL, &level,
 		sizeof(level));
 #ifdef IP_AUTH_TRANS_LEVEL
-	(void)setsockopt(s, IPPROTO_IP, IP_AUTH_TRANS_LEVEL, &level,
+	(void)prog_setsockopt(s, IPPROTO_IP, IP_AUTH_TRANS_LEVEL, &level,
 		sizeof(level));
 #else
-	(void)setsockopt(s, IPPROTO_IP, IP_AUTH_LEVEL, &level,
+	(void)prog_setsockopt(s, IPPROTO_IP, IP_AUTH_LEVEL, &level,
 		sizeof(level));
 #endif
 #ifdef IP_AUTH_NETWORK_LEVEL
-	(void)setsockopt(s, IPPROTO_IP, IP_AUTH_NETWORK_LEVEL, &level,
+	(void)prog_setsockopt(s, IPPROTO_IP, IP_AUTH_NETWORK_LEVEL, &level,
 		sizeof(level));
 #endif
     }
@@ -760,19 +765,19 @@ main(int argc, char **argv)
     {
 	int level = IPSEC_LEVEL_BYPASS;
 
-	(void)setsockopt(sndsock, IPPROTO_IP, IP_ESP_TRANS_LEVEL, &level,
+	(void)prog_setsockopt(sndsock, IPPROTO_IP, IP_ESP_TRANS_LEVEL, &level,
 		sizeof(level));
-	(void)setsockopt(sndsock, IPPROTO_IP, IP_ESP_NETWORK_LEVEL, &level,
+	(void)prog_setsockopt(sndsock, IPPROTO_IP, IP_ESP_NETWORK_LEVEL, &level,
 		sizeof(level));
 #ifdef IP_AUTH_TRANS_LEVEL
-	(void)setsockopt(sndsock, IPPROTO_IP, IP_AUTH_TRANS_LEVEL, &level,
+	(void)prog_setsockopt(sndsock, IPPROTO_IP, IP_AUTH_TRANS_LEVEL, &level,
 		sizeof(level));
 #else
-	(void)setsockopt(sndsock, IPPROTO_IP, IP_AUTH_LEVEL, &level,
+	(void)prog_setsockopt(sndsock, IPPROTO_IP, IP_AUTH_LEVEL, &level,
 		sizeof(level));
 #endif
 #ifdef IP_AUTH_NETWORK_LEVEL
-	(void)setsockopt(sndsock, IPPROTO_IP, IP_AUTH_NETWORK_LEVEL, &level,
+	(void)prog_setsockopt(sndsock, IPPROTO_IP, IP_AUTH_NETWORK_LEVEL, &level,
 		sizeof(level));
 #endif
     }
@@ -797,7 +802,7 @@ main(int argc, char **argv)
 		optlist[3] = IPOPT_MINOFF;
 		memcpy(optlist + 4, gwlist, i);
 
-		if ((setsockopt(sndsock, IPPROTO_IP, IP_OPTIONS, optlist,
+		if ((prog_setsockopt(sndsock, IPPROTO_IP, IP_OPTIONS, optlist,
 		    i + sizeof(gwlist[0]))) < 0) {
 			Fprintf(stderr, "%s: IP_OPTIONS: %s\n",
 			    prog, strerror(errno));
@@ -807,21 +812,21 @@ main(int argc, char **argv)
 #endif
 
 #ifdef SO_SNDBUF
-	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&packlen,
+	if (prog_setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&packlen,
 	    sizeof(packlen)) < 0) {
 		Fprintf(stderr, "%s: SO_SNDBUF: %s\n", prog, strerror(errno));
 		exit(1);
 	}
 #endif
 #ifdef IP_HDRINCL
-	if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
+	if (prog_setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
 	    sizeof(on)) < 0) {
 		Fprintf(stderr, "%s: IP_HDRINCL: %s\n", prog, strerror(errno));
 		exit(1);
 	}
 #else
 #ifdef IP_TOS
-	if (settos && setsockopt(sndsock, IPPROTO_IP, IP_TOS,
+	if (settos && prog_setsockopt(sndsock, IPPROTO_IP, IP_TOS,
 	    (char *)&tos, sizeof(tos)) < 0) {
 		Fprintf(stderr, "%s: setsockopt tos %d: %s\n",
 		    prog, tos, strerror(errno));
@@ -830,10 +835,10 @@ main(int argc, char **argv)
 #endif
 #endif
 	if (options & SO_DEBUG)
-		(void)setsockopt(sndsock, SOL_SOCKET, SO_DEBUG, (char *)&on,
+		(void)prog_setsockopt(sndsock, SOL_SOCKET, SO_DEBUG, (char *)&on,
 		    sizeof(on));
 	if (options & SO_DONTROUTE)
-		(void)setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE, (char *)&on,
+		(void)prog_setsockopt(sndsock, SOL_SOCKET, SO_DONTROUTE, (char *)&on,
 		    sizeof(on));
 
 	/* Get the interface address list */
@@ -1100,14 +1105,14 @@ wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 		wait.tv_usec = 0;
 	}
 
-	retval = poll(set, 1, wait.tv_sec * 1000 + wait.tv_usec / 1000);
+	retval = prog_poll(set, 1, wait.tv_sec * 1000 + wait.tv_usec / 1000);
 	if (retval < 0)  {
 		/* If we continue, we probably just flood the remote host. */
 		Fprintf(stderr, "%s: poll: %s\n", prog, strerror(errno));
 		exit(1);
 	}
 	if (retval > 0)  {
-		cc = recvfrom(s, (char *)packet, sizeof(packet), 0,
+		cc = prog_recvfrom(s, (char *)packet, sizeof(packet), 0,
 			    (struct sockaddr *)fromp, &fromlen);
 	}
 
@@ -1349,7 +1354,7 @@ again:
 	}
 
 #if !defined(IP_HDRINCL) && defined(IP_TTL)
-	if (setsockopt(sndsock, IPPROTO_IP, IP_TTL,
+	if (prog_setsockopt(sndsock, IPPROTO_IP, IP_TTL,
 	    (char *)&ttl, sizeof(ttl)) < 0) {
 		Fprintf(stderr, "%s: setsockopt ttl %d: %s\n",
 		    prog, ttl, strerror(errno));
@@ -1365,7 +1370,7 @@ again:
 	if (cc > 0)
 		cc += sizeof(*outip) + optlen;
 #else
-	cc = sendto(sndsock, (char *)outip,
+	cc = prog_sendto(sndsock, (char *)outip,
 	    packlen, 0, &whereto, sizeof(whereto));
 #endif
 	if (cc < 0 || cc != packlen)  {
@@ -1828,7 +1833,7 @@ find_local_ip(struct sockaddr_in *from, struct sockaddr_in *to)
 	struct sockaddr_in help;
 	socklen_t help_len;
 
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	sock = prog_socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) return (0);
 
 	help.sin_family = AF_INET;
@@ -1838,20 +1843,20 @@ find_local_ip(struct sockaddr_in *from, struct sockaddr_in *to)
 	 */
 	help.sin_port = 42;
 	help.sin_addr.s_addr = to->sin_addr.s_addr;
-	if (connect(sock, (struct sockaddr *)&help, sizeof(help)) < 0) {
-		(void)close(sock);
+	if (prog_connect(sock, (struct sockaddr *)&help, sizeof(help)) < 0) {
+		(void)prog_close(sock);
 		return (0);
 	}
 
 	help_len = sizeof(help);
-	if (getsockname(sock, (struct sockaddr *)&help, &help_len) < 0 ||
+	if (prog_getsockname(sock, (struct sockaddr *)&help, &help_len) < 0 ||
 	    help_len != sizeof(help) ||
 	    help.sin_addr.s_addr == INADDR_ANY) {
-		(void)close(sock);
+		(void)prog_close(sock);
 		return (0);
 	}
 
-	(void)close(sock);
+	(void)prog_close(sock);
 	setsin(from, help.sin_addr.s_addr);
 	return (1);
 }
@@ -1870,7 +1875,7 @@ setpolicy(so, policy)
 		Fprintf(stderr, "%s: %s\n", prog, ipsec_strerror());
 		return -1;
 	}
-	(void)setsockopt(so, IPPROTO_IP, IP_IPSEC_POLICY,
+	(void)prog_setsockopt(so, IPPROTO_IP, IP_IPSEC_POLICY,
 		buf, ipsec_get_policylen(buf));
 
 	free(buf);
