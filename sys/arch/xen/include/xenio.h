@@ -1,4 +1,4 @@
-/*	$NetBSD: xenio.h,v 1.7 2010/09/03 06:07:24 cegger Exp $	*/
+/*	$NetBSD: xenio.h,v 1.8 2010/12/15 14:45:47 cegger Exp $	*/
 
 /******************************************************************************
  * privcmd.h
@@ -58,6 +58,14 @@ typedef struct privcmd_mmapbatch {
     unsigned long *arr; /* array of mfns - top nibble set on err */
 } privcmd_mmapbatch_t; 
 
+typedef struct privcmd_mmapbatch_v2 {
+    int num;     /* number of pages to populate */
+    domid_t dom; /* target domain */
+    uint64_t addr;  /* virtual address */
+    const xen_pfn_t *arr; /* array of mfns */
+    int *err; /* array of error codes */
+} privcmd_mmapbatch_v2_t; 
+
 typedef struct privcmd_blkmsg
 {
     unsigned long op;
@@ -103,6 +111,8 @@ typedef struct oprivcmd_hypercall
  */
 #define IOCTL_PRIVCMD_INITDOMAIN_EVTCHN \
     _IOR('P', 5, int)
+#define IOCTL_PRIVCMD_MMAPBATCH_V2      \
+    _IOW('P", 6, privcmd_mmapbatch_v2_t)
 
 /* Interface to /dev/xenevt */
 /* EVTCHN_RESET: Clear and reinit the event buffer. Clear error condition. */
