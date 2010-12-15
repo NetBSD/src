@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.177 2010/12/15 00:17:34 pooka Exp $
+# $NetBSD: mi,v 1.178 2010/12/15 10:42:56 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1687,6 +1687,7 @@
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
 ./usr/tests/usr.sbin				tests-util-tests
+./usr/tests/usr.sbin/Atffile			tests-sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute			tests-util-tests
 ./usr/tests/usr.sbin/traceroute/Atffile		tests-util-tests	atf
 ./usr/tests/usr.sbin/traceroute/t_traceroute	tests-util-tests	atf
