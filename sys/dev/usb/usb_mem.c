@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.41 2010/12/15 23:38:15 matt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.42 2010/12/15 23:43:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.41 2010/12/15 23:38:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.42 2010/12/15 23:43:02 matt Exp $");
 
 #include "opt_usb.h"
 
@@ -297,7 +297,7 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 #endif
 	f->block = p->block;
 	f->offs = p->offs;
-#if def USB_FRAG_DMA_WORKAROUND
+#ifdef USB_FRAG_DMA_WORKAROUND
 	f->offs -= USB_MEM_SMALL;
 #endif
 	s = splusb();
