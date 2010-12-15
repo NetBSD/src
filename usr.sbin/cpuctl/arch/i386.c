@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.22 2010/02/23 08:46:33 cegger Exp $	*/
+/*	$NetBSD: i386.c,v 1.23 2010/12/15 17:09:07 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.22 2010/02/23 08:46:33 cegger Exp $");
+__RCSID("$NetBSD: i386.c,v 1.23 2010/12/15 17:09:07 cegger Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1491,9 +1491,14 @@ identifycpu(const char *cpuname)
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
 			    data[0] & 0xf);
 			aprint_verbose("%s: SVM NASID %d\n", cpuname, data[1]);
-			snprintb(buf, sizeof(buf), CPUID_AMD_SVM_FLAGS,
-			    data[3]);
-			aprint_verbose("%s: SVM features %s\n", cpuname, buf);
+			snprintb_m(buf, sizeof(buf), CPUID_AMD_SVM_FLAGS,
+				   data[3], MAX_FEATURE_LEN);
+			bp = buf;
+			while (*bp != '\0') {
+				aprint_verbose("%s: SVM features %s\n",
+				    cpuname, bp);
+				bp += strlen(bp) + 1;
+			}
 		}
 	}
 
