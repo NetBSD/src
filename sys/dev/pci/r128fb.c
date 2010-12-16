@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.16 2010/11/15 23:19:33 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.17 2010/12/16 06:45:50 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.16 2010/11/15 23:19:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.17 2010/12/16 06:45:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,85 +342,82 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct wsdisplay_param  *param;
 
 	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
 
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return 0;
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l));
 
-		/* PCI config read/write passthrough. */
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, l));
+	case WSDISPLAYIO_GINFO:
+		if (ms == NULL)
+			return ENODEV;
+		wdf = (void *)data;
+		wdf->height = ms->scr_ri.ri_height;
+		wdf->width = ms->scr_ri.ri_width;
+		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->cmsize = 256;
+		return 0;
 
-		case WSDISPLAYIO_GINFO:
-			if (ms == NULL)
-				return ENODEV;
-			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_height;
-			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
-			wdf->cmsize = 256;
-			return 0;
+	case WSDISPLAYIO_GETCMAP:
+		return r128fb_getcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_GETCMAP:
-			return r128fb_getcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_PUTCMAP:
+		return r128fb_putcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_PUTCMAP:
-			return r128fb_putcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_stride;
+		return 0;
 
-		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = sc->sc_stride;
-			return 0;
-
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
-
-				if (new_mode != sc->sc_mode) {
-					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-						r128fb_init(sc);
-						r128fb_restore_palette(sc);
-						vcons_redraw_screen(ms);
-					}
-				}
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
+			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+				r128fb_init(sc);
+				r128fb_restore_palette(sc);
+				vcons_redraw_screen(ms);
 			}
-			return 0;
+		}
+		}
+		return 0;
 
-		case WSDISPLAYIO_GETPARAM:
-			param = (struct wsdisplay_param *)data;
-			if (sc->sc_have_backlight == 0)
-				return EPASSTHROUGH;
-			switch (param->param) {
-			case WSDISPLAYIO_PARAM_BRIGHTNESS:
-				param->min = 0;
-				param->max = 255;
-				param->curval = sc->sc_bl_level;
-				return 0;
-			case WSDISPLAYIO_PARAM_BACKLIGHT:
-				param->min = 0;
-				param->max = 1;
-				param->curval = sc->sc_bl_on;
-				return 0;
-			}
+	case WSDISPLAYIO_GETPARAM:
+		param = (struct wsdisplay_param *)data;
+		if (sc->sc_have_backlight == 0)
 			return EPASSTHROUGH;
+		switch (param->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			param->min = 0;
+			param->max = 255;
+			param->curval = sc->sc_bl_level;
+			return 0;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			param->min = 0;
+			param->max = 1;
+			param->curval = sc->sc_bl_on;
+			return 0;
+		}
+		return EPASSTHROUGH;
 
-		case WSDISPLAYIO_SETPARAM:
-			param = (struct wsdisplay_param *)data;
-			if (sc->sc_have_backlight == 0)
-				return EPASSTHROUGH;
-			switch (param->param) {
-			case WSDISPLAYIO_PARAM_BRIGHTNESS:
-				r128fb_set_backlight(sc, param->curval);
-				return 0;
-			case WSDISPLAYIO_PARAM_BACKLIGHT:
-				r128fb_switch_backlight(sc,  param->curval);
-				return 0;
-			}
+	case WSDISPLAYIO_SETPARAM:
+		param = (struct wsdisplay_param *)data;
+		if (sc->sc_have_backlight == 0)
 			return EPASSTHROUGH;
+		switch (param->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			r128fb_set_backlight(sc, param->curval);
+			return 0;
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			r128fb_switch_backlight(sc,  param->curval);
+			return 0;
+		}
+		return EPASSTHROUGH;
 	}
 	return EPASSTHROUGH;
 }
