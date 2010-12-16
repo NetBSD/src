@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.22 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.23 2010/12/16 06:19:01 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.22 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.23 2010/12/16 06:19:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,44 +820,43 @@ chipsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return 0;
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
 
-		case WSDISPLAYIO_GINFO:
-			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_height;
-			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
-			wdf->cmsize = 256;
-			return 0;
+	case WSDISPLAYIO_GINFO:
+		wdf = (void *)data;
+		wdf->height = ms->scr_ri.ri_height;
+		wdf->width = ms->scr_ri.ri_width;
+		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->cmsize = 256;
+		return 0;
 
-		case WSDISPLAYIO_GETCMAP:
-			return chipsfb_getcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_GETCMAP:
+		return chipsfb_getcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_PUTCMAP:
-			return chipsfb_putcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_PUTCMAP:
+		return chipsfb_putcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		/* PCI config read/write passthrough. */
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, l));
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
 
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
-				if (new_mode != sc->sc_mode) {
-					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-						chipsfb_restore_palette(sc);
-						vcons_redraw_screen(ms);
-					}
-				}
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
+			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+				chipsfb_restore_palette(sc);
+				vcons_redraw_screen(ms);
 			}
-			return 0;
+		}
+		}
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
