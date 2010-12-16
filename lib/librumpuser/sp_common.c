@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.15 2010/12/12 17:58:28 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.16 2010/12/16 12:38:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -98,6 +98,8 @@ struct rsp_hdr {
 #define HDRSZ sizeof(struct rsp_hdr)
 #define rsp_sysnum u.sysnum
 #define rsp_error u.error
+
+#define MAXBANNER 96
 
 /*
  * Data follows the header.  We have two types of structured data.
