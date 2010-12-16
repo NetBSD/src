@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1547 2010/12/16 10:19:13 jruoho Exp $
+#	$NetBSD: mi,v 1.1548 2010/12/16 17:47:53 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4908,9 +4908,15 @@
 ./usr/share/man/cat3/__aligned.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__arraycount.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_object_size.0	comp-c-catman		.cat
+./usr/share/man/cat3/__constfunc.0		comp-c-catman		.cat
+./usr/share/man/cat3/__dead.0			comp-c-catman		.cat
+./usr/share/man/cat3/__noinline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__packed.0			comp-c-catman		.cat
+./usr/share/man/cat3/__pure.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__section.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__svc_getcallercreds.0	comp-c-catman		.cat
+./usr/share/man/cat3/__unused.0			comp-c-catman		.cat
+./usr/share/man/cat3/__used.0			comp-c-catman		.cat
 ./usr/share/man/cat3/_longjmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/_setjmp.0			comp-c-catman		.cat
@@ -10975,9 +10981,15 @@
 ./usr/share/man/html3/__aligned.html		comp-c-htmlman		html
 ./usr/share/man/html3/__arraycount.html		comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_object_size.html	comp-c-htmlman		html
+./usr/share/man/html3/__constfunc.html		comp-c-htmlman		html
+./usr/share/man/html3/__dead.html		comp-c-htmlman		html
+./usr/share/man/html3/__noinline.html		comp-c-htmlman		html
 ./usr/share/man/html3/__packed.html		comp-c-htmlman		html
+./usr/share/man/html3/__pure.html		comp-c-htmlman		html
 ./usr/share/man/html3/__section.html		comp-c-htmlman		html
 ./usr/share/man/html3/__svc_getcallercreds.html	comp-c-htmlman		html
+./usr/share/man/html3/__unused.html		comp-c-htmlman		html
+./usr/share/man/html3/__used.html		comp-c-htmlman		html
 ./usr/share/man/html3/_longjmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/_lwp_makecontext.html	comp-c-htmlman		html
 ./usr/share/man/html3/_setjmp.html		comp-c-htmlman		html
@@ -16842,9 +16854,15 @@
 ./usr/share/man/man3/__aligned.3		comp-c-man		.man
 ./usr/share/man/man3/__arraycount.3		comp-c-man		.man
 ./usr/share/man/man3/__builtin_object_size.3	comp-c-man		.man
+./usr/share/man/man3/__constfunc.3		comp-c-man		.man
+./usr/share/man/man3/__dead.3			comp-c-man		.man
+./usr/share/man/man3/__noinline.3		comp-c-man		.man
 ./usr/share/man/man3/__packed.3			comp-c-man		.man
+./usr/share/man/man3/__pure.3			comp-c-man		.man
 ./usr/share/man/man3/__section.3		comp-c-man		.man
 ./usr/share/man/man3/__svc_getcallercreds.3	comp-c-man		.man
+./usr/share/man/man3/__unused.3			comp-c-man		.man
+./usr/share/man/man3/__used.3			comp-c-man		.man
 ./usr/share/man/man3/_longjmp.3			comp-c-man		.man
 ./usr/share/man/man3/_lwp_makecontext.3		comp-c-man		.man
 ./usr/share/man/man3/_setjmp.3			comp-c-man		.man
