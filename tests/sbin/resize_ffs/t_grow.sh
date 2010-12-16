@@ -1,4 +1,4 @@
-# $NetBSD: t_grow.sh,v 1.5 2010/12/16 17:16:07 riz Exp $
+# $NetBSD: t_grow.sh,v 1.6 2010/12/16 17:50:13 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,6 +97,7 @@ atf_init_test_cases()
 	atf_add_test_case grow_16M_v1_16384
 	atf_add_test_case grow_16M_v1_32768
 	atf_add_test_case grow_16M_v1_65536
+if [ "${RESIZE_FFS_ALL_TESTS-X}" != "X" ]; then
 	atf_add_test_case grow_24M_v1_4096
 	atf_add_test_case grow_24M_v1_8192
 	atf_add_test_case grow_24M_v1_16384
@@ -107,7 +108,6 @@ atf_init_test_cases()
 	atf_add_test_case grow_32M_v1_16384
 	atf_add_test_case grow_32M_v1_32768
 	atf_add_test_case grow_32M_v1_65536
-if [ "X${RESIZE_FFS_BIG_TESTS}" != "X" ]; then
 	atf_add_test_case grow_48M_v1_4096
 	atf_add_test_case grow_48M_v1_8192
 	atf_add_test_case grow_48M_v1_16384
