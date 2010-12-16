@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.110 2010/12/15 17:17:16 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.111 2010/12/16 16:08:57 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.110 2010/12/15 17:17:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.111 2010/12/16 16:08:57 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1136,6 +1136,7 @@ sme_remove_userprops(void)
 			/*
 			 * Next, we need to retrieve those initial limits.
 			 */
+			props = 0;
 			edata->upropset &= ~PROP_LIMITS;
 			if (sme->sme_get_limits) {
 				DPRINTF(("%s: retrieve limits for %s %s\n",
