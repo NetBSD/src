@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2010/12/16 10:19:14 jruoho Exp $
+#	$NetBSD: Makefile,v 1.61 2010/12/16 17:47:54 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
@@ -14,7 +14,13 @@ USETBL=	# used by queue.3
 
 MLINKS+=__CONCAT.3 __STRING.3
 MLINKS+=__UNCONST.3 __UNVOLATILE.3
-MLINKS+=attribute.3 __packed.3 \
+MLINKS+=attribute.3 __dead.3 \
+	attribute.3 __pure.3 \
+	attribute.3 __constfunc.3 \
+	attribute.3 __noinline.3 \
+	attribute.3 __unused.3 \
+	attribute.3 __used.3 \
+	attribute.3 __packed.3 \
 	attribute.3 __aligned.3 \
 	attribute.3 __section.3
 MLINKS+=bitstring.3 bit_alloc.3 \
