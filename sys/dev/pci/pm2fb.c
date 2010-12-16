@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.5 2010/11/13 13:52:08 uebayasi Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.6 2010/12/16 06:45:50 cegger Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.5 2010/11/13 13:52:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.6 2010/12/16 06:45:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,53 +307,50 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
 
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return 0;
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
 
-		/* PCI config read/write passthrough. */
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, l));
+	case WSDISPLAYIO_GINFO:
+		if (ms == NULL)
+			return ENODEV;
+		wdf = (void *)data;
+		wdf->height = ms->scr_ri.ri_height;
+		wdf->width = ms->scr_ri.ri_width;
+		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->cmsize = 256;
+		return 0;
 
-		case WSDISPLAYIO_GINFO:
-			if (ms == NULL)
-				return ENODEV;
-			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_height;
-			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
-			wdf->cmsize = 256;
-			return 0;
+	case WSDISPLAYIO_GETCMAP:
+		return pm2fb_getcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_GETCMAP:
-			return pm2fb_getcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_PUTCMAP:
+		return pm2fb_putcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_PUTCMAP:
-			return pm2fb_putcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_stride;
+		return 0;
 
-		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = sc->sc_stride;
-			return 0;
-
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
-
-				if (new_mode != sc->sc_mode) {
-					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-						pm2fb_restore_palette(sc);
-						vcons_redraw_screen(ms);
-					} else
-						pm2fb_flush_engine(sc);
-				}
-			}
-			return 0;
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
+			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+				pm2fb_restore_palette(sc);
+				vcons_redraw_screen(ms);
+			} else
+				pm2fb_flush_engine(sc);
+		}
+		}
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
