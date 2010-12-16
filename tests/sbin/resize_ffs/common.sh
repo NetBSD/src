@@ -96,3 +96,56 @@ check_data_range ()
 		check_data $i
 	done
 }
+
+
+resize_ffs()
+{
+	echo "in shrink_ffs:" ${@}
+	local bs=$1
+	local fragsz=$2
+	local osize=$3
+	local nsize=$4
+	local fslevel=$5
+	local numdata=$6
+	local swap=$7
+	mkdir -p mnt
+	echo "bs is ${bs} numdata is ${numdata}"
+	echo "****shrinking fs with blocksize ${bs}"
+
+	# we want no more than 16K/inode to allow test files to copy.
+	local fpi=$((fragsz * 4))
+	local i
+	if [ $fpi -gt 16384 ]; then
+		i="-i 16384"
+	fi
+	if [ x$swap != x ]; then
+		newfs -B ${BYTESWAP} -O${fslevel} -b ${bs} -f ${fragsz} \
+			-s ${osize} ${i} -F ${IMG}
+	else
+		newfs -O${fslevel} -b ${bs} -f ${fragsz} -s ${osize} ${i} \
+			-F ${IMG}
+	fi
+
+	# we're specifying relative paths, so rump_ffs warns - ignore.
+	atf_check -s exit:0 -e ignore rump_ffs ${IMG} mnt
+	copy_multiple ${numdata}
+
+	if [ ${nsize} -lt ${osize} ]; then
+	    # how much data to remove so fs can be shrunk
+	    local remove=$((numdata-numdata*nsize/osize))
+	    local dataleft=$((numdata-remove))
+	    echo remove is $remove dataleft is $dataleft
+	    remove_multiple ${remove}
+	fi
+
+	umount mnt
+	atf_check -s exit:0 -o ignore resize_ffs -y -s ${nsize} ${IMG}
+	atf_check -s exit:0 -o ignore fsck_ffs -f -n -F ${IMG}
+	atf_check -s exit:0 -e ignore rump_ffs ${IMG} mnt
+	if [ ${nsize} -lt ${osize} ]; then
+	    # checking everything because we don't delete on grow
+	    check_data_range $((remove + 1)) ${numdata}
+	fi
+	umount mnt
+	rm -f ${IMG}	# probably unnecessary
+}
