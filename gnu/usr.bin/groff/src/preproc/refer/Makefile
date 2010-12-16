@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2006/10/09 08:32:54 mrg Exp $
+# $NetBSD: Makefile,v 1.10 2010/12/16 22:54:21 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/refer/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -8,8 +8,8 @@ PROG=		refer
 SRCS=		command.cpp ref.cpp refer.cpp token.cpp
 GROFFYSRCS=	label.y
 CFLAGS+=	-I${DIST_DIR}
-DPADD+=		${LIBBIB} ${LIBGROFF} ${LIBM} ${LIBSUPCXX}
-LDADD+=		${LIBBIB} ${LIBGROFF} -lm -lsupc++
+DPADD+=		${LIBBIB}
+LDADD+=		${LIBBIB}
 CLEANFILES=	${MAN}
 
 .include <bsd.prog.mk>

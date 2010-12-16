@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2006/10/09 08:32:54 mrg Exp $
+# $NetBSD: Makefile,v 1.9 2010/12/16 22:54:20 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/eqn/Makefile,v 1.4 2003/05/01 13:22:19 ru Exp $
 
@@ -10,8 +10,6 @@ SRCS=		main.cpp lex.cpp \
 		script.cpp mark.cpp other.cpp delim.cpp sqrt.cpp pile.cpp special.cpp
 GROFFYSRCS=	eqn.y
 CFLAGS+=	-I${DIST_DIR} -I.
-DPADD+=		${LIBGROFF} ${LIBM} ${LIBSUPCXX}
-LDADD+=		${LIBGROFF} -lm -lsupc++
 SCRIPTS=	neqn
 MAN=		eqn.1 neqn.1
 CLEANFILES=	${SCRIPTS} ${MAN}
