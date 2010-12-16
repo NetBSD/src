@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.2 2009/01/11 02:46:25 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.3 2010/12/16 18:38:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -86,9 +86,21 @@ char *ctime_r(const int32_t *, char *);
 struct tm *gmtime_r(const int32_t * __restrict, struct tm * __restrict);
 struct tm *localtime_r(const int32_t * __restrict, struct tm * __restrict);
 struct tm *offtime(const int32_t *, long);
+struct tm *offtime_r(const int32_t *, long, struct tm *);
 int32_t timelocal(struct tm *);
 int32_t timegm(struct tm *);
 int32_t timeoff(struct tm *, long);
 int32_t time2posix(int32_t);
 int32_t posix2time(int32_t);
+struct tm *localtime_rz(const timezone_t, const int32_t * __restrict,
+    struct tm * __restrict);
+char *ctime_rz(const timezone_t, const int32_t *, char *);
+int32_t mktime_z(const timezone_t, struct tm *);
+int32_t timelocal_z(const timezone_t, struct tm *);
+int32_t time2posix_z(const timezone_t, int32_t);
+int32_t posix2time_z(const timezone_t, int32_t);
+timezone_t tzalloc(const char *);
+void tzfree(const timezone_t);
+const char *tzgetname(const timezone_t, int);
+
 #endif /* !_COMPAT_TIME_H_ */
