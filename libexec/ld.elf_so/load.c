@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.39 2010/12/16 19:35:38 skrll Exp $	 */
+/*	$NetBSD: load.c,v 1.40 2010/12/16 19:59:39 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.39 2010/12/16 19:35:38 skrll Exp $");
+__RCSID("$NetBSD: load.c,v 1.40 2010/12/16 19:59:39 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -170,12 +170,12 @@ _rtld_load_object(const char *filepath, int mode)
 #ifdef RTLD_LOADER
 	if (mode & RTLD_MAIN && !obj->mainref) {
 		obj->mainref = 1;
-		rdbg(("adding %p (%s) to _rtld_list_main", obj, obj->path));
+		dbg(("adding %p (%s) to _rtld_list_main", obj, obj->path));
 		_rtld_objlist_push_tail(&_rtld_list_main, obj);
 	}
 	if (mode & RTLD_GLOBAL && !obj->globalref) {
 		obj->globalref = 1;
-		rdbg(("adding %p (%s) to _rtld_list_global", obj, obj->path));
+		dbg(("adding %p (%s) to _rtld_list_global", obj, obj->path));
 		_rtld_objlist_push_tail(&_rtld_list_global, obj);
 	}
 #endif

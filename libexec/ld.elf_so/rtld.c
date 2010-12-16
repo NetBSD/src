@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.132 2010/10/29 15:08:17 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.133 2010/12/16 19:59:39 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.132 2010/10/29 15:08:17 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.133 2010/12/16 19:59:39 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -660,7 +660,7 @@ _rtld_init_dag1(Obj_Entry *root, Obj_Entry *obj)
 	if (!obj->mainref) {
 		if (_rtld_objlist_find(&obj->dldags, root))
 			return;
-		rdbg(("add %p (%s) to %p (%s) DAG", obj, obj->path, root,
+		dbg(("add %p (%s) to %p (%s) DAG", obj, obj->path, root,
 		    root->path));
 		_rtld_objlist_push_tail(&obj->dldags, root);
 		_rtld_objlist_push_tail(&root->dagmembers, obj);
