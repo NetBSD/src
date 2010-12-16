@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.12 2006/10/16 08:42:16 wiz Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.13 2010/12/16 17:42:27 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" ----------------------------------------------------------------------
 .Sh NAME
 .Nm wcsrtombs
-.Nd converts a wide character string to a multibyte character string \
+.Nd converts a wide-character string to a multibyte character string \
 (restartable)
 .\" ----------------------------------------------------------------------
 .Sh LIBRARY
@@ -45,7 +45,7 @@
 .Sh DESCRIPTION
 The
 .Fn wcsrtombs
-converts the nul-terminated wide character string indirectly pointed
+converts the nul-terminated wide-character string indirectly pointed
 to by
 .Fa pwcs
 to the corresponding multibyte character string,
@@ -102,7 +102,7 @@ These are the special cases:
 .It "s == NULL"
 .Fn wcsrtombs
 returns the number of bytes to store the whole multibyte character string
-corresponding to the wide character string pointed to by
+corresponding to the wide-character string pointed to by
 .Fa pwcs ,
 not including the terminating nul byte.
 In this case,

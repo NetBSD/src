@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.100 2010/02/23 19:48:26 drochner Exp $	*/
+/*	$NetBSD: curses.h,v 1.101 2010/12/16 17:42:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -31,9 +31,9 @@
  *	@(#)curses.h	8.5 (Berkeley) 4/29/95
  *
  *	Modified by Ruibiao Qiu <ruibiao@arl.wustl.edu,ruibiao@gmail.com> 2005
- *	to add wide character support
+ *	to add wide-character support
  *  - Add complex character structure (cchar_t)
- *	- Add definitions of wide character routines
+ *	- Add definitions of wide-character routines
  *	- Add KEY_CODE_YES
  */
 
@@ -808,7 +808,7 @@ int wchgat(WINDOW *, int, attr_t, short, const void *);
 int mvchgat(int, int, int, attr_t, short, const void *);
 int mvwchgat(WINDOW *, int, int, int, attr_t, short, const void *);
 
-/* wide character support routines */
+/* wide-character support routines */
 /* return ERR when HAVE_WCHAR is not defined */
 /* add */
 int add_wch(const cchar_t *);
