@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.16 2009/05/06 10:34:33 cegger Exp $ */
+/* $NetBSD: unichromefb.c,v 1.17 2010/12/16 06:45:50 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.16 2009/05/06 10:34:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.17 2010/12/16 06:45:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,21 +452,20 @@ unichromefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_stride;
 		return 0;
-	case WSDISPLAYIO_SMODE:
-		{
-			int new_mode = *(int *)data;
-			if (new_mode != sc->sc_wsmode) {
-				sc->sc_wsmode = new_mode;
-				switch (new_mode) {
-				case WSDISPLAYIO_MODE_EMUL:
-					unichromefb_drm_map(sc);
-					vcons_redraw_screen(vd->active);
-					break;
-				default:
-					unichromefb_drm_unmap(sc);
-					break;
-				}
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int *)data;
+		if (new_mode != sc->sc_wsmode) {
+			sc->sc_wsmode = new_mode;
+			switch (new_mode) {
+			case WSDISPLAYIO_MODE_EMUL:
+				unichromefb_drm_map(sc);
+				vcons_redraw_screen(vd->active);
+				break;
+			default:
+				unichromefb_drm_unmap(sc);
+				break;
 			}
+		}
 		}
 		return 0;
 	case WSDISPLAYIO_SSPLASH:
