@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.22 2010/11/19 00:44:18 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.23 2010/12/16 17:42:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.22 2010/11/19 00:44:18 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.23 2010/12/16 17:42:27 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -475,9 +475,9 @@ __mbsconv(char *mbsarg, int prec)
 }
 #else
 /*
- * Convert a wide character string argument for the %ls format to a multibyte
+ * Convert a wide-character string argument for the %ls format to a multibyte
  * string representation. If not -1, prec specifies the maximum number of
- * bytes to output, and also means that we can't assume that the wide char.
+ * bytes to output, and also means that we can't assume that the wide-char.
  * string ends is null-terminated.
  */
 static char *

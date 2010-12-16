@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.47 2010/01/11 16:28:06 christos Exp $ */
+/* $NetBSD: scan.l,v 1.48 2010/12/16 17:42:29 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.47 2010/01/11 16:28:06 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.48 2010/12/16 17:42:29 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1284,7 +1284,7 @@ wcstrg(void)
 		/* unterminated string constant */
 		error(258);
 
-	/* get length of wide character string */
+	/* get length of wide-character string */
 	(void)mblen(NULL, 0);
 	for (i = 0, wlen = 0; i < len; i += n, wlen++) {
 		if ((n = mblen(&s[i], MB_CUR_MAX)) == -1) {

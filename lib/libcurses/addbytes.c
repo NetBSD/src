@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.37 2010/11/23 05:38:35 tnozaki Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.38 2010/12/16 17:42:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.37 2010/11/23 05:38:35 tnozaki Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.38 2010/12/16 17:42:28 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -143,7 +143,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 		count--;
 #else
 		/*
-		 * For wide character support only, try and convert the
+		 * For wide-character support only, try and convert the
 		 * given string into a wide character - we do this because
 		 * this is how ncurses behaves (not that I think this is
 		 * actually the correct thing to do but if we don't do it

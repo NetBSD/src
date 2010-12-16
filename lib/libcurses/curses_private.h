@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.45 2010/02/23 19:48:26 drochner Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.46 2010/12/16 17:42:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -35,8 +35,8 @@
  * - Add a compiler variable HAVE_WCHAR for wide character only code
  * - Add a pointer to liked list of non-spacing characters in __ldata
  *   and the macro to access the width field in the attribute field
- * - Add a circular input character buffer in __screen to handle wide
- *   character input (used in get_wch())
+ * - Add a circular input character buffer in __screen to handle
+ *   wide-character input (used in get_wch())
  */
 
 #include <term.h>

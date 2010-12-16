@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.4 2010/02/23 19:48:26 drochner Exp $ */
+/*   $NetBSD: cchar.c,v 1.5 2010/12/16 17:42:28 wiz Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.4 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.5 2010/12/16 17:42:28 wiz Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: cchar.c,v 1.4 2010/02/23 19:48:26 drochner Exp $");
 
 /*
  * getcchar --
- *	get a wide character string and rendition from a cchar_t
+ *	get a wide-character string and rendition from a cchar_t
  */
 int
 getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
@@ -80,7 +80,7 @@ getcchar(const cchar_t *wcval, wchar_t *wch, attr_t *attrs,
 
 /*
  * setcchar --
- *	set cchar_t from a wide character string and rendition
+ *	set cchar_t from a wide-character string and rendition
  */
 int
 setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
