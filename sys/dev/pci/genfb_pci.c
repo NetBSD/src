@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.25 2010/10/07 07:53:54 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.26 2010/12/16 06:45:50 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.25 2010/10/07 07:53:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.26 2010/12/16 06:45:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,27 +188,26 @@ pci_genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct pci_genfb_softc *sc = v;
 
 	switch (cmd) {
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return 0;
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
 
-		/* PCI config read/write passthrough. */
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, l));
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data, i;
-				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
-					for (i = 0; i < 9; i++)
-						pci_conf_write(sc->sc_pc,
-						     sc->sc_pcitag,
-						     0x10 + (i << 2),
-						     sc->sc_bars[i]);
-				}
-			}
-			return 0;
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int*)data, i;
+		if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+			for (i = 0; i < 9; i++)
+				pci_conf_write(sc->sc_pc,
+				     sc->sc_pcitag,
+				     0x10 + (i << 2),
+				     sc->sc_bars[i]);
+		}
+		}
+		return 0;
 	}
 
 	return EPASSTHROUGH;

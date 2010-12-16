@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.6 2010/03/10 05:16:17 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.7 2010/12/16 06:45:51 cegger Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.6 2010/03/10 05:16:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.7 2010/12/16 06:45:51 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,20 +309,19 @@ wcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct wcfb_softc *sc = v;
 
 	switch (cmd) {
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return 0;
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
 
-		/* PCI config read/write passthrough. */
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, l));
-		case WSDISPLAYIO_SMODE:
-			{
-				/*int new_mode = *(int*)data, i;*/
-			}
-			return 0;
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
+	case WSDISPLAYIO_SMODE: {
+		/*int new_mode = *(int*)data, i;*/
+		}
+		return 0;
 	}
 
 	return EPASSTHROUGH;

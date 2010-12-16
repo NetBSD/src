@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.51 2010/11/19 13:38:17 macallan Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.52 2010/12/16 06:45:50 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.51 2010/11/19 13:38:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.52 2010/12/16 06:45:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,11 +310,11 @@ vga_pci_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	/* PCI config read/write passthrough. */
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
-		return (pci_devioctl(psc->sc_pc, psc->sc_pcitag,
-		    cmd, data, flag, l));
+		return pci_devioctl(psc->sc_pc, psc->sc_pcitag,
+		    cmd, data, flag, l);
 
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
 }
 
