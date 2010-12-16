@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.145 2010/11/17 13:19:32 tron Exp $	*/
+/*	$NetBSD: namespace.h,v 1.146 2010/12/16 18:38:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -221,6 +221,7 @@
 #define csetexpandtc		_csetexpandtc
 #define ctermid			_ctermid
 #define ctime_r			_ctime_r
+#define ctime_rz		_ctime_rz
 #define daemon			_daemon
 #define dbopen			_dbopen
 #define devname			_devname
@@ -432,12 +433,14 @@
 #define llabs			_llabs
 #define lldiv			_lldiv
 #define localtime_r		_localtime_r
+#define localtime_rz		_localtime_rz
 #define lockf			_lockf
 #define lrand48			_lrand48
 #define lseek			_lseek
 #define mergesort		_mergesort
 #define mi_vector_hash		_mi_vector_hash
 #define mkstemp			_mkstemp
+#define mktime_z		_mktime_z
 #define mmap			_mmap
 #define mpool_close		_mpool_close
 #define mpool_filter		_mpool_filter
@@ -474,6 +477,7 @@
 #define pollts			_pollts
 #define popen			_popen
 #define posix2time		_posix2time
+#define posix2time_z		_posix2time_z
 #define pread			_pread
 #define pselect			_pselect
 #define psignal			_psignal
@@ -579,6 +583,7 @@
 #define strcasecmp		_strcasecmp
 #define strdup			_strdup
 #define stresep			_stresep
+#define strftime_z		_strftime_z
 #define strndup			_strndup
 #define strncasecmp		_strncasecmp
 #define strptime		_strptime
