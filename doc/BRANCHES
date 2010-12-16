@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.300 2010/11/15 14:40:36 uebayasi Exp $
+#	$NetBSD: BRANCHES,v 1.301 2010/12/16 02:01:37 uebayasi Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1219,6 +1219,9 @@ Scope:		src/external/gpl3/binutils/usr.sbin/mdsetimage/mdsetimage.8
 		src/sys/conf
 		src/sys/dev/flash.c
 		src/sys/dev/flashvar.h
+		src/sys/dev/md.c
+		src/sys/dev/md.h
+		src/sys/dev/md_root.c
 		src/sys/dev/xmd.c
 		src/sys/kern/vfs_syscalls.c
 		src/sys/miscfs/genfs/genfs_io.c
