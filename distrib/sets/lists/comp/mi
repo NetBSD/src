@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1548 2010/12/16 17:47:53 jruoho Exp $
+#	$NetBSD: mi,v 1.1549 2010/12/16 18:42:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5548,6 +5548,7 @@
 ./usr/share/man/cat3/ctermid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ctime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ctime_r.0			comp-c-catman		.cat
+./usr/share/man/cat3/ctime_rz.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ctype.0			comp-c-catman		.cat
 ./usr/share/man/cat3/current_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curs_set.0			comp-c-catman		.cat
@@ -7209,6 +7210,7 @@
 ./usr/share/man/cat3/localeconv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/localtime.0		comp-c-catman		.cat
 ./usr/share/man/cat3/localtime_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/localtime_rz.0		comp-c-catman		.cat
 ./usr/share/man/cat3/lockf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log.0			comp-c-catman		.cat
 ./usr/share/man/cat3/log10.0			comp-c-catman		.cat
@@ -7416,6 +7418,7 @@
 ./usr/share/man/cat3/ntohs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/offsetof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/offtime.0			comp-c-catman		.cat
+./usr/share/man/cat3/offtime_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/opendir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/opendisk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openlog.0			comp-c-catman		.cat
@@ -7579,6 +7582,8 @@
 ./usr/share/man/cat3/popcountll.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pos_form_cursor.0		comp-c-catman		.cat
+./usr/share/man/cat3/posix2time.0		comp-c-catman		.cat
+./usr/share/man/cat3/posix2time_z.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix_memalign.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix_openpt.0		comp-c-catman		.cat
 ./usr/share/man/cat3/post_form.0		comp-c-catman		.cat
@@ -8289,6 +8294,7 @@
 ./usr/share/man/cat3/stresep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strfmon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strftime.0			comp-c-catman		.cat
+./usr/share/man/cat3/strftime_z.0		comp-c-catman		.cat
 ./usr/share/man/cat3/string.0			comp-c-catman		.cat
 ./usr/share/man/cat3/string_to_flags.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stringlist.0		comp-c-catman		.cat
@@ -8459,6 +8465,7 @@
 ./usr/share/man/cat3/tigetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/time.0			comp-c-catman		.cat
 ./usr/share/man/cat3/time2posix.0		comp-c-catman		.cat
+./usr/share/man/cat3/time2posix_z.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timegm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timelocal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timeoff.0			comp-c-catman		.cat
@@ -8508,6 +8515,9 @@
 ./usr/share/man/cat3/ttyunlock.0		comp-c-catman		.cat
 ./usr/share/man/cat3/twalk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/types.0			comp-c-catman		.cat
+./usr/share/man/cat3/tzalloc.0			comp-c-catman		.cat
+./usr/share/man/cat3/tzfree.0			comp-c-catman		.cat
+./usr/share/man/cat3/tzgetname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tzset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tzsetwall.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ualarm.0			comp-c-catman		.cat
@@ -11568,6 +11578,7 @@
 ./usr/share/man/html3/ctermid.html		comp-c-htmlman		html
 ./usr/share/man/html3/ctime.html		comp-c-htmlman		html
 ./usr/share/man/html3/ctime_r.html		comp-c-htmlman		html
+./usr/share/man/html3/ctime_rz.html		comp-c-htmlman		html
 ./usr/share/man/html3/ctype.html		comp-c-htmlman		html
 ./usr/share/man/html3/current_field.html	comp-c-htmlman		html
 ./usr/share/man/html3/curs_set.html		comp-c-htmlman		html
@@ -13189,6 +13200,7 @@
 ./usr/share/man/html3/localeconv.html		comp-c-htmlman		html
 ./usr/share/man/html3/localtime.html		comp-c-htmlman		html
 ./usr/share/man/html3/localtime_r.html		comp-c-htmlman		html
+./usr/share/man/html3/localtime_rz.html		comp-c-htmlman		html
 ./usr/share/man/html3/lockf.html		comp-c-htmlman		html
 ./usr/share/man/html3/log.html			comp-c-htmlman		html
 ./usr/share/man/html3/log10.html		comp-c-htmlman		html
@@ -13392,6 +13404,7 @@
 ./usr/share/man/html3/ntohs.html		comp-c-htmlman		html
 ./usr/share/man/html3/offsetof.html		comp-c-htmlman		html
 ./usr/share/man/html3/offtime.html		comp-c-htmlman		html
+./usr/share/man/html3/offtime_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/opendir.html		comp-c-htmlman		html
 ./usr/share/man/html3/opendisk.html		comp-c-htmlman		html
 ./usr/share/man/html3/openlog.html		comp-c-htmlman		html
@@ -13555,6 +13568,8 @@
 ./usr/share/man/html3/popcountll.html		comp-c-htmlman		html
 ./usr/share/man/html3/popen.html		comp-c-htmlman		html
 ./usr/share/man/html3/pos_form_cursor.html	comp-c-htmlman		html
+./usr/share/man/html3/posix2time.html		comp-c-htmlman		html
+./usr/share/man/html3/posix2time_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/posix_memalign.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_openpt.html		comp-c-htmlman		html
 ./usr/share/man/html3/post_form.html		comp-c-htmlman		html
@@ -14240,7 +14255,7 @@
 ./usr/share/man/html3/strerror_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/stresep.html		comp-c-htmlman		html
 ./usr/share/man/html3/strfmon.html		comp-c-htmlman		html
-./usr/share/man/html3/strftime.html		comp-c-htmlman		html
+./usr/share/man/html3/strftime_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/string.html		comp-c-htmlman		html
 ./usr/share/man/html3/string_to_flags.html	comp-c-htmlman		html
 ./usr/share/man/html3/stringlist.html		comp-c-htmlman		html
@@ -14395,6 +14410,7 @@
 ./usr/share/man/html3/tigetstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/time.html			comp-c-htmlman		html
 ./usr/share/man/html3/time2posix.html		comp-c-htmlman		html
+./usr/share/man/html3/time2posix_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/timegm.html		comp-c-htmlman		html
 ./usr/share/man/html3/timelocal.html		comp-c-htmlman		html
 ./usr/share/man/html3/timeoff.html		comp-c-htmlman		html
@@ -14444,6 +14460,9 @@
 ./usr/share/man/html3/ttyunlock.html		comp-c-htmlman		html
 ./usr/share/man/html3/twalk.html		comp-c-htmlman		html
 ./usr/share/man/html3/types.html		comp-c-htmlman		html
+./usr/share/man/html3/tzalloc.html		comp-c-htmlman		html
+./usr/share/man/html3/tzfree.html		comp-c-htmlman		html
+./usr/share/man/html3/tzgetname.html		comp-c-htmlman		html
 ./usr/share/man/html3/tzset.html		comp-c-htmlman		html
 ./usr/share/man/html3/tzsetwall.html		comp-c-htmlman		html
 ./usr/share/man/html3/ualarm.html		comp-c-htmlman		html
@@ -17494,6 +17513,7 @@
 ./usr/share/man/man3/ctermid.3			comp-c-man		.man
 ./usr/share/man/man3/ctime.3			comp-c-man		.man
 ./usr/share/man/man3/ctime_r.3			comp-c-man		.man
+./usr/share/man/man3/ctime_rz.3			comp-c-man		.man
 ./usr/share/man/man3/ctype.3			comp-c-man		.man
 ./usr/share/man/man3/current_field.3		comp-c-man		.man
 ./usr/share/man/man3/curs_set.3			comp-c-man		.man
@@ -19155,6 +19175,7 @@
 ./usr/share/man/man3/localeconv.3		comp-c-man		.man
 ./usr/share/man/man3/localtime.3		comp-c-man		.man
 ./usr/share/man/man3/localtime_r.3		comp-c-man		.man
+./usr/share/man/man3/localtime_rz.3		comp-c-man		.man
 ./usr/share/man/man3/lockf.3			comp-c-man		.man
 ./usr/share/man/man3/log.3			comp-c-man		.man
 ./usr/share/man/man3/log10.3			comp-c-man		.man
@@ -19362,6 +19383,7 @@
 ./usr/share/man/man3/ntohs.3			comp-c-man		.man
 ./usr/share/man/man3/offsetof.3			comp-c-man		.man
 ./usr/share/man/man3/offtime.3			comp-c-man		.man
+./usr/share/man/man3/offtime_r.3		comp-c-man		.man
 ./usr/share/man/man3/opendir.3			comp-c-man		.man
 ./usr/share/man/man3/opendisk.3			comp-c-man		.man
 ./usr/share/man/man3/openlog.3			comp-c-man		.man
@@ -19525,6 +19547,8 @@
 ./usr/share/man/man3/popcountll.3		comp-c-man		.man
 ./usr/share/man/man3/popen.3			comp-c-man		.man
 ./usr/share/man/man3/pos_form_cursor.3		comp-c-man		.man
+./usr/share/man/man3/posix2time.3		comp-c-man		.man
+./usr/share/man/man3/posix2time_z.3		comp-c-man		.man
 ./usr/share/man/man3/posix_memalign.3		comp-c-man		.man
 ./usr/share/man/man3/posix_openpt.3		comp-c-man		.man
 ./usr/share/man/man3/post_form.3		comp-c-man		.man
@@ -20231,6 +20255,7 @@
 ./usr/share/man/man3/stresep.3			comp-c-man		.man
 ./usr/share/man/man3/strfmon.3			comp-c-man		.man
 ./usr/share/man/man3/strftime.3			comp-c-man		.man
+./usr/share/man/man3/strftime_z.3		comp-c-man		.man
 ./usr/share/man/man3/string.3			comp-c-man		.man
 ./usr/share/man/man3/string_to_flags.3		comp-c-man		.man
 ./usr/share/man/man3/stringlist.3		comp-c-man		.man
@@ -20401,6 +20426,7 @@
 ./usr/share/man/man3/tigetstr.3			comp-c-man		.man
 ./usr/share/man/man3/time.3			comp-c-man		.man
 ./usr/share/man/man3/time2posix.3		comp-c-man		.man
+./usr/share/man/man3/time2posix_z.3		comp-c-man		.man
 ./usr/share/man/man3/timegm.3			comp-c-man		.man
 ./usr/share/man/man3/timelocal.3		comp-c-man		.man
 ./usr/share/man/man3/timeoff.3			comp-c-man		.man
@@ -20450,6 +20476,9 @@
 ./usr/share/man/man3/ttyunlock.3		comp-c-man		.man
 ./usr/share/man/man3/twalk.3			comp-c-man		.man
 ./usr/share/man/man3/types.3			comp-c-man		.man
+./usr/share/man/man3/tzalloc.3			comp-c-man		.man
+./usr/share/man/man3/tzfree.3			comp-c-man		.man
+./usr/share/man/man3/tzgetname.3		comp-c-man		.man
 ./usr/share/man/man3/tzset.3			comp-c-man		.man
 ./usr/share/man/man3/tzsetwall.3		comp-c-man		.man
 ./usr/share/man/man3/ualarm.3			comp-c-man		.man
