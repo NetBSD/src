@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.106 2010/11/13 13:52:07 uebayasi Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.107 2010/12/16 17:07:44 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.106 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.107 2010/12/16 17:07:44 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -1685,6 +1685,8 @@ vr_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_AUTO);
+
+	sc->vr_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/*
 	 * Call MI attach routines.
