@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.59 2010/12/16 08:35:35 jruoho Exp $
+#	$NetBSD: Makefile,v 1.60 2010/12/16 10:19:14 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
-	__arraycount.3 assert.3 attribute.3 bits.3 bitstring.3 dirent.3 \
-	dlfcn.3 dl_iterate_phdr.3 end.3 \
+	__arraycount.3 assert.3 attribute.3 bits.3 bitstring.3 \
+	cdefs.3 dirent.3 dlfcn.3 dl_iterate_phdr.3 end.3 \
 	fast_divide32.3 ffs32.3 gcq.3 \
 	ilog2.3 intro.3 inttypes.3 iso646.3 \
 	makedev.3 offsetof.3 queue.3 rbtree.3 sigevent.3 \
@@ -32,6 +32,8 @@ MLINKS+=bits.3 __BIT.3 \
 	bits.3 __SHIFTIN.3 \
 	bits.3 __SHIFTOUT.3 \
 	bits.3 __SHIFTOUT_MASK.3
+MLINKS+=cdefs.3 __RCSID.3 \
+	cdefs.3 __KERNEL_RCSID.3
 MLINKS+=end.3 edata.3 end.3 etext.3
 MLINKS+=fast_divide32.3 fast_divide32_prepare.3 \
 	fast_divide32.3 fast_remainder32.3
