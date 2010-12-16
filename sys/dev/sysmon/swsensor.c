@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.5 2010/12/11 04:13:03 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.6 2010/12/16 14:33:30 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.5 2010/12/11 04:13:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.6 2010/12/16 14:33:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -226,6 +226,13 @@ swsensor_init(void *arg)
 		swsensor_get_limits(swsensor_sme, &swsensor_edata,
 		    &sw_sensor_deflims, &sw_sensor_defprops);
 	}
+
+	/* See if an initial value was specified */
+	if (pd != NULL)
+		po = prop_dictionary_get(pd, "value");
+
+	if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
+		sw_sensor_value = prop_number_integer_value(po);
 
 	swsensor_edata.value_cur = 0;
 
