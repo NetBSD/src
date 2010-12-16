@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.4 2010/12/16 15:55:41 jruoho Exp $
+.\" $NetBSD: attribute.3,v 1.5 2010/12/16 17:47:54 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,9 +32,21 @@
 .Os
 .Sh NAME
 .Nm attribute
-.Nd non-standard GCC extensions
+.Nd non-standard GCC attribute extensions
 .Sh SYNOPSIS
 .In sys/cdefs.h
+.Pp
+.Ic __dead
+.Pp
+.Ic __pure
+.Pp
+.Ic __constfunc
+.Pp
+.Ic __noinline
+.Pp
+.Ic __unused
+.Pp
+.Ic __used
 .Pp
 .Ic __packed
 .Pp
@@ -54,8 +66,91 @@ The described macros should be preferred instead of using the
 .Tn GCC's
 .Em __attribute__
 extension directly.
-.Sh FUNCTIONS
+.Sh ATTRIBUTES
 .Bl -tag -width abc
+.It Ic __dead
+The
+.Xr gcc 1
+compiler knows that certain functions such as
+.Xr abort 3
+and
+.Xr exit 3
+can never return any value.
+When such a function is equipped with
+.Ic __dead ,
+certain optimizations are possible.
+Obviously a
+.Ic __dead
+function can never have return type other than
+.Vt void .
+.It Ic __pure
+A
+.Ic __pure
+function is defined to be one that has no effects except
+the return value, which is assumed to depend only on the
+function parameters and/or global variables.
+Any access to parameters and/or global variables must also be read-only.
+A function that depends on volatile memory, or other comparable
+system resource that can change between two consecutive calls,
+can never be
+.Ic __pure .
+Many
+.Xr math 3
+functions satisfy the definition of a
+.Ic __pure
+function, at least in theory.
+Other examples include
+.Xr strlen 3
+and
+.Xr strcmp 3 .
+.It Ic __constfunc
+A
+.Dq const function
+is a stricter variant of
+.Dq pure functions .
+In addition to the restrictions of pure functions, a function declared with
+.Ic __constfunc
+can never access global variables nor take pointers as parameters.
+The return value of these functions must depend
+only on the passed-by-value parameters.
+Note also that a function that calls non-const functions can not be
+.Ic __constfunc .
+The canonical example of a const function would be
+.Xr abs 3 .
+As with pure functions,
+certain micro-optimizations are possible for functions declared with
+.Ic __constfunc .
+.It Ic __noinline
+.Tn GCC
+is known for aggressive function inlining.
+Sometimes it is known that inlining is undesirable or that
+a function will perform incorrectly when inlined.
+The
+.Ic __noinline
+macro expands to a function attribute that prevents
+.Tn GCC
+for inlining the function, irrespective
+whether the function was declared with the
+.Em inline
+keyword.
+The attribute takes precedence over all
+other compiler options related to inlining.
+.It Ic __unused
+In most
+.Tn GCC
+versions the common
+.Fl Wall
+flag enables warnings produced by functions that are defined but unused.
+Marking an unused function with the
+.Ic __unused
+macro inhibits these warnings.
+.It Ic __used
+The
+.Ic __used
+macro expands to an attribute that informs
+.Tn GCC
+that a static variable or function is to be always retained
+in the object file even if it is unreferenced.
 .It Ic __packed
 The
 .Ic __packed
