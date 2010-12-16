@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.16 2010/12/16 12:38:20 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.17 2010/12/16 17:05:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -76,10 +76,13 @@ mydprintf(const char *fmt, ...)
  */
 
 enum { RUMPSP_REQ, RUMPSP_RESP, RUMPSP_ERROR };
-enum {	RUMPSP_SYSCALL,
+enum {	RUMPSP_HANDSHAKE,
+	RUMPSP_SYSCALL,
 	RUMPSP_COPYIN, RUMPSP_COPYINSTR,
 	RUMPSP_COPYOUT, RUMPSP_COPYOUTSTR,
 	RUMPSP_ANONMMAP };
+
+enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH }; /* more to come */
 
 struct rsp_hdr {
 	uint64_t rsp_len;
@@ -93,11 +96,13 @@ struct rsp_hdr {
 	union {
 		uint32_t sysnum;
 		uint32_t error;
+		uint32_t handshake;
 	} u;
 };
 #define HDRSZ sizeof(struct rsp_hdr)
 #define rsp_sysnum u.sysnum
 #define rsp_error u.error
+#define rsp_handshake u.handshake
 
 #define MAXBANNER 96
 
@@ -132,7 +137,7 @@ struct respwait {
 struct spclient {
 	int spc_fd;
 	int spc_refcnt;
-	int spc_dying;
+	int spc_state;
 
 	pthread_mutex_t spc_mtx;
 	pthread_cond_t spc_cv;
@@ -156,6 +161,10 @@ struct spclient {
 #define SPCSTATUS_FREE 0
 #define SPCSTATUS_BUSY 1
 #define SPCSTATUS_WANTED 2
+
+#define SPCSTATE_NEW     0
+#define SPCSTATE_RUNNING 1
+#define SPCSTATE_DYING   2
 
 typedef int (*addrparse_fn)(const char *, struct sockaddr **, int);
 typedef int (*connecthook_fn)(int);
@@ -334,7 +343,8 @@ waitresp(struct spclient *spc, struct respwait *rw)
 	sendunlockl(spc);
 
 	rw->rw_error = 0;
-	while (rw->rw_data == NULL && rw->rw_error == 0 && spc->spc_dying == 0){
+	while (rw->rw_data == NULL && rw->rw_error == 0
+	    && spc->spc_state != SPCSTATE_DYING){
 		/* are we free to receive? */
 		if (spc->spc_istatus == SPCSTATUS_FREE) {
 			int gotresp;
@@ -352,7 +362,7 @@ waitresp(struct spclient *spc, struct respwait *rw)
 					continue;
 				case -1:
 					rv = errno;
-					spc->spc_dying = 1;
+					spc->spc_state = SPCSTATE_DYING;
 					goto cleanup;
 				default:
 					break;
@@ -391,7 +401,7 @@ waitresp(struct spclient *spc, struct respwait *rw)
 
 	if (rv)
 		return rv;
-	if (spc->spc_dying)
+	if (spc->spc_state == SPCSTATE_DYING)
 		return ENOTCONN;
 	return rw->rw_error;
 }

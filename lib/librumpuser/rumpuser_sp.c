@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.26 2010/12/16 12:38:20 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.27 2010/12/16 17:05:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.26 2010/12/16 12:38:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.27 2010/12/16 17:05:44 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -198,6 +198,26 @@ send_error_resp(struct spclient *spc, uint64_t reqno, int error)
 }
 
 static int
+send_handshake_resp(struct spclient *spc, uint64_t reqno, int error)
+{
+	struct rsp_hdr rhdr;
+	int rv;
+
+	rhdr.rsp_len = sizeof(rhdr) + sizeof(error);
+	rhdr.rsp_reqno = reqno;
+	rhdr.rsp_class = RUMPSP_RESP;
+	rhdr.rsp_type = RUMPSP_HANDSHAKE;
+	rhdr.rsp_error = 0;
+
+	sendlock(spc);
+	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	rv = dosend(spc, &error, sizeof(error));
+	sendunlock(spc);
+
+	return rv;
+}
+
+static int
 send_syscall_resp(struct spclient *spc, uint64_t reqno, int error,
 	register_t *retval)
 {
@@ -355,7 +375,7 @@ spcrelease(struct spclient *spc)
 
 	close(spc->spc_fd);
 	spc->spc_fd = -1;
-	spc->spc_dying = 0;
+	spc->spc_state = SPCSTATE_NEW;
 
 	atomic_inc_uint(&disco);
 }
@@ -370,7 +390,7 @@ serv_handledisco(unsigned int idx)
 	pfdlist[idx].fd = -1;
 	pfdlist[idx].revents = 0;
 	pthread_mutex_lock(&spc->spc_mtx);
-	spc->spc_dying = 1;
+	spc->spc_state = SPCSTATE_DYING;
 	kickall(spc);
 	pthread_mutex_unlock(&spc->spc_mtx);
 
@@ -439,7 +459,7 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 
 	/* find empty slot the simple way */
 	for (i = 0; i < MAXCLI; i++) {
-		if (pfdlist[i].fd == -1 && spclist[i].spc_dying == 0)
+		if (pfdlist[i].fd == -1 && spclist[i].spc_state == SPCSTATE_NEW)
 			break;
 	}
 
@@ -647,7 +667,24 @@ handlereq(struct spclient *spc)
 {
 	struct sysbouncearg *sba;
 	pthread_t pt;
-	int retries;
+	int retries, rv;
+
+	if (__predict_false(spc->spc_state == SPCSTATE_NEW)) {
+		if (spc->spc_hdr.rsp_type != RUMPSP_HANDSHAKE) {
+			send_error_resp(spc, spc->spc_hdr.rsp_reqno, EAUTH);
+			spcfreebuf(spc);
+			return;
+		}
+
+		rv = send_handshake_resp(spc, spc->spc_hdr.rsp_reqno, 0);
+		spcfreebuf(spc);
+		if (rv) {
+			shutdown(spc->spc_fd, SHUT_RDWR);
+			return;
+		}
+		spc->spc_state = SPCSTATE_RUNNING;
+		return;
+	}
 
 	if (__predict_false(spc->spc_hdr.rsp_type != RUMPSP_SYSCALL)) {
 		send_error_resp(spc, spc->spc_hdr.rsp_reqno, EINVAL);
