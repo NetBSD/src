@@ -30,13 +30,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.26 2010/05/29 20:32:18 dholland Exp $
+.\"	$NetBSD: strftime.3,v 1.27 2010/12/16 18:38:07 christos Exp $
 .\"
-.Dd May 29, 2010
+.Dd December 14, 2010
 .Dt STRFTIME 3
 .Os
 .Sh NAME
-.Nm strftime
+.Nm strftime ,
+.Nm strftime_z
 .Nd format date and time
 .Sh LIBRARY
 .Lb libc
@@ -44,6 +45,8 @@
 .In time.h
 .Ft size_t
 .Fn strftime "char * restrict buf" "size_t maxsize" "const char * restrict format" "const struct tm * restrict timeptr"
+.Ft size_t
+.Fn strftime_z "const timezone_t tz" "char * restrict buf" "size_t maxsize" "const char * restrict format" "const struct tm * restrict timeptr"
 .Sh DESCRIPTION
 The
 .Fn strftime
@@ -193,6 +196,15 @@ is replaced by the offset from ITC in the ISO 8601 format
 is replaced by
 .Ql % .
 .El
+.Pp
+The
+.Fn strftime_z
+function is similar to
+.Fn strftime ,
+but it also takes a
+.Ft "const timezone_t"
+.Fa tz
+argument.
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr printf 1 ,
