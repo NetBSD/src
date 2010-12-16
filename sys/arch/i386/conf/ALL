@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.280 2010/11/27 20:18:46 christos Exp $
+# $NetBSD: ALL,v 1.281 2010/12/16 07:51:21 cegger Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.280 $"
+#ident 		"ALL-$Revision: 1.281 $"
 
 maxusers	64		# estimated number of users
 
@@ -576,8 +576,16 @@ wsdisplay* 	at machfb? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
-# VIA Unichrome framebuffer console
-unichromefb*	at pci? dev ? function ?
+chipsfb*	at pci? dev ? function ?
+genfb*		at pci? dev ? function ?
+machfb*		at pci? dev ? function ?
+pm2fb*		at pci? dev ? function ?
+r128fb*		at pci? dev ? function ?
+radeonfb*	at pci? dev ? function ?
+unichromefb*	at pci? dev ? function ?  # VIA Unichrome framebuffer console
+voodoofb*	at pci? dev ? function ?
+voyagerfb*	at pci? dev ? function ?
+wcfb*	at pci? dev ? function ?
 wsdisplay*	at unichromefb?
 
 # XBOX framebuffer console
