@@ -1,4 +1,4 @@
-.\"	$NetBSD: swsensor.4,v 1.4 2010/12/11 15:49:34 wiz Exp $
+.\"	$NetBSD: swsensor.4,v 1.5 2010/12/16 14:33:30 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 9, 2010
+.Dd December 16, 2010
 .Dt SWSENSOR 4
 .Os
 .Sh NAME
@@ -77,6 +77,9 @@ The initial limit value, if limit emulation is selected (ie, if
 is set to 1 or 2)
 .It Li "type"
 Override the sensor's unit/type.
+.It Li "value"
+Provide an initial value for the sensor.
+If this is omitted, the sensor's initial value is set to zero.
 .El
 .Pp
 For example,
