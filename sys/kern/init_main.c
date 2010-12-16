@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.423 2010/08/21 13:17:31 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.423 2010/08/21 13:17:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -502,11 +502,11 @@ main(void)
 
 	ssp_init();
 
+	ubc_init();		/* must be after autoconfig */
+
 	configure2();
 	/* Now timer is working.  Enable preemption. */
 	kpreempt_enable();
-
-	ubc_init();		/* must be after autoconfig */
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
