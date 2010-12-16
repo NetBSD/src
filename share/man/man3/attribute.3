@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.3 2010/12/16 10:40:43 jruoho Exp $
+.\" $NetBSD: attribute.3,v 1.4 2010/12/16 15:55:41 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,6 +69,10 @@ If specified on a
 or
 .Vt union ,
 all variables therein are also packed.
+The
+.Ic __packed
+macro is often useful when dealing with data that
+is in a particular static format on the disk, wire, or memory.
 .It Fn __aligned "x"
 The
 .Fn __aligned
@@ -95,15 +99,13 @@ processor cache lines.
 Note that when used with functions, structures, or structure members,
 .Fn __aligned
 can only be used to increase the alignment.
-It is however possible to decrease the alignment
+If the macro is however used as part of a
+.Vt typedef ,
+the alignment can both increase and decrease.
+Otherwise it is only possible to decrease the alignment
 for variables and fields by using the
 .Ic __packed
 macro.
-If
-.Fn __aligned
-is used as part of a
-.Vt typedef ,
-the alignment can both increase and decrease.
 The effectiveness of
 .Fn __aligned
 is largely dependent on the linker.
@@ -134,4 +136,4 @@ It goes without saying that portable applications
 should steer clear from non-standard extensions specific
 to any given compiler.
 Even when portability is not a concern,
-use these macros wisely.
+use these macros sparsely and wisely.
