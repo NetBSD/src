@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.38 2010/10/16 10:27:07 skrll Exp $	 */
+/*	$NetBSD: load.c,v 1.39 2010/12/16 19:35:38 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.38 2010/10/16 10:27:07 skrll Exp $");
+__RCSID("$NetBSD: load.c,v 1.39 2010/12/16 19:35:38 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -236,8 +236,7 @@ _rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed, int 
 			    val.s, name);
 			break;
 		}
-		/* XXX: This can mess up debuggers, cause we lie about
-		 * what we loaded in the needed objects */
+
 		for (j = 0; j < RTLD_MAX_LIBRARY &&
 		    x->entry[i].library[j] != NULL; j++) {
 			o = _rtld_load_library(x->entry[i].library[j], obj,
