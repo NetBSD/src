@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.25 2010/12/12 17:58:28 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.26 2010/12/16 12:38:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.25 2010/12/12 17:58:28 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.26 2010/12/16 12:38:20 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -80,6 +80,11 @@ static unsigned int disco;
 static volatile int spfini;
 
 static struct rumpuser_sp_ops spops;
+
+static char banner[MAXBANNER];
+
+#define PROTOMAJOR 0
+#define PROTOMINOR 0
 
 /*
  * Manual wrappers, since librump does not have access to the
@@ -415,8 +420,6 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 		return 0;
 	}
 
-	/* XXX: should do some sort of handshake too */
-
 	flags = fcntl(newfd, F_GETFL, 0);
 	if (fcntl(newfd, F_SETFL, flags | O_NONBLOCK) == -1) {
 		close(newfd);
@@ -424,6 +427,12 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 	}
 
 	if (connhook(newfd) != 0) {
+		close(newfd);
+		return 0;
+	}
+
+	/* write out a banner for the client */
+	if (write(newfd, banner, strlen(banner)) != (ssize_t)strlen(banner)) {
 		close(newfd);
 		return 0;
 	}
@@ -809,7 +818,8 @@ spserver(void *arg)
 static unsigned cleanupidx;
 static struct sockaddr *cleanupsa;
 int
-rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
+rumpuser_sp_init(const char *url, const struct rumpuser_sp_ops *spopsp,
+	const char *ostype, const char *osrelease, const char *machine)
 {
 	pthread_t pt;
 	struct spservarg *sarg;
@@ -825,6 +835,9 @@ rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
 	free(p);
 	if (error)
 		return error;
+
+	snprintf(banner, sizeof(banner), "RUMPSP-%d.%d-%s-%s/%s\n",
+	    PROTOMAJOR, PROTOMINOR, ostype, osrelease, machine);
 
 	s = socket(parsetab[idx].domain, SOCK_STREAM, 0);
 	if (s == -1)

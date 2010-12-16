@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.8 2010/11/30 22:30:43 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.9 2010/12/16 12:38:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -207,9 +207,11 @@ handlereq(struct spclient *spc)
 int
 rumpclient_init()
 {
+	char banner[MAXBANNER];
 	struct sockaddr *sap;
 	char *p;
 	unsigned idx;
+	ssize_t n;
 	int error, s;
 
 	if ((p = getenv("RUMP_SERVER")) == NULL) {
@@ -243,6 +245,20 @@ rumpclient_init()
 	TAILQ_INIT(&clispc.spc_respwait);
 	pthread_mutex_init(&clispc.spc_mtx, NULL);
 	pthread_cond_init(&clispc.spc_cv, NULL);
+
+	if ((n = read(s, banner, sizeof(banner)-1)) < 0) {
+		fprintf(stderr, "rump_sp: failed to read banner\n");
+		return -1;
+	}
+
+	if (banner[n-1] != '\n') {
+		fprintf(stderr, "rump_sp: invalid banner\n");
+		errno = EINVAL;
+		return -1;
+	}
+	banner[n] = '\0';
+
+	/* parse the banner some day */
 
 	return 0;
 }
