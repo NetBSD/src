@@ -1250,7 +1250,7 @@ check_format_info (function_format_info *info, tree params)
 	     format_types[info->format_type].name);
 
   if (res.number_wide > 0)
-    warning (OPT_Wformat, "format is a wide character string");
+    warning (OPT_Wformat, "format is a wide-character string");
 
   if (res.number_unterminated > 0)
     warning (OPT_Wformat, "unterminated format string");
