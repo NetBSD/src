@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.20 2010/12/01 09:52:28 he Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.21 2010/12/16 01:56:21 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.20 2010/12/01 09:52:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.21 2010/12/16 01:56:21 macallan Exp $");
 
 #include "opt_inet.h"
 
@@ -63,11 +63,11 @@ struct wi_obio_softc {
 	bus_space_tag_t sc_tag;
 };
 
-CFATTACH_DECL(wi_obio, sizeof(struct wi_obio_softc),
+CFATTACH_DECL_NEW(wi_obio, sizeof(struct wi_obio_softc),
     wi_obio_match, wi_obio_attach, NULL, NULL);
 
 int
-wi_obio_match(struct device *parent, struct cfdata *match, void *aux)
+wi_obio_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -85,15 +85,16 @@ wi_obio_match(struct device *parent, struct cfdata *match, void *aux)
 #define OBIO_WI_EXTINT	0x58
 
 void
-wi_obio_attach(struct device *parent, struct device *self, void *aux)
+wi_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct wi_obio_softc * const sc = (void *)self;
+	struct wi_obio_softc * const sc = device_private(self);
 	struct wi_softc * const wisc = &sc->sc_wi;
 	struct confargs * const ca = aux;
 
 	aprint_normal(" irq %d:", ca->ca_intr[0]);
 	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, wi_intr, sc);
 
+	wisc->sc_dev = self;
 	sc->sc_tag = wisc->sc_iot = ca->ca_tag;
 
 	if (bus_space_map(wisc->sc_iot, ca->ca_baseaddr + ca->ca_reg[0],
