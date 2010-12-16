@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1550 2010/12/16 22:19:37 christos Exp $
+#	$NetBSD: mi,v 1.1551 2010/12/16 23:01:56 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13305,7 +13305,7 @@
 ./usr/share/man/html3/mkstemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktime.html		comp-c-htmlman		html
-./usr/share/man/html3/mktime_Z.html		comp-c-htmlman		html
+./usr/share/man/html3/mktime_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/modf.html			comp-c-htmlman		html
 ./usr/share/man/html3/moncontrol.html		comp-c-htmlman		html
 ./usr/share/man/html3/monstartup.html		comp-c-htmlman		html
@@ -19283,6 +19283,7 @@
 ./usr/share/man/man3/mkstemp.3			comp-c-man		.man
 ./usr/share/man/man3/mktemp.3			comp-c-man		.man
 ./usr/share/man/man3/mktime.3			comp-c-man		.man
+./usr/share/man/man3/mktime_z.3			comp-c-man		.man
 ./usr/share/man/man3/modf.3			comp-c-man		.man
 ./usr/share/man/man3/moncontrol.3		comp-c-man		.man
 ./usr/share/man/man3/monstartup.3		comp-c-man		.man
