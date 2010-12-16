@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2010/12/16 22:47:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.101 2010/12/16 22:52:32 joerg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -69,10 +69,18 @@ SRCS+=		stack_protector.c
 .PATH.c: ${NETBSDSRCDIR}/lib/libc/stdlib
 SRCS+=		exit.c
 
+errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
+	${TOOL_AWK} -v concat=1 -f ${.ALLSRC} > ${.TARGET}.tmp && \
+	mv -f ${.TARGET}.tmp ${.TARGET}
+
+xprintf.c: errlist_concat.h
+
+CLEANFILES+=	errlist_concat.h
+
 BINDIR=		${SHLINKINSTALLDIR}
 
 CPPFLAGS+=	-DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
-CPPFLAGS+=	-I${.CURDIR}
+CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-DRTLD_LOADER
 CPPFLAGS+=	-D_RTLD_SOURCE
 CPPFLAGS+=	-DCOMBRELOC

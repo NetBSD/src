@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: errlist.awk,v 1.3 2010/12/12 22:34:44 joerg Exp $
+#	$NetBSD: errlist.awk,v 1.4 2010/12/16 22:52:32 joerg Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,6 +37,8 @@
 #
 function tabs(desc) {
 	l = length(desc) + 3;
+	if (concat)
+		l++
 	if (l < 16)
 		return "\t\t\t\t";
 	else if (l < 24)
@@ -50,14 +52,25 @@ function tabs(desc) {
 }
 function perror(name, number, desc)
 {
-	printf("\t\"%s\",%s/* %d - %s */\n", desc, tabs(desc), number, name);
+	if (!concat) {
+		printf("\t\"%s\",%s/* %d - %s */\n", desc, tabs(desc), number, name);
+	} else {
+		offsets[number] = offset;
+		offset += length(desc) + 1;
+		printf("\t\"%s\\0\"%s/* %d - %s */\n", desc, tabs(desc), number, name);
+	}
 }
 BEGIN {
 	printf("/* Automatically generated file; do not edit */\n");
 	printf("#include <sys/cdefs.h>\n");
-	printf("__RCSID(\"$NetBSD: errlist.awk,v 1.3 2010/12/12 22:34:44 joerg Exp $\");\n");
+	printf("__RCSID(\"$NetBSD: errlist.awk,v 1.4 2010/12/16 22:52:32 joerg Exp $\");\n");
 	printf("#include <errno.h>\n");
-	printf("static const char *const errlist[] = {\n");
+	if (!concat) {
+		printf("static const char *const errlist[] = {\n");
+	} else {
+		printf("static const char concat_errlist[] = {\n");
+		offset = 0;
+	}
 	perror("ENOERROR", 0, "Undefined error: 0");
 	errno = 1;
 }
@@ -81,6 +94,20 @@ BEGIN {
 }
 END {
 	printf("};\n\n");
-	printf("const int sys_nerr = sizeof(errlist) / sizeof(errlist[0]);\n");
-	printf("const char * const *sys_errlist = errlist;\n");
+	if (!concat) {
+		printf("const int sys_nerr = sizeof(errlist) / sizeof(errlist[0]);\n");
+		printf("const char * const *sys_errlist = errlist;\n");
+	} else {
+		printf("static const int concat_nerr = %d;\n", errno);
+		printf("static const unsigned short concat_offset[] = {\n");
+		offsets[errno++] = offset;
+		for (j = 0; j < errno; j++) {
+			printf("\t%d,\n", offsets[j]);
+		}
+		printf("};\n");
+		if (offset > 65535) {
+			printf("Total errlist size doesn't fit into 16bit\n") > "/dev/stderr";
+			exit(1);
+		}
+	}
 }
