@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1549 2010/12/16 18:42:49 christos Exp $
+#	$NetBSD: mi,v 1.1550 2010/12/16 22:19:37 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7315,6 +7315,7 @@
 ./usr/share/man/cat3/mkstemp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mktemp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mktime.0			comp-c-catman		.cat
+./usr/share/man/cat3/mktime_z.0			comp-c-catman		.cat
 ./usr/share/man/cat3/modf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/moncontrol.0		comp-c-catman		.cat
 ./usr/share/man/cat3/monstartup.0		comp-c-catman		.cat
@@ -13304,6 +13305,7 @@
 ./usr/share/man/html3/mkstemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktemp.html		comp-c-htmlman		html
 ./usr/share/man/html3/mktime.html		comp-c-htmlman		html
+./usr/share/man/html3/mktime_Z.html		comp-c-htmlman		html
 ./usr/share/man/html3/modf.html			comp-c-htmlman		html
 ./usr/share/man/html3/moncontrol.html		comp-c-htmlman		html
 ./usr/share/man/html3/monstartup.html		comp-c-htmlman		html
@@ -14255,6 +14257,7 @@
 ./usr/share/man/html3/strerror_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/stresep.html		comp-c-htmlman		html
 ./usr/share/man/html3/strfmon.html		comp-c-htmlman		html
+./usr/share/man/html3/strftime.html		comp-c-htmlman		html
 ./usr/share/man/html3/strftime_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/string.html		comp-c-htmlman		html
 ./usr/share/man/html3/string_to_flags.html	comp-c-htmlman		html
