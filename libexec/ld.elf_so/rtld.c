@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.133 2010/12/16 19:59:39 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.134 2010/12/16 22:47:27 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.133 2010/12/16 19:59:39 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.134 2010/12/16 22:47:27 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -312,20 +312,21 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	               *pAUX_phent, *pAUX_phnum, *pAUX_euid, *pAUX_egid,
 		       *pAUX_ruid, *pAUX_rgid;
 	const AuxInfo  *pAUX_pagesz;
-	char          **env;
+	char          **env, **oenvp;
 	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
 	Elf_Addr       *const osp = sp;
 	bool            bind_now = 0;
-	const char     *ld_bind_now;
+	const char     *ld_bind_now, *ld_preload, *ld_library_path;
 	const char    **argv;
 	const char     *execname;
 	long		argc;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
 	char ***real_environ;
-#if defined(RTLD_DEBUG)
+#ifdef DEBUG
 	int i = 0;
+	const char     *ld_debug;
 #endif
 
 	/*
@@ -428,24 +429,68 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	    ((pAUX_egid ? (gid_t)pAUX_egid->a_v : getegid()) ==
 	    (pAUX_rgid ? (gid_t)pAUX_rgid->a_v : getgid()));
 
-	ld_bind_now = getenv("LD_BIND_NOW");
+#ifdef DEBUG
+	ld_debug = NULL;
+#endif
+	ld_bind_now = NULL;
+	ld_library_path = NULL;
+	ld_preload = NULL;
+	/*
+	 * Inline avoid using normal getenv/unsetenv here as the libc
+	 * code is quite a bit more complicated.
+	 */
+	for (oenvp = env; *env != NULL; ++env) {
+		static const char bind_var[] = "LD_BIND_NOW=";
+		static const char debug_var[] =  "LD_DEBUG=";
+		static const char path_var[] = "LD_LIBRARY_PATH=";
+		static const char preload_var[] = "LD_PRELOAD=";
+#define LEN(x)	(sizeof(x) - 1)
+
+		if ((*env)[0] != 'L' || (*env)[1] != 'D') {
+			/*
+			 * Special case to skip most entries without
+			 * the more expensive calls to strncmp.
+			 */
+			*oenvp++ = *env;
+		} else if (strncmp(*env, debug_var, LEN(debug_var)) == 0) {
+			if (_rtld_trust) {
+#ifdef DEBUG
+				ld_debug = *env + LEN(debug_var);
+#endif
+				*oenvp++ = *env;
+			}
+		} else if (strncmp(*env, bind_var, LEN(bind_var)) == 0) {
+			ld_bind_now = *env + LEN(bind_var);
+		} else if (strncmp(*env, path_var, LEN(path_var)) == 0) {
+			if (_rtld_trust) {
+				ld_library_path = *env + LEN(path_var);
+				*oenvp++ = *env;
+			}
+		} else if (strncmp(*env, preload_var, LEN(preload_var)) == 0) {
+			if (_rtld_trust) {
+				ld_preload = *env + LEN(preload_var);
+				*oenvp++ = *env;
+			}
+		} else {
+			*oenvp++ = *env;
+		}
+#undef LEN
+	}
+	*oenvp++ = NULL;
+
 	if (ld_bind_now != NULL && *ld_bind_now != '\0')
 		bind_now = true;
 	if (_rtld_trust) {
 #ifdef DEBUG
-		const char     *ld_debug = getenv("LD_DEBUG");
 #ifdef RTLD_DEBUG
 		debug = 0;
 #endif
 		if (ld_debug != NULL && *ld_debug != '\0')
 			debug = 1;
 #endif
-		_rtld_add_paths(execname, &_rtld_paths,
-		    getenv("LD_LIBRARY_PATH"));
+		_rtld_add_paths(execname, &_rtld_paths, ld_library_path);
 	} else {
 		execname = NULL;
-		if (xunsetenv("LD_DEBUG") || xunsetenv("LD_LIBRARY_PATH"))
-			_rtld_die();
 	}
 	_rtld_process_hints(execname, &_rtld_paths, &_rtld_xforms,
 	    _PATH_LD_HINTS);
@@ -512,17 +557,15 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	_rtld_objmain->mainref = 1;
 	_rtld_objlist_push_tail(&_rtld_list_main, _rtld_objmain);
 
-	if (_rtld_trust) {
+	if (ld_preload) {
 		/*
 		 * Pre-load user-specified objects after the main program
 		 * but before any shared object dependencies.
 		 */
 		dbg(("preloading objects"));
-		if (_rtld_preload(getenv("LD_PRELOAD")) == -1)
+		if (_rtld_preload(ld_preload) == -1)
 			_rtld_die();
-	} else
-		if (xunsetenv("LD_PRELOAD"))
-			_rtld_die();
+	}
 
 	dbg(("loading needed objects"));
 	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_MAIN) == -1)
