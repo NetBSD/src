@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.58 2010/12/12 17:10:36 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.59 2010/12/16 12:38:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 7
+#define RUMPUSER_VERSION 8
 int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
@@ -220,7 +220,8 @@ struct rumpuser_sp_ops {
 	pid_t (*spop_getpid)(void);
 };
 
-int	rumpuser_sp_init(const struct rumpuser_sp_ops *, const char *);
+int	rumpuser_sp_init(const char *, const struct rumpuser_sp_ops *,
+			 const char *, const char *, const char *);
 int	rumpuser_sp_copyin(void *, const void *, void *, size_t);
 int	rumpuser_sp_copyinstr(void *, const void *, void *, size_t *);
 int	rumpuser_sp_copyout(void *, const void *, void *, size_t);
