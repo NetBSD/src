@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.17 2009/08/24 09:33:03 vanhu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.18 2010/12/16 16:59:05 gdt Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1817,7 +1817,8 @@ oakley_check_certid(iph1)
 				"ID mismatched with ASN1 SubjectName.\n");
 			plogdump(LLV_DEBUG, id_b + 1, idlen);
 			plogdump(LLV_DEBUG, name->v, idlen);
-			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
+			if (iph1->rmconf->verify_identifier)
+				return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 		return 0;
 	case IPSECDOI_ID_IPV4_ADDR:
@@ -1889,7 +1890,8 @@ oakley_check_certid(iph1)
 				"ID mismatched with subjectAltName.\n");
 			plogdump(LLV_DEBUG, id_b + 1, idlen);
 			plogdump(LLV_DEBUG, a, idlen);
-			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
+			if (iph1->rmconf->verify_identifier)
+				return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 		return 0;
 	}
