@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.20 2009/12/31 22:49:16 mlelstv Exp $	*/
+/*	$NetBSD: strftime.c,v 1.21 2010/12/16 18:38:07 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,7 +6,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.20 2009/12/31 22:49:16 mlelstv Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.21 2010/12/16 18:38:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,14 +73,18 @@ static const char	sccsid[] = "@(#)strftime.c	5.4 (Berkeley) 3/14/89";
 #include "fcntl.h"
 #include "locale.h"
 
+#ifdef __weak_alias
+__weak_alias(strftime_z, _strftime_z)
+#endif
+
 #include "sys/localedef.h"
 #define Locale	_CurrentTimeLocale
 #define c_fmt   d_t_fmt
 
 static char *	_add(const char *, char *, const char *);
 static char *	_conv(int, const char *, char *, const char *);
-static char *	_fmt(const char *, const struct tm *, char *, const char *,
-			int *);
+static char *	_fmt(const timezone_t, const char *, const struct tm *, char *,
+			const char *, int *);
 static char *	_yconv(int, int, int, int, char *, const char *);
 
 extern char *	tzname[];
@@ -95,18 +99,15 @@ extern char *	tzname[];
 #define IN_ALL	3
 
 size_t
-strftime(s, maxsize, format, t)
-char * const		s;
-const size_t		maxsize;
-const char * const	format;
-const struct tm * const	t;
+strftime_z(const timezone_t sp, char * const s, const size_t maxsize,
+    const char * const format, const struct tm * const	t)
 {
 	char *	p;
 	int	warn;
 
-	tzset();
 	warn = IN_NONE;
-	p = _fmt(((format == NULL) ? "%c" : format), t, s, s + maxsize, &warn);
+	p = _fmt(sp, ((format == NULL) ? "%c" : format), t, s, s + maxsize,
+	    &warn);
 #ifndef NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU
 	if (warn != IN_NONE && getenv(YEAR_2000_NAME) != NULL) {
 		(void) fprintf(stderr, "\n");
@@ -130,12 +131,8 @@ const struct tm * const	t;
 }
 
 static char *
-_fmt(format, t, pt, ptlim, warnp)
-const char *		format;
-const struct tm * const	t;
-char *			pt;
-const char * const	ptlim;
-int *			warnp;
+_fmt(const timezone_t sp, const char *format, const struct tm * const t,
+	char *pt, const char *const ptlim, int *warnp)
 {
 	for ( ; *format; ++format) {
 		if (*format == '%') {
@@ -184,7 +181,7 @@ label:
 				{
 				int warn2 = IN_SOME;
 
-				pt = _fmt(Locale->c_fmt, t, pt, ptlim, &warn2);
+				pt = _fmt(sp, Locale->c_fmt, t, pt, ptlim, &warn2);
 				if (warn2 == IN_ALL)
 					warn2 = IN_THIS;
 				if (warn2 > *warnp)
@@ -192,7 +189,7 @@ label:
 				}
 				continue;
 			case 'D':
-				pt = _fmt("%m/%d/%y", t, pt, ptlim, warnp);
+				pt = _fmt(sp, "%m/%d/%y", t, pt, ptlim, warnp);
 				continue;
 			case 'd':
 				pt = _conv(t->tm_mday, "%02d", pt, ptlim);
@@ -213,7 +210,7 @@ label:
 				pt = _conv(t->tm_mday, "%2d", pt, ptlim);
 				continue;
 			case 'F':
-				pt = _fmt("%Y-%m-%d", t, pt, ptlim, warnp);
+				pt = _fmt(sp, "%Y-%m-%d", t, pt, ptlim, warnp);
 				continue;
 			case 'H':
 				pt = _conv(t->tm_hour, "%02d", pt, ptlim);
@@ -277,10 +274,10 @@ label:
 					pt, ptlim);
 				continue;
 			case 'R':
-				pt = _fmt("%H:%M", t, pt, ptlim, warnp);
+				pt = _fmt(sp, "%H:%M", t, pt, ptlim, warnp);
 				continue;
 			case 'r':
-				pt = _fmt(Locale->t_fmt_ampm, t, pt, ptlim,
+				pt = _fmt(sp, Locale->t_fmt_ampm, t, pt, ptlim,
 				       	warnp);
 				continue;
 			case 'S':
@@ -306,7 +303,7 @@ label:
 				}
 				continue;
 			case 'T':
-				pt = _fmt("%H:%M:%S", t, pt, ptlim, warnp);
+				pt = _fmt(sp, "%H:%M:%S", t, pt, ptlim, warnp);
 				continue;
 			case 't':
 				pt = _add("\t", pt, ptlim);
@@ -421,7 +418,7 @@ label:
 				** "date as dd-bbb-YYYY"
 				** (ado, 1993-05-24)
 				*/
-				pt = _fmt("%e-%b-%Y", t, pt, ptlim, warnp);
+				pt = _fmt(sp, "%e-%b-%Y", t, pt, ptlim, warnp);
 				continue;
 			case 'W':
 				pt = _conv((t->tm_yday + DAYSPERWEEK -
@@ -434,13 +431,13 @@ label:
 				pt = _conv(t->tm_wday, "%d", pt, ptlim);
 				continue;
 			case 'X':
-				pt = _fmt(Locale->t_fmt, t, pt, ptlim, warnp);
+				pt = _fmt(sp, Locale->t_fmt, t, pt, ptlim, warnp);
 				continue;
 			case 'x':
 				{
 				int	warn2 = IN_SOME;
 
-				pt = _fmt(Locale->d_fmt, t, pt, ptlim, &warn2);
+				pt = _fmt(sp, Locale->d_fmt, t, pt, ptlim, &warn2);
 				if (warn2 == IN_ALL)
 					warn2 = IN_THIS;
 				if (warn2 > *warnp)
@@ -463,8 +460,10 @@ label:
 				else
 #endif /* defined TM_ZONE */
 				if (t->tm_isdst >= 0)
-					pt = _add(tzname[t->tm_isdst != 0],
-						pt, ptlim);
+					pt = _add((sp ?
+					    tzgetname(sp, t->tm_isdst) :
+					    tzname[t->tm_isdst != 0]),
+					    pt, ptlim);
 				/*
 				** C99 says that %Z must be replaced by the
 				** empty string if the time zone is not
@@ -556,7 +555,7 @@ label:
 				continue;
 #if 0
 			case '+':
-				pt = _fmt(Locale->date_fmt, t, pt, ptlim,
+				pt = _fmt(sp, Locale->date_fmt, t, pt, ptlim,
 					warnp);
 				continue;
 #endif
@@ -575,6 +574,14 @@ label:
 		*pt++ = *format;
 	}
 	return pt;
+}
+
+size_t
+strftime(char * const s, const size_t maxsize,
+    const char * const format, const struct tm * const	t)
+{
+	tzset();
+	return strftime_z(NULL, s, maxsize, format, t);
 }
 
 static char *

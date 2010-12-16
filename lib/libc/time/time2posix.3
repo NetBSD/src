@@ -1,10 +1,12 @@
-.\"	$NetBSD: time2posix.3,v 1.15 2009/12/31 22:49:16 mlelstv Exp $
-.Dd April 1, 2001
+.\"	$NetBSD: time2posix.3,v 1.16 2010/12/16 18:38:07 christos Exp $
+.Dd December 4, 2010
 .Dt TIME2POSIX 3
 .Os
 .Sh NAME
 .Nm time2posix ,
-.Nm posix2time
+.Nm time2posix_z ,
+.Nm posix2time ,
+.Nm posix2time_z ,
 .Nd convert seconds since the Epoch
 .Sh LIBRARY
 .Lb libc
@@ -13,7 +15,11 @@
 .Ft time_t
 .Fn time2posix "time_t t"
 .Ft time_t
+.Fn time2posix_z "const timezone_t tz" "time_t t"
+.Ft time_t
 .Fn posix2time "time_t t"
+.Ft time_t
+.Fn posix2time_z "const timezone_t tz" "time_t t"
 .Sh DESCRIPTION
 .St -p1003.1
 legislates that a
@@ -42,7 +48,10 @@ values should only be obtained-from and
 passed-to functions such as
 .Xr time 3 ,
 .Xr localtime 3 ,
+.Xr localtime_r 3 ,
+.Xr localtime_rz 3 ,
 .Xr mktime 3 ,
+.Xr mktime_z 3 ,
 and
 .Xr difftime 3 .
 However, POSIX gives an arithmetic expression for directly computing a
@@ -55,9 +64,11 @@ using such a relationship will typically not handle intervals over
 leap seconds correctly.
 .Pp
 The
-.Fn time2posix
-and
+.Fn time2posix ,
+.Fn time2posix_z ,
 .Fn posix2time
+and
+.Fn posix2time_z
 functions are provided to address this
 .Va time_t
 mismatch by converting between local
@@ -69,18 +80,31 @@ These converted values can then be used in lieu of correcting the
 older applications, or when communicating with POSIX-compliant systems.
 .Pp
 .Fn time2posix
-is single-valued.
+and
+.Fn time2posix_z
+are single-valued.
 That is, every local
 .Va time_t
 corresponds to a single POSIX
 .Va time_t .
 .Fn posix2time
-is less well-behaved: for a positive leap second hit the result is not
+and
+.Fn posix2time
+are less well-behaved: for a positive leap second hit the result is not
 unique, and for a negative leap second hit the corresponding POSIX
 .Va time_t
 doesn't exist so an adjacent value is returned.
 Both of these are good indicators of the inferiority of the POSIX
 representation.
+.Pp
+The
+.Dq z
+variants of the two functions behave exactly like their counterparts,
+but they operate in the given
+.Fa tz
+argument which was previously allocated using
+.Xr tzalloc 3
+and are re-entrant.
 .Pp
 The following table summarizes the relationship between a
 .Va time_t
@@ -115,7 +139,11 @@ degenerate to the identity function.
 .Sh SEE ALSO
 .Xr difftime 3 ,
 .Xr localtime 3 ,
+.Xr localtime_r 3 ,
+.Xr localtime_rz 3 ,
+.Xr tzalloc 3 ,
 .Xr mktime 3 ,
+.Xr mktime_z 3 ,
 .Xr time 3
 .\" @(#)time2posix.3	7.7
 .\" This file is in the public domain, so clarified as of
