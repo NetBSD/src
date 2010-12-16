@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1268 2010/12/14 16:18:16 jruoho Exp $
+# $NetBSD: mi,v 1.1269 2010/12/16 15:30:56 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1989,6 +1989,7 @@
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
+./usr/share/man/cat7/rump_sp.0			man-reference-catman	.cat
 ./usr/share/man/cat7/script.0			man-reference-catman	.cat
 ./usr/share/man/cat7/setuid.0			man-reference-catman	.cat
 ./usr/share/man/cat7/signal.0			man-reference-catman	.cat
@@ -4608,6 +4609,7 @@
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
+./usr/share/man/html7/rump_sp.html		man-reference-htmlman	html
 ./usr/share/man/html7/script.html		man-reference-htmlman	html
 ./usr/share/man/html7/setuid.html		man-reference-htmlman	html
 ./usr/share/man/html7/signal.html		man-reference-htmlman	html
@@ -7208,6 +7210,7 @@
 ./usr/share/man/man7/pcap-filter.7		man-netutil-man		.man
 ./usr/share/man/man7/pcap-linktype.7		man-netutil-man		.man
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
+./usr/share/man/man7/rump_sp.7		man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
 ./usr/share/man/man7/script.7			man-reference-man	.man
