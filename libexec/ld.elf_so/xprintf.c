@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.20 2009/05/19 20:44:52 christos Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.21 2010/12/16 22:52:32 joerg Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xprintf.c,v 1.20 2009/05/19 20:44:52 christos Exp $");
+__RCSID("$NetBSD: xprintf.c,v 1.21 2010/12/16 22:52:32 joerg Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -243,16 +243,18 @@ xsnprintf(char *buf, size_t buflen, const char *fmt, ...)
 	va_end(ap);
 }
 
+#include "errlist_concat.h"
+
 const char *
 xstrerror(int error)
 {
 
-	if (error >= sys_nerr || error < 0) {
+	if (error >= concat_nerr || error < 0) {
 		static char buf[128];
 		xsnprintf(buf, sizeof(buf), "Unknown error: %d", error);
 		return buf;
 	}
-	return sys_errlist[error];
+	return concat_errlist + concat_offset[error];
 }
 
 void
