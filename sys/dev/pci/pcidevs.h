@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1050 2010/12/11 17:46:58 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1051 2010/12/16 10:10:53 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1053 2010/12/11 17:45:38 matt Exp
+ *	NetBSD: pcidevs,v 1.1054 2010/12/16 07:02:07 cegger Exp
  */
 
 /*
@@ -997,7 +997,7 @@
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX	0x9602		/* RS780 PCI-PCI Bridge (int gfx) */
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX0	0x9603		/* RS780 PCI-PCI Bridge (ext gfx port 0) */
 #define	PCI_PRODUCT_AMD_RS780_PPB0	0x9604		/* RS780 PCI-PCIE Bridge (port 0) */
-#define	PCI_PRODUCT_AMD_RS780_PPB1	0x9605		/* RS780 PCI-PCIE Brdige (port 1) */
+#define	PCI_PRODUCT_AMD_RS780_PPB1	0x9605		/* RS780 PCI-PCIE Bridge (port 1) */
 #define	PCI_PRODUCT_AMD_RS780_PPB2	0x9606		/* RS780 PCI-PCIE Bridge (port 2) */
 
 /* American Megatrends products */
