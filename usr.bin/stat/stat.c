@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.31 2010/12/16 05:30:16 dholland Exp $ */
+/*	$NetBSD: stat.c,v 1.32 2010/12/16 05:42:14 dholland Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.31 2010/12/16 05:30:16 dholland Exp $");
+__RCSID("$NetBSD: stat.c,v 1.32 2010/12/16 05:42:14 dholland Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -176,7 +176,7 @@ __RCSID("$NetBSD: stat.c,v 1.31 2010/12/16 05:30:16 dholland Exp $");
 
 void	usage(const char *);
 void	output(const struct stat *, const char *,
-	    const char *, int, int, int);
+	    const char *, int, int);
 int	format1(const struct stat *,	/* stat info */
 	    const char *,		/* the file name */
 	    const char *, int,		/* the format string itself */
@@ -329,7 +329,7 @@ main(int argc, char *argv[])
 				    usestat ? "stat" : "lstat");
 		}
 		else
-			output(&st, argv[0], statfmt, fn, nonl, quiet);
+			output(&st, argv[0], statfmt, fn, nonl);
 
 		argv++;
 		argc--;
@@ -352,7 +352,7 @@ usage(const char *synopsis)
  */
 void
 output(const struct stat *st, const char *file,
-    const char *statfmt, int fn, int nonl, int quiet)
+    const char *statfmt, int fn, int nonl)
 {
 	int flags, size, prec, ofmt, hilo, what;
 	char buf[PATH_MAX + 4 + 1];
