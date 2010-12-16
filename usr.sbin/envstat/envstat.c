@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.84 2010/12/14 08:04:14 pooka Exp $ */
+/* $NetBSD: envstat.c,v 1.85 2010/12/16 14:37:23 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.84 2010/12/14 08:04:14 pooka Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.85 2010/12/16 14:37:23 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -852,7 +852,6 @@ do {								\
 			PRINTTEMP(sensor->cur_value);
 			stype = degrees;
 
-			ilen = 8;
 			if (statistics) {
 				/* show statistics if flag set */
 				PRINTTEMP(stats->max);
