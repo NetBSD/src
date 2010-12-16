@@ -272,7 +272,7 @@ specifically in the standard.  Again, it is under control of the user.
 The default is UTF-16 or UTF-32, whichever fits in the target's
 @code{wchar_t} type, in the target machine's byte
 order.@footnote{UTF-16 does not meet the requirements of the C
-standard for a wide character set, but the choice of 16-bit
+standard for a wide-character set, but the choice of 16-bit
 @code{wchar_t} is enshrined in some system ABIs so we cannot fix
 this.}  Octal and hexadecimal escape sequences do not undergo
 conversion; @t{'\x12'} has the value 0x12 regardless of the currently

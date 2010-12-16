@@ -1,4 +1,4 @@
-.\" $NetBSD: title.cdrom,v 1.6 2003/10/13 14:34:25 agc Exp $
+.\" $NetBSD: title.cdrom,v 1.7 2010/12/16 17:42:28 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Regents of the University of California.
 .\" All rights reserved.
@@ -908,7 +908,7 @@ The C functions specified by both ANSI C, POSIX 1003.1 and
 This includes support for file name matching, shell globbing
 and both basic and extended regular expressions.
 .IP \(bu
-ANSI C multibyte and wide character support has been integrated.
+ANSI C multibyte and wide-character support has been integrated.
 The rune functionality from the Bell Labs' Plan 9 system is provided
 as well.
 .IP \(bu

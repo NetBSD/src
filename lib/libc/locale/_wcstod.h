@@ -1,4 +1,4 @@
-/* $NetBSD: _wcstod.h,v 1.1 2006/04/15 12:17:23 tnozaki Exp $ */
+/* $NetBSD: _wcstod.h,v 1.2 2010/12/16 17:42:27 wiz Exp $ */
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -46,7 +46,7 @@
  *
  * This is the wide-character counterpart of strto{f,d,ld}(). So that
  * we do not have to duplicate the code of strto{f,d,ld}() here,
- * we convert the supplied wide character string to multibyte and
+ * we convert the supplied wide-character string to multibyte and
  * call strto{f,d,ld}() on the result.
  * This assumes that the multibyte encoding is compatible with ASCII
  * for at least the digits, radix character and letters.
@@ -69,10 +69,10 @@ _FUNCNAME(const wchar_t * __restrict nptr, wchar_t ** __restrict endptr)
 		goto no_convert;
 
 	/*
-	 * Convert the supplied numeric wide char. string to multibyte.
+	 * Convert the supplied numeric wide-char. string to multibyte.
 	 *
 	 * We could attempt to find the end of the numeric portion of the
-	 * wide char. string to avoid converting unneeded characters but
+	 * wide-char. string to avoid converting unneeded characters but
 	 * choose not to bother; optimising the uncommon case where
 	 * the input string contains a lot of text after the number
 	 * duplicates a lot of strto{f,d,ld}()'s functionality and
@@ -108,7 +108,7 @@ _FUNCNAME(const wchar_t * __restrict nptr, wchar_t ** __restrict endptr)
 	 * We only know where the number ended in the _multibyte_
 	 * representation of the string. If the caller wants to know
 	 * where it ended, count multibyte characters to find the
-	 * corresponding position in the wide char string.
+	 * corresponding position in the wide-char string.
 	 */
 	if (endptr != NULL)
 		/* XXX Assume each wide char is one byte. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.40 2009/01/30 23:48:36 lukem Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.41 2010/12/16 17:42:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfscanf.c,v 1.41 2007/01/09 00:28:07 imp Exp $");
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.40 2009/01/30 23:48:36 lukem Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.41 2010/12/16 17:42:27 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -165,7 +165,7 @@ __svfscanf_unlocked(FILE *fp, const char *fmt0, va_list ap)
 	int base;		/* base argument to conversion function */
 	char ccltab[256];	/* character class table for %[...] */
 	char buf[BUF];		/* buffer for numeric and mb conversions */
-	wchar_t *wcp;		/* handy wide character pointer */
+	wchar_t *wcp;		/* handy wide-character pointer */
 	size_t nconv;		/* length of multibyte sequence converted */
 	static const mbstate_t initial;
 	mbstate_t mbs;

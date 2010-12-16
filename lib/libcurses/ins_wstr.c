@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.5 2010/02/23 19:48:26 drochner Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.6 2010/12/16 17:42:28 wiz Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.5 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.6 2010/12/16 17:42:28 wiz Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: ins_wstr.c,v 1.5 2010/02/23 19:48:26 drochner Exp $");
 
 /*
  * ins_wstr --
- *	insert a multi-character wide character string into the current window
+ *	insert a multi-character wide-character string into the current window
  */
 int
 ins_wstr(const wchar_t *wstr)
@@ -57,7 +57,7 @@ ins_wstr(const wchar_t *wstr)
 
 /*
  * ins_nwstr --
- *	insert a multi-character wide character string into the current window
+ *	insert a multi-character wide-character string into the current window
  *	with at most n characters
  */
 int

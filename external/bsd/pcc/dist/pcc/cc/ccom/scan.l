@@ -1,6 +1,6 @@
 %{
 /*	Id: scan.l,v 1.91 2010/05/21 19:37:32 ragge Exp 	*/	
-/*	$NetBSD: scan.l,v 1.1.1.3 2010/06/03 18:57:43 plunky Exp $	*/
+/*	$NetBSD: scan.l,v 1.2 2010/12/16 17:42:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -527,9 +527,9 @@ wcharcon(void)
 	}
 
 	if (i == 0)
-		uerror("empty wide character constant");
+		uerror("empty wide-character constant");
 	if (i > 1)
-		werror("too many characters in wide character constant");
+		werror("too many characters in wide-character constant");
 	return xbcon(lastcon, NULL, ctype(UNSIGNED));
 }
 
