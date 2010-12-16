@@ -1,4 +1,4 @@
-.\" $NetBSD: sdp_data.3,v 1.3 2009/05/21 09:23:50 wiz Exp $
+.\" $NetBSD: sdp_data.3,v 1.4 2010/12/16 08:44:23 plunky Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -309,10 +309,6 @@ examining various attribute values:
 
 	/* rsp contains remote response */
 
-	/* discard sequence header */
-	if (!sdp_get_seq(\*[Am]rsp, \*[Am]rsp))
-		err(EXIT_FAILURE, "response is not a sequence");
-
 	while (sdp_get_attr(\*[Am]rsp, \*[Am]attr, \*[Am]val)) {
 		switch(attr) {
 		case SDP_ATTR_SERVICE_RECORD_HANDLE:
@@ -330,8 +326,8 @@ examining various attribute values:
 			break;
 		}
 	}
-
 .Ed
+.Pp
 The following code creates a ProtocolDataList attribute value for a service
 using the L2CAP and RFCOMM protocols and illustrates how to construct sequences
 of known and unknown length.
