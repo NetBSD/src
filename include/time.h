@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.39 2009/05/14 02:37:36 ginsbach Exp $	*/
+/*	$NetBSD: time.h,v 1.40 2010/12/16 18:36:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -174,6 +174,9 @@ struct tm *localtime_r(const time_t * __restrict, struct tm * __restrict)
 #endif
 
 #if defined(_NETBSD_SOURCE)
+
+typedef struct __state *timezone_t;
+
 #ifndef __LIBC12_SOURCE__
 time_t time2posix(time_t) __RENAME(__time2posix50);
 time_t posix2time(time_t) __RENAME(__posix2time50);
@@ -181,10 +184,25 @@ time_t timegm(struct tm *) __RENAME(__timegm50);
 time_t timeoff(struct tm *, long) __RENAME(__timeoff50);
 time_t timelocal(struct tm *) __RENAME(__timelocal50);
 struct tm *offtime(const time_t *, long) __RENAME(__offtime50);
-#endif
-#ifndef __LIBC12_SOURCE__
 void tzsetwall(void) __RENAME(__tzsetwall50);
+
+struct tm *offtime_r(const time_t *, long, struct tm *) __RENAME(__offtime_r50);
+struct tm *localtime_rz(const timezone_t, const time_t * __restrict,
+    struct tm * __restrict) __RENAME(__localtime_rz50);
+char *ctime_rz(const timezone_t, const time_t *, char *) __RENAME(__ctime_rz50);
+time_t mktime_z(const timezone_t, struct tm *) __RENAME(__mktime_z50);
+time_t timelocal_z(const timezone_t, struct tm *) __RENAME(__timelocal_z50);
+time_t time2posix_z(const timezone_t, time_t) __RENAME(__time2posix_z50);
+time_t posix2time_z(const timezone_t, time_t) __RENAME(__posix2time_z50);
+timezone_t tzalloc(const char *) __RENAME(__tzalloc50);
+void tzfree(const timezone_t) __RENAME(__tzfree50);
+const char *tzgetname(const timezone_t, int) __RENAME(__tzgetname50);
 #endif
+
+size_t strftime_z(const timezone_t, char * __restrict, size_t,
+    const char * __restrict, const struct tm * __restrict)
+    __attribute__((__format__(__strftime__, 4, 0)));
+
 #endif /* _NETBSD_SOURCE */
 
 __END_DECLS
