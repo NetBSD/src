@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.9 2010/12/16 12:38:21 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.10 2010/12/16 17:05:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -83,6 +83,36 @@ syscall_req(struct spclient *spc, int sysnum,
 	} while (rv == EAGAIN);
 
 	*resp = rw.rw_data;
+	return rv;
+}
+
+static int
+handshake_req(struct spclient *spc)
+{
+	struct rsp_hdr rhdr;
+	struct respwait rw;
+	int rv;
+
+	/* performs server handshake */
+	rhdr.rsp_len = sizeof(rhdr);
+	rhdr.rsp_class = RUMPSP_REQ;
+	rhdr.rsp_type = RUMPSP_HANDSHAKE;
+	rhdr.rsp_handshake = HANDSHAKE_GUEST;
+
+	putwait(spc, &rw, &rhdr);
+	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	if (rv != 0) {
+		unputwait(spc, &rw);
+		return rv;
+	}
+
+	rv = waitresp(spc, &rw);
+	if (rv)
+		return rv;
+
+	rv = *(int *)rw.rw_data;
+	free(rw.rw_data);
+
 	return rv;
 }
 
@@ -235,19 +265,10 @@ rumpclient_init()
 		return -1;
 	}
 
-	if ((error = parsetab[idx].connhook(s)) != 0) {
-		error = errno;
-		fprintf(stderr, "rump_sp: connect hook failed\n");
-		errno = error;
-		return -1;
-	}
-	clispc.spc_fd = s;
-	TAILQ_INIT(&clispc.spc_respwait);
-	pthread_mutex_init(&clispc.spc_mtx, NULL);
-	pthread_cond_init(&clispc.spc_cv, NULL);
-
 	if ((n = read(s, banner, sizeof(banner)-1)) < 0) {
+		error = errno;
 		fprintf(stderr, "rump_sp: failed to read banner\n");
+		errno = error;
 		return -1;
 	}
 
@@ -260,5 +281,23 @@ rumpclient_init()
 
 	/* parse the banner some day */
 
-	return 0;
+	if ((error = parsetab[idx].connhook(s)) != 0) {
+		error = errno;
+		fprintf(stderr, "rump_sp: connect hook failed\n");
+		errno = error;
+		return -1;
+	}
+
+	pthread_mutex_init(&clispc.spc_mtx, NULL);
+	pthread_cond_init(&clispc.spc_cv, NULL);
+	clispc.spc_fd = s;
+	TAILQ_INIT(&clispc.spc_respwait);
+
+	error = handshake_req(&clispc);
+	if (error) {
+		pthread_mutex_destroy(&clispc.spc_mtx);
+		pthread_cond_destroy(&clispc.spc_cv);
+		close(s);
+	}
+	return error;
 }
