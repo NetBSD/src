@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1545 2010/12/15 18:39:28 pooka Exp $
+#	$NetBSD: mi,v 1.1546 2010/12/16 08:35:36 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4903,8 +4903,11 @@
 ./usr/share/man/cat3/__STRING.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__UNCONST.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__UNVOLATILE.0		comp-c-catman		.cat
+./usr/share/man/cat3/__aligned.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__arraycount.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_object_size.0	comp-c-catman		.cat
+./usr/share/man/cat3/__packed.0			comp-c-catman		.cat
+./usr/share/man/cat3/__section.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__svc_getcallercreds.0	comp-c-catman		.cat
 ./usr/share/man/cat3/_longjmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman		.cat
@@ -5215,6 +5218,7 @@
 ./usr/share/man/cat3/attr_off.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attr_on.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attr_set.0			comp-c-catman		.cat
+./usr/share/man/cat3/attribute.0		comp-c-catman		.cat
 ./usr/share/man/cat3/attroff.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attron.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attrset.0			comp-c-catman		.cat
@@ -10963,8 +10967,11 @@
 ./usr/share/man/html3/__STRING.html		comp-c-htmlman		html
 ./usr/share/man/html3/__UNCONST.html		comp-c-htmlman		html
 ./usr/share/man/html3/__UNVOLATILE.html		comp-c-htmlman		html
+./usr/share/man/html3/__aligned.html		comp-c-htmlman		html
 ./usr/share/man/html3/__arraycount.html		comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_object_size.html	comp-c-htmlman		html
+./usr/share/man/html3/__packed.html		comp-c-htmlman		html
+./usr/share/man/html3/__section.html		comp-c-htmlman		html
 ./usr/share/man/html3/__svc_getcallercreds.html	comp-c-htmlman		html
 ./usr/share/man/html3/_longjmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/_lwp_makecontext.html	comp-c-htmlman		html
@@ -11275,6 +11282,7 @@
 ./usr/share/man/html3/attr_off.html		comp-c-htmlman		html
 ./usr/share/man/html3/attr_on.html		comp-c-htmlman		html
 ./usr/share/man/html3/attr_set.html		comp-c-htmlman		html
+./usr/share/man/html3/attribute.html		comp-c-htmlman		html
 ./usr/share/man/html3/attroff.html		comp-c-htmlman		html
 ./usr/share/man/html3/attron.html		comp-c-htmlman		html
 ./usr/share/man/html3/attrset.html		comp-c-htmlman		html
@@ -16823,8 +16831,11 @@
 ./usr/share/man/man3/__STRING.3			comp-c-man		.man
 ./usr/share/man/man3/__UNCONST.3		comp-c-man		.man
 ./usr/share/man/man3/__UNVOLATILE.3		comp-c-man		.man
+./usr/share/man/man3/__aligned.3		comp-c-man		.man
 ./usr/share/man/man3/__arraycount.3		comp-c-man		.man
 ./usr/share/man/man3/__builtin_object_size.3	comp-c-man		.man
+./usr/share/man/man3/__packed.3			comp-c-man		.man
+./usr/share/man/man3/__section.3		comp-c-man		.man
 ./usr/share/man/man3/__svc_getcallercreds.3	comp-c-man		.man
 ./usr/share/man/man3/_longjmp.3			comp-c-man		.man
 ./usr/share/man/man3/_lwp_makecontext.3		comp-c-man		.man
@@ -17135,6 +17146,7 @@
 ./usr/share/man/man3/attr_off.3			comp-c-man		.man
 ./usr/share/man/man3/attr_on.3			comp-c-man		.man
 ./usr/share/man/man3/attr_set.3			comp-c-man		.man
+./usr/share/man/man3/attribute.3		comp-c-man		.man
 ./usr/share/man/man3/attroff.3			comp-c-man		.man
 ./usr/share/man/man3/attron.3			comp-c-man		.man
 ./usr/share/man/man3/attrset.3			comp-c-man		.man
