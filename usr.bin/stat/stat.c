@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.30 2010/11/25 04:33:30 dholland Exp $ */
+/*	$NetBSD: stat.c,v 1.31 2010/12/16 05:30:16 dholland Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.30 2010/11/25 04:33:30 dholland Exp $");
+__RCSID("$NetBSD: stat.c,v 1.31 2010/12/16 05:30:16 dholland Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -788,7 +788,7 @@ format1(const struct stat *st,
 		small = 0;
 		data = 0;
 		if (file == NULL) {
-			(void)strncpy(path, "(stdin)", sizeof(path));
+			(void)strlcpy(path, "(stdin)", sizeof(path));
 			sdata = path;
 		} else {
 			snprintf(path, sizeof(path), " -> ");
@@ -881,15 +881,15 @@ format1(const struct stat *st,
 		small = 0;
 		data = 0;
 		if (file == NULL) {
-			(void)strncpy(path, "(stdin)", sizeof(path));
+			(void)strlcpy(path, "(stdin)", sizeof(path));
 			if (hilo == HIGH_PIECE || hilo == LOW_PIECE)
 				hilo = 0;
 		}
 		else if (hilo == 0)
-			(void)strncpy(path, file, sizeof(path));
+			(void)strlcpy(path, file, sizeof(path));
 		else {
 			char *s;
-			(void)strncpy(path, file, sizeof(path));
+			(void)strlcpy(path, file, sizeof(path));
 			s = strrchr(path, '/');
 			if (s != NULL) {
 				/* trim off trailing /'s */
@@ -900,7 +900,7 @@ format1(const struct stat *st,
 			}
 			if (hilo == HIGH_PIECE) {
 				if (s == NULL)
-					(void)strncpy(path, ".", sizeof(path));
+					(void)strlcpy(path, ".", sizeof(path));
 				else {
 					while (s != path && s[0] == '/')
 						*s-- = '\0';
@@ -909,7 +909,7 @@ format1(const struct stat *st,
 			}
 			else if (hilo == LOW_PIECE) {
 				if (s != NULL && s[1] != '\0')
-					(void)strncpy(path, s + 1,
+					(void)strlcpy(path, s + 1,
 						      sizeof(path));
 				hilo = 0;
 			}
