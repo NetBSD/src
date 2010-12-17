@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.6 2010/12/16 17:50:39 jruoho Exp $
+.\" $NetBSD: attribute.3,v 1.7 2010/12/17 08:13:09 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,6 +52,10 @@
 .Pp
 .Fn __aligned "x"
 .Fn __section "section"
+.Pp
+.Ic __read_mostly
+.Pp
+.Ic __cacheline_aligned
 .Sh DESCRIPTION
 The
 .Tn GNU
@@ -218,9 +222,37 @@ By using
 .Fn __section ,
 it is possible to override this behavior, perhaps in order to place
 some variables into particular sections specific to unique hardware.
-Generally the use cases of
+.It Ic __read_mostly
+The
+.Ic __read_mostly
+macro uses
 .Fn __section
-are very limited.
+to place a variable or function into the
+.Dq .data.read_mostly
+section of the (kernel)
+.Xr elf 5 .
+The use of
+.Ic __read_mostly
+allows infrequently modified data to be grouped together;
+it is expected that the cachelines of rarely and frequently modified
+data structures are this way separated.
+Candidates for
+.Ic __read_mostly
+include variables that are initialized once,
+read very often, and seldom written to.
+.It Ic __cacheline_aligned
+The
+.Ic __cacheline_aligned
+macro behaves like
+.Ic __read_mostly ,
+but the used section is
+.Dq .data.cacheline_aligned
+instead.
+It also uses
+.Fn __aligned
+to set the minimum alignment into a predefined coherency unit.
+This should ensure that frequently used data structures are
+aligned on cacheline boundaries.
 .El
 .Sh SEE ALSO
 .Xr gcc 1 ,
