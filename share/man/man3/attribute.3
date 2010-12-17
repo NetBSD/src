@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.7 2010/12/17 08:13:09 jruoho Exp $
+.\" $NetBSD: attribute.3,v 1.8 2010/12/17 08:23:04 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -253,6 +253,11 @@ It also uses
 to set the minimum alignment into a predefined coherency unit.
 This should ensure that frequently used data structures are
 aligned on cacheline boundaries.
+Both
+.Ic __cacheline_aligned
+and
+.Ic __read_mostly
+are only available for the kernel.
 .El
 .Sh SEE ALSO
 .Xr gcc 1 ,
