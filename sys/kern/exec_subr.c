@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.65 2010/08/23 20:53:08 christos Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.66 2010/12/17 22:35:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.65 2010/08/23 20:53:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.66 2010/12/17 22:35:07 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -80,6 +80,8 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
 	struct exec_vmcmd    *vcp;
 
 	VMCMD_EVCNT_INCR(calls);
+	KASSERT(proc != vmcmd_map_pagedvn || (vp->v_iflag & VI_TEXT));
+	KASSERT(vp == NULL || vp->v_usecount > 0);
 
 	if (evsp->evs_used >= evsp->evs_cnt)
 		vmcmdset_extend(evsp);
