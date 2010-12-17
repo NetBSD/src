@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1553 2010/12/17 08:13:09 jruoho Exp $
+#	$NetBSD: mi,v 1.1554 2010/12/17 12:14:03 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8518,6 +8518,7 @@
 ./usr/share/man/cat3/ttyslot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttyunlock.0		comp-c-catman		.cat
 ./usr/share/man/cat3/twalk.0			comp-c-catman		.cat
+./usr/share/man/cat3/typeof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/types.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tzalloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tzfree.0			comp-c-catman		.cat
@@ -14468,6 +14469,7 @@
 ./usr/share/man/html3/ttyslot.html		comp-c-htmlman		html
 ./usr/share/man/html3/ttyunlock.html		comp-c-htmlman		html
 ./usr/share/man/html3/twalk.html		comp-c-htmlman		html
+./usr/share/man/html3/typeof.html		comp-c-htmlman		html
 ./usr/share/man/html3/types.html		comp-c-htmlman		html
 ./usr/share/man/html3/tzalloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/tzfree.html		comp-c-htmlman		html
@@ -20488,6 +20490,7 @@
 ./usr/share/man/man3/ttyslot.3			comp-c-man		.man
 ./usr/share/man/man3/ttyunlock.3		comp-c-man		.man
 ./usr/share/man/man3/twalk.3			comp-c-man		.man
+./usr/share/man/man3/typeof.3			comp-c-man		.man
 ./usr/share/man/man3/types.3			comp-c-man		.man
 ./usr/share/man/man3/tzalloc.3			comp-c-man		.man
 ./usr/share/man/man3/tzfree.3			comp-c-man		.man
