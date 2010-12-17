@@ -1,4 +1,4 @@
-.\"	$NetBSD: time2posix.3,v 1.16 2010/12/16 18:38:07 christos Exp $
+.\"	$NetBSD: time2posix.3,v 1.17 2010/12/17 01:30:14 wiz Exp $
 .Dd December 4, 2010
 .Dt TIME2POSIX 3
 .Os
@@ -66,7 +66,7 @@ leap seconds correctly.
 The
 .Fn time2posix ,
 .Fn time2posix_z ,
-.Fn posix2time
+.Fn posix2time ,
 and
 .Fn posix2time_z
 functions are provided to address this
@@ -141,10 +141,10 @@ degenerate to the identity function.
 .Xr localtime 3 ,
 .Xr localtime_r 3 ,
 .Xr localtime_rz 3 ,
-.Xr tzalloc 3 ,
 .Xr mktime 3 ,
 .Xr mktime_z 3 ,
-.Xr time 3
+.Xr time 3 ,
+.Xr tzalloc 3
 .\" @(#)time2posix.3	7.7
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson.
