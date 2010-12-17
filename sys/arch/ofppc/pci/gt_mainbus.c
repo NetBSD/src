@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.2 2010/06/20 00:25:41 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.3 2010/12/17 19:18:49 phx Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.2 2010/06/20 00:25:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.3 2010/12/17 19:18:49 phx Exp $");
 
 #include "opt_pci.h"
 #include "opt_marvell.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.2 2010/06/20 00:25:41 matt Exp $");
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/marvell/gtreg.h>
 #include <dev/marvell/gtvar.h>
@@ -122,7 +123,8 @@ int
 gt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
-	int node, pci, ethernet;
+	uint32_t device_id, vendor_id;
+	int node;
 	char name[32];
 
 	if (strcmp(ca->ca_name, "gt") != 0 ||
@@ -130,20 +132,27 @@ gt_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	/* Paranoid check... */
-
-	pci = ethernet = 0;
 	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
 		memset(name, 0, sizeof(name));
 		if (OF_getprop(node, "name", name, sizeof(name)) == -1)
 			continue;
-		if (strcmp(name, "pci") == 0)
-			pci++;
-		else if (strcmp(name, "ethernet") == 0)
-			ethernet++;
-
+		if (strcmp(name, "pci") == 0) {
+			for (node = OF_child(node); node;
+			    node = OF_peer(node)) {
+				if (OF_getprop(node, "vendor-id",
+				    &vendor_id, sizeof(vendor_id)) == -1)
+					continue;
+				if (OF_getprop(node, "device-id",
+				    &device_id, sizeof(device_id)) == -1)
+					continue;
+				/* Find a Marvell system controller */
+				if (vendor_id == PCI_VENDOR_MARVELL &&
+				    device_id == PCI_PRODUCT_MARVELL_MV64360)
+					return 1;
+			}
+			return 0;
+		}
 	}
-	if (pci == 2 && (ethernet == 1 || ethernet == 0))
-		return 1;
 	return 0;
 }
 
@@ -244,19 +253,13 @@ gt_attach(device_t parent, device_t self, void *aux)
 		genppc_gtpci0_chipset.pc_iot = &gtpci0_io_bs_tag;
 		genppc_gtpci0_chipset.pc_memt = &gtpci0_mem_bs_tag;
 
-		/* Enable access to space of configuration for AGP. */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_GPP_Value_Set,
-		    (1 << 23));
+		/* Enable AGP configuration space access. */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    GT_GPP_Value_Set, PEGASOS2_AGP_CONF_ENABLE);
 	}
 #endif
 
 	gt_attach_common(sc);
-
-#if NGTPCI > 0
-	/* Disable access to space of configuration for AGP. */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_GPP_Value_Clear,
-	    (1 << 23));
-#endif
 }
 
 
