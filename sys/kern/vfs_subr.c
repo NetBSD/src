@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.416 2010/11/11 13:58:58 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.417 2010/12/17 22:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.416 2010/11/11 13:58:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.417 2010/12/17 22:04:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -637,7 +637,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_op = vops;
 	insmntque(vp, mp);
 	*vpp = vp;
-	vp->v_data = 0;
+	vp->v_data = NULL;
 
 	/*
 	 * initialize uvm_object within vnode.
