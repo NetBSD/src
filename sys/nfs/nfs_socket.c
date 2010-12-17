@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.187 2010/03/02 23:19:09 pooka Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.188 2010/12/17 22:22:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.187 2010/03/02 23:19:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.188 2010/12/17 22:22:00 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -906,10 +906,12 @@ nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
 		 * receive lock.
 		 */
 		if (rep->r_mrep != NULL) {
+			cv_signal(&nmp->nm_rcvcv);
 			error = EALREADY;
 			break;
 		}
 		if (nfs_sigintr(rep->r_nmp, rep, rep->r_lwp)) {
+			cv_signal(&nmp->nm_rcvcv);
 			error = EINTR;
 			break;
 		}
@@ -944,7 +946,7 @@ nfs_rcvunlock(struct nfsmount *nmp)
 	if ((nmp->nm_iflag & NFSMNT_RCVLOCK) == 0)
 		panic("nfs rcvunlock");
 	nmp->nm_iflag &= ~NFSMNT_RCVLOCK;
-	cv_broadcast(&nmp->nm_rcvcv);
+	cv_signal(&nmp->nm_rcvcv);
 	mutex_exit(&nmp->nm_lock);
 }
 
