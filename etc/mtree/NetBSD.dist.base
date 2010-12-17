@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.67 2010/12/08 23:56:02 njoly Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.68 2010/12/17 09:54:28 jruoho Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1080,6 +1080,7 @@
 ./var/chroot/ntpd/var/run	mode=0775 gname=ntpd
 ./var/chroot/pflogd		mode=0755
 ./var/chroot/sshd		mode=0755
+./var/chroot/tcpdump		mode=0755
 ./var/chroot/tftp-proxy		mode=0755
 ./var/crash			mode=0770
 ./var/cron
