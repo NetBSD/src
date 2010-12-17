@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.103 2010/11/26 09:25:39 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.104 2010/12/17 00:53:16 joerg Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -31,9 +31,17 @@ RUMP_SMP=		# defined
 CPPFLAGS.rump.c+=	-DRUMP_SMP
 .endif
 
+MKREPRO?=no
+
+.if ${MKREPRO} == "yes"
+_NVFLAGS=-r
+.else
+_NVFLAGS=
+.endif
+
 vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh ${RUMPTOP}/../sys/param.h
 	${_MKMSG_CREATE} vers.c
-	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n
+	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n ${_NVFLAGS}
 SRCS+=		vers.c
 CLEANFILES+=	vers.c version
 
