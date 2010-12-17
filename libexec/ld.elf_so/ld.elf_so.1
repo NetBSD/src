@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.13 2010/12/16 19:25:41 wiz Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.14 2010/12/17 07:04:52 skrll Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 2010
+.Dd December 17, 2010
 .Dt LD.ELF_SO 1
 .Os
 .Sh NAME
@@ -63,13 +63,6 @@ The entry point of the program and the base address of where
 .Nm
 is loaded is also supplied.
 .Pp
-Careful use of code allows
-.Nm
-to relocate itself before proceeding.
-Specifically the use of global variables and
-large switch statements is not allowed.
-The later can cause the output of a jump table that
-can use the equivalent of a global variable.
 .Ss Finding objects
 Each
 .Xr elf 5
