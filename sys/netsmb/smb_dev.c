@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.38 2010/12/17 13:24:45 pooka Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.39 2010/12/17 14:27:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.38 2010/12/17 13:24:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.39 2010/12/17 14:27:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.38 2010/12/17 13:24:45 pooka Exp $");
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/file.h>		/* Must come after sys/malloc.h */
+#include <sys/module.h>
 #include <sys/mbuf.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
@@ -356,13 +357,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 	return error;
 }
 
-
-#ifdef _MODULE
-
-#include <sys/module.h>
-
-MODULE(MODULE_CLASS_MISC, nsmb, NULL);
-
+MODULE(MODULE_CLASS_DRIVER, nsmb, NULL);
 static int
 nsmb_modcmd(modcmd_t cmd, void *arg)
 {
@@ -394,8 +389,6 @@ nsmb_modcmd(modcmd_t cmd, void *arg)
 
 	return error;
 }
-#endif /* _MODULE */
-
 
 /*
  * Convert a file descriptor to appropriate smb_share pointer
@@ -441,4 +434,3 @@ smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	*sspp = ssp;
 	return 0;
 }
-
