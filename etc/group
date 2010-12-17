@@ -22,6 +22,7 @@ _sdpd:*:23:
 _httpd:*:24:
 _mdnsd:*:25:
 _atf:*:26:
+_tcpdump:*:27:
 guest:*:31:root
 nobody:*:39:
 utmp:*:45:
