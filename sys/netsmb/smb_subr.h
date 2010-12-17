@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.19 2010/07/12 02:58:01 christos Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.20 2010/12/17 13:05:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -64,9 +64,7 @@ void m_dumpm(struct mbuf *m);
 #define m_dumpm(m)
 #endif
 
-#ifdef __NetBSD__
 #define SIGISMEMBER(s,n) sigismember(&(s),n)
-#endif
 
 #define	SMB_SIGMASK(set) 						\
 	(SIGISMEMBER(set, SIGINT) || SIGISMEMBER(set, SIGTERM) ||	\

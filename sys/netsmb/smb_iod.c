@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.38 2010/12/15 12:58:13 ahoka Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.39 2010/12/17 13:05:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.38 2010/12/15 12:58:13 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.39 2010/12/17 13:05:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -713,13 +713,8 @@ smb_iod_create(struct smb_vc *vcp)
 	SIMPLEQ_INIT(&iod->iod_rqlist);
 	smb_sl_init(&iod->iod_evlock, "smbevl");
 	SIMPLEQ_INIT(&iod->iod_evlist);
-#ifdef __NetBSD__
 	error = kthread_create(PRI_NONE, 0, NULL, smb_iod_thread, iod,
 	   &iod->iod_l, "smbiod%d", iod->iod_id);
-#else
-	error = kthread_create(smb_iod_thread, iod, &iod->iod_p,
-	    RFNOWAIT, "smbiod%d", iod->iod_id);
-#endif
 	if (error) {
 		SMBIODEBUG(("can't start smbiod: %d", error));
 		free(iod, M_SMBIOD);

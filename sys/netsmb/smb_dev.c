@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.36 2010/12/15 12:58:13 ahoka Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.37 2010/12/17 13:05:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.36 2010/12/15 12:58:13 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.37 2010/12/17 13:05:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,31 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.36 2010/12/15 12:58:13 ahoka Exp $");
 #include <netsmb/smb_dev.h>
 #include <netsmb/smb_rq.h>
 
-#ifdef __NetBSD__
 static struct smb_dev **smb_devtbl; /* indexed by minor */
 #define SMB_GETDEV(dev) (smb_devtbl[minor(dev)])
 #define NSMB_DEFNUM	4
 
-#else /* !NetBSD */
-
-#define SMB_GETDEV(dev)		((struct smb_dev*)(dev)->si_drv1)
-
-static d_open_t	 nsmb_dev_open;
-static d_close_t nsmb_dev_close;
-static d_read_t	 nsmb_dev_read;
-static d_write_t nsmb_dev_write;
-static d_ioctl_t nsmb_dev_ioctl;
-static d_poll_t	 nsmb_dev_poll;
-
-MODULE_DEPEND(netsmb, libiconv, 1, 1, 1);
-MODULE_VERSION(netsmb, NSMB_VERSION);
-
-static int smb_version = NSMB_VERSION;
-
-
-SYSCTL_DECL(_net_smb);
-SYSCTL_INT(_net_smb, OID_AUTO, version, CTLFLAG_RD, &smb_version, 0, "");
-#endif /* NetBSD */
 
 static MALLOC_DEFINE(M_NSMBDEV, "NETSMBDEV", "NET/SMB device");
 
@@ -100,7 +79,6 @@ static MALLOC_DEFINE(M_NSMBDEV, "NETSMBDEV", "NET/SMB device");
 int smb_dev_queue(struct smb_dev *ndp, struct smb_rq *rqp, int prio);
 */
 
-#ifdef __NetBSD__
 dev_type_open(nsmb_dev_open);
 dev_type_close(nsmb_dev_close);
 dev_type_ioctl(nsmb_dev_ioctl);
@@ -109,40 +87,7 @@ const struct cdevsw nsmb_cdevsw = {
 	nsmb_dev_open, nsmb_dev_close, noread, nowrite,
 	nsmb_dev_ioctl, nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
-#else
-static struct cdevsw nsmb_cdevsw = {
-	/* open */	nsmb_dev_open,
-	/* close */	nsmb_dev_close,
-	/* read */	nsmb_dev_read,
-	/* write */	nsmb_dev_write,
-	/* ioctl */ 	nsmb_dev_ioctl,
-	/* poll */	nsmb_dev_poll,
-	/* mmap */	nommap,
-	/* strategy */	nostrategy,
-	/* name */	NSMB_NAME,
-	/* maj */	NSMB_MAJOR,
-	/* dump */	nodump,
-	/* psize */	nopsize,
-	/* flags */	0,
-};
-#endif /* !__NetBSD__ */
 
-#ifndef __NetBSD__
-static eventhandler_tag nsmb_dev_tag;
-
-static void
-nsmb_dev_clone(void *arg, char *name, int namelen, dev_t *dev)
-{
-	int min;
-
-	if (*dev != NODEV)
-		return;
-	if (dev_stdclone(name, NULL, NSMB_NAME, &min) != 1)
-		return;
-	*dev = make_dev(&nsmb_cdevsw, min, 0, 0, 0600, NSMB_NAME"%d", min);
-}
-
-#else /* __NetBSD__ */
 
 void nsmbattach(int);
 
@@ -178,7 +123,6 @@ nsmbattach(int num)
 	}
 	smb_rqpool_init();
 }
-#endif /* __NetBSD__ */
 
 int
 nsmb_dev_open(dev_t dev, int oflags, int devtype,
@@ -195,15 +139,6 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype,
 		smb_devtbl[minor(dev)] = (void*)sdp;
 	}
 
-#ifndef __NetBSD__
-	/*
-	 * XXX: this is just crazy - make a device for an already passed device...
-	 * someone should take care of it.
-	 */
-	if ((dev->si_flags & SI_NAMED) == 0)
-		make_dev(&nsmb_cdevsw, minor(dev), cred->cr_uid, cred->cr_gid, 0700,
-		    NSMB_NAME"%d", dev2unit(dev));
-#endif /* !__NetBSD__ */
 
 	memset(sdp, 0, sizeof(*sdp));
 /*
@@ -254,9 +189,6 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 */
 	smb_devtbl[minor(dev)] = NULL;
 	free(sdp, M_NSMBDEV);
-#ifndef __NetBSD__
-	destroy_dev(dev);
-#endif
 	splx(s);
 	return 0;
 }
@@ -408,61 +340,6 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 	return error;
 }
 
-#ifndef __NetBSD__
-int
-nsmb_dev_read(dev_t dev, struct uio *uio, int flag)
-{
-	return EACCES;
-}
-
-int
-nsmb_dev_write(dev_t dev, struct uio *uio, int flag)
-{
-	return EACCES;
-}
-
-int
-nsmb_dev_poll(dev_t dev, int events, struct proc *p)
-{
-	return ENODEV;
-}
-
-static int
-nsmb_dev_load(module_t mod, int cmd, void *arg)
-{
-	int error = 0;
-
-	switch (cmd) {
-	    case MOD_LOAD:
-		error = smb_sm_init();
-		if (error)
-			break;
-		error = smb_iod_init();
-		if (error) {
-			smb_sm_done();
-			break;
-		}
-		cdevsw_add(&nsmb_cdevsw);
-		nsmb_dev_tag = EVENTHANDLER_REGISTER(dev_clone, nsmb_dev_clone, 0, 1000);
-		printf("netsmb_dev: loaded\n");
-		break;
-	    case MOD_UNLOAD:
-		smb_iod_done();
-		error = smb_sm_done();
-		error = 0;
-		EVENTHANDLER_DEREGISTER(dev_clone, nsmb_dev_tag);
-		cdevsw_remove(&nsmb_cdevsw);
-		printf("netsmb_dev: unloaded\n");
-		break;
-	    default:
-		error = EINVAL;
-		break;
-	}
-	return error;
-}
-
-DEV_MODULE (dev_netsmb, nsmb_dev_load, 0);
-#else
 
 #ifdef _MODULE
 
@@ -502,7 +379,6 @@ nsmb_modcmd(modcmd_t cmd, void *arg)
 }
 #endif /* _MODULE */
 
-#endif /* !__NetBSD__ */
 
 /*
  * Convert a file descriptor to appropriate smb_share pointer

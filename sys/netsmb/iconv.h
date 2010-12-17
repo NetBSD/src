@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.h,v 1.9 2008/06/24 10:37:19 gmcgarry Exp $	*/
+/*	$NetBSD: iconv.h,v 1.10 2010/12/17 13:05:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -82,49 +82,6 @@ __END_DECLS
 
 #else /* !_KERNEL */
 
-#ifndef __NetBSD__
-#include <sys/kobj.h>
-#include <sys/queue.h>			/* can't avoid that */
-#include <sys/sysctl.h>			/* can't avoid that */
-
-struct iconv_cspair;
-struct iconv_cspairdata;
-
-/*
- * iconv converter class definition
- */
-struct iconv_converter_class {
-	KOBJ_CLASS_FIELDS;
-	TAILQ_ENTRY(iconv_converter_class)	cc_link;
-};
-
-struct iconv_cspair {
-	int		cp_id;		/* unique id of charset pair */
-	int		cp_refcount;	/* number of references from other pairs */
-	const char *	cp_from;
-	const char *	cp_to;
-	void *		cp_data;
-	struct iconv_converter_class * cp_dcp;
-	struct iconv_cspair *cp_base;
-	TAILQ_ENTRY(iconv_cspair)	cp_link;
-};
-
-#define	KICONV_CONVERTER(name,size) 				\
-    static DEFINE_CLASS(iconv_ ## name, iconv_ ## name ## _methods, (size)); \
-    static moduledata_t iconv_ ## name ## _mod = {	\
-	"iconv_"#name, iconv_converter_handler,		\
-	(void*)&iconv_ ## name ## _class		\
-    };							\
-    DECLARE_MODULE(iconv_ ## name, iconv_ ## name ## _mod, SI_SUB_DRIVERS, SI_ORDER_ANY);
-
-#define	KICONV_CES(name,size) 				\
-    static DEFINE_CLASS(iconv_ces_ ## name, iconv_ces_ ## name ## _methods, (size)); \
-    static moduledata_t iconv_ces_ ## name ## _mod = {	\
-	"iconv_ces_"#name, iconv_cesmod_handler,	\
-	(void*)&iconv_ces_ ## name ## _class		\
-    };							\
-    DECLARE_MODULE(iconv_ces_ ## name, iconv_ces_ ## name ## _mod, SI_SUB_DRIVERS, SI_ORDER_ANY);
-#endif /* !NetBSD */
 
 #ifdef MALLOC_DECLARE
 MALLOC_DECLARE(M_ICONV);
@@ -144,11 +101,6 @@ void *iconv_convmem(void *, void *, const void *, int);
  */
 int iconv_lookupcp(const char **, const char *);
 
-#ifndef __NetBSD__
-int iconv_converter_initstub(struct iconv_converter_class *);
-int iconv_converter_donestub(struct iconv_converter_class *);
-int iconv_converter_handler(module_t, int, void *);
-#endif /* !NetBSD */
 
 #ifdef ICONV_DEBUG
 #define ICDEBUG(x)	aprint_debug x

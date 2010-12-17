@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.19 2010/07/12 02:58:01 christos Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.20 2010/12/17 13:05:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.19 2010/07/12 02:58:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.20 2010/12/17 13:05:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.19 2010/07/12 02:58:01 christos Ex
 #define MBERROR(x)	aprint_error x
 #define MBPANIC(x)	aprint_error x
 
-#ifdef __NetBSD__
 static struct mbuf *
 m_getm(struct mbuf *m, size_t len, int how, int type)
 {
@@ -101,7 +100,6 @@ failed:
         return (NULL);
 }
 
-#endif /* __NetBSD__ */
 
 /*
  * Various helper functions
