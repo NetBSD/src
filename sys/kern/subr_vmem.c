@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.57 2009/03/18 10:22:42 cegger Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.58 2010/12/17 22:24:11 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.57 2009/03/18 10:22:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.58 2010/12/17 22:24:11 yamt Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -579,7 +579,8 @@ vmem_add1(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags,
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
-	KASSERT(spanbttype == BT_TYPE_SPAN || spanbttype == BT_TYPE_SPAN_STATIC);
+	KASSERT(spanbttype == BT_TYPE_SPAN ||
+	    spanbttype == BT_TYPE_SPAN_STATIC);
 
 	btspan = bt_alloc(vm, flags);
 	if (btspan == NULL) {
