@@ -1,6 +1,6 @@
 .\" @(#) Header: /tcpdump/master/tcpdump/tcpdump.1.in,v 1.2 2008-11-09 23:35:03 mcr Exp (LBL)
 .\"
-.\"	$NetBSD: tcpdump.1.in,v 1.2 2010/12/05 05:11:31 christos Exp $
+.\"	$NetBSD: tcpdump.1.in,v 1.3 2010/12/17 09:54:28 jruoho Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -620,12 +620,15 @@ savefile name as the only argument, make the flags & arguments arrangements
 and execute the command that you want.
 .TP
 .B \-Z
-Drops privileges (if root) and changes user ID to
-.I user
-and the group ID to the primary group of
-.IR user .
-.IP
-This behavior can also be enabled by default at compile time.
+By default,
+.I tcpdump
+operates in NetBSD under the privileges of the user ``_tcpdump''.
+Before the user ID and the corresponding primary group ID are changed,
+.I tcpdump
+will change the root directory to \fI/var/chroot/tcpdump\fP.
+By using the option
+.B \-Z
+the real and effective user and group IDs can be changed to ``user'' instead.
 .IP "\fI expression\fP"
 .RS
 selects which packets will be dumped.

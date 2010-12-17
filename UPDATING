@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.216 2010/11/25 22:08:49 christos Exp $
+$NetBSD: UPDATING,v 1.217 2010/12/17 09:54:27 jruoho Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20101217:
+	The tcpdump(8) program was changed to drop privileges and chroot(2)
+	by default. It may be necessary to manually update passwd(5) and
+	group(5) in order to make the program work with existing setups.
+
 20101125:
 	The latest changes to setenv(3) dissallow setting environment
 	variables with names that contain '='. Revision 1.18 of env.c

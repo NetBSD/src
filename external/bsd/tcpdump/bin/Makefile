@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/12/05 05:52:46 christos Exp $	
+#	$NetBSD: Makefile,v 1.4 2010/12/17 09:54:28 jruoho Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -63,6 +63,9 @@ CPPFLAGS+=  -I${NETBSDSRCDIR}/dist/pf/sbin/pfctl \
 AWKS= atime.awk packetdat.awk stime.awk send-ack.awk   
 
 CPPFLAGS+=-DHAVE_CONFIG_H -D_U_="__attribute__((__unused__))"
+
+CPPFLAGS+=-DWITH_USER=\"_tcpdump\"
+CPPFLAGS+=-DWITH_CHROOT=\"/var/chroot/tcpdump\"
 
 .if (${USE_INET6} != "no")
 SRCS+=	print-ip6.c print-ip6opts.c print-ripng.c print-icmp6.c print-frag6.c \

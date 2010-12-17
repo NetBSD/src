@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2009/09/14 10:36:51 degroote Exp $	
+#	$NetBSD: Makefile,v 1.51 2010/12/17 09:54:28 jruoho Exp $	
 
 WARNS?=	1	# XXX: out of date third-party program 
 
@@ -76,6 +76,9 @@ CPPFLAGS+= -DHAVE_STRUCT_ETHER_ADDR
 CPPFLAGS+=-DLBL_ALIGN=1
 CPPFLAGS+=-DTCPDUMP_DO_SMB=1
 CPPFLAGS+=-D_U_="__attribute__((unused))"
+
+CPPFLAGS+=-DWITH_USER=\"_tcpdump\"
+CPPFLAGS+=-DWITH_CHROOT=\"/var/chroot/tcpdump\"
 
 .if (${USE_INET6} != "no")
 SRCS+=	print-ip6.c print-ip6opts.c print-ripng.c print-icmp6.c print-frag6.c \
