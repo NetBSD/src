@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.30 2010/08/17 00:52:33 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.31 2010/12/17 04:49:24 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.30 2010/08/17 00:52:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.31 2010/12/17 04:49:24 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -287,7 +287,13 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	uint32_t r;
 	extern char edata[], end[];
 
-#ifndef MULTIPROCESSOR
+#ifdef MULTIPROCESSOR
+	r = rmixl_mfcr(0x400);
+	r |= __BIT(0);			/* enable global TLB mode */
+	rmixl_mtcr(0x400, r);		/* enable MMU clock gating */
+					/* preserve MMU Thread Mode */
+					/* TLB is not paritioned (global) */
+#else
 	rmixl_mtcr(0, 1);		/* disable all threads except #0 */
 	rmixl_mtcr(0x400, 0);		/* enable MMU clock gating */
 					/* set single MMU Thread Mode */
