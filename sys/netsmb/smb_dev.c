@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.37 2010/12/17 13:05:29 pooka Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.38 2010/12/17 13:24:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.37 2010/12/17 13:05:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.38 2010/12/17 13:24:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,10 +90,15 @@ const struct cdevsw nsmb_cdevsw = {
 
 
 void nsmbattach(int);
+static bool nsmb_inited = false;
 
 void
 nsmbattach(int num)
 {
+
+	if (nsmb_inited)
+		return;
+	nsmb_inited = true;
 
 	if (num <= 0) {
 #ifdef DIAGNOSTIC
@@ -122,6 +127,17 @@ nsmbattach(int num)
 		return;
 	}
 	smb_rqpool_init();
+}
+
+static void
+nsmbdetach(void)
+{
+
+	smb_iod_done();
+	smb_sm_done();
+	smb_rqpool_fini();
+	free(smb_devtbl, M_NSMBDEV);
+	nsmb_inited = false;
 }
 
 int
@@ -358,24 +374,25 @@ nsmb_modcmd(modcmd_t cmd, void *arg)
 		nsmbattach(1);
 		error =
 		    devsw_attach("nsmb", NULL, &bmajor, &nsmb_cdevsw, &cmajor);
-		if (error)
-			return error;
+		if (error == EEXIST) /* builtin */
+			error = 0;
+		if (error) {
+			nsmbdetach();
+		}
 
 		break;
 	    case MODULE_CMD_FINI:
-		smb_iod_done();
-		smb_sm_done();
-		smb_rqpool_fini();
 		error = devsw_detach(NULL, &nsmb_cdevsw);
-		free(smb_devtbl, M_NSMBDEV);
+		if (error)
+			break;
+		nsmbdetach();
 		break;
 	    default:
 		error = ENOTTY;
 		break;
 	}
-	return error;
-	return 0;
 
+	return error;
 }
 #endif /* _MODULE */
 
