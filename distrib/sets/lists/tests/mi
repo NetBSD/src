@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.179 2010/12/15 20:42:24 pooka Exp $
+# $NetBSD: mi,v 1.180 2010/12/17 19:13:48 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -319,6 +319,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio				tests-lib-debug
@@ -1529,6 +1530,7 @@
 ./usr/tests/lib/libc/gen			tests-lib-tests
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_syslog_pthread		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash			tests-lib-tests
 ./usr/tests/lib/libc/hash/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		atf
