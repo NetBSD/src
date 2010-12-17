@@ -1,4 +1,4 @@
-#	$NetBSD: t_raid.sh,v 1.1 2010/12/15 20:40:18 pooka Exp $
+#	$NetBSD: t_raid.sh,v 1.2 2010/12/17 14:51:27 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@ makecfg()
 }
 
 atf_test_case smalldisk cleanup
-raid1fail_head()
+smalldisk_head()
 {
 
 	atf_set "descr" "Checks the raidframe works on small disks"
