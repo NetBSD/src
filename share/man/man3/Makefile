@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2010/12/17 07:10:38 jruoho Exp $
+#	$NetBSD: Makefile,v 1.63 2010/12/17 08:13:09 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
@@ -23,7 +23,9 @@ MLINKS+=attribute.3 __dead.3 \
 	attribute.3 __used.3 \
 	attribute.3 __packed.3 \
 	attribute.3 __aligned.3 \
-	attribute.3 __section.3
+	attribute.3 __section.3 \
+	attribute.3 __read_mostly.3 \
+	attribute.3 __cacheline_aligned.3
 MLINKS+=bitstring.3 bit_alloc.3 \
 	bitstring.3 bit_clear.3 \
 	bitstring.3 bit_decl.3 \
