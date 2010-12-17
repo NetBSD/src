@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.6 2010/12/16 14:33:30 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.7 2010/12/17 13:37:37 pooka Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.6 2010/12/16 14:33:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.7 2010/12/17 13:37:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -243,17 +243,17 @@ swsensor_init(void *arg)
 	if (error == 0)
 		error = sysmon_envsys_register(swsensor_sme);
 	else {
-		printf("sysmon_envsys_sensor_attach failed: %d\n", error);
+		aprint_error("sysmon_envsys_sensor_attach failed: %d\n", error);
 		return error;
 	}
 
 	if (error == 0)
 		sysctl_swsensor_setup();
 	else
-		printf("sysmon_envsys_register failed: %d\n", error);
+		aprint_error("sysmon_envsys_register failed: %d\n", error);
 
 	if (error == 0)
-		printf("swsensor: initialized\n");
+		aprint_normal("swsensor: initialized\n");
 	return error;
 }
 
