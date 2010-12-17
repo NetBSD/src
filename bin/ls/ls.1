@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.65 2010/05/14 17:11:52 joerg Exp $
+.\"	$NetBSD: ls.1,v 1.66 2010/12/17 19:20:42 njoly Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -430,7 +430,7 @@ or
 .Pp
 The number of bytes displayed for a directory is a function of the
 number of
-.Xr dirent 5
+.Xr dirent 3
 structures in the directory, not all of which may be allocated to
 any existing file.
 .Sh ENVIRONMENT
@@ -477,8 +477,8 @@ specification.
 .Xr chflags 1 ,
 .Xr chmod 1 ,
 .Xr stat 2 ,
+.Xr dirent 3 ,
 .Xr getbsize 3 ,
-.Xr dir 5 ,
 .Xr sticky 7 ,
 .Xr symlink 7
 .Sh STANDARDS
