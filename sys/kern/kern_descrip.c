@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.207 2010/10/29 15:32:23 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.208 2010/12/17 22:06:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.207 2010/10/29 15:32:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.208 2010/12/17 22:06:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1598,7 +1598,7 @@ filedescopen(dev_t dev, int mode, int type, lwp_t *l)
 	 * the file descriptor being sought for duplication. The error
 	 * return ensures that the vnode for this device will be released
 	 * by vn_open. Open will detect this special error and take the
-	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
+	 * actions in fd_dupopen below. Other callers of vn_open or VOP_OPEN
 	 * will simply report the error.
 	 */
 	l->l_dupfd = minor(dev);	/* XXX */
@@ -1626,11 +1626,11 @@ fd_dupopen(int old, int *new, int mode, int error)
 	/*
 	 * There are two cases of interest here.
 	 *
-	 * For EDUPFD simply dup (dfd) to file descriptor
-	 * (indx) and return.
+	 * For EDUPFD simply dup (old) to file descriptor
+	 * (new) and return.
 	 *
-	 * For EMOVEFD steal away the file structure from (dfd) and
-	 * store it in (indx).  (dfd) is effectively closed by
+	 * For EMOVEFD steal away the file structure from (old) and
+	 * store it in (new).  (old) is effectively closed by
 	 * this operation.
 	 *
 	 * Any other error code is just returned.
