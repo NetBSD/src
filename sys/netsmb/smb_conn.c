@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.26 2010/07/01 13:00:56 hannken Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.27 2010/12/17 13:05:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.26 2010/07/01 13:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.27 2010/12/17 13:05:29 pooka Exp $");
 
 /*
  * Connection engine.
@@ -88,9 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.26 2010/07/01 13:00:56 hannken Exp $"
 static struct smb_connobj smb_vclist;
 static int smb_vcnext = 1;	/* next unique id for VC */
 
-#ifndef __NetBSD__
-SYSCTL_NODE(_net, OID_AUTO, smb, CTLFLAG_RW, NULL, "SMB protocol");
-#endif
 
 MALLOC_DEFINE(M_SMBCONN, "SMB conn", "SMB connection");
 
@@ -103,12 +100,6 @@ static void smb_vc_gone(struct smb_connobj *cp, struct smb_cred *scred);
 static smb_co_free_t smb_share_free;
 static smb_co_gone_t smb_share_gone;
 
-#ifndef __NetBSD__
-static int  smb_sysctl_treedump(SYSCTL_HANDLER_ARGS);
-
-SYSCTL_PROC(_net_smb, OID_AUTO, treedump, CTLFLAG_RD | CTLTYPE_OPAQUE,
-	    NULL, 0, smb_sysctl_treedump, "S,treedump", "Requester tree");
-#endif
 
 int
 smb_sm_init(void)
@@ -708,25 +699,6 @@ smb_vc_getpass(struct smb_vc *vcp)
 	return smb_emptypass;
 }
 
-#ifndef __NetBSD__
-static int
-smb_vc_getinfo(struct smb_vc *vcp, struct smb_vc_info *vip)
-{
-	memset(vip, 0, sizeof(struct smb_vc_info));
-	vip->itype = SMB_INFO_VC;
-	vip->usecount = vcp->obj.co_usecount;
-	vip->uid = vcp->vc_uid;
-	vip->gid = vcp->vc_grp;
-	vip->mode = vcp->vc_mode;
-	vip->flags = vcp->obj.co_flags;
-	vip->sopt = vcp->vc_sopt;
-	vip->iodstate = vcp->vc_iod->iod_state;
-	memset(&vip->sopt.sv_skey, 0, sizeof(vip->sopt.sv_skey));
-	snprintf(vip->srvname, sizeof(vip->srvname), "%s", vcp->vc_srvname);
-	snprintf(vip->vcname, sizeof(vip->vcname), "%s", vcp->vc_username);
-	return 0;
-}
-#endif
 
 u_short
 smb_vc_nextmid(struct smb_vc *vcp)
@@ -905,73 +877,4 @@ smb_share_getpass(struct smb_share *ssp)
 	return smb_emptypass;
 }
 
-#ifndef __NetBSD__
-static int
-smb_share_getinfo(struct smb_share *ssp, struct smb_share_info *sip)
-{
-	memset(sip, 0, sizeof(struct smb_share_info));
-	sip->itype = SMB_INFO_SHARE;
-	sip->usecount = ssp->obj.co_usecount;
-	sip->tid  = ssp->ss_tid;
-	sip->type= ssp->ss_type;
-	sip->uid = ssp->ss_uid;
-	sip->gid = ssp->ss_grp;
-	sip->mode= ssp->ss_mode;
-	sip->flags = ssp->obj.co_flags;
-	snprintf(sip->sname, sizeof(sip->sname), "%s", ssp->ss_name);
-	return 0;
-}
-#endif
 
-#ifndef __NetBSD__
-/*
- * Dump an entire tree into sysctl call
- */
-static int
-smb_sysctl_treedump(SYSCTL_HANDLER_ARGS)
-{
-	struct smb_cred scred;
-	struct smb_vc *vcp;
-	struct smb_share *ssp;
-	struct smb_vc_info vci;
-	struct smb_share_info ssi;
-	int error, itype;
-
-	smb_makescred(&scred, td, td->td_proc->p_cred);
-	error = smb_sm_lockvclist(LK_SHARED);
-	if (error)
-		return error;
-	SMBCO_FOREACH((struct smb_connobj*)vcp, &smb_vclist) {
-		error = smb_vc_lock(vcp, LK_SHARED);
-		if (error)
-			continue;
-		smb_vc_getinfo(vcp, &vci);
-		error = SYSCTL_OUT(req, &vci, sizeof(struct smb_vc_info));
-		if (error) {
-			smb_vc_unlock(vcp, 0);
-			break;
-		}
-		SMBCO_FOREACH((struct smb_connobj*)ssp, VCTOCP(vcp)) {
-			error = smb_share_lock(ssp, LK_SHARED);
-			if (error) {
-				error = 0;
-				continue;
-			}
-			smb_share_getinfo(ssp, &ssi);
-			smb_share_unlock(ssp, 0);
-			error = SYSCTL_OUT(req, &ssi, sizeof(struct smb_share_info));
-			if (error)
-				break;
-		}
-		smb_vc_unlock(vcp, 0);
-		if (error)
-			break;
-	}
-	if (!error) {
-		itype = SMB_INFO_NONE;
-		error = SYSCTL_OUT(req, &itype, sizeof(itype));
-	}
-	smb_sm_unlockvclist();
-	return error;
-}
-#endif
