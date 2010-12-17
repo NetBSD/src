@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.49 2010/07/02 07:58:09 hannken Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.50 2010/12/17 22:03:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.49 2010/07/02 07:58:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.50 2010/12/17 22:03:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,11 +60,11 @@ int	dead_poll(void *);
 #define dead_inactive	genfs_nullop
 #define dead_reclaim	genfs_nullop
 int	dead_lock(void *);
-#define dead_unlock	genfs_nullop
+#define dead_unlock	genfs_unlock
 int	dead_bmap(void *);
 int	dead_strategy(void *);
 int	dead_print(void *);
-#define dead_islocked	genfs_nullop
+#define dead_islocked	genfs_islocked
 #define dead_bwrite	genfs_nullop
 #define dead_revoke	genfs_nullop
 int	dead_getpages(void *);
@@ -235,8 +235,9 @@ dead_lock(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 
-	if (!chkvnlock(ap->a_vp))
-		return (0);
+	if (!chkvnlock(ap->a_vp)) {
+		return genfs_lock(v);
+	}
 	return (VCALL(ap->a_vp, VOFFSET(vop_lock), ap));
 }
 
