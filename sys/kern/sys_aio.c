@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.35 2010/08/06 18:36:09 jruoho Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.36 2010/12/17 22:05:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.35 2010/08/06 18:36:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.36 2010/12/17 22:05:36 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -327,6 +327,7 @@ aio_worker(void *arg)
 		    sizeof(struct aiocb));
 
 		mutex_enter(&aio->aio_mtx);
+		KASSERT(aio->curjob == a_job);
 		aio->curjob = NULL;
 
 		/* Decrease a reference counter, if there is a LIO structure */
