@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.5 2010/12/18 01:07:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -151,7 +151,7 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
  * npf_icmp_uniqid: retrieve unique identifiers - either ICMP query ID
  * or TCP/UDP ports of the original packet, which is embedded.
  */
-static inline bool
+static bool
 npf_icmp_uniqid(const int type, npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
 	struct icmp *ic;
@@ -252,7 +252,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 	 */
 	KASSERT(npf_iscached(key, NPC_IP46));
 	KASSERT(npf_iscached(key, NPC_LAYER4));
-	key->npc_di = (npc->npc_di == PFIL_IN) ? PFIL_OUT : PFIL_IN;
+	key->npc_ipsz = npc->npc_ipsz;
 
 	return true;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.5 2010/12/18 01:07:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -111,6 +111,8 @@ npf_addr_sum(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
 {
 	uint32_t mix = 0;
 	int i;
+
+	KASSERT(sz > 0 && a1 != NULL && a2 != NULL);
 
 	for (i = 0; i < (sz >> 2); i++) {
 		mix += a1->s6_addr32[i];
@@ -524,15 +526,17 @@ npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 }
 
 static inline bool
-npf_normalize_ip4(npf_cache_t *npc, nbuf_t *nbuf, bool rnd, int minttl)
+npf_normalize_ip4(npf_cache_t *npc, nbuf_t *nbuf,
+    bool rnd, bool no_df, int minttl)
 {
 	void *n_ptr = nbuf_dataptr(nbuf);
 	struct ip *ip = &npc->npc_ip.v4;
 	uint16_t cksum = ip->ip_sum;
+	uint16_t ip_off = ip->ip_off;
 	uint8_t ttl = ip->ip_ttl;
 	u_int offby = 0;
 
-	KASSERT(rnd || minttl);
+	KASSERT(rnd || minttl || no_df);
 
 	/* Randomize IPv4 ID. */
 	if (rnd) {
@@ -545,6 +549,20 @@ npf_normalize_ip4(npf_cache_t *npc, nbuf_t *nbuf, bool rnd, int minttl)
 		}
 		cksum = npf_fixup16_cksum(cksum, oid, nid);
 		ip->ip_id = nid;
+	}
+
+	/* IP_DF flag cleansing. */
+	if (no_df && (ip_off & htons(IP_DF)) != 0) {
+		uint16_t nip_off = ip_off & ~htons(IP_DF);
+
+		if (nbuf_advstore(&nbuf, &n_ptr,
+		    offsetof(struct ip, ip_off) - offby,
+		    sizeof(uint8_t), &nip_off)) {
+			return false;
+		}
+		cksum = npf_fixup16_cksum(cksum, ip_off, nip_off);
+		ip->ip_off = nip_off;
+		offby = offsetof(struct ip, ip_off);
 	}
 
 	/* Enforce minimum TTL. */
@@ -570,7 +588,7 @@ npf_normalize_ip4(npf_cache_t *npc, nbuf_t *nbuf, bool rnd, int minttl)
 
 bool
 npf_normalize(npf_cache_t *npc, nbuf_t *nbuf,
-    bool rnd, u_int minttl, u_int maxmss)
+    bool no_df, bool rnd, u_int minttl, u_int maxmss)
 {
 	void *n_ptr = nbuf_dataptr(nbuf);
 	struct ip *ip = &npc->npc_ip.v4;
@@ -580,7 +598,7 @@ npf_normalize(npf_cache_t *npc, nbuf_t *nbuf,
 
 	/* Normalize IPv4. */
 	if (npf_iscached(npc, NPC_IP4) && (rnd || minttl)) {
-		if (!npf_normalize_ip4(npc, nbuf, rnd, minttl)) {
+		if (!npf_normalize_ip4(npc, nbuf, rnd, no_df, minttl)) {
 			return false;
 		}
 	}

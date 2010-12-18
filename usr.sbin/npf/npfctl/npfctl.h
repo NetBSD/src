@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.4 2010/12/18 01:07:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 
 #define	NPF_DEV_PATH	"/dev/npf"
 #define	NPF_CONF_PATH	"/etc/npf.conf"
+#define	NPF_SESSDB_PATH	"/var/db/npf_sessions.db"
 
 typedef struct {
 	char *		e_data;
@@ -72,13 +73,15 @@ char *		xstrdup(const char *);
 
 void		npfctl_init_data(void);
 int		npfctl_ioctl_send(int);
+int		npfctl_ioctl_recvse(int);
+int		npfctl_ioctl_sendse(int);
 
 bool		npfctl_parse_v4mask(char *, in_addr_t *, in_addr_t *);
 
 prop_dictionary_t npfctl_mk_rule(bool);
 void		npfctl_add_rule(prop_dictionary_t, prop_dictionary_t);
 void		npfctl_rule_setattr(prop_dictionary_t, int, char *,
-		    bool, int, int);
+		    char *, bool, int, int, bool);
 void		npfctl_rule_protodata(prop_dictionary_t, char *, char *,
 		    int, int, var_t *, var_t *, var_t *, var_t *);
 void		npfctl_rule_icmpdata(prop_dictionary_t, var_t *, var_t *);

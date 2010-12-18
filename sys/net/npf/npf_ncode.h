@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.4 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -82,8 +82,8 @@ int	npf_ncode_validate(const void *, size_t, int *);
 #define	NPF_OPCODE_TAG			0x04
 
 /* Set and load instructions. */
-#define	NPF_OPCODE_MOV			0x10
-#define	NPF_OPCODE_LOAD			0x11
+#define	NPF_OPCODE_MOVE			0x10
+#define	NPF_OPCODE_LW			0x11
 
 /* Compare and jump instructions. */
 #define	NPF_OPCODE_CMP			0x21
@@ -93,8 +93,19 @@ int	npf_ncode_validate(const void *, size_t, int *);
 #define	NPF_OPCODE_BGT			0x25
 #define	NPF_OPCODE_BLT			0x26
 
+/* Arithmetic instructions. */
+#define	NPF_OPCODE_ADD			0x30
+#define	NPF_OPCODE_SUB			0x31
+#define	NPF_OPCODE_MULT			0x32
+#define	NPF_OPCODE_DIV			0x33
+
 /* Bitwise instructions. */
-#define	NPF_OPCODE_AND			0x30
+#define	NPF_OPCODE_NOT			0x40
+#define	NPF_OPCODE_AND			0x41
+#define	NPF_OPCODE_OR			0x42
+#define	NPF_OPCODE_XOR			0x43
+#define	NPF_OPCODE_SLL			0x44
+#define	NPF_OPCODE_SRL			0x45
 
 /*
  * CISC-like n-code instructions.

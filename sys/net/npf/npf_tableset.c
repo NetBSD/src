@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.4 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,7 @@
  */
 
 /*
- * NPF table module.
- *
- *	table_lock ->
- *		npf_table_t::t_lock
+ * NPF tableset module.
  *
  * TODO:
  * - Currently, code is modeled to handle IPv4 CIDR blocks.
@@ -42,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.4 2010/12/18 01:07:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,7 +60,7 @@ struct npf_tblent {
 	/* Hash/tree entry. */
 	union {
 		LIST_ENTRY(npf_tblent)	hashq;
-		struct rb_node		rbnode;
+		rb_node_t		rbnode;
 	} te_entry;
 	/* IPv4 CIDR block. */
 	in_addr_t			te_addr;
@@ -87,39 +84,24 @@ struct npf_table {
 	rb_tree_t			t_rbtree;
 };
 
-/* Global table array and its lock. */
-static npf_tableset_t *		table_array;
-static krwlock_t		table_lock;
-static pool_cache_t		tblent_cache;
+static pool_cache_t			tblent_cache	__read_mostly;
 
 /*
  * npf_table_sysinit: initialise tableset structures.
  */
-int
+void
 npf_tableset_sysinit(void)
 {
 
 	tblent_cache = pool_cache_init(sizeof(npf_tblent_t), coherency_unit,
 	    0, 0, "npftenpl", NULL, IPL_NONE, NULL, NULL, NULL);
-	if (tblent_cache == NULL) {
-		return ENOMEM;
-	}
-	table_array = npf_tableset_create();
-	if (table_array == NULL) {
-		pool_cache_destroy(tblent_cache);
-		return ENOMEM;
-	}
-	rw_init(&table_lock);
-	return 0;
 }
 
 void
 npf_tableset_sysfini(void)
 {
 
-	npf_tableset_destroy(table_array);
 	pool_cache_destroy(tblent_cache);
-	rw_destroy(&table_lock);
 }
 
 npf_tableset_t *
@@ -170,25 +152,6 @@ npf_tableset_insert(npf_tableset_t *tblset, npf_table_t *t)
 		error = EEXIST;
 	}
 	return error;
-}
-
-/*
- * npf_tableset_reload: replace old tableset array with a new one.
- *
- * => Called from npf_ruleset_reload() with a global ruleset lock held.
- * => Returns pointer to the old tableset, caller will destroy it.
- */
-npf_tableset_t *
-npf_tableset_reload(npf_tableset_t *tblset)
-{
-	npf_tableset_t *oldtblset;
-
-	rw_enter(&table_lock, RW_WRITER);
-	oldtblset = table_array;
-	table_array = tblset;
-	rw_exit(&table_lock);
-
-	return oldtblset;
 }
 
 /*
@@ -341,24 +304,25 @@ npf_table_unref(npf_table_t *t)
 npf_table_t *
 npf_table_get(npf_tableset_t *tset, u_int tid)
 {
+	npf_tableset_t *rtset;
 	npf_table_t *t;
 
 	if ((u_int)tid >= NPF_TABLE_SLOTS) {
 		return NULL;
 	}
-	if (tset) {
-		t = tset[tid];
-		if (t != NULL) {
-			rw_enter(&t->t_lock, RW_READER);
-		}
-		return t;
+	if (tset == NULL) {
+		npf_core_enter();
+		rtset = npf_core_tableset();
+	} else {
+		rtset = tset;
 	}
-	rw_enter(&table_lock, RW_READER);
-	t = table_array[tid];
+	t = rtset[tid];
 	if (t != NULL) {
 		rw_enter(&t->t_lock, RW_READER);
 	}
-	rw_exit(&table_lock);
+	if (tset == NULL) {
+		npf_core_exit();
+	}
 	return t;
 }
 
@@ -406,9 +370,6 @@ npf_table_add_v4cidr(npf_tableset_t *tset, u_int tid,
 
 	/* Allocate and setup entry. */
 	e = pool_cache_get(tblent_cache, PR_WAITOK);
-	if (e == NULL) {
-		return ENOMEM;
-	}
 	e->te_addr = addr;
 	e->te_mask = mask;
 

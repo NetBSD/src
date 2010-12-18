@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.5 2010/12/18 01:07:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.5 2010/12/18 01:07:26 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -67,15 +67,11 @@ static pri_t			nat_prio_counter = 1;
 void
 npfctl_init_data(void)
 {
-	prop_number_t ver;
 
 	if (getifaddrs(&ifs_list) == -1)
 		err(EXIT_FAILURE, "getifaddrs");
 
 	npf_dict = prop_dictionary_create();
-
-	ver = prop_number_create_integer(NPF_VERSION);
-	prop_dictionary_set(npf_dict, "version", ver);
 
 	nat_arr = prop_array_create();
 	prop_dictionary_set(npf_dict, "translation", nat_arr);
@@ -106,6 +102,42 @@ npfctl_ioctl_send(int fd)
 #endif
 	prop_object_release(npf_dict);
 	return ret;
+}
+
+int
+npfctl_ioctl_sendse(int fd)
+{
+	prop_dictionary_t sesdict;
+	int error;
+
+	sesdict = prop_dictionary_internalize_from_file(NPF_SESSDB_PATH);
+	if (sesdict == NULL) {
+		errx(EXIT_FAILURE, "npfctl: no sessions saved "
+		    "('%s' does not exist)", NPF_SESSDB_PATH);
+	}
+	error = prop_dictionary_send_ioctl(sesdict, fd, IOC_NPF_SESSIONS_LOAD);
+	prop_object_release(sesdict);
+	if (error) {
+		err(EXIT_FAILURE, "npfctl_ioctl_sendse");
+	}
+	return 0;
+}
+
+int
+npfctl_ioctl_recvse(int fd)
+{
+	prop_dictionary_t sesdict;
+	int error;
+
+	error = prop_dictionary_recv_ioctl(fd, IOC_NPF_SESSIONS_SAVE, &sesdict);
+	if (error) {
+		err(EXIT_FAILURE, "prop_array_recv_ioctl");
+	}
+	if (!prop_dictionary_externalize_to_file(sesdict, NPF_SESSDB_PATH)) {
+		errx(EXIT_FAILURE, "could not save to '%s'", NPF_SESSDB_PATH);
+	}
+	prop_object_release(sesdict);
+	return 0;
 }
 
 /*
@@ -393,21 +425,26 @@ npfctl_add_rule(prop_dictionary_t rl, prop_dictionary_t parent)
 
 void
 npfctl_rule_setattr(prop_dictionary_t rl, int attr, char *iface,
-    bool ipid_rnd, int minttl, int maxmss)
+    char *logiface, bool ipid_rnd, int minttl, int maxmss, bool no_df)
 {
-	prop_number_t attrnum;
+	prop_number_t attrnum, ifnum;
+	unsigned int if_idx;
 
 	attrnum = prop_number_create_integer(attr);
 	prop_dictionary_set(rl, "attributes", attrnum);
 	if (iface) {
-		prop_number_t ifnum;
-		unsigned int if_idx;
-
 		if (npfctl_getif(iface, &if_idx) == NULL) {
 			errx(EXIT_FAILURE, "invalid interface '%s'", iface);
 		}
 		ifnum = prop_number_create_integer(if_idx);
 		prop_dictionary_set(rl, "interface", ifnum);
+	}
+	if (logiface) {
+		if (npfctl_getif(logiface, &if_idx) == NULL) {
+			errx(EXIT_FAILURE, "invalid interface '%s'", logiface);
+		}
+		ifnum = prop_number_create_integer(if_idx);
+		prop_dictionary_set(rl, "log-interface", ifnum);
 	}
 	if (attr & NPF_RULE_NORMALIZE) {
 		prop_dictionary_set(rl, "randomize-id",
@@ -416,6 +453,8 @@ npfctl_rule_setattr(prop_dictionary_t rl, int attr, char *iface,
 		    prop_number_create_integer(minttl));
 		prop_dictionary_set(rl, "max-mss",
 		    prop_number_create_integer(maxmss));
+		prop_dictionary_set(rl, "no-df",
+		    prop_bool_create(no_df));
 	}
 }
 
@@ -452,7 +491,8 @@ npfctl_rulenc_v4cidr(void **nc, int nblocks[], var_t *dat, bool sd)
 }
 
 static void
-npfctl_rulenc_ports(void **nc, int nblocks[], var_t *dat, bool tcpudp, bool sd)
+npfctl_rulenc_ports(void **nc, int nblocks[], var_t *dat, bool tcpudp,
+    bool both, bool sd)
 {
 	element_t *el = dat->v_elements;
 	int foff;
@@ -468,7 +508,7 @@ npfctl_rulenc_ports(void **nc, int nblocks[], var_t *dat, bool tcpudp, bool sd)
 			errx(EXIT_FAILURE, "invalid service '%s'", el->e_data);
 		}
 		nblocks[0]--;
-		foff = npfctl_failure_offset(nblocks);
+		foff = both ? 0 : npfctl_failure_offset(nblocks);
 		npfctl_gennc_ports(nc, foff, fport, tport, tcpudp, sd);
 	}
 }
@@ -482,11 +522,11 @@ npfctl_rulenc_block(void **nc, int nblocks[], var_t *cidr, var_t *ports,
 	if (ports == NULL) {
 		return;
 	}
-	npfctl_rulenc_ports(nc, nblocks, ports, tcpudp, sd);
+	npfctl_rulenc_ports(nc, nblocks, ports, tcpudp, both, sd);
 	if (!both) {
 		return;
 	}
-	npfctl_rulenc_ports(nc, nblocks, ports, !tcpudp, sd);
+	npfctl_rulenc_ports(nc, nblocks, ports, !tcpudp, false, sd);
 }
 
 void
@@ -505,10 +545,11 @@ npfctl_rule_protodata(prop_dictionary_t rl, char *proto, char *tcp_flags,
 	 */
 	icmp = false;
 	tcpudp = true;
-	both = false;
 	if (proto == NULL) {
+		both = true;
 		goto skip_proto;
 	}
+	both = false;
 
 	if (strcmp(proto, "icmp") == 0) {
 		/* ICMP case. */
@@ -661,7 +702,7 @@ npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
 {
 	int attr = NPF_RULE_PASS | NPF_RULE_FINAL;
 	in_addr_t addr, mask;
-	void *addrptr;
+	prop_data_t addrdat;
 
 	/* Translation type and flags. */
 	prop_dictionary_set(rl, "type",
@@ -671,15 +712,15 @@ npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
 
 	/* Interface and attributes. */
 	attr |= (type == NPF_NATOUT) ? NPF_RULE_OUT : NPF_RULE_IN;
-	npfctl_rule_setattr(rl, attr, iface, false, 0, 0);
+	npfctl_rule_setattr(rl, attr, iface, NULL, false, 0, 0, false);
 
 	/* Translation IP, XXX should be no mask. */
 	npfctl_parse_cidr(taddr, &addr, &mask);
-	addrptr = prop_data_create_data(&addr, sizeof(in_addr_t));
-	if (addrptr == NULL) {
+	addrdat = prop_data_create_data(&addr, sizeof(in_addr_t));
+	if (addrdat == NULL) {
 		err(EXIT_FAILURE, "prop_data_create_data");
 	}
-	prop_dictionary_set(rl, "translation-ip", addrptr);
+	prop_dictionary_set(rl, "translation-ip", addrdat);
 
 	/* Translation port (for redirect case). */
 	if (rport) {

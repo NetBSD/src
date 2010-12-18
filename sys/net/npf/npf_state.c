@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.1 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.2 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.1 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.2 2010/12/18 01:07:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,10 +146,12 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	 * that is, upper boundary for valid data (I).
 	 */
 	if (!SEQ_GEQ(fstate->nst_ackend, end)) {
+		npf_stats_inc(NPF_STAT_INVALID_STATE_TCP1);
 		return false;
 	}
 	/* Lower boundary (II), which is no more than one window back. */
 	if (!SEQ_GEQ(seq, fstate->nst_seqend - tstate->nst_maxwin)) {
+		npf_stats_inc(NPF_STAT_INVALID_STATE_TCP2);
 		return false;
 	}
 	/*
@@ -158,10 +160,13 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	 */
 	ackskew = tstate->nst_seqend - ack;
 	if (ackskew < -MAXACKWINDOW || ackskew > MAXACKWINDOW) {
+		npf_stats_inc(NPF_STAT_INVALID_STATE_TCP3);
 		return false;
 	}
 
 	/*
+	 * Packet is passed now.
+	 *
 	 * Negative ackskew might be due to fragmented packets.  Since the
 	 * total length of the packet is unknown - bump the boundary.
 	 */
@@ -188,6 +193,7 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 {
 	const struct tcphdr *th = &npc->npc_l4.tcp;
 	const int tcpfl = th->th_flags;
+	int nstate = 0;
 
 	/*
 	 * Handle 3-way handshake (SYN -> SYN,ACK -> ACK).
@@ -195,19 +201,16 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	switch (nst->nst_state) {
 	case ST_ESTABLISHED:
 		/* Common case - connection established. */
-		if (tcpfl & TH_ACK) {
-			/*
-			 * Data transmission.
-			 */
-		} else if (tcpfl & TH_FIN) {
-			/* XXX TODO */
+		if (__predict_false(tcpfl & (TH_FIN | TH_RST))) {
+			/* Handle connection closure (FIN or RST). */
+			nstate = ST_CLOSING;
 		}
 		break;
 	case ST_OPENING:
 		/* SYN has been sent, expecting SYN-ACK. */
 		if (tcpfl == (TH_SYN | TH_ACK) && !forw) {
 			/* Received backwards SYN-ACK. */
-			nst->nst_state = ST_ACKNOWLEDGE;
+			nstate = ST_ACKNOWLEDGE;
 		} else if (tcpfl == TH_SYN && forw) {
 			/* Re-transmission of SYN. */
 		} else {
@@ -217,7 +220,7 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	case ST_ACKNOWLEDGE:
 		/* SYN-ACK was seen, expecting ACK. */
 		if (tcpfl == TH_ACK && forw) {
-			nst->nst_state = ST_ESTABLISHED;
+			nstate = ST_ESTABLISHED;
 		} else {
 			return false;
 		}
@@ -229,7 +232,15 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 		npf_state_dump(nst);
 		KASSERT(false);
 	}
-	return npf_tcp_inwindow(npc, nbuf, nst, forw);
+#if 0
+	if (!npf_tcp_inwindow(npc, nbuf, nst, forw)) {
+		return false;
+	}
+#endif
+	if (__predict_false(nstate)) {
+		nst->nst_state = nstate;
+	}
+	return true;
 }
 
 bool
@@ -238,20 +249,24 @@ npf_state_init(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 	const int proto = npf_cache_ipproto(npc);
 
 	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
+
+	mutex_init(&nst->nst_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+	nst->nst_state = ST_OPENING;
+
 	if (proto == IPPROTO_TCP) {
 		const struct tcphdr *th = &npc->npc_l4.tcp;
 		/* TCP case: must be SYN. */
 		KASSERT(npf_iscached(npc, NPC_TCP));
 		if (th->th_flags != TH_SYN) {
+			npf_stats_inc(NPF_STAT_INVALID_STATE);
 			return false;
 		}
 		/* Initial values for TCP window and sequence tracking. */
 		if (!npf_tcp_inwindow(npc, nbuf, nst, true)) {
+			npf_stats_inc(NPF_STAT_INVALID_STATE);
 			return false;
 		}
 	}
-	mutex_init(&nst->nst_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-	nst->nst_state = ST_OPENING;
 	return true;
 }
 
@@ -284,6 +299,9 @@ npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
 		ret = true;
 	}
 	mutex_exit(&nst->nst_lock);
+	if (__predict_false(!ret)) {
+		npf_stats_inc(NPF_STAT_INVALID_STATE);
+	}
 	return ret;
 }
 

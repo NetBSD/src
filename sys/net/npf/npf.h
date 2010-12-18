@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -98,9 +98,8 @@ typedef struct in6_addr		npf_addr_t;
 #define	NPC_IP46	(NPC_IP4|NPC_IP6)
 
 typedef struct {
-	/* Information flags and packet direction. */
+	/* Information flags. */
 	uint32_t		npc_info;
-	int			npc_di;
 	/* Pointers to the IP v4/v6 addresses. */
 	npf_addr_t *		npc_srcip;
 	npf_addr_t *		npc_dstip;
@@ -147,7 +146,7 @@ int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
 /* Ruleset interface. */
-npf_rule_t *	npf_rule_alloc(int, pri_t, int, void *, size_t, bool, int, int);
+npf_rule_t *	npf_rule_alloc(prop_dictionary_t, void *, size_t);
 void		npf_rule_free(npf_rule_t *);
 void		npf_activate_rule(npf_rule_t *);
 void		npf_deactivate_rule(npf_rule_t *);
@@ -206,6 +205,33 @@ typedef struct npf_ioctl_table {
 	int			_reserved;
 } npf_ioctl_table_t;
 
+typedef enum {
+	/* Packets passed. */
+	NPF_STAT_PASS_DEFAULT,
+	NPF_STAT_PASS_RULESET,
+	NPF_STAT_PASS_SESSION,
+	/* Packets blocked. */
+	NPF_STAT_BLOCK_DEFAULT,
+	NPF_STAT_BLOCK_RULESET,
+	/* Session and NAT entries. */
+	NPF_STAT_SESSION_CREATE,
+	NPF_STAT_SESSION_DESTROY,
+	NPF_STAT_NAT_CREATE,
+	NPF_STAT_NAT_DESTROY,
+	/* Invalid state cases. */
+	NPF_STAT_INVALID_STATE,
+	NPF_STAT_INVALID_STATE_TCP1,
+	NPF_STAT_INVALID_STATE_TCP2,
+	NPF_STAT_INVALID_STATE_TCP3,
+	/* Raced packets. */
+	NPF_STAT_RACE_SESSION,
+	NPF_STAT_RACE_NAT,
+	/* Count (last). */
+	NPF_STATS_COUNT
+} npf_stats_t;
+
+#define	NPF_STATS_SIZE		(sizeof(uint64_t) * NPF_STATS_COUNT)
+
 /*
  * IOCTL operations.
  */
@@ -214,5 +240,8 @@ typedef struct npf_ioctl_table {
 #define	IOC_NPF_SWITCH		_IOW('N', 101, int)
 #define	IOC_NPF_RELOAD		_IOW('N', 102, struct plistref)
 #define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
+#define	IOC_NPF_STATS		_IOW('N', 104, void *)
+#define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
+#define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
 
 #endif	/* _NPF_H_ */

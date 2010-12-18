@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.5 2010/12/18 01:07:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 	npf_cache_t npc;
 	npf_session_t *se;
 	npf_rule_t *rl;
-	bool keepstate;
+	npf_rproc_t *rp;
 	int retfl, error;
 
 	/*
@@ -94,6 +94,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 	npc.npc_info = 0;
 	error = 0;
 	retfl = 0;
+	rp = NULL;
 
 	/* Cache everything.  Determine whether it is an IPv4 fragment. */
 	if (npf_cache_all(&npc, nbuf) && npf_iscached(&npc, NPC_IPFRAG)) {
@@ -119,7 +120,8 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 	se = npf_session_inspect(&npc, nbuf, di);
 
 	/* If "passing" session found - skip the ruleset inspection. */
-	if (se && npf_session_pass(se)) {
+	if (se && npf_session_pass(se, &rp)) {
+		npf_stats_inc(NPF_STAT_PASS_SESSION);
 		goto pass;
 	}
 
@@ -127,29 +129,44 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 	rl = npf_ruleset_inspect(&npc, nbuf, ifp, di, NPF_LAYER_3);
 	if (rl == NULL) {
 		if (default_pass) {
+			npf_stats_inc(NPF_STAT_PASS_DEFAULT);
 			goto pass;
 		}
+		npf_stats_inc(NPF_STAT_BLOCK_DEFAULT);
 		error = ENETUNREACH;
 		goto out;
 	}
 
 	/* Apply the rule. */
-	error = npf_rule_apply(&npc, nbuf, rl, &keepstate, &retfl);
+	error = npf_rule_apply(&npc, nbuf, rl, &retfl);
 	if (error) {
+		npf_stats_inc(NPF_STAT_BLOCK_RULESET);
 		goto out;
 	}
+	npf_stats_inc(NPF_STAT_PASS_RULESET);
 
 	/* Establish a "pass" session, if required. */
-	if (keepstate && !se) {
-		se = npf_session_establish(&npc, nbuf, NULL, di);
+	if ((retfl & NPF_RULE_KEEPSTATE) != 0 && !se) {
+		se = npf_session_establish(&npc, nbuf, di);
 		if (se == NULL) {
 			error = ENOMEM;
 			goto out;
 		}
-		npf_session_setpass(se);
+		/* Associate rule processing data (XXX locking). */
+		rp = npf_rproc_return(rl);
+		npf_session_setpass(se, rp);
+	} else {
+		/* XXX: Return rule processing, needs locking. */
 	}
 pass:
 	KASSERT(error == 0);
+
+	/*
+	 * Perform rule processing, if required.
+	 */
+	if (rp) {
+		npf_rproc_run(&npc, nbuf, rp);
+	}
 	/*
 	 * Perform NAT.
 	 */
