@@ -1,4 +1,4 @@
-# $NetBSD: t_sort.sh,v 1.2 2010/11/07 17:51:24 jmmv Exp $
+# $NetBSD: t_sort.sh,v 1.3 2010/12/18 12:47:21 pooka Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -305,8 +305,6 @@ kflag_limits_head()
 }
 kflag_limits_body()
 {
-	atf_skip "This test is probably broken"
-
 	cat >in <<EOF
 a	2
 a	1
@@ -315,13 +313,13 @@ b	1
 EOF
 
 	cat >out <<EOF
-b	1
 b	2
-a	1
+b	1
 a	2
+a	1
 EOF
 
-	atf_check -o file:out sort -S -r -k1,1 -k2n in
+	atf_check -o file:out sort -r -k1,1 -k2n in
 }
 
 atf_test_case kflag_alpha
