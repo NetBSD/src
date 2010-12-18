@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.67 2010/01/07 09:33:44 jdc Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.68 2010/12/18 05:14:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.67 2010/01/07 09:33:44 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.68 2010/12/18 05:14:13 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -438,8 +438,8 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	if (OF_mapintr(node, &int_used, sizeof(int_used), 
 		sizeof(int_used)) < 0) {
 		printf("OF_mapintr failed\n");
-		KASSERT(pa->pa_pc->spc_find_ino);
-		pa->pa_pc->spc_find_ino(pa, &int_used);
+		if (pa->pa_pc->spc_find_ino)
+			pa->pa_pc->spc_find_ino(pa, &int_used);
 	}
 	DPRINTF(SPDB_INTMAP, ("OF_mapintr() gave %x\n", int_used));
 
