@@ -1,4 +1,4 @@
-#	$NetBSD: t_raid.sh,v 1.3 2010/12/18 09:26:57 pooka Exp $
+#	$NetBSD: t_raid.sh,v 1.4 2010/12/18 09:44:41 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,14 +47,12 @@ makecfg()
 atf_test_case smalldisk cleanup
 smalldisk_head()
 {
-
 	atf_set "descr" "Checks the raidframe works on small disks " \
 	    "(PR kern/44239)"
 }
 
 smalldisk_body()
 {
-
 	makecfg 1 2
 	export RUMP_SERVER=unix://sock
 	atf_check -s exit:0 rump_allserver			\
@@ -68,11 +66,11 @@ smalldisk_body()
 
 smalldisk_cleanup()
 {
-
 	export RUMP_SERVER=unix://sock
 	rump.halt
 	: server dumps currently, so reset error.  remove this line when fixed
 }
+
 
 # make this smaller once 44239 is fixed
 export RAID_MEDIASIZE=32m
@@ -80,13 +78,11 @@ export RAID_MEDIASIZE=32m
 atf_test_case raid1_compfail cleanup
 raid1_compfail_head()
 {
-
 	atf_set "descr" "Checks that RAID1 works after component failure"
 }
 
 raid1_compfail_body()
 {
-
 	makecfg 1 2
 	export RUMP_SERVER=unix://sock
 	atf_check -s exit:0 rump_allserver				\
@@ -119,21 +115,58 @@ raid1_compfail_body()
 
 raid1_compfail_cleanup()
 {
-
 	export RUMP_SERVER=unix://sock
 	rump.halt
 }
 
+
+
+atf_test_case raid1_comp0fail cleanup
+raid1_comp0fail_head()
+{
+	atf_set "descr" "Checks configuring RAID1 after component 0 fails"
+}
+
+raid1_comp0fail_body()
+{
+	makecfg 1 2
+	export RUMP_SERVER=unix://sock
+	atf_check -s exit:0 rump_allserver				\
+	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
+	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
+	    ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.raidctl -C raid.conf raid0
+	atf_check -s exit:0 rump.raidctl -I 12345 raid0
+	atf_check -s exit:0 -o ignore rump.raidctl -iv raid0
+
+	# restart server with failed component
+	rump.halt
+	rm disk0.img # FAIL
+	atf_check -s exit:0 rump_allserver				\
+	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
+	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
+	    ${RUMP_SERVER}
+
+	atf_expect_fail "PR kern/44251"
+	atf_check -s exit:0 rump.raidctl -c raid.conf raid0
+}
+
+raid1_comp0fail_cleanup()
+{
+	export RUMP_SERVER=unix://sock
+	rump.halt
+}
+
+
 atf_test_case raid5_compfail cleanup
 raid5_compfail_head()
 {
-
 	atf_set "descr" "Checks that RAID5 works after component failure"
 }
 
 raid5_compfail_body()
 {
-
 	makecfg 5 3
 	export RUMP_SERVER=unix://sock
 	atf_check -s exit:0 rump_allserver				\
@@ -168,15 +201,15 @@ raid5_compfail_body()
 
 raid5_compfail_cleanup()
 {
-
 	export RUMP_SERVER=unix://sock
 	rump.halt
 }
 
+
 atf_init_test_cases()
 {
-
 	atf_add_test_case smalldisk
+	atf_add_test_case raid1_comp0fail
 	atf_add_test_case raid1_compfail
 	atf_add_test_case raid5_compfail
 }
