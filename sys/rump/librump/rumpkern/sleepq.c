@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.9 2010/12/18 01:36:20 rmind Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.10 2010/12/18 14:01:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.9 2010/12/18 01:36:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.10 2010/12/18 14:01:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.9 2010/12/18 01:36:20 rmind Exp $");
 #include <sys/queue.h>
 #include <sys/sleepq.h>
 #include <sys/syncobj.h>
+#include <sys/atomic.h>
 
 #include "rump_private.h"
 
