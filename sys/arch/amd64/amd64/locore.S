@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.62 2010/10/21 11:43:22 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.63 2010/12/18 13:53:34 jym Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -786,12 +786,6 @@ start:
 	movq	%rax, %rsi
 	movq	%rsi,(_C_LABEL(lwp0)+L_PCB)	/* XXX L_PCB != uarea */
 	
-	xorq	%rax,%rax
-	movq	%rsi,%rdi
-	movq	$USPACE,%rcx
-	rep
-	stosb
-
 	/*
 	 * Set new stack and clear segments
 	 */
@@ -799,6 +793,7 @@ start:
 	leaq	(USPACE-FRAMESIZE)(%rsi),%rsp
 	xorq	%rbp,%rbp
 
+	xorw	%ax,%ax
 	movw	%ax,%gs
 	movw	%ax,%fs
 	
