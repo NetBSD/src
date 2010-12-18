@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.284 2010/11/02 15:17:37 pooka Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.285 2010/12/18 01:13:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.284 2010/11/02 15:17:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.285 2010/12/18 01:13:36 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -654,9 +654,13 @@ mi_switch(lwp_t *l)
 			l->l_stat = LSRUN;
 			lwp_setlock(l, spc->spc_mutex);
 			sched_enqueue(l, true);
-			/* Handle migration case */
-			KASSERT(spc->spc_migrating == NULL);
-			if (l->l_target_cpu !=  NULL) {
+			/*
+			 * Handle migration.  Note that "migrating LWP" may
+			 * be reset here, if interrupt/preemption happens
+			 * early in idle LWP.
+			 */
+			if (l->l_target_cpu != NULL) {
+				KASSERT((l->l_pflag & LP_INTR) == 0);
 				spc->spc_migrating = l;
 			}
 		} else
