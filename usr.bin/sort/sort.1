@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.30 2010/05/14 16:58:32 jruoho Exp $
+.\"	$NetBSD: sort.1,v 1.31 2010/12/18 23:09:48 christos Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 14, 2010
+.Dd December 18, 2010
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@
 .Nd sort or merge text files
 .Sh SYNOPSIS
 .Nm sort
-.Op Fl bcdfHimnrSsu
+.Op Fl bcdfHilmnrSsu
 .Oo
 .Fl k
 .Ar field1 Ns Op Li \&, Ns Ar field2
@@ -155,6 +155,8 @@ Considers all lowercase characters that have uppercase
 equivalents to be the same for purposes of comparison.
 .It Fl i
 Ignore all non-printable characters.
+.It Fl l
+Sort by the string length of the field, not by the field itself.
 .It Fl n
 An initial numeric string, consisting of optional blank space, optional
 minus sign, and zero or more digits (including decimal point)
@@ -275,7 +277,7 @@ have the form
 .Ar m Ns Li \&. Ns Ar n
 and can be followed by one or more of the letters
 .Cm b , d , f , i ,
-.Cm n ,
+.Cm l , n ,
 and
 .Cm r ,
 which correspond to the options discussed above.

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.27 2010/06/06 00:00:33 wiz Exp $	*/
+/*	$NetBSD: init.c,v 1.28 2010/12/18 23:09:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include "sort.h"
 
-__RCSID("$NetBSD: init.c,v 1.27 2010/06/06 00:00:33 wiz Exp $");
+__RCSID("$NetBSD: init.c,v 1.28 2010/12/18 23:09:48 christos Exp $");
 
 #include <ctype.h>
 #include <string.h>
@@ -223,17 +223,18 @@ int
 optval(int desc, int tcolflag)
 {
 	switch(desc) {
-		case 'b':
-			if (!tcolflag)
-				return (BI);
-			else
-				return (BT);
-		case 'd': return (D);
-		case 'f': return (F);
-		case 'i': return (I);
-		case 'n': return (N);
-		case 'r': return (R);
-		default:  return (0);
+	case 'b':
+		if (!tcolflag)
+			return BI;
+		else
+			return BT;
+	case 'd': return D;
+	case 'f': return F;
+	case 'i': return I;
+	case 'l': return L;
+	case 'n': return N;
+	case 'r': return R;
+	default:  return 0;
 	}
 }
 
