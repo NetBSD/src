@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.65 2010/11/24 17:51:11 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.66 2010/12/18 20:57:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.65 2010/11/24 17:51:11 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.66 2010/12/18 20:57:41 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -4011,16 +4011,18 @@ catstrg(strg_t *strg1, strg_t *strg2)
 	len2 = strg2->st_len + 1;	/* + NUL */
 	len = len1 + len2;
 
-	if (strg1->st_tspec == CHAR) {
-		strg1->st_cp = xrealloc(strg1->st_cp, len);
-		(void)memcpy(strg1->st_cp + len1, strg2->st_cp, len2);
-		free(strg2->st_cp);
-	} else {
-		strg1->st_wcp = xrealloc(strg1->st_wcp, sizeof(*strg1->st_wcp));
-		(void)memcpy(strg1->st_wcp + len1, strg2->st_wcp,
-		    len2 * sizeof(*strg1->st_wcp));
-		free(strg2->st_wcp);
-	}
+#define COPY(F) \
+    do { \
+	strg1->F = xrealloc(strg1->F, len * sizeof(*strg1->F)); \
+	(void)memcpy(strg1->F + len1, strg2->F, len2 * sizeof(*strg1->F)); \
+	free(strg2->F); \
+    } while (/*CONSTCOND*/0)
+
+	if (strg1->st_tspec == CHAR)
+		COPY(st_cp);
+	else
+		COPY(st_wcp);
+
 	strg1->st_len = len - 1; /* - NUL */;
 	free(strg2);
 
