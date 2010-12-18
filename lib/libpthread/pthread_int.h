@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.72 2009/05/17 14:49:00 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.73 2010/12/18 15:54:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -249,13 +249,18 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 	_INITCONTEXT_U_MD(ucp)						\
 	} while (/*CONSTCOND*/0)
 
-/* Stack location of pointer to a particular thread */
-#define pthread__id(sp) \
-	((pthread_t) (((vaddr_t)(sp)) & pthread__threadmask))
 
 #ifdef PTHREAD__HAVE_THREADREG
 #define	pthread__self()		pthread__threadreg_get()
 #else
+/* Stack location of pointer to a particular thread */
+extern vaddr_t	pthread__mainbase;
+extern vaddr_t	pthread__mainstruct;
+static inline pthread_t
+pthread__id(vaddr_t sp) {
+	vaddr_t va = sp & pthread__threadmask;
+	return (pthread_t)(va == pthread__mainbase ? pthread__mainstruct : va);
+}
 #define pthread__self() 	(pthread__id(pthread__sp()))
 #endif
 
