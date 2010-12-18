@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1474 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1475 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,19 +31,19 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		encryption. [christos 20081031]
 	agp(4): Add support for Intel G35. [christos 20081108]
 	kernel: Add generic producer/consumer queue. [matt 20081111]
-	lkm: Removed. Superseded by the new module framework. [ad 20081112]
-	module: Allow the POSIX semaphore code to be loaded as a module.
+	lkm: Removed. Superseded by the new module(7) framework. [ad 20081112]
+	module(7): Allow the POSIX semaphore code to be loaded as a module.
 		[ad 20081112]
-	module: Make compat_ossaudio a module. [ad 20081113]
-	module: Make compat_ndis a module. [ad 20081113]
+	module(7): Make compat_ossaudio a module. [ad 20081113]
+	module(7): Make compat_ndis a module. [ad 20081113]
 	build.sh: Add support for new MAKEVERBOSE levels 3 and 4.
 		[apb 20081113]
 	libfetch: Update to libfetch 2.20. Allow HTTP auth to be provided in
 		URL. [joerg 20081114]
-	module: Make POSIX AIO loadable as a module. [ad 20081114]
+	module(7): Make POSIX AIO loadable as a module. [ad 20081114]
 	amd64, i386: Make boot loader autoload a kernel module corresponding
 		to the root file system type. [ad 20081119]
-	module: Make the emulations, exec formats, coredump, NFS, and
+	module(7): Make the emulations, exec formats, coredump, NFS, and
 		the NFS server into modules. [ad 20081119]
 	rump(3): Move VFS functionality away from librump to a new library:
 		librumpvfs [pooka 20081119]
@@ -57,13 +57,13 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		when the NFS server goes away. [mrg 20081123]
 	compat_osf1(8): Add getpgid, needed for Tru64 4.0g ksh.
 		[njoly 20081124]
-	module: Make PPP compressors modules. [cube 20081125]
+	module(7): Make PPP compressors modules. [cube 20081125]
 	i386: Make pxeboot(8) understand boot.cfg(5). [ad 20081125]
 	agp(4): Add support for the Intel G45 AGP. [christos 20081129]
 	compat_osf1(8): Fix getdirentries(2). [njoly 20081202]
-	module: Add a couple of sysctl(8) entries, kern.module.autoload and
+	module(7): Add a couple of sysctl(8) entries, kern.module.autoload and
 		kern.module.verbose. [ad 20081203]
-	module: Add a layerfs module. [ad 20081205]
+	module(7): Add a layerfs module. [ad 20081205]
 	libc: Add fdopendir(3), from Solaris/Linux. [ad 20081205]
 	compat_linux32: Add getresuid() and getresgid() syscalls.
 		[njoly 20081205]
@@ -96,7 +96,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[christos 20090103]
 	rump: Include libkern in rumpkern. [pooka 20090104]
 	rc.d(8): Add a script for rndctl(8). [apb 20090104]
-	module: Add sysvbfs module. [pooka 20090105]
+	module(7): Add sysvbfs module. [pooka 20090105]
 	rump: Prepend all symbols within the rump virtual kernel image
 		with the string "rump".  This prevents conflicts with the
 		host system symbols.  [pooka 20090108]
@@ -133,7 +133,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	X11: added support for X11FLAVOUR=xorg for NetBSD/alpha.  No support
 		for turbochannel graphic cards yet. [bouyer 20090124]
 	kernel: Add support for loading pseudo-device drivers. [haad 20090202]
-	module: Add a module for vnd(4) driver. [haad 20090205]
+	module(7): Add a module for vnd(4) driver. [haad 20090205]
 	dkctl(8): Display cache, strategy, and list of wedges if no command
 		is specified in the command line. [uebayasi 20090207]
 	udf, mount_udf(8): add support for session opening/closing on
@@ -200,7 +200,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	libfetch: Import libfetch-2.23. [joerg 20090310]
 	wm(4): Add support for 82567LF-3, and fix register access for ICH10DO.
 		[msaitoh 20090310]
-	module: Add tprof modules. [yamt 20090310]
+	module(7): Add tprof modules. [yamt 20090310]
 	zaurus: Add kloader(4) support. [nonaka 20090311]
 	altmem(4): Add 'alternative memory' disk device driver.
 		[jmcneill 20090312]
@@ -312,7 +312,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	agr(4): Add support for layering vlans on top. Also allow LACP
 		to be disabled. [darran 20090529]
 	openssh: Import 5.2. [christos 20090607]
-	module: Add the capability to read an <module>.prop associated
+	module(7): Add the capability to read an <module>.prop associated
 		with a module and merge a plist passed in by modload(8).
 		Also, add MODCTL_NO_PROP flag to prevent loading
 		<module>.prop. [jnemeth 20090609]
@@ -575,9 +575,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.1. [roy 20100227]
 	ddb(4): Add 'mach frame' for hp700.  [skrll 20100302]
 	ne(4): Add proper support for NE2000 8 bit mode. [tsutsui 20090303]
-	module: Remove all kernel compile time #defines indicating file
+	module(7): Remove all kernel compile time #defines indicating file
 		system support (e.g. fs_ffs.h / -DFFS).  [pooka 20100303]
-	module: Make it possible to disable builtin modules and
+	module(7): Make it possible to disable builtin modules and
 		re-enable them.  [pooka 20100305]
 	uhso(4): Add a driver for Option N.V. Wireless WAN modems.
 		[plunky 20100306]
@@ -759,7 +759,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[tsutsui 20101013]
 	m68k: Fix kobj relocation functions so that MODULAR kernel work
 		on m68k ports.  [tsutsui 20101014]
-	sun3: Make common kernel module binaries work on both sun3 and sun3x.
+	sun3: Make common module(7) binaries work on both sun3 and sun3x.
 		[tsutsui 20101015]
 	atf(7): Import 0.11.  [jmmv 20101020]
 	lua(1): Import of Lua 5.1.4. [mbalmer 20101031]
@@ -786,12 +786,12 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[bsh 20101113]
 	evbarm: Add initial support for Sharp NetWalker MID.
 		[bsh 20101113]
-	module: Allow disabling autoloading a specific module by setting
+	module(7): Allow disabling autoloading a specific module by setting
 		noautoload property.  [jnemeth 20101118]
 	openssh: Import 5.6. [adam 20101121]
 	dhcpcd(8): Import dhcpcd-5.2.9. [roy 20101127]
 	postfix(1): Import version 2.7.2 [tron 20101127]
-	module: Rename <module>.prop to <module>.plist.  [jnemeth 20101127]
+	module(7): Rename <module>.prop to <module>.plist.  [jnemeth 20101127]
 	ukbd(4): Support for Apple notebook keyboards: swapped keys on ISO
 		keyboards, Apple FN key, simulate AltGr with FN-Alt,
 		generate special keycodes for the hotkeys. [phx 20101130]
