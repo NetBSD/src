@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.18 2009/11/22 18:40:26 mbalmer Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.19 2010/12/18 01:36:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -120,20 +120,13 @@ sleepq_hashlock(wchan_t wchan)
 static inline void
 sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 {
-	kmutex_t *omp;
 
 	/*
-	 * Acquire the per-LWP mutex and lend it ours (the sleep queue
-	 * lock).  Once that's done we're interlocked, and so can release
-	 * the kernel lock.
+	 * Acquire the per-LWP mutex and lend it ours sleep queue lock.
+	 * Once interlocked, we can release the kernel lock.
 	 */
-	omp = l->l_mutex;
-	mutex_spin_enter(omp);
-	if (__predict_false(l->l_mutex != omp)) {
-		omp = lwp_lock_retry(l, omp);
-	}
-	l->l_mutex = mp;
-	mutex_spin_exit(omp);
+	lwp_lock(l);
+	lwp_unlock_to(l, mp);
 	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
 }
 

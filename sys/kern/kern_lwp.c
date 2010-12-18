@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.151 2010/07/07 01:30:37 chs Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.152 2010/12/18 01:36:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -153,9 +153,11 @@
  *	each field are documented in sys/lwp.h.
  *
  *	State transitions must be made with the LWP's general lock held,
- *	and may cause the LWP's lock pointer to change. Manipulation of
+ *	and may cause the LWP's lock pointer to change.  Manipulation of
  *	the general lock is not performed directly, but through calls to
- *	lwp_lock(), lwp_relock() and similar.
+ *	lwp_lock(), lwp_unlock() and others.  It should be noted that the
+ *	adaptive locks are not allowed to be released while the LWP's lock
+ *	is being held (unlike for other spin-locks).
  *
  *	States and their associated locks:
  *
@@ -209,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.151 2010/07/07 01:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.152 2010/12/18 01:36:19 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -242,8 +244,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.151 2010/07/07 01:30:37 chs Exp $");
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
-struct lwplist		alllwp = LIST_HEAD_INITIALIZER(alllwp);
-static pool_cache_t	lwp_cache;
+static pool_cache_t	lwp_cache	__read_mostly;
+struct lwplist		alllwp		__cacheline_aligned;
 
 /* DTrace proc provider probes */
 SDT_PROBE_DEFINE(proc,,,lwp_create,
@@ -284,6 +286,7 @@ void
 lwpinit(void)
 {
 
+	LIST_INIT(&alllwp);
 	lwpinit_specificdata();
 	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
@@ -1242,40 +1245,6 @@ lwp_locked(struct lwp *l, kmutex_t *mtx)
 }
 
 /*
- * Lock an LWP.
- */
-kmutex_t *
-lwp_lock_retry(struct lwp *l, kmutex_t *old)
-{
-
-	/*
-	 * XXXgcc ignoring kmutex_t * volatile on i386
-	 *
-	 * gcc version 4.1.2 20061021 prerelease (NetBSD nb1 20061021)
-	 */
-#if 1
-	while (l->l_mutex != old) {
-#else
-	for (;;) {
-#endif
-		mutex_spin_exit(old);
-		old = l->l_mutex;
-		mutex_spin_enter(old);
-
-		/*
-		 * mutex_enter() will have posted a read barrier.  Re-test
-		 * l->l_mutex.  If it has changed, we need to try again.
-		 */
-#if 1
-	}
-#else
-	} while (__predict_false(l->l_mutex != old));
-#endif
-
-	return old;
-}
-
-/*
  * Lend a new mutex to an LWP.  The old mutex must be held.
  */
 void
@@ -1297,31 +1266,12 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 {
 	kmutex_t *old;
 
-	KASSERT(mutex_owned(l->l_mutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	old = l->l_mutex;
 	membar_exit();
 	l->l_mutex = new;
 	mutex_spin_exit(old);
-}
-
-/*
- * Acquire a new mutex, and donate it to an LWP.  The LWP must already be
- * locked.
- */
-void
-lwp_relock(struct lwp *l, kmutex_t *new)
-{
-	kmutex_t *old;
-
-	KASSERT(mutex_owned(l->l_mutex));
-
-	old = l->l_mutex;
-	if (old != new) {
-		mutex_spin_enter(new);
-		l->l_mutex = new;
-		mutex_spin_exit(old);
-	}
 }
 
 int
@@ -1345,7 +1295,6 @@ lwp_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(mutex_owned(l->l_mutex));
 	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
 }
-
 
 /*
  * Handle exceptions for mi_userret().  Called if a member of LW_USERRET is
