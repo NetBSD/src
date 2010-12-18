@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.4 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.4 2010/12/18 01:07:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -173,9 +173,9 @@ process_next:
 	/*
 	 * RISC-like instructions.
 	 *
-	 * - ADVR, LOAD, CMP, CMPR
+	 * - ADVR, LW, CMP, CMPR
 	 * - BEQ, BNE, BGT, BLT
-	 * - RET, TAG, MOV
+	 * - RET, TAG, MOVE
 	 * - AND, J, INVL
 	 */
 	switch (d) {
@@ -187,7 +187,7 @@ process_next:
 			goto fail;
 		}
 		break;
-	case NPF_OPCODE_LOAD:
+	case NPF_OPCODE_LW:
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);	/* Size, register */
 		KASSERT(i < NPF_NREGS);
 		KASSERT(n >= sizeof(uint8_t) && n <= sizeof(uint32_t));
@@ -242,7 +242,7 @@ process_next:
 			goto fail;
 		}
 		break;
-	case NPF_OPCODE_MOV:
+	case NPF_OPCODE_MOVE:
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);	/* Value, register */
 		KASSERT(i < NPF_NREGS);
 		regs[i] = n;
@@ -379,7 +379,7 @@ nc_insn_check(const uintptr_t optr, const void *nc, size_t sz,
 	case NPF_OPCODE_ADVR:
 		error = nc_ptr_check(&iptr, nc, sz, 1, &regidx, 1);
 		break;
-	case NPF_OPCODE_LOAD:
+	case NPF_OPCODE_LW:
 		error = nc_ptr_check(&iptr, nc, sz, 1, &val, 1);
 		if (error || val < sizeof(uint8_t) || val > sizeof(uint32_t)) {
 			return error ? error : NPF_ERR_INVAL;
@@ -404,7 +404,7 @@ nc_insn_check(const uintptr_t optr, const void *nc, size_t sz,
 	case NPF_OPCODE_TAG:
 		error = nc_ptr_check(&iptr, nc, sz, 2, NULL, 0);
 		break;
-	case NPF_OPCODE_MOV:
+	case NPF_OPCODE_MOVE:
 		error = nc_ptr_check(&iptr, nc, sz, 2, &regidx, 2);
 		break;
 	case NPF_OPCODE_CMPR:

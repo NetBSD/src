@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -57,16 +57,20 @@
  */
 
 struct npf_nat;
+struct npf_rproc;
 struct npf_session;
 
 typedef struct npf_nat		npf_nat_t;
+typedef struct npf_rproc	npf_rproc_t;
 typedef struct npf_alg		npf_alg_t;
 typedef struct npf_natpolicy	npf_natpolicy_t;
 typedef struct npf_session	npf_session_t;
 
+struct npf_sehash;
 struct npf_tblent;
 struct npf_table;
 
+typedef struct npf_sehash	npf_sehash_t;
 typedef struct npf_tblent	npf_tblent_t;
 typedef struct npf_table	npf_table_t;
 
@@ -76,10 +80,11 @@ typedef npf_table_t *		npf_tableset_t;
  * DEFINITIONS.
  */
 
-typedef bool	(*npf_algfunc_t)(npf_cache_t *, nbuf_t *, void *);
+typedef bool (*npf_algfunc_t)(npf_cache_t *, nbuf_t *, void *);
 
 #define	NPF_NCODE_LIMIT		1024
 #define	NPF_TABLE_SLOTS		32
+
 
 /*
  * SESSION STATE STRUCTURES
@@ -88,7 +93,7 @@ typedef bool	(*npf_algfunc_t)(npf_cache_t *, nbuf_t *, void *);
 #define	ST_OPENING		1	/* SYN has been sent. */
 #define	ST_ACKNOWLEDGE		2	/* SYN-ACK received, wait for ACK. */
 #define	ST_ESTABLISHED		3	/* ACK seen, connection established. */
-#define	ST_CLOSING		4
+#define	ST_CLOSING		4	/* FIN or RST seen. */
 
 typedef struct {
 	uint32_t	nst_seqend;	/* SEQ number + length. */
@@ -107,14 +112,30 @@ typedef struct {
  * INTERFACES.
  */
 
-/* NPF control. */
+/* NPF control, statistics, etc. */
+void		npf_core_enter(void);
+npf_ruleset_t *	npf_core_ruleset(void);
+npf_ruleset_t *	npf_core_natset(void);
+npf_tableset_t *npf_core_tableset(void);
+void		npf_core_exit(void);
+bool		npf_core_locked(void);
+void		npf_reload(npf_ruleset_t *, npf_tableset_t *, npf_ruleset_t *);
+
+void		npflogattach(int);
+void		npflogdetach(void);
 int		npfctl_switch(void *);
 int		npfctl_reload(u_long, void *);
+int		npfctl_sessions_save(u_long, void *);
+int		npfctl_sessions_load(u_long, void *);
 int		npfctl_table(void *);
+
+void		npf_stats_inc(npf_stats_t);
+void		npf_stats_dec(npf_stats_t);
 
 /* Packet filter hooks. */
 int		npf_register_pfil(void);
 void		npf_unregister_pfil(void);
+void		npf_log_packet(npf_cache_t *, nbuf_t *, int);
 
 /* Protocol helpers. */
 bool		npf_fetch_ip(npf_cache_t *, nbuf_t *, void *);
@@ -137,7 +158,7 @@ uint32_t	npf_addr_sum(const int, const npf_addr_t *, const npf_addr_t *);
 int		npf_tcpsaw(npf_cache_t *, tcp_seq *, tcp_seq *, uint32_t *);
 bool		npf_fetch_tcpopts(const npf_cache_t *, nbuf_t *,
 		    uint16_t *, int *);
-bool		npf_normalize(npf_cache_t *, nbuf_t *, bool, u_int, u_int);
+bool		npf_normalize(npf_cache_t *, nbuf_t *, bool, bool, u_int, u_int);
 void		npf_return_block(npf_cache_t *, nbuf_t *, const int);
 
 /* Complex instructions. */
@@ -154,7 +175,7 @@ int		npf_match_icmp4(npf_cache_t *, nbuf_t *, void *, uint32_t);
 int		npf_match_tcpfl(npf_cache_t *, nbuf_t *, void *, uint32_t);
 
 /* Tableset interface. */
-int		npf_tableset_sysinit(void);
+void		npf_tableset_sysinit(void);
 void		npf_tableset_sysfini(void);
 
 npf_tableset_t *npf_tableset_create(void);
@@ -177,38 +198,47 @@ int		npf_table_rem_v4cidr(npf_tableset_t *, u_int,
 int		npf_table_match_v4addr(u_int, in_addr_t);
 
 /* Ruleset interface. */
-int		npf_ruleset_sysinit(void);
-void		npf_ruleset_sysfini(void);
-
 npf_ruleset_t *	npf_ruleset_create(void);
 void		npf_ruleset_destroy(npf_ruleset_t *);
 void		npf_ruleset_insert(npf_ruleset_t *, npf_rule_t *);
-void		npf_ruleset_reload(npf_ruleset_t *, npf_tableset_t *);
+void		npf_ruleset_natreload(npf_ruleset_t *, npf_ruleset_t *);
+npf_rule_t *	npf_ruleset_matchnat(npf_ruleset_t *, npf_natpolicy_t *);
 
 npf_rule_t *	npf_ruleset_match(npf_ruleset_t *, npf_cache_t *, nbuf_t *,
 		    struct ifnet *, const int, const int);
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, nbuf_t *,
 		    struct ifnet *, const int, const int);
-int		npf_rule_apply(npf_cache_t *, nbuf_t *, npf_rule_t *,
-		    bool *, int *);
-npf_ruleset_t *	npf_rule_subset(npf_rule_t *);
+int		npf_rule_apply(npf_cache_t *, nbuf_t *, npf_rule_t *, int *);
 
+npf_ruleset_t *	npf_rule_subset(npf_rule_t *);
 npf_natpolicy_t *npf_rule_getnat(const npf_rule_t *);
 void		npf_rule_setnat(npf_rule_t *, npf_natpolicy_t *);
 
+npf_rproc_t *	npf_rproc_create(prop_dictionary_t);
+npf_rproc_t *	npf_rproc_return(npf_rule_t *);
+void		npf_rproc_release(npf_rproc_t *);
+void		npf_rproc_run(npf_cache_t *, nbuf_t *, npf_rproc_t *);
+
 /* Session handling interface. */
-int		npf_session_sysinit(void);
+void		npf_session_sysinit(void);
 void		npf_session_sysfini(void);
 int		npf_session_tracking(bool);
 
+npf_sehash_t *	sess_htable_create(void);
+void		sess_htable_destroy(npf_sehash_t *);
+void		sess_htable_reload(npf_sehash_t *);
+
 npf_session_t *	npf_session_inspect(npf_cache_t *, nbuf_t *, const int);
-npf_session_t *	npf_session_establish(const npf_cache_t *, nbuf_t *,
-		    npf_nat_t *, const int);
+npf_session_t *	npf_session_establish(const npf_cache_t *, nbuf_t *, const int);
 void		npf_session_release(npf_session_t *);
-bool		npf_session_pass(const npf_session_t *);
-void		npf_session_setpass(npf_session_t *);
-void		npf_session_link(npf_session_t *, npf_session_t *);
+void		npf_session_expire(npf_session_t *);
+bool		npf_session_pass(const npf_session_t *, npf_rproc_t **);
+void		npf_session_setpass(npf_session_t *, npf_rproc_t *);
+int		npf_session_setnat(npf_session_t *, npf_nat_t *, const int);
 npf_nat_t *	npf_session_retnat(npf_session_t *, const int, bool *);
+
+int		npf_session_save(prop_array_t, prop_array_t);
+int		npf_session_restore(npf_sehash_t *, prop_dictionary_t);
 
 /* State handling. */
 bool		npf_state_init(const npf_cache_t *, nbuf_t *, npf_state_t *);
@@ -220,17 +250,19 @@ void		npf_state_destroy(npf_state_t *);
 /* NAT. */
 void		npf_nat_sysinit(void);
 void		npf_nat_sysfini(void);
-npf_natpolicy_t *npf_nat_newpolicy(int, int, const npf_addr_t *, size_t,
-		    in_port_t);
+npf_natpolicy_t *npf_nat_newpolicy(prop_dictionary_t);
 void		npf_nat_freepolicy(npf_natpolicy_t *);
-void		npf_nat_flush(void);
-void		npf_nat_reload(npf_ruleset_t *);
+bool		npf_nat_matchpolicy(npf_natpolicy_t *, npf_natpolicy_t *);
 
 int		npf_do_nat(npf_cache_t *, npf_session_t *, nbuf_t *,
 		    struct ifnet *, const int);
 void		npf_nat_expire(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
+void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_setalg(npf_nat_t *, npf_alg_t *, uintptr_t);
+
+int		npf_nat_save(prop_dictionary_t, prop_array_t, npf_nat_t *);
+npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_session_t *);
 
 /* ALG interface. */
 void		npf_alg_sysinit(void);

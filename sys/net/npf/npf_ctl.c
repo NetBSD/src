@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.4 2010/12/18 01:07:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,13 +34,10 @@
  *
  * Implementation of (re)loading, construction of tables and rules.
  * NPF proplib(9) dictionary consumer.
- *
- * TODO:
- * - Consider implementing 'sync' functionality.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.4 2010/12/18 01:07:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,9 +81,6 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables)
 		return EINVAL;
 
 	it = prop_array_iterator(tables);
-	if (it == NULL)
-		return ENOMEM;
-
 	while ((tbldict = prop_object_iterator_next(it)) != NULL) {
 		prop_dictionary_t ent;
 		prop_object_iterator_t eit;
@@ -127,10 +121,6 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables)
 			break;
 		}
 		eit = prop_array_iterator(entries);
-		if (eit == NULL) {
-			error = ENOMEM;
-			break;
-		}
 		while ((ent = prop_object_iterator_next(eit)) != NULL) {
 			in_addr_t addr, mask;	/* XXX: IPv6 */
 
@@ -151,35 +141,9 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables)
 	}
 	prop_object_iterator_release(it);
 	/*
-	 * Note: in a case of error, caller will free entire tableset.
+	 * Note: in a case of error, caller will free the tableset.
 	 */
 	return error;
-}
-
-static void *
-npf_mk_ncode(const void *ncptr, size_t nc_size)
-{
-	int npf_err, errat;
-	void *nc;
-
-	/*
-	 * Allocate and copy n-code.
-	 *
-	 * XXX: Inefficient; consider extending proplib(9) to provide
-	 * interface for custom allocator and avoid copy.
-	 */
-	nc = npf_ncode_alloc(nc_size);
-	if (nc == NULL) {
-		return NULL;
-	}
-	memcpy(nc, ncptr, nc_size);
-	npf_err = npf_ncode_validate(nc, nc_size, &errat);
-	if (npf_err) {
-		npf_ncode_free(nc, nc_size);
-		/* TODO: return error details via proplib */
-		return NULL;
-	}
-	return nc;
 }
 
 static int
@@ -188,9 +152,6 @@ npf_mk_singlerule(prop_dictionary_t rldict,
 {
 	npf_rule_t *rl;
 	prop_object_t obj;
-	int attr, ifidx, minttl, maxmss;
-	pri_t pri;
-	bool rnd_ipid;
 	size_t nc_size;
 	void *nc;
 
@@ -198,43 +159,29 @@ npf_mk_singlerule(prop_dictionary_t rldict,
 	if (prop_object_type(rldict) != PROP_TYPE_DICTIONARY)
 		return EINVAL;
 
-	/* Attributes (integer). */
-	obj = prop_dictionary_get(rldict, "attributes");
-	attr = prop_number_integer_value(obj);
-
-	/* Priority (integer). */
-	obj = prop_dictionary_get(rldict, "priority");
-	pri = prop_number_integer_value(obj);
-
-	/* Interface ID (integer). */
-	obj = prop_dictionary_get(rldict, "interface");
-	ifidx = prop_number_integer_value(obj);
-
-	/* Randomize IP ID (bool). */
-	obj = prop_dictionary_get(rldict, "randomize-id");
-	rnd_ipid = prop_bool_true(obj);
-
-	/* Minimum IP TTL (integer). */
-	obj = prop_dictionary_get(rldict, "min-ttl");
-	minttl = prop_number_integer_value(obj);
-
-	/* Maximum TCP MSS (integer). */
-	obj = prop_dictionary_get(rldict, "max-mss");
-	maxmss = prop_number_integer_value(obj);
-
 	/* N-code (binary data). */
 	obj = prop_dictionary_get(rldict, "ncode");
 	if (obj) {
 		const void *ncptr;
+		int npf_err, errat;
 
-		/* Perform n-code validation. */
-		nc_size = prop_data_size(obj);
+		/*
+		 * Allocate, copy and validate n-code. XXX: Inefficient.
+		 */
 		ncptr = prop_data_data_nocopy(obj);
+		nc_size = prop_data_size(obj);
 		if (ncptr == NULL || nc_size > NPF_NCODE_LIMIT) {
 			return EINVAL;
 		}
-		nc = npf_mk_ncode(ncptr, nc_size);
+		nc = npf_ncode_alloc(nc_size);
 		if (nc == NULL) {
+			return EINVAL;
+		}
+		memcpy(nc, ncptr, nc_size);
+		npf_err = npf_ncode_validate(nc, nc_size, &errat);
+		if (npf_err) {
+			npf_ncode_free(nc, nc_size);
+			/* TODO: return error details via proplib */
 			return EINVAL;
 		}
 	} else {
@@ -244,8 +191,7 @@ npf_mk_singlerule(prop_dictionary_t rldict,
 	}
 
 	/* Allocate and setup NPF rule. */
-	rl = npf_rule_alloc(attr, pri, ifidx, nc, nc_size,
-	    rnd_ipid, minttl, maxmss);
+	rl = npf_rule_alloc(rldict, nc, nc_size);
 	if (rl == NULL) {
 		if (nc) {
 			npf_ncode_free(nc, nc_size);	/* XXX */
@@ -270,11 +216,8 @@ npf_mk_rules(npf_ruleset_t *rlset, prop_array_t rules)
 	if (prop_object_type(rules) != PROP_TYPE_ARRAY)
 		return EINVAL;
 
-	it = prop_array_iterator(rules);
-	if (it == NULL)
-		return ENOMEM;
-
 	error = 0;
+	it = prop_array_iterator(rules);
 	while ((rldict = prop_object_iterator_next(it)) != NULL) {
 		prop_object_iterator_t sit;
 		prop_array_t subrules;
@@ -298,10 +241,6 @@ npf_mk_rules(npf_ruleset_t *rlset, prop_array_t rules)
 			break;
 		}
 		sit = prop_array_iterator(subrules);
-		if (sit == NULL) {
-			error = ENOMEM;
-			break;
-		}
 		while ((srldict = prop_object_iterator_next(sit)) != NULL) {
 			/* For subrule, pass ruleset pointer of parent. */
 			error = npf_mk_singlerule(srldict,
@@ -315,7 +254,7 @@ npf_mk_rules(npf_ruleset_t *rlset, prop_array_t rules)
 	}
 	prop_object_iterator_release(it);
 	/*
-	 * Note: in a case of error, caller will free entire ruleset.
+	 * Note: in a case of error, caller will free the ruleset.
 	 */
 	return error;
 }
@@ -331,42 +270,17 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 	if (prop_object_type(natlist) != PROP_TYPE_ARRAY)
 		return EINVAL;
 
-	it = prop_array_iterator(natlist);
-	if (it == NULL)
-		return ENOMEM;
-
 	error = 0;
+	it = prop_array_iterator(natlist);
 	while ((natdict = prop_object_iterator_next(it)) != NULL) {
-		prop_object_t obj;
 		npf_natpolicy_t *np;
 		npf_rule_t *rl;
-		const npf_addr_t *taddr;
-		size_t taddr_sz;
-		in_port_t tport;
-		int type, flags;
 
 		/* NAT policy - dictionary. */
 		if (prop_object_type(natdict) != PROP_TYPE_DICTIONARY) {
 			error = EINVAL;
 			break;
 		}
-
-		/* Translation type. */
-		obj = prop_dictionary_get(natdict, "type");
-		type = prop_number_integer_value(obj);
-
-		/* Translation type. */
-		obj = prop_dictionary_get(natdict, "flags");
-		flags = prop_number_integer_value(obj);
-
-		/* Translation IP. */
-		obj = prop_dictionary_get(natdict, "translation-ip");
-		taddr_sz = prop_data_size(obj);
-		taddr = (const npf_addr_t *)prop_data_data_nocopy(obj);
-
-		/* Translation port (for redirect case). */
-		obj = prop_dictionary_get(natdict, "translation-port");
-		tport = (in_port_t)prop_number_integer_value(obj);
 
 		/*
 		 * NAT policies are standard rules, plus additional
@@ -377,8 +291,9 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 			break;
 
 		/* Allocate a new NAT policy and assign to the rule. */
-		np = npf_nat_newpolicy(type, flags, taddr, taddr_sz, tport);
+		np = npf_nat_newpolicy(natdict);
 		if (np == NULL) {
+			npf_rule_free(rl);
 			error = ENOMEM;
 			break;
 		}
@@ -405,7 +320,6 @@ npfctl_reload(u_long cmd, void *data)
 	npf_ruleset_t *nset = NULL;
 	prop_dictionary_t dict;
 	prop_array_t natlist, tables, rules;
-	prop_object_t ver;
 	int error;
 
 	/* Retrieve the dictionary. */
@@ -418,16 +332,6 @@ npfctl_reload(u_long cmd, void *data)
 	if (dict == NULL)
 		return EINVAL;
 #endif
-	/* Version. */
-	ver = prop_dictionary_get(dict, "version");
-	if (ver == NULL || prop_number_integer_value(ver) != NPF_VERSION) {
-		error = EINVAL;
-		goto fail;
-	}
-
-	/* XXX: Hard way for now. */
-	(void)npf_session_tracking(false);
-
 	/* NAT policies. */
 	nset = npf_ruleset_create();
 	natlist = prop_dictionary_get(dict, "translation");
@@ -449,16 +353,11 @@ npfctl_reload(u_long cmd, void *data)
 	if (error)
 		goto fail;
 
-	/* Flush and reload NAT policies. */
-	npf_nat_reload(nset);
-
 	/*
-	 * Finally, reload the ruleset.  It will also reload the tableset.
+	 * Finally - reload ruleset, tableset and NAT policies.
 	 * Operation will be performed as a single transaction.
 	 */
-	npf_ruleset_reload(rlset, tblset);
-
-	(void)npf_session_tracking(true);
+	npf_reload(rlset, tblset, nset);
 
 	/* Done.  Since data is consumed now, we shall not destroy it. */
 	tblset = NULL;
@@ -478,6 +377,110 @@ fail:
 	}
 	if (tblset) {
 		npf_tableset_destroy(tblset);
+	}
+	return error;
+}
+
+/*
+ * npfctl_sessions_save: construct a list of sessions and export for saving.
+ */
+int
+npfctl_sessions_save(u_long cmd, void *data)
+{
+	struct plistref *pref = data;
+	prop_dictionary_t sesdict;
+	prop_array_t selist, nplist;
+	int error;
+
+	/* Create a dictionary and two lists. */
+	sesdict = prop_dictionary_create();
+	selist = prop_array_create();
+	nplist = prop_array_create();
+
+	/* Save the sessions. */
+	error = npf_session_save(selist, nplist);
+	if (error) {
+		goto fail;
+	}
+
+	/* Set the session list, NAT policy list and export the dictionary. */
+	prop_dictionary_set(sesdict, "session-list", selist);
+	prop_dictionary_set(sesdict, "nat-policy-list", nplist);
+#ifdef _KERNEL
+	error = prop_dictionary_copyout_ioctl(pref, cmd, sesdict);
+#else
+	error = prop_dictionary_externalize_to_file(sesdict, data) ? 0 : errno;
+#endif
+fail:
+	prop_object_release(sesdict);
+	return error;
+}
+
+/*
+ * npfctl_sessions_load: import a list of sessions, reconstruct them and load.
+ */
+int
+npfctl_sessions_load(u_long cmd, void *data)
+{
+	const struct plistref *pref = data;
+	npf_sehash_t *sehasht = NULL;
+	prop_dictionary_t sesdict, sedict;
+	prop_object_iterator_t it;
+	prop_array_t selist;
+	int error;
+
+	/* Retrieve the dictionary containing session and NAT policy lists. */
+#ifdef _KERNEL
+	error = prop_dictionary_copyin_ioctl(pref, cmd, &sesdict);
+	if (error)
+		return error;
+#else
+	sesdict = prop_dictionary_internalize_from_file(data);
+	if (sesdict == NULL)
+		return EINVAL;
+#endif
+	/*
+	 * Note: session objects contain the references to the NAT policy
+	 * entries.  Therefore, no need to directly access it.
+	 */
+	selist = prop_dictionary_get(sesdict, "session-list");
+	if (prop_object_type(selist) != PROP_TYPE_ARRAY) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	/* Create a session hash table. */
+	sehasht = sess_htable_create();
+	if (sehasht == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+
+	/*
+	 * Iterate through and construct each session.
+	 */
+	error = 0;
+	it = prop_array_iterator(selist);
+	npf_core_enter();
+	while ((sedict = prop_object_iterator_next(it)) != NULL) {
+		/* Session - dictionary. */
+		if (prop_object_type(sedict) != PROP_TYPE_DICTIONARY) {
+			error = EINVAL;
+			goto fail;
+		}
+		/* Construct and insert real session structure. */
+		error = npf_session_restore(sehasht, sedict);
+		if (error) {
+			goto fail;
+		}
+	}
+	npf_core_exit();
+	sess_htable_reload(sehasht);
+fail:
+	prop_object_release(selist);
+	if (error && sehasht) {
+		/* Destroy session table. */
+		sess_htable_destroy(sehasht);
 	}
 	return error;
 }
