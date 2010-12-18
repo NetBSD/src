@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.53 2010/07/10 10:10:36 nakayama Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.54 2010/12/18 05:45:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -223,6 +223,7 @@
 #define	MCCR_IMMU_EN	0x04
 #define	MCCR_DCACHE_EN	0x02
 #define	MCCR_ICACHE_EN	0x01
+#define	MCCR_RAW_EN	0x400000000000
 
 
 /*
