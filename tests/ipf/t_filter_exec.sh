@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_exec.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
+# $NetBSD: t_filter_exec.sh,v 1.3 2010/12/18 13:06:51 pooka Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,7 +88,7 @@ test_case f15 mtest text text
 test_case f16 mtest text text
 test_case f17 mtest hex hex
 test_case f18 mtest text text
-broken_test_case f19 dotest text text -T fr_statemax=3
+#broken_test_case f19 dotest text text -T fr_statemax=3
 test_case f20 mtest text text
 test_case f24 mtest hex text
 test_case ipv6_1 dotest6 hex hex
@@ -117,7 +117,6 @@ atf_init_test_cases()
 	atf_add_test_case f16
 	atf_add_test_case f17
 	atf_add_test_case f18
-	atf_add_test_case f19
 	atf_add_test_case f20
 	atf_add_test_case f24
 	atf_add_test_case ipv6_1
@@ -125,4 +124,6 @@ atf_init_test_cases()
 	atf_add_test_case ipv6_3
 	atf_add_test_case ipv6_5
 	atf_add_test_case ipv6_6
+
+	#atf_add_test_case f19
 }
