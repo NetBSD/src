@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parser.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_parser.c,v 1.4 2010/12/18 01:07:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_parser.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
+__RCSID("$NetBSD: npf_parser.c,v 1.4 2010/12/18 01:07:26 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -144,7 +144,7 @@ npfctl_parsevalue(char *buf)
 }
 
 static inline int
-npfctl_parsenorm(char *buf, bool *rnd, int *minttl, int *maxmss)
+npfctl_parsenorm(char *buf, bool *rnd, int *minttl, int *maxmss, bool *no_df)
 {
 	char *p = buf, *sptr;
 
@@ -163,6 +163,8 @@ npfctl_parsenorm(char *buf, bool *rnd, int *minttl, int *maxmss)
 		} else if (strcmp(p, "max-mss") == 0) {
 			p = strtok_r(NULL, ", \t", &sptr);
 			*maxmss = atoi(p);
+		} else if (strcmp(p, "no-df") == 0) {
+			*no_df = true;
 		} else {
 			return -1;
 		}
@@ -185,9 +187,9 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 {
 	var_t *from_cidr = NULL, *fports = NULL;
 	var_t *to_cidr = NULL, *tports = NULL;
-	char *p, *sptr, *iface, *proto = NULL, *tcp_flags = NULL;
+	char *p, *sptr, *iface, *logiface, *proto = NULL, *tcp_flags = NULL;
 	int icmp_type = -1, icmp_code = -1, minttl = 0, maxmss = 0;
-	bool icmp = false, tcp = false, rnd = false;
+	bool icmp = false, tcp = false, rnd = false, no_df = false;
 	int ret, attr = 0;
 
 	DPRINTF(("rule\t|%s|\n", buf));
@@ -228,10 +230,24 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 		attr |= (NPF_RULE_IN | NPF_RULE_OUT);
 	}
 
-	/* log (XXX: NOP) */
+	/* log <interface> */
 	if (strcmp(p, "log") == 0) {
+		var_t *ifvar;
+		element_t *el;
+
+		PARSE_NEXT_TOKEN();
+		if ((ifvar = npfctl_parsevalue(p)) == NULL)
+			return PARSE_ERR();
+		if (ifvar->v_type != VAR_SINGLE) {
+			errx(EXIT_FAILURE, "invalid interface value '%s'", p);
+		}
+		el = ifvar->v_elements;
+		logiface = el->e_data;
+
 		attr |= NPF_RULE_LOG;
 		PARSE_NEXT_TOKEN();
+	} else {
+		logiface = NULL;
 	}
 
 	/* count */
@@ -379,7 +395,7 @@ last:
 		if (p == NULL) {
 			return PARSE_ERR();
 		}
-		if (npfctl_parsenorm(p, &rnd, &minttl, &maxmss)) {
+		if (npfctl_parsenorm(p, &rnd, &minttl, &maxmss, &no_df)) {
 			return PARSE_ERR();
 		}
 		attr |= NPF_RULE_NORMALIZE;
@@ -392,7 +408,8 @@ last:
 	}
 
 	/* Set the rule attributes and interface, if any. */
-	npfctl_rule_setattr(rl, attr, iface, rnd, minttl, maxmss);
+	npfctl_rule_setattr(rl, attr, iface, logiface,
+	    rnd, minttl, maxmss, no_df);
 
 	/*
 	 * Generate all protocol data.
@@ -439,7 +456,7 @@ npfctl_parsegroup(char *buf, prop_dictionary_t rl)
 		attr_dir = NPF_RULE_IN | NPF_RULE_OUT;
 		npfctl_rule_setattr(rl,
 		    GROUP_ATTRS | NPF_RULE_DEFAULT | attr_dir, NULL,
-		    false, 0, 0);
+		    NULL, false, 0, 0, false);
 		return 0;
 	}
 
@@ -486,7 +503,8 @@ npfctl_parsegroup(char *buf, prop_dictionary_t rl)
 		else
 			return -1;
 	}
-	npfctl_rule_setattr(rl, GROUP_ATTRS | attr_dir, iface, false, 0, 0);
+	npfctl_rule_setattr(rl, GROUP_ATTRS | attr_dir, iface, NULL,
+	    false, 0, 0, false);
 	return 0;
 }
 
