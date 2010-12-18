@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.31 2010/12/18 23:09:48 christos Exp $
+.\"	$NetBSD: sort.1,v 1.32 2010/12/18 23:36:23 wiz Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -362,18 +362,6 @@ option is still supported, except for
 which has no
 .Fl k
 equivalent.
-.Sh EXIT STATUS
-Sort exits with one of the following values:
-.Bl -tag -width flag -compact
-.It 0
-Normal behavior.
-.It 1
-On disorder (or non-uniqueness) with the
-.Fl c
-option
-.It 2
-An error occurred.
-.El
 .Sh ENVIRONMENT
 If the following environment variable exists, it is used by
 .Nm .
@@ -399,6 +387,18 @@ Once sorting is finished, this file replaces
 .Xr link 2
 and
 .Xr unlink 2 ) .
+.El
+.Sh EXIT STATUS
+Sort exits with one of the following values:
+.Bl -tag -width flag -compact
+.It 0
+Normal behavior.
+.It 1
+On disorder (or non-uniqueness) with the
+.Fl c
+option
+.It 2
+An error occurred.
 .El
 .Sh SEE ALSO
 .Xr comm 1 ,
