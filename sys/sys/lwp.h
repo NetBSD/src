@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.138 2010/09/01 19:37:58 pooka Exp $	*/
+/*	$NetBSD: lwp.h,v 1.139 2010/12/18 01:36:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -299,7 +299,6 @@ void	lwp_startup(lwp_t *, lwp_t *);
 int	lwp_locked(lwp_t *, kmutex_t *);
 void	lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
-kmutex_t *lwp_lock_retry(lwp_t *, kmutex_t *);
 void	lwp_relock(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
@@ -360,16 +359,18 @@ void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 static inline void
 lwp_lock(lwp_t *l)
 {
-	kmutex_t *old;
-
-	mutex_spin_enter(old = l->l_mutex);
+	kmutex_t *old = l->l_mutex;
 
 	/*
-	 * mutex_enter() will have posted a read barrier.  Re-test
-	 * l->l_mutex.  If it has changed, we need to try again.
+	 * Note: mutex_spin_enter() will have posted a read barrier.
+	 * Re-test l->l_mutex.  If it has changed, we need to try again.
 	 */
-	if (__predict_false(l->l_mutex != old))
-		lwp_lock_retry(l, old);
+	mutex_spin_enter(old);
+	while (__predict_false(l->l_mutex != old)) {
+		mutex_spin_exit(old);
+		old = l->l_mutex;
+		mutex_spin_enter(old);
+	}
 }
 
 /*
