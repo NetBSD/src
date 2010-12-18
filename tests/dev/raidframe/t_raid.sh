@@ -1,4 +1,4 @@
-#	$NetBSD: t_raid.sh,v 1.2 2010/12/17 14:51:27 pooka Exp $
+#	$NetBSD: t_raid.sh,v 1.3 2010/12/18 09:26:57 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,6 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
+rawraid=/dev/rraid0${rawpart}
+
 makecfg()
 {
 	level=${1}
@@ -45,7 +48,8 @@ atf_test_case smalldisk cleanup
 smalldisk_head()
 {
 
-	atf_set "descr" "Checks the raidframe works on small disks"
+	atf_set "descr" "Checks the raidframe works on small disks " \
+	    "(PR kern/44239)"
 }
 
 smalldisk_body()
@@ -70,8 +74,109 @@ smalldisk_cleanup()
 	: server dumps currently, so reset error.  remove this line when fixed
 }
 
+# make this smaller once 44239 is fixed
+export RAID_MEDIASIZE=32m
+
+atf_test_case raid1_compfail cleanup
+raid1_compfail_head()
+{
+
+	atf_set "descr" "Checks that RAID1 works after component failure"
+}
+
+raid1_compfail_body()
+{
+
+	makecfg 1 2
+	export RUMP_SERVER=unix://sock
+	atf_check -s exit:0 rump_allserver				\
+	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
+	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
+	    ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.raidctl -C raid.conf raid0
+	atf_check -s exit:0 rump.raidctl -I 12345 raid0
+	atf_check -s exit:0 -o ignore rump.raidctl -iv raid0
+
+	# put some data there
+	atf_check -s exit:0 -e ignore \
+	    dd if=$(atf_get_srcdir)/t_raid of=testfile count=4
+	atf_check -s exit:0 -e ignore dd if=testfile rof=${rawraid} conv=sync
+
+	# restart server with failed component
+	rump.halt
+	rm disk1.img # FAIL
+	atf_check -s exit:0 rump_allserver				\
+	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
+	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
+	    ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.raidctl -c raid.conf raid0
+
+	# check if we we get what we wrote
+	atf_check -s exit:0 -o file:testfile -e ignore dd rif=${rawraid} count=4
+}
+
+raid1_compfail_cleanup()
+{
+
+	export RUMP_SERVER=unix://sock
+	rump.halt
+}
+
+atf_test_case raid5_compfail cleanup
+raid5_compfail_head()
+{
+
+	atf_set "descr" "Checks that RAID5 works after component failure"
+}
+
+raid5_compfail_body()
+{
+
+	makecfg 5 3
+	export RUMP_SERVER=unix://sock
+	atf_check -s exit:0 rump_allserver				\
+	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
+	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
+	    -d key=/disk2,hostpath=disk2.img,size=${RAID_MEDIASIZE}	\
+	    ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.raidctl -C raid.conf raid0
+	atf_check -s exit:0 rump.raidctl -I 12345 raid0
+	atf_check -s exit:0 -o ignore rump.raidctl -iv raid0
+
+	# put some data there
+	atf_check -s exit:0 -e ignore \
+	    dd if=$(atf_get_srcdir)/t_raid of=testfile count=4
+	atf_check -s exit:0 -e ignore dd if=testfile rof=${rawraid} conv=sync
+
+	# restart server with failed component
+	rump.halt
+	rm disk2.img # FAIL
+	atf_check -s exit:0 rump_allserver				\
+	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
+	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
+	    -d key=/disk2,hostpath=disk2.img,size=${RAID_MEDIASIZE}	\
+	    ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.raidctl -c raid.conf raid0
+
+	# check if we we get what we wrote
+	atf_check -s exit:0 -o file:testfile -e ignore dd rif=${rawraid} count=4
+}
+
+raid5_compfail_cleanup()
+{
+
+	export RUMP_SERVER=unix://sock
+	rump.halt
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case smalldisk
+	atf_add_test_case raid1_compfail
+	atf_add_test_case raid5_compfail
 }
