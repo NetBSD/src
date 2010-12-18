@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/12/08 07:20:14 kefren Exp $
+# $NetBSD: Makefile,v 1.2 2010/12/18 04:25:37 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,8 +18,6 @@ SRCS=   fsm.c \
 	socketops.c \
 	tlv.c \
 	tlv_stack.c
-
-CFLAGS=	-Wall -g
 
 LDADD+=	-lcrypt
 
