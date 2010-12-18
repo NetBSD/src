@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.28 2010/10/15 05:39:19 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.29 2010/12/18 01:36:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,21 +84,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.28 2010/10/15 05:39:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.29 2010/12/18 01:36:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
-#include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/stat.h>
+#include <sys/lwp.h>
 #include <sys/poll.h>
-#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>

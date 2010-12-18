@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.303 2010/11/30 10:43:05 dholland Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.304 2010/12/18 01:36:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.303 2010/11/30 10:43:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.304 2010/12/18 01:36:19 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -1165,8 +1165,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		l->l_stat = LSSTOP;
 		p->p_stat = SSTOP;
 		p->p_nrlwps--;
+		lwp_unlock(l);
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
+		lwp_lock(l);
 		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
 		KERNEL_LOCK(l->l_biglocks, l);

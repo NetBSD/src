@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.8 2010/07/23 19:14:14 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.9 2010/12/18 01:36:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.8 2010/07/23 19:14:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.9 2010/12/18 01:36:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -161,18 +161,15 @@ syncobj_noowner(wchan_t wc)
 	return NULL;
 }
 
-/*
- * XXX: used only by callout, therefore here.  should try to use
- * one in kern_lwp directly.
- */
-kmutex_t *
-lwp_lock_retry(struct lwp *l, kmutex_t *old)
+void
+lwp_unlock_to(struct lwp *l, kmutex_t *new)
 {
+	kmutex_t *old;
 
-	while (l->l_mutex != old) {
-		mutex_spin_exit(old);
-		old = l->l_mutex;
-		mutex_spin_enter(old);
-	}
-	return old;
+	KASSERT(mutex_owned(l->l_mutex));
+
+	old = l->l_mutex;
+	membar_exit();
+	l->l_mutex = new;
+	mutex_spin_exit(old);
 }
