@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.77 2010/11/30 18:20:41 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.78 2010/12/18 08:20:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.77 2010/11/30 18:20:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.78 2010/12/18 08:20:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1442,6 +1442,7 @@ rump_vop_spec(void *v)
 	case VOP_SETATTR_DESCOFFSET:
 	case VOP_LOCK_DESCOFFSET:
 	case VOP_UNLOCK_DESCOFFSET:
+	case VOP_ISLOCKED_DESCOFFSET:
 	case VOP_RECLAIM_DESCOFFSET:
 		opvec = rump_vnodeop_p;
 		break;
