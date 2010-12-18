@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.18 2010/10/27 02:58:04 rmind Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.19 2010/12/18 01:18:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.18 2010/10/27 02:58:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.19 2010/12/18 01:18:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,9 +662,8 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 	case POSIX_FADV_NORMAL:
 	case POSIX_FADV_RANDOM:
 	case POSIX_FADV_SEQUENTIAL:
-
 		/*
-		 * We ignore offset and size.  must lock the file to
+		 * We ignore offset and size.  Must lock the file to
 		 * do this, as f_advice is sub-word sized.
 		 */
 		mutex_enter(&fp->f_lock);
@@ -680,9 +679,22 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 
 	case POSIX_FADV_DONTNEED:
 		vp = fp->f_data;
-		mutex_enter(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(offset),
-		    round_page(endoffset), PGO_DEACTIVATE | PGO_CLEANIT);
+		/*
+		 * Align the region to page boundaries as VOP_PUTPAGES expects
+		 * by shrinking it.  We shrink instead of expand because we
+		 * do not want to deactivate cache outside of the requested
+		 * region.  It means that if the specified region is smaller
+		 * than PAGE_SIZE, we do nothing.
+		 */
+		if (round_page(offset) < trunc_page(endoffset) &&
+		    offset <= round_page(offset)) {
+			mutex_enter(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp,
+			    round_page(offset), trunc_page(endoffset),
+			    PGO_DEACTIVATE | PGO_CLEANIT);
+		} else {
+			error = 0;
+		}
 		break;
 
 	case POSIX_FADV_NOREUSE:
