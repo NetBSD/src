@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.3 2010/11/11 06:30:39 rmind Exp $
+# $NetBSD: files.npf,v 1.4 2010/12/18 01:07:25 rmind Exp $
 #
 # Public Domain.
 #
@@ -24,6 +24,7 @@ file	net/npf/npf_state.c			npf
 file	net/npf/npf_nat.c			npf
 file	net/npf/npf_alg.c			npf
 file	net/npf/npf_sendpkt.c			npf
+file	net/npf/npf_log.c			npf
 
 # ALGs
 file	net/npf/npf_alg_icmp.c			npf

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.4 2010/12/18 01:07:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.4 2010/12/18 01:07:26 rmind Exp $");
 
 #include <sys/types.h>
 
@@ -152,9 +152,18 @@ npfctl_gennc_ports(void **ncptr, int foff,
 	*nc++ = (sd ? 0x01 : 0x00);
 	*nc++ = ((uint32_t)pfrom << 16) | pto;
 
-	/* If not equal, jump to failure block, continue otherwise (2 words). */
-	*nc++ = NPF_OPCODE_BNE;
-	*nc++ = foff;
+	/*
+	 * If not equal, jump to failure block, continue otherwise (2 words).
+	 * Specific case (foff == 0): when matching both TCP and UDP ports,
+	 * skip next port-matching fragment on success (5 + 2 words).
+	 */
+	if (foff) {
+		*nc++ = NPF_OPCODE_BNE;
+		*nc++ = foff;
+	} else {
+		*nc++ = NPF_OPCODE_BEQ;
+		*nc++ = 5 + 2;
+	}
 
 	/* + 5 words. */
 	*ncptr = (void *)nc;
