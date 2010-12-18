@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/08/03 17:24:45 drochner Exp $
+#	$NetBSD: Makefile,v 1.5 2010/12/18 04:31:41 joerg Exp $
 #
 
 NOMAN=	1
@@ -30,7 +30,6 @@ CPPFLAGS+=	-DDEBUG -DMOUNT_NOMAIN -I${.CURDIR}/include -D_REENTRANT
 CPPFLAGS+=	-DRUMP_SYS_NETWORKING
 #CPPFLAGS+=	-DSVC_RUN_DEBUG
 CPPFLAGS+=	-I${.CURDIR}/../../common/nfsrpc
-DBG=-g
 
 .PATH: ${.CURDIR}/rpcbind
 .include "rpcbind/Makefile.inc"
