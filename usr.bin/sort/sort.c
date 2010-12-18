@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.59 2010/06/05 17:44:51 dholland Exp $	*/
+/*	$NetBSD: sort.c,v 1.60 2010/12/18 23:09:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
  The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
-__RCSID("$NetBSD: sort.c,v 1.59 2010/06/05 17:44:51 dholland Exp $");
+__RCSID("$NetBSD: sort.c,v 1.60 2010/12/18 23:09:48 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 	fldtab = emalloc(fldtab_sz * sizeof(*fldtab));
 	memset(fldtab, 0, fldtab_sz * sizeof(*fldtab));
 
-#define SORT_OPTS "bcdD:fik:mHno:rR:sSt:T:ux"
+#define SORT_OPTS "bcdD:fHik:lmno:rR:sSt:T:ux"
 
 	/* Convert "+field" args to -f format */
 	fixit(&argc, argv, SORT_OPTS);
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 			for (i = 0; optarg[i]; i++)
 			    debug_flags |= 1 << (optarg[i] & 31);
 			break;
-		case 'd': case 'f': case 'i': case 'n':
+		case 'd': case 'f': case 'i': case 'n': case 'l':
 			fldtab[0].flags |= optval(ch, 0);
 			break;
 		case 'H':
@@ -286,7 +286,7 @@ main(int argc, char *argv[])
 
 	if (fldtab[1].icol.num == 0) {
 		/* No sort key specified */
-		if (fldtab[0].flags & (I|D|F|N)) {
+		if (fldtab[0].flags & (I|D|F|N|L)) {
 			/* Modified - generate a key that covers the line */
 			fldtab[0].flags &= ~(BI|BT);
 			setfield("1", &fldtab[++fld_cnt], fldtab->flags);
@@ -398,7 +398,7 @@ usage(const char *msg)
 	if (msg != NULL)
 		(void)fprintf(stderr, "%s: %s\n", getprogname(), msg);
 	(void)fprintf(stderr,
-	    "usage: %s [-bcdfHimnrSsu] [-k field1[,field2]] [-o output]"
+	    "usage: %s [-bcdfHilmnrSsu] [-k field1[,field2]] [-o output]"
 	    " [-R char] [-T dir]", getprogname());
 	(void)fprintf(stderr,
 	    "             [-t char] [file ...]\n");
