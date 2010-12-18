@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.23 2010/09/09 12:18:39 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.24 2010/12/18 11:45:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.23 2010/09/09 12:18:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.24 2010/12/18 11:45:09 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -195,8 +195,14 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 			pageoff = uio->uio_offset & PAGE_MASK;
 			xfersize = MIN(MIN(todo, PAGE_SIZE), PAGE_SIZE-pageoff);
 			KASSERT(xfersize > 0);
-			uiomove((uint8_t *)pg->uanon + pageoff,
+			rv = uiomove((uint8_t *)pg->uanon + pageoff,
 			    xfersize, uio);
+			if (rv) {
+				mutex_enter(&uobj->vmobjlock);
+				uvm_page_unbusy(pgs, npages);
+				mutex_exit(&uobj->vmobjlock);
+				goto out;
+			}
 			if (uio->uio_rw == UIO_WRITE)
 				pg->flags &= ~(PG_CLEAN | PG_FAKE);
 			todo -= xfersize;
