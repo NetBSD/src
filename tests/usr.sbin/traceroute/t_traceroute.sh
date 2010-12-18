@@ -1,4 +1,4 @@
-#	$NetBSD: t_traceroute.sh,v 1.1 2010/12/15 00:13:52 pooka Exp $
+#	$NetBSD: t_traceroute.sh,v 1.2 2010/12/18 08:34:56 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,18 +41,18 @@ cfgendpt ()
 	bus=${4}
 
 	export RUMP_SERVER=${sock}
-	atf-check -s exit:0 rump.ifconfig shmif0 create
-	atf-check -s exit:0 rump.ifconfig shmif0 linkstr ${bus}
-	atf-check -s exit:0 rump.ifconfig shmif0 inet ${addr} netmask 0xffffff00
-	atf-check -s exit:0 -o ignore rump.route add default ${route}
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr ${bus}
+	atf_check -s exit:0 rump.ifconfig shmif0 inet ${addr} netmask 0xffffff00
+	atf_check -s exit:0 -o ignore rump.route add default ${route}
 }
 
 threeservers()
 {
 
-	atf-check -s exit:0 rump_allserver unix://commsock1
-	atf-check -s exit:0 rump_allserver unix://commsock2
-	atf-check -s exit:0 rump_allserver unix://commsock3
+	atf_check -s exit:0 rump_allserver unix://commsock1
+	atf_check -s exit:0 rump_allserver unix://commsock2
+	atf_check -s exit:0 rump_allserver unix://commsock3
 
 	# configure endpoints
 	cfgendpt unix://commsock1 1.2.3.4 1.2.3.1 bus1
@@ -60,13 +60,13 @@ threeservers()
 
 	# configure the router
 	export RUMP_SERVER=unix://commsock2
-	atf-check -s exit:0 rump.ifconfig shmif0 create
-	atf-check -s exit:0 rump.ifconfig shmif0 linkstr bus1
-	atf-check -s exit:0 rump.ifconfig shmif0 inet 1.2.3.1 netmask 0xffffff00
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 1.2.3.1 netmask 0xffffff00
 
-	atf-check -s exit:0 rump.ifconfig shmif1 create
-	atf-check -s exit:0 rump.ifconfig shmif1 linkstr bus2
-	atf-check -s exit:0 rump.ifconfig shmif1 inet 2.3.4.1 netmask 0xffffff00
+	atf_check -s exit:0 rump.ifconfig shmif1 create
+	atf_check -s exit:0 rump.ifconfig shmif1 linkstr bus2
+	atf_check -s exit:0 rump.ifconfig shmif1 inet 2.3.4.1 netmask 0xffffff00
 }
 
 threecleanup()
@@ -80,12 +80,14 @@ threetests()
 {
 
 	threeservers
-	env RUMP_SERVER=unix://commsock1 atf-check -s exit:0	\
+	export RUMP_SERVER=unix://commsock1
+	atf_check -s exit:0	\
 	     -o save:tmpfile -e ignore rump.traceroute ${1} -n 2.3.4.5
-	atf-check -o inline:'1.2.3.1\n2.3.4.5\n' awk '{print $2}' < tmpfile
-	env RUMP_SERVER=unix://commsock3 atf-check -s exit:0	\
+	atf_check -o inline:'1.2.3.1\n2.3.4.5\n' awk '{print $2}' < tmpfile
+	export RUMP_SERVER=unix://commsock3
+	atf_check -s exit:0	\
 	     -o save:tmpfile -e ignore rump.traceroute ${1} -n 1.2.3.4
-	atf-check -o inline:'2.3.4.1\n1.2.3.4\n' awk '{print $2}' < tmpfile
+	atf_check -o inline:'2.3.4.1\n1.2.3.4\n' awk '{print $2}' < tmpfile
 }
 
 basic_body()
