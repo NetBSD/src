@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.32 2010/06/05 17:44:51 dholland Exp $	*/
+/*	$NetBSD: sort.h,v 1.33 2010/12/18 23:09:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -78,13 +78,14 @@
 
 /* values for masks, weights, and other flags. */
 /* R and F get used to index weight_tables[] */
-#define R 1		/* Field is reversed */
-#define F 2		/* weight lower and upper case the same */
-#define I 4		/* mask out non-printable characters */
-#define D 8		/* sort alphanumeric characters only */
-#define N 16		/* Field is a number */
-#define BI 32		/* ignore blanks in icol */
-#define BT 64		/* ignore blanks in tcol */
+#define	R	0x01	/* Field is reversed */
+#define	F	0x02	/* weight lower and upper case the same */
+#define	I	0x04	/* mask out non-printable characters */
+#define	D	0x08	/* sort alphanumeric characters only */
+#define	N	0x10	/* Field is a number */
+#define	BI	0x20	/* ignore blanks in icol */
+#define	BT	0x40	/* ignore blanks in tcol */
+#define	L	0x80	/* Sort by field length */
 
 /* masks for delimiters: blanks, fields, and termination. */
 #define BLANK 1		/* ' ', '\t'; '\n' if -R is invoked */
