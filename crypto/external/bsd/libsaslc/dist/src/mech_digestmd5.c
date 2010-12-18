@@ -1,4 +1,4 @@
-/* $Id: mech_digestmd5.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: mech_digestmd5.c,v 1.2 2010/12/18 18:22:24 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -544,7 +544,7 @@ saslc__mech_digestmd5_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 		}
 
 		if ((pass = saslc_sess_getprop(sess,
-		    SASLC_DIGEST_MD5_AUTHZID)) == NULL) {
+		    SASLC_DIGEST_MD5_PASSWORD)) == NULL) {
 			saslc__error_set(ERR(sess), ERROR_MECH,
 			    "password is required for an authentication");
 			return MECH_ERROR;
