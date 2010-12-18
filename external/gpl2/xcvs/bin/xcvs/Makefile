@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/08 16:27:51 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2010/12/18 04:23:26 joerg Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
-CFLAGS+=-g
+
 PROG=	xcvs
 
 # So that cleandir works on case-insensitive file systems.
