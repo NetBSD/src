@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping2.sh,v 1.2 2010/12/14 19:08:22 pooka Exp $
+#	$NetBSD: t_ping2.sh,v 1.3 2010/12/18 08:35:53 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,26 +38,26 @@ docfg ()
 	sock=${1}
 	addr=${2}
 
-	atf-check -s exit:0 \
+	atf_check -s exit:0 \
 	    env RUMP_SERVER=${sock} rump.ifconfig shmif0 create
-	atf-check -s exit:0 \
+	atf_check -s exit:0 \
 	    env RUMP_SERVER=${sock} rump.ifconfig shmif0 linkstr bus
-	atf-check -s exit:0 \
+	atf_check -s exit:0 \
 	    env RUMP_SERVER=${sock} rump.ifconfig shmif0 inet ${addr}
 }
 
 basic_body()
 {
 
-	atf-check -s exit:0 rump_allserver unix://commsock1
-	atf-check -s exit:0 rump_allserver unix://commsock2
+	atf_check -s exit:0 rump_allserver unix://commsock1
+	atf_check -s exit:0 rump_allserver unix://commsock2
 
 	docfg unix://commsock1 1.2.3.4
 	docfg unix://commsock2 1.2.3.5
 
-	atf-check -s exit:0 -o ignore \
+	atf_check -s exit:0 -o ignore \
 	    env RUMP_SERVER=unix://commsock1 rump.ping -n -c 1 1.2.3.5
-	atf-check -s exit:0 -o ignore \
+	atf_check -s exit:0 -o ignore \
 	    env RUMP_SERVER=unix://commsock2 rump.ping -n -c 1 1.2.3.5
 }
 
