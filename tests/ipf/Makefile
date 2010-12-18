@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2010/07/13 21:13:25 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/12/18 13:06:51 pooka Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/ipf
+ATFFILE=	yes
 
 .for name in t_bpf t_filter_exec t_filter_parse t_logging t_nat_exec \
              t_nat_ipf_exec t_nat_parse t_pools

@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
+# $NetBSD: t_nat_exec.sh,v 1.3 2010/12/18 13:06:51 pooka Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,17 +52,17 @@ nattest()
 	diff -u exp out || atf_fail "results differ"
 }
 
-broken_test_case n1 nattest text text
-broken_test_case n2 nattest text text
+#broken_test_case n1 nattest text text
+#broken_test_case n2 nattest text text
 test_case n3 nattest text text
-broken_test_case n4 nattest text text
-broken_test_case n5 nattest text text
-broken_test_case n6 nattest text text
+#broken_test_case n4 nattest text text
+#broken_test_case n5 nattest text text
+#broken_test_case n6 nattest text text
 test_case n7 nattest text text
 test_case n8 nattest hex hex -T fr_update_ipid=0
 test_case n9 nattest hex hex -T fr_update_ipid=0
 test_case n10 nattest hex hex -T fr_update_ipid=0
-broken_test_case n11 nattest text text
+#broken_test_case n11 nattest text text
 test_case n12 nattest hex hex -T fr_update_ipid=0
 test_case n13 nattest text text
 test_case n14 nattest text text
@@ -71,20 +71,21 @@ test_case n17 nattest hex hex -D
 
 atf_init_test_cases()
 {
-	atf_add_test_case n1
-	atf_add_test_case n2
 	atf_add_test_case n3
-	atf_add_test_case n4
-	atf_add_test_case n5
-	atf_add_test_case n6
 	atf_add_test_case n7
 	atf_add_test_case n8
 	atf_add_test_case n9
 	atf_add_test_case n10
-	atf_add_test_case n11
 	atf_add_test_case n12
 	atf_add_test_case n13
 	atf_add_test_case n14
 	atf_add_test_case n16
 	atf_add_test_case n17
+
+	#atf_add_test_case n1
+	#atf_add_test_case n2
+	#atf_add_test_case n4
+	#atf_add_test_case n5
+	#atf_add_test_case n6
+	#atf_add_test_case n11
 }
