@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.117 2010/11/14 22:25:23 tron Exp $	*/
+/*	$NetBSD: pthread.c,v 1.118 2010/12/18 15:54:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.117 2010/11/14 22:25:23 tron Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.118 2010/12/18 15:54:27 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -108,6 +108,8 @@ int	pthread__stacksize_lg = _STACKSIZE_LG;
 size_t	pthread__stacksize = 1 << _STACKSIZE_LG;
 vaddr_t	pthread__stackmask = (1 << _STACKSIZE_LG) - 1;
 vaddr_t pthread__threadmask = (vaddr_t)~((1 << _STACKSIZE_LG) - 1);
+vaddr_t	pthread__mainbase = 0;
+vaddr_t	pthread__mainstruct = 0;
 #undef	_STACKSIZE_LG
 
 int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
@@ -1221,7 +1223,14 @@ pthread__initmain(pthread_t *newt)
 	pthread__threadmask = ~pthread__stackmask;
 
 	base = (void *)(pthread__sp() & pthread__threadmask);
+	if ((pthread__sp() - (uintptr_t)base) < 4 * pagesize) {
+		pthread__mainbase = (vaddr_t)base;
+		base = STACK_GROW(base, pthread__stacksize);
+		pthread__mainstruct = (vaddr_t)base;
+	}
 	size = pthread__stacksize;
+	if (mprotect(base, size, PROT_READ|PROT_WRITE) == -1)
+		err(1, "mprotect stack");
 
 	error = pthread__stackid_setup(base, size, &t);
 	if (error) {
@@ -1258,7 +1267,6 @@ pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
 #else
 	t->pt_stack.ss_sp = (char *)(void *)base + 2 * pagesize;
 #endif
-
 	/* Protect the next-to-bottom stack page as a red zone. */
 	ret = mprotect(redaddr, pagesize, PROT_NONE);
 	if (ret == -1) {
