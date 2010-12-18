@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.231 2010/08/04 10:43:53 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.232 2010/12/18 00:01:46 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.231 2010/08/04 10:43:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.232 2010/12/18 00:01:46 eeh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2205,16 +2205,19 @@ lfs_putpages(void *v)
 	 * Pagedaemon can't actually write LFS pages; wake up
 	 * the writer to take care of that.  The writer will
 	 * notice the pager inode queue and act on that.
+	 *
+	 * XXX We must drop the vp->interlock before taking the lfs_lock or we
+	 * get a nasty deadlock with lfs_flush_pchain().
 	 */
 	if (pagedaemon) {
+		mutex_exit(&vp->v_interlock);
 		mutex_enter(&lfs_lock);
 		if (!(ip->i_flags & IN_PAGING)) {
 			ip->i_flags |= IN_PAGING;
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
-		}
+		} 
 		wakeup(&lfs_writer_daemon);
 		mutex_exit(&lfs_lock);
-		mutex_exit(&vp->v_interlock);
 		preempt();
 		return EWOULDBLOCK;
 	}
