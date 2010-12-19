@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.5 2009/12/22 08:44:03 cegger Exp $ */
+/* $NetBSD: acpi.c,v 1.6 2010/12/19 16:25:16 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.5 2009/12/22 08:44:03 cegger Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.6 2010/12/19 16:25:16 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2335,7 +2335,7 @@ dsdt_save_file(char *outfile, ACPI_TABLE_HEADER *rsdt, ACPI_TABLE_HEADER *dsdp)
 void
 aml_disassemble(ACPI_TABLE_HEADER *rsdt, ACPI_TABLE_HEADER *dsdp)
 {
-	char buf[PATH_MAX], tmpstr[PATH_MAX];
+	char buf[MAXPATHLEN], tmpstr[MAXPATHLEN];
 	const char *tmpdir;
 	char *tmpext;
 	FILE *fp;
