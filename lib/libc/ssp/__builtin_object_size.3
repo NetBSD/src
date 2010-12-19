@@ -1,4 +1,4 @@
-.\"	$NetBSD: __builtin_object_size.3,v 1.6 2010/12/16 17:50:39 jruoho Exp $
+.\"	$NetBSD: __builtin_object_size.3,v 1.7 2010/12/19 08:21:36 jruoho Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,13 +28,13 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 16, 2010
+.Dd December 19, 2010
 .Dt __BUILTIN_OBJECT_SIZE 3
 .Os
 .Sh NAME
 .Nm __builtin_object_size
 .Nd return the size of the given object
-.Sh LIBRARY
+.Sh SYNOPSIS
 .Ft size_t
 .Fn __builtin_object_size "void *ptr" "int type"
 .Sh DESCRIPTION
@@ -85,3 +85,5 @@ The
 .Fn __builtin_object_size
 appeared in
 .Tn GCC 4.1 .
+.Sh CAVEATS
+This is a non-standard, compiler-specific extension.
