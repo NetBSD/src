@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.45 2010/12/19 08:32:33 jandberg Exp $ */
+/* $NetBSD: machdep.c,v 1.46 2010/12/19 11:05:06 phx Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2010/12/19 08:32:33 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2010/12/19 11:05:06 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -243,15 +243,10 @@ amigappc_install_handlers(void)
 
 	/* handlers for all 6 Amiga interrupt levels */
 	intr_establish(1, IST_LEVEL, IPL_BIO, lev1_intr, NULL);
-
 	intr_establish(2, IST_LEVEL, IPL_BIO, ports_intr, &isr_ports);
-
 	intr_establish(3, IST_LEVEL, IPL_TTY, lev3_intr, NULL);
-
 	intr_establish(4, IST_LEVEL, IPL_AUDIO, lev4_intr, NULL);
-
 	intr_establish(5, IST_LEVEL, IPL_SERIAL, lev5_intr, NULL);
-
 	intr_establish(6, IST_LEVEL, IPL_SERIAL, exter_intr, &isr_exter);
 }
 
@@ -259,17 +254,12 @@ static void
 amigappc_identify(void)
 {
 	extern u_long ns_per_tick, ticks_per_sec;
-	static const unsigned char pll603[] = {
-		10, 10, 10, 10, 20, 20, 25, 00,
-		30, 00, 40, 00, 15, 00, 35, 00
-	};
-	static const unsigned char pll604[] = {
+	static const unsigned char pll[] = {
 		10, 10, 70, 10, 20, 65, 25, 45,
 		30, 55, 40, 50, 15, 60, 35, 00
 	};
 	const char *cpuname, *mach, *p5type_p, *pup;
 	u_long busclock, cpuclock;
-	int cpu;
 	register int pvr, hid1;
 
 	/* PowerUp ROM id location */
@@ -289,32 +279,26 @@ amigappc_identify(void)
 	else
 		mach = "Amiga 1200";
 
-	/* find CPU type - BlizzardPPC has 603e, CyberstormPPC has 604e */
+	/* find CPU type - BlizzardPPC has 603e/603ev, CyberstormPPC has 604e */
 	switch (pvr >> 16) {
 	case 3:
 		cpuname = "603";
-		cpu = 603;
 		break;
 	case 4:
 		cpuname = "604";
-		cpu = 604;
 		break;
 	case 6:
 		cpuname = "603e";
-		cpu = 603;
 		break;
 	case 7:
 		cpuname = "603ev";
-		cpu = 603;
 		break;
 	case 9:
 	case 10:
 		cpuname = "604e";
-		cpu = 604;
 		break;
 	default:
 		cpuname = "unknown";
-		cpu = 604;
 		break;
 	}
 
@@ -349,10 +333,7 @@ amigappc_identify(void)
 	}
 
 	/* compute cpuclock based on PLL configuration */
-	if (cpu == 603)
-		cpuclock = busclock * pll603[hid1>>28 & 0xf] / 10;
-	else /* 604 */
-		cpuclock = busclock * pll604[hid1>>28 & 0xf] / 10;
+	cpuclock = busclock * pll[hid1>>28 & 0xf] / 10;
 
 	snprintf(model, sizeof(model),
 	    "%s %s (%s v%d.%d %lu MHz, busclk %lu MHz)",
