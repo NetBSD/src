@@ -1,4 +1,4 @@
-.\" $NetBSD: typeof.3,v 1.2 2010/12/19 08:10:09 jruoho Exp $
+.\" $NetBSD: __alignof__.3,v 1.1 2010/12/19 08:10:09 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -25,39 +25,60 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd December 19, 2010
-.Dt TYPEOF 3
+.Dt __alignof__ 3
 .Os
 .Sh NAME
-.Nm typeof
-.Nd GNU extension for type of an expression
+.Nm __alignof__
+.Nd GNU extension for alignment of an object
 .Sh SYNOPSIS
-.Ft type
-.Fn typeof "expression"
+.Ft int
+.Fn __alignof__ "void type"
 .Sh DESCRIPTION
 The
-.Fn typeof
-construct can be used to obtain the type of an expression.
-The syntax is comparable to that of
-.Fn sizeof ,
-but semantically
-.Fn typeof
-operates like a type name defined with
-.Em typedef .
+.Fn __alignof__
+operator returns the alignment of its operand.
+The operand can be a type or an expression.
+If the operand is a
+.Sq lvalue ,
+the return value represents the required alignment of the underlying type,
+not the actual alignment of the specified
+.Sq lvalue .
+.Pp
+The returned value is specific to the architecture and the
+.Tn ABI .
+If the architecture does not impose strict alignment requirements,
+.Fn __alignof__
+returns the minimum required alignment.
+If
+.Xr __aligned 3
+is used to increase the alignment,
+.Fn __alignof__
+returns the specified alignment.
 .Sh EXAMPLES
-The following is a typical example of a type-generic macro:
+The syntax is comparable to the
+.Fn sizeof
+operator.
+If the architecture aligns integers along 32-bit address boundaries,
+the following should print the value 4.
 .Bd -literal -offset indent
-#define MAX(a, b) ({		\\
-	typeof(a) _a = (a);	\\
-	typeof(b) _b = (b);	\\
-	_a > _b ? _a : _b;	\\
-})
+(void)printf(\*[q]%d\\n\*[q], __alignof__(int));
+.Ed
+.Pp
+On the other hand, the following example probably prints the value 1,
+even though this is unlikely to be the actual alignment of the
+structure member.
+.Bd -literal -offset indent
+struct align {
+	int  x;
+	char y;
+} a;
+
+(void)printf(\*[q]%d\\n\*[q], __alignof__(a.y));
 .Ed
 .Sh SEE ALSO
 .Xr gcc 1 ,
-.Xr __alignof__ 3 ,
 .Xr attribute 3 ,
-.Xr offsetof 3
+.Xr offsetof 3 ,
+.Xr typeof 3
 .Sh CAVEATS
-The
-.Fn typeof
-construct is a non-standard, compiler-specific extension.
+This is a non-standard, compiler-specific extension.
