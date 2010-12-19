@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1557 2010/12/19 10:07:23 jruoho Exp $
+#	$NetBSD: mi,v 1.1558 2010/12/19 22:53:19 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3741,6 +3741,7 @@
 ./usr/libdata/debug/usr/sbin/postqueue.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postsuper.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/powerd.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/rump.powerd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pppd.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/pppdump.debug	comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		debug
