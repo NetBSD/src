@@ -1,4 +1,4 @@
-.\"	$NetBSD: offsetof.3,v 1.2 2010/03/21 12:36:21 jruoho Exp $
+.\"	$NetBSD: offsetof.3,v 1.3 2010/12/19 08:10:09 jruoho Exp $
 .\"
 .\"	$OpenBSD: offsetof.3,v 1.2 2010/02/18 18:30:19 jmc Exp $
 .\"
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd February 18, 2010
+.Dd December 19, 2010
 .Dt OFFSETOF 3
 .Os
 .Sh NAME
@@ -42,7 +42,9 @@ A compiler error will result if
 .Ar member
 is not aligned to a byte boundary (i.e. it is a bit-field).
 .Sh SEE ALSO
-.Xr stddef 3
+.Xr __alignof__ 3 ,
+.Xr stddef 3 ,
+.Xr typeof 3
 .Sh STANDARDS
 The
 .Fn offsetof
