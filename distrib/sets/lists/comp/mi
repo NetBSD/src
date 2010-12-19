@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1556 2010/12/19 09:30:49 jruoho Exp $
+#	$NetBSD: mi,v 1.1557 2010/12/19 10:07:23 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4908,6 +4908,7 @@
 ./usr/share/man/cat3/__aligned.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__alignof__.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__arraycount.0		comp-c-catman		.cat
+./usr/share/man/cat3/__builtin_constant_p.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_frame_address.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_object_size.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_return_address.0	comp-c-catman		.cat
@@ -10999,6 +11000,7 @@
 ./usr/share/man/html3/__aligned.html		comp-c-htmlman		html
 ./usr/share/man/html3/__alignof__.html		comp-c-htmlman		html
 ./usr/share/man/html3/__arraycount.html		comp-c-htmlman		html
+./usr/share/man/html3/__builtin_constant_p.html		comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_frame_address.html	comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_object_size.html	comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_return_address.html	comp-c-htmlman		html
@@ -16890,6 +16892,7 @@
 ./usr/share/man/man3/__aligned.3		comp-c-man		.man
 ./usr/share/man/man3/__alignof__.3		comp-c-man		.man
 ./usr/share/man/man3/__arraycount.3		comp-c-man		.man
+./usr/share/man/man3/__builtin_constant_p.3	comp-c-man		.man
 ./usr/share/man/man3/__builtin_frame_address.3	comp-c-man		.man
 ./usr/share/man/man3/__builtin_object_size.3	comp-c-man		.man
 ./usr/share/man/man3/__builtin_return_address.3	comp-c-man		.man
