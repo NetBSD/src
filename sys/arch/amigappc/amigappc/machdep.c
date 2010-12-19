@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.44 2010/11/01 19:00:08 phx Exp $ */
+/* $NetBSD: machdep.c,v 1.45 2010/12/19 08:32:33 jandberg Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2010/11/01 19:00:08 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2010/12/19 08:32:33 jandberg Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -304,7 +304,7 @@ amigappc_identify(void)
 		cpu = 603;
 		break;
 	case 7:
-		cpuname = "603e+";
+		cpuname = "603ev";
 		cpu = 603;
 		break;
 	case 9:
@@ -328,6 +328,7 @@ amigappc_identify(void)
 	case 'F':
 		pup = "[CS Mk.III]";
 		break;
+	case 'H':
 	case 'I':
 		pup = "[BlizzardPPC]";
 		break;
