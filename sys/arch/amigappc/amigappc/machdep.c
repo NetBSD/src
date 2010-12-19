@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.46 2010/12/19 11:05:06 phx Exp $ */
+/* $NetBSD: machdep.c,v 1.47 2010/12/19 14:46:10 phx Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2010/12/19 11:05:06 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2010/12/19 14:46:10 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2010/12/19 11:05:06 phx Exp $");
 extern void setup_amiga_intr(void);
 #if NSER > 0
 extern void ser_outintr(void);
-extern void serintr(void);
+extern void ser_fastint(void);
 #endif
 #if NFD > 0
 extern void fdintr(int);
@@ -227,12 +227,9 @@ lev4_intr(void *arg)
 static int
 lev5_intr(void *arg)
 {
-	unsigned short ireq;
 
-	ireq = custom.intreqr;
-	if (ireq & INTF_RBF)
-		serintr();
-	if (ireq & INTF_DSKSYNC)
+	ser_fastint();
+	if (custom.intreqr & INTF_DSKSYNC)
 		custom.intreq = INTF_DSKSYNC;
 	return 0;
 }
