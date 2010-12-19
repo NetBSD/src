@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.9 2009/11/21 11:54:47 dsl Exp $	*/
+/*	$NetBSD: realprot.S,v 1.10 2010/12/19 17:18:23 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -90,18 +90,18 @@ stkdif:	.long	0			/* diff. between real and prot sp */
 	.global	gdt_fixup
 gdt_fixup:
 	.code16
-	push	%ax
-	push	%dx
+	pushl	%eax
+	pushl	%edx
 
 	xorl	%eax, %eax
 	mov	%cs, %ax
 	mov	%ax, ourseg
 	/* sort out stuff for %ss != %ds */
+	xorl	%edx, %edx
 	movw	%ss, %dx
 	movw	%dx, stkseg
-	subw	%ax, %dx
-	shll	$16, %edx
-	shrl	$12, %edx
+	subl	%eax, %edx
+	shll	$4, %edx
 	movl	%edx, stkdif
 
 	/* fix up GDT entries for bootstrap */
@@ -121,8 +121,8 @@ gdt_fixup:
 	addl	$gdt, %eax
 	movl	%eax, gdtarg+2
 
-	pop	%dx
-	pop	%ax
+	popl	%edx
+	popl	%eax
 	ret
 
 /*
