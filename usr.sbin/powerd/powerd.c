@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.15 2010/12/15 17:12:40 pgoyette Exp $	*/
+/*	$NetBSD: powerd.c,v 1.16 2010/12/19 22:52:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,10 +42,12 @@
 #define SYSLOG_NAMES
 
 #include <sys/cdefs.h>
+#include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/event.h>
 #include <sys/power.h>
 #include <sys/wait.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -58,6 +60,8 @@
 #include <prop/proplib.h>
 #include <stdarg.h>
 #include <string.h>
+
+#include "prog_ops.h"
 
 int	debug, no_scripts;
 
@@ -88,6 +92,9 @@ main(int argc, char *argv[])
 
 	setprogname(*argv);
 
+	if (prog_init && prog_init() == -1)
+		err(1, "init failed");
+
 	while ((ch = getopt(argc, argv, "dn")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -115,24 +122,24 @@ main(int argc, char *argv[])
 		(void)pidfile(NULL);
 	}
 
-	if ((kq = kqueue()) == -1) {
+	if ((kq = prog_kqueue()) == -1) {
 		powerd_log(LOG_ERR, "kqueue: %s", strerror(errno));
 		exit(EX_OSERR);
 	}
 
-	if ((fd = open(_PATH_POWER, O_RDONLY|O_NONBLOCK, 0600)) == -1) {
+	if ((fd = prog_open(_PATH_POWER, O_RDONLY|O_NONBLOCK, 0600)) == -1) {
 		powerd_log(LOG_ERR, "open %s: %s", _PATH_POWER,
 		    strerror(errno));
 		exit(EX_OSERR);
 	}
 
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+	if (prog_fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
 		powerd_log(LOG_ERR, "Cannot set close on exec in power fd: %s",
 		    strerror(errno));
 		exit(EX_OSERR);
 	}
 
-	if (ioctl(fd, POWER_IOC_GET_TYPE, &power_type) == -1) {
+	if (prog_ioctl(fd, POWER_IOC_GET_TYPE, &power_type) == -1) {
 		powerd_log(LOG_ERR, "POWER_IOC_GET_TYPE: %s", strerror(errno));
 		exit(EX_OSERR);
 	}
@@ -254,7 +261,7 @@ wait_for_events(struct kevent *events, size_t nevents)
 {
 	int rv;
 
-	while ((rv = kevent(kq, nchanges ? changebuf : NULL, nchanges,
+	while ((rv = prog_kevent(kq, nchanges ? changebuf : NULL, nchanges,
 	    events, nevents, NULL)) < 0) {
 		nchanges = 0;
 		if (errno != EINTR) {
@@ -278,7 +285,7 @@ dispatch_dev_power(struct kevent *ev)
 		    ev->data, ev->data > 1 ? "s" : "");
 
  again:
-	if (read(fd, &pev, sizeof(pev)) != sizeof(pev)) {
+	if (prog_read(fd, &pev, sizeof(pev)) != sizeof(pev)) {
 		if (errno == EWOULDBLOCK)
 			return;
 		powerd_log(LOG_ERR, "read of %s: %s", _PATH_POWER,
