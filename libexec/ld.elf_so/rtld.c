@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.135 2010/12/19 17:17:50 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.136 2010/12/19 17:26:51 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.135 2010/12/19 17:17:50 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.136 2010/12/19 17:26:51 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -868,7 +868,7 @@ _rtld_objmain_sym(const char *name)
 
 	if (def != NULL)
 		return obj->relocbase + def->st_value;
-	return(NULL);
+	return NULL;
 }
 
 #ifdef __powerpc__
