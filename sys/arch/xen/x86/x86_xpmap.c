@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.21 2010/07/24 00:45:56 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.22 2010/12/19 23:23:35 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.21 2010/07/24 00:45:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.22 2010/12/19 23:23:35 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -175,7 +175,8 @@ xpq_flush_queue(void)
 		    xpq_queue[i].ptr, xpq_queue[i].val));
 	if (xpq_idx != 0 &&
 	    HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok) < 0) {
-		printf("xpq_flush_queue: %d entries \n", xpq_idx);
+		printf("xpq_flush_queue: %d entries (%d successful)\n",
+		    xpq_idx, ok);
 		for (i = 0; i < xpq_idx; i++)
 			printf("0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
 			   xpq_queue[i].ptr, xpq_queue[i].val);
