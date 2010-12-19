@@ -1,4 +1,4 @@
-.\" $NetBSD: __alignof__.3,v 1.2 2010/12/19 08:14:03 jruoho Exp $
+.\" $NetBSD: __alignof__.3,v 1.3 2010/12/19 08:56:17 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd December 19, 2010
-.Dt __alignof__ 3
+.Dt __ALIGNOF__ 3
 .Os
 .Sh NAME
 .Nm __alignof__
@@ -61,7 +61,7 @@ operator.
 If the architecture aligns integers along 32-bit address boundaries,
 the following should print the value 4.
 .Bd -literal -offset indent
-(void)printf(\*[q]%d\\n\*[q], __alignof__(int));
+(void)printf(\*[q]%d\en\*[q], __alignof__(int));
 .Ed
 .Pp
 On the other hand, the following example probably prints the value 1,
@@ -73,7 +73,7 @@ struct align {
 	char y;
 } a;
 
-(void)printf(\*[q]%d\\n\*[q], __alignof__(a.y));
+(void)printf(\*[q]%d\en\*[q], __alignof__(a.y));
 .Ed
 .Sh SEE ALSO
 .Xr gcc 1 ,
