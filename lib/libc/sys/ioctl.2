@@ -1,4 +1,4 @@
-.\"	$NetBSD: ioctl.2,v 1.22 2010/12/19 16:54:10 christos Exp $
+.\"	$NetBSD: ioctl.2,v 1.23 2010/12/19 22:19:27 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,9 +62,9 @@ has encoded in it whether the argument is an
 .Dq out ,
 or
 .Dq inout
-parameter, and the size of the first varyadic argument
+parameter, and the size of the first variadic argument
 in bytes.
-Note that there can be only one varyadic argument but cannot be represented as
+Note that there can be only one variadic argument but cannot be represented as
 a
 .Ft "void *"
 argument in the prototype because this would require a cast to pass integral
@@ -93,7 +93,7 @@ form should be preferred).
 .It Dv FIONCLEX
 Clear close-on-exec flag.
 The file will remain open across
-.Xr exec 3 
+.Xr exec 3
 (This is equivalent to
 .Fn fcntl
 .Dv F_SETFD
@@ -174,7 +174,7 @@ signals when data is available
 (This is equivalent to
 .Fn fcntl
 .Dv F_SETOWN
-.Ft pid_t 
+.Ft pid_t
 and the
 .Ft fcntl
 form should be preferred).
@@ -190,23 +190,22 @@ will fail if:
 .It Bq Er EBADF
 .Fa d
 is not a valid descriptor.
-.It Bq Er ENOTTY
-.Fa d
-is not associated with a character
-special device.
-.It Bq Er ENOTTY
-The specified request does not apply to the kind
-of object that the descriptor
-.Fa d
-references.
+.It Bq Er EFAULT
+.Fa argp
+points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Fa request
 or
 .Fa argp
 is not valid.
-.It Bq Er EFAULT
-.Fa argp
-points outside the process's allocated address space.
+.It Bq Er ENOTTY
+.Fa d
+is not associated with a character
+special device; or
+the specified request does not apply to the kind
+of object that the descriptor
+.Fa d
+references.
 .El
 .Sh SEE ALSO
 .Xr mt 1 ,
