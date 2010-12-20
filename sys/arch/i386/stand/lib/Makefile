@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2009/11/19 22:13:17 dsl Exp $
+#	$NetBSD: Makefile,v 1.30 2010/12/20 01:12:44 jakllsch Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -21,7 +21,7 @@ SRCS+= getsecs.c biosgetrtc.S biosdelay.S biosreboot.S gatea20.c
 SRCS+= biosmem.S getextmemx.c biosmemx.S printmemlist.c
 SRCS+= pread.c menuutils.c parseutils.c
 SRCS+= bootinfo.c bootinfo_biosgeom.c bootinfo_memmap.c
-SRCS+= startprog.S multiboot.S panic.c
+SRCS+= startprog.S multiboot.S
 SRCS+= biosgetsystime.S cpufunc.S bootmenu.c
 SRCS+= realprot.S message.S message32.S dump_eax.S pvcopy.S putstr.S
 SRCS+= rasops.c vbe.c biosvbe.S
