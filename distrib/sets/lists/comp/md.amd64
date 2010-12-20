@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.88 2010/12/16 18:42:49 christos Exp $
+# $NetBSD: md.amd64,v 1.89 2010/12/20 04:29:29 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -228,6 +228,7 @@
 ./usr/include/x86/specialreg.h			comp-c-include
 ./usr/include/x86/sysarch.h			comp-c-include
 ./usr/include/x86/trap.h			comp-c-include
+./usr/include/x86/via_padlock.h			comp-c-include
 ./usr/include/xen				comp-c-include
 ./usr/include/xen/xenio.h			comp-c-include
 ./usr/include/xen/xenio3.h			comp-c-include
