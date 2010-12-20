@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.46 2010/12/11 08:20:17 mrg Exp $
+# $NetBSD: Makefile.boot,v 1.47 2010/12/20 00:55:10 jakllsch Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -72,10 +72,7 @@ CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
 CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -DSUPPORT_USTARFS
 CPPFLAGS+= -DSUPPORT_DOSFS
-# XXX this bloats(?) /boot and it can't boot from cd anymore
-.if ${MACHINE_ARCH} != "x86_64"
 CPPFLAGS+= -DSUPPORT_EXT2FS
-.endif
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
@@ -84,7 +81,7 @@ CPPFLAGS+= -DEPIA_HACK
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
 # XXX The heap values should be determined from _end.
-SAMISCCPPFLAGS+= -DHEAP_START=0x30000 -DHEAP_LIMIT=0x50000
+SAMISCCPPFLAGS+= -DHEAP_START=0x40000 -DHEAP_LIMIT=0x70000
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
