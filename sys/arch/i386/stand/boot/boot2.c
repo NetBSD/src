@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.49 2010/11/06 23:07:46 jym Exp $	*/
+/*	$NetBSD: boot2.c,v 1.50 2010/12/20 01:12:44 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -414,7 +414,6 @@ command_quit(char *arg)
 	reboot();
 	/* Note: we shouldn't get to this point! */
 	panic("Could not reboot!");
-	exit(0);
 }
 
 void
