@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.4 2010/02/06 20:11:33 pgoyette Exp $
+.\"	$NetBSD: iic.4,v 1.5 2010/12/20 18:15:21 jruoho Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 6, 2010
+.Dd December 20, 2010
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@
 .Cd "iic* at piixpm?              # amd64 i386 "
 .Cd "iic0 at slugiic0             # evbarm "
 .Cd "iic* at viapcib?             # i386 "
+.Pp
+.Cd "options I2C_SCAN"
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting
@@ -86,15 +88,15 @@ it with the
 .Tn I2C
 commands.
 .Sh SUPPORTED MASTERS
-A wide list of I2C masters are supported, among them
-are:
+A wide list of I2C masters are supported, among them are:
+.Pp
 .\"
 .\" Generate the following list with these (t)csh commands:
 .\" cd .../src/sys/arch
 .\" grep -h '^iic.*at' */conf/* | awk '{print $3}' | sed 's,.$,,' | sort -u | sh -c 'while read i ; do echo .It Xr $i 4; n=`grep -h ^.Nd ../../share/man/man4/$i* | sed "s,^.Nd ,,"`; if [ -n "$n" ]; then echo $n ; else echo "" ; fi ; done' | tee /tmp/x
 .\" cat /tmp/x
 .\"
-.Bl -tag -width 18n -compact
+.Bl -tag -width 18n -compact -offset indent
 .It Xr alipm 4
 Acer Labs M7101 SMBus controller
 .It Xr acpismbus 4
@@ -126,13 +128,14 @@ Intel PIIX and compatible Power Management controller
 .El
 .Sh SUPPORTED SLAVES
 A wide list of slaves are supported, among them:
+.Pp
 .\"
 .\" Create the following list with these commands:
 .\" cd .../src/sys/arch
 .\" grep -h '.* at iic.*' */conf/* | sed -e 's,^#,,' -e 's, .*,,' -e 's,.$,,' | sort -u | sh -c 'while read i ; do echo .It Xr $i 4 ; n=`grep ^.Nd ../../share/man/man4/$i* | sed "s,^.Nd ,,"` ; if [ -n "$n" ]; then echo $n ; else echo "" ; fi ; done' | tee /tmp/x
 .\" cat /tmp/x
 .\"
-.Bl -tag -width 13n -compact
+.Bl -tag -width 13n -compact -offset indent
 .It Xr dbcool 4
 dbCool(tm) family of environmental monitors and fan controllers
 .It Xr rs5c372rtc 4
