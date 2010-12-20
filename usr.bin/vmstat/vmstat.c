@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.170 2010/10/18 19:39:32 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.171 2010/12/20 04:25:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.170 2010/10/18 19:39:32 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.171 2010/12/20 04:25:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,8 @@ __RCSID("$NetBSD: vmstat.c,v 1.170 2010/10/18 19:39:32 christos Exp $");
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/user.h>
+#include <sys/queue.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
@@ -154,7 +156,9 @@ struct nlist namelist[] =
 	{ .n_name = "_time_second" },
 #define X_TIME		10
 	{ .n_name = "_time" },
-#define	X_NL_SIZE	11
+#define X_CPU_QUEUE	11
+	{ .n_name = "_cpu_queue" },
+#define	X_NL_SIZE	12
 	{ .n_name = NULL },
 };
 
@@ -226,7 +230,17 @@ struct nlist histnl[] =
 
 #define KILO	1024	
 
+struct cpu_counter {
+	uint64_t nintr;
+	uint64_t nsyscall;
+	uint64_t nswtch;
+	uint64_t nfault;
+	uint64_t ntrap;
+	uint64_t nsoft;
+} cpucounter, ocpucounter;
+
 struct	uvmexp uvmexp, ouvmexp;
+struct  cpuqueue cpu_queue;
 int	ndrives;
 
 int	winlines = 20;
@@ -263,6 +277,7 @@ kvm_t *kd;
 } while (/* CONSTCOND */0)
 
 void	cpustats(int *);
+void	cpucounters(struct cpu_counter *);
 void	deref_kptr(const void *, void *, size_t, const char *);
 void	drvstats(int *);
 void	doevcnt(int verbose);
@@ -664,6 +679,8 @@ dovmstat(struct timespec *interval, int reps)
 	if (!hz)
 		kread(namelist, X_HZ, &hz, sizeof(hz));
 
+	kread(namelist, X_CPU_QUEUE, &cpu_queue, sizeof(cpu_queue));
+
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt)
 			printhdr();
@@ -687,6 +704,7 @@ dovmstat(struct timespec *interval, int reps)
 				(void)memset(&total, 0, sizeof(total));
 			}
 		}
+		cpucounters(&cpucounter);
 		ovflw = 0;
 		PRWORD(ovflw, " %*d", 2, 1, total.t_rq - 1);
 		PRWORD(ovflw, " %*d", 2, 1, total.t_dw + total.t_pw);
@@ -695,7 +713,7 @@ dovmstat(struct timespec *interval, int reps)
 		PRWORD(ovflw, " %*ld", 9, 1, pgtok(total.t_avm));
 		PRWORD(ovflw, " %*ld", 7, 1, pgtok(total.t_free));
 		PRWORD(ovflw, " %*ld", 5, 1,
-		    rate(uvmexp.faults - ouvmexp.faults));
+		    rate(cpucounter.nfault - ocpucounter.nfault));
 		PRWORD(ovflw, " %*ld", 4, 1,
 		    rate(uvmexp.pdreact - ouvmexp.pdreact));
 		PRWORD(ovflw, " %*ld", 4, 1,
@@ -708,17 +726,17 @@ dovmstat(struct timespec *interval, int reps)
 		    rate(uvmexp.pdscans - ouvmexp.pdscans));
 		drvstats(&ovflw);
 		PRWORD(ovflw, " %*ld", 5, 1,
-		    rate(uvmexp.intrs - ouvmexp.intrs));
+		    rate(cpucounter.nintr - ocpucounter.nintr));
 		PRWORD(ovflw, " %*ld", 5, 1,
-		    rate(uvmexp.syscalls - ouvmexp.syscalls));
+		    rate(cpucounter.nsyscall - ocpucounter.nsyscall));
 		PRWORD(ovflw, " %*ld", 4, 1,
-		    rate(uvmexp.swtch - ouvmexp.swtch));
+		    rate(cpucounter.nswtch - ocpucounter.nswtch));
 		cpustats(&ovflw);
 		(void)putchar('\n');
 		(void)fflush(stdout);
 		if (reps >= 0 && --reps <= 0)
 			break;
-		ouvmexp = uvmexp;
+		ocpucounter = cpucounter;
 		uptime = interval->tv_sec;
 		/*
 		 * We round upward to avoid losing low-frequency events
@@ -784,6 +802,7 @@ dosum(void)
 	struct uvmexp_sysctl uvmexp2;
 	size_t ssize;
 	int active_kernel;
+	struct cpu_counter cc;
 
 	/*
 	 * The "active" and "inactive" variables
@@ -832,12 +851,14 @@ dosum(void)
 	(void)printf("%9u swap pages in use\n", uvmexp.swpginuse);
 	(void)printf("%9u swap allocations\n", uvmexp.nswget);
 
-	(void)printf("%9u total faults taken\n", uvmexp.faults);
-	(void)printf("%9u traps\n", uvmexp.traps);
-	(void)printf("%9u device interrupts\n", uvmexp.intrs);
-	(void)printf("%9u CPU context switches\n", uvmexp.swtch);
-	(void)printf("%9u software interrupts\n", uvmexp.softs);
-	(void)printf("%9u system calls\n", uvmexp.syscalls);
+	kread(namelist, X_CPU_QUEUE, &cpu_queue, sizeof(cpu_queue));
+	cpucounters(&cc);
+	(void)printf("%9" PRIu64 " total faults taken\n", cc.nfault);
+	(void)printf("%9" PRIu64 " traps\n", cc.ntrap);
+	(void)printf("%9" PRIu64 " device interrupts\n", cc.nintr);
+	(void)printf("%9" PRIu64 " CPU context switches\n", cc.nswtch);
+	(void)printf("%9" PRIu64 " software interrupts\n", cc.nsoft);
+	(void)printf("%9" PRIu64 " system calls\n", cc.nsyscall);
 	(void)printf("%9u pagein requests\n", uvmexp.pageins);
 	(void)printf("%9u pageout requests\n", uvmexp.pdpageouts);
 	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin);
@@ -948,6 +969,32 @@ drvstats(int *ovflwp)
 		    (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
 	}
 	*ovflwp = ovflw;
+}
+
+void
+cpucounters(struct cpu_counter *cc)
+{
+	struct cpu_info *ci;
+	(void)memset(cc, 0, sizeof(*cc));
+	CIRCLEQ_FOREACH(ci, &cpu_queue, ci_data.cpu_qchain) {
+		struct cpu_info tci;
+		if ((size_t)kvm_read(kd, (u_long)ci, &tci, sizeof(tci))
+		    != sizeof(tci)) {
+		    warnx("Can't read cpu info from %p (%s)",
+			ci, kvm_geterr(kd));
+		    continue;
+		}
+		/* Found the fake element, done */
+		if (tci.ci_data.cpu_qchain.cqe_prev == NULL)
+			break;
+		cc->nintr += tci.ci_data.cpu_nintr;
+		cc->nsyscall += tci.ci_data.cpu_nsyscall;
+		cc->nswtch = tci.ci_data.cpu_nswtch;
+		cc->nfault = tci.ci_data.cpu_nfault;
+		cc->ntrap = tci.ci_data.cpu_ntrap;
+		cc->nsoft = tci.ci_data.cpu_nsoft;
+		ci = &tci;
+	}
 }
 
 void
