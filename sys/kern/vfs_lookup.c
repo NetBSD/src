@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.126 2010/12/17 22:34:04 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.127 2010/12/20 00:12:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.126 2010/12/17 22:34:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.127 2010/12/20 00:12:46 yamt Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -696,7 +696,6 @@ do_namei(struct namei_state *state)
 		}
 		return error;
 	}
-	KASSERT(VOP_ISLOCKED(state->namei_startdir) == LK_EXCLUSIVE);
 
 	/* Loop through symbolic links */
 	for (;;) {
@@ -905,11 +904,6 @@ lookup_start(struct namei_state *state)
 	return 0;
 }
 
-/*
- * lookup_parsepath: consume a component name from state->ndp and prepare
- * state->cnp for it.
- */
-
 static int
 lookup_parsepath(struct namei_state *state)
 {
@@ -928,12 +922,16 @@ lookup_parsepath(struct namei_state *state)
 	 * cnp->cn_nameptr for callers that need the name. Callers needing
 	 * the name set the SAVENAME flag. When done, they assume
 	 * responsibility for freeing the pathname buffer.
+	 *
+	 * At this point, our only vnode state is that "dp" is held and locked.
 	 */
 	cnp->cn_consume = 0;
 	cp = NULL;
 	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
 	if (cnp->cn_namelen > NAME_MAX) {
+		vput(state->dp);
+		ndp->ni_dvp = NULL;
 		return ENAMETOOLONG;
 	}
 #ifdef NAMEI_DIAGNOSTIC
@@ -983,21 +981,6 @@ lookup_parsepath(struct namei_state *state)
 
 	return 0;
 }
-
-/*
- * lookup_once: look up the vnode for the next component name (state->cnp).
- *
- * takes care of dot-dot, cross-mount, and MNT_UNION.
- *
- * inputs:
- *	state->dp	the parent vnode
- *	state->cnp	the componentname to lookup
- *
- * outputs:
- *	state->dp	the result vnode
- *	ndp->ni_vp	updated to state->dp
- *	ndp->ni_dvp	updated to the parent directory vnode
- */
 
 static int
 lookup_once(struct namei_state *state)
@@ -1153,8 +1136,6 @@ unionlookup:
 	 * "state->dp" and "ndp->ni_dvp" are both locked and held,
 	 * and may be the same vnode.
 	 */
-	KASSERT(VOP_ISLOCKED(state->dp) == LK_EXCLUSIVE);
-	KASSERT(VOP_ISLOCKED(ndp->ni_dvp) == LK_EXCLUSIVE);
 
 	/*
 	 * Check to see if the vnode has been mounted on;
@@ -1176,9 +1157,10 @@ unionlookup:
 			vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
 			return error;
 		}
-		vrele(ndp->ni_dvp);
-		vref(tdp);
-		ndp->ni_dvp = ndp->ni_vp = state->dp = tdp;
+		VOP_UNLOCK(tdp);
+		ndp->ni_vp = state->dp = tdp;
+		vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(ndp->ni_vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 	return 0;
@@ -1205,14 +1187,8 @@ do_lookup(struct namei_state *state)
 	}
 
 dirloop:
-	/*
-	 * At this point, our only vnode state is that "dp" is held and locked.
-	 */
-	KASSERT(VOP_ISLOCKED(state->dp) == LK_EXCLUSIVE);
-	KASSERT(ndp->ni_dvp == NULL);
 	error = lookup_parsepath(state);
 	if (error) {
-		vput(state->dp);
 		goto bad;
 	}
 
@@ -1259,7 +1235,6 @@ dirloop:
 		} else {
 			vput(ndp->ni_dvp);
 		}
-		ndp->ni_dvp = NULL;
 		goto dirloop;
 	}
 
