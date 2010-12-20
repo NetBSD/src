@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.34 2010/10/28 04:27:40 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.35 2010/12/20 08:13:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.34 2010/10/28 04:27:40 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.35 2010/12/20 08:13:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -852,18 +852,21 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	uint8_t width;
 	int rv;
 
-	if (sc->sc_cold != false) {
+	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
 		goto fail;
 	}
 
-	if ((sc->sc_flags & ACPICPU_FLAG_P) == 0) {
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P) == 0)) {
 		rv = ENODEV;
 		goto fail;
 	}
 
 	mutex_enter(&sc->sc_mtx);
 
+	/*
+	 * Use the cached value, if available.
+	 */
 	if (sc->sc_pstate_current != ACPICPU_P_STATE_UNKNOWN) {
 		*freq = sc->sc_pstate_current;
 		mutex_exit(&sc->sc_mtx);
@@ -878,7 +881,7 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 		rv = acpicpu_md_pstate_get(sc, freq);
 
-		if (rv != 0)
+		if (__predict_false(rv != 0))
 			goto fail;
 
 		break;
@@ -906,7 +909,7 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 			}
 		}
 
-		if (__predict_false(ps == NULL)) {
+		if (ps == NULL) {
 			rv = EIO;
 			goto fail;
 		}
@@ -946,12 +949,12 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 	uint8_t width;
 	int rv;
 
-	if (sc->sc_cold != false) {
+	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
 		goto fail;
 	}
 
-	if ((sc->sc_flags & ACPICPU_FLAG_P) == 0) {
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P) == 0)) {
 		rv = ENODEV;
 		goto fail;
 	}
@@ -963,9 +966,15 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 		return 0;
 	}
 
+	/*
+	 * Verify that the requested frequency is available.
+	 *
+	 * The access needs to be protected since the currently
+	 * available maximum and minimum may change dynamically.
+	 */
 	for (i = sc->sc_pstate_max; i <= sc->sc_pstate_min; i++) {
 
-		if (sc->sc_pstate[i].ps_freq == 0)
+		if (__predict_false(sc->sc_pstate[i].ps_freq == 0))
 			continue;
 
 		if (sc->sc_pstate[i].ps_freq == freq) {
@@ -987,7 +996,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 
 		rv = acpicpu_md_pstate_set(ps);
 
-		if (rv != 0)
+		if (__predict_false(rv != 0))
 			goto fail;
 
 		break;
