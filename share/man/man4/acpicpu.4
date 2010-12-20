@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.18 2010/12/20 08:33:09 jruoho Exp $
+.\" $NetBSD: acpicpu.4,v 1.19 2010/12/20 08:34:15 jruoho Exp $
 .\"
 .\" Coyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -329,15 +329,6 @@ It is currently only safe to use
 on
 .Nx .
 All other C-states are disabled by default.
-.It
-The
-.Tn AMD
-.Tn C1E
-extension is not supported.
-If this extension is available in a vendor
-.Tn BIOS ,
-it is recommended to turn it off, with or without
-.Nm .
 .It
 Processor thermal control (see
 .Xr acpitz 4 )
