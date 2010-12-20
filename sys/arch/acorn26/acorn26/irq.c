@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.15 2009/03/18 10:22:21 cegger Exp $ */
+/* $NetBSD: irq.c,v 1.16 2010/12/20 00:25:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.15 2009/03/18 10:22:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.16 2010/12/20 00:25:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.15 2009/03/18 10:22:21 cegger Exp $");
 #include <sys/bus.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/frame.h>
 #include <machine/irq.h>
@@ -141,7 +139,7 @@ irq_handler(struct irqframe *irqf)
 #if 0
 	printf("*");
 #endif
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	stray = 1;
 #if NFIQ > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2010/07/07 01:16:26 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.140 2010/12/20 00:25:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2010/07/07 01:16:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2010/12/20 00:25:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -261,7 +261,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 	u_quad_t sticks;
 	void *onfault;
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);

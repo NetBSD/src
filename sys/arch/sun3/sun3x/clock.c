@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 2010/01/28 14:10:54 mbalmer Exp $	*/
+/*	$NetBSD: clock.c,v 1.39 2010/12/20 00:25:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2010/01/28 14:10:54 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2010/12/20 00:25:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,7 +443,7 @@ clock_intr(struct clockframe cf)
 #endif	/* SUN3_470 */
 
 	intrcnt[CLOCK_PRI]++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	/* Entertainment! */
 	if (cf.cf_pc == (long)_Idle)

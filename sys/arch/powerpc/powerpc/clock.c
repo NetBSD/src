@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2010/04/24 09:39:57 kiyohara Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2010/12/20 00:25:41 matt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2010/04/24 09:39:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2010/12/20 00:25:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -137,7 +137,7 @@ decr_intr(struct clockframe *frame)
 		ticks += ticks_per_intr;
 	__asm volatile ("mtdec %0" :: "r"(ticks));
 
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.94 2010/11/09 06:41:03 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.95 2010/12/20 00:25:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 2010/11/09 06:41:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2010/12/20 00:25:34 matt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -206,7 +206,7 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 
 	if (l->l_md.md_astpending) {
 		l->l_md.md_astpending = 0;
-		uvmexp.softs++;
+		//curcpu()->ci_data.cpu_nast++;
 
 		if (curcpu()->ci_want_resched)
 			preempt();
@@ -588,7 +588,7 @@ trap(int type, struct trapframe *frame)
 
 	/* If this is a trap, not an interrupt, reenable interrupts. */
 	if (trapnum != T_INTERRUPT) {
-		uvmexp.traps++;
+		curcpu()->ci_data.cpu_ntrap++;
 		mtctl(frame->tf_eiem, CR_EIEM);
 	}
 
@@ -1124,7 +1124,7 @@ syscall(struct trapframe *frame, int *args)
 	int oldcpl = ci->ci_cpl;
 #endif
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, frame, curlwp);

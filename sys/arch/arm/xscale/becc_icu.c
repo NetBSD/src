@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.11 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.12 2010/12/20 00:25:29 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.11 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.12 2010/12/20 00:25:29 matt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -372,7 +372,7 @@ becc_intr_dispatch(struct irqframe *frame)
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			ci->ci_cpl = ih->ih_ipl;
 			oldirqstate = enable_interrupts(I32_bit);

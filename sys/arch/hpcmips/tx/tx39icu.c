@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.26 2010/11/15 06:26:58 uebayasi Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.27 2010/12/20 00:25:34 matt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.26 2010/11/15 06:26:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.27 2010/12/20 00:25:34 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -315,7 +315,7 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 #ifdef __HAVE_FAST_SOFTINTS
 	if ((ipending & MIPS_HARD_INT_MASK) == 0)

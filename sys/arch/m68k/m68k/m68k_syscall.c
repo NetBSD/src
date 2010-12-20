@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.44 2010/10/15 10:40:52 tsutsui Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.45 2010/12/20 00:25:36 matt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.44 2010/10/15 10:40:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.45 2010/12/20 00:25:36 matt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -159,7 +159,7 @@ syscall(register_t code, struct frame frame)
 	struct proc *p;
 	u_quad_t sticks;
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 

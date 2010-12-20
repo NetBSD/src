@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.166 2010/11/13 05:52:55 uebayasi Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.167 2010/12/20 00:25:47 matt Exp $	*/
 
 /*
  *
@@ -314,12 +314,12 @@ struct uvmexp {
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 
 	/* stat counters.  XXX: should be 64-bit counters */
-	int faults;		/* page fault count */
-	int traps;		/* trap count */
-	int intrs;		/* interrupt count */
-	int swtch;		/* context switch count */
-	int softs;		/* software interrupt count */
-	int syscalls;		/* system calls */
+	int _unused_faults;	/* page fault count */
+	int _unused_traps;	/* trap count */
+	int _unused_intrs;	/* interrupt count */
+	int _unused_swtch;	/* context switch count */
+	int _unused_softs;	/* software interrupt count */
+	int _unused_syscalls;	/* system calls */
 	int pageins;		/* pagein operation count */
 				/* pageouts are in pdpageouts below */
 	int _unused1;

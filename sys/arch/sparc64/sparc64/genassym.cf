@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.62 2009/12/10 05:10:03 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.63 2010/12/20 00:25:44 matt Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -137,10 +137,6 @@ define	PM_WIRED	offsetof(struct pmap, pm_stats.wired_count)
 # the assembler doesn't grok C constants with LL suffix
 define	A_TLB_TSB_LOCK	TLB_TSB_LOCK
 
-# interrupt/fault metering
-define	V_INTR		offsetof(struct uvmexp, intrs)
-define	V_FAULTS	offsetof(struct uvmexp, faults)
-
 # CPU info structure
 define	CI_SELF		offsetof(struct cpu_info, ci_self)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
@@ -155,6 +151,8 @@ define	CI_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_EINTRSTACK	offsetof(struct cpu_info, ci_eintstack)
 define	CI_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CI_NFAULT	offsetof(struct cpu_info, ci_data.cpu_nfault)
+define	CI_NINTR	offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CI_CLOCKRATE	offsetof(struct cpu_info, ci_cpu_clockrate)
 define	CI_IDEPTH	offsetof(struct cpu_info, ci_idepth)
 define	CI_INTRPENDING	offsetof(struct cpu_info, ci_intrpending)

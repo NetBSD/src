@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.32 2010/12/11 22:32:13 matt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.33 2010/12/20 00:25:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.32 2010/12/11 22:32:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.33 2010/12/20 00:25:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -553,7 +553,7 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 	 * Unlocked, but only for statistics.
 	 * Should be per-CPU to prevent cache ping-pong.
 	 */
-	uvmexp.softs++;
+	curcpu()->ci_data.cpu_nsoft++;
 
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);
