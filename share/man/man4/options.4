@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.397 2010/09/22 17:59:35 wiz Exp $
+.\"	$NetBSD: options.4,v 1.398 2010/12/20 18:18:32 jruoho Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1142,7 +1142,8 @@ Possible values include
 .Dv RB_SINGLE
 (boot in single-user mode).
 .It Cd options MODULAR
-Enables the framework for kernel modules.
+Enables the framework for kernel modules (see
+.Xr module 7 ) .
 .It Cd options VND_COMPRESSION
 Enables the
 .Xr vnd 4
@@ -1494,8 +1495,9 @@ Using this option can access some devices in such a
 manner as to leave them in an unstable or unuseable state, and
 can prevent those devices from being properly matched and/or
 attached.
-It can also lock up the entire i2c bus and even
-prevent a machine from completing the boot process.
+It can also lock up the entire
+.Xr iic 4
+bus and even prevent a machine from completing the boot process.
 Don't use this option unless you know what you're doing and can
 accept all sorts of unforeseen consequences.
 .El
