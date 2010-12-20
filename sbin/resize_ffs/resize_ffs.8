@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_ffs.8,v 1.7 2010/12/19 23:22:46 njoly Exp $
+.\"     $NetBSD: resize_ffs.8,v 1.8 2010/12/20 00:44:53 riz Exp $
 .\"
 .\" As its sole author, I explicitly place this man page in the public
 .\" domain.  Anyone may use it in any way for any purpose (though I would
@@ -9,12 +9,12 @@
 .\"  X  Against HTML               mouse@rodents.montreal.qc.ca
 .\" / \ Email!           7D C8 61 52 5D E7 2D 39  4E F1 31 3E E8 B3 27 4B
 .\"
-.Dd October 30, 2010
+.Dd December 18, 2010
 .Dt RESIZE_FFS 8
 .Os
 .Sh NAME
 .Nm resize_ffs
-.Nd resize an on-disk file system
+.Nd resize a file system on disk or in a file
 .Sh SYNOPSIS
 .Nm
 .Op Fl y
@@ -24,7 +24,7 @@
 .Nm
 resizes a file system on disk.
 .Ar file-system-raw-device
-is the name of the raw disk device where the file system resides;
+is the name of the raw disk device or file where the file system resides;
 (Sectors are almost always 512 bytes, and
 .Nm
 can both grow and shrink file systems.
@@ -66,10 +66,6 @@ Disable sanity questions made by
 .Nm .
 .El
 .Sh WARNING
-.Nm
-should still be considered experimental.
-It still needs to be validated with a rigorous regression test
-suite.
 .Em Interrupting
 .Nm
 .Em "may leave your file system in an inconsistent state and require a"
@@ -88,16 +84,7 @@ data.
 It's probably wise to
 .Xr fsck 8
 the file system before and after, just to be safe.
-.\" Remove this when (if) fsck gets fixed.
-.Pp
-There is a bug somewhere in
-.Xr fsck 8 ;
-it does not check certain data structures enough.
-A past version of this program had a bug that produced corrupted
-rotation layout summary tables, which would panic the kernel.
-This bug is believed fixed, and there are currently no
-known bugs in the program.
-However, you should be aware that just because
+You should be aware that just because
 .Xr fsck 8
 is happy with the file system does not mean it is intact.
 .Sh EXIT STATUS
@@ -133,9 +120,6 @@ layout bug referred to in the
 .Sx WARNING
 section above.
 .Sh BUGS
-Has not been tested and probably won't work on opposite-endian file
-systems.
-.Pp
 Can fail to shrink a file system when there actually is enough space,
 because it does not distinguish between a block allocated as a block
 and a block fully occupied by two or more frags.
@@ -146,4 +130,4 @@ when the new size is extremely close to the minimum possible.
 Has no intelligence whatever when it comes to allocating blocks to copy
 data into when shrinking.
 .Pp
-Doesn't work with FFSv2 file systems.
+Doesn't shrink FFSv2 file systems.
