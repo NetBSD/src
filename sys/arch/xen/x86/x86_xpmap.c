@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.22 2010/12/19 23:23:35 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.23 2010/12/20 21:18:45 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.22 2010/12/19 23:23:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.23 2010/12/20 21:18:45 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -167,20 +167,22 @@ static int xpq_idx = 0;
 void
 xpq_flush_queue(void)
 {
-	int i, ok;
+	int i, ok, ret;
 
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
 		XENPRINTK2(("%d: 0x%08" PRIx64 " 0x%08" PRIx64 "\n", i,
 		    xpq_queue[i].ptr, xpq_queue[i].val));
-	if (xpq_idx != 0 &&
-	    HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok) < 0) {
+
+	ret = HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok);
+
+	if (xpq_idx != 0 && ret < 0) {
 		printf("xpq_flush_queue: %d entries (%d successful)\n",
 		    xpq_idx, ok);
 		for (i = 0; i < xpq_idx; i++)
 			printf("0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
 			   xpq_queue[i].ptr, xpq_queue[i].val);
-		panic("HYPERVISOR_mmu_update failed\n");
+		panic("HYPERVISOR_mmu_update failed, ret: %d\n", ret);
 	}
 	xpq_idx = 0;
 }
