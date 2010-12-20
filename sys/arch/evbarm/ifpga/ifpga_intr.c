@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.c,v 1.8 2008/04/27 18:58:46 matt Exp $	*/
+/*	$NetBSD: ifpga_intr.c,v 1.9 2010/12/20 00:25:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -48,8 +48,6 @@
 #include <sys/malloc.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <arm/cpufunc.h>
 
@@ -340,7 +338,7 @@ ifpga_intr_dispatch(struct clockframe *frame)
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		ci->ci_cpl |= iq->iq_mask;
 		oldirqstate = enable_interrupts(I32_bit);
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;

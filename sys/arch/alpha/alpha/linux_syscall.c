@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.30 2009/11/21 05:35:40 rmind Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.31 2010/12/20 00:25:24 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.30 2009/11/21 05:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.31 2010/12/20 00:25:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.30 2009/11/21 05:35:40 rmind Exp
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -151,7 +149,7 @@ linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	LWP_CACHE_CREDS(l, p);
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 	l->l_md.md_tf = framep;
 
 	callp = p->p_emul->e_sysent;
@@ -235,7 +233,7 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	LWP_CACHE_CREDS(l, p);
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 	l->l_md.md_tf = framep;
 
 	callp = p->p_emul->e_sysent;

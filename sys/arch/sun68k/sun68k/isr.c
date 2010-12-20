@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.23 2008/06/22 17:34:25 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.24 2010/12/20 00:25:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.23 2008/06/22 17:34:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.24 2010/12/20 00:25:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ isr_autovec(struct clockframe cf)
 
 	n = intrcnt[ipl];
 	intrcnt[ipl] = n + 1;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	isr = isr_autovec_list[ipl];
 	if (isr == NULL) {
@@ -181,7 +181,7 @@ isr_vectored(struct clockframe cf)
 	ipl = (ipl >> 8) & 7;
 
 	intrcnt[ipl]++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 #ifdef DIAGNOSTIC
 	if (vec < 64 || vec >= 256) {

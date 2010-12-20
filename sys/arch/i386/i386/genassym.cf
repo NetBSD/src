@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.87 2010/04/28 19:17:03 dyoung Exp $
+#	$NetBSD: genassym.cf,v 1.88 2010/12/20 00:25:35 matt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,9 +205,6 @@ define	IP_DST			offsetof(struct ip, ip_dst)
 define	IP6_SRC			offsetof(struct ip6_hdr, ip6_src)
 define	IP6_DST			offsetof(struct ip6_hdr, ip6_dst)
 
-define	V_TRAP			offsetof(struct uvmexp, traps)
-define	V_INTR			offsetof(struct uvmexp, intrs)
-
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
 define	PCB_ESP			offsetof(struct pcb, pcb_esp)
@@ -308,8 +305,10 @@ define	CPU_INFO_IOMAP		offsetof(struct cpu_info, ci_iomap)
 define	IOMAP_INVALOFF		IOMAP_INVALOFF
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
+define	CPU_INFO_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
+
 
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)

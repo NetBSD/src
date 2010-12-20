@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.119 2010/06/06 04:50:05 mrg Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.120 2010/12/20 00:25:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,11 +37,10 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.119 2010/06/06 04:50:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.120 2010/12/20 00:25:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <uvm/uvm_extern.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
@@ -53,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.119 2010/06/06 04:50:05 mrg Exp $")
 #include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2010/11/15 06:30:04 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2010/12/20 00:25:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2010/11/15 06:30:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2010/12/20 00:25:34 matt Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -596,6 +596,8 @@ intc_intr(int ssr, int spc, int ssp)
 	struct intc_intrhand *ih;
 	int evtcode;
 	uint16_t r;
+
+	curcpu()->ci_data.cpu_nintr++;
 
 	evtcode = _reg_read_4(CPU_IS_SH3 ? SH7709_INTEVT2 : SH4_INTEVT);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.50 2009/11/21 20:32:17 rmind Exp $	*/
+/*	$NetBSD: syscall.c,v 1.51 2010/12/20 00:25:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.50 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51 2010/12/20 00:25:26 matt Exp $");
 
 #include "opt_sa.h"
 
@@ -198,7 +198,7 @@ swi_handler(trapframe_t *frame)
 	}
 #endif	/* CPU_ARM7 */
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 
 	LWP_CACHE_CREDS(l, l->l_proc);
 	(*l->l_proc->p_md.md_syscall)(frame, l, insn);

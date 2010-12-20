@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.161 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.162 2010/12/20 00:25:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -847,12 +847,11 @@ Lbrkpt3:
  *	Level 7:        NMIs: parity errors?, RESET button
  */
 
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
-
 ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(intrcnt)+0
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)
@@ -898,7 +897,9 @@ ENTRY_NOPROFILE(rtclock_intr)
 	addql	#4,%sp			| pop param
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
 	addql	#1,_C_LABEL(intrcnt)+32	| record a clock interrupt
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	movw	%d2,%sr			| restore SPL
 	movl	%sp@+,%d2		| restore %d2
 	rts				| go back from whence we came

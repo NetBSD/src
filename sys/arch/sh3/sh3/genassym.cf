@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2009/12/10 05:10:03 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.19 2010/12/20 00:25:43 matt Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@ include <sh3/vmparam.h>
 include <sh3/pte.h>
 
 define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
+define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 
 define	TF_SIZE			sizeof(struct trapframe)
 define	TF_EXPEVT		offsetof(struct trapframe, tf_expevt)
@@ -81,8 +82,6 @@ define	L_MD_PCB		offsetof(struct lwp, l_md.md_pcb)
 
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FAULTBAIL		offsetof(struct pcb, pcb_faultbail)
-
-define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
 
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.11 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.12 2010/12/20 00:25:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -265,10 +265,17 @@ irqloop:
 	moveq	r0, r8			/* IRQ requests as arg 0 */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 
-	ldr	r0, Lcnt
-	ldr	r1, [r0, #(V_INTR)]
-	add	r1, r1, #0x00000001
-	str	r1, [r0, #(V_INTR)]
+	ldr	r1, [r4, #(CI_CC_NINTR)]
+	ldr	r2, [r4, #(CI_CC_NINTR+4)]
+#ifdef _ARMEL
+	adds	r1, r1, #0x00000001
+	adc	r2, r2, #0x00000000
+#else
+	adds	r2, r2, #0x00000001
+	adc	r1, r1, #0x00000000
+#endif
+	str	r1, [r4, #(CI_CC_NINTR)]
+	str	r2, [r4, #(CI_CC_NINTR+4)]
 
 irqchainloop:
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
@@ -333,9 +340,6 @@ ENTRY(irq_setmasks)
 	/* Do nothing */
 	mov	pc, lr
 
-
-Lcnt:
-	.word	_C_LABEL(uvmexp)
 
 Lirqhandlers:
 	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */

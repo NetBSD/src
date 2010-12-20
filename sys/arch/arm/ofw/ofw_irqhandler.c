@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.17 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.18 2010/12/20 00:25:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,14 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.17 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.18 2010/12/20 00:25:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/irqhandler.h>

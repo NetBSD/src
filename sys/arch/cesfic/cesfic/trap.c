@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2010/07/07 01:16:24 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 2010/12/20 00:25:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2010/07/07 01:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2010/12/20 00:25:30 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -305,7 +305,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 	int rv;
 	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);
@@ -536,7 +536,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
-			uvmexp.traps--;
+			curcpu()->ci_data.cpu_ntrap--;
 			return;
 		}
 		spl0();

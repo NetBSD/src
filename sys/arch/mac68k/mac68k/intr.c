@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28 2008/06/19 13:56:22 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.29 2010/12/20 00:25:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2008/06/19 13:56:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2010/12/20 00:25:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2008/06/19 13:56:22 tsutsui Exp $");
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/psc.h>
 #include <machine/viareg.h>
@@ -221,7 +219,7 @@ intr_dispatch(int evec)		/* format | vector offset */
 	ipl = vec - ISRLOC;
 
 	intrcnt[ipl]++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	(void)(*intr_func[ipl])(intr_arg[ipl]);
 	idepth--;

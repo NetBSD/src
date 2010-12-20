@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.32 2009/10/21 21:12:07 rmind Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.33 2010/12/20 00:25:48 matt Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.32 2009/10/21 21:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.33 2010/12/20 00:25:48 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.32 2009/10/21 21:12:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
@@ -208,6 +209,8 @@ void
 uvmexp_print(void (*pr)(const char *, ...))
 {
 	int active, inactive;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 
 	uvm_estimatepageable(&active, &inactive);
 
@@ -222,9 +225,16 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
 	(*pr)("  freemin=%d, free-target=%d, wired-max=%d\n",
 	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
-	(*pr)("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d\n",
-	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch);
-	(*pr)("  softint=%d, syscalls=%d\n", uvmexp.softs, uvmexp.syscalls);
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		(*pr)("  cpu%u:\n", cpu_index(ci));
+		(*pr)("    faults=%" PRIu64 ", traps=%" PRIu64 ", "
+		    "intrs=%llu, ctxswitch=%llu\n",
+		    ci->ci_data.cpu_nfault, ci->ci_data.cpu_ntrap,
+		    ci->ci_data.cpu_nintr, ci->ci_data.cpu_nswtch);
+		(*pr)("    softint=%" PRIu64 ", syscalls=%" PRIu64 "\n",
+		    ci->ci_data.cpu_nsoft, ci->ci_data.cpu_nsyscall);
+	}
 
 	(*pr)("  fault counts:\n");
 	(*pr)("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",

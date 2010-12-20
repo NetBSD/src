@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163 2010/12/13 06:35:03 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.164 2010/12/20 00:25:44 matt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2010/12/13 06:35:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2010/12/20 00:25:44 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -477,7 +477,7 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 	}
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
@@ -1038,7 +1038,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	}
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);
@@ -1284,7 +1284,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	}
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	pcb = lwp_getpcb(l);
 	LWP_CACHE_CREDS(l, l->l_proc);
@@ -1415,7 +1415,7 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	}
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
@@ -1534,7 +1534,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		Debugger();
 	}
 #endif
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);

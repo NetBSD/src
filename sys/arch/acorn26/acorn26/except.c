@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.26 2010/11/15 06:05:27 uebayasi Exp $ */
+/* $NetBSD: except.c,v 1.27 2010/12/20 00:25:23 matt Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.26 2010/11/15 06:05:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.27 2010/12/20 00:25:23 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -108,7 +108,7 @@ prefetch_abort_handler(struct trapframe *tf)
 	 * p15).
 	 */
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;
@@ -166,7 +166,7 @@ data_abort_handler(struct trapframe *tf)
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;
@@ -478,7 +478,7 @@ address_exception_handler(struct trapframe *tf)
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;

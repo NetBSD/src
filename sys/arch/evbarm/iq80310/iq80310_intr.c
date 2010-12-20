@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.26 2008/04/27 18:58:46 matt Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.27 2010/12/20 00:25:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.26 2008/04/27 18:58:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.27 2010/12/20 00:25:31 matt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.26 2008/04/27 18:58:46 matt Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -443,7 +441,7 @@ iq80310_intr_dispatch(struct irqframe *frame)
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		ci->ci_cpl |= iq->iq_mask;
 		oldirqstate = enable_interrupts(I32_bit);
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;

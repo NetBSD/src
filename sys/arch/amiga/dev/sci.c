@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.33 2005/11/26 13:54:18 tsutsui Exp $ */
+/*	$NetBSD: sci.c,v 1.34 2010/12/20 00:25:26 matt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.33 2005/11/26 13:54:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.34 2010/12/20 00:25:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.33 2005/11/26 13:54:18 tsutsui Exp $");
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <uvm/uvm_extern.h>
-#include <machine/pmap.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.45 2009/01/23 16:54:14 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.46 2010/12/20 00:25:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.45 2009/01/23 16:54:14 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.46 2010/12/20 00:25:43 matt Exp $")
 
 
 /*
@@ -462,17 +462,13 @@ NENTRY(sh_vector_interrupt)
 	__EXCEPTION_UNBLOCK(r0, r1)	! enable exceptions for P3 access
 
 	mov.l	.Li_ci_idepth, r8	! callee-saved
-	mov.l	.Li_uvmexp_intrs, r2
 	mov.l	.Li_intc_intr, r0
 	mov.l	@r8, r9			! callee-saved
 	mov	#0, r1
-	mov.l	@r2, r3
 	add	#1, r9			! curcpu()->ci_idepth++
 	mov.l	r1, @(TF_EXPEVT, r14)	! tf->tf_expevt = 0 (for debug)?
-	add	#1, r3			! ++uvmexp.intrs
-	mov.l	r9, @r8
 	jsr	@r0			! intc_intr(ssr, spc, ssp)
-	 mov.l	r3, @r2
+	 mov.l	r9, @r8
 
 	cmp/pl	r9			! curcpu()->ci_idepth > 0
 	add	#-1, r9			! curcpu()->ci_idepth--
@@ -511,7 +507,6 @@ NENTRY(sh_vector_interrupt)
 
 	.align	5
 .Li_ci_idepth:		.long	_C_LABEL(cpu_info_store) + CI_IDEPTH
-.Li_uvmexp_intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS
 .Li_intc_intr:		.long	_C_LABEL(intc_intr)
 .Li_PSL_MD:		.long	0x40000000 /* PSL_MD */
 .Li_ras_start:		.long	_C_LABEL(_lock_cas_ras_start)

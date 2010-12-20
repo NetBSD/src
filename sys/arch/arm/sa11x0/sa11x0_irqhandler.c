@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.16 2008/06/13 13:24:10 rafal Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.17 2010/12/20 00:25:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.16 2008/06/13 13:24:10 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.17 2010/12/20 00:25:29 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.16 2008/06/13 13:24:10 rafal
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <uvm/uvm_extern.h>
 
 #include <arm/arm32/machdep.h>
 #include <arm/sa11x0/sa11x0_reg.h>

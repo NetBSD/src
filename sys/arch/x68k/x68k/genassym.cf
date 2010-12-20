@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31 2009/12/10 05:10:04 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.32 2010/12/20 00:25:46 matt Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -121,7 +121,7 @@ define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
 
 # interrupt/fault metering
-define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 
 define	T_BUSERR		T_BUSERR
 define	T_ADDRERR		T_ADDRERR

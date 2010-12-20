@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108 2010/07/07 01:16:23 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.109 2010/12/20 00:25:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2010/07/07 01:16:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2010/12/20 00:25:30 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -372,7 +372,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	l = curlwp;
 	sticks = 0;
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
@@ -580,7 +580,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
-			uvmexp.traps--;
+			curcpu()->ci_data.cpu_ntrap--;
 			return;
 		}
 		spl0();

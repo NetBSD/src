@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.136 2010/07/07 01:19:54 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.137 2010/12/20 00:25:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2010/07/07 01:19:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2010/12/20 00:25:42 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -104,7 +104,7 @@ trap(struct trapframe *frame)
 		LWP_CACHE_CREDS(l, p);
 	}
 
-	uvmexp.traps++;
+	ci->ci_data.cpu_ntrap++;
 
 	switch (type) {
 	case EXC_RUNMODETRC|EXC_USER:
@@ -347,7 +347,7 @@ trap(struct trapframe *frame)
 
 	case EXC_AST|EXC_USER:
 		ci->ci_astpending = 0;		/* we are about to do it */
-		uvmexp.softs++;
+		//ci->ci_data.cpu_nast++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);

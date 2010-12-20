@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.39 2008/12/21 17:42:05 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.40 2010/12/20 00:25:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.39 2008/12/21 17:42:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40 2010/12/20 00:25:33 matt Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.39 2008/12/21 17:42:05 tsutsui Exp $");
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * The location and size of the autovectored interrupt portion
@@ -195,7 +193,7 @@ intr_dispatch(int evec /* format | vector offset */)
 	ipl = vec - ISRLOC;
 
 	hp300_intr_list[ipl].hi_evcnt.ev_count++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	list = &hp300_intr_list[ipl];
 	if (LIST_FIRST(&list->hi_q) == NULL) {

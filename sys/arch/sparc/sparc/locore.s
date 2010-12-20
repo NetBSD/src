@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.257 2010/08/08 18:21:50 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.258 2010/12/20 00:25:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -91,20 +91,6 @@
 .if CPUINFO_VA & 0x1fff
 BARF
 .endif
-
-/*
- * A handy macro for maintaining instrumentation counters.
- * Note that this clobbers %o0 and %o1.  Normal usage is
- * something like:
- *	foointr:
- *		TRAP_SETUP(...)		! makes %o registers safe
- *		INCR(cnt+V_FOO)	! count a foo
- */
-#define INCR(what) \
-	sethi	%hi(what), %o0; \
-	ld	[%o0 + %lo(what)], %o1; \
-	inc	%o1; \
-	st	%o1, [%o0 + %lo(what)]
 
 #if EV_COUNT != 0
 # error "this code does not work with EV_COUNT != 0"
@@ -1802,7 +1788,8 @@ ctw_invalid:
 #if defined(SUN4)
 memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
-	INCR(_C_LABEL(uvmexp)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
+	! tally interrupt (curcpu()->cpu_data.cpu_nfault++) (clobbers %o0,%o1)
+	INCR64(CPUINFO_VA + CPUINFO_NFAULT)
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1867,7 +1854,8 @@ memfault_sun4:
 memfault_sun4c:
 #if defined(SUN4C)
 	TRAP_SETUP(-CCFSZ-80)
-	INCR(_C_LABEL(uvmexp)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
+	! tally fault (curcpu()->cpu_data.cpu_nfault++) (clobbers %o0,%o1,%o2)
+	INCR64(CPUINFO_VA + CPUINFO_NFAULT)
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1969,7 +1957,8 @@ memfault_sun4m:
 	jmpl	%l5, %l7
 	 or	%l4, %lo(CPUINFO_SYNCFLTDUMP), %l4
 	TRAP_SETUP(-CCFSZ-80)
-	INCR(_C_LABEL(uvmexp)+V_FAULTS)	! cnt.v_faults++ (clobbers %o0,%o1)
+	! tally fault (curcpu()->cpu_data.cpu_nfault++) (clobbers %o0,%o1,%o2)
+	INCR64(CPUINFO_VA + CPUINFO_NFAULT)
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -2503,7 +2492,8 @@ softintr_sun44c:
 softintr_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-	INCR(_C_LABEL(uvmexp)+V_SOFT)	! cnt.v_intr++; (clobbers %o0,%o1)
+	! tally softint (curcpu()->cpu_data.cpu_nintr++) (clobbers %o0,%o1,%o2)
+	INCR64(CPUINFO_VA + CPUINFO_NSOFT)
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2636,7 +2626,8 @@ _ENTRY(_C_LABEL(sparc_interrupt4m))
 sparc_interrupt4m_bogus:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	! tally interrupt (curcpu()->cpu_data.cpu_nintr++) (clobbers %o0,%o1)
+	INCR64X(CPUINFO_VA + CPUINFO_NINTR, %o0, %o1, %l7)
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2683,7 +2674,8 @@ _ENTRY(_C_LABEL(sparc_interrupt44c))
 sparc_interrupt_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	! tally intr (curcpu()->cpu_data.cpu_nintr++) (clobbers %o0,%o1)
+	INCR64X(CPUINFO_VA + CPUINFO_NINTR, %o0, %o1, %l7)
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2983,7 +2975,8 @@ zshard:
 #if defined(SUN4)
 _ENTRY(_C_LABEL(nmi_sun4))
 	INTR_SETUP(-CCFSZ-80)
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	! tally intr (curcpu()->cpu_data.cpu_nintr++) (clobbers %o0,%o1,%o2)
+	INCR64(CPUINFO_VA + CPUINFO_NINTR)
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -3009,7 +3002,8 @@ _ENTRY(_C_LABEL(nmi_sun4))
 #if defined(SUN4C)
 _ENTRY(_C_LABEL(nmi_sun4c))
 	INTR_SETUP(-CCFSZ-80)
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	! tally intr (curcpu()->cpu_data.cpu_nintr++) (clobbers %o0,%o1,%o2)
+	INCR64(CPUINFO_VA + CPUINFO_NINTR)
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -3064,7 +3058,8 @@ _ENTRY(_C_LABEL(nmi_common))
 #if defined(SUN4M)
 _ENTRY(_C_LABEL(nmi_sun4m))
 	INTR_SETUP(-CCFSZ-80)
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	! tally intr (curcpu()->cpu_data.cpu_nintr++) (clobbers %o0,%o1,%o2)
+	INCR64(CPUINFO_VA + CPUINFO_NINTR)
 
 #if !defined(MSIIEP) /* normal sun4m */
 

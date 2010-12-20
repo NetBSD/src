@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_tzic.c,v 1.1 2010/11/13 07:11:03 bsh Exp $	*/
+/*	$NetBSD: imx51_tzic.c,v 1.2 2010/12/20 00:25:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.1 2010/11/13 07:11:03 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.2 2010/12/20 00:25:28 matt Exp $");
 
 #define	_INTR_PRIVATE	/* for arm/pic/picvar.h */
 
@@ -241,7 +241,7 @@ imx51_irq_handler(void *frame)
 	const uint32_t oldipl_mask = __BIT(oldipl);
 	int ipl_mask = 0;
 
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	if (tzic_softc->sc_enabled_mask[0])
 		ipl_mask |= find_pending_irqs(tzic_softc, 0);

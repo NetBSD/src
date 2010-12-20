@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.4 2010/06/13 02:11:22 tsutsui Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.4 2010/06/13 02:11:22 tsutsui Exp $	*/
+/*	$Id: at91aic.c,v 1.5 2010/12/20 00:25:27 matt Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.5 2010/12/20 00:25:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -369,7 +369,7 @@ intr_process(struct intrq *iq, int pcpl, struct irqframe *frame)
 	intr = iq - intrq;
 
 	iq->iq_ev.ev_count++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	if ((1U << intr) & aic_imask[pcpl]) {
 		panic("interrupt %d should be masked! (aic_imask=0x%X)", intr, aic_imask[pcpl]);

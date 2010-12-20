@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.54 2010/11/16 03:49:53 enami Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.55 2010/12/20 00:25:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,11 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.54 2010/11/16 03:49:53 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.55 2010/12/20 00:25:48 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 
@@ -98,6 +99,8 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 	struct uvmexp_sysctl u;
 	int active, inactive;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 
 	uvm_estimatepageable(&active, &inactive);
 
@@ -125,12 +128,14 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.swpginuse = uvmexp.swpginuse;
 	u.swpgonly = uvmexp.swpgonly;
 	u.nswget = uvmexp.nswget;
-	u.faults = uvmexp.faults;
-	u.traps = uvmexp.traps;
-	u.intrs = uvmexp.intrs;
-	u.swtch = uvmexp.swtch;
-	u.softs = uvmexp.softs;
-	u.syscalls = uvmexp.syscalls;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		u.faults += ci->ci_data.cpu_nfault;
+		u.traps += ci->ci_data.cpu_ntrap;
+		u.intrs += ci->ci_data.cpu_nintr;
+		u.swtch += ci->ci_data.cpu_nswtch;
+		u.softs += ci->ci_data.cpu_nsoft;
+		u.syscalls += ci->ci_data.cpu_nsyscall;
+	}
 	u.pageins = uvmexp.pageins;
 	u.pgswapin = uvmexp.pgswapin;
 	u.pgswapout = uvmexp.pgswapout;

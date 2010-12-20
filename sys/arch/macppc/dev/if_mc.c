@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.17 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.18 2010/12/20 00:25:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.17 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.18 2010/12/20 00:25:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.17 2009/03/14 21:04:11 dsl Exp $");
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 

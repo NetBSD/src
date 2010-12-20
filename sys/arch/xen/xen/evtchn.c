@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.46 2009/10/23 05:10:48 snj Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.47 2010/12/20 00:25:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.46 2009/10/23 05:10:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47 2010/12/20 00:25:46 matt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -182,7 +182,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	int ilevel;
 	struct intrhand *ih;
 	int	(*ih_fun)(void *, void *);
-	extern struct uvmexp uvmexp;
 	uint32_t iplmask;
 	int i;
 	uint32_t iplbit;
@@ -215,7 +214,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		panic("evtchn_do_event: unknown event");
 	}
 #endif
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 	evtsource[evtch]->ev_evcnt.ev_count++;
 	ilevel = ci->ci_ilevel;
 	if (evtsource[evtch]->ev_maxlevel <= ilevel) {

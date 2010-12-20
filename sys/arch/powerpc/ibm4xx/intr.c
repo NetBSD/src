@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2010/03/18 13:47:05 kiyohara Exp $	*/
+/*	$NetBSD: intr.c,v 1.24 2010/12/20 00:25:41 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,14 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2010/03/18 13:47:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2010/12/20 00:25:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/evcnt.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/psl.h>
@@ -249,6 +247,7 @@ static struct intrsrc 		intrs0[ICU_LEN] = {
 void
 intr_init(void)
 {
+	struct cpu_info * const ci = curcpu();
 #ifdef MULTIUIC
 	struct uic *uic = &uics[0];
 #endif
@@ -267,9 +266,9 @@ intr_init(void)
 		}
 
 	/* Initialized in powerpc/ibm4xx/cpu.c */
-	evcnt_attach_static(&curcpu()->ci_ev_softclock);
-	evcnt_attach_static(&curcpu()->ci_ev_softnet);
-	evcnt_attach_static(&curcpu()->ci_ev_softserial);
+	evcnt_attach_static(&ci->ci_ev_softclock);
+	evcnt_attach_static(&ci->ci_ev_softnet);
+	evcnt_attach_static(&ci->ci_ev_softserial);
 
 #ifdef MULTIUIC
 	strcpy(uic->uic_name, intrs0[0].is_evcnt.ev_name);;
@@ -409,7 +408,7 @@ ext_intr_core(void *arg)
 			if (intrs[i].is_type == IST_LEVEL)
 				enable_irq(irq);
 			ci->ci_cpl = pcpl;
-			uvmexp.intrs++;
+			ci->ci_data.cpu_nintr++;
 			intrs[i].is_evcnt.ev_count++;
 			ci->ci_idepth--;
 		}
@@ -827,6 +826,7 @@ softintr(int idx)
 	static const int softmap[3] = {
 		MASK_SOFTCLOCK, MASK_SOFTNET, MASK_SOFTSERIAL
 	};
+	struct cpu_info * const ci = curcpu();
 	int oldmsr;
 
 	KASSERT(idx >= 0 && idx < 3);
@@ -839,7 +839,7 @@ softintr(int idx)
 	oldmsr = mfmsr();
 	wrteei(0);
 
-	curcpu()->ci_ipending |= softmap[idx];
+	ci->ci_ipending |= softmap[idx];
 
 	mtmsr(oldmsr);
 }

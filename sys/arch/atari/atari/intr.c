@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22 2010/04/13 11:22:22 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.23 2010/12/20 00:25:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2010/04/13 11:22:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2010/12/20 00:25:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2010/04/13 11:22:22 tsutsui Exp $");
 #include <sys/queue.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 
@@ -280,7 +278,7 @@ intr_dispatch(struct clockframe frame)
 	ih_list_t	*vec_list;
 	struct intrhand	*ih;
 
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 	vector = (frame.cf_vo & 0xfff) >> 2;
 	if (vector < (AVEC_LOC+AVEC_MAX) && vector >= AVEC_LOC)
 		vec_list = &autovec_list[vector - AVEC_LOC];

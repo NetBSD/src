@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41 2009/12/13 12:21:26 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.42 2010/12/20 00:25:33 matt Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -171,7 +171,7 @@ define	HI_EVCNT		offsetof(struct hp300_intr, hi_evcnt)
 define	SIZEOF_HI		sizeof(struct hp300_intr)
 
 # interrupt/fault metering
-define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S

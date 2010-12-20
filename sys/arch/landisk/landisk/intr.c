@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2008/05/16 16:24:17 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.4 2010/12/20 00:25:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2008/05/16 16:24:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2010/12/20 00:25:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ intc_intr(int ssr, int spc, int ssp)
 	struct intc_intrhand *ih;
 	struct clockframe cf;
 	int evtcode;
+
+	curcpu()->ci_data.cpu_nintr++;
 
 	evtcode = _reg_read_4(SH4_INTEVT);
 	ih = EVTCODE_IH(evtcode);

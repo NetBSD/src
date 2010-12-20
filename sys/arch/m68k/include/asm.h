@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.25 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.26 2010/12/20 00:25:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -178,6 +178,31 @@
 		jbsr	_C_LABEL(panic)		;	\
 	9:	.asciz	x			;	\
 		.even
+
+/*
+ * Need a better place for these but these are common across
+ * all m68k ports so let's define just once.
+ */
+#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
+#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
+
+/* 64-bit counter increments */
+#define CPUINFO_INCREMENT(n)					\
+	lea	_C_LABEL(cpu_info_store)+(n)+4,%a1;		\
+	addq.l	#1,(%a1);					\
+	clr.l	%d0;		/* doesn't change CCR[X] */	\
+	move.l	-(%a1),%d1;	/* doesn't change CCR[X] */	\
+	addx.l	%d0,%d1;					\
+	move.l	%d1,(%a1)
+
+/* 64-bit counter increments */
+#define CPUINFO_ADD(n, addend)					\
+	lea	_C_LABEL(cpu_info_store)+(n)+4,%a1;		\
+	add.l	addend,(%a1);					\
+	clr.l	%d0;		/* doesn't change CCR[X] */	\
+	move.l	-(%a1),%d1;	/* doesn't change CCR[X] */	\
+	addx.l	%d0,%d1;					\
+	move.l	%d1,(%a1)
 
 #endif /* _KERNEL */
 

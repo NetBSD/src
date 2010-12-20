@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.14 2009/12/14 00:45:59 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.15 2010/12/20 00:25:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14 2009/12/14 00:45:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2010/12/20 00:25:23 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14 2009/12/14 00:45:59 matt Exp $");
 #include <sys/intr.h>
 #include <sys/cpu.h>
 
-#include <uvm/uvm_extern.h>
+//#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/locore.h>
@@ -116,7 +116,7 @@ cpu_intr(u_int32_t status, u_int32_t cause, vaddr_t pc, u_int32_t ipending)
 
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	if (ipending & MIPS_INT_MASK_5) {
 

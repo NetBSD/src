@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.55 2010/03/20 23:31:30 chs Exp $	*/
+/*	$NetBSD: exception.c,v 1.56 2010/12/20 00:25:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.55 2010/03/20 23:31:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.56 2010/12/20 00:25:43 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -145,7 +145,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	uint32_t code;
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 
 	/*
 	 * Read trap code from TRA before enabling interrupts,
@@ -463,7 +463,7 @@ ast(struct lwp *l, struct trapframe *tf)
 	KDASSERT(l->l_md.md_regs == tf);
 
 	while (l->l_md.md_astpending) {
-		uvmexp.softs++;
+		//curcpu()->ci_data.cpu_nast++;
 		l->l_md.md_astpending = 0;
 
 		if (l->l_pflag & LP_OWEUPC) {

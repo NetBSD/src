@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2010/04/06 15:54:30 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2010/12/20 00:25:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2010/04/06 15:54:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2010/12/20 00:25:32 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -529,6 +529,8 @@ intc_intr(int ssr, int spc, int ssp)
 	struct intc_intrhand *ih;
 	struct clockframe cf;
 	int s, evtcode;
+
+	curcpu()->ci_data.cpu_nintr++;
 
 	switch (cpu_product) {
 	case CPU_PRODUCT_7708:

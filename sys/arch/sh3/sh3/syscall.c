@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.12 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.13 2010/12/20 00:25:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -123,7 +123,7 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 	size_t argsize;
 	register_t code, args[8], rval[2], ocode;
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 
 	opc = tf->tf_spc;
 	ocode = code = tf->tf_r0;
@@ -262,7 +262,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 	size_t argsize;
 	register_t code, args[8], rval[2], ocode;
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 
 	opc = tf->tf_spc;
 	ocode = code = tf->tf_r0;

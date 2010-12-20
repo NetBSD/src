@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.27 2007/10/17 19:57:14 garbled Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.28 2010/12/20 00:25:43 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -167,11 +167,8 @@ _ENTRY(_C_LABEL(fdchwintr))
 	std	%l0, [%l7]
 	st	%l2, [%l7 + 8]
 
-	! tally interrupt (uvmexp.intrs++)
-	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
-	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
-	inc	%l6
-	st	%l6, [%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)]
+	! tally interrupt (curcpu()->cpu_data.cpu_nintr++)
+	INCR64X(CPUINFO_VA+CPUINFO_NINTR, %l4, %l5, %l7)
 
 	! load fdc, if it's NULL there's nothing to do: schedule soft interrupt
 	sethi	%hi(_C_LABEL(fdciop)), %l7

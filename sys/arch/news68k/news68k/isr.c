@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.20 2008/12/10 14:19:02 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.21 2010/12/20 00:25:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.20 2008/12/10 14:19:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.21 2010/12/20 00:25:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ isrdispatch_autovec(int evec)
 	ipl = vec - ISRAUTOVEC;
 
 	intrcnt[ipl]++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	list = &isr_autovec[ipl];
 	if (LIST_EMPTY(list)) {
@@ -241,7 +241,7 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 	ipl = (getsr() >> 8) & 7;
 
 	intrcnt[ipl]++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
 		panic("isrdispatch_vectored: bad vec 0x%x", vec);

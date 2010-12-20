@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.29 2010/04/05 07:19:30 joerg Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.30 2010/12/20 00:25:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.29 2010/04/05 07:19:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.30 2010/12/20 00:25:37 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.29 2010/04/05 07:19:30 joerg Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

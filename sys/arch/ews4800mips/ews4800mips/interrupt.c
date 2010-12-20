@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6 2010/11/15 06:22:13 uebayasi Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7 2010/12/20 00:25:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,13 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2010/11/15 06:22:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2010/12/20 00:25:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>	/* uvmexp.intrs */
 
 #include <machine/sbdvar.h>
 
@@ -71,7 +69,7 @@ cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 	struct cpu_info *ci;
 
 	ci = curcpu();
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	ci->ci_idepth++;
 	(*platform_intr)(status, cause, pc, ipending);

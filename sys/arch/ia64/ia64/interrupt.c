@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.4 2009/07/20 04:41:37 kiyohara Exp $ */
+/* $NetBSD: interrupt.c,v 1.5 2010/12/20 00:25:35 matt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4 2009/07/20 04:41:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5 2010/12/20 00:25:35 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4 2009/07/20 04:41:37 kiyohara Exp $
 #include <sys/lwp.h>
 #include <sys/malloc.h>
 #include <sys/sched.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/clock.h>
 #include <machine/cpu.h>
@@ -86,7 +84,7 @@ interrupt(uint64_t vector, struct trapframe *tf)
 	ia64_set_fpsr(IA64_FPSR_DEFAULT);
 
 	ci->ci_intrdepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
  next:
 	/*

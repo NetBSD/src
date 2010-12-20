@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_ki2c.c,v 1.6 2009/11/05 05:39:41 dyoung Exp $ */
+/*	$NetBSD: dbcool_ki2c.c,v 1.7 2010/12/20 00:25:37 matt Exp $ */
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.6 2009/11/05 05:39:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.7 2010/12/20 00:25:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.6 2009/11/05 05:39:41 dyoung Exp $
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 #include <macppc/dev/ki2cvar.h>

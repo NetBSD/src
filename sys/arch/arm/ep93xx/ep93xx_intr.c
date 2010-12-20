@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.14 2010/06/13 02:11:22 tsutsui Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.15 2010/12/20 00:25:27 matt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.14 2010/06/13 02:11:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.15 2010/12/20 00:25:27 matt Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.14 2010/06/13 02:11:22 tsutsui Exp
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/termios.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -353,7 +351,7 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		curcpu()->ci_data.cpu_nintr++;
 		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			set_curcpl(ih->ih_ipl);
 			oldirqstate = enable_interrupts(I32_bit);
@@ -365,7 +363,7 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 
 		iq = &intrq[irq + VIC_NIRQ];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		curcpu()->ci_data.cpu_nintr++;
 		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			set_curcpl(ih->ih_ipl);
 			oldirqstate = enable_interrupts(I32_bit);

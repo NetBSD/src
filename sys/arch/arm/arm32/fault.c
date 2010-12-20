@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.77 2010/07/07 01:17:27 chs Exp $	*/
+/*	$NetBSD: fault.c,v 1.78 2010/12/20 00:25:27 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.77 2010/07/07 01:17:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.78 2010/12/20 00:25:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ data_abort_handler(trapframe_t *tf)
 
 	UVMHIST_CALLED(maphist);
 	/* Update vmmeter statistics */
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 
 	/* Re-enable interrupts if they were enabled previously */
 	KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
@@ -787,7 +787,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	UVMHIST_FUNC("prefetch_abort_handler"); UVMHIST_CALLED(maphist);
 
 	/* Update vmmeter statistics */
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 
 	l = curlwp;
 	pcb = lwp_getpcb(l);

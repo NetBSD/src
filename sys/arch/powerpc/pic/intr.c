@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 2010/05/12 06:11:31 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.10 2010/12/20 00:25:41 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2010/05/12 06:11:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2010/12/20 00:25:41 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2010/05/12 06:11:31 macallan Exp $");
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <arch/powerpc/pic/picvar.h>
 #include "opt_pic.h"
@@ -643,7 +641,7 @@ start:
 		mtmsr(msr);
 		ci->ci_cpl = pcpl;
 
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		is->is_ev.ev_count++;
 		ci->ci_idepth--;
 	}
@@ -719,11 +717,12 @@ spllower(int ncpl)
 void
 softintr(int ipl)
 {
+	struct cpu_info *ci = curcpu();
 	int msrsave;
 
 	msrsave = mfmsr();
 	mtmsr(msrsave & ~PSL_EE);
-	curcpu()->ci_ipending |= 1ULL << ipl;
+	ci->ci_ipending |= 1ULL << ipl;
 	mtmsr(msrsave);
 }
 

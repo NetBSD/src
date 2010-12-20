@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.57 2010/11/15 06:27:41 uebayasi Exp $	*/
+/*	$NetBSD: vr.c,v 1.58 2010/12/20 00:25:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.57 2010/11/15 06:27:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.58 2010/12/20 00:25:34 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -541,7 +541,7 @@ VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	/* Deal with unneded compare interrupts occasionally so that we can
 	 * keep spllowersoftclock. */

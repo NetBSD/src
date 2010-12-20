@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16 2006/01/20 22:02:40 christos Exp $ */
+/*	$NetBSD: asm.h,v 1.17 2010/12/20 00:25:43 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -204,5 +204,22 @@
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
 #endif /* __ELF__ */
+
+#ifdef __arch64__
+#define INCR64X(what,r0,r1)						\
+	sethi	%hi(what), r0;						\
+	ldx	[r0 + %lo(what)], r1;					\
+	inc	r1;							\
+	stx	r1, [r0 + %lo(what)]
+#define INCR64(what)		INCR64X(what,%o0,%o1)
+#else
+#define INCR64X(what,r0,r1,r2)						\
+	sethi	%hi(what), r2;						\
+	ldd	[r2 + %lo(what)], r0;					\
+	inccc	r1;							\
+	addx	r0, 0, r0;						\
+	std	r0, [r2 + %lo(what)]
+#define INCR64(what)		INCR64X(what,%o0,%o1,%l7)
+#endif
 
 #endif /* _ASM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.23 2009/12/15 06:01:43 mrg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24 2010/12/20 00:25:42 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2009/12/15 06:01:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2010/12/20 00:25:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,7 +109,7 @@ cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	(void)(*platform.watchdog_reset)();
 

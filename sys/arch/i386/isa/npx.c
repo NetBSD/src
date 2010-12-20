@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.138 2010/07/25 19:19:57 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.139 2010/12/20 00:25:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.138 2010/07/25 19:19:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.139 2010/12/20 00:25:35 matt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -389,7 +389,7 @@ npxintr(void *arg, struct intrframe *frame)
 	x86_enable_intr();
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	IPRINTF(("%s: fp intr\n", device_xname(ci->ci_dev)));
 
 #ifndef XEN

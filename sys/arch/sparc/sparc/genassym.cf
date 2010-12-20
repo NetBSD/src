@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.60 2010/01/03 11:44:58 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.61 2010/12/20 00:25:44 matt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,9 +124,9 @@ define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
 define	PMAP_CPUSET	offsetof(struct pmap, pm_cpuset)
 
 # interrupt/fault metering
-define	V_INTR		offsetof(struct uvmexp, intrs)
-define	V_SOFT		offsetof(struct uvmexp, softs)
-define	V_FAULTS	offsetof(struct uvmexp, faults)
+define	CPUINFO_NINTR	offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CPUINFO_NSOFT	offsetof(struct cpu_info, ci_data.cpu_nsoft)
+define	CPUINFO_NFAULT	offsetof(struct cpu_info, ci_data.cpu_nfault)
 define	EV_COUNT	offsetof(struct evcnt, ev_count)
 define	EV_STRUCTSIZE	sizeof(struct evcnt)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.154 2010/06/06 04:50:06 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.155 2010/12/20 00:25:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1037,25 +1037,21 @@ Lbrkpt3:
  * we don't do anything else with them.
  */
 
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
-
 /* 64-bit evcnt counter increments */
 #define EVCNT_COUNTER(ipl)					\
 	_C_LABEL(hp300_intr_list) + (ipl)*SIZEOF_HI + HI_EVCNT
 #define EVCNT_INCREMENT(ipl)					\
-	movel	%d2,-(%sp);					\
 	clrl	%d0;						\
-	moveql	#1,%d1;						\
-	addl	%d1,EVCNT_COUNTER(ipl)+4;			\
-	movel	EVCNT_COUNTER(ipl),%d2;				\
-	addxl	%d0,%d2;					\
-	movel	%d2,EVCNT_COUNTER(ipl);				\
-	movel	(%sp)+,%d2
+	addql	#1,EVCNT_COUNTER(ipl)+4;			\
+	movel	EVCNT_COUNTER(ipl),%d1;				\
+	addxl	%d0,%d1;					\
+	movel	%d1,EVCNT_COUNTER(ipl)
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
+	INTERRUPT_SAVEREG
 	EVCNT_INCREMENT(0)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
@@ -1128,9 +1124,9 @@ Lnoleds0:
 #endif /* USELEDS */
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
-	CLKADDR(%a0)
 Lrecheck:
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
+	CPUINFO_INCREMENT(CI_NINTR)	| chalk up another interrupt
+	CLKADDR(%a0)
 	movb	%a0@(CLKSR),%d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
 	INTERRUPT_RESTOREREG
@@ -1138,9 +1134,9 @@ Lrecheck:
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
-	EVCNT_INCREMENT(7)
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
+	EVCNT_INCREMENT(7)
 	movl	%usp,%a0		| and save
 	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
 	jbsr	_C_LABEL(nmihand)	| call handler

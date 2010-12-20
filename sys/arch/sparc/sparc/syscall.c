@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.22 2010/02/25 07:21:20 skrll Exp $ */
+/*	$NetBSD: syscall.c,v 1.23 2010/12/20 00:25:44 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22 2010/02/25 07:21:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23 2010/12/20 00:25:44 matt Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -216,7 +216,7 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	register_t i;
 	u_quad_t sticks;
 
-	uvmexp.syscalls++;	/* XXXSMP */
+	curcpu()->ci_data.cpu_nsyscall++;	/* XXXSMP */
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
@@ -297,7 +297,7 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 	register_t i;
 	u_quad_t sticks;
 
-	uvmexp.syscalls++;	/* XXXSMP */
+	curcpu()->ci_data.cpu_nsyscall++;	/* XXXSMP */
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);

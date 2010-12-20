@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.27 2008/12/16 22:35:25 christos Exp $ */
+/*	$NetBSD: isr.c,v 1.28 2010/12/20 00:25:40 matt Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.27 2008/12/16 22:35:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.28 2010/12/20 00:25:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ isrdispatch_autovec(struct clockframe *frame)
 
 	intrcnt[ipl]++; /* XXXSCW: Will go away soon */
 	next68k_irq_evcnt[ipl].ev_count++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 #ifdef INTRLOG
 	log[logptr].ipl = ipl;
 	log[logptr].intrstat = *intrstat;
@@ -370,7 +370,7 @@ isrdispatch_vectored(int ipl, struct clockframe *frame)
 
 	intrcnt[ipl]++; /* XXXSCW: Will go away soon */
 	next68k_irq_evcnt[ipl].ev_count++;
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	if (isr->isr_func == NULL) {
 		printf("isrdispatch_vectored: no handler for vec 0x%x\n",

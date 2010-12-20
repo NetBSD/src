@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.53 2010/03/02 21:52:33 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2010/03/02 21:52:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2010/03/02 21:52:33 matt Exp $");
 #include <sys/types.h>
 #include <sys/lwp.h>
 
-#include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/bat.h>

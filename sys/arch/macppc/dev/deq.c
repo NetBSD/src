@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.7 2010/10/15 22:18:58 phx Exp $	*/
+/*	$NetBSD: deq.c,v 1.8 2010/12/20 00:25:37 matt Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,15 +32,13 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.7 2010/10/15 22:18:58 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.8 2010/12/20 00:25:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/i2c/i2cvar.h>

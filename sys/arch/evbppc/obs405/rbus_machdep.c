@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.3 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.4 2010/12/20 00:25:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -32,8 +32,6 @@
 #include <sys/systm.h>
 
 #include <sys/extent.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

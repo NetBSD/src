@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.78 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: interrupt.c,v 1.79 2010/12/20 00:25:24 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.78 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.79 2010/12/20 00:25:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.78 2008/04/28 20:23:10 martin Exp $"
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpuvar.h>
 #include <machine/autoconf.h>
@@ -227,7 +225,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		 * time would be counted as interrupt time.
 		 */
 		sc->sc_evcnt_clock.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		if (platform.clockintr) {
 			/*
 			 * Call hardclock().  This will also call
@@ -271,7 +269,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		if (!mpsafe) {
 			KERNEL_LOCK(1, NULL);
 		}
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		scb = &scb_iovectab[idx];
 		(*scb->scb_func)(scb->scb_arg, a1);
 		if (!mpsafe)

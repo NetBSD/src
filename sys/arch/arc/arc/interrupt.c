@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.5 2009/12/14 00:46:00 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.6 2010/12/20 00:25:26 matt Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,15 +78,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5 2009/12/14 00:46:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2010/12/20 00:25:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <mips/locore.h>
 
@@ -148,7 +146,7 @@ cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 
 	handled = 0;
 	ci = curcpu();
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 	ci->ci_idepth++;
 
 	cf.pc = pc;
