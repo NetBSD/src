@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.42 2010/07/07 01:19:09 chs Exp $	*/
+/*	$NetBSD: asm.h,v 1.43 2010/12/20 21:11:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,11 +118,15 @@
  * WARN_REFERENCES: create a warning if the specified symbol is referenced.
  */
 #ifdef __STDC__
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
 #endif /* __STDC__ */
 
 /*
