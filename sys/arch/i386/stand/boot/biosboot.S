@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.S,v 1.6 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: biosboot.S,v 1.7 2010/12/20 00:39:06 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ ENTRY(_rtt)
 	call	prot_to_real
 	.code16
 loopstop:
-	movb	0x86, %ah		/* delay for about a second */
+	movb	$0x86, %ah		/* delay for about a second */
 	movw	$16, %cx
 	int	$0x15
 	int	$0x18			/* might be a boot fail entry */
