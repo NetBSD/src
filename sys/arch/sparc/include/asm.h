@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.17 2010/12/20 00:25:43 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.18 2010/12/20 21:11:25 joerg Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -185,11 +185,15 @@
  */
 #ifdef __ELF__
 #ifdef __STDC__
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
 #endif /* __STDC__ */
 #else
 #ifdef __STDC__

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.29 2010/03/09 22:36:41 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.30 2010/12/20 21:11:25 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -138,11 +138,15 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	alias = sym
 
 #ifdef __STDC__
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
 #endif /* __STDC__ */
 
 #ifdef _KERNEL
