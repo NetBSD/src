@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2010/07/26 12:39:04 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 2010/12/20 00:25:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2010/07/26 12:39:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2010/12/20 00:25:24 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -434,7 +434,7 @@ copyfault:
 		/* Already handled by fputrap(), fall through. */
 	case T_ASTFLT|T_USER:
 		/* Allow process switch. */
-		uvmexp.softs++;
+		//curcpu()->ci_data.cpu_nast++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);

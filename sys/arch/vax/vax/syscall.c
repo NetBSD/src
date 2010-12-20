@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.17 2009/11/21 04:45:39 rmind Exp $     */
+/*	$NetBSD: syscall.c,v 1.18 2010/12/20 00:25:45 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,32 +33,21 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2010/12/20 00:25:45 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/syscall.h>
-#include <sys/syscallvar.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/exec.h>
+#include <sys/cpu.h>
+#include <sys/ktrace.h>
+#include <sys/proc.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/ktrace.h>
-#include <sys/pool.h>
+#include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/mtpr.h>
-#include <machine/pte.h>
-#include <machine/pcb.h>
-#include <machine/trap.h>
-#include <machine/pmap.h>
-#include <machine/cpu.h>
 #include <machine/userret.h>
 
 #ifdef TRAPDEBUG
@@ -95,7 +84,7 @@ syscall(struct trapframe *frame)
 	    syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 	    p->p_pid,frame));
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
  
  	LWP_CACHE_CREDS(l, p);
 

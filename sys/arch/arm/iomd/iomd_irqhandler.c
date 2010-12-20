@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.17 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.18 2010/12/20 00:25:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.17 2008/04/27 18:58:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.18 2010/12/20 00:25:28 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.17 2008/04/27 18:58:44 matt Ex
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <uvm/uvm_extern.h>
 
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.2 2009/10/19 23:19:38 rmind Exp $ */
+/* $NetBSD: admpci.c,v 1.3 2010/12/20 00:25:38 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.2 2009/10/19 23:19:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.3 2010/12/20 00:25:38 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -203,7 +203,8 @@ admpciattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(": ADM5120 Host-PCI Bridge, data %lx addr %lx, sc %p\n",
+	printf(": ADM5120 Host-PCI Bridge, data %"PRIxBUSADDR
+	    " addr %"PRIxBUSADDR", sc %p\n",
 	    sc->sc_datah, sc->sc_addrh, (void *)sc);
 
 #if NPCI > 0

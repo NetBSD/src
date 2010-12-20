@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.44 2010/10/18 22:02:25 phx Exp $ */
+/*	$NetBSD: flsc.c,v 1.45 2010/12/20 00:25:25 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -47,7 +47,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.44 2010/10/18 22:02:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.45 2010/12/20 00:25:25 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.44 2010/10/18 22:02:25 phx Exp $");
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

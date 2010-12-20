@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc_intr.c,v 1.2 2010/12/20 00:25:28 matt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,14 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.2 2010/12/20 00:25:28 matt Exp $");
 
 #define _INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 
@@ -79,7 +77,7 @@ mvsoc_irq_handler(void *frame)
 	const uint32_t oldipl_mask = __BIT(oldipl);
 	int ipl_mask = 0;
 
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	ipl_mask = find_pending_irqs();
 

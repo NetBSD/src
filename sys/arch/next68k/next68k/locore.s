@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 2010/06/06 04:50:08 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 2010/12/20 00:25:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -950,12 +950,11 @@ Lbrkpt3:
  * intrhand_vectored is the entry point for vectored interrupts.
  */
 
-#define INTERRUPT_SAVEREG	moveml  #0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml  %sp@+,#0x0303
-
 ENTRY_NOPROFILE(spurintr)	/* Level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */

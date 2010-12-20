@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2009/11/27 03:23:11 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2010/12/20 00:25:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2009/11/27 03:23:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2010/12/20 00:25:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -563,6 +563,8 @@ intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
 	int s, evtcode;
+
+	curcpu()->ci_data.cpu_nintr++;
 
 	evtcode = _reg_read_4(SH3_INTEVT);
 

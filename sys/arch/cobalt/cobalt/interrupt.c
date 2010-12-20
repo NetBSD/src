@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2009/12/14 00:46:00 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5 2010/12/20 00:25:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -79,14 +79,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4 2009/12/14 00:46:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5 2010/12/20 00:25:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <mips/mips3_clock.h>
 #include <machine/bus.h>
@@ -399,7 +397,7 @@ cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 	handled = 0;
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	if (ipending & MIPS_INT_MASK_5) {
 		/* call the common MIPS3 clock interrupt handler */
