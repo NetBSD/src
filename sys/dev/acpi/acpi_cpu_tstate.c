@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.16 2010/08/21 18:25:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.17 2010/12/20 08:13:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.16 2010/08/21 18:25:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.17 2010/12/20 08:13:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -638,12 +638,12 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 	uint64_t addr;
 	int rv;
 
-	if (sc->sc_cold != false) {
+	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
 		goto fail;
 	}
 
-	if ((sc->sc_flags & ACPICPU_FLAG_T) == 0) {
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_T) == 0)) {
 		rv = ENODEV;
 		goto fail;
 	}
@@ -664,7 +664,7 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 
 		rv = acpicpu_md_tstate_get(sc, percent);
 
-		if (rv != 0)
+		if (__predict_false(rv != 0))
 			goto fail;
 
 		break;
@@ -689,7 +689,7 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 			}
 		}
 
-		if (__predict_false(ts == NULL)) {
+		if (ts == NULL) {
 			rv = EIO;
 			goto fail;
 		}
@@ -729,12 +729,12 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 	uint64_t addr;
 	int rv;
 
-	if (sc->sc_cold != false) {
+	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
 		goto fail;
 	}
 
-	if ((sc->sc_flags & ACPICPU_FLAG_T) == 0) {
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_T) == 0)) {
 		rv = ENODEV;
 		goto fail;
 	}
@@ -748,7 +748,7 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 
 	for (i = sc->sc_tstate_max; i <= sc->sc_tstate_min; i++) {
 
-		if (sc->sc_tstate[i].ts_percent == 0)
+		if (__predict_false(sc->sc_tstate[i].ts_percent == 0))
 			continue;
 
 		if (sc->sc_tstate[i].ts_percent == percent) {
@@ -770,7 +770,7 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 
 		rv = acpicpu_md_tstate_set(ts);
 
-		if (rv != 0)
+		if (__predict_false(rv != 0))
 			goto fail;
 
 		break;
