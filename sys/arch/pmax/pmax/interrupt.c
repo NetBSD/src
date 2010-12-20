@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.16 2009/12/14 00:46:11 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.17 2010/12/20 00:25:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2009/12/14 00:46:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2010/12/20 00:25:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <mips/psl.h>
 
@@ -87,7 +85,7 @@ cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	/* device interrupts */
 	if (ipending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|

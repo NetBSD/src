@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.28 2009/04/30 05:20:30 nonaka Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.29 2010/12/20 00:25:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.28 2009/04/30 05:20:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.29 2010/12/20 00:25:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>	/* uvmexp.intrs */
 
 #include <sh3/exception.h>
 #include <sh3/clock.h>

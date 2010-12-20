@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2010/03/02 21:52:33 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 2010/12/20 00:25:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2010/03/02 21:52:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2010/12/20 00:25:41 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2010/03/02 21:52:33 matt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 

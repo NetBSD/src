@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.123 2010/04/23 19:18:09 rmind Exp $ */
+/* $NetBSD: trap.c,v 1.124 2010/12/20 00:25:24 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2010/04/23 19:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2010/12/20 00:25:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 	int call_debugger = 1;
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 
 	l = curlwp;
 
@@ -658,7 +658,7 @@ ast(struct trapframe *framep)
 	if (l == NULL)
 		return;
 
-	uvmexp.softs++;
+	//curcpu()->ci_data.cpu_nast++;
 	l->l_md.md_tf = framep;
 
 	if (l->l_pflag & LP_OWEUPC) {

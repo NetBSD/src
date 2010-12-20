@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.34 2009/12/10 05:10:02 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.35 2010/12/20 00:25:36 matt Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -104,7 +104,7 @@ define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
 
 # interrupt/fault metering
-define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 
 #mE PSL values (should just include psl.h?)
 define	PSL_S			PSL_S

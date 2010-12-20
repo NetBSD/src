@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.16 2009/12/15 06:01:43 mrg Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.17 2010/12/20 00:25:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,15 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2009/12/15 06:01:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2010/12/20 00:25:34 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/sysconf.h>
 

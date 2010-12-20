@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.54 2010/10/31 04:51:19 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.55 2010/12/20 00:25:35 matt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.54 2010/10/31 04:51:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.55 2010/12/20 00:25:35 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -109,8 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.54 2010/10/31 04:51:19 yamt Exp $");
  * segment registers.
  *
  */
-
-#define MY_COUNT _C_LABEL(uvmexp)
 
 /*
  * Store address of TSS in %eax, given a selector in %eax.
@@ -432,7 +430,8 @@ IDTVEC(intr_/**/name/**/num)						;\
 	movl	CPUVAR(ILEVEL),%esi					;\
 	cmpl	%ebx,%esi						;\
 	jae	10f			/* currently masked; hold it */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	addl	$1,CPUVAR(NINTR)	/* statistical info */		;\
+	adcl	$0,CPUVAR(NINTR)+4					;\
 	addl	$1,IS_EVCNTLO(%ebp)	/* inc event counter */		;\
 	adcl	$0,IS_EVCNTHI(%ebp)					;\
 1:									\
@@ -1030,7 +1029,8 @@ IDTVEC(trap10)
 	pushl	%ebx
 	pushl	%esp
 	pushl	$0			# dummy arg
-	incl	_C_LABEL(uvmexp)+V_TRAP
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	call	_C_LABEL(npxintr)
 	addl	$12,%esp
 	jmp	_C_LABEL(trapreturn)
@@ -1116,7 +1116,8 @@ calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
-	incl	CPUVAR(NTRAP)
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
@@ -1137,7 +1138,8 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 5:	CLEAR_ASTPENDING(%eax)
 	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
-	incl	CPUVAR(NTRAP)
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp

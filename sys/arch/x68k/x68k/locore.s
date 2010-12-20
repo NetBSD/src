@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.98 2010/06/06 04:50:08 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.99 2010/12/20 00:25:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -532,11 +532,11 @@ Lbrkpt3:
  * specially, to improve performance
  */
 
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
-
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	rte				| XXX mfpcure (x680x0 hardware bug)
 
 ENTRY_NOPROFILE(kbdtimer)
@@ -544,31 +544,31 @@ ENTRY_NOPROFILE(kbdtimer)
 
 ENTRY_NOPROFILE(com0trap)
 #include "com.h"
+	INTERRUPT_SAVEREG
 #if NXCOM > 0
 	addql	#1,_C_LABEL(idepth)
-	INTERRUPT_SAVEREG
 	movel	#0,%sp@-
 	jbsr	_C_LABEL(comintr)
 	addql	#4,%sp
-	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(idepth)
 #endif
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	addql	#1,_C_LABEL(intrcnt)+36
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
 ENTRY_NOPROFILE(com1trap)
+	INTERRUPT_SAVEREG
 #if NXCOM > 1
 	addql	#1,_C_LABEL(idepth)
-	INTERRUPT_SAVEREG
 	movel	#1,%sp@-
 	jbsr	_C_LABEL(comintr)
 	addql	#4,%sp
-	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(idepth)
 #endif
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	addql	#1,_C_LABEL(intrcnt)+36
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
 ENTRY_NOPROFILE(intiotrap)
@@ -577,9 +577,9 @@ ENTRY_NOPROFILE(intiotrap)
 	pea	%sp@(16-(FR_HW))	| XXX
 	jbsr	_C_LABEL(intio_intr)
 	addql	#4,%sp
+	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(idepth)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
 ENTRY_NOPROFILE(lev1intr)
@@ -599,9 +599,9 @@ Lnotdma:
 	clrw	%sp@-			|    padded to longword
 	jbsr	_C_LABEL(intrhand)	| handle interrupt
 	addql	#4,%sp			| pop SR
+	CPUINFO_INCREMENT(CI_NINTR)
 	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(idepth)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(timertrap)
@@ -612,7 +612,7 @@ ENTRY_NOPROFILE(timertrap)
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
+	CPUINFO_INCREMENT(CI_NINTR)	| chalk up another interrupt
 	INTERRUPT_RESTOREREG		| restore scratch registers
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| all done

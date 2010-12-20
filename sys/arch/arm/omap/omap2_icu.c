@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_icu.c,v 1.6 2010/11/15 09:34:28 bsh Exp $	*/
+/*	$NetBSD: omap2_icu.c,v 1.7 2010/12/20 00:25:29 matt Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -30,7 +30,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.6 2010/11/15 09:34:28 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.7 2010/12/20 00:25:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -139,7 +139,7 @@ omap_irq_handler(void *frame)
 	const uint32_t oldipl_mask = __BIT(oldipl);
 	int ipl_mask = 0;
 
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	if (sc->sc_enabled_irqs[0])
 		ipl_mask |= find_pending_irqs(sc, 0);

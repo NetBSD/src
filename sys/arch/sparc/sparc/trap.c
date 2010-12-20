@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.183 2010/04/23 19:18:10 rmind Exp $ */
+/*	$NetBSD: trap.c,v 1.184 2010/12/20 00:25:44 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.183 2010/04/23 19:18:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.184 2010/12/20 00:25:44 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -229,7 +229,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
-	uvmexp.traps++;	/* XXXSMP */
+	curcpu()->ci_data.cpu_ntrap++;
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -786,7 +786,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	char bits[64];
 	ksiginfo_t ksi;
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);
@@ -1005,7 +1005,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	char bits[64];
 	ksiginfo_t ksi;
 
-	uvmexp.traps++;	/* XXXSMP */
+	curcpu()->ci_data.cpu_ntrap++;
 
 	l = curlwp;
 	p = l->l_proc;

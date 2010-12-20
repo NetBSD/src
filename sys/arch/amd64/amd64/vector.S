@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.34 2010/07/07 01:14:52 chs Exp $	*/
+/*	$NetBSD: vector.S,v 1.35 2010/12/20 00:25:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ IDTVEC(trap02)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
@@ -160,7 +160,7 @@ IDTVEC(trap02)
 	jmp	2f
 1:
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 2:
 	INTR_RESTORE_GPRS
@@ -326,7 +326,7 @@ calltrap:
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
@@ -341,7 +341,7 @@ calltrap:
   	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
@@ -389,8 +389,6 @@ calltrap:
  * segment registers.
  *
  */
-
-#define MY_COUNT _C_LABEL(uvmexp)
 
 /* XXX See comment in locore.s */
 #ifdef __ELF__
@@ -672,7 +670,7 @@ IDTVEC(intr_/**/name/**/num)						;\
 	movl	CPUVAR(ILEVEL),%r13d					;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	incq	CPUVAR(NINTR)		/* statistical info */		;\
 	incq	IS_EVCNT(%r14)						;\
 1:									\
 	pushq	%r13							;\

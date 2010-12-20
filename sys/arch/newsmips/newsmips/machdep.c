@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2010/03/02 17:28:08 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2010/12/20 00:25:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/03/02 17:28:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2010/12/20 00:25:40 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -599,7 +599,7 @@ cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 	struct cpu_info *ci;
 
 	ci = curcpu();
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	/* device interrupts */
 	ci->ci_idepth++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $ */
+/*	$NetBSD: machdep.c,v 1.303 2010/12/20 00:25:44 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.303 2010/12/20 00:25:44 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $");
 #include <sys/proc.h>
 #include <sys/extent.h>
 #include <sys/savar.h>
+#include <sys/cpu.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
@@ -1117,18 +1118,17 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 void
 oldmon_w_trace(u_long va)
 {
+	struct cpu_info * const ci = curcpu();
 	u_long stop;
 	struct frame *fp;
 
-	if (curlwp)
-		printf("curlwp = %p, pid %d\n",
-			curlwp, curproc->p_pid);
-	else
-		printf("no curlwp\n");
+	printf("curlwp = %p, pid %d\n", curlwp, curproc->p_pid);
 
-	printf("uvm: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
-	    uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs,
-		uvmexp.softs, uvmexp.faults);
+	printf("uvm: cpu%u: swtch %"PRIu64", trap %"PRIu64", sys %"PRIu64", "
+	    "intr %"PRIu64", soft %"PRIu64", faults %"PRIu64"\n",
+	    cpu_index(ci), ci->ci_data.cpu_nswtch, ci->ci_data.cpu_ntrap,
+	    ci->ci_data.cpu_nsyscall, ci->ci_data.cpu_nintr,
+	    ci->ci_data.cpu_nsoft, ci->ci_data.cpu_nfault);
 	write_user_windows();
 
 #define round_up(x) (( (x) + (PAGE_SIZE-1) ) & (~(PAGE_SIZE-1)) )

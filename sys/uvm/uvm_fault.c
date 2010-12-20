@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.177 2010/12/17 22:00:43 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.178 2010/12/20 00:25:47 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.177 2010/12/17 22:00:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.178 2010/12/20 00:25:47 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -791,7 +791,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, at=%d, ff=%d)",
 	      orig_map, vaddr, access_type, fault_flag);
 
-	uvmexp.faults++;	/* XXX: locking? */
+	curcpu()->ci_data.cpu_nfault++;
 
 	/*
 	 * init the IN parameters in the ufi

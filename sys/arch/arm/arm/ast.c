@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.19 2009/11/23 18:20:46 rmind Exp $	*/
+/*	$NetBSD: ast.c,v 1.20 2010/12/20 00:25:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.19 2009/11/23 18:20:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.20 2010/12/20 00:25:26 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,8 +110,8 @@ ast(struct trapframe *tf)
 #endif
 
 
-	uvmexp.traps++;
-	uvmexp.softs++;
+	curcpu()->ci_data.cpu_ntrap++;
+	//curcpu()->ci_data.cpu_nast++;
 
 #ifdef DEBUG
 	KDASSERT(curcpu()->ci_cpl == IPL_NONE);
