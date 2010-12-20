@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.470 2010/12/08 10:22:55 ryoon Exp $
+.\"	$NetBSD: main,v 1.471 2010/12/20 19:51:03 ryo Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1323,6 +1323,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta John Shannon Ta Mt shannonjr@NetBSD.org
 .It Ta Tim Shepard Ta Mt shep@NetBSD.org
 .It Ta Naoto Shimazaki Ta Mt igy@NetBSD.org
+.It Ta Ryo Shimizu Ta Mt ryo@NetBSD.org
 .It Ta Takao Shinohara Ta Mt shin@NetBSD.org
 .It Ta Takuya SHIOZAKI Ta Mt tshiozak@NetBSD.org
 .It Ta Daniel Sieger Ta Mt dsieger@NetBSD.org
