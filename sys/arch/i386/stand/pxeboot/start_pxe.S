@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.4 2005/11/11 21:42:13 dsl Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.5 2010/12/20 01:12:45 jakllsch Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -89,8 +89,7 @@ _C_LABEL(boot_params):
 	/* ...and call main()! */
 	call	_C_LABEL(main)
 
-	.globl	_C_LABEL(exit)
-_C_LABEL(exit):
+ENTRY(_rtt)
 	call	_C_LABEL(prot_to_real)
 	.code16
 	movw	$efail, %si

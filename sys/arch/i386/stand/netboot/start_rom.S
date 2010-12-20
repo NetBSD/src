@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.2 2005/12/11 12:17:49 christos Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.3 2010/12/20 01:12:44 jakllsch Exp $	*/
 	
 /*
  * ROM startup
@@ -181,8 +181,7 @@ ENTRY(start)
 	.code32
 	call	_C_LABEL(main)
 
-	.globl	_C_LABEL(exit)
-_C_LABEL(exit):
+ENTRY(_rtt)
 	call	_C_LABEL(prot_to_real)
 	.code16
 
