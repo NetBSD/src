@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.91 2009/11/12 20:11:35 dyoung Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.92 2010/12/20 18:49:12 phx Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ struct usbd_xfer {
 void usbd_init(void);
 void usbd_finish(void);
 
-#ifdef USB_DEBUG
+#if defined(USB_DEBUG) || defined(EHCI_DEBUG)
 void usbd_dump_iface(struct usbd_interface *iface);
 void usbd_dump_device(struct usbd_device *dev);
 void usbd_dump_endpoint(struct usbd_endpoint *endp);

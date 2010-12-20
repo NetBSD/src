@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.130 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.131 2010/12/20 18:49:11 phx Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.130 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.131 2010/12/20 18:49:11 phx Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -81,7 +81,7 @@ usbd_xfer_isread(usbd_xfer_handle xfer)
 			UE_DIR_IN);
 }
 
-#ifdef USB_DEBUG
+#if defined(USB_DEBUG) || defined(EHCI_DEBUG)
 void
 usbd_dump_iface(struct usbd_interface *iface)
 {
