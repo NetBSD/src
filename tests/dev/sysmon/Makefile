@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/08/06 16:13:26 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/12/20 04:56:18 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,5 +12,7 @@ LDADD+=	-lrump
 LDADD+=	-lrumpuser -lpthread
 
 WARNS=	4
+
+TESTS_SH=	t_swsensor
 
 .include <bsd.test.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.180 2010/12/17 19:13:48 pooka Exp $
+# $NetBSD: mi,v 1.181 2010/12/20 04:56:18 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -223,6 +223,7 @@
 ./usr/libdata/debug/usr/tests/dev/scsipi					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/scsipi/t_cd.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/dev/sysmon					tests-fs-debug
+./usr/libdata/debug/usr/tests/dev/sysmon/t_swsensor.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/dev/sysmon/t_swwdog.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
@@ -1056,6 +1057,7 @@
 ./usr/tests/dev/scsipi/t_cd			tests-fs-tests		atf
 ./usr/tests/dev/sysmon				tests-fs-tests
 ./usr/tests/dev/sysmon/Atffile			tests-fs-tests		atf
+./usr/tests/dev/sysmon/t_swsensor		tests-fs-tests		atf
 ./usr/tests/dev/sysmon/t_swwdog			tests-fs-tests		atf
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests		atf
