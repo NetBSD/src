@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2010/11/13 02:23:27 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.126 2010/12/20 00:25:45 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,31 +33,24 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2010/11/13 02:23:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2010/12/20 00:25:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/syscall.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
+#include <sys/kauth.h>
+#include <sys/proc.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/kmem.h>
-#include <sys/kauth.h>
+#include <sys/signalvar.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/mtpr.h>
-#include <machine/pte.h>
-#include <machine/pcb.h>
 #include <machine/trap.h>
-#include <machine/pmap.h>
-#include <machine/cpu.h>
 #include <machine/userret.h>
 
 #ifdef DDB
@@ -121,7 +114,7 @@ trap(struct trapframe *frame)
 	onfault = pcb->pcb_onfault;
 	p = l->l_proc;
 	KASSERT(p != NULL);
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	if (usermode) {
 		type |= T_USER;
 		oticks = p->p_sticks;

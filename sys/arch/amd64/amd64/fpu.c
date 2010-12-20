@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.32 2009/11/21 03:11:01 rmind Exp $	*/
+/*	$NetBSD: fpu.c,v 1.33 2010/12/20 00:25:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.32 2009/11/21 03:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33 2010/12/20 00:25:24 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -113,8 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.32 2009/11/21 03:11:01 rmind Exp $");
 #include <sys/device.h>
 #include <sys/vmmeter.h>
 #include <sys/kernel.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.68 2010/10/18 22:02:25 phx Exp $ */
+/*	$NetBSD: sbic.c,v 1.69 2010/12/20 00:25:26 matt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.68 2010/10/18 22:02:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.69 2010/12/20 00:25:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.68 2010/10/18 22:02:25 phx Exp $");
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>

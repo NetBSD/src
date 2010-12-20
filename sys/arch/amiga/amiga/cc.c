@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.21 2009/03/18 10:22:23 cegger Exp $	*/
+/*	$NetBSD: cc.c,v 1.22 2010/12/20 00:25:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,13 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.21 2009/03/18 10:22:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.22 2010/12/20 00:25:25 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>

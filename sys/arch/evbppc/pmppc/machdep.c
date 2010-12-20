@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2010/12/11 17:12:44 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2010/12/20 00:25:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2010/12/11 17:12:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2010/12/20 00:25:32 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2010/12/11 17:12:44 matt Exp $");
 #include <sys/systm.h>
 #include <sys/ksyms.h>
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>

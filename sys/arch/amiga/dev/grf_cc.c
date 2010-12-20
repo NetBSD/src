@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.38 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.39 2010/12/20 00:25:25 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.38 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.39 2010/12/20 00:25:25 matt Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.38 2009/10/26 19:16:54 cegger Exp $");
 #include <amiga/dev/grf_ccreg.h>
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
-
-#include <uvm/uvm_extern.h>
 
 #include "view.h"
 

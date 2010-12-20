@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.223 2010/11/12 17:22:49 uebayasi Exp $	*/
+/*	$NetBSD: trap.c,v 1.224 2010/12/20 00:25:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.223 2010/11/12 17:22:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.224 2010/12/20 00:25:38 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -208,7 +208,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	extern void fswintrberr(void);
 	KSI_INIT_TRAP(&ksi);
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status)) {
 		type |= T_USER;
@@ -623,7 +623,7 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 	struct lwp *l = curlwp;
 
 	while (l->l_md.md_astpending) {
-		uvmexp.softs++;
+		//curcpu()->ci_data.cpu_nast++;
 		l->l_md.md_astpending = 0;
 
 		if (l->l_pflag & LP_OWEUPC) {
