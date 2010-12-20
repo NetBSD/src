@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2010/01/13 01:57:17 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2010/12/20 04:27:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -37,6 +37,7 @@
 
 struct cpu_info;
 
+#ifdef _KERNEL
 #ifndef cpu_idle
 void cpu_idle(void);
 #endif
@@ -68,7 +69,7 @@ void cpu_need_resched(struct cpu_info *, int);
 void	cpu_offline_md(void);
 #endif
 
-lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
+struct lwp *cpu_switchto(struct lwp *, struct lwp *, bool);
 struct	cpu_info *cpu_lookup(u_int);
 int	cpu_setstate(struct cpu_info *, bool);
 int	cpu_setintr(struct cpu_info *, bool);
@@ -77,12 +78,14 @@ bool	cpu_softintr_p(void);
 bool	cpu_kpreempt_enter(uintptr_t, int);
 void	cpu_kpreempt_exit(uintptr_t);
 bool	cpu_kpreempt_disabled(void);
-int	cpu_lwp_setprivate(lwp_t *, void *);
+int	cpu_lwp_setprivate(struct lwp *, void *);
 void	cpu_intr_redistribute(void);
 u_int	cpu_intr_count(struct cpu_info *);
+#endif
 
 CIRCLEQ_HEAD(cpuqueue, cpu_info);
 
+#ifdef _KERNEL
 extern kmutex_t cpu_lock;
 extern u_int maxcpus;
 extern struct cpuqueue cpu_queue;
@@ -98,7 +101,7 @@ cpu_name(struct cpu_info *ci)
 {
 	return ci->ci_data.cpu_name;
 }
-
+#endif
 #endif	/* !_LOCORE */
 
 /* flags for cpu_need_resched */
