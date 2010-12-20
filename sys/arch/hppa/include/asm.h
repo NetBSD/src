@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 2010/03/08 07:42:46 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.12 2010/12/20 21:11:24 joerg Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -135,13 +135,15 @@
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(sym) ## ,1,0,0,0
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(sym),1,0,0,0
-#endif
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
+#endif /* __STDC__ */
 
 #define	BSS(n,s)	.comm n, s
 #define	SZREG	4

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.21 2008/08/31 23:23:42 mrg Exp $ */
+/*	$NetBSD: asm.h,v 1.22 2010/12/20 21:11:26 joerg Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -94,12 +94,14 @@
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_C_LABEL(sym)),1,0,0,0
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
 #endif /* __STDC__ */
 
 #endif /* !_VAX_ASM_H_ */
