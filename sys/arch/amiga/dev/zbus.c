@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.61 2007/10/17 19:53:17 garbled Exp $ */
+/*	$NetBSD: zbus.c,v 1.62 2010/12/20 00:25:26 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,13 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.61 2007/10/17 19:53:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.62 2010/12/20 00:25:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
@@ -66,7 +64,7 @@ u_int		ZBUSAVAIL;	/* bytes of Zorro bus I/O space left */
 /*
  * explain the names.. 0123456789 => zothfisven
  */
-static struct aconfdata aconftab[] = {
+static const struct aconfdata aconftab[] = {
 	/* Commodore Amiga */
 	{ "atzee",	513,	1 },
 	{ "atzsc",	514,	2 },
@@ -233,7 +231,7 @@ static const char *aconflookup(int, int);
 static const char *
 aconflookup(int mid, int pid)
 {
-	struct aconfdata *adp, *eadp;
+	const struct aconfdata *adp, *eadp;
 
 	eadp = &aconftab[naconfent];
 	for (adp = aconftab; adp < eadp; adp++)

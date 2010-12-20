@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 2010/12/20 00:25:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -833,12 +833,11 @@ Lbrkpt3:
  * _intrhand_vectored is the entry point for vectored interrupts.
  */
 
-#define INTERRUPT_SAVEREG	moveml  #0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml  %sp@+,#0x0303
-
 ENTRY_NOPROFILE(spurintr)	/* Level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	rte
 
 ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
@@ -854,12 +853,12 @@ ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
 
 ENTRY_NOPROFILE(lev1intr)		/* Level 1: AST interrupt */
 	addql	#1,_C_LABEL(idepth)
-	movl	%a0,%sp@-
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
 	addql	#1,_C_LABEL(intrcnt)+4
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	movl	_C_LABEL(ctrl_ast),%a0
 	clrb	%a0@			| disable AST interrupt
-	movl	%sp@+,%a0
+	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| handle AST
 

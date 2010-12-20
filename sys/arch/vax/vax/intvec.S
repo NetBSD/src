@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.18 2010/07/01 19:50:12 ragge Exp $   */
+/*	$NetBSD: intvec.S,v 1.19 2010/12/20 00:25:45 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -305,15 +305,20 @@ SCBENTRY(hardclock)
 	jbr	Xtrap
 #endif
 1:	pushr	$0x3f
-        mfpr    $PR_ICCS,%r0
-        tstl    %r0
-        bgeq    2f
+	mfpr    $PR_ICCS,%r0
+	tstl    %r0
+	bgeq    2f
 	incl    _C_LABEL(clock_misscnt)+EV_COUNT
-        adwc    $0,_C_LABEL(clock_misscnt)+EV_COUNT+4
+	adwc    $0,_C_LABEL(clock_misscnt)+EV_COUNT+4
 2:      mtpr	$0x800000c1,$PR_ICCS		# Reset interrupt flag
 	incl	_C_LABEL(clock_intrcnt)+EV_COUNT	# count the number of clock interrupts
 	adwc	$0,_C_LABEL(clock_intrcnt)+EV_COUNT+4
-	incl	_C_LABEL(uvmexp)+UVME_INTRS
+
+	mfpr    $PR_SSP, %r0		/* SSP contains curlwp */
+	movl	L_CPU(%r0), %r0		/* get current CPU */
+	incl    CI_NINTR(%r0)
+	adwc    $0,(CI_NINTR+4)(%r0)
+	
 #if VAX46 || VAXANY
 	cmpl	_C_LABEL(vax_boardtype),$VAX_BTYP_46
 	bneq	1f

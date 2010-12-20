@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.17 2010/01/28 14:10:54 mbalmer Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.18 2010/12/20 00:25:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.17 2010/01/28 14:10:54 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.18 2010/12/20 00:25:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,7 +163,7 @@ clock_intr(struct clockframe *cf)
 
 	/* Call common clock interrupt handler. */
 	hardclock(cf);
-	uvmexp.intrs++;
+	curcpu()->ci_data.cpu_nintr++;
 }
 
 /* heartbeat LED */

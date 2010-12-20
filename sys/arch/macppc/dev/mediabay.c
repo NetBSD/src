@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.18 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.19 2010/12/20 00:25:37 matt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,15 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.18 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.19 2010/12/20 00:25:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 

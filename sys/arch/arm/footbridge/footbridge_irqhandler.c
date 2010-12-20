@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.22 2009/06/17 06:27:05 skrll Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.23 2010/12/20 00:25:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,14 +40,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.22 2009/06/17 06:27:05 skrll Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.23 2010/12/20 00:25:27 matt Exp $");
 
 #include "opt_irqstats.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/cpu.h>
@@ -312,7 +311,7 @@ footbridge_intr_dispatch(struct clockframe *frame)
 
 		iq = &footbridge_intrq[irq];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			ci->ci_cpl = ih->ih_ipl;
 			oldirqstate = enable_interrupts(I32_bit);

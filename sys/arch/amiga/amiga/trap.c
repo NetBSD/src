@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.130 2010/07/07 01:16:23 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.131 2010/12/20 00:25:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2010/07/07 01:16:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2010/12/20 00:25:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,7 +559,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;

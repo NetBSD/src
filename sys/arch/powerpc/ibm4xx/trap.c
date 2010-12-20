@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 2010/04/23 19:18:09 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 2010/12/20 00:25:41 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2010/04/23 19:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2010/12/20 00:25:41 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -296,7 +296,7 @@ trap(struct trapframe *frame)
 
 	case EXC_AST|EXC_USER:
 		curcpu()->ci_astpending = 0;	/* we are about to do it */
-		uvmexp.softs++;
+		//curcpu()->ci_data.cpu_nast++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
@@ -324,7 +324,7 @@ trap(struct trapframe *frame)
 		 *
 		 * let's try to see if it's FPU and can be emulated.
 		 */
-		uvmexp.traps++;
+		curcpu()->ci_data.cpu_ntrap++;
 		pcb = lwp_getpcb(l);
 
 		if (!(pcb->pcb_flags & PCB_FPU)) {

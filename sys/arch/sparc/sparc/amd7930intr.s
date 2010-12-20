@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930intr.s,v 1.22 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: amd7930intr.s,v 1.23 2010/12/20 00:25:43 matt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -137,11 +137,8 @@ _ENTRY(_C_LABEL(amd7930_trap))
 	sethi	%hi(savepc), %l7
 	st	%l2, [%l7 + %lo(savepc)]
 
-	! tally interrupt (uvmexp.intrs++)
-	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
-	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
-	inc	%l6
-	st	%l6, [%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)]
+	! tally interrupt (curcpu()->cpu_data.cpu_nintr++)
+	INCR64X(CPUINFO_VA + CPUINFO_NINTR, %l4, %l5, %l7)
 
 	sethi	%hi(_C_LABEL(auiop)), %l7
 	ld	[%l7 + %lo(_C_LABEL(auiop))], %l7

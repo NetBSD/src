@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.42 2008/06/13 08:13:37 cegger Exp $ */
+/*	$NetBSD: afsc.c,v 1.43 2010/12/20 00:25:25 matt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,14 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.42 2008/06/13 08:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.43 2010/12/20 00:25:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

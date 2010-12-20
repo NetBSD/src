@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 2010/02/25 23:31:47 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 2010/12/20 00:25:41 matt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2010/02/25 23:31:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2010/12/20 00:25:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,19 +90,21 @@ void stat_intr(struct clockframe *);	/* called from trap_subr.S */
 void
 stat_intr(struct clockframe *frame)
 {
+	struct cpu_info * const ci = curcpu();
 
 	mtspr(SPR_TSR, TSR_FIS);	/* Clear TSR[FIS] */
-	uvmexp.intrs++;
-	curcpu()->ci_ev_statclock.ev_count++;
+	ci->ci_data.cpu_nintr++;
+	ci->ci_ev_statclock.ev_count++;
 
 	/* Nobody can interrupt us, but see if we're allowed to run. */
-	if (! (curcpu()->ci_cpl & mask_statclock))
+	if (! (ci->ci_cpl & mask_statclock))
   		statclock(frame);
 }
 
 void
 decr_intr(struct clockframe *frame)
 {
+	struct cpu_info * const ci = curcpu();
 	int pri;
 	long tbtick, xticks;
 	int nticks;
@@ -121,8 +123,8 @@ decr_intr(struct clockframe *frame)
 		xticks -= ticks_per_intr;
 	lasttb2 = tbtick - xticks;
 
-	uvmexp.intrs++;
-	curcpu()->ci_ev_clock.ev_count++;
+	ci->ci_data.cpu_nintr++;
+	ci->ci_ev_clock.ev_count++;
 	pri = splclock();
 	if (pri & mask_clock) {
 		tickspending += nticks;
@@ -158,9 +160,11 @@ decr_intr(struct clockframe *frame)
 void
 cpu_initclocks(void)
 {
+	struct cpu_info * const ci = curcpu();
+
 	/* Initialized in powerpc/ibm4xx/cpu.c */
-	evcnt_attach_static(&curcpu()->ci_ev_clock);
-	evcnt_attach_static(&curcpu()->ci_ev_statclock);
+	evcnt_attach_static(&ci->ci_ev_clock);
+	evcnt_attach_static(&ci->ci_ev_statclock);
 
 	ticks_per_intr = ticks_per_sec / hz;
 	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);

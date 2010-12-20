@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.52 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: grf.c,v 1.53 2010/12/20 00:25:25 matt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.52 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53 2010/12/20 00:25:25 matt Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.52 2009/10/26 19:16:54 cegger Exp $");
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>
-#include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <dev/sun/fbio.h>
 #include <amiga/amiga/color.h>	/* DEBUG */

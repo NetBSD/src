@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.10 2009/12/14 00:46:12 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.11 2010/12/20 00:25:42 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,15 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.10 2009/12/14 00:46:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.11 2010/12/20 00:25:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/malloc.h>
-
-/* XXX for uvmexp */
-#include <uvm/uvm_extern.h>
 
 #include <machine/systemsw.h>
 #include <mips/locore.h>
@@ -112,7 +110,7 @@ sb1250_cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
 	/* XXX do something if 5? */
 	if (ipending & (MIPS_INT_MASK_0 << 5)) {

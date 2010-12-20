@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.58 2009/10/19 01:25:29 dholland Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.59 2010/12/20 00:25:47 matt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.58 2009/10/19 01:25:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.59 2010/12/20 00:25:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,6 +253,8 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
         CPU_INFO_ITERATOR cii;
 #endif
 	int	 	 i;
+	uint64_t	nintr;
+	uint64_t	nswtch;
 
 	error = ENAMETOOLONG;
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
@@ -275,6 +277,8 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 #endif
 
 	i = 0;
+	nintr = 0;
+	nswtch = 0;
 	for (ALLCPUS) {
 		len += snprintf(&bf[len], LBFSZ - len, 
 			"cpu%d %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64
@@ -286,20 +290,22 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 		if (len >= LBFSZ)
 			goto out;
 		i += 1;
+		nintr += CPUNAME->ci_data.cpu_nintr;
+		nswtch += CPUNAME->ci_data.cpu_nswtch;
 	}
 
 	len += snprintf(&bf[len], LBFSZ - len,
 			"disk 0 0 0 0\n"
 			"page %u %u\n"
 			"swap %u %u\n"
-			"intr %u\n"
-			"ctxt %u\n"
-			"btime %lld\n",
+			"intr %"PRIu64"\n"
+			"ctxt %"PRIu64"\n"
+			"btime %"PRId64"\n",
 			uvmexp.pageins, uvmexp.pdpageouts,
 			uvmexp.pgswapin, uvmexp.pgswapout,
-			uvmexp.intrs,
-			uvmexp.swtch,
-			(long long)boottime.tv_sec);
+			nintr,
+			nswtch,
+			boottime.tv_sec);
 	if (len >= LBFSZ)
 		goto out;
 

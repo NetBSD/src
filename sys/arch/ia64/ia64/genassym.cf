@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2009/12/10 05:10:02 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.9 2010/12/20 00:25:35 matt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,8 +145,8 @@ define	IP_DST			offsetof(struct ip, ip_dst)
 define	IP6_SRC			offsetof(struct ip6_hdr, ip6_src)
 define	IP6_DST			offsetof(struct ip6_hdr, ip6_dst)
 
-define	V_TRAP			offsetof(struct uvmexp, traps)
-define	V_INTR			offsetof(struct uvmexp, intrs)
+define	CI_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
+define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 
 define  SIZEOF_PCB		sizeof(struct pcb)
 define  SIZEOF_TRAPFRAME	sizeof(struct trapframe)
