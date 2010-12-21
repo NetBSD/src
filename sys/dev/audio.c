@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.6.3 2009/10/16 05:43:37 snj Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.6.4 2010/12/21 22:25:56 riz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.6.3 2009/10/16 05:43:37 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.6.4 2010/12/21 22:25:56 riz Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2780,8 +2780,8 @@ audio_pint(void *v)
 
 			/* Clear next block so we keep ahead of the DMA. */
 			used = audio_stream_get_used(&cb->s);
-			if (used + cc < cb->s.end - cb->s.start)
-				audio_pint_silence(sc, cb, inp, blksize);
+			if (used + blksize < cb->s.end - cb->s.start)
+				audio_pint_silence(sc, cb, cb->s.inp, blksize);
 		}
 	}
 
