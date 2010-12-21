@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1477 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1478 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -612,13 +612,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		a snapshot of a live file system. [hannken 20100411]
 	rump(3): Support file system snapshots.  [pooka 20100412]
 	hpcarm: Add support for Sharp W-ZERO3 series. [nonaka 20100417]
-	acpi(4): Statistical event counters were added to hw.acpi.stat
-		sysctl(8) tree. Dynamic debug output messages provided by the
-		interpreter were added for ACPI_DEBUG kernels. These are
-		controllable from the hw.acpi.debug sysctl(8) namespace.
-		Furthermore, the ACPI device wake-up sysctl(8) tree was moved
-		from hw.wake to hw.acpi.wake. [jruoho 20100419]
-	acpiwmi(4): Added two mappings (child devices) for the ACPI WMI.
+	acpi(4): The sysctl(8) tree was reorganized into hw.acpi.
+		[jruoho 20100419]
+	acpiwmi(4): Add three mappings, wmidell(4), wmihp(4), and wmimsi(4).
 		[jruoho 20100419]
 	kernel: Enforce RLIMIT_FSIZE above the file system.  This fixes
 		the feature for some file systems.  [pooka 20100423]
@@ -718,7 +714,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		write through mapping for framebuffer memory.
 		[tsutsui 20100808]
 	bind: Update to 9.7.2b1. [christos 20100806]
-	acpicpu(4): add a driver for ACPI-based processor functionality.
+	acpicpu(4): Add a driver for ACPI-based processor functionality.
 		[jruoho 20100815]
 	network: Added NPF - a new packet filter. [rmind 20100822]
 	tests(7): Convert the libdes tests to ATF.  [jmmv 20100825]
