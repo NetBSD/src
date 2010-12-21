@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.398 2010/12/20 18:18:32 jruoho Exp $
+.\"	$NetBSD: options.4,v 1.399 2010/12/21 08:11:21 jruoho Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 21, 2010
+.Dd December 21, 2010
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -2408,12 +2408,15 @@ on a Shark.
 .Bl -ohang
 .It Cd options ENHANCED_SPEEDSTEP
 Include support for the
-.Tn Enhanced SpeedStep Technology
-present in newer
-.Tn CPU Ns s .
+.Dq Enhanced SpeedStep Technology .
+Note that new systems supporting
+.Xr acpi 4
+should prefer
+.Xr acpicpu 4
+instead.
 .It Cd options EST_FREQ_USERWRITE
 Allow any user to change the frequency of an
-.Tn Enhanced SpeedStep Technology
+.Dq Enhanced SpeedStep Technology .
 capable
 .Tn CPU .
 .It Cd options INTEL_ONDEMAND_CLOCKMOD
@@ -2430,6 +2433,11 @@ if supported.
 Include support for AMD Athlon 64 PowerNow! and Cool`n'Quiet
 Technology, used to change the CPU voltage and frequency
 on the fly.
+Note that new systems supporting
+.Xr acpi 4
+should prefer
+.Xr acpicpu 4
+instead.
 .El
 .Ss atari-specific Options
 .Bl -ohang
@@ -2462,12 +2470,15 @@ and Hades.
 .Bl -ohang
 .It Cd options ENHANCED_SPEEDSTEP
 Include support for the
-.Tn Enhanced SpeedStep Technology
-present in newer
-.Tn CPU Ns s .
+.Dq Enhanced SpeedStep Technology .
+Note that new systems supporting
+.Xr acpi 4
+should prefer
+.Xr acpicpu 4
+instead.
 .It Cd options EST_FREQ_USERWRITE
 Allow any user to change the frequency of an
-.Tn Enhanced SpeedStep Technology
+.Dq Enhanced SpeedStep Technology
 capable
 .Tn CPU .
 .It Cd options INTEL_ONDEMAND_CLOCKMOD
