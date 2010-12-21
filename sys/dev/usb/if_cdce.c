@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.31 2010/08/08 01:57:24 jakllsch Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.32 2010/12/21 07:07:44 jnemeth Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.31 2010/08/08 01:57:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.32 2010/12/21 07:07:44 jnemeth Exp $");
 #ifdef	__NetBSD__
 #include "opt_inet.h"
 #endif
@@ -102,6 +102,8 @@ Static const struct cdce_type cdce_devs[] = {
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5600 }, CDCE_ZAURUS | CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C700 }, CDCE_ZAURUS | CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C750 }, CDCE_ZAURUS | CDCE_NO_UNION },
+  {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_ZAURUS | CDCE_NO_UNION },
+  {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_ZAURUS | CDCE_NO_UNION },
 };
 #define cdce_lookup(v, p) ((const struct cdce_type *)usb_lookup(cdce_devs, v, p))
 
