@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.8 2010/08/28 15:49:08 wiz Exp $
+.\"     $NetBSD: parsedate.3,v 1.9 2010/12/21 00:15:10 christos Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 28, 2010
+.Dd December 20, 2010
 .Dt PARSEDATE 3
 .Os
 .Sh NAME
@@ -69,30 +69,32 @@ The following words have the indicated numeric meanings:
 \-1,
 .Dv this =
 0,
-.Dv first or next
+.Dv first, next, or one =
 1,
 .Dv second
 is unused so that it is not confused with
 .Dq seconds ,
-.Dv third =
+.Dv two =
+2,
+.Dv third or three =
 3,
-.Dv fourth =
+.Dv fourth or four =
 4,
-.Dv fifth =
+.Dv fifth or five  =
 5,
-.Dv sixth =
+.Dv sixth or six  =
 6,
-.Dv seventh =
+.Dv seventh or seven =
 7,
-.Dv eighth =
+.Dv eighth or eight =
 8,
-.Dv ninth =
+.Dv ninth or nine =
 9,
-.Dv tenth =
+.Dv tenth or ten =
 10,
-.Dv eleventh =
+.Dv eleventh or eleven =
 11,
-.Dv twelfth =
+.Dv twelfth or twoelve =
 12.
 .Pp
 The following words are recognized in English only:
@@ -255,4 +257,22 @@ The
 function first appeared in
 .Nx 4.0 .
 .Sh BUGS
-The parsedate function is not re-entrant or thread-safe.
+.Bl -tag -compact -width 1
+.It 1
+The 
+.Fn parsedate
+function is not re-entrant or thread-safe.
+.It 2
+The
+.Fn parsedate
+function cannot compute days before the unix epoch (19700101).
+.It 3
+The
+.Fn parsedate
+function assumes years less than 0 mean -
+.Fa year ,
+years less than 70 mean 2000 + 
+.Fa year ,
+years less than 100 mean 1900 +
+.Fa year .
+.El
