@@ -56,10 +56,73 @@ ATF_TC_BODY(zero_padding, tc)
 #endif
 }
 
+ATF_TC(dot_zero_f);
+
+ATF_TC_HEAD(dot_zero_f, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", \
+	    "PR lib/32951: %.0f formats (0.0,0.5] to \"0.\"");
+}
+
+ATF_TC_BODY(dot_zero_f, tc)
+{
+	char s[4];
+
+	ATF_CHECK(snprintf(s, sizeof(s), "%.0f", 0.1) == 1);
+	ATF_REQUIRE_STREQ(s, "0");
+}
+
+ATF_TC(sscanf_neg_hex);
+
+ATF_TC_HEAD(sscanf_neg_hex, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", \
+	    "PR lib/21691: %i and %x fail with negative hex numbers");
+}
+
+ATF_TC_BODY(sscanf_neg_hex, tc)
+{
+#define NUM     -0x1234
+#define STRNUM  ___STRING(NUM)
+
+        int i;
+
+        sscanf(STRNUM, "%i", &i);
+	ATF_REQUIRE(i == NUM);
+
+        sscanf(STRNUM, "%x", &i);
+	ATF_REQUIRE(i == NUM);
+}
+
+ATF_TC(sscanf_whitespace);
+
+ATF_TC_HEAD(sscanf_whitespace, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "verify sscanf skips all whitespace");
+}
+
+ATF_TC_BODY(sscanf_whitespace, tc)
+{
+	const char str[] = "\f\n\r\t\v%z";
+	char c;
+
+        /* set of "white space" symbols from isspace(3) */
+        c = 0;
+        (void)sscanf(str, "%%%c", &c);
+	ATF_REQUIRE(c == 'z');
+}
+
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, zero_padding);
+	ATF_TP_ADD_TC(tp, dot_zero_f);
+	ATF_TP_ADD_TC(tp, sscanf_neg_hex);
+	ATF_TP_ADD_TC(tp, sscanf_whitespace);
 
 	return atf_no_error();
 }
