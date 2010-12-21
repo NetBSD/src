@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.58 2009/11/25 09:30:04 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.59 2010/12/21 14:26:17 pgoyette Exp $
 
 SUBDIR+= _setjmp atexit basename citrus clone context convfp db dirname \
 	div divrem gen gdtoa getaddrinfo hsearch inet int_fmtio locale md5sha \
 	nsdispatch popen pty randomid regex rpc servent setjmp sigsetjmp \
-	stdio stdlib string strptime sys time
+	stdlib string strptime sys time
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
