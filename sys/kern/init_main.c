@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.371.2.4 2010/02/14 13:35:43 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.371.2.5 2010/12/21 22:21:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.4 2010/02/14 13:35:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.5 2010/12/21 22:21:42 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -477,6 +477,11 @@ main(void)
 	shminit();
 #endif
 
+	vmem_rehash_start();	/* must be before exec_init */
+
+	/* Initialize exec structures */
+	exec_init(1);		/* seminit calls exithook_establish() */
+
 #ifdef SYSVSEM
 	/* Initialize System V style semaphores. */
 	seminit();
@@ -660,11 +665,6 @@ main(void)
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
 	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
 		panic("fork aiodoned");
-
-	vmem_rehash_start();
-
-	/* Initialize exec structures */
-	exec_init(1);
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
