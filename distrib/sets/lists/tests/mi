@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.184 2010/12/20 23:47:23 pgoyette Exp $
+# $NetBSD: mi,v 1.185 2010/12/21 18:05:43 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -340,6 +340,7 @@
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libm/t_libm.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libposix				tests-lib-debug
