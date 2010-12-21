@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.37 2010/12/10 21:45:33 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.38 2010/12/21 22:26:44 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -942,4 +942,25 @@ crypto/external/bsd/openssl/dist/ssl/t1_lib.c	1.3 via patch
 	Don't assume a decode error if session tlsext_ecpointformatlist is
 	not NULL: it can be legitimately set elsewhere.
 	[drochner, ticket #1510]
+
+sys/arch/acorn32/stand/lib/riscospart.c		1.3
+
+	Use partition_cyl_high and partition_cyl_low to find the "RiscBSD"
+	partition.
+	[skrll, ticket #1495]
+
+sys/kern/init_main.c				1.418
+
+	Fix LOCKDEBUG panic 'uninitialized lock'.
+	[skrll, ticket #1496]
+
+sys/arch/dreamcast/dev/g2/aica.c		1.19
+
+	Workaround to make dreamcast audio work.
+	[tsutsui, ticket #1497]
+
+sys/dev/audio.c					1.252
+
+	Fix buffer overrun.
+	[tsutsui, ticket #1498]
 
