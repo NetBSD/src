@@ -161,7 +161,7 @@ epochdate: AT_SIGN tUNUMBER {
 		yyMinutes = tmbuf.tm_min;
 		yySeconds = tmbuf.tm_sec;
 	    } else {
-		yyYear = 1970;
+		yyYear = EPOCH;
 		yyMonth = 1;
 		yyDay = 1;
 
@@ -206,6 +206,15 @@ time	: tUNUMBER tMERIDIAN {
 	    yyMeridian = MER24;
 	    yyDSTmode = DSToff;
 	    yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
+	}
+	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
+	    yyHour = $1;
+	    yyMinutes = $3;
+	    yySeconds = $5;
+	    yyMeridian = MER24;
+	    yyDSTmode = DSToff;
+/* XXX: Do nothing with millis */
+/*	    yyTimezone = ($7 % 100 + ($7 / 100) * 60); */
 	}
 	;
 
@@ -412,17 +421,29 @@ static TABLE const OtherTable[] = {
     { "this",		tMINUTE_UNIT,	0 },
     { "next",		tUNUMBER,	2 },
     { "first",		tUNUMBER,	1 },
+    { "one",		tUNUMBER,	1 },
 /*  { "second",		tUNUMBER,	2 }, */
+    { "two",		tUNUMBER,	2 },
     { "third",		tUNUMBER,	3 },
+    { "three",		tUNUMBER,	3 },
     { "fourth",		tUNUMBER,	4 },
+    { "four",		tUNUMBER,	4 },
     { "fifth",		tUNUMBER,	5 },
+    { "five",		tUNUMBER,	5 },
     { "sixth",		tUNUMBER,	6 },
+    { "six",		tUNUMBER,	6 },
     { "seventh",	tUNUMBER,	7 },
+    { "seven",		tUNUMBER,	7 },
     { "eighth",		tUNUMBER,	8 },
+    { "eight",		tUNUMBER,	8 },
     { "ninth",		tUNUMBER,	9 },
+    { "nine",		tUNUMBER,	9 },
     { "tenth",		tUNUMBER,	10 },
+    { "ten",		tUNUMBER,	10 },
     { "eleventh",	tUNUMBER,	11 },
+    { "eleven",		tUNUMBER,	11 },
     { "twelfth",	tUNUMBER,	12 },
+    { "twelve",		tUNUMBER,	12 },
     { "ago",		tAGO,	1 },
     { NULL,		0,	0 }
 };
@@ -616,9 +637,10 @@ Convert(
     time_t	Julian, oJulian;
     int		i;
 
+    /* XXX Y2K */
     if (Year < 0)
 	Year = -Year;
-    if (Year < 69)
+    if (Year < 70)
 	Year += 2000;
     else if (Year < 100)
 	Year += 1900;
