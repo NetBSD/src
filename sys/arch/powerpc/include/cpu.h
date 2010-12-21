@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72 2010/11/13 13:13:34 uebayasi Exp $	*/
+/*	$NetBSD: cpu.h,v 1.73 2010/12/21 20:39:53 phx Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -42,23 +42,26 @@ struct cache_info {
 	int icache_line_size;
 };
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #endif
 
+#ifdef _KERNEL
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
+#endif
 
 #include <sys/cpu_data.h>
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+#ifdef _KERNEL
 	struct device *ci_dev;		/* device of corresponding cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 
@@ -135,7 +138,11 @@ struct cpu_info {
 	struct evcnt ci_ev_vecsw;	/* Altivec context switches */
 	struct evcnt ci_ev_umchk;	/* user MCHK events */
 	struct evcnt ci_ev_ipi;		/* IPIs received */
+#endif /* _KERNEL */
 };
+#endif /* _KERNEL || _KMEMUSER */
+
+#ifdef _KERNEL
 
 #ifdef MULTIPROCESSOR
 
