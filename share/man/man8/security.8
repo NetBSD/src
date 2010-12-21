@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.27 2010/12/19 08:31:38 jruoho Exp $
+.\" $NetBSD: security.8,v 1.28 2010/12/21 08:50:18 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 19, 2010
+.Dd December 21, 2010
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -95,6 +95,10 @@ stack-smashing protection
 .It
 bounds checked libc functions
 .Pq Tn FORTIFY_SOURCE
+.It
+Protections against
+.Dv NULL
+pointer dereferences
 .El
 .Ss PaX ASLR
 .Em PaX ASLR
@@ -332,6 +336,39 @@ the following in
 .Bd -literal -offset indent
 USE_FORT=yes
 .Ed
+.Ss Protections against NULL pointer dereferences
+A certain class of attacks rely on kernel bugs that dereference
+.Dv NULL
+pointers.
+If user processes are allowed to map the virtual address 0 with
+.Xr mmap 2
+or by other means, there is a risk that code or data
+can be injected into the kernel address space.
+.Pp
+In
+.Nx
+it is possible to restrict whether user processes are
+allowed to make mappings at the zero address.
+By default, address 0 mappings are restricted
+on the i386 and amd64 architectures.
+It is however known that some third-party programs
+may not function properly with the restriction.
+Such mappings can be allowed either by using the
+.Dv USER_VA0_DISABLE_DEFAULT
+kernel configuration
+.Xr option 4
+or by changing the following variable at runtime:
+.Bd -literal -offset indent
+# sysctl -w vm.user_va0_disable=0
+.Ed
+.Pp
+Note that if
+.Em securelevel
+(see
+.Xr secmodel_securelevel 9 )
+is greater than zero, it is not possible to change the
+.Xr sysctl 8
+variable.
 .Sh PER-USER TEMPORARY STORAGE
 It is possible to configure per-user temporary storage to avoid potential
 security issues (race conditions, etc.) in programs that do not make secure
