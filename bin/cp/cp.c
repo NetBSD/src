@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.53 2009/10/08 20:36:41 pooka Exp $ */
+/* $NetBSD: cp.c,v 1.54 2010/12/21 20:56:01 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.53 2009/10/08 20:36:41 pooka Exp $");
+__RCSID("$NetBSD: cp.c,v 1.54 2010/12/21 20:56:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLNPRfiprv")) != -1) 
+	while ((ch = getopt(argc, argv, "HLNPRfaiprv")) != -1) 
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -125,6 +125,12 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			Rflag = 1;
+			break;
+		case 'a':
+			Pflag = 1;
+			pflag = 1;
+			Rflag = 1;
+			Hflag = Lflag = 0;
 			break;
 		case 'f':
 			fflag = 1;
