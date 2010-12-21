@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.30 2007/10/26 16:31:16 hira Exp $
+.\"	$NetBSD: cp.1,v 1.31 2010/12/21 20:56:01 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl f | i
-.Op Fl Npv
+.Op Fl aNpv
 .Ar source_file target_file
 .Nm cp
 .Oo
@@ -53,7 +53,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl f | i
-.Op Fl Npv
+.Op Fl aNpv
 .Ar source_file ... target_directory
 .Sh DESCRIPTION
 In the first synopsis form, the
@@ -100,6 +100,10 @@ the file copy is attempted.
 If the
 .Fl R
 option is specified, all symbolic links are followed.
+.It Fl a
+Archive mode.
+Same as
+.Fl RpP .
 .It Fl N
 When used with
 .Fl p ,
