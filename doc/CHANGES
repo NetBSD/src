@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1478 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1479 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -366,7 +366,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		switch and sleep/power buttons as a method of waking the
 		machine from sleep. Any ACPI device node with a _PRW method
 		is now a candidate, and the device nodes are listed in the
-		hw.wake namespace. By default, the following device node
+		hw.acpi.wake namespace. By default, the following device node
 		types are enabled as wakeup devices if the firmware supports
 		it: lid switch, sleep/power button, PC keyboard controller.
 		[jmcneill 20090804]
