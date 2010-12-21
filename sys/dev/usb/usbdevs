@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.570 2010/12/08 20:59:58 phx Exp $
+$NetBSD: usbdevs,v 1.571 2010/12/21 07:03:08 jnemeth Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1903,8 +1903,8 @@ product MOTOROLA MC141555	0x1555	MC141555 hub controller
 product MOTOROLA SB4100		0x4100	SB4100 USB Cable Modem
 product MOTOROLA2 T720C		0x2822	T720c
 product MOTOROLA2 A920		0x4002	A920
-product MOTOROLA2 USBLAN	0x600c	USBLAN
-product MOTOROLA2 USBLAN2	0x6027	USBLAN
+product MOTOROLA2 USBLAN	0x600c	USBLAN (A780, E680, ...)
+product MOTOROLA2 USBLAN2	0x6027	USBLAN (A910, A1200, Rokr E2, Rokr E6, ...)
 
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
