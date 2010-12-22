@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93 2009/10/21 21:12:00 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.94 2010/12/22 02:42:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -114,28 +114,6 @@
  * Get interrupt glue.
  */
 #include <machine/intr.h>
-
-#include <sys/cpu_data.h>
-struct cpu_info {
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	cpuid_t	ci_cpuid;
-	int	ci_mtx_oldspl;
-	int	ci_mtx_count;
-	int	ci_want_resched;
-};
-
-extern struct cpu_info cpu_info_store;
-
-#define	curcpu()			(&cpu_info_store)
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_number()			0
-
-void	cpu_proc_fork(struct proc *, struct proc *);
-
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
