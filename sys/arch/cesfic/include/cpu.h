@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2010/06/06 04:50:06 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 2010/12/22 02:42:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -90,27 +90,6 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
-
-#include <sys/cpu_data.h>
-struct cpu_info {
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	cpuid_t	ci_cpuid;
-	int	ci_mtx_count;
-	int	ci_mtx_oldspl;
-	int	ci_want_resched;
-};
-
-extern struct cpu_info cpu_info_store;
-
-#define	curcpu()	(&cpu_info_store)
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define cpu_number()			0
-
-void	cpu_proc_fork(struct proc *, struct proc *);
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
