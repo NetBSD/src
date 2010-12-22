@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.16 2010/06/09 18:16:27 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.17 2010/12/22 05:57:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.16 2010/06/09 18:16:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.17 2010/12/22 05:57:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ cpu_uarea_remap(struct lwp *l)
 		error = uvm_pglistalloc(USPACE, mips_avail_start, high,
 		    USPACE_ALIGN, 0, &pglist, 1, 1);
 		if (error)
-			panic("softint_init_md: uvm_pglistalloc failed: %d",
+			panic("%s: uvm_pglistalloc failed: %d", __func__,
 			    error);
 
 		/*
