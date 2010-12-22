@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2005/12/11 12:17:53 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2010/12/22 02:42:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -197,11 +197,32 @@
 #define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
+#include <sys/cpu_data.h>
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+struct cpu_info {
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	cpuid_t	ci_cpuid;
+	int	ci_mtx_count;
+	int	ci_mtx_oldspl;
+	volatile int	ci_want_resched;
+	volatile int	ci_idepth;
+};
+#endif /* _KERNEL || _KMEMUSER */
+
 #ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+struct	proc;
+void	cpu_proc_fork(struct proc *, struct proc *);
+
+#define	curcpu()	(&cpu_info_store)
+
 /*
- * From m68k/syscall.c
+ * definitions of cpu-dependent requirements
+ * referenced in generic code
  */
-/* extern void syscall(register_t, struct frame); Only called from locore.s */
+#define cpu_number()			0
 
 #define LWP_PC(l)	(((struct trapframe *)((l)->l_md.md_regs))->tf_pc)
 #endif /* _KERNEL */
