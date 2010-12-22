@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.13 2010/06/09 14:24:12 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.14 2010/12/22 06:09:02 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -98,8 +98,9 @@ typedef struct {
 } ipl_cookie_t;
 
 #ifdef _KERNEL
-#ifdef MULTIPROCESSOR
-#define __HAVE_PREEMPTION
+
+#if defined(MULTIPROCESSOR) && defined(__HAVE_FAST_SOFTINTS)
+#define __HAVE_PREEMPTION	1
 #define SOFTINT_KPREEMPT	(SOFTINT_COUNT+0)
 #endif
 
