@@ -1,4 +1,4 @@
-.\" $NetBSD: __builtin_types_compatible_p.3,v 1.1 2010/12/21 15:05:02 jruoho Exp $
+.\" $NetBSD: __builtin_types_compatible_p.3,v 1.2 2010/12/22 09:07:15 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -96,7 +96,6 @@ construct:
 if (__COMPARE_TYPES(p, double) != 0)
 	err(EX_DATAERR, "invalid type");
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr gcc 1 ,
 .Xr __builtin_constant_p 3 ,
