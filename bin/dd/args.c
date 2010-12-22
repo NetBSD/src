@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.31 2010/12/22 09:39:06 enami Exp $	*/
+/*	$NetBSD: args.c,v 1.32 2010/12/22 09:42:53 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.31 2010/12/22 09:39:06 enami Exp $");
+__RCSID("$NetBSD: args.c,v 1.32 2010/12/22 09:42:53 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,8 +97,10 @@ static const struct arg {
 	{ "files",	f_files,	C_FILES, C_FILES },
 	{ "ibs",	f_ibs,		C_IBS,	 C_BS|C_IBS },
 	{ "if",		f_if,		C_IF,	 C_IF|C_RIF },
+	{ "iseek",	f_skip,		C_SKIP,	 C_SKIP },
 	{ "obs",	f_obs,		C_OBS,	 C_BS|C_OBS },
 	{ "of",		f_of,		C_OF,	 C_OF|C_ROF },
+	{ "oseek",	f_seek,		C_SEEK,	 C_SEEK },
 	{ "progress",	f_progress,	0,	 0 },
 #ifdef _HAVE_RUMPOPS
 	{ "rif",	f_rif,		C_RIF|C_RUMP,	 C_RIF|C_IF },
