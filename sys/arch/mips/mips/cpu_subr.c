@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.12 2010/09/01 00:59:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.13 2010/12/22 05:53:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -97,11 +97,11 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
 	int error;
 
 	/*
-	* Grab a page from the first 256MB to use to store
+	* Grab a page from the first 512MB (mappable by KSEG0) to use to store
 	* exception vectors and cpu_info for this cpu.
 	*/
 	error = uvm_pglistalloc(PAGE_SIZE,
-	    0, 0x10000000,
+	    0, MIPS_KSEG1_START - MIPS_KSEG0_START,
 	    PAGE_SIZE, PAGE_SIZE, &pglist, 1, false);
 	if (error)
 		return NULL;
@@ -507,7 +507,9 @@ void
 cpu_signotify(struct lwp *l)
 {
 	KASSERT(kpreempt_disabled());
+#ifdef __HAVE_FAST_SOFTINTS
 	KASSERT(lwp_locked(l, NULL));
+#endif
 	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSRUN || l->l_stat == LSSTOP);
 
 	l->l_md.md_astpending = 1; 		/* force call to ast() */
