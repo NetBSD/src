@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.3 2010/03/24 19:23:46 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.4 2010/12/22 05:57:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -81,11 +81,13 @@ ipi_syncicache(struct cpu_info *ci)
 	pmap_tlb_syncicache_wanted(ci);
 }
 
+#ifdef __HAVE_PREEEMPTION
 static inline void
 ipi_kpreempt(struct cpu_info *ci)
 {
 	softint_trigger(SOFTINT_KPREEMPT);
 }
+#endif
 
 void
 ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
