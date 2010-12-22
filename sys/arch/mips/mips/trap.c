@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.30 2010/08/16 23:38:01 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.31 2010/12/22 06:06:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.30 2010/08/16 23:38:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.31 2010/12/22 06:06:19 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -401,6 +401,8 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			return; /* GEN */
 		}
 #endif
+		KASSERT(va < 0 || ci->ci_pmap_asid_cur != 0);
+		pmap_tlb_asid_check();
 
 #ifdef PMAP_FAULTINFO
 		if (p->p_pid == pfi->pfi_lastpid && va == pfi->pfi_faultaddr) {
