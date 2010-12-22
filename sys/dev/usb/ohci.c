@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.211 2010/12/15 23:48:15 matt Exp $	*/
+/*	$NetBSD: ohci.c,v 1.212 2010/12/22 01:34:19 macallan Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.211 2010/12/15 23:48:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.212 2010/12/22 01:34:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1150,7 +1150,6 @@ ohci_intr1(ohci_softc_t *sc)
 		     (u_int)eintrs, sc->sc_eintrs));
 
 	if (!eintrs) {
-		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_MIE); /* Disable */
 		return (0);
 	}
 
