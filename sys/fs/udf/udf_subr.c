@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.108 2010/09/24 22:51:50 rmind Exp $ */
+/* $NetBSD: udf_subr.c,v 1.109 2010/12/22 12:38:42 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.108 2010/09/24 22:51:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.109 2010/12/22 12:38:42 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.108 2010/09/24 22:51:50 rmind Exp $")
 #define UDF_SET_SYSTEMFILE(vp) \
 	/* XXXAD Is the vnode locked? */	\
 	(vp)->v_vflag |= VV_SYSTEM;		\
-	vref(vp);			\
-	vput(vp);			\
+	vref((vp));			\
+	vput((vp));			\
 
 extern int syncer_maxdelay;     /* maximum delay time */
 extern int (**udf_vnodeop_p)(void *);
@@ -1738,7 +1738,7 @@ udf_read_metadata_partition_spacetable(struct udf_mount *ump)
 			dscr,
 			inflen, 0,
 			UIO_SYSSPACE,
-			IO_SYNC | IO_NODELOCKED | IO_ALTSEMANTICS, FSCRED,
+			IO_SYNC | IO_ALTSEMANTICS, FSCRED,
 			NULL, NULL);
 	if (error) {
 		DPRINTF(VOLUMES, ("Error reading metadata space bitmap\n"));
@@ -1810,7 +1810,7 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 			dscr,
 			new_inflen, 0,
 			UIO_SYSSPACE,
-			IO_NODELOCKED | IO_ALTSEMANTICS, FSCRED,
+			IO_ALTSEMANTICS, FSCRED,
 			NULL, NULL);
 
 	bitmap_node->i_flags |= IN_MODIFIED;
@@ -2815,7 +2815,7 @@ udf_writeout_vat(struct udf_mount *ump)
 	vat_length = ump->vat_table_len;
 	error = vn_rdwr(UIO_WRITE, vat_node->vnode,
 		ump->vat_table, ump->vat_table_len, 0,
-		UIO_SYSSPACE, IO_NODELOCKED, FSCRED, NULL, NULL);
+		UIO_SYSSPACE, 0, FSCRED, NULL, NULL);
 	if (error) {
 		printf("udf_writeout_vat: failed to write out VAT contents\n");
 		goto out;
