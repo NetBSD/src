@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.35 2010/08/20 03:21:41 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.36 2010/12/22 05:59:13 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -665,8 +665,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	/*
 	 * Verify our existing interrupt level.
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
-	jalr	t9
+	jal	_C_LABEL(splcheck)
 	 nop
 #endif /* PARANOIA */
 
@@ -733,8 +732,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	/*
 	 * Verify our existing interrupt level.
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
-	jalr	t9
+	jal	_C_LABEL(splcheck)
 	 nop
 #endif /* PARANOIA */
 
@@ -1106,8 +1104,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	/*
 	 * Verify the current interrupt level
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
-	jalr	t9
+	jal	_C_LABEL(splcheck)
 	 nop
 #endif /* PARANOIA */
 
@@ -1277,8 +1274,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 11:	bne	t2, t1, 11b			# loop forever is unequal
 	 nop
 
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
-	jalr	t9
+	jal	_C_LABEL(splcheck)
 	 nop
 #endif /* PARANOIA */
 
