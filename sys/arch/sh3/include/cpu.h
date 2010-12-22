@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2009/10/21 21:12:02 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 2010/12/22 03:22:43 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -92,8 +92,8 @@ struct clockframe {
  * This is used during profiling to integrate system time.  It can safely
  * assume that the process is resident.
  */
-#define	PROC_PC(p)							\
-	(((struct trapframe *)(p)->p_md.md_regs)->tf_spc)
+#define	LWP_PC(l)							\
+	(((struct trapframe *)(l)->l_md.md_regs)->tf_spc)
 
 /*
  * Preempt the current process if in interrupt from user mode,
