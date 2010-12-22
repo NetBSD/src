@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.31 2010/12/21 20:56:01 christos Exp $
+.\"	$NetBSD: cp.1,v 1.32 2010/12/22 05:46:25 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,6 +110,7 @@ When used with
 don't copy file flags.
 .It Fl P
 No symbolic links are followed.
+This is the default.
 .It Fl p
 Causes
 .Nm
@@ -219,6 +220,9 @@ The
 utility is expected to be
 .St -p1003.2
 compatible.
+The
+.Fl a
+is a non-standard extension.
 .Pp
 The
 .Fl v
