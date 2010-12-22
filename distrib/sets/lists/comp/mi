@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1560 2010/12/22 17:00:54 christos Exp $
+#	$NetBSD: mi,v 1.1561 2010/12/22 19:35:41 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4912,6 +4912,7 @@
 ./usr/share/man/cat3/__builtin_constant_p.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_frame_address.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_object_size.0		comp-c-catman		.cat
+./usr/share/man/cat3/__builtin_prefetch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_return_address.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_types_compatible_p.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__cacheline_aligned.0	comp-c-catman		.cat
@@ -11007,6 +11008,7 @@
 ./usr/share/man/html3/__builtin_constant_p.html		comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_frame_address.html	comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_object_size.html	comp-c-htmlman		html
+./usr/share/man/html3/__builtin_prefetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_return_address.html	comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_types_compatible_p.html	comp-c-htmlman		html
 ./usr/share/man/html3/__cacheline_aligned.html	comp-c-htmlman		html
@@ -16901,6 +16903,7 @@
 ./usr/share/man/man3/__builtin_constant_p.3		comp-c-man		.man
 ./usr/share/man/man3/__builtin_frame_address.3		comp-c-man		.man
 ./usr/share/man/man3/__builtin_object_size.3		comp-c-man		.man
+./usr/share/man/man3/__builtin_prefetch.3		comp-c-man		.man
 ./usr/share/man/man3/__builtin_return_address.3		comp-c-man		.man
 ./usr/share/man/man3/__builtin_types_compatible_p.3	comp-c-man		.man
 ./usr/share/man/man3/__cacheline_aligned.3	comp-c-man		.man
