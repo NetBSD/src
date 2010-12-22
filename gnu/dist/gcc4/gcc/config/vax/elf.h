@@ -107,5 +107,5 @@ Boston, MA 02110-1301, USA.  */
     fputs (integer_asm_op (SIZE, FALSE), FILE);		\
     fprintf (FILE, "%%pcrel%d(", SIZE * 8);		\
     assemble_name (FILE, LABEL);			\
-    fputc (')', FILE);					\
+    fprintf (FILE, "%+d)", SIZE);			\
   } while (0)
