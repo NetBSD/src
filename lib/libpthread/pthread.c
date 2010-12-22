@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.118 2010/12/18 15:54:27 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.119 2010/12/22 22:19:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.118 2010/12/18 15:54:27 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.119 2010/12/22 22:19:46 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1227,10 +1227,10 @@ pthread__initmain(pthread_t *newt)
 		pthread__mainbase = (vaddr_t)base;
 		base = STACK_GROW(base, pthread__stacksize);
 		pthread__mainstruct = (vaddr_t)base;
+		if (mprotect(base, size, PROT_READ|PROT_WRITE) == -1)
+			err(1, "mprotect stack");
 	}
 	size = pthread__stacksize;
-	if (mprotect(base, size, PROT_READ|PROT_WRITE) == -1)
-		err(1, "mprotect stack");
 
 	error = pthread__stackid_setup(base, size, &t);
 	if (error) {
