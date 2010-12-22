@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2010/08/16 19:39:06 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2010/12/22 04:15:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,6 +78,7 @@ struct device;
  */
 
 struct cpu_info {
+	struct cpu_data ci_data;	/* MI per-cpu data */
 	device_t ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
 	volatile struct vcpu_info *ci_vcpu; /* for XEN */
@@ -97,7 +98,6 @@ struct cpu_info {
 	int	ci_cpumask;		/* (1 << CPU ID) */
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
-	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/*
 	 * Private members.
