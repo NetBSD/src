@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: ssp.h,v 1.4 2010/12/22 19:43:33 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ __ssp_inline rtype __ssp_alias_name(fun) args { \
 	if (bos(__buf) != (size_t)-1 && __len > bos(__buf)) \
 		__chk_fail(); \
 	return fun call; \
-} 
+}
 
 #define __ssp_redirect(rtype, fun, args, call) \
     __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos)
@@ -66,8 +66,8 @@ __ssp_inline rtype __ssp_alias_name(fun) args { \
     __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos0)
 
 __BEGIN_DECLS
-void __stack_chk_fail(void) __attribute__((__noreturn__));
-void __chk_fail(void) __attribute__((__noreturn__));
+void __stack_chk_fail(void) __dead;
+void __chk_fail(void) __dead;
 __END_DECLS
 
 #endif /* _SSP_SSP_H_ */
