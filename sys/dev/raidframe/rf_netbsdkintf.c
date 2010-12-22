@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.278 2010/12/11 03:12:10 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.279 2010/12/22 05:51:19 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.278 2010/12/11 03:12:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.279 2010/12/22 05:51:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2906,7 +2906,8 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 	retcode = rf_RewriteParity(raidPtr);
 	splx(s);
 	if (retcode) {
-		printf("raid%d: Error re-writing parity!\n",raidPtr->raidid);
+		printf("raid%d: Error re-writing parity (%d)!\n",
+		    raidPtr->raidid, retcode);
 	} else {
 		/* set the clean bit!  If we shutdown correctly,
 		   the clean bit on each component label will get
