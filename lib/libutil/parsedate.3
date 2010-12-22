@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.9 2010/12/21 00:15:10 christos Exp $
+.\"     $NetBSD: parsedate.3,v 1.10 2010/12/22 09:12:28 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -259,7 +259,7 @@ function first appeared in
 .Sh BUGS
 .Bl -tag -compact -width 1
 .It 1
-The 
+The
 .Fn parsedate
 function is not re-entrant or thread-safe.
 .It 2
@@ -271,7 +271,7 @@ The
 .Fn parsedate
 function assumes years less than 0 mean -
 .Fa year ,
-years less than 70 mean 2000 + 
+years less than 70 mean 2000 +
 .Fa year ,
 years less than 100 mean 1900 +
 .Fa year .
