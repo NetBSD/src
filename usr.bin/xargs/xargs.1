@@ -1,4 +1,4 @@
-.\" $NetBSD: xargs.1,v 1.21 2010/12/21 20:30:13 christos Exp $
+.\" $NetBSD: xargs.1,v 1.22 2010/12/22 09:05:07 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -232,7 +232,7 @@ input is empty, and it supports a
 .Fl r
 option to inhibit this behavior.
 The
-.Fx
+.Nx
 version of
 .Nm
 does not run the
@@ -240,11 +240,11 @@ does not run the
 argument on empty input, but it supports the
 .Fl r
 option for command-line compatibility with GNU
-.Nm ,
+.Nm ;
 but the
 .Fl r
 option does nothing in the
-.Fx
+.Nx
 version of
 .Nm .
 .It Fl R Ar replacements
@@ -307,6 +307,11 @@ is terminated by a signal,
 or an invocation of
 .Ar utility
 exits with a value of 255.
+.Sh FILES
+.Bl -tag -width /dev/tty -compact
+.It Pa /dev/tty
+used to read responses in prompt mode
+.El
 .Sh EXIT STATUS
 .Nm
 exits with one of the following values:
@@ -337,11 +342,6 @@ The
 could not be found.
 .It 1
 Some other error occurred.
-.El
-.Sh FILES
-.Bl -tag -width /dev/tty -compact
-.It Pa /dev/tty
-used to read responses in prompt mode
 .El
 .Sh SEE ALSO
 .Xr echo 1 ,
