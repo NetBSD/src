@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.30 2010/12/14 19:03:21 pooka Exp $	*/
+/*	$NetBSD: args.c,v 1.31 2010/12/22 09:39:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.30 2010/12/14 19:03:21 pooka Exp $");
+__RCSID("$NetBSD: args.c,v 1.31 2010/12/22 09:39:06 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,12 @@ jcl(char **argv)
 	in.dbsz = out.dbsz = 512;
 
 	while ((oper = *++argv) != NULL) {
+		if ((oper = strdup(oper)) == NULL) {
+			errx(EXIT_FAILURE,
+			    "unable to allocate space for the argument %s",
+			    *argv);
+			/* NOTREACHED */
+		}
 		if ((arg = strchr(oper, '=')) == NULL) {
 			errx(EXIT_FAILURE, "unknown operand %s", oper);
 			/* NOTREACHED */
