@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.80 2010/07/06 06:00:00 mrg Exp $
+#	$NetBSD: Makefile.booters,v 1.81 2010/12/22 20:46:42 jakllsch Exp $
 
 .include <bsd.own.mk>
 
@@ -15,14 +15,11 @@ LIBC=		# nothing
 .if defined(HAVE_GCC)
 .if ${MACHINE_ARCH} == "x86_64"
 CPUFLAGS= -m32
-.if ${HAVE_GCC} != 3
-CPUFLAGS+= -Wno-attributes
-.endif
 .else
 .if ${HAVE_GCC} == 3
 CPUFLAGS=  -mcpu=i386
 .else
-CPUFLAGS=  -march=i386 -mtune=i386 -Wno-attributes
+CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 .endif
 .endif
