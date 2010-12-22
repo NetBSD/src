@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.56 2010/12/22 16:59:10 christos Exp $
+.\"	$NetBSD: printf.3,v 1.57 2010/12/22 17:06:03 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -156,7 +156,7 @@ on error.
 It is more portable to check for a return value of \-1 instead.
 .Pp
 .Fn snprintf ,
-.Fn vsnprintf
+.Fn vsnprintf ,
 and
 .Fn vsnprintf_ss
 will write at most
@@ -836,7 +836,7 @@ and
 are modeled on the ones that first appeared in the GNU C library.
 The function
 .Fn vsnprintf_ss
-is non standard and appeared in
+is non-standard and appeared in
 .Nx 4.0 .
 The functions
 .Fn dprintf
