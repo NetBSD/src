@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.29 2010/02/26 09:57:39 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.30 2010/12/22 12:15:02 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.29 2010/02/26 09:57:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.30 2010/12/22 12:15:02 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1608,6 +1608,7 @@ udf_collect_free_space_for_vpart(struct udf_mount *ump,
 		/* try to grow the meta partition */
 		DPRINTF(RESERVE, ("\ttrying to grow the meta partition\n"));
 		/* as per [UDF 2.60/2.2.13.5] : extend bitmap and metadata file(s) */
+		DPRINTF(NOTIMPL, ("\tgrowing meta partition not implemented yet\n"));
 	} else {
 		/* try to shrink the metadata partition */
 		DPRINTF(RESERVE, ("\ttrying to shrink the meta partition\n"));
