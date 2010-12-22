@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.14 2010/08/16 18:01:13 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.15 2010/12/22 06:05:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -263,6 +263,7 @@ void	pmap_tlb_syncicache(vaddr_t, uint32_t);
 void	pmap_tlb_info_init(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t pmap, struct lwp *l);
 void	pmap_tlb_asid_deactivate(pmap_t pmap);
+void	pmap_tlb_asid_check(void);
 void	pmap_tlb_asid_release_all(pmap_t pmap);
 int	pmap_tlb_update_addr(pmap_t pmap, vaddr_t, uint32_t, bool);
 void	pmap_tlb_invalidate_addr(pmap_t pmap, vaddr_t);
