@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.172 2009/12/20 03:40:27 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.173 2010/12/22 01:34:17 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -247,7 +247,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_L	s4, PCB_CONTEXT+SF_REG_S4(a0)
 	REG_L	s5, PCB_CONTEXT+SF_REG_S5(a0)
 	REG_L	s6, PCB_CONTEXT+SF_REG_S6(a0)
-	REG_L	s7, PCB_CONTEXT+SF_REG_S7(a0)
+     /* REG_L	s7, PCB_CONTEXT+SF_REG_S7(a0)	don't touch MIPS_CURLWP */
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L	gp, PCB_CONTEXT+SF_REG_GP(a0)
 #endif

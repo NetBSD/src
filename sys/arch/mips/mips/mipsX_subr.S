@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.36 2010/06/22 12:42:21 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.37 2010/12/22 01:34:17 nisimura Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2018,10 +2018,9 @@ LEAF(MIPSX(lwp_trampoline))
 	PTR_ADDU sp, sp, -CALLFRAME_SIZ
 
 	# Call lwp_startup(), with args from cpu_switchto()/cpu_setfunc()
-	PTR_LA	t0, _C_LABEL(lwp_startup)
 	move	a0, v0
-	jal	ra, t0
-	move	a1, s7
+	jal	_C_LABEL(lwp_startup)
+	move	a1, MIPS_CURLWP
 
 	# Call the routine specified by cpu_setfunc()
 	jal	ra, s0			
