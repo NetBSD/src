@@ -1,4 +1,4 @@
-.\" $NetBSD: __builtin_prefetch.3,v 1.2 2010/12/22 20:17:50 jruoho Exp $
+.\" $NetBSD: __builtin_prefetch.3,v 1.3 2010/12/22 22:02:54 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Nd GNU extension to prefetch memory
 .Sh SYNOPSIS
 .Ft void
-.Fn __builtin_prefetch "const void *addr, ..."
+.Fn __builtin_prefetch "const void *addr" "..."
 .Sh DESCRIPTION
 The
 .Fn __builtin_prefetch
