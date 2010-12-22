@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.20 2010/08/18 06:35:01 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.21 2010/12/22 06:13:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,8 +223,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	/*
 	 * Verify interrupt configuration matches IPL_SCHED
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
-	jalr	t9
+	jal	_C_LABEL(splcheck)
 	 nop
 #endif /* PARANOIA */
 
@@ -236,8 +235,6 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 /*
  * Switch to new context.
  */
-	.globl	_C_LABEL(__cpu_switchto_fixup)
-_C_LABEL(__cpu_switchto_fixup):
 	jal	_C_LABEL(mips_cpu_switch_resume)
 	 move	a0, MIPS_CURLWP
 
@@ -291,8 +288,7 @@ _C_LABEL(__cpu_switchto_fixup):
 	/*
 	 * Verify interrupt configuration still matches IPL_SCHED
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
-	j	t9
+	j	_C_LABEL(splcheck)
 #else
 	j	ra
 #endif /* PARANOIA */

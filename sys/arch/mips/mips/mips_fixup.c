@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.5 2010/03/01 19:26:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.6 2010/12/22 06:13:36 matt Exp $");
 
 #include <sys/param.h>
 
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.5 2010/03/01 19:26:01 matt Exp 
 #include <mips/locore.h>
 #include <mips/cache.h>
 #include <mips/mips3_pte.h>
+#include <mips/regnum.h>
 
 #define	INSN_LUI_P(insn)	(((insn) >> 26) == 017)
 #define	INSN_LW_P(insn)		(((insn) >> 26) == 043)
@@ -202,67 +203,86 @@ fixup_mips_jump(uint32_t *insnp, const struct mips_jump_fixup_info *jfi)
 }
 
 void
-mips_fixup_stubs(uint32_t *start, uint32_t *end,
-	const struct mips_jump_fixup_info *fixups,
-	size_t nfixups)
+mips_fixup_stubs(uint32_t *start, uint32_t *end)
 {
-	const uint32_t min_offset = fixups[0].jfi_stub;
-	const uint32_t max_offset = fixups[nfixups-1].jfi_stub;
 #ifdef DEBUG
 	size_t fixups_done = 0;
 	uint32_t cycles = (CPUISMIPS3 ? mips3_cp0_count_read() : 0);
 #endif
+	extern uint32_t __stub_start[], __stub_end[];
 
-#ifdef DIAGNOGSTIC
-	/*
-	 * Verify the fixup list is sorted from low stub to high stub.
-	 */
-	for (const struct mips_jump_fixup_info *jfi = fixups + 1;
-	     jfi < fixups + nfixups; jfi++) {
-		KASSERT(jfi[-1].jfi_stub < jfi[0].jfi_stub);
-	}
-#endif
+	KASSERT(MIPS_KSEG0_P(start));
+	KASSERT(MIPS_KSEG0_P(end));
+	KASSERT(MIPS_KSEG0_START == (((intptr_t)start >> 28) << 28));
+
+	if (end > __stub_start)
+		end = __stub_start;
 
 	for (uint32_t *insnp = start; insnp < end; insnp++) {
 		uint32_t insn = *insnp;
 		uint32_t offset = insn & 0x03ffffff;
 		uint32_t opcode = insn >> 26;
+		const uint32_t * const stubp =
+		    &((uint32_t *)(((intptr_t)insnp >> 28) << 28))[offset];
 
 		/*
 		 * First we check to see if this is a jump and whether it is
 		 * within the range we are interested in.
 		 */
 		if ((opcode != OPCODE_J && opcode != OPCODE_JAL)
-		    || offset < min_offset || max_offset < offset)
+		    || stubp < __stub_start || __stub_end <= stubp)
 			continue;
 
 		/*
-		 * We know it's a jump, but does it match one we want to
-		 * fixup?
+		 * Stubs typically look like:
+		 *	lui	v0, %hi(sym)
+		 *	lX	t9, %lo(sym)(v0)
+		 *	jr	t9
+		 *	nop
 		 */
-		for (const struct mips_jump_fixup_info *jfi = fixups;
-		     jfi < fixups + nfixups; jfi++) {
-			/*
-			 * The caller has sorted the fixup list from lowest
-			 * stub to highest stub so if the current offset is
-			 * less than the this fixup's stub offset, we know
-			 * can't match anything else in the fixup list.
-			 */
-			if (jfi->jfi_stub > offset)
-				break;
+		const uint32_t lui_insn = stubp[0];
+		const uint32_t load_insn = stubp[1];
+		KASSERT(stubp[2] == 0x03200008);	/* jr t9 */
+		KASSERT(stubp[3] == 0);			/* nop */
 
-			if (jfi->jfi_stub == offset) {
-				/*
-				 * Yes, we need to fix it up.  Replace the old
-				 * displacement with the real displacement.
-				 */
-				fixup_mips_jump(insnp, jfi);
-#ifdef DEBUG
-				fixups_done++;
+		KASSERT(INSN_LUI_P(lui_insn));
+#ifdef _LP64
+		KASSERT(INSN_LD_P(load_insn));
+#else
+		KASSERT(INSN_LW_P(load_insn));
 #endif
-				break;
-			}
-		}
+#ifdef DIAGNOSTIC
+		const u_int lui_reg = (lui_insn >> 16) & 31;
+		const u_int load_reg = (load_insn >> 16) & 31;
+#endif
+		KASSERT(((load_insn >> 21) & 31) == lui_reg);
+		KASSERT(load_reg == _R_T9);
+
+		intptr_t load_addr = ((int16_t)lui_insn << 16) + (int16_t) load_insn;
+#ifdef _LP64
+		const intptr_t real_addr = *(int64_t *)load_addr;
+#else
+		const intptr_t real_addr = *(int32_t *)load_addr;
+#endif
+		/*
+		 * Verify the real destination is in the same 256MB
+		 * as the location of the jump instruction.
+		 */
+		KASSERT((real_addr >> 28) == ((intptr_t)insnp >> 28));
+
+		/*
+		 * Now fix it up.  Replace the old displacement to the stub
+		 * with the real displacement.
+		 */
+		struct mips_jump_fixup_info fixup = {
+		    .jfi_stub = fixup_addr2offset(stubp),
+		    .jfi_real = fixup_addr2offset(real_addr),
+		};
+
+		fixup_mips_jump(insnp, &fixup);
+#ifdef DEBUG
+		fixups_done++;
+#endif
 	}
 
 	if (sizeof(uint32_t [end - start]) > mips_cache_info.mci_picache_size)
@@ -280,7 +300,19 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end,
 #endif
 }
 
-void mips_cpu_switch_resume(struct lwp *l) __section(".stub");
+#define	__stub		__section(".stub")
+
+void	mips_cpu_switch_resume(struct lwp *)		__stub;
+void	tlb_set_asid(uint32_t)				__stub;
+void	tlb_invalidate_all(void)			__stub;
+void	tlb_invalidate_globals(void)			__stub;
+void	tlb_invalidate_asids(uint32_t, uint32_t)	__stub;
+void	tlb_invalidate_addr(vaddr_t)			__stub;
+u_int	tlb_record_asids(u_long *, uint32_t)		__stub;
+int	tlb_update(vaddr_t, uint32_t)			__stub;
+void	tlb_enter(size_t, vaddr_t, uint32_t)		__stub;
+void	tlb_read_indexed(size_t, struct tlbmask *)	__stub;
+void	wbflush(void)					__stub;
 
 void
 mips_cpu_switch_resume(struct lwp *l)
@@ -289,14 +321,62 @@ mips_cpu_switch_resume(struct lwp *l)
 }
 
 void
-fixup_mips_cpu_switch_resume(void)
+tlb_set_asid(uint32_t asid)
 {
-	extern uint32_t __cpu_switchto_fixup[];
-
-	struct mips_jump_fixup_info fixup = {
-		fixup_addr2offset(mips_cpu_switch_resume),
-		fixup_addr2offset(mips_locoresw.lsw_cpu_switch_resume)
-	};
-
-	fixup_mips_jump(__cpu_switchto_fixup, &fixup);
+        (*mips_locore_jumpvec.ljv_tlb_set_asid)(asid);  
 }
+
+void
+tlb_invalidate_all(void)
+{
+        (*mips_locore_jumpvec.ljv_tlb_invalidate_all)();
+}
+
+void
+tlb_invalidate_addr(vaddr_t va)
+{
+        (*mips_locore_jumpvec.ljv_tlb_invalidate_addr)(va);
+}
+
+void
+tlb_invalidate_globals(void)
+{
+        (*mips_locore_jumpvec.ljv_tlb_invalidate_globals)();
+}
+
+void
+tlb_invalidate_asids(uint32_t asid_lo, uint32_t asid_hi)
+{
+        (*mips_locore_jumpvec.ljv_tlb_invalidate_asids)(asid_lo, asid_hi);
+}
+
+u_int
+tlb_record_asids(u_long *bitmap, uint32_t asid_max)
+{
+        return (*mips_locore_jumpvec.ljv_tlb_record_asids)(bitmap, asid_max);
+}
+
+int
+tlb_update(vaddr_t va, uint32_t pte)
+{
+        return (*mips_locore_jumpvec.ljv_tlb_update)(va, pte);
+}
+
+void
+tlb_enter(size_t tlbno, vaddr_t va, uint32_t pte)
+{
+        (*mips_locore_jumpvec.ljv_tlb_enter)(tlbno, va, pte);
+}
+
+void
+tlb_read_indexed(size_t tlbno, struct tlbmask *tlb)
+{
+        (*mips_locore_jumpvec.ljv_tlb_read_indexed)(tlbno, tlb);
+}
+
+void
+wbflush(void)
+{
+        (*mips_locore_jumpvec.ljv_wbflush)();
+}
+

@@ -1,4 +1,4 @@
-/* $NetBSD: spl_stubs.c,v 1.1.2.2 2010/03/01 19:26:01 matt Exp $ */
+/* $NetBSD: spl_stubs.c,v 1.1.2.3 2010/12/22 06:13:36 matt Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: spl_stubs.c,v 1.1.2.2 2010/03/01 19:26:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl_stubs.c,v 1.1.2.3 2010/12/22 06:13:36 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -151,47 +151,4 @@ void
 splcheck(void)
 {
 	(*mips_splsw.splsw_splcheck)();
-}
-
-void
-fixup_splcalls(void)
-{
-	extern uint32_t _ftext[];
-	extern uint32_t _etext[];
-
-#define	splfixupinfo(x)	{ fixup_addr2offset(x), \
-			  fixup_addr2offset(mips_splsw.splsw_##x) }
-	struct mips_jump_fixup_info fixups[] = {
-		splfixupinfo(splhigh),
-		splfixupinfo(splhigh_noprof),
-		splfixupinfo(splsched),
-		splfixupinfo(splvm),
-		splfixupinfo(splsoftserial),
-		splfixupinfo(splsoftnet),
-		splfixupinfo(splsoftbio),
-		splfixupinfo(splsoftclock),
-		splfixupinfo(spl0),
-		splfixupinfo(splx),
-		splfixupinfo(splx_noprof),
-		splfixupinfo(splraise),
-		splfixupinfo(splintr),
-		splfixupinfo(_setsoftintr),
-		splfixupinfo(_clrsoftintr),
-		splfixupinfo(splcheck),
-	};
-
-	/*
-	 * [bubble] sort fixups from lowest stub to highest stub.
-	 */
-	for (size_t i = 0; i < __arraycount(fixups) - 1; i++) {
-		for (size_t j = i + 1; j < __arraycount(fixups); j++) {
-			if (fixups[i].jfi_stub > fixups[j].jfi_stub) {
-				struct mips_jump_fixup_info tmp = fixups[i];
-				fixups[i] = fixups[j];
-				fixups[j] = tmp;
-			}
-		}
-	}
-
-	mips_fixup_stubs(_ftext, _etext, fixups, __arraycount(fixups));
 }

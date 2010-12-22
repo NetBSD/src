@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.48 2010/08/18 07:12:57 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.49 2010/12/22 06:13:36 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.48 2010/08/18 07:12:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.49 2010/12/22 06:13:36 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -1011,10 +1011,11 @@ mips_vector_init(const struct splsw *splsw)
 
 	/*
 	 * Now that the splsw and locoresw have been filled in, fixup the
-	 * jumps to their stubs to instead jump to the real routines.
+	 * jumps to any stubs to actually jump to the real routines.
 	 */
-	fixup_mips_cpu_switch_resume();
-	fixup_splcalls();
+	extern uint32_t _ftext[];
+	extern uint32_t _etext[];
+	mips_fixup_stubs(_ftext, _etext);
 
 /* XXX simonb: ugg, another ugly #ifdef check... */
 #if (defined(MIPS3) && !defined(MIPS3_5900)) || defined(MIPS32) || defined(MIPS64)
