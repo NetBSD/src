@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.7 2010/06/09 14:25:30 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.8 2010/12/22 06:08:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"	/* MP kernel? */
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 
 #include <sys/cdefs.h>
@@ -37,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.2.7 2010/06/09 14:25:30 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.2.8 2010/12/22 06:08:10 matt Exp $")
 
 #include "assym.h"
 
@@ -76,6 +77,9 @@ _splraise:
 	DYNAMIC_STATUS_MASK(a0,v0)		# machine dependent masking
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
 	COP0_SYNC
+#ifdef MULTIPROCESSOR
+	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
+#endif
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 	mtc0	a0, MIPS_COP_0_STATUS		## store back
 	COP0_SYNC
@@ -220,6 +224,9 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	DYNAMIC_STATUS_MASK(a0,a2)		# machine dependent masking
 	mtc0	a0, MIPS_COP_0_STATUS		## store back
 	COP0_SYNC
+#ifdef MULTIPROCESSOR
+	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
+#endif
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 #ifdef PARANOIA
 	j	ra				## return
