@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.20 2010/10/26 08:59:06 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.21 2010/12/22 22:29:19 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.27 2010/10/26 08:57:46 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.29 2010/12/22 22:28:35 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1431,5 +1431,13 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "INT0800",
 	    "Intel Firmware Hub Device",
+	},
+	{
+	    "IPI0001",
+	    "Intelligent Platform Management Interface",
+	},
+	{
+	    "LEN0014",
+	    "Lenovo ThinkPad Extras",
 	},
 };
