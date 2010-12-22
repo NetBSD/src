@@ -1,4 +1,4 @@
-/* $NetBSD: kern.ldscript,v 1.5 2006/08/27 04:48:44 tsutsui Exp $ */
+/* $NetBSD: kern.ldscript,v 1.5.78.1 2010/12/22 06:13:36 matt Exp $ */
 
 /*  ldscript for NetBSD/mips kernels and LKMs */
 OUTPUT_ARCH(mips)
@@ -15,6 +15,9 @@ SECTIONS
   {
     _ftext = . ;
     *(.text)
+    __stub_start = . ;
+    *(.stub*)
+    __stub_end = . ;
     *(.gnu.warning)
   } =0
   _etext = .;
