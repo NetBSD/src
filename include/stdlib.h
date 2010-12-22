@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.93 2010/10/01 20:11:58 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.94 2010/12/22 19:47:56 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -300,7 +300,7 @@ void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
 
 void	 setproctitle(const char *, ...)
 	    __printflike(1, 2);
-const char *getprogname(void) __attribute__((const));
+const char *getprogname(void) __constfunc;
 void	setprogname(const char *);
 
 quad_t	 qabs(quad_t);
