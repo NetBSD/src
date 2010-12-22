@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1559 2010/12/21 15:05:02 jruoho Exp $
+#	$NetBSD: mi,v 1.1560 2010/12/22 17:00:54 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8590,6 +8590,7 @@
 ./usr/share/man/cat3/vprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsnprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/vsnprintf_ss.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vsprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vswprintf.0		comp-c-catman		.cat
@@ -10162,6 +10163,7 @@
 ./usr/share/man/cat9/vrele.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vrele_async.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vslock.0			comp-obsolete		obsolete
+./usr/share/man/cat9/vsnprintf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vsnprintf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vsprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vsunlock.0			comp-obsolete		obsolete
@@ -14544,6 +14546,7 @@
 ./usr/share/man/html3/vprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vscanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsnprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/vsnprintf_ss.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsscanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vswprintf.html		comp-c-htmlman		html
@@ -20572,6 +20575,7 @@
 ./usr/share/man/man3/vprintf.3			comp-c-man		.man
 ./usr/share/man/man3/vscanf.3			comp-c-man		.man
 ./usr/share/man/man3/vsnprintf.3		comp-c-man		.man
+./usr/share/man/man3/vsnprintf_ss.3		comp-c-man		.man
 ./usr/share/man/man3/vsprintf.3			comp-c-man		.man
 ./usr/share/man/man3/vsscanf.3			comp-c-man		.man
 ./usr/share/man/man3/vswprintf.3		comp-c-man		.man
