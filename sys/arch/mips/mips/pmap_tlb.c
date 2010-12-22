@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.12 2010/06/10 00:38:11 cliff Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.13 2010/12/22 06:05:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.12 2010/06/10 00:38:11 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.13 2010/12/22 06:05:42 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -371,8 +371,10 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		 * and clear the ASID bitmap.  That will force everyone to
 		 * allocate a new ASID.
 		 */
+		pmap_tlb_asid_check();
 		const u_int asids_found = tlb_record_asids(ti->ti_asid_bitmap,
 		    ti->ti_asid_mask);
+		pmap_tlb_asid_check();
 		KASSERT(asids_found == pmap_tlb_asid_count(ti));
 		if (__predict_false(asids_found >= ti->ti_asid_max / 2)) {
 			tlb_invalidate_asids(1, ti->ti_asid_mask);
@@ -446,7 +448,9 @@ pmap_tlb_shootdown_process(void)
 			 * invalidate its TLB entries.
 			 */
 			KASSERT(pai->pai_asid != 0);
+			pmap_tlb_asid_check();
 			tlb_invalidate_asids(pai->pai_asid, pai->pai_asid + 1);
+			pmap_tlb_asid_check();
 		} else if (pai->pai_asid) {
 			/*
 			 * The victim is no longer an active pmap for this TLB.
@@ -469,7 +473,9 @@ pmap_tlb_shootdown_process(void)
 		/*
 		 * We need to invalidate all global TLB entries.
 		 */
+		pmap_tlb_asid_check();
 		tlb_invalidate_globals();
+		pmap_tlb_asid_check();
 		break;
 	case TLBINV_ALL:
 		/*
@@ -609,7 +615,9 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, uint32_t pt_entry, bool need_ipi)
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
 		va |= pai->pai_asid << MIPS_TLB_PID_SHIFT;
+		pmap_tlb_asid_check();
 		rv = tlb_update(va, pt_entry);
+		pmap_tlb_asid_check();
 	}
 #ifdef MULTIPROCESSOR
 	pm->pm_shootdown_pending = need_ipi;
@@ -630,7 +638,9 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
 		va |= pai->pai_asid << MIPS_TLB_PID_SHIFT;
+		pmap_tlb_asid_check();
 		tlb_invalidate_addr(va);
+		pmap_tlb_asid_check();
 	}
 #ifdef MULTIPROCESSOR
 	pm->pm_shootdown_pending = 1;
@@ -762,13 +772,17 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		}
 		atomic_or_ulong(&ci->ci_flags, CPUF_USERPMAP);
 #endif /* MULTIPROCESSOR */
+		ci->ci_pmap_asid_cur = pai->pai_asid;
 		tlb_set_asid(pai->pai_asid);
+		pmap_tlb_asid_check();
+	} else {
+		printf("%s: l (%p) != curlwp %p\n", __func__, l, curlwp);
 	}
 	TLBINFO_UNLOCK(ti);
 
 #ifdef DEBUGXX
 	if (pmapdebug & (PDB_FOLLOW|PDB_TLBPID)) {
-		printf("pmap_tlb_asid_alloc: curlwp %d.%d '%s' ",
+		printf("%s: curlwp %d.%d '%s' ", __func__,
 		    curlwp->l_proc->p_pid, curlwp->l_lid,
 		    curlwp->l_proc->p_comm);
 		printf("segtab %p asid %d\n", pm->pm_segtab, pai->pai_asid);
@@ -798,7 +812,9 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		atomic_and_ulong(&ci->ci_flags, ~CPUF_USERPMAP);
 	}
 #elif defined(DEBUG)
+	curcpu()->ci_pmap_asid_cur = 0;
 	tlb_set_asid(0);
+	pmap_tlb_asid_check();
 #endif
 }
 
@@ -987,3 +1003,15 @@ pmap_tlb_syncicache_wanted(struct cpu_info *ci)
 
 }
 #endif /* MULTIPROCESSOR */
+
+void
+pmap_tlb_asid_check(void)
+{
+#ifdef DEBUG
+	register_t tlb_hi;
+	__asm("mfc0 %0,$%1" : "=r"(tlb_hi) : "n"(MIPS_COP_0_TLB_HI));
+	KASSERTMSG((tlb_hi & 0xff) != curcpu()->ci_pmap_asid_cur,
+	   ("tlb_hi (%#x) asid != current asid (%#x)",
+	    (uint8_t)tlb_hi, curcpu()->ci_pmap_asid_cur));
+#endif
+}
