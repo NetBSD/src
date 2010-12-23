@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.6 2009/12/02 01:53:25 haad Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.7 2010/12/23 14:46:25 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -41,6 +41,7 @@
 #elif __NetBSD__
 #  include <sys/disk.h>
 #  include <sys/disklabel.h>
+#  include <prop/proplib.h>
 #  include <sys/param.h>
 #else
 #  include <sys/disk.h>
@@ -133,14 +134,22 @@ static int _get_block_size(struct device *dev, unsigned int *size)
 	const char *name = dev_name(dev);
 #ifdef __NetBSD__
 	struct disklabel	lab;
+	prop_dictionary_t	disk_dict, geom_dict;
+	uint32_t		secsize;
 #endif
 
 	if ((dev->block_size == -1)) {
 #ifdef __NetBSD__
-		if (ioctl(dev_fd(dev), DIOCGDINFO, &lab) < 0) {
-			dev->block_size = DEV_BSIZE;
-		} else
-			dev->block_size = lab.d_secsize;
+		if (prop_dictionary_recv_ioctl(dev_fd(dev), DIOCGDISKINFO, &disk_dict)) {
+			if (ioctl(dev_fd(dev), DIOCGDINFO, &lab) < 0) {
+				dev->block_size = DEV_BSIZE;
+			} else
+				dev->block_size = lab.d_secsize;
+		} else {
+			geom_dict = prop_dictionary_get(disk_dict, "geometry");
+			prop_dictionary_get_uint32(geom_dict, "sector-size", &secsize);
+			dev->block_size = secsize;
+		}
 #else
 		if (ioctl(dev_fd(dev), BLKBSZGET, &dev->block_size) < 0) {
 			log_sys_error("ioctl BLKBSZGET", name);
