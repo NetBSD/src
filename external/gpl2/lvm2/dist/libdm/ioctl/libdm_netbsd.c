@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm_netbsd.c,v 1.5 2009/12/05 11:42:24 haad Exp $        */
+/*      $NetBSD: libdm_netbsd.c,v 1.6 2010/12/23 17:44:33 christos Exp $        */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include <dev/dm/netbsd-dm.h>
 
