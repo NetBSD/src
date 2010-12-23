@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.27 2010/12/23 14:58:13 mlelstv Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.28 2010/12/23 20:07:13 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
+#include <sys/kauth.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -121,23 +122,23 @@ extern uint32_t dm_dev_counter;
  * ioctl to kernel but will do another things in userspace.
  *
  */
-struct cmd_function cmd_fn[] = {
-		{ .cmd = "version", .fn = dm_get_version_ioctl},
-		{ .cmd = "targets", .fn = dm_list_versions_ioctl},
-		{ .cmd = "create",  .fn = dm_dev_create_ioctl},
-		{ .cmd = "info",    .fn = dm_dev_status_ioctl},
-		{ .cmd = "mknodes", .fn = dm_dev_status_ioctl},		
-		{ .cmd = "names",   .fn = dm_dev_list_ioctl},
-		{ .cmd = "suspend", .fn = dm_dev_suspend_ioctl},
-		{ .cmd = "remove",  .fn = dm_dev_remove_ioctl}, 
-		{ .cmd = "rename",  .fn = dm_dev_rename_ioctl},
-		{ .cmd = "resume",  .fn = dm_dev_resume_ioctl},
-		{ .cmd = "clear",   .fn = dm_table_clear_ioctl},
-		{ .cmd = "deps",    .fn = dm_table_deps_ioctl},
-		{ .cmd = "reload",  .fn = dm_table_load_ioctl},
-		{ .cmd = "status",  .fn = dm_table_status_ioctl},
-		{ .cmd = "table",   .fn = dm_table_status_ioctl},
-		{NULL, NULL}	
+static const struct cmd_function cmd_fn[] = {
+	{ .cmd = "version", .fn = dm_get_version_ioctl,	  .allowed = 1 },
+	{ .cmd = "targets", .fn = dm_list_versions_ioctl, .allowed = 1 },
+	{ .cmd = "create",  .fn = dm_dev_create_ioctl,    .allowed = 0 },
+	{ .cmd = "info",    .fn = dm_dev_status_ioctl,    .allowed = 1 },
+	{ .cmd = "mknodes", .fn = dm_dev_status_ioctl,    .allowed = 1 },
+	{ .cmd = "names",   .fn = dm_dev_list_ioctl,      .allowed = 1 },
+	{ .cmd = "suspend", .fn = dm_dev_suspend_ioctl,   .allowed = 0 },
+	{ .cmd = "remove",  .fn = dm_dev_remove_ioctl,    .allowed = 0 }, 
+	{ .cmd = "rename",  .fn = dm_dev_rename_ioctl,    .allowed = 0 },
+	{ .cmd = "resume",  .fn = dm_dev_resume_ioctl,    .allowed = 0 },
+	{ .cmd = "clear",   .fn = dm_table_clear_ioctl,   .allowed = 0 },
+	{ .cmd = "deps",    .fn = dm_table_deps_ioctl,    .allowed = 1 },
+	{ .cmd = "reload",  .fn = dm_table_load_ioctl,    .allowed = 0 },
+	{ .cmd = "status",  .fn = dm_table_status_ioctl,  .allowed = 1 },
+	{ .cmd = "table",   .fn = dm_table_status_ioctl,  .allowed = 1 },
+	{ .cmd = NULL, 	    .fn = NULL,			  .allowed = 0 }	
 };
 
 #ifdef _MODULE
@@ -382,7 +383,7 @@ cleanup_exit:
  * Translate command sent from libdevmapper to func.
  */
 static int
-dm_cmd_to_fun(prop_dictionary_t dm_dict){
+dm_cmd_to_fun(prop_dictionary_t dm_dict) {
 	int i, r;
 	prop_string_t command;
 	
@@ -394,6 +395,11 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 	for(i = 0; cmd_fn[i].cmd != NULL; i++)
 		if (prop_string_equals_cstring(command, cmd_fn[i].cmd))
 			break;
+
+	if (!cmd_fn[i].allowed && 
+	    (r = kauth_authorize_generic(kauth_cred_get(),
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		return r;
 
 	if (cmd_fn[i].cmd == NULL)
 		return EINVAL;
