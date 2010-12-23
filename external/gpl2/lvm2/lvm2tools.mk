@@ -1,4 +1,4 @@
-#	$NetBSD: lvm2tools.mk,v 1.1 2008/12/22 00:57:58 haad Exp $
+#	$NetBSD: lvm2tools.mk,v 1.2 2010/12/23 17:46:54 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,9 @@ LVM2_DISTDIR=	${NETBSDSRCDIR}/external/gpl2/lvm2/dist
 LIBDM_SRCDIR=		${NETBSDSRCDIR}/external/gpl2/lvm2/lib/libdevmapper
 LIBDM_DISTDIR=		${NETBSDSRCDIR}/external/gpl2/lvm2/dist/libdm
 LIBDM_INCLUDE=		${NETBSDSRCDIR}/external/gpl2/lvm2/dist/include
+
+# root:operator [cb]rw-r-----
+CPPFLAGS+=-DDM_DEVICE_UID=0 -DDM_DEVICE_GID=5 -DDM_DEVICE_MODE=0640
 
 #
 #LIBDM_OBJDIR.libdevmapper=${LIBDM_SRCDIR}/lib/libdevmapper/
