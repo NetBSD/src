@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.11 2010/11/15 05:53:29 uebayasi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.12 2010/12/23 14:58:13 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -216,6 +216,26 @@ dm_target_linear_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 int
 dm_target_linear_upcall(dm_table_entry_t * table_en, struct buf * bp)
 {
+	return 0;
+}
+/*
+ * Query physical block size of this target
+ * For a linear target this is just the sector size of the underlying device
+ */
+int
+dm_target_linear_secsize(dm_table_entry_t * table_en, unsigned *secsizep)
+{
+	dm_target_linear_config_t *tlc;
+	unsigned secsize;
+
+	secsize = 0;
+
+	tlc = table_en->target_config;
+	if (tlc != NULL)
+		secsize = tlc->pdev->pdev_secsize;
+
+	*secsizep = secsize;
+
 	return 0;
 }
 /*
