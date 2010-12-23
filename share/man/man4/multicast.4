@@ -24,7 +24,7 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $NetBSD: multicast.4,v 1.4 2010/03/22 18:58:31 joerg Exp $
+.\" $NetBSD: multicast.4,v 1.5 2010/12/23 19:15:55 njoly Exp $
 .\"
 .Dd September 4, 2003
 .Dt MULTICAST 4
@@ -78,7 +78,7 @@ about the kernel configuration options),
 and must run a multicast routing capable user-level process.
 From developer's point of view,
 the programming guide described in the
-.Sx "Programming Guide"
+.Sx Programming Guide
 section should be used to control the multicast forwarding in the kernel.
 .\"
 .Ss Programming Guide
@@ -86,7 +86,7 @@ This section provides information about the basic multicast routing API.
 The so-called
 .Dq advanced multicast API
 is described in the
-.Sx "Advanced Multicast API Programming Guide"
+.Sx Advanced Multicast API Programming Guide
 section.
 .Pp
 First, a multicast routing socket must be open.
@@ -417,7 +417,7 @@ the kernel has agreed on.
 To support backward compatibility, if the user-level process does not
 ask for any new features, the kernel defaults to the basic
 multicast API (see the
-.Sx "Programming Guide"
+.Sx Programming Guide
 section).
 .\" XXX: edit as appropriate after the advanced multicast API is
 .\" supported under IPv6
