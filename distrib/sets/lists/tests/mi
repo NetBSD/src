@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.186 2010/12/22 23:45:44 pgoyette Exp $
+# $NetBSD: mi,v 1.187 2010/12/23 15:27:44 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -324,9 +324,11 @@
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fmemopen.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/stdio/t_format.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fmemopen.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdio/t_format.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdio/t_popen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_div.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment_pth.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
@@ -1542,6 +1544,7 @@
 ./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_div		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_environment	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_environment_pth	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
@@ -1550,6 +1553,7 @@
 ./usr/tests/lib/libc/stdio/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_fmemopen		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_format		tests-lib-tests		atf
+./usr/tests/lib/libc/stdio/t_popen		tests-lib-tests		atf
 ./usr/tests/lib/libc/string			tests-obsolete		obsolete
 ./usr/tests/lib/libc/string/Atffile		tests-obsolete		obsolete
 ./usr/tests/lib/libc/string/t_popcount		tests-obsolete		obsolete
