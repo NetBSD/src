@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.21 2010/12/23 14:58:13 mlelstv Exp $      */
+/*        $NetBSD: dm.h,v 1.22 2010/12/23 20:07:13 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -258,11 +258,13 @@ typedef struct dm_target {
  * This structure is used to translate command sent to kernel driver in
  * <key>command</key>
  * <value></value>
- * to function which I can call.
+ * to function which I can call, and if the command is allowed for
+ * non-superusers.
  */
 struct cmd_function {
 	const char *cmd;
 	int  (*fn)(prop_dictionary_t);
+	int  allowed;
 };
 
 /* device-mapper */
