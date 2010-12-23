@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.14 2010/08/21 13:19:41 pgoyette Exp $      */
+/*        $NetBSD: dm_target.c,v 1.15 2010/12/23 14:58:13 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -291,6 +291,7 @@ dm_target_init(void)
 	dmt->deps = &dm_target_linear_deps;
 	dmt->destroy = &dm_target_linear_destroy;
 	dmt->upcall = &dm_target_linear_upcall;
+	dmt->secsize = &dm_target_linear_secsize;
 
 	r = dm_target_insert(dmt);
 
@@ -305,6 +306,7 @@ dm_target_init(void)
 	dmt3->deps = &dm_target_stripe_deps;
 	dmt3->destroy = &dm_target_stripe_destroy;
 	dmt3->upcall = &dm_target_stripe_upcall;
+	dmt3->secsize = &dm_target_stripe_secsize;
 
 	r = dm_target_insert(dmt3);
 

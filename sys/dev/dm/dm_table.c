@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.5 2010/01/04 00:19:08 haad Exp $      */
+/*        $NetBSD: dm_table.c,v 1.6 2010/12/23 14:58:13 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -201,6 +201,41 @@ dm_table_size(dm_table_head_t * head)
 	dm_table_unbusy(head);
 
 	return length;
+}
+/*
+ * Return combined disk geometry
+ */
+void
+dm_table_disksize(dm_table_head_t * head, uint64_t *numsecp, unsigned *secsizep)
+{
+	dm_table_t *tbl;
+	dm_table_entry_t *table_en;
+	uint64_t length;
+	unsigned secsize, tsecsize;
+	uint8_t id;
+
+	length = 0;
+
+	id = dm_table_busy(head, DM_TABLE_ACTIVE);
+
+	/* Select active table */
+	tbl = &head->tables[id];
+
+	/*
+	 * Find out what tables I want to select.
+	 * if length => rawblkno then we should used that table.
+	 */
+	secsize = 0;
+	SLIST_FOREACH(table_en, tbl, next) {
+	    length += table_en->length;
+	    (void)table_en->target->secsize(table_en, &tsecsize);
+	    if (secsize < tsecsize)
+	    	secsize = tsecsize;
+	}
+	*numsecp = secsize > 0 ? dbtob(length) / secsize : 0;
+	*secsizep = secsize;
+
+	dm_table_unbusy(head);
 }
 /*
  * Return > 0 if table is at least one table entry (returns number of entries)

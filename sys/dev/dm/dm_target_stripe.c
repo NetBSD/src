@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.12 2010/11/15 05:54:38 uebayasi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.13 2010/12/23 14:58:14 mlelstv Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -340,5 +340,32 @@ dm_target_stripe_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 int
 dm_target_stripe_upcall(dm_table_entry_t * table_en, struct buf * bp)
 {
+	return 0;
+}
+/*
+ * Compute physical block size
+ * For a stripe target we chose the maximum sector size of all 
+ * stripe devices. For the supported power-of-2 sizes this is equivalent
+ * to the least common multiple.
+ */
+int
+dm_target_stripe_secsize(dm_table_entry_t * table_en, unsigned *secsizep)
+{
+	dm_target_linear_config_t *tlc;
+	dm_target_stripe_config_t *tsc;
+	unsigned secsize;
+
+	secsize = 0;
+
+	tsc = table_en->target_config;
+	if (tsc != NULL) {
+		TAILQ_FOREACH(tlc, &tsc->stripe_devs, entries) {
+			if (secsize < tlc->pdev->pdev_secsize)
+				secsize = tlc->pdev->pdev_secsize;
+		}
+	}
+
+	*secsizep = secsize;
+
 	return 0;
 }

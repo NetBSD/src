@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.20 2010/12/06 08:54:49 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.21 2010/12/23 14:58:13 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/queue.h>
 
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 
 #include <prop/proplib.h>
@@ -108,6 +109,8 @@ typedef struct dm_pdev {
 	char name[MAX_DEV_NAME];
 
 	struct vnode *pdev_vnode;
+	uint64_t pdev_numsec;
+	unsigned pdev_secsize;
 	int ref_cnt; /* reference counter for users ofthis pdev */
 
 	SLIST_ENTRY(dm_pdev) next_pdev;
@@ -241,6 +244,7 @@ typedef struct dm_target {
 	int (*strategy)(dm_table_entry_t *, struct buf *);
 	int (*sync)(dm_table_entry_t *);
 	int (*upcall)(dm_table_entry_t *, struct buf *);
+	int (*secsize)(dm_table_entry_t *, unsigned *);
 	
 	uint32_t version[3];
 	int ref_cnt;
@@ -306,6 +310,7 @@ int dm_target_linear_sync(dm_table_entry_t *);
 int dm_target_linear_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_linear_destroy(dm_table_entry_t *);
 int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
+int dm_target_linear_secsize(dm_table_entry_t *, unsigned *);
 
 /* Generic function used to convert char to string */
 uint64_t atoi(const char *); 
@@ -318,6 +323,7 @@ int dm_target_stripe_sync(dm_table_entry_t *);
 int dm_target_stripe_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_stripe_destroy(dm_table_entry_t *);
 int dm_target_stripe_upcall(dm_table_entry_t *, struct buf *);
+int dm_target_stripe_secsize(dm_table_entry_t *, unsigned *);
 
 /* dm_table.c  */
 #define DM_TABLE_ACTIVE 0
@@ -325,6 +331,7 @@ int dm_target_stripe_upcall(dm_table_entry_t *, struct buf *);
 
 int dm_table_destroy(dm_table_head_t *, uint8_t);
 uint64_t dm_table_size(dm_table_head_t *);
+void dm_table_disksize(dm_table_head_t *, uint64_t *, unsigned *);
 dm_table_t * dm_table_get_entry(dm_table_head_t *, uint8_t);
 int dm_table_get_target_count(dm_table_head_t *, uint8_t);
 void dm_table_release(dm_table_head_t *, uint8_t s);

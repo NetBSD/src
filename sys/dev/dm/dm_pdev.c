@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.7 2010/11/19 06:44:40 dholland Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.8 2010/12/23 14:58:13 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ dm_pdev_insert(const char *dev_name)
 		kmem_free(dmp, sizeof(dm_pdev_t));
 		return NULL;
 	}
+	getdisksize(dmp->pdev_vnode, &dmp->pdev_numsec, &dmp->pdev_secsize);
 	dmp->ref_cnt = 1;
 
 	mutex_enter(&dm_pdev_mutex);
