@@ -1,3 +1,340 @@
+2010-11-27  Thomas Dickey  <tom@crayon>
+
+	* package/byacc.spec, package/debian/changelog, VERSION: bump
+
+	* output.c:
+	corrected use of %parse-param value in yyerror(); it doesn't use &yylval
+	(report by Clifford Yapp)
+
+2010-11-26  Thomas Dickey  <tom@crayon>
+
+	* skeleton.c: typo
+
+	* output.c:
+	correct line-numbering when "-r" option is used; the 'outline' variable
+	should only be incremented when writing to the code-file.
+
+	* test/code_calc.code.c, test/code_error.code.c: regen
+
+	* yacc.1: bump date
+
+	* yacc.1: comment on -b option vs -r
+
+	* test/calc2.tab.c, test/calc2.y, test/calc3.tab.c, test/calc3.y, test/ftp.tab.c, test/grammar.tab.c, test/pure_calc.tab.c, test/pure_error.tab.c, test/calc.tab.c, test/calc1.tab.c, test/code_calc.code.c, test/code_error.code.c, test/error.tab.c:
+	regen
+
+	* output.c:
+	improve on YYERROR_DECL(), adding dummy params which can be used for the
+	actual function declaration.  Also add YYERROR_CALL().  The two macros
+	simplify maintaining sets of grammars which may/may not be pure.
+
+	* test/calc1.y, test/ftp.tab.c, test/grammar.tab.c, test/pure_calc.tab.c, test/pure_error.tab.c, test/calc.tab.c, test/calc1.tab.c, test/calc2.tab.c, test/calc3.tab.c, test/code_calc.code.c, test/code_error.code.c, test/error.tab.c:
+	regen
+
+	* output.c: generate yyerror() calls in output.c
+	This is for compatibility with bison, which passes the yylval to yyerror
+	when the %parse-param feature is used.
+
+	* skeleton.c, defs.h: generate yyerror() calls in output.c
+
+	* output.c: simplified a little, using putc_code() and putl_code()
+
+	* test/calc1.tab.h: regen
+
+	* reader.c:
+	improve ifdef for YYSTYPE union declaration (report by Clifford Yapp)
+
+	* reader.c:
+	accept underscore as a replacement for dash in command names, e.g.,
+	"%pure_parser" vs "%pure-parser".
+
+	* test/calc1.tab.c: regen
+
+	* output.c, reader.c:
+	also ifdef YYSTYPE declaration in the generated code (report by Clifford Yapp)
+
+	* package/debian/changelog, package/byacc.spec, VERSION: bump
+
+2010-11-24  Thomas Dickey  <tom@crayon>
+
+	* main.c, defs.h, symtab.c, error.c: reduce global variables
+
+	* package/debian/changelog, package/byacc.spec, VERSION: bump
+
+	* reader.c:
+	amend fix for Redhat #112617 to still call default_action_warning() for
+	empty rules (report by Bruce Cran).
+
+2010-11-22  Thomas Dickey  <tom@crayon>
+
+	* output.c:
+	add ifdef to guard against redefinition of YYSTYPE union (request by Clifford Yapp).
+
+	* test/calc1.tab.c: regen
+
+	* test/calc1.y: cleanup compiler warnings
+
+	* test/grammar.y: add "%expect"
+
+	* test/calc1.tab.h: regen
+
+	* test/calc1.output, test/calc1.tab.c, test/calc1.tab.h: RCS_BASE
+
+	* test/calc2.tab.c, test/calc3.tab.c: regen
+
+	* test/calc1.y:
+	advanced example from Steve Johnson's paper, uses unions
+
+	* test/calc3.y, test/calc2.y: init 'base', so examples can run
+
+	* test/ftp.tab.c, test/ftp.y: tweaks to compile with g++
+
+	* output.c: compensate for fix in reader.c
+
+	* reader.c:
+	add/use putc_both() and puts_both(), incidentally fixing a place where
+	a union copied to the union_file may be missing the end of the last line.
+
+	* package/debian/changelog, package/byacc.spec, VERSION: bump
+
+2010-06-10  Thomas Dickey  <tom@crayon>
+
+	* yacc.1, package/debian/changelog, package/byacc.spec, VERSION:
+	bump to 2010/06/10
+
+2010-06-09  Thomas Dickey  <tom@crayon>
+
+	* reader.c: free declarations in leak-testing code.
+
+	* main.c: close code_file if -r option used, for leak-testing
+
+	* defs.h, reader.c:
+	improve %lex-param / %parse-param implementation by allowing for arrays to
+	be passed as parameters, e.g., "int regs[26]".
+
+	* test/calc3.tab.c, test/calc3.y, test/calc3.output, test/calc3.tab.h, test/calc2.tab.c, test/calc2.y, test/calc2.tab.h, test/calc2.output:
+	RCS_BASE
+
+	* output.c:
+	improve %lex-param / %parse-param implementation by allowing for arrays to
+	be passed as parameters, e.g., "int regs[26]".
+
+	* test/calc.tab.c, test/calc.y:
+	test-cases and reference files for %lex-param / %parse-param
+
+	* makefile.in: add docs-rule, for html/pdf/txt form of manpage
+
+	* configure: regen
+
+	* aclocal.m4: add CF_XOPEN_SOURCE, etc.
+
+	* configure.in:
+	use CF_XOPEN_SOURCE check to ensure that strdup is in scope, e.g., for c89
+
+	* test/ftp.tab.c, test/ftp.y, reader.c, symtab.c, verbose.c, lr0.c, main.c, mkpar.c, output.c, defs.h, closure.c:
+	fix warnings from clang --analyze
+
+2010-06-08  Thomas Dickey  <tom@crayon>
+
+	* output.c: fix to build with c89, etc.
+
+	* reader.c: gcc warning
+
+	* test/ftp.tab.c, test/ftp.y, test/calc.tab.c, test/code_calc.code.c, test/code_error.code.c, test/code_error.y, test/code_calc.y, test/calc.y, test/pure_error.tab.c, test/error.tab.c, test/error.y, test/pure_error.y, test/pure_calc.tab.c, test/pure_calc.y:
+	modified test-cases to allow them to compile, to validate pure-parser changes.
+	updated reference files to match.
+
+	* output.c:
+	move call for output_stype() earlier since it is used in pure-parser declarations
+
+	* test/grammar.tab.c, test/grammar.y:
+	modified test-cases to allow them to compile, to validate pure-parser changes.
+	updated reference files to match.
+
+	* test/calc.tab.c, test/error.tab.c, test/ftp.tab.c, test/grammar.tab.c:
+	regen
+
+	* yacc.1: document %lex-param and %parse-param
+
+	* test/run_lint.sh, test/run_make.sh: RCS_BASE
+
+	* test/run_test.sh:
+	further modify to allow build-directory to be in a different location by
+	passing this directory's location as a parameter to the script.
+
+	* makefile.in:
+	add check_make and check_lint rules to help validate the generated files
+	in the test-directory
+
+2010-06-07  Thomas Dickey  <tom@crayon>
+
+	* test/pure_calc.tab.c, test/pure_error.tab.c: RCS_BASE
+
+	* test/run_test.sh:
+	provide for testing -r and -P options by checking if the ".y" filename
+	begins with "code_" or "pure_", respectively.
+
+	* test/code_error.code.c, test/code_error.tab.c, test/code_error.tab.h, test/code_calc.code.c, test/code_calc.tab.c, test/code_calc.tab.h, test/pure_calc.output, test/pure_calc.tab.h, test/pure_error.output, test/pure_error.tab.h, test/code_calc.output, test/code_error.output:
+	RCS_BASE
+
+	* test/error.tab.c, test/ftp.tab.c, test/grammar.tab.c: regen
+
+	* test/run_test.sh:
+	changes to support running "make check" in a separate build-tree
+
+	* main.c: add "-P" to usage message
+
+	* reader.c: use UCH() macro to hide casts.
+
+2010-06-07  Andres.Mejia
+
+	* main.c, output.c, reader.c, defs.h, skeleton.c:
+	Fix the output order of the generated parse code file.  This allows for
+	the use of YYPARSE_PARAM, by having the output that checks for
+	YYPARSE_PARAM to be defined come after the C code block in the
+	definitions section of a yacc file.
+
+	Implement support for YYLEX_PARAM, similar to bison.  This is useful for
+	support for building reentrant lexers with flex.
+
+	Fix a compatibility issue with bison's pure-parser option.  Bison
+	defines yylex as sending at least one parameter, &yylval, as the first
+	parameter and doesn't seem to have an easy way to remove that parameter.
+	This on the other hand is rather convenient to support saving to yylval
+	from flex when building reentrant lexers and parsers.
+
+	Add support for the %parse-param and %lex-param directives used in
+	bison.  This change bears some similarity to NetBSD's changes to byacc
+	at http://www.mail-archive.com/source-changes-full@netbsd.org/msg08143.html
+
+	Bison allows for POSIX yacc emulation via a yacc directive in the yacc
+	file, and also via a command line switch.  Implement this feature as a
+	no-op for byacc, since byacc is designed to be POSIX yacc compatible
+	anyway.  This allows for better compatibility with yacc sources written
+	for bison.
+
+2010-06-07  Thomas Dickey  <tom@crayon>
+
+	* VERSION: bump to 2010/06/07
+
+2010-06-06  Thomas Dickey  <tom@crayon>
+
+	* test/calc.tab.c, configure: regen
+
+	* skeleton.c:
+	move #include's down into the generated code, to allow user-defined code
+	to override feature definitions, particularly with stdlib.h (request by
+	Marcus Kool).
+
+	* lr0.c, error.c, reader.c, defs.h:
+	strict gcc 3.4.6 warnings on 64-bit platform
+
+	* aclocal.m4, configure.in: add check for lint
+
+	* makefile.in: add lint rule
+
+	* defs.h, closure.c, lr0.c, warshall.c, main.c:
+	fix gcc warnings, mostly for 64-bit platform
+
+	* aclocal.m4:
+	add macros for checking ctags/etags, e.g., to work with NetBSD pkgsrc
+
+	* makefile.in: add etags/TAGS if available
+
+	* configure.in: add configure check for actual ctags and etags programs
+
+	* package/debian/copyright: add copyright notices for non-PD files
+
+	* package/debian/changelog:
+	incorporated scripts in upstream to use for test-builds
+
+	* makefile.in: drop mkdirs.sh, just use "mkdir -p"
+
+	* AUTHORS: nicknames for some contributors (see CHANGES for details)
+
+	* package/byacc.spec: RPM file for byacc
+
+	* VERSION: bump to 2010/06/06
+
+	* aclocal.m4: add copyright notice, from "my-autoconf" macros
+		http://invisible-island.net/autoconf/autoconf.html
+
+	* package/RCS, package/debian/RCS, package/debian/source/RCS, package/pkgsrc/RCS:
+	PERMIT FILE
+
+	* aclocal.m4: resync with my-autoconf.  summary of changes:
+		a) CF_ADD_CFLAGS, etc., improve quoting of ifelse() parameter
+		b) CF_DISABLE_ECHO, change indent-convention for substituted makefile
+		c) CF_GCC_VERSION, ignore stderr
+		d) CF_GCC_WARNINGS, adjust options to work with c89 wrapper of gcc
+
+2010-04-20  Thomas Dickey  <tom@crayon>
+
+	* package/debian/changelog, package/debian/compat, package/debian/control, package/debian/copyright, package/debian/docs, package/debian/postinst, package/debian/prerm, package/debian/rules, package/debian/watch:
+	scripts from Debian package
+
+2010-02-16  Thomas Dickey  <tom@crayon>
+
+	* yacc.1: document -P and bison-extensions
+
+	* test/ftp.tab.c, test/grammar.tab.c, test/calc.tab.c, test/error.tab.c:
+	regen
+
+	* output.c: implement %pure-parser
+
+	* skeleton.c:
+	implement %pure-parser, like bison.  To help with this, changed the stack
+	variables, putting them into a struct.
+
+	* reader.c: implement %pure-parser
+
+	* defs.h: modified skeleton to support %pure-parser feature
+
+	* main.c: add -P option to set %pure-parser
+
+	* output.c:
+	make -r and -p options work together.  The -r option splits the generated
+	parser into code/table files; for this case we cannot use static data.
+	Also, we have to repeat the #define's used for prefix (-p) as well as the
+	redeclaration of yyparse().  Finally, allow any of the prefixed names to
+	be overridden, e.g., by passing a -D option to the compiler.  Make that
+	a little more readable by putting a blank line before each chunk.
+
+	* defs.h: add definitions for %pure-parser
+
+	* skeleton.c:
+	put blank line before/after the redeclaration of yyparse()
+
+	* output.c: allow for other program redefining yylex()
+
+	* skeleton.c:
+	split-off xdecls[] array, to move declaration of yyparse() after #define's
+
+	* defs.h: split-out xdecls[]
+
+	* VERSION: bump
+
+	* configure: regen
+
+	* aclocal.m4: add CF_REMOVE_DEFINE, needed by CF_ADD_CFLAGS
+
+	* aclocal.m4:
+	resync with my-autoconf CF_ADD_CFLAGS and CF_DISABLE_ECHO changes.
+
+2010-02-16  Ostap.Cherkashi
+
+	* skeleton.c: fix a memory leak in the generated skeleton
+
+2010-01-01  Thomas Dickey  <tom@crayon>
+
+	* package/debian/source/format: scripts from Debian package
+
+2009-12-31  Thomas Dickey  <tom@crayon>
+
+	* config.guess: 2009-12-30
+
+	* config.sub: 2009-12-31
+
 2009-10-27  Thomas Dickey  <tom@crayon>
 
 	* VERSION: 20091027
@@ -159,6 +496,11 @@
 
 	* aclocal.m4: resync with my-autoconf (no major changes)
 
+2008-07-24  Thomas Dickey  <tom@crayon>
+
+	* package/pkgsrc/Makefile, package/pkgsrc/distinfo:
+	scripts from NetBSD pkgsrc, for test-builds
+
 2008-03-14  Thomas Dickey  <tom@crayon>
 
 	* config.sub: update to 2008-03-08
@@ -288,7 +630,7 @@
 	the VERSION file holds the patch-date.  Define YYPATCH, so this will be
 	compiled into the skeleton.
 
-	* VERSION: RCS_BASE
+	* VERSION: patch-level for byacc
 
 	* main.c:
 	add "-o" to usage message.  It is too long for a single line; rewrite usage()
@@ -330,6 +672,14 @@
 	* config.sub: 2005/2/10
 
 	* config.guess: 2005/3/24
+
+2005-04-13  Thomas Dickey  <tom@crayon>
+
+	* package/pkgsrc/PLIST: scripts from NetBSD pkgsrc, for test-builds
+
+2005-03-21  Thomas Dickey  <tom@crayon>
+
+	* package/pkgsrc/DESCR: scripts from NetBSD pkgsrc, for test-builds
 
 2004-03-28  Thomas Dickey  <tom@crayon>
 
@@ -422,6 +772,8 @@
 
 	* test/calc.y: RCS_BASE
 
+	* test/code_calc.y, test/pure_calc.y: copy of calc.y
+
 	* vmsbuild.com: original version
 
 2000-02-23  dickey
@@ -494,6 +846,10 @@
 1990-02-05  unknown
 
 	* symtab.c, lalr.c, error.c: original version
+
+1990-01-16  Thomas Dickey  <tom@crayon>
+
+	* test/code_error.y, test/pure_error.y: RCS_BASE
 
 1990-01-16  unknown
 
