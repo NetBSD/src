@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.15 2010/02/27 12:04:19 mlelstv Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.16 2010/12/23 14:43:37 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.15 2010/02/27 12:04:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.16 2010/12/23 14:43:37 mlelstv Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -609,10 +609,12 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 		return error;
 
 	if ((error = UFS_VALLOC(rvp, 0 | S_IFREG, NOCRED, &vp)) != 0) {
-		vput(rvp);
+		VOP_UNLOCK(rvp);
+		vgone(rvp);
 		return error;
 	}
-	vput(rvp);
+	VOP_UNLOCK(rvp);
+	vgone(rvp);
 
 	vp->v_type = VREG;
 	ip = VTOI(vp);
@@ -634,7 +636,8 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 		 */
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
-		vput(vp);
+		VOP_UNLOCK(vp);
+		vgone(vp);
 
 		return error;
 	}
@@ -643,7 +646,8 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	 * Now that we have the place-holder inode for the journal,
 	 * we don't need the vnode ever again.
 	 */
-	vput(vp);
+	VOP_UNLOCK(vp);
+	vgone(vp);
 
 	return 0;
 }
