@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.57 2010/08/04 12:34:00 bouyer Exp $	*/
+/*	$NetBSD: dk.c,v 1.58 2010/12/23 14:22:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.57 2010/08/04 12:34:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.58 2010/12/23 14:22:03 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -235,10 +235,11 @@ dkgetproperties(struct disk *disk, struct dkwedge_info *dkw)
 
 	geom = prop_dictionary_create();
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", dkw->dkw_size);
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    dkw->dkw_size >> disk->dk_blkshift);
 
 	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE /* XXX 512? */);
+	    DEV_BSIZE << disk->dk_blkshift);
 
 	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
 
@@ -432,6 +433,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 */
 
 	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
+	disk_blocksize(&sc->sc_dk, DEV_BSIZE << pdk->dk_blkshift);
 	dkgetproperties(&sc->sc_dk, dkw);
 	disk_attach(&sc->sc_dk);
 
