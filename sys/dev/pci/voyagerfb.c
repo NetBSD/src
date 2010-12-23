@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.5 2010/12/16 06:45:51 cegger Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.6 2010/12/23 21:34:02 cegger Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.5 2010/12/16 06:45:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.6 2010/12/23 21:34:02 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dataport = bus_space_vaddr(sc->sc_memt, sc->sc_regh);
 	sc->sc_dataport += SM502_DATAPORT;
 
-	reg = bus_space_read_8(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CRTL);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CRTL);
 	switch (reg & SM502_PDC_DEPTH_MASK) {
 		case SM502_PDC_8BIT:
 			sc->sc_depth = 8;
