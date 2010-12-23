@@ -1,6 +1,6 @@
-/*	$NetBSD: error.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.2 2010/12/23 23:36:25 christos Exp $	*/
 
-/* Id: error.c,v 1.6 2008/11/24 21:30:35 tom Exp */
+/* Id: error.c,v 1.8 2010/11/24 15:10:20 tom Exp */
 
 /* routines for printing error messages  */
 
@@ -35,7 +35,7 @@ unexpected_EOF(void)
     done(1);
 }
 
-void
+static void
 print_pos(char *st_line, char *st_cptr)
 {
     char *s;
@@ -44,7 +44,7 @@ print_pos(char *st_line, char *st_cptr)
 	return;
     for (s = st_line; *s != '\n'; ++s)
     {
-	if (isprint(*s) || *s == '\t')
+	if (isprint(UCH(*s)) || *s == '\t')
 	    putc(*s, stderr);
 	else
 	    putc('?', stderr);

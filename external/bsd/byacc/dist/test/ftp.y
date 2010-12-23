@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.y,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: ftp.y,v 1.1.1.2 2010/12/23 23:36:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -26,9 +26,7 @@
 
 %{
 
-#ifndef lint
-static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
-#endif /* not lint */
+/* sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89"; */
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -37,6 +35,8 @@ static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
 
 #include <arpa/ftp.h>
 
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
 #include <ctype.h>
@@ -44,7 +44,9 @@ static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
 #include <setjmp.h>
 #include <syslog.h>
 #include <sys/stat.h>
+#include <string.h>
 #include <time.h>
+#include <assert.h>
 
 extern	struct sockaddr_in data_dest;
 extern	int logged_in;
@@ -63,7 +65,30 @@ extern	char *globerr;
 extern	int usedefault;
 extern  int transflag;
 extern  char tmpline[];
-char	**glob();
+
+extern char **glob(char *);
+extern char *renamefrom(char *);
+extern void cwd(const char *);
+
+extern void dologout(int);
+extern void fatal(const char *);
+extern void makedir(const char *);
+extern void nack(const char *);
+extern void pass(const char *);
+extern void passive(void);
+extern void pwd(void);
+extern void removedir(char *);
+extern void renamecmd(char *, char *);
+extern void retrieve(const char *, const char *);
+extern void send_file_list(const char *);
+extern void statcmd(void);
+extern void statfilecmd(const char *);
+extern void store(char *, const char *, int);
+extern void user(const char *);
+
+extern void perror_reply(int, const char *, ...);
+extern void reply(int, const char *, ...);
+extern void lreply(int, const char *, ...);
 
 static	int cmd_type;
 static	int cmd_form;
@@ -71,7 +96,15 @@ static	int cmd_bytesz;
 char	cbuf[512];
 char	*fromname;
 
-char	*index();
+
+
+static char * copy(const char *);
+
+static void
+yyerror(const char *msg)
+{
+	perror(msg);
+}
 %}
 
 %token
@@ -196,23 +229,23 @@ cmd:		USER SP username CRLF
 		}
 	|	RETR check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				retrieve((char *) 0, (char *) $4);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	STOR check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				store((char *) $4, "w", 0);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	APPE check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				store((char *) $4, "a", 0);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	NLST check_login CRLF
@@ -222,9 +255,9 @@ cmd:		USER SP username CRLF
 		}
 	|	NLST check_login SP STRING CRLF
 		= {
-			if ($2 && $4 != NULL) 
+			if ($2 && $4 != 0) 
 				send_file_list((char *) $4);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	LIST check_login CRLF
@@ -234,16 +267,16 @@ cmd:		USER SP username CRLF
 		}
 	|	LIST check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				retrieve("/bin/ls -lgA %s", (char *) $4);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	STAT check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				statfilecmd((char *) $4);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	STAT CRLF
@@ -252,9 +285,9 @@ cmd:		USER SP username CRLF
 		}
 	|	DELE check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
-				delete((char *) $4);
-			if ($4 != NULL)
+			if ($2 && $4 != 0)
+				remove((char *) $4);
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	RNTO SP pathname CRLF
@@ -279,9 +312,9 @@ cmd:		USER SP username CRLF
 		}
 	|	CWD check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				cwd((char *) $4);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	HELP CRLF
@@ -309,16 +342,16 @@ cmd:		USER SP username CRLF
 		}
 	|	MKD check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				makedir((char *) $4);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	RMD check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				removedir((char *) $4);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	PWD check_login CRLF
@@ -366,7 +399,7 @@ cmd:		USER SP username CRLF
 		}
 	|	SITE SP CHMOD check_login SP octal_number SP pathname CRLF
 		= {
-			if ($4 && ($8 != NULL)) {
+			if ($4 && ($8 != 0)) {
 				if ($6 > 0777)
 					reply(501,
 				"CHMOD: Mode value must be between 0 and 0777");
@@ -375,7 +408,7 @@ cmd:		USER SP username CRLF
 				else
 					reply(200, "CHMOD command successful.");
 			}
-			if ($8 != NULL)
+			if ($8 != 0)
 				free((char *) $8);
 		}
 	|	SITE SP IDLE CRLF
@@ -400,9 +433,9 @@ cmd:		USER SP username CRLF
 		}
 	|	STOU check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				store((char *) $4, "w", 1);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	SYST CRLF
@@ -428,9 +461,9 @@ cmd:		USER SP username CRLF
 		 */
 	|	SIZE check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL)
+			if ($2 && $4 != 0)
 				sizecmd((char *) $4);
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 
@@ -445,7 +478,7 @@ cmd:		USER SP username CRLF
 		 */
 	|	MDTM check_login SP pathname CRLF
 		= {
-			if ($2 && $4 != NULL) {
+			if ($2 && $4 != 0) {
 				struct stat stbuf;
 				if (stat((char *) $4, &stbuf) < 0)
 					perror_reply(550, "%s", (char *) $4);
@@ -454,7 +487,6 @@ cmd:		USER SP username CRLF
 						(char *) $4);
 				} else {
 					register struct tm *t;
-					struct tm *gmtime();
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
 					    "19%02d%02d%02d%02d%02d%02d",
@@ -462,7 +494,7 @@ cmd:		USER SP username CRLF
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
 			}
-			if ($4 != NULL)
+			if ($4 != 0)
 				free((char *) $4);
 		}
 	|	QUIT CRLF
@@ -477,8 +509,6 @@ cmd:		USER SP username CRLF
 	;
 rcmd:		RNFR check_login SP pathname CRLF
 		= {
-			char *renamefrom();
-
 			if ($2 && $4) {
 				fromname = renamefrom((char *) $4);
 				if (fromname == (char *) 0 && $4) {
@@ -493,7 +523,7 @@ username:	STRING
 
 password:	/* empty */
 		= {
-			*(char **)&($$) = "";
+			*(const char **)(&($$)) = "";
 		}
 	|	STRING
 	;
@@ -607,9 +637,9 @@ pathname:	pathstring
 		 */
 		if (logged_in && $1 && strncmp((char *) $1, "~", 1) == 0) {
 			*(char **)&($$) = *glob((char *) $1);
-			if (globerr != NULL) {
+			if (globerr != 0) {
 				reply(550, globerr);
-				$$ = NULL;
+				$$ = 0;
 			}
 			free((char *) $1);
 		} else
@@ -660,6 +690,8 @@ check_login:	/* empty */
 
 extern jmp_buf errcatch;
 
+static void upper(char *);
+
 #define	CMD	0	/* beginning of command */
 #define	ARGS	1	/* expect miscellaneous arguments */
 #define	STR1	2	/* expect SP followed by STRING */
@@ -671,11 +703,11 @@ extern jmp_buf errcatch;
 #define	NSTR	8	/* Number followed by a string */
 
 struct tab {
-	char	*name;
+	const char *name;
 	short	token;
 	short	state;
 	short	implemented;	/* 1 if command is implemented */
-	char	*help;
+	const char *help;
 };
 
 struct tab cmdtab[] = {		/* In order defined in RFC 765 */
@@ -726,7 +758,7 @@ struct tab cmdtab[] = {		/* In order defined in RFC 765 */
 	{ "STOU", STOU, STR1, 1,	"<sp> file-name" },
 	{ "SIZE", SIZE, OSTR, 1,	"<sp> path-name" },
 	{ "MDTM", MDTM, OSTR, 1,	"<sp> path-name" },
-	{ NULL,   0,    0,    0,	0 }
+	{ 0,   0,    0,    0,	0 }
 };
 
 struct tab sitetab[] = {
@@ -734,16 +766,14 @@ struct tab sitetab[] = {
 	{ "IDLE", IDLE, ARGS, 1,	"[ <sp> maximum-idle-time ]" },
 	{ "CHMOD", CHMOD, NSTR, 1,	"<sp> mode <sp> file-name" },
 	{ "HELP", HELP, OSTR, 1,	"[ <sp> <string> ]" },
-	{ NULL,   0,    0,    0,	0 }
+	{ 0,   0,    0,    0,	0 }
 };
 
-struct tab *
-lookup(p, cmd)
-	register struct tab *p;
-	char *cmd;
+static struct tab *
+lookup(struct tab *p, char *cmd)
 {
 
-	for (; p->name != NULL; p++)
+	for (; p->name != 0; p++)
 		if (strcmp(cmd, p->name) == 0)
 			return (p);
 	return (0);
@@ -752,14 +782,12 @@ lookup(p, cmd)
 #include <arpa/telnet.h>
 
 /*
- * getline - a hacked up version of fgets to ignore TELNET escape codes.
+ * get_line - a hacked up version of fgets to ignore TELNET escape codes.
  */
-char *
-getline(s, n, iop)
-	char *s;
-	register FILE *iop;
+static char *
+get_line(char *s, int n, FILE *iop)
 {
-	register c;
+	register int c;
 	register char *cs;
 
 	cs = s;
@@ -767,7 +795,7 @@ getline(s, n, iop)
 	for (c = 0; tmpline[c] != '\0' && --n > 0; ++c) {
 		*cs++ = tmpline[c];
 		if (tmpline[c] == '\n') {
-			*cs++ = '\0';
+			*cs = '\0';
 			if (debug)
 				syslog(LOG_DEBUG, "command: %s", s);
 			tmpline[0] = '\0';
@@ -806,20 +834,19 @@ getline(s, n, iop)
 			break;
 	}
 	if (c == EOF && cs == s)
-		return (NULL);
-	*cs++ = '\0';
+		return (0);
+	*cs = '\0';
 	if (debug)
 		syslog(LOG_DEBUG, "command: %s", s);
 	return (s);
 }
 
-static int
-toolong()
+static void
+toolong(int sig)
 {
 	time_t now;
-	extern char *ctime();
-	extern time_t time();
 
+	(void) sig;
 	reply(421,
 	  "Timeout (%d seconds): closing control connection.", timeout);
 	(void) time(&now);
@@ -831,14 +858,14 @@ toolong()
 	dologout(1);
 }
 
-yylex()
+int
+yylex(void)
 {
 	static int cpos, state;
 	register char *cp, *cp2;
 	register struct tab *p;
 	int n;
-	char c, *strpbrk();
-	char *copy();
+	char c;
 
 	for (;;) {
 		switch (state) {
@@ -846,16 +873,16 @@ yylex()
 		case CMD:
 			(void) signal(SIGALRM, toolong);
 			(void) alarm((unsigned) timeout);
-			if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
+			if (get_line(cbuf, sizeof(cbuf)-1, stdin) == 0) {
 				reply(221, "You could at least say goodbye.");
 				dologout(0);
 			}
 			(void) alarm(0);
 #ifdef SETPROCTITLE
-			if (strncasecmp(cbuf, "PASS", 4) != NULL)
+			if (strncasecmp(cbuf, "PASS", 4) != 0)
 				setproctitle("%s: %s", proctitle, cbuf);
 #endif /* SETPROCTITLE */
-			if ((cp = index(cbuf, '\r'))) {
+			if ((cp = strchr(cbuf, '\r'))) {
 				*cp++ = '\n';
 				*cp = '\0';
 			}
@@ -875,7 +902,7 @@ yylex()
 					/* NOTREACHED */
 				}
 				state = p->state;
-				*(char **)&yylval = p->name;
+				*(const char **)(&yylval) = p->name;
 				return (p->token);
 			}
 			break;
@@ -901,7 +928,7 @@ yylex()
 					/* NOTREACHED */
 				}
 				state = p->state;
-				*(char **)&yylval = p->name;
+				*(const char **)(&yylval) = p->name;
 				return (p->token);
 			}
 			state = CMD;
@@ -919,7 +946,10 @@ yylex()
 		dostr1:
 			if (cbuf[cpos] == ' ') {
 				cpos++;
-				state = state == OSTR ? STR2 : ++state;
+				if (state == OSTR)
+					state = STR2;
+				else
+					++state;
 				return (SP);
 			}
 			break;
@@ -1049,8 +1079,8 @@ yylex()
 	}
 }
 
-upper(s)
-	register char *s;
+static void
+upper(char *s)
 {
 	while (*s != '\0') {
 		if (islower(*s))
@@ -1059,34 +1089,32 @@ upper(s)
 	}
 }
 
-char *
-copy(s)
-	char *s;
+static char *
+copy(const char *s)
 {
 	char *p;
-	extern char *malloc(), *strcpy();
 
-	p = malloc((unsigned) strlen(s) + 1);
-	if (p == NULL)
+	p = (char * )malloc(strlen(s) + 1);
+	if (p == 0)
 		fatal("Ran out of memory.");
-	(void) strcpy(p, s);
+	else
+		(void) strcpy(p, s);
 	return (p);
 }
 
-help(ctab, s)
-	struct tab *ctab;
-	char *s;
+static void
+help(struct tab *ctab, char *s)
 {
 	register struct tab *c;
 	register int width, NCMDS;
-	char *type;
+	const char *help_type;
 
 	if (ctab == sitetab)
-		type = "SITE ";
+		help_type = "SITE ";
 	else
-		type = "";
+		help_type = "";
 	width = 0, NCMDS = 0;
-	for (c = ctab; c->name != NULL; c++) {
+	for (c = ctab; c->name != 0; c++) {
 		int len = strlen(c->name);
 
 		if (len > width)
@@ -1099,7 +1127,7 @@ help(ctab, s)
 		int columns, lines;
 
 		lreply(214, "The following %scommands are recognized %s.",
-		    type, "(* =>'s unimplemented)");
+		    help_type, "(* =>'s unimplemented)");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
@@ -1108,6 +1136,7 @@ help(ctab, s)
 			printf("   ");
 			for (j = 0; j < columns; j++) {
 				c = ctab + j * lines + i;
+				assert(c->name != 0);
 				printf("%s%c", c->name,
 					c->implemented ? ' ' : '*');
 				if (c + lines >= &ctab[NCMDS])
@@ -1131,14 +1160,14 @@ help(ctab, s)
 		return;
 	}
 	if (c->implemented)
-		reply(214, "Syntax: %s%s %s", type, c->name, c->help);
+		reply(214, "Syntax: %s%s %s", help_type, c->name, c->help);
 	else
-		reply(214, "%s%-*s\t%s; unimplemented.", type, width,
+		reply(214, "%s%-*s\t%s; unimplemented.", help_type, width,
 		    c->name, c->help);
 }
 
-sizecmd(filename)
-char *filename;
+static void
+sizecmd(char *filename)
 {
 	switch (type) {
 	case TYPE_L:
@@ -1155,7 +1184,7 @@ char *filename;
 		register int c, count;
 		struct stat stbuf;
 		fin = fopen(filename, "r");
-		if (fin == NULL) {
+		if (fin == 0) {
 			perror_reply(550, filename);
 			return;
 		}

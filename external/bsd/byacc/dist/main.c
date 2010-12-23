@@ -1,6 +1,6 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2 2010/12/23 23:36:26 christos Exp $	*/
 
-/* Id: main.c,v 1.23 2009/10/27 09:06:44 tom Exp */
+/* Id: main.c,v 1.30 2010/11/24 15:13:39 tom Exp */
 
 #include <signal.h>
 #include <unistd.h>		/* for _exit() */
@@ -10,7 +10,7 @@
 char dflag;
 char gflag;
 char lflag;
-char oflag;
+static char oflag;
 char rflag;
 char tflag;
 char vflag;
@@ -27,11 +27,11 @@ static char default_file_prefix[] = "y";
 static char *file_prefix = default_file_prefix;
 
 char *code_file_name;
-char *defines_file_name;
 char *input_file_name = empty_string;
-char *output_file_name = 0;
-char *verbose_file_name;
-char *graph_file_name;
+static char *defines_file_name;
+static char *graph_file_name;
+static char *output_file_name;
+static char *verbose_file_name;
 
 FILE *action_file;	/*  a temp file, used to save actions associated    */
 			/*  with rules until the parser is written          */
@@ -60,6 +60,7 @@ Value_t *symbol_value;
 short *symbol_prec;
 char *symbol_assoc;
 
+int pure_parser;
 int exit_code;
 
 Value_t *ritem;
@@ -122,6 +123,9 @@ done(int k)
     reader_leaks();
 #endif
 
+    if (rflag)
+	DO_CLOSE(code_file);
+
     exit(k);
 }
 
@@ -162,6 +166,7 @@ usage(void)
 	,"  -l                    suppress #line directives"
 	,"  -o output_file        (default \"y.tab.c\")"
 	,"  -p symbol_prefix      set symbol prefix (default \"yy\")"
+	,"  -P                    create a reentrant parser, e.g., \"%pure-parser\""
 	,"  -r                    produce separate code and table files (y.code.c)"
 	,"  -t                    add debugging support"
 	,"  -v                    write description (y.output)"
@@ -194,6 +199,10 @@ setflag(int ch)
 	lflag = 1;
 	break;
 
+    case 'P':
+	pure_parser = 1;
+	break;
+
     case 'r':
 	rflag = 1;
 	break;
@@ -209,6 +218,11 @@ setflag(int ch)
     case 'V':
 	printf("%s - %s\n", myname, VERSION);
 	exit(EXIT_SUCCESS);
+
+    case 'y':
+	/* noop for bison compatibility. byacc is already designed to be posix
+	 * yacc compatible. */
+	break;
 
     default:
 	usage();
@@ -296,7 +310,7 @@ getargs(int argc, char *argv[])
 }
 
 char *
-allocate(unsigned n)
+allocate(size_t n)
 {
     char *p;
 
@@ -304,16 +318,14 @@ allocate(unsigned n)
     if (n)
     {
 	p = CALLOC(1, n);
-	if (!p)
-	    no_space();
+	NO_SPACE(p);
     }
     return (p);
 }
 
 #define CREATE_FILE_NAME(dest, suffix) \
 	dest = MALLOC(len + strlen(suffix) + 1); \
-	if (dest == 0) \
-	    no_space(); \
+	NO_SPACE(dest); \
 	strcpy(dest, file_prefix); \
 	strcpy(dest + len, suffix)
 
@@ -339,8 +351,7 @@ create_file_names(void)
     {
 	len = (size_t) (prefix - output_file_name);
 	file_prefix = (char *)MALLOC(len + 1);
-	if (file_prefix == 0)
-	    no_space();
+	NO_SPACE(file_prefix);
 	strncpy(file_prefix, output_file_name, len)[len] = 0;
     }
     else

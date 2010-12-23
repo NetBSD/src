@@ -1,6 +1,6 @@
-/*	$NetBSD: closure.c,v 1.1.1.1 2009/10/29 00:46:52 christos Exp $	*/
+/*	$NetBSD: closure.c,v 1.1.1.2 2010/12/23 23:36:23 christos Exp $	*/
 
-/* Id: closure.c,v 1.7 2009/10/27 09:30:14 tom Exp */
+/* Id: closure.c,v 1.9 2010/06/09 08:21:47 tom Exp */
 
 #include "defs.h"
 
@@ -81,7 +81,7 @@ set_first_derives(void)
 		k = 0;
 	    }
 
-	    if (cword & (1 << k))
+	    if (cword & (unsigned)(1 << k))
 	    {
 		rp = derives[j];
 		while ((rule = *rp++) >= 0)
@@ -91,7 +91,6 @@ set_first_derives(void)
 	    }
 	}
 
-	vrow += varsetsize;
 	rrow += rulesetsize;
     }
 
@@ -119,7 +118,6 @@ closure(short *nucleus, int n)
     Value_t itemno;
 
     rulesetsize = WORDSIZE(nrules);
-    rsp = ruleset;
     rsend = ruleset + rulesetsize;
     for (rsp = ruleset; rsp < rsend; rsp++)
 	*rsp = 0;
@@ -147,7 +145,7 @@ closure(short *nucleus, int n)
 	{
 	    for (i = 0; i < BITS_PER_WORD; ++i)
 	    {
-		if (word & (1 << i))
+		if (word & (unsigned)(1 << i))
 		{
 		    itemno = rrhs[ruleno + i];
 		    while (csp < csend && *csp < itemno)

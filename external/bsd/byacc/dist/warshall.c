@@ -1,6 +1,6 @@
-/*	$NetBSD: warshall.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: warshall.c,v 1.1.1.2 2010/12/23 23:36:27 christos Exp $	*/
 
-/* Id: warshall.c,v 1.6 2008/11/24 21:30:35 tom Exp */
+/* Id: warshall.c,v 1.7 2010/06/06 22:48:51 tom Exp */
 
 #include "defs.h"
 
@@ -30,7 +30,7 @@ transitive_closure(unsigned *R, int n)
 
 	while (rowj < relend)
 	{
-	    if (*ccol & (1 << i))
+	    if (*ccol & (unsigned)(1 << i))
 	    {
 		rp = rowi;
 		rend = rowj + rowsize;
@@ -72,7 +72,7 @@ reflexive_transitive_closure(unsigned *R, int n)
     rp = R;
     while (rp < relend)
     {
-	*rp |= (1 << i);
+	*rp |= (unsigned)(1 << i);
 	if (++i >= BITS_PER_WORD)
 	{
 	    i = 0;

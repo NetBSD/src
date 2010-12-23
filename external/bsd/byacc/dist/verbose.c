@@ -1,6 +1,6 @@
-/*	$NetBSD: verbose.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.1.1.2 2010/12/23 23:36:27 christos Exp $	*/
 
-/* Id: verbose.c,v 1.8 2009/10/27 09:12:43 tom Exp */
+/* Id: verbose.c,v 1.9 2010/06/09 08:58:29 tom Exp */
 
 #include "defs.h"
 
@@ -26,8 +26,8 @@ verbose(void)
 	return;
 
     null_rules = (short *)MALLOC((unsigned)nrules * sizeof(short));
-    if (null_rules == 0)
-	no_space();
+    NO_SPACE(null_rules);
+
     fprintf(verbose_file, "\f\n");
     for (i = 0; i < nstates; i++)
 	print_state(i);

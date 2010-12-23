@@ -1,6 +1,6 @@
-/*	$NetBSD: defs.h,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.1.1.2 2010/12/23 23:36:25 christos Exp $	*/
 
-/* Id: defs.h,v 1.20 2009/10/27 10:47:43 tom Exp */
+/* Id: defs.h,v 1.30 2010/11/26 15:19:36 tom Exp */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -66,6 +66,8 @@
 #define	DOUBLE_QUOTE	'\"'	/*  double quote  */
 #define	BACKSLASH	'\\'	/*  backslash  */
 
+#define UCH(c)          (unsigned char)(c)
+
 /* defines for constructing filenames */
 
 #if defined(VMS)
@@ -94,6 +96,10 @@
 #define IDENT 9
 #define EXPECT 10
 #define EXPECT_RR 11
+#define PURE_PARSER 12
+#define PARSE_PARAM 13
+#define LEX_PARAM 14
+#define POSIX_YACC 15
 
 /*  symbol classes  */
 
@@ -123,14 +129,16 @@
 
 /*  storage allocation macros  */
 
-#define CALLOC(k,n)	(calloc((unsigned)(k),(unsigned)(n)))
+#define CALLOC(k,n)	(calloc((size_t)(k),(size_t)(n)))
 #define	FREE(x)		(free((char*)(x)))
-#define MALLOC(n)	(malloc((unsigned)(n)))
+#define MALLOC(n)	(malloc((size_t)(n)))
 #define	NEW(t)		((t*)allocate(sizeof(t)))
-#define	NEW2(n,t)	((t*)allocate(((unsigned)(n)*sizeof(t))))
-#define REALLOC(p,n)	(realloc((char*)(p),(unsigned)(n)))
+#define	NEW2(n,t)	((t*)allocate(((size_t)(n)*sizeof(t))))
+#define REALLOC(p,n)	(realloc((char*)(p),(size_t)(n)))
 
 #define DO_FREE(x)	if (x) { FREE(x); x = 0; }
+
+#define NO_SPACE(p)	if (p == 0) no_space(); assert(p != 0)
 
 /* messages */
 #define PLURAL(n) ((n) > 1 ? "s" : "")
@@ -205,6 +213,16 @@ struct action
     char suppressed;
 };
 
+/*  the structure used to store parse/lex parameters  */
+typedef struct param param;
+struct param
+{
+    struct param *next;
+    char *name;		/* parameter name */
+    char *type;		/* everything before parameter name */
+    char *type2;	/* everything after parameter name */
+};
+
 /* global variables */
 
 extern char dflag;
@@ -221,19 +239,22 @@ extern char *line;
 extern int lineno;
 extern int outline;
 extern int exit_code;
+extern int pure_parser;
 
 extern const char *banner[];
+extern const char *xdecls[];
 extern const char *tables[];
-extern const char *header[];
-extern const char *body[];
+extern const char *hdr_defs[];
+extern const char *hdr_vars[];
+extern const char *body_1[];
+extern const char *body_vars[];
+extern const char *body_2[];
+extern const char *body_3[];
 extern const char *trailer[];
+extern const char *trailer_2[];
 
 extern char *code_file_name;
-extern char *defines_file_name;
 extern char *input_file_name;
-extern char *output_file_name;
-extern char *verbose_file_name;
-extern char *graph_file_name;
 
 extern FILE *action_file;
 extern FILE *code_file;
@@ -274,6 +295,7 @@ extern char *nullable;
 extern bucket *first_symbol;
 extern bucket *last_symbol;
 
+extern int pure_parser;
 extern int nstates;
 extern core *first_state;
 extern shifts *first_shift;
@@ -305,6 +327,9 @@ extern Value_t *itemset;
 extern Value_t *itemsetend;
 extern unsigned *ruleset;
 
+extern param *lex_param;
+extern param *parse_param;
+
 /* global functions */
 
 extern bucket *lookup(const char *);
@@ -319,7 +344,7 @@ extern bucket *make_bucket(const char *);
 #endif
 
 /* closure.c */
-extern void closure(Value_t *nucleus, int n);
+extern void closure(Value_t * nucleus, int n);
 extern void finalize_closure(void);
 extern void set_first_derives(void);
 
@@ -335,7 +360,6 @@ extern void no_space(void);
 extern void open_error(const char *filename);
 extern void over_unionized(char *u_cptr);
 extern void prec_redeclared(void);
-extern void print_pos(char *st_line, char *st_cptr);
 extern void reprec_warning(char *s);
 extern void restarted_warning(void);
 extern void retyped_warning(char *s);
@@ -361,7 +385,6 @@ extern void used_reserved(char *s);
 extern void graph(void);
 
 /* lalr.c */
-extern int hash(const char *name);
 extern void create_symbol_table(void);
 extern void free_symbol_table(void);
 extern void free_symbols(void);
@@ -377,7 +400,7 @@ extern void show_rrhs(void);
 extern void show_shifts(void);
 
 /* main.c */
-extern char *allocate(unsigned n);
+extern char *allocate(size_t n);
 extern void done(int k) GCC_NORETURN;
 
 /* mkpar.c */

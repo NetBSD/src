@@ -1,6 +1,6 @@
-/*	$NetBSD: symtab.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.1.1.2 2010/12/23 23:36:26 christos Exp $	*/
 
-/* Id: symtab.c,v 1.7 2008/11/24 21:30:35 tom Exp */
+/* Id: symtab.c,v 1.9 2010/11/24 15:12:29 tom Exp */
 
 #include "defs.h"
 
@@ -13,7 +13,7 @@ static bucket **symbol_table = 0;
 bucket *first_symbol;
 bucket *last_symbol;
 
-int
+static int
 hash(const char *name)
 {
     const char *s;
@@ -33,24 +33,23 @@ make_bucket(const char *name)
 {
     bucket *bp;
 
-    assert(name);
+    assert(name != 0);
+
     bp = (bucket *)MALLOC(sizeof(bucket));
-    if (bp == 0)
-	no_space();
+    NO_SPACE(bp);
+
     bp->link = 0;
     bp->next = 0;
+
     bp->name = MALLOC(strlen(name) + 1);
-    if (bp->name == 0)
-	no_space();
+    NO_SPACE(bp->name);
+
     bp->tag = 0;
     bp->value = UNDEFINED;
     bp->index = 0;
     bp->prec = 0;
     bp->class = UNKNOWN;
     bp->assoc = TOKEN;
-
-    if (bp->name == 0)
-	no_space();
     strcpy(bp->name, name);
 
     return (bp);
@@ -86,8 +85,8 @@ create_symbol_table(void)
     bucket *bp;
 
     symbol_table = (bucket **)MALLOC(TABLE_SIZE * sizeof(bucket *));
-    if (symbol_table == 0)
-	no_space();
+    NO_SPACE(symbol_table);
+
     for (i = 0; i < TABLE_SIZE; i++)
 	symbol_table[i] = 0;
 

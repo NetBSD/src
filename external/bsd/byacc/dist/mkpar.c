@@ -1,6 +1,6 @@
-/*	$NetBSD: mkpar.c,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.1.1.2 2010/12/23 23:36:26 christos Exp $	*/
 
-/* Id: mkpar.c,v 1.10 2009/10/27 10:50:13 tom Exp */
+/* Id: mkpar.c,v 1.11 2010/06/09 08:53:17 tom Exp */
 
 #include "defs.h"
 
@@ -183,8 +183,7 @@ unused_rules(void)
     action *p;
 
     rules_used = (Value_t *) MALLOC((unsigned)nrules * sizeof(Value_t));
-    if (rules_used == 0)
-	no_space();
+    NO_SPACE(rules_used);
 
     for (i = 0; i < nrules; ++i)
 	rules_used[i] = 0;
@@ -240,7 +239,7 @@ remove_conflicts(void)
 		SRcount++;
 		p->suppressed = 1;
 	    }
-	    else if (pref->action_code == SHIFT)
+	    else if (pref != 0 && pref->action_code == SHIFT)
 	    {
 		if (pref->prec > 0 && p->prec > 0)
 		{
