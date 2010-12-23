@@ -1,4 +1,4 @@
-# Id: makefile.in,v 1.11 2009/10/26 23:49:57 tom Exp
+# Id: makefile.in,v 1.16 2010/06/09 09:46:37 tom Exp
 #
 # UNIX template-makefile for Berkeley Yacc
 
@@ -24,12 +24,18 @@ CFLAGS		= @CFLAGS@ $(CPPFLAGS) $(EXTRA_CFLAGS)
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 
+CTAGS		= @CTAGS@
+ETAGS		= @ETAGS@
+LINT		= @LINT@
+
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
 bindir		= $(DESTDIR)@bindir@
 mandir		= $(DESTDIR)@mandir@/man1
 manext		= 1
+
+testdir		= $(srcdir)/test
 
 x		= @EXEEXT@
 o		= .@OBJEXT@
@@ -85,41 +91,85 @@ install: all installdirs
 	- $(INSTALL_DATA) $(srcdir)/$(THIS).1 $(mandir)/$(actual_man)
 
 installdirs:
-	$(SHELL) ${srcdir}/mkdirs.sh $(bindir)
-	- $(SHELL) ${srcdir}/mkdirs.sh $(mandir)
+	mkdir -p $(bindir)
+	- mkdir -p $(mandir)
 
 uninstall:
 	- rm -f $(bindir)/$(actual_bin)
 	- rm -f $(mandir)/$(actual_man)
 
+################################################################################
+.SUFFIXES : $o .i .html .$(manext) .cat .ps .pdf .txt
+
 .c$o:
 	@RULE_CC@
 	@ECHO_CC@$(CC) -c $(CFLAGS) $<
 
+.c.i :
+	@RULE_CC@
+	@ECHO_CC@$(CPP) -C $(CPPFLAGS) $*.c >$@
+
+.$(manext).cat :
+	- nroff -man $(srcdir)/$(THIS).$(manext) >$@
+
+.$(manext).html :
+	GROFF_NO_SGR=stupid $(SHELL) -c "tbl $*.$(manext) | groff -Thtml -man" >$@
+
+.$(manext).ps :
+	$(SHELL) -c "tbl $*.$(manext) | groff -man" >$@
+
+.$(manext).txt :
+	GROFF_NO_SGR=stupid $(SHELL) -c "tbl $*.$(manext) | nroff -Tascii -man | col -bx" >$@
+
+.ps.pdf :
+	ps2pdf $*.ps
+
+################################################################################
+
 $(THIS)$x : $(OBJS)
 	@ECHO_LD@$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
 
-$(THIS).man : $(THIS).1
-	- nroff -man $(srcdir)/$(THIS).1 >$@
-
 mostlyclean :
-	- rm -f core .nfs* *$o *.bak *.BAK *.man *.out
+	- rm -f core .nfs* *$o *.bak *.BAK *.out
 
 clean : mostlyclean
 	- rm -f $(THIS)$x
 
 distclean : clean
 	- rm -f config.log config.cache config.status config.h makefile
+	- rm -f *.html *.cat *.pdf *.ps *.txt
 	- cd test && rm -f test-*
 
 realclean: distclean
-	- rm -f tags
+	- rm -f tags TAGS
 
+################################################################################
+docs :: $(THIS).html \
+	$(THIS).pdf \
+	$(THIS).ps \
+	$(THIS).txt
+$(THIS).html : $(THIS).$(manext)
+$(THIS).pdf : $(THIS).ps
+$(THIS).ps : $(THIS).$(manext)
+$(THIS).txt : $(THIS).$(manext)
+################################################################################
 check:	$(THIS)$x
-	cd test && $(SHELL) ./run_test.sh
+	$(SHELL) $(testdir)/run_test.sh $(testdir)
 
+check_make:
+	$(SHELL) $(testdir)/run_make.sh $(testdir)
+
+check_lint:
+	$(SHELL) $(testdir)/run_lint.sh $(testdir)
+################################################################################
 tags: $(H_FILES) $(C_FILES) 
-	ctags $(C_FILES) $(H_FILES)
+	$(CTAGS) $(C_FILES) $(H_FILES)
+
+lint: $(C_FILES) 
+	$(LINT) $(CPPFLAGS) $(C_FILES)
+
+@MAKE_UPPER_TAGS@TAGS: $(H_FILES) $(C_FILES) 
+@MAKE_UPPER_TAGS@	$(ETAGS) $(C_FILES) $(H_FILES)
 
 depend:
 	makedepend -- $(CPPFLAGS) -- $(C_FILES)
