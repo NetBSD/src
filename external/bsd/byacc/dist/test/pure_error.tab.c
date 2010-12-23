@@ -1,4 +1,4 @@
-/*	$NetBSD: calc.tab.c,v 1.1.1.2 2010/12/23 23:36:30 christos Exp $	*/
+/*	$NetBSD: pure_error.tab.c,v 1.1.1.1 2010/12/23 23:36:27 christos Exp $	*/
 
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
@@ -15,96 +15,88 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 
 
 #ifndef yyparse
-#define yyparse    calc_parse
+#define yyparse    error_parse
 #endif /* yyparse */
 
 #ifndef yylex
-#define yylex      calc_lex
+#define yylex      error_lex
 #endif /* yylex */
 
 #ifndef yyerror
-#define yyerror    calc_error
+#define yyerror    error_error
 #endif /* yyerror */
 
 #ifndef yychar
-#define yychar     calc_char
+#define yychar     error_char
 #endif /* yychar */
 
 #ifndef yyval
-#define yyval      calc_val
+#define yyval      error_val
 #endif /* yyval */
 
 #ifndef yylval
-#define yylval     calc_lval
+#define yylval     error_lval
 #endif /* yylval */
 
 #ifndef yydebug
-#define yydebug    calc_debug
+#define yydebug    error_debug
 #endif /* yydebug */
 
 #ifndef yynerrs
-#define yynerrs    calc_nerrs
+#define yynerrs    error_nerrs
 #endif /* yynerrs */
 
 #ifndef yyerrflag
-#define yyerrflag  calc_errflag
+#define yyerrflag  error_errflag
 #endif /* yyerrflag */
 
 #ifndef yylhs
-#define yylhs      calc_lhs
+#define yylhs      error_lhs
 #endif /* yylhs */
 
 #ifndef yylen
-#define yylen      calc_len
+#define yylen      error_len
 #endif /* yylen */
 
 #ifndef yydefred
-#define yydefred   calc_defred
+#define yydefred   error_defred
 #endif /* yydefred */
 
 #ifndef yydgoto
-#define yydgoto    calc_dgoto
+#define yydgoto    error_dgoto
 #endif /* yydgoto */
 
 #ifndef yysindex
-#define yysindex   calc_sindex
+#define yysindex   error_sindex
 #endif /* yysindex */
 
 #ifndef yyrindex
-#define yyrindex   calc_rindex
+#define yyrindex   error_rindex
 #endif /* yyrindex */
 
 #ifndef yygindex
-#define yygindex   calc_gindex
+#define yygindex   error_gindex
 #endif /* yygindex */
 
 #ifndef yytable
-#define yytable    calc_table
+#define yytable    error_table
 #endif /* yytable */
 
 #ifndef yycheck
-#define yycheck    calc_check
+#define yycheck    error_check
 #endif /* yycheck */
 
 #ifndef yyname
-#define yyname     calc_name
+#define yyname     error_name
 #endif /* yyname */
 
 #ifndef yyrule
-#define yyrule     calc_rule
+#define yyrule     error_rule
 #endif /* yyrule */
-#define YYPREFIX "calc_"
+#define YYPREFIX "error_"
 
-#define YYPURE 0
+#define YYPURE 1
 
-#line 2 "calc.y"
-# include <stdio.h>
-# include <ctype.h>
-
-int regs[26];
-int base;
-
-#line 106 "calc.tab.c"
 
 #ifndef YYSTYPE
 typedef int YYSTYPE;
@@ -124,11 +116,11 @@ typedef int YYSTYPE;
 
 /* Parameters sent to lex. */
 #ifdef YYLEX_PARAM
-# define YYLEX_DECL() yylex(void *YYLEX_PARAM)
-# define YYLEX yylex(YYLEX_PARAM)
+# define YYLEX_DECL() yylex(YYSTYPE *yylval, void *YYLEX_PARAM)
+# define YYLEX yylex(&yylval, YYLEX_PARAM)
 #else
-# define YYLEX_DECL() yylex(void)
-# define YYLEX yylex()
+# define YYLEX_DECL() yylex(YYSTYPE *yylval)
+# define YYLEX yylex(&yylval)
 #endif
 
 /* Parameters sent to yyerror. */
@@ -138,128 +130,44 @@ typedef int YYSTYPE;
 extern int YYPARSE_DECL();
 extern int YYLEX_DECL();
 
-#define DIGIT 257
-#define LETTER 258
-#define UMINUS 259
 #define YYERRCODE 256
-static const short calc_lhs[] = {                        -1,
-    0,    0,    0,    1,    1,    2,    2,    2,    2,    2,
-    2,    2,    2,    2,    2,    2,    3,    3,
+static const short error_lhs[] = {                       -1,
+    0,
 };
-static const short calc_len[] = {                         2,
-    0,    3,    3,    1,    3,    3,    3,    3,    3,    3,
-    3,    3,    3,    2,    1,    1,    1,    2,
+static const short error_len[] = {                        2,
+    1,
 };
-static const short calc_defred[] = {                      1,
-    0,    0,   17,    0,    0,    0,    0,    0,    0,    3,
-    0,   15,   14,    0,    2,    0,    0,    0,    0,    0,
-    0,    0,   18,    0,    6,    0,    0,    0,    0,    9,
-   10,   11,
+static const short error_defred[] = {                     0,
+    1,    0,
 };
-static const short calc_dgoto[] = {                       1,
-    7,    8,    9,
+static const short error_dgoto[] = {                      2,
 };
-static const short calc_sindex[] = {                      0,
-  -40,   -7,    0,  -55,  -38,  -38,    1,  -29, -247,    0,
-  -38,    0,    0,   22,    0,  -38,  -38,  -38,  -38,  -38,
-  -38,  -38,    0,  -29,    0,   51,   60,  -20,  -20,    0,
+static const short error_sindex[] = {                  -256,
     0,    0,
 };
-static const short calc_rindex[] = {                      0,
-    0,    0,    0,    2,    0,    0,    0,    9,   -9,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,   10,    0,   -6,   14,    5,   13,    0,
+static const short error_rindex[] = {                     0,
     0,    0,
 };
-static const short calc_gindex[] = {                      0,
-    0,   65,    0,
+static const short error_gindex[] = {                     0,
 };
-#define YYTABLESIZE 220
-static const short calc_table[] = {                       6,
-   16,    6,   10,   13,    5,   11,    5,   22,   17,   23,
-   15,   15,   20,   18,    7,   19,   22,   21,    4,    5,
-    0,   20,    8,   12,    0,    0,   21,   16,   16,    0,
-    0,   16,   16,   16,   13,   16,    0,   16,   15,   15,
-    0,    0,    7,   15,   15,    7,   15,    7,   15,    7,
-    8,   12,    0,    8,   12,    8,    0,    8,   22,   17,
-    0,    0,   25,   20,   18,    0,   19,    0,   21,   13,
-   14,    0,    0,    0,    0,   24,    0,    0,    0,    0,
-   26,   27,   28,   29,   30,   31,   32,   22,   17,    0,
-    0,    0,   20,   18,   16,   19,   22,   21,    0,    0,
-    0,   20,   18,    0,   19,    0,   21,    0,    0,    0,
-    0,    0,    0,    0,   16,    0,    0,   13,    0,    0,
-    0,    0,    0,    0,    0,   15,    0,    0,    7,    0,
-    0,    0,    0,    0,    0,    0,    8,   12,    0,    0,
-    0,    0,    0,    0,    0,   16,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    2,    3,    4,    3,   12,
+#define YYTABLESIZE 0
+static const short error_table[] = {                      1,
 };
-static const short calc_check[] = {                      40,
-   10,   40,   10,   10,   45,   61,   45,   37,   38,  257,
-   10,   10,   42,   43,   10,   45,   37,   47,   10,   10,
-   -1,   42,   10,   10,   -1,   -1,   47,   37,   38,   -1,
-   -1,   41,   42,   43,   41,   45,   -1,   47,   37,   38,
-   -1,   -1,   38,   42,   43,   41,   45,   43,   47,   45,
-   38,   38,   -1,   41,   41,   43,   -1,   45,   37,   38,
-   -1,   -1,   41,   42,   43,   -1,   45,   -1,   47,    5,
-    6,   -1,   -1,   -1,   -1,   11,   -1,   -1,   -1,   -1,
-   16,   17,   18,   19,   20,   21,   22,   37,   38,   -1,
-   -1,   -1,   42,   43,  124,   45,   37,   47,   -1,   -1,
-   -1,   42,   43,   -1,   45,   -1,   47,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,  124,   -1,   -1,  124,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,  124,   -1,   -1,  124,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,  124,  124,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,  124,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,  256,  257,  258,  257,  258,
+static const short error_check[] = {                    256,
 };
-#define YYFINAL 1
+#define YYFINAL 2
 #ifndef YYDEBUG
 #define YYDEBUG 0
 #endif
-#define YYMAXTOKEN 259
+#define YYMAXTOKEN 0
 #if YYDEBUG
 static const char *yyname[] = {
 
-"end-of-file",0,0,0,0,0,0,0,0,0,"'\\n'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'%'","'&'",0,"'('","')'","'*'","'+'",0,"'-'",0,"'/'",0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'='",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"'|'",0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"DIGIT","LETTER","UMINUS",
+"end-of-file",
 };
 static const char *yyrule[] = {
-"$accept : list",
-"list :",
-"list : list stat '\\n'",
-"list : list error '\\n'",
-"stat : expr",
-"stat : LETTER '=' expr",
-"expr : '(' expr ')'",
-"expr : expr '+' expr",
-"expr : expr '-' expr",
-"expr : expr '*' expr",
-"expr : expr '/' expr",
-"expr : expr '%' expr",
-"expr : expr '&' expr",
-"expr : expr '|' expr",
-"expr : '-' expr",
-"expr : LETTER",
-"expr : number",
-"number : DIGIT",
-"number : number DIGIT",
+"$accept : S",
+"S : error",
 
 };
 #endif
@@ -289,56 +197,29 @@ typedef struct {
     YYSTYPE  *l_base;
     YYSTYPE  *l_mark;
 } YYSTACKDATA;
-int      yyerrflag;
-int      yychar;
-YYSTYPE  yyval;
-YYSTYPE  yylval;
+#line 4 "pure_error.y"
 
-/* variables for the parser stack */
-static YYSTACKDATA yystack;
-#line 63 "calc.y"
- /* start of programs */
+#include <stdio.h>
 
 int
-main (void)
+main(void)
 {
-    while(!feof(stdin)) {
-	yyparse();
-    }
+    printf("yyparse() = %d\n", yyparse());
     return 0;
 }
 
-static void
-yyerror(const char *s)
-{
-    fprintf(stderr, "%s\n", s);
-}
-
 int
-yylex(void)
+yylex(YYSTYPE *value)
 {
-	/* lexical analysis routine */
-	/* returns LETTER for a lower case letter, yylval = 0 through 25 */
-	/* return DIGIT for a digit, yylval = 0 through 9 */
-	/* all other characters are returned immediately */
-
-    int c;
-
-    while( (c=getchar()) == ' ' )   { /* skip blanks */ }
-
-    /* c is now nonblank */
-
-    if( islower( c )) {
-	yylval = c - 'a';
-	return ( LETTER );
-    }
-    if( isdigit( c )) {
-	yylval = c - '0';
-	return ( DIGIT );
-    }
-    return( c );
+    return value ? 0 : -1;
 }
-#line 340 "calc.tab.c"
+
+static void
+yyerror(const char* s)
+{
+    printf("%s\n", s);
+}
+#line 221 "pure_error.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -405,6 +286,13 @@ static void yyfreestack(YYSTACKDATA *data)
 int
 YYPARSE_DECL()
 {
+    int      yyerrflag;
+    int      yychar;
+    YYSTYPE  yyval;
+    YYSTYPE  yylval;
+
+    /* variables for the parser stack */
+    YYSTACKDATA yystack;
     int yym, yyn, yystate;
 #if YYDEBUG
     const char *yys;
@@ -548,67 +436,6 @@ yyreduce:
         memset(&yyval, 0, sizeof yyval);
     switch (yyn)
     {
-case 3:
-#line 25 "calc.y"
-	{  yyerrok ; }
-break;
-case 4:
-#line 29 "calc.y"
-	{  printf("%d\n",yystack.l_mark[0]);}
-break;
-case 5:
-#line 31 "calc.y"
-	{  regs[yystack.l_mark[-2]] = yystack.l_mark[0]; }
-break;
-case 6:
-#line 35 "calc.y"
-	{  yyval = yystack.l_mark[-1]; }
-break;
-case 7:
-#line 37 "calc.y"
-	{  yyval = yystack.l_mark[-2] + yystack.l_mark[0]; }
-break;
-case 8:
-#line 39 "calc.y"
-	{  yyval = yystack.l_mark[-2] - yystack.l_mark[0]; }
-break;
-case 9:
-#line 41 "calc.y"
-	{  yyval = yystack.l_mark[-2] * yystack.l_mark[0]; }
-break;
-case 10:
-#line 43 "calc.y"
-	{  yyval = yystack.l_mark[-2] / yystack.l_mark[0]; }
-break;
-case 11:
-#line 45 "calc.y"
-	{  yyval = yystack.l_mark[-2] % yystack.l_mark[0]; }
-break;
-case 12:
-#line 47 "calc.y"
-	{  yyval = yystack.l_mark[-2] & yystack.l_mark[0]; }
-break;
-case 13:
-#line 49 "calc.y"
-	{  yyval = yystack.l_mark[-2] | yystack.l_mark[0]; }
-break;
-case 14:
-#line 51 "calc.y"
-	{  yyval = - yystack.l_mark[0]; }
-break;
-case 15:
-#line 53 "calc.y"
-	{  yyval = regs[yystack.l_mark[0]]; }
-break;
-case 17:
-#line 58 "calc.y"
-	{  yyval = yystack.l_mark[0]; base = (yystack.l_mark[0]==0) ? 8 : 10; }
-break;
-case 18:
-#line 60 "calc.y"
-	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
-break;
-#line 610 "calc.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;
