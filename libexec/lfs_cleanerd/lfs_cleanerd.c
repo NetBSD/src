@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.26 2010/08/16 22:11:55 pooka Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.27 2010/12/23 18:08:41 mlelstv Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ init_fs(struct clfs *fs, char *fsname)
 	int rootfd;
 	int i;
 	void *sbuf;
+	char *bn;
 
 	/*
 	 * Get the raw device from the block device.
@@ -218,7 +219,11 @@ init_fs(struct clfs *fs, char *fsname)
 		syslog(LOG_ERR, "couldn't malloc device name string: %m");
 		return -1;
 	}
-	sprintf(fs->clfs_dev, "/dev/r%s", sf.f_mntfromname + 5);
+	bn = strrchr(sf.f_mntfromname, '/');
+	bn = bn ? bn+1 : sf.f_mntfromname;
+	strlcpy(fs->clfs_dev, sf.f_mntfromname, bn - sf.f_mntfromname + 1);
+	strcat(fs->clfs_dev, "r");
+	strcat(fs->clfs_dev, bn);
 	if ((fs->clfs_devfd = kops.ko_open(fs->clfs_dev, O_RDONLY, 0)) < 0) {
 		syslog(LOG_ERR, "couldn't open device %s for reading",
 			fs->clfs_dev);
