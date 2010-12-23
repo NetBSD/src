@@ -1,4 +1,4 @@
-/*	$NetBSD: functions.c,v 1.1.1.1 2009/12/02 00:27:10 haad Exp $	*/
+/*	$NetBSD: functions.c,v 1.2 2010/12/23 17:46:54 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
@@ -350,7 +350,10 @@ static int find_disk_path(char *major_minor_str, char *path_rtn, int *unlink_pat
 	LOG_DBG("Path not found for %d/%d", major, minor);
 	LOG_DBG("Creating /dev/mapper/%d-%d", major, minor);
 	sprintf(path_rtn, "/dev/mapper/%d-%d", major, minor);
-	r = mknod(path_rtn, S_IFBLK | S_IRUSR | S_IWUSR, MKDEV(major, minor));
+	r = mknod(path_rtn, S_IFBLK | DM_DEVICE_MODE, MKDEV(major, minor));
+
+	if (r != -1)
+		r = chown(path_rtn, DM_DEVICE_UID, DM_DEVICE_GID);
 
 	/*
 	 * If we have to make the path, we unlink it after we open it

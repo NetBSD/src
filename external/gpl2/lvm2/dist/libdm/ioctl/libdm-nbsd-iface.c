@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm-nbsd-iface.c,v 1.7 2010/03/12 16:24:40 haad Exp $        */
+/*      $NetBSD: libdm-nbsd-iface.c,v 1.8 2010/12/23 17:46:54 christos Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -162,9 +162,13 @@ static int _create_control(const char *control, uint32_t major, uint32_t minor)
 
 	log_verbose("Creating device %s (%u, %u)", control, major, minor);
 
-	if (mknod(control, S_IFCHR | S_IRUSR | S_IWUSR,
+	if (mknod(control, S_IFCHR | DM_DEVICE_MODE,
 		  MKDEV(major, minor)) < 0)  {
 		log_sys_error("mknod", control);
+		return 0;
+	}
+	if (chown(control, DM_DEVICE_UID, DM_DEVICE_GID) == -1) {
+		log_sys_error("chown", control);
 		return 0;
 	}
 
