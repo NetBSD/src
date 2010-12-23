@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: t_format.c,v 1.5 2010/12/23 13:34:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
