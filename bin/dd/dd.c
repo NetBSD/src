@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.45 2010/12/14 19:04:05 pooka Exp $	*/
+/*	$NetBSD: dd.c,v 1.46 2010/12/23 21:55:40 riz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.45 2010/12/14 19:04:05 pooka Exp $");
+__RCSID("$NetBSD: dd.c,v 1.46 2010/12/23 21:55:40 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -445,10 +445,10 @@ dd_close(void)
 		dd_out(1);
 
 	/*
-	 * Reporting nfs write error may be defered until next
+	 * Reporting nfs write error may be deferred until next
 	 * write(2) or close(2) system call.  So, we need to do an
 	 * extra check.  If an output is stdout, the file structure
-	 * may be shared among with other processes and close(2) just
+	 * may be shared with other processes and close(2) just
 	 * decreases the reference count.
 	 */
 	if (out.fd == STDOUT_FILENO && ddop_fsync(out, out.fd) == -1
