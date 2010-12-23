@@ -1,4 +1,4 @@
-/*	$NetBSD: error.y,v 1.1.1.2 2010/12/23 23:36:27 christos Exp $	*/
+/*	$NetBSD: pure_error.y,v 1.1.1.1 2010/12/23 23:36:27 christos Exp $	*/
 
 %%
 S: error
@@ -14,9 +14,9 @@ main(void)
 }
 
 int
-yylex(void)
+yylex(YYSTYPE *value)
 {
-    return -1;
+    return value ? 0 : -1;
 }
 
 static void

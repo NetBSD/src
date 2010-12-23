@@ -1,11 +1,13 @@
-/*	$NetBSD: calc.y,v 1.1.1.2 2010/12/23 23:36:28 christos Exp $	*/
+/*	$NetBSD: calc2.y,v 1.1.1.1 2010/12/23 23:36:30 christos Exp $	*/
+
+%parse-param { int regs[26] }
+%parse-param { int *base }
+
+%lex-param { int *base }
 
 %{
 # include <stdio.h>
 # include <ctype.h>
-
-int regs[26];
-int base;
 
 %}
 
@@ -57,9 +59,9 @@ expr  :  '(' expr ')'
       ;
 
 number:  DIGIT
-         {  $$ = $1; base = ($1==0) ? 8 : 10; }
+         {  $$ = $1; (*base) = ($1==0) ? 8 : 10; }
       |  number DIGIT
-         {  $$ = base * $1 + $2; }
+         {  $$ = (*base) * $1 + $2; }
       ;
 
 %% /* start of programs */
@@ -67,20 +69,23 @@ number:  DIGIT
 int
 main (void)
 {
+    int regs[26];
+    int base = 10;
+
     while(!feof(stdin)) {
-	yyparse();
+	yyparse(regs, &base);
     }
     return 0;
 }
 
 static void
-yyerror(const char *s)
+YYERROR_DECL()
 {
     fprintf(stderr, "%s\n", s);
 }
 
 int
-yylex(void)
+yylex(int *base)
 {
 	/* lexical analysis routine */
 	/* returns LETTER for a lower case letter, yylval = 0 through 25 */
@@ -98,7 +103,7 @@ yylex(void)
 	return ( LETTER );
     }
     if( isdigit( c )) {
-	yylval = c - '0';
+	yylval = (c - '0') % (*base);
 	return ( DIGIT );
     }
     return( c );
