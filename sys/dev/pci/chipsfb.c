@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.23 2010/12/16 06:19:01 cegger Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.24 2010/12/23 21:11:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.23 2010/12/16 06:19:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.24 2010/12/23 21:11:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,11 +153,12 @@ static void	chipsfb_wait_idle(struct chipsfb_softc *);
 static uint32_t chipsfb_probe_vram(struct chipsfb_softc *);
 
 struct wsscreen_descr chipsfb_defaultscreen = {
-	"default",
-	0, 0,
-	NULL,
-	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+	"default",	/* name */
+	0, 0,		/* ncols, nrows */
+	NULL,		/* textops */
+	8, 16,		/* fontwidth, fontheight */
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT, /* capabilities */
+	NULL,		/* modecookie */
 };
 
 const struct wsscreen_descr *_chipsfb_scrlist[] = {
@@ -180,6 +181,9 @@ static void	chipsfb_init_screen(void *, struct vcons_screen *, int,
 struct wsdisplay_accessops chipsfb_accessops = {
 	chipsfb_ioctl,
 	chipsfb_mmap,
+	NULL,	/* vcons_alloc_screen */
+	NULL,	/* vcons_free_screen */
+	NULL,	/* vcons_show_screen */
 	NULL,	/* load_font */
 	NULL,	/* polls */
 	NULL,	/* scroll */
