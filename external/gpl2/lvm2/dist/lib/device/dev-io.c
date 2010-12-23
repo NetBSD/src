@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.7 2010/12/23 14:46:25 mlelstv Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.8 2010/12/23 21:39:08 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -275,26 +275,20 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 		log_sys_error("open", name);
 #endif		
 		return 0;
-		}
-
-#ifdef __NetBSD__
-	if ((*size = lseek (fd, 0, SEEK_END)) < 0) {
-		log_sys_error("lseek SEEK_END", name);
-		close(fd);
-		return 0;
 	}
 
-	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
-		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) < 0) {
-			log_debug("ioctl DIOCGWEDGEINFO", name);
+#ifdef __NetBSD__
+        /* Get info about partition/wedge */
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1) {
+		if (ioctl(fd, DIOCGDINFO, &lab) == -1) {
+			log_debug("Please implement DIOCGWEDGEINFO or "
+			    "DIOCGDINFO for disk device %s", name);
 			close(fd);
 			return 0;
 		} else
-			if (dkw.dkw_size)
-				*size = dkw.dkw_size;
-	} else 
-		if (lab.d_secsize)
 			*size /= lab.d_secsize;
+	} else
+		*size = dkw.dkw_size;
 #else
 	if (ioctl(fd, BLKGETSIZE64, size) < 0) {
 		log_sys_error("ioctl BLKGETSIZE64", name);
