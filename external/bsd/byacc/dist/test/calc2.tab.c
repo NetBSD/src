@@ -1,4 +1,4 @@
-/*	$NetBSD: calc.tab.c,v 1.1.1.2 2010/12/23 23:36:30 christos Exp $	*/
+/*	$NetBSD: calc2.tab.c,v 1.1.1.1 2010/12/23 23:36:31 christos Exp $	*/
 
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
@@ -15,96 +15,93 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 
 
 #ifndef yyparse
-#define yyparse    calc_parse
+#define yyparse    calc2_parse
 #endif /* yyparse */
 
 #ifndef yylex
-#define yylex      calc_lex
+#define yylex      calc2_lex
 #endif /* yylex */
 
 #ifndef yyerror
-#define yyerror    calc_error
+#define yyerror    calc2_error
 #endif /* yyerror */
 
 #ifndef yychar
-#define yychar     calc_char
+#define yychar     calc2_char
 #endif /* yychar */
 
 #ifndef yyval
-#define yyval      calc_val
+#define yyval      calc2_val
 #endif /* yyval */
 
 #ifndef yylval
-#define yylval     calc_lval
+#define yylval     calc2_lval
 #endif /* yylval */
 
 #ifndef yydebug
-#define yydebug    calc_debug
+#define yydebug    calc2_debug
 #endif /* yydebug */
 
 #ifndef yynerrs
-#define yynerrs    calc_nerrs
+#define yynerrs    calc2_nerrs
 #endif /* yynerrs */
 
 #ifndef yyerrflag
-#define yyerrflag  calc_errflag
+#define yyerrflag  calc2_errflag
 #endif /* yyerrflag */
 
 #ifndef yylhs
-#define yylhs      calc_lhs
+#define yylhs      calc2_lhs
 #endif /* yylhs */
 
 #ifndef yylen
-#define yylen      calc_len
+#define yylen      calc2_len
 #endif /* yylen */
 
 #ifndef yydefred
-#define yydefred   calc_defred
+#define yydefred   calc2_defred
 #endif /* yydefred */
 
 #ifndef yydgoto
-#define yydgoto    calc_dgoto
+#define yydgoto    calc2_dgoto
 #endif /* yydgoto */
 
 #ifndef yysindex
-#define yysindex   calc_sindex
+#define yysindex   calc2_sindex
 #endif /* yysindex */
 
 #ifndef yyrindex
-#define yyrindex   calc_rindex
+#define yyrindex   calc2_rindex
 #endif /* yyrindex */
 
 #ifndef yygindex
-#define yygindex   calc_gindex
+#define yygindex   calc2_gindex
 #endif /* yygindex */
 
 #ifndef yytable
-#define yytable    calc_table
+#define yytable    calc2_table
 #endif /* yytable */
 
 #ifndef yycheck
-#define yycheck    calc_check
+#define yycheck    calc2_check
 #endif /* yycheck */
 
 #ifndef yyname
-#define yyname     calc_name
+#define yyname     calc2_name
 #endif /* yyname */
 
 #ifndef yyrule
-#define yyrule     calc_rule
+#define yyrule     calc2_rule
 #endif /* yyrule */
-#define YYPREFIX "calc_"
+#define YYPREFIX "calc2_"
 
 #define YYPURE 0
 
-#line 2 "calc.y"
+#line 7 "calc2.y"
 # include <stdio.h>
 # include <ctype.h>
 
-int regs[26];
-int base;
-
-#line 106 "calc.tab.c"
+#line 103 "calc2.tab.c"
 
 #ifndef YYSTYPE
 typedef int YYSTYPE;
@@ -119,7 +116,7 @@ typedef int YYSTYPE;
 #  define YYPARSE_DECL() yyparse(void *YYPARSE_PARAM)
 # endif
 #else
-# define YYPARSE_DECL() yyparse(void)
+# define YYPARSE_DECL() yyparse(int  regs[26], int * base)
 #endif
 
 /* Parameters sent to lex. */
@@ -127,13 +124,13 @@ typedef int YYSTYPE;
 # define YYLEX_DECL() yylex(void *YYLEX_PARAM)
 # define YYLEX yylex(YYLEX_PARAM)
 #else
-# define YYLEX_DECL() yylex(void)
-# define YYLEX yylex()
+# define YYLEX_DECL() yylex(int * base)
+# define YYLEX yylex(base)
 #endif
 
 /* Parameters sent to yyerror. */
-#define YYERROR_DECL() yyerror(const char *s)
-#define YYERROR_CALL(msg) yyerror(msg)
+#define YYERROR_DECL() yyerror(YYSTYPE *v, const char *s)
+#define YYERROR_CALL(msg) yyerror(regs, base, msg)
 
 extern int YYPARSE_DECL();
 extern int YYLEX_DECL();
@@ -142,40 +139,40 @@ extern int YYLEX_DECL();
 #define LETTER 258
 #define UMINUS 259
 #define YYERRCODE 256
-static const short calc_lhs[] = {                        -1,
+static const short calc2_lhs[] = {                       -1,
     0,    0,    0,    1,    1,    2,    2,    2,    2,    2,
     2,    2,    2,    2,    2,    2,    3,    3,
 };
-static const short calc_len[] = {                         2,
+static const short calc2_len[] = {                        2,
     0,    3,    3,    1,    3,    3,    3,    3,    3,    3,
     3,    3,    3,    2,    1,    1,    1,    2,
 };
-static const short calc_defred[] = {                      1,
+static const short calc2_defred[] = {                     1,
     0,    0,   17,    0,    0,    0,    0,    0,    0,    3,
     0,   15,   14,    0,    2,    0,    0,    0,    0,    0,
     0,    0,   18,    0,    6,    0,    0,    0,    0,    9,
    10,   11,
 };
-static const short calc_dgoto[] = {                       1,
+static const short calc2_dgoto[] = {                      1,
     7,    8,    9,
 };
-static const short calc_sindex[] = {                      0,
+static const short calc2_sindex[] = {                     0,
   -40,   -7,    0,  -55,  -38,  -38,    1,  -29, -247,    0,
   -38,    0,    0,   22,    0,  -38,  -38,  -38,  -38,  -38,
   -38,  -38,    0,  -29,    0,   51,   60,  -20,  -20,    0,
     0,    0,
 };
-static const short calc_rindex[] = {                      0,
+static const short calc2_rindex[] = {                     0,
     0,    0,    0,    2,    0,    0,    0,    9,   -9,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,   10,    0,   -6,   14,    5,   13,    0,
     0,    0,
 };
-static const short calc_gindex[] = {                      0,
+static const short calc2_gindex[] = {                     0,
     0,   65,    0,
 };
 #define YYTABLESIZE 220
-static const short calc_table[] = {                       6,
+static const short calc2_table[] = {                      6,
    16,    6,   10,   13,    5,   11,    5,   22,   17,   23,
    15,   15,   20,   18,    7,   19,   22,   21,    4,    5,
     0,   20,    8,   12,    0,    0,   21,   16,   16,    0,
@@ -199,7 +196,7 @@ static const short calc_table[] = {                       6,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    2,    3,    4,    3,   12,
 };
-static const short calc_check[] = {                      40,
+static const short calc2_check[] = {                     40,
    10,   40,   10,   10,   45,   61,   45,   37,   38,  257,
    10,   10,   42,   43,   10,   45,   37,   47,   10,   10,
    -1,   42,   10,   10,   -1,   -1,   47,   37,   38,   -1,
@@ -296,26 +293,29 @@ YYSTYPE  yylval;
 
 /* variables for the parser stack */
 static YYSTACKDATA yystack;
-#line 63 "calc.y"
+#line 65 "calc2.y"
  /* start of programs */
 
 int
 main (void)
 {
+    int regs[26];
+    int base = 10;
+
     while(!feof(stdin)) {
-	yyparse();
+	yyparse(regs, &base);
     }
     return 0;
 }
 
 static void
-yyerror(const char *s)
+YYERROR_DECL()
 {
     fprintf(stderr, "%s\n", s);
 }
 
 int
-yylex(void)
+yylex(int *base)
 {
 	/* lexical analysis routine */
 	/* returns LETTER for a lower case letter, yylval = 0 through 25 */
@@ -333,12 +333,12 @@ yylex(void)
 	return ( LETTER );
     }
     if( isdigit( c )) {
-	yylval = c - '0';
+	yylval = (c - '0') % (*base);
 	return ( DIGIT );
     }
     return( c );
 }
-#line 340 "calc.tab.c"
+#line 340 "calc2.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -475,7 +475,7 @@ yyloop:
     }
     if (yyerrflag) goto yyinrecovery;
 
-    yyerror("syntax error");
+    yyerror(regs, base, "syntax error");
 
     goto yyerrlab;
 
@@ -549,66 +549,66 @@ yyreduce:
     switch (yyn)
     {
 case 3:
-#line 25 "calc.y"
+#line 27 "calc2.y"
 	{  yyerrok ; }
 break;
 case 4:
-#line 29 "calc.y"
+#line 31 "calc2.y"
 	{  printf("%d\n",yystack.l_mark[0]);}
 break;
 case 5:
-#line 31 "calc.y"
+#line 33 "calc2.y"
 	{  regs[yystack.l_mark[-2]] = yystack.l_mark[0]; }
 break;
 case 6:
-#line 35 "calc.y"
+#line 37 "calc2.y"
 	{  yyval = yystack.l_mark[-1]; }
 break;
 case 7:
-#line 37 "calc.y"
+#line 39 "calc2.y"
 	{  yyval = yystack.l_mark[-2] + yystack.l_mark[0]; }
 break;
 case 8:
-#line 39 "calc.y"
+#line 41 "calc2.y"
 	{  yyval = yystack.l_mark[-2] - yystack.l_mark[0]; }
 break;
 case 9:
-#line 41 "calc.y"
+#line 43 "calc2.y"
 	{  yyval = yystack.l_mark[-2] * yystack.l_mark[0]; }
 break;
 case 10:
-#line 43 "calc.y"
+#line 45 "calc2.y"
 	{  yyval = yystack.l_mark[-2] / yystack.l_mark[0]; }
 break;
 case 11:
-#line 45 "calc.y"
+#line 47 "calc2.y"
 	{  yyval = yystack.l_mark[-2] % yystack.l_mark[0]; }
 break;
 case 12:
-#line 47 "calc.y"
+#line 49 "calc2.y"
 	{  yyval = yystack.l_mark[-2] & yystack.l_mark[0]; }
 break;
 case 13:
-#line 49 "calc.y"
+#line 51 "calc2.y"
 	{  yyval = yystack.l_mark[-2] | yystack.l_mark[0]; }
 break;
 case 14:
-#line 51 "calc.y"
+#line 53 "calc2.y"
 	{  yyval = - yystack.l_mark[0]; }
 break;
 case 15:
-#line 53 "calc.y"
+#line 55 "calc2.y"
 	{  yyval = regs[yystack.l_mark[0]]; }
 break;
 case 17:
-#line 58 "calc.y"
-	{  yyval = yystack.l_mark[0]; base = (yystack.l_mark[0]==0) ? 8 : 10; }
+#line 60 "calc2.y"
+	{  yyval = yystack.l_mark[0]; (*base) = (yystack.l_mark[0]==0) ? 8 : 10; }
 break;
 case 18:
-#line 60 "calc.y"
-	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
+#line 62 "calc2.y"
+	{  yyval = (*base) * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 610 "calc.tab.c"
+#line 610 "calc2.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;
@@ -660,7 +660,7 @@ to state %d\n", YYPREFIX, *yystack.s_mark, yystate);
     goto yyloop;
 
 yyoverflow:
-    yyerror("yacc stack overflow");
+    yyerror(regs, base, "yacc stack overflow");
 
 yyabort:
     yyfreestack(&yystack);

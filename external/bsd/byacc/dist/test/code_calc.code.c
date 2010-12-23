@@ -1,4 +1,4 @@
-/*	$NetBSD: calc.tab.c,v 1.1.1.2 2010/12/23 23:36:30 christos Exp $	*/
+/*	$NetBSD: code_calc.code.c,v 1.1.1.1 2010/12/23 23:36:27 christos Exp $	*/
 
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
@@ -13,6 +13,60 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #define yyerrok        (yyerrflag = 0)
 #define YYRECOVERING() (yyerrflag != 0)
 
+
+#define YYPURE 0
+
+#line 2 "code_calc.y"
+# include <stdio.h>
+# include <ctype.h>
+
+int regs[26];
+int base;
+
+#line 25 "code_calc.code.c"
+
+#ifndef YYSTYPE
+typedef int YYSTYPE;
+#endif
+
+/* compatibility with bison */
+#ifdef YYPARSE_PARAM
+/* compatibility with FreeBSD */
+# ifdef YYPARSE_PARAM_TYPE
+#  define YYPARSE_DECL() yyparse(YYPARSE_PARAM_TYPE YYPARSE_PARAM)
+# else
+#  define YYPARSE_DECL() yyparse(void *YYPARSE_PARAM)
+# endif
+#else
+# define YYPARSE_DECL() yyparse(void)
+#endif
+
+/* Parameters sent to lex. */
+#ifdef YYLEX_PARAM
+# define YYLEX_DECL() yylex(void *YYLEX_PARAM)
+# define YYLEX yylex(YYLEX_PARAM)
+#else
+# define YYLEX_DECL() yylex(void)
+# define YYLEX yylex()
+#endif
+
+/* Parameters sent to yyerror. */
+#define YYERROR_DECL() yyerror(const char *s)
+#define YYERROR_CALL(msg) yyerror(msg)
+
+extern int YYPARSE_DECL();
+extern int YYLEX_DECL();
+
+#define DIGIT 257
+#define LETTER 258
+#define UMINUS 259
+#define YYERRCODE 256
+#define YYTABLESIZE 220
+#define YYFINAL 1
+#ifndef YYDEBUG
+#define YYDEBUG 0
+#endif
+#define YYMAXTOKEN 259
 
 #ifndef yyparse
 #define yyparse    calc_parse
@@ -94,174 +148,22 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #define yyrule     calc_rule
 #endif /* yyrule */
 #define YYPREFIX "calc_"
-
-#define YYPURE 0
-
-#line 2 "calc.y"
-# include <stdio.h>
-# include <ctype.h>
-
-int regs[26];
-int base;
-
-#line 106 "calc.tab.c"
-
-#ifndef YYSTYPE
-typedef int YYSTYPE;
-#endif
-
-/* compatibility with bison */
-#ifdef YYPARSE_PARAM
-/* compatibility with FreeBSD */
-# ifdef YYPARSE_PARAM_TYPE
-#  define YYPARSE_DECL() yyparse(YYPARSE_PARAM_TYPE YYPARSE_PARAM)
-# else
-#  define YYPARSE_DECL() yyparse(void *YYPARSE_PARAM)
-# endif
-#else
-# define YYPARSE_DECL() yyparse(void)
-#endif
-
-/* Parameters sent to lex. */
-#ifdef YYLEX_PARAM
-# define YYLEX_DECL() yylex(void *YYLEX_PARAM)
-# define YYLEX yylex(YYLEX_PARAM)
-#else
-# define YYLEX_DECL() yylex(void)
-# define YYLEX yylex()
-#endif
-
-/* Parameters sent to yyerror. */
-#define YYERROR_DECL() yyerror(const char *s)
-#define YYERROR_CALL(msg) yyerror(msg)
-
 extern int YYPARSE_DECL();
 extern int YYLEX_DECL();
 
-#define DIGIT 257
-#define LETTER 258
-#define UMINUS 259
-#define YYERRCODE 256
-static const short calc_lhs[] = {                        -1,
-    0,    0,    0,    1,    1,    2,    2,    2,    2,    2,
-    2,    2,    2,    2,    2,    2,    3,    3,
-};
-static const short calc_len[] = {                         2,
-    0,    3,    3,    1,    3,    3,    3,    3,    3,    3,
-    3,    3,    3,    2,    1,    1,    1,    2,
-};
-static const short calc_defred[] = {                      1,
-    0,    0,   17,    0,    0,    0,    0,    0,    0,    3,
-    0,   15,   14,    0,    2,    0,    0,    0,    0,    0,
-    0,    0,   18,    0,    6,    0,    0,    0,    0,    9,
-   10,   11,
-};
-static const short calc_dgoto[] = {                       1,
-    7,    8,    9,
-};
-static const short calc_sindex[] = {                      0,
-  -40,   -7,    0,  -55,  -38,  -38,    1,  -29, -247,    0,
-  -38,    0,    0,   22,    0,  -38,  -38,  -38,  -38,  -38,
-  -38,  -38,    0,  -29,    0,   51,   60,  -20,  -20,    0,
-    0,    0,
-};
-static const short calc_rindex[] = {                      0,
-    0,    0,    0,    2,    0,    0,    0,    9,   -9,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,   10,    0,   -6,   14,    5,   13,    0,
-    0,    0,
-};
-static const short calc_gindex[] = {                      0,
-    0,   65,    0,
-};
-#define YYTABLESIZE 220
-static const short calc_table[] = {                       6,
-   16,    6,   10,   13,    5,   11,    5,   22,   17,   23,
-   15,   15,   20,   18,    7,   19,   22,   21,    4,    5,
-    0,   20,    8,   12,    0,    0,   21,   16,   16,    0,
-    0,   16,   16,   16,   13,   16,    0,   16,   15,   15,
-    0,    0,    7,   15,   15,    7,   15,    7,   15,    7,
-    8,   12,    0,    8,   12,    8,    0,    8,   22,   17,
-    0,    0,   25,   20,   18,    0,   19,    0,   21,   13,
-   14,    0,    0,    0,    0,   24,    0,    0,    0,    0,
-   26,   27,   28,   29,   30,   31,   32,   22,   17,    0,
-    0,    0,   20,   18,   16,   19,   22,   21,    0,    0,
-    0,   20,   18,    0,   19,    0,   21,    0,    0,    0,
-    0,    0,    0,    0,   16,    0,    0,   13,    0,    0,
-    0,    0,    0,    0,    0,   15,    0,    0,    7,    0,
-    0,    0,    0,    0,    0,    0,    8,   12,    0,    0,
-    0,    0,    0,    0,    0,   16,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    2,    3,    4,    3,   12,
-};
-static const short calc_check[] = {                      40,
-   10,   40,   10,   10,   45,   61,   45,   37,   38,  257,
-   10,   10,   42,   43,   10,   45,   37,   47,   10,   10,
-   -1,   42,   10,   10,   -1,   -1,   47,   37,   38,   -1,
-   -1,   41,   42,   43,   41,   45,   -1,   47,   37,   38,
-   -1,   -1,   38,   42,   43,   41,   45,   43,   47,   45,
-   38,   38,   -1,   41,   41,   43,   -1,   45,   37,   38,
-   -1,   -1,   41,   42,   43,   -1,   45,   -1,   47,    5,
-    6,   -1,   -1,   -1,   -1,   11,   -1,   -1,   -1,   -1,
-   16,   17,   18,   19,   20,   21,   22,   37,   38,   -1,
-   -1,   -1,   42,   43,  124,   45,   37,   47,   -1,   -1,
-   -1,   42,   43,   -1,   45,   -1,   47,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,  124,   -1,   -1,  124,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,  124,   -1,   -1,  124,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,  124,  124,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,  124,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,  256,  257,  258,  257,  258,
-};
-#define YYFINAL 1
-#ifndef YYDEBUG
-#define YYDEBUG 0
-#endif
-#define YYMAXTOKEN 259
+extern short yylhs[];
+extern short yylen[];
+extern short yydefred[];
+extern short yydgoto[];
+extern short yysindex[];
+extern short yyrindex[];
+extern short yygindex[];
+extern short yytable[];
+extern short yycheck[];
+
 #if YYDEBUG
-static const char *yyname[] = {
-
-"end-of-file",0,0,0,0,0,0,0,0,0,"'\\n'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'%'","'&'",0,"'('","')'","'*'","'+'",0,"'-'",0,"'/'",0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'='",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"'|'",0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"DIGIT","LETTER","UMINUS",
-};
-static const char *yyrule[] = {
-"$accept : list",
-"list :",
-"list : list stat '\\n'",
-"list : list error '\\n'",
-"stat : expr",
-"stat : LETTER '=' expr",
-"expr : '(' expr ')'",
-"expr : expr '+' expr",
-"expr : expr '-' expr",
-"expr : expr '*' expr",
-"expr : expr '/' expr",
-"expr : expr '%' expr",
-"expr : expr '&' expr",
-"expr : expr '|' expr",
-"expr : '-' expr",
-"expr : LETTER",
-"expr : number",
-"number : DIGIT",
-"number : number DIGIT",
-
-};
+extern char *yyname[];
+extern char *yyrule[];
 #endif
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -296,7 +198,7 @@ YYSTYPE  yylval;
 
 /* variables for the parser stack */
 static YYSTACKDATA yystack;
-#line 63 "calc.y"
+#line 63 "code_calc.y"
  /* start of programs */
 
 int
@@ -315,8 +217,7 @@ yyerror(const char *s)
 }
 
 int
-yylex(void)
-{
+yylex(void) {
 	/* lexical analysis routine */
 	/* returns LETTER for a lower case letter, yylval = 0 through 25 */
 	/* return DIGIT for a digit, yylval = 0 through 9 */
@@ -338,7 +239,7 @@ yylex(void)
     }
     return( c );
 }
-#line 340 "calc.tab.c"
+#line 241 "code_calc.code.c"
 
 #if YYDEBUG
 #include <stdio.h>		/* needed for printf */
@@ -549,66 +450,66 @@ yyreduce:
     switch (yyn)
     {
 case 3:
-#line 25 "calc.y"
+#line 25 "code_calc.y"
 	{  yyerrok ; }
 break;
 case 4:
-#line 29 "calc.y"
+#line 29 "code_calc.y"
 	{  printf("%d\n",yystack.l_mark[0]);}
 break;
 case 5:
-#line 31 "calc.y"
+#line 31 "code_calc.y"
 	{  regs[yystack.l_mark[-2]] = yystack.l_mark[0]; }
 break;
 case 6:
-#line 35 "calc.y"
+#line 35 "code_calc.y"
 	{  yyval = yystack.l_mark[-1]; }
 break;
 case 7:
-#line 37 "calc.y"
+#line 37 "code_calc.y"
 	{  yyval = yystack.l_mark[-2] + yystack.l_mark[0]; }
 break;
 case 8:
-#line 39 "calc.y"
+#line 39 "code_calc.y"
 	{  yyval = yystack.l_mark[-2] - yystack.l_mark[0]; }
 break;
 case 9:
-#line 41 "calc.y"
+#line 41 "code_calc.y"
 	{  yyval = yystack.l_mark[-2] * yystack.l_mark[0]; }
 break;
 case 10:
-#line 43 "calc.y"
+#line 43 "code_calc.y"
 	{  yyval = yystack.l_mark[-2] / yystack.l_mark[0]; }
 break;
 case 11:
-#line 45 "calc.y"
+#line 45 "code_calc.y"
 	{  yyval = yystack.l_mark[-2] % yystack.l_mark[0]; }
 break;
 case 12:
-#line 47 "calc.y"
+#line 47 "code_calc.y"
 	{  yyval = yystack.l_mark[-2] & yystack.l_mark[0]; }
 break;
 case 13:
-#line 49 "calc.y"
+#line 49 "code_calc.y"
 	{  yyval = yystack.l_mark[-2] | yystack.l_mark[0]; }
 break;
 case 14:
-#line 51 "calc.y"
+#line 51 "code_calc.y"
 	{  yyval = - yystack.l_mark[0]; }
 break;
 case 15:
-#line 53 "calc.y"
+#line 53 "code_calc.y"
 	{  yyval = regs[yystack.l_mark[0]]; }
 break;
 case 17:
-#line 58 "calc.y"
+#line 58 "code_calc.y"
 	{  yyval = yystack.l_mark[0]; base = (yystack.l_mark[0]==0) ? 8 : 10; }
 break;
 case 18:
-#line 60 "calc.y"
+#line 60 "code_calc.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 610 "calc.tab.c"
+#line 511 "code_calc.code.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

@@ -1,12 +1,12 @@
-/*	$NetBSD: grammar.y,v 1.1.1.1 2009/10/29 00:46:53 christos Exp $	*/
+/*	$NetBSD: grammar.y,v 1.1.1.2 2010/12/23 23:36:28 christos Exp $	*/
 
-/* Id: grammar.y,v 1.1 2004/03/24 21:29:23 tom Exp
+/* Id: grammar.y,v 1.3 2010/11/23 01:28:47 tom Exp
  *
  * yacc grammar for C function prototype generator
  * This was derived from the grammar in Appendix A of
  * "The C Programming Language" by Kernighan and Ritchie.
  */
-
+%expect 1
 %token <text> '(' '*' '&'
 	/* identifiers that are not reserved words */
 	T_IDENTIFIER T_TYPEDEF_NAME T_DEFINE_NAME
@@ -70,9 +70,205 @@
 %{
 #include <stdio.h>
 #include <ctype.h>
-#include "cproto.h"
-#include "symbol.h"
-#include "semantic.h"
+#include <string.h>
+
+#define OPT_LINTLIBRARY 1
+
+#ifndef TRUE
+#define	TRUE	(1)
+#endif
+
+#ifndef FALSE
+#define	FALSE	(0)
+#endif
+
+/* #include "cproto.h" */
+#define MAX_TEXT_SIZE 1024
+
+/* Prototype styles */
+#if OPT_LINTLIBRARY
+#define PROTO_ANSI_LLIB		-2	/* form ANSI lint-library source */
+#define PROTO_LINTLIBRARY	-1	/* form lint-library source */
+#endif
+#define PROTO_NONE		0	/* do not output any prototypes */
+#define PROTO_TRADITIONAL	1	/* comment out parameters */
+#define PROTO_ABSTRACT		2	/* comment out parameter names */
+#define PROTO_ANSI		3	/* ANSI C prototype */
+
+typedef int PrototypeStyle;
+
+typedef char boolean;
+
+extern boolean types_out;
+extern PrototypeStyle proto_style;
+
+#define ansiLintLibrary() (proto_style == PROTO_ANSI_LLIB)
+#define knrLintLibrary()  (proto_style == PROTO_LINTLIBRARY)
+#define lintLibrary()     (knrLintLibrary() || ansiLintLibrary())
+
+#if OPT_LINTLIBRARY
+#define FUNC_UNKNOWN		-1	/* unspecified */
+#else
+#define FUNC_UNKNOWN		0	/* unspecified (same as FUNC_NONE) */
+#endif
+#define FUNC_NONE		0	/* not a function definition */
+#define FUNC_TRADITIONAL	1	/* traditional style */
+#define FUNC_ANSI		2	/* ANSI style */
+#define FUNC_BOTH		3	/* both styles */
+
+typedef int FuncDefStyle;
+
+/* Source file text */
+typedef struct text {
+    char text[MAX_TEXT_SIZE];	/* source text */
+    long begin; 		/* offset in temporary file */
+} Text;
+
+/* Declaration specifier flags */
+#define DS_NONE 	0	/* default */
+#define DS_EXTERN	1	/* contains "extern" specifier */
+#define DS_STATIC	2	/* contains "static" specifier */
+#define DS_CHAR 	4	/* contains "char" type specifier */
+#define DS_SHORT	8	/* contains "short" type specifier */
+#define DS_FLOAT	16	/* contains "float" type specifier */
+#define DS_INLINE	32	/* contains "inline" specifier */
+#define DS_JUNK 	64	/* we're not interested in this declaration */
+
+/* This structure stores information about a declaration specifier. */
+typedef struct decl_spec {
+    unsigned short flags;	/* flags defined above */
+    char *text; 		/* source text */
+    long begin; 		/* offset in temporary file */
+} DeclSpec;
+
+/* This is a list of function parameters. */
+typedef struct _ParameterList {
+    struct parameter *first;	/* pointer to first parameter in list */
+    struct parameter *last;	/* pointer to last parameter in list */  
+    long begin_comment; 	/* begin offset of comment */
+    long end_comment;		/* end offset of comment */
+    char *comment;		/* comment at start of parameter list */
+} ParameterList;
+
+/* This structure stores information about a declarator. */
+typedef struct _Declarator {
+    char *name; 			/* name of variable or function */
+    char *text; 			/* source text */
+    long begin; 			/* offset in temporary file */
+    long begin_comment; 		/* begin offset of comment */
+    long end_comment;			/* end offset of comment */
+    FuncDefStyle func_def;		/* style of function definition */
+    ParameterList params;		/* function parameters */
+    boolean pointer;			/* TRUE if it declares a pointer */
+    struct _Declarator *head;		/* head function declarator */
+    struct _Declarator *func_stack;	/* stack of function declarators */
+    struct _Declarator *next;		/* next declarator in list */
+} Declarator;
+
+/* This structure stores information about a function parameter. */
+typedef struct parameter {
+    struct parameter *next;	/* next parameter in list */
+    DeclSpec decl_spec;
+    Declarator *declarator;
+    char *comment;		/* comment following the parameter */
+} Parameter;
+
+/* This is a list of declarators. */
+typedef struct declarator_list {
+    Declarator *first;		/* pointer to first declarator in list */
+    Declarator *last;		/* pointer to last declarator in list */  
+} DeclaratorList;
+
+/* #include "symbol.h" */
+typedef struct symbol {
+    struct symbol *next;	/* next symbol in list */
+    char *name; 		/* name of symbol */
+    char *value;		/* value of symbol (for defines) */
+    short flags;		/* symbol attributes */
+} Symbol;
+
+/* parser stack entry type */
+typedef union {
+    Text text;
+    DeclSpec decl_spec;
+    Parameter *parameter;
+    ParameterList param_list;
+    Declarator *declarator;
+    DeclaratorList decl_list;
+} YYSTYPE;
+
+/* The hash table length should be a prime number. */
+#define SYM_MAX_HASH 251
+
+typedef struct symbol_table {
+    Symbol *bucket[SYM_MAX_HASH];	/* hash buckets */
+} SymbolTable;
+
+extern SymbolTable *new_symbol_table	/* Create symbol table */
+	(void);
+extern void free_symbol_table		/* Destroy symbol table */
+	(SymbolTable *s);
+extern Symbol *find_symbol		/* Lookup symbol name */
+	(SymbolTable *s, const char *n);
+extern Symbol *new_symbol		/* Define new symbol */
+	(SymbolTable *s, const char *n, const char *v, int f);
+
+/* #include "semantic.h" */
+extern void new_decl_spec (DeclSpec *, const char *, long, int);
+extern void free_decl_spec (DeclSpec *);
+extern void join_decl_specs (DeclSpec *, DeclSpec *, DeclSpec *);
+extern void check_untagged (DeclSpec *);
+extern Declarator *new_declarator (const char *, const char *, long);
+extern void free_declarator (Declarator *);
+extern void new_decl_list (DeclaratorList *, Declarator *);
+extern void free_decl_list (DeclaratorList *);
+extern void add_decl_list (DeclaratorList *, DeclaratorList *, Declarator *);
+extern Parameter *new_parameter (DeclSpec *, Declarator *);
+extern void free_parameter (Parameter *);
+extern void new_param_list (ParameterList *, Parameter *);
+extern void free_param_list (ParameterList *);
+extern void add_param_list (ParameterList *, ParameterList *, Parameter *);
+extern void new_ident_list (ParameterList *);
+extern void add_ident_list (ParameterList *, ParameterList *, const char *);
+extern void set_param_types (ParameterList *, DeclSpec *, DeclaratorList *);
+extern void gen_declarations (DeclSpec *, DeclaratorList *);
+extern void gen_prototype (DeclSpec *, Declarator *);
+extern void gen_func_declarator (Declarator *);
+extern void gen_func_definition (DeclSpec *, Declarator *);
+
+extern void init_parser     (void);
+extern void process_file    (FILE *infile, char *name);
+extern char *cur_text       (void);
+extern char *cur_file_name  (void);
+extern char *implied_typedef (void);
+extern void include_file    (char *name, int convert);
+extern char *supply_parm    (int count);
+extern char *xstrdup        (const char *);
+extern int already_declared (char *name);
+extern int is_actual_func   (Declarator *d);
+extern int lint_ellipsis    (Parameter *p);
+extern int want_typedef     (void);
+extern void begin_tracking  (void);
+extern void begin_typedef   (void);
+extern void copy_typedef    (char *s);
+extern void ellipsis_varargs (Declarator *d);
+extern void end_typedef     (void);
+extern void flush_varargs   (void);
+extern void fmt_library     (int code);
+extern void imply_typedef   (const char *s);
+extern void indent          (FILE *outf);
+extern void put_blankline   (FILE *outf);
+extern void put_body        (FILE *outf, DeclSpec *decl_spec, Declarator *declarator);
+extern void put_char        (FILE *outf, int c);
+extern void put_error       (void);
+extern void put_newline     (FILE *outf);
+extern void put_padded      (FILE *outf, const char *s);
+extern void put_string      (FILE *outf, const char *s);
+extern void track_in        (void);
+
+extern boolean file_comments;
+extern FuncDefStyle func_style;
+extern char base_file[];
 
 #define YYMAXDEPTH 150
 
@@ -122,28 +318,20 @@ typedef struct {
 
 static IncludeStack *cur_file;	/* current input file */
 
-#include "yyerror.c"
+/* #include "yyerror.c" */
 
 static int haveAnsiParam (void);
 
 
 /* Flags to enable us to find if a procedure returns a value.
  */
-static int return_val,	/* nonzero on BRACES iff return-expression found */
-	   returned_at;	/* marker for token-number to set 'return_val' */
+static int return_val;	/* nonzero on BRACES iff return-expression found */
 
-#if OPT_LINTLIBRARY
-static char *dft_decl_spec (void);
-
-static char *
+static const char *
 dft_decl_spec (void)
 {
     return (lintLibrary() && !return_val) ? "void" : "int";
 }
-
-#else
-#define dft_decl_spec() "int"
-#endif
 
 static int
 haveAnsiParam (void)
@@ -816,18 +1004,30 @@ direct_abs_declarator
 
 %%
 
-#if defined(__EMX__) || defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(vms)
-# ifdef USE_flex
-#  include "lexyy.c"
-# else
-#  include "lex_yy.c"
-# endif
-#else
-# include "lex.yy.c"
-#endif
+/* lex.yy.c */
+#define BEGIN yy_start = 1 + 2 *
+
+#define CPP1 1
+#define INIT1 2
+#define INIT2 3
+#define CURLY 4
+#define LEXYACC 5
+#define ASM 6
+#define CPP_INLINE 7
+
+extern char *yytext;
+extern FILE *yyin, *yyout;
+
+static int curly;			/* number of curly brace nesting levels */
+static int ly_count;			/* number of occurances of %% */
+static int inc_depth;			/* include nesting level */
+static SymbolTable *included_files;	/* files already included */
+static int yy_start = 0;		/* start state number */
+
+#define grammar_error(s) yaccError(s)
 
 static void
-yaccError (char *msg)
+yaccError (const char *msg)
 {
     func_params = NULL;
     put_error();		/* tell what line we're on, and what file */
@@ -840,7 +1040,7 @@ yaccError (char *msg)
 void
 init_parser (void)
 {
-    static char *keywords[] = {
+    static const char *keywords[] = {
 	"const",
 	"restrict",
 	"volatile",

@@ -1,4 +1,4 @@
-/*	$NetBSD: calc.y,v 1.1.1.2 2010/12/23 23:36:28 christos Exp $	*/
+/*	$NetBSD: code_calc.y,v 1.1.1.1 2010/12/23 23:36:27 christos Exp $	*/
 
 %{
 # include <stdio.h>
@@ -80,8 +80,7 @@ yyerror(const char *s)
 }
 
 int
-yylex(void)
-{
+yylex(void) {
 	/* lexical analysis routine */
 	/* returns LETTER for a lower case letter, yylval = 0 through 25 */
 	/* return DIGIT for a digit, yylval = 0 through 9 */
