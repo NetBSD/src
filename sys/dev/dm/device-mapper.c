@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.26 2010/12/06 09:12:23 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.27 2010/12/23 14:58:13 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -440,6 +440,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) data;
+		unsigned secsize;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
@@ -451,7 +452,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		strlcpy(dkw->dkw_parent, dmv->name, 16);
 
 		dkw->dkw_offset = 0;
-		dkw->dkw_size = dm_table_size(&dmv->table_head);
+		dm_table_disksize(&dmv->table_head, &dkw->dkw_size, &secsize);
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
 
 		dm_dev_unbusy(dmv);
@@ -667,19 +668,19 @@ void
 dmgetproperties(struct disk *disk, dm_table_head_t *head)
 {
 	prop_dictionary_t disk_info, odisk_info, geom;
-	int dmp_size;
+	uint64_t numsec;
+	unsigned secsize;
 
-	dmp_size = dm_table_size(head);
+	dm_table_disksize(head, &numsec, &secsize);
 	disk_info = prop_dictionary_create();
 	geom = prop_dictionary_create();
 
 	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", dmp_size);
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE /* XXX 512? */);
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", numsec);
+	prop_dictionary_set_uint32(geom, "sector-size", secsize);
 	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
 	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
-	prop_dictionary_set_uint32(geom, "cylinders-per-unit", dmp_size / 2048);
+	prop_dictionary_set_uint32(geom, "cylinders-per-unit", numsec / 2048);
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
@@ -688,4 +689,6 @@ dmgetproperties(struct disk *disk, dm_table_head_t *head)
 
 	if (odisk_info != NULL)
 		prop_object_release(odisk_info);
-}	
+
+	disk_blocksize(disk, secsize);
+}
