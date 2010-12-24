@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.58.28.1 2009/09/08 17:24:09 matt Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.58.28.2 2010/12/24 07:23:42 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -104,9 +104,10 @@
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
+#define __INTR_PRIVATE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.58.28.1 2009/09/08 17:24:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.58.28.2 2010/12/24 07:23:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.58.28.1 2009/09/08 17:24:09 matt 
 
 #include <machine/cpu.h>
 #include <machine/sysconf.h>
+#include <machine/locore.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mclock CPUspeed estimation */
 
@@ -132,15 +134,15 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.58.28.1 2009/09/08 17:24:09 matt 
 #include <pmax/pmax/cons.h>
 #include "wsdisplay.h"
 
-void		dec_3maxplus_init __P((void));		/* XXX */
-static void	dec_3maxplus_bus_reset __P((void));
-static void	dec_3maxplus_cons_init __P((void));
-static void 	dec_3maxplus_errintr __P((void));
-static void	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_3maxplus_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
+void		dec_3maxplus_init(void);		/* XXX */
+static void	dec_3maxplus_bus_reset(void);
+static void	dec_3maxplus_cons_init(void);
+static void 	dec_3maxplus_errintr(void);
+static void	dec_3maxplus_intr(uint32_t, vaddr_t, uint32_t);
+static void	dec_3maxplus_intr_establish(struct device *, void *,
+		    int, int (*)(void *), void *);
 
-static void	kn03_wbflush __P((void));
+static void	kn03_wbflush(void);
 
 static void	dec_3maxplus_tc_init(void);
 
@@ -150,18 +152,20 @@ static void	dec_3maxplus_tc_init(void);
 static uint32_t kn03_tc3_imask;
 static unsigned latched_cycle_cnt;
 
-static const int dec_3maxplus_ipl2spl_table[] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
-	[IPL_SOFTNET] = _SPL_SOFTNET,
+static const struct ipl_sr_map dec_3maxplus_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
 	/*
 	 * 3MAX+ IOASIC interrupts come through INT 0, while
 	 * clock interrupt does via INT 1.  splclock and splstatclock
 	 * should block IOASIC activities.
 	 */
-	[IPL_VM] = MIPS_SPL0,
-	[IPL_SCHED] = MIPS_SPL_0_1,
-	[IPL_HIGH] = MIPS_SPL_0_1,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 void
@@ -184,7 +188,7 @@ dec_3maxplus_init()
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
 
-	ipl2spl_table = dec_3maxplus_ipl2spl_table;
+	ipl_sr_map = dec_3maxplus_ipl_sr_map;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
@@ -263,12 +267,8 @@ dec_3maxplus_cons_init()
 }
 
 static void
-dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
+dec_3maxplus_intr_establish(device_t dev, void *cookie, int level,
+	int (*handler)(void *), void *arg)
 {
 	unsigned mask;
 
@@ -313,84 +313,41 @@ dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
 #define CHECKINTR(vvv, bits)					\
     do {							\
 	if (can_serve & (bits)) {				\
-		ifound = 1;					\
+		ifound = true;					\
 		intrtab[vvv].ih_count.ev_count++;		\
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
 	}							\
     } while (0)
 
 static void
-dec_3maxplus_intr(status, cause, pc, ipending)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
-	unsigned ipending;
+dec_3maxplus_ioasic_intr(void)
 {
-	static int warned = 0;
-	unsigned old_buscycle;
+	static bool warned = false;
+	bool ifound;
+	uint32_t imsk, intr, can_serve, xxxintr;
 
-	if (ipending & MIPS_INT_MASK_4)
-		prom_haltbutton();
+	do {
+		ifound = false;
+		imsk = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
+		intr = *(uint32_t *)(ioasic_base + IOASIC_INTR);
+		can_serve = intr & imsk;
 
-	/* handle clock interrupts ASAP */
-	old_buscycle = latched_cycle_cnt;
-	if (ipending & MIPS_INT_MASK_1) {
-		struct clockframe cf;
+		CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
+		CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
+		CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+		CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+		CHECKINTR(SYS_DEV_OPT2, KN03_INTR_TC_2);
+		CHECKINTR(SYS_DEV_OPT1, KN03_INTR_TC_1);
+		CHECKINTR(SYS_DEV_OPT0, KN03_INTR_TC_0);
 
-		__asm volatile("lbu $0,48(%0)" ::
-			"r"(ioasic_base + IOASIC_SLOT_8_START));
-		cf.pc = pc;
-		cf.sr = status;
-		hardclock(&cf);
-		pmax_clock_evcnt.ev_count++;
-		old_buscycle = latched_cycle_cnt - old_buscycle;
-		/* keep clock interrupts enabled when we return */
-		cause &= ~MIPS_INT_MASK_1;
-	}
-
-	/* If clock interrupts were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
-
-#ifdef notdef
-	/*
-	 * Check for late clock interrupts (allow 10% slop). Be careful
-	 * to do so only after calling hardclock(), due to logging cost.
-	 * Even then, logging dropped ticks just causes more clock
-	 * ticks to be missed.
-	 */
-	if ((ipending & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
-		/* XXX need to include <sys/msgbug.h> for msgbufmapped */
-  		if (msgbufmapped && 0)
-			 addlog("kn03: clock intr %d usec late\n",
-				 old_buscycle/25);
-	}
-#endif
-	if (ipending & MIPS_INT_MASK_0) {
-		int ifound;
-		uint32_t imsk, intr, can_serve, xxxintr;
-
-		do {
-			ifound = 0;
-			imsk = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
-			intr = *(uint32_t *)(ioasic_base + IOASIC_INTR);
-			can_serve = intr & imsk;
-
-			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
-			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
-			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
-			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
-			CHECKINTR(SYS_DEV_OPT2, KN03_INTR_TC_2);
-			CHECKINTR(SYS_DEV_OPT1, KN03_INTR_TC_1);
-			CHECKINTR(SYS_DEV_OPT0, KN03_INTR_TC_0);
-
-			if (warned > 0 && !(can_serve & KN03_INTR_PSWARN)) {
-				printf("%s\n", "Power supply ok now.");
-				warned = 0;
-			}
-			if ((can_serve & KN03_INTR_PSWARN) && (warned < 3)) {
-				warned++;
-				printf("%s\n", "Power supply overheating");
-			}
+		if (warned && !(can_serve & KN03_INTR_PSWARN)) {
+			printf("%s\n", "Power supply ok now.");
+			warned = false;
+		}
+		if ((can_serve & KN03_INTR_PSWARN) && (warned < 3)) {
+			warned = true;
+			printf("%s\n", "Power supply overheating");
+		}
 
 #define ERRORS	(IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
 #define PTRLOAD	(IOASIC_INTR_SCSI_PTR_LOAD)
@@ -411,20 +368,58 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 	 * DMA interrupts can then be serviced whilst still servicing
 	 * non-DMA interrupts from ioctl devices or TC options.
 	 */
-			xxxintr = can_serve & (ERRORS | PTRLOAD);
-			if (xxxintr) {
-				ifound = 1;
-				*(uint32_t *)(ioasic_base + IOASIC_INTR)
-					= intr &~ xxxintr;
-			}
-		} while (ifound);
+		xxxintr = can_serve & (ERRORS | PTRLOAD);
+		if (xxxintr) {
+			ifound = true;
+			*(uint32_t *)(ioasic_base + IOASIC_INTR) = intr &~ xxxintr;
+		}
+	} while (ifound);
+}
+
+static void
+dec_3maxplus_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
+{
+	unsigned old_buscycle;
+
+	if (ipending & MIPS_INT_MASK_4)
+		prom_haltbutton();
+
+	/* handle clock interrupts ASAP */
+	old_buscycle = latched_cycle_cnt;
+	if (ipending & MIPS_INT_MASK_1) {
+		struct clockframe cf;
+
+		__asm volatile("lbu $0,48(%0)" ::
+			"r"(ioasic_base + IOASIC_SLOT_8_START));
+		cf.pc = pc;
+		cf.sr = status;
+		hardclock(&cf);
+		pmax_clock_evcnt.ev_count++;
+		old_buscycle = latched_cycle_cnt - old_buscycle;
+		/* keep clock interrupts enabled when we return */
+	}
+
+#ifdef notdef
+	/*
+	 * Check for late clock interrupts (allow 10% slop). Be careful
+	 * to do so only after calling hardclock(), due to logging cost.
+	 * Even then, logging dropped ticks just causes more clock
+	 * ticks to be missed.
+	 */
+	if ((ipending & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
+		/* XXX need to include <sys/msgbug.h> for msgbufmapped */
+		if (msgbufmapped && 0)
+			 addlog("kn03: clock intr %d usec late\n",
+				 old_buscycle/25);
+	}
+#endif
+	if (ipending & MIPS_INT_MASK_0) {
+		dec_3maxplus_ioasic_intr();
 	}
 	if (ipending & MIPS_INT_MASK_3) {
 		dec_3maxplus_errintr();
 		pmax_memerr_evcnt.ev_count++;
 	}
-
-	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 /*

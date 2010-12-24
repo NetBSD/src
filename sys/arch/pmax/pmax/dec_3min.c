@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.60.22.2 2010/02/01 06:09:21 matt Exp $ */
+/* $NetBSD: dec_3min.c,v 1.60.22.3 2010/12/24 07:23:42 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -104,17 +104,19 @@
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
+#define	__INTR_PRIVATE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.22.2 2010/02/01 06:09:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.22.3 2010/12/24 07:23:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timetc.h>
+#include <sys/lwp.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
@@ -133,14 +135,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.22.2 2010/02/01 06:09:21 matt Exp 
 #include <dev/tc/zs_ioasicvar.h>
 #include "wsdisplay.h"
 
-void		dec_3min_init __P((void));		/* XXX */
-static void	dec_3min_bus_reset __P((void));
-static void	dec_3min_cons_init __P((void));
-static void	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_3min_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
+void		dec_3min_init(void);		/* XXX */
+static void	dec_3min_bus_reset(void);
+static void	dec_3min_cons_init(void);
+static void	dec_3min_intr(uint32_t, vaddr_t, uint32_t);
+static void	dec_3min_intr_establish(struct device *, void *,
+		    int, int (*)(void *), void *);
 
-static void	kn02ba_wbflush __P((void));
+static void	kn02ba_wbflush(void);
 
 static void	dec_3min_tc_init(void);
 
@@ -149,10 +151,11 @@ static void	dec_3min_tc_init(void);
  */
 static uint32_t kmin_tc3_imask;
 
-static const int dec_3min_ipl2spl_table[] = {
+static const struct ipl_sr_map dec_3min_ipl_sr_map = {
+    .sr_bits = {
 	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
-	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK,
 	/*
 	 * Since all the motherboard interrupts come through the
 	 * IOASIC, it has to be turned off for all the spls and
@@ -162,6 +165,7 @@ static const int dec_3min_ipl2spl_table[] = {
 	[IPL_VM] = MIPS_SPL_0_1_2_3,
 	[IPL_SCHED] = MIPS_SPL_0_1_2_3,
 	[IPL_HIGH] = MIPS_SPL_0_1_2_3,
+    },
 };
 
 void
@@ -181,7 +185,7 @@ dec_3min_init()
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
 
-	ipl2spl_table = dec_3min_ipl2spl_table;
+	ipl_sr_map = dec_3min_ipl_sr_map;
 
 	/* enable posting of MIPS_INT_MASK_3 to CAUSE register */
 	*(uint32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
@@ -264,12 +268,8 @@ dec_3min_cons_init()
 }
 
 static void
-dec_3min_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
+dec_3min_intr_establish(device_t dev, void *cookie, int level,
+	int (*handler)(void *), void *arg)
 {
 	unsigned mask;
 
@@ -354,129 +354,119 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static void
-dec_3min_intr(status, cause, pc, ipending)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
-	unsigned ipending;
+dec_3min_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 	static int user_warned = 0;
-	static int intr_depth = 0;
 	uint32_t old_mask;
 
-	intr_depth++;
 	old_mask = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
 
-	if (ipending & MIPS_INT_MASK_4)
-		prom_haltbutton();
+	do {
+		if (ipending & MIPS_INT_MASK_4)
+			prom_haltbutton();
 
-	if (ipending & MIPS_INT_MASK_3) {
-		/* NB: status & MIPS_INT_MASK3 must also be set */
-		/* masked interrupts are still observable */
-		uint32_t intr, imsk, can_serve, turnoff;
+		if (ipending & MIPS_INT_MASK_3) {
+			/* NB: status & MIPS_INT_MASK3 must also be set */
+			/* masked interrupts are still observable */
+			uint32_t intr, imsk, can_serve, turnoff;
 
-		turnoff = 0;
-		intr = *(uint32_t *)(ioasic_base + IOASIC_INTR);
-		imsk = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
-		can_serve = intr & imsk;
+			turnoff = 0;
+			intr = *(uint32_t *)(ioasic_base + IOASIC_INTR);
+			imsk = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
+			can_serve = intr & imsk;
 
-		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
-			turnoff |= IOASIC_INTR_SCSI_PTR_LOAD;
+			if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
+				turnoff |= IOASIC_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
-			asc_dma_intr();
+				asc_dma_intr();
 #endif
-		}
+			}
 
-		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
-			turnoff |= IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E;
+			if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
+				turnoff |= IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E;
 
-		if (intr & IOASIC_INTR_LANCE_READ_E)
-			turnoff |= IOASIC_INTR_LANCE_READ_E;
+			if (intr & IOASIC_INTR_LANCE_READ_E)
+				turnoff |= IOASIC_INTR_LANCE_READ_E;
 
-		if (turnoff)
-			*(uint32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
+			if (turnoff)
+				*(uint32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
 
-		if (intr & KMIN_INTR_TIMEOUT) {
-			kn02ba_errintr();
-			pmax_memerr_evcnt.ev_count++;
-		}
+			if (intr & KMIN_INTR_TIMEOUT) {
+				kn02ba_errintr();
+				pmax_memerr_evcnt.ev_count++;
+			}
 
-		if (intr & KMIN_INTR_CLOCK) {
-			struct clockframe cf;
+			if (intr & KMIN_INTR_CLOCK) {
+				struct clockframe cf;
 
-			__asm volatile("lbu $0,48(%0)" ::
-				"r"(ioasic_base + IOASIC_SLOT_8_START));
+				__asm volatile("lbu $0,48(%0)" ::
+					"r"(ioasic_base + IOASIC_SLOT_8_START));
 
-			cf.pc = pc;
-			cf.sr = status;
-			hardclock(&cf);
-			pmax_clock_evcnt.ev_count++;
-		}
+				cf.pc = pc;
+				cf.sr = status;
+				hardclock(&cf);
+				pmax_clock_evcnt.ev_count++;
+			}
 
-		/* If clock interrupts were enabled, re-enable them ASAP. */
-		if (old_mask & KMIN_INTR_CLOCK) {
-			/* ioctl interrupt mask to splclock and higher */
-			*(uint32_t *)(ioasic_base + IOASIC_IMSK)
-				= old_mask &
-					~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
-					  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
-			kn02ba_wbflush();
-			_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_3));
-		}
+			/* If clock interrupts were enabled, re-enable them ASAP. */
+			if (old_mask & KMIN_INTR_CLOCK) {
+				/* ioctl interrupt mask to splclock and higher */
+				*(uint32_t *)(ioasic_base + IOASIC_IMSK) =
+				    old_mask &
+					~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1
+					  |IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
+				kn02ba_wbflush();
+			}
 
-		if (intr_depth > 1)
-			 goto done;
+			if (curcpu()->ci_idepth > 1)
+				 break;
 
-		CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
-		CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
+			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
+			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
 
 #ifdef notyet /* untested */
-		/* If tty interrupts were enabled, re-enable them ASAP. */
-		if ((old_mask & (KMIN_INTR_SCC_1|KMIN_INTR_SCC_0)) ==
-		     (KMIN_INTR_SCC_1|KMIN_INTR_SCC_0)) {
-			*imaskp = old_mask &
-			  ~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
-			  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
-			kn02ba_wbflush();
-		}
+			/* If tty interrupts were enabled, re-enable them ASAP. */
+			if ((old_mask & (KMIN_INTR_SCC_1|KMIN_INTR_SCC_0)) ==
+			     (KMIN_INTR_SCC_1|KMIN_INTR_SCC_0)) {
+				*imaskp = old_mask &
+				  ~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
+				  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
+				kn02ba_wbflush();
+			}
 
-		/* XXX until we know about SPLs of TC options. */
-		if (intr_depth > 1)
-			 goto done;
+			/* XXX until we know about SPLs of TC options. */
+			if (curcpu()->ci_idepth > 1)
+				 break;
 #endif
-		CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
-		CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
 
-		if (user_warned && ((intr & KMIN_INTR_PSWARN) == 0)) {
-			printf("%s\n", "Power supply ok now.");
-			user_warned = 0;
+			if (user_warned && ((intr & KMIN_INTR_PSWARN) == 0)) {
+				printf("%s\n", "Power supply ok now.");
+				user_warned = 0;
+			}
+			if ((intr & KMIN_INTR_PSWARN) && (user_warned < 3)) {
+				user_warned++;
+				printf("%s\n", "Power supply overheating");
+			}
 		}
-		if ((intr & KMIN_INTR_PSWARN) && (user_warned < 3)) {
-			user_warned++;
-			printf("%s\n", "Power supply overheating");
+		if ((ipending & MIPS_INT_MASK_0) && intrtab[SYS_DEV_OPT0].ih_func) {
+			(*intrtab[SYS_DEV_OPT0].ih_func)(intrtab[SYS_DEV_OPT0].ih_arg);
+			intrtab[SYS_DEV_OPT0].ih_count.ev_count++;
 		}
-	}
-	if ((ipending & MIPS_INT_MASK_0) && intrtab[SYS_DEV_OPT0].ih_func) {
-		(*intrtab[SYS_DEV_OPT0].ih_func)(intrtab[SYS_DEV_OPT0].ih_arg);
-		intrtab[SYS_DEV_OPT0].ih_count.ev_count++;
- 	}
 
-	if ((ipending & MIPS_INT_MASK_1) && intrtab[SYS_DEV_OPT1].ih_func) {
-		(*intrtab[SYS_DEV_OPT1].ih_func)(intrtab[SYS_DEV_OPT1].ih_arg);
-		intrtab[SYS_DEV_OPT1].ih_count.ev_count++;
-	}
-	if ((ipending & MIPS_INT_MASK_2) && intrtab[SYS_DEV_OPT2].ih_func) {
-		(*intrtab[SYS_DEV_OPT2].ih_func)(intrtab[SYS_DEV_OPT2].ih_arg);
-		intrtab[SYS_DEV_OPT2].ih_count.ev_count++;
-	}
+		if ((ipending & MIPS_INT_MASK_1) && intrtab[SYS_DEV_OPT1].ih_func) {
+			(*intrtab[SYS_DEV_OPT1].ih_func)(intrtab[SYS_DEV_OPT1].ih_arg);
+			intrtab[SYS_DEV_OPT1].ih_count.ev_count++;
+		}
+		if ((ipending & MIPS_INT_MASK_2) && intrtab[SYS_DEV_OPT2].ih_func) {
+			(*intrtab[SYS_DEV_OPT2].ih_func)(intrtab[SYS_DEV_OPT2].ih_arg);
+			intrtab[SYS_DEV_OPT2].ih_count.ev_count++;
+		}
+	} while (0);
 
-done:
 	/* restore entry state */
-	splhigh();
-	intr_depth--;
 	*(uint32_t *)(ioasic_base + IOASIC_IMSK) = old_mask;
-
-	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 

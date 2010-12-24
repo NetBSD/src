@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71 2007/12/03 15:34:09 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71.36.1 2010/12/24 07:23:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71 2007/12/03 15:34:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.36.1 2010/12/24 07:23:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +114,6 @@ cpu_configure()
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
 
-	evcnt_attach_static(&pmax_clock_evcnt);
-	evcnt_attach_static(&pmax_fpu_evcnt);
-	evcnt_attach_static(&pmax_memerr_evcnt);
-
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
@@ -125,7 +121,7 @@ cpu_configure()
 	(*platform.bus_reset)();
 
 	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
+	spl0();	/* enable all source forcing SOFT_INTs cleared */
 }
 
 /*
