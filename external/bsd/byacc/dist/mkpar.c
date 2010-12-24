@@ -1,10 +1,10 @@
-/*	$NetBSD: mkpar.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
-/* Id: mkpar.c,v 1.10 2009/10/27 10:50:13 tom Exp */
+/*	$NetBSD: mkpar.c,v 1.3 2010/12/24 02:58:20 christos Exp $	*/
+/* Id: mkpar.c,v 1.11 2010/06/09 08:53:17 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkpar.c,v 1.2 2009/10/29 00:56:20 christos Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.3 2010/12/24 02:58:20 christos Exp $");
 
 static action *add_reduce(action *actions, int ruleno, int symbol);
 static action *add_reductions(int stateno, action *actions);
@@ -185,8 +185,7 @@ unused_rules(void)
     action *p;
 
     rules_used = (Value_t *) MALLOC((unsigned)nrules * sizeof(Value_t));
-    if (rules_used == 0)
-	no_space();
+    NO_SPACE(rules_used);
 
     for (i = 0; i < nrules; ++i)
 	rules_used[i] = 0;
@@ -242,7 +241,7 @@ remove_conflicts(void)
 		SRcount++;
 		p->suppressed = 1;
 	    }
-	    else if (pref->action_code == SHIFT)
+	    else if (pref != 0 && pref->action_code == SHIFT)
 	    {
 		if (pref->prec > 0 && p->prec > 0)
 		{
