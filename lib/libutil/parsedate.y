@@ -672,7 +672,7 @@ Convert(
 	return -1;
     oJulian = Julian;
     Julian += Timezone * 60L;
-    if (oJulian > Julian)
+    if (Timezone > 0 && oJulian > Julian)
 	return -1;
     oJulian = Julian;
 
