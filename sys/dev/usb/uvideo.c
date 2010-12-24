@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.32 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.33 2010/12/24 20:54:28 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.32 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.33 2010/12/24 20:54:28 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -64,12 +64,14 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.32 2010/11/03 22:34:24 dyoung Exp $");
 #include <sys/poll.h>
 #include <sys/queue.h>	/* SLIST */
 #include <sys/kthread.h>
+#include <sys/bus.h>
 
 #include <sys/videoio.h>
 #include <dev/video_if.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usb_quirks.h>
 
@@ -255,6 +257,8 @@ struct uvideo_softc {
 	struct uvideo_stream	*sc_stream_in;
 
 	struct uvideo_stream_list sc_stream_list;
+
+	char			sc_businfo[32];
 };
 
 int	uvideo_match(device_t, cfdata_t, void *);
@@ -266,6 +270,7 @@ int	uvideo_activate(device_t, enum devact);
 static int	uvideo_open(void *, int);
 static void	uvideo_close(void *);
 static const char * uvideo_get_devname(void *);
+static const char * uvideo_get_businfo(void *);
 
 static int	uvideo_enum_format(void *, uint32_t, struct video_format *);
 static int	uvideo_get_format(void *, struct video_format *);
@@ -377,6 +382,7 @@ static const struct video_hw_if uvideo_hw_if = {
 	.open = uvideo_open,
 	.close = uvideo_close,
 	.get_devname = uvideo_get_devname,
+	.get_businfo = uvideo_get_businfo,
 	.enum_format = uvideo_enum_format,
 	.get_format = uvideo_get_format,
 	.set_format = uvideo_set_format,
@@ -501,6 +507,8 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dying = 0;
 	sc->sc_state = UVIDEO_STATE_CLOSED;
 	SLIST_INIT(&sc->sc_stream_list);
+	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
+	    sc->sc_udev->cookie.cookie);
 
 #ifdef UVIDEO_DEBUG
 	/* Debugging dump of descriptors. TODO: move this to userspace
@@ -1911,6 +1919,13 @@ uvideo_get_devname(void *addr)
 {
 	struct uvideo_softc *sc = addr;
 	return sc->sc_devname;
+}
+
+static const char *
+uvideo_get_businfo(void *addr)
+{
+	struct uvideo_softc *sc = addr;
+	return sc->sc_businfo;
 }
 
 static int

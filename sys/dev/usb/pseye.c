@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.18 2010/11/13 13:52:12 uebayasi Exp $ */
+/* $NetBSD: pseye.c,v 1.19 2010/12/24 20:54:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.18 2010/11/13 13:52:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.19 2010/12/24 20:54:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.18 2010/11/13 13:52:12 uebayasi Exp $");
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uvideoreg.h>
@@ -97,6 +98,8 @@ struct pseye_softc {
 	int			sc_bulkin_bufferlen;
 
 	char			sc_dying;
+
+	char			sc_businfo[32];
 };
 
 static int	pseye_match(device_t, cfdata_t, void *);
@@ -126,6 +129,7 @@ static void	pseye_submit_payload(struct pseye_softc *, uint32_t);
 static int		pseye_open(void *, int);
 static void		pseye_close(void *);
 static const char *	pseye_get_devname(void *);
+static const char *	pseye_get_businfo(void *);
 static int		pseye_enum_format(void *, uint32_t,
 					  struct video_format *);
 static int		pseye_get_format(void *, struct video_format *);
@@ -142,6 +146,7 @@ static const struct video_hw_if pseye_hw_if = {
 	.open = pseye_open,
 	.close = pseye_close,
 	.get_devname = pseye_get_devname,
+	.get_businfo = pseye_get_businfo,
 	.enum_format = pseye_enum_format,
 	.get_format = pseye_get_format,
 	.set_format = pseye_set_format,
@@ -196,6 +201,8 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 	sc->sc_iface = uaa->iface;
+	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
+	    sc->sc_udev->cookie.cookie);
 	sc->sc_bulkin_bufferlen = PSEYE_BULKIN_BUFLEN;
 
 	sc->sc_dying = sc->sc_running = 0;
@@ -739,6 +746,14 @@ static const char *
 pseye_get_devname(void *opaque)
 {
 	return "PlayStation Eye";
+}
+
+static const char *
+pseye_get_businfo(void *opaque)
+{
+	struct pseye_softc *sc = opaque;
+
+	return sc->sc_businfo;
 }
 
 static int
