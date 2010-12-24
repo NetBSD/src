@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.26 2008/04/28 20:23:25 martin Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.27 2010/12/24 20:36:51 jakllsch Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -153,8 +153,8 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_extinfo *ed)
  * this buffer doesn't cross a 64K DMA boundary.
  */
 static int      ra_dev;
-static int      ra_end;
-static int      ra_first;
+static daddr_t  ra_end;
+static daddr_t  ra_first;
 
 /*
  * Because some older BIOSes have bugs in their int13 extensions, we
@@ -264,8 +264,8 @@ readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 			while ((nsec = do_read(d, dblk, maxsecs, trbuf)) < 0) {
 #ifdef DISK_DEBUG
 				if (!cold)
-					printf("read error dblk %d-%d\n", (int)dblk,
-					       (int)(dblk + maxsecs - 1));
+					printf("read error dblk %lld-%lld\n",
+					    dblk, (dblk + maxsecs - 1));
 #endif
 				if (--retries >= 0)
 					continue;

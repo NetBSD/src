@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.h,v 1.7 2008/12/14 17:03:43 christos Exp $	*/
+/*	$NetBSD: biosdisk.h,v 1.8 2010/12/24 20:36:51 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -29,4 +29,4 @@ int biosdisk_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 int biosdisk_open(struct open_file *, ...);
 int biosdisk_close(struct open_file *);
 int biosdisk_ioctl(struct open_file *, u_long, void *);
-int biosdisk_findpartition(int, u_int);
+int biosdisk_findpartition(int, daddr_t);
