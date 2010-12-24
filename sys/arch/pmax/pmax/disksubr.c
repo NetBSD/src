@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.48 2008/01/02 11:48:27 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.48.24.1 2010/12/24 07:23:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48 2008/01/02 11:48:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48.24.1 2010/12/24 07:23:42 matt Exp $");
 
 #include "opt_compat_ultrix.h"
 
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48 2008/01/02 11:48:27 ad Exp $");
 #include <ufs/ufs/dinode.h>		/* XXX for fs.h */
 #include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
-const char *compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-	struct disklabel *lp, struct cpu_disklabel *osdep));	/* XXX */
+const char *compat_label(dev_t dev, void (*strat)(struct buf *bp),
+	struct disklabel *lp, struct cpu_disklabel *osdep);	/* XXX */
 
 #endif
 

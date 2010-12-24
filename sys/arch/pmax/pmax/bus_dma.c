@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.49.16.2 2010/02/01 06:09:21 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.49.16.3 2010/12/24 07:23:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49.16.2 2010/02/01 06:09:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49.16.3 2010/12/24 07:23:42 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -47,11 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49.16.2 2010/02/01 06:09:21 matt Exp $
 
 #include <mips/cache.h>
 
-static int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
+static int	_bus_dmamap_load_buffer(bus_dmamap_t,
 		    void *, bus_size_t, struct vmspace *, int, vaddr_t *,
-		    int *, int));
+		    int *, int);
 
-paddr_t	kvtophys __P((vaddr_t));	/* XXX */
+paddr_t	kvtophys(vaddr_t);	/* XXX */
 
 /*
  * The default DMA tag for all busses on the DECstation.
@@ -736,7 +736,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 #ifdef DIAGNOSTIC
 		if (curaddr < mips_avail_start || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
-			    " address 0x%lx\n", curaddr);
+			    " address 0x%"PRIxVADDR"\n", curaddr);
 			panic("_bus_dmamem_alloc");
 		}
 #endif

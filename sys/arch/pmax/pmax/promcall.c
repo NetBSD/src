@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.12.76.1 2009/09/16 19:23:18 matt Exp $	*/
+/*	$NetBSD: promcall.c,v 1.12.76.2 2010/12/24 07:23:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.12.76.1 2009/09/16 19:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.12.76.2 2010/12/24 07:23:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -233,7 +233,7 @@ prom_halt(int howto, char *bootstr)
 	if (callv != &callvec)
 		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
 	else {
-		void __dead (*f) __P((void));
+		void __dead (*f)(void);
 
 		f = (howto & RB_HALT)
 			? (void *)DEC_PROM_REINIT

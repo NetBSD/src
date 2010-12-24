@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.8.1.2.7 2010/03/21 17:38:34 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.8.1.2.8 2010/12/24 07:23:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.7 2010/03/21 17:38:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.8 2010/12/24 07:23:42 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -161,13 +161,13 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 void	mach_init(int, int32_t *, int, intptr_t, u_int, char *); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
-static void	unimpl_bus_reset __P((void));
-static void	unimpl_cons_init __P((void));
-static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
-static void	unimpl_intr_establish __P((struct device *, void *, int,
-		    int (*)(void *), void *));
-static int	unimpl_memsize __P((void *));
-static unsigned	nullwork __P((void));
+static void	unimpl_bus_reset(void);
+static void	unimpl_cons_init(void);
+static void	unimpl_iointr(uint32_t, vaddr_t, uint32_t);
+static void	unimpl_intr_establish(device_t, void *, int,
+		    int (*)(void *), void *);
+static int	unimpl_memsize(void *);
+static unsigned	nullwork(void);
 
 struct platform platform = {
 	"iobus not set",
@@ -428,7 +428,7 @@ mips_machdep_cache_config(void)
 }
 
 void
-consinit()
+consinit(void)
 {
 
 	(*platform.cons_init)();
@@ -439,7 +439,7 @@ consinit()
  * tables.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -483,8 +483,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -505,9 +504,7 @@ lookup_bootinfo(type)
 }
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto;	/* XXX volatile to keep gcc happy */
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
@@ -569,8 +566,7 @@ haltsys:
  * Be careful to save and restore the original contents for msgbuf.
  */
 int
-memsize_scan(first)
-	void *first;
+memsize_scan(void *first)
 {
 	int i, mem;
 	char *cp;
@@ -615,8 +611,7 @@ memsize_scan(first)
  * Find out how much memory is available by using the PROM bitmap.
  */
 int
-memsize_bitmap(first)
-	void *first;
+memsize_bitmap(void *first)
 {
 	memmap *prom_memmap = (memmap *)first;
 	int i, mapbytes;
@@ -656,51 +651,42 @@ memsize_bitmap(first)
  *  Ensure all platform vectors are always initialized.
  */
 static void
-unimpl_bus_reset()
+unimpl_bus_reset(void)
 {
 
 	panic("sysconf.init didn't set bus_reset");
 }
 
 static void
-unimpl_cons_init()
+unimpl_cons_init(void)
 {
 
 	panic("sysconf.init didn't set cons_init");
 }
 
 static void
-unimpl_iointr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
+unimpl_iointr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 
 	panic("sysconf.init didn't set intr");
 }
 
 static void
-unimpl_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
-	void *cookie;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
+unimpl_intr_establish(device_t dev, void *cookie, int level,
+	int (*handler)(void *), void *arg)
 {
 	panic("sysconf.init didn't set intr_establish");
 }
 
 static int
-unimpl_memsize(first)
-void *first;
+unimpl_memsize(void *first)
 {
 
 	panic("sysconf.init didn't set memsize");
 }
 
 static unsigned
-nullwork()
+nullwork(void)
 {
 
 	return (0);
@@ -710,8 +696,7 @@ nullwork()
  * Wait "n" microseconds. (scsi code needs this).
  */
 void
-delay(n)
-        int n;
+delay(int n)
 {
 
         DELAY(n);
