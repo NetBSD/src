@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.21 2010/01/07 07:35:35 skrll Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.22 2010/12/24 12:41:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@ __END_DECLS
 #define RTLD_NOW	2
 #define RTLD_GLOBAL	0x100		/* Allow global searches in object */
 #define RTLD_LOCAL	0x200
+#define RTLD_NODELETE	0x01000		/* Do not remove members. */
+#define RTLD_NOLOAD	0x02000		/* Do not load if not already loaded. */
 #if defined(_NETBSD_SOURCE)
 #define DL_LAZY		RTLD_LAZY	/* Compat */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.107 2010/12/13 19:37:32 joerg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.108 2010/12/24 12:41:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -668,7 +668,10 @@ typedef struct {
 #define	DT_HIPROC	0x7fffffff
 
 /* Flag values for DT_FLAGS_1 (incomplete) */
+#define	DF_1_BIND_NOW	0x00000001	/* Same as DF_BIND_NOW */
+#define	DF_1_NODELETE	0x00000008	/* Set the RTLD_NODELETE for object */
 #define	DF_1_INITFIRST	0x00000020	/* Object's init/fini take priority */
+#define	DF_1_NOOPEN	0x00000040	/* Do not allow loading on dlopen() */
 
 /*
  * Auxiliary Vectors

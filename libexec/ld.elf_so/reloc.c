@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.102 2010/04/05 14:01:26 joerg Exp $	 */
+/*	$NetBSD: reloc.c,v 1.103 2010/12/24 12:41:43 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.102 2010/04/05 14:01:26 joerg Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.103 2010/12/24 12:41:43 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -195,7 +195,7 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 #if defined(__hppa__)
 		bind_now = 1;
 #endif
-		if (bind_now) {
+		if (obj->z_now || bind_now) {
 			dbg(("doing immediate PLT binding"));
 			if (_rtld_relocate_plt_objects(obj) < 0)
 				ok = 0;

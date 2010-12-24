@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.136 2010/12/19 17:26:51 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.137 2010/12/24 12:41:43 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.136 2010/12/19 17:26:51 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.137 2010/12/24 12:41:43 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -147,7 +147,7 @@ _rtld_call_fini_functions(int force)
 		if (obj->refcount > 0 && !force) {
 			continue;
 		}
-		if (obj->fini == NULL || obj->fini_called || obj->initfirst) {
+		if (obj->fini == NULL || obj->fini_called || obj->z_initfirst) {
 		    	continue;
 		}
 		dbg (("calling fini function %s at %p",  obj->path,
@@ -188,7 +188,7 @@ _rtld_call_init_functions()
 	/* First pass: objects marked with DF_1_INITFIRST. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
 		obj = elm->obj;
-		if (obj->init == NULL || obj->init_called || !obj->initfirst) {
+		if (obj->init == NULL || obj->init_called || !obj->z_initfirst) {
 			continue;
 		}
 		dbg (("calling init function %s at %p (DF_1_INITFIRST)",
@@ -568,7 +568,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	}
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_MAIN) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain, _RTLD_MAIN) == -1)
 		_rtld_die();
 
 	dbg(("relocating objects"));
@@ -760,13 +760,35 @@ _rtld_unload_object(Obj_Entry *root, bool do_fini_funcs)
 	}
 }
 
+void
+_rtld_ref_dag(Obj_Entry *root)
+{
+	const Needed_Entry *needed;
+
+	assert(root);
+
+	++root->refcount;
+
+	dbg(("incremented reference on \"%s\" (%d)", root->path,
+	    root->refcount));
+	for (needed = root->needed; needed != NULL;
+	     needed = needed->next) {
+		if (needed->obj != NULL)
+			_rtld_ref_dag(needed->obj);
+	}
+}
+
 static void
 _rtld_unref_dag(Obj_Entry *root)
 {
 
 	assert(root);
 	assert(root->refcount != 0);
+
 	--root->refcount;
+	dbg(("decremented reference on \"%s\" (%d)", root->path,
+	    root->refcount));
+
 	if (root->refcount == 0) {
 		const Needed_Entry *needed;
 
@@ -815,6 +837,15 @@ dlopen(const char *name, int mode)
 {
 	Obj_Entry **old_obj_tail = _rtld_objtail;
 	Obj_Entry *obj = NULL;
+	int flags = _RTLD_DLOPEN;
+	bool nodelete;
+	bool now;
+
+	flags |= (mode & RTLD_GLOBAL) ? _RTLD_GLOBAL : 0;
+	flags |= (mode & RTLD_NOLOAD) ? _RTLD_NOLOAD : 0;
+	
+	nodelete = (mode & RTLD_NODELETE) ? true : false;
+	now = ((mode & RTLD_MODEMASK) == RTLD_NOW) ? true : false;
 
 	_rtld_debug.r_state = RT_ADD;
 	_rtld_debug_state();
@@ -823,22 +854,30 @@ dlopen(const char *name, int mode)
 		obj = _rtld_objmain;
 		obj->refcount++;
 	} else
-		obj = _rtld_load_library(name, _rtld_objmain, mode);
+		obj = _rtld_load_library(name, _rtld_objmain, flags);
+
 
 	if (obj != NULL) {
 		++obj->dl_refcount;
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);
 
-			if (_rtld_load_needed_objects(obj, mode) == -1 ||
+			if (_rtld_load_needed_objects(obj, flags) == -1 ||
 			    (_rtld_init_dag(obj),
 			    _rtld_relocate_objects(obj,
-			    ((mode & 3) == RTLD_NOW))) == -1) {
+			    (now || obj->z_now))) == -1) {
 				_rtld_unload_object(obj, false);
 				obj->dl_refcount--;
 				obj = NULL;
 			} else {
 				_rtld_call_init_functions();
+			}
+		}
+		if (obj != NULL) {
+			if ((nodelete || obj->z_nodelete) && !obj->ref_nodel) {
+				dbg(("dlopen obj %s nodelete", obj->path));
+				_rtld_ref_dag(obj);
+				obj->z_nodelete = obj->ref_nodel = true;
 			}
 		}
 	}

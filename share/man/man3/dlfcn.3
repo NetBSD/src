@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.27 2010/01/24 22:54:14 wiz Exp $
+.\"	$NetBSD: dlfcn.3,v 1.28 2010/12/24 12:41:43 skrll Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,24 +65,29 @@ under program control.
 The
 .Fn dlopen
 function takes the name of a shared object as the first argument.
-The shared object is mapped into the address space, relocated, and
-its external references are resolved in the same way as is done
-with the implicitly loaded shared libraries at program startup.
-.Pp
 The
 .Fa path
 argument can be specified as either an absolute pathname to a shared object
 or just the name of the shared object itself.
 When an absolute pathname is specified,
 only the path provided will be searched.
-When just a shared object name is specified, the same search rules apply that are
-used for
+When just a shared object name is specified, the same search rules apply that
+are used for
 .Dq intrinsic
 shared object searches.
+.Po
+see
+.Xr ld.elf_so 5
+.Pc
 .Pp
 Shared libraries take the following form:
 .Do lib Ns Ao name Ac Ns .so Ns Oo .xx Ns Oo .yy Oc Oc Dc .
 .Pp
+The shared object is mapped into the address space, relocated, and
+its external references are resolved in the same way as is done
+with the implicitly loaded shared libraries at program startup.
+.Pp
+The
 If the first argument is
 .Dv NULL ,
 .Fn dlopen
@@ -97,7 +102,7 @@ The
 .Fa mode
 parameter specifies symbol resolution time and symbol visibility.
 One of the following values may be used to specify symbol resolution time:
-.Bl -tag -width "RTLD_LAZYXX" -offset indent
+.Bl -tag -width "RTLD_GLOBALXX" -offset indent
 .It Dv RTLD_NOW
 Symbols are resolved immediately.
 .It Dv RTLD_LAZY
@@ -107,7 +112,7 @@ This is the default value if resolution time is unspecified.
 .Pp
 One of the following values may be used to specify symbol visibility:
 .Pp
-.Bl -tag -width "RTLD_GLOBAL" -compact -offset indent
+.Bl -tag -width "RTLD_GLOBALXX" -offset indent
 .It Dv RTLD_GLOBAL
 The object's symbols and the symbols of its dependencies will be visible to
 other objects.
@@ -125,6 +130,23 @@ and later opened with
 .Dv RTLD_GLOBAL ,
 then it is promoted to
 .Dv RTLD_GLOBAL .
+.Pp
+Additionally, one of the following flags may be ORed into the
+.Fa mode
+argument:
+.Bl -tag -width "RTLD_NODELETEXX" -offset indent
+.It Dv RTLD_NODELETE
+Prevents unload of the loaded object on
+.Fn dlclose .
+The same behaviour may be requested by
+.Fl "z nodelete"
+option of the static linker
+.Xr ld 1 .
+.It Dv RTLD_NOLOAD
+Only return valid handle for the object if it is already loaded in
+the process address space, otherwise do not load the object and return
+.Dv NULL .
+.El
 .Pp
 .Fn dlopen
 returns a
@@ -192,13 +214,13 @@ Thus an object can reference its own symbols and the symbols of its
 dependencies without calling
 .Fn dlopen .
 .It Dv RTLD_DEFAULT
-All the visible shared objects and the executable will be searched in the order they
-were loaded.
+All the visible shared objects and the executable will be searched in the order
+they were loaded.
 .It Dv RTLD_NEXT
 The search for
 .Fa symbol
-is limited to the visible shared objects which were loaded after the one issuing the
-call to
+is limited to the visible shared objects which were loaded after the one
+issuing the call to
 .Fn dlsym .
 Thus, if
 .Fn dlsym

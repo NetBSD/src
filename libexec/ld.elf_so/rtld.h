@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.96 2010/12/05 00:56:06 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.97 2010/12/24 12:41:43 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -128,7 +128,6 @@ typedef struct _rtld_library_xform_t {
 
 #define RTLD_MAGIC	0xd550b87a
 #define RTLD_VERSION	1
-#define	RTLD_MAIN	0x800
 
 typedef struct Struct_Obj_Entry {
 	Elf32_Word      magic;		/* Magic number (sanity check) */
@@ -202,10 +201,17 @@ typedef struct Struct_Obj_Entry {
 					 * called */
 			fini_called:1,	/* True if .fini function has been 
 					 * called */
-			initfirst:1,	/* True if object's .init/.fini take
+			z_now:1,	/* True if object's symbols should be
+					   bound immediately */
+			z_nodelete:1,	/* True if object should never be
+					   unloaded */
+			z_initfirst:1,	/* True if object's .init/.fini take
 					 * priority over others */
-			phdr_loaded:1;	/* Phdr is loaded and doesn't need to
+			z_noopen:1,	/* True if object should never be
+					   dlopen'ed */
+			phdr_loaded:1,	/* Phdr is loaded and doesn't need to
 					 * be freed. */
+			ref_nodel:1;	/* Refcount increased to prevent dlclose */
 
 	struct link_map linkmap;	/* for GDB */
 
@@ -251,6 +257,14 @@ extern Objlist _rtld_list_global;
 extern Objlist _rtld_list_main;
 extern Elf_Sym _rtld_sym_zero;
 
+#define	RTLD_MODEMASK 0x3
+
+/* Flags for _rtld_load_object() and friends. */
+#define	_RTLD_GLOBAL	0x01	/* Add object to global DAG. */
+#define	_RTLD_MAIN	0x02
+#define	_RTLD_NOLOAD	0x04	/* dlopen() specified RTLD_NOLOAD. */
+#define	_RTLD_DLOPEN	0x08	/* Load_object() called from dlopen(). */
+
 /* rtld.c */
 
 /* We export these symbols using _rtld_symbol_lookup and is_exported. */
@@ -274,6 +288,7 @@ void _rtld_linkmap_delete(Obj_Entry *);
 void _rtld_objlist_push_head(Objlist *, Obj_Entry *);
 void _rtld_objlist_push_tail(Objlist *, Obj_Entry *);
 Objlist_Entry *_rtld_objlist_find(Objlist *, const Obj_Entry *);
+void _rtld_ref_dag(Obj_Entry *);
 
 /* expand.c */
 size_t _rtld_expand_path(char *, size_t, const char *, const char *,\
@@ -288,6 +303,7 @@ Obj_Entry *_rtld_load_object(const char *, int);
 int _rtld_load_needed_objects(Obj_Entry *, int);
 int _rtld_preload(const char *);
 
+#define	OBJ_ERR	(Obj_Entry *)(-1)
 /* path.c */
 void _rtld_add_paths(const char *, Search_Path **, const char *);
 void _rtld_process_hints(const char *, Search_Path **, Library_Xform **,
