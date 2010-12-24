@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.4 2010/03/21 17:38:33 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.5 2010/12/24 07:52:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.4 2010/03/21 17:38:33 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.5 2010/12/24 07:52:01 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -189,6 +189,13 @@ mach_init(uint32_t memsize32, u_int bim, uint32_t bip32)
 
 	}
 
+	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
+	 * Clear out the I and D caches.
+	 */
+	mips_vector_init(NULL);
+
 	/* Check for valid bootinfo passed from bootstrap */
 	if (bim == BOOTINFO_MAGIC) {
 		struct btinfo_magic *bi_magic;
@@ -255,13 +262,6 @@ mach_init(uint32_t memsize32, u_int bim, uint32_t bip32)
 		printf(bi_msg);
 
 	uvm_setpagesize();
-
-	/*
-	 * Copy exception-dispatch code down to exception vector.
-	 * Initialize locore-function vector.
-	 * Clear out the I and D caches.
-	 */
-	mips_vector_init(NULL);
 
 	/*
 	 * The boot command is passed in the top 512 bytes,
