@@ -340,7 +340,7 @@
 #define HAVE_STDLIB_H 1
 
 /* Define if you have the stpcpy function */
-/* #undef HAVE_STPCPY */
+#define HAVE_STPCPY 1
 
 /* Define to 1 if you have the `strcasecmp' function. */
 #define HAVE_STRCASECMP 1
@@ -459,7 +459,7 @@
 /* #undef HAVE_TERMIO_H */
 
 /* Define to 1 if you have the <term.h> header file. */
-/* #undef HAVE_TERM_H */
+#define HAVE_TERM_H 1
 
 /* Define to 1 if you have the <thread_db.h> header file. */
 /* #undef HAVE_THREAD_DB_H */
