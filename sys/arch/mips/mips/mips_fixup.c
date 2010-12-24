@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.6 2010/12/22 06:13:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.7 2010/12/24 07:12:10 matt Exp $");
 
 #include <sys/param.h>
 
@@ -237,13 +237,20 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		 * Stubs typically look like:
 		 *	lui	v0, %hi(sym)
 		 *	lX	t9, %lo(sym)(v0)
+		 *	[nop]
 		 *	jr	t9
 		 *	nop
 		 */
 		const uint32_t lui_insn = stubp[0];
 		const uint32_t load_insn = stubp[1];
-		KASSERT(stubp[2] == 0x03200008);	/* jr t9 */
-		KASSERT(stubp[3] == 0);			/* nop */
+#ifdef DIAGNOSTIC
+		if (stubp[2] == 0) {
+			KASSERT(stubp[3] == 0x03200008);	/* jr t9 */
+			KASSERT(stubp[4] == 0);			/* nop */
+		} else {
+			KASSERT(stubp[2] == 0x03200008);	/* jr t9 */
+			KASSERT(stubp[3] == 0);			/* nop */
+		}
 
 		KASSERT(INSN_LUI_P(lui_insn));
 #ifdef _LP64
@@ -251,7 +258,6 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 #else
 		KASSERT(INSN_LW_P(load_insn));
 #endif
-#ifdef DIAGNOSTIC
 		const u_int lui_reg = (lui_insn >> 16) & 31;
 		const u_int load_reg = (load_insn >> 16) & 31;
 #endif
@@ -312,7 +318,7 @@ u_int	tlb_record_asids(u_long *, uint32_t)		__stub;
 int	tlb_update(vaddr_t, uint32_t)			__stub;
 void	tlb_enter(size_t, vaddr_t, uint32_t)		__stub;
 void	tlb_read_indexed(size_t, struct tlbmask *)	__stub;
-void	wbflush(void)					__stub;
+void	wbflush(void)					/*__stub*/;
 
 void
 mips_cpu_switch_resume(struct lwp *l)
