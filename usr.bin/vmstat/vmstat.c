@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.171 2010/12/20 04:25:03 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.172 2010/12/24 23:39:19 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.171 2010/12/20 04:25:03 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.172 2010/12/24 23:39:19 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -736,6 +736,7 @@ dovmstat(struct timespec *interval, int reps)
 		(void)fflush(stdout);
 		if (reps >= 0 && --reps <= 0)
 			break;
+		ouvmexp = uvmexp;
 		ocpucounter = cpucounter;
 		uptime = interval->tv_sec;
 		/*
