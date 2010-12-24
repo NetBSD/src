@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2010/05/08 23:18:44 hans Exp $
+#	$NetBSD: Makefile,v 1.18 2010/12/24 13:12:09 njoly Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,8 @@ INSTALL_TARGET=	install-gdb
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=     ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=     ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -B${DESTDIR}/usr/lib/
+LDADDFLAGS=	-L${DESTDIR}/lib -L${DESTDIR}/usr/lib -Wl,-rpath-link,${DESTDIR}/usr/lib
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
@@ -65,7 +66,7 @@ native-gdb: .native/.configure_done
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-isystem' '${DESTDIR}/usr/include \
-			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
+			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS=${LDADDFLAGS:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
