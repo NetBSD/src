@@ -1,10 +1,10 @@
-/*	$NetBSD: reader.c,v 1.3 2009/10/29 21:03:59 christos Exp $	*/
-/* Id: reader.c,v 1.18 2009/10/27 09:04:07 tom Exp */
+/*	$NetBSD: reader.c,v 1.4 2010/12/24 02:58:21 christos Exp $	*/
+/* Id: reader.c,v 1.31 2010/11/26 12:30:40 tom Exp */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.3 2009/10/29 21:03:59 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.4 2010/12/24 02:58:21 christos Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -45,7 +45,9 @@ static size_t name_pool_size;
 static char *name_pool;
 
 char line_format[] = "#line %d \"%s\"\n";
-int pure_parser;
+
+param *lex_param;
+param *parse_param;
 
 static void
 cachec(int c)
@@ -55,8 +57,7 @@ cachec(int c)
     {
 	cache_size += 256;
 	cache = REALLOC(cache, cache_size);
-	if (cache == 0)
-	    no_space();
+	NO_SPACE(cache);
     }
     cache[cinc] = (char)c;
     ++cinc;
@@ -87,8 +88,7 @@ get_line(void)
 	    FREE(line);
 	linesize = LINESIZE + 1;
 	line = MALLOC(linesize);
-	if (line == 0)
-	    no_space();
+	NO_SPACE(line);
     }
 
     i = 0;
@@ -105,8 +105,7 @@ get_line(void)
 	{
 	    linesize += LINESIZE;
 	    line = REALLOC(line, linesize);
-	    if (line == 0)
-		no_space();
+	    NO_SPACE(line);
 	}
 	c = getc(f);
 	if (c == EOF)
@@ -130,8 +129,7 @@ dup_line(void)
     while (*s != '\n')
 	++s;
     p = MALLOC(s - line + 1);
-    if (p == 0)
-	no_space();
+    NO_SPACE(p);
 
     s = line;
     t = p;
@@ -233,6 +231,36 @@ nextc(void)
     }
 }
 
+/*
+ * Compare keyword to cached token, treating '_' and '-' the same.  Some
+ * grammars rely upon this misfeature.
+ */
+static int
+matchec(const char *name)
+{
+    const char *p = cache;
+    const char *q = name;
+    int code = 0;	/* assume mismatch */
+
+    while (*p != '\0' && *q != '\0')
+    {
+	char a = *p++;
+	char b = *q++;
+	if (a == '_')
+	    a = '-';
+	if (b == '_')
+	    b = '-';
+	if (a != b)
+	    break;
+	if (*p == '\0' && *q == '\0')
+	{
+	    code = 1;
+	    break;
+	}
+    }
+    return code;
+}
+
 static int
 keyword(void)
 {
@@ -251,40 +279,50 @@ keyword(void)
 		    c = tolower(c);
 		cachec(c);
 	    }
-	    else if (isdigit(c) || c == '-' || c == '_' || c == '.' || c == '$')
+	    else if (isdigit(c)
+		     || c == '-'
+		     || c == '_'
+		     || c == '.'
+		     || c == '$')
+	    {
 		cachec(c);
+	    }
 	    else
+	    {
 		break;
+	    }
 	    c = *++cptr;
 	}
 	cachec(NUL);
 
-	if (strcmp(cache, "token") == 0 || strcmp(cache, "term") == 0)
+	if (matchec("token") || matchec("term"))
 	    return (TOKEN);
-	if (strcmp(cache, "type") == 0)
+	if (matchec("type"))
 	    return (TYPE);
-	if (strcmp(cache, "left") == 0)
+	if (matchec("left"))
 	    return (LEFT);
-	if (strcmp(cache, "right") == 0)
+	if (matchec("right"))
 	    return (RIGHT);
-	if (strcmp(cache, "nonassoc") == 0 || strcmp(cache, "binary") == 0)
+	if (matchec("nonassoc") || matchec("binary"))
 	    return (NONASSOC);
-	if (strcmp(cache, "start") == 0)
+	if (matchec("start"))
 	    return (START);
-	if (strcmp(cache, "union") == 0)
+	if (matchec("union"))
 	    return (UNION);
-	if (strcmp(cache, "ident") == 0)
+	if (matchec("ident"))
 	    return (IDENT);
-	if (strcmp(cache, "expect") == 0)
+	if (matchec("expect"))
 	    return (EXPECT);
-	if (strcmp(cache, "expect-rr") == 0)
+	if (matchec("expect-rr"))
 	    return (EXPECT_RR);
-	if (strcmp(cache, "pure-parser") == 0)
+	if (matchec("pure-parser"))
 	    return (PURE_PARSER);
-	if (strcmp(cache, "parse-param") == 0)
+	if (matchec("parse-param"))
 	    return (PARSE_PARAM);
-	if (strcmp(cache, "lex-param") == 0)
+	if (matchec("lex-param"))
 	    return (LEX_PARAM);
+	if (matchec("yacc"))
+	    return (POSIX_YACC);
     }
     else
     {
@@ -306,89 +344,6 @@ keyword(void)
     /*NOTREACHED */
 }
 
-struct param *lex_param;
-struct param *parse_param;
-
-/*
- * Keep a linked list of parameters
- */
-static void
-copy_param(int k)
-{
-    char *buf;
-    int c;
-    param *head, *p;
-    int i;
-
-    c = nextc();
-    if (c == EOF)
-	unexpected_EOF();
-    if (c != '{')
-	goto out;
-    cptr++;
-
-    c = nextc();
-    if (c == EOF)
-	unexpected_EOF();
-    if (c == '}')
-	goto out;
-
-    buf = MALLOC(linesize);
-    if (buf == NULL)
-	goto nospace;
-
-    for (i = 0; (c = *cptr++) != '}'; i++) {
-	if (c == EOF)
-	    unexpected_EOF();
-	buf[i] = c;
-    }
-
-    if (i == 0)
-	goto out;
-
-    buf[i--] = '\0';
-    while (i >= 0 && isspace((unsigned char)buf[i]))
-	buf[i--] = '\0';
-    while (i >= 0 && isalnum((unsigned char)buf[i]))
-	i--;
-
-    if (!isspace((unsigned char)buf[i]) && buf[i] != '*')
-	goto out;
-
-    p = MALLOC(sizeof(*p));
-    if (p == NULL)
-	goto nospace;
-
-    p->name = strdup(buf + i + 1);
-    if (p->name == NULL)
-	goto nospace;
-
-    buf[i + 1] = '\0';
-    p->type = buf;
-
-    if (k == LEX_PARAM)
-	head = lex_param;
-    else
-	head = parse_param;
-
-    if (head != NULL) {
-	while (head->next)
-	    head = head->next;
-	head->next = p;
-    } else {
-	if (k == LEX_PARAM)
-	    lex_param = p;
-	else
-	    parse_param = p;
-    }
-    p->next = NULL;
-    return;
-	
-out:
-    syntax_error(lineno, line, cptr);
-nospace:
-    no_space();
-}
 
 static void
 copy_ident(void)
@@ -556,6 +511,22 @@ copy_text(void)
 }
 
 static void
+puts_both(const char *s)
+{
+    fputs(s, text_file);
+    if (dflag)
+	fputs(s, union_file);
+}
+
+static void
+putc_both(int c)
+{
+    putc(c, text_file);
+    if (dflag)
+	putc(c, union_file);
+}
+
+static void
 copy_union(void)
 {
     int c;
@@ -572,16 +543,18 @@ copy_union(void)
     if (!lflag)
 	fprintf(text_file, line_format, lineno, input_file_name);
 
-    fprintf(text_file, "typedef union YYSTYPE");
-    if (dflag)
-	fprintf(union_file, "typedef union YYSTYPE");
+    puts_both("#ifdef YYSTYPE\n");
+    puts_both("#undef  YYSTYPE_IS_DECLARED\n");
+    puts_both("#define YYSTYPE_IS_DECLARED 1\n");
+    puts_both("#endif\n");
+    puts_both("#ifndef YYSTYPE_IS_DECLARED\n");
+    puts_both("#define YYSTYPE_IS_DECLARED 1\n");
+    puts_both("typedef union");
 
     depth = 0;
   loop:
     c = *cptr++;
-    putc(c, text_file);
-    if (dflag)
-	putc(c, union_file);
+    putc_both(c);
     switch (c)
     {
     case '\n':
@@ -598,7 +571,8 @@ copy_union(void)
     case R_CURL:
 	if (--depth == 0)
 	{
-	    fprintf(text_file, " YYSTYPE;\n");
+	    puts_both(" YYSTYPE;\n");
+	    puts_both("#endif /* !YYSTYPE_IS_DECLARED */\n");
 	    FREE(u_line);
 	    return;
 	}
@@ -615,9 +589,7 @@ copy_union(void)
 	    for (;;)
 	    {
 		c = *cptr++;
-		putc(c, text_file);
-		if (dflag)
-		    putc(c, union_file);
+		putc_both(c);
 		if (c == quote)
 		{
 		    FREE(s_line);
@@ -628,9 +600,7 @@ copy_union(void)
 		if (c == '\\')
 		{
 		    c = *cptr++;
-		    putc(c, text_file);
-		    if (dflag)
-			putc(c, union_file);
+		    putc_both(c);
 		    if (c == '\n')
 		    {
 			get_line();
@@ -645,27 +615,19 @@ copy_union(void)
 	c = *cptr;
 	if (c == '/')
 	{
-	    putc('*', text_file);
-	    if (dflag)
-		putc('*', union_file);
+	    putc_both('*');
 	    while ((c = *++cptr) != '\n')
 	    {
 		if (c == '*' && cptr[1] == '/')
 		{
-		    fprintf(text_file, "* ");
-		    if (dflag)
-			fprintf(union_file, "* ");
+		    puts_both("* ");
 		}
 		else
 		{
-		    putc(c, text_file);
-		    if (dflag)
-			putc(c, union_file);
+		    putc_both(c);
 		}
 	    }
-	    fprintf(text_file, "*/\n");
-	    if (dflag)
-		fprintf(union_file, "*/\n");
+	    puts_both("*/\n");
 	    goto next_line;
 	}
 	if (c == '*')
@@ -674,21 +636,15 @@ copy_union(void)
 	    char *c_line = dup_line();
 	    char *c_cptr = c_line + (cptr - line - 1);
 
-	    putc('*', text_file);
-	    if (dflag)
-		putc('*', union_file);
+	    putc_both('*');
 	    ++cptr;
 	    for (;;)
 	    {
 		c = *cptr++;
-		putc(c, text_file);
-		if (dflag)
-		    putc(c, union_file);
+		putc_both(c);
 		if (c == '*' && *cptr == '/')
 		{
-		    putc('/', text_file);
-		    if (dflag)
-			putc('/', union_file);
+		    putc_both('/');
 		    ++cptr;
 		    FREE(c_line);
 		    goto loop;
@@ -706,6 +662,116 @@ copy_union(void)
     default:
 	goto loop;
     }
+}
+
+/*
+ * Keep a linked list of parameters
+ */
+static void
+copy_param(int k)
+{
+    char *buf;
+    int c;
+    param *head, *p;
+    int i;
+    int name, type2;
+
+    c = nextc();
+    if (c == EOF)
+	unexpected_EOF();
+    if (c != '{')
+	goto out;
+    cptr++;
+
+    c = nextc();
+    if (c == EOF)
+	unexpected_EOF();
+    if (c == '}')
+	goto out;
+
+    buf = MALLOC(linesize);
+    NO_SPACE(buf);
+
+    for (i = 0; (c = *cptr++) != '}'; i++)
+    {
+	if (c == EOF)
+	    unexpected_EOF();
+	buf[i] = (char)c;
+    }
+
+    if (i == 0)
+	goto out;
+
+    buf[i--] = '\0';
+    while (i >= 0 && isspace(UCH(buf[i])))
+	buf[i--] = '\0';
+
+    if (buf[i] == ']')
+    {
+	int level = 1;
+	while (i >= 0 && level > 0 && buf[i] != '[')
+	{
+	    if (buf[i] == ']')
+		++level;
+	    else if (buf[i] == '[')
+		--level;
+	    i--;
+	}
+	if (i <= 0)
+	    unexpected_EOF();
+	type2 = i--;
+    }
+    else
+    {
+	type2 = i + 1;
+    }
+
+    while (i >= 0 && (isalnum(UCH(buf[i])) ||
+		      UCH(buf[i]) == '_'))
+	i--;
+
+    if (!isspace(UCH(buf[i])) && buf[i] != '*')
+	goto out;
+
+    name = i + 1;
+
+    p = MALLOC(sizeof(*p));
+    NO_SPACE(p);
+
+    p->type2 = strdup(buf + type2);
+    NO_SPACE(p->type2);
+
+    buf[type2] = '\0';
+
+    p->name = strdup(buf + name);
+    NO_SPACE(p->name);
+
+    buf[name] = '\0';
+    p->type = buf;
+
+    if (k == LEX_PARAM)
+	head = lex_param;
+    else
+	head = parse_param;
+
+    if (head != NULL)
+    {
+	while (head->next)
+	    head = head->next;
+	head->next = p;
+    }
+    else
+    {
+	if (k == LEX_PARAM)
+	    lex_param = p;
+	else
+	    parse_param = p;
+    }
+    p->next = NULL;
+    return;
+
+  out:
+    syntax_error(lineno, line, cptr);
 }
 
 static int
@@ -827,8 +893,7 @@ get_literal(void)
 
     n = cinc;
     s = MALLOC(n);
-    if (s == 0)
-	no_space();
+    NO_SPACE(s);
 
     for (i = 0; i < n; ++i)
 	s[i] = cache[i];
@@ -841,7 +906,7 @@ get_literal(void)
 
     for (i = 0; i < n; ++i)
     {
-	c = ((unsigned char *)s)[i];
+	c = UCH(s[i]);
 	if (c == '\\' || c == cache[0])
 	{
 	    cachec('\\');
@@ -893,7 +958,7 @@ get_literal(void)
     bp = lookup(cache);
     bp->class = TERM;
     if (n == 1 && bp->value == UNDEFINED)
-	bp->value = *(unsigned char *)s;
+	bp->value = UCH(*s);
     FREE(s);
 
     return (bp);
@@ -909,10 +974,10 @@ is_reserved(char *name)
 	strcmp(name, "$end") == 0)
 	return (1);
 
-    if (name[0] == '$' && name[1] == '$' && isdigit((unsigned char)name[2]))
+    if (name[0] == '$' && name[1] == '$' && isdigit(UCH(name[2])))
     {
 	s = name + 3;
-	while (isdigit((unsigned char)*s))
+	while (isdigit(UCH(*s)))
 	    ++s;
 	if (*s == NUL)
 	    return (1);
@@ -999,13 +1064,12 @@ get_tag(void)
 	    (tag_table
 	     ? REALLOC(tag_table, (unsigned)tagmax * sizeof(char *))
 	     : MALLOC((unsigned)tagmax * sizeof(char *)));
-	if (tag_table == 0)
-	    no_space();
+	NO_SPACE(tag_table);
     }
 
     s = MALLOC(cinc);
-    if (s == 0)
-	no_space();
+    NO_SPACE(s);
+
     strcpy(s, cache);
     tag_table[ntags] = s;
     ++ntags;
@@ -1066,7 +1130,7 @@ declare_tokens(int assoc)
 	c = nextc();
 	if (c == EOF)
 	    unexpected_EOF();
-	value = UNDEFINED;
+
 	if (isdigit(c))
 	{
 	    value = get_number();
@@ -1185,8 +1249,7 @@ read_declarations(void)
 
     cache_size = 256;
     cache = MALLOC(cache_size);
-    if (cache == 0)
-	no_space();
+    NO_SPACE(cache);
 
     for (;;)
     {
@@ -1212,15 +1275,6 @@ read_declarations(void)
 	    copy_union();
 	    break;
 
-	case PURE_PARSER:
-	    pure_parser = 1;
-	    break;
-
-	case LEX_PARAM:
-	case PARSE_PARAM:
-	    copy_param(k);
-	    break;
-
 	case TOKEN:
 	case LEFT:
 	case RIGHT:
@@ -1240,6 +1294,20 @@ read_declarations(void)
 	case START:
 	    declare_start();
 	    break;
+
+	case PURE_PARSER:
+	    pure_parser = 1;
+	    break;
+
+	case PARSE_PARAM:
+	case LEX_PARAM:
+	    copy_param(k);
+	    break;
+
+	case POSIX_YACC:
+	    /* noop for bison compatibility. byacc is already designed to be posix
+	     * yacc compatible. */
+	    break;
 	}
     }
 }
@@ -1249,9 +1317,10 @@ initialize_grammar(void)
 {
     nitems = 4;
     maxitems = 300;
+
     pitem = (bucket **)MALLOC((unsigned)maxitems * sizeof(bucket *));
-    if (pitem == 0)
-	no_space();
+    NO_SPACE(pitem);
+
     pitem[0] = 0;
     pitem[1] = 0;
     pitem[2] = 0;
@@ -1259,21 +1328,24 @@ initialize_grammar(void)
 
     nrules = 3;
     maxrules = 100;
+
     plhs = (bucket **)MALLOC((unsigned)maxrules * sizeof(bucket *));
-    if (plhs == 0)
-	no_space();
+    NO_SPACE(plhs);
+
     plhs[0] = 0;
     plhs[1] = 0;
     plhs[2] = 0;
+
     rprec = (short *)MALLOC((unsigned)maxrules * sizeof(short));
-    if (rprec == 0)
-	no_space();
+    NO_SPACE(rprec);
+
     rprec[0] = 0;
     rprec[1] = 0;
     rprec[2] = 0;
+
     rassoc = (char *)MALLOC((unsigned)maxrules * sizeof(char));
-    if (rassoc == 0)
-	no_space();
+    NO_SPACE(rassoc);
+
     rassoc[0] = TOKEN;
     rassoc[1] = TOKEN;
     rassoc[2] = TOKEN;
@@ -1284,23 +1356,22 @@ expand_items(void)
 {
     maxitems += 300;
     pitem = (bucket **)REALLOC(pitem, (unsigned)maxitems * sizeof(bucket *));
-    if (pitem == 0)
-	no_space();
+    NO_SPACE(pitem);
 }
 
 static void
 expand_rules(void)
 {
     maxrules += 100;
+
     plhs = (bucket **)REALLOC(plhs, (unsigned)maxrules * sizeof(bucket *));
-    if (plhs == 0)
-	no_space();
+    NO_SPACE(plhs);
+
     rprec = (short *)REALLOC(rprec, (unsigned)maxrules * sizeof(short));
-    if (rprec == 0)
-	no_space();
+    NO_SPACE(rprec);
+
     rassoc = (char *)REALLOC(rassoc, (unsigned)maxrules * sizeof(char));
-    if (rassoc == 0)
-	no_space();
+    NO_SPACE(rassoc);
 }
 
 static void
@@ -1383,6 +1454,10 @@ end_rule(void)
 	    if (pitem[i + 1] == 0 || pitem[i + 1]->tag != plhs[nrules]->tag)
 		default_action_warning();
 	}
+	else
+	{
+	    default_action_warning();
+	}
     }
 
     last_was_action = 0;
@@ -1457,7 +1532,7 @@ add_symbol(void)
 static char *
 after_blanks(char *s)
 {
-    while (*s != '\0' && isspace((unsigned char)*s))
+    while (*s != '\0' && isspace(UCH(*s)))
 	++s;
     return s;
 }
@@ -1522,15 +1597,15 @@ copy_action(void)
 		i = get_number();
 		if (i > n)
 		    dollar_warning(d_lineno, i);
-		fprintf(f, "yyvsp[%d].%s", i - n, tag);
+		fprintf(f, "yystack.l_mark[%d].%s", i - n, tag);
 		FREE(d_line);
 		goto loop;
 	    }
-	    else if (c == '-' && isdigit((unsigned char)cptr[1]))
+	    else if (c == '-' && isdigit(UCH(cptr[1])))
 	    {
 		++cptr;
 		i = -get_number() - n;
-		fprintf(f, "yyvsp[%d].%s", i, tag);
+		fprintf(f, "yystack.l_mark[%d].%s", i, tag);
 		FREE(d_line);
 		goto loop;
 	    }
@@ -1551,7 +1626,7 @@ copy_action(void)
 	    cptr += 2;
 	    goto loop;
 	}
-	else if (isdigit((unsigned char)cptr[1]))
+	else if (isdigit(UCH(cptr[1])))
 	{
 	    ++cptr;
 	    i = get_number();
@@ -1562,13 +1637,13 @@ copy_action(void)
 		tag = pitem[nitems + i - n - 1]->tag;
 		if (tag == 0)
 		    untyped_rhs(i, pitem[nitems + i - n - 1]->name);
-		fprintf(f, "yyvsp[%d].%s", i - n, tag);
+		fprintf(f, "yystack.l_mark[%d].%s", i - n, tag);
 	    }
 	    else
 	    {
 		if (i > n)
 		    dollar_warning(lineno, i);
-		fprintf(f, "yyvsp[%d]", i - n);
+		fprintf(f, "yystack.l_mark[%d]", i - n);
 	    }
 	    goto loop;
 	}
@@ -1578,7 +1653,7 @@ copy_action(void)
 	    i = get_number();
 	    if (ntags)
 		unknown_rhs(-i);
-	    fprintf(f, "yyvsp[%d]", -i - n);
+	    fprintf(f, "yystack.l_mark[%d]", -i - n);
 	    goto loop;
 	}
     }
@@ -1810,9 +1885,9 @@ pack_names(void)
     name_pool_size = 13;	/* 13 == sizeof("$end") + sizeof("$accept") */
     for (bp = first_symbol; bp; bp = bp->next)
 	name_pool_size += strlen(bp->name) + 1;
+
     name_pool = MALLOC(name_pool_size);
-    if (name_pool == 0)
-	no_space();
+    NO_SPACE(name_pool);
 
     strlcpy(name_pool, "$accept", name_pool_size);
     strlcpy(name_pool + 8, "$end", name_pool_size - 8);
@@ -1865,9 +1940,10 @@ protect_string(char *src, char **des)
 	    s++;
 	    len++;
 	}
+
 	*des = d = (char *)MALLOC(len);
-	if (0 == *des)
-	    no_space();
+	NO_SPACE(d);
+
 	s = src;
 	while (*s)
 	{
@@ -1898,21 +1974,19 @@ pack_symbols(void)
     nvars = nsyms - ntokens;
 
     symbol_name = (char **)MALLOC((unsigned)nsyms * sizeof(char *));
-    if (symbol_name == 0)
-	no_space();
+    NO_SPACE(symbol_name);
+
     symbol_value = (short *)MALLOC((unsigned)nsyms * sizeof(short));
-    if (symbol_value == 0)
-	no_space();
+    NO_SPACE(symbol_value);
+
     symbol_prec = (short *)MALLOC((unsigned)nsyms * sizeof(short));
-    if (symbol_prec == 0)
-	no_space();
+    NO_SPACE(symbol_prec);
+
     symbol_assoc = MALLOC(nsyms);
-    if (symbol_assoc == 0)
-	no_space();
+    NO_SPACE(symbol_assoc);
 
     v = (bucket **)MALLOC((unsigned)nsyms * sizeof(bucket *));
-    if (v == 0)
-	no_space();
+    NO_SPACE(v);
 
     v[0] = 0;
     v[start_symbol] = 0;
@@ -1963,6 +2037,8 @@ pack_symbols(void)
 	}
     }
 
+    assert(v[1] != 0);
+
     if (v[1]->value == UNDEFINED)
 	v[1]->value = 256;
 
@@ -2010,8 +2086,7 @@ pack_symbols(void)
     if (gflag)
     {
 	symbol_pname = (char **)MALLOC((unsigned)nsyms * sizeof(char *));
-	if (symbol_pname == 0)
-	    no_space();
+	NO_SPACE(symbol_pname);
 
 	for (i = 0; i < nsyms; ++i)
 	    protect_string(symbol_name[i], &(symbol_pname[i]));
@@ -2029,20 +2104,19 @@ pack_grammar(void)
     Value_t prec2;
 
     ritem = (short *)MALLOC((unsigned)nitems * sizeof(short));
-    if (ritem == 0)
-	no_space();
+    NO_SPACE(ritem);
+
     rlhs = (short *)MALLOC((unsigned)nrules * sizeof(short));
-    if (rlhs == 0)
-	no_space();
+    NO_SPACE(rlhs);
+
     rrhs = (short *)MALLOC((unsigned)(nrules + 1) * sizeof(short));
-    if (rrhs == 0)
-	no_space();
+    NO_SPACE(rrhs);
+
     rprec = (short *)REALLOC(rprec, (unsigned)nrules * sizeof(short));
-    if (rprec == 0)
-	no_space();
+    NO_SPACE(rprec);
+
     rassoc = REALLOC(rassoc, nrules);
-    if (rassoc == 0)
-	no_space();
+    NO_SPACE(rassoc);
 
     ritem[0] = -1;
     ritem[1] = goal->index;
@@ -2128,6 +2202,7 @@ print_grammar(void)
 void
 reader(void)
 {
+    write_section(banner);
     create_symbol_table();
     read_declarations();
     read_grammar();
@@ -2142,9 +2217,27 @@ reader(void)
 }
 
 #ifdef NO_LEAKS
+static param *
+free_declarations(param * list)
+{
+    while (list != 0)
+    {
+	param *next = list->next;
+	free(list->type);
+	free(list->name);
+	free(list->type2);
+	free(list);
+	list = next;
+    }
+    return list;
+}
+
 void
 reader_leaks(void)
 {
+    lex_param = free_declarations(lex_param);
+    parse_param = free_declarations(parse_param);
+
     DO_FREE(line);
     DO_FREE(rrhs);
     DO_FREE(rlhs);
