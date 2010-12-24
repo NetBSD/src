@@ -1,8 +1,10 @@
-.\"	$NetBSD: yacc.1,v 1.2 2009/10/29 00:56:20 christos Exp $
-.\" Id: yacc.1,v 1.6 2005/05/04 22:11:56 tom Exp
+.\"	$NetBSD: yacc.1,v 1.3 2010/12/24 02:58:21 christos Exp $
 .\"
-.TH YACC 1 "July\ 15,\ 1990"
-.UC 6
+.\" Id: yacc.1,v 1.11 2010/11/26 16:27:11 tom Exp
+.\"
+.\" .TH YACC 1 "July\ 15,\ 1990"
+.\" .UC 6
+.TH YACC 1 "November 26, 2010" "Berkeley Yacc" "User Commands"
 .SH NAME
 Yacc \- an LALR(1) parser generator
 .SH SYNOPSIS
@@ -24,7 +26,6 @@ normally writes the parse tables and the driver routine to the file
 .IR y.tab.c.
 .PP
 The following options are available:
-.RS
 .TP
 \fB\-b \fP\fIfile_prefix\fR
 The
@@ -76,6 +77,9 @@ the string denoted by
 The default prefix is the string
 .IR yy.
 .TP
+.B \-P
+create a reentrant parser, e.g., "%pure-parser".
+.TP
 .B \-r
 The
 .B \-r
@@ -86,6 +90,7 @@ is named
 .IR y.code.c,
 and the tables file is named
 .IR y.tab.c.
+The prefix "\fIy.\fP" can be overridden using the \fB\-b\fP option.
 .TP
 .B \-t
 The
@@ -103,7 +108,33 @@ be written to the file
 .TP
 .B \-V
 print the version number to the standard output.
-.RE
+.SH EXTENSIONS
+.B yacc
+provides some extensions for compatibility with bison and other implementations
+of yacc:
+.TP
+\fB %expect\fP \fInumber\fP
+tell \fByacc\fP the expected number of shift/reduce conflicts.
+That makes it only report the number if it differs.
+.TP
+\fB %expect-rr\fP \fInumber\fP
+tell \fByacc\fP the expected number of reduce/reduce conflicts.
+That makes it only report the number if it differs.
+This is (unlike bison) allowable in LALR parsers.
+.TP
+\fB %lex-param\fP { \fIargument-declaration\fP }
+By default, the lexer accepts no parameters, e.g., \fByylex()\fP.
+Use this directive to add parameter declarations for your customized lexer.
+.TP
+\fB %parse-param\fP { \fIargument-declaration\fP }
+By default, the parser accepts no parameters, e.g., \fByyparse()\fP. 
+Use this directive to add parameter declarations for your customized parser.
+.TP
+\fB %pure-parser\fP
+Most variables (other than \fByydebug\fP and \fByynerrs\fP) are
+allocated on the stack within \fByyparse\fP, making the parser reasonably
+reentrant.
+.
 .SH DIAGNOSTICS
 If there are rules that are never reduced, the number of such rules is
 reported on standard error.

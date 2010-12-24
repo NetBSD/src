@@ -1,8 +1,9 @@
-/* Id: defs.h,v 1.20 2009/10/27 10:47:43 tom Exp */
+/*	$NetBSD: defs.h,v 1.4 2010/12/24 02:58:20 christos Exp $	*/
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+/* Id: defs.h,v 1.30 2010/11/26 15:19:36 tom Exp */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -68,6 +69,8 @@
 #define	DOUBLE_QUOTE	'\"'	/*  double quote  */
 #define	BACKSLASH	'\\'	/*  backslash  */
 
+#define UCH(c)          (unsigned char)(c)
+
 /* defines for constructing filenames */
 
 #if defined(VMS)
@@ -99,6 +102,7 @@
 #define PURE_PARSER 12
 #define PARSE_PARAM 13
 #define LEX_PARAM 14
+#define POSIX_YACC 15
 
 /*  symbol classes  */
 
@@ -128,14 +132,16 @@
 
 /*  storage allocation macros  */
 
-#define CALLOC(k,n)	(calloc((unsigned)(k),(unsigned)(n)))
+#define CALLOC(k,n)	(calloc((size_t)(k),(size_t)(n)))
 #define	FREE(x)		(free((char*)(x)))
-#define MALLOC(n)	(malloc((unsigned)(n)))
+#define MALLOC(n)	(malloc((size_t)(n)))
 #define	NEW(t)		((t*)allocate(sizeof(t)))
-#define	NEW2(n,t)	((t*)allocate(((unsigned)(n)*sizeof(t))))
-#define REALLOC(p,n)	(realloc((char*)(p),(unsigned)(n)))
+#define	NEW2(n,t)	((t*)allocate(((size_t)(n)*sizeof(t))))
+#define REALLOC(p,n)	(realloc((char*)(p),(size_t)(n)))
 
 #define DO_FREE(x)	if (x) { FREE(x); x = 0; }
+
+#define NO_SPACE(p)	if (p == 0) no_space(); assert(p != 0)
 
 /* messages */
 #define PLURAL(n) ((n) > 1 ? "s" : "")
@@ -185,13 +191,6 @@ struct shifts
     Value_t shift[1];
 };
 
-typedef struct param param;
-struct param {
-    struct param *next;
-    char *name;
-    char *type;
-};
-
 /*  the structure used to store reductions  */
 
 typedef struct reductions reductions;
@@ -217,6 +216,16 @@ struct action
     char suppressed;
 };
 
+/*  the structure used to store parse/lex parameters  */
+typedef struct param param;
+struct param
+{
+    struct param *next;
+    char *name;		/* parameter name */
+    char *type;		/* everything before parameter name */
+    char *type2;	/* everything after parameter name */
+};
+
 /* global variables */
 
 extern char dflag;
@@ -236,17 +245,19 @@ extern int exit_code;
 extern int pure_parser;
 
 extern const char * const banner[];
+extern const char * const xdecls[];
 extern const char * const tables[];
-extern const char * const header[];
-extern const char * const body[];
+extern const char * const hdr_defs[];
+extern const char * const hdr_vars[];
+extern const char * const body_1[];
+extern const char * const body_vars[];
+extern const char * const body_2[];
+extern const char * const body_3[];
 extern const char * const trailer[];
+extern const char * const trailer_2[];
 
 extern char *code_file_name;
-extern char *defines_file_name;
-extern const char *input_file_name;
-extern char *output_file_name;
-extern char *verbose_file_name;
-extern char *graph_file_name;
+extern char *input_file_name;
 
 extern FILE *action_file;
 extern FILE *code_file;
@@ -287,6 +298,7 @@ extern char *nullable;
 extern bucket *first_symbol;
 extern bucket *last_symbol;
 
+extern int pure_parser;
 extern int nstates;
 extern core *first_state;
 extern shifts *first_shift;
@@ -335,7 +347,7 @@ extern bucket *make_bucket(const char *);
 #endif
 
 /* closure.c */
-extern void closure(Value_t *nucleus, int n);
+extern void closure(Value_t * nucleus, int n);
 extern void finalize_closure(void);
 extern void set_first_derives(void);
 
@@ -351,7 +363,6 @@ extern void no_space(void);
 extern void open_error(const char *filename);
 extern void over_unionized(char *u_cptr);
 extern void prec_redeclared(void);
-extern void print_pos(char *st_line, char *st_cptr);
 extern void reprec_warning(char *s);
 extern void restarted_warning(void);
 extern void retyped_warning(char *s);
@@ -377,7 +388,6 @@ extern void used_reserved(char *s);
 extern void graph(void);
 
 /* lalr.c */
-extern int hash(const char *name);
 extern void create_symbol_table(void);
 extern void free_symbol_table(void);
 extern void free_symbols(void);
@@ -393,7 +403,7 @@ extern void show_rrhs(void);
 extern void show_shifts(void);
 
 /* main.c */
-extern char *allocate(unsigned n);
+extern char *allocate(size_t n);
 extern void done(int k) GCC_NORETURN;
 
 /* mkpar.c */
@@ -407,7 +417,7 @@ extern void output(void);
 extern void reader(void);
 
 /* skeleton.c */
-extern void write_section(const char * const section[], int);
+extern void write_section(const char * const section[]);
 
 /* verbose.c */
 extern void verbose(void);
