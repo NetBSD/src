@@ -615,7 +615,9 @@ libzfs_fini(libzfs_handle_t *hdl)
 	if (hdl->libzfs_log_str)
 		(void) free(hdl->libzfs_log_str);
 	zpool_free_handles(hdl);
+#ifdef PORT_SOLARIS
 	libzfs_fru_clear(hdl, B_TRUE);
+#endif	
 	namespace_clear(hdl);
 	libzfs_mnttab_fini(hdl);
 	free(hdl);
