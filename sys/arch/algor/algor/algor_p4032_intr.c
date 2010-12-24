@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.20.16.2 2010/02/28 03:32:23 matt Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.20.16.3 2010/12/24 07:32:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.20.16.2 2010/02/28 03:32:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.20.16.3 2010/12/24 07:32:26 matt Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -243,7 +243,6 @@ algor_p4032_intr_init(struct p4032_config *acp)
 		evcnt_attach_dynamic(&p4032_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", p4032_cpuintrnames[i]);
 	}
-	evcnt_attach_static(&mips_int5_evcnt);
 
 	for (i = 0; i < NIRQMAPS; i++) {
 		irqmap = &p4032_irqmap[i];
