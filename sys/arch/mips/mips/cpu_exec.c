@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.13 2010/02/01 04:16:19 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.54.1.4.14 2010/12/24 07:10:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.13 2010/02/01 04:16:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.14 2010/12/24 07:10:32 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.54.1.4.13 2010/02/01 04:16:19 matt
 #endif
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/locore.h>
 
 #include <compat/common/compat_util.h>
 
@@ -76,9 +77,7 @@ int	mips_elf_makecmds(struct lwp *, struct exec_package *);
  *
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error;
 
@@ -127,10 +126,7 @@ cpu_exec_aout_makecmds(l, epp)
 
 #ifdef EXEC_ECOFF
 void
-cpu_exec_ecoff_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	vaddr_t stack;
+cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct trapframe *tf = l->l_md.md_utf;
@@ -145,9 +141,7 @@ cpu_exec_ecoff_setregs(l, epp, stack)
  * Do any machine-dependent diddling of the exec package when doing ECOFF.
  */
 int
-cpu_exec_ecoff_probe(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 {
 
 	/* NetBSD/mips does not have native ECOFF binaries. */
@@ -163,9 +157,7 @@ cpu_exec_ecoff_probe(l, epp)
  */
 
 int
-mips_elf_makecmds (l, epp)
-        struct lwp *l;
-        struct exec_package *epp;
+mips_elf_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	Elf32_Ehdr *ex = (Elf32_Ehdr *)epp->ep_hdr;
 	Elf32_Phdr ph;
