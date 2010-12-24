@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.118 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.119 2010/12/24 20:49:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.118 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.119 2010/12/24 20:49:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.118 2010/11/03 22:34:23 dyoung Exp $");
 #include <sys/vnode.h>
 #include <sys/poll.h>
 #include <sys/module.h>
+#include <sys/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -61,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.118 2010/11/03 22:34:23 dyoung Exp $");
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usb_quirks.h>
 
@@ -179,6 +181,7 @@ struct uaudio_softc {
 	struct audio_encoding_set *sc_encodings;
 	u_int		sc_channel_config;
 	char		sc_dying;
+	struct audio_device sc_adev;
 };
 
 struct terminal_list {
@@ -349,12 +352,6 @@ Static const struct audio_hw_if uaudio_hw_if = {
 	NULL,
 };
 
-Static struct audio_device uaudio_device = {
-	"USB audio",
-	"",
-	"uaudio"
-};
-
 int uaudio_match(device_t, cfdata_t, void *);
 void uaudio_attach(device_t, device_t, void *);
 int uaudio_detach(device_t, int);
@@ -394,6 +391,11 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->device;
+
+	strlcpy(sc->sc_adev.name, "USB audio", sizeof(sc->sc_adev.name));
+	strlcpy(sc->sc_adev.version, "", sizeof(sc->sc_adev.version));
+	snprintf(sc->sc_adev.config, sizeof(sc->sc_adev.config), "usb:%08x",
+	    sc->sc_udev->cookie.cookie);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -2226,7 +2228,7 @@ uaudio_getdev(void *addr, struct audio_device *retp)
 	if (sc->sc_dying)
 		return EIO;
 
-	*retp = uaudio_device;
+	*retp = sc->sc_adev;
 	return 0;
 }
 
