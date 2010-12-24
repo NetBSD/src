@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.29 2010/12/24 12:42:56 skrll Exp $
+.\"	$NetBSD: dlfcn.3,v 1.30 2010/12/24 13:00:24 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,7 +77,7 @@ are used for
 shared object searches.
 .Po
 see
-.Xr ld.elf_so 5
+.Xr ld.elf_so 1
 .Pc
 .Pp
 Shared libraries take the following form:
@@ -87,7 +87,6 @@ The shared object is mapped into the address space, relocated, and
 its external references are resolved in the same way as is done
 with the implicitly loaded shared libraries at program startup.
 .Pp
-The
 If the first argument is
 .Dv NULL ,
 .Fn dlopen
