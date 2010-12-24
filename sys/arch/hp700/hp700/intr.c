@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.31 2010/12/20 00:25:33 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.32 2010/12/24 16:03:54 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2010/12/20 00:25:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2010/12/24 16:03:54 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -54,6 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2010/12/20 00:25:33 matt Exp $");
 #include <hp700/hp700/machdep.h>
 
 #include <machine/mutex.h>
+
+#if defined(_KERNEL_OPT)
+#include "opt_lockdebug.h"
+#endif
 
 /* The priority level masks. */
 int imask[NIPL];
