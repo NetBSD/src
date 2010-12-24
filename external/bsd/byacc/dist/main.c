@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.3 2009/10/29 01:04:17 christos Exp $	*/
-/* Id: main.c,v 1.23 2009/10/27 09:06:44 tom Exp */
-
-#include "defs.h"
+/*	$NetBSD: main.c,v 1.4 2010/12/24 02:58:20 christos Exp $	*/
+/* Id: main.c,v 1.30 2010/11/24 15:13:39 tom Exp */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.3 2009/10/29 01:04:17 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2010/12/24 02:58:20 christos Exp $");
+
+#include "defs.h"
 
 #include <signal.h>
 #include <unistd.h>		/* for _exit() */
@@ -13,7 +13,7 @@ __RCSID("$NetBSD: main.c,v 1.3 2009/10/29 01:04:17 christos Exp $");
 char dflag;
 char gflag;
 char lflag;
-char oflag;
+static char oflag;
 char rflag;
 char tflag;
 char vflag;
@@ -25,18 +25,17 @@ int lineno;
 int outline;
 
 static char empty_string[] = "";
-static const char default_file_prefix[] = "y";
+static char default_file_prefix[] = "y";
 static int explicit_file_name;
 
-static const char *file_prefix = default_file_prefix;
+static char *file_prefix = default_file_prefix;
 
 char *code_file_name;
-char *defines_file_name;
-const char *input_file_name = empty_string;
-char *output_file_name = 0;
-char *verbose_file_name;
-char *graph_file_name;
-char *allocated_file_prefix;
+char *input_file_name = empty_string;
+static char *defines_file_name;
+static char *graph_file_name;
+static char *output_file_name;
+static char *verbose_file_name;
 
 FILE *action_file;	/*  a temp file, used to save actions associated    */
 			/*  with rules until the parser is written          */
@@ -65,6 +64,7 @@ Value_t *symbol_value;
 short *symbol_prec;
 char *symbol_assoc;
 
+int pure_parser;
 int exit_code;
 
 Value_t *ritem;
@@ -127,6 +127,9 @@ done(int k)
     reader_leaks();
 #endif
 
+    if (rflag)
+	DO_CLOSE(code_file);
+
     exit(k);
 }
 
@@ -167,6 +170,7 @@ usage(void)
 	,"  -l                    suppress #line directives"
 	,"  -o output_file        (default \"y.tab.c\")"
 	,"  -p symbol_prefix      set symbol prefix (default \"yy\")"
+	,"  -P                    create a reentrant parser, e.g., \"%pure-parser\""
 	,"  -r                    produce separate code and table files (y.code.c)"
 	,"  -t                    add debugging support"
 	,"  -v                    write description (y.output)"
@@ -199,6 +203,10 @@ setflag(int ch)
 	lflag = 1;
 	break;
 
+    case 'P':
+	pure_parser = 1;
+	break;
+
     case 'r':
 	rflag = 1;
 	break;
@@ -214,6 +222,11 @@ setflag(int ch)
     case 'V':
 	printf("%s - %s\n", myname, VERSION);
 	exit(EXIT_SUCCESS);
+
+    case 'y':
+	/* noop for bison compatibility. byacc is already designed to be posix
+	 * yacc compatible. */
+	break;
 
     default:
 	usage();
@@ -302,7 +315,7 @@ getargs(int argc, char *argv[])
 }
 
 char *
-allocate(unsigned n)
+allocate(size_t n)
 {
     char *p;
 
@@ -310,16 +323,14 @@ allocate(unsigned n)
     if (n)
     {
 	p = CALLOC(1, n);
-	if (!p)
-	    no_space();
+	NO_SPACE(p);
     }
     return (p);
 }
 
 #define CREATE_FILE_NAME(dest, suffix) \
 	dest = MALLOC(len + strlen(suffix) + 1); \
-	if (dest == 0) \
-	    no_space(); \
+	NO_SPACE(dest); \
 	strcpy(dest, file_prefix); \
 	strcpy(dest + len, suffix)
 
@@ -344,10 +355,9 @@ create_file_names(void)
     if (prefix != NULL)
     {
 	len = (size_t) (prefix - output_file_name);
-	file_prefix = allocated_file_prefix = MALLOC(len + 1);
-	if (file_prefix == 0)
-	    no_space();
-	strlcpy(allocated_file_prefix, output_file_name, len + 1);
+	file_prefix = MALLOC(len + 1);
+	NO_SPACE(file_prefix);
+	strncpy(file_prefix, output_file_name, len)[len] = 0;
     }
     else
 	len = strlen(file_prefix);
@@ -410,9 +420,9 @@ create_file_names(void)
 	CREATE_FILE_NAME(graph_file_name, GRAPH_SUFFIX);
     }
 
-    if (allocated_file_prefix != NULL)
+    if (prefix != NULL)
     {
-	FREE(allocated_file_prefix);
+	FREE(file_prefix);
     }
 }
 
