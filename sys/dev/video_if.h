@@ -1,4 +1,4 @@
-/* $NetBSD: video_if.h,v 1.6 2010/12/14 03:25:16 jmcneill Exp $ */
+/* $NetBSD: video_if.h,v 1.7 2010/12/24 20:54:28 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -454,6 +454,7 @@ struct video_hw_if {
 	void	(*close)(void *);     /* close hardware */
 
 	const char *	(*get_devname)(void *);
+	const char *	(*get_businfo)(void *);
 
 	int	(*enum_format)(void *, uint32_t, struct video_format *);
 	int	(*get_format)(void *, struct video_format *);

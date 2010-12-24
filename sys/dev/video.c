@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.24 2010/12/14 03:25:16 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.25 2010/12/24 20:54:28 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.24 2010/12/14 03:25:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.25 2010/12/24 20:54:28 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -71,7 +71,10 @@ int	videodebug = VIDEO_DEBUG;
 
 #define PAGE_ALIGN(a)		(((a) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 
-#define VIDEO_DRIVER_VERSION 1
+#define VIDEO_DRIVER_VERSION				\
+	(((__NetBSD_Version__ / 100000000) << 16) |	\
+	 ((__NetBSD_Version__ / 1000000 % 100) << 8) |	\
+	 (__NetBSD_Version__ / 100 % 100))
 
 /* TODO: move to sys/intr.h */
 #define IPL_VIDEO	IPL_VM
@@ -1844,12 +1847,13 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case VIDIOC_QUERYCAP:
 		cap = data;
 		memset(cap, 0, sizeof(*cap));
-		strlcpy(cap->driver, device_xname(sc->hw_dev),
+		strlcpy(cap->driver,
+			device_cfdriver(sc->hw_dev)->cd_name,
 			sizeof(cap->driver));
 		strlcpy(cap->card, hw->get_devname(sc->hw_softc),
 			sizeof(cap->card));
-		/* FIXME: bus_info is wrongly hardcoded to USB */
-		strlcpy(cap->bus_info, "USB", sizeof(cap->bus_info));
+		strlcpy(cap->bus_info, hw->get_businfo(sc->hw_softc),
+			sizeof(cap->bus_info));
 		cap->version = VIDEO_DRIVER_VERSION;
 		cap->capabilities = 0;
 		if (hw->start_transfer != NULL && hw->stop_transfer != NULL)
