@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2010/08/06 05:35:42 christos Exp $
+#	$NetBSD: Makefile,v 1.71 2010/12/24 12:41:42 skrll Exp $
 #
 
 WARNS=	4
@@ -32,6 +32,8 @@ CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 
 LIB=	pthread
+
+LDFLAGS+=	-Wl,-znodlopen
 
 #
 # NOTE: When you create a new file for libpthread, make sure that pthread.c
