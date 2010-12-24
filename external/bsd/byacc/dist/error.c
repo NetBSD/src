@@ -1,10 +1,9 @@
-/*	$NetBSD: error.c,v 1.3 2009/10/29 12:55:52 christos Exp $	*/
-/* Id: error.c,v 1.6 2008/11/24 21:30:35 tom Exp */
-
-#include "defs.h"
+/*	$NetBSD: error.c,v 1.4 2010/12/24 02:58:20 christos Exp $	*/
+/* Id: error.c,v 1.8 2010/11/24 15:10:20 tom Exp */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: error.c,v 1.3 2009/10/29 12:55:52 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.4 2010/12/24 02:58:20 christos Exp $");
+#include "defs.h"
 
 
 /* routines for printing error messages  */
@@ -38,7 +37,7 @@ unexpected_EOF(void)
     done(1);
 }
 
-void
+static void
 print_pos(char *st_line, char *st_cptr)
 {
     char *s;
@@ -47,7 +46,7 @@ print_pos(char *st_line, char *st_cptr)
 	return;
     for (s = st_line; *s != '\n'; ++s)
     {
-	if (isprint((unsigned char)*s) || *s == '\t')
+	if (isprint(UCH(*s)) || *s == '\t')
 	    putc(*s, stderr);
 	else
 	    putc('?', stderr);
