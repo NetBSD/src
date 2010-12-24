@@ -1,11 +1,9 @@
-/*	$NetBSD: ftp.tab.c,v 1.2 2009/10/29 00:56:20 christos Exp $	*/
+/*	$NetBSD: ftp.tab.c,v 1.3 2010/12/24 02:58:21 christos Exp $	*/
+
 #ifndef lint
 /* static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93"; */
-static char rcsid[] = "$NetBSD: ftp.tab.c,v 1.2 2009/10/29 00:56:20 christos Exp $";
+static char rcsid[] = "$NetBSD: ftp.tab.c,v 1.3 2010/12/24 02:58:21 christos Exp $";
 #endif
-
-#include <stdlib.h>
-#include <string.h>
 
 #define YYBYACC 1
 #define YYMAJOR 1
@@ -16,51 +14,93 @@ static char rcsid[] = "$NetBSD: ftp.tab.c,v 1.2 2009/10/29 00:56:20 christos Exp
 #define yyerrok        (yyerrflag = 0)
 #define YYRECOVERING() (yyerrflag != 0)
 
-/* compatibility with bison */
-#ifdef YYPARSE_PARAM
-/* compatibility with FreeBSD */
-#ifdef YYPARSE_PARAM_TYPE
-#define YYPARSE_DECL() yyparse(YYPARSE_PARAM_TYPE YYPARSE_PARAM)
-#else
-#define YYPARSE_DECL() yyparse(void *YYPARSE_PARAM)
-#endif
-#else
-#define YYPARSE_DECL() yyparse(void)
-#endif /* YYPARSE_PARAM */
 
-extern int YYPARSE_DECL();
-
-static int yygrowstack(void);
+#ifndef yyparse
 #define yyparse    ftp_parse
+#endif /* yyparse */
+
+#ifndef yylex
 #define yylex      ftp_lex
+#endif /* yylex */
+
+#ifndef yyerror
 #define yyerror    ftp_error
+#endif /* yyerror */
+
+#ifndef yychar
 #define yychar     ftp_char
+#endif /* yychar */
+
+#ifndef yyval
 #define yyval      ftp_val
+#endif /* yyval */
+
+#ifndef yylval
 #define yylval     ftp_lval
+#endif /* yylval */
+
+#ifndef yydebug
 #define yydebug    ftp_debug
+#endif /* yydebug */
+
+#ifndef yynerrs
 #define yynerrs    ftp_nerrs
+#endif /* yynerrs */
+
+#ifndef yyerrflag
 #define yyerrflag  ftp_errflag
-#define yyss       ftp_ss
-#define yyssp      ftp_ssp
-#define yyvs       ftp_vs
-#define yyvsp      ftp_vsp
+#endif /* yyerrflag */
+
+#ifndef yylhs
 #define yylhs      ftp_lhs
+#endif /* yylhs */
+
+#ifndef yylen
 #define yylen      ftp_len
+#endif /* yylen */
+
+#ifndef yydefred
 #define yydefred   ftp_defred
+#endif /* yydefred */
+
+#ifndef yydgoto
 #define yydgoto    ftp_dgoto
+#endif /* yydgoto */
+
+#ifndef yysindex
 #define yysindex   ftp_sindex
+#endif /* yysindex */
+
+#ifndef yyrindex
 #define yyrindex   ftp_rindex
+#endif /* yyrindex */
+
+#ifndef yygindex
 #define yygindex   ftp_gindex
+#endif /* yygindex */
+
+#ifndef yytable
 #define yytable    ftp_table
+#endif /* yytable */
+
+#ifndef yycheck
 #define yycheck    ftp_check
+#endif /* yycheck */
+
+#ifndef yyname
 #define yyname     ftp_name
+#endif /* yyname */
+
+#ifndef yyrule
 #define yyrule     ftp_rule
+#endif /* yyrule */
 #define YYPREFIX "ftp_"
+
+#define YYPURE 0
+
 #line 26 "ftp.y"
 
-#ifndef lint
-static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
-#endif /* not lint */
+/* sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89"; */
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -69,6 +109,8 @@ static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
 
 #include <arpa/ftp.h>
 
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
 #include <ctype.h>
@@ -76,7 +118,9 @@ static char sccsid[] = "@(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";
 #include <setjmp.h>
 #include <syslog.h>
 #include <sys/stat.h>
+#include <string.h>
 #include <time.h>
+#include <assert.h>
 
 extern	struct sockaddr_in data_dest;
 extern	int logged_in;
@@ -95,7 +139,30 @@ extern	char *globerr;
 extern	int usedefault;
 extern  int transflag;
 extern  char tmpline[];
-char	**glob();
+
+extern char **glob(char *);
+extern char *renamefrom(char *);
+extern void cwd(const char *);
+
+extern void dologout(int);
+extern void fatal(const char *);
+extern void makedir(const char *);
+extern void nack(const char *);
+extern void pass(const char *);
+extern void passive(void);
+extern void pwd(void);
+extern void removedir(char *);
+extern void renamecmd(char *, char *);
+extern void retrieve(const char *, const char *);
+extern void send_file_list(const char *);
+extern void statcmd(void);
+extern void statfilecmd(const char *);
+extern void store(char *, const char *, int);
+extern void user(const char *);
+
+extern void perror_reply(int, const char *, ...);
+extern void reply(int, const char *, ...);
+extern void lreply(int, const char *, ...);
 
 static	int cmd_type;
 static	int cmd_form;
@@ -103,8 +170,49 @@ static	int cmd_bytesz;
 char	cbuf[512];
 char	*fromname;
 
-char	*index();
-#line 106 "ftp.tab.c"
+
+
+static char * copy(const char *);
+
+static void
+yyerror(const char *msg)
+{
+	perror(msg);
+}
+#line 180 "ftp.tab.c"
+
+#ifndef YYSTYPE
+typedef int YYSTYPE;
+#endif
+
+/* compatibility with bison */
+#ifdef YYPARSE_PARAM
+/* compatibility with FreeBSD */
+# ifdef YYPARSE_PARAM_TYPE
+#  define YYPARSE_DECL() yyparse(YYPARSE_PARAM_TYPE YYPARSE_PARAM)
+# else
+#  define YYPARSE_DECL() yyparse(void *YYPARSE_PARAM)
+# endif
+#else
+# define YYPARSE_DECL() yyparse(void)
+#endif
+
+/* Parameters sent to lex. */
+#ifdef YYLEX_PARAM
+# define YYLEX_DECL() yylex(void *YYLEX_PARAM)
+# define YYLEX yylex(YYLEX_PARAM)
+#else
+# define YYLEX_DECL() yylex(void)
+# define YYLEX yylex()
+#endif
+
+/* Parameters sent to yyerror. */
+#define YYERROR_DECL() yyerror(const char *s)
+#define YYERROR_CALL(msg) yyerror(msg)
+
+extern int YYPARSE_DECL();
+extern int YYLEX_DECL();
+
 #define A 257
 #define B 258
 #define C 259
@@ -312,7 +420,7 @@ static const short ftp_check[] = {                       89,
 #endif
 #define YYMAXTOKEN 319
 #if YYDEBUG
-static const char *ftp_name[] = {
+static const char *yyname[] = {
 
 "end-of-file",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -327,7 +435,7 @@ static const char *ftp_name[] = {
 "DELE","CWD","LIST","NLST","SITE","STAT","HELP","NOOP","MKD","RMD","PWD","CDUP",
 "STOU","SMNT","SYST","SIZE","MDTM","UMASK","IDLE","CHMOD","LEXERR",
 };
-static const char *ftp_rule[] = {
+static const char *yyrule[] = {
 "$accept : cmd_list",
 "cmd_list :",
 "cmd_list : cmd_list cmd",
@@ -405,13 +513,6 @@ static const char *ftp_rule[] = {
 
 };
 #endif
-#ifndef YYSTYPE
-typedef int YYSTYPE;
-#endif
-#if YYDEBUG
-#include <stdio.h>
-#endif
-
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
 #undef YYMAXDEPTH
@@ -429,21 +530,27 @@ typedef int YYSTYPE;
 
 int      yydebug;
 int      yynerrs;
+
+typedef struct {
+    unsigned stacksize;
+    short    *s_base;
+    short    *s_mark;
+    short    *s_last;
+    YYSTYPE  *l_base;
+    YYSTYPE  *l_mark;
+} YYSTACKDATA;
 int      yyerrflag;
 int      yychar;
-short   *yyssp;
-YYSTYPE *yyvsp;
 YYSTYPE  yyval;
 YYSTYPE  yylval;
 
 /* variables for the parser stack */
-static short   *yyss;
-static short   *yysslim;
-static YYSTYPE *yyvs;
-static unsigned yystacksize;
-#line 658 "ftp.y"
+static YYSTACKDATA yystack;
+#line 688 "ftp.y"
 
 extern jmp_buf errcatch;
+
+static void upper(char *);
 
 #define	CMD	0	/* beginning of command */
 #define	ARGS	1	/* expect miscellaneous arguments */
@@ -456,11 +563,11 @@ extern jmp_buf errcatch;
 #define	NSTR	8	/* Number followed by a string */
 
 struct tab {
-	char	*name;
+	const char *name;
 	short	token;
 	short	state;
 	short	implemented;	/* 1 if command is implemented */
-	char	*help;
+	const char *help;
 };
 
 struct tab cmdtab[] = {		/* In order defined in RFC 765 */
@@ -511,7 +618,7 @@ struct tab cmdtab[] = {		/* In order defined in RFC 765 */
 	{ "STOU", STOU, STR1, 1,	"<sp> file-name" },
 	{ "SIZE", SIZE, OSTR, 1,	"<sp> path-name" },
 	{ "MDTM", MDTM, OSTR, 1,	"<sp> path-name" },
-	{ NULL,   0,    0,    0,	0 }
+	{ 0,   0,    0,    0,	0 }
 };
 
 struct tab sitetab[] = {
@@ -519,16 +626,14 @@ struct tab sitetab[] = {
 	{ "IDLE", IDLE, ARGS, 1,	"[ <sp> maximum-idle-time ]" },
 	{ "CHMOD", CHMOD, NSTR, 1,	"<sp> mode <sp> file-name" },
 	{ "HELP", HELP, OSTR, 1,	"[ <sp> <string> ]" },
-	{ NULL,   0,    0,    0,	0 }
+	{ 0,   0,    0,    0,	0 }
 };
 
-struct tab *
-lookup(p, cmd)
-	register struct tab *p;
-	char *cmd;
+static struct tab *
+lookup(struct tab *p, char *cmd)
 {
 
-	for (; p->name != NULL; p++)
+	for (; p->name != 0; p++)
 		if (strcmp(cmd, p->name) == 0)
 			return (p);
 	return (0);
@@ -537,14 +642,12 @@ lookup(p, cmd)
 #include <arpa/telnet.h>
 
 /*
- * getline - a hacked up version of fgets to ignore TELNET escape codes.
+ * get_line - a hacked up version of fgets to ignore TELNET escape codes.
  */
-char *
-getline(s, n, iop)
-	char *s;
-	register FILE *iop;
+static char *
+get_line(char *s, int n, FILE *iop)
 {
-	register c;
+	register int c;
 	register char *cs;
 
 	cs = s;
@@ -552,7 +655,7 @@ getline(s, n, iop)
 	for (c = 0; tmpline[c] != '\0' && --n > 0; ++c) {
 		*cs++ = tmpline[c];
 		if (tmpline[c] == '\n') {
-			*cs++ = '\0';
+			*cs = '\0';
 			if (debug)
 				syslog(LOG_DEBUG, "command: %s", s);
 			tmpline[0] = '\0';
@@ -591,20 +694,19 @@ getline(s, n, iop)
 			break;
 	}
 	if (c == EOF && cs == s)
-		return (NULL);
-	*cs++ = '\0';
+		return (0);
+	*cs = '\0';
 	if (debug)
 		syslog(LOG_DEBUG, "command: %s", s);
 	return (s);
 }
 
-static int
-toolong()
+static void
+toolong(int sig)
 {
 	time_t now;
-	extern char *ctime();
-	extern time_t time();
 
+	(void) sig;
 	reply(421,
 	  "Timeout (%d seconds): closing control connection.", timeout);
 	(void) time(&now);
@@ -616,14 +718,14 @@ toolong()
 	dologout(1);
 }
 
-yylex()
+int
+yylex(void)
 {
 	static int cpos, state;
 	register char *cp, *cp2;
 	register struct tab *p;
 	int n;
-	char c, *strpbrk();
-	char *copy();
+	char c;
 
 	for (;;) {
 		switch (state) {
@@ -631,16 +733,16 @@ yylex()
 		case CMD:
 			(void) signal(SIGALRM, toolong);
 			(void) alarm((unsigned) timeout);
-			if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
+			if (get_line(cbuf, sizeof(cbuf)-1, stdin) == 0) {
 				reply(221, "You could at least say goodbye.");
 				dologout(0);
 			}
 			(void) alarm(0);
 #ifdef SETPROCTITLE
-			if (strncasecmp(cbuf, "PASS", 4) != NULL)
+			if (strncasecmp(cbuf, "PASS", 4) != 0)
 				setproctitle("%s: %s", proctitle, cbuf);
 #endif /* SETPROCTITLE */
-			if ((cp = index(cbuf, '\r'))) {
+			if ((cp = strchr(cbuf, '\r'))) {
 				*cp++ = '\n';
 				*cp = '\0';
 			}
@@ -660,7 +762,7 @@ yylex()
 					/* NOTREACHED */
 				}
 				state = p->state;
-				*(char **)&yylval = p->name;
+				*(const char **)(&yylval) = p->name;
 				return (p->token);
 			}
 			break;
@@ -686,7 +788,7 @@ yylex()
 					/* NOTREACHED */
 				}
 				state = p->state;
-				*(char **)&yylval = p->name;
+				*(const char **)(&yylval) = p->name;
 				return (p->token);
 			}
 			state = CMD;
@@ -704,7 +806,10 @@ yylex()
 		dostr1:
 			if (cbuf[cpos] == ' ') {
 				cpos++;
-				state = state == OSTR ? STR2 : ++state;
+				if (state == OSTR)
+					state = STR2;
+				else
+					++state;
 				return (SP);
 			}
 			break;
@@ -834,8 +939,8 @@ yylex()
 	}
 }
 
-upper(s)
-	register char *s;
+static void
+upper(char *s)
 {
 	while (*s != '\0') {
 		if (islower(*s))
@@ -844,34 +949,32 @@ upper(s)
 	}
 }
 
-char *
-copy(s)
-	char *s;
+static char *
+copy(const char *s)
 {
 	char *p;
-	extern char *malloc(), *strcpy();
 
-	p = malloc((unsigned) strlen(s) + 1);
-	if (p == NULL)
+	p = (char * )malloc(strlen(s) + 1);
+	if (p == 0)
 		fatal("Ran out of memory.");
-	(void) strcpy(p, s);
+	else
+		(void) strcpy(p, s);
 	return (p);
 }
 
-help(ctab, s)
-	struct tab *ctab;
-	char *s;
+static void
+help(struct tab *ctab, char *s)
 {
 	register struct tab *c;
 	register int width, NCMDS;
-	char *type;
+	const char *help_type;
 
 	if (ctab == sitetab)
-		type = "SITE ";
+		help_type = "SITE ";
 	else
-		type = "";
+		help_type = "";
 	width = 0, NCMDS = 0;
-	for (c = ctab; c->name != NULL; c++) {
+	for (c = ctab; c->name != 0; c++) {
 		int len = strlen(c->name);
 
 		if (len > width)
@@ -884,7 +987,7 @@ help(ctab, s)
 		int columns, lines;
 
 		lreply(214, "The following %scommands are recognized %s.",
-		    type, "(* =>'s unimplemented)");
+		    help_type, "(* =>'s unimplemented)");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
@@ -893,6 +996,7 @@ help(ctab, s)
 			printf("   ");
 			for (j = 0; j < columns; j++) {
 				c = ctab + j * lines + i;
+				assert(c->name != 0);
 				printf("%s%c", c->name,
 					c->implemented ? ' ' : '*');
 				if (c + lines >= &ctab[NCMDS])
@@ -916,14 +1020,14 @@ help(ctab, s)
 		return;
 	}
 	if (c->implemented)
-		reply(214, "Syntax: %s%s %s", type, c->name, c->help);
+		reply(214, "Syntax: %s%s %s", help_type, c->name, c->help);
 	else
-		reply(214, "%s%-*s\t%s; unimplemented.", type, width,
+		reply(214, "%s%-*s\t%s; unimplemented.", help_type, width,
 		    c->name, c->help);
 }
 
-sizecmd(filename)
-char *filename;
+static void
+sizecmd(char *filename)
 {
 	switch (type) {
 	case TYPE_L:
@@ -940,7 +1044,7 @@ char *filename;
 		register int c, count;
 		struct stat stbuf;
 		fin = fopen(filename, "r");
-		if (fin == NULL) {
+		if (fin == 0) {
 			perror_reply(550, filename);
 			return;
 		}
@@ -965,43 +1069,64 @@ char *filename;
 		reply(504, "SIZE not implemented for Type %c.", "?AEIL"[type]);
 	}
 }
-#line 967 "ftp.tab.c"
+#line 1070 "ftp.tab.c"
+
+#if YYDEBUG
+#include <stdio.h>		/* needed for printf */
+#endif
+
+#include <stdlib.h>	/* needed for malloc, etc */
+#include <string.h>	/* needed for memset */
+
 /* allocate initial stack or double stack size, up to YYMAXDEPTH */
-static int yygrowstack(void)
+static int yygrowstack(YYSTACKDATA *data)
 {
     int i;
     unsigned newsize;
     short *newss;
     YYSTYPE *newvs;
 
-    if ((newsize = yystacksize) == 0)
+    if ((newsize = data->stacksize) == 0)
         newsize = YYINITSTACKSIZE;
     else if (newsize >= YYMAXDEPTH)
         return -1;
     else if ((newsize *= 2) > YYMAXDEPTH)
         newsize = YYMAXDEPTH;
 
-    i = yyssp - yyss;
-    newss = (yyss != 0)
-          ? (short *)realloc(yyss, newsize * sizeof(*newss))
+    i = data->s_mark - data->s_base;
+    newss = (data->s_base != 0)
+          ? (short *)realloc(data->s_base, newsize * sizeof(*newss))
           : (short *)malloc(newsize * sizeof(*newss));
     if (newss == 0)
         return -1;
 
-    yyss  = newss;
-    yyssp = newss + i;
-    newvs = (yyvs != 0)
-          ? (YYSTYPE *)realloc(yyvs, newsize * sizeof(*newvs))
+    data->s_base = newss;
+    data->s_mark = newss + i;
+
+    newvs = (data->l_base != 0)
+          ? (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs))
           : (YYSTYPE *)malloc(newsize * sizeof(*newvs));
     if (newvs == 0)
         return -1;
 
-    yyvs = newvs;
-    yyvsp = newvs + i;
-    yystacksize = newsize;
-    yysslim = yyss + newsize - 1;
+    data->l_base = newvs;
+    data->l_mark = newvs + i;
+
+    data->stacksize = newsize;
+    data->s_last = data->s_base + newsize - 1;
     return 0;
 }
+
+#if YYPURE || defined(YY_NO_LEAKS)
+static void yyfreestack(YYSTACKDATA *data)
+{
+    free(data->s_base);
+    free(data->l_base);
+    memset(data, 0, sizeof(*data));
+}
+#else
+#define yyfreestack(data) /* nothing */
+#endif
 
 #define YYABORT  goto yyabort
 #define YYREJECT goto yyabort
@@ -1028,17 +1153,21 @@ YYPARSE_DECL()
     yychar = YYEMPTY;
     yystate = 0;
 
-    if (yyss == NULL && yygrowstack()) goto yyoverflow;
-    yyssp = yyss;
-    yyvsp = yyvs;
+#if YYPURE
+    memset(&yystack, 0, sizeof(yystack));
+#endif
+
+    if (yystack.s_base == NULL && yygrowstack(&yystack)) goto yyoverflow;
+    yystack.s_mark = yystack.s_base;
+    yystack.l_mark = yystack.l_base;
     yystate = 0;
-    *yyssp = 0;
+    *yystack.s_mark = 0;
 
 yyloop:
     if ((yyn = yydefred[yystate]) != 0) goto yyreduce;
     if (yychar < 0)
     {
-        if ((yychar = yylex()) < 0) yychar = 0;
+        if ((yychar = YYLEX) < 0) yychar = 0;
 #if YYDEBUG
         if (yydebug)
         {
@@ -1058,13 +1187,13 @@ yyloop:
             printf("%sdebug: state %d, shifting to state %d\n",
                     YYPREFIX, yystate, yytable[yyn]);
 #endif
-        if (yyssp >= yysslim && yygrowstack())
+        if (yystack.s_mark >= yystack.s_last && yygrowstack(&yystack))
         {
             goto yyoverflow;
         }
         yystate = yytable[yyn];
-        *++yyssp = yytable[yyn];
-        *++yyvsp = yylval;
+        *++yystack.s_mark = yytable[yyn];
+        *++yystack.l_mark = yylval;
         yychar = YYEMPTY;
         if (yyerrflag > 0)  --yyerrflag;
         goto yyloop;
@@ -1090,21 +1219,21 @@ yyinrecovery:
         yyerrflag = 3;
         for (;;)
         {
-            if ((yyn = yysindex[*yyssp]) && (yyn += YYERRCODE) >= 0 &&
+            if ((yyn = yysindex[*yystack.s_mark]) && (yyn += YYERRCODE) >= 0 &&
                     yyn <= YYTABLESIZE && yycheck[yyn] == YYERRCODE)
             {
 #if YYDEBUG
                 if (yydebug)
                     printf("%sdebug: state %d, error recovery shifting\
- to state %d\n", YYPREFIX, *yyssp, yytable[yyn]);
+ to state %d\n", YYPREFIX, *yystack.s_mark, yytable[yyn]);
 #endif
-                if (yyssp >= yysslim && yygrowstack())
+                if (yystack.s_mark >= yystack.s_last && yygrowstack(&yystack))
                 {
                     goto yyoverflow;
                 }
                 yystate = yytable[yyn];
-                *++yyssp = yytable[yyn];
-                *++yyvsp = yylval;
+                *++yystack.s_mark = yytable[yyn];
+                *++yystack.l_mark = yylval;
                 goto yyloop;
             }
             else
@@ -1112,11 +1241,11 @@ yyinrecovery:
 #if YYDEBUG
                 if (yydebug)
                     printf("%sdebug: error recovery discarding state %d\n",
-                            YYPREFIX, *yyssp);
+                            YYPREFIX, *yystack.s_mark);
 #endif
-                if (yyssp <= yyss) goto yyabort;
-                --yyssp;
-                --yyvsp;
+                if (yystack.s_mark <= yystack.s_base) goto yyabort;
+                --yystack.s_mark;
+                --yystack.l_mark;
             }
         }
     }
@@ -1145,33 +1274,33 @@ yyreduce:
 #endif
     yym = yylen[yyn];
     if (yym)
-        yyval = yyvsp[1-yym];
+        yyval = yystack.l_mark[1-yym];
     else
         memset(&yyval, 0, sizeof yyval);
     switch (yyn)
     {
 case 2:
-#line 99 "ftp.y"
+#line 132 "ftp.y"
 	{
 			fromname = (char *) 0;
 		}
 break;
 case 4:
-#line 106 "ftp.y"
+#line 139 "ftp.y"
 	{
-			user((char *) yyvsp[-1]);
-			free((char *) yyvsp[-1]);
+			user((char *) yystack.l_mark[-1]);
+			free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 5:
-#line 111 "ftp.y"
+#line 144 "ftp.y"
 	{
-			pass((char *) yyvsp[-1]);
-			free((char *) yyvsp[-1]);
+			pass((char *) yystack.l_mark[-1]);
+			free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 6:
-#line 116 "ftp.y"
+#line 149 "ftp.y"
 	{
 			usedefault = 0;
 			if (pdata >= 0) {
@@ -1182,13 +1311,13 @@ case 6:
 		}
 break;
 case 7:
-#line 125 "ftp.y"
+#line 158 "ftp.y"
 	{
 			passive();
 		}
 break;
 case 8:
-#line 129 "ftp.y"
+#line 162 "ftp.y"
 	{
 			switch (cmd_type) {
 
@@ -1225,9 +1354,9 @@ case 8:
 		}
 break;
 case 9:
-#line 164 "ftp.y"
+#line 197 "ftp.y"
 	{
-			switch (yyvsp[-1]) {
+			switch (yystack.l_mark[-1]) {
 
 			case STRU_F:
 				reply(200, "STRU F ok.");
@@ -1239,9 +1368,9 @@ case 9:
 		}
 break;
 case 10:
-#line 176 "ftp.y"
+#line 209 "ftp.y"
 	{
-			switch (yyvsp[-1]) {
+			switch (yystack.l_mark[-1]) {
 
 			case MODE_S:
 				reply(200, "MODE S ok.");
@@ -1253,148 +1382,148 @@ case 10:
 		}
 break;
 case 11:
-#line 188 "ftp.y"
+#line 221 "ftp.y"
 	{
 			reply(202, "ALLO command ignored.");
 		}
 break;
 case 12:
-#line 192 "ftp.y"
+#line 225 "ftp.y"
 	{
 			reply(202, "ALLO command ignored.");
 		}
 break;
 case 13:
-#line 196 "ftp.y"
+#line 229 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				retrieve((char *) 0, (char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				retrieve((char *) 0, (char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 14:
-#line 203 "ftp.y"
+#line 236 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				store((char *) yyvsp[-1], "w", 0);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				store((char *) yystack.l_mark[-1], "w", 0);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 15:
-#line 210 "ftp.y"
+#line 243 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				store((char *) yyvsp[-1], "a", 0);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				store((char *) yystack.l_mark[-1], "a", 0);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 16:
-#line 217 "ftp.y"
+#line 250 "ftp.y"
 	{
-			if (yyvsp[-1])
+			if (yystack.l_mark[-1])
 				send_file_list(".");
 		}
 break;
 case 17:
-#line 222 "ftp.y"
+#line 255 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL) 
-				send_file_list((char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0) 
+				send_file_list((char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 18:
-#line 229 "ftp.y"
+#line 262 "ftp.y"
 	{
-			if (yyvsp[-1])
+			if (yystack.l_mark[-1])
 				retrieve("/bin/ls -lgA", "");
 		}
 break;
 case 19:
-#line 234 "ftp.y"
+#line 267 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				retrieve("/bin/ls -lgA %s", (char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				retrieve("/bin/ls -lgA %s", (char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 20:
-#line 241 "ftp.y"
+#line 274 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				statfilecmd((char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				statfilecmd((char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 21:
-#line 248 "ftp.y"
+#line 281 "ftp.y"
 	{
 			statcmd();
 		}
 break;
 case 22:
-#line 252 "ftp.y"
+#line 285 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				delete((char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				remove((char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 23:
-#line 259 "ftp.y"
+#line 292 "ftp.y"
 	{
 			if (fromname) {
-				renamecmd(fromname, (char *) yyvsp[-1]);
+				renamecmd(fromname, (char *) yystack.l_mark[-1]);
 				free(fromname);
 				fromname = (char *) 0;
 			} else {
 				reply(503, "Bad sequence of commands.");
 			}
-			free((char *) yyvsp[-1]);
+			free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 24:
-#line 270 "ftp.y"
+#line 303 "ftp.y"
 	{
 			reply(225, "ABOR command successful.");
 		}
 break;
 case 25:
-#line 274 "ftp.y"
+#line 307 "ftp.y"
 	{
-			if (yyvsp[-1])
+			if (yystack.l_mark[-1])
 				cwd(pw->pw_dir);
 		}
 break;
 case 26:
-#line 279 "ftp.y"
+#line 312 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				cwd((char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				cwd((char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 27:
-#line 286 "ftp.y"
+#line 319 "ftp.y"
 	{
 			help(cmdtab, (char *) 0);
 		}
 break;
 case 28:
-#line 290 "ftp.y"
+#line 323 "ftp.y"
 	{
-			register char *cp = (char *)yyvsp[-1];
+			register char *cp = (char *)yystack.l_mark[-1];
 
 			if (strncasecmp(cp, "SITE", 4) == 0) {
-				cp = (char *)yyvsp[-1] + 4;
+				cp = (char *)yystack.l_mark[-1] + 4;
 				if (*cp == ' ')
 					cp++;
 				if (*cp)
@@ -1402,65 +1531,65 @@ case 28:
 				else
 					help(sitetab, (char *) 0);
 			} else
-				help(cmdtab, (char *) yyvsp[-1]);
+				help(cmdtab, (char *) yystack.l_mark[-1]);
 		}
 break;
 case 29:
-#line 305 "ftp.y"
+#line 338 "ftp.y"
 	{
 			reply(200, "NOOP command successful.");
 		}
 break;
 case 30:
-#line 309 "ftp.y"
+#line 342 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				makedir((char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				makedir((char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 31:
-#line 316 "ftp.y"
+#line 349 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				removedir((char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				removedir((char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 32:
-#line 323 "ftp.y"
+#line 356 "ftp.y"
 	{
-			if (yyvsp[-1])
+			if (yystack.l_mark[-1])
 				pwd();
 		}
 break;
 case 33:
-#line 328 "ftp.y"
+#line 361 "ftp.y"
 	{
-			if (yyvsp[-1])
+			if (yystack.l_mark[-1])
 				cwd("..");
 		}
 break;
 case 34:
-#line 333 "ftp.y"
+#line 366 "ftp.y"
 	{
 			help(sitetab, (char *) 0);
 		}
 break;
 case 35:
-#line 337 "ftp.y"
+#line 370 "ftp.y"
 	{
-			help(sitetab, (char *) yyvsp[-1]);
+			help(sitetab, (char *) yystack.l_mark[-1]);
 		}
 break;
 case 36:
-#line 341 "ftp.y"
+#line 374 "ftp.y"
 	{
 			int oldmask;
 
-			if (yyvsp[-1]) {
+			if (yystack.l_mark[-1]) {
 				oldmask = umask(0);
 				(void) umask(oldmask);
 				reply(200, "Current UMASK is %03o", oldmask);
@@ -1468,40 +1597,40 @@ case 36:
 		}
 break;
 case 37:
-#line 351 "ftp.y"
+#line 384 "ftp.y"
 	{
 			int oldmask;
 
-			if (yyvsp[-3]) {
-				if ((yyvsp[-1] == -1) || (yyvsp[-1] > 0777)) {
+			if (yystack.l_mark[-3]) {
+				if ((yystack.l_mark[-1] == -1) || (yystack.l_mark[-1] > 0777)) {
 					reply(501, "Bad UMASK value");
 				} else {
-					oldmask = umask(yyvsp[-1]);
+					oldmask = umask(yystack.l_mark[-1]);
 					reply(200,
 					    "UMASK set to %03o (was %03o)",
-					    yyvsp[-1], oldmask);
+					    yystack.l_mark[-1], oldmask);
 				}
 			}
 		}
 break;
 case 38:
-#line 366 "ftp.y"
+#line 399 "ftp.y"
 	{
-			if (yyvsp[-5] && (yyvsp[-1] != NULL)) {
-				if (yyvsp[-3] > 0777)
+			if (yystack.l_mark[-5] && (yystack.l_mark[-1] != 0)) {
+				if (yystack.l_mark[-3] > 0777)
 					reply(501,
 				"CHMOD: Mode value must be between 0 and 0777");
-				else if (chmod((char *) yyvsp[-1], yyvsp[-3]) < 0)
-					perror_reply(550, (char *) yyvsp[-1]);
+				else if (chmod((char *) yystack.l_mark[-1], yystack.l_mark[-3]) < 0)
+					perror_reply(550, (char *) yystack.l_mark[-1]);
 				else
 					reply(200, "CHMOD command successful.");
 			}
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 39:
-#line 380 "ftp.y"
+#line 413 "ftp.y"
 	{
 			reply(200,
 			    "Current IDLE time limit is %d seconds; max %d",
@@ -1509,14 +1638,14 @@ case 39:
 		}
 break;
 case 40:
-#line 386 "ftp.y"
+#line 419 "ftp.y"
 	{
-			if (yyvsp[-1] < 30 || yyvsp[-1] > maxtimeout) {
+			if (yystack.l_mark[-1] < 30 || yystack.l_mark[-1] > maxtimeout) {
 				reply(501,
 			"Maximum IDLE time must be between 30 and %d seconds",
 				    maxtimeout);
 			} else {
-				timeout = yyvsp[-1];
+				timeout = yystack.l_mark[-1];
 				(void) alarm((unsigned) timeout);
 				reply(200,
 				    "Maximum IDLE time set to %d seconds",
@@ -1525,16 +1654,16 @@ case 40:
 		}
 break;
 case 41:
-#line 400 "ftp.y"
+#line 433 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				store((char *) yyvsp[-1], "w", 1);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				store((char *) yystack.l_mark[-1], "w", 1);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 42:
-#line 407 "ftp.y"
+#line 440 "ftp.y"
 	{
 #ifdef unix
 #ifdef BSD
@@ -1549,27 +1678,26 @@ case 42:
 		}
 break;
 case 43:
-#line 428 "ftp.y"
+#line 461 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL)
-				sizecmd((char *) yyvsp[-1]);
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0)
+				sizecmd((char *) yystack.l_mark[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 44:
-#line 445 "ftp.y"
+#line 478 "ftp.y"
 	{
-			if (yyvsp[-3] && yyvsp[-1] != NULL) {
+			if (yystack.l_mark[-3] && yystack.l_mark[-1] != 0) {
 				struct stat stbuf;
-				if (stat((char *) yyvsp[-1], &stbuf) < 0)
-					perror_reply(550, "%s", (char *) yyvsp[-1]);
+				if (stat((char *) yystack.l_mark[-1], &stbuf) < 0)
+					perror_reply(550, "%s", (char *) yystack.l_mark[-1]);
 				else if ((stbuf.st_mode&S_IFMT) != S_IFREG) {
 					reply(550, "%s: not a plain file.",
-						(char *) yyvsp[-1]);
+						(char *) yystack.l_mark[-1]);
 				} else {
 					register struct tm *t;
-					struct tm *gmtime();
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
 					    "19%02d%02d%02d%02d%02d%02d",
@@ -1577,184 +1705,182 @@ case 44:
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
 			}
-			if (yyvsp[-1] != NULL)
-				free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-1] != 0)
+				free((char *) yystack.l_mark[-1]);
 		}
 break;
 case 45:
-#line 467 "ftp.y"
+#line 499 "ftp.y"
 	{
 			reply(221, "Goodbye.");
 			dologout(0);
 		}
 break;
 case 46:
-#line 472 "ftp.y"
+#line 504 "ftp.y"
 	{
 			yyerrok;
 		}
 break;
 case 47:
-#line 477 "ftp.y"
+#line 509 "ftp.y"
 	{
-			char *renamefrom();
-
-			if (yyvsp[-3] && yyvsp[-1]) {
-				fromname = renamefrom((char *) yyvsp[-1]);
-				if (fromname == (char *) 0 && yyvsp[-1]) {
-					free((char *) yyvsp[-1]);
+			if (yystack.l_mark[-3] && yystack.l_mark[-1]) {
+				fromname = renamefrom((char *) yystack.l_mark[-1]);
+				if (fromname == (char *) 0 && yystack.l_mark[-1]) {
+					free((char *) yystack.l_mark[-1]);
 				}
 			}
 		}
 break;
 case 49:
-#line 493 "ftp.y"
+#line 523 "ftp.y"
 	{
-			*(char **)&(yyval) = "";
+			*(const char **)(&(yyval)) = "";
 		}
 break;
 case 52:
-#line 504 "ftp.y"
+#line 534 "ftp.y"
 	{
 			register char *a, *p;
 
 			a = (char *)&data_dest.sin_addr;
-			a[0] = yyvsp[-10]; a[1] = yyvsp[-8]; a[2] = yyvsp[-6]; a[3] = yyvsp[-4];
+			a[0] = yystack.l_mark[-10]; a[1] = yystack.l_mark[-8]; a[2] = yystack.l_mark[-6]; a[3] = yystack.l_mark[-4];
 			p = (char *)&data_dest.sin_port;
-			p[0] = yyvsp[-2]; p[1] = yyvsp[0];
+			p[0] = yystack.l_mark[-2]; p[1] = yystack.l_mark[0];
 			data_dest.sin_family = AF_INET;
 		}
 break;
 case 53:
-#line 516 "ftp.y"
+#line 546 "ftp.y"
 	{
 		yyval = FORM_N;
 	}
 break;
 case 54:
-#line 520 "ftp.y"
+#line 550 "ftp.y"
 	{
 		yyval = FORM_T;
 	}
 break;
 case 55:
-#line 524 "ftp.y"
+#line 554 "ftp.y"
 	{
 		yyval = FORM_C;
 	}
 break;
 case 56:
-#line 530 "ftp.y"
+#line 560 "ftp.y"
 	{
 		cmd_type = TYPE_A;
 		cmd_form = FORM_N;
 	}
 break;
 case 57:
-#line 535 "ftp.y"
+#line 565 "ftp.y"
 	{
 		cmd_type = TYPE_A;
-		cmd_form = yyvsp[0];
+		cmd_form = yystack.l_mark[0];
 	}
 break;
 case 58:
-#line 540 "ftp.y"
+#line 570 "ftp.y"
 	{
 		cmd_type = TYPE_E;
 		cmd_form = FORM_N;
 	}
 break;
 case 59:
-#line 545 "ftp.y"
+#line 575 "ftp.y"
 	{
 		cmd_type = TYPE_E;
-		cmd_form = yyvsp[0];
+		cmd_form = yystack.l_mark[0];
 	}
 break;
 case 60:
-#line 550 "ftp.y"
+#line 580 "ftp.y"
 	{
 		cmd_type = TYPE_I;
 	}
 break;
 case 61:
-#line 554 "ftp.y"
+#line 584 "ftp.y"
 	{
 		cmd_type = TYPE_L;
 		cmd_bytesz = NBBY;
 	}
 break;
 case 62:
-#line 559 "ftp.y"
+#line 589 "ftp.y"
 	{
 		cmd_type = TYPE_L;
-		cmd_bytesz = yyvsp[0];
+		cmd_bytesz = yystack.l_mark[0];
 	}
 break;
 case 63:
-#line 565 "ftp.y"
+#line 595 "ftp.y"
 	{
 		cmd_type = TYPE_L;
-		cmd_bytesz = yyvsp[0];
+		cmd_bytesz = yystack.l_mark[0];
 	}
 break;
 case 64:
-#line 572 "ftp.y"
+#line 602 "ftp.y"
 	{
 		yyval = STRU_F;
 	}
 break;
 case 65:
-#line 576 "ftp.y"
+#line 606 "ftp.y"
 	{
 		yyval = STRU_R;
 	}
 break;
 case 66:
-#line 580 "ftp.y"
+#line 610 "ftp.y"
 	{
 		yyval = STRU_P;
 	}
 break;
 case 67:
-#line 586 "ftp.y"
+#line 616 "ftp.y"
 	{
 		yyval = MODE_S;
 	}
 break;
 case 68:
-#line 590 "ftp.y"
+#line 620 "ftp.y"
 	{
 		yyval = MODE_B;
 	}
 break;
 case 69:
-#line 594 "ftp.y"
+#line 624 "ftp.y"
 	{
 		yyval = MODE_C;
 	}
 break;
 case 70:
-#line 600 "ftp.y"
+#line 630 "ftp.y"
 	{
 		/*
 		 * Problem: this production is used for all pathname
 		 * processing, but only gives a 550 error reply.
 		 * This is a valid reply in some cases but not in others.
 		 */
-		if (logged_in && yyvsp[0] && strncmp((char *) yyvsp[0], "~", 1) == 0) {
-			*(char **)&(yyval) = *glob((char *) yyvsp[0]);
-			if (globerr != NULL) {
+		if (logged_in && yystack.l_mark[0] && strncmp((char *) yystack.l_mark[0], "~", 1) == 0) {
+			*(char **)&(yyval) = *glob((char *) yystack.l_mark[0]);
+			if (globerr != 0) {
 				reply(550, globerr);
-				yyval = NULL;
+				yyval = 0;
 			}
-			free((char *) yyvsp[0]);
+			free((char *) yystack.l_mark[0]);
 		} else
-			yyval = yyvsp[0];
+			yyval = yystack.l_mark[0];
 	}
 break;
 case 72:
-#line 622 "ftp.y"
+#line 652 "ftp.y"
 	{
 		register int ret, dec, multby, digit;
 
@@ -1762,7 +1888,7 @@ case 72:
 		 * Convert a number that was read as decimal number
 		 * to what it would be if it had been read as octal.
 		 */
-		dec = yyvsp[0];
+		dec = yystack.l_mark[0];
 		multby = 1;
 		ret = 0;
 		while (dec) {
@@ -1779,7 +1905,7 @@ case 72:
 	}
 break;
 case 73:
-#line 647 "ftp.y"
+#line 677 "ftp.y"
 	{
 		if (logged_in)
 			yyval = 1;
@@ -1789,11 +1915,11 @@ case 73:
 		}
 	}
 break;
-#line 1791 "ftp.tab.c"
+#line 1916 "ftp.tab.c"
     }
-    yyssp -= yym;
-    yystate = *yyssp;
-    yyvsp -= yym;
+    yystack.s_mark -= yym;
+    yystate = *yystack.s_mark;
+    yystack.l_mark -= yym;
     yym = yylhs[yyn];
     if (yystate == 0 && yym == 0)
     {
@@ -1803,11 +1929,11 @@ break;
  state %d\n", YYPREFIX, YYFINAL);
 #endif
         yystate = YYFINAL;
-        *++yyssp = YYFINAL;
-        *++yyvsp = yyval;
+        *++yystack.s_mark = YYFINAL;
+        *++yystack.l_mark = yyval;
         if (yychar < 0)
         {
-            if ((yychar = yylex()) < 0) yychar = 0;
+            if ((yychar = YYLEX) < 0) yychar = 0;
 #if YYDEBUG
             if (yydebug)
             {
@@ -1830,22 +1956,24 @@ break;
 #if YYDEBUG
     if (yydebug)
         printf("%sdebug: after reduction, shifting from state %d \
-to state %d\n", YYPREFIX, *yyssp, yystate);
+to state %d\n", YYPREFIX, *yystack.s_mark, yystate);
 #endif
-    if (yyssp >= yysslim && yygrowstack())
+    if (yystack.s_mark >= yystack.s_last && yygrowstack(&yystack))
     {
         goto yyoverflow;
     }
-    *++yyssp = (short) yystate;
-    *++yyvsp = yyval;
+    *++yystack.s_mark = (short) yystate;
+    *++yystack.l_mark = yyval;
     goto yyloop;
 
 yyoverflow:
     yyerror("yacc stack overflow");
 
 yyabort:
+    yyfreestack(&yystack);
     return (1);
 
 yyaccept:
+    yyfreestack(&yystack);
     return (0);
 }
