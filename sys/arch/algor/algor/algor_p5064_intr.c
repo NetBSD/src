@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.23.16.2 2010/02/28 03:32:23 matt Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.23.16.3 2010/12/24 07:32:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.23.16.2 2010/02/28 03:32:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.23.16.3 2010/12/24 07:32:26 matt Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -112,7 +112,7 @@ struct p5064_irqreg p5064_irqsteer[NSTEERREG] = {
 #define	IRQMAP_ISABASE		(IRQMAP_LOCBASE + NLOCIRQS)
 #define	NIRQMAPS		(IRQMAP_ISABASE + NISAIRQS)
 
-const char *p5064_intrnames[NIRQMAPS] = {
+const char * const p5064_intrnames[NIRQMAPS] = {
 	/*
 	 * PCI INTERRUPTS
 	 */
@@ -275,13 +275,13 @@ struct p5064_cpuintr {
 };
 
 struct p5064_cpuintr p5064_cpuintrs[NINTRS];
-const char *p5064_cpuintrnames[NINTRS] = {
+const char * const p5064_cpuintrnames[NINTRS] = {
 	"int 0 (isa)",
 	"int 1 (pci)",
 	"int 2 (local)",
 };
 
-const char *p5064_intrgroups[NINTRS] = {
+const char * const p5064_intrgroups[NINTRS] = {
 	"isa",
 	"pci",
 	"local",
@@ -322,7 +322,6 @@ algor_p5064_intr_init(struct p5064_config *acp)
 		evcnt_attach_dynamic(&p5064_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", p5064_cpuintrnames[i]);
 	}
-	evcnt_attach_static(&mips_int5_evcnt);
 
 	for (i = 0; i < NIRQMAPS; i++) {
 		irqmap = &p5064_irqmap[i];
