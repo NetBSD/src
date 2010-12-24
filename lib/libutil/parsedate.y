@@ -62,32 +62,26 @@ typedef enum _MERIDIAN {
 } MERIDIAN;
 
 
-/*
-**  Global variables.  We could get rid of most of these by using a good
-**  union as the yacc stack.  (This routine was originally written before
-**  yacc had the %union construct.)  Maybe someday; right now we only use
-**  the %union very rarely.
-*/
-static const char *yyInput;
-static DSTMODE	yyDSTmode;
-static time_t	yyDayOrdinal;
-static time_t	yyDayNumber;
-static int	yyHaveDate;
-static int	yyHaveDay;
-static int	yyHaveRel;
-static int	yyHaveTime;
-static int	yyHaveZone;
-static time_t	yyTimezone;
-static time_t	yyDay;
-static time_t	yyHour;
-static time_t	yyMinutes;
-static time_t	yyMonth;
-static time_t	yySeconds;
-static time_t	yyYear;
-static MERIDIAN	yyMeridian;
-static time_t	yyRelMonth;
-static time_t	yyRelSeconds;
-
+struct dateinfo {
+	DSTMODE	yyDSTmode;
+	time_t	yyDayOrdinal;
+	time_t	yyDayNumber;
+	int	yyHaveDate;
+	int	yyHaveDay;
+	int	yyHaveRel;
+	int	yyHaveTime;
+	int	yyHaveZone;
+	time_t	yyTimezone;
+	time_t	yyDay;
+	time_t	yyHour;
+	time_t	yyMinutes;
+	time_t	yyMonth;
+	time_t	yySeconds;
+	time_t	yyYear;
+	MERIDIAN	yyMeridian;
+	time_t	yyRelMonth;
+	time_t	yyRelSeconds;
+};
 %}
 
 %union {
@@ -102,6 +96,11 @@ static time_t	yyRelSeconds;
 %type	<Number>	tSEC_UNIT tSNUMBER tUNUMBER tZONE
 %type	<Meridian>	tMERIDIAN o_merid
 
+%parse-param	{ struct dateinfo *param }
+%parse-param 	{ const char **yyInput }
+%lex-param	{ const char **yyInput }
+%pure-parser
+
 %%
 
 spec	: /* NULL */
@@ -109,43 +108,43 @@ spec	: /* NULL */
 	;
 
 item	: time {
-	    yyHaveTime++;
+	    param->yyHaveTime++;
 	}
 	| zone {
-	    yyHaveZone++;
+	    param->yyHaveZone++;
 	}
 	| date {
-	    yyHaveDate++;
+	    param->yyHaveDate++;
 	}
 	| day {
-	    yyHaveDay++;
+	    param->yyHaveDay++;
 	}
 	| rel {
-	    yyHaveRel++;
+	    param->yyHaveRel++;
 	}
 	| cvsstamp {
-	    yyHaveTime++;
-	    yyHaveDate++;
-	    yyHaveZone++;
+	    param->yyHaveTime++;
+	    param->yyHaveDate++;
+	    param->yyHaveZone++;
 	}
 	| epochdate {
-	    yyHaveTime++;
-	    yyHaveDate++;
-	    yyHaveZone++;
+	    param->yyHaveTime++;
+	    param->yyHaveDate++;
+	    param->yyHaveZone++;
 	}
 	| number
 	;
 
 cvsstamp: tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER {
-	    yyYear = $1;
-	    if (yyYear < 100) yyYear += 1900;
-	    yyMonth = $3;
-	    yyDay = $5;
-	    yyHour = $7;
-	    yyMinutes = $9;
-	    yySeconds = $11;
-	    yyDSTmode = DSToff;
-	    yyTimezone = 0;
+	    param->yyYear = $1;
+	    if (param->yyYear < 100) param->yyYear += 1900;
+	    param->yyMonth = $3;
+	    param->yyDay = $5;
+	    param->yyHour = $7;
+	    param->yyMinutes = $9;
+	    param->yySeconds = $11;
+	    param->yyDSTmode = DSToff;
+	    param->yyTimezone = 0;
 	}
 	;
 
@@ -153,205 +152,205 @@ epochdate: AT_SIGN tUNUMBER {
             time_t    when = $2;
             struct tm tmbuf;
             if (gmtime_r(&when, &tmbuf) != NULL) {
-		yyYear = tmbuf.tm_year + 1900;
-		yyMonth = tmbuf.tm_mon + 1;
-		yyDay = tmbuf.tm_mday;
+		param->yyYear = tmbuf.tm_year + 1900;
+		param->yyMonth = tmbuf.tm_mon + 1;
+		param->yyDay = tmbuf.tm_mday;
 
-		yyHour = tmbuf.tm_hour;
-		yyMinutes = tmbuf.tm_min;
-		yySeconds = tmbuf.tm_sec;
+		param->yyHour = tmbuf.tm_hour;
+		param->yyMinutes = tmbuf.tm_min;
+		param->yySeconds = tmbuf.tm_sec;
 	    } else {
-		yyYear = EPOCH;
-		yyMonth = 1;
-		yyDay = 1;
+		param->yyYear = EPOCH;
+		param->yyMonth = 1;
+		param->yyDay = 1;
 
-		yyHour = 0;
-		yyMinutes = 0;
-		yySeconds = 0;
+		param->yyHour = 0;
+		param->yyMinutes = 0;
+		param->yySeconds = 0;
 	    }
-	    yyDSTmode = DSToff;
-	    yyTimezone = 0;
+	    param->yyDSTmode = DSToff;
+	    param->yyTimezone = 0;
 	}
 	;
 
 time	: tUNUMBER tMERIDIAN {
-	    yyHour = $1;
-	    yyMinutes = 0;
-	    yySeconds = 0;
-	    yyMeridian = $2;
+	    param->yyHour = $1;
+	    param->yyMinutes = 0;
+	    param->yySeconds = 0;
+	    param->yyMeridian = $2;
 	}
 	| tUNUMBER ':' tUNUMBER o_merid {
-	    yyHour = $1;
-	    yyMinutes = $3;
-	    yySeconds = 0;
-	    yyMeridian = $4;
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yySeconds = 0;
+	    param->yyMeridian = $4;
 	}
 	| tUNUMBER ':' tUNUMBER tSNUMBER {
-	    yyHour = $1;
-	    yyMinutes = $3;
-	    yyMeridian = MER24;
-	    yyDSTmode = DSToff;
-	    yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yyMeridian = MER24;
+	    param->yyDSTmode = DSToff;
+	    param->yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
 	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER o_merid {
-	    yyHour = $1;
-	    yyMinutes = $3;
-	    yySeconds = $5;
-	    yyMeridian = $6;
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yySeconds = $5;
+	    param->yyMeridian = $6;
 	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER tSNUMBER {
-	    yyHour = $1;
-	    yyMinutes = $3;
-	    yySeconds = $5;
-	    yyMeridian = MER24;
-	    yyDSTmode = DSToff;
-	    yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yySeconds = $5;
+	    param->yyMeridian = MER24;
+	    param->yyDSTmode = DSToff;
+	    param->yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
 	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
-	    yyHour = $1;
-	    yyMinutes = $3;
-	    yySeconds = $5;
-	    yyMeridian = MER24;
-	    yyDSTmode = DSToff;
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yySeconds = $5;
+	    param->yyMeridian = MER24;
+	    param->yyDSTmode = DSToff;
 /* XXX: Do nothing with millis */
-/*	    yyTimezone = ($7 % 100 + ($7 / 100) * 60); */
+/*	    param->yyTimezone = ($7 % 100 + ($7 / 100) * 60); */
 	}
 	;
 
 zone	: tZONE {
-	    yyTimezone = $1;
-	    yyDSTmode = DSToff;
+	    param->yyTimezone = $1;
+	    param->yyDSTmode = DSToff;
 	}
 	| tDAYZONE {
-	    yyTimezone = $1;
-	    yyDSTmode = DSTon;
+	    param->yyTimezone = $1;
+	    param->yyDSTmode = DSTon;
 	}
 	|
 	  tZONE tDST {
-	    yyTimezone = $1;
-	    yyDSTmode = DSTon;
+	    param->yyTimezone = $1;
+	    param->yyDSTmode = DSTon;
 	}
 	;
 
 day	: tDAY {
-	    yyDayOrdinal = 1;
-	    yyDayNumber = $1;
+	    param->yyDayOrdinal = 1;
+	    param->yyDayNumber = $1;
 	}
 	| tDAY ',' {
-	    yyDayOrdinal = 1;
-	    yyDayNumber = $1;
+	    param->yyDayOrdinal = 1;
+	    param->yyDayNumber = $1;
 	}
 	| tUNUMBER tDAY {
-	    yyDayOrdinal = $1;
-	    yyDayNumber = $2;
+	    param->yyDayOrdinal = $1;
+	    param->yyDayNumber = $2;
 	}
 	;
 
 date	: tUNUMBER '/' tUNUMBER {
-	    yyMonth = $1;
-	    yyDay = $3;
+	    param->yyMonth = $1;
+	    param->yyDay = $3;
 	}
 	| tUNUMBER '/' tUNUMBER '/' tUNUMBER {
 	    if ($1 >= 100) {
-		yyYear = $1;
-		yyMonth = $3;
-		yyDay = $5;
+		param->yyYear = $1;
+		param->yyMonth = $3;
+		param->yyDay = $5;
 	    } else {
-		yyMonth = $1;
-		yyDay = $3;
-		yyYear = $5;
+		param->yyMonth = $1;
+		param->yyDay = $3;
+		param->yyYear = $5;
 	    }
 	}
 	| tUNUMBER tSNUMBER tSNUMBER {
 	    /* ISO 8601 format.  yyyy-mm-dd.  */
-	    yyYear = $1;
-	    yyMonth = -$2;
-	    yyDay = -$3;
+	    param->yyYear = $1;
+	    param->yyMonth = -$2;
+	    param->yyDay = -$3;
 	}
 	| tUNUMBER tMONTH tSNUMBER {
 	    /* e.g. 17-JUN-1992.  */
-	    yyDay = $1;
-	    yyMonth = $2;
-	    yyYear = -$3;
+	    param->yyDay = $1;
+	    param->yyMonth = $2;
+	    param->yyYear = -$3;
 	}
 	| tMONTH tUNUMBER {
-	    yyMonth = $1;
-	    yyDay = $2;
+	    param->yyMonth = $1;
+	    param->yyDay = $2;
 	}
 	| tMONTH tUNUMBER ',' tUNUMBER {
-	    yyMonth = $1;
-	    yyDay = $2;
-	    yyYear = $4;
+	    param->yyMonth = $1;
+	    param->yyDay = $2;
+	    param->yyYear = $4;
 	}
 	| tUNUMBER tMONTH {
-	    yyMonth = $2;
-	    yyDay = $1;
+	    param->yyMonth = $2;
+	    param->yyDay = $1;
 	}
 	| tUNUMBER tMONTH tUNUMBER {
-	    yyMonth = $2;
-	    yyDay = $1;
-	    yyYear = $3;
+	    param->yyMonth = $2;
+	    param->yyDay = $1;
+	    param->yyYear = $3;
 	}
 	;
 
 rel	: relunit tAGO {
-	    yyRelSeconds = -yyRelSeconds;
-	    yyRelMonth = -yyRelMonth;
+	    param->yyRelSeconds = -param->yyRelSeconds;
+	    param->yyRelMonth = -param->yyRelMonth;
 	}
 	| relunit
 	;
 
 relunit	: tUNUMBER tMINUTE_UNIT {
-	    yyRelSeconds += $1 * $2 * 60L;
+	    param->yyRelSeconds += $1 * $2 * 60L;
 	}
 	| tSNUMBER tMINUTE_UNIT {
-	    yyRelSeconds += $1 * $2 * 60L;
+	    param->yyRelSeconds += $1 * $2 * 60L;
 	}
 	| tMINUTE_UNIT {
-	    yyRelSeconds += $1 * 60L;
+	    param->yyRelSeconds += $1 * 60L;
 	}
 	| tSNUMBER tSEC_UNIT {
-	    yyRelSeconds += $1;
+	    param->yyRelSeconds += $1;
 	}
 	| tUNUMBER tSEC_UNIT {
-	    yyRelSeconds += $1;
+	    param->yyRelSeconds += $1;
 	}
 	| tSEC_UNIT {
-	    yyRelSeconds++;
+	    param->yyRelSeconds++;
 	}
 	| tSNUMBER tMONTH_UNIT {
-	    yyRelMonth += $1 * $2;
+	    param->yyRelMonth += $1 * $2;
 	}
 	| tUNUMBER tMONTH_UNIT {
-	    yyRelMonth += $1 * $2;
+	    param->yyRelMonth += $1 * $2;
 	}
 	| tMONTH_UNIT {
-	    yyRelMonth += $1;
+	    param->yyRelMonth += $1;
 	}
 	;
 
 number	: tUNUMBER {
-	    if (yyHaveTime && yyHaveDate && !yyHaveRel)
-		yyYear = $1;
+	    if (param->yyHaveTime && param->yyHaveDate && !param->yyHaveRel)
+		param->yyYear = $1;
 	    else {
 		if($1>10000) {
-		    yyHaveDate++;
-		    yyDay= ($1)%100;
-		    yyMonth= ($1/100)%100;
-		    yyYear = $1/10000;
+		    param->yyHaveDate++;
+		    param->yyDay= ($1)%100;
+		    param->yyMonth= ($1/100)%100;
+		    param->yyYear = $1/10000;
 		}
 		else {
-		    yyHaveTime++;
+		    param->yyHaveTime++;
 		    if ($1 < 100) {
-			yyHour = $1;
-			yyMinutes = 0;
+			param->yyHour = $1;
+			param->yyMinutes = 0;
 		    }
 		    else {
-		    	yyHour = $1 / 100;
-		    	yyMinutes = $1 % 100;
+		    	param->yyHour = $1 / 100;
+		    	param->yyMinutes = $1 % 100;
 		    }
-		    yySeconds = 0;
-		    yyMeridian = MER24;
+		    param->yySeconds = 0;
+		    param->yyMeridian = MER24;
 	        }
 	    }
 	}
@@ -368,7 +367,7 @@ o_merid	: /* NULL */ {
 %%
 
 /* Month and day table. */
-static TABLE const MonthDayTable[] = {
+static const TABLE const MonthDayTable[] = {
     { "january",	tMONTH,  1 },
     { "february",	tMONTH,  2 },
     { "march",		tMONTH,  3 },
@@ -397,7 +396,7 @@ static TABLE const MonthDayTable[] = {
 };
 
 /* Time units table. */
-static TABLE const UnitsTable[] = {
+static const TABLE const UnitsTable[] = {
     { "year",		tMONTH_UNIT,	12 },
     { "month",		tMONTH_UNIT,	1 },
     { "fortnight",	tMINUTE_UNIT,	14 * 24 * 60 },
@@ -412,7 +411,7 @@ static TABLE const UnitsTable[] = {
 };
 
 /* Assorted relative-time words. */
-static TABLE const OtherTable[] = {
+static const TABLE const OtherTable[] = {
     { "tomorrow",	tMINUTE_UNIT,	1 * 24 * 60 },
     { "yesterday",	tMINUTE_UNIT,	-1 * 24 * 60 },
     { "today",		tMINUTE_UNIT,	0 },
@@ -450,7 +449,7 @@ static TABLE const OtherTable[] = {
 
 /* The timezone table. */
 /* Some of these are commented out because a time_t can't store a float. */
-static TABLE const TimezoneTable[] = {
+static const TABLE const TimezoneTable[] = {
     { "gmt",	tZONE,     HOUR( 0) },	/* Greenwich Mean */
     { "ut",	tZONE,     HOUR( 0) },	/* Universal (Coordinated) */
     { "utc",	tZONE,     HOUR( 0) },
@@ -534,7 +533,7 @@ static TABLE const TimezoneTable[] = {
 };
 
 /* Military timezone table. */
-static TABLE const MilitaryTable[] = {
+static const TABLE const MilitaryTable[] = {
     { "a",	tZONE,	HOUR(  1) },
     { "b",	tZONE,	HOUR(  2) },
     { "c",	tZONE,	HOUR(  3) },
@@ -568,7 +567,7 @@ static TABLE const MilitaryTable[] = {
 
 /* ARGSUSED */
 static int
-yyerror(const char *s __unused)
+yyerror(struct dateinfo *param, const char **inp, const char *s __unused)
 {
   return 0;
 }
@@ -626,6 +625,7 @@ Convert(
     time_t	Hours,
     time_t	Minutes,
     time_t	Seconds,
+    time_t	Timezone,
     MERIDIAN	Meridian,
     DSTMODE	DSTmode
 )
@@ -671,9 +671,8 @@ Convert(
     if (oJulian > Julian)
 	return -1;
     oJulian = Julian;
-
-    Julian += yyTimezone * 60L;
-    if (oJulian > Julian && yyTimezone > 0)
+    Julian += Timezone * 60L;
+    if (oJulian > Julian)
 	return -1;
     oJulian = Julian;
 
@@ -738,7 +737,8 @@ RelativeDate(
 static time_t
 RelativeMonth(
     time_t	Start,
-    time_t	RelMonth
+    time_t	RelMonth,
+    time_t	Timezone
 )
 {
     struct tm	*tm;
@@ -756,12 +756,12 @@ RelativeMonth(
     return DSTcorrect(Start,
 	    Convert(Month, (time_t)tm->tm_mday, Year,
 		(time_t)tm->tm_hour, (time_t)tm->tm_min, (time_t)tm->tm_sec,
-		MER24, DSTmaybe));
+		Timezone, MER24, DSTmaybe));
 }
 
 
 static int
-LookupWord(char *buff)
+LookupWord(YYSTYPE *yylval, char *buff)
 {
     register char	*p;
     register char	*q;
@@ -775,11 +775,11 @@ LookupWord(char *buff)
 	    *p = tolower((unsigned char)*p);
 
     if (strcmp(buff, "am") == 0 || strcmp(buff, "a.m.") == 0) {
-	yylval.Meridian = MERam;
+	yylval->Meridian = MERam;
 	return tMERIDIAN;
     }
     if (strcmp(buff, "pm") == 0 || strcmp(buff, "p.m.") == 0) {
-	yylval.Meridian = MERpm;
+	yylval->Meridian = MERpm;
 	return tMERIDIAN;
     }
 
@@ -796,19 +796,19 @@ LookupWord(char *buff)
     for (tp = MonthDayTable; tp->name; tp++) {
 	if (abbrev) {
 	    if (strncmp(buff, tp->name, 3) == 0) {
-		yylval.Number = tp->value;
+		yylval->Number = tp->value;
 		return tp->type;
 	    }
 	}
 	else if (strcmp(buff, tp->name) == 0) {
-	    yylval.Number = tp->value;
+	    yylval->Number = tp->value;
 	    return tp->type;
 	}
     }
 
     for (tp = TimezoneTable; tp->name; tp++)
 	if (strcmp(buff, tp->name) == 0) {
-	    yylval.Number = tp->value;
+	    yylval->Number = tp->value;
 	    return tp->type;
 	}
 
@@ -817,7 +817,7 @@ LookupWord(char *buff)
 
     for (tp = UnitsTable; tp->name; tp++)
 	if (strcmp(buff, tp->name) == 0) {
-	    yylval.Number = tp->value;
+	    yylval->Number = tp->value;
 	    return tp->type;
 	}
 
@@ -827,7 +827,7 @@ LookupWord(char *buff)
 	buff[i] = '\0';
 	for (tp = UnitsTable; tp->name; tp++)
 	    if (strcmp(buff, tp->name) == 0) {
-		yylval.Number = tp->value;
+		yylval->Number = tp->value;
 		return tp->type;
 	    }
 	buff[i] = 's';		/* Put back for "this" in OtherTable. */
@@ -835,7 +835,7 @@ LookupWord(char *buff)
 
     for (tp = OtherTable; tp->name; tp++)
 	if (strcmp(buff, tp->name) == 0) {
-	    yylval.Number = tp->value;
+	    yylval->Number = tp->value;
 	    return tp->type;
 	}
 
@@ -843,7 +843,7 @@ LookupWord(char *buff)
     if (buff[1] == '\0' && isalpha((unsigned char)*buff)) {
 	for (tp = MilitaryTable; tp->name; tp++)
 	    if (strcmp(buff, tp->name) == 0) {
-		yylval.Number = tp->value;
+		yylval->Number = tp->value;
 		return tp->type;
 	    }
     }
@@ -858,7 +858,7 @@ LookupWord(char *buff)
     if (i)
 	for (tp = TimezoneTable; tp->name; tp++)
 	    if (strcmp(buff, tp->name) == 0) {
-		yylval.Number = tp->value;
+		yylval->Number = tp->value;
 		return tp->type;
 	    }
 
@@ -867,51 +867,54 @@ LookupWord(char *buff)
 
 
 static int
-yylex(void)
+yylex(YYSTYPE *yylval, const char **yyInput)
 {
     register char	c;
     register char	*p;
     char		buff[20];
     int			Count;
     int			sign;
+    const char		*inp = *yyInput;
 
     for ( ; ; ) {
-	while (isspace((unsigned char)*yyInput))
-	    yyInput++;
+	while (isspace((unsigned char)*inp))
+	    inp++;
 
-	if (isdigit((unsigned char)(c = *yyInput)) || c == '-' || c == '+') {
+	if (isdigit((unsigned char)(c = *inp)) || c == '-' || c == '+') {
 	    if (c == '-' || c == '+') {
 		sign = c == '-' ? -1 : 1;
-		if (!isdigit((unsigned char)*++yyInput))
+		if (!isdigit((unsigned char)*++inp))
 		    /* skip the '-' sign */
 		    continue;
 	    }
 	    else
 		sign = 0;
-	    for (yylval.Number = 0; isdigit((unsigned char)(c = *yyInput++)); )
-		yylval.Number = 10 * yylval.Number + c - '0';
-	    yyInput--;
+	    for (yylval->Number = 0; isdigit((unsigned char)(c = *inp++)); )
+		yylval->Number = 10 * yylval->Number + c - '0';
 	    if (sign < 0)
-		yylval.Number = -yylval.Number;
+		yylval->Number = -yylval->Number;
+	    *yyInput = --inp;
 	    return sign ? tSNUMBER : tUNUMBER;
 	}
 	if (isalpha((unsigned char)c)) {
-	    for (p = buff; isalpha((unsigned char)(c = *yyInput++)) || c == '.'; )
+	    for (p = buff; isalpha((unsigned char)(c = *inp++)) || c == '.'; )
 		if (p < &buff[sizeof buff - 1])
 		    *p++ = c;
 	    *p = '\0';
-	    yyInput--;
-	    return LookupWord(buff);
+	    *yyInput = --inp;
+	    return LookupWord(yylval, buff);
 	}
 	if (c == '@') {
-	    yyInput++;
+	    *yyInput = ++inp;
 	    return AT_SIGN;
 	}
-	if (c != '(')
-	    return *yyInput++;
+	if (c != '(') {
+	    *yyInput = ++inp;
+	    return c;
+	}
 	Count = 0;
 	do {
-	    c = *yyInput++;
+	    c = *inp++;
 	    if (c == '\0')
 		return c;
 	    if (c == '(')
@@ -953,8 +956,8 @@ parsedate(const char *p, const time_t *now, const int *zone)
     int			zonet;
     time_t		Start;
     time_t		tod, rm;
+    struct dateinfo	param;
 
-    yyInput = p;
     if (now == NULL || zone == NULL) {
         now = &nowt;
 	zone = &zonet;
@@ -980,47 +983,48 @@ parsedate(const char *p, const time_t *now, const int *zone)
 	if ((tm = localtime_r(now, &local)) == NULL)
 	    return -1;
     }
-    yyYear = tm->tm_year + 1900;
-    yyMonth = tm->tm_mon + 1;
-    yyDay = tm->tm_mday;
-    yyTimezone = *zone;
-    yyDSTmode = DSTmaybe;
-    yyHour = 0;
-    yyMinutes = 0;
-    yySeconds = 0;
-    yyMeridian = MER24;
-    yyRelSeconds = 0;
-    yyRelMonth = 0;
-    yyHaveDate = 0;
-    yyHaveDay = 0;
-    yyHaveRel = 0;
-    yyHaveTime = 0;
-    yyHaveZone = 0;
+    param.yyYear = tm->tm_year + 1900;
+    param.yyMonth = tm->tm_mon + 1;
+    param.yyDay = tm->tm_mday;
+    param.yyTimezone = *zone;
+    param.yyDSTmode = DSTmaybe;
+    param.yyHour = 0;
+    param.yyMinutes = 0;
+    param.yySeconds = 0;
+    param.yyMeridian = MER24;
+    param.yyRelSeconds = 0;
+    param.yyRelMonth = 0;
+    param.yyHaveDate = 0;
+    param.yyHaveDay = 0;
+    param.yyHaveRel = 0;
+    param.yyHaveTime = 0;
+    param.yyHaveZone = 0;
 
-    if (yyparse()
-     || yyHaveTime > 1 || yyHaveZone > 1 || yyHaveDate > 1 || yyHaveDay > 1)
+    if (yyparse(&param, &p) || param.yyHaveTime > 1 || param.yyHaveZone > 1 ||
+	param.yyHaveDate > 1 || param.yyHaveDay > 1)
 	return -1;
 
-    if (yyHaveDate || yyHaveTime || yyHaveDay) {
-	Start = Convert(yyMonth, yyDay, yyYear, yyHour, yyMinutes, yySeconds,
-		    yyMeridian, yyDSTmode);
+    if (param.yyHaveDate || param.yyHaveTime || param.yyHaveDay) {
+	Start = Convert(param.yyMonth, param.yyDay, param.yyYear, param.yyHour,
+	    param.yyMinutes, param.yySeconds, param.yyTimezone,
+	    param.yyMeridian, param.yyDSTmode);
 	if (Start < 0)
 	    return -1;
     }
     else {
 	Start = *now;
-	if (!yyHaveRel)
+	if (!param.yyHaveRel)
 	    Start -= ((tm->tm_hour * 60L + tm->tm_min) * 60L) + tm->tm_sec;
     }
 
-    Start += yyRelSeconds;
-    rm = RelativeMonth(Start, yyRelMonth);
+    Start += param.yyRelSeconds;
+    rm = RelativeMonth(Start, param.yyRelMonth, param.yyTimezone);
     if (rm == -1)
 	return -1;
     Start += rm;
 
-    if (yyHaveDay && !yyHaveDate) {
-	tod = RelativeDate(Start, yyDayOrdinal, yyDayNumber);
+    if (param.yyHaveDay && !param.yyHaveDate) {
+	tod = RelativeDate(Start, param.yyDayOrdinal, param.yyDayNumber);
 	Start += tod;
     }
 
