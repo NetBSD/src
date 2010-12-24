@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2010/12/12 08:23:15 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 2010/12/24 16:00:13 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -189,10 +189,6 @@ extern register_t kpsw;
 
 #ifndef _LOCORE
 #ifdef _KERNEL
-
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
 
 /*
  * External definitions unique to PA-RISC cpu support.
