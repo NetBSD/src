@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.49 2010/12/22 06:13:36 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.50 2010/12/24 07:21:12 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.49 2010/12/22 06:13:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.50 2010/12/24 07:21:12 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -580,13 +580,10 @@ mips1_vector_init(const struct splsw *splsw)
 	 */
 	if (mips1_utlb_miss_end - mips1_utlb_miss > 0x80)
 		panic("startup: UTLB vector code too large");
-	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips1_utlb_miss,
-		mips1_utlb_miss_end - mips1_utlb_miss);
-
 	if (mips1_exception_end - mips1_exception > 0x80)
 		panic("startup: general exception vector code too large");
-	memcpy((void *)MIPS1_GEN_EXC_VEC, mips1_exception,
-		mips1_exception_end - mips1_exception);
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips1_utlb_miss,
+		mips1_exception_end - mips1_utlb_miss);
 
 	/*
 	 * Copy locore-function vector.
