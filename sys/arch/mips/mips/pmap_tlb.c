@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.13 2010/12/22 06:05:42 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.14 2010/12/24 07:09:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.13 2010/12/22 06:05:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.14 2010/12/24 07:09:53 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -146,9 +146,9 @@ static kmutex_t pmap_tlb0_mutex __aligned(32);
 struct pmap_tlb_info pmap_tlb0_info = {
 	.ti_name = "tlb0",
 	.ti_asid_hint = 1,
-	.ti_asid_mask = MIPS_TLB_NUM_PIDS - 1,
-	.ti_asid_max = MIPS_TLB_NUM_PIDS - 1,
-	.ti_asids_free = MIPS_TLB_NUM_PIDS - 1,
+	.ti_asid_mask = __builtin_constant_p(MIPS_TLB_NUM_PIDS) ? MIPS_TLB_NUM_PIDS - 1 : 0,
+	.ti_asid_max = __builtin_constant_p(MIPS_TLB_NUM_PIDS) ? MIPS_TLB_NUM_PIDS - 1 : 0,
+	.ti_asids_free = __builtin_constant_p(MIPS_TLB_NUM_PIDS) ? MIPS_TLB_NUM_PIDS - 1 : 0,
 	.ti_asid_bitmap[0] = 1,
 	.ti_wired = MIPS3_TLB_WIRED_UPAGES,
 	.ti_lock = &pmap_tlb0_mutex,
@@ -247,7 +247,7 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 #endif /* MULTIPROCESSOR */
 		KASSERT(ti == &pmap_tlb0_info);
 		mutex_init(ti->ti_lock, MUTEX_DEFAULT, IPL_SCHED);
-		if (!CPUISMIPSNN) {
+		if (!CPUISMIPSNN || !__builtin_constant_p(MIPS_TLB_NUM_PIDS)) {
 			ti->ti_asid_max = mips_options.mips_num_tlb_entries - 1;
 			ti->ti_asids_free = ti->ti_asid_max;
 			ti->ti_asid_mask = ti->ti_asid_max;
