@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.110 2010/11/23 11:14:02 hannken Exp $
+#	$NetBSD: INSTALL,v 1.111 2010/12/24 10:11:39 aymeric Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=4224	# 2112 KiB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	USERCONF	# userconf(4) support
