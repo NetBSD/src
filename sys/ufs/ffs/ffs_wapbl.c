@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.16 2010/12/23 14:43:37 mlelstv Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.17 2010/12/24 13:38:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.16 2010/12/23 14:43:37 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.17 2010/12/24 13:38:57 mlelstv Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -608,13 +608,15 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	if ((error = VFS_ROOT(mp, &rvp)) != 0)
 		return error;
 
-	if ((error = UFS_VALLOC(rvp, 0 | S_IFREG, NOCRED, &vp)) != 0) {
+	error = UFS_VALLOC(rvp, 0 | S_IFREG, NOCRED, &vp);
+	if (mp->mnt_flag & MNT_UPDATE) {
+		vput(rvp);
+	} else {
 		VOP_UNLOCK(rvp);
 		vgone(rvp);
-		return error;
 	}
-	VOP_UNLOCK(rvp);
-	vgone(rvp);
+	if (error != 0)
+		return error;
 
 	vp->v_type = VREG;
 	ip = VTOI(vp);
