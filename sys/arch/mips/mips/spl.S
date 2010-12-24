@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.8 2010/12/22 06:08:10 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.9 2010/12/24 07:13:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,9 +38,15 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.2.8 2010/12/22 06:08:10 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.2.9 2010/12/24 07:13:19 matt Exp $")
 
 #include "assym.h"
+
+#ifdef MIPS1
+#define	NOP_L	nop
+#else
+#define	NOP_L	/* nothing */
+#endif
 
 	.data
 	.globl	_C_LABEL(ipl_sr_map)
@@ -56,6 +62,7 @@ _C_LABEL(ipl_sr_map):
 	.word	MIPS_INT_MASK		/* IPL_HIGH */
 
 	.text
+	.set	noreorder
 /*
  * MIPS processor interrupt control
  *
@@ -68,10 +75,13 @@ _splraise:
 	 * Can only use a0-a3 and v0-v1
 	 */
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
+	NOP_L
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
 	sltu	v1, a1, v0			# newipl < curipl
 	bnez	v1, 1f				# yes, don't change.
+	 nop					#  branch delay
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
+	NOP_L					# load delay
 	or	v1, MIPS_INT_MASK		# enable all interrupts
 	xor	a0, v1				# disable ipl's masked bits
 	DYNAMIC_STATUS_MASK(a0,v0)		# machine dependent masking
@@ -79,34 +89,37 @@ _splraise:
 	COP0_SYNC
 #ifdef MULTIPROCESSOR
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
+	NOP_L					## load delay
 #endif
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 	mtc0	a0, MIPS_COP_0_STATUS		## store back
 	COP0_SYNC
 #ifdef PARANOIA
 	j	ra
-	 nop
+	 nop					#  branch delay
 #endif /* PARANOIA */
 1:
 #ifdef PARANOIA
 	mfc0	v1, MIPS_COP_0_STATUS
+	NOP_L					# load delay
 	and	a0, v1				# a1 contains bit that MBZ
 3:	bnez	a0, 3b				# loop forever
-	 nop
+	 nop					#  branch delay
 #endif /* PARANOIA */
 	j	ra
-	 nop
+	 nop					#  branch delay
 
 STATIC_LEAF(_splsw_splx)
 STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		# get cpu_info
+	NOP_L					# load delay
 	INT_L	a2, CPU_INFO_CPL(a3)		# get IPL from cpu_info
 	beq	a0, a2, 2f			# if same, nothing to do
-	 nop
+	 nop					#  branch delay
 #ifdef PARANOIA
 	sltu	v0, a0, a2			# v0 = a0 < a2
 99:	beqz	v0, 99b				# loop forever if false
-	 nop
+	 nop					#  branch delay
 #endif /* PARANOIA */
 	#move	a1, zero			# avoid lookup on splx(IPL_NONE)
 	#beq	a0, zero, 1f			# skip fetch
@@ -114,8 +127,10 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	sll	a2, a0, INT_SCALESHIFT		# convert IPL to array offset
 	PTR_ADDU v1, a2				# add to table addr
 	INT_L	a1, (v1)			# load SR bits for this IPL
+	NOP_L					# load delay
 1:
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
+	NOP_L					# load delay
 	or	v1, MIPS_INT_MASK		# set all INT bits
 	xor	v1, a1				# clear any bits for this IPL
 	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
@@ -126,7 +141,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	COP0_SYNC
 #ifdef PARANOIA
 	j	ra
-	 nop
+	 nop					#  branch delay
 #endif /* PARANOIA */
 2:
 #ifdef PARANOIA
@@ -138,21 +153,20 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	and	v1, MIPS_INT_MASK
 	xor	a1, MIPS_INT_MASK
 3:	bne	a1, v1, 3b
-	 nop
+	 nop					#  branch delay
 #endif /* PARANOIA */
 	j	ra
-	 nop
+	 nop					#  branch delay
 END(_splsw_splx)
 
 STATIC_LEAF(_splsw_spl0)
 	INT_L	v1, _C_LABEL(ipl_sr_map) + 4*IPL_NONE
-	xor	v1, MIPS_INT_MASK | MIPS_SR_INT_IE # invert and or in IE
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
+	xor	v1, MIPS_INT_MASK | MIPS_SR_INT_IE # invert and or in IE
 	#mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
-	COP0_SYNC
+	#COP0_SYNC
 	mfc0	v0, MIPS_COP_0_STATUS
-	nop
-	nop
+	NOP_L					# load delay
 	or	v0, v1
 	DYNAMIC_STATUS_MASK(v0,t0)		# machine dependent masking
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
@@ -165,7 +179,7 @@ STATIC_LEAF(_splsw_spl0)
 	mtc0	v0, MIPS_COP_0_STATUS		## enable all sources
 	COP0_SYNC
 	j	ra
-	nop
+	 nop					#  branch delay
 END(_splsw_spl0)
 
 STATIC_LEAF(_splsw_setsoftintr)
@@ -175,14 +189,14 @@ STATIC_LEAF(_splsw_setsoftintr)
 	nop
 	nop
 	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
-	nop
+	NOP_L					# load delay
 	or	v0, v0, a0			# set soft intr. bits
 	mtc0	v0, MIPS_COP_0_CAUSE		# store back
 	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
 	COP0_SYNC
 	j	ra
-	nop
+	 nop
 END(_splsw_setsoftintr)
 
 STATIC_LEAF(_splsw_clrsoftintr)
@@ -199,7 +213,7 @@ STATIC_LEAF(_splsw_clrsoftintr)
 	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
 	COP0_SYNC
 	j	ra
-	nop
+	 nop					#  branch delay
 END(_splsw_clrsoftintr)
 
 STATIC_LEAF(_splsw_splraise)
@@ -207,18 +221,20 @@ STATIC_LEAF(_splsw_splraise)
 	PTR_LA	v1, _C_LABEL(ipl_sr_map)
 	sll	a2, a0, INT_SCALESHIFT
 	PTR_ADDU v1, a2
-	INT_L	a0, (v1)
 	b	_splraise
-	 nop
+	 INT_L	a0, (v1)
 END(_splsw_splraise)
 
 STATIC_LEAF(_splsw_splhigh)
 STATIC_XLEAF(_splsw_splhigh_noprof)
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
+	NOP_L					# load delay
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
 	li	a1, IPL_HIGH			# 
 	beq	v0, a1, 1f			# don't do anything if IPL_HIGH
+	 nop					# branch delay
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
+	NOP_L					# load delay
 	and	a0, v1, MIPS_INT_MASK		# select all interrupts
 	xor	a0, v1				# clear all interrupts
 	DYNAMIC_STATUS_MASK(a0,a2)		# machine dependent masking
@@ -226,106 +242,112 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	COP0_SYNC
 #ifdef MULTIPROCESSOR
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		## make sure curcpu is correct
+	NOP_L					## load delay
 #endif
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 #ifdef PARANOIA
 	j	ra				## return
-	 nop
+	 nop					#  branch delay
 #endif /* PARANOIA */
 1:
 #ifdef PARANOIA
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
 	and	v1, MIPS_INT_MASK		# any int bits set?
 2:	bnez	v1, 2b				# loop forever.
-	 nop
+	 nop					# branch delay
 #endif /* PARANOIA */
 	j	ra				## return
-	 nop
+	 nop					# branch delay
 END(_splsw_splhigh)
 
+	.p2align 4
 STATIC_LEAF(_splsw_splddb)
 	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_DDB
-	li	a1, IPL_DDB
 	b	_splraise
-	 nop
+	 li	a1, IPL_DDB
+	nop
 END(_splsw_splddb)
 
 STATIC_LEAF(_splsw_splsched)
 	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SCHED
-	li	a1, IPL_SCHED
 	b	_splraise
-	 nop
+	 li	a1, IPL_SCHED
+	nop
 END(_splsw_splsched)
 
 STATIC_LEAF(_splsw_splvm)
 	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_VM
-	li	a1, IPL_VM
 	b	_splraise
+	 li	a1, IPL_VM
+	nop
 END(_splsw_splvm)
 
 STATIC_LEAF(_splsw_splsoftserial)
 	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SOFTSERIAL
-	li	a1, IPL_SOFTSERIAL
 	b	_splraise
-	 nop
+	 li	a1, IPL_SOFTSERIAL
+	nop
 END(_splsw_splsoftserial)
 
 STATIC_LEAF(_splsw_splsoftnet)
 	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SOFTNET
-	li	a1, IPL_SOFTNET
 	b	_splraise
-	 nop
+	 li	a1, IPL_SOFTNET
+	nop
 END(_splsw_splsoftnet)
 
 STATIC_LEAF(_splsw_splsoftbio)
 	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SOFTBIO
-	li	a1, IPL_SOFTBIO
 	b	_splraise
-	 nop
+	 li	a1, IPL_SOFTBIO
+	nop
 END(_splsw_splsoftbio)
 
 STATIC_LEAF(_splsw_splsoftclock)
 	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SOFTCLOCK
-	li	a1, IPL_SOFTCLOCK
 	b	_splraise
-	 nop
+	 li	a1, IPL_SOFTCLOCK
+	nop
 END(_splsw_splsoftclock)
 
 STATIC_LEAF(_splsw_splintr)
 	mfc0	ta1, MIPS_COP_0_CAUSE		# get active interrupts
-
+	NOP_L					# load delay
 						# restrict to hard int bits
 	and	v1, ta1, MIPS_HARD_INT_MASK	# now have pending interrupts
 	li	v0, IPL_NONE			#  return IPL_NONE
 	beq	v1, zero, 2f			# quick exit if nothing pending
-	 nop
+	 nop					#  branch delay
 
 	li	v0, IPL_VM			# start at IPL_VM
 	PTR_LA	ta3, _C_LABEL(ipl_sr_map) + 4*IPL_VM
 	INT_L	ta2, -4(ta3)			# load mask for IPL_SOFTSERIAL
+	NOP_L					# load delay
 	xor	ta2, MIPS_INT_MASK		# invert
 	and	v1, ta2				# apply to pending bits
 
 1:
 	INT_L	ta2, (ta3)			# get SR bits for ipl in v0
+	NOP_L					# load delay
 	xor	ta2, MIPS_INT_MASK		# invert
 	and	ta2, v1				# any match to pending intrs?
 	beq	ta2, zero, 2f			#  no, return ipl
+	 nop					#  branch delay
 
 	PTR_ADDU ta3, 1 << INT_SCALESHIFT	# point to next entry
 	addiu	v0, 1				#  increase ipl by 1
-	move	v1, ta2				# whittle down pending intrs
 	b	1b				# and check it
+	 move	v1, ta2				# whittle down pending intrs
 
 2:
-	INT_S	v1, (a0)			# return a new pending mask
 	j	ra
-	#nop
+	 INT_S	v1, (a0)			# return a new pending mask
 END(_splsw_splintr)
 
 STATIC_LEAF(_splsw_splcheck)
 #ifdef PARANOIA
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	NOP_L					# load delay
 	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
 
 	mfc0	t0, MIPS_COP_0_STATUS		# get current status
@@ -335,12 +357,13 @@ STATIC_LEAF(_splsw_splcheck)
 	sll	t1, INT_SCALESHIFT		# shift cpl to array index
 	PTR_ADDU t2, t1
 	INT_L	t3, (t2)			# load value
+	NOP_L					# load delay
 	xor	t3, MIPS_INT_MASK		# invert
 1:	bne	t0, t3, 1b			# loop forever if not equal
-	 nop
+	 nop					#  branch delay
 #endif /* PARANOIA */
 	j	ra
-	 nop
+	 nop					#  branch delay
 END(_splsw_splcheck)
 
 	.rdata

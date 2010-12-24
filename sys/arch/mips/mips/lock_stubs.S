@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.10 2010/02/28 03:28:54 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.11 2010/12/24 07:13:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -236,8 +236,8 @@ END(mutex_exit)
 NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 	move	t0, a0
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
-	INT_L	ta1, CPU_INFO_CPL(t2)
 	INT_L	ta0, MTX_IPL(t0)
+	INT_L	ta1, CPU_INFO_CPL(t2)
 
 	/*
 	 * If the current IPL is less than the mutex's IPL, we need to raise
@@ -268,6 +268,7 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 	 */
 1:
 	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
+	nop
 	INT_ADDU ta3, ta2, -1
 	INT_S	ta3, CPU_INFO_MTX_COUNT(t2)
 	bltz	ta2, 2f
@@ -277,6 +278,7 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 #ifdef PARANOIA
 	INT_L	ta1, CPU_INFO_MTX_OLDSPL(t2)
 	INT_L	ta2, CPU_INFO_CPL(t2)	# get updated CPL
+	nop
 	sltu	v0, ta2, ta0		# v0 = cpl < mtx_ipl
 	sltu	v1, ta2, ta1		# v1 = cpl < oldspl
 	sll	v0, 1
@@ -322,7 +324,7 @@ END(mutex_spin_enter)
  *
  * o All of the critical sections are 20 bytes in size, and the entry
  *   to each critical section is aligned on a 16 byte boundary (see
- *   top of _lock_ras() for why).  The entry is defined here as the
+ *   top of _restart_lock_ras() for why).  The entry is defined here as the
  *   point after where a restart occurs if we trap within the section.
  *
  * o The entire code block is aligned on a 128 byte boundary, and is
@@ -330,7 +332,7 @@ END(mutex_spin_enter)
  *   after taking a trap with:
  *
  *	if ((addr & ~127) == _lock_ras_start)
- *		addr = _lock_ras(addr);
+ *		addr = _restart_lock_ras(addr);
  *
  *   See definition of MIPS_LOCK_RAS_SIZE in asm.h.
  *
@@ -347,12 +349,15 @@ END(mutex_spin_enter)
  *     unsigned long old, unsigned long new);
  */
 	.text
-	.p2align 7
+#if MIPS_LOCK_RAS_SIZE != 256
+#error RAS alignment needs to be fixed
+#endif
+	.p2align 8
 
 EXPORT(_lock_ras_start)
-
-	.space	12
-
+	nop
+	nop
+	nop
 LEAF_NOPROFILE(_atomic_cas_ulong)
 	PTR_L	t0, (a0)	/* <- critical section start */
 _atomic_cas_start:
@@ -404,16 +409,16 @@ END(_ucas_32_ras)
 
 #ifndef LOCKDEBUG
 	.p2align 5
+	nop
+	nop
+	nop
 /*
  * int mutex_enter(kmutex_t *mtx);
  */
-	nop
-	nop
-	nop
 LEAF_NOPROFILE(mutex_enter)
 	PTR_L	t0, (a0)	/* <- critical section start */
 _mutex_enter_start:
-	nop
+	 nop
 	bnez	t0, 1f
 	 nop			
 	PTR_S	MIPS_CURLWP, (a0)/* <- critical section end */
@@ -443,7 +448,10 @@ _mutex_exit_start:
 END(mutex_exit)
 	 nop
 
-	.p2align 7			/* Get out of the RAS block */
+#if MIPS_LOCK_RAS_SIZE != 256
+#error RAS alignment needs to be fixed
+#endif
+	.p2align 8		/* Get out of the RAS block */
 
 /*
  * void	mutex_spin_enter(kmutex_t *mtx);
@@ -453,6 +461,7 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
 	INT_L	a0, MTX_IPL(t0)
 	INT_L	ta1, CPU_INFO_CPL(t2)		# get current cpl
+	nop
 
 	/*
 	 * If the current IPL is less than the mutex's IPL, we need to raise
@@ -477,8 +486,9 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 	 */
 1:
 	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
+	nop
 	INT_ADDU ta3, ta2, -1
-	INT_S	ta2, CPU_INFO_MTX_COUNT(t2)
+	INT_S	ta3, CPU_INFO_MTX_COUNT(t2)
 
 	bnez	ta2, 2f
 	 nop
@@ -525,7 +535,7 @@ END(mutex_spin_enter)
  *	t2	clobbered
  */
 
-LEAF_NOPROFILE(_lock_ras)
+LEAF_NOPROFILE(_restart_lock_ras)
 	li	t1, -16
 	and	t2, k1, t1
 	la	t0, _atomic_cas_start
@@ -547,7 +557,7 @@ LEAF_NOPROFILE(_lock_ras)
 1:
 	j	ra
 	 addiu	k1, t0, -4
-END(_lock_ras)
+END(_restart_lock_ras)
 
 /*
  * int ucas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new, uint32_t *ret)
@@ -587,6 +597,7 @@ LEAF(mutex_spin_exit)
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
 #if defined(DIAGNOSTIC)
 	INT_L	t0, MTX_LOCK(a0)
+	nop
 	SYNC
 	beqz	t0, 2f
 	 nop
@@ -603,6 +614,7 @@ LEAF(mutex_spin_exit)
 	 */
 #ifdef PARANOIA
 	INT_L	a2, MTX_IPL(a0)
+	nop
 #endif
 	INT_L	a0, CPU_INFO_MTX_OLDSPL(t2)
 
@@ -610,6 +622,7 @@ LEAF(mutex_spin_exit)
 	 * Increment the mutex count
 	 */
 	INT_L	t0, CPU_INFO_MTX_COUNT(t2)
+	nop
 	INT_ADDU t0, t0, 1
 	INT_S	t0, CPU_INFO_MTX_COUNT(t2)
 
