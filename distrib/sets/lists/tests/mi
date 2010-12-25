@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.188 2010/12/24 12:41:42 skrll Exp $
+# $NetBSD: mi,v 1.189 2010/12/25 01:04:27 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -321,6 +321,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio				tests-lib-debug
@@ -1541,6 +1542,7 @@
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash			tests-lib-tests
 ./usr/tests/lib/libc/hash/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		atf
