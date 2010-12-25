@@ -1,14 +1,10 @@
-/*	$NetBSD: warshall.c,v 1.4 2010/12/25 19:24:28 joerg Exp $	*/
+/*	$NetBSD: warshall.c,v 1.5 2010/12/25 23:43:30 christos Exp $	*/
 /* Id: warshall.c,v 1.7 2010/06/06 22:48:51 tom Exp */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
+#include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: warshall.c,v 1.4 2010/12/25 19:24:28 joerg Exp $");
-
-#include "defs.h"
+__RCSID("$NetBSD: warshall.c,v 1.5 2010/12/25 23:43:30 christos Exp $");
 
 static void
 transitive_closure(unsigned *R, int n)

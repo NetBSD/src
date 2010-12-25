@@ -1,13 +1,10 @@
-/*	$NetBSD: symtab.c,v 1.4 2010/12/25 19:24:28 joerg Exp $	*/
+/*	$NetBSD: symtab.c,v 1.5 2010/12/25 23:43:30 christos Exp $	*/
 /* Id: symtab.c,v 1.9 2010/11/24 15:12:29 tom Exp */
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.4 2010/12/25 19:24:28 joerg Exp $");
 
 #include "defs.h"
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: symtab.c,v 1.5 2010/12/25 23:43:30 christos Exp $");
 
 /* TABLE_SIZE is the number of entries in the symbol table. */
 /* TABLE_SIZE must be a power of two.			    */

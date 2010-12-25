@@ -1,14 +1,10 @@
-/*	$NetBSD: main.c,v 1.5 2010/12/25 19:24:28 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2010/12/25 23:43:30 christos Exp $	*/
 /* Id: main.c,v 1.30 2010/11/24 15:13:39 tom Exp */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
+#include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.5 2010/12/25 19:24:28 joerg Exp $");
-
-#include "defs.h"
+__RCSID("$NetBSD: main.c,v 1.6 2010/12/25 23:43:30 christos Exp $");
 
 #include <signal.h>
 #include <unistd.h>		/* for _exit() */
