@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.193 2010/12/25 04:57:07 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.194 2010/12/25 20:34:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.193 2010/12/25 04:57:07 dholland Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.194 2010/12/25 20:34:08 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.193 2010/12/25 04:57:07 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.194 2010/12/25 20:34:08 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -964,7 +964,8 @@ main(int argc, char **argv)
 	 * We take care of PWD for the automounter below...
 	 */
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
-		(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
+		(void)fprintf(stderr, "%s: getcwd: %s.\n",
+		    progname, strerror(errno));
 		exit(2);
 	}
 
