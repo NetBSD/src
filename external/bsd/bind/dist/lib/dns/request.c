@@ -1,4 +1,4 @@
-/*	$NetBSD: request.c,v 1.1.1.2 2009/10/25 00:02:33 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.2 2010/12/25 18:23:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -1415,7 +1415,7 @@ req_sendevent(dns_request_t *request, isc_result_t result) {
 	task = request->event->ev_sender;
 	request->event->ev_sender = request;
 	request->event->result = result;
-	isc_task_sendanddetach(&task, (isc_event_t **)&request->event);
+	isc_task_sendanddetach(&task, (isc_event_t **)(void *)&request->event);
 }
 
 static void
@@ -1432,7 +1432,7 @@ req_destroy(dns_request_t *request) {
 	if (request->answer != NULL)
 		isc_buffer_free(&request->answer);
 	if (request->event != NULL)
-		isc_event_free((isc_event_t **)&request->event);
+		isc_event_free((isc_event_t **)(void *)&request->event);
 	if (request->dispentry != NULL)
 		dns_dispatch_removeresponse(&request->dispentry, NULL);
 	if (request->dispatch != NULL)
