@@ -1,11 +1,8 @@
-# $NetBSD: Makefile,v 1.8 2010/11/03 20:20:12 christos Exp $
+# $NetBSD: Makefile,v 1.9 2010/12/25 21:10:25 pgoyette Exp $
 
 .include <bsd.own.mk>
 
-TESTS_SUBDIRS+=	gen hash stdlib stdio
-
-# Disabled for now, only test in there is very expensive
-#SUBDIR+=	 string
+TESTS_SUBDIRS+=	gen hash stdlib stdio string
 
 TESTSDIR=	${TESTSBASE}/lib/libc
 
