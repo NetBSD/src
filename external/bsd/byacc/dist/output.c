@@ -1,14 +1,10 @@
-/*    $NetBSD: output.c,v 1.6 2010/12/25 19:24:28 joerg Exp $  */
+/*    $NetBSD: output.c,v 1.7 2010/12/25 23:43:30 christos Exp $  */
 /* Id: output.c,v 1.37 2010/11/27 17:28:29 tom Exp */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
+#include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.6 2010/12/25 19:24:28 joerg Exp $");
-
-#include "defs.h"
+__RCSID("$NetBSD: output.c,v 1.7 2010/12/25 23:43:30 christos Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))

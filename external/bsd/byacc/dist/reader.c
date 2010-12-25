@@ -1,14 +1,10 @@
-/*	$NetBSD: reader.c,v 1.5 2010/12/25 19:24:28 joerg Exp $	*/
+/*	$NetBSD: reader.c,v 1.6 2010/12/25 23:43:30 christos Exp $	*/
 /* Id: reader.c,v 1.31 2010/11/26 12:30:40 tom Exp */
 
 #include "defs.h"
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.5 2010/12/25 19:24:28 joerg Exp $");
+__RCSID("$NetBSD: reader.c,v 1.6 2010/12/25 23:43:30 christos Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
