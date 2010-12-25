@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.17 2010/12/16 06:45:50 cegger Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.18 2010/12/25 03:29:08 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.17 2010/12/16 06:45:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.18 2010/12/25 03:29:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -623,8 +623,7 @@ r128fb_init(struct r128fb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DP_DATATYPE,
 	    R128_HOST_BIG_ENDIAN_EN);
 #else
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DP_DATATYPE,
-	    R128_HOST_LITTLE_ENDIAN_EN);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DP_DATATYPE, 0);
 #endif
 
 	r128fb_wait(sc, 5);
