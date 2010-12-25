@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.20 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: attributes.c,v 1.21 2010/12/25 10:08:20 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.20 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.21 2010/12/25 10:08:20 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -358,6 +358,9 @@ termattrs(void)
 	__CTRACE(__CTRACE_ATTR, "termattrs\n");
 #endif
 	if (exit_attribute_mode != NULL) {
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "termattrs: have exit attribute mode\n");
+#endif
 		if (enter_blink_mode != NULL)
 			ch |= __BLINK;
 		if (enter_bold_mode != NULL)
