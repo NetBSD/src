@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.43 2010/12/25 15:29:34 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.44 2010/12/25 16:14:44 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.43 2010/12/25 15:29:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.44 2010/12/25 16:14:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -122,6 +122,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
+	lwp0upa = nextpa;
+	nextpa += USPACE;
+
 	iiomappages = m68k_btop(RELOC(intiotop_phys, u_int) -
 	    RELOC(intiobase_phys, u_int));
 
@@ -137,8 +140,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	nextpa += PAGE_SIZE;
 	lkptpa = nextpa;
 	nextpa += PAGE_SIZE;
-	lwp0upa = nextpa;
-	nextpa += USPACE;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) + (iiomappages + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * PAGE_SIZE;
