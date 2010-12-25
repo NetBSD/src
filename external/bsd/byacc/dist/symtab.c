@@ -1,7 +1,11 @@
-/*	$NetBSD: symtab.c,v 1.3 2010/12/24 02:58:21 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.4 2010/12/25 19:24:28 joerg Exp $	*/
 /* Id: symtab.c,v 1.9 2010/11/24 15:12:29 tom Exp */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.3 2010/12/24 02:58:21 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.4 2010/12/25 19:24:28 joerg Exp $");
 
 #include "defs.h"
 
