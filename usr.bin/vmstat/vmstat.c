@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.174 2010/12/25 20:50:36 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.175 2010/12/25 23:36:59 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.174 2010/12/25 20:50:36 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.175 2010/12/25 23:36:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,6 @@ __RCSID("$NetBSD: vmstat.c,v 1.174 2010/12/25 20:50:36 christos Exp $");
 #include <sys/time.h>
 #include <sys/user.h>
 #include <sys/queue.h>
-#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
@@ -134,13 +133,19 @@ __RCSID("$NetBSD: vmstat.c,v 1.174 2010/12/25 20:50:36 christos Exp $");
  * All this mess will go away once everything is converted.
  */
 #ifdef __HAVE_CPU_DATA_FIRST
-#include <sys/cpu_data.h>
-struct xcpu_info {
+
+# include <sys/cpu_data.h>
+struct cpu_info {
 	struct cpu_data ci_data;
 };
-# define CPU_INFO	xcpu_info
+CIRCLEQ_HEAD(cpuqueue, cpu_info);
+struct  cpuqueue cpu_queue;
+
 #else
-# define CPU_INFO	cpu_info
+
+# include <sys/cpu.h>
+struct  cpuqueue cpu_queue;
+
 #endif
 /*
  * General namelist
@@ -253,7 +258,6 @@ struct cpu_counter {
 } cpucounter, ocpucounter;
 
 struct	uvmexp uvmexp, ouvmexp;
-struct  cpuqueue cpu_queue;
 int	ndrives;
 
 int	winlines = 20;
@@ -989,10 +993,10 @@ drvstats(int *ovflwp)
 void
 cpucounters(struct cpu_counter *cc)
 {
-	struct CPU_INFO *ci;
+	struct cpu_info *ci;
 	(void)memset(cc, 0, sizeof(*cc));
 	CIRCLEQ_FOREACH(ci, &cpu_queue, ci_data.cpu_qchain) {
-		struct CPU_INFO tci;
+		struct cpu_info tci;
 		if ((size_t)kvm_read(kd, (u_long)ci, &tci, sizeof(tci))
 		    != sizeof(tci)) {
 		    warnx("Can't read cpu info from %p (%s)",
