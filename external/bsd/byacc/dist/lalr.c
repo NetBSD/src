@@ -1,14 +1,10 @@
-/*	$NetBSD: lalr.c,v 1.3 2010/12/25 19:24:28 joerg Exp $	*/
+/*	$NetBSD: lalr.c,v 1.4 2010/12/25 23:43:30 christos Exp $	*/
 /* Id: lalr.c,v 1.9 2009/10/27 09:49:27 tom Exp */
 
 #include "defs.h"
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lalr.c,v 1.3 2010/12/25 19:24:28 joerg Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.4 2010/12/25 23:43:30 christos Exp $");
 
 typedef struct shorts
 {
