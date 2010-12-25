@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.32 2010/12/24 20:36:51 jakllsch Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.33 2010/12/25 01:19:33 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -178,7 +178,7 @@ check_label(struct biosdisk *d, daddr_t sector)
 	lp = (struct disklabel *) (d->buf + LABELOFFSET);
 	if (lp->d_magic != DISKMAGIC || dkcksum(lp)) {
 #ifdef DISK_DEBUG
-		printf("warning: no disklabel in sector %lld\n", sector);
+		printf("warning: no disklabel in sector %"PRId64"\n", sector);
 #endif
 		return -1;
 	}
@@ -234,7 +234,7 @@ read_label(struct biosdisk *d)
 				continue;
 			sector = this_ext + mbr[i].mbrp_start;
 #ifdef DISK_DEBUG
-			printf("ptn type %d in sector %lld\n", typ, sector);
+			printf("ptn type %d in sector %"PRId64"\n", typ, sector);
 #endif
 			if (typ == MBR_PTYPE_NETBSD) {
 				error = check_label(d, sector);
@@ -334,10 +334,10 @@ biosdisk_probe(void)
 				printf(" size ");
 				size = ed.totsec * ed.sbytes;
 				if (size >= (10ULL * 1024 * 1024 * 1024))
-					printf("%llu GB",
+					printf("%"PRIu64" GB",
 					    size / (1024 * 1024 * 1024));
 				else
-					printf("%llu MB",
+					printf("%"PRIu64" MB",
 					    size / (1024 * 1024));
 			}
 			printf("\n");
@@ -386,7 +386,7 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 	int partition = 0;
 	struct disklabel *lp;
 #ifdef DISK_DEBUG
-	printf("looking for partition device %x, sector %lld\n", biosdev, sector);
+	printf("looking for partition device %x, sector %"PRId64"\n", biosdev, sector);
 #endif
 
 	/* Look for netbsd partition that is the dos boot one */
