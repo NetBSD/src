@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.131 2010/11/12 16:30:26 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.132 2010/12/25 20:37:44 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.131 2010/11/12 16:30:26 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.132 2010/12/25 20:37:44 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -572,6 +572,47 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
 	return 0;
 }
 
+static int
+rt_getlen(int type)
+{
+	switch (type) {
+	case RTM_DELADDR:
+	case RTM_NEWADDR:
+	case RTM_CHGADDR:
+		return sizeof(struct ifa_msghdr);
+
+	case RTM_OOIFINFO:
+#ifdef COMPAT_14
+		return sizeof(struct if_msghdr14);
+#else
+#ifdef DIAGNOSTIC
+		printf("RTM_OOIFINFO\n");
+#endif
+		return -1;
+#endif
+	case RTM_OIFINFO:
+#ifdef COMPAT_50
+		return sizeof(struct if_msghdr50);
+#else
+#ifdef DIAGNOSTIC
+		printf("RTM_OIFINFO\n");
+#endif
+		return -1;
+#endif
+
+	case RTM_IFINFO:
+		return sizeof(struct if_msghdr);
+
+	case RTM_IFANNOUNCE:
+	case RTM_IEEE80211:
+		return sizeof(struct if_announcemsghdr);
+
+	default:
+		return sizeof(struct rt_msghdr);
+	}
+}
+
+
 struct mbuf *
 rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 {
@@ -585,45 +626,15 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 	if (m == NULL)
 		return m;
 	MCLAIM(m, &routedomain.dom_mowner);
-	switch (type) {
 
-	case RTM_DELADDR:
-	case RTM_NEWADDR:
-	case RTM_CHGADDR:
-		len = sizeof(struct ifa_msghdr);
-		break;
-
-#ifdef COMPAT_14
-	case RTM_OOIFINFO:
-		len = sizeof(struct if_msghdr14);
-		break;
-#endif
-#ifdef COMPAT_50
-	case RTM_OIFINFO:
-		len = sizeof(struct if_msghdr50);
-		break;
-#endif
-
-	case RTM_IFINFO:
-		len = sizeof(struct if_msghdr);
-		break;
-
-	case RTM_IFANNOUNCE:
-	case RTM_IEEE80211:
-		len = sizeof(struct if_announcemsghdr);
-		break;
-
-	default:
-		len = sizeof(struct rt_msghdr);
-	}
+	if ((len = rt_getlen(type)) == -1)
+		goto out;
 	if (len > MHLEN + MLEN)
 		panic("rt_msg1: message too long");
 	else if (len > MHLEN) {
 		m->m_next = m_get(M_DONTWAIT, MT_DATA);
-		if (m->m_next == NULL) {
-			m_freem(m);
-			return NULL;
-		}
+		if (m->m_next == NULL)
+			goto out;
 		MCLAIM(m->m_next, m->m_owner);
 		m->m_pkthdr.len = len;
 		m->m_len = MHLEN;
@@ -644,14 +655,15 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 		m_copyback(m, len, dlen, sa);
 		len += dlen;
 	}
-	if (m->m_pkthdr.len != len) {
-		m_freem(m);
-		return NULL;
-	}
+	if (m->m_pkthdr.len != len)
+		goto out;
 	rtm->rtm_msglen = len;
 	rtm->rtm_version = RTM_VERSION;
 	rtm->rtm_type = type;
 	return m;
+out:
+	m_freem(m);
+	return NULL;
 }
 
 /*
@@ -677,31 +689,9 @@ rt_msg2(int type, struct rt_addrinfo *rtinfo, void *cpv, struct rt_walkarg *w,
 
 	rtinfo->rti_addrs = 0;
 again:
-	switch (type) {
+	if ((len = rt_getlen(type)) == -1)
+		return EINVAL;
 
-	case RTM_DELADDR:
-	case RTM_NEWADDR:
-	case RTM_CHGADDR:
-		len = sizeof(struct ifa_msghdr);
-		break;
-#ifdef COMPAT_14
-	case RTM_OOIFINFO:
-		len = sizeof(struct if_msghdr14);
-		break;
-#endif
-#ifdef COMPAT_50
-	case RTM_OIFINFO:
-		len = sizeof(struct if_msghdr50);
-		break;
-#endif
-
-	case RTM_IFINFO:
-		len = sizeof(struct if_msghdr);
-		break;
-
-	default:
-		len = sizeof(struct rt_msghdr);
-	}
 	if ((cp0 = cp) != NULL)
 		cp += len;
 	for (i = 0; i < RTAX_MAX; i++) {
