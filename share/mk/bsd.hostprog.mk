@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.59 2010/11/22 11:29:07 pooka Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.60 2010/12/25 18:56:45 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -125,7 +125,7 @@ cleanprog: .PHONY
 
 beforedepend:
 CFLAGS:=	${HOST_CFLAGS}
-CPPFLAGS:=	${HOST_CPPFLAGS}
+CPPFLAGS:=	${HOST_CPPFLAGS:N-Wp,-iremap,*}
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
