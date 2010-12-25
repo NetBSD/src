@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.1.1.6 2010/12/02 14:23:25 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.2 2010/12/25 18:23:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -214,7 +214,7 @@ validator_done(dns_validator_t *val, isc_result_t result) {
 	val->event->ev_type = DNS_EVENT_VALIDATORDONE;
 	val->event->ev_action = val->action;
 	val->event->ev_arg = val->arg;
-	isc_task_sendanddetach(&task, (isc_event_t **)&val->event);
+	isc_task_sendanddetach(&task, (isc_event_t **)(void *)&val->event);
 }
 
 static inline isc_boolean_t

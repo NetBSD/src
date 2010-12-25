@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.c,v 1.1.1.5 2010/12/02 14:23:24 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.2 2010/12/25 18:23:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -672,7 +672,7 @@ createnode(dns_sdb_t *sdb, dns_sdbnode_t **nodep) {
 		return (ISC_R_NOMEMORY);
 
 	node->sdb = NULL;
-	attach((dns_db_t *)sdb, (dns_db_t **)&node->sdb);
+	attach((dns_db_t *)sdb, (dns_db_t **)(void *)&node->sdb);
 	ISC_LIST_INIT(node->lists);
 	ISC_LIST_INIT(node->buffers);
 	ISC_LINK_INIT(node, link);
