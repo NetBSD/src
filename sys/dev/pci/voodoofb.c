@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.25 2010/12/16 06:45:50 cegger Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.26 2010/12/25 11:51:21 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.25 2010/12/16 06:45:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.26 2010/12/25 11:51:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,10 +158,6 @@ static void	voodoofb_rectinvert(struct voodoofb_softc *, int, int, int,
 static void	voodoofb_setup_mono(struct voodoofb_softc *, int, int, int,
 			    int, uint32_t, uint32_t); 
 static void	voodoofb_feed_line(struct voodoofb_softc *, int, uint8_t *);
-
-#ifdef VOODOOFB_DEBUG
-static void	voodoofb_showpal(struct voodoofb_softc *);
-#endif
 
 static void	voodoofb_wait_idle(struct voodoofb_softc *);
 
@@ -891,19 +887,6 @@ voodoofb_feed_line(struct voodoofb_softc *sc, int count, uint8_t *data)
 	if (shift != 24)
 		voodoo3_write32(sc, LAUNCH_2D, latch);
 }	
-
-#ifdef VOODOOFB_DEBUG
-static void
-voodoofb_showpal(struct voodoofb_softc *sc) 
-{
-	int i, x = 0;
-	
-	for (i = 0; i < 16; i++) {
-		voodoofb_rectfill(sc, x, 0, 64, 64, i);
-		x += 64;
-	}
-}
-#endif
 
 #if 0
 static int
