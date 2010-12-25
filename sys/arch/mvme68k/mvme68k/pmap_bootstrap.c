@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.42 2010/12/25 14:43:00 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.43 2010/12/25 15:29:34 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.42 2010/12/25 14:43:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.43 2010/12/25 15:29:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -103,7 +103,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Calculate important physical addresses:
 	 *
-	 *	lwp0upa		lwp0 0 u-area		UPAGES pages
+	 *	lwp0upa		lwp0 u-area		UPAGES pages
 	 *
 	 *	kstpa		kernel segment table	1 page (!040)
 	 *						N pages (040)
@@ -212,7 +212,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		}
 		/*
 		 * Initialize level 1 descriptors.  We need:
-		 *	roundup(nl2desc, SG4_LEV2SIZE) / SG4_LEV2SIZE
+		 *	howmany(nl2desc, SG4_LEV2SIZE)
 		 * level 1 descriptors to map the `nl2desc' level 2's.
 		 */
 		nl1desc = howmany(nl2desc, SG4_LEV2SIZE);
@@ -302,7 +302,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * and the software Sysptmap.
 		 */
 		ste = (st_entry_t *)kstpa;
-		pte = (st_entry_t *)kptmpa;
+		pte = (pt_entry_t *)kptmpa;
 		epte = &pte[nptpages];
 		protoste = kptpa | SG_RW | SG_V;
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
@@ -319,7 +319,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		este = &este[TIA_SIZE];
 		while (ste < este)
 			*ste++ = SG_NV;
-		epte = (st_entry_t *)kptmpa;
+		epte = (pt_entry_t *)kptmpa;
 		epte = &epte[TIB_SIZE];
 		while (pte < epte)
 			*pte++ = PG_NV;
