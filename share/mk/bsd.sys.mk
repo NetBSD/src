@@ -1,9 +1,14 @@
-#	$NetBSD: bsd.sys.mk,v 1.192 2010/04/21 16:09:11 pooka Exp $
+#	$NetBSD: bsd.sys.mk,v 1.193 2010/12/25 18:56:45 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
 .if !defined(_BSD_SYS_MK_)
 _BSD_SYS_MK_=1
+
+.if ${MKREPRO:Uno} == "yes"
+CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
+CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
+.endif
 
 .if defined(WARNS)
 .if ${WARNS} > 0
