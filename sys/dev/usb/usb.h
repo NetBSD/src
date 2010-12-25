@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.89 2010/12/25 14:06:14 jmcneill Exp $	*/
+/*	$NetBSD: usb.h,v 1.90 2010/12/25 15:27:08 wiz Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ typedef struct {
 	uByte		bFunctionClass;
 	uByte		bFunctionSubClass;
 	uByte		bFunctionProtocol;
-	uByte		iFunction
+	uByte		iFunction;
 } UPACKED usb_interface_assoc_descriptor_t;
 #define USB_INTERFACE_ASSOC_DESCRIPTOR_SIZE 8
 
