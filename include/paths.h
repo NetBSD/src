@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.37 2010/04/24 20:44:33 jruoho Exp $	*/
+/*	$NetBSD: paths.h,v 1.38 2010/12/25 16:49:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -95,6 +95,8 @@
 #define	_PATH_TTY	"/dev/tty"
 #define	_PATH_UNIX	"/netbsd"
 #define	_PATH_URANDOM	"/dev/urandom"
+#define	_PATH_VIDEO	"/dev/video"
+#define	_PATH_VIDEO0	"/dev/video0"
 
 /*
  * Provide trailing slash, since mostly used for building pathnames.
