@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.192 2010/12/13 01:48:50 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.193 2010/12/25 04:57:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.192 2010/12/13 01:48:50 dholland Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.193 2010/12/25 04:57:07 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.192 2010/12/13 01:48:50 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.193 2010/12/25 04:57:07 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1307,7 +1307,7 @@ ReadMakefile(const void *p, const void *q __unused)
 	char *name, *path = bmake_malloc(len);
 
 	if (!strcmp(fname, "-")) {
-		Parse_File("(stdin)", dup(fileno(stdin)));
+		Parse_File(NULL /*stdin*/, -1);
 		Var_Set("MAKEFILE", "", VAR_GLOBAL, 0);
 	} else {
 		/* if we've chdir'd, rebuild the path name */
