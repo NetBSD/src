@@ -1,10 +1,14 @@
-/*	$NetBSD: skeleton.c,v 1.7 2010/12/24 02:58:21 christos Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.8 2010/12/25 19:24:28 joerg Exp $	*/
 /* Id: skeleton.c,v 1.27 2010/11/26 17:24:00 tom Exp */
 
 #include "defs.h"
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeleton.c,v 1.7 2010/12/24 02:58:21 christos Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.8 2010/12/25 19:24:28 joerg Exp $");
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
 /*  a #pragma ident directive if the target C compiler supports		*/

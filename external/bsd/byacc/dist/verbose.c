@@ -1,8 +1,12 @@
-/*	$NetBSD: verbose.c,v 1.3 2010/12/24 02:58:21 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.4 2010/12/25 19:24:28 joerg Exp $	*/
 /* Id: verbose.c,v 1.9 2010/06/09 08:58:29 tom Exp */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: verbose.c,v 1.3 2010/12/24 02:58:21 christos Exp $");
+__RCSID("$NetBSD: verbose.c,v 1.4 2010/12/25 19:24:28 joerg Exp $");
 
 #include "defs.h"
 
