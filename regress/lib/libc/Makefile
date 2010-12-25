@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2010/12/23 15:32:03 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.62 2010/12/25 01:20:11 pgoyette Exp $
 
 SUBDIR+= _setjmp atexit citrus clone context convfp db \
 	divrem gen gdtoa getaddrinfo hsearch inet int_fmtio locale md5sha \
@@ -16,14 +16,6 @@ SUBDIR+= ieeefp
 .endif
 .if (${MACHINE_ARCH} != "vax")
 SUBDIR+= ldexp
-.endif
-
-.if !make(obj) && !make(cleandir)
-HAVE_SIGINFO != if (echo "\#include <signal.h>" && echo "SA_SIGINFO") | ${CC} -E -I${DESTDIR}/usr/include - | grep -sq 0x0040; then echo yes; else echo no; fi
-.endif
-
-.if make(obj) || make(cleandir) || (${HAVE_SIGINFO} == "yes")
-SUBDIR+= siginfo
 .endif
 
 .if exists(arch/${MACHINE_ARCH})
