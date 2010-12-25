@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1561 2010/12/22 19:35:41 jruoho Exp $
+#	$NetBSD: mi,v 1.1562 2010/12/25 23:28:18 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3114,6 +3114,9 @@
 ./usr/libdata/debug/usr/bin/crunchide.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/csplit.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/ctags.debug		comp-c-debug		debug
+./usr/libdata/debug/usr/bin/ctfconvert.debug	comp-util-debug		dtrace,debug
+./usr/libdata/debug/usr/bin/ctfdump.debug	comp-util-debug		dtrace,debug
+./usr/libdata/debug/usr/bin/ctfmerge.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/bin/cut.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/cvs.debug		comp-cvs-debug		cvs,debug
 ./usr/libdata/debug/usr/bin/db.debug		comp-util-debug		debug
@@ -3612,6 +3615,7 @@
 ./usr/libdata/debug/usr/sbin/dnssec-settime.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/dtrace.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/edquota.debug	comp-sysutil-debug	debug
