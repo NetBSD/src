@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.80 2010/08/07 21:03:18 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.81 2010/12/25 22:30:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -218,32 +218,36 @@
 #define	__used		__unused
 #endif
 
+#if defined(__cplusplus)
+#define	__BEGIN_EXTERN_C	extern "C" {
+#define	__END_EXTERN_C		}
+#define	__static_cast(x,y)	static_cast<x>(y)
+#else
+#define	__BEGIN_EXTERN_C
+#define	__END_EXTERN_C
+#define	__static_cast(x,y)	(x)y
+#endif
+
 #if __GNUC_PREREQ__(4, 0)
 #  define __dso_public	__attribute__((__visibility__("default")))
 #  define __dso_hidden	__attribute__((__visibility__("hidden")))
-#  define __BEGIN_PUBLIC	_Pragma("GCC visibility push(default)")
-#  define __END_PUBLIC		_Pragma("GCC visibility pop")
-#  define __BEGIN_HIDDEN	_Pragma("GCC visibility push(hidden)")
-#  define __END_HIDDEN		_Pragma("GCC visibility pop")
+#  define __BEGIN_PUBLIC_DECLS	\
+	_Pragma("GCC visibility push(default)") __BEGIN_EXTERN_C
+#  define __END_PUBLIC_DECLS	__END_EXTERN_C _Pragma("GCC visibility pop")
+#  define __BEGIN_HIDDEN_DECLS	\
+	_Pragma("GCC visibility push(hidden)") __BEGIN_EXTERN_C
+#  define __END_HIDDEN_DECLS	__END_EXTERN_C _Pragma("GCC visibility pop")
 #else
 #  define __dso_public
 #  define __dso_hidden
-#  define __BEGIN_PUBLIC
-#  define __END_PUBLIC
-#  define __BEGIN_HIDDEN
-#  define __END_HIDDEN
+#  define __BEGIN_PUBLIC_DECLS	__BEGIN_EXTERN_C
+#  define __END_PUBLIC_DECLS	__END_EXTERN_C
+#  define __BEGIN_HIDDEN_DECLS	__BEGIN_EXTERN_C
+#  define __END_HIDDEN_DECLS	__END_EXTERN_C
 #endif
 
-
-#if defined(__cplusplus)
-#define	__BEGIN_DECLS		__BEGIN_PUBLIC extern "C" {
-#define	__END_DECLS		} __END_PUBLIC
-#define	__static_cast(x,y)	static_cast<x>(y)
-#else
-#define	__BEGIN_DECLS		__BEGIN_PUBLIC
-#define	__END_DECLS		__END_PUBLIC
-#define	__static_cast(x,y)	(x)y
-#endif
+#define	__BEGIN_DECLS		__BEGIN_PUBLIC_DECLS
+#define	__END_DECLS		__END_PUBLIC_DECLS
 
 /*
  * Non-static C99 inline functions are optional bodies.  They don't
