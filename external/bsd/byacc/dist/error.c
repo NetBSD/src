@@ -1,8 +1,12 @@
-/*	$NetBSD: error.c,v 1.4 2010/12/24 02:58:20 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.5 2010/12/25 19:24:28 joerg Exp $	*/
 /* Id: error.c,v 1.8 2010/11/24 15:10:20 tom Exp */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: error.c,v 1.4 2010/12/24 02:58:20 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.5 2010/12/25 19:24:28 joerg Exp $");
 #include "defs.h"
 
 
