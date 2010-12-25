@@ -1,4 +1,4 @@
-/*	$NetBSD: make_malloc.c,v 1.5 2009/01/24 23:19:50 dsl Exp $	*/
+/*	$NetBSD: make_malloc.c,v 1.6 2010/12/25 20:35:25 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #ifdef MAKE_NATIVE
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: make_malloc.c,v 1.5 2009/01/24 23:19:50 dsl Exp $");
+__RCSID("$NetBSD: make_malloc.c,v 1.6 2010/12/25 20:35:25 dholland Exp $");
 #endif
 
 #include <stdio.h>
@@ -48,7 +48,7 @@ enomem(void)
 {
 	extern char *progname;
 
-	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
+	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(ENOMEM));
 	exit(2);
 }
 
