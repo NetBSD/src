@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.172 2010/12/25 20:46:18 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.172 2010/12/25 20:46:18 dholland Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.172 2010/12/25 20:46:18 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -543,10 +543,10 @@ loadfile(const char *path, int fd)
 		bufpos += result;
 	}
 	assert(bufpos <= lf->len);
+	lf->len = bufpos;
 
 	/* truncate malloc region to actual length (maybe not useful) */
 	if (lf->len > 0) {
-		lf->len = bufpos;
 		lf->buf = bmake_realloc(lf->buf, lf->len);
 	}
 
