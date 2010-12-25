@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.23 2007/12/02 04:59:24 tsutsui Exp $	*/
+/*	$NetBSD: alloc.c,v 1.24 2010/12/25 01:08:44 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -214,7 +214,7 @@ alloc(size_t size)
 		top += ALIGN(sizeof(unsigned int)) + ALIGN(size);
 #ifdef HEAP_LIMIT
 		if (top > (char *)HEAP_LIMIT)
-			panic("heap full (0x%lx+%zu)", help, size);
+			panic("heap full (%p+%zu)", help, size);
 #endif
 		*(unsigned int *)(void *)help = (unsigned int)ALIGN(size);
 #ifdef ALLOC_TRACE
