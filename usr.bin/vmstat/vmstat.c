@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.172 2010/12/24 23:39:19 enami Exp $ */
+/* $NetBSD: vmstat.c,v 1.173 2010/12/25 14:18:37 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.172 2010/12/24 23:39:19 enami Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.173 2010/12/25 14:18:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -983,7 +983,8 @@ cpucounters(struct cpu_counter *cc)
 		    != sizeof(tci)) {
 		    warnx("Can't read cpu info from %p (%s)",
 			ci, kvm_geterr(kd));
-		    continue;
+		    (void)memset(cc, 0, sizeof(*cc));
+		    return;
 		}
 		/* Found the fake element, done */
 		if (tci.ci_data.cpu_qchain.cqe_prev == NULL)
