@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.169 2010/12/13 05:01:56 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.170 2010/12/25 04:57:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.169 2010/12/13 05:01:56 dholland Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.170 2010/12/25 04:57:07 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.169 2010/12/13 05:01:56 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.170 2010/12/25 04:57:07 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -123,11 +123,18 @@ __RCSID("$NetBSD: parse.c,v 1.169 2010/12/13 05:01:56 dholland Exp $");
  *	Parse_MainName	    	    Returns a Lst of the main target to create.
  */
 
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+#ifndef MAP_COPY
+#define MAP_COPY MAP_PRIVATE
+#endif
 
 #include "make.h"
 #include "hash.h"
@@ -146,17 +153,15 @@ typedef struct IFile {
     const char      *fname;         /* name of file */
     int             lineno;         /* current line number in file */
     int             first_lineno;   /* line number of start of text */
-    int             fd;             /* the open file */
     int             cond_depth;     /* 'if' nesting when file opened */
     char            *P_str;         /* point to base of string buffer */
     char            *P_ptr;         /* point to next char of string buffer */
     char            *P_end;         /* point to the end of string buffer */
-    int             P_buflen;       /* current size of file buffer */
-    char            *(*nextbuf)(void *); /* Function to get more data */
+    char            *(*nextbuf)(void *, size_t *); /* Function to get more data */
     void            *nextbuf_arg;   /* Opaque arg for nextbuf() */
+    struct loadedfile *lf;          /* loadedfile object, if any */
 } IFile;
 
-#define IFILE_BUFLEN 0x8000
 
 /*
  * These values are returned by ParseEOF to tell Parse_File whether to
@@ -359,7 +364,198 @@ static void ParseFinishLine(void);
 static void ParseMark(GNode *);
 
 ////////////////////////////////////////////////////////////
-// code
+// file loader
+
+struct loadedfile {
+	const char *path;		/* name, for error reports */
+	char *buf;			/* contents buffer */
+	size_t len;			/* length of contents */
+	size_t maplen;			/* length of mmap area, or 0 */
+	Boolean used;			/* XXX: have we used the data yet */
+};
+
+/*
+ * Constructor/destructor for loadedfile
+ */
+static struct loadedfile *
+loadedfile_create(const char *path)
+{
+	struct loadedfile *lf;
+
+	lf = bmake_malloc(sizeof(*lf));
+	lf->path = (path == NULL ? "(stdin)" : path);
+	lf->buf = NULL;
+	lf->len = 0;
+	lf->maplen = 0;
+	lf->used = FALSE;
+	return lf;
+}
+
+static void
+loadedfile_destroy(struct loadedfile *lf)
+{
+	if (lf->buf != NULL) {
+		if (lf->maplen > 0) {
+			munmap(lf->buf, lf->maplen);
+		} else {
+			free(lf->buf);
+		}
+	}
+	free(lf);
+}
+
+/*
+ * nextbuf() operation for loadedfile, as needed by the weird and twisted
+ * logic below. Once that's cleaned up, we can get rid of lf->used...
+ */
+static char *
+loadedfile_nextbuf(void *x, size_t *len)
+{
+	struct loadedfile *lf = x;
+
+	if (lf->used) {
+		return NULL;
+	}
+	lf->used = TRUE;
+	*len = lf->len;
+	return lf->buf;
+}
+
+/*
+ * Try to get the size of a file.
+ */
+static ReturnStatus
+load_getsize(int fd, size_t *ret)
+{
+	struct stat st;
+
+	if (fstat(fd, &st) < 0) {
+		return FAILURE;
+	}
+
+	if (!S_ISREG(st.st_mode)) {
+		return FAILURE;
+	}
+
+	/*
+	 * st_size is an off_t, which is 64 bits signed; *ret is
+	 * size_t, which might be 32 bits unsigned or 64 bits
+	 * unsigned. Rather than being elaborate, just punt on
+	 * files that are more than 2^31 bytes. We should never
+	 * see a makefile that size in practice...
+	 *
+	 * While we're at it reject negative sizes too, just in case.
+	 */
+	if (st.st_size < 0 || st.st_size > 0x7fffffff) {
+		return FAILURE;
+	}
+
+	*ret = (size_t) st.st_size;
+	return SUCCESS;
+}
+
+/*
+ * Read in a file.
+ *
+ * Until the path search logic can be moved under here instead of
+ * being in the caller in another source file, we need to have the fd
+ * passed in already open. Bleh.
+ *
+ * If the path is NULL use stdin and (to insure against fd leaks)
+ * assert that the caller passed in -1.
+ */
+static struct loadedfile *
+loadfile(const char *path, int fd)
+{
+	struct loadedfile *lf;
+	long pagesize;
+	ssize_t result;
+	size_t bufpos;
+
+	lf = loadedfile_create(path);
+
+	if (path == NULL) {
+		assert(fd == -1);
+		fd = STDIN_FILENO;
+	} else {
+#if 0 /* notyet */
+		fd = open(path, O_RDONLY);
+		if (fd < 0) {
+			...
+			Error("%s: %s", path, strerror(errno));
+			exit(1);
+		}
+#endif
+	}
+
+	if (load_getsize(fd, &lf->len) == SUCCESS) {
+		/* found a size, try mmap */
+		pagesize = sysconf(_SC_PAGESIZE);
+		if (pagesize <= 0) {
+			pagesize = 0x1000;
+		}
+		/* round size up to a page */
+		lf->maplen = pagesize * ((lf->len + pagesize - 1)/pagesize);
+
+		/*
+		 * XXX hack for dealing with empty files; remove when
+		 * we're no longer limited by interfacing to the old
+		 * logic elsewhere in this file.
+		 */
+		if (lf->maplen == 0) {
+			lf->maplen = pagesize;
+		}
+
+		/*
+		 * FUTURE: remove PROT_WRITE when the parser no longer
+		 * needs to scribble on the input.
+		 */
+		lf->buf = mmap(NULL, lf->maplen, PROT_READ|PROT_WRITE,
+			       MAP_FILE|MAP_COPY, fd, 0);
+		if (lf->buf != MAP_FAILED) {
+			/* succeeded */
+			goto done;
+		}
+	}
+
+	/* cannot mmap; load the traditional way */
+
+	lf->maplen = 0;
+	lf->len = 1024;
+	lf->buf = bmake_malloc(lf->len);
+
+	bufpos = 0;
+	while (1) {
+		assert(bufpos <= lf->len);
+		if (bufpos == lf->len) {
+			lf->len *= 2;
+			lf->buf = bmake_realloc(lf->buf, lf->len);
+		}
+		result = read(fd, lf->buf + bufpos, lf->len - bufpos);
+		if (result < 0) {
+			Error("%s: read error: %s", path, strerror(errno));
+			exit(1);
+		}
+		if (result == 0) {
+			break;
+		}
+		bufpos += result;
+	}
+	assert(bufpos <= lf->len);
+
+	/* truncate malloc region to actual length (maybe not useful) */
+	lf->len = bufpos;
+	lf->buf = bmake_realloc(lf->buf, lf->len);
+
+done:
+	if (path != NULL) {
+		close(fd);
+	}
+	return lf;
+}
+
+////////////////////////////////////////////////////////////
+// old code
 
 /*-
  *----------------------------------------------------------------------
@@ -1835,6 +2031,7 @@ Parse_AddIncludeDir(char *dir)
 static void
 Parse_include_file(char *file, Boolean isSystem, int silent)
 {
+    struct loadedfile *lf;
     char          *fullname;	/* full pathname of file */
     char          *newName;
     char          *prefEnd, *incdir;
@@ -1925,8 +2122,12 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
 	return;
     }
 
+    /* load it */
+    lf = loadfile(fullname, fd);
+
     /* Start reading from this file next */
-    Parse_SetInput(fullname, 0, fd, NULL, NULL);
+    Parse_SetInput(fullname, 0, -1, loadedfile_nextbuf, lf);
+    curFile->lf = lf;
 }
 
 static void
@@ -2063,9 +2264,11 @@ ParseTrackInput(const char *name)
  *---------------------------------------------------------------------
  */
 void
-Parse_SetInput(const char *name, int line, int fd, char *(*nextbuf)(void *), void *arg)
+Parse_SetInput(const char *name, int line, int fd,
+	char *(*nextbuf)(void *, size_t *), void *arg)
 {
     char *buf;
+    size_t len;
 
     if (name == NULL)
 	name = curFile->fname;
@@ -2096,33 +2299,22 @@ Parse_SetInput(const char *name, int line, int fd, char *(*nextbuf)(void *), voi
     curFile->fname = name;
     curFile->lineno = line;
     curFile->first_lineno = line;
-    curFile->fd = fd;
     curFile->nextbuf = nextbuf;
     curFile->nextbuf_arg = arg;
+    curFile->lf = NULL;
 
-    if (nextbuf == NULL) {
-	/*
-	 * Allocate a 32k data buffer (as stdio seems to).
-	 * Set pointers so that first ParseReadc has to do a file read.
-	 */
-	buf = bmake_malloc(IFILE_BUFLEN);
-	buf[0] = 0;
-	curFile->P_str = buf;
-	curFile->P_ptr = buf;
-	curFile->P_end = buf;
-	curFile->P_buflen = IFILE_BUFLEN;
-    } else {
-	/* Get first block of input data */
-	buf = curFile->nextbuf(curFile->nextbuf_arg);
-	if (buf == NULL) {
-	    /* Was all a waste of time ... */
-	    free(curFile);
-	    return;
-	}
-	curFile->P_str = buf;
-	curFile->P_ptr = buf;
-	curFile->P_end = NULL;
+    assert(nextbuf != NULL);
+
+    /* Get first block of input data */
+    buf = curFile->nextbuf(curFile->nextbuf_arg, &len);
+    if (buf == NULL) {
+        /* Was all a waste of time ... */
+	free(curFile);
+	return;
     }
+    curFile->P_str = buf;
+    curFile->P_ptr = buf;
+    curFile->P_end = buf+len;
 
     curFile->cond_depth = Cond_save_depth();
     ParseSetParseFile(name);
@@ -2211,26 +2403,31 @@ static int
 ParseEOF(void)
 {
     char *ptr;
+    size_t len;
 
-    if (curFile->nextbuf != NULL) {
-       /* eg .for loop data, get next iteration */
-       ptr = curFile->nextbuf(curFile->nextbuf_arg);
-       curFile->P_ptr = ptr;
-       curFile->P_str = ptr;
-       curFile->lineno = curFile->first_lineno;
-       if (ptr != NULL) {
-	    /* Iterate again */
-	    return CONTINUE;
-	}
+    assert(curFile->nextbuf != NULL);
+
+    /* get next input buffer, if any */
+    ptr = curFile->nextbuf(curFile->nextbuf_arg, &len);
+    curFile->P_ptr = ptr;
+    curFile->P_str = ptr;
+    curFile->P_end = ptr + len;
+    curFile->lineno = curFile->first_lineno;
+    if (ptr != NULL) {
+	/* Iterate again */
+	return CONTINUE;
     }
 
     /* Ensure the makefile (or loop) didn't have mismatched conditionals */
     Cond_restore_depth(curFile->cond_depth);
 
+    if (curFile->lf != NULL) {
+	    loadedfile_destroy(curFile->lf);
+	    curFile->lf = NULL;
+    }
+
     /* Dispose of curFile info */
     /* Leak curFile->fname because all the gnodes have pointers to it */
-    if (curFile->fd != -1)
-	close(curFile->fd);
     free(curFile->P_str);
     free(curFile);
 
@@ -2244,8 +2441,8 @@ ParseEOF(void)
     }
 
     if (DEBUG(PARSE))
-	fprintf(debug_file, "ParseEOF: returning to file %s, line %d, fd %d\n",
-	    curFile->fname, curFile->lineno, curFile->fd);
+	fprintf(debug_file, "ParseEOF: returning to file %s, line %d\n",
+	    curFile->fname, curFile->lineno);
 
     /* Restore the PARSEDIR/PARSEFILE variables */
     ParseSetParseFile(curFile->fname);
@@ -2266,7 +2463,6 @@ ParseGetLine(int flags, int *length)
     char *escaped;
     char *comment;
     char *tp;
-    int len, dist;
 
     /* Loop through blank lines and comment lines */
     for (;;) {
@@ -2277,67 +2473,25 @@ ParseGetLine(int flags, int *length)
 	escaped = NULL;
 	comment = NULL;
 	for (;;) {
+	    if (cf->P_end != NULL && ptr == cf->P_end) {
+		/* end of buffer */
+		ch = 0;
+		break;
+	    }
 	    ch = *ptr;
 	    if (ch == 0 || (ch == '\\' && ptr[1] == 0)) {
 		if (cf->P_end == NULL)
 		    /* End of string (aka for loop) data */
 		    break;
-		/* End of data read from file, read more data */
-		if (ptr != cf->P_end && (ch != '\\' || ptr + 1 != cf->P_end)) {
-		    Parse_Error(PARSE_FATAL, "Zero byte read from file");
-		    return NULL;
-		}
-		/* Move existing data to (near) start of file buffer */
-		len = cf->P_end - cf->P_ptr;
-		tp = cf->P_str + 32;
-		memmove(tp, cf->P_ptr, len);
-		dist = cf->P_ptr - tp;
-		/* Update all pointers to reflect moved data */
-		ptr -= dist;
-		line -= dist;
-		line_end -= dist;
-		if (escaped)
-		    escaped -= dist;
-		if (comment)
-		    comment -= dist;
-		cf->P_ptr = tp;
-		tp += len;
-		cf->P_end = tp;
-		/* Try to read more data from file into buffer space */
-		len = cf->P_str + cf->P_buflen - tp - 32;
-		if (len <= 0) {
-		    /* We need a bigger buffer to hold this line */
-		    tp = bmake_realloc(cf->P_str, cf->P_buflen + IFILE_BUFLEN);
-		    cf->P_ptr = cf->P_ptr - cf->P_str + tp;
-		    cf->P_end = cf->P_end - cf->P_str + tp;
-		    ptr = ptr - cf->P_str + tp;
-		    line = line - cf->P_str + tp;
-		    line_end = line_end - cf->P_str + tp;
-		    if (escaped)
-			escaped = escaped - cf->P_str + tp;
-		    if (comment)
-			comment = comment - cf->P_str + tp;
-		    cf->P_str = tp;
-		    tp = cf->P_end;
-		    len += IFILE_BUFLEN;
-		    cf->P_buflen += IFILE_BUFLEN;
-		}
-		len = read(cf->fd, tp, len);
-		if (len <= 0) {
-		    if (len < 0) {
-			Parse_Error(PARSE_FATAL, "Makefile read error: %s",
-				strerror(errno));
-			return NULL;
-		    }
-		    /* End of file */
+		if (cf->nextbuf != NULL) {
+		    /*
+		     * End of this buffer; return EOF and outer logic
+		     * will get the next one. (eww)
+		     */
 		    break;
 		}
-		/* 0 terminate the data, and update end pointer */
-		tp += len;
-		cf->P_end = tp;
-		*tp = 0;
-		/* Process newly read characters */
-		continue;
+		Parse_Error(PARSE_FATAL, "Zero byte read from file");
+		return NULL;
 	    }
 
 	    if (ch == '\\') {
@@ -2571,11 +2725,19 @@ Parse_File(const char *name, int fd)
 {
     char	  *cp;		/* pointer into the line */
     char          *line;	/* the line we're working on */
+    struct loadedfile *lf;
+
+    lf = loadfile(name, fd);
 
     inLine = FALSE;
     fatals = 0;
 
-    Parse_SetInput(name, 0, fd, NULL, NULL);
+    if (name == NULL) {
+	    name = "(stdin)";
+    }
+
+    Parse_SetInput(name, 0, -1, loadedfile_nextbuf, lf);
+    curFile->lf = lf;
 
     do {
 	for (; (line = ParseReadLine()) != NULL; ) {

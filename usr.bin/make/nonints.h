@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.61 2010/12/09 22:30:17 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.62 2010/12/25 04:57:07 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -136,7 +136,7 @@ void Parse_AddIncludeDir(char *);
 void Parse_File(const char *, int);
 void Parse_Init(void);
 void Parse_End(void);
-void Parse_SetInput(const char *, int, int, char *(*)(void *), void *);
+void Parse_SetInput(const char *, int, int, char *(*)(void *, size_t *), void *);
 Lst Parse_MainName(void);
 
 /* str.c */
