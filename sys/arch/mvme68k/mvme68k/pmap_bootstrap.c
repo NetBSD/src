@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.41 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.42 2010/12/25 14:43:00 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.41 2010/06/06 04:50:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.42 2010/12/25 14:43:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -316,7 +316,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Invalidate all remaining entries in both.
 		 */
 		este = (st_entry_t *)kstpa;
-		este = &epte[TIA_SIZE];
+		este = &este[TIA_SIZE];
 		while (ste < este)
 			*ste++ = SG_NV;
 		epte = (st_entry_t *)kptmpa;
