@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.4 2010/12/02 14:22:26 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.2 2010/12/25 18:23:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -490,8 +490,8 @@ exit_check(ns_client_t *client) {
 
 		ns_query_free(client);
 		isc_mem_put(client->mctx, client->recvbuf, RECV_BUFFER_SIZE);
-		isc_event_free((isc_event_t **)&client->sendevent);
-		isc_event_free((isc_event_t **)&client->recvevent);
+		isc_event_free((isc_event_t **)(void *)&client->sendevent);
+		isc_event_free((isc_event_t **)(void *)&client->recvevent);
 		isc_timer_detach(&client->timer);
 
 		if (client->tcpbuf != NULL)
@@ -2139,13 +2139,13 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	ns_query_free(client);
 
  cleanup_recvevent:
-	isc_event_free((isc_event_t **)&client->recvevent);
+	isc_event_free((isc_event_t **)(void *)&client->recvevent);
 
  cleanup_recvbuf:
 	isc_mem_put(client->mctx, client->recvbuf, RECV_BUFFER_SIZE);
 
  cleanup_sendevent:
-	isc_event_free((isc_event_t **)&client->sendevent);
+	isc_event_free((isc_event_t **)(void *)&client->sendevent);
 
 	client->magic = 0;
 
