@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.27 2010/12/25 14:42:59 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.28 2010/12/25 16:11:11 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27 2010/12/25 14:42:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.28 2010/12/25 16:11:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
 		ste = (st_entry_t *)kstpa;
 		ste = &ste[i + SG4_LEV2SIZE - NPTEPG / SG4_LEV3SIZE * 2];
-		epte = &ste[NPTEPG / SG4_LEV3SIZE];
+		este = &ste[NPTEPG / SG4_LEV3SIZE];
 		protoste = kptmpa | SG_U | SG_RW | SG_V;
 		while (ste < este) {
 			*ste++ = protoste;
