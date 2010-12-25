@@ -1,9 +1,9 @@
-/*	$NetBSD: atomic.h,v 1.2 2010/12/14 23:19:23 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3 2010/12/25 15:26:32 christos Exp $	*/
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
 
-#ifdef ISC_PLATFORM_USE_THREADS
+#ifdef ISC_PLATFORM_USETHREADS
 #include <sys/atomic.h>
 #else
 #define ISC_NO_ATOMIC
@@ -18,7 +18,7 @@ static __inline isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 #ifdef ISC_NO_ATOMIC
 	isc_int32_t oval = *p;
-	*p = val;
+	*p += val;
 	return oval;
 #else
 	return (isc_int32_t)atomic_add_32_nv((volatile uint32_t *)p,
@@ -31,7 +31,7 @@ static __inline isc_int64_t
 isc_atomic_xaddq(isc_int64_t *p, isc_int64_t val) {
 #ifdef ISC_NO_ATOMIC
 	isc_int64_t oval = *p;
-	*p = val;
+	*p += val;
 	return oval;
 #else
 	return (isc_int64_t)atomic_add_64_nv((volatile uint64_t *)p,
@@ -61,7 +61,7 @@ static __inline__ isc_int32_t
 isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 #ifdef ISC_NO_ATOMIC
 	isc_int32_t oval = *p;
-	if (oval == val)
+	if (cmpval == oval)
 		*p = val;
 	return oval;
 #else
