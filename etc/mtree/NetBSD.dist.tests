@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.6 2010/12/20 23:47:23 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.7 2010/12/25 21:10:25 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -49,6 +49,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/stdio
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib
+./usr/libdata/debug/usr/tests/lib/libc/string
 ./usr/libdata/debug/usr/tests/lib/libdes
 ./usr/libdata/debug/usr/tests/lib/libevent
 ./usr/libdata/debug/usr/tests/lib/semaphore
@@ -141,6 +142,7 @@
 ./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/stdio
 ./usr/tests/lib/libc/stdlib
+./usr/tests/lib/libc/string
 ./usr/tests/lib/libdes
 ./usr/tests/lib/semaphore
 ./usr/tests/lib/semaphore/pthread
