@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.88 2010/11/19 18:21:48 phx Exp $	*/
+/*	$NetBSD: usb.h,v 1.89 2010/12/25 14:06:14 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -195,6 +195,7 @@ typedef struct {
 #define  UDESC_INTERFACE_POWER	0x08
 #define  UDESC_OTG		0x09
 #define  UDESC_DEBUG		0x0a
+#define  UDESC_INTERFACE_ASSOC	0x0b
 #define  UDESC_CS_DEVICE	0x21	/* class specific */
 #define  UDESC_CS_CONFIG	0x22
 #define  UDESC_CS_STRING	0x23
@@ -272,6 +273,18 @@ typedef struct {
 	uByte		iInterface;
 } UPACKED usb_interface_descriptor_t;
 #define USB_INTERFACE_DESCRIPTOR_SIZE 9
+
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bFirstInterface;
+	uByte		bInterfaceCount;
+	uByte		bFunctionClass;
+	uByte		bFunctionSubClass;
+	uByte		bFunctionProtocol;
+	uByte		iFunction
+} UPACKED usb_interface_assoc_descriptor_t;
+#define USB_INTERFACE_ASSOC_DESCRIPTOR_SIZE 8
 
 typedef struct {
 	uByte		bLength;
