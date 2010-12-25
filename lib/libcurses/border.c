@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.13 2010/02/23 19:48:26 drochner Exp $	*/
+/*	$NetBSD: border.c,v 1.14 2010/12/25 09:59:52 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.13 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: border.c,v 1.14 2010/12/25 09:59:52 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -161,20 +161,23 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	cchar_t ls, rs, ts, bs, tl, tr, bl, br;
 	cchar_t *lsp, *rsp, *tsp, *bsp, *tlp, *trp, *blp, *brp;
 
-#define S(in, out) \
+#define S(in, out, def) \
 	if (in & __CHARTEXT) { \
 		__cursesi_chtype_to_cchar(in, &out); \
-		out##p = &out; \
-	} else \
-		out##p = NULL
-	S(left, ls);
-	S(right, rs);
-	S(top, ts);
-	S(bottom, bs);
-	S(topleft, tl);
-	S(topright, tr);
-	S(botleft, bl);
-	S(botright, br);
+	} else { \
+		memcpy(&out, def, sizeof(cchar_t)); \
+		out.attributes |= in & __ATTRIBUTES; \
+	} \
+	out##p = &out;
+
+	S(left, ls, WACS_VLINE);
+	S(right, rs, WACS_VLINE);
+	S(top, ts, WACS_HLINE);
+	S(bottom, bs, WACS_HLINE);
+	S(topleft, tl, WACS_ULCORNER);
+	S(topright, tr, WACS_URCORNER);
+	S(botleft, bl, WACS_LLCORNER);
+	S(botright, br, WACS_LRCORNER);
 #undef S
 	return wborder_set(win, lsp, rsp, tsp, bsp, tlp, trp, blp, brp);
 #endif /* HAVE_WCHAR */
