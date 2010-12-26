@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.25 2010/12/24 20:54:28 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.26 2010/12/26 23:41:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.25 2010/12/24 20:54:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.26 2010/12/26 23:41:45 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1319,11 +1319,23 @@ video_set_frequency(struct video_softc *sc, struct v4l2_frequency *freq)
 {
 	const struct video_hw_if *hw = sc->hw_if;
 	struct video_frequency vfreq;
+	struct video_tuner vt;
+	int error;
 
-	if (hw->set_frequency == NULL)
+	if (hw->set_frequency == NULL || hw->get_tuner == NULL)
 		return ENOTTY;
 	if (freq->type != V4L2_TUNER_ANALOG_TV)
 		return EINVAL;
+
+	vt.index = freq->tuner;
+	error = hw->get_tuner(sc->hw_softc, &vt);
+	if (error)
+		return error;
+
+	if (freq->frequency < vt.freq_lo)
+		freq->frequency = vt.freq_lo;
+	else if (freq->frequency > vt.freq_hi)
+		freq->frequency = vt.freq_hi;
 
 	vfreq.tuner_index = freq->tuner;
 	vfreq.frequency = freq->frequency;
