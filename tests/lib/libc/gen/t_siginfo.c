@@ -74,14 +74,9 @@ sig_debug(int signo, siginfo_t *info, ucontext_t *ctx)
 		printf("uc_stack %p %lu 0x%x\n", ctx->uc_stack.ss_sp, 
 		    (unsigned long)ctx->uc_stack.ss_size,
 		    ctx->uc_stack.ss_flags);
-		/*
-		 * XXX Don't try to print MD __gregs since we don't
-		 * XXX know what format to use
-		 *
-		for (i = 0; i < __arraycount(mc->__gregs); i++)
-			printf("uc_mcontext.greg[%d] 0x%x\n", i,
-			    uc->uc_mcontext.__gregs[i]);
-		 */
+		for (i = 0; i < __arraycount(ctx->uc_mcontext.__gregs); i++)
+			printf("uc_mcontext.greg[%d] 0x%lx\n", i,
+			    (long)ctx->uc_mcontext.__gregs[i]);
 	}
 }
 
@@ -134,13 +129,8 @@ sigchild_action(int signo, siginfo_t *info, void *ptr)
 		printf("si_uid=%d\n", info->si_uid);
 		printf("si_pid=%d\n", info->si_pid);
 		printf("si_status=%d\n", info->si_status);
-		/*
-		 * XXX don't print these until we figure out the
-		 * XXX correct machine-independant format specifier
-		 *
-		printf("si_utime=%u\n", info->si_utime);
-		printf("si_stime=%u\n", info->si_stime);
-		 */
+		printf("si_utime=%lu\n", (unsigned long int)info->si_utime);
+		printf("si_stime=%lu\n", (unsigned long int)info->si_stime);
 	}
 	ATF_REQUIRE_EQ(info->si_code, code);
 	ATF_REQUIRE_EQ(info->si_signo, SIGCHLD);
