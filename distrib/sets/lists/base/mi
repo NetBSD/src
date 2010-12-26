@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.909 2010/12/19 22:53:19 pgoyette Exp $
+# $NetBSD: mi,v 1.910 2010/12/26 11:31:44 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -686,6 +686,7 @@
 ./usr/bin/uux					base-obsolete		obsolete
 ./usr/bin/vacation				base-mail-bin
 ./usr/bin/vi					base-util-bin
+./usr/bin/videoctl				base-video-bin
 ./usr/bin/view					base-util-bin
 ./usr/bin/vis					base-util-bin
 ./usr/bin/vmstat				base-util-bin
