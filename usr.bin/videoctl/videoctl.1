@@ -1,4 +1,4 @@
-.\" $NetBSD: videoctl.1,v 1.1 2010/12/26 10:37:15 jmcneill Exp $
+.\" $NetBSD: videoctl.1,v 1.2 2010/12/26 14:26:45 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -44,8 +44,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-command displays or sets various video system driver variables. If a list of
-variables is present on the command line, then
+command displays or sets various video system driver variables.
+If a list of variables is present on the command line, then
 .Nm
 prints the current value of those variables for the specified device.
 If the
@@ -58,7 +58,8 @@ flag is specified
 attempts to set the specified variables to the given values.
 The
 .Fl d
-flag can be used to specify an alternate video device. If
+flag can be used to specify an alternate video device.
+If
 .Fl d
 is not specified,
 .Pa /dev/video0
