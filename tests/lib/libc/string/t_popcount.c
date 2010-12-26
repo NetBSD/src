@@ -1,4 +1,4 @@
-/*	$NetBSD: t_popcount.c,v 1.2 2009/07/21 21:45:33 drochner Exp $	*/
+/*	$NetBSD: t_popcount.c,v 1.3 2010/12/26 13:29:47 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_popcount.c,v 1.2 2009/07/21 21:45:33 drochner Exp $");
+__RCSID("$NetBSD: t_popcount.c,v 1.3 2010/12/26 13:29:47 pgoyette Exp $");
 
 #include <atf-c.h>
 #include <strings.h>
@@ -40,17 +40,26 @@ __RCSID("$NetBSD: t_popcount.c,v 1.2 2009/07/21 21:45:33 drochner Exp $");
 static unsigned int byte_count[256];
 
 static void
-popcount_init(void)
+popcount_init(const char *cfg_var)
 {
 	unsigned int i, j;
 
-	for (i = 0; i < 256; ++i) {
-		byte_count[i] = 0;
-		for (j = i; j != 0; j >>= 1) {
-			if (j & 1)
-				++byte_count[i];
+	if (strcasecmp(cfg_var, "YES")  == 0 ||
+	    strcasecmp(cfg_var, "Y")    == 0 ||
+	    strcasecmp(cfg_var, "1")    == 0 ||
+	    strcasecmp(cfg_var, "T")    == 0 ||
+	    strcasecmp(cfg_var, "TRUE") == 0) {
+		for (i = 0; i < 256; ++i) {
+			byte_count[i] = 0;
+			for (j = i; j != 0; j >>= 1) {
+				if (j & 1)
+					++byte_count[i];
+			}
 		}
+		return;
 	}
+
+	atf_tc_skip("config variable \"run_popcount\" not set to YES/TRUE");
 }
 
 unsigned int test_parts[256] = {
@@ -121,17 +130,11 @@ unsigned int test_parts[256] = {
 };
 
 ATF_TC(t_popcount);
-ATF_TC(t_popcountll);
 
 ATF_TC_HEAD(t_popcount, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test popcount results");
-	atf_tc_set_md_var(tc, "timeout", "0");
-}
 
-ATF_TC_HEAD(t_popcountll, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Test popcountll results");
+	atf_tc_set_md_var(tc, "descr", "Test popcount results");
 	atf_tc_set_md_var(tc, "timeout", "0");
 }
 
@@ -139,7 +142,7 @@ ATF_TC_BODY(t_popcount, tc)
 {
 	unsigned int i, r;
 
-	popcount_init();
+	popcount_init(atf_tc_get_config_var_wd(tc, "run_popcount", "NO"));
 
 	for (i = 0; i < 0xffffffff; ++i) {
 		r = byte_count[i & 255] + byte_count[(i >> 8) & 255]
@@ -151,12 +154,20 @@ ATF_TC_BODY(t_popcount, tc)
 	ATF_CHECK_EQ(popcount(0xffffffff), 32);
 }
 
+ATF_TC(t_popcountll);
+ATF_TC_HEAD(t_popcountll, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Test popcountll results");
+	atf_tc_set_md_var(tc, "timeout", "0");
+}
+
 ATF_TC_BODY(t_popcountll, tc)
 {
 	unsigned int i, j, r, r2, p;
 	unsigned long long v;
 
-	popcount_init();
+	popcount_init(atf_tc_get_config_var_wd(tc, "run_popcount", "NO"));
 
 	for (j = 0; j < 256; ++j) {
 		p = test_parts[j];
