@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1269 2010/12/16 15:30:56 pooka Exp $
+# $NetBSD: mi,v 1.1270 2010/12/26 11:31:45 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -540,6 +540,7 @@
 ./usr/share/man/cat1/uux.0			man-obsolete		obsolete
 ./usr/share/man/cat1/vacation.0			man-mail-catman		.cat
 ./usr/share/man/cat1/vi.0			man-util-catman		.cat
+./usr/share/man/cat1/videoctl.0			man-video-catman	.cat
 ./usr/share/man/cat1/view.0			man-util-catman		.cat
 ./usr/share/man/cat1/vis.0			man-util-catman		.cat
 ./usr/share/man/cat1/vmstat.0			man-util-catman		.cat
@@ -3318,6 +3319,7 @@
 ./usr/share/man/html1/uuidgen.html		man-util-htmlman	html
 ./usr/share/man/html1/vacation.html		man-mail-htmlman	html
 ./usr/share/man/html1/vi.html			man-util-htmlman	html
+./usr/share/man/html1/videoctl.html		man-video-htmlman	html
 ./usr/share/man/html1/view.html			man-util-htmlman	html
 ./usr/share/man/html1/vis.html			man-util-htmlman	html
 ./usr/share/man/html1/vmstat.html		man-util-htmlman	html
@@ -5764,6 +5766,7 @@
 ./usr/share/man/man1/uux.1			man-obsolete		obsolete
 ./usr/share/man/man1/vacation.1			man-mail-man		.man
 ./usr/share/man/man1/vi.1			man-util-man		.man
+./usr/share/man/man1/videoctl.1			man-video-man		.man
 ./usr/share/man/man1/view.1			man-util-man		.man
 ./usr/share/man/man1/vis.1			man-util-man		.man
 ./usr/share/man/man1/vmstat.1			man-util-man		.man

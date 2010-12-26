@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1562 2010/12/25 23:28:18 haad Exp $
+#	$NetBSD: mi,v 1.1563 2010/12/26 11:31:44 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3418,6 +3418,7 @@
 ./usr/libdata/debug/usr/bin/vacation.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/bin/verify_krb5_conf.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/vi.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/videoctl.debug	comp-video-debug	debug
 ./usr/libdata/debug/usr/bin/vis.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/vmstat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/vndcompress.debug	comp-util-debug		debug
