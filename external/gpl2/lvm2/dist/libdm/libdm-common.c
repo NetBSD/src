@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-common.c,v 1.5 2009/12/05 11:42:24 haad Exp $	*/
+/*	$NetBSD: libdm-common.c,v 1.6 2010/12/26 14:48:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -450,9 +450,15 @@ static int _add_dev_node(const char *dev_name, uint32_t major, uint32_t minor,
 	}
 
 	old_mask = umask(0);
-
 	if (mknod(rpath, S_IFCHR | mode, rdev) < 0) {
+		umask(old_mask);
 		log_error("Unable to make device node for '%s'", raw_devname);
+		return 0;
+	}
+	umask(old_mask);
+
+	if (chown(path, uid, gid) < 0) {
+		log_sys_error("chown", rpath);
 		return 0;
 	}
 #endif
@@ -505,7 +511,7 @@ static int _rm_dev_node(const char *dev_name, int check_udev)
 	char path[PATH_MAX];
 	struct stat info;
 
-	#ifdef __NetBSD__
+#ifdef __NetBSD__
 	char rpath[PATH_MAX];
 	char raw_devname[DM_NAME_LEN+1]; /* r + other device name */
 

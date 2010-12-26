@@ -1,4 +1,4 @@
-/*	$NetBSD: functions.c,v 1.2 2010/12/23 17:46:54 christos Exp $	*/
+/*	$NetBSD: functions.c,v 1.3 2010/12/26 14:48:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
@@ -303,6 +303,7 @@ static int find_disk_path(char *major_minor_str, char *path_rtn, int *unlink_pat
 	struct dirent *dep;
 	struct stat statbuf;
 	int major, minor;
+	mode_t old_umask;
 
 	if (!strstr(major_minor_str, ":")) {
 		r = stat(major_minor_str, &statbuf);
@@ -350,7 +351,9 @@ static int find_disk_path(char *major_minor_str, char *path_rtn, int *unlink_pat
 	LOG_DBG("Path not found for %d/%d", major, minor);
 	LOG_DBG("Creating /dev/mapper/%d-%d", major, minor);
 	sprintf(path_rtn, "/dev/mapper/%d-%d", major, minor);
+	old_umask = umask(0);
 	r = mknod(path_rtn, S_IFBLK | DM_DEVICE_MODE, MKDEV(major, minor));
+	umask(old_umask);
 
 	if (r != -1)
 		r = chown(path_rtn, DM_DEVICE_UID, DM_DEVICE_GID);
