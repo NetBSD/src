@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2010/12/24 16:00:13 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 2010/12/26 21:05:34 he Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -215,6 +215,10 @@ struct clockframe {
 #define	cpu_signotify(l)	(setsoftast(l))
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast(l))
 
+#endif /* _KERNEL */
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+
 #include <sys/cpu_data.h>
 
 /*
@@ -227,6 +231,7 @@ struct cpu_info {
 
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
+#ifndef _KMEMUSER
 #ifdef MULTIPROCESSOR
 	struct	lwp	*ci_curlwp;	/* CPU owner */
 #endif
@@ -238,8 +243,12 @@ struct cpu_info {
 	volatile int	ci_cpl;
 	volatile int	ci_ipending;	/* The pending interrupts. */
 	u_int		ci_intr_depth;	/* Nonzero iff running an interrupt. */
+#endif /* !_KMEMUSER */
 } __aligned(64);
 
+#endif /* _KERNEL || _KMEMUSER */
+
+#if defined(_KERNEL)
 
 /*
  * definitions of cpu-dependent requirements
