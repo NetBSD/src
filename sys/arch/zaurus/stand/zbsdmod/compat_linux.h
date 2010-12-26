@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_linux.h,v 1.4 2007/10/17 19:58:41 garbled Exp $	*/
+/*	$NetBSD: compat_linux.h,v 1.5 2010/12/26 09:02:52 nonaka Exp $	*/
 /*	$OpenBSD: compat_linux.h,v 1.5 2006/01/15 17:58:27 deraadt Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
 struct file;
 struct inode;
 
+#include <sys/cdefs.h>
 #define	ELFSIZE	32
 #include <sys/exec_elf.h>
 #include <sys/types.h>
@@ -67,7 +68,7 @@ extern	int kernel_read(struct file *, unsigned long, char *, unsigned long);
 extern	int memcmp(const void *, const void *, size_t);
 extern	int register_chrdev(unsigned int, const char *, struct file_operations *);
 extern	int unregister_chrdev(unsigned int, const char *);
-extern	void printk(const char *, ...);
+extern	void printk(const char *, ...) __printflike(1, 2);
 extern	void *memcpy(void *, const void *, size_t);
 
 /* Linux LKM support */
