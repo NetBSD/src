@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.4 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.5 2010/12/26 09:03:56 nonaka Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ init_module(void)
 	rc = register_chrdev(ZBOOTDEV_MAJOR, ZBOOTDEV_NAME, &fops);
 	if (rc != 0) {
 		printk("%s: register_chrdev(%d, ...): error %d\n",
-		    ZBOOTMOD_NAME, -rc);
+		    ZBOOTMOD_NAME, ZBOOTDEV_MAJOR, -rc);
 		return 1;
 	}
 
@@ -346,7 +346,7 @@ zbsdmod_close(struct inode *ino, struct file *f)
 		return -EBUSY;
 
 	if (position > 0) {
-		printk("%s: loaded %d bytes\n", ZBOOTDEV_NAME,
+		printk("%s: loaded %ld bytes\n", ZBOOTDEV_NAME,
 		    position);
 
 		if (position < BOOTINFO_MAXSIZE) {
