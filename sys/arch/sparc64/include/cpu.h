@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.92 2010/05/29 21:59:33 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.93 2010/12/26 12:06:57 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,6 +88,8 @@
  */
 
 struct cpu_info {
+	struct cpu_data		ci_data;	/* MI per-cpu data */
+
 
 	/*
 	 * SPARC cpu_info structures live at two VAs: one global
@@ -166,8 +168,6 @@ struct cpu_info {
 	 */
 	pte_t			*ci_tsb_dmmu;
 	pte_t			*ci_tsb_immu;
-
-	struct cpu_data		ci_data;	/* MI per-cpu data */
 
 	volatile void		*ci_ddb_regs;	/* DDB regs */
 };
