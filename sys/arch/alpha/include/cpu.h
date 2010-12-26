@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.74 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: cpu.h,v 1.75 2010/12/26 18:00:41 he Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -120,10 +120,12 @@
 
 #include <machine/alpha_cpu.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/cpu_data.h>
+#ifndef _KMEMUSER
 #include <sys/cctr.h>
 #include <machine/frame.h>
+#endif
 
 /*
  * Machine check information.
@@ -145,6 +147,7 @@ struct cpu_info {
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct cpu_data ci_data;	/* MI per-cpu data */
+#ifndef _KMEMUSER
 	struct cctr_state ci_cc;	/* cycle counter state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 	int ci_mtx_count;
@@ -165,7 +168,12 @@ struct cpu_info {
 	volatile u_long ci_flags;	/* flags; see below */
 	volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
+#endif /* _KMEMUSER */
 };
+
+#endif /* _KERNEL || _KMEMUSER */
+
+#if defined(_KERNEL)
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
 #define	CPUF_PRESENT	0x02		/* CPU is present */
