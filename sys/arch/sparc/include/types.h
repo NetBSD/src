@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.53 2010/12/22 00:05:33 christos Exp $ */
+/*	$NetBSD: types.h,v 1.54 2010/12/26 11:32:38 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,7 +116,9 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+#ifndef SUN4U
 #define __HAVE_CPU_DATA_FIRST
+#endif
 
 #ifdef SUN4U
 #define __HAVE_DEVICE_REGISTER_POSTCONFIG
