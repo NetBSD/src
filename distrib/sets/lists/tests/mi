@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.190 2010/12/25 21:10:24 pgoyette Exp $
+# $NetBSD: mi,v 1.191 2010/12/26 13:35:54 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -335,8 +335,12 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
-#./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_memcpy.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_memmem.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_string.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_stresep.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libdes				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libdes/t_des.debug			tests-lib-debug		debug,atf,crypto
 ./usr/libdata/debug/usr/tests/lib/semaphore				tests-lib-debug
@@ -1561,8 +1565,12 @@
 ./usr/tests/lib/libc/stdio/t_popen		tests-lib-tests		atf
 ./usr/tests/lib/libc/string			tests-lib-tests
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
-#./usr/tests/lib/libc/string/t_popcount		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_memcpy		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_memmem		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_popcount		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_string		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_stresep		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
 ./usr/tests/lib/libdes				tests-lib-tests
 ./usr/tests/lib/libdes/Atffile			tests-lib-tests		atf,crypto
 ./usr/tests/lib/libdes/t_des			tests-lib-tests		atf,crypto
