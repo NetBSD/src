@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2010/10/26 05:42:51 jruoho Exp $
+#	$NetBSD: Makefile,v 1.55 2010/12/27 15:48:28 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,8 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
+SUBDIR+=	au8522
+SUBDIR+=	auvitek
 SUBDIR+=	bpf
 SUBDIR+=	cd9660
 SUBDIR+=	coda
@@ -60,6 +62,7 @@ SUBDIR+=	umap
 SUBDIR+=	union
 SUBDIR+=	usbverbose
 SUBDIR+=	vnd
+SUBDIR+=	xc5k
 SUBDIR+=	tprof
 .if (defined(NOTYET))
 SUBDIR+=	unionfs
