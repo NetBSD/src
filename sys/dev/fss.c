@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.71 2010/11/19 06:44:39 dholland Exp $	*/
+/*	$NetBSD: fss.c,v 1.72 2010/12/27 18:41:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.71 2010/11/19 06:44:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.72 2010/12/27 18:41:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -796,9 +796,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 
 	microtime(&sc->sc_time);
 
-	if (error == 0)
-		error = fscow_establish(sc->sc_mount,
-		    fss_copy_on_write, sc);
+	error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
 	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
 
