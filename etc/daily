@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.76 2010/02/05 16:29:02 jmmv Exp $
+#	$NetBSD: daily,v 1.77 2010/12/27 03:38:52 christos Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -11,8 +11,8 @@ if [ -s /etc/daily.conf ]; then
 	. /etc/daily.conf
 fi
 
-host=`hostname`
-date=`date`
+host="$(hostname)"
+date="$(date)"
 rcvar_manpage='daily.conf(5)'
 
 echo "To: ${MAILTO:-root}"
@@ -37,7 +37,7 @@ if [ -n "${pkgdb_dir}" ]; then
 fi
 
 echo ""
-echo "Uptime: " `uptime`
+echo "Uptime: $(uptime)"
 
 # Uncommenting any of the finds below would open up a race condition attack
 # based on symlinks, potentially allowing removal of any file on the system.
@@ -86,9 +86,9 @@ TMP2=daily2.$$
 
 if checkyesno find_core; then
 	# Turn "foo !bar bax" into "-fstype foo -o ! -fstype bar -o -fstype bax"
-	ignfstypes=`echo $find_core_ignore_fstypes | \
+	ignfstypes="$(echo $find_core_ignore_fstypes | \
 		sed -e's/\(!*\)\([^[:space:]]\{1,\}\)/-o \1 -fstype \2/g' \
-		    -e's/^-o //'`
+		    -e's/^-o //')"
 	find / \( $ignfstypes \) -prune -o \
 		-name 'lost+found' -prune -o \
 		\( -name '*.core' -o -name 'core' \) -type f -print > $TMP
@@ -176,7 +176,7 @@ if checkyesno check_disks; then
 	fi
 	rm -f $TMP $TMP2
 	touch $TMP2
-	for dev in `iostat -x | awk '/^raid/ { print $1 }'`; do
+	for dev in $(iostat -x | awk '/^raid/ { print $1 }'); do
 		raidctl -s $dev | awk '/^.*: failed$/ {print $0}' > $TMP
 		if [ -s $TMP ]; then
 			echo "$dev:" >> $TMP2
@@ -241,7 +241,7 @@ echo ""
 if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 	echo "Running rdist:"
 	if [ -d /var/log/rdist ]; then
-		logf=`date +%Y.%b.%d`
+		logf="$(date +%Y.%b.%d)"
 		rdist -f /etc/Distfile 2>&1 | tee /var/log/rdist/$logf
 	else
 		rdist -f /etc/Distfile 
