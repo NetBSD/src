@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.18 2010/10/19 11:58:00 pgoyette Exp $
+# $NetBSD: mi,v 1.19 2010/12/27 15:48:28 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -14,6 +14,10 @@
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aio				base-kernel-modules	kmod
 ./@MODULEDIR@/aio/aio.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/au8522				base-kernel-modules	kmod
+./@MODULEDIR@/au8522/au8522.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/auvitek				base-kernel-modules	kmod
+./@MODULEDIR@/auvitek/auvitek.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/bpf				base-kernel-modules	kmod
 ./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660				base-kernel-modules	kmod
@@ -134,5 +138,7 @@
 ./@MODULEDIR@/usbverbose/usbverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/vnd 				base-kernel-modules	kmod
 ./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules	kmod
+./@MODULEDIR@/xc5k				base-kernel-modules	kmod
+./@MODULEDIR@/xc5k/xc5k.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/zfs				base-kernel-modules     kmod,zfs
 ./@MODULEDIR@/zfs/zfs.kmod			base-kernel-modules     kmod,zfs
