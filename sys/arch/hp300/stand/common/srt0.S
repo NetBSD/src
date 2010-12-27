@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.15 2006/07/20 13:21:38 tsutsui Exp $	*/
+/*	$NetBSD: srt0.S,v 1.16 2010/12/27 15:23:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -183,11 +183,18 @@ not370:
 	movl	#HP_400,%a0@		/* must be a 400 */
 	jra	ihpibcheck
 isa36x:
-	movl	#0x41c000,%sp@-		/* check (INTIOBASE + FRODO_BASE) */
+	movl	#0x01000000,%sp@-	/* check DIOII_BASE (scode 132) */
 	jbsr	_C_LABEL(badaddr)
 	addql	#4,%sp
 	tstl	%d0
-	jne	ihpibcheck
+	jne	ihpibcheck		/* no device, assume 360 */
+	movl	#0x01000000,%a0
+	movb	%a0@(0x01),%d0		/* check device ID at DIO_IDOFF */
+	cmpb	#0x39,%d0		/* framebuffer? */
+	jne	ihpibcheck		/* no, assume 360 */
+	movb	%a0@(0x15),%d0		/* check sec ID at DIO_SECIDOFF */
+	cmpb	#0x11,%d0		/* VRX sti on 362? */
+	jne	ihpibcheck		/* no, assume 360 */
 	lea	_C_LABEL(machineid),%a0
 	movl	#HP_362,%a0@
 	jra	ihpibcheck

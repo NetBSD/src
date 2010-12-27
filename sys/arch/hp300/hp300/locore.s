@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.155 2010/12/20 00:25:33 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.156 2010/12/27 15:23:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -251,14 +251,20 @@ Lnot370:
 Lisa36x:
 	/*
 	 * If we found a 360, we need to check for a 362 (neither the 360
-	 * nor the 362 have a nonzero mmuid). Since the 362 has a frodo
-	 * utility chip in the DIO hole, check for it.
+	 * nor the 362 have a nonzero mmuid). Identify 362 by checking
+	 * on-board VRX framebuffer which has secid 0x11 at dio scode 132.
 	 */
-	movl	#(INTIOBASE + FRODO_BASE),%a0
+	movl	#DIOII_BASE,%a0		| probe dio scode 132
 	ASRELOC(phys_badaddr,%a3)
 	jbsr	%a3@
-	tstl	%d0			| found a frodo?
-	jne	Lstart1			| no, really a 360
+	tstl	%d0			| device at scode 132?
+	jne	Lstart1			| no, not 362, assume 360
+	movb	%a0@(DIO_IDOFF),%d0
+	cmpb	#DIO_DEVICE_ID_FRAMEBUFFER,%d0	| framebuffer?
+	jne	Lstart1			| no, not 362, assume 360
+	movb	%a0@(DIO_SECIDOFF),%d0
+	cmpb	#0x11,%d0		| VRX sti on 362?
+	jne	Lstart1			| no, not 362, assume 360
 	RELOC(machineid,%a0)
 	movl	#HP_362,%a0@
 	jra	Lstart1

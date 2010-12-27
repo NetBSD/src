@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.42 2010/12/20 00:25:33 matt Exp $
+#	$NetBSD: genassym.cf,v 1.43 2010/12/27 15:23:36 tsutsui Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -58,6 +58,8 @@ include <machine/reg.h>
 include <machine/pte.h>
 
 include <hp300/dev/intioreg.h>
+include <hp300/dev/dioreg.h>
+include <hp300/dev/diodevs.h>
 include <hp300/hp300/clockreg.h>
 
 # values for mmutype
@@ -257,8 +259,11 @@ define	CLKSR			CLKSR
 define	CLKMSB1			CLKMSB1
 define	CLKMSB3			CLKMSB3
 
-# frodo utility chip address (to identify HP362)
-define	FRODO_BASE		FRODO_BASE
+# DIO macro (to identify HP362)
+define	DIOII_BASE		DIOII_BASE
+define	DIO_IDOFF		DIO_IDOFF
+define	DIO_SECIDOFF		DIO_SECIDOFF
+define	DIO_DEVICE_ID_FRAMEBUFFER	DIO_DEVICE_ID_FRAMEBUFFER
 
 # SVR4 binary compatibility
 ifdef COMPAT_SVR4
