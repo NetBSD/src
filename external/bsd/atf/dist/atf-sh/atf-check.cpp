@@ -184,6 +184,7 @@ static struct name_number {
     { "int", SIGINT },
     { "quit", SIGQUIT },
     { "trap", SIGTRAP },
+    { "abrt", SIGABRT },
     { "kill", SIGKILL },
     { "segv", SIGSEGV },
     { "pipe", SIGPIPE },
