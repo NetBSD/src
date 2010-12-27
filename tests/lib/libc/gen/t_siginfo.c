@@ -333,7 +333,7 @@ ATF_TC_HEAD(sigfpe_int, tc)
 ATF_TC_BODY(sigfpe_int, tc)
 { 
 	struct sigaction sa;
-	double d = strtod("0", NULL);
+	long l = strtol("0", NULL, 10);
 
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = sigfpe_int_action;
@@ -342,7 +342,7 @@ ATF_TC_BODY(sigfpe_int, tc)
 #ifndef __vax__
 	fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
-	printf("%g\n", 1 / d);
+	printf("%ld\n", 1 / l);
 	if (intdiv_signalled == 0)
 		atf_tc_fail("FPE signal handler was not invoked");
 }
