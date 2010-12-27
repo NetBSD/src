@@ -1,4 +1,4 @@
-# $NetBSD: t_ssp.sh,v 1.1 2010/12/27 02:04:19 pgoyette Exp $
+# $NetBSD: t_ssp.sh,v 1.2 2010/12/27 05:27:34 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,14 +27,14 @@
 
 h_pass()
 {
-	echo "Executing command [ $1 ]"
-	atf_check -s exit:0 -o ignore -e ignore $1
+	echo "Executing command [ $2$1 ]"
+	eval $2 atf_check -s exit:0 -o ignore -e ignore $1
 }
 
 h_fail()
 {
-	echo "Executing command [ $1 ]"
-	atf_check -s signal:6 -o ignore -e ignore $1
+	echo "Executing command [ $2$1 ]"
+	eval $2 atf_check -s signal:6 -o ignore -e ignore $1
 }
 
 atf_test_case raw
@@ -111,8 +111,8 @@ gets_body()
 {
 	prog="$(atf_get_srcdir)/h_gets"
 
-	h_pass "echo ok | $prog"
-	h_fail "echo 0123456789 | $prog"
+	h_pass "$prog" "echo ok |"
+	h_fail "$prog" "echo 0123456789 |"
 }
 
 atf_test_case fgets
@@ -124,8 +124,8 @@ fgets_body()
 {
 	prog="$(atf_get_srcdir)/h_fgets"
 
-	h_pass "echo ok | $prog 10"
-	h_fail "echo busted | $prog 11"
+	h_pass "$prog 10" "echo ok |"
+	h_fail "$prog 11" "echo busted |"
 }
 
 atf_test_case memcpy
@@ -228,8 +228,8 @@ read_body()
 {
 	prog="$(atf_get_srcdir)/h_read"
 
-	h_pass "echo foo | $prog 1024"
-	h_fail "echo bar | $prog 1025"
+	h_pass "$prog 1024" "echo foo |"
+	h_fail "$prog 1025" "echo bar |"
 }
 
 atf_test_case readlink
