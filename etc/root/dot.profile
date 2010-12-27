@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.23 2009/08/26 11:15:25 tsutsui Exp $
+#	$NetBSD: dot.profile,v 1.24 2010/12/27 03:38:53 christos Exp $
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
 export PATH=${PATH}:/usr/X11R7/bin:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
@@ -13,7 +13,7 @@ export BLOCKSIZE=1k
 export HOST="$(hostname)"
 
 if [ -x /usr/bin/tset ]; then
-	eval `tset -sQrm 'unknown:?unknown'`
+	eval $(tset -sQrm 'unknown:?unknown')
 fi
 
 umask 022

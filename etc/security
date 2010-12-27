@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.108 2010/02/05 16:29:02 jmmv Exp $
+#	$NetBSD: security,v 1.109 2010/12/27 03:38:52 christos Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -408,8 +408,8 @@ end-of-csh
 			unset PATH
 			/bin/sh << end-of-sh > /dev/null 2>&1
 				. $i
-				list=\`echo \$PATH | /usr/bin/sed -e \
-				    's/^:/.:/;s/:$/:./;s/::/:.:/g;s/:/ /g'\`
+				list=\$\(echo \$PATH | /usr/bin/sed -e \
+				    's/^:/.:/;s/:$/:./;s/::/:.:/g;s/:/ /g'\)
 				/bin/ls -ldgT \$list > $TMP1
 end-of-sh
 			export PATH=$SAVE_PATH
@@ -441,7 +441,7 @@ fi
 # Root and uucp should both be in /etc/ftpusers.
 #
 if checkyesno check_ftpusers; then
-	list="uucp "`awk '$2 == 0 { print $1 }' $MPBYUID`
+	list="uucp "$(awk '$2 == 0 { print $1 }' $MPBYUID)
 	for i in $list; do
 		if /usr/libexec/ftpd -C $i ; then
 			printf "\t$i is not denied\n"
@@ -481,7 +481,7 @@ if checkyesno check_rhosts; then
 	sort -k2 |
 	while read uid homedir; do
 		if [ -f ${homedir}/.rhosts ] ; then
-			rhost=`ls -ldgT ${homedir}/.rhosts`
+			rhost=$(ls -ldgT ${homedir}/.rhosts)
 			printf -- "$uid: $rhost\n"
 		fi
 	done > $OUTPUT
@@ -510,7 +510,7 @@ if checkyesno check_homes; then
 		permit_usergroups=1 || permit_usergroups=0
 	while read uid homedir; do
 		if [ -d ${homedir}/ ] ; then
-			file=`ls -ldgT ${homedir}`
+			file=$(ls -ldgT ${homedir})
 			printf -- "$uid $file\n"
 		fi
 	done < $MPBYPATH |
@@ -533,7 +533,7 @@ if checkyesno check_homes; then
 		for f in $list ; do
 			file=${homedir}/${f}
 			if [ -f $file ] ; then
-				printf -- "$uid $f `ls -ldgT $file`\n"
+				printf -- "$uid $f $(ls -ldgT $file)\n"
 			fi
 		done
 	done < $MPBYPATH |
@@ -562,7 +562,7 @@ if checkyesno check_homes; then
 		for f in $list ; do
 			file=${homedir}/${f}
 			if [ -f $file ] ; then
-				printf -- "$uid $f `ls -ldgT $file`\n"
+				printf -- "$uid $f $(ls -ldgT $file)\n"
 			fi
 		done
 	done < $MPBYPATH |
@@ -849,7 +849,7 @@ if checkyesno check_mtree; then
 
 	for file in /etc/mtree/*.secure; do
 		[ $file = '/etc/mtree/*.secure' ] && continue
-		tree=`sed -n -e '3s/.* //p' -e 3q $file`
+		tree=$(sed -n -e '3s/.* //p' -e 3q $file)
 		mtree $check_mtree_flags -f $file -p $tree > $TMP1
 		if [ -s $TMP1 ]; then
 			printf "\nChecking $tree:\n"
@@ -866,8 +866,8 @@ fi
 #
 if checkyesno check_disklabels; then
 		# migrate old disklabels
-	for file in `ls -1d $backup_dir/$backup_dir/disklabel.* \
-	    $backup_dir/disklabel.* 2>/dev/null`; do
+	for file in $(ls -1d $backup_dir/$backup_dir/disklabel.* \
+	    $backup_dir/disklabel.* 2>/dev/null); do
 		migrate_file "$file" "$work_dir/${file##*/}"
 	done
 
@@ -877,14 +877,14 @@ if checkyesno check_disklabels; then
 	xargs rm < $LABELS
 
 		# generate disklabels of all disks excluding:	cd dk fd md st
-	disks=`iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d|dk|st|nfs/ { print $1; }'`
+	disks=$(iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d|dk|st|nfs/ { print $1; }')
 	for i in $disks; do
 		disklabel $i > "$work_dir/disklabel.$i" 2>/dev/null
 	done
 
 		# if fdisk is available, generate fdisks for:	ed ld sd wd
 	if [ -x /sbin/fdisk ]; then
-		disks=`iostat -x| awk 'NR > 1 && $1 ~ /^[elsw]d/ { print $1; }'`
+		disks=$(iostat -x | awk 'NR > 1 && $1 ~ /^[elsw]d/ { print $1; }')
 		for i in $disks; do
 			/sbin/fdisk $i > "$work_dir/fdisk.$i" 2>/dev/null
 		done
@@ -892,7 +892,7 @@ if checkyesno check_disklabels; then
 
 		# if dkctl is available, generate dkctl listwedges for:	ed ld sd wd cgd ofdisk ra rl raid
 	if [ -x /sbin/dkctl ]; then
-		disks=`iostat -x| awk 'NR > 1 && $1 ~ /^[elsw]d|cgd|ofdisk|r[al]|raid/ { print $1; }'`
+		disks=$(iostat -x | awk 'NR > 1 && $1 ~ /^[elsw]d|cgd|ofdisk|r[al]|raid/ { print $1; }')
 		for i in $disks; do
 			/sbin/dkctl $i listwedges > "$work_dir/wedges.$i" 2>/dev/null
 		done
