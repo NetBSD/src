@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.8 2010/12/27 02:04:19 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.9 2010/12/27 19:35:31 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -47,6 +47,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc
 ./usr/libdata/debug/usr/tests/lib/libc/gen
 ./usr/libdata/debug/usr/tests/lib/libc/hash
+./usr/libdata/debug/usr/tests/lib/libc/setjmp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp
 ./usr/libdata/debug/usr/tests/lib/libc/stdio
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib
@@ -141,6 +142,7 @@
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/gen
 ./usr/tests/lib/libc/hash
+./usr/tests/lib/libc/setjmp
 ./usr/tests/lib/libc/ssp
 ./usr/tests/lib/libc/stdio
 ./usr/tests/lib/libc/stdlib
