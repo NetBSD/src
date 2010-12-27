@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.293 2010/11/27 20:19:41 christos Exp $
+# $NetBSD: GENERIC,v 1.294 2010/12/27 15:56:50 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.293 $"
+#ident 		"GENERIC-$Revision: 1.294 $"
 
 maxusers	64		# estimated number of users
 
@@ -843,6 +843,7 @@ wd* at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
+uaudio*	at usbifif?
 
 # USB MIDI
 umidi* at uhub? port ? configuration ?
