@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.29 2010/10/10 05:17:44 kiyohara Exp $
+#	$NetBSD: files.i2c,v 1.30 2010/12/27 20:42:51 jmcneill Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -12,6 +12,14 @@ file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
 # Common module for bit-bang'ing an I2C bus
 define	i2c_bitbang
 file	dev/i2c/i2c_bitbang.c			i2c_bitbang
+
+# Auvitek AU8522 decoder
+define	au8522: i2cexec
+file	dev/i2c/au8522.c			au8522
+
+# Xceive XC5000 tuner
+define	xc5k: i2cexec
+file	dev/i2c/xc5k.c				xc5k
 
 #
 # I2C client devices
