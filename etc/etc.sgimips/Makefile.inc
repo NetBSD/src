@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2010/08/27 11:02:55 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2010/12/27 03:38:53 christos Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
@@ -34,12 +34,12 @@ iso-image-md-pre:
 SGI.image= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom/netbsd-sgimips.img
 
 iso-image-md-post:
-	@SEEK=`${TOOL_AWK} '/SGI_BOOT_BLOCK_SIZE_VOLHDR/{print $$3}' \
-		${DESTDIR}/usr/include/sys/bootblock.h` ; \
-	EST=`ls -l ${CDROM.image} \
+	@SEEK=$$(${TOOL_AWK} '/SGI_BOOT_BLOCK_SIZE_VOLHDR/{print $$3}' \
+		${DESTDIR}/usr/include/sys/bootblock.h) ; \
+	EST=$$(ls -l ${CDROM.image} \
 		| ${TOOL_AWK} '{ s += $$5 } \
 			END { print int(('$${SEEK}'*512+s)/1024/1024/32+1)*32 \
-			}'` ; \
+			}') ; \
 	echo "Estimated image size: $${EST} MB"; \
 	dd if=/dev/zero of=${SGI.image} bs=1024k count=$${EST}; \
 	${TOOLDIR}/bin/nbsgivol -f -i ${SGI.image}; \

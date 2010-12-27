@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.23 2007/06/06 13:30:48 martti Exp $
+#	$NetBSD: weekly,v 1.24 2010/12/27 03:38:52 christos Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -11,8 +11,8 @@ if [ -s /etc/weekly.conf ]; then
 	. /etc/weekly.conf
 fi
 
-host=`hostname`
-date=`date`
+host="$(hostname)"
+date="$(date)"
 rcvar_manpage='weekly.conf(5)'
 
 echo "To: ${MAILTO:-root}"
@@ -45,20 +45,20 @@ TMP=weekly.$$
 # before looking there for checked-out files
 
 #if [ -d /usr/src -a \
-#  -n "`find -f /usr/src ! -fstype local -prune -or -type d -print -prune`" ];
+#  -n "$(find -f /usr/src ! -fstype local -prune -or -type d -print -prune)" ];
 #then
 #	echo ""
 #	echo "Looking for checked out files:"
 #
 #	TDIR=$(mktemp -d -t _checkout) || exit 1
 #	trap "/bin/rm -rf $TDIR ; exit 0" EXIT INT QUIT
-#	for file in `find -f /usr/src ! -fstype local -prune -or \
-#	    -name 'p.*' -print | egrep 'SCCS/p\.'`; do
-#		owner=`awk '{ print $3 }' $file`
+#	for file in $(find -f /usr/src ! -fstype local -prune -or \
+#	    -name 'p.*' -print | egrep 'SCCS/p\.'); do
+#		owner=$(awk '{ print $3 }' $file)
 #		echo "$owner	$file"
 #		echo $file >> "$TDIR/$owner"
 #	done | sed -e 's,SCCS/p.,,'
-#	if test -n "`ls $TDIR`"; then
+#	if test -n "$(ls $TDIR)"; then
 #		for file in $TDIR/*; do
 #			sed -e 's,SCCS/p.,,' $file | \
 #			    Mail -s 'checked out files' ${file##*/}
