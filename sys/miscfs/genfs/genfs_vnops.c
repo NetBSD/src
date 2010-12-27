@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.185 2010/11/30 10:43:05 dholland Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.186 2010/12/27 18:49:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,13 +57,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.185 2010/11/30 10:43:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.186 2010/12/27 18:49:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
@@ -293,10 +294,17 @@ genfs_lock(void *v)
 	KASSERT((flags & ~(LK_EXCLUSIVE | LK_SHARED | LK_NOWAIT)) == 0);
 
 	op = ((flags & LK_EXCLUSIVE) != 0 ? RW_WRITER : RW_READER);
+	if ((flags & LK_NOWAIT) != 0) {
+		if (fstrans_start_nowait(vp->v_mount, FSTRANS_SHARED))
+			return EBUSY;
+		if (! rw_tryenter(&vp->v_lock, op)) {
+			fstrans_done(vp->v_mount);
+			return EBUSY;
+		}
+		return 0;
+	}
 
-	if ((flags & LK_NOWAIT) != 0)
-		return (rw_tryenter(&vp->v_lock, op) ? 0 : EBUSY);
-
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	rw_enter(&vp->v_lock, op);
 
 	return 0;
@@ -314,6 +322,7 @@ genfs_unlock(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	rw_exit(&vp->v_lock);
+	fstrans_done(vp->v_mount);
 
 	return 0;
 }

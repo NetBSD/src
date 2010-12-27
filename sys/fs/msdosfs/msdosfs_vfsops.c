@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.88 2010/12/14 17:17:02 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.89 2010/12/27 18:49:42 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.88 2010/12/14 17:17:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.89 2010/12/27 18:49:42 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -938,8 +938,7 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	struct vnode *vp, *mvp;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	int lk_flags, error, allerror = 0;
-	bool is_suspending;
+	int error, allerror = 0;
 
 	/*
 	 * If we ever switch to not updating all of the fats all the time,
@@ -956,15 +955,6 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	if ((mvp = vnalloc(mp)) == NULL)
 		return ENOMEM;
 	fstrans_start(mp, FSTRANS_SHARED);
-	is_suspending = (fstrans_getstate(mp) == FSTRANS_SUSPENDING);
-	/*
-	 * We can't lock vnodes while the file system is suspending because
-	 * threads waiting on fstrans may have locked vnodes.
-	 */
-	if (is_suspending)
-		lk_flags = 0;
-	else
-		lk_flags = LK_EXCLUSIVE | LK_NOWAIT;
 	/*
 	 * Write back each (modified) denode.
 	 */
@@ -985,7 +975,7 @@ loop:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, lk_flags);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT) {
@@ -997,10 +987,7 @@ loop:
 		if ((error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 			allerror = error;
-		if (is_suspending)
-			vrele(vp);
-		else
-			vput(vp);
+		vput(vp);
 		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.262 2010/08/09 17:12:18 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.263 2010/12/27 18:49:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.262 2010/08/09 17:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.263 2010/12/27 18:49:42 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1547,7 +1547,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
-	int lk_flags, error, allerror = 0;
+	int error, allerror = 0;
 	bool is_suspending;
 
 	fs = ump->um_fs;
@@ -1562,14 +1562,6 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 
 	fstrans_start(mp, FSTRANS_SHARED);
 	is_suspending = (fstrans_getstate(mp) == FSTRANS_SUSPENDING);
-	/*
-	 * We can't lock vnodes while the file system is suspending because
-	 * threads waiting on fstrans may have locked vnodes.
-	 */
-	if (is_suspending)
-		lk_flags = 0;
-	else
-		lk_flags = LK_EXCLUSIVE | LK_NOWAIT;
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1632,7 +1624,7 @@ loop:
 		}
 		vmark(mvp, vp);
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, lk_flags);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			nvp = vunmark(mvp);
@@ -1654,10 +1646,7 @@ loop:
 		}
 		if (error)
 			allerror = error;
-		if (is_suspending)
-			vrele(vp);
-		else
-			vput(vp);
+		vput(vp);
 		mutex_enter(&mntvnode_lock);
 		nvp = vunmark(mvp);
 	}
