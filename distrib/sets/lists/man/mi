@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1270 2010/12/26 11:31:45 jmcneill Exp $
+# $NetBSD: mi,v 1.1271 2010/12/27 17:26:57 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -803,6 +803,7 @@
 ./usr/share/man/cat4/auixp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/autri.0			man-sys-catman		.cat
 ./usr/share/man/cat4/auvia.0			man-sys-catman		.cat
+./usr/share/man/cat4/auvitek.0			man-sys-catman		.cat
 ./usr/share/man/cat4/awi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/axe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/az.0			man-sys-catman		.cat
@@ -3530,6 +3531,7 @@
 ./usr/share/man/html4/auixp.html		man-sys-htmlman		html
 ./usr/share/man/html4/autri.html		man-sys-htmlman		html
 ./usr/share/man/html4/auvia.html		man-sys-htmlman		html
+./usr/share/man/html4/auvitek.html		man-sys-htmlman		html
 ./usr/share/man/html4/awi.html			man-sys-htmlman		html
 ./usr/share/man/html4/axe.html			man-sys-htmlman		html
 ./usr/share/man/html4/az.html			man-sys-htmlman		html
@@ -6029,6 +6031,7 @@
 ./usr/share/man/man4/auixp.4			man-sys-man		.man
 ./usr/share/man/man4/autri.4			man-sys-man		.man
 ./usr/share/man/man4/auvia.4			man-sys-man		.man
+./usr/share/man/man4/auvitek.4			man-sys-man		.man
 ./usr/share/man/man4/awi.4			man-sys-man		.man
 ./usr/share/man/man4/axe.4			man-sys-man		.man
 ./usr/share/man/man4/az.4			man-sys-man		.man
