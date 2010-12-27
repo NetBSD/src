@@ -1,8 +1,13 @@
-# $NetBSD: Makefile,v 1.10 2010/12/27 02:04:19 pgoyette Exp $
+# $NetBSD: Makefile,v 1.11 2010/12/27 15:10:33 he Exp $
 
 .include <bsd.own.mk>
+.include <bsd.sys.mk>
 
-TESTS_SUBDIRS+=	gen hash ssp stdlib stdio string
+TESTS_SUBDIRS+=	gen hash stdlib stdio string
+
+.if ${HAS_SSP} == "yes"
+TESTS_SUBDIRS+=	ssp
+.endif
 
 TESTSDIR=	${TESTSBASE}/lib/libc
 
