@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.156 2010/12/27 15:23:36 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.157 2010/12/27 15:39:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1343,7 +1343,7 @@ Lploadwskp:
 /*
  * _delay(u_int N)
  *
- * Delay for at least (N/256) microsecends.
+ * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
  */
