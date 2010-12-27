@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.192 2010/12/27 02:04:18 pgoyette Exp $
+# $NetBSD: mi,v 1.193 2010/12/27 15:31:22 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -342,7 +342,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strncpy.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_vsnprintf.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_vsprintf.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/t_ssp.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fmemopen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_format.debug		tests-lib-debug		debug,atf
