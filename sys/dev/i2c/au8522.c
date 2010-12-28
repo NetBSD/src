@@ -1,4 +1,4 @@
-/* $NetBSD: au8522.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $ */
+/* $NetBSD: au8522.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,8 +257,6 @@ au8522_get_signal(struct au8522 *au)
 	return (status & AU8522_STATUS_LOCK) == AU8522_STATUS_LOCK ? 1 : 0;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, au8522, NULL);
 
 static int
@@ -273,5 +271,3 @@ au8522_modcmd(modcmd_t cmd, void *opaque)
 		return ENOTTY;
 	}
 }
-
-#endif /* !_MODULE */
