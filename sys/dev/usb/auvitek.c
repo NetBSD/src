@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.3 2010/12/28 04:02:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.3 2010/12/28 04:02:33 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,8 @@ static const struct {
 } auvitek_devices[] = {
 	{ 0x2040, 0x7200,
 	  "WinTV HVR-950Q", AUVITEK_BOARD_HVR_950Q },
+	{ 0x2040, 0x7240,
+	  "WinTV HVR-850", AUVITEK_BOARD_HVR_850 },
 };
 
 static int

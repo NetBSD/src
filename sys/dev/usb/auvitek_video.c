@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.2 2010/12/28 04:02:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.2 2010/12/28 04:02:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ auvitek_set_input(void *opaque, struct video_input *vi)
 
 	au8522_set_input(sc->sc_au8522, vinput, ainput);
 
-	/* XXX HVR-950Q specific */
+	/* XXX HVR-850/950Q specific */
 	r = auvitek_read_1(sc, AU0828_REG_GPIO1_OUTEN);
 	if (ainput == AU8522_AINPUT_NONE)
 		r |= 0x10;

@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_board.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $ */
+/* $NetBSD: auvitek_board.c,v 1.2 2010/12/28 04:02:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_board.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_board.c,v 1.2 2010/12/28 04:02:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,11 @@ static const struct auvitek_board_config {
 	uint16_t	enable;
 	uint8_t		clkdiv;
 } auvitek_board_config[] = {
+	[AUVITEK_BOARD_HVR_850] = {
+		.reset = 0x02b0,
+		.enable = 0x02f0,
+		.clkdiv = AU0828_I2C_CLKDIV_30,
+	},
 	[AUVITEK_BOARD_HVR_950Q] = {
 		.reset = 0x02b0,
 		.enable = 0x02f0,
@@ -97,6 +102,7 @@ auvitek_board_tuner_reset(struct auvitek_softc *sc)
 	uint8_t val;
 
 	switch (sc->sc_board) {
+	case AUVITEK_BOARD_HVR_850:
 	case AUVITEK_BOARD_HVR_950Q:
 		val = auvitek_read_1(sc, AU0828_REG_GPIO2_OUTEN);
 		val &= ~2;
