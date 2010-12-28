@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2010/12/28 12:48:38 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.66 2010/12/28 17:35:25 pgoyette Exp $
 
 SUBDIR+= atexit citrus clone context convfp db \
 	divrem gdtoa getaddrinfo hsearch inet int_fmtio locale md5sha \
@@ -9,9 +9,6 @@ SUBDIR+= atexit citrus clone context convfp db \
 
 .if (${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m68000")
 SUBDIR+= ieeefp
-.endif
-.if (${MACHINE_ARCH} != "vax")
-SUBDIR+= ldexp
 .endif
 
 .if exists(arch/${MACHINE_ARCH})
