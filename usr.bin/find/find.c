@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.26 2010/12/27 16:09:46 christos Exp $	*/
+/*	$NetBSD: find.c,v 1.27 2010/12/28 15:28:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.26 2010/12/27 16:09:46 christos Exp $");
+__RCSID("$NetBSD: find.c,v 1.27 2010/12/28 15:28:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,12 +159,19 @@ static bool notty;
 static __inline void
 sig_init(void)
 {
+	struct sigaction sa;
 	notty = !(isatty(STDIN_FILENO) || isatty(STDOUT_FILENO) ||
 	    isatty(STDERR_FILENO));
 	if (notty)
 		return;
 	sigemptyset(&ss);
 	sigaddset(&ss, SIGINFO); /* block SIGINFO */
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = show_path;
+	(void)sigaction(SIGINFO, &sa, NULL);
+
 }
 
 static __inline void
