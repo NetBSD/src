@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.7 2010/12/14 01:23:43 haad Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.8 2010/12/28 13:36:09 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -369,7 +369,7 @@ typedef struct vattr {
 
 #define	VOP_CLOSE(vp, f, c, o, cr, unk)	0
 #define	VOP_PUTPAGE(vp, of, sz, fl, cr, unk)	0
-#define	VOP_GETATTR(vp, vap, fl, cr, unk) ((vap)->va_size = (vp)->v_size, 0)
+#define	VOP_GETATTR(vp, vap, fl, cr, unk) vn_getattr(vp, vap)
 #define	VOP_FSYNC(vp, f, cr, unk)	fsync((vp)->v_fd)
 
 #define	VN_RELE(vp)	vn_close(vp)
