@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.3 2010/03/22 12:03:04 cegger Exp $
+# $NetBSD: mkvars.mk,v 1.4 2010/12/28 09:15:24 he Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -7,6 +7,7 @@ MKEXTRAVARS= \
 	HAVE_BINUTILS \
 	HAVE_GCC \
 	HAVE_GDB \
+	HAS_SSP \
 	OBJECT_FMT \
 	TOOLCHAIN_MISSING \
 	EXTSRCS \
@@ -27,6 +28,7 @@ MKEXTRAVARS= \
 #####
 
 .include <bsd.own.mk>
+.include <bsd.sys.mk>
 
 .if (${MKMAN} == "no" || empty(MANINSTALL:Mmaninstall))
 MKMANPAGES=no

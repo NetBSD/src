@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.194 2010/12/27 19:35:31 pgoyette Exp $
+# $NetBSD: mi,v 1.195 2010/12/28 09:15:24 he Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -327,23 +327,23 @@
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp/t_setjmp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ssp				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_fgets.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_getcwd.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_gets.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memcpy.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memmove.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memset.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_raw.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_read.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_readlink.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_snprintf.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_sprintf.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strcat.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strcpy.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strncat.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strncpy.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_vsnprintf.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_vsprintf.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_fgets.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_getcwd.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_gets.debug			tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memcpy.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memmove.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memset.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_raw.debug			tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_read.debug			tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_readlink.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_snprintf.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_sprintf.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strcat.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strcpy.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strncat.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_strncpy.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_vsnprintf.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_vsprintf.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/stdio				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fmemopen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_format.debug		tests-lib-debug		debug,atf
@@ -1582,25 +1582,25 @@
 ./usr/tests/lib/libc/setjmp/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/setjmp/t_setjmp		tests-lib-tests		atf
 ./usr/tests/lib/libc/ssp			tests-lib-tests
-./usr/tests/lib/libc/ssp/Atffile		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_fgets		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_getcwd		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_gets			tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_memcpy		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_memmove		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_memset		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_raw			tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_read			tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_readlink		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_snprintf		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_sprintf		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_strcat		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_strcpy		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_strncat		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_strncpy		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_vsnprintf		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/h_vsprintf		tests-lib-tests		atf
-./usr/tests/lib/libc/ssp/t_ssp			tests-lib-tests		atf
+./usr/tests/lib/libc/ssp/Atffile		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_fgets		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_getcwd		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_gets			tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_memcpy		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_memmove		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_memset		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_raw			tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_read			tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_readlink		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_snprintf		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_sprintf		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_strcat		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_strcpy		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_strncat		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_strncpy		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_vsnprintf		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_vsprintf		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/t_ssp			tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/stdio			tests-lib-tests
 ./usr/tests/lib/libc/stdio/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_fmemopen		tests-lib-tests		atf
