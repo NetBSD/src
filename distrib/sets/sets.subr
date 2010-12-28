@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.125 2010/12/08 23:56:01 njoly Exp $
+#	$NetBSD: sets.subr,v 1.126 2010/12/28 09:15:24 he Exp $
 #
 
 #
@@ -19,6 +19,7 @@
 #	HAVE_BINUTILS
 #	HAVE_GCC
 #	HAVE_GDB
+#	HAS_SSP
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
 # as well as:
@@ -171,7 +172,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.125 2010/12/08 23:56:01 njoly Exp $
+# 	# $NetBSD: sets.subr,v 1.126 2010/12/28 09:15:24 he Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -237,6 +238,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
 #	solaris			${MKDTRACE} != no or ${MKZFS} != no
+#	ssp			${HAS_SSP} != no
 #	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
 #	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
 #	yp			${MKYP} != no
@@ -274,6 +276,7 @@ list_set_files()
 				nv = needvars[vi]
 				kw = tolower(nv)
 				sub(/^mk/, "", kw)
+				sub(/^has_/, "", kw)
 				if (ENVIRON[nv] != "no")
 					wanted[kw] = 1 
 			}
