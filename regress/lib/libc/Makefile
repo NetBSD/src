@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.64 2010/12/27 19:39:09 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.65 2010/12/28 12:48:38 pgoyette Exp $
 
 SUBDIR+= atexit citrus clone context convfp db \
-	divrem gen gdtoa getaddrinfo hsearch inet int_fmtio locale md5sha \
+	divrem gdtoa getaddrinfo hsearch inet int_fmtio locale md5sha \
 	nsdispatch pty randomid regex rpc servent stdlib strptime sys time
 
 .include <bsd.own.mk>
