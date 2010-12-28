@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: strcpy_chk.c,v 1.5 2010/12/28 16:19:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strcpy_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: strcpy_chk.c,v 1.5 2010/12/28 16:19:25 christos Exp $");
 
 /*LINTLIBRARY*/
 
@@ -43,7 +43,7 @@ __strcpy_chk(char * __restrict dst, const char * __restrict src, size_t slen)
 {
 	size_t len = strlen(src);
 
-	if (len > slen)
+	if (len >= slen)
 		__chk_fail();
 
 	return memcpy(dst, src, len + 1);
