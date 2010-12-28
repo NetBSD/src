@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2010/12/28 17:33:58 pgoyette Exp $
+# $NetBSD: Makefile,v 1.10 2010/12/28 20:25:31 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ TESTS_C+=	t_siginfo
 .endif
 
 .if (${MACHINE_ARCH} != "vax")
-TESTS_C+=	ldexp
+TESTS_C+=	t_ldexp
 .endif
 
 LDADD.t_syslog_pthread+=-lpthread
