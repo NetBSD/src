@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.196 2010/12/28 12:46:15 pgoyette Exp $
+# $NetBSD: mi,v 1.197 2010/12/28 16:57:00 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -323,6 +323,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_humanize_number.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_ldexp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_rbstress.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
@@ -1574,6 +1575,7 @@
 ./usr/tests/lib/libc/gen/t_fmtcheck		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_humanize_number	tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_ldexp		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_rbstress		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2010/12/28 12:46:15 pgoyette Exp $
+# $NetBSD: Makefile,v 1.8 2010/12/28 16:57:00 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
 TESTS_C+=	t_glob_star
 TESTS_C+=	t_humanize_number
+TESTS_C+=	t_ldexp
 TESTS_C+=	t_rbstress
 TESTS_C+=	t_syslog_pthread
 TESTS_C+=	t_vis
