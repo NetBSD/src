@@ -1,4 +1,4 @@
-/*     $NetBSD: kernel.c,v 1.4 2010/05/02 23:50:34 haad Exp $  */
+/*     $NetBSD: kernel.c,v 1.5 2010/12/28 13:36:09 haad Exp $  */
 
 /*
  * CDDL HEADER START
@@ -29,7 +29,7 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kernel.c,v 1.4 2010/05/02 23:50:34 haad Exp $");
+__RCSID("$NetBSD: kernel.c,v 1.5 2010/12/28 13:36:09 haad Exp $");
 
 #include <sys/zfs_context.h>
 #include <sys/sysctl.h>
@@ -212,6 +212,24 @@ vn_openat(char *path, int x1, int flags, int mode, vnode_t **vpp, int x2,
 
 	return (ret);
 }
+
+int
+vn_getattr(vnode_t *vp, vattr_t *va)
+{
+	int fd;
+	struct stat64 st;
+
+	fd = vp->v_fd;
+
+	if (fstat64(fd, &st) == -1)
+		return (errno);
+
+	vp->v_size = st.st_size;
+	va->va_size = st.st_size;
+
+	return 0;
+}
+
 
 /*ARGSUSED*/
 int
