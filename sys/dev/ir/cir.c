@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.26 2009/12/06 22:40:56 dyoung Exp $	*/
+/*	$NetBSD: cir.c,v 1.27 2010/12/28 14:45:30 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.26 2009/12/06 22:40:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.27 2010/12/28 14:45:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.26 2009/12/06 22:40:56 dyoung Exp $");
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/vnode.h>
+#include <sys/module.h>
 
 #include <dev/ir/ir.h>
 #include <dev/ir/cirio.h>
@@ -256,4 +257,33 @@ cirpoll(dev_t dev, int events, struct lwp *l)
 
 	splx(s);
 	return (revents);
+}
+
+MODULE(MODULE_CLASS_DRIVER, cir, "ir");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+cir_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		return config_init_component(cfdriver_ioconf_cir,
+		    cfattach_ioconf_cir, cfdata_ioconf_cir);
+#else
+		return 0;
+#endif
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		return config_fini_component(cfdriver_ioconf_cir,
+		    cfattach_ioconf_cir, cfdata_ioconf_cir);
+#else
+		return 0;
+#endif
+	default:
+		return ENOTTY;
+	}
 }
