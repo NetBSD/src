@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.19 2010/12/24 20:54:28 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.20 2010/12/28 00:49:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.19 2010/12/24 20:54:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.20 2010/12/28 00:49:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -835,67 +835,31 @@ pseye_stop_transfer(void *opaque)
 	return 0;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, pseye, NULL);
 
-static const struct cfiattrdata videobuscf_iattrdata = {
-	"videobus", 0, { { NULL, NULL, 0 }, }
-};
-static const struct cfiattrdata * const pseye_attrs[] = {
-	&videobuscf_iattrdata, NULL
-};
-CFDRIVER_DECL(pseye, DV_DULL, pseye_attrs);
-extern struct cfattach video_ca;
-static int pseyeloc[6] = { -1, -1, -1, -1, -1, -1 };
-static struct cfparent uhubparent = {
-	"usbifif", NULL, DVUNIT_ANY
-};
-static struct cfdata pseye_cfdata[] = {
-	{
-		.cf_name = "pseye",
-		.cf_atname = "pseye",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = pseyeloc,
-		.cf_flags = 0,
-		.cf_pspec = &uhubparent,
-	},
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
 pseye_modcmd(modcmd_t cmd, void *opaque)
 {
-	int err;
-
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		err = config_cfdriver_attach(&pseye_cd);
-		if (err)
-			return err;
-		err = config_cfattach_attach("pseye", &pseye_ca);
-		if (err) {
-			config_cfdriver_detach(&pseye_cd);
-			return err;
-		}
-		err = config_cfdata_attach(pseye_cfdata, 1);
-		if (err) {
-			config_cfattach_detach("pseye", &pseye_ca);
-			config_cfdriver_detach(&pseye_cd);
-			return err;
-		}
+#ifdef _MODULE
+		return config_init_component(cfdriver_ioconf_pseye,
+		    cfattach_ioconf_pseye, cfdata_ioconf_pseye);
+#else
 		return 0;
+#endif
 	case MODULE_CMD_FINI:
-		err = config_cfdata_detach(pseye_cfdata);
-		if (err)
-			return err;
-		config_cfattach_detach("pseye", &pseye_ca);
-		config_cfdriver_detach(&pseye_cd);
+#ifdef _MODULE
+		return config_fini_component(cfdriver_ioconf_pseye,
+		    cfattach_ioconf_pseye, cfdata_ioconf_pseye);
+#else
 		return 0;
+#endif
 	default:
 		return ENOTTY;
 	}
 }
-
-#endif /* !_MODULE */
