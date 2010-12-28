@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs_data.h,v 1.12 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: diodevs_data.h,v 1.13 2010/12/28 10:20:27 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.10 2010/12/28 10:19:24 tsutsui Exp 
  */
 
 /*-
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define DIO_NDEVICES	46
+#define DIO_NDEVICES	48
 
 struct dio_devdata dio_devdatas[] = {
 	{ 0x02,	0,	1 },
@@ -66,6 +66,8 @@ struct dio_devdata dio_devdatas[] = {
 	{ 0x39,	0x0b,	1 },
 	{ 0x39,	0x0c,	1 },
 	{ 0x39,	0x0d,	1 },
+	{ 0x39,	0x10,	4 },
+	{ 0x39,	0x11,	4 },
 	{ 0x03,	0,	1 },
 	{ 0x04,	0,	1 },
 	{ 0x06,	0,	1 },
@@ -116,6 +118,8 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x39,	0x0b,	DIO_DEVICE_DESC_XGENESIS },
 	{ 0x39,	0x0c,	DIO_DEVICE_DESC_TIGER },
 	{ 0x39,	0x0d,	DIO_DEVICE_DESC_YGENESIS },
+	{ 0x39,	0x10,	DIO_DEVICE_DESC_FB3X2_A },
+	{ 0x39,	0x11,	DIO_DEVICE_DESC_FB3X2_B },
 	{ 0x03,	0,	DIO_DEVICE_DESC_MISC0 },
 	{ 0x04,	0,	DIO_DEVICE_DESC_MISC1 },
 	{ 0x06,	0,	DIO_DEVICE_DESC_PARALLEL },
