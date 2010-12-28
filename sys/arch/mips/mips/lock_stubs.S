@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.11 2010/12/24 07:13:19 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.12 2010/12/28 22:16:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -492,7 +492,7 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 
 	bnez	ta2, 2f
 	 nop
-	INT_S	t1, CPU_INFO_MTX_OLDSPL(t2)
+	INT_S	ta1, CPU_INFO_MTX_OLDSPL(t2)
 2:
 #if defined(DIAGNOSTIC)
 	INT_L	t3, MTX_LOCK(t0)
@@ -649,6 +649,11 @@ LEAF(mutex_spin_exit)
 	/*
 	 * Mutex count is zero so we need to restore the old IPL
 	 */
+#ifdef PARANOIA
+	sltiu	v0, a0, IPL_HIGH+1
+13:	beqz	v0, 13b			# loop forever if ipl > IPL_HIGH
+	 nop
+#endif
 	j	 _C_LABEL(splx)
 	 nop
 1:
