@@ -1,4 +1,4 @@
-/* $NetBSD: h_vsprintf.c,v 1.1 2010/12/27 02:04:19 pgoyette Exp $ */
+/* $NetBSD: h_vsprintf.c,v 1.2 2010/12/28 16:18:46 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,27 +29,27 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_vsprintf.c,v 1.1 2010/12/27 02:04:19 pgoyette Exp $");
+__RCSID("$NetBSD: h_vsprintf.c,v 1.2 2010/12/28 16:18:46 christos Exp $");
 
 #include <stdio.h>
 #include <stdarg.h>
 
-static void wrap(char *str, const char *, ...);
+static void wrap(const char *, ...);
 
 static void
-wrap(char *str, const char *fmt, ...)
+wrap(const char *fmt, ...)
 {
+	char b[10];
 	va_list ap;
 	va_start(ap, fmt);
-	(void)vsprintf(str, fmt, ap);
+	(void)vsprintf(b, fmt, ap);
+	(void)printf("%s\n", b);
 	va_end(ap);
 }
 
 int
 main(int argc, char *argv[])
 {
-	char b[10];
-	wrap(b, "%s", argv[1]);
-	(void)printf("%s\n", b);
+	wrap("%s", argv[1]);
 	return 0;
 }
