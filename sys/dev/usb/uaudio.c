@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.119 2010/12/24 20:49:55 jmcneill Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.120 2010/12/28 20:11:18 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.119 2010/12/24 20:49:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.120 2010/12/28 20:11:18 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.119 2010/12/24 20:49:55 jmcneill Exp $"
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usb_quirks.h>
+
+#include <dev/usb/usbdevs.h>
 
 #include <dev/usb/uaudioreg.h>
 
@@ -1845,7 +1847,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 	const struct usb_audio_output_terminal *pot;
 	struct terminal_list *tml;
 	const char *tbuf, *ibuf, *ibufend;
-	int size, offs, aclen, ndps, i, j;
+	int size, offs, ndps, i, j;
 
 	size = UGETW(cdesc->wTotalLength);
 	tbuf = (const char *)cdesc;
@@ -1862,12 +1864,10 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 
 	/* A class-specific AC interface header should follow. */
 	ibuf = tbuf + offs;
+	ibufend = tbuf + size;
 	acdp = (const struct usb_audio_control_descriptor *)ibuf;
 	if (acdp->bDescriptorType != UDESC_CS_INTERFACE ||
 	    acdp->bDescriptorSubtype != UDESCSUB_AC_HEADER)
-		return USBD_INVAL;
-	aclen = UGETW(acdp->wTotalLength);
-	if (offs + aclen > size)
 		return USBD_INVAL;
 
 	if (!(usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_BAD_ADC) &&
@@ -1875,13 +1875,12 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 		return USBD_INVAL;
 
 	sc->sc_audio_rev = UGETW(acdp->bcdADC);
-	DPRINTFN(2,("uaudio_identify_ac: found AC header, vers=%03x, len=%d\n",
-		 sc->sc_audio_rev, aclen));
+	DPRINTFN(2,("uaudio_identify_ac: found AC header, vers=%03x\n",
+		 sc->sc_audio_rev));
 
 	sc->sc_nullalt = -1;
 
 	/* Scan through all the AC specific descriptors */
-	ibufend = ibuf + aclen;
 	dp = (const uaudio_cs_descriptor_t *)ibuf;
 	ndps = 0;
 	iot = malloc(sizeof(struct io_terminal) * 256, M_TEMP, M_NOWAIT | M_ZERO);
@@ -1898,12 +1897,8 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 			free(iot, M_TEMP);
 			return USBD_INVAL;
 		}
-		if (dp->bDescriptorType != UDESC_CS_INTERFACE) {
-			aprint_error(
-			    "uaudio_identify_ac: skip desc type=0x%02x\n",
-			    dp->bDescriptorType);
-			continue;
-		}
+		if (dp->bDescriptorType != UDESC_CS_INTERFACE)
+			break;
 		i = ((const struct usb_audio_input_terminal *)dp)->bTerminalId;
 		iot[i].d.desc = dp;
 		if (i > ndps)
@@ -2623,11 +2618,10 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 		return err;
 
 	/*
-	 * If just one sampling rate is supported,
-	 * no need to call uaudio_set_speed().
 	 * Roland SD-90 freezes by a SAMPLING_FREQ_CONTROL request.
 	 */
-	if (as->asf1desc->bSamFreqType != 1) {
+	if ((UGETW(sc->sc_udev->ddesc.idVendor) != USB_VENDOR_ROLAND) &&
+	    (UGETW(sc->sc_udev->ddesc.idProduct) != USB_PRODUCT_ROLAND_SD90)) {
 		err = uaudio_set_speed(sc, endpt, ch->sample_rate);
 		if (err) {
 			DPRINTF(("uaudio_chan_open: set_speed failed err=%s\n",
