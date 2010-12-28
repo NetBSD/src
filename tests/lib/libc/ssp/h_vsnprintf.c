@@ -1,4 +1,4 @@
-/* $NetBSD: h_vsnprintf.c,v 1.1 2010/12/27 02:04:19 pgoyette Exp $ */
+/* $NetBSD: h_vsnprintf.c,v 1.2 2010/12/28 16:18:46 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,29 +29,29 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_vsnprintf.c,v 1.1 2010/12/27 02:04:19 pgoyette Exp $");
+__RCSID("$NetBSD: h_vsnprintf.c,v 1.2 2010/12/28 16:18:46 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-static void wrap(char *str, size_t, const char *, ...);
+void wrap(size_t, const char *, ...);
 
-static void
-wrap(char *str, size_t len, const char *fmt, ...)
+void
+wrap(size_t len, const char *fmt, ...)
 {
+	char b[10];
 	va_list ap;
 	va_start(ap, fmt);
-	(void)vsnprintf(str, len, fmt, ap);
+	(void)vsnprintf(b, len, fmt, ap);
+	(void)printf("%s\n", b);
 	va_end(ap);
 }
 
 int
 main(int argc, char *argv[])
 {
-	char b[10];
 	size_t len = atoi(argv[1]);
-	wrap(b, len, "%s", "012345678910");
-	(void)printf("%s\n", b);
+	wrap(len, "%s", "012345678901234567890");
 	return 0;
 }
