@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.1 2010/12/27 15:42:11 jmcneill Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.2 2010/12/28 04:02:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -43,6 +43,7 @@
 struct auvitek_softc;
 
 enum auvitek_board {
+	AUVITEK_BOARD_HVR_850,
 	AUVITEK_BOARD_HVR_950Q,
 };
 
