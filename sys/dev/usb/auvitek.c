@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.1 2010/12/27 15:42:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -285,25 +285,31 @@ auvitek_write_1(struct auvitek_softc *sc, uint16_t reg, uint8_t data)
 		    usbd_errstr(err));
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, auvitek, "au8522,xc5k");
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
 auvitek_modcmd(modcmd_t cmd, void *opaque)
 {
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		return config_init_component(cfdriver_ioconf_auvitek,
 		    cfattach_ioconf_auvitek, cfdata_ioconf_auvitek);
+#else
+		return 0;
+#endif
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		return config_fini_component(cfdriver_ioconf_auvitek,
 		    cfattach_ioconf_auvitek, cfdata_ioconf_auvitek);
+#else
+		return 0;
+#endif
 	default:
 		return ENOTTY;
 	}
 }
-
-#endif /* !_MODULE */
