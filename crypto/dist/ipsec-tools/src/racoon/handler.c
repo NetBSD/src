@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.9.6.8 2009/04/20 13:25:27 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.9.6.9 2010/12/28 06:02:45 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -1306,7 +1306,7 @@ static void remove_ph1(struct ph1handle *iph1){
 
 	if (iph1->status == PHASE1ST_ESTABLISHED){
 		for (iph2 = LIST_FIRST(&iph1->ph2tree); iph2; iph2 = iph2_next) {
-			iph2_next = LIST_NEXT(iph2, chain);
+			iph2_next = LIST_NEXT(iph2, ph1bind);
 			remove_ph2(iph2);
 		}
 		isakmp_info_send_d1(iph1);
