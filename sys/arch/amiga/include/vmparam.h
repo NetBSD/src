@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.40 2010/11/06 15:42:44 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41 2010/12/28 18:31:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -98,9 +98,8 @@
  * These are a mixture of i386, sun3 and hp settings.. 
  */
 
-/* Sun settings. Still hope, that I might get sun3 binaries to work... */
 #ifndef USRSTACK
-#define	USRSTACK	0x0E000000
+#define	USRSTACK	0x1E000000
 #endif
 #define KUSER_AREA	(-UPAGES*PAGE_SIZE)
 /*
