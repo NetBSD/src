@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.8 2010/12/28 13:36:09 haad Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.9 2010/12/28 16:44:45 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -381,6 +381,7 @@ extern int vn_openat(char *path, int x1, int oflags, int mode, vnode_t **vpp,
 extern int vn_rdwr(int uio, vnode_t *vp, void *addr, ssize_t len,
     offset_t offset, int x1, int x2, rlim64_t x3, void *x4, ssize_t *residp);
 extern void vn_close(vnode_t *vp);
+extern int vn_getattr(vnode_t *vp, vattr_t *va);
 
 #define	vn_remove(path, x1, x2)		remove(path)
 #define	vn_rename(from, to, seg)	rename((from), (to))
