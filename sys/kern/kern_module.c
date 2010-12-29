@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.73 2010/10/16 18:09:02 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.74 2010/12/29 15:07:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.73 2010/10/16 18:09:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.74 2010/12/29 15:07:36 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -90,7 +90,7 @@ static void	module_require_force(module_t *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
 		    module_t **, modclass_t class, bool);
 static int	module_do_unload(const char *, bool);
-static int	module_do_builtin(const char *, module_t **);
+static int	module_do_builtin(const char *, module_t **, prop_dictionary_t);
 static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
 
@@ -252,7 +252,8 @@ module_builtin_add(modinfo_t *const *mip, size_t nmodinfo, bool init)
 	/* finally, init (if required) */
 	if (init) {
 		for (i = 0; i < nmodinfo; i++) {
-			rv = module_do_builtin(modp[i]->mod_info->mi_name,NULL);
+			rv = module_do_builtin(modp[i]->mod_info->mi_name,
+			    NULL, NULL);
 			/* throw in the towel, recovery hard & not worth it */
 			if (rv)
 				panic("builtin module \"%s\" init failed: %d",
@@ -461,7 +462,7 @@ module_init_class(modclass_t class)
 			 * MODFLG_MUST_FORCE, don't try to override that!)
 			 */
 			if (mod->mod_flags & MODFLG_MUST_FORCE ||
-			    module_do_builtin(mi->mi_name, NULL) != 0) {
+			    module_do_builtin(mi->mi_name, NULL, NULL) != 0) {
 				TAILQ_REMOVE(&module_builtins, mod, mod_chain);
 				TAILQ_INSERT_TAIL(&bi_fail, mod, mod_chain);
 			}
@@ -704,7 +705,7 @@ module_enqueue(module_t *mod)
  *	already linked into the kernel.
  */
 static int
-module_do_builtin(const char *name, module_t **modp)
+module_do_builtin(const char *name, module_t **modp, prop_dictionary_t props)
 {
 	const char *p, *s;
 	char buf[MAXMODNAME];
@@ -765,7 +766,7 @@ module_do_builtin(const char *name, module_t **modp)
 				module_error("too many required modules");
 				return EINVAL;
 			}
-			error = module_do_builtin(buf, &mod2);
+			error = module_do_builtin(buf, &mod2, NULL);
 			if (error != 0) {
 				return error;
 			}
@@ -778,7 +779,7 @@ module_do_builtin(const char *name, module_t **modp)
 	 */
 	prev_active = module_active;
 	module_active = mod;
-	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, NULL);
+	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
 	module_active = prev_active;
 	if (error != 0) {
 		module_error("builtin module `%s' "
@@ -870,7 +871,7 @@ module_do_load(const char *name, bool isdep, int flags,
 			depth--;
 			return EPERM;
 		} else {
-			error = module_do_builtin(name, NULL);
+			error = module_do_builtin(name, NULL, props);
 			depth--;
 			return error;
 		}
