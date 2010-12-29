@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.51.22.1 2010/02/05 07:39:53 matt Exp $	*/
+/*	$NetBSD: vr.c,v 1.51.22.2 2010/12/29 08:16:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,11 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51.22.1 2010/02/05 07:39:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51.22.2 2010/12/29 08:16:23 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 #include "opt_kgdb.h"
+
+#define	__INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,22 +128,19 @@ __KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51.22.1 2010/02/05 07:39:53 matt Exp $");
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-const u_int32_t __ipl_sr_bits_vr[_IPL_N] = {
-	0,					/* IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_VM */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1,		/* IPL_SCHED */
+const struct ipl_sr_map __ipl_sr_map_vr = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_VM] =		MIPS_INT_MASK,
+    },
 };
 
 #if defined(VR41XX) && defined(TX39XX)
@@ -151,7 +150,7 @@ const u_int32_t __ipl_sr_bits_vr[_IPL_N] = {
 #endif
 
 void vr_init(void);
-void VR_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void VR_INTR(int, vaddr_t, uint32_t);
 extern void vr_idle(void);
 STATIC void vr_cons_init(void);
 STATIC void vr_fb_init(void **);
@@ -162,8 +161,8 @@ STATIC void vr_reboot(int, char *);
 /*
  * CPU interrupt dispatch table (HwInt[0:3])
  */
-STATIC int vr_null_handler(void *, u_int32_t, u_int32_t);
-STATIC int (*vr_intr_handler[4])(void *, u_int32_t, u_int32_t) = 
+STATIC int vr_null_handler(void *, uint32_t, uint32_t);
+STATIC int (*vr_intr_handler[4])(void *, uint32_t, uint32_t) = 
 {
 	vr_null_handler,
 	vr_null_handler,
@@ -428,6 +427,7 @@ vr_cons_init()
 			printf("%s(%d): can't init kgdb's serial port",
 			    __FILE__, __LINE__);
 		}
+	}
 #else /* KGDB */
 	if (com_info->attach != NULL && (bootinfo->bi_cnuse&BI_CNUSE_SERIAL)) {
 		/* Serial console */
@@ -530,45 +530,32 @@ vr_reboot(int howto, char *bootstr)
  * Handle interrupts.
  */
 void
-VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+VR_INTR(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct cpu_info *ci;
+	uint32_t ipending;
+	int ipl;
 
-	ci = curcpu();
-	ci->ci_idepth++;
 	uvmexp.intrs++;
 
-	/* Deal with unneded compare interrupts occasionally so that we can
-	 * keep spllowersoftclock. */
-	if (ipending & MIPS_INT_MASK_5) {
-		mips3_cp0_compare_write(0);
-	}
+	while (ppl < (ipl = splintr(&ipending))) {
+		/* Deal with unneded compare interrupts occasionally so that
+		 * we can keep spllowersoftclock. */
+		if (ipending & MIPS_INT_MASK_5) {
+			mips3_cp0_compare_write(0);
+		}
 
-	if (ipending & MIPS_INT_MASK_1) {
-		_splset(MIPS_SR_INT_IE); /* for spllowersoftclock */
-		/* Remove the lower priority pending bits from status so that
-		 * spllowersoftclock will not happen if other interrupts are
-		 * pending. */
-		(*vr_intr_handler[1])(vr_intr_arg[1], pc, status & ~(ipending
-		& (MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)));
-	}
+		if (ipending & MIPS_INT_MASK_1) {
+			(*vr_intr_handler[1])(vr_intr_arg[1], pc, ipending);
+		}
 
-	if (ipending & MIPS_INT_MASK_0) {
-		_splset(MIPS_INT_MASK_1|MIPS_SR_INT_IE);
-		(*vr_intr_handler[0])(vr_intr_arg[0], pc, status);
+		if (ipending & MIPS_INT_MASK_0) {
+			(*vr_intr_handler[0])(vr_intr_arg[0], pc, status);
+		}
 	}
-	ci->ci_idepth--;
-
-#ifdef __HAVE_FAST_SOFTINTS
-	ipending &= MIPS_SOFT_INT_MASK;
-	if (ipending == 0)
-		return;
-	softint_process(ipending);
-#endif
 }
 
 void *
-vr_intr_establish(int line, int (*ih_fun)(void *, u_int32_t, u_int32_t),
+vr_intr_establish(int line, int (*ih_fun)(void *, uint32_t, uint32_t),
     void *ih_arg)
 {
 
@@ -590,7 +577,7 @@ vr_intr_disestablish(void *ih)
 }
 
 int
-vr_null_handler(void *arg, u_int32_t pc, u_int32_t status)
+vr_null_handler(void *arg, uint32_t pc, uint32_t status)
 {
 
 	printf("vr_null_handler\n");

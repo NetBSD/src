@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96.10.5 2010/03/21 17:38:34 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96.10.6 2010/12/29 08:16:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.10.5 2010/03/21 17:38:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.10.6 2010/12/29 08:16:22 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.10.5 2010/03/21 17:38:34 cliff Exp 
 #include <ufs/mfs/mfs_extern.h>	/* mfs_initminiroot() */
 #include <dev/cons.h>		/* cntab access (cpu_reboot) */
 
+#include <machine/locore.h>
 #include <machine/psl.h>
 #include <machine/sysconf.h>
 #include <machine/platid.h>
