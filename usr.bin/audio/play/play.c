@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.52 2010/12/29 14:38:54 jmcneill Exp $	*/
+/*	$NetBSD: play.c,v 1.53 2010/12/29 18:48:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.52 2010/12/29 14:38:54 jmcneill Exp $");
+__RCSID("$NetBSD: play.c,v 1.53 2010/12/29 18:48:40 wiz Exp $");
 #endif
 
 
@@ -474,8 +474,8 @@ usage()
 
 	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", getprogname());
 	fprintf(stderr, "Options:\n\t"
-	    "-b balance (0-63)\n\t"
 	    "-B buffer size\n\t"
+	    "-b balance (0-63)\n\t"
 	    "-d audio device\n\t"
 	    "-f force settings\n\t"
 	    "\t-c forced channels\n\t"
