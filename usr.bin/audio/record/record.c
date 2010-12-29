@@ -1,7 +1,7 @@
-/*	$NetBSD: record.c,v 1.47 2009/04/11 10:43:10 lukem Exp $	*/
+/*	$NetBSD: record.c,v 1.48 2010/12/29 13:09:03 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999, 2002 Matthew R. Green
+ * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,11 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.47 2009/04/11 10:43:10 lukem Exp $");
+__RCSID("$NetBSD: record.c,v 1.48 2010/12/29 13:09:03 mrg Exp $");
 #endif
 
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/audioio.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
@@ -93,11 +93,11 @@ main(argc, argv)
 	char *argv[];
 {
 	u_char	*buffer;
-	size_t	len, bufsize;
+	size_t	len, bufsize = 0;
 	int	ch, no_time_limit = 1;
 	const char *defdevice = _PATH_SOUND;
 
-	while ((ch = getopt(argc, argv, "ab:C:F:c:d:e:fhi:m:P:p:qt:s:Vv:")) != -1) {
+	while ((ch = getopt(argc, argv, "ab:B:C:F:c:d:e:fhi:m:P:p:qt:s:Vv:")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag++;
@@ -106,6 +106,10 @@ main(argc, argv)
 			decode_int(optarg, &balance);
 			if (balance < 0 || balance > 63)
 				errx(1, "balance must be between 0 and 63");
+			break;
+		case 'B':
+			bufsize = strsuftoll("read buffer size", optarg,
+					     1, UINT_MAX);
 			break;
 		case 'C':
 			/* Ignore, compatibility */
@@ -199,10 +203,6 @@ main(argc, argv)
 		if (encoding == -1)
 			errx(1, "unknown encoding, bailing...");
 	}
-#if 0
-	else
-		encoding = AUDIO_ENCODING_ULAW;
-#endif
 
 	/*
 	 * open the output file
@@ -246,7 +246,8 @@ main(argc, argv)
 	 */
 	if (ioctl(audiofd, AUDIO_GETINFO, &oinfo) < 0)
 		err(1, "failed to get audio info");
-	bufsize = oinfo.record.buffer_size;
+	if (bufsize == 0)
+		bufsize = oinfo.record.buffer_size;
 	if (bufsize < 32 * 1024)
 		bufsize = 32 * 1024;
 	omonitor_gain = oinfo.monitor_gain;
@@ -778,6 +779,7 @@ usage()
 	    getprogname());
 	fprintf(stderr, "Options:\n\t"
 	    "-b balance (0-63)\n\t"
+	    "-B buffer size\n\t"
 	    "-c channels\n\t"
 	    "-d audio device\n\t"
 	    "-e encoding\n\t"

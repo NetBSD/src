@@ -1,7 +1,7 @@
-/*	$NetBSD: play.c,v 1.50 2009/04/11 10:43:09 lukem Exp $	*/
+/*	$NetBSD: play.c,v 1.51 2010/12/29 13:09:03 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.50 2009/04/11 10:43:09 lukem Exp $");
+__RCSID("$NetBSD: play.c,v 1.51 2010/12/29 13:09:03 mrg Exp $");
 #endif
 
 
@@ -87,12 +87,16 @@ main(argc, argv)
 	const char *defdevice = _PATH_SOUND;
 	const char *device = NULL;
 
-	while ((ch = getopt(argc, argv, "b:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
 		switch (ch) {
 		case 'b':
 			decode_int(optarg, &balance);
 			if (balance < 0 || balance > 64)
 				errx(1, "balance must be between 0 and 63");
+			break;
+		case 'B':
+			bufsize = strsuftoll("write buffer size", optarg,
+					     1, UINT_MAX);
 			break;
 		case 'c':
 			decode_int(optarg, &channels);
@@ -180,7 +184,8 @@ main(argc, argv)
 
 	if (ioctl(audiofd, AUDIO_GETINFO, &info) < 0)
 		err(1, "failed to get audio info");
-	bufsize = info.play.buffer_size;
+	if (bufsize == 0)
+		bufsize = info.play.buffer_size;
 	if (bufsize < 32 * 1024)
 		bufsize = 32 * 1024;
 
@@ -258,11 +263,9 @@ play(file)
 
 	/*
 	 * give the VM system a bit of a hint about the type
-	 * of accesses we will make.
+	 * of accesses we will make.  we don't care about errors.
 	 */
-	if (madvise(addr, sizet_filesize, MADV_SEQUENTIAL) < 0 &&
-	    !qflag)
-		warn("madvise failed, ignoring");
+	madvise(addr, sizet_filesize, MADV_SEQUENTIAL);
 
 	/*
 	 * get the header length and set up the audio device
@@ -470,8 +473,8 @@ usage()
 
 	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", getprogname());
 	fprintf(stderr, "Options:\n\t"
-	    "-C audio control device\n\t"
 	    "-b balance (0-63)\n\t"
+	    "-B buffer size\n\t"
 	    "-d audio device\n\t"
 	    "-f force settings\n\t"
 	    "\t-c forced channels\n\t"
