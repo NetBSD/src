@@ -1,4 +1,4 @@
-.\"	$NetBSD: audioplay.1,v 1.22 2010/12/29 13:09:03 mrg Exp $
+.\"	$NetBSD: audioplay.1,v 1.23 2010/12/29 18:46:48 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2002, 2010 Matthew R. Green
 .\" All rights reserved.
@@ -33,8 +33,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl hiqV
-.Op Fl b Ar balance
 .Op Fl B Ar buffersize
+.Op Fl b Ar balance
 .Op Fl d Ar device
 .Op Fl p Ar port
 .Op Fl v Ar volume
@@ -59,52 +59,23 @@ understood by the underlying driver.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width 123456
-.It Fl b
-Set the balance to
-.Ar balance .
-This value must be between 0 and 63.
 .It Fl B
 Set the write block size to
 .Ar buffersize .
 The default value is the play.buffer_size of the audio device.
+.It Fl b
+Set the balance to
+.Ar balance .
+This value must be between 0 and 63.
+.It Fl c
+When combined with the
+.Fl f
+option, sets the number of channels to its argument.
 .It Fl d
 Set the audio device to be
 .Ar device .
 The default is
 .Pa /dev/sound .
-.It Fl h
-Print a help message.
-.It Fl i
-If the audio device cannot be opened, exit now rather than wait for it.
-.It Fl p
-Set the output port to
-.Ar port .
-The valid values of
-.Ar port
-are
-.Dq speaker ,
-.Dq headphone
-and
-.Dq line .
-.It Fl q
-Be quiet.
-.It Fl v
-Set the volume (gain) to
-.Ar volume .
-This value must be between 0 and 255.
-.It Fl V
-Be verbose.
-.It Fl f
-Force playing, even if the format is unknown.
-The
-.Fl f
-flag can be used in addition with the following flags to
-change the number of channels, encoding, precision and
-sample rate.
-.It Fl c
-When combined with the
-.Fl f
-option, sets the number of channels to its argument.
 .It Fl e
 When combined with the
 .Fl f
@@ -131,17 +102,46 @@ Possible values are
 .Cm mpeg_l2_packets ,
 and
 .Cm mpeg_l2_system .
+.It Fl f
+Force playing, even if the format is unknown.
+The
+.Fl f
+flag can be used in addition with the following flags to
+change the number of channels, encoding, precision and
+sample rate.
+.It Fl h
+Print a help message.
+.It Fl i
+If the audio device cannot be opened, exit now rather than wait for it.
 .It Fl P
 When combined with the
 .Fl f
 option, sets the precision to its argument.
 This value must be either 4, 8, 16, 24 or 32.
+.It Fl p
+Set the output port to
+.Ar port .
+The valid values of
+.Ar port
+are
+.Dq speaker ,
+.Dq headphone
+and
+.Dq line .
+.It Fl q
+Be quiet.
 .It Fl s
 When combined with the
 .Fl f
 option, sets the sample rate to its argument.
 This value must be a valid value for the audio device or an error will
 be returned.
+.It Fl V
+Be verbose.
+.It Fl v
+Set the volume (gain) to
+.Ar volume .
+This value must be between 0 and 255.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
