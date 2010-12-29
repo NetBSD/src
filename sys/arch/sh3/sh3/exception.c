@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.57 2010/12/29 13:43:58 nisimura Exp $	*/
+/*	$NetBSD: exception.c,v 1.58 2010/12/29 13:49:32 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.57 2010/12/29 13:43:58 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.58 2010/12/29 13:49:32 nisimura Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -282,7 +282,7 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	int err, track, ftype;
 	const char *panic_msg;
 
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	onfault = pcb->pcb_onfault;
 
 #define TLB_ASSERT(assert, msg)				\
