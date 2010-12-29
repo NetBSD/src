@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.8 2010/12/23 21:39:08 haad Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.9 2010/12/29 00:14:04 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -286,7 +286,7 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 			close(fd);
 			return 0;
 		} else
-			*size /= lab.d_secsize;
+			*size = lab.d_nsectors;
 	} else
 		*size = dkw.dkw_size;
 #else
