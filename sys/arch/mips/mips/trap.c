@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.31 2010/12/22 06:06:19 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.32 2010/12/29 00:47:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.31 2010/12/22 06:06:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.32 2010/12/29 00:47:50 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -158,12 +158,8 @@ const char * const trap_type[] = {
 	"r4000 virtual coherency data",
 };
 
-void trap(unsigned int, unsigned int, vaddr_t, vaddr_t, struct trapframe *);
+void trap(uint32_t, uint32_t, vaddr_t, vaddr_t, struct trapframe *);
 void ast(void);
-
-vaddr_t MachEmulateBranch(struct trapframe *, vaddr_t, unsigned int, int);	/* XXX */
-void MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct trapframe *);	/* XXX */
-void MachFPTrap(uint32_t, uint32_t, vaddr_t, struct trapframe *);	/* XXX */
 
 /*
  * fork syscall returns directly to user process via lwp_trampoline(),
@@ -195,7 +191,7 @@ child_return(void *arg)
  * interrupts as a part of real interrupt processing.
  */
 void
-trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
+trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
     struct trapframe *tf)
 {
 	int type;
@@ -226,7 +222,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			trap_type[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
 		printf("status=0x%x, cause=0x%x, epc=%#" PRIxVADDR
-			", vaddr=%#" PRIxVADDR, status, cause, opc, vaddr);
+			", vaddr=%#" PRIxVADDR, status, cause, pc, vaddr);
 		if (USERMODE(status)) {
 			KASSERT(tf == utf);
 			printf(" frame=%p usp=%#" PRIxREGISTER
@@ -410,7 +406,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 				register_t tlb_hi;
 				pt_entry_t *pte = pfi->pfi_faultpte;
 				__asm("dmfc0 %0,$%1" : "=r"(tlb_hi) : "n"(MIPS_COP_0_TLB_HI));
-				printf("trap: fault #%u (%s/%s) for %#"PRIxVADDR" (%#"PRIxVADDR") at pc %#"PRIxVADDR" curpid=%u/%u pte@%p=%#x)\n", pfi->pfi_repeats, trap_type[TRAPTYPE(cause)], trap_type[pfi->pfi_faulttype], va, vaddr, opc, map->pmap->pm_pai[0].pai_asid, (uint8_t)tlb_hi, pte, pte ? pte->pt_entry : 0);
+				printf("trap: fault #%u (%s/%s) for %#"PRIxVADDR" (%#"PRIxVADDR") at pc %#"PRIxVADDR" curpid=%u/%u pte@%p=%#x)\n", pfi->pfi_repeats, trap_type[TRAPTYPE(cause)], trap_type[pfi->pfi_faulttype], va, vaddr, pc, map->pmap->pm_pai[0].pai_asid, (uint8_t)tlb_hi, pte, pte ? pte->pt_entry : 0);
 				if (pfi->pfi_repeats >= 4) {
 					cpu_Debugger();
 				} else {
@@ -440,7 +436,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		printf(
 		    "uvm_fault(%p (pmap %p), %#"PRIxVADDR
 		    " (%"PRIxVADDR"), %d) -> %d at pc %#"PRIxVADDR"\n",
-		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, opc);
+		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, pc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -567,7 +563,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		int rv;
 
 		/* compute address of break instruction */
-		va = (cause & MIPS_CR_BR_DELAY) ? opc + sizeof(int) : opc;
+		va = (cause & MIPS_CR_BR_DELAY) ? pc + sizeof(int) : pc;
 
 		/* read break instruction */
 		instr = fuiword((void *)va);
@@ -618,15 +614,15 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		} else
 #endif
 		{
-			MachEmulateInst(status, cause, opc, utf);
+			mips_emul_inst(status, cause, pc, utf);
 		}
 		userret(l);
 		return; /* GEN */
 	case T_FPE+T_USER:
 #if defined(FPEMUL)
-		MachEmulateInst(status, cause, opc, utf);
+		mips_emul_inst(status, cause, pc, utf);
 #elif !defined(NOFPU)
-		MachFPTrap(status, cause, opc, utf);
+		mips_fpu_trap(pc, utf);
 #endif
 		userret(l);
 		return; /* GEN */
@@ -634,7 +630,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_TRAP+T_USER:
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_addr = (void *)(intptr_t)opc /*utf->tf_regs[_R_PC]*/;
+		ksi.ksi_addr = (void *)(intptr_t)pc /*utf->tf_regs[_R_PC]*/;
 		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}
@@ -714,6 +710,7 @@ mips_singlestep(struct lwp *l)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct proc * const p = l->l_proc;
+	struct pcb * const pcb = &l->l_addr->u_pcb;
 	vaddr_t pc, va;
 	int rv;
 
@@ -724,7 +721,7 @@ mips_singlestep(struct lwp *l)
 	}
 	pc = (vaddr_t)tf->tf_regs[_R_PC];
 	if (ufetch_uint32((void *)pc) != 0) /* not a NOP instruction */
-		va = MachEmulateBranch(tf, pc, PCB_FSR(&l->l_addr->u_pcb), 1);
+		va = mips_emul_branch(tf, pc, PCB_FSR(pcb), true);
 	else
 		va = pc + sizeof(int);
 
