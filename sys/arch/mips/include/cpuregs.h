@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.18 2010/04/27 05:44:30 cliff Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.19 2010/12/29 00:33:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -713,12 +713,14 @@
 #if !(defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)) \
     && defined(MIPS1)				/* XXX simonb must be neater! */
 #define	MIPS_TLB_PID_SHIFT		MIPS1_TLB_PID_SHIFT
+#define	MIPS_TLB_PID			MIPS1_TLB_PID
 #define	MIPS_TLB_NUM_PIDS		MIPS1_TLB_NUM_PIDS
 #endif
 
 #if (defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)) \
     && !defined(MIPS1)				/* XXX simonb must be neater! */
 #define	MIPS_TLB_PID_SHIFT		0
+#define	MIPS_TLB_PID			MIPS3_TLB_PID
 #define	MIPS_TLB_NUM_PIDS		MIPS3_TLB_NUM_ASIDS
 #endif
 
@@ -726,6 +728,9 @@
 #if !defined(MIPS_TLB_PID_SHIFT)
 #define	MIPS_TLB_PID_SHIFT \
     ((MIPS_HAS_R4K_MMU) ? 0 : MIPS1_TLB_PID_SHIFT)
+
+#define	MIPS_TLB_PID \
+    ((MIPS_HAS_R4K_MMU) ? MIPS3_TLB_PID : MIPS1_TLB_PID)
 
 #define	MIPS_TLB_NUM_PIDS \
     ((MIPS_HAS_R4K_MMU) ? MIPS3_TLB_NUM_ASIDS : MIPS1_TLB_NUM_PIDS)
