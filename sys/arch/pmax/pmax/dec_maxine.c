@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.52.28.3 2010/12/24 07:23:42 matt Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.52.28.4 2010/12/29 00:20:37 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -107,7 +107,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52.28.3 2010/12/24 07:23:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.52.28.4 2010/12/29 00:20:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,7 @@ static const struct ipl_sr_map dec_maxine_ipl_sr_map = {
 	 */
 	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_3,
 	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
 	[IPL_HIGH] =		MIPS_INT_MASK,
     },
 };
