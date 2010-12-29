@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.38 2010/12/29 00:39:39 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.39 2010/12/29 08:13:38 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2645,6 +2645,7 @@ _C_LABEL(MIPSX(locore_vec)):
 	PTR_WORD _C_LABEL(MIPSX(cpu_switch_resume))
 	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
 	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
+	PTR_WORD _C_LABEL(MIPSX(wbflush)) # wbflush
 	PTR_WORD _C_LABEL(MIPSX(tlb_set_asid))
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_asids))
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_addr))
