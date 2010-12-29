@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.23 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.23.96.1 2010/12/29 00:16:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>	/* XXX - misnomer? */
 
+#include "assym.h"
 #include "sii.h"
 #include "opt_dec_5100.h"
 #include "opt_dec_5400.h"
@@ -162,3 +163,56 @@ ALEAF(kn210_wbflush)
         nop
 END(dec_mips1_wbflush)
 #endif	/* defined(DEC_5100) || defined(DEC_5400) */
+
+#ifdef __mips_o32
+NESTED(promcall, 0, ra)
+	sll	t9, a0, 0
+	sll	a0, a1, 0
+	sll	a1, a2, 0
+	sll	a2, a3, 0
+
+	j	t9
+	 nop
+END(promcall)
+#else
+NESTED(promcall, TF_SIZ, ra)
+	PTR_SUBU sp, TF_SIZ
+	REG_S	ra, TF_REG_RA(sp)
+	REG_S	s0, TF_REG_S0(sp)
+	REG_S	s1, TF_REG_S1(sp)
+	REG_S	s2, TF_REG_S2(sp)
+	REG_S	s3, TF_REG_S3(sp)
+	REG_S	s4, TF_REG_S4(sp)
+	REG_S	s5, TF_REG_S5(sp)
+	REG_S	s6, TF_REG_S6(sp)
+	REG_S	s7, TF_REG_S7(sp)
+	REG_S	s8, TF_REG_S8(sp)
+	REG_S	gp, TF_REG_GP(sp)
+
+	sll	t9, a0, 0
+	sll	a0, a1, 0
+	sll	a1, a2, 0
+	sll	a2, a3, 0
+
+	jal	t9
+	 nop
+
+	sll	v0, v0, 0
+
+	REG_L	ra, TF_REG_RA(sp)
+	REG_L	s0, TF_REG_S0(sp)
+	REG_L	s1, TF_REG_S1(sp)
+	REG_L	s2, TF_REG_S2(sp)
+	REG_L	s3, TF_REG_S3(sp)
+	REG_L	s4, TF_REG_S4(sp)
+	REG_L	s5, TF_REG_S5(sp)
+	REG_L	s6, TF_REG_S6(sp)
+	REG_L	s7, TF_REG_S7(sp)
+	REG_L	s8, TF_REG_S8(sp)
+	REG_L	gp, TF_REG_GP(sp)
+
+	PTR_ADDU sp, TF_SIZ
+	j	ra
+	nop
+END(promcall)
+#endif

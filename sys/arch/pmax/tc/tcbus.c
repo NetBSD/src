@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.21 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.21.16.1 2010/12/29 00:16:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.21 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.21.16.1 2010/12/29 00:16:30 matt Exp $");
 
 /*
  * Which system models were configured?
@@ -192,7 +192,7 @@ tc_ds_get_dma_tag(slot)
 #include <pmax/pmax/cons.h>
 #include <machine/dec_prom.h>
 
-int	tc_checkslot __P((tc_addr_t, char *));
+int	tc_checkslot(tc_addr_t, char *);
 
 struct cnboards {
 	const char	*cb_tcname;
@@ -229,22 +229,22 @@ struct cnboards {
 };
 
 int
-tcfb_cnattach(slotno)
-	int slotno;
+tcfb_cnattach(int slotno)
 {
 	paddr_t tcaddr;
 	char tcname[TC_ROM_LLEN];
 	int i;
 
-	tcaddr = (*callv->_slot_address)(slotno);
+	tcaddr = promcall(callv->_slot_address, slotno);
 	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
 		panic("TC console designated by PROM does not exist!?");
 
-	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)
+	for (i = 0; i < __arraycount(cnboards); i++) {
 		if (strncmp(tcname, cnboards[i].cb_tcname, TC_ROM_LLEN) == 0)
 			break;
+	}
 
-	if (i == sizeof(cnboards) / sizeof(cnboards[0]))
+	if (i == __arraycount(cnboards))
 		return (0);
 
 	(cnboards[i].cb_cnattach)((tc_addr_t)TC_PHYS_TO_UNCACHED(tcaddr));
