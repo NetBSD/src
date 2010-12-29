@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.24 2010/12/22 05:54:56 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.25 2010/12/29 00:43:22 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -140,8 +140,6 @@ define	SIGSEGV			SIGSEGV
 
 #				/* XXX */
 define	MIPSX_FLUSHICACHE	0
-define	MIPSX_CPU_SWITCH_RESUME	offsetof(struct locoresw, lsw_cpu_switch_resume)
-define	MIPSX_CPU_IDLE		offsetof(struct locoresw, lsw_cpu_idle)
 
 define	PG_ASID			PG_ASID
 define	MIPS1_PG_G		MIPS1_PG_G
