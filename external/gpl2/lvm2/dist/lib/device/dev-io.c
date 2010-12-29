@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-io.c,v 1.9 2010/12/29 00:14:04 haad Exp $	*/
+/*	$NetBSD: dev-io.c,v 1.10 2010/12/29 23:14:21 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -268,6 +268,7 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 #ifdef __NetBSD__
 	struct disklabel	lab;
 	struct dkwedge_info     dkw;
+	struct stat stat;
 #endif
 
 	if ((fd = open(name, O_RDONLY)) < 0) {
@@ -285,8 +286,12 @@ static int _dev_get_size_dev(const struct device *dev, uint64_t *size)
 			    "DIOCGDINFO for disk device %s", name);
 			close(fd);
 			return 0;
-		} else
-			*size = lab.d_nsectors;
+		} else {
+			if (fstat(fd, &stat) < 0)
+				log_debug("fstat on device %s failure", name);
+			
+			*size = lab.d_partitions[DISKPART(stat.st_rdev)].p_size;
+		}
 	} else
 		*size = dkw.dkw_size;
 #else
