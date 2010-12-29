@@ -29,8 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.7 2010/12/24 07:12:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.8 2010/12/29 00:46:17 matt Exp $");
 
+#include "opt_mips3_wired.h"
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
@@ -122,6 +123,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 	return fixed;
 }
 
+#ifdef MIPS3_PLUS
 bool
 mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
 {
@@ -165,13 +167,15 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
 	TLBINFO_LOCK(ti);
 	if (ci->ci_tlb_slot < 0) {
 		ci->ci_tlb_slot = ti->ti_wired++;
-		mips3_cp0_wired_write(ti->ti_wired);
+		if (MIPS_HAS_R4K_MMU)
+			mips3_cp0_wired_write(ti->ti_wired);
 		tlb_enter(ci->ci_tlb_slot, -PAGE_SIZE, tlb_lo);
 	}
 	TLBINFO_UNLOCK(ti);
 
 	return true;
 }
+#endif /* MIPS3_PLUS */
 
 #define OPCODE_J		002
 #define OPCODE_JAL		003
@@ -271,6 +275,12 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		const intptr_t real_addr = *(int32_t *)load_addr;
 #endif
 		/*
+		 * If the real_addr has been set yet, don't fix up.
+		 */
+		if (real_addr == 0) {
+			continue;
+		}
+		/*
 		 * Verify the real destination is in the same 256MB
 		 * as the location of the jump instruction.
 		 */
@@ -318,12 +328,19 @@ u_int	tlb_record_asids(u_long *, uint32_t)		__stub;
 int	tlb_update(vaddr_t, uint32_t)			__stub;
 void	tlb_enter(size_t, vaddr_t, uint32_t)		__stub;
 void	tlb_read_indexed(size_t, struct tlbmask *)	__stub;
+#if defined(ENABLE_MIPS3_WIRED_MAP)
+void	tlb_write_indexed(size_t, const struct tlbmask *) __stub;
+#endif
+/*
+ * wbflush isn't a stub since it gets overridden quite late
+ * (after mips_vector_init returns).
+ */
 void	wbflush(void)					/*__stub*/;
 
 void
 mips_cpu_switch_resume(struct lwp *l)
 {
-	(*mips_locoresw.lsw_cpu_switch_resume)(l);
+	(*mips_locore_jumpvec.ljv_cpu_switch_resume)(l);
 }
 
 void
@@ -380,9 +397,16 @@ tlb_read_indexed(size_t tlbno, struct tlbmask *tlb)
         (*mips_locore_jumpvec.ljv_tlb_read_indexed)(tlbno, tlb);
 }
 
+#if defined(ENABLE_MIPS3_WIRED_MAP)
+void
+tlb_write_indexed(size_t tlbno, const struct tlbmask *tlb)
+{
+        (*mips_locore_jumpvec.ljv_tlb_write_indexed)(tlbno, tlb);
+}
+#endif
+
 void
 wbflush(void)
 {
-        (*mips_locore_jumpvec.ljv_wbflush)();
+        (*mips_locoresw.lsw_wbflush)();
 }
-
