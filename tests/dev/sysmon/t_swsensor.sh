@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.1 2010/12/20 04:56:18 pgoyette Exp $
+# $NetBSD: t_swsensor.sh,v 1.2 2010/12/29 19:21:39 pgoyette Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \
@@ -56,17 +56,11 @@ common_head() {
 	atf_set	require.progs	rump.powerd rump.envstat rump.modload   \
 				rump.halt   rump.sysctl  rump_allserver \
 				sed         grep
-	atf_set	require.user	root
 }
 
 common_cleanup() {
-	if [ -n "$(jobs)" ] ; then
-		kill %1			# get rid of our rump.powerd
-	fi
-
 	rump.modunload swsensor
 	rump.halt
-	rm -f ${RUMP_SERVER}
 }
 
 create_envsys_conf_files() {
@@ -95,10 +89,6 @@ ENV2
 #	$5	difference from limit to trigger event
 
 common_body() {
-	if [ $1 -ne 0 ] ; then
-		atf_skip "rump.modload doesn't pass proplist attributes"
-	fi
-
 	# Start the rump-server process and load the module
 	start_rump "-i mode=$1 -i value=$2 -i limit=$3"
 
@@ -151,7 +141,7 @@ common_body() {
 	# Step 5 - if sensor provides hw limit, make sure it works
 	if [ $1 -ne 0 -a ${skip_events} -eq 0 ] ; then
 		rump.sysctl -w hw.swsensor.cur_value=$(( $3 - $5 ))
-		sleep 5
+		sleep 15
 		cnt=$(get_powerd_event_count)
 		if [ ${cnt} -lt ${expected_event} ] ; then
 			atf_fail "5: No event triggered"
@@ -240,7 +230,13 @@ common_body() {
 		sleep 5
 		cnt=$(get_powerd_event_count)
 		if [ ${cnt} -ge ${expected_event} ] ; then
-			atf_fail "9: Event triggered after reset"
+			if [ $1 -ne 2 ] ; then
+				atf_fail "11b Event triggered after reset"
+			fi
+			evt=$( check_powerd_event ${cnt} "critical-under")
+			if [ -n "${evt}" ] ; then
+				atf_fail "11a: ${evt}"
+			fi
 		fi
 	fi
 
@@ -295,7 +291,7 @@ alarm_sensor_cleanup() {
 }
 
 atf_init_test_cases() {
-	RUMP_SERVER="unix:///tmp/t_swsensor" ; export RUMP_SERVER
+	RUMP_SERVER="unix://t_swsensor_socket" ; export RUMP_SERVER
 	atf_add_test_case simple_sensor
 	atf_add_test_case limit_sensor
 	atf_add_test_case alarm_sensor
