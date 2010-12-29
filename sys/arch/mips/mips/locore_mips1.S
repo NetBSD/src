@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.10 2010/12/24 07:21:12 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.11 2010/12/29 00:39:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1636,96 +1636,97 @@ END(MIPSX(wbflush))
 
 	.globl _C_LABEL(MIPSX(locore_vec))
 _C_LABEL(MIPSX(locore_vec)):
-	.word	_C_LABEL(MIPSX(tlb_set_asid))
-	.word	_C_LABEL(MIPSX(tlb_invalidate_asids))
-	.word	_C_LABEL(MIPSX(tlb_invalidate_addr))
-	.word	_C_LABEL(nullop)
-	.word	_C_LABEL(MIPSX(tlb_invalidate_all))
-	.word	_C_LABEL(MIPSX(tlb_record_asids))
-	.word	_C_LABEL(MIPSX(tlb_update))
-	.word	_C_LABEL(MIPSX(tlb_enter))
-	.word	_C_LABEL(MIPSX(tlb_read_indexed))
-	.word	_C_LABEL(MIPSX(wbflush))
+	PTR_WORD _C_LABEL(MIPSX(cpu_switch_resume))
+	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
+	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
+	PTR_WORD _C_LABEL(MIPSX(tlb_set_asid))
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_asids))
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_addr))
+	PTR_WORD _C_LABEL(nullop)			# tlb_invalidate_globals
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_all))
+	PTR_WORD _C_LABEL(MIPSX(tlb_record_asids))
+	PTR_WORD _C_LABEL(MIPSX(tlb_update))
+	PTR_WORD _C_LABEL(MIPSX(tlb_enter))
+	PTR_WORD _C_LABEL(MIPSX(tlb_read_indexed))
+	PTR_WORD _C_LABEL(nullop)			# tlb_write_indexed
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
-	.word _C_LABEL(MIPSX(cpu_switch_resume))
-	.word _C_LABEL(MIPSX(lwp_trampoline))
-	.word _C_LABEL(nullop)			# idle
-	.word _C_LABEL(MIPSX(setfunc_trampoline))
-	.word _C_LABEL(nullop)			# send ipi
-	.word _C_LABEL(nullop)			# cpu_offline_md
-	.word _C_LABEL(nullop)			# spare
-	.word _C_LABEL(nullop)			# spare
+	PTR_WORD _C_LABEL(MIPSX(wbflush))		# wbflush
+	PTR_WORD _C_LABEL(nullop)			# idle
+	PTR_WORD _C_LABEL(nullop)			# send ipi
+	PTR_WORD _C_LABEL(nullop)			# cpu_offline_md
+	PTR_WORD _C_LABEL(nullop)			# spare
+	PTR_WORD _C_LABEL(nullop)			# spare
 
 MIPSX(excpt_sw):
 	####
 	#### The kernel exception handlers.
 	####
-	.word _C_LABEL(MIPSX(kern_intr))	# 0 external interrupt
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 1 TLB modification
-	.word _C_LABEL(MIPSX(kernel_tlb_miss))	# 2 TLB miss (LW/I-fetch)
-	.word _C_LABEL(MIPSX(kernel_tlb_miss))	# 3 TLB miss (SW)
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 4 address error (LW/I-fetch)
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 5 address error (SW)
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 6 bus error (I-fetch)
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 7 bus error (load or store)
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 8 system call
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 9 breakpoint
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 10 reserved instruction
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 11 coprocessor unusable
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 12 arithmetic overflow
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 13 r3k reserved
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 14 r3k reserved
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 15 r3k reserved
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 16 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 17 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 18 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 19 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 20 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 21 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 22 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 23 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 24 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 25 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 26 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 27 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 28 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 29 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 30 never happens w/ MIPS1
-	.word _C_LABEL(MIPSX(kern_gen_exception))# 31 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_intr))	# 0 external interrupt
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 1 TLB modification
+	PTR_WORD _C_LABEL(MIPSX(kernel_tlb_miss))	# 2 TLB miss (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(kernel_tlb_miss))	# 3 TLB miss (SW)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 4 address error (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 5 address error (SW)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 6 bus error (I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 7 bus error (load or store)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 8 system call
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 9 breakpoint
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 10 reserved instruction
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 11 coprocessor unusable
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 12 arithmetic overflow
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 13 r3k reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 14 r3k reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 15 r3k reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 16 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 17 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 18 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 19 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 20 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 21 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 22 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 23 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 24 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 25 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 26 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 27 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 28 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 29 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 30 never happens w/ MIPS1
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 31 never happens w/ MIPS1
 	#####
 	##### The user exception handlers.
 	#####
-	.word _C_LABEL(MIPSX(user_intr))	#  0
-	.word _C_LABEL(MIPSX(user_gen_exception))#  1
-	.word _C_LABEL(MIPSX(user_gen_exception))#  2
-	.word _C_LABEL(MIPSX(user_gen_exception))#  3
-	.word _C_LABEL(MIPSX(user_gen_exception))#  4
-	.word _C_LABEL(MIPSX(user_gen_exception))#  5
-	.word _C_LABEL(MIPSX(user_gen_exception))#  6
-	.word _C_LABEL(MIPSX(user_gen_exception))#  7
-	.word _C_LABEL(MIPSX(systemcall))	#  8
-	.word _C_LABEL(MIPSX(user_gen_exception))#  9
-	.word _C_LABEL(MIPSX(user_gen_exception))# 10
-	.word _C_LABEL(MIPSX(user_gen_exception))# 11
-	.word _C_LABEL(MIPSX(user_gen_exception))# 12
-	.word _C_LABEL(MIPSX(user_gen_exception))# 13
-	.word _C_LABEL(MIPSX(user_gen_exception))# 14
-	.word _C_LABEL(MIPSX(user_gen_exception))# 15
-	.word _C_LABEL(MIPSX(user_gen_exception))# 16
-	.word _C_LABEL(MIPSX(user_gen_exception))# 17
-	.word _C_LABEL(MIPSX(user_gen_exception))# 18
-	.word _C_LABEL(MIPSX(user_gen_exception))# 19
-	.word _C_LABEL(MIPSX(user_gen_exception))# 20
-	.word _C_LABEL(MIPSX(user_gen_exception))# 21
-	.word _C_LABEL(MIPSX(user_gen_exception))# 22
-	.word _C_LABEL(MIPSX(user_gen_exception))# 23
-	.word _C_LABEL(MIPSX(user_gen_exception))# 24
-	.word _C_LABEL(MIPSX(user_gen_exception))# 25
-	.word _C_LABEL(MIPSX(user_gen_exception))# 26
-	.word _C_LABEL(MIPSX(user_gen_exception))# 27
-	.word _C_LABEL(MIPSX(user_gen_exception))# 28
-	.word _C_LABEL(MIPSX(user_gen_exception))# 29
-	.word _C_LABEL(MIPSX(user_gen_exception))# 20
-	.word _C_LABEL(MIPSX(user_gen_exception))# 31
+	PTR_WORD _C_LABEL(MIPSX(user_intr))	#  0
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))#  1
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))#  2
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))#  3
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))#  4
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))#  5
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))#  6
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))#  7
+	PTR_WORD _C_LABEL(MIPSX(systemcall))	#  8
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))#  9
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 10
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 11
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 12
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 13
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 14
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 15
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 16
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 17
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 18
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 19
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 20
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 21
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 22
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 23
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 24
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 25
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 26
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 27
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 28
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 29
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 20
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))# 31
