@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.26 2010/12/22 06:13:36 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.27 2010/12/29 00:39:39 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -36,6 +36,53 @@
 #include <mips/reg.h>
 
 struct tlbmask;
+struct trapframe;
+
+void	trap(uint32_t, uint32_t, vaddr_t, vaddr_t, struct trapframe *);
+void	ast(void);
+
+void	mips_fpu_trap(vaddr_t, struct trapframe *);
+void	mips_fpu_intr(vaddr_t, struct trapframe *);
+
+vaddr_t mips_emul_branch(struct trapframe *, vaddr_t, uint32_t, bool);
+void	mips_emul_inst(uint32_t, uint32_t, vaddr_t, struct trapframe *);
+
+void	mips_emul_fp(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_branchdelayslot(uint32_t, struct trapframe *, uint32_t);
+
+void	mips_emul_lwc0(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_swc0(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_special(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_special3(uint32_t, struct trapframe *, uint32_t);
+
+void	mips_emul_lwc1(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_swc1(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_ldc1(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_sdc1(uint32_t, struct trapframe *, uint32_t);
+
+void	mips_emul_lb(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_lbu(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_lh(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_lhu(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_lw(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_lwl(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_lwr(uint32_t, struct trapframe *, uint32_t);
+#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
+void	mips_emul_lwu(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_ld(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_ldl(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_ldr(uint32_t, struct trapframe *, uint32_t);
+#endif
+void	mips_emul_sb(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_sh(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_sw(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_swl(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_swr(uint32_t, struct trapframe *, uint32_t);
+#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
+void	mips_emul_sd(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_sdl(uint32_t, struct trapframe *, uint32_t);
+void	mips_emul_sdr(uint32_t, struct trapframe *, uint32_t);
+#endif
 
 uint32_t mips_cp0_cause_read(void);
 void	mips_cp0_cause_write(uint32_t);
@@ -78,40 +125,31 @@ u_int	tlb_record_asids(u_long *, uint32_t);
 int	tlb_update(vaddr_t, uint32_t);
 void	tlb_enter(size_t, vaddr_t, uint32_t);
 void	tlb_read_indexed(size_t, struct tlbmask *);
+void	tlb_write_indexed(size_t, const struct tlbmask *);
 void	wbflush(void);
 
 #ifdef MIPS1
 void	mips1_tlb_invalidate_all(void);
-void	mips1_lwp_trampoline(void);
-void	mips1_setfunc_trampoline(void);
 
 uint32_t tx3900_cp0_config_read(void);
 #endif
 
 #if defined(MIPS3) || defined(MIPS4)
 void	mips3_tlb_invalidate_all(void);
-void	mips3_lwp_trampoline(void);
-void	mips3_setfunc_trampoline(void);
 void	mips3_pagezero(void *dst);
 
 #ifdef MIPS3_5900
 void	mips5900_tlb_invalidate_all(void);
-void	mips5900_lwp_trampoline(void);
-void	mips5900_setfunc_trampoline(void);
 void	mips5900_pagezero(void *dst);
 #endif
 #endif /* MIPS3 || MIPS4 */
 
 #ifdef MIPS32
 void	mips32_tlb_invalidate_all(void);
-void	mips32_lwp_trampoline(void);
-void	mips32_setfunc_trampoline(void);
 #endif
 
 #ifdef MIPS64
 void	mips64_tlb_invalidate_all(void);
-void	mips64_lwp_trampoline(void);
-void	mips64_setfunc_trampoline(void);
 void	mips64_pagezero(void *dst);
 #endif
 
@@ -291,6 +329,9 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
  * locore function, and macros which jump through it.
  */
 typedef struct  {
+	void	(*ljv_cpu_switch_resume)(struct lwp *);
+	intptr_t ljv_lwp_trampoline;
+	intptr_t ljv_setfunc_trampoline;
 	void	(*ljv_tlb_set_asid)(uint32_t pid);
 	void	(*ljv_tlb_invalidate_asids)(uint32_t, uint32_t);
 	void	(*ljv_tlb_invalidate_addr)(vaddr_t);
@@ -300,7 +341,7 @@ typedef struct  {
 	int	(*ljv_tlb_update)(vaddr_t, uint32_t);
 	void	(*ljv_tlb_enter)(size_t, vaddr_t, uint32_t);
 	void	(*ljv_tlb_read_indexed)(size_t, struct tlbmask *);
-	void	(*ljv_wbflush)(void);
+	void	(*ljv_tlb_write_indexed)(size_t, const struct tlbmask *);
 } mips_locore_jumpvec_t;
 
 void	mips_set_wbflush(void (*)(void));
@@ -310,10 +351,8 @@ void	stacktrace(void);
 void	logstacktrace(void);
 
 struct locoresw {
-	void		(*lsw_cpu_switch_resume)(struct lwp *);
-	uintptr_t	lsw_lwp_trampoline;
+	void		(*lsw_wbflush)(void);
 	void		(*lsw_cpu_idle)(void);
-	uintptr_t	lsw_setfunc_trampoline;
 	int		(*lsw_send_ipi)(struct cpu_info *, int);
 	void		(*lsw_cpu_offline_md)(void);
 	void		(*lsw_cpu_init)(struct cpu_info *);
@@ -331,30 +370,8 @@ struct mips_vmfreelist {
  */
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern struct locoresw mips_locoresw;
+struct lwpsw;
 extern void mips_vector_init(const struct splsw *);
-
-#if defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64)
-#define lwp_trampoline		mips1_lwp_trampoline
-#define setfunc_trampoline	mips1_setfunc_trampoline
-#elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && !defined(MIPS3_5900)
-#define lwp_trampoline		mips3_lwp_trampoline
-#define setfunc_trampoline	mips3_setfunc_trampoline
-#elif !defined(MIPS1) && !defined(MIPS3) &&  defined(MIPS32) && !defined(MIPS64)
-#define lwp_trampoline		mips32_lwp_trampoline
-#define setfunc_trampoline	mips32_setfunc_trampoline
-#elif !defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) &&  defined(MIPS64)
- /* all common with mips3 */
-#define lwp_trampoline		mips64_lwp_trampoline
-#define setfunc_trampoline	mips64_setfunc_trampoline
-#elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && defined(MIPS3_5900)
-#define lwp_trampoline		mips5900_lwp_trampoline
-#define setfunc_trampoline	mips5900_setfunc_trampoline
-#else
-#define lwp_trampoline		mips_locoresw.lsw_lwp_trampoline
-#define setfunc_trampoline	mips_locoresw.lsw_setfunc_trampoline
-#endif
-
-#define CPU_IDLE		mips_locoresw.lsw_cpu_idle
 
 /* cpu_switch_resume is called inside locore.S */
 
