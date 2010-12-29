@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.19 2009/11/21 11:52:57 dsl Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.20 2010/12/29 22:40:46 jakllsch Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -82,8 +82,7 @@ ENTRY(biosdisk_reset)
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
-	xorl	%eax, %eax
-	movw	%bx, %ax	# return value in %ax
+	movzwl	%bx, %eax	# return value in %eax
 
 	pop	%edi
 	pop	%edx
@@ -146,7 +145,7 @@ ENTRY(biosdisk_read)
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
-	andl	$0xffff, %eax
+	movzwl	%ax, %eax	# return value in %eax
 
 	pop	%edi
 	pop	%esi
@@ -246,8 +245,7 @@ ENTRY(biosdisk_int13ext)
 	calll	_C_LABEL(real_to_prot)	# switch back
 	.code32
 
-	xorl	%eax, %eax
-	movb	%dl, %al	# return value in %ax
+	movzbl	%dl, %eax		# return value in %eax
 
 	cmpw	$0xaa55, %bx
 	sete	%dl
@@ -304,8 +302,7 @@ ENTRY(biosdisk_extread)
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
-	xorl	%eax, %eax
-	movw	%bx, %ax	# return value in %ax
+	movzwl	%bx, %eax	# return value in %eax
 
 	pop	%edi
 	pop	%esi
@@ -346,8 +343,7 @@ ENTRY(biosdisk_getextinfo)
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
-	xorl	%eax, %eax
-	movb	%bl, %al	# return value in %ax
+	movzbl	%bl, %eax	# return value in %eax
 
 	pop	%edi
 	pop	%esi
