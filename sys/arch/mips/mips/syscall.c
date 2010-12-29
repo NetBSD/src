@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.12 2010/02/22 20:17:09 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.13 2010/12/29 00:47:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.12 2010/02/22 20:17:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.13 2010/12/29 00:47:50 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -144,8 +144,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.12 2010/02/22 20:17:09 matt Exp 
 void	EMULNAME(syscall_intern)(struct proc *);
 static void EMULNAME(syscall)(struct lwp *, uint32_t, uint32_t, vaddr_t);
 
-register_t MachEmulateBranch(struct trapframe *, register_t, u_int, int);
-
 void
 EMULNAME(syscall_intern)(struct proc *p)
 {
@@ -162,7 +160,7 @@ EMULNAME(syscall_intern)(struct proc *p)
  */
 
 void
-EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
+EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_utf;
@@ -190,9 +188,9 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	curcpu()->ci_data.cpu_nsyscall++;
 
 	if (cause & MIPS_CR_BR_DELAY)
-		reg->r_regs[_R_PC] = MachEmulateBranch(tf, opc, 0, 0);
+		reg->r_regs[_R_PC] = mips_emul_branch(tf, pc, 0, false);
 	else
-		reg->r_regs[_R_PC] = opc + sizeof(uint32_t);
+		reg->r_regs[_R_PC] = pc + sizeof(uint32_t);
 
 	callp = p->p_emul->e_sysent;
 	saved_v0 = code = reg->r_regs[_R_V0];
@@ -400,7 +398,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 		break;
 	case ERESTART:
 		reg->r_regs[_R_V0] = saved_v0; /* restore syscall code */
-		reg->r_regs[_R_PC] = opc;
+		reg->r_regs[_R_PC] = pc;
 		break;
 	case EJUSTRETURN:
 		break;	/* nothing to do */
