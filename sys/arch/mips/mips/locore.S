@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.21 2010/12/22 06:13:36 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.22 2010/12/29 00:50:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -575,23 +575,15 @@ END(mips_cp0_status_write)
 #if !defined(NOFPU) || defined(FPEMUL)
 /*----------------------------------------------------------------------------
  *
- * MachFPInterrupt --
- * MachFPTrap --
+ * mips_fpu_intr --
+ * mips_fpu_trap --
  *
  *	Handle a floating point interrupt (r3k) or trap (r4k).
  *	the handlers are indentical, only the reporting mechanisms differ.
  *
- *	MachFPInterrupt(status, cause, pc, frame)
- *		unsigned status;
- *		unsigned cause;
- *		unsigned pc;
- *		int *frame;
+ *	mips_fpu_intr(vaddr_t pc, struct trapframe *tf)
  *
- *	MachFPTrap(status, cause, pc, frame)
- *		unsigned status;
- *		unsigned cause;
- *		unsigned pc;
- *		int *frame;
+ *	mips_fpu_trap(vaddr_t pc, struct trapframe *tf)
  *
  * Results:
  *	None.
@@ -601,8 +593,8 @@ END(mips_cp0_status_write)
  *
  *----------------------------------------------------------------------------
  */
-NESTED(MachFPInterrupt, CALLFRAME_SIZ, ra)
-XNESTED(MachFPTrap)
+NESTED(mips_fpu_intr, CALLFRAME_SIZ, ra)
+XNESTED(mips_fpu_trap)
 	.mask	0x80000000, -4
 	PTR_SUBU	sp, CALLFRAME_SIZ
 	mfc0		t0, MIPS_COP_0_STATUS
@@ -611,12 +603,17 @@ XNESTED(MachFPTrap)
 	mtc0		t0, MIPS_COP_0_STATUS
 	COP0_HAZARD_FPUENABLE
 
+	REG_PROLOGUE
+	REG_L		t3, TF_REG_CAUSE(a1)
+	REG_EPILOGUE
+
 	cfc1		t0, MIPS_FPU_CSR	# stall til FP done
 	cfc1		t0, MIPS_FPU_CSR	# now get status
 	nop
 	sll		t2, t0, (31 - 17)	# unimplemented operation?
 	bgez		t2, 3f			# no, normal trap
-	nop
+	 nop
+
 /*
  * We got an unimplemented operation trap so
  * We received an unimplemented operation trap.
@@ -626,21 +623,22 @@ XNESTED(MachFPTrap)
  *
  * fetch the instruction and emulate the instruction.
  */
-	bgez		a1, 1f			# Check the branch delay bit.
-	nop
+	bgez		t3, 1f			# Check the branch delay bit.
+	 nop
 /*
  * The instruction is in the branch delay slot.
  */
+	move		a2, a0			# 3rd arg is opcode address
+
 	b		2f
-	lw		a0, 4(a2)		# a0 = coproc instruction
+	 INT_L		a0, 4(a0)		# a0 = coproc instruction
 /*
  * This is not in the branch delay slot so calculate the resulting
  * PC (epc + 4) into v0 and continue to MachEmulateFP().
  */
 1:
-	lw		a0, 4(a2)		# a0 = coproc instruction
+	INT_L		a0, 4(a0)		# a0 = coproc instruction
 2:
-	move		a2, a1
 
 /*
  * Check to see if the instruction to be emulated is a floating-point
@@ -648,24 +646,24 @@ XNESTED(MachFPTrap)
  */
 	srl		t0, a0, MIPS_OPCODE_SHIFT
 	beq		t0, MIPS_OPCODE_C1, 4f
-	nop
+	 nop
 
 /*
  * Send a floating point exception signal to the current LWP.
  */
-	li		t0, 0xFFFFFF00
-	and		a1, a1, t0
-	ori		a1, a1, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
+	srl		t0, 8
+	sll		t0, 8
+	ori		t3, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
 	REG_PROLOGUE
-	REG_S		a1, TF_REG_CAUSE(a3)
+	REG_S		t3, TF_REG_CAUSE(a3)
 	REG_EPILOGUE
 
 	move		a1, a0				# code = instruction
 	jal		_C_LABEL(mips_fpuillinst)
-	move		a0, MIPS_CURLWP			# get current LWP
+	 move		a0, MIPS_CURLWP			# get current LWP
 
 	b		FPReturn
-	nop
+	 nop
 
 /*
  * Send a FPE signal to the current LWP if it tripped the any of
@@ -673,7 +671,7 @@ XNESTED(MachFPTrap)
  */
 3:
 	REG_PROLOGUE
-	REG_S		a1, TF_REG_CAUSE(a3)
+	REG_S		t3, TF_REG_CAUSE(a3)
 	REG_EPILOGUE
 
 	and		a0, t0, ~MIPS_FPU_EXCEPTION_BITS
@@ -681,17 +679,18 @@ XNESTED(MachFPTrap)
 
 	move		a1, t0			# FPU status
 	jal		_C_LABEL(mips_fpuexcept)
-	move		a0, MIPS_CURLWP		# get current LWP
+	 move		a0, MIPS_CURLWP		# get current LWP
 
 	b		FPReturn
-	nop
+	 nop
 
 /*
- * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
+ * Finally, we can call
+ * mips_emul(uint32_t insn, struct trapframe *tf, vaddr_t pc).
  */
 4:
-	jal		_C_LABEL(MachEmulateFP)
-	move		a1, a3
+	jal		_C_LABEL(mips_emul_fp)
+	 nop
 
 /*
  * Turn off the floating point coprocessor and return.
@@ -699,12 +698,12 @@ XNESTED(MachFPTrap)
 FPReturn:
 	mfc0		t0, MIPS_COP_0_STATUS
 	REG_L		ra, CALLFRAME_RA(sp)
-	and		t0, t0, ~MIPS_SR_COP_1_BIT
+	and		t0, ~MIPS_SR_COP_1_BIT
 	mtc0		t0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	j		ra
-	PTR_ADDU	sp, CALLFRAME_SIZ
-END(MachFPInterrupt)
+	 PTR_ADDU	sp, CALLFRAME_SIZ
+END(mips_fpu_intr)
 #endif /* !defined(NOFPU) || defined(FPEMUL) */
 
 LEAF(mips_pagecopy)

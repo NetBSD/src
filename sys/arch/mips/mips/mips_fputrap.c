@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.5.66.5 2010/02/23 20:33:48 matt Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.5.66.6 2010/12/29 00:50:29 matt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -37,12 +37,12 @@
 #include <mips/locore.h>
 
 #if defined(FPEMUL) || !defined(NOFPU)
-void mips_fpuexcept(struct lwp *, unsigned int);
-void mips_fpuillinst(struct lwp *, unsigned int, unsigned long);
-static int fpustat2sicode(unsigned int);
+void mips_fpuexcept(struct lwp *, uint32_t);
+void mips_fpuillinst(struct lwp *, uint32_t, vaddr_t);
+static int fpustat2sicode(uint32_t);
 
 void
-mips_fpuexcept(struct lwp *l, unsigned int fpustat)
+mips_fpuexcept(struct lwp *l, uint32_t fpustat)
 {
 	ksiginfo_t ksi;
 
@@ -54,7 +54,7 @@ mips_fpuexcept(struct lwp *l, unsigned int fpustat)
 }
 
 void
-mips_fpuillinst(struct lwp *l, unsigned int opcode, unsigned long vaddr)
+mips_fpuillinst(struct lwp *l, uint32_t opcode, vaddr_t vaddr)
 {
 	ksiginfo_t ksi;
 
@@ -66,7 +66,7 @@ mips_fpuillinst(struct lwp *l, unsigned int opcode, unsigned long vaddr)
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 }
 
-static struct {
+static const struct {
 	unsigned int bit;
 	int code;
 } fpecodes[] = {
@@ -79,14 +79,14 @@ static struct {
 };
 
 static int
-fpustat2sicode(unsigned int fpustat)
+fpustat2sicode(uint32_t fpustat)
 {
-	int i;
-
-	for (i = 0; i < 6; i++)
+	for (size_t i = 0; i < __arraycount(fpecodes); i++) {
 		if (fpustat & fpecodes[i].bit)
-			return (fpecodes[i].code);
-	return (FPE_FLTINV);
+			return fpecodes[i].code;
+	}
+
+	return FPE_FLTINV;
 }
 #endif /* FPEMUL || !NOFPU */
 

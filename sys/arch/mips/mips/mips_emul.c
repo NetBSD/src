@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.11 2010/06/01 19:10:45 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.12 2010/12/29 00:50:29 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.11 2010/06/01 19:10:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.12 2010/12/29 00:50:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,48 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.11 2010/06/01 19:10:45 matt Ex
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
-#if !defined(NOFPU) || defined(FPEMUL)
-void MachEmulateFP(uint32_t, struct reg *, uint32_t);
-#endif
-
 static inline void	send_sigsegv(intptr_t, uint32_t, struct trapframe *,
 			    uint32_t);
 static inline void	update_pc(struct trapframe *, uint32_t);
-
-vaddr_t MachEmulateBranch(struct trapframe *, vaddr_t, unsigned, int);
-void	MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct trapframe *);
-
-void	MachEmulateLWC0(uint32_t, struct trapframe *, uint32_t);
-void	MachEmulateSWC0(uint32_t, struct trapframe *, uint32_t);
-void	MachEmulateSpecial(uint32_t, struct trapframe *, uint32_t);
-void	MachEmulateSpecial3(uint32_t, struct trapframe *, uint32_t);
-void	MachEmulateLWC1(uint32_t, struct trapframe *, uint32_t);
-void	MachEmulateLDC1(uint32_t, struct trapframe *, uint32_t);
-void	MachEmulateSWC1(uint32_t, struct trapframe *, uint32_t);
-void	MachEmulateSDC1(uint32_t, struct trapframe *, uint32_t);
-
-void	bcemul_lb(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_lbu(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_lh(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_lhu(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_lw(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_lwl(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_lwr(uint32_t, struct trapframe *, uint32_t);
-#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
-void	bcemul_ld(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_ldl(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_ldr(uint32_t, struct trapframe *, uint32_t);
-#endif
-void	bcemul_sb(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_sh(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_sw(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_swl(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_swr(uint32_t, struct trapframe *, uint32_t);
-#if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
-void	bcemul_sd(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_sdl(uint32_t, struct trapframe *, uint32_t);
-void	bcemul_sdr(uint32_t, struct trapframe *, uint32_t);
-#endif
 
 /*
  * MIPS2 LL instruction emulation state
@@ -99,8 +60,8 @@ struct {
  * Analyse 'next' PC address taking account of branch/jump instructions
  */
 vaddr_t
-MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
-    int allowNonBranch)
+mips_emul_branch(struct trapframe *tf, vaddr_t instpc, uint32_t fpuCSR,
+    bool allowNonBranch)
 {
 #define	BRANCHTARGET(pc, i) (4 + (pc) + ((short)(i).IType.imm << 2))
 	InstFmt inst;
@@ -109,7 +70,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 	if (instpc < MIPS_KSEG0_START)
 		inst.word = ufetch_uint32((void *)instpc);
 	else
-		inst.word = *(unsigned *)instpc;
+		inst.word = *(uint32_t *)instpc;
 
 	switch ((int)inst.JType.op) {
 	case OP_SPECIAL:
@@ -153,7 +114,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 	case OP_J:
 	case OP_JAL:
 		nextpc = (inst.JType.target << 2) |
-			((unsigned)instpc & 0xF0000000);
+			((intptr_t)instpc & 0xF0000000);
 		break;
 
 	case OP_BEQ:
@@ -220,7 +181,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
  * Emulate instructions (including floating-point instructions)
  */
 void
-MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
+mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
     struct trapframe *tf)
 {
 	uint32_t inst;
@@ -237,40 +198,40 @@ MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
 
 	switch (((InstFmt)inst).FRType.op) {
 	case OP_LWC0:
-		MachEmulateLWC0(inst, tf, cause);
+		mips_emul_lwc0(inst, tf, cause);
 		break;
 	case OP_SWC0:
-		MachEmulateSWC0(inst, tf, cause);
+		mips_emul_swc0(inst, tf, cause);
 		break;
 	case OP_SPECIAL:
-		MachEmulateSpecial(inst, tf, cause);
+		mips_emul_special(inst, tf, cause);
 		break;
 	case OP_SPECIAL3:
-		MachEmulateSpecial3(inst, tf, cause);
+		mips_emul_special3(inst, tf, cause);
 		break;
 	case OP_COP1:
 #if defined(FPEMUL)
-		MachEmulateFP(inst, &tf->tf_registers, cause);
+		mips_emul_fp(inst, tf, cause);
 		break;
 #endif
 	case OP_LWC1:
 #if defined(FPEMUL)
-		MachEmulateLWC1(inst, tf, cause);
+		mips_emul_lwc1(inst, tf, cause);
 		break;
 #endif
 	case OP_LDC1:
 #if defined(FPEMUL)
-		MachEmulateLDC1(inst, tf, cause);
+		mips_emul_ldc1(inst, tf, cause);
 		break;
 #endif
 	case OP_SWC1:
 #if defined(FPEMUL)
-		MachEmulateSWC1(inst, tf, cause);
+		mips_emul_swc1(inst, tf, cause);
 		break;
 #endif
 	case OP_SDC1:
 #if defined(FPEMUL)
-		MachEmulateSDC1(inst, tf, cause);
+		mips_emul_sdc1(inst, tf, cause);
 		break;
 #else
 		code = ILL_COPROC;
@@ -297,7 +258,7 @@ send_sigsegv(intptr_t vaddr, uint32_t exccode, struct trapframe *tf,
     uint32_t cause)
 {
 	ksiginfo_t ksi;
-	cause = (cause & 0xFFFFFF00) | (exccode << MIPS_CR_EXC_CODE_SHIFT);
+	cause = (cause & ~0xFF) | (exccode << MIPS_CR_EXC_CODE_SHIFT);
 	tf->tf_regs[_R_CAUSE] = cause;
 	tf->tf_regs[_R_BADVADDR] = vaddr;
 	KSI_INIT_TRAP(&ksi);
@@ -314,7 +275,7 @@ update_pc(struct trapframe *tf, uint32_t cause)
 
 	if (cause & MIPS_CR_BR_DELAY)
 		tf->tf_regs[_R_PC] = 
-		    MachEmulateBranch(tf, tf->tf_regs[_R_PC],
+		    mips_emul_branch(tf, tf->tf_regs[_R_PC],
 			PCB_FSR(curpcb), 0);
 	else
 		tf->tf_regs[_R_PC] += 4;
@@ -324,7 +285,7 @@ update_pc(struct trapframe *tf, uint32_t cause)
  * MIPS2 LL instruction
  */
 void
-MachEmulateLWC0(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lwc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -357,7 +318,7 @@ MachEmulateLWC0(uint32_t inst, struct trapframe *tf, uint32_t cause)
  * MIPS2 SC instruction
  */
 void
-MachEmulateSWC0(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_swc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint32_t	value;
@@ -408,7 +369,7 @@ MachEmulateSWC0(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-MachEmulateSpecial(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_special(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	ksiginfo_t ksi;
 	switch (((InstFmt)inst).RType.func) {
@@ -431,7 +392,7 @@ MachEmulateSpecial(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-MachEmulateSpecial3(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	ksiginfo_t ksi;
 	switch (((InstFmt)inst).RType.func) {
@@ -463,7 +424,7 @@ MachEmulateSpecial3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 #define LWSWC1_MAXLOOP	12
 
 void
-MachEmulateLWC1(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lwc1(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -526,7 +487,7 @@ MachEmulateLWC1(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-MachEmulateLDC1(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_ldc1(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -553,7 +514,7 @@ MachEmulateLDC1(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-MachEmulateSWC1(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_swc1(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -616,7 +577,7 @@ MachEmulateSWC1(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-MachEmulateSDC1(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sdc1(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -643,7 +604,7 @@ MachEmulateSDC1(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_lb(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lb(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -663,17 +624,17 @@ bcemul_lb(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		return;
 	}
 
-	tf->tf_regs[(inst>>16)&0x1F] = (int32_t)x;
+	tf->tf_regs[(inst>>16)&0x1F] = x;
 
 	update_pc(tf, cause);
 }
 
 void
-bcemul_lbu(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lbu(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
-	uint8_t	x;
+	uint8_t		x;
 
 	offset = inst & 0xFFFF;
 	vaddr = tf->tf_regs[(inst>>21)&0x1F] + offset;
@@ -689,13 +650,13 @@ bcemul_lbu(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		return;
 	}
 
-	tf->tf_regs[(inst>>16)&0x1F] = (mips_ureg_t)x;
+	tf->tf_regs[(inst>>16)&0x1F] = x;
 
 	update_pc(tf, cause);
 }
 
 void
-bcemul_lh(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lh(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -721,11 +682,11 @@ bcemul_lh(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_lhu(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lhu(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
-	u_int16_t	x;
+	uint16_t	x;
 
 	offset = inst & 0xFFFF;
 	vaddr = tf->tf_regs[(inst>>21)&0x1F] + offset;
@@ -747,10 +708,11 @@ bcemul_lhu(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_lw(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lw(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
+	int32_t		x;
 
 	offset = inst & 0xFFFF;
 	vaddr = tf->tf_regs[(inst>>21)&0x1F] + offset;
@@ -761,16 +723,18 @@ bcemul_lw(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		return;
 	}
 
-	if (copyin((void *)vaddr, &(tf->tf_regs[(inst>>16)&0x1F]), 4) != 0) {
+	if (copyin((void *)vaddr, &x, 4) != 0) {
 		send_sigsegv(vaddr, T_TLB_LD_MISS, tf, cause);
 		return;
 	}
+
+	tf->tf_regs[(inst>>16)&0x1F] = x;
 
 	update_pc(tf, cause);
 }
 
 void
-bcemul_lwl(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lwl(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint32_t	a, x, shift;
@@ -803,9 +767,9 @@ bcemul_lwl(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_lwr(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lwr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
-	intptr_t		vaddr;
+	intptr_t	vaddr;
 	uint32_t	a, x, shift;
 	int16_t		offset;
 
@@ -837,7 +801,33 @@ bcemul_lwr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 
 #if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
 void
-bcemul_ld(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_lwu(uint32_t inst, struct trapframe *tf, uint32_t cause)
+{
+	intptr_t	vaddr;
+	int16_t		offset;
+	uint32_t	x;
+
+	offset = inst & 0xFFFF;
+	vaddr = tf->tf_regs[(inst>>21)&0x1F] + offset;
+
+	/* segment and alignment check */
+	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
+		send_sigsegv(vaddr, T_ADDR_ERR_LD, tf, cause);
+		return;
+	}
+
+	if (copyin((void *)vaddr, &x, 4) != 0) {
+		send_sigsegv(vaddr, T_TLB_LD_MISS, tf, cause);
+		return;
+	}
+
+	tf->tf_regs[(inst>>16)&0x1F] = x;
+
+	update_pc(tf, cause);
+}
+
+void
+mips_emul_ld(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -860,7 +850,7 @@ bcemul_ld(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_ldl(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_ldl(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint64_t	a, x;
@@ -894,7 +884,7 @@ bcemul_ldl(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_ldr(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_ldr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint64_t	a, x;
@@ -929,7 +919,7 @@ bcemul_ldr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 #endif /* defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64) */
 
 void
-bcemul_sb(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sb(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -952,7 +942,7 @@ bcemul_sb(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_sh(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sh(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -975,7 +965,7 @@ bcemul_sh(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_sw(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sw(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -998,7 +988,7 @@ bcemul_sw(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_swl(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_swl(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint32_t	a, x, shift;
@@ -1034,7 +1024,7 @@ bcemul_swl(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_swr(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_swr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint32_t	a, x, shift;
@@ -1071,7 +1061,7 @@ bcemul_swr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 
 #if defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64)
 void
-bcemul_sd(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sd(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -1094,7 +1084,7 @@ bcemul_sd(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_sdl(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sdl(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint64_t	a, x;
@@ -1131,7 +1121,7 @@ bcemul_sdl(uint32_t inst, struct trapframe *tf, uint32_t cause)
 }
 
 void
-bcemul_sdr(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sdr(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint64_t	a, x;
