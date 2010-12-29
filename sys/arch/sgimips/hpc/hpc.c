@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.60.38.1 2009/08/26 03:46:40 matt Exp $	*/
+/*	$NetBSD: hpc.c,v 1.60.38.2 2010/12/29 07:19:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.60.38.1 2009/08/26 03:46:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.60.38.2 2010/12/29 07:19:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,12 @@ static const struct hpc_device hpc3_devices[] = {
 	  HPC3_PBUS_CH6_DEVREGS + IOC_PLP_REGS, 0,
 	  -1,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ "panel",	/* Indy front panel */
+	  HPC_BASE_ADDRESS_0,
+	  HPC3_PBUS_CH6_DEVREGS + IOC_PANEL, 0,
+	  9,
+	  HPCDEV_IP24 },
 
 	{ NULL,
 	  0,
