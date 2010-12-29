@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.14 2007/03/04 06:00:33 christos Exp $	*/
+/*	$NetBSD: ibus.c,v 1.14.62.1 2010/12/29 00:12:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.14 2007/03/04 06:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.14.62.1 2010/12/29 00:12:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ ibusattach(parent, self, aux)
 		    badaddr((void *)ia->ia_addr, ia->ia_basz) != 0)
 			continue;
 
-		locs[IBUSCF_ADDR] = MIPS_KSEG1_TO_PHYS(ia->ia_addr);
+		locs[IBUSCF_ADDR] = (int32_t)MIPS_KSEG1_TO_PHYS(ia->ia_addr);
 
 		config_found_sm_loc(self, "ibus", locs, ia,
 				    ibusprint, config_stdsubmatch);
@@ -82,7 +82,7 @@ ibusprint(aux, pnp)
 	if (pnp)
 		aprint_normal("%s at %s", ia->ia_name, pnp);
 
-	aprint_normal(" addr 0x%x", MIPS_KSEG1_TO_PHYS(ia->ia_addr));
+	aprint_normal(" addr %#"PRIxPADDR, MIPS_KSEG1_TO_PHYS(ia->ia_addr));
 
 	return (UNCONF);
 }
@@ -92,7 +92,7 @@ ibus_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, arg);
