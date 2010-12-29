@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.27 2010/12/29 00:39:39 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.28 2010/12/29 08:13:37 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -332,6 +332,7 @@ typedef struct  {
 	void	(*ljv_cpu_switch_resume)(struct lwp *);
 	intptr_t ljv_lwp_trampoline;
 	intptr_t ljv_setfunc_trampoline;
+	void	(*ljv_wbflush)(void);
 	void	(*ljv_tlb_set_asid)(uint32_t pid);
 	void	(*ljv_tlb_invalidate_asids)(uint32_t, uint32_t);
 	void	(*ljv_tlb_invalidate_addr)(vaddr_t);
@@ -349,6 +350,9 @@ void	mips_wait_idle(void);
 
 void	stacktrace(void);
 void	logstacktrace(void);
+
+struct cpu_info;
+struct splsw;
 
 struct locoresw {
 	void		(*lsw_wbflush)(void);
@@ -370,10 +374,7 @@ struct mips_vmfreelist {
  */
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern struct locoresw mips_locoresw;
-struct lwpsw;
 extern void mips_vector_init(const struct splsw *);
-
-/* cpu_switch_resume is called inside locore.S */
 
 /*
  * CPU identification, from PRID register.
