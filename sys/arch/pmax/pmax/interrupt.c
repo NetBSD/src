@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15.18.3 2010/12/24 07:23:42 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.15.18.4 2010/12/29 08:18:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15.18.3 2010/12/24 07:23:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15.18.4 2010/12/29 08:18:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,8 +58,6 @@ EVCNT_ATTACH_STATIC(pmax_fpu_evcnt);
 struct evcnt pmax_memerr_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "memerr", "intr");
 EVCNT_ATTACH_STATIC(pmax_memerr_evcnt);
-
-void MachFPInterrupt(uint32_t, uint32_t, uint32_t, struct trapframe *);
 
 static const char * const intrnames[] = {
 	"serial0",
@@ -109,9 +107,7 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 				    "PC %#"PRIxVADDR", SR %#x", pc, status);
 
 			pmax_fpu_evcnt.ev_count++;
-			MachFPInterrupt(status,
-			    curlwp->l_md.md_utf->tf_regs[_R_CAUSE], pc,
-			    curlwp->l_md.md_utf);
+			mips_fpu_intr(pc, curlwp->l_md.md_utf);
 		}
 #endif
 	}
