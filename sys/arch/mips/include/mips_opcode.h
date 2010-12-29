@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.12.96.1 2010/05/15 20:27:48 matt Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.12.96.2 2010/12/29 00:34:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -173,7 +173,7 @@ typedef union {
 #define OP_LWC0		OP_LL	/* backwards source compatibility */
 #define OP_LWC1		061
 #define OP_LWC2		062
-#define OP_LWC3		063
+#define OP_PREF		063
 #define OP_LLD		064		/* MIPS-II, for r4000 port */
 #define OP_LDC1		065
 #define OP_LD		067		/* MIPS-II, for r4000 port */
@@ -182,7 +182,7 @@ typedef union {
 #define OP_SWC0		OP_SC	/* backwards source compatibility */
 #define OP_SWC1		071
 #define OP_SWC2		072
-#define OP_SWC3		073
+#define OP_RSVD073	073
 #define OP_SCD		074		/* MIPS-II, for r4000 port */
 #define OP_SDC1		075
 #define OP_SD		077		/* MIPS-II, for r4000 port */
