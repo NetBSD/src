@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.20.96.1 2009/09/16 19:23:18 matt Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.20.96.2 2010/12/29 00:16:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,8 +145,10 @@ extern struct callback callvec;
 #else
 extern const struct callback callvec;
 #endif
+intptr_t promcall(void *, ...);
 
 #if defined(_STANDALONE) && !defined(_NO_PROM_DEFINES)
+#if 0
 #define memcpy (*callv -> _memcpy)
 #define memset (*callv -> _memset)
 #define strcat (*callv -> _strcat)
@@ -188,6 +190,7 @@ extern const struct callback callvec;
 #define gettcinfo (*callv -> _gettcinfo)
 #define execute_cmd (*callv -> _execute_cmd)
 #define rex (*callv -> _rex)
+#endif
 
 #define bzero(dst, len) memset(dst, 0, len)
 /* XXX make sure that no calls to bcopy overlap! */
