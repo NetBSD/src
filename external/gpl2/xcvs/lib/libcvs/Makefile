@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/10/29 02:36:48 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2010/12/29 19:53:32 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -9,8 +9,6 @@ LIB=	cvs
 DIST=	${IDIST}/lib
 .PATH:	${DIST}
 CPPFLAGS+=-I${DIST}
-.y.c .y.h:
-	@true
 
 SRCS=	__fpending.c asnprintf.c basename.c canon-host.c canonicalize.c \
 	chdir-long.c closeout.c cycle-check.c dirname.c dup-safer.c exitfail.c \
@@ -20,6 +18,8 @@ SRCS=	__fpending.c asnprintf.c basename.c canon-host.c canonicalize.c \
 	stripslash.c vasnprintf.c xalloc-die.c xgetcwd.c xgethostname.c \
 	xmalloc.c xreadlink.c yesno.c
 
-getdate.c: getdate.y
-
 .include <bsd.lib.mk>
+# bsd.lib.mk includes bsd.sys.mk which defines the suffix rules, so we
+@ need to override after.
+.y.c .y.h:
+	@true
