@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.4.62.1 2010/01/15 06:47:00 matt Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.4.62.2 2010/12/29 00:42:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.4.62.1 2010/01/15 06:47:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.4.62.2 2010/12/29 00:42:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ mips3_wired_enter_page(vaddr_t va, paddr_t pa, vsize_t pgsize)
 			mips3_wired_map[index].pa1) |
 		    MIPS3_PG_IOPAGE(
 			    PMAP_CCA_FOR_PA(mips3_wired_map[index].pa1));
-	tlb_write_indexed_VPS(MIPS3_TLB_WIRED_UPAGES + index, &tlb);
+	tlb_write_indexed(MIPS3_TLB_WIRED_UPAGES + index, &tlb);
 	return true;
 }
 
