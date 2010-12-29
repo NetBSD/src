@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.1.2.1 2010/03/11 22:26:56 matt Exp $ */
+/* $NetBSD: cpuvar.h,v 1.1.2.2 2010/12/29 08:19:58 matt Exp $ */
 
 #ifndef _SBMIPS_CPUVAR_H_
 #define _SBMIPS_CPUVAR_H_
@@ -12,6 +12,9 @@ struct cpu_softc {
 	vaddr_t sb1cpu_imr_base;
 	uint64_t sb1cpu_imr_all;
 	struct evcnt sb1cpu_intr_evcnts[64];
+	struct evcnt sb1cpu_spurious_intrs[_IPL_N];
+	struct evcnt sb1cpu_intrs[_IPL_N];
+	struct evcnt sb1cpu_int5;
 };
 #endif /* _LOCORE */
 
