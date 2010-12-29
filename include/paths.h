@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.38 2010/12/25 16:49:08 jmcneill Exp $	*/
+/*	$NetBSD: paths.h,v 1.39 2010/12/29 15:53:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -68,9 +68,9 @@
 #define	_PATH_DRUM	"/dev/drum"
 #define	_PATH_ESDB	"/usr/share/i18n/esdb"
 #define	_PATH_FTPUSERS	"/etc/ftpusers"
+#define	_PATH_GETTYTAB	"/etc/gettytab"
 #define	_PATH_I18NMODULE "/usr/lib/i18n"
 #define	_PATH_ICONV	"/usr/share/i18n/iconv"
-#define	_PATH_GETTYTAB	"/etc/gettytab"
 #define	_PATH_KMEM	"/dev/kmem"
 #define	_PATH_KSYMS	"/dev/ksyms"
 #define	_PATH_KVMDB	"/var/db/kvm.db"
@@ -81,8 +81,8 @@
 #define	_PATH_MIXER	"/dev/mixer"
 #define	_PATH_MIXER0	"/dev/mixer0"
 #define	_PATH_NOLOGIN	"/etc/nologin"
-#define	_PATH_PRINTCAP	"/etc/printcap"
 #define _PATH_POWER	"/dev/power"
+#define	_PATH_PRINTCAP	"/etc/printcap"
 #define	_PATH_PUD	"/dev/pud"
 #define	_PATH_PUFFS	"/dev/puffs"
 #define	_PATH_RANDOM	"/dev/random"
