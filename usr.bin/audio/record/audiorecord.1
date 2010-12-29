@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.39 2010/12/29 13:09:03 mrg Exp $
+.\"	$NetBSD: audiorecord.1,v 1.40 2010/12/29 18:46:49 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2001, 2002, 2010 Matthew R. Green
 .\" All rights reserved.
@@ -33,8 +33,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl afhqV
-.Op Fl b Ar balance
 .Op Fl B Ar buffersize
+.Op Fl b Ar balance
 .Op Fl c Ar channels
 .Op Fl d Ar device
 .Op Fl e Ar encoding
@@ -70,14 +70,14 @@ The following options are available:
 .Bl -tag -width XpXprecisionX
 .It Fl a
 Append to the specified file, rather than overwriting.
-.It Fl b Ar balance
-Set the balance to
-.Ar balance .
-This value must be between 0 and 63.
 .It Fl B Ar buffersize
 Set the audio device read buffer size to
 .Ar buffersize .
 The default value is the record.buffer_size of the audio device.
+.It Fl b Ar balance
+Set the balance to
+.Ar balance .
+This value must be between 0 and 63.
 .It Fl c Ar channels
 Set number of channels to
 .Ar channels .
@@ -89,7 +89,7 @@ The default is
 .It Fl e Ar encoding
 Set encoding to either
 .Dq alaw ,
-.Dq ulaw
+.Dq ulaw ,
 or
 .Dq linear ,
 or any other value reported by
