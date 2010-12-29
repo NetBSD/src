@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.6 2010/11/01 16:27:07 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.7 2010/12/29 22:56:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,6 +55,44 @@
 
 static bool mayquit = false;
 
+static ssize_t
+xread(int fd, void *vp, size_t n)
+{
+	size_t left;
+
+	left = n;
+	do {
+		ssize_t ssz;
+
+		ssz = read(fd, vp, left);
+		if (ssz == -1) {
+			return ssz;
+		}
+		left -= ssz;
+		vp = (char *)vp + ssz;
+	} while (left > 0);
+	return n;
+}
+
+static ssize_t
+xwrite(int fd, const void *vp, size_t n)
+{
+	size_t left;
+
+	left = n;
+	do {
+		ssize_t ssz;
+
+		ssz = write(fd, vp, left);
+		if (ssz == -1) {
+			return ssz;
+		}
+		left -= ssz;
+		vp = (const char *)vp + ssz;
+	} while (left > 0);
+	return n;
+}
+
 /*
  * Threads which shovel data between comfd and /dev/puffs.
  * (cannot use polling since fd's are in different namespaces)
@@ -102,7 +140,7 @@ readshovel(void *arg)
 		}
 
 		n = phdr->pth_framelen;
-		if (write(comfd, buf, n) != n) {
+		if (xwrite(comfd, buf, n) != n) {
 			fprintf(stderr, "readshovel write %zd / %d\n", n, errno);
 			break;
 		}
@@ -143,7 +181,7 @@ writeshovel(void *arg)
 		toread = sizeof(struct putter_hdr);
 		assert(toread < BUFSIZE);
 		do {
-			n = read(comfd, buf+off, toread);
+			n = xread(comfd, buf+off, toread);
 			if (n <= 0) {
 				fprintf(stderr, "writeshovel read %zd / %d\n",
 				    n, errno);
@@ -269,30 +307,30 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	}
 
 	/* read args */
-	if ((n = read(sv[1], &len, sizeof(len))) != sizeof(len))
+	if ((n = xread(sv[1], &len, sizeof(len))) != sizeof(len))
 		err(1, "mp 1 %zd", n);
 	if (len > MAXPATHLEN)
 		err(1, "mntpath > MAXPATHLEN");
-	if ((size_t)read(sv[1], args->pta_dir, len) != len)
+	if ((size_t)xread(sv[1], args->pta_dir, len) != len)
 		err(1, "mp 2");
-	if (read(sv[1], &len, sizeof(len)) != sizeof(len))
+	if (xread(sv[1], &len, sizeof(len)) != sizeof(len))
 		err(1, "fn 1");
 	if (len > MAXPATHLEN)
 		err(1, "devpath > MAXPATHLEN");
-	if ((size_t)read(sv[1], args->pta_dev, len) != len)
+	if ((size_t)xread(sv[1], args->pta_dev, len) != len)
 		err(1, "fn 2");
-	if (read(sv[1], &mntflags, sizeof(mntflags)) != sizeof(mntflags))
+	if (xread(sv[1], &mntflags, sizeof(mntflags)) != sizeof(mntflags))
 		err(1, "mntflags");
-	if (read(sv[1], &args->pta_pargslen, sizeof(args->pta_pargslen))
+	if (xread(sv[1], &args->pta_pargslen, sizeof(args->pta_pargslen))
 	    != sizeof(args->pta_pargslen))
 		err(1, "puffstest_args len");
 	args->pta_pargs = malloc(args->pta_pargslen);
 	if (args->pta_pargs == NULL)
 		err(1, "malloc");
-	if (read(sv[1], args->pta_pargs, args->pta_pargslen)
+	if (xread(sv[1], args->pta_pargs, args->pta_pargslen)
 	    != (ssize_t)args->pta_pargslen)
 		err(1, "puffstest_args");
-	if (read(sv[1], pflags, sizeof(*pflags)) != sizeof(*pflags))
+	if (xread(sv[1], pflags, sizeof(*pflags)) != sizeof(*pflags))
 		err(1, "pflags");
 
 	args->pta_childpid = childpid;
