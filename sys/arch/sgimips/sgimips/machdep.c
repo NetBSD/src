@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121.8.5 2010/03/21 17:38:35 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.8.6 2010/12/29 07:15:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,13 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.5 2010/03/21 17:38:35 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.6 2010/12/29 07:15:48 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_execfmt.h"
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,36 +130,39 @@ int arcsmem;		/* Memory used by the ARCS firmware */
 
 int ncpus;
 
-/* CPU interrupt masks */
-const int *ipl2spl_table;
+#define IPL2SPL_TABLE_COMMON					\
+	[IPL_NONE] =		0,				\
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,		\
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,		\
+	[IPL_DDB] =		MIPS_INT_MASK,			\
+	[IPL_HIGH] =		MIPS_INT_MASK
 
-#define	IPL2SPL_TABLE_COMMON \
-	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_1, \
-	[IPL_HIGH] = MIPS_INT_MASK,
-
+/* CPU interrupt sr maps */
 #if defined(MIPS1)
-static const int sgi_ip12_ipl2spl_table[] = {
-	IPL2SPL_TABLE_COMMON
+static const struct ipl_sr_map sgi_ip12_ipl_sr_map = {
+    .sr_bits = {
+	IPL2SPL_TABLE_COMMON,
 	[IPL_VM] = MIPS_INT_MASK_2|MIPS_INT_MASK_1|MIPS_INT_MASK_0|
-	    MIPS_SOFT_INT_MASK_0,
+	    MIPS_SOFT_INT_MASK,
 	[IPL_SCHED] = MIPS_INT_MASK_4|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0,
+	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+    },
 };
 #endif /* defined(MIPS1) */
 #if defined(MIPS3)
-static const int sgi_ip2x_ipl2spl_table[] = {
-	IPL2SPL_TABLE_COMMON
-	[IPL_VM] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|
-	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
-	[IPL_SCHED] = MIPS_INT_MASK_5|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|
-	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+static const struct ipl_sr_map sgi_ip2x_ipl_sr_map = {
+    .sr_bits = {
+	IPL2SPL_TABLE_COMMON,
+	[IPL_VM] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+	[IPL_SCHED] = MIPS_INT_MASK,
+    },
 };
-static const int sgi_ip3x_ipl2spl_table[] = {
-	IPL2SPL_TABLE_COMMON
-	[IPL_VM] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
-	[IPL_SCHED] = MIPS_INT_MASK_5|MIPS_INT_MASK_0|
-	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+static const struct ipl_sr_map sgi_ip3x_ipl_sr_map = {
+    .sr_bits = {
+	IPL2SPL_TABLE_COMMON,
+	[IPL_VM] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+	[IPL_SCHED] = MIPS_INT_MASK_5|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+    },
 };
 #endif /* defined(MIPS3) */
 
@@ -170,11 +175,11 @@ extern void	ip22_sdcache_enable(void);
 #endif
 
 #if defined(MIPS1)
-extern void mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void mips1_fpu_intr(vaddr_t, uint32_t, uint32_t);
 #endif
 
 #if defined(MIPS3)
-extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void mips3_clock_intr(vaddr_t, uint32_t, uint32_t);
 #endif
 
 void	mach_init(int, char **, uintptr_t, void *);
@@ -193,7 +198,7 @@ void mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_tr
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
 static void	*unimpl_intr_establish(int, int, int (*)(void *), void *);
-static void	unimpl_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static void	unimpl_intr(vaddr_t, uint32_t, uint32_t);
 static unsigned	long nulllong(void);
 static void	nullvoid(void);
 
@@ -222,7 +227,7 @@ struct platform platform = {
  * safepri is a safe priority for sleep to set for a spin-wait during
  * autoconfiguration or after a panic.  Used as an argument to splx().
  */
-int	safepri = MIPS1_PSL_LOWIPL;
+int	safepri = IPL_HIGH;
 
 extern u_int32_t ssir;
 extern struct user *proc0paddr;
@@ -522,7 +527,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 				mach_subtype = MACH_SGI_IP12_HPLC;
                 }
 
-		ipl2spl_table = sgi_ip12_ipl2spl_table;
+		ipl_sr_map = sgi_ip12_ipl_sr_map;
 		platform.intr0 = mips1_fpu_intr;
 		break;
 #endif /* MIPS1 */
@@ -531,19 +536,19 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
-		ipl2spl_table = sgi_ip2x_ipl2spl_table;
+		ipl_sr_map = sgi_ip2x_ipl_sr_map;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP22:
-		ipl2spl_table = sgi_ip2x_ipl2spl_table;
+		ipl_sr_map = sgi_ip2x_ipl_sr_map;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP30:
-		ipl2spl_table = sgi_ip3x_ipl2spl_table;
+		ipl_sr_map = sgi_ip3x_ipl_sr_map;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP32:
-		ipl2spl_table = sgi_ip3x_ipl2spl_table;
+		ipl_sr_map = sgi_ip3x_ipl_sr_map;
 		platform.intr5 = mips3_clock_intr;
 		break;
 #endif /* MIPS3 */
@@ -876,17 +881,17 @@ static void *
 unimpl_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 {
 	panic("target init didn't set intr_establish");
-	return (void *)NULL;
+	return NULL;
 }
 
 static void
-unimpl_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+unimpl_intr(vaddr_t pc, uint32_t status, uint32_t pending)
 {
-	printf("spurious interrupt, ipending %x\n", ipending);
+	printf("spurious interrupt pending %#x\n", pending);
 }
 
 static unsigned long
-nulllong()
+nulllong(void)
 {
 	printf("nulllong\n");
 	return (0);
@@ -986,11 +991,4 @@ mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewal
 		mci->mci_sdcache_ways = 1;
 		break;
 	}
-}
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

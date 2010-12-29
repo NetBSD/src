@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.19.12.1 2009/09/10 01:51:31 matt Exp $	*/
+/*	$NetBSD: int.c,v 1.19.12.2 2010/12/29 07:15:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,8 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.19.12.1 2009/09/10 01:51:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.19.12.2 2010/12/29 07:15:47 matt Exp $");
 
+#define __INTR_PRIVATE
 #include "opt_cputype.h"
 
 #include <sys/param.h>
@@ -65,14 +66,14 @@ struct int_softc {
 
 static int	int_match(struct device *, struct cfdata *, void *);
 static void	int_attach(struct device *, struct device *, void *);
-static void 	int_local0_intr(uint32_t, uint32_t, uint32_t, uint32_t);
-static void	int_local1_intr(uint32_t, uint32_t, uint32_t, uint32_t);
+static void 	int_local0_intr(vaddr_t, uint32_t, uint32_t);
+static void	int_local1_intr(vaddr_t, uint32_t, uint32_t);
 static int 	int_mappable_intr(void *);
 static void    *int_intr_establish(int, int, int (*)(void *), void *);
 static void	int_8254_cal(void);
 static u_int	int_8254_get_timecount(struct timecounter *);
-static void	int_8254_intr0(uint32_t, uint32_t, uint32_t, uint32_t);
-static void	int_8254_intr1(uint32_t, uint32_t, uint32_t, uint32_t);
+static void	int_8254_intr0(vaddr_t, uint32_t, uint32_t);
+static void	int_8254_intr1(vaddr_t, uint32_t, uint32_t);
 
 #ifdef MIPS3
 static u_long	int_cal_timer(void);
@@ -234,7 +235,7 @@ int_mappable_intr(void *arg)
 }
 
 void
-int_local0_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+int_local0_intr(vaddr_t pc, uint32_t status, uint32_t ipending)
 {
 	int i;
 	uint32_t l0stat;
@@ -260,7 +261,7 @@ int_local0_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 }
 
 void
-int_local1_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+int_local1_intr(vaddr_t pc, uint32_t status, uint32_t ipending)
 {
 	int i;
 	uint32_t l1stat;
@@ -458,7 +459,7 @@ int_8254_get_timecount(struct timecounter *tc)
 }
 
 static void
-int_8254_intr0(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+int_8254_intr0(vaddr_t pc, uint32_t status, uint32_t ipending)
 {
 	struct clockframe cf;
 
@@ -472,7 +473,7 @@ int_8254_intr0(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 
 static void
-int_8254_intr1(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+int_8254_intr1(vaddr_t pc, uint32_t status, uint32_t ipending)
 {
 	int s;
 

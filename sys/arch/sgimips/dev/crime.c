@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.33.12.1 2010/01/20 09:04:31 matt Exp $	*/
+/*	$NetBSD: crime.c,v 1.33.12.2 2010/12/29 07:15:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.33.12.1 2010/01/20 09:04:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.33.12.2 2010/12/29 07:15:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,7 +66,7 @@ static void	crime_attach(struct device *, struct device *, void *);
 void		crime_bus_reset(void);
 void		crime_watchdog_reset(void);
 void		crime_watchdog_disable(void);
-void		crime_intr(uint32_t, uint32_t, uint32_t, uint32_t);
+void		crime_intr(vaddr_t, uint32_t, uint32_t);
 void		*crime_intr_establish(int, int, int (*)(void *), void *);
 
 static bus_space_tag_t crm_iot;
@@ -209,7 +209,7 @@ crime_intr_establish(int irq, int level, int (*func)(void *), void *arg)
 }
 
 void
-crime_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+crime_intr(vaddr_t pc, uint32_t status, uint32_t ipending)
 {
 	uint64_t crime_intmask;
 	uint64_t crime_intstat;
