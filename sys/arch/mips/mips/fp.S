@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.11 2010/05/11 20:54:27 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.12 2010/12/29 00:49:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,12 +100,12 @@
 
 /*----------------------------------------------------------------------------
  *
- * MachEmulateFP --
+ * mips_emul_fp --
  *
  *	Emulate unimplemented floating point operations.
- *	This routine should only be called by MachFPInterrupt().
+ *	This routine should only be called by mips_fpu_intr().
  *
- *	MachEmulateFP(uint32_t instr, struct frame *frame, uint32_t cause)
+ *	mips_emul_fp(uint32_t instr, struct trapframe *tf, uint32_t cause)
  *
  * Results:
  *	None.
@@ -126,7 +126,7 @@
 #error N32/N64 ABI callframe error
 #endif
 #endif
-NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
+NESTED(mips_emul_fp, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, CALLFRAME_SIZ
 	REG_S	ra, CALLFRAME_RA(sp)
 	REG_S	a1, CALLFRAME_FRAME(sp)
@@ -844,7 +844,7 @@ bcemul_branch:
 	REG_L	a0, TF_REG_EPC(a1)
 	REG_EPILOGUE
 	PTR_ADDU a0, 4
-	jal	_C_LABEL(fuiword)
+	jal	_C_LABEL(ufetch_uint32)
 
 	move	a0, v0
 	REG_L	a1, CALLFRAME_FRAME(sp)
@@ -854,11 +854,11 @@ bcemul_branch:
 	li	t0, MIPS_CR_BR_DELAY
 	or	a2, a2, t0
 
-	/* Free MachEmulateFP call frame */
+	/* Free mips_emul_fp call frame */
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, CALLFRAME_SIZ
 
-	j	_C_LABEL(bcemul_delay_slot)
+	j	_C_LABEL(mips_emul_branchdelayslot)
 #endif
 
 /*
@@ -2900,7 +2900,7 @@ done:
 	move	a1, v0				# 2nd arg is instruction PC
 						# 3rd arg is FP CSR
 	move	a3, zero			# 4th arg is FALSE
-	jal	_C_LABEL(MachEmulateBranch)	# compute PC after branch
+	jal	_C_LABEL(mips_emul_branch)	# compute PC after branch
 
 	REG_L	a1, CALLFRAME_FRAME(sp)
 	b	2f
@@ -2918,13 +2918,13 @@ done:
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, CALLFRAME_SIZ
 	j	ra
-END(MachEmulateFP)
+END(mips_emul_fp)
 
 /*----------------------------------------------------------------------------
  * get_fs_int --
  *
  *	Read (integer) the FS register (bits 15-11).
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Results:
  *	t0	contains the sign
@@ -3033,7 +3033,7 @@ END(get_fs_int)
  *
  *	Read (single precision) the FT register (bits 20-16) and
  *	the FS register (bits 15-11) and break up into fields.
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Results:
  *	t0	contains the FS sign
@@ -3153,7 +3153,7 @@ get_ft_s_done:
  *
  *	Read (single precision) the FS register (bits 15-11) and
  *	break up into fields.
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Results:
  *	t0	contains the sign
@@ -3271,7 +3271,7 @@ END(get_ft_fs_s)
  *
  *	Read (double precision) the FT register (bits 20-16) and
  *	the FS register (bits 15-11) and break up into fields.
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Results:
  *	t0	contains the FS sign
@@ -3416,7 +3416,7 @@ get_ft_d_done:
  *
  *	Read (double precision) the FS register (bits 15-11) and
  *	break up into fields.
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Results:
  *	t0	contains the sign
@@ -3558,7 +3558,7 @@ END(get_ft_fs_d)
  *
  *	Read (single precision) the FS register (bits 15-11) and
  *	the FT register (bits 20-16) and break up into fields.
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Results:
  *	t0	contains the sign
@@ -3760,7 +3760,7 @@ END(get_cmp_s)
  *
  *	Read (double precision) the FS register (bits 15-11) and
  *	the FT register (bits 20-16) and break up into fields.
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Results:
  *	t0	contains the sign
@@ -4009,7 +4009,7 @@ END(get_cmp_d)
  * set_fd_s --
  *
  *	Write (single precision) the FD register (bits 10-6).
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Arguments:
  *	a0	contains the FP instruction
@@ -4020,7 +4020,7 @@ END(get_cmp_d)
  * set_fd_word --
  *
  *	Write (integer) the FD register (bits 10-6).
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Arguments:
  *	a0	contains the FP instruction
@@ -4123,7 +4123,7 @@ END(set_fd_s)
  * set_fd_d --
  *
  *	Write (double precision) the FT register (bits 10-6).
- *	This is an internal routine used by MachEmulateFP only.
+ *	This is an internal routine used by mips_emul_fp only.
  *
  * Arguments:
  *	a0	contains the FP instruction
@@ -4552,782 +4552,11 @@ STATIC_LEAF(renorm_ft_d)
 #endif	/* __mips_o32 */
 END(renorm_ft_d)
 
-#ifdef FPEMUL
-/*
- * Emulate branch delay slot CPU instruction.
- * Enter from BC1x emulation.
- * These instructions are not implemented and causes SIGILL.
- *  jump/branch
- *  COP0
- *  64bit operation
- *  trap/syscall/break
- *
- * Args are same as MachEmulateFP.
- * It should be used to emulate instruction in branch delay slot.
- */
-STATIC_LEAF(bcemul_delay_slot)
-	REG_PROLOGUE
-	REG_S	zero, TF_REG_ZERO(a1)		# ensure zero has value 0
-	REG_EPILOGUE
-
-	srl	t0, a0, 26-PTR_SCALESHIFT
-	andi	t0, t0, 0x3F << PTR_SCALESHIFT
-	PTR_L	t0, bcemul_optbl(t0)
-	j	t0
-
-bcemul_special:
-	sll	t0, a0, PTR_SCALESHIFT
-	andi	t0, t0, 0x3F << PTR_SCALESHIFT
-	PTR_L	t0, bcemul_specialtbl(t0)
-	j	t0
-
-	.rdata
-bcemul_optbl:
-	PTR_WORD bcemul_special			# 0
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 1
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 2
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 3
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 4
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 5
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 6
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 7
-	PTR_WORD bcemul_addi			# 8
-	PTR_WORD bcemul_addiu			# 9
-	PTR_WORD bcemul_slti			# 10
-	PTR_WORD bcemul_sltiu			# 11
-	PTR_WORD bcemul_andi			# 12
-	PTR_WORD bcemul_ori			# 13
-	PTR_WORD bcemul_xori			# 14
-	PTR_WORD bcemul_lui			# 15
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 16
-	PTR_WORD _C_LABEL(MachEmulateFP)	# 17
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 18
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 19 /* COP1X */
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 20
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 21
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 22
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 23
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 24 DADDI
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 25 DADDIU
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 26
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 27
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 28
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 29
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 30
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 31
-	PTR_WORD _C_LABEL(bcemul_lb)		# 32
-	PTR_WORD _C_LABEL(bcemul_lh)		# 33
-	PTR_WORD _C_LABEL(bcemul_lwl)		# 34
-	PTR_WORD _C_LABEL(bcemul_lw)		# 35
-	PTR_WORD _C_LABEL(bcemul_lbu)		# 36
-	PTR_WORD _C_LABEL(bcemul_lhu)		# 37
-	PTR_WORD _C_LABEL(bcemul_lwr)		# 38
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 39
-	PTR_WORD _C_LABEL(bcemul_sb)		# 40
-	PTR_WORD _C_LABEL(bcemul_sh)		# 41
-	PTR_WORD _C_LABEL(bcemul_swl)		# 42
-	PTR_WORD _C_LABEL(bcemul_sw)		# 43
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 44
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 45
-	PTR_WORD _C_LABEL(bcemul_swr)		# 46 SWR
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 47
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 48
-	PTR_WORD _C_LABEL(MachEmulateLWC1)	# 49
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 50
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 51
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 52
-	PTR_WORD _C_LABEL(MachEmulateLDC1)	# 53
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 54
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 55 LD
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 56
-	PTR_WORD _C_LABEL(MachEmulateSWC1)	# 57
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 58
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 59
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 60
-	PTR_WORD _C_LABEL(MachEmulateSDC1)	# 61
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 62
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 63 SD
-
-bcemul_specialtbl:
-	PTR_WORD bcemul_sll		# 0
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 1
-	PTR_WORD bcemul_srl		# 2
-	PTR_WORD bcemul_sra		# 3
-	PTR_WORD bcemul_sllv		# 4
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 5
-	PTR_WORD bcemul_srlv		# 6
-	PTR_WORD bcemul_srav		# 7
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 8
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 9
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 10
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 11
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 12
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 13
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 14
-	PTR_WORD bcemul_sync		# 15
-	PTR_WORD bcemul_mfhi		# 16
-	PTR_WORD bcemul_mthi		# 17
-	PTR_WORD bcemul_mflo		# 18
-	PTR_WORD bcemul_mtlo		# 19
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 20
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 21
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 22
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 23
-	PTR_WORD bcemul_mult		# 24
-	PTR_WORD bcemul_multu		# 25
-	PTR_WORD bcemul_div		# 26
-	PTR_WORD bcemul_divu		# 27
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 28
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 29
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 30
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 31
-	PTR_WORD bcemul_add		# 32
-	PTR_WORD bcemul_addu		# 33
-	PTR_WORD bcemul_sub		# 34
-	PTR_WORD bcemul_subu		# 35
-	PTR_WORD bcemul_and		# 36
-	PTR_WORD bcemul_or		# 37
-	PTR_WORD bcemul_xor		# 38
-	PTR_WORD bcemul_nor		# 39
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 40
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 41
-	PTR_WORD bcemul_slt		# 42
-	PTR_WORD bcemul_sltu		# 43
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 44
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 45
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 46
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 47
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 48
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 49
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 50
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 51
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 52
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 53
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 54
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 55
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 56
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 57
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 58
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 59
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 60
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 61
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 62
-	PTR_WORD _C_LABEL(bcemul_sigill)	# 63
-
-	.text
-
-bcemul_addi:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	sll	t2, a0, 16
-	sra	t2, t2, 16
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_EPILOGUE
-	addu	t0, v0, t2
-
-	/* Overflow check */
-	xor	t2, v0, t2
-	srl	t2, t2, 31
-	bne	t2, zero, addiok
-
-	xor	v0, v0, t0
-	srl	v0, v0, 31
-	beq	v0, zero, addiok
-
-	j	_C_LABEL(bcemul_sigfpe)
-
-addiok:
-	REG_PROLOGUE
-	REG_S	t0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_addiu:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	sll	t2, a0, 16
-	sra	t2, t2, 16
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	addu	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_slti:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	sll	t2, a0, 16
-	sra	t2, t2, 16
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	slt	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_sltiu:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	sll	t2, a0, 16
-	sra	t2, t2, 16
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	sltu	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_andi:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	andi	t2, a0, 0xFFFF
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	and	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_ori:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	andi	t2, a0, 0xFFFF
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	or	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_xori:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	andi	t2, a0, 0xFFFF
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	xor	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_lui:
-	srl	t0, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	sll	v0, a0, 16
-	REG_PROLOGUE
-	REG_S	v0, TF_REG_ZERO(t0)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_sll:
-	srl	t0, a0, 16-REG_SCALESHIFT	# rt
-	srl	t1, a0, 11-REG_SCALESHIFT	# rd
-	srl	t2, a0, 6		# sa
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, 0x001F
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	sllv	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_srl:
-	srl	t0, a0, 16-REG_SCALESHIFT	# rt
-	srl	t1, a0, 11-REG_SCALESHIFT	# rd
-	srl	t2, a0, 6		# sa
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, 0x001F
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	srlv	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_sra:
-	srl	t0, a0, 16-REG_SCALESHIFT	# rt
-	srl	t1, a0, 11-REG_SCALESHIFT	# rd
-	srl	t2, a0, 6		# sa
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, 0x001F
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	srav	v0, v0, t2
-	REG_S	v0, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_sllv:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	sllv	v0, v1, v0
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_srlv:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	srlv	v0, v1, v0
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_srav:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	srav	v0, v1, v0
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_sync:
-	b	bcemul_done
-
-bcemul_mfhi:
-	srl	t0, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_MULHI(a1)
-	REG_S	v0, TF_REG_ZERO(t0)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_mthi:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	andi	t0, t0, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_S	v0, TF_REG_MULHI(a1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_mflo:
-	srl	t0, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_MULLO(a1)
-	REG_S	v0, TF_REG_ZERO(t0)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_mtlo:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	andi	t0, t0, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_S	v0, TF_REG_MULLO(a1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_mult:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	mult	v0, v1
-	mflo	v0
-	mfhi	v1
-	REG_PROLOGUE
-	REG_S	v0, TF_REG_MULLO(a1)
-	REG_S	v1, TF_REG_MULHI(a1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_multu:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	multu	v0, v1
-	mflo	v0
-	mfhi	v1
-	REG_PROLOGUE
-	REG_S	v0, TF_REG_MULLO(a1)
-	REG_S	v1, TF_REG_MULHI(a1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_div:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	div	v0, v1
-	mflo	v0
-	mfhi	v1
-	REG_PROLOGUE
-	REG_S	v0, TF_REG_MULLO(a1)
-	REG_S	v1, TF_REG_MULHI(a1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_divu:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	divu	v0, v1
-	mflo	v0
-	mfhi	v1
-	REG_PROLOGUE
-	REG_S	v0, TF_REG_MULLO(a1)
-	REG_S	v1, TF_REG_MULHI(a1)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_add:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	addu	t0, v0, v1
-
-	/* Overflow check */
-	xor	v1, v0, v1
-	srl	v1, v1, 31
-	bne	v1, zero, addok
-
-	xor	v0, v0, t0
-	srl	v0, v0, 31
-	beq	v0, zero, addok
-
-	j	_C_LABEL(bcemul_sigfpe)
-
-addok:
-	REG_PROLOGUE
-	REG_S	t0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_addu:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	addu	v0, v0, v1
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_sub:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	REG_EPILOGUE
-	subu	t0, v0, v1
-
-	/* Overflow check */
-	xor	v1, v0, v1
-	srl	v1, v1, 31
-	beq	v1, zero, subok
-
-	xor	v0, v0, t0
-	srl	v0, v0, 31
-	beq	v0, zero, subok
-
-	j	_C_LABEL(bcemul_sigfpe)
-
-subok:
-	REG_PROLOGUE
-	REG_S	t0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_subu:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	subu	v0, v0, v1
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_and:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	and	v0, v0, v1
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_or:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	or	v0, v0, v1
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_xor:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	xor	v0, v0, v1
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_nor:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	nor	v0, v0, v1
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_slt:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	slt	v0, v0, v1
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-	b	bcemul_done
-
-bcemul_sltu:
-	srl	t0, a0, 21-REG_SCALESHIFT	# rs
-	srl	t1, a0, 16-REG_SCALESHIFT	# rt
-	srl	t2, a0, 11-REG_SCALESHIFT	# rd
-	andi	t0, t0, REG_REGMASK
-	andi	t1, t1, REG_REGMASK
-	andi	t2, t2, REG_REGMASK
-	PTR_ADDU t0, a1, t0
-	PTR_ADDU t1, a1, t1
-	PTR_ADDU t2, a1, t2
-	REG_PROLOGUE
-	REG_L	v0, TF_REG_ZERO(t0)
-	REG_L	v1, TF_REG_ZERO(t1)
-	sltu	v0, v0, v1
-	REG_S	v0, TF_REG_ZERO(t2)
-	REG_EPILOGUE
-#	b	bcemul_done		# fall through to bcemul_done
-
-bcemul_done:
-/*
- * Succeeded to emulate instruction with no error
- * so compute the next PC.
- */
-	PTR_SUBU sp, CALLFRAME_SIZ
-	REG_S	ra, CALLFRAME_RA(sp)
-	REG_S	a1, CALLFRAME_FRAME(sp)
-
-	/* Fetch previous branch instruction */
-	REG_PROLOGUE
-	REG_L	a0, TF_REG_EPC(a1)
-	REG_EPILOGUE
-	jal	_C_LABEL(fuiword)
-
-	REG_L	a1, CALLFRAME_FRAME(sp)
-
-	/* Calculate branch destination */
-	sll	t0, v0, 16
-	sra	t0, t0, 16-2
-	REG_PROLOGUE
-	REG_L	t1, TF_REG_EPC(a1)
-	PTR_ADDU t0, t0, 4
-	PTR_ADDU t1, t0
-	REG_S	t1, TF_REG_EPC(a1)
-	REG_EPILOGUE
-
-	REG_L	ra, CALLFRAME_RA(sp)
-	PTR_ADDU sp, CALLFRAME_SIZ
-	j	ra
-
-END(bcemul_delay_slot)
-
-#endif
-
 /*
  * Send SIGILL, SIGFPE.
- * Args are same as MachEmulateFP.
+ * Args are same as mips_emul_fp.
  */
 STATIC_LEAF(fpemul_sigill)
-#ifdef FPEMUL
-STATIC_XLEAF(bcemul_sigill)
-#endif
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0
 	ori	a2, a2, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
@@ -5356,7 +4585,7 @@ STATIC_LEAF(fpemul_sigfpe)
 END(fpemul_sigfpe)
 
 #ifdef FPEMUL
-STATIC_LEAF(bcemul_sigfpe)
+STATIC_LEAF(mips_emul_sigfpe)
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0
 	ori	a2, a2, T_OVFLOW << MIPS_CR_EXC_CODE_SHIFT
@@ -5368,5 +4597,5 @@ STATIC_LEAF(bcemul_sigfpe)
 	move	a0, MIPS_CURLWP			# get current process
 	li	a1, SIGFPE
 	j	_C_LABEL(fpemul_trapsignal)
-END(bcemul_sigfpe)
+END(mips_emul_sigfpe)
 #endif
