@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-common.c,v 1.6 2010/12/26 14:48:34 christos Exp $	*/
+/*	$NetBSD: libdm-common.c,v 1.7 2010/12/29 10:39:27 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -418,16 +418,16 @@ static int _add_dev_node(const char *dev_name, uint32_t major, uint32_t minor,
 	dev_t dev = MKDEV(major, minor);
 	mode_t old_mask;
 
-	#ifdef __NetBSD__
+#ifdef __NetBSD__
 	char rpath[PATH_MAX];
 	uint32_t raw_major;
 	dev_t rdev;
 	char raw_devname[DM_NAME_LEN+1]; /* r + other device name */
 
-	nbsd_get_dm_major(&raw_major,DM_CHAR_MAJOR);
-	rdev = MKDEV(raw_major,minor);
+	nbsd_get_dm_major(&raw_major, DM_CHAR_MAJOR);
+	rdev = MKDEV(raw_major, minor);
 
-	snprintf(raw_devname,sizeof(raw_devname),"r%s",dev_name);
+	snprintf(raw_devname, sizeof(raw_devname), "r%s", dev_name);
 
 	_build_dev_path(rpath, sizeof(rpath), raw_devname);
 
@@ -457,8 +457,8 @@ static int _add_dev_node(const char *dev_name, uint32_t major, uint32_t minor,
 	}
 	umask(old_mask);
 
-	if (chown(path, uid, gid) < 0) {
-		log_sys_error("chown", rpath);
+	if (chown(rpath, uid, gid) < 0) {
+		log_sys_error("Raw device chown", rpath);
 		return 0;
 	}
 #endif
