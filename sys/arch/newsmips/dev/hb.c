@@ -1,15 +1,16 @@
-/*	$NetBSD: hb.c,v 1.18 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: hb.c,v 1.18.22.1 2010/12/29 08:14:43 matt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.18 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.18.22.1 2010/12/29 08:14:43 matt Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 
 #include <newsmips/dev/hbvar.h>
 
