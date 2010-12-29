@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.4 2007/03/04 06:00:13 christos Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.4.62.1 2010/12/29 08:16:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -53,11 +53,11 @@ struct platform {
 	 *	write_todr	-	Write TOD registers
 	 *	clkinit		-	Initialize clocks
 	 */
-	void	(*cons_init) __P((void));
-	void	(*iointr) __P((unsigned, unsigned, unsigned, unsigned));
-	int	(*memsize) __P((void *));
-	void	(*intr_establish) __P((int, int (*)__P((void *)), void *)); 
-	void	(*clkinit) __P((void));
+	void	(*cons_init)(void);
+	void	(*iointr)(uint32_t, vaddr_t, uint32_t);
+	int	(*memsize)(void *);
+	void	(*intr_establish)(int, int (*)(void *), void *); 
+	void	(*clkinit)(void);
 };
 
 extern struct platform platform;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58.10.3 2010/03/21 17:38:34 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58.10.4 2010/12/29 08:16:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.10.3 2010/03/21 17:38:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.10.4 2010/12/29 08:16:21 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -150,26 +150,26 @@ char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void to_monitor __P((int)) __attribute__((__noreturn__));
-void prom_halt __P((int)) __attribute__((__noreturn__));
+void to_monitor(int) __dead;
+void prom_halt(int) __dead;
 
 #ifdef	KGDB
-void zs_kgdb_init __P((void));
-void kgdb_connect __P((int));
+void zs_kgdb_init(void);
+void kgdb_connect(int);
 #endif
 
 /*
  *  Local functions.
  */
-int initcpu __P((void));
-void configure __P((void));
+int initcpu(void);
+void configure(void);
 
-void mach_init __P((int, char *[], char*[], u_int, char *));
-int  memsize_scan __P((void *));
+void mach_init(int, char *[], char*[], u_int, char *);
+int  memsize_scan(void *);
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
+extern void stacktrace(void); /*XXX*/
 #endif
 
 /*
@@ -182,15 +182,15 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 extern struct user *proc0paddr;
 
 /* locore callback-vector setup */
-extern void mips_vector_init  __P((const struct splsw *));
-extern void prom_init  __P((void));
-extern void pizazz_init __P((void));
+extern void mips_vector_init(const struct splsw *);
+extern void prom_init(void);
+extern void pizazz_init(void);
 
 /* platform-specific initialization vector */
-static void	unimpl_cons_init __P((void));
-static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
-static int	unimpl_memsize __P((void *));
-static void	unimpl_intr_establish __P((int, int (*)__P((void *)), void *));
+static void	unimpl_cons_init(void);
+static void	unimpl_iointr(uint32_t, vaddr_t, uint32_t);
+static int	unimpl_memsize(void *);
+static void	unimpl_intr_establish(int, int (*)(void *), void *);
 
 struct platform platform = {
 	.iobus = "iobus not set",
@@ -205,11 +205,11 @@ struct consdev *cn_tab = NULL;
 extern struct consdev consdev_prom;
 extern struct consdev consdev_zs;
 
-static void null_cnprobe __P((struct consdev *));
-static void prom_cninit __P((struct consdev *));
-static int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-static void null_cnpollc __P((dev_t, int));
+static void null_cnprobe(struct consdev *);
+static void prom_cninit(struct consdev *);
+static int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
+static void null_cnpollc(dev_t, int);
 
 struct consdev consdev_prom = {
         null_cnprobe,
@@ -246,7 +246,6 @@ mach_init(argc, argv, envp, bim, bip)
 	struct btinfo_symtab *bi_syms;
 #endif
 
-
 	/* Check for valid bootinfo passed from bootstrap */
 	if (bim == BOOTINFO_MAGIC) {
 		struct btinfo_magic *bi_magic;
@@ -263,6 +262,13 @@ mach_init(argc, argv, envp, bim, bip)
 	/* clear the BSS segment */
 	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, end - edata);
+
+	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
+	 * Clear out the I and D caches.
+	 */
+	mips_vector_init(NULL);
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
@@ -297,13 +303,6 @@ mach_init(argc, argv, envp, bim, bip)
 	mem_clusters[0].start = 0;		/* XXX is this correct? */
 	mem_clusters[0].size  = ctob(physmem);
 	mem_cluster_cnt = 1;
-
-	/*
-	 * Copy exception-dispatch code down to exception vector.
-	 * Initialize locore-function vector.
-	 * Clear out the I and D caches.
-	 */
-	mips_vector_init();
 
 	/* Look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
@@ -531,50 +530,41 @@ haltsys:
 }
 
 int
-initcpu()
+initcpu(void)
 {
 	spl0();		/* safe to turn interrupts on now */
 	return 0;
 }
 
 static void
-unimpl_cons_init()
+unimpl_cons_init(void)
 {
 
 	panic("sysconf.init didn't set cons_init");
 }
 
 static void
-unimpl_iointr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
+unimpl_iointr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 
 	panic("sysconf.init didn't set intr");
 }
 
 static int
-unimpl_memsize(first)
-void *first;
+unimpl_memsize(void *first)
 {
 
 	panic("sysconf.init didn't set memsize");
 }
 
 void
-unimpl_intr_establish(level, func, arg)
-	int level;
-	int (*func) __P((void *));
-	void *arg;
+unimpl_intr_establish(int level, int (*func)(void *), void *arg)
 {
 	panic("sysconf.init didn't init intr_establish");
 }
 
 void
-delay(n)
-	int n;
+delay(int n)
 {
 	DELAY(n);
 }

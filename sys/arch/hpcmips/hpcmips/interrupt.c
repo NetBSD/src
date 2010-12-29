@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.13 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.13.18.1 2010/12/29 08:16:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,28 +30,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13.18.1 2010/12/29 08:16:22 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 
+#define __INTR_PRIVATE
+
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/sysconf.h>
 
-extern const u_int32_t __ipl_sr_bits_vr[];
-extern const u_int32_t __ipl_sr_bits_tx[];
-
-const u_int32_t *ipl_sr_bits;
-
 void
-intr_init()
+intr_init(void)
 {
 
-	ipl_sr_bits = CPUISMIPS3 ? __ipl_sr_bits_vr : __ipl_sr_bits_tx;
+	ipl_sr_map = CPUISMIPS3 ? __ipl_sr_map_vr : __ipl_sr_map_tx;
 }
 
 #if defined(VR41XX) && defined(TX39XX)
@@ -64,9 +62,9 @@ intr_init()
  * 
  */
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 
-	(*platform.cpu_intr)(status, cause, pc, ipending);
+	(*platform.cpu_intr)(ppl, pc, status);
 }
 #endif /* VR41XX && TX39XX */

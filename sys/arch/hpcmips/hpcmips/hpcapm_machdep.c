@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm_machdep.c,v 1.2 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: hpcapm_machdep.c,v 1.2.96.1 2010/12/29 08:16:22 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.2 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.2.96.1 2010/12/29 08:16:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,35 +91,35 @@ void
 machine_sleep()
 {
 #if NVRIP_COMMON > 0
-	 if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
-		 /*
-		  * disable all interrupts except PIU interrupt
-		  */
-		 vrip_intr_suspend();
-		 _spllower(~MIPS_INT_MASK_0);
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
+		/*
+		 * disable all interrupts except PIU interrupt
+		 */
+		vrip_intr_suspend();
+		_spllower(~MIPS_INT_MASK_0);
 
-		 /*
-		  * SUSPEND instruction puts the CPU into power saveing
-		  * state until some interrupt occuer.
-		  * It sleeps until you push the power button.
-		  */
-		 __asm(".set noreorder");
-		 __asm(".word	" ___STRING(VR_OPCODE_SUSPEND));
-		 __asm("nop");
-		 __asm("nop");
-		 __asm("nop");
-		 __asm("nop");
-		 __asm("nop");
-		 __asm(".set reorder");
+		/*
+		 * SUSPEND instruction puts the CPU into power saveing
+		 * state until some interrupt occuer.
+		 * It sleeps until you push the power button.
+		 */
+		__asm(".set noreorder");
+		__asm(".word	" ___STRING(VR_OPCODE_SUSPEND));
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm(".set reorder");
 
-		 splhigh();
-		 vrip_intr_resume();
-		 delay(1000); /* 1msec */
-	 }
+		splhigh();
+		vrip_intr_resume();
+		delay(1000); /* 1msec */
+	}
 #endif /* NVRIP_COMMON > 0 */
 #ifdef TX39XX
-	 if (platid_match(&platid, &platid_mask_CPU_MIPS_TX)) {
-		 tx39power_suspend_cpu();
-	 }
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_TX)) {
+		tx39power_suspend_cpu();
+	}
 #endif
 }

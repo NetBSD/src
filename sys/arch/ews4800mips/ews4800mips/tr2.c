@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2.c,v 1.3.18.1 2010/01/20 09:04:33 matt Exp $	*/
+/*	$NetBSD: tr2.c,v 1.3.18.2 2010/12/29 08:16:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2.c,v 1.3.18.1 2010/01/20 09:04:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2.c,v 1.3.18.2 2010/12/29 08:16:21 matt Exp $");
 
+#define __INTR_PRIVATE
 #include "fb_sbdio.h"
 #include "kbms_sbdio.h"
 #include "zsc_sbdio.h"
@@ -59,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tr2.c,v 1.3.18.1 2010/01/20 09:04:33 matt Exp $");
 SBD_DECL(tr2);
 
 /* EWS4800/350 mainbus device list */
-static const char *tr2_mainbusdevs[] =
+static const char * const tr2_mainbusdevs[] =
 {
 	"sbdio",
 #ifdef notyet
@@ -102,7 +103,7 @@ tr2_init(void)
 	platform.mainbusdevs = tr2_mainbusdevs;
 	platform.sbdiodevs = tr2_sbdiodevs;
 
-	ipl_sr_bits = tr2_sr_bits;
+	ipl_sr_map = tr2_ipl_sr_map;
 
 	kseg2iobufsize = 0x02000000;	/* 32MB for VME and framebuffer */
 
