@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.56 2010/12/20 00:25:43 matt Exp $	*/
+/*	$NetBSD: exception.c,v 1.57 2010/12/29 13:43:58 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.56 2010/12/20 00:25:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.57 2010/12/29 13:43:58 nisimura Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -139,6 +139,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
 	bool usermode = !KERNELMODE(tf->tf_ssr);
+	struct pcb *pcb;
 	ksiginfo_t ksi;
 	uint32_t trapcode;
 #ifdef DDB
@@ -191,8 +192,9 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
 	case EXPEVT_ADDR_ERR_LD: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST:
-		KDASSERT(l->l_md.md_pcb->pcb_onfault != NULL);
-		tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
+		pcb = lwp_getpcb(l);
+		KDASSERT(pcb->pcb_onfault != NULL);
+		tf->tf_spc = (int)pcb->pcb_onfault;
 		tf->tf_r0 = EFAULT;
 		if (tf->tf_spc == 0)
 			goto do_panic;

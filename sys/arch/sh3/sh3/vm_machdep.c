@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.67 2010/04/23 19:18:10 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.68 2010/12/29 13:43:58 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2010/04/23 19:18:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2010/12/29 13:43:58 nisimura Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -134,6 +134,7 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
     size_t stacksize, void (*func)(void *), void *arg)
 {
+	struct pcb *pcb;
 	struct switchframe *sf;
 
 #if 0 /* FIXME: probably wrong for yamt-idlelwp */
@@ -151,7 +152,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 		l2->l_md.md_regs->tf_r15 = (u_int)stack + stacksize;
 
 	/* When l2 is switched to, jump to the trampoline */
-	sf = &l2->l_md.md_pcb->pcb_sf;
+	pcb = lwp_getpcb(l2);
+	sf = &pcb->pcb_sf;
 	sf->sf_pr  = (int)lwp_trampoline;
 	sf->sf_r10 = (int)l2;	/* "new" lwp for lwp_startup() */
 	sf->sf_r11 = (int)arg;	/* hook function/argument */
@@ -166,14 +168,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct switchframe *sf;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct switchframe *sf = &pcb->pcb_sf;
 
 	sh3_setup_uarea(l);
 
 	l->l_md.md_regs->tf_ssr = PSL_USERSET;
 
 	/* When lwp is switched to, jump to the trampoline */
-	sf = &l->l_md.md_pcb->pcb_sf;
 	sf->sf_pr  = (int)lwp_setfunc_trampoline;
 	sf->sf_r11 = (int)arg;	/* hook function/argument */
 	sf->sf_r12 = (int)func;
