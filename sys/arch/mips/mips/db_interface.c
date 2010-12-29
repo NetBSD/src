@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.17 2010/12/24 07:11:25 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.18 2010/12/29 00:48:22 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.17 2010/12/24 07:11:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.18 2010/12/29 00:48:22 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -77,7 +77,6 @@ static void	kdbpoke_2(vaddr_t addr, short newval);
 static void	kdbpoke_1(vaddr_t addr, char newval);
 static short	kdbpeek_2(vaddr_t addr);
 static char	kdbpeek_1(vaddr_t addr);
-vaddr_t		MachEmulateBranch(struct trapframe *, vaddr_t, unsigned, int);
 
 paddr_t kvtophys(vaddr_t);
 
@@ -680,66 +679,49 @@ inst_unconditional_flow_transfer(int inst)
 bool
 inst_load(int inst)
 {
-	InstFmt i;
+	InstFmt i = { .word = inst, };
 
-	i.word = inst;
+	/*
+	 * All loads are opcodes 04x or 06x.
+	 */
+	if ((i.JType.op & 050) != 040)
+		return false;
 
-	switch (i.JType.op) {
-	case OP_LWC1:
-	case OP_LB:
-	case OP_LH:
-	case OP_LW:
-	case OP_LD:
-	case OP_LBU:
-	case OP_LHU:
-	case OP_LWU:
-	case OP_LDL:
-	case OP_LDR:
-	case OP_LWL:
-	case OP_LWR:
-	case OP_LL:
-		return 1;
-	default:
-		return 0;
-	}
+	/*
+	 * Except these this opcode is not a load.
+	 */
+	return i.JType.op != OP_PREF;
 }
 
 bool
 inst_store(int inst)
 {
-	InstFmt i;
+	InstFmt i = { .word = inst, };
 
-	i.word = inst;
+	/*
+	 * All stores are opcodes 05x or 07x.
+	 */
+	if ((i.JType.op & 050) != 050)
+		return false;
 
-	switch (i.JType.op) {
-	case OP_SWC1:
-	case OP_SB:
-	case OP_SH:
-	case OP_SW:
-	case OP_SD:
-	case OP_SDL:
-	case OP_SDR:
-	case OP_SWL:
-	case OP_SWR:
-	case OP_SCD:
-		return 1;
-	default:
-		return 0;
-	}
+	/*
+	 * Except these two opcodes are not stores.
+	 */
+	return i.JType.op != OP_RSVD073 && i.JType.op != OP_CACHE;
 }
 
 /*
  * Return the next pc if the given branch is taken.
- * MachEmulateBranch() runs analysis for branch delay slot.
+ * mips_emul_branch() runs analysis for branch delay slot.
  */
 db_addr_t
 branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 {
+	struct pcb * const pcb = &curlwp->l_addr->u_pcb;
+	const uint32_t fpucsr = PCB_FSR(pcb);
 	vaddr_t ra;
-	unsigned fpucsr;
 
-	fpucsr = PCB_FSR(&curlwp->l_addr->u_pcb);
-	ra = MachEmulateBranch((struct trapframe *)regs, pc, fpucsr, 0);
+	ra = mips_emul_branch((struct trapframe *)regs, pc, fpucsr, false);
 	return ra;
 }
 
@@ -755,7 +737,7 @@ next_instr_address(db_addr_t pc, bool bd)
 		return (pc + 4);
 	
 	if (pc < MIPS_KSEG0_START)
-		ins = fuiword((void *)pc);
+		ins = ufetch_uint32((void *)pc);
 	else
 		ins = *(unsigned *)pc;
 
