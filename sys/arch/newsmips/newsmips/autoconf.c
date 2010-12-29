@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2008/02/16 22:02:15 he Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32.28.1 2010/12/29 08:14:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,20 +85,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2008/02/16 22:02:15 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32.28.1 2010/12/29 08:14:43 matt Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <machine/cpu.h>
 #include <machine/adrsmap.h>
 #include <machine/romcall.h>
 
@@ -129,7 +131,7 @@ cpu_configure(void)
 	/*
 	 * Kick off autoconfiguration
 	 */
-	_splnone();	/* enable all interrupts */
+	spl0();		/* enable all interrupts */
 	splhigh();	/* ...then disable device interrupts */
 
 	if (systype == NEWS3400) {
@@ -144,7 +146,7 @@ cpu_configure(void)
 	enable_intr();
 
 	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
+	spl0();		/* enable all source forcing SOFT_INTs cleared */
 }
 
 void

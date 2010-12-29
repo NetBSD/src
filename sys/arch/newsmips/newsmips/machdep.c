@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.5 2010/03/21 17:38:34 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.6 2010/12/29 08:14:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,13 +76,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.5 2010/03/21 17:38:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.6 2010/12/29 08:14:43 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,13 +106,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.5 2010/03/21 17:38:34 cliff Exp 
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -156,7 +158,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 struct idrom idrom;
-void (*hardware_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
+void (*hardware_intr)(int, vaddr_t, uint32_t);
 void (*enable_intr)(void);
 void (*disable_intr)(void);
 void (*enable_timer)(void);
@@ -597,23 +599,11 @@ delay(int n)
 }
 
 void
-cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct cpu_info *ci;
-
-	ci = curcpu();
 	uvmexp.intrs++;
 
 	/* device interrupts */
-	ci->ci_idepth++;
-	(*hardware_intr)(status, cause, pc, ipending);
-	ci->ci_idepth--;
+	(*hardware_intr)(ppl, pc, status);
 
-#ifdef __HAVE_FAST_SOFTINTS
-	/* software interrupts */
-	ipending &= MIPS_SOFT_INT_MASK;
-	if (ipending == 0)
-		return;
-	softint_process(ipending);
-#endif
 }
