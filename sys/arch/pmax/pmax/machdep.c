@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.8.1.2.8 2010/12/24 07:23:42 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.8.1.2.9 2010/12/29 00:22:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.8 2010/12/24 07:23:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.9 2010/12/29 00:22:01 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -266,7 +266,6 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	} else {
 		callv = &callvec;
 	}
-	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
 
 	/* Use PROM console output until we initialize a console driver. */
 	cn_tab = &promcd;
