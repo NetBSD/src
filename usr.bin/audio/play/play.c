@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.51 2010/12/29 13:09:03 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.52 2010/12/29 14:38:54 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.51 2010/12/29 13:09:03 mrg Exp $");
+__RCSID("$NetBSD: play.c,v 1.52 2010/12/29 14:38:54 jmcneill Exp $");
 #endif
 
 
@@ -184,10 +184,11 @@ main(argc, argv)
 
 	if (ioctl(audiofd, AUDIO_GETINFO, &info) < 0)
 		err(1, "failed to get audio info");
-	if (bufsize == 0)
+	if (bufsize == 0) {
 		bufsize = info.play.buffer_size;
-	if (bufsize < 32 * 1024)
-		bufsize = 32 * 1024;
+		if (bufsize < 32 * 1024)
+			bufsize = 32 * 1024;
+	}
 
 	signal(SIGINT, cleanup);
 	signal(SIGTERM, cleanup);

@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.48 2010/12/29 13:09:03 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.49 2010/12/29 14:38:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.48 2010/12/29 13:09:03 mrg Exp $");
+__RCSID("$NetBSD: record.c,v 1.49 2010/12/29 14:38:55 jmcneill Exp $");
 #endif
 
 
@@ -246,10 +246,11 @@ main(argc, argv)
 	 */
 	if (ioctl(audiofd, AUDIO_GETINFO, &oinfo) < 0)
 		err(1, "failed to get audio info");
-	if (bufsize == 0)
+	if (bufsize == 0) {
 		bufsize = oinfo.record.buffer_size;
-	if (bufsize < 32 * 1024)
-		bufsize = 32 * 1024;
+		if (bufsize < 32 * 1024)
+			bufsize = 32 * 1024;
+	}
 	omonitor_gain = oinfo.monitor_gain;
 
 	buffer = malloc(bufsize);
