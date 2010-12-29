@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.60.22.3 2010/12/24 07:23:42 matt Exp $ */
+/* $NetBSD: dec_3min.c,v 1.60.22.4 2010/12/29 00:20:37 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -107,7 +107,7 @@
 #define	__INTR_PRIVATE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.22.3 2010/12/24 07:23:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.22.4 2010/12/29 00:20:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,9 +162,10 @@ static const struct ipl_sr_map dec_3min_ipl_sr_map = {
 	 * since we don't know what kinds of devices are in the
 	 * TURBOchannel option slots, just splhigh().
 	 */
-	[IPL_VM] = MIPS_SPL_0_1_2_3,
-	[IPL_SCHED] = MIPS_SPL_0_1_2_3,
-	[IPL_HIGH] = MIPS_SPL_0_1_2_3,
+	[IPL_VM] = MIPS_SPLHIGH,
+	[IPL_SCHED] = MIPS_SPLHIGH,
+	[IPL_DDB] = MIPS_SPLHIGH,
+	[IPL_HIGH] = MIPS_SPLHIGH,
     },
 };
 

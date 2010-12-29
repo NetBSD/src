@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.44.36.2 2010/12/24 07:23:42 matt Exp $ */
+/* $NetBSD: dec_3100.c,v 1.44.36.3 2010/12/29 00:20:37 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.44.36.2 2010/12/24 07:23:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.44.36.3 2010/12/29 00:20:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,9 @@ static const struct ipl_sr_map dec_3100_ipl_sr_map = {
 	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTSERIAL] = MIPS_SOFT_INT_MASK,
 	[IPL_VM] = MIPS_SPL_0_1_2,
-	[IPL_SCHED] = MIPS_SPL_0_1_2_3,
-	[IPL_HIGH] = MIPS_SPL_0_1_2_3,
+	[IPL_SCHED] = MIPS_SPLHIGH,
+	[IPL_DDB] = MIPS_SPLHIGH,
+	[IPL_HIGH] = MIPS_SPLHIGH,
     }
 };
 

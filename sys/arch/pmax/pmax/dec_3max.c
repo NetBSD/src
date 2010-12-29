@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.45.36.2 2010/12/24 07:23:42 matt Exp $ */
+/* $NetBSD: dec_3max.c,v 1.45.36.3 2010/12/29 00:20:37 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -107,7 +107,9 @@
 #define	__INTR_PRIVATE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.45.36.2 2010/12/24 07:23:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.45.36.3 2010/12/29 00:20:37 matt Exp $");
+
+#include "dzkbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,8 +154,9 @@ static const struct ipl_sr_map dec_3max_ipl_sr_map = {
 	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK,
 	[IPL_VM] = MIPS_SPL0,
-	[IPL_SCHED] = MIPS_SPL_0_1,
-	[IPL_HIGH] = MIPS_SPL_0_1,
+	[IPL_SCHED] = MIPS_SPLHIGH,
+	[IPL_DDB] = MIPS_SPLHIGH,
+	[IPL_HIGH] = MIPS_SPLHIGH,
     },
 };
 
@@ -258,15 +261,15 @@ dec_3max_intr_establish(device_t dev, void *cookie, int level,
 	int i;
 	uint32_t csr;
 
-	for (i = 0; i < sizeof(kn02intrs)/sizeof(kn02intrs[0]); i++) {
-		if (kn02intrs[i].cookie == (int)cookie)
+	for (i = 0; i < __arraycount(kn02intrs); i++) {
+		if (kn02intrs[i].cookie == (intptr_t)cookie)
 			goto found;
 	}
-	panic("intr_establish: invalid cookie %d", (int)cookie);
+	panic("intr_establish: invalid cookie %p", cookie);
 
 found:
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(intptr_t)cookie].ih_func = handler;
+	intrtab[(intptr_t)cookie].ih_arg = arg;
 
 	csr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
 	csr |= (kn02intrs[i].intrbit << 16);
@@ -345,7 +348,8 @@ dec_3max_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 static void
 dec_3max_errintr()
 {
-	uint32_t erradr, errsyn, csr;
+	uint32_t erradr, csr;
+	vaddr_t errsyn;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
