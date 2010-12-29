@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25.36.1 2010/02/06 02:57:44 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.36.2 2010/12/29 07:15:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,37 +35,21 @@
 #ifndef	_SGIMIPS_INTR_H_
 #define	_SGIMIPS_INTR_H_
 
-#define	IPL_NONE	0	/* Disable only this interrupt. */
-#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
-#define	IPL_SOFTBIO	1	/* serial software interrupts */
-#define	IPL_SOFTNET	1	/* network software interrupts */
-#define	IPL_SOFTSERIAL	1	/* clock software interrupts */
-#define	IPL_VM		2
-#define	IPL_SCHED	3
-#define	IPL_HIGH	4
-
-#define NIPL		5
-
-/* Interrupt sharing types. */
-#define IST_NONE	0	/* none */
-#define IST_PULSE	1	/* pulsed */
-#define IST_EDGE	2	/* edge-triggered */
-#define IST_LEVEL	3	/* level-triggered */
+#include <mips/intr.h>
 
 #ifdef _KERNEL
-#ifndef _LOCORE
+#ifdef __INTR_PRIVATE
 
 #include <sys/queue.h>
 #include <sys/types.h>
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 
 #define NINTR	32
 
 struct sgimips_intrhand {
-	LIST_ENTRY(sgimips_intrhand)
-		ih_q;
+	LIST_ENTRY(sgimips_intrhand) ih_q;
 	int	(*ih_fun) (void *);
 	void	 *ih_arg;
 	struct	sgimips_intr *ih_intrhead;
@@ -74,43 +58,18 @@ struct sgimips_intrhand {
 };
 
 struct sgimips_intr {
-	LIST_HEAD(,sgimips_intrhand)
-		intr_q;
+	LIST_HEAD(,sgimips_intrhand) intr_q;
 	struct	evcnt ih_evcnt;
 	unsigned long intr_ipl;
 };
 
 extern struct sgimips_intrhand intrtab[];
 
-extern const int *ipl2spl_table;
+#endif /* __INTR_PRIVATE */
 
-#define spl0()		(void)_spllower(0)
-#define splx(s)		(void)_splset(s)
-#define splvm()		_splraise(ipl2spl_table[IPL_VM])
-#define splsched()	_splraise(ipl2spl_table[IPL_SCHED])
-#define splhigh()	_splraise(MIPS_INT_MASK)
-
-#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_1)
-#define splsoftbio()	splsoftclock()
-#define splsoftnet()	splsoftclock()
-#define splsoftserial()	splsoftclock()
-
-extern void *		cpu_intr_establish(int, int, int (*)(void *), void *);
-
-typedef int ipl_t;
-typedef struct {
-	int _spl;
-} ipl_cookie_t;
-
-ipl_cookie_t makeiplcookie(ipl_t);
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._spl);
-}
-#endif /* _LOCORE */
+#ifndef _LOCORE
+void *cpu_intr_establish(int, int, int (*)(void *), void *);
+#endif
 #endif /* !_KERNEL */
 
 #endif	/* !_SGIMIPS_INTR_H_ */
