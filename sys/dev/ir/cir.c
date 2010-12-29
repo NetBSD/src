@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.27 2010/12/28 14:45:30 jmcneill Exp $	*/
+/*	$NetBSD: cir.c,v 1.28 2010/12/29 13:43:16 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.27 2010/12/28 14:45:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.28 2010/12/29 13:43:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,21 +268,31 @@ MODULE(MODULE_CLASS_DRIVER, cir, "ir");
 static int
 cir_modcmd(modcmd_t cmd, void *opaque)
 {
+	int error = 0;
+#ifdef _MODULE
+	int bmaj = -1, cmaj = -1;
+#endif
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		return config_init_component(cfdriver_ioconf_cir,
+		error = config_init_component(cfdriver_ioconf_cir,
 		    cfattach_ioconf_cir, cfdata_ioconf_cir);
-#else
-		return 0;
+		if (error)
+			return error;
+		error = devsw_attach("cir", NULL, &bmaj, &cir_cdevsw, &cmaj);
+		if (error)
+			config_fini_component(cfdriver_ioconf_cir,
+			    cfattach_ioconf_cir, cfdata_ioconf_cir);
 #endif
+		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
+		devsw_detach(NULL, &cir_cdevsw);
 		return config_fini_component(cfdriver_ioconf_cir,
 		    cfattach_ioconf_cir, cfdata_ioconf_cir);
-#else
-		return 0;
 #endif
+		return error;
 	default:
 		return ENOTTY;
 	}
