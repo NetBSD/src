@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.9 2010/12/24 07:13:19 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.10 2010/12/29 00:41:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.2.9 2010/12/24 07:13:19 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.2.10 2010/12/29 00:41:54 matt Exp $")
 
 #include "assym.h"
 
@@ -111,6 +111,11 @@ _splraise:
 
 STATIC_LEAF(_splsw_splx)
 STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
+#ifdef PARANOIA
+	sltiu	v0, a0, IPL_HIGH+1		# v0 = a0 <= IPL_HIGH
+98:	beqz	v0, 98b
+	 nop
+#endif
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		# get cpu_info
 	NOP_L					# load delay
 	INT_L	a2, CPU_INFO_CPL(a3)		# get IPL from cpu_info
