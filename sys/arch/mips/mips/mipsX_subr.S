@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.37 2010/12/24 07:21:12 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.38 2010/12/29 00:39:39 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2465,7 +2465,7 @@ END(MIPSX(cpu_switch_resume))
 #if defined(ENABLE_MIPS3_WIRED_MAP)
 /*--------------------------------------------------------------------------
  *
- * mipsN_TLBWriteIndexedVPS --
+ * mipsN_tlb_write_indexed --
  *
  *      Write the given entry into the TLB at the given index.
  *      Pass full R4000 style TLB info including variable page size mask.
@@ -2480,7 +2480,7 @@ END(MIPSX(cpu_switch_resume))
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(tlb_write_indexed_VPS))
+LEAF(MIPSX(tlb_write_indexed))
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
@@ -2521,7 +2521,7 @@ LEAF(MIPSX(tlb_write_indexed_VPS))
 	nop
 	j       ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(MIPSX(tlb_write_indexed_VPS))
+END(MIPSX(tlb_write_indexed))
 #endif /* ENABLE_MIPS3_WIRED_MAP */
 
 #if defined(MIPS3) && !defined(MIPS3_5900)
@@ -2642,6 +2642,9 @@ END(MIPSX(pagezero))
 
 	.globl _C_LABEL(MIPSX(locore_vec))
 _C_LABEL(MIPSX(locore_vec)):
+	PTR_WORD _C_LABEL(MIPSX(cpu_switch_resume))
+	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
+	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
 	PTR_WORD _C_LABEL(MIPSX(tlb_set_asid))
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_asids))
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_addr))
@@ -2651,14 +2654,16 @@ _C_LABEL(MIPSX(locore_vec)):
 	PTR_WORD _C_LABEL(MIPSX(tlb_update))
 	PTR_WORD _C_LABEL(MIPSX(tlb_enter))
 	PTR_WORD _C_LABEL(MIPSX(tlb_read_indexed))
-	PTR_WORD _C_LABEL(MIPSX(wbflush))
+#if defined(ENABLE_MIPS3_WIRED_MAP)
+	PTR_WORD _C_LABEL(MIPSX(tlb_write_indexed))
+#else
+	PTR_WORD _C_LABEL(nullop)
+#endif
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
-	PTR_WORD _C_LABEL(MIPSX(cpu_switch_resume))
-	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
+	PTR_WORD _C_LABEL(MIPSX(wbflush)) # wbflush
 	PTR_WORD _C_LABEL(nullop)	# cpu_idle
-	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
 	PTR_WORD _C_LABEL(nullop)	# send ipi
 	PTR_WORD _C_LABEL(nullop)	# cpu_offline_md
 	PTR_WORD _C_LABEL(nullop)	# cpu_init_md

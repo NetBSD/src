@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.50 2010/12/24 07:21:12 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.51 2010/12/29 00:39:40 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.50 2010/12/24 07:21:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.51 2010/12/29 00:39:40 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -1028,8 +1028,7 @@ mips_vector_init(const struct splsw *splsw)
 void
 mips_set_wbflush(void (*flush_fn)(void))
 {
-#undef wbflush
-	mips_locore_jumpvec.ljv_wbflush = flush_fn;
+	mips_locoresw.lsw_wbflush = flush_fn;
 	(*flush_fn)();
 }
 
