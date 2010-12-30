@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.243 2010/12/11 22:27:53 matt Exp $	*/
+/*	$NetBSD: systm.h,v 1.244 2010/12/30 12:46:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -98,8 +98,8 @@ extern int ncpuonline;		/* number of CPUs online */
 extern bool mp_online;		/* secondary processors are started */
 #endif /* defined(_KERNEL) */
 
-extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf2.c */
-extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf2.c */
+extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
+extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
 
 /*
  * These represent the swap pseudo-device (`sw').  This device
