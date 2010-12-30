@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.572 2010/12/24 19:22:17 jmcneill Exp $
+$NetBSD: usbdevs,v 1.573 2010/12/30 19:27:51 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1464,6 +1464,7 @@ product HP RNDIS		0x1c1d	Generic RNDIS
 product HP 640C			0x2004	DeskJet 640c
 product HP 4670V		0x3005	ScanJet 4670v
 product HP P1100		0x3102	Photosmart P1100
+product HP V125W		0x3307	v125w
 product HP 6127			0x3504	Deskjet 6127
 product HP HN210E		0x811c	Ethernet HN210E
 
