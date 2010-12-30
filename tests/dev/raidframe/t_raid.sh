@@ -1,4 +1,4 @@
-#	$NetBSD: t_raid.sh,v 1.4 2010/12/18 09:44:41 pooka Exp $
+#	$NetBSD: t_raid.sh,v 1.5 2010/12/30 16:58:07 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,7 @@
 
 rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
 rawraid=/dev/rraid0${rawpart}
+raidserver="rump_server -lrumpvfs -lrumpdev -lrumpdev_disk -lrumpdev_raidframe"
 
 makecfg()
 {
@@ -55,7 +56,7 @@ smalldisk_body()
 {
 	makecfg 1 2
 	export RUMP_SERVER=unix://sock
-	atf_check -s exit:0 rump_allserver			\
+	atf_check -s exit:0 ${raidserver}			\
 	    -d key=/disk0,hostpath=disk0.img,size=1m		\
 	    -d key=/disk1,hostpath=disk1.img,size=1m		\
 	    ${RUMP_SERVER}
@@ -85,7 +86,7 @@ raid1_compfail_body()
 {
 	makecfg 1 2
 	export RUMP_SERVER=unix://sock
-	atf_check -s exit:0 rump_allserver				\
+	atf_check -s exit:0 ${raidserver}				\
 	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
 	    ${RUMP_SERVER}
@@ -102,7 +103,7 @@ raid1_compfail_body()
 	# restart server with failed component
 	rump.halt
 	rm disk1.img # FAIL
-	atf_check -s exit:0 rump_allserver				\
+	atf_check -s exit:0 ${raidserver}				\
 	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
 	    ${RUMP_SERVER}
@@ -131,7 +132,7 @@ raid1_comp0fail_body()
 {
 	makecfg 1 2
 	export RUMP_SERVER=unix://sock
-	atf_check -s exit:0 rump_allserver				\
+	atf_check -s exit:0 ${raidserver}				\
 	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
 	    ${RUMP_SERVER}
@@ -143,7 +144,7 @@ raid1_comp0fail_body()
 	# restart server with failed component
 	rump.halt
 	rm disk0.img # FAIL
-	atf_check -s exit:0 rump_allserver				\
+	atf_check -s exit:0 ${raidserver}				\
 	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
 	    ${RUMP_SERVER}
@@ -169,7 +170,7 @@ raid5_compfail_body()
 {
 	makecfg 5 3
 	export RUMP_SERVER=unix://sock
-	atf_check -s exit:0 rump_allserver				\
+	atf_check -s exit:0 ${raidserver}				\
 	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk2,hostpath=disk2.img,size=${RAID_MEDIASIZE}	\
@@ -187,7 +188,7 @@ raid5_compfail_body()
 	# restart server with failed component
 	rump.halt
 	rm disk2.img # FAIL
-	atf_check -s exit:0 rump_allserver				\
+	atf_check -s exit:0 ${raidserver}				\
 	    -d key=/disk0,hostpath=disk0.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk1,hostpath=disk1.img,size=${RAID_MEDIASIZE}	\
 	    -d key=/disk2,hostpath=disk2.img,size=${RAID_MEDIASIZE}	\

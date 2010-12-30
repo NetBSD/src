@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.3 2010/12/15 19:14:37 pooka Exp $
+#	$NetBSD: t_cgd.sh,v 1.4 2010/12/30 16:58:07 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,6 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+cgdserver=\
+"rump_server -lrumpvfs -lrumpkern_crypto -lrumpdev -lrumpdev_disk -lrumpdev_cgd"
+
 atf_test_case basic cleanup
 basic_head()
 {
@@ -37,7 +40,7 @@ basic_body()
 
 	d=$(atf_get_srcdir)
 	atf_check -s exit:0 \
-	    rump_allserver -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
+	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
 
 	export RUMP_SERVER=unix://csock
 	atf_check -s exit:0 sh -c "echo 12345 | \
@@ -67,7 +70,7 @@ wrongpass_body()
 
 	d=$(atf_get_srcdir)
 	atf_check -s exit:0 \
-	    rump_allserver -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
+	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
 
 	export RUMP_SERVER=unix://csock
 	atf_check -s exit:0 sh -c "echo 12345 | \

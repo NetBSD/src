@@ -1,4 +1,4 @@
-#	$NetBSD: t_traceroute.sh,v 1.2 2010/12/18 08:34:56 pooka Exp $
+#	$NetBSD: t_traceroute.sh,v 1.3 2010/12/30 16:58:07 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,6 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+netserver=\
+"rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+
 atf_test_case basic cleanup
 basic_head()
 {
@@ -50,9 +53,9 @@ cfgendpt ()
 threeservers()
 {
 
-	atf_check -s exit:0 rump_allserver unix://commsock1
-	atf_check -s exit:0 rump_allserver unix://commsock2
-	atf_check -s exit:0 rump_allserver unix://commsock3
+	atf_check -s exit:0 ${netserver} unix://commsock1
+	atf_check -s exit:0 ${netserver} unix://commsock2
+	atf_check -s exit:0 ${netserver} unix://commsock3
 
 	# configure endpoints
 	cfgendpt unix://commsock1 1.2.3.4 1.2.3.1 bus1
