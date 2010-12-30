@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.1 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: conffile.c,v 1.2 2010/12/30 21:26:00 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int confh;
 struct in_addr conf_ldp_id;
 
 static int conf_dispatch(char*);
-static int conf_readline(char*, int);
+static int conf_readline(char*, size_t);
 static int checkeol(char*);
 static int Fhellotime(char*);
 static int Fport(char*);
@@ -111,9 +111,9 @@ conf_parsefile(char *fname)
  * Reads a line from config file
  */
 int
-conf_readline(char *buf, int bufsize)
+conf_readline(char *buf, size_t bufsize)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < bufsize; i++) {
 		if (read(confh, &buf[i], 1) != 1) {
@@ -123,7 +123,7 @@ conf_readline(char *buf, int bufsize)
 		}
 		if (buf[i] == '\n')
 			break;
-		if (i == 0 && isspace((int)buf[i]) != 0) {
+		if (i == 0 && isspace((unsigned char)buf[i]) != 0) {
 			i--;
 			continue;
 		}
@@ -170,11 +170,12 @@ conf_dispatch(char *line)
 int
 checkeol(char *line)
 {
-	if (line[strlen(line) - 1] == ';') {
-		line[strlen(line) - 1] = '\0';
+	size_t len = strlen(line);
+	if (len > 0 && line[len - 1] == ';') {
+		line[len - 1] = '\0';
 		return 0;
 	}
-	for (uint i = 0; i < strlen(line); i++)
+	for (size_t i = 0; i < len; i++)
 		if (line[i] == '{')
 			return 0;
 	return -1;
@@ -273,10 +274,12 @@ Fneighbour(char *line)
 		return E_CONF_PARAM;
 
 	nei = calloc(1, sizeof(*nei));
+	if (nei == NULL)
+		return E_CONF_MEM;
 	nei->address.s_addr = ad.s_addr;
 	SLIST_INSERT_HEAD(&conei_head, nei, neilist);
 
-	while(conf_readline(buf, sizeof(buf)) >= 0) {
+	while (conf_readline(buf, sizeof(buf)) >= 0) {
 		if (buf[0] == '}')
 			return 0;
 		if (Gneighbour(nei, buf) == -1)
