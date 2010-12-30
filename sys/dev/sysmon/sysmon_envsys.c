@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.111 2010/12/16 16:08:57 njoly Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.112 2010/12/30 03:59:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.111 2010/12/16 16:08:57 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.112 2010/12/30 03:59:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1175,6 +1175,7 @@ sme_remove_userprops(void)
 		 * Restore default timeout value.
 		 */
 		sme->sme_events_timeout = SME_EVENTS_DEFTIMEOUT;
+		sme_schedule_callout(sme);
 		sysmon_envsys_release(sme, false);
 	}
 	mutex_exit(&sme_global_mtx);
@@ -1214,8 +1215,10 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 	...
 	 *
 	 */
-	if (!sme->sme_events_timeout)
+	if (sme->sme_events_timeout == 0) {
 		sme->sme_events_timeout = SME_EVENTS_DEFTIMEOUT;
+		sme_schedule_callout(sme);
+	}
 
 	if (!prop_dictionary_set_uint64(pdict, "refresh-timeout",
 					sme->sme_events_timeout)) {
@@ -1805,7 +1808,10 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 				error = EINVAL;
 			else {
 				mutex_enter(&sme->sme_mtx);
-				sme->sme_events_timeout = refresh_timo;
+				if (sme->sme_events_timeout != refresh_timo) {
+					sme->sme_events_timeout = refresh_timo;
+					sme_schedule_callout(sme);
+				}
 				mutex_exit(&sme->sme_mtx);
 		}
 		}
