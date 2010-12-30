@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.106 2010/12/30 13:38:10 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.107 2010/12/30 16:49:24 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -591,9 +591,11 @@ function printrumpsysent(insysent, compatwrap) {
 	if (!insysent) {
 		eno[0] = "rump_enosys"
 		eno[1] = "sys_nomodule"
-		printf("\t{ 0, 0, 0,\n\t    (sy_call_t *)%s }, \t"	\
+		flags[0] = "SYCALL_NOSYS"
+		flags[1] = "0"
+		printf("\t{ 0, 0, %s,\n\t    (sy_call_t *)%s }, \t"	\
 		    "/* %d = unrumped */\n",				\
-		    eno[modular], syscall) > rumpsysent
+		    flags[modular], eno[modular], syscall) > rumpsysent
 		return
 	}
 
@@ -768,7 +770,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 
 	printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = %s */\n", \
 	    sys_stub, syscall, comment) > sysent
-	printf("\t{ 0, 0, 0,\n\t    %s },\t\t/* %d = %s */\n", \
+	printf("\t{ 0, 0, SYCALL_NOSYS,\n\t    %s },\t\t/* %d = %s */\n", \
 	    "(sy_call_t *)rump_enosys", syscall, comment) > rumpsysent
 	printf("\t/* %3d */\t\"#%d (%s)\",\n", syscall, syscall, comment) \
 	    > sysnamesbottom
@@ -815,7 +817,7 @@ END {
 		while (syscall < nsysent) {
 			printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = filler */\n", \
 			    sys_nosys, syscall) > sysent
-			printf("\t{ 0, 0, 0,\n\t    %s },\t\t/* %d = filler */\n", \
+			printf("\t{ 0, 0, SYCALL_NOSYS,\n\t    %s },\t\t/* %d = filler */\n", \
 			    "(sy_call_t *)rump_enosys", syscall) > rumpsysent
 			printf("\t/* %3d */\t\"# filler\",\n", syscall) \
 			    > sysnamesbottom
