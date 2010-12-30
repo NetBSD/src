@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/12/29 19:53:32 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2010/12/30 00:46:38 pgoyette Exp $
 
 LIBISPRIVATE=	yes
 
@@ -20,6 +20,6 @@ SRCS=	__fpending.c asnprintf.c basename.c canon-host.c canonicalize.c \
 
 .include <bsd.lib.mk>
 # bsd.lib.mk includes bsd.sys.mk which defines the suffix rules, so we
-@ need to override after.
+# need to override after.
 .y.c .y.h:
 	@true
