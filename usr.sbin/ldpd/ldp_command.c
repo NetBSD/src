@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.2 2010/12/14 21:32:43 christos Exp $ */
+/* $NetBSD: ldp_command.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,7 +51,8 @@
 #include "socketops.h"
 
 struct com_sock csockets[MAX_COMMAND_SOCKETS];
-extern int ldp_hello_time, debug_f, warn_f;
+extern int ldp_hello_time, ldp_keepalive_time, ldp_holddown_time,
+	min_label, max_label, debug_f, warn_f;
 
 #define	writestr(soc, str) write(soc, str, strlen(str))
 
@@ -62,7 +63,7 @@ static int	verify_root_pwd(char *);
 static void	echo_on(int s);
 static void	echo_off(int s);
 
-struct com_func main_commands[] = {
+static struct com_func main_commands[] = {
 	{ "show", show_func },
 	{ "set", set_func },
 	{ "quit", exit_func },
@@ -70,7 +71,7 @@ struct com_func main_commands[] = {
 	{ "", NULL }
 };
 
-struct com_func show_commands[] = {
+static struct com_func show_commands[] = {
 	{ "neighbours", show_neighbours },
 	{ "bindings", show_bindings },
 	{ "debug", show_debug },
@@ -494,10 +495,10 @@ show_parameters(int s, char *recvspace)
 		my_ldp_id,
 		LDP_VERSION,
 		ldp_hello_time,
-		LDP_KEEPALIVE_TIME,
-		LDP_HOLDTIME,
-		MIN_LABEL,
-		MAX_LABEL);
+		ldp_keepalive_time,
+		ldp_holddown_time,
+		min_label,
+		max_label);
 	writestr(s, sendspace);
 	return 1;
 }
