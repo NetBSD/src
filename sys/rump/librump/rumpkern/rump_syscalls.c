@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.56 2010/12/30 13:38:56 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.57 2010/12/30 16:51:28 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.56 2010/12/30 13:38:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.57 2010/12/30 16:51:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstypes.h>
@@ -3109,11 +3109,11 @@ rump_sys_pipe(int *fd)
 #define	ns(type)	n(type), s(type)
 
 struct sysent rump_sysent[] = {
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 0 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 1 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 2 = unrumped */
 	{ ns(struct sys_read_args), 0,
 	    (sy_call_t *)sys_read },		/* 3 = read */
@@ -3131,7 +3131,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_link },		/* 9 = link */
 	{ ns(struct sys_unlink_args), 0,
 	    (sy_call_t *)sys_unlink },		/* 10 = unlink */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 11 = obsolete execv */
 	{ ns(struct sys_chdir_args), 0,
 	    (sy_call_t *)sys_chdir },		/* 12 = chdir */
@@ -3143,7 +3143,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_chmod },		/* 15 = chmod */
 	{ ns(struct sys_chown_args), 0,
 	    (sy_call_t *)sys_chown },		/* 16 = chown */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 17 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 18 = unrumped */
@@ -3161,7 +3161,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_getuid_with_euid },/* 24 = getuid */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_geteuid },		/* 25 = geteuid */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 26 = unrumped */
 	{ ns(struct sys_recvmsg_args), 0,
 	    (sy_call_t *)sys_recvmsg },		/* 27 = recvmsg */
@@ -3183,7 +3183,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_fchflags },	/* 35 = fchflags */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_sync },		/* 36 = sync */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 37 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 38 = unrumped */
@@ -3197,9 +3197,9 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_pipe },		/* 42 = pipe */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_getegid },		/* 43 = getegid */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 44 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 45 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 46 = unrumped */
@@ -3211,7 +3211,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys___getlogin },	/* 49 = __getlogin */
 	{ ns(struct sys___setlogin_args), 0,
 	    (sy_call_t *)sys___setlogin },	/* 50 = __setlogin */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 51 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 52 = unrumped */
@@ -3227,7 +3227,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_symlink },		/* 57 = symlink */
 	{ ns(struct sys_readlink_args), 0,
 	    (sy_call_t *)sys_readlink },	/* 58 = readlink */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 59 = unrumped */
 	{ ns(struct sys_umask_args), 0,
 	    (sy_call_t *)sys_umask },		/* 60 = umask */
@@ -3241,31 +3241,31 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 64 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 65 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 66 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 67 = obsolete vread */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 68 = obsolete vwrite */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 69 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 70 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 71 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 72 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 73 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 74 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 75 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 76 = obsolete vhangup */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 77 = obsolete vlimit */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 78 = unrumped */
 	{ ns(struct sys_getgroups_args), 0,
 	    (sy_call_t *)sys_getgroups },	/* 79 = getgroups */
@@ -3291,17 +3291,17 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 89 = unrumped */
 	{ ns(struct sys_dup2_args), 0,
 	    (sy_call_t *)sys_dup2 },		/* 90 = dup2 */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 91 = unimplemented getdopt */
 	{ ns(struct sys_fcntl_args), 0,
 	    (sy_call_t *)sys_fcntl },		/* 92 = fcntl */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 93 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 94 = unimplemented setdopt */
 	{ ns(struct sys_fsync_args), 0,
 	    (sy_call_t *)sys_fsync },		/* 95 = fsync */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 96 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 97 = unrumped */
@@ -3309,7 +3309,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_connect },		/* 98 = connect */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 99 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 100 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 101 = unrumped */
@@ -3323,7 +3323,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_setsockopt },	/* 105 = setsockopt */
 	{ ns(struct sys_listen_args), 0,
 	    (sy_call_t *)sys_listen },		/* 106 = listen */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 107 = obsolete vtimes */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 108 = unrumped */
@@ -3339,7 +3339,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 113 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 114 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 115 = obsolete vtrace */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 116 = unrumped */
@@ -3347,7 +3347,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 117 = unrumped */
 	{ ns(struct sys_getsockopt_args), 0,
 	    (sy_call_t *)sys_getsockopt },	/* 118 = getsockopt */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 119 = obsolete resuba */
 	{ ns(struct sys_readv_args), 0,
 	    (sy_call_t *)sys_readv },		/* 120 = readv */
@@ -3387,7 +3387,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_rmdir },		/* 137 = rmdir */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 138 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 139 = obsolete 4.2 sigreturn */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 140 = unrumped */
@@ -3405,19 +3405,19 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 146 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_setsid },		/* 147 = setsid */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 148 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 149 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 150 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 151 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 152 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 153 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 154 = unimplemented */
 	{ ns(struct sys_nfssvc_args), 0,
 	    (sy_call_t *)sys_nomodule },	/* 155 = nfssvc */
@@ -3427,9 +3427,9 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 157 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 158 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 159 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 160 = unimplemented */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 161 = unrumped */
@@ -3439,57 +3439,57 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 163 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 164 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 165 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 166 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 167 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 168 = unimplemented */
 #if (defined(SYSVSEM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 169 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 169 = excluded 1.0 semsys */
 #endif
 #if (defined(SYSVMSG) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 170 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 170 = excluded 1.0 msgsys */
 #endif
 #if (defined(SYSVSHM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 171 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 171 = excluded 1.0 shmsys */
 #endif
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 172 = unimplemented */
 	{ ns(struct sys_pread_args), 0,
 	    (sy_call_t *)sys_pread },		/* 173 = pread */
 	{ ns(struct sys_pwrite_args), 0,
 	    (sy_call_t *)sys_pwrite },		/* 174 = pwrite */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 175 = unrumped */
 #if defined(NTP) || !defined(_KERNEL_OPT)
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 176 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 176 = excluded ntp_adjtime */
 #endif
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 177 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 178 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 179 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 180 = unimplemented */
 	{ ns(struct sys_setgid_args), 0,
 	    (sy_call_t *)sys_setgid },		/* 181 = setgid */
@@ -3515,7 +3515,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_pathconf },	/* 191 = pathconf */
 	{ ns(struct sys_fpathconf_args), 0,
 	    (sy_call_t *)sys_fpathconf },	/* 192 = fpathconf */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 193 = unimplemented */
 	{ ns(struct sys_getrlimit_args), 0,
 	    (sy_call_t *)sys_getrlimit },	/* 194 = getrlimit */
@@ -3523,9 +3523,9 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_setrlimit },	/* 195 = setrlimit */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 196 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 197 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 198 = unrumped */
 	{ ns(struct sys_lseek_args), 0,
 	    (sy_call_t *)sys_lseek },		/* 199 = lseek */
@@ -3535,11 +3535,11 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_ftruncate },	/* 201 = ftruncate */
 	{ ns(struct sys___sysctl_args), 0,
 	    (sy_call_t *)sys___sysctl },	/* 202 = __sysctl */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 203 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 204 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 205 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 206 = unrumped */
@@ -3549,81 +3549,81 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_reboot },		/* 208 = reboot */
 	{ ns(struct sys_poll_args), 0,
 	    (sy_call_t *)sys_poll },		/* 209 = poll */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 210 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 211 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 212 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 213 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 214 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 215 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 216 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 217 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 218 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 219 = unimplemented */
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 220 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 221 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 222 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 223 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 220 = excluded compat_14_semctl */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 221 = excluded semget */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 222 = excluded semop */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 223 = excluded semconfig */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 224 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 225 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 226 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 227 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 224 = excluded compat_14_msgctl */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 225 = excluded msgget */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 226 = excluded msgsnd */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 227 = excluded msgrcv */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 228 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 229 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 230 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 231 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 228 = excluded shmat */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 229 = excluded compat_14_shmctl */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 230 = excluded shmdt */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 231 = excluded shmget */
 #endif
 	{ 0, 0, 0,
@@ -3632,27 +3632,27 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 233 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 234 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 235 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 236 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 237 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 238 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 239 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 240 = unrumped */
 	{ ns(struct sys_fdatasync_args), 0,
 	    (sy_call_t *)sys_fdatasync },	/* 241 = fdatasync */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 242 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 243 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 244 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 245 = unimplemented sys_sigqueue */
 	{ ns(struct sys_modctl_args), 0,
 	    (sy_call_t *)sys_modctl },		/* 246 = modctl */
@@ -3674,7 +3674,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule },	/* 254 = _ksem_getvalue */
 	{ ns(struct sys__ksem_destroy_args), 0,
 	    (sy_call_t *)sys_nomodule },	/* 255 = _ksem_destroy */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 256 = unimplemented sys__ksem_timedwait */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 257 = unrumped */
@@ -3696,19 +3696,19 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 265 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 266 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 267 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 268 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 269 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 270 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 271 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 272 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 273 = unrumped */
 	{ ns(struct sys_lchmod_args), 0,
 	    (sy_call_t *)sys_lchmod },		/* 274 = lchmod */
@@ -3716,7 +3716,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_lchown },		/* 275 = lchown */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 276 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 277 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 278 = unrumped */
@@ -3724,33 +3724,33 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 279 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 280 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 281 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 282 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 283 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 284 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 285 = unrumped */
 	{ ns(struct sys_getsid_args), 0,
 	    (sy_call_t *)sys_getsid },		/* 286 = getsid */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 287 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 288 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 289 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 290 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 291 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 292 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 293 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 294 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 295 = unrumped */
@@ -3768,126 +3768,126 @@ struct sysent rump_sysent[] = {
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 301 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 301 = excluded ____semctl13 */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 302 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 302 = excluded __msgctl13 */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 303 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 303 = excluded __shmctl13 */
 #endif
 	{ ns(struct sys_lchflags_args), 0,
 	    (sy_call_t *)sys_lchflags },	/* 304 = lchflags */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_issetugid },	/* 305 = issetugid */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 306 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 307 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 308 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 309 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 310 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 311 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 312 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 313 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 314 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 315 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 316 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 317 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 318 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 319 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 320 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 321 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 322 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 323 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 324 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 325 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 326 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 327 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 328 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 329 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 330 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 331 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 332 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 333 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 334 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 335 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 336 = obsolete sys_sa_unblockyield */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 337 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 338 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 339 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 340 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 341 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 342 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 343 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_kqueue },		/* 344 = kqueue */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 345 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 346 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 347 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 348 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 349 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 350 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 351 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 352 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 353 = unimplemented */
 	{ ns(struct sys_fsync_range_args), 0,
 	    (sy_call_t *)sys_fsync_range },	/* 354 = fsync_range */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 355 = unrumped */
 	{ ns(struct sys_getvfsstat_args), 0,
 	    (sy_call_t *)sys_getvfsstat },	/* 356 = getvfsstat */
@@ -3959,7 +3959,7 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 389 = unrumped */
 	{ ns(struct sys___getdents30_args), 0,
 	    (sy_call_t *)sys___getdents30 },	/* 390 = __getdents30 */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 391 = ignored old posix_fadvise */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 392 = unrumped */
@@ -3991,35 +3991,35 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys_nomodule }, 	/* 405 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 406 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 407 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 408 = unimplemented */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 409 = unimplemented */
 	{ ns(struct sys___mount50_args), 0,
 	    (sy_call_t *)sys___mount50 },	/* 410 = __mount50 */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 411 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 412 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 413 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 414 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 415 = unrumped */
 	{ ns(struct sys___posix_fadvise50_args), 0,
 	    (sy_call_t *)sys___posix_fadvise50 },/* 416 = __posix_fadvise50 */
 	{ ns(struct sys___select50_args), 0,
 	    (sy_call_t *)sys___select50 },	/* 417 = __select50 */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 418 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 419 = unrumped */
 	{ ns(struct sys___utimes50_args), 0,
 	    (sy_call_t *)sys___utimes50 },	/* 420 = __utimes50 */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 421 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 422 = unrumped */
@@ -4027,25 +4027,25 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)sys___futimes50 },	/* 423 = __futimes50 */
 	{ ns(struct sys___lutimes50_args), 0,
 	    (sy_call_t *)sys___lutimes50 },	/* 424 = __lutimes50 */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 425 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 426 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 427 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 428 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 429 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 430 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 431 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 432 = unrumped */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule }, 	/* 433 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 434 = unrumped */
 	{ ns(struct sys___kevent50_args), 0,
 	    (sy_call_t *)sys___kevent50 },	/* 435 = __kevent50 */
@@ -4062,164 +4062,164 @@ struct sysent rump_sysent[] = {
 	{ ns(struct sys___lstat50_args), 0,
 	    (sy_call_t *)sys___lstat50 },	/* 441 = __lstat50 */
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 442 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 442 = excluded ____semctl50 */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 443 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 443 = excluded ____shmctl50 */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 444 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 444 = excluded ____msgctl50 */
 #endif
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 445 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 446 = unrumped */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 447 = unrumped */
 #if defined(NTP) || !defined(_KERNEL_OPT)
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 448 = unrumped */
 #else
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 448 = excluded ___ntp_gettime50 */
 #endif
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys }, 	/* 449 = unrumped */
 	{ ns(struct sys___mknod50_args), 0,
 	    (sy_call_t *)sys___mknod50 },	/* 450 = __mknod50 */
 	{ ns(struct sys___fhstat50_args), 0,
 	    (sy_call_t *)sys___fhstat50 },	/* 451 = __fhstat50 */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 452 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 453 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 454 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 455 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 456 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 457 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 458 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 459 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 460 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 461 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 462 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 463 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 464 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 465 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 466 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 467 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 468 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 469 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 470 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 471 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 472 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 473 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 474 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 475 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 476 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 477 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 478 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 479 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 480 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 481 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 482 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 483 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 484 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 485 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 486 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 487 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 488 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 489 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 490 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 491 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 492 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 493 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 494 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 495 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 496 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 497 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 498 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 499 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 500 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 501 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 502 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 503 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 504 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 505 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 506 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 507 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 508 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 509 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 510 = filler */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_NOSYS,
 	    (sy_call_t *)rump_enosys },		/* 511 = filler */
 };
 CTASSERT(__arraycount(rump_sysent) == SYS_NSYSENT);
