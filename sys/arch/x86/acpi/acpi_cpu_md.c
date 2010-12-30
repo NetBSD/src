@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.36 2010/11/30 18:44:07 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.37 2010/12/30 17:06:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.36 2010/11/30 18:44:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.37 2010/12/30 17:06:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -587,6 +587,9 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	struct msr_rw_info msr;
 	uint64_t xc;
 	int rv = 0;
+
+	if (__predict_false(ps->ps_control_addr == 0))
+		return EINVAL;
 
 	if ((ps->ps_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 		return acpicpu_md_pstate_fidvid_set(ps);
