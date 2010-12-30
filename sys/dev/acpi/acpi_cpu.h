@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.26 2010/11/30 04:31:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.27 2010/12/30 12:05:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -205,7 +205,6 @@ struct acpicpu_softc {
 	uint32_t		 sc_flags;
 	cpuid_t			 sc_cpuid;
 	bool			 sc_cold;
-	bool			 sc_passive;
 };
 
 void		acpicpu_cstate_attach(device_t);

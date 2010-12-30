@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.23 2010/10/28 04:28:29 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.24 2010/12/30 12:05:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.23 2010/10/28 04:28:29 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.24 2010/12/30 12:05:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.23 2010/10/28 04:28:29 jruoho Exp $")
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/once.h>
+#include <sys/sysctl.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -53,6 +54,7 @@ static int		  acpicpu_once_attach(void);
 static int		  acpicpu_once_detach(void);
 static void		  acpicpu_prestart(device_t);
 static void		  acpicpu_start(device_t);
+static void		  acpicpu_sysctl(device_t);
 
 static int		  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
 static cpuid_t		  acpicpu_id(uint32_t);
@@ -65,6 +67,9 @@ static bool		  acpicpu_suspend(device_t, const pmf_qual_t *);
 static bool		  acpicpu_resume(device_t, const pmf_qual_t *);
 
 struct acpicpu_softc	**acpicpu_sc = NULL;
+static struct sysctllog	 *acpicpu_log = NULL;
+static bool		  acpicpu_dynamic = true;
+static bool		  acpicpu_passive = true;
 
 static const char * const acpicpu_hid[] = {
 	"ACPI0007",
@@ -115,7 +120,6 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_cold = true;
-	sc->sc_passive = false;
 	sc->sc_node = aa->aa_node;
 	sc->sc_cpuid = acpicpu_id(sc->sc_object.ao_procid);
 
@@ -211,6 +215,9 @@ acpicpu_once_detach(void)
 	if (acpicpu_sc != NULL)
 		kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
 
+	if (acpicpu_log != NULL)
+		sysctl_teardown(&acpicpu_log);
+
 	return 0;
 }
 
@@ -250,10 +257,61 @@ acpicpu_start(device_t self)
 	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
 		acpicpu_tstate_start(self);
 
+	acpicpu_sysctl(self);
+
 	aprint_debug_dev(sc->sc_dev, "ACPI CPUs started (cap "
 	    "0x%02x, flags 0x%06x)\n", sc->sc_cap, sc->sc_flags);
 
 	sc->sc_cold = false;
+}
+
+static void
+acpicpu_sysctl(device_t self)
+{
+	const struct sysctlnode *node;
+	int err;
+
+	err = sysctl_createv(&acpicpu_log, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(&acpicpu_log, 0, &node, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(&acpicpu_log, 0, &node, &node,
+	    0, CTLTYPE_NODE, "cpu", SYSCTL_DESCR("ACPI CPU"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(&acpicpu_log, 0, &node, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "dynamic",
+	    SYSCTL_DESCR("Dynamic states"), NULL, 0,
+	    &acpicpu_dynamic, 0, CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(&acpicpu_log, 0, &node, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "passive",
+	    SYSCTL_DESCR("Passive cooling"), NULL, 0,
+	    &acpicpu_passive, 0, CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	return;
+
+fail:
+	aprint_error_dev(self, "failed to initialize sysctl (err %d)\n", err);
 }
 
 static int
@@ -490,6 +548,9 @@ acpicpu_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	sc = device_private(self);
 
 	if (sc->sc_cold != false)
+		return;
+
+	if (acpicpu_dynamic != true)
 		return;
 
 	switch (evt) {
