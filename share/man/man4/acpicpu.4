@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.20 2010/12/20 09:11:37 wiz Exp $
+.\" $NetBSD: acpicpu.4,v 1.21 2010/12/30 12:06:53 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2010
+.Dd December 30, 2010
 .Dt ACPICPU 4
 .Os
 .Sh NAME
@@ -185,11 +185,11 @@ dynamically scale the presently supported maximum or minimum clock frequency.
 For example, if
 .Xr acpiacad 4
 is disconnected, the maximum available frequency may be lowered.
-Currently the
+By default,
+the
 .Nx
-implementation reacts to these events by imposing the dynamic maximum, but
-.Nm
-does not take any actions to manipulate the frequencies by itself.
+implementation may manipulate the frequencies
+according to the notifications from the firmware.
 .Ss T-states
 Processor T-states, or
 .Dq throttling states ,
@@ -250,17 +250,6 @@ the system is in the highest-power P-state and
 a high temperature situation exists.
 After the temperatures have returned to non-critical levels,
 the modulation ceases.
-.Ss Statistics
-The
-.Nm
-driver uses event counters to track the times
-a processor has entered a given state.
-It is possible to view the statistics by using
-.Xr vmstat 1
-(with the
-.Fl e
-flag).
-Note that valid per-CPU data is available only for C-states.
 .Ss System Control Variables
 The
 .Nm
@@ -277,7 +266,30 @@ or
 .Ic machdep.powernow .
 Please note that future versions of
 .Nm
-may however remove the system control variables without further notice.
+may however remove these system control variables without further notice.
+.Pp
+In addition, the following two variables are available.
+.Bl -tag -width "hw.acpi.cpu.dynamic" -offset indent
+.It Ic hw.acpi.cpu.dynamic
+A boolean that controls whether the states are allowed to change dynamically.
+When enabled, C-, P-, and T-states may all change at runtime, and
+.Nm
+may also take actions based on requests from the firmware.
+.It Ic hw.acpi.cpu.passive
+A boolean that enables or disables automatic processor thermal management via
+.Xr acpitz 4 .
+.El
+.Ss Statistics
+The
+.Nm
+driver uses event counters to track the times
+a processor has entered a given state.
+It is possible to view the statistics by using
+.Xr vmstat 1
+(with the
+.Fl e
+flag).
+Note that valid per-CPU data is available only for C-states.
 .Sh COMPATIBILITY
 The
 .Nm
