@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.21 2010/12/22 22:29:19 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.22 2010/12/30 19:38:03 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.29 2010/12/22 22:28:35 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.30 2010/12/30 19:37:39 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1427,6 +1427,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "HPQ0004",
 	    "Hewlett-Packard 3D DriveGuard accelerometer",
+	},
+	{
+	    "IBM0079",
+	    "IBM Docking Station",
 	},
 	{
 	    "INT0800",
