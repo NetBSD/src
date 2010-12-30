@@ -1,4 +1,4 @@
-/*	$NetBSD: t_syslog_pthread.c,v 1.1 2010/12/17 19:12:30 pooka Exp $	*/
+/*	$NetBSD: t_syslog_pthread.c,v 1.2 2010/12/30 22:21:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ ATF_TC_HEAD(basic, tc)
 ATF_TC_BODY(basic, tc)
 {
 
-	atf_tc_expect_timeout("PR lib/44248");
+	//atf_tc_expect_timeout("PR lib/44248");
 	syslog(LOG_DEBUG, "from tests/lib/libc/gen/t_syslog_pthread");
 }
 
