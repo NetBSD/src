@@ -1,4 +1,4 @@
-/* $NetBSD: t_posix_fadvise.c,v 1.4 2010/11/15 22:01:44 pooka Exp $ */
+/* $NetBSD: t_posix_fadvise.c,v 1.5 2010/12/30 22:23:13 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_fadvise.c,v 1.4 2010/11/15 22:01:44 pooka Exp $");
+__RCSID("$NetBSD: t_posix_fadvise.c,v 1.5 2010/12/30 22:23:13 pooka Exp $");
 
 #include <sys/fcntl.h>
 
@@ -147,7 +147,7 @@ ATF_TC_BODY(posix_fadvise_reg, tc)
 	CE(rump_sys_posix_fadvise(rfd,
 	    INT64_MAX-getpagesize(), getpagesize(), POSIX_FADV_NOREUSE), 0);
 
-	atf_tc_expect_signal(-1, "http://mail-index.netbsd.org/source-changes-d/2010/11/11/msg002508.html");
+	//atf_tc_expect_signal(-1, "http://mail-index.netbsd.org/source-changes-d/2010/11/11/msg002508.html");
 	CE(rump_sys_posix_fadvise(rfd,
 	    INT64_MAX-getpagesize(), getpagesize(), POSIX_FADV_DONTNEED), 0);
 	CE(rump_sys_posix_fadvise(rfd, 0, 0, POSIX_FADV_DONTNEED), 0);
