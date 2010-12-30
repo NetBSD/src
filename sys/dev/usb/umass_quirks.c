@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.83 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.84 2010/12/30 19:35:33 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.83 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.84 2010/12/30 19:35:33 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +272,15 @@ Static const struct umass_quirk umass_quirks[] = {
 	/* Kingston USB pendrives don't like being told to lock the door */
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DTMINI10 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/* HP USB pendrives don't like being told to lock the door */
+	{ { USB_VENDOR_HP, USB_PRODUCT_HP_V125W },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
