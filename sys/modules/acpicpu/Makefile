@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2010/08/18 19:33:10 jruoho Exp $
+# $NetBSD: Makefile,v 1.5 2010/12/30 18:38:50 jruoho Exp $
 
 .include "../Makefile.inc"
 
@@ -13,6 +13,5 @@ SRCS=	acpi_cpu.c \
 	acpi_cpu_tstate.c
 
 WARNS=	 4
-CFLAGS+= -DDIAGNOSTIC
 
 .include <bsd.kmodule.mk>
