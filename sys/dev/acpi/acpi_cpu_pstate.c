@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.35 2010/12/20 08:13:04 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.36 2010/12/30 12:05:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.35 2010/12/20 08:13:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.36 2010/12/30 12:05:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -346,26 +346,24 @@ acpicpu_pstate_callback(void *aux)
 	sc = device_private(self);
 
 	mutex_enter(&sc->sc_mtx);
+
 	old = sc->sc_pstate_max;
 	acpicpu_pstate_change(sc);
 	new = sc->sc_pstate_max;
+
+	if (old == new) {
+		mutex_exit(&sc->sc_mtx);
+		return;
+	}
+
 	mutex_exit(&sc->sc_mtx);
 
-	if (old != new) {
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "maximum frequency "
+		"changed from P%u (%u MHz) to P%u (%u MHz)\n",
+		old, sc->sc_pstate[old].ps_freq, new,
+		sc->sc_pstate[sc->sc_pstate_max].ps_freq));
 
-		aprint_debug_dev(sc->sc_dev, "maximum frequency "
-		    "changed from P%u (%u MHz) to P%u (%u MHz)\n",
-		    old, sc->sc_pstate[old].ps_freq, new,
-		    sc->sc_pstate[sc->sc_pstate_max].ps_freq);
-#if 0
-		/*
-		 * If the maximum changed, proactively
-		 * raise or lower the target frequency.
-		 */
-		(void)acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
-
-#endif
-	}
+	(void)acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
 }
 
 ACPI_STATUS
@@ -800,8 +798,16 @@ acpicpu_pstate_change(struct acpicpu_softc *sc)
 	static ACPI_STATUS rv = AE_OK;
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj[2];
+	static int val = 0;
 
 	acpicpu_pstate_reset(sc);
+
+	/*
+	 * Cache the checks as the optional
+	 * _PDL and _OST are rarely present.
+	 */
+	if (val == 0)
+		val = acpicpu_pstate_min(sc);
 
 	arg.Count = 2;
 	arg.Pointer = obj;
@@ -811,9 +817,6 @@ acpicpu_pstate_change(struct acpicpu_softc *sc)
 
 	obj[0].Integer.Value = ACPICPU_P_NOTIFY;
 	obj[1].Integer.Value = acpicpu_pstate_max(sc);
-
-	if (sc->sc_passive != false)
-		(void)acpicpu_pstate_min(sc);
 
 	if (ACPI_FAILURE(rv))
 		return;
