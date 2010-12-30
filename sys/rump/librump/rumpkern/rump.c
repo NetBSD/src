@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.212 2010/12/16 12:38:20 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.213 2010/12/30 16:46:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.212 2010/12/16 12:38:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.213 2010/12/30 16:46:32 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -439,6 +439,35 @@ rump__init(int rump_version)
 	mutex_exit(proc_lock);
 	if (initproc == NULL)
 		panic("where in the world is initproc?");
+
+	/*
+	 * Adjust syscall vector in case factions were dlopen()'d
+	 * before calling rump_init().
+	 * (modules will handle dynamic syscalls the usual way)
+	 *
+	 * Note: this will adjust the function vectors of
+	 * syscalls which use a funcalias (getpid etc.), but
+	 * it makes no difference.
+	 */
+	for (i = 0; i < SYS_NSYSENT; i++) {
+		void *sym;
+
+		if (rump_sysent[i].sy_flags & SYCALL_NOSYS ||
+		    *syscallnames[i] == '#' ||
+		    rump_sysent[i].sy_call == sys_nomodule)
+			continue;
+
+		/* if present, adjust symbol value */
+		sprintf(buf, "rumpns_sys_%s", syscallnames[i]);
+		if ((sym = rumpuser_dl_globalsym(buf)) != NULL
+		    && sym != rump_sysent[i].sy_call) {
+#if 0
+			rumpuser_dprintf("adjusting %s: %p (old %p)\n",
+			    syscallnames[i], sym, rump_sysent[i].sy_call);
+#endif
+			rump_sysent[i].sy_call = sym;
+		}
+	}
 
 	/* release cpu */
 	rump_unschedule();
