@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.51 2010/12/30 18:27:01 jruoho Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.52 2010/12/30 19:27:27 jruoho Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.51 2010/12/30 18:27:01 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.52 2010/12/30 19:27:27 jruoho Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -768,7 +768,8 @@ iwn_sensor_attach(struct iwn_softc *sc)
 	sc->sc_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
 	sc->sc_sensor.limits.sel_critmax = IWN_CTOK(110);
 #endif
-	strlcpy((sc->sc_sensor.desc), "TEMP", sizeof(sc->sc_sensor.desc));
+	(void)strlcpy(sc->sc_sensor.desc,
+	    "temperature", sizeof(sc->sc_sensor.desc));
 
 	/* Temperature is not valid unless interface is up. */
 	sc->sc_sensor.value_cur = 0;
