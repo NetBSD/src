@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.c,v 1.4 2009/05/26 23:43:39 pooka Exp $	*/
+/*	$NetBSD: netisr.c,v 1.5 2010/12/30 16:19:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.4 2009/05/26 23:43:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.5 2010/12/30 16:19:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: netisr.c,v 1.4 2009/05/26 23:43:39 pooka Exp $");
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <net/netisr.h>
+
+#include <rump/rumpuser.h>
 
 #include "rump_net_private.h"
 
@@ -49,44 +51,40 @@ schednetisr(int isr)
 }
 
 /*
- * Provide weak aliases purely for linkage in case the real
- * networking stack isn't used
+ * Aliases are needed only for static linking (dlsym() is not supported).
  */
-void __ipintr_stub(void);
+void __netisr_stub(void);
 void
-__ipintr_stub(void)
+__netisr_stub(void)
 {
 
-	panic("ipintr called but networking stack missing");
+	panic("netisr called but networking stack missing");
 }
-__weak_alias(ipintr,__ipintr_stub);
-
-void __arpintr_stub(void);
-void
-__arpintr_stub(void)
-{
-
-	panic("arpintr called but networking stack missing");
-}
-__weak_alias(arpintr,__arpintr_stub);
-
-void __ip6intr_stub(void);
-void
-__ip6intr_stub(void)
-{
-
-	panic("ip6intr called but networking stack missing");
-}
-__weak_alias(ip6intr,__ip6intr_stub);
+__weak_alias(ipintr,__netisr_stub);
+__weak_alias(arpintr,__netisr_stub);
+__weak_alias(ip6intr,__netisr_stub);
 
 void
 rump_netisr_init(void)
 {
+	void *iphand, *arphand, *ip6hand, *sym;
 
+	iphand = ipintr;
+	if ((sym = rumpuser_dl_globalsym("rumpns_ipintr")) != NULL)
+		iphand = sym;
+
+	arphand = arpintr;
+	if ((sym = rumpuser_dl_globalsym("rumpns_arpintr")) != NULL)
+		arphand = sym;
+
+	ip6hand = ip6intr;
+	if ((sym = rumpuser_dl_globalsym("rumpns_ip6intr")) != NULL)
+		ip6hand = sym;
+		
 	netisrs[NETISR_IP] = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
-	    (void (*)(void *))ipintr, NULL);
+	    (void (*)(void *))iphand, NULL);
 	netisrs[NETISR_ARP] = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
-	    (void (*)(void *))arpintr, NULL);
+	    (void (*)(void *))arphand, NULL);
 	netisrs[NETISR_IPV6] = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
-	    (void (*)(void *))ip6intr, NULL);
+	    (void (*)(void *))ip6hand, NULL);
 }
