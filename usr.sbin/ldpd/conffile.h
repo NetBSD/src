@@ -1,6 +1,6 @@
-/* $NetBSD: ldp.h,v 1.2 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: conffile.h,v 1.1 2010/12/30 11:29:21 kefren Exp $ */
 
-/*-
+/*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,53 +29,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LDP_H_
-#define _LDP_H_
+#ifndef __CONFFILE_H
+#define __CONFFILE_H
 
-#include <sys/types.h>
 #include <netinet/in.h>
+#include <sys/queue.h>
 
-#define	ALL_ROUTERS		"224.0.0.2"
-#define	LDP_PORT		646
-#define	LDP_COMMAND_PORT	2626
+#define E_CONF_OK 0
+#define	E_CONF_NOMATCH -1
+#define E_CONF_AMBIGUOUS -2
+#define E_CONF_IO -3
+#define E_CONF_MEM -4
+#define E_CONF_GENERIC -5
+#define E_CONF_PARAM -6
 
-#define	LDPD_VER		"0.3.0"
+struct conf_neighbour {
+	struct in_addr address;
+	int authenticate;	/* RFC 2385 */
+	SLIST_ENTRY(conf_neighbour) neilist;
+};
+SLIST_HEAD(,conf_neighbour) conei_head;
 
-#define CONFFILE		"/etc/ldpd.conf"
 
-extern char     my_ldp_id[20];
+int conf_parsefile(char *fname);
 
-#define LDP_ID my_ldp_id
-
-/* LDP Messages */
-#define	LDP_NOTIFICATION	0x0001
-#define	LDP_HELLO		0x0100
-#define	LDP_INITIALIZE		0x0200
-#define	LDP_KEEPALIVE		0x0201
-#define	LDP_ADDRESS		0x0300
-#define	LDP_ADDRESS_WITHDRAW	0x0301
-#define	LDP_LABEL_MAPPING	0x0400
-#define	LDP_LABEL_REQUEST	0x0401
-#define	LDP_LABEL_WITHDRAW	0x0402
-#define	LDP_LABEL_RELEASE	0x0403
-#define	LDP_LABEL_ABORT		0x0404
-
-/* Protocol version */
-#define	LDP_VERSION		1
-
-/* Various timers */
-#define	LDP_HELLO_TIME 5
-#define	LDP_HELLO_KEEP 15
-#define	LDP_KEEPALIVE_TIME 4
-#define	LDP_HOLDTIME 15
-
-#define	MIN_LABEL		16
-#define	MAX_LABEL		1048576
-
-#define	ROUTE_LOOKUP_LOOP	6
-#define	REPLAY_MAX		100
-#define	MAX_POLL_FDS		200
-
-void	print_usage(char*);
-
-#endif	/* !_LDP_H_ */
+#endif

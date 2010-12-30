@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netmpls/mpls.h>
 #include <arpa/inet.h>
 
@@ -40,6 +41,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+
+#include "conffile.h"
 #include "socketops.h"
 #include "ldp_errors.h"
 #include "ldp.h"
@@ -47,6 +50,8 @@
 #include "mpls_interface.h"
 #include "notifications.h"
 #include "ldp_peer.h"
+
+extern int ldp_holddown_time;
 
 struct in_addr *myaddresses;
 
@@ -66,8 +71,9 @@ ldp_peer_new(struct in_addr * ldp_id, struct in_addr * a,
 	     struct in_addr * tradd, uint16_t holdtime, int soc)
 {
 	struct ldp_peer *p;
-	int             s = soc;
+	int s = soc;
 	struct sockaddr_in sa;
+	struct conf_neighbour *cn;
 
 	if (s < 1) {
 		s = socket(PF_INET, SOCK_STREAM, 0);
@@ -86,11 +92,22 @@ ldp_peer_new(struct in_addr * ldp_id, struct in_addr * a,
 		set_ttl(s);
 	}
 
+	/* MD5 authentication needed ? */
+	SLIST_FOREACH(cn, &conei_head, neilist)
+		if (cn->authenticate != 0 && (a->s_addr == cn->address.s_addr ||
+		    (tradd && tradd->s_addr == cn->address.s_addr))) {
+			if (setsockopt(s, IPPROTO_TCP, TCP_MD5SIG, &(int){1},
+			    sizeof(int)) != 0)
+				fatalp("setsockopt TCP_MD5SIG: %s\n",
+				    strerror(errno));
+			break;
+		}
+
 	/* Set the peer in CONNECTING/CONNECTED state */
 	p = calloc(1, sizeof(*p));
 
 	if (!p) {
-		fatalp("ldp_peer_new: malloc problem\n");
+		fatalp("ldp_peer_new: calloc problem\n");
 		return NULL;
 	}
 
@@ -103,7 +120,7 @@ ldp_peer_new(struct in_addr * ldp_id, struct in_addr * a,
 	else
 		memcpy(&p->transport_address, a,
 		    sizeof(struct in_addr));
-	p->holdtime = holdtime > LDP_HOLDTIME ? holdtime : LDP_HOLDTIME;
+	p->holdtime = holdtime > ldp_holddown_time ? holdtime : ldp_holddown_time;
 	p->socket = s;
 	if (soc < 1) {
 		p->state = LDP_PEER_CONNECTING;
@@ -141,7 +158,7 @@ ldp_peer_holddown(struct ldp_peer * p)
 	if (p->state == LDP_PEER_ESTABLISHED)
 		mpls_delete_ldp_peer(p);
 	p->state = LDP_PEER_HOLDDOWN;
-	p->timeout = LDP_HOLDTIME;
+	p->timeout = ldp_holddown_time;
 	shutdown(p->socket, SHUT_RDWR);
 	ldp_peer_delete_all_mappings(p);
 	del_all_ifaddr(p);
