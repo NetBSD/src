@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.33 2010/12/25 01:19:33 jakllsch Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.34 2010/12/30 22:28:53 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -234,7 +234,7 @@ read_label(struct biosdisk *d)
 				continue;
 			sector = this_ext + mbr[i].mbrp_start;
 #ifdef DISK_DEBUG
-			printf("ptn type %d in sector %"PRId64"\n", typ, sector);
+			printf("ptn type %d in sector %d\n", typ, sector);
 #endif
 			if (typ == MBR_PTYPE_NETBSD) {
 				error = check_label(d, sector);
@@ -485,7 +485,7 @@ nolabel:
 #endif /* NO_DISKLABEL */
 
 #ifdef DISK_DEBUG
-	printf("partition @%d\n", d->boff);
+	printf("partition @%"PRId64"\n", d->boff);
 #endif
 
 #ifdef _STANDALONE
