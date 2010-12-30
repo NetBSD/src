@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.29 2010/12/22 22:28:35 jruoho Exp $
+# $NetBSD: acpidevs,v 1.30 2010/12/30 19:37:39 jruoho Exp $
 #
 # Originally extracted from:
 
@@ -388,6 +388,7 @@ ACPI000D	Power Meter
 ACPI000E	Wake Alarm Device
 # **** Others ****
 HPQ0004	Hewlett-Packard 3D DriveGuard accelerometer
+IBM0079	IBM Docking Station
 INT0800	Intel Firmware Hub Device
 IPI0001	Intelligent Platform Management Interface
 LEN0014	Lenovo ThinkPad Extras
