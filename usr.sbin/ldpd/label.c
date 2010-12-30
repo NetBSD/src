@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
+/* $NetBSD: label.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include "mpls_routes.h"
 #include "label.h"
 #include "ldp_errors.h"
+
+int	min_label = MIN_LABEL, max_label = MAX_LABEL;
 
 void 
 label_init()
@@ -146,7 +148,7 @@ label_reattach_route(struct label *l, int readd)
 	l->label = 0;
 
 	/* Deletes pure MPLS route */
-	if (oldbinding >= MIN_LABEL) {
+	if (oldbinding >= min_label) {
 		u = make_mpls_union(oldbinding);
 		delete_route(u, NULL, FREESO);
 	}
@@ -189,22 +191,15 @@ label_reattach_all_peer_labels(struct ldp_peer *p, int readd)
 void 
 del_all_peer_labels(struct ldp_peer * p, int readd)
 {
-	struct label   *l;
-	int		do_remove = 1;
+	struct label   *l, *lnext;
 
-	while(do_remove == 1) {
-		do_remove = 0;
-		SLIST_FOREACH(l, &label_head, labels) {
-			if(l->p != p)
-				continue;
-			label_reattach_route(l, readd);
-			label_del(l);
-			/* remove must not interact with foreach */
-			SLIST_REMOVE(&label_head, l, label, labels);
-			do_remove = 1;
-			break;		/* XXX: suboptimal */
-		}
-	} // while
+	SLIST_FOREACH_SAFE(l, &label_head, labels, lnext) {
+		if(l->p != p)
+			continue;
+		label_reattach_route(l, readd);
+		label_del(l);
+		SLIST_REMOVE(&label_head, l, label, labels);
+	}
 }
 
 /*
@@ -251,11 +246,11 @@ uint32_t
 get_free_local_label()
 {
 	struct label *l;
-	uint32_t lbl;
+	int lbl;
  
-	for (lbl = MIN_LABEL; lbl <= MAX_LABEL; lbl++) {
+	for (lbl = min_label; lbl <= max_label; lbl++) {
 		SLIST_FOREACH(l, &label_head, labels)
-			if ((uint32_t)l->binding == lbl)
+			if (l->binding == lbl)
 				break;
 		if (l == NULL)
 			return lbl;

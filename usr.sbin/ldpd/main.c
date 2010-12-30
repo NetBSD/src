@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.2 2010/12/08 09:43:28 wiz Exp $ */
+/* $NetBSD: main.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -48,15 +48,17 @@
 #include "fsm.h"
 #include "ldp_errors.h"
 #include "mpls_interface.h"
+#include "conffile.h"
 
-extern int      ls;		/* TCP listening socket */
-extern int	dont_catch;
-extern int	command_port;
-extern int	command_socket;
+extern int ls;		/* TCP listening socket */
+extern int dont_catch;
+extern int command_port;
+extern int command_socket;
 
-extern int	debug_f, warn_f, syslog_f;
+extern int debug_f, warn_f, syslog_f;
 
-extern	struct sockaddr	mplssockaddr;
+extern struct sockaddr mplssockaddr;
+extern struct in_addr conf_ldp_id;
 
 void print_usage(char *myself)
 {
@@ -66,10 +68,15 @@ void print_usage(char *myself)
 int 
 main(int argc, char *argv[])
 {
-	int ch, forkres, dontfork = 0;
+	int ch, forkres, dontfork = 0, cpf;
+	char conffile[PATH_MAX + 1];
 
-	while((ch = getopt(argc, argv, "dDfhp:W")) != -1)
+	strlcpy(conffile, CONFFILE, sizeof(conffile));
+	while((ch = getopt(argc, argv, "c:dDfhp:W")) != -1)
 		switch(ch) {
+		case 'c':
+			strlcpy(conffile, optarg, sizeof(conffile));
+			break;
 		case 'D':
 			debug_f = 1;
 			break;
@@ -98,10 +105,23 @@ main(int argc, char *argv[])
 		fatalp("You have to run this as ROOT\n");
 		return -1;
 	}
+
+	cpf = conf_parsefile(conffile);
+	if (cpf < 0 && strcmp(conffile, CONFFILE)) {
+		fatalp("Cannot parse config file: %s\n", conffile);
+		return -1;
+	} else if (cpf > 0) {
+		fatalp("Cannot parse line %d in config file\n", cpf);
+		return -1;
+	}
+
 	if (set_my_ldp_id()) {
 		fatalp("Cannot set LDP ID\n");
 		return -1;
 	}
+	if (conf_ldp_id.s_addr != 0)
+		strlcpy(my_ldp_id, inet_ntoa(conf_ldp_id), INET_ADDRSTRLEN);
+
 	if (mplssockaddr.sa_len == 0) {
 		fatalp("You need one mpls interface up and an IP "
 		    "address set for it\n");
