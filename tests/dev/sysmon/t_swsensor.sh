@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.2 2010/12/29 19:21:39 pgoyette Exp $
+# $NetBSD: t_swsensor.sh,v 1.3 2010/12/30 04:01:59 pgoyette Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \
@@ -141,7 +141,7 @@ common_body() {
 	# Step 5 - if sensor provides hw limit, make sure it works
 	if [ $1 -ne 0 -a ${skip_events} -eq 0 ] ; then
 		rump.sysctl -w hw.swsensor.cur_value=$(( $3 - $5 ))
-		sleep 15
+		sleep 5
 		cnt=$(get_powerd_event_count)
 		if [ ${cnt} -lt ${expected_event} ] ; then
 			atf_fail "5: No event triggered"
