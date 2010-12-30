@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
+/* $NetBSD: socketops.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@ extern struct rt_msg replay_rt[REPLAY_MAX];
 extern struct com_sock	csockets[MAX_COMMAND_SOCKETS];
 
 int	ldp_hello_time = LDP_HELLO_TIME;
+int	ldp_keepalive_time = LDP_KEEPALIVE_TIME;
+int	ldp_holddown_time = LDP_HOLDTIME;
 
 void	recv_pdu(int);
 void	send_hello_alarm(int);
@@ -279,7 +281,7 @@ send_hello(void)
 	/* Prepare Common Hello attributes */
 	cht->type = htons(TLV_COMMON_HELLO);
 	cht->length = htons(sizeof(cht->holdtime) + sizeof(cht->res));
-	cht->holdtime = htons(LDP_HOLDTIME);
+	cht->holdtime = htons(ldp_holddown_time);
 	cht->res = 0;
 
 	/*
@@ -456,7 +458,7 @@ void
 send_hello_alarm(int unused)
 {
 	struct ldp_peer *p;
-	struct hello_info *hi;
+	struct hello_info *hi, *hinext;
 	time_t          t = time(NULL);
 	int             olderrno = errno;
 
@@ -489,7 +491,7 @@ check_peer:
 			}	/* switch */
 
 	/* send keepalives */
-	if (!(t % LDP_KEEPALIVE_TIME)) {
+	if (!(t % ldp_keepalive_time)) {
 		SLIST_FOREACH(p, &ldp_peer_head, peers)	
 		    if (p->state == LDP_PEER_ESTABLISHED) {
 			debugp("Sending KeepAlive to %s\n",
@@ -503,12 +505,9 @@ check_peer:
 		hi->keepalive--;
 
 	/* Check hello keepalives */
-check_hello:
-	SLIST_FOREACH(hi, &hello_info_head, infos)
-		if (hi->keepalive < 1) {
+	SLIST_FOREACH_SAFE(hi, &hello_info_head, infos, hinext)
+		if (hi->keepalive < 1)
 			SLIST_REMOVE(&hello_info_head, hi, hello_info, infos);
-			goto check_hello;
-		}
 
 	/* Set the alarm again and bail out */
 	alarm(1);
@@ -707,7 +706,7 @@ new_peer_connection()
 		return;
 	}
 	/* XXX: sa.sin_addr ain't peer LDP ID ... */
-	ldp_peer_new(&sa.sin_addr, &sa.sin_addr, NULL, LDP_HOLDTIME, s);
+	ldp_peer_new(&sa.sin_addr, &sa.sin_addr, NULL, ldp_holddown_time, s);
 
 }
 
@@ -722,7 +721,7 @@ send_initialize(struct ldp_peer * p)
 	ti.cs_type = htons(TLV_COMMON_SESSION);
 	ti.cs_len = htons(CS_LEN);
 	ti.cs_version = htons(LDP_VERSION);
-	ti.cs_keepalive = htons(2 * LDP_KEEPALIVE_TIME);
+	ti.cs_keepalive = htons(2 * ldp_keepalive_time);
 	ti.cs_adpvlim = 0;
 	ti.cs_maxpdulen = htons(MAX_PDU_SIZE);
 	ti.cs_peeraddress.s_addr = p->ldp_id.s_addr;
