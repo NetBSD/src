@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.104 2010/12/30 11:42:53 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.105 2010/12/30 11:54:50 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -817,7 +817,8 @@ END {
 			    sys_nosys, syscall) > sysent
 			printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = filler */\n", \
 			    "(sy_call_t *)rump_enosys", syscall) > rumpsysent
-			printf("\t/* %3d */\t\"# filler\",\n", syscall, syscall) > sysnamesbottom
+			printf("\t/* %3d */\t\"# filler\",\n", syscall) \
+			    > sysnamesbottom
 			syscall++
 		}
 	}
