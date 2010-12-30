@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.4 2010/06/08 15:32:55 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.5 2010/12/30 15:47:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.4 2010/06/08 15:32:55 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.5 2010/12/30 15:47:30 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -428,3 +428,10 @@ rumpuser_dl_component_init(int type, rump_component_init_fn compinit)
 	fprintf(stderr, "Warning, dlinfo() unsupported on host?\n");
 }
 #endif
+
+void *
+rumpuser_dl_globalsym(const char *symname)
+{
+
+	return dlsym(RTLD_DEFAULT, symname);
+}
