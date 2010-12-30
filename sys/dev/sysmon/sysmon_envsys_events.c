@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.96 2010/12/15 17:17:17 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.97 2010/12/30 03:59:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.96 2010/12/15 17:17:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.97 2010/12/30 03:59:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -486,15 +486,9 @@ int
 sme_events_init(struct sysmon_envsys *sme)
 {
 	int error = 0;
-	uint64_t timo;
 
 	KASSERT(sme != NULL);
 	KASSERT(mutex_owned(&sme->sme_mtx));
-
-	if (sme->sme_events_timeout)
-		timo = sme->sme_events_timeout * hz;
-	else
-		timo = SME_EVTIMO;
 
 	error = workqueue_create(&sme->sme_wq, sme->sme_name,
 	    sme_events_worker, sme, PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE);
@@ -504,12 +498,36 @@ sme_events_init(struct sysmon_envsys *sme)
 	mutex_init(&sme->sme_callout_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sme->sme_callout, sme_events_check, sme);
-	callout_schedule(&sme->sme_callout, timo);
 	sme->sme_flags |= SME_CALLOUT_INITIALIZED;
+	sme_schedule_callout(sme);
 	DPRINTF(("%s: events framework initialized for '%s'\n",
 	    __func__, sme->sme_name));
 
 	return error;
+}
+
+/*
+ * sme_schedule_callout
+ *
+ *	(Re)-schedule the device's callout timer
+ */
+void
+sme_schedule_callout(struct sysmon_envsys *sme)
+{
+	uint64_t timo;
+
+	KASSERT(sme != NULL);
+
+	if ((sme->sme_flags & SME_CALLOUT_INITIALIZED) == 0)
+		return;
+
+	if (sme->sme_events_timeout)
+		timo = sme->sme_events_timeout * hz;
+	else
+		timo = SME_EVTIMO;
+
+	callout_stop(&sme->sme_callout);
+	callout_schedule(&sme->sme_callout, timo);
 }
 
 /*
@@ -630,7 +648,7 @@ sme_events_check(void *arg)
 	else
 		timo = SME_EVTIMO;
 	if (!sysmon_low_power)
-		callout_schedule(&sme->sme_callout, timo);
+		sme_schedule_callout(sme);
 	mutex_exit(&sme->sme_callout_mtx);
 }
 
