@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.50 2010/08/29 07:00:13 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.51 2010/12/30 18:27:01 jruoho Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.50 2010/08/29 07:00:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.51 2010/12/30 18:27:01 jruoho Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -611,6 +611,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	ifp->if_init = iwn_init;
 	ifp->if_ioctl = iwn_ioctl;
 	ifp->if_start = iwn_start;
+	ifp->if_stop = iwn_stop;
 	ifp->if_watchdog = iwn_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
