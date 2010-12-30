@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.107 2010/12/30 16:49:24 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.108 2010/12/30 20:09:53 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -594,8 +594,9 @@ function printrumpsysent(insysent, compatwrap) {
 		flags[0] = "SYCALL_NOSYS"
 		flags[1] = "0"
 		printf("\t{ 0, 0, %s,\n\t    (sy_call_t *)%s }, \t"	\
-		    "/* %d = unrumped */\n",				\
-		    flags[modular], eno[modular], syscall) > rumpsysent
+		    "/* %d = %s */\n",					\
+		    flags[modular], eno[modular], syscall, funcalias)	\
+		    > rumpsysent
 		return
 	}
 
