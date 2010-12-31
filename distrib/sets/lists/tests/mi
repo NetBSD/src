@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.199 2010/12/31 14:36:10 pgoyette Exp $
+# $NetBSD: mi,v 1.200 2010/12/31 18:20:32 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -268,6 +268,7 @@
 ./usr/libdata/debug/usr/tests/fs/vfs/t_io.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_renamerace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_rmdirrace.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/vfs/t_ro.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/include					tests-ipf-tests
@@ -1204,6 +1205,7 @@
 ./usr/tests/fs/vfs/t_io			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_renamerace			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_rmdirrace			tests-fs-tests		atf
+./usr/tests/fs/vfs/t_ro			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_vfsops			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_vnops			tests-fs-tests		atf
 ./usr/tests/games				tests-games-tests
