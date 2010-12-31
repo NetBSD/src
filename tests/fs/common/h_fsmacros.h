@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.23 2010/12/31 18:12:51 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.24 2010/12/31 18:16:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ FSPROTOS(ffs);
 FSPROTOS(lfs);
 FSPROTOS(msdosfs);
 FSPROTOS(nfs);
+FSPROTOS(nfsro);
 FSPROTOS(puffs);
 FSPROTOS(rumpfs);
 FSPROTOS(sysvbfs);
@@ -126,6 +127,41 @@ do {									\
 			atf_tc_fail_errno("delfs failed");		\
 	}
 
+#define ATF_TC_FSADD_RO(_fs_,_type_,_func_,_desc_,_gen_)		\
+	ATF_TC_WITH_CLEANUP(_fs_##_##_func_);				\
+	ATF_TC_HEAD(_fs_##_##_func_,tc)					\
+	{								\
+		atf_tc_set_md_var(tc, "descr",_type_" test for "_desc_);\
+		atf_tc_set_md_var(tc, "X-fs.type", _type_);		\
+	}								\
+	void *_fs_##_func_##tmp;					\
+									\
+	ATF_TC_BODY(_fs_##_##_func_,tc)					\
+	{								\
+		if (!atf_check_fstype(tc, _type_))			\
+			atf_tc_skip("filesystem not selected");		\
+		FSTEST_CONSTRUCTOR(tc,_fs_,_fs_##_func_##tmp);		\
+		_gen_(tc,FSTEST_MNTNAME);				\
+		if (_fs_##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0)	\
+			atf_tc_fail_errno("unmount r/w failed");	\
+		if (_fs_##_fstest_mount(tc, _fs_##_func_##tmp,		\
+		    FSTEST_MNTNAME, MNT_RDONLY) != 0)			\
+		atf_tc_fail_errno("mount ro failed");			\
+		_func_(tc,FSTEST_MNTNAME);				\
+		if (_fs_##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0) {\
+			rump_pub_vfs_mount_print(FSTEST_MNTNAME, 1);	\
+			atf_tc_fail_errno("unmount failed");		\
+		}							\
+	}								\
+									\
+	ATF_TC_CLEANUP(_fs_##_##_func_,tc)				\
+	{								\
+		if (!atf_check_fstype(tc, _type_))			\
+			return;						\
+		if (_fs_##_fstest_delfs(tc, _fs_##_func_##tmp) != 0)	\
+			atf_tc_fail_errno("delfs failed");		\
+	}
+
 #define ATF_TP_FSADD(fs,func)						\
   ATF_TP_ADD_TC(tp,fs##_##func)
 
@@ -150,6 +186,33 @@ do {									\
   ATF_TP_FSADD(rumpfs,func);						\
   ATF_TP_FSADD(sysvbfs,func);						\
   ATF_TP_FSADD(tmpfs,func);
+
+/*
+ * Same as above, but generate a file system image first and perform
+ * tests for a r/o mount.
+ *
+ * Missing the following file systems:
+ *   + lfs (fstest_lfs routines cannot handle remount.  FIXME!)
+ *   + tmpfs (memory backend)
+ *   + rumpfs (memory backend)
+ *   + puffs (memory backend, but could be run in theory)
+ */
+
+#define ATF_TC_FSAPPLY_RO(func,desc,gen)				\
+  ATF_TC_FSADD_RO(ext2fs,MOUNT_EXT2FS,func,desc,gen)			\
+  ATF_TC_FSADD_RO(ffs,MOUNT_FFS,func,desc,gen)				\
+  ATF_TC_FSADD_RO(msdosfs,MOUNT_MSDOS,func,desc,gen)			\
+  ATF_TC_FSADD_RO(nfs,MOUNT_NFS,func,desc,gen)				\
+  ATF_TC_FSADD_RO(nfsro,MOUNT_NFS,func,desc,gen)			\
+  ATF_TC_FSADD_RO(sysvbfs,MOUNT_SYSVBFS,func,desc,gen)
+
+#define ATF_TP_FSAPPLY_RO(func)						\
+  ATF_TP_FSADD(ext2fs,func);						\
+  ATF_TP_FSADD(ffs,func);						\
+  ATF_TP_FSADD(msdosfs,func);						\
+  ATF_TP_FSADD(nfs,func);						\
+  ATF_TP_FSADD(nfsro,func);						\
+  ATF_TP_FSADD(sysvbfs,func);
 
 #define ATF_FSAPPLY(func,desc)						\
 	ATF_TC_FSAPPLY(func,desc);					\
