@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ro.c,v 1.1 2010/12/31 18:20:32 pooka Exp $	*/
+/*	$NetBSD: t_ro.c,v 1.2 2010/12/31 18:26:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ rmfile(const atf_tc_t *tc, const char *mp)
 
 	FSTEST_ENTER();
 	if (FSTYPE_SYSVBFS(tc))
-		atf_tc_expect_fail("sysbvfs unlink (PR MISSING)");
+		atf_tc_expect_fail("PR kern/44302");
 	ATF_REQUIRE_ERRNO(EROFS, rump_sys_unlink(AFILE) == -1);
 	FSTEST_EXIT();
 }
