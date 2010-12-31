@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/09/23 09:39:14 he Exp $
+#	$NetBSD: Makefile,v 1.13 2010/12/31 18:20:32 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,6 +9,7 @@ WARNS=		4
 TESTS_C+=	t_full
 TESTS_C+=	t_io
 TESTS_C+=	t_renamerace
+TESTS_C+=	t_ro
 TESTS_C+=	t_rmdirrace
 TESTS_C+=	t_vfsops
 TESTS_C+=	t_vnops
