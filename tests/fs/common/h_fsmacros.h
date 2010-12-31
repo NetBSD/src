@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.22 2010/11/11 17:39:29 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.23 2010/12/31 18:12:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,77 +97,80 @@ do {									\
 		atf_tc_fail_errno("delfs failed");			\
 } while (/*CONSTCOND*/0);
 
-#define ATF_TC_FSADD(fs,type,func,desc) \
-  ATF_TC_WITH_CLEANUP(fs##_##func); \
-  ATF_TC_HEAD(fs##_##func,tc) \
-  { \
-    atf_tc_set_md_var(tc, "descr", type " test for " desc); \
-    atf_tc_set_md_var(tc, "X-fs.type", type); \
-  } \
-  void *fs##func##tmp; \
-  ATF_TC_BODY(fs##_##func,tc) \
-  { \
-    if (!atf_check_fstype(tc, type)) \
-      atf_tc_skip("filesystem not selected"); \
-    FSTEST_CONSTRUCTOR(tc,fs,fs##func##tmp); \
-    func(tc,FSTEST_MNTNAME); \
-    if (fs##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0) { \
-      rump_pub_vfs_mount_print(FSTEST_MNTNAME, 1); \
-      atf_tc_fail_errno("unmount failed"); \
-    } \
-  } \
-  ATF_TC_CLEANUP(fs##_##func,tc) \
-  { \
-    if (!atf_check_fstype(tc, type)) \
-      return; \
-    if (fs##_fstest_delfs(tc, fs##func##tmp) != 0) \
-      atf_tc_fail_errno("delfs failed"); \
-  }
+#define ATF_TC_FSADD(fs,type,func,desc)					\
+	ATF_TC_WITH_CLEANUP(fs##_##func);				\
+	ATF_TC_HEAD(fs##_##func,tc)					\
+	{								\
+		atf_tc_set_md_var(tc, "descr", type " test for " desc);	\
+		atf_tc_set_md_var(tc, "X-fs.type", type);		\
+	}								\
+	void *fs##func##tmp;						\
+									\
+	ATF_TC_BODY(fs##_##func,tc)					\
+	{								\
+		if (!atf_check_fstype(tc, type))			\
+			atf_tc_skip("filesystem not selected");		\
+		FSTEST_CONSTRUCTOR(tc,fs,fs##func##tmp);		\
+		func(tc,FSTEST_MNTNAME);				\
+		if (fs##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0) {	\
+			rump_pub_vfs_mount_print(FSTEST_MNTNAME, 1);	\
+			atf_tc_fail_errno("unmount failed");		\
+		}							\
+	}								\
+									\
+	ATF_TC_CLEANUP(fs##_##func,tc)					\
+	{								\
+		if (!atf_check_fstype(tc, type))			\
+			return;						\
+		if (fs##_fstest_delfs(tc, fs##func##tmp) != 0)		\
+			atf_tc_fail_errno("delfs failed");		\
+	}
 
-#define ATF_TP_FSADD(fs,func) \
+#define ATF_TP_FSADD(fs,func)						\
   ATF_TP_ADD_TC(tp,fs##_##func)
 
-#define ATF_TC_FSAPPLY(func,desc) \
-  ATF_TC_FSADD(ext2fs,MOUNT_EXT2FS,func,desc) \
-  ATF_TC_FSADD(ffs,MOUNT_FFS,func,desc) \
-  ATF_TC_FSADD(lfs,MOUNT_LFS,func,desc) \
-  ATF_TC_FSADD(msdosfs,MOUNT_MSDOS,func,desc) \
-  ATF_TC_FSADD(nfs,MOUNT_NFS,func,desc) \
-  ATF_TC_FSADD(puffs,MOUNT_PUFFS,func,desc) \
-  ATF_TC_FSADD(rumpfs,MOUNT_RUMPFS,func,desc) \
-  ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc) \
+#define ATF_TC_FSAPPLY(func,desc)					\
+  ATF_TC_FSADD(ext2fs,MOUNT_EXT2FS,func,desc)				\
+  ATF_TC_FSADD(ffs,MOUNT_FFS,func,desc)					\
+  ATF_TC_FSADD(lfs,MOUNT_LFS,func,desc)					\
+  ATF_TC_FSADD(msdosfs,MOUNT_MSDOS,func,desc)				\
+  ATF_TC_FSADD(nfs,MOUNT_NFS,func,desc)					\
+  ATF_TC_FSADD(puffs,MOUNT_PUFFS,func,desc)				\
+  ATF_TC_FSADD(rumpfs,MOUNT_RUMPFS,func,desc)				\
+  ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc)				\
   ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)
 
-#define ATF_TP_FSAPPLY(func) \
-  ATF_TP_FSADD(ext2fs,func); \
-  ATF_TP_FSADD(ffs,func); \
-  ATF_TP_FSADD(lfs,func); \
-  ATF_TP_FSADD(msdosfs,func); \
-  ATF_TP_FSADD(nfs,func); \
-  ATF_TP_FSADD(puffs,func); \
-  ATF_TP_FSADD(rumpfs,func); \
-  ATF_TP_FSADD(sysvbfs,func); \
+#define ATF_TP_FSAPPLY(func)						\
+  ATF_TP_FSADD(ext2fs,func);						\
+  ATF_TP_FSADD(ffs,func);						\
+  ATF_TP_FSADD(lfs,func);						\
+  ATF_TP_FSADD(msdosfs,func);						\
+  ATF_TP_FSADD(nfs,func);						\
+  ATF_TP_FSADD(puffs,func);						\
+  ATF_TP_FSADD(rumpfs,func);						\
+  ATF_TP_FSADD(sysvbfs,func);						\
   ATF_TP_FSADD(tmpfs,func);
 
-#define ATF_FSAPPLY(func,desc) \
-  ATF_TC_FSAPPLY(func,desc); \
-  ATF_TP_ADD_TCS(tp) \
-  { \
-    ATF_TP_FSAPPLY(func); \
-    return atf_no_error(); \
-  }
+#define ATF_FSAPPLY(func,desc)						\
+	ATF_TC_FSAPPLY(func,desc);					\
+	ATF_TP_ADD_TCS(tp)						\
+	{								\
+		ATF_TP_FSAPPLY(func);					\
+		return atf_no_error();					\
+	}
 
 static __inline bool
 atf_check_fstype(const atf_tc_t *tc, const char *fs)
 {
-  const char *fstype;
+	const char *fstype;
 
-  if (!atf_tc_has_config_var(tc, "fstype"))
-    return true;
-  fstype = atf_tc_get_config_var(tc, "fstype");
-  if (strcmp(fstype, fs) == 0)
-    return true;
-  return false;
+	if (!atf_tc_has_config_var(tc, "fstype"))
+		return true;
+
+	fstype = atf_tc_get_config_var(tc, "fstype");
+	if (strcmp(fstype, fs) == 0)
+		return true;
+	return false;
 }
 
 #define FSTYPE_EXT2FS(tc)\
@@ -189,12 +192,13 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
 #define FSTYPE_TMPFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_TMPFS) == 0)
 
-#define FSTEST_ENTER()						\
-    if (rump_sys_chdir(FSTEST_MNTNAME) == -1)			\
-	atf_tc_fail_errno("failed to cd into test mount")
-#define FSTEST_EXIT()						\
-    if (rump_sys_chdir("/") == -1)				\
-	atf_tc_fail_errno("failed to cd out of test mount")
+#define FSTEST_ENTER()							\
+	if (rump_sys_chdir(FSTEST_MNTNAME) == -1)			\
+		atf_tc_fail_errno("failed to cd into test mount")
+
+#define FSTEST_EXIT()							\
+	if (rump_sys_chdir("/") == -1)					\
+		atf_tc_fail_errno("failed to cd out of test mount")
 
 /*
  * file system args structures
