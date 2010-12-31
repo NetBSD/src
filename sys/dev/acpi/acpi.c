@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.222 2010/10/24 07:53:04 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.223 2010/12/31 09:19:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.222 2010/10/24 07:53:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.223 2010/12/31 09:19:43 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1495,7 +1495,7 @@ acpi_enter_sleep_state(int state)
  */
 SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
 {
-	const struct sysctlnode *mnode, *rnode;
+	const struct sysctlnode *mnode, *rnode, *snode;
 	int err;
 
 	err = sysctl_createv(clog, 0, NULL, &rnode,
@@ -1521,12 +1521,31 @@ SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
 	    NULL, 0, &acpi_root_pointer, sizeof(acpi_root_pointer),
 	    CTL_CREATE, CTL_EOL);
 
-	(void)sysctl_createv(NULL, 0, &rnode, NULL,
+	err = sysctl_createv(clog, 0, &rnode, &snode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
+	    "sleep", SYSCTL_DESCR("ACPI sleep"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		return;
+
+	(void)sysctl_createv(NULL, 0, &snode, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "state", SYSCTL_DESCR("System sleep state"),
+	    sysctl_hw_acpi_sleepstate, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	(void)sysctl_createv(NULL, 0, &snode, NULL,
 	    CTLFLAG_PERMANENT | CTLFLAG_READONLY, CTLTYPE_STRING,
-	    "supported_states", SYSCTL_DESCR("Supported system states"),
+	    "states", SYSCTL_DESCR("Supported sleep states"),
 	    sysctl_hw_acpi_sleepstates, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 
+	/*
+	 * For the time being, machdep.sleep_state
+	 * is provided for backwards compatibility.
+	 */
 	err = sysctl_createv(NULL, 0, NULL, &mnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep",
 	    NULL, NULL, 0, NULL, 0,
