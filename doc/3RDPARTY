@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.799 2010/12/27 19:48:02 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.800 2010/12/31 13:05:09 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -167,7 +167,7 @@ Notes:
 
 Package:	byacc
 Version:	20101127
-Current Vers:	20101226
+Current Vers:	20101229
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
