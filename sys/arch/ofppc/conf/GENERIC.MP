@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.13 2010/12/10 21:27:21 phx Exp $
+# $NetBSD: GENERIC.MP,v 1.14 2010/12/31 21:50:27 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -53,6 +53,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+options 	RDB_PART	# Rigid Disk Block partition support
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
