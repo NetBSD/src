@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.197 2010/12/28 16:57:00 pgoyette Exp $
+# $NetBSD: mi,v 1.198 2010/12/31 04:08:32 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -367,6 +367,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_string.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_stresep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_convfp.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_gdtoa.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_randomid.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libdes				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libdes/t_des.debug			tests-lib-debug		debug,atf,crypto
 ./usr/libdata/debug/usr/tests/lib/semaphore				tests-lib-debug
@@ -1626,6 +1629,9 @@
 ./usr/tests/lib/libc/string/t_string		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_stresep		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
+./usr/tests/lib/libc/t_convfp			tests-lib-tests		atf
+./usr/tests/lib/libc/t_gdtoa			tests-lib-tests		atf
+./usr/tests/lib/libc/t_randomid			tests-lib-tests		atf
 ./usr/tests/lib/libdes				tests-lib-tests
 ./usr/tests/lib/libdes/Atffile			tests-lib-tests		atf,crypto
 ./usr/tests/lib/libdes/t_des			tests-lib-tests		atf,crypto
