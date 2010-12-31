@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs.h,v 1.13 2010/12/28 10:20:27 tsutsui Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.14 2010/12/31 22:49:55 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.10 2010/12/28 10:19:24 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.11 2010/12/31 22:48:59 tsutsui Exp 
  */
 
 /*-
@@ -129,11 +129,12 @@
 #define	DIO_DEVICE_SECID_YGENESIS	0x0d
 #define	DIO_DEVICE_DESC_YGENESIS	"y-genesis display"
 
-#define	DIO_DEVICE_SECID_FB3X2_A	0x10
-#define	DIO_DEVICE_DESC_FB3X2_A	"362/382 internal display #1"
+#define	DIO_DEVICE_SECID_A1474MID	0x10
+#define	DIO_DEVICE_DESC_A1474MID	"A1474-69511 on-board mid-res graphics"
 
-#define	DIO_DEVICE_SECID_FB3X2_B	0x11
-#define	DIO_DEVICE_DESC_FB3X2_B	"362/382 internal display #2"
+#define	DIO_DEVICE_SECID_A147xVGA	0x11
+#define	DIO_DEVICE_DESC_A147xVGA	"A147x-69510 on-board VGA graphics"
+/* No ID info about A1474-69515 on-board high-res graphics */
 
 /* Devices not yet supported.  Descriptions are lacking. */
 
