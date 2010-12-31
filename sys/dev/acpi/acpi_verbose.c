@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.13 2010/12/31 10:23:44 jruoho Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.14 2010/12/31 10:56:39 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.13 2010/12/31 10:23:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.14 2010/12/31 10:56:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -458,7 +458,7 @@ static void
 acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 {
 	struct acpi_devnode *child;
-	device_t pcidev;
+	device_t dev;
 	uint32_t i;
 
 	for (i = 0; i < level; i++)
@@ -490,10 +490,10 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 			    ad->ad_pciinfo->ap_segment,
 			    ad->ad_pciinfo->ap_downbus);
 
-		pcidev = acpi_pcidev_find_dev(ad->ad_pciinfo);
+		dev = acpi_pcidev_find_dev(ad);
 
-		if (pcidev != NULL)
-			aprint_normal(" <%s>", device_xname(pcidev));
+		if (dev != NULL)
+			aprint_normal(" <%s>", device_xname(dev));
 	}
 
 	aprint_normal("\n");

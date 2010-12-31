@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.17 2010/12/31 10:23:44 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.18 2010/12/31 10:56:39 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.17 2010/12/31 10:23:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.18 2010/12/31 10:56:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -397,14 +397,20 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
  *	if it doesn't exist.
  */
 device_t
-acpi_pcidev_find_dev(struct acpi_pci_info *ap)
+acpi_pcidev_find_dev(struct acpi_devnode *ad)
 {
+	struct acpi_pci_info *ap;
 	struct pci_softc *pci;
 	device_t dv, pr;
 	deviter_t di;
 
-	if (ap == NULL)
+	if (ad == NULL)
 		return NULL;
+
+	if (ad->ad_pciinfo == NULL)
+		return NULL;
+
+	ap = ad->ad_pciinfo;
 
 	if (ap->ap_function == 0xFFFF)
 		return NULL;
