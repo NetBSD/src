@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.16 2010/10/26 22:27:44 gsutre Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.17 2010/12/31 10:23:44 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.16 2010/10/26 22:27:44 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.17 2010/12/31 10:23:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,12 +37,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.16 2010/10/26 22:27:44 gsutre Exp $")
 #include <sys/systm.h>
 
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>
+
+#include "locators.h"
 
 #define _COMPONENT	  ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	  ("acpi_pci")
@@ -384,4 +387,48 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
 	}
 
 	return NULL;
+}
+
+
+/*
+ * acpi_pcidev_find_dev:
+ *
+ *	Returns the device corresponding to the given PCI info, or NULL
+ *	if it doesn't exist.
+ */
+device_t
+acpi_pcidev_find_dev(struct acpi_pci_info *ap)
+{
+	struct pci_softc *pci;
+	device_t dv, pr;
+	deviter_t di;
+
+	if (ap == NULL)
+		return NULL;
+
+	if (ap->ap_function == 0xFFFF)
+		return NULL;
+
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dv != NULL; dv = deviter_next(&di)) {
+
+		pr = device_parent(dv);
+
+		if (pr == NULL || device_is_a(pr, "pci") != true)
+			continue;
+
+		if (dv->dv_locators == NULL)	/* This should not happen. */
+			continue;
+
+		pci = device_private(pr);
+
+		if (pci->sc_bus == ap->ap_bus &&
+		    device_locator(dv, PCICF_DEV) == ap->ap_device &&
+		    device_locator(dv, PCICF_FUNCTION) == ap->ap_function)
+			break;
+	}
+
+	deviter_release(&di);
+
+	return dv;
 }
