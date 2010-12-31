@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 2009/11/23 13:40:10 pooka Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.9 2010/12/31 21:50:28 phx Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,27 +30,33 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _MACHINE_DISKLABEL_H_
+#define _MACHINE_DISKLABEL_H_
 
-#ifndef	_MACHINE_DISKLABEL_H_
-#define	_MACHINE_DISKLABEL_H_
-
-#define	LABELSECTOR	1		/* sector containing label */
-#define	LABELOFFSET	0		/* offset of label in sector */
-#define	MAXPARTITIONS	16		/* number of partitions */
-#define	RAW_PART	2		/* raw partition: XX?c */
+#define	LABELSECTOR	0			/* sector containing label */
+#define	LABELOFFSET	64			/* offset of label in sector */
+#define MBR_LABELSECTOR 1			/* label sector in MBR */
+#define MBR_LABELOFFSET 0			/* label offset in MBR */
+#define	MAXPARTITIONS	16			/* number of partitions */
+#define	RAW_PART	2			/* raw partition: xx?c */
 
 #if HAVE_NBTOOL_CONFIG_H
-#include <nbinclude/sys/bootblock.h> /* Pull in MBR partition definitions. */
-#include <nbinclude/sys/dkbad.h>
+#include <nbinclude/sys/bootblock.h>		/* MBR partition definitions */
+#include <nbinclude/sys/disklabel_rdb.h>	/* RDB partition definitions */
 #else
-#include <sys/bootblock.h> /* Pull in MBR partition definitions. */
-#include <sys/dkbad.h>
+#include <sys/bootblock.h>			/* MBR partition definitions */
+#include <sys/disklabel_rdb.h>			/* RDB partition definitions */
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 struct cpu_disklabel {
-	struct mbr_partition dosparts[MBR_PART_COUNT];
-#define __HAVE_DISKLABEL_DKBAD
-	struct dkbad bad;
+	daddr_t cd_start;	/* Offset to NetBSD partition in blocks */
+	daddr_t cd_labelsector; /* label sector offset from cd_start */   
+	int cd_labeloffset;     /* label byte offset within label sector */
+
+	u_long rdblock;			/* may be RDBNULL which invalidates */
+	u_long pblist[MAXPARTITIONS];	/* partblock number (RDB list order) */
+	int pbindex[MAXPARTITIONS];	/* index of pblock (partition order) */
+	int valid;			/* essential that this is valid */
 };
 
-#endif	/* _MACHINE_DISKLABEL_H_ */
+#endif /* _MACHINE_DISKLABEL_H_ */
