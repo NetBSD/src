@@ -1,4 +1,4 @@
-# $NetBSD: t_df_1_noopen.sh,v 1.1 2010/12/24 12:41:43 skrll Exp $
+# $NetBSD: t_df_1_noopen.sh,v 1.2 2010/12/31 08:52:32 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,8 +39,7 @@ df_1_noopen1_body()
 h_df_1_noopen1: Cannot dlopen non-loadable /usr/lib/libpthread.so
 EOF
 
-	atf_check -o file:expout "$(atf_get_srcdir)/h_df_1_noopen1"
-	atf_expect_exit 1 "libpthread is marked DF_1_NOOPEN"
+	atf_check -s exit:1 -e file:expout "$(atf_get_srcdir)/h_df_1_noopen1"
 }
 
 atf_test_case df_1_noopen2
