@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs_data.h,v 1.13 2010/12/28 10:20:27 tsutsui Exp $	*/
+/*	$NetBSD: diodevs_data.h,v 1.14 2010/12/31 22:49:55 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.10 2010/12/28 10:19:24 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.11 2010/12/31 22:48:59 tsutsui Exp 
  */
 
 /*-
@@ -118,8 +118,8 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x39,	0x0b,	DIO_DEVICE_DESC_XGENESIS },
 	{ 0x39,	0x0c,	DIO_DEVICE_DESC_TIGER },
 	{ 0x39,	0x0d,	DIO_DEVICE_DESC_YGENESIS },
-	{ 0x39,	0x10,	DIO_DEVICE_DESC_FB3X2_A },
-	{ 0x39,	0x11,	DIO_DEVICE_DESC_FB3X2_B },
+	{ 0x39,	0x10,	DIO_DEVICE_DESC_A1474MID },
+	{ 0x39,	0x11,	DIO_DEVICE_DESC_A147xVGA },
 	{ 0x03,	0,	DIO_DEVICE_DESC_MISC0 },
 	{ 0x04,	0,	DIO_DEVICE_DESC_MISC1 },
 	{ 0x06,	0,	DIO_DEVICE_DESC_PARALLEL },
