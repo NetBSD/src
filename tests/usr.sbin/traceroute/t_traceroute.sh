@@ -1,4 +1,4 @@
-#	$NetBSD: t_traceroute.sh,v 1.3 2010/12/30 16:58:07 pooka Exp $
+#	$NetBSD: t_traceroute.sh,v 1.4 2010/12/31 15:21:49 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -84,13 +84,11 @@ threetests()
 
 	threeservers
 	export RUMP_SERVER=unix://commsock1
-	atf_check -s exit:0	\
-	     -o save:tmpfile -e ignore rump.traceroute ${1} -n 2.3.4.5
-	atf_check -o inline:'1.2.3.1\n2.3.4.5\n' awk '{print $2}' < tmpfile
+	atf_check -s exit:0 -o inline:'1.2.3.1\n2.3.4.5\n' -e ignore -x	\
+	    "rump.traceroute ${1} -n 2.3.4.5 | awk '{print \$2}'"
 	export RUMP_SERVER=unix://commsock3
-	atf_check -s exit:0	\
-	     -o save:tmpfile -e ignore rump.traceroute ${1} -n 1.2.3.4
-	atf_check -o inline:'2.3.4.1\n1.2.3.4\n' awk '{print $2}' < tmpfile
+	atf_check -s exit:0 -o inline:'2.3.4.1\n1.2.3.4\n' -e ignore -x \
+	    "rump.traceroute ${1} -n 1.2.3.4 | awk '{print \$2}'"
 }
 
 basic_body()
