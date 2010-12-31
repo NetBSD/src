@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpnfsd.c,v 1.5 2010/09/02 15:13:55 pooka Exp $	*/
+/*	$NetBSD: rumpnfsd.c,v 1.6 2010/12/31 18:11:27 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,12 +54,12 @@ sem_t gensem;
 int
 main(int argc, char *argv[])
 {
-	const char *ethername;
-	const char *serveraddr;
+	const char *ethername, *ethername_ro;
+	const char *serveraddr, *serveraddr_ro;
 	const char *netmask;
 	const char *exportpath;
 	const char *imagename;
-	char ifname[IFNAMSIZ];
+	char ifname[IFNAMSIZ], ifname_ro[IFNAMSIZ];
 	void *fsarg;
 	pthread_t t;
 	int rv;
@@ -67,16 +67,20 @@ main(int argc, char *argv[])
 	/* use defaults? */
 	if (argc == 1) {
 		ethername = "etherbus";
+		ethername_ro = "etherbus_ro";
 		serveraddr = "10.3.2.1";
+		serveraddr_ro = "10.4.2.1";
 		netmask = "255.255.255.0";
 		exportpath = "/myexport";
 		imagename = "ffs.img";
 	} else {
 		ethername = argv[1];
-		serveraddr = argv[2];
-		netmask = argv[3];
-		exportpath = argv[4];
-		imagename = argv[5];
+		ethername_ro = argv[2];
+		serveraddr = argv[3];
+		serveraddr_ro = argv[4];
+		netmask = argv[5];
+		exportpath = argv[6];
+		imagename = argv[7];
 	}
 
 	rump_init();
@@ -123,6 +127,9 @@ main(int argc, char *argv[])
 	/* create interface */
 	netcfg_rump_makeshmif(ethername, ifname);
 	netcfg_rump_if(ifname, serveraddr, netmask);
+
+	netcfg_rump_makeshmif(ethername_ro, ifname_ro);
+	netcfg_rump_if(ifname_ro, serveraddr_ro, netmask);
 
 	/*
 	 * No syslogging, thanks.
