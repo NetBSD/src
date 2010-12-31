@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.4 2010/07/28 15:15:22 pooka Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.5 2010/12/31 17:59:24 pooka Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.4 2010/07/28 15:15:22 pooka Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.5 2010/12/31 17:59:24 pooka Exp $");
 #endif
 #endif				/* not lint */
 
@@ -210,7 +210,9 @@ static void parsecred __P((char *, struct uucred *));
 static int put_exlist __P((struct dirlist *, XDR *, struct dirlist *, int *));
 static int scan_tree __P((struct dirlist *, struct sockaddr *));
 static void send_umntall __P((int));
+#if 0
 static int umntall_each __P((caddr_t, struct sockaddr_in *));
+#endif
 static int xdr_dir __P((XDR *, char *));
 static int xdr_explist __P((XDR *, caddr_t));
 static int xdr_fhs __P((XDR *, caddr_t));
@@ -2386,11 +2388,14 @@ static void
 send_umntall(n)
 	int n;
 {
+#if 0
 	(void)clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1, RPCMNT_UMNTALL,
 	    xdr_void, NULL, xdr_void, NULL, (resultproc_t)umntall_each);
+#endif
 	exit(0);
 }
 
+#if 0
 static int
 umntall_each(resultsp, raddr)
 	caddr_t resultsp;
@@ -2398,6 +2403,7 @@ umntall_each(resultsp, raddr)
 {
 	return (1);
 }
+#endif
 
 /*
  * Free up a group list.
