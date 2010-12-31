@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.25 2010/07/29 11:40:08 jruoho Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.26 2010/12/31 09:19:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.25 2010/07/29 11:40:08 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.26 2010/12/31 09:19:43 jruoho Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -111,7 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.25 2010/07/29 11:40:08 jruoho Exp 
 static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
-static int acpi_md_node = CTL_EOL;
 int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
 int acpi_md_vesa_modenum = 0; /* Referenced by arch/x86/x86/genfb_machdep.c */
 static int acpi_md_beep_on_reset = 0;
@@ -396,23 +395,63 @@ acpi_md_sleep_init(void)
 
 SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi x86 sysctl setup")
 {
-	const struct sysctlnode *node;
-	const struct sysctlnode *ssnode;
+	const struct sysctlnode *rnode, *mnode;
+	int err;
 
-	if (sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "machdep", NULL, NULL, 0, NULL, 0, CTL_MACHDEP,
-	    CTL_EOL) != 0)
-		return;
-	if (sysctl_createv(NULL, 0, &node, &ssnode, CTLFLAG_READWRITE,
-	    CTLTYPE_INT, "acpi_vbios_reset", NULL, sysctl_md_acpi_vbios_reset,
-	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
-		return;
-	if (sysctl_createv(NULL, 0, &node, &ssnode, CTLFLAG_READWRITE,
-	    CTLTYPE_BOOL, "acpi_beep_on_reset", NULL, sysctl_md_acpi_beep_on_reset,
-	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+	    NULL, NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
+
+	if (err != 0)
+		goto out;
+
+	err = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto out;
+
+	err = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
+	    "sleep", SYSCTL_DESCR("ACPI sleep"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto out;
+
+	(void)sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "beep",
+	    NULL, sysctl_md_acpi_beep_on_reset,
+	    0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	(void)sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "vbios",
+	    NULL, sysctl_md_acpi_vbios_reset,
+	    0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	/*
+	 * All ACPI-specific sysctl(9) nodes are centralized
+	 * under hw.acpi. The two variables below are provided
+	 * for backwards compatibility.
+	 */
+out:
+	err = sysctl_createv(NULL, 0, NULL, &mnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep",
+	    NULL, NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	if (err != 0)
 		return;
 
-	acpi_md_node = node->sysctl_num;
+	(void)sysctl_createv(NULL, 0, &mnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "acpi_vbios_reset",
+	    NULL, sysctl_md_acpi_vbios_reset,
+	    0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	(void)sysctl_createv(NULL, 0, &mnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "acpi_beep_on_reset",
+	    NULL, sysctl_md_acpi_beep_on_reset,
+	    0, NULL, 0, CTL_CREATE, CTL_EOL);
 }
 
 static int
@@ -433,7 +472,7 @@ sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
 
 #ifndef VGA_POST
 	if (t == 2) {
-		aprint_error("WARNING: machdep.acpi_vbios_reset=2 "
+		aprint_error("WARNING: hw.acpi.sleep.vbios=2 "
 		    "unsupported (no option VGA_POST in kernel config)\n");
 		return EINVAL;
 	}
