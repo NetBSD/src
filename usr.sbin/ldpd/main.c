@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: main.c,v 1.4 2010/12/31 06:16:17 wiz Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ extern struct in_addr conf_ldp_id;
 
 void print_usage(char *myself)
 {
-	printf("\nUsage: %s [-DdfhW] [-p PORT]\n\n", myself);
+	printf("\nUsage: %s [-DdfhW] [-c config_file] [-p port]\n\n", myself);
 }
 
 int 
