@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.3 2010/12/03 01:29:55 christos Exp $
+# $NetBSD: t_make.sh,v 1.4 2010/12/31 14:55:07 pgoyette Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,5 +85,5 @@ atf_init_test_cases()
 	atf_add_test_case qequals
 	atf_add_test_case ternary
 	atf_add_test_case varcmd
-	atf_add_test_case unmathedvarparen
+	atf_add_test_case unmatchedvarparen
 }
