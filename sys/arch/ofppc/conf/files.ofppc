@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.43 2010/06/09 04:44:01 kiyohara Exp $
+#	$NetBSD: files.ofppc,v 1.44 2010/12/31 21:50:27 phx Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -8,17 +8,19 @@ maxpartitions 16
 
 maxusers 8 16 64
 
-defflag	akbd.h NO_AKDB_DEVICE
-defflag adbkbd.h NO_ADBKBD_DEVICE
-defflag zsc.h NO_ZSC_DEVICE
-defflag adb.h NO_ADB_DEVICE
-defflag ukbd.h NO_UKBD_DEVICE
-defflag zstty.h NO_ZSTTY_DEVICE
-defflag ofb.h NO_OFB_DEVICE
+defflag	akbd.h		NO_AKDB_DEVICE
+defflag adbkbd.h	NO_ADBKBD_DEVICE
+defflag zsc.h		NO_ZSC_DEVICE
+defflag adb.h		NO_ADB_DEVICE
+defflag ukbd.h		NO_UKBD_DEVICE
+defflag zstty.h		NO_ZSTTY_DEVICE
+defflag ofb.h		NO_OFB_DEVICE
+
+defflag opt_disksubr.h	RDB_PART
 
 file	arch/powerpc/oea/ofw_autoconf.c
 file	arch/powerpc/powerpc/clock.c
-file	kern/subr_disk_mbr.c			disk
+file	arch/ofppc/ofppc/disksubr.c		disk
 file	arch/powerpc/oea/ofwoea_machdep.c
 file	arch/powerpc/oea/ofw_consinit.c
 file	arch/powerpc/oea/ofw_rascons.c
