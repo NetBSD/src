@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.4 2010/08/26 15:07:16 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.5 2010/12/31 18:11:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,7 +53,9 @@
 #include "../../net/config/netconfig.c"
 
 #define SERVERADDR "10.3.2.1"
+#define SERVERROADDR "10.4.2.1"
 #define CLIENTADDR "10.3.2.2"
+#define CLIENTROADDR "10.4.2.2"
 #define NETNETMASK "255.255.255.0"
 #define EXPORTPATH "/myexport"
 
@@ -66,17 +68,18 @@ childfail(int status)
 
 struct nfstestargs *theargs;
 
+
 /* fork rump nfsd, configure interface */
-int
-nfs_fstest_newfs(const atf_tc_t *tc, void **argp,
+static int
+donewfs(const atf_tc_t *tc, void **argp,
 	const char *image, off_t size, void *fspriv)
 {
 	const char *srcdir;
 	char *nfsdargv[7];
 	char nfsdpath[MAXPATHLEN];
-	char ethername[MAXPATHLEN];
 	char imagepath[MAXPATHLEN];
-	char ifname[IFNAMSIZ];
+	char ethername[MAXPATHLEN], ethername_ro[MAXPATHLEN];
+	char ifname[IFNAMSIZ], ifname_ro[IFNAMSIZ];
 	char cwd[MAXPATHLEN];
 	struct nfstestargs *args;
 	pid_t childpid;
@@ -89,15 +92,18 @@ nfs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	srcdir = atf_tc_get_config_var(tc, "srcdir");
 	sprintf(nfsdpath, "%s/../nfs/nfsservice/rumpnfsd", srcdir);
 	sprintf(ethername, "/%s/%s.etherbus", getcwd(cwd, sizeof(cwd)), image);
+	sprintf(ethername_ro, "%s_ro", ethername);
 	sprintf(imagepath, "/%s/%s", cwd, image);
 
 	nfsdargv[0] = nfsdpath;
 	nfsdargv[1] = ethername;
-	nfsdargv[2] = __UNCONST(SERVERADDR);
-	nfsdargv[3] = __UNCONST(NETNETMASK);
-	nfsdargv[4] = __UNCONST(EXPORTPATH);
-	nfsdargv[5] = imagepath;
-	nfsdargv[6] = NULL;
+	nfsdargv[2] = ethername_ro;
+	nfsdargv[3] = __UNCONST(SERVERADDR);
+	nfsdargv[4] = __UNCONST(SERVERROADDR);
+	nfsdargv[5] = __UNCONST(NETNETMASK);
+	nfsdargv[6] = __UNCONST(EXPORTPATH);
+	nfsdargv[7] = imagepath;
+	nfsdargv[8] = NULL;
 
 	signal(SIGCHLD, childfail);
 	if (pipe(pipes) == -1)
@@ -135,6 +141,8 @@ nfs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	rump_init();
 	netcfg_rump_makeshmif(ethername, ifname);
 	netcfg_rump_if(ifname, CLIENTADDR, NETNETMASK);
+	netcfg_rump_makeshmif(ethername_ro, ifname_ro);
+	netcfg_rump_if(ifname_ro, CLIENTROADDR, NETNETMASK);
 
 	/*
 	 * That's it.  The rest is done in mount, since we don't have
@@ -150,14 +158,31 @@ nfs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	return 0;
 }
 
-/* mount the file system */
 int
-nfs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
+nfs_fstest_newfs(const atf_tc_t *tc, void **argp,
+	const char *image, off_t size, void *fspriv)
+{
+
+	return donewfs(tc, argp, image, size, fspriv);
+}
+
+int
+nfsro_fstest_newfs(const atf_tc_t *tc, void **argp,
+	const char *image, off_t size, void *fspriv)
+{
+
+	return donewfs(tc, argp, image, size, fspriv);
+}
+
+/* mount the file system */
+static int
+domount(const atf_tc_t *tc, void *arg, const char *serverpath,
+	const char *path, int flags)
 {
 	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 	const char *nfscliargs[] = {
 		"nfsclient",
-		SERVERADDR ":" EXPORTPATH,
+		serverpath,
 		path,
 		NULL,
 	};
@@ -171,13 +196,13 @@ nfs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 	optind = 1;
 	opterr = 1;
 
+	/*
+	 * We use nfs parseargs here, since as a side effect it
+	 * takes care of the RPC hulabaloo.
+	 */
 	mount_nfs_parseargs(__arraycount(nfscliargs)-1, __UNCONST(nfscliargs),
 	    &args, &mntflags, canon_dev, canon_dir);
 
-	/*
-	 * We use nfs parseargs here, since as a side effect it
-	 * takes care of the  RPC hulabaloo.
-	 */
 	if (rump_sys_mount(MOUNT_NFS, path, flags, &args, sizeof(args)) == -1) {
 		return errno;
 	}
@@ -186,16 +211,80 @@ nfs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 }
 
 int
-nfs_fstest_delfs(const atf_tc_t *tc, void *arg)
+nfs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 {
-	return 0;
 
+	return domount(tc, arg, SERVERADDR ":" EXPORTPATH, path, flags);
+}
+
+/*
+ * This is where the magic happens!
+ *
+ * If we are mounting r/w, do the normal thing.  However, if we are
+ * doing a r/o mount, switch use the r/o server export address
+ * and do a r/w mount.  This way we end up testing the r/o export policy
+ * of the server! (yes, slightly questionable semantics, but at least
+ * we notice very quickly if our assumption is broken in the future ;)
+ */
+int
+nfsro_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
+{
+
+	if (flags & MNT_RDONLY) {
+		flags &= ~MNT_RDONLY;
+		return domount(tc, arg, SERVERROADDR":"EXPORTPATH, path, flags);
+	} else {
+		return domount(tc, arg, SERVERADDR":"EXPORTPATH, path, flags);
+	}
+}
+
+static int
+dodelfs(const atf_tc_t *tc, void *arg)
+{
+
+	/*
+	 * XXX: no access to "args" since we're called from "cleanup".
+	 * Trust atf to kill nfsd process and remove etherfile.
+	 */
+#if 0
+	/*
+	 * It's highly expected that the child will die next, so we
+	 * don't need that information anymore thank you very many.
+	 */
+	signal(SIGCHLD, SIG_IGN);
+
+	/*
+	 * Just KILL it.  Sending it SIGTERM first causes it to try
+	 * to send some unmount RPCs, leading to sticky situations.
+	 */
+	kill(args->ta_childpid, SIGKILL);
+	wait(&status);
+
+	/* remove ethernet bus */
+	if (unlink(args->ta_ethername) == -1)
+		atf_tc_fail_errno("unlink ethername");
+#endif
+
+	return 0;
 }
 
 int
-nfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
+nfs_fstest_delfs(const atf_tc_t *tc, void *arg)
 {
-	struct nfstestargs *args = theargs;
+
+	return dodelfs(tc, arg);
+}
+
+int
+nfsro_fstest_delfs(const atf_tc_t *tc, void *arg)
+{
+
+	return dodelfs(tc, arg);
+}
+
+static int
+dounmount(const atf_tc_t *tc, const char *path, int flags)
+{
 	int status, i, sverrno;
 
 	/*
@@ -217,22 +306,22 @@ nfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 	if (status == -1)
 		return sverrno;
 
-	/*
-	 * It's highly expected that the child will die next, so we
-	 * don't need that information anymore thank you very many.
-	 */
-	signal(SIGCHLD, SIG_IGN);
-
-	/*
-	 * Just KILL it.  Sending it SIGTERM first causes it to try
-	 * to send some unmount RPCs, leading to sticky situations.
-	 */
-	kill(args->ta_childpid, SIGKILL);
-	wait(&status);
-
-	/* remove ethernet bus */
-	if (unlink(args->ta_ethername) == -1)
-		atf_tc_fail_errno("unlink ethername");
+	if (rump_sys_rmdir(path) == -1)
+		return errno;
 
 	return 0;
+}
+
+int
+nfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
+{
+
+	return dounmount(tc, path, flags);
+}
+
+int
+nfsro_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
+{
+
+	return dounmount(tc, path, flags);
 }
