@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: ldp_command.c,v 1.4 2010/12/31 11:29:33 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <arpa/inet.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -380,6 +381,8 @@ show_neighbours(int s, char *recvspace)
 	struct ldp_peer_address *wp;
 	struct sockaddr_in ssin;
 	socklen_t sin_len = sizeof(struct sockaddr_in);
+	int enc;
+	socklen_t enclen = sizeof(enc);
 
 	SLIST_FOREACH(p, &ldp_peer_head, peers) {
 		snprintf(sendspace, MAXSEND, "LDP peer: %s\n",
@@ -410,6 +413,15 @@ show_neighbours(int s, char *recvspace)
 			if (getsockname(p->socket,(struct sockaddr *) &ssin,
 			    &sin_len))
 				break;
+
+			if (getsockopt(p->socket, IPPROTO_TCP, TCP_MD5SIG,
+			    &enc, &enclen) == 0) {
+				snprintf(sendspace, MAXSEND,
+				    "Authenticated: %s\n",
+				    enc != 0 ? "YES" : "NO");
+				writestr(s, sendspace);
+			}
+
 			snprintf(sendspace, MAXSEND,"Socket: %d\nLocal %s:%d\n",
 			    p->socket, inet_ntoa(ssin.sin_addr),
 			    ntohs(ssin.sin_port));
