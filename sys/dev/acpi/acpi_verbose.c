@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.12 2010/10/26 22:27:44 gsutre Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.13 2010/12/31 10:23:44 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.12 2010/10/26 22:27:44 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.13 2010/12/31 10:23:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,11 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.12 2010/10/26 22:27:44 gsutre Exp
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidevs_data.h>
 
-#include <dev/pci/pcivar.h>
-
 #include <prop/proplib.h>
 
-#include "locators.h"
+#define _COMPONENT ACPI_UTILITIES
+ACPI_MODULE_NAME   ("acpi_verbose")
 
 static bool	   acpiverbose_modcmd_prop(prop_dictionary_t);
 
@@ -92,7 +91,6 @@ static ACPI_STATUS acpi_print_madt_callback(ACPI_SUBTABLE_HEADER *, void *);
 static void	   acpi_print_fadt(struct acpi_softc *);
 static void	   acpi_print_devnodes(struct acpi_softc *);
 static void	   acpi_print_tree(struct acpi_devnode *, uint32_t);
-static device_t	   device_find_by_acpi_pci_info(const struct acpi_pci_info *);
 
 extern ACPI_TABLE_HEADER *madt_header;
 
@@ -492,7 +490,8 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 			    ad->ad_pciinfo->ap_segment,
 			    ad->ad_pciinfo->ap_downbus);
 
-		pcidev = device_find_by_acpi_pci_info(ad->ad_pciinfo);
+		pcidev = acpi_pcidev_find_dev(ad->ad_pciinfo);
+
 		if (pcidev != NULL)
 			aprint_normal(" <%s>", device_xname(pcidev));
 	}
@@ -501,38 +500,4 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 
 	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
 	    acpi_print_tree(child, level + 1);
-}
-
-/*
- * device_find_by_acpi_pci_info:
- *
- *	Returns the device corresponding to the given PCI info, or NULL
- *	if it doesn't exist.
- */
-static device_t
-device_find_by_acpi_pci_info(const struct acpi_pci_info *ap)
-{
-	device_t dv, pr;
-	struct pci_softc *pci;
-	deviter_t di;
-
-	if (ap->ap_function == 0xFFFF)
-		return NULL;
-
-	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
-	     dv = deviter_next(&di)) {
-		pr = device_parent(dv);
-		if ((pr == NULL) || !device_is_a(pr, "pci"))
-			continue;
-		if (dv->dv_locators == NULL)	/* This should not happen. */
-			continue;
-		pci = device_private(pr);
-		if (pci->sc_bus == ap->ap_bus &&
-		    device_locator(dv, PCICF_DEV) == ap->ap_device &&
-		    device_locator(dv, PCICF_FUNCTION) == ap->ap_function)
-			break;
-	}
-	deviter_release(&di);
-
-	return dv;
 }
