@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <setjmp.h>
 
 #ifndef __vax__
 #include <ieeefp.h>
@@ -264,6 +265,7 @@ ATF_TC_BODY(sigchild_kill, tc)
 	}
 }
 
+static sigjmp_buf sigfpe_flt_env;
 static void
 sigfpe_flt_action(int signo, siginfo_t *info, void *ptr)
 {
@@ -276,6 +278,8 @@ sigfpe_flt_action(int signo, siginfo_t *info, void *ptr)
 	ATF_REQUIRE_EQ(info->si_signo, SIGFPE);
 	ATF_REQUIRE_EQ(info->si_code, FPE_FLTDIV);
 	ATF_REQUIRE_EQ(info->si_errno, 0);
+
+	siglongjmp(sigfpe_flt_env, 1);
 }
 
 ATF_TC(sigfpe_flt);
@@ -292,18 +296,21 @@ ATF_TC_BODY(sigfpe_flt, tc)
 	struct sigaction sa;
 	double d = strtod("0", NULL);
 
-	sa.sa_flags = SA_SIGINFO;
-	sa.sa_sigaction = sigfpe_flt_action;
-	sigemptyset(&sa.sa_mask);
-	sigaction(SIGFPE, &sa, NULL);
+	if (sigsetjmp(sigfpe_flt_env, 0) == 0) {
+		sa.sa_flags = SA_SIGINFO;
+		sa.sa_sigaction = sigfpe_flt_action;
+		sigemptyset(&sa.sa_mask);
+		sigaction(SIGFPE, &sa, NULL);
 #ifndef __vax__
-	fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
+		fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
-	printf("%g\n", 1 / d);
+		printf("%g\n", 1 / d);
+	}
 	if (fltdiv_signalled == 0)
 		atf_tc_fail("FPE signal handler was not invoked");
 }
 
+static sigjmp_buf sigfpe_int_env;
 static void
 sigfpe_int_action(int signo, siginfo_t *info, void *ptr)
 {
@@ -319,6 +326,8 @@ sigfpe_int_action(int signo, siginfo_t *info, void *ptr)
 		    "reports FPE_FLTDIV instead of FPE_INTDIV");
 	ATF_REQUIRE_EQ(info->si_code, FPE_INTDIV);
 	ATF_REQUIRE_EQ(info->si_errno, 0);
+
+	siglongjmp(sigfpe_int_env, 1);
 }
 
 ATF_TC(sigfpe_int);
@@ -335,14 +344,16 @@ ATF_TC_BODY(sigfpe_int, tc)
 	struct sigaction sa;
 	long l = strtol("0", NULL, 10);
 
-	sa.sa_flags = SA_SIGINFO;
-	sa.sa_sigaction = sigfpe_int_action;
-	sigemptyset(&sa.sa_mask);
-	sigaction(SIGFPE, &sa, NULL);
+	if (sigsetjmp(sigfpe_int_env, 0) == 0) {
+		sa.sa_flags = SA_SIGINFO;
+		sa.sa_sigaction = sigfpe_int_action;
+		sigemptyset(&sa.sa_mask);
+		sigaction(SIGFPE, &sa, NULL);
 #ifndef __vax__
-	fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
+		fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
-	printf("%ld\n", 1 / l);
+		printf("%ld\n", 1 / l);
+	}
 	if (intdiv_signalled == 0)
 		atf_tc_fail("FPE signal handler was not invoked");
 }
