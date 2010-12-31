@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.31 2010/10/25 07:48:03 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.32 2010/12/31 08:17:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.31 2010/10/25 07:48:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.32 2010/12/31 08:17:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -315,7 +315,7 @@ thinkpad_get_hotkeys(void *opaque)
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
 	int type, event;
-	
+
 	for (;;) {
 		rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKP", &val);
 		if (ACPI_FAILURE(rv)) {
@@ -470,7 +470,7 @@ thinkpad_sensors_init(thinkpad_softc_t *sc)
 		sc->sc_sensor[i].units = ENVSYS_STEMP;
 
 		(void)snprintf(sc->sc_sensor[i].desc,
-		    sizeof(sc->sc_sensor[i].desc), "TMP%d", i);
+		    sizeof(sc->sc_sensor[i].desc), "temperature %d", i);
 
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 			&sc->sc_sensor[i]) != 0)
@@ -482,7 +482,7 @@ thinkpad_sensors_init(thinkpad_softc_t *sc)
 		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
 
 		(void)snprintf(sc->sc_sensor[i].desc,
-		    sizeof(sc->sc_sensor[i].desc), "FAN%d", j);
+		    sizeof(sc->sc_sensor[i].desc), "fan speed %d", j);
 
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 			&sc->sc_sensor[i]) != 0)
@@ -631,7 +631,7 @@ thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 
 	if (sc->sc_cmoshdl_valid == false)
 		return;
-	
+
 	rv = acpi_eval_set_integer(sc->sc_cmoshdl, NULL, cmd);
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(sc->sc_dev, "couldn't evalute CMOS: %s\n",
