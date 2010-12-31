@@ -1,4 +1,4 @@
-.\" $NetBSD: ldpd.8,v 1.3 2010/12/30 11:29:21 kefren Exp $
+.\" $NetBSD: ldpd.8,v 1.4 2010/12/31 06:15:08 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,8 +32,8 @@
 .Nd Label Distribution Protocol Daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl c Ar config_file
 .Op Fl DdfhW
+.Op Fl c Ar config_file
 .Op Fl p Ar port
 .Sh DESCRIPTION
 .Nm
@@ -76,7 +76,9 @@ daemon without modifications.
 The options are as follows:
 .Bl -tag -width 15n
 .It Fl c Ar config_file
-Specifies a path to the config file. Default: /etc/ldpd.conf
+Specifies a path to the config file.
+Default:
+.Pa /etc/ldpd.conf
 .It Fl D
 Enable debug mode.
 .It Fl d
