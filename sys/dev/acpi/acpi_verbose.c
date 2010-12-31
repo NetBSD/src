@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.14 2010/12/31 10:56:39 jruoho Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.15 2010/12/31 14:05:15 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.14 2010/12/31 10:56:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.15 2010/12/31 14:05:15 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.14 2010/12/31 10:56:39 jruoho Exp
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidevs_data.h>
+#include <dev/acpi/acpi_pci.h>
 
 #include <prop/proplib.h>
 
