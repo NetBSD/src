@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.1 2010/12/28 16:57:00 pgoyette Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.2 2011/01/01 23:45:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include <atf-c.h>
+#include <atf-c/config.h>
 
 #include <math.h>
 #include <stdio.h>
@@ -195,14 +196,19 @@ TEST(denormal_large_exp)
 
 ATF_TP_ADD_TCS(tp)
 {
+	const char *arch;
 
-	ATF_TP_ADD_TC(tp, basics);
-	ATF_TP_ADD_TC(tp, zero);
-	ATF_TP_ADD_TC(tp, infinity);
-	ATF_TP_ADD_TC(tp, overflow);
-	ATF_TP_ADD_TC(tp, denormal);
-	ATF_TP_ADD_TC(tp, underflow);
-	ATF_TP_ADD_TC(tp, denormal_large_exp);
+	arch = atf_config_get("atf_arch");
+	if (strcmp("vax", arch) != 0) {
+		ATF_TP_ADD_TC(tp, basics);
+		ATF_TP_ADD_TC(tp, zero);
+		ATF_TP_ADD_TC(tp, infinity);
+		ATF_TP_ADD_TC(tp, overflow);
+		ATF_TP_ADD_TC(tp, denormal);
+		ATF_TP_ADD_TC(tp, underflow);
+		ATF_TP_ADD_TC(tp, denormal_large_exp);
+	} else
+		printf("Test not valid for %s\n", arch);
 
 	return atf_no_error();
 }
