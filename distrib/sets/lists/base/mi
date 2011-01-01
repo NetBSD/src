@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.910 2010/12/26 11:31:44 jmcneill Exp $
+# $NetBSD: mi,v 1.911 2011/01/01 12:49:49 haad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4836,6 +4836,7 @@
 ./var/games/sail				base-games-root
 ./var/games/save				base-obsolete		obsolete
 ./var/heimdal					base-krb5-root
+./var/lock					base-sys-root
 ./var/log					base-sys-root
 ./var/log/rdist					base-netutil-root
 ./var/mail					base-mail-root

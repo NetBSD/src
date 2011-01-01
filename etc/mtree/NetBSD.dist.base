@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.68 2010/12/17 09:54:28 jruoho Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.69 2011/01/01 12:49:48 haad Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1098,6 +1098,7 @@
 ./var/games/phantasia		uname=games gname=games mode=0775
 ./var/games/sail		uname=games gname=games mode=0775
 ./var/heimdal
+./var/lock			gname=operator mode=0710
 ./var/log
 ./var/log/rdist
 ./var/mail			mode=1777
