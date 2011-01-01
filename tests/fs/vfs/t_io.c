@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.2 2010/11/11 16:03:55 pooka Exp $	*/
+/*	$NetBSD: t_io.c,v 1.3 2011/01/01 20:26:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
 #include "../common/h_fsmacros.h"
 #include "../../h_macros.h"
 
+#define TESTSTR "this is a string.  collect enough and you'll have Em"
+#define TESTSZ sizeof(TESTSTR)
+
 static void
 holywrite(const atf_tc_t *tc, const char *mp)
 {
@@ -49,7 +52,7 @@ holywrite(const atf_tc_t *tc, const char *mp)
 	size_t therange = getpagesize()+1;
 	int fd;
 
-	RL(rump_sys_chdir(mp));
+	FSTEST_ENTER();
 
 	RL(fd = rump_sys_open("file", O_RDWR|O_CREAT|O_TRUNC, 0666));
 
@@ -70,15 +73,61 @@ holywrite(const atf_tc_t *tc, const char *mp)
 	ATF_REQUIRE_EQ(memcmp(b2, b3, therange), 0);
 
 	rump_sys_close(fd);
-	rump_sys_chdir("/");
+	FSTEST_EXIT();
+}
+
+static void
+extendbody(const atf_tc_t *tc, off_t seekcnt)
+{
+	char buf[TESTSZ+1];
+	struct stat sb;
+	int fd;
+
+	FSTEST_ENTER();
+	RL(fd = rump_sys_open("testfile",
+	    O_CREAT | O_RDWR | (seekcnt ? O_APPEND : 0)));
+	RL(rump_sys_ftruncate(fd, seekcnt));
+	RL(rump_sys_fstat(fd, &sb));
+	if (FSTYPE_SYSVBFS(tc) && seekcnt)
+		atf_tc_expect_fail("fail");
+	ATF_REQUIRE_EQ(sb.st_size, seekcnt);
+	atf_tc_expect_pass();
+
+	ATF_REQUIRE_EQ(rump_sys_write(fd, TESTSTR, TESTSZ), TESTSZ);
+	ATF_REQUIRE_EQ(rump_sys_pread(fd, buf, TESTSZ, seekcnt), TESTSZ);
+	ATF_REQUIRE_STREQ(buf, TESTSTR);
+
+	RL(rump_sys_fstat(fd, &sb));
+	ATF_REQUIRE_EQ(sb.st_size, TESTSZ + seekcnt);
+	RL(rump_sys_close(fd));
+	FSTEST_EXIT();
+}
+
+static void
+extendfile(const atf_tc_t *tc, const char *mp)
+{
+
+	extendbody(tc, 0);
+}
+
+static void
+extendfile_append(const atf_tc_t *tc, const char *mp)
+{
+
+	extendbody(tc, 37);
 }
 
 ATF_TC_FSAPPLY(holywrite, "create a sparse file and fill hole");
+ATF_TC_FSAPPLY(extendfile, "check that extending a file works");
+ATF_TC_FSAPPLY(extendfile_append, "check that extending a file works "
+				  "with a append-only fd");
 
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_FSAPPLY(holywrite);
+	ATF_TP_FSAPPLY(extendfile);
+	ATF_TP_FSAPPLY(extendfile_append);
 
 	return atf_no_error();
 }
