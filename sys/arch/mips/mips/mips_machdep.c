@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.228 2010/11/10 09:27:23 uebayasi Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.229 2011/01/01 02:08:10 nisimura Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.228 2010/11/10 09:27:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.229 2011/01/01 02:08:10 nisimura Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1643,22 +1643,21 @@ mips_init_msgbuf(void)
 void
 mips_init_lwp0_uarea(void)
 {
-	vaddr_t v = uvm_pageboot_alloc(USPACE);
+	vaddr_t v;
+	struct pcb * const pcb0;
 
+	v = uvm_pageboot_alloc(USPACE);
 	uvm_lwp_setuarea(&lwp0, v);
 
-	struct pcb * const pcb0 = lwp_getpcb(&lwp0);
+	pcb0  = lwp_getpcb(&lwp0);
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	/*
 	 * Now zero out the only two areas of the uarea that we care about.
 	 */
 	memset(lwp0.l_md.md_regs, 0, sizeof(*lwp0.l_md.md_regs));
 	memset(pcb0, 0, sizeof(*pcb0));
-#ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
-#endif
 	pcb0->pcb_context.val[_L_SR] =
-#ifdef _LP64
+#if !defined(__mips_o32)
 	    MIPS_SR_KX |
 #endif
 	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
