@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.47 2010/11/29 04:20:12 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.48 2011/01/01 22:29:00 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -144,7 +144,7 @@ read_partial_data(pgp_stream_t *stream, void *dest, size_t length)
 		(void) fprintf(stderr, "fd_reader: coalesced data, off %d\n",
 				stream->virtualoff);
 	}
-	n = MIN(stream->virtualc - stream->virtualoff, length);
+	n = MIN(stream->virtualc - stream->virtualoff, (unsigned)length);
 	(void) memcpy(dest, &stream->virtualpkt[stream->virtualoff], n);
 	stream->virtualoff += n;
 	if (stream->virtualoff == stream->virtualc) {
