@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.87 2010/12/01 22:14:52 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.88 2011/01/01 23:00:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -598,9 +598,9 @@ format_json_key(FILE *fp, mj_t *obj, const int psigs)
 	pobj(fp, &obj->value.v[mj_object_find(obj, "pka", 0, 2) + 1], 0);
 	p(fp, " ", NULL);
 	pobj(fp, &obj->value.v[mj_object_find(obj, "key id", 0, 2) + 1], 0);
-	birthtime = strtoll(obj->value.v[mj_object_find(obj, "birthtime", 0, 2) + 1].value.s, NULL, 10);
+	birthtime = (int64_t)strtoll(obj->value.v[mj_object_find(obj, "birthtime", 0, 2) + 1].value.s, NULL, 10);
 	p(fp, " ", ptimestr(tbuf, sizeof(tbuf), birthtime), NULL);
-	duration = strtoll(obj->value.v[mj_object_find(obj, "duration", 0, 2) + 1].value.s, NULL, 10);
+	duration = (int64_t)strtoll(obj->value.v[mj_object_find(obj, "duration", 0, 2) + 1].value.s, NULL, 10);
 	if (duration > 0) {
 		now = time(NULL);
 		p(fp, " ", (birthtime + duration < now) ? "[EXPIRED " : "[EXPIRES ",
@@ -625,13 +625,15 @@ format_json_key(FILE *fp, mj_t *obj, const int psigs)
 			pobj(fp, &sub->value.v[1], 0); /* alg */
 			p(fp, " ", NULL);
 			pobj(fp, &sub->value.v[2], 0); /* id */
-			p(fp, " ", ptimestr(tbuf, sizeof(tbuf), strtoll(sub->value.v[3].value.s, NULL, 10)),
+			p(fp, " ", ptimestr(tbuf, sizeof(tbuf),
+					(time_t)strtoll(sub->value.v[3].value.s, NULL, 10)),
 				"\n", NULL);
 		} else if (strcmp(obj->value.v[i].value.s, "sig") == 0) {
 			sub = &obj->value.v[i + 1];
 			p(fp, "sig", NULL);
 			pobj(fp, &sub->value.v[0], 8);	/* size */
-			p(fp, "  ", ptimestr(tbuf, sizeof(tbuf), strtoll(sub->value.v[1].value.s, NULL, 10)),
+			p(fp, "  ", ptimestr(tbuf, sizeof(tbuf),
+					(time_t)strtoll(sub->value.v[1].value.s, NULL, 10)),
 				" ", NULL); /* time */
 			pobj(fp, &sub->value.v[2], 0); /* human name */
 			p(fp, "\n", NULL);
@@ -658,7 +660,7 @@ savepubkey(char *res, char *f, size_t size)
 		return 0;
 	}
 	len = strlen(res);
-	for (cc = 0 ; (wc = write(fd, &res[cc], len - cc)) > 0 ; cc += wc) {
+	for (cc = 0 ; (wc = (int)write(fd, &res[cc], len - (size_t)cc)) > 0 ; cc += wc) {
 	}
 	(void) close(fd);
 	return 1;
@@ -681,9 +683,9 @@ formatstring(char *buffer, const uint8_t *s, size_t len)
 {
 	int	cc;
 
-	cc = formatu32((uint8_t *)buffer, len);
+	cc = formatu32((uint8_t *)buffer, (uint32_t)len);
 	(void) memcpy(&buffer[cc], s, len);
-	return cc + len;
+	return cc + (int)len;
 }
 
 /* format a bignum, checking for "interesting" high bit values */
@@ -723,7 +725,7 @@ find_passphrase(FILE *passfp, const char *id, char *passphrase, size_t size, int
 		if (fgets(passphrase, (int)size, passfp) == NULL) {
 			return 0;
 		}
-		return strlen(passphrase);
+		return (int)strlen(passphrase);
 	}
 	for (i = 0 ; i < attempts ; i++) {
 		(void) snprintf(prompt, sizeof(prompt), "Enter passphrase for %.16s: ", id);
@@ -1870,11 +1872,11 @@ int
 netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, size_t size)
 {
 	const pgp_key_t	*key;
-	pgp_keyring_t		*keyring;
-	pgp_io_t		*io;
-	unsigned		 k;
-	size_t			 cc;
-	char			 f[MAXPATHLEN];
+	pgp_keyring_t	*keyring;
+	pgp_io_t	*io;
+	unsigned	 k;
+	size_t		 cc;
+	char		 f[MAXPATHLEN];
 
 	if ((io = calloc(1, sizeof(pgp_io_t))) == NULL) {
 		(void) fprintf(stderr, "netpgp_save_sshpub: bad alloc 1\n");
@@ -1917,5 +1919,5 @@ netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, si
 	cc += formatbignum((char *)&out[cc], key->key.pubkey.key.rsa.n);
 	free(io);
 	free(keyring);
-	return cc;
+	return (int)cc;
 }
