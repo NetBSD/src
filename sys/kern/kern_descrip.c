@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.208 2010/12/17 22:06:31 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.209 2011/01/01 22:05:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.208 2010/12/17 22:06:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.209 2011/01/01 22:05:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1319,15 +1319,15 @@ filedesc_dtor(void *arg, void *obj)
 }
 
 /*
- * Make p2 share p1's filedesc structure.
+ * Make p share curproc's filedesc structure.
  */
 void
-fd_share(struct proc *p2)
+fd_share(struct proc *p)
 {
 	filedesc_t *fdp;
 
 	fdp = curlwp->l_fd;
-	p2->p_fd = fdp;
+	p->p_fd = fdp;
 	atomic_inc_uint(&fdp->fd_refcnt);
 }
 
