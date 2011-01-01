@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.3 2011/01/01 20:26:22 pooka Exp $	*/
+/*	$NetBSD: t_io.c,v 1.4 2011/01/01 20:30:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ extendbody(const atf_tc_t *tc, off_t seekcnt)
 	RL(rump_sys_ftruncate(fd, seekcnt));
 	RL(rump_sys_fstat(fd, &sb));
 	if (FSTYPE_SYSVBFS(tc) && seekcnt)
-		atf_tc_expect_fail("fail");
+		atf_tc_expect_fail("PR kern/44307");
 	ATF_REQUIRE_EQ(sb.st_size, seekcnt);
 	atf_tc_expect_pass();
 
