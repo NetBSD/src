@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.4 2011/01/01 20:30:56 pooka Exp $	*/
+/*	$NetBSD: t_io.c,v 1.5 2011/01/01 20:43:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ extendbody(const atf_tc_t *tc, off_t seekcnt)
 	ATF_REQUIRE_STREQ(buf, TESTSTR);
 
 	RL(rump_sys_fstat(fd, &sb));
-	ATF_REQUIRE_EQ(sb.st_size, TESTSZ + seekcnt);
+	ATF_REQUIRE_EQ(sb.st_size, (off_t)TESTSZ + seekcnt);
 	RL(rump_sys_close(fd));
 	FSTEST_EXIT();
 }
