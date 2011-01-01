@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.19 2009/12/14 00:46:07 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.20 2011/01/01 02:08:10 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2009/12/14 00:46:07 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20 2011/01/01 02:08:10 nisimura Exp $"); 
 
 #include "opt_cputype.h"
 
@@ -60,9 +60,8 @@ getframe(struct lwp *l, int sig, int *onstack)
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
 		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
-	else
-		return (void *)(intptr_t)fp->f_regs[_R_SP];
-}		
+	return (void *)(intptr_t)fp->f_regs[_R_SP];
+}
 
 struct sigframe_siginfo {
 	siginfo_t sf_si;
@@ -78,30 +77,26 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
+	struct frame *tf;
+	struct sigframe_siginfo *fp, frame;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
-	struct sigframe_siginfo *fp = getframe(l, sig, &onstack);
-	struct frame *tf;
-	ucontext_t uc;
-	size_t ucsz;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = l->l_md.md_regs;
-	fp--;
+	fp = (struct sigframe_siginfo *)getframe(l, sig, &onstack) - 1;
 
-        uc.uc_flags = _UC_SIGMASK
-            | ((l->l_sigstk.ss_flags & SS_ONSTACK)
-            ? _UC_SETSTACK : _UC_CLRSTACK);
-        uc.uc_sigmask = *mask;
-        uc.uc_link = l->l_ctxlink;
-        memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
-        ucsz = (char *)&uc.__uc_pad - (char *)&uc;
-        sendsig_reset(l, sig);
-        mutex_exit(p->p_lock);
-        cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
-	error = copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info));
-	if (error == 0)
-		error = copyout(&uc, &fp->sf_uc, ucsz);
+	frame.sf_si._info = ksi->ksi_info;
+	frame.sf_uc.uc_flags = _UC_SIGMASK
+	    | ((l->l_sigstk.ss_flags & SS_ONSTACK)
+	    ? _UC_SETSTACK : _UC_CLRSTACK);
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_link = l->l_ctxlink;
+	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	sendsig_reset(l, sig);
+
+	mutex_exit(p->p_lock);
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	error = copyout(&frame, fp, sizeof(frame));
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -118,6 +113,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * handler.  The return address will be set up to point
 	 * to the signal trampoline to bounce us back.
 	 */
+	tf = l->l_md.md_regs;
 	tf->f_regs[_R_A0] = sig;
 	tf->f_regs[_R_A1] = (intptr_t)&fp->sf_si;
 	tf->f_regs[_R_A2] = (intptr_t)&fp->sf_uc;
