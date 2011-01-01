@@ -251,7 +251,7 @@ pgp_ssh2pubkey(pgp_io_t *io, const char *f, pgp_key_t *key, pgp_hash_alg_t hasht
 	}
 
 	/* convert from base64 to binary */
-	cc = bufgap_getbin(&bg, buf, (size_t)st.st_size);
+	cc = bufgap_getbin(&bg, buf, (size_t)bg.bcc);
 	if ((space = strchr(buf, ' ')) != NULL) {
 		cc = (int)(space - buf);
 	}
