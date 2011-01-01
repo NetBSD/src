@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.78 2010/12/18 08:20:12 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.79 2011/01/01 19:47:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.78 2010/12/18 08:20:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.79 2011/01/01 19:47:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -759,9 +759,12 @@ rump_vop_getattr(void *v)
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	struct rumpfs_node *rn = ap->a_vp->v_data;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+	struct vattr *vap = ap->a_vap;
 
-	memcpy(ap->a_vap, &rn->rn_va, sizeof(struct vattr));
+	memcpy(vap, &rn->rn_va, sizeof(struct vattr));
+	vap->va_size = vp->v_size;
 	return 0;
 }
 
@@ -776,6 +779,7 @@ rump_vop_setattr(void *v)
 	struct rumpfs_node *rn = ap->a_vp->v_data;
 
 	memcpy(&rn->rn_va, ap->a_vap, sizeof(struct vattr));
+	uvm_vnp_setsize(ap->a_vp, ap->a_vap->va_size);
 	return 0;
 }
 
@@ -1211,6 +1215,9 @@ rump_vop_write(void *v)
 	off_t chunk;
 	int error = 0;
 	bool allocd = false;
+
+	if (ap->a_ioflag & IO_APPEND)
+		uio->uio_offset = vp->v_size;
 
 	/* consult et? */
 	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
