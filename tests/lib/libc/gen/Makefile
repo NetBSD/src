@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2010/12/28 20:25:31 pgoyette Exp $
+# $NetBSD: Makefile,v 1.11 2011/01/01 23:45:01 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
 TESTS_C+=	t_glob_star
 TESTS_C+=	t_humanize_number
+TESTS_C+=	t_ldexp
 TESTS_C+=	t_rbstress
 TESTS_C+=	t_syslog_pthread
 TESTS_C+=	t_vis
@@ -21,10 +22,7 @@ HAVE_SIGINFO != if (echo "\#include <signal.h>" && echo "SA_SIGINFO") | ${CC} -E
 TESTS_C+=	t_siginfo
 .endif
 
-.if (${MACHINE_ARCH} != "vax")
-TESTS_C+=	t_ldexp
-.endif
-
+LDADD.t_ldexp+=		-lm
 LDADD.t_syslog_pthread+=-lpthread
 
 .include <bsd.test.mk>
