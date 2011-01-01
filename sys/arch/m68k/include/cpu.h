@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2010/12/22 02:42:28 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 2011/01/01 00:37:16 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -197,9 +197,9 @@
 #define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/cpu_data.h>
 
-#if defined(_KERNEL) || defined(_KMEMUSER)
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	cpuid_t	ci_cpuid;
