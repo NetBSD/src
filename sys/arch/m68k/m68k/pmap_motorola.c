@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.57 2010/11/10 09:27:22 uebayasi Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.58 2011/01/02 05:21:11 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.57 2010/11/10 09:27:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.58 2011/01/02 05:21:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
 #ifdef M68K_MMU_HP
-int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
+u_int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #endif
 #if defined(M68040) || defined(M68060)
 u_int		protostfree;	/* prototype (default) free ST map */
