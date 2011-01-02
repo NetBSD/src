@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.17 2009/11/30 21:37:16 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.18 2011/01/02 02:01:58 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -40,11 +40,11 @@
  * The job of this code is to read in the phase 1 bootstrap.
  *
  * Makefile supplies:
- * PRIMARY_LOAD_ADDRESS:	Address we load code to (0x600).
+ * PRIMARY_LOAD_ADDRESS:	Address we load code to (0x1000).
  * BOOTXX_SECTORS:		Number of sectors we load (15).
  * X86_BOOT_MAGIC_1:		A random magic number.
  *
- * Although this code is executing at 0x7c00, it is linked to address 0x600.
+ * Although this code is executing at 0x7c00, it is linked to address 0x1000.
  * All data references MUST be fixed up using R().
  */
 
@@ -91,7 +91,7 @@
  * (for a floppy) or the mbr boot code.  Since the boot program will
  * be loaded to address 1000:0, we don't need to relocate ourselves
  * and can load the subsequent blocks (that load boot) to an address
- * of our choosing. 0:600 is a not unreasonable choice.
+ * of our choosing. 0:1000 is a not unreasonable choice.
  *
  * On entry the BIOS drive number is in %dl and %esi may contain the
  * sector we were loaded from (if we were loaded by NetBSD mbr code).
