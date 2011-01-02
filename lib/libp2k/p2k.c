@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.48 2011/01/02 05:04:59 dholland Exp $	*/
+/*	$NetBSD: p2k.c,v 1.49 2011/01/02 13:01:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -362,7 +362,7 @@ p2k_init(uint32_t puffs_flags)
 	if (p2m)
 		rump_init();
 
-	rump_pub_lwproc_newproc();
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 
 	return p2m;
 }
