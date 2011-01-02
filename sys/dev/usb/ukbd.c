@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.109 2010/11/30 11:35:30 phx Exp $        */
+/*      $NetBSD: ukbd.c,v 1.110 2011/01/02 12:36:41 mbalmer Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.109 2010/11/30 11:35:30 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.110 2011/01/02 12:36:41 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -996,7 +996,7 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 			if (h.loc.size != 8)
 				return ("key code size != 8");
 			if (h.loc.count > MAXKEYCODE)
-				return ("too many key codes");
+				h.loc.count = MAXKEYCODE;
 			if (h.loc.pos % 8 != 0)
 				return ("key codes not on byte boundary");
 			if (sc->sc_nkeycode != 0)
