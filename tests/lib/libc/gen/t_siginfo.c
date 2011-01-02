@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.6 2011/01/02 21:34:00 pgoyette Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.7 2011/01/02 21:39:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -325,6 +325,7 @@ sigfpe_int_action(int signo, siginfo_t *info, void *ptr)
 		atf_tc_expect_fail("PR port-i386/43655 : integer div-by-zero "
 		    "reports FPE_FLTDIV instead of FPE_INTDIV");
 	ATF_REQUIRE_EQ(info->si_code, FPE_INTDIV);
+	atf_tc_expect_pass();
 	ATF_REQUIRE_EQ(info->si_errno, 0);
 
 	siglongjmp(sigfpe_int_env, 1);
