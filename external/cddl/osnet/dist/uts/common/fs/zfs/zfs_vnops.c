@@ -5042,9 +5042,6 @@ zfs_netbsd_rename(ap)
 	vnode_t *tvp = ap->a_tvp;
 	int error;
 
-	ASSERT(ap->a_fcnp->cn_flags & SAVESTART);
-	ASSERT(ap->a_tcnp->cn_flags & SAVESTART);
-
 	error = zfs_rename(fdvp, (char *)ap->a_fcnp->cn_nameptr, tdvp,
 	    (char *)ap->a_tcnp->cn_nameptr, ap->a_fcnp->cn_cred, NULL, 0);
 
