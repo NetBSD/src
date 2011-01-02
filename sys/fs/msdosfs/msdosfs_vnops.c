@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.70 2010/11/30 10:43:03 dholland Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.71 2011/01/02 05:09:30 dholland Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.70 2010/11/30 10:43:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.71 2011/01/02 05:09:30 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -829,7 +829,6 @@ msdosfs_rename(void *v)
 	struct msdosfsmount *pmp;
 	struct direntry *dotdotp;
 	struct buf *bp;
-	int fdvp_dorele = 0;
 
 	pmp = VFSTOMSDOSFS(fdvp->v_mount);
 
@@ -922,16 +921,6 @@ abortit:
 	if (VTODE(fdvp)->de_StartCluster != VTODE(tdvp)->de_StartCluster)
 		newparent = 1;
 
-	/*
-	 * XXX: We can do this here because rename uses SAVEFART and
-	 * therefore fdvp has at least two references (one doesn't
-	 * belong to us, though, and that's evil).  We'll get
-	 * another "extra" reference when we do relookup(), so we
-	 * need to compensate.  We should *NOT* be doing this, but
-	 * it works, so whatever.
-	 */
-	vrele(fdvp);
-
 	if (doingdirectory && newparent) {
 		if (error)	/* write access check above */
 			goto tdvpbad;
@@ -939,22 +928,19 @@ abortit:
 			vput(tvp);
 		tvp = NULL;
 		/*
-		 * doscheckpath() vput()'s dp,
-		 * so we have to do a relookup afterwards
+		 * doscheckpath() vput()'s tdvp (dp == VTODE(tdvp)),
+		 * so we have to get an extra ref to it first, and
+		 * because it's been unlocked we need to do a relookup
+		 * afterwards in case tvp has changed.
 		 */
+		vref(tdvp);
 		if ((error = doscheckpath(ip, dp)) != 0)
 			goto out;
-		if ((tcnp->cn_flags & SAVESTART) == 0)
-			panic("msdosfs_rename: lost to startdir");
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0) {
+		if ((error = relookup(tdvp, &tvp, tcnp, 0)) != 0) {
 			VOP_UNLOCK(tdvp);
 			goto out;
 		}
-		/*
-		 * XXX: SAVESTART causes us to get a reference, but
-		 * that's released already above in doscheckpath()
-		 */
 		dp = VTODE(tdvp);
 		xp = tvp ? VTODE(tvp) : NULL;
 	}
@@ -1004,11 +990,9 @@ abortit:
 	 */
 	fcnp->cn_flags &= ~MODMASK;
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-	if ((fcnp->cn_flags & SAVESTART) == 0)
-		panic("msdosfs_rename: lost from startdir");
 	VOP_UNLOCK(tdvp);
 	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = relookup(fdvp, &fvp, fcnp))) {
+	if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 		VOP_UNLOCK(fdvp);
 		vrele(ap->a_fvp);
 		vrele(tdvp);
@@ -1027,7 +1011,6 @@ abortit:
 		fstrans_done(fdvp->v_mount);
 		return 0;
 	}
-	fdvp_dorele = 1;
 	VOP_UNLOCK(fdvp);
 	xp = VTODE(fvp);
 	zp = VTODE(fdvp);
@@ -1133,8 +1116,7 @@ bad:
 	vrele(tdvp);
 out:
 	ip->de_flag &= ~DE_RENAME;
-	if (fdvp_dorele)
-		vrele(fdvp);
+	vrele(fdvp);
 	vrele(fvp);
 	fstrans_done(fdvp->v_mount);
 	return (error);
