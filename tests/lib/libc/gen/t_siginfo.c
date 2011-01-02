@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: t_siginfo.c,v 1.6 2011/01/02 21:34:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
