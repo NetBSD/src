@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.45 2011/01/02 06:15:04 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.46 2011/01/02 06:25:23 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.45 2011/01/02 06:15:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.46 2011/01/02 06:25:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.45 2011/01/02 06:15:04 tsutsui 
 
 #define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
 
-extern char *kernel_text, *etext;
+extern char *etext;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
@@ -120,12 +120,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
-	lwp0upa = nextpa;
-	nextpa += USPACE;
-
 	iiomappages = m68k_btop(RELOC(intiotop_phys, u_int) -
 	    RELOC(intiobase_phys, u_int));
 
+	lwp0upa = nextpa;
+	nextpa += USPACE;
 #if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
@@ -321,7 +320,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	while (pte < epte)
 		*pte++ = PG_NV;
 	/*
-	 * Validate PTEs for kernel text (RO)
+	 * Validate PTEs for kernel text (RO).
 	 */
 	pte = (pt_entry_t *)kptpa;
 	pte = &pte[m68k_btop(KERNBASE)];
@@ -349,7 +348,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		protopte += PAGE_SIZE;
 	}
 	/*
-	 * map the kernel segment table cache invalidated for 
+	 * map the kernel segment table cache invalidated for
 	 * these machines (for the 68040 not strictly necessary, but
 	 * recommended by Motorola; for the 68060 mandatory)
 	 */
@@ -373,8 +372,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	protopte = RELOC(intiobase_phys, u_int) | PG_RW | PG_CI | PG_U | PG_V;
 	epte = &pte[iiomappages];
-	RELOC(intiobase, char *) = (char *)PTE2VA(pte);
-	RELOC(intiolimit, char *) = (char *)PTE2VA(epte);
+	RELOC(intiobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
+	RELOC(intiolimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
