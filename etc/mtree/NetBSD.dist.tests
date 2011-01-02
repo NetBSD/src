@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.9 2010/12/27 19:35:31 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.10 2011/01/02 09:30:08 dbj Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -142,6 +142,7 @@
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/gen
 ./usr/tests/lib/libc/hash
+./usr/tests/lib/libc/ieeefp
 ./usr/tests/lib/libc/setjmp
 ./usr/tests/lib/libc/ssp
 ./usr/tests/lib/libc/stdio
