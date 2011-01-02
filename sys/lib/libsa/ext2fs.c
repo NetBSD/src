@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.8 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.9 2011/01/02 21:37:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -510,6 +510,7 @@ ext2fs_open(const char *path, struct open_file *f)
 
 	/* allocate space and read super block */
 	fs = alloc(sizeof(*fs));
+	memset(fs, 0, sizeof(*fs));
 	fp->f_fs = fs;
 	twiddle();
 
