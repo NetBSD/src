@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.73 2011/01/02 05:09:50 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.74 2011/01/02 05:12:56 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.20 2011/01/02 05:09:30 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.21 2011/01/02 05:12:33 dholland Exp 
  */
 
 /*
@@ -156,15 +156,9 @@ struct nameidata {
 #define	MODMASK		0x010000fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
- *
- * SAVESTART is set only by the callers of namei. It implies saving
- * the parent directory that contains the name in ni_startdir. It
- * allows repeated calls to lookup for the name being sought. The
- * caller is responsible for vrele'ing ni_startdir.
  */
 #define	NOCROSSMOUNT	0x0000100	/* do not cross mount points */
 #define	RDONLY		0x0000200	/* lookup with read-only semantics */
-#define	SAVESTART	0x0001000	/* save starting directory */
 #define	ISDOTDOT	0x0002000	/* current component name is .. */
 #define	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
 #define	ISLASTCN	0x0008000	/* this is last component of pathname */
@@ -175,7 +169,7 @@ struct nameidata {
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
 #define	INRENAME	0x0400000	/* operation is a part of ``rename'' */
 #define	INRELOOKUP	0x0800000	/* set while inside relookup() */
-#define	PARAMASK	0x0efff00	/* mask of parameter descriptors */
+#define	PARAMASK	0x0efef00	/* mask of parameter descriptors */
 
 /*
  * Initialization of an nameidata structure.
@@ -322,7 +316,6 @@ extern struct nchstats nchstats;
 #define NAMEI_MODMASK	0x010000fc
 #define NAMEI_NOCROSSMOUNT	0x0000100
 #define NAMEI_RDONLY	0x0000200
-#define NAMEI_SAVESTART	0x0001000
 #define NAMEI_ISDOTDOT	0x0002000
 #define NAMEI_MAKEENTRY	0x0004000
 #define NAMEI_ISLASTCN	0x0008000
@@ -333,6 +326,6 @@ extern struct nchstats nchstats;
 #define NAMEI_CREATEDIR	0x0200000
 #define NAMEI_INRENAME	0x0400000
 #define NAMEI_INRELOOKUP	0x0800000
-#define NAMEI_PARAMASK	0x0efff00
+#define NAMEI_PARAMASK	0x0efef00
 
 #endif /* !_SYS_NAMEI_H_ */
