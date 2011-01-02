@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.28 2010/06/06 04:50:06 mrg Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.29 2011/01/02 07:51:02 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.28 2010/06/06 04:50:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.29 2011/01/02 07:51:02 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -187,7 +187,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		nl1desc = howmany(nl2desc, SG4_LEV2SIZE);
 		ste = (st_entry_t *)kstpa;
 		este = &ste[nl1desc];
-		protoste = (paddr_t)&pte[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
+		protoste = (paddr_t)&ste[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
 		while (ste < este) {
 			*ste++ = protoste;
 			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
