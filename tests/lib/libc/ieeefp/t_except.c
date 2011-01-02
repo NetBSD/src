@@ -1,4 +1,4 @@
-/*	$NetBSD: t_except.c,v 1.1 2011/01/02 03:51:21 pgoyette Exp $	*/
+/*	$NetBSD: t_except.c,v 1.2 2011/01/02 21:17:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ struct ops {
 	int sicode;
 };
 
-static struct ops float_ops[] = {
+static const volatile struct ops float_ops[] = {
 	{ f_dz, FP_X_DZ, FPE_FLTDIV },
 	{ f_inv, FP_X_INV, FPE_FLTINV },
 	{ f_ofl, FP_X_OFL, FPE_FLTOVF },
@@ -171,7 +171,7 @@ static struct ops float_ops[] = {
 	{ NULL, 0, 0 }
 };
 
-static struct ops double_ops[] = {
+static const volatile struct ops double_ops[] = {
 	{ d_dz, FP_X_DZ, FPE_FLTDIV },
 	{ d_inv, FP_X_INV, FPE_FLTINV },
 	{ d_ofl, FP_X_OFL, FPE_FLTOVF },
@@ -179,7 +179,7 @@ static struct ops double_ops[] = {
 	{ NULL, 0, 0 }
 };
 
-static struct ops long_double_ops[] = {
+static const volatile struct ops long_double_ops[] = {
 	{ ld_dz, FP_X_DZ, FPE_FLTDIV },
 	{ ld_inv, FP_X_INV, FPE_FLTINV },
 	{ ld_ofl, FP_X_OFL, FPE_FLTOVF },
@@ -190,10 +190,11 @@ static struct ops long_double_ops[] = {
 static sigjmp_buf b;
 
 static void
-masked(struct ops *test_ops)
+masked(const volatile struct ops *test_ops)
 {
 	struct sigaction sa;
 	fp_except ex1, ex2;
+	static const volatile struct ops *t;
 
 	/* mask all exceptions, clear history */
 	fpsetmask(0);
@@ -209,17 +210,16 @@ masked(struct ops *test_ops)
 	/*
 	 * exceptions masked, check whether "sticky" bits are set correctly
 	 */
-	while (test_ops->op != NULL) {
-		(*test_ops->op)();
+	for (t = test_ops; t->op != NULL; t++) {
+		(*t->op)();
 		ex1 = fpgetsticky();
-		ATF_CHECK_EQ(ex1 & test_ops->mask, test_ops->mask);
+		ATF_CHECK_EQ(ex1 & t->mask, t->mask);
 		ATF_CHECK_EQ(signal_caught, 0);
 
 		/* check correct fpsetsticky() behaviour */
 		ex2 = fpsetsticky(0);
 		ATF_CHECK_EQ(fpgetsticky(), 0);
 		ATF_CHECK_EQ(ex1, ex2);
-		test_ops++;
 	}
 }
 
@@ -227,10 +227,11 @@ masked(struct ops *test_ops)
 #define BARRIER() fpsetmask(0); f_x = f_one * f_one
 
 static void
-unmasked(struct ops *test_ops)
+unmasked(const volatile struct ops *test_ops)
 {
 	struct sigaction sa;
 	int r;
+	static const volatile struct ops *t;
 
 	/* mask all exceptions, clear history */
 	fpsetmask(0);
@@ -246,17 +247,16 @@ unmasked(struct ops *test_ops)
 	/*
 	 * exception unmasked, check SIGFPE delivery and correct siginfo
 	 */
-	while (test_ops->op != NULL) {
-		fpsetmask(test_ops->mask);
+	for (t = test_ops; t->op != NULL; t++) {
+		fpsetmask(t->mask);
 		r = sigsetjmp(b, 1);
 		if (!r) {
-			(*test_ops->op)();
+			(*t->op)();
 			BARRIER();
 		}
 		ATF_CHECK_EQ(signal_caught, 1);
-		ATF_CHECK_EQ(sicode, test_ops->sicode);
+		ATF_CHECK_EQ(sicode, t->sicode);
 		signal_caught = 0;
-		test_ops++;
 	}
 }
 
