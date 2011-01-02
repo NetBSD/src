@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.32 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.33 2011/01/02 05:01:57 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.32 2010/06/06 04:50:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.33 2011/01/02 05:01:57 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -343,11 +343,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (nextpa - firstpa bytes), and pages for lwp0
+	 * by us so far (kstpa - firstpa bytes), and pages for lwp0
 	 * u-area and page table allocated below (RW).
 	 */
 	epte = (pt_entry_t *)kptpa;
-	epte = &epte[m68k_btop(nextpa - firstpa)];
+	epte = &epte[m68k_btop(kstpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -360,6 +360,25 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
 	}
+	/*
+	 * map the kernel segment table cache invalidated for
+	 * these machines (for the 68040 not strictly necessary, but
+	 * recommended by Motorola; for the 68060 mandatory)
+	 */
+	epte = (pt_entry_t *)kptpa;
+	epte = &epte[m68k_btop(nextpa - firstpa)];
+	protopte = (protopte & ~PG_PROT) | PG_RW;
+#ifdef M68040
+	if (RELOC(mmutype, int) == MMU_68040) {
+		protopte &= ~PG_CCB;
+		protopte |= PG_CIN;
+	}
+#endif
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += PAGE_SIZE;
+	}
+
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
 	 */
