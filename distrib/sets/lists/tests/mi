@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.203 2011/01/02 11:34:13 dbj Exp $
+# $NetBSD: mi,v 1.204 2011/01/02 22:06:40 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -329,7 +329,10 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/h_protoent.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/h_servent.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/hash/h_hash.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp				tests-lib-debug
@@ -1595,8 +1598,18 @@
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_vis			tests-lib-tests		atf
+./usr/tests/lib/libc/h_protoent			tests-lib-tests		atf
+./usr/tests/lib/libc/h_servent			tests-lib-tests		atf
 ./usr/tests/lib/libc/hash			tests-lib-tests
 ./usr/tests/lib/libc/hash/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/hash/data			tests-lib-tests
+./usr/tests/lib/libc/hash/data/md5test-in	tests-lib-tests		atf
+./usr/tests/lib/libc/hash/data/md5test-out	tests-lib-tests		atf
+./usr/tests/lib/libc/hash/data/sha1test-in	tests-lib-tests		atf
+./usr/tests/lib/libc/hash/data/sha1test-out	tests-lib-tests		atf
+./usr/tests/lib/libc/hash/data/sha1test2-out	tests-lib-tests		atf
+./usr/tests/lib/libc/hash/h_hash		tests-lib-tests		atf
+./usr/tests/lib/libc/hash/t_hash		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp			tests-lib-tests
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
@@ -1652,8 +1665,10 @@
 ./usr/tests/lib/libc/t_gdtoa			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_hsearch			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_inet			tests-lib-tests		atf
+./usr/tests/lib/libc/t_protoent			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_ptm			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_randomid			tests-lib-tests		atf
+./usr/tests/lib/libc/t_servent			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_strptime			tests-lib-tests		atf
 ./usr/tests/lib/libdes				tests-lib-tests
 ./usr/tests/lib/libdes/Atffile			tests-lib-tests		atf,crypto
