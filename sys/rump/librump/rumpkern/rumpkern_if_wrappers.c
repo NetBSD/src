@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.11 2010/11/21 17:35:20 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.12 2011/01/02 12:53:13 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.9 2010/11/21 17:34:11 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.10 2011/01/02 12:52:25 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -141,12 +141,12 @@ rump_pub_cred_put(struct kauth_cred *arg1)
 }
 
 int
-rump_pub_lwproc_newproc(void)
+rump_pub_lwproc_rfork(int arg1)
 {
 	int rv;
 
 	rump_schedule();
-	rv = rump_lwproc_newproc();
+	rv = rump_lwproc_rfork(arg1);
 	rump_unschedule();
 
 	return rv;
