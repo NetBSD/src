@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.24 2011/01/02 06:05:47 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.25 2011/01/02 12:06:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.24 2011/01/02 06:05:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.25 2011/01/02 12:06:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -760,7 +760,7 @@ acpi_power_add(struct acpi_devnode *ad)
 
 	if (err != 0)
 		aprint_error_dev(ad->ad_root, "sysctl_createv"
-		    "(hw.acpi.power.%s) failed (err %d)\n", ad->ad_name, err);
+		    "(hw.acpi.power.%s) failed (err %d)\n", str, err);
 }
 
 static int
