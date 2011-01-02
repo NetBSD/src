@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.229 2011/01/01 02:08:10 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.230 2011/01/02 12:17:28 he Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.229 2011/01/01 02:08:10 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.230 2011/01/02 12:17:28 he Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1644,7 +1644,7 @@ void
 mips_init_lwp0_uarea(void)
 {
 	vaddr_t v;
-	struct pcb * const pcb0;
+	struct pcb * pcb0;
 
 	v = uvm_pageboot_alloc(USPACE);
 	uvm_lwp_setuarea(&lwp0, v);
