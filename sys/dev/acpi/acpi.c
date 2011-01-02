@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.223 2010/12/31 09:19:43 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.224 2011/01/02 06:05:47 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.223 2010/12/31 09:19:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.224 2011/01/02 06:05:47 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -213,7 +213,7 @@ static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE);
 
 static int		acpi_rescan(device_t, const char *, const int *);
 static void		acpi_rescan_nodes(struct acpi_softc *);
-static void		acpi_rescan_capabilities(struct acpi_softc *);
+static void		acpi_rescan_capabilities(device_t);
 static int		acpi_print(void *aux, const char *);
 
 static void		acpi_notify_handler(ACPI_HANDLE, uint32_t, void *);
@@ -674,7 +674,10 @@ acpi_build_tree(struct acpi_softc *sc)
 	(void)acpi_pcidev_scan(sc->sc_root);
 	(void)acpi_rescan(sc->sc_dev, NULL, NULL);
 
-	acpi_rescan_capabilities(sc);
+	/*
+	 * Defer rest of the configuration.
+	 */
+	(void)config_defer(sc->sc_dev, acpi_rescan_capabilities);
 }
 
 static ACPI_STATUS
@@ -1008,8 +1011,9 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 }
 
 static void
-acpi_rescan_capabilities(struct acpi_softc *sc)
+acpi_rescan_capabilities(device_t self)
 {
+	struct acpi_softc *sc = device_private(self);
 	struct acpi_devnode *ad;
 	ACPI_HANDLE tmp;
 	ACPI_STATUS rv;
