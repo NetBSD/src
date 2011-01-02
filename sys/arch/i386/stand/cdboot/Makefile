@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2010/12/29 17:44:03 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.11 2011/01/02 02:31:32 jakllsch Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -12,7 +12,7 @@ LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
 
-PRIMARY_LOAD_ADDRESS=	0x600
+PRIMARY_LOAD_ADDRESS=	0x1000
 SECONDARY_LOAD_ADDRESS=	0x10000
 
 PROG=		bootxx_cd9660
