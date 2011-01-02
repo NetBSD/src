@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.128 2011/01/02 05:01:20 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.129 2011/01/02 05:04:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.128 2011/01/02 05:01:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.129 2011/01/02 05:04:58 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -399,6 +399,7 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 {
 	state->ndp = ndp;
 	state->cnp = &ndp->ni_cnd;
+	KASSERT((state->cnp->cn_flags & INRELOOKUP) == 0);
 
 	state->namei_startdir = NULL;
 
@@ -1513,7 +1514,10 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 */
-	if ((error = VOP_LOOKUP(dvp, vpp, cnp)) != 0) {
+	cnp->cn_flags |= INRELOOKUP;
+	error = VOP_LOOKUP(dvp, vpp, cnp);
+	cnp->cn_flags &= ~INRELOOKUP;
+	if ((error) != 0) {
 #ifdef DIAGNOSTIC
 		if (*vpp != NULL)
 			panic("leaf `%s' should be empty", cnp->cn_nameptr);
