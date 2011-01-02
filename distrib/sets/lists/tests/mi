@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.202 2011/01/02 01:58:31 pgoyette Exp $
+# $NetBSD: mi,v 1.203 2011/01/02 11:34:13 dbj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -331,6 +331,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/ieeefp				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp/t_setjmp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ssp				tests-lib-debug
@@ -1597,6 +1598,7 @@
 ./usr/tests/lib/libc/hash			tests-lib-tests
 ./usr/tests/lib/libc/hash/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		atf
+./usr/tests/lib/libc/ieeefp			tests-lib-tests
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/h_getopt		tests-lib-tests		atf
