@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.232 2010/12/18 00:01:46 eeh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.233 2011/01/02 05:09:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.232 2010/12/18 00:01:46 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.233 2011/01/02 05:09:32 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -852,11 +852,11 @@ lfs_rename(void *v)
 
 		/* Delete source. */
 		vrele(fvp);
-		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+		fcnp->cn_flags &= ~(MODMASK);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp))) {
+		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			return (error);
 		}

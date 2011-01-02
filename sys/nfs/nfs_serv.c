@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.153 2011/01/02 05:01:21 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.154 2011/01/02 05:09:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.153 2011/01/02 05:01:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.154 2011/01/02 05:09:31 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1898,7 +1898,6 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	nfsrvfh_t fnsfh, tnsfh;
 	u_quad_t frev;
 	uid_t saved_uid;
-	uint32_t saveflag;
 
 #ifndef nolint
 	fvp = (struct vnode *)0;
@@ -1956,11 +1955,8 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 		vrele(fromnd.ni_dvp);
 		goto out1;
 	}
-	saveflag = fromnd.ni_cnd.cn_flags & SAVESTART;
-	fromnd.ni_cnd.cn_flags &= ~SAVESTART;
 	vn_lock(fromnd.ni_dvp, LK_EXCLUSIVE | LK_RETRY);
-	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd);
-	fromnd.ni_cnd.cn_flags |= saveflag;
+	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd, 0);
 	if (error) {
 		VOP_UNLOCK(fromnd.ni_dvp);
 		VFS_RENAMELOCK_EXIT(localfs);

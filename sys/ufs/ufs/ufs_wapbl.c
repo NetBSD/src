@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.11 2010/11/30 10:43:06 dholland Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.12 2011/01/02 05:09:32 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.11 2010/11/30 10:43:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.12 2011/01/02 05:09:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,11 +219,11 @@ wapbl_ufs_rename(void *v)
 
 		/* Delete source. */
 		vrele(fvp);
-		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+		fcnp->cn_flags &= ~(MODMASK);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp))) {
+		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			return (error);
 		}
@@ -301,10 +301,9 @@ wapbl_ufs_rename(void *v)
 			tdp = NULL;
 			goto out;
 		}
-		tcnp->cn_flags &= ~SAVESTART;
 		tdp = NULL;
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		error = relookup(tdvp, &tvp, tcnp);
+		error = relookup(tdvp, &tvp, tcnp, 0);
 		if (error != 0) {
 			vput(tdvp);
 			goto out;
@@ -330,7 +329,7 @@ wapbl_ufs_rename(void *v)
 	 * This was moved up to before the journal lock to
 	 * avoid potential deadlock
 	 */
-	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+	fcnp->cn_flags &= ~(MODMASK);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	if (newparent) {
 		/* Check for the rename("foo/foo", "foo") case. */
@@ -339,7 +338,7 @@ wapbl_ufs_rename(void *v)
 			goto out;
 		}
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp))) {
+		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			vrele(ap->a_fvp);
 			goto out2;

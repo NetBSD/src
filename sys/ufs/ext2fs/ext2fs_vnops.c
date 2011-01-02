@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.96 2010/11/30 10:43:06 dholland Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.97 2011/01/02 05:09:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.96 2010/11/30 10:43:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.97 2011/01/02 05:09:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -700,11 +700,11 @@ abortit:
 
 		/* Delete source. */
 		vrele(fvp);
-		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+		fcnp->cn_flags &= ~(MODMASK);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp))) {
+		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			return (error);
 		}
@@ -799,9 +799,8 @@ abortit:
 			vrele(tdvp);
 			goto out;
 		}
-		tcnp->cn_flags &= ~SAVESTART;
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0) {
+		if ((error = relookup(tdvp, &tvp, tcnp, 0)) != 0) {
 			vput(tdvp);
 			goto out;
 		}
@@ -931,10 +930,10 @@ abortit:
 	/*
 	 * 3) Unlink the source.
 	 */
-	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+	fcnp->cn_flags &= ~(MODMASK);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = relookup(fdvp, &fvp, fcnp))) {
+	if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 		vput(fdvp);
 		vrele(ap->a_fvp);
 		return (error);

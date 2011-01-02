@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.129 2011/01/02 05:04:58 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.130 2011/01/02 05:09:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.129 2011/01/02 05:04:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.130 2011/01/02 05:09:31 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1463,7 +1463,7 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
  * *vpp is locked on exit unless it's NULL.
  */
 int
-relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
+relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int dummy)
 {
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
@@ -1471,6 +1471,8 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	uint32_t newhash;		/* DEBUG: check name hash */
 	const char *cp;			/* DEBUG: check name ptr/len */
 #endif /* DEBUG */
+
+	(void)dummy;
 
 	/*
 	 * Setup: break out flag bits into variables.
@@ -1544,8 +1546,6 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		}
 		goto bad;
 	}
-	if (cnp->cn_flags & SAVESTART)
-		vref(dvp);
 	return (0);
 
 bad:

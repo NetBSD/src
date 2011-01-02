@@ -317,14 +317,12 @@ unionfs_relookup(struct vnode *dvp, struct vnode **vpp,
 	cn->cn_consume = cnp->cn_consume;
 
 	if (nameiop == DELETE)
-		cn->cn_flags |= (cnp->cn_flags & (DOWHITEOUT | SAVESTART));
-	else if (RENAME == nameiop)
-		cn->cn_flags |= (cnp->cn_flags & SAVESTART);
+		cn->cn_flags |= (cnp->cn_flags & DOWHITEOUT);
 
 	vref(dvp);
 	VOP_UNLOCK(dvp);
 
-	if ((error = relookup(dvp, vpp, cn))) {
+	if ((error = relookup(dvp, vpp, cn, 0))) {
 		PNBUF_PUT(pnbuf);
 		*pnbuf_ret = NULL;
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
@@ -631,7 +629,7 @@ unionfs_vn_create_on_upper(struct vnode **vpp, struct vnode *udvp,
 	cn.cn_consume = 0;
 
 	vref(udvp);
-	if ((error = relookup(udvp, &vp, &cn)) != 0)
+	if ((error = relookup(udvp, &vp, &cn, 0)) != 0)
 		goto unionfs_vn_create_on_upper_free_out2;
 	vrele(udvp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.411 2011/01/02 05:01:20 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.412 2011/01/02 05:09:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.411 2011/01/02 05:01:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.412 2011/01/02 05:09:31 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3438,7 +3438,6 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	struct mount *fs;
 	struct lwp *l = curlwp;
 	struct proc *p;
-	uint32_t saveflag;
 	int error;
 
 	error = pathbuf_maybe_copyin(from, seg, &frompb);
@@ -3482,9 +3481,6 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	 * order and do the lookups in the right places, but that's a
 	 * major rototill.
 	 *
-	 * Preserve the SAVESTART in cn_flags, because who knows what
-	 * might happen if we don't.
-	 *
 	 * Note: this logic (as well as this whole function) is cloned
 	 * in nfs_serv.c. Proceed accordingly.
 	 */
@@ -3500,11 +3496,8 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 		vrele(fromnd.ni_dvp);
 		goto out1;
 	}
-	saveflag = fromnd.ni_cnd.cn_flags & SAVESTART;
-	fromnd.ni_cnd.cn_flags &= ~SAVESTART;
 	vn_lock(fromnd.ni_dvp, LK_EXCLUSIVE | LK_RETRY);
-	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd);
-	fromnd.ni_cnd.cn_flags |= saveflag;
+	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd, 0);
 	if (error) {
 		VOP_UNLOCK(fromnd.ni_dvp);
 		VFS_RENAMELOCK_EXIT(fs);

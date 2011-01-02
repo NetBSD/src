@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.61 2010/11/30 10:43:04 dholland Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.62 2011/01/02 05:09:30 dholland Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.61 2010/11/30 10:43:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.62 2011/01/02 05:09:30 dholland Exp $");
 #endif /* not lint */
 
 
@@ -2042,8 +2042,7 @@ udf_rename(void *v)
 		 * re-lookup tvp since the parent has been unlocked, so could
 		 * have changed/removed in the meantime.
 		 */
-		tcnp->cn_flags &= ~SAVESTART;
-		error = relookup(tdvp, &tvp, tcnp);
+		error = relookup(tdvp, &tvp, tcnp, 0);
 		if (error) {
 			vput(tdvp);
 			goto out;

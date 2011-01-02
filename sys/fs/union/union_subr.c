@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.41 2010/11/30 10:43:04 dholland Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.42 2011/01/02 05:09:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.41 2010/11/30 10:43:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.42 2011/01/02 05:09:31 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,7 +815,7 @@ union_relookup(
 	cn->cn_hash = cnp->cn_hash;
 	cn->cn_consume = cnp->cn_consume;
 
-	error = relookup(dvp, vpp, cn);
+	error = relookup(dvp, vpp, cn, 0);
 	if (error) {
 		PNBUF_PUT(pnbuf);
 		*pnbuf_ret = NULL;
@@ -972,7 +972,7 @@ union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
 	cn.cn_consume = 0;
 
 	vn_lock(un->un_dirvp, LK_EXCLUSIVE | LK_RETRY);
-	error = relookup(un->un_dirvp, &vp, &cn);
+	error = relookup(un->un_dirvp, &vp, &cn, 0);
 	if (error) {
 		PNBUF_PUT(pnbuf);
 		VOP_UNLOCK(un->un_dirvp);
