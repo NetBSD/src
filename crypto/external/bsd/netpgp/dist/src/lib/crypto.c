@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.34 2010/11/29 04:20:12 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.35 2011/01/02 18:13:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -598,11 +598,8 @@ pgp_decrypt_buf(pgp_io_t *io,
 		pgp_reader_pop_dearmour(parse);
 	}
 
-
 	/* tidy up */
 	pgp_teardown_memory_read(parse, inmem);
-	pgp_memory_release(inmem);
-	free(inmem);
 
 	pgp_writer_close(parse->cbinfo.output);
 	pgp_output_delete(parse->cbinfo.output);
