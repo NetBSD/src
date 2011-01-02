@@ -1,7 +1,7 @@
-/*      $NetBSD: lwproc.c,v 1.6 2010/11/22 20:42:19 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.7 2011/01/02 12:52:25 pooka Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.6 2010/11/22 20:42:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.7 2011/01/02 12:52:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -94,7 +94,7 @@ lwproc_proc_free(struct proc *p)
  * Switch to the new lwp and return a pointer to it.
  */
 static struct proc *
-lwproc_newproc(struct proc *parent)
+lwproc_newproc(struct proc *parent, int flags)
 {
 	uid_t uid = kauth_cred_getuid(parent->p_cred);
 	struct proc *p;
@@ -113,10 +113,18 @@ lwproc_newproc(struct proc *parent)
 
 	p->p_stats = pstatscopy(parent->p_stats);
 
-	/* not based on parent */
 	p->p_vmspace = vmspace_kernel();
 	p->p_emul = &emul_netbsd;
-	p->p_fd = fd_init(NULL);
+
+	if ((flags & RUMP_RFCFDG) == 0)
+		KASSERT(parent == curproc);
+	if (flags & RUMP_RFFDG)
+		p->p_fd = fd_copy();
+	else if (flags & RUMP_RFCFDG)
+		p->p_fd = fd_init(NULL);
+	else
+		fd_share(p);
+
 	lim_addref(parent->p_limit);
 	p->p_limit = parent->p_limit;
 
@@ -234,7 +242,7 @@ rump__lwproc_alloclwp(struct proc *p)
 	bool newproc = false;
 
 	if (p == NULL) {
-		p = lwproc_newproc(&proc0);
+		p = lwproc_newproc(&proc0, 0);
 		newproc = true;
 	}
 
@@ -268,12 +276,16 @@ rump_lwproc_newlwp(pid_t pid)
 }
 
 int
-rump_lwproc_newproc(void)
+rump_lwproc_rfork(int flags)
 {
 	struct proc *p;
 	struct lwp *l;
 
-	p = lwproc_newproc(curproc);
+	if (flags & ~(RUMP_RFFDG|RUMP_RFCFDG) ||
+	    (~flags & (RUMP_RFFDG|RUMP_RFCFDG)) == 0)
+		return EINVAL;
+
+	p = lwproc_newproc(curproc, flags);
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	mutex_enter(p->p_lock);
 	lwproc_makelwp(p, l, true, true);
