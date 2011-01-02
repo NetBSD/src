@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2010/11/30 18:38:53 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2011/01/02 09:33:45 skrll Exp $
 
 NOMAN=			# defined
 
@@ -11,7 +11,7 @@ SUBDIR+=		dso
 
 .include "Makefile.check_stack"
 
-CPPFLAGS+=	${CPPFLAGS_CHECK_STACK}
+CPPFLAGS+=		${CPPFLAGS_CHECK_STACK}
 
 BINDIR=			${TESTSDIR}
 PROG_CXX=		h_initfini1 h_initfini2 h_initfini3
