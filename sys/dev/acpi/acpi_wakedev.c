@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.18 2010/10/08 07:04:31 gsutre Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.19 2011/01/02 06:05:47 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.18 2010/10/08 07:04:31 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.19 2011/01/02 06:05:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.18 2010/10/08 07:04:31 gsutre Exp
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_power.h>
 #include <dev/acpi/acpi_wakedev.h>
 
@@ -95,6 +96,8 @@ SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 void
 acpi_wakedev_add(struct acpi_devnode *ad)
 {
+	const char *str = NULL;
+	device_t dev;
 	int err;
 
 	KASSERT(ad != NULL && ad->ad_root != NULL);
@@ -109,10 +112,22 @@ acpi_wakedev_add(struct acpi_devnode *ad)
 	    acpi_wakedev_wakenode == CTL_EOL)
 		return;
 
+	if (ad->ad_device != NULL)
+		str = device_xname(ad->ad_device);
+	else {
+		dev = acpi_pcidev_find_dev(ad);
+
+		if (dev != NULL)
+			str = device_xname(dev);
+	}
+
+	if (str == NULL)
+		return;
+
 	err = sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL, ad->ad_name,
-	    NULL, NULL, 0, &ad->ad_wake, 0,
-	    CTL_HW, acpi_wakedev_acpinode, acpi_wakedev_wakenode,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, str,
+	    NULL, NULL, 0, &ad->ad_wake, 0, CTL_HW,
+	    acpi_wakedev_acpinode, acpi_wakedev_wakenode,
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)

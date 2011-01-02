@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.23 2010/10/08 07:04:31 gsutre Exp $ */
+/* $NetBSD: acpi_power.c,v 1.24 2011/01/02 06:05:47 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.23 2010/10/08 07:04:31 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.24 2011/01/02 06:05:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.23 2010/10/08 07:04:31 gsutre Exp $
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_power.h>
 
 #define _COMPONENT			ACPI_BUS_COMPONENT
@@ -728,6 +729,8 @@ SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 void
 acpi_power_add(struct acpi_devnode *ad)
 {
+	const char *str = NULL;
+	device_t dev;
 	int err;
 
 	KASSERT(ad != NULL && ad->ad_root != NULL);
@@ -737,15 +740,22 @@ acpi_power_add(struct acpi_devnode *ad)
 	    acpi_power_powernode == CTL_EOL)
 		return;
 
-	/*
-	 * Make this read-only: because a single power resource
-	 * may power multiple devices, it is unclear whether
-	 * power resources should be controllable by an user.
-	 */
+	if (ad->ad_device != NULL)
+		str = device_xname(ad->ad_device);
+	else {
+		dev = acpi_pcidev_find_dev(ad);
+
+		if (dev != NULL)
+			str = device_xname(dev);
+	}
+
+	if (str == NULL)
+		return;
+
 	err = sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_READONLY, CTLTYPE_STRING, ad->ad_name,
-	    NULL, acpi_power_sysctl, 0, ad, 0,
-	    CTL_HW, acpi_power_acpinode, acpi_power_powernode,
+	    CTLFLAG_READONLY, CTLTYPE_STRING, str,
+	    NULL, acpi_power_sysctl, 0, ad, 0, CTL_HW,
+	    acpi_power_acpinode, acpi_power_powernode,
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
