@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.6 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.7 2011/01/02 08:19:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
  * Autoconfiguration definitions and prototypes for the next68k
  * internal i/o space.
  */
+
+#include <machine/bus.h>
 
 /*
  * Arguments used to attach a device to the internal i/o space.
