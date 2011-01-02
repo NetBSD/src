@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/01/02 03:51:21 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2011/01/02 13:49:15 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -10,5 +10,7 @@ TESTS_C+=	t_round
 TESTS_C+=	t_subnormal
 
 LDADD.t_subnormal+=-lm
+WARNS=1
 
 .include <bsd.test.mk>
+
