@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.33 2011/01/02 05:01:57 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.34 2011/01/02 05:09:27 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.33 2011/01/02 05:01:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.34 2011/01/02 05:09:27 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -58,9 +58,6 @@ extern char *cache_ctl, *cache_clr;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
-#if 0
-extern int pmap_aliasmask;
-#endif
 
 void pmap_bootstrap(paddr_t, paddr_t);
 
@@ -439,16 +436,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
-#if 0
-	/*
-	 * Determine VA aliasing distance if any
-	 *
-	 * XXX Are there any models which have VAC?
-	 */
-	if (RELOC(ectype, int) == EC_VIRT) {
-		RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
-	}
-#endif
 #ifdef news1700
 	if (RELOC(systype, int) == NEWS1700) {
 		RELOC(cache_ctl, uint8_t *) = 0xe1300000 - INTIOBASE1700 +
