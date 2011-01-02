@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.120 2010/12/20 00:25:25 matt Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.121 2011/01/02 18:48:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.120 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.121 2011/01/02 18:48:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,9 +547,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 
 #if defined(M68040) || defined(M68060)
 	/*
-	 * map the kernel segment table cache invalidated for
-	 * these machines (for the 68040 not strictly necessary, but
-	 * recommended by Motorola; for the 68060 mandatory)
+	 * Map the kernel segment table cache invalidated for 68040/68060.
+	 * (for the 68040 not strictly necessary, but recommended by Motorola;
+	 *  for the 68060 mandatory)
 	 */
 	if (RELOC(mmutype, int) == MMU_68040) {
 

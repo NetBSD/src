@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.38 2011/01/02 08:40:55 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.39 2011/01/02 18:48:07 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.38 2011/01/02 08:40:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.39 2011/01/02 18:48:07 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -401,9 +401,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		protopte += PAGE_SIZE;
 	}
 	/*
-	 * map the kernel segment table cache invalidated for
-	 * these machines (for the 68040 not strictly necessary, but
-	 * recommended by Motorola; for the 68060 mandatory)
+	 * Map the kernel segment table cache invalidated for 68040/68060.
+	 * (for the 68040 not strictly necessary, but recommended by Motorola;
+	 *  for the 68060 mandatory)
 	 */
 	epte = (pt_entry_t *)kptpa;
 	epte = &epte[m68k_btop(nextpa - firstpa)];

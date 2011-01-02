@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.30 2011/01/02 18:39:11 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.31 2011/01/02 18:48:05 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.30 2011/01/02 18:39:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.31 2011/01/02 18:48:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -359,9 +359,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		protopte += PAGE_SIZE;
 	}
 	/*
-	 * map the kernel segment table cache invalidated for
-	 * these machines (for the 68040 not strictly necessary, but
-	 * recommended by Motorola; for the 68060 mandatory)
+	 * Map the kernel segment table cache invalidated for 68040/68060.
+	 * (for the 68040 not strictly necessary, but recommended by Motorola;
+	 *  for the 68060 mandatory)
 	 */
 	epte = (pt_entry_t *)kptpa;
 	epte = &epte[m68k_btop(KERNBASE + nextpa - firstpa)];
