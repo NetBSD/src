@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.152 2010/11/30 10:30:03 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.153 2011/01/02 05:01:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.152 2010/11/30 10:30:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.153 2011/01/02 05:01:21 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,9 +430,8 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			ind.ni_pathlen = strlen(nfs_pub.np_index);
 			ind.ni_pnbuf = NULL;
 			ind.ni_cnd.cn_nameptr = NULL;
-			ind.ni_startdir = nd.ni_vp;
-			vref(ind.ni_startdir);
-			error = lookup_for_nfsd_index(&ind);
+
+			error = lookup_for_nfsd_index(&ind, nd.ni_vp);
 			if (!error) {
 				/*
 				 * Found an index file. Get rid of
@@ -441,7 +440,6 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 				if (dirp)
 					vrele(dirp);
 				dirp = nd.ni_vp;
-				vrele(nd.ni_startdir);
 				ndp = &ind;
 			} else
 				error = 0;
@@ -480,7 +478,6 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	if (!error)
 		error = VOP_GETATTR(vp, &va, cred);
 	vput(vp);
-	vrele(ndp->ni_startdir);
 	nfsm_reply(NFSX_SRVFH(&nsfh, v3) + NFSX_POSTOPORFATTR(v3) +
 	    NFSX_POSTOPATTR(v3));
 	if (error) {
@@ -2082,7 +2079,6 @@ out:
 		if (error == -1)
 			error = 0;
 	}
-	vrele(tond.ni_startdir);
 	pathbuf_destroy(tond.ni_pathbuf);
 	tond.ni_cnd.cn_nameiop = 0;
 out1:
@@ -2100,7 +2096,6 @@ out1:
 		vrele(tdirp);
 		tdirp = NULL;
 	}
-	vrele(fromnd.ni_startdir);
 	pathbuf_destroy(fromnd.ni_pathbuf);
 	fromnd.ni_cnd.cn_nameiop = 0;
 	localfs = NULL;
@@ -2119,14 +2114,12 @@ nfsmout:
 		vrele(tdirp);
 #endif
 	if (tond.ni_cnd.cn_nameiop) {
-		vrele(tond.ni_startdir);
 		pathbuf_destroy(tond.ni_pathbuf);
 	}
 	if (localfs) {
 		VFS_RENAMELOCK_EXIT(localfs);
 	}
 	if (fromnd.ni_cnd.cn_nameiop) {
-		vrele(fromnd.ni_startdir);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		pathbuf_destroy(fromnd.ni_pathbuf);
 		vrele(fromnd.ni_dvp);

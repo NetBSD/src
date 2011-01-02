@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.127 2010/12/20 00:12:46 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.128 2011/01/02 05:01:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.127 2010/12/20 00:12:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.128 2011/01/02 05:01:20 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -388,7 +388,7 @@ struct namei_state {
 };
 
 /* XXX reorder things to make this decl unnecessary */
-static int do_lookup(struct namei_state *state);
+static int do_lookup(struct namei_state *state, struct vnode *startdir);
 
 
 /*
@@ -708,8 +708,7 @@ do_namei(struct namei_state *state)
 			return (ENOENT);
 		}
 		cnp->cn_nameptr = ndp->ni_pnbuf;
-		ndp->ni_startdir = state->namei_startdir;
-		error = do_lookup(state);
+		error = do_lookup(state, state->namei_startdir);
 		if (error != 0) {
 			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
@@ -810,10 +809,10 @@ namei_hash(const char *name, const char **ep)
  * This is a very central and rather complicated routine.
  *
  * The pathname is pointed to by ni_ptr and is of length ni_pathlen.
- * The starting directory is taken from ni_startdir. The pathname is
- * descended until done, or a symbolic link is encountered. The variable
- * ni_more is clear if the path is completed; it is set to one if a
- * symbolic link needing interpretation is encountered.
+ * The starting directory is passed in. The pathname is descended
+ * until done, or a symbolic link is encountered. The variable ni_more
+ * is clear if the path is completed; it is set to one if a symbolic
+ * link needing interpretation is encountered.
  *
  * The flag argument is LOOKUP, CREATE, RENAME, or DELETE depending on
  * whether the name is to be looked up, created, renamed, or deleted.
@@ -846,7 +845,7 @@ namei_hash(const char *name, const char **ep)
  * Begin lookup().
  */
 static int
-lookup_start(struct namei_state *state)
+lookup_start(struct namei_state *state, struct vnode *startdir)
 {
 	const char *cp;			/* pointer into pathname argument */
 
@@ -867,8 +866,7 @@ lookup_start(struct namei_state *state)
 	state->rdonly = cnp->cn_flags & RDONLY;
 	ndp->ni_dvp = NULL;
 	cnp->cn_flags &= ~ISSYMLINK;
-	state->dp = ndp->ni_startdir;
-	ndp->ni_startdir = NULLVP;
+	state->dp = startdir;
 
 	/*
 	 * If we have a leading string of slashes, remove them, and just make
@@ -1106,10 +1104,6 @@ unionlookup:
 		 * doesn't currently exist, leaving a pointer to the
 		 * (possibly locked) directory vnode in ndp->ni_dvp.
 		 */
-		if (cnp->cn_flags & SAVESTART) {
-			ndp->ni_startdir = ndp->ni_dvp;
-			vref(ndp->ni_startdir);
-		}
 		state->lookup_alldone = 1;
 		return (0);
 	}
@@ -1167,7 +1161,7 @@ unionlookup:
 }
 
 static int
-do_lookup(struct namei_state *state)
+do_lookup(struct namei_state *state, struct vnode *startdir)
 {
 	int error = 0;
 
@@ -1176,7 +1170,7 @@ do_lookup(struct namei_state *state)
 
 	KASSERT(cnp == &ndp->ni_cnd);
 
-	error = lookup_start(state);
+	error = lookup_start(state, startdir);
 	if (error) {
 		goto bad;
 	}
@@ -1293,12 +1287,6 @@ terminal:
 		}
 		goto bad;
 	}
-	if (ndp->ni_dvp != NULL) {
-		if (cnp->cn_flags & SAVESTART) {
-			ndp->ni_startdir = ndp->ni_dvp;
-			vref(ndp->ni_startdir);
-		}
-	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0) {
 		VOP_UNLOCK(state->dp);
 	}
@@ -1342,13 +1330,12 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *dp, int neverfollow)
     for (;;) {
 
 	state.cnp->cn_nameptr = state.ndp->ni_pnbuf;
-	state.ndp->ni_startdir = dp;
 
 	/*
 	 * END wodge of code from nfsd
 	 */
 
-	error = do_lookup(&state);
+	error = do_lookup(&state, dp);
 	if (error) {
 		/* BEGIN from nfsd */
 		if (ndp->ni_dvp) {
@@ -1452,16 +1439,18 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *dp, int neverfollow)
 }
 
 int
-lookup_for_nfsd_index(struct nameidata *ndp)
+lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 {
 	struct namei_state state;
 	int error;
+
+	vref(startdir);
 
 	ndp->ni_pnbuf = ndp->ni_pathbuf->pb_path;
 	ndp->ni_cnd.cn_nameptr = ndp->ni_pnbuf;
 
 	namei_init(&state, ndp);
-	error = do_lookup(&state);
+	error = do_lookup(&state, startdir);
 	namei_cleanup(&state);
 
 	return error;
