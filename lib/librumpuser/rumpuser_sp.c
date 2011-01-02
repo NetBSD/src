@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.27 2010/12/16 17:05:44 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.28 2011/01/02 13:01:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.27 2010/12/16 17:05:44 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.28 2011/01/02 13:01:45 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.27 2010/12/16 17:05:44 pooka Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#include <rump/rump.h> /* XXX: for rfork flags */
 #include <rump/rumpuser.h>
 #include "rumpuser_int.h"
 
@@ -110,12 +111,12 @@ lwproc_release(void)
 }
 
 static int
-lwproc_newproc(struct spclient *spc)
+lwproc_rfork(struct spclient *spc, int flags)
 {
 	int rv;
 
 	spops.spop_schedule();
-	rv = spops.spop_lwproc_newproc(spc);
+	rv = spops.spop_lwproc_rfork(spc, flags);
 	spops.spop_unschedule();
 
 	return rv;
@@ -463,7 +464,7 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 			break;
 	}
 
-	if (lwproc_newproc(&spclist[i]) != 0) {
+	if (lwproc_rfork(&spclist[i], RUMP_RFCFDG) != 0) {
 		close(newfd);
 		return 0;
 	}

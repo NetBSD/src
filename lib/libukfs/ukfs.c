@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.55 2010/11/26 11:10:53 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.56 2011/01/02 13:01:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -122,7 +122,7 @@ precall(struct ukfs *ukfs, struct lwp **curlwp)
 	*curlwp = rump_pub_lwproc_curlwp();
 	if (*curlwp)
 		rump_pub_lwproc_switch(ukfs->ukfs_lwp);
-	rump_pub_lwproc_newproc();
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 
 	if (rump_sys_chroot(ukfs->ukfs_mountpath) == -1)
 		return errno;
@@ -671,7 +671,7 @@ ukfs_release(struct ukfs *fs, int flags)
 
 	/* get root lwp */
 	rump_pub_lwproc_switch(fs->ukfs_lwp);
-	rump_pub_lwproc_newproc();
+	rump_pub_lwproc_rfork(RUMP_RFCFDG);
 
 	if ((flags & UKFS_RELFLAG_NOUNMOUNT) == 0) {
 		int rv, mntflag, error;
