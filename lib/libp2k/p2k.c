@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.47 2010/11/30 15:42:11 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.48 2011/01/02 05:04:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -680,8 +680,8 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	/*
 	 * XXX the rename lookup protocol is currently horribly
-	 * broken.  We get 1) DELETE with SAVESTART 2) DELETE
-	 * without SAVESTART 3) RENAME.  Hold on to this like
+	 * broken.  We get 1) DELETE 2) DELETE with INRELOOKUP
+	 * 3) RENAME.  Hold on to this like
 	 * it were the absolute truth for now.  However, do
 	 * not sprinkle asserts based on this due to abovementioned
 	 * brokenness -- some file system drivers might not
@@ -691,7 +691,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (pcn->pcn_flags & RUMP_NAMEI_INRENAME) {
 		if (pcn->pcn_nameiop == RUMP_NAMEI_DELETE) {
 			/* save path from the first lookup */
-			if (pcn->pcn_flags & RUMP_NAMEI_SAVESTART) {
+			if ((pcn->pcn_flags & RUMP_NAMEI_INRELOOKUP) == 0) {
 				if (p2n_dir->p2n_cn_ren_src)
 					freecn(p2n_dir->p2n_cn_ren_src);
 				p2n_dir->p2n_cn_ren_src = cn;
