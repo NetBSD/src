@@ -1,4 +1,4 @@
-;	$NetBSD: rumpkern.ifspec,v 1.9 2010/11/21 17:34:11 pooka Exp $
+;	$NetBSD: rumpkern.ifspec,v 1.10 2011/01/02 12:52:25 pooka Exp $
 
 NAME|kern
 PUBHDR|include/rump/rumpkern_if_pub.h
@@ -23,7 +23,7 @@ struct kauth_cred*|cred_create	|uid_t, gid_t, size_t, gid_t *
 void		  |cred_put	|struct kauth_cred *
 
 ; lwp and proc creation / switching interfaces
-int		|lwproc_newproc		|void
+int		|lwproc_rfork		|int
 int		|lwproc_newlwp		|pid_t
 void		|lwproc_switch		|struct lwp *
 void		|lwproc_releaselwp	|void
