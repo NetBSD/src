@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_lwproc.3,v 1.3 2010/10/29 15:38:15 pooka Exp $
+.\"     $NetBSD: rump_lwproc.3,v 1.4 2011/01/02 13:03:29 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 29, 2010
+.Dd January 2, 2011
 .Dt RUMP_LWPROC 3
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ rump kernel (librump, \-lrump)
 .Sh SYNOPSIS
 .In rump/rump.h
 .Ft int
-.Fn rump_pub_lwproc_newproc
+.Fn rump_pub_lwproc_rfork "int flags"
 .Ft int
 .Fn rump_pub_lwproc_newlwp "pid_t pid"
 .Ft void
@@ -77,13 +77,29 @@ are no longer necessary.
 Like other rump kernel resources, procs/lwps will be released when
 the process hosting the rump kernel exits.
 .Bl -tag -width xxxx
-.It Fn rump_pub_lwproc_newproc
-Create a process and one lwp inside it.
-Sets curlwp to the new lwp.
-The new process id can be retrieved in the normal fashion by calling
-.Fn rump_sys_getpid .
+.It Fn rump_pub_lwproc_rfork
+Create a process, one lwp inside it and set curlwp to the new lwp.
+The
+.Ar flags
+parameter controls how file descriptors are inherited from the
+parent.
+By default (flags=0) file descriptors are shared.
+Other options are:
+.Bl -tag -width RUMP_RFCFDGXX
+.It Dv RUMP_RFFDG
+Copy file descriptors from parent.
+This is what
+.Xr fork 2
+does.
+.It Dv RUMP_RFCFDG
+File descriptors neither copied nor shared, i.e. new process does not
+have access to the parent's file descriptors.
+.El
+.Pp
 This routine returns 0 for success or an errno indicating the reason
 for failure.
+The new process id can be retrieved in the normal fashion by calling
+.Fn rump_sys_getpid .
 .It Fn rump_pub_lwproc_newlwp "pid"
 Create a new lwp attached to the process specified by
 .Fa pid .
