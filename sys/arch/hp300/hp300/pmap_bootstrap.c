@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.48 2011/01/02 05:18:04 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.49 2011/01/02 05:21:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.48 2011/01/02 05:18:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.49 2011/01/02 05:21:11 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -59,9 +59,6 @@ extern vaddr_t bootinfo_va;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
-#ifdef M68K_MMU_HP
-extern int pmap_aliasmask;
-#endif
 
 void	pmap_bootstrap(paddr_t, paddr_t);
 
