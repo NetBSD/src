@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.159 2010/12/08 17:10:13 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.160 2011/01/02 21:03:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.159 2010/12/08 17:10:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.160 2011/01/02 21:03:45 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -134,7 +134,7 @@ static void	bpf_deliver(struct bpf_if *,
 static void	bpf_freed(struct bpf_d *);
 static void	bpf_ifname(struct ifnet *, struct ifreq *);
 static void	*bpf_mcpy(void *, const void *, size_t);
-static int	bpf_movein(struct uio *, int, int,
+static int	bpf_movein(struct uio *, int, uint64_t,
 			        struct mbuf **, struct sockaddr *);
 static void	bpf_attachd(struct bpf_d *, struct bpf_if *);
 static void	bpf_detachd(struct bpf_d *);
@@ -179,14 +179,14 @@ const struct cdevsw bpf_cdevsw = {
 };
 
 static int
-bpf_movein(struct uio *uio, int linktype, int mtu, struct mbuf **mp,
+bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 	   struct sockaddr *sockp)
 {
 	struct mbuf *m;
 	int error;
-	int len;
-	int hlen;
-	int align;
+	size_t len;
+	size_t hlen;
+	size_t align;
 
 	/*
 	 * Build a sockaddr based on the data link layer type.
@@ -253,7 +253,7 @@ bpf_movein(struct uio *uio, int linktype, int mtu, struct mbuf **mp,
 	 * If there aren't enough bytes for a link level header or the
 	 * packet length exceeds the interface mtu, return an error.
 	 */
-	if (len < hlen || len - hlen > mtu)
+	if (len - hlen > mtu)
 		return (EMSGSIZE);
 
 	/*
@@ -261,13 +261,13 @@ bpf_movein(struct uio *uio, int linktype, int mtu, struct mbuf **mp,
 	 * bail if it won't fit in a single mbuf.
 	 * (Take into account possible alignment bytes)
 	 */
-	if ((unsigned)len > MCLBYTES - align)
+	if (len + align > MCLBYTES)
 		return (EIO);
 
 	m = m_gethdr(M_WAIT, MT_DATA);
 	m->m_pkthdr.rcvif = 0;
-	m->m_pkthdr.len = len - hlen;
-	if (len > MHLEN - align) {
+	m->m_pkthdr.len = (int)(len - hlen);
+	if (len + align > MHLEN) {
 		m_clget(m, M_WAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			error = ENOBUFS;
@@ -278,7 +278,7 @@ bpf_movein(struct uio *uio, int linktype, int mtu, struct mbuf **mp,
 	/* Insure the data is properly aligned */
 	if (align > 0) {
 		m->m_data += align;
-		m->m_len -= align;
+		m->m_len -= (int)align;
 	}
 
 	error = uiomove(mtod(m, void *), len, uio);
@@ -289,7 +289,7 @@ bpf_movein(struct uio *uio, int linktype, int mtu, struct mbuf **mp,
 		m->m_data += hlen; /* XXX */
 		len -= hlen;
 	}
-	m->m_len = len;
+	m->m_len = (int)len;
 	*mp = m;
 	return (0);
 
