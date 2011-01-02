@@ -1,4 +1,4 @@
-.\" $NetBSD: __insn_barrier.3,v 1.1 2010/12/17 07:10:38 jruoho Exp $
+.\" $NetBSD: __insn_barrier.3,v 1.2 2011/01/02 07:14:02 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 17, 2010
+.Dd January 2, 2011
 .Dt __INSN_BARRIER 3
 .Os
 .Sh NAME
@@ -50,7 +50,8 @@ may be necessary in some corner cases to prevent the compiler
 from misoptimizing.
 .Sh SEE ALSO
 .Xr gcc 1 ,
-.Xr cdefs 3
+.Xr cdefs 3 ,
+.Xr mb 9
 .Rs
 .%A Paul E. McKenney
 .%T Memory Barriers: a Hardware View for Software Hackers
