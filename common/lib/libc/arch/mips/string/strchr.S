@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.S,v 1.2 2009/07/17 19:37:57 dsl Exp $	*/
+/*	$NetBSD: strchr.S,v 1.3 2011/01/02 02:58:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)index.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: strchr.S,v 1.2 2009/07/17 19:37:57 dsl Exp $")
+	ASMSTR("$NetBSD: strchr.S,v 1.3 2011/01/02 02:58:52 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __ABICALLS__
@@ -47,13 +47,13 @@ LEAF(strchr)
 XLEAF(index)
 1:
 	lbu	a2, 0(a0)		# get a byte
-	addu	a0, a0, 1
+	PTR_ADDU a0, 1
 	beq	a2, a1, fnd
 	bne	a2, zero, 1b
 notfnd:
 	move	v0, zero
 	j	ra
 fnd:
-	subu	v0, a0, 1
+	PTR_SUBU v0, a0, 1
 	j	ra
 END(strchr)
