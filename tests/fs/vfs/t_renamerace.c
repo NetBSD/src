@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.14 2010/11/11 17:44:44 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.15 2011/01/02 12:58:17 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -90,7 +90,7 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by fs");
 
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
 
 	RL(rump_sys_chdir(mp));
@@ -133,7 +133,7 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	    FSTYPE_MSDOS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43626");
 
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
 
 	RL(rump_sys_chdir(mp));
