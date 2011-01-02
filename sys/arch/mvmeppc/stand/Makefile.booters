@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.10 2009/12/24 16:41:01 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.11 2011/01/02 09:40:51 tsutsui Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -53,18 +53,8 @@ ${PROG}: machine powerpc ${PROGDEPENDS}
 
 LIB_SA_DIR=	${.CURDIR}/../libsa
 LIBSA_DIR!=	cd ${LIB_SA_DIR} && ${PRINTOBJDIR}
-LIBSA=${LIBSA_DIR}/libsa.a
-
-.PHONY: ${LIBSA}
-${LIBSA}:
-	@echo making sure libsa is up to date...
-	@cd ${LIB_SA_DIR} && ${MAKE}
-
-SRTOBJ?= ${LIBSA_DIR}/srt0.o
-.PHONY: ${SRTOBJ}
-${SRTOBJ}:
-	@echo making sure srt0 is up to date...
-	@cd ${LIB_SA_DIR} && ${MAKE} srt0.o
+LIBSA=		${LIBSA_DIR}/lib/sa/libsa.a
+LIBKERN=	${LIBSA_DIR}/lib/kern/libkern.a
 
 #WRTVID_BOOT_DIR=  ${.CURDIR}/../wrtvid
 #WRTVID_DIR!=	cd ${WRTVID_BOOT_DIR} && ${PRINTOBJDIR}
