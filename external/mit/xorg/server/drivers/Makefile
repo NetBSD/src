@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2010/12/07 05:39:53 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.52 2011/01/02 11:24:20 mrg Exp $
 
 # xf86-input drivers
 
@@ -179,7 +179,7 @@ SUBDIR+= \
 	xf86-video-r128 \
 	xf86-video-tdfx \
 	xf86-video-wsfb
-.endif	# ${MACHINE} == "macppc"
+.endif	# ${MACHINE} == "ofppc"
 
 .if ${MACHINE} == "netwinder"
 SUBDIR+= \
