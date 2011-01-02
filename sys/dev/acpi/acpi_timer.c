@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.c,v 1.18 2010/07/10 19:37:38 jruoho Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.19 2011/01/02 05:48:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2006 Matthias Drochner <drochner@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.18 2010/07/10 19:37:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.19 2011/01/02 05:48:55 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -55,13 +55,14 @@ static struct timecounter acpi_timecounter = {
 int
 acpitimer_init(struct acpi_softc *sc)
 {
-	ACPI_STATUS res;
+	const uint32_t flags = AcpiGbl_FADT.Flags;
+	ACPI_STATUS rv;
 	uint32_t bits;
 	int i, j;
 
-	res = AcpiGetTimerResolution(&bits);
+	rv = AcpiGetTimerResolution(&bits);
 
-	if (res != AE_OK)
+	if (ACPI_FAILURE(rv))
 		return -1;
 
 	if (bits == 32)
@@ -78,8 +79,12 @@ acpitimer_init(struct acpi_softc *sc)
 
 	tc_init(&acpi_timecounter);
 
-	aprint_debug_dev(sc->sc_dev,
-	    "%s %d-bit timer\n", acpi_timecounter.tc_name, bits);
+	aprint_debug_dev(sc->sc_dev, "%s %d-bit timer\n",
+	    acpi_timecounter.tc_name, bits);
+
+	if ((flags & ACPI_FADT_PLATFORM_CLOCK) != 0)
+		aprint_debug_dev(sc->sc_dev,
+		    "warning: timer may be unreliable\n");
 
 	return 0;
 }
