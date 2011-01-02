@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.213 2010/12/30 16:46:32 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.214 2011/01/02 12:52:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.213 2010/12/30 16:46:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.214 2011/01/02 12:52:25 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -99,7 +99,7 @@ int rump_threads = 1;
 #endif
 
 static int rump_proxy_syscall(int, void *, register_t *);
-static int rump_proxy_newproc(void *);
+static int rump_proxy_rfork(void *, int);
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -199,7 +199,7 @@ static const struct rumpuser_sp_ops spops = {
 	.spop_unschedule	= rump_unschedule,
 	.spop_lwproc_switch	= rump_lwproc_switch,
 	.spop_lwproc_release	= rump_lwproc_releaselwp,
-	.spop_lwproc_newproc	= rump_proxy_newproc,
+	.spop_lwproc_rfork	= rump_proxy_rfork,
 	.spop_lwproc_newlwp	= rump_lwproc_newlwp,
 	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
 	.spop_syscall		= rump_proxy_syscall,
@@ -704,12 +704,12 @@ rump_proxy_syscall(int num, void *arg, register_t *retval)
 }
 
 static int
-rump_proxy_newproc(void *priv)
+rump_proxy_rfork(void *priv, int flags)
 {
 	struct vmspace *newspace;
 	int error;
 
-	if ((error = rump_lwproc_newproc()) != 0)
+	if ((error = rump_lwproc_rfork(flags)) != 0)
 		return error;
 
 	/*
