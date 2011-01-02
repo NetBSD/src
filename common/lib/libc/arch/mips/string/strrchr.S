@@ -1,4 +1,4 @@
-/*	$NetBSD: strrchr.S,v 1.1 2009/07/16 21:25:36 dsl Exp $	*/
+/*	$NetBSD: strrchr.S,v 1.2 2011/01/02 02:58:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)rindex.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: strrchr.S,v 1.1 2009/07/16 21:25:36 dsl Exp $")
+	ASMSTR("$NetBSD: strrchr.S,v 1.2 2011/01/02 02:58:52 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __ABICALLS__
@@ -48,9 +48,9 @@ XLEAF(rindex)
 	move	v0, zero		# default if not found
 1:
 	lbu	a3, 0(a0)		# get a byte
-	addu	a0, a0, 1
+	PTR_ADDU a0, a0, 1
 	bne	a3, a1, 2f
-	subu	v0, a0, 1		# save address of last match
+	PTR_SUBU v0, a0, 1		# save address of last match
 2:
 	bne	a3, zero, 1b		# continue if not end
 	j	ra
