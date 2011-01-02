@@ -1,9 +1,10 @@
-/*	$NetBSD: schizo.c,v 1.16 2010/03/11 03:54:56 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.17 2011/01/02 10:43:18 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
  * Copyright (c) 2003 Henric Jungheim
+ * Copyright (c) 2008, 2009, 2010 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,7 +103,6 @@ static void *schizo_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
 static int schizo_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 static void *schizo_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
                                        int, int (*)(void *), void *);
-static int schizo_pci_find_ino(struct pci_attach_args *, pci_intr_handle_t *);
 static int schizo_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	bus_size_t, int, bus_dmamap_t *);
 
@@ -141,6 +141,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	uint64_t reg, eccctrl;
 	int *busranges = NULL, nranges;
 	char *str;
+	bool no_sc;
 
 	aprint_normal(": addr %" PRIx64, ma->ma_reg[0].ur_paddr);
 	str = prom_getpropstring(ma->ma_node, "compatible");
@@ -213,7 +214,10 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 
 	is = &pbm->sp_is;
 	pbm->sp_sb.sb_is = is;
-	if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+	no_sc = prom_getproplen(sc->sc_node, "no-streaming-cache") >= 0;
+	if (no_sc)
+		aprint_debug("%s: no streaming buffers\n", sc->sc_dv.dv_xname);
+	else {
 		vaddr_t va = (vaddr_t)&pbm->sp_flush[0x40];
 
 		/*
@@ -227,8 +231,6 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_subregion(pbm->sp_regt, pbm->sp_regh,
 			offsetof(struct schizo_pbm_regs, strbuf),
 			sizeof(struct iommu_strbuf), &is->is_sb[0]->sb_sb);
-	} else {
-		aprint_debug("%s: no streaming buffers\n", sc->sc_dv.dv_xname);
 	}
 
 	aprint_normal("%s: ", sc->sc_dv.dv_xname);
@@ -296,6 +298,22 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	    "ce");
 	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
 	    SCZ_SERR_INO, "safari");
+
+#if 0
+	if (sc->sc_tomatillo) {
+		/*
+		 * We should enable the IOCACHE here.
+		 */
+		uint64_t iocache_csr;
+		char bits[128];
+
+		iocache_csr = schizo_pbm_read(pbm, SCZ_PCI_IOCACHE_CSR);
+
+		snprintb(bits, sizeof(bits), TOM_IOCACHE_CSR_BITS, iocache_csr);
+		printf("IOCACHE_CSR=%s\n", bits);
+		printf("IOCACHE_CSR=%" PRIx64 "\n", iocache_csr);
+	}
+#endif
 
 	config_found(&sc->sc_dv, &pba, schizo_print);
 }
@@ -605,7 +623,7 @@ schizo_alloc_chipset(struct schizo_pbm *pbm, int node, pci_chipset_tag_t pc)
 	npc->spc_conf_write = schizo_conf_write;
 	npc->spc_intr_map = schizo_pci_intr_map;
 	npc->spc_intr_establish = schizo_pci_intr_establish;
-	npc->spc_find_ino = schizo_pci_find_ino;
+	npc->spc_find_ino = NULL;
 	return (npc);
 }
 
@@ -813,55 +831,4 @@ schizo_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 
 	DPRINTF(SDB_INTR, ("; returning handle %p\n", cookie));
 	return (cookie);
-}
-
-static int
-schizo_pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-#if 0
-	struct schizo_pbm *pbm = pa->pa_pc->cookie;
-	struct schizo_softc *sc = pbm->sp_sc;
-	u_int bus;
-	u_int dev;
-	u_int pin;
-#endif
-
-	DPRINTF(SDB_INTMAP, ("pci_find_ino: pa_tag: node %x, %d:%d:%d\n",
-			      PCITAG_NODE(pa->pa_tag), (int)PCITAG_BUS(pa->pa_tag),
-			      (int)PCITAG_DEV(pa->pa_tag),
-			      (int)PCITAG_FUN(pa->pa_tag)));
-	DPRINTF(SDB_INTMAP,
-		("pci_find_ino: intrswiz %d, intrpin %d, intrline %d, rawintrpin %d\n",
-		 pa->pa_intrswiz, pa->pa_intrpin, pa->pa_intrline, pa->pa_rawintrpin));
-	DPRINTF(SDB_INTMAP, ("pci_find_ino: pa_intrtag: node %x, %d:%d:%d\n",
-			      PCITAG_NODE(pa->pa_intrtag),
-			      (int)PCITAG_BUS(pa->pa_intrtag),
-			      (int)PCITAG_DEV(pa->pa_intrtag),
-			      (int)PCITAG_FUN(pa->pa_intrtag)));
-
-#if 0
-	bus = (pp->pp_id == PSYCHO_PBM_B);
-	/*
-	 * If we are on a ppb, use the devno on the underlying bus when forming
-	 * the ivec.
-	 */
-	if (pa->pa_intrswiz != 0 && PCITAG_NODE(pa->pa_intrtag) != 0) 
-		dev = PCITAG_DEV(pa->pa_intrtag);
-	else
-		dev = pa->pa_device;
-	dev--;
-
-	if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
-	    pp->pp_id == PSYCHO_PBM_B)
-		dev--;
-
-	pin = pa->pa_intrpin - 1;
-	DPRINTF(SDB_INTMAP, ("pci_find_ino: mode %d, pbm %d, dev %d, pin %d\n",
-	    sc->sc_mode, pp->pp_id, dev, pin));
-
-	*ihp = sc->sc_ign | ((bus << 4) & INTMAP_PCIBUS) |
-	    ((dev << 2) & INTMAP_PCISLOT) | (pin & INTMAP_PCIINT);
-#endif
-
-	return (0);
 }

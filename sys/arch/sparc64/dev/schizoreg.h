@@ -1,8 +1,9 @@
-/*	$NetBSD: schizoreg.h,v 1.6 2010/02/13 11:55:48 nakayama Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.7 2011/01/02 10:43:18 mrg Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
+ * Copyright (c) 2010 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -129,6 +130,9 @@ struct schizo_regs {
 #define	SCZ_PCI_AFAR			0x02018
 #define	SCZ_PCI_DIAG			0x02020
 #define	SCZ_PCI_ESTAR			0x02028
+#define	SCZ_PCI_IOCACHE_CSR		0x02248
+#define	SCZ_PCI_IOCACHE_TAG_DIAG_BASE	0x02250
+#define	SCZ_PCI_IOCACHE_TAG_DATA_BASE	0x02290
 #define	SCZ_PCI_STRBUF_CTRL		0x02800
 #define	SCZ_PCI_STRBUF_FLUSH		0x02808
 #define	SCZ_PCI_STRBUF_FSYNC		0x02810
@@ -250,6 +254,30 @@ struct schizo_regs {
 #define	SCZ_PCIDIAG_I_DMADPAR		(1UL <<  3UL)	/* invert dma parity */
 #define	SCZ_PCIDIAG_I_PIODPAR		(1UL <<  2UL)	/* invert pio data parity */
 #define	SCZ_PCIDIAG_I_PIOAPAR		(1UL <<  1UL)	/* invert pio addr parity */
+
+/* Enable prefetch bits */
+#define	TOM_IOCACHE_CSR_WRT_PEN		(1UL << 19UL)	/* for partial line writes */
+#define	TOM_IOCACHE_CSR_NCP_RDM		(1UL << 18UL)	/* memory read multiple (NC) */
+#define	TOM_IOCACHE_CSR_NCP_ONE		(1UL << 17UL)	/* memory read (NC) */
+#define	TOM_IOCACHE_CSR_NCP_LINE	(1UL << 16UL)	/* memory read line (NC) */
+#define	TOM_IOCACHE_CSR_PEN_RDM		(1UL << 2UL)	/* memory read multiple */
+#define	TOM_IOCACHE_CSR_PEN_ONE		(1UL << 1UL)	/* memory read */
+#define	TOM_IOCACHE_CSR_PEN_LINE	(1UL << 0UL)	/* memory read line */
+/* Prefetch lines selection 0x0 = 1, 0x3 = 4 */
+#define	TOM_IOCACHE_CSR_PLEN_RDM_MASK	0x000000000000c000UL	/* read multiple */
+#define	TOM_IOCACHE_CSR_PLEN_RDM_SHIFT	14
+#define	TOM_IOCACHE_CSR_PLEN_ONE_MASK	0x0000000000003000UL	/* read one */
+#define	TOM_IOCACHE_CSR_PLEN_ONE_SHIFT	12
+#define	TOM_IOCACHE_CSR_PLEN_LINE_MASK	0x0000000000000c00UL	/* read line */
+#define	TOM_IOCACHE_CSR_PLEN_LINE_SHIFT	10
+/* Prefetch offset selection 0x00 = 1, 0x7e = 127, 0x7f = invalid */
+#define	TOM_IOCACHE_CSR_POFFSET_MASK	0x00000000000003f8UL
+
+#define	TOM_IOCACHE_CSR_BITS	"\177\020"				\
+		"b\19WRT_PEN\0b\18NCP_RDM\0b17NCP_ONE\0b\16NCP_LINE\0"	\
+		"f\14\2PLEN_RDM\0f\12\2PEN_ONE\0f\10\2PEN_LINE\0"	\
+		"f\3\7POFFSET\0"					\
+		"b\2PEN_RDM\0b\1PEN_ONE\0b\0PEN_LINE\0\0"
 
 #define	TOM_IOMMU_ERR			(1UL << 24)
 #define	TOM_IOMMU_ERR_MASK		(3UL << 25)
