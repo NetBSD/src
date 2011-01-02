@@ -1,4 +1,4 @@
-/*	$NetBSD: t_p2kifs.c,v 1.2 2010/12/14 20:09:43 pooka Exp $	*/
+/*	$NetBSD: t_p2kifs.c,v 1.3 2011/01/02 12:58:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ ATF_TC_BODY(makecn, tc)
 	RL(rump_sys_mkdir("/" TESTFILE, 0777));
 
 	/* need stable lwp for componentname */
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 
 	/* try it once with the right path */
 	cn = rump_pub_makecn(RUMP_NAMEI_LOOKUP, 0, pathstr, strlen(pathstr),
