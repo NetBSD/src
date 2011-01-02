@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.19 2011/01/02 06:05:47 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.20 2011/01/02 12:06:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.19 2011/01/02 06:05:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.20 2011/01/02 12:06:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,7 +132,7 @@ acpi_wakedev_add(struct acpi_devnode *ad)
 
 	if (err != 0)
 		aprint_error_dev(ad->ad_root, "sysctl_createv"
-		    "(hw.acpi.wake.%s) failed (err %d)\n", ad->ad_name, err);
+		    "(hw.acpi.wake.%s) failed (err %d)\n", str, err);
 }
 
 void
