@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.89 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.90 2011/01/02 08:40:55 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.89 2010/06/06 04:50:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.90 2011/01/02 08:40:55 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.89 2010/06/06 04:50:07 mrg Exp 
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
-#include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/autoconf.h>
 #include <machine/video.h>
@@ -64,8 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.89 2010/06/06 04:50:07 mrg Exp 
 extern char *etext;
 extern char *extiobase;
 
-extern paddr_t avail_start;
-extern paddr_t avail_end;
+extern paddr_t avail_start, avail_end;
 
 #if NZSC > 0
 extern	int	zsinited;
@@ -96,8 +95,8 @@ void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
 
-void	pmap_bootstrap(paddr_t, paddr_t);
-void	bootstrap_mac68k(int);
+void pmap_bootstrap(paddr_t, paddr_t);
+void bootstrap_mac68k(int);
 
 /*
  * Bootstrap the VM system.
@@ -112,7 +111,7 @@ void	bootstrap_mac68k(int);
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, lwp0upa;
+	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	u_int nptpages, kstsize;
 	paddr_t avail_next;
 	int avail_remaining;
@@ -129,7 +128,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Calculate important physical addresses:
 	 *
-	 *	lwp0upa		lwp 0 u-area		UPAGES pages
+	 *	lwp0upa		lwp0 u-area		UPAGES pages
 	 *
 	 *	kstpa		kernel segment table	1 page (!040)
 	 *						N pages (040)
@@ -139,7 +138,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *	kptpa		statically allocated
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
-	 * [ Sysptsize is the number of pages of PT, IIOMAPSIZE and
+	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE and
 	 *   NBMAPSIZE are the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
@@ -192,6 +191,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * points to blocks of 128 second level descriptors (512 bytes)
 	 * each mapping 256kb.  Note that there may be additional "segment
 	 * table" pages depending on how large MAXKL2SIZE is.
+	 *
+	 * Portions of the last segment of KVA space (0xFFC00000 -
+	 * 0xFFFFFFFF) are mapped for the kernel page tables.
 	 *
 	 * XXX cramming two levels of mapping into the single "segment"
 	 * table on the 68040 is intended as a temporary hack to get things
@@ -333,9 +335,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 */
 		ste = PA2VA(kstpa, st_entry_t *);
 		ste = &ste[SYSMAP_VA >> SEGSHIFT];
-		*ste = kptmpa | SG_RW | SG_V;
 		pte = PA2VA(kptmpa, pt_entry_t *);
 		pte = &pte[SYSMAP_VA >> SEGSHIFT];
+		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	}
 
@@ -347,21 +349,19 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	epte = &pte[nptpages * NPTEPG];
 	while (pte < epte)
 		*pte++ = PG_NV;
-
 	/*
 	 * Validate PTEs for kernel text (RO).
-	 * Pages up to "start" must be writable for the ROM.
+	 * Pages up to "start" (vectors and Mac OS global variable space)
+	 * must be writable for the ROM.
 	 */
 	pte = PA2VA(kptpa, pt_entry_t *);
 	pte = &pte[m68k_btop(KERNBASE)];
-	/* XXX why KERNBASE relative? */
 	epte = &pte[m68k_btop(m68k_round_page(start))];
 	protopte = firstpa | PG_RW | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
 	}
-	/* XXX why KERNBASE relative? */
 	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
 	protopte = (protopte & ~PG_PROT) | PG_RO;
 	while (pte < epte) {
