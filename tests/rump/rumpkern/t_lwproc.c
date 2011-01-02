@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lwproc.c,v 1.4 2010/10/29 15:32:51 pooka Exp $	*/
+/*	$NetBSD: t_lwproc.c,v 1.5 2011/01/02 12:58:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <atf-c.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +63,7 @@ ATF_TC_BODY(makelwp, tc)
 	ATF_REQUIRE_EQ(rump_pub_lwproc_newlwp(37), ESRCH);
 	l = rump_pub_lwproc_curlwp();
 
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	ATF_REQUIRE(rump_pub_lwproc_curlwp() != l);
 	l = rump_pub_lwproc_curlwp();
 
@@ -85,10 +86,10 @@ ATF_TC_BODY(proccreds, tc)
 	struct lwp *l1, *l2;
 
 	rump_init();
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	l1 = rump_pub_lwproc_curlwp();
 
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	l2 = rump_pub_lwproc_curlwp();
 
 	RL(rump_sys_setuid(22));
@@ -119,11 +120,11 @@ ATF_TC_BODY(inherit, tc)
 
 	rump_init();
 
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(rump_sys_setuid(66));
 	ATF_REQUIRE_EQ(rump_sys_getuid(), 66);
 
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	ATF_REQUIRE_EQ(rump_sys_getuid(), 66);
 
 	/* release lwp and proc */
@@ -149,7 +150,7 @@ ATF_TC_BODY(lwps, tc)
 
 	rump_init();
 
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	mypid = rump_sys_getpid();
 	RL(rump_sys_setuid(375));
 
@@ -240,6 +241,65 @@ ATF_TC_BODY(nullswitch, tc)
 	rump_pub_lwproc_switch(l);
 }
 
+ATF_TC(rfork);
+ATF_TC_HEAD(rfork, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "check that fork shares fd's");
+}
+
+ATF_TC_BODY(rfork, tc)
+{
+	struct stat sb;
+	struct lwp *l, *l2;
+	int fd;
+
+	RZ(rump_init());
+
+	ATF_REQUIRE_EQ(rump_pub_lwproc_rfork(RUMP_RFFDG|RUMP_RFCFDG), EINVAL);
+
+	RZ(rump_pub_lwproc_rfork(0));
+	l = rump_pub_lwproc_curlwp();
+
+	RL(fd = rump_sys_open("/file", O_RDWR | O_CREAT, 0777));
+
+	/* ok, first check rfork(RUMP_RFCFDG) does *not* preserve fd's */
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
+	ATF_REQUIRE_ERRNO(EBADF, rump_sys_write(fd, &fd, sizeof(fd)) == -1);
+
+	/* then check that rfork(0) does */
+	rump_pub_lwproc_switch(l);
+	RZ(rump_pub_lwproc_rfork(0));
+	ATF_REQUIRE_EQ(rump_sys_write(fd, &fd, sizeof(fd)), sizeof(fd));
+	RL(rump_sys_fstat(fd, &sb));
+	l2 = rump_pub_lwproc_curlwp();
+
+	/*
+	 * check that the shared fd table is really shared by
+	 * closing fd in parent
+	 */
+	rump_pub_lwproc_switch(l);
+	RL(rump_sys_close(fd));
+	rump_pub_lwproc_switch(l2);
+	ATF_REQUIRE_ERRNO(EBADF, rump_sys_fstat(fd, &sb) == -1);
+
+	/* redo, this time copying the fd table instead of sharing it */
+	rump_pub_lwproc_releaselwp();
+	rump_pub_lwproc_switch(l);
+	RL(fd = rump_sys_open("/file", O_RDWR, 0777));
+	RZ(rump_pub_lwproc_rfork(RUMP_RFFDG));
+	ATF_REQUIRE_EQ(rump_sys_write(fd, &fd, sizeof(fd)), sizeof(fd));
+	RL(rump_sys_fstat(fd, &sb));
+	l2 = rump_pub_lwproc_curlwp();
+
+	/* check that the fd table is copied */
+	rump_pub_lwproc_switch(l);
+	RL(rump_sys_close(fd));
+	rump_pub_lwproc_switch(l2);
+	RL(rump_sys_fstat(fd, &sb));
+	ATF_REQUIRE_EQ(sb.st_size, sizeof(fd));
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -250,6 +310,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, nolwprelease);
 	ATF_TP_ADD_TC(tp, nolwp);
 	ATF_TP_ADD_TC(tp, nullswitch);
+	ATF_TP_ADD_TC(tp, rfork);
 
 	return atf_no_error();
 }

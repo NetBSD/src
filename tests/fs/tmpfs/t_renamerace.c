@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.9 2010/09/01 19:41:27 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.10 2011/01/02 12:58:17 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -105,7 +105,7 @@ ATF_TC_BODY(renamerace2, tc)
 	if (rump_sys_mkdir("/dir", 0777) == -1)
 		atf_tc_fail_errno("cannot create directory");
 
-	RZ(rump_pub_lwproc_newproc());
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
 	pthread_create(&pt[0], NULL, r2w1, NULL);
 	pthread_create(&pt[1], NULL, r2w2, NULL);
