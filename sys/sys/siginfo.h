@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.19 2009/03/27 11:05:43 drochner Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.20 2011/01/02 18:12:01 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef	_SYS_SIGINFO_H_
 #define	_SYS_SIGINFO_H_
 
-#include <machine/signal.h>	/* XXX: __HAVE_SIGINFO */
+#include <machine/signal.h>
 #ifdef _KERNEL
 #include <sys/queue.h>
 #endif
