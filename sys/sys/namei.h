@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.72 2011/01/02 05:05:42 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.73 2011/01/02 05:09:50 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.19 2011/01/02 05:04:58 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.20 2011/01/02 05:09:30 dholland Exp 
  */
 
 /*
@@ -265,7 +265,7 @@ int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
 int	lookup_for_nfsd(struct nameidata *, struct vnode *, int neverfollow);
 int	lookup_for_nfsd_index(struct nameidata *, struct vnode *);
-int	relookup(struct vnode *, struct vnode **, struct componentname *);
+int	relookup(struct vnode *, struct vnode **, struct componentname *, int);
 void	cache_purge1(struct vnode *, const struct componentname *, int);
 #define	PURGE_PARENTS	1
 #define	PURGE_CHILDREN	2
