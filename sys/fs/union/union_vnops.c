@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.38 2010/07/02 07:56:46 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.39 2011/01/02 05:09:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.38 2010/07/02 07:56:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.39 2011/01/02 05:09:31 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1228,7 +1228,7 @@ union_link(void *v)
 				vp  = NULLVP;
 				if (dun->un_uppervp == NULLVP)
 					 panic("union: null upperdvp?");
-				error = relookup(ap->a_dvp, &vp, ap->a_cnp);
+				error = relookup(ap->a_dvp, &vp, ap->a_cnp, 0);
 				if (error) {
 					VOP_UNLOCK(ap->a_vp);
 					return EROFS;	/* ? */
