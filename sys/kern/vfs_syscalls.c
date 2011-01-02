@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.412 2011/01/02 05:09:31 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.413 2011/01/02 05:12:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.412 2011/01/02 05:09:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.413 2011/01/02 05:12:33 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3450,7 +3450,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 		return error;
 	}
 
-	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART | TRYEMULROOT | INRENAME,
+	NDINIT(&fromnd, DELETE, LOCKPARENT | TRYEMULROOT | INRENAME,
 	    frompb);
 	if ((error = namei(&fromnd)) != 0) {
 		pathbuf_destroy(frompb);
@@ -3511,7 +3511,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	fvp = fromnd.ni_vp;
 
 	NDINIT(&tond, RENAME,
-	    LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART | TRYEMULROOT
+	    LOCKPARENT | LOCKLEAF | NOCACHE | TRYEMULROOT
 	      | INRENAME | (fvp->v_type == VDIR ? CREATEDIR : 0),
 	    topb);
 	if ((error = namei(&tond)) != 0) {
