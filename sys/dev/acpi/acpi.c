@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.224 2011/01/02 06:05:47 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.225 2011/01/03 08:50:23 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.224 2011/01/02 06:05:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.225 2011/01/03 08:50:23 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1045,6 +1045,14 @@ acpi_rescan_capabilities(device_t self)
 			ad->ad_flags |= ACPI_DEVICE_WAKEUP;
 			acpi_wakedev_add(ad);
 		}
+
+		/*
+		 * Scan devices that are ejectable.
+		 */
+		rv = AcpiGetHandle(ad->ad_handle, "_EJ0", &tmp);
+
+		if (ACPI_SUCCESS(rv))
+			ad->ad_flags |= ACPI_DEVICE_EJECT;
 	}
 }
 
