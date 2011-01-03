@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158 2010/11/23 11:13:58 hannken Exp $
+# $NetBSD: GENERIC,v 1.159 2011/01/03 06:07:43 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158 $"
+#ident 		"GENERIC-$Revision: 1.159 $"
 
 maxusers	32		# estimated number of users
 
@@ -57,7 +57,7 @@ options 	SYSVMSG		# System V-style message queues
 options 	SYSVSEM		# System V-style semaphores
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-#options 	MODULAR		# new style module framework
+#options 	MODULAR		# new style module(7) framework
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
