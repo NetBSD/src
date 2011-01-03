@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1482 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1483 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -815,3 +815,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dm(4): Make LVM use non 512-byte sector devices. [mlelstv 20101223]
 	auvitek(4): Add a driver for Auvitek AU0828 family USB video
 		capture controllers. [jmcneill 20101227]
+	dhcpcd(8): Import dhcpcd-5.2.10. [roy 20110103]
