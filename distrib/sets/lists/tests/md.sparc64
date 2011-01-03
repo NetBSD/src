@@ -1,0 +1,11 @@
+# $NetBSD: md.sparc64,v 1.1 2011/01/03 14:07:10 pgoyette Exp $
+./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_except.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_nan_inf.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-lib-debug		debug,atf
+#
+./usr/tests/lib/libc/ieeefp/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/ieeefp/t_except		tests-lib-tests		atf
+./usr/tests/lib/libc/ieeefp/t_nan_inf		tests-lib-tests		atf
+./usr/tests/lib/libc/ieeefp/t_round		tests-lib-tests		atf
+./usr/tests/lib/libc/ieeefp/t_subnormal		tests-lib-tests		atf
