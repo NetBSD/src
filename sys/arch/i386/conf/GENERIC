@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1003 2010/12/27 20:45:00 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1004 2011/01/03 06:07:43 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,11 +22,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1003 $"
+#ident 		"GENERIC-$Revision: 1.1004 $"
 
 maxusers	64		# estimated number of users
 
-# For GENERIC, we build the exec formats as modules by default.
+# For GENERIC, we build the exec formats as module(7)s by default.
 no options 	EXEC_AOUT       # exec a.out binaries
 no options 	EXEC_ELF32      # exec ELF binaries
 no options 	EXEC_SCRIPT     # exec #! scripts
@@ -98,10 +98,10 @@ options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
-no options 	AIO		# POSIX asynchronous I/O, built as a module
-no options 	MQUEUE		# POSIX messsage queues, built as a module
+no options 	AIO		# POSIX asynchronous I/O, built as a module(7)
+no options 	MQUEUE		# POSIX messsage queues, built as a module(7)
 
-options 	MODULAR		# new style module framework
+options 	MODULAR		# new style module(7) framework
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -135,7 +135,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
-# Compatibility options, built as modules by default
+# Compatibility options, built as module(7)s by default
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 options 	COMPAT_09	# NetBSD 0.9
 options 	COMPAT_10	# NetBSD 1.0
@@ -172,7 +172,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
-# File systems, built as modules by default
+# File systems, built as module(7)s by default
 #file-system	FFS		# UFS
 #file-system	EXT2FS		# second extended file system (linux)
 #file-system	LFS		# log-structured file system
@@ -1548,7 +1548,7 @@ pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md			# memory disk device (ramdisk)
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
-options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module
+options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
 
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
@@ -1585,7 +1585,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	srt			# source-address-based routing
 
 #
-# accept filters, built as modules by default
+# accept filters, built as module(7)s by default
 #pseudo-device	accf_data		# "dataready" accept filter
 #pseudo-device	accf_http		# "httpready" accept filter
 

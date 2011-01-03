@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.282 2010/12/27 20:45:00 jmcneill Exp $
+# $NetBSD: ALL,v 1.283 2011/01/03 06:07:43 tsutsui Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.282 $"
+#ident 		"ALL-$Revision: 1.283 $"
 
 maxusers	64		# estimated number of users
 
@@ -98,7 +98,7 @@ options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	MODULAR		# new style module framework
+options 	MODULAR		# new style module(7) framework
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -1622,7 +1622,7 @@ pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md			# memory disk device (ramdisk)
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
-options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module
+options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
 
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
@@ -1663,7 +1663,7 @@ pseudo-device	etherip			# EtherIP
 pseudo-device	srt			# source-address-based routing
 
 #
-# accept filters, built as modules by default
+# accept filters, built as module(7)s by default
 pseudo-device	accf_data		# "dataready" accept filter
 pseudo-device	accf_http		# "httpready" accept filter
 

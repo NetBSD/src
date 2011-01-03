@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2010/11/23 11:13:56 hannken Exp $
+# $NetBSD: GENERIC,v 1.100 2011/01/03 06:07:42 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -42,7 +42,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-#options 	MODULAR		# new style module framework
+#options 	MODULAR		# new style module(7) framework
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
