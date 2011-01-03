@@ -1,4 +1,4 @@
-/*	$NetBSD: t_except.c,v 1.4 2011/01/03 09:14:21 dholland Exp $	*/
+/*	$NetBSD: t_except.c,v 1.5 2011/01/03 20:51:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+
+const char *skip_mesg;
+const char *skip_arch;
 
 void sigfpe(int, siginfo_t *, void *);
 volatile sig_atomic_t signal_caught;
@@ -282,6 +285,8 @@ sigfpe(int s, siginfo_t *si, void *c)
 	ATF_TC_BODY(m##_##t, tc)					\
 	{								\
 									\
+		if (skip_mesg != NULL)					\
+			atf_tc_skip(skip_mesg, skip_arch);		\
 		m(t##_ops);						\
 	}
 
@@ -294,19 +299,22 @@ TEST(unmasked, long_double)
 
 ATF_TP_ADD_TCS(tp)
 {
-	const char *arch;
 
-	arch = atf_config_get("atf_machine");
-	if (strcmp("vax", arch) == 0 || strcmp("m68000", arch) == 0)
-		printf("Test not applicable on %s", arch);
-	else {
-		ATF_TP_ADD_TC(tp, masked_float);
-		ATF_TP_ADD_TC(tp, masked_double);
-		ATF_TP_ADD_TC(tp, masked_long_double);
-		ATF_TP_ADD_TC(tp, unmasked_float);
-		ATF_TP_ADD_TC(tp, unmasked_double);
-		ATF_TP_ADD_TC(tp, unmasked_long_double);
-	}
+	skip_arch = atf_config_get("atf_machine");
+	if (strcmp("vax", skip_arch) == 0 || strcmp("m68000", skip_arch) == 0)
+		skip_mesg = "Test not applicable on %s";
+	else if (system("cpuctl identify 0 | grep -q QEMU") == 0) {
+		skip_mesg = "Test does not run correctly under %s";
+		skip_arch = "QEMU";
+	} else
+		skip_mesg = NULL;
+
+	ATF_TP_ADD_TC(tp, masked_float);
+	ATF_TP_ADD_TC(tp, masked_double);
+	ATF_TP_ADD_TC(tp, masked_long_double);
+	ATF_TP_ADD_TC(tp, unmasked_float);
+	ATF_TP_ADD_TC(tp, unmasked_double);
+	ATF_TP_ADD_TC(tp, unmasked_long_double);
 
 	return atf_no_error();
 }

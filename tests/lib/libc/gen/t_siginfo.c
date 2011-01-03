@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.7 2011/01/02 21:39:24 pgoyette Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.8 2011/01/03 20:51:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -296,6 +296,8 @@ ATF_TC_BODY(sigfpe_flt, tc)
 	struct sigaction sa;
 	double d = strtod("0", NULL);
 
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_skip("Test does not run correctly under qemu");
 	if (sigsetjmp(sigfpe_flt_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
 		sa.sa_sigaction = sigfpe_flt_action;
