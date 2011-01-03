@@ -1107,9 +1107,6 @@ start_interface(void *arg)
 		return;
 	}
 
-	/* We don't want to read the old lease if we NAK an old test */
-	nolease = iface->state->offer && options & DHCPCD_TEST;
-
 	iface->start_uptime = uptime();
 	free(iface->state->offer);
 	iface->state->offer = NULL;
@@ -1134,21 +1131,9 @@ start_interface(void *arg)
 		delete_timeout(NULL, iface);
 		return;
 	}
-	if (ifo->req_addr.s_addr) {
-		iface->state->offer =
-		    dhcp_message_new(&ifo->req_addr, &ifo->req_mask);
-		if (ifo->options & DHCPCD_REQUEST)
-			ifo->req_addr.s_addr = 0;
-		else {
-			iface->state->reason = "STATIC";
-			iface->state->new = iface->state->offer;
-			iface->state->offer = NULL;
-			get_lease(&iface->state->lease, iface->state->new);
-			configure(iface);
-			start_inform(iface);
-			return;
-		}
-	} else if (!nolease)
+	/* We don't want to read the old lease if we NAK an old test */
+	nolease = iface->state->offer && options & DHCPCD_TEST;
+	if (!nolease)
 		iface->state->offer = read_lease(iface);
 	if (iface->state->offer) {
 		get_lease(&iface->state->lease, iface->state->offer);
@@ -1207,6 +1192,10 @@ init_state(struct interface *iface, int argc, char **argv)
 	configure_interface(iface, argc, argv);
 	if (!(options & DHCPCD_TEST))
 		run_script(iface);
+	/* We need to drop the leasefile so that start_interface
+	 * doesn't load it. */	
+	if (ifs->options->options & DHCPCD_REQUEST)
+		unlink(iface->leasefile);
 
 	if (ifs->options->options & DHCPCD_LINK) {
 		switch (carrier_status(iface)) {

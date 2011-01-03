@@ -39,6 +39,8 @@
 #include <netinet/in.h>
 #ifdef __DragonFly__
 #  include <netproto/802_11/ieee80211_ioctl.h>
+#elif __APPLE__
+  /* FIXME: Add apple includes so we can work out SSID */
 #else
 #  include <net80211/ieee80211_ioctl.h>
 #endif
@@ -342,6 +344,7 @@ manage_link(int fd)
 		for (p = link_buf; p < e; p += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)(void *)p;
 			switch(rtm->rtm_type) {
+#ifdef RTM_IFANNOUNCE
 			case RTM_IFANNOUNCE:
 				ifan = (struct if_announcemsghdr *)(void *)p;
 				switch(ifan->ifan_what) {
@@ -353,6 +356,7 @@ manage_link(int fd)
 					break;
 				}
 				break;
+#endif
 			case RTM_IFINFO:
 				ifm = (struct if_msghdr *)(void *)p;
 				memset(ifname, 0, sizeof(ifname));
