@@ -1,4 +1,4 @@
-# $NetBSD: ad.i386,v 1.1 2011/01/02 03:52:15 pgoyette Exp $
+# $NetBSD: md.i386,v 1.1 2011/01/03 14:07:10 pgoyette Exp $
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_except.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_nan_inf.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-lib-debug		debug,atf
