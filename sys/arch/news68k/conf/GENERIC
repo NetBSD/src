@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2010/11/23 11:14:03 hannken Exp $
+# $NetBSD: GENERIC,v 1.104 2011/01/03 06:07:44 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 maxusers	8
 
@@ -39,7 +39,7 @@ options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-#options 	MODULAR			# new style module framework
+#options 	MODULAR			# new style module(7) framework
 
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92 2010/07/21 11:10:14 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.93 2011/01/03 06:07:43 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -73,7 +73,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-#options 	MODULAR		# new style module framework
+#options 	MODULAR		# new style module(7) framework
 
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
