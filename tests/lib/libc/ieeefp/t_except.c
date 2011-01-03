@@ -1,4 +1,4 @@
-/*	$NetBSD: t_except.c,v 1.2 2011/01/02 21:17:19 christos Exp $	*/
+/*	$NetBSD: t_except.c,v 1.3 2011/01/03 09:10:54 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ struct ops {
 	int sicode;
 };
 
-static const volatile struct ops float_ops[] = {
+static const struct ops float_ops[] = {
 	{ f_dz, FP_X_DZ, FPE_FLTDIV },
 	{ f_inv, FP_X_INV, FPE_FLTINV },
 	{ f_ofl, FP_X_OFL, FPE_FLTOVF },
@@ -171,7 +171,7 @@ static const volatile struct ops float_ops[] = {
 	{ NULL, 0, 0 }
 };
 
-static const volatile struct ops double_ops[] = {
+static const struct ops double_ops[] = {
 	{ d_dz, FP_X_DZ, FPE_FLTDIV },
 	{ d_inv, FP_X_INV, FPE_FLTINV },
 	{ d_ofl, FP_X_OFL, FPE_FLTOVF },
@@ -179,7 +179,7 @@ static const volatile struct ops double_ops[] = {
 	{ NULL, 0, 0 }
 };
 
-static const volatile struct ops long_double_ops[] = {
+static const struct ops long_double_ops[] = {
 	{ ld_dz, FP_X_DZ, FPE_FLTDIV },
 	{ ld_inv, FP_X_INV, FPE_FLTINV },
 	{ ld_ofl, FP_X_OFL, FPE_FLTOVF },
@@ -190,11 +190,11 @@ static const volatile struct ops long_double_ops[] = {
 static sigjmp_buf b;
 
 static void
-masked(const volatile struct ops *test_ops)
+masked(const struct ops *test_ops)
 {
 	struct sigaction sa;
 	fp_except ex1, ex2;
-	static const volatile struct ops *t;
+	static const struct ops *t;
 
 	/* mask all exceptions, clear history */
 	fpsetmask(0);
@@ -227,11 +227,11 @@ masked(const volatile struct ops *test_ops)
 #define BARRIER() fpsetmask(0); f_x = f_one * f_one
 
 static void
-unmasked(const volatile struct ops *test_ops)
+unmasked(const struct ops *test_ops)
 {
 	struct sigaction sa;
 	int r;
-	static const volatile struct ops *t;
+	const struct ops *volatile t;
 
 	/* mask all exceptions, clear history */
 	fpsetmask(0);
