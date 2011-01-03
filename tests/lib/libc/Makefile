@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.17 2011/01/02 22:03:25 pgoyette Exp $
+# $NetBSD: Makefile,v 1.18 2011/01/03 19:01:47 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
 
-TESTS_SUBDIRS+=	gen hash setjmp stdlib stdio string
+TESTS_SUBDIRS+=	gen hash locale setjmp stdlib stdio string
 
 .if ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m68000"
 TESTS_SUBDIRS+=	ieeefp
@@ -25,12 +25,14 @@ TESTS_C+=	t_ptm
 TESTS_C+=	t_randomid
 TESTS_C+=	t_strptime
 
+TESTS_SH+=	t_atexit
 TESTS_SH+=	t_protoent
 TESTS_SH+=	t_servent
 
 BINDIR=		${TESTSDIR}
 MKMAN=		no
 
+PROGS+=		h_atexit
 PROGS+=		h_protoent
 PROGS+=		h_servent
 
