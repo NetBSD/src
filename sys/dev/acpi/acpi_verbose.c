@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.15 2010/12/31 14:05:15 jruoho Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.16 2011/01/03 08:50:23 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.15 2010/12/31 14:05:15 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.16 2011/01/03 08:50:23 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -460,14 +460,24 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 {
 	struct acpi_devnode *child;
 	device_t dev;
+	char buf[5];
 	uint32_t i;
 
 	for (i = 0; i < level; i++)
 		aprint_normal("    ");
 
-	aprint_normal("%-5s [%02u] [%c%c]", ad->ad_name, ad->ad_type,
-	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : ' ',
-	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : ' ');
+	buf[0] = '\0';
+
+	if ((ad->ad_flags & ACPI_DEVICE_POWER) != 0)
+		(void)strlcat(buf, "P", sizeof(buf));
+
+	if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0)
+		(void)strlcat(buf, "W", sizeof(buf));
+
+	if ((ad->ad_flags & ACPI_DEVICE_EJECT) != 0)
+		(void)strlcat(buf, "E", sizeof(buf));
+
+	aprint_normal("%-5s [%02u] [%s]", ad->ad_name, ad->ad_type, buf);
 
 	if (ad->ad_device != NULL)
 		aprint_normal(" <%s>", device_xname(ad->ad_device));
