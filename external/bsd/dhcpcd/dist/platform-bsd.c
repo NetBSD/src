@@ -31,6 +31,10 @@
 
 #include "platform.h"
 
+#ifndef SYS_NMLN	/* OSX */
+#  define SYS_NMLN 256
+#endif
+
 static char march[SYS_NMLN];
 
 char *

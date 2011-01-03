@@ -892,7 +892,6 @@ make_message(struct dhcp_message **message,
 
 	if (lease->addr.s_addr && lease->cookie == htonl(MAGIC_COOKIE)) {
 		if (type == DHCP_DECLINE ||
-		    type == DHCP_DISCOVER ||
 		    (type == DHCP_REQUEST &&
 			lease->addr.s_addr != iface->addr.s_addr))
 		{
@@ -914,6 +913,9 @@ make_message(struct dhcp_message **message,
 		memcpy(p, DAD, len);
 		p += len;
 	}
+
+	if (type == DHCP_DISCOVER && ifo->options & DHCPCD_REQUEST)
+		PUTADDR(DHO_IPADDRESS, ifo->req_addr);
 
 	if (type == DHCP_DISCOVER ||
 	    type == DHCP_INFORM ||
