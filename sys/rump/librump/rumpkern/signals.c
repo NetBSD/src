@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.4 2010/11/15 20:37:22 pooka Exp $	*/
+/*	$NetBSD: signals.c,v 1.5 2011/01/03 14:57:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.4 2010/11/15 20:37:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.5 2011/01/03 14:57:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -39,7 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.4 2010/11/15 20:37:22 pooka Exp $");
 
 #include "rumpkern_if_priv.h"
 
-const struct filterops sig_filtops;
+const struct filterops sig_filtops = {
+	.f_attach = (void *)eopnotsupp,
+};
+
 sigset_t sigcantmask;
 
 /* RUMP_SIGMODEL_PANIC */
