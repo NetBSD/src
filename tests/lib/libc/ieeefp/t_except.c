@@ -1,4 +1,4 @@
-/*	$NetBSD: t_except.c,v 1.3 2011/01/03 09:10:54 dholland Exp $	*/
+/*	$NetBSD: t_except.c,v 1.4 2011/01/03 09:14:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ masked(const struct ops *test_ops)
 {
 	struct sigaction sa;
 	fp_except ex1, ex2;
-	static const struct ops *t;
+	const struct ops *t;
 
 	/* mask all exceptions, clear history */
 	fpsetmask(0);
