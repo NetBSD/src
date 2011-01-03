@@ -1,4 +1,4 @@
-#	$NetBSD: t_md.sh,v 1.4 2010/12/12 12:49:59 pooka Exp $
+#	$NetBSD: t_md.sh,v 1.5 2011/01/03 09:39:46 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,6 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
+rawmd=/dev/rmd0${rawpart}
+
 atf_test_case basic cleanup
 basic_head()
 {
@@ -39,11 +42,11 @@ basic_body()
 	# but just let it slide for now, since they *should* be the same.
 	rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
 
-	atf_check -s exit:0 $(atf_get_srcdir)/h_mdserv /dev/rmd0${rawpart}
+	atf_check -s exit:0 $(atf_get_srcdir)/h_mdserv ${rawmd}
 
 	export RUMP_SERVER=unix://commsock
-	atf_check -s exit:0 -e ignore dd if=/bin/ls rof=/dev/rmd0d seek=100 count=10
-	atf_check -s exit:0 -e ignore dd of=testfile rif=/dev/rmd0d skip=100 count=10
+	atf_check -s exit:0 -e ignore dd if=/bin/ls rof=${rawmd} seek=100 count=10
+	atf_check -s exit:0 -e ignore dd of=testfile rif=${rawmd} skip=100 count=10
 	atf_check -s exit:0 -e ignore -o file:testfile dd if=/bin/ls count=10
 }
 
