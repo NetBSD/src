@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.13 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.14 2011/01/03 19:20:11 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -56,9 +56,9 @@ struct confargs {
 #define	HP700CF_IRQ_UNDEF	(-1)
 #define	hp700cf_irq	cf_loc[GEDOENSCF_IRQ]
 
-/* this is used for hppa_knownmodules table
- * describing known to this port modules,
- * system boards, cpus, fpus and busses
+/*
+ * This is used for hppa_knownmodules table describing known to this port
+ * modules, system boards, cpus, fpus and busses.
  */
 struct hppa_mod_info {
 	int	mi_type;
