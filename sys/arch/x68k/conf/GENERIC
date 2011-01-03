@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.151 2010/11/23 11:14:07 hannken Exp $
+# $NetBSD: GENERIC,v 1.152 2011/01/03 03:43:22 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.151 $"
+#ident 		"GENERIC-$Revision: 1.152 $"
 
 maxusers	8
 
@@ -99,7 +99,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 ## The DDB in-kernel debugger runs at panic (unless DDB_ONPANIC=0), or at
 ## serial console break or keyboard reset, where the PROM would normally
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
-#options 	DDB			# kernel dynamic debugger
+options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 #options 	PANICBUTTON		# interrupt switch invokes DDB
