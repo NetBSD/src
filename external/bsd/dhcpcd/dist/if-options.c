@@ -420,14 +420,12 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		ifo->options |= DHCPCD_QUIET;
 		break;
 	case 'r':
-		ifo->options |= DHCPCD_REQUEST;
 		if (parse_addr(&ifo->req_addr, NULL, arg) != 0)
 			return -1;
+		ifo->options |= DHCPCD_REQUEST;
 		ifo->req_mask.s_addr = 0;
 		break;
 	case 's':
-		ifo->options |= DHCPCD_INFORM | DHCPCD_PERSISTENT;
-		ifo->options &= ~(DHCPCD_ARP | DHCPCD_STATIC);
 		if (arg && *arg != '\0') {
 			if (parse_addr(&ifo->req_addr, &ifo->req_mask,
 				arg) != 0)
@@ -436,6 +434,8 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 			ifo->req_addr.s_addr = 0;
 			ifo->req_mask.s_addr = 0;
 		}
+		ifo->options |= DHCPCD_INFORM | DHCPCD_PERSISTENT;
+		ifo->options &= ~(DHCPCD_ARP | DHCPCD_STATIC);
 		break;
 	case 't':
 		ifo->timeout = atoint(arg);
