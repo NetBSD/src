@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.12 2011/01/03 10:44:40 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.13 2011/01/03 12:18:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.12 2011/01/03 10:44:40 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.13 2011/01/03 12:18:25 wiz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-s] [-c ncpu] [-d drivespec] [-l libs] "
+	fprintf(stderr, "usage: %s [-s] [-c ncpu] [-d drivespec] [-l libs] "
 	    "[-m modules] bindurl\n", getprogname());
 	exit(1);
 }
