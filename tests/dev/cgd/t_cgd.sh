@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.4 2010/12/30 16:58:07 pooka Exp $
+#	$NetBSD: t_cgd.sh,v 1.5 2011/01/03 09:37:42 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,6 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
+rawcgd=/dev/rcgd0${rawpart}
 cgdserver=\
 "rump_server -lrumpvfs -lrumpkern_crypto -lrumpdev -lrumpdev_disk -lrumpdev_cgd"
 
@@ -45,10 +47,9 @@ basic_body()
 	export RUMP_SERVER=unix://csock
 	atf_check -s exit:0 sh -c "echo 12345 | \
 	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
-	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd rof=/dev/rcgd0d count=2
+	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd rof=${rawcgd} count=2
 	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd of=testfile count=2
-	atf_check -s exit:0 -e ignore -o file:testfile \
-	    dd rif=/dev/rcgd0d count=2
+	atf_check -s exit:0 -e ignore -o file:testfile dd rif=${rawcgd} count=2
 }
 
 basic_cleanup()
@@ -75,7 +76,7 @@ wrongpass_body()
 	export RUMP_SERVER=unix://csock
 	atf_check -s exit:0 sh -c "echo 12345 | \
 	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
-	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd rof=/dev/rcgd0d count=2
+	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd rof=${rawcgd} count=2
 
 	# unconfig and reconfig cgd
 	atf_check -s exit:0 rump.cgdconfig -u cgd0
@@ -84,7 +85,7 @@ wrongpass_body()
 
 	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd of=testfile count=2
 	atf_check -s exit:0 -e ignore -o not-file:testfile \
-	    dd rif=/dev/rcgd0d count=2
+	    dd rif=${rawcgd} count=2
 }
 
 wrongpass_cleanup()
