@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.5 2011/01/01 20:43:01 pooka Exp $	*/
+/*	$NetBSD: t_io.c,v 1.6 2011/01/03 09:35:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ holywrite(const atf_tc_t *tc, const char *mp)
 	RL(rump_sys_pwrite(fd, buf, 1, getpagesize()));
 
 	memset(buf, 'B', sizeof(buf));
-	RL(rump_sys_pwrite(fd, buf, 2, 0xfff));
+	RL(rump_sys_pwrite(fd, buf, 2, getpagesize()-1));
 
 	REQUIRE_LIBC(b2 = malloc(2 * getpagesize()), NULL);
 	REQUIRE_LIBC(b3 = malloc(2 * getpagesize()), NULL);
