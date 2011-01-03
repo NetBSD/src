@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.285 2010/12/18 01:13:36 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.286 2011/01/03 13:22:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.285 2010/12/18 01:13:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.286 2011/01/03 13:22:32 pooka Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -978,8 +978,7 @@ setrunnable(struct lwp *l)
 #endif /* KERN_SA */
 
 	/*
-	 * If the LWP was sleeping interruptably, then it's OK to start it
-	 * again.  If not, mark it as still sleeping.
+	 * If the LWP was sleeping, start it again.
 	 */
 	if (l->l_wchan != NULL) {
 		l->l_stat = LSSLEEP;
