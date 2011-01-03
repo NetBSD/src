@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.6 2010/12/15 18:42:59 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.7 2011/01/03 10:44:40 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 14, 2010
+.Dd January 3, 2011
 .Dt RUMP_SERVER 1
 .Os
 .Sh NAME
@@ -33,6 +33,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl s
+.Op Fl c Ar ncpu
 .Op Fl d Ar drivespec
 .Op Fl l Ar library
 .Op Fl m Ar module
@@ -60,6 +61,12 @@ system was built.
 At execution time it is possible to load components from the command
 line as described in the options section.
 .Bl -tag -width indent
+.It Fl c Ar ncpu
+Configure
+.Ar ncpu
+virtual CPUs on SMP-capable archs.
+By default, the number of CPUs equals the number of CPUs on the
+host.
 .It Fl d Ar drivespec
 The argument
 .Ar drivespec

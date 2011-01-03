@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.11 2010/12/15 19:07:43 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.12 2011/01/03 10:44:40 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.11 2010/12/15 19:07:43 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.12 2011/01/03 10:44:40 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -51,8 +51,8 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-s] [-d drivespec] [-l libs] [-m modules] "
-	    "bindurl\n", getprogname());
+	fprintf(stderr, "usage: %s [-s] [-c ncpu] [-d drivespec] [-l libs] "
+	    "[-m modules] bindurl\n", getprogname());
 	exit(1);
 }
 
@@ -101,12 +101,21 @@ main(int argc, char *argv[])
 	unsigned netfs = 0, curetfs = 0;
 	int error;
 	int ch, sflag;
+	int ncpu;
 
 	setprogname(argv[0]);
 
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "d:l:m:s")) != -1) {
+	while ((ch = getopt(argc, argv, "c:d:l:m:s")) != -1) {
 		switch (ch) {
+		case 'c':
+			ncpu = atoi(optarg);
+			/* XXX: MAXCPUS is from host, not from kernel */
+			if (ncpu < 1 || ncpu > MAXCPUS)
+				err(1, "CPU count needs to be between "
+				    "1 and %d\n", MAXCPUS);
+			setenv("RUMP_NCPU", optarg, 1);
+			break;
 		case 'd': {
 			char *options, *value;
 			char *key, *hostpath;
