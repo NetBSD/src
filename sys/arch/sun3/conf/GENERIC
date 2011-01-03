@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153 2010/11/23 11:14:06 hannken Exp $
+# $NetBSD: GENERIC,v 1.154 2011/01/03 06:07:44 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.153 $"
+#ident		"GENERIC-$Revision: 1.154 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -43,7 +43,7 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-#options 	MODULAR		# new style module framework
+#options 	MODULAR		# new style module(7) framework
 
 #options 	INSECURE	# disable kernel security level
 #options 	USERCONF	# userconf(4) support
