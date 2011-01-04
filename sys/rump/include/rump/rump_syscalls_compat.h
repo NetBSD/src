@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.4 2010/08/30 10:08:39 pooka Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.5 2011/01/04 17:00:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -45,6 +45,9 @@
 #define rump_sys_fstat(a,b) rump_sys_nb5_fstat(a,b)
 #define rump_sys_pollts(a,b,c,d) rump_sys_nb5_pollts(a,b,c,d)
 #define rump_sys_select(a,b,c,d,e) rump_sys_nb5_select(a,b,c,d,e)
+#define rump_sys_utimes(a,b) rump_sys_nb5_utimes(a,b)
+#define rump_sys_lutimes(a,b) rump_sys_nb5_lutimes(a,b)
+#define rump_sys_futimes(a,b) rump_sys_nb5_futimes(a,b)
 #endif /* __NetBSD_Prereq */
 #endif /* __NetBSD__ */
 #endif /* _KERNEL */
@@ -62,6 +65,9 @@ int rump_sys_nb5_fstat(int, struct stat *);
 int rump_sys_nb5_pollts(struct pollfd *, size_t,
 			const struct timespec *, const void *);
 int rump_sys_nb5_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+int rump_sys_nb5_utimes(const char *, const struct timeval *);
+int rump_sys_nb5_lutimes(const char *, const struct timeval *);
+int rump_sys_nb5_futimes(int, const struct timeval *);
 
 #ifdef _END_DECLS
 _END_DECLS
