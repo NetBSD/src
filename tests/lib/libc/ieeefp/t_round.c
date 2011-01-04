@@ -1,4 +1,4 @@
-/*	$NetBSD: t_round.c,v 1.1 2011/01/02 03:51:21 pgoyette Exp $	*/
+/*	$NetBSD: t_round.c,v 1.2 2011/01/04 22:30:41 pgoyette Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 18, 1995
@@ -6,12 +6,14 @@
  */
 
 #include <atf-c.h>
-#include <atf-c/config.h>
 
-#include <ieeefp.h>
 #include <float.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if !defined(__mc68000__) && !defined(__vax__)
+#include <ieeefp.h>
+#endif
 
 ATF_TC(fpround);
 
@@ -25,6 +27,9 @@ ATF_TC_HEAD(fpround, tc)
 ATF_TC_BODY(fpround, tc)
 {
 
+#if defined(__mc68000__) || defined(__vax__)
+	atf_tc_skip("Test not applicable on this architecture.");
+#else
 	/*
 	 * This test would be better if it actually performed some
 	 * calculations to verify the selected rounding mode.  But
@@ -61,18 +66,13 @@ ATF_TC_BODY(fpround, tc)
 
 	ATF_CHECK_EQ(fpgetround(), FP_RN);
 	ATF_CHECK_EQ(FLT_ROUNDS, 1);
+#endif /* defined(__mc68000__) || defined(__vax__) */
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-	const char *arch;
 
-	arch = atf_config_get("atf_machine");
-	if (strcmp("vax", arch) == 0 || strcmp("m68000", arch) == 0)
-		atf_tc_skip("Test not applicable on %s", arch);
-	else {
-		ATF_TP_ADD_TC(tp, fpround);
-	}
+	ATF_TP_ADD_TC(tp, fpround);
 
 	return atf_no_error();
 }

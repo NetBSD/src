@@ -1,4 +1,4 @@
-/* $NetBSD: t_subnormal.c,v 1.1 2011/01/02 03:51:21 pgoyette Exp $ */
+/* $NetBSD: t_subnormal.c,v 1.2 2011/01/04 22:30:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,13 +30,29 @@
  */
 
 #include <atf-c.h>
-#include <atf-c/config.h>
 
-#include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+
+#if defined(__vax__)
+
+ATF_TC(no_test);
+
+ATF_TC_HEAD(no_test, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Dummy test");
+}
+
+ATF_TC_BODY(no_test,tc)
+{
+
+	atf_tc_skip("Test not available on this architecture");
+}
+
+#else /* defined(__vax__) */
 
 ATF_TC(test_float);
 
@@ -180,21 +196,20 @@ ATF_TC_BODY(test_long_double, tc)
 	ATF_REQUIRE_EQ(f, 0);
 }
 #endif /* TEST_LONG_DOUBLE */
+#endif /* defined(__vax__) */
 
 ATF_TP_ADD_TCS(tp)
 {
-	const char *arch;
 
-	arch = atf_config_get("atf_arch");
-	if (strcmp("vax", arch) == 0 || strcmp("m68000", arch) == 0)
-		printf("Test not applicable on %s\n", arch);
-	else {
-		ATF_TP_ADD_TC(tp, test_float);
-		ATF_TP_ADD_TC(tp, test_double);
+#if defined(__vax__)
+	ATF_TP_ADD_TC(tp, no_test);
+#else
+	ATF_TP_ADD_TC(tp, test_float);
+	ATF_TP_ADD_TC(tp, test_double);
 #ifdef TEST_LONG_DOUBLE
-		ATF_TP_ADD_TC(tp, test_long_double);
+	ATF_TP_ADD_TC(tp, test_long_double);
 #endif /* TEST_LONG_DOUBLE */
-	}
+#endif
 
 	return atf_no_error();
 }

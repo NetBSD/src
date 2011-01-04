@@ -1,4 +1,4 @@
-/*	$NetBSD: t_except.c,v 1.5 2011/01/03 20:51:26 pgoyette Exp $	*/
+/*	$NetBSD: t_except.c,v 1.6 2011/01/04 22:30:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -27,16 +27,33 @@
  */
 
 #include <atf-c.h>
-#include <atf-c/config.h>
 
 #include <stdio.h>
 #include <signal.h>
-#include <assert.h>
-#include <ieeefp.h>
 #include <float.h>
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if defined(__mc68000__) || defined(__vax__)
+
+ATF_TC(no_test);
+
+ATF_TC_HEAD(no_test, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Dummy test case");
+}
+
+ATF_TC_BODY(no_test, tc)
+{
+
+	atf_tc_skip("Test not available on this architecture.");
+}
+
+#else /* defined(__mc68000__) || defined(__vax__) */
+
+#include <ieeefp.h>
 
 const char *skip_mesg;
 const char *skip_arch;
@@ -45,15 +62,6 @@ void sigfpe(int, siginfo_t *, void *);
 volatile sig_atomic_t signal_caught;
 volatile int sicode;
 
-#ifdef USE_FLOAT
-#define FPTYPE float
-#else
-#ifdef USE_LONGDOUBLE
-#define FPTYPE long double
-#else
-#define FPTYPE double
-#endif
-#endif
 static volatile const float	f_one   = 1.0;
 static volatile const float	f_zero  = 0.0;
 static volatile const double	d_one   = 1.0;
@@ -285,8 +293,8 @@ sigfpe(int s, siginfo_t *si, void *c)
 	ATF_TC_BODY(m##_##t, tc)					\
 	{								\
 									\
-		if (skip_mesg != NULL)					\
-			atf_tc_skip(skip_mesg, skip_arch);		\
+		if (system("cpuctl identify 0 | grep -q QEMU") == 0)	\
+			atf_tc_skip("Test not applicable on QEMU");	\
 		m(t##_ops);						\
 	}
 
@@ -297,24 +305,21 @@ TEST(unmasked, float)
 TEST(unmasked, double)
 TEST(unmasked, long_double)
 
+#endif /* defined(__mc68000__) || defined(__vax__) */
+
 ATF_TP_ADD_TCS(tp)
 {
 
-	skip_arch = atf_config_get("atf_machine");
-	if (strcmp("vax", skip_arch) == 0 || strcmp("m68000", skip_arch) == 0)
-		skip_mesg = "Test not applicable on %s";
-	else if (system("cpuctl identify 0 | grep -q QEMU") == 0) {
-		skip_mesg = "Test does not run correctly under %s";
-		skip_arch = "QEMU";
-	} else
-		skip_mesg = NULL;
-
+#if defined(__mc68000__) || defined(__vax__)
+	ATF_TP_ADD_TC(tp, no_test);
+#else
 	ATF_TP_ADD_TC(tp, masked_float);
 	ATF_TP_ADD_TC(tp, masked_double);
 	ATF_TP_ADD_TC(tp, masked_long_double);
 	ATF_TP_ADD_TC(tp, unmasked_float);
 	ATF_TP_ADD_TC(tp, unmasked_double);
 	ATF_TP_ADD_TC(tp, unmasked_long_double);
+#endif
 
 	return atf_no_error();
 }

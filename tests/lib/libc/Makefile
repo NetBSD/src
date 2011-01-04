@@ -1,13 +1,9 @@
-# $NetBSD: Makefile,v 1.19 2011/01/03 19:25:48 pgoyette Exp $
+# $NetBSD: Makefile,v 1.20 2011/01/04 22:30:40 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
 
-TESTS_SUBDIRS+=	gen hash setjmp stdlib stdio string
-
-.if ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m68000"
-TESTS_SUBDIRS+=	ieeefp
-.endif
+TESTS_SUBDIRS+=	gen hash ieeefp setjmp stdlib stdio string
 
 .if ${HAS_SSP} == "yes"
 TESTS_SUBDIRS+=	ssp
