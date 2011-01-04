@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.3 2011/01/04 09:42:21 wiz Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -198,6 +198,7 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 		so_ifa = malloc(sizeof(*so_ifa));
 		if (!so_ifa) {
 			fatalp("Out of memory\n");
+			free(so_nexthop);
 			return LDP_E_MEMORY;
 		}
 		memcpy(so_ifa, so_oldifa, so_oldifa->sa.sa_len);
