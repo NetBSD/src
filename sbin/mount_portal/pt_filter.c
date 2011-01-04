@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.10 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.11 2011/01/04 23:36:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.10 2008/04/28 20:23:09 martin Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.11 2011/01/04 23:36:23 wiz Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -149,7 +149,7 @@ portal_rfilter(struct portal_cred *pcr, char *key, char **v, int *fdp)
 		if ((seteuid((uid_t) 0) < 0) || (setegid((gid_t) 0) < 0)) {
 			error = errno;
 			syslog(LOG_WARNING, "setcred: %m");
-			fclose(fp);
+			pclose(fp);
 			fp = NULL;
 		}
 	}
@@ -193,7 +193,7 @@ portal_wfilter(struct portal_cred *pcr, char *key, char **v, int *fdp)
 		if ((seteuid((uid_t) 0) < 0) || (setegid((gid_t) 0) < 0)) {
 			error = errno;
 			syslog(LOG_WARNING, "setcred: %m");
-			fclose(fp);
+			pclose(fp);
 			fp = NULL;
 		}
 	}
