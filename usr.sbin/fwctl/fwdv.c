@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdv.c,v 1.4 2010/08/24 08:41:24 cegger Exp $	*/
+/*	$NetBSD: fwdv.c,v 1.5 2011/01/04 09:04:24 wiz Exp $	*/
 /*
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -107,7 +107,7 @@ dvrecv(int d, const char *filename, char ich, int count)
 	} else {
 		fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0660);
 		if (fd == -1)
-			err(EX_NOINPUT, filename);
+			err(EX_NOINPUT, "%s", filename);
 	}
 	buf = malloc(RBUFSIZE);
 	pad = malloc(DSIZE*MAXBLOCKS);
@@ -269,7 +269,7 @@ dvsend(int d, const char *filename, char ich, int count)
 
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
-		err(EX_NOINPUT, filename);
+		err(EX_NOINPUT, "%s", filename);
 
 	pbuf = malloc(DSIZE * TNBUF);
 	bzero(wbuf, sizeof(wbuf));
