@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.26 2010/05/12 21:21:59 mbalmer Exp $	*/
+/*	$NetBSD: symtab.c,v 1.27 2011/01/04 23:46:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.26 2010/05/12 21:21:59 mbalmer Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.27 2011/01/04 23:46:34 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -572,6 +572,7 @@ initsymtable(const char *filename)
 		fprintf(stderr, "read: %s\n", strerror(errno));
 		panic("cannot read symbol table file %s\n", filename);
 	}
+	(void)close(fd);
 	switch (command) {
 	case 'r':
 		/*
