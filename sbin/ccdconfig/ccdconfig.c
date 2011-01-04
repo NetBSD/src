@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.49 2009/03/16 12:52:07 lukem Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.50 2011/01/04 23:31:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.49 2009/03/16 12:52:07 lukem Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.50 2011/01/04 23:31:29 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -471,9 +471,11 @@ do_io(char *path, u_long cmd, struct ccd_ioctl *cciop)
 			cp = "unknown";
 		}
 		warn("ioctl (%s): %s", cp, path);
+		(void)close(fd);
 		return (1);
 	}
 
+	(void)close(fd);
 	return (0);
 }
 

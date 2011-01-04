@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.47 2010/05/13 17:52:12 tnozaki Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.48 2011/01/04 23:34:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.47 2010/05/13 17:52:12 tnozaki Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.48 2011/01/04 23:34:06 wiz Exp $");
 #endif
 
 
@@ -467,20 +467,20 @@ buildhints(void)
 	if (write(fd, &hdr, sizeof(struct hints_header)) !=
 	    sizeof(struct hints_header)) {
 		warn("%s", _PATH_LD_HINTS);
-		goto out;
+		goto fdout;
 	}
 	if ((size_t)write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
 		  hdr.hh_nbucket * sizeof(struct hints_bucket)) {
 		warn("%s", _PATH_LD_HINTS);
-		goto out;
+		goto fdout;
 	}
 	if (write(fd, strtab, strtab_sz) != strtab_sz) {
 		warn("%s", _PATH_LD_HINTS);
-		goto out;
+		goto fdout;
 	}
 	if (fchmod(fd, 0444) == -1) {
 		warn("%s", _PATH_LD_HINTS);
-		goto out;
+		goto fdout;
 	}
 	if (close(fd) != 0) {
 		warn("%s", _PATH_LD_HINTS);
@@ -501,6 +501,8 @@ buildhints(void)
 	free(blist);
 	free(strtab);
 	return 0;
+fdout:
+	(void)close(fd);
 out:
 	free(blist);
 	free(strtab);
