@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.178 2010/12/20 00:25:47 matt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.179 2011/01/04 08:26:33 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.178 2010/12/20 00:25:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.179 2011/01/04 08:26:33 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -361,7 +361,8 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * no page, we must try and bring it in.
 			 */
 
-			pg = uvm_pagealloc(NULL, 0, anon, 0);
+			pg = uvm_pagealloc(NULL, ufi->orig_rvaddr,
+			    NULL, UVM_FLAG_COLORMATCH);
 			if (pg == NULL) {		/* out of RAM.  */
 				uvmfault_unlockall(ufi, amap, NULL, anon);
 				uvmexp.fltnoram++;
@@ -619,8 +620,8 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 		 * so have uvm_pagealloc() do that for us.
 		 */
 
-		pg = uvm_pagealloc(NULL, 0, anon,
-		    (opg == NULL) ? UVM_PGA_ZERO : 0);
+		pg = uvm_pagealloc(NULL, ufi->orig_rvaddr, anon,
+		    UVM_FLAG_COLORMATCH | (opg == NULL ? UVM_PGA_ZERO : 0));
 	} else {
 		pg = NULL;
 	}
