@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.116 2009/11/19 02:52:54 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.117 2011/01/04 09:58:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.116 2009/11/19 02:52:54 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.117 2011/01/04 09:58:03 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -926,6 +926,7 @@ getfiles(char **abuf, int *alen, char **aoffset)
 		err(1, "malloc");
 	if (sysctl(mib, 6, buf + offset, &len, NULL, 0) == -1) {
 		warn("sysctl: 2nd KERN_FILE2");
+		free(buf);
 		return (-1);
 	}
 	*abuf = buf;
