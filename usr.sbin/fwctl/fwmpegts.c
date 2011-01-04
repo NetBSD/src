@@ -1,4 +1,4 @@
-/* $NetBSD: fwmpegts.c,v 1.3 2011/01/04 09:04:24 wiz Exp $ */
+/* $NetBSD: fwmpegts.c,v 1.4 2011/01/04 20:45:13 christos Exp $ */
 /*
  * Copyright (C) 2005
  * 	Petr Holub, Hidetoshi Shimokawa. All rights reserved.
@@ -156,7 +156,7 @@ mpegtsrecv(int d, const char *filename, char ich, int count)
 	else {
 		fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0660);
 		if (fd == -1)
-			err(EX_NOINPUT, "%s", filename);
+			err(EX_NOINPUT, "%s: %s", __func__, filename);
 	}
 	buf = malloc(RBUFSIZE);
 
@@ -167,13 +167,13 @@ mpegtsrecv(int d, const char *filename, char ich, int count)
 	bufreq.tx.npacket = 0;
 	bufreq.tx.psize = 0;
 	if (ioctl(d, FW_SSTBUF, &bufreq) < 0)
-		err(EXIT_FAILURE, "ioctl");
+		err(EXIT_FAILURE, "%s: ioctl", __func__);
 
 	isoreq.ch = ich & 0x3f;
 	isoreq.tag = (ich >> 6) & 3;
 
 	if (ioctl(d, FW_SRSTREAM, &isoreq) < 0)
-		err(EXIT_FAILURE, "ioctl");
+		err(EXIT_FAILURE, "%s: ioctl", __func__);
 
 	k = m = 0;
 	while (count <= 0 || k <= count) {
@@ -201,11 +201,14 @@ mpegtsrecv(int d, const char *filename, char ich, int count)
 			/* there is no CRC in the 1394 header */
 			ciph = (struct ciphdr *)(ptr + 1);	/* skip iso header */
 			if (ciph->fmt != CIP_FMT_MPEG)
-				errx(1, "unknown format 0x%x", ciph->fmt);
+				errx(EXIT_FAILURE, 
+				    "%s: unknown format 0x%x", __func__,
+				    ciph->fmt);
 			if (ciph->fn != 3) {
-				errx(1,
-						"unsupported MPEG TS stream, fn=%d (only fn=3 is supported)",
-						ciph->fn);
+				errx(EXIT_FAILURE,
+				    "%s: unsupported MPEG TS stream, "
+				    "fn=%d (only fn=3 is supported)",
+				    __func__, ciph->fn);
 			}
 			ptr = (uint32_t *) (ciph + 1);		/* skip cip header */
 
