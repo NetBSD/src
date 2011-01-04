@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.168 2010/12/11 22:34:03 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.169 2011/01/04 08:26:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.168 2010/12/11 22:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.169 2011/01/04 08:26:33 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1220,7 +1220,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	lwp_t *l;
 
 	KASSERT(obj == NULL || anon == NULL);
-	KASSERT(anon == NULL || off == 0);
+	KASSERT(anon == NULL || (flags & UVM_FLAG_COLORMATCH) || off == 0);
 	KASSERT(off == trunc_page(off));
 	KASSERT(obj == NULL || mutex_owned(&obj->vmobjlock));
 	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
@@ -1230,12 +1230,14 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	/*
 	 * This implements a global round-robin page coloring
 	 * algorithm.
-	 *
-	 * XXXJRT: What about virtually-indexed caches?
 	 */
 
 	ucpu = curcpu()->ci_data.cpu_uvm;
-	color = ucpu->page_free_nextcolor;
+	if (flags & UVM_FLAG_COLORMATCH) {
+		color = atop(off) & uvmexp.colormask;
+	} else {
+		color = ucpu->page_free_nextcolor;
+	}
 
 	/*
 	 * check to see if we need to generate some free pages waking
