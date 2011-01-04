@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sa.c,v 1.11 2009/12/10 14:10:35 matt Exp $	*/
+/*	$NetBSD: netbsd32_sa.c,v 1.12 2011/01/04 10:59:28 matt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,7 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.11 2009/12/10 14:10:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.12 2011/01/04 10:59:28 matt Exp $");
+#include "opt_compat_netbsd.h"
+#include "opt_sa.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,19 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.11 2009/12/10 14:10:35 matt Exp $"
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_sa.h>
 
-const struct sa_emul saemul_netbsd32 = {
-	sizeof(ucontext32_t),
-	sizeof(struct netbsd32_sa_t),
-	sizeof(netbsd32_sa_tp),
-	netbsd32_sacopyout,  
-	netbsd32_upcallconv,
-	netbsd32_cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext32_sa,
 #ifdef KERN_SA
-	netbsd32_sa_ucsp
-#else
-	NULL
-#endif
+const struct sa_emul saemul_netbsd32 = {
+	.sae_ucsize = sizeof(ucontext32_t),
+	.sae_sasize = sizeof(struct netbsd32_sa_t),
+	.sae_sapsize = sizeof(netbsd32_sa_tp),
+	.sae_sacopyout = netbsd32_sacopyout,  
+	.sae_upcallconv = netbsd32_upcallconv,
+	.sae_upcall = netbsd32_cpu_upcall,
+	.sae_getucontext = (void (*)(struct lwp *, void *))getucontext32_sa,
+	.sae_ucsp = netbsd32_sa_ucsp
 }; 
 
 /* SA emulation helpers */
@@ -140,6 +139,7 @@ netbsd32_sa_ucsp(void *arg)
 
 	return NETBSD32IPTR64(_UC_MACHINE32_SP(uc32));
 }
+#endif /* KERN_SA */
 
 /* Sycalls conversion */
 
@@ -147,7 +147,7 @@ int
 netbsd32_sa_register(struct lwp *l,
     const struct netbsd32_sa_register_args *uap, register_t *retval)
 {
-#ifdef COMPAT_40
+#if defined(COMPAT_40) && defined(KERN_SA)
 	/* {
 		syscallarg(netbsd32_sa_upcall_t) new;
 		syscallarg(netbsd32_sa_upcallp_t) old;
@@ -176,7 +176,7 @@ netbsd32_sa_register(struct lwp *l,
 #endif	
 }
 
-#ifdef COMPAT_40
+#if defined(COMPAT_40) && defined(KERN_SA)
 static int
 netbsd32_sa_copyin_stack(stack_t *stacks, int index, stack_t *dest)
 {
@@ -200,7 +200,7 @@ int
 netbsd32_sa_stacks(struct lwp *l, const struct netbsd32_sa_stacks_args *uap,
     register_t *retval)
 {
-#ifdef COMPAT_40
+#if defined(COMPAT_40) && defined(KERN_SA)
 	 /* {
 		syscallarg(int) num;
 		syscallarg(netbsd32_stackp_t) stacks;
@@ -217,6 +217,7 @@ int
 netbsd32_sa_setconcurrency(struct lwp *l,
     const struct netbsd32_sa_setconcurrency_args *uap, register_t *retval)
 {
+#ifdef KERN_SA
 	/* {
 		syscallarg(int) concurrency;
 	} */
@@ -224,12 +225,16 @@ netbsd32_sa_setconcurrency(struct lwp *l,
 
 	NETBSD32TO64_UAP(concurrency);
 	return sys_sa_setconcurrency(l, &ua, retval);
+#else
+	return ENOSYS;
+#endif
 }
 
 int
 netbsd32_sa_preempt(struct lwp *l, const struct netbsd32_sa_preempt_args *uap,
     register_t *retval)
 {
+#ifdef KERN_SA
 	 /* {
 		syscallarg(int) sa_id;
 	} */
@@ -237,4 +242,7 @@ netbsd32_sa_preempt(struct lwp *l, const struct netbsd32_sa_preempt_args *uap,
 
 	NETBSD32TO64_UAP(sa_id);
 	return sys_sa_preempt(l, &ua, retval);
+#else
+	return ENOSYS;
+#endif
 }
