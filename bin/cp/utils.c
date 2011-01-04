@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.37 2010/12/21 20:56:01 christos Exp $ */
+/* $NetBSD: utils.c,v 1.38 2011/01/04 10:35:10 wiz Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.37 2010/12/21 20:56:01 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.38 2011/01/04 10:35:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ copy_file(FTSENT *entp, int dne)
 			lstat(to.p_path, &sb) : stat(to.p_path, &sb);
 		if (sval == -1) {
 			warn("stat: %s", to.p_path);
+			(void)close(from_fd);
 			return (1);
 		}
 
