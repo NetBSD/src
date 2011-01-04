@@ -1,4 +1,4 @@
-/*	$NetBSD: extattrctl.c,v 1.2 2009/04/15 06:01:01 lukem Exp $	*/
+/*	$NetBSD: extattrctl.c,v 1.3 2011/01/04 09:28:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -153,7 +153,7 @@ initattr(int argc, char *argv[])
 	uef.uef_version = rw32(UFS_EXTATTR_VERSION);
 	uef.uef_size = rw32(atoi(argv[0]));
 	if (write(i, &uef, sizeof(uef)) != sizeof(uef)) {
-		warn("unable to write arribute file header");
+		warn("unable to write attribute file header");
 		error = -1;
 	} else if (fs_path != NULL) {
 		easize = (sizeof(uef) + uef.uef_size) *
@@ -170,6 +170,7 @@ initattr(int argc, char *argv[])
 			easize -= wlen;
 		}
 	}
+	close(i);
 	if (error == -1) {
 		unlink(argv[1]);
 		return (-1);
@@ -197,6 +198,7 @@ showattr(int argc, char *argv[])
 	i = read(fd, &uef, sizeof(uef));
 	if (i != sizeof(uef)) {
 		warn("unable to read attribute file header");
+		(void)close(fd);
 		return (-1);
 	}
 
@@ -204,6 +206,7 @@ showattr(int argc, char *argv[])
 		needswap = 1;
 		if (rw32(uef.uef_magic) != UFS_EXTATTR_MAGIC) {
 			fprintf(stderr, "%s: bad magic\n", argv[0]);
+			(void)close(fd);
 			return (-1);
 		}
 	}
@@ -217,6 +220,7 @@ showattr(int argc, char *argv[])
 	printf("%s: version %u, size %u, byte-order: %s\n",
 	    argv[0], rw32(uef.uef_version), rw32(uef.uef_size), bo);
 
+	close(fd);
 	return (0);
 }
 
