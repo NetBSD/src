@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.11 2009/10/24 12:57:17 dsl Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.12 2011/01/04 16:53:05 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
 #define BOOT_ADDR	0x7c00
 #define BLOCK_SIZE	2048		/* Default for ISO 9660 */
 #define VD_LBA		16		/* LBA of Volume Descriptor (VD) */
-#define PVD_ADDR	0x1000		/* Where Primary VD is loaded */
-#define ROOTDIR_ADDR	0x1800		/* Where Root Directory is loaded */
+#define PVD_ADDR	end		/* Where Primary VD is loaded */
+#define ROOTDIR_ADDR	end+BLOCK_SIZE	/* Where Root Directory is loaded */
 #define LOADER_ADDR	SECONDARY_LOAD_ADDRESS
 
 #ifdef BOOT_FROM_FAT
