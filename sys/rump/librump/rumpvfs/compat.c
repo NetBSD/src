@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.7 2010/08/30 10:08:39 pooka Exp $	*/
+/*	$NetBSD: compat.c,v 1.8 2011/01/04 17:00:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.7 2010/08/30 10:08:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.8 2011/01/04 17:00:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -132,6 +132,66 @@ rump_sys_nb5_fstat(int fd, struct stat *sb)
 
 	rump_schedule();
 	error = compat_50_sys___fstat30(curlwp, &args, &retval);
+	if (error) {
+		retval = -1;
+		rumpuser_seterrno(error);
+	}
+	rump_unschedule();
+	return retval;
+}
+
+int
+rump_sys_nb5_utimes(const char *path, const struct timeval times[2])
+{
+	struct compat_50_sys_utimes_args args;
+	register_t retval = 0;
+	int error = 0;
+
+	SPARG(&args, path) = path;
+	SPARG(&args, tptr) = (const struct timeval50 *)times;
+
+	rump_schedule();
+	error = compat_50_sys_utimes(curlwp, &args, &retval);
+	if (error) {
+		retval = -1;
+		rumpuser_seterrno(error);
+	}
+	rump_unschedule();
+	return retval;
+}
+
+int
+rump_sys_nb5_lutimes(const char *path, const struct timeval times[2])
+{
+	struct compat_50_sys_lutimes_args args;
+	register_t retval = 0;
+	int error = 0;
+
+	SPARG(&args, path) = path;
+	SPARG(&args, tptr) = (const struct timeval50 *)times;
+
+	rump_schedule();
+	error = compat_50_sys_lutimes(curlwp, &args, &retval);
+	if (error) {
+		retval = -1;
+		rumpuser_seterrno(error);
+	}
+	rump_unschedule();
+	return retval;
+}
+
+int
+rump_sys_nb5_futimes(int fd, const struct timeval times[2])
+{
+	struct compat_50_sys_futimes_args args;
+	register_t retval = 0;
+	int error = 0;
+
+	SPARG(&args, fd) = fd;
+	SPARG(&args, tptr) = (const struct timeval50 *)times;
+
+	rump_schedule();
+	error = compat_50_sys_futimes(curlwp, &args, &retval);
 	if (error) {
 		retval = -1;
 		rumpuser_seterrno(error);
