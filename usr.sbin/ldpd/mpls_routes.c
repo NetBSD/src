@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.3 2011/01/04 10:58:15 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -617,7 +617,8 @@ check_route(struct rt_msg * rg, uint rlen)
 		prefixlen = from_mask_to_cidr(inet_ntoa(so_pref->sin.sin_addr));
 	else {
 		prefixlen = 32;
-		so_pref = from_cidr_to_union(32);
+		if ((so_pref = from_cidr_to_union(32)) == NULL)
+			return LDP_E_MEMORY;
 		so_pref_allocated = 1;
 	}
 
@@ -791,9 +792,10 @@ bind_current_routes()
 			so_gate = GETNEXT(so_dst);
 
 		/* Get prefix */
-		if (rtmes->rtm_flags & RTF_HOST)
-			so_pref = from_cidr_to_union(32);
-		else if (rtmes->rtm_addrs & RTA_GATEWAY)
+		if (rtmes->rtm_flags & RTF_HOST) {
+			if ((so_pref = from_cidr_to_union(32)) == NULL)
+				return LDP_E_MEMORY;
+		} else if (rtmes->rtm_addrs & RTA_GATEWAY)
 			so_pref = GETNEXT(so_gate);
 		else
 			so_pref = GETNEXT(so_dst);
