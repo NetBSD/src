@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.114 2010/11/22 23:05:22 dholland Exp $
+$NetBSD: acronyms.comp,v 1.115 2011/01/04 06:18:51 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -221,6 +221,8 @@ FPU	floating point unit
 FQDN	fully qualified domain name
 FRU	field replaceable unit
 FSB	front side bus
+FSCK	file system check
+FSCK	fuck
 FTP	file transfer protocol
 FTPS	file transfer protocol, secure
 FWH	firmware hub

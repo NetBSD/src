@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.197 2011/01/04 06:17:37 dholland Exp $
+$NetBSD: acronyms,v 1.198 2011/01/04 06:18:51 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -109,7 +109,6 @@ FNO	for nerds only
 FOAD	{fuck off,fall over} and die
 FOS	full of shit
 FPS	first person shooter
-FSCK	fuck
 FSDO	for some definition of
 FSVO	for some value of
 FTBFS	fails to build from source
