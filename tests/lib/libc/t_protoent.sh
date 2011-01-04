@@ -1,4 +1,4 @@
-# $NetBSD: t_protoent.sh,v 1.1 2011/01/02 22:03:25 pgoyette Exp $
+# $NetBSD: t_protoent.sh,v 1.2 2011/01/04 12:44:48 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -82,7 +82,6 @@ protoent_body()
 	# run test program
 	"$(atf_get_srcdir)/h_protoent" | sed 's/ *$//' | sort >out
 
-	atf_expect_fail "PR misc/44311: protocol entry for manet is wrong"
 	diff -u exp out || \
 	    atf_fail "Observed output does not match reference output"
 }
