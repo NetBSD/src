@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA820,v 1.20 2010/11/23 11:13:59 hannken Exp $
+#	$NetBSD: JORNADA820,v 1.21 2011/01/04 02:19:32 tsutsui Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.21 $"
 
 # estimated number of users
 maxusers	32
@@ -97,6 +97,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
+options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 
