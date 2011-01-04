@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.22 2009/01/25 01:22:42 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.23 2011/01/04 11:00:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -273,6 +273,7 @@ netbsd32_to_msghdr(const struct netbsd32_msghdr *mhp32, struct msghdr *mhp)
 
 	mhp->msg_name = NETBSD32PTR64(mhp32->msg_name);
 	mhp->msg_namelen = mhp32->msg_namelen;
+	mhp->msg_iov = NETBSD32PTR64(mhp32->msg_iov);
 	mhp->msg_iovlen = (size_t)mhp32->msg_iovlen;
 	mhp->msg_control = NETBSD32PTR64(mhp32->msg_control);
 	mhp->msg_controllen = mhp32->msg_controllen;
