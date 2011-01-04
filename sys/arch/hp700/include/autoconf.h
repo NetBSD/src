@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.14 2011/01/03 19:20:11 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.15 2011/01/04 10:42:34 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -33,14 +33,23 @@
 #include <machine/bus.h>
 #include <machine/pdc.h>
 
+/* 16 should be enough for anyone */
+#define	HP700_MAXIOADDRS	16
+
 struct confargs {
-	struct iodc_data ca_type PDC_ALIGNMENT;	/* iodc-specific type descrition */
+	struct iodc_data ca_type;	/* iodc-specific type descrition */
 	struct device_path ca_dp;	/* device_path as found by pdc_scan */
-	struct pdc_iodc_read *ca_pdc_iodc_read;
+	union {
+		struct pdc_iodc_read uca_pir;
+		struct pdc_chassis_lcd uca_pcl;
+	} ca_u;
+#define	ca_pir ca_u.uca_pir
+#define	ca_pcl ca_u.uca_pcl
+
 	struct {
 		hppa_hpa_t addr;
 		u_int   size;
-	}		ca_addrs[16];	/* 16 is ought to be enough */
+	}		ca_addrs[HP700_MAXIOADDRS];
 	const char	*ca_name;	/* device name/description */
 	bus_space_tag_t	ca_iot;		/* io tag */
 	int		ca_mod;		/* module number on the bus */
