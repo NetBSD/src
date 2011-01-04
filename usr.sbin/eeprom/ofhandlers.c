@@ -1,4 +1,4 @@
-/*	$NetBSD: ofhandlers.c,v 1.4 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: ofhandlers.c,v 1.5 2011/01/04 09:25:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -106,8 +106,10 @@ of_handler(keyword, arg)
 		if (strcmp(ex->ex_keyword, keyword) == 0)
 			break;
 
-	if (ioctl(fd, OFIOCGETOPTNODE, (char *)&optnode) < 0)
+	if (ioctl(fd, OFIOCGETOPTNODE, (char *)&optnode) < 0) {
+		(void)close(fd);
 		BARF("OFIOCGETOPTNODE", strerror(errno));
+	}
 
 	memset(&ofio_buf[0], 0, sizeof(ofio_buf));
 	memset(&ofio, 0, sizeof(ofio));
@@ -121,8 +123,10 @@ of_handler(keyword, arg)
 
 			ofio.of_buf = &ofio_buf[0];
 			ofio.of_buflen = sizeof(ofio_buf);
-			if (ioctl(fd, OFIOCGET, (char *)&ofio) < 0)
+			if (ioctl(fd, OFIOCGET, (char *)&ofio) < 0) {
+				(void)close(fd);
 				BARF("OFIOCGET", strerror(errno));
+			}
 
 			if (ofio.of_buflen <= 0) {
 				printf("nothing available for %s\n", keyword);
@@ -142,8 +146,10 @@ of_handler(keyword, arg)
 			ofio.of_buflen = strlen(arg);
 		}
 
-		if (ioctl(fd, OFIOCSET, (char *)&ofio) < 0)
+		if (ioctl(fd, OFIOCSET, (char *)&ofio) < 0) {
+			(void)close(fd);
 			BARF("invalid keyword", keyword);
+		}
 
 		if (verbose) {
 			printf("new: ");
@@ -155,8 +161,10 @@ of_handler(keyword, arg)
 	} else {
 		ofio.of_buf = &ofio_buf[0];
 		ofio.of_buflen = sizeof(ofio_buf);
-		if (ioctl(fd, OFIOCGET, (char *)&ofio) < 0)
+		if (ioctl(fd, OFIOCGET, (char *)&ofio) < 0) {
+			(void)close(fd);
 			BARF("OFIOCGET", strerror(errno));
+		}
 
 		if (ofio.of_buflen <= 0) {
 			(void)snprintf(err_str, sizeof err_str,
