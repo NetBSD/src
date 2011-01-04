@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.130 2011/01/02 05:09:31 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.131 2011/01/04 07:43:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.130 2011/01/02 05:09:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.131 2011/01/04 07:43:42 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -190,6 +190,36 @@ symlink_magic(struct proc *p, char *cp, size_t *len)
 #undef VC
 #undef MATCH
 #undef SUBSTITUTE
+
+////////////////////////////////////////////////////////////
+
+/*
+ * Determine the namei hash (for cn_hash) for name.
+ * If *ep != NULL, hash from name to ep-1.
+ * If *ep == NULL, hash from name until the first NUL or '/', and
+ * return the location of this termination character in *ep.
+ *
+ * This function returns an equivalent hash to the MI hash32_strn().
+ * The latter isn't used because in the *ep == NULL case, determining
+ * the length of the string to the first NUL or `/' and then calling
+ * hash32_strn() involves unnecessary double-handling of the data.
+ */
+uint32_t
+namei_hash(const char *name, const char **ep)
+{
+	uint32_t	hash;
+
+	hash = HASH32_STR_INIT;
+	if (*ep != NULL) {
+		for (; name < *ep; name++)
+			hash = hash * 33 + *(const uint8_t *)name;
+	} else {
+		for (; *name != '\0' && *name != '/'; name++)
+			hash = hash * 33 + *(const uint8_t *)name;
+		*ep = name;
+	}
+	return (hash + (hash >> 5));
+}
 
 ////////////////////////////////////////////////////////////
 
@@ -466,11 +496,6 @@ namei_start2(struct namei_state *state)
 	struct cwdinfo *cwdi;		/* pointer to cwd state */
 	struct lwp *self = curlwp;	/* thread doing namei() */
 
-#if 0 /* not any more */
-	/* as both buffers are size PATH_MAX this cannot overflow */
-	strcpy(cnp->cn_pnbuf, ndp->ni_pathbuf->pb_path);
-#endif
-
 	/* length includes null terminator (was originally from copyinstr) */
 	ndp->ni_pathlen = strlen(ndp->ni_pnbuf) + 1;
 
@@ -663,147 +688,6 @@ namei_follow(struct namei_state *state)
 }
 
 //////////////////////////////
-
-static int
-do_namei(struct namei_state *state)
-{
-	int error;
-
-	struct nameidata *ndp = state->ndp;
-	struct componentname *cnp = state->cnp;
-	const char *savepath = NULL;
-
-	KASSERT(cnp == &ndp->ni_cnd);
-
-	namei_start1(state);
-
-	if (cnp->cn_flags & TRYEMULROOT) {
-		savepath = pathbuf_stringcopy_get(ndp->ni_pathbuf);
-	}
-
-    emul_retry:
-
-	if (savepath != NULL) {
-		/* kinda gross */
-		strcpy(ndp->ni_pathbuf->pb_path, savepath);
-		pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-		savepath = NULL;
-	}
-
-	error = namei_start2(state);
-	if (error) {
-		if (savepath != NULL) {
-			pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-		}
-		return error;
-	}
-
-	/* Loop through symbolic links */
-	for (;;) {
-		if (state->namei_startdir->v_mount == NULL) {
-			/* Give up if the directory is no longer mounted */
-			if (savepath != NULL) {
-				pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-			}
-			namei_end(state);
-			return (ENOENT);
-		}
-		cnp->cn_nameptr = ndp->ni_pnbuf;
-		error = do_lookup(state, state->namei_startdir);
-		if (error != 0) {
-			/* XXX this should use namei_end() */
-			if (ndp->ni_dvp) {
-				vput(ndp->ni_dvp);
-			}
-			if (ndp->ni_erootdir != NULL) {
-				/* Retry the whole thing from the normal root */
-				cnp->cn_flags &= ~TRYEMULROOT;
-				goto emul_retry;
-			}
-			KASSERT(savepath == NULL);
-			return (error);
-		}
-
-		/*
-		 * Check for symbolic link
-		 */
-		if (namei_atsymlink(state)) {
-			error = namei_follow(state);
-			if (error) {
-				KASSERT(ndp->ni_dvp != ndp->ni_vp);
-				vput(ndp->ni_dvp);
-				vput(ndp->ni_vp);
-				ndp->ni_vp = NULL;
-				if (savepath != NULL) {
-					pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-				}
-				return error;
-			}
-		}
-		else {
-			break;
-		}
-	}
-
-	/*
-	 * Done
-	 */
-
-	if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp) {
-		if (ndp->ni_dvp == ndp->ni_vp) {
-			vrele(ndp->ni_dvp);
-		} else {
-			vput(ndp->ni_dvp);
-		}
-	}
-
-	if (savepath != NULL) {
-		pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-	}
-
-	return 0;
-}
-
-int
-namei(struct nameidata *ndp)
-{
-	struct namei_state state;
-	int error;
-
-	namei_init(&state, ndp);
-	error = do_namei(&state);
-	namei_cleanup(&state);
-
-	return error;
-}
-
-/*
- * Determine the namei hash (for cn_hash) for name.
- * If *ep != NULL, hash from name to ep-1.
- * If *ep == NULL, hash from name until the first NUL or '/', and
- * return the location of this termination character in *ep.
- *
- * This function returns an equivalent hash to the MI hash32_strn().
- * The latter isn't used because in the *ep == NULL case, determining
- * the length of the string to the first NUL or `/' and then calling
- * hash32_strn() involves unnecessary double-handling of the data.
- */
-uint32_t
-namei_hash(const char *name, const char **ep)
-{
-	uint32_t	hash;
-
-	hash = HASH32_STR_INIT;
-	if (*ep != NULL) {
-		for (; name < *ep; name++)
-			hash = hash * 33 + *(const uint8_t *)name;
-	} else {
-		for (; *name != '\0' && *name != '/'; name++)
-			hash = hash * 33 + *(const uint8_t *)name;
-		*ep = name;
-	}
-	return (hash + (hash >> 5));
-}
 
 /*
  * Search a pathname.
@@ -1298,6 +1182,123 @@ bad:
 	return (error);
 }
 
+//////////////////////////////
+
+static int
+do_namei(struct namei_state *state)
+{
+	int error;
+
+	struct nameidata *ndp = state->ndp;
+	struct componentname *cnp = state->cnp;
+	const char *savepath = NULL;
+
+	KASSERT(cnp == &ndp->ni_cnd);
+
+	namei_start1(state);
+
+	if (cnp->cn_flags & TRYEMULROOT) {
+		savepath = pathbuf_stringcopy_get(ndp->ni_pathbuf);
+	}
+
+    emul_retry:
+
+	if (savepath != NULL) {
+		/* kinda gross */
+		strcpy(ndp->ni_pathbuf->pb_path, savepath);
+		pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
+		savepath = NULL;
+	}
+
+	error = namei_start2(state);
+	if (error) {
+		if (savepath != NULL) {
+			pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
+		}
+		return error;
+	}
+
+	/* Loop through symbolic links */
+	for (;;) {
+		if (state->namei_startdir->v_mount == NULL) {
+			/* Give up if the directory is no longer mounted */
+			if (savepath != NULL) {
+				pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
+			}
+			namei_end(state);
+			return (ENOENT);
+		}
+		cnp->cn_nameptr = ndp->ni_pnbuf;
+		error = do_lookup(state, state->namei_startdir);
+		if (error != 0) {
+			/* XXX this should use namei_end() */
+			if (ndp->ni_dvp) {
+				vput(ndp->ni_dvp);
+			}
+			if (ndp->ni_erootdir != NULL) {
+				/* Retry the whole thing from the normal root */
+				cnp->cn_flags &= ~TRYEMULROOT;
+				goto emul_retry;
+			}
+			KASSERT(savepath == NULL);
+			return (error);
+		}
+
+		/*
+		 * Check for symbolic link
+		 */
+		if (namei_atsymlink(state)) {
+			error = namei_follow(state);
+			if (error) {
+				KASSERT(ndp->ni_dvp != ndp->ni_vp);
+				vput(ndp->ni_dvp);
+				vput(ndp->ni_vp);
+				ndp->ni_vp = NULL;
+				if (savepath != NULL) {
+					pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
+				}
+				return error;
+			}
+		}
+		else {
+			break;
+		}
+	}
+
+	/*
+	 * Done
+	 */
+
+	if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp) {
+		if (ndp->ni_dvp == ndp->ni_vp) {
+			vrele(ndp->ni_dvp);
+		} else {
+			vput(ndp->ni_dvp);
+		}
+	}
+
+	if (savepath != NULL) {
+		pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
+	}
+
+	return 0;
+}
+
+int
+namei(struct nameidata *ndp)
+{
+	struct namei_state state;
+	int error;
+
+	namei_init(&state, ndp);
+	error = do_namei(&state);
+	namei_cleanup(&state);
+
+	return error;
+}
+
+////////////////////////////////////////////////////////////
+
 /*
  * Externally visible interfaces used by nfsd (bletch, yuk, XXX)
  *
@@ -1456,6 +1457,8 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 
 	return error;
 }
+
+////////////////////////////////////////////////////////////
 
 /*
  * Reacquire a path name component.
