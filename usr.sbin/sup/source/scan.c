@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.28 2011/01/04 10:14:25 wiz Exp $	*/
+/*	$NetBSD: scan.c,v 1.29 2011/01/04 10:23:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -165,11 +165,6 @@ extern time_t lasttime;		/* time of last upgrade */
 extern time_t scantime;		/* time of this scan */
 extern int trace;		/* trace directories */
 extern int newonly;		/* new files only */
-
-#ifdef RCSSTAT
-extern char *rcs_branch;
-extern int candorcs;
-#endif
 
 /*************************************************
  ***   STATIC   R O U T I N E S    ***
@@ -644,27 +639,6 @@ listentry(char *name, char *fullname, char *updir, int always)
 	}
 	if (access(name, R_OK) < 0)
 		return;
-#ifdef RCSSTAT
-	if (candorcs) {
-		char rcs_release[STRINGLENGTH];
-		int status;
-		if (rcs_branch != NULL)
-#ifdef CVS
-			sprintf(rcs_release, "-r %s", rcs_branch);
-#else
-			sprintf(rcs_release, "-r%s", rcs_branch);
-#endif
-		else
-			rcs_release[0] = '\0';
-#ifdef CVS
-		sprintf(sys_com, "cvs -d %s -r -l -Q co -p %s %s > %s\n", cvs_root, rcs_release, name, rcs_file);
-#else
-		status = runp("rcsstat", "rcsstat", "-q", rcs_release, name, 0);
-#endif
-		if (status != 0)
-			return;
-	}
-#endif
 	listname(fullname, &statbuf);
 }
 
