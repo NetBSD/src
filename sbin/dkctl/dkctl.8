@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.21 2010/05/18 23:33:03 wiz Exp $
+.\"	$NetBSD: dkctl.8,v 1.22 2011/01/04 21:42:10 spz Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -52,6 +52,8 @@ allows a user or system administrator to manipulate and configure disks
 in various ways.
 It is used by specifying a disk to manipulate, the command
 to perform, and any arguments the command may require.
+.Ar device
+is the disk (wdN, sdN, ...) containing the wedges unless noted otherwise.
 If
 .Nm
 is called without any command, it displays strategy, cache, and all of
@@ -120,6 +122,11 @@ on the specified disk starting at block number
 and spanning
 .Ar blkcnt
 blocks.
+You need to create the partition first with
+.Xr fdisk 8
+or
+.Xr gpt 8 ,
+dkctl will just name it.
 The wedge will have the volume name
 .Ar name
 and the partition type
@@ -153,6 +160,8 @@ Delete the wedge specified by its device name
 from the specified disk.
 .It Ic getwedgeinfo
 Display information about the specified disk wedge.
+.Ar device
+in this case is the wedge name.
 .It Ic listwedges
 List all of the wedges configured on the specified disk.
 .It Ic strategy Op Ar name
