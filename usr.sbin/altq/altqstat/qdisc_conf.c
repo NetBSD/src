@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_conf.c,v 1.5 2008/05/02 19:07:44 xtraeme Exp $	*/
+/*	$NetBSD: qdisc_conf.c,v 1.6 2011/01/04 09:13:22 wiz Exp $	*/
 /*	$KAME: qdisc_conf.c,v 1.5 2002/10/26 06:59:54 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -91,6 +91,7 @@ ifname2qdisc(const char *ifname, char *qname)
 	}
 	if (ioctl(fd, ALTQGTYPE, &qtypereq) < 0) {
 		warn("ALTQGQTYPE");
+		close(fd);
 		return (0);
 	}
 	close(fd);
