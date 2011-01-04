@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.c,v 1.19 2011/01/02 05:48:55 jruoho Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.20 2011/01/04 04:28:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2006 Matthias Drochner <drochner@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.19 2011/01/02 05:48:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.20 2011/01/04 04:28:48 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ acpitimer_init(struct acpi_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "%s %d-bit timer\n",
 	    acpi_timecounter.tc_name, bits);
 
-	if ((flags & ACPI_FADT_PLATFORM_CLOCK) != 0)
+	if ((flags & ACPI_FADT_PLATFORM_CLOCK) == 0)
 		aprint_debug_dev(sc->sc_dev,
 		    "warning: timer may be unreliable\n");
 
