@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.25 2008/04/28 20:23:50 martin Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.26 2011/01/04 01:28:15 matt Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.25 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.26 2011/01/04 01:28:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ int mk48txx_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 uint8_t mk48txx_def_nvrd(struct mk48txx_softc *, int);
 void mk48txx_def_nvwr(struct mk48txx_softc *, int, uint8_t);
 
-struct {
+const struct {
 	const char *name;
 	bus_size_t nvramsz;
 	bus_size_t clkoff;
@@ -61,6 +61,7 @@ struct {
 	{ "mk48t08", MK48T08_CLKSZ, MK48T08_CLKOFF, 0 },
 	{ "mk48t18", MK48T18_CLKSZ, MK48T18_CLKOFF, 0 },
 	{ "mk48t59", MK48T59_CLKSZ, MK48T59_CLKOFF, MK48TXX_EXT_REGISTERS },
+	{ "ds1553", DS1553_CLKSZ, DS1553_CLKOFF, MK48TXX_EXT_REGISTERS },
 };
 
 void
@@ -127,10 +128,14 @@ mk48txx_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	dt->dt_mon = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMON));
 	year = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IYEAR));
 
-	year += sc->sc_year0;
-	if (year < POSIX_BASE_YEAR &&
-	    (sc->sc_flag & MK48TXX_NO_CENT_ADJUST) == 0)
-		year += 100;
+	if (sc->sc_flag & MK48TXX_HAVE_CENT_REG) {
+		year += 100*FROMBCD(csr & MK48TXX_CSR_CENT_MASK);
+	} else {
+		year += sc->sc_year0;
+		if (year < POSIX_BASE_YEAR &&
+		    (sc->sc_flag & MK48TXX_NO_CENT_ADJUST) == 0)
+			year += 100;
+	}
 
 	dt->dt_year = year;
 
@@ -154,14 +159,21 @@ mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	bus_size_t clkoff;
 	uint8_t csr;
 	int year;
+	int cent;
 
 	sc = handle->cookie;
 	clkoff = sc->sc_clkoffset;
 
-	year = dt->dt_year - sc->sc_year0;
-	if (year > 99 &&
-	    (sc->sc_flag & MK48TXX_NO_CENT_ADJUST) == 0)
-		year -= 100;
+	if ((sc->sc_flag & MK48TXX_HAVE_CENT_REG) == 0) {
+		cent = 0;
+		year = dt->dt_year - sc->sc_year0;
+		if (year > 99 &&
+		    (sc->sc_flag & MK48TXX_NO_CENT_ADJUST) == 0)
+			year -= 100;
+	} else {
+		cent = dt->dt_year / 100;
+		year = dt->dt_year % 100;
+	}
 
 	todr_wenable(handle, 1);
 	/* enable write */
@@ -176,6 +188,17 @@ mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IDAY, TOBCD(dt->dt_day));
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMON, TOBCD(dt->dt_mon));
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IYEAR, TOBCD(year));
+
+	/*
+	 * If we have a century register and the century has changed
+	 * update it.
+	 */
+	if ((sc->sc_flag & MK48TXX_HAVE_CENT_REG)
+	    && (csr & MK48TXX_CSR_CENT_MASK) != TOBCD(cent)) {
+		csr &= ~MK48TXX_CSR_CENT_MASK;
+		csr |= MK48TXX_CSR_CENT_MASK & TOBCD(cent);
+		(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
+	}
 
 	/* load them up */
 	csr = (*sc->sc_nvrd)(sc, clkoff + MK48TXX_ICSR);
