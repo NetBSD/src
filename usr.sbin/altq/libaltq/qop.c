@@ -1,4 +1,4 @@
-/*	$NetBSD: qop.c,v 1.9 2008/05/02 19:07:44 xtraeme Exp $	*/
+/*	$NetBSD: qop.c,v 1.10 2011/01/04 09:14:42 wiz Exp $	*/
 /*	$KAME: qop.c,v 1.11 2001/10/26 04:57:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -1366,6 +1366,7 @@ qop_red_set_defaults(int th_min, int th_max, int inv_pmax)
 
 	if (ioctl(fd, RED_SETDEFAULTS, &params) < 0) {
 		LOG(LOG_ERR, errno, "RED_SETDEFAULTS");
+		(void)close(fd);
 		return (QOPERR_SYSCALL);
 	}
 
@@ -1392,6 +1393,7 @@ qop_rio_set_defaults(struct redparams *params)
 
 	if (ioctl(fd, RIO_SETDEFAULTS, params) < 0) {
 		LOG(LOG_ERR, errno, "RIO_SETDEFAULTS");
+		(void)close(fd);
 		return (QOPERR_SYSCALL);
 	}
 
