@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.3 2011/01/04 09:42:21 wiz Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.4 2011/01/04 10:18:42 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -83,10 +83,12 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 		 * let's loop until we have it..
 		 */
 
-		so_dest = make_inet_union(inet_ntoa(*addr));
-		if (len != 32)
-			so_pref = from_cidr_to_union(len);
-
+		if ((so_dest = make_inet_union(inet_ntoa(*addr))) == NULL)
+			return LDP_E_MEMORY;
+		if (len != 32 && (so_pref = from_cidr_to_union(len)) == NULL) {
+			free(so_dest);
+			return LDP_E_MEMORY;
+		}
 		do {
 			if (kount == rlookup) {
 				debugp("No route for this prefix\n");
@@ -166,16 +168,25 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 	so_dest = make_mpls_union(lab->binding);
 	so_nexthop = malloc(sizeof(*so_nexthop));
 	if (!so_nexthop) {
+		free(so_dest);
 		fatalp("Out of memory\n");
 		return LDP_E_MEMORY;
 	}
 	memcpy(so_nexthop, so_gate, so_gate->sa.sa_len);
-	so_tag = make_mpls_union(label);
+	if ((so_tag = make_mpls_union(label)) == NULL) {
+		free(so_dest);
+		free(so_nexthop);
+		fatalp("Out of memory\n");
+		return LDP_E_MEMORY;
+	}
 	if (add_route(so_dest, NULL, so_nexthop, NULL, so_tag, FREESO, RTM_ADD) != LDP_E_OK)
 		return LDP_E_ROUTE_ERROR;
 
 	/* Now, let's add tag to IPv4 route and point it to mpls interface */
-	so_dest = make_inet_union(inet_ntoa(*addr));
+	if ((so_dest = make_inet_union(inet_ntoa(*addr))) == NULL) {
+		fatalp("Out of memory\n");
+		return LDP_E_MEMORY;
+	}
 
 	/* if prefixlen == 32 check if it's inserted as host
  	* and treat it as host. It may also be set as /32 prefix
@@ -183,12 +194,18 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
  	*/
 	if ((len == 32) && (rgp->m_rtm.rtm_flags & RTF_HOST))
 		so_pref = NULL;
-	else
-		so_pref = from_cidr_to_union(len);
+	else if ((so_pref = from_cidr_to_union(len)) == NULL) {
+		free(so_dest);
+		fatalp("Out of memory\n");
+		return LDP_E_MEMORY;
+	}
 
 	/* Add tag to route */
 	so_nexthop = malloc(sizeof(*so_nexthop));
 	if (!so_nexthop) {
+		free(so_dest);
+		if (so_pref != NULL)
+			free(so_pref);
 		fatalp("Out of memory\n");
 		return LDP_E_MEMORY;
 	}
@@ -196,9 +213,13 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 	so_tag = make_mpls_union(label);
 	if (so_oldifa != NULL) {
 		so_ifa = malloc(sizeof(*so_ifa));
-		if (!so_ifa) {
-			fatalp("Out of memory\n");
+		if (so_ifa == NULL) {
+			free(so_dest);
+			if (so_pref != NULL)
+				free(so_pref);
+			free(so_tag);
 			free(so_nexthop);
+			fatalp("Out of memory\n");
 			return LDP_E_MEMORY;
 		}
 		memcpy(so_ifa, so_oldifa, so_oldifa->sa.sa_len);
