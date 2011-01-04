@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.24 2007/12/16 21:07:45 dyoung Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.25 2011/01/04 01:51:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.24 2007/12/16 21:07:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.25 2011/01/04 01:51:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,11 +64,13 @@ static kcondvar_t sysmon_wdog_cv;
 static struct sysmon_wdog *sysmon_armed_wdog;
 static callout_t sysmon_wdog_callout;
 static void *sysmon_wdog_sdhook;
+static void *sysmon_wdog_cphook;
 
 struct sysmon_wdog *sysmon_wdog_find(const char *);
 void	sysmon_wdog_release(struct sysmon_wdog *);
 int	sysmon_wdog_setmode(struct sysmon_wdog *, int, u_int);
 void	sysmon_wdog_ktickle(void *);
+void	sysmon_wdog_critpoll(void *);
 void	sysmon_wdog_shutdown(void *);
 void	sysmon_wdog_ref(struct sysmon_wdog *);
 
@@ -78,6 +80,13 @@ sysmon_wdog_init(void)
 	mutex_init(&sysmon_wdog_list_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sysmon_wdog_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sysmon_wdog_cv, "wdogref");
+	sysmon_wdog_sdhook = shutdownhook_establish(sysmon_wdog_shutdown, NULL);
+	if (sysmon_wdog_sdhook == NULL)
+		printf("WARNING: unable to register watchdog shutdown hook\n");
+	sysmon_wdog_cphook = critpollhook_establish(sysmon_wdog_critpoll, NULL);
+	if (sysmon_wdog_cphook == NULL)
+		printf("WARNING: unable to register watchdog critpoll hook\n");
+	callout_init(&sysmon_wdog_callout, 0);
 }
 
 /*
@@ -88,17 +97,6 @@ sysmon_wdog_init(void)
 int
 sysmonopen_wdog(dev_t dev, int flag, int mode, struct lwp *l)
 {
-
-	mutex_enter(&sysmon_wdog_list_mtx);
-	if (sysmon_wdog_sdhook == NULL) {
-		sysmon_wdog_sdhook =
-		    shutdownhook_establish(sysmon_wdog_shutdown, NULL);
-		if (sysmon_wdog_sdhook == NULL)
-			printf("WARNING: unable to register watchdog "
-			    "shutdown hook\n");
-		callout_init(&sysmon_wdog_callout, 0);
-	}
-	mutex_exit(&sysmon_wdog_list_mtx);
 
 	return 0;
 }
@@ -320,6 +318,27 @@ sysmon_wdog_unregister(struct sysmon_wdog *smw)
 	}
 	mutex_exit(&sysmon_wdog_list_mtx);
 	return rc;
+}
+
+/*
+ * sysmon_wdog_critpoll:
+ *
+ *	Perform critical operations during long polling periods
+ */
+void
+sysmon_wdog_critpoll(void *arg)
+{
+	struct sysmon_wdog *smw = sysmon_armed_wdog;
+
+	if (smw == NULL)
+		return;
+
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_KTICKLE) {
+		if ((*smw->smw_tickle)(smw) != 0) {
+			printf("WARNING: KERNEL TICKLE OF WATCHDOG %s "
+			    "FAILED!\n", smw->smw_name);
+		}
+	}
 }
 
 /*
