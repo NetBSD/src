@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.c,v 1.7 2009/01/17 22:01:32 he Exp $	*/
+/*	$NetBSD: videomode.c,v 1.8 2011/01/04 10:32:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Christian E. Hopps
@@ -132,14 +132,17 @@ dump_mode(m)
 			dump_vm(&vm);
 		(void)printf("\n");
 	}
-	if (m >= 0)
+	if (m >= 0) {
+		(void)close(grffd);
 		return;
+	}
 	for (m = 1; m <= num_vm; m++) {
 		vm.mode_num = m;
 		if (ioctl(grffd, GRFGETVMODE, &vm) == -1)
 			break;
 		dump_vm(&vm);
 	}
+	(void)close(grffd);
 }
 
 void
@@ -150,6 +153,7 @@ set_mode(m)
 
 	grffd = get_grf();
 	(void)ioctl(grffd, GRFSETVMODE, &m);
+	(void)close(grffd);
 }
 
 void
