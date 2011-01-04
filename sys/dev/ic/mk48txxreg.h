@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxreg.h,v 1.10 2008/04/28 20:23:50 martin Exp $ */
+/*	$NetBSD: mk48txxreg.h,v 1.11 2011/01/04 01:28:15 matt Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,7 +57,7 @@
 #define MK48TXX_IADAY	5	/* alarm day (1..31; BCD) */
 #define MK48TXX_IINTR	6	/* interrupts */
 #define MK48TXX_IWDOG	7	/* watchdog */
-#define MK48TXX_ICSR	8	/* control register */
+#define MK48TXX_ICSR	8	/* control register / century (DS1553) */
 #define MK48TXX_ISEC	9	/* seconds (0..59; BCD) */
 #define MK48TXX_IMIN	10	/* minutes (0..59; BCD) */
 #define MK48TXX_IHOUR	11	/* hour (0..23; BCD) */
@@ -88,6 +88,7 @@
 /* Bits in the control register */
 #define MK48TXX_CSR_WRITE	0x80	/* want to write */
 #define MK48TXX_CSR_READ	0x40	/* want to read (freeze clock) */
+#define MK48TXX_CSR_CENT_MASK	0x3f	/* century mask */
 
 /* Bit in the weekday register */
 #define MK48TXX_WDAY_FT		0x40	/* freq test: toggle sec[0] at 512Hz */
@@ -109,3 +110,6 @@
 
 #define MK48T59_CLKSZ		8192
 #define MK48T59_CLKOFF		0x1ff0
+
+#define	DS1553_CLKSZ		8192
+#define	DS1553_CLKOFF		0x1ff0
