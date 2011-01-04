@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.10 2010/11/11 17:44:44 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.11 2011/01/04 11:17:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #include "../common/h_fsmacros.h"
 #include "../../h_macros.h"
+
+#define TESTFILE "afile"
 
 #define USES_DIRS \
     if (FSTYPE_SYSVBFS(tc)) atf_tc_skip("dirs not supported by file system")
@@ -470,6 +472,57 @@ symlink_zerolen(const atf_tc_t *tc, const char *mp)
 	RL(rump_sys_chdir("/"));
 }
 
+static void
+attrs(const atf_tc_t *tc, const char *mp)
+{
+	struct stat sb, sb2;
+	struct timeval tv[2];
+	int fd;
+
+	FSTEST_ENTER();
+	RL(fd = rump_sys_open(TESTFILE, O_RDWR | O_CREAT, 0755));
+	RL(rump_sys_close(fd));
+	RL(rump_sys_stat(TESTFILE, &sb));
+	if (!(FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc))) {
+		RL(rump_sys_chown(TESTFILE, 1, 2));
+		sb.st_uid = 1;
+		sb.st_gid = 2;
+		RL(rump_sys_chmod(TESTFILE, 0123));
+		sb.st_mode = (sb.st_mode & ~ACCESSPERMS) | 0123;
+	}
+
+	tv[0].tv_sec = 1000000000; /* need something >1980 for msdosfs */
+	tv[0].tv_usec = 1;
+	tv[1].tv_sec = 1000000002; /* need even seconds for msdosfs */
+	tv[1].tv_usec = 3;
+	RL(rump_sys_utimes(TESTFILE, tv));
+	RL(rump_sys_utimes(TESTFILE, tv)); /* XXX: utimes & birthtime */
+	sb.st_atimespec.tv_sec = 1000000000;
+	sb.st_atimespec.tv_nsec = 1000;
+	sb.st_mtimespec.tv_sec = 1000000002;
+	sb.st_mtimespec.tv_nsec = 3000;
+
+	RL(rump_sys_stat(TESTFILE, &sb2));
+#define CHECK(a) ATF_REQUIRE_EQ(sb.a, sb2.a)
+	if (!(FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc))) {
+		CHECK(st_uid);
+		CHECK(st_gid);
+		CHECK(st_mode);
+	}
+	if (!FSTYPE_MSDOS(tc)) {
+		/* msdosfs has only access date, not time */
+		CHECK(st_atimespec.tv_sec);
+	}
+	CHECK(st_mtimespec.tv_sec);
+	if (!(FSTYPE_EXT2FS(tc) || FSTYPE_MSDOS(tc) || FSTYPE_SYSVBFS(tc))) {
+		CHECK(st_atimespec.tv_nsec);
+		CHECK(st_mtimespec.tv_nsec);
+	}
+#undef  CHECK
+
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -480,6 +533,7 @@ ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
 ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
 ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
 ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
+ATF_TC_FSAPPLY(attrs, "check setting attributes works");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -494,6 +548,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(create_nametoolong);
 	ATF_TP_FSAPPLY(rename_nametoolong);
 	ATF_TP_FSAPPLY(symlink_zerolen);
+	ATF_TP_FSAPPLY(attrs);
 
 	return atf_no_error();
 }
