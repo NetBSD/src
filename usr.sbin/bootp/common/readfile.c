@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.17 2009/04/15 00:23:29 lukem Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.18 2011/01/04 09:16:17 wiz Exp $");
 #endif
 
 
@@ -681,8 +681,10 @@ process_entry(struct host *host, char *src)
 			break;
 		case E_BAD_PATHNAME:
 			msg = "bad pathname (need leading '/')";
+			break;
 		case E_BAD_VALUE:
 			msg = "bad value";
+			break;
 		default:
 			msg = "unknown error";
 			break;
