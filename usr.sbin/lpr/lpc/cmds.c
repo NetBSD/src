@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.22 2009/07/13 19:05:41 roy Exp $	*/
+/*	$NetBSD: cmds.c,v 1.23 2011/01/04 09:43:39 wiz Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.22 2009/07/13 19:05:41 roy Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.23 2011/01/04 09:43:39 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -563,6 +563,8 @@ putmsg(int argc, char **argv)
 	if (fd < 0 || flock(fd, LOCK_EX) < 0) {
 		printf("\tcannot create status file\n");
 		seteuid(uid);
+		if (fd >= 0)
+			(void)close(fd);
 		return;
 	}
 	seteuid(uid);
