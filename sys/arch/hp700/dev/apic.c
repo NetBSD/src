@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.8 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.9 2011/01/04 10:42:33 skrll Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -256,35 +256,24 @@ apic_intr(void *v)
 	return (claimed);
 }
 
-/* Maximum number of supported interrupt routing entries. */
-#define MAX_INT_TBL_SZ	16
-
 void
 apic_get_int_tbl(struct elroy_softc *sc)
 {
-	static struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
-	static struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
+	int nentries;
 	size_t size;
+	int err;
 
-	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL_SZ,
-	    &int_tbl_sz, 0, 0, 0, 0, 0))
+	err = pdcproc_pci_inttblsz(&nentries);
+	if (err)
 		return;
-
-	if (int_tbl_sz.num > MAX_INT_TBL_SZ)
-		panic("interrupt routing table too big (%d entries)",
-		    int_tbl_sz.num);
-
-	size = int_tbl_sz.num * sizeof(struct pdc_pat_pci_rt);
-	sc->sc_int_tbl_sz = int_tbl_sz.num;
+	
+	size = nentries * sizeof(struct pdc_pat_pci_rt);
+	sc->sc_int_tbl_sz = nentries;
 	sc->sc_int_tbl = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_int_tbl == NULL)
 		return;
 
-	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL,
-	    &int_tbl_sz, 0, &int_tbl, 0, 0, 0))
-		return;
-
-	memcpy(sc->sc_int_tbl, int_tbl, size);
+	pdcproc_pci_gettable(nentries, size, sc->sc_int_tbl);
 }
 
 uint32_t

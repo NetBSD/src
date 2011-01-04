@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop_gsc.c,v 1.10 2010/12/11 19:32:06 skrll Exp $	*/
+/*	$NetBSD: oosiop_gsc.c,v 1.11 2011/01/04 10:42:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.10 2010/12/11 19:32:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.11 2011/01/04 10:42:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ oosiop_gsc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_freq = ga->ga_ca.ca_pdc_iodc_read->filler2[14];
+	sc->sc_freq = ga->ga_ca.ca_pir.filler2[14];
 	if (sc->sc_freq == 0)
 		sc->sc_freq = 50000000;
 

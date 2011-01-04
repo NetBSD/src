@@ -1,4 +1,4 @@
-/*	$NetBSD: lcd.c,v 1.3 2010/12/24 15:29:08 skrll Exp $	*/
+/*	$NetBSD: lcd.c,v 1.4 2011/01/04 10:42:33 skrll Exp $	*/
 /*	OpenBSD: lcd.c,v 1.2 2007/07/20 22:13:45 kettenis Exp 	*/
 
 /*
@@ -72,7 +72,7 @@ lcd_attach(device_t parent, device_t self, void *aux)
 {
 	struct lcd_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	struct pdc_chassis_lcd *pdc_lcd = (void *)ca->ca_pdc_iodc_read;
+	struct pdc_chassis_lcd *pdc_lcd = &ca->ca_pcl;
 	int i;
 
 	sc->sc_dv = self;

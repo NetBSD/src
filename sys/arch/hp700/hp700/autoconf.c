@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 2010/11/13 07:58:55 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 2011/01/04 10:42:34 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34 2010/11/13 07:58:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35 2011/01/04 10:42:34 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34 2010/11/13 07:58:55 skrll Exp $");
 #include <sys/kgdb.h>
 #endif
 
+#include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 
@@ -457,10 +458,9 @@ cpu_rootconf(void)
 /*static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };*/
 #endif
 
-static struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
-static struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
-static struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
-static struct pdc_system_map_find_addr pdc_find_addr PDC_ALIGNMENT;
+static struct pdc_memmap pdc_memmap;
+static struct pdc_system_map_find_mod pdc_find_mod;
+static struct pdc_system_map_find_addr pdc_find_addr;
 
 void
 pdc_scanbus(device_t self, struct confargs *ca,
@@ -489,18 +489,17 @@ pdc_scanbus(device_t self, struct confargs *ca,
 		if (ca->ca_hpabase) {
 			nca.ca_hpa = ca->ca_hpabase + IOMOD_HPASIZE * i;
 			nca.ca_dp.dp_mod = i;
-		} else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
-		    PDC_MEMMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0)
+		} else if ((error = pdcproc_memmap(&pdc_memmap,
+		    &nca.ca_dp)) == 0)
 			nca.ca_hpa = pdc_memmap.hpa;
-		else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SYSTEM_MAP,
-		    PDC_SYSTEM_MAP_TRANS_PATH, &pdc_memmap, &nca.ca_dp)) == 0) {
+		else if ((error = pdcproc_system_map_trans_path(&pdc_memmap,
+		    &nca.ca_dp)) == 0) {
 			struct device_path path;
 			int im, ia;
 
 			nca.ca_hpa = pdc_memmap.hpa;
 
-			for (im = 0; !(error = pdc_call((iodcio_t)pdc, 0,
-			    PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_MOD,
+			for (im = 0; !(error = pdcproc_system_map_find_mod(
 			    &pdc_find_mod, &path, im)) &&
 			    pdc_find_mod.hpa != nca.ca_hpa; im++)
 				;
@@ -510,18 +509,21 @@ pdc_scanbus(device_t self, struct confargs *ca,
 
 			if (!error && pdc_find_mod.naddrs) {
 				nca.ca_naddrs = pdc_find_mod.naddrs;
-				if (nca.ca_naddrs > 16) {
-					nca.ca_naddrs = 16;
+				if (nca.ca_naddrs > HP700_MAXIOADDRS) {
+					nca.ca_naddrs = HP700_MAXIOADDRS;
 					aprint_error("WARNING: "
 					    "too many (%d) addrs\n",
 					    pdc_find_mod.naddrs);
 				}
 
 				aprint_verbose(">> ADDRS: ");
-				for (ia = 0; !(error = pdc_call((iodcio_t)pdc,
-				    0, PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_ADDR,
-				    &pdc_find_addr, im, ia + 1)) && ia < nca.ca_naddrs; ia++) {
-					nca.ca_addrs[ia].addr = pdc_find_addr.hpa;
+				for (ia = 0; ia < nca.ca_naddrs; ia++) {
+					error = pdcproc_system_map_find_addr(
+					    &pdc_find_addr, im, ia + 1);
+					if (error)
+						break;
+					nca.ca_addrs[ia].addr =
+					    pdc_find_addr.hpa;
 					nca.ca_addrs[ia].size =
 					    pdc_find_addr.size << PGSHIFT;
 
@@ -539,8 +541,8 @@ pdc_scanbus(device_t self, struct confargs *ca,
 		aprint_verbose(">> HPA 0x%lx[0x%x]\n", nca.ca_hpa,
 		    nca.ca_hpasz);
 
-		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
-		    PDC_IODC_READ, &pdc_iodc_read, nca.ca_hpa, IODC_DATA,
+		if ((error = pdcproc_iodc_read(nca.ca_hpa, IODC_DATA, NULL,
+		    &nca.ca_pir, sizeof(nca.ca_pir),
 		    &nca.ca_type, sizeof(nca.ca_type))) < 0) {
 			aprint_verbose(">> iodc_data error %d\n", error);
 			continue;
@@ -557,7 +559,6 @@ pdc_scanbus(device_t self, struct confargs *ca,
 		    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 
 		nca.ca_irq = HP700CF_IRQ_UNDEF;
-		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 		    nca.ca_type.iodc_sv_model);
 

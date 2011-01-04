@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.17 2010/12/11 19:32:05 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.18 2011/01/04 10:42:33 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.17 2010/12/11 19:32:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.18 2011/01/04 10:42:33 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -96,7 +96,6 @@ lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
 {
 	struct lasi_softc *sc = _sc;
 	hppa_hpa_t module_offset;
-	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 
 	/*
 	 * Determine this module's interrupt bit.
@@ -119,10 +118,8 @@ lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
 	 * If this is the Ethernet adapter, get its Ethernet address.
 	 */
 	if (module_offset == 0x7000) {
-		if (pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
-		     PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa) == 0)
-			memcpy(ga->ga_ether_address, pdc_mac.addr,
-				sizeof(ga->ga_ether_address));
+		pdcproc_lan_station_id(ga->ga_ether_address,
+		    sizeof(ga->ga_ether_address), ga->ga_hpa);
 	}
 }
 

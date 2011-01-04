@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.74 2010/12/12 08:23:14 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.75 2011/01/04 10:42:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.74 2010/12/12 08:23:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.75 2011/01/04 10:42:34 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -83,10 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.74 2010/12/12 08:23:14 skrll Exp $");
 #include <hp700/hp700/intr.h>
 #include <hp700/dev/cpudevs.h>
 
-static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 #if NLCD > 0
-static struct pdc_chassis_info pdc_chassis_info PDC_ALIGNMENT;
-static struct pdc_chassis_lcd pdc_chassis_lcd PDC_ALIGNMENT;
+static struct pdc_chassis_info pdc_chassis_info;
 #endif
 
 #ifdef MBUSDEBUG
@@ -1360,13 +1358,16 @@ mbattach(device_t parent, device_t self, void *aux)
 	struct confargs nca;
 	bus_space_handle_t ioh;
 	hppa_hpa_t hpabase;
+	hppa_hpa_t prochpa;
+	int err;
 
 	sc->sc_dv = self;
-
 	mb_attached = 1;
 
 	/* fetch the "default" cpu hpa */
-	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)
+
+	err =  pdcproc_hpa_processor(&prochpa);
+	if (err < 0)
 		panic("mbattach: PDC_HPA failed");
 
 	/*
@@ -1375,20 +1376,23 @@ mbattach(device_t parent, device_t self, void *aux)
 	 * end of the address space.
 	 */
 	/*
-	 * XXX fredette - this may be a copout, or it may
- 	 * be a great idea.  I'm not sure which yet.
+	 * XXX fredette - this may be a copout, or it may be a great idea.  I'm
+	 * not sure which yet.
 	 */
-	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa, 0 - pdc_hpa.hpa, 0, &ioh))
-		panic("mbattach: can't map mainbus IO space");
+
+	/* map all the way till the end of the memory */
+	if (bus_space_map(&hppa_bustag, prochpa, (~0LU - prochpa + 1),
+	    0, &ioh))
+		panic("%s: cannot map mainbus IO space", __func__);
 
 	/*
 	 * Local-Broadcast the HPA to all modules on the bus
 	 */
-	((struct iomod *)(pdc_hpa.hpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
-		(void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
+	((struct iomod *)(prochpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
+		(void *)((prochpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
-	sc->sc_hpa = pdc_hpa.hpa;
-	aprint_normal(" [flex %lx]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
+	sc->sc_hpa = prochpa;
+	aprint_normal(" [flex %lx]\n", prochpa & HPPA_FLEX_MASK);
 
 	/* PDC first */
 	memset(&nca, 0, sizeof(nca));
@@ -1408,18 +1412,16 @@ mbattach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NLCD > 0
-	if (!pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_INFO,
-	    &pdc_chassis_info, &pdc_chassis_lcd, sizeof(pdc_chassis_lcd)) &&
-	    pdc_chassis_lcd.enabled) {
-		memset(&nca, 0, sizeof(nca));
+	memset(&nca, 0, sizeof(nca));
+	err = pdcproc_chassis_info(&pdc_chassis_info, &nca.ca_pcl);
+	if (!err && nca.ca_pcl.enabled) {
 		nca.ca_name = "lcd";
 		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
 		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 		nca.ca_dp.dp_mod = -1;
 		nca.ca_irq = -1;
 		nca.ca_iot = &hppa_bustag;
-		nca.ca_hpa = pdc_chassis_lcd.cmd_addr;
-		nca.ca_pdc_iodc_read = (void *)&pdc_chassis_lcd;
+		nca.ca_hpa = nca.ca_pcl.cmd_addr;
 
 		config_found(self, &nca, mbprint);
 	}

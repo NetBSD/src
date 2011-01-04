@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2010/12/12 08:54:25 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 2011/01/04 10:42:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2010/12/12 08:54:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2011/01/04 10:42:34 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -162,9 +162,9 @@ static int pagezero_mapped = 1;
 /*
  * CPU params (should be the same for all cpus in the system)
  */
-struct pdc_cache pdc_cache PDC_ALIGNMENT;
-struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
-struct pdc_model pdc_model PDC_ALIGNMENT;
+struct pdc_cache pdc_cache;
+struct pdc_btlb pdc_btlb;
+struct pdc_model pdc_model;
 
 int usebtlb;
 
@@ -279,12 +279,12 @@ void blink_lcd_timeout(void *);
 /*
  * wide used hardware params
  */
-struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
-struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
-struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
-struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
-struct pdc_pim pdc_pim PDC_ALIGNMENT;
-struct pdc_model pdc_model PDC_ALIGNMENT;
+struct pdc_hwtlb pdc_hwtlb;
+struct pdc_coproc pdc_coproc;
+struct pdc_coherence pdc_coherence;
+struct pdc_spidb pdc_spidbits;
+struct pdc_pim pdc_pim;
+struct pdc_model pdc_model;
 
 /*
  * Debugger info.
@@ -447,8 +447,8 @@ hppa_init(paddr_t start, void *bi)
 	delay_init();	/* calculate CPU clock ratio */
 
 	/* cache parameters */
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_DFLT,
-	    &pdc_cache)) < 0) {
+	error = pdcproc_cache(&pdc_cache);
+	if (error < 0) {
 #ifdef DEBUG
 		printf("WARNING: PDC_CACHE error %d\n", error);
 #endif
@@ -459,23 +459,14 @@ hppa_init(paddr_t start, void *bi)
 	icache_line_mask = pdc_cache.ic_conf.cc_line * 16 - 1;
 	icache_stride = pdc_cache.ic_stride;
 
-	/* cache coherence params (pbably available for 8k only) */
-	error = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_SETCS,
-	    &pdc_coherence, 1, 1, 1, 1);
-#ifdef DEBUG
-	printf ("PDC_CACHE_SETCS: %d, %d, %d, %d (%d)\n",
-	    pdc_coherence.ia_cst, pdc_coherence.da_cst,
-	    pdc_coherence.ita_cst, pdc_coherence.dta_cst, error);
-#endif
-	error = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_GETSPIDB,
-	    &pdc_spidbits, 0, 0, 0, 0);
+	error = pdcproc_cache_spidbits(&pdc_spidbits);
 #ifdef DEBUG
 	printf("SPID bits: 0x%x, error = %d\n", pdc_spidbits.spidbits, error);
 #endif
 
 	/* Calculate the OS_HPMC handler checksums. */
 	p = &os_hpmc;
-	if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
+	if (pdcproc_instr(p))
 		*p = 0x08000240;
 	p[7] = ((char *) &os_hpmc_cont_end) - ((char *) &os_hpmc_cont);
 	p[6] = (u_int) &os_hpmc_cont;
@@ -564,8 +555,7 @@ do {									\
 	printf("%s: PDC_CHASSIS\n", __func__);
 #endif
 	/* they say PDC_COPROC might turn fault light on */
-	pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP,
-	    PDC_OSTAT(PDC_OSTAT_RUN) | 0xCEC0);
+	pdcproc_chassis_display(PDC_OSTAT(PDC_OSTAT_RUN) | 0xCEC0);
 
 #ifdef DEBUG
 	printf("%s: intr bootstrap\n", __func__);
@@ -637,7 +627,7 @@ cpuid(void)
 	extern u_int trap_ep_T_ITLBMISS[];
 	extern u_int trap_ep_T_ITLBMISSNA[];
 
-	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
+	struct pdc_cpuid pdc_cpuid;
 	const struct hppa_cpu_info *p = NULL;
 	const char *model;
 	u_int cpu_version, cpu_features;
@@ -650,8 +640,8 @@ cpuid(void)
 	cpu_version = 0;
 
 	/* identify system type */
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
-	    &pdc_model)) < 0) {
+	error = pdcproc_model_info(&pdc_model);
+	if (error < 0) {
 #ifdef DEBUG
 		printf("WARNING: PDC_MODEL_INFO error %d\n", error);
 #endif
@@ -670,8 +660,8 @@ cpuid(void)
 #endif
 
 	memset(&pdc_cpuid, 0, sizeof(pdc_cpuid));
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
-	   &pdc_cpuid, 0, 0, 0, 0)) < 0) {
+	error = pdcproc_model_cpuid(&pdc_cpuid);
+	if (error < 0) {
 #ifdef DEBUG
 		printf("WARNING: PDC_MODEL_CPUID error %d. "
 		    "Using cpu_modelno based cpu_type.\n", error);
@@ -695,8 +685,8 @@ cpuid(void)
 
 	/* locate coprocessors and SFUs */
 	memset(&pdc_coproc, 0, sizeof(pdc_coproc));
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_COPROC, PDC_COPROC_DFLT,
-	    &pdc_coproc, 0, 0, 0, 0)) < 0) { /* XXXNH 0,0,0,0 ???*/
+	error = pdcproc_coproc(&pdc_coproc);
+	if (error < 0) {
 		printf("WARNING: PDC_COPROC error %d\n", error);
 		pdc_coproc.ccr_enable = 0;
 	} else {
@@ -723,8 +713,8 @@ cpuid(void)
 	} else {
 
 		/* BTLB params */
-		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
-		    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
+		error = pdcproc_block_tlb(&pdc_btlb);
+		if (error < 0) {
 #ifdef DEBUG
 			printf("WARNING: PDC_BTLB error %d\n", error);
 #endif
@@ -744,8 +734,7 @@ cpuid(void)
 			    pdc_btlb.vinfo.num_c);
 #endif /* BTLBDEBUG */
 			/* purge TLBs and caches */
-			if (pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
-			    PDC_BTLB_PURGE_ALL) < 0)
+			if (pdcproc_btlb_purgeall() < 0)
 				printf("WARNING: BTLB purge failed\n");
 
 			hppa_btlb_size_min = pdc_btlb.min_size;
@@ -762,7 +751,7 @@ cpuid(void)
 	}
 	usebtlb = 0;
 
-	error = pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb);
+	error = pdcproc_tlb_info(&pdc_hwtlb);
 	if (error == 0 && pdc_hwtlb.min_size != 0 && pdc_hwtlb.max_size != 0) {
 		cpu_features |= HPPA_FTRS_HVT;
 		if (pmap_hptsize > pdc_hwtlb.max_size)
@@ -1050,8 +1039,7 @@ int
 hpti_g(vaddr_t hpt, vsize_t hptsize)
 {
 
-	return pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_CONFIG,
-	    &pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
+	return pdcproc_tlb_config(&pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
 }
 
 int
@@ -1065,8 +1053,8 @@ ibtlb_g(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
 {
 	int error;
 
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB, PDC_BTLB_INSERT,
-	    sp, va, pa, sz, prot, i)) < 0) {
+	error = pdcproc_btlb_insert(sp, va, pa, sz, prot, i);
+	if (error < 0) {
 #ifdef BTLBDEBUG
 		printf("WARNING: BTLB insert failed (%d)\n", error);
 #endif
@@ -1118,13 +1106,14 @@ _hp700_btlb_insert(struct btlb_slot *btlb_slot)
 #endif
 
 	/* Insert this mapping. */
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB, PDC_BTLB_INSERT,
+	error = pdcproc_btlb_insert(
 		btlb_slot->btlb_slot_va_space,
 		btlb_slot->btlb_slot_va_frame,
 		btlb_slot->btlb_slot_pa_frame,
 		btlb_slot->btlb_slot_frames,
 		btlb_slot->btlb_slot_tlbprot,
-		btlb_slot->btlb_slot_number)) < 0) {
+		btlb_slot->btlb_slot_number);
+	if (error < 0) {
 #ifdef BTLBDEBUG
 		printf("WARNING: BTLB insert failed (%d)\n", error);
 #endif
@@ -1330,12 +1319,12 @@ hppa_btlb_purge(pa_space_t space, vaddr_t va, vsize_t *sizep)
 		if (btlb_slot->btlb_slot_frames != 0 &&
 		    btlb_slot->btlb_slot_va_space == space &&
 		    btlb_slot->btlb_slot_va_frame == va) {
-			if ((error = pdc_call((iodcio_t)pdc, 0,
-				PDC_BLOCK_TLB, PDC_BTLB_PURGE,
+			error = pdcproc_btlb_purge(
 				btlb_slot->btlb_slot_va_space,
 				btlb_slot->btlb_slot_va_frame,
 				btlb_slot->btlb_slot_number,
-				btlb_slot->btlb_slot_frames)) < 0) {
+				btlb_slot->btlb_slot_frames);
+			if (error < 0) {
 #ifdef BTLBDEBUG
 				printf("WARNING: BTLB purge failed (%d)\n",
 					error);
@@ -1446,7 +1435,7 @@ cpu_reboot(int howto, char *user_boot_string)
 		    :: "r" (CMD_RESET), "r" (LBCAST_ADDR + iomod_command));
 
 		/* ask firmware to reset */
-		pdc_call((iodcio_t)pdc, 0, PDC_BROADCAST_RESET, PDC_DO_RESET);
+		pdcproc_doreset();
 		/* forcably reset module if that fails */
 		__asm __volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
@@ -1481,7 +1470,6 @@ cpu_dumpsize(void)
  * an LPMC, or a TOC.  The check type is passed in as a trap
  * type, one of T_HPMC, T_LPMC, or T_INTERRUPT (for TOC).
  */
-static char pim_data_buffer[896] __attribute__((__aligned__(8)));
 static char in_check = 0;
 
 #define	PIM_WORD(name, word, bits)			\
@@ -1493,7 +1481,7 @@ do {							\
 
 
 static inline void
-hppa_pim_dump(int check_type)
+hppa_pim_dump(int check_type, void *data, size_t size)
 {
 	struct hp700_pim_hpmc *hpmc;
 	struct hp700_pim_lpmc *lpmc;
@@ -1509,16 +1497,16 @@ hppa_pim_dump(int check_type)
 	checks = NULL;
 	switch (check_type) {
 	case T_HPMC:
-		hpmc = (struct hp700_pim_hpmc *) pim_data_buffer;
+		hpmc = (struct hp700_pim_hpmc *) data;
 		regs = &hpmc->pim_hpmc_regs;
 		checks = &hpmc->pim_hpmc_checks;
 		break;
 	case T_LPMC:
-		lpmc = (struct hp700_pim_lpmc *) pim_data_buffer;
+		lpmc = (struct hp700_pim_lpmc *) data;
 		checks = &lpmc->pim_lpmc_checks;
 		break;
 	case T_INTERRUPT:
-		toc = (struct hp700_pim_toc *) pim_data_buffer;
+		toc = (struct hp700_pim_toc *) data;
 		regs = &toc->pim_toc_regs;
 		break;
 	default:
@@ -1585,7 +1573,7 @@ hppa_pim_dump(int check_type)
 }
 
 static inline void
-hppa_pim64_dump(int check_type)
+hppa_pim64_dump(int check_type, void *data, size_t size)
 {
 	struct hp700_pim64_hpmc *hpmc;
 	struct hp700_pim64_lpmc *lpmc;
@@ -1601,16 +1589,16 @@ hppa_pim64_dump(int check_type)
 	checks = NULL;
 	switch (check_type) {
 	case T_HPMC:
-		hpmc = (struct hp700_pim64_hpmc *) pim_data_buffer;
+		hpmc = (struct hp700_pim64_hpmc *) data;
 		regs = &hpmc->pim_hpmc_regs;
 		checks = &hpmc->pim_hpmc_checks;
 		break;
 	case T_LPMC:
-		lpmc = (struct hp700_pim64_lpmc *) pim_data_buffer;
+		lpmc = (struct hp700_pim64_lpmc *) data;
 		checks = &lpmc->pim_lpmc_checks;
 		break;
 	case T_INTERRUPT:
-		toc = (struct hp700_pim64_toc *) pim_data_buffer;
+		toc = (struct hp700_pim64_toc *) data;
 		regs = &toc->pim_toc_regs;
 		break;
 	default:
@@ -1686,6 +1674,8 @@ hppa_machine_check(int check_type)
 	int pdc_pim_type;
 	const char *name;
 	int pimerror, error;
+	void *data;
+	size_t size;
 
 	/* Do an fcacheall(). */
 	fcacheall();
@@ -1709,10 +1699,9 @@ hppa_machine_check(int check_type)
 		/* NOTREACHED */
 	}
 
-	pimerror = pdc_call((iodcio_t)pdc, 0, PDC_PIM, pdc_pim_type,
-	    &pdc_pim, pim_data_buffer, sizeof(pim_data_buffer));
+	pimerror = pdcproc_pim(pdc_pim_type, &pdc_pim, &data, &size);
 
-	KASSERT(pdc_pim.count <= sizeof(pim_data_buffer));
+	KASSERT(pdc_pim.count <= size);
 
 	/*
 	 * Reset IO and log errors.
@@ -1721,7 +1710,7 @@ hppa_machine_check(int check_type)
 	 * if we take a HPMC interrupt. This PDC procedure may not be
 	 * implemented by some machines.
 	 */
-	error = pdc_call((iodcio_t)pdc, 0, PDC_IO, 0, 0, 0, 0);
+	error = pdcproc_ioclrerrors();
 	if (error != PDC_ERR_OK && error != PDC_ERR_NOPROC)
 		/* This seems futile if we can't print to the console. */
 		panic("PDC_IO failed");
@@ -1732,9 +1721,9 @@ hppa_machine_check(int check_type)
 		printf(" - WARNING: could not transfer PIM info (%d)", pimerror);
 	} else {
 		if (hppa_cpu_ispa20_p())
-			hppa_pim64_dump(check_type);
+			hppa_pim64_dump(check_type, data, size);
 		else
-			hppa_pim_dump(check_type);
+			hppa_pim_dump(check_type, data, size);
 	}
 
 	printf("\n");

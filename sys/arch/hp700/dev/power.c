@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.5 2010/12/12 08:23:14 skrll Exp $	*/
+/*	$NetBSD: power.c,v 1.6 2011/01/04 10:42:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -100,7 +100,7 @@ void	powerattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(power, sizeof(struct power_softc),
     powermatch, powerattach, NULL, NULL);
 
-static struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
+static struct pdc_power_info pdc_power_info;
 static bool pswitch_on;			/* power switch */
 static int pwr_sw_control;
 static const char *pwr_sw_control_str[] = {"disabled", "enabled", "locked"};
@@ -132,14 +132,15 @@ powerattach(device_t parent, device_t self, void *aux)
 {
 	struct power_softc *sc = device_private(self);
 	struct confargs *ca = aux;
+	int err;
 
 	sc->sc_dev = self;
 	sc->sc_kicker = NULL;
 
-	if (!pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER,
-	    PDC_SOFT_POWER_INFO, &pdc_power_info, 0)) {
+	err = pdcproc_soft_power_info(&pdc_power_info);
+
+	if (!err)
 		ca->ca_hpa = pdc_power_info.addr;
-	}
 
 	switch (cpu_modelno) {
 	case HPPA_BOARD_HP712_60:
@@ -248,9 +249,8 @@ power_cold_hook_reg(int on)
 {
 	int error;
 
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER,
-	    PDC_SOFT_POWER_ENABLE, &pdc_power_info,
-	    on == HPPA_COLD_HOT)))
+	error = pdcproc_soft_power_enable(on == HPPA_COLD_HOT);
+	if (error)
 		aprint_error("PDC_SOFT_POWER_ENABLE failed (%d)\n", error);
 }
 
