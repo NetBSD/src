@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.30 2010/12/27 20:42:51 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.31 2011/01/04 01:24:56 matt Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -20,6 +20,12 @@ file	dev/i2c/au8522.c			au8522
 # Xceive XC5000 tuner
 define	xc5k: i2cexec
 file	dev/i2c/xc5k.c				xc5k
+
+#
+# I2C master devices
+#
+define	motoi2c
+file	dev/i2c/motoi2c.c			motoi2c
 
 #
 # I2C client devices
