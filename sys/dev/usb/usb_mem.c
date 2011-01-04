@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.43 2010/12/16 10:08:43 pooka Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.44 2011/01/04 01:29:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.43 2010/12/16 10:08:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.44 2011/01/04 01:29:01 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -121,7 +121,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 
 	s = splusb();
 	/* First check the free list. */
-	for (p = LIST_FIRST(&usb_blk_freelist); p; p = LIST_NEXT(p, next)) {
+	LIST_FOREACH(p, &usb_blk_freelist, next) {
 		if (p->tag == tag && p->size >= size && p->align >= align) {
 			LIST_REMOVE(p, next);
 			usb_blk_nfree--;
@@ -246,7 +246,7 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 
 	s = splusb();
 	/* Check for free fragments. */
-	for (f = LIST_FIRST(&usb_frag_freelist); f; f = LIST_NEXT(f, next)) {
+	LIST_FOREACH(f, &usb_frag_freelist, next) {
 		if (f->block->tag == tag)
 			break;
 	}
