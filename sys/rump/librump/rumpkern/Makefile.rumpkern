@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.104 2010/12/17 00:53:16 joerg Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.105 2011/01/04 16:23:36 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -24,12 +24,6 @@ SRCS+=	compat.c
 # locking at runtime.
 SRCS+=	locks.c
 #SRCS+=	locks_up.c
-
-# Does the arch support multiple processors?
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-RUMP_SMP=		# defined
-CPPFLAGS.rump.c+=	-DRUMP_SMP
-.endif
 
 MKREPRO?=no
 
@@ -180,20 +174,14 @@ KERNMISCCPPFLAGS+=	-D_RUMPKERNEL
 
 # Some architectures require a little special massage with atomic
 # compare-and-swap.  This is because the kernel version is using
-# instructions or routines unavailable to us in userspace.  We
-# use a very simple CAS routine which (correctly) assumes non-SMP
-# and no preemption.  If some of these archs later develop MP
-# support, switch them to use atomic_cas_generic.c
+# instructions or routines unavailable to us in userspace.
 #
 .if ${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "hppa" \
     || ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "sh3" \
     || ${MACHINE_CPU} == "vax" || ${MACHINE_ARCH} == "m68000"
 CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
-.ifdef RUMP_SMP
 SRCS+=		atomic_cas_generic.c
-.else
-SRCS+=		rump_atomic_cas_up.c
-.endif
+#SRCS+=		rump_atomic_cas_up.c
 .endif
 
 .include <bsd.lib.mk>
