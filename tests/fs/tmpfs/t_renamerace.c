@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.11 2011/01/04 16:25:20 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.12 2011/01/04 18:46:21 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -76,7 +76,6 @@ r2w2(void *arg)
 ATF_TC_BODY(renamerace2, tc)
 {
 	struct tmpfs_args args;
-	struct utsname un;
 	pthread_t pt[2];
 
 	/*
