@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.44 2011/01/04 01:29:01 matt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.45 2011/01/04 01:37:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.44 2011/01/04 01:29:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.45 2011/01/04 01:37:55 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.44 2011/01/04 01:29:01 matt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/device.h>		/* for usbdivar.h */
 #include <sys/bus.h>
@@ -142,7 +142,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 #endif
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
-	p = kmem_zalloc(sizeof *p, KM_NOSLEEP);
+	p = malloc(sizeof *p, M_USB, M_NOWAIT);
 	if (p == NULL)
 		return (USBD_NOMEM);
 
@@ -183,7 +183,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
  free1:
 	bus_dmamem_free(tag, p->segs, p->nsegs);
  free0:
-	kmem_free(p, sizeof(*p));
+	free(p, M_USB);
 	return (USBD_NOMEM);
 }
 
@@ -201,7 +201,7 @@ usb_block_real_freemem(usb_dma_block_t *p)
 	bus_dmamap_destroy(p->tag, p->map);
 	bus_dmamem_unmap(p->tag, p->kaddr, p->size);
 	bus_dmamem_free(p->tag, p->segs, p->nsegs);
-	kmem_free(p, sizeof(*p));
+	free(p, M_USB);
 }
 #endif
 
@@ -327,7 +327,7 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	if (rs->vaddr == 0 || size > USB_MEM_RESERVE)
 		return USBD_NOMEM;
 
-	dma->block = kmem_zalloc(sizeof *dma->block, KM_NOSLEEP);
+	dma->block = malloc(sizeof *dma->block, M_USB, M_ZERO | M_NOWAIT);
 	if (dma->block == NULL)
 		return USBD_NOMEM;
 
@@ -363,7 +363,7 @@ usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
 
 	error = extent_free(rs->extent,
 	    (u_long)(rs->paddr + dma->offs), dma->block->size, 0);
-	kmem_free(dma->block, sizeof(*dma->block));
+	free(dma->block, M_USB);
 }
 
 int
