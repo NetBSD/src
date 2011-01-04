@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.27 2009/10/17 20:46:03 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.28 2011/01/04 10:14:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -968,9 +968,9 @@ makescanfile(char *scanfile)
 	if (scanF == NULL)
 		goto out;
 	if (fprintf(scanF, "V%d\n", SCANVERSION) < 0)
-		goto out;
+		goto closeout;
 	if (Tprocess(listT, recordone, scanF) != SCMOK)
-		goto out;
+		goto closeout;
 	if (fclose(scanF) != 0)
 		goto out;
 	if (rename(tname, fname) < 0) {
@@ -983,6 +983,8 @@ makescanfile(char *scanfile)
 	tbuf[1].tv_usec = 0;
 	(void) utimes(fname, tbuf);
 	return;
+closeout:
+	(void) fclose(scanF);
 out:
 	goaway("Can't write scan file temp %s for %s", tname, collname);
 }
