@@ -1,4 +1,4 @@
-/*	$NetBSD: as.c,v 1.2 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: as.c,v 1.3 2011/01/04 10:26:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -119,10 +119,12 @@ as_setup(server)
 		asn->as_f = f;
 
 #ifdef AS_DEBUG_FILE
-	asn->as_debug = fopen(AS_DEBUG_FILE, "w");
-	if (asn->as_debug) {
-		(void)fprintf(asn->as_debug, ">> !!\n");
-		(void)fflush(asn->as_debug);
+	if (asn) {
+		asn->as_debug = fopen(AS_DEBUG_FILE, "w");
+		if (asn->as_debug) {
+			(void)fprintf(asn->as_debug, ">> !!\n");
+			(void)fflush(asn->as_debug);
+		}
 	}
 #endif /* AS_DEBUG_FILE */
 
