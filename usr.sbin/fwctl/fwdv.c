@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdv.c,v 1.5 2011/01/04 09:04:24 wiz Exp $	*/
+/*	$NetBSD: fwdv.c,v 1.6 2011/01/04 20:45:13 christos Exp $	*/
 /*
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -107,12 +107,18 @@ dvrecv(int d, const char *filename, char ich, int count)
 	} else {
 		fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0660);
 		if (fd == -1)
-			err(EX_NOINPUT, "%s", filename);
+			err(EX_NOINPUT, "%s: %s", __func__, filename);
 	}
 	buf = malloc(RBUFSIZE);
+	if (buf == NULL)
+		err(EX_SOFTWARE, "%s: buffer alloc", __func__);
+	memset(wbuf, 0, sizeof(wbuf));
+
 	pad = malloc(DSIZE*MAXBLOCKS);
+	if (pad == NULL)
+		err(EX_SOFTWARE, "%s: pad alloc", __func__);
+
 	memset(pad, 0xff, DSIZE*MAXBLOCKS);
-	bzero(wbuf, sizeof(wbuf));
 
 	bufreq.rx.nchunk = NCHUNK;
 	bufreq.rx.npacket = NPACKET_R;
@@ -121,20 +127,20 @@ dvrecv(int d, const char *filename, char ich, int count)
 	bufreq.tx.npacket = 0;
 	bufreq.tx.psize = 0;
 	if (ioctl(d, FW_SSTBUF, &bufreq) < 0)
-		err(EXIT_FAILURE, "ioctl FW_SSTBUF");
+		err(EXIT_FAILURE, "%s: ioctl FW_SSTBUF", __func__);
 
 	isoreq.ch = ich & 0x3f;
 	isoreq.tag = (ich >> 6) & 3;
 
 	if (ioctl(d, FW_SRSTREAM, &isoreq) < 0)
-		err(EXIT_FAILURE, "ioctl");
+		err(EXIT_FAILURE, "%s: ioctl", __func__);
 
 	k = m = 0;
 	while (count <= 0 || k <= count) {
 #if 0
 		tlen = 0;
 		while ((len = read(d, buf + tlen, PSIZE
-						/* RBUFSIZE - tlen */)) > 0) {
+		    /* RBUFSIZE - tlen */)) > 0) {
 			if (len < 0) {
 				if (errno == EAGAIN) {
 					fprintf(stderr, "(EAGAIN)\n");
@@ -142,7 +148,8 @@ dvrecv(int d, const char *filename, char ich, int count)
 					if (len <= 0)
 						continue;
 				} else
-					err(EXIT_FAILURE, "read failed");
+					err(EXIT_FAILURE, "%s: read failed",
+					    __fnc__);
 			}
 			tlen += len;
 			if ((RBUFSIZE - tlen) < PSIZE)
@@ -157,7 +164,7 @@ dvrecv(int d, const char *filename, char ich, int count)
 				if (len <= 0)
 					continue;
 			} else
-				err(EXIT_FAILURE, "read failed");
+				err(EXIT_FAILURE, "%s: read failed", __func__);
 		}
 #endif
 		vec = 0;
@@ -171,7 +178,8 @@ again:
 #endif
 		ciph = (struct ciphdr *)(ptr + 1);	/* skip iso header */
 		if (ciph->fmt != CIP_FMT_DVCR)
-			errx(1, "unknown format 0x%x", ciph->fmt);
+			errx(EXIT_FAILURE, "%s: unknown format 0x%x",
+			    __func__, ciph->fmt);
 		ptr = (uint32_t *) (ciph + 1);		/* skip cip header */
 #if DEBUG
 		if (ciph->fdf.dv.cyc != 0xffff && k == 0)
@@ -269,7 +277,7 @@ dvsend(int d, const char *filename, char ich, int count)
 
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
-		err(EX_NOINPUT, "%s", filename);
+		err(EX_NOINPUT, "%s: %s", __func__, filename);
 
 	pbuf = malloc(DSIZE * TNBUF);
 	bzero(wbuf, sizeof(wbuf));
@@ -281,13 +289,13 @@ dvsend(int d, const char *filename, char ich, int count)
 	bufreq.tx.npacket = NPACKET_T;
 	bufreq.tx.psize = PSIZE;
 	if (ioctl(d, FW_SSTBUF, &bufreq) < 0)
-		err(EXIT_FAILURE, "ioctl FW_SSTBUF");
+		err(EXIT_FAILURE, "%s: ioctl FW_SSTBUF", __func__);
 
 	isoreq.ch = ich & 0x3f;
 	isoreq.tag = (ich >> 6) & 3;
 
 	if (ioctl(d, FW_STSTREAM, &isoreq) < 0)
-		err(EXIT_FAILURE, "ioctl FW_STSTREAM");
+		err(EXIT_FAILURE, "%s: ioctl FW_STSTREAM", __func__);
 
 	iso_data = 0;
 	pkt = (struct fw_pkt *) &iso_data;
@@ -319,7 +327,7 @@ dvsend(int d, const char *filename, char ich, int count)
 	frames = 0;
 	packets = 0;
 	pad_acc = 0;
-	while (1) {
+	for (;;) {
 		tlen = 0;
 		while (tlen < DSIZE * TNBUF) {
 			len = read(fd, pbuf + tlen, DSIZE * TNBUF - tlen);
@@ -403,7 +411,7 @@ again:
 				fprintf(stderr, "(EAGAIN) - push 'Play'?\n");
 				goto again;
 			}
-			err(EXIT_FAILURE, "write failed");
+			err(EXIT_FAILURE, "%s: write failed", __func__);
 		}
 	}
 	close(fd);
