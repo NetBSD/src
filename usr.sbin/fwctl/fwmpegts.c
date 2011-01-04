@@ -1,4 +1,4 @@
-/* $NetBSD: fwmpegts.c,v 1.2 2010/08/24 08:41:24 cegger Exp $ */
+/* $NetBSD: fwmpegts.c,v 1.3 2011/01/04 09:04:24 wiz Exp $ */
 /*
  * Copyright (C) 2005
  * 	Petr Holub, Hidetoshi Shimokawa. All rights reserved.
@@ -156,7 +156,7 @@ mpegtsrecv(int d, const char *filename, char ich, int count)
 	else {
 		fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0660);
 		if (fd == -1)
-			err(EX_NOINPUT, filename);
+			err(EX_NOINPUT, "%s", filename);
 	}
 	buf = malloc(RBUFSIZE);
 
