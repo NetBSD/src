@@ -1,4 +1,4 @@
-# $NetBSD: protocols,v 1.22 2010/10/04 22:31:11 christos Exp $
+# $NetBSD: protocols,v 1.23 2011/01/04 06:54:59 dholland Exp $
 # See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
 #
 #    Last Updated
@@ -185,7 +185,7 @@ rsvp-e2e-ignore 134 RSVP-E2E-IGNORE # [RFC3175]
 mobility     135 Mobility     # Header                                       [RFC3775]
 udplite      136 UDPLite      # [RFC3828]
 mpls-in-ip   137 MPLS-in-IP   # [RFC4023]
-manet        138 manet        # MANET Protocols                       [RFC-ietf-manet-iana-07]
+manet        138 MANET        # MANET Protocols                       [RFC-ietf-manet-iana-07]
 hip          139 HIP          # Host Identity Protocol                [RFC5201]
 shim6        140 Shim6        # Shim6 Protocol                        [RFC5533]
 wesp         141 WESP         # Wrapped Encapsulating Security        [RFC5840]
