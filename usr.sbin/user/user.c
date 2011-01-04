@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.125 2009/12/31 19:59:31 mlelstv Exp $ */
+/* $NetBSD: user.c,v 1.126 2011/01/04 10:30:21 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.125 2009/12/31 19:59:31 mlelstv Exp $");
+__RCSID("$NetBSD: user.c,v 1.126 2011/01/04 10:30:21 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1115,6 +1115,7 @@ adduser(char *login_name, user_t *up)
 			    "short write to /etc/ptmp", login_name);
 		}
 	}
+	(void)close(masterfd);
 	/* if no uid was specified, get next one in [low_uid..high_uid] range */
 	sync_uid_gid = (strcmp(up->u_primgrp, "=uid") == 0);
 	if (up->u_uid == -1) {
