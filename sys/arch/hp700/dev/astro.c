@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.11 2010/12/11 19:32:05 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.12 2011/01/04 10:42:33 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -315,7 +315,7 @@ astro_attach(device_t parent, device_t self, void *aux)
 	 */
 	pagezero_cookie = hp700_pagezero_map();
 	if (PAGE0->mem_cons.pz_class != PCL_DUPLEX)
-		pdc_call((iodcio_t)pdc, 0, PDC_IO, PDC_IO_RESET_DEVICES);
+		pdcproc_ioreset();
 	hp700_pagezero_unmap(pagezero_cookie);
 
 	/* Enable iova space. */
