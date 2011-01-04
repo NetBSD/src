@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.10 2009/08/07 13:55:22 wiz Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.11 2011/01/04 10:05:55 wiz Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -573,7 +573,7 @@ build_pr_list()
 		last = curr;
 
 	}
-	(void) fclose(p);
+	(void) pclose(p);
 
 	/*
 	 ** Now add on the virtual printers, if any
