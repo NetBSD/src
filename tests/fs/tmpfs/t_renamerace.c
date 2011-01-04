@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.10 2011/01/02 12:58:17 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.11 2011/01/04 16:25:20 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -78,16 +78,6 @@ ATF_TC_BODY(renamerace2, tc)
 	struct tmpfs_args args;
 	struct utsname un;
 	pthread_t pt[2];
-
-	/*
-	 * Check that we are running on an SMP-capable arch.  It should
-	 * be a rump capability, but after the CPU_INFO_FOREACH is
-	 * fixed, it will be every arch (for rump), so don't bother.
-	 */
-	if (uname(&un) == -1)
-		atf_tc_fail_errno("uname");
-	if (strcmp(un.machine, "i386") != 0 && strcmp(un.machine, "amd64") != 0)
-		atf_tc_skip("i386 or amd64 required (have %s)", un.machine);
 
 	/*
 	 * Force SMP regardless of how many host CPUs there are.
