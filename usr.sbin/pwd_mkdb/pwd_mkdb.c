@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.52 2010/08/18 08:06:39 christos Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.53 2011/01/04 10:01:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.52 2010/08/18 08:06:39 christos Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.53 2011/01/04 10:01:51 wiz Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -645,18 +645,23 @@ cp(const char *from, const char *to, mode_t mode)
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0)
 		mkpw_error("Cannot open `%s'", from);
-	if ((to_fd = open(to, O_WRONLY | O_CREAT | O_EXCL, mode)) < 0)
+	if ((to_fd = open(to, O_WRONLY | O_CREAT | O_EXCL, mode)) < 0) {
+		(void)close(from_fd);
 		mkpw_error("Cannot open `%s'", to);
+	}
 	while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 		wcount = write(to_fd, buf, (size_t)rcount);
-		if (rcount != wcount || wcount == -1)
+		if (rcount != wcount || wcount == -1) {
+			(void)close(from_fd);
+			(void)close(to_fd);
 			goto on_error;
+		}
 	}
 
-	if (rcount < 0)
-		goto on_error;
 	close(from_fd);
 	if (close(to_fd))
+		goto on_error;
+	if (rcount < 0)
 		goto on_error;
 	return;
 
