@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.61 2010/07/27 14:25:23 jakllsch Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.62 2011/01/04 01:40:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.61 2010/07/27 14:25:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.62 2011/01/04 01:40:19 matt Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -365,11 +365,14 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 		nglob += (ELF_ST_BIND(nsym[n].st_info) == STB_GLOBAL);
 
 		/* Compute min and max symbols. */
-		if (nsym[n].st_value < tab->sd_minsym) {
-		    	tab->sd_minsym = nsym[n].st_value;
-		}
-		if (nsym[n].st_value > tab->sd_maxsym) {
-		    	tab->sd_maxsym = nsym[n].st_value;
+		if (strcmp(str + sym[i].st_name, "*ABS*") != 0
+		    && ELF_ST_TYPE(nsym[n].st_info) != STT_NOTYPE) {
+			if (nsym[n].st_value < tab->sd_minsym) {
+				tab->sd_minsym = nsym[n].st_value;
+			}
+			if (nsym[n].st_value > tab->sd_maxsym) {
+				tab->sd_maxsym = nsym[n].st_value;
+			}
 		}
 		n++;
 	}
