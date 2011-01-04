@@ -1,11 +1,11 @@
-/* $NetBSD: motoi2c.c,v 1.1 2011/01/04 01:25:17 matt Exp $ */
+/* $NetBSD: motoi2c.c,v 1.2 2011/01/04 02:50:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Tohru Nishimura and Matt Thomas.
+ * by Matt Thomas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.1 2011/01/04 01:25:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.2 2011/01/04 02:50:08 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
