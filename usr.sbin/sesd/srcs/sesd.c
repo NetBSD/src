@@ -1,4 +1,4 @@
-/* $NetBSD: sesd.c,v 1.5 2009/04/18 13:57:44 lukem Exp $ */
+/* $NetBSD: sesd.c,v 1.6 2011/01/04 10:10:39 wiz Exp $ */
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -102,6 +102,7 @@ main(a, v)
 		if (ioctl(fd, SESIOC_INIT, NULL) < 0) {
 			fprintf(stderr, "%s: SESIOC_INIT fails- %s\n",
 			    v[dev], strerror(errno));
+			(void) close(fd);
 			return (1);
 		}
 		(void) close(fd);
