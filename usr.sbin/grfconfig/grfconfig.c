@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.14 2009/04/26 19:24:18 mlelstv Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.15 2011/01/04 09:32:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1997\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: grfconfig.c,v 1.14 2009/04/26 19:24:18 mlelstv Exp $");
+__RCSID("$NetBSD: grfconfig.c,v 1.15 2011/01/04 09:32:31 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -127,6 +127,7 @@ main(ac, av)
 		if (!(fp = fopen(modefile, "r"))) {
 			printf("grfconfig: Cannot open mode definition "
 			    "file.\n");
+			(void)close(grffd);
 			return (1);
 		}
 		while (fgets(buf, sizeof(buf), fp)) {
@@ -168,6 +169,8 @@ main(ac, av)
 			if (i < 14) {
 				printf("grfconfig: too few values in mode "
 				    "definition file:\n %s\n", obuf);
+				(void)fclose(fp);
+				(void)close(grffd);
 				return (1);
 			}
 
@@ -193,6 +196,8 @@ main(ac, av)
 				} else {
 					printf("grfconfig: Illegal mode "
 					    "number: %s\n", cps[0]);
+					(void)fclose(fp);
+					(void)close(grffd);
 					return (1);
 				}
 
@@ -210,6 +215,8 @@ main(ac, av)
 			    (gv->vtotal == 0)) {
 				printf("grfconfig: Illegal value in "
 				    "mode #%d:\n %s\n", gv->mode_num, obuf);
+				(void)fclose(fp);
+				(void)close(grffd);
 				return (1);  
 			}
 
@@ -230,6 +237,8 @@ main(ac, av)
 					    "grfconfig for more information "
 					    "about the new mode definition "
 					    "file.\n");
+					(void)fclose(fp);
+					(void)close(grffd);
 					return (1);
 				}
 			}
@@ -255,6 +264,8 @@ main(ac, av)
 				printf("grfconfig: Illegal flags in "
 				    "mode #%d: %s are both defined!\n",
 				    gv->mode_num, errortext);
+				(void)fclose(fp);
+				(void)close(grffd);
 				return (1);
 			}
 
@@ -274,6 +285,8 @@ main(ac, av)
 				printf(" See the manpage of grfconfig for "
 				    "more information about the new mode "
 				    "definition file.\n");
+				(void)fclose(fp);
+				(void)close(grffd);
 				return (1);
 			}
 
@@ -298,6 +311,8 @@ main(ac, av)
 				printf(" See the manpage of grfconfig for "
 				    "more information about the new mode "
 				    "definition file.\n");
+				(void)fclose(fp);
+				(void)close(grffd);
 				return (1);
 			} else if (((gv->vtotal / 2) > lowlim) &&
 			    ((gv->vtotal / 2) < uplim)) {
@@ -317,6 +332,8 @@ main(ac, av)
 				printf(" See the manpage of grfconfig for "
 				    "more information about the new mode "
 				    "definition file.\n");
+				(void)fclose(fp);
+				(void)close(grffd);
 				return (1);
 			}
 
