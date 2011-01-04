@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txxvar.h,v 1.6 2008/04/28 20:23:50 martin Exp $ */
+/*	$NetBSD: mk48txxvar.h,v 1.7 2011/01/04 01:28:15 matt Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,6 +48,7 @@ struct mk48txx_softc {
 					   counter at 0 */
 	u_int		sc_flag;
 #define MK48TXX_NO_CENT_ADJUST	0x0001
+#define MK48TXX_HAVE_CENT_REG	0x0002
 
 	mk48txx_nvrd_t	sc_nvrd;	/* NVRAM/RTC read function */
 	mk48txx_nvwr_t	sc_nvwr;	/* NVRAM/RTC write function */
