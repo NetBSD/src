@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.80 2011/01/04 00:09:43 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.81 2011/01/04 09:49:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.80 2011/01/04 00:09:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.81 2011/01/04 09:49:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -780,7 +780,21 @@ rump_vop_setattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	struct rumpfs_node *rn = vp->v_data;
 
-	memcpy(&rn->rn_va, vap, sizeof(rn->rn_va));
+#define SETIFVAL(a,t) if (vap->a != (t)VNOVAL) rn->rn_va.a = vap->a
+	SETIFVAL(va_mode, mode_t);
+	SETIFVAL(va_uid, uid_t);
+	SETIFVAL(va_gid, gid_t);
+	SETIFVAL(va_atime.tv_sec, time_t);
+	SETIFVAL(va_ctime.tv_sec, time_t);
+	SETIFVAL(va_mtime.tv_sec, time_t);
+	SETIFVAL(va_birthtime.tv_sec, time_t);
+	SETIFVAL(va_atime.tv_nsec, long);
+	SETIFVAL(va_ctime.tv_nsec, long);
+	SETIFVAL(va_mtime.tv_nsec, long);
+	SETIFVAL(va_birthtime.tv_nsec, long);
+	SETIFVAL(va_flags, u_long);
+#undef  SETIFVAL
+
 	if (vp->v_type == VREG && vap->va_size != VSIZENOTSET)
 		uvm_vnp_setsize(vp, vap->va_size);
 	return 0;
