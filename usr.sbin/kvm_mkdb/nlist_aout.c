@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.8 2003/08/07 11:25:23 agc Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.9 2011/01/04 09:36:13 wiz Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.8 2003/08/07 11:25:23 agc Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.9 2011/01/04 09:36:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,12 +125,16 @@ create_knlist_aout(name, db)
 
 	/* Read in exec structure. */
 	nr = read(fd, &ebuf, sizeof(struct exec));
-	if (nr != sizeof(struct exec))
+	if (nr != sizeof(struct exec)) {
+		(void)close(fd);
 		return (-1);
+	}
 
 	/* Check magic number. */
-	if (N_BADMAG(ebuf))
+	if (N_BADMAG(ebuf)) {
+		(void)close(fd);
 		return (-1);
+	}
 
 	/*
 	 * We've recognized it as an a.out binary.  From here
