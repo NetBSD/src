@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.200 2010/12/27 19:02:32 phx Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.201 2011/01/04 10:40:17 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.200 2010/12/27 19:02:32 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.201 2011/01/04 10:40:17 jruoho Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1034,8 +1034,8 @@ pccbbintr(void *arg)
 	Pcic_read(sc, PCIC_CSC);
 
 	if (sockevent != 0) {
-		aprint_debug("%s: enter sockevent %" PRIx32 "\n", __func__,
-		    sockevent);
+		DPRINTF(("%s: enter sockevent %" PRIx32 "\n",
+			__func__, sockevent));
 	}
 
 	/* XXX sockevent == CB_SOCKET_EVENT_CSTS|CB_SOCKET_EVENT_POWER
