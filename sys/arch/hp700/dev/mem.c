@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 2010/12/12 08:23:14 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.27 2011/01/04 10:42:33 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26 2010/12/12 08:23:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.27 2011/01/04 10:42:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ memmatch(device_t parent, cfdata_t cf, void *aux)
 void
 memattach(device_t parent, device_t self, void *aux)
 {
-	struct pdc_iodc_minit pdc_minit PDC_ALIGNMENT;
+	struct pdc_iodc_minit pdc_minit;
 	struct confargs *ca = aux;
 	struct mem_softc *sc = device_private(self);
 	int err, pagezero_cookie;
@@ -255,8 +255,8 @@ memattach(device_t parent, device_t self, void *aux)
 	} else
 		sc->sc_vp = NULL;
 
-	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_NINIT,
-			    &pdc_minit, ca->ca_hpa, PAGE0->imm_spa_size)) < 0)
+	err = pdcproc_iodc_ninit(&pdc_minit, ca->ca_hpa, PAGE0->imm_spa_size);
+	if (err < 0)
 		pdc_minit.max_spa = PAGE0->imm_max_mem;
 
 	hp700_pagezero_unmap(pagezero_cookie);
