@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2010/12/02 21:20:39 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2011/01/04 16:23:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,8 @@ struct cpu_info {
 	cpuid_t ci_cpuid;
 	struct lwp *ci_curlwp;
 
+	struct cpu_info *ci_next;
+
 /*
  * XXX: horrible workaround for vax lock.h.
  * I eventually want to nuke rump include/machine, so don't waste
@@ -77,7 +79,14 @@ struct lwp *rumpuser_get_curlwp(void);
 #define curlwp rumpuser_get_curlwp()
 
 #define curcpu() (curlwp->l_cpu)
-#define cpu_number() 0 /* XXX: not good enuf */
+#define cpu_number() (cpu_index(curcpu))
+
+extern struct cpu_info *rumpcpu_info_list;
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(_cii_, _ci_)	_cii_ = 0, _ci_ = rumpcpu_info_list; \
+					_ci_ != NULL; _ci_ = _ci_->ci_next
+#define CPU_IS_PRIMARY(_ci_)		(_ci_->ci_index == 0)
+
 
 #endif /* !_LOCORE */
 
