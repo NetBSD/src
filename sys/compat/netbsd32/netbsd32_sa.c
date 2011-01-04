@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sa.c,v 1.12 2011/01/04 10:59:28 matt Exp $	*/
+/*	$NetBSD: netbsd32_sa.c,v 1.13 2011/01/04 20:23:40 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,9 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.12 2011/01/04 10:59:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.13 2011/01/04 20:23:40 pgoyette Exp $");
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
