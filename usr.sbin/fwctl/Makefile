@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.3 2008/02/16 07:27:29 matt Exp $
+# $NetBSD: Makefile,v 1.4 2011/01/04 20:45:12 christos Exp $
 
+WARNS?=5
 PROG=	fwctl
 SRCS=	eui64.c fwcontrol.c fwcrom.c fwdv.c fwmpegts.c
 MAN=	fwctl.8
