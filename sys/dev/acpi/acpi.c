@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.226 2011/01/05 07:58:04 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.227 2011/01/05 08:08:47 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.226 2011/01/05 07:58:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.227 2011/01/05 08:08:47 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1035,16 +1035,13 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 				continue;
 		}
 
-		/*
-		 * Handled internally.
-		 */
 		if (di->Type == ACPI_TYPE_POWER)
 			continue;
 
-		/*
-		 * Skip ignored HIDs.
-		 */
-		if (acpi_match_hid(di, acpi_ignored_ids))
+		if (acpi_match_hid(di, acpi_early_ids) != 0)
+			continue;
+
+		if (acpi_match_hid(di, acpi_ignored_ids) != 0)
 			continue;
 
 		aa.aa_node = ad;
