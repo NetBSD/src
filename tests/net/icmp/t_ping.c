@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.11 2010/11/07 17:51:21 jmmv Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.12 2011/01/05 14:08:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.11 2010/11/07 17:51:21 jmmv Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.12 2011/01/05 14:08:12 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -129,7 +129,10 @@ in_cksum(void *data, size_t len)
 static int
 doping(const char *target, int loops, u_int pktsize)
 {
-	char sndbuf[IP_MAXPACKET - sizeof(struct ip)];
+	union {
+		char buf[IP_MAXPACKET - sizeof(struct ip)];
+		struct icmp i;	/* ensure proper alignment */
+	} sndbuf;
 	char recvbuf[IP_MAXPACKET];
 	struct sockaddr_in dst, pingee;
 	struct icmp *icmp;
@@ -147,7 +150,7 @@ doping(const char *target, int loops, u_int pktsize)
 	dst.sin_family = AF_INET;
 	dst.sin_addr.s_addr = inet_addr(target);
 
-	icmp = (struct icmp *)sndbuf;
+	icmp = (struct icmp *)&sndbuf;
 	memset(icmp, 0, sizeof(*icmp));
 	icmp->icmp_type = ICMP_ECHO;
 	icmp->icmp_id = htons(37);
