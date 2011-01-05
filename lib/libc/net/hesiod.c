@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.24 2005/10/19 22:56:42 christos Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.25 2011/01/05 00:09:43 wiz Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -51,7 +51,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.24 2005/10/19 22:56:42 christos Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.25 2011/01/05 00:09:43 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -378,6 +378,7 @@ read_config_file(ctx, filename)
 			*which = strdup(data);
 			if (!*which) {
 				errno = ENOMEM;
+				(void)fclose(fp);
 				return -1;
 			}
 		} else {

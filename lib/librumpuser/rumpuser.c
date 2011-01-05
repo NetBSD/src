@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.10 2010/11/15 15:23:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.11 2011/01/05 00:19:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.10 2010/11/15 15:23:32 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.11 2011/01/05 00:19:20 wiz Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -159,6 +159,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 
 		if (ioctl(fd, DIOCGDINFO, &lab) == -1) {
 			seterror(errno);
+			(void)close(fd);
 			rv = -1;
 			goto out;
 		}
