@@ -1,7 +1,7 @@
-/*      $NetBSD: rumpclient.c,v 1.10 2010/12/16 17:05:44 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.11 2011/01/05 17:14:50 pooka Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,6 +45,7 @@ __RCSID("$NetBSD");
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,7 +56,9 @@ __RCSID("$NetBSD");
 
 #include "sp_common.c"
 
-static struct spclient clispc;
+static struct spclient clispc = {
+	.spc_fd = -1,
+};
 
 static int
 syscall_req(struct spclient *spc, int sysnum,
@@ -87,21 +90,30 @@ syscall_req(struct spclient *spc, int sysnum,
 }
 
 static int
-handshake_req(struct spclient *spc)
+handshake_req(struct spclient *spc, uint32_t *auth, int cancel)
 {
+	struct handshake_fork rf;
 	struct rsp_hdr rhdr;
 	struct respwait rw;
 	int rv;
 
 	/* performs server handshake */
-	rhdr.rsp_len = sizeof(rhdr);
+	rhdr.rsp_len = sizeof(rhdr) + (auth ? sizeof(rf) : 0);
 	rhdr.rsp_class = RUMPSP_REQ;
 	rhdr.rsp_type = RUMPSP_HANDSHAKE;
-	rhdr.rsp_handshake = HANDSHAKE_GUEST;
+	if (auth)
+		rhdr.rsp_handshake = HANDSHAKE_FORK;
+	else
+		rhdr.rsp_handshake = HANDSHAKE_GUEST;
 
 	putwait(spc, &rw, &rhdr);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	if (rv != 0) {
+	if (auth) {
+		memcpy(rf.rf_auth, auth, AUTHLEN*sizeof(*auth));
+		rf.rf_cancel = cancel;
+		rv = dosend(spc, &rf, sizeof(rf));
+	}
+	if (rv != 0 || cancel) {
 		unputwait(spc, &rw);
 		return rv;
 	}
@@ -113,6 +125,31 @@ handshake_req(struct spclient *spc)
 	rv = *(int *)rw.rw_data;
 	free(rw.rw_data);
 
+	return rv;
+}
+
+static int
+prefork_req(struct spclient *spc, void **resp)
+{
+	struct rsp_hdr rhdr;
+	struct respwait rw;
+	int rv;
+
+	rhdr.rsp_len = sizeof(rhdr);
+	rhdr.rsp_class = RUMPSP_REQ;
+	rhdr.rsp_type = RUMPSP_PREFORK;
+	rhdr.rsp_error = 0;
+
+
+	putwait(spc, &rw, &rhdr);
+	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	if (rv != 0) {
+		unputwait(spc, &rw);
+		return rv;
+	}
+
+	rv = waitresp(spc, &rw);
+	*resp = rw.rw_data;
 	return rv;
 }
 
@@ -234,33 +271,30 @@ handlereq(struct spclient *spc)
 	spcfreebuf(spc);
 }
 
-int
-rumpclient_init()
+static unsigned ptab_idx;
+static struct sockaddr *serv_sa;
+
+static int
+doconnect(void)
 {
 	char banner[MAXBANNER];
-	struct sockaddr *sap;
-	char *p;
-	unsigned idx;
+	int s, error;
 	ssize_t n;
-	int error, s;
 
-	if ((p = getenv("RUMP_SERVER")) == NULL) {
-		errno = ENOENT;
+	s = socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0);
+	if (s == -1)
 		return -1;
-	}
 
-	if ((error = parseurl(p, &sap, &idx, 0)) != 0) {
+	if (connect(s, serv_sa, (socklen_t)serv_sa->sa_len) == -1) {
+		error = errno;
+		fprintf(stderr, "rump_sp: client connect failed\n");
 		errno = error;
 		return -1;
 	}
 
-	s = socket(parsetab[idx].domain, SOCK_STREAM, 0);
-	if (s == -1)
-		return -1;
-
-	if (connect(s, sap, (socklen_t)sap->sa_len) == -1) {
+	if ((error = parsetab[ptab_idx].connhook(s)) != 0) {
 		error = errno;
-		fprintf(stderr, "rump_sp: client connect failed\n");
+		fprintf(stderr, "rump_sp: connect hook failed\n");
 		errno = error;
 		return -1;
 	}
@@ -281,23 +315,91 @@ rumpclient_init()
 
 	/* parse the banner some day */
 
-	if ((error = parsetab[idx].connhook(s)) != 0) {
-		error = errno;
-		fprintf(stderr, "rump_sp: connect hook failed\n");
+	clispc.spc_fd = s;
+	TAILQ_INIT(&clispc.spc_respwait);
+	pthread_mutex_init(&clispc.spc_mtx, NULL);
+	pthread_cond_init(&clispc.spc_cv, NULL);
+
+	return 0;
+}
+
+int
+rumpclient_init()
+{
+	char *p;
+	int error;
+
+	if ((p = getenv("RUMP_SERVER")) == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	if ((error = parseurl(p, &serv_sa, &ptab_idx, 0)) != 0) {
 		errno = error;
 		return -1;
 	}
 
-	pthread_mutex_init(&clispc.spc_mtx, NULL);
-	pthread_cond_init(&clispc.spc_cv, NULL);
-	clispc.spc_fd = s;
-	TAILQ_INIT(&clispc.spc_respwait);
+	if (doconnect() == -1)
+		return -1;
 
-	error = handshake_req(&clispc);
+	error = handshake_req(&clispc, NULL, 0);
 	if (error) {
 		pthread_mutex_destroy(&clispc.spc_mtx);
 		pthread_cond_destroy(&clispc.spc_cv);
-		close(s);
+		close(clispc.spc_fd);
+		errno = error;
+		return -1;
 	}
-	return error;
+
+	return 0;
+}
+
+struct rumpclient_fork {
+	uint32_t fork_auth[AUTHLEN];
+};
+
+struct rumpclient_fork *
+rumpclient_prefork(void)
+{
+	struct rumpclient_fork *rpf;
+	void *resp;
+	int rv;
+
+	rpf = malloc(sizeof(*rpf));
+	if (rpf == NULL)
+		return NULL;
+
+	if ((rv = prefork_req(&clispc, &resp)) != 0) {
+		free(rpf);
+		errno = rv;
+		return NULL;
+	}
+
+	memcpy(rpf->fork_auth, resp, sizeof(rpf->fork_auth));
+	free(resp);
+
+	return rpf;
+}
+
+int
+rumpclient_fork_init(struct rumpclient_fork *rpf)
+{
+	int error;
+
+	close(clispc.spc_fd);
+	memset(&clispc, 0, sizeof(clispc));
+	clispc.spc_fd = -1;
+
+	if (doconnect() == -1)
+		return -1;
+
+	error = handshake_req(&clispc, rpf->fork_auth, 0);
+	if (error) {
+		pthread_mutex_destroy(&clispc.spc_mtx);
+		pthread_cond_destroy(&clispc.spc_cv);
+		errno = error;
+		return -1;
+	}
+
+	return 0;
 }

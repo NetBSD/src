@@ -1,7 +1,7 @@
-/*      $NetBSD: sp_common.c,v 1.17 2010/12/16 17:05:44 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.18 2011/01/05 17:14:50 pooka Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -80,9 +80,12 @@ enum {	RUMPSP_HANDSHAKE,
 	RUMPSP_SYSCALL,
 	RUMPSP_COPYIN, RUMPSP_COPYINSTR,
 	RUMPSP_COPYOUT, RUMPSP_COPYOUTSTR,
-	RUMPSP_ANONMMAP };
+	RUMPSP_ANONMMAP,
+	RUMPSP_PREFORK };
 
-enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH }; /* more to come */
+enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK };
+
+#define AUTHLEN 4 /* 128bit fork auth */
 
 struct rsp_hdr {
 	uint64_t rsp_len;
@@ -123,6 +126,11 @@ struct rsp_sysresp {
 	register_t rsys_retval[2];
 };
 
+struct handshake_fork {
+	uint32_t rf_auth[4];
+	int rf_cancel;
+};
+
 struct respwait {
 	uint64_t rw_reqno;
 	void *rw_data;
@@ -134,6 +142,7 @@ struct respwait {
 	TAILQ_ENTRY(respwait) rw_entries;
 };
 
+struct prefork;
 struct spclient {
 	int spc_fd;
 	int spc_refcnt;
@@ -157,6 +166,8 @@ struct spclient {
 
 	uint64_t spc_nextreq;
 	int spc_ostatus, spc_istatus;
+
+	LIST_HEAD(, prefork) spc_pflist;
 };
 #define SPCSTATUS_FREE 0
 #define SPCSTATUS_BUSY 1
@@ -252,11 +263,11 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 
 		n = send(fd, sdata + sent, dlen - sent, MSG_NOSIGNAL);
 		if (n == 0) {
-			return EFAULT;
+			return ENOTCONN;
 		}
 		if (n == -1)  {
 			if (errno != EAGAIN)
-				return EFAULT;
+				return errno;
 			continue;
 		}
 		sent += n;
@@ -305,6 +316,7 @@ kickwaiter(struct spclient *spc)
 	if (rw == NULL) {
 		DPRINTF(("no waiter found, invalid reqno %" PRIu64 "?\n",
 		    spc->spc_hdr.rsp_reqno));
+		spcfreebuf(spc);
 		return;
 	}
 	DPRINTF(("rump_sp: client %p woke up waiter at %p\n", spc, rw));

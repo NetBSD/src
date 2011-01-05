@@ -1,7 +1,7 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.28 2011/01/02 13:01:45 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.29 2011/01/05 17:14:50 pooka Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.28 2011/01/02 13:01:45 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.29 2011/01/05 17:14:50 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -85,7 +85,17 @@ static struct rumpuser_sp_ops spops;
 static char banner[MAXBANNER];
 
 #define PROTOMAJOR 0
-#define PROTOMINOR 0
+#define PROTOMINOR 1
+
+struct prefork {
+	uint32_t pf_auth[AUTHLEN];
+	struct lwp *pf_lwp;
+
+	LIST_ENTRY(prefork) pf_entries;		/* global list */
+	LIST_ENTRY(prefork) pf_spcentries;	/* linked from forking spc */
+};
+static LIST_HEAD(, prefork) preforks = LIST_HEAD_INITIALIZER(preforks);
+static pthread_mutex_t pfmtx;
 
 /*
  * Manual wrappers, since librump does not have access to the
@@ -244,6 +254,26 @@ send_syscall_resp(struct spclient *spc, uint64_t reqno, int error,
 }
 
 static int
+send_prefork_resp(struct spclient *spc, uint64_t reqno, uint32_t *auth)
+{
+	struct rsp_hdr rhdr;
+	int rv;
+
+	rhdr.rsp_len = sizeof(rhdr) + AUTHLEN*sizeof(*auth);
+	rhdr.rsp_reqno = reqno;
+	rhdr.rsp_class = RUMPSP_RESP;
+	rhdr.rsp_type = RUMPSP_PREFORK;
+	rhdr.rsp_sysnum = 0;
+
+	sendlock(spc);
+	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	rv = dosend(spc, auth, AUTHLEN*sizeof(*auth));
+	sendunlock(spc);
+
+	return rv;
+}
+
+static int
 copyin_req(struct spclient *spc, const void *remaddr, size_t *dlen,
 	int wantstr, void **resp)
 {
@@ -365,13 +395,15 @@ spcrelease(struct spclient *spc)
 	if (ref > 0)
 		return;
 
-	DPRINTF(("spcrelease: spc %p fd %d\n", spc, spc->spc_fd));
+	DPRINTF(("rump_sp: spcrelease: spc %p fd %d\n", spc, spc->spc_fd));
 
 	_DIAGASSERT(TAILQ_EMPTY(&spc->spc_respwait));
 	_DIAGASSERT(spc->spc_buf == NULL);
 
-	lwproc_switch(spc->spc_mainlwp);
-	lwproc_release();
+	if (spc->spc_mainlwp) {
+		lwproc_switch(spc->spc_mainlwp);
+		lwproc_release();
+	}
 	spc->spc_mainlwp = NULL;
 
 	close(spc->spc_fd);
@@ -464,26 +496,16 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 			break;
 	}
 
-	if (lwproc_rfork(&spclist[i], RUMP_RFCFDG) != 0) {
-		close(newfd);
-		return 0;
-	}
-
 	assert(i < MAXCLI);
 
 	pfdlist[i].fd = newfd;
 	spclist[i].spc_fd = newfd;
-	spclist[i].spc_mainlwp = lwproc_curlwp();
 	spclist[i].spc_istatus = SPCSTATUS_BUSY; /* dedicated receiver */
-	spclist[i].spc_pid = lwproc_getpid();
 	spclist[i].spc_refcnt = 1;
 
 	TAILQ_INIT(&spclist[i].spc_respwait);
 
-	DPRINTF(("rump_sp: added new connection fd %d at idx %u, pid %d\n",
-	    newfd, i, lwproc_getpid()));
-
-	lwproc_switch(NULL);
+	DPRINTF(("rump_sp: added new connection fd %d at idx %u\n", newfd, i));
 
 	return i;
 }
@@ -496,7 +518,7 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 
 	sysnum = (int)rhdr->rsp_sysnum;
 	DPRINTF(("rump_sp: handling syscall %d from client %d\n",
-	    sysnum, 0));
+	    sysnum, spc->spc_pid));
 
 	lwproc_newlwp(spc->spc_pid);
 	rv = rumpsyscall(sysnum, data, retval);
@@ -668,22 +690,150 @@ handlereq(struct spclient *spc)
 {
 	struct sysbouncearg *sba;
 	pthread_t pt;
-	int retries, rv;
+	int retries, error, i;
 
 	if (__predict_false(spc->spc_state == SPCSTATE_NEW)) {
 		if (spc->spc_hdr.rsp_type != RUMPSP_HANDSHAKE) {
 			send_error_resp(spc, spc->spc_hdr.rsp_reqno, EAUTH);
+			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
 		}
 
-		rv = send_handshake_resp(spc, spc->spc_hdr.rsp_reqno, 0);
+		if (spc->spc_hdr.rsp_handshake == HANDSHAKE_GUEST) {
+			if ((error = lwproc_rfork(spc, RUMP_RFCFDG)) != 0) {
+				shutdown(spc->spc_fd, SHUT_RDWR);
+			}
+
+			spcfreebuf(spc);
+			if (error)
+				return;
+
+			spc->spc_mainlwp = lwproc_curlwp();
+
+			send_handshake_resp(spc, spc->spc_hdr.rsp_reqno, 0);
+		} else if (spc->spc_hdr.rsp_handshake == HANDSHAKE_FORK) {
+			struct lwp *tmpmain;
+			struct prefork *pf;
+			struct handshake_fork *rfp;
+			uint64_t reqno;
+			int cancel;
+
+			reqno = spc->spc_hdr.rsp_reqno;
+			if (spc->spc_off-HDRSZ != sizeof(*rfp)) {
+				send_error_resp(spc, reqno, EINVAL);
+				shutdown(spc->spc_fd, SHUT_RDWR);
+				spcfreebuf(spc);
+				return;
+			}
+
+			/*LINTED*/
+			rfp = (void *)spc->spc_buf;
+			cancel = rfp->rf_cancel;
+
+			pthread_mutex_lock(&pfmtx);
+			LIST_FOREACH(pf, &preforks, pf_entries) {
+				if (memcmp(rfp->rf_auth, pf->pf_auth,
+				    sizeof(rfp->rf_auth)) == 0) {
+					LIST_REMOVE(pf, pf_entries);
+					LIST_REMOVE(pf, pf_spcentries);
+					break;
+				}
+			}
+			pthread_mutex_lock(&pfmtx);
+			spcfreebuf(spc);
+
+			if (!pf) {
+				send_error_resp(spc, reqno, ESRCH);
+				shutdown(spc->spc_fd, SHUT_RDWR);
+				return;
+			}
+
+			tmpmain = pf->pf_lwp;
+			free(pf);
+			lwproc_switch(tmpmain);
+			if (cancel) {
+				lwproc_release();
+				shutdown(spc->spc_fd, SHUT_RDWR);
+				return;
+			}
+
+			/*
+			 * So, we forked already during "prefork" to save
+			 * the file descriptors from a parent exit
+			 * race condition.  But now we need to fork
+			 * a second time since the initial fork has
+			 * the wrong spc pointer.  (yea, optimize
+			 * interfaces some day if anyone cares)
+			 */
+			if ((error = lwproc_rfork(spc, 0)) != 0) {
+				send_error_resp(spc, reqno, error);
+				shutdown(spc->spc_fd, SHUT_RDWR);
+				lwproc_release();
+				return;
+			}
+			spc->spc_mainlwp = lwproc_curlwp();
+			lwproc_switch(tmpmain);
+			lwproc_release();
+			lwproc_switch(spc->spc_mainlwp);
+
+			send_handshake_resp(spc, reqno, 0);
+		}
+
+		spc->spc_pid = lwproc_getpid();
+
+		DPRINTF(("rump_sp: handshake for client %p complete, pid %d\n",
+		    spc, spc->spc_pid));
+		    
+		lwproc_switch(NULL);
+		spc->spc_state = SPCSTATE_RUNNING;
+		return;
+	}
+
+	if (__predict_false(spc->spc_hdr.rsp_type == RUMPSP_PREFORK)) {
+		struct prefork *pf;
+		uint64_t reqno;
+		uint32_t auth[AUTHLEN];
+
+		DPRINTF(("rump_sp: prefork handler executing for %p\n", spc));
+		reqno = spc->spc_hdr.rsp_reqno;
 		spcfreebuf(spc);
-		if (rv) {
-			shutdown(spc->spc_fd, SHUT_RDWR);
+
+		pf = malloc(sizeof(*pf));
+		if (pf == NULL) {
+			send_error_resp(spc, reqno, ENOMEM);
 			return;
 		}
-		spc->spc_state = SPCSTATE_RUNNING;
+
+		/*
+		 * Use client main lwp to fork.  this is never used by
+		 * worker threads (except if spc refcount goes to 0),
+		 * so we can safely use it here.
+		 */
+		lwproc_switch(spc->spc_mainlwp);
+		if ((error = lwproc_rfork(spc, RUMP_RFFDG)) != 0) {
+			DPRINTF(("rump_sp: fork failed: %d (%p)\n",error, spc));
+			send_error_resp(spc, reqno, error);
+			lwproc_switch(NULL);
+			free(pf);
+			return;
+		}
+
+		/* Ok, we have a new process context and a new curlwp */
+		for (i = 0; i < AUTHLEN; i++) {
+			pf->pf_auth[i] = auth[i] = arc4random();
+		}
+		pf->pf_lwp = lwproc_curlwp();
+		lwproc_switch(NULL);
+
+		pthread_mutex_lock(&pfmtx);
+		LIST_INSERT_HEAD(&preforks, pf, pf_entries);
+		LIST_INSERT_HEAD(&spc->spc_pflist, pf, pf_spcentries);
+		pthread_mutex_unlock(&pfmtx);
+
+		DPRINTF(("rump_sp: prefork handler success %p\n", spc));
+
+		send_prefork_resp(spc, reqno, auth);
 		return;
 	}
 
