@@ -100,7 +100,7 @@ check_data_range ()
 
 resize_ffs()
 {
-	echo "in shrink_ffs:" ${@}
+	echo "in resize_ffs:" ${@}
 	local bs=$1
 	local fragsz=$2
 	local osize=$3
@@ -110,7 +110,7 @@ resize_ffs()
 	local swap=$7
 	mkdir -p mnt
 	echo "bs is ${bs} numdata is ${numdata}"
-	echo "****shrinking fs with blocksize ${bs}"
+	echo "****resizing fs with blocksize ${bs}"
 
 	# we want no more than 16K/inode to allow test files to copy.
 	local fpi=$((fragsz * 4))
@@ -147,5 +147,4 @@ resize_ffs()
 	    check_data_range $((remove + 1)) ${numdata}
 	fi
 	umount mnt
-	rm -f ${IMG}	# probably unnecessary
 }
