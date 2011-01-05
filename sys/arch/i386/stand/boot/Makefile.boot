@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.47 2010/12/20 00:55:10 jakllsch Exp $
+# $NetBSD: Makefile.boot,v 1.48 2011/01/05 23:13:01 jakllsch Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -32,7 +32,6 @@ BINMODE=444
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
 LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
-# CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 #CPPFLAGS+= -DDEBUG_MEMSIZE
