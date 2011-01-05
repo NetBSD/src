@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.11 2011/01/05 00:19:20 wiz Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.12 2011/01/05 09:43:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.11 2011/01/05 00:19:20 wiz Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.12 2011/01/05 09:43:00 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -80,6 +80,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 	struct stat sb;
 	uint64_t size;
 	int needsdev = 0, rv = 0, ft;
+	int fd = -1;
 
 	if (stat(path, &sb) == -1) {
 		seterror(errno);
@@ -125,7 +126,6 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 		 */
 #ifndef __NetBSD__
 		off_t off;
-		int fd;
 
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
@@ -135,20 +135,18 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 		}
 
 		off = lseek(fd, 0, SEEK_END);
-		close(fd);
 		if (off != 0) {
 			size = off;
 			goto out;
 		}
 		fprintf(stderr, "error: device size query not implemented on "
 		    "this platform\n");
-		sererror(EOPNOTSUPP);
+		seterror(EOPNOTSUPP);
 		rv = -1;
 		goto out;
 #else
 		struct disklabel lab;
 		struct partition *parta;
-		int fd;
 
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
@@ -159,11 +157,9 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 
 		if (ioctl(fd, DIOCGDINFO, &lab) == -1) {
 			seterror(errno);
-			(void)close(fd);
 			rv = -1;
 			goto out;
 		}
-		close(fd);
 
 		parta = &lab.d_partitions[DISKPART(sb.st_rdev)];
 		size = (uint64_t)lab.d_secsize * parta->p_size;
@@ -175,6 +171,8 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 		*sizep = size;
 	if (rv == 0 && ftp)
 		*ftp = ft;
+	if (fd != -1)
+		close(fd);
 
 	return rv;
 }
