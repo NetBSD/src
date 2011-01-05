@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.S,v 1.7 2010/12/20 00:39:06 jakllsch Exp $	*/
+/*	$NetBSD: biosboot.S,v 1.8 2011/01/05 23:13:01 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
  *
  * On entry:
  * 	%dl			BIOS drive number
- *	%ebx			Sector number of netbsd partition
- *	%ds:%esi		Boot parameter block (patched by installboot)
+ *	%ecx:%ebx		Sector number of NetBSD partition
+ *	%ds:%si			Boot parameter block (patched by installboot)
  *	%cs			0x1000
  *	%ds, %es, %ss		All zero
  *	%sp			near 0xfffc
@@ -77,6 +77,8 @@ boot_start_1:
 	mov	%cs, %ax
 	mov	%ax, %es
 
+	movl	%ecx, %ebp		/* move LBA out of the way */
+
 	/* Grab boot_params patched into bootxx by installboot */
 	cmpl	$X86_BOOT_MAGIC_1,-4(%si)	/* sanity check ptr */
 	jne	2f
@@ -110,11 +112,17 @@ boot_start_1:
 	rep
 	stosl
 
-	and	$0xff, %edx
+	testb	$X86_BP_FLAGS_LBA64VALID, boot_params+4
+	jnz	1f
+	xorl	%ebp, %ebp		/* high part of LBA is not valid */
+1:
+
+	movzbl	%dl, %edx
+	push	%ebp			/* high 32 bits of first sector */
 	push	%ebx			/* first sector of bios partition */
 	push	%edx			/* bios disk */
 	call	_C_LABEL(boot2)		/* C bootstrap code */
-	add	$8, %esp
+	addl	$12, %esp
 	call	prot_to_real
 	.code16
 
