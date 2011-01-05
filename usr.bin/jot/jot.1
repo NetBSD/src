@@ -1,4 +1,4 @@
-.\"	$NetBSD: jot.1,v 1.10 2009/03/11 13:53:51 joerg Exp $
+.\"	$NetBSD: jot.1,v 1.11 2011/01/05 19:59:48 apb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)jot.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd February 24, 2008
+.Dd January 5, 2010
 .Dt JOT 1
 .Os
 .Sh NAME
@@ -152,6 +152,10 @@ derives in part from
 a function in APL.
 .Sh EXAMPLES
 The command:
+.Dl "jot - 42 87 1"
+prints the integers from 42 to 87, inclusive.
+.Pp
+The command:
 .Dl "jot 21 \-1 1.00"
 prints 21 evenly spaced numbers increasing from \-1 to 1.
 .Pp
@@ -201,6 +205,7 @@ prints all lines 80 characters or longer.
 .Xr ed 1 ,
 .Xr expand 1 ,
 .Xr rs 1 ,
+.Xr seq 1 ,
 .Xr yes 1 ,
 .Xr printf 3 ,
 .Xr random 3
