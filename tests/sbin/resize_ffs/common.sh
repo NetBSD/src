@@ -63,7 +63,7 @@ copy_data ()
 copy_multiple ()
 {
 	local i
-	for i in $(jot $1); do
+	for i in $(seq $1); do
 		copy_data $i
 	done
 }
@@ -78,7 +78,7 @@ remove_data ()
 remove_multiple ()
 {
 	local i
-	for i in $(jot $1); do
+	for i in $(seq $1); do
 		remove_data $i
 	done
 }
@@ -95,7 +95,7 @@ check_data ()
 check_data_range ()
 {
 	local i
-	for i in $(jot $(($2-$1+1)) $1); do
+	for i in $(seq $1 $2); do
 		check_data $i
 	done
 }
