@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.36 2009/08/12 07:42:11 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.37 2011/01/05 15:40:55 wiz Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.36 2009/08/12 07:42:11 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.37 2011/01/05 15:40:55 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -468,8 +468,12 @@ get_response:
 	set[0].events = POLLIN;
 	for (;;) {
 		if (listc + 1 >= listmax) {
+			void *newlistv;
 			listmax += 20;
-			listv = realloc(listv, listmax * sizeof(SOCKET));
+			newlistv = realloc(listv, listmax * sizeof(SOCKET));
+			if (newlistv == NULL)
+				leave(1, "realloc");
+			listv = (SOCKET *)newlistv;
 		}
 
 		if (poll(set, 1, 1000) == 1 &&
