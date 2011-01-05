@@ -86,6 +86,9 @@
         <xsl:if test="$ntcs-skipped > 0">
           <xsl:call-template name="skipped-tcs-summary" />
         </xsl:if>
+        <xsl:if test="$ntps-failed > 0">
+          <xsl:call-template name="failed-tps-summary" />
+        </xsl:if>
         <xsl:call-template name="info-bottom" />
 
         <xsl:apply-templates select="tp" mode="details" />
@@ -167,14 +170,16 @@
         <td class="numeric"><p><xsl:value-of select="$ntps" /></p></td>
       </tr>
       <tr class="entry">
-        <td><p>Bogus test programs</p></td>
         <xsl:choose>
           <xsl:when test="$ntps-failed > 0">
+            <td><p><a href="#failed-tps-summary">Bogus test
+            programs</a></p></td>
             <td class="numeric-error">
               <p><xsl:value-of select="$ntps-failed" /></p>
             </td>
           </xsl:when>
           <xsl:otherwise>
+            <td><p>Bogus test programs</p></td>
             <td class="numeric">
               <p><xsl:value-of select="$ntps-failed" /></p>
             </td>
@@ -314,6 +319,20 @@
     </table>
   </xsl:template>
 
+  <xsl:template name="failed-tps-summary">
+    <a name="failed-tps-summary" />
+    <h2 id="failed-tps-summary">Bogus test programs summary</h2>
+
+    <table class="tcs-summary">
+      <tr>
+        <th>Test program</th>
+      </tr>
+      <xsl:apply-templates select="tp" mode="summary">
+        <xsl:with-param name="which">bogus</xsl:with-param>
+      </xsl:apply-templates>
+    </table>
+  </xsl:template>
+
   <xsl:template name="skipped-tcs-summary">
     <a name="skipped-tcs-summary" />
     <h2 id="skipped-tcs-summary">Skipped test cases summary</h2>
@@ -335,6 +354,7 @@
 
     <xsl:variable name="chosen">
       <xsl:choose>
+        <xsl:when test="$which = 'bogus' and failed">yes</xsl:when>
         <xsl:when test="$which = 'passed' and tc/passed">yes</xsl:when>
         <xsl:when test="$which = 'failed' and tc/failed">yes</xsl:when>
         <xsl:when test="$which = 'xfail' and
@@ -359,9 +379,11 @@
           <p><xsl:value-of select="@id" /></p>
         </td>
       </tr>
-      <xsl:apply-templates select="tc" mode="summary">
-        <xsl:with-param name="which" select="$which" />
-      </xsl:apply-templates>
+      <xsl:if test="$which != 'bogus'">
+        <xsl:apply-templates select="tc" mode="summary">
+          <xsl:with-param name="which" select="$which" />
+        </xsl:apply-templates>
+      </xsl:if>
     </xsl:if>
   </xsl:template>
 
