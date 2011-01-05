@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.32 2010/03/01 19:52:38 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.33 2011/01/05 00:03:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.32 2010/03/01 19:52:38 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.33 2011/01/05 00:03:52 wiz Exp $");
 #endif
 #endif
 
@@ -441,6 +441,7 @@ _mcleanup(void)
 	logfd = open("gmon.log", O_CREAT|O_TRUNC|O_WRONLY, 0664);
 	if (logfd < 0) {
 		warn("%s: Cannot open `%s'", __func__, "gmon.log");
+		(void)close(fd);
 		return;
 	}
 	len = snprintf(buf2, sizeof buf2, "[mcleanup1] kcount %p ssiz %lu\n",
