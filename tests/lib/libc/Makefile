@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2011/01/04 22:30:40 pgoyette Exp $
+# $NetBSD: Makefile,v 1.21 2011/01/05 21:17:04 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -22,6 +22,7 @@ TESTS_C+=	t_randomid
 TESTS_C+=	t_strptime
 
 TESTS_SH+=	t_atexit
+TESTS_SH+=	t_nsdispatch
 TESTS_SH+=	t_protoent
 TESTS_SH+=	t_servent
 
@@ -29,7 +30,11 @@ BINDIR=		${TESTSDIR}
 MKMAN=		no
 
 PROGS+=		h_atexit
+PROGS+=		h_nsd_recurse
 PROGS+=		h_protoent
 PROGS+=		h_servent
+
+LDADD.h_nsd_recurse+=	-lpthread
+LDADD.t_mktime+=	-lpthread
 
 .include <bsd.test.mk>
