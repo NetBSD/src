@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1483 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1484 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -816,3 +816,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	auvitek(4): Add a driver for Auvitek AU0828 family USB video
 		capture controllers. [jmcneill 20101227]
 	dhcpcd(8): Import dhcpcd-5.2.10. [roy 20110103]
+	resize_ffs(8): support byteswapped file systems, and support
+		growing ufs2 file systems. [riz 20110104]
