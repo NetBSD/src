@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.34 2011/01/04 08:17:01 matt Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.35 2011/01/05 21:20:44 enami Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.34 2011/01/04 08:17:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.35 2011/01/05 21:20:44 enami Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -206,7 +206,8 @@ uvmhist_print(void (*pr)(const char *, ...))
  * uvmexp_print: ddb hook to print interesting uvm counters
  */
 void
-uvmexp_print(void (*pr)(const char *, ...))
+uvmexp_print(void (*pr)(const char *, ...)
+    __attribute__((__format__(__printf__,1,2))))
 {
 	int active, inactive;
 	CPU_INFO_ITERATOR cii;
@@ -229,7 +230,7 @@ uvmexp_print(void (*pr)(const char *, ...))
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		(*pr)("  cpu%u:\n", cpu_index(ci));
 		(*pr)("    faults=%" PRIu64 ", traps=%" PRIu64 ", "
-		    "intrs=%llu, ctxswitch=%llu\n",
+		    "intrs=%" PRIu64 ", ctxswitch=%" PRIu64 "\n",
 		    ci->ci_data.cpu_nfault, ci->ci_data.cpu_ntrap,
 		    ci->ci_data.cpu_nintr, ci->ci_data.cpu_nswtch);
 		(*pr)("    softint=%" PRIu64 ", syscalls=%" PRIu64 "\n",
