@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.1 2011/01/05 10:34:49 jnemeth Exp $
+# $NetBSD: MODULAR,v 1.2 2011/01/05 12:59:33 martin Exp $
 #
 # MODULAR kernel - like GENERIC, but excluding lots of stuff that can
 # be loaded as a module later
@@ -6,9 +6,10 @@
 
 include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"MODULAR-$Revision: 1.1 $"
+#ident		"MODULAR-$Revision: 1.2 $"
 
-#no options 	MODULAR
+options		INSECURE	# disable kernel security levels initially
+				# (we can't load file system modules otherwise)
 
 #no options 	EXEC_AOUT	# execve(2) support for a.out binaries
 #no options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
