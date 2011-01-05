@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.137 2010/04/30 20:47:17 pooka Exp $	*/
+/*	$NetBSD: conf.h,v 1.138 2011/01/05 17:00:25 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,7 +53,7 @@ struct uio;
 struct vnode;
 
 /*
- * Types for d_type
+ * Types for d_flag
  */
 #define D_OTHER		0x0000
 #define	D_TAPE		0x0001
