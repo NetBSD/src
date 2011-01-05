@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.34 2010/12/30 22:28:53 jakllsch Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.35 2011/01/05 21:44:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -497,7 +497,7 @@ nolabel:
 out:
         va_end(ap);
 	if (error)
-		dealloc(d, sizeof(struct biosdisk));
+		dealloc(d, sizeof(*d));
 	return error;
 }
 
@@ -511,7 +511,7 @@ biosdisk_close(struct open_file *f)
 	if (d->ll.type == BIOSDISK_TYPE_FD)
 		wait_sec(3);	/* 2s is enough on all PCs I found */
 
-	dealloc(d, sizeof(struct biosdisk));
+	dealloc(d, sizeof(*d));
 	f->f_devdata = NULL;
 	return 0;
 }
