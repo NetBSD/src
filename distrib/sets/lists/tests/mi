@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.209 2011/01/05 17:20:15 pooka Exp $
+# $NetBSD: mi,v 1.210 2011/01/05 21:18:29 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -330,6 +330,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/h_atexit.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/h_nsd_recurse.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/h_protoent.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/h_servent.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
@@ -1605,6 +1606,7 @@
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_vis			tests-lib-tests		atf
 ./usr/tests/lib/libc/h_atexit			tests-lib-tests		atf
+./usr/tests/lib/libc/h_nsd_recurse		tests-lib-tests		atf
 ./usr/tests/lib/libc/h_protoent			tests-lib-tests		atf
 ./usr/tests/lib/libc/h_servent			tests-lib-tests		atf
 ./usr/tests/lib/libc/hash			tests-lib-tests
@@ -1678,6 +1680,7 @@
 ./usr/tests/lib/libc/t_gdtoa			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_hsearch			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_inet			tests-lib-tests		atf
+./usr/tests/lib/libc/t_nsdispatch		tests-lib-tests		atf
 ./usr/tests/lib/libc/t_protoent			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_ptm			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_randomid			tests-lib-tests		atf
