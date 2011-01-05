@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.233 2011/01/02 05:09:32 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.234 2011/01/05 19:34:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.233 2011/01/02 05:09:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.234 2011/01/05 19:34:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1860,7 +1860,8 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			 * blocks outside our area of interest or beyond
 			 * the end of file.
 			 */
-			KASSERT((curpg->flags & PG_MARKER) == 0);
+			KASSERT(curpg == NULL
+			    || (curpg->flags & PG_MARKER) == 0);
 			if (pages_per_block > 1) {
 				while (curpg &&
 				    ((curpg->offset & fs->lfs_bmask) ||
