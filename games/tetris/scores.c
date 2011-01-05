@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.19 2010/02/03 15:34:39 roy Exp $	*/
+/*	$NetBSD: scores.c,v 1.20 2011/01/05 15:48:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -458,8 +458,7 @@ getscores(int *fdp)
 	result = read(sd, &header, sizeof(header));
 	if (result < 0) {
 		warn("Score file %s: read", _PATH_SCOREFILE);
-		close(sd);
-		goto fail;
+		goto sdfail;
 	}
 	if (result != 0 && (size_t)result != sizeof(header)) {
 		warnx("Score file %s: read: unexpected EOF", _PATH_SCOREFILE);
@@ -470,13 +469,12 @@ getscores(int *fdp)
 		if (lseek(sd, 0, SEEK_SET) < 0) {
 			/* ? */
 			warn("Score file %s: lseek", _PATH_SCOREFILE);
-			goto fail;
+			goto sdfail;
 		}
 		if (ftruncate(sd, 0) == 0) {
 			result = 0;
 		} else {
-			close(sd);
-			goto fail;
+			goto sdfail;
 		}
 	}
 
@@ -501,17 +499,17 @@ getscores(int *fdp)
 			} else {
 				warnx("Score file %s: Unknown endian tag %u",
 					_PATH_SCOREFILE, header.hsh_endiantag);
-				goto fail;
+				goto sdfail;
 			}
 
 			if (header.hsh_version != HSH_VERSION) {
 				warnx("Score file %s: Unknown version code %u",
 					_PATH_SCOREFILE, header.hsh_version);
-				goto fail;
+				goto sdfail;
 			}
 
 			if (readscores(sd, doflip) < 0) {
-				goto fail;
+				goto sdfail;
 			}
 		} else {
 			/*
@@ -521,7 +519,7 @@ getscores(int *fdp)
 			result = scorefile_probe(sd);
 			if (lseek(sd, 0, SEEK_SET) < 0) {
 				warn("Score file %s: lseek", _PATH_SCOREFILE);
-				goto fail;
+				goto sdfail;
 			}
 			switch (result) {
 			case SCOREFILE_CURRENT:
@@ -543,10 +541,10 @@ getscores(int *fdp)
 				result = readscores50(sd, 1 /* do flip */);
 				break;
 			default:
-				goto fail;
+				goto sdfail;
 			}
 			if (result < 0) {
-				goto fail;
+				goto sdfail;
 			}
 		}
 	}
@@ -559,6 +557,8 @@ getscores(int *fdp)
 
 	return;
 
+sdfail:
+	close(sd);
  fail:
 	if (fdp != NULL) {
 		*fdp = -1;
