@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.72 2011/01/04 14:22:06 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.73 2011/01/05 21:20:25 pgoyette Exp $
 
-SUBDIR+= citrus db divrem getaddrinfo int_fmtio locale \
-	nsdispatch regex rpc sys time
+SUBDIR+= citrus db divrem getaddrinfo int_fmtio locale regex rpc sys time
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
