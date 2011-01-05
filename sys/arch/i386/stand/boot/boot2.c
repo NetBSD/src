@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.50 2010/12/20 01:12:44 jakllsch Exp $	*/
+/*	$NetBSD: boot2.c,v 1.51 2011/01/05 23:13:01 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 int errno;
 
 int boot_biosdev;
-u_int boot_biossector;
+daddr_t boot_biossector;
 
 static const char * const names[][2] = {
 	{ "netbsd", "netbsd.gz" },
@@ -112,7 +112,7 @@ static const char *default_filename;
 char *sprint_bootsel(const char *);
 void bootit(const char *, int, int);
 void print_banner(void);
-void boot2(int, u_int);
+void boot2(int, uint64_t);
 
 void	command_help(char *);
 void	command_ls(char *);
@@ -276,7 +276,7 @@ print_banner(void)
  * biossector: Sector number of the NetBSD partition
  */
 void
-boot2(int biosdev, u_int biossector)
+boot2(int biosdev, uint64_t biossector)
 {
 	extern char twiddle_toggle;
 	int currname;

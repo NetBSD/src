@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.50 2010/01/17 14:54:43 drochner Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.51 2011/01/05 23:13:01 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1070,6 +1070,7 @@ struct x86_boot_params {
 #define	X86_BP_FLAGS_PASSWORD		2
 #define	X86_BP_FLAGS_NOMODULES		4
 #define	X86_BP_FLAGS_NOBOOTCONF		8
+#define	X86_BP_FLAGS_LBA64VALID		0x10
 
 		/* values for bp_consdev */
 #define	X86_BP_CONSDEV_PC	0
