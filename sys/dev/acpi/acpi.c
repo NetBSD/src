@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.225 2011/01/03 08:50:23 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.226 2011/01/05 07:58:04 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.225 2011/01/03 08:50:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.226 2011/01/05 07:58:04 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -192,6 +192,14 @@ static const char * const acpi_ignored_ids[] = {
 	NULL
 };
 
+/*
+ * Devices that should be attached early.
+ */
+static const char * const acpi_early_ids[] = {
+	"PNP0C09",	/* acpiec(4) */
+	NULL
+};
+
 static int		acpi_match(device_t, cfdata_t, void *);
 static int		acpi_submatch(device_t, cfdata_t, const int *, void *);
 static void		acpi_attach(device_t, device_t, void *);
@@ -212,6 +220,7 @@ static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE);
 #endif
 
 static int		acpi_rescan(device_t, const char *, const int *);
+static void		acpi_rescan_early(struct acpi_softc *);
 static void		acpi_rescan_nodes(struct acpi_softc *);
 static void		acpi_rescan_capabilities(device_t);
 static int		acpi_print(void *aux, const char *);
@@ -940,14 +949,54 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct acpi_softc *sc = device_private(self);
 
-	if (ifattr_match(ifattr, "acpinodebus"))
+	/*
+	 * A two-pass scan for acpinodebus.
+	 */
+	if (ifattr_match(ifattr, "acpinodebus")) {
+		acpi_rescan_early(sc);
 		acpi_rescan_nodes(sc);
+	}
 
 	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL)
 		sc->sc_apmbus = config_found_ia(sc->sc_dev,
 		    "acpiapmbus", NULL, NULL);
 
 	return 0;
+}
+
+static void
+acpi_rescan_early(struct acpi_softc *sc)
+{
+	struct acpi_attach_args aa;
+	struct acpi_devnode *ad;
+
+	/*
+	 * First scan for devices such as acpiec(4) that
+	 * should be always attached before anything else.
+	 * We want these devices to attach regardless of
+	 * the device status and other restrictions.
+	 */
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
+		if (ad->ad_device != NULL)
+			continue;
+
+		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+			continue;
+
+		if (acpi_match_hid(ad->ad_devinfo, acpi_early_ids) == 0)
+			continue;
+
+		aa.aa_node = ad;
+		aa.aa_iot = sc->sc_iot;
+		aa.aa_memt = sc->sc_memt;
+		aa.aa_pc = sc->sc_pc;
+		aa.aa_pciflags = sc->sc_pciflags;
+		aa.aa_ic = sc->sc_ic;
+
+		ad->ad_device = config_found_ia(sc->sc_dev,
+		    "acpinodebus", &aa, acpi_print);
+	}
 }
 
 static void
