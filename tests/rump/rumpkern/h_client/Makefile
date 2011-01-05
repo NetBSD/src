@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2010/12/12 12:53:35 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2011/01/05 17:19:09 pooka Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/rump/rumpkern/h_client
 
+TESTS_C+=	h_forkcli
 TESTS_C+=	h_simplecli
 TESTS_C+=	h_stresscli
 
