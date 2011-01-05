@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.3 2010/12/13 13:39:42 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.4 2011/01/05 17:19:09 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,61 +25,58 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-atf_test_case basic cleanup
-basic_head()
+test_case()
 {
+	local name="${1}"; shift
+	local check_function="${1}"; shift
 
-	atf_set "descr" "Check that basic remote server communication works"
+	atf_test_case "${name}" cleanup
+	eval "${name}_head() {  }"
+	eval "${name}_body() { \
+		${check_function} " "${@}" "; \
+	}"
+        eval "${name}_cleanup() { \
+		RUMP_SERVER=unix://commsock rump.halt
+        }"
 }
 
-basic_body()
+test_case basic basic
+test_case stress_short stress 1
+test_case stress_long stress 10
+test_case fork_simple fork simple
+test_case fork_pipecomm fork pipecomm
+test_case fork_fakeauth fork fakeauth
+
+basic()
 {
-
 	export RUMP_SERVER=unix://commsock
-
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
-
 	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_simplecli
 }
 
-basic_cleanup()
-{
-
-	docleanup
-}
-
-stresst=10
-atf_test_case stress cleanup
-stress_head()
-{
-
-	atf_set "descr" "Stress/robustness test (~${stresst}s)"
-}
-
-stress_body()
+stress()
 {
 
 	export RUMP_SERVER=unix://commsock
-
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
-
-	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_stresscli ${stresst}
+	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_stresscli ${1}
 }
 
-stress_cleanup()
+fork()
 {
 
-	docleanup
-}
-
-docleanup()
-{
-	RUMP_SERVER=unix://commsock rump.halt
+	export RUMP_SERVER=unix://commsock
+	atf_check -s exit:0 rump_server -lrumpvfs ${RUMP_SERVER}
+	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_forkcli ${1}
 }
 
 atf_init_test_cases()
 {
 
 	atf_add_test_case basic
-	atf_add_test_case stress
+	atf_add_test_case stress_short
+	atf_add_test_case stress_long
+	atf_add_test_case fork_simple
+	atf_add_test_case fork_pipecomm
+	atf_add_test_case fork_fakeauth
 }
