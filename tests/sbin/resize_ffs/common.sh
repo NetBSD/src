@@ -24,6 +24,9 @@ test_case()
 	local check_function="${1}"; shift
 
 	atf_test_case "${name}" cleanup
+	eval "${name}_head() { \
+		atf_set "require.user" "root" ; \
+	}"
 	eval "${name}_body() { \
 		${check_function} " "${@}" "; \
 	}"
