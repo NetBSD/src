@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.12 2011/01/05 14:08:12 martin Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.13 2011/01/05 14:43:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.12 2011/01/05 14:08:12 martin Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.13 2011/01/05 14:43:40 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -157,8 +157,8 @@ doping(const char *target, int loops, u_int pktsize)
 
 	if (pktsize < sizeof(*icmp))
 		pktsize = sizeof(*icmp);
-	if (pktsize > sizeof(sndbuf))
-		pktsize = sizeof(sndbuf);
+	if (pktsize > sizeof(sndbuf.buf))
+		pktsize = sizeof(sndbuf.buf);
 
 	RL(rump_sys_setsockopt(s, SOL_SOCKET, SO_SNDBUF,
 	    &pktsize, sizeof(pktsize)));
