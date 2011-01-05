@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.188 2010/11/13 13:52:06 uebayasi Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.189 2011/01/05 14:55:10 sketch Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.188 2010/11/13 13:52:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.189 2011/01/05 14:55:10 sketch Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -754,7 +754,8 @@ bge_set_max_readrq(struct bge_softc *sc)
 	    + PCI_PCIE_DCSR);
 	if ((val & PCI_PCIE_DCSR_MAX_READ_REQ) !=
 	    BGE_PCIE_DEVCTL_MAX_READRQ_4096) {
-		aprint_verbose("adjust device control 0x%04x ", val);
+		aprint_verbose_dev(sc->bge_dev,
+		    "adjust device control 0x%04x ", val);
 		val &= ~PCI_PCIE_DCSR_MAX_READ_REQ;
 		val |= BGE_PCIE_DEVCTL_MAX_READRQ_4096;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
