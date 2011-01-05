@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-globals.c,v 1.1.1.3 2009/12/02 00:26:44 haad Exp $	*/
+/*	$NetBSD: lvm-globals.c,v 1.2 2011/01/05 14:57:28 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -40,6 +40,21 @@ static int _dmeventd_monitor = DEFAULT_DMEVENTD_MONITOR;
 static int _ignore_suspended_devices = 0;
 static int _error_message_produced = 0;
 static unsigned _is_static = 0;
+
+#ifdef __NetBSD__
+
+static int _is_operator = 0;
+
+void init_operator(int operator)
+{
+	_is_operator = operator;
+}
+
+int is_operator()
+{
+	return _is_operator;
+}
+#endif
 
 void init_verbose(int level)
 {

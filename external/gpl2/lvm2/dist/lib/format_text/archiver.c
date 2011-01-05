@@ -1,4 +1,4 @@
-/*	$NetBSD: archiver.c,v 1.1.1.3 2009/12/02 00:26:29 haad Exp $	*/
+/*	$NetBSD: archiver.c,v 1.2 2011/01/05 14:57:28 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -117,6 +117,12 @@ int archive(struct volume_group *vg)
 		return 1;
 	}
 
+#ifdef __NetBSD__
+	if (is_operator()) {
+		log_verbose("Operator usage: Skipping archiving of volume group.");
+		return 1;
+	}
+#endif
 	if (!dm_create_dir(vg->cmd->archive_params->dir))
 		return 0;
 
@@ -221,6 +227,12 @@ int backup_locally(struct volume_group *vg)
 		return 1;
 	}
 
+#ifdef __NetBSD__
+	if (is_operator()) {
+		log_verbose("Operator usage: Skipping archiving of volume group.");
+		return 1;
+	}
+#endif	
 	if (!dm_create_dir(vg->cmd->backup_params->dir))
 		return 0;
 

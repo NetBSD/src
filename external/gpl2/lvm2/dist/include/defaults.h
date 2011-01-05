@@ -1,4 +1,4 @@
-/*	$NetBSD: defaults.h,v 1.1.1.2 2009/12/02 00:25:44 haad Exp $	*/
+/*	$NetBSD: defaults.h,v 1.2 2011/01/05 14:57:27 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -39,7 +39,7 @@
 #define DEFAULT_DATA_ALIGNMENT_OFFSET_DETECTION 1
 #define DEFAULT_DATA_ALIGNMENT_DETECTION 1
 
-#define DEFAULT_LOCK_DIR "/var/lock/lvm"
+#define DEFAULT_LOCK_DIR "/var/run/lvm"
 #define DEFAULT_LOCKING_LIB "liblvm2clusterlock.so"
 #define DEFAULT_FALLBACK_TO_LOCAL_LOCKING 1
 #define DEFAULT_FALLBACK_TO_CLUSTERED_LOCKING 1

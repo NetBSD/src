@@ -1,4 +1,4 @@
-/*	$NetBSD: lvmcmdline.c,v 1.1.1.3 2009/12/02 00:25:52 haad Exp $	*/
+/*	$NetBSD: lvmcmdline.c,v 1.2 2011/01/05 14:57:28 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -1296,8 +1296,32 @@ static void _exec_lvm1_command(char **argv)
 
 static void _nonroot_warning(void)
 {
+#ifdef __NetBSD__
+	gid_t groups_list[NGROUPS_MAX];
+	int i, group_num, is_operator = 0;
+	
+	/* Operator group in NetBSD should be able to see lvm status. */
+	if (getuid() || geteuid()) {
+		group_num = getgroups(NGROUPS_MAX, groups_list);
+		
+		for (i = 0; i < group_num; i++) {
+			if (groups_list[i] == DM_DEVICE_GID) {
+				is_operator = 1;
+				init_operator(is_operator);
+				break;
+			}
+		}
+
+		if (is_operator)
+			log_warn("WARNING: Using LVM as operator you have only read access.");
+		else
+			log_warn("WARNING: Running as a non-root user and without "
+				"operator group. Functionality may be unavailable.");
+	}
+#else
 	if (getuid() || geteuid())
 		log_warn("WARNING: Running as a non-root user. Functionality may be unavailable.");
+#endif
 }
 
 int lvm2_main(int argc, char **argv)

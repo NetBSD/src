@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-file.c,v 1.1.1.1 2008/12/22 00:18:33 haad Exp $	*/
+/*	$NetBSD: libdm-file.c,v 1.2 2011/01/05 14:57:28 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -21,6 +21,11 @@
 #include <fcntl.h>
 #include <dirent.h>
 
+/*
+ * Created directories permissions are controled by umask values and
+ * they should be set by api user before calling this function.
+ * Changing directory owners is also left on caller.
+ */
 static int _create_dir_recursive(const char *dir)
 {
 	char *orig, *s;

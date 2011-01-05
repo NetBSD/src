@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm-globals.h,v 1.1.1.2 2009/02/18 11:17:17 haad Exp $	*/
+/*	$NetBSD: lvm-globals.h,v 1.2 2011/01/05 14:57:28 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
@@ -20,6 +20,11 @@
 
 #define VERBOSE_BASE_LEVEL _LOG_WARN
 #define SECURITY_LEVEL 0
+
+#ifdef __NetBSD__
+void init_operator(int operator);
+int  is_operator(void);
+#endif
 
 void init_verbose(int level);
 void init_test(int level);

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_locking.c,v 1.1.1.3 2009/12/02 00:26:24 haad Exp $	*/
+/*	$NetBSD: file_locking.c,v 1.2 2011/01/05 14:57:28 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -322,6 +322,8 @@ static int _file_lock_resource(struct cmd_context *cmd, const char *resource,
 
 int init_file_locking(struct locking_type *locking, struct cmd_context *cmd)
 {
+	mode_t old_umask;
+
 	locking->lock_resource = _file_lock_resource;
 	locking->reset_locking = _reset_file_locking;
 	locking->fin_locking = _fin_file_locking;
@@ -335,10 +337,23 @@ int init_file_locking(struct locking_type *locking, struct cmd_context *cmd)
 	_prioritise_write_locks =
 	    find_config_tree_bool(cmd, "global/prioritise_write_locks",
 				  DEFAULT_PRIORITISE_WRITE_LOCKS);
-
-	if (!dm_create_dir(_lock_dir))
+	old_umask = umask(LVM_LOCKDIR_MODE);
+	if (!dm_create_dir(_lock_dir)){
+		umask(old_umask);
 		return 0;
+	} else {
+		/* Change lockfile directory owner to match with others */
+		if (chown(_lock_dir, DM_DEVICE_UID, DM_DEVICE_GID) == -1) {
+			if (errno == EPERM)
+				goto next;
+			log_sys_error("chown", _lock_dir);
+			return 0;
+		}
+	}
 
+next:		
+	umask(old_umask);
+ 
 	/* Trap a read-only file system */
 	if ((access(_lock_dir, R_OK | W_OK | X_OK) == -1) && (errno == EROFS))
 		return 0;
