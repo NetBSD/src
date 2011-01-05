@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.12 2011/01/05 22:28:05 jakllsch Exp $
+$NetBSD: version,v 1.13 2011/01/05 23:13:01 jakllsch Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -44,3 +44,4 @@ is taken as the current.
 	restored on ACPI resume.
 5.5:	Adjust stack and heap areas to not overlap.
 5.6:	GUID Partition Table support.
+5.7:	Recognize 64-bit LBA from bootxx.
