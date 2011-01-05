@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.29 2011/01/05 17:14:50 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.30 2011/01/05 22:57:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.29 2011/01/05 17:14:50 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.30 2011/01/05 22:57:01 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -425,6 +425,7 @@ serv_handledisco(unsigned int idx)
 	pthread_mutex_lock(&spc->spc_mtx);
 	spc->spc_state = SPCSTATE_DYING;
 	kickall(spc);
+	sendunlockl(spc);
 	pthread_mutex_unlock(&spc->spc_mtx);
 
 	/*
