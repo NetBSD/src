@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.39 2010/12/11 14:28:38 martin Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.40 2011/01/06 02:02:43 jym Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.39 2010/12/11 14:28:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.40 2011/01/06 02:02:43 jym Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.39 2010/12/11 14:28:38 martin Exp $");
  *   BCM5708C B1, B2
  *   BCM5708S B1, B2
  *   BCM5709C A1, C0
+ *   BCM5709S A1, C0
  *   BCM5716  C0
  *
  * The following controllers are not supported by this driver:
@@ -53,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.39 2010/12/11 14:28:38 martin Exp $");
  *   BCM5708C A0, B0
  *   BCM5708S A0, B0
  *   BCM5709C A0  B0, B1, B2 (pre-production)
- *   BCM5709S A0, A1, B0, B1, B2, C0 (pre-production)
+ *   BCM5709S A0, B0, B1, B2 (pre-production)
  */
 
 #include <sys/callout.h>
