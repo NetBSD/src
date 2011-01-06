@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.58 2010/12/06 09:12:34 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.59 2011/01/06 11:22:54 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -29,6 +29,10 @@ CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
 CPPFLAGS+=	-nostdinc -isystem ${RUMPTOP}/..
 LDFLAGS+=	-T ${RUMPTOP}/ldscript.rump
 #CPPFLAGS+=	-DDEBUG
+
+.ifdef RUMP_LOCKDEBUG
+CPPFLAGS+=	-DLOCKDEBUG
+.endif
 
 # kernel libs should not get linked against libc
 # XXX: actually, we would like to enable this but cannot, since it
