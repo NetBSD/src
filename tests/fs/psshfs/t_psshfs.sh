@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.2 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_psshfs.sh,v 1.3 2011/01/06 07:28:32 pooka Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -193,6 +193,43 @@ pwd_cleanup() {
 	stop_ssh
 }
 
+atf_test_case ls cleanup
+ls_head() {
+	atf_set "descr" "Uses ls, attempts to exercise puffs_cc"
+}
+ls_body() {
+	require_puffs
+
+	start_ssh
+
+	mkdir mnt
+	mkdir root
+	mkdir root/dir
+	touch root/dir/file1
+	touch root/dir/file2
+	touch root/file3
+	touch root/file4
+
+	mount_psshfs root mnt
+
+	ls -l mnt &
+
+	IFS=' '
+lsout='dir
+file3
+file4
+
+mnt/dir:
+file1
+file2
+'
+	atf_check -s exit:0 -o inline:"$lsout" ls -R mnt
+}
+ls_cleanup() {
+	umount mnt
+	stop_ssh
+}
+
 # -------------------------------------------------------------------------
 # Initialization.
 # -------------------------------------------------------------------------
@@ -200,4 +237,5 @@ pwd_cleanup() {
 atf_init_test_cases() {
 	atf_add_test_case inode_nos
 	atf_add_test_case pwd
+	atf_add_test_case ls
 }
