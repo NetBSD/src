@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2008/05/11 19:17:07 he Exp $
+# $NetBSD: Makefile.inc,v 1.8.4.1 2011/01/06 05:20:24 riz Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -24,6 +24,11 @@
 # SUCH DAMAGE.
 #
 # $FreeBSD: src/lib/libpam/Makefile.inc,v 1.15 2004/03/15 13:23:20 des Exp $
+
+# This needs to be before bsd.init.mk
+.if defined(BSD_MK_COMPAT_FILE)
+.include <${BSD_MK_COMPAT_FILE}>
+.endif
 
 USE_FORT?= yes	# network client software *and* authentication software
 

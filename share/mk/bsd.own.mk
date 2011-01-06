@@ -1,4 +1,9 @@
-#	$NetBSD: bsd.own.mk,v 1.542.2.13 2010/11/25 00:27:19 riz Exp $
+#	$NetBSD: bsd.own.mk,v 1.542.2.14 2011/01/06 05:20:25 riz Exp $
+
+# This needs to be before bsd.init.mk
+.if defined(BSD_MK_COMPAT_FILE)
+.include <${BSD_MK_COMPAT_FILE}>
+.endif
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -888,8 +893,9 @@ X11LOADABLE?=			yes
 
 #
 # MAKEDIRTARGET dir target [extra make(1) params]
-#	run "cd $${dir} && ${MAKE} [params] $${target}", with a pretty message
+#	run "cd $${dir} && ${MAKEDIRTARGETENV} ${MAKE} [params] $${target}", with a pretty message
 #
+MAKEDIRTARGETENV?=
 MAKEDIRTARGET=\
 	@_makedirtarget() { \
 		dir="$$1"; shift; \
@@ -905,7 +911,7 @@ MAKEDIRTARGET=\
 		show=$${this:-.}; \
 		echo "$${target} ===> $${show%/}$${1:+	(with: $$@)}"; \
 		cd "$${real}" \
-		&& ${MAKE} _THISDIR_="$${this}" "$$@" $${target}; \
+		&& ${MAKEDIRTARGETENV} ${MAKE} _THISDIR_="$${this}" "$$@" $${target}; \
 	}; \
 	_makedirtarget
 
