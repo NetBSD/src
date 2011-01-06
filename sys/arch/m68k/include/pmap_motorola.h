@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.31 2011/01/02 05:21:11 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.32 2011/01/06 13:49:16 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -246,7 +246,7 @@ extern u_int		protection_codes[];
 #if defined(M68040) || defined(M68060)
 extern u_int		protostfree;
 #endif
-#ifdef M68K_MMU_HP
+#ifdef CACHE_HAVE_VAC
 extern u_int		pmap_aliasmask;
 #endif
 
