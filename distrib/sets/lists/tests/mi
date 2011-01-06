@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.210 2011/01/05 21:18:29 pgoyette Exp $
+# $NetBSD: mi,v 1.211 2011/01/06 07:05:51 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -480,6 +480,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client			tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_reboot.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_forkcli.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_sigcli.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_simplecli.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_stresscli.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_server			tests-obsolete	obsolete
@@ -1810,6 +1811,7 @@
 ./usr/tests/rump/rumpkern/h_client			tests-rump-tests
 ./usr/tests/rump/rumpkern/h_client/h_reboot		tests-obsolete		obsolete
 ./usr/tests/rump/rumpkern/h_client/h_forkcli		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/h_client/h_sigcli		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/h_client/h_simplecli		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/h_client/h_stresscli		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/h_server			tests-obsolete	obsolete
