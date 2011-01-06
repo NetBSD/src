@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.228 2011/01/06 06:49:12 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.229 2011/01/06 07:05:00 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.228 2011/01/06 06:49:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.229 2011/01/06 07:05:00 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -213,6 +213,7 @@ static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
 					  void *, void **);
 static ACPI_STATUS	acpi_make_devnode_post(ACPI_HANDLE, uint32_t,
 					       void *, void **);
+static void		acpi_make_name(struct acpi_devnode *, uint32_t);
 
 static int		acpi_rescan(device_t, const char *, const int *);
 static void		acpi_rescan_early(struct acpi_softc *);
@@ -696,9 +697,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *devinfo;
 	ACPI_OBJECT_TYPE type;
-	ACPI_NAME_UNION *anu;
 	ACPI_STATUS rv;
-	int clear, i;
 
 	rv = AcpiGetObjectInfo(handle, &devinfo);
 
@@ -731,26 +730,11 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		ad->ad_root = sc->sc_dev;
 		ad->ad_parent = awc->aw_parent;
 
-		anu = (ACPI_NAME_UNION *)&devinfo->Name;
-		ad->ad_name[4] = '\0';
-
-		for (i = 3, clear = 0; i >= 0; i--) {
-
-			if (clear == 0 && anu->Ascii[i] == '_')
-				ad->ad_name[i] = '\0';
-			else {
-				ad->ad_name[i] = anu->Ascii[i];
-				clear = 1;
-			}
-		}
-
-		if (ad->ad_name[0] == '\0')
-			ad->ad_name[0] = '_';
+		acpi_set_node(ad);
+		acpi_make_name(ad, devinfo->Name);
 
 		SIMPLEQ_INIT(&ad->ad_child_head);
 		SIMPLEQ_INSERT_TAIL(&sc->ad_head, ad, ad_list);
-
-		acpi_set_node(ad);
 
 		if (ad->ad_parent != NULL) {
 
@@ -777,6 +761,29 @@ acpi_make_devnode_post(ACPI_HANDLE handle, uint32_t level,
 		awc->aw_parent = awc->aw_parent->ad_parent;
 
 	return AE_OK;
+}
+
+static void
+acpi_make_name(struct acpi_devnode *ad, uint32_t name)
+{
+	ACPI_NAME_UNION *anu;
+	int clear, i;
+
+	anu = (ACPI_NAME_UNION *)&name;
+	ad->ad_name[4] = '\0';
+
+	for (i = 3, clear = 0; i >= 0; i--) {
+
+		if (clear == 0 && anu->Ascii[i] == '_')
+			ad->ad_name[i] = '\0';
+		else {
+			ad->ad_name[i] = anu->Ascii[i];
+			clear = 1;
+		}
+	}
+
+	if (ad->ad_name[0] == '\0')
+		ad->ad_name[0] = '_';
 }
 
 /*
