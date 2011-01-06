@@ -67,7 +67,7 @@ struct mbr_part {
 };
 
 struct mbr {
-	uint16_t	mbr_code[223];
+	uint8_t		mbr_code[446];
 	struct mbr_part	mbr_part[4];
 	uint16_t	mbr_sig;
 #define	MBR_SIG		0xAA55
@@ -90,6 +90,7 @@ uint8_t *utf16_to_utf8(uint16_t *);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
 
 int	cmd_add(int, char *[]);
+int	cmd_biosboot(int, char *[]);
 int	cmd_create(int, char *[]);
 int	cmd_destroy(int, char *[]);
 int	cmd_label(int, char *[]);
