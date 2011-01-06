@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $	*/
+/*	$NetBSD: function.c,v 1.65 2011/01/06 08:18:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $");
+__RCSID("$NetBSD: function.c,v 1.65 2011/01/06 08:18:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -646,6 +646,7 @@ c_exec(char ***argvp, int isok)
 			errx(1, "%s: no terminating \";\" or \"+\"",
 			    isok ? "-ok" : "-exec");
 		lastbrace = brace;
+		brace = 0;
 		if (strcmp(*ap, "{}") == 0)
 			brace = 1;
 		if (strcmp(*ap, ";") == 0)
