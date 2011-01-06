@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.36 2010/12/25 10:05:08 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.37 2011/01/06 11:29:40 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.36 2010/12/25 10:05:08 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.37 2011/01/06 11:29:40 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -437,23 +437,13 @@ use_default_colors()
  *	Set the default foreground and background colours.
  */
 int
-assume_default_colors(short arg_fore, short arg_back)
+assume_default_colors(short fore, short back)
 {
-	short fore, back;
-
-	fore = arg_fore;
-	back = arg_back;
-
 #ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "assume_default_colors: %d, %d\n",
 	    fore, back);
 	__CTRACE(__CTRACE_COLOR, "assume_default_colors: default_colour = %d, pair_number = %d\n", __default_color, PAIR_NUMBER(__default_color));
 #endif
-
-	if (arg_fore == -1)
-		fore = COLOR_WHITE;
-	if (arg_back == -1)
-		back = COLOR_BLACK;
 
 	/* Swap red/blue and yellow/cyan */
 	if (_cursesi_screen->color_type == COLOR_OTHER) {
