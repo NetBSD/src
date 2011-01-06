@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.50 2010/12/17 23:11:57 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.51 2011/01/06 02:41:34 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.9";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.50 2010/12/17 23:11:57 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.51 2011/01/06 02:41:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1348,10 +1348,8 @@ localsub(const timezone_t sp, const time_t * const timep, const long offset,
 				newt += seconds;
 			else	newt -= seconds;
 			if (newt < sp->ats[0] ||
-				newt > sp->ats[sp->timecnt - 1]) {
-					errno = EOVERFLOW;
+				newt > sp->ats[sp->timecnt - 1])
 					return NULL;	/* "cannot happen" */
-			}
 			result = localsub(sp, &newt, offset, tmp);
 			if (result == tmp) {
 				time_t	newy;
@@ -1361,10 +1359,8 @@ localsub(const timezone_t sp, const time_t * const timep, const long offset,
 					newy -= (time_t)icycles * YEARSPERREPEAT;
 				else	newy += (time_t)icycles * YEARSPERREPEAT;
 				tmp->tm_year = (int)newy;
-				if (tmp->tm_year != newy) {
-					errno = EOVERFLOW;
+				if (tmp->tm_year != newy)
 					return NULL;
-				}
 			}
 			return result;
 	}
@@ -1428,9 +1424,12 @@ struct tm *
 localtime_rz(const timezone_t sp, const time_t * __restrict timep, struct tm *tmp)
 {
 	if (sp == NULL)
-		return gmtsub(NULL, timep, 0L, tmp);
+		tmp = gmtsub(NULL, timep, 0L, tmp);
 	else
-		return localsub(sp, timep, 0L, tmp);
+		tmp = localsub(sp, timep, 0L, tmp);
+	if (tmp == NULL)
+		errno = EOVERFLOW;
+	return tmp;
 }
 
 /*
@@ -1567,17 +1566,13 @@ timesub(const timezone_t sp, const time_t *const timep, const long offset,
 
 		tdelta = tdays / DAYSPERLYEAR;
 		idelta = (int) tdelta;
-		if (tdelta - idelta >= 1 || idelta - tdelta >= 1) {
-			errno = EOVERFLOW;
+		if (tdelta - idelta >= 1 || idelta - tdelta >= 1)
 			return NULL;
-		}
 		if (idelta == 0)
 			idelta = (tdays < 0) ? -1 : 1;
 		newy = y;
-		if (increment_overflow(&newy, idelta)) {
-			errno = EOVERFLOW;
+		if (increment_overflow(&newy, idelta))
 			return NULL;
-		}
 		leapdays = leaps_thru_end_of(newy - 1) -
 			leaps_thru_end_of(y - 1);
 		tdays -= ((time_t) newy - y) * DAYSPERNYEAR;
@@ -1605,24 +1600,18 @@ timesub(const timezone_t sp, const time_t *const timep, const long offset,
 		++idays;
 	}
 	while (idays < 0) {
-		if (increment_overflow(&y, -1)) {
-			errno = EOVERFLOW;
+		if (increment_overflow(&y, -1))
 			return NULL;
-		}
 		idays += year_lengths[isleap(y)];
 	}
 	while (idays >= year_lengths[isleap(y)]) {
 		idays -= year_lengths[isleap(y)];
-		if (increment_overflow(&y, 1)) {
-			errno = EOVERFLOW;
+		if (increment_overflow(&y, 1))
 			return NULL;
-		}
 	}
 	tmp->tm_year = y;
-	if (increment_overflow(&tmp->tm_year, -TM_YEAR_BASE)) {
-		errno = EOVERFLOW;
+	if (increment_overflow(&tmp->tm_year, -TM_YEAR_BASE))
 		return NULL;
-	}
 	tmp->tm_yday = idays;
 	/*
 	** The "extra" mods below avoid overflow problems.
@@ -1702,7 +1691,7 @@ ctime_rz(const timezone_t sp, const time_t * timep, char *buf)
 */
 
 #ifndef WRONG
-#define WRONG	(-1)
+#define WRONG	((time_t)-1)
 #endif /* !defined WRONG */
 
 /*
@@ -1943,9 +1932,11 @@ label:
 	if ((newt < t) != (saved_seconds < 0))
 		return WRONG;
 	t = newt;
-	if ((*funcp)(sp, &t, offset, tmp))
+	if ((*funcp)(sp, &t, offset, tmp)) {
 		*okayp = TRUE;
-	return t;
+		return t;
+	} else
+		return WRONG;
 }
 
 static time_t
@@ -2033,10 +2024,14 @@ time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 time_t
 mktime_z(const timezone_t sp, struct tm *tmp)
 {
+	time_t t;
 	if (sp == NULL)
-		return time1(NULL, tmp, gmtsub, 0L);
+		t = time1(NULL, tmp, gmtsub, 0L);
 	else
-		return time1(sp, tmp, localsub, 0L);
+		t = time1(sp, tmp, localsub, 0L);
+	if (t == WRONG)
+		errno = EOVERFLOW;
+	return t;
 }
 
 time_t
@@ -2071,15 +2066,25 @@ timelocal(struct tm *const tmp)
 time_t
 timegm(struct tm *const tmp)
 {
+	time_t t;
+
 	tmp->tm_isdst = 0;
-	return time1(gmtptr, tmp, gmtsub, 0L);
+	t = time1(gmtptr, tmp, gmtsub, 0L);
+	if (t == WRONG)
+		errno = EOVERFLOW;
+	return t;
 }
 
 time_t
 timeoff(struct tm *const tmp, const long offset)
 {
+	time_t t;
+
 	tmp->tm_isdst = 0;
-	return time1(gmtptr, tmp, gmtsub, offset);
+	t = time1(gmtptr, tmp, gmtsub, offset);
+	if (t == WRONG)
+		errno = EOVERFLOW;
+	return t;
 }
 
 #endif /* defined STD_INSPIRED */
