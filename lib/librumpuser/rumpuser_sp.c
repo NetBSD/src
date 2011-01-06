@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.30 2011/01/05 22:57:01 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.31 2011/01/06 06:57:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.30 2011/01/05 22:57:01 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.31 2011/01/06 06:57:14 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -96,6 +96,82 @@ struct prefork {
 };
 static LIST_HEAD(, prefork) preforks = LIST_HEAD_INITIALIZER(preforks);
 static pthread_mutex_t pfmtx;
+
+/*
+ * This version is for the server.  It's optimized for multiple threads
+ * and is *NOT* reentrant wrt to signals
+ */
+static int
+waitresp(struct spclient *spc, struct respwait *rw)
+{
+	struct pollfd pfd;
+	int rv = 0;
+
+	sendunlockl(spc);
+
+	rw->rw_error = 0;
+	while (rw->rw_data == NULL && rw->rw_error == 0
+	    && spc->spc_state != SPCSTATE_DYING){
+		/* are we free to receive? */
+		if (spc->spc_istatus == SPCSTATUS_FREE) {
+			int gotresp;
+
+			spc->spc_istatus = SPCSTATUS_BUSY;
+			pthread_mutex_unlock(&spc->spc_mtx);
+
+			pfd.fd = spc->spc_fd;
+			pfd.events = POLLIN;
+
+			for (gotresp = 0; !gotresp; ) {
+				switch (readframe(spc)) {
+				case 0:
+					poll(&pfd, 1, INFTIM);
+					continue;
+				case -1:
+					rv = errno;
+					spc->spc_state = SPCSTATE_DYING;
+					goto cleanup;
+				default:
+					break;
+				}
+
+				switch (spc->spc_hdr.rsp_class) {
+				case RUMPSP_RESP:
+				case RUMPSP_ERROR:
+					kickwaiter(spc);
+					gotresp = spc->spc_hdr.rsp_reqno ==
+					    rw->rw_reqno;
+					break;
+				case RUMPSP_REQ:
+					handlereq(spc);
+					break;
+				default:
+					/* panic */
+					break;
+				}
+			}
+ cleanup:
+			pthread_mutex_lock(&spc->spc_mtx);
+			if (spc->spc_istatus == SPCSTATUS_WANTED)
+				kickall(spc);
+			spc->spc_istatus = SPCSTATUS_FREE;
+		} else {
+			spc->spc_istatus = SPCSTATUS_WANTED;
+			pthread_cond_wait(&rw->rw_cv, &spc->spc_mtx);
+		}
+	}
+
+	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
+	pthread_mutex_unlock(&spc->spc_mtx);
+
+	pthread_cond_destroy(&rw->rw_cv);
+
+	if (rv)
+		return rv;
+	if (spc->spc_state == SPCSTATE_DYING)
+		return ENOTCONN;
+	return rw->rw_error;
+}
 
 /*
  * Manual wrappers, since librump does not have access to the
