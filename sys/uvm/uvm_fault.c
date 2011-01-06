@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.179 2011/01/04 08:26:33 matt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.180 2011/01/06 05:51:57 enami Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.179 2011/01/04 08:26:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.180 2011/01/06 05:51:57 enami Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -361,8 +361,9 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * no page, we must try and bring it in.
 			 */
 
-			pg = uvm_pagealloc(NULL, ufi->orig_rvaddr,
-			    NULL, UVM_FLAG_COLORMATCH);
+			pg = uvm_pagealloc(NULL,
+			    ufi != NULL ? ufi->orig_rvaddr : 0,
+			    anon, UVM_FLAG_COLORMATCH);
 			if (pg == NULL) {		/* out of RAM.  */
 				uvmfault_unlockall(ufi, amap, NULL, anon);
 				uvmexp.fltnoram++;
