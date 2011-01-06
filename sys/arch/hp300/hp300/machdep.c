@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.212 2010/10/16 16:41:45 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.213 2011/01/06 13:03:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2010/10/16 16:41:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.213 2011/01/06 13:03:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -249,6 +249,8 @@ hp300_init(void)
 	 * exists by searching for the MAGIC record.  If it's not
 	 * there, disable bootinfo.
 	 */
+	bootinfo_va = virtual_avail;
+	virtual_avail += PAGE_SIZE;
 	pmap_enter(pmap_kernel(), bootinfo_va, bootinfo_pa,
 	    VM_PROT_READ|VM_PROT_WRITE,
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
@@ -260,6 +262,7 @@ hp300_init(void)
 		pmap_remove(pmap_kernel(), bootinfo_va,
 		    bootinfo_va + PAGE_SIZE);
 		pmap_update(pmap_kernel());
+		virtual_avail -= PAGE_SIZE;
 		bootinfo_va = 0;
 	}
 }
@@ -287,7 +290,9 @@ consinit(void)
 	/*
 	 * Issue a warning if the boot loader didn't provide bootinfo.
 	 */
-	if (bootinfo_va == 0)
+	if (bootinfo_va != 0)
+		printf("bootinfo found at 0x%08lx\n", bootinfo_pa);
+	else
 		printf("WARNING: boot loader did not provide bootinfo\n");
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
