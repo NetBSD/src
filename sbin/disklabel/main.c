@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2010/01/05 15:45:26 tsutsui Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2011/01/06 19:34:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2010/01/05 15:45:26 tsutsui Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2011/01/06 19:34:28 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1106,40 +1106,40 @@ makedisktab(FILE *f, struct disklabel *lp)
 	if ((unsigned) lp->d_type < DKMAXTYPES)
 		(void) fprintf(f, "%s:", dktypenames[lp->d_type]);
 	else
-		(void) fprintf(f, "unknown%d:", lp->d_type);
+		(void) fprintf(f, "unknown%" PRIu16 ":", lp->d_type);
 
-	(void) fprintf(f, "se#%d:", lp->d_secsize);
-	(void) fprintf(f, "ns#%d:", lp->d_nsectors);
-	(void) fprintf(f, "nt#%d:", lp->d_ntracks);
-	(void) fprintf(f, "sc#%d:", lp->d_secpercyl);
-	(void) fprintf(f, "nc#%d:", lp->d_ncylinders);
+	(void) fprintf(f, "se#%" PRIu32 ":", lp->d_secsize);
+	(void) fprintf(f, "ns#%" PRIu32 ":", lp->d_nsectors);
+	(void) fprintf(f, "nt#%" PRIu32 ":", lp->d_ntracks);
+	(void) fprintf(f, "sc#%" PRIu32 ":", lp->d_secpercyl);
+	(void) fprintf(f, "nc#%" PRIu32 ":", lp->d_ncylinders);
 
 	if ((lp->d_secpercyl * lp->d_ncylinders) != lp->d_secperunit) {
-		(void) fprintf(f, "%ssu#%d:", did, lp->d_secperunit);
+		(void) fprintf(f, "%ssu#%" PRIu32 ":", did, lp->d_secperunit);
 		did = "";
 	}
 	if (lp->d_rpm != 3600) {
-		(void) fprintf(f, "%srm#%d:", did, lp->d_rpm);
+		(void) fprintf(f, "%srm#%" PRIu16 ":", did, lp->d_rpm);
 		did = "";
 	}
 	if (lp->d_interleave != 1) {
-		(void) fprintf(f, "%sil#%d:", did, lp->d_interleave);
+		(void) fprintf(f, "%sil#%" PRIu16 ":", did, lp->d_interleave);
 		did = "";
 	}
 	if (lp->d_trackskew != 0) {
-		(void) fprintf(f, "%ssk#%d:", did, lp->d_trackskew);
+		(void) fprintf(f, "%ssk#%" PRIu16 ":", did, lp->d_trackskew);
 		did = "";
 	}
 	if (lp->d_cylskew != 0) {
-		(void) fprintf(f, "%scs#%d:", did, lp->d_cylskew);
+		(void) fprintf(f, "%scs#%" PRIu16 ":", did, lp->d_cylskew);
 		did = "";
 	}
 	if (lp->d_headswitch != 0) {
-		(void) fprintf(f, "%shs#%d:", did, lp->d_headswitch);
+		(void) fprintf(f, "%shs#%" PRIu16 ":", did, lp->d_headswitch);
 		did = "";
 	}
 	if (lp->d_trkseek != 0) {
-		(void) fprintf(f, "%sts#%d:", did, lp->d_trkseek);
+		(void) fprintf(f, "%sts#%" PRIu32 ":", did, lp->d_trkseek);
 		did = "";
 	}
 #ifdef notyet
@@ -1150,22 +1150,22 @@ makedisktab(FILE *f, struct disklabel *lp)
 	if (i < 0)
 		i = 0;
 	for (j = 0; j <= i; j++)
-		(void) fprintf(f, "%d ", lp->d_drivedata[j]);
+		(void) fprintf(f, "%" PRIu32 " ", lp->d_drivedata[j]);
 #endif	/* notyet */
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
 		if (pp->p_size) {
 			char c = 'a' + i;
 			(void) fprintf(f, "\\\n\t:");
-			(void) fprintf(f, "p%c#%d:", c, pp->p_size);
-			(void) fprintf(f, "o%c#%d:", c, pp->p_offset);
+			(void) fprintf(f, "p%c#%" PRIu32 ":", c, pp->p_size);
+			(void) fprintf(f, "o%c#%" PRIu32 ":", c, pp->p_offset);
 			if (pp->p_fstype != FS_UNUSED) {
 				if ((unsigned) pp->p_fstype < FSMAXTYPES)
 					(void) fprintf(f, "t%c=%s:", c,
 					    fstypenames[pp->p_fstype]);
 				else
-					(void) fprintf(f, "t%c=unknown%d:",
-					    c, pp->p_fstype);
+					(void) fprintf(f, "t%c=unknown%" PRIu8
+					    ":", c, pp->p_fstype);
 			}
 			switch (pp->p_fstype) {
 
@@ -1177,9 +1177,10 @@ makedisktab(FILE *f, struct disklabel *lp)
 			case FS_EX2FS:
 			case FS_ADOS:
 			case FS_APPLEUFS:
-				(void) fprintf(f, "b%c#%d:", c,
-				    pp->p_fsize * pp->p_frag);
-				(void) fprintf(f, "f%c#%d:", c, pp->p_fsize);
+				(void) fprintf(f, "b%c#%" PRIu64 ":", c,
+				    (uint64_t)pp->p_fsize * pp->p_frag);
+				(void) fprintf(f, "f%c#%" PRIu32 ":", c,
+				    pp->p_fsize);
 				break;
 			default:
 				break;
@@ -1709,34 +1710,34 @@ checklabel(struct disklabel *lp)
 
 	errors = 0;
 	if (lp->d_secsize == 0) {
-		warnx("sector size %d", lp->d_secsize);
+		warnx("sector size %" PRIu32, lp->d_secsize);
 		return (1);
 	}
 	if (lp->d_nsectors == 0) {
-		warnx("sectors/track %d", lp->d_nsectors);
+		warnx("sectors/track %" PRIu32, lp->d_nsectors);
 		return (1);
 	}
 	if (lp->d_ntracks == 0) {
-		warnx("tracks/cylinder %d", lp->d_ntracks);
+		warnx("tracks/cylinder %" PRIu32, lp->d_ntracks);
 		return (1);
 	}
 	if  (lp->d_ncylinders == 0) {
-		warnx("cylinders/unit %d", lp->d_ncylinders);
+		warnx("cylinders/unit %" PRIu32, lp->d_ncylinders);
 		errors++;
 	}
 	if (lp->d_rpm == 0)
-		warnx("warning, revolutions/minute %d", lp->d_rpm);
+		warnx("warning, revolutions/minute %" PRIu16, lp->d_rpm);
 	if (lp->d_secpercyl == 0)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 	if (lp->d_bbsize == 0) {
-		warnx("boot block size %d", lp->d_bbsize);
+		warnx("boot block size %" PRIu32, lp->d_bbsize);
 		errors++;
 	} else if (lp->d_bbsize % lp->d_secsize)
 		warnx("warning, boot block size %% sector-size != 0");
 	if (lp->d_sbsize == 0) {
-		warnx("super block size %d", lp->d_sbsize);
+		warnx("super block size %" PRIu32, lp->d_sbsize);
 		errors++;
 	} else if (lp->d_sbsize % lp->d_secsize)
 		warnx("warning, super block size %% sector-size != 0");
