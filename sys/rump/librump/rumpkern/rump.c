@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.216 2011/01/06 11:22:55 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.217 2011/01/06 13:09:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.216 2011/01/06 11:22:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.217 2011/01/06 13:09:17 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -103,6 +103,12 @@ static int rump_proxy_syscall(int, void *, register_t *);
 static int rump_proxy_rfork(void *, int);
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
+
+#ifdef LOCKDEBUG
+const int rump_lockdebug = 1;
+#else
+const int rump_lockdebug = 0;
+#endif
 
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
