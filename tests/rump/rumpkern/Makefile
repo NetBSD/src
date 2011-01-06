@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.11 2010/12/13 13:39:42 pooka Exp $
+# $NetBSD: Makefile,v 1.12 2011/01/06 13:12:52 pooka Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/rump/rumpkern
 
 TESTS_C=	t_copy
+TESTS_C+=	t_kern
 TESTS_C+=	t_lwproc
 TESTS_C+=	t_modcmd
 TESTS_C+=	t_modlinkset
