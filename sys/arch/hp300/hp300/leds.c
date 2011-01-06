@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.18 2007/03/04 05:59:49 christos Exp $	*/
+/*	$NetBSD: leds.c,v 1.19 2011/01/06 13:25:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.18 2007/03/04 05:59:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.19 2011/01/06 13:25:32 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.18 2007/03/04 05:59:49 christos Exp $");
 
 #include <hp300/hp300/leds.h>
 
-extern void *	ledbase;	/* kva of LED page */
+static vaddr_t	ledbase;	/* kva of LED page */
 uint8_t		*ledaddr;	/* actual address of LEDs */
 static volatile uint8_t currentleds; /* current LED status */
 
@@ -96,10 +96,11 @@ void
 ledinit(void)
 {
 
-	pmap_enter(pmap_kernel(), (vaddr_t)ledbase, (paddr_t)LED_ADDR,
+	ledbase = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
+	pmap_enter(pmap_kernel(), ledbase, (paddr_t)LED_ADDR,
 	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	pmap_update(pmap_kernel());
-	ledaddr = (uint8_t *) ((long)ledbase | (LED_ADDR & PGOFSET));
+	ledaddr = (uint8_t *)(ledbase | (LED_ADDR & PGOFSET));
 }
 
 /*

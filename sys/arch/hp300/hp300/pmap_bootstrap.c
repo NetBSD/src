@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.52 2011/01/06 13:03:47 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.53 2011/01/06 13:25:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.52 2011/01/06 13:03:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.53 2011/01/06 13:25:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -63,12 +63,10 @@ extern paddr_t avail_start, avail_end;
  *	CADDR1, CADDR2:	pmap zero/copy operations
  *	vmmap:		/dev/mem, crash dumps, parity error checking
  *	msgbufaddr:	kernel message buffer
- *	ledbase:	SPU LEDs
  */
 void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
-void *ledbase;
 
 void pmap_bootstrap(paddr_t, paddr_t);
 
@@ -482,8 +480,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		RELOC(CADDR2, void *) = (void *)va;
 		va += PAGE_SIZE;
 		RELOC(vmmap, void *) = (void *)va;
-		va += PAGE_SIZE;
-		RELOC(ledbase, void *) = (void *)va;
 		va += PAGE_SIZE;
 		RELOC(msgbufaddr, void *) = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);
