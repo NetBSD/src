@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.h,v 1.1.2.3 2009/02/25 03:09:31 snj Exp $	*/
+/*	$NetBSD: ldd.h,v 1.1.2.4 2011/01/06 05:20:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2008 Matthew R. Green
@@ -34,6 +34,8 @@ int elf32_ldd(int, char *, char *, char *);
 #ifdef _LP64
 int elf64_ldd(int, char *, char *, char *);
 #define elf_ldd elf64_ldd
+#elif defined(ELF32_COMPAT)
+#define elf_ldd elf32_compat_ldd
 #else
 #define elf_ldd elf32_ldd
 #endif
