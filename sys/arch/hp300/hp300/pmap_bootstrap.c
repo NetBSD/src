@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.51 2011/01/02 18:48:05 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.52 2011/01/06 13:03:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.51 2011/01/02 18:48:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.52 2011/01/06 13:03:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.51 2011/01/02 18:48:05 tsutsui 
 
 extern char *etext;
 extern vaddr_t CLKbase, MMUbase;
-extern paddr_t bootinfo_pa;
-extern vaddr_t bootinfo_va;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
@@ -339,16 +337,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	epte = &pte[nptpages * NPTEPG];
 	while (pte < epte)
 		*pte++ = PG_NV;
-
-	/*
-	 * The page of kernel text is zero-filled in locore.s,
-	 * and not mapped (at VA 0).  The boot loader places the
-	 * bootinfo here after the kernel is loaded.  Remember
-	 * the physical address; we'll map it to a virtual address
-	 * later.
-	 */
-	RELOC(bootinfo_pa, paddr_t) = firstpa;
-
 	/*
 	 * Validate PTEs for kernel text (RO).
 	 * The first page of kernel text remains invalid; see locore.s
@@ -489,8 +477,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	{
 		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
-		RELOC(bootinfo_va, vaddr_t) = (vaddr_t)va;
-		va += PAGE_SIZE;
 		RELOC(CADDR1, void *) = (void *)va;
 		va += PAGE_SIZE;
 		RELOC(CADDR2, void *) = (void *)va;
