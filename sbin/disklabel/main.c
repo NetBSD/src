@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2011/01/06 19:34:28 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2011/01/06 21:39:01 apb Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2011/01/06 19:34:28 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2011/01/06 21:39:01 apb Exp $");
 #endif
 #endif	/* not lint */
 
@@ -624,7 +624,7 @@ process_mbr(int f, int (*action)(int, u_int))
 		if (pread(f, &mbr, sizeof mbr, this_ext * (off_t)DEV_BSIZE)
 		    != sizeof(mbr)) {
 			if (verbose)
-				warn("Can't read master boot record %d",
+				warn("Can't read master boot record %u",
 				    this_ext);
 			break;
 		}
@@ -632,7 +632,7 @@ process_mbr(int f, int (*action)(int, u_int))
 		/* Check if table is valid. */
 		if (mbr.mbr_magic != htole16(MBR_MAGIC)) {
 			if (verbose)
-				warnx("Invalid signature in mbr record %d",
+				warnx("Invalid signature in mbr record %u",
 				    this_ext);
 			break;
 		}
@@ -902,7 +902,8 @@ static struct disklabel *
 find_label(int f, u_int sector)
 {
 	struct disklabel *disk_lp, hlp;
-	int i, offset;
+	int i;
+	u_int offset;
 	const char *is_deleted;
 
 	bootarea_len = pread(f, bootarea, sizeof bootarea,
@@ -914,7 +915,7 @@ find_label(int f, u_int sector)
 	}
 
 	if (verbose > 2)
-		warnx("read sector %u len %u looking for label",
+		warnx("read sector %u len %d looking for label",
 		    sector, bootarea_len);
 
 	/* Check expected offset first */
@@ -1000,9 +1001,9 @@ write_bootarea(int f, u_int sector)
 	if (wlen == bootarea_len)
 		return;
 	if (wlen == -1)
-		err(1, "disklabel write (sector %u) size %u failed",
+		err(1, "disklabel write (sector %u) size %d failed",
 		    sector, bootarea_len);
-	errx(1, "disklabel write (sector %u) size %u truncated to %d",
+	errx(1, "disklabel write (sector %u) size %d truncated to %d",
 		    sector, bootarea_len, wlen);
 }
 
@@ -1164,8 +1165,9 @@ makedisktab(FILE *f, struct disklabel *lp)
 					(void) fprintf(f, "t%c=%s:", c,
 					    fstypenames[pp->p_fstype]);
 				else
-					(void) fprintf(f, "t%c=unknown%" PRIu8
-					    ":", c, pp->p_fstype);
+					(void) fprintf(f,
+					    "t%c=unknown%" PRIu8 ":",
+					    c, pp->p_fstype);
 			}
 			switch (pp->p_fstype) {
 
@@ -1742,7 +1744,8 @@ checklabel(struct disklabel *lp)
 	} else if (lp->d_sbsize % lp->d_secsize)
 		warnx("warning, super block size %% sector-size != 0");
 	if (lp->d_npartitions > MAXPARTITIONS)
-		warnx("warning, number of partitions (%d) > MAXPARTITIONS (%d)",
+		warnx("warning, number of partitions (%" PRIu16 ") > "
+		    "MAXPARTITIONS (%d)",
 		    lp->d_npartitions, MAXPARTITIONS);
 	else
 		for (i = MAXPARTITIONS - 1; i >= lp->d_npartitions; i--) {
@@ -1750,7 +1753,8 @@ checklabel(struct disklabel *lp)
 			pp = &lp->d_partitions[i];
 			if (pp->p_size || pp->p_offset) {
 				warnx("warning, partition %c increased "
-				    "number of partitions from %d to %d",
+				    "number of partitions from %" PRIu16
+				    " to %d",
 				    part, lp->d_npartitions, i + 1);
 				lp->d_npartitions = i + 1;
 				break;
@@ -1760,7 +1764,8 @@ checklabel(struct disklabel *lp)
 		part = 'a' + i;
 		pp = &lp->d_partitions[i];
 		if (pp->p_size == 0 && pp->p_offset != 0)
-			warnx("warning, partition %c: size 0, but offset %d",
+			warnx("warning, partition %c: size 0, but "
+			    "offset %" PRIu32,
 			    part, pp->p_offset);
 #ifdef STRICT_CYLINDER_ALIGNMENT
 		if (pp->p_offset % lp->d_secpercyl) {
