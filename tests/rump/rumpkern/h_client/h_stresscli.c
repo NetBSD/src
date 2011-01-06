@@ -1,4 +1,4 @@
-/*	$NetBSD: h_stresscli.c,v 1.1 2010/11/30 22:09:15 pooka Exp $	*/
+/*	$NetBSD: h_stresscli.c,v 1.2 2011/01/06 06:59:25 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -118,6 +118,8 @@ main(int argc, char *argv[])
 			errx(1, "wanted pid %d, got %d\n", clis[i], apid);
 		clis[i] = 0;
 		ncli--;
+		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+			exit(1);
 	}
 
 	for (i = 0; i < NCLI; i++)
