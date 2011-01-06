@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.51 2011/01/05 23:13:01 jakllsch Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.52 2011/01/06 01:08:48 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -168,6 +168,8 @@
  *
  *	400 - 439	MP	NetBSD: mbr_bootsel
  *
+ *	424 - 439	M	NetBSD: bootptn_guid (in GPT PMBR only)
+ *
  *	440 - 443	M	WinNT/2K/XP Drive Serial Number (NT DSN)
  *		http://www.geocities.com/thestarman3/asm/mbr/Win2kmbr.htm
  *
@@ -194,6 +196,9 @@
 #define	MBR_BOOTCODE_OFFSET	90	/* offsetof(mbr_sector, mbr_bootcode) */
 #define	MBR_BS_OFFSET		400	/* offsetof(mbr_sector, mbr_bootsel) */
 #define	MBR_BS_OLD_OFFSET	404	/* where mbr_bootsel used to be */
+#define	MBR_GPT_GUID_OFFSET	424	/* location of partition GUID to boot */
+#define	MBR_GPT_GUID_DEFAULT		/* default uninitialized GUID */ \
+	{0xeee69d04,0x02f4,0x11e0,0x8f,0x5d,{0x00,0xe0,0x81,0x52,0x9a,0x6b}}
 #define	MBR_DSN_OFFSET		440	/* offsetof(mbr_sector, mbr_dsn) */
 #define	MBR_BS_MAGIC_OFFSET	444	/* offsetof(mbr_sector, mbr_bootsel_magic) */
 #define	MBR_PART_OFFSET		446	/* offsetof(mbr_sector, mbr_part[0]) */
@@ -1064,6 +1069,7 @@ struct x86_boot_params {
 #define	X86_BOOT_MAGIC_2	X86_BOOT_MAGIC(2)	/* bootxx.S */
 #define	X86_BOOT_MAGIC_PXE	X86_BOOT_MAGIC(3)	/* start_pxe.S */
 #define	X86_BOOT_MAGIC_FAT	X86_BOOT_MAGIC(4)	/* fatboot.S */
+#define	X86_MBR_GPT_MAGIC	0xedb88320		/* gpt.S */
 
 		/* values for bp_flags */
 #define	X86_BP_FLAGS_RESET_VIDEO	1
