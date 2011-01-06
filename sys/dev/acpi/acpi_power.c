@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.25 2011/01/02 12:06:02 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.26 2011/01/06 18:57:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.25 2011/01/02 12:06:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.26 2011/01/06 18:57:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -250,10 +250,9 @@ acpi_power_get(ACPI_HANDLE hdl, int *state)
 	}
 
 	/*
-	 * Because the _PSC control method, like _STA,
-	 * is known to be implemented incorrectly in
-	 * some systems, we first try to retrieve the
-	 * power state indirectly via power resources.
+	 * As _PSC may be broken, first try to
+	 * retrieve the power state indirectly
+	 * via power resources.
 	 */
 	rv = acpi_power_get_indirect(ad);
 
