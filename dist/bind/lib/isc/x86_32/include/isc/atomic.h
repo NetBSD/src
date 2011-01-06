@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.3 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3.4.1 2011/01/06 21:42:03 riz Exp $	*/
 
 /*
  * Copyright (C) 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: atomic.h,v 1.8.118.2 2008/01/24 23:46:26 tbox Exp */
+/* Id: atomic.h,v 1.10 2008/01/24 23:47:00 tbox Exp */
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1

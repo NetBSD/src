@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.5.4.1 2009/12/03 17:38:15 snj Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.1.1.5.4.2 2011/01/06 21:41:47 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.c,v 1.79.128.2 2009/01/19 23:47:02 tbox Exp */
+/* Id: rdataset.c,v 1.84.186.2 2010/02/25 05:25:51 tbox Exp */
 
 /*! \file */
 
@@ -61,6 +61,7 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->privateuint4 = 0;
 	rdataset->private5 = NULL;
 	rdataset->private6 = NULL;
+	rdataset->resign = 0;
 }
 
 void
@@ -177,6 +178,10 @@ static dns_rdatasetmethods_t question_methods = {
 	question_current,
 	question_clone,
 	question_count,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -622,14 +627,36 @@ dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name) {
 
 isc_result_t
 dns_rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-			dns_rdataset_t *nsec, dns_rdataset_t *nsecsig)
+			dns_rdataset_t *neg, dns_rdataset_t *negsig)
 {
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 
 	if (rdataset->methods->getnoqname == NULL)
 		return (ISC_R_NOTIMPLEMENTED);
-	return((rdataset->methods->getnoqname)(rdataset, name, nsec, nsecsig));
+	return((rdataset->methods->getnoqname)(rdataset, name, neg, negsig));
+}
+
+isc_result_t
+dns_rdataset_addclosest(dns_rdataset_t *rdataset, dns_name_t *name) {
+
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+	if (rdataset->methods->addclosest == NULL)
+		return (ISC_R_NOTIMPLEMENTED);
+	return((rdataset->methods->addclosest)(rdataset, name));
+}
+
+isc_result_t
+dns_rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+			dns_rdataset_t *neg, dns_rdataset_t *negsig)
+{
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+
+	if (rdataset->methods->getclosest == NULL)
+		return (ISC_R_NOTIMPLEMENTED);
+	return((rdataset->methods->getclosest)(rdataset, name, neg, negsig));
 }
 
 /*
@@ -709,3 +736,22 @@ dns_rdataset_putadditional(dns_acache_t *acache,
 	return (ISC_R_FAILURE);
 }
 
+void
+dns_rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+
+	if (rdataset->methods->settrust != NULL)
+		(rdataset->methods->settrust)(rdataset, trust);
+	else
+		rdataset->trust = trust;
+}
+
+void
+dns_rdataset_expire(dns_rdataset_t *rdataset) {
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
+
+	if (rdataset->methods->expire != NULL)
+		(rdataset->methods->expire)(rdataset);
+}

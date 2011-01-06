@@ -27,6 +27,7 @@ NULL=nul
 
 CPP=cl.exe
 RSC=rc.exe
+LIBXML=../../../../libxml2-2.7.3/win32/bin.msvc/libxml2.lib
 
 !IF  "$(CFG)" == "named - Win32 Release"
 _VC_MANIFEST_INC=0
@@ -161,13 +162,13 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/isc/noatomic/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" /Fp"$(INTDIR)\named.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "../../../../libxml2-2.7.3/include" /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/isc/noatomic/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" /Fp"$(INTDIR)\named.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\named.bsc" 
 BSC32_SBRS= \
 	
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib ws2_32.lib ../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib ../../../lib/isccc/win32/Release/libisccc.lib ../../../lib/lwres/win32/Release/liblwres.lib ../../../lib/isccfg/win32/Release/libisccfg.lib ../../../lib/bind9/win32/Release/libbind9.lib /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\named.pdb" /machine:I386 /out:"../../../Build/Release/named.exe" 
+LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib ws2_32.lib ../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib ../../../lib/isccc/win32/Release/libisccc.lib ../../../lib/lwres/win32/Release/liblwres.lib ../../../lib/isccfg/win32/Release/libisccfg.lib ../../../lib/bind9/win32/Release/libbind9.lib $(LIBXML) /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\named.pdb" /machine:I386 /out:"../../../Build/Release/named.exe" 
 LINK32_OBJS= \
 	"$(INTDIR)\client.obj" \
 	"$(INTDIR)\config.obj" \
@@ -310,7 +311,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/isc/noatomic/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "i386" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../" /I "../../../../libxml2-2.7.3/include" /I "../win32/include" /I "../include" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/isc/include" /I "../../../lib/isc/noatomic/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isccc/include" /I "../../../lib/lwres/win32/include" /I "../../../lib/lwres/include" /I "../../../lib/isccfg/include" /I "../../../lib/bind9/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "i386" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\named.bsc" 
 BSC32_SBRS= \
@@ -352,7 +353,7 @@ BSC32_SBRS= \
 <<
 
 LINK32=link.exe
-LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib ws2_32.lib ../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib ../../../lib/isccc/win32/Debug/libisccc.lib ../../../lib/lwres/win32/Debug/liblwres.lib ../../../lib/isccfg/win32/Debug/libisccfg.lib ../../../lib/bind9/win32/Debug/libbind9.lib /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\named.pdb" /map:"$(INTDIR)\named.map" /debug /machine:I386 /out:"../../../Build/Debug/named.exe" /pdbtype:sept 
+LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib ws2_32.lib ../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib ../../../lib/isccc/win32/Debug/libisccc.lib ../../../lib/lwres/win32/Debug/liblwres.lib ../../../lib/isccfg/win32/Debug/libisccfg.lib ../../../lib/bind9/win32/Debug/libbind9.lib $(LIBXML) /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\named.pdb" /map:"$(INTDIR)\named.map" /debug /machine:I386 /out:"../../../Build/Debug/named.exe" /pdbtype:sept 
 LINK32_OBJS= \
 	"$(INTDIR)\client.obj" \
 	"$(INTDIR)\config.obj" \

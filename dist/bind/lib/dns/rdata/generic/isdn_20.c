@@ -1,7 +1,7 @@
-/*	$NetBSD: isdn_20.c,v 1.1.1.5 2008/06/21 18:32:43 christos Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.1.1.5.4.1 2011/01/06 21:41:50 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: isdn_20.c,v 1.38 2007/06/19 23:47:17 tbox Exp */
+/* Id: isdn_20.c,v 1.40 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -231,6 +231,11 @@ checknames_isdn(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_isdn(ARGS_COMPARE) {
+	return (compare_isdn(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_ISDN_20_C */

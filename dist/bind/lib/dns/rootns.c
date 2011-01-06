@@ -1,7 +1,7 @@
-/*	$NetBSD: rootns.c,v 1.1.1.5 2008/06/21 18:31:42 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.1.1.5.4.1 2011/01/06 21:41:47 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rootns.c,v 1.32.24.2 2008/02/05 23:46:39 tbox Exp */
+/* Id: rootns.c,v 1.36.270.4 2010/06/18 05:37:15 marka Exp */
 
 /*! \file */
 
@@ -73,11 +73,13 @@ static char root_ns[] =
 "H.ROOT-SERVERS.NET.     3600000 IN      A       128.63.2.53\n"
 "H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::803F:235\n"
 "I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
+"I.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7fe::53\n"
 "J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
 "J.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:C27::2:30\n"
 "K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
 "K.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7FD::1\n"
 "L.ROOT-SERVERS.NET.     3600000 IN      A       199.7.83.42\n"
+"L.ROOT-SERVERS.NET.     604800  IN      AAAA    2001:500:3::42\n"
 "M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n"
 "M.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:DC3::35\n";
 
@@ -99,6 +101,7 @@ in_rootns(dns_rdataset_t *rootns, dns_name_t *name) {
 		if (dns_name_compare(name, &ns.name) == 0)
 			return (ISC_R_SUCCESS);
 		result = dns_rdataset_next(rootns);
+		dns_rdata_reset(&rdata);
 	}
 	if (result == ISC_R_NOMORE)
 		result = ISC_R_NOTFOUND;
@@ -160,7 +163,7 @@ check_hints(dns_db_t *db) {
 	dns_rdataset_init(&rootns);
 	(void)dns_db_find(db, dns_rootname, NULL, dns_rdatatype_ns, 0,
 			  now, NULL, name, &rootns, NULL);
-	result = dns_db_createiterator(db, ISC_FALSE, &dbiter);
+	result = dns_db_createiterator(db, 0, &dbiter);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	result = dns_dbiterator_first(dbiter);
@@ -340,6 +343,7 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
 		result = dns_rdataset_first(&rootrrset);
 		while (result == ISC_R_SUCCESS) {
+			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&rootrrset, &rdata);
 			if (!inrrset(&hintrrset, &rdata))
 				report(view, name, ISC_TRUE, &rdata);
@@ -347,6 +351,7 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 		}
 		result = dns_rdataset_first(&hintrrset);
 		while (result == ISC_R_SUCCESS) {
+			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&hintrrset, &rdata);
 			if (!inrrset(&rootrrset, &rdata))
 				report(view, name, ISC_FALSE, &rdata);
@@ -357,6 +362,7 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
 		result = dns_rdataset_first(&rootrrset);
 		while (result == ISC_R_SUCCESS) {
+			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&rootrrset, &rdata);
 			report(view, name, ISC_TRUE, &rdata);
 			result = dns_rdataset_next(&rootrrset);
@@ -379,6 +385,7 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
 		result = dns_rdataset_first(&rootrrset);
 		while (result == ISC_R_SUCCESS) {
+			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&rootrrset, &rdata);
 			if (!inrrset(&hintrrset, &rdata))
 				report(view, name, ISC_TRUE, &rdata);
@@ -387,6 +394,7 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 		}
 		result = dns_rdataset_first(&hintrrset);
 		while (result == ISC_R_SUCCESS) {
+			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&hintrrset, &rdata);
 			if (!inrrset(&rootrrset, &rdata))
 				report(view, name, ISC_FALSE, &rdata);
@@ -398,6 +406,7 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
 		result = dns_rdataset_first(&rootrrset);
 		while (result == ISC_R_SUCCESS) {
+			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&rootrrset, &rdata);
 			report(view, name, ISC_TRUE, &rdata);
 			dns_rdata_reset(&rdata);
