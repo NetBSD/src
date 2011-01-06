@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.18 2010/12/25 03:29:08 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.19 2011/01/06 07:43:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.18 2010/12/25 03:29:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.19 2011/01/06 07:43:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,6 +381,9 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				r128fb_init(sc);
 				r128fb_restore_palette(sc);
+				r128fb_rectfill(sc, 0, 0, sc->sc_width,
+				    sc->sc_height, ms->scr_ri.ri_devcmap[
+				    (ms->scr_defattr >> 16) & 0xff]);
 				vcons_redraw_screen(ms);
 			}
 		}
