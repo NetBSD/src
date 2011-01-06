@@ -1,4 +1,4 @@
-#	$NetBSD: mod.mk,v 1.6.2.2 2010/11/25 00:27:20 riz Exp $
+#	$NetBSD: mod.mk,v 1.6.2.3 2011/01/06 05:20:24 riz Exp $
 
 NOLINT=		# don't build a lint library
 NOPROFILE=	# don't build a profile library
@@ -8,8 +8,8 @@ NOPICINSTALL=	# don't install _pic.a library
 
 .include "${.CURDIR}/../../Makefile.inc"
 
-.if defined(LD32DIR)
-LIBDIR=/usr/lib/${LD32DIR}/security
+.if defined(MLIBDIR)
+LIBDIR=/usr/lib/${MLIBDIR}/security
 .else
 LIBDIR=/usr/lib/security
 .endif

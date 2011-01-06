@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.25.2.9 2010/11/21 02:42:32 riz Exp $
+# $NetBSD: md.amd64,v 1.25.2.10 2011/01/06 05:20:22 riz Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -63,6 +63,7 @@
 ./@MODULEDIR@/union/union.kmod			base-kernel-modules
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
+./libexec/ld.elf_so-i386			base-sysutil-bin	compat,pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/i386					base-compat-lib		compat
 ./usr/lib/i386/i18n				base-compat-lib		compat
@@ -250,8 +251,8 @@
 ./usr/lib/i386/libssl.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libsupc++.so.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libsupc++.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libsupc++.so.0			base-compat-shlib	obsolete
+./usr/lib/i386/libsupc++.so.0.0			base-compat-shlib	obsolete
 ./usr/lib/i386/libtermcap.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libtermcap.so.0.6		base-compat-shlib	compat,pic
 ./usr/lib/i386/libtermlib.so.0			base-compat-shlib	compat,pic
