@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.40 2011/01/06 02:02:43 jym Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.41 2011/01/06 03:37:55 jym Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.40 2011/01/06 02:02:43 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.41 2011/01/06 03:37:55 jym Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -346,6 +346,7 @@ int	bnx_nvram_write(struct bnx_softc *, u_int32_t, u_int8_t *, int);
 /*                                                                          */
 /****************************************************************************/
 void	bnx_get_media(struct bnx_softc *);
+void	bnx_init_media(struct bnx_softc *);
 int	bnx_dma_alloc(struct bnx_softc *);
 void	bnx_dma_free(struct bnx_softc *);
 void	bnx_release_resources(struct bnx_softc *);
@@ -459,6 +460,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 {
 	const struct bnx_product *bp;
 	struct bnx_softc	*sc = device_private(self);
+	prop_dictionary_t	dict;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
@@ -708,9 +710,17 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	sc->bnx_mii.mii_writereg = bnx_miibus_write_reg;
 	sc->bnx_mii.mii_statchg = bnx_miibus_statchg;
 
+	/* Handle any special PHY initialization for SerDes PHYs. */
+	bnx_init_media(sc);
+
 	sc->bnx_ec.ec_mii = &sc->bnx_mii;
 	ifmedia_init(&sc->bnx_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
+
+	/* set phyflags before mii_attach() */
+	dict = device_properties(self);
+	prop_dictionary_set_uint32(dict, "phyflags", sc->bnx_phy_flags);
+
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(self, &sc->bnx_mii, 0xffffffff,
@@ -920,6 +930,16 @@ bnx_miibus_read_reg(device_t dev, int phy, int reg)
 		return(0);
 	}
 
+	/*
+	 * The BCM5709S PHY is an IEEE Clause 45 PHY
+	 * with special mappings to work with IEEE
+	 * Clause 22 register accesses.
+	 */
+	if ((sc->bnx_phy_flags & BNX_PHY_IEEE_CLAUSE_45_FLAG) != 0) {
+		if (reg >= MII_BMCR && reg <= MII_ANLPRNP)
+			reg += 0x10;
+	}
+
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
 		val = REG_RD(sc, BNX_EMAC_MDIO_MODE);
 		val &= ~BNX_EMAC_MDIO_MODE_AUTO_POLL;
@@ -998,6 +1018,16 @@ bnx_miibus_write_reg(device_t dev, int phy, int reg, int val)
 	DBPRINT(sc, BNX_EXCESSIVE, "%s(): phy = %d, reg = 0x%04X, "
 	    "val = 0x%04X\n", __func__,
 	    phy, (u_int16_t) reg & 0xffff, (u_int16_t) val & 0xffff);
+
+	/*
+	 * The BCM5709S PHY is an IEEE Clause 45 PHY
+	 * with special mappings to work with IEEE
+	 * Clause 22 register accesses.
+	 */
+	if ((sc->bnx_phy_flags & BNX_PHY_IEEE_CLAUSE_45_FLAG) != 0) {
+		if (reg >= MII_BMCR && reg <= MII_ANLPRNP)
+			reg += 0x10;
+	}
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
 		val1 = REG_RD(sc, BNX_EMAC_MDIO_MODE);
@@ -2005,6 +2035,14 @@ bnx_get_media(struct bnx_softc *sc)
 		u_int32_t val;
  
 		sc->bnx_flags |= BNX_NO_WOL_FLAG;
+
+		if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709)
+			sc->bnx_phy_flags |= BNX_PHY_IEEE_CLAUSE_45_FLAG;
+
+		/*
+		 * The BCM5708S, BCM5709S, and BCM5716S controllers use a
+		 * separate PHY for SerDes.
+		 */
 		if (BNX_CHIP_NUM(sc) != BNX_CHIP_NUM_5706) {
 			sc->bnx_phy_addr = 2;
 			val = REG_RD_IND(sc, sc->bnx_shmem_base +
@@ -2022,6 +2060,36 @@ bnx_get_media(struct bnx_softc *sc)
 bnx_get_media_exit:
 	DBPRINT(sc, (BNX_INFO_LOAD), 
 		"Using PHY address %d.\n", sc->bnx_phy_addr);
+}
+
+/****************************************************************************/
+/* Performs PHY initialization required before MII drivers access the       */
+/* device.                                                                  */
+/*                                                                          */
+/* Returns:                                                                 */
+/*   Nothing.                                                               */
+/****************************************************************************/
+void
+bnx_init_media(struct bnx_softc *sc)
+{
+	if (sc->bnx_phy_flags & BNX_PHY_IEEE_CLAUSE_45_FLAG) {
+		/*
+		 * Configure the BCM5709S / BCM5716S PHYs to use traditional
+		 * IEEE Clause 22 method. Otherwise we have no way to attach
+		 * the PHY to the mii(4) layer. PHY specific configuration
+		 * is done by the mii(4) layer.
+		 */
+
+		/* Select auto-negotiation MMD of the PHY. */
+		bnx_miibus_write_reg(sc->bnx_dev, sc->bnx_phy_addr,
+		    BRGPHY_BLOCK_ADDR, BRGPHY_BLOCK_ADDR_ADDR_EXT);
+
+		bnx_miibus_write_reg(sc->bnx_dev, sc->bnx_phy_addr,
+		    BRGPHY_ADDR_EXT, BRGPHY_ADDR_EXT_AN_MMD);
+
+		bnx_miibus_write_reg(sc->bnx_dev, sc->bnx_phy_addr,
+		    BRGPHY_BLOCK_ADDR, BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
+	}
 }
 
 /****************************************************************************/
