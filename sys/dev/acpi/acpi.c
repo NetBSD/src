@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.227 2011/01/05 08:08:47 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.228 2011/01/06 06:49:12 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.227 2011/01/05 08:08:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.228 2011/01/06 06:49:12 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -214,11 +214,6 @@ static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
 static ACPI_STATUS	acpi_make_devnode_post(ACPI_HANDLE, uint32_t,
 					       void *, void **);
 
-#ifdef ACPI_ACTIVATE_DEV
-static void		acpi_activate_device(ACPI_HANDLE, ACPI_DEVICE_INFO **);
-static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE);
-#endif
-
 static int		acpi_rescan(device_t, const char *, const int *);
 static void		acpi_rescan_early(struct acpi_softc *);
 static void		acpi_rescan_nodes(struct acpi_softc *);
@@ -244,6 +239,9 @@ static void		  acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 
 void			acpi_print_verbose_stub(struct acpi_softc *);
 void			acpi_print_dev_stub(const char *);
+
+static void		acpi_activate_device(ACPI_HANDLE, ACPI_DEVICE_INFO **);
+ACPI_STATUS		acpi_allocate_resources(ACPI_HANDLE);
 
 void (*acpi_print_verbose)(struct acpi_softc *) = acpi_print_verbose_stub;
 void (*acpi_print_dev)(const char *) = acpi_print_dev_stub;
@@ -712,11 +710,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 	switch (type) {
 
 	case ACPI_TYPE_DEVICE:
-
-#ifdef ACPI_ACTIVATE_DEV
 		acpi_activate_device(handle, &devinfo);
-#endif
-
 	case ACPI_TYPE_PROCESSOR:
 	case ACPI_TYPE_THERMAL:
 	case ACPI_TYPE_POWER:
@@ -784,162 +778,6 @@ acpi_make_devnode_post(ACPI_HANDLE handle, uint32_t level,
 
 	return AE_OK;
 }
-
-#ifdef ACPI_ACTIVATE_DEV
-static void
-acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
-{
-	static const int valid = ACPI_VALID_STA | ACPI_VALID_HID;
-	ACPI_DEVICE_INFO *newdi;
-	ACPI_STATUS rv;
-	uint32_t old;
-
-	/*
-	 * If the device is valid and present,
-	 * but not enabled, try to activate it.
-	 */
-	if (((*di)->Valid & valid) != valid)
-		return;
-
-	old = (*di)->CurrentStatus;
-
-	if ((old & (ACPI_STA_DEVICE_PRESENT | ACPI_STA_DEVICE_ENABLED)) !=
-	    ACPI_STA_DEVICE_PRESENT)
-		return;
-
-	rv = acpi_allocate_resources(handle);
-
-	if (ACPI_FAILURE(rv))
-		goto fail;
-
-	rv = AcpiGetObjectInfo(handle, &newdi);
-
-	if (ACPI_FAILURE(rv))
-		goto fail;
-
-	ACPI_FREE(*di);
-	*di = newdi;
-
-	aprint_verbose_dev(acpi_softc->sc_dev,
-	    "%s activated, STA 0x%08X -> STA 0x%08X\n",
-	    (*di)->HardwareId.String, old, (*di)->CurrentStatus);
-
-	return;
-
-fail:
-	aprint_error_dev(acpi_softc->sc_dev, "failed to "
-	    "activate %s\n", (*di)->HardwareId.String);
-}
-
-/*
- * XXX: This very incomplete.
- */
-ACPI_STATUS
-acpi_allocate_resources(ACPI_HANDLE handle)
-{
-	ACPI_BUFFER bufp, bufc, bufn;
-	ACPI_RESOURCE *resp, *resc, *resn;
-	ACPI_RESOURCE_IRQ *irq;
-	ACPI_RESOURCE_EXTENDED_IRQ *xirq;
-	ACPI_STATUS rv;
-	uint delta;
-
-	rv = acpi_get(handle, &bufp, AcpiGetPossibleResources);
-	if (ACPI_FAILURE(rv))
-		goto out;
-	rv = acpi_get(handle, &bufc, AcpiGetCurrentResources);
-	if (ACPI_FAILURE(rv)) {
-		goto out1;
-	}
-
-	bufn.Length = 1000;
-	bufn.Pointer = resn = malloc(bufn.Length, M_ACPI, M_WAITOK);
-	resp = bufp.Pointer;
-	resc = bufc.Pointer;
-	while (resc->Type != ACPI_RESOURCE_TYPE_END_TAG &&
-	       resp->Type != ACPI_RESOURCE_TYPE_END_TAG) {
-		while (resc->Type != resp->Type && resp->Type != ACPI_RESOURCE_TYPE_END_TAG)
-			resp = ACPI_NEXT_RESOURCE(resp);
-		if (resp->Type == ACPI_RESOURCE_TYPE_END_TAG)
-			break;
-		/* Found identical Id */
-		resn->Type = resc->Type;
-		switch (resc->Type) {
-		case ACPI_RESOURCE_TYPE_IRQ:
-			memcpy(&resn->Data, &resp->Data,
-			       sizeof(ACPI_RESOURCE_IRQ));
-			irq = (ACPI_RESOURCE_IRQ *)&resn->Data;
-			irq->Interrupts[0] =
-			    ((ACPI_RESOURCE_IRQ *)&resp->Data)->
-			        Interrupts[irq->InterruptCount-1];
-			irq->InterruptCount = 1;
-			resn->Length = ACPI_RS_SIZE(ACPI_RESOURCE_IRQ);
-			break;
-		case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
-			memcpy(&resn->Data, &resp->Data,
-			       sizeof(ACPI_RESOURCE_EXTENDED_IRQ));
-			xirq = (ACPI_RESOURCE_EXTENDED_IRQ *)&resn->Data;
-#if 0
-			/*
-			 * XXX:	Not duplicating the interrupt logic above
-			 *	because its not clear what it accomplishes.
-			 */
-			xirq->Interrupts[0] =
-			    ((ACPI_RESOURCE_EXT_IRQ *)&resp->Data)->
-			    Interrupts[irq->NumberOfInterrupts-1];
-			xirq->NumberOfInterrupts = 1;
-#endif
-			resn->Length = ACPI_RS_SIZE(ACPI_RESOURCE_EXTENDED_IRQ);
-			break;
-		case ACPI_RESOURCE_TYPE_IO:
-			memcpy(&resn->Data, &resp->Data,
-			       sizeof(ACPI_RESOURCE_IO));
-			resn->Length = resp->Length;
-			break;
-		default:
-			aprint_error_dev(acpi_softc->sc_dev,
-			    "%s: invalid type %u\n", __func__, resc->Type);
-			rv = AE_BAD_DATA;
-			goto out2;
-		}
-		resc = ACPI_NEXT_RESOURCE(resc);
-		resn = ACPI_NEXT_RESOURCE(resn);
-		resp = ACPI_NEXT_RESOURCE(resp);
-		delta = (uint8_t *)resn - (uint8_t *)bufn.Pointer;
-		if (delta >=
-		    bufn.Length-ACPI_RS_SIZE(ACPI_RESOURCE_DATA)) {
-			bufn.Length *= 2;
-			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,
-					       M_ACPI, M_WAITOK);
-			resn = (ACPI_RESOURCE *)((uint8_t *)bufn.Pointer +
-			    delta);
-		}
-	}
-
-	if (resc->Type != ACPI_RESOURCE_TYPE_END_TAG) {
-		aprint_error_dev(acpi_softc->sc_dev,
-		    "%s: resc not exhausted\n", __func__);
-		rv = AE_BAD_DATA;
-		goto out3;
-	}
-
-	resn->Type = ACPI_RESOURCE_TYPE_END_TAG;
-	rv = AcpiSetCurrentResources(handle, &bufn);
-
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(acpi_softc->sc_dev, "%s: failed to set "
-		    "resources: %s\n", __func__, AcpiFormatException(rv));
-
-out3:
-	free(bufn.Pointer, M_ACPI);
-out2:
-	ACPI_FREE(bufc.Pointer);
-out1:
-	ACPI_FREE(bufp.Pointer);
-out:
-	return rv;
-}
-#endif /* ACPI_ACTIVATE_DEV */
 
 /*
  * Device attachment.
@@ -1901,3 +1739,167 @@ acpi_print_dev_stub(const char *pnpstr)
 	if (acpi_verbose_loaded != 0)
 		acpi_print_dev(pnpstr);
 }
+
+/*
+ * ACPI_ACTIVATE_DEV.
+ */
+static void
+acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
+{
+
+#ifndef ACPI_ACTIVATE_DEV
+	return;
+}
+#else
+	static const int valid = ACPI_VALID_STA | ACPI_VALID_HID;
+	ACPI_DEVICE_INFO *newdi;
+	ACPI_STATUS rv;
+	uint32_t old;
+
+	/*
+	 * If the device is valid and present,
+	 * but not enabled, try to activate it.
+	 */
+	if (((*di)->Valid & valid) != valid)
+		return;
+
+	old = (*di)->CurrentStatus;
+
+	if ((old & (ACPI_STA_DEVICE_PRESENT | ACPI_STA_DEVICE_ENABLED)) !=
+	    ACPI_STA_DEVICE_PRESENT)
+		return;
+
+	rv = acpi_allocate_resources(handle);
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
+	rv = AcpiGetObjectInfo(handle, &newdi);
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
+	ACPI_FREE(*di);
+	*di = newdi;
+
+	aprint_verbose_dev(acpi_softc->sc_dev,
+	    "%s activated, STA 0x%08X -> STA 0x%08X\n",
+	    (*di)->HardwareId.String, old, (*di)->CurrentStatus);
+
+	return;
+
+fail:
+	aprint_error_dev(acpi_softc->sc_dev, "failed to "
+	    "activate %s\n", (*di)->HardwareId.String);
+}
+
+/*
+ * XXX: This very incomplete.
+ */
+ACPI_STATUS
+acpi_allocate_resources(ACPI_HANDLE handle)
+{
+	ACPI_BUFFER bufp, bufc, bufn;
+	ACPI_RESOURCE *resp, *resc, *resn;
+	ACPI_RESOURCE_IRQ *irq;
+	ACPI_RESOURCE_EXTENDED_IRQ *xirq;
+	ACPI_STATUS rv;
+	uint delta;
+
+	rv = acpi_get(handle, &bufp, AcpiGetPossibleResources);
+	if (ACPI_FAILURE(rv))
+		goto out;
+	rv = acpi_get(handle, &bufc, AcpiGetCurrentResources);
+	if (ACPI_FAILURE(rv)) {
+		goto out1;
+	}
+
+	bufn.Length = 1000;
+	bufn.Pointer = resn = malloc(bufn.Length, M_ACPI, M_WAITOK);
+	resp = bufp.Pointer;
+	resc = bufc.Pointer;
+	while (resc->Type != ACPI_RESOURCE_TYPE_END_TAG &&
+	       resp->Type != ACPI_RESOURCE_TYPE_END_TAG) {
+		while (resc->Type != resp->Type && resp->Type != ACPI_RESOURCE_TYPE_END_TAG)
+			resp = ACPI_NEXT_RESOURCE(resp);
+		if (resp->Type == ACPI_RESOURCE_TYPE_END_TAG)
+			break;
+		/* Found identical Id */
+		resn->Type = resc->Type;
+		switch (resc->Type) {
+		case ACPI_RESOURCE_TYPE_IRQ:
+			memcpy(&resn->Data, &resp->Data,
+			       sizeof(ACPI_RESOURCE_IRQ));
+			irq = (ACPI_RESOURCE_IRQ *)&resn->Data;
+			irq->Interrupts[0] =
+			    ((ACPI_RESOURCE_IRQ *)&resp->Data)->
+			        Interrupts[irq->InterruptCount-1];
+			irq->InterruptCount = 1;
+			resn->Length = ACPI_RS_SIZE(ACPI_RESOURCE_IRQ);
+			break;
+		case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+			memcpy(&resn->Data, &resp->Data,
+			       sizeof(ACPI_RESOURCE_EXTENDED_IRQ));
+			xirq = (ACPI_RESOURCE_EXTENDED_IRQ *)&resn->Data;
+#if 0
+			/*
+			 * XXX:	Not duplicating the interrupt logic above
+			 *	because its not clear what it accomplishes.
+			 */
+			xirq->Interrupts[0] =
+			    ((ACPI_RESOURCE_EXT_IRQ *)&resp->Data)->
+			    Interrupts[irq->NumberOfInterrupts-1];
+			xirq->NumberOfInterrupts = 1;
+#endif
+			resn->Length = ACPI_RS_SIZE(ACPI_RESOURCE_EXTENDED_IRQ);
+			break;
+		case ACPI_RESOURCE_TYPE_IO:
+			memcpy(&resn->Data, &resp->Data,
+			       sizeof(ACPI_RESOURCE_IO));
+			resn->Length = resp->Length;
+			break;
+		default:
+			aprint_error_dev(acpi_softc->sc_dev,
+			    "%s: invalid type %u\n", __func__, resc->Type);
+			rv = AE_BAD_DATA;
+			goto out2;
+		}
+		resc = ACPI_NEXT_RESOURCE(resc);
+		resn = ACPI_NEXT_RESOURCE(resn);
+		resp = ACPI_NEXT_RESOURCE(resp);
+		delta = (uint8_t *)resn - (uint8_t *)bufn.Pointer;
+		if (delta >=
+		    bufn.Length-ACPI_RS_SIZE(ACPI_RESOURCE_DATA)) {
+			bufn.Length *= 2;
+			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,
+					       M_ACPI, M_WAITOK);
+			resn = (ACPI_RESOURCE *)((uint8_t *)bufn.Pointer +
+			    delta);
+		}
+	}
+
+	if (resc->Type != ACPI_RESOURCE_TYPE_END_TAG) {
+		aprint_error_dev(acpi_softc->sc_dev,
+		    "%s: resc not exhausted\n", __func__);
+		rv = AE_BAD_DATA;
+		goto out3;
+	}
+
+	resn->Type = ACPI_RESOURCE_TYPE_END_TAG;
+	rv = AcpiSetCurrentResources(handle, &bufn);
+
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(acpi_softc->sc_dev, "%s: failed to set "
+		    "resources: %s\n", __func__, AcpiFormatException(rv));
+
+out3:
+	free(bufn.Pointer, M_ACPI);
+out2:
+	ACPI_FREE(bufc.Pointer);
+out1:
+	ACPI_FREE(bufp.Pointer);
+out:
+	return rv;
+}
+
+#endif	/* ACPI_ACTIVATE_DEV */
