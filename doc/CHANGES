@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1485 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1486 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -819,3 +819,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	resize_ffs(8): support byteswapped file systems, and support
 		growing ufs2 file systems. [riz 20110104]
 	acpipmtr(4): Add a driver for ACPI power meters. [jruoho 20110105]
+	amd64, i386: Booting from a disk with a GUID Partition Table is
+		now possible. [jakllsch 20110106]
