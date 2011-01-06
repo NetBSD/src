@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.7 2011/01/02 12:52:25 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.8 2011/01/06 11:22:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.7 2011/01/02 12:52:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.8 2011/01/06 11:22:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -218,6 +218,7 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	l->l_fd = p->p_fd;
 	l->l_cpu = NULL;
 	l->l_target_cpu = rump_cpu; /* Initial target CPU always the same */
+	TAILQ_INIT(&l->l_ld_locks);
 
 	lwp_initspecific(l);
 

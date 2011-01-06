@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.147 2010/11/21 17:34:11 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.148 2011/01/06 11:22:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.147 2010/11/21 17:34:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.148 2011/01/06 11:22:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.147 2010/11/21 17:34:11 pooka Exp $");
 #include <sys/reboot.h>
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
+#include <sys/sleepq.h>
 
 #include <dev/cons.h>
 
@@ -293,3 +294,12 @@ trace_exit(register_t code, register_t rval[], int error)
 
 	/* nada */
 }
+
+#ifdef LOCKDEBUG
+void
+turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
+{
+
+	/* nada */
+}
+#endif
