@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.45 2011/01/06 11:22:55 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.46 2011/01/06 13:36:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.45 2011/01/06 11:22:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.46 2011/01/06 13:36:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -53,7 +53,7 @@ static lockops_t mutex_lockops = {
 	NULL
 };
 static lockops_t rw_lockops = {
-	"mutex",
+	"rwlock",
 	LOCKOPS_SLEEP,
 	NULL
 };
