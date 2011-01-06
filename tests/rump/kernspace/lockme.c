@@ -1,7 +1,7 @@
-/*	$NetBSD: kernspace.h,v 1.3 2011/01/06 13:12:52 pooka Exp $	*/
+/*	$NetBSD: lockme.c,v 1.1 2011/01/06 13:12:52 pooka Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,18 +27,66 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TESTS_RUMP_KERNSPACE_KERNSPACE_H_
-#define _TESTS_RUMP_KERNSPACE_KERNSPACE_H_
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: lockme.c,v 1.1 2011/01/06 13:12:52 pooka Exp $");
+#endif /* !lint */
 
-enum locktest { LOCKME_MTX, LOCKME_RWDOUBLEX, LOCKME_RWRX, LOCKME_RWXR,
-	LOCKME_DESTROYHELD, LOCKME_DOUBLEINIT, LOCKME_DOUBLEFREE,
-	LOCKME_MEMFREE };
+#include <sys/param.h>
+#include <sys/kmem.h>
+#include <sys/mutex.h>
+#include <sys/rwlock.h>
 
-void rumptest_busypage(void);
-void rumptest_threadjoin(void);
-void rumptest_thread(void);
-void rumptest_tsleep(void);
-void rumptest_alloc(size_t);
-void rumptest_lockme(enum locktest);
+#include "kernspace.h"
 
-#endif /* _TESTS_RUMP_KERNSPACE_KERNSPACE_H_ */
+struct somemem {
+	char foo;
+	kmutex_t mutexetum;
+	char oof;
+};
+
+void
+rumptest_lockme(enum locktest what)
+{
+	struct somemem *some;
+	kmutex_t mtx;
+	krwlock_t rw;
+
+	rw_init(&rw);
+	mutex_init(&mtx, MUTEX_DEFAULT, IPL_NONE);
+
+	switch (what) {
+	case LOCKME_MTX:
+		mutex_enter(&mtx);
+		mutex_enter(&mtx);
+		break;
+	case LOCKME_RWDOUBLEX:
+		rw_enter(&rw, RW_WRITER);
+		rw_enter(&rw, RW_WRITER);
+		break;
+	case LOCKME_RWRX:
+		rw_enter(&rw, RW_READER);
+		rw_enter(&rw, RW_WRITER);
+		break;
+	case LOCKME_RWXR:
+		rw_enter(&rw, RW_WRITER);
+		rw_enter(&rw, RW_READER);
+		break;
+	case LOCKME_DOUBLEINIT:
+		mutex_init(&mtx, MUTEX_DEFAULT, IPL_NONE);
+		break;
+	case LOCKME_DOUBLEFREE:
+		mutex_destroy(&mtx);
+		mutex_destroy(&mtx);
+		break;
+	case LOCKME_DESTROYHELD:
+		mutex_enter(&mtx);
+		mutex_destroy(&mtx);
+		break;
+	case LOCKME_MEMFREE:
+		some = kmem_alloc(sizeof(*some), KM_SLEEP);
+		mutex_init(&some->mutexetum, MUTEX_DEFAULT, IPL_NONE);
+		kmem_free(some, sizeof(*some));
+		break;
+	}
+}
