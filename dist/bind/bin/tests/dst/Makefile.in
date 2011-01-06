@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2006-2008  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1999-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.44.128.2 2008/08/22 23:46:32 tbox Exp
+# Id: Makefile.in,v 1.50 2009/12/05 23:31:40 each Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -58,7 +58,7 @@ gsstest@EXEEXT@: gsstest.@O@ ${DEPLIBS}
 		gsstest.@O@ ${LIBS}
 
 test: t_dst@EXEEXT@
-	../genrandom@EXEEXT@ 100 randomfile
+	../../tools/genrandom@EXEEXT@ 100 randomfile
 	-@ ./t_dst@EXEEXT@ -b @srcdir@ -q 1800 -a
 
 clean distclean::

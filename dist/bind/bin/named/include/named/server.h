@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.1.1.5.4.1 2009/12/03 17:38:05 snj Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.5.4.2 2011/01/06 21:40:37 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.h,v 1.88.10.7 2009/07/11 04:28:14 marka Exp */
+/* Id: server.h,v 1.104.8.6 2010/08/16 23:46:30 tbox Exp */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -56,6 +56,8 @@ struct ns_server {
 	dns_acl_t		*blackholeacl;
 	char *			statsfile;	/*%< Statistics file name */
 	char *			dumpfile;	/*%< Dump file name */
+	char *			secrootsfile;	/*%< Secroots file name */
+	char *			bindkeysfile;	/*%< bind.keys file name */
 	char *			recfile;	/*%< Recursive file name */
 	isc_boolean_t		version_set;	/*%< User has set version */
 	char *			version;	/*%< User-specified version */
@@ -93,13 +95,14 @@ struct ns_server {
 	isc_boolean_t		flushonshutdown;
 	isc_boolean_t		log_queries;	/*%< For BIND 8 compatibility */
 
-	isc_stats_t *		nsstats;	/*%< Server statistics */
-	dns_stats_t *		rcvquerystats;	/*% Incoming query statistics */
-	dns_stats_t *		opcodestats;	/*%< Incoming message statistics */
-	isc_stats_t *		zonestats;	/*% Zone management statistics */
-	isc_stats_t *		resolverstats;	/*% Resolver statistics */
+	ns_cachelist_t		cachelist;	/*%< Possibly shared caches */
+	isc_stats_t *		nsstats;	/*%< Server stats */
+	dns_stats_t *		rcvquerystats;	/*% Incoming query stats */
+	dns_stats_t *		opcodestats;	/*%< Incoming message stats */
+	isc_stats_t *		zonestats;	/*% Zone management stats */
+	isc_stats_t  *		resolverstats;	/*% Resolver stats */
+	isc_stats_t *		sockstats;	/*%< Socket stats */
 
-	isc_stats_t *		sockstats;	/*%< Socket statistics */
 	ns_controls_t *		controls;	/*%< Control channels */
 	unsigned int		dispatchgen;
 	ns_dispatchlist_t	dispatches;
@@ -107,6 +110,12 @@ struct ns_server {
 	dns_acache_t		*acache;
 
 	ns_statschannellist_t	statschannels;
+
+	dns_tsigkey_t		*sessionkey;
+	char			*session_keyfile;
+	dns_name_t		*session_keyname;
+	unsigned int		session_keyalg;
+	isc_uint16_t		session_keybits;
 };
 
 #define NS_SERVER_MAGIC			ISC_MAGIC('S','V','E','R')
@@ -239,6 +248,12 @@ isc_result_t
 ns_server_dumpdb(ns_server_t *server, char *args);
 
 /*%
+ * Dump the current security roots to the secroots file.
+ */
+isc_result_t
+ns_server_dumpsecroots(ns_server_t *server, char *args);
+
+/*%
  * Change or increment the server debug level.
  */
 isc_result_t
@@ -282,6 +297,16 @@ ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args,
 		 isc_buffer_t *text);
 
 /*%
+ * Update a zone's DNSKEY set from the key repository.  If
+ * the command that triggered the call to this function was "sign",
+ * then force a full signing of the zone.  If it was "loadkeys",
+ * then don't sign the zone; any needed changes to signatures can
+ * take place incrementally.
+ */
+isc_result_t
+ns_server_rekey(ns_server_t *server, char *args);
+
+/*%
  * Dump the current recursive queries.
  */
 isc_result_t
@@ -298,5 +323,17 @@ ns_add_reserved_dispatch(ns_server_t *server, const isc_sockaddr_t *addr);
  */
 isc_result_t
 ns_server_validation(ns_server_t *server, char *args);
+
+/*%
+ * Add a zone to a running process
+ */
+isc_result_t
+ns_server_add_zone(ns_server_t *server, char *args);
+
+/*%
+ * Deletes a zone from a running process
+ */
+isc_result_t
+ns_server_del_zone(ns_server_t *server, char *args);
 
 #endif /* NAMED_SERVER_H */

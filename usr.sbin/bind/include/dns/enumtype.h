@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -74,11 +74,15 @@ enum {
 	dns_rdatatype_nsec = 47,
 	dns_rdatatype_dnskey = 48,
 	dns_rdatatype_dhcid = 49,
+	dns_rdatatype_nsec3 = 50,
+	dns_rdatatype_nsec3param = 51,
+	dns_rdatatype_hip = 55,
 	dns_rdatatype_spf = 99,
 	dns_rdatatype_unspec = 103,
 	dns_rdatatype_tkey = 249,
 	dns_rdatatype_tsig = 250,
 	dns_rdatatype_dlv = 32769,
+	dns_rdatatype_keydata = 65533,
 	dns_rdatatype_ixfr = 251,
 	dns_rdatatype_axfr = 252,
 	dns_rdatatype_mailb = 253,
@@ -132,11 +136,15 @@ enum {
 #define dns_rdatatype_nsec	((dns_rdatatype_t)dns_rdatatype_nsec)
 #define dns_rdatatype_dnskey	((dns_rdatatype_t)dns_rdatatype_dnskey)
 #define dns_rdatatype_dhcid	((dns_rdatatype_t)dns_rdatatype_dhcid)
+#define dns_rdatatype_nsec3	((dns_rdatatype_t)dns_rdatatype_nsec3)
+#define dns_rdatatype_nsec3param	((dns_rdatatype_t)dns_rdatatype_nsec3param)
+#define dns_rdatatype_hip	((dns_rdatatype_t)dns_rdatatype_hip)
 #define dns_rdatatype_spf	((dns_rdatatype_t)dns_rdatatype_spf)
 #define dns_rdatatype_unspec	((dns_rdatatype_t)dns_rdatatype_unspec)
 #define dns_rdatatype_tkey	((dns_rdatatype_t)dns_rdatatype_tkey)
 #define dns_rdatatype_tsig	((dns_rdatatype_t)dns_rdatatype_tsig)
 #define dns_rdatatype_dlv	((dns_rdatatype_t)dns_rdatatype_dlv)
+#define dns_rdatatype_keydata	((dns_rdatatype_t)dns_rdatatype_keydata)
 #define dns_rdatatype_ixfr	((dns_rdatatype_t)dns_rdatatype_ixfr)
 #define dns_rdatatype_axfr	((dns_rdatatype_t)dns_rdatatype_axfr)
 #define dns_rdatatype_mailb	((dns_rdatatype_t)dns_rdatatype_mailb)

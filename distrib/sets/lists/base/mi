@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.16 2009/10/18 19:02:34 snj Exp $
+# $NetBSD: mi,v 1.780.2.17 2011/01/06 21:42:07 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1339,14 +1339,19 @@
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-isdn-bin
 ./usr/sbin/dbsym				base-sysutil-bin	bfd
+./usr/sbin/ddns-confgen				base-bind-bin
 ./usr/sbin/dev_mkdb				base-sysutil-bin
 ./usr/sbin/dhcpd				base-dhcpd-bin
 ./usr/sbin/dhcrelay				base-dhcpd-bin
 ./usr/sbin/dig					base-obsolete		obsolete
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
+./usr/sbin/dnssec-dsfromkey			base-bind-bin
+./usr/sbin/dnssec-keyfromlabel			base-bind-bin
 ./usr/sbin/dnssec-keygen			base-bind-bin
 ./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
+./usr/sbin/dnssec-revoke			base-bind-bin
+./usr/sbin/dnssec-settime			base-bind-bin
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin

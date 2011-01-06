@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.c,v 1.1.1.5.4.1 2009/12/03 17:38:24 snj Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.1.1.5.4.2 2011/01/06 21:41:50 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: loc_29.c,v 1.45.128.4 2009/02/17 05:54:41 marka Exp */
+/* Id: loc_29.c,v 1.50 2009/12/04 21:09:33 marka Exp */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -796,6 +796,11 @@ checknames_loc(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_loc(ARGS_COMPARE) {
+	return (compare_loc(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_LOC_29_C */

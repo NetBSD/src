@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.h,v 1.3.4.1 2009/12/03 17:38:04 snj Exp $	*/
+/*	$NetBSD: dig.h,v 1.3.4.2 2011/01/06 21:40:32 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.h,v 1.105.130.3 2008/12/16 02:59:46 jinmei Exp */
+/* Id: dig.h,v 1.111 2009/09/29 15:06:06 fdupont Exp */
 
 #ifndef DIG_H
 #define DIG_H
@@ -294,8 +294,9 @@ isc_result_t
 get_reverse(char *reverse, size_t len, char *value, isc_boolean_t ip6_int,
 	    isc_boolean_t strict);
 
-void
-fatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
+ISC_PLATFORM_NORETURN_PRE void
+fatal(const char *format, ...)
+ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
 
 void
 debug(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
@@ -326,6 +327,13 @@ setup_libs(void);
 
 void
 setup_system(void);
+
+isc_result_t
+parse_uint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+	   const char *desc);
+
+void
+parse_hmac(const char *hmacstr);
 
 dig_lookup_t *
 requeue_lookup(dig_lookup_t *lookold, isc_boolean_t servers);
