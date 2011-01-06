@@ -1,7 +1,7 @@
-/*	$NetBSD: lwresd.c,v 1.1.1.6.4.1 2009/12/03 17:38:04 snj Exp $	*/
+/*	$NetBSD: lwresd.c,v 1.1.1.6.4.2 2011/01/06 21:40:36 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwresd.c,v 1.55.130.3 2008/07/23 23:31:17 marka Exp */
+/* Id: lwresd.c,v 1.60 2009/09/02 23:48:01 tbox Exp */
 
 /*! \file
  * \brief
@@ -374,8 +374,7 @@ ns_lwdmanager_create(isc_mem_t *mctx, const cfg_obj_t *lwres,
 					strlen(searchstr));
 			isc_buffer_add(&namebuf, strlen(searchstr));
 			result = dns_name_fromtext(name, &namebuf,
-						   dns_rootname, ISC_FALSE,
-						   NULL);
+						   dns_rootname, 0, NULL);
 			if (result != ISC_R_SUCCESS) {
 				isc_log_write(ns_g_lctx,
 					      NS_LOGCATEGORY_GENERAL,

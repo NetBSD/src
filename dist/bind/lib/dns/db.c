@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.1.1.5.4.1 2009/12/03 17:38:14 snj Exp $	*/
+/*	$NetBSD: db.c,v 1.1.1.5.4.2 2011/01/06 21:41:46 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.c,v 1.83.128.4 2009/04/29 23:46:55 tbox Exp */
+/* Id: db.c,v 1.95 2009/10/08 23:13:06 marka Exp */
 
 /*! \file */
 
@@ -36,10 +36,12 @@
 
 #include <dns/callbacks.h>
 #include <dns/db.h>
+#include <dns/dbiterator.h>
 #include <dns/log.h>
 #include <dns/master.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
+#include <dns/rdatasetiter.h>
 #include <dns/result.h>
 
 /***
@@ -63,14 +65,18 @@ struct dns_dbimplementation {
  */
 
 #include "rbtdb.h"
+#ifdef BIND9
 #include "rbtdb64.h"
+#endif
 
 static ISC_LIST(dns_dbimplementation_t) implementations;
 static isc_rwlock_t implock;
 static isc_once_t once = ISC_ONCE_INIT;
 
 static dns_dbimplementation_t rbtimp;
+#ifdef BIND9
 static dns_dbimplementation_t rbt64imp;
+#endif
 
 static void
 initialize(void) {
@@ -82,15 +88,19 @@ initialize(void) {
 	rbtimp.driverarg = NULL;
 	ISC_LINK_INIT(&rbtimp, link);
 
+#ifdef BIND9
 	rbt64imp.name = "rbt64";
 	rbt64imp.create = dns_rbtdb64_create;
 	rbt64imp.mctx = NULL;
 	rbt64imp.driverarg = NULL;
 	ISC_LINK_INIT(&rbt64imp, link);
+#endif
 
 	ISC_LIST_INIT(implementations);
 	ISC_LIST_APPEND(implementations, &rbtimp, link);
+#ifdef BIND9
 	ISC_LIST_APPEND(implementations, &rbt64imp, link);
+#endif
 }
 
 static inline dns_dbimplementation_t *
@@ -231,6 +241,21 @@ dns_db_isstub(dns_db_t *db) {
 }
 
 isc_boolean_t
+dns_db_isdnssec(dns_db_t *db) {
+
+	/*
+	 * Is 'db' secure or partially secure?
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE((db->attributes & DNS_DBATTR_CACHE) == 0);
+
+	if (db->methods->isdnssec != NULL)
+		return ((db->methods->isdnssec)(db));
+	return ((db->methods->issecure)(db));
+}
+
+isc_boolean_t
 dns_db_issecure(dns_db_t *db) {
 
 	/*
@@ -277,6 +302,7 @@ dns_db_class(dns_db_t *db) {
 	return (db->rdclass);
 }
 
+#ifdef BIND9
 isc_result_t
 dns_db_beginload(dns_db_t *db, dns_addrdatasetfunc_t *addp,
 		 dns_dbload_t **dbloadp) {
@@ -305,14 +331,19 @@ dns_db_endload(dns_db_t *db, dns_dbload_t **dbloadp) {
 
 isc_result_t
 dns_db_load(dns_db_t *db, const char *filename) {
-	return (dns_db_load2(db, filename, dns_masterformat_text));
+	return (dns_db_load3(db, filename, dns_masterformat_text, 0));
 }
 
 isc_result_t
 dns_db_load2(dns_db_t *db, const char *filename, dns_masterformat_t format) {
+	return (dns_db_load3(db, filename, format, 0));
+}
+
+isc_result_t
+dns_db_load3(dns_db_t *db, const char *filename, dns_masterformat_t format,
+	     unsigned int options) {
 	isc_result_t result, eresult;
 	dns_rdatacallbacks_t callbacks;
-	unsigned int options = 0;
 
 	/*
 	 * Load master file 'filename' into 'db'.
@@ -363,6 +394,7 @@ dns_db_dump2(dns_db_t *db, dns_dbversion_t *version, const char *filename,
 
 	return ((db->methods->dump)(db, version, filename, masterformat));
 }
+#endif /* BIND9 */
 
 /***
  *** Version Methods
@@ -449,6 +481,21 @@ dns_db_findnode(dns_db_t *db, dns_name_t *name,
 	REQUIRE(nodep != NULL && *nodep == NULL);
 
 	return ((db->methods->findnode)(db, name, create, nodep));
+}
+
+isc_result_t
+dns_db_findnsec3node(dns_db_t *db, dns_name_t *name,
+		     isc_boolean_t create, dns_dbnode_t **nodep)
+{
+
+	/*
+	 * Find the node with name 'name'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(nodep != NULL && *nodep == NULL);
+
+	return ((db->methods->findnsec3node)(db, name, create, nodep));
 }
 
 isc_result_t
@@ -585,7 +632,7 @@ dns_db_printnode(dns_db_t *db, dns_dbnode_t *node, FILE *out) {
  ***/
 
 isc_result_t
-dns_db_createiterator(dns_db_t *db, isc_boolean_t relative_names,
+dns_db_createiterator(dns_db_t *db, unsigned int flags,
 		      dns_dbiterator_t **iteratorp)
 {
 	/*
@@ -595,7 +642,7 @@ dns_db_createiterator(dns_db_t *db, isc_boolean_t relative_names,
 	REQUIRE(DNS_DB_VALID(db));
 	REQUIRE(iteratorp != NULL && *iteratorp == NULL);
 
-	return (db->methods->createiterator(db, relative_names, iteratorp));
+	return (db->methods->createiterator(db, flags, iteratorp));
 }
 
 /***
@@ -836,6 +883,18 @@ dns_db_unregister(dns_dbimplementation_t **dbimp) {
 	ENSURE(*dbimp == NULL);
 }
 
+isc_result_t
+dns_db_getoriginnode(dns_db_t *db, dns_dbnode_t **nodep) {
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db) == ISC_TRUE);
+	REQUIRE(nodep != NULL && *nodep == NULL);
+
+	if (db->methods->getoriginnode != NULL)
+		return ((db->methods->getoriginnode)(db, nodep));
+
+	return (ISC_R_NOTFOUND);
+}
+
 dns_stats_t *
 dns_db_getrrsetstats(dns_db_t *db) {
 	REQUIRE(DNS_DB_VALID(db));
@@ -847,13 +906,43 @@ dns_db_getrrsetstats(dns_db_t *db) {
 }
 
 isc_result_t
-dns_db_getoriginnode(dns_db_t *db, dns_dbnode_t **nodep) {
+dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
+			  dns_hash_t *hash, isc_uint8_t *flags,
+			  isc_uint16_t *iterations,
+			  unsigned char *salt, size_t *salt_length)
+{
 	REQUIRE(DNS_DB_VALID(db));
 	REQUIRE(dns_db_iszone(db) == ISC_TRUE);
-	REQUIRE(nodep != NULL && *nodep == NULL);
 
-	if (db->methods->getoriginnode != NULL)
-		return ((db->methods->getoriginnode)(db, nodep));
+	if (db->methods->getnsec3parameters != NULL)
+		return ((db->methods->getnsec3parameters)(db, version, hash,
+							  flags, iterations,
+							  salt, salt_length));
 
 	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_db_setsigningtime(dns_db_t *db, dns_rdataset_t *rdataset,
+		      isc_stdtime_t resign)
+{
+	if (db->methods->setsigningtime != NULL)
+		return ((db->methods->setsigningtime)(db, rdataset, resign));
+	return (ISC_R_NOTIMPLEMENTED);
+}
+
+isc_result_t
+dns_db_getsigningtime(dns_db_t *db, dns_rdataset_t *rdataset, dns_name_t *name)
+{
+	if (db->methods->getsigningtime != NULL)
+		return ((db->methods->getsigningtime)(db, rdataset, name));
+	return (ISC_R_NOTFOUND);
+}
+
+void
+dns_db_resigned(dns_db_t *db, dns_rdataset_t *rdataset,
+		dns_dbversion_t *version)
+{
+	if (db->methods->resigned != NULL)
+		(db->methods->resigned)(db, rdataset, version);
 }

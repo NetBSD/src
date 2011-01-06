@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.h,v 1.1.1.5.4.1 2009/12/03 17:38:22 snj Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.1.1.5.4.2 2011/01/06 21:41:49 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.h,v 1.62.128.2 2009/01/19 23:47:03 tbox Exp */
+/* Id: rdataset.h,v 1.67.186.2 2010/02/25 05:25:53 tbox Exp */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -80,8 +80,14 @@ typedef struct dns_rdatasetmethods {
 					      dns_name_t *name);
 	isc_result_t		(*getnoqname)(dns_rdataset_t *rdataset,
 					      dns_name_t *name,
-					      dns_rdataset_t *nsec,
-					      dns_rdataset_t *nsecsig);
+					      dns_rdataset_t *neg,
+					      dns_rdataset_t *negsig);
+	isc_result_t		(*addclosest)(dns_rdataset_t *rdataset,
+					      dns_name_t *name);
+	isc_result_t		(*getclosest)(dns_rdataset_t *rdataset,
+					      dns_name_t *name,
+					      dns_rdataset_t *neg,
+					      dns_rdataset_t *negsig);
 	isc_result_t		(*getadditional)(dns_rdataset_t *rdataset,
 						 dns_rdatasetadditional_t type,
 						 dns_rdatatype_t qtype,
@@ -106,6 +112,9 @@ typedef struct dns_rdatasetmethods {
 						 dns_rdataset_t *rdataset,
 						 dns_rdatasetadditional_t type,
 						 dns_rdatatype_t qtype);
+	void			(*settrust)(dns_rdataset_t *rdataset,
+					    dns_trust_t trust);
+	void			(*expire)(dns_rdataset_t *rdataset);
 } dns_rdatasetmethods_t;
 
 #define DNS_RDATASET_MAGIC	       ISC_MAGIC('D','N','S','R')
@@ -142,6 +151,11 @@ struct dns_rdataset {
 	 * increment the counter.
 	 */
 	isc_uint32_t			count;
+	/*
+	 * This RRSIG RRset should be re-generated around this time.
+	 * Only valid if DNS_RDATASETATTR_RESIGN is set in attributes.
+	 */
+	isc_stdtime_t			resign;
 	/*@{*/
 	/*%
 	 * These are for use by the rdataset implementation, and MUST NOT
@@ -153,7 +167,9 @@ struct dns_rdataset {
 	unsigned int			privateuint4;
 	void *				private5;
 	void *				private6;
+	void *				private7;
 	/*@}*/
+
 };
 
 /*!
@@ -186,6 +202,9 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_CHECKNAMES	0x00008000	/*%< Used by resolver. */
 #define DNS_RDATASETATTR_REQUIREDGLUE	0x00010000
 #define DNS_RDATASETATTR_LOADORDER	0x00020000
+#define DNS_RDATASETATTR_RESIGN		0x00040000
+#define DNS_RDATASETATTR_CLOSEST	0x00080000
+#define DNS_RDATASETATTR_OPTOUT		0x00100000	/*%< OPTOUT proof */
 
 /*%
  * _OMITDNSSEC:
@@ -479,14 +498,14 @@ dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
 
 isc_result_t
 dns_rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-			dns_rdataset_t *nsec, dns_rdataset_t *nsecsig);
+			dns_rdataset_t *neg, dns_rdataset_t *negsig);
 /*%<
  * Return the noqname proof for this record.
  *
  * Requires:
  *\li	'rdataset' to be valid and #DNS_RDATASETATTR_NOQNAME to be set.
  *\li	'name' to be valid.
- *\li	'nsec' and 'nsecsig' to be valid and not associated.
+ *\li	'neg' and 'negsig' to be valid and not associated.
  */
 
 isc_result_t
@@ -495,11 +514,37 @@ dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name);
  * Associate a noqname proof with this record.
  * Sets #DNS_RDATASETATTR_NOQNAME if successful.
  * Adjusts the 'rdataset->ttl' to minimum of the 'rdataset->ttl' and
- * the 'nsec' and 'rrsig(nsec)' ttl.
+ * the 'nsec'/'nsec3' and 'rrsig(nsec)'/'rrsig(nsec3)' ttl.
  *
  * Requires:
  *\li	'rdataset' to be valid and #DNS_RDATASETATTR_NOQNAME to be set.
- *\li	'name' to be valid and have NSEC and RRSIG(NSEC) rdatasets.
+ *\li	'name' to be valid and have NSEC or NSEC3 and associated RRSIG
+ *	 rdatasets.
+ */
+
+isc_result_t
+dns_rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+			dns_rdataset_t *nsec, dns_rdataset_t *nsecsig);
+/*%<
+ * Return the closest encloser for this record.
+ *
+ * Requires:
+ *\li	'rdataset' to be valid and #DNS_RDATASETATTR_CLOSEST to be set.
+ *\li	'name' to be valid.
+ *\li	'nsec' and 'nsecsig' to be valid and not associated.
+ */
+
+isc_result_t
+dns_rdataset_addclosest(dns_rdataset_t *rdataset, dns_name_t *name);
+/*%<
+ * Associate a closest encloset proof with this record.
+ * Sets #DNS_RDATASETATTR_CLOSEST if successful.
+ * Adjusts the 'rdataset->ttl' to minimum of the 'rdataset->ttl' and
+ * the 'nsec' and 'rrsig(nsec)' ttl.
+ *
+ * Requires:
+ *\li	'rdataset' to be valid and #DNS_RDATASETATTR_CLOSEST to be set.
+ *\li	'name' to be valid and have NSEC3 and RRSIG(NSEC3) rdatasets.
  */
 
 isc_result_t
@@ -592,6 +637,19 @@ dns_rdataset_putadditional(dns_acache_t *acache,
  * \li	#ISC_R_FAILURE	- additional information caching is not supported.
  * \li	#ISC_R_NOTFOUND	- the corresponding DB node has not cached additional
  *			  information for 'rdataset.'
+ */
+
+void
+dns_rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust);
+/*%<
+ * Set the trust of the 'rdataset' to trust in any in the backing database.
+ * The local trust level of 'rdataset' is also set.
+ */
+
+void
+dns_rdataset_expire(dns_rdataset_t *rdataset);
+/*%<
+ * Mark the rdataset to be expired in the backing database.
  */
 
 ISC_LANG_ENDDECLS

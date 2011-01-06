@@ -1,6 +1,6 @@
-/*	$NetBSD: loc.h,v 1.1.1.1 2008/06/21 18:30:22 christos Exp $	*/
+/*	$NetBSD: loc.h,v 1.1.1.1.6.1 2011/01/06 21:41:06 riz Exp $	*/
 
-/* Id: loc.h,v 1.1.2.1 2008/02/15 02:11:57 marka Exp */
+/* Id: loc.h,v 1.1 2008/02/15 01:47:15 marka Exp */
 
 #define VERSION "0.4.0"
 

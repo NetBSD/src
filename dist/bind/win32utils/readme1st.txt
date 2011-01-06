@@ -1,13 +1,13 @@
-Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2001, 2003  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-Id: readme1st.txt,v 1.18.168.5 2009/09/02 00:30:44 marka Exp
+Id: readme1st.txt,v 1.24 2009/09/01 06:51:47 marka Exp
 
-	   Release of BIND 9.5 for Windows XP and later.
+	   Release of BIND 9.7 for Windows and later.
 
-This is a release of BIND 9.5 for Windows XP and later.
- 
+This is a release of BIND 9.7 for Windows XP and later.
+  
 	Important Kit Installation Information
 
 As of release 9.3.0, BINDInstall requires that you install it under
@@ -125,8 +125,9 @@ are HTML pages for each of the BIND 9 applications.
 
 The following tools have been built for Windows: dig, nslookup,
 host, nsupdate, rndc, rndc-confgen, named-checkconf, named-checkzone,
-dnssec-keygen, dnssec-signzone.  The latter tools are for use with
-DNSSEC.  All tools are installed in the dns/bin directory.
+dnssec-keygen, dnssec-signzone, dnssec-dsfromkey and dnssec-keyfromlabel.
+The latter tools are for use with DNSSEC.  All tools are installed
+in the dns/bin directory.
 
 IMPORTANT NOTE ON USING THE TOOLS:
 

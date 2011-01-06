@@ -1,7 +1,7 @@
-/*	$NetBSD: time.h,v 1.1.1.5.4.1 2009/12/03 17:38:30 snj Exp $	*/
+/*	$NetBSD: time.h,v 1.1.1.5.4.2 2011/01/06 21:42:02 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.h,v 1.36.128.3 2009/01/06 23:46:48 tbox Exp */
+/* Id: time.h,v 1.40 2009/01/05 23:47:54 tbox Exp */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -92,15 +92,17 @@ extern isc_time_t *isc_time_epoch;
 void
 isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds);
 /*%<
- * Set 't' to a particular number of seconds + nanoseconds since the epoch.
+ * Set 't' to a value which represents the given number of seconds and
+ * nanoseconds since 00:00:00 January 1, 1970, UTC.
  *
  * Notes:
- *\li	This call is equivalent to:
+ *\li	The Unix version of this call is equivalent to:
  *\code
  *	isc_time_settoepoch(t);
  *	isc_interval_set(i, seconds, nanoseconds);
  *	isc_time_add(t, i, t);
  *\endcode
+ *
  * Requires:
  *\li	't' is a valid pointer.
  *\li	nanoseconds < 1000000000.

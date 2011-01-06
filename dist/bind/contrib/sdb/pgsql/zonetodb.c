@@ -1,7 +1,7 @@
-/*	$NetBSD: zonetodb.c,v 1.1.1.6.4.1 2009/12/03 17:38:08 snj Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.1.1.6.4.2 2011/01/06 21:41:07 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonetodb.c,v 1.18.128.2 2008/11/27 23:46:44 tbox Exp */
+/* Id: zonetodb.c,v 1.23 2009/09/02 23:48:01 tbox Exp */
 
 #include <stdlib.h>
 #include <string.h>
@@ -176,7 +176,7 @@ main(int argc, char **argv) {
 	isc_buffer_add(&b, strlen(porigin));
 	dns_fixedname_init(&forigin);
 	origin = dns_fixedname_name(&forigin);
-	result = dns_name_fromtext(origin, &b, dns_rootname, ISC_FALSE, NULL);
+	result = dns_name_fromtext(origin, &b, dns_rootname, 0, NULL);
 	check_result(result, "dns_name_fromtext");
 
 	db = NULL;
@@ -232,7 +232,7 @@ main(int argc, char **argv) {
 	PQclear(res);
 
 	dbiter = NULL;
-	result = dns_db_createiterator(db, ISC_FALSE, &dbiter);
+	result = dns_db_createiterator(db, 0, &dbiter);
 	check_result(result, "dns_db_createiterator()");
 
 	result = dns_dbiterator_first(dbiter);

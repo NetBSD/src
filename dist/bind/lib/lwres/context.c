@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.1.1.5.4.1 2009/12/03 17:38:31 snj Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.5.4.2 2011/01/06 21:42:05 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context.c,v 1.50.128.5 2009/09/01 23:46:36 tbox Exp */
+/* Id: context.c,v 1.55 2009/09/02 23:48:03 tbox Exp */
 
 /*! \file context.c
    lwres_context_create() creates a #lwres_context_t structure for use in
@@ -473,6 +473,17 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	result = lwres_context_send(ctx, sendbase, sendlen);
 	if (result != LWRES_R_SUCCESS)
 		return (result);
+
+	/*
+	 * If this is not checked, select() can overflow,
+	 * causing corruption elsewhere.
+	 */
+	if (ctx->sock >= (int)FD_SETSIZE) {
+		close(ctx->sock);
+		ctx->sock = -1;
+		return (LWRES_R_IOERROR);
+	}
+
  again:
 	FD_ZERO(&readfds);
 	FD_SET(ctx->sock, &readfds);

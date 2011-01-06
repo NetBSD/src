@@ -1,7 +1,7 @@
-/*	$NetBSD: nsecify.c,v 1.1.1.4 2008/06/21 18:33:56 christos Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.1.1.4.4.1 2011/01/06 21:40:41 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsecify.c,v 1.6 2007/06/19 23:46:59 tbox Exp */
+/* Id: nsecify.c,v 1.10 2009/09/02 23:48:01 tbox Exp */
 
 #include <config.h>
 
@@ -141,7 +141,7 @@ nsecify(char *filename) {
 	len = strlen(origintext);
 	isc_buffer_init(&b, origintext, len);
 	isc_buffer_add(&b, len);
-	result = dns_name_fromtext(name, &b, dns_rootname, ISC_FALSE, NULL);
+	result = dns_name_fromtext(name, &b, dns_rootname, 0, NULL);
 	check_result(result, "dns_name_fromtext()");
 
 	db = NULL;
@@ -156,7 +156,7 @@ nsecify(char *filename) {
 	result = dns_db_newversion(db, &wversion);
 	check_result(result, "dns_db_newversion()");
 	dbiter = NULL;
-	result = dns_db_createiterator(db, ISC_FALSE, &dbiter);
+	result = dns_db_createiterator(db, 0, &dbiter);
 	check_result(result, "dns_db_createiterator()");
 	result = dns_dbiterator_first(dbiter);
 	node = NULL;

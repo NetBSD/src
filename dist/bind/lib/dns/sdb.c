@@ -1,7 +1,7 @@
-/*	$NetBSD: sdb.c,v 1.1.1.6.4.1 2009/12/03 17:38:15 snj Exp $	*/
+/*	$NetBSD: sdb.c,v 1.1.1.6.4.2 2011/01/06 21:41:47 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.c,v 1.59.94.8 2009/06/26 06:23:47 marka Exp */
+/* Id: sdb.c,v 1.71.54.3 2010/08/16 05:14:15 marka Exp */
 
 /*! \file */
 
@@ -452,7 +452,7 @@ getnode(dns_sdballnodes_t *allnodes, const char *name, dns_sdbnode_t **nodep) {
 	isc_buffer_init(&b, name, strlen(name));
 	isc_buffer_add(&b, strlen(name));
 
-	result = dns_name_fromtext(newname, &b, origin, ISC_FALSE, NULL);
+	result = dns_name_fromtext(newname, &b, origin, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -839,13 +839,6 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 
 	for (i = olabels; i <= nlabels; i++) {
 		/*
-		 * Unless this is an explicit lookup at the origin, don't
-		 * look at the origin.
-		 */
-		if (i == olabels && i != nlabels)
-			continue;
-
-		/*
 		 * Look up the next label.
 		 */
 		dns_name_getlabelsequence(name, nlabels - i, i, xname);
@@ -1040,8 +1033,7 @@ printnode(dns_db_t *db, dns_dbnode_t *node, FILE *out) {
 }
 
 static isc_result_t
-createiterator(dns_db_t *db, isc_boolean_t relative_names,
-	       dns_dbiterator_t **iteratorp)
+createiterator(dns_db_t *db, unsigned int options, dns_dbiterator_t **iteratorp)
 {
 	dns_sdb_t *sdb = (dns_sdb_t *)db;
 	sdb_dbiterator_t *sdbiter;
@@ -1053,6 +1045,10 @@ createiterator(dns_db_t *db, isc_boolean_t relative_names,
 	if (imp->methods->allnodes == NULL)
 		return (ISC_R_NOTIMPLEMENTED);
 
+	if ((options & DNS_DB_NSEC3ONLY) != 0 ||
+	    (options & DNS_DB_NONSEC3) != 0)
+		return (ISC_R_NOTIMPLEMENTED);
+
 	sdbiter = isc_mem_get(sdb->common.mctx, sizeof(sdb_dbiterator_t));
 	if (sdbiter == NULL)
 		return (ISC_R_NOMEMORY);
@@ -1060,7 +1056,7 @@ createiterator(dns_db_t *db, isc_boolean_t relative_names,
 	sdbiter->common.methods = &dbiterator_methods;
 	sdbiter->common.db = NULL;
 	dns_db_attach(db, &sdbiter->common.db);
-	sdbiter->common.relative_names = relative_names;
+	sdbiter->common.relative_names = ISC_TF(options & DNS_DB_RELATIVENAMES);
 	sdbiter->common.magic = DNS_DBITERATOR_MAGIC;
 	ISC_LIST_INIT(sdbiter->nodelist);
 	sdbiter->current = NULL;
@@ -1253,7 +1249,13 @@ static dns_dbmethods_t sdb_methods = {
 	settask,
 	NULL,
 	NULL,
-	NULL
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 static isc_result_t
@@ -1376,6 +1378,10 @@ static dns_rdatasetmethods_t methods = {
 	isc__rdatalist_count,
 	isc__rdatalist_addnoqname,
 	isc__rdatalist_getnoqname,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL

@@ -1,7 +1,7 @@
-/*	$NetBSD: commandline.c,v 1.1.1.5 2008/06/21 18:31:05 christos Exp $	*/
+/*	$NetBSD: commandline.c,v 1.1.1.5.4.1 2011/01/06 21:41:58 riz Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +50,7 @@
  * SUCH DAMAGE.
  */
 
-/* Id: commandline.c,v 1.20 2007/06/19 23:47:17 tbox Exp */
+/* Id: commandline.c,v 1.22 2008/09/25 04:02:39 tbox Exp */
 
 /*! \file
  * This file was adapted from the NetBSD project's source tree, RCS ID:
@@ -109,7 +109,10 @@ isc_commandline_parse(int argc, char * const *argv, const char *options) {
 	 * the previous argv was finished.
 	 */
 	if (isc_commandline_reset || *place == '\0') {
-		isc_commandline_reset = ISC_FALSE;
+		if (isc_commandline_reset) {
+			isc_commandline_index = 1;
+			isc_commandline_reset = ISC_FALSE;
+		}
 
 		if (isc_commandline_progname == NULL)
 			isc_commandline_progname = argv[0];

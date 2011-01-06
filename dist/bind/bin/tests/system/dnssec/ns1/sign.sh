@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/sh -e
 #
-# Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.23.288.1 2009/12/31 21:45:53 each Exp
+# Id: sign.sh,v 1.30.32.3.8.1 2010/11/16 01:31:38 marka Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -28,18 +28,19 @@ zonefile=root.db
 
 (cd ../ns2 && sh sign.sh )
 
-cp ../ns2/keyset-example. .
-cp ../ns2/keyset-dlv. .
+cp ../ns2/dsset-example. .
+cp ../ns2/dsset-dlv. .
+grep "8 [12]" ../ns2/dsset-algroll. > dsset-algroll.
 
-keyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
+keyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 
 cat $infile $keyname.key > $zonefile
 
-$SIGNER -g -r $RANDFILE -o $zone $zonefile > /dev/null
+$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
 
 # Configure the resolving server with a trusted key.
 
-cat $keyname.key | $PERL -n -e '
+cat $keyname.key | grep -v '^; ' | $PERL -n -e '
 local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
 local $key = join("", @rest);
 print <<EOF
@@ -52,3 +53,10 @@ cp trusted.conf ../ns2/trusted.conf
 cp trusted.conf ../ns3/trusted.conf
 cp trusted.conf ../ns4/trusted.conf
 cp trusted.conf ../ns6/trusted.conf
+cp trusted.conf ../ns7/trusted.conf
+#
+#  Save keyid for managed key id test.
+#
+keyid=`expr $keyname : 'K.+001+\(.*\)'`
+keyid=`expr $keyid + 0`
+echo "$keyid" > managed.key.id

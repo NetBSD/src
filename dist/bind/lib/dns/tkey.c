@@ -1,7 +1,7 @@
-/*	$NetBSD: tkey.c,v 1.1.1.6 2008/06/21 18:32:10 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.1.1.6.4.1 2011/01/06 21:41:47 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: tkey.c,v 1.87.2.3 2008/04/03 00:47:46 marka Exp
+ * Id: tkey.c,v 1.92.104.2 2010/07/09 23:46:27 tbox Exp
  */
 /*! \file */
 #include <config.h>
@@ -458,18 +458,15 @@ process_gsstkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 	if (result == ISC_R_SUCCESS)
 		gss_ctx = dst_key_getgssctx(tsigkey->key);
 
-
 	dns_fixedname_init(&principal);
 
 	result = dst_gssapi_acceptctx(tctx->gsscred, &intoken,
 				      &outtoken, &gss_ctx,
 				      dns_fixedname_name(&principal),
 				      tctx->mctx);
-
-	if (tsigkey != NULL)
-		dns_tsigkey_detach(&tsigkey);
-
 	if (result == DNS_R_INVALIDTKEY) {
+		if (tsigkey != NULL)
+			dns_tsigkey_detach(&tsigkey);
 		tkeyout->error = dns_tsigerror_badkey;
 		tkey_log("process_gsstkey(): dns_tsigerror_badkey");    /* XXXSRA */
 		return (ISC_R_SUCCESS);
@@ -480,19 +477,37 @@ process_gsstkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 	 * XXXDCL Section 4.1.3: Limit GSS_S_CONTINUE_NEEDED to 10 times.
 	 */
 
+	isc_stdtime_get(&now);
+
 	if (tsigkey == NULL) {
+#ifdef GSSAPI
+		OM_uint32 gret, minor, lifetime;
+#endif
+		isc_uint32_t expire;
+
 		RETERR(dst_key_fromgssapi(name, gss_ctx, msg->mctx, &dstkey));
+		/*
+		 * Limit keys to 1 hour or the context's lifetime whichever
+		 * is smaller.
+		 */
+		expire = now + 3600;
+#ifdef GSSAPI
+		gret = gss_context_time(&minor, gss_ctx, &lifetime);
+		if (gret == GSS_S_COMPLETE && now + lifetime < expire)
+			expire = now + lifetime;
+#endif
 		RETERR(dns_tsigkey_createfromkey(name, &tkeyin->algorithm,
 						 dstkey, ISC_TRUE,
 						 dns_fixedname_name(&principal),
-						 tkeyin->inception,
-						 tkeyin->expire,
-						 ring->mctx, ring, NULL));
+						 now, expire, ring->mctx, ring,
+						 NULL));
+		tkeyout->inception = now;
+		tkeyout->expire = expire;
+	} else {
+		tkeyout->inception = tsigkey->inception;
+		tkeyout->expire = tkeyout->expire;
+		dns_tsigkey_detach(&tsigkey);
 	}
-
-	isc_stdtime_get(&now);
-	tkeyout->inception = tkeyin->inception;
-	tkeyout->expire = tkeyin->expire;
 
 	if (outtoken) {
 		tkeyout->key = isc_mem_get(tkeyout->mctx,
@@ -522,6 +537,9 @@ process_gsstkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 	return (ISC_R_SUCCESS);
 
 failure:
+	if (tsigkey != NULL)
+		dns_tsigkey_detach(&tsigkey);
+
 	if (dstkey != NULL)
 		dst_key_free(&dstkey);
 
@@ -726,8 +744,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 			}
 			isc_buffer_init(&b, randomtext, sizeof(randomtext));
 			isc_buffer_add(&b, sizeof(randomtext));
-			result = dns_name_fromtext(keyname, &b, NULL,
-						   ISC_FALSE, NULL);
+			result = dns_name_fromtext(keyname, &b, NULL, 0, NULL);
 			if (result != ISC_R_SUCCESS)
 				goto failure;
 		}
@@ -1367,10 +1384,10 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 
 	if (win2k == ISC_TRUE)
 		RETERR(find_tkey(qmsg, &tkeyname, &qtkeyrdata,
-			 DNS_SECTION_ANSWER));
+				 DNS_SECTION_ANSWER));
 	else
 		RETERR(find_tkey(qmsg, &tkeyname, &qtkeyrdata,
-			 DNS_SECTION_ADDITIONAL));
+				 DNS_SECTION_ADDITIONAL));
 
 	RETERR(dns_rdata_tostruct(&qtkeyrdata, &qtkey, NULL));
 

@@ -1,6 +1,6 @@
 #!/bin/sh 
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: sign.sh,v 1.1.2.1 2010/01/22 21:04:44 snj Exp $
+# Id: sign.sh,v 1.2.22.3 2010/01/07 23:48:15 tbox Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -30,8 +30,8 @@ zonefile=root.db
 cp ../ns2/dsset-example. .
 cp ../ns2/dsset-example.com. .
 
-keyname1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
-keyname2=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 2048 -f KSK -n zone $zone`
+keyname1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 2048 -f KSK -n zone $zone`
 cat $infile $keyname1.key $keyname2.key > $zonefile
 
 $SIGNER -g -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1

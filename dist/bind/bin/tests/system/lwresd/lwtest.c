@@ -1,4 +1,4 @@
-/*	$NetBSD: lwtest.c,v 1.1.1.5 2008/06/21 18:34:51 christos Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.1.1.5.4.1 2011/01/06 21:40:53 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwtest.c,v 1.29.60.2 2008/01/14 23:46:28 tbox Exp */
+/* Id: lwtest.c,v 1.32 2008/04/02 02:37:42 marka Exp */
 
 #include <config.h>
 
@@ -766,7 +766,7 @@ main(void) {
 	test_getrrsetbyname("a.example1.", 1, 1, 1, 0, 1);
 	test_getrrsetbyname("e.example1.", 1, 1, 1, 1, 1);
 	test_getrrsetbyname("e.example1.", 1, 255, 1, 1, 0);
-	test_getrrsetbyname("e.example1.", 1, 46, 1, 0, 1);
+	test_getrrsetbyname("e.example1.", 1, 46, 2, 0, 1);
 	test_getrrsetbyname("", 1, 1, 0, 0, 0);
 
 	if (fails == 0)

@@ -1,7 +1,7 @@
-/*	$NetBSD: master.h,v 1.1.1.5 2008/06/21 18:32:32 christos Exp $	*/
+/*	$NetBSD: master.h,v 1.1.1.5.4.1 2011/01/06 21:41:48 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.h,v 1.48 2007/06/19 23:47:17 tbox Exp */
+/* Id: master.h,v 1.53 2009/07/01 23:47:36 tbox Exp */
 
 #ifndef DNS_MASTER_H
 #define DNS_MASTER_H 1
@@ -44,7 +44,7 @@
 #define DNS_MASTER_HINT 	0x00000010	/*%< Loading a hint master file. */
 #define DNS_MASTER_SLAVE 	0x00000020	/*%< Loading a slave master file. */
 #define DNS_MASTER_CHECKNS 	0x00000040	/*%<
-						 * Check NS records to see 
+						 * Check NS records to see
 						 * if they are an address
 						 */
 #define DNS_MASTER_FATALNS 	0x00000080	/*%<
@@ -56,6 +56,9 @@
 #define DNS_MASTER_CHECKWILDCARD 0x00000400	/* Check for internal wildcards. */
 #define DNS_MASTER_CHECKMX	0x00000800
 #define DNS_MASTER_CHECKMXFAIL	0x00001000
+
+#define DNS_MASTER_RESIGN	0x00002000
+#define DNS_MASTER_KEY	 	0x00004000	/*%< Loading a key zone master file. */
 
 ISC_LANG_BEGINDECLS
 
@@ -115,6 +118,17 @@ dns_master_loadfile2(const char *master_file,
 		     dns_masterformat_t format);
 
 isc_result_t
+dns_master_loadfile3(const char *master_file,
+		     dns_name_t *top,
+		     dns_name_t *origin,
+		     dns_rdataclass_t zclass,
+		     unsigned int options,
+		     isc_uint32_t resign,
+		     dns_rdatacallbacks_t *callbacks,
+		     isc_mem_t *mctx,
+		     dns_masterformat_t format);
+
+isc_result_t
 dns_master_loadstream(FILE *stream,
 		      dns_name_t *top,
 		      dns_name_t *origin,
@@ -158,6 +172,19 @@ dns_master_loadfileinc2(const char *master_file,
 			dns_name_t *origin,
 			dns_rdataclass_t zclass,
 			unsigned int options,
+			dns_rdatacallbacks_t *callbacks,
+			isc_task_t *task,
+			dns_loaddonefunc_t done, void *done_arg,
+			dns_loadctx_t **ctxp, isc_mem_t *mctx,
+			dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfileinc3(const char *master_file,
+			dns_name_t *top,
+			dns_name_t *origin,
+			dns_rdataclass_t zclass,
+			unsigned int options,
+			isc_uint32_t resign,
 			dns_rdatacallbacks_t *callbacks,
 			isc_task_t *task,
 			dns_loaddonefunc_t done, void *done_arg,
@@ -213,6 +240,9 @@ dns_master_loadlexerinc(isc_lex_t *lex,
  * 'done' is called with 'done_arg' and a result code when the loading
  * is completed or has failed.  If the initial setup fails 'done' is
  * not called.
+ *
+ * 'resign' the number of seconds before a RRSIG expires that it should
+ * be re-signed.  0 is used if not provided.
  *
  * Requires:
  *\li	'master_file' points to a valid string.

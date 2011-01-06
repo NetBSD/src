@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: copyright.xsl,v 1.6.128.2 2009/07/10 23:46:39 tbox Exp -->
+<!-- Id: copyright.xsl,v 1.8 2009/07/10 23:47:58 tbox Exp -->
 
 <!-- Generate ISC copyright comments from Docbook copyright metadata. -->
 

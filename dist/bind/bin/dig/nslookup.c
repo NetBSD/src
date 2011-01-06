@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.1.1.6.4.1 2009/12/03 17:38:04 snj Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.1.1.6.4.2 2011/01/06 21:40:32 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nslookup.c,v 1.117.130.5 2009/05/06 23:46:49 tbox Exp */
+/* Id: nslookup.c,v 1.124 2009/10/20 01:04:03 marka Exp */
 
 #include <config.h>
 
@@ -375,6 +375,7 @@ detailsection(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers,
 					printrdata(&rdata);
 				}
 				dns_rdata_reset(&rdata);
+				printf("\tttl = %u\n", rdataset->ttl);
 				loopresult = dns_rdataset_next(rdataset);
 			}
 		}
@@ -540,22 +541,6 @@ static void
 safecpy(char *dest, char *src, int size) {
 	strncpy(dest, src, size);
 	dest[size-1] = 0;
-}
-
-static isc_result_t
-parse_uint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
-	   const char *desc) {
-	isc_uint32_t n;
-	isc_result_t result = isc_parse_uint32(&n, value, 10);
-	if (result == ISC_R_SUCCESS && n > max)
-		result = ISC_R_RANGE;
-	if (result != ISC_R_SUCCESS) {
-		printf("invalid %s '%s': %s\n", desc,
-		       value, isc_result_totext(result));
-		return result;
-	}
-	*uip = n;
-	return (ISC_R_SUCCESS);
 }
 
 static void

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.20.4.1 2011/01/06 21:42:52 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 .include "${.CURDIR}/../Makefile.inc"
 
 DIST=${IDIST}/bin/named
-CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include
+CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include -DCONFIGARGS=\"defaults\"
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 .for f in client

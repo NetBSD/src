@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2005/12/22 00:27:23 christos Exp $
+#	$NetBSD: Makefile,v 1.2.26.1 2011/01/06 21:42:50 riz Exp $
 
-SUBDIR= dnssec-keygen dnssec-signzone
+SUBDIR= dnssec-dsfromkey dnssec-keyfromlabel dnssec-keygen dnssec-signzone \
+	dnssec-settime dnssec-revoke
 
 .include "Makefile.inc"
 

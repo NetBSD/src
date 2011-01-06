@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.2.4.1 2009/12/03 17:38:14 snj Exp $	*/
+/*	$NetBSD: master.c,v 1.2.4.2 2011/01/06 21:41:46 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.c,v 1.166.94.5 2009/01/19 23:47:02 tbox Exp */
+/* Id: master.c,v 1.178 2009/09/01 00:22:26 jinmei Exp */
 
 /*! \file */
 
@@ -87,7 +87,11 @@
  */
 #define TOKENSIZ (8*1024)
 
-#define DNS_MASTER_BUFSZ 2048
+/*%
+ * Buffers sizes for $GENERATE.
+ */
+#define DNS_MASTER_LHS 2048
+#define DNS_MASTER_RHS MINTSIZ
 
 typedef ISC_LIST(dns_rdatalist_t) rdatalist_head_t;
 
@@ -141,6 +145,7 @@ struct dns_loadctx {
 	/* locked by lock */
 	isc_uint32_t		references;
 	dns_incctx_t		*inc;
+	isc_uint32_t		resign;
 };
 
 struct dns_incctx {
@@ -505,7 +510,7 @@ incctx_create(isc_mem_t *mctx, dns_name_t *origin, dns_incctx_t **ictxp) {
 
 static isc_result_t
 loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
-	       unsigned int options, dns_name_t *top,
+	       unsigned int options, isc_uint32_t resign, dns_name_t *top,
 	       dns_rdataclass_t zclass, dns_name_t *origin,
 	       dns_rdatacallbacks_t *callbacks, isc_task_t *task,
 	       dns_loaddonefunc_t done, void *done_arg, isc_lex_t *lex,
@@ -582,6 +587,7 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 	lctx->options = options;
 	lctx->seen_include = ISC_FALSE;
 	lctx->zclass = zclass;
+	lctx->resign = resign;
 	lctx->result = ISC_R_SUCCESS;
 
 	dns_fixedname_init(&lctx->fixed_top);
@@ -614,6 +620,57 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 	return (result);
 }
 
+static const char *hex = "0123456789abcdef0123456789ABCDEF";
+
+/*%
+ * Convert value into a nibble sequence from least significant to most
+ * significant nibble.  Zero fill upper most significant nibbles if
+ * required to make the width.
+ *
+ * Returns the number of characters that should have been written without
+ * counting the terminating NUL.
+ */
+static unsigned int
+nibbles(char *numbuf, size_t length, unsigned int width, char mode, int value) {
+	unsigned int count = 0;
+
+	/*
+	 * This reserve space for the NUL string terminator.
+	 */
+	if (length > 0U) {
+		*numbuf = '\0';
+		length--;
+	}
+	do {
+		char val = hex[(value & 0x0f) + ((mode == 'n') ? 0 : 16)];
+		value >>= 4;
+		if (length > 0U) {
+			*numbuf++ = val;
+			*numbuf = '\0';
+			length--;
+		}
+		if (width > 0)
+			width--;
+		count++;
+		/*
+		 * If width is non zero then we need to add a label seperator.
+		 * If value is non zero then we need to add another label and
+		 * that requires a label seperator.
+		 */
+		if (width > 0 || value != 0) {
+			if (length > 0U) {
+				*numbuf++ = '.';
+				*numbuf = '\0';
+				length--;
+			}
+			if (width > 0)
+				width--;
+			count++;
+		}
+	} while (value != 0 || width > 0);
+	return (count);
+}
+
 static isc_result_t
 genname(char *name, int it, char *buffer, size_t length) {
 	char fmt[sizeof("%04000000000d")];
@@ -624,6 +681,7 @@ genname(char *name, int it, char *buffer, size_t length) {
 	isc_textregion_t r;
 	unsigned int n;
 	unsigned int width;
+	isc_boolean_t nibblemode;
 
 	r.base = buffer;
 	r.length = length;
@@ -638,10 +696,11 @@ genname(char *name, int it, char *buffer, size_t length) {
 				isc_textregion_consume(&r, 1);
 				continue;
 			}
+			nibblemode = ISC_FALSE;
 			strcpy(fmt, "%d");
 			/* Get format specifier. */
 			if (*name == '{' ) {
-				n = sscanf(name, "{%d,%u,%1[doxX]}",
+				n = sscanf(name, "{%d,%u,%1[doxXnN]}",
 					   &delta, &width, mode);
 				switch (n) {
 				case 1:
@@ -651,6 +710,8 @@ genname(char *name, int it, char *buffer, size_t length) {
 						     "%%0%ud", width);
 					break;
 				case 3:
+					if (mode[0] == 'n' || mode[0] == 'N')
+						nibblemode = ISC_TRUE;
 					n = snprintf(fmt, sizeof(fmt),
 						     "%%0%u%c", width, mode[0]);
 					break;
@@ -663,7 +724,12 @@ genname(char *name, int it, char *buffer, size_t length) {
 				while (*name != '\0' && *name++ != '}')
 					continue;
 			}
-			n = snprintf(numbuf, sizeof(numbuf), fmt, it + delta);
+			if (nibblemode)
+				n = nibbles(numbuf, sizeof(numbuf), width,
+					    mode[0], it + delta);
+			else
+				n = snprintf(numbuf, sizeof(numbuf), fmt,
+					     it + delta);
 			if (n >= sizeof(numbuf))
 				return (ISC_R_NOSPACE);
 			cp = numbuf;
@@ -746,8 +812,8 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	ISC_LIST_INIT(head);
 
 	target_mem = isc_mem_get(lctx->mctx, target_size);
-	rhsbuf = isc_mem_get(lctx->mctx, DNS_MASTER_BUFSZ);
-	lhsbuf = isc_mem_get(lctx->mctx, DNS_MASTER_BUFSZ);
+	rhsbuf = isc_mem_get(lctx->mctx, DNS_MASTER_RHS);
+	lhsbuf = isc_mem_get(lctx->mctx, DNS_MASTER_LHS);
 	if (target_mem == NULL || rhsbuf == NULL || lhsbuf == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto error_cleanup;
@@ -778,35 +844,13 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 		goto insist_cleanup;
 	}
 
-	switch (type) {
-	case dns_rdatatype_ns:
-	case dns_rdatatype_ptr:
-	case dns_rdatatype_cname:
-	case dns_rdatatype_dname:
-		break;
-
-	case dns_rdatatype_a:
-	case dns_rdatatype_aaaa:
-		if (lctx->zclass == dns_rdataclass_in ||
-		    lctx->zclass == dns_rdataclass_ch ||
-		    lctx->zclass == dns_rdataclass_hs)
-			break;
-		/* FALLTHROUGH */
-	default:
-	       (*callbacks->error)(callbacks,
-				  "%s: %s:%lu: unsupported type '%s'",
-				  "$GENERATE", source, line, gtype);
-		result = ISC_R_NOTIMPLEMENTED;
-		goto error_cleanup;
-	}
-
 	ISC_LIST_INIT(rdatalist.rdata);
 	ISC_LINK_INIT(&rdatalist, link);
 	for (i = start; i <= stop; i += step) {
-		result = genname(lhs, i, lhsbuf, DNS_MASTER_BUFSZ);
+		result = genname(lhs, i, lhsbuf, DNS_MASTER_LHS);
 		if (result != ISC_R_SUCCESS)
 			goto error_cleanup;
-		result = genname(rhs, i, rhsbuf, DNS_MASTER_BUFSZ);
+		result = genname(rhs, i, rhsbuf, DNS_MASTER_RHS);
 		if (result != ISC_R_SUCCESS)
 			goto error_cleanup;
 
@@ -820,6 +864,7 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 
 		if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
 		    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
+		    (lctx->options & DNS_MASTER_KEY) == 0 &&
 		    !dns_name_issubdomain(owner, lctx->top))
 		{
 			char namebuf[DNS_NAME_FORMATSIZE];
@@ -880,9 +925,9 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	if (target_mem != NULL)
 		isc_mem_put(lctx->mctx, target_mem, target_size);
 	if (lhsbuf != NULL)
-		isc_mem_put(lctx->mctx, lhsbuf, DNS_MASTER_BUFSZ);
+		isc_mem_put(lctx->mctx, lhsbuf, DNS_MASTER_LHS);
 	if (rhsbuf != NULL)
-		isc_mem_put(lctx->mctx, rhsbuf, DNS_MASTER_BUFSZ);
+		isc_mem_put(lctx->mctx, rhsbuf, DNS_MASTER_RHS);
 	return (result);
 }
 
@@ -1270,7 +1315,8 @@ load_text(dns_loadctx_t *lctx) {
 					goto log_and_cleanup;
 				}
 				/* RHS */
-				GETTOKEN(lctx->lex, 0, &token, ISC_FALSE);
+				GETTOKEN(lctx->lex, ISC_LEXOPT_QSTRING,
+					 &token, ISC_FALSE);
 				rhs = isc_mem_strdup(mctx, DNS_AS_STR(token));
 				if (rhs == NULL) {
 					result = ISC_R_NOMEMORY;
@@ -1338,7 +1384,7 @@ load_text(dns_loadctx_t *lctx) {
 			isc_buffer_setactive(&buffer,
 					     token.value.as_region.length);
 			result = dns_name_fromtext(new_name, &buffer,
-					  ictx->origin, ISC_FALSE, NULL);
+					  ictx->origin, 0, NULL);
 			if (MANYERRS(lctx, result)) {
 				SETRESULT(lctx, result);
 				LOGIT(result);
@@ -1459,6 +1505,7 @@ load_text(dns_loadctx_t *lctx) {
 			}
 			if ((lctx->options & DNS_MASTER_ZONE) != 0 &&
 			    (lctx->options & DNS_MASTER_SLAVE) == 0 &&
+			    (lctx->options & DNS_MASTER_KEY) == 0 &&
 			    !dns_name_issubdomain(new_name, lctx->top))
 			{
 				char namebuf[DNS_NAME_FORMATSIZE];
@@ -1740,8 +1787,7 @@ load_text(dns_loadctx_t *lctx) {
 			char namebuf[DNS_NAME_FORMATSIZE];
 			dns_name_format(ictx->current, namebuf,
 					sizeof(namebuf));
-			(*callbacks->error)(callbacks,
-					    "%s:%lu: SOA "
+			(*callbacks->error)(callbacks, "%s:%lu: SOA "
 					    "record not at top of zone (%s)",
 					    source, line, namebuf);
 			result = DNS_R_NOTZONETOP;
@@ -2326,8 +2372,8 @@ dns_master_loadfile(const char *master_file, dns_name_t *top,
 		    dns_rdataclass_t zclass, unsigned int options,
 		    dns_rdatacallbacks_t *callbacks, isc_mem_t *mctx)
 {
-	return (dns_master_loadfile2(master_file, top, origin, zclass, options,
-				     callbacks, mctx, dns_masterformat_text));
+	return (dns_master_loadfile3(master_file, top, origin, zclass, options,
+				     0, callbacks, mctx, dns_masterformat_text));
 }
 
 isc_result_t
@@ -2337,11 +2383,23 @@ dns_master_loadfile2(const char *master_file, dns_name_t *top,
 		     dns_rdatacallbacks_t *callbacks, isc_mem_t *mctx,
 		     dns_masterformat_t format)
 {
+	return (dns_master_loadfile3(master_file, top, origin, zclass, options,
+				     0, callbacks, mctx, format));
+}
+
+isc_result_t
+dns_master_loadfile3(const char *master_file, dns_name_t *top,
+		     dns_name_t *origin, dns_rdataclass_t zclass,
+		     unsigned int options, isc_uint32_t resign,
+		     dns_rdatacallbacks_t *callbacks, isc_mem_t *mctx,
+		     dns_masterformat_t format)
+{
 	dns_loadctx_t *lctx = NULL;
 	isc_result_t result;
 
-	result = loadctx_create(format, mctx, options, top, zclass, origin,
-				callbacks, NULL, NULL, NULL, NULL, &lctx);
+	result = loadctx_create(format, mctx, options, resign, top, zclass,
+				origin, callbacks, NULL, NULL, NULL, NULL,
+				&lctx);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -2364,8 +2422,8 @@ dns_master_loadfileinc(const char *master_file, dns_name_t *top,
 		       isc_task_t *task, dns_loaddonefunc_t done,
 		       void *done_arg, dns_loadctx_t **lctxp, isc_mem_t *mctx)
 {
-	return (dns_master_loadfileinc2(master_file, top, origin, zclass,
-					options, callbacks, task, done,
+	return (dns_master_loadfileinc3(master_file, top, origin, zclass,
+					options, 0, callbacks, task, done,
 					done_arg, lctxp, mctx,
 					dns_masterformat_text));
 }
@@ -2378,14 +2436,29 @@ dns_master_loadfileinc2(const char *master_file, dns_name_t *top,
 			void *done_arg, dns_loadctx_t **lctxp, isc_mem_t *mctx,
 			dns_masterformat_t format)
 {
+	return (dns_master_loadfileinc3(master_file, top, origin, zclass,
+					options, 0, callbacks, task, done,
+					done_arg, lctxp, mctx, format));
+}
+
+isc_result_t
+dns_master_loadfileinc3(const char *master_file, dns_name_t *top,
+			dns_name_t *origin, dns_rdataclass_t zclass,
+			unsigned int options, isc_uint32_t resign,
+			dns_rdatacallbacks_t *callbacks, isc_task_t *task,
+			dns_loaddonefunc_t done, void *done_arg,
+			dns_loadctx_t **lctxp, isc_mem_t *mctx,
+			dns_masterformat_t format)
+{
 	dns_loadctx_t *lctx = NULL;
 	isc_result_t result;
 
 	REQUIRE(task != NULL);
 	REQUIRE(done != NULL);
 
-	result = loadctx_create(format, mctx, options, top, zclass, origin,
-				callbacks, task, done, done_arg, NULL, &lctx);
+	result = loadctx_create(format, mctx, options, resign, top, zclass,
+				origin, callbacks, task, done, done_arg, NULL,
+				&lctx);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -2414,7 +2487,7 @@ dns_master_loadstream(FILE *stream, dns_name_t *top, dns_name_t *origin,
 
 	REQUIRE(stream != NULL);
 
-	result = loadctx_create(dns_masterformat_text, mctx, options, top,
+	result = loadctx_create(dns_masterformat_text, mctx, options, 0, top,
 				zclass, origin, callbacks, NULL, NULL, NULL,
 				NULL, &lctx);
 	if (result != ISC_R_SUCCESS)
@@ -2447,7 +2520,7 @@ dns_master_loadstreaminc(FILE *stream, dns_name_t *top, dns_name_t *origin,
 	REQUIRE(task != NULL);
 	REQUIRE(done != NULL);
 
-	result = loadctx_create(dns_masterformat_text, mctx, options, top,
+	result = loadctx_create(dns_masterformat_text, mctx, options, 0, top,
 				zclass, origin, callbacks, task, done,
 				done_arg, NULL, &lctx);
 	if (result != ISC_R_SUCCESS)
@@ -2480,7 +2553,7 @@ dns_master_loadbuffer(isc_buffer_t *buffer, dns_name_t *top,
 
 	REQUIRE(buffer != NULL);
 
-	result = loadctx_create(dns_masterformat_text, mctx, options, top,
+	result = loadctx_create(dns_masterformat_text, mctx, options, 0, top,
 				zclass, origin, callbacks, NULL, NULL, NULL,
 				NULL, &lctx);
 	if (result != ISC_R_SUCCESS)
@@ -2513,7 +2586,7 @@ dns_master_loadbufferinc(isc_buffer_t *buffer, dns_name_t *top,
 	REQUIRE(task != NULL);
 	REQUIRE(done != NULL);
 
-	result = loadctx_create(dns_masterformat_text, mctx, options, top,
+	result = loadctx_create(dns_masterformat_text, mctx, options, 0, top,
 				zclass, origin, callbacks, task, done,
 				done_arg, NULL, &lctx);
 	if (result != ISC_R_SUCCESS)
@@ -2545,7 +2618,7 @@ dns_master_loadlexer(isc_lex_t *lex, dns_name_t *top,
 
 	REQUIRE(lex != NULL);
 
-	result = loadctx_create(dns_masterformat_text, mctx, options, top,
+	result = loadctx_create(dns_masterformat_text, mctx, options, 0, top,
 				zclass, origin, callbacks, NULL, NULL, NULL,
 				lex, &lctx);
 	if (result != ISC_R_SUCCESS)
@@ -2573,7 +2646,7 @@ dns_master_loadlexerinc(isc_lex_t *lex, dns_name_t *top,
 	REQUIRE(task != NULL);
 	REQUIRE(done != NULL);
 
-	result = loadctx_create(dns_masterformat_text, mctx, options, top,
+	result = loadctx_create(dns_masterformat_text, mctx, options, 0, top,
 				zclass, origin, callbacks, task, done,
 				done_arg, lex, &lctx);
 	if (result != ISC_R_SUCCESS)
@@ -2702,6 +2775,27 @@ grow_rdata(int new_len, dns_rdata_t *old, int old_len,
 	return (new);
 }
 
+static isc_uint32_t
+resign_fromlist(dns_rdatalist_t *this, isc_uint32_t resign) {
+	dns_rdata_t *rdata;
+	dns_rdata_rrsig_t sig;
+	isc_uint32_t when;
+
+	rdata = ISC_LIST_HEAD(this->rdata);
+	INSIST(rdata != NULL);
+	(void)dns_rdata_tostruct(rdata, &sig, NULL);
+	when = sig.timeexpire - resign;
+
+	rdata = ISC_LIST_NEXT(rdata, link);
+	while (rdata != NULL) {
+		(void)dns_rdata_tostruct(rdata, &sig, NULL);
+		if (sig.timeexpire - resign < when)
+			when = sig.timeexpire - resign;
+		rdata = ISC_LIST_NEXT(rdata, link);
+	}
+	return (when);
+}
+
 /*
  * Convert each element from a rdatalist_t to rdataset then call commit.
  * Unlink each element as we go.
@@ -2728,14 +2822,22 @@ commit(dns_rdatacallbacks_t *callbacks, dns_loadctx_t *lctx,
 		RUNTIME_CHECK(dns_rdatalist_tordataset(this, &dataset)
 			      == ISC_R_SUCCESS);
 		dataset.trust = dns_trust_ultimate;
+		/*
+		 * If this is a secure dynamic zone set the re-signing time.
+		 */
+		if (dataset.type == dns_rdatatype_rrsig &&
+		    (lctx->options & DNS_MASTER_RESIGN) != 0) {
+			dataset.attributes |= DNS_RDATASETATTR_RESIGN;
+			dns_name_format(owner, namebuf, sizeof(namebuf));
+			dataset.resign = resign_fromlist(this, lctx->resign);
+		}
 		result = ((*callbacks->add)(callbacks->add_private, owner,
 					    &dataset));
 		if (result == ISC_R_NOMEMORY) {
 			(*error)(callbacks, "dns_master_load: %s",
 				 dns_result_totext(result));
 		} else if (result != ISC_R_SUCCESS) {
-			dns_name_format(owner, namebuf,
-					sizeof(namebuf));
+			dns_name_format(owner, namebuf, sizeof(namebuf));
 			if (source != NULL) {
 				(*error)(callbacks, "%s: %s:%lu: %s: %s",
 					 "dns_master_load", source, line,

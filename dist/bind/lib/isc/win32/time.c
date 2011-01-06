@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.5.4.1 2009/12/03 17:38:30 snj Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.5.4.2 2011/01/06 21:42:02 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.43.128.5 2009/08/14 07:48:45 marka Exp */
+/* Id: time.c,v 1.52 2009/08/14 07:51:08 marka Exp */
 
 #include <config.h>
 
@@ -80,6 +80,27 @@ isc_interval_iszero(const isc_interval_t *i) {
 		return (ISC_TRUE);
 
 	return (ISC_FALSE);
+}
+
+void
+isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds) {
+	SYSTEMTIME epoch = { 1970, 1, 4, 1, 0, 0, 0, 0 };
+	FILETIME temp;
+	ULARGE_INTEGER i1;
+
+	REQUIRE(t != NULL);
+	REQUIRE(nanoseconds < NS_PER_S);
+
+	SystemTimeToFileTime(&epoch, &temp);
+
+	i1.LowPart = t->absolute.dwLowDateTime;
+	i1.HighPart = t->absolute.dwHighDateTime;
+
+	i1.QuadPart += (unsigned __int64)nanoseconds/100;
+	i1.QuadPart += (unsigned __int64)seconds*10000000;
+
+	t->absolute.dwLowDateTime = i1.LowPart;
+	t->absolute.dwHighDateTime = i1.HighPart;
 }
 
 void
@@ -263,15 +284,38 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	char DateBuf[50];
 	char TimeBuf[50];
 
+/* strftime() format: "%a, %d %b %Y %H:%M:%S GMT" */
+
 	REQUIRE(len > 0);
 	if (FileTimeToSystemTime(&t->absolute, &st)) {
-		GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, "ddd',', dd-MMM-yyyy",
-			      DateBuf, 50);
+		GetDateFormat(LOCALE_USER_DEFAULT, 0, &st,
+			      "ddd',', dd-MMM-yyyy", DateBuf, 50);
 		GetTimeFormat(LOCALE_USER_DEFAULT,
 			      TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
 			      &st, "hh':'mm':'ss", TimeBuf, 50);
 
 		snprintf(buf, len, "%s %s GMT", DateBuf, TimeBuf);
+	} else {
+		buf[0] = 0;
+	}
+}
+
+void
+isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
+	SYSTEMTIME st;
+	char DateBuf[50];
+	char TimeBuf[50];
+
+/* strtime() format: "%Y-%m-%dT%H:%M:%SZ" */
+
+	REQUIRE(len > 0);
+	if (FileTimeToSystemTime(&t->absolute, &st)) {
+		GetDateFormat(LOCALE_NEUTRAL, 0, &st, "yyyy-MM-dd",
+			      DateBuf, 50);
+		GetTimeFormat(LOCALE_NEUTRAL,
+			      TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
+			      &st, "hh':'mm':'ss", TimeBuf, 50);
+		snprintf(buf, len, "%s%sZ", DateBuf, TimeBuf);
 	} else {
 		buf[0] = 0;
 	}
