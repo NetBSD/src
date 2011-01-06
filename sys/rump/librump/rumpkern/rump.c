@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.215 2011/01/04 16:23:36 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.216 2011/01/06 11:22:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.215 2011/01/04 16:23:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.216 2011/01/06 11:22:55 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.215 2011/01/04 16:23:36 pooka Exp $");
 #include <sys/uidinfo.h>
 #include <sys/vmem.h>
 #include <sys/xcall.h>
+#include <sys/simplelock.h>
 
 #include <rump/rumpuser.h>
 
@@ -367,6 +368,9 @@ rump__init(int rump_version)
 		pool_cache_cpu_init(ci);
 		selsysinit(ci);
 		percpu_init_cpu(ci);
+
+		TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
+		__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
 
 		aprint_verbose("cpu%d at thinair0: rump virtual cpu\n", i);
 	}
