@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.11 2011/01/05 17:14:50 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.12 2011/01/06 06:57:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -60,12 +60,95 @@ static struct spclient clispc = {
 	.spc_fd = -1,
 };
 
+/*
+ * This version of waitresp is optimized for single-threaded clients
+ * and is required by signal-safe clientside rump syscalls.
+ */
+
+static void
+releasercvlock(struct spclient *spc)
+{
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	if (spc->spc_istatus == SPCSTATUS_WANTED)
+		kickall(spc);
+	spc->spc_istatus = SPCSTATUS_FREE;
+}
+
+static sigset_t fullset;
+static int
+waitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask)
+{
+	struct pollfd pfd;
+	int rv = 0;
+
+	sendunlockl(spc);
+
+	rw->rw_error = 0;
+	while (rw->rw_data == NULL && rw->rw_error == 0
+	    && spc->spc_state != SPCSTATE_DYING){
+		/* are we free to receive? */
+		if (spc->spc_istatus == SPCSTATUS_FREE) {
+			spc->spc_istatus = SPCSTATUS_BUSY;
+			pthread_mutex_unlock(&spc->spc_mtx);
+
+			pfd.fd = spc->spc_fd;
+			pfd.events = POLLIN;
+
+			switch (readframe(spc)) {
+			case 0:
+				releasercvlock(spc);
+				pthread_mutex_unlock(&spc->spc_mtx);
+				pollts(&pfd, 1, NULL, mask);
+				pthread_mutex_lock(&spc->spc_mtx);
+				continue;
+			case -1:
+				releasercvlock(spc);
+				rv = errno;
+				spc->spc_state = SPCSTATE_DYING;
+				continue;
+			default:
+				break;
+			}
+
+			switch (spc->spc_hdr.rsp_class) {
+				case RUMPSP_RESP:
+				case RUMPSP_ERROR:
+					kickwaiter(spc);
+					break;
+				case RUMPSP_REQ:
+					handlereq(spc);
+					break;
+				default:
+					/* panic */
+					break;
+			}
+
+			releasercvlock(spc);
+		} else {
+			spc->spc_istatus = SPCSTATUS_WANTED;
+			pthread_cond_wait(&rw->rw_cv, &spc->spc_mtx);
+		}
+	}
+	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
+	pthread_mutex_unlock(&spc->spc_mtx);
+	pthread_cond_destroy(&rw->rw_cv);
+
+	if (rv)
+		return rv;
+	if (spc->spc_state == SPCSTATE_DYING)
+		return ENOTCONN;
+	return rw->rw_error;
+}
+
+
 static int
 syscall_req(struct spclient *spc, int sysnum,
 	const void *data, size_t dlen, void **resp)
 {
 	struct rsp_hdr rhdr;
 	struct respwait rw;
+	sigset_t omask;
 	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr) + dlen;
@@ -73,17 +156,21 @@ syscall_req(struct spclient *spc, int sysnum,
 	rhdr.rsp_type = RUMPSP_SYSCALL;
 	rhdr.rsp_sysnum = sysnum;
 
+	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	do {
+
 		putwait(spc, &rw, &rhdr);
 		rv = dosend(spc, &rhdr, sizeof(rhdr));
 		rv = dosend(spc, data, dlen);
 		if (rv) {
 			unputwait(spc, &rw);
+			pthread_sigmask(SIG_SETMASK, &omask, NULL);
 			return rv;
 		}
 
-		rv = waitresp(spc, &rw);
+		rv = waitresp(spc, &rw, &omask);
 	} while (rv == EAGAIN);
+	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 
 	*resp = rw.rw_data;
 	return rv;
@@ -95,6 +182,7 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel)
 	struct handshake_fork rf;
 	struct rsp_hdr rhdr;
 	struct respwait rw;
+	sigset_t omask;
 	int rv;
 
 	/* performs server handshake */
@@ -106,6 +194,7 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel)
 	else
 		rhdr.rsp_handshake = HANDSHAKE_GUEST;
 
+	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	putwait(spc, &rw, &rhdr);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
 	if (auth) {
@@ -115,10 +204,12 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel)
 	}
 	if (rv != 0 || cancel) {
 		unputwait(spc, &rw);
+		pthread_sigmask(SIG_SETMASK, &omask, NULL);
 		return rv;
 	}
 
-	rv = waitresp(spc, &rw);
+	rv = waitresp(spc, &rw, &omask);
+	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 	if (rv)
 		return rv;
 
@@ -133,6 +224,7 @@ prefork_req(struct spclient *spc, void **resp)
 {
 	struct rsp_hdr rhdr;
 	struct respwait rw;
+	sigset_t omask;
 	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr);
@@ -140,15 +232,17 @@ prefork_req(struct spclient *spc, void **resp)
 	rhdr.rsp_type = RUMPSP_PREFORK;
 	rhdr.rsp_error = 0;
 
-
+	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	putwait(spc, &rw, &rhdr);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
 	if (rv != 0) {
 		unputwait(spc, &rw);
+		pthread_sigmask(SIG_SETMASK, &omask, NULL);
 		return rv;
 	}
 
-	rv = waitresp(spc, &rw);
+	rv = waitresp(spc, &rw, &omask);
+	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 	*resp = rw.rw_data;
 	return rv;
 }
@@ -263,7 +357,7 @@ handlereq(struct spclient *spc)
 		send_anonmmap_resp(spc, spc->spc_hdr.rsp_reqno, mapaddr);
 		break;
 	default:
-		printf("PANIC: INVALID TYPE\n");
+		printf("PANIC: INVALID TYPE %d\n", reqtype);
 		abort();
 		break;
 	}
@@ -351,6 +445,7 @@ rumpclient_init()
 		return -1;
 	}
 
+	sigfillset(&fullset);
 	return 0;
 }
 
