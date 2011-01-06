@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.157 2010/12/27 15:39:07 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.158 2011/01/06 13:03:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -114,7 +114,7 @@ GLOBAL(kernel_text)
  * VA 0.
  *
  * The bootloader places the bootinfo in this page, and we allocate
- * a VA for it and map it in pmap_bootstrap().
+ * a VA for it and map it later.
  */
 	.fill	PAGE_SIZE/4,4,0
 
@@ -420,14 +420,17 @@ Lstart2:
 	moveq	#FC_USERD,%d0		| user space
 	movc	%d0,%sfc		|   as source
 	movc	%d0,%dfc		|   and destination of transfers
+/* save the first PA as bootinfo_pa to map it to a virtual address later. */
+	movl	%a5,%d0			| lowram value from ROM via boot
+	RELOC(bootinfo_pa, %a0)
+	movl	%d0,%a0@		| save the lowram as bootinfo PA
 /* initialize memory sizes (for pmap_bootstrap) */
 	movl	#MAXADDR,%d1		| last page
 	moveq	#PGSHIFT,%d2
 	lsrl	%d2,%d1			| convert to page (click) number
 	RELOC(maxmem, %a0)
 	movl	%d1,%a0@		| save as maxmem
-	movl	%a5,%d0			| lowram value from ROM via boot
-	lsrl	%d2,%d0			| convert to page number
+	lsrl	%d2,%d0			| convert the lowram to page number
 	subl	%d0,%d1			| compute amount of RAM present
 	RELOC(physmem, %a0)
 	movl	%d1,%a0@		| and physmem
