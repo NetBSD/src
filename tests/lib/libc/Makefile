@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2011/01/05 21:17:04 pgoyette Exp $
+# $NetBSD: Makefile,v 1.22 2011/01/06 17:20:48 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -17,6 +17,7 @@ TESTS_C+=	t_convfp
 TESTS_C+=	t_gdtoa
 TESTS_C+=	t_hsearch
 TESTS_C+=	t_inet
+TESTS_C+=	t_mktime
 TESTS_C+=	t_ptm
 TESTS_C+=	t_randomid
 TESTS_C+=	t_strptime
