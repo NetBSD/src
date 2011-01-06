@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.12 2010/04/02 19:33:09 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.13 2011/01/06 01:08:48 jakllsch Exp $");
 #endif
 
 #include <sys/param.h>
@@ -756,6 +756,7 @@ static struct {
 	const char *name;
 } cmdsw[] = {
 	{ cmd_add, "add" },
+	{ cmd_biosboot, "biosboot" },
 	{ cmd_create, "create" },
 	{ cmd_destroy, "destroy" },
 	{ NULL, "help" },
@@ -772,13 +773,14 @@ static struct {
 static void
 usage(void)
 {
-	extern const char addmsg[], createmsg[], destroymsg[];
+	extern const char addmsg[], biosbootmsg[], createmsg[], destroymsg[];
 	extern const char labelmsg1[], labelmsg2[], labelmsg3[];
 	extern const char migratemsg[], recovermsg[], removemsg1[];
 	extern const char removemsg2[], showmsg[];
 
 	fprintf(stderr,
 	    "usage: %s %s\n"
+	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
@@ -790,6 +792,7 @@ usage(void)
 	    "       %s %s\n"
 	    "       %s %s\n",
 	    getprogname(), addmsg,
+	    getprogname(), biosbootmsg,
 	    getprogname(), createmsg,
 	    getprogname(), destroymsg,
 	    getprogname(), labelmsg1,
