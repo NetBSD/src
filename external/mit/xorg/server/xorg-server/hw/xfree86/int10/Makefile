@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2010/11/25 16:02:02 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2011/01/06 03:29:12 macallan Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -16,6 +16,11 @@ CPPFLAGS+=	-D__DRIVER__ -DFORCE_POST -D_CEXPORT= -DNO_LONG_LONG \
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-D_PC
+.endif
+
+# do not muck around in IO space trying to enable / disable non-PCI VGAs
+.if ${MACHINE} == "macppc" || ${MACHINE} == "sparc64"
+CPPFLAGS+=	-DNO_LEGACY_VGA
 .endif
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
