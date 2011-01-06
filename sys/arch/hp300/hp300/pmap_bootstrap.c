@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.53 2011/01/06 13:25:32 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.54 2011/01/06 14:19:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.53 2011/01/06 13:25:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.54 2011/01/06 14:19:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -456,18 +456,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
 
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
-
-#ifdef M68K_MMU_HP
-	/*
-	 * Determine VA aliasing distance if any
-	 */
-	if (RELOC(ectype, int) == EC_VIRT) {
-		if (RELOC(machineid, int) == HP_320)
-			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
-		else if (RELOC(machineid, int) == HP_350)
-			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
-	}
-#endif
 
 	/*
 	 * Allocate some fixed, special purpose kernel virtual addresses

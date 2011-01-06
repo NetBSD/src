@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.213 2011/01/06 13:03:47 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.214 2011/01/06 14:19:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.213 2011/01/06 13:03:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2011/01/06 14:19:54 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -220,6 +220,22 @@ hp300_init(void)
 	int i;
 
 	extern paddr_t avail_start, avail_end;
+
+#ifdef CACHE_HAVE_VAC
+	/*
+	 * Determine VA aliasing distance if any
+	 */
+	switch (machineid) {
+	case HP_320:
+		pmap_aliasmask = 0x3fff;	/* 16KB */
+		break;
+	case HP_350:
+		pmap_aliasmask = 0x7fff;	/* 32KB */
+		break;
+	default:
+		break;
+	}
+#endif
 
 	/*
 	 * Tell the VM system about available physical memory.  The
