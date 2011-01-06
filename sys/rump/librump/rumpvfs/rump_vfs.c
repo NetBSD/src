@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.63 2010/11/30 15:41:35 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.64 2011/01/06 10:20:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.63 2010/11/30 15:41:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.64 2011/01/06 10:20:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -118,7 +118,6 @@ rump_vfs_init(void)
 	root_device = &rump_rootdev;
 
 	/* bootstrap cwdi (rest done in vfs_mountroot() */
-	rw_init(&cwdi0.cwdi_lock);
 	proc0.p_cwdi = &cwdi0;
 	proc0.p_cwdi = cwdinit();
 
