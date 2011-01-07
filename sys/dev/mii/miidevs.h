@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.81.4.4 2010/11/19 23:59:22 riz Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.81.4.4.2.1 2011/01/07 02:20:06 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.78.4.4 2010/11/19 23:58:41 riz Exp
+ *	NetBSD: miidevs,v 1.78.4.4.2.1 2011/01/07 02:19:45 matt Exp
  */
 
 /*-
@@ -53,9 +53,10 @@
  */
 
 /*
-* Use "make -f Makefile.miidevs" to regenerate miidevs.h and miidevs_data.h
-*/
+ * Use "make -f Makefile.miidevs" to regenerate miidevs.h and miidevs_data.h
+ */
 
+#define	MII_OUI_AGERE	0x00053d	/* Agere */
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_ATHEROS	0x001374	/* Atheros */
@@ -114,6 +115,12 @@
  * List of known models.  Grouped by oui.
  */
 
+/*
+ * Agere PHYs
+ */
+#define	MII_MODEL_AGERE_ET1011	0x0004
+#define	MII_STR_AGERE_ET1011	"Agere ET1011 10/100/1000baseT PHY"
+
 /* Atheros PHYs */
 #define	MII_MODEL_ATHEROS_F1	0x0001
 #define	MII_STR_ATHEROS_F1	"F1 10/100/1000 PHY"
@@ -125,6 +132,8 @@
 #define	MII_STR_ATTANSIC_L1	"L1 10/100/1000 PHY"
 #define	MII_MODEL_ATTANSIC_L2	0x0002
 #define	MII_STR_ATTANSIC_L2	"L2 10/100 PHY"
+#define	MII_MODEL_ATTANSIC_AR8021	0x0004
+#define	MII_STR_ATTANSIC_AR8021	"Atheros AR8021 10/100/1000 PHY"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
@@ -202,6 +211,10 @@
 #define	MII_STR_BROADCOM_BCM5708C	"BCM5708C 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5906	0x0004
 #define	MII_STR_BROADCOM2_BCM5906	"BCM5906 10/100baseTX media interface"
+#define	MII_MODEL_BROADCOM2_BCM5481	0x000a
+#define	MII_STR_BROADCOM2_BCM5481	"BCM5481 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM2_BCM5482	0x000b
+#define	MII_STR_BROADCOM2_BCM5482	"BCM5482 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5755	0x000c
 #define	MII_STR_BROADCOM2_BCM5755	"BCM5755 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5754	0x000e
@@ -216,16 +229,24 @@
 #define	MII_STR_BROADCOM2_BCM5709C	"BCM5709 10/100/1000baseT PHY"
 #define	MII_MODEL_BROADCOM2_BCM5761	0x003d
 #define	MII_STR_BROADCOM2_BCM5761	"BCM5761 10/100/1000baseT PHY"
+#define	MII_MODEL_BROADCOM2_BCM5709S	0x003f
+#define	MII_STR_BROADCOM2_BCM5709S	"BCM5709S 1000/2500baseSX PHY"
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
 #define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
 #define	MII_STR_CICADA_CS8201	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8204	0x0004
+#define	MII_STR_CICADA_CS8204	"Cicada CS8204 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_VSC8211	0x000b
+#define	MII_STR_CICADA_VSC8211	"Cicada VSC8211 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201A	0x0020
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8244	0x002c
+#define	MII_STR_CICADA_CS8244	"Cicada CS8244 10/100/1000TX PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
 #define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 
@@ -267,6 +288,8 @@
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82566	0x0039
 #define	MII_STR_yyINTEL_I82566	"i82566 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_I82577	0x0005
+#define	MII_STR_INTEL_I82577	"i82577 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
 
@@ -304,10 +327,16 @@
 #define	MII_STR_xxMARVELL_E1000_5	"Marvell 88E1000 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E6060	0x0008
 #define	MII_STR_xxMARVELL_E6060	"Marvell 88E6060 10/100 5-port PHY switch"
+#define	MII_MODEL_xxMARVELL_E1149	0x000b
+#define	MII_STR_xxMARVELL_E1149	"Marvell 88E1149 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1111	0x000c
 #define	MII_STR_xxMARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1145	0x000d
+#define	MII_STR_xxMARVELL_E1145	"Marvell 88E1145 Quad Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116	0x0021
 #define	MII_STR_xxMARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1116R	0x0024
+#define	MII_STR_xxMARVELL_E1116R	"Marvell 88E1116R Gigabit PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
@@ -328,6 +357,8 @@
 #define	MII_STR_xxNATSEMI_DP83891	"DP83891 1000BASE-T media interface"
 #define	MII_MODEL_xxNATSEMI_DP83861	0x0006
 #define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000BASE-T media interface"
+#define	MII_MODEL_xxNATSEMI_DP83865	0x0007
+#define	MII_STR_xxNATSEMI_DP83865	"DP83865 1000BASE-T media interface"
 
 /* PMC Sierra PHYs */
 #define	MII_MODEL_xxPMCSIERRA_PM8351	0x0000
