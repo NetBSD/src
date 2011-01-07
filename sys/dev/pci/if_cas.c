@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.12 2010/11/13 13:52:06 uebayasi Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.13 2011/01/07 11:17:22 jmcneill Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,9 +44,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.12 2010/11/13 13:52:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.13 2011/01/07 11:17:22 jmcneill Exp $");
 
+#ifndef _MODULE
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.12 2010/11/13 13:52:06 uebayasi Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <machine/endian.h>
 
@@ -2063,4 +2066,33 @@ cas_start(struct ifnet *ifp)
 	}
 
 	sc->sc_tx_prod = bix;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_cas, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_cas_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_cas,
+		    cfattach_ioconf_cas, cfdata_ioconf_cas);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_cas,
+		    cfattach_ioconf_cas, cfdata_ioconf_cas);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
