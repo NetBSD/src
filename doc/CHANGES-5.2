@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.43 2011/01/07 01:43:55 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.44 2011/01/07 01:56:17 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -4231,4 +4231,17 @@ sys/arch/xen/conf/files.xen			1.110 via patch
 
 	Make maxpartitions 16 on !i386.
 	[bouyer, ticket #1503]
+
+etc/rc.d/network				1.61
+etc/rc.subr					1.86 via patch
+share/man/man5/ifconfig.if.5			1.14
+share/man/man8/rc.subr.8			1.27
+
+	Add a collapse_backslash_newline function to rc.subr. PR#41662.
+	[enami, ticket #1504]
+
+sys/dev/sysmon/sysmon_envsys_events.c		1.94 via patch
+
+	Make this compile when "options ENVSYS_OBJECTS_DEBUG" is defined.
+	[pgoyette, ticket #1505]
 
