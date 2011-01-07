@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.20 2008/02/05 22:31:50 garbled Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.20.30.1 2011/01/07 02:03:51 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.20 2008/02/05 22:31:50 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.20.30.1 2011/01/07 02:03:51 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -56,6 +56,18 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.20 2008/02/05 22:31:50 garbled Ex
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/spr.h>
+#if defined (PPC_OEA) || defined (PPC_OEA601) || defined (PPC_OEA64_BRIDGE)
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/bat.h>
+#elif defined (PPC_OEA64)
+#include <powerpc/oea/spr.h>
+#elif defined (PPC_IBM4XX)
+#include <powerpc/booke/spr.h>
+#elif defined (PPC_BOOKE)
+#include <powerpc/booke/spr.h>
+#else
+#error unknown architecture
+#endif
 
 /*
  * Determine if the memory at va..(va+len) is valid.

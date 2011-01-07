@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.74.4.1 2009/06/09 17:52:58 snj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.74.4.1.4.1 2011/01/07 02:03:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74.4.1 2009/06/09 17:52:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74.4.1.4.1 2011/01/07 02:03:51 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -88,15 +88,17 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct callframe *cf;
 	struct switchframe *sf;
 	char *stktop1, *stktop2;
-	struct pcb *pcb = &l2->l_addr->u_pcb;
+	struct pcb *pcb1, *pcb2;
 
-#ifdef DIAGNOSTIC
+//printf("%s: l1 %p, l2 %p, stack %p, stacksize %#x, func %p, arg %p\n",
+//__func__, l1, l2, stack, stacksize, func, arg);
 	/*
 	 * if p1 != curlwp && p1 == &proc0, we're creating a kernel thread.
 	 */
-	if (l1 != curlwp && l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
+	KASSERT(l1 == curlwp || l1 == &lwp0);
+
+	pcb1 = &l1->l_addr->u_pcb;
+	pcb2 = &l2->l_addr->u_pcb;
 
 #ifdef PPC_HAVE_FPU
 	if (l1->l_addr->u_pcb.pcb_fpcpu)
@@ -106,9 +108,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (l1->l_addr->u_pcb.pcb_veccpu)
 		save_vec_lwp(l1, ALTIVEC_SAVE);
 #endif
-	*pcb = l1->l_addr->u_pcb;
 
-	pcb->pcb_pm = l2->l_proc->p_vmspace->vm_map.pmap;
+	/* Copy PCB. */
+	*pcb2 = *pcb1;
+
+	pcb2->pcb_pm = l2->l_proc->p_vmspace->vm_map.pmap;
 
 	l2->l_md.md_flags = 0;
 
@@ -124,33 +128,34 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	if (stack != NULL) {
 		tf = trapframe(l2);
-		tf->fixreg[1] = (register_t)stack + stacksize;
+		tf->tf_fixreg[1] = (register_t)stack + stacksize;
 	}
 
 	/*
 	 * Align stack pointer
-	 * Since sizeof(struct trapframe) is 41 words, this will
-	 * give us 12 bytes on the stack, which pad us somewhat
-	 * for an extra call frame (or at least space for callee
-	 * to store LR).
+	 * struct ktrapframe has a partial callframe (sp & lr)
+	 * followed by a real trapframe. The partial callframe
+	 * is for the callee to store LR. The SP isn't really used
+	 * since trap/syscall will use the SP in the trapframe.
 	 */
-	stktop2 = (void *)((uintptr_t)stktop2 & ~(CALLFRAMELEN-1));
+	stktop2 = (void *)ktrapframe(l2);
 
 	/*
-	 * There happens to be a callframe, too.
+	 * There happens to be a partial callframe in front of the
+	 * trapframe, too.
 	 */
-	cf = (struct callframe *)stktop2;
-	cf->sp = (register_t)(stktop2 + CALLFRAMELEN);
-	cf->lr = (register_t)cpu_lwp_bootstrap;
+	struct ktrapframe *ktf = (struct ktrapframe *)stktop2;
+	ktf->ktf_sp = (register_t)(stktop2 + FRAMELEN); /* not used */
+	ktf->ktf_lr = (register_t)cpu_lwp_bootstrap;
 
 	/*
 	 * Below the trap frame, there is another call frame:
 	 */
 	stktop2 -= CALLFRAMELEN;
 	cf = (struct callframe *)stktop2;
-	cf->sp = (register_t)(stktop2 + CALLFRAMELEN);
-	cf->r31 = (register_t)func;
-	cf->r30 = (register_t)arg;
+	cf->cf_sp = (register_t)(stktop2 + CALLFRAMELEN);
+	cf->cf_r31 = (register_t)func;
+	cf->cf_r30 = (register_t)arg;
 
 	/*
 	 * Below that, we allocate the switch frame:
@@ -158,13 +163,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	stktop2 -= SFRAMELEN;		/* must match SFRAMELEN in genassym */
 	sf = (struct switchframe *)stktop2;
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
-	sf->sp = (register_t)cf;
-#ifndef PPC_IBM4XX
-	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
+	sf->sf_sp = (register_t)cf;
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+	sf->sf_user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
-	pcb->pcb_sp = (register_t)stktop2;
-	pcb->pcb_kmapsr = 0;
-	pcb->pcb_umapsr = 0;
+	pcb2->pcb_sp = (register_t)stktop2;
+	pcb2->pcb_kmapsr = 0;
+	pcb2->pcb_umapsr = 0;
+
+	KASSERT(memcmp(trapframe(l1), trapframe(l2), sizeof(struct trapframe)) == 0);
 }
 
 void
@@ -353,22 +360,22 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	extern void setfunc_trampoline(void);
 	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct trapframe *tf;
+	struct ktrapframe *ktf;
 	struct callframe *cf;
 	struct switchframe *sf;
 
-	tf = trapframe(l);
-	cf = (struct callframe *) ((uintptr_t)tf & ~(CALLFRAMELEN-1));
-	cf->lr = (register_t)setfunc_trampoline;
-	cf--;
-	cf->sp = (register_t) (cf+1);
-	cf->r31 = (register_t) func;
-	cf->r30 = (register_t) arg;
+	ktf = ktrapframe(l);
+	KASSERT((ktf->ktf_tf.tf_srr1 & PSL_USERSET) == PSL_USERSET);
+	ktf->ktf_lr = (register_t)setfunc_trampoline;
+	cf = ((struct callframe *) ktf) - 1;
+	cf->cf_sp = (register_t) (cf+1);
+	cf->cf_r31 = (register_t) func;
+	cf->cf_r30 = (register_t) arg;
 	sf = (struct switchframe *) ((uintptr_t) cf - SFRAMELEN);
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
-	sf->sp = (register_t) cf;
+	sf->sf_sp = (register_t) cf;
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
-	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
+	sf->sf_user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
 	pcb->pcb_sp = (register_t)sf;
 	pcb->pcb_kmapsr = 0;
