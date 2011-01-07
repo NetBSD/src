@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.6 2008/02/05 22:31:49 garbled Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.6.34.1 2011/01/07 01:56:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -36,6 +36,9 @@
 #ifdef _KERNEL
 
 #include <powerpc/spr.h>
+#ifdef PPC_OEA601
+#include <powerpc/oea/spr.h>
+#endif
 
 #define cpu_hascounter()	(1)
 #define cpu_counter()		cpu_counter32()
@@ -60,15 +63,21 @@ cpu_counter32(void)
 	    "add	%1,%2,%0	\n"
 	    "b		2f		\n"
 	    "1:				\n"
-#endif /* PPC_OEA601 */
-#ifdef PPC_IBM403
+#elif defined(PPC_IBM403)
 	    "mftblo	%1		\n"
+#elif defined(PPC_BOOKE)
+	    "mfspr	%1,%3		\n"
 #else
 	    "mftb	%1		\n"
 #endif
 	    "2:				\n"
-	    : "=r"(scratch), "=r"(rv), "=r"(rtcu)
-	    : "n"(MPC601), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R));
+		: "=r"(scratch), "=r"(rv), "=r"(rtcu)
+#ifdef PPC_OEA601
+		: "n"(MPC601), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
+#elif defined(PPC_BOOKE)
+		: "n"(SPR_TBL)
+#endif
+	    );
 
 	return rv;
 }
