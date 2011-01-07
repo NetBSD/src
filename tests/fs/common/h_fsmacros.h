@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.25 2011/01/07 10:45:45 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.26 2011/01/07 11:36:27 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ do {									\
 	ATF_TC_HEAD(_fs_##_##_func_,tc)					\
 	{								\
 		atf_tc_set_md_var(tc, "descr",_type_" test for "_desc_);\
-		atf_tc_set_md_var(tc, "X-fs.type", _type_);		\
+		atf_tc_set_md_var(tc, "X-fs.type", #_fs_);		\
 	}								\
 	void *_fs_##_func_##tmp;					\
 									\
@@ -240,23 +240,27 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
 }
 
 #define FSTYPE_EXT2FS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_EXT2FS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "ext2fs") == 0)
 #define FSTYPE_FFS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_FFS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "ffs") == 0)
 #define FSTYPE_LFS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_LFS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "lfs") == 0)
 #define FSTYPE_MSDOS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_MSDOS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "msdosfs") == 0)
 #define FSTYPE_NFS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_NFS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "nfs") == 0)
+#define FSTYPE_NFSRO(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "nfsro") == 0)
+#define FSTYPE_P2K_FFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "p2k_ffs") == 0)
 #define FSTYPE_PUFFS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_PUFFS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "puffs") == 0)
 #define FSTYPE_RUMPFS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_RUMPFS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "rumpfs") == 0)
 #define FSTYPE_SYSVBFS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_SYSVBFS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "sysvbfs") == 0)
 #define FSTYPE_TMPFS(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_TMPFS) == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "tmpfs") == 0)
 
 #define FSTEST_ENTER()							\
 	if (rump_sys_chdir(FSTEST_MNTNAME) == -1)			\
