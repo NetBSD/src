@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_ffs.c,v 1.2 2010/07/30 16:15:05 pooka Exp $	*/
+/*	$NetBSD: fstest_ffs.c,v 1.3 2011/01/07 11:52:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ ffs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 
 	return 0;
 }
+__strong_alias(ffslog_fstest_newfs,ffs_fstest_newfs);
 
 int
 ffs_fstest_delfs(const atf_tc_t *tc, void *buf)
@@ -108,6 +109,7 @@ ffs_fstest_delfs(const atf_tc_t *tc, void *buf)
 
 	return 0;
 }
+__strong_alias(ffslog_fstest_delfs,ffs_fstest_delfs);
 
 int
 ffs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
@@ -125,6 +127,13 @@ ffs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 }
 
 int
+ffslog_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
+{
+
+	return ffs_fstest_mount(tc, buf, path, flags | MNT_LOG);
+}
+
+int
 ffs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
 	int res;
@@ -136,3 +145,4 @@ ffs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 	res = rump_sys_rmdir(path);
 	return res;
 }
+__strong_alias(ffslog_fstest_unmount,ffs_fstest_unmount);
