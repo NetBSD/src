@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.242.4.3 2010/01/27 21:17:55 sborrill Exp $
+#	$NetBSD: DEVNAMES,v 1.242.4.3.4.1 2011/01/07 02:51:16 matt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -299,6 +299,7 @@ cpu			sparc
 cpu			sparc64
 cpu			vax
 cpu			x68k
+cpunode			evbppc
 crime			sgimips
 crypto			MI		Attribute
 cs			MI
@@ -322,6 +323,7 @@ depca			MI
 dge			MI
 dh			vax
 dhu			MI
+diic			evbppc
 dio			hp300
 dl			MI
 dma			MI
@@ -345,9 +347,11 @@ drsupio			amigappc
 dsrtc			cats
 dsrtc			evbppc
 dtide			MI
+duart			powerpc
 dvbox			hp300
 dwlpx			alpha
 dz			MI
+e500wdog		powerpc
 ea			MI
 eap			MI
 eb			MI
@@ -858,6 +862,7 @@ mmem			dreamcast
 mms			bebox
 mms			dreamcast
 mms			i386
+motoi2c			MI		Attribute
 moxa			MI
 mpt			MI
 mpu			MI
@@ -1009,8 +1014,10 @@ pcic			algor
 pcic			alpha
 pcic			hpcmips
 pcic			i386
+pcie			evbppc
 pciide			MI
 pcivga			arc
+pcix			evbppc
 pckbc			MI
 pckbcport		bebox		Attribute
 pckbcport		i386		Attribute
@@ -1279,6 +1286,7 @@ trm			MI
 ts			MI
 tsc			alpha
 tscs			MI
+tsec			powerpc
 tslcd			evbarm
 tslot			sparc
 tsp			alpha
