@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.275.4.1 2008/11/25 04:04:38 snj Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.275.4.1.8.1 2011/01/07 03:16:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.275.4.1 2008/11/25 04:04:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.275.4.1.8.1 2011/01/07 03:16:14 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -473,7 +473,9 @@ ipintr(void)
 		splx(s);
 		if (m == NULL)
 			break;
+		KERNEL_UNLOCK_ONE(NULL);
 		ip_input(m);
+		KERNEL_LOCK(1, NULL);
 	}
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
