@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.118 2008/08/10 15:31:21 tls Exp $
+# $NetBSD: GENERIC,v 1.118.12.1 2011/01/07 01:36:11 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.118 $"
+#ident 		"GENERIC-$Revision: 1.118.12.1 $"
 
 maxusers	32
 
@@ -57,7 +57,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
-options 	TRAP_PANICWAIT
+##options 	TRAP_PANICWAIT
+##options	SYSCALL_DEBUG
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 

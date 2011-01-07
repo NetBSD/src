@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2006/06/10 07:49:29 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.15.86.1 2011/01/07 01:36:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,7 @@
 #include <machine/cpu.h>
 #include <machine/residual.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include "boot.h"
 

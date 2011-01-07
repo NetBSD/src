@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.48.40.1 2011/01/07 01:36:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48.40.1 2011/01/07 01:36:12 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2007/11/17 18:02:42 macallan Exp $");
 #include <powerpc/openpic.h>
 #include <powerpc/atomic.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #ifdef ALTIVEC
 #include <powerpc/altivec.h>
 #endif

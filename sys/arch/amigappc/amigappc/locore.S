@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.15 2008/02/05 22:31:48 garbled Exp $   */
+/*      $NetBSD: locore.S,v 1.15.32.1 2011/01/07 01:36:12 matt Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,6 +60,7 @@
 #include <amiga/amiga/custom.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 	.data
 GLOBAL(proc0paddr)

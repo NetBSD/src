@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.39.22.1 2011/01/07 01:36:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,7 @@
 #include <machine/vmparam.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include "ksyms.h"
 
@@ -121,7 +122,7 @@ __start:
 	/*
 	 * Initialize cpu_info[0]
 	 */
-	INIT_CPUINFO(4,1,9,0)
+	INIT_CPUINFO(4,1,9,5)
 
 	lis	3,__start@ha
 	addi	3,3,__start@l
