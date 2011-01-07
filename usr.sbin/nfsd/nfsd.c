@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.54 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.54.4.1 2011/01/07 06:27:51 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.54 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.54.4.1 2011/01/07 06:27:51 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ main(argc, argv)
 	struct sockaddr_in6 inet6peer;
 	struct pollfd set[4];
 	socklen_t len;
-	int ch, cltpflag, connect_type_cnt, i, maxsock, msgsock;
+	int ch, cltpflag, connect_type_cnt, i, maxsock, msgsock, serrno;
 	int nfsdcnt, on = 1, reregister, sock, tcpflag, tcpsock;
 	int tcp6sock, ip6flag;
 	int tp4cnt, tp4flag, tpipcnt, tpipflag, udpflag, ecode, s;
@@ -482,7 +482,10 @@ main(argc, argv)
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tcpsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
+				serrno = errno;
 				syslog(LOG_ERR, "accept failed: %m");
+				if (serrno == EINTR || serrno == ECONNABORTED)
+					continue;
 				exit(1);
 			}
 			memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
@@ -501,7 +504,10 @@ main(argc, argv)
 			len = sizeof(inet6peer);
 			if ((msgsock = accept(tcp6sock,
 			    (struct sockaddr *)&inet6peer, &len)) < 0) {
+				serrno = errno;
 				syslog(LOG_ERR, "accept failed: %m");
+				if (serrno == EINTR || serrno == ECONNABORTED)
+					continue;
 				exit(1);
 			}
 			if (setsockopt(msgsock, SOL_SOCKET,
@@ -520,7 +526,10 @@ main(argc, argv)
 			len = sizeof(isopeer);
 			if ((msgsock = accept(tp4sock,
 			    (struct sockaddr *)&isopeer, &len)) < 0) {
+				serrno = errno;
 				syslog(LOG_ERR, "accept failed: %m");
+				if (serrno == EINTR || serrno == ECONNABORTED)
+					continue;
 				exit(1);
 			}
 			if (setsockopt(msgsock, SOL_SOCKET,
@@ -538,7 +547,10 @@ main(argc, argv)
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tpipsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
+				serrno = errno;
 				syslog(LOG_ERR, "accept failed: %m");
+				if (serrno == EINTR || serrno == ECONNABORTED)
+					continue;
 				exit(1);
 			}
 			if (setsockopt(msgsock, SOL_SOCKET,
