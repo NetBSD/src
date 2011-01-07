@@ -44,6 +44,8 @@
       builtin_define ("__powerpc__");		\
       builtin_assert ("cpu=powerpc");		\
       builtin_assert ("machine=powerpc");	\
+      if (TARGET_SOFT_FLOAT)			\
+        builtin_define ("_SOFT_FLOAT");		\
     }						\
   while (0)
 
@@ -120,6 +122,13 @@
  */
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_STRICT_ALIGN)
+
+#undef TARGET_E500
+#undef TARGET_E500_SINGLE
+#undef TARGET_E500_DOUBLE
+#define TARGET_E500 (rs6000_cpu == PROCESSOR_PPC8540)
+#define TARGET_E500_SINGLE (TARGET_HARD_FLOAT && rs6000_float_gprs == 1)
+#define TARGET_E500_DOUBLE (TARGET_HARD_FLOAT && rs6000_float_gprs == 2)
 
 /* Attempt to enable execute permissions on the stack.  */
 #define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
