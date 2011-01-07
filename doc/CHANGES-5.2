@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.48 2011/01/07 19:17:29 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.49 2011/01/07 23:29:05 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4267,4 +4267,20 @@ sys/sys/device.h				1.133
 	Add helper function that determines the size and block size of a
 	disk device.
 	[mrg, ticket #1520]
+
+doc/3RDPARTY					patch
+
+	Update Postfix version.
+	[tron, ticket #1521]
+
+sys/dev/raidframe/rf_disks.c			1.76
+sys/dev/raidframe/rf_netbsdkintf.c		1.276
+
+	support non-512K sector disks (up to 16KB) in raidframe.
+	[mrg, ticket #1522]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.278
+
+	Hack to fix up disks with old raidframe component labels.
+	[mrg, ticket #1511]
 
