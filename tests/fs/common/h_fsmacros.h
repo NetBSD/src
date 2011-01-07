@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.27 2011/01/07 11:41:40 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.28 2011/01/07 11:52:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ int _fs_##_fstest_unmount(const atf_tc_t *, const char *, int);
 
 FSPROTOS(ext2fs);
 FSPROTOS(ffs);
+FSPROTOS(ffslog);
 FSPROTOS(lfs);
 FSPROTOS(msdosfs);
 FSPROTOS(nfs);
@@ -169,6 +170,7 @@ do {									\
 #define ATF_TC_FSAPPLY(func,desc)					\
   ATF_TC_FSADD(ext2fs,MOUNT_EXT2FS,func,desc)				\
   ATF_TC_FSADD(ffs,MOUNT_FFS,func,desc)					\
+  ATF_TC_FSADD(ffslog,MOUNT_FFS,func,desc)				\
   ATF_TC_FSADD(lfs,MOUNT_LFS,func,desc)					\
   ATF_TC_FSADD(msdosfs,MOUNT_MSDOS,func,desc)				\
   ATF_TC_FSADD(nfs,MOUNT_NFS,func,desc)					\
@@ -181,6 +183,7 @@ do {									\
 #define ATF_TP_FSAPPLY(func)						\
   ATF_TP_FSADD(ext2fs,func);						\
   ATF_TP_FSADD(ffs,func);						\
+  ATF_TP_FSADD(ffslog,func);						\
   ATF_TP_FSADD(lfs,func);						\
   ATF_TP_FSADD(msdosfs,func);						\
   ATF_TP_FSADD(nfs,func);						\
@@ -204,6 +207,7 @@ do {									\
 #define ATF_TC_FSAPPLY_RO(func,desc,gen)				\
   ATF_TC_FSADD_RO(ext2fs,MOUNT_EXT2FS,func,desc,gen)			\
   ATF_TC_FSADD_RO(ffs,MOUNT_FFS,func,desc,gen)				\
+  ATF_TC_FSADD_RO(ffslog,MOUNT_FFS,func,desc,gen)			\
   ATF_TC_FSADD_RO(msdosfs,MOUNT_MSDOS,func,desc,gen)			\
   ATF_TC_FSADD_RO(nfs,MOUNT_NFS,func,desc,gen)				\
   ATF_TC_FSADD_RO(nfsro,MOUNT_NFS,func,desc,gen)			\
@@ -212,6 +216,7 @@ do {									\
 #define ATF_TP_FSAPPLY_RO(func)						\
   ATF_TP_FSADD(ext2fs,func);						\
   ATF_TP_FSADD(ffs,func);						\
+  ATF_TP_FSADD(ffslog,func);						\
   ATF_TP_FSADD(msdosfs,func);						\
   ATF_TP_FSADD(nfs,func);						\
   ATF_TP_FSADD(nfsro,func);						\
@@ -242,6 +247,8 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
 #define FSTYPE_EXT2FS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "ext2fs") == 0)
 #define FSTYPE_FFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "ffs") == 0)
+#define FSTYPE_FFSLOG(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "ffs") == 0)
 #define FSTYPE_LFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "lfs") == 0)
