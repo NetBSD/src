@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.50 2011/01/07 23:54:41 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.51 2011/01/07 23:57:43 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4295,4 +4295,9 @@ gnu/lib/libstdc++-v3_4/Makefile			1.5
 
 	Explicitly link libstdc++ against libm.
 	[joerg, ticket #1432]
+
+external/mit/xorg/tools/bdftopcf/Makefile	1.5
+
+	Disable bzip2 support in tools bdftopcf(1). PR#44138.
+	[tsutsui, ticket #1512]
 
