@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.32.2 2010/11/25 00:27:20 riz Exp $
+# $NetBSD: Makefile,v 1.2.32.3 2011/01/07 23:50:30 riz Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -27,6 +27,6 @@
 
 # The modules must be built first, because they are built into the
 # static version of libpam.
-SUBDIR=	modules .WAIT libpam
+SUBDIR=	staticmodules .WAIT libpam .WAIT modules
 
 .include <bsd.subdir.mk>
