@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.126 2008/10/05 21:57:20 pooka Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.126.20.1 2011/01/07 01:11:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.126 2008/10/05 21:57:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.126.20.1 2011/01/07 01:11:13 matt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_perfctrs.h"
@@ -321,13 +321,23 @@ schedclock(struct lwp *l)
 
 	ci = l->l_cpu;
 
-	/* Accumulate syscall and context switch counts. */
+	/*
+	 * Accumulate syscall, context switch, and other uvmexp counts.  There
+	 * is a small window where we could loose an counter increment but 
+	 * the overhead just isn't worth it to have perfect statistics.
+	 */
 	atomic_add_int((unsigned *)&uvmexp.swtch, ci->ci_data.cpu_nswtch);
 	ci->ci_data.cpu_nswtch = 0;
 	atomic_add_int((unsigned *)&uvmexp.syscalls, ci->ci_data.cpu_nsyscall);
 	ci->ci_data.cpu_nsyscall = 0;
 	atomic_add_int((unsigned *)&uvmexp.traps, ci->ci_data.cpu_ntrap);
 	ci->ci_data.cpu_ntrap = 0;
+	atomic_add_int((unsigned *)&uvmexp.intrs, ci->ci_data.cpu_nintr);
+	ci->ci_data.cpu_nintr = 0;
+	atomic_add_int((unsigned *)&uvmexp.softs, ci->ci_data.cpu_nsoft);
+	ci->ci_data.cpu_nsoft = 0;
+	atomic_add_int((unsigned *)&uvmexp.faults, ci->ci_data.cpu_nfault);
+	ci->ci_data.cpu_nfault = 0;
 
 	if ((l->l_flag & LW_IDLE) != 0)
 		return;
