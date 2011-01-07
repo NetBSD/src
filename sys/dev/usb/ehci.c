@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.154.4.2 2010/06/12 01:05:44 riz Exp $ */
+/*	$NetBSD: ehci.c,v 1.154.4.2.4.1 2011/01/07 02:50:47 matt Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.4.2 2010/06/12 01:05:44 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.4.2.4.1 2011/01/07 02:50:47 matt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -394,6 +394,17 @@ ehci_init(ehci_softc_t *sc)
 	if (hcr) {
 		aprint_error("%s: reset timeout\n", device_xname(sc->sc_dev));
 		return (USBD_IOERROR);
+	}
+
+	/*
+	 * If we are doing embedded transaction translation function, force
+	 * the controller to host mode.
+	 */
+	if (sc->sc_flags & EHCIF_ETTF) {
+		uint32_t usbmode = EREAD4(sc, EHCI_USBMODE);
+		usbmode &= ~EHCI_USBMODE_CM;
+		usbmode |= EHCI_USBMODE_CM_HOST;
+		EWRITE4(sc, EHCI_USBMODE, usbmode);
 	}
 
 	/* XXX need proper intr scheduling */
@@ -1547,7 +1558,17 @@ ehci_open(usbd_pipe_handle pipe)
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
 
 	if (dev->myhsport) {
-		hshubaddr = dev->myhsport->parent->address;
+		/*
+		 * When directly attached FS/LS device while doing embedded
+		 * transaction translations and we are the hub, set the hub
+		 * adddress to 0 (us).
+		 */
+		if (!(sc->sc_flags & EHCIF_ETTF)
+		    || (dev->myhsport->parent->address != sc->sc_addr)) {
+			hshubaddr = dev->myhsport->parent->address;
+		} else {
+			hshubaddr = 0;
+		}
 		hshubport = dev->myhsport->portno;
 	} else {
 		hshubaddr = 0;
@@ -2255,7 +2276,18 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		v = EOREAD4(sc, EHCI_PORTSC(index));
 		DPRINTFN(8,("ehci_root_ctrl_start: port status=0x%04x\n",
 			    v));
-		i = UPS_HIGH_SPEED;
+
+		if (sc->sc_flags & EHCIF_ETTF) {
+			/*
+			 * If we are doing embedded transaction translation,
+			 * then directly attached LS/FS devices are reset by
+			 * the EHCI controller itself.  PSPD is encoded
+			 * the same way as in USBSTATUS. 
+			 */
+			i = __SHIFTOUT(v, EHCI_PS_PSPD) * UPS_LOW_SPEED;
+		} else {
+			i = UPS_HIGH_SPEED;
+		}
 		if (v & EHCI_PS_CS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & EHCI_PS_PE)	i |= UPS_PORT_ENABLED;
 		if (v & EHCI_PS_SUSP)	i |= UPS_SUSPEND;
@@ -2297,8 +2329,12 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_RESET:
 			DPRINTFN(5,("ehci_root_ctrl_start: reset port %d\n",
 				    index));
-			if (EHCI_PS_IS_LOWSPEED(v)) {
-				/* Low speed device, give up ownership. */
+			if (EHCI_PS_IS_LOWSPEED(v)
+			    && !(sc->sc_flags & EHCIF_ETTF)) {
+				/*
+				 * Low speed device on non-ETTF controller,
+				 * give up ownership.
+				 */
 				ehci_disown(sc, index, 1);
 				break;
 			}
@@ -2311,14 +2347,23 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 				err = USBD_IOERROR;
 				goto ret;
 			}
-			/* Terminate reset sequence. */
-			EOWRITE4(sc, port, v);
-			/* Wait for HC to complete reset. */
-			usb_delay_ms(&sc->sc_bus, EHCI_PORT_RESET_COMPLETE);
-			if (sc->sc_dying) {
-				err = USBD_IOERROR;
-				goto ret;
+			/*
+			 * An embedded transaction translater will automatically
+			 * terminate the reset sequence so there's no need to
+			 * it.
+			 */
+			if (!(sc->sc_flags & EHCIF_ETTF)) {
+				/* Terminate reset sequence. */
+				EOWRITE4(sc, port, v);
+				/* Wait for HC to complete reset. */
+				usb_delay_ms(&sc->sc_bus,
+				    EHCI_PORT_RESET_COMPLETE);
+				if (sc->sc_dying) {
+					err = USBD_IOERROR;
+					goto ret;
+				}
 			}
+
 			v = EOREAD4(sc, port);
 			DPRINTF(("ehci after reset, status=0x%08x\n", v));
 			if (v & EHCI_PS_PR) {
