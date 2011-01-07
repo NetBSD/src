@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.5 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: setfault.S,v 1.5.104.1 2011/01/07 02:06:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -66,6 +66,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #define _NOREGNAMES
+#include "opt_ppcarch.h"
 #include "assym.h"
 #include <machine/asm.h>
 
@@ -85,14 +86,20 @@
  */
 	.globl	_C_LABEL(setfault)
 _C_LABEL(setfault):
-	mflr	%r0
+	mflr	%r11
 	mfcr	%r12
 	GET_CPUINFO(%r4)
 	ldptr	%r4,CI_CURPCB(%r4)
-	stptr	%r3,PCB_FAULT(%r4)
-	streg	%r0,FB_PC(%r3)			/* LR */
+	stptr	%r3,PCB_ONFAULT(%r4)
 	streg	%r1,FB_SP(%r3)			/* SP (R1) */
 	streg	%r2,FB_R2(%r3)			/* why?? */
+#ifdef PPC_BOOKE
+	mfmsr	%r10
+	andi.	%r0,%r10,PSL_PR@l
+	twnei	%r0,0
+	stmw	%r10,FB_MSR(%r3)		/* MSR, LR, CR, R13-R31 */
+#else
+	streg	%r11,FB_PC(%r3)			/* LR */
 	streg	%r12,FB_CR(%r3)			/* CR */
 	streg	%r13,FB_R13(%r3)		/* R13-R31 */
 	streg	%r14,FB_R14(%r3)
@@ -113,5 +120,6 @@ _C_LABEL(setfault):
 	streg	%r29,FB_R29(%r3)
 	streg	%r30,FB_R30(%r3)
 	streg	%r31,FB_R31(%r3)
+#endif
 	li	%r3,0
 	blr
