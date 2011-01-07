@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.19 2011/01/06 06:57:14 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.20 2011/01/07 19:37:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -69,6 +69,13 @@ mydprintf(const char *fmt, ...)
 }
 #else
 #define DPRINTF(x)
+#endif
+
+#ifndef HOSTOPS
+#define host_poll poll
+#define host_read read
+#define host_sendto sendto
+#define host_setsockopt setsockopt
 #endif
 
 /*
@@ -254,14 +261,15 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 
 	for (sent = 0, n = 0; sent < dlen; ) {
 		if (n) {
-			if (poll(&pfd, 1, INFTIM) == -1) {
+			if (host_poll(&pfd, 1, INFTIM) == -1) {
 				if (errno == EINTR)
 					continue;
 				return errno;
 			}
 		}
 
-		n = send(fd, sdata + sent, dlen - sent, MSG_NOSIGNAL);
+		n = host_sendto(fd, sdata + sent, dlen - sent,
+		    MSG_NOSIGNAL, NULL, 0);
 		if (n == 0) {
 			return ENOTCONN;
 		}
@@ -361,7 +369,7 @@ readframe(struct spclient *spc)
 
 		left = HDRSZ - spc->spc_off;
 		/*LINTED: cast ok */
-		n = read(fd, (uint8_t *)&spc->spc_hdr + spc->spc_off, left);
+		n = host_read(fd, (uint8_t*)&spc->spc_hdr + spc->spc_off, left);
 		if (n == 0) {
 			return -1;
 		}
@@ -403,7 +411,7 @@ readframe(struct spclient *spc)
 
 	if (left == 0)
 		return 1;
-	n = read(fd, spc->spc_buf + (spc->spc_off - HDRSZ), left);
+	n = host_read(fd, spc->spc_buf + (spc->spc_off - HDRSZ), left);
 	if (n == 0) {
 		return -1;
 	}
@@ -508,7 +516,7 @@ tcp_connecthook(int s)
 	int x;
 
 	x = 1;
-	setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &x, sizeof(x));
+	host_setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &x, sizeof(x));
 
 	return 0;
 }
