@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.28 2011/01/07 15:30:29 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.29 2011/01/07 18:24:53 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.28 2011/01/07 15:30:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.29 2011/01/07 18:24:53 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3841,7 +3841,7 @@ MODULE(MODULE_CLASS_DRIVER, hdafg, "hdaudio");
 static int
 hdafg_modcmd(modcmd_t cmd, void *opaque)
 {
-	int error;
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
