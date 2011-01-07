@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.308.2.6 2009/10/28 09:03:42 bouyer Exp $
+#	$NetBSD: files.pci,v 1.308.2.6.4.1 2011/01/07 02:23:57 matt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -73,7 +73,7 @@ attach	ld at amr with ld_amr
 file	dev/pci/ld_amr.c		ld_amr
 
 # Areca SATA RAID Controllers
-device	arcmsr: scsi
+device	arcmsr: scsi, sysmon_envsys
 attach	arcmsr at pci
 file	dev/pci/arcmsr.c		arcmsr
 
