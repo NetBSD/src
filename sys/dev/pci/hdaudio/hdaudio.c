@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.8 2010/09/02 01:55:31 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.9 2011/01/07 15:30:29 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.8 2010/09/02 01:55:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.9 2011/01/07 15:30:29 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.8 2010/09/02 01:55:31 jmcneill Exp $")
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 #include <dev/pci/hdaudio/hdaudiovar.h>
 #include <dev/pci/hdaudio/hdaudioreg.h>
@@ -865,6 +866,46 @@ hdaudio_resume(struct hdaudio_softc *sc)
 }
 
 int
+hdaudio_rescan(struct hdaudio_softc *sc, const char *ifattr, const int *locs)
+{
+	struct hdaudio_codec *co;
+	struct hdaudio_function_group *fg;
+	unsigned int codec;
+
+	if (!ifattr_match(ifattr, "hdaudiobus"))
+		return 0;
+
+	for (codec = 0; codec < HDAUDIO_MAX_CODECS; codec++) {
+		co = &sc->sc_codec[codec];
+		fg = co->co_fg;
+		if (!co->co_valid || fg == NULL)
+			continue;
+		if (fg->fg_device)
+			continue;
+		hdaudio_attach_fg(fg, NULL);
+	}
+
+	return 0;
+}
+
+void
+hdaudio_childdet(struct hdaudio_softc *sc, device_t child)
+{
+	struct hdaudio_codec *co;
+	struct hdaudio_function_group *fg;
+	unsigned int codec;
+
+	for (codec = 0; codec < HDAUDIO_MAX_CODECS; codec++) {
+		co = &sc->sc_codec[codec];
+		fg = co->co_fg;
+		if (!co->co_valid || fg == NULL)
+			continue;
+		if (fg->fg_device == child)
+			fg->fg_device = NULL;
+	}
+}
+
+int
 hdaudio_intr(struct hdaudio_softc *sc)
 {
 	struct hdaudio_stream *st;
@@ -1348,8 +1389,12 @@ hdaudio_dispatch_fgrp_ioctl(struct hdaudio_softc *sc, u_long cmd,
     prop_dictionary_t request, prop_dictionary_t response)
 {
 	struct hdaudio_function_group *fg;
+	int (*infocb)(void *, prop_dictionary_t, prop_dictionary_t);
+	prop_dictionary_t fgrp_dict;
+	uint64_t info_fn;
 	int16_t codecid, nid;
 	void *fgrp_sc; 
+	bool rv;
 	int err;
 
 	if (!prop_dictionary_get_int16(request, "codecid", &codecid) ||
@@ -1360,17 +1405,26 @@ hdaudio_dispatch_fgrp_ioctl(struct hdaudio_softc *sc, u_long cmd,
 	if (fg == NULL)
 		return ENODEV;
 	fgrp_sc = device_private(fg->fg_device);
+	fgrp_dict = device_properties(fg->fg_device);
 
 	switch (fg->fg_type) {
 	case HDAUDIO_GROUP_TYPE_AFG:
 		switch (cmd) {
 		case HDAUDIO_FGRP_CODEC_INFO:
-			err = hdaudio_afg_codec_info(fgrp_sc,
-			    request, response);
+			rv = prop_dictionary_get_uint64(fgrp_dict,
+			    "codecinfo-callback", &info_fn);
+			if (!rv)
+				return ENXIO;
+			infocb = (void *)(uintptr_t)info_fn;
+			err = infocb(fgrp_sc, request, response);
 			break;
 		case HDAUDIO_FGRP_WIDGET_INFO:
-			err = hdaudio_afg_widget_info(fgrp_sc,
-			    request, response);
+			rv = prop_dictionary_get_uint64(fgrp_dict,
+			    "widgetinfo-callback", &info_fn);
+			if (!rv)
+				return ENXIO;
+			infocb = (void *)(uintptr_t)info_fn;
+			err = infocb(fgrp_sc, request, response);
 			break;
 		default:
 			err = EINVAL;
@@ -1451,4 +1505,44 @@ hdaudioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		prop_object_release(response);
 	prop_object_release(request);
 	return err;
+}
+
+MODULE(MODULE_CLASS_DRIVER, hdaudio, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+hdaudio_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+#ifdef _MODULE
+	int bmaj = -1, cmaj = -1;
+#endif
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_hdaudio,
+		    cfattach_ioconf_hdaudio, cfdata_ioconf_hdaudio);
+		if (error)
+			return error;
+		error = devsw_attach("hdaudio", NULL, &bmaj,
+		    &hdaudio_cdevsw, &cmaj);
+		if (error)
+			config_fini_component(cfdriver_ioconf_hdaudio,
+			    cfattach_ioconf_hdaudio, cfdata_ioconf_hdaudio);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		devsw_detach(NULL, &hdaudio_cdevsw);
+		error = config_fini_component(cfdriver_ioconf_hdaudio,
+		    cfattach_ioconf_hdaudio, cfdata_ioconf_hdaudio);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }

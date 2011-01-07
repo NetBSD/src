@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.27 2010/09/02 01:55:31 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.28 2011/01/07 15:30:29 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.27 2010/09/02 01:55:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.28 2011/01/07 15:30:29 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.27 2010/09/02 01:55:31 jmcneill Ex
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -321,6 +322,11 @@ static void	hdaudio_afg_childdet(device_t, device_t);
 static bool	hdaudio_afg_suspend(device_t, const pmf_qual_t *);
 static bool	hdaudio_afg_resume(device_t, const pmf_qual_t *);
 
+static int	hdaudio_afg_widget_info(void *, prop_dictionary_t,
+					prop_dictionary_t);
+static int	hdaudio_afg_codec_info(void *, prop_dictionary_t,
+				       prop_dictionary_t);
+
 CFATTACH_DECL2_NEW(
     hdafg,
     sizeof(struct hdaudio_afg_softc),
@@ -378,7 +384,7 @@ static const struct audio_hw_if hdaudio_afg_hw_if = {
 	.get_props		= hdaudio_afg_get_props,
 	.trigger_output		= hdaudio_afg_trigger_output,
 	.trigger_input		= hdaudio_afg_trigger_input,
-	.dev_ioctl		= hdaudio_afg_dev_ioctl
+	.dev_ioctl		= hdaudio_afg_dev_ioctl,
 };
 
 static int
@@ -3729,7 +3735,7 @@ hdaudio_afg_trigger_input(void *opaque, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 hdaudio_afg_widget_info(void *opaque, prop_dictionary_t request,
     prop_dictionary_t response)
 {
@@ -3774,7 +3780,7 @@ hdaudio_afg_widget_info(void *opaque, prop_dictionary_t request,
 	return 0;
 }
 
-int
+static int
 hdaudio_afg_codec_info(void *opaque, prop_dictionary_t request,
     prop_dictionary_t response)
 {
@@ -3824,4 +3830,33 @@ hdaudio_afg_dev_ioctl(void *opaque, u_long cmd, void *addr, int flag, lwp_t *l)
 		prop_object_release(response);
 	prop_object_release(request);
 	return err;
+}
+
+MODULE(MODULE_CLASS_DRIVER, hdafg, "hdaudio");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+hdafg_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_hdafg,
+		    cfattach_ioconf_hdafg, cfdata_ioconf_hdafg);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_hdafg,
+		    cfattach_ioconf_hdafg, cfdata_ioconf_hdafg);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
