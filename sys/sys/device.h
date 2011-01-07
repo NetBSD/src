@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.112.6.1 2009/03/15 19:43:48 snj Exp $ */
+/* $NetBSD: device.h,v 1.112.6.2 2011/01/07 06:33:44 riz Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -389,6 +389,7 @@ extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
 
 struct vnode *opendisk(struct device *);
+int getdisksize(struct vnode *, uint64_t *, unsigned *);
 int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
