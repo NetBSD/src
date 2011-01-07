@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.22 2011/01/06 17:20:48 pgoyette Exp $
+# $NetBSD: Makefile,v 1.23 2011/01/07 02:47:40 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
 
-TESTS_SUBDIRS+=	gen hash ieeefp setjmp stdlib stdio string
+TESTS_SUBDIRS+=	gen hash ieeefp setjmp stdlib stdio string ttyio
 
 .if ${HAS_SSP} == "yes"
 TESTS_SUBDIRS+=	ssp
@@ -11,6 +11,7 @@ TESTS_SUBDIRS+=	ssp
 
 TESTSDIR=	${TESTSBASE}/lib/libc
 
+TESTS_C+=	t_cerror
 TESTS_C+=	t_clone
 TESTS_C+=	t_context
 TESTS_C+=	t_convfp
