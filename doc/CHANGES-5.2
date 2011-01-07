@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.40 2011/01/06 22:02:53 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.41 2011/01/07 01:10:48 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -3333,4 +3333,17 @@ usr.sbin/bind/rndc-confgen/Makefile                                     delete
 
 	Update bind to 9.7.2-P3.
 	[spz, ticket #1517]
+
+sys/arch/vax/include/clock.h			1.8
+sys/arch/vax/vax/clock.c			1.54
+
+	Correct definition of leap year.  Make yeartonum and numtoyear use
+	full years so that year 2000 is correctly counted as a leap year.
+	Now NetBSD under SIMH picks up correct time-of-day clock value.
+	[uwe, ticket #1500]
+
+etc/rc.d/named					1.19, 1.21
+
+	Adjust named startup for new BIND version.
+	[tron, ticket #1519]
 
