@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.279 2010/12/22 05:51:19 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.280 2011/01/07 19:52:18 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.279 2010/12/22 05:51:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.280 2011/01/07 19:52:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -993,6 +993,7 @@ raid_detach_unlocked(struct raid_softc *rs)
 		rs->sc_flags &= ~(RAIDF_INITED|RAIDF_SHUTDOWN);
 
 	/* Detach the disk. */
+	dkwedge_delall(&rs->sc_dkdev);
 	disk_detach(&rs->sc_dkdev);
 	disk_destroy(&rs->sc_dkdev);
 
