@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.50 2008/10/14 22:54:22 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.50.14.1 2011/01/07 02:12:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50 2008/10/14 22:54:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50.14.1 2011/01/07 02:12:19 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50 2008/10/14 22:54:22 macallan Exp $
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/hid_601.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/cpufeat.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -393,7 +394,7 @@ cpu_attach_common(struct device *self, int id)
 #endif
 
 	ci->ci_cpuid = id;
-	ci->ci_intrdepth = -1;
+	ci->ci_idepth = -1;
 	ci->ci_dev = self;
 	ci->ci_idlespin = cpu_idlespin;
 
@@ -507,7 +508,7 @@ cpu_setup(self, ci)
 		/* Select NAP mode. */
 		hid0 &= ~HID0_SLEEP;
 		hid0 |= HID0_NAP | HID0_DPM;
-		powersave = 1;
+//		powersave = 1;
 		break;
 
 	case IBM970:

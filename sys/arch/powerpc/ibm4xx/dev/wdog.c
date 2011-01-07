@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.9 2006/05/05 18:04:42 thorpej Exp $ */
+/* $NetBSD: wdog.c,v 1.9.90.1 2011/01/07 02:12:18 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.9 2006/05/05 18:04:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.9.90.1 2011/01/07 02:12:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.9 2006/05/05 18:04:42 thorpej Exp $");
 #include <prop/proplib.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include <dev/sysmon/sysmonvar.h>

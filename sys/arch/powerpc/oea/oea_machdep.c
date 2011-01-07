@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.46 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.46.18.1 2011/01/07 02:12:19 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46.18.1 2011/01/07 02:12:19 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46 2008/07/02 17:28:56 ad Exp $");
 #include <powerpc/pte.h>
 #include <powerpc/altivec.h>
 #include <machine/powerpc.h>
+#include <powerpc/oea/spr.h>
 
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
@@ -727,7 +728,7 @@ oea_startup(const char *model)
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
 	KASSERT(curcpu()->ci_intstk != 0);
-	KASSERT(curcpu()->ci_intrdepth == -1);
+	KASSERT(curcpu()->ci_idepth == -1);
 
 	/*
 	 * If the msgbuf is not in segment 0, allocate KVA for it and access
