@@ -849,10 +849,10 @@ display_init(struct statics *statics, int percpuinfo)
 	    *ip++ = cpustate_total_length;
 	    if ((i = strlen(*pp++)) > 0)
 	    {
-		cpustate_total_length += i + 7;
-		/* strlen(" 100% ") is 6, strlen(" 99.9% ") is 7. Never 8. */
+		cpustate_total_length += i + 8;
 	    }
 	}
+	cpustate_total_length -= 2;
     }
 
 #ifdef ENABLE_COLOR
@@ -1151,10 +1151,10 @@ cpustates_tag(int c)
 
     static char fmttag[100];
 
-    char *short_tag = !multi || ncpu <= 1 ? "CPU: " : "CPU%0*d";
+    char *short_tag = !multi || ncpu <= 1 ? "CPU: " : "CPU%0*d: ";
     char *long_tag = !multi || ncpu <= 1 ? "CPU states: " : "CPU%0*d states: ";
 
-    for (width=0, u=ncpu; u>0; u /= 10) {
+    for (width = 0, u = ncpu - 1; u > 0; u /= 10) {
 	++width;
     }
 
