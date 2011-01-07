@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.39 2008/04/28 20:23:43 martin Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.39.22.1 2011/01/07 03:13:09 matt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39.22.1 2011/01/07 03:13:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		    ((char *)l->l_sigstk.ss_sp +
 		    l->l_sigstk.ss_size);
 	} else {
-		fp = tf->fixreg[1];
+		fp = tf->tf_fixreg[1];
 	}
 #ifdef DEBUG_LINUX
 	printf("fp at start of linux_sendsig = %x\n", fp);
@@ -167,18 +167,18 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Save register context.
 	 */
 	for (i = 0; i < 32; i++)
-		linux_regs.lgpr[i] = tf->fixreg[i];
-	linux_regs.lnip = tf->srr0;
-	linux_regs.lmsr = tf->srr1 & PSL_USERSRR1;
-	linux_regs.lorig_gpr3 = tf->fixreg[3]; /* XXX Is that right? */
-	linux_regs.lctr = tf->ctr;
-	linux_regs.llink = tf->lr;
-	linux_regs.lxer = tf->xer;
-	linux_regs.lccr = tf->cr;
+		linux_regs.lgpr[i] = tf->tf_fixreg[i];
+	linux_regs.lnip = tf->tf_srr0;
+	linux_regs.lmsr = tf->tf_srr1 & PSL_USERSRR1;
+	linux_regs.lorig_gpr3 = tf->tf_fixreg[3]; /* XXX Is that right? */
+	linux_regs.lctr = tf->tf_ctr;
+	linux_regs.llink = tf->tf_lr;
+	linux_regs.lxer = tf->tf_xer;
+	linux_regs.lccr = tf->tf_cr;
 	linux_regs.lmq = 0;  			/* Unused, 601 only */
-	linux_regs.ltrap = tf->exc;
-	linux_regs.ldar = tf->dar;
-	linux_regs.ldsisr = tf->dsisr;
+	linux_regs.ltrap = tf->tf_exc;
+	linux_regs.ldar = tf->tf_dar;
+	linux_regs.ldsisr = tf->tf_dsisr;
 	linux_regs.lresult = 0;
 
 	memset(&frame, 0, sizeof(frame));
@@ -235,11 +235,11 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Set the registers according to how the Linux process expects them.
 	 * "Mind the gap" Linux expects a gap here.
 	 */
-	tf->fixreg[1] = fp - LINUX__SIGNAL_FRAMESIZE;
-	tf->lr = (int)catcher;
-	tf->fixreg[3] = (int)native_to_linux_signo[sig];
-	tf->fixreg[4] = fp;
-	tf->srr0 = (int)p->p_sigctx.ps_sigcode;
+	tf->tf_fixreg[1] = fp - LINUX__SIGNAL_FRAMESIZE;
+	tf->tf_lr = (int)catcher;
+	tf->tf_fixreg[3] = (int)native_to_linux_signo[sig];
+	tf->tf_fixreg[4] = fp;
+	tf->tf_srr0 = (int)p->p_sigctx.ps_sigcode;
 
 #ifdef DEBUG_LINUX
 	printf("fp at end of linux_sendsig = %x\n", fp);
@@ -310,13 +310,13 @@ linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *
 		return (EINVAL);
 
 	for (i = 0; i < 32; i++)
-		tf->fixreg[i] = lregs->lgpr[i];
-	tf->lr = lregs->llink;
-	tf->cr = lregs->lccr;
-	tf->xer = lregs->lxer;
-	tf->ctr = lregs->lctr;
-	tf->srr0 = lregs->lnip;
-	tf->srr1 = lregs->lmsr;
+		tf->tf_fixreg[i] = lregs->lgpr[i];
+	tf->tf_lr = lregs->llink;
+	tf->tf_cr = lregs->lccr;
+	tf->tf_xer = lregs->lxer;
+	tf->tf_ctr = lregs->lctr;
+	tf->tf_srr0 = lregs->lnip;
+	tf->tf_srr1 = lregs->lmsr;
 
 	/*
 	 * Make sure the fpu state is discarded
@@ -400,13 +400,13 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 		return (EINVAL);
 
 	for (i = 0; i < 32; i++)
-		tf->fixreg[i] = lregs->lgpr[i];
-	tf->lr = lregs->llink;
-	tf->cr = lregs->lccr;
-	tf->xer = lregs->lxer;
-	tf->ctr = lregs->lctr;
-	tf->srr0 = lregs->lnip;
-	tf->srr1 = lregs->lmsr;
+		tf->tf_fixreg[i] = lregs->lgpr[i];
+	tf->tf_lr = lregs->llink;
+	tf->tf_cr = lregs->lccr;
+	tf->tf_xer = lregs->lxer;
+	tf->tf_ctr = lregs->lctr;
+	tf->tf_srr0 = lregs->lnip;
+	tf->tf_srr1 = lregs->lmsr;
 
 	/*
 	 * Make sure the fpu state is discarded
