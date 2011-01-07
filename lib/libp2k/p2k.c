@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.50 2011/01/07 10:18:06 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.51 2011/01/07 11:15:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -84,16 +84,6 @@ struct p2k_mount {
 
 struct p2k_node {
 	struct vnode *p2n_vp;
-
-	/*
-	 * Ok, then, uhm, we need .. *drumroll*.. two componentname
-	 * storages for rename.  This is because the source dir is
-	 * unlocked after the first lookup, and someone else might
-	 * race in here.  However, we know it's not another rename
-	 * because of the kernel rename lock.  And we need two since
-	 * srcdir and targdir might be the same.  It's a wonderful world.
-	 */
-	struct componentname *p2n_cn_ren_src, *p2n_cn_ren_targ;
 
 	LIST_ENTRY(p2k_node) p2n_entries;
 };
@@ -304,7 +294,6 @@ p2k_init(uint32_t puffs_flags)
 
 	PUFFSOP_SET(pops, p2k, node, inactive);
 	PUFFSOP_SET(pops, p2k, node, reclaim);
-	PUFFSOP_SET(pops, p2k, node, abortop);
 
 	PUFFSOP_SET(pops, p2k, node, getextattr);
 	PUFFSOP_SET(pops, p2k, node, setextattr);
@@ -677,37 +666,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_LOOKUP(dvp, &vp, cn);
 	RUMP_VOP_UNLOCK(dvp);
-
-	/*
-	 * XXX the rename lookup protocol is currently horribly
-	 * broken.  We get 1) DELETE 2) DELETE with INRELOOKUP
-	 * 3) RENAME.  Hold on to this like
-	 * it were the absolute truth for now.  However, do
-	 * not sprinkle asserts based on this due to abovementioned
-	 * brokenness -- some file system drivers might not
-	 * even issue ABORT properly, so just free resources
-	 * on the fly and hope for the best.  PR kern/42348
-	 */
-	if (pcn->pcn_flags & RUMP_NAMEI_INRENAME) {
-		if (pcn->pcn_nameiop == RUMP_NAMEI_DELETE) {
-			/* save path from the first lookup */
-			if ((pcn->pcn_flags & RUMP_NAMEI_INRELOOKUP) == 0) {
-				if (p2n_dir->p2n_cn_ren_src)
-					freecn(p2n_dir->p2n_cn_ren_src);
-				p2n_dir->p2n_cn_ren_src = cn;
-			} else {
-				freecn(cn);
-				cn = NULL;
-			}
-		} else {
-			assert(pcn->pcn_nameiop == RUMP_NAMEI_RENAME);
-			if (p2n_dir->p2n_cn_ren_targ)
-				freecn(p2n_dir->p2n_cn_ren_targ);
-			p2n_dir->p2n_cn_ren_targ = cn;
-		}
-	} else {
-		freecn(cn);
-	}
+	freecn(cn);
 
 	if (rv) {
 		if (rv == EJUSTRETURN) {
@@ -719,15 +678,6 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	p2n = getp2n(p2m, vp, false, NULL);
 	if (p2n == NULL) {
-		if (pcn->pcn_flags & RUMP_NAMEI_INRENAME) {
-			if (pcn->pcn_nameiop == RUMP_NAMEI_DELETE) {
-				p2n_dir->p2n_cn_ren_src = NULL;
-			} else {
-				p2n_dir->p2n_cn_ren_targ = NULL;
-			}
-
-			RUMP_VOP_ABORTOP(dvp, cn);
-		}
 		return ENOMEM;
 	}
 
@@ -1003,26 +953,6 @@ p2k_node_seek(struct puffs_usermount *pu, puffs_cookie_t opc,
 	return rv;
 }
 
-/*ARGSUSED*/
-int
-p2k_node_abortop(struct puffs_usermount *pu, puffs_cookie_t opc,
-	const struct puffs_cn *pcn)
-{
-	struct p2k_node *p2n_dir = opc;
-	struct componentname *cnp;
-
-	if ((cnp = p2n_dir->p2n_cn_ren_src) != NULL) {
-		freecn(cnp);
-		p2n_dir->p2n_cn_ren_src = NULL;
-	}
-	if ((cnp = p2n_dir->p2n_cn_ren_targ) != NULL) {
-		freecn(cnp);
-		p2n_dir->p2n_cn_ren_targ = NULL;
-	}
-
-	return 0;
-}
-
 static int
 do_nukenode(struct p2k_node *p2n_dir, struct p2k_node *p2n,
 	const struct puffs_cn *pcn,
@@ -1081,24 +1011,12 @@ p2k_node_rename(struct puffs_usermount *pu,
 	puffs_cookie_t targ_dir, puffs_cookie_t targ,
 	const struct puffs_cn *pcn_targ)
 {
-	struct p2k_node *p2n_srcdir = src_dir, *p2n_targdir = targ_dir;
 	struct vnode *dvp, *vp, *tdvp, *tvp = NULL;
 	struct componentname *cn_src, *cn_targ;
 	int rv;
 
-	if (p2n_srcdir->p2n_cn_ren_src) {
-		cn_src = p2n_srcdir->p2n_cn_ren_src;
-		p2n_srcdir->p2n_cn_ren_src = NULL;
-	} else {
-		cn_src = makecn(pcn_src);
-	}
-
-	if (p2n_targdir->p2n_cn_ren_targ) {
-		cn_targ = p2n_targdir->p2n_cn_ren_targ;
-		p2n_targdir->p2n_cn_ren_targ = NULL;
-	} else {
-		cn_targ = makecn(pcn_targ);
-	}
+	cn_src = makecn(pcn_src);
+	cn_targ = makecn(pcn_targ);
 
 	dvp = OPC2VP(src_dir);
 	vp = OPC2VP(src);
