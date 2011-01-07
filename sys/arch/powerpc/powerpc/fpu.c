@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.21 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: fpu.c,v 1.21.26.1 2011/01/07 02:03:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21.26.1 2011/01/07 02:03:51 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -69,7 +69,7 @@ enable_fpu(void)
 	 * If we own the CPU but FP is disabled, simply enable it and return.
 	 */
 	if (ci->ci_fpulwp == l) {
-		tf->srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
+		tf->tf_srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 		return;
 	}
 	msr = mfmsr();
@@ -118,7 +118,7 @@ enable_fpu(void)
 		"lfd	31,248(%0)\n"
 	    :: "b"(&pcb->pcb_fpu.fpreg[0]));
 	__asm volatile ("isync");
-	tf->srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
+	tf->tf_srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 	ci->ci_fpulwp = l;
 	pcb->pcb_fpcpu = ci;
 	pcb->pcb_flags |= PCB_OWNFPU;
