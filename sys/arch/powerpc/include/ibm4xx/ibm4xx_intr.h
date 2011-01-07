@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.16 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.16.26.1 2011/01/07 01:53:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
-
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
