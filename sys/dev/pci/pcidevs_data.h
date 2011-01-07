@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.15 2010/11/22 03:40:00 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.15.2.1 2011/01/07 02:22:19 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.962.4.15.2.1 2011/01/07 02:21:52 matt Exp
  */
 
 /*
@@ -1964,6 +1964,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Nvidia & SGS-Thomson Microelectronics",
 	},
 	{
+	    PCI_VENDOR_PERICOM,
+	    "Pericom Semiconductors",
+	},
+	{
 	    PCI_VENDOR_RAINBOW,
 	    "Rainbow Technologies",
 	},
@@ -2248,6 +2252,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "B & B Electronics",
 	},
 	{
+	    PCI_VENDOR_FREESCALE,
+	    "Freescale Semiconductor",
+	},
+	{
 	    PCI_VENDOR_ATTANSIC,
 	    "Attansic Technologies",
 	},
@@ -2400,7 +2408,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 590;
+const int pci_nvendors = 592;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -3834,6 +3842,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA,
 	    "L1 Gigabit Ethernet Adapter",
+	},
+	{
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8131,
+	    "Atheros AR8131 Gigabit Ethernet Adapter",
 	},
 	{
 	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_100,
@@ -6706,6 +6718,50 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_SS3000,
 	    "SpeedStream 3000",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8548E,
+	    "MPC8548E",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8548,
+	    "MPC8548",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8543E,
+	    "MPC8543E",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8543,
+	    "MPC8543",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8547E,
+	    "MPC8547E",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8545E,
+	    "MPC8545E",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8545,
+	    "MPC8545",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8544E,
+	    "MPC8544E",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8544,
+	    "MPC8544",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8572E,
+	    "MPC8572E",
+	},
+	{
+	    PCI_VENDOR_FREESCALE, PCI_PRODUCT_FREESCALE_MPC8572,
+	    "MPC8572",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64010A,
@@ -10232,6 +10288,22 @@ static const struct pci_product pci_products[] = {
 	    "MPC8245 \"Kahlua II\" Host Bridge",
 	},
 	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8555E,
+	    "MPC8555E",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8541,
+	    "MPC8541",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8548E,
+	    "MPC8548E",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8548,
+	    "MPC8548",
+	},
+	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_RAVEN,
 	    "Raven Host Bridge & Multi-Processor Interrupt Controller",
 	},
@@ -10786,6 +10858,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855,
 	    "9855 Quad UART and 1284 Printer port",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_MCS9990,
+	    "MCS9990 Quad USB 2.0 Port",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
@@ -12157,7 +12233,15 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_PEAK, PCI_PRODUCT_PEAK_PCAN,
-	    "PCAN CAN controller",
+	    "PCAN CAN Controller",
+	},
+	{
+	    PCI_VENDOR_PERICOM, PCI_PRODUCT_PERICOM_P17C9X110,
+	    "P17C9X110 PCIe to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_PERICOM, PCI_PRODUCT_PERICOM_P17C9X,
+	    "P17C9X PCIe to PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX,
@@ -14980,4 +15064,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3144;
+const int pci_nproducts = 3163;
