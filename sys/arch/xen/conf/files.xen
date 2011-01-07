@@ -1,10 +1,14 @@
-#	$NetBSD: files.xen,v 1.88.4.5 2009/10/03 23:54:04 snj Exp $
+#	$NetBSD: files.xen,v 1.88.4.6 2011/01/07 01:42:55 riz Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
 version 20071109
 
+ifdef i386
 maxpartitions 8
+else
+maxpartitions 16
+endif
 
 maxusers 2 16 128
 
