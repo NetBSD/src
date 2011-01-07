@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.15 2007/11/06 02:52:53 simonb Exp $	*/
+/*	$NetBSD: userret.h,v 1.15.40.1 2011/01/07 01:55:37 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,7 +42,7 @@
  * trap and syscall.
  */
 static __inline void
-userret(struct lwp *l, struct trapframe *frame)
+userret(struct lwp *l, struct trapframe *tf)
 {
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct cpu_info * const ci = curcpu();
@@ -51,10 +51,13 @@ userret(struct lwp *l, struct trapframe *frame)
 	struct pcb * const pcb = &l->l_addr->u_pcb;
 #endif
 
+	KASSERTMSG((tf == trapframe(curlwp)),
+	    ("tf=%p, trapframe(curlwp)=%p\n", tf, trapframe(curlwp)));
+
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	frame->srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
+	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
 
 	/*
 	 * If someone stole the fp or vector unit while we were away,
@@ -62,9 +65,9 @@ userret(struct lwp *l, struct trapframe *frame)
 	 * we don't own it.
 	 */
 #ifdef PPC_HAVE_FPU
-	if ((frame->srr1 & PSL_FP) &&
+	if ((tf->tf_srr1 & PSL_FP) &&
 	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
-		frame->srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
+		tf->tf_srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
 	}
 #endif
 #ifdef ALTIVEC
@@ -72,12 +75,12 @@ userret(struct lwp *l, struct trapframe *frame)
 	 * We need to manually restore PSL_VEC each time we return
 	 * to user mode since PSL_VEC is not preserved in SRR1.
 	 */
-	if (frame->srr1 & PSL_VEC) {
+	if (tf->tf_srr1 & PSL_VEC) {
 		if (l != ci->ci_veclwp)
-			frame->srr1 &= ~PSL_VEC;
+			tf->tf_srr1 &= ~PSL_VEC;
 	} else {
 		if (l == ci->ci_veclwp)
-			frame->srr1 |= PSL_VEC;
+			tf->tf_srr1 |= PSL_VEC;
 	}
 
 	/*
