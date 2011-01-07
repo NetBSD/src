@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2008/02/05 22:31:49 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.7.28.1 2011/01/07 01:37:43 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include "ksyms.h"
 
