@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.214 2011/01/06 17:20:48 pgoyette Exp $
+# $NetBSD: mi,v 1.215 2011/01/07 02:49:09 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -382,6 +382,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_string.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_stresep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/ttyio				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/ttyio/t_ttyio.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_cerror.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_clone.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_context.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_convfp.debug			tests-lib-debug		debug,atf
@@ -1678,7 +1681,10 @@
 ./usr/tests/lib/libc/string/t_string		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_stresep		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
+./usr/tests/lib/libc/ttyio			tests-lib-tests
+./usr/tests/lib/libc/ttyio/t_ttyio		tests-lib-tests		atf
 ./usr/tests/lib/libc/t_atexit			tests-lib-tests		atf
+./usr/tests/lib/libc/t_cerror			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_clone			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_context			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_convfp			tests-lib-tests		atf
