@@ -1,4 +1,4 @@
-#	$NetBSD: files.mpc85xx,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $
+#	$NetBSD: files.mpc85xx,v 1.1.2.2 2011/01/07 03:12:38 matt Exp $
 #
 # mpc85xx-specific configuration info
 
@@ -26,6 +26,7 @@ include	"dev/ata/files.ata"
 
 # Machine-independent USB drivers
 include	"dev/usb/files.usb"
+options 	USB_FRAG_DMA_WORKAROUND
 
 # Machine-independent SDMMC drivers
 include	"dev/sdmmc/files.sdmmc"
