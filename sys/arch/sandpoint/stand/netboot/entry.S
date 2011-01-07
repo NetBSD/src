@@ -1,6 +1,7 @@
-/* $NetBSD: entry.S,v 1.3 2007/11/05 13:41:48 nisimura Exp $ */
+/* $NetBSD: entry.S,v 1.3.44.1 2011/01/07 01:37:43 matt Exp $ */
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/hid.h>
 
 	.text
