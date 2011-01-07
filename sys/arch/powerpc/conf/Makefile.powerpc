@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.40 2008/03/07 17:10:00 phx Exp $
+#	$NetBSD: Makefile.powerpc,v 1.40.22.1 2011/01/07 02:08:24 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -41,8 +41,9 @@ CPPFLAGS+=	-D${MACHINE}=${MACHINE}
 CWARNFLAGS+=	-Wreturn-type
 .if ${PPCDIR} == "oea"
 CFLAGS+=	-mno-strict-align
+CFLAGS+=	-Wa,-maltivec
 .endif
-CFLAGS+=	-msoft-float ${CCPUOPTS} -Wa,-maltivec
+CFLAGS+=	-msoft-float ${CCPUOPTS}
 AFLAGS+=	${AOPTS}
 
 ##
@@ -71,8 +72,10 @@ ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 ##
 ## (5) link settings
 ##
+KERNLDSCRIPT?=	${POWERPC}/conf/kern.ldscript
 TEXTADDR?=	0x100000
-LINKFORMAT=	-N
+LINKFORMAT=	-N -T ${KERNLDSCRIPT}
+
 ENTRYPOINT=	__start
 
 .if defined(NEED_SREC)
