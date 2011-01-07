@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 2008/02/07 00:36:57 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13.30.1 2011/01/07 01:52:39 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -250,7 +250,7 @@ vaddr_t pmap_unsetusr (void);
 int pmap_setup_segment0_map(int use_large_pages, ...);
 #endif
 
-#define	PMAP_NC			0x1000
+#define	PMAP_NOCACHE			0x1000000
 #define PMAP_STEAL_MEMORY
 #define PMAP_NEED_PROCWR
 
