@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.44 2011/01/07 01:56:17 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.45 2011/01/07 03:58:26 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -4244,4 +4244,15 @@ sys/dev/sysmon/sysmon_envsys_events.c		1.94 via patch
 
 	Make this compile when "options ENVSYS_OBJECTS_DEBUG" is defined.
 	[pgoyette, ticket #1505]
+
+sys/dev/sbus/spif.c				1.19
+
+	Fix warning about missing initializer that showed up in sparc64
+	builds, but, strangely enough, not in sparc builds.
+	[hauke, ticket #1506]
+
+external/bsd/top/dist/display.c			1.9 via patch
+
+	PR/43562: Witold Jan Wnuk: top: CPU percentages overlap labels
+	[is, ticket #1507]
 
