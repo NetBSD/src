@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.215 2011/01/07 02:49:09 pgoyette Exp $
+# $NetBSD: mi,v 1.216 2011/01/07 03:04:12 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1682,6 +1682,7 @@
 ./usr/tests/lib/libc/string/t_stresep		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio			tests-lib-tests
+./usr/tests/lib/libc/ttyio/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio/t_ttyio		tests-lib-tests		atf
 ./usr/tests/lib/libc/t_atexit			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_cerror			tests-lib-tests		atf
