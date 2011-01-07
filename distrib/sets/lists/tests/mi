@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.216 2011/01/07 03:04:12 pgoyette Exp $
+# $NetBSD: mi,v 1.217 2011/01/07 15:06:37 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -319,6 +319,8 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
@@ -1601,6 +1603,11 @@
 ./usr/tests/lib/csu/t_crt0			tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libc/db				tests-lib-tests
+./usr/tests/lib/libc/db/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libc/db/README			tests-lib-tests		atf
+./usr/tests/lib/libc/db/h_db			tests-lib-tests		atf
+./usr/tests/lib/libc/db/t_db			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen			tests-lib-tests
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf
