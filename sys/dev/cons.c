@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.65 2008/01/24 17:32:52 ad Exp $	*/
+/*	$NetBSD: cons.c,v 1.65.32.1 2011/01/07 02:27:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.65 2008/01/24 17:32:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.65.32.1 2011/01/07 02:27:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -279,7 +279,15 @@ cngetc(void)
 {
 	if (cn_tab == NULL)
 		return (0);
-	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
+	int s = splserial();
+	for (;;) {
+		const int rv = (*cn_tab->cn_getc)(cn_tab->cn_dev);
+		if (rv >= 0) {
+			splx(s);
+			return rv;
+		}
+		docritpollhooks();
+	}
 }
 
 int
@@ -337,8 +345,10 @@ cnputc(int c)
 
 	if (c) {
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
-		if (c == '\n')
+		if (c == '\n') {
+			docritpollhooks();
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
+		}
 	}
 }
 
