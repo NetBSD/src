@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.70.10.3 2010/11/21 22:06:53 riz Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.70.10.4 2011/01/07 23:25:59 riz Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.70.10.3 2010/11/21 22:06:53 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.70.10.4 2011/01/07 23:25:59 riz Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -597,15 +597,25 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		if (error == ENXIO) {
 			/* the component isn't there... must be dead :-( */
 			diskPtr->status = rf_ds_failed;
+			return 0;
 		} else {
 			return (error);
 		}
 	}
-	if (diskPtr->status == rf_ds_optimal) {
 
+	if ((error = rf_getdisksize(vp, curlwp, diskPtr)) != 0)
+		return (error);
+
+	/*
+	 * If this raidPtr's bytesPerSector is zero, fill it in with this
+	 * components blockSize.  This will give us something to work with
+	 * initially, and if it is wrong, we'll get errors later.
+	 */
+	if (raidPtr->bytesPerSector == 0)
+		raidPtr->bytesPerSector = diskPtr->blockSize;
+
+	if (diskPtr->status == rf_ds_optimal) {
 		if ((error = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0) 
-			return (error);
-		if ((error = rf_getdisksize(vp, curlwp, diskPtr)) != 0)
 			return (error);
 
 		raidPtr->raid_cinfo[col].ci_vp = vp;
