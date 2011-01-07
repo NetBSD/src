@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.51 2011/01/07 11:15:30 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.52 2011/01/07 15:30:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -554,6 +554,13 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 
 	if (fs) {
 		if (ukfs_release(fs, 0) != 0) {
+			struct statvfs svfsb;
+
+			if (p2m->p2m_hasdebug
+			    && p2k_fs_statvfs(pu, &svfsb) == 0) {
+				printf("\nSOFT UNMOUNT FAILED, MP INFO DUMP\n");
+				rump_pub_vfs_mount_print(svfsb.f_mntonname, 1);
+			}
 			ukfs_release(fs, UKFS_RELFLAG_FORCE);
 			error = 0;
 		}
