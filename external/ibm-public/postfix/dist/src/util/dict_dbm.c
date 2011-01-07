@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_dbm.c,v 1.1.1.1.2.3 2010/11/21 18:31:36 riz Exp $	*/
+/*	$NetBSD: dict_dbm.c,v 1.1.1.1.2.4 2011/01/07 01:24:16 riz Exp $	*/
 
 /*++
 /* NAME

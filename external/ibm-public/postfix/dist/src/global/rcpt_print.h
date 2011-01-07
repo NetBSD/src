@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_print.h,v 1.1.1.1.2.2 2009/09/15 06:02:52 snj Exp $	*/
+/*	$NetBSD: rcpt_print.h,v 1.1.1.1.2.3 2011/01/07 01:24:05 riz Exp $	*/
 
 #ifndef _RCPT_PRINT_H_INCLUDED_
 #define _RCPT_PRINT_H_INCLUDED_

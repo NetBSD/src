@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.1.1.1.2.3 2010/11/21 18:31:35 riz Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.1.1.1.2.4 2011/01/07 01:24:13 riz Exp $	*/
 
 /*++
 /* NAME

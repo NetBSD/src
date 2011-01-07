@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_host.h,v 1.1.1.1.2.2 2009/09/15 06:03:59 snj Exp $	*/
+/*	$NetBSD: inet_addr_host.h,v 1.1.1.1.2.3 2011/01/07 01:24:18 riz Exp $	*/
 
 #ifndef INET_ADDR_HOST_H_INCLUDED_
 #define INET_ADDR_HOST_H_INCLUDED_

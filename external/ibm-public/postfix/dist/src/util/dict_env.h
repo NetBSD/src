@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_env.h,v 1.1.1.1.2.2 2009/09/15 06:03:55 snj Exp $	*/
+/*	$NetBSD: dict_env.h,v 1.1.1.1.2.3 2011/01/07 01:24:16 riz Exp $	*/
 
 #ifndef _DICT_ENV_H_INCLUDED_
 #define _DICT_ENV_H_INCLUDED_

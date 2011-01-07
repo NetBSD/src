@@ -1,4 +1,4 @@
-/*	$NetBSD: open_as.h,v 1.1.1.1.2.2 2009/09/15 06:04:01 snj Exp $	*/
+/*	$NetBSD: open_as.h,v 1.1.1.1.2.3 2011/01/07 01:24:19 riz Exp $	*/
 
 #ifndef _OPEN_H_INCLUDED_
 #define _OPEN_H_INCLUDED_

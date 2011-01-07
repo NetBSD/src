@@ -1,4 +1,4 @@
-/*	$NetBSD: safe_open.h,v 1.1.1.1.2.2 2009/09/15 06:04:02 snj Exp $	*/
+/*	$NetBSD: safe_open.h,v 1.1.1.1.2.3 2011/01/07 01:24:19 riz Exp $	*/
 
 #ifndef _SAFE_OPEN_H_INCLUDED_
 #define _SAFE_OPEN_H_INCLUDED_

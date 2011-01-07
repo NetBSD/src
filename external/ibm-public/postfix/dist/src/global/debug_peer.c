@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_peer.c,v 1.1.1.1.2.2 2009/09/15 06:02:39 snj Exp $	*/
+/*	$NetBSD: debug_peer.c,v 1.1.1.1.2.3 2011/01/07 01:24:02 riz Exp $	*/
 
 /*++
 /* NAME

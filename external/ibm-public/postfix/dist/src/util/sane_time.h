@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_time.h,v 1.1.1.1.2.2 2009/09/15 06:04:03 snj Exp $	*/
+/*	$NetBSD: sane_time.h,v 1.1.1.1.2.3 2011/01/07 01:24:19 riz Exp $	*/
 
 #ifndef _SANE_TIME_H_
 #define _SANE_TIME_H_

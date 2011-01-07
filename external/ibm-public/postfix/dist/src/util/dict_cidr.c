@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.1.1.1.2.2 2009/09/15 06:03:55 snj Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.1.1.1.2.3 2011/01/07 01:24:16 riz Exp $	*/
 
 /*++
 /* NAME

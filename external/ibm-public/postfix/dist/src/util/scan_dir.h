@@ -1,4 +1,4 @@
-/*	$NetBSD: scan_dir.h,v 1.1.1.1.2.2 2009/09/15 06:04:03 snj Exp $	*/
+/*	$NetBSD: scan_dir.h,v 1.1.1.1.2.3 2011/01/07 01:24:19 riz Exp $	*/
 
 #ifndef _SCAN_DIR_H_INCLUDED_
 #define _SCAN_DIR_H_INCLUDED_

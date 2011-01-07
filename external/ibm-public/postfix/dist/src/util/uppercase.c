@@ -1,4 +1,4 @@
-/*	$NetBSD: uppercase.c,v 1.1.1.1.2.2 2009/09/15 06:04:05 snj Exp $	*/
+/*	$NetBSD: uppercase.c,v 1.1.1.1.2.3 2011/01/07 01:24:20 riz Exp $	*/
 
 /*++
 /* NAME
