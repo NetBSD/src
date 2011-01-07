@@ -1,4 +1,4 @@
-/*	$NetBSD: file_id.h,v 1.1.1.1.2.2 2009/09/15 06:02:43 snj Exp $	*/
+/*	$NetBSD: file_id.h,v 1.1.1.1.2.3 2011/01/07 01:24:02 riz Exp $	*/
 
 #ifndef _FILE_ID_H_INCLUDED_
 #define _FILE_ID_H_INCLUDED_

@@ -9150,6 +9150,10 @@ file may also be used to augment the client certificate trust chain,
 but it is best to include all the required certificates directly in
 $<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>. </p>
 
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
+
 <p> Example: </p>
 
 <pre>
@@ -9172,6 +9176,10 @@ with, for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs".
 
 <p> To use this option in chroot mode, this directory (or a copy)
 must be inside the chroot jail. </p>
+
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
 
 <p> Example: </p>
 
@@ -10824,8 +10832,11 @@ authenticated via the <a href="http://tools.ietf.org/html/rfc4954">RFC 4954</a> 
 <dd> Permit the request when the remote SMTP client certificate is
 verified successfully.  This option must be used only if a special
 CA issues the certificates and only this CA is listed as trusted
-CA, otherwise all clients with a recognized certificate would be
-allowed to relay. This feature is available with Postfix version 2.2.</dd>
+CA. Otherwise, clients with a third-party certificate would also
+be allowed to relay.  Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" when the
+trusted CA is specified with <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> or <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a>,
+to prevent Postfix from appending the system-supplied default CAs.
+This feature is available with Postfix version 2.2.</dd>
 
 <dt><b><a name="permit_tls_clientcerts">permit_tls_clientcerts</a></b></dt>
 
@@ -12595,6 +12606,10 @@ file may also be used to augment the server certificate trust chain,
 but it is best to include all the required certificates directly in the
 server certificate file. </p>
 
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
+
 <p> By default (see <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a>), client certificates are not
 requested, and <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> should remain empty. If you do make use
 of client certificates, the distinguished names (DNs) of the certificate
@@ -12625,6 +12640,10 @@ certificates. Do not forget to create the necessary "hash" links with,
 for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs". To use
 <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> in chroot mode, this directory (or a copy) must be
 inside the chroot jail. </p>
+
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
 
 <p> By default (see <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a>), client certificates are
 not requested, and <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> should remain empty. In contrast
@@ -13735,6 +13754,23 @@ connections.  Next, you enable Postfix TCP servers with the updated
 <a href="lmtp.8.html">lmtp(8)</a>).  </p>
 
 <p> This feature is available in Postfix 2.6 and later. </p>
+
+
+</DD>
+
+<DT><b><a name="tls_append_default_CA">tls_append_default_CA</a>
+(default: no)</b></DT><DD>
+
+<p> Append the system-supplied default certificate authority
+certificates to the ones specified with *_tls_CApath or *_tls_CAfile.
+The default is "no"; this prevents Postfix from trusting third-party
+certificates and giving them relay permission with
+<a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a>.  </p>
+
+<p> This feature is available in Postfix 2.4.15, 2.5.11, 2.6.8,
+2.7.2 and later versions. Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = yes" for
+backwards compatibility, to avoid breaking certificate verification
+with sites that don't use <a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a>. </p>
 
 
 </DD>

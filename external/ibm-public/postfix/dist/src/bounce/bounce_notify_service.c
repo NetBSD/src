@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_notify_service.c,v 1.1.1.1.2.2 2009/09/15 06:02:29 snj Exp $	*/
+/*	$NetBSD: bounce_notify_service.c,v 1.1.1.1.2.3 2011/01/07 01:23:59 riz Exp $	*/
 
 /*++
 /* NAME

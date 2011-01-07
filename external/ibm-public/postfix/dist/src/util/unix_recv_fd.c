@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_recv_fd.c,v 1.2.2.3 2010/11/21 18:31:37 riz Exp $	*/
+/*	$NetBSD: unix_recv_fd.c,v 1.2.2.4 2011/01/07 01:24:20 riz Exp $	*/
 
 /*++
 /* NAME

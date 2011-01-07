@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.c,v 1.1.1.1.2.3 2010/11/21 18:31:28 riz Exp $	*/
+/*	$NetBSD: bounce.c,v 1.1.1.1.2.4 2011/01/07 01:23:59 riz Exp $	*/
 
 /*++
 /* NAME

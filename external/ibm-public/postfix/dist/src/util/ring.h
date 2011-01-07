@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.h,v 1.1.1.1.2.2 2009/09/15 06:04:02 snj Exp $	*/
+/*	$NetBSD: ring.h,v 1.1.1.1.2.3 2011/01/07 01:24:19 riz Exp $	*/
 
 #ifndef _RING_H_INCLUDED_
 #define _RING_H_INCLUDED_

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pcre.h,v 1.1.1.1.2.2 2009/09/15 06:03:56 snj Exp $	*/
+/*	$NetBSD: dict_pcre.h,v 1.1.1.1.2.3 2011/01/07 01:24:17 riz Exp $	*/
 
 #ifndef _DICT_PCRE_H_INCLUDED_
 #define _DICT_PCRE_H_INCLUDED_

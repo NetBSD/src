@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_user.h,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
+/*	$NetBSD: cleanup_user.h,v 1.1.1.1.2.4 2011/01/07 01:24:01 riz Exp $	*/
 
 #ifndef _CLEANUP_USER_H_INCLUDED_
 #define _CLEANUP_USER_H_INCLUDED_

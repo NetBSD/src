@@ -1,4 +1,4 @@
-/*	$NetBSD: base64_code.c,v 1.1.1.1.2.2 2009/09/15 06:03:53 snj Exp $	*/
+/*	$NetBSD: base64_code.c,v 1.1.1.1.2.3 2011/01/07 01:24:16 riz Exp $	*/
 
 /*++
 /* NAME

@@ -1,4 +1,4 @@
-/*	$NetBSD: read_wait.c,v 1.1.1.1.2.3 2010/11/21 18:31:37 riz Exp $	*/
+/*	$NetBSD: read_wait.c,v 1.1.1.1.2.4 2011/01/07 01:24:19 riz Exp $	*/
 
 /*++
 /* NAME

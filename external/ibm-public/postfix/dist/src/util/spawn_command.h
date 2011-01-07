@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn_command.h,v 1.1.1.1.2.2 2009/09/15 06:04:03 snj Exp $	*/
+/*	$NetBSD: spawn_command.h,v 1.1.1.1.2.3 2011/01/07 01:24:20 riz Exp $	*/
 
 #ifndef _SPAWN_COMMAND_H_INCLUDED_
 #define _SPAWN_COMMAND_H_INCLUDED_

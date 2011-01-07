@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.1.2.3 2010/11/21 18:31:28 riz Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.1.2.4 2011/01/07 01:24:00 riz Exp $	*/
 
 /*++
 /* NAME
@@ -372,8 +372,7 @@ static char *cleanup_milter_hbc_extend(void *context, const char *command,
 	}
 	return ((char *) buf);
     }
-    msg_warn("unknown command in %s map: %s", map_class, command);
-    return ((char *) buf);
+    return ((char *) HBC_CHECKS_STAT_UNKNOWN);
 }
 
 /* cleanup_milter_header_checks - inspect Milter-generated header */

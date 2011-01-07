@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_list.h,v 1.1.1.1.2.2 2009/09/15 06:03:59 snj Exp $	*/
+/*	$NetBSD: inet_addr_list.h,v 1.1.1.1.2.3 2011/01/07 01:24:18 riz Exp $	*/
 
 #ifndef _INET_ADDR_LIST_H_INCLUDED_
 #define _INET_ADDR_LIST_H_INCLUDED_

@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.h,v 1.1.1.1.2.2 2009/09/15 06:02:37 snj Exp $	*/
+/*	$NetBSD: bounce.h,v 1.1.1.1.2.3 2011/01/07 01:24:01 riz Exp $	*/
 
 #ifndef _BOUNCE_H_INCLUDED_
 #define _BOUNCE_H_INCLUDED_
