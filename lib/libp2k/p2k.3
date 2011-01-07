@@ -1,4 +1,4 @@
-.\"     $NetBSD: p2k.3,v 1.9 2011/01/07 15:50:40 pooka Exp $
+.\"     $NetBSD: p2k.3,v 1.10 2011/01/07 16:02:32 pooka Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -118,10 +118,8 @@ Do not use the puffs page or name cache.
 If set, use the value of the variable to determine the UID of the
 caller of each operation instead of the actual caller supplied by
 .Xr puffs 3 .
-This can be used for example to simplify modifying an OS installations
+This can be used for example to simplify modifying an OS installation's
 root image as a non-root user.
-If the variable is set but does not contain an integer value, 0
-(root) is used.
 .El
 .Sh SEE ALSO
 .Xr puffs 3 ,
