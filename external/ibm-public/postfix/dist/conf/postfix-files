@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.2.2.2 2009/09/15 06:02:10 snj Exp $
+#	$NetBSD: postfix-files,v 1.2.2.3 2011/01/07 01:23:56 riz Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #

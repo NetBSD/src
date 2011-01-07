@@ -1,4 +1,4 @@
-/*	$NetBSD: clean_env.h,v 1.1.1.1.2.2 2009/09/15 06:03:54 snj Exp $	*/
+/*	$NetBSD: clean_env.h,v 1.1.1.1.2.3 2011/01/07 01:24:16 riz Exp $	*/
 
 #ifndef _CLEAN_ENV_H_INCLUDED_
 #define _CLEAN_ENV_H_INCLUDED_

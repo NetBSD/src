@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-script,v 1.1.1.1.2.3 2010/11/21 18:31:23 riz Exp $
+#	$NetBSD: postfix-script,v 1.1.1.1.2.4 2011/01/07 01:23:56 riz Exp $
 #
 
 #++

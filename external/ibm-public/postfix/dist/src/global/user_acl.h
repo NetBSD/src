@@ -1,4 +1,4 @@
-/*	$NetBSD: user_acl.h,v 1.1.1.1.2.2 2009/09/15 06:02:55 snj Exp $	*/
+/*	$NetBSD: user_acl.h,v 1.1.1.1.2.3 2011/01/07 01:24:05 riz Exp $	*/
 
 #ifndef _USER_ACL_H_INCLUDED_
 #define _USER_ACL_H_INCLUDED_

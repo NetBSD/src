@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqp-source.c,v 1.1.1.1.2.2 2009/09/15 06:03:50 snj Exp $	*/
+/*	$NetBSD: qmqp-source.c,v 1.1.1.1.2.3 2011/01/07 01:24:14 riz Exp $	*/
 
 /*++
 /* NAME

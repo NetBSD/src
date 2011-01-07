@@ -1,4 +1,4 @@
-/*	$NetBSD: maps.h,v 1.1.1.1.2.2 2009/09/15 06:02:47 snj Exp $	*/
+/*	$NetBSD: maps.h,v 1.1.1.1.2.3 2011/01/07 01:24:04 riz Exp $	*/
 
 #ifndef _MAPS_H_INCLUDED_
 #define _MAPS_H_INCLUDED_

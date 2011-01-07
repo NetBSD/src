@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_flow.c,v 1.1.1.1.2.2 2009/09/15 06:02:57 snj Exp $	*/
+/*	$NetBSD: mail_flow.c,v 1.1.1.1.2.3 2011/01/07 01:24:06 riz Exp $	*/
 
 /*++
 /* NAME

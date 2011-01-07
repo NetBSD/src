@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_open_ok.h,v 1.1.1.1.2.2 2009/09/15 06:02:46 snj Exp $	*/
+/*	$NetBSD: mail_open_ok.h,v 1.1.1.1.2.3 2011/01/07 01:24:03 riz Exp $	*/
 
 #ifndef _MAIL_OPEN_OK_H_INCLUDED_
 #define _MAIL_OPEN_OK_H_INCLUDED_

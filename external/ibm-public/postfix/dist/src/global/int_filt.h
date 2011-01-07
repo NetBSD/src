@@ -1,4 +1,4 @@
-/*	$NetBSD: int_filt.h,v 1.1.1.1.2.2 2009/09/15 06:02:44 snj Exp $	*/
+/*	$NetBSD: int_filt.h,v 1.1.1.1.2.3 2011/01/07 01:24:03 riz Exp $	*/
 
 #ifndef _INT_FILT_INCLUDED_
 #define _INT_FILT_INCLUDED_

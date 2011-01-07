@@ -1,4 +1,4 @@
-/*	$NetBSD: addr_match_list.h,v 1.1.1.1.2.2 2010/11/21 18:31:31 riz Exp $	*/
+/*	$NetBSD: addr_match_list.h,v 1.1.1.1.2.3 2011/01/07 01:24:01 riz Exp $	*/
 
 #ifndef _ADDR_MATCH_LIST_H_INCLUDED_
 #define _ADDR_MATCH_LIST_H_INCLUDED_

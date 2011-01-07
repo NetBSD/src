@@ -4855,8 +4855,11 @@ authenticated via the RFC 4954 (AUTH) protocol. </dd>
 <dd> Permit the request when the remote SMTP client certificate is
 verified successfully.  This option must be used only if a special
 CA issues the certificates and only this CA is listed as trusted
-CA, otherwise all clients with a recognized certificate would be
-allowed to relay. This feature is available with Postfix version 2.2.</dd>
+CA. Otherwise, clients with a third-party certificate would also
+be allowed to relay.  Specify "tls_append_default_CA = no" when the
+trusted CA is specified with smtpd_tls_CAfile or smtpd_tls_CApath,
+to prevent Postfix from appending the system-supplied default CAs.
+This feature is available with Postfix version 2.2.</dd>
 
 <dt><b><a name="permit_tls_clientcerts">permit_tls_clientcerts</a></b></dt>
 
@@ -8648,6 +8651,10 @@ file may also be used to augment the server certificate trust chain,
 but it is best to include all the required certificates directly in the
 server certificate file. </p>
 
+<p> Specify "tls_append_default_CA = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
+
 <p> By default (see smtpd_tls_ask_ccert), client certificates are not
 requested, and smtpd_tls_CAfile should remain empty. If you do make use
 of client certificates, the distinguished names (DNs) of the certificate
@@ -8674,6 +8681,10 @@ certificates. Do not forget to create the necessary "hash" links with,
 for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs". To use
 smtpd_tls_CApath in chroot mode, this directory (or a copy) must be
 inside the chroot jail. </p>
+
+<p> Specify "tls_append_default_CA = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
 
 <p> By default (see smtpd_tls_ask_ccert), client certificates are
 not requested, and smtpd_tls_CApath should remain empty. In contrast
@@ -9043,6 +9054,10 @@ file may also be used to augment the client certificate trust chain,
 but it is best to include all the required certificates directly in
 $smtp_tls_cert_file. </p>
 
+<p> Specify "tls_append_default_CA = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
+
 <p> Example: </p>
 
 <pre>
@@ -9061,6 +9076,10 @@ with, for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs".
 
 <p> To use this option in chroot mode, this directory (or a copy) 
 must be inside the chroot jail. </p>
+
+<p> Specify "tls_append_default_CA = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
 
 <p> Example: </p>
 
@@ -9350,6 +9369,19 @@ smtp_tls_dcert_file = /etc/postfix/client-dsa.pem
 </pre>
 
 <p> This feature is available in Postfix 2.2 and later.  </p>
+
+%PARAM tls_append_default_CA no
+
+<p> Append the system-supplied default certificate authority
+certificates to the ones specified with *_tls_CApath or *_tls_CAfile.
+The default is "no"; this prevents Postfix from trusting third-party
+certificates and giving them relay permission with
+permit_tls_all_clientcerts.  </p>
+
+<p> This feature is available in Postfix 2.4.15, 2.5.11, 2.6.8,
+2.7.2 and later versions. Specify "tls_append_default_CA = yes" for
+backwards compatibility, to avoid breaking certificate verification
+with sites that don't use permit_tls_all_clientcerts. </p>
 
 %PARAM tls_random_exchange_name see "postconf -d" output
 

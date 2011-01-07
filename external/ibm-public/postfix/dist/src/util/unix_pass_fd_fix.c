@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_pass_fd_fix.c,v 1.1.1.1.2.2 2010/11/21 18:31:37 riz Exp $	*/
+/*	$NetBSD: unix_pass_fd_fix.c,v 1.1.1.1.2.3 2011/01/07 01:24:20 riz Exp $	*/
 
 /*++
 /* NAME

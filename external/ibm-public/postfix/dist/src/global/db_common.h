@@ -1,4 +1,4 @@
-/*	$NetBSD: db_common.h,v 1.1.1.1.2.2 2009/09/15 06:02:39 snj Exp $	*/
+/*	$NetBSD: db_common.h,v 1.1.1.1.2.3 2011/01/07 01:24:02 riz Exp $	*/
 
 #ifndef _DB_COMMON_H_INCLUDED_
 #define _DB_COMMON_H_INCLUDED_

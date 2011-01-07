@@ -1,6 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.2.2.3 2010/11/21 18:31:28 riz Exp $	*/
-
-/*	$NetBSD: cleanup.h,v 1.2.2.3 2010/11/21 18:31:28 riz Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.2.2.4 2011/01/07 01:24:00 riz Exp $	*/
 
 /*++
 /* NAME

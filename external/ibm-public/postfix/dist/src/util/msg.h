@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.1.1.1.2.2 2009/09/15 06:04:00 snj Exp $	*/
+/*	$NetBSD: msg.h,v 1.1.1.1.2.3 2011/01/07 01:24:18 riz Exp $	*/
 
 #ifndef _MSG_H_INCLUDED_
 #define _MSG_H_INCLUDED_

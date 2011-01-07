@@ -1,4 +1,4 @@
-/*	$NetBSD: postalias.c,v 1.1.1.1.2.2 2009/09/15 06:03:22 snj Exp $	*/
+/*	$NetBSD: postalias.c,v 1.1.1.1.2.3 2011/01/07 01:24:08 riz Exp $	*/
 
 /*++
 /* NAME
