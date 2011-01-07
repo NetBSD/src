@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.6 2006/11/29 19:56:47 freza Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.6.74.1 2011/01/07 01:43:08 matt Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6 2006/11/29 19:56:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6.74.1 2011/01/07 01:43:08 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6 2006/11/29 19:56:47 freza Exp
 #include <machine/cpu.h>
 #include <machine/obs266.h>
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
