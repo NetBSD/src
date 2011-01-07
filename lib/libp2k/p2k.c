@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.52 2011/01/07 15:30:09 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.53 2011/01/07 15:47:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -148,6 +148,29 @@ makelwp(struct puffs_usermount *pu)
 
 	puffs_cc_getcaller(puffs_cc_getcc(pu), &pid, &lid);
 	rump_pub_allbetsareoff_setid(pid, lid);
+}
+
+static volatile sig_atomic_t dodump;
+static void
+dumpmp(struct puffs_usermount *pu)
+{
+	struct statvfs svfsb;
+
+	if (dodump && p2k_fs_statvfs(pu, &svfsb) == 0) {
+		rump_pub_vfs_mount_print(svfsb.f_mntonname, dodump-1);
+	}
+
+	dodump = 0;
+}
+
+static void
+sighand(int sig)
+{
+
+	if (sig == SIGINFO)
+		dodump = 1;
+	else if (sig == SIGUSR1)
+		dodump = 2;
 }
 
 static __inline struct p2k_vp_hash *
@@ -444,6 +467,18 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 	puffs_setstacksize(pu, PUFFS_STACKSIZE_MIN);
 	puffs_fakecc = 1;
 	puffs_set_prepost(pu, makelwp, NULL);
+
+	if (p2m->p2m_hasdebug) {
+		struct timespec ts;
+
+		signal(SIGINFO, sighand);
+		signal(SIGUSR1, sighand);
+
+		ts.tv_sec = 0;
+		ts.tv_nsec = 1000*1000*10; /* 10ms */
+		puffs_ml_setloopfn(pu, dumpmp);
+		puffs_ml_settimeout(pu, &ts);
+	}
 	puffs_set_errnotify(pu, p2k_errcatcher);
 
 	puffs_setspecific(pu, p2m);
