@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ro.c,v 1.2 2010/12/31 18:26:25 pooka Exp $	*/
+/*	$NetBSD: t_ro.c,v 1.3 2011/01/07 11:39:27 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -95,6 +95,12 @@ fileio(const atf_tc_t *tc, const char *mp)
 {
 	int fd;
 	char buf[FUNSIZE+1];
+	int expected;
+
+	if (FSTYPE_NFSRO(tc))
+		expected = EACCES;
+	else
+		expected = EROFS;
 
 	FSTEST_ENTER();
 	RL(fd = rump_sys_open(AFILE, O_RDONLY));
@@ -103,8 +109,8 @@ fileio(const atf_tc_t *tc, const char *mp)
 	ATF_REQUIRE_STREQ(buf, FUNTEXT);
 	RL(rump_sys_close(fd));
 
-	ATF_REQUIRE_ERRNO(EROFS, rump_sys_open(AFILE, O_WRONLY) == -1);
-	ATF_REQUIRE_ERRNO(EROFS, rump_sys_open(AFILE, O_RDWR) == -1);
+	ATF_REQUIRE_ERRNO(expected, rump_sys_open(AFILE, O_WRONLY) == -1);
+	ATF_REQUIRE_ERRNO(expected, rump_sys_open(AFILE, O_RDWR) == -1);
 	FSTEST_EXIT();
 }
 
