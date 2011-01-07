@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.82.12.1 2010/11/21 20:45:39 riz Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.82.12.1.2.1 2011/01/07 03:16:14 matt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82.12.1 2010/11/21 20:45:39 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82.12.1.2.1 2011/01/07 03:16:14 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -178,7 +178,10 @@ PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
 
 #if defined(IPSEC) || defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(ah6_ctlinput)
+
+#if defined(IPSEC_ESP) || defined(FAST_IPSEC)
 PR_WRAP_CTLINPUT(esp6_ctlinput)
+#endif
 
 #define	ah6_ctlinput	ah6_ctlinput_wrapper
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
