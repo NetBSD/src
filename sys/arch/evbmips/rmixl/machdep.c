@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.31 2010/12/17 04:49:24 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.32 2011/01/07 00:17:42 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.31 2010/12/17 04:49:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.32 2011/01/07 00:17:42 cliff Exp $");
 
 #define __INTR_PRIVATE
 
@@ -284,25 +284,9 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	struct rmixl_config *rcp = &rmixl_configuration;
 	void *kernend;
 	uint64_t memsize;
-	uint32_t r;
 	extern char edata[], end[];
 
-#ifdef MULTIPROCESSOR
-	r = rmixl_mfcr(0x400);
-	r |= __BIT(0);			/* enable global TLB mode */
-	rmixl_mtcr(0x400, r);		/* enable MMU clock gating */
-					/* preserve MMU Thread Mode */
-					/* TLB is not paritioned (global) */
-#else
-	rmixl_mtcr(0, 1);		/* disable all threads except #0 */
-	rmixl_mtcr(0x400, 0);		/* enable MMU clock gating */
-					/* set single MMU Thread Mode */
-					/* TLB is partitioned (1 partition) */
-#endif
-
-	r = rmixl_mfcr(0x300);
-	r &= ~__BIT(14);		/* disabled Unaligned Access */
-	rmixl_mtcr(0x300, r);
+	rmixl_pcr_init_core();
 
 	/*
 	 * Clear the BSS segment.
@@ -479,6 +463,31 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
 	mips_fixup_exceptions(rmixl_fixup_cop0_oscratch);
 #endif
+}
+
+/*
+ * set up Processor Control Regs for this core
+ */
+void
+rmixl_pcr_init_core()
+{
+	uint32_t r;
+
+#ifdef MULTIPROCESSOR
+	rmixl_mtcr(RMIXL_PCR_MMU_SETUP, __BITS(2,0));
+						/* enable MMU clock gating */
+						/* 4 threads active -- why needed if Global? */
+						/* enable global TLB mode */
+#else
+	rmixl_mtcr(RMIXL_PCR_THREADEN, 1);	/* disable all threads except #0 */
+	rmixl_mtcr(RMIXL_PCR_MMU_SETUP, 0);	/* enable MMU clock gating */
+						/* set single MMU Thread Mode */
+						/* TLB is partitioned (1 partition) */
+#endif
+
+	r = rmixl_mfcr(RMIXL_PCR_L1D_CONFIG0);
+	r &= ~__BIT(14);			/* disable Unaligned Access */
+	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
 }
 
 #ifdef MULTIPROCESSOR
