@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.6 2010/03/21 21:24:19 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.7 2011/01/07 00:16:59 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.6 2010/03/21 21:24:19 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.7 2011/01/07 00:16:59 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.6 2010/03/21 21:24:19 cliff 
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_cpunodevar.h>
 #include <mips/rmi/rmixl_cpucorevar.h>
+#include <mips/rmi/rmixl_fmnvar.h>
 
 static int	cpucore_rmixl_match(device_t, cfdata_t, void *);
 static void	cpucore_rmixl_attach(device_t, device_t, void *);
@@ -87,6 +88,7 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_core = na->na_core;
+	sc->sc_hatched = false;
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -148,3 +150,24 @@ cpucore_rmixl_print(void *aux, const char *pnp)
 
 	return (UNCONF);
 }
+
+#ifdef MULTIPROCESSOR
+/*
+ * cpucore_rmixl_hatch
+ *	called from cpu_rmixl_hatch for each cpu
+ *	the first call for each cpucore causes init of per-core features
+ */
+void
+cpucore_rmixl_hatch(device_t self)
+{
+	struct cpucore_softc * const sc = device_private(self);
+
+	if (sc->sc_hatched == false) {
+		/* PCRs for core#0 are set up in mach_init() */
+		if (sc->sc_core != 0)
+			rmixl_pcr_init_core();
+		rmixl_fmn_init_core();
+		sc->sc_hatched = true;
+	}
+}
+#endif	/* MULTIPROCESSOR */
