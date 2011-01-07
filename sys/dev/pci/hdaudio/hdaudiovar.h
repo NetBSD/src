@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.6 2010/08/15 19:39:56 jmcneill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.7 2011/01/07 15:30:30 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -163,6 +163,9 @@ struct hdaudio_softc {
 int	hdaudio_attach(device_t, struct hdaudio_softc *);
 int	hdaudio_detach(struct hdaudio_softc *, int);
 bool	hdaudio_resume(struct hdaudio_softc *);
+int	hdaudio_rescan(struct hdaudio_softc *, const char *, const int *);
+void	hdaudio_childdet(struct hdaudio_softc *, device_t);
+
 uint32_t hdaudio_command(struct hdaudio_codec *, int, uint32_t, uint32_t);
 int	hdaudio_intr(struct hdaudio_softc *);
 
@@ -179,8 +182,5 @@ void	hdaudio_stream_stop(struct hdaudio_stream *);
 void	hdaudio_stream_reset(struct hdaudio_stream *);
 int	hdaudio_stream_tag(struct hdaudio_stream *);
 uint16_t hdaudio_stream_param(struct hdaudio_stream *, const audio_params_t *);
-
-int	hdaudio_afg_widget_info(void *, prop_dictionary_t, prop_dictionary_t);
-int	hdaudio_afg_codec_info(void *, prop_dictionary_t, prop_dictionary_t);
 
 #endif /* !_HDAUDIOVAR_H */
