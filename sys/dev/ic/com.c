@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.286 2008/10/25 17:50:29 matt Exp $ */
+/* $NetBSD: com.c,v 1.286.14.1 2011/01/07 02:28:45 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.286 2008/10/25 17:50:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.286.14.1 2011/01/07 02:28:45 matt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2090,9 +2090,11 @@ com_common_getc(dev_t dev, struct com_regs *regsp)
 		return (c);
 	}
 
-	/* block until a character becomes available */
-	while (!ISSET(stat = CSR_READ_1(regsp, COM_REG_LSR), LSR_RXRDY))
-		;
+	/* don't block until a character becomes available */
+	if (!ISSET(stat = CSR_READ_1(regsp, COM_REG_LSR), LSR_RXRDY)) {
+		splx(s);
+		return -1;
+	}
 
 	c = CSR_READ_1(regsp, COM_REG_RXDATA);
 	stat = CSR_READ_1(regsp, COM_REG_IIR);
