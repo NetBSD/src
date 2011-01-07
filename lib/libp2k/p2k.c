@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.49 2011/01/02 13:01:45 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.50 2011/01/07 10:18:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -634,7 +634,7 @@ int
 p2k_fs_nodetofh(struct puffs_usermount *pu, puffs_cookie_t cookie, void *fid,
 	size_t *fidsize)
 {
-	struct vnode *vp = cookie;
+	struct vnode *vp = OPC2VP(cookie);
 
 	return rump_pub_vfs_vptofh(vp, fid, fidsize);
 }
