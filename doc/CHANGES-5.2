@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.49 2011/01/07 23:29:05 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.50 2011/01/07 23:54:41 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4283,4 +4283,16 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.278
 
 	Hack to fix up disks with old raidframe component labels.
 	[mrg, ticket #1511]
+
+lib/libpam/Makefile				1.3
+lib/libpam/modules/mod.mk			1.9 via patch
+lib/libpam/staticmodules/Makefile		1.1
+
+	Make the dependency on libpam explicit.  Fixes afpd in pkgsrc.
+	[christos, ticket #1414]
+
+gnu/lib/libstdc++-v3_4/Makefile			1.5
+
+	Explicitly link libstdc++ against libm.
+	[joerg, ticket #1432]
 
