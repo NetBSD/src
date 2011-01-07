@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.11 2008/04/24 18:39:21 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.11.20.1 2011/01/07 02:01:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11.20.1 2011/01/07 02:01:57 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_altivec.h"
@@ -78,17 +78,18 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 		fp = (struct sigcontext *)((char *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
-		fp = (struct sigcontext *)tf->fixreg[1];
+		fp = (struct sigcontext *)tf->tf_fixreg[1];
 	fp = (struct sigcontext *)((uintptr_t)(fp - 1) & ~0xf);
 
 	/* Save register context. */
-	memcpy(utf->fixreg, tf->fixreg, sizeof(utf->fixreg));
-	utf->lr   = tf->lr;
-	utf->cr   = tf->cr;
-	utf->xer  = tf->xer;
-	utf->ctr  = tf->ctr;
-	utf->srr0 = tf->srr0;
-	utf->srr1 = tf->srr1 & PSL_USERSRR1;
+	memcpy(utf->fixreg, tf->tf_fixreg, sizeof(utf->fixreg));
+	utf->lr   = tf->tf_lr;
+	utf->cr   = tf->tf_cr;
+	utf->xer  = tf->tf_xer;
+	utf->ctr  = tf->tf_ctr;
+	utf->srr0 = tf->tf_srr0;
+	utf->srr1 = tf->tf_srr1 & PSL_USERSRR1;
+
 #ifdef PPC_HAVE_FPU
 	utf->srr1 |= l->l_addr->u_pcb.pcb_flags & (PCB_FE0|PCB_FE1);
 #endif
@@ -96,8 +97,8 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 	utf->srr1 |= l->l_addr->u_pcb.pcb_flags & PCB_ALTIVEC ? PSL_VEC : 0;
 #endif
 #ifdef PPC_OEA
-	utf->vrsave = tf->tf_xtra[TF_VRSAVE];
-	utf->mq = tf->tf_xtra[TF_MQ];
+	utf->vrsave = tf->tf_vrsave;
+	utf->mq = tf->tf_mq;
 #endif
 
 	/* Save signal stack. */
@@ -136,22 +137,22 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 #if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
-		tf->fixreg[1] = (register_t)fp;
-		tf->lr = (register_t)catcher;
-		tf->fixreg[3] = (register_t)sig;
-		tf->fixreg[4] = (register_t)code;
-		tf->fixreg[5] = (register_t)fp;
-		tf->srr0 = (register_t)p->p_sigctx.ps_sigcode;
+		tf->tf_fixreg[1] = (register_t)fp;
+		tf->tf_lr = (register_t)catcher;
+		tf->tf_fixreg[3] = (register_t)sig;
+		tf->tf_fixreg[4] = (register_t)code;
+		tf->tf_fixreg[5] = (register_t)fp;
+		tf->tf_srr0 = (register_t)p->p_sigctx.ps_sigcode;
 		break;
 #endif /* COMPAT_16 */
 
 	case 1:
-		tf->fixreg[1] = (register_t)fp;
-		tf->lr = (register_t)catcher;
-		tf->fixreg[3] = (register_t)sig;
-		tf->fixreg[4] = (register_t)code;
-		tf->fixreg[5] = (register_t)fp;
-		tf->srr0 = (register_t)ps->sa_sigdesc[sig].sd_tramp;
+		tf->tf_fixreg[1] = (register_t)fp;
+		tf->tf_lr = (register_t)catcher;
+		tf->tf_fixreg[3] = (register_t)sig;
+		tf->tf_fixreg[4] = (register_t)code;
+		tf->tf_fixreg[5] = (register_t)fp;
+		tf->tf_srr0 = (register_t)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
 	default:
@@ -197,20 +198,20 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		return (EINVAL);
 
 	/* Restore register context. */
-	memcpy(tf->fixreg, utf->fixreg, sizeof(tf->fixreg));
-	tf->lr   = utf->lr;
-	tf->cr   = utf->cr;
-	tf->xer  = utf->xer;
-	tf->ctr  = utf->ctr;
-	tf->srr0 = utf->srr0;
-	tf->srr1 = utf->srr1;
+	memcpy(tf->tf_fixreg, utf->fixreg, sizeof(tf->tf_fixreg));
+	tf->tf_lr   = utf->lr;
+	tf->tf_cr   = utf->cr;
+	tf->tf_xer  = utf->xer;
+	tf->tf_ctr  = utf->ctr;
+	tf->tf_srr0 = utf->srr0;
+	tf->tf_srr1 = utf->srr1;
 #ifdef PPC_HAVE_FPU
 	l->l_addr->u_pcb.pcb_flags &= ~(PCB_FE0|PCB_FE1);
 	l->l_addr->u_pcb.pcb_flags |= utf->srr1 & (PCB_FE0|PCB_FE1);
 #endif
 #ifdef PPC_OEA
-	tf->tf_xtra[TF_VRSAVE] = utf->vrsave;
-	tf->tf_xtra[TF_MQ] = utf->mq;
+	tf->tf_vrsave = utf->vrsave;
+	tf->tf_mq = utf->mq;
 #endif
 
 	mutex_enter(p->p_lock);
