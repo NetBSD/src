@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.67 2010/06/06 18:56:10 jruoho Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.68 2011/01/07 14:08:29 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.67 2010/06/06 18:56:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.68 2011/01/07 14:08:29 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -735,8 +735,8 @@ done:
 	snprintf(qxx, sizeof(qxx), "_Q%02X", (unsigned int)reg);
 	rv = AcpiEvaluateObject(sc->sc_ech, qxx, NULL, NULL);
 	if (rv != AE_OK && rv != AE_NOT_FOUND) {
-		aprint_error("%s: GPE query method %s failed: %s",
-		    device_xname(dv), qxx, AcpiFormatException(rv));
+		aprint_error_dev(dv, "GPE query method %s failed: %s",
+		    qxx, AcpiFormatException(rv));
 	}
 
 	goto loop;
