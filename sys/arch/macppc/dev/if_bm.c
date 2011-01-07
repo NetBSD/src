@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.37 2008/09/26 03:39:23 macallan Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.37.12.1 2011/01/07 01:36:12 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.37 2008/09/26 03:39:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.37.12.1 2011/01/07 01:36:12 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.37 2008/09/26 03:39:23 macallan Exp $");
 #include <dev/mii/mii_bitbang.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
