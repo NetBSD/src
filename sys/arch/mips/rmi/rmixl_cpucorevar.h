@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucorevar.h,v 1.1.2.3 2010/04/13 18:15:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpucorevar.h,v 1.1.2.4 2011/01/07 00:16:05 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +36,7 @@ struct cpucore_softc {
 	bool		sc_attached;
 	u_int		sc_core;
 #ifdef MULTIPROCESSOR
+	bool		sc_hatched;
 	struct pmap_tlb_info *sc_tlbinfo;
 	struct pmap_tlb_info sc_tlbinfo0;
 #endif
@@ -46,5 +47,7 @@ struct cpucore_attach_args {
 	int		ca_core;
 	int		ca_thread;
 };
+
+extern void cpucore_rmixl_hatch(device_t);
 
 #endif	/* _ARCH_MIPS_RMI_RMIXL_CPUCOREVAR_H_ */
