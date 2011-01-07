@@ -1,7 +1,7 @@
-/*	$NetBSD: fstest_puffs.c,v 1.7 2010/12/29 22:56:59 yamt Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.8 2011/01/07 10:45:45 pooka Exp $	*/
 
 /*
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -242,14 +242,11 @@ childfail(int sign)
 struct puffstestargs *theargs; /* XXX */
 
 /* XXX: we don't support size */
-int
-puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
-	const char *image, off_t size, void *fspriv)
+static int
+donewfs(const atf_tc_t *tc, void **argp,
+	const char *image, off_t size, void *fspriv, char **theargv)
 {
 	struct puffstestargs *args;
-	char dtfs_path[MAXPATHLEN];
-	char *dtfsargv[6];
-	char **theargv;
 	pid_t childpid;
 	int *pflags;
 	char comfd[16];
@@ -265,24 +262,6 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 		return errno;
 
 	pflags = &args->pta_pflags;
-
-	/* build dtfs exec path from atf test dir */
-	sprintf(dtfs_path, "%s/../puffs/h_dtfs/h_dtfs",
-	    atf_tc_get_config_var(tc, "srcdir"));
-
-	if (fspriv) {
-		theargv = fspriv;
-		theargv[0] = dtfs_path;
-	} else {
-		dtfsargv[0] = dtfs_path;
-		dtfsargv[1] = __UNCONST("-i");
-		dtfsargv[2] = __UNCONST("-s");
-		dtfsargv[3] = __UNCONST("dtfs");
-		dtfsargv[4] = __UNCONST("fictional");
-		dtfsargv[5] = NULL;
-
-		theargv = dtfsargv;
-	}
 
 	/* Create sucketpair for communication with the real file server */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
@@ -343,6 +322,59 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 }
 
 int
+puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
+	const char *image, off_t size, void *fspriv)
+{
+	char dtfs_path[MAXPATHLEN];
+	char *dtfsargv[6];
+	char **theargv;
+
+	/* build dtfs exec path from atf test dir */
+	sprintf(dtfs_path, "%s/../puffs/h_dtfs/h_dtfs",
+	    atf_tc_get_config_var(tc, "srcdir"));
+
+	if (fspriv) {
+		theargv = fspriv;
+		theargv[0] = dtfs_path;
+	} else {
+		dtfsargv[0] = dtfs_path;
+		dtfsargv[1] = __UNCONST("-i");
+		dtfsargv[2] = __UNCONST("-s");
+		dtfsargv[3] = __UNCONST("dtfs");
+		dtfsargv[4] = __UNCONST("fictional");
+		dtfsargv[5] = NULL;
+
+		theargv = dtfsargv;
+	}
+
+	return donewfs(tc, argp, image, size, fspriv, theargv);
+}
+
+int
+p2k_ffs_fstest_newfs(const atf_tc_t *tc, void **argp,
+	const char *image, off_t size, void *fspriv)
+{
+	char *rumpffs_argv[5];
+	int rv;
+
+	rump_init();
+	if ((rv = ffs_fstest_newfs(tc, argp, image, size, fspriv)) != 0)
+		return rv;
+	if (mkdir("p2kffsfake", 0777) == -1)
+		return errno;
+
+	setenv("P2K_NODETACH", "1", 1);
+	rumpffs_argv[0] = __UNCONST("rump_ffs");
+	rumpffs_argv[1] = __UNCONST(image);
+	rumpffs_argv[2] = __UNCONST("p2kffsfake"); /* NOTUSED */
+	rumpffs_argv[3] = NULL;
+
+	if ((rv = donewfs(tc, argp, image, size, fspriv, rumpffs_argv)) != 0)
+		ffs_fstest_delfs(tc, argp);
+	return rv;
+}
+
+int
 puffs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 {
 	struct puffstestargs *pargs = arg;
@@ -374,6 +406,7 @@ puffs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 
 	return 0;
 }
+__strong_alias(p2k_ffs_fstest_mount,puffs_fstest_mount);
 
 int
 puffs_fstest_delfs(const atf_tc_t *tc, void *arg)
@@ -381,6 +414,13 @@ puffs_fstest_delfs(const atf_tc_t *tc, void *arg)
 
 	/* useless ... */
 	return 0;
+}
+
+int
+p2k_ffs_fstest_delfs(const atf_tc_t *tc, void *arg)
+{
+
+	return ffs_fstest_delfs(tc, arg);
 }
 
 int
@@ -410,5 +450,8 @@ puffs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 	usleep(500);
 	wait(&status);
 
+	rmdir("p2kffsfake");
+
 	return 0;
 }
+__strong_alias(p2k_ffs_fstest_unmount,puffs_fstest_unmount);
