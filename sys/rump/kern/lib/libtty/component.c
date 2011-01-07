@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/06/14 14:45:47 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2 2011/01/07 15:10:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/06/14 14:45:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2011/01/07 15:10:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -68,4 +68,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_KERN_VFS)
 	ttyldisc_init();
 
 	ptyattach(1);
+
+	rump_ttycomponent = true;
 }
