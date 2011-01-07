@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.64 2011/01/06 10:20:57 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.65 2011/01/07 11:27:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.64 2011/01/06 10:20:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.65 2011/01/07 11:27:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -194,7 +194,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp->cn_nameptr = rcn->rcn_path;
 
 	cnp->cn_nameiop = nameiop;
-	cnp->cn_flags = flags;
+	cnp->cn_flags = flags & (MODMASK | PARAMASK);
 
 	cnp->cn_namelen = namelen;
 	cnp->cn_hash = namei_hash(name, &cp);
