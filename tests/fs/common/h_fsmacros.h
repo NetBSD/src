@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.30 2011/01/07 12:00:34 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.31 2011/01/07 12:16:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ do {									\
 									\
 	ATF_TC_BODY(fs##_##func,tc)					\
 	{								\
-		if (!atf_check_fstype(tc, type))			\
+		if (!atf_check_fstype(tc, #fs))				\
 			atf_tc_skip("filesystem not selected");		\
 		FSTEST_CONSTRUCTOR(tc,fs,fs##func##tmp);		\
 		func(tc,FSTEST_MNTNAME);				\
@@ -124,7 +124,7 @@ do {									\
 									\
 	ATF_TC_CLEANUP(fs##_##func,tc)					\
 	{								\
-		if (!atf_check_fstype(tc, type))			\
+		if (!atf_check_fstype(tc, #fs))				\
 			return;						\
 		if (fs##_fstest_delfs(tc, fs##func##tmp) != 0)		\
 			atf_tc_fail_errno("delfs failed");		\
@@ -142,7 +142,7 @@ do {									\
 									\
 	ATF_TC_BODY(_fs_##_##_func_,tc)					\
 	{								\
-		if (!atf_check_fstype(tc, _type_))			\
+		if (!atf_check_fstype(tc, #_fs_))			\
 			atf_tc_skip("filesystem not selected");		\
 		FSTEST_CONSTRUCTOR(tc,_fs_,_fs_##_func_##tmp);		\
 		_gen_(tc,FSTEST_MNTNAME);				\
@@ -160,7 +160,7 @@ do {									\
 									\
 	ATF_TC_CLEANUP(_fs_##_##_func_,tc)				\
 	{								\
-		if (!atf_check_fstype(tc, _type_))			\
+		if (!atf_check_fstype(tc, #_fs_))			\
 			return;						\
 		if (_fs_##_fstest_delfs(tc, _fs_##_func_##tmp) != 0)	\
 			atf_tc_fail_errno("delfs failed");		\
