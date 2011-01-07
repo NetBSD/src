@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.4.104.1 2011/01/07 01:51:31 matt Exp $ */
+/*	$NetBSD: instr.h,v 1.4.104.2 2011/01/07 15:11:30 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -388,6 +388,22 @@ union instr {
  */
 #define	B_LK		0x01	/* Link flag (LR=CIA+4) */
 #define	B_AA		0x02	/* Absolute flag */
+
+/*
+ * Helpers for decoding mfspr
+ */
+#define	OPC_MFSPR_CODE		0x7c0002a6
+#define	OPC_MFSPR_MASK		(~(0x1f << 21))
+#define	OPC_MFSPR(spr)		(OPC_MFSPR_CODE |\
+				 (((spr) & 0x1f) << 16) |\
+				 (((spr) & 0x3e0) << 6))
+#define	OPC_MFSPR_REG(o)	(((o) >> 21) & 0x1f)
+#define	OPC_MFSPR_P(o, spr)	(((o) & OPC_MFSPR_MASK) == OPC_MFSPR(spr))
+
+/*
+ * booke doesn't have lwsync even though gcc emits it so we have to emulate it.
+ */
+#define	OPC_LWSYNC		0x7c2004ac
 
 /*
  * FPU data types.

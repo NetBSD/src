@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128.4.1.4.1 2011/01/07 02:05:58 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.128.4.1.4.2 2011/01/07 15:11:30 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.4.1.4.1 2011/01/07 02:05:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.4.1.4.2 2011/01/07 15:11:30 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.4.1.4.1 2011/01/07 02:05:58 matt Exp 
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <powerpc/altivec.h>
+#include <powerpc/instr.h>
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>
 #include <powerpc/userret.h>
@@ -774,14 +775,6 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 	uint32_t opcode;
 	if (copyin((void *)tf->tf_srr0, &opcode, sizeof(opcode)) != 0)
 		return 0;
-
-#define	OPC_MFSPR_CODE		0x7c0002a6
-#define	OPC_MFSPR_MASK		(0xfc0007ff|0x001ff800)
-#define	OPC_MFSPR(spr)		(OPC_MFSPR_CODE |\
-				 (((spr) & 0x1f) << 16) |\
-				 (((spr) & 0x3e0) << 6))
-#define	OPC_MFSPR_REG(o)	(((o) >> 21) & 0x1f)
-#define	OPC_MFSPR_P(o, spr)	(((o) & OPC_MFSPR_MASK) == OPC_MFSPR(spr))
 
 	if (OPC_MFSPR_P(opcode, SPR_PVR)) {
 		__asm ("mfpvr %0" : "=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)]));
