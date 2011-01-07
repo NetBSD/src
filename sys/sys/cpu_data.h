@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.27 2008/06/03 15:50:22 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.27.20.1 2011/01/07 01:11:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -86,6 +86,9 @@ struct cpu_data {
 	u_int		cpu_nsyscall;		/* syscall counter */
 	u_int		cpu_ntrap;		/* trap counter */
 	u_int		cpu_nswtch;		/* context switch counter */
+	u_int		cpu_nintr;		/* interrupt count */
+	u_int		cpu_nsoft;		/* soft interrupt count */
+	u_int		cpu_nfault;		/* pagefault counter */
 	void		*cpu_uvm;		/* uvm per-cpu data */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
