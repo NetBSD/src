@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.6 2010/08/07 16:59:48 jmcneill Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.7 2011/01/07 15:30:30 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.6 2010/08/07 16:59:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.7 2011/01/07 15:30:30 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,7 @@ struct hdaudio_pci_softc {
 static int		hdaudio_pci_match(device_t, cfdata_t, void *);
 static void		hdaudio_pci_attach(device_t, device_t, void *);
 static int		hdaudio_pci_detach(device_t, int);
+static int		hdaudio_pci_rescan(device_t, const char *, const int *);
 static void		hdaudio_pci_childdet(device_t, device_t);
 
 static int		hdaudio_pci_intr(void *);
@@ -75,7 +76,7 @@ CFATTACH_DECL2_NEW(
     hdaudio_pci_attach,
     hdaudio_pci_detach,
     NULL,
-    NULL,
+    hdaudio_pci_rescan,
     hdaudio_pci_childdet
 );
 
@@ -170,14 +171,20 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	hdaudio_attach(self, &sc->sc_hdaudio);
 }
 
+static int
+hdaudio_pci_rescan(device_t self, const char *ifattr, const int *locs)
+{
+	struct hdaudio_pci_softc *sc = device_private(self);
+
+	return hdaudio_rescan(&sc->sc_hdaudio, ifattr, locs);
+}
+
 void
 hdaudio_pci_childdet(device_t self, device_t child)
 {
-#if notyet
 	struct hdaudio_pci_softc *sc = device_private(self);
 
 	hdaudio_childdet(&sc->sc_hdaudio, child);
-#endif
 }
 
 static int
