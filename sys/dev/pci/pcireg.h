@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.57.20.1 2010/11/19 23:40:28 riz Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.57.20.1.2.1 2011/01/07 02:26:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -87,6 +87,7 @@ typedef u_int16_t pci_product_id_t;
 #define	PCI_COMMAND_BACKTOBACK_ENABLE		0x00000200
 #define	PCI_COMMAND_INTERRUPT_DISABLE		0x00000400
 
+#define	PCI_STATUS_INT_STATUS			0x00080000
 #define	PCI_STATUS_CAPLIST_SUPPORT		0x00100000
 #define	PCI_STATUS_66MHZ_SUPPORT		0x00200000
 #define	PCI_STATUS_UDF_SUPPORT			0x00400000
@@ -338,9 +339,12 @@ typedef u_int8_t pci_revision_t;
 /*
  * PCI header type
  */
-#define PCI_HDRTYPE_DEVICE	0
-#define PCI_HDRTYPE_PPB		1
-#define PCI_HDRTYPE_PCB		2
+#define PCI_HDRTYPE_DEVICE	0	/* PCI/PCIX/Cardbus */
+#define PCI_HDRTYPE_PPB		1	/* PCI/PCIX/Cardbus */
+#define PCI_HDRTYPE_PCB		2	/* PCI/PCIX/Cardbus */
+#define	PCI_HDRTYPE_EP		0	/* PCI Express */
+#define	PCI_HDRTYPE_RC		1	/* PCI Express */
+
 
 /*
  * Mapping registers
@@ -350,6 +354,15 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_ROM			0x30
 #define	PCI_MAPREG_PPB_END		0x18
 #define	PCI_MAPREG_PCB_END		0x14
+
+#define PCI_BAR0		0x10
+#define PCI_BAR1		0x14
+#define PCI_BAR2		0x18
+#define PCI_BAR3		0x1C
+#define PCI_BAR4		0x20
+#define PCI_BAR5		0x24
+
+#define	PCI_BAR(__n)		(0x10 + 4 * (__n))
 
 #define	PCI_MAPREG_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_TYPE_MASK)
@@ -447,6 +460,49 @@ typedef u_int8_t pci_revision_t;
 	(((ofs) & PCI_VPD_ADDRESS_MASK) << PCI_VPD_ADDRESS_SHIFT)
 #define	PCI_VPD_DATAREG(ofs)	((ofs) + 4)
 #define	PCI_VPD_OPFLAG		0x80000000
+
+#define	PCI_MSI_CTL_PERVEC_MASK	0x01000000
+#define	PCI_MSI_CTL_64BIT_ADDR	0x00800000
+#define	PCI_MSI_CTL_MME_MASK	0x7
+#define	PCI_MSI_CTL_MME_SHIFT	20
+#define	PCI_MSI_CTL_MME(ofs)	(((ofs) & PCI_MSI_CTL_MME_MASK) << PCI_MSI_CTL_MME_SHIFT)
+#define	PCI_MSI_CTL_MMC_MASK	0x7
+#define	PCI_MSI_CTL_MMC_SHIFT	17
+#define	PCI_MSI_CTL_MMC(ofs)	(((ofs) >> PCI_MSI_CTL_MME_SHIFT) & PCI_MSI_CTL_MME_MASK)
+#define	PCI_MSI_CTL_MSI_ENABLE	0x00010000
+/*
+ * MSI Message Address is at offset 4.
+ * MSI Message Upper Address (if 64bit) is at offset 8.
+ * MSI Message data is at offset 8 or 12 and is 16 bits.
+ * [16 bit reserved field]
+ * MSI Mask Bits (32 bit field)
+ * MSI Pending Bits (32 bit field)
+ */
+
+#define	PCI_MSIX_CTL_ENABLE	0x80000000
+#define	PCI_MSIX_CTL_FUNCMASK	0x40000000
+#define	PCI_MSIX_CTL_TBLSIZE_MASK 0x07ff0000
+#define	PCI_MSIX_CTL_TBLSIZE_SHIFT 16
+#define	PCI_MSIX_CTL_TBLSIZE(ofs)	(((ofs) >> PCI_MSIX_CTL_TBLSIZE_SHIFT) & PCI_MSIX_CTL_TBLSIZE_MASK)
+/*
+ * 2nd DWORD is the Table Offset
+ */
+#define	PCI_MSIX_TBLOFFSET_MASK	0xfffffff8
+#define	PCI_MSIX_TBLBIR_MASK	0x00000007
+/*
+ * 3rd DWORD is the Pending Bitmap Array Offset
+ */
+#define	PCI_MSIX_PBAOFFSET_MASK	0xfffffff8
+#define	PCI_MSIX_PBABIR_MASK	0x00000007
+
+struct pci_msix_table_entry {
+	uint32_t pci_msix_addr_lo;
+	uint32_t pci_msix_addr_hi;
+	uint32_t pci_msix_value;
+	uint32_t pci_msix_vendor_control;
+};
+#define	PCI_MSIX_VENDCTL_MASK	0x00000001
+
 
 /*
  * Power Management Capability; access via capability pointer.
