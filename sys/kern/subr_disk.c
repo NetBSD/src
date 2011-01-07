@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.93.10.2 2010/11/21 21:48:28 riz Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.93.10.3 2011/01/07 06:33:45 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.93.10.2 2010/11/21 21:48:28 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.93.10.3 2011/01/07 06:33:45 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,6 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.93.10.2 2010/11/21 21:48:28 riz Exp 
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/sysctl.h>
+#include <sys/fcntl.h>
+#include <sys/kauth.h>
+#include <sys/vnode_if.h>
 #include <lib/libkern/libkern.h>
 
 /*
@@ -492,4 +495,32 @@ disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
 	}
 
 	return (error);
+}
+
+int
+getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned *secsizep)
+{
+	struct partinfo dpart;
+	struct dkwedge_info dkw;
+	struct disk *pdk;
+	int error;
+
+	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
+	if (error == 0) {
+		*secsizep = dpart.disklab->d_secsize;
+		*numsecp  = dpart.part->p_size;
+		return 0;
+	}
+
+	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
+	if (error == 0) {
+		pdk = disk_find(dkw.dkw_parent);
+		if (pdk != NULL) {
+			*secsizep = DEV_BSIZE << pdk->dk_blkshift;
+			*numsecp  = dkw.dkw_size;
+		} else
+			error = ENODEV;
+	}
+
+	return error;
 }
