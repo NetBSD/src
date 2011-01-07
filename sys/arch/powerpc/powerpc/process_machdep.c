@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.26 2007/10/17 19:56:48 garbled Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.26.42.1 2011/01/07 02:03:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2007/10/17 19:56:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26.42.1 2011/01/07 02:03:51 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -57,12 +57,12 @@ process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe * const tf = trapframe(l);
 
-	memcpy(regs->fixreg, tf->fixreg, sizeof(regs->fixreg));
-	regs->lr = tf->lr;
-	regs->cr = tf->cr;
-	regs->xer = tf->xer;
-	regs->ctr = tf->ctr;
-	regs->pc = tf->srr0;
+	memcpy(regs->fixreg, tf->tf_fixreg, sizeof(regs->fixreg));
+	regs->lr = tf->tf_lr;
+	regs->cr = tf->tf_cr;
+	regs->xer = tf->tf_xer;
+	regs->ctr = tf->tf_ctr;
+	regs->pc = tf->tf_srr0;
 
 	return 0;
 }
@@ -72,12 +72,12 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe * const tf = trapframe(l);
 
-	memcpy(tf->fixreg, regs->fixreg, sizeof(regs->fixreg));
-	tf->lr = regs->lr;
-	tf->cr = regs->cr;
-	tf->xer = regs->xer;
-	tf->ctr = regs->ctr;
-	tf->srr0 = regs->pc;
+	memcpy(tf->tf_fixreg, regs->fixreg, sizeof(regs->fixreg));
+	tf->tf_lr = regs->lr;
+	tf->tf_cr = regs->cr;
+	tf->tf_xer = regs->xer;
+	tf->tf_ctr = regs->ctr;
+	tf->tf_srr0 = regs->pc;
 
 	return 0;
 }
@@ -126,7 +126,8 @@ process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe * const tf = trapframe(l);
 	
-	tf->srr0 = (register_t)addr;
+	tf->tf_srr0 = (register_t)addr;
+
 	return 0;
 }
 
@@ -136,9 +137,9 @@ process_sstep(struct lwp *l, int sstep)
 	struct trapframe *tf = trapframe(l);
 	
 	if (sstep)
-		tf->srr1 |= PSL_SE;
+		tf->tf_srr1 |= PSL_SE;
 	else
-		tf->srr1 &= ~PSL_SE;
+		tf->tf_srr1 &= ~PSL_SE;
 	return 0;
 }
 
