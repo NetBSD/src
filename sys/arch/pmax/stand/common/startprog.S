@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.S,v 1.6 2010/11/25 14:05:27 tsutsui Exp $	*/
+/*	$NetBSD: startprog.S,v 1.7 2011/01/07 14:50:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <mips/asm.h>
 
+	.set	noreorder
 LEAF(startprog)
         subu    sp,sp,CALLFRAME_SIZ
 	addu	t2,a1,-CALLFRAME_SIZ	# new stack value
