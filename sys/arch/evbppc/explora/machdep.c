@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2008/08/08 06:29:21 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.12.1 2011/01/07 01:43:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/08/08 06:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.12.1 2011/01/07 01:43:07 matt Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/08/08 06:29:21 hannken Exp $")
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 
 #if NKSYMS || defined(DDB) || defined(LKM)
