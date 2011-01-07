@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.74 2011/01/02 05:12:56 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.75 2011/01/07 11:25:43 pooka Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.21 2011/01/02 05:12:33 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.22 2011/01/07 11:25:10 pooka Exp 
  */
 
 /*
@@ -169,7 +169,7 @@ struct nameidata {
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
 #define	INRENAME	0x0400000	/* operation is a part of ``rename'' */
 #define	INRELOOKUP	0x0800000	/* set while inside relookup() */
-#define	PARAMASK	0x0efef00	/* mask of parameter descriptors */
+#define	PARAMASK	0x0efe300	/* mask of parameter descriptors */
 
 /*
  * Initialization of an nameidata structure.
@@ -326,6 +326,6 @@ extern struct nchstats nchstats;
 #define NAMEI_CREATEDIR	0x0200000
 #define NAMEI_INRENAME	0x0400000
 #define NAMEI_INRELOOKUP	0x0800000
-#define NAMEI_PARAMASK	0x0efef00
+#define NAMEI_PARAMASK	0x0efe300
 
 #endif /* !_SYS_NAMEI_H_ */
