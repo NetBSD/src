@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.21 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: pcb.h,v 1.21.104.1 2011/01/07 01:57:31 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,9 +36,13 @@
 #include <powerpc/reg.h>
 
 struct faultbuf {
-	register_t fb_pc;		/* PC */
 	register_t fb_sp;		/* R1 */
 	register_t fb_r2;		/* R2 (why?) */
+	/*
+	 * These are ordered so that one could use a stmw to save them.
+	 */
+	register_t fb_msr;		/* MSR */
+	register_t fb_pc;		/* PC */
 	register_t fb_cr;		/* CR */
 	register_t fb_fixreg[19];	/* R13-R31 */
 };
@@ -60,6 +64,7 @@ struct pcb {
 	vaddr_t pcb_umapsr;	/* the user segment mapped in kernel */
 	struct fpreg pcb_fpu;	/* Floating point processor */
 	struct vreg pcb_vr __attribute__((aligned(16)));
+	register_t pcb_usprg0;	/* User Special-Purpose Register General 0 */
 };
 
 struct md_coredump {
