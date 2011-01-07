@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.19 2006/05/14 21:56:32 elad Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.19.88.1 2011/01/07 01:59:39 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -118,7 +118,7 @@ extern	db_regs_t	ddb_regs;		/* register state */
 				 ((ins)&M_BCTR) == I_BCTR )
 #define inst_load(ins)		0
 #define inst_store(ins)		0
-#ifdef PPC_IBM4XX
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 #define next_instr_address(v, b) ((db_addr_t) ((b) ? (v) : ((v) + 4)))
 extern db_addr_t branch_taken(int, db_addr_t, db_regs_t *);
 #endif
@@ -150,7 +150,8 @@ typedef long	kgdb_reg_t;
 void	kdb_kintr __P((void *));
 int	kdb_trap __P((int, void *));
 
-#ifdef PPC_IBM4XX
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE) \
+	|| defined(PPC_IBM4XX) || defined(USERACC) || defined(PPC_BOOKE)
 /*
  * We have machine-dependent commands.
  */
