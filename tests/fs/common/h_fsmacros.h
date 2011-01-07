@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.24 2010/12/31 18:16:41 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.25 2011/01/07 10:45:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ FSPROTOS(lfs);
 FSPROTOS(msdosfs);
 FSPROTOS(nfs);
 FSPROTOS(nfsro);
+FSPROTOS(p2k_ffs);
 FSPROTOS(puffs);
 FSPROTOS(rumpfs);
 FSPROTOS(sysvbfs);
@@ -171,6 +172,7 @@ do {									\
   ATF_TC_FSADD(lfs,MOUNT_LFS,func,desc)					\
   ATF_TC_FSADD(msdosfs,MOUNT_MSDOS,func,desc)				\
   ATF_TC_FSADD(nfs,MOUNT_NFS,func,desc)					\
+  ATF_TC_FSADD(p2k_ffs,MOUNT_PUFFS,func,desc)				\
   ATF_TC_FSADD(puffs,MOUNT_PUFFS,func,desc)				\
   ATF_TC_FSADD(rumpfs,MOUNT_RUMPFS,func,desc)				\
   ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc)				\
@@ -182,6 +184,7 @@ do {									\
   ATF_TP_FSADD(lfs,func);						\
   ATF_TP_FSADD(msdosfs,func);						\
   ATF_TP_FSADD(nfs,func);						\
+  ATF_TP_FSADD(p2k_ffs,func);						\
   ATF_TP_FSADD(puffs,func);						\
   ATF_TP_FSADD(rumpfs,func);						\
   ATF_TP_FSADD(sysvbfs,func);						\
