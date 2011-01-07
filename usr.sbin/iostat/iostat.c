@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.53 2009/04/15 10:05:41 lukem Exp $	*/
+/*	$NetBSD: iostat.c,v 1.54 2011/01/07 03:12:27 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.53 2009/04/15 10:05:41 lukem Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.54 2011/01/07 03:12:27 jakllsch Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ __RCSID("$NetBSD: iostat.c,v 1.53 2009/04/15 10:05:41 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "drvstats.h"
 
@@ -98,6 +99,8 @@ static int	todo = 0;
 static int	defdrives;
 static int	winlines = 20;
 static int	wincols = 80;
+
+#define	MAX(a,b)	(((a)>(b))?(a):(b))
 
 #define	ISSET(x, a)	((x) & (a))
 #define	SHOW_CPU	(1<<0)
@@ -339,7 +342,9 @@ drive_stats(double etime)
 			    (double)(1024 * 1024);
 		else
 			mbps = 0;
-		(void)printf(" %5.2f ", mbps / etime);
+		mbps /= etime;
+		(void)printf(" %5.*f ",
+		    MAX(0,3-(int)floor(log10(fabs(fmax(1.0,mbps))))), mbps);
 	}
 }
 
