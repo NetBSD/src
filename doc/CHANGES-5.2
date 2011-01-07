@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.42 2011/01/07 01:29:25 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.43 2011/01/07 01:43:55 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -4221,4 +4221,14 @@ external/ibm-public/postfix/dist/src/xsasl/xsasl_server.c       patch
 
 	Update postfix to 2.7.2.
 	[tron, ticket #1501]
+
+sys/dev/rnd.c					1.79
+
+	Prevent crash if len field is garbage in ioctl(RNDADDDATA). PR#44190.
+	[pooka, ticket #1502]
+
+sys/arch/xen/conf/files.xen			1.110 via patch
+
+	Make maxpartitions 16 on !i386.
+	[bouyer, ticket #1503]
 
