@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.8 2010/11/19 17:46:02 pooka Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.9 2011/01/07 12:01:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,14 +51,14 @@ tmount(const atf_tc_t *tc, const char *path)
 static void
 tstatvfs(const atf_tc_t *tc, const char *path)
 {
-	const char *fstype = atf_tc_get_md_var(tc, "X-fs.type");
+	const char *fstype = atf_tc_get_md_var(tc, "X-fs.mntname");
 	struct statvfs svb;
 
 	if (rump_sys_statvfs1(path, &svb, ST_WAIT) == -1)
 		atf_tc_fail_errno("statvfs");
 
 	ATF_REQUIRE(svb.f_namemax > 0 && svb.f_namemax <= MAXNAMLEN);
-	if (!FSTYPE_PUFFS(tc))
+	if (!(FSTYPE_PUFFS(tc) || FSTYPE_P2K_FFS(tc)))
 		ATF_REQUIRE_STREQ(svb.f_fstypename, fstype);
 	ATF_REQUIRE_STREQ(svb.f_mntonname, path);
 }
