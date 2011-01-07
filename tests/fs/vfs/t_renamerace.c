@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.15 2011/01/02 12:58:17 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.16 2011/01/07 11:53:23 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -130,7 +130,7 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 
 	/* XXX: msdosfs also sometimes hangs */
 	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
-	    FSTYPE_MSDOS(tc))
+	    FSTYPE_MSDOS(tc) || FSTYPE_FFSLOG(tc))
 		atf_tc_expect_signal(-1, "PR kern/43626");
 
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
