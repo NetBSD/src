@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.32 2008/04/24 18:39:21 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.32.20.1 2011/01/07 02:01:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32.20.1 2011/01/07 02:01:57 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -79,7 +79,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    (sd->sd_sigact.sa_flags & SA_ONSTACK) != 0;
 
 	/* Find top of stack.  */
-	sp = (onstack ? (vaddr_t)ss->ss_sp + ss->ss_size : tf->fixreg[1]);
+	sp = (onstack ? (vaddr_t)ss->ss_sp + ss->ss_size : tf->tf_fixreg[1]);
 	sp &= ~(CALLFRAMELEN-1);
 
 	/* Allocate space for the ucontext.  */
@@ -123,14 +123,14 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	switch (sd->sd_vers) {
 	case 2:		/* siginfo sigtramp */
-		tf->fixreg[1]  = (register_t)sp - CALLFRAMELEN;
-		tf->fixreg[3]  = (register_t)ksi->ksi_signo;
-		tf->fixreg[4]  = (register_t)sip;
-		tf->fixreg[5]  = (register_t)ucp;
+		tf->tf_fixreg[1]  = (register_t)sp - CALLFRAMELEN;
+		tf->tf_fixreg[3]  = (register_t)ksi->ksi_signo;
+		tf->tf_fixreg[4]  = (register_t)sip;
+		tf->tf_fixreg[5]  = (register_t)ucp;
 		/* Preserve ucp across call to signal function */
-		tf->fixreg[30] = (register_t)ucp;
-		tf->lr         = (register_t)sd->sd_tramp;
-		tf->srr0       = (register_t)sd->sd_sigact.sa_handler;
+		tf->tf_fixreg[30] = (register_t)ucp;
+		tf->tf_lr         = (register_t)sd->sd_tramp;
+		tf->tf_srr0       = (register_t)sd->sd_sigact.sa_handler;
 		break;
 
 	default:
@@ -160,24 +160,25 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 #endif
 
 	/* Save GPR context. */
-	(void)memcpy(gr, &tf->fixreg, 32 * sizeof (gr[0])); /* GR0-31 */
-	gr[_REG_CR]  = tf->cr;
-	gr[_REG_LR]  = tf->lr;
-	gr[_REG_PC]  = tf->srr0;
-	gr[_REG_MSR] = tf->srr1 & PSL_USERSRR1;
+	(void)memcpy(gr, &tf->tf_fixreg, 32 * sizeof (gr[0])); /* GR0-31 */
+	gr[_REG_CR]  = tf->tf_cr;
+	gr[_REG_LR]  = tf->tf_lr;
+	gr[_REG_PC]  = tf->tf_srr0;
+	gr[_REG_MSR] = tf->tf_srr1 & PSL_USERSRR1;
 #ifdef PPC_HAVE_FPU
 	gr[_REG_MSR] |= pcb->pcb_flags & (PCB_FE0|PCB_FE1);
 #endif
 #ifdef ALTIVEC
 	gr[_REG_MSR] |= pcb->pcb_flags & PCB_ALTIVEC ? PSL_VEC : 0;
 #endif
-	gr[_REG_CTR] = tf->ctr;
-	gr[_REG_XER] = tf->xer;
+	gr[_REG_CTR] = tf->tf_ctr;
+	gr[_REG_XER] = tf->tf_xer;
 #ifdef PPC_OEA
-	gr[_REG_MQ]  = tf->tf_xtra[TF_MQ];
+	gr[_REG_MQ]  = tf->tf_mq;
 #else
 	gr[_REG_MQ]  = 0;
 #endif
+
 	*flagp |= _UC_CPU;
 
 #ifdef PPC_HAVE_FPU
@@ -234,20 +235,20 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		pcb->pcb_flags |= gr[_REG_MSR] & (PCB_FE0|PCB_FE1);
 #endif
 
-		(void)memcpy(&tf->fixreg, gr, 32 * sizeof (gr[0]));
-		tf->cr   = gr[_REG_CR];
-		tf->lr   = gr[_REG_LR];
-		tf->srr0 = gr[_REG_PC];
+		(void)memcpy(&tf->tf_fixreg, gr, 32 * sizeof (gr[0]));
+		tf->tf_cr   = gr[_REG_CR];
+		tf->tf_lr   = gr[_REG_LR];
+		tf->tf_srr0 = gr[_REG_PC];
 		/*
 		 * Accept all user-settable bits without complaint;
 		 * userland should not need to know the machine-specific
 		 * MSR value.
 		 */
-		tf->srr1 = (gr[_REG_MSR] & PSL_USERMOD) | PSL_USERSET;
-		tf->ctr  = gr[_REG_CTR];
-		tf->xer  = gr[_REG_XER];
+		tf->tf_srr1 = (gr[_REG_MSR] & PSL_USERMOD) | PSL_USERSET;
+		tf->tf_ctr  = gr[_REG_CTR];
+		tf->tf_xer  = gr[_REG_XER];
 #ifdef PPC_OEA
-		tf->tf_xtra[TF_MQ] = gr[_REG_MQ];
+		tf->tf_mq = gr[_REG_MQ];
 #endif
 	}
 
