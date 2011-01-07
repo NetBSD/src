@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.82.4.3 2010/03/28 17:28:33 snj Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.82.4.3.4.1 2011/01/07 03:14:46 matt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.82.4.3 2010/03/28 17:28:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.82.4.3.4.1 2011/01/07 03:14:46 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -177,7 +177,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	void *sbbuf = NULL;
 	daddr_t *snaplist = NULL, snaplistsize = 0;
 	struct buf *bp, *nbp;
-	struct fs *copy_fs, *fs = VFSTOUFS(mp)->um_fs;
+	struct fs *copy_fs = NULL, *fs = VFSTOUFS(mp)->um_fs;
 	struct inode *ip = VTOI(vp);
 	struct lwp *l = curlwp;
 	struct snap_info *si = VFSTOUFS(mp)->um_snapinfo;
