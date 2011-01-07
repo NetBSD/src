@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.217 2011/01/06 13:09:17 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.218 2011/01/07 15:10:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.217 2011/01/06 13:09:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.218 2011/01/07 15:10:22 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -109,6 +109,7 @@ const int rump_lockdebug = 1;
 #else
 const int rump_lockdebug = 0;
 #endif
+bool rump_ttycomponent = false;
 
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
@@ -307,7 +308,6 @@ rump__init(int rump_version)
 	l->l_fd = &filedesc0;
 	rumpuser_set_curlwp(l);
 
-	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpuser_mutex_init(&rump_giantlock);
 	ksyms_init();
 	uvm_init();
@@ -410,6 +410,13 @@ rump__init(int rump_version)
 	rump_dev_init();
 
 	rump_component_init(RUMP_COMPONENT_KERN_VFS);
+
+	/*
+	 * if we initialized the tty component above, the tyttymtx is
+	 * now initialized.  otherwise, we need to initialize it.
+	 */
+	if (!rump_ttycomponent)
+		mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_VM);
 
 	cold = 0;
 
