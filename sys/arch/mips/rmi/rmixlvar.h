@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.18 2010/04/17 07:33:33 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.19 2011/01/07 00:16:20 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,6 +45,8 @@
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
+
+extern void rmixl_pcr_init_core(void);
 
 static inline bool
 cpu_rmixl(const struct pridtab *ct)
