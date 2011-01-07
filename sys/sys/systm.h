@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.228.4.2 2009/03/15 19:43:48 snj Exp $	*/
+/*	$NetBSD: systm.h,v 1.228.4.2.8.1 2011/01/07 01:13:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -303,6 +303,14 @@ void	startprofclock(struct proc *);
 void	stopprofclock(struct proc *);
 void	proftick(struct clockframe *);
 void	setstatclockrate(int);
+
+/*
+ * Critical polling hooks.  Functions to be run while the kernel stays
+ * elevated IPL for a "long" time.  (watchdogs).
+ */
+void	*critpollhook_establish(void (*)(void *), void *);
+void	critpollhook_disestablish(void *);
+void	docritpollhooks(void);
 
 /*
  * Shutdown hooks.  Functions to be run with all interrupts disabled
