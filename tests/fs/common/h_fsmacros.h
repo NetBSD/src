@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.28 2011/01/07 11:52:59 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.29 2011/01/07 11:58:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
 #define FSTYPE_FFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "ffs") == 0)
 #define FSTYPE_FFSLOG(tc)\
-    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "ffs") == 0)
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "ffslog") == 0)
 #define FSTYPE_LFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "lfs") == 0)
 #define FSTYPE_MSDOS(tc)\
