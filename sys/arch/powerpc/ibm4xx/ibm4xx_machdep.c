@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.8 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.8.18.1 2011/01/07 02:12:18 matt Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.8 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.8.18.1 2011/01/07 02:12:18 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.8 2008/07/02 17:28:56 ad Exp $"
 
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <machine/trap.h>
 
 /*
@@ -275,7 +276,7 @@ ibm4xx_cpu_startup(const char *model)
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
 	KASSERT(curcpu()->ci_intstk != 0);
-	KASSERT(curcpu()->ci_intrdepth == -1);
+	KASSERT(curcpu()->ci_idepth == -1);
 
 	/*
 	 * Initialize error message buffer (at end of core).

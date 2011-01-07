@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.14 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: altivec.c,v 1.14.26.1 2011/01/07 02:12:19 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.14 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.14.26.1 2011/01/07 02:12:19 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.14 2008/04/08 02:33:03 garbled Exp $")
 
 #include <powerpc/altivec.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/psl.h>
 
 #ifdef MULTIPROCESSOR
@@ -91,7 +92,7 @@ enable_vec(void)
 	/*
 	 * VRSAVE will be restored when trap frame returns
 	 */
-	tf->tf_xtra[TF_VRSAVE] = vr->vrsave;
+	tf->tf_vrsave = vr->vrsave;
 
 #define	LVX(n,vr)	__asm /*volatile*/("lvx %2,%0,%1" \
 	    ::	"b"(vr), "r"(offsetof(struct vreg, vreg[n])), "n"(n));
@@ -174,7 +175,7 @@ save_vec_cpu(void)
 	/*
 	 * Save VRSAVE
 	 */
-	vr->vrsave = tf->tf_xtra[TF_VRSAVE];
+	vr->vrsave = tf->tf_vrsave;
 
 	/*
 	 * Note that we aren't using any CPU resources and stop any
