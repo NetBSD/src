@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2011/01/02 13:18:37 pooka Exp $
+# $NetBSD: Makefile,v 1.28 2011/01/07 01:07:31 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,8 @@ SUBDIR+= modules
 . endif
 
 .include <bsd.test.mk>
-.endif
+
+.else
 
 .include <bsd.subdir.mk>
+.endif
