@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.1.2.2 2011/01/07 15:14:23 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.2 2011/01/07 15:14:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,12 +53,14 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $");
 #endif
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/ras.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <powerpc/pcb.h>
 #include <powerpc/userret.h>
 #include <powerpc/psl.h>
+#include <powerpc/instr.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
@@ -385,6 +387,26 @@ itlb_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	return rv;
 }
 
+static bool
+emulate_opcode(struct trapframe *tf, ksiginfo_t *ksi)
+{
+	uint32_t opcode;
+        if (copyin((void *)tf->tf_srr0, &opcode, sizeof(opcode)) != 0)
+		return false;
+
+	if (opcode == OPC_LWSYNC)
+		return true;
+
+	if (OPC_MFSPR_P(opcode, SPR_PVR)) {
+		__asm ("mfpvr %0" : "=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)]));
+		return true;
+	}
+
+	/*
+	 * If we bothered to emulate FP, we would try to do so here.
+	 */
+	return false;
+}
 
 static int
 pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
@@ -392,21 +414,37 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	struct cpu_info * const ci = curcpu();
 	int rv = EPERM;
 
-	if (rv != 0 && usertrap_p(tf)) {
-		ci->ci_ev_pgm.ev_count++;
-		KSI_INIT_TRAP(ksi);
-		ksi->ksi_signo = SIGILL;
-		ksi->ksi_trap = EXC_PGM;
-		if (tf->tf_esr & ESR_PIL)
-			ksi->ksi_code = ILL_ILLOPC;
-		else if (tf->tf_esr & ESR_PPR)
-			ksi->ksi_code = ILL_PRVOPC;
-		else if (tf->tf_esr & ESR_PTR)
-			ksi->ksi_code = ILL_ILLTRP;
-		else
-			ksi->ksi_code = 0;
-		ksi->ksi_addr = (void *)tf->tf_srr0;
+	if (!usertrap_p(tf))
+		return rv;
+
+	ci->ci_ev_pgm.ev_count++;
+
+	if (tf->tf_esr & ESR_PTR) {
+		struct proc *p = curlwp->l_proc;
+		if (p->p_raslist != NULL
+		    && ras_lookup(p, (void *)tf->tf_srr0) != (void *) -1) {
+			tf->tf_srr0 += 4;
+			return 0;
+		}
+	} else if (tf->tf_esr & (ESR_PIL|ESR_PPR)) {
+		if (emulate_opcode(tf, ksi)) {
+			tf->tf_srr0 += 4;
+			return 0;
+		}
 	}
+
+	KSI_INIT_TRAP(ksi);
+	ksi->ksi_signo = SIGILL;
+	ksi->ksi_trap = EXC_PGM;
+	if (tf->tf_esr & ESR_PIL)
+		ksi->ksi_code = ILL_ILLOPC;
+	else if (tf->tf_esr & ESR_PPR)
+		ksi->ksi_code = ILL_PRVOPC;
+	else if (tf->tf_esr & ESR_PTR)
+		ksi->ksi_code = ILL_ILLTRP;
+	else
+		ksi->ksi_code = 0;
+	ksi->ksi_addr = (void *)tf->tf_srr0;
 	return rv;
 }
 
