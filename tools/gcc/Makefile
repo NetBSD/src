@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2008/10/25 22:15:28 apb Exp $
+#	$NetBSD: Makefile,v 1.30.12.1 2011/01/07 03:14:09 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -16,9 +16,14 @@ MULTILIB_ARGS= --enable-multilib
 MULTILIB_ARGS= --disable-multilib
 .endif
 
+.if ${MKSOFTFLOAT} != "no"
+SOFTFLOAT_ARGS=	-with-float=soft
+.endif
+
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--enable-long-long \
 		${MULTILIB_ARGS} \
+		${SOFTFLOAT_ARGS} \
 		--enable-threads \
 		${VAX_CONFIGURE_ARGS} \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
