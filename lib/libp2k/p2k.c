@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.53 2011/01/07 15:47:14 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.54 2011/01/07 16:02:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -344,10 +344,17 @@ p2k_init(uint32_t puffs_flags)
 		puffs_flags |= PUFFS_KFLAG_NOCACHE;
 	}
 	if ((envbuf = getenv("P2K_WIZARDUID")) != NULL) {
-		/* default to 0 in error cases */
-		wizarduid = atoi(envbuf);
-		haswizard = 1;
-		printf("P2K WIZARD MODE: using uid %d\n", wizarduid);
+		char *ep;
+
+		wizarduid = strtoul(envbuf, &ep, 10);
+		if (envbuf[0] == '\0' || *ep != '\0') {
+			printf("P2K_WIZARDUID: invalid uid %s\n", envbuf);
+		} else if (wizarduid > UID_MAX) {
+			printf("P2K_WIZARDUID: uid %s out-of-range\n", envbuf);
+		} else {
+			haswizard = 1;
+			printf("P2K WIZARD MODE: using uid %d\n", wizarduid);
+		}
 	}
 
 	p2m = allocp2m();
