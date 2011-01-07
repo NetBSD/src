@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.26 2008/02/23 19:38:47 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.26.26.1 2011/01/07 01:51:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -123,7 +123,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.text; .asciz x
+#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
@@ -159,6 +159,14 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
  *	R4[er] = kernelend
  */
 
+#ifdef CI_INTSTK
+#define	INIT_CPUINFO_INTSTK(er,tmp1)					\
+	addi	er,er,INTSTK;						\
+	stptr	er,CI_INTSTK(tmp1)
+#else
+#define	INIT_CPUINFO_INTSTK(er,tmp1)	/* nothing */
+#endif
+
 #define	INIT_CPUINFO(er,sp,tmp1,tmp2) 					\
 	li	tmp1,PGOFSET;						\
 	add	er,er,tmp1;						\
@@ -166,13 +174,12 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	lis	tmp1,_C_LABEL(cpu_info)@ha;				\
 	addi	tmp1,tmp1,_C_LABEL(cpu_info)@l;				\
 	mtsprg0	tmp1;			/* save for later use */	\
-	addi	er,er,INTSTK;						\
-	stptr	er,CI_INTSTK(tmp1);					\
+	INIT_CPUINFO_INTSTK(er,tmp1);					\
 	lis	tmp2,_C_LABEL(emptyidlespin)@h;				\
 	ori	tmp2,tmp2,_C_LABEL(emptyidlespin)@l;			\
 	stptr	tmp2,CI_IDLESPIN(tmp1);					\
 	li	tmp2,-1;						\
-	stint	tmp2,CI_INTRDEPTH(tmp1);				\
+	stint	tmp2,CI_IDEPTH(tmp1);					\
 	li	tmp2,0;							\
 	stptr	tmp2,-CALLFRAMELEN(er);	/* terminate idle stack chain */\
 	lis	tmp1,_C_LABEL(proc0paddr)@ha;				\
@@ -182,7 +189,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 		/* er = end of mem reserved for kernel */		\
 	stptru	tmp2,-CALLFRAMELEN(sp)	/* end of stack chain */
 
-#endif
+#endif	/* KERNEL */
 
 /* Condition Register Bit Fields */
 
