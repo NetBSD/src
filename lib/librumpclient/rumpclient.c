@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.12 2011/01/06 06:57:14 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.13 2011/01/07 19:37:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -41,8 +41,10 @@ __RCSID("$NetBSD");
 #include <netinet/tcp.h>
 
 #include <assert.h>
+#include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <link.h>
 #include <poll.h>
 #include <pthread.h>
 #include <signal.h>
@@ -53,6 +55,18 @@ __RCSID("$NetBSD");
 #include <unistd.h>
 
 #include <rump/rumpclient.h>
+
+#define HOSTOPS
+int	(*host_socket)(int, int, int);
+int	(*host_close)(int);
+int	(*host_connect)(int, const struct sockaddr *, socklen_t);
+int	(*host_poll)(struct pollfd *, nfds_t, int);
+int	(*host_pollts)(struct pollfd *, nfds_t, const struct timespec *,
+		      const sigset_t *);
+ssize_t	(*host_read)(int, void *, size_t);
+ssize_t (*host_sendto)(int, const void *, size_t, int,
+		       const struct sockaddr *, socklen_t);
+int	(*host_setsockopt)(int, int, int, const void *, socklen_t);
 
 #include "sp_common.c"
 
@@ -99,7 +113,7 @@ waitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask)
 			case 0:
 				releasercvlock(spc);
 				pthread_mutex_unlock(&spc->spc_mtx);
-				pollts(&pfd, 1, NULL, mask);
+				host_pollts(&pfd, 1, NULL, mask);
 				pthread_mutex_lock(&spc->spc_mtx);
 				continue;
 			case -1:
@@ -375,11 +389,11 @@ doconnect(void)
 	int s, error;
 	ssize_t n;
 
-	s = socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0);
+	s = host_socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0);
 	if (s == -1)
 		return -1;
 
-	if (connect(s, serv_sa, (socklen_t)serv_sa->sa_len) == -1) {
+	if (host_connect(s, serv_sa, (socklen_t)serv_sa->sa_len) == -1) {
 		error = errno;
 		fprintf(stderr, "rump_sp: client connect failed\n");
 		errno = error;
@@ -393,7 +407,7 @@ doconnect(void)
 		return -1;
 	}
 
-	if ((n = read(s, banner, sizeof(banner)-1)) < 0) {
+	if ((n = host_read(s, banner, sizeof(banner)-1)) < 0) {
 		error = errno;
 		fprintf(stderr, "rump_sp: failed to read banner\n");
 		errno = error;
@@ -417,11 +431,37 @@ doconnect(void)
 	return 0;
 }
 
+void *(*rumpclient_dlsym)(void *, const char *);
+
 int
 rumpclient_init()
 {
 	char *p;
 	int error;
+
+	/* dlsym overrided by rumphijack? */
+	if (!rumpclient_dlsym)
+		rumpclient_dlsym = dlsym;
+
+	/*
+	 * sag mir, wo die symbol sind.  zogen fort, der krieg beginnt.
+	 * wann wird man je verstehen?  wann wird man je verstehen?
+	 */
+#define FINDSYM2(_name_,_syscall_)					\
+	if ((host_##_name_ = rumpclient_dlsym(RTLD_NEXT,		\
+	    #_syscall_)) == NULL)					\
+		/* host_##_name_ = _syscall_ */;
+#define FINDSYM(_name_) FINDSYM2(_name_,_name_)
+	FINDSYM2(socket,__socket30);
+	FINDSYM(close);
+	FINDSYM(connect);
+	FINDSYM(poll);
+	FINDSYM(pollts);
+	FINDSYM(read);
+	FINDSYM(sendto);
+	FINDSYM(setsockopt);
+#undef	FINDSYM
+#undef	FINDSY2
 
 	if ((p = getenv("RUMP_SERVER")) == NULL) {
 		errno = ENOENT;
@@ -440,7 +480,7 @@ rumpclient_init()
 	if (error) {
 		pthread_mutex_destroy(&clispc.spc_mtx);
 		pthread_cond_destroy(&clispc.spc_cv);
-		close(clispc.spc_fd);
+		host_close(clispc.spc_fd);
 		errno = error;
 		return -1;
 	}
@@ -481,7 +521,7 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 {
 	int error;
 
-	close(clispc.spc_fd);
+	host_close(clispc.spc_fd);
 	memset(&clispc, 0, sizeof(clispc));
 	clispc.spc_fd = -1;
 
