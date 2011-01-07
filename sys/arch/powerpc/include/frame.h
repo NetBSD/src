@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.20 2008/10/16 04:02:32 wrstuden Exp $	*/
+/*	$NetBSD: frame.h,v 1.20.16.1 2011/01/07 01:50:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,12 @@
 
 #include <machine/types.h>
 
+#ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
+#endif
+
 /*
  * We have to save all registers on every trap, because
  *	1. user could attach this process every time
@@ -45,6 +51,14 @@
  *
  * Change ordering to cluster together these register_t's.		XXX
  */
+struct reg_sans_pc {
+	register_t r_fixreg[32];
+	register_t r_lr;
+	uint32_t r_cr;
+	uint32_t r_xer;
+	register_t r_ctr;
+};
+
 struct utrapframe {
 	register_t fixreg[32];
 	register_t lr;
@@ -58,26 +72,45 @@ struct utrapframe {
 	int spare;
 };
 
-struct trapframe {
-	register_t fixreg[32];
-	register_t lr;
-	int cr;
-	int xer;
-	register_t ctr;
-	register_t srr0;
-	register_t srr1;
-	/*
-	 * DAR is the OEA name.  On IBM4xx is DAR is really DEAR.
-	 */
-	register_t dar;		/* dar & dsisr are only filled on a DSI trap */
-	int dsisr;
-	int exc;
-	int tf_xtra[2];
+struct clockframe {
+	register_t cf_srr0;
+	register_t cf_srr1;
+	int cf_idepth;
 };
-#define	TF_VRSAVE	0
-#define	TF_MQ		1
-#define	TF_ESR		0
-#define	TF_PID		1
+
+struct trapframe {
+	struct reg_sans_pc tf_ureg;
+	struct clockframe tf_cf;
+	uint32_t tf_exc;
+#if defined(PPC_OEA) || defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
+	register_t tf_dar;
+	uint32_t tf_dsisr;
+	uint32_t tf_vrsave;
+	uint32_t tf_mq;
+#endif
+#if defined(PPC_BOOKE) || defined(PPC_IBM4XX)
+	register_t tf_dear;
+	register_t tf_mcar;
+	register_t tf_sprg1;
+	uint32_t tf_esr;
+	uint32_t tf_mcsr;
+	uint32_t tf_pid;
+#endif
+};
+#define tf_fixreg	tf_ureg.r_fixreg
+#define tf_lr		tf_ureg.r_lr
+#define tf_cr		tf_ureg.r_cr
+#define tf_xer		tf_ureg.r_xer
+#define tf_ctr		tf_ureg.r_ctr
+#define tf_srr0		tf_cf.cf_srr0
+#define tf_srr1		tf_cf.cf_srr1
+#define tf_idepth	tf_cf.cf_idepth
+
+struct ktrapframe {
+	register_t ktf_sp;
+	register_t ktf_lr;
+	struct trapframe ktf_tf;
+};
 
 #if defined(_KERNEL) || defined(_LKM)
 #ifdef _LP64
@@ -99,24 +132,18 @@ struct utrapframe32 {
 /*
  * This is to ensure alignment of the stackpointer
  */
-#define	FRAMELEN	roundup(sizeof(struct trapframe) + 2*sizeof(register_t), CALLFRAMELEN)
-#define	trapframe(l)	((struct trapframe *)((char *)(l)->l_addr + USPACE - FRAMELEN + 2*sizeof(register_t)))
+#define	FRAMELEN	roundup(sizeof(struct ktrapframe), CALLFRAMELEN)
+#define ktrapframe(l)	((struct ktrapframe *)((char *)(l)->l_addr + USPACE - FRAMELEN - CALLFRAMELEN))
+#define trapframe(l)	(&(ktrapframe(l)->ktf_tf))
 
 #define	SFRAMELEN	roundup(sizeof(struct switchframe), CALLFRAMELEN)
 struct switchframe {
-	register_t sp;
-	register_t lr;
-	register_t user_sr;		/* VSID on IBM4XX */
-	register_t cr;			/* why?  CR is volatile. */
-	register_t fixreg2;
-	register_t fixreg[19];		/* R13-R31 */
-};
-
-struct clockframe {
-	register_t srr1;
-	register_t srr0;
-	int pri;
-	int depth;
+	register_t sf_sp;
+	register_t sf_lr;
+	register_t sf_user_sr;		/* VSID on IBM4XX */
+	register_t sf_cr;		/* why?  CR is volatile. */
+	register_t sf_fixreg2;
+	register_t sf_fixreg[19];	/* R13-R31 */
 };
 
 /*
@@ -124,16 +151,18 @@ struct clockframe {
  */
 #define	CALLFRAMELEN	sizeof(struct callframe)
 struct callframe {
-	register_t sp;
-	register_t lr;
-	register_t r30;
-	register_t r31;
+	register_t cf_sp;
+	register_t cf_lr;
+	register_t cf_r30;
+	register_t cf_r31;
 };
 
 struct saframe {
-	register_t r1;		/* stack pointer */
-	register_t lr;		/* Callee lr save area */
-	register_t fill[2];	/* Pad to multiple of 16 bytes */
+	register_t saf_r1;	/* stack pointer */
+	register_t saf_lr;	/* Callee lr save area */
+#ifndef _LP64
+	register_t saf_fill[2];	/* Pad to multiple of 16 bytes */
+#endif
 };
 
 #define	IFRAMELEN	roundup(sizeof(struct intrframe), CALLFRAMELEN)
