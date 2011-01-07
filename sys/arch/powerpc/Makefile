@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.10 2008/04/30 21:15:33 garbled Exp $
+#	$NetBSD: Makefile,v 1.10.26.1 2011/01/07 02:11:36 matt Exp $
 
-SUBDIR=	include .WAIT include/ibm4xx include/oea stand
+SUBDIR=	include .WAIT include/booke include/ibm4xx include/oea stand
 
 .include <bsd.kinc.mk>
