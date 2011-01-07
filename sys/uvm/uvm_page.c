@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140.6.3 2009/03/02 20:51:35 snj Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.6.3.8.1 2011/01/07 01:16:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3 2009/03/02 20:51:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.8.1 2011/01/07 01:16:44 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -503,7 +503,8 @@ uvm_setpagesize(void)
 	}
 	uvmexp.pagemask = uvmexp.pagesize - 1;
 	if ((uvmexp.pagemask & uvmexp.pagesize) != 0)
-		panic("uvm_setpagesize: page size not a power of two");
+		panic("uvm_setpagesize: page size %u (%#x) not a power of two",
+		    uvmexp.pagesize, uvmexp.pagesize);
 	for (uvmexp.pageshift = 0; ; uvmexp.pageshift++)
 		if ((1 << uvmexp.pageshift) == uvmexp.pagesize)
 			break;
