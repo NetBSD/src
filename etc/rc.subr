@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.73 2008/06/23 03:26:18 dholland Exp $
+# $NetBSD: rc.subr,v 1.73.2.1 2011/01/07 01:53:32 riz Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -909,6 +909,28 @@ backup_file()
 			;;
 		esac
 	fi
+}
+
+#
+# collapse_backslash_newline
+#	Copy input to output, collapsing <backslash><newline>
+#	to nothing, but leaving other backslashes alone.
+#
+collapse_backslash_newline()
+{
+	local line
+	while read -r line ; do
+		case "$line" in
+		*\\)
+			# print it, without the backslash or newline
+			printf "%s" "${line%?}"
+			;;
+		*)
+			# print it, with a newline
+			printf "%s\n" "${line}"
+			;;
+		esac
+	done
 }
 
 _rc_subr_loaded=:
