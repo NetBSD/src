@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.9.28.1 2010/11/21 03:05:07 riz Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.9.28.1.2.1 2011/01/07 01:45:39 matt Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -182,6 +182,7 @@ wd*	at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
+audio*	at uaudio?
 
 # USB MIDI
 umidi*	at uhub? port ? configuration ?
@@ -331,6 +332,7 @@ btsco*	at bthub?
 # miscellaneous pseudo-devices
 pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+pseudo-device	sysmon
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
