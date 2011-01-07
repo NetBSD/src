@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.8 2011/01/07 10:45:45 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.9 2011/01/07 11:50:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -360,7 +360,7 @@ p2k_ffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	rump_init();
 	if ((rv = ffs_fstest_newfs(tc, argp, image, size, fspriv)) != 0)
 		return rv;
-	if (mkdir("p2kffsfake", 0777) == -1)
+	if (mkdir("p2kffsfake", 0777) == -1 && errno != EEXIST)
 		return errno;
 
 	setenv("P2K_NODETACH", "1", 1);
