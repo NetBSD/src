@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.301 2010/12/16 02:01:37 uebayasi Exp $
+#	$NetBSD: BRANCHES,v 1.302 2011/01/07 01:11:03 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -410,6 +410,16 @@ Status:		Active
 Start Date:	2009-08-01
 End Date:
 Base Tag:	netbsd-5-0-1-RELEASE
+Maintainer:	Matt Thomas <matt@NetBSD.org>
+Scope:		kernel & userland
+Notes:		
+
+Branch:		matt-nb5-pq3
+Description:	Rototill the powerpc code to support mpc85xx
+Status:		Active
+Start Date:	2010-12-20
+End Date:
+Base Tag:	matt-nb5-pq3-base
 Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
 Notes:		
