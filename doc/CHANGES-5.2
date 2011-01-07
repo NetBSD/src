@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.45 2011/01/07 03:58:26 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.46 2011/01/07 06:34:53 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -4255,4 +4255,16 @@ external/bsd/top/dist/display.c			1.9 via patch
 
 	PR/43562: Witold Jan Wnuk: top: CPU percentages overlap labels
 	[is, ticket #1507]
+
+usr.sbin/nfsd/nfsd.c				1.57
+
+	PR/42486: stop nfsd exiting prematurely during port-scan
+	[bouyer, ticket #1515]
+
+sys/kern/subr_disk.c				patch
+sys/sys/device.h				1.133
+
+	Add helper function that determines the size and block size of a
+	disk device.
+	[mrg, ticket #1520]
 
