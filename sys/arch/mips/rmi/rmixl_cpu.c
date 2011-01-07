@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.15 2010/09/20 19:39:10 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.16 2011/01/07 00:17:22 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.15 2010/09/20 19:39:10 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.16 2011/01/07 00:17:22 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,6 +106,7 @@ static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
 static inline bool
 cpu_xls616_erratum(device_t parent, struct cpucore_attach_args *ca)
 {
+#if 0
 	if (mips_options.mips_cpu->cpu_pid == MIPS_XLS616) {
 		if (ca->ca_thread > 0) {
 			aprint_error_dev(parent, "XLS616 CLOCK ERRATUM: "
@@ -113,6 +114,7 @@ cpu_xls616_erratum(device_t parent, struct cpucore_attach_args *ca)
 			return true;
 		}
 	}
+#endif
 	return false;
 }
 
@@ -263,6 +265,7 @@ cpu_fmn_intr(void *arg, rmixl_fmn_rxmsg_t *rxmsg)
 void
 cpu_rmixl_hatch(struct cpu_info *ci)
 {
+	struct rmixl_cpu_softc * const sc = (void *)ci->ci_softc;
 	extern void rmixl_spl_init_cpu(void);
 
 	rmixl_spl_init_cpu();	/* spl initialization for this CPU */
@@ -276,8 +279,7 @@ cpu_rmixl_hatch(struct cpu_info *ci)
 	KASSERT(curcpu() == ci);
 #endif
 
-	if (RMIXL_CPU_THREAD(ci->ci_cpuid) == 0)
-		rmixl_fmn_init_core();
+	cpucore_rmixl_hatch(device_parent(sc->sc_dev));
 }
 
 static int
