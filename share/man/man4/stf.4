@@ -1,4 +1,4 @@
-.\"     $NetBSD: stf.4,v 1.21 2006/06/17 04:58:14 reed Exp $
+.\"     $NetBSD: stf.4,v 1.21.26.1 2011/01/08 01:27:16 riz Exp $
 .\"     $KAME: stf.4,v 1.39 2002/11/17 19:34:02 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -234,7 +234,6 @@ and not to use your 6to4 prefix as a source address.
 .Xr inet 4 ,
 .Xr inet6 4
 .Pp
-.Pa http://www.6bone.net/6bone_6to4.html
 .Rs
 .%A Brian Carpenter
 .%A Keith Moore
@@ -242,6 +241,13 @@ and not to use your 6to4 prefix as a source address.
 .%D February 2001
 .%R RFC
 .%N 3056
+.Re
+.Rs
+.%A C. Huitema
+.%T "An Anycast Prefix for 6to4 Relay Routers"
+.%D June 2001
+.%R RFC
+.%N 3068
 .Re
 .Rs
 .%A F. Baker
@@ -252,11 +258,19 @@ and not to use your 6to4 prefix as a source address.
 .%N 3704
 .Re
 .Rs
+.%A P. Savola
+.%A C. Patel
+.%T "Security Considerations for 6to4"
+.%D December 2004
+.%R RFC
+.%N 3964
+.Re
+.Rs
 .%A Jun-ichiro itojun Hagino
 .%T "Possible abuse against IPv6 transition technologies"
 .%D July 2000
 .%N draft-itojun-ipv6-transition-abuse-01.txt
-.%O work in progress
+.%O expired, work in progress
 .Re
 .\"
 .Sh HISTORY
