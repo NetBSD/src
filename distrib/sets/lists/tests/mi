@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.217 2011/01/07 15:06:37 pgoyette Exp $
+# $NetBSD: mi,v 1.218 2011/01/08 07:00:18 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -344,6 +344,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_nan_inf.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/rpc				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/rpc/t_xdr.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp/t_setjmp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ssp				tests-lib-debug
@@ -1641,6 +1643,9 @@
 ./usr/tests/lib/libc/ieeefp/t_nan_inf		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_round		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_subnormal		tests-lib-tests		atf
+./usr/tests/lib/libc/rpc			tests-lib-tests
+./usr/tests/lib/libc/rpc/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/rpc/t_xdr			tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/h_getopt		tests-lib-tests		atf
