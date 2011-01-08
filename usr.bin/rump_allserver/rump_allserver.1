@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.7 2011/01/03 10:44:40 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.8 2011/01/08 09:36:26 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -152,12 +152,3 @@ $ rump_server tcp://0:3755/
 .Xr rump.halt 1 ,
 .Xr dlopen 3 ,
 .Xr rump 3
-.Sh BUGS
-Using
-.Fl l
-does not update the kernel syscall vector when using
-.Nm .
-This should be fixed very shortly, but if it's a showstopper,
-use
-.Nm rump_allserver
-as a workaround.
