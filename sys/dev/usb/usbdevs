@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.573 2010/12/30 19:27:51 jakllsch Exp $
+$NetBSD: usbdevs,v 1.574 2011/01/08 22:02:49 is Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2287,6 +2287,7 @@ product RATOC REXUSB60F		0xb020	USB serial adapter REX-USB60F
 product REALTEK RTL8150L	0x8150	RTL8150L USB-Ethernet Bridge
 product REALTEK RTL8151		0x8151	RTL8151 PNA
 product REALTEK RTL8187		0x8187	RTL8187
+product	REALTEK RTL8187B	0x8189	RTL8187B WLAN Adapter
 
 /* Research In Motion */
 product RIM BLACKBERRY			0x0001	BlackBerry
