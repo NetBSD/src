@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.2 2011/01/08 14:19:27 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.3 2011/01/08 18:11:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.2 2011/01/08 14:19:27 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.3 2011/01/08 18:11:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,9 +45,11 @@ __RCSID("$NetBSD: hijack.c,v 1.2 2011/01/08 14:19:27 pooka Exp $");
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 enum {	RUMPCALL_SOCKET, RUMPCALL_ACCEPT, RUMPCALL_BIND, RUMPCALL_CONNECT,
@@ -60,7 +62,7 @@ enum {	RUMPCALL_SOCKET, RUMPCALL_ACCEPT, RUMPCALL_BIND, RUMPCALL_CONNECT,
 	RUMPCALL_WRITE, RUMPCALL_WRITEV,
 	RUMPCALL_IOCTL, RUMPCALL_FCNTL,
 	RUMPCALL_CLOSE,
-	RUMPCALL_SELECT, RUMPCALL_POLL, RUMPCALL_POLLTS,
+	RUMPCALL_SELECT, RUMPCALL_POLLTS,
 	RUMPCALL__NUM
 };
 
@@ -87,7 +89,6 @@ const char *sysnames[] = {
 	"fcntl",
 	"close",
 	"__select50",
-	"poll",
 	"__pollts50",
 };
 
@@ -100,13 +101,10 @@ static int	(*host_fcntl)(int, int, ...);
 static int	(*host_close)(int);
 static int	(*host_select)(int, fd_set *, fd_set *, fd_set *,
 			       struct timeval *);
-static int	(*host_poll)(struct pollfd *, nfds_t, int);
-static pid_t	(*host_fork)(void);
-static int	(*host_dup2)(int, int);
-#if 0
 static int	(*host_pollts)(struct pollfd *, nfds_t,
 			       const struct timespec *, const sigset_t *);
-#endif
+static pid_t	(*host_fork)(void);
+static int	(*host_dup2)(int, int);
 
 static void *rumpcalls[RUMPCALL__NUM];
 
@@ -146,7 +144,7 @@ rcinit(void)
 	host_fcntl = dlsym(RTLD_NEXT, "fcntl");
 	host_close = dlsym(RTLD_NEXT, "close");
 	host_select = dlsym(RTLD_NEXT, "select");
-	host_poll = dlsym(RTLD_NEXT, "poll");
+	host_pollts = dlsym(RTLD_NEXT, "pollts");
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_dup2 = dlsym(RTLD_NEXT, "dup2");
 
@@ -156,7 +154,7 @@ rcinit(void)
 		snprintf(sysname, sizeof(sysname), "rump_sys_%s", sysnames[i]);
 		rumpcalls[i] = dlsym(hand, sysname);
 		if (!rumpcalls[i]) {
-			fprintf(stderr, "%s\n", sysname);
+			fprintf(stderr, "cannot find symbol: %s\n", sysname);
 			exit(1);
 		}
 	}
@@ -687,6 +685,11 @@ adjustpoll(struct pollfd *fds, nfds_t nfds, int (*fdadj)(int))
 	}
 }
 
+struct mytimespec {
+	uint64_t tv_sec;
+	long tv_nsec;
+};
+
 /*
  * poll is easy as long as the call comes in the fds only in one
  * kernel.  otherwise its quite tricky...
@@ -694,7 +697,8 @@ adjustpoll(struct pollfd *fds, nfds_t nfds, int (*fdadj)(int))
 struct pollarg {
 	struct pollfd *pfds;
 	nfds_t nfds;
-	int timeout;
+	const struct timespec *ts;
+	const sigset_t *sigmask;
 	int pipefd;
 	int errnum;
 };
@@ -705,7 +709,7 @@ hostpoll(void *arg)
 	struct pollarg *parg = arg;
 	intptr_t rv;
 
-	rv = poll(parg->pfds, parg->nfds, parg->timeout);
+	rv = host_pollts(parg->pfds, parg->nfds, parg->ts, parg->sigmask);
 	if (rv == -1)
 		parg->errnum = errno;
 	rump_sys_write(parg->pipefd, &rv, sizeof(rv));
@@ -714,13 +718,25 @@ hostpoll(void *arg)
 }
 
 int
-poll(struct pollfd *fds, nfds_t nfds, int timeout)
+pollts(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
+	const sigset_t *sigmask)
 {
-	int (*op_poll)(struct pollfd *, nfds_t, int);
+	int (*op_pollts)(struct pollfd *, nfds_t, const struct timespec *,
+			 const sigset_t *);
 	int hostcall = 0, rumpcall = 0;
 	pthread_t pt;
 	nfds_t i;
 	int rv;
+
+#if 0
+	/* XXX: quick 5.0 kludge.  do syscall compat in rumpclient properly */
+	struct mytimespec mts;
+	if (ts) {
+		mts.tv_sec = ts->tv_sec;
+		mts.tv_nsec = ts->tv_nsec;
+		ts = (struct timespec *)&mts;
+	}
+#endif
 
 	DPRINTF(("poll\n"));
 	checkpoll(fds, nfds, &hostcall, &rumpcall);
@@ -753,7 +769,10 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 
 		/* split vectors */
 		for (i = 0; i < nfds; i++) {
-			if (fd_isrump(fds[i].fd)) {
+			if (fds[i].fd == -1) {
+				pfd_host[i].fd = -1;
+				pfd_rump[i].fd = -1;
+			} else if (fd_isrump(fds[i].fd)) {
 				pfd_host[i].fd = -1;
 				pfd_rump[i].fd = fd_host2rump(fds[i].fd);
 				pfd_rump[i].events = fds[i].events;
@@ -785,11 +804,13 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 
 		parg.pfds = pfd_host;
 		parg.nfds = nfds+1;
-		parg.timeout = timeout;
+		parg.ts = ts;
+		parg.sigmask = sigmask;
 		parg.pipefd = rpipe[1];
 		pthread_create(&pt, NULL, hostpoll, &parg);
 
-		lrv = rump_sys_poll(pfd_rump, nfds+1, timeout);
+		op_pollts = rumpcalls[RUMPCALL_POLLTS];
+		lrv = op_pollts(pfd_rump, nfds+1, ts, NULL);
 		sverrno = errno;
 		write(hpipe[1], &rv, sizeof(rv));
 		pthread_join(pt, (void *)&trv);
@@ -812,7 +833,6 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 			}
 		} else {
 			rv = 0;
-			assert(timeout != -1);
 		}
 
  out:
@@ -829,13 +849,13 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 		errno = sverrno;
 	} else {
 		if (hostcall) {
-			op_poll = host_poll;
+			op_pollts = host_pollts;
 		} else {
-			op_poll = rumpcalls[RUMPCALL_POLL];
+			op_pollts = rumpcalls[RUMPCALL_POLLTS];
 			adjustpoll(fds, nfds, fd_host2rump);
 		}
 
-		rv = op_poll(fds, nfds, timeout);
+		rv = op_pollts(fds, nfds, ts, sigmask);
 		if (rumpcall)
 			adjustpoll(fds, nfds, fd_rump2host);
 	}
@@ -844,9 +864,17 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 }
 
 int
-pollts(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
-	const sigset_t *sigmask)
+poll(struct pollfd *fds, nfds_t nfds, int timeout)
 {
+	struct timespec ts;
+	struct timespec *tsp = NULL;
 
-	abort();
+	if (timeout != INFTIM) {
+		ts.tv_sec = timeout / 1000;
+		ts.tv_nsec = (timeout % 1000) * 1000;
+
+		tsp = &ts;
+	}
+
+	return pollts(fds, nfds, tsp, NULL);
 }
