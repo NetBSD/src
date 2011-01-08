@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.5 2011/01/07 19:14:26 riz Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.6 2011/01/08 00:53:09 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -38,4 +38,9 @@ crypto/external/bsd/openssl/dist/ssl/t1_lib.c	1.3 via patch
 	Don't assume a decode error if session tlsext_ecpointformatlist is
 	not NULL: it can be legitimately set elsewhere.
 	[drochner, ticket #1510]
+
+external/mit/xorg/tools/bdftopcf/Makefile	1.5
+
+	Disable bzip2 support in tools bdftopcf(1). PR#44138.
+	[tsutsui, ticket #1512]
 
