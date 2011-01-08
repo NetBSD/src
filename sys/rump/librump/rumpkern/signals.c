@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.5 2011/01/03 14:57:06 pooka Exp $	*/
+/*	$NetBSD: signals.c,v 1.6 2011/01/08 14:01:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.5 2011/01/03 14:57:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.6 2011/01/08 14:01:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -53,6 +53,7 @@ rumpsig_panic(pid_t target, int signo)
 
 	switch (signo) {
 	case SIGSYS:
+	case SIGPIPE:
 		break;
 	default:
 		panic("unhandled signal %d", signo);
