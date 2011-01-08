@@ -1,10 +1,7 @@
-$NetBSD: TODO,v 1.28 2009/10/21 21:11:59 rmind Exp $
+$NetBSD: TODO,v 1.29 2011/01/08 09:44:37 tsutsui Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
-
-    o	install notes
-
 
     o	use MI driver
 
@@ -15,13 +12,11 @@ XXX some entries might be obsolete.
 	    XXX needs fixes of DESKstation support
 
     o	VXL framebuffer support (Magnum, RISCstation 2200)
+	(Note nowadays QEMU supports Magnum 4000 with VXL)
 
     o	com_jazzio.c
 	-   clock handling clean up (obtain from ARC BIOS)
 	-   fifo disabling may be only needed on some Magnum?
-
-    o	remove pccons and switch to wscons completely
-	(XXX what's the problem to remove pccons?)
 
     o	AD1848 audio support
 
@@ -36,6 +31,8 @@ XXX some entries might be obsolete.
 	-   vga/cirrus	RISCserver 2200, Express5800/240 R4400 EISA
 	-   vga/???	DESKstation Tyne, rPC44
 	-   TGA		RISCstation 2250, Express5800/230 R4400 PCI
+			(TGA support in XalphaNetBSD just works,
+			 but needs XOrg'fy)
 
     o   Find out why bitmap load to S3-928 flashes screen. (X server)
 	Know why (enable linear mode). Need S3 info.
@@ -57,7 +54,6 @@ XXX some entries might be obsolete.
     o	parse ARC BIOS configuration information and use it
 
     o	fix kernel start address
-	(maybe requires bootloader support)
 
     o	allocate PICA_TL_BASE dynamically
 
@@ -68,8 +64,6 @@ XXX some entries might be obsolete.
     o	fix mem_clusters[] usage.
 
     o	intrcnt[] name cleanup, use MI evcnt(9)
-
-    o	test and merge soren's clean up about proc0.p_addr.
 
     o	redesign interrupt handler framework.
 
@@ -101,14 +95,8 @@ XXX some entries might be obsolete.
 
 (following entries might be MI MIPS items)
 
-    o	make CLKF_INTR() work.
-
     o	Move the RO and WIRED attribute from the pte to the pv table.
 	This saves four instructions in the tlb miss handler.
-
-    o   Can we have 32 double registers?
-
-    o	64bit kernel/userland
 
     o	clean up ALEAF/NLEAF/NON_LEAF/NNON_LEAF in userland.
 
