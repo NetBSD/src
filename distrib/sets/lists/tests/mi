@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.218 2011/01/08 07:00:18 pgoyette Exp $
+# $NetBSD: mi,v 1.219 2011/01/08 18:11:21 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -344,6 +344,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_nan_inf.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/regex				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/rpc				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/rpc/t_xdr.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp				tests-lib-debug
@@ -1643,6 +1645,32 @@
 ./usr/tests/lib/libc/ieeefp/t_nan_inf		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_round		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_subnormal		tests-lib-tests		atf
+./usr/tests/lib/libc/regex			tests-lib-tests
+./usr/tests/lib/libc/regex/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data			tests-lib-tests
+./usr/tests/lib/libc/regex/data/README		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/anchor.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/backref.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/basic.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/bracket.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/c_comments.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/complex.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/error.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/meta.in		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/nospec.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/nul.in		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/paren.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/regress.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/repet_bounded.in tests-lib-tests	atf
+./usr/tests/lib/libc/regex/data/repet_multi.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/repet_ordinary.in tests-lib-tests	atf
+./usr/tests/lib/libc/regex/data/startend.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/subexp.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/subtle.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/data/word_bound.in	tests-lib-tests		atf
+./usr/tests/lib/libc/regex/h_regex		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/t_regex		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/h_regex		tests-lib-tests		atf
 ./usr/tests/lib/libc/rpc			tests-lib-tests
 ./usr/tests/lib/libc/rpc/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/rpc/t_xdr			tests-lib-tests		atf
