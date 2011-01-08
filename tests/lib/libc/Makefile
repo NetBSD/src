@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.25 2011/01/08 06:59:37 pgoyette Exp $
+# $NetBSD: Makefile,v 1.26 2011/01/08 18:10:31 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
 
-TESTS_SUBDIRS+=	db gen hash ieeefp rpc setjmp stdlib stdio string ttyio
+TESTS_SUBDIRS+=	db gen hash ieeefp regex rpc setjmp stdlib stdio string ttyio
 
 .if ${HAS_SSP} == "yes"
 TESTS_SUBDIRS+=	ssp
