@@ -1,4 +1,4 @@
-# $NetBSD: t_db.sh,v 1.1 2011/01/07 15:05:58 pgoyette Exp $
+# $NetBSD: t_db.sh,v 1.2 2011/01/08 05:33:34 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -459,24 +459,17 @@ h_delete()
 	awk '{
 		for (i = 1; i <= 120; ++i)
 			printf("%05d: input key %d: %s\n", i, i, $0);
-		printf("%05d: input key %d: %s\n", 120, 120, $0);
-		printf("seq failed, no such key\n");
-		printf("%05d: input key %d: %s\n", 1, 1, $0);
-		printf("%05d: input key %d: %s\n", 2, 2, $0);
-		exit;
 	}' >exp
 
 	cat exp |
 	awk '{
-		if (i == 120)
-			exit;
 		printf("p\nk%d\nd%s\n", ++i, $0);
 	}
 	END {
 		printf("fR_NEXT\n");
 		for (i = 1; i <= 120; ++i)
 			printf("s\n");
-		printf("fR_CURSOR\ns\nk120\n");
+		printf("fR_CURSOR\ns\nkXX\n");
 		printf("r\n");
 		printf("fR_NEXT\ns\n");
 		printf("fR_CURSOR\ns\nk1\n");
@@ -484,12 +477,42 @@ h_delete()
 		printf("fR_FIRST\ns\n");
 	}' >in
 
+	# For btree, the records are ordered by the string representation
+	# of the key value.  So sort the expected output file accordingly,
+	# and set the seek_last key to the last expected key value.
+
+	if [ "$type" = "btree" ] ; then
+		sed -e 's/kXX/k99/' < in > tmp
+		mv tmp in
+		sort -d -k4 < exp > tmp
+		mv tmp exp
+		echo $SEVEN_SEVEN |
+		awk '{
+			printf("%05d: input key %d: %s\n", 99, 99, $0);
+			printf("seq failed, no such key\n");
+			printf("%05d: input key %d: %s\n", 1, 1, $0);
+			printf("%05d: input key %d: %s\n", 10, 10, $0);
+			exit;
+		}' >> exp
+	else
+	# For recno, records are ordered by numerical key value.  No sort
+	# is needed, but still need to set proper seek_last key value.
+		sed -e 's/kXX/k120/' < in > tmp
+		mv tmp in
+		echo $SEVEN_SEVEN |
+		awk '{
+			printf("%05d: input key %d: %s\n", 120, 120, $0);
+			printf("seq failed, no such key\n");
+			printf("%05d: input key %d: %s\n", 1, 1, $0);
+			printf("%05d: input key %d: %s\n", 2, 2, $0);
+			exit;
+		}' >> exp
+	fi
+
 	atf_check "$(prog)" -o out $type in
 	atf_check -o file:exp cat out
 }
 
-# FIXME: should it actually work? the original test apparently
-# was supposed to run such test, but didn't
 atf_test_case delete_btree
 delete_btree_head()
 {
@@ -497,13 +520,6 @@ delete_btree_head()
 }
 delete_btree_body()
 {
-#
-# The delete_btree test was skipped in the original ..../regress test
-# structure, so noone ever noticed that it didn't work!  Disable it for
-# now, until we correct the generation of in/out files to reflect the
-# actual collating sequence of key values ("19" comes before "2")
-#
-	atf_skip "delete_btreee test case is broken"
 	h_delete btree
 }
 
