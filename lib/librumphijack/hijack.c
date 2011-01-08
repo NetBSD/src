@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.3 2011/01/08 18:11:46 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.4 2011/01/08 21:30:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.3 2011/01/08 18:11:46 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.4 2011/01/08 21:30:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,7 +62,7 @@ enum {	RUMPCALL_SOCKET, RUMPCALL_ACCEPT, RUMPCALL_BIND, RUMPCALL_CONNECT,
 	RUMPCALL_WRITE, RUMPCALL_WRITEV,
 	RUMPCALL_IOCTL, RUMPCALL_FCNTL,
 	RUMPCALL_CLOSE,
-	RUMPCALL_SELECT, RUMPCALL_POLLTS,
+	RUMPCALL_POLLTS,
 	RUMPCALL__NUM
 };
 
@@ -88,7 +88,6 @@ const char *sysnames[] = {
 	"ioctl",
 	"fcntl",
 	"close",
-	"__select50",
 	"__pollts50",
 };
 
@@ -99,8 +98,6 @@ static ssize_t	(*host_writev)(int, const struct iovec *, int);
 static int	(*host_ioctl)(int, unsigned long, ...);
 static int	(*host_fcntl)(int, int, ...);
 static int	(*host_close)(int);
-static int	(*host_select)(int, fd_set *, fd_set *, fd_set *,
-			       struct timeval *);
 static int	(*host_pollts)(struct pollfd *, nfds_t,
 			       const struct timespec *, const sigset_t *);
 static pid_t	(*host_fork)(void);
@@ -143,7 +140,6 @@ rcinit(void)
 	host_ioctl = dlsym(RTLD_NEXT, "ioctl");
 	host_fcntl = dlsym(RTLD_NEXT, "fcntl");
 	host_close = dlsym(RTLD_NEXT, "close");
-	host_select = dlsym(RTLD_NEXT, "select");
 	host_pollts = dlsym(RTLD_NEXT, "pollts");
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_dup2 = dlsym(RTLD_NEXT, "dup2");
@@ -586,79 +582,106 @@ close(int fd)
 	return op_close(fd);
 }
 
-/*
- * select() has more than one implication.  e.g. we cannot know
- * the caller's FD_SETSIZE.  So just assume something and hope.
- */
-static void
-checkset(fd_set *setti, int nfds, int *hostcall, int *rumpcall)
-{
-	int i;
-
-	if (!setti)
-		return;
-
-	for (i = 0; i < MIN(nfds, FD_SETSIZE); i++) {
-		if (FD_ISSET(i, setti)) {
-			if (fd_isrump(i))
-				*rumpcall = 1;
-			else
-				*hostcall = 1;
-		}
-	}
-}
-
-static void
-adjustset(fd_set *setti, int nfds, int (*fdadj)(int))
-{
-	int fd, i;
-
-	if (!setti)
-		return;
-
-	for (i = 0; i < MIN(nfds, FD_SETSIZE); i++) {
-		if (FD_ISSET(i, setti)) {
-			FD_CLR(i, setti);
-			fd = fdadj(fd);
-			FD_SET(fd, setti);
-		}
-	}
-}
-
 int
 select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	struct timeval *timeout)
 {
-	int (*op_select)(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-	int hostcall = 0, rumpcall = 0;
-	int rv;
+	struct pollfd *pfds;
+	struct timespec ts, *tsp = NULL;
+	nfds_t i, j, realnfds;
+	int rv, incr;
 
-	checkset(readfds, nfds, &hostcall, &rumpcall);
-	checkset(writefds, nfds, &hostcall, &rumpcall);
-	checkset(exceptfds, nfds, &hostcall, &rumpcall);
-
-	if (hostcall && rumpcall) {
-		fprintf(stderr, "cannot select() two kernels! (fixme)\n");
-		return EINVAL;
+	/*
+	 * Well, first we must scan the fds to figure out how many
+	 * fds there really are.  This is because up to and including
+	 * nb5 poll() silently refuses nfds > process_open_fds.
+	 * Seems to be fixed in current, thank the maker.
+	 * god damn cluster...bomb.
+	 */
+	
+	for (i = 0, realnfds = 0; i < nfds; i++) {
+		if (readfds && FD_ISSET(i, readfds)) {
+			realnfds++;
+			continue;
+		}
+		if (writefds && FD_ISSET(i, writefds)) {
+			realnfds++;
+			continue;
+		}
+		if (exceptfds && FD_ISSET(i, exceptfds)) {
+			realnfds++;
+			continue;
+		}
 	}
 
-	if (hostcall) {
-		op_select = host_select;
-	} else {
-		adjustset(readfds, nfds, fd_host2rump);
-		adjustset(writefds, nfds, fd_host2rump);
-		adjustset(exceptfds, nfds, fd_host2rump);
-		op_select = rumpcalls[RUMPCALL_SELECT];
+	pfds = malloc(sizeof(*pfds) * realnfds);
+	if (!pfds)
+		return -1;
+
+	for (i = 0, j = 0; i < nfds; i++) {
+		incr = 0;
+		pfds[j].events = pfds[j].revents = 0;
+		if (readfds && FD_ISSET(i, readfds)) {
+			pfds[j].fd = i;
+			pfds[j].events |= POLLIN;
+			incr=1;
+		}
+		if (writefds && FD_ISSET(i, writefds)) {
+			pfds[j].fd = i;
+			pfds[j].events |= POLLOUT;
+			incr=1;
+		}
+		if (exceptfds && FD_ISSET(i, exceptfds)) {
+			pfds[j].fd = i;
+			pfds[j].events |= POLLHUP|POLLERR;
+			incr=1;
+		}
+		if (incr)
+			j++;
 	}
 
-	DPRINTF(("select\n"));
-	rv = op_select(nfds+HIJACK_SELECT,
-	    readfds, writefds, exceptfds, timeout);
-	if (rumpcall) {
-		adjustset(readfds, nfds, fd_rump2host);
-		adjustset(writefds, nfds, fd_rump2host);
-		adjustset(exceptfds, nfds, fd_rump2host);
+	if (timeout) {
+		TIMEVAL_TO_TIMESPEC(timeout, &ts);
+		tsp = &ts;
 	}
+	rv = pollts(pfds, realnfds, tsp, NULL);
+	if (rv <= 0)
+		goto out;
+
+	/*
+	 * ok, harvest results.  first zero out entries (can't use
+	 * FD_ZERO for the obvious select-me-not reason).  whee.
+	 */
+	for (i = 0; i < nfds; i++) {
+		if (readfds)
+			FD_CLR(i, readfds);
+		if (writefds)
+			FD_CLR(i, writefds);
+		if (exceptfds)
+			FD_CLR(i, exceptfds);
+	}
+
+	/* and then plug in the results */
+	for (i = 0; i < realnfds; i++) {
+		if (readfds) {
+			if (pfds[i].revents & POLLIN) {
+				FD_SET(pfds[i].fd, readfds);
+			}
+		}
+		if (writefds) {
+			if (pfds[i].revents & POLLOUT) {
+				FD_SET(pfds[i].fd, writefds);
+			}
+		}
+		if (exceptfds) {
+			if (pfds[i].revents & (POLLHUP|POLLERR)) {
+				FD_SET(pfds[i].fd, exceptfds);
+			}
+		}
+	}
+
+ out:
+	free(pfds);
 	return rv;
 }
 
