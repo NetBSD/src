@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.123 2011/01/02 20:50:55 christos Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.124 2011/01/08 20:29:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.123 2011/01/02 20:50:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.124 2011/01/08 20:29:13 christos Exp $");
 
 #include "opt_veriexec.h"
 
@@ -164,7 +164,7 @@ sysctl_kern_veriexec_algorithms(SYSCTLFN_ARGS)
 	if (*oldlenp < len)
 		return ENOMEM;
 
-	if ((error = copyout(p, oldp, len)) != 0)
+	if (oldp && (error = copyout(p, oldp, len)) != 0)
 		return error;
 
 	*oldlenp = len;
