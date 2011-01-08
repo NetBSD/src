@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.104 2010/12/01 20:29:57 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.105 2011/01/08 09:40:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.104 2010/12/01 20:29:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.105 2011/01/08 09:40:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -256,10 +256,39 @@ uvm_init(void)
 	int error;
 
 	if (rumpuser_getenv("RUMP_MEMLIMIT", buf, sizeof(buf), &error) == 0) {
-		rump_physmemlimit = strtoll(buf, NULL, 10);
+		unsigned long tmp;
+		char *ep;
+		int mult;
+
+		tmp = strtoll(buf, &ep, 10);
+		if (strlen(ep) > 1)
+			panic("uvm_init: invalid RUMP_MEMLIMIT: %s", buf);
+
+		/* mini-dehumanize-number */
+		mult = 1;
+		switch (*ep) {
+		case 'k':
+			mult = 1024;
+			break;
+		case 'm':
+			mult = 1024*1024;
+			break;
+		case 'g':
+			mult = 1024*1024*1024;
+			break;
+		case 0:
+			break;
+		default:
+			panic("uvm_init: invalid RUMP_MEMLIMIT: %s", buf);
+		}
+		rump_physmemlimit = tmp * mult;
+
+		if (rump_physmemlimit / mult != tmp)
+			panic("uvm_init: RUMP_MEMLIMIT overflow: %s", buf);
 		/* it's not like we'd get far with, say, 1 byte, but ... */
 		if (rump_physmemlimit == 0)
-			panic("uvm_init: no memory available");
+			panic("uvm_init: no memory");
+
 #define HUMANIZE_BYTES 9
 		CTASSERT(sizeof(buf) >= HUMANIZE_BYTES);
 		format_bytes(buf, HUMANIZE_BYTES, rump_physmemlimit);
