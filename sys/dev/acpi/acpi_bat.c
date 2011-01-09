@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.106 2011/01/04 05:48:48 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.107 2011/01/09 09:47:55 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.106 2011/01/04 05:48:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.107 2011/01/09 09:47:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -221,6 +221,8 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpibat_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
+	ACPI_HANDLE tmp;
+	ACPI_STATUS rv;
 
 	aprint_naive(": ACPI Battery\n");
 	aprint_normal(": ACPI Battery\n");
@@ -248,6 +250,14 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	acpibat_init_envsys(self);
+
+	/*
+	 * If this is ever seen, the driver should be extended.
+	 */
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "_BIX", &tmp);
+
+	if (ACPI_SUCCESS(rv))
+		aprint_verbose_dev(self, "ACPI 4.0 functionality present\n");
 }
 
 /*
