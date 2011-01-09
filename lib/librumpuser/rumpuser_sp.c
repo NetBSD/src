@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.31 2011/01/06 06:57:14 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.32 2011/01/09 14:10:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.31 2011/01/06 06:57:14 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.32 2011/01/09 14:10:03 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -110,7 +110,7 @@ waitresp(struct spclient *spc, struct respwait *rw)
 	sendunlockl(spc);
 
 	rw->rw_error = 0;
-	while (rw->rw_data == NULL && rw->rw_error == 0
+	while (!rw->rw_done && rw->rw_error == 0
 	    && spc->spc_state != SPCSTATE_DYING){
 		/* are we free to receive? */
 		if (spc->spc_istatus == SPCSTATUS_FREE) {

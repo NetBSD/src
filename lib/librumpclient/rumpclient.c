@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.13 2011/01/07 19:37:51 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.14 2011/01/09 14:10:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -99,7 +99,7 @@ waitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask)
 	sendunlockl(spc);
 
 	rw->rw_error = 0;
-	while (rw->rw_data == NULL && rw->rw_error == 0
+	while (!rw->rw_done && rw->rw_error == 0
 	    && spc->spc_state != SPCSTATE_DYING){
 		/* are we free to receive? */
 		if (spc->spc_istatus == SPCSTATUS_FREE) {
