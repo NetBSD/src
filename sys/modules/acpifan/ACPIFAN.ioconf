@@ -1,0 +1,10 @@
+# $NetBSD: ACPIFAN.ioconf,v 1.1 2011/01/09 15:12:34 jruoho Exp $
+
+ioconf acpifan
+
+include "conf/files"
+include "dev/acpi/files.acpi"
+
+pseudo-root acpi*
+
+acpifan* at acpi?

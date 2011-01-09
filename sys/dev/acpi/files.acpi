@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.83 2011/01/05 20:08:12 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.84 2011/01/09 15:12:34 jruoho Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -72,6 +72,11 @@ attach	acpivga at acpinodebus
 device	acpiout
 attach	acpiout at acpivga
 file	dev/acpi/acpi_display.c		acpivga|acpiout
+
+# ACPI Fan
+device	acpifan: sysmon_envsys
+attach	acpifan at acpinodebus
+file	dev/acpi/acpi_fan.c		acpifan
 
 # ACPI Power Meter
 device	acpipmtr: sysmon_envsys
