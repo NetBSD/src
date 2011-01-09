@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.35 2010/08/08 11:54:45 phx Exp $ */
+/* $NetBSD: main.c,v 1.36 2011/01/09 22:59:40 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -133,13 +133,14 @@ main(int argc, char *argv[])
 	pcifixup();
 
 	if (dskdv_init(dsk, &dev) == 0 || disk_scan(dev) == 0)
-		printf("no IDE/SATA device driver is found\n");
+		printf("no IDE/SATA device driver was found\n");
 
 	if (netif_init(tag) == 0)
-		printf("no NIC device driver is found\n");
+		printf("no NIC device driver was found\n");
+
+	howto = RB_AUTOBOOT;		/* default is autoboot = 0 */
 
 	/* get boot options and determine bootname */
-	howto = RB_AUTOBOOT;
 	for (n = 1; n < argc; n++) {
 		for (i = 0; i < sizeof(bootargs) / sizeof(bootargs[0]); i++) {
 			if (strncasecmp(argv[n], bootargs[i].name,
