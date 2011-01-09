@@ -1,7 +1,7 @@
-/*	$NetBSD: t_api.c,v 1.1.1.6.4.1 2009/12/03 17:38:35 snj Exp $	*/
+/*	$NetBSD: t_api.c,v 1.1.1.6.4.1.2.1 2011/01/09 20:42:42 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.c,v 1.60.128.5 2009/03/02 23:46:31 tbox Exp */
+/* Id: t_api.c,v 1.65.154.2 2010/06/08 23:49:11 tbox Exp */
 
 /*! \file */
 
@@ -401,6 +401,9 @@ t_result(int result) {
 			break;
 		case T_THREADONLY:
 			p = "THREADONLY";
+			break;
+		case T_PKCS11ONLY:
+			p = "PKCS11ONLY";
 			break;
 		default:
 			p = "UNKNOWN";

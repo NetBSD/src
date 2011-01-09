@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.1.1.7.4.1 2009/12/03 17:38:04 snj Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.1.1.7.4.1.2.1 2011/01/09 20:41:13 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfacemgr.c,v 1.90.64.5 2009/01/19 23:47:01 tbox Exp */
+/* Id: interfacemgr.c,v 1.95 2009/01/17 23:47:42 tbox Exp */
 
 /*! \file */
 

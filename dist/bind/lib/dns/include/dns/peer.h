@@ -1,4 +1,4 @@
-/*	$NetBSD: peer.h,v 1.1.1.5.4.1 2009/12/03 17:38:22 snj Exp $	*/
+/*	$NetBSD: peer.h,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:25 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: peer.h,v 1.31.128.4 2009/01/19 23:47:03 tbox Exp */
+/* Id: peer.h,v 1.35 2009/01/17 23:47:43 tbox Exp */
 
 #ifndef DNS_PEER_H
 #define DNS_PEER_H 1

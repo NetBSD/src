@@ -1,7 +1,7 @@
-/*	$NetBSD: result.h,v 1.1.1.6 2008/06/21 18:31:16 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.6.12.1 2011/01/09 20:42:36 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.h,v 1.69 2007/06/19 23:47:18 tbox Exp */
+/* Id: result.h,v 1.73 2009/09/02 23:48:03 tbox Exp */
 
 #ifndef ISC_RESULT_H
 #define ISC_RESULT_H 1
@@ -44,6 +44,7 @@
 #define ISC_R_EOF			14	/*%< end of file */
 #define ISC_R_BOUND			15	/*%< socket already bound */
 #define ISC_R_RELOAD			16	/*%< reload */
+#define ISC_R_SUSPEND	      ISC_R_RELOAD	/*%< alias of 'reload' */
 #define ISC_R_LOCKBUSY			17	/*%< lock busy */
 #define ISC_R_EXISTS			18	/*%< already exists */
 #define ISC_R_NOSPACE			19	/*%< ran out of space */
@@ -87,9 +88,10 @@
 #define ISC_R_DISABLED			57	/*%< disabled */
 #define ISC_R_MAXSIZE			58	/*%< max size */
 #define ISC_R_BADADDRESSFORM		59	/*%< invalid address format */
+#define ISC_R_BADBASE32			60	/*%< bad base32 encoding */
 
 /*% Not a result code: the number of results. */
-#define ISC_R_NRESULTS 			60
+#define ISC_R_NRESULTS 			61
 
 ISC_LANG_BEGINDECLS
 

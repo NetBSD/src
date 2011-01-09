@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/sh -e
 #
-# Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.28.288.1 2009/12/31 21:02:44 each Exp
+# Id: sign.sh,v 1.35.32.4.6.1 2010/11/16 01:31:39 marka Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -30,17 +30,18 @@ zonefile=example.db
 
 ( cd ../ns3 && sh sign.sh )
 
-for subdomain in secure bogus dynamic keyless
+for subdomain in secure bogus dynamic keyless nsec3 optout nsec3-unknown \
+    optout-unknown multiple rsasha256 rsasha512 kskonly
 do
-	cp ../ns3/keyset-$subdomain.example. .
+	cp ../ns3/dsset-$subdomain.example. .
 done
 
-keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone`
-keyname2=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone`
+keyname1=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
+keyname2=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+$SIGNER -P -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 #
 # lower/uppercase the signature bits with the exception of the last characters
@@ -95,11 +96,11 @@ privzone=private.secure.example.
 privinfile=private.secure.example.db.in
 privzonefile=private.secure.example.db
 
-privkeyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $privzone`
+privkeyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $privzone`
 
 cat $privinfile $privkeyname.key >$privzonefile
 
-$SIGNER -g -r $RANDFILE -o $privzone -l dlv $privzonefile > /dev/null
+$SIGNER -P -g -r $RANDFILE -o $privzone -l dlv $privzonefile > /dev/null
 
 # Sign the DLV secure zone.
 
@@ -108,8 +109,42 @@ dlvzone=dlv.
 dlvinfile=dlv.db.in
 dlvzonefile=dlv.db
 
-dlvkeyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $dlvzone`
+dlvkeyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $dlvzone`
 
 cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
 
-$SIGNER -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
+$SIGNER -P -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
+
+
+# Sign the badparam secure file
+
+zone=badparam.
+infile=badparam.db.in
+zonefile=badparam.db
+
+keyname1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+
+cat $infile $keyname1.key $keyname2.key >$zonefile
+
+$SIGNER -P -3 - -H 1 -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+
+sed 's/IN NSEC3 1 0 1 /IN NSEC3 1 0 10 /' $zonefile.signed > $zonefile.bad
+
+#
+# algroll has just has the old DNSKEY records removed and is waiting
+# for them to be flushed from caches.  We still need to generate
+# RRSIGs for the old DNSKEY.
+#
+zone=algroll.
+infile=algroll.db.in
+zonefile=algroll.db
+
+keyold1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
+keyold2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+keynew1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -fk $zone`
+keynew2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+
+cat $infile $keynew1.key $keynew2.key >$zonefile
+
+$SIGNER -P -r $RANDFILE -o $zone -k $keyold1 -k $keynew1 $zonefile $keyold1 $keyold2 $keynew1 $keynew2 > /dev/null

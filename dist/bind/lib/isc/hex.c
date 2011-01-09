@@ -1,7 +1,7 @@
-/*	$NetBSD: hex.c,v 1.6 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: hex.c,v 1.6.12.1 2011/01/09 20:42:34 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hex.c,v 1.18 2007/06/19 23:47:17 tbox Exp */
+/* Id: hex.c,v 1.20 2008/09/25 04:02:39 tbox Exp */
 
 /*! \file */
 
@@ -158,7 +158,7 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 }
 
 isc_result_t
-isc_hex_decodestring(char *cstr, isc_buffer_t *target) {
+isc_hex_decodestring(const char *cstr, isc_buffer_t *target) {
 	hex_decode_ctx_t ctx;
 
 	hex_decode_init(&ctx, -1, target);
@@ -170,7 +170,7 @@ isc_hex_decodestring(char *cstr, isc_buffer_t *target) {
 			continue;
 		RETERR(hex_decode_char(&ctx, c));
 	}
-	RETERR(hex_decode_finish(&ctx));	
+	RETERR(hex_decode_finish(&ctx));
 	return (ISC_R_SUCCESS);
 }
 

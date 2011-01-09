@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.1.1.5.4.1 2009/12/03 17:38:06 snj Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.5.4.1.2.1 2011/01/09 20:41:18 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.h,v 1.9.128.2 2009/01/19 23:47:01 tbox Exp */
+/* Id: os.h,v 1.12 2009/06/10 00:27:21 each Exp */
 
 /*! \file */
 
@@ -28,12 +28,6 @@
 #include <stdio.h>
 
 ISC_LANG_BEGINDECLS
-
-FILE *safe_create(const char *filename);
-/*%<
- * Open 'filename' for writing, truncate if necessary.  If the file was
- * created ensure that only the owner can read/write it.
- */
 
 int set_user(FILE *fd, const char *user);
 /*%<

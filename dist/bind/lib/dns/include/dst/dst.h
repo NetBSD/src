@@ -1,7 +1,7 @@
-/*	$NetBSD: dst.h,v 1.1.1.3 2008/06/21 18:32:25 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.1.1.3.12.1 2011/01/09 20:42:25 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst.h,v 1.9 2007/06/19 23:47:17 tbox Exp */
+/* Id: dst.h,v 1.25 2009/10/26 21:18:24 each Exp */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -25,8 +25,11 @@
 /*! \file dst/dst.h */
 
 #include <isc/lang.h>
+#include <isc/stdtime.h>
 
 #include <dns/types.h>
+#include <dns/name.h>
+#include <dns/secalg.h>
 
 #include <dst/gssapi.h>
 
@@ -53,6 +56,10 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_DSA		3
 #define DST_ALG_ECC		4
 #define DST_ALG_RSASHA1		5
+#define DST_ALG_NSEC3DSA	6
+#define DST_ALG_NSEC3RSASHA1	7
+#define DST_ALG_RSASHA256	8
+#define DST_ALG_RSASHA512	10
 #define DST_ALG_HMACMD5		157
 #define DST_ALG_GSSAPI		160
 #define DST_ALG_HMACSHA1	161	/* XXXMPA */
@@ -78,12 +85,55 @@ typedef struct dst_context 	dst_context_t;
 #define DST_TYPE_PRIVATE	0x2000000
 #define DST_TYPE_PUBLIC		0x4000000
 
+/* Key timing metadata definitions */
+#define DST_TIME_CREATED	0
+#define DST_TIME_PUBLISH	1
+#define DST_TIME_ACTIVATE	2
+#define DST_TIME_REVOKE 	3
+#define DST_TIME_INACTIVE	4
+#define DST_TIME_DELETE 	5
+#define DST_TIME_DSPUBLISH 	6
+#define DST_MAX_TIMES		6
+
+/* Numeric metadata definitions */
+#define DST_NUM_PREDECESSOR	0
+#define DST_NUM_SUCCESSOR	1
+#define DST_NUM_MAXTTL		2
+#define DST_NUM_ROLLPERIOD	3
+#define DST_MAX_NUMERIC		3
+
+/*
+ * Current format version number of the private key parser.
+ *
+ * When parsing a key file with the same major number but a higher minor
+ * number, the key parser will ignore any fields it does not recognize.
+ * Thus, DST_MINOR_VERSION should be incremented whenever new
+ * fields are added to the private key file (such as new metadata).
+ *
+ * When rewriting these keys, those fields will be dropped, and the
+ * format version set back to the current one..
+ *
+ * When a key is seen with a higher major number, the key parser will
+ * reject it as invalid.  Thus, DST_MAJOR_VERSION should be incremented
+ * and DST_MINOR_VERSION set to zero whenever there is a format change
+ * which is not backward compatible to previous versions of the dst_key
+ * parser, such as change in the syntax of an existing field, the removal
+ * of a currently mandatory field, or a new field added which would
+ * alter the functioning of the key if it were absent.
+ */
+#define DST_MAJOR_VERSION	1
+#define DST_MINOR_VERSION	3
+
 /***
  *** Functions
  ***/
 
 isc_result_t
 dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags);
+
+isc_result_t
+dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
+	      const char *engine, unsigned int eflags);
 /*%<
  * Initializes the DST subsystem.
  *
@@ -94,6 +144,7 @@ dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags);
  * Returns:
  * \li	ISC_R_SUCCESS
  * \li	ISC_R_NOMEMORY
+ * \li	DST_R_NOENGINE
  *
  * Ensures:
  * \li	DST is properly initialized.
@@ -242,12 +293,16 @@ dst_key_fromfile(dns_name_t *name, dns_keytag_t id, unsigned int alg, int type,
  */
 
 isc_result_t
-dst_key_fromnamedfile(const char *filename, int type, isc_mem_t *mctx,
-		      dst_key_t **keyp);
+dst_key_fromnamedfile(const char *filename, const char *dirname,
+		      int type, isc_mem_t *mctx, dst_key_t **keyp);
 /*%<
  * Reads a key from permanent storage.  The key can either be a public or
  * key, and is specified by filename.  If a private key is specified, the
  * public key must also be present.
+ *
+ * If 'dirname' is not NULL, and 'filename' is a relative path,
+ * then the file is looked up relative to the given directory.
+ * If 'filename' is an absolute path, 'dirname' is ignored.
  *
  * Requires:
  * \li	"filename" is not NULL
@@ -437,11 +492,25 @@ dst_key_fromgssapi(dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
  */
 
 isc_result_t
+dst_key_fromlabel(dns_name_t *name, int alg, unsigned int flags,
+		  unsigned int protocol, dns_rdataclass_t rdclass,
+		  const char *engine, const char *label, const char *pin,
+		  isc_mem_t *mctx, dst_key_t **keyp);
+
+isc_result_t
 dst_key_generate(dns_name_t *name, unsigned int alg,
 		 unsigned int bits, unsigned int param,
 		 unsigned int flags, unsigned int protocol,
 		 dns_rdataclass_t rdclass,
 		 isc_mem_t *mctx, dst_key_t **keyp);
+
+isc_result_t
+dst_key_generate2(dns_name_t *name, unsigned int alg,
+		  unsigned int bits, unsigned int param,
+		  unsigned int flags, unsigned int protocol,
+		  dns_rdataclass_t rdclass,
+		  isc_mem_t *mctx, dst_key_t **keyp,
+		  void (*callback)(int));
 /*%<
  * Generate a DST key (or keypair) with the supplied parameters.  The
  * interpretation of the "param" field depends on the algorithm:
@@ -474,7 +543,31 @@ dst_key_generate(dns_name_t *name, unsigned int alg,
 isc_boolean_t
 dst_key_compare(const dst_key_t *key1, const dst_key_t *key2);
 /*%<
- * Compares two DST keys.
+ * Compares two DST keys.  Returns true if they match, false otherwise.
+ *
+ * Keys ARE NOT considered to match if one of them is the revoked version
+ * of the other.
+ *
+ * Requires:
+ *\li	"key1" is a valid key.
+ *\li	"key2" is a valid key.
+ *
+ * Returns:
+ *\li 	ISC_TRUE
+ * \li	ISC_FALSE
+ */
+
+isc_boolean_t
+dst_key_pubcompare(const dst_key_t *key1, const dst_key_t *key2,
+		   isc_boolean_t match_revoked_key);
+/*%<
+ * Compares only the public portions of two DST keys.  Returns true
+ * if they match, false otherwise.  This allows us, for example, to
+ * determine whether a public key found in a zone matches up with a
+ * key pair found on disk.
+ *
+ * If match_revoked_key is TRUE, then keys ARE considered to match if one
+ * of them is the revoked version of the other. Otherwise, they are not.
  *
  * Requires:
  *\li	"key1" is a valid key.
@@ -503,10 +596,12 @@ dst_key_paramcompare(const dst_key_t *key1, const dst_key_t *key2);
 void
 dst_key_free(dst_key_t **keyp);
 /*%<
- * Release all memory associated with the key.
+ * Decrement the key's reference counter and, when it reaches zero,
+ * release all memory associated with the key.
  *
  * Requires:
  *\li	"keyp" is not NULL and "*keyp" is a valid key.
+ *\li	reference counter greater than zero.
  *
  * Ensures:
  *\li	All memory associated with "*keyp" will be freed.
@@ -615,7 +710,7 @@ dst_region_computeid(const isc_region_t *source, unsigned int alg);
 
 isc_uint16_t
 dst_key_getbits(const dst_key_t *key);
-/*
+/*%<
  * Get the number of digest bits required (0 == MAX).
  *
  * Requires:
@@ -624,11 +719,114 @@ dst_key_getbits(const dst_key_t *key);
 
 void
 dst_key_setbits(dst_key_t *key, isc_uint16_t bits);
-/*
+/*%<
  * Set the number of digest bits required (0 == MAX).
  *
  * Requires:
  *	"key" is a valid key.
+ */
+
+isc_result_t
+dst_key_setflags(dst_key_t *key, isc_uint32_t flags);
+/*
+ * Set the key flags, and recompute the key ID.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ */
+
+isc_result_t
+dst_key_getnum(const dst_key_t *key, int type, isc_uint32_t *valuep);
+/*%<
+ * Get a member of the numeric metadata array and place it in '*valuep'.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ *	"type" is no larger than DST_MAX_NUMERIC
+ *	"timep" is not null.
+ */
+
+void
+dst_key_setnum(dst_key_t *key, int type, isc_uint32_t value);
+/*%<
+ * Set a member of the numeric metadata array.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ *	"type" is no larger than DST_MAX_NUMERIC
+ */
+
+void
+dst_key_unsetnum(dst_key_t *key, int type);
+/*%<
+ * Flag a member of the numeric metadata array as "not set".
+ *
+ * Requires:
+ *	"key" is a valid key.
+ *	"type" is no larger than DST_MAX_NUMERIC
+ */
+
+isc_result_t
+dst_key_gettime(const dst_key_t *key, int type, isc_stdtime_t *timep);
+/*%<
+ * Get a member of the timing metadata array and place it in '*timep'.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ *	"type" is no larger than DST_MAX_TIMES
+ *	"timep" is not null.
+ */
+
+void
+dst_key_settime(dst_key_t *key, int type, isc_stdtime_t when);
+/*%<
+ * Set a member of the timing metadata array.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ *	"type" is no larger than DST_MAX_TIMES
+ */
+
+void
+dst_key_unsettime(dst_key_t *key, int type);
+/*%<
+ * Flag a member of the timing metadata array as "not set".
+ *
+ * Requires:
+ *	"key" is a valid key.
+ *	"type" is no larger than DST_MAX_TIMES
+ */
+
+isc_result_t
+dst_key_getprivateformat(const dst_key_t *key, int *majorp, int *minorp);
+/*%<
+ * Get the private key format version number.  (If the key does not have
+ * a private key associated with it, the version will be 0.0.)  The major
+ * version number is placed in '*majorp', and the minor version number in
+ * '*minorp'.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ *	"majorp" is not NULL.
+ *	"minorp" is not NULL.
+ */
+
+void
+dst_key_setprivateformat(dst_key_t *key, int major, int minor);
+/*%<
+ * Set the private key format version number.
+ *
+ * Requires:
+ *	"key" is a valid key.
+ */
+
+#define DST_KEY_FORMATSIZE (DNS_NAME_FORMATSIZE + DNS_SECALG_FORMATSIZE + 7)
+
+void
+dst_key_format(dst_key_t *key, char *cp, unsigned int size);
+/*%<
+ * Write the uniquely identifying information about the key (name,
+ * algorithm, key ID) into a string 'cp' of size 'size'.
  */
 
 ISC_LANG_ENDDECLS

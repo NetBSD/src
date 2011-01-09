@@ -1,0 +1,125 @@
+Introduction
+
+	ISC's libbind provides the standard resolver library,
+	along with header files and documentation, for communicating
+	with domain name servers, retrieving network host entries
+	from /etc/hosts or via DNS, converting CIDR network addresses,
+	perform Hesiod information lookups, retrieve network entries
+	from /etc/networks, implement TSIG transaction/request
+	security of DNS messages, perform name-to-address and
+	address-to-name translations, utilize /etc/resolv.conf
+	for resolver configuration.
+
+	It contains many of the same historical functions and headers
+	included with many Unix operating systems.
+
+	Originally written for BIND 8, it was included in BIND 9 as
+	optionally-compiled code through release 9.5.  It has been
+	removed from subsequent releases of BIND 9 and is now
+	provided as a separate package.
+
+Building
+
+	The libbind library requires a system with an ANSI C compiler
+	and basic POSIX support.
+
+	To build, just
+
+		./configure
+		make
+
+	Several environment variables that can be set before running
+	configure will affect compilation:
+
+	    CC
+		The C compiler to use.	configure tries to figure
+		out the right one for supported systems.
+
+	    CFLAGS
+		C compiler flags.  Defaults to include -g and/or -O2
+		as supported by the compiler.  
+
+	    STD_CINCLUDES
+		System header file directories.	 Can be used to specify
+		where add-on thread or IPv6 support is, for example.
+		Defaults to empty string.
+
+	    STD_CDEFINES
+		Any additional preprocessor symbols you want defined.
+		Defaults to empty string.
+
+		Possible settings:
+		Change the default syslog facility of named/lwresd.
+		  -DISC_FACILITY=LOG_LOCAL0	
+		Enable DNSSEC signature chasing support in dig.
+		  -DDIG_SIGCHASE=1 (sets -DDIG_SIGCHASE_TD=1 and
+				    -DDIG_SIGCHASE_BU=1)
+		Disable dropping queries from particular well known ports.
+		  -DNS_CLIENT_DROPPORT=0
+		Sibling glue checking in named-checkzone is enabled by default.
+		To disable the default check set.  -DCHECK_SIBLING=0
+		named-checkzone checks out-of-zone addresses by default.
+		To disable this default set.  -DCHECK_LOCAL=0
+		Enable workaround for Solaris kernel bug about /dev/poll
+		  -DISC_SOCKET_USE_POLLWATCH=1
+		  The watch timeout is also configurable, e.g.,
+		  -DISC_SOCKET_POLLWATCH_TIMEOUT=20
+
+	    LDFLAGS
+		Linker flags. Defaults to empty string.
+
+	The following need to be set when cross compiling.
+
+	    BUILD_CC
+		The native C compiler.
+	    BUILD_CFLAGS (optional)
+	    BUILD_CPPFLAGS (optional)
+		Possible Settings:
+		-DNEED_OPTARG=1		(optarg is not declared in <unistd.h>)
+	    BUILD_LDFLAGS (optional)
+	    BUILD_LIBS (optional)
+
+	"make install" will install the library.  By default, installation
+	is into /usr/local, but this can be changed with the "--prefix"
+	option when running "configure".
+
+	To see additional configure options, run "configure --help".
+
+	If you need to re-run configure please run "make distclean" first.
+	This will ensure that all the option changes take.
+
+Notes on Usage
+
+        - Installing both libbind and BIND 9 on the same system
+          will produce two incompatible header files with similar
+          names: $PREFIX/include/isc/list.h (from BIND 9) and
+          $PREFIX/include/bind/isc/list.h (from libbind).  When
+          compiling code against libbind, be sure to set -I flags
+          appropriately.
+
+Documentation
+
+	Man pages for libbind routines, in *roff and plaintext format,
+	are included with the release.
+
+Bug Reports and Mailing Lists
+
+	Bugs reports should be sent to
+
+		libbind-bugs@isc.org
+
+	Discussions of libbind can be send to the BIND Users mailing
+	list.  To subscribe, send mail to:
+
+		bind-users-subscribe@isc.org
+
+	Archives of that list can be found at:
+
+		https://lists.isc.org/pipermail/bind-users/
+
+	If you're planning on making changes to the libbind source
+	code, you might want to join the BIND Workers mailing list.
+	To subscribe, send mail to:
+
+		bind-workers-subscribe@isc.org
+

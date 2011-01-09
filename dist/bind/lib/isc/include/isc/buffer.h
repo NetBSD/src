@@ -1,7 +1,7 @@
-/*	$NetBSD: buffer.h,v 1.1.1.5 2008/06/21 18:31:16 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.1.1.5.12.1 2011/01/09 20:42:35 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: buffer.h,v 1.51 2007/06/19 23:47:18 tbox Exp */
+/* Id: buffer.h,v 1.53 2008/09/25 04:02:39 tbox Exp */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -170,13 +170,13 @@ ISC_LANG_BEGINDECLS
 struct isc_buffer {
 	unsigned int		magic;
 	void		       *base;
-        /*@{*/
+	/*@{*/
 	/*! The following integers are byte offsets from 'base'. */
 	unsigned int		length;
 	unsigned int		used;
 	unsigned int 		current;
 	unsigned int 		active;
-        /*@}*/
+	/*@}*/
 	/*! linkable */
 	ISC_LINK(isc_buffer_t)	link;
 	/*! private internal elements */
@@ -598,6 +598,21 @@ isc__buffer_putuint48(isc_buffer_t *b, isc_uint64_t val);
  */
 
 void
+isc__buffer_putuint24(isc_buffer_t *b, isc_uint32_t val);
+/*!<
+ * Store an unsigned 24-bit integer in host byte order from 'val'
+ * into 'b' in network byte order.
+ *
+ * Requires:
+ *\li	'b' is a valid buffer.
+ *
+ *	The length of the unused region of 'b' is at least 3.
+ *
+ * Ensures:
+ *\li	The used pointer in 'b' is advanced by 3.
+ */
+
+void
 isc__buffer_putmem(isc_buffer_t *b, const unsigned char *base,
 		   unsigned int length);
 /*!<
@@ -812,6 +827,17 @@ ISC_LANG_ENDDECLS
 		_cp[1] = (unsigned char)(_val2 & 0x00ffU); \
 	} while (0)
 
+#define ISC__BUFFER_PUTUINT24(_b, _val) \
+	do { \
+		unsigned char *_cp; \
+		isc_uint32_t _val2 = (_val); \
+		_cp = isc_buffer_used(_b); \
+		(_b)->used += 3; \
+		_cp[0] = (unsigned char)((_val2 & 0xff0000U) >> 16); \
+		_cp[1] = (unsigned char)((_val2 & 0xff00U) >> 8); \
+		_cp[2] = (unsigned char)(_val2 & 0x00ffU); \
+	} while (0)
+
 #define ISC__BUFFER_PUTUINT32(_b, _val) \
 	do { \
 		unsigned char *_cp; \
@@ -845,6 +871,7 @@ ISC_LANG_ENDDECLS
 #define isc_buffer_putstr		ISC__BUFFER_PUTSTR
 #define isc_buffer_putuint8		ISC__BUFFER_PUTUINT8
 #define isc_buffer_putuint16		ISC__BUFFER_PUTUINT16
+#define isc_buffer_putuint24		ISC__BUFFER_PUTUINT24
 #define isc_buffer_putuint32		ISC__BUFFER_PUTUINT32
 #else
 #define isc_buffer_init			isc__buffer_init
@@ -867,6 +894,7 @@ ISC_LANG_ENDDECLS
 #define isc_buffer_putstr		isc__buffer_putstr
 #define isc_buffer_putuint8		isc__buffer_putuint8
 #define isc_buffer_putuint16		isc__buffer_putuint16
+#define isc_buffer_putuint24		isc__buffer_putuint24
 #define isc_buffer_putuint32		isc__buffer_putuint32
 #endif
 

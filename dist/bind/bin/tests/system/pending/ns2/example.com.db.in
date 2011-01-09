@@ -1,4 +1,4 @@
-; Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; $Id: example.com.db.in,v 1.1.2.1 2010/01/22 21:04:45 snj Exp $
+; Id: example.com.db.in,v 1.2.2.3 2010/01/18 23:48:01 tbox Exp
 
 $TTL 30
 @			IN SOA	mname1. . (
@@ -29,3 +29,4 @@ mail			A	192.0.2.2
 			AAAA	2001:db8::2
 pending-ok		A	192.0.2.2
 pending-ng		A	192.0.2.102
+removed			A	10.9.8.7

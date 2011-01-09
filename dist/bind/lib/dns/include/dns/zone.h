@@ -1,7 +1,7 @@
-/*	$NetBSD: zone.h,v 1.1.1.5.4.1 2009/12/03 17:38:23 snj Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:25 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.153.56.8 2009/07/11 04:28:14 marka Exp */
+/* Id: zone.h,v 1.174.4.4 2010/08/16 22:27:18 marka Exp */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -35,13 +35,15 @@
 #include <isc/rwlock.h>
 
 #include <dns/masterdump.h>
+#include <dns/rdatastruct.h>
 #include <dns/types.h>
 
 typedef enum {
 	dns_zone_none,
 	dns_zone_master,
 	dns_zone_slave,
-	dns_zone_stub
+	dns_zone_stub,
+	dns_zone_key
 } dns_zonetype_t;
 
 #define DNS_ZONEOPT_SERVERS	  0x00000001U	/*%< perform server checks */
@@ -70,6 +72,11 @@ typedef enum {
 #define DNS_ZONEOPT_UPDATECHECKKSK 0x00800000U	/*%< check dnskey KSK flag */
 #define DNS_ZONEOPT_TRYTCPREFRESH 0x01000000U	/*%< try tcp refresh on udp failure */
 #define DNS_ZONEOPT_NOTIFYTOSOA	  0x02000000U	/*%< Notify the SOA MNAME */
+#define DNS_ZONEOPT_NSEC3TESTZONE 0x04000000U	/*%< nsec3-test-zone */
+#define DNS_ZONEOPT_SECURETOINSECURE 0x08000000U /*%< dnssec-secure-to-insecure */
+#define DNS_ZONEOPT_DNSKEYKSKONLY 0x10000000U	/*%< dnssec-dnskey-kskonly */
+#define DNS_ZONEOPT_CHECKDUPRR	  0x20000000U   /*%< check-dup-records */
+#define DNS_ZONEOPT_CHECKDUPRRFAIL 0x40000000U	/*%< fatal check-dup-records failures */
 
 #ifndef NOMINUM_PUBLIC
 /*
@@ -77,6 +84,14 @@ typedef enum {
  */
 #define DNS_ZONEOPT_NOTIFYFORWARD 0x80000000U	/* forward notify to master */
 #endif /* NOMINUM_PUBLIC */
+
+/*
+ * Zone key maintenance options
+ */
+#define DNS_ZONEKEY_ALLOW	0x00000001U	/*%< fetch keys on command */
+#define DNS_ZONEKEY_MAINTAIN	0x00000002U	/*%< publish/sign on schedule */
+#define DNS_ZONEKEY_CREATE	0x00000004U	/*%< make keys when needed */
+#define DNS_ZONEKEY_FULLSIGN    0x00000008U     /*%< roll to new keys immediately */
 
 #ifndef DNS_ZONE_MINREFRESH
 #define DNS_ZONE_MINREFRESH		    300	/*%< 5 minutes */
@@ -149,13 +164,24 @@ dns_zone_getclass(dns_zone_t *zone);
  *\li	'zone' to be a valid zone.
  */
 
+isc_result_t
+dns_zone_getserial2(dns_zone_t *zone, isc_uint32_t *serialp);
+
 isc_uint32_t
 dns_zone_getserial(dns_zone_t *zone);
 /*%<
- *	Returns the current serial number of the zone.
+ *	Returns the current serial number of the zone.  On success, the SOA
+ *	serial of the zone will be copied into '*serialp'.
+ *	dns_zone_getserial() cannot catch failure cases and is deprecated by
+ *	dns_zone_getserial2().
  *
  * Requires:
  *\li	'zone' to be a valid zone.
+ *\li	'serialp' to be non NULL
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	#DNS_R_NOTLOADED	zone DB is not loaded
  */
 
 void
@@ -557,6 +583,25 @@ dns_zone_getoptions(dns_zone_t *zone);
  */
 
 void
+dns_zone_setkeyopt(dns_zone_t *zone, unsigned int option, isc_boolean_t value);
+/*%<
+ *	Set key options on ('value' == ISC_TRUE) or off ('value' ==
+ *	#ISC_FALSE).
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+unsigned int
+dns_zone_getkeyopts(dns_zone_t *zone);
+/*%<
+ *	Returns the current zone key options.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+void
 dns_zone_setminrefreshtime(dns_zone_t *zone, isc_uint32_t val);
 /*%<
  *	Set the minimum refresh time.
@@ -894,12 +939,16 @@ isc_boolean_t
 dns_zone_getupdatedisabled(dns_zone_t *zone);
 /*%<
  * Return update disabled.
+ * Transient unless called when running in isc_task_exclusive() mode.
  */
 
 void
 dns_zone_setupdatedisabled(dns_zone_t *zone, isc_boolean_t state);
 /*%<
  * Set update disabled.
+ * Should only be called only when running in isc_task_exclusive() mode.
+ * Failure to do so may result in updates being committed after the
+ * call has been made.
  */
 
 isc_boolean_t
@@ -1184,7 +1233,7 @@ dns_zone_getmgr(dns_zone_t *zone);
 void
 dns_zone_setsigvalidityinterval(dns_zone_t *zone, isc_uint32_t interval);
 /*%<
- * Set the zone's SIG validity interval.  This is the length of time
+ * Set the zone's RRSIG validity interval.  This is the length of time
  * for which DNSSEC signatures created as a result of dynamic updates
  * to secure zones will remain valid, in seconds.
  *
@@ -1195,7 +1244,26 @@ dns_zone_setsigvalidityinterval(dns_zone_t *zone, isc_uint32_t interval);
 isc_uint32_t
 dns_zone_getsigvalidityinterval(dns_zone_t *zone);
 /*%<
- * Get the zone's SIG validity interval.
+ * Get the zone's RRSIG validity interval.
+ *
+ * Requires:
+ * \li	'zone' to be a valid zone.
+ */
+
+void
+dns_zone_setsigresigninginterval(dns_zone_t *zone, isc_uint32_t interval);
+/*%<
+ * Set the zone's RRSIG re-signing interval.  A dynamic zone's RRSIG's
+ * will be re-signed 'interval' amount of time before they expire.
+ *
+ * Requires:
+ * \li	'zone' to be a valid zone.
+ */
+
+isc_uint32_t
+dns_zone_getsigresigninginterval(dns_zone_t *zone);
+/*%<
+ * Get the zone's RRSIG re-signing interval.
  *
  * Requires:
  * \li	'zone' to be a valid zone.
@@ -1589,7 +1657,7 @@ dns_zone_name(dns_zone_t *zone, char *buf, size_t len);
 
 isc_result_t
 dns_zone_checknames(dns_zone_t *zone, dns_name_t *name, dns_rdata_t *rdata);
-/*
+/*%<
  * Check if this record meets the check-names policy.
  *
  * Requires:
@@ -1605,7 +1673,7 @@ dns_zone_checknames(dns_zone_t *zone, dns_name_t *name, dns_rdata_t *rdata);
 
 void
 dns_zone_setacache(dns_zone_t *zone, dns_acache_t *acache);
-/*
+/*%<
  *	Associate the zone with an additional cache.
  *
  * Require:
@@ -1618,7 +1686,7 @@ dns_zone_setacache(dns_zone_t *zone, dns_acache_t *acache);
 
 void
 dns_zone_setcheckmx(dns_zone_t *zone, dns_checkmxfunc_t checkmx);
-/*
+/*%<
  *	Set the post load integrity callback function 'checkmx'.
  *	'checkmx' will be called if the MX is not within the zone.
  *
@@ -1628,7 +1696,7 @@ dns_zone_setcheckmx(dns_zone_t *zone, dns_checkmxfunc_t checkmx);
 
 void
 dns_zone_setchecksrv(dns_zone_t *zone, dns_checkmxfunc_t checksrv);
-/*
+/*%<
  *	Set the post load integrity callback function 'checksrv'.
  *	'checksrv' will be called if the SRV TARGET is not within the zone.
  *
@@ -1638,7 +1706,7 @@ dns_zone_setchecksrv(dns_zone_t *zone, dns_checkmxfunc_t checksrv);
 
 void
 dns_zone_setcheckns(dns_zone_t *zone, dns_checknsfunc_t checkns);
-/*
+/*%<
  *	Set the post load integrity callback function 'checkmx'.
  *	'checkmx' will be called if the MX is not within the zone.
  *
@@ -1648,7 +1716,7 @@ dns_zone_setcheckns(dns_zone_t *zone, dns_checknsfunc_t checkns);
 
 void
 dns_zone_setnotifydelay(dns_zone_t *zone, isc_uint32_t delay);
-/*
+/*%<
  * Set the minimum delay between sets of notify messages.
  *
  * Requires:
@@ -1657,7 +1725,7 @@ dns_zone_setnotifydelay(dns_zone_t *zone, isc_uint32_t delay);
 
 isc_uint32_t
 dns_zone_getnotifydelay(dns_zone_t *zone);
-/*
+/*%<
  * Get the minimum delay between sets of notify messages.
  *
  * Requires:
@@ -1666,7 +1734,7 @@ dns_zone_getnotifydelay(dns_zone_t *zone);
 
 void
 dns_zone_setisself(dns_zone_t *zone, dns_isselffunc_t isself, void *arg);
-/*
+/*%<
  * Set the isself callback function and argument.
  *
  * isc_boolean_t
@@ -1676,6 +1744,90 @@ dns_zone_setisself(dns_zone_t *zone, dns_isselffunc_t isself, void *arg);
  * 'isself' returns ISC_TRUE if a non-recursive query from 'srcaddr' to
  * 'destaddr' with optional key 'mykey' for class 'rdclass' would be
  * delivered to 'myview'.
+ */
+
+void
+dns_zone_setnodes(dns_zone_t *zone, isc_uint32_t nodes);
+/*%<
+ * Set the number of nodes that will be checked per quantum.
+ */
+
+void
+dns_zone_setsignatures(dns_zone_t *zone, isc_uint32_t signatures);
+/*%<
+ * Set the number of signatures that will be generated per quantum.
+ */
+
+isc_result_t
+dns_zone_signwithkey(dns_zone_t *zone, dns_secalg_t algorithm,
+		     isc_uint16_t keyid, isc_boolean_t delete);
+/*%<
+ * Initiate/resume signing of the entire zone with the zone DNSKEY(s)
+ * that match the given algorithm and keyid.
+ */
+
+isc_result_t
+dns_zone_addnsec3chain(dns_zone_t *zone, dns_rdata_nsec3param_t *nsec3param);
+/*%<
+ * Incrementally add a NSEC3 chain that corresponds to 'nsec3param'.
+ */
+
+void
+dns_zone_setprivatetype(dns_zone_t *zone, dns_rdatatype_t type);
+dns_rdatatype_t
+dns_zone_getprivatetype(dns_zone_t *zone);
+/*
+ * Get/Set the private record type.  It is expected that these interfaces
+ * will not be permanent.
+ */
+
+void
+dns_zone_rekey(dns_zone_t *zone, isc_boolean_t fullsign);
+/*%<
+ * Update the zone's DNSKEY set from the key repository.
+ *
+ * If 'fullsign' is true, trigger an immediate full signing of
+ * the zone with the new key.  Otherwise, if there are no keys or
+ * if the new keys are for algorithms that have already signed the
+ * zone, then the zone can be re-signed incrementally.
+ */
+
+isc_result_t
+dns_zone_nscheck(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version,
+		 unsigned int *errors);
+/*%
+ * Check if the name servers for the zone are sane (have address, don't
+ * refer to CNAMEs/DNAMEs.  The number of constiancy errors detected in
+ * returned in '*errors'
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ * \li	'db' to be valid.
+ * \li	'version' to be valid or NULL.
+ * \li	'errors' to be non NULL.
+ *
+ * Returns:
+ * 	ISC_R_SUCCESS if there were no errors examining the zone contents.
+ */
+
+void
+dns_zone_setadded(dns_zone_t *zone, isc_boolean_t added);
+/*%
+ * Sets the value of zone->added, which should be ISC_TRUE for
+ * zones that were originally added by "rndc addzone".
+ *
+ * Requires:
+ * \li	'zone' to be valid.
+ */
+
+isc_boolean_t
+dns_zone_getadded(dns_zone_t *zone);
+/*%
+ * Returns ISC_TRUE if the zone was originally added at runtime
+ * using "rndc addzone".
+ *
+ * Requires:
+ * \li	'zone' to be valid.
  */
 
 ISC_LANG_ENDDECLS

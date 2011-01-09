@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.6.4.1 2009/12/03 17:38:15 snj Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.6.4.1.2.1 2011/01/09 20:42:23 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrin.c,v 1.157.12.7 2008/09/25 04:15:41 marka Exp */
+/* Id: xfrin.c,v 1.166 2008/09/25 04:12:39 marka Exp */
 
 /*! \file */
 

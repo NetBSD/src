@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2000-2002  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example1.db,v 1.12 2007/06/19 23:47:04 tbox Exp
+; Id: example1.db,v 1.14 2009/01/21 23:47:26 tbox Exp
 
 $ORIGIN .
 $TTL 300	; 5 minutes
@@ -93,7 +93,7 @@ mr02			MR	.
 mx01			MX	10 mail
 mx02			MX	10 .
 naptr01			NAPTR	0 0 "" "" "" .
-naptr02			NAPTR	65535 65535 "blurgh" "blorf" "blegh" foo.
+naptr02			NAPTR	65535 65535 "blurgh" "blorf" "blllbb" foo.
 nsap-ptr01		NSAP-PTR foo.
 			NSAP-PTR .
 nsap01			NSAP	0x47000580005a0000000001e133ffffff00016100

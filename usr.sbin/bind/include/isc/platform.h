@@ -1,7 +1,5 @@
-/*	$NetBSD: platform.h,v 1.9 2008/06/23 09:19:34 ad Exp $	*/
-
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.45.60.2 2008/01/24 23:46:26 tbox Exp */
+/* Id: platform.h.in,v 1.53.66.2 2010/06/03 23:49:23 tbox Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -96,11 +94,6 @@
 #undef ISC_PLATFORM_NEEDPTON
 
 /*! \brief
- * If this system needs inet_aton(), ISC_PLATFORM_NEEDATON will be defined.
- */
-#undef ISC_PLATFORM_NEEDATON
-
-/*! \brief
  * If this system needs in_port_t, ISC_PLATFORM_NEEDPORTT will be defined.
  */
 #undef ISC_PLATFORM_NEEDPORTT
@@ -137,6 +130,26 @@
  * IN6_IS_ADDR_* macros.
  */
 #undef ISC_PLATFORM_FIXIN6ISADDR
+
+/*! \brief
+ * Define if the system supports kqueue multiplexing
+ */
+#define ISC_PLATFORM_HAVEKQUEUE 1
+
+/*! \brief
+ * Define if the system supports epoll multiplexing
+ */
+#undef ISC_PLATFORM_HAVEEPOLL
+
+/*! \brief
+ * Define if the system supports /dev/poll multiplexing
+ */
+#undef ISC_PLATFORM_HAVEDEVPOLL
+
+/*! \brief
+ * Define if we want to log backtrace
+ */
+#define ISC_PLATFORM_USEBACKTRACE 1
 
 /*
  *** Printing.
@@ -193,7 +206,8 @@
 /*
  * Defined if we are using threads.
  */
-#if 0 /* We will deal with this in the Makefile */
+#if 0
+/* Put in the Makefile */
 #define ISC_PLATFORM_USETHREADS 1
 #endif
 
@@ -205,6 +219,12 @@
 /*
  * Defined to <gssapi.h> or <gssapi/gssapi.h> for how to include
  * the GSSAPI header.
+ */
+
+
+/*
+ * Defined to <krb5.h> or <krb5/krb5.h> for how to include
+ * the KRB5 header.
  */
 
 
@@ -238,13 +258,15 @@
  * If the "xadd" operation is available on this architecture,
  * ISC_PLATFORM_HAVEXADD will be defined.
  */
+#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADD 1
+#endif
 
 /*
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
-#if defined(_LP64)
+#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADDQ 1
 #endif
 
@@ -279,6 +301,17 @@
  * Define if the platform has <strings.h>.
  */
 #define ISC_PLATFORM_HAVESTRINGSH 1
+
+/*
+ * Define if the hash functions must be provided by OpenSSL.
+ */
+#undef ISC_PLATFORM_OPENSSLHASH
+
+/*
+ * Defines for the noreturn attribute.
+ */
+#define ISC_PLATFORM_NORETURN_PRE
+#define ISC_PLATFORM_NORETURN_POST __attribute__((noreturn))
 
 /***
  ***	Windows dll support.

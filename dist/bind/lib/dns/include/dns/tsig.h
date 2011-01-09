@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.h,v 1.1.1.5 2008/06/21 18:32:26 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.1.1.5.12.1 2011/01/09 20:42:25 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsig.h,v 1.51 2007/06/19 23:47:17 tbox Exp */
+/* Id: tsig.h,v 1.53.136.2 2010/07/09 23:46:27 tbox Exp */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1
@@ -64,6 +64,13 @@ struct dns_tsig_keyring {
 	unsigned int writecount;
 	isc_rwlock_t lock;
 	isc_mem_t *mctx;
+	/*
+	 * LRU list of generated key along with a count of the keys on the
+	 * list and a maximum size.
+	 */
+	unsigned int generated;
+	unsigned int maxgenerated;
+	ISC_LIST(dns_tsigkey_t) lru;
 };
 
 struct dns_tsigkey {
@@ -79,12 +86,13 @@ struct dns_tsigkey {
 	isc_stdtime_t		expire;		/*%< end of validity period */
 	dns_tsig_keyring_t	*ring;		/*%< the enclosing keyring */
 	isc_refcount_t		refs;		/*%< reference counter */
+	ISC_LINK(dns_tsigkey_t) link;
 };
 
 #define dns_tsigkey_identity(tsigkey) \
 	((tsigkey) == NULL ? NULL : \
-         (tsigkey)->generated ? ((tsigkey)->creator) : \
-         (&((tsigkey)->name)))
+	 (tsigkey)->generated ? ((tsigkey)->creator) : \
+	 (&((tsigkey)->name)))
 
 ISC_LANG_BEGINDECLS
 
@@ -242,6 +250,20 @@ dns_tsigkeyring_create(isc_mem_t *mctx, dns_tsig_keyring_t **ringp);
  *	Returns:
  *\li		#ISC_R_SUCCESS
  *\li		#ISC_R_NOMEMORY
+ */
+
+isc_result_t
+dns_tsigkeyring_add(dns_tsig_keyring_t *ring, dns_name_t *name,
+		    dns_tsigkey_t *tkey);
+/*%<
+ *      Place a TSIG key onto a key ring.
+ *
+ *	Requires:
+ *\li		'ring', 'name' and 'tkey' are not NULL
+ *
+ *	Returns:
+ *\li		#ISC_R_SUCCESS
+ *\li		Any other value indicates failure.
  */
 
 
