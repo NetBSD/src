@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.6 2011/01/09 14:15:06 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.7 2011/01/09 19:56:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.6 2011/01/09 14:15:06 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.7 2011/01/09 19:56:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -91,6 +91,15 @@ const char *sysnames[] = {
 	"__pollts50",
 };
 
+static int	(*host_socket)(int, int, int);
+static int	(*host_connect)(int, const struct sockaddr *, socklen_t);
+static int	(*host_bind)(int, const struct sockaddr *, socklen_t);
+static int	(*host_listen)(int, int);
+static int	(*host_accept)(int, struct sockaddr *, socklen_t *);
+static int	(*host_getpeername)(int, struct sockaddr *, socklen_t *);
+static int	(*host_getsockname)(int, struct sockaddr *, socklen_t *);
+static int	(*host_setsockopt)(int, int, int, const void *, socklen_t);
+
 static ssize_t	(*host_read)(int, void *, size_t);
 static ssize_t	(*host_readv)(int, const struct iovec *, int);
 static ssize_t	(*host_write)(int, const void *, size_t);
@@ -116,6 +125,9 @@ hijackdlsym(void *handle, const char *symbol)
 	return dlsym(handle, symbol);
 }
 
+/* low calorie sockets? */
+static bool hostlocalsockets = false;
+
 static void __attribute__((constructor))
 rcinit(void)
 {
@@ -132,6 +144,15 @@ rcinit(void)
 
 	rumpcdlsym = dlsym(hand, "rumpclient_dlsym");
 	*rumpcdlsym = hijackdlsym;
+
+	host_socket = dlsym(RTLD_NEXT, "__socket30");
+	host_listen = dlsym(RTLD_NEXT, "listen");
+	host_connect = dlsym(RTLD_NEXT, "connect");
+	host_bind = dlsym(RTLD_NEXT, "bind");
+	host_accept = dlsym(RTLD_NEXT, "accept");
+	host_getpeername = dlsym(RTLD_NEXT, "getpeername");
+	host_getsockname = dlsym(RTLD_NEXT, "getsockname");
+	host_setsockopt = dlsym(RTLD_NEXT, "setsockopt");
 
 	host_read = dlsym(RTLD_NEXT, "read");
 	host_readv = dlsym(RTLD_NEXT, "readv");
@@ -228,13 +249,21 @@ __socket30(int domain, int type, int protocol)
 {
 	int (*rc_socket)(int, int, int);
 	int fd;
+	bool dohost;
 
-	rc_socket = rumpcalls[RUMPCALL_SOCKET];
+	dohost = hostlocalsockets && (domain == AF_LOCAL);
+
+	if (dohost)
+		rc_socket = host_socket;
+	else
+		rc_socket = rumpcalls[RUMPCALL_SOCKET];
 	fd = rc_socket(domain, type, protocol);
 
-	DPRINTF(("socket <- %d\n", fd_rump2host(fd)));
+	if (!dohost)
+		fd = fd_rump2host(fd);
+	DPRINTF(("socket <- %d\n", fd));
 
-	return fd_rump2host(fd);
+	return fd;
 }
 
 int
@@ -242,14 +271,24 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
 	int (*rc_accept)(int, struct sockaddr *, socklen_t *);
 	int fd;
+	bool isrump;
+
+	isrump = fd_isrump(s);
 
 	DPRINTF(("accept -> %d", s));
-	assertfd(s);
-	rc_accept = rumpcalls[RUMPCALL_ACCEPT];
-	fd = rc_accept(fd_host2rump(s), addr, addrlen);
-	DPRINTF((" <- %d\n", fd_rump2host(fd)));
+	if (isrump) {
+		rc_accept = rumpcalls[RUMPCALL_ACCEPT];
+		s = fd_host2rump(s);
+	} else {
+		rc_accept = host_accept;
+	}
+	fd = rc_accept(s, addr, addrlen);
+	if (fd != -1 && isrump)
+		fd = fd_rump2host(fd);
 
-	return fd_rump2host(fd);
+	DPRINTF((" <- %d\n", fd));
+
+	return fd;
 }
 
 int
@@ -258,10 +297,13 @@ bind(int s, const struct sockaddr *name, socklen_t namelen)
 	int (*rc_bind)(int, const struct sockaddr *, socklen_t);
 
 	DPRINTF(("bind -> %d\n", s));
-	assertfd(s);
-	rc_bind = rumpcalls[RUMPCALL_BIND];
-
-	return rc_bind(fd_host2rump(s), name, namelen);
+	if (fd_isrump(s)) {
+		rc_bind = rumpcalls[RUMPCALL_BIND];
+		s = fd_host2rump(s);
+	} else {
+		rc_bind = host_bind;
+	}
+	return rc_bind(s, name, namelen);
 }
 
 int
@@ -270,10 +312,14 @@ connect(int s, const struct sockaddr *name, socklen_t namelen)
 	int (*rc_connect)(int, const struct sockaddr *, socklen_t);
 
 	DPRINTF(("connect -> %d\n", s));
-	assertfd(s);
-	rc_connect = rumpcalls[RUMPCALL_CONNECT];
+	if (fd_isrump(s)) {
+		rc_connect = rumpcalls[RUMPCALL_CONNECT];
+		s = fd_host2rump(s);
+	} else {
+		rc_connect = host_connect;
+	}
 
-	return rc_connect(fd_host2rump(s), name, namelen);
+	return rc_connect(s, name, namelen);
 }
 
 int
@@ -282,9 +328,13 @@ getpeername(int s, struct sockaddr *name, socklen_t *namelen)
 	int (*rc_getpeername)(int, struct sockaddr *, socklen_t *);
 
 	DPRINTF(("getpeername -> %d\n", s));
-	assertfd(s);
-	rc_getpeername = rumpcalls[RUMPCALL_GETPEERNAME];
-	return rc_getpeername(fd_host2rump(s), name, namelen);
+	if (fd_isrump(s)) {
+		rc_getpeername = rumpcalls[RUMPCALL_GETPEERNAME];
+		s = fd_host2rump(s);
+	} else {
+		rc_getpeername = host_getpeername;
+	}
+	return rc_getpeername(s, name, namelen);
 }
 
 int
@@ -293,9 +343,13 @@ getsockname(int s, struct sockaddr *name, socklen_t *namelen)
 	int (*rc_getsockname)(int, struct sockaddr *, socklen_t *);
 
 	DPRINTF(("getsockname -> %d\n", s));
-	assertfd(s);
-	rc_getsockname = rumpcalls[RUMPCALL_GETSOCKNAME];
-	return rc_getsockname(fd_host2rump(s), name, namelen);
+	if (fd_isrump(s)) {
+		rc_getsockname = rumpcalls[RUMPCALL_GETSOCKNAME];
+		s = fd_host2rump(s);
+	} else {
+		rc_getsockname = host_getsockname;
+	}
+	return rc_getsockname(s, name, namelen);
 }
 
 int
@@ -304,9 +358,13 @@ listen(int s, int backlog)
 	int (*rc_listen)(int, int);
 
 	DPRINTF(("listen -> %d\n", s));
-	assertfd(s);
-	rc_listen = rumpcalls[RUMPCALL_LISTEN];
-	return rc_listen(fd_host2rump(s), backlog);
+	if (fd_isrump(s)) {
+		rc_listen = rumpcalls[RUMPCALL_LISTEN];
+		s = fd_host2rump(s);
+	} else {
+		rc_listen = host_listen;
+	}
+	return rc_listen(s, backlog);
 }
 
 ssize_t
@@ -379,7 +437,7 @@ getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 {
 	int (*rc_getsockopt)(int, int, int, void *, socklen_t *);
 
-	DPRINTF(("getsockopt\n"));
+	DPRINTF(("getsockopt -> %d\n", s));
 	assertfd(s);
 	rc_getsockopt = rumpcalls[RUMPCALL_GETSOCKOPT];
 	return rc_getsockopt(fd_host2rump(s), level, optname, optval, optlen);
@@ -390,10 +448,14 @@ setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
 {
 	int (*rc_setsockopt)(int, int, int, const void *, socklen_t);
 
-	DPRINTF(("setsockopt\n"));
-	assertfd(s);
-	rc_setsockopt = rumpcalls[RUMPCALL_SETSOCKOPT];
-	return rc_setsockopt(fd_host2rump(s), level, optname, optval, optlen);
+	DPRINTF(("setsockopt -> %d\n", s));
+	if (fd_isrump(s)) {
+		rc_setsockopt = rumpcalls[RUMPCALL_SETSOCKOPT];
+		s = fd_host2rump(s);
+	} else {
+		rc_setsockopt = host_setsockopt;
+	}
+	return rc_setsockopt(s, level, optname, optval, optlen);
 }
 
 int
@@ -401,7 +463,7 @@ shutdown(int s, int how)
 {
 	int (*rc_shutdown)(int, int);
 
-	DPRINTF(("shutdown\n"));
+	DPRINTF(("shutdown -> %d\n", s));
 	assertfd(s);
 	rc_shutdown = rumpcalls[RUMPCALL_SHUTDOWN];
 	return rc_shutdown(fd_host2rump(s), how);
@@ -496,6 +558,7 @@ readv(int fd, const struct iovec *iov, int iovcnt)
 {
 	int (*op_readv)(int, const struct iovec *, int);
 
+	DPRINTF(("readv %d\n", fd));
 	if (fd_isrump(fd)) {
 		fd = fd_host2rump(fd);
 		op_readv = rumpcalls[RUMPCALL_READV];
@@ -503,7 +566,6 @@ readv(int fd, const struct iovec *iov, int iovcnt)
 		op_readv = host_readv;
 	}
 
-	DPRINTF(("readv\n"));
 	return op_readv(fd, iov, iovcnt);
 }
 
@@ -527,6 +589,7 @@ writev(int fd, const struct iovec *iov, int iovcnt)
 {
 	int (*op_writev)(int, const struct iovec *, int);
 
+	DPRINTF(("writev %d\n", fd));
 	if (fd_isrump(fd)) {
 		fd = fd_host2rump(fd);
 		op_writev = rumpcalls[RUMPCALL_WRITEV];
@@ -603,6 +666,8 @@ select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	struct timespec ts, *tsp = NULL;
 	nfds_t i, j, realnfds;
 	int rv, incr;
+
+	DPRINTF(("select\n"));
 
 	/*
 	 * Well, first we must scan the fds to figure out how many
