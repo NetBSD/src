@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.7 2009/03/14 15:36:12 dsl Exp $ */
+/*      $NetBSD: if_prom.c,v 1.8 2011/01/09 16:28:40 tsutsui Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -123,8 +123,9 @@ prom_init(struct iodesc *desc, void *machdep_hint)
 {
 	char *device =
 		((struct netif *)desc->io_netif)->nif_driver->netif_bname;
-	char *c, *enet;
-	int i, j, num;
+	char *enet;
+	uint8_t *cp, *dest;
+	int i;
 
 #ifdef NET_DEBUG
 	printf("prom_init: called\n");
@@ -138,23 +139,33 @@ prom_init(struct iodesc *desc, void *machdep_hint)
          */
 	enet = (*callv->_getenv)("enet");
 
+	if (enet == NULL) {
+		printf("No `enet' environment variable found.\n"
+		    "Set MAC address to `enet' manually by setenv command.\n");
+		(*callv->_halt)((int *)0, 0);	/* XXX */
+		/* NOTREACHED */
+	}
+
 #ifdef NET_DEBUG
 	if (debug)
 		printf("enet=%s\n", enet);
 #endif
 
-	i=0;
-	c = enet;
-	for (i=0; i<6; i++) {
-		j = *c - '0';
-		num = (j<10?j:j-39);
-		num <<= 4;
-		c++;
-		j = *c - '0';
-		num += (j<10?j:j-39);
-		desc->myea[i] = num;
-		c++;
-		c++; /* skip '-' */
+#define atox(c)	(((c) < '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+
+	cp = (uint8_t *)enet;
+	dest = desc->myea;
+	for (i = 0; i < 6; i++) {
+		if (isxdigit(*cp)) {
+			*dest = atox(*cp);
+			cp++;
+			if (isxdigit(*cp)) {
+				*dest = (*dest << 4) | atox(*cp);
+				cp++;
+			}
+		}
+		dest++;
+		cp++;	/* skip '-' or ':' etc. */
 	}
 
 	desc->xid = 0x66d30000;
