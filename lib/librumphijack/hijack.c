@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.4 2011/01/08 21:30:24 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.5 2011/01/09 10:28:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.4 2011/01/08 21:30:24 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.5 2011/01/09 10:28:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -159,15 +159,28 @@ rcinit(void)
 		err(1, "rumpclient init");
 }
 
+static unsigned dup2mask;
+#define ISDUP2D(fd) (((fd+1) & dup2mask) == ((fd)+1))
+
 //#define DEBUGJACK
 #ifdef DEBUGJACK
-#define DPRINTF(x) printf x
+#define DPRINTF(x) mydprintf x
+static void
+mydprintf(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (ISDUP2D(STDERR_FILENO))
+		return;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+
 #else
 #define DPRINTF(x)
 #endif
-
-static unsigned dup2mask;
-#define ISDUP2D(fd) (((fd+1) & dup2mask) == ((fd)+1))
 
 /* XXX: need runtime selection.  low for now due to FD_SETSIZE */
 #define HIJACK_FDOFF 128
