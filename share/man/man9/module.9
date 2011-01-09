@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.25 2010/12/14 16:23:59 jruoho Exp $
+.\"	$NetBSD: module.9,v 1.26 2011/01/09 05:05:10 jnemeth Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 14, 2010
+.Dd January 8, 2011
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -277,6 +277,19 @@ The
 function is intended for use by kernel components to locate and load optional
 system components.
 The function is also used to load modules that are required by other modules.
+.Pp
+The directory from which the module is loaded will be searched for a file
+with the same name as the module file, but with the suffix
+.Dq Pa .plist .
+If this file is found, the prop_dictionary it contains will be loaded and
+passed to the module's
+.Fn modcmd
+routine.
+If this prop_dictionary contains a
+.Dq Pa noautoload
+property which is set to
+.Dq Pa true
+then the system will refuse to load the module.
 .It Fn module_unload "name"
 Unload a module.
 If the module's reference count is non-zero, the function returns
