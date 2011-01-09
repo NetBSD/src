@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.20 2011/01/07 19:37:52 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.21 2011/01/09 14:10:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -142,6 +142,7 @@ struct respwait {
 	uint64_t rw_reqno;
 	void *rw_data;
 	size_t rw_dlen;
+	int rw_done;
 	int rw_error;
 
 	pthread_cond_t rw_cv;
@@ -289,7 +290,7 @@ putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
 {
 
 	rw->rw_data = NULL;
-	rw->rw_dlen = 0;
+	rw->rw_dlen = rw->rw_done = 0;
 	pthread_cond_init(&rw->rw_cv, NULL);
 
 	pthread_mutex_lock(&spc->spc_mtx);
@@ -329,6 +330,7 @@ kickwaiter(struct spclient *spc)
 	}
 	DPRINTF(("rump_sp: client %p woke up waiter at %p\n", spc, rw));
 	rw->rw_data = spc->spc_buf;
+	rw->rw_done = 1;
 	rw->rw_dlen = (size_t)(spc->spc_off - HDRSZ);
 	if (spc->spc_hdr.rsp_class == RUMPSP_ERROR) {
 		error = rw->rw_error = spc->spc_hdr.rsp_error;
