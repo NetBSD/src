@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.14 2011/01/09 13:49:57 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.15 2011/01/09 14:12:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.14 2011/01/09 13:49:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.15 2011/01/09 14:12:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -48,7 +48,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 
 	if (curproc->p_vmspace == vmspace_kernel()) {
 		memcpy(kaddr, uaddr, len);
-	} else {
+	} else if (len) {
 		error = rumpuser_sp_copyin(curproc->p_vmspace->vm_map.pmap,
 		    uaddr, kaddr, len);
 	}
@@ -67,7 +67,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 
 	if (curproc->p_vmspace == vmspace_kernel()) {
 		memcpy(uaddr, kaddr, len);
-	} else {
+	} else if (len) {
 		error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
 		    kaddr, uaddr, len);
 	}
