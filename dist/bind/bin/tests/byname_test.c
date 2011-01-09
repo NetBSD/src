@@ -1,7 +1,7 @@
-/*	$NetBSD: byname_test.c,v 1.1.1.5 2008/06/21 18:33:58 christos Exp $	*/
+/*	$NetBSD: byname_test.c,v 1.1.1.5.12.1 2011/01/09 20:41:18 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byname_test.c,v 1.31 2007/06/19 23:46:59 tbox Exp */
+/* Id: byname_test.c,v 1.33 2009/09/02 23:48:01 tbox Exp */
 
 /*! \file
  * \author
@@ -345,7 +345,7 @@ main(int argc, char *argv[]) {
 	dns_fixedname_init(&name);
 	dns_fixedname_init(&target);
 	RUNTIME_CHECK(dns_name_fromtext(dns_fixedname_name(&name), &b,
-					dns_rootname, ISC_FALSE, NULL) ==
+					dns_rootname, 0, NULL) ==
 		      ISC_R_SUCCESS);
 
 	RUNTIME_CHECK(isc_app_onrun(mctx, task, run, NULL) == ISC_R_SUCCESS);

@@ -1,7 +1,7 @@
-/*	$NetBSD: aaaa_28.c,v 1.1.1.5 2008/06/21 18:32:45 christos Exp $	*/
+/*	$NetBSD: aaaa_28.c,v 1.1.1.5.12.1 2011/01/09 20:42:27 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: aaaa_28.c,v 1.45 2007/06/19 23:47:17 tbox Exp */
+/* Id: aaaa_28.c,v 1.47 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -232,4 +232,8 @@ checknames_in_aaaa(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline int
+casecompare_in_aaaa(ARGS_COMPARE) {
+	return (compare_in_aaaa(rdata1, rdata2));
+}
 #endif	/* RDATA_IN_1_AAAA_28_C */

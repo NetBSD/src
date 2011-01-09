@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.1.1.5.4.1 2009/12/03 17:38:05 snj Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.5.4.1.2.1 2011/01/09 20:41:15 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,11 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.25.128.4 2008/10/24 01:28:29 marka Exp */
+/* Id: os.c,v 1.37 2009/08/05 18:43:37 each Exp */
 
 #include <config.h>
 #include <stdarg.h>
 
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -68,6 +69,7 @@ ns_paths_init() {
 	ns_g_defaultpidfile = isc_ntpaths_get(NAMED_PID_PATH);
 	lwresd_g_defaultpidfile = isc_ntpaths_get(LWRESD_PID_PATH);
 	ns_g_keyfile = isc_ntpaths_get(RNDC_KEY_PATH);
+	ns_g_defaultsessionkeyfile = isc_ntpaths_get(SESSION_KEY_PATH);
 
 	Initialized = TRUE;
 }
@@ -157,6 +159,8 @@ ns_os_closedevnull(void) {
 
 void
 ns_os_chroot(const char *root) {
+	if (root != NULL)
+		ns_main_earlyfatal("chroot(): isn't supported by Win32 API");
 }
 
 void
@@ -176,7 +180,7 @@ ns_os_minprivs(void) {
 }
 
 static int
-safe_open(const char *filename, isc_boolean_t append) {
+safe_open(const char *filename, int mode, isc_boolean_t append) {
 	int fd;
 	struct stat sb;
 
@@ -187,12 +191,10 @@ safe_open(const char *filename, isc_boolean_t append) {
 		return (-1);
 
 	if (append)
-		fd = open(filename, O_WRONLY|O_CREAT|O_APPEND,
-			  S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+		fd = open(filename, O_WRONLY|O_CREAT|O_APPEND, mode);
 	else {
 		(void)unlink(filename);
-		fd = open(filename, O_WRONLY|O_CREAT|O_EXCL,
-			  S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+		fd = open(filename, O_WRONLY|O_CREAT|O_EXCL, mode);
 	}
 	return (fd);
 }
@@ -206,11 +208,34 @@ cleanup_pidfile(void) {
 	pidfile = NULL;
 }
 
+FILE *
+ns_os_openfile(const char *filename, int mode, isc_boolean_t switch_user) {
+	char strbuf[ISC_STRERRORSIZE];
+	FILE *fp;
+	int fd;
+
+	UNUSED(switch_user);
+	fd = safe_open(filename, mode, ISC_FALSE);
+	if (fd < 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		ns_main_earlywarning("could not open file '%s': %s",
+				     filename, strbuf);
+	}
+
+	fp = fdopen(fd, "w");
+	if (fp == NULL) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		ns_main_earlywarning("could not fdopen() file '%s': %s",
+				     filename, strbuf);
+		close(fd);
+	}
+
+	return (fp);
+}
+
 void
 ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
-	int fd;
 	FILE *lockfile;
-	size_t len;
 	pid_t pid;
 	char strbuf[ISC_STRERRORSIZE];
 	void (*report)(const char *, ...);
@@ -225,31 +250,19 @@ ns_os_writepidfile(const char *filename, isc_boolean_t first_time) {
 
 	if (filename == NULL)
 		return;
-	len = strlen(filename);
-	pidfile = malloc(len + 1);
+
+	pidfile = strdup(filename);
 	if (pidfile == NULL) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
-		(*report)("couldn't malloc '%s': %s", filename, strbuf);
+		(*report)("couldn't strdup() '%s': %s", filename, strbuf);
 		return;
 	}
-	/* This is safe. */
-	strcpy(pidfile, filename);
 
-	fd = safe_open(filename, ISC_FALSE);
-	if (fd < 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		(*report)("couldn't open pid file '%s': %s", filename, strbuf);
+	lockfile = ns_os_openfile(filename, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH,
+				  ISC_FALSE);
+	if (lockfile == NULL) {
 		free(pidfile);
 		pidfile = NULL;
-		return;
-	}
-	lockfile = fdopen(fd, "w");
-	if (lockfile == NULL) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		(*report)("could not fdopen() pid file '%s': %s",
-			  filename, strbuf);
-		(void)close(fd);
-		cleanup_pidfile();
 		return;
 	}
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: db_test.c,v 1.1.1.5 2008/06/21 18:34:01 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.1.1.5.12.1 2011/01/09 20:41:18 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db_test.c,v 1.64 2007/06/19 23:46:59 tbox Exp */
+/* Id: db_test.c,v 1.68 2009/09/02 23:48:01 tbox Exp */
 
-/*! \file 
+/*! \file
  * \author
  * Principal Author: Bob Halley
  */
@@ -136,8 +136,7 @@ select_db(char *origintext) {
 	isc_buffer_add(&source, len);
 	dns_fixedname_init(&forigin);
 	origin = dns_fixedname_name(&forigin);
-	result = dns_name_fromtext(origin, &source, dns_rootname, ISC_FALSE,
-				   NULL);
+	result = dns_name_fromtext(origin, &source, dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		print_result("bad name", result);
 		return (NULL);
@@ -179,8 +178,7 @@ list(dbinfo *dbi, char *seektext) {
 				dns_db_currentversion(dbi->db, &dbi->iversion);
 		}
 
-		result = dns_db_createiterator(dbi->db, ISC_FALSE,
-					       &dbi->dbiterator);
+		result = dns_db_createiterator(dbi->db, 0, &dbi->dbiterator);
 		if (result == ISC_R_SUCCESS) {
 			if (seektext != NULL) {
 				len = strlen(seektext);
@@ -191,8 +189,7 @@ list(dbinfo *dbi, char *seektext) {
 				result = dns_name_fromtext(seekname, &source,
 							   dns_db_origin(
 								 dbi->db),
-							   ISC_FALSE,
-							   NULL);
+							   0, NULL);
 				if (result == ISC_R_SUCCESS)
 					result = dns_dbiterator_seek(
 							     dbi->dbiterator,
@@ -274,8 +271,7 @@ load(const char *filename, const char *origintext, isc_boolean_t cache) {
 	isc_buffer_add(&source, len);
 	dns_fixedname_init(&forigin);
 	origin = dns_fixedname_name(&forigin);
-	result = dns_name_fromtext(origin, &source, dns_rootname, ISC_FALSE,
-				   NULL);
+	result = dns_name_fromtext(origin, &source, dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -388,7 +384,7 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(dns_dbtable_create(mctx, dns_rdataclass_in, &dbtable) ==
 		      ISC_R_SUCCESS);
 
-	
+
 
 	strcpy(dbtype, "rbt");
 	while ((ch = isc_commandline_parse(argc, argv, "c:d:t:z:P:Q:glpqvT"))
@@ -407,7 +403,7 @@ main(int argc, char *argv[]) {
 		case 'g':
 			options |= (DNS_DBFIND_GLUEOK|DNS_DBFIND_VALIDATEGLUE);
 			break;
-        	case 'l':
+		case 'l':
 			RUNTIME_CHECK(isc_log_create(mctx, &lctx,
 						     NULL) == ISC_R_SUCCESS);
 			isc_log_setcontext(lctx);
@@ -739,8 +735,7 @@ main(int argc, char *argv[]) {
 		isc_buffer_init(&source, s, len);
 		isc_buffer_add(&source, len);
 		isc_buffer_init(&target, b, sizeof(b));
-		result = dns_name_fromtext(&name, &source, origin,
-					   ISC_FALSE, &target);
+		result = dns_name_fromtext(&name, &source, origin, 0, &target);
 		if (result != ISC_R_SUCCESS) {
 			print_result("bad name: ", result);
 			continue;

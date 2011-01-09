@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec_47.h,v 1.5.4.1 2009/12/03 17:38:24 snj Exp $	*/
+/*	$NetBSD: nsec_47.h,v 1.5.4.1.2.1 2011/01/09 20:42:26 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_NSEC_47_H
 #define GENERIC_NSEC_47_H 1
 
-/* Id: nsec_47.h,v 1.8.128.2 2008/07/15 23:46:46 tbox Exp */
+/* Id: nsec_47.h,v 1.10 2008/07/15 23:47:21 tbox Exp */
 
 /*!
  * \brief Per RFC 3845 */

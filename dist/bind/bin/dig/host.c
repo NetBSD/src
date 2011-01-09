@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.1.1.5.4.1 2009/12/03 17:38:04 snj Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.5.4.1.2.1 2011/01/09 20:41:10 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: host.c,v 1.116.12.3 2009/09/08 23:28:40 marka Exp */
+/* Id: host.c,v 1.120 2009/09/29 15:06:05 fdupont Exp */
 
 /*! \file */
 
@@ -142,6 +142,9 @@ rcode_totext(dns_rcode_t rcode)
 		totext.consttext = rcodetext[rcode];
 	return totext.deconsttext;
 }
+
+ISC_PLATFORM_NORETURN_PRE static void
+show_usage(void) ISC_PLATFORM_NORETURN_POST;
 
 static void
 show_usage(void) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.h,v 1.1.1.5.4.1 2009/12/03 17:38:21 snj Exp $	*/
+/*	$NetBSD: compress.h,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:24 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: compress.h,v 1.40.128.2 2009/01/19 23:47:03 tbox Exp */
+/* Id: compress.h,v 1.42 2009/01/17 23:47:43 tbox Exp */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1

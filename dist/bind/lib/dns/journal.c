@@ -1,7 +1,7 @@
-/*	$NetBSD: journal.c,v 1.1.1.6.4.1 2009/12/03 17:38:14 snj Exp $	*/
+/*	$NetBSD: journal.c,v 1.1.1.6.4.1.2.1 2011/01/09 20:42:22 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.c,v 1.99.70.4 2009/01/19 23:47:02 tbox Exp */
+/* Id: journal.c,v 1.110.194.2 2010/11/17 23:46:50 tbox Exp */
 
 #include <config.h>
 
@@ -564,11 +564,9 @@ journal_open(isc_mem_t *mctx, const char *filename, isc_boolean_t write,
 
 	if (result == ISC_R_FILENOTFOUND) {
 		if (create) {
-			isc_log_write(JOURNAL_COMMON_LOGARGS,
-				      ISC_LOG_INFO,
+			isc_log_write(JOURNAL_COMMON_LOGARGS, ISC_LOG_DEBUG(1),
 				      "journal file %s does not exist, "
-				      "creating it",
-				      j->filename);
+				      "creating it", j->filename);
 			CHECK(journal_file_create(mctx, filename));
 			/*
 			 * Retry.
@@ -711,8 +709,35 @@ ixfr_order(const void *av, const void *bv) {
 	dns_difftuple_t const *a = *ap;
 	dns_difftuple_t const *b = *bp;
 	int r;
+	int bop = 0, aop = 0;
 
-	r = (b->op == DNS_DIFFOP_DEL) - (a->op == DNS_DIFFOP_DEL);
+	switch (a->op) {
+	case DNS_DIFFOP_DEL:
+	case DNS_DIFFOP_DELRESIGN:
+		aop = 1;
+		break;
+	case DNS_DIFFOP_ADD:
+	case DNS_DIFFOP_ADDRESIGN:
+		aop = 0;
+		break;
+	default:
+		INSIST(0);
+	}
+
+	switch (b->op) {
+	case DNS_DIFFOP_DEL:
+	case DNS_DIFFOP_DELRESIGN:
+		bop = 1;
+		break;
+	case DNS_DIFFOP_ADD:
+	case DNS_DIFFOP_ADDRESIGN:
+		bop = 0;
+		break;
+	default:
+		INSIST(0);
+	}
+
+	r = bop - aop;
 	if (r != 0)
 		return (r);
 
@@ -1193,7 +1218,9 @@ dns_journal_destroy(dns_journal_t **journalp) {
 /* XXX Share code with incoming IXFR? */
 
 static isc_result_t
-roll_forward(dns_journal_t *j, dns_db_t *db) {
+roll_forward(dns_journal_t *j, dns_db_t *db, unsigned int options,
+	     isc_uint32_t resign)
+{
 	isc_buffer_t source;		/* Transaction data from disk */
 	isc_buffer_t target;		/* Ditto after _fromwire check */
 	isc_uint32_t db_serial;		/* Database SOA serial */
@@ -1204,11 +1231,13 @@ roll_forward(dns_journal_t *j, dns_db_t *db) {
 	dns_diff_t diff;
 	unsigned int n_soa = 0;
 	unsigned int n_put = 0;
+	dns_diffop_t op;
 
 	REQUIRE(DNS_JOURNAL_VALID(j));
 	REQUIRE(DNS_DB_VALID(db));
 
 	dns_diff_init(j->mctx, &diff);
+	diff.resign = resign;
 
 	/*
 	 * Set up empty initial buffers for unchecked and checked
@@ -1275,9 +1304,14 @@ roll_forward(dns_journal_t *j, dns_db_t *db) {
 					 "initial SOA", j->filename);
 			FAIL(ISC_R_UNEXPECTED);
 		}
-		CHECK(dns_difftuple_create(diff.mctx, n_soa == 1 ?
-					   DNS_DIFFOP_DEL : DNS_DIFFOP_ADD,
-					   name, ttl, rdata, &tuple));
+		if ((options & DNS_JOURNALOPT_RESIGN) != 0)
+			op = (n_soa == 1) ? DNS_DIFFOP_DELRESIGN :
+					    DNS_DIFFOP_ADDRESIGN;
+		else
+			op = (n_soa == 1) ? DNS_DIFFOP_DEL : DNS_DIFFOP_ADD;
+
+		CHECK(dns_difftuple_create(diff.mctx, op, name, ttl, rdata,
+					   &tuple));
 		dns_diff_append(&diff, &tuple);
 
 		if (++n_put > 100)  {
@@ -1319,7 +1353,17 @@ roll_forward(dns_journal_t *j, dns_db_t *db) {
 }
 
 isc_result_t
-dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db, const char *filename) {
+dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db,
+			unsigned int options, const char *filename)
+{
+	REQUIRE((options & DNS_JOURNALOPT_RESIGN) == 0);
+	return (dns_journal_rollforward2(mctx, db, options, 0, filename));
+}
+
+isc_result_t
+dns_journal_rollforward2(isc_mem_t *mctx, dns_db_t *db, unsigned int options,
+			 isc_uint32_t resign, const char *filename)
+{
 	dns_journal_t *j;
 	isc_result_t result;
 
@@ -1338,7 +1382,7 @@ dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db, const char *filename) {
 	if (JOURNAL_EMPTY(&j->header))
 		result = DNS_R_UPTODATE;
 	else
-		result = roll_forward(j, db);
+		result = roll_forward(j, db, options, resign);
 
 	dns_journal_destroy(&j);
 
@@ -1817,18 +1861,11 @@ dns_diff_subtract(dns_diff_t diff[2], dns_diff_t *r) {
 	return (result);
 }
 
-/*
- * Compare the databases 'dba' and 'dbb' and generate a journal
- * entry containing the changes to make 'dba' from 'dbb' (note
- * the order).  This journal entry will consist of a single,
- * possibly very large transaction.
- */
-
-isc_result_t
-dns_db_diff(isc_mem_t *mctx,
-	    dns_db_t *dba, dns_dbversion_t *dbvera,
-	    dns_db_t *dbb, dns_dbversion_t *dbverb,
-	    const char *journal_filename)
+static isc_result_t
+diff_namespace(isc_mem_t *mctx,
+	       dns_db_t *dba, dns_dbversion_t *dbvera,
+	       dns_db_t *dbb, dns_dbversion_t *dbverb,
+	       unsigned int options, dns_diff_t *resultdiff)
 {
 	dns_db_t *db[2];
 	dns_dbversion_t *ver[2];
@@ -1836,30 +1873,24 @@ dns_db_diff(isc_mem_t *mctx,
 	isc_boolean_t have[2] = { ISC_FALSE, ISC_FALSE };
 	dns_fixedname_t fixname[2];
 	isc_result_t result, itresult[2];
-	dns_diff_t diff[2], resultdiff;
+	dns_diff_t diff[2];
 	int i, t;
-	dns_journal_t *journal = NULL;
 
 	db[0] = dba, db[1] = dbb;
 	ver[0] = dbvera, ver[1] = dbverb;
 
 	dns_diff_init(mctx, &diff[0]);
 	dns_diff_init(mctx, &diff[1]);
-	dns_diff_init(mctx, &resultdiff);
 
 	dns_fixedname_init(&fixname[0]);
 	dns_fixedname_init(&fixname[1]);
 
-	result = dns_journal_open(mctx, journal_filename, ISC_TRUE, &journal);
+	result = dns_db_createiterator(db[0], options, &dbit[0]);
 	if (result != ISC_R_SUCCESS)
 		return (result);
-
-	result = dns_db_createiterator(db[0], ISC_FALSE, &dbit[0]);
+	result = dns_db_createiterator(db[1], options, &dbit[1]);
 	if (result != ISC_R_SUCCESS)
-		goto cleanup_journal;
-	result = dns_db_createiterator(db[1], ISC_FALSE, &dbit[1]);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_interator0;
+		goto cleanup_iterator;
 
 	itresult[0] = dns_dbiterator_first(dbit[0]);
 	itresult[1] = dns_dbiterator_first(dbit[1]);
@@ -1886,7 +1917,7 @@ dns_db_diff(isc_mem_t *mctx,
 
 		for (i = 0; i < 2; i++) {
 			if (! have[!i]) {
-				ISC_LIST_APPENDLIST(resultdiff.tuples,
+				ISC_LIST_APPENDLIST(resultdiff->tuples,
 						    diff[i].tuples, link);
 				INSIST(ISC_LIST_EMPTY(diff[i].tuples));
 				have[i] = ISC_FALSE;
@@ -1897,21 +1928,21 @@ dns_db_diff(isc_mem_t *mctx,
 		t = dns_name_compare(dns_fixedname_name(&fixname[0]),
 				     dns_fixedname_name(&fixname[1]));
 		if (t < 0) {
-			ISC_LIST_APPENDLIST(resultdiff.tuples,
+			ISC_LIST_APPENDLIST(resultdiff->tuples,
 					    diff[0].tuples, link);
 			INSIST(ISC_LIST_EMPTY(diff[0].tuples));
 			have[0] = ISC_FALSE;
 			continue;
 		}
 		if (t > 0) {
-			ISC_LIST_APPENDLIST(resultdiff.tuples,
+			ISC_LIST_APPENDLIST(resultdiff->tuples,
 					    diff[1].tuples, link);
 			INSIST(ISC_LIST_EMPTY(diff[1].tuples));
 			have[1] = ISC_FALSE;
 			continue;
 		}
 		INSIST(t == 0);
-		CHECK(dns_diff_subtract(diff, &resultdiff));
+		CHECK(dns_diff_subtract(diff, resultdiff));
 		INSIST(ISC_LIST_EMPTY(diff[0].tuples));
 		INSIST(ISC_LIST_EMPTY(diff[1].tuples));
 		have[0] = have[1] = ISC_FALSE;
@@ -1922,20 +1953,49 @@ dns_db_diff(isc_mem_t *mctx,
 	if (itresult[1] != ISC_R_NOMORE)
 		FAIL(itresult[1]);
 
+	INSIST(ISC_LIST_EMPTY(diff[0].tuples));
+	INSIST(ISC_LIST_EMPTY(diff[1].tuples));
+
+ failure:
+	dns_dbiterator_destroy(&dbit[1]);
+ cleanup_iterator:
+	dns_dbiterator_destroy(&dbit[0]);
+	return (result);
+}
+
+/*
+ * Compare the databases 'dba' and 'dbb' and generate a journal
+ * entry containing the changes to make 'dba' from 'dbb' (note
+ * the order).  This journal entry will consist of a single,
+ * possibly very large transaction.
+ */
+isc_result_t
+dns_db_diff(isc_mem_t *mctx,
+	    dns_db_t *dba, dns_dbversion_t *dbvera,
+	    dns_db_t *dbb, dns_dbversion_t *dbverb,
+	    const char *journal_filename)
+{
+	isc_result_t result;
+	dns_journal_t *journal = NULL;
+	dns_diff_t resultdiff;
+
+	result = dns_journal_open(mctx, journal_filename, ISC_TRUE, &journal);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	dns_diff_init(mctx, &resultdiff);
+
+	CHECK(diff_namespace(mctx, dba, dbvera, dbb, dbverb,
+			     DNS_DB_NONSEC3, &resultdiff));
+	CHECK(diff_namespace(mctx, dba, dbvera, dbb, dbverb,
+			     DNS_DB_NSEC3ONLY, &resultdiff));
 	if (ISC_LIST_EMPTY(resultdiff.tuples)) {
 		isc_log_write(JOURNAL_DEBUG_LOGARGS(3), "no changes");
 	} else {
 		CHECK(dns_journal_write_transaction(journal, &resultdiff));
 	}
-	INSIST(ISC_LIST_EMPTY(diff[0].tuples));
-	INSIST(ISC_LIST_EMPTY(diff[1].tuples));
-
  failure:
 	dns_diff_clear(&resultdiff);
-	dns_dbiterator_destroy(&dbit[1]);
- cleanup_interator0:
-	dns_dbiterator_destroy(&dbit[0]);
- cleanup_journal:
 	dns_journal_destroy(&journal);
 	return (result);
 }
@@ -2113,6 +2173,12 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 
 		indexend = new->header.end.offset;
 	}
+
+	/*
+	 * Close both journals before trying to rename files (this is
+	 * necessary on WIN32).
+	 */
+	dns_journal_destroy(&j);
 	dns_journal_destroy(&new);
 
 	/*
@@ -2120,12 +2186,14 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 	 * Any IXFR outs will just continue and the old journal will be
 	 * removed on final close.
 	 *
-	 * With MSDOS / NTFS we need to do a two stage rename triggered
-	 * bu EEXISTS.  Hopefully all IXFR's that were active at the last
-	 * rename are now complete.
+	 * With MSDOS / NTFS we need to do a two stage rename, triggered
+	 * by EEXIST.  (If any IXFR's are running in other threads, however,
+	 * this will fail, and the journal will not be compacted.  But
+	 * if so, hopefully they'll be finished by the next time we
+	 * compact.)
 	 */
 	if (rename(newname, filename) == -1) {
-		if (errno == EACCES && !is_backup) {
+		if (errno == EEXIST && !is_backup) {
 			result = isc_file_remove(backup);
 			if (result != ISC_R_SUCCESS &&
 			    result != ISC_R_FILENOTFOUND)
@@ -2142,7 +2210,6 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 		}
 	}
 
-	dns_journal_destroy(&j);
 	result = ISC_R_SUCCESS;
 
  failure:
