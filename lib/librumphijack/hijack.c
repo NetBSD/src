@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.5 2011/01/09 10:28:46 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.6 2011/01/09 14:15:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.5 2011/01/09 10:28:46 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.6 2011/01/09 14:15:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -627,9 +627,13 @@ select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		}
 	}
 
-	pfds = malloc(sizeof(*pfds) * realnfds);
-	if (!pfds)
-		return -1;
+	if (realnfds) {
+		pfds = malloc(sizeof(*pfds) * realnfds);
+		if (!pfds)
+			return -1;
+	} else {
+		pfds = NULL;
+	}
 
 	for (i = 0, j = 0; i < nfds; i++) {
 		incr = 0;
