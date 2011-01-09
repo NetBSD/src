@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_fan.c,v 1.1 2011/01/09 15:12:34 jruoho Exp $ */
+/*	$NetBSD: acpi_fan.c,v 1.2 2011/01/09 15:43:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.1 2011/01/09 15:12:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.2 2011/01/09 15:43:20 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -112,6 +112,9 @@ acpifan_detach(device_t self, int flags)
 {
 	struct acpifan_softc *sc = device_private(self);
 
+	if (sc->sc_state != ACPI_STATE_ERROR)
+		(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D0);
+
 	pmf_device_deregister(self);
 	acpi_power_deregister(sc->sc_node->ad_handle);
 
@@ -152,7 +155,7 @@ acpifan_shutdown(device_t self, int how)
 	struct acpifan_softc *sc = device_private(self);
 
 	if (sc->sc_state != ACPI_STATE_ERROR)
-		(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D3);
+		(void)acpi_power_set(sc->sc_node->ad_handle, ACPI_STATE_D0);
 
 	return true;
 }
