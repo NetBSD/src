@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.1 2009/12/13 16:54:38 kardel Exp $	*/
+/*	$NetBSD: net.c,v 1.2 2011/01/09 14:49:39 kardel Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -106,10 +106,10 @@ const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
 
 # if defined(WANT_IPV6)
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
-# endif
 
 # if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
+# endif
 # endif
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 
@@ -319,7 +319,6 @@ initialize_ipv6only(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6only,
 				  try_ipv6only) == ISC_R_SUCCESS);
 }
-#endif /* WANT_IPV6 */
 
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 static void
@@ -376,6 +375,7 @@ initialize_ipv6pktinfo(void) {
 }
 #endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
 #endif /* ISC_PLATFORM_HAVEIPV6 */
+#endif /* WANT_IPV6 */
 
 isc_result_t
 isc_net_probe_ipv6only(void) {
