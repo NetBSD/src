@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.76 2010/10/26 04:37:33 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.77 2011/01/09 14:58:10 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.76 2010/10/26 04:37:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.77 2011/01/09 14:58:10 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -198,6 +198,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	acpitz_get_status(self);
 
 	(void)pmf_device_register(self, NULL, NULL);
+	(void)acpi_power_register(sc->sc_node->ad_handle);
 	(void)acpi_register_notify(sc->sc_node, acpitz_notify_handler);
 
 	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
