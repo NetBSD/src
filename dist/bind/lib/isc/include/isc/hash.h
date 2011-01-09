@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.1.1.5.4.1 2009/12/03 17:38:26 snj Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:36 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hash.h,v 1.10.128.2 2009/01/19 23:47:03 tbox Exp */
+/* Id: hash.h,v 1.12 2009/01/17 23:47:43 tbox Exp */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1

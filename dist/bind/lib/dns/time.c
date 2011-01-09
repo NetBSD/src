@@ -1,7 +1,7 @@
-/*	$NetBSD: time.c,v 1.1.1.6.4.1 2009/12/03 17:38:15 snj Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.6.4.1.2.1 2011/01/09 20:42:23 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.31.128.2 2009/01/19 23:47:02 tbox Exp */
+/* Id: time.c,v 1.33.186.2 2010/04/21 23:50:05 tbox Exp */
 
 /*! \file */
 
@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <time.h>
+#include <ctype.h>
 
 #include <isc/print.h>
 #include <isc/region.h>
@@ -134,6 +135,14 @@ dns_time64_fromtext(const char *source, isc_int64_t *target) {
 
 	if (strlen(source) != 14U)
 		return (DNS_R_SYNTAX);
+	/*
+	 * Confirm the source only consists digits.  sscanf() allows some
+	 * minor exceptions.
+	 */
+	for (i = 0; i < 14; i++) {
+		if (!isdigit((unsigned char)source[i]))
+			return (DNS_R_SYNTAX);
+	}
 	if (sscanf(source, "%4d%2d%2d%2d%2d%2d",
 		   &year, &month, &day, &hour, &minute, &second) != 6)
 		return (DNS_R_SYNTAX);

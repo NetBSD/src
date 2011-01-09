@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.4.4.1 2009/12/03 17:38:14 snj Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.1.1.4.4.1.2.1 2011/01/09 20:42:22 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: gssapi_link.c,v 1.7.128.5 2008/07/23 10:33:26 marka Exp
+ * Id: gssapi_link.c,v 1.14 2009/10/24 23:47:36 tbox Exp
  */
 
 #include <config.h>
@@ -256,9 +256,10 @@ gssapi_compare(const dst_key_t *key1, const dst_key_t *key2) {
 }
 
 static isc_result_t
-gssapi_generate(dst_key_t *key, int unused) {
+gssapi_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	UNUSED(key);
 	UNUSED(unused);
+	UNUSED(callback);
 
 	/* No idea */
 	return (ISC_R_FAILURE);
@@ -293,7 +294,8 @@ static dst_func_t gssapi_functions = {
 	NULL, /*%< fromdns */
 	NULL, /*%< tofile */
 	NULL, /*%< parse */
-	NULL /*%< cleanup */
+	NULL, /*%< cleanup */
+	NULL,  /*%< fromlabel */
 };
 
 isc_result_t

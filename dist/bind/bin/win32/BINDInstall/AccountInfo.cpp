@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: AccountInfo.cpp,v 1.8 2007/06/19 23:47:07 tbox Exp */
+/* Id: AccountInfo.cpp,v 1.10 2009/09/29 23:48:04 tbox Exp */
 
 #ifndef UNICODE
 #define UNICODE
@@ -108,7 +108,7 @@ DisplayWinError(
 int
 GetAccountPrivileges(char *name, wchar_t **PrivList, unsigned int *PrivCount,
 		     char **Accounts, unsigned int *totalAccounts,
-		     int maxAccounts) 
+		     int maxAccounts)
 {
 	LSA_HANDLE PolicyHandle;
 	TCHAR AccountName[256];		/* static account name buffer */
@@ -153,8 +153,8 @@ GetAccountPrivileges(char *name, wchar_t **PrivList, unsigned int *PrivCount,
 		 /* Obtain the SID of the user/group. */
 		if (!GetAccountSid(NULL, AccountName, &pSid))
 			continue;	/* Try the next one */
-		/* Get the Privileges allocated to this SID */ 
-	        if ((Status = GetPrivilegesOnAccount(PolicyHandle, pSid,
+		/* Get the Privileges allocated to this SID */
+		if ((Status = GetPrivilegesOnAccount(PolicyHandle, pSid,
 			PrivList, PrivCount)) == STATUS_SUCCESS)
 		{
 			iRetVal=RTN_OK;
@@ -183,8 +183,8 @@ CreateServiceAccount(char *name, char *password) {
 	DWORD dwError = 0;
 	NET_API_STATUS nStatus;
 
-	unsigned int namelen = strlen(name);
-	unsigned int passwdlen = strlen(password);
+	size_t namelen = strlen(name);
+	size_t passwdlen = strlen(password);
 	wchar_t AccountName[MAX_NAME_LENGTH];
 	wchar_t AccountPassword[MAX_NAME_LENGTH];
 
@@ -193,7 +193,7 @@ CreateServiceAccount(char *name, char *password) {
 
 	/*
 	 * Set up the USER_INFO_1 structure.
-	 * USER_PRIV_USER: name is required here when creating an account 
+	 * USER_PRIV_USER: name is required here when creating an account
 	 * rather than an administrator or a guest.
 	 */
 
@@ -239,7 +239,7 @@ AddPrivilegeToAcccount(LPTSTR name, LPWSTR PrivilegeName) {
 	if (!GetAccountSid(NULL, AccountName, &pSid))
 		return (RTN_NOACCOUNT);
 
-        err = LsaNtStatusToWinError(SetPrivilegeOnAccount(PolicyHandle,
+	err = LsaNtStatusToWinError(SetPrivilegeOnAccount(PolicyHandle,
 		pSid, PrivilegeName, TRUE));
 
 	LsaClose(PolicyHandle);
@@ -251,7 +251,7 @@ AddPrivilegeToAcccount(LPTSTR name, LPWSTR PrivilegeName) {
 
 void
 InitLsaString(PLSA_UNICODE_STRING LsaString, LPWSTR String){
-	DWORD StringLength;
+	size_t StringLength;
 
 	if (String == NULL) {
 		LsaString->Buffer = NULL;
@@ -327,7 +327,7 @@ GetAccountSid(LPTSTR SystemName, LPTSTR AccountName, PSID *Sid) {
 					cbReferencedDomain)) == NULL)
 				__leave;
 			}
-			else 
+			else
 				__leave;
 		}
 		bSuccess = TRUE;
@@ -370,7 +370,7 @@ SetPrivilegeOnAccount(LSA_HANDLE PolicyHandle, PSID AccountSid,
 
 NTSTATUS
 GetPrivilegesOnAccount(LSA_HANDLE PolicyHandle, PSID AccountSid,
-		       wchar_t **PrivList, unsigned int *PrivCount) 
+		       wchar_t **PrivList, unsigned int *PrivCount)
 {
 	NTSTATUS Status;
 	LSA_UNICODE_STRING *UserRights;
@@ -395,7 +395,7 @@ GetPrivilegesOnAccount(LSA_HANDLE PolicyHandle, PSID AccountSid,
 				break;
 		}
 		if (found != 0) {
-			PrivList[*PrivCount] = 
+			PrivList[*PrivCount] =
 			    (wchar_t *)malloc(UserRights[i].MaximumLength);
 			if (PrivList[*PrivCount] == NULL)
 				return (RTN_NOMEMORY);

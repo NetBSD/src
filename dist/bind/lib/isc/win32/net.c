@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.1.1.5.4.1 2009/12/03 17:38:30 snj Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:38 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.c,v 1.14.128.4 2008/08/08 05:10:34 marka Exp */
+/* Id: net.c,v 1.20 2009/09/08 23:41:50 tbox Exp */
 
 #include <config.h>
 
@@ -199,7 +199,7 @@ try_ipv6only(void) {
 	ipv6only_result = ISC_R_SUCCESS;
 
 close:
-	closeocket(s);
+	closesocket(s);
 	return;
 #endif /* IPV6_V6ONLY */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddresses.h,v 1.1.1.3.4.1 2009/12/03 17:38:14 snj Exp $	*/
+/*	$NetBSD: getaddresses.h,v 1.1.1.3.4.1.2.1 2011/01/09 20:42:20 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddresses.h,v 1.9.128.2 2009/01/19 23:47:01 tbox Exp */
+/* Id: getaddresses.h,v 1.11 2009/01/17 23:47:42 tbox Exp */
 
 #ifndef BIND9_GETADDRESSES_H
 #define BIND9_GETADDRESSES_H 1

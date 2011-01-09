@@ -1,7 +1,7 @@
-/*	$NetBSD: peer.c,v 1.1.1.5 2008/06/21 18:32:00 christos Exp $	*/
+/*	$NetBSD: peer.c,v 1.1.1.5.12.1 2011/01/09 20:42:22 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: peer.c,v 1.29.128.2 2008/04/03 06:08:27 tbox Exp */
+/* Id: peer.c,v 1.33 2009/09/02 23:48:02 tbox Exp */
 
 /*! \file */
 
@@ -538,7 +538,7 @@ dns_peer_setkeybycharp(dns_peer_t *peer, const char *keyval) {
 	isc_buffer_init(&b, keyval, strlen(keyval));
 	isc_buffer_add(&b, strlen(keyval));
 	result = dns_name_fromtext(dns_fixedname_name(&fname), &b,
-				   dns_rootname, ISC_FALSE, NULL);
+				   dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 

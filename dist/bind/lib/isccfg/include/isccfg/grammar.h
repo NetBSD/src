@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.1.1.4 2008/06/21 18:30:41 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.1.1.4.12.1 2011/01/09 20:42:40 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: grammar.h,v 1.15 2007/06/19 23:47:22 tbox Exp */
+/* Id: grammar.h,v 1.19.136.3 2010/08/11 18:19:58 each Exp */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -53,6 +53,10 @@
  * "directory" option.
  */
 #define CFG_CLAUSEFLAG_CALLBACK		0x00000020
+/*% A option that is only used in testing. */
+#define CFG_CLAUSEFLAG_TESTONLY		0x00000040
+/*% A configuration option that was not configured at compile time. */
+#define CFG_CLAUSEFLAG_NOTCONFIGURED	0x00000080
 
 typedef struct cfg_clausedef cfg_clausedef_t;
 typedef struct cfg_tuplefielddef cfg_tuplefielddef_t;
@@ -157,6 +161,7 @@ struct cfg_obj {
 		isc_sockaddr_t	sockaddr;
 		cfg_netprefix_t netprefix;
 	}               value;
+	isc_refcount_t  references;     /*%< reference counter */
 	const char *	file;
 	unsigned int    line;
 };
@@ -186,8 +191,8 @@ struct cfg_parser {
 	/*%
 	 * The stack of currently active files, represented
 	 * as a configuration list of configuration strings.
-	 * The head is the top-level file, subsequent elements 
-	 * (if any) are the nested include files, and the 
+	 * The head is the top-level file, subsequent elements
+	 * (if any) are the nested include files, and the
 	 * last element is the file currently being parsed.
 	 */
 	cfg_obj_t *	open_files;
@@ -210,10 +215,21 @@ struct cfg_parser {
 	 */
 	unsigned int	line;
 
+	/*%
+	 * Parser context flags, used for maintaining state
+	 * from one token to the next.
+	 */
+	unsigned int flags;
+
+	/*%< Reference counter */
+	isc_refcount_t  references;
+
 	cfg_parsecallback_t callback;
 	void *callbackarg;
 };
 
+/* Parser context flags */
+#define CFG_PCTX_SKIP		0x1
 
 /*@{*/
 /*%
@@ -435,7 +451,7 @@ cfg_doc_terminal(cfg_printer_t *pctx, const cfg_type_t *type);
 void
 cfg_parser_error(cfg_parser_t *pctx, unsigned int flags,
 		 const char *fmt, ...) ISC_FORMAT_PRINTF(3, 4);
-/*! 
+/*!
  * Pass one of these flags to cfg_parser_error() to include the
  * token text in log message.
  */

@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.50.86.2 2009/02/20 23:46:49 tbox Exp
+# Id: Makefile.in,v 1.58 2009/11/26 20:52:44 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -21,23 +21,16 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_VERSION@
 
-SUBDIRS =	make lib bin doc @LIBBIND@
+SUBDIRS =	make lib bin doc @LIBEXPORT@
 TARGETS =
 
 MANPAGES =	isc-config.sh.1
- 
+
 HTMLPAGES =	isc-config.sh.html
- 
+
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
-
-distclean::
-	@if [ "X@LIBBIND@" = "X" ] ; then \
-		i=lib/bind; \
-		echo "making $@ in `pwd`/$$i"; \
-		(cd $$i; ${MAKE} ${MAKEDEFS} $@) || exit 1; \
-	fi
 
 distclean::
 	rm -f config.cache config.h config.log config.status TAGS
@@ -61,7 +54,8 @@ installdirs:
 
 install:: isc-config.sh installdirs
 	${INSTALL_SCRIPT} isc-config.sh ${DESTDIR}${bindir}
-	${INSTALL_DATA} ${srcdir}/isc-config.sh.1 ${DESTDIR}${mandir}/man1
+	${INSTALL_DATA} ${top_srcdir}/isc-config.sh.1 ${DESTDIR}${mandir}/man1
+	${INSTALL_DATA} ${top_srcdir}/bind.keys ${DESTDIR}${sysconfdir}
 
 tags:
 	rm -f TAGS

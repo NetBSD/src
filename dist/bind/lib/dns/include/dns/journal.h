@@ -1,7 +1,7 @@
-/*	$NetBSD: journal.h,v 1.1.1.5.4.1 2009/12/03 17:38:21 snj Exp $	*/
+/*	$NetBSD: journal.h,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:24 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.h,v 1.31.128.2 2009/01/19 23:47:03 tbox Exp */
+/* Id: journal.h,v 1.37 2009/11/04 23:48:18 tbox Exp */
 
 #ifndef DNS_JOURNAL_H
 #define DNS_JOURNAL_H 1
@@ -42,6 +42,11 @@
 #include <dns/diff.h>
 #include <dns/rdata.h>
 #include <dns/types.h>
+
+/***
+ *** Defines.
+ ***/
+#define DNS_JOURNALOPT_RESIGN	0x00000001
 
 /***
  *** Types
@@ -227,17 +232,25 @@ dns_journal_current_rr(dns_journal_t *j, dns_name_t **name, isc_uint32_t *ttl,
  */
 
 isc_result_t
-dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db, const char *filename);
+dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db, unsigned int options,
+			const char *filename);
+
+isc_result_t
+dns_journal_rollforward2(isc_mem_t *mctx, dns_db_t *db, unsigned int options,
+			 isc_uint32_t resign, const char *filename);
 /*%<
  * Roll forward (play back) the journal file "filename" into the
  * database "db".  This should be called when the server starts
- * after a shutdown or crash.
+ * after a shutdown or crash.  'resign' is how many seconds before
+ * a RRSIG is due to expire it should be scheduled to be regenerated.
  *
  * Requires:
- *\li      'mctx' is a valid memory context.
+ *\li	dns_journal_rollforward() requires that DNS_JOURNALOPT_RESIGN
+ *	is not set.
+ *\li   'mctx' is a valid memory context.
  *\li	'db' is a valid database which does not have a version
  *           open for writing.
- *  \li    'filename' is the name of the journal file belonging to 'db'.
+ *\li   'filename' is the name of the journal file belonging to 'db'.
  *
  * Returns:
  *\li	DNS_R_NOJOURNAL when journal does not exist.

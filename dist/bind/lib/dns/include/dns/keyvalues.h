@@ -1,7 +1,7 @@
-/*	$NetBSD: keyvalues.h,v 1.1.1.5 2008/06/21 18:32:32 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.1.1.5.12.1 2011/01/09 20:42:24 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keyvalues.h,v 1.21 2007/06/19 23:47:16 tbox Exp */
+/* Id: keyvalues.h,v 1.27 2009/10/22 02:21:31 each Exp */
 
 #ifndef DNS_KEYVALUES_H
 #define DNS_KEYVALUES_H 1
@@ -44,7 +44,7 @@
 #define DNS_KEYOWNER_ENTITY	0x0200	/*%< key is assoc. with entity eg host */
 #define DNS_KEYOWNER_ZONE	0x0100	/*%< key is zone key */
 #define DNS_KEYOWNER_RESERVED	0x0300	/*%< reserved meaning */
-#define DNS_KEYFLAG_RESERVED8	0x0080	/*%< reserved - must be zero */
+#define DNS_KEYFLAG_REVOKE	0x0080	/*%< key revoked (per rfc5011) */
 #define DNS_KEYFLAG_RESERVED9	0x0040	/*%< reserved - must be zero */
 #define DNS_KEYFLAG_RESERVED10	0x0020	/*%< reserved - must be zero */
 #define DNS_KEYFLAG_RESERVED11	0x0010	/*%< reserved - must be zero */
@@ -53,7 +53,6 @@
 #define DNS_KEYFLAG_RESERVEDMASK (DNS_KEYFLAG_RESERVED2 | \
 				  DNS_KEYFLAG_RESERVED4 | \
 				  DNS_KEYFLAG_RESERVED5 | \
-				  DNS_KEYFLAG_RESERVED8 | \
 				  DNS_KEYFLAG_RESERVED9 | \
 				  DNS_KEYFLAG_RESERVED10 | \
 				  DNS_KEYFLAG_RESERVED11 )
@@ -66,9 +65,13 @@
 #define DNS_KEYALG_RSA		DNS_KEYALG_RSAMD5
 #define DNS_KEYALG_DH		2       /*%< Diffie Hellman KEY */
 #define DNS_KEYALG_DSA		3       /*%< DSA KEY */
-#define DNS_KEYALG_DSS		NS_ALG_DSA
+#define DNS_KEYALG_NSEC3DSA	6
+#define DNS_KEYALG_DSS		DNS_ALG_DSA
 #define DNS_KEYALG_ECC		4
 #define DNS_KEYALG_RSASHA1	5
+#define DNS_KEYALG_NSEC3RSASHA1	7
+#define DNS_KEYALG_RSASHA256	8
+#define DNS_KEYALG_RSASHA512	10
 #define DNS_KEYALG_INDIRECT	252
 #define DNS_KEYALG_PRIVATEDNS	253
 #define DNS_KEYALG_PRIVATEOID	254     /*%< Key begins with OID giving alg */

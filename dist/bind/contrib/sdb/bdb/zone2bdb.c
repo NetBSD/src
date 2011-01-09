@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2bdb.c,v 1.1.1.2 2007/01/27 21:06:30 christos Exp $	*/
+/*	$NetBSD: zone2bdb.c,v 1.1.1.2.26.1 2011/01/09 20:41:44 riz Exp $	*/
 
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone2bdb.c,v 1.1 2002/05/16 04:25:22 marka Exp */
+/* Id: zone2bdb.c,v 1.3 2009/09/01 00:22:26 jinmei Exp */
 
 #include <stdio.h>
 
@@ -139,14 +139,14 @@ main(int argc, char *argv[])
 	dns_fixedname_init(&origin);
 
 	REQUIRE(dns_name_fromtext(dns_fixedname_name(&origin), &b, dns_rootname,
-				  ISC_FALSE, NULL) == ISC_R_SUCCESS);
+				  0, NULL) == ISC_R_SUCCESS);
 	REQUIRE(dns_db_create(mctx, "rbt", dns_fixedname_name(&origin),
 			      dns_dbtype_zone, dns_rdataclass_in, 0, NULL,
 			      &db) == ISC_R_SUCCESS);
 
 	REQUIRE(dns_db_load(db, argv[2]) == ISC_R_SUCCESS);
 
-	REQUIRE(dns_db_createiterator(db, ISC_FALSE, &dbiter) == ISC_R_SUCCESS);
+	REQUIRE(dns_db_createiterator(db, 0, &dbiter) == ISC_R_SUCCESS);
 
 	dns_rdataset_init(&rdataset);
 	dns_rdata_init(&rdata);

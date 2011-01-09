@@ -1,7 +1,7 @@
-/*	$NetBSD: assertions.h,v 1.5.4.1 2009/12/03 17:38:26 snj Exp $	*/
+/*	$NetBSD: assertions.h,v 1.5.4.1.2.1 2011/01/09 20:42:35 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: assertions.h,v 1.24.128.2 2008/10/15 23:46:53 tbox Exp
+ * Id: assertions.h,v 1.28 2009/09/29 23:48:04 tbox Exp
  */
 /*! \file isc/assertions.h
  */
@@ -43,7 +43,9 @@ typedef void (*isc_assertioncallback_t)(const char *, int, isc_assertiontype_t,
 					const char *);
 
 /* coverity[+kill] */
-LIBISC_EXTERNAL_DATA extern isc_assertioncallback_t isc_assertion_failed;
+ISC_PLATFORM_NORETURN_PRE
+void isc_assertion_failed(const char *, int, isc_assertiontype_t,
+			  const char *) ISC_PLATFORM_NORETURN_POST;
 
 void
 isc_assertion_setcallback(isc_assertioncallback_t);
