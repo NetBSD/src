@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.22 2010/12/30 19:38:03 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.23 2011/01/09 04:59:00 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.30 2010/12/30 19:37:39 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.31 2011/01/09 04:58:34 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1350,6 +1350,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "ICO0102",
+	    "Intel Trusted Platform Module",
+	},
+	{
+	    "INTC0102",
 	    "Intel Trusted Platform Module",
 	},
 	{
