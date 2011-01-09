@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.6 2010/11/22 09:53:01 adam Exp $	*/
+/*	$NetBSD: servconf.c,v 1.7 2011/01/09 23:17:36 christos Exp $	*/
 /* $OpenBSD: servconf.c,v 1.209 2010/06/22 04:22:59 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.6 2010/11/22 09:53:01 adam Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.7 2011/01/09 23:17:36 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -816,7 +816,9 @@ process_server_config_line(ServerOptions *options, char *line,
 	int cmdline = 0, *intptr, value, n;
 	SyslogFacility *log_facility_ptr;
 	LogLevel *log_level_ptr;
+#ifdef WITH_LDAP_PUBKEY
  	unsigned long lvalue;
+#endif
 	time_t *timetptr;
 	ServerOpCodes opcode;
 	int port = 0;
