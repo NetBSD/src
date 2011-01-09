@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.55 2011/01/08 02:36:52 jakllsch Exp $	*/
+/*	$NetBSD: iostat.c,v 1.56 2011/01/09 02:40:19 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.55 2011/01/08 02:36:52 jakllsch Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.56 2011/01/09 02:40:19 jakllsch Exp $");
 #endif
 #endif /* not lint */
 
@@ -326,7 +326,8 @@ drive_stats(double etime)
 			    1024.0) / (cur.rxfer[dn] + cur.wxfer[dn]);
 		else
 			mbps = 0.0;
-		(void)printf(" %5.2f", mbps);
+		(void)printf(" %5.*f ",
+		    MAX(0,3-(int)floor(log10(fabs(fmax(1.0,mbps))))), mbps);
 
 					/* average transfers per second. */
 		(void)printf(" %4.0f",
@@ -344,7 +345,7 @@ drive_stats(double etime)
 			mbps = 0;
 		mbps /= etime;
 		(void)printf(" %5.*f ",
-		    MAX(0,3-(int)floor(log10(fabs(MAX(1.0,mbps))))), mbps);
+		    MAX(0,3-(int)floor(log10(fabs(fmax(1.0,mbps))))), mbps);
 	}
 }
 
