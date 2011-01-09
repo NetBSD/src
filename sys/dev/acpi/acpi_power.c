@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.26 2011/01/06 18:57:22 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.27 2011/01/09 14:56:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.26 2011/01/06 18:57:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.27 2011/01/09 14:56:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -202,14 +202,6 @@ acpi_power_res_get(ACPI_HANDLE hdl)
 bool
 acpi_power_register(ACPI_HANDLE hdl)
 {
-	struct acpi_devnode *ad = acpi_get_node(hdl);
-
-	if (ad == NULL)
-		return false;
-
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0)
-		return false;
-
 	return true;
 }
 
