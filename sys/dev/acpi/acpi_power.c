@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.28 2011/01/09 16:15:25 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.29 2011/01/09 16:22:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.28 2011/01/09 16:15:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.29 2011/01/09 16:22:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -264,8 +264,8 @@ fail:
 	if (state != NULL)
 		*state = ad->ad_state;
 
-	aprint_error_dev(ad->ad_root, "failed to get power state "
-	    "for %s: %s\n", ad->ad_name, AcpiFormatException(rv));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "failed to get power state "
+		"for %s: %s\n", ad->ad_name, AcpiFormatException(rv)));
 
 	return false;
 }
