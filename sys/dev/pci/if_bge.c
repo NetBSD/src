@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.189 2011/01/05 14:55:10 sketch Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.190 2011/01/09 13:01:03 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.189 2011/01/05 14:55:10 sketch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.190 2011/01/09 13:01:03 jruoho Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -261,6 +261,8 @@ static void bge_sig_pre_reset(struct bge_softc *, int);
 static void bge_stop_fw(struct bge_softc *);
 static int bge_reset(struct bge_softc *);
 static void bge_link_upd(struct bge_softc *);
+static void sysctl_bge_init(struct bge_softc *);
+static int sysctl_bge_verify(SYSCTLFN_PROTO);
 
 #ifdef BGE_DEBUG
 #define DPRINTF(x)	if (bgedebug) printf x
@@ -3044,6 +3046,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	sysctl_bge_init(sc);
+
 #ifdef BGE_DEBUG
 	bge_debug_info(sc);
 #endif
@@ -4827,22 +4831,21 @@ sysctl_bge_verify(SYSCTLFN_ARGS)
 
 /*
  * Set up sysctl(3) MIB, hw.bge.*.
- *
- * TBD condition SYSCTL_PERMANENT on being an LKM or not
  */
-SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
+static void
+sysctl_bge_init(struct bge_softc *sc)
 {
 	int rc, bge_root_num;
 	const struct sysctlnode *node;
 
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
 	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
 		goto err;
 	}
 
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "bge",
+	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, &node,
+	    0, CTLTYPE_NODE, "bge",
 	    SYSCTL_DESCR("BGE interface controls"),
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
 		goto err;
@@ -4851,8 +4854,8 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 	bge_root_num = node->sysctl_num;
 
 	/* BGE Rx interrupt mitigation level */
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, &node,
+	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rx_lvl",
 	    SYSCTL_DESCR("BGE receive interrupt mitigation level"),
 	    sysctl_bge_verify, 0,
