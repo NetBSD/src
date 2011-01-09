@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.4 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.5 2011/01/09 14:49:40 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -923,7 +923,10 @@ create_wildcards(
 	u_short	port
 	)
 {
-	int			v4wild, v6wild;
+	int			v4wild;
+#ifdef INCLUDE_IPV6_SUPPORT
+	int                     v6wild;
+#endif
 	sockaddr_u		wildaddr;
 	isc_netaddr_t		wnaddr;
 	nic_rule_action		action;
@@ -2902,7 +2905,9 @@ sendpkt(
 		 */
 		int	rtc;
 		u_char	cttl;
+#ifdef INCLUDE_IPV6_SUPPORT
 		u_int	uttl;
+#endif
 		
 		switch (AF(&inter->sin)) {
 			
