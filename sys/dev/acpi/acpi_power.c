@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.27 2011/01/09 14:56:06 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.28 2011/01/09 16:15:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.27 2011/01/09 14:56:06 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.28 2011/01/09 16:15:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -214,9 +214,6 @@ acpi_power_deregister(ACPI_HANDLE hdl)
 	if (ad == NULL)
 		return;
 
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0)
-		return;
-
 	/*
 	 * Remove all references in each resource.
 	 */
@@ -235,11 +232,6 @@ acpi_power_get(ACPI_HANDLE hdl, int *state)
 
 	if (ad == NULL)
 		return false;
-
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
-		rv = AE_SUPPORT;
-		goto fail;
-	}
 
 	/*
 	 * As _PSC may be broken, first try to
@@ -355,11 +347,6 @@ acpi_power_set(ACPI_HANDLE hdl, int state)
 
 	if (ad == NULL)
 		return false;
-
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
-		rv = AE_SUPPORT;
-		goto fail;
-	}
 
 	if (state < ACPI_STATE_D0 || state > ACPI_STATE_D3) {
 		rv = AE_BAD_PARAMETER;
