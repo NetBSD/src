@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.53 2010/12/14 16:23:59 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.54 2011/01/09 16:55:59 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 14, 2010
+.Dd January 9, 2010
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -133,12 +133,26 @@ A distinguished second level name,
 .Li vfs.generic ( VFS_GENERIC ) ,
 is used to get general information about all filesystems.
 It has the following third level identifiers:
-.Bl -tag -width compact
+.Bl -tag -width "vfs.generic.maxtypenum (VFS_MAXTYPENUM)"
 .It vfs.generic.maxtypenum ( VFS_MAXTYPENUM )
 The highest valid filesystem type number.
 .It vfs.generic.conf ( VFS_CONF )
 Returns configuration information about the file-system type given as a fourth
 level identifier.
+.El
+.Pp
+A second level name for controlling the
+.Xr wapbl 4
+(Write Ahead Physical Block Logging file system journalling)
+capabilities with the following third level identifiers:
+.Bl -tag -width "vfs.wapbl.flush_disk_cache"
+.It vfs.wapbl.flush_disk_cache Controls whether to attempt to flush the
+disk cache on each commit.
+It defaults to 1 and it should always be on to ensure data integrity in
+case of a crash.
+For slow disks, turning it off can improve performance.
+.It vfs.wapbl.verbose_commit For each transaction log commit, print the
+number of bytes written and the time it took to commit as seconds.nanoseconds.
 .El
 .Pp
 The remaining second level identifiers are the file-system names, identified
