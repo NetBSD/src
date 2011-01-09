@@ -1,4 +1,4 @@
-# $NetBSD: t_regex.in,v 1.1 2011/01/08 18:10:31 pgoyette Exp $
+# $NetBSD: t_regex.in,v 1.2 2011/01/09 05:44:46 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 h_check()
 {
-	prog="$(atf_get_srcdir)/h_re"
+	prog="$(atf_get_srcdir)/h_regex"
 	data="$(atf_get_srcdir)/data/$1.in"
 
 	atf_check -x "${prog} <${data}"
