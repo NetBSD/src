@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.c,v 1.1.1.5.8.1 2009/12/03 17:31:32 snj Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.1.1.5.8.2 2011/01/10 00:39:54 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: soa_6.c,v 1.61.128.2 2009/02/16 23:46:44 tbox Exp */
+/* Id: soa_6.c,v 1.64 2009/12/04 21:09:34 marka Exp */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -441,6 +441,11 @@ checknames_soa(ARGS_CHECKNAMES) {
 		return (ISC_FALSE);
 	}
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_soa(ARGS_COMPARE) {
+	return (compare_soa(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_SOA_6_C */

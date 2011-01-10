@@ -1,7 +1,7 @@
-/*	$NetBSD: openssl_link.c,v 1.1.1.3.8.1 2009/12/03 17:31:25 snj Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.1.1.3.8.2 2011/01/10 00:39:41 riz Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssl_link.c,v 1.16.92.2 2009/02/11 23:46:41 tbox Exp
+ * Id: openssl_link.c,v 1.27 2009/10/05 17:30:49 fdupont Exp
  */
 #ifdef OPENSSL
 
@@ -47,6 +47,8 @@
 #include <isc/thread.h>
 #include <isc/util.h>
 
+#include <dst/result.h>
+
 #include "dst_internal.h"
 #include "dst_openssl.h"
 
@@ -56,7 +58,7 @@
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 
-#if defined(CRYPTO_LOCK_ENGINE) && (OPENSSL_VERSION_NUMBER != 0x00907000L)
+#if defined(CRYPTO_LOCK_ENGINE) && (OPENSSL_VERSION_NUMBER >= 0x0090707f)
 #define USE_ENGINE 1
 #endif
 
@@ -70,7 +72,7 @@ static isc_mutex_t *locks = NULL;
 static int nlocks;
 
 #ifdef USE_ENGINE
-static ENGINE *e;
+static ENGINE *e = NULL;
 #endif
 
 static int
@@ -123,8 +125,16 @@ id_callback(void) {
 
 static void *
 mem_alloc(size_t size) {
+#ifdef OPENSSL_LEAKS
+	void *ptr;
+
+	INSIST(dst__memory_pool != NULL);
+	ptr = isc_mem_allocate(dst__memory_pool, size);
+	return (ptr);
+#else
 	INSIST(dst__memory_pool != NULL);
 	return (isc_mem_allocate(dst__memory_pool, size));
+#endif
 }
 
 static void
@@ -136,13 +146,27 @@ mem_free(void *ptr) {
 
 static void *
 mem_realloc(void *ptr, size_t size) {
+#ifdef OPENSSL_LEAKS
+	void *rptr;
+
+	INSIST(dst__memory_pool != NULL);
+	rptr = isc_mem_reallocate(dst__memory_pool, ptr, size);
+	return (rptr);
+#else
 	INSIST(dst__memory_pool != NULL);
 	return (isc_mem_reallocate(dst__memory_pool, ptr, size));
+#endif
 }
 
 isc_result_t
-dst__openssl_init() {
+dst__openssl_init(const char *engine) {
 	isc_result_t result;
+#ifdef USE_ENGINE
+	ENGINE *re;
+#else
+
+	UNUSED(engine);
+#endif
 
 #ifdef  DNS_CRYPTO_LEAKS
 	CRYPTO_malloc_debug_init();
@@ -171,14 +195,38 @@ dst__openssl_init() {
 	rm->add = entropy_add;
 	rm->pseudorand = entropy_getpseudo;
 	rm->status = entropy_status;
+
 #ifdef USE_ENGINE
-	e = ENGINE_new();
-	if (e == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto cleanup_rm;
+	OPENSSL_config(NULL);
+
+	if (engine != NULL && *engine == '\0')
+		engine = NULL;
+
+	if (engine != NULL) {
+		e = ENGINE_by_id(engine);
+		if (e == NULL) {
+			result = DST_R_NOENGINE;
+			goto cleanup_rm;
+		}
+		/* This will init the engine. */
+		if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
+			result = DST_R_NOENGINE;
+			goto cleanup_rm;
+		}
 	}
-	ENGINE_set_RAND(e, rm);
-	RAND_set_rand_method(rm);
+
+	re = ENGINE_get_default_RAND();
+	if (re == NULL) {
+		re = ENGINE_new();
+		if (re == NULL) {
+			result = ISC_R_NOMEMORY;
+			goto cleanup_rm;
+		}
+		ENGINE_set_RAND(re, rm);
+		ENGINE_set_default_RAND(re);
+		ENGINE_free(re);
+	} else
+		ENGINE_finish(re);
 #else
 	RAND_set_rand_method(rm);
 #endif /* USE_ENGINE */
@@ -186,13 +234,18 @@ dst__openssl_init() {
 
 #ifdef USE_ENGINE
  cleanup_rm:
+	if (e != NULL)
+		ENGINE_free(e);
+	e = NULL;
 	mem_free(rm);
+	rm = NULL;
 #endif
  cleanup_mutexinit:
 	CRYPTO_set_locking_callback(NULL);
 	DESTROYMUTEXBLOCK(locks, nlocks);
  cleanup_mutexalloc:
 	mem_free(locks);
+	locks = NULL;
 	return (result);
 }
 
@@ -202,47 +255,42 @@ dst__openssl_destroy() {
 	/*
 	 * Sequence taken from apps_shutdown() in <apps/apps.h>.
 	 */
-#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
-	CONF_modules_unload(1);
-#endif
-	EVP_cleanup();
-#if defined(USE_ENGINE) && OPENSSL_VERSION_NUMBER >= 0x00907000L
-	ENGINE_cleanup();
-#endif
-#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
-	CRYPTO_cleanup_all_ex_data();
-#endif
-	ERR_clear_error();
-	ERR_free_strings();
-	ERR_remove_state(0);
-
-#ifdef  DNS_CRYPTO_LEAKS
-	CRYPTO_mem_leaks_fp(stderr);
-#endif
-
-#if 0
-	/*
-	 * The old error sequence that leaked.  Remove for 9.4.1 if
-	 * there are no issues by then.
-	 */
-	ERR_clear_error();
-#ifdef USE_ENGINE
-	if (e != NULL) {
-		ENGINE_free(e);
-		e = NULL;
-	}
-#endif
-#endif
 	if (rm != NULL) {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 		RAND_cleanup();
 #endif
 		mem_free(rm);
+		rm = NULL;
 	}
+#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
+	CONF_modules_free();
+#endif
+	OBJ_cleanup();
+	EVP_cleanup();
+#if defined(USE_ENGINE)
+	if (e != NULL)
+		ENGINE_free(e);
+	e = NULL;
+#if defined(USE_ENGINE) && OPENSSL_VERSION_NUMBER >= 0x00907000L
+	ENGINE_cleanup();
+#endif
+#endif
+#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
+	CRYPTO_cleanup_all_ex_data();
+#endif
+	ERR_clear_error();
+	ERR_remove_state(0);
+	ERR_free_strings();
+
+#ifdef  DNS_CRYPTO_LEAKS
+	CRYPTO_mem_leaks_fp(stderr);
+#endif
+
 	if (locks != NULL) {
 		CRYPTO_set_locking_callback(NULL);
 		DESTROYMUTEXBLOCK(locks, nlocks);
 		mem_free(locks);
+		locks = NULL;
 	}
 }
 
@@ -260,6 +308,20 @@ dst__openssl_toresult(isc_result_t fallback) {
 	}
 	ERR_clear_error();
 	return (result);
+}
+
+ENGINE *
+dst__openssl_getengine(const char *engine) {
+
+	if (engine == NULL)
+		return (NULL);
+#if defined(USE_ENGINE)
+	if (e == NULL)
+		return (NULL);
+	if (strcmp(engine, ENGINE_get_id(e)) == 0)
+		return (e);
+#endif
+	return (NULL);
 }
 
 #else /* OPENSSL */

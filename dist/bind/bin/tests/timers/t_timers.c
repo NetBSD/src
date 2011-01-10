@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timers.c,v 1.1.1.6.8.1 2009/12/03 17:31:18 snj Exp $	*/
+/*	$NetBSD: t_timers.c,v 1.1.1.6.8.2 2011/01/10 00:38:03 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_timers.c,v 1.26.128.4 2009/01/22 23:46:35 tbox Exp */
+/* Id: t_timers.c,v 1.30 2009/01/22 23:47:54 tbox Exp */
 
 #include <config.h>
 

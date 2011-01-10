@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile.inc,v 1.32.8.1 2011/01/10 00:42:21 riz Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -38,6 +38,7 @@ CPPFLAGS+=-I${BIND_SRCDIR}/include \
 	-I${IDIST}/lib/dns/sec/dst/include \
 	-DNS_LOCALSTATEDIR=\"${LOCALSTATEDIR}\" \
 	-DNS_SYSCONFDIR=\"${SYSCONFDIR}\" \
+	-DSESSION_KEYFILE=\"${LOCALSTATEDIR}/run/named/session.key\" \
 	-DVERSION=\"${VERSION}\"
 
 .if (${USE_INET6} != "no")

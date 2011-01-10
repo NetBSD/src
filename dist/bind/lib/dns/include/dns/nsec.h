@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec.h,v 1.1.1.3 2008/06/21 18:32:36 christos Exp $	*/
+/*	$NetBSD: nsec.h,v 1.1.1.3.8.1 2011/01/10 00:39:46 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.h,v 1.10 2007/06/19 23:47:17 tbox Exp */
+/* Id: nsec.h,v 1.12 2008/09/25 04:02:39 tbox Exp */
 
 #ifndef DNS_NSEC_H
 #define DNS_NSEC_H 1
@@ -64,6 +64,17 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
  *
  * Requires:
  *\li	'nsec' points to a valid rdataset of type NSEC
+ */
+
+isc_result_t
+dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version,
+		  isc_boolean_t *answer);
+/*
+ * Report whether the DNSKEY RRset has a NSEC only algorithm.  Unknown
+ * algorithms are assumed to support NSEC3.
+ *
+ * Requires:
+ * 	'answer' to be non NULL.
  */
 
 ISC_LANG_ENDDECLS

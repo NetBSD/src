@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.h,v 1.1.1.5.8.1 2009/12/03 17:31:31 snj Exp $	*/
+/*	$NetBSD: lookup.h,v 1.1.1.5.8.2 2011/01/10 00:39:46 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lookup.h,v 1.12.128.2 2009/01/19 23:47:03 tbox Exp */
+/* Id: lookup.h,v 1.14 2009/01/17 23:47:43 tbox Exp */
 
 #ifndef DNS_LOOKUP_H
 #define DNS_LOOKUP_H 1

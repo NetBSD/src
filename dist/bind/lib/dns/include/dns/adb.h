@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.h,v 1.1.1.5 2008/06/21 18:32:32 christos Exp $	*/
+/*	$NetBSD: adb.h,v 1.1.1.5.8.1 2011/01/10 00:39:45 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb.h,v 1.83.128.2 2008/04/03 06:20:34 tbox Exp */
+/* Id: adb.h,v 1.85 2008/04/03 06:09:04 tbox Exp */
 
 #ifndef DNS_ADB_H
 #define DNS_ADB_H 1
