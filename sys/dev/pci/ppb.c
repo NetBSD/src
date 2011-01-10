@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.44 2011/01/10 12:23:21 jmcneill Exp $	*/
+/*	$NetBSD: ppb.c,v 1.45 2011/01/10 14:19:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.44 2011/01/10 12:23:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.45 2011/01/10 14:19:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ ppb_fix_pcie(device_t self)
 	switch (reg & PCI_PCIE_XCAP_VER_MASK) {
 	case PCI_PCIE_XCAP_VER_1_0:
 		aprint_normal("1.0");
+		break;
 	case PCI_PCIE_XCAP_VER_2_0:
 		aprint_normal("2.0");
 		break;
