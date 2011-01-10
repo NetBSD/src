@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.21 2011/01/09 14:10:03 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.22 2011/01/10 11:57:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -290,7 +290,7 @@ putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
 {
 
 	rw->rw_data = NULL;
-	rw->rw_dlen = rw->rw_done = 0;
+	rw->rw_dlen = rw->rw_done = rw->rw_error = 0;
 	pthread_cond_init(&rw->rw_cv, NULL);
 
 	pthread_mutex_lock(&spc->spc_mtx);
@@ -315,7 +315,7 @@ static void
 kickwaiter(struct spclient *spc)
 {
 	struct respwait *rw;
-	int error;
+	int error = 0;
 
 	pthread_mutex_lock(&spc->spc_mtx);
 	TAILQ_FOREACH(rw, &spc->spc_respwait, rw_entries) {
@@ -334,8 +334,6 @@ kickwaiter(struct spclient *spc)
 	rw->rw_dlen = (size_t)(spc->spc_off - HDRSZ);
 	if (spc->spc_hdr.rsp_class == RUMPSP_ERROR) {
 		error = rw->rw_error = spc->spc_hdr.rsp_error;
-	} else {
-		error = rw->rw_error = 0;
 	}
 	pthread_cond_signal(&rw->rw_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
