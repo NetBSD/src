@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.219 2011/01/08 18:11:21 pgoyette Exp $
+# $NetBSD: mi,v 1.220 2011/01/10 05:00:35 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -388,6 +388,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_string.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_stresep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio/t_ttyio.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_cerror.debug			tests-lib-debug		debug,atf
@@ -1721,6 +1723,9 @@
 ./usr/tests/lib/libc/string/t_string		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_stresep		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
+./usr/tests/lib/libc/sys			tests-lib-tests
+./usr/tests/lib/libc/sys/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio			tests-lib-tests
 ./usr/tests/lib/libc/ttyio/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio/t_ttyio		tests-lib-tests		atf
