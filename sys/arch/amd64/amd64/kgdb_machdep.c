@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4.2.2 2009/11/01 13:58:48 jym Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.4.2.3 2011/01/10 00:37:27 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4.2.2 2009/11/01 13:58:48 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4.2.3 2011/01/10 00:37:27 jym Exp $");
 
 #include "opt_ddb.h"
 
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4.2.2 2009/11/01 13:58:48 jym Exp
 #include <sys/param.h>
 #include <sys/kgdb.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/trap.h>

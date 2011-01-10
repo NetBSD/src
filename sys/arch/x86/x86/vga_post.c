@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.11.8.3 2010/10/24 22:48:20 jym Exp $ */
+/* $NetBSD: vga_post.c,v 1.11.8.4 2011/01/10 00:37:37 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.3 2010/10/24 22:48:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.4 2011/01/10 00:37:37 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 
 #include <machine/pio.h>

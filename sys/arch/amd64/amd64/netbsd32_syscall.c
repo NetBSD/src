@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.29.8.1 2010/10/24 22:47:52 jym Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.29.8.2 2011/01/10 00:37:28 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.29.8.1 2010/10/24 22:47:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.29.8.2 2011/01/10 00:37:28 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.29.8.1 2010/10/24 22:47:52 jy
 #include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <sys/syscall_stats.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/psl.h>

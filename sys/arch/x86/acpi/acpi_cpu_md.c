@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.34.2.2 2010/10/24 22:48:16 jym Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.34.2.3 2011/01/10 00:37:36 jym Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.34.2.2 2010/10/24 22:48:16 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.34.2.3 2011/01/10 00:37:36 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,7 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.34.2.2 2010/10/24 22:48:16 jym Exp
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define ACPICPU_P_STATE_STATUS	0
+/*
+ * AMD C1E.
+ */
+#define MSR_CMPHALT		0xc0010055
+
+#define MSR_CMPHALT_SMI		__BIT(27)
+#define MSR_CMPHALT_C1E		__BIT(28)
+#define MSR_CMPHALT_BMSTS	__BIT(29)
 
 /*
  * AMD families 10h and 11h.
@@ -105,6 +112,7 @@ static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
 
 extern uint32_t cpus_running;
 extern struct acpicpu_softc **acpicpu_sc;
+static bool acpicpu_pstate_status = false;
 static struct sysctllog *acpicpu_log = NULL;
 
 uint32_t
@@ -256,6 +264,9 @@ acpicpu_md_quirks(void)
 
 			if ((regs[3] & CPUID_APM_CPB) != 0)
 				val |= ACPICPU_FLAG_P_TURBO;
+
+			val |= ACPICPU_FLAG_C_C1E;
+			break;
 		}
 
 		break;
@@ -287,6 +298,18 @@ acpicpu_md_quirks_piix4(struct pci_attach_args *pa)
 		return 1;
 
 	return 0;
+}
+
+void
+acpicpu_md_quirks_c1e(void)
+{
+	const uint64_t c1e = MSR_CMPHALT_SMI | MSR_CMPHALT_C1E;
+	uint64_t val;
+
+	val = rdmsr(MSR_CMPHALT);
+
+	if ((val & c1e) != 0)
+		wrmsr(MSR_CMPHALT, val & ~c1e);
 }
 
 uint32_t
@@ -565,6 +588,9 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	uint64_t xc;
 	int rv = 0;
 
+	if (__predict_false(ps->ps_control_addr == 0))
+		return EINVAL;
+
 	if ((ps->ps_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 		return acpicpu_md_pstate_fidvid_set(ps);
 
@@ -580,7 +606,11 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
 	xc_wait(xc);
 
-	if (ACPICPU_P_STATE_STATUS == 0) {
+	/*
+	 * Due several problems, we bypass the
+	 * relatively expensive status check.
+	 */
+	if (acpicpu_pstate_status != true) {
 		DELAY(ps->ps_latency);
 		return 0;
 	}
