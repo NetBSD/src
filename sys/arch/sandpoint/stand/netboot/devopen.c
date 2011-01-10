@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.11 2010/06/26 21:45:49 phx Exp $ */
+/* $NetBSD: devopen.c,v 1.12 2011/01/10 20:14:52 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (name[0] == 'w' && name[1] == 'd') {
 		parseunit(&name[2], &unit, &part, file);
 		of->f_dev = &devdsk;
+		if (*file == NULL || **file <= ' ')
+			*file = "netbsd";
 		if ((error = dsk_open(of, unit, part, *file)) != 0)
 			return error;
 		file_system[0] = *dsk_fsops(of);
