@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.S,v 1.2 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: getchar.S,v 1.3 2011/01/10 15:25:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,10 +33,11 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
+	.set	noreorder
 LEAF(getchar)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
 	lw	v0, 0x24(v0)	# offset for callv->_getchar
 	nop
 	j	v0		# call PROM getchar
-	nop
+	 nop
 END(getchar)
