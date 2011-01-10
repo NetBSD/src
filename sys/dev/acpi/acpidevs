@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.32 2011/01/09 05:06:17 jruoho Exp $
+# $NetBSD: acpidevs,v 1.33 2011/01/10 17:04:22 jruoho Exp $
 #
 # Originally extracted from:
 
@@ -367,11 +367,12 @@ ATM1200		Atmel Trusted Platform Module
 BCM0101		Broadcom Trusted Platform Module
 BCM0102		Broadcom Trusted Platform Module
 ICO0102		Intel Trusted Platform Module
-INTC0102	Intel Trusted Platform Module
 IFX0102		Infineon Trusted Platform Module
+INTC0102	Intel Trusted Platform Module
 NSC1100		NSC Trusted Platform Module
 NSC1200		NSC Trusted Platform Module
 PNP0C31		Trusted Platform Module
+SMO1200		STMicroelectronics Trusted Platform Module
 # ***** ACPI 4.0 specific devices *****
 ACPI0001	SMBus 1.0 Host Controller
 ACPI0002	Smart Battery Subsystem
