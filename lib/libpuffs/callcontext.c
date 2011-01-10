@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.23 2008/08/11 16:23:37 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.24 2011/01/10 23:20:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.23 2008/08/11 16:23:37 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.24 2011/01/10 23:20:45 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -110,7 +110,7 @@ puffs__cc_cont(struct puffs_cc *pcc)
 	DPRINTF(("puffs__cc_cont: pcc %p, mycc %p\n", pcc, mycc));
 
 	/*
-	 * XXX: race between setcontenxt() and recycle if
+	 * XXX: race between setcontext() and recycle if
 	 * we go multithreaded
 	 */
 	puffs__cc_destroy(mycc, 1);
