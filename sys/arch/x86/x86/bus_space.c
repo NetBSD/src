@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.31 2010/07/27 13:54:19 jakllsch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.32 2011/01/10 16:59:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.31 2010/07/27 13:54:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.32 2011/01/10 16:59:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.31 2010/07/27 13:54:19 jakllsch Exp 
  * routines need access to them for bus address space allocation.
  */
 static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
