@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.29 2010/08/21 13:19:39 pgoyette Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.30 2011/01/10 04:39:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.29 2010/08/21 13:19:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.30 2011/01/10 04:39:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -213,53 +213,98 @@ sys___sigaltstack14(struct lwp *l, const struct sys___sigaltstack14_args *uap,
 	return 0;
 }
 
-int
-sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int)	pid;
-		syscallarg(int)	signum;
-	} */
-	struct proc	*p;
-	ksiginfo_t	ksi;
-	int signum = SCARG(uap, signum);
-	int error;
 
-	if ((u_int)signum >= NSIG)
+static int
+kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
+{
+	int error;
+	struct proc *p;
+
+	if ((u_int)ksi->ksi_signo >= NSIG)
 		return EINVAL;
-	KSI_INIT(&ksi);
-	ksi.ksi_signo = signum;
-	ksi.ksi_code = SI_USER;
-	ksi.ksi_pid = l->l_proc->p_pid;
-	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
-	if (SCARG(uap, pid) > 0) {
+
+	if (ksi->ksi_pid != l->l_proc->p_pid)
+		return EPERM;
+
+	if (ksi->ksi_uid != kauth_cred_geteuid(l->l_cred))
+		return EPERM;
+
+	switch (ksi->ksi_code) {
+	case SI_USER:
+	case SI_QUEUE:
+		break;
+	default:
+		return EPERM;
+	}
+		
+	if (pid > 0) {
 		/* kill single process */
 		mutex_enter(proc_lock);
-		p = proc_find(SCARG(uap, pid));
+		p = proc_find(pid);
 		if (p == NULL) {
 			mutex_exit(proc_lock);
 			return ESRCH;
 		}
 		mutex_enter(p->p_lock);
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signum),
+		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(ksi->ksi_signo),
 		    NULL, NULL);
-		if (!error && signum) {
-			kpsignal2(p, &ksi);
+		if (!error && ksi->ksi_signo) {
+			kpsignal2(p, ksi);
 		}
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		return error;
 	}
-	switch (SCARG(uap, pid)) {
+
+	switch (pid) {
 	case -1:		/* broadcast signal */
-		return killpg1(l, &ksi, 0, 1);
+		return killpg1(l, ksi, 0, 1);
 	case 0:			/* signal own process group */
-		return killpg1(l, &ksi, 0, 0);
+		return killpg1(l, ksi, 0, 0);
 	default:		/* negative explicit process group */
-		return killpg1(l, &ksi, -SCARG(uap, pid), 0);
+		return killpg1(l, ksi, -pid, 0);
 	}
 	/* NOTREACHED */
+}
+
+int
+sys_sigqueueinfo(struct lwp *l, const struct sys_sigqueueinfo_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(pid_t int)	pid;
+		syscallarg(const siginfo_t *)	info;
+	} */
+	ksiginfo_t	ksi;
+	int error;
+
+	KSI_INIT(&ksi);
+
+	if ((error = copyin(&SCARG(uap, info)->_info, &ksi.ksi_info,
+	    sizeof(ksi.ksi_info))) != 0)
+		return error;
+
+	return kill1(l, SCARG(uap, pid), &ksi, retval);
+}
+
+int
+sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(pid_t)	pid;
+		syscallarg(int)	signum;
+	} */
+	ksiginfo_t	ksi;
+
+	KSI_INIT(&ksi);
+
+	ksi.ksi_signo = SCARG(uap, signum);
+	ksi.ksi_code = SI_USER;
+	ksi.ksi_pid = l->l_proc->p_pid;
+	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
+
+	return kill1(l, SCARG(uap, pid), &ksi, retval);
 }
 
 int
