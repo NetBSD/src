@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1487 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1488 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -822,3 +822,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	acpipmtr(4): Add a driver for ACPI power meters. [jruoho 20110105]
 	amd64, i386: Booting from a disk with a GUID Partition Table is
 		now possible. [jakllsch 20110106]
+	sigqueue(2): Implement sigqueue/sigqueueinfo [christos 20110109]
