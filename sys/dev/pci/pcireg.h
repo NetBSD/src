@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.68 2010/12/11 18:17:39 matt Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.69 2011/01/10 12:23:21 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -604,6 +604,17 @@ struct pci_msix_table_entry {
  * PCI Express; access via capability pointer.
  */
 #define PCI_PCIE_XCAP		0x00
+#define	PCI_PCIE_XCAP_VER_MASK	0x000f0000
+#define	 PCI_PCIE_XCAP_VER_1_0		0x00010000
+#define	 PCI_PCIE_XCAP_VER_2_0		0x00020000
+#define	PCI_PCIE_XCAP_TYPE_MASK	0x00f00000
+#define	 PCI_PCIE_XCAP_TYPE_PCIE_DEV	0x00000000
+#define	 PCI_PCIE_XCAP_TYPE_PCI_DEV	0x00100000
+#define	 PCI_PCIE_XCAP_TYPE_ROOT	0x00400000
+#define	 PCI_PCIE_XCAP_TYPE_UP		0x00500000
+#define	 PCI_PCIE_XCAP_TYPE_DOWN	0x00600000
+#define	 PCI_PCIE_XCAP_TYPE_PCIE2PCI	0x00700000
+#define	 PCI_PCIE_XCAP_TYPE_PCI2PCIE	0x00800000
 #define PCI_PCIE_XCAP_SI	0x01000000
 #define PCI_PCIE_DCAP		0x04
 #define PCI_PCIE_DCSR		0x08
