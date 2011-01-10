@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile,v 1.13.12.1 2010/10/24 22:48:16 jym Exp $
+# 	$NetBSD: Makefile,v 1.13.12.2 2011/01/10 00:37:36 jym Exp $
 
 INCSDIR=/usr/include/x86
 
@@ -21,6 +21,7 @@ INCS=	aout_machdep.h \
 	rwlock.h \
 	specialreg.h \
 	sysarch.h \
-	trap.h
+	trap.h \
+	via_padlock.h
 
 .include <bsd.kinc.mk>

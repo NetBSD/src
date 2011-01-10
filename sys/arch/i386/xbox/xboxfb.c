@@ -1,4 +1,4 @@
-/*	$NetBSD: xboxfb.c,v 1.12.8.1 2010/10/24 22:48:06 jym Exp $	*/
+/*	$NetBSD: xboxfb.c,v 1.12.8.2 2011/01/10 00:37:35 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.12.8.1 2010/10/24 22:48:06 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.12.8.2 2011/01/10 00:37:35 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,40 +244,39 @@ xboxfb_ioctl(void *v, void*vs, u_long cmd, void *data, int flag,
 	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return 0;
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
 
-		case WSDISPLAYIO_GINFO:
-			wdf = (void *)data;
-			wdf->height = xboxfb_console_height;
-			wdf->width = xboxfb_console_width;
-			wdf->depth = ms->scr_ri.ri_depth;
-			wdf->cmsize = 256;
-			return 0;
+	case WSDISPLAYIO_GINFO:
+		wdf = (void *)data;
+		wdf->height = xboxfb_console_height;
+		wdf->width = xboxfb_console_width;
+		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->cmsize = 256;
+		return 0;
 
-		case WSDISPLAYIO_GETCMAP:
-			return EINVAL;
+	case WSDISPLAYIO_GETCMAP:
+		return EINVAL;
 
-		case WSDISPLAYIO_PUTCMAP:
-			return EINVAL;
+	case WSDISPLAYIO_PUTCMAP:
+		return EINVAL;
 
-		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = ms->scr_ri.ri_stride;
-			return 0;
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = ms->scr_ri.ri_stride;
+		return 0;
 
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int *)data;
-				if (new_mode != sc->sc_mode) {
-					sc->sc_mode = new_mode;
-					if (new_mode == WSDISPLAYIO_MODE_EMUL) {
-						xboxfb_clear_fb(sc);
-						vcons_redraw_screen(vd->active);
-					}
+	case WSDISPLAYIO_SMODE: {
+			int new_mode = *(int *)data;
+			if (new_mode != sc->sc_mode) {
+				sc->sc_mode = new_mode;
+				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+					xboxfb_clear_fb(sc);
+					vcons_redraw_screen(vd->active);
 				}
 			}
-			return 0;
+		}
+		return 0;
 	}
 	return EPASSTHROUGH;
 }

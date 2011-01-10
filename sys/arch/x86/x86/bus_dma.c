@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.46.4.3 2010/10/24 22:48:18 jym Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.46.4.4 2011/01/10 00:37:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46.4.3 2010/10/24 22:48:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46.4.4 2011/01/10 00:37:37 jym Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46.4.3 2010/10/24 22:48:18 jym Exp $")
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 extern	paddr_t avail_end;
 

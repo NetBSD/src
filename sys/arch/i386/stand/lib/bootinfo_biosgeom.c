@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.19.92.1 2010/10/24 22:48:05 jym Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.19.92.2 2011/01/10 00:37:33 jym Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -99,7 +99,7 @@ bi_getbiosgeom(void)
 #ifdef GEOM_DEBUG
 		printf("#%d: %x: C %d H %d S %d\n", nvalid,
 		       d.dev, d.cyl, d.head, d.sec);
-		printf("   sz %d fl %x cyl %d head %d sec %d totsec %lld sbytes %d\n",
+		printf("   sz %d fl %x cyl %d head %d sec %d totsec %"PRId64" sbytes %d\n",
 		       ed.size, ed.flags, ed.cyl, ed.head, ed.sec,
 		       ed.totsec, ed.sbytes);
 #endif

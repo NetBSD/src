@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9.4.1 2009/11/01 13:58:35 jym Exp $
+$NetBSD: version,v 1.9.4.2 2011/01/10 00:37:32 jym Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -42,3 +42,6 @@ is taken as the current.
 5.3:	Autoload kernel module for root file system.
 5.4:	The VESA VBE mode number is now passed to the kernel so it can be
 	restored on ACPI resume.
+5.5:	Adjust stack and heap areas to not overlap.
+5.6:	GUID Partition Table support.
+5.7:	Recognize 64-bit LBA from bootxx.

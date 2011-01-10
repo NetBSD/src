@@ -1,4 +1,4 @@
-/*	$NetBSD: start_dos.S,v 1.9 2007/03/04 05:59:59 christos Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.9.58.1 2011/01/10 00:37:33 jym Exp $	*/
 	
 /*
  * startup for DOS .COM programs
@@ -188,7 +188,7 @@ ENTRY(start)
 	stosb
 
 	call	_C_LABEL(doscommain)
-ENTRY(exit)
+ENTRY(_rtt)
 	call	_C_LABEL(prot_to_real)
 	.code16
 ENTRY(exit16)

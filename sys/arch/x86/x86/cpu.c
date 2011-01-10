@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.62.2.3 2010/10/24 22:48:18 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.62.2.4 2011/01/10 00:37:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.2.3 2010/10/24 22:48:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.2.4 2011/01/10 00:37:37 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.2.3 2010/10/24 22:48:18 jym Exp $");
 #include <sys/atomic.h>
 #include <sys/reboot.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>

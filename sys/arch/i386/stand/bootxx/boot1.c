@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.17.14.1 2010/10/24 22:48:04 jym Exp $	*/
+/*	$NetBSD: boot1.c,v 1.17.14.2 2011/01/10 00:37:32 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.17.14.1 2010/10/24 22:48:04 jym Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.17.14.2 2011/01/10 00:37:32 jym Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -44,11 +44,11 @@ __RCSID("$NetBSD: boot1.c,v 1.17.14.1 2010/10/24 22:48:04 jym Exp $");
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
 
-static uint32_t bios_sector;
+static daddr_t bios_sector;
 
 static struct biosdisk_ll d;
 
-const char *boot1(uint32_t, uint32_t *);
+const char *boot1(uint32_t, uint64_t *);
 extern void putstr(const char *);
 
 extern struct disklabel ptn_disklabel;
@@ -60,7 +60,7 @@ ob(void)
 }
 
 const char *
-boot1(uint32_t biosdev, uint32_t *sector)
+boot1(uint32_t biosdev, uint64_t *sector)
 {
 	struct stat sb;
 	int fd;

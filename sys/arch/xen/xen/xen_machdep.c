@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4.12.6 2009/11/01 21:43:28 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4.12.7 2011/01/10 00:37:39 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.6 2009/11/01 21:43:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.7 2011/01/10 00:37:39 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -233,7 +233,7 @@ sysctl_xen_sleepstate_setup(void) {
 	 * it should not call this function to register
 	 * machdep.sleep_state sysctl
 	 */
-	KASSERT( !(xendomain_is_dom0()) );
+	KASSERT(!(xendomain_is_dom0()));
 
 	ret = sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
 	     CTLTYPE_INT, "sleep_state", NULL, sysctl_xen_sleepstate, 0,

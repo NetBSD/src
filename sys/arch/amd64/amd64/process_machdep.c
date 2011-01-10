@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.16.14.1 2010/10/24 22:47:52 jym Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16.14.2 2011/01/10 00:37:28 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16.14.1 2010/10/24 22:47:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16.14.2 2011/01/10 00:37:28 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16.14.1 2010/10/24 22:47:52 jy
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/psl.h>
 #include <machine/reg.h>
