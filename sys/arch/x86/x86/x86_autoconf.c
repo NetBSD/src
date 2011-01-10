@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.52 2010/08/21 17:27:20 jmcneill Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.53 2011/01/10 21:26:38 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.52 2010/08/21 17:27:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.53 2011/01/10 21:26:38 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,6 @@ matchbiosdisks(void)
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
-			/* XXXJRT why not just dv_xname?? */
 			snprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
 			    sizeof(x86_alldisks->dl_nativedisks[n].ni_devname),
 			    "%s", device_xname(dv));
@@ -299,8 +298,8 @@ match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
 		    0, NOCRED, NULL, NULL);
 		if (error) {
-			printf("findroot: unable to read block %" PRIu64 "\n",
-			    blk);
+			printf("findroot: unable to read block %" PRId64 " "
+			    "of dev %s (%d)\n", blk, device_xname(dv), error);
 			goto closeout;
 		}
 		MD5Update(&ctx, bf, sizeof(bf));
