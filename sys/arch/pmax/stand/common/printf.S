@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.S,v 1.6 2009/12/14 00:46:11 matt Exp $	*/
+/*	$NetBSD: printf.S,v 1.7 2011/01/10 15:25:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
+	.set	noreorder
 LEAF(printf)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
 	lw	t9, 0x30(v0)	# offset for callv->_printf
@@ -56,6 +57,6 @@ LEAF(printf)
 	 addu	sp, sp, 48
 #else
 	j	t9		# call PROM printf
-	nop
+	 nop
 #endif
 END(printf)
