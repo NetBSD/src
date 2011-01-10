@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_parse.h,v 1.1.1.3 2008/06/21 18:31:49 christos Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.1.1.3.8.1 2011/01/10 00:39:39 riz Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_parse.h,v 1.8.92.2 2008/05/15 23:46:37 tbox Exp */
+/* Id: dst_parse.h,v 1.15 2009/10/26 21:18:24 each Exp */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H
@@ -41,18 +41,20 @@
 
 #include <dst/dst.h>
 
-#define MAJOR_VERSION		1
-#define MINOR_VERSION		2
-
 #define MAXFIELDSIZE		512
-#define MAXFIELDS		12
+
+/*
+ * Maximum number of fields in a private file is 18 (12 algorithm-
+ * specific fields for RSA, plus 6 generic fields).
+ */
+#define MAXFIELDS		12+6
 
 #define TAG_SHIFT		4
 #define TAG_ALG(tag)		((unsigned int)(tag) >> TAG_SHIFT)
 #define TAG(alg, off)		(((alg) << TAG_SHIFT) + (off))
 
 /* These are used by both RSA-MD5 and RSA-SHA1 */
-#define RSA_NTAGS		8
+#define RSA_NTAGS		11
 #define TAG_RSA_MODULUS		((DST_ALG_RSAMD5 << TAG_SHIFT) + 0)
 #define TAG_RSA_PUBLICEXPONENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 1)
 #define TAG_RSA_PRIVATEEXPONENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 2)
@@ -61,6 +63,9 @@
 #define TAG_RSA_EXPONENT1	((DST_ALG_RSAMD5 << TAG_SHIFT) + 5)
 #define TAG_RSA_EXPONENT2	((DST_ALG_RSAMD5 << TAG_SHIFT) + 6)
 #define TAG_RSA_COEFFICIENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 7)
+#define TAG_RSA_ENGINE		((DST_ALG_RSAMD5 << TAG_SHIFT) + 8)
+#define TAG_RSA_LABEL		((DST_ALG_RSAMD5 << TAG_SHIFT) + 9)
+#define TAG_RSA_PIN		((DST_ALG_RSAMD5 << TAG_SHIFT) + 10)
 
 #define DH_NTAGS		4
 #define TAG_DH_PRIME		((DST_ALG_DH << TAG_SHIFT) + 0)
@@ -120,11 +125,11 @@ ISC_LANG_BEGINDECLS
 void
 dst__privstruct_free(dst_private_t *priv, isc_mem_t *mctx);
 
-int
+isc_result_t
 dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		      isc_mem_t *mctx, dst_private_t *priv);
 
-int
+isc_result_t
 dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 			  const char *directory);
 

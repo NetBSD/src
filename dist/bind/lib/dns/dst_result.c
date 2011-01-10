@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_result.c,v 1.1.1.3 2008/06/21 18:32:10 christos Exp $	*/
+/*	$NetBSD: dst_result.c,v 1.1.1.3.8.1 2011/01/10 00:39:39 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -19,7 +19,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * Id: dst_result.c,v 1.5 2007/06/19 23:47:16 tbox Exp
+ * Id: dst_result.c,v 1.7 2008/04/01 23:47:10 tbox Exp
  */
 
 #include <config.h>
@@ -51,7 +51,8 @@ static const char *text[DST_R_NRESULTS] = {
 	"not a key that can compute a secret",	/*%< 17 */
 	"failure computing a shared secret",	/*%< 18 */
 	"no randomness available",		/*%< 19 */
-	"bad key type"				/*%< 20 */
+	"bad key type",				/*%< 20 */
+	"no engine"				/*%< 21 */
 };
 
 #define DST_RESULT_RESULTSET			2

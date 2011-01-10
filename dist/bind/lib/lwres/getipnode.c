@@ -1,4 +1,4 @@
-/*	$NetBSD: getipnode.c,v 1.1.1.5.8.1 2009/12/03 17:31:42 snj Exp $	*/
+/*	$NetBSD: getipnode.c,v 1.1.1.5.8.2 2011/01/10 00:40:27 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getipnode.c,v 1.42.128.3 2009/09/01 23:46:36 tbox Exp */
+/* Id: getipnode.c,v 1.47 2009/09/01 23:47:45 tbox Exp */
 
 /*! \file */
 
@@ -204,7 +204,7 @@ lwres_getipnodebyname(const char *name, int af, int flags, int *error_num) {
 	struct in6_addr in6;
 	struct hostent he, *he1 = NULL, *he2 = NULL, *he3 = NULL;
 	int v4 = 0, v6 = 0;
-	int tmp_err;
+	int tmp_err = 0;
 	lwres_context_t *lwrctx = NULL;
 	lwres_gabnresponse_t *by = NULL;
 	int n;
@@ -277,7 +277,6 @@ lwres_getipnodebyname(const char *name, int af, int flags, int *error_num) {
 	(void) lwres_conf_parse(lwrctx, lwres_resolv_conf);
 	tmp_err = NO_RECOVERY;
 	if (have_v6 && af == AF_INET6) {
-
 		n = lwres_getaddrsbyname(lwrctx, name, LWRES_ADDRTYPE_V6, &by);
 		if (n == 0) {
 			he1 = hostfromname(by, AF_INET6);
@@ -287,7 +286,12 @@ lwres_getipnodebyname(const char *name, int af, int flags, int *error_num) {
 				goto cleanup;
 			}
 		} else {
-			tmp_err = HOST_NOT_FOUND;
+			if (n == LWRES_R_NOTFOUND)
+				tmp_err = HOST_NOT_FOUND;
+			else {
+				*error_num = NO_RECOVERY;
+				goto cleanup;
+			}
 		}
 	}
 
@@ -439,9 +443,15 @@ lwres_getipnodebyaddr(const void *src, size_t len, int af, int *error_num) {
 	if (n != 0) {
 		lwres_conf_clear(lwrctx);
 		lwres_context_destroy(&lwrctx);
-		*error_num = HOST_NOT_FOUND;
+
+		if (n == LWRES_R_NOTFOUND)
+		       *error_num = HOST_NOT_FOUND;
+		else
+		       *error_num = NO_RECOVERY;
+
 		return (NULL);
 	}
+
 	he1 = hostfromaddr(by, AF_INET6, src);
 	lwres_gnbaresponse_free(lwrctx, &by);
 	if (he1 == NULL)

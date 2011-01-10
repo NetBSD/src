@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkzone.c,v 1.1.1.5.8.1 2009/12/03 17:31:14 snj Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.1.1.5.8.2 2011/01/10 00:37:04 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkzone.c,v 1.49.130.5 2009/05/29 02:18:32 marka Exp */
+/* Id: named-checkzone.c,v 1.59 2009/12/04 22:06:37 tbox Exp */
 
 /*! \file */
 
@@ -72,17 +72,23 @@ static enum { progmode_check, progmode_compile } progmode;
 		} \
 	} while (0)
 
+ISC_PLATFORM_NORETURN_PRE static void
+usage(void) ISC_PLATFORM_NORETURN_POST;
+
 static void
 usage(void) {
 	fprintf(stderr,
-		"usage: %s [-djqvD] [-c class] [-o output] "
+		"usage: %s [-djqvD] [-c class] "
 		"[-f inputformat] [-F outputformat] "
 		"[-t directory] [-w directory] [-k (ignore|warn|fail)] "
 		"[-n (ignore|warn|fail)] [-m (ignore|warn|fail)] "
+		"[-r (ignore|warn|fail)] "
 		"[-i (full|full-sibling|local|local-sibling|none)] "
 		"[-M (ignore|warn|fail)] [-S (ignore|warn|fail)] "
 		"[-W (ignore|warn)] "
-		"zonename filename\n", prog_name);
+		"%s zonename filename\n",
+		prog_name,
+		progmode == progmode_check ? "[-o filename]" : "-o filename");
 	exit(1);
 }
 
@@ -140,17 +146,19 @@ main(int argc, char **argv) {
 	if (progmode == progmode_compile) {
 		zone_options |= (DNS_ZONEOPT_CHECKNS |
 				 DNS_ZONEOPT_FATALNS |
+				 DNS_ZONEOPT_CHECKDUPRR |
 				 DNS_ZONEOPT_CHECKNAMES |
 				 DNS_ZONEOPT_CHECKNAMESFAIL |
 				 DNS_ZONEOPT_CHECKWILDCARD);
-	}
+	} else
+		zone_options |= DNS_ZONEOPT_CHECKDUPRR;
 
 #define ARGCMP(X) (strcmp(isc_commandline_argument, X) == 0)
 
 	isc_commandline_errprint = ISC_FALSE;
 
 	while ((c = isc_commandline_parse(argc, argv,
-					 "c:df:hi:jk:m:n:qs:t:o:vw:DF:M:S:W:"))
+				       "c:df:hi:jk:m:n:qr:s:t:o:vw:DF:M:S:W:"))
 	       != EOF) {
 		switch (c) {
 		case 'c':
@@ -262,16 +270,27 @@ main(int argc, char **argv) {
 			}
 			break;
 
+		case 'o':
+			output_filename = isc_commandline_argument;
+			break;
+
 		case 'q':
 			quiet++;
 			break;
 
-		case 't':
-			result = isc_dir_chroot(isc_commandline_argument);
-			if (result != ISC_R_SUCCESS) {
-				fprintf(stderr, "isc_dir_chroot: %s: %s\n",
-					isc_commandline_argument,
-					isc_result_totext(result));
+		case 'r':
+			if (ARGCMP("warn")) {
+				zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+				zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+			} else if (ARGCMP("fail")) {
+				zone_options |= DNS_ZONEOPT_CHECKDUPRR |
+						DNS_ZONEOPT_CHECKDUPRRFAIL;
+			} else if (ARGCMP("ignore")) {
+				zone_options &= ~(DNS_ZONEOPT_CHECKDUPRR |
+						  DNS_ZONEOPT_CHECKDUPRRFAIL);
+			} else {
+				fprintf(stderr, "invalid argument to -r: %s\n",
+					isc_commandline_argument);
 				exit(1);
 			}
 			break;
@@ -289,8 +308,14 @@ main(int argc, char **argv) {
 			}
 			break;
 
-		case 'o':
-			output_filename = isc_commandline_argument;
+		case 't':
+			result = isc_dir_chroot(isc_commandline_argument);
+			if (result != ISC_R_SUCCESS) {
+				fprintf(stderr, "isc_dir_chroot: %s: %s\n",
+					isc_commandline_argument,
+					isc_result_totext(result));
+				exit(1);
+			}
 			break;
 
 		case 'v':

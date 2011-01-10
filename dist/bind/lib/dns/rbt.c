@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.6.8.1 2009/12/03 17:31:25 snj Exp $	*/
+/*	$NetBSD: rbt.c,v 1.6.8.2 2011/01/10 00:39:41 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.c,v 1.138.36.5 2009/01/19 23:47:02 tbox Exp */
+/* Id: rbt.c,v 1.146 2009/10/27 04:46:58 marka Exp */
 
 /*! \file */
 
@@ -87,9 +87,9 @@ struct dns_rbt {
 #define HASHVAL(node)           ((node)->hashval)
 #define COLOR(node)             ((node)->color)
 #define NAMELEN(node)           ((node)->namelen)
+#define OLDNAMELEN(node)        ((node)->oldnamelen)
 #define OFFSETLEN(node)         ((node)->offsetlen)
 #define ATTRS(node)             ((node)->attributes)
-#define PADBYTES(node)          ((node)->padbytes)
 #define IS_ROOT(node)           ISC_TF((node)->is_root == 1)
 #define FINDCALLBACK(node)      ISC_TF((node)->find_callback == 1)
 
@@ -102,13 +102,23 @@ struct dns_rbt {
 #define LOCKNUM(node)   ((node)->locknum)
 
 /*%
- * The variable length stuff stored after the node.
+ * The variable length stuff stored after the node has the following
+ * structure.
+ *
+ *	<name_data>{1..255}<oldoffsetlen>{1}<offsets>{1..128}
+ *
+ * <name_data> contains the name of the node when it was created.
+ * <oldoffsetlen> contains the length of <offsets> when the node was created.
+ * <offsets> contains the offets into name for each label when the node was
+ * created.
  */
+
 #define NAME(node)      ((unsigned char *)((node) + 1))
-#define OFFSETS(node)   (NAME(node) + NAMELEN(node))
+#define OFFSETS(node)   (NAME(node) + OLDNAMELEN(node) + 1)
+#define OLDOFFSETLEN(node) (OFFSETS(node)[-1])
 
 #define NODE_SIZE(node) (sizeof(*node) + \
-			 NAMELEN(node) + OFFSETLEN(node) + PADBYTES(node))
+			 OLDNAMELEN(node) + OLDOFFSETLEN(node) + 1)
 
 /*%
  * Color management.
@@ -529,6 +539,10 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 				 * current node.
 				 */
 				new_current->is_root = current->is_root;
+				if (current->nsec == DNS_RBT_NSEC_HAS_NSEC)
+					new_current->nsec = DNS_RBT_NSEC_NORMAL;
+				else
+					new_current->nsec = current->nsec;
 				PARENT(new_current)  = PARENT(current);
 				LEFT(new_current)    = LEFT(current);
 				RIGHT(new_current)   = RIGHT(current);
@@ -554,11 +568,6 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 
 				NAMELEN(current) = prefix->length;
 				OFFSETLEN(current) = prefix->labels;
-				memcpy(OFFSETS(current), prefix->offsets,
-				       prefix->labels);
-				PADBYTES(current) +=
-				       (current_name.length - prefix->length) +
-				       (current_name.labels - prefix->labels);
 
 				/*
 				 * Set up the new root of the next level.
@@ -1424,7 +1433,7 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 	 * Allocate space for the node structure, the name, and the offsets.
 	 */
 	node = (dns_rbtnode_t *)isc_mem_get(mctx, sizeof(*node) +
-					    region.length + labels);
+					    region.length + labels + 1);
 
 	if (node == NULL)
 		return (ISC_R_NOMEMORY);
@@ -1447,6 +1456,7 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 	DIRTY(node) = 0;
 	dns_rbtnode_refinit(node, 0);
 	node->find_callback = 0;
+	node->nsec = DNS_RBT_NSEC_NORMAL;
 
 	MAKE_BLACK(node);
 
@@ -1460,10 +1470,12 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 	 *      The offsets table could be made smaller by eliminating the
 	 *      first offset, which is always 0.  This requires changes to
 	 *      lib/dns/name.c.
+	 *
+	 * Note: OLDOFFSETLEN *must* be assigned *after* OLDNAMELEN is assigned
+	 * 	 as it uses OLDNAMELEN.
 	 */
-	NAMELEN(node) = region.length;
-	PADBYTES(node) = 0;
-	OFFSETLEN(node) = labels;
+	OLDNAMELEN(node) = NAMELEN(node) = region.length;
+	OLDOFFSETLEN(node) = OFFSETLEN(node) = labels;
 	ATTRS(node) = name->attributes;
 
 	memcpy(NAME(node), region.base, region.length);
@@ -2355,6 +2367,113 @@ dns_rbtnodechain_prev(dns_rbtnodechain_t *chain, dns_name_t *name,
 			result = dns_rbtnodechain_current(chain, name, NULL,
 							  NULL);
 
+	} else
+		result = ISC_R_NOMORE;
+
+	return (result);
+}
+
+isc_result_t
+dns_rbtnodechain_down(dns_rbtnodechain_t *chain, dns_name_t *name,
+		      dns_name_t *origin)
+{
+	dns_rbtnode_t *current, *successor;
+	isc_result_t result = ISC_R_SUCCESS;
+	isc_boolean_t new_origin = ISC_FALSE;
+
+	REQUIRE(VALID_CHAIN(chain) && chain->end != NULL);
+
+	successor = NULL;
+
+	current = chain->end;
+
+	if (DOWN(current) != NULL) {
+		/*
+		 * Don't declare an origin change when the new origin is "."
+		 * at the second level tree, because "." is already declared
+		 * as the origin for the top level tree.
+		 */
+		if (chain->level_count > 0 ||
+		    OFFSETLEN(current) > 1)
+			new_origin = ISC_TRUE;
+
+		ADD_LEVEL(chain, current);
+		current = DOWN(current);
+
+		while (LEFT(current) != NULL)
+			current = LEFT(current);
+
+		successor = current;
+	}
+
+	if (successor != NULL) {
+		chain->end = successor;
+
+		/*
+		 * It is not necessary to use dns_rbtnodechain_current like
+		 * the other functions because this function will never
+		 * find a node in the topmost level.  This is because the
+		 * root level will never be more than one name, and everything
+		 * in the megatree is a successor to that node, down at
+		 * the second level or below.
+		 */
+
+		if (name != NULL)
+			NODENAME(chain->end, name);
+
+		if (new_origin) {
+			if (origin != NULL)
+				result = chain_name(chain, origin, ISC_FALSE);
+
+			if (result == ISC_R_SUCCESS)
+				result = DNS_R_NEWORIGIN;
+
+		} else
+			result = ISC_R_SUCCESS;
+
+	} else
+		result = ISC_R_NOMORE;
+
+	return (result);
+}
+
+isc_result_t
+dns_rbtnodechain_nextflat(dns_rbtnodechain_t *chain, dns_name_t *name) {
+	dns_rbtnode_t *current, *previous, *successor;
+	isc_result_t result = ISC_R_SUCCESS;
+
+	REQUIRE(VALID_CHAIN(chain) && chain->end != NULL);
+
+	successor = NULL;
+
+	current = chain->end;
+
+	if (RIGHT(current) == NULL) {
+		while (! IS_ROOT(current)) {
+			previous = current;
+			current = PARENT(current);
+
+			if (LEFT(current) == previous) {
+				successor = current;
+				break;
+			}
+		}
+	} else {
+		current = RIGHT(current);
+
+		while (LEFT(current) != NULL)
+			current = LEFT(current);
+
+		successor = current;
+	}
+
+	if (successor != NULL) {
+		chain->end = successor;
+
+		if (name != NULL)
+			NODENAME(chain->end, name);
+
+		result = ISC_R_SUCCESS;
 	} else
 		result = ISC_R_NOMORE;
 

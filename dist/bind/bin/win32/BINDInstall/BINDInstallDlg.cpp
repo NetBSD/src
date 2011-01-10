@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.cpp,v 1.37.24.4 2009/09/02 00:30:44 marka Exp */
+/* Id: BINDInstallDlg.cpp,v 1.46.4.2 2010/01/07 23:48:15 tbox Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -63,6 +63,8 @@
 #include <direct.h>
 #include "AccountInfo.h"
 #include "versioninfo.h"
+
+#include <config.h>
 
 #define MAX_GROUPS	100
 #define MAX_PRIVS	 50
@@ -132,6 +134,9 @@ const FileData installFiles[] =
 	{"libdns.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"liblwres.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
 	{"libeay32.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#ifdef HAVE_LIBXML2
+	{"libxml2.dll", FileData::BinDir, FileData::Critical, FALSE, TRUE},
+#endif
 	{"named.exe", FileData::BinDir, FileData::Critical, FALSE, FALSE},
 	{"nsupdate.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"BINDInstall.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
@@ -139,12 +144,24 @@ const FileData installFiles[] =
 	{"dig.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"host.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"nslookup.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"arpaname.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"nsec3hash.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"genrandom.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"rndc-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"ddns-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-signzone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-dsfromkey.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-keyfromlabel.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"dnssec-revoke.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-checkconf.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-checkzone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-compilezone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"named-journalprint.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"isc-hmax-fixup.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"pkcs11-destroy.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"pkcs11-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"pkcs11-list.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"readme1st.txt", FileData::BinDir, FileData::Trivial, FALSE, TRUE},
 	{NULL, -1, -1}
 };
@@ -229,7 +246,7 @@ BOOL CBINDInstallDlg::OnInitDialog() {
 	char *fptr = &filename[0];
 	GetModuleFileName(NULL, filename, MAX_PATH);
 	char *dptr = strrchr(filename,'\\');
-	int index = dptr - fptr;
+	size_t index = dptr - fptr;
 	strncpy(dirname, filename, index);
 	dirname[index] = '\0';
 	CString Dirname(dirname);
@@ -961,7 +978,7 @@ void CBINDInstallDlg::RegisterMessages() {
 
 	/* Add the Event-ID message-file name to the subkey. */
 	if (RegSetValueEx(hKey, "EventMessageFile", 0, REG_EXPAND_SZ,
-		(LPBYTE)pszMsgDLL, strlen(pszMsgDLL) + 1) != ERROR_SUCCESS)
+		(LPBYTE)pszMsgDLL, (DWORD)(strlen(pszMsgDLL) + 1)) != ERROR_SUCCESS)
 		throw(Exception(IDS_ERR_SET_VALUE, GetErrMessage()));
 
 	/* Set the supported types flags and addit to the subkey. */

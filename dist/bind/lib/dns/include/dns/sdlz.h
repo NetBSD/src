@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.h,v 1.1.1.2.8.1 2009/12/03 17:31:31 snj Exp $	*/
+/*	$NetBSD: sdlz.h,v 1.1.1.2.8.2 2011/01/10 00:39:48 riz Exp $	*/
 
 /*
  * Portions Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.h,v 1.7.128.2 2009/01/19 23:47:03 tbox Exp */
+/* Id: sdlz.h,v 1.9 2009/01/17 23:47:43 tbox Exp */
 
 /*! \file dns/sdlz.h */
 

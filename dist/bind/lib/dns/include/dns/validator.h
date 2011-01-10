@@ -1,7 +1,7 @@
-/*	$NetBSD: validator.h,v 1.1.1.6.8.1 2009/12/03 17:31:31 snj Exp $	*/
+/*	$NetBSD: validator.h,v 1.1.1.6.8.2 2011/01/10 00:39:49 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: validator.h,v 1.39.52.3 2009/01/19 00:01:11 marka Exp */
+/* Id: validator.h,v 1.44.186.2 2010/02/25 05:25:53 tbox Exp */
 
 #ifndef DNS_VALIDATOR_H
 #define DNS_VALIDATOR_H 1
@@ -101,12 +101,17 @@ typedef struct dns_validatorevent {
 	/*
 	 * Proofs to be cached.
 	 */
-	dns_name_t *			proofs[3];
+	dns_name_t *			proofs[4];
+	/*
+	 * Optout proof seen.
+	 */
+	isc_boolean_t			optout;
 } dns_validatorevent_t;
 
 #define DNS_VALIDATOR_NOQNAMEPROOF 0
 #define DNS_VALIDATOR_NODATAPROOF 1
 #define DNS_VALIDATOR_NOWILDCARDPROOF 2
+#define DNS_VALIDATOR_CLOSESTENCLOSER 3
 
 /*%
  * A validator object represents a validation in progress.
@@ -141,11 +146,14 @@ struct dns_validator {
 	dns_rdataset_t *		dsset;
 	dns_rdataset_t *		soaset;
 	dns_rdataset_t *		nsecset;
+	dns_rdataset_t *		nsec3set;
 	dns_name_t *			soaname;
 	dns_rdataset_t			frdataset;
 	dns_rdataset_t			fsigrdataset;
 	dns_fixedname_t			fname;
 	dns_fixedname_t			wild;
+	dns_fixedname_t			nearest;
+	dns_fixedname_t			closest;
 	ISC_LINK(dns_validator_t)	link;
 	dns_rdataset_t 			dlv;
 	dns_fixedname_t			dlvsep;
@@ -153,6 +161,8 @@ struct dns_validator {
 	isc_boolean_t			mustbesecure;
 	unsigned int			dlvlabels;
 	unsigned int			depth;
+	unsigned int			authcount;
+	unsigned int			authfail;
 };
 
 /*%

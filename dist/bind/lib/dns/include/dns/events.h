@@ -1,7 +1,7 @@
-/*	$NetBSD: events.h,v 1.1.1.5.8.1 2009/12/03 17:31:31 snj Exp $	*/
+/*	$NetBSD: events.h,v 1.1.1.5.8.2 2011/01/10 00:39:46 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: events.h,v 1.49.128.2 2009/05/07 23:46:32 tbox Exp */
+/* Id: events.h,v 1.53.104.2 2010/05/10 23:49:42 tbox Exp */
 
 #ifndef DNS_EVENTS_H
 #define DNS_EVENTS_H 1
@@ -60,7 +60,7 @@
 #define DNS_EVENT_MASTERNEXTZONE		(ISC_EVENTCLASS_DNS + 28)
 #define DNS_EVENT_IOREADY			(ISC_EVENTCLASS_DNS + 29)
 #define DNS_EVENT_LOOKUPDONE			(ISC_EVENTCLASS_DNS + 30)
-/* #define DNS_EVENT_unused			(ISC_EVENTCLASS_DNS + 31) */
+#define DNS_EVENT_RBTDEADNODES			(ISC_EVENTCLASS_DNS + 31)
 #define DNS_EVENT_DISPATCHCONTROL		(ISC_EVENTCLASS_DNS + 32)
 #define DNS_EVENT_REQUESTCONTROL		(ISC_EVENTCLASS_DNS + 33)
 #define DNS_EVENT_DUMPQUANTUM			(ISC_EVENTCLASS_DNS + 34)
@@ -71,6 +71,9 @@
 #define DNS_EVENT_ACACHECLEAN			(ISC_EVENTCLASS_DNS + 39)
 #define DNS_EVENT_ACACHEOVERMEM			(ISC_EVENTCLASS_DNS + 40)
 #define DNS_EVENT_RBTPRUNE			(ISC_EVENTCLASS_DNS + 41)
+#define DNS_EVENT_MANAGEKEYS			(ISC_EVENTCLASS_DNS + 42)
+#define DNS_EVENT_CLIENTRESDONE			(ISC_EVENTCLASS_DNS + 43)
+#define DNS_EVENT_CLIENTREQDONE			(ISC_EVENTCLASS_DNS + 44)
 
 #define DNS_EVENT_FIRSTEVENT			(ISC_EVENTCLASS_DNS + 0)
 #define DNS_EVENT_LASTEVENT			(ISC_EVENTCLASS_DNS + 65535)

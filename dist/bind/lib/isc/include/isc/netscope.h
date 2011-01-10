@@ -1,4 +1,4 @@
-/*	$NetBSD: netscope.h,v 1.1.1.3.8.1 2009/12/03 17:31:38 snj Exp $	*/
+/*	$NetBSD: netscope.h,v 1.1.1.3.8.2 2011/01/10 00:40:14 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netscope.h,v 1.11.128.2 2009/06/25 23:46:43 tbox Exp */
+/* Id: netscope.h,v 1.13 2009/06/25 23:48:02 tbox Exp */
 
 #ifndef ISC_NETSCOPE_H
 #define ISC_NETSCOPE_H 1

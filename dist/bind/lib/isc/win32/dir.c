@@ -1,7 +1,7 @@
-/*	$NetBSD: dir.c,v 1.1.1.5.8.1 2009/12/03 17:31:39 snj Exp $	*/
+/*	$NetBSD: dir.c,v 1.1.1.5.8.2 2011/01/10 00:40:20 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,14 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dir.c,v 1.14.128.2 2009/01/19 23:47:03 tbox Exp */
+/* Id: dir.c,v 1.18 2009/01/18 23:48:14 tbox Exp */
 
 /* Principal Authors: DCL */
-
-/*
- * isc_dir_chroot is currently stubbed out for Win32
- * This will need to be revisited
- */
 
 #include <config.h>
 
@@ -244,7 +239,7 @@ isc_dir_chdir(const char *dirname) {
 
 isc_result_t
 isc_dir_chroot(const char *dirname) {
-	return (ISC_R_SUCCESS);
+	return (ISC_R_NOTIMPLEMENTED);
 }
 
 isc_result_t

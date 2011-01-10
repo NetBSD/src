@@ -1,7 +1,7 @@
-/*	$NetBSD: rdatatype.h,v 1.1.1.5 2008/06/21 18:32:30 christos Exp $	*/
+/*	$NetBSD: rdatatype.h,v 1.1.1.5.8.1 2011/01/10 00:39:47 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatatype.h,v 1.24 2007/06/19 23:47:17 tbox Exp */
+/* Id: rdatatype.h,v 1.26 2008/09/25 04:02:39 tbox Exp */
 
 #ifndef DNS_RDATATYPE_H
 #define DNS_RDATATYPE_H 1
@@ -73,7 +73,8 @@ dns_rdatatype_format(dns_rdatatype_t rdtype,
  * The resulting string is guaranteed to be null-terminated.
  */
 
-#define DNS_RDATATYPE_FORMATSIZE sizeof("TYPE65535")
+#define DNS_RDATATYPE_FORMATSIZE sizeof("NSEC3PARAM")
+
 /*%<
  * Minimum size of array to pass to dns_rdatatype_format().
  * May need to be adjusted if a new RR type with a very long
