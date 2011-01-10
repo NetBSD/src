@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.66 2011/01/10 04:38:37 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.67 2011/01/10 13:56:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -235,7 +235,11 @@ struct	sigevent {
  */
 __BEGIN_DECLS
 void	(*signal(int, void (*)(int)))(int);
+#if (_POSIX_C_SOURCE - 0) >= 200112L || defined(_NETBSD_SOURCE)
 int	sigqueue(pid_t, int, const union sigval);
+#endif
+#if defined(_NETBSD_SOURCE)
 int	sigqueueinfo(pid_t, const siginfo_t *);
+#endif
 __END_DECLS
 #endif	/* !_SYS_SIGNAL_H_ */
