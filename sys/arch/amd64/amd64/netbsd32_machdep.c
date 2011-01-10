@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.57.2.2 2010/10/24 22:47:52 jym Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.57.2.3 2011/01/10 00:37:28 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.57.2.2 2010/10/24 22:47:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.57.2.3 2011/01/10 00:37:28 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1085,7 +1085,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	/*
 	 * Check for security violations.
 	 */
-	error = check_sigcontext32((const struct netbsd32_sigcontext *)&context, tf);
+	error = check_sigcontext32(l, (const struct netbsd32_sigcontext *)&context);
 	if (error != 0)
 		return error;
 

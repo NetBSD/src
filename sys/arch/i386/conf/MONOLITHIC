@@ -1,4 +1,4 @@
-# $NetBSD: MONOLITHIC,v 1.3.2.3 2010/10/24 22:47:59 jym Exp $
+# $NetBSD: MONOLITHIC,v 1.3.2.4 2011/01/10 00:37:29 jym Exp $
 #
 # Non MODULAR, used mostly as a reference as to what we modularized.
 #
@@ -64,3 +64,4 @@ pseudo-device	putter		# for puffs and pud
 
 pseudo-device	pad		# pseudo audio device driver
 
+pseudo-device 	dm		# device-mapper device driver

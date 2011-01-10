@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.5.6.2 2010/10/24 22:48:22 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.5.6.3 2011/01/10 00:37:39 jym Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.5.6.2 2010/10/24 22:48:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.5.6.3 2011/01/10 00:37:39 jym Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.5.6.2 2010/10/24 22:48:22 jym Exp $");
 #include <xen/balloon.h>
 
 #include <uvm/uvm.h>
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <xen/xenpmap.h>
 
 #define BALLOONINTERVALMS 100 /* milliseconds */

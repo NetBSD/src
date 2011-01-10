@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.6.2.3 2010/10/24 22:48:00 jym Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.6.2.4 2011/01/10 00:37:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.6.2.3 2010/10/24 22:48:00 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.6.2.4 2011/01/10 00:37:29 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.6.2.3 2010/10/24 22:48:00 jym Exp $");
 #include <machine/kcore.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_page.h>
 
 /*
  * Exports, needed by savecore, the debugger or elsewhere in the kernel.

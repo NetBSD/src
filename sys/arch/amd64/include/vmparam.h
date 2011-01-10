@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20.2.3 2010/10/24 22:47:53 jym Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20.2.4 2011/01/10 00:37:29 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -150,23 +150,11 @@
 
 #define VM_PHYSSEG_MAX		10	/* 1 "hole" + 9 free lists */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
-#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		3
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST4G	1
 #define	VM_FREELIST_FIRST16	2
-
-#include <x86/pmap_pv.h>
-
-#define	__HAVE_VM_PAGE_MD
-#define	VM_MDPAGE_INIT(pg) \
-	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage)); \
-	PMAP_PAGE_INIT(&(pg)->mdpage.mp_pp)
-
-struct vm_page_md {
-	struct pmap_page mp_pp;
-};
 
 #else	/*	!__x86_64__	*/
 

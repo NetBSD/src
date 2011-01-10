@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.7 2008/05/02 15:26:38 ad Exp $	 */
+/*	$NetBSD: devopen.c,v 1.7.14.1 2011/01/10 00:37:32 jym Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ dev2bios(char *devname, int unit, int *biosdev)
 }
 
 void
-bios2dev(int biosdev, u_int sector, char **devname, int *unit, int *partition)
+bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
 {
 
 	/* set default */

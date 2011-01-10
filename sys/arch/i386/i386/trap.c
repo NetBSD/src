@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.241.8.3 2010/10/24 22:48:02 jym Exp $	*/
+/*	$NetBSD: trap.c,v 1.241.8.4 2011/01/10 00:37:30 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.8.3 2010/10/24 22:48:02 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.8.4 2011/01/10 00:37:30 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -571,7 +571,7 @@ kernelfault:
 
 	case T_ASTFLT|T_USER:
 		/* Allow process switch. */
-		uvmexp.softs++;
+		//curcpu()->ci_data.cpu_nast++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);

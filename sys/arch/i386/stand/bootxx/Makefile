@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.11.70.1 2010/10/24 22:48:04 jym Exp $
+# $NetBSD: Makefile,v 1.11.70.2 2011/01/10 00:37:32 jym Exp $
 
-SUBDIR=	bootxx_cd9660 bootxx_ffsv1 .WAIT bootxx_ffsv2 bootxx_lfsv1 bootxx_lfsv2
+SUBDIR=	bootxx_ffsv1 .WAIT bootxx_ffsv2 bootxx_lfsv1 bootxx_lfsv2
 SUBDIR+=bootxx_msdos bootxx_ustarfs
 
 # Ext2fs doesn't have enough free space (it has only 1KB)

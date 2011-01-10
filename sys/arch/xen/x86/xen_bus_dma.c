@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.14.2.4 2010/10/24 22:48:22 jym Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.14.2.5 2011/01/10 00:37:39 jym Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14.2.4 2010/10/24 22:48:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14.2.5 2011/01/10 00:37:39 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.14.2.4 2010/10/24 22:48:22 jym Exp
 #include <machine/bus.h>
 #include <machine/bus_private.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 extern paddr_t avail_end;
 

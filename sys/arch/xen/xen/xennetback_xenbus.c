@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.27.2.5 2010/10/24 22:48:23 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.27.2.6 2011/01/10 00:37:39 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -271,18 +271,20 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	ifp = &xneti->xni_if;
 	ifp->if_softc = xneti;
+	snprintf(ifp->if_xname, IFNAMSIZ, "xvif%d.%d",
+	    (int)domid, (int)handle);
 
 	/* read mac address */
 	if ((err = xenbus_read(NULL, xbusd->xbusd_path, "mac", NULL, &val))) {
-		aprint_error("xvif: can' read %s/mac: %d\n",
+		aprint_error_ifnet(ifp, "can't read %s/mac: %d\n",
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
 	for (i = 0, p = val; i < 6; i++) {
 		xneti->xni_enaddr[i] = strtoul(p, &e, 16);
 		if ((e[0] == '\0' && i != 5) && e[0] != ':') {
-			aprint_error("xvif: %s is not a valid mac address\n",
-			    val);
+			aprint_error_ifnet(ifp,
+			    "%s is not a valid mac address\n", val);
 			err = EINVAL;
 			goto fail;
 		}
@@ -293,8 +295,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	/* we can't use the same MAC addr as our guest */
 	xneti->xni_enaddr[3]++;
 	/* create pseudo-interface */
-	snprintf(xneti->xni_if.if_xname, IFNAMSIZ, "xvif%d.%d",
-	    (int)domid, (int)handle);
 	aprint_verbose_ifnet(ifp, "Ethernet address %s\n",
 	    ether_sprintf(xneti->xni_enaddr));
 	ifp->if_flags =
