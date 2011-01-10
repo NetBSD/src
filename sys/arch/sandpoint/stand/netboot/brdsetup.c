@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.21 2010/06/26 21:45:49 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.22 2011/01/10 18:35:49 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -200,6 +200,10 @@ brdsetup(void)
 	    0x8086) {				/* PCI_VENDOR_INTEL */
 		brdtype = BRD_QNAPTS101;
 	}
+	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 13, 0), PCI_ID_REG)) ==
+	    0x1106) {				/* PCI_VENDOR_VIA */
+		brdtype = BRD_STORCENTER;
+	}
 
 	brdprop = brd_lookup(brdtype);
 
@@ -261,6 +265,7 @@ brd_lookup(int brd)
 static void
 setup()
 {
+
 	if (brdprop->setup == NULL)
 		return;
 	(*brdprop->setup)(brdprop);
@@ -269,6 +274,7 @@ setup()
 static void
 brdfixup()
 {
+
 	if (brdprop->brdfix == NULL)
 		return;
 	(*brdprop->brdfix)(brdprop);
@@ -277,6 +283,7 @@ brdfixup()
 void
 pcifixup()
 {
+
 	if (brdprop->pcifix == NULL)
 		return;
 	(*brdprop->pcifix)(brdprop);
@@ -285,6 +292,7 @@ pcifixup()
 void
 encsetup(struct brdprop *brd)
 {
+
 #ifdef COSNAME
 	brd->consname = CONSNAME;
 #endif
@@ -358,6 +366,7 @@ encbrdfix(struct brdprop *brd)
 void
 motsetup(struct brdprop *brd)
 {
+
 #ifdef COSNAME
 	brd->consname = CONSNAME;
 #endif
@@ -372,6 +381,7 @@ motsetup(struct brdprop *brd)
 void
 motbrdfix(struct brdprop *brd)
 {
+
 /*
  * WinBond/Symphony Lab 83C553 with PC87308 "SuperIO"
  *
@@ -638,6 +648,7 @@ kuropcifix(struct brdprop *brd)
 void
 synosetup(struct brdprop *brd)
 {
+
 	/* nothing */
 }
 
@@ -723,6 +734,7 @@ synoreset()
 void
 _rtt(void)
 {
+
 	if (brdprop->reset != NULL)
 		(*brdprop->reset)();
 	else
