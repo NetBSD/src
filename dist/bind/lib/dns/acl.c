@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.1.1.5.8.1 2009/12/03 17:31:24 snj Exp $	*/
+/*	$NetBSD: acl.c,v 1.1.1.5.8.2 2011/01/10 00:39:37 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acl.c,v 1.37.2.14 2009/01/19 23:47:02 tbox Exp */
+/* Id: acl.c,v 1.53 2009/01/17 23:47:42 tbox Exp */
 
 /*! \file */
 

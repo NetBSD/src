@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.93.58.5 2009/02/16 00:53:58 marka Exp
+# Id: Makefile.in,v 1.104.2.4 2010/06/09 01:50:01 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -27,8 +27,8 @@ CINCLUDES =	-I${srcdir}/unix/include \
 		-I${srcdir}/@ISC_THREAD_DIR@/include \
 		-I${srcdir}/@ISC_ARCH_DIR@/include \
 		-I./include \
-		-I${srcdir}/include
-CDEFINES =
+		-I${srcdir}/include @ISC_OPENSSL_INC@
+CDEFINES =	@USE_OPENSSL@
 CWARNINGS =
 
 # Alphabetically
@@ -39,11 +39,11 @@ UNIXOBJS =	@ISC_ISCIPV6_O@ \
 		unix/os.@O@ unix/resource.@O@ unix/socket.@O@ unix/stdio.@O@ \
 		unix/stdtime.@O@ unix/strerror.@O@ unix/syslog.@O@ unix/time.@O@
 
-
 NLSOBJS =	nls/msgcat.@O@
 
-THREADOBJS =	@ISC_THREAD_DIR@/condition.@O@ @ISC_THREAD_DIR@/mutex.@O@ \
-		@ISC_THREAD_DIR@/thread.@O@
+THREADOPTOBJS = @ISC_THREAD_DIR@/condition.@O@ @ISC_THREAD_DIR@/mutex.@O@
+
+THREADOBJS =	@THREADOPTOBJS@ @ISC_THREAD_DIR@/thread.@O@
 
 WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/file.@O@ \
 		win32/fsaccess.@O@ win32/once.@O@ win32/stdtime.@O@ \
@@ -51,10 +51,11 @@ WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/file.@O@ \
 
 # Alphabetically
 OBJS =		@ISC_EXTRA_OBJS@ \
-		assertions.@O@ base64.@O@ bitstring.@O@ buffer.@O@ \
-		bufferlist.@O@ commandline.@O@ error.@O@ event.@O@ \
+		assertions.@O@ backtrace.@O@ base32.@O@ base64.@O@ \
+		bitstring.@O@ buffer.@O@ bufferlist.@O@ commandline.@O@ \
+		error.@O@ event.@O@ \
 		hash.@O@ heap.@O@ hex.@O@ hmacmd5.@O@ hmacsha.@O@ \
-		httpd.@O@ inet_aton.@O@ \
+		httpd.@O@ inet_aton.@O@ iterated_hash.@O@ \
 		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
 		md5.@O@ mem.@O@ mutexblock.@O@ \
 		netaddr.@O@ netscope.@O@ ondestroy.@O@ \
@@ -63,23 +64,28 @@ OBJS =		@ISC_EXTRA_OBJS@ \
 		serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ stats.@O@ \
 		string.@O@ strtoul.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
 		timer.@O@ version.@O@ ${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
+SYMTBLOBJS =	backtrace-emptytbl.@O@
 
 # Alphabetically
 SRCS =		@ISC_EXTRA_SRCS@ \
-		assertions.c base64.c bitstring.c buffer.c \
-		bufferlist.c commandline.c error.c event.c \
+		assertions.c backtrace.c base32.c base64.c bitstring.c \
+		buffer.c bufferlist.c commandline.c error.c event.c \
 		heap.c hex.c hmacmd5.c hmacsha.c \
-		httpd.c inet_aton.c \
+		httpd.c inet_aton.c iterated_hash.c \
 		lex.c lfsr.c lib.c log.c \
 		md5.c mem.c mutexblock.c \
 		netaddr.c netscope.c ondestroy.c \
 		parseint.c portset.c quota.c radix.c random.c \
 		ratelimiter.c refcount.c region.c result.c rwlock.c \
 		serial.c sha1.c sha2.c sockaddr.c stats.c string.c strtoul.c \
-		symtab.c task.c taskpool.c timer.c version.c
+		symtab.c symtbl-empty.c task.c taskpool.c timer.c version.c
 
 LIBS =		@LIBS@
 
+# Note: the order of SUBDIRS is important.
+# Attempt to disable parallel processing.
+.NOTPARALLEL:
+.NO_PARALLEL:
 SUBDIRS =	include unix nls @ISC_THREAD_DIR@ @ISC_ARCH_DIR@
 TARGETS =	timestamp
 
@@ -93,17 +99,27 @@ version.@O@: version.c
 		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
-libisc.@SA@: ${OBJS}
+libisc.@SA@: ${OBJS} ${SYMTBLOBJS}
+	${AR} ${ARFLAGS} $@ ${OBJS} ${SYMTBLOBJS}
+	${RANLIB} $@
+
+libisc-nosymtbl.@SA@: ${OBJS}
 	${AR} ${ARFLAGS} $@ ${OBJS}
 	${RANLIB} $@
 
-libisc.la: ${OBJS}
+libisc.la: ${OBJS} ${SYMTBLOBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisc.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
+		${OBJS} ${SYMTBLOBJS} ${LIBS}
+
+libisc-nosymtbl.la: ${OBJS}
+	${LIBTOOL_MODE_LINK} \
+		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisc-nosymtbl.la -rpath ${libdir} \
+		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} ${LIBS}
 
-timestamp: libisc.@A@
+timestamp: libisc.@A@ libisc-nosymtbl.@A@
 	touch timestamp
 
 installdirs:
@@ -113,4 +129,5 @@ install:: timestamp installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_DATA} libisc.@A@ ${DESTDIR}${libdir}
 
 clean distclean::
-	rm -f libisc.@A@ libisc.la timestamp
+	rm -f libisc.@A@ libisc-nosymtbl.@A@ libisc.la \
+	libisc-nosymtbl.la timestamp

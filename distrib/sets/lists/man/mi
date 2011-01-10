@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.3.2.2 2009/12/03 17:31:44 snj Exp $
+# $NetBSD: mi,v 1.1109.2.3.2.3 2011/01/10 00:40:35 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1996,6 +1996,7 @@
 ./usr/share/man/cat8/cpuctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cron.0			man-cron-catman		.cat
 ./usr/share/man/cat8/dbsym.0			man-sysutil-catman	bfd,.cat
+./usr/share/man/cat8/ddns-confgen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/defer.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dhclient-script.0		man-dhclient-catman	.cat
@@ -2011,8 +2012,12 @@
 ./usr/share/man/cat8/dkctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dkscan_bsdlabel.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/dnssec-dsfromkey.0		man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-keyfromlabel.0	man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-keygen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-makekeyset.0	man-obsolete		obsolete
+./usr/share/man/cat8/dnssec-revoke.0		man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-settime.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-signkey.0		man-obsolete		obsolete
 ./usr/share/man/cat8/dnssec-signzone.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-obsolete		obsolete
@@ -4387,6 +4392,7 @@
 ./usr/share/man/html8/cpuctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cron.html			man-cron-htmlman	html
 ./usr/share/man/html8/dbsym.html		man-sysutil-htmlman	bfd,html
+./usr/share/man/html8/ddns-confgen.html		man-bind-htmlman	html
 ./usr/share/man/html8/defer.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/dev_mkdb.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dhclient-script.html	man-dhclient-htmlman	html
@@ -4402,7 +4408,11 @@
 ./usr/share/man/html8/dkctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dkscan_bsdlabel.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/dmesg.html		man-sysutil-htmlman	html
+./usr/share/man/html8/dnssec-dsfromkey.html	man-bind-htmlman	html
+./usr/share/man/html8/dnssec-keyfromlabel.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-keygen.html	man-bind-htmlman	html
+./usr/share/man/html8/dnssec-revoke.html	man-bind-htmlman	html
+./usr/share/man/html8/dnssec-settime.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-signzone.html	man-bind-htmlman	html
 ./usr/share/man/html8/dreamcast/boot.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/drvctl.html		man-sysutil-htmlman	html
@@ -6837,6 +6847,7 @@
 ./usr/share/man/man8/cpuctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/cron.8			man-cron-man		.man
 ./usr/share/man/man8/dbsym.8			man-sysutil-man		bfd,.man
+./usr/share/man/man8/ddns-confgen.8		man-bind-man		.man
 ./usr/share/man/man8/defer.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/dhclient-script.8		man-dhclient-man	.man
@@ -6852,8 +6863,12 @@
 ./usr/share/man/man8/dkctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dkscan_bsdlabel.8		man-sysutil-man		.man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man		.man
+./usr/share/man/man8/dnssec-dsfromkey.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-keyfromlabel.8	man-bind-man		.man
 ./usr/share/man/man8/dnssec-keygen.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-makekeyset.8	man-obsolete		obsolete
+./usr/share/man/man8/dnssec-revoke.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-settime.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-signkey.8		man-obsolete		obsolete
 ./usr/share/man/man8/dnssec-signzone.8		man-bind-man		.man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-obsolete		obsolete

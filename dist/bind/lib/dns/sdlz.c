@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.3.8.1 2009/12/03 17:31:25 snj Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.3.8.2 2011/01/10 00:39:43 riz Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.c,v 1.14.94.6 2009/06/26 06:23:47 marka Exp */
+/* Id: sdlz.c,v 1.22.104.3 2010/08/16 05:14:15 marka Exp */
 
 /*! \file */
 
@@ -669,8 +669,7 @@ printnode(dns_db_t *db, dns_dbnode_t *node, FILE *out) {
 }
 
 static isc_result_t
-createiterator(dns_db_t *db, isc_boolean_t relative_names,
-	       dns_dbiterator_t **iteratorp)
+createiterator(dns_db_t *db, unsigned int options, dns_dbiterator_t **iteratorp)
 {
 	dns_sdlz_db_t *sdlz = (dns_sdlz_db_t *)db;
 	sdlz_dbiterator_t *sdlziter;
@@ -682,6 +681,10 @@ createiterator(dns_db_t *db, isc_boolean_t relative_names,
 
 	if (sdlz->dlzimp->methods->allnodes == NULL)
 		return (ISC_R_NOTIMPLEMENTED);
+
+	if ((options & DNS_DB_NSEC3ONLY) != 0 ||
+	    (options & DNS_DB_NONSEC3) != 0)
+		 return (ISC_R_NOTIMPLEMENTED);
 
 	isc_buffer_init(&b, zonestr, sizeof(zonestr));
 	result = dns_name_totext(&sdlz->common.origin, ISC_TRUE, &b);
@@ -696,7 +699,7 @@ createiterator(dns_db_t *db, isc_boolean_t relative_names,
 	sdlziter->common.methods = &dbiterator_methods;
 	sdlziter->common.db = NULL;
 	dns_db_attach(db, &sdlziter->common.db);
-	sdlziter->common.relative_names = relative_names;
+	sdlziter->common.relative_names = ISC_TF(options & DNS_DB_RELATIVENAMES);
 	sdlziter->common.magic = DNS_DBITERATOR_MAGIC;
 	ISC_LIST_INIT(sdlziter->nodelist);
 	sdlziter->current = NULL;
@@ -799,13 +802,6 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	result = DNS_R_NXDOMAIN;
 
 	for (i = olabels; i <= nlabels; i++) {
-		/*
-		 * Unless this is an explicit lookup at the origin, don't
-		 * look at the origin.
-		 */
-		if (i == olabels && i != nlabels)
-			continue;
-
 		/*
 		 * Look up the next label.
 		 */
@@ -1057,6 +1053,12 @@ static dns_dbmethods_t sdlzdb_methods = {
 	settask,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL
 };
 
@@ -1200,6 +1202,10 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	isc__rdatalist_count,
 	isc__rdatalist_addnoqname,
 	isc__rdatalist_getnoqname,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL
@@ -1611,7 +1617,7 @@ dns_sdlz_putnamedrr(dns_sdlzallnodes_t *allnodes, const char *name,
 	isc_buffer_init(&b, name, strlen(name));
 	isc_buffer_add(&b, strlen(name));
 
-	result = dns_name_fromtext(newname, &b, origin, ISC_FALSE, NULL);
+	result = dns_name_fromtext(newname, &b, origin, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 

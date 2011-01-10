@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.4.8.1 2009/12/03 17:31:17 snj Exp $	*/
+/*	$NetBSD: rndc.c,v 1.4.8.2 2011/01/10 00:37:23 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.118.128.6 2009/01/19 23:47:01 tbox Exp */
+/* Id: rndc.c,v 1.126.66.4 2010/07/11 00:12:18 each Exp */
 
 /*! \file */
 
@@ -81,6 +81,7 @@ static unsigned char databuf[2048];
 static isccc_ccmsg_t ccmsg;
 static isccc_region_t secret;
 static isc_boolean_t failed = ISC_FALSE;
+static isc_boolean_t c_flag = ISC_FALSE;
 static isc_mem_t *mctx;
 static int sends, recvs, connects;
 static char *command;
@@ -90,6 +91,9 @@ static isc_socket_t *sock = NULL;
 static isc_uint32_t serial;
 
 static void rndc_startconnect(isc_sockaddr_t *addr, isc_task_t *task);
+
+ISC_PLATFORM_NORETURN_PRE static void
+usage(int status) ISC_PLATFORM_NORETURN_POST;
 
 static void
 usage(int status) {
@@ -115,10 +119,14 @@ command is one of the following:\n\
   notify zone [class [view]]\n\
 		Resend NOTIFY messages for the zone.\n\
   reconfig	Reload configuration file and new zones only.\n\
+  sign zone [class [view]]\n\
+		Update zone keys, and sign as needed.\n\
   stats		Write server statistics to the statistics file.\n\
   querylog	Toggle query logging.\n\
   dumpdb [-all|-cache|-zones] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
+  secroots [view ...]\n\
+		Write security roots to the secroots file.\n\
   stop		Save pending updates to master files and stop the server.\n\
   stop -p	Save pending updates to master files and stop the server\n\
 		reporting process id.\n\
@@ -137,6 +145,10 @@ command is one of the following:\n\
   validation newstate [view]\n\
 		Enable / disable DNSSEC validation.\n\
   *restart	Restart the server.\n\
+  addzone [\"file\"] zone [class [view]] { zone-options }\n\
+		Add zone to given view. Requires new-zone-file option.\n\
+  delzone [\"file\"] zone [class [view]]\n\
+		Removes zone from given view. Requires new-zone-file option.\n\
 \n\
 * == not yet implemented\n\
 Version: %s\n",
@@ -457,6 +469,10 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 			fatal("neither %s nor %s was found",
 			      admin_conffile, admin_keyfile);
 		key_only = ISC_TRUE;
+	} else if (! c_flag && isc_file_exists(admin_keyfile)) {
+		fprintf(stderr, "WARNING: key file (%s) exists, but using "
+			"default configuration file (%s)\n",
+			admin_keyfile, admin_conffile);
 	}
 
 	DO("create parser", cfg_parser_create(mctx, log, pctxp));
@@ -711,6 +727,7 @@ main(int argc, char **argv) {
 
 		case 'c':
 			admin_conffile = isc_commandline_argument;
+			c_flag = ISC_TRUE;
 			break;
 
 		case 'k':

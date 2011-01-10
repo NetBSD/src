@@ -1,7 +1,7 @@
-/*	$NetBSD: name.c,v 1.1.1.6 2008/06/21 18:32:03 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.1.1.6.8.1 2011/01/10 00:39:40 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.c,v 1.163.128.2 2008/03/31 23:46:42 tbox Exp */
+/* Id: name.c,v 1.169.104.3 2010/07/09 05:14:08 each Exp */
 
 /*! \file */
 
@@ -36,6 +36,7 @@
 #include <isc/util.h>
 
 #include <dns/compress.h>
+#include <dns/fixedname.h>
 #include <dns/name.h>
 #include <dns/result.h>
 
@@ -903,7 +904,7 @@ dns_name_getlabelsequence(const dns_name_t *source,
 	REQUIRE(VALID_NAME(source));
 	REQUIRE(VALID_NAME(target));
 	REQUIRE(first <= source->labels);
-	REQUIRE(first + n <= source->labels);
+	REQUIRE(n <= source->labels - first); /* note first+n could overflow */
 	REQUIRE(BINDABLE(target));
 
 	SETUP_OFFSETS(source, offsets, odata);
@@ -1019,7 +1020,6 @@ dns_name_toregion(dns_name_t *name, isc_region_t *r) {
 
 	DNS_NAME_TOREGION(name, r);
 }
-
 
 isc_result_t
 dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
@@ -1326,6 +1326,21 @@ isc_result_t
 dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 		isc_buffer_t *target)
 {
+	unsigned int options = DNS_NAME_MASTERFILE;
+
+	if (omit_final_dot)
+		options |= DNS_NAME_OMITFINALDOT;
+	return (dns_name_totext2(name, options, target));
+}
+
+isc_result_t
+dns_name_toprincipal(dns_name_t *name, isc_buffer_t *target) {
+	return (dns_name_totext2(name, DNS_NAME_OMITFINALDOT, target));
+}
+
+isc_result_t
+dns_name_totext2(dns_name_t *name, unsigned int options, isc_buffer_t *target)
+{
 	unsigned char *ndata;
 	char *tdata;
 	unsigned int nlen, tlen;
@@ -1339,6 +1354,8 @@ dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 	dns_name_totextfilter_t totext_filter_proc = NULL;
 	isc_result_t result;
 #endif
+	isc_boolean_t omit_final_dot =
+		ISC_TF(options & DNS_NAME_OMITFINALDOT);
 
 	/*
 	 * This function assumes the name is in proper uncompressed
@@ -1414,15 +1431,17 @@ dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 			while (count > 0) {
 				c = *ndata;
 				switch (c) {
+				/* Special modifiers in zone files. */
+				case 0x40: /* '@' */
+				case 0x24: /* '$' */
+					if ((options & DNS_NAME_MASTERFILE) == 0)
+						goto no_escape;
 				case 0x22: /* '"' */
 				case 0x28: /* '(' */
 				case 0x29: /* ')' */
 				case 0x2E: /* '.' */
 				case 0x3B: /* ';' */
 				case 0x5C: /* '\\' */
-				/* Special modifiers in zone files. */
-				case 0x40: /* '@' */
-				case 0x24: /* '$' */
 					if (trem < 2)
 						return (ISC_R_NOSPACE);
 					*tdata++ = '\\';
@@ -1432,6 +1451,7 @@ dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 					trem -= 2;
 					nlen--;
 					break;
+				no_escape:
 				default:
 					if (c > 0x20 && c < 0x7f) {
 						if (trem == 0)
@@ -2340,6 +2360,62 @@ dns_name_format(dns_name_t *name, char *cp, unsigned int size) {
 
 	} else
 		snprintf(cp, size, "<unknown>");
+}
+
+/*
+ * dns_name_tostring() -- similar to dns_name_format() but allocates its own
+ * memory.
+ */
+isc_result_t
+dns_name_tostring(dns_name_t *name, char **target, isc_mem_t *mctx) {
+	isc_result_t result;
+	isc_buffer_t buf;
+	isc_region_t reg;
+	char *p, txt[DNS_NAME_FORMATSIZE];
+
+	REQUIRE(VALID_NAME(name));
+	REQUIRE(target != NULL && *target == NULL);
+
+	isc_buffer_init(&buf, txt, sizeof(txt));
+	result = dns_name_totext(name, ISC_FALSE, &buf);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	isc_buffer_usedregion(&buf, &reg);
+	p = isc_mem_allocate(mctx, reg.length + 1);
+	memcpy(p, (char *) reg.base, (int) reg.length);
+	p[reg.length] = '\0';
+
+	*target = p;
+	return (ISC_R_SUCCESS);
+}
+
+/*
+ * dns_name_fromstring() -- convert directly from a string to a name,
+ * allocating memory as needed
+ */
+isc_result_t
+dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
+		    isc_mem_t *mctx)
+{
+	isc_result_t result;
+	isc_buffer_t buf;
+	dns_fixedname_t fn;
+	dns_name_t *name;
+
+	REQUIRE(src != NULL);
+
+	isc_buffer_init(&buf, src, strlen(src));
+	isc_buffer_add(&buf, strlen(src));
+	dns_fixedname_init(&fn);
+	name = dns_fixedname_name(&fn);
+
+	result = dns_name_fromtext(name, &buf, dns_rootname, options, NULL);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	result = dns_name_dup(name, mctx, target);
+	return (result);
 }
 
 isc_result_t

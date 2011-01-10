@@ -1,7 +1,7 @@
-/*	$NetBSD: cname_5.c,v 1.1.1.5 2008/06/21 18:32:44 christos Exp $	*/
+/*	$NetBSD: cname_5.c,v 1.1.1.5.8.1 2011/01/10 00:39:51 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cname_5.c,v 1.47 2007/06/19 23:47:17 tbox Exp */
+/* Id: cname_5.c,v 1.49 2009/12/04 22:06:37 tbox Exp */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -229,6 +229,11 @@ checknames_cname(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_cname(ARGS_COMPARE) {
+	return (compare_cname(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_CNAME_5_C */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.2.26.1 2009/12/03 17:31:19 snj Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.2.26.2 2011/01/10 00:38:15 riz Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -794,7 +794,7 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	char *endp;
 	int j;
 	unsigned int flags = 0;
-#ifdef MYSQL_OPT_RECONNECT
+#if MYSQL_VERSION_ID >= 50000
         my_bool auto_reconnect = 1;
 #endif
 
@@ -928,7 +928,7 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	pass = getParameterValue(argv[1], "pass=");
 	socket = getParameterValue(argv[1], "socket=");
 
-#ifdef MYSQL_OPT_RECONNECT
+#if MYSQL_VERSION_ID >= 50000
 	/* enable automatic reconnection. */
         if (mysql_options((MYSQL *) dbi->dbconn, MYSQL_OPT_RECONNECT,
 			  &auto_reconnect) != 0) {

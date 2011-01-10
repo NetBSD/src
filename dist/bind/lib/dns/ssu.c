@@ -1,7 +1,7 @@
-/*	$NetBSD: ssu.c,v 1.1.1.5 2008/06/21 18:31:51 christos Exp $	*/
+/*	$NetBSD: ssu.c,v 1.1.1.5.8.1 2011/01/10 00:39:43 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -19,7 +19,7 @@
 
 /*! \file */
 /*
- * Id: ssu.c,v 1.31 2007/06/19 23:47:16 tbox Exp
+ * Id: ssu.c,v 1.34 2008/01/18 23:46:58 tbox Exp
  * Principal Author: Brian Wellington
  */
 
@@ -27,8 +27,9 @@
 
 #include <isc/magic.h>
 #include <isc/mem.h>
+#include <isc/netaddr.h>
 #include <isc/result.h>
-#include <isc/string.h>		/* Required for HP/UX (and others?) */
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <dns/fixedname.h>
@@ -249,21 +250,118 @@ isusertype(dns_rdatatype_t type) {
 		       type != dns_rdatatype_rrsig));
 }
 
+static void
+reverse_from_address(dns_name_t *tcpself, isc_netaddr_t *tcpaddr) {
+	char buf[16 * 4 + sizeof("IP6.ARPA.")];
+	isc_result_t result;
+	unsigned char *ap;
+	isc_buffer_t b;
+	unsigned long l;
+
+	switch (tcpaddr->family) {
+	case AF_INET:
+		l = ntohl(tcpaddr->type.in.s_addr);
+		result = isc_string_printf(buf, sizeof(buf),
+					   "%lu.%lu.%lu.%lu.IN-ADDR.ARPA.",
+					   (l >> 0) & 0xff, (l >> 8) & 0xff,
+					   (l >> 16) & 0xff, (l >> 24) & 0xff);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		break;
+	case AF_INET6:
+		ap = tcpaddr->type.in6.s6_addr;
+		result = isc_string_printf(buf, sizeof(buf),
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "IP6.ARPA.",
+					   ap[15] & 0x0f, (ap[15] >> 4) & 0x0f,
+					   ap[14] & 0x0f, (ap[14] >> 4) & 0x0f,
+					   ap[13] & 0x0f, (ap[13] >> 4) & 0x0f,
+					   ap[12] & 0x0f, (ap[12] >> 4) & 0x0f,
+					   ap[11] & 0x0f, (ap[11] >> 4) & 0x0f,
+					   ap[10] & 0x0f, (ap[10] >> 4) & 0x0f,
+					   ap[9] & 0x0f, (ap[9] >> 4) & 0x0f,
+					   ap[8] & 0x0f, (ap[8] >> 4) & 0x0f,
+					   ap[7] & 0x0f, (ap[7] >> 4) & 0x0f,
+					   ap[6] & 0x0f, (ap[6] >> 4) & 0x0f,
+					   ap[5] & 0x0f, (ap[5] >> 4) & 0x0f,
+					   ap[4] & 0x0f, (ap[4] >> 4) & 0x0f,
+					   ap[3] & 0x0f, (ap[3] >> 4) & 0x0f,
+					   ap[2] & 0x0f, (ap[2] >> 4) & 0x0f,
+					   ap[1] & 0x0f, (ap[1] >> 4) & 0x0f,
+					   ap[0] & 0x0f, (ap[0] >> 4) & 0x0f);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		break;
+	default:
+		INSIST(0);
+	}
+	isc_buffer_init(&b, buf, strlen(buf));
+	isc_buffer_add(&b, strlen(buf));
+	result = dns_name_fromtext(tcpself, &b, dns_rootname, 0, NULL);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+}
+
+static void
+stf_from_address(dns_name_t *stfself, isc_netaddr_t *tcpaddr) {
+	char buf[sizeof("X.X.X.X.Y.Y.Y.Y.2.0.0.2.IP6.ARPA.")];
+	isc_result_t result;
+	unsigned char *ap;
+	isc_buffer_t b;
+	unsigned long l;
+
+	switch(tcpaddr->family) {
+	case AF_INET:
+		l = ntohl(tcpaddr->type.in.s_addr);
+		result = isc_string_printf(buf, sizeof(buf),
+					   "%lx.%lx.%lx.%lx.%lx.%lx.%lx.%lx"
+					   "2.0.0.2.IP6.ARPA.",
+					   l & 0xf, (l >> 4) & 0xf,
+					   (l >> 8) & 0xf, (l >> 12) & 0xf,
+					   (l >> 16) & 0xf, (l >> 20) & 0xf,
+					   (l >> 24) & 0xf, (l >> 28) & 0xf);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		break;
+	case AF_INET6:
+		ap = tcpaddr->type.in6.s6_addr;
+		result = isc_string_printf(buf, sizeof(buf),
+					   "%x.%x.%x.%x.%x.%x.%x.%x."
+					   "%x.%x.%x.%x.IP6.ARPA.",
+					   ap[5] & 0x0f, (ap[5] >> 4) & 0x0f,
+					   ap[4] & 0x0f, (ap[4] >> 4) & 0x0f,
+					   ap[3] & 0x0f, (ap[3] >> 4) & 0x0f,
+					   ap[2] & 0x0f, (ap[2] >> 4) & 0x0f,
+					   ap[1] & 0x0f, (ap[1] >> 4) & 0x0f,
+					   ap[0] & 0x0f, (ap[0] >> 4) & 0x0f);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		break;
+	default:
+		INSIST(0);
+	}
+	isc_buffer_init(&b, buf, strlen(buf));
+	isc_buffer_add(&b, strlen(buf));
+	result = dns_name_fromtext(stfself, &b, dns_rootname, 0, NULL);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+}
+
 isc_boolean_t
 dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
-			dns_name_t *name, dns_rdatatype_t type)
+			dns_name_t *name, isc_netaddr_t *tcpaddr,
+			dns_rdatatype_t type)
 {
 	dns_ssurule_t *rule;
 	unsigned int i;
 	dns_fixedname_t fixed;
 	dns_name_t *wildcard;
+	dns_name_t *tcpself;
+	dns_name_t *stfself;
 	isc_result_t result;
 
 	REQUIRE(VALID_SSUTABLE(table));
 	REQUIRE(signer == NULL || dns_name_isabsolute(signer));
 	REQUIRE(dns_name_isabsolute(name));
 
-	if (signer == NULL)
+	if (signer == NULL && tcpaddr == NULL)
 		return (ISC_FALSE);
 
 	for (rule = ISC_LIST_HEAD(table->rules);
@@ -277,15 +375,28 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 		case DNS_SSUMATCHTYPE_SELF:
 		case DNS_SSUMATCHTYPE_SELFSUB:
 		case DNS_SSUMATCHTYPE_SELFWILD:
+			if (signer == NULL)
+				continue;
 			if (dns_name_iswildcard(rule->identity)) {
 				if (!dns_name_matcheswildcard(signer,
 							      rule->identity))
 					continue;
-			}
-			else {
+			} else {
 				if (!dns_name_equal(signer, rule->identity))
 					continue;
 			}
+			break;
+		case DNS_SSUMATCHTYPE_SELFKRB5:
+		case DNS_SSUMATCHTYPE_SELFMS:
+		case DNS_SSUMATCHTYPE_SUBDOMAINKRB5:
+		case DNS_SSUMATCHTYPE_SUBDOMAINMS:
+			if (signer == NULL)
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_TCPSELF:
+		case DNS_SSUMATCHTYPE_6TO4SELF:
+			if (tcpaddr == NULL)
+				continue;
 			break;
 		}
 
@@ -327,7 +438,7 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 			break;
 		case DNS_SSUMATCHTYPE_SELFMS:
 			if (!dst_gssapi_identitymatchesrealmms(signer, name,
-							      rule->identity))
+							       rule->identity))
 				continue;
 			break;
 		case DNS_SSUMATCHTYPE_SUBDOMAINKRB5:
@@ -342,6 +453,36 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 				continue;
 			if (!dst_gssapi_identitymatchesrealmms(signer, NULL,
 							       rule->identity))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_TCPSELF:
+			dns_fixedname_init(&fixed);
+			tcpself = dns_fixedname_name(&fixed);
+			reverse_from_address(tcpself, tcpaddr);
+			if (dns_name_iswildcard(rule->identity)) {
+				if (!dns_name_matcheswildcard(tcpself,
+							      rule->identity))
+					continue;
+			} else {
+				if (!dns_name_equal(tcpself, rule->identity))
+					continue;
+			}
+			if (!dns_name_equal(tcpself, name))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_6TO4SELF:
+			dns_fixedname_init(&fixed);
+			stfself = dns_fixedname_name(&fixed);
+			stf_from_address(stfself, tcpaddr);
+			if (dns_name_iswildcard(rule->identity)) {
+				if (!dns_name_matcheswildcard(stfself,
+							      rule->identity))
+					continue;
+			} else {
+				if (!dns_name_equal(stfself, rule->identity))
+					continue;
+			}
+			if (!dns_name_equal(stfself, name))
 				continue;
 			break;
 		}

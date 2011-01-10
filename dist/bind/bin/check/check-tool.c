@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.c,v 1.1.1.5.8.1 2009/12/03 17:31:14 snj Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.1.1.5.8.2 2011/01/10 00:37:03 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check-tool.c,v 1.31.62.5 2009/01/27 21:17:39 jinmei Exp */
+/* Id: check-tool.c,v 1.39 2009/09/01 00:22:24 jinmei Exp */
 
 /*! \file */
 
@@ -225,8 +225,9 @@ checkns(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner,
 		    !logged(namebuf, ERR_IS_CNAME)) {
 			dns_zone_log(zone, ISC_LOG_ERROR,
 				     "%s/NS '%s' (out of zone) "
-				     "is a CNAME (illegal)",
-				     ownerbuf, namebuf);
+				     "is a CNAME '%s' (illegal)",
+				     ownerbuf, namebuf,
+				     cur->ai_canonname);
 			/* XXX950 make fatal for 9.5.0 */
 			/* answer = ISC_FALSE; */
 			add(namebuf, ERR_IS_CNAME);
@@ -417,8 +418,10 @@ checkmx(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 				if (!logged(namebuf, ERR_IS_MXCNAME)) {
 					dns_zone_log(zone, level,
 						     "%s/MX '%s' (out of zone)"
-						     " is a CNAME (illegal)",
-						     ownerbuf, namebuf);
+						     " is a CNAME '%s' "
+						     "(illegal)",
+						     ownerbuf, namebuf,
+						     cur->ai_canonname);
 					add(namebuf, ERR_IS_MXCNAME);
 				}
 				if (level == ISC_LOG_ERROR)
@@ -500,8 +503,9 @@ checksrv(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 				if (!logged(namebuf, ERR_IS_SRVCNAME)) {
 					dns_zone_log(zone, level, "%s/SRV '%s'"
 						     " (out of zone) is a "
-						     "CNAME (illegal)",
-						     ownerbuf, namebuf);
+						     "CNAME '%s' (illegal)",
+						     ownerbuf, namebuf,
+						     cur->ai_canonname);
 					add(namebuf, ERR_IS_SRVCNAME);
 				}
 				if (level == ISC_LOG_ERROR)
@@ -595,8 +599,7 @@ load_zone(isc_mem_t *mctx, const char *zonename, const char *filename,
 	isc_buffer_add(&buffer, strlen(zonename));
 	dns_fixedname_init(&fixorigin);
 	origin = dns_fixedname_name(&fixorigin);
-	CHECK(dns_name_fromtext(origin, &buffer, dns_rootname,
-				ISC_FALSE, NULL));
+	CHECK(dns_name_fromtext(origin, &buffer, dns_rootname, 0, NULL));
 	CHECK(dns_zone_setorigin(zone, origin));
 	CHECK(dns_zone_setdbtype(zone, 1, (const char * const *) dbtype));
 	CHECK(dns_zone_setfile2(zone, filename, fileformat));

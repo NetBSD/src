@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1606,7 +1606,7 @@ typedef struct dns_rdata_rrsig {
 
 #endif /* GENERIC_DNSSIG_46_H */
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1625,10 +1625,10 @@ typedef struct dns_rdata_rrsig {
 #ifndef GENERIC_NSEC_47_H
 #define GENERIC_NSEC_47_H 1
 
-/* Id: nsec_47.h,v 1.8 2007/06/19 23:47:17 tbox Exp */
+/* Id: nsec_47.h,v 1.10 2008/07/15 23:47:21 tbox Exp */
 
 /*!
- * \brief Per draft-ietf-dnsext-nsec-rdata-01.txt */
+ * \brief Per RFC 3845 */
 
 typedef struct dns_rdata_nsec {
 	dns_rdatacommon_t	common;
@@ -1706,6 +1706,184 @@ typedef struct dns_rdata_in_dhcid {
 } dns_rdata_in_dhcid_t;
 
 #endif /* IN_1_DHCID_49_H */
+/*
+ * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+
+#ifndef GENERIC_NSEC3_50_H
+#define GENERIC_NSEC3_50_H 1
+
+/* Id: nsec3_50.h,v 1.4 2008/09/25 04:02:39 tbox Exp */
+
+/*!
+ * \brief Per RFC 5155 */
+
+#include <isc/iterated_hash.h>
+
+typedef struct dns_rdata_nsec3 {
+	dns_rdatacommon_t	common;
+	isc_mem_t		*mctx;
+	dns_hash_t		hash;
+	unsigned char		flags;
+	dns_iterations_t	iterations;
+	unsigned char		salt_length;
+	unsigned char		next_length;
+	isc_uint16_t		len;
+	unsigned char		*salt;
+	unsigned char		*next;
+	unsigned char		*typebits;
+} dns_rdata_nsec3_t;
+
+/*
+ * The corresponding NSEC3 interval is OPTOUT indicating possible
+ * insecure delegations.
+ */
+#define DNS_NSEC3FLAG_OPTOUT 0x01U
+
+/*%
+ * Non-standard, NSEC3PARAM only.
+ *
+ * Create a corresponding NSEC3 chain.
+ * Once the NSEC3 chain is complete this flag will be removed to signal
+ * that there is a complete chain.
+ *
+ * This flag is automatically set when a NSEC3PARAM record is added to
+ * the zone via UPDATE.
+ *
+ * NSEC3PARAM records with this flag set are supposed to be ignored by
+ * RFC 5155 compliant nameservers.
+ */
+#define DNS_NSEC3FLAG_CREATE 0x80U
+
+/*%
+ * Non-standard, NSEC3PARAM only.
+ *
+ * The corresponding NSEC3 set is to be removed once the NSEC chain
+ * has been generated.
+ *
+ * This flag is automatically set when the last active NSEC3PARAM record
+ * is removed from the zone via UPDATE.
+ *
+ * NSEC3PARAM records with this flag set are supposed to be ignored by
+ * RFC 5155 compliant nameservers.
+ */
+#define DNS_NSEC3FLAG_REMOVE 0x40U
+
+/*%
+ * Non-standard, NSEC3PARAM only.
+ *
+ * Used to identify NSEC3PARAM records added in this UPDATE request.
+ */
+#define DNS_NSEC3FLAG_UPDATE 0x20U
+
+/*%
+ * Non-standard, NSEC3PARAM only.
+ *
+ * Prevent the creation of a NSEC chain before the last NSEC3 chain
+ * is removed.  This will normally only be set when the zone is
+ * transitioning from secure with NSEC3 chains to insecure.
+ */
+#define DNS_NSEC3FLAG_NONSEC 0x10U
+
+#endif /* GENERIC_NSEC3_50_H */
+/*
+ * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+
+#ifndef GENERIC_NSEC3PARAM_51_H
+#define GENERIC_NSEC3PARAM_51_H 1
+
+/* Id: nsec3param_51.h,v 1.4 2008/09/25 04:02:39 tbox Exp */
+
+/*!
+ * \brief Per RFC 5155 */
+
+#include <isc/iterated_hash.h>
+
+typedef struct dns_rdata_nsec3param {
+	dns_rdatacommon_t	common;
+	isc_mem_t		*mctx;
+	dns_hash_t		hash;
+	unsigned char		flags;		/* DNS_NSEC3FLAG_* */
+	dns_iterations_t	iterations;
+	unsigned char		salt_length;
+	unsigned char		*salt;
+} dns_rdata_nsec3param_t;
+
+#endif /* GENERIC_NSEC3PARAM_51_H */
+/*
+ * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/* Id: hip_55.h,v 1.2 2009/02/26 06:09:19 marka Exp */
+
+#ifndef GENERIC_HIP_5_H
+#define GENERIC_HIP_5_H 1
+
+/* RFC 5205 */
+
+typedef struct dns_rdata_hip {
+	dns_rdatacommon_t	common;
+	isc_mem_t *		mctx;
+	unsigned char *		hit;
+	unsigned char *		key;
+	unsigned char *		servers;
+	isc_uint8_t		algorithm;
+	isc_uint8_t		hit_len;
+	isc_uint16_t		key_len;
+	isc_uint16_t		servers_len;
+	/* Private */
+	isc_uint16_t		offset;
+} dns_rdata_hip_t;
+
+isc_result_t
+dns_rdata_hip_first(dns_rdata_hip_t *);
+
+isc_result_t
+dns_rdata_hip_next(dns_rdata_hip_t *);
+
+void
+dns_rdata_hip_current(dns_rdata_hip_t *, dns_name_t *);
+
+#endif /* GENERIC_HIP_5_H */
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -1900,6 +2078,41 @@ typedef struct dns_rdata_dlv {
 } dns_rdata_dlv_t;
 
 #endif /* GENERIC_DLV_32769_H */
+/*
+ * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef GENERIC_KEYDATA_65533_H
+#define GENERIC_KEYDATA_65533_H 1
+
+/* Id: keydata_65533.h,v 1.2 2009/06/30 02:52:32 each Exp */
+
+typedef struct dns_rdata_keydata {
+	dns_rdatacommon_t	common;
+	isc_mem_t *		mctx;
+	isc_uint32_t		refresh;      /* Timer for refreshing data */
+	isc_uint32_t		addhd;	      /* Hold-down timer for adding */
+	isc_uint32_t		removehd;     /* Hold-down timer for removing */
+	isc_uint16_t		flags;	      /* Copy of DNSKEY_48 */
+	isc_uint8_t		protocol;
+	isc_uint8_t		algorithm;
+	isc_uint16_t		datalen;
+	unsigned char *		data;
+} dns_rdata_keydata_t;
+
+#endif /* GENERIC_KEYDATA_65533_H */
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.

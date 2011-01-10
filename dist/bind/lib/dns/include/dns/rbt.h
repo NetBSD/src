@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt.h,v 1.1.1.5.8.1 2009/12/03 17:31:31 snj Exp $	*/
+/*	$NetBSD: rbt.h,v 1.1.1.5.8.2 2011/01/10 00:39:47 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.h,v 1.69.36.2 2009/01/19 23:47:03 tbox Exp */
+/* Id: rbt.h,v 1.77 2009/11/04 01:18:19 marka Exp */
 
 #ifndef DNS_RBT_H
 #define DNS_RBT_H 1
@@ -72,6 +72,12 @@ ISC_LANG_BEGINDECLS
  * multiple dns_rbtnode structures will not work.
  */
 typedef struct dns_rbtnode dns_rbtnode_t;
+enum {
+	DNS_RBT_NSEC_NORMAL=0,      /* in main tree */
+	DNS_RBT_NSEC_HAS_NSEC=1,    /* also has node in nsec tree */
+	DNS_RBT_NSEC_NSEC=2,        /* in nsec tree */
+	DNS_RBT_NSEC_NSEC3=3        /* in nsec3 tree */
+};
 struct dns_rbtnode {
 #if DNS_RBT_USEMAGIC
 	unsigned int magic;
@@ -96,10 +102,7 @@ struct dns_rbtnode {
 	 * The following bitfields add up to a total bitwidth of 32.
 	 * The range of values necessary for each item is indicated,
 	 * but in the case of "attributes" the field is wider to accommodate
-	 * possible future expansion.  "offsetlen" could be one bit
-	 * narrower by always adjusting its value by 1 to find the real
-	 * offsetlen, but doing so does not gain anything (except perhaps
-	 * another bit for "attributes", which doesn't yet need any more).
+	 * possible future expansion.
 	 *
 	 * In each case below the "range" indicated is what's _necessary_ for
 	 * the bitfield to hold, not what it actually _can_ hold.
@@ -107,10 +110,11 @@ struct dns_rbtnode {
 	unsigned int is_root : 1;       /*%< range is 0..1 */
 	unsigned int color : 1;         /*%< range is 0..1 */
 	unsigned int find_callback : 1; /*%< range is 0..1 */
-	unsigned int attributes : 4;    /*%< range is 0..2 */
+	unsigned int attributes : 3;    /*%< range is 0..2 */
+	unsigned int nsec : 2;          /*%< range is 0..3 */
 	unsigned int namelen : 8;       /*%< range is 1..255 */
 	unsigned int offsetlen : 8;     /*%< range is 1..128 */
-	unsigned int padbytes : 9;      /*%< range is 0..380 */
+	unsigned int oldnamelen : 8;    /*%< range is 1..255 */
 	/*@}*/
 
 #ifdef DNS_RBT_USEHASH
@@ -865,6 +869,19 @@ dns_rbtnodechain_next(dns_rbtnodechain_t *chain, dns_name_t *name,
  *\li   &lt;something_else>     Any error result from dns_name_concatenate.
  */
 
+isc_result_t
+dns_rbtnodechain_down(dns_rbtnodechain_t *chain, dns_name_t *name,
+		      dns_name_t *origin);
+/*%<
+ * Descend down if possible.
+ */
+
+isc_result_t
+dns_rbtnodechain_nextflat(dns_rbtnodechain_t *chain, dns_name_t *name);
+/*%<
+ * Find the next node at the current depth in DNSSEC order.
+ */
+
 /*
  * Wrapper macros for manipulating the rbtnode reference counter:
  *   Since we selectively use isc_refcount_t for the reference counter of
@@ -897,7 +914,7 @@ dns_rbtnodechain_next(dns_rbtnodechain_t *chain, dns_name_t *name,
 	} while (0)
 #else  /* DNS_RBT_USEISCREFCOUNT */
 #define dns_rbtnode_refinit(node, n)    ((node)->references = (n))
-#define dns_rbtnode_refdestroy(node)    (REQUIRE((node)->references == 0))
+#define dns_rbtnode_refdestroy(node)    REQUIRE((node)->references == 0)
 #define dns_rbtnode_refcurrent(node)    ((node)->references)
 #define dns_rbtnode_refincrement0(node, refs)                   \
 	do {                                                    \

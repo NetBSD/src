@@ -1,7 +1,7 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.90.60.8 2008/05/06 01:32:51 each Exp */
+/* Id: config.h.in,v 1.122.32.11 2010/08/16 05:14:58 marka Exp */
 
 /*! \file */
 
@@ -25,9 +25,6 @@
  *** This file is not to be included by any public header files, because
  *** it does not get installed.
  ***/
-
-/** define to `int' if <sys/types.h> doesn't define.  */
-/* #undef ssize_t */
 
 /** define on DEC OSF to enable 4.4BSD style sa_len support */
 /* #undef _SOCKADDR_LEN */
@@ -68,9 +65,6 @@
 
 /** define if you have the NET_RT_IFLIST sysctl variable and sys/sysctl.h */
 #define HAVE_IFLIST_SYSCTL 1
-
-/** define if chroot() is available */
-#define HAVE_CHROOT 1
 
 /** define if tzset() is available */
 #define HAVE_TZSET 1
@@ -125,7 +119,7 @@ int sigwait(const unsigned int *set, int *sig);
  * The silly continuation line is to keep configure from
  * commenting out the #undef.
  */
- 
+
 #undef \
 	va_start
 #define	va_start(ap, last) \
@@ -160,6 +154,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if threads need PTHREAD_SCOPE_SYSTEM */
 /* #undef NEED_PTHREAD_SCOPE_SYSTEM */
 
+/* Define to enable the "filter-aaaa-on-v4" option. */
+/* #undef ALLOW_FILTER_AAAA_ON_V4 */
+
 /* Define if recvmsg() does not meet all of the BSD socket API specifications.
    */
 /* #undef BROKEN_RECVMSG */
@@ -170,8 +167,29 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to enable "rrset-order fixed" syntax. */
 #define DNS_RDATASET_FIXED 1
 
+/* Solaris hack to get select_large_fdset. */
+/* #undef FD_SETSIZE */
+
+/* Define to nothing if C supports flexible array members, and to 1 if it does
+   not. That way, with a declaration like `struct s { int n; double
+   d[FLEXIBLE_ARRAY_MEMBER]; };', the struct hack can be used with pre-C99
+   compilers. When computing the size of such an object, don't use 'sizeof
+   (struct s)' as it overestimates the size. Use 'offsetof (struct s, d)'
+   instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
+   MSVC and with C++ compilers. */
+#define FLEXIBLE_ARRAY_MEMBER /**/
+
+/* Define to 1 if you have the `chroot' function. */
+#define HAVE_CHROOT 1
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
+
+/* Define to 1 if you have the `EVP_sha256' function. */
+#define HAVE_EVP_SHA256 1
+
+/* Define to 1 if you have the `EVP_sha512' function. */
+#define HAVE_EVP_SHA512 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -185,11 +203,23 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the <kerberosv5/krb5.h> header file. */
+/* #undef HAVE_KERBEROSV5_KRB5_H */
+
+/* Define to 1 if you have the <krb5.h> header file. */
+/* #undef HAVE_KRB5_H */
+
+/* Define to 1 if you have the <krb5/krb5.h> header file. */
+#define HAVE_KRB5_KRB5_H 1
+
 /* Define to 1 if you have the `c' library (-lc). */
 /* #undef HAVE_LIBC */
 
 /* Define to 1 if you have the `cap' library (-lcap). */
 /* #undef HAVE_LIBCAP */
+
+/* if system have backtrace function */
+/* #undef HAVE_LIBCTRACE */
 
 /* Define to 1 if you have the `c_r' library (-lc_r). */
 /* #undef HAVE_LIBC_R */
@@ -221,11 +251,29 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Define to 1 if you have the `nanosleep' function. */
+#define HAVE_NANOSLEEP 1
+
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
 
+/* Define to 1 if you have the <regex.h> header file. */
+#define HAVE_REGEX_H 1
+
+/* Define to 1 if you have the `setegid' function. */
+#define HAVE_SETEGID 1
+
+/* Define to 1 if you have the `seteuid' function. */
+#define HAVE_SETEUID 1
+
 /* Define to 1 if you have the `setlocale' function. */
 #define HAVE_SETLOCALE 1
+
+/* Define to 1 if you have the `setresgid' function. */
+/* #undef HAVE_SETRESGID */
+
+/* Define to 1 if you have the `setresuid' function. */
+/* #undef HAVE_SETRESUID */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -241,6 +289,12 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <sys/capability.h> header file. */
 /* #undef HAVE_SYS_CAPABILITY_H */
+
+/* Define to 1 if you have the <sys/devpoll.h> header file. */
+/* #undef HAVE_SYS_DEVPOLL_H */
+
+/* Define to 1 if you have the <sys/dyntune.h> header file. */
+/* #undef HAVE_SYS_DYNTUNE_H */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
@@ -274,6 +328,15 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* return type of gai_strerror */
+#define IRS_GAISTRERROR_RETURN_T const char *
+
+/* Define to the buffer length type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_BUFLEN_T socklen_t
+
+/* Define to the flags type used by getnameinfo(3). */
+#define IRS_GETNAMEINFO_FLAGS_T int
 
 /* Defined if extern char *optarg is not declared. */
 /* #undef NEED_OPTARG */
@@ -314,8 +377,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* define if idnkit support is to be included. */
 /* #undef WITH_IDN */
 
-/* Define to 1 if your processor stores words with the most significant byte
-   first (like Motorola and SPARC, unlike Intel and VAX). */
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel and VAX). */
 #include <sys/endian.h>
 #if _BYTE_ORDER == _BIG_ENDIAN
 #define WORDS_BIGENDIAN
@@ -327,7 +390,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
-/* #undef inline */
+/* #define inline */
 #endif
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */

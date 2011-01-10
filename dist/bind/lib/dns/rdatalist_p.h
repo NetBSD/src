@@ -1,7 +1,7 @@
-/*	$NetBSD: rdatalist_p.h,v 1.1.1.5 2008/06/21 18:31:44 christos Exp $	*/
+/*	$NetBSD: rdatalist_p.h,v 1.1.1.5.8.1 2011/01/10 00:39:42 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatalist_p.h,v 1.9 2007/06/19 23:47:16 tbox Exp */
+/* Id: rdatalist_p.h,v 1.11 2008/09/25 04:02:38 tbox Exp */
 
 #ifndef DNS_RDATALIST_P_H
 #define DNS_RDATALIST_P_H
@@ -52,7 +52,14 @@ isc__rdatalist_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name);
 
 isc_result_t
 isc__rdatalist_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-			  dns_rdataset_t *nsec, dns_rdataset_t *nsecsig);
+			  dns_rdataset_t *neg, dns_rdataset_t *negsig);
+
+isc_result_t
+isc__rdatalist_addclosest(dns_rdataset_t *rdataset, dns_name_t *name);
+
+isc_result_t
+isc__rdatalist_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
+			  dns_rdataset_t *neg, dns_rdataset_t *negsig);
 
 ISC_LANG_ENDDECLS
 

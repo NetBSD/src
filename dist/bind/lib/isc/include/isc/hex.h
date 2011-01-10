@@ -1,7 +1,7 @@
-/*	$NetBSD: hex.h,v 1.1.1.5 2008/06/21 18:31:19 christos Exp $	*/
+/*	$NetBSD: hex.h,v 1.1.1.5.8.1 2011/01/10 00:40:13 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hex.h,v 1.11 2007/06/19 23:47:18 tbox Exp */
+/* Id: hex.h,v 1.13 2008/09/25 04:02:39 tbox Exp */
 
 #ifndef ISC_HEX_H
 #define ISC_HEX_H 1
@@ -58,7 +58,7 @@ isc_hex_totext(isc_region_t *source, int wordlength,
  */
 
 isc_result_t
-isc_hex_decodestring(char *cstr, isc_buffer_t *target);
+isc_hex_decodestring(const char *cstr, isc_buffer_t *target);
 /*!<
  * \brief Decode a null-terminated hex string.
  *

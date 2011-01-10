@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.60 2008/06/21 20:12:49 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.60.10.1 2011/01/10 00:42:15 riz Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -84,7 +84,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.21.288.1 2008/02/28 05:46:12 marka Exp
+ *	Id: netdb.h,v 1.22 2008/02/28 05:34:17 marka Exp
  */
 
 #ifndef _NETDB_H_
@@ -125,6 +125,9 @@ typedef _BSD_SIZE_T_	size_t;
 #ifndef _PATH_SERVICES
 #define	_PATH_SERVICES	"/etc/services"
 #endif
+#ifndef _PATH_SERVICES_CDB
+#define	_PATH_SERVICES_CDB "/var/db/services.cdb"
+#endif
 #ifndef _PATH_SERVICES_DB
 #define	_PATH_SERVICES_DB "/var/db/services.db"
 #endif
@@ -132,7 +135,7 @@ typedef _BSD_SIZE_T_	size_t;
 
 __BEGIN_DECLS
 extern int h_errno;
-extern int * __h_errno __P((void));
+extern int * __h_errno(void);
 #ifdef _REENTRANT
 #define	h_errno (*__h_errno())
 #endif
@@ -334,19 +337,19 @@ void		sethostent(int);
 #endif
 void		setnetent(int);
 void		setprotoent(int);
+void		setservent(int);
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)
-void		setservent(int);
 int		getaddrinfo(const char * __restrict, const char * __restrict,
 				 const struct addrinfo * __restrict,
 				 struct addrinfo ** __restrict);
 int		getnameinfo(const struct sockaddr * __restrict, socklen_t,
 				 char * __restrict, socklen_t,
 				 char * __restrict, socklen_t, int);
+struct addrinfo *allocaddrinfo(socklen_t);
 void		freeaddrinfo(struct addrinfo *);
 const char	*gai_strerror(int);
 #endif
-void		setservent(int);
 __END_DECLS
 
 #endif /* !_NETDB_H_ */

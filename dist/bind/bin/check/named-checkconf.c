@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.5.8.1 2009/12/03 17:31:14 snj Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.1.1.5.8.2 2011/01/10 00:37:04 riz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkconf.c,v 1.46.18.2 2009/02/16 23:46:44 tbox Exp */
+/* Id: named-checkconf.c,v 1.51.4.2 2010/03/09 23:49:55 tbox Exp */
 
 /*! \file */
 
@@ -61,9 +61,12 @@ isc_log_t *logc = NULL;
 	} while (0)
 
 /*% usage */
+ISC_PLATFORM_NORETURN_PRE static void
+usage(void) ISC_PLATFORM_NORETURN_POST;
+
 static void
 usage(void) {
-	fprintf(stderr, "usage: %s [-h] [-j] [-v] [-z] [-t directory] "
+	fprintf(stderr, "usage: %s [-h] [-j] [-p] [-v] [-z] [-t directory] "
 		"[named.conf]\n", program);
 	exit(1);
 }
@@ -203,6 +206,24 @@ configure_zone(const char *vclass, const char *view,
 	if (fileobj == NULL)
 		return (ISC_R_FAILURE);
 	zfile = cfg_obj_asstring(fileobj);
+
+	obj = NULL;
+	if (get_maps(maps, "check-dup-records", &obj)) {
+		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
+			zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "fail") == 0) {
+			zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+			zone_options |= DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRR;
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else
+			INSIST(0);
+	} else {
+		zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+		zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+	}
 
 	obj = NULL;
 	if (get_maps(maps, "check-mx", &obj)) {
@@ -389,6 +410,15 @@ load_zones_fromconfig(const cfg_obj_t *config, isc_mem_t *mctx) {
 	return (result);
 }
 
+static void
+output(void *closure, const char *text, int textlen) {
+	UNUSED(closure);
+	if (fwrite(text, 1, textlen, stdout) != (size_t)textlen) {
+		perror("fwrite");
+		exit(1);
+	}
+}
+
 /*% The main processing routine */
 int
 main(int argc, char **argv) {
@@ -401,10 +431,11 @@ main(int argc, char **argv) {
 	int exit_status = 0;
 	isc_entropy_t *ectx = NULL;
 	isc_boolean_t load_zones = ISC_FALSE;
+	isc_boolean_t print = ISC_FALSE;
 
 	isc_commandline_errprint = ISC_FALSE;
 
-	while ((c = isc_commandline_parse(argc, argv, "dhjt:vz")) != EOF) {
+	while ((c = isc_commandline_parse(argc, argv, "dhjt:pvz")) != EOF) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -421,6 +452,10 @@ main(int argc, char **argv) {
 					isc_result_totext(result));
 				exit(1);
 			}
+			break;
+
+		case 'p':
+			print = ISC_TRUE;
 			break;
 
 		case 'v':
@@ -483,6 +518,8 @@ main(int argc, char **argv) {
 			exit_status = 1;
 	}
 
+	if (print && exit_status == 0)
+		cfg_print(config, output, NULL);
 	cfg_obj_destroy(parser, &config);
 
 	cfg_parser_destroy(&parser);

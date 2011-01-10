@@ -1,7 +1,7 @@
-/*	$NetBSD: dir.c,v 1.1.1.5.8.1 2009/12/03 17:31:39 snj Exp $	*/
+/*	$NetBSD: dir.c,v 1.1.1.5.8.2 2011/01/10 00:40:17 riz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dir.c,v 1.25.128.3 2009/02/16 23:46:44 tbox Exp */
+/* Id: dir.c,v 1.29 2009/02/16 23:48:04 tbox Exp */
 
 /*! \file
  * \author  Principal Authors: DCL */

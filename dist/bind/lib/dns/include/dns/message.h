@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.1.1.5.8.1 2009/12/03 17:31:31 snj Exp $	*/
+/*	$NetBSD: message.h,v 1.1.1.5.8.2 2011/01/10 00:39:46 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.h,v 1.123.128.4 2009/01/19 23:47:03 tbox Exp */
+/* Id: message.h,v 1.130 2009/10/26 23:47:35 tbox Exp */
 
 #ifndef DNS_MESSAGE_H
 #define DNS_MESSAGE_H 1
@@ -83,8 +83,7 @@
  *	name = NULL;
  *	name = dns_message_gettempname(message, &name);
  *	dns_name_init(name, NULL);
- *	result = dns_name_fromtext(name, &source, dns_rootname, ISC_FALSE,
- *				   buffer);
+ *	result = dns_name_fromtext(name, &source, dns_rootname, 0, buffer);
  *	dns_message_takebuffer(message, &buffer);
  * \endcode
  *
@@ -176,6 +175,9 @@ typedef int dns_messagetextflag_t;
 						      additional section. */
 #define DNS_MESSAGERENDER_PREFER_AAAA	0x0010	/*%< prefer AAAA records in
 						  additional section. */
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+#define DNS_MESSAGERENDER_FILTER_AAAA	0x0020	/*%< filter AAAA records */
+#endif
 
 typedef struct dns_msgblock dns_msgblock_t;
 

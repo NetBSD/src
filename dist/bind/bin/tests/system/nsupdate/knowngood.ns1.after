@@ -52,7 +52,7 @@ mr02.example.nil.	3600	IN	MR	.
 mx01.example.nil.	3600	IN	MX	10 mail.example.nil.
 mx02.example.nil.	3600	IN	MX	10 .
 naptr01.example.nil.	3600	IN	NAPTR	0 0 "" "" "" .
-naptr02.example.nil.	3600	IN	NAPTR	65535 65535 "blurgh" "blorf" "blegh" foo.
+naptr02.example.nil.	3600	IN	NAPTR	65535 65535 "blurgh" "blorf" "blllbb" foo.
 ns1.example.nil.	300	IN	A	10.53.0.1
 ns2.example.nil.	300	IN	A	10.53.0.2
 nsap-ptr01.example.nil.	3600	IN	NSAP-PTR .

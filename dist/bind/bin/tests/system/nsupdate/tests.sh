@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,12 +15,30 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.25 2007/06/19 23:47:04 tbox Exp
+# Id: tests.sh,v 1.28 2009/09/04 17:14:58 each Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
+
+# wait for zone transfer to complete
+tries=0
+while true; do
+    if [ $tries -eq 10 ]
+    then
+        exit 1
+    fi
+
+    if grep "example.nil/IN.*Transfer completed" ns2/named.run > /dev/null
+    then
+        break
+    else
+        echo "I:zones are not fully loaded, waiting..."
+        tries=`expr $tries + 1`
+        sleep 1
+    fi
+done
 
 echo "I:fetching first copy of zone before update"
 $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
@@ -28,7 +46,7 @@ $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
 
 echo "I:fetching second copy of zone before update"
 $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
-	@10.53.0.1 axfr -p 5300 > dig.out.ns2 || status=1
+	@10.53.0.2 axfr -p 5300 > dig.out.ns2 || status=1
 
 echo "I:comparing pre-update copies to known good data"
 $PERL ../digcomp.pl knowngood.ns1.before dig.out.ns1 || status=1
@@ -36,7 +54,7 @@ $PERL ../digcomp.pl knowngood.ns1.before dig.out.ns2 || status=1
 
 echo "I:updating zone"
 # nsupdate will print a ">" prompt to stdout as it gets each input line.
-$NSUPDATE <<END > /dev/null || status=1
+$NSUPDATE -k ns1/ddns.key <<END > /dev/null || status=1
 server 10.53.0.1 5300
 update add updated.example.nil. 600 A 10.10.10.1
 update add updated.example.nil. 600 TXT Foo
@@ -57,6 +75,28 @@ $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
 echo "I:comparing post-update copies to known good data"
 $PERL ../digcomp.pl knowngood.ns1.after dig.out.ns1 || status=1
 $PERL ../digcomp.pl knowngood.ns1.after dig.out.ns2 || status=1
+
+echo "I:testing local update policy"
+pre=`$DIG +short new.other.nil. @10.53.0.1 a -p 5300` || status=1
+[ -z "$pre" ] || status=1
+
+echo "I:updating zone"
+# nsupdate will print a ">" prompt to stdout as it gets each input line.
+$NSUPDATE -l -p 5300 -k ns1/session.key > /dev/null <<END || status=1
+zone other.nil.
+update add new.other.nil. 600 IN A 10.10.10.1
+send
+END
+
+echo "I:sleeping 5 seconds for server to incorporate changes"
+sleep 5
+
+echo "I:checking result of update"
+post=`$DIG +short new.other.nil. @10.53.0.1 a -p 5300` || status=1
+[ "$post" = "10.10.10.1" ] || status=1
+
+echo "I:comparing post-update copy to known good data"
+$PERL ../digcomp.pl knowngood.ns1.after dig.out.ns1 || status=1
 
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then
@@ -103,7 +143,7 @@ $PERL ../digcomp.pl dig.out.ns1 dig.out.ns1.after || status=1
 echo "I:begin RT #482 regression test"
 
 echo "I:update master"
-$NSUPDATE <<END > /dev/null || status=1
+$NSUPDATE -k ns1/ddns.key <<END > /dev/null || status=1
 server 10.53.0.1 5300
 update add updated2.example.nil. 600 A 10.10.10.2
 update add updated2.example.nil. 600 TXT Bar
@@ -119,7 +159,7 @@ kill -HUP `cat ns2/named.pid`
 sleep 5
 
 echo "I:update master again"
-$NSUPDATE <<END > /dev/null || status=1
+$NSUPDATE -k ns1/ddns.key <<END > /dev/null || status=1
 server 10.53.0.1 5300
 update add updated3.example.nil. 600 A 10.10.10.3
 update add updated3.example.nil. 600 TXT Zap
@@ -142,7 +182,7 @@ fi
 echo "I:end RT #482 regression test"
 
 echo "I:testing that rndc stop updates the master file"
-$NSUPDATE <<END > /dev/null || status=1
+$NSUPDATE -k ns1/ddns.key <<END > /dev/null || status=1
 server 10.53.0.1 5300
 update add updated4.example.nil. 600 A 10.10.10.3
 send
