@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.43 2010/12/11 18:25:02 matt Exp $	*/
+/*	$NetBSD: ppb.c,v 1.44 2011/01/10 12:23:21 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.43 2010/12/11 18:25:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.44 2011/01/10 12:23:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.43 2010/12/11 18:25:02 matt Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/ppbreg.h>
 #include <dev/pci/pcidevs.h>
+
+#define	PCI_PCIE_SLCSR_NOTIFY_MASK					\
+	(PCI_PCIE_SLCSR_ABE | PCI_PCIE_SLCSR_PFE | PCI_PCIE_SLCSR_MSE |	\
+	 PCI_PCIE_SLCSR_PDE | PCI_PCIE_SLCSR_CCE | PCI_PCIE_SLCSR_HPE)
 
 struct ppb_softc {
 	device_t sc_dev;		/* generic device glue */
@@ -83,7 +87,7 @@ ppbmatch(device_t parent, cfdata_t match, void *aux)
 }
 
 static void
-ppb_fix_pcix(device_t self)
+ppb_fix_pcie(device_t self)
 {
 	struct ppb_softc *sc = device_private(self);
 	pcireg_t reg;
@@ -93,15 +97,54 @@ ppb_fix_pcix(device_t self)
 				&off, &reg))
 		return; /* Not a PCIe device */
 
-	if ((reg & 0x000f0000) != 0x00010000) {
-		aprint_normal_dev(self, "unsupported PCI Express version\n");
+	aprint_normal_dev(self, "PCI Express ");
+	switch (reg & PCI_PCIE_XCAP_VER_MASK) {
+	case PCI_PCIE_XCAP_VER_1_0:
+		aprint_normal("1.0");
+	case PCI_PCIE_XCAP_VER_2_0:
+		aprint_normal("2.0");
+		break;
+	default:
+		aprint_normal_dev(self, "version unsupported (0x%x)\n",
+		    (reg & PCI_PCIE_XCAP_VER_MASK) >> 16);
 		return;
 	}
-	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + 0x18);
-	if (reg & 0x003f) {
-		aprint_normal_dev(self, "disabling notification events\n");
-		reg &= ~0x003f;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, off + 0x18, reg);
+	aprint_normal(" <");
+	switch (reg & PCI_PCIE_XCAP_TYPE_MASK) {
+	case PCI_PCIE_XCAP_TYPE_PCIE_DEV:
+		aprint_normal("PCI-E Endpoint device");
+		break;
+	case PCI_PCIE_XCAP_TYPE_PCI_DEV:
+		aprint_normal("Legacy PCI-E Endpoint device");
+		break;
+	case PCI_PCIE_XCAP_TYPE_ROOT:
+		aprint_normal("Root Port of PCI-E Root Complex");
+		break;
+	case PCI_PCIE_XCAP_TYPE_UP:
+		aprint_normal("Upstream Port of PCI-E Switch");
+		break;
+	case PCI_PCIE_XCAP_TYPE_DOWN:
+		aprint_normal("Downstream Port of PCI-E Switch");
+		break;
+	case PCI_PCIE_XCAP_TYPE_PCIE2PCI:
+		aprint_normal("PCI-E to PCI/PCI-X Bridge");
+		break;
+	case PCI_PCIE_XCAP_TYPE_PCI2PCIE:
+		aprint_normal("PCI/PCI-X to PCI-E Bridge");
+		break;
+	default:
+		aprint_normal("Device/Port Type 0x%x",
+		    (reg & PCI_PCIE_XCAP_TYPE_MASK) >> 20);
+		break;
+	}
+	aprint_normal(">\n");
+
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + PCI_PCIE_SLCSR);
+	if (reg & PCI_PCIE_SLCSR_NOTIFY_MASK) {
+		aprint_debug_dev(self, "disabling notification events\n");
+		reg &= ~PCI_PCIE_SLCSR_NOTIFY_MASK;
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    off + PCI_PCIE_SLCSR, reg);
 	}
 }
 
@@ -131,7 +174,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ppb_fix_pcix(self);
+	ppb_fix_pcie(self);
 
 #if 0
 	/*
@@ -193,7 +236,7 @@ ppb_resume(device_t dv, const pmf_qual_t *qual)
 			    sc->sc_pciconfext[(off - 0x40)/4]);
 	}
 
-	ppb_fix_pcix(dv);
+	ppb_fix_pcie(dv);
 
 	return true;
 }
