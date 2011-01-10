@@ -1,4 +1,4 @@
-.\" $NetBSD: sigqueue.2,v 1.1 2011/01/10 04:41:27 christos Exp $
+.\" $NetBSD: sigqueue.2,v 1.2 2011/01/10 06:26:30 wiz Exp $
 .\" Copyright (c) 2005 David Xu <davidxu@FreeBSD.org>
 .\" All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm sigqueue
-.Nd "queue a signal to a process (REALTIME)"
+.Nd queue a signal to a process (REALTIME)
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -119,18 +119,17 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
 No resources are available to queue the signal.
-The process has already
-queued
+The process has already queued
 .Brq Dv SIGQUEUE_MAX
 signals that are still pending at the receiver(s),
 or a system-wide resource limit has been exceeded.
+.It Bq Er EEPERM
+The process does not have the appropriate privilege to send the signal
+to the receiving process.
 .It Bq Er EINVAL
 The value of the
 .Fa signo
 argument is an invalid or unsupported signal number.
-.It Bq Er EEPERM
-The process does not have the appropriate privilege to send the signal
-to the receiving process.
 .It Bq Er ESRCH
 The process
 .Fa pid
@@ -138,20 +137,19 @@ does not exist.
 .El
 .Sh SEE ALSO
 .Xr sigaction 2 ,
+.Xr siginfo 2 ,
 .Xr sigpending 2 ,
-.Xr sigqueue 2 ,
 .Xr sigsuspend 2 ,
 .Xr sigtimedwait 2 ,
 .Xr sigwait 2 ,
 .Xr sigwaitinfo 2 ,
 .Xr pause 3 ,
-.Xr pthread_sigmask 3 ,
-.Xr siginfo 3
+.Xr pthread_sigmask 3
 .Sh STANDARDS
 The
 .Fn sigqueue
 system call conforms to
-.St -p1003.1-2004
+.St -p1003.1-2004 .
 .Sh HISTORY
 Support for
 .Tn POSIX
