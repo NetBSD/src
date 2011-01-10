@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.23 2011/01/09 04:59:00 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.24 2011/01/10 17:04:55 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.31 2011/01/09 04:58:34 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.33 2011/01/10 17:04:22 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1353,12 +1353,12 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Intel Trusted Platform Module",
 	},
 	{
-	    "INTC0102",
-	    "Intel Trusted Platform Module",
-	},
-	{
 	    "IFX0102",
 	    "Infineon Trusted Platform Module",
+	},
+	{
+	    "INTC0102",
+	    "Intel Trusted Platform Module",
 	},
 	{
 	    "NSC1100",
@@ -1371,6 +1371,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0C31",
 	    "Trusted Platform Module",
+	},
+	{
+	    "SMO1200",
+	    "STMicroelectronics Trusted Platform Module",
 	},
 	{
 	    "ACPI0001",
