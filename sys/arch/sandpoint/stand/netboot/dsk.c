@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.5 2010/08/08 11:58:26 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.6 2011/01/10 20:18:19 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -142,11 +142,23 @@ spinwait_unbusy(struct dkdev_ata *l, int n, int milli, const char **err)
 	int sts;
 	const char *msg;
 
+	/*
+	 * For best compatibility it is recommended to wait 400ns and
+	 * read the alternate status byte four times before the status
+	 * is valid.
+	 */
+	delay(1);
+	(void)CSR_READ_1(chan->alt);
+	(void)CSR_READ_1(chan->alt);
+	(void)CSR_READ_1(chan->alt);
+	(void)CSR_READ_1(chan->alt);
+
 	sts = CSR_READ_1(chan->cmd + _STS);
 	while (milli-- > 0 && sts != 0xff && (sts & ATA_STS_BUSY)) {
 		delay(1000);
 		sts = CSR_READ_1(chan->cmd + _STS);
 	}
+
 	msg = NULL;
 	if (sts == 0xff)
 		msg = "returned 0xff";
@@ -157,7 +169,7 @@ spinwait_unbusy(struct dkdev_ata *l, int n, int milli, const char **err)
 
 	if (err != NULL)
 		*err = msg;
-	return (msg == NULL);
+	return msg == NULL;
 }
 
 int
