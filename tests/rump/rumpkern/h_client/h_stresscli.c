@@ -1,4 +1,4 @@
-/*	$NetBSD: h_stresscli.c,v 1.2 2011/01/06 06:59:25 pooka Exp $	*/
+/*	$NetBSD: h_stresscli.c,v 1.3 2011/01/10 14:05:03 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -22,8 +22,6 @@ static void
 signaali(int sig)
 {
 
-	membar_consumer();
-	printf("process did %d syscalls\n", syscalls);
 	_exit(0);
 }
 
