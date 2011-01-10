@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.S,v 1.7 2011/01/07 14:50:27 tsutsui Exp $	*/
+/*	$NetBSD: startprog.S,v 1.8 2011/01/10 15:25:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,9 +64,9 @@ LEAF(startprog)
 	sw	$8,16(sp)		# save on stack for O32
 	sw	$9,20(sp)		# save on stack for O32
 	jal	ra,t9
-	nop				# BDslot
+	 nop				# BDslot
 
 	lw	ra,CALLFRAME_RA(sp)	# should not get back here!
 	j	ra
-	addu	sp,sp,CALLFRAME_SIZ
+	 addu	sp,sp,CALLFRAME_SIZ
 END(startprog)
