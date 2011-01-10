@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.20 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: start.S,v 1.21 2011/01/10 15:25:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,20 +98,20 @@ start:
 	move	s0, a0				# save argc
 	move	s1, a1				# save argv
 	beq	a2, DEC_REX_MAGIC, 1f		# jump if boot from DS5000
-	move	s3, a3				# BDslot: save call vector
+	 move	s3, a3				# BDslot: save call vector
 	la	s3, _C_LABEL(callvec)		# init call vector
 1:
 	la	a0, _C_LABEL (edata)		# clear BSS
 	move	a1, zero
 	la	a2, _C_LABEL (end)
 	jal	_C_LABEL(memset)		# memset(edata, 0, end - edata)
-	subu	a2, a2, a0
+	 subu	a2, a2, a0
 	sw	s3, _C_LABEL(callv)		# save call vector
 	move	a0, s0				# restore argc
 	jal	_C_LABEL(main)			# main(argc, argv)
-	move	a1, s1				# restore argv
+	 move	a1, s1				# restore argv
 	j	_C_LABEL(prom_restart)		# restart...
-	nop
+	 nop
 
 LEAF(prom_restart)
 XLEAF(_rtt)
@@ -119,37 +119,37 @@ XLEAF(_rtt)
 	lw	v0, 0x9C(v0)			/* halt */
 	move	a0, zero			/* Don't print anything. */
 	j	v0
-	move	a1, zero
+	 move	a1, zero
 END(prom_restart)
 
 LEAF(prom_open)
 	li	v0, DEC_PROM_OPEN
 	j	v0
-	nop
+	 nop
 END(prom_open)
 
 #ifndef LIBSA_NO_DEV_CLOSE
 LEAF(prom_close)
 	li	v0, DEC_PROM_CLOSE
 	j	v0
-	nop
+	 nop
 END(prom_close)
 #endif
 
 LEAF(prom_lseek)
 	li	v0, DEC_PROM_LSEEK
 	j	v0
-	nop
+	 nop
 END(prom_lseek)
 
 LEAF(prom_read)
 	li	v0, DEC_PROM_READ
 	j	v0
-	nop
+	 nop
 END(prom_read)
 
 LEAF(prom_write)
 	li	v0, DEC_PROM_WRITE
 	j	v0
-	nop
+	 nop
 END(prom_write)
