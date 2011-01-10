@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.30 2010/11/13 13:52:00 uebayasi Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.31 2011/01/10 11:18:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.30 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.31 2011/01/10 11:18:14 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -769,7 +769,8 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	AHCIDEBUG_PRINT(("%s port %d header %p\n", AHCINAME(sc),
 	    chp->ch_channel, cmd_h), DEBUG_XFERS);
 	if (ahci_dma_setup(chp, slot,
-	    (ata_c->flags & (AT_READ|AT_WRITE)) ? ata_c->data : NULL,
+	    (ata_c->flags & (AT_READ|AT_WRITE) && ata_c->bcount > 0) ?
+	    ata_c->data : NULL,
 	    ata_c->bcount,
 	    (ata_c->flags & AT_READ) ? BUS_DMA_READ : BUS_DMA_WRITE)) {
 		ata_c->flags |= AT_DF;
@@ -904,7 +905,7 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	/* this comamnd is not active any more */
 	achp->ahcic_cmds_active &= ~(1 << slot);
 
-	if (ata_c->flags & (AT_READ|AT_WRITE)) {
+	if (ata_c->flags & (AT_READ|AT_WRITE) && ata_c->bcount > 0) {
 		bus_dmamap_sync(sc->sc_dmat, achp->ahcic_datad[slot], 0,
 		    achp->ahcic_datad[slot]->dm_mapsize,
 		    (ata_c->flags & AT_READ) ? BUS_DMASYNC_POSTREAD :
