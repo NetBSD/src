@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.22 2011/01/10 11:57:53 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.23 2011/01/10 19:49:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -212,7 +212,6 @@ static void
 sendlockl(struct spclient *spc)
 {
 
-	/* assert(pthread_mutex_owned) */
 	while (spc->spc_ostatus != SPCSTATUS_FREE) {
 		spc->spc_ostatus = SPCSTATUS_WANTED;
 		pthread_cond_wait(&spc->spc_cv, &spc->spc_mtx);
@@ -233,7 +232,6 @@ static void
 sendunlockl(struct spclient *spc)
 {
 
-	/* assert(pthread_mutex_owned) */
 	if (spc->spc_ostatus == SPCSTATUS_WANTED)
 		pthread_cond_broadcast(&spc->spc_cv);
 	spc->spc_ostatus = SPCSTATUS_FREE;
@@ -298,12 +296,14 @@ putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
 	TAILQ_INSERT_TAIL(&spc->spc_respwait, rw, rw_entries);
 
 	sendlockl(spc);
+	pthread_mutex_unlock(&spc->spc_mtx);
 }
 
 static void
 unputwait(struct spclient *spc, struct respwait *rw)
 {
 
+	pthread_mutex_lock(&spc->spc_mtx);
 	sendunlockl(spc);
 
 	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
@@ -325,6 +325,7 @@ kickwaiter(struct spclient *spc)
 	if (rw == NULL) {
 		DPRINTF(("no waiter found, invalid reqno %" PRIu64 "?\n",
 		    spc->spc_hdr.rsp_reqno));
+		pthread_mutex_unlock(&spc->spc_mtx);
 		spcfreebuf(spc);
 		return;
 	}
