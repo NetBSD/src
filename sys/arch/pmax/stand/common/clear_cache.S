@@ -1,4 +1,4 @@
-/*	$NetBSD: clear_cache.S,v 1.7 2011/01/10 15:25:15 tsutsui Exp $	*/
+/*	$NetBSD: clear_cache.S,v 1.8 2011/01/10 16:43:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 	.set	noreorder
 LEAF(clear_cache)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
+	nop
 	lw	v0, 0x7c(v0)	# offset for callv->_clear_cache
 	nop
 	j	v0		# call PROM clear_cache
