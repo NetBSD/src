@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.13 2010/08/08 11:58:26 phx Exp $ */
+/* $NetBSD: siisata.c,v 1.14 2011/01/10 20:13:47 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -83,11 +83,10 @@ siisata_init(unsigned tag, void *data)
 		l->chan[1].cmd = l->bar[2];
 		l->chan[1].ctl = l->chan[1].alt = l->bar[3] | 02;
 		l->chan[1].dma = l->bar[4] + 0x8;
-		/* assume BA5 access is possible */
 		nchan = 2;
 	}
 	else {
-		/* 3114 */
+		/* 3114 - assume BA5 access is possible XXX */
 		l->chan[0].cmd = l->bar[5] + 0x080;
 		l->chan[0].ctl = l->chan[0].alt = (l->bar[5] + 0x088) | 02;
 		l->chan[1].cmd = l->bar[5] + 0x0c0;
@@ -98,10 +97,16 @@ siisata_init(unsigned tag, void *data)
 		l->chan[3].ctl = l->chan[3].alt = (l->bar[5] + 0x2c8) | 02;
 		nchan = 4;
 	}
+
 	for (n = 0; n < nchan; n++) {
-		l->presense[n] = satapresense(l, n);
-		if (l->presense[n])
-			printf("port %d device present\n", n);
+		if (satapresense(l, n)) {
+			/* drive present, now check whether soft reset works */
+			if (perform_atareset(l, n)) {
+				printf("port %d device present\n", n);
+				l->presense[n] = 1;
+			}
+		} else
+			l->presense[n] = 0;
 	}
 	return l;
 }
