@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1563 2010/12/26 11:31:44 jmcneill Exp $
+#	$NetBSD: mi,v 1.1564 2011/01/10 04:41:00 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4390,6 +4390,8 @@
 ./usr/share/man/cat2/sigpending.0		comp-c-catman		.cat
 ./usr/share/man/cat2/sigprocmask.0		comp-c-catman		.cat
 ./usr/share/man/cat2/sigreturn.0		comp-obsolete		obsolete
+./usr/share/man/cat2/sigqueue.0			comp-c-catman		.cat
+./usr/share/man/cat2/sigqueueinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat2/sigstack.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sigsuspend.0		comp-c-catman		.cat
 ./usr/share/man/cat2/sigtimedwait.0		comp-c-catman		.cat
@@ -10491,6 +10493,8 @@
 ./usr/share/man/html2/siginfo.html		comp-c-htmlman		html
 ./usr/share/man/html2/sigpending.html		comp-c-htmlman		html
 ./usr/share/man/html2/sigprocmask.html		comp-c-htmlman		html
+./usr/share/man/html2/sigqueue.html		comp-c-htmlman		html
+./usr/share/man/html2/sigqueueinfo.html		comp-c-htmlman		html
 ./usr/share/man/html2/sigstack.html		comp-c-htmlman		html
 ./usr/share/man/html2/sigsuspend.html		comp-c-htmlman		html
 ./usr/share/man/html2/sigtimedwait.html		comp-c-htmlman		html
@@ -16382,6 +16386,8 @@
 ./usr/share/man/man2/sigpending.2		comp-c-man		.man
 ./usr/share/man/man2/sigprocmask.2		comp-c-man		.man
 ./usr/share/man/man2/sigreturn.2		comp-obsolete		obsolete
+./usr/share/man/man2/sigqueue.2			comp-c-man		.man
+./usr/share/man/man2/sigqueueinfo.2		comp-c-man		.man
 ./usr/share/man/man2/sigstack.2			comp-c-man		.man
 ./usr/share/man/man2/sigsuspend.2		comp-c-man		.man
 ./usr/share/man/man2/sigtimedwait.2		comp-c-man		.man
