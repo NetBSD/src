@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.1 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.2 2011/01/10 17:14:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sig.c,v 1.1 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.2 2011/01/10 17:14:38 dyoung Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -59,7 +59,7 @@ typedef struct q_entry_s {
 static struct {
 	q_entry_t *qe_first;
 	q_entry_t **qe_last;
-} sigqueue = { NULL, &sigqueue.qe_first };
+} sigq = { NULL, &sigq.qe_first };
 #define SIGQUEUE_INIT(p)  do {\
 	(p)->qe_first = NULL;\
 	(p)->qe_last = &((p)->qe_first);\
@@ -104,7 +104,7 @@ free_entry(q_entry_t *e)
 }
 
 /*
- * Attempt to post a signal to the sigqueue.
+ * Attempt to post a signal to the sigq.
  */
 static void
 sig_post(int signo)
@@ -116,13 +116,13 @@ sig_post(int signo)
 
 	e = alloc_entry(signo);
 	if (e != NULL) {
-		*sigqueue.qe_last = e;
-		sigqueue.qe_last = &e->qe_next;
+		*sigq.qe_last = e;
+		sigq.qe_last = &e->qe_next;
 	}
 }
 
 /*
- * Check the sigqueue for any pending signals.  If any are found,
+ * Check the sigq for any pending signals.  If any are found,
  * preform the required actions and remove them from the queue.
  */
 PUBLIC void
@@ -137,16 +137,16 @@ sig_check(void)
 	(void)sigfillset(&nset);
 	(void)sigprocmask(SIG_SETMASK, &nset, &oset);
 
-	while ((e = sigqueue.qe_first) != NULL) {
+	while ((e = sigq.qe_first) != NULL) {
 		signo = e->qe_signo;
 		handler = e->qe_handler;
 
 		/*
 		 * Remove the entry from the queue and free it.
 		 */
-		sigqueue.qe_first = e->qe_next;
-		if (sigqueue.qe_first == NULL)
-			sigqueue.qe_last = &sigqueue.qe_first;
+		sigq.qe_first = e->qe_next;
+		if (sigq.qe_first == NULL)
+			sigq.qe_last = &sigq.qe_first;
 		free_entry(e);
 
 		if (handler == SIG_DFL || handler == SIG_IGN) {
@@ -323,7 +323,7 @@ sig_setup(void)
 	 * XXX: This should be unnecessary.
 	 */
 	(void)memset(sigarray, 0, sizeof(sigarray));
-	SIGQUEUE_INIT(&sigqueue);
+	SIGQUEUE_INIT(&sigq);
 
 	/* Restore the signal mask. */
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
