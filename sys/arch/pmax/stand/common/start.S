@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.21 2011/01/10 15:25:44 tsutsui Exp $	*/
+/*	$NetBSD: start.S,v 1.22 2011/01/10 17:01:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ start:
 LEAF(prom_restart)
 XLEAF(_rtt)
 	lw	v0, _C_LABEL (callv)
+	nop
 	lw	v0, 0x9C(v0)			/* halt */
 	move	a0, zero			/* Don't print anything. */
 	j	v0
