@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.18 2010/06/26 21:45:49 phx Exp $ */
+/* $NetBSD: globals.h,v 1.19 2011/01/10 20:13:47 phx Exp $ */
 
 /* clock feed */
 #ifndef EXT_CLK_FREQ
@@ -135,24 +135,24 @@ int dsk_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 struct fs_ops *dsk_fsops(struct open_file *);
 
 /* status */
-#define ATA_STS_BUSY	0x80
-#define ATA_STS_DRDY	0x40
-#define ATA_STS_ERR 	0x01
+#define ATA_STS_BUSY		0x80
+#define ATA_STS_DRDY		0x40
+#define ATA_STS_ERR 		0x01
 /* command */
-#define ATA_CMD_IDENT	0xec
-#define ATA_CMD_READ	0xc8
-#define ATA_CMD_READ_EXT 0x24
-#define ATA_CMD_SETF	0xef
+#define ATA_CMD_IDENT		0xec
+#define ATA_CMD_READ		0x20
+#define ATA_CMD_READ_EXT	0x24
+#define ATA_CMD_SETF		0xef
 /* device */
-#define ATA_DEV_LBA	0xe0
-#define ATA_DEV_OBS	0x90
+#define ATA_DEV_LBA		0xe0
+#define ATA_DEV_OBS		0x90
 /* control */
-#define ATA_DREQ	0x08
-#define ATA_SRST	0x04
+#define ATA_DREQ		0x08
+#define ATA_SRST		0x04
 
-#define ATA_XFER	0x03
-#define XFER_PIO4	0x0c
-#define XFER_PIO0	0x08
+#define ATA_XFER		0x03
+#define XFER_PIO4		0x0c
+#define XFER_PIO0		0x08
 
 struct dvata_chan {
 	uint32_t cmd, ctl, alt, dma;
