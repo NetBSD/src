@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.9 2011/01/09 16:55:13 tsutsui Exp $ */
+/*      $NetBSD: if_prom.c,v 1.10 2011/01/10 17:01:17 tsutsui Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -141,7 +141,7 @@ prom_init(struct iodesc *desc, void *machdep_hint)
 	if (enet == NULL) {
 		printf("No `enet' environment variable found.\n"
 		    "Set MAC address to `enet' manually by setenv command.\n");
-		(*callv->_halt)((int *)0, 0);	/* XXX */
+		prom_restart();
 		/* NOTREACHED */
 	}
 

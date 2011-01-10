@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.9 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: common.h,v 1.10 2011/01/10 17:01:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ int prom_close(int);
 int prom_lseek(int, int, int);
 int prom_open(const char *, int);
 int prom_read(int, void *, int);
+void __dead prom_restart(void);
 int prom_write(int, void *, int);
 
 
