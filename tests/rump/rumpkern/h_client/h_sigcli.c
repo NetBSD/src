@@ -1,4 +1,4 @@
-/*	$NetBSD: h_sigcli.c,v 1.1 2011/01/06 07:00:28 pooka Exp $	*/
+/*	$NetBSD: h_sigcli.c,v 1.2 2011/01/10 19:30:21 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -15,6 +15,8 @@
 static const int hostnamemib[] = { CTL_KERN, KERN_HOSTNAME };
 static char hostnamebuf[128];
 
+static volatile sig_atomic_t sigexecs;
+
 static void
 sighand(int sig)
 {
@@ -26,6 +28,7 @@ sighand(int sig)
 		err(1, "sighand sysctl");
 	if (strcmp(buf, hostnamebuf) != 0)
 		errx(1, "sighandler hostname");
+	sigexecs++;
 }
 
 int
@@ -61,5 +64,9 @@ main(void)
 			err(1, "sysctl");
 		if (strcmp(buf, hostnamebuf) != 0)
 			errx(1, "main hostname");
+	}
+
+	if (!sigexecs) {
+		printf("no signal handlers run.  test busted?\n");
 	}
 }
