@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nullpts.c,v 1.4 2010/07/03 08:18:30 jmmv Exp $	*/
+/*	$NetBSD: t_nullpts.c,v 1.5 2011/01/10 11:11:04 hannken Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -113,11 +113,10 @@ ATF_TC_BODY(nullrevoke, tc)
 	 */
 	rump_sys_close(ptg.sfd);
 
-	/* revoke slave tty.  boom */
-	atf_tc_expect_signal(-1, "PR kern/43456");
+	/* revoke slave tty. */
 	rump_sys_revoke(path);
 
-	/* done? */
+	/* done */
 }
 
 ATF_TP_ADD_TCS(tp)
