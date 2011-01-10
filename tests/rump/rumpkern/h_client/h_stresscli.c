@@ -1,4 +1,4 @@
-/*	$NetBSD: h_stresscli.c,v 1.3 2011/01/10 14:05:03 pooka Exp $	*/
+/*	$NetBSD: h_stresscli.c,v 1.4 2011/01/10 19:51:37 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -17,12 +17,13 @@
 
 static unsigned int syscalls;
 static pid_t mypid;
+static volatile sig_atomic_t doquit;
 
 static void
 signaali(int sig)
 {
 
-	_exit(0);
+	doquit = 1;
 }
 
 static const int hostnamemib[] = { CTL_KERN, KERN_HOSTNAME };
@@ -35,7 +36,7 @@ client(void *arg)
 	char buf[256];
 	size_t blen;
 
-	for (;;) {
+	while (!doquit) {
 		pid_t pidi;
 		blen = sizeof(buf);
 		if (rump_sys___sysctl(hostnamemib, __arraycount(hostnamemib),
@@ -63,7 +64,7 @@ client(void *arg)
 int
 main(int argc, char *argv[])
 {
-	pthread_t pt;
+	pthread_t pt[NTHR-1];
 	pid_t clis[NCLI];
 	pid_t apid;
 	int ncli = 0;
@@ -94,10 +95,15 @@ main(int argc, char *argv[])
 				signal(SIGUSR1, signaali);
 
 				for (j = 0; j < NTHR-1; j++)
-					if (pthread_create(&pt, NULL,
+					if (pthread_create(&pt[j], NULL,
 					    client, NULL) != 0)
 						err(1, "pthread create");
 				client(NULL);
+				for (j = 0; j < NTHR-1; j++)
+					pthread_join(pt[j], NULL);
+				membar_consumer();
+				fprintf(stderr, "done %d\n", syscalls);
+				exit(0);
 				/* NOTREACHED */
 			default:
 				ncli++;
