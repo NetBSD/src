@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.7 2010/11/07 16:36:26 gsutre Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.8 2011/01/10 09:07:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.7 2010/11/07 16:36:26 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.8 2011/01/10 09:07:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -394,40 +394,46 @@ acpidisp_vga_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 	struct acpi_devnode *ad = aa->aa_node;
-	struct acpi_softc *sc = device_private(ad->ad_root);
 	struct acpi_pci_info *ap;
-	pcitag_t tag;
 	pcireg_t id, class;
+	pcitag_t tag;
 
-	/*
-	 * We match ACPI devices that correspond to PCI display controllers.
-	 */
 	if (ad->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
 	ap = ad->ad_pciinfo;
-	if ((ap == NULL) ||
-	    !(ap->ap_flags & ACPI_PCI_INFO_DEVICE) ||
-	    (ap->ap_function == 0xffff))
+
+	if (ap == NULL)
 		return 0;
 
-	KASSERT(ap->ap_bus < 256 && ap->ap_device < 32 && ap->ap_function < 8);
-
-	tag = pci_make_tag(sc->sc_pc, ap->ap_bus, ap->ap_device,
-	    ap->ap_function);
-
-	/* Check that the PCI device is present. */
-	id = pci_conf_read(sc->sc_pc, tag, PCI_ID_REG);
-	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID ||
-	    PCI_VENDOR(id) == 0)
+	if ((ap->ap_flags & ACPI_PCI_INFO_DEVICE) == 0)
 		return 0;
 
-	/* Check the class of the PCI device. */
-	class = pci_conf_read(sc->sc_pc, tag, PCI_CLASS_REG);
+	if (ap->ap_function == 0xffff)
+		return 0;
+
+	KASSERT(ap->ap_bus < 256);
+	KASSERT(ap->ap_device < 32);
+	KASSERT(ap->ap_function < 8);
+
+	/*
+	 * Check that the PCI device is present, verify
+	 * the class of the PCI device, and finally see
+	 * if the ACPI device is capable of something.
+	 */
+	tag = pci_make_tag(aa->aa_pc, ap->ap_bus,
+	    ap->ap_device, ap->ap_function);
+
+	id = pci_conf_read(aa->aa_pc, tag, PCI_ID_REG);
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID || PCI_VENDOR(id) == 0)
+		return 0;
+
+	class = pci_conf_read(aa->aa_pc, tag, PCI_CLASS_REG);
+
 	if (PCI_CLASS(class) != PCI_CLASS_DISPLAY)
 		return 0;
 
-	/* We match if the display adapter is capable of something... */
 	if (acpidisp_vga_capabilities(ad) == 0)
 		return 0;
 
@@ -444,50 +450,50 @@ acpidisp_vga_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": ACPI Display Adapter\n");
 	aprint_normal(": ACPI Display Adapter\n");
 
-	asc->sc_dev = self;
 	asc->sc_node = ad;
+	asc->sc_dev = self;
 	asc->sc_log = NULL;
+
 	mutex_init(&asc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
+
 	asc->sc_caps = acpidisp_vga_capabilities(ad);
 	asc->sc_policy = acpidisp_default_bios_policy;
 	asc->sc_odinfo = NULL;
 
 	acpidisp_vga_print_capabilities(self, asc->sc_caps);
 
-	/* Enumerate connected output devices. */
+	/*
+	 * Enumerate connected output devices, attach
+	 * output display devices, and bind the attached
+	 * output devices to the enumerated ones.
+	 */
 	asc->sc_odinfo = acpidisp_init_odinfo(asc);
 
-	/* Attach (via autoconf(9)) ACPI display output devices. */
 	acpidisp_vga_scan_outdevs(asc);
 
-	/* Bind the attached output devices to the enumerated ones. */
 	if (asc->sc_odinfo != NULL) {
 		acpidisp_vga_bind_outdevs(asc);
 		acpidisp_print_odinfo(self, asc->sc_odinfo);
 	}
 
-	/* Install ACPI notify handler. */
-	(void)acpi_register_notify(asc->sc_node, acpidisp_vga_notify_handler);
-
 	/*
 	 * Set BIOS automatic switch policy.
 	 *
-	 * Many laptops do not support output device switching with the methods
-	 * specified in the ACPI extensions for display adapters.  Therefore, we
-	 * leave the BIOS output switch policy on ``auto'' instead of setting it
-	 * to ``normal''.
+	 * Many laptops do not support output device switching with
+	 * the methods specified in the ACPI extensions for display
+	 * adapters. Therefore, we leave the BIOS output switch policy
+	 * on "auto" instead of setting it to "normal".
 	 */
 	asc->sc_policy.fmt.output = ACPI_DISP_POLICY_OUTPUT_AUTO;
 	asc->sc_policy.fmt.brightness = ACPI_DISP_POLICY_BRIGHTNESS_NORMAL;
+
 	if (acpidisp_set_policy(asc, asc->sc_policy.raw))
 		asc->sc_policy = acpidisp_default_bios_policy;
 
-	/* Setup sysctl. */
 	acpidisp_vga_sysctl_setup(asc);
 
-	/* Power management. */
-	if (!pmf_device_register(self, NULL, acpidisp_vga_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	(void)pmf_device_register(self, NULL, acpidisp_vga_resume);
+	(void)acpi_register_notify(asc->sc_node, acpidisp_vga_notify_handler);
 }
 
 static int
