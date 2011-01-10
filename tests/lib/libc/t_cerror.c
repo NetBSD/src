@@ -1,4 +1,4 @@
-/* $NetBSD: t_cerror.c,v 1.1 2011/01/07 02:47:40 pgoyette Exp $ */
+/* $NetBSD: t_cerror.c,v 1.2 2011/01/10 16:54:02 njoly Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_cerror.c,v 1.1 2011/01/07 02:47:40 pgoyette Exp $");
+__RCSID("$NetBSD: t_cerror.c,v 1.2 2011/01/10 16:54:02 njoly Exp $");
 
 #include <errno.h>
 #include <unistd.h>
@@ -97,6 +97,9 @@ ATF_TC_HEAD(cerror_64, tc)
 }
 ATF_TC_BODY(cerror_64, tc)
 {
+	/* Make sure file desc 4 is closed. */
+	(void)close(4);
+
 	/* Check error and 64-bit return code.*/
 	errno = 0;
 	ATF_REQUIRE_EQ(lseek(4, (off_t) 0, SEEK_SET), (off_t) -1);
