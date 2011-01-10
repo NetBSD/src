@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.44 2011/01/02 10:38:02 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.45 2011/01/10 11:11:03 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.44 2011/01/02 10:38:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.45 2011/01/10 11:11:03 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,6 +645,32 @@ layer_rmdir(void *v)
 		VTOLAYER(vp)->layer_flags |= LAYERFS_REMOVED;
 	}
 	vrele(vp);
+
+	return error;
+}
+
+int
+layer_revoke(void *v)
+{
+        struct vop_revoke_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *lvp = LAYERVPTOLOWERVP(vp);
+	int i, n, error;
+
+	/*
+	 * We will most likely end up in vclean which uses the v_usecount
+	 * to determine if a vnode is active.  So we have to adjust the
+	 * lower vp's usecount to be at least as high as our usecount.
+	 */
+	n = vp->v_usecount - lvp->v_usecount;
+	for (i = 0; i < n; i++)
+		vref(lvp);
+	error = LAYERFS_DO_BYPASS(vp, ap);
+	for (i = 0; i < n; i++)
+		vrele(lvp);
 
 	return error;
 }
