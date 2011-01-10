@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.36 2011/01/09 22:59:40 phx Exp $ */
+/* $NetBSD: main.c,v 1.37 2011/01/10 20:16:42 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -300,7 +300,7 @@ check_bootname(char *s)
 	 * nfs:<bootfile>
 	 * tftp:
 	 * tftp:<bootfile>
-	 * wdN:<bootfile>
+	 * wd[N[P]]:<bootfile>
 	 *
 	 * net is a synonym of nfs.
 	 */
@@ -308,9 +308,14 @@ check_bootname(char *s)
 		return 1;
 	if (strncmp(s, "tftp:", 5) == 0)
 		return 1;
-	if (s[0] == 'w' && s[1] == 'd'
-	    && s[2] >= '0' && s[2] <= '3' && s[3] == ':') {
-		return s[4] != '\0';
+	if (s[0] == 'w' && s[1] == 'd') {
+		s += 2;
+		if (*s != ':' && *s >= '0' && *s <= '3') {
+			++s;
+			if (*s != ':' && *s >= 'a' && *s <= 'p')
+				++s;
+		}
+		return *s == ':';
 	}
 	return 0;
 }
