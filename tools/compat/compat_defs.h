@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.77 2010/01/14 21:38:19 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.78 2011/01/10 20:38:35 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -532,6 +532,53 @@ void *setmode(const char *);
 
 /* <inttypes.h> */
 
+#if UCHAR_MAX == 0xffU			/* char is an 8-bit type */
+#ifndef PRId8
+#define PRId8 "hhd"
+#endif
+#ifndef PRIi8
+#define PRIi8 "hhi"
+#endif
+#ifndef PRIo8
+#define PRIo8 "hho"
+#endif
+#ifndef PRIu8
+#define PRIu8 "hhu"
+#endif
+#ifndef PRIx8
+#define PRIx8 "hhx"
+#endif
+#ifndef PRIX8
+#define PRIX8 "hhX"
+#endif
+#ifndef SCNd8
+#define SCNd8 "hhd"
+#endif
+#ifndef SCNi8
+#define SCNi8 "hhi"
+#endif
+#ifndef SCNo8
+#define SCNo8 "hho"
+#endif
+#ifndef SCNu8
+#define SCNu8 "hhu"
+#endif
+#ifndef SCNx8
+#define SCNx8 "hhx"
+#endif
+#ifndef SCNX8
+#define SCNX8 "hhX"
+#endif
+#endif					/* char is an 8-bit type */
+#if ! (defined(PRId8) && defined(PRIi8) && defined(PRIo8) && \
+	defined(PRIu8) && defined(PRIx8) && defined(PRIX8))
+#error "Don't know how to define PRI[diouxX]8"
+#endif
+#if ! (defined(SCNd8) && defined(SCNi8) && defined(SCNo8) && \
+	defined(SCNu8) && defined(SCNx8) && defined(SCNX8))
+#error "Don't know how to define SCN[diouxX]8"
+#endif
+
 #if USHRT_MAX == 0xffffU		/* short is a 16-bit type */
 #ifndef PRId16
 #define PRId16 "hd"
@@ -551,10 +598,32 @@ void *setmode(const char *);
 #ifndef PRIX16
 #define PRIX16 "hX"
 #endif
+#ifndef SCNd16
+#define SCNd16 "hd"
+#endif
+#ifndef SCNi16
+#define SCNi16 "hi"
+#endif
+#ifndef SCNo16
+#define SCNo16 "ho"
+#endif
+#ifndef SCNu16
+#define SCNu16 "hu"
+#endif
+#ifndef SCNx16
+#define SCNx16 "hx"
+#endif
+#ifndef SCNX16
+#define SCNX16 "hX"
+#endif
 #endif					/* short is a 16-bit type */
 #if ! (defined(PRId16) && defined(PRIi16) && defined(PRIo16) && \
 	defined(PRIu16) && defined(PRIx16) && defined(PRIX16))
 #error "Don't know how to define PRI[diouxX]16"
+#endif
+#if ! (defined(SCNd16) && defined(SCNi16) && defined(SCNo16) && \
+	defined(SCNu16) && defined(SCNx16) && defined(SCNX16))
+#error "Don't know how to define SCN[diouxX]16"
 #endif
 
 #if UINT_MAX == 0xffffffffU		/* int is a 32-bit type */
@@ -576,6 +645,24 @@ void *setmode(const char *);
 #ifndef PRIX32
 #define PRIX32 "X"
 #endif
+#ifndef SCNd32
+#define SCNd32 "d"
+#endif
+#ifndef SCNi32
+#define SCNi32 "i"
+#endif
+#ifndef SCNo32
+#define SCNo32 "o"
+#endif
+#ifndef SCNu32
+#define SCNu32 "u"
+#endif
+#ifndef SCNx32
+#define SCNx32 "x"
+#endif
+#ifndef SCNX32
+#define SCNX32 "X"
+#endif
 #endif					/* int is a 32-bit type */
 #if ULONG_MAX == 0xffffffffU		/* long is a 32-bit type */
 #ifndef PRId32
@@ -596,10 +683,32 @@ void *setmode(const char *);
 #ifndef PRIX32
 #define PRIX32 "lX"
 #endif
+#ifndef SCNd32
+#define SCNd32 "ld"
+#endif
+#ifndef SCNi32
+#define SCNi32 "li"
+#endif
+#ifndef SCNo32
+#define SCNo32 "lo"
+#endif
+#ifndef SCNu32
+#define SCNu32 "lu"
+#endif
+#ifndef SCNx32
+#define SCNx32 "lx"
+#endif
+#ifndef SCNX32
+#define SCNX32 "lX"
+#endif
 #endif					/* long is a 32-bit type */
 #if ! (defined(PRId32) && defined(PRIi32) && defined(PRIo32) && \
 	defined(PRIu32) && defined(PRIx32) && defined(PRIX32))
 #error "Don't know how to define PRI[diouxX]32"
+#endif
+#if ! (defined(SCNd32) && defined(SCNi32) && defined(SCNo32) && \
+	defined(SCNu32) && defined(SCNx32) && defined(SCNX32))
+#error "Don't know how to define SCN[diouxX]32"
 #endif
 
 #if ULONG_MAX == 0xffffffffffffffffU	/* long is a 64-bit type */
@@ -621,6 +730,24 @@ void *setmode(const char *);
 #ifndef PRIX64
 #define PRIX64 "lX"
 #endif
+#ifndef SCNd64
+#define SCNd64 "ld"
+#endif
+#ifndef SCNi64
+#define SCNi64 "li"
+#endif
+#ifndef SCNo64
+#define SCNo64 "lo"
+#endif
+#ifndef SCNu64
+#define SCNu64 "lu"
+#endif
+#ifndef SCNx64
+#define SCNx64 "lx"
+#endif
+#ifndef SCNX64
+#define SCNX64 "lX"
+#endif
 #endif					/* long is a 64-bit type */
 #if ULLONG_MAX == 0xffffffffffffffffU	/* long long is a 64-bit type */
 #ifndef PRId64
@@ -641,10 +768,32 @@ void *setmode(const char *);
 #ifndef PRIX64
 #define PRIX64 "llX"
 #endif
+#ifndef SCNd64
+#define SCNd64 "lld"
+#endif
+#ifndef SCNi64
+#define SCNi64 "lli"
+#endif
+#ifndef SCNo64
+#define SCNo64 "llo"
+#endif
+#ifndef SCNu64
+#define SCNu64 "llu"
+#endif
+#ifndef SCNx64
+#define SCNx64 "llx"
+#endif
+#ifndef SCNX64
+#define SCNX64 "llX"
+#endif
 #endif					/* long long is a 64-bit type */
 #if ! (defined(PRId64) && defined(PRIi64) && defined(PRIo64) && \
 	defined(PRIu64) && defined(PRIx64) && defined(PRIX64))
 #error "Don't know how to define PRI[diouxX]64"
+#endif
+#if ! (defined(SCNd64) && defined(SCNi64) && defined(SCNo64) && \
+	defined(SCNu64) && defined(SCNx64) && defined(SCNX64))
+#error "Don't know how to define SCN[diouxX]64"
 #endif
 
 /* <limits.h> */
