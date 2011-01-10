@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.36 2010/04/05 07:19:31 joerg Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.37 2011/01/10 13:29:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.36 2010/04/05 07:19:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.37 2011/01/10 13:29:29 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -117,8 +117,6 @@ static void	sq_reset(struct sq_softc *);
 static int 	sq_add_rxbuf(struct sq_softc *, int);
 static void 	sq_dump_buffer(paddr_t addr, psize_t len);
 static void	sq_trace_dump(struct sq_softc *);
-
-static void	enaddr_aton(const char*, u_int8_t*);
 
 CFATTACH_DECL(sq, sizeof(struct sq_softc),
     sq_match, sq_attach, NULL, NULL);
@@ -282,7 +280,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 			printf(": unable to get MAC address!\n");
 			goto fail_6;
 		}
-		enaddr_aton(macaddr, sc->sc_enaddr);
+		ether_aton_r(sc->sc_enaddr, sizeof(sc->sc_enaddr), macaddr);
 	}
 
 	evcnt_attach_dynamic(&sc->sq_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -1331,30 +1329,4 @@ sq_dump_buffer(paddr_t addr, psize_t len)
 	}
 
 	printf("\n");
-}
-
-void
-enaddr_aton(const char* str, u_int8_t* eaddr)
-{
-	int i;
-	char c;
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		if (*str == ':')
-			str++;
-
-		c = *str++;
-		if (isdigit(c)) {
-			eaddr[i] = (c - '0');
-		} else if (isxdigit(c)) {
-			eaddr[i] = (toupper(c) + 10 - 'A');
-		}
-
-		c = *str++;
-		if (isdigit(c)) {
-			eaddr[i] = (eaddr[i] << 4) | (c - '0');
-		} else if (isxdigit(c)) {
-			eaddr[i] = (eaddr[i] << 4) | (toupper(c) + 10 - 'A');
-		}
-	}
 }
