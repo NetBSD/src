@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigqueue.c,v 1.1 2011/01/10 04:57:56 christos Exp $ */
+/* $NetBSD: t_sigqueue.c,v 1.2 2011/01/10 05:15:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigqueue.c,v 1.1 2011/01/10 04:57:56 christos Exp $");
+__RCSID("$NetBSD: t_sigqueue.c,v 1.2 2011/01/10 05:15:00 christos Exp $");
 
 #include <signal.h>
 #include <unistd.h>
@@ -53,7 +53,7 @@ ATF_TC_HEAD(sigqueue, tc)
 	atf_tc_set_md_var(tc, "descr", "Checks sigqueue sigval delivery");
 }
 
-#define VALUE (int)0xc001dadd1
+#define VALUE (int)0xc001dad1
 static int value;
 
 static void
