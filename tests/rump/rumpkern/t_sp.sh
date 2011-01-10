@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.5 2011/01/06 07:00:28 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.6 2011/01/10 19:51:37 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,7 +60,7 @@ stress()
 
 	export RUMP_SERVER=unix://commsock
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
-	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_stresscli ${1}
+	atf_check -s exit:0 -e ignore $(atf_get_srcdir)/h_client/h_stresscli $1
 }
 
 fork()
