@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.33 2011/01/10 11:57:53 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.34 2011/01/10 19:49:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.33 2011/01/10 11:57:53 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.34 2011/01/10 19:49:43 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -104,20 +104,23 @@ static pthread_mutex_t pfmtx;
 static int
 waitresp(struct spclient *spc, struct respwait *rw)
 {
+	int spcstate;
 	int rv = 0;
 
+	pthread_mutex_lock(&spc->spc_mtx);
 	sendunlockl(spc);
 	while (!rw->rw_done && spc->spc_state != SPCSTATE_DYING) {
 		pthread_cond_wait(&rw->rw_cv, &spc->spc_mtx);
 	}
 	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
+	spcstate = spc->spc_state;
 	pthread_mutex_unlock(&spc->spc_mtx);
 
 	pthread_cond_destroy(&rw->rw_cv);
 
 	if (rv)
 		return rv;
-	if (spc->spc_state == SPCSTATE_DYING)
+	if (spcstate == SPCSTATE_DYING)
 		return ENOTCONN;
 	return rw->rw_error;
 }
@@ -511,7 +514,8 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 	}
 
 	/* write out a banner for the client */
-	if (write(newfd, banner, strlen(banner)) != (ssize_t)strlen(banner)) {
+	if (send(newfd, banner, strlen(banner), MSG_NOSIGNAL)
+	    != (ssize_t)strlen(banner)) {
 		close(newfd);
 		return 0;
 	}
