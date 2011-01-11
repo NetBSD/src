@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.542 2011/01/09 15:12:34 jruoho Exp $
+#	$NetBSD: Makefile,v 1.543 2011/01/11 00:45:04 jym Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -134,6 +134,9 @@ MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
 
 # onewire bus and devices
 MAN+=	gpioow.4 onewire.4 owtemp.4
+
+# machine-independent Xen devices
+MAN+=	pciback.4 xbd.4 xbdback.4 xenbus.4 xennet.4 xpci.4 xvif.4
 
 # DRM devices
 MLINKS+=drm.4 i915drm.4
