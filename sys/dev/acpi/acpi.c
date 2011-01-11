@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.229 2011/01/06 07:05:00 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.230 2011/01/11 20:35:24 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.229 2011/01/06 07:05:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.230 2011/01/11 20:35:24 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1262,6 +1262,9 @@ acpi_sleep_init(struct acpi_softc *sc)
 	}
 }
 
+/*
+ * Must be called with interrupts enabled.
+ */
 void
 acpi_enter_sleep_state(int state)
 {
@@ -1375,6 +1378,8 @@ acpi_enter_sleep_state(int state)
 			    "S%d: %s\n", state, AcpiFormatException(rv));
 			break;
 		}
+
+		(void)AcpiDisableAllGpes();
 
 		DELAY(1000000);
 
