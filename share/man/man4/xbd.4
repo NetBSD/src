@@ -1,4 +1,4 @@
-.\"	$NetBSD: xbd.4,v 1.1 2011/01/11 00:45:04 jym Exp $
+.\"	$NetBSD: xbd.4,v 1.2 2011/01/11 10:48:49 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,17 +77,17 @@ interface.
 .It "xbd%d: %s MB, %d bytes/sect x %u sectors"
 Gives the total size of the
 .Nm
-block device, its sector's size and total number of sectors.
+block device, its sector size and total number of sectors.
 .It "xbd%d: WARNING: cache flush not supported by backend"
-The backend driver associated to this
+The backend driver associated with this
 .Nm
 device does not support cache flushing operation.
 This can be problematic for file system operations that require
 cache sync to avoid data loss or corruption.
 .El
 .Sh SEE ALSO
-.Xr xenbus 4 ,
 .Xr xbdback 4 ,
+.Xr xenbus 4 ,
 .Xr dkctl 8
 .Sh HISTORY
 The
