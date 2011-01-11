@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.11 2010/05/02 13:36:31 phx Exp $ */
+/* $NetBSD: wm.c,v 1.12 2011/01/11 09:45:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -104,10 +104,10 @@ struct rdesc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct tdesc txd;
+	struct tdesc txd[2];
 	struct rdesc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
-	unsigned csr, rx;
+	unsigned csr, tx, rx;
 	unsigned ctl, tctl, rctl;
 	unsigned phy, bmsr, anlpar;
 	int sromsft;
@@ -175,7 +175,7 @@ wm_init(unsigned tag, void *data)
 		printf("-FDX");
 	printf("\n");
 
-	txd = &l->txd;
+	txd = &l->txd[0];
 	rxd = &l->rxd[0];
 	rxd[0].lo = htole32(VTOPHYS(l->rxstore[0]));
 	rxd[0].r2 = 0;
@@ -183,10 +183,10 @@ wm_init(unsigned tag, void *data)
 	rxd[1].lo = htole32(VTOPHYS(l->rxstore[1]));
 	rxd[1].r2 = 0;
 	rxd[0].r3 = 0;
-	l->rx = 0;
+	l->tx = l->rx = 0;
 
-	CSR_WRITE(l, WMREG_TBDAH, 0);
-	CSR_WRITE(l, WMREG_TBDAL, VTOPHYS(txd));
+	CSR_WRITE(l, WMREG_TDBAH, 0);
+	CSR_WRITE(l, WMREG_TDBAL, VTOPHYS(txd));
 	CSR_WRITE(l, WMREG_TDLEN, sizeof(l->txd));
 	CSR_WRITE(l, WMREG_TDH, 0);
 	CSR_WRITE(l, WMREG_TDT, 0);
@@ -227,7 +227,7 @@ wm_send(void *dev, char *buf, unsigned len)
 	unsigned loop;
 
 	wbinv(buf, len);
-	txd = &l->txd;
+	txd = &l->txd[l->tx];
 	txd->lo = htole32(VTOPHYS(buf));
 	txd->t2 = htole32(T2_EOP|T2_IFCS|T2_RS | (len & T2_FLMASK));
 	txd->t3 = 0;
@@ -243,6 +243,7 @@ wm_send(void *dev, char *buf, unsigned len)
 	printf("xmit failed\n");
 	return -1;
   done:
+	l->tx ^= 1;
 	return len;
 }
 

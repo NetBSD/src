@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.17 2010/05/02 13:36:31 phx Exp $ */
+/* $NetBSD: sip.c,v 1.18 2011/01/11 09:45:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -98,10 +98,10 @@ struct desc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc txd;
+	struct desc txd[2];
 	struct desc rxd[2];
 	uint8_t store[2][FRAMESIZE];
-	unsigned csr, rx;
+	unsigned csr, tx, rx;
 	unsigned phy, bmsr, anlpar;
 	unsigned cr;
 };
@@ -191,7 +191,7 @@ sip_init(unsigned tag, void *data)
 		printf("-FDX");
 	printf("\n");
 
-	txd = &l->txd;
+	txd = &l->txd[0];
 	txd->xd0 = htole32(VTOPHYS(txd));
 	rxd = l->rxd;
 	rxd[0].xd0 = htole32(VTOPHYS(&rxd[1]));
@@ -201,7 +201,7 @@ sip_init(unsigned tag, void *data)
 	rxd[1].xd1 = htole32(XD1_OWN | FRAMESIZE);
 	rxd[1].xd2 = htole32(VTOPHYS(l->store[1]));
 	wbinv(l, sizeof(struct local));
-	l->rx = 0;
+	l->tx = l->rx = 0;
 
 	CSR_WRITE(l, SIP_RFCR, 0);
 	CSR_WRITE(l, SIP_RFDR, (en[1] << 8) | en[0]);
@@ -235,7 +235,7 @@ sip_send(void *dev, char *buf, unsigned len)
 	unsigned loop;
 
 	wbinv(buf, len);
-	txd = &l->txd;
+	txd = &l->txd[l->tx];
 	txd->xd2 = htole32(VTOPHYS(buf));
 	txd->xd1 = htole32(XD1_OWN | (len & 0xfff));
 	wbinv(txd, sizeof(struct desc));
@@ -250,6 +250,7 @@ sip_send(void *dev, char *buf, unsigned len)
 	printf("xmit failed\n");
 	return -1;
   done:
+	l->tx ^= 1;
 	return len;
 }
 

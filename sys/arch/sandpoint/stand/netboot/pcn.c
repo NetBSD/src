@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.17 2010/05/02 13:36:30 phx Exp $ */
+/* $NetBSD: pcn.c,v 1.18 2011/01/11 09:45:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -116,10 +116,10 @@ struct pcninit {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc txd;
+	struct desc txd[2];
 	struct desc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
-	unsigned csr, rx;
+	unsigned csr, tx, rx;
 	unsigned phy, bmsr, anlpar;
 };
 
@@ -179,13 +179,13 @@ pcn_init(unsigned tag, void *data)
 		printf("-FDX");
 	printf("\n");
 
-	txd = &l->txd;
+	txd = &l->txd[0];
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole32(VTOPHYS(l->rxstore[0]));
 	rxd[0].xd1 = htole32(R1_OWN | R1_ONES | FRAMESIZE);
 	rxd[1].xd0 = htole32(VTOPHYS(l->rxstore[1]));
 	rxd[1].xd1 = htole32(R1_OWN | R1_ONES | FRAMESIZE);
-	l->rx = 0;
+	l->tx = l->rx = 0;
 
 	ib = &initblock;
 	ib->init_mode = htole32((0 << 28) | (1 << 20) | 0);
@@ -226,8 +226,8 @@ pcn_send(void *dev, char *buf, unsigned len)
 	int tlen;
 
 	wbinv(buf, len);
+	txd = &l->txd[l->tx];
 	tlen = (-len) & T1_FLMASK; /* two's complement */
-	txd = &l->txd;
 	txd->xd0 = htole32(VTOPHYS(buf));
 	txd->xd1 = htole32(T1_OWN | T1_STP | T1_ENP | T1_ONES | tlen);
 	wbinv(txd, sizeof(struct desc));
@@ -242,6 +242,7 @@ pcn_send(void *dev, char *buf, unsigned len)
 	printf("xmit failed\n");
 	return -1;
   done:
+	l->tx ^= 1;
 	return len;
 }
 

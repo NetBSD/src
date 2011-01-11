@@ -1,4 +1,4 @@
-/* $NetBSD: kse.c,v 1.4 2010/05/02 13:36:30 phx Exp $ */
+/* $NetBSD: kse.c,v 1.5 2011/01/11 09:45:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -100,10 +100,10 @@ struct desc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc txd;
+	struct desc txd[2];
 	struct desc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
-	unsigned csr, rx;
+	unsigned csr, tx, rx;
 };
 
 static void mii_dealan(struct local *, unsigned);
@@ -162,7 +162,7 @@ kse_init(unsigned tag, void *data)
 		printf("\n");
 	}
 
-	txd = &l->txd;
+	txd = &l->txd[0];
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole32(R0_OWN);
 	rxd[0].xd1 = htole32(FRAMESIZE);
@@ -172,7 +172,7 @@ kse_init(unsigned tag, void *data)
 	rxd[1].xd1 = htole32(R1_RER | FRAMESIZE);
 	rxd[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
 	rxd[1].xd3 = htole32(VTOPHYS(&rxd[0]));
-	l->rx = 0;
+	l->tx = l->rx = 0;
 
 	CSR_WRITE_4(l, TDLB, VTOPHYS(txd));
 	CSR_WRITE_4(l, RDLB, VTOPHYS(rxd));
@@ -191,7 +191,7 @@ kse_send(void *dev, char *buf, unsigned len)
 	unsigned txstat, loop;
 
 	wbinv(buf, len);
-	txd = &l->txd;
+	txd = &l->txd[l->tx];
 	txd->xd2 = htole32(VTOPHYS(buf));
 	txd->xd1 = htole32(T1_FS | T1_LS | (len & T1_TBS_MASK));
 	txd->xd0 = htole32(T0_OWN);
@@ -208,6 +208,7 @@ kse_send(void *dev, char *buf, unsigned len)
 	printf("xmit failed\n");
 	return -1;
   done:
+	l->tx ^= 1;
 	return len;
 }
 
