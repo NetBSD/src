@@ -1,4 +1,4 @@
-/*	$NetBSD: h_stresscli.c,v 1.4 2011/01/10 19:51:37 pooka Exp $	*/
+/*	$NetBSD: h_stresscli.c,v 1.5 2011/01/11 11:26:28 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -122,8 +122,10 @@ main(int argc, char *argv[])
 			errx(1, "wanted pid %d, got %d\n", clis[i], apid);
 		clis[i] = 0;
 		ncli--;
-		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+			fprintf(stderr, "child died with 0x%x\n", status);
 			exit(1);
+		}
 	}
 
 	for (i = 0; i < NCLI; i++)
