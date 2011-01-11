@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78 2010/11/06 11:46:04 uebayasi Exp $	*/
+/*	$NetBSD: cpu.c,v 1.79 2011/01/11 18:25:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78 2010/11/06 11:46:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79 2011/01/11 18:25:25 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -122,6 +122,7 @@ void    cpu_attach(device_t, device_t, void *);
 
 static bool	cpu_suspend(device_t, const pmf_qual_t *);
 static bool	cpu_resume(device_t, const pmf_qual_t *);
+static bool	cpu_shutdown(device_t, int);
 
 struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
@@ -427,7 +428,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	pat_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
-	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
+	if (!pmf_device_register1(self, cpu_suspend, cpu_resume, cpu_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	if (mp_verbose) {
@@ -1036,7 +1037,7 @@ cpu_suspend(device_t dv, const pmf_qual_t *qual)
 		mutex_enter(&cpu_lock);
 		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
-	
+
 		if (err)
 			return false;
 	}
@@ -1065,6 +1066,12 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 	}
 
 	return err == 0;
+}
+
+static bool
+cpu_shutdown(device_t dv, int how)
+{
+	return cpu_suspend(dv, NULL);
 }
 
 void
