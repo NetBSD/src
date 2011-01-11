@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.114.4.1 2009/02/06 01:54:09 snj Exp $	*/
+/*	$NetBSD: lwp.h,v 1.114.4.1.8.1 2011/01/11 18:49:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -189,6 +189,14 @@ struct lwp {
 #define	USER_TO_UAREA(user)	((vaddr_t)(user) - UAREA_USER_OFFSET)
 #define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
 #endif /* !defined(UAREA_TO_USER) */
+
+#ifdef _KERNEL
+static inline void *
+lwp_getpcb(lwp_t *l)
+{
+	return l->l_addr;
+}
+#endif
 
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
