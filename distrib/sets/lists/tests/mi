@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.221 2011/01/11 10:55:27 pooka Exp $
+# $NetBSD: mi,v 1.222 2011/01/11 16:31:33 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -332,6 +332,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo/h_gai		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/h_atexit.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/h_nsd_recurse.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/h_protoent.debug			tests-lib-debug		debug,atf
@@ -1628,6 +1630,23 @@
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_vis			tests-lib-tests		atf
+./usr/tests/lib/libc/getaddrinfo		tests-lib-tests
+./usr/tests/lib/libc/getaddrinfo/Atffile	tests-lib-tests		atf
+./usr/tests/lib/libc/getaddrinfo/data		tests-lib-tests
+./usr/tests/lib/libc/getaddrinfo/data/basics_v4.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/basics_v4v6.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/no_host_v4.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/no_host_v4v6.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/no_serv_v4.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/no_serv_v4v6.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/scoped.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/sock_raw_v4.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/sock_raw_v4v6.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/spec_fam_v4.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/spec_fam_v4v6.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/data/unsup_fam.exp	tests-lib-tests	atf
+./usr/tests/lib/libc/getaddrinfo/h_gai		tests-lib-tests		atf
+./usr/tests/lib/libc/getaddrinfo/t_getaddrinfo	tests-lib-tests		atf
 ./usr/tests/lib/libc/h_atexit			tests-lib-tests		atf
 ./usr/tests/lib/libc/h_nsd_recurse		tests-lib-tests		atf
 ./usr/tests/lib/libc/h_protoent			tests-lib-tests		atf
