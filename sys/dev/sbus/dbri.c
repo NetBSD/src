@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.31 2010/02/24 22:38:08 dyoung Exp $	*/
+/*	$NetBSD: dbri.c,v 1.32 2011/01/11 00:49:50 macallan Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.31 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.32 2011/01/11 00:49:50 macallan Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -96,7 +96,7 @@ enum io {
 static void	dbri_attach_sbus(device_t, device_t, void *);
 static int	dbri_match_sbus(device_t, cfdata_t, void *);
 
-static void	dbri_config_interrupts(device_t);
+static int	dbri_config_interrupts(device_t);
 
 /* interrupt handler */
 static int	dbri_intr(void *);
@@ -378,7 +378,8 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 	sc->sc_refcount = 0;
 	sc->sc_playing = 0;
 	sc->sc_recording = 0;
-	config_interrupts(self, &dbri_config_interrupts);
+	sc->sc_init_done = 0;
+	config_finalize_register(self, &dbri_config_interrupts);
 
 	return;
 }
@@ -441,16 +442,21 @@ dbri_bring_up(struct dbri_softc *sc)
 	mmcodec_setgain(sc, 0);
 }
 
-static void
+static int
 dbri_config_interrupts(device_t dev)
 {
 	struct dbri_softc *sc = device_private(dev);
+
+	if (sc->sc_init_done != 0)
+		return 0;
+
+	sc->sc_init_done = 1;
 
 	dbri_init(sc);
 	if (mmcodec_init(sc) == -1) {
 		printf("%s: no codec detected, aborting\n",
 		    device_xname(dev));
-		return;
+		return 0;
 	}
 
 	/* Attach ourselves to the high level audio interface */
@@ -458,7 +464,7 @@ dbri_config_interrupts(device_t dev)
 
 	/* power down until open() */
 	dbri_set_power(sc, 0);
-	return;
+	return 0;
 }
 
 static int
