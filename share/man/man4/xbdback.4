@@ -1,4 +1,4 @@
-.\"	$NetBSD: xbdback.4,v 1.1 2011/01/11 00:45:04 jym Exp $
+.\"	$NetBSD: xbdback.4,v 1.2 2011/01/11 10:48:05 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@ For
 the guest device name specified in the guest configuration file
 does not matter, and can be chosen arbitrarily.
 .Nm
-interfaces are backed either by a physical device directly, 
+interfaces are backed either by a physical device directly,
 or an image file mounted through
 .Xr vnd 4 .
 .Pp
@@ -74,19 +74,19 @@ Gives the device used as
 .Nm
 interface for the given guest domain, and its size, in bytes.
 .It "xbd backend 0x%x for domain %d using event channel %d, protocol %s"
-Gives the backend identifier, guest domain ID, event channel ID and
+Gives the backend identifier, guest domain ID, event channel ID, and
 protocol used for block level communication.
 .It "xbdback %s: can't VOP_OPEN device 0x%x: %d"
 When this message appears in the system message buffer with error 16
 .Po Er EBUSY Pc ,
 the device is likely to be already mounted.
-It musts be unmounted first, as the system will refuse to open
+It must be unmounted first, as the system will refuse to open
 it a second time.
 .El
 .Sh SEE ALSO
+.Xr vnd 4 ,
 .Xr xbd 4 ,
-.Xr xenbus 4 ,
-.Xr vnd 4
+.Xr xenbus 4
 .Sh HISTORY
 The
 .Nm
