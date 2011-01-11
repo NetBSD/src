@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2010/12/20 00:25:42 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2011/01/11 13:29:09 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2010/12/20 00:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2011/01/11 13:29:09 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_modular.h"
 #include "opt_interrupt.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -58,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2010/12/20 00:25:42 matt Exp $");
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -388,6 +390,27 @@ cpu_reboot(int howto, char *what)
 	}
 	while (1) ; /* may practice PPC processor reset sequence here */
 }
+
+#ifdef MODULAR
+void
+module_init_md(void)
+{
+        struct btinfo_modulelist *module;
+	struct bi_modulelist_entry *bi, *biend;
+
+        module = lookup_bootinfo(BTINFO_MODULELIST);
+        if (module == NULL)
+		return;
+	bi = (struct bi_modulelist_entry *)(module + 1);
+	biend = bi + module->num;
+	while (bi < biend) {
+		printf("module %s at 0x%08x size %x\n", 
+		    bi->kmod, bi->base, bi->len);
+		/* module_prime((void *)bi->base, bi->len); */
+		bi += 1;
+	}
+}
+#endif /* MODULAR */
 
 struct powerpc_bus_space sandpoint_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
