@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.11 2011/01/04 11:17:22 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.12 2011/01/11 14:03:38 kefren Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -523,6 +523,50 @@ attrs(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+fcntl_lock(const atf_tc_t *tc, const char *mp)
+{
+	int fd, fd2;
+	struct flock l;
+	struct lwp *lwp1, *lwp2;
+
+	FSTEST_ENTER();
+	l.l_pid = 0;
+	l.l_start = l.l_len = 1024;
+	l.l_type = F_RDLCK | F_WRLCK;
+	l.l_whence = SEEK_END;
+
+	lwp1 = rump_pub_lwproc_curlwp();
+	RL(fd = rump_sys_open(TESTFILE, O_RDWR | O_CREAT, 0755));
+	RL(rump_sys_ftruncate(fd, 8192));
+
+	/* PR kern/43321 */
+	RL(rump_sys_fcntl(fd, F_SETLK, &l));
+
+	/* Next, we fork and try to lock the same area */
+	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
+	lwp2 = rump_pub_lwproc_curlwp();
+	RL(fd2 = rump_sys_open(TESTFILE, O_RDWR, 0));
+	ATF_REQUIRE_ERRNO(EAGAIN, rump_sys_fcntl(fd2, F_SETLK, &l));
+
+	/* Switch back and unlock... */
+	rump_pub_lwproc_switch(lwp1);
+	l.l_type = F_UNLCK;
+	RL(rump_sys_fcntl(fd, F_SETLK, &l));
+
+	/* ... and try to lock again */
+	rump_pub_lwproc_switch(lwp2);
+	l.l_type = F_RDLCK | F_WRLCK;
+	RL(rump_sys_fcntl(fd2, F_SETLK, &l));
+
+	RL(rump_sys_close(fd2));
+	rump_pub_lwproc_releaselwp();
+
+	RL(rump_sys_close(fd));
+
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -534,6 +578,7 @@ ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
 ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
 ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
 ATF_TC_FSAPPLY(attrs, "check setting attributes works");
+ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -549,6 +594,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(rename_nametoolong);
 	ATF_TP_FSAPPLY(symlink_zerolen);
 	ATF_TP_FSAPPLY(attrs);
+	ATF_TP_FSAPPLY(fcntl_lock);
 
 	return atf_no_error();
 }
