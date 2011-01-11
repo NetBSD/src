@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.26.26.1 2011/01/07 01:51:02 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.26.26.2 2011/01/11 07:10:15 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -110,6 +110,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	.text; .align 2; .globl x; .type x,@function; x:
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	END(x)		.size _C_LABEL(x),.-_C_LABEL(x)
 
 #define	ENTRY_NOPROFILE(y) _ENTRY(_C_LABEL(y))
 
