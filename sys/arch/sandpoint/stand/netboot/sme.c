@@ -1,4 +1,4 @@
-/* $NetBSD: sme.c,v 1.4 2011/01/11 09:45:25 nisimura Exp $ */
+/* $NetBSD: sme.c,v 1.5 2011/01/11 10:10:48 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ sme_init(unsigned tag, void *data)
 	unsigned mac32, mac16, val, fdx;
 	uint8_t *en;
 
-	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
+	l = ALLOC(struct local, 32); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x1c)); /* BAR3 mem space, LE */
 	l->phy = 1; /* 9420 internal PHY */
