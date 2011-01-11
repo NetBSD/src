@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1273 2011/01/09 15:12:33 jruoho Exp $
+# $NetBSD: mi,v 1.1274 2011/01/11 00:45:04 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1323,6 +1323,7 @@
 ./usr/share/man/cat4/pcdisplay.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pchb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pci.0			man-sys-catman		.cat
+./usr/share/man/cat4/pciback.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pcic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pciide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pckbc.0			man-sys-catman		.cat
@@ -1765,8 +1766,14 @@
 ./usr/share/man/cat4/x86/fwhrng.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/hpet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ichlpcib.0		man-sys-catman		.cat
+./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
+./usr/share/man/cat4/xbdback.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
+./usr/share/man/cat4/xenbus.0			man-sys-catman		.cat
+./usr/share/man/cat4/xennet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xge.0			man-sys-catman		.cat
+./usr/share/man/cat4/xpci.0			man-sys-catman		.cat
+./usr/share/man/cat4/xvif.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xirc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/yds.0			man-sys-catman		.cat
@@ -4000,6 +4007,7 @@
 ./usr/share/man/html4/pcdisplay.html		man-sys-htmlman		html
 ./usr/share/man/html4/pchb.html			man-sys-htmlman		html
 ./usr/share/man/html4/pci.html			man-sys-htmlman		html
+./usr/share/man/html4/pciback.html		man-sys-htmlman		html
 ./usr/share/man/html4/pcic.html			man-sys-htmlman		html
 ./usr/share/man/html4/pciide.html		man-sys-htmlman		html
 ./usr/share/man/html4/pckbc.html		man-sys-htmlman		html
@@ -4412,8 +4420,14 @@
 ./usr/share/man/html4/x86/fwhrng.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/hpet.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ichlpcib.html		man-sys-htmlman		html
+./usr/share/man/html4/xbd.html			man-sys-htmlman		html
+./usr/share/man/html4/xbdback.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbox.html			man-sys-htmlman		html
+./usr/share/man/html4/xenbus.html		man-sys-htmlman		html
+./usr/share/man/html4/xennet.html		man-sys-htmlman		html
 ./usr/share/man/html4/xge.html			man-sys-htmlman		html
+./usr/share/man/html4/xpci.html			man-sys-htmlman		html
+./usr/share/man/html4/xvif.html			man-sys-htmlman		html
 ./usr/share/man/html4/xi.html			man-sys-htmlman		html
 ./usr/share/man/html4/xirc.html			man-sys-htmlman		html
 ./usr/share/man/html4/yds.html			man-sys-htmlman		html
@@ -6555,6 +6569,7 @@
 ./usr/share/man/man4/pcdisplay.4		man-sys-man		.man
 ./usr/share/man/man4/pchb.4			man-sys-man		.man
 ./usr/share/man/man4/pci.4			man-sys-man		.man
+./usr/share/man/man4/pciback.4			man-sys-man		.man
 ./usr/share/man/man4/pcic.4			man-sys-man		.man
 ./usr/share/man/man4/pciide.4			man-sys-man		.man
 ./usr/share/man/man4/pckbc.4			man-sys-man		.man
@@ -6997,8 +7012,14 @@
 ./usr/share/man/man4/x86/fwhrng.4		man-sys-man		.man
 ./usr/share/man/man4/x86/hpet.4			man-sys-man		.man
 ./usr/share/man/man4/x86/ichlpcib.4		man-sys-man		.man
+./usr/share/man/man4/xbd.4			man-sys-man		.man
+./usr/share/man/man4/xbdback.4			man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
+./usr/share/man/man4/xenbus.4			man-sys-man		.man
+./usr/share/man/man4/xennet.4			man-sys-man		.man
 ./usr/share/man/man4/xge.4			man-sys-man		.man
+./usr/share/man/man4/xpci.4			man-sys-man		.man
+./usr/share/man/man4/xvif.4			man-sys-man		.man
 ./usr/share/man/man4/xi.4			man-sys-man		.man
 ./usr/share/man/man4/xirc.4			man-sys-man		.man
 ./usr/share/man/man4/yds.4			man-sys-man		.man
