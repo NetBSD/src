@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.37 2011/01/10 20:16:42 phx Exp $ */
+/* $NetBSD: main.c,v 1.38 2011/01/11 08:04:14 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -71,6 +71,22 @@ struct btinfo_prodfamily bi_fam;
 struct btinfo_bootpath bi_path;
 struct btinfo_rootdevice bi_rdev;
 struct btinfo_net bi_net;
+struct btinfo_modulelist *btinfo_modulelist;
+size_t btinfo_modulelist_size;
+
+struct boot_module {
+	char *bm_kmod;
+	ssize_t bm_len;
+	struct boot_module *bm_next;
+};
+struct boot_module *boot_modules;
+char module_base[80];
+uint32_t kmodloadp;
+int modules_enabled = 0;
+
+void module_add(char *);
+void module_load(char *);
+int module_open(struct boot_module *);
 
 void main(int, char **);
 extern char bootprog_rev[], bootprog_maker[], bootprog_date[];
@@ -171,10 +187,15 @@ main(int argc, char *argv[])
 	marks[MARK_START] = 0;
 	if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
 		goto loadfail;
+	close(fd);
+
+	printf("entry=%p, ssym=%p, esym=%p\n",
+	    (void *)marks[MARK_ENTRY],
+	    (void *)marks[MARK_SYM],
+	    (void *)marks[MARK_END]);
 
 	bootinfo = (void *)0x4000;
 	bi_init(bootinfo);
-
 	bi_add(&bi_cons, BTINFO_CONSOLE, sizeof(bi_cons));
 	bi_add(&bi_mem, BTINFO_MEMORY, sizeof(bi_mem));
 	bi_add(&bi_clk, BTINFO_CLOCK, sizeof(bi_clk));
@@ -186,10 +207,17 @@ main(int argc, char *argv[])
 		bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
 	}
 
-	printf("entry=%p, ssym=%p, esym=%p\n",
-	    (void *)marks[MARK_ENTRY],
-	    (void *)marks[MARK_SYM],
-	    (void *)marks[MARK_END]);
+	if (modules_enabled) {
+		module_add(fsmod);
+		if (fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
+		module_add(fsmod2);
+		kmodloadp = marks[MARK_END];
+		btinfo_modulelist = NULL;
+		module_load(bname);
+		if (btinfo_modulelist != NULL && btinfo_modulelist->num > 0)
+			bi_add(btinfo_modulelist, BTINFO_MODULELIST,
+			    btinfo_modulelist_size);
+	}
 
 	__syncicache((void *)marks[MARK_ENTRY],
 	    (u_int)marks[MARK_SYM] - (u_int)marks[MARK_ENTRY]);
@@ -232,6 +260,137 @@ bi_add(void *new, int type, int size)
 	bi->type = type;
 	memcpy(bi_next, new, size);
 	bi_next += size;
+}
+
+void
+module_add(char *name)
+{
+	struct boot_module *bm, *bmp;
+
+	while (*name == ' ' || *name == '\t')
+		++name;
+
+	bm = alloc(sizeof(struct boot_module) + strlen(name) + 1);
+	if (bm == NULL) {
+		printf("couldn't allocate module %s\n", name); 
+		return; 
+	}
+
+	bm->bm_kmod = (char *)(bm + 1);
+	bm->bm_len = -1;
+	bm->bm_next = NULL;
+	strcpy(bm->bm_kmod, name);
+	if ((bmp = boot_modules) == NULL)
+		boot_modules = bm;
+	else {
+		while (bmp->bm_next != NULL)
+			bmp = bmp->bm_next;
+		bmp->bm_next = bm;
+	}
+}
+
+#define PAGE_SIZE	4096
+#define alignpg(x)	(((x)+PAGE_SIZE-1) & ~(PAGE_SIZE-1))
+
+void
+module_load(char *kernel_path) 
+{
+	struct boot_module *bm;
+	struct bi_modulelist_entry *bi;
+	struct stat st;
+	char *p; 
+	int size, fd;
+
+	strcpy(module_base, kernel_path);
+	if ((p = strchr(module_base, ':')) == NULL)
+		return; /* eeh?! */
+	p += 1;
+	size = sizeof(module_base) - (p - module_base);
+
+	if (netbsd_version / 1000000 % 100 == 99) {
+		/* -current */
+		snprintf(p, size,
+		    "/stand/sandpoint/%d.%d.%d/modules",
+		    netbsd_version / 100000000,
+		    netbsd_version / 1000000 % 100,
+		    netbsd_version / 100 % 100);
+	}
+	 else if (netbsd_version != 0) {
+		/* release */
+		snprintf(p, size,
+		    "/stand/sandpoint/%d.%d/modules",
+		    netbsd_version / 100000000,
+		    netbsd_version / 1000000 % 100);
+	}
+
+	/*
+	 * 1st pass; determine module existence
+	 */
+	size = 0;
+	for (bm = boot_modules; bm != NULL; bm = bm->bm_next) {
+		fd = module_open(bm);
+		if (fd == -1)
+			continue;
+		if (fstat(fd, &st) == -1 || st.st_size == -1) {
+			printf("WARNING: couldn't stat %s\n", bm->bm_kmod);
+			close(fd);
+			continue;
+		}
+		bm->bm_len = (int)st.st_size;
+		close(fd);
+		size += sizeof(struct bi_modulelist_entry); 
+	}
+	if (size == 0)
+		return;
+
+	size += sizeof(struct btinfo_modulelist);
+	btinfo_modulelist = alloc(size);
+	if (btinfo_modulelist == NULL) {
+		printf("WARNING: couldn't allocate module list\n");
+		return;
+	}
+	btinfo_modulelist_size = size;
+	btinfo_modulelist->num = 0;
+
+	/*
+	 * 2nd pass; load modules into memory
+	 */
+	kmodloadp = alignpg(kmodloadp);
+	bi = (struct bi_modulelist_entry *)(btinfo_modulelist + 1);
+	for (bm = boot_modules; bm != NULL; bm = bm->bm_next) {
+		if (bm->bm_len == -1)
+			continue; /* already found unavailable */
+		fd = module_open(bm);
+		printf("module \"%s\" ", bm->bm_kmod);
+		size = read(fd, (char *)kmodloadp, SSIZE_MAX);
+		if (size < bm->bm_len)
+			printf("WARNING: couldn't load");
+		else {
+			snprintf(bi->kmod, sizeof(bi->kmod), bm->bm_kmod);
+			bi->type = BI_MODULE_ELF;
+			bi->len = size;
+			bi->base = kmodloadp;
+			btinfo_modulelist->num += 1;
+			kmodloadp += alignpg(size);
+			bi += 1;
+			printf("loaded at 0x%08x size 0x%x", kmodloadp, size);
+		}
+		printf("\n");
+		close(fd);
+	}
+	btinfo_modulelist->endpa = kmodloadp;
+}
+
+int
+module_open(struct boot_module *bm)
+{
+	char path[80];
+	int fd;
+
+	snprintf(path, sizeof(path),
+	    "%s/%s/%s.kmod", module_base, bm->bm_kmod, bm->bm_kmod);
+	fd = open(path, 0);
+	return fd;
 }
 
 #if 0
