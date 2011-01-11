@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.17 2011/01/07 12:18:25 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.18 2011/01/11 09:32:50 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -133,6 +133,7 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	    FSTYPE_MSDOS(tc) || FSTYPE_FFSLOG(tc))
 		atf_tc_expect_signal(-1, "PR kern/43626");
 
+	/* XXX: unracy execution not caught */
 	if (FSTYPE_P2K_FFS(tc))
 		atf_tc_expect_fail("PR kern/44336"); /* child dies */
 
@@ -155,7 +156,7 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	 * (i.e. not on tmpfs/mfs).  So do the usual kludge.
 	 */
 	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
-	    FSTYPE_MSDOS(tc) || FSTYPE_P2K_FFS(tc))
+	    FSTYPE_MSDOS(tc) || FSTYPE_FFSLOG(tc))
 		abort();
 }
 
