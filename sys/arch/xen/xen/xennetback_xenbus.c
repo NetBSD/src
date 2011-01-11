@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.35 2011/01/08 05:23:19 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.36 2011/01/11 01:21:32 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -242,13 +242,13 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "frontend-id", &domid, 10)) != 0) {
-		aprint_error("xvif: can' read %s/frontend-id: %d\n",
+		aprint_error("xvif: can't read %s/frontend-id: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "handle", &handle, 10)) != 0) {
-		aprint_error("xvif: can' read %s/handle: %d\n",
+		aprint_error("xvif: can't read %s/handle: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
