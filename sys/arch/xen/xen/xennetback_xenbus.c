@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.36 2011/01/11 01:21:32 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.37 2011/01/11 23:22:19 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -322,6 +322,13 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 			printf("xbdback %s: can't start transaction\n",
 			    xbusd->xbusd_path);
 			goto fail;
+		}
+		err = xenbus_printf(xbt, xbusd->xbusd_path,
+		    "vifname", ifp->if_xname);
+		if (err) {
+			printf("xbdback: failed to write %s/vifname: "
+			    "%d\n", xbusd->xbusd_path, err);
+			goto abort_xbt;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
 		    "feature-rx-copy", "%d", 1);
