@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.1.2.2 2011/01/11 03:45:29 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1436,7 +1436,7 @@ pq3etsec_rx_input(
 	int s = splnet();
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 	(*ifp->if_input)(ifp, m);
 	splx(s);
@@ -2381,6 +2381,8 @@ pq3etsec_mii_tick(void *arg)
 		softint_schedule(sc->sc_soft_ih);
 	splx(s);
 	callout_schedule(&sc->sc_mii_callout, hz);
+#ifdef DEBUG
 	sc->sc_mii_last_tick = now;
+#endif
 	mutex_exit(sc->sc_lock);
 }
