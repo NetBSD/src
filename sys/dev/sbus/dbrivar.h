@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.11 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.12 2011/01/11 00:49:50 macallan Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -124,6 +124,7 @@ struct dbri_softc {
 	bus_dma_segment_t sc_dmaseg;
 	
 	int		sc_have_powerctl;
+	int		sc_init_done;
 	int		sc_powerstate;	/* DBRI's powered up or not */
 	int		sc_pmgrstate;	/* PWR_RESUME etc. */
 	int		sc_burst;	/* DVMA burst size in effect */
