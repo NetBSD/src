@@ -1,4 +1,4 @@
-# $NetBSD: t_grow.sh,v 1.7 2011/01/05 02:25:27 riz Exp $
+# $NetBSD: t_grow.sh,v 1.8 2011/01/11 00:50:02 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -96,22 +96,22 @@ test_case grow_16M_v2_8192 resize_ffs 8192 1024 32768 131072 2 28
 test_case grow_16M_v2_16384 resize_ffs 16384 2048 32768 131072 2 29
 test_case grow_16M_v2_32768 resize_ffs 32768 4096 32768 131072 2 28
 test_case grow_16M_v2_65536 resize_ffs 65536 8192 32768 131072 2 25
-test_case grow_24M_v2_4096 resize_ffs 4096 512 49152 65536 2 41
+test_case grow_24M_v2_4096 resize_ffs 4096 512 49152 65536 2 40
 test_case grow_24M_v2_8192 resize_ffs 8192 1024 49152 65536 2 42
 test_case grow_24M_v2_16384 resize_ffs 16384 2048 49152 65536 2 43
 test_case grow_24M_v2_32768 resize_ffs 32768 4096 49152 65536 2 42
 test_case grow_24M_v2_65536 resize_ffs 65536 8192 49152 65536 2 38
-test_case grow_32M_v2_4096 resize_ffs 4096 512 65536 131072 2 55
+test_case grow_32M_v2_4096 resize_ffs 4096 512 65536 131072 2 53
 test_case grow_32M_v2_8192 resize_ffs 8192 1024 65536 131072 2 56
 test_case grow_32M_v2_16384 resize_ffs 16384 2048 65536 131072 2 58
 test_case grow_32M_v2_32768 resize_ffs 32768 4096 65536 131072 2 56
 test_case grow_32M_v2_65536 resize_ffs 65536 8192 65536 131072 2 51
-test_case grow_48M_v2_4096 resize_ffs 4096 512 98304 131072 2 82
+test_case grow_48M_v2_4096 resize_ffs 4096 512 98304 131072 2 80
 test_case grow_48M_v2_8192 resize_ffs 8192 1024 98304 131072 2 84
 test_case grow_48M_v2_16384 resize_ffs 16384 2048 98304 131072 2 87
 test_case grow_48M_v2_32768 resize_ffs 32768 4096 98304 131072 2 83
 test_case grow_48M_v2_65536 resize_ffs 65536 8192 98304 131072 2 76
-test_case grow_64M_v2_4096 resize_ffs 4096 512 131072 262144 2 109
+test_case grow_64M_v2_4096 resize_ffs 4096 512 131072 262144 2 107
 test_case grow_64M_v2_8192 resize_ffs 8192 1024 131072 262144 2 111
 test_case grow_64M_v2_16384 resize_ffs 16384 2048 131072 262144 2 115
 test_case grow_64M_v2_32768 resize_ffs 32768 4096 131072 262144 2 111

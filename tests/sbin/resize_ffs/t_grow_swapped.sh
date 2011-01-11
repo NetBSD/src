@@ -1,4 +1,4 @@
-# $NetBSD: t_grow_swapped.sh,v 1.1 2011/01/05 02:25:27 riz Exp $
+# $NetBSD: t_grow_swapped.sh,v 1.2 2011/01/11 00:50:02 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -96,22 +96,22 @@ test_case grow_16M_v2_8192 resize_ffs 8192 1024 32768 131072 2 28 swap
 test_case grow_16M_v2_16384 resize_ffs 16384 2048 32768 131072 2 29 swap
 test_case grow_16M_v2_32768 resize_ffs 32768 4096 32768 131072 2 28 swap
 test_case grow_16M_v2_65536 resize_ffs 65536 8192 32768 131072 2 25 swap
-test_case grow_24M_v2_4096 resize_ffs 4096 512 49152 65536 2 41 swap
+test_case grow_24M_v2_4096 resize_ffs 4096 512 49152 65536 2 40 swap
 test_case grow_24M_v2_8192 resize_ffs 8192 1024 49152 65536 2 42 swap
 test_case grow_24M_v2_16384 resize_ffs 16384 2048 49152 65536 2 43 swap
 test_case grow_24M_v2_32768 resize_ffs 32768 4096 49152 65536 2 42 swap
 test_case grow_24M_v2_65536 resize_ffs 65536 8192 49152 65536 2 38 swap
-test_case grow_32M_v2_4096 resize_ffs 4096 512 65536 131072 2 55 swap
+test_case grow_32M_v2_4096 resize_ffs 4096 512 65536 131072 2 53 swap
 test_case grow_32M_v2_8192 resize_ffs 8192 1024 65536 131072 2 56 swap
 test_case grow_32M_v2_16384 resize_ffs 16384 2048 65536 131072 2 58 swap
 test_case grow_32M_v2_32768 resize_ffs 32768 4096 65536 131072 2 56 swap
 test_case grow_32M_v2_65536 resize_ffs 65536 8192 65536 131072 2 51 swap
-test_case grow_48M_v2_4096 resize_ffs 4096 512 98304 131072 2 82 swap
+test_case grow_48M_v2_4096 resize_ffs 4096 512 98304 131072 2 80 swap
 test_case grow_48M_v2_8192 resize_ffs 8192 1024 98304 131072 2 84 swap
 test_case grow_48M_v2_16384 resize_ffs 16384 2048 98304 131072 2 87 swap
 test_case grow_48M_v2_32768 resize_ffs 32768 4096 98304 131072 2 83 swap
 test_case grow_48M_v2_65536 resize_ffs 65536 8192 98304 131072 2 76 swap
-test_case grow_64M_v2_4096 resize_ffs 4096 512 131072 262144 2 109 swap
+test_case grow_64M_v2_4096 resize_ffs 4096 512 131072 262144 2 107 swap
 test_case grow_64M_v2_8192 resize_ffs 8192 1024 131072 262144 2 111 swap
 test_case grow_64M_v2_16384 resize_ffs 16384 2048 131072 262144 2 115 swap
 test_case grow_64M_v2_32768 resize_ffs 32768 4096 131072 262144 2 111 swap
