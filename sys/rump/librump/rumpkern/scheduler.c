@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.23 2010/12/01 20:29:56 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.24 2011/01/11 10:49:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.23 2010/12/01 20:29:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.24 2011/01/11 10:49:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -349,9 +349,14 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 void
 rump_unschedule()
 {
-	struct lwp *l;
+	struct lwp *l = rumpuser_get_curlwp();
+#ifdef DIAGNOSTIC
+	int nlock;
 
-	l = rumpuser_get_curlwp();
+	KERNEL_UNLOCK_ALL(l, &nlock);
+	KASSERT(nlock == 0);
+#endif
+
 	KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_mutex);
 	rump_unschedule_cpu(l);
 	l->l_mutex = NULL;
