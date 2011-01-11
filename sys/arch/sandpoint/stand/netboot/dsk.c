@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.6 2011/01/10 20:18:19 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.7 2011/01/11 07:01:21 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -127,9 +127,9 @@ disk_scan(void *cookie)
 		d->dvops = l;
 		d->unittag = ndrive;
 		snprintf(d->xname, sizeof(d->xname), "wd%d", d->unittag);
+		set_xfermode(l, n);
 		drive_ident(d, l->iobuf);
 		decode_dlabel(d, l->iobuf);
-		set_xfermode(l, n);
 		ndrive += 1;
 	}
 	return ndrive;
