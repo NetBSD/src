@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14.86.1 2011/01/07 01:59:39 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.14.86.2 2011/01/11 07:09:54 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,8 +43,8 @@
  * [*] Little-endian mode on the 601 is implemented in the HID0 register.
  */
 #define	PSL_VEC		0x02000000	/* ..6. AltiVec vector unit available */
+#define	PSL_SPV		0x02000000	/* B... (e500) SPE enable */
 #define	PSL_UCLE	0x00400000	/* B... user-mode cache lock enable */
-#define	PSL_SPV		0x00200000	/* B... (e500) SPE enable */
 #define	PSL_POW		0x00040000	/* ..6. power management */
 #define	PSL_WE		PSL_POW		/* B4.. wait state enable */
 #define	PSL_TGPR	0x00020000	/* ..6. temp. gpr remapping (mpc603e) */
