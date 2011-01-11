@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1051 2010/12/16 10:10:53 wiz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1052 2011/01/11 00:14:41 dyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1054 2010/12/16 07:02:07 cegger Exp
+ *	NetBSD: pcidevs,v 1.1055 2011/01/11 00:13:03 dyoung Exp
  */
 
 /*
@@ -2361,6 +2361,11 @@
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_5	0x103e		/* PRO/100 VM (MOB) Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2100	0x1043		/* PRO/Wireless LAN 2100 3B Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_82597EX	0x1048		/* PRO/10GbE LR Server Adapter */
+#define	PCI_PRODUCT_INTEL_82599_KX4	0x10F7		/* 82599 (KX/KX4) 10 GbE Controller */
+#define	PCI_PRODUCT_INTEL_82599_COMBO_BACKPLANE	0x10F8		/* 82599 (combined backplane; KR/KX4/KX) 10 GbE Controller */
+#define	PCI_PRODUCT_INTEL_82599_CX4	0x10F9		/* 82599 (CX4) 10 GbE Controller */
+#define	PCI_PRODUCT_INTEL_82599_SFP	0x10FB		/* 82599 (SFI/SFP+) 10 GbE Controller */
+#define	PCI_PRODUCT_INTEL_82599_XAUI_LOM	0x10FC		/* 82599 (XAUI/BX4) 10 GbE Controller */
 #define	PCI_PRODUCT_INTEL_82801H_M_AMT	0x1049		/* i82801H (M_AMT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_AMT	0x104a		/* i82801H (AMT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_LAN	0x104b		/* i82801H LAN Controller */
