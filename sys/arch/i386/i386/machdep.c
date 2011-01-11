@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.698 2010/11/12 13:18:57 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.699 2011/01/11 21:10:17 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.698 2010/11/12 13:18:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.699 2011/01/11 21:10:17 jruoho Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -864,7 +864,9 @@ cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
 	struct lwp *l;
+	int s;
 
+	s = IPL_NONE;
 	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
 	if (cold) {
@@ -908,7 +910,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	pmf_system_shutdown(boothowto);
 
-	splhigh();
+	s = splhigh();
 haltsys:
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -923,6 +925,9 @@ haltsys:
 		}
 #endif
 #if NACPICA > 0
+		if (s != IPL_NONE)
+			splx(s);
+
 		acpi_enter_sleep_state(ACPI_STATE_S5);
 #endif
 #if NAPMBIOS > 0 && !defined(APM_NO_POWEROFF)
