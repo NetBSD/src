@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.157 2010/11/15 06:12:28 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.158 2011/01/11 21:10:17 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2010/11/15 06:12:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2011/01/11 21:10:17 jruoho Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -669,6 +669,7 @@ struct pcb dumppcb;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	int s = IPL_NONE;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -687,7 +688,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable interrupts. */
-	splhigh();
+	s = splhigh();
 
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
@@ -701,6 +702,9 @@ haltsys:
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
 #if NACPICA > 0
+		if (s != IPL_NONE)
+			splx(s);
+
 		acpi_enter_sleep_state(ACPI_STATE_S5);
 #endif
 #else /* XEN */
