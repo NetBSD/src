@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciback.4,v 1.1 2011/01/11 00:45:04 jym Exp $
+.\"	$NetBSD: pciback.4,v 1.2 2011/01/11 10:48:37 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ driver will attach to a
 bus inside the guest domain.
 .Sh EXAMPLES
 To attach a device to the
-.Nm 
+.Nm
 driver,
 follow these steps:
 .Bl -enum -offset indent -compact
@@ -67,7 +67,7 @@ look for the device PCI ID, via
 .Xr pcictl 8 .
 .It
 edit
-.Xr boot.conf 5 ,
+.Pa boot.conf
 and add the PCI ID to the list of PCI IDs that you want to
 attach to
 .Nm ,
@@ -83,7 +83,7 @@ reboot dom0.
 .It
 add the PCI ID to the list of PCI devices in the domain
 configuration file:
-.Dl pci = ['bus:dev.fun', '...'] 
+.Dl pci = ['bus:dev.fun', '...']
 .It
 start the guest domain.
 .El
