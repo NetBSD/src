@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.67 2011/01/09 12:20:10 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.68 2011/01/11 09:22:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -56,9 +56,13 @@ extern struct sysent rump_sysent[];
 
 enum rump_component_type {
 	RUMP_COMPONENT_DEV,
-	RUMP_COMPONENT_NET, RUMP_COMPONENT_NET_ROUTE, RUMP_COMPONENT_NET_IF,
+	RUMP_COMPONENT_NET,
+		RUMP_COMPONENT_NET_ROUTE,
+		RUMP_COMPONENT_NET_IF,
+		RUMP_COMPONENT_NET_IFCFG,
 	RUMP_COMPONENT_VFS,
-	RUMP_COMPONENT_KERN, RUMP_COMPONENT_KERN_VFS,
+	RUMP_COMPONENT_KERN,
+		RUMP_COMPONENT_KERN_VFS,
 	RUMP_COMPONENT_MAX,
 };
 struct rump_component {
