@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.18 2010/05/02 13:36:30 phx Exp $ */
+/* $NetBSD: nvt.c,v 1.19 2011/01/11 09:45:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -139,10 +139,10 @@ struct desc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc txd;
+	struct desc txd[2];
 	struct desc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
-	unsigned csr, rx;
+	unsigned csr, tx, rx;
 	unsigned phy, bmsr, anlpar;
 	unsigned ctl0;
 };
@@ -210,7 +210,7 @@ nvt_init(unsigned tag, void *data)
 		printf("-FDX");
 	printf("\n");
 
-	txd = &l->txd;
+	txd = &l->txd[0];
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole32(R0_OWN);
 	rxd[0].xd1 = htole32(FRAMESIZE << 16);
@@ -221,7 +221,7 @@ nvt_init(unsigned tag, void *data)
 	rxd[1].xd2 = htole32(FRAMESIZE << 16);
 	rxd[1].xd3 = htole32(VTOPHYS(&rxd[0]));
 	wbinv(l, sizeof(struct local));
-	l->rx = 0;
+	l->tx = l->rx = 0;
 
 	/* enable transmitter and receiver */
 	l->ctl0 = CTL0_TXON | CTL0_RXON | CTL0_START;
@@ -250,7 +250,7 @@ nvt_send(void *dev, char *buf, unsigned len)
 	if (len < 60)
 		len = 60; /* needs to stretch to ETHER_MIN_LEN - 4 */
 	wbinv(buf, len);
-	txd = &l->txd;
+	txd = &l->txd[l->tx];
 	txd->xd3 = htole32(txd);
 	txd->xd2 = htole32(VTOPHYS(buf));
 	txd->xd1 = htole32(T1_STP | T1_EDP | len);
@@ -267,6 +267,7 @@ nvt_send(void *dev, char *buf, unsigned len)
 	printf("xmit failed\n");
 	return -1;
   done:
+	l->tx ^= 1;
 	return len;
 }
 
