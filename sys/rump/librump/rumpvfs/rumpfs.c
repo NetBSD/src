@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.81 2011/01/04 09:49:16 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.82 2011/01/11 14:05:32 kefren Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.81 2011/01/04 09:49:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.82 2011/01/11 14:05:32 kefren Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -82,6 +82,7 @@ static int rump_vop_whiteout(void *);
 static int rump_vop_pathconf(void *);
 static int rump_vop_bmap(void *);
 static int rump_vop_strategy(void *);
+static int rump_vop_advlock(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -124,6 +125,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, rump_vop_pathconf },
 	{ &vop_bmap_desc, rump_vop_bmap },
 	{ &vop_strategy_desc, rump_vop_strategy },
+	{ &vop_advlock_desc, rump_vop_advlock },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
@@ -168,6 +170,7 @@ struct rumpfs_node {
 	struct vnode *rn_vp;
 	char *rn_hostpath;
 	int rn_flags;
+	struct lockf *rn_lockf;
 
 	union {
 		struct {		/* VREG */
@@ -1476,6 +1479,23 @@ rump_vop_spec(void *v)
 	}
 
 	return VOCALL(opvec, ap->a_desc->vdesc_offset, v);
+}
+
+static int
+rump_vop_advlock(void *v)
+{
+	struct vop_advlock_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		void *a_id;
+		int a_op;
+		struct flock *a_fl;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+
+	return lf_advlock(ap, &rn->rn_lockf, vp->v_size);
 }
 
 /*
