@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.19 2011/01/11 09:45:25 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.20 2011/01/11 10:10:48 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ nvt_init(unsigned tag, void *data)
 	struct desc *txd, *rxd;
 	uint8_t *en;
 
-	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
+	l = ALLOC(struct local, 32); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = ~01 & DEVTOV(pcicfgread(tag, 0x10)); /* use IO space */
 
