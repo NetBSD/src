@@ -1,4 +1,4 @@
-/* $NetBSD: sme.c,v 1.3 2010/05/02 13:36:31 phx Exp $ */
+/* $NetBSD: sme.c,v 1.4 2011/01/11 09:45:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -91,10 +91,10 @@ struct desc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc txd;
+	struct desc txd[2];
 	struct desc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
-	unsigned csr, rx;
+	unsigned csr, tx, rx;
 	unsigned phy, bmsr, anlpar;
 };
 
@@ -154,7 +154,7 @@ sme_init(unsigned tag, void *data)
 		printf("-FDX");
 	printf("\n");
 
-	txd = &l->txd;
+	txd = &l->txd[0];
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole32(R0_OWN);
 	rxd[0].xd1 = htole32(R1_RCH | FRAMESIZE);
@@ -164,7 +164,7 @@ sme_init(unsigned tag, void *data)
 	rxd[1].xd1 = htole32(R1_RER | FRAMESIZE);
 	rxd[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
 	/* R1_RER neglects xd3 */
-	l->rx = 0;
+	l->tx = l->rx = 0;
 
 	wbinv(l, sizeof(struct local));
 
@@ -190,7 +190,7 @@ sme_send(void *dev, char *buf, unsigned len)
 
 	/* send a single frame with no T1_TER|T1_TCH designation */
 	wbinv(buf, len);
-	txd = &l->txd;
+	txd = &l->txd[l->tx];
 	txd->xd2 = htole32(VTOPHYS(buf));
 	txd->xd1 = htole32(T1_FS | T1_LS | (len & T1_FL));
 	txd->xd0 = htole32(T0_OWN | (len & T0_FL) << 16);
@@ -209,6 +209,7 @@ sme_send(void *dev, char *buf, unsigned len)
 	printf("xmit failed\n");
 	return -1;
   done:
+	l->tx ^= 1;
 	return len;
 }
 
