@@ -1,4 +1,4 @@
-/* $NetBSD: kse.c,v 1.5 2011/01/11 09:45:25 nisimura Exp $ */
+/* $NetBSD: kse.c,v 1.6 2011/01/11 10:10:48 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ kse_init(unsigned tag, void *data)
 	unsigned i, val, fdx;
 	uint8_t *en;
 
-	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
+	l = ALLOC(struct local, 32); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x10));
 

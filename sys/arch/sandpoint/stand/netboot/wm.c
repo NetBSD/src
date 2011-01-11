@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.12 2011/01/11 09:45:25 nisimura Exp $ */
+/* $NetBSD: wm.c,v 1.13 2011/01/11 10:10:48 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ wm_init(unsigned tag, void *data)
 	struct rdesc *rxd;
 	uint8_t *en;
 
-	l = ALLOC(struct local, sizeof(struct tdesc)); /* desc alignment */
+	l = ALLOC(struct local, 32); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = pcicfgread(tag, 0x10); /* use mem space */
 
