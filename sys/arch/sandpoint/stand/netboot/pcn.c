@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.18 2011/01/11 09:45:25 nisimura Exp $ */
+/* $NetBSD: pcn.c,v 1.19 2011/01/11 10:10:48 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ pcn_init(unsigned tag, void *data)
 	uint8_t *en;
 	struct pcninit initblock, *ib;
 
-	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
+	l = ALLOC(struct local, 32); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
