@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.38 2011/01/11 08:04:14 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.39 2011/01/11 08:19:34 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -371,9 +371,9 @@ module_load(char *kernel_path)
 			bi->len = size;
 			bi->base = kmodloadp;
 			btinfo_modulelist->num += 1;
+			printf("loaded at 0x%08x size 0x%x", kmodloadp, size);
 			kmodloadp += alignpg(size);
 			bi += 1;
-			printf("loaded at 0x%08x size 0x%x", kmodloadp, size);
 		}
 		printf("\n");
 		close(fd);
