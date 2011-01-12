@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/01/06 15:19:10 njoly Exp $
+#	$NetBSD: Makefile,v 1.15 2011/01/12 21:13:27 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,6 +11,7 @@ TESTS_C+=	t_io
 TESTS_C+=	t_renamerace
 TESTS_C+=	t_ro
 TESTS_C+=	t_rmdirrace
+TESTS_C+=	t_union
 TESTS_C+=	t_unpriv
 TESTS_C+=	t_vfsops
 TESTS_C+=	t_vnops
@@ -23,6 +24,7 @@ LDADD+=-lrumpfs_syspuffs					# puffs
 LDADD+=-lrumpdev_putter -lrumpdev				#   \ putter
 LDADD+=-lrumpfs_sysvbfs						# sysvbfs
 LDADD+=-lrumpfs_tmpfs						# tmpfs
+LDADD+=-lrumpfs_union						# union
 LDADD+=-lrumpdev_disk -lrumpdev					# disk device
 
 
