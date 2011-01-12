@@ -1,4 +1,4 @@
-/*	$NetBSD: t_union.c,v 1.1 2011/01/12 21:13:27 pooka Exp $	*/
+/*	$NetBSD: t_union.c,v 1.2 2011/01/12 21:45:39 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -21,9 +21,6 @@
 #include "../common/h_fsmacros.h"
 
 #define MSTR "magic bus"
-
-#define HAS_WHITEOUT (FSTYPE_FFS(tc) || FSTYPE_FFSLOG(tc) ||	\
-    FSTYPE_LFS(tc) || FSTYPE_RUMPFS(tc))
 
 static void
 xput_tfile(const char *mp, const char *path)
@@ -74,10 +71,6 @@ basic(const atf_tc_t *tc, const char *mp)
 	struct dirent *dp;
 	int error, fd, dsize;
 
-	if (!HAS_WHITEOUT) {
-		atf_tc_skip("file system does not support VOP_WHITEOUT");
-	}
-
 	snprintf(lowerpath, sizeof(lowerpath), "%s.lower", mp);
 
 	RL(rump_sys_mkdir(lowerpath, 0777));
@@ -91,8 +84,13 @@ basic(const atf_tc_t *tc, const char *mp)
 	unionargs.mntflags = UNMNT_BELOW;
 
 	if (rump_sys_mount(MOUNT_UNION, mp, 0,
-	    &unionargs, sizeof(unionargs)) == -1)
-		atf_tc_fail_errno("union mount");
+	    &unionargs, sizeof(unionargs)) == -1) {
+		if (errno == EOPNOTSUPP) {
+			atf_tc_skip("fs does not support VOP_WHITEOUT");
+		} else {
+			atf_tc_fail_errno("union mount");
+		}
+	}
 
 	/* first, test we can read the old file from the new namespace */
 	error = xread_tfile(mp, TFILE);
