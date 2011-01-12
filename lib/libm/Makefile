@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.100 2011/01/09 02:32:13 jakllsch Exp $
+#  $NetBSD: Makefile,v 1.101 2011/01/12 23:03:56 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -270,8 +270,6 @@ MLINKS+=fmax.3 fminl.3
 MLINKS+=fmax.3 fminf.3
 MLINKS+=fdim.3 fdiml.3
 MLINKS+=fdim.3 fdimf.3
-
-NOMANDOC=	yes
 
 .if (${MKCOMPLEX} != "no")
 .include "${.CURDIR}/complex/Makefile.inc"
