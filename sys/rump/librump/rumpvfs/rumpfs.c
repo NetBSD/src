@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.84 2011/01/12 17:20:54 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.85 2011/01/12 19:31:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.84 2011/01/12 17:20:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.85 2011/01/12 19:31:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -644,6 +644,8 @@ rump_vop_lookup(void *v)
 	struct etfs *et;
 	bool dotdot = (cnp->cn_flags & ISDOTDOT) != 0;
 	int rv = 0;
+
+	*vpp = NULL;
 
 	/* check for dot, return directly if the case */
 	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
