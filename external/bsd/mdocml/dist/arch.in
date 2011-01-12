@@ -1,4 +1,4 @@
-/*	$Vendor-Id: arch.in,v 1.9 2010/07/19 15:43:10 kristaps Exp $ */
+/*	$Vendor-Id: arch.in,v 1.10 2010/09/27 06:56:44 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -42,6 +42,7 @@ LINE("loongson",	"Loongson")
 LINE("luna88k",		"Luna88k")
 LINE("mac68k",		"Mac68k")
 LINE("macppc",		"MacPPC")
+LINE("mips64",		"MIPS64")
 LINE("mvme68k",		"MVME68k")
 LINE("mvme88k",		"MVME88k")
 LINE("mvmeppc",		"MVMEPPC")

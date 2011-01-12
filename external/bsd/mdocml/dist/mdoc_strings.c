@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mdoc_strings.c,v 1.23 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_strings.c,v 1.24 2010/07/31 23:52:58 schwarze Exp $ */
 /*
- * Copyright (c) 2008 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
