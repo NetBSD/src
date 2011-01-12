@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.184 2010/11/17 00:20:49 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.185 2011/01/12 15:30:40 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.184 2010/11/17 00:20:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.185 2011/01/12 15:30:40 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1250,7 +1250,7 @@ ether_aton_r(u_char *dest, size_t len, const char *str)
         const u_char *cp = (const void *)str;
 	u_char *ep;
 
-#define atox(c)	(((c) < '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
 
 	if (len < ETHER_ADDR_LEN)
 		return ENOSPC;
