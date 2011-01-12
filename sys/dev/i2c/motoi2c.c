@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.2 2011/01/04 02:50:08 nisimura Exp $ */
+/* $NetBSD: motoi2c.c,v 1.3 2011/01/12 18:06:26 phx Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.2 2011/01/04 02:50:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.3 2011/01/12 18:06:26 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,10 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.2 2011/01/04 02:50:08 nisimura Exp $")
 #include <dev/i2c/motoi2cvar.h>
 
 #ifdef DEBUG
-static int motoi2c_debug = 0;
-#define	DPRINTF		if (motoi2c_debug) printf
+int motoi2c_debug = 0;
+#define	DPRINTF(x)	if (motoi2c_debug) printf x
 #else
-#define	DPRINTF		(void)
+#define	DPRINTF(x)
 #endif
 
 static int  motoi2c_acquire_bus(void *, int);
@@ -149,19 +149,17 @@ motoi2c_busy_wait(struct motoi2c_softc *sc, uint8_t cr)
 		DELAY(10);
 
 	if (timo == 0) {
-		DPRINTF("%s: timeout (sr=%#x, cr=%#x)\n",
-		    __func__, sr, I2C_READ(I2CCR));
+		DPRINTF(("%s: timeout (sr=%#x, cr=%#x)\n",
+		    __func__, sr, I2C_READ(I2CCR)));
 		error = ETIMEDOUT;
 	}
 	/*
 	 * RXAK is only valid when transmitting.
 	 */
 	if ((cr & CR_MTX) && (sr & SR_RXAK)) {
+		DPRINTF(("%s: missing rx ack (%#x): spin=%u\n",
+		    __func__, sr, 1000 - timo));
 		error = EIO;
-#ifdef DEBUG
-		DPRINTF("%s: missing rx ack (%#x): spin=%u\n",
-		    __func__, sr, 1000 - timo);
-#endif
 	}
 	I2C_WRITE(I2CSR, 0);
 	return error;
@@ -192,9 +190,9 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 	cr = I2C_READ(I2CCR);
 
 #if 0
-	DPRINTF("%s(%#x,%#x,%p,%zu,%p,%zu,%#x): sr=%#x cr=%#x\n",
+	DPRINTF(("%s(%#x,%#x,%p,%zu,%p,%zu,%#x): sr=%#x cr=%#x\n",
 	    __func__, op, addr, cmdbuf, cmdlen, databuf, datalen, flags,
-	    sr, cr);
+	    sr, cr));
 #endif
 
 	if ((cr & CR_MSTA) == 0 && (sr & SR_MBB) != 0) {
@@ -205,9 +203,7 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 		} while (--timo > 0 && ((sr = I2C_READ(I2CSR)) & SR_MBB) != 0);
 
 		if (timo == 0) {
-#ifdef DEBUG
-			DPRINTF("%s: bus is busy (%#x)\n", __func__, sr);
-#endif
+			DPRINTF(("%s: bus is busy (%#x)\n", __func__, sr));
 			return ETIMEDOUT;
 		}
 	}
@@ -224,13 +220,13 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 	cr = CR_MEN | CR_MTX | CR_MSTA;
 	I2C_WRITE(I2CCR, cr | rsta);
 
-	DPRINTF("%s: started: sr=%#x cr=%#x/%#x\n",
-	    __func__, I2C_READ(I2CSR), cr, I2C_READ(I2CCR));
+	DPRINTF(("%s: started: sr=%#x cr=%#x/%#x\n",
+	    __func__, I2C_READ(I2CSR), cr, I2C_READ(I2CCR)));
 
 	sr = I2C_READ(I2CSR);
 	if (sr & SR_MAL) {
-		DPRINTF("%s: lost bus: sr=%#x cr=%#x/%#x\n",
-		    __func__, I2C_READ(I2CSR), cr, I2C_READ(I2CCR));
+		DPRINTF(("%s: lost bus: sr=%#x cr=%#x/%#x\n",
+		    __func__, I2C_READ(I2CSR), cr, I2C_READ(I2CCR)));
 		I2C_WRITE(I2CCR, 0);
 		DELAY(10);
 		I2C_WRITE(I2CCR, CR_MEN | CR_MTX | CR_MSTA);
@@ -240,8 +236,8 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 			error = EBUSY;
 			goto out;
 		}
-		DPRINTF("%s: reacquired bus: sr=%#x cr=%#x/%#x\n",
-		    __func__, I2C_READ(I2CSR), cr, I2C_READ(I2CCR));
+		DPRINTF(("%s: reacquired bus: sr=%#x cr=%#x/%#x\n",
+		    __func__, I2C_READ(I2CSR), cr, I2C_READ(I2CCR)));
 	}
 
 	/* send target address and transfer direction */
@@ -251,7 +247,7 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 
 	error = motoi2c_busy_wait(sc, cr);
 	if (error) {
-		DPRINTF("%s: error sending address: %d\n", __func__, error);
+		DPRINTF(("%s: error sending address: %d\n", __func__, error));
 		if (error == EIO)
 			error = ENXIO;
 		goto out;
@@ -263,8 +259,8 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 
 		error = motoi2c_busy_wait(sc, cr);
 		if (error) {
-			DPRINTF("%s: error sending cmd byte %zu (cr=%#x/%#x): %d\n",
-			    __func__, i, I2C_READ(I2CCR), cr, error);
+			DPRINTF(("%s: error sending cmd byte %zu (cr=%#x/%#x):"
+			    " %d\n", __func__, i, I2C_READ(I2CCR), cr, error));
 			goto out;
 		}
 	}
@@ -274,8 +270,8 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 		KASSERT((cr & CR_TXAK) == 0);
 		I2C_WRITE(I2CCR, cr | CR_RSTA);
 #if 0
-		DPRINTF("%s: restarted(read): sr=%#x cr=%#x(%#x)\n",
-		    __func__, I2C_READ(I2CSR), cr | CR_RSTA, I2C_READ(I2CCR));
+		DPRINTF(("%s: restarted(read): sr=%#x cr=%#x(%#x)\n",
+		    __func__, I2C_READ(I2CSR), cr | CR_RSTA, I2C_READ(I2CCR)));
 #endif
 
 		/* send target address and read transfer direction */
@@ -309,8 +305,8 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 			 */
 			error = motoi2c_busy_wait(sc, cr);
 			if (error) {
-				DPRINTF("%s: error reading byte %zu: %d\n",
-				    __func__, i, error);
+				DPRINTF(("%s: error reading byte %zu: %d\n",
+				    __func__, i, error));
 				goto out;
 			}
 			if (I2C_OP_STOP_P(op)) {
@@ -329,8 +325,8 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 			(void)I2C_READ(I2CDR);	/* dummy read */
 			error = motoi2c_busy_wait(sc, cr);
 			if (error) {
-				DPRINTF("%s: error reading dummy last byte: %d\n",
-				    __func__, error);
+				DPRINTF(("%s: error reading dummy last byte:"
+				    "%d\n", __func__, error));
 				goto out;
 			}
 		}
@@ -340,8 +336,8 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 			I2C_WRITE(I2CDR, *dataptr++);
 			error = motoi2c_busy_wait(sc, cr);
 			if (error) {
-				DPRINTF("%s: error sending data byte %zu: %d\n",
-				    __func__, i, error);
+				DPRINTF(("%s: error sending data byte %zu:"
+				    " %d\n", __func__, i, error));
 				goto out;
 			}
 		}
@@ -355,12 +351,12 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 	if (error || (cr & CR_TXAK) || ((cr & CR_MSTA) && I2C_OP_STOP_P(op))) {
 		cr = CR_MEN;
 		I2C_WRITE(I2CCR, cr);
-		DPRINTF("%s: stopping: cr=%#x/%#x\n", __func__,
-		    cr, I2C_READ(I2CCR));
+		DPRINTF(("%s: stopping: cr=%#x/%#x\n", __func__,
+		    cr, I2C_READ(I2CCR)));
 	}
 
-	DPRINTF("%s: exit sr=%#x cr=%#x: %d\n", __func__,
-	    I2C_READ(I2CSR), I2C_READ(I2CCR), error);
+	DPRINTF(("%s: exit sr=%#x cr=%#x: %d\n", __func__,
+	    I2C_READ(I2CSR), I2C_READ(I2CCR), error));
 
 	return error;
 }
