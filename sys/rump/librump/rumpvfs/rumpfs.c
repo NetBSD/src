@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.85 2011/01/12 19:31:39 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.86 2011/01/12 21:08:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.85 2011/01/12 19:31:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.86 2011/01/12 21:08:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -145,7 +145,7 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 	NULL
 };
 
-#define RUMPFS_WHITEOUT NULL
+#define RUMPFS_WHITEOUT ((void *)-1)
 #define RDENT_ISWHITEOUT(rdp) (rdp->rd_node == RUMPFS_WHITEOUT)
 struct rumpfs_dent {
 	char *rd_name;
@@ -729,6 +729,11 @@ rump_vop_lookup(void *v)
 
 	if (!rd && (cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == CREATE) {
 		return EJUSTRETURN;
+	}
+
+	if (RDENT_ISWHITEOUT(rd)) {
+		cnp->cn_flags |= ISWHITEOUT;
+		return ENOENT;
 	}
 
 	rn = rd->rd_node;
