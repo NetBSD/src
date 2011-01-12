@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.10 2011/01/10 17:01:17 tsutsui Exp $ */
+/*      $NetBSD: if_prom.c,v 1.11 2011/01/12 15:32:43 tsutsui Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -150,7 +150,7 @@ prom_init(struct iodesc *desc, void *machdep_hint)
 		printf("enet=%s\n", enet);
 #endif
 
-#define atox(c)	(((c) < '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
 
 	cp = (uint8_t *)enet;
 	dest = desc->myea;
