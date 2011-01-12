@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2010/06/24 17:20:19 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2011/01/12 23:02:21 joerg Exp $
 
 .include <bsd.own.mk>
 
 PROG=		mandoc
 
 SRCS=		main.c mdoc_term.c chars.c term.c term_ascii.c term_ps.c \
-		tree.c compat.c \
+		tbl_term.c tbl_html.c tree.c compat.c \
 	        man_term.c html.c mdoc_html.c man_html.c out.c
 
 .ifndef HOSTPROG
