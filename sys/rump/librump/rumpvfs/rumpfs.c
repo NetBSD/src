@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.82 2011/01/11 14:05:32 kefren Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.83 2011/01/12 17:14:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.82 2011/01/11 14:05:32 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.83 2011/01/12 17:14:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1648,6 +1648,7 @@ rumpfs_mountroot()
 	if (error)
 		panic("set_statvfs_info failed for rootfs: %d", error);
 
+	mp->mnt_flag &= ~MNT_RDONLY;
 	vfs_unbusy(mp, false, NULL);
 
 	return 0;
