@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.5 2010/11/07 17:51:18 jmmv Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.6 2011/01/12 17:16:24 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -59,9 +59,7 @@ xread_tfile(const char *path)
 }
 
 #define IMG1 "atf1.img"
-#define IMG2 "atf2.img"
 #define DEV1 "/dev/fs1"
-#define DEV2 "/dev/fs2"
 #define newfs_base "newfs -F -s 10000 "
 
 ATF_TC_BODY(basic, tc)
@@ -72,12 +70,9 @@ ATF_TC_BODY(basic, tc)
 
 	if (system(newfs_base IMG1) == -1)
 		atf_tc_fail_errno("create img1");
-	if (system(newfs_base IMG2) == -1)
-		atf_tc_fail_errno("create img2");
 
 	rump_init();
-        rump_pub_etfs_register(DEV1, IMG1, RUMP_ETFS_BLK);
-        rump_pub_etfs_register(DEV2, IMG2, RUMP_ETFS_BLK);
+	rump_pub_etfs_register(DEV1, IMG1, RUMP_ETFS_BLK);
 
 	if (rump_sys_mkdir("/mp1", 0777) == -1)
 		atf_tc_fail_errno("mp1");
@@ -88,11 +83,6 @@ ATF_TC_BODY(basic, tc)
 	args.fspec = __UNCONST(DEV1);
 	if (rump_sys_mount(MOUNT_FFS, "/mp1", 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("could not mount ffs1");
-
-	memset(&args, 0, sizeof(args));
-	args.fspec = __UNCONST(DEV2);
-	if (rump_sys_mount(MOUNT_FFS, "/mp2", 0, &args, sizeof(args)) == -1)
-		atf_tc_fail_errno("could not mount tmpfs2");
 
 	xput_tfile("/mp1/tensti");
 	memset(&unionargs, 0, sizeof(unionargs));
