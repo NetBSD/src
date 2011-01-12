@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.227 2011/01/12 17:33:38 pgoyette Exp $
+# $NetBSD: mi,v 1.228 2011/01/12 19:45:23 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -352,7 +352,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_protoent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_servent.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/h_atexit.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/rpc				tests-lib-debug
@@ -382,6 +381,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_format.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_popen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_atexit.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_getopt.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/h_getopt_long.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_div.debug		tests-lib-debug		debug,atf
@@ -1654,7 +1654,7 @@
 ./usr/tests/lib/libc/getaddrinfo/data/unsup_fam.exp	tests-obsolete	obsolete
 ./usr/tests/lib/libc/getaddrinfo/h_gai		tests-obsolete		obsolete
 ./usr/tests/lib/libc/getaddrinfo/t_getaddrinfo	tests-obsolete		obsolete
-./usr/tests/lib/libc/h_atexit			tests-lib-tests		atf
+./usr/tests/lib/libc/h_atexit			tests-obsolete		obsolete
 ./usr/tests/lib/libc/h_nsd_recurse		tests-lib-tests		atf
 ./usr/tests/lib/libc/h_protoent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/h_servent			tests-obsolete		obsolete
@@ -1729,8 +1729,10 @@
 ./usr/tests/lib/libc/rpc/t_xdr			tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/h_atexit		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/h_getopt		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/h_getopt_long	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_atexit		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_div		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_environment	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_environment_pth	tests-lib-tests		atf
@@ -1780,7 +1782,7 @@
 ./usr/tests/lib/libc/ttyio			tests-lib-tests
 ./usr/tests/lib/libc/ttyio/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio/t_ttyio		tests-lib-tests		atf
-./usr/tests/lib/libc/t_atexit			tests-lib-tests		atf
+./usr/tests/lib/libc/t_atexit			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_cerror			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_clone			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_context			tests-lib-tests		atf
