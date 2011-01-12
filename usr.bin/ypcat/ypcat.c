@@ -1,4 +1,4 @@
-/* $NetBSD: ypcat.c,v 1.14 2009/06/21 14:58:16 wiz Exp $	*/
+/* $NetBSD: ypcat.c,v 1.15 2011/01/12 18:28:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypcat.c,v 1.14 2009/06/21 14:58:16 wiz Exp $");
+__RCSID("$NetBSD: ypcat.c,v 1.15 2011/01/12 18:28:19 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: ypcat.c,v 1.14 2009/06/21 14:58:16 wiz Exp $");
 static int	printit(int, char *, int, char *, int, char *);
 static void	usage(void) __attribute__((__noreturn__));
 
+static int	compressspace;
+
 
 int
 main(int argc, char *argv[])
@@ -69,8 +71,20 @@ main(int argc, char *argv[])
 	domainname = NULL;
 	notrans = key = 0;
 	ypaliases = ypalias_init();
-	while((c = getopt(argc, argv, "xd:kt")) != -1) {
+	while((c = getopt(argc, argv, "d:kstx")) != -1) {
 		switch (c) {
+		case 'd':
+			domainname = optarg;
+			break;
+
+		case 'k':
+			key++;
+			break;
+
+		case 's':
+			compressspace++;
+			break;
+
 		case 'x':
 			for (i = 0; ypaliases[i].alias; i++)
 				printf("Use \"%s\" for \"%s\"\n",
@@ -78,16 +92,8 @@ main(int argc, char *argv[])
 				    ypaliases[i].name);
 			return 0;
 
-		case 'd':
-			domainname = optarg;
-			break;
-
 		case 't':
 			notrans++;
-			break;
-
-		case 'k':
-			key++;
 			break;
 
 		default:
@@ -137,10 +143,28 @@ printit(int instatus, char *inkey, int inkeylen, char *inval,
 		return instatus;
 	if (indata)
 		(void)printf("%*.*s", inkeylen, inkeylen, inkey);
-	if (invallen)
-		(void)printf("%s%*.*s", (indata ? " " : ""), invallen, invallen,
-		    inval);
-	(void)printf("\n");
+	if (invallen) {
+		if (indata)
+			(void)putc(' ', stdout);
+		if (compressspace) {
+			int i;
+			int hadspace = 0;
+
+			for (i = 0; i < invallen; i++) {
+				if (isspace((unsigned char)inval[i])) {
+					if (hadspace)
+						continue;
+					hadspace = 1;
+					(void)putc(' ', stdout);
+				} else {
+					hadspace = 0;
+					(void)putc(inval[i], stdout);
+				}
+			}
+		} else
+			(void)printf("%*.*s", invallen, invallen, inval);
+	}
+	(void)putc('\n', stdout);
 	return 0;
 }
 
