@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.29 2009/11/25 17:08:08 tron Exp $
+#	$NetBSD: Makefile.amd64,v 1.30 2011/01/12 23:12:11 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ DEFCOPTS=	-O2
 CPPFLAGS+=	-Damd64 -Dx86_64
 CFLAGS+=	-mcmodel=kernel
 CFLAGS+=	-mno-red-zone
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-x assembler-with-cpp
 
 ##
 ## (3) libkern and compat

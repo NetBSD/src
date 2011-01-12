@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.15 2009/11/26 07:40:34 pooka Exp $	*/
+/*	$NetBSD: atomic.S,v 1.16 2011/01/12 23:12:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #endif
 
 #ifdef _HARDKERNEL
-#define	LOCK(n)		.Lpatch/**/n:	lock
+#define	LOCK(n)		.Lpatch ## n:	lock
 #define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
 #else
 #define	LOCK(n)		lock

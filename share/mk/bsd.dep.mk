@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.69 2010/01/25 00:43:00 christos Exp $
+#	$NetBSD: bsd.dep.mk,v 1.70 2011/01/12 23:12:11 joerg Exp $
 
 ##### Basic targets
 cleandir:	cleandepend
@@ -15,8 +15,7 @@ MKDEP_SUFFIXES?=	.o
 # some of the rules involve .h sources, so remove them from mkdep line
 
 .if defined(SRCS)							# {
-_TRADITIONAL_CPP?=-traditional-cpp
-__acpp_flags=	${_TRADITIONAL_CPP}
+__acpp_flags=	${_ASM_TRADITIONAL_CPP}
 
 __DPSRCS.all=	${SRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/} \
 		${DPSRCS:C/\.(c|m|s|S|C|cc|cpp|cxx)$/.d/}
