@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47 2010/06/06 12:13:35 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.48 2011/01/12 21:18:23 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_lockdebug.h"
 
 #include <sys/errno.h>
 #include <machine/param.h>
