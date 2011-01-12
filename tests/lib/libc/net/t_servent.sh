@@ -1,4 +1,4 @@
-# $NetBSD: t_servent.sh,v 1.1 2011/01/02 22:03:25 pgoyette Exp $
+# $NetBSD: t_servent.sh,v 1.1 2011/01/12 17:32:27 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.

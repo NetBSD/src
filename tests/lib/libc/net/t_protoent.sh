@@ -1,4 +1,4 @@
-# $NetBSD: t_protoent.sh,v 1.2 2011/01/04 12:44:48 pgoyette Exp $
+# $NetBSD: t_protoent.sh,v 1.1 2011/01/12 17:32:27 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
