@@ -1,4 +1,4 @@
-/* $NetBSD: h_atexit.c,v 1.1 2011/01/03 19:01:47 pgoyette Exp $ */
+/* $NetBSD: h_atexit.c,v 1.1 2011/01/12 19:44:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_atexit.c,v 1.1 2011/01/03 19:01:47 pgoyette Exp $");
+__RCSID("$NetBSD: h_atexit.c,v 1.1 2011/01/12 19:44:08 pgoyette Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
