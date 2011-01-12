@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.218 2011/01/07 15:10:22 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.219 2011/01/12 12:51:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.218 2011/01/07 15:10:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.219 2011/01/12 12:51:21 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -101,6 +101,7 @@ int rump_threads = 1;
 
 static int rump_proxy_syscall(int, void *, register_t *);
 static int rump_proxy_rfork(void *, int);
+static void rump_proxy_procexit(void);
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -210,6 +211,7 @@ static const struct rumpuser_sp_ops spops = {
 	.spop_lwproc_rfork	= rump_proxy_rfork,
 	.spop_lwproc_newlwp	= rump_lwproc_newlwp,
 	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
+	.spop_procexit		= rump_proxy_procexit,
 	.spop_syscall		= rump_proxy_syscall,
 	.spop_getpid		= spgetpid,
 };
@@ -733,6 +735,61 @@ rump_proxy_rfork(void *priv, int flags)
 	curproc->p_vmspace = newspace;
 
 	return 0;
+}
+
+static void
+rump_proxy_procexit(void)
+{
+	struct proc *p = curproc;
+	uint64_t where;
+	struct lwp *l;
+
+	mutex_enter(p->p_lock);
+	/*
+	 * First pass: mark all lwps in the process with LSDEAD
+	 * so that they know they should exit.
+	 */
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (l == curlwp)
+			continue;
+		l->l_stat = LSDEAD;
+	}
+	mutex_exit(p->p_lock);
+
+	/*
+	 * Next, make sure everyone on all CPUs sees our status
+	 * update.  This keeps threads inside cv_wait() and makes
+	 * sure we don't access a stale cv pointer later when
+	 * we wake up the threads.
+	 */
+
+	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+	xc_wait(where);
+
+	/*
+	 * Ok, all lwps are either:
+	 *  1) not in the cv code
+	 *  2) sleeping on l->l_private
+	 *  3) sleeping on p->p_waitcv
+	 *
+	 * Either way, l_private is stable until we change the lwps
+	 * state to LSZOMB.
+	 */
+
+	mutex_enter(p->p_lock);
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (l->l_private)
+			cv_broadcast(l->l_private);
+		l->l_stat = LSZOMB;
+	}
+	cv_broadcast(&p->p_waitcv);
+	mutex_exit(p->p_lock);
+
+	/*
+	 * Don't wait for lwps to exit.  There's refcounting in the
+	 * rumpuser sp code which makes this safe.  Also, this routine
+	 * should sleep for a long time.
+	 */
 }
 
 int
