@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.224 2011/01/12 03:53:58 pgoyette Exp $
+# $NetBSD: mi,v 1.225 2011/01/12 12:52:13 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -332,9 +332,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo/data			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo/h_gai		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/h_atexit.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/h_nsd_recurse.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/h_protoent.debug			tests-lib-debug		debug,atf
@@ -1635,9 +1632,9 @@
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_vis			tests-lib-tests		atf
-./usr/tests/lib/libc/getaddrinfo		tests-obsolete
+./usr/tests/lib/libc/getaddrinfo		tests-obsolete		obsolete
 ./usr/tests/lib/libc/getaddrinfo/Atffile	tests-obsolete		obsolete
-./usr/tests/lib/libc/getaddrinfo/data		tests-obsolete
+./usr/tests/lib/libc/getaddrinfo/data		tests-obsolete		obsolete
 ./usr/tests/lib/libc/getaddrinfo/data/basics_v4.exp	tests-obsolete	obsolete
 ./usr/tests/lib/libc/getaddrinfo/data/basics_v4v6.exp	tests-obsolete	obsolete
 ./usr/tests/lib/libc/getaddrinfo/data/no_host_v4.exp	tests-obsolete	obsolete
