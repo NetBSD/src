@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1274 2011/01/11 00:45:04 jym Exp $
+# $NetBSD: mi,v 1.1275 2011/01/12 16:18:58 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -467,6 +467,7 @@
 ./usr/share/man/cat1/sha1.0			man-util-catman		.cat
 ./usr/share/man/cat1/shar.0			man-util-catman		.cat
 ./usr/share/man/cat1/shlock.0			man-util-catman		.cat
+./usr/share/man/cat1/shmif_dumpbus.0			man-util-catman		.cat
 ./usr/share/man/cat1/shuffle.0			man-util-catman		.cat
 ./usr/share/man/cat1/skey.0			man-util-catman		skey,.cat
 ./usr/share/man/cat1/skeyaudit.0		man-util-catman		skey,.cat
@@ -3261,6 +3262,7 @@
 ./usr/share/man/html1/sha1.html			man-util-htmlman	html
 ./usr/share/man/html1/shar.html			man-util-htmlman	html
 ./usr/share/man/html1/shlock.html		man-util-htmlman	html
+./usr/share/man/html1/shmif_dumpbus.html		man-util-htmlman	html
 ./usr/share/man/html1/shuffle.html		man-util-htmlman	html
 ./usr/share/man/html1/skey.html			man-util-htmlman	skey,html
 ./usr/share/man/html1/skeyaudit.html		man-util-htmlman	skey,html
@@ -5713,6 +5715,7 @@
 ./usr/share/man/man1/sha1.1			man-util-man		.man
 ./usr/share/man/man1/shar.1			man-util-man		.man
 ./usr/share/man/man1/shlock.1			man-util-man		.man
+./usr/share/man/man1/shmif_dumpbus.1			man-util-man		.man
 ./usr/share/man/man1/shuffle.1			man-util-man		.man
 ./usr/share/man/man1/skey.1			man-util-man		skey,.man
 ./usr/share/man/man1/skeyaudit.1		man-util-man		skey,.man
