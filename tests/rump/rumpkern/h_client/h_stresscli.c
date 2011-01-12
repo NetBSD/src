@@ -1,4 +1,4 @@
-/*	$NetBSD: h_stresscli.c,v 1.6 2011/01/12 11:12:25 pooka Exp $	*/
+/*	$NetBSD: h_stresscli.c,v 1.7 2011/01/12 11:37:45 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -69,11 +69,19 @@ main(int argc, char *argv[])
 	pid_t apid;
 	int ncli = 0;
 	int i = 0, j;
-	int status;
+	int status, thesig;
 	int rounds;
 
-	if (argc != 2)
+	if (argc != 2 && argc != 3)
 		errx(1, "need roundcount");
+
+	if (argc == 3) {
+		if (strcmp(argv[2], "kill") != 0)
+			errx(1, "optional 3rd param must be kill");
+		thesig = SIGKILL;
+	} else {
+		thesig = SIGUSR1;
+	}
 
 	signal(SIGUSR1, signaali);
 
@@ -115,16 +123,25 @@ main(int argc, char *argv[])
 		}
 
 		usleep(100000);
-		kill(clis[i], SIGUSR1);
+		kill(clis[i], thesig);
 
 		apid = wait(&status);
 		if (apid != clis[i])
 			errx(1, "wanted pid %d, got %d\n", clis[i], apid);
 		clis[i] = 0;
 		ncli--;
-		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-			fprintf(stderr, "child died with 0x%x\n", status);
-			exit(1);
+		if (thesig == SIGUSR1) {
+			if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+				fprintf(stderr, "child died with 0x%x\n",
+				    status);
+				exit(1);
+			}
+		} else {
+			if (!WIFSIGNALED(status) || WTERMSIG(status) != thesig){
+				fprintf(stderr, "child died with 0x%x\n",
+				    status);
+				exit(1);
+			}
 		}
 	}
 
