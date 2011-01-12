@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_busops.c,v 1.7 2010/08/17 12:59:53 pooka Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.8 2011/01/12 16:12:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,19 +28,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.7 2010/08/17 12:59:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.8 2011/01/12 16:12:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 
-#include "shmifvar.h"
-
 #ifndef _KERNEL
 #include <assert.h>
+#include <stdbool.h>
+#include <string.h>
+
 #define KASSERT(a) assert(a)
 #else
 #include <rump/rumpuser.h>
 #endif
+
+#include "shmifvar.h"
 
 uint32_t
 shmif_advance(uint32_t oldoff, uint32_t delta)
