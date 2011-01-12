@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.277 2010/10/31 11:52:53 mbalmer Exp $
+#	$NetBSD: bsd.README,v 1.278 2011/01/12 23:05:31 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -252,7 +252,7 @@ MKMAN		If "no", don't build or install the man or catman pages,
 MKMANDOC	If "yes", mandoc is built as tool and used to compile
 		catman or html pages.  A directory can be exempted by
 		defining NOMANDOC.  Individual man pages are exempted
-		if USETBL is set or NOMANDOC.${target} is set to "yes".
+		if NOMANDOC.${target} is set to "yes".
 		Default: no
 
 MKMANZ		If not "no", compress manual pages at installation time.
