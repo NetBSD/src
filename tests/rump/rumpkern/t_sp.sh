@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.7 2011/01/12 11:39:20 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.8 2011/01/12 12:32:53 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@ test_case()
 
 test_case basic basic
 test_case stress_short stress 1
-test_case stress_long stress 5
+test_case stress_long stress 2
 test_case stress_killer stress 5 kill
 test_case fork_simple fork simple
 test_case fork_pipecomm fork pipecomm
@@ -60,7 +60,8 @@ stress()
 {
 
 	export RUMP_SERVER=unix://commsock
-	atf_check -s exit:0 rump_server ${RUMP_SERVER}
+	atf_check -s exit:0 rump_server \
+	    -lrumpvfs -lrumpnet -lrumpnet_net -lrumpnet_netinet ${RUMP_SERVER}
 	atf_check -s exit:0 -e ignore $(atf_get_srcdir)/h_client/h_stresscli $@
 }
 

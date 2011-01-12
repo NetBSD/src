@@ -1,11 +1,15 @@
-/*	$NetBSD: h_stresscli.c,v 1.7 2011/01/12 11:37:45 pooka Exp $	*/
+/*	$NetBSD: h_stresscli.c,v 1.8 2011/01/12 12:32:53 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/atomic.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +19,7 @@
 #include <rump/rump_syscalls.h>
 #include <rump/rumpclient.h>
 
-static unsigned int syscalls;
+static unsigned int syscalls, bindcalls;
 static pid_t mypid;
 static volatile sig_atomic_t doquit;
 
@@ -30,15 +34,57 @@ static const int hostnamemib[] = { CTL_KERN, KERN_HOSTNAME };
 static char hostnamebuf[128];
 #define HOSTNAMEBASE "rumpclient"
 
+static int iskiller;
+
 static void *
 client(void *arg)
 {
 	char buf[256];
+	struct sockaddr_in sin;
 	size_t blen;
+	int port = (int)(uintptr_t)arg;
+	int s, fd, x;
+
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof(sin);
+	sin.sin_port = htons(port);
 
 	while (!doquit) {
 		pid_t pidi;
 		blen = sizeof(buf);
+		s = rump_sys_socket(PF_INET, SOCK_STREAM, 0);
+		if (s == -1)
+			err(1, "socket");
+		atomic_inc_uint(&syscalls);
+
+		fd = rump_sys_open("/dev/null", O_RDWR);
+		atomic_inc_uint(&syscalls);
+
+		if (doquit)
+			goto out;
+
+		x = 1;
+		if (rump_sys_setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+		    &x, sizeof(x)) == -1)
+			err(1, "reuseaddr");
+
+		/*
+		 * we don't really know when the kernel handles our disconnect,
+		 * so be soft about about the failure in case of a killer client
+		 */
+		if (rump_sys_bind(s, (struct sockaddr*)&sin, sizeof(sin))==-1) {
+			if (!iskiller)
+				err(1, "bind to port %d failed",
+				    ntohs(sin.sin_port));
+		} else {
+			atomic_inc_uint(&bindcalls);
+		}
+		atomic_inc_uint(&syscalls);
+
+		if (doquit)
+			goto out;
+
 		if (rump_sys___sysctl(hostnamemib, __arraycount(hostnamemib),
 		    buf, &blen, NULL, 0) == -1)
 			err(1, "sysctl");
@@ -46,11 +92,27 @@ client(void *arg)
 			errx(1, "hostname (%s/%s) mismatch", buf, hostnamebuf);
 		atomic_inc_uint(&syscalls);
 
+		if (doquit)
+			goto out;
+
 		pidi = rump_sys_getpid();
 		if (pidi == -1)
 			err(1, "getpid");
 		if (pidi != mypid)
 			errx(1, "mypid mismatch");
+		atomic_inc_uint(&syscalls);
+
+		if (doquit)
+			goto out;
+
+		if (rump_sys_write(fd, buf, 16) != 16)
+			err(1, "write /dev/null");
+		atomic_inc_uint(&syscalls);
+
+ out:
+		rump_sys_close(fd);
+		atomic_inc_uint(&syscalls);
+		rump_sys_close(s);
 		atomic_inc_uint(&syscalls);
 	}
 
@@ -70,7 +132,7 @@ main(int argc, char *argv[])
 	int ncli = 0;
 	int i = 0, j;
 	int status, thesig;
-	int rounds;
+	int rounds, myport;
 
 	if (argc != 2 && argc != 3)
 		errx(1, "need roundcount");
@@ -79,6 +141,7 @@ main(int argc, char *argv[])
 		if (strcmp(argv[2], "kill") != 0)
 			errx(1, "optional 3rd param must be kill");
 		thesig = SIGKILL;
+		iskiller = 1;
 	} else {
 		thesig = SIGUSR1;
 	}
@@ -102,11 +165,15 @@ main(int argc, char *argv[])
 				    hostnamebuf, strlen(hostnamebuf)+1) == -1)
 					err(1, "sethostname");
 
-				for (j = 0; j < NTHR-1; j++)
+				for (j = 0; j < NTHR-1; j++) {
+					myport = i*NCLI + j+2;
 					if (pthread_create(&pt[j], NULL,
-					    client, NULL) != 0)
+					    client,
+					    (void*)(uintptr_t)myport) !=0 )
 						err(1, "pthread create");
-				client(NULL);
+				}
+				myport = i*NCLI+1;
+				client((void *)(uintptr_t)myport);
 				for (j = 0; j < NTHR-1; j++)
 					pthread_join(pt[j], NULL);
 				membar_consumer();
