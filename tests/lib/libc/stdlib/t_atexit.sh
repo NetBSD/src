@@ -1,4 +1,4 @@
-# $NetBSD: t_atexit.sh,v 1.1 2011/01/03 19:01:47 pgoyette Exp $
+# $NetBSD: t_atexit.sh,v 1.1 2011/01/12 19:44:08 pgoyette Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
