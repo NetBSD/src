@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.6 2011/01/10 19:51:37 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.7 2011/01/12 11:39:20 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,8 @@ test_case()
 
 test_case basic basic
 test_case stress_short stress 1
-test_case stress_long stress 10
+test_case stress_long stress 5
+test_case stress_killer stress 5 kill
 test_case fork_simple fork simple
 test_case fork_pipecomm fork pipecomm
 test_case fork_fakeauth fork fakeauth
@@ -60,7 +61,7 @@ stress()
 
 	export RUMP_SERVER=unix://commsock
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
-	atf_check -s exit:0 -e ignore $(atf_get_srcdir)/h_client/h_stresscli $1
+	atf_check -s exit:0 -e ignore $(atf_get_srcdir)/h_client/h_stresscli $@
 }
 
 fork()
@@ -85,6 +86,7 @@ atf_init_test_cases()
 	atf_add_test_case basic
 	atf_add_test_case stress_short
 	atf_add_test_case stress_long
+	atf_add_test_case stress_killer
 	atf_add_test_case fork_simple
 	atf_add_test_case fork_pipecomm
 	atf_add_test_case fork_fakeauth
