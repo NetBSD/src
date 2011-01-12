@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.61 2011/01/02 12:52:25 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.62 2011/01/12 12:51:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 8
+#define RUMPUSER_VERSION 9
 int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
@@ -218,6 +218,7 @@ struct rumpuser_sp_ops {
 	int (*spop_lwproc_newlwp)(pid_t);
 	struct lwp * (*spop_lwproc_curlwp)(void);
 	int (*spop_syscall)(int, void *, register_t *);
+	void (*spop_procexit)(void);
 	pid_t (*spop_getpid)(void);
 };
 
