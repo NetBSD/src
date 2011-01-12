@@ -1,4 +1,4 @@
-/*	$Vendor-Id: libman.h,v 1.42 2010/07/13 23:53:20 schwarze Exp $ */
+/*	$Vendor-Id: libman.h,v 1.44 2010/11/30 15:36:28 kristaps Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,7 +27,6 @@ enum	man_next {
 struct	man {
 	void		*data; /* private application data */
 	mandocmsg	 msg; /* output message handler */
-	int		 pflags; /* parse flags (see man.h) */
 	int		 flags; /* parse flags */
 #define	MAN_HALT	(1 << 0) /* badness happened: die */
 #define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
@@ -85,8 +84,6 @@ int		  man_vmsg(struct man *, enum mandocerr,
 			int, int, const char *, ...);
 int		  man_valid_post(struct man *);
 int		  man_valid_pre(struct man *, struct man_node *);
-int		  man_action_post(struct man *);
-int		  man_action_pre(struct man *, struct man_node *);
 int		  man_unscope(struct man *, 
 			const struct man_node *, enum mandocerr);
 
