@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.25 2010/09/20 23:11:38 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.26 2011/01/12 19:29:24 pooka Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.176 2010/09/20 22:26:28 mrg Exp $	*/
 
@@ -1728,7 +1728,8 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		size = 0;
 
 	bozo_printf(httpd, "%s %s\r\n", proto, header);
-	bozo_auth_check_401(request, code);
+	if (request)
+		bozo_auth_check_401(request, code);
 
 	bozo_printf(httpd, "Content-Type: text/html\r\n");
 	bozo_printf(httpd, "Content-Length: %d\r\n", size);
