@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.913 2011/01/05 14:57:29 haad Exp $
+# $NetBSD: mi,v 1.914 2011/01/12 16:18:57 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -617,6 +617,7 @@
 ./usr/bin/sha1					base-util-bin
 ./usr/bin/shar					base-util-bin
 ./usr/bin/shlock				base-util-bin
+./usr/bin/shmif_dumpbus				base-util-bin
 ./usr/bin/showmount				base-nfsclient-bin
 ./usr/bin/shuffle				base-util-bin
 ./usr/bin/skey					base-util-bin		skey
