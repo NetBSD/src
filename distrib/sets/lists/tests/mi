@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.229 2011/01/12 19:52:15 tron Exp $
+# $NetBSD: mi,v 1.230 2011/01/12 21:30:50 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -261,7 +261,7 @@
 ./usr/libdata/debug/usr/tests/fs/umapfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/umapfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/union					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/union/t_basic.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/union/t_basic.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/union/t_pr.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/vfs/t_full.debug			tests-fs-debug		debug,atf
@@ -269,6 +269,7 @@
 ./usr/libdata/debug/usr/tests/fs/vfs/t_renamerace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_rmdirrace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_ro.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/vfs/t_union.debug			tests-obsolete		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_unpriv.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf
@@ -1237,7 +1238,7 @@
 ./usr/tests/fs/umapfs/t_basic			tests-fs-tests		atf
 ./usr/tests/fs/union				tests-fs-tests
 ./usr/tests/fs/union/Atffile			tests-fs-tests		atf
-./usr/tests/fs/union/t_basic			tests-fs-tests		atf
+./usr/tests/fs/union/t_basic			tests-obsolete		obsolete
 ./usr/tests/fs/union/t_pr			tests-fs-tests		atf
 ./usr/tests/fs/vfs				tests-fs-tests
 ./usr/tests/fs/vfs/Atffile			tests-fs-tests		atf
@@ -1246,6 +1247,7 @@
 ./usr/tests/fs/vfs/t_renamerace			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_rmdirrace			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_ro			tests-fs-tests		atf
+./usr/tests/fs/vfs/t_union			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_unpriv			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_vfsops			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_vnops			tests-fs-tests		atf
