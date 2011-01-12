@@ -1,4 +1,4 @@
-/*	$NetBSD: h_stresscli.c,v 1.5 2011/01/11 11:26:28 pooka Exp $	*/
+/*	$NetBSD: h_stresscli.c,v 1.6 2011/01/12 11:12:25 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -75,6 +75,8 @@ main(int argc, char *argv[])
 	if (argc != 2)
 		errx(1, "need roundcount");
 
+	signal(SIGUSR1, signaali);
+
 	memset(clis, 0, sizeof(clis));
 	for (rounds = 1; rounds < atoi(argv[1])*10; rounds++) {
 		while (ncli < NCLI) {
@@ -91,8 +93,6 @@ main(int argc, char *argv[])
 				    __arraycount(hostnamemib), NULL, NULL,
 				    hostnamebuf, strlen(hostnamebuf)+1) == -1)
 					err(1, "sethostname");
-
-				signal(SIGUSR1, signaali);
 
 				for (j = 0; j < NTHR-1; j++)
 					if (pthread_create(&pt[j], NULL,
