@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1564 2011/01/10 04:41:00 christos Exp $
+#	$NetBSD: mi,v 1.1565 2011/01/12 16:18:57 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3350,6 +3350,7 @@
 ./usr/libdata/debug/usr/bin/seq.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sftp.debug		comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/shlock.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/shmif_dumpbus.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/showmount.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/usr/bin/shuffle.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/size.debug		comp-util-debug		binutils,debug
