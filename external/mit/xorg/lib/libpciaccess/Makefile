@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/06/03 09:42:40 veego Exp $
+#	$NetBSD: Makefile,v 1.5 2011/01/12 19:04:19 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ SRCS=	common_bridge.c \
 	netbsd_pci.c
 
 CPPFLAGS+=	${X11FLAGS} -I${X11SRCDIR.${LIB}}/include \
-		-DHAVE_MMTR -DHAVE_ZLIB \
+		-DHAVE_MTRR -DHAVE_ZLIB \
 		-DHAVE_STRING_H -DHAVE_STDINT_H -DHAVE_INTTYPES_H \
 		-DPCIIDS_PATH=\"${X11ROOTDIR}/share/pciids\"
 
