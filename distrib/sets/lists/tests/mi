@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.228 2011/01/12 19:45:23 pgoyette Exp $
+# $NetBSD: mi,v 1.229 2011/01/12 19:52:15 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -349,7 +349,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo			tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_protoent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_servent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex				tests-lib-debug
