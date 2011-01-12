@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.83 2011/01/12 17:14:34 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.84 2011/01/12 17:20:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.83 2011/01/12 17:14:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.84 2011/01/12 17:20:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1562,6 +1562,11 @@ int
 rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
 	int error;
+
+	if (mp->mnt_flag & MNT_RDONLY) {
+		printf("rumpfs does not support r/o mounts\n");
+		return EOPNOTSUPP;
+	}
 
 	error = set_statvfs_info(mntpath, UIO_USERSPACE, "rumpfs", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, curlwp);
