@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2cvar.h,v 1.2 2011/01/04 02:50:08 nisimura Exp $ */
+/* $NetBSD: motoi2cvar.h,v 1.3 2011/01/12 18:05:18 phx Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _DEV_I2C_MOTOI2CVAR_H_
 #define _DEV_I2C_MOTOI2CVAR_H_
+
+#include <dev/i2c/i2cvar.h>
 
 struct motoi2c_softc;
 typedef uint8_t (*motoi2c_iord_t)(struct motoi2c_softc *, bus_size_t);
