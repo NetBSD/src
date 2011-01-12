@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.34 2011/01/10 19:49:43 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.35 2011/01/12 12:52:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.34 2011/01/10 19:49:43 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.35 2011/01/12 12:52:16 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -194,6 +194,15 @@ lwproc_getpid(void)
 	spops.spop_unschedule();
 
 	return p;
+}
+
+static void
+lwproc_procexit(void)
+{
+
+	spops.spop_schedule();
+	spops.spop_procexit();
+	spops.spop_unschedule();
 }
 
 static int
@@ -455,6 +464,12 @@ serv_handledisco(unsigned int idx)
 	kickall(spc);
 	sendunlockl(spc);
 	pthread_mutex_unlock(&spc->spc_mtx);
+
+	if (spc->spc_mainlwp) {
+		lwproc_switch(spc->spc_mainlwp);
+		lwproc_procexit();
+		lwproc_switch(NULL);
+	}
 
 	/*
 	 * Nobody's going to attempt to send/receive anymore,
