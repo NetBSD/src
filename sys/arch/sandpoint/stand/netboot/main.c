@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.39 2011/01/11 08:19:34 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.40 2011/01/12 07:38:43 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 	if (modules_enabled) {
 		module_add(fsmod);
 		if (fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
-		module_add(fsmod2);
+			module_add(fsmod2);
 		kmodloadp = marks[MARK_END];
 		btinfo_modulelist = NULL;
 		module_load(bname);
