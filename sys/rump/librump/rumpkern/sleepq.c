@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.10 2010/12/18 14:01:43 skrll Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.11 2011/01/12 12:51:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.10 2010/12/18 14:01:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.11 2011/01/12 12:51:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -87,7 +87,8 @@ sleepq_block(int timo, bool catch)
 
 	while (l->l_wchan) {
 		l->l_mutex = mp;
-		if ((error=cv_timedwait(&sq_cv, mp, timo)) == EWOULDBLOCK) {
+		error = cv_timedwait(&sq_cv, mp, timo);
+		if (error == EWOULDBLOCK || error == EINTR) {
 			TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
 			l->l_wchan = NULL;
 		}

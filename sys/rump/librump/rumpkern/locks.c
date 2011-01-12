@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.46 2011/01/06 13:36:48 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.47 2011/01/12 12:51:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.46 2011/01/06 13:36:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.47 2011/01/12 12:51:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -262,15 +262,70 @@ cv_destroy(kcondvar_t *cv)
 	rumpuser_cv_destroy(RUMPCV(cv));
 }
 
+static int
+docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
+{
+	struct lwp *l = curlwp;
+	int rv;
+
+	if (__predict_false(l->l_stat == LSDEAD || l->l_stat == LSZOMB)) {
+		/*
+		 * sleepq code expects us to sleep, so set l_mutex
+		 * back to cpu lock here if we didn't.
+		 */
+		l->l_mutex = l->l_cpu->ci_schedstate.spc_mutex;
+		return EINTR;
+	}
+
+	UNLOCKED(mtx, false);
+
+	l->l_private = cv;
+	rv = 0;
+	if (ts) {
+		if (rumpuser_cv_timedwait(RUMPCV(cv), RUMPMTX(mtx),
+		    ts->tv_sec, ts->tv_nsec))
+			rv = EWOULDBLOCK;
+	} else {
+		rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
+	}
+
+	/*
+	 * Check for LSDEAD.  if so, we need to wait here until we
+	 * are allowed to exit.
+	 */
+	if (__predict_false(l->l_stat == LSDEAD)) {
+		struct proc *p = l->l_proc;
+
+		mutex_exit(mtx); /* drop and retake later */
+
+		mutex_enter(p->p_lock);
+		while (l->l_stat == LSDEAD) {
+			/* avoid recursion */
+			rumpuser_cv_wait(RUMPCV(&p->p_waitcv),
+			    RUMPMTX(p->p_lock));
+		}
+		KASSERT(l->l_stat == LSZOMB);
+		mutex_exit(p->p_lock);
+
+		/* ok, we can exit and remove "reference" to l->private */
+
+		mutex_enter(mtx);
+		rv = EINTR;
+	}
+	l->l_private = NULL;
+
+	LOCKED(mtx, false);
+
+	return rv;
+}
+
 void
 cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 {
 
 	if (__predict_false(rump_threads == 0))
 		panic("cv_wait without threads");
-	UNLOCKED(mtx, false);
-	rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
-	LOCKED(mtx, false);
+	(void) docvwait(cv, mtx, NULL);
 }
 
 int
@@ -279,10 +334,7 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 
 	if (__predict_false(rump_threads == 0))
 		panic("cv_wait without threads");
-	UNLOCKED(mtx, false);
-	rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
-	LOCKED(mtx, false);
-	return 0;
+	return docvwait(cv, mtx, NULL);
 }
 
 int
@@ -293,8 +345,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 	int rv;
 
 	if (ticks == 0) {
-		cv_wait(cv, mtx);
-		rv = 0;
+		rv = cv_wait_sig(cv, mtx);
 	} else {
 		/*
 		 * XXX: this fetches rump kernel time, but
@@ -305,13 +356,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 		tick.tv_nsec = (ticks % hz) * (1000000000/hz);
 		timespecadd(&ts, &tick, &ts);
 
-		UNLOCKED(mtx, false);
-		if (rumpuser_cv_timedwait(RUMPCV(cv), RUMPMTX(mtx),
-		    ts.tv_sec, ts.tv_nsec))
-			rv = EWOULDBLOCK;
-		else
-			rv = 0;
-		LOCKED(mtx, false);
+		rv = docvwait(cv, mtx, &ts);
 	}
 
 	return rv;
