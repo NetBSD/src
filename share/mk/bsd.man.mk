@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.105 2010/12/02 23:08:04 wiz Exp $
+#	$NetBSD: bsd.man.mk,v 1.106 2011/01/12 23:03:24 joerg Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -128,10 +128,7 @@ realall:	${CATPAGES}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 	${_MKTARGET_FORMAT}
-.if defined(USETBL)
-	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
-	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
-.elif ${MKMANDOC} == yes && !defined(NOMANDOC)
+.if ${MKMANDOC} == yes && !defined(NOMANDOC)
 	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
 		${TOOL_MANDOC_ASCII} ${.IMPSRC} ${MANCOMPRESS} \
 		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
@@ -139,6 +136,9 @@ ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 		${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
 		    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}; \
 	fi
+.elif defined(USETBL)
+	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
+	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .else
 	${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
 	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
@@ -262,7 +262,7 @@ cleanman: .PHONY
 
 .if !empty(MANPAGES)
 lintmanpages: ${MANPAGES}
-	${TOOL_MANDOC_LINT} -Tlint -fstrict -Wall ${.ALLSRC}
+	${TOOL_MANDOC_LINT} -Tlint -fstrict -Wall,stop ${.ALLSRC}
 .endif
 
 ##### Pull in related .mk logic
