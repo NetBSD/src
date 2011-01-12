@@ -1,4 +1,4 @@
-/*	$Vendor-Id: out.c,v 1.23 2010/07/22 23:03:15 kristaps Exp $ */
+/*	$Vendor-Id: out.c,v 1.30 2011/01/05 15:37:23 kristaps Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,7 +27,15 @@
 #include <string.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "out.h"
+
+static	void	tblcalc_data(struct rofftbl *, struct roffcol *,
+			const struct tbl *, const struct tbl_dat *);
+static	void	tblcalc_literal(struct rofftbl *, struct roffcol *,
+			const struct tbl_dat *);
+static	void	tblcalc_number(struct rofftbl *, struct roffcol *,
+			const struct tbl *, const struct tbl_dat *);
 
 /* 
  * Convert a `scaling unit' to a consistent form, or fail.  Scaling
@@ -172,6 +180,7 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 	int		 i, j, lim;
 	char		 term, c;
 	const char	*wp;
+	enum roffdeco	 dd;
 
 	*d = DECO_NONE;
 	lim = i = 0;
@@ -219,6 +228,8 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 			break;
 		}
 		break;
+	case ('k'):
+		/* FALLTHROUGH */
 	case ('M'):
 		/* FALLTHROUGH */
 	case ('m'):
@@ -240,11 +251,16 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 			break;
 		}
 		break;
+	case ('h'):
+		/* FALLTHROUGH */
+	case ('v'):
+		/* FALLTHROUGH */
 	case ('s'):
-		if ('+' == wp[i] || '-' == wp[i])
+		j = 0;
+		if ('+' == wp[i] || '-' == wp[i]) {
 			i++;
-
-		j = ('s' != wp[i - 1]);
+			j = 1;
+		}
 
 		switch (wp[i++]) {
 		case ('('):
@@ -257,7 +273,7 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 			term = '\'';
 			break;
 		case ('0'):
-			j++;
+			j = 1;
 			/* FALLTHROUGH */
 		default:
 			i--;
@@ -266,13 +282,31 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 		}
 
 		if ('+' == wp[i] || '-' == wp[i]) {
-			if (j++)
+			if (j)
 				return(i);
 			i++;
 		} 
-		
-		if (0 == j)
-			return(i);
+
+		/* Handle embedded numerical subexp or escape. */
+
+		if ('(' == wp[i]) {
+			while (wp[i] && ')' != wp[i])
+				if ('\\' == wp[i++]) {
+					/* Handle embedded escape. */
+					*word = &wp[i];
+					i += a2roffdeco(&dd, word, sz);
+				}
+
+			if (')' == wp[i++])
+				break;
+
+			*d = DECO_NONE;
+			return(i - 1);
+		} else if ('\\' == wp[i]) {
+			*word = &wp[++i];
+			i += a2roffdeco(&dd, word, sz);
+		}
+
 		break;
 	case ('['):
 		*d = DECO_SPECIAL;
@@ -281,6 +315,22 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 	case ('c'):
 		*d = DECO_NOSPACE;
 		return(i);
+	case ('z'):
+		*d = DECO_NONE;
+		if ('\\' == wp[i]) {
+			*word = &wp[++i];
+			return(i + a2roffdeco(&dd, word, sz));
+		} else
+			lim = 1;
+		break;
+	case ('o'):
+		/* FALLTHROUGH */
+	case ('w'):
+		if ('\'' == wp[i++]) {
+			term = '\'';
+			break;
+		} 
+		/* FALLTHROUGH */
 	default:
 		*d = DECO_SSPECIAL;
 		i--;
@@ -316,3 +366,197 @@ a2roffdeco(enum roffdeco *d, const char **word, size_t *sz)
 
 	return(i);
 }
+
+/*
+ * Calculate the abstract widths and decimal positions of columns in a
+ * table.  This routine allocates the columns structures then runs over
+ * all rows and cells in the table.  The function pointers in "tbl" are
+ * used for the actual width calculations.
+ */
+void
+tblcalc(struct rofftbl *tbl, const struct tbl_span *sp)
+{
+	const struct tbl_dat	*dp;
+	const struct tbl_head	*hp;
+	struct roffcol		*col;
+
+	/*
+	 * Allocate the master column specifiers.  These will hold the
+	 * widths and decimal positions for all cells in the column.  It
+	 * must be freed and nullified by the caller.
+	 */
+
+	assert(NULL == tbl->cols);
+	tbl->cols = calloc(sp->tbl->cols, sizeof(struct roffcol));
+
+	hp = sp->head;
+
+	for ( ; sp; sp = sp->next) {
+		if (TBL_SPAN_DATA != sp->pos)
+			continue;
+		/*
+		 * Account for the data cells in the layout, matching it
+		 * to data cells in the data section.
+		 */
+		for (dp = sp->first; dp; dp = dp->next) {
+			if (NULL == dp->layout)
+				continue;
+			col = &tbl->cols[dp->layout->head->ident];
+			tblcalc_data(tbl, col, sp->tbl, dp);
+		}
+	}
+
+	/* 
+	 * Calculate width of the spanners.  These get one space for a
+	 * vertical line, two for a double-vertical line. 
+	 */
+
+	for ( ; hp; hp = hp->next) {
+		col = &tbl->cols[hp->ident];
+		switch (hp->pos) {
+		case (TBL_HEAD_VERT):
+			col->width = (*tbl->len)(1, tbl->arg);
+			break;
+		case (TBL_HEAD_DVERT):
+			col->width = (*tbl->len)(2, tbl->arg);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+static void
+tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
+		const struct tbl *tp, const struct tbl_dat *dp)
+{
+	size_t		 sz;
+
+	/* Branch down into data sub-types. */
+
+	switch (dp->layout->pos) {
+	case (TBL_CELL_HORIZ):
+		/* FALLTHROUGH */
+	case (TBL_CELL_DHORIZ):
+		sz = (*tbl->len)(1, tbl->arg);
+		if (col->width < sz)
+			col->width = sz;
+		break;
+	case (TBL_CELL_LONG):
+		/* FALLTHROUGH */
+	case (TBL_CELL_CENTRE):
+		/* FALLTHROUGH */
+	case (TBL_CELL_LEFT):
+		/* FALLTHROUGH */
+	case (TBL_CELL_RIGHT):
+		tblcalc_literal(tbl, col, dp);
+		break;
+	case (TBL_CELL_NUMBER):
+		tblcalc_number(tbl, col, tp, dp);
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+}
+
+static void
+tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
+		const struct tbl_dat *dp)
+{
+	size_t		 sz, bufsz, spsz;
+
+	/* 
+	 * Calculate our width and use the spacing, with a minimum
+	 * spacing dictated by position (centre, e.g,. gets a space on
+	 * either side, while right/left get a single adjacent space).
+	 */
+
+	sz = bufsz = spsz = 0;
+	if (dp->string)
+		sz = (*tbl->slen)(dp->string, tbl->arg);
+
+	assert(dp->layout);
+	switch (dp->layout->pos) {
+	case (TBL_CELL_LONG):
+		/* FALLTHROUGH */
+	case (TBL_CELL_CENTRE):
+		bufsz = (*tbl->len)(2, tbl->arg);
+		break;
+	default:
+		bufsz = (*tbl->len)(1, tbl->arg);
+		break;
+	}
+
+	if (dp->layout->spacing) {
+		spsz = (*tbl->len)(dp->layout->spacing, tbl->arg);
+		bufsz = bufsz > spsz ? bufsz : spsz;
+	}
+
+	sz += bufsz;
+	if (col->width < sz)
+		col->width = sz;
+}
+
+static void
+tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
+		const struct tbl *tp, const struct tbl_dat *dp)
+{
+	int 		 i;
+	size_t		 sz, psz, ssz, d;
+	char		*cp;
+	const char	*str;
+	char		 buf[2];
+
+	/* TODO: use spacing modifier. */
+
+	/*
+	 * First calculate number width and decimal place (last + 1 for
+	 * no-decimal numbers).  If the stored decimal is subsequent
+	 * ours, make our size longer by that difference
+	 * (right-"shifting"); similarly, if ours is subsequent the
+	 * stored, then extend the stored size by the difference.
+	 * Finally, re-assign the stored values.
+	 */
+
+	str = "";
+	if (dp->string)
+		str = dp->string;
+
+	sz = (*tbl->slen)(str, tbl->arg);
+
+	buf[0] = tp->decimal;
+	buf[1] = '\0';
+
+	psz = (*tbl->slen)(buf, tbl->arg);
+
+	if (NULL != (cp = strchr(str, tp->decimal))) {
+		buf[1] = '\0';
+		for (ssz = 0, i = 0; cp != &str[i]; i++) {
+			buf[0] = str[i];
+			ssz += (*tbl->slen)(buf, tbl->arg);
+		}
+		d = ssz + psz;
+	} else
+		d = sz + psz;
+
+	/* Padding. */
+
+	sz += (*tbl->len)(2, tbl->arg);
+	d += (*tbl->len)(1, tbl->arg);
+
+	/* Adjust the settings for this column. */
+
+	if (col->decimal > d) {
+		sz += col->decimal - d;
+		d = col->decimal;
+	} else
+		col->width += d - col->decimal;
+
+	if (sz > col->width)
+		col->width = sz;
+	if (d > col->decimal)
+		col->decimal = d;
+}
+
+

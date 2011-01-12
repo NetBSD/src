@@ -1,4 +1,4 @@
-/*	$Vendor-Id: html.h,v 1.27 2010/07/23 00:08:57 kristaps Exp $ */
+/*	$Vendor-Id: html.h,v 1.38 2011/01/06 11:55:39 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,12 +33,23 @@ enum	htmltag {
 	TAG_BR,
 	TAG_A,
 	TAG_TABLE,
+	TAG_TBODY,
 	TAG_COL,
 	TAG_TR,
 	TAG_TD,
 	TAG_LI,
 	TAG_UL,
 	TAG_OL,
+	TAG_DL,
+	TAG_DT,
+	TAG_DD,
+	TAG_BLOCKQUOTE,
+	TAG_P,
+	TAG_PRE,
+	TAG_B,
+	TAG_I,
+	TAG_CODE,
+	TAG_SMALL,
 	TAG_MAX
 };
 
@@ -53,10 +64,9 @@ enum	htmlattr {
 	ATTR_CLASS,
 	ATTR_STYLE,
 	ATTR_WIDTH,
-	ATTR_VALIGN,
-	ATTR_TARGET,
 	ATTR_ID,
 	ATTR_SUMMARY,
+	ATTR_ALIGN,
 	ATTR_MAX
 };
 
@@ -72,17 +82,8 @@ struct	tag {
 	enum htmltag	  tag;
 };
 
-struct	ord {
-	struct ord	 *next;
-	const void	 *cookie;
-	int		  pos;
-};
-
 struct tagq {
 	struct tag	 *head;
-};
-struct ordq {
-	struct ord	 *head;
 };
 
 struct	htmlpair {
@@ -114,31 +115,28 @@ struct	html {
 #define	HTML_KEEP	 (1 << 2)
 #define	HTML_PREKEEP	 (1 << 3)
 #define	HTML_NONOSPACE	 (1 << 4)
-	struct tagq	  tags;
-	struct ordq	  ords;
-	void		 *symtab;
-	char		 *base;
-	char		 *base_man;
-	char		 *base_includes;
-	char		 *style;
-	char		  buf[BUFSIZ];
+	struct tagq	  tags; /* stack of open tags */
+	struct rofftbl	  tbl; /* current table */
+	void		 *symtab; /* character-escapes */
+	char		 *base_man; /* base for manpage href */
+	char		 *base_includes; /* base for include href */
+	char		 *style; /* style-sheet URI */
+	char		  buf[BUFSIZ]; /* see bufcat and friends */
 	size_t		  buflen;
-	struct tag	 *metaf;
-	enum htmlfont	  metal;
-	enum htmlfont	  metac;
+	struct tag	 *metaf; /* current open font scope */
+	enum htmlfont	  metal; /* last used font */
+	enum htmlfont	  metac; /* current font mode */
 	enum htmltype	  type;
 };
 
-struct	roffsu;
-
 void		  print_gen_decls(struct html *);
 void		  print_gen_head(struct html *);
-struct tag	 *print_ofont(struct html *, enum htmlfont);
 struct tag	 *print_otag(struct html *, enum htmltag, 
 				int, const struct htmlpair *);
 void		  print_tagq(struct html *, const struct tag *);
 void		  print_stagq(struct html *, const struct tag *);
 void		  print_text(struct html *, const char *);
+void		  print_tbl(struct html *, const struct tbl_span *);
 
 void		  bufcat_su(struct html *, const char *, 
 			const struct roffsu *);

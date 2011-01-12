@@ -1,4 +1,4 @@
-/*	$Vendor-Id: roff.h,v 1.17 2010/06/27 15:52:41 kristaps Exp $ */
+/*	$Vendor-Id: roff.h,v 1.22 2011/01/01 16:18:39 kristaps Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,7 +20,11 @@
 enum	rofferr {
 	ROFF_CONT, /* continue processing line */
 	ROFF_RERUN, /* re-run roff interpreter with offset */
+	ROFF_APPEND, /* re-run main parser, appending next line */
+	ROFF_REPARSE, /* re-run main parser on the result */
+	ROFF_SO, /* include another file */
 	ROFF_IGN, /* ignore current line */
+	ROFF_TBL, /* a table row was successfully parsed */
 	ROFF_ERR /* badness: puke and stop */
 };
 
@@ -29,11 +33,12 @@ __BEGIN_DECLS
 struct	roff;
 
 void	 	  roff_free(struct roff *);
-struct	roff	 *roff_alloc(struct regset *, mandocmsg, void *);
+struct	roff	 *roff_alloc(struct regset *, void *, mandocmsg);
 void		  roff_reset(struct roff *);
 enum	rofferr	  roff_parseln(struct roff *, int, 
 			char **, size_t *, int, int *);
-int		  roff_endparse(struct roff *);
+void		  roff_endparse(struct roff *);
+const struct tbl_span *roff_span(const struct roff *);
 
 __END_DECLS
 
