@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_argv.c,v 1.58 2010/07/21 09:36:41 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_argv.c,v 1.62 2010/12/24 14:00:40 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,7 +95,7 @@ static	int mdoc_argflags[MDOC_MAX] = {
 	0, /* Os */
 	0, /* Sh */
 	0, /* Ss */ 
-	ARGS_DELIM, /* Pp */ 
+	0, /* Pp */ 
 	ARGS_DELIM, /* D1 */
 	ARGS_DELIM, /* Dl */
 	0, /* Bd */
@@ -196,7 +196,7 @@ static	int mdoc_argflags[MDOC_MAX] = {
 	0, /* Fr */
 	0, /* Ud */
 	0, /* Lb */
-	ARGS_DELIM, /* Lp */
+	0, /* Lp */
 	ARGS_DELIM, /* Lk */
 	ARGS_DELIM, /* Mt */
 	ARGS_DELIM, /* Brq */
@@ -361,8 +361,7 @@ mdoc_args(struct mdoc *m, int line, int *pos,
 		if (MDOC_Bl == n->tok)
 			break;
 
-	assert(n->data.Bl);
-	if (n && LIST_column == n->data.Bl->type) {
+	if (n && LIST_column == n->norm->Bl.type) {
 		fl |= ARGS_TABSEP;
 		fl &= ~ARGS_DELIM;
 	}

@@ -1,6 +1,6 @@
-/*	$Vendor-Id: man_macro.c,v 1.49 2010/07/22 23:03:15 kristaps Exp $ */
+/*	$Vendor-Id: man_macro.c,v 1.54 2010/12/08 10:58:22 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -69,21 +69,17 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* IR */
 	{ in_line_eoln, 0 }, /* RI */
 	{ in_line_eoln, MAN_NSCOPED }, /* na */
-	{ in_line_eoln, 0 }, /* i */
 	{ in_line_eoln, MAN_NSCOPED }, /* sp */
 	{ in_line_eoln, 0 }, /* nf */
 	{ in_line_eoln, 0 }, /* fi */
-	{ in_line_eoln, 0 }, /* r */
 	{ blk_close, 0 }, /* RE */
 	{ blk_exp, MAN_EXPLICIT }, /* RS */
 	{ in_line_eoln, 0 }, /* DT */
 	{ in_line_eoln, 0 }, /* UC */
 	{ in_line_eoln, 0 }, /* PD */
-	{ in_line_eoln, MAN_NSCOPED }, /* Sp */
-	{ in_line_eoln, 0 }, /* Vb */
-	{ in_line_eoln, 0 }, /* Ve */
 	{ in_line_eoln, 0 }, /* AT */
 	{ in_line_eoln, 0 }, /* in */
+	{ in_line_eoln, 0 }, /* ft */
 };
 
 const	struct man_macro * const man_macros = __man_macros;
@@ -123,8 +119,6 @@ man_unscope(struct man *m, const struct man_node *n,
 			return(0);
 		if ( ! man_valid_post(m))
 			return(0);
-		if ( ! man_action_post(m))
-			return(0);
 		m->last = m->last->parent;
 		assert(m->last);
 	}
@@ -132,8 +126,6 @@ man_unscope(struct man *m, const struct man_node *n,
 	if ( ! rew_warn(m, m->last, er))
 		return(0);
 	if ( ! man_valid_post(m))
-		return(0);
-	if ( ! man_action_post(m))
 		return(0);
 
 	m->next = MAN_ROOT == m->last->type ? 
@@ -458,8 +450,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 			break;
 		if ( ! man_valid_post(m))
 			return(0);
-		if ( ! man_action_post(m))
-			return(0);
 	}
 
 	assert(m->last);
@@ -469,8 +459,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 	 */
 
 	if (m->last->type != MAN_ROOT && ! man_valid_post(m))
-		return(0);
-	if (m->last->type != MAN_ROOT && ! man_action_post(m))
 		return(0);
 
 	m->next = MAN_ROOT == m->last->type ?

@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: mdoc.7,v 1.142 2010/07/26 13:45:49 kristaps Exp $
+.\"	$Vendor-Id: mdoc.7,v 1.174 2011/01/04 23:32:21 kristaps Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 26 2010 $
+.Dd January 4, 2011
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -28,9 +28,11 @@ language is used to format
 .Bx
 .Ux
 manuals.
-In this reference document, we describe its syntax, structure, and
+This reference document describes its syntax, structure, and
 usage.
-Our reference implementation is mandoc; the
+The reference implementation is
+.Xr mandoc 1 ;
+the
 .Sx COMPATIBILITY
 section describes compatibility with other troff \-mdoc implementations.
 .Pp
@@ -61,7 +63,7 @@ line.
 A macro line with only a control character and comment escape,
 .Sq \&.\e\*q ,
 is also ignored.
-Macro lines with only a control character and optionally whitespace are
+Macro lines with only a control character and optional whitespace are
 stripped from input.
 .Ss Reserved Characters
 Within a macro line, the following characters are reserved:
@@ -107,7 +109,7 @@ for two-character sequences; an open-bracket
 .Sq \&[
 for n-character sequences (terminated at a close-bracket
 .Sq \&] ) ;
-or a single one-character sequence.
+or a single one character sequence.
 See
 .Xr mandoc_char 7
 for a complete list.
@@ -120,10 +122,10 @@ and
 .Ss Text Decoration
 Terms may be text-decorated using the
 .Sq \ef
-escape followed by an indicator: B (bold), I, (italic), R (Roman), or P
+escape followed by an indicator: B (bold), I (italic), R (Roman), or P
 (revert to previous mode):
 .Pp
-.D1 \efBbold\efR \efIitalic\efP
+.Dl \efBbold\efR \efIitalic\efP
 .Pp
 A numerical representation 3, 2, or 1 (bold, italic, and Roman,
 respectively) may be used instead.
@@ -147,7 +149,7 @@ recommended for
 which encourages semantic annotation.
 .Ss Predefined Strings
 Historically,
-.Xr groff 1
+troff
 also defined a set of package-specific
 .Dq predefined strings ,
 which, like
@@ -172,7 +174,7 @@ and
 .Pq vertical bar .
 .Ss Whitespace
 Whitespace consists of the space character.
-In free-form lines, whitespace is preserved within a line; un-escaped
+In free-form lines, whitespace is preserved within a line; unescaped
 trailing spaces are stripped from input (unless in a literal context).
 Blank free-form lines, which may include whitespace, are only permitted
 within literal contexts.
@@ -183,7 +185,7 @@ If arguments are quoted, whitespace within the quotes is retained.
 Macro arguments may be quoted with double-quotes to group
 space-delimited terms or to retain blocks of whitespace.
 A quoted argument begins with a double-quote preceded by whitespace.
-The next double-quote not pair-wise adjacent to another double-quote
+The next double-quote not pairwise adjacent to another double-quote
 terminates the literal, regardless of surrounding whitespace.
 .Pp
 Note that any quoted text, even if it would cause a macro invocation
@@ -276,7 +278,7 @@ is necessarily non-portable across output media.
 See
 .Sx COMPATIBILITY .
 .Ss Sentence Spacing
-When composing a manual, make sure that your sentences end at the end of
+When composing a manual, make sure that sentences end at the end of
 a line.
 By doing so, front-ends will be able to apply the proper amount of
 spacing after the end of sentence (unescaped) period, exclamation mark,
@@ -288,10 +290,11 @@ delimiters (
 .Sq \&" ) .
 .Pp
 The proper spacing is also intelligently preserved if a sentence ends at
-the boundary of a macro line, e.g.,
+the boundary of a macro line.
+For example:
 .Pp
-.D1 \&Xr mandoc 1 \.
-.D1 \&Fl T \&Ns \&Cm ascii \.
+.Dl \&Xr mandoc 1 \.
+.Dl \&Fl T \&Ns \&Cm ascii \.
 .Sh MANUAL STRUCTURE
 A well-formed
 .Nm
@@ -328,8 +331,9 @@ file:
 \&.Sh NAME
 \&.Nm foo
 \&.Nd a description goes here
-\&.\e\*q The next is for sections 2, 3, & 9 only.
 \&.\e\*q .Sh LIBRARY
+\&.\e\*q For sections 2, 3, & 9 only.
+\&.\e\*q Not used in OpenBSD.
 \&.Sh SYNOPSIS
 \&.Nm foo
 \&.Op Fl options
@@ -339,18 +343,19 @@ The
 \&.Nm
 utility processes files ...
 \&.\e\*q .Sh IMPLEMENTATION NOTES
-\&.\e\*q The next is for sections 2, 3, & 9 only.
+\&.\e\*q Not used in OpenBSD.
 \&.\e\*q .Sh RETURN VALUES
-\&.\e\*q The next is for sections 1, 6, 7, & 8 only.
+\&.\e\*q For sections 2, 3, & 9 only.
 \&.\e\*q .Sh ENVIRONMENT
+\&.\e\*q For sections 1, 6, 7, & 8 only.
 \&.\e\*q .Sh FILES
-\&.\e\*q The next is for sections 1 & 8 only.
 \&.\e\*q .Sh EXIT STATUS
+\&.\e\*q For sections 1, 6, & 8 only.
 \&.\e\*q .Sh EXAMPLES
-\&.\e\*q The next is for sections 1, 4, 6, 7, & 8 only.
 \&.\e\*q .Sh DIAGNOSTICS
-\&.\e\*q The next is for sections 2, 3, & 9 only.
+\&.\e\*q For sections 1, 4, 6, 7, & 8 only.
 \&.\e\*q .Sh ERRORS
+\&.\e\*q For sections 2, 3, & 9 only.
 \&.\e\*q .Sh SEE ALSO
 \&.\e\*q .Xr foobar 1
 \&.\e\*q .Sh STANDARDS
@@ -359,21 +364,22 @@ utility processes files ...
 \&.\e\*q .Sh CAVEATS
 \&.\e\*q .Sh BUGS
 \&.\e\*q .Sh SECURITY CONSIDERATIONS
+\&.\e\*q Not used in OpenBSD.
 .Ed
 .Pp
-The sections in a
+The sections in an
 .Nm
 document are conventionally ordered as they appear above.
 Sections should be composed as follows:
 .Bl -ohang -offset Ds
 .It Em NAME
-The name(s) and a one-line description of the documented material.
+The name(s) and a one line description of the documented material.
 The syntax for this as follows:
 .Bd -literal -offset indent
-\&.Nm name0
-\&.Nm name1
+\&.Nm name0 ,
+\&.Nm name1 ,
 \&.Nm name2
-\&.Nd a one-line description
+\&.Nd a one line description
 .Ed
 .Pp
 The
@@ -415,8 +421,8 @@ generally structured as follows:
 .Pp
 For the second, function calls (sections 2, 3, 9):
 .Bd -literal -offset indent
-\&.Vt extern const char *global;
 \&.In header.h
+\&.Vt extern const char *global;
 \&.Ft "char *"
 \&.Fn foo "const char *src"
 \&.Ft "char *"
@@ -445,7 +451,7 @@ section, particularly
 and
 .Sx \&Ft .
 All of these macros are output on their own line.
-If two such dissimilar macros are pair-wise invoked (except for
+If two such dissimilar macros are pairwise invoked (except for
 .Sx \&Ft
 before
 .Sx \&Fo
@@ -471,9 +477,9 @@ or
 .Sx \&Ss
 macro or the end of an enclosing block, whichever comes first.
 .It Em DESCRIPTION
-This expands upon the brief, one-line description in
+This expands upon the brief, one line description in
 .Em NAME .
-It usually contains a break-down of the options (if documenting a
+It usually contains a breakdown of the options (if documenting a
 command), such as:
 .Bd -literal -offset indent
 The arguments are as follows:
@@ -489,10 +495,8 @@ Implementation-specific notes should be kept here.
 This is useful when implementing standard functions that may have side
 effects or notable algorithmic implications.
 .It Em RETURN VALUES
-This section is the dual of
-.Em EXIT STATUS ,
-which is used for commands.
-It documents the return values of functions in sections 2, 3, and 9.
+This section documents the
+return values of functions in sections 2, 3, and 9.
 .Pp
 See
 .Sx \&Rv .
@@ -513,10 +517,8 @@ the file is used (created, modified, etc.).
 See
 .Sx \&Pa .
 .It Em EXIT STATUS
-Command exit status for section 1, 6, and 8 manuals.
-This section is the dual of
-.Em RETURN VALUES ,
-which is used for functions.
+This section documents the
+command exit status for section 1, 6, and 8 utilities.
 Historically, this information was described in
 .Em DIAGNOSTICS ,
 a practise that is now discouraged.
@@ -526,7 +528,7 @@ See
 .It Em EXAMPLES
 Example usages.
 This often contains snippets of well-formed, well-tested invocations.
-Make doubly sure that your examples work properly!
+Make sure that examples work properly!
 .It Em DIAGNOSTICS
 Documents error conditions.
 This is most useful in section 4 manuals.
@@ -560,11 +562,9 @@ section should be used instead.
 See
 .Sx \&St .
 .It Em HISTORY
-The history of any manual without a
-.Em STANDARDS
-section should be described in this section.
+A brief history of the subject, including where support first appeared.
 .It Em AUTHORS
-Credits to authors, if applicable, should appear in this section.
+Credits to the person or persons who wrote the code and/or documentation.
 Authors should generally be noted by both name and email address.
 .Pp
 See
@@ -573,7 +573,7 @@ See
 Common misuses and misunderstandings should be explained
 in this section.
 .It Em BUGS
-Known bugs, limitations and work-arounds should be described
+Known bugs, limitations, and work-arounds should be described
 in this section.
 .It Em SECURITY CONSIDERATIONS
 Documents any security precautions that operators should consider.
@@ -604,20 +604,21 @@ closes it out.
 .Pp
 The
 .Em Callable
-column indicates that the macro may be called subsequent to the initial
-line-macro.
-If a macro is not callable, then its invocation after the initial line
-macro is interpreted as opaque text, such that
+column indicates that the macro may also be called by passing its name
+as an argument to another macro.
+If a macro is not callable but its name appears as an argument
+to another macro, it is interpreted as opaque text.
+For example,
 .Sq \&.Fl \&Sh
 produces
 .Sq Fl \&Sh .
 .Pp
 The
 .Em Parsed
-column indicates whether the macro may be followed by further
-(ostensibly callable) macros.
-If a macro is not parsed, subsequent macro invocations on the line
-will be interpreted as opaque text.
+column indicates whether the macro may call other macros by receiving
+their names as arguments.
+If a macro is not parsed but the name of another macro appears
+as an argument, it is interpreted as opaque text.
 .Pp
 The
 .Em Scope
@@ -771,7 +772,7 @@ If a number (or inequality) of arguments is
 .Pq n ,
 then the macro accepts an arbitrary number of arguments.
 .Bd -literal -offset indent
-\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB \(lbres...\(rb
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB \(lBres...\(rB
 
 \&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB Yc...
 
@@ -879,10 +880,6 @@ referring to book titles.
 Publication city or location of an
 .Sx \&Rs
 block.
-.Pp
-.Em Remarks :
-this macro is not implemented in
-.Xr groff 1 .
 .Ss \&%D
 Publication date of an
 .Sx \&Rs
@@ -942,8 +939,8 @@ Memory address.
 Do not use this for postal addresses.
 .Pp
 Examples:
-.D1 \&.Ad [0,$]
-.D1 \&.Ad 0x00000000
+.Dl \&.Ad [0,$]
+.Dl \&.Ad 0x00000000
 .Ss \&An
 Author name.
 Requires either the name of an author or one of the following arguments:
@@ -973,14 +970,14 @@ for the first author listing and
 for all other author listings.
 .Pp
 Examples:
-.D1 \&.An -nosplit
-.D1 \&.An Kristaps Dzonsons \&Aq kristaps@bsd.lv
+.Dl \&.An -nosplit
+.Dl \&.An Kristaps Dzonsons \&Aq kristaps@bsd.lv
 .Ss \&Ao
 Begin a block enclosed by angle brackets.
 Does not have any head arguments.
 .Pp
 Examples:
-.D1 \&.Fl -key= \&Ns \&Ao \&Ar val \&Ac
+.Dl \&.Fl -key= \&Ns \&Ao \&Ar val \&Ac
 .Pp
 See also
 .Sx \&Aq .
@@ -990,12 +987,12 @@ This is generally used as a grammatical device when referring to the verb
 form of a function.
 .Pp
 Examples:
-.D1 \&.Fn execve \&Ap d
+.Dl \&.Fn execve \&Ap d
 .Ss \&Aq
 Encloses its arguments in angle brackets.
 .Pp
 Examples:
-.D1 \&.Fl -key= \&Ns \&Aq \&Ar val
+.Dl \&.Fl -key= \&Ns \&Aq \&Ar val
 .Pp
 .Em Remarks :
 this macro is often abused for rendering URIs, which should instead use
@@ -1016,9 +1013,9 @@ If an argument is not provided, the string
 is used as a default.
 .Pp
 Examples:
-.D1 \&.Fl o \&Ns \&Ar file1
-.D1 \&.Ar
-.D1 \&.Ar arg1 , arg2 .
+.Dl \&.Fl o \&Ns \&Ar file1
+.Dl \&.Ar
+.Dl \&.Ar arg1 , arg2 .
 .Ss \&At
 Formats an AT&T version.
 Accepts one optional argument:
@@ -1035,8 +1032,8 @@ A version of
 Note that these arguments do not begin with a hyphen.
 .Pp
 Examples:
-.D1 \&.At
-.D1 \&.At V.1
+.Dl \&.At
+.Dl \&.At V.1
 .Pp
 See also
 .Sx \&Bsx ,
@@ -1161,7 +1158,7 @@ and
 argument are equivalent, as are
 .Fl symbolic
 and
-.Cm \&Sy,
+.Cm \&Sy ,
 and
 .Fl literal
 and
@@ -1204,7 +1201,7 @@ Be careful in using over-long lines within a keep block!
 Doing so will clobber the right margin.
 .Ss \&Bl
 Begin a list.
-Lists consist of items started by the
+Lists consist of items specified using the
 .Sx \&It
 macro, containing a head or a body or both.
 The list syntax is as follows:
@@ -1339,7 +1336,7 @@ See also
 Encloses its arguments in square brackets.
 .Pp
 Examples:
-.D1 \&.Bq 1 , \&Dv BUFSIZ
+.Dl \&.Bq 1 , \&Dv BUFSIZ
 .Pp
 .Em Remarks :
 this macro is sometimes abused to emulate optional arguments for
@@ -1372,7 +1369,7 @@ See also
 Encloses its arguments in curly braces.
 .Pp
 Examples:
-.D1 \&.Brq 1 , ... , \&Va n
+.Dl \&.Brq 1 , ... , \&Va n
 .Pp
 See also
 .Sx \&Bro .
@@ -1381,8 +1378,8 @@ Format the BSD/OS version provided as an argument, or a default value if
 no argument is provided.
 .Pp
 Examples:
-.D1 \&.Bsx 1.0
-.D1 \&.Bsx
+.Dl \&.Bsx 1.0
+.Dl \&.Bsx
 .Pp
 See also
 .Sx \&At ,
@@ -1395,14 +1392,14 @@ and
 .Sx \&Ux .
 .Ss \&Bt
 Prints
-.Dq is currently in beta test.
+.Dq is currently in beta test .
 .Ss \&Bx
 Format the BSD version provided as an argument, or a default value if no
 argument is provided.
 .Pp
 Examples:
-.D1 \&.Bx 4.4
-.D1 \&.Bx
+.Dl \&.Bx 4.4
+.Dl \&.Bx
 .Pp
 See also
 .Sx \&At ,
@@ -1419,7 +1416,7 @@ This denotes strings accepted by
 .Xr config 8 .
 .Pp
 Examples:
-.D1 \&.Cd device le0 at scode?
+.Dl \&.Cd device le0 at scode?
 .Pp
 .Em Remarks :
 this macro is commonly abused by using quoted literals to retain
@@ -1432,8 +1429,8 @@ Command modifiers.
 Useful when specifying configuration options or keys.
 .Pp
 Examples:
-.D1 \&.Cm ControlPath
-.D1 \&.Cm ControlMaster
+.Dl \&.Cm ControlPath
+.Dl \&.Cm ControlMaster
 .Pp
 See also
 .Sx \&Fl .
@@ -1444,7 +1441,7 @@ statements.
 It is followed by a newline.
 .Pp
 Examples:
-.D1 \&.D1 \&Fl abcdefgh
+.Dl \&.D1 \&Fl abcdefgh
 .Pp
 See also
 .Sx \&Bd
@@ -1483,9 +1480,9 @@ or instead a valid canonical date as specified by
 If a date does not conform or is empty, the current date is used.
 .Pp
 Examples:
-.D1 \&.Dd $\&Mdocdate$
-.D1 \&.Dd $\&Mdocdate: July 21 2007$
-.D1 \&.Dd July 21, 2007
+.Dl \&.Dd $\&Mdocdate$
+.Dl \&.Dd $\&Mdocdate: July 21 2007$
+.Dl \&.Dd July 21, 2007
 .Pp
 See also
 .Sx \&Dt
@@ -1498,7 +1495,7 @@ invocations.
 It is followed by a newline.
 .Pp
 Examples:
-.D1 \&.Dl % mandoc mdoc.7 \e(ba less
+.Dl \&.Dl % mandoc mdoc.7 \e(ba less
 .Pp
 See also
 .Sx \&Bd
@@ -1650,6 +1647,7 @@ It must be one of
 .Ar luna88k ,
 .Ar mac68k ,
 .Ar macppc ,
+.Ar mips64 ,
 .Ar mvme68k ,
 .Ar mvme88k ,
 .Ar mvmeppc ,
@@ -1665,9 +1663,9 @@ or
 .El
 .Pp
 Examples:
-.D1 \&.Dt FOO 1
-.D1 \&.Dt FOO 4 KM
-.D1 \&.Dt FOO 9 i386
+.Dl \&.Dt FOO 1
+.Dl \&.Dt FOO 4 KM
+.Dl \&.Dt FOO 9 i386
 .Pp
 See also
 .Sx \&Dd
@@ -1677,8 +1675,8 @@ and
 Defined variables such as preprocessor constants.
 .Pp
 Examples:
-.D1 \&.Dv BUFSIZ
-.D1 \&.Dv STDOUT_FILENO
+.Dl \&.Dv BUFSIZ
+.Dl \&.Dv STDOUT_FILENO
 .Pp
 See also
 .Sx \&Er .
@@ -1687,8 +1685,8 @@ Format the DragonFly BSD version provided as an argument, or a default
 value if no argument is provided.
 .Pp
 Examples:
-.D1 \&.Dx 2.4.1
-.D1 \&.Dx
+.Dl \&.Dx 2.4.1
+.Dl \&.Dx
 .Pp
 See also
 .Sx \&At ,
@@ -1734,8 +1732,8 @@ Note that this is a presentation term and should not be used for
 stylistically decorating technical terms.
 .Pp
 Examples:
-.D1 \&.Em Warnings!
-.D1 \&.Em Remarks :
+.Dl \&.Em Warnings!
+.Dl \&.Em Remarks :
 .Pp
 See also
 .Sx \&Bf ,
@@ -1760,8 +1758,8 @@ will emulate
 Display error constants.
 .Pp
 Examples:
-.D1 \&.Er EPERM
-.D1 \&.Er ENOENT
+.Dl \&.Er EPERM
+.Dl \&.Er ENOENT
 .Pp
 See also
 .Sx \&Dv .
@@ -1772,8 +1770,8 @@ Environmental variables such as those specified in
 .Xr environ 7 .
 .Pp
 Examples:
-.D1 \&.Ev DISPLAY
-.D1 \&.Ev PATH
+.Dl \&.Ev DISPLAY
+.Dl \&.Ev PATH
 .Ss \&Ex
 Insert a standard sentence regarding exit values.
 Its syntax is as follows:
@@ -1813,9 +1811,9 @@ Furthermore, if the following macro is another
 the last argument will also have a trailing comma.
 .Pp
 Examples:
-.D1 \&.Fa \(dqconst char *p\(dq
-.D1 \&.Fa \(dqint a\(dq \(dqint b\(dq \(dqint c\(dq
-.D1 \&.Fa foo
+.Dl \&.Fa \(dqconst char *p\(dq
+.Dl \&.Fa \(dqint a\(dq \(dqint b\(dq \(dqint c\(dq
+.Dl \&.Fa foo
 .Pp
 See also
 .Sx \&Fo .
@@ -1843,10 +1841,10 @@ If the argument is a macro, a hyphen is prefixed to the subsequent macro
 output.
 .Pp
 Examples:
-.D1 \&.Fl a b c
-.D1 \&.Fl \&Pf a b
-.D1 \&.Fl
-.D1 \&.Op \&Fl o \&Ns \&Ar file
+.Dl \&.Fl a b c
+.Dl \&.Fl \&Pf a b
+.Dl \&.Fl
+.Dl \&.Op \&Fl o \&Ns \&Ar file
 .Pp
 See also
 .Sx \&Cm .
@@ -1865,14 +1863,17 @@ are delimited by commas.
 If no arguments are specified, blank parenthesis are output.
 .Pp
 Examples:
-.D1 \&.Fn "int funcname" "int arg0" "int arg1"
-.D1 \&.Fn funcname "int arg0"
-.D1 \&.Fn funcname arg0
+.Dl \&.Fn "int funcname" "int arg0" "int arg1"
+.Dl \&.Fn funcname "int arg0"
+.Dl \&.Fn funcname arg0
 .Bd -literal -offset indent -compact
 \&.Ft functype
 \&.Fn funcname
 .Ed
 .Pp
+When referring to a function documented in another manual page, use
+.Sx \&Xr
+instead.
 See also
 .Sx MANUAL STRUCTURE
 and
@@ -1915,7 +1916,7 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Ft Cm functype
 .Pp
 Examples:
-.D1 \&.Ft int
+.Dl \&.Ft int
 .Bd -literal -offset indent -compact
 \&.Ft functype
 \&.Fn funcname
@@ -1927,12 +1928,14 @@ See also
 and
 .Sx \&Fo .
 .Ss \&Fx
-Format the FreeBSD version provided as an argument, or a default value
+Format the
+.Fx
+version provided as an argument, or a default value
 if no argument is provided.
 .Pp
 Examples:
-.D1 \&.Fx 7.1
-.D1 \&.Fx
+.Dl \&.Fx 7.1
+.Dl \&.Fx
 .Pp
 See also
 .Sx \&At ,
@@ -1952,11 +1955,11 @@ This is similar to
 but used for instructions rather than values.
 .Pp
 Examples:
-.D1 \&.Ic hash
-.D1 \&.Ic alias
+.Dl \&.Ic hash
+.Dl \&.Ic alias
 .Pp
 Note that using
-.Sx \&Bd No Fl literal
+.Sx \&Bd Fl literal
 or
 .Sx \&D1
 is preferred for displaying code; the
@@ -1974,7 +1977,7 @@ preceded by
 the arguments is enclosed in angle brackets.
 .Pp
 Examples:
-.D1 \&.In sys/types
+.Dl \&.In sys/types
 .Pp
 See also
 .Sx MANUAL STRUCTURE .
@@ -2054,7 +2057,7 @@ phrases on an
 .Sx \&It ,
 for example,
 .Pp
-.D1 .It \(dqcol1 ; <TAB> col2 ;\(dq \&;
+.Dl .It \(dqcol1 ; <TAB> col2 ;\(dq \&;
 .Pp
 will preserve the semicolon whitespace except for the last.
 .Pp
@@ -2081,8 +2084,8 @@ section as described in
 .Sx MANUAL STRUCTURE .
 .Pp
 Examples:
-.D1 \&.Lb libz
-.D1 \&.Lb mdoc
+.Dl \&.Lb libz
+.Dl \&.Lb mdoc
 .Ss \&Li
 Denotes text that should be in a literal font mode.
 Note that this is a presentation term and should not be used for
@@ -2100,8 +2103,8 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Lk Cm uri Op Cm name
 .Pp
 Examples:
-.D1 \&.Lk http://bsd.lv "The BSD.lv Project"
-.D1 \&.Lk http://bsd.lv
+.Dl \&.Lk http://bsd.lv \*qThe BSD.lv Project\*q
+.Dl \&.Lk http://bsd.lv
 .Pp
 See also
 .Sx \&Mt .
@@ -2115,8 +2118,8 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Ms Cm symbol
 .Pp
 Examples:
-.D1 \&.Ms sigma
-.D1 \&.Ms aleph
+.Dl \&.Ms sigma
+.Dl \&.Ms aleph
 .Ss \&Mt
 Format a
 .Dq mailto:
@@ -2126,9 +2129,9 @@ Its syntax is as follows:
 .D1 Pf \. Sx \&Mt Cm address
 .Pp
 Examples:
-.D1 \&.Mt discuss@manpages.bsd.lv
+.Dl \&.Mt discuss@manpages.bsd.lv
 .Ss \&Nd
-A one-line description of the manual's content.
+A one line description of the manual's content.
 This may only be invoked in the
 .Em SYNOPSIS
 section subsequent the
@@ -2136,8 +2139,8 @@ section subsequent the
 macro.
 .Pp
 Examples:
-.D1 \&.Sx \&Nd mdoc language reference
-.D1 \&.Sx \&Nd format and display UNIX manuals
+.Dl \&.Sx \&Nd mdoc language reference
+.Dl \&.Sx \&Nd format and display UNIX manuals
 .Pp
 The
 .Sx \&Nd
@@ -2194,26 +2197,28 @@ A
 macro used to terminate prior macro contexts.
 .Pp
 Examples:
-.D1 \&.Sx \&Fl ab \&No cd \&Fl ef
+.Dl \&.Sx \&Fl ab \&No cd \&Fl ef
 .Ss \&Ns
 Suppress a space.
 Following invocation, text is interpreted as free-form text until a
 macro is encountered.
 .Pp
 Examples:
-.D1 \&.Fl o \&Ns \&Ar output
+.Dl \&.Fl o \&Ns \&Ar output
 .Pp
 See also
 .Sx \&No
 and
 .Sx \&Sm .
 .Ss \&Nx
-Format the NetBSD version provided as an argument, or a default value if
+Format the
+.Nx
+version provided as an argument, or a default value if
 no argument is provided.
 .Pp
 Examples:
-.D1 \&.Nx 5.01
-.D1 \&.Nx
+.Dl \&.Nx 5.01
+.Dl \&.Nx
 .Pp
 See also
 .Sx \&At ,
@@ -2244,8 +2249,8 @@ Used when listing options to command-line utilities.
 Prints the argument(s) in brackets.
 .Pp
 Examples:
-.D1 \&.Op \&Fl a \&Ar b
-.D1 \&.Op \&Ar a | b
+.Dl \&.Op \&Fl a \&Ar b
+.Dl \&.Op \&Ar a | b
 .Pp
 See also
 .Sx \&Oo .
@@ -2257,7 +2262,7 @@ any
 file.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Os Op Cm system
+.D1 Pf \. Sx \&Os Op Cm system Op Cm version
 .Pp
 The optional
 .Cm system
@@ -2266,9 +2271,9 @@ Left unspecified, it defaults to the local operating system version.
 This is the suggested form.
 .Pp
 Examples:
-.D1 \&.Os
-.D1 \&.Os KTH/CSC/TCS
-.D1 \&.Os BSD 4.3
+.Dl \&.Os
+.Dl \&.Os KTH/CSC/TCS
+.Dl \&.Os BSD 4.3
 .Pp
 See also
 .Sx \&Dd
@@ -2280,12 +2285,14 @@ Unknown usage.
 .Em Remarks :
 this macro has been deprecated.
 .Ss \&Ox
-Format the OpenBSD version provided as an argument, or a default value
+Format the
+.Ox
+version provided as an argument, or a default value
 if no argument is provided.
 .Pp
 Examples:
-.D1 \&.Ox 4.5
-.D1 \&.Ox
+.Dl \&.Ox 4.5
+.Dl \&.Ox
 .Pp
 See also
 .Sx \&At ,
@@ -2298,10 +2305,13 @@ and
 .Sx \&Ux .
 .Ss \&Pa
 A file-system path.
+If an argument is not provided, the string
+.Dq \(ti
+is used as a default.
 .Pp
 Examples:
-.D1 \&.Pa /usr/bin/mandoc
-.D1 \&.Pa /usr/share/man/man7/mdoc.7
+.Dl \&.Pa /usr/bin/mandoc
+.Dl \&.Pa /usr/share/man/man7/mdoc.7
 .Pp
 See also
 .Sx \&Lk .
@@ -2321,7 +2331,7 @@ The
 argument may be a macro.
 .Pp
 Examples:
-.D1 \&.Pf \e. \&Sx \&Pf \&Cm prefix suffix
+.Dl \&.Pf \e. \&Sx \&Pf \&Cm prefix suffix
 .Ss \&Po
 Multi-line version of
 .Sx \&Pq .
@@ -2581,7 +2591,12 @@ The referenced section or sub-section name must be identical to the
 enclosed argument, including whitespace.
 .Pp
 Examples:
-.D1 \&.Sx MANUAL STRUCTURE
+.Dl \&.Sx MANUAL STRUCTURE
+.Pp
+See also
+.Sx \&Sh
+and
+.Sx \&Ss .
 .Ss \&Sy
 Format enclosed arguments in symbolic
 .Pq Dq boldface .
@@ -2597,16 +2612,16 @@ and
 Format a tradename.
 .Pp
 Examples:
-.D1 \&.Tn IBM
+.Dl \&.Tn IBM
 .Ss \&Ud
 Prints out
-.Dq currently under development.
+.Dq currently under development .
 .Ss \&Ux
 Format the UNIX name.
 Accepts no argument.
 .Pp
 Examples:
-.D1 \&.Ux
+.Dl \&.Ux
 .Pp
 See also
 .Sx \&At ,
@@ -2621,8 +2636,8 @@ and
 A variable name.
 .Pp
 Examples:
-.D1 \&.Va foo
-.D1 \&.Va const char *bar ;
+.Dl \&.Va foo
+.Dl \&.Va const char *bar ;
 .Ss \&Vt
 A variable type.
 This is also used for indicating global variables in the
@@ -2641,8 +2656,8 @@ Note that this should not be confused with
 which is used for function return types.
 .Pp
 Examples:
-.D1 \&.Vt unsigned char
-.D1 \&.Vt extern const char * const sys_signame[] \&;
+.Dl \&.Vt unsigned char
+.Dl \&.Vt extern const char * const sys_signame[] \&;
 .Pp
 See also
 .Sx MANUAL STRUCTURE
@@ -2652,9 +2667,13 @@ and
 Close a scope opened by
 .Sx \&Xo .
 .Ss \&Xo
-Open an extension scope.
-This macro originally existed to extend the 9-argument limit of troff;
-since this limit has been lifted, the macro has been deprecated.
+Extend the header of an
+.Sx \&It
+macro or the body of a partial-implicit block macro
+beyond the end of the input line.
+This macro originally existed to work around the 9-argument limit
+of historic
+.Xr roff 7 .
 .Ss \&Xr
 Link to another manual
 .Pq Qq cross-reference .
@@ -2673,12 +2692,12 @@ is followed by non-punctuation, an
 .Sx \&Ns
 is inserted into the token stream.
 This behaviour is for compatibility with
-.Xr groff 1 .
+GNU troff.
 .Pp
 Examples:
-.D1 \&.Xr mandoc 1
-.D1 \&.Xr mandoc 1 \&;
-.D1 \&.Xr mandoc 1 \&Ns s behaviour
+.Dl \&.Xr mandoc 1
+.Dl \&.Xr mandoc 1 \&;
+.Dl \&.Xr mandoc 1 \&Ns s behaviour
 .Ss \&br
 Emits a line-break.
 This macro should not be used; it is implemented for compatibility with
@@ -2708,159 +2727,197 @@ troff implementations, at this time limited to GNU troff
 .Pq Qq groff .
 The term
 .Qq historic groff
-refers to groff versions before the
+refers to groff versions before 1.17,
+which featured a significant update of the
 .Pa doc.tmac
-file re-write
-.Pq somewhere between 1.15 and 1.19 .
+file.
 .Pp
 Heirloom troff, the other significant troff implementation accepting
 \-mdoc, is similar to historic groff.
 .Pp
+The following problematic behaviour is found in groff:
+.ds hist (Historic groff only.)
+.Pp
 .Bl -dash -compact
 .It
-An empty
-.Sq \&Dd
-macro in groff prints
+Display macros
+.Po
+.Sx \&Bd ,
+.Sx \&Dl ,
+and
+.Sx \&D1
+.Pc
+may not be nested.
+\*[hist]
+.It
+.Sx \&At
+with unknown arguments produces no output at all.
+\*[hist]
+Newer groff and mandoc print
+.Qq AT&T UNIX
+and the arguments.
+.It
+.Sx \&Bd Fl column
+does not recognize trailing punctuation characters when they immediately
+precede tabulator characters, but treats them as normal text and
+outputs a space before them.
+.It
+.Sx \&Bd Fl ragged compact
+does not start a new line.
+\*[hist]
+.It
+.Sx \&Dd
+without an argument prints
 .Dq Epoch .
 In mandoc, it resolves to the current date.
 .It
-The \es (font size), \em (font colour), and \eM (font filling colour)
-font decoration escapes are all discarded in mandoc.
+.Sx \&Fl
+does not print a dash for an empty argument.
+\*[hist]
 .It
-Old groff fails to assert a newline before
-.Sx \&Bd Fl ragged compact .
-.It
-groff behaves inconsistently when encountering
-.Pf non- Sx \&Fa
-children of
-.Sx \&Fo
-regarding spacing between arguments.
-In mandoc, this is not the case: each argument is consistently followed
-by a single space and the trailing
-.Sq \&)
-suppresses prior spacing.
-.It
-groff behaves inconsistently when encountering
-.Sx \&Ft
-and
 .Sx \&Fn
+does not start a new line unless invoked as the line macro in the
+.Em SYNOPSIS
+section.
+\*[hist]
+.It
+.Sx \&Fo
+with
+.Pf non- Sx \&Fa
+children causes inconsistent spacing between arguments.
+In mandoc, a single space is always inserted between arguments.
+.It
+.Sx \&Ft
 in the
-.Em SYNOPSIS :
-at times newline(s) are suppressed depending on whether a prior
+.Em SYNOPSIS
+causes inconsistent vertical spacing, depending on whether a prior
 .Sx \&Fn
 has been invoked.
-In mandoc, this is not the case.
 See
 .Sx \&Ft
 and
 .Sx \&Fn
-for the normalised behaviour.
+for the normalised behaviour in mandoc.
 .It
-Historic groff does not break before an
-.Sx \&Fn
-when not invoked as the line macro in the
-.Em SYNOPSIS
-section.
-.It
-Historic groff formats the
 .Sx \&In
-badly: trailing arguments are trashed and
-.Em SYNOPSIS
-is not specially treated.
+ignores additional arguments and is not treated specially in the
+.Em SYNOPSIS .
+\*[hist]
 .It
-groff does not accept the
-.Sq \&Ta
-pseudo-macro as a line macro.
-mandoc does.
-.It
-The comment syntax
-.Sq \e\."
-is no longer accepted.
-.It
-In groff, the
-.Sx \&Pa
-macro does not format its arguments when used in the FILES section under
-certain list types.
-mandoc does.
-.It
-Historic groff does not print a dash for empty
-.Sx \&Fl
-arguments.
-mandoc and newer groff implementations do.
-.It
-groff behaves irregularly when specifying
-.Sq \ef
-.Sx Text Decoration
-within line-macro scopes.
-mandoc follows a consistent system.
-.It
-In mandoc, negative scaling units are truncated to zero; groff would
-move to prior lines.
-Furthermore, the
-.Sq f
-scaling unit, while accepted, is rendered as the default unit.
-.It
-In quoted literals, groff allowed pair-wise double-quotes to produce a
-standalone double-quote in formatted output.
-This idiosyncratic behaviour is not applicable in mandoc.
-.It
-Display offsets
-.Sx \&Bd
-.Fl offset Ar center
-and
-.Fl offset Ar right
-are disregarded in mandoc.
-Furthermore, troff specifies a
-.Fl file Ar file
-argument that is not supported in mandoc.
-Lastly, since text is not right-justified in mandoc (or even groff),
-.Fl ragged
-and
-.Fl filled
-are aliases, as are
-.Fl literal
-and
-.Fl unfilled .
-.It
-Historic groff has many un-callable macros.
-Most of these (excluding some block-level macros) are now callable.
-.It
-The vertical bar
-.Sq \(ba
-made historic groff
-.Qq go orbital
-but has been a proper delimiter since then.
-.It
-.Sx \&It Fl nested
-is assumed for all lists (it wasn't in historic groff): any list may be
-nested and
+.Sx \&It
+sometimes requires a
+.Fl nested
+flag.
+\*[hist]
+In new groff and mandoc, any list may be nested by default and
 .Fl enum
 lists will restart the sequence only for the sub-list.
 .It
-Some manuals use
 .Sx \&Li
-incorrectly by following it with a reserved character and expecting the
-delimiter to render.
-This is not supported in mandoc.
+followed by a reserved character is incorrectly used in some manuals
+instead of properly quoting that character, which sometimes works with
+historic groff.
 .It
-In groff, the
-.Sx \&Cd ,
-.Sx \&Er ,
-.Sx \&Ex ,
+.Sx \&Lk
+only accepts a single link-name argument; the remainder is misformatted.
+.It
+.Sx \&Pa
+does not format its arguments when used in the FILES section under
+certain list types.
+.It
+.Sx \&Ta
+can only be called by other macros, but not at the beginning of a line.
+.It
+.Sx \&%C
+is not implemented.
+.It
+Historic groff only allows up to eight or nine arguments per macro input
+line, depending on the exact situation.
+Providing more arguments causes garbled output.
+The number of arguments on one input line is not limited with mandoc.
+.It
+Historic groff has many un-callable macros.
+Most of these (excluding some block-level macros) are callable
+in new groff and mandoc.
+.It
+.Sq \(ba
+(vertical bar) is not fully supported as a delimiter.
+\*[hist]
+.It
+.Sq \ef
+.Pq font face
 and
-.Sx \&Rv
-macros were stipulated only to occur in certain manual sections.
-mandoc does not have these restrictions.
+.Sq \ef
+.Pq font family face
+.Sx Text Decoration
+escapes behave irregularly when specified within line-macro scopes.
 .It
-Newer groff and mandoc print
-.Qq AT&T UNIX
-prior to unknown arguments of
-.Sx \&At ;
-older groff did nothing.
+Negative scaling units return to prior lines.
+Instead, mandoc truncates them to zero.
+.El
+.Pp
+The following features are unimplemented in mandoc:
+.Pp
+.Bl -dash -compact
+.It
+.Sx \&Bd
+.Fl file Ar file .
+.It
+.Sx \&Bd
+.Fl offset Ar center
+and
+.Fl offset Ar right .
+Groff does not implement centered and flush-right rendering either,
+but produces large indentations.
+.It
+The
+.Sq \eh
+.Pq horizontal position ,
+.Sq \ev
+.Pq vertical position ,
+.Sq \em
+.Pq text colour ,
+.Sq \eM
+.Pq text filling colour ,
+.Sq \ez
+.Pq zero-length character ,
+.Sq \ew
+.Pq string length ,
+.Sq \ek
+.Pq horizontal position marker ,
+.Sq \eo
+.Pq text overstrike ,
+and
+.Sq \es
+.Pq text size
+escape sequences are all discarded in mandoc.
+.It
+The
+.Sq \ef
+scaling unit is accepted by mandoc, but rendered as the default unit.
+.It
+In quoted literals, groff allows pairwise double-quotes to produce a
+standalone double-quote in formatted output.
+This is not supported by mandoc.
 .El
 .Sh SEE ALSO
+.Xr man 1 ,
 .Xr mandoc 1 ,
+.Xr man 7 ,
 .Xr mandoc_char 7
+.Xr roff 7 ,
+.Xr tbl 7
+.Sh HISTORY
+The
+.Nm
+language first appeared as a troff macro package in
+.Bx 4.4 .
+It was later significantly updated by Werner Lemberg and Ruslan Ermilov
+in groff-1.17.
+The standalone implementation that is part of the
+.Xr mandoc 1
+utility written by Kristaps Dzonsons appeared in
+.Ox 4.6 .
 .Sh AUTHORS
 The
 .Nm

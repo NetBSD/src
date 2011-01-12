@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: mdoc.3,v 1.48 2010/07/07 15:04:54 kristaps Exp $
+.\"	$Vendor-Id: mdoc.3,v 1.55 2011/01/07 15:07:21 kristaps Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2010 $
+.Dd January 7, 2011
 .Dt MDOC 3
 .Os
 .Sh NAME
@@ -33,11 +33,15 @@
 .In mdoc.h
 .Vt extern const char * const * mdoc_macronames;
 .Vt extern const char * const * mdoc_argnames;
+.Ft int
+.Fo mdoc_addspan
+.Fa "struct mdoc *mdoc"
+.Fa "const struct tbl_span *span"
+.Fc
 .Ft "struct mdoc *"
 .Fo mdoc_alloc
 .Fa "struct regset *regs"
 .Fa "void *data"
-.Fa "int pflags"
 .Fa "mandocmsg msgs"
 .Fc
 .Ft int
@@ -80,56 +84,40 @@ The
 .Fn mdoc_reset
 function may be used in order to reset the parser for another input
 sequence.
-See the
-.Sx EXAMPLES
-section for a simple example.
-.Pp
-This section further defines the
-.Sx Types ,
-.Sx Functions
-and
-.Sx Variables
-available to programmers.
-Following that, the
-.Sx Abstract Syntax Tree
-section documents the output tree.
 .Ss Types
-Both functions (see
-.Sx Functions )
-and variables (see
-.Sx Variables )
-may use the following types:
 .Bl -ohang
 .It Vt struct mdoc
-An opaque type defined in
-.Pa mdoc.c .
+An opaque type.
 Its values are only used privately within the library.
 .It Vt struct mdoc_node
 A parsed node.
-Defined in
-.Pa mdoc.h .
 See
 .Sx Abstract Syntax Tree
 for details.
-.It Vt mandocmsg
-A function callback type defined in
-.Pa mandoc.h .
 .El
 .Ss Functions
-Function descriptions follow:
+If
+.Fn mdoc_addspan ,
+.Fn mdoc_parseln ,
+or
+.Fn mdoc_endparse
+return 0, calls to any function but
+.Fn mdoc_reset
+or
+.Fn mdoc_free
+will raise an assertion.
 .Bl -ohang
+.It Fn mdoc_addspan
+Add a table span to the parsing stream.
+Returns 0 on failure, 1 on success.
 .It Fn mdoc_alloc
 Allocates a parsing structure.
 The
 .Fa data
 pointer is passed to
 .Fa msgs .
-The
-.Fa pflags
-arguments are defined in
-.Pa mdoc.h .
-Returns NULL on failure.
-If non-NULL, the pointer must be freed with
+Always returns a valid pointer.
+The pointer must be freed with
 .Fn mdoc_free .
 .It Fn mdoc_reset
 Reset the parser for another parse routine.
@@ -149,29 +137,13 @@ The input buffer
 is modified by this function.
 .It Fn mdoc_endparse
 Signals that the parse is complete.
-Note that if
-.Fn mdoc_endparse
-is called subsequent to
-.Fn mdoc_node ,
-the resulting tree is incomplete.
 Returns 0 on failure, 1 on success.
 .It Fn mdoc_node
 Returns the first node of the parse.
-Note that if
-.Fn mdoc_parseln
-or
-.Fn mdoc_endparse
-return 0, the tree will be incomplete.
 .It Fn mdoc_meta
 Returns the document's parsed meta-data.
-If this information has not yet been supplied or
-.Fn mdoc_parseln
-or
-.Fn mdoc_endparse
-return 0, the data will be incomplete.
 .El
 .Ss Variables
-The following variables are also defined:
 .Bl -ohang
 .It Va mdoc_macronames
 An array of string-ified token names.
@@ -338,7 +310,7 @@ int line;
 
 bzero(&regs, sizeof(struct regset));
 line = 1;
-mdoc = mdoc_alloc(&regs, NULL, 0, NULL);
+mdoc = mdoc_alloc(&regs, NULL, NULL);
 buf = NULL;
 alloc_len = 0;
 
@@ -359,9 +331,13 @@ parsed(mdoc, node);
 mdoc_free(mdoc);
 .Ed
 .Pp
-Please see
+To compile this, execute
+.Pp
+.Dl % cc main.c libmdoc.a libmandoc.a
+.Pp
+where
 .Pa main.c
-in the source archive for a rigorous reference.
+is the example file.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr mdoc 7

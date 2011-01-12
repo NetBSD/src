@@ -1,6 +1,6 @@
-/*	$Vendor-Id: chars.c,v 1.24 2010/07/26 13:59:00 kristaps Exp $ */
+/*	$Vendor-Id: chars.c,v 1.31 2011/01/02 10:10:57 kristaps Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,7 +40,7 @@ struct	ln {
 #define CHARS_BOTH	 (CHARS_CHAR | CHARS_STRING)
 };
 
-#define	LINES_MAX	  370
+#define	LINES_MAX	  351
 
 #define CHAR(in, ch, code) \
 	{ NULL, (in), (ch), (code), CHARS_CHAR },
@@ -54,22 +54,22 @@ struct	ln {
 
 #include "chars.in"
 
-struct	tbl {
+struct	ctab {
 	enum chars	  type;
 	struct ln	**htab;
 };
 
 static	inline int	  match(const struct ln *,
 				const char *, size_t, int);
-static	const struct ln	 *find(struct tbl *, const char *, size_t, int);
+static	const struct ln	 *find(struct ctab *, const char *, size_t, int);
 
 
 void
 chars_free(void *arg)
 {
-	struct tbl	*tab;
+	struct ctab	*tab;
 
-	tab = (struct tbl *)arg;
+	tab = (struct ctab *)arg;
 
 	free(tab->htab);
 	free(tab);
@@ -79,7 +79,7 @@ chars_free(void *arg)
 void *
 chars_init(enum chars type)
 {
-	struct tbl	 *tab;
+	struct ctab	 *tab;
 	struct ln	**htab;
 	struct ln	 *pp;
 	int		  i, hash;
@@ -91,16 +91,16 @@ chars_init(enum chars type)
 	 * (they're in-line re-ordered during lookup).
 	 */
 
-	tab = malloc(sizeof(struct tbl));
+	tab = malloc(sizeof(struct ctab));
 	if (NULL == tab) {
 		perror(NULL);
-		exit(EXIT_FAILURE);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 
 	htab = calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
 	if (NULL == htab) {
 		perror(NULL);
-		exit(EXIT_FAILURE);
+		exit((int)MANDOCLEVEL_SYSERR);
 	}
 
 	for (i = 0; i < LINES_MAX; i++) {
@@ -130,7 +130,7 @@ chars_spec2cp(void *arg, const char *p, size_t sz)
 {
 	const struct ln	*ln;
 
-	ln = find((struct tbl *)arg, p, sz, CHARS_CHAR);
+	ln = find((struct ctab *)arg, p, sz, CHARS_CHAR);
 	if (NULL == ln)
 		return(-1);
 	return(ln->unicode);
@@ -145,7 +145,7 @@ chars_res2cp(void *arg, const char *p, size_t sz)
 {
 	const struct ln	*ln;
 
-	ln = find((struct tbl *)arg, p, sz, CHARS_STRING);
+	ln = find((struct ctab *)arg, p, sz, CHARS_STRING);
 	if (NULL == ln)
 		return(-1);
 	return(ln->unicode);
@@ -160,7 +160,7 @@ chars_spec2str(void *arg, const char *p, size_t sz, size_t *rsz)
 {
 	const struct ln	*ln;
 
-	ln = find((struct tbl *)arg, p, sz, CHARS_CHAR);
+	ln = find((struct ctab *)arg, p, sz, CHARS_CHAR);
 	if (NULL == ln)
 		return(NULL);
 
@@ -177,7 +177,7 @@ chars_res2str(void *arg, const char *p, size_t sz, size_t *rsz)
 {
 	const struct ln	*ln;
 
-	ln = find((struct tbl *)arg, p, sz, CHARS_STRING);
+	ln = find((struct ctab *)arg, p, sz, CHARS_STRING);
 	if (NULL == ln)
 		return(NULL);
 
@@ -187,7 +187,7 @@ chars_res2str(void *arg, const char *p, size_t sz, size_t *rsz)
 
 
 static const struct ln *
-find(struct tbl *tab, const char *p, size_t sz, int type)
+find(struct ctab *tab, const char *p, size_t sz, int type)
 {
 	struct ln	 *pp, *prev;
 	struct ln	**htab;

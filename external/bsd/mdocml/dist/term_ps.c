@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term_ps.c,v 1.39 2010/07/25 22:15:07 kristaps Exp $ */
+/*	$Vendor-Id: term_ps.c,v 1.45 2010/09/27 23:03:44 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,7 +18,7 @@
 #include "config.h"
 #endif
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 #include <assert.h>
 #include <stdarg.h>
@@ -29,6 +29,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "mandoc.h"
 #include "out.h"
 #include "main.h"
 #include "term.h"
@@ -353,20 +354,27 @@ static	const struct font fonts[TERMFONT__MAX] = {
 
 /* These work the buffer used by the header and footer. */
 #define	PS_BUFSLOP	  128
-#define	PS_GROWBUF(p, sz) \
-	do if ((p)->engine.ps.psmargcur + (sz) > \
-			(p)->engine.ps.psmargsz) { \
-		(p)->engine.ps.psmargsz += /* CONSTCOND */ \
-			MAX(PS_BUFSLOP, (sz)); \
-		(p)->engine.ps.psmarg = realloc \
-			((p)->engine.ps.psmarg,  \
-			 (p)->engine.ps.psmargsz); \
-		if (NULL == (p)->engine.ps.psmarg) { \
-			perror(NULL); \
-			exit(EXIT_FAILURE); \
-		} \
-	} while (/* CONSTCOND */ 0)
 
+static void
+ps_growbuf(struct termp *p, size_t sz)
+{
+	if (p->engine.ps.psmargcur + sz <= p->engine.ps.psmargsz)
+		return;
+
+	if (sz < PS_BUFSLOP)
+		sz = PS_BUFSLOP;
+
+	p->engine.ps.psmargsz += sz;
+
+	p->engine.ps.psmarg = realloc
+		(p->engine.ps.psmarg,
+		 p->engine.ps.psmargsz);
+	
+	if (NULL == p->engine.ps.psmarg) {
+		perror(NULL);
+		exit((int)MANDOCLEVEL_SYSERR);
+	}
+}
 
 static	double		  ps_hspan(const struct termp *,
 				const struct roffsu *);
@@ -556,7 +564,7 @@ ps_printf(struct termp *p, const char *fmt, ...)
 	 * assumption that will cause pukeage if it's not the case.
 	 */
 
-	PS_GROWBUF(p, PS_BUFSLOP);
+	ps_growbuf(p, PS_BUFSLOP);
 
 	pos = (int)p->engine.ps.psmargcur;
 	len = vsnprintf(&p->engine.ps.psmarg[pos], PS_BUFSLOP, fmt, ap);
@@ -575,12 +583,13 @@ ps_putchar(struct termp *p, char c)
 	/* See ps_printf(). */
 
 	if ( ! (PS_MARGINS & p->engine.ps.flags)) {
+		/* LINTED */
 		putchar(c);
 		p->engine.ps.pdfbytes++;
 		return;
 	}
 
-	PS_GROWBUF(p, 2);
+	ps_growbuf(p, 2);
 
 	pos = (int)p->engine.ps.psmargcur++;
 	p->engine.ps.psmarg[pos++] = c;
@@ -601,7 +610,7 @@ pdf_obj(struct termp *p, size_t obj)
 			 p->engine.ps.pdfobjsz * sizeof(size_t));
 		if (NULL == p->engine.ps.pdfobjs) {
 			perror(NULL);
-			exit(EXIT_FAILURE);
+			exit((int)MANDOCLEVEL_SYSERR);
 		}
 	}
 
@@ -899,7 +908,7 @@ ps_pletter(struct termp *p, int c)
 
 	f = (int)p->engine.ps.lastf;
 
-	if (c <= 32 || (c - 32 > MAXCHAR)) {
+	if (c <= 32 || (c - 32 >= MAXCHAR)) {
 		ps_putchar(p, ' ');
 		p->engine.ps.pscol += (size_t)fonts[f].gly[0].wx;
 		return;

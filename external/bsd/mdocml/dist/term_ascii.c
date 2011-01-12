@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term_ascii.c,v 1.9 2010/07/13 23:53:20 schwarze Exp $ */
+/*	$Vendor-Id: term_ascii.c,v 1.11 2011/01/02 12:21:07 kristaps Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "mandoc.h"
 #include "out.h"
 #include "term.h"
 #include "main.h"
@@ -104,6 +105,7 @@ static void
 ascii_letter(struct termp *p, char c)
 {
 	
+	/* LINTED */
 	putchar(c);
 }
 
