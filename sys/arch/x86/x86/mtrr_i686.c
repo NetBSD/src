@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.22 2010/07/08 09:42:08 cegger Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.23 2011/01/12 23:52:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.22 2010/07/08 09:42:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.23 2011/01/12 23:52:38 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -63,7 +63,7 @@ static void i686_soft2raw(void);
 static void i686_raw2soft(void);
 static void i686_mtrr_commit(void);
 static int i686_mtrr_setone(struct mtrr *, struct proc *p);
-
+static int i686_mtrr_conflict(uint8_t, uint8_t);
 
 static struct mtrr_state
 mtrr_raw[] = {
@@ -622,7 +622,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 		}
 		if (((high >= curlow && high < curhigh) ||
 		    (low >= curlow && low < curhigh)) &&
-	 	    ((mtrr_var[i].type != mtrrp->type) ||
+	 	    (i686_mtrr_conflict(mtrr_var[i].type, mtrrp->type) ||
 		     ((mtrr_var[i].flags & MTRR_PRIVATE) &&
  		      (!(mtrrp->flags & MTRR_PRIVATE) || (p == NULL) ||
 		       (mtrr_var[i].owner != p->p_pid))))) {
@@ -636,6 +636,17 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 	freep->owner = (mtrrp->flags & MTRR_PRIVATE) ? p->p_pid : 0;
 
 	return 0;
+}
+
+static int
+i686_mtrr_conflict(uint8_t type1, uint8_t type2)
+{
+	if (type1 == MTRR_TYPE_UC || type2 == MTRR_TYPE_UC)
+		return 0;
+	if ((type1 == MTRR_TYPE_WT && type2 == MTRR_TYPE_WB) ||
+	    (type1 == MTRR_TYPE_WB && type2 == MTRR_TYPE_WT))
+		return 0;
+	return 1;
 }
 
 static void
