@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.11 2009/01/16 14:48:04 he Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.12 2011/01/12 23:34:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1989, 1993, 1994, 1995
@@ -49,21 +49,15 @@
 #define getpwnam_r		_getpwnam_r
 
 __weak_alias(endpwent,_endpwent)
-__weak_alias(getpwent,_getpwent)
-__weak_alias(getpwent_r,_getpwent_r)
-__weak_alias(getpwuid,_getpwuid)
-__weak_alias(getpwnam,_getpwnam)
 __weak_alias(setpwent,_setpwent)
 __weak_alias(setpassent,_setpassent)
-__weak_alias(getpwuid_r,_getpwuid_r)
-__weak_alias(getpwnam_r,_getpwnam_r)
 
-__weak_alias(__getpwent50,_getpwent)
-__weak_alias(__getpwent_r50,_getpwent_r)
-__weak_alias(__getpwuid50,_getpwuid)
-__weak_alias(__getpwnam50,_getpwnam)
-__weak_alias(__getpwuid_r50,_getpwuid_r)
-__weak_alias(__getpwnam_r50,_getpwnam_r)
+__weak_alias(getpwent,__getpwent50)
+__weak_alias(getpwent_r,__getpwent_r50)
+__weak_alias(getpwuid,__getpwuid50)
+__weak_alias(getpwnam,__getpwnam50)
+__weak_alias(getpwuid_r,__getpwuid_r50)
+__weak_alias(getpwnam_r,__getpwnam_r50)
 #endif
 
 #include <sys/param.h>
