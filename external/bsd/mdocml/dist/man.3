@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: man.3,v 1.22 2010/07/07 15:04:54 kristaps Exp $
+.\"	$Vendor-Id: man.3,v 1.29 2011/01/03 11:31:26 kristaps Exp $
 .\"
 .\" Copyright (c) 2009-2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2010 $
+.Dd January 3, 2011
 .Dt MAN 3
 .Os
 .Sh NAME
@@ -31,11 +31,15 @@
 .In mandoc.h
 .In man.h
 .Vt extern const char * const * man_macronames;
+.Ft int
+.Fo man_addspan
+.Fa "struct man *man"
+.Fa "const struct tbl_span *span"
+.Fc
 .Ft "struct man *"
 .Fo man_alloc
 .Fa "struct regset *regs"
 .Fa "void *data"
-.Fa "int pflags"
 .Fa "mandocmsg msgs"
 .Fc
 .Ft int
@@ -77,108 +81,52 @@ The
 .Fn man_reset
 function may be used in order to reset the parser for another input
 sequence.
-See the
-.Sx EXAMPLES
-section for a full example.
 .Pp
 Beyond the full set of macros defined in
 .Xr man 7 ,
 the
 .Nm
-library also accepts the following macros:
+library also accepts the following macro:
 .Pp
 .Bl -tag -width Ds -compact
 .It PD
-Has no effect.  Handled as a current-scope line macro.
-.It Sp
-A synonym for
-.Sq sp 0.5v
-.Pq part of the standard preamble for Perl documentation .
-Handled as a line macro.
-.It Vb
-A synonym for
-.Sq nf
-.Pq part of the standard preamble for Perl documentation .
-Handled as a current-scope line macro.
-.It Ve
-A synonym for
-.Sq fi ,
-closing
-.Sq Vb
-.Pq part of the standard preamble for Perl documentation .
+Has no effect.
 Handled as a current-scope line macro.
 .El
-.Pp
-Furthermore, the following escapes are accepted to allow
-.Xr pod2man 1
-documents to be correctly formatted:
-\e*(-- (dash),
-\e*(PI (pi),
-\e*(L" (left double-quote),
-\e*(R" (right double-quote),
-\e*(C+ (C++),
-\e*(C` (left single-quote),
-\e*(C' (right single-quote),
-\e*(Aq (apostrophe),
-\e*^ (hat),
-\e*, (comma),
-\e*~ (tilde),
-\e*/ (forward slash),
-\e*: (umlaut),
-\e*8 (beta),
-\e*o (degree),
-\e*(D- (Eth),
-\e*(d- (eth),
-\e*(Th (Thorn),
-and
-\e*(th (thorn).
-.Sh REFERENCE
-This section further defines the
-.Sx Types ,
-.Sx Functions
-and
-.Sx Variables
-available to programmers.
-Following that, the
-.Sx Abstract Syntax Tree
-section documents the output tree.
 .Ss Types
-Both functions (see
-.Sx Functions )
-and variables (see
-.Sx Variables )
-may use the following types:
 .Bl -ohang
 .It Vt struct man
-An opaque type defined in
-.Pa man.c .
+An opaque type.
 Its values are only used privately within the library.
-.It Vt mandocmsg
-A function callback type defined in
-.Pa mandoc.h .
 .It Vt struct man_node
 A parsed node.
-Defined in
-.Pa man.h .
 See
 .Sx Abstract Syntax Tree
 for details.
 .El
 .Ss Functions
-Function descriptions follow:
+If
+.Fn man_addspan ,
+.Fn man_parseln ,
+or
+.Fn man_endparse
+return 0, calls to any function but
+.Fn man_reset
+or
+.Fn man_free
+will raise an assertion.
 .Bl -ohang
+.It Fn man_addspan
+Add a table span to the parsing stream.
+Returns 0 on failure, 1 on success.
 .It Fn man_alloc
 Allocates a parsing structure.
 The
 .Fa data
 pointer is passed to
 .Fa msgs .
-The
-.Fa pflags
-arguments are defined in
-.Pa man.h .
-Returns NULL on failure.
-If non-NULL, the pointer must be freed with
+Always returns a valid pointer.
+The pointer must be freed with
 .Fn man_free .
 .It Fn man_reset
 Reset the parser for another parse routine.
@@ -197,26 +145,11 @@ The input buffer
 is modified by this function.
 .It Fn man_endparse
 Signals that the parse is complete.
-Note that if
-.Fn man_endparse
-is called subsequent to
-.Fn man_node ,
-the resulting tree is incomplete.
 Returns 0 on failure, 1 on success.
 .It Fn man_node
 Returns the first node of the parse.
-Note that if
-.Fn man_parseln
-or
-.Fn man_endparse
-return 0, the tree will be incomplete.
 .It Fn man_meta
 Returns the document's parsed meta-data.
-If this information has not yet been supplied or
-.Fn man_parseln
-or
-.Fn man_endparse
-return 0, the data will be incomplete.
 .El
 .Ss Variables
 The following variables are also defined:
@@ -299,7 +232,7 @@ int line;
 
 bzero(&regs, sizeof(struct regset));
 line = 1;
-man = man_alloc(&regs, NULL, 0, NULL);
+man = man_alloc(&regs, NULL, NULL);
 buf = NULL;
 alloc_len = 0;
 
@@ -322,9 +255,13 @@ parsed(man, node);
 man_free(man);
 .Ed
 .Pp
-Please see
+To compile this, execute
+.Pp
+.Dl % cc main.c libman.a libmandoc.a
+.Pp
+where
 .Pa main.c
-in the source archive for a rigorous reference.
+is the example file.
 .Sh SEE ALSO
 .Xr mandoc 1 ,
 .Xr man 7
