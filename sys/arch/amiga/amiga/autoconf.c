@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.105 2010/05/21 12:56:47 phx Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.106 2011/01/13 22:02:05 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.105 2010/05/21 12:56:47 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106 2011/01/13 22:02:05 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,13 +284,13 @@ mbattach(struct device *pdp, struct device *dp, void *auxp)
 		config_found(dp, __UNCONST("amidisplaycc"), simple_devprint);
 		config_found(dp, __UNCONST("fdc"), simple_devprint);
 	}
-	if (is_a4000() || is_a1200())
+	if (is_a4000() || is_a1200() || is_a600())
 		config_found(dp, __UNCONST("wdc"), simple_devprint);
 	if (is_a4000())			/* Try to configure A4000T SCSI */
 		config_found(dp, __UNCONST("afsc"), simple_devprint);
 	if (is_a3000())
 		config_found(dp, __UNCONST("ahsc"), simple_devprint);
-	if (/*is_a600() || */is_a1200())
+	if (is_a600() || is_a1200())
 		config_found(dp, __UNCONST("pccard"), simple_devprint);
 #ifdef DRACO
 	if (!is_draco())
@@ -569,5 +569,13 @@ is_a1200()
 {
 	if ((machineid >> 16) == 1200)
 		return (1);		/* It's an A1200 */
+	return (0);			/* Machine type not set */
+}
+
+int
+is_a600()
+{
+	if ((machineid >> 16) == 600)
+		return (1);		/* It's an A600 */
 	return (0);			/* Machine type not set */
 }

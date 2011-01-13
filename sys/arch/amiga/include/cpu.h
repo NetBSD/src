@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.76 2010/12/22 02:42:27 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.77 2011/01/13 22:02:05 phx Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,12 +78,6 @@
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
 
-#if defined(_KERNEL)
-
-/*
- * Exported definitions unique to amiga/68k cpu support.
- */
-
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
@@ -92,6 +86,11 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
+
+#if defined(_KERNEL)
+/*
+ * Exported definitions unique to amiga/68k cpu support.
+ */
 #define	M68K_MMU_MOTOROLA
 
 extern volatile unsigned int interrupt_depth;
@@ -167,6 +166,7 @@ void	*alloc_z2mem(long);
 /*
  * Prototypes from autoconf.c
  */
+int	is_a600(void);
 int	is_a1200(void);
 int	is_a3000(void);
 int	is_a4000(void);

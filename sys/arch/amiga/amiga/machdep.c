@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227 2010/10/16 17:10:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.228 2011/01/13 22:02:05 phx Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -87,7 +87,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2010/10/16 17:10:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2011/01/13 22:02:05 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,6 +393,8 @@ identifycpu(void)
 		mach = "Amiga 3000";
 	else if (is_a1200())
 		mach = "Amiga 1200";
+	else if (is_a600())
+		mach = "Amiga 600";
 	else
 		mach = "Amiga 500/2000";
 
