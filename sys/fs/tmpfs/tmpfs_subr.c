@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.61 2010/11/30 10:43:04 dholland Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.62 2011/01/13 13:35:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.61 2010/11/30 10:43:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.62 2011/01/13 13:35:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -279,9 +279,11 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
 	memcpy(nde->td_name, name, len);
 	nde->td_node = node;
 
-	node->tn_links++;
-	if (node->tn_links > 1 && node->tn_vnode != NULL)
-		VN_KNOTE(node->tn_vnode, NOTE_LINK);
+	if (node != TMPFS_NODE_WHITEOUT) {
+		node->tn_links++;
+		if (node->tn_links > 1 && node->tn_vnode != NULL)
+			VN_KNOTE(node->tn_vnode, NOTE_LINK);
+	}
 	*de = nde;
 
 	return 0;
@@ -306,7 +308,7 @@ void
 tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
     bool node_exists)
 {
-	if (node_exists) {
+	if (node_exists && de->td_node != TMPFS_NODE_WHITEOUT) {
 		struct tmpfs_node *node;
 
 		node = de->td_node;
@@ -769,38 +771,43 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 	do {
 		/* Create a dirent structure representing the current
 		 * tmpfs_node and fill it. */
-		dentp->d_fileno = de->td_node->tn_id;
-		switch (de->td_node->tn_type) {
-		case VBLK:
-			dentp->d_type = DT_BLK;
+		if (de->td_node == TMPFS_NODE_WHITEOUT) {
+			dentp->d_fileno = 1;
+			dentp->d_type = DT_WHT;
+		} else {
+			dentp->d_fileno = de->td_node->tn_id;
+			switch (de->td_node->tn_type) {
+			case VBLK:
+				dentp->d_type = DT_BLK;
 			break;
 
-		case VCHR:
-			dentp->d_type = DT_CHR;
+			case VCHR:
+				dentp->d_type = DT_CHR;
+				break;
+
+			case VDIR:
+				dentp->d_type = DT_DIR;
+				break;
+
+			case VFIFO:
+				dentp->d_type = DT_FIFO;
+				break;
+
+			case VLNK:
+				dentp->d_type = DT_LNK;
+				break;
+
+			case VREG:
+				dentp->d_type = DT_REG;
+				break;
+
+			case VSOCK:
+				dentp->d_type = DT_SOCK;
 			break;
 
-		case VDIR:
-			dentp->d_type = DT_DIR;
-			break;
-
-		case VFIFO:
-			dentp->d_type = DT_FIFO;
-			break;
-
-		case VLNK:
-			dentp->d_type = DT_LNK;
-			break;
-
-		case VREG:
-			dentp->d_type = DT_REG;
-			break;
-
-		case VSOCK:
-			dentp->d_type = DT_SOCK;
-			break;
-
-		default:
-			KASSERT(0);
+			default:
+				KASSERT(0);
+			}
 		}
 		dentp->d_namlen = de->td_namelen;
 		KASSERT(de->td_namelen < sizeof(dentp->d_name));
