@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.303 2010/12/20 00:25:44 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.304 2011/01/13 05:20:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.303 2010/12/20 00:25:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304 2011/01/13 05:20:27 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -376,7 +376,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 				savefpstate(fs);
 #if defined(MULTIPROCESSOR)
 			else
-				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+				XCALL1(ipi_savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 			cpi->fplwp = NULL;
 		}

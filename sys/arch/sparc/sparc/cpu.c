@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.223 2010/06/22 18:29:02 rmind Exp $ */
+/*	$NetBSD: cpu.c,v 1.224 2011/01/13 05:20:27 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.223 2010/06/22 18:29:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224 2011/01/13 05:20:27 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -64,7 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.223 2010/06/22 18:29:02 rmind Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/evcnt.h>
 #include <sys/xcall.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -119,6 +121,7 @@ CFATTACH_DECL(cpu_cpuunit, sizeof(struct cpu_softc),
     cpu_cpuunit_match, cpu_cpuunit_attach, NULL, NULL);
 #endif /* SUN4D */
 
+static void cpu_init_evcnt(struct cpu_info *cpi);
 static void cpu_attach(struct cpu_softc *, int, int);
 
 static const char *fsrtoname(int, int, int);
@@ -293,6 +296,21 @@ cpu_cpuunit_attach(struct device *parent, struct device *self, void *aux)
 }
 #endif /* SUN4D */
 
+static void
+cpu_init_evcnt(struct cpu_info *cpi)
+{
+
+	/*
+	 * Setup the per-cpu savefpstate counters.  The "savefp null"
+	 * counter should go away when the NULL struct fpstate * bug
+	 * is fixed.
+	 */
+	evcnt_attach_dynamic(&cpi->ci_savefpstate, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "savefp ipi");
+	evcnt_attach_dynamic(&cpi->ci_savefpstate_null, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "savefp null ipi");
+}
+
 /*
  * Attach the CPU.
  * Discover interesting goop about the virtual address cache
@@ -341,9 +359,12 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 #if defined(MULTIPROCESSOR)
 	if (cpu_attach_count > 1) {
 		cpu_attach_non_boot(sc, cpi, node);
+		cpu_init_evcnt(cpi);
 		return;
 	}
 #endif /* MULTIPROCESSOR */
+
+	cpu_init_evcnt(cpi);
 
 	/* Stuff to only run on the boot CPU */
 	cpu_setup();

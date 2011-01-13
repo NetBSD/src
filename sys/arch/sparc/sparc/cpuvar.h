@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.83 2010/01/23 16:06:57 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.84 2011/01/13 05:20:27 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -127,6 +127,13 @@ struct xpmsg {
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
+	/*
+	 * Primary Inter-processor message area.  Keep this aligned
+	 * to a cache line boundary if possible, as the structure
+	 * itself is one (normal 32 byte) cache-line.
+	 */
+	struct xpmsg	msg __aligned(32);
+
 	/* Scheduler flags */
 	int	ci_want_ast;
 	int	ci_want_resched;
@@ -141,9 +148,6 @@ struct cpu_info {
 	 * in the curcpu() macro.
 	 */
 	struct cpu_info * volatile ci_self;
-
-	/* Primary Inter-processor message area */
-	struct xpmsg	msg;
 
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 
@@ -334,6 +338,8 @@ struct cpu_info {
 
 	struct evcnt ci_lev10;
 	struct evcnt ci_lev14;
+	struct evcnt ci_savefpstate;
+	struct evcnt ci_savefpstate_null;
 };
 
 /*
