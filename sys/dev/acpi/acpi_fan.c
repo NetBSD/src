@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_fan.c,v 1.2 2011/01/09 15:43:20 jruoho Exp $ */
+/*	$NetBSD: acpi_fan.c,v 1.3 2011/01/13 14:25:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.2 2011/01/09 15:43:20 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.3 2011/01/13 14:25:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -61,7 +61,7 @@ static bool	acpifan_suspend(device_t, const pmf_qual_t *);
 static bool	acpifan_resume(device_t, const pmf_qual_t *);
 static bool	acpifan_shutdown(device_t, int);
 static bool	acpifan_sensor_init(device_t);
-static void	acpifan_sensor_state(device_t);
+static void	acpifan_sensor_state(void *);
 static void	acpifan_sensor_refresh(struct sysmon_envsys *,envsys_data_t *);
 
 CFATTACH_DECL_NEW(acpifan, sizeof(struct acpifan_softc),
@@ -196,10 +196,15 @@ fail:
 }
 
 static void
-acpifan_sensor_state(device_t self)
+acpifan_sensor_state(void *arg)
 {
-	struct acpifan_softc *sc = device_private(self);
-	int state = ACPI_STATE_ERROR;
+	struct acpifan_softc *sc;
+	device_t self;
+	int state;
+
+	self = arg;
+	sc = device_private(self);
+	state = ACPI_STATE_ERROR;
 
 	(void)acpi_power_get(sc->sc_node->ad_handle, &state);
 
@@ -228,7 +233,7 @@ acpifan_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	device_t self = sme->sme_cookie;
 
-	acpifan_sensor_state(self);
+	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpifan_sensor_state, self);
 }
 
 #ifdef _MODULE
