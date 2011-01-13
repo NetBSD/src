@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.232 2011/01/13 01:32:04 pgoyette Exp $
+# $NetBSD: mi,v 1.233 2011/01/13 01:57:48 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -337,7 +337,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo/data			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo/h_gai		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/h_atexit.debug			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/lib/libc/h_nsd_recurse.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/h_nsd_recurse.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/h_protoent.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/h_servent.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
@@ -351,6 +351,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/net				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo			tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/net/h_nsd_recurse.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_protoent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_servent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex				tests-lib-debug
@@ -1660,7 +1661,7 @@
 ./usr/tests/lib/libc/getaddrinfo/h_gai		tests-obsolete		obsolete
 ./usr/tests/lib/libc/getaddrinfo/t_getaddrinfo	tests-obsolete		obsolete
 ./usr/tests/lib/libc/h_atexit			tests-obsolete		obsolete
-./usr/tests/lib/libc/h_nsd_recurse		tests-lib-tests		atf
+./usr/tests/lib/libc/h_nsd_recurse		tests-obsolete		obsolete
 ./usr/tests/lib/libc/h_protoent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/h_servent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/hash			tests-lib-tests
@@ -1699,8 +1700,10 @@
 ./usr/tests/lib/libc/net/getaddrinfo/data/unsup_fam.exp		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/getaddrinfo/h_gai	tests-lib-tests		atf
 ./usr/tests/lib/libc/net/getaddrinfo/t_getaddrinfo tests-lib-tests	atf
+./usr/tests/lib/libc/net/h_nsd_recurse		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/h_protoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/h_servent		tests-lib-tests		atf
+./usr/tests/lib/libc/net/t_nsdispatch		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_protoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_servent		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex			tests-lib-tests
@@ -1796,7 +1799,7 @@
 ./usr/tests/lib/libc/t_hsearch			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_inet			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_mktime			tests-obsolete		obsolete
-./usr/tests/lib/libc/t_nsdispatch		tests-lib-tests		atf
+./usr/tests/lib/libc/t_nsdispatch		tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_protoent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_ptm			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_randomid			tests-lib-tests		atf
