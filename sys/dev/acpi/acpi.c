@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.230 2011/01/11 20:35:24 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.231 2011/01/13 04:18:19 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.230 2011/01/11 20:35:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.231 2011/01/13 04:18:19 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -149,15 +149,15 @@ static int acpi_dbgr = 0x00;
 #endif
 
 /*
- * This is a flag we set when the ACPI subsystem is active.  Machine
- * dependent code may wish to skip other steps (such as attaching
+ * The acpi_active variable is set when the ACPI subsystem is active.
+ * Machine-dependent code may wish to skip other steps (such as attaching
  * subsystems that ACPI supercedes) when ACPI is active.
  */
-int	acpi_active;
-
-int	acpi_force_load = 0;
-int	acpi_suspended = 0;
-int	acpi_verbose_loaded = 0;
+uint32_t	acpi_cpus = 0;
+int		acpi_active = 0;
+int		acpi_suspended = 0;
+int		acpi_force_load = 0;
+int		acpi_verbose_loaded = 0;
 
 struct acpi_softc	*acpi_softc;
 static uint64_t		 acpi_root_pointer;
@@ -847,6 +847,7 @@ acpi_rescan_early(struct acpi_softc *sc)
 static void
 acpi_rescan_nodes(struct acpi_softc *sc)
 {
+	const uint32_t ncpus = acpi_md_ncpus();
 	struct acpi_attach_args aa;
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *di;
@@ -881,6 +882,9 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		}
 
 		if (di->Type == ACPI_TYPE_POWER)
+			continue;
+
+		if (di->Type == ACPI_TYPE_PROCESSOR && acpi_cpus >= ncpus)
 			continue;
 
 		if (acpi_match_hid(di, acpi_early_ids) != 0)

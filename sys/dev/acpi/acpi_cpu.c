@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.24 2010/12/30 12:05:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.25 2011/01/13 04:18:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.24 2010/12/30 12:05:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.25 2011/01/13 04:18:19 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -66,6 +66,7 @@ static void		  acpicpu_notify(ACPI_HANDLE, uint32_t, void *);
 static bool		  acpicpu_suspend(device_t, const pmf_qual_t *);
 static bool		  acpicpu_resume(device_t, const pmf_qual_t *);
 
+extern uint32_t		  acpi_cpus;
 struct acpicpu_softc	**acpicpu_sc = NULL;
 static struct sysctllog	 *acpicpu_log = NULL;
 static bool		  acpicpu_dynamic = true;
@@ -136,6 +137,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": ACPI CPU\n");
 
+	acpi_cpus++;
 	acpicpu_sc[sc->sc_cpuid] = sc;
 
 	sc->sc_cap = acpicpu_cap(sc);
@@ -186,6 +188,7 @@ acpicpu_detach(device_t self, int flags)
 		return rv;
 
 	mutex_destroy(&sc->sc_mtx);
+	acpi_cpus--;
 
 	return 0;
 }
