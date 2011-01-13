@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.31 2008/04/28 20:23:12 martin Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.32 2011/01/13 22:02:05 phx Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.31 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.32 2011/01/13 22:02:05 phx Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,8 @@ CFATTACH_DECL_NEW(wdc_amiga, sizeof(struct wdc_amiga_softc),
 int
 wdc_amiga_probe(device_t parent, cfdata_t cfp, void *aux)
 {
-	if ((!is_a4000() && !is_a1200()) || !matchname(aux, "wdc"))
+	if ((!is_a4000() && !is_a1200() && !is_a600()) ||
+	    !matchname(aux, "wdc"))
 		return(0);
 	return 1;
 }
