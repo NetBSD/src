@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1565 2011/01/12 16:18:57 pooka Exp $
+#	$NetBSD: mi,v 1.1566 2011/01/13 22:28:37 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2954,6 +2954,7 @@
 ./usr/libdata/debug/sbin/brconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/ccdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/cgdconfig.debug	comp-sysutil-debug	crypto,debug
+./usr/libdata/debug/sbin/chown.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/rump.cgdconfig.debug	comp-sysutil-debug	crypto,debug
 ./usr/libdata/debug/sbin/clri.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dhclient.debug		comp-dhclient-debug	debug
@@ -3597,7 +3598,6 @@
 ./usr/libdata/debug/usr/sbin/btuartd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
-./usr/libdata/debug/usr/sbin/chown.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/chroot.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/chrtbl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cnwctl.debug	comp-netutil-debug	debug
