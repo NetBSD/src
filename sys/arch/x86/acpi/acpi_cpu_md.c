@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.37 2010/12/30 17:06:17 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.38 2011/01/13 03:40:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.37 2010/12/30 17:06:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.38 2011/01/13 03:40:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.37 2010/12/30 17:06:17 jruoho Exp 
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <machine/acpi_machdep.h>
 
 /*
  * AMD C1E.
@@ -110,7 +112,6 @@ static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
 
-extern uint32_t cpus_running;
 extern struct acpicpu_softc **acpicpu_sc;
 static bool acpicpu_pstate_status = false;
 static struct sysctllog *acpicpu_log = NULL;
@@ -157,7 +158,7 @@ acpicpu_md_quirks(void)
 	uint32_t family, val = 0;
 	uint32_t regs[4];
 
-	if (acpicpu_md_cpus_running() == 1)
+	if (acpi_md_ncpus() == 1)
 		val |= ACPICPU_FLAG_C_BM;
 
 	if ((ci->ci_feat_val[1] & CPUID2_MONITOR) != 0)
@@ -310,13 +311,6 @@ acpicpu_md_quirks_c1e(void)
 
 	if ((val & c1e) != 0)
 		wrmsr(MSR_CMPHALT, val & ~c1e);
-}
-
-uint32_t
-acpicpu_md_cpus_running(void)
-{
-
-	return popcount32(cpus_running);
 }
 
 int
