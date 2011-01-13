@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_ffs.c,v 1.3 2011/01/07 11:52:59 pooka Exp $	*/
+/*	$NetBSD: fstest_ffs.c,v 1.4 2011/01/13 12:55:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -59,10 +59,15 @@ ffs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 	int res;
 	static unsigned int num = 0;
 	struct ffstestargs *args;
+	struct sigaction act, oact;
 
 	size /= 512;
 	snprintf(cmd, 1024, "newfs -F -s %"PRId64" %s >/dev/null", size, image);
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = SIG_DFL;
+	sigaction(SIGCHLD, &act, &oact);
 	res = system(cmd);
+	sigaction(SIGCHLD, &oact, NULL);
 	if (res != 0)
 		return res;
 
