@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.32 2010/12/22 09:42:53 enami Exp $	*/
+/*	$NetBSD: args.c,v 1.33 2011/01/13 23:45:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.32 2010/12/22 09:42:53 enami Exp $");
+__RCSID("$NetBSD: args.c,v 1.33 2011/01/13 23:45:13 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,9 +138,8 @@ jcl(char **argv)
 			/* NOTREACHED */
 		}
 		tmp.name = oper;
-		if (!(ap = (struct arg *)bsearch(&tmp, args,
-		    sizeof(args)/sizeof(struct arg), sizeof(struct arg),
-		    c_arg))) {
+		if (!(ap = bsearch(&tmp, args,
+		    __arraycount(args), sizeof(*args), c_arg))) {
 			errx(EXIT_FAILURE, "unknown operand %s", tmp.name);
 			/* NOTREACHED */
 		}
@@ -385,9 +384,8 @@ f_conv(char *arg)
 
 	while (arg != NULL) {
 		tmp.name = strsep(&arg, ",");
-		if (!(cp = (struct conv *)bsearch(&tmp, clist,
-		    sizeof(clist)/sizeof(struct conv), sizeof(struct conv),
-		    c_conv))) {
+		if (!(cp = bsearch(&tmp, clist,
+		    __arraycount(clist), sizeof(*clist), c_conv))) {
 			errx(EXIT_FAILURE, "unknown conversion %s", tmp.name);
 			/* NOTREACHED */
 		}
