@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.20 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.21 2011/01/13 21:15:14 skrll Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.20 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.21 2011/01/13 21:15:14 skrll Exp $");
 
 #define GSCDEBUG
 
@@ -106,8 +106,8 @@ CFATTACH_DECL_NEW(gsc, sizeof(struct gsc_softc),
  * to fix up the module's attach arguments, then we match
  * and attach it.
  */
-static void gsc_module_callback(device_t, struct confargs *);
-static void
+static device_t gsc_module_callback(device_t, struct confargs *);
+static device_t
 gsc_module_callback(device_t self, struct confargs *ca)
 {
 	struct gsc_softc *sc = device_private(self);
@@ -120,7 +120,7 @@ gsc_module_callback(device_t self, struct confargs *ca)
 	ga.ga_dmatag = sc->sc_ga.ga_dmatag;
 	(*sc->sc_ga.ga_fix_args)(sc->sc_ga.ga_fix_args_cookie, &ga);
 
-	config_found_sm_loc(self, "gsc", NULL, &ga, mbprint, mbsubmatch);
+	return config_found_sm_loc(self, "gsc", NULL, &ga, mbprint, mbsubmatch);
 }
 
 int

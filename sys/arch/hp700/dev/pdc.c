@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.37 2011/01/04 10:42:33 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.38 2011/01/13 21:15:14 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.37 2011/01/04 10:42:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.38 2011/01/13 21:15:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.37 2011/01/04 10:42:33 skrll Exp $");
 #include <machine/autoconf.h>
 
 #include <hp700/hp700/machdep.h>
+#include <hp700/dev/cpudevs.h>
 
 typedef
 struct pdc_softc {
@@ -57,6 +58,8 @@ struct pdc_softc {
 } pdcsoftc_t;
 
 pdcio_t pdc;
+
+enum pdc_type pdc_type;
 
 static struct pdc_result pdcret1 PDC_ALIGNMENT;
 static struct pdc_result pdcret2 PDC_ALIGNMENT;
@@ -143,6 +146,78 @@ pdc_init(void)
 
 	/* attach the TOD clock */
 	todr_attach(&todr);
+}
+
+void
+pdc_settype(int modelno)
+{
+	switch (modelno) {
+		/* 720, 750, 730, 735, 755 */
+	case HPPA_BOARD_HP720:
+	case HPPA_BOARD_HP750_66:
+	case HPPA_BOARD_HP730_66:
+	case HPPA_BOARD_HP735_99:
+	case HPPA_BOARD_HP755_99:
+	case HPPA_BOARD_HP755_125:
+	case HPPA_BOARD_HP735_130:
+
+		/* 710, 705, 7[12]5 */
+	case HPPA_BOARD_HP710:
+	case HPPA_BOARD_HP705:
+	case HPPA_BOARD_HP715_50:
+	case HPPA_BOARD_HP715_33:
+	case HPPA_BOARD_HP715S_50:
+	case HPPA_BOARD_HP715S_33:
+	case HPPA_BOARD_HP715T_50:
+	case HPPA_BOARD_HP715T_33:
+	case HPPA_BOARD_HP715_75:
+	case HPPA_BOARD_HP715_99:
+	case HPPA_BOARD_HP725_50:
+	case HPPA_BOARD_HP725_75:
+	case HPPA_BOARD_HP725_99:
+
+		/* 745, 742, 747 */
+	case HPPA_BOARD_HP745I_50:
+	case HPPA_BOARD_HP742I_50:
+	case HPPA_BOARD_HP747I_100:
+
+		/* 712/{60,80,100,120}, 715/{64,80,100,...}, etc */
+	case HPPA_BOARD_HP712_60:
+	case HPPA_BOARD_HP712_80:
+	case HPPA_BOARD_HP712_100:
+	case HPPA_BOARD_HP743I_64:
+	case HPPA_BOARD_HP743I_100:
+	case HPPA_BOARD_HP712_120:
+	case HPPA_BOARD_HP715_80:
+	case HPPA_BOARD_HP715_64:
+	case HPPA_BOARD_HP715_100:
+	case HPPA_BOARD_HP715_100XC:
+	case HPPA_BOARD_HP725_100:
+	case HPPA_BOARD_HP725_120:
+	case HPPA_BOARD_HP715_100L:
+	case HPPA_BOARD_HP715_120L:
+	case HPPA_BOARD_HP725_80L:
+	case HPPA_BOARD_HP725_100L:
+	case HPPA_BOARD_HP725_120L:
+	case HPPA_BOARD_HP743_50:
+	case HPPA_BOARD_HP743_100:
+	case HPPA_BOARD_HP715_80M:
+	case HPPA_BOARD_HP811:
+	case HPPA_BOARD_HP801:
+	case HPPA_BOARD_HP743T:
+		pdc_type = PDC_TYPE_SNAKE;
+		break;
+
+	default:
+		pdc_type = PDC_TYPE_UNKNOWN;
+	}
+}
+
+enum pdc_type
+pdc_gettype(void)
+{
+
+	return pdc_type;
 }
 
 int
