@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.55 2010/11/29 12:44:17 jym Exp $
+.\"	$NetBSD: boot.8,v 1.56 2011/01/13 10:03:29 jym Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -463,13 +463,14 @@ is the address of the NFS server, and
 .Ar rootpath
 is the remote mount point for the root file system.
 .It Ic pciback.hide Ns = Ns Ar pcidevs
-Pass a list of PCI IDs for use with the PCI backend driver.
+Pass a list of PCI IDs for use with the PCI backend driver,
+.Xr pciback 4 .
 .Ar pcidevs
 is formed of multiple IDs (in bus:device.function notation),
 each ID being surrounded with brackets.
 PCI domain IDs are currently ignored.
-You can obtains PCI IDs through
-.Xr pcictl 8 .
+See
+.Xr pciback 4 .
 .El
 .It Ic ls Op Pa path
 Print a directory listing of
@@ -585,6 +586,7 @@ partition by
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
+.Xr pciback 4 ,
 .Xr userconf 4 ,
 .Xr boot.cfg 5 ,
 .Xr boot_console 8 ,
@@ -593,7 +595,6 @@ partition by
 .Xr installboot 8 ,
 .Xr mbr 8 ,
 .Xr multiboot 8 ,
-.Xr pcictl 8 ,
 .Xr pxeboot 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8 ,
