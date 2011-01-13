@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.107 2011/01/09 09:47:55 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.108 2011/01/13 13:05:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.107 2011/01/09 09:47:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.108 2011/01/13 13:05:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -148,6 +148,7 @@ enum {
 struct acpibat_softc {
 	struct acpi_devnode	*sc_node;
 	struct sysmon_envsys	*sc_sme;
+	struct timeval		 sc_last;
 	envsys_data_t		*sc_sensor;
 	char			 sc_serial[64];
 	kmutex_t		 sc_mutex;
@@ -665,6 +666,7 @@ acpibat_update_status(void *arg)
 	}
 
 	sc->sc_present = rv;
+	microtime(&sc->sc_last);
 
 	cv_broadcast(&sc->sc_condvar);
 	mutex_exit(&sc->sc_mutex);
@@ -777,14 +779,26 @@ fail:
 static void
 acpibat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	device_t dv = sme->sme_cookie;
-	struct acpibat_softc *sc = device_private(dv);
+	device_t self = sme->sme_cookie;
+	struct acpibat_softc *sc;
+	struct timeval tv, tmp;
 	ACPI_STATUS rv;
+
+	sc = device_private(self);
+
+	tmp.tv_sec = 10;
+	tmp.tv_usec = 0;
+
+	microtime(&tv);
+	timersub(&tv, &tmp, &tv);
+
+	if (timercmp(&tv, &sc->sc_last, <) != 0)
+		return;
 
 	if (mutex_tryenter(&sc->sc_mutex) == 0)
 		return;
 
-	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_status, dv);
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_status, self);
 
 	if (ACPI_SUCCESS(rv))
 		cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz);
