@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.14 2011/01/13 21:15:14 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.15 2011/01/13 21:44:13 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -112,7 +112,7 @@ struct uturn_softc {
 
 int	uturnmatch(device_t, cfdata_t, void *);
 void	uturnattach(device_t, device_t, void *);
-static device_t uturn_callback(device_t self, struct confargs *ca);
+static device_t uturn_callback(device_t, struct confargs *);
 
 CFATTACH_DECL_NEW(uturn, sizeof(struct uturn_softc),
     uturnmatch, uturnattach, NULL, NULL);
