@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2011/01/04 10:42:34 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 2011/01/13 21:15:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2011/01/04 10:42:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2011/01/13 21:15:15 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -658,6 +658,7 @@ cpuid(void)
 #ifdef DEBUG
 	printf("%s: model %s\n", __func__, model);
 #endif
+	pdc_settype(cpu_modelno);
 
 	memset(&pdc_cpuid, 0, sizeof(pdc_cpuid));
 	error = pdcproc_model_cpuid(&pdc_cpuid);
