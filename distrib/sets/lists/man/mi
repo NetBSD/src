@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1275 2011/01/12 16:18:58 pooka Exp $
+# $NetBSD: mi,v 1.1276 2011/01/13 21:05:49 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1767,6 +1767,7 @@
 ./usr/share/man/cat4/x86/fwhrng.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/hpet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ichlpcib.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/ioapic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/xbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbdback.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
@@ -4422,6 +4423,7 @@
 ./usr/share/man/html4/x86/fwhrng.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/hpet.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ichlpcib.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/ioapic.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/xbdback.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbox.html			man-sys-htmlman		html
@@ -7015,6 +7017,7 @@
 ./usr/share/man/man4/x86/fwhrng.4		man-sys-man		.man
 ./usr/share/man/man4/x86/hpet.4			man-sys-man		.man
 ./usr/share/man/man4/x86/ichlpcib.4		man-sys-man		.man
+./usr/share/man/man4/x86/ioapic.4		man-sys-man		.man
 ./usr/share/man/man4/xbd.4			man-sys-man		.man
 ./usr/share/man/man4/xbdback.4			man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
