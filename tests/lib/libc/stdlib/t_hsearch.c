@@ -1,4 +1,4 @@
-/* $NetBSD: t_hsearch.c,v 1.1 2010/12/31 14:36:11 pgoyette Exp $ */
+/* $NetBSD: t_hsearch.c,v 1.1 2011/01/13 14:32:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_hsearch.c,v 1.1 2010/12/31 14:36:11 pgoyette Exp $");
+__RCSID("$NetBSD: t_hsearch.c,v 1.1 2011/01/13 14:32:35 pgoyette Exp $");
 
 #include <errno.h>
 #include <search.h>
