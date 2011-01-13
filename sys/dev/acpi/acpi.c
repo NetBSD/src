@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.232 2011/01/13 05:14:48 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.233 2011/01/13 05:58:05 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.232 2011/01/13 05:14:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.233 2011/01/13 05:58:05 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -963,61 +963,52 @@ static int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
-	ACPI_STATUS rv;
+	struct acpi_devnode *ad;
+	const char *hid, *uid;
+	ACPI_DEVICE_INFO *di;
 
-	if (pnp) {
-		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
-			char *pnpstr =
-			    aa->aa_node->ad_devinfo->HardwareId.String;
-			ACPI_BUFFER buf;
+	ad = aa->aa_node;
+	di = ad->ad_devinfo;
 
-			aprint_normal("%s (%s) ", aa->aa_node->ad_name,
-			    pnpstr);
+	hid = di->HardwareId.String;
+	uid = di->UniqueId.String;
 
-			rv = acpi_eval_struct(aa->aa_node->ad_handle,
-			    "_STR", &buf);
-			if (ACPI_SUCCESS(rv)) {
-				ACPI_OBJECT *obj = buf.Pointer;
-				switch (obj->Type) {
-				case ACPI_TYPE_STRING:
-					aprint_normal("[%s] ", obj->String.Pointer);
-					break;
-				case ACPI_TYPE_BUFFER:
-					aprint_normal("buffer %p ", obj->Buffer.Pointer);
-					break;
-				default:
-					aprint_normal("type %u ",obj->Type);
-					break;
-				}
-				ACPI_FREE(buf.Pointer);
-			}
-			else
-				acpi_print_dev(pnpstr);
+	if (pnp != NULL) {
 
-			aprint_normal("at %s", pnp);
-		} else if (aa->aa_node->ad_devinfo->Type != ACPI_TYPE_DEVICE) {
-			aprint_normal("%s (ACPI Object Type '%s' "
-			    "[0x%02x]) ", aa->aa_node->ad_name,
-			     AcpiUtGetTypeName(aa->aa_node->ad_devinfo->Type),
-			     aa->aa_node->ad_devinfo->Type);
-			aprint_normal("at %s", pnp);
-		} else
-			return 0;
-	} else {
-		aprint_normal(" (%s", aa->aa_node->ad_name);
-		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
-			aprint_normal(", %s", aa->aa_node->ad_devinfo->HardwareId.String);
-			if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_UID) {
-				const char *uid;
+		if (di->Type != ACPI_TYPE_DEVICE) {
 
-				uid = aa->aa_node->ad_devinfo->UniqueId.String;
-				if (uid[0] == '\0')
-					uid = "<null>";
-				aprint_normal("-%s", uid);
-			}
+			aprint_normal("%s (ACPI Object Type '%s') at %s",
+			    ad->ad_name, AcpiUtGetTypeName(ad->ad_type), pnp);
+
+			return UNCONF;
 		}
-		aprint_normal(")");
+
+		if ((di->Valid & ACPI_VALID_HID) == 0 || hid == NULL)
+			return 0;
+
+		aprint_normal("%s (%s) ", ad->ad_name, hid);
+		acpi_print_dev(hid);
+		aprint_normal("at %s", pnp);
+
+		return UNCONF;
 	}
+
+	aprint_normal(" (%s", ad->ad_name);
+
+	if ((di->Valid & ACPI_VALID_HID) != 0 && hid != NULL) {
+
+		aprint_normal(", %s", hid);
+
+		if ((di->Valid & ACPI_VALID_UID) != 0 && uid != NULL) {
+
+			if (uid[0] == '\0')
+				uid = "<null>";
+
+			aprint_normal("-%s", uid);
+		}
+	}
+
+	aprint_normal(")");
 
 	return UNCONF;
 }
