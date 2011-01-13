@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.14 2011/01/10 20:13:47 phx Exp $ */
+/* $NetBSD: siisata.c,v 1.15 2011/01/13 21:54:14 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ siisata_match(unsigned tag, void *data)
 void *
 siisata_init(unsigned tag, void *data)
 {
-	unsigned val;
+	unsigned idreg;
 	int nchan, n;
 	struct dkdev_ata *l;
 
@@ -67,6 +67,7 @@ siisata_init(unsigned tag, void *data)
 	l->iobuf = allocaligned(512, 16);
 	l->tag = tag;
 
+	idreg = pcicfgread(tag, PCI_ID_REG);
 	l->bar[0] = pciiobase + (pcicfgread(tag, 0x10) &~ 01);
 	l->bar[1] = pciiobase + (pcicfgread(tag, 0x14) &~ 01);
 	l->bar[2] = pciiobase + (pcicfgread(tag, 0x18) &~ 01);
@@ -74,8 +75,7 @@ siisata_init(unsigned tag, void *data)
 	l->bar[4] = pciiobase + (pcicfgread(tag, 0x20) &~ 01);
 	l->bar[5] = pcicfgread(tag, 0x24) &~ 0x3ff;
 
-	val = pcicfgread(tag, PCI_ID_REG);
-	if ((PCI_PRODUCT(val) & 0xf) == 0x2) {
+	if ((PCI_PRODUCT(idreg) & 0xf) == 0x2) {
 		/* 3112/3512 */
 		l->chan[0].cmd = l->bar[0];
 		l->chan[0].ctl = l->chan[0].alt = l->bar[1] | 02;
@@ -97,6 +97,10 @@ siisata_init(unsigned tag, void *data)
 		l->chan[3].ctl = l->chan[3].alt = (l->bar[5] + 0x2c8) | 02;
 		nchan = 4;
 	}
+
+	/* configure PIO transfer mode */
+	pcicfgwrite(tag, 0x80, 0x00);
+	pcicfgwrite(tag, 0x84, 0x00);
 
 	for (n = 0; n < nchan; n++) {
 		if (satapresense(l, n)) {
