@@ -1,4 +1,4 @@
-/*	$NetBSD: h_nsd_recurse.c,v 1.1 2011/01/05 21:17:04 pgoyette Exp $ */
+/*	$NetBSD: h_nsd_recurse.c,v 1.1 2011/01/13 01:56:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_nsd_recurse.c,v 1.1 2011/01/05 21:17:04 pgoyette Exp $");
+__RCSID("$NetBSD: h_nsd_recurse.c,v 1.1 2011/01/13 01:56:44 pgoyette Exp $");
 
 #define	_REENTRANT
 

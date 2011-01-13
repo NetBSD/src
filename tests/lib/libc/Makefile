@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2011/01/13 00:14:10 pgoyette Exp $
+# $NetBSD: Makefile,v 1.33 2011/01/13 01:56:44 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -21,15 +21,5 @@ TESTS_C+=	t_hsearch
 TESTS_C+=	t_inet
 TESTS_C+=	t_ptm
 TESTS_C+=	t_randomid
-
-TESTS_SH+=	t_nsdispatch
-
-BINDIR=		${TESTSDIR}
-MKMAN=		no
-
-PROGS+=		h_nsd_recurse
-
-LDADD.h_nsd_recurse+=	-lpthread
-LDADD.t_mktime+=	-lpthread
 
 .include <bsd.test.mk>
