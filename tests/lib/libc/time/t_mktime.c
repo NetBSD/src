@@ -1,4 +1,4 @@
-/* $NetBSD: t_mktime.c,v 1.1 2011/01/06 17:20:48 pgoyette Exp $ */
+/* $NetBSD: t_mktime.c,v 1.1 2011/01/13 00:14:10 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
