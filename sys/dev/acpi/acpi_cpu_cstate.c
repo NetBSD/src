@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.35 2011/01/04 05:48:48 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.36 2011/01/13 03:40:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.35 2011/01/04 05:48:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.36 2011/01/13 03:40:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -541,7 +541,7 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	if (sc->sc_object.ao_pblkaddr == 0)
 		return;
 
-	if (acpicpu_md_cpus_running() > 1) {
+	if (acpi_md_ncpus() > 1) {
 
 		if ((AcpiGbl_FADT.Flags & ACPI_FADT_C2_MP_SUPPORTED) == 0)
 			return;
