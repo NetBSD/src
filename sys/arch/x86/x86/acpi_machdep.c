@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.27 2010/04/28 19:17:04 dyoung Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.28 2011/01/13 03:40:50 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.27 2010/04/28 19:17:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.28 2011/01/13 03:40:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.27 2010/04/28 19:17:04 dyoung Exp
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 
+extern uint32_t cpus_running;
+
 ACPI_STATUS
 acpi_md_OsInitialize(void)
 {
@@ -95,6 +97,7 @@ acpi_md_OsGetRootPointer(void)
 	ACPI_STATUS Status;
 
 	Status = AcpiFindRootPointer(&PhysicalAddress);
+
 	if (ACPI_FAILURE(Status))
 		PhysicalAddress = 0;
 
@@ -280,6 +283,12 @@ void
 acpi_md_OsEnableInterrupt(void)
 {
 	x86_enable_intr();
+}
+
+uint32_t
+acpi_md_ncpus(void)
+{
+	return popcount32(cpus_running);
 }
 
 void
