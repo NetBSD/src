@@ -1,4 +1,4 @@
-/*	$NetBSD: t_union.c,v 1.3 2011/01/12 22:42:24 pooka Exp $	*/
+/*	$NetBSD: t_union.c,v 1.4 2011/01/13 10:33:01 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -60,23 +60,18 @@ xread_tfile(const char *mp, const char *path)
 	return EPROGMISMATCH;
 }
 
-#define TFILE "tensti"
+/*
+ * Mount a unionfs for testing.  Before calling, "mp" contains
+ * the upper layer.  Lowerpath is constructed so that the directory
+ * contains rumpfs.
+ */
 static void
-basic(const atf_tc_t *tc, const char *mp)
+mountunion(const char *mp, char *lowerpath)
 {
-	char lowerpath[MAXPATHLEN];
-	char dbuf[8192];
 	struct union_args unionargs;
-	struct stat sb;
-	struct dirent *dp;
-	int error, fd, dsize;
 
-	snprintf(lowerpath, sizeof(lowerpath), "%s.lower", mp);
-
-	RL(rump_sys_mkdir(lowerpath, 0777));
-
-	/* create a file in the lower layer */
-	xput_tfile(lowerpath, TFILE);
+	sprintf(lowerpath, "/lower");
+	rump_sys_mkdir(lowerpath, 0777);
 
 	/* mount the union with our testfs as the upper layer */
 	memset(&unionargs, 0, sizeof(unionargs));
@@ -91,6 +86,38 @@ basic(const atf_tc_t *tc, const char *mp)
 			atf_tc_fail_errno("union mount");
 		}
 	}
+}
+
+#if 0
+static void
+toggleroot(void)
+{
+	static int status;
+
+	status ^= MNT_RDONLY;
+
+	printf("0x%x\n", status);
+	RL(rump_sys_mount(MOUNT_RUMPFS, "/", status | MNT_UPDATE, NULL, 0));
+}
+#endif
+
+#define TFILE "tensti"
+#define TDIR "testdir"
+#define TDFILE TDIR "/indir"
+
+static void
+basic(const atf_tc_t *tc, const char *mp)
+{
+	char lowerpath[MAXPATHLEN];
+	char dbuf[8192];
+	struct stat sb;
+	struct dirent *dp;
+	int error, fd, dsize;
+
+	mountunion(mp, lowerpath);
+
+	/* create a file in the lower layer */
+	xput_tfile(lowerpath, TFILE);
 
 	/* first, test we can read the old file from the new namespace */
 	error = xread_tfile(mp, TFILE);
@@ -128,11 +155,52 @@ basic(const atf_tc_t *tc, const char *mp)
 	RL(rump_sys_unmount(mp, 0));
 }
 
+static void
+whiteout(const atf_tc_t *tc, const char *mp)
+{
+	char lower[MAXPATHLEN];
+	struct stat sb;
+	void *fsarg;
+
+	/*
+	 * XXX: use ffs here to make sure any screwups in rumpfs don't
+	 * affect the test
+	 */
+	RL(ffs_fstest_newfs(tc, &fsarg, "daimage", 1024*1024*5, NULL));
+	RL(ffs_fstest_mount(tc, fsarg, "/lower", 0));
+
+	/* create a file in the lower layer */
+	RL(rump_sys_chdir("/lower"));
+	RL(rump_sys_mkdir(TDIR, 0777));
+	RL(rump_sys_mkdir(TDFILE, 0777));
+	RL(rump_sys_chdir("/"));
+
+	RL(ffs_fstest_unmount(tc, "/lower", 0));
+	RL(ffs_fstest_mount(tc, fsarg, "/lower", MNT_RDONLY));
+
+	mountunion(mp, lower);
+
+	FSTEST_ENTER();
+	RL(rump_sys_rmdir(TDIR));
+	ATF_REQUIRE_ERRNO(ENOENT, rump_sys_stat(TDFILE, &sb) == -1);
+	ATF_REQUIRE_ERRNO(ENOENT, rump_sys_stat(TDIR, &sb) == -1);
+
+	RL(rump_sys_mkdir(TDIR, 0777));
+	RL(rump_sys_stat(TDIR, &sb));
+	ATF_REQUIRE_ERRNO(ENOENT, rump_sys_stat(TDFILE, &sb) == -1);
+	FSTEST_EXIT();
+
+	RL(rump_sys_unmount(mp, 0));
+}
+
 ATF_TC_FSAPPLY(basic, "check basic union functionality");
+ATF_TC_FSAPPLY(whiteout, "create whiteout in upper layer");
 
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_FSAPPLY(basic);
+	ATF_TP_FSAPPLY(whiteout);
+
 	return atf_no_error();
 }
