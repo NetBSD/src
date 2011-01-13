@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2011/01/13 13:53:49 pgoyette Exp $
+# $NetBSD: Makefile,v 1.37 2011/01/13 14:32:35 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -14,6 +14,5 @@ TESTSDIR=	${TESTSBASE}/lib/libc
 
 TESTS_C+=	t_convfp
 TESTS_C+=	t_gdtoa
-TESTS_C+=	t_hsearch
 
 .include <bsd.test.mk>
