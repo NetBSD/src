@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.31 2011/01/12 19:44:07 pgoyette Exp $
+# $NetBSD: Makefile,v 1.32 2011/01/13 00:14:10 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
 
 TESTS_SUBDIRS+=	db gen hash ieeefp net regex rpc setjmp stdlib
-TESTS_SUBDIRS+=	stdio string sys ttyio
+TESTS_SUBDIRS+=	stdio string sys time ttyio
 
 .if ${HAS_SSP} == "yes"
 TESTS_SUBDIRS+=	ssp
@@ -19,10 +19,8 @@ TESTS_C+=	t_convfp
 TESTS_C+=	t_gdtoa
 TESTS_C+=	t_hsearch
 TESTS_C+=	t_inet
-TESTS_C+=	t_mktime
 TESTS_C+=	t_ptm
 TESTS_C+=	t_randomid
-TESTS_C+=	t_strptime
 
 TESTS_SH+=	t_nsdispatch
 
