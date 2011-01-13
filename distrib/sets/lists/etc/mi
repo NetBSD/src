@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.217 2010/11/07 17:48:41 jmmv Exp $
+# $NetBSD: mi,v 1.218 2011/01/13 10:55:19 kefren Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -213,6 +213,7 @@
 ./etc/rc.d/kdc					etc-krb5-rc
 ./etc/rc.d/kerberos				etc-obsolete		obsolete
 ./etc/rc.d/ldconfig				etc-sys-rc
+./etc/rc.d/ldpd					etc-router-rc
 ./etc/rc.d/lkm1					etc-obsolete		obsolete
 ./etc/rc.d/lkm2					etc-obsolete		obsolete
 ./etc/rc.d/lkm3					etc-obsolete		obsolete
