@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.16 2011/01/05 07:40:16 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.17 2011/01/13 21:15:16 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -58,7 +58,7 @@ struct confargs {
 	bus_dma_tag_t	ca_dmatag;	/* DMA tag */
 	int		ca_irq;		/* module IRQ */
 	int		ca_naddrs;	/* number of valid addr ents */
-	hppa_hpa_t	ca_hpabase;	/* HPA base to use or 0 for PDC */
+	hppa_hpa_t	ca_hpabase;	/* HPA base to use */
 	int		ca_nmodules;	/* check for modules 0 to nmodules - 1 */
 };
 
@@ -82,8 +82,11 @@ extern void (*cold_hook)(int);
 
 const char *hppa_mod_info(int, int);
 
-void	pdc_scanbus(device_t, struct confargs *,
-    void (*)(device_t, struct confargs *));
+void	hppa_modules_scan(void);
+void	hppa_modules_done(void);
+
+void pdc_scanbus(device_t, struct confargs *,
+    device_t (*)(device_t, struct confargs *));
 
 int	mbprint(void *, const char *);
 int	mbsubmatch(device_t, struct cfdata *, const int *, void *);

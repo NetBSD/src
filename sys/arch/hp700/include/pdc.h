@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.17 2011/01/04 10:42:34 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.18 2011/01/13 21:15:16 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -755,7 +755,15 @@ struct consdev;
 
 extern int kernelmapped;
 
+enum pdc_type {
+        PDC_TYPE_UNKNOWN,
+        PDC_TYPE_SNAKE
+};
+
 void pdc_init(void);
+void pdc_settype(int);
+enum pdc_type pdc_gettype(void);
+
 int pdc_call(iodcio_t, int, ...);
 
 void pdccnprobe(struct consdev *);
