@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.75 2011/01/04 10:42:34 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.76 2011/01/13 21:15:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.75 2011/01/04 10:42:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.76 2011/01/13 21:15:15 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1333,22 +1333,24 @@ mbmatch(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static void
+static device_t
 mb_module_callback(device_t self, struct confargs *ca)
 {
 	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
-		return;
-	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+		return NULL;
+
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }
 
-static void
+static device_t
 mb_cpu_mem_callback(device_t self, struct confargs *ca)
 {
-	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
-	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY))
-		config_found_sm_loc(self, "gedoens", NULL, ca, mbprint,
-		    mbsubmatch);
+	if ((ca->ca_type.iodc_type != HPPA_TYPE_NPROC &&
+	     ca->ca_type.iodc_type != HPPA_TYPE_MEMORY))
+		return NULL;
+
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }
 
 void
@@ -1357,7 +1359,6 @@ mbattach(device_t parent, device_t self, void *aux)
 	struct mainbus_softc *sc = device_private(self);
 	struct confargs nca;
 	bus_space_handle_t ioh;
-	hppa_hpa_t hpabase;
 	hppa_hpa_t prochpa;
 	int err;
 
@@ -1427,48 +1428,13 @@ mbattach(device_t parent, device_t self, void *aux)
 	}
 #endif	
 
-	switch (cpu_modelno) {
-	case HPPA_BOARD_HPE23:
-	case HPPA_BOARD_HPE25:
-	case HPPA_BOARD_HPE35:
-	case HPPA_BOARD_HPE45:
-
-	case HPPA_BOARD_HP809:
-	case HPPA_BOARD_HP819:
-	case HPPA_BOARD_HP829:
-	case HPPA_BOARD_HP839:
-	case HPPA_BOARD_HP849:
-	case HPPA_BOARD_HP859:
-	case HPPA_BOARD_HP869:
-#if 0
-	case HPPA_BOARD_HP770_J200:
-	case HPPA_BOARD_HP770_J210:
-	case HPPA_BOARD_HP770_J210XC:
-	case HPPA_BOARD_HP780_J282:
-	case HPPA_BOARD_HP782_J2240:
-#endif
-	case HPPA_BOARD_HP780_C160:
-	case HPPA_BOARD_HP780_C180P:
-	case HPPA_BOARD_HP780_C180XP:
-	case HPPA_BOARD_HP780_C200:
-	case HPPA_BOARD_HP780_C230:
-	case HPPA_BOARD_HP780_C240:
-	case HPPA_BOARD_HP785_C360:
-
-	case HPPA_BOARD_HP800D:
-	case HPPA_BOARD_HP821:
-		hpabase = HPPA_FPA;
-		break;
-	default:
-		hpabase = 0;
-		break;
-	}
+	hppa_modules_scan();
 
 	/* Search and attach all CPUs and memory controllers. */
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
-	nca.ca_hpabase = hpabase;
+	nca.ca_hpabase = HPPA_FPA;	/* Central bus */
 	nca.ca_nmodules = MAXMODBUS;
 	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
@@ -1482,7 +1448,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
-	nca.ca_hpabase = hpabase;
+	nca.ca_hpabase = 0;		/* Central bus already walked above */
 	nca.ca_nmodules = MAXMODBUS;
 	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
@@ -1491,6 +1457,8 @@ mbattach(device_t parent, device_t self, void *aux)
 	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 	nca.ca_dp.dp_mod = -1;
 	pdc_scanbus(self, &nca, mb_module_callback);
+
+	hppa_modules_done();
 }
 
 /*

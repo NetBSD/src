@@ -1,4 +1,4 @@
-/*	$NetBSD: phantomas.c,v 1.7 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: phantomas.c,v 1.8 2011/01/13 21:15:14 skrll Exp $	*/
 /*	$OpenBSD: phantomas.c,v 1.1 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ struct phantomas_softc {
 
 int	phantomasmatch(device_t, cfdata_t, void *);
 void	phantomasattach(device_t, device_t, void *);
-static void phantomas_callback(device_t self, struct confargs *ca);
+static device_t phantomas_callback(device_t self, struct confargs *ca);
 
 CFATTACH_DECL_NEW(phantomas, sizeof(struct phantomas_softc),
     phantomasmatch, phantomasattach, NULL, NULL);
@@ -74,9 +74,9 @@ phantomasattach(device_t parent, device_t self, void *aux)
 	pdc_scanbus(self, &nca, phantomas_callback);
 }
 
-static void
+static device_t
 phantomas_callback(device_t self, struct confargs *ca)
 {
 
-	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }

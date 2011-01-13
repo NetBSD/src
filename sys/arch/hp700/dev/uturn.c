@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.13 2010/12/12 08:23:14 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.14 2011/01/13 21:15:14 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -112,7 +112,7 @@ struct uturn_softc {
 
 int	uturnmatch(device_t, cfdata_t, void *);
 void	uturnattach(device_t, device_t, void *);
-static void uturn_callback(device_t self, struct confargs *ca);
+static device_t uturn_callback(device_t self, struct confargs *ca);
 
 CFATTACH_DECL_NEW(uturn, sizeof(struct uturn_softc),
     uturnmatch, uturnattach, NULL, NULL);
@@ -201,36 +201,19 @@ uturnattach(device_t parent, device_t self, void *aux)
 	 * it always is module 63, hence the MAXMODBUS - 1 below.
 	 */
 	nca = *ca;
-	nca.ca_hpabase = 0;
+	nca.ca_hpabase = r->io_io_low << 16;
 	nca.ca_dmatag = &sc->sc_dmatag;
 	nca.ca_nmodules = MAXMODBUS - 1;
 	pdc_scanbus(self, &nca, uturn_callback);
 
-	/* XXX On some machines, PDC doesn't tell us about all devices. */
-	switch (cpu_modelno) {
-	case HPPA_BOARD_HP809:
-	case HPPA_BOARD_HP819:
-	case HPPA_BOARD_HP829:
-	case HPPA_BOARD_HP839:
-	case HPPA_BOARD_HP849:
-	case HPPA_BOARD_HP859:
-	case HPPA_BOARD_HP869:
-
-	case HPPA_BOARD_HP800D:
-	case HPPA_BOARD_HP821:
-		nca.ca_hpabase = r->io_io_low << 16;
-		pdc_scanbus(self, &nca, uturn_callback);
-		break;
-	default:
-		break;
-	}
 }
 
-static void
+static device_t
 uturn_callback(device_t self, struct confargs *ca)
 {
 
-	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint,
+	    mbsubmatch);
 }
 
 

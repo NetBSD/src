@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 2011/01/04 10:42:34 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 2011/01/13 21:15:14 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35 2011/01/04 10:42:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36 2011/01/13 21:15:14 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35 2011/01/04 10:42:34 skrll Exp $");
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/callout.h>
+#include <sys/kmem.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -127,6 +128,23 @@ register_t	kpsw =
 	PSW_C |		/* Instruction Address Translation Enable */
 	PSW_D;		/* Data Address Translation Enable */
 
+static TAILQ_HEAD(hppa_pdcmodule_head, hppa_pdcmodule) hppa_pdcmodule_list =
+    TAILQ_HEAD_INITIALIZER(hppa_pdcmodule_list);
+
+struct hppa_pdcmodule {
+	TAILQ_ENTRY(hppa_pdcmodule) hm_link;
+	bool			hm_registered;
+	struct pdc_iodc_read	hm_pir;
+	struct iodc_data	hm_type;
+	struct device_path	hm_dp;
+	hppa_hpa_t		hm_hpa;
+	u_int			hm_hpasz;
+	u_int			hm_naddrs;	/* only PDC_SYSTEM_MAP */
+	u_int			hm_modindex;	/* only PDC_SYSTEM_MAP */
+};
+
+#define	HPPA_SYSTEMMAPMODULES	256
+
 /*
  * LED blinking thing
  */
@@ -138,6 +156,12 @@ extern int hz;
 #endif
 
 void (*cold_hook)(int); /* see below */
+
+struct hppa_pdcmodule *hppa_pdcmodule_create(struct hppa_pdcmodule *,
+    const char *);
+void hppa_walkbus(struct confargs *ca);
+static void hppa_pdc_snake_scan(void);
+static void hppa_pdc_system_map_scan(void);
 
 /*
  * cpu_configure:
@@ -458,113 +482,160 @@ cpu_rootconf(void)
 /*static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };*/
 #endif
 
-static struct pdc_memmap pdc_memmap;
-static struct pdc_system_map_find_mod pdc_find_mod;
-static struct pdc_system_map_find_addr pdc_find_addr;
+void
+hppa_walkbus(struct confargs *ca)
+{
+	struct hppa_pdcmodule nhm, *hm;
+	int i;
+
+	if (ca->ca_hpabase == 0)
+		return;
+	
+	aprint_verbose(">> Walking bus at HPA 0x%lx\n", ca->ca_hpabase);
+
+	for (i = 0; i < ca->ca_nmodules; i++) {
+		int error;
+
+ 		memset(&nhm, 0, sizeof(nhm));
+		nhm.hm_dp.dp_bc[0] = ca->ca_dp.dp_bc[1];
+		nhm.hm_dp.dp_bc[1] = ca->ca_dp.dp_bc[2];
+		nhm.hm_dp.dp_bc[2] = ca->ca_dp.dp_bc[3];
+		nhm.hm_dp.dp_bc[3] = ca->ca_dp.dp_bc[4];
+		nhm.hm_dp.dp_bc[4] = ca->ca_dp.dp_bc[5];
+		nhm.hm_dp.dp_bc[5] = ca->ca_dp.dp_mod;
+		nhm.hm_hpa = ca->ca_hpabase + IOMOD_HPASIZE * i;
+		nhm.hm_hpasz = 0;
+		nhm.hm_dp.dp_mod = i;
+		nhm.hm_naddrs = 0;
+
+		error = pdcproc_iodc_read(nhm.hm_hpa, IODC_DATA, NULL,
+		    &nhm.hm_pir, sizeof(nhm.hm_pir), &nhm.hm_type,
+		    sizeof(nhm.hm_type));
+		if (error < 0)
+			continue;
+
+		aprint_verbose(">> HPA 0x%lx[0x%x]", nhm.hm_hpa,
+		    nhm.hm_hpasz);
+
+		TAILQ_FOREACH(hm, &hppa_pdcmodule_list, hm_link) {
+			if (nhm.hm_hpa == hm->hm_hpa) {
+				aprint_verbose(" found by firmware\n");
+				break;
+			}
+		}
+
+		/* If we've found the module move onto the next one. */
+		if (hm) {
+			aprint_verbose("\n");
+			continue;
+		}
+
+		/* Expect PDC to report devices of the following types */
+		if (nhm.hm_type.iodc_type == HPPA_TYPE_FIO) {
+			aprint_verbose(" expected to be missing\n");
+			continue;
+		}
+
+		hppa_pdcmodule_create(&nhm, "Bus walk");
+	}
+}
 
 void
 pdc_scanbus(device_t self, struct confargs *ca,
-    void (*callback)(device_t, struct confargs *))
+    device_t (*callback)(device_t, struct confargs *))
 {
-	int i;
+	struct hppa_pdcmodule *hm;
+	struct confargs nca;
+	device_t dev;
+	int ia;
 
-	for (i = 0; i < ca->ca_nmodules; i++) {
-		struct confargs nca;
+	hppa_walkbus(ca);
+
+	TAILQ_FOREACH(hm, &hppa_pdcmodule_list, hm_link) {
 		char buf[128];
 		int error;
+
+		if (hm->hm_registered)
+			continue;
+
+		if (!(hm->hm_dp.dp_bc[0] == ca->ca_dp.dp_bc[1] &&
+		    hm->hm_dp.dp_bc[1] == ca->ca_dp.dp_bc[2] &&
+		    hm->hm_dp.dp_bc[2] == ca->ca_dp.dp_bc[3] &&
+		    hm->hm_dp.dp_bc[3] == ca->ca_dp.dp_bc[4] &&
+		    hm->hm_dp.dp_bc[4] == ca->ca_dp.dp_bc[5] &&
+		    hm->hm_dp.dp_bc[5] == ca->ca_dp.dp_mod))
+			continue;
 
 		memset(&nca, 0, sizeof(nca));
 		nca.ca_iot = ca->ca_iot;
 		nca.ca_dmatag = ca->ca_dmatag;
-		nca.ca_dp.dp_bc[0] = ca->ca_dp.dp_bc[1];
-		nca.ca_dp.dp_bc[1] = ca->ca_dp.dp_bc[2];
-		nca.ca_dp.dp_bc[2] = ca->ca_dp.dp_bc[3];
-		nca.ca_dp.dp_bc[3] = ca->ca_dp.dp_bc[4];
-		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_bc[5];
-		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod;
-		nca.ca_dp.dp_mod = i;
-		nca.ca_naddrs = 0;
-		nca.ca_hpa = 0;
+		nca.ca_pir = hm->hm_pir;
+		nca.ca_type = hm->hm_type;
+		nca.ca_hpa = hm->hm_hpa;
+		nca.ca_dp = hm->hm_dp;
+		nca.ca_hpa = hm->hm_hpa;
+		nca.ca_hpasz = hm->hm_hpasz;
 
-		if (ca->ca_hpabase) {
-			nca.ca_hpa = ca->ca_hpabase + IOMOD_HPASIZE * i;
-			nca.ca_dp.dp_mod = i;
-		} else if ((error = pdcproc_memmap(&pdc_memmap,
-		    &nca.ca_dp)) == 0)
-			nca.ca_hpa = pdc_memmap.hpa;
-		else if ((error = pdcproc_system_map_trans_path(&pdc_memmap,
-		    &nca.ca_dp)) == 0) {
-			struct device_path path;
-			int im, ia;
+		if (hm->hm_naddrs) {
+			if (hm->hm_naddrs > HP700_MAXIOADDRS) {
+				nca.ca_naddrs = HP700_MAXIOADDRS;
+				aprint_error("WARNING: too many (%d) addrs\n",
+				    hm->hm_naddrs);
+			} else
+				nca.ca_naddrs = hm->hm_naddrs;
 
-			nca.ca_hpa = pdc_memmap.hpa;
+			aprint_verbose(">> ADDRS[%d/%d]: ", nca.ca_naddrs,
+			    hm->hm_modindex);
 
-			for (im = 0; !(error = pdcproc_system_map_find_mod(
-			    &pdc_find_mod, &path, im)) &&
-			    pdc_find_mod.hpa != nca.ca_hpa; im++)
-				;
+			KASSERT(hm->hm_modindex != -1);
+			for (ia = 0; ia < nca.ca_naddrs; ia++) {
+				struct pdc_system_map_find_addr pdc_find_addr;
 
-			if (!error)
-				nca.ca_hpasz = pdc_find_mod.size << PGSHIFT;
+				error = pdcproc_system_map_find_addr(
+				    &pdc_find_addr, hm->hm_modindex, ia + 1);
+				if (error < 0)
+					break;
+				nca.ca_addrs[ia].addr = pdc_find_addr.hpa;
+				nca.ca_addrs[ia].size =
+				    pdc_find_addr.size << PGSHIFT;
 
-			if (!error && pdc_find_mod.naddrs) {
-				nca.ca_naddrs = pdc_find_mod.naddrs;
-				if (nca.ca_naddrs > HP700_MAXIOADDRS) {
-					nca.ca_naddrs = HP700_MAXIOADDRS;
-					aprint_error("WARNING: "
-					    "too many (%d) addrs\n",
-					    pdc_find_mod.naddrs);
-				}
-
-				aprint_verbose(">> ADDRS: ");
-				for (ia = 0; ia < nca.ca_naddrs; ia++) {
-					error = pdcproc_system_map_find_addr(
-					    &pdc_find_addr, im, ia + 1);
-					if (error)
-						break;
-					nca.ca_addrs[ia].addr =
-					    pdc_find_addr.hpa;
-					nca.ca_addrs[ia].size =
-					    pdc_find_addr.size << PGSHIFT;
-
-					aprint_verbose(" 0x%lx[0x%x]",
-					    nca.ca_addrs[ia].addr,
-					    nca.ca_addrs[ia].size);
-				}
-				aprint_verbose("\n");
+				aprint_verbose(" 0x%lx[0x%x]",
+				    nca.ca_addrs[ia].addr,
+				    nca.ca_addrs[ia].size);
 			}
+			aprint_verbose("\n");
 		}
-
-		if (!nca.ca_hpa)
-			continue;
 
 		aprint_verbose(">> HPA 0x%lx[0x%x]\n", nca.ca_hpa,
 		    nca.ca_hpasz);
 
-		if ((error = pdcproc_iodc_read(nca.ca_hpa, IODC_DATA, NULL,
-		    &nca.ca_pir, sizeof(nca.ca_pir),
-		    &nca.ca_type, sizeof(nca.ca_type))) < 0) {
-			aprint_verbose(">> iodc_data error %d\n", error);
-			continue;
+		snprintb(buf, sizeof(buf), PZF_BITS, nca.ca_dp.dp_flags);
+		aprint_verbose(">> probing: flags %s ", buf);
+		if (nca.ca_dp.dp_mod >=0) {
+			int n;
+
+			aprint_verbose(" path ");
+			for (n = 0; n < 6; n++) {
+				if (nca.ca_dp.dp_bc[n] >= 0)
+					aprint_verbose("%d/",
+					    nca.ca_dp.dp_bc[n]);
+			}
+			aprint_verbose("%d", nca.ca_dp.dp_mod);
 		}
 
-		snprintb(buf, sizeof(buf), PZF_BITS, nca.ca_dp.dp_flags);
-		aprint_verbose(">> probing: flags %s bc %d/%d/%d/%d/%d/%d ",
-		    buf,
-		    nca.ca_dp.dp_bc[0], nca.ca_dp.dp_bc[1],
-		    nca.ca_dp.dp_bc[2], nca.ca_dp.dp_bc[3],
-		    nca.ca_dp.dp_bc[4], nca.ca_dp.dp_bc[5]);
-		aprint_verbose("mod %x hpa %lx type %x sv %x\n",
-		    nca.ca_dp.dp_mod, nca.ca_hpa,
+		aprint_verbose(" type %x sv %x\n",
 		    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 
 		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 		    nca.ca_type.iodc_sv_model);
 
-		(*callback)(self, &nca);
-	}
+		dev = callback(self, &nca);
 
+		if (dev)
+			hm->hm_registered = true;
+		
+	}
 }
 
 static const struct hppa_mod_info hppa_knownmods[] = {
@@ -585,4 +656,204 @@ hppa_mod_info(int type, int sv)
 		return fakeid;
 	} else
 		return mi->mi_name;
+}
+
+/*
+ * Create the device on our device list.  Keep the devices in order. */
+struct hppa_pdcmodule *
+hppa_pdcmodule_create(struct hppa_pdcmodule *hm, const char *who)
+{
+	struct hppa_pdcmodule *nhm, *ahm;
+	int i;
+	
+	nhm = kmem_zalloc(sizeof(*nhm), KM_SLEEP);
+
+	nhm->hm_registered = false;
+	nhm->hm_type = hm->hm_type;
+	nhm->hm_dp = hm->hm_dp;
+	nhm->hm_hpa = hm->hm_hpa;
+	nhm->hm_hpasz = hm->hm_hpasz;
+	nhm->hm_naddrs = hm->hm_naddrs;
+	nhm->hm_modindex = hm->hm_modindex;
+
+	/* Find start of new path */
+	for (i = 0; i < 6; i++) {
+		if (hm->hm_dp.dp_bc[i] != -1)
+			break;
+	}
+
+	/*
+	 * Look, in reverse, for the first device that has a path before our
+	 * new one.  In reverse because PDC reports most (all?) devices in path
+	 * order and therefore the common case is to add to the end of the
+	 * list.
+	 */
+	TAILQ_FOREACH_REVERSE(ahm, &hppa_pdcmodule_list, hppa_pdcmodule_head,
+	    hm_link) {
+		int check;
+		int j, k;
+		
+		for (j = 0; j < 6; j++) {
+			if (ahm->hm_dp.dp_bc[j] != -1)
+				break;
+		}
+
+		for (check = 0, k = i; j < 7 && k < 7; j++, k++) {
+			char nid, aid;
+
+			nid = (k == 6) ? hm->hm_dp.dp_mod : hm->hm_dp.dp_bc[k];
+			aid = (j == 6) ? ahm->hm_dp.dp_mod : ahm->hm_dp.dp_bc[j];
+
+			if (nid == aid)
+				continue;
+			check = nid - aid;
+			break;
+		}
+		if (check >= 0)
+			break;
+		else if (check < 0)
+			continue;
+	}
+	if (ahm == NULL)
+		TAILQ_INSERT_HEAD(&hppa_pdcmodule_list, nhm, hm_link);
+	else
+		TAILQ_INSERT_AFTER(&hppa_pdcmodule_list, ahm, nhm, hm_link);
+
+	if (hm->hm_dp.dp_mod >= 0) {
+		int n;
+
+		aprint_verbose(">> %s device at path ", who);
+		for (n = 0; n < 6; n++) {
+			if (hm->hm_dp.dp_bc[n] >= 0)
+				aprint_verbose("%d/", hm->hm_dp.dp_bc[n]);
+		}
+		aprint_verbose("%d addrs %d\n", hm->hm_dp.dp_mod,
+		    hm->hm_naddrs);
+	}
+
+	return nhm;
+}
+
+/*
+ * This is used for Snake machines
+ */
+static struct hppa_pdcmodule *
+hppa_memmap_query(struct device_path *devp)
+{
+	static struct hppa_pdcmodule nhm;
+	struct pdc_memmap pdc_memmap;
+	int error;
+
+	error = pdcproc_memmap(&pdc_memmap, devp);
+	
+	if (error < 0)
+		return NULL;
+
+	memset(&nhm, 0, sizeof(nhm));
+	nhm.hm_dp = *devp;
+	nhm.hm_hpa = pdc_memmap.hpa;
+	nhm.hm_hpasz = pdc_memmap.morepages;
+	nhm.hm_naddrs = 0;
+	nhm.hm_modindex = -1;
+
+	error = pdcproc_iodc_read(nhm.hm_hpa, IODC_DATA, NULL, &nhm.hm_pir,
+	    sizeof(nhm.hm_pir), &nhm.hm_type, sizeof(nhm.hm_type));
+
+	if (error < 0)
+		return NULL;
+
+	return hppa_pdcmodule_create(&nhm, "PDC (memmap)");
+}
+
+
+static void
+hppa_pdc_snake_scan(void)
+{
+	struct device_path path;
+	struct hppa_pdcmodule *hm;
+	int im, ba;
+
+	memset(&path, 0, sizeof(path));
+	for (im = 0; im < 16; im++) {
+		path.dp_bc[0] = path.dp_bc[1] = path.dp_bc[2] =
+		path.dp_bc[3] = path.dp_bc[4] = path.dp_bc[5] = -1;
+		path.dp_mod = im;
+
+		hm = hppa_memmap_query(&path);
+
+		if (!hm)
+			continue;
+
+		if (hm->hm_type.iodc_type != HPPA_TYPE_BHA)
+			continue;
+
+		path.dp_bc[0] = path.dp_bc[1] =
+		path.dp_bc[2] = path.dp_bc[3] = -1;
+		path.dp_bc[4] = im;
+		path.dp_bc[5] = 0;
+
+		for (ba = 0; ba < 16; ba++) {
+			path.dp_mod = ba;
+			hppa_memmap_query(&path);
+		}
+	}
+}
+
+static void
+hppa_pdc_system_map_scan(void)
+{
+	struct pdc_system_map_find_mod pdc_find_mod;
+	struct device_path path;
+	struct hppa_pdcmodule hm;
+	int error;
+	int im;
+
+	for (im = 0; im < HPPA_SYSTEMMAPMODULES; im++) {
+		memset(&path, 0, sizeof(path));
+		error = pdcproc_system_map_find_mod(&pdc_find_mod, &path, im);
+		if (error == PDC_ERR_NMOD)
+			break;
+
+		if (error < 0)
+			continue;
+
+		memset(&hm, 0, sizeof(hm));
+		hm.hm_dp = path;
+		hm.hm_hpa = pdc_find_mod.hpa;
+		hm.hm_hpasz = pdc_find_mod.size << PGSHIFT;
+		hm.hm_naddrs = pdc_find_mod.naddrs;
+		hm.hm_modindex = im;
+
+		error = pdcproc_iodc_read(hm.hm_hpa, IODC_DATA, NULL,
+		    &hm.hm_pir, sizeof(hm.hm_pir), &hm.hm_type,
+		    sizeof(hm.hm_type));
+		if (error < 0)
+			continue;
+
+		hppa_pdcmodule_create(&hm, "PDC (system map)");
+	}
+}
+
+void
+hppa_modules_scan(void)
+{
+	switch (pdc_gettype()) {
+	case PDC_TYPE_SNAKE:
+		hppa_pdc_snake_scan();
+		break;
+
+	case PDC_TYPE_UNKNOWN:
+		hppa_pdc_system_map_scan();
+	}
+}
+
+void
+hppa_modules_done(void)
+{
+	struct hppa_pdcmodule *hm, *nhm;
+
+	TAILQ_FOREACH_SAFE(hm, &hppa_pdcmodule_list, hm_link, nhm) {
+		TAILQ_REMOVE(&hppa_pdcmodule_list, hm, hm_link);
+		kmem_free(hm, sizeof(*hm));
+	}
 }

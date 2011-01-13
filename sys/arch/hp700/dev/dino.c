@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.27 2010/12/05 12:19:09 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.28 2011/01/13 21:15:13 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.27 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.28 2011/01/13 21:15:13 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -135,11 +135,10 @@ struct dino_softc {
 
 int	dinomatch(device_t, struct cfdata *, void *);
 void	dinoattach(device_t, device_t, void *);
-static void	dino_callback(device_t, struct confargs *);
+static device_t	dino_callback(device_t, struct confargs *);
 
 CFATTACH_DECL_NEW(dino, sizeof(struct dino_softc), dinomatch, dinoattach, NULL,
     NULL);
-
 
 void dino_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
@@ -1734,9 +1733,9 @@ dinoattach(device_t parent, device_t self, void *aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-static void
+static device_t
 dino_callback(device_t self, struct confargs *ca)
 {
 
-	config_found_sm_loc(self, "dino", NULL, ca, mbprint, mbsubmatch);
+	return config_found_sm_loc(self, "dino", NULL, ca, mbprint, mbsubmatch);
 }
