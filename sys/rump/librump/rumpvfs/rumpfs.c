@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.86 2011/01/12 21:08:55 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.87 2011/01/13 07:27:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.86 2011/01/12 21:08:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.87 2011/01/13 07:27:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -83,6 +83,7 @@ static int rump_vop_pathconf(void *);
 static int rump_vop_bmap(void *);
 static int rump_vop_strategy(void *);
 static int rump_vop_advlock(void *);
+static int rump_vop_access(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -105,7 +106,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_create_desc, rump_vop_create },
 	{ &vop_symlink_desc, rump_vop_symlink },
 	{ &vop_readlink_desc, rump_vop_readlink },
-	{ &vop_access_desc, rump_vop_success },
+	{ &vop_access_desc, rump_vop_access },
 	{ &vop_readdir_desc, rump_vop_readdir },
 	{ &vop_read_desc, rump_vop_read },
 	{ &vop_write_desc, rump_vop_write },
@@ -647,6 +648,11 @@ rump_vop_lookup(void *v)
 
 	*vpp = NULL;
 
+	if ((cnp->cn_flags & ISLASTCN)
+	    && (dvp->v_mount->mnt_flag & MNT_RDONLY)
+	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return EROFS;
+
 	/* check for dot, return directly if the case */
 	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		vref(dvp);
@@ -728,6 +734,8 @@ rump_vop_lookup(void *v)
 		return ENOENT;
 
 	if (!rd && (cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == CREATE) {
+		if (dvp->v_mount->mnt_flag & MNT_RDONLY)
+			return EROFS;
 		return EJUSTRETURN;
 	}
 
@@ -759,6 +767,34 @@ rump_vop_lookup(void *v)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 
 	return rv;
+}
+
+int
+rump_vop_access(void *v)
+{
+	struct vop_access_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int mode = ap->a_mode;
+
+	if (mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			if ((vp->v_mount->mnt_flag & MNT_RDONLY))
+				return EROFS;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return 0;
 }
 
 static int
@@ -1558,7 +1594,7 @@ rumpfs_mountfs(struct mount *mp)
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_stat.f_iosize = 512;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
 	mp->mnt_fs_bshift = DEV_BSHIFT;
 	vfs_getnewfsid(mp);
 
@@ -1570,9 +1606,8 @@ rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
 	int error;
 
-	if (mp->mnt_flag & MNT_RDONLY) {
-		printf("rumpfs does not support r/o mounts\n");
-		return EOPNOTSUPP;
+	if (mp->mnt_flag & MNT_UPDATE) {
+		return 0;
 	}
 
 	error = set_statvfs_info(mntpath, UIO_USERSPACE, "rumpfs", UIO_SYSSPACE,
