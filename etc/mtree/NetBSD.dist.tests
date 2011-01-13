@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.21 2011/01/13 00:16:34 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.22 2011/01/13 13:54:23 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -49,6 +49,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp
+./usr/libdata/debug/usr/tests/lib/libc/inet
 ./usr/libdata/debug/usr/tests/lib/libc/net
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo
 ./usr/libdata/debug/usr/tests/lib/libc/regex
@@ -155,6 +156,7 @@
 ./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/hash/data
 ./usr/tests/lib/libc/ieeefp
+./usr/tests/lib/libc/inet
 ./usr/tests/lib/libc/net
 ./usr/tests/lib/libc/net/getaddrinfo
 ./usr/tests/lib/libc/net/getaddrinfo/data
