@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.230 2011/01/12 21:30:50 pooka Exp $
+# $NetBSD: mi,v 1.231 2011/01/13 00:16:34 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -409,10 +409,13 @@
 ./usr/libdata/debug/usr/tests/lib/libc/t_gdtoa.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_hsearch.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_inet.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/t_mktime.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_mktime.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_ptm.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_randomid.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/t_strptime.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_strptime.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/time				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/time/t_mktime.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/time/t_strptime.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libdes				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libdes/t_des.debug			tests-lib-debug		debug,atf,crypto
 ./usr/libdata/debug/usr/tests/lib/semaphore				tests-lib-debug
@@ -1792,14 +1795,18 @@
 ./usr/tests/lib/libc/t_gdtoa			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_hsearch			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_inet			tests-lib-tests		atf
-./usr/tests/lib/libc/t_mktime			tests-lib-tests		atf
+./usr/tests/lib/libc/t_mktime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_nsdispatch		tests-lib-tests		atf
 ./usr/tests/lib/libc/t_protoent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_ptm			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_randomid			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_servent			tests-obsolete		obsolete
-./usr/tests/lib/libc/t_strptime			tests-lib-tests		atf
+./usr/tests/lib/libc/t_strptime			tests-obsolete		obsolete
+./usr/tests/lib/libc/time			tests-lib-tests
 ./usr/tests/lib/libdes				tests-lib-tests
+./usr/tests/lib/libc/time/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/time/t_mktime		tests-lib-tests		atf
+./usr/tests/lib/libc/time/t_strptime		tests-lib-tests		atf
 ./usr/tests/lib/libdes/Atffile			tests-lib-tests		atf,crypto
 ./usr/tests/lib/libdes/t_des			tests-lib-tests		atf,crypto
 ./usr/tests/lib/semaphore			tests-lib-tests
