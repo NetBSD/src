@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.233 2011/01/13 01:57:48 pgoyette Exp $
+# $NetBSD: mi,v 1.234 2011/01/13 02:41:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -329,6 +329,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_humanize_number.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ldexp.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_randomid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_rbstress.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
@@ -400,19 +401,22 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_stresep.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_clone.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio/t_ttyio.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/t_cerror.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/t_clone.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/t_context.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_cerror.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/t_clone.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/t_context.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_convfp.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_gdtoa.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_hsearch.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_inet.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_mktime.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_ptm.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/t_randomid.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_randomid.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_strptime.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/time				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/time/t_mktime.debug		tests-lib-debug		debug,atf
@@ -1639,6 +1643,7 @@
 ./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_humanize_number	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_ldexp		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_randomid		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_rbstress		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
@@ -1786,14 +1791,17 @@
 ./usr/tests/lib/libc/string/t_swab		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys			tests-lib-tests
 ./usr/tests/lib/libc/sys/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_clone		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_context		tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_cerror		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio			tests-lib-tests
 ./usr/tests/lib/libc/ttyio/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio/t_ttyio		tests-lib-tests		atf
 ./usr/tests/lib/libc/t_atexit			tests-obsolete		obsolete
-./usr/tests/lib/libc/t_cerror			tests-lib-tests		atf
-./usr/tests/lib/libc/t_clone			tests-lib-tests		atf
-./usr/tests/lib/libc/t_context			tests-lib-tests		atf
+./usr/tests/lib/libc/t_cerror			tests-obsolete		obsolete
+./usr/tests/lib/libc/t_clone			tests-obsolete		obsolete
+./usr/tests/lib/libc/t_context			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_convfp			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_gdtoa			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_hsearch			tests-lib-tests		atf
@@ -1802,7 +1810,7 @@
 ./usr/tests/lib/libc/t_nsdispatch		tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_protoent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_ptm			tests-lib-tests		atf
-./usr/tests/lib/libc/t_randomid			tests-lib-tests		atf
+./usr/tests/lib/libc/t_randomid			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_servent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_strptime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/time			tests-lib-tests
