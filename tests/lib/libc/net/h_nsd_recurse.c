@@ -1,4 +1,4 @@
-/*	$NetBSD: h_nsd_recurse.c,v 1.1 2011/01/13 01:56:44 pgoyette Exp $ */
+/*	$NetBSD: h_nsd_recurse.c,v 1.2 2011/01/13 02:24:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_nsd_recurse.c,v 1.1 2011/01/13 01:56:44 pgoyette Exp $");
+__RCSID("$NetBSD: h_nsd_recurse.c,v 1.2 2011/01/13 02:24:51 pgoyette Exp $");
 
 #define	_REENTRANT
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: h_nsd_recurse.c,v 1.1 2011/01/13 01:56:44 pgoyette Exp $");
 
 static const ns_src testsrc[] = {
 	{ "test",	NS_SUCCESS },
-	{ 0 }
+	{ NULL, 0 }
 };
 
 static int
@@ -62,7 +62,7 @@ func2(void *rv, void *cb_data, va_list ap)
 {
 	static const ns_dtab dtab[] = {
 		{ "test",	func3,		NULL },
-		{ 0 }
+		{ NULL, NULL, NULL }
 	};
 	int r;
 
@@ -78,7 +78,7 @@ func1(void)
 {
 	static const ns_dtab dtab[] = {
 		{ "test",	func2,		NULL },
-		{ 0 }
+		{ NULL, NULL, NULL }
 	};
 	int r;
 
