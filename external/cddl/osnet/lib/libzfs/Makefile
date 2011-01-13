@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/02/28 22:40:09 haad Exp $
+#	$NetBSD: Makefile,v 1.6 2011/01/13 23:18:24 haad Exp $
 
 .PATH: ${.CURDIR}/../../dist/common/zfs
 .PATH: ${.CURDIR}/../../dist/common/fs/zfs
@@ -19,12 +19,13 @@ SRCS+=	libzfs_pool.c libzfs_changelist.c libzfs_config.c libzfs_import.c
 SRCS+=	libzfs_status.c libzfs_sendrecv.c
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sbin/mount
+# CPPFLAGS+=	-Wall -Wno-unknown-pragmas
 
 # Avoid conflict with libprop
 CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT
 
 # Avoid internal header conflicts
-CPPFLAGS+=	-D_ZFS_CONTEXT_NO_VERIFY
+CPPFLAGS+=	-D_ZFS_CONTEXT_NO_VERIFY -D_ZFS_CONTEXT_NO_DEBUG
 
 .include "../../Makefile.zfs"
 .include <bsd.lib.mk>

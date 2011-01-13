@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/21 01:46:35 darran Exp $
+#	$NetBSD: Makefile,v 1.4 2011/01/13 23:18:24 haad Exp $
 
 .PATH:	${.CURDIR}/../../dist/common/avl
+
+CPPFLAGS+=-Wall -Wno-unknown-pragmas
 
 LIB=	avl
 SRCS=	avl.c
