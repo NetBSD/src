@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2010/08/06 17:00:13 jruoho Exp $
+#	$NetBSD: Makefile,v 1.5 2011/01/13 21:05:51 jruoho Exp $
 
-MAN=	amdpcib.4 balloon.4 fwhrng.4 hpet.4 ichlpcib.4
+MAN=	amdpcib.4 balloon.4 fwhrng.4 hpet.4 ichlpcib.4 ioapic.4
 
 MANSUBDIR=/x86
 
