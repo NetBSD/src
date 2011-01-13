@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.184 2010/12/20 00:25:44 matt Exp $ */
+/*	$NetBSD: trap.c,v 1.185 2011/01/13 05:20:27 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.184 2010/12/20 00:25:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.185 2011/01/13 05:20:27 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -477,7 +477,7 @@ badtrap:
 					panic("FPU(%d): state for %p",
 							cpi->ci_cpuid, l);
 #if defined(MULTIPROCESSOR)
-				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+				XCALL1(ipi_savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 				cpi->fplwp = NULL;
 			}
