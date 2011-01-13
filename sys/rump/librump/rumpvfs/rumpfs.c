@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.87 2011/01/13 07:27:35 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.88 2011/01/13 10:26:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.87 2011/01/13 07:27:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.88 2011/01/13 10:26:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -618,9 +618,13 @@ freedir(struct rumpfs_node *rnd, struct componentname *cnp)
 	if (rd == NULL)
 		panic("could not find directory entry: %s", cnp->cn_nameptr);
 
-	LIST_REMOVE(rd, rd_entries);
-	kmem_free(rd->rd_name, rd->rd_namelen+1);
-	kmem_free(rd, sizeof(*rd));
+	if (cnp->cn_flags & DOWHITEOUT) {
+		rd->rd_node = RUMPFS_WHITEOUT;
+	} else {
+		LIST_REMOVE(rd, rd_entries);
+		kmem_free(rd->rd_name, rd->rd_namelen+1);
+		kmem_free(rd, sizeof(*rd));
+	}
 }
 
 /*
