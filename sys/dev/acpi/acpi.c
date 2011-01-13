@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.231 2011/01/13 04:18:19 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.232 2011/01/13 05:14:48 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.231 2011/01/13 04:18:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.232 2011/01/13 05:14:48 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -940,6 +940,14 @@ acpi_rescan_capabilities(device_t self)
 			ad->ad_flags |= ACPI_DEVICE_WAKEUP;
 			acpi_wakedev_add(ad);
 		}
+
+		/*
+		 * Scan docking stations.
+		 */
+		rv = AcpiGetHandle(ad->ad_handle, "_DCK", &tmp);
+
+		if (ACPI_SUCCESS(rv))
+			ad->ad_flags |= ACPI_DEVICE_DOCK;
 
 		/*
 		 * Scan devices that are ejectable.
