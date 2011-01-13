@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.234 2011/01/13 02:41:10 pgoyette Exp $
+# $NetBSD: mi,v 1.235 2011/01/13 03:20:14 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -406,6 +406,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/ttyio/t_ptm.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio/t_ttyio.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_cerror.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_clone.debug			tests-obsolete		obsolete
@@ -415,7 +416,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/t_hsearch.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_inet.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_mktime.debug			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/lib/libc/t_ptm.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_ptm.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_randomid.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_strptime.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/time				tests-lib-debug
@@ -1797,6 +1798,7 @@
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio			tests-lib-tests
 ./usr/tests/lib/libc/ttyio/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/ttyio/t_ptm		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio/t_ttyio		tests-lib-tests		atf
 ./usr/tests/lib/libc/t_atexit			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_cerror			tests-obsolete		obsolete
@@ -1809,7 +1811,7 @@
 ./usr/tests/lib/libc/t_mktime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_nsdispatch		tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_protoent			tests-obsolete		obsolete
-./usr/tests/lib/libc/t_ptm			tests-lib-tests		atf
+./usr/tests/lib/libc/t_ptm			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_randomid			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_servent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_strptime			tests-obsolete		obsolete
