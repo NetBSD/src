@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.91 2010/01/14 21:46:24 pooka Exp $	*/
+/*	$NetBSD: mount.c,v 1.92 2011/01/13 11:57:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.91 2010/01/14 21:46:24 pooka Exp $");
+__RCSID("$NetBSD: mount.c,v 1.92 2011/01/13 11:57:02 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -392,7 +392,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	if (!mntopts && !options)
 		catopt(&optbuf, "rw");
 
-	if (getargs == 0 && strcmp(name, "/") == 0)
+	if (getargs == 0 && strcmp(name, "/") == 0 && !hasopt(optbuf, "union"))
 		flags |= MNT_UPDATE;
 	else if (skipmounted) {
 		if ((numfs = getmntinfo(&sfp, MNT_WAIT)) == 0) {
