@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.45 2011/01/10 11:11:03 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.46 2011/01/13 10:28:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.45 2011/01/10 11:11:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.46 2011/01/13 10:28:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -658,19 +658,16 @@ layer_revoke(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *lvp = LAYERVPTOLOWERVP(vp);
-	int i, n, error;
+	int error;
 
 	/*
 	 * We will most likely end up in vclean which uses the v_usecount
-	 * to determine if a vnode is active.  So we have to adjust the
-	 * lower vp's usecount to be at least as high as our usecount.
+	 * to determine if a vnode is active.  Take an extra reference on
+	 * the lower vnode so it will always close and inactivate.
 	 */
-	n = vp->v_usecount - lvp->v_usecount;
-	for (i = 0; i < n; i++)
-		vref(lvp);
+	vref(lvp);
 	error = LAYERFS_DO_BYPASS(vp, ap);
-	for (i = 0; i < n; i++)
-		vrele(lvp);
+	vrele(lvp);
 
 	return error;
 }
