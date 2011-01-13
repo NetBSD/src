@@ -1,4 +1,4 @@
-/* $NetBSD: t_randomid.c,v 1.1 2011/01/13 02:40:43 pgoyette Exp $ */
+/* $NetBSD: t_randomid.c,v 1.2 2011/01/13 03:00:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -67,9 +67,10 @@ ATF_TC_BODY(randomid, tc)
 
 			if (diff <= lowest) {
 				if (lowest != UINT64_MAX)
-					printf("id %5d: last call at %9lld, "
-					    "current call %9lld (diff %5lld)"
-					    ", lowest %lld\n",
+					printf("id %5d: last call at %9"PRIu64
+					    ", current call %9"PRIu64
+					    " (diff %5"PRIu64"), "
+					    "lowest %"PRIu64"\n",
 					    id, last[id], n, diff, lowest);
 
 				ATF_REQUIRE_MSG(diff >= PERIOD,
