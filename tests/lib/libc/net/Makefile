@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/01/13 01:56:44 pgoyette Exp $
+# $NetBSD: Makefile,v 1.4 2011/01/13 02:24:51 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,6 @@ PROGS+=		h_nsd_recurse
 PROGS+=		h_protoent
 PROGS+=		h_servent
 
-LDADD.h_nsd_dispatch+=	-lpthread
+LDADD.h_nsd_recurse+=	-lpthread
 
 .include <bsd.test.mk>
