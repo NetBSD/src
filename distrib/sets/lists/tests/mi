@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.236 2011/01/13 13:54:24 pgoyette Exp $
+# $NetBSD: mi,v 1.237 2011/01/13 14:09:52 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1690,6 +1690,7 @@
 ./usr/tests/lib/libc/ieeefp/t_round		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_subnormal		tests-lib-tests		atf
 ./usr/tests/lib/libc/inet			tests-lib-tests
+./usr/tests/lib/libc/inet/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/inet/t_inet_network	tests-lib-tests		atf
 ./usr/tests/lib/libc/net			tests-lib-tests
 ./usr/tests/lib/libc/net/Atffile		tests-lib-tests		atf
