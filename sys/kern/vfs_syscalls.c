@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.413 2011/01/02 05:12:33 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.414 2011/01/13 07:25:50 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.413 2011/01/02 05:12:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414 2011/01/13 07:25:50 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -169,7 +169,8 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	 * prevent read-write to read-only downgrades.
 	 */
 	if ((flags & (MNT_RELOAD | MNT_RDONLY)) != 0 &&
-	    (mp->mnt_flag & MNT_RDONLY) == 0) {
+	    (mp->mnt_flag & MNT_RDONLY) == 0 &&
+	    (mp->mnt_iflag & IMNT_CAN_RWTORO) == 0) {
 		error = EOPNOTSUPP;	/* Needs translation */
 		goto out;
 	}
