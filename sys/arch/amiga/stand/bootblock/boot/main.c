@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.25 2009/11/15 20:38:35 snj Exp $
+ * $NetBSD: main.c,v 1.26 2011/01/13 22:02:06 phx Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -544,7 +544,11 @@ long get_number(char **ptr)
 int
 get_cpuid(u_int32_t *cpuid)
 {
+	uint8_t alicerev;
+
+	alicerev = *((uint8_t *)0xdff004) & 0x6f;
 	*cpuid |= SysBase->AttnFlags;	/* get FPU and CPU flags */
+
 	if (*cpuid & 0xffff0000) {
 		if ((*cpuid >> 24) == 0x7D)
 			return 0;
@@ -571,8 +575,10 @@ get_cpuid(u_int32_t *cpuid)
 	    || (SysBase->LibNode.Version == 36))
 		*cpuid |= 3000 << 16;
 	else if (OpenResource("card.resource")) {
-		/* Test for AGA? */
-		*cpuid |= 1200 << 16;
+		if (alicerev == 0x22 || alicerev == 0x23)
+			*cpuid |= 1200 << 16;	/* AGA + PCMCIA = A1200 */
+		else
+			*cpuid |= 600 << 16;	/* noAGA + PCMCIA = A600 */
 	} else if (OpenResource("draco.resource")) {
 		*cpuid |= (32000 | DRACOREVISION) << 16;
 	}
