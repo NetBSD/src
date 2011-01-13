@@ -38,7 +38,7 @@ struct gecko_softc {
 
 int	gecko_match(device_t, cfdata_t, void *);
 void	gecko_attach(device_t, device_t, void *);
-static void gecko_callback(device_t, struct confargs *);
+static device_t gecko_callback(device_t, struct confargs *);
 
 CFATTACH_DECL_NEW(gecko, sizeof(struct gecko_softc), gecko_match,
     gecko_attach, NULL, NULL);
@@ -86,10 +86,11 @@ gecko_attach(device_t parent, device_t self, void *aux)
 	pdc_scanbus(self, &nca, gecko_callback);
 }
 
-static void
+static device_t
 gecko_callback(device_t self, struct confargs *ca)
 {
 
-	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint,
+	    mbsubmatch);
 }
 
