@@ -1,4 +1,4 @@
-# $NetBSD: t_nsdispatch.sh,v 1.1 2011/01/05 21:17:04 pgoyette Exp $
+# $NetBSD: t_nsdispatch.sh,v 1.1 2011/01/13 01:56:44 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
