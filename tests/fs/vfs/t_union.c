@@ -1,4 +1,4 @@
-/*	$NetBSD: t_union.c,v 1.4 2011/01/13 10:33:01 pooka Exp $	*/
+/*	$NetBSD: t_union.c,v 1.5 2011/01/13 11:00:19 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -180,6 +180,8 @@ whiteout(const atf_tc_t *tc, const char *mp)
 
 	mountunion(mp, lower);
 
+	/* all file systems fail sooner or later */
+	atf_tc_expect_fail("PR kern/44383");
 	FSTEST_ENTER();
 	RL(rump_sys_rmdir(TDIR));
 	ATF_REQUIRE_ERRNO(ENOENT, rump_sys_stat(TDFILE, &sb) == -1);
