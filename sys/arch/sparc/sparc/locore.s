@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.258 2010/12/20 00:25:44 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.259 2011/01/13 05:20:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5841,12 +5841,29 @@ Lkcerr:
 	/* NOTREACHED */
 
 /*
- * savefpstate(f) struct fpstate *f;
+ * savefpstate(struct fpstate *f);
+ * ipi_savefpstate(struct fpstate *f);
  *
  * Store the current FPU state.  The first `st %fsr' may cause a trap;
  * our trap handler knows how to recover (by `returning' to savefpcont).
+ *
+ * The IPI version just deals with updating event counters first.
  */
+Lpanic_savefpstate:
+	.asciz	"cpu%d: NULL fpstate"
+	_ALIGN
+
+ENTRY(ipi_savefpstate)
+	sethi	%hi(CPUINFO_VA), %o5
+	ldd	[%o5 + CPUINFO_SAVEFPSTATE], %o2
+	inccc   %o3
+	addx    %o2, 0, %o2
+	std	%o2, [%o5 + CPUINFO_SAVEFPSTATE]
+
 ENTRY(savefpstate)
+	cmp	%o0, 0
+	bz	Lfp_null_fpstate
+	 nop
 	rd	%psr, %o1		! enable FP before we begin
 	set	PSR_EF, %o2
 	or	%o1, %o2, %o1
@@ -5887,6 +5904,27 @@ Lfp_finish:
 	std	%f28, [%o0 + FS_REGS + (4*28)]
 	retl
 	 std	%f30, [%o0 + FS_REGS + (4*30)]
+
+/*
+ * We really should panic here but while we figure out what the bug is
+ * that a remote CPU gets a NULL struct fpstate *, this lets the system
+ * work at least seemingly stably.
+ */
+Lfp_null_fpstate:
+#if 1
+	sethi	%hi(CPUINFO_VA), %o5
+	ldd	[%o5 + CPUINFO_SAVEFPSTATE_NULL], %o2
+	inccc   %o3
+	addx    %o2, 0, %o2
+	retl
+	 std	%o2, [%o5 + CPUINFO_SAVEFPSTATE_NULL]
+#else
+	ld	[%o5 + CPUINFO_CPUNO], %o1
+	sethi	%hi(Lpanic_savefpstate), %o0
+	call	_C_LABEL(panic)
+	 or	%o0, %lo(Lpanic_savefpstate), %o0
+#endif
+1:
 
 /*
  * Store the (now known nonempty) FP queue.
