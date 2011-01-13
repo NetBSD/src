@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.65 2010/10/26 22:27:44 gsutre Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.66 2011/01/13 05:14:48 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -135,11 +135,12 @@ struct acpi_devnode {
 };
 
 /*
- * ACPI driver capabilities.
+ * ACPI driver capabilities (ad_flags).
  */
 #define ACPI_DEVICE_POWER	__BIT(0)	/* Support for D-states  */
 #define ACPI_DEVICE_WAKEUP	__BIT(1)	/* Support for wake-up */
 #define ACPI_DEVICE_EJECT	__BIT(2)	/* Support for "ejection" */
+#define ACPI_DEVICE_DOCK	__BIT(3)	/* Support for docking */
 
 /*
  * Software state of the ACPI subsystem.
