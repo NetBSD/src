@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.105 2011/01/08 09:40:05 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.106 2011/01/13 15:38:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.105 2011/01/08 09:40:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.106 2011/01/13 15:38:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -378,7 +378,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	if (*addr != 0)
 		panic("uvm_mmap() variant unsupported");
 
-	if (curproc->p_vmspace == vmspace_kernel()) {
+	if (RUMP_LOCALPROC_P(curproc)) {
 		uaddr = rumpuser_anonmmap(NULL, size, 0, 0, &error);
 	} else {
 		error = rumpuser_sp_anonmmap(curproc->p_vmspace->vm_map.pmap,
@@ -763,7 +763,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	bp->b_saveaddr = bp->b_data;
 
 	/* remote case */
-	if (curproc->p_vmspace != vmspace_kernel()) {
+	if (!RUMP_LOCALPROC_P(curproc)) {
 		bp->b_data = rump_hypermalloc(len, 0, true, "vmapbuf");
 		if (BUF_ISWRITE(bp)) {
 			copyin(bp->b_saveaddr, bp->b_data, len);
@@ -776,7 +776,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 {
 
 	/* remote case */
-	if (bp->b_proc->p_vmspace != vmspace_kernel()) {
+	if (!RUMP_LOCALPROC_P(bp->b_proc)) {
 		if (BUF_ISREAD(bp)) {
 			copyout_proc(bp->b_proc,
 			    bp->b_data, bp->b_saveaddr, len);

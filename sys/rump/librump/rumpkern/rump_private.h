@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.68 2011/01/11 09:22:32 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.69 2011/01/13 15:38:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -87,6 +87,8 @@ do {									\
 
 #define RUMPMEM_UNLIMITED ((unsigned long)-1)
 extern unsigned long rump_physmemlimit;
+
+#define RUMP_LOCALPROC_P(p) (p->p_vmspace == vmspace_kernel())
 
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);
