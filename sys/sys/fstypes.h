@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.26 2008/09/03 23:43:06 gmcgarry Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.27 2011/01/13 07:23:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -254,7 +254,7 @@ typedef struct fhandle	fhandle_t;
 
 #define	__IMNT_FLAG_BITS \
 	"\20" \
-        "\20IMNT_MPSAFE" \
+        "\11IMNT_MPSAFE" \
 	"\10IMNT_HAS_TRANS" \
 	"\07IMNT_DTYPE" \
 	"\03IMNT_WANTRDWR" \
