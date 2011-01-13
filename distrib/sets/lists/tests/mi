@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.235 2011/01/13 03:20:14 pgoyette Exp $
+# $NetBSD: mi,v 1.236 2011/01/13 13:54:24 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -349,6 +349,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_nan_inf.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/inet				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/inet/t_inet_network.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo			tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf
@@ -1687,6 +1689,8 @@
 ./usr/tests/lib/libc/ieeefp/t_nan_inf		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_round		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_subnormal		tests-lib-tests		atf
+./usr/tests/lib/libc/inet			tests-lib-tests
+./usr/tests/lib/libc/inet/t_inet_network	tests-lib-tests		atf
 ./usr/tests/lib/libc/net			tests-lib-tests
 ./usr/tests/lib/libc/net/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/getaddrinfo		tests-lib-tests
