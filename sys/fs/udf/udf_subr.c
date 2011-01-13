@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.109 2010/12/22 12:38:42 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.110 2011/01/13 13:13:31 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.109 2010/12/22 12:38:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.110 2011/01/13 13:13:31 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -4568,7 +4568,15 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 			dirent->d_namlen, dirent->d_namlen, dirent->d_name));
 
 		/* see if its our entry */
-		KASSERT(dirent->d_namlen == namelen);
+#ifdef DIAGNOSTIC
+		if (dirent->d_namlen != namelen) {
+			printf("WARNING: dirhash_lookup() returned wrong "
+				"d_namelen: %d and ought to be %d\n",
+				dirent->d_namlen, namelen);
+			printf("\tlooked for `%s' and got `%s'\n",
+				name, dirent->d_name);
+		}
+#endif
 		if (strncmp(dirent->d_name, name, namelen) == 0) {
 			*found = 1;
 			*icb_loc = fid->icb;
@@ -5227,8 +5235,10 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	}
 
 	/* append to the dirhash */
-	dirent.d_namlen = cnp->cn_namelen;
-	memcpy(dirent.d_name, cnp->cn_nameptr, cnp->cn_namelen);
+	/* NOTE do not use dirent anymore or it won't match later! */
+	udf_to_unix_name(dirent.d_name, MAXNAMLEN,
+		(char *) fid->data + udf_rw16(fid->l_iu), fid->l_fi, &osta_charspec);
+	dirent.d_namlen = strlen(dirent.d_name);
 	dirhash_enter(dirh, &dirent, chosen_fid_pos,
 		udf_fidsize(fid), 1);
 
