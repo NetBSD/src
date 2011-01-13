@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.12 2011/01/04 10:42:33 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.13 2011/01/13 21:15:13 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -156,7 +156,7 @@ struct iommu_map_state {
 
 int	astro_match(device_t, cfdata_t, void *);
 void	astro_attach(device_t, device_t, void *);
-static void astro_callback(device_t self, struct confargs *ca);
+static device_t astro_callback(device_t self, struct confargs *ca);
 
 CFATTACH_DECL_NEW(astro, sizeof(struct astro_softc),
     astro_match, astro_attach, NULL, NULL);
@@ -232,6 +232,7 @@ astro_attach(device_t parent, device_t self, void *aux)
 	psize_t size;
 	vaddr_t va;
 	paddr_t pa;
+	void *p;
 	struct vm_page *m;
 	struct pglist mlist;
 	int iova_bits;
@@ -244,8 +245,8 @@ astro_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map IO space\n");
 		return;
 	}
-	sc->sc_regs = r = (struct astro_regs *)ca->ca_hpa;
-
+	p = bus_space_vaddr(ca->ca_iot, ioh);
+	sc->sc_regs = r = p;
 	rid = le32toh(r->rid);
 	aprint_normal(": Astro rev %d.%d\n", (rid & 7) + 1, (rid >> 3) & 3);
 
@@ -333,18 +334,17 @@ astro_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmatag._cookie = sc;
 
 	nca = *ca;	/* clone from us */
-// 	nca.ca_hpamask = HPPA_IOBEGIN;
 	nca.ca_dmatag = &sc->sc_dmatag;
-	nca.ca_hpabase = 0; /* HPPA_UNDEF */
+	nca.ca_hpabase = IOMOD_IO_IO_LOW(p);
 	nca.ca_nmodules = MAXMODBUS;
 	pdc_scanbus(self, &nca, astro_callback);
 }
 
-static void
+static device_t
 astro_callback(device_t self, struct confargs *ca)
 {
 
-	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }
 
 int
