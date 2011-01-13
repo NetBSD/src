@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.237 2011/01/13 14:09:52 pgoyette Exp $
+# $NetBSD: mi,v 1.238 2011/01/13 14:34:16 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -392,6 +392,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_div.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment_pth.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_hsearch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_posix_memalign.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-lib-debug		debug,atf
@@ -415,8 +416,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/t_context.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_convfp.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_gdtoa.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/t_hsearch.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/t_inet.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_hsearch.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/t_inet.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_mktime.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_ptm.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_randomid.debug			tests-obsolete		obsolete
@@ -1746,19 +1747,6 @@
 ./usr/tests/lib/libc/rpc			tests-lib-tests
 ./usr/tests/lib/libc/rpc/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/rpc/t_xdr			tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib			tests-lib-tests
-./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/h_atexit		tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/h_getopt		tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/h_getopt_long	tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_atexit		tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_div		tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_environment	tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_environment_pth	tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_getopt		tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		atf
-./usr/tests/lib/libc/stdlib/t_strtox		tests-lib-tests		atf
 ./usr/tests/lib/libc/setjmp			tests-lib-tests
 ./usr/tests/lib/libc/setjmp/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/setjmp/t_setjmp		tests-lib-tests		atf
@@ -1787,6 +1775,20 @@
 ./usr/tests/lib/libc/stdio/t_fmemopen		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_format		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_popen		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib			tests-lib-tests
+./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/h_atexit		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/h_getopt		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/h_getopt_long	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_atexit		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_div		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_environment	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_environment_pth	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_getopt		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_hsearch		tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_strtox		tests-lib-tests		atf
 ./usr/tests/lib/libc/string			tests-lib-tests
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_memcpy		tests-lib-tests		atf
@@ -1811,8 +1813,8 @@
 ./usr/tests/lib/libc/t_context			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_convfp			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_gdtoa			tests-lib-tests		atf
-./usr/tests/lib/libc/t_hsearch			tests-lib-tests		atf
-./usr/tests/lib/libc/t_inet			tests-lib-tests		atf
+./usr/tests/lib/libc/t_hsearch			tests-obsolete		obsolete
+./usr/tests/lib/libc/t_inet			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_mktime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_nsdispatch		tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_protoent			tests-obsolete		obsolete
