@@ -1,4 +1,4 @@
-/* $NetBSD: t_randomid.c,v 1.1 2010/12/31 04:08:33 pgoyette Exp $ */
+/* $NetBSD: t_randomid.c,v 1.1 2011/01/13 02:40:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.

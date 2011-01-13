@@ -1,4 +1,4 @@
-/* $NetBSD: t_context.c,v 1.1 2010/12/31 14:36:11 pgoyette Exp $ */
+/* $NetBSD: t_context.c,v 1.1 2011/01/13 02:40:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_context.c,v 1.1 2010/12/31 14:36:11 pgoyette Exp $");
+__RCSID("$NetBSD: t_context.c,v 1.1 2011/01/13 02:40:44 pgoyette Exp $");
 
 #include <ucontext.h>
 #include <stdarg.h>
