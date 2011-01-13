@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/01/10 04:57:56 christos Exp $
+# $NetBSD: Makefile,v 1.2 2011/01/13 02:40:44 pgoyette Exp $
 
 MKMAN=	no
 
@@ -6,6 +6,9 @@ MKMAN=	no
 
 TESTSDIR=		${TESTSBASE}/lib/libc/sys
 
+TESTS_C+=		t_cerror
+TESTS_C+=		t_clone
+TESTS_C+=		t_context
 TESTS_C=		t_sigqueue
 
 .include <bsd.test.mk>
