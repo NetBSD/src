@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.231 2011/01/13 00:16:34 pgoyette Exp $
+# $NetBSD: mi,v 1.232 2011/01/13 01:32:04 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1699,9 +1699,9 @@
 ./usr/tests/lib/libc/net/getaddrinfo/data/unsup_fam.exp		tests-lib-tests	atf
 ./usr/tests/lib/libc/net/getaddrinfo/h_gai	tests-lib-tests		atf
 ./usr/tests/lib/libc/net/getaddrinfo/t_getaddrinfo tests-lib-tests	atf
-./usr/tests/lib/libc/net/h_protoent		tests-obsolete		obsolete
-./usr/tests/lib/libc/net/h_servent		tests-obsolete		obsolete
-./usr/tests/lib/libc/net/t_protoent		tests-obsolete		obsolete
+./usr/tests/lib/libc/net/h_protoent		tests-lib-tests		atf
+./usr/tests/lib/libc/net/h_servent		tests-lib-tests		atf
+./usr/tests/lib/libc/net/t_protoent		tests-lib-tests		atf
 ./usr/tests/lib/libc/net/t_servent		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex			tests-lib-tests
 ./usr/tests/lib/libc/regex/Atffile		tests-lib-tests		atf
