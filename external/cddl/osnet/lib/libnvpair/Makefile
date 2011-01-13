@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2010/02/22 20:05:03 haad Exp $
+#	$NetBSD: Makefile,v 1.6 2011/01/13 23:18:24 haad Exp $
 
 .PATH:  ${.CURDIR}/../../dist/lib/libnvpair
 .PATH:  ${.CURDIR}/../../dist/common/nvpair
+
+CPPFLAGS+=-Wall -Wno-unknown-pragmas
 
 LIB=	nvpair
 
