@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.26 2010/12/31 09:19:43 jruoho Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.27 2011/01/13 03:45:38 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.26 2010/12/31 09:19:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.27 2011/01/13 03:45:38 jruoho Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -341,12 +341,19 @@ acpi_md_sleep(int state)
 	initrtclock(TIMER_FREQ);
 	inittodr(time_second);
 
-	AcpiClearEvent(ACPI_EVENT_PMTIMER);
-	AcpiClearEvent(ACPI_EVENT_GLOBAL);
-	AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
-	AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
-	AcpiClearEvent(ACPI_EVENT_RTC);
-	AcpiHwDisableAllGpes ();
+	/*
+	 * Clear fixed events (see e.g. ACPI 3.0, p. 62).
+	 * Also prevent GPEs from misfiring by disabling
+	 * all GPEs before interrupts are enabled. The
+	 * AcpiLeaveSleepState() function will enable
+	 * and handle the general purpose events later.
+	 */
+	(void)AcpiClearEvent(ACPI_EVENT_PMTIMER);
+	(void)AcpiClearEvent(ACPI_EVENT_GLOBAL);
+	(void)AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
+	(void)AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
+	(void)AcpiClearEvent(ACPI_EVENT_RTC);
+	(void)AcpiHwDisableAllGpes();
 
 	acpi_pci_link_resume();
 
