@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.89 2010/01/03 23:03:21 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.90 2011/01/13 05:20:27 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -193,6 +193,7 @@ void	schedintr(void *);
 
 /* locore.s */
 struct fpstate;
+void	ipi_savefpstate(struct fpstate *);
 void	savefpstate(struct fpstate *);
 void	loadfpstate(struct fpstate *);
 int	probeget(void *, int);
