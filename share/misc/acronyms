@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.198 2011/01/04 06:18:51 dholland Exp $
+$NetBSD: acronyms,v 1.199 2011/01/13 15:41:52 jruoho Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -173,6 +173,7 @@ IHNFC	I have no fucking clue
 IIANM	if I am not mistaken
 IIRC	if I recall correctly
 IIUC	if I understand correctly
+IKWYM	I know what you mean
 ILU	I love you
 ILY	I love you
 IMAO	in my arrogant opinion
