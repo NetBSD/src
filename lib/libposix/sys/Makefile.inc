@@ -1,13 +1,17 @@
-#	$NetBSD: Makefile.inc,v 1.19 2004/02/08 22:55:27 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2011/01/14 05:20:00 matt Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
+.PATH: ${ARCHDIR}/sys
 
 # stubs providing an entry "foo" but calling "__posix_foo()"
 PSEUDO=		chown.S fchown.S lchown.S rename.S
 
 SRCS+=		${PSEUDO}
 CLEANFILES+=	${PSEUDO}
+
+SRCS+=		cerror.S
+CPPFLAGS+=	-D__cerror=__posix_cerror
 
 ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
