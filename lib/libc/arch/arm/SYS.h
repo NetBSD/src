@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.9 2004/08/21 11:18:40 rearnsha Exp $	*/
+/*	$NetBSD: SYS.h,v 1.10 2011/01/14 06:12:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
-	bcs PIC_SYM(CERROR, PLT)
+	bcs CERROR
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
