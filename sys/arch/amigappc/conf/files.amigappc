@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.23 2010/10/18 22:00:47 phx Exp $
+#	$NetBSD: files.amigappc,v 1.24 2011/01/14 12:54:39 phx Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -353,6 +353,11 @@ file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
 device	wesc: scsi, asiop
 attach	wesc at zbus
 file	arch/amiga/dev/wesc.c		wesc needs-flag
+
+# Phase5 Blizzard 603e+ SCSI
+device	bppcsc: scsi, asiop
+attach	bppcsc at zbus
+file	arch/amiga/dev/bppcsc.c		bppcsc needs-flag
 
 # C= A4091 & A4000T
 device	afsc: scsi, asiop
