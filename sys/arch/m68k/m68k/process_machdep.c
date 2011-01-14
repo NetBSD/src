@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.28 2009/11/23 00:11:44 rmind Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.29 2011/01/14 02:06:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29 2011/01/14 02:06:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2009/11/23 00:11:44 rmind E
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
+
+#include <machine/frame.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
 
 static inline struct frame *
 process_frame(struct lwp *l)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.131 2010/12/22 01:34:17 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.132 2011/01/14 02:06:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.131 2010/12/22 01:34:17 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.132 2011/01/14 02:06:28 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.131 2010/12/22 01:34:17 nisimura Ex
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -95,11 +96,11 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.131 2010/12/22 01:34:17 nisimura Ex
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#include <mips/pcb.h>
 #include <mips/regnum.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <mips/psl.h>
-#include <machine/cpu.h>
 
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
