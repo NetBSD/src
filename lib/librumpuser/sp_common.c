@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.23 2011/01/10 19:49:43 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.24 2011/01/14 13:12:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -88,7 +88,8 @@ enum {	RUMPSP_HANDSHAKE,
 	RUMPSP_COPYIN, RUMPSP_COPYINSTR,
 	RUMPSP_COPYOUT, RUMPSP_COPYOUTSTR,
 	RUMPSP_ANONMMAP,
-	RUMPSP_PREFORK };
+	RUMPSP_PREFORK,
+	RUMPSP_RAISE };
 
 enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK };
 
@@ -107,12 +108,14 @@ struct rsp_hdr {
 		uint32_t sysnum;
 		uint32_t error;
 		uint32_t handshake;
+		uint32_t signo;
 	} u;
 };
 #define HDRSZ sizeof(struct rsp_hdr)
 #define rsp_sysnum u.sysnum
 #define rsp_error u.error
 #define rsp_handshake u.handshake
+#define rsp_signo u.signo
 
 #define MAXBANNER 96
 
