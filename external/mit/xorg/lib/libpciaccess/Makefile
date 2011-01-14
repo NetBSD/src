@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/01/12 19:04:19 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.6 2011/01/14 16:04:49 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,7 @@ SRCS=	common_bridge.c \
 	common_vgaarb_stub.c \
 	netbsd_pci.c
 
-CPPFLAGS+=	${X11FLAGS} -I${X11SRCDIR.${LIB}}/include \
-		-DHAVE_MTRR -DHAVE_ZLIB \
+CPPFLAGS+=	${X11FLAGS} -I${X11SRCDIR.${LIB}}/include -DHAVE_ZLIB \
 		-DHAVE_STRING_H -DHAVE_STDINT_H -DHAVE_INTTYPES_H \
 		-DPCIIDS_PATH=\"${X11ROOTDIR}/share/pciids\"
 
@@ -31,6 +30,10 @@ PKGDIST=	${LIB}
 
 LDADD+=	-lpci -lz
 DPADD+=	${LIBPCI} ${LIBZ}
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-DHAVE_MTRR
+.endif
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
