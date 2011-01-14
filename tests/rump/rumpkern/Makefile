@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2011/01/06 13:12:52 pooka Exp $
+# $NetBSD: Makefile,v 1.13 2011/01/14 13:08:00 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ TESTS_C+=	t_kern
 TESTS_C+=	t_lwproc
 TESTS_C+=	t_modcmd
 TESTS_C+=	t_modlinkset
+TESTS_C+=	t_signals
 TESTS_C+=	t_threads
 TESTS_C+=	t_tsleep
 TESTS_C+=	t_vm
