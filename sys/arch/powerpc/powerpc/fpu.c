@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.23 2009/11/27 03:23:12 rmind Exp $	*/
+/*	$NetBSD: fpu.c,v 1.24 2011/01/14 02:06:30 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23 2009/11/27 03:23:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24 2011/01/14 02:06:30 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23 2009/11/27 03:23:12 rmind Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/pcb.h>
 #include <machine/fpu.h>
 #include <machine/psl.h>
 

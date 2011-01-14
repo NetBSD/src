@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.43 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.44 2011/01/14 02:06:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,13 +77,14 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43 2010/06/06 04:50:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.44 2011/01/14 02:06:27 rmind Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
@@ -96,8 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43 2010/06/06 04:50:07 mrg Exp $")
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/frame.h>
 
 #include <m68k/m68k.h>

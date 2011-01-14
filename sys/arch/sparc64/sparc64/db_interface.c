@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.125 2010/11/06 11:46:03 uebayasi Exp $ */
+/*	$NetBSD: db_interface.c,v 1.126 2011/01/14 02:06:32 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.125 2010/11/06 11:46:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.126 2011/01/14 02:06:32 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -968,13 +968,6 @@ db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	LIST_FOREACH(p, &allproc, p_list) {
 		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
-#if 0
-/* XXX Do we need to do the following too?: */
-			extern struct pcb *cpcb;
-
-			curlwp = p;
-			cpcb = (struct pcb*)p->p_addr;
-#endif
 			if (p->p_vmspace->vm_map.pmap == pmap_kernel()) {
 				db_printf("PID %ld has a kernel context.\n",
 				    (long)addr);

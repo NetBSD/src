@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.2 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.3 2011/01/14 02:06:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3 2011/01/14 02:06:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,15 +87,16 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2 2009/11/21 17:40:28 rmind Exp $
 #include <sys/vnode.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/pcb.h>
 #include <mips/cache.h>
 #include <mips/regnum.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <mips/psl.h>
-#include <machine/cpu.h>
 
 /*
  * Dump the machine specific segment at the start of a core dump.
