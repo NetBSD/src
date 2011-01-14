@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.20 2010/12/02 12:54:13 wiz Exp $
+.\" $NetBSD: evcnt.9,v 1.21 2011/01/14 18:34:44 dyoung Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd August 7, 2010
+.Dd January 14, 2011
 .Dt EVCNT 9
 .Os
 .Sh NAME
@@ -226,7 +226,6 @@ and
 interrupts) a device driver might use:
 .Bd -literal
 struct foo_softc {
-	struct device sc_dev;		/* generic device information */
 	[ . . . ]
 	struct evcnt sc_ev_intr;	/* interrupt count */
 	struct evcnt sc_ev_intr_rd;	/* 'readable' interrupt count */
@@ -241,21 +240,19 @@ the system using the
 function, using code like:
 .Bd -literal
 void
-fooattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fooattach(device_t parent, device_t self, void *aux)
 {
-	struct foo_softc *sc = (struct foo_softc *)self;
+	struct foo_softc *sc = device_private(self);
 
 	[ . . . ]
 
 	/* Initialize and attach event counters. */
 	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev, EVCNT_TYPE_INTR,
-	    NULL, sc-\*[Gt]sc_dev.dv_xname, "intr");
+	    NULL, device_xname(self), "intr");
 	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev_rd, EVCNT_TYPE_INTR,
-	    \*[Am]sc-\*[Gt]sc_ev, sc-\*[Gt]sc_dev.dv_xname, "intr rd");
+	    \*[Am]sc-\*[Gt]sc_ev, device_xname(self), "intr rd");
 	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev_wr, EVCNT_TYPE_INTR,
-	    \*[Am]sc-\*[Gt]sc_ev, sc-\*[Gt]sc_dev.dv_xname, "intr wr");
+	    \*[Am]sc-\*[Gt]sc_ev, device_xname(self), "intr wr");
 
 	[ . . . ]
 }
