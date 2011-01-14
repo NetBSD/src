@@ -110,6 +110,10 @@ LDLIBS=
 #  -TTZ_DOMAINDIR=\"/path\" to use "/path" for gettext directory;
 #	the default is system-supplied, typically "/usr/lib/locale"
 #  $(GCC_DEBUG_FLAGS) if you are using GCC and want lots of checking
+#  $(GCC_OVERFLOW_FLAGS) if you are using GCC 3.4 or later.
+#	If you are using a compiler other than GCC, and if it defaults to
+#	undefined behavior on integer overflow, then you need to specify a flag
+#	saying that integer arithmetic is supposed to wrap around on overflow.
 #  -DNO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU=1
 #	if you do not want run time warnings about formats that may cause
 #	year 2000 grief
@@ -120,6 +124,7 @@ GCC_DEBUG_FLAGS = -Dlint -g -O -fno-common \
 	-Wall -Wcast-qual -Wconversion -Wmissing-prototypes \
 	-Wnested-externs -Wpointer-arith -Wshadow \
 	-Wtraditional # -Wstrict-prototypes -Wwrite-strings
+GCC_OVERFLOW_FLAGS = -fwrapv
 #
 # If you want to use System V compatibility code, add
 #	-DUSG_COMPAT
@@ -386,7 +391,7 @@ names:
 
 public:		$(ENCHILADA)
 		make maintainer-clean
-		make "CFLAGS=$(GCC_DEBUG_FLAGS)"
+		make "CFLAGS=$(GCC_DEBUG_FLAGS) $(GCC_OVERFLOW_FLAGS)"
 		-mkdir /tmp/,tzpublic
 		-for i in $(TDATA) ; do zic -v -d /tmp/,tzpublic $$i 2>&1 | grep -v "starting year" ; done
 		for i in $(TDATA) ; do zic -d /tmp/,tzpublic $$i || exit; done

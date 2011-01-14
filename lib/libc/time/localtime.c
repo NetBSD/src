@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.51 2011/01/06 02:41:34 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.52 2011/01/14 23:35:07 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.9";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.51 2011/01/06 02:41:34 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.52 2011/01/14 23:35:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1704,8 +1704,10 @@ increment_overflow(int *number, int delta)
 	int	number0;
 
 	number0 = *number;
+	if (delta < 0 ? number0 < delta - INT_MIN : INT_MAX - delta < number0)
+		  return 1;
 	*number += delta;
-	return (*number < number0) != (delta < 0);
+	return 0;
 }
 
 static int
@@ -1714,8 +1716,10 @@ long_increment_overflow(long *number, int delta)
 	long	number0;
 
 	number0 = *number;
+	if (delta < 0 ? number0 < delta - LONG_MIN : LONG_MAX - delta < number0)
+		  return 1;
 	*number += delta;
-	return (*number < number0) != (delta < 0);
+	return 0;
 }
 
 static int
