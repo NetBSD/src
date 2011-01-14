@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2010/02/11 09:06:47 roy Exp $
+#	$NetBSD: list,v 1.10 2011/01/14 10:26:30 tsutsui Exp $
 
 SRCDIRS usr.bin/less
 SRCDIRS	bin sbin usr.bin usr.sbin
@@ -23,6 +23,7 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
+PROG	sbin/chown	bin/chgrp
 PROG	sbin/dhclient
 PROG	sbin/disklabel
 PROG	sbin/dmesg
@@ -57,7 +58,6 @@ PROG	usr/bin/less	usr/bin/more
 PROG	usr/bin/sed
 PROG	usr/bin/tset
 
-PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
 # init invokes the shell as -sh

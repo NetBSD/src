@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2009/09/20 23:19:52 abs Exp $
+#	$NetBSD: list,v 1.10 2011/01/14 10:26:32 tsutsui Exp $
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/master.passwd		etc/master.passwd
@@ -36,6 +36,7 @@ COPY	${OBJDIR}/ramdiskbin		ramdiskbin
 SPECIAL chown 0:0			ramdiskbin
 #SPECIAL chmod 4755			ramdiskbin
 LINK	ramdiskbin			bin/cat
+LINK	ramdiskbin			bin/chgrp
 LINK	ramdiskbin			bin/chmod
 LINK	ramdiskbin			bin/cp
 LINK	ramdiskbin			bin/date
@@ -91,7 +92,6 @@ LINK	ramdiskbin			usr/bin/su
 LINK	ramdiskbin			bin/netstat
 
 #LINK	ramdiskbin			usr/bin/tftp
-LINK	ramdiskbin			usr/bin/chgrp
 LINK	ramdiskbin			usr/bin/fstat
 LINK	ramdiskbin			usr/bin/ftp
 LINK	ramdiskbin			usr/bin/hexdump
@@ -107,10 +107,10 @@ LINK	ramdiskbin			usr/bin/head
 LINK	ramdiskbin			usr/bin/tail
 
 LINK	ramdiskbin			sbin/arp
+LINK	ramdiskbin			sbin/chown
 LINK	ramdiskbin			sbin/dev_mkdb
 LINK	ramdiskbin			sbin/traceroute
 
-LINK	ramdiskbin			usr/sbin/chown
 LINK	ramdiskbin			usr/sbin/iostat
 LINK	ramdiskbin			usr/sbin/pstat
 #LINK	ramdiskbin			usr/sbin/rdate

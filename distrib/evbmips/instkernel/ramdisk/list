@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.12 2010/02/11 09:06:48 roy Exp $
+#	$NetBSD: list,v 1.13 2011/01/14 10:26:31 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -20,6 +20,7 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
+PROG	sbin/chown	bin/chgrp
 PROG	sbin/disklabel
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
@@ -48,7 +49,6 @@ PROG	usr/bin/less	usr/bin/more
 PROG	usr/bin/sed
 PROG	usr/bin/tset
 
-PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
 SPECIAL	ping	srcdir	distrib/utils/x_ping
