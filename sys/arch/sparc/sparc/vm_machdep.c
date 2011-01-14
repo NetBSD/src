@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.102 2011/01/13 05:20:27 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.103 2011/01/14 02:06:32 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2011/01/13 05:20:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2011/01/14 02:06:32 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2011/01/13 05:20:27 mrg Exp $")
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 #include <machine/trap.h>
 
 #include <sparc/sparc/cpuvar.h>

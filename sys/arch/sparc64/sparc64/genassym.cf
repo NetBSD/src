@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.63 2010/12/20 00:25:44 matt Exp $
+#	$NetBSD: genassym.cf,v 1.64 2011/01/14 02:06:32 rmind Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ include <uvm/uvm.h>
 include <machine/db_machdep.h>
 include <machine/pmap.h>
 include <machine/cpu.h>
+include <machine/pcb.h>
 include <machine/reg.h>
 include <machine/vmparam.h>
 

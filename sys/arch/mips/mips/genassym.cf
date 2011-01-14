@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50 2010/12/20 00:25:38 matt Exp $
+#	$NetBSD: genassym.cf,v 1.51 2011/01/14 02:06:28 rmind Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -78,10 +78,11 @@ include <sys/buf.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/mutex.h>
+include <sys/cpu.h>
 
 include <uvm/uvm.h>
 
-include <mips/cpu.h>
+include <mips/pcb.h>
 include <mips/cache.h>
 include <mips/regnum.h>
 include <mips/vmparam.h>
