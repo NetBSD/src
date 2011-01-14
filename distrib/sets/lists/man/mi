@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1276 2011/01/13 21:05:49 jruoho Exp $
+# $NetBSD: mi,v 1.1277 2011/01/14 10:25:14 phx Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -709,6 +709,7 @@
 ./usr/share/man/cat4/amiga/atzsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/bah.0		man-sys-catman		.cat
+./usr/share/man/cat4/amiga/bppcsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/console.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ed.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/es.0			man-sys-catman		.cat
@@ -3484,6 +3485,7 @@
 ./usr/share/man/html4/amiga/atzsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/bah.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/bppcsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/console.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/ed.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/es.html		man-sys-htmlman		html
@@ -5959,6 +5961,7 @@
 ./usr/share/man/man4/amiga/atzsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/bah.4		man-sys-man		.man
+./usr/share/man/man4/amiga/bppcsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/console.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ed.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/es.4			man-sys-man		.man
