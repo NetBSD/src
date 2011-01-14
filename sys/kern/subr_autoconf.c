@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.209 2010/08/16 17:29:52 jruoho Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.210 2011/01/14 10:18:21 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.209 2010/08/16 17:29:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.210 2011/01/14 10:18:21 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -228,7 +228,7 @@ static int config_pending;		/* semaphore for mountroot */
 static kmutex_t config_misc_lock;
 static kcondvar_t config_misc_cv;
 
-static int detachall = 0;
+static bool detachall = false;
 
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
