@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.15 2011/01/10 19:49:43 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.16 2011/01/14 13:12:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -343,6 +343,7 @@ static void
 handlereq(struct spclient *spc)
 {
 	struct rsp_copydata *copydata;
+	struct rsp_hdr *rhdr = &spc->spc_hdr;
 	void *mapaddr;
 	size_t maplen;
 	int reqtype = spc->spc_hdr.rsp_type;
@@ -377,6 +378,14 @@ handlereq(struct spclient *spc)
 			mapaddr = NULL;
 		DPRINTF(("rump_sp handlereq: anonmmap: %p\n", mapaddr));
 		send_anonmmap_resp(spc, spc->spc_hdr.rsp_reqno, mapaddr);
+		break;
+	case RUMPSP_RAISE:
+		DPRINTF(("rump_sp handlereq: raise sig %d\n", rhdr->rsp_signo));
+		raise(rhdr->rsp_signo);
+		/*
+		 * We most likely have signals blocked, but the signal
+		 * will be handled soon enough when we return.
+		 */
 		break;
 	default:
 		printf("PANIC: INVALID TYPE %d\n", reqtype);

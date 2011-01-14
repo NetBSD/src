@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.35 2011/01/12 12:52:16 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.36 2011/01/14 13:12:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.35 2011/01/12 12:52:16 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.36 2011/01/14 13:12:14 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -411,6 +411,24 @@ anonmmap_req(struct spclient *spc, size_t howmuch, void **resp)
 	return rv;
 }
 
+static int
+send_raise_req(struct spclient *spc, int signo)
+{
+	struct rsp_hdr rhdr;
+	int rv;
+
+	rhdr.rsp_len = sizeof(rhdr);
+	rhdr.rsp_class = RUMPSP_REQ;
+	rhdr.rsp_type = RUMPSP_RAISE;
+	rhdr.rsp_signo = signo;
+
+	sendlock(spc);
+	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	sendunlock(spc);
+
+	return rv;
+}
+
 static void
 spcref(struct spclient *spc)
 {
@@ -716,6 +734,19 @@ rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 	if (rv)
 		return rv;
 	return 0;
+}
+
+int
+rumpuser_sp_raise(void *arg, int signo)
+{
+	struct spclient *spc = arg;
+	int rv, nlocks;
+
+	rumpuser__kunlock(0, &nlocks, NULL);
+	rv = send_raise_req(spc, signo);
+	rumpuser__klock(nlocks, NULL);
+
+	return rv;
 }
 
 /*
