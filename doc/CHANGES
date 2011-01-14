@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1488 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1489 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -823,3 +823,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	amd64, i386: Booting from a disk with a GUID Partition Table is
 		now possible. [jakllsch 20110106]
 	sigqueue(2): Implement sigqueue/sigqueueinfo [christos 20110109]
+	amiga: Add a driver for BlizzardPPC 603e+ SCSI [phx 20110114]
