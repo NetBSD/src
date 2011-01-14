@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.28 2010/02/11 09:06:51 roy Exp $
+#	$NetBSD: list,v 1.29 2011/01/14 10:26:37 tsutsui Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/x68k/stand
 
@@ -22,6 +22,7 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
+PROG	sbin/chown	bin/chgrp
 PROG	sbin/disklabel
 PROG	sbin/dmesg
 PROG	sbin/fsck
@@ -49,7 +50,6 @@ PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 PROG	usr/bin/more	usr/bin/less
 PROG	usr/mdec/newdisk
 PROG	usr/mdec/installboot usr/mdec/installboot.new
-PROG	usr/sbin/chown	usr/bin/chgrp
 #PROG	usr/sbin/chroot
 PROG	usr/sbin/memswitch
 

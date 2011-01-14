@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.25 2010/03/10 23:13:10 abs Exp $
+# $NetBSD: list,v 1.26 2011/01/14 10:26:37 tsutsui Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -114,8 +114,9 @@ PROG	bin/sync
 
 PROG	bin/test	bin/[
 
+PROG	sbin/chown	bin/chgrp
+
 # usr.sbin:
-PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/eeprom
 PROG	usr/sbin/installboot
 PROG	usr/sbin/rdate

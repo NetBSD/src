@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.19 2010/03/12 23:07:13 martin Exp $
+#	$NetBSD: list,v 1.20 2011/01/14 10:26:36 tsutsui Exp $
 
 SRCDIRS	bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -22,6 +22,7 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
+PROG	sbin/chown	bin/chgrp
 PROG	sbin/disklabel
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
@@ -61,7 +62,6 @@ PROG	usr/bin/tip
 PROG	libexec/lfs_cleanerd
 
 PROG	usr/sbin/chat
-PROG	usr/sbin/chown		usr/bin/chgrp
 PROG	usr/sbin/chroot
 PROG	usr/sbin/installboot
 PROG	usr/sbin/pppd
