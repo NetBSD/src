@@ -1,8 +1,9 @@
+.\" $NetBSD: bppcsc.4,v 1.2 2011/01/14 10:30:02 wiz Exp $
 .Dd January 8, 2011
 .Dt BPPCSC 4 amiga
 .Os
 .Sh NAME
-.Nm bppcsc 
+.Nm bppcsc
 .Nd BlizzardPPC 603e+ SCSI host adapter device driver
 .Sh SYNOPSIS
 .Cd "bppcsc0 at zbus0"
@@ -10,14 +11,16 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the SCSI controller present on Blizzard PPC 603e+ cards.
+driver provides support for the SCSI controller present on Blizzard
+PPC 603e+ cards.
 .Sh HARDWARE
 The
 .Nm
 driver supports the following hardware:
 .Bl -tag -width "BLIZZARDPPC" -offset indent
-.It Em BLIZZARDPPC 
-Phase5 BlizzardPPC 603e+ on-board SCSI, manufacturer\ 8512, product\ 110, serial number staring with "I"
+.It Em BLIZZARDPPC
+Phase5 BlizzardPPC 603e+ on-board SCSI, manufacturer 8512,
+product 110, serial number staring with "I"
 .El
 .Sh SEE ALSO
 .Xr scsibus 4 ,
@@ -28,10 +31,13 @@ The
 device first appeared in
 .Nx 6.0 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by
-.An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com . 
+.An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
 It was heavily based on the
-.Xr wesc 4 
-driver and uses the siop machine-dependent backend, both written by Michael L. Hitch.
+.Xr wesc 4
+driver and uses the siop machine-dependent backend, both written
+by
+.An Michael L. Hitch .
