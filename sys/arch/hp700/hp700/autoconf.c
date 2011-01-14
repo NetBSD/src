@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 2011/01/14 16:37:11 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 2011/01/14 16:48:15 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37 2011/01/14 16:37:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2011/01/14 16:48:15 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -525,10 +525,8 @@ hppa_walkbus(struct confargs *ca)
 		}
 
 		/* If we've found the module move onto the next one. */
-		if (hm) {
-			aprint_verbose("\n");
+		if (hm)
 			continue;
-		}
 
 		/* Expect PDC to report devices of the following types */
 		if (nhm.hm_type.iodc_type == HPPA_TYPE_FIO) {
