@@ -1,8 +1,9 @@
-#	$NetBSD: list,v 1.19 2010/02/11 09:06:47 roy Exp $
+#	$NetBSD: list,v 1.20 2011/01/14 10:26:29 tsutsui Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
 LINK	instbin			bin/cat
+LINK	instbin			bin/chgrp
 LINK	instbin			bin/chmod
 LINK	instbin			bin/cp
 LINK	instbin			bin/df
@@ -21,6 +22,7 @@ LINK	instbin			bin/stty
 LINK	instbin			bin/sync
 LINK	instbin			bin/test
 LINK	instbin			bin/[
+LINK	instbin			sbin/chown
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/fsck
 LINK	instbin			sbin/fsck_ffs
@@ -40,7 +42,6 @@ LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
 LINK	instbin			usr/bin/awk
-LINK	instbin			usr/bin/chgrp
 LINK	instbin			usr/bin/ftp
 LINK	instbin			usr/bin/gunzip
 LINK	instbin			usr/bin/gzcat
@@ -51,7 +52,6 @@ LINK	instbin			usr/bin/sed
 LINK	instbin			usr/bin/strings
 LINK	instbin			usr/bin/tar
 LINK	instbin			usr/bin/tip
-LINK	instbin			usr/sbin/chown
 LINK	instbin			usr/sbin/chroot
 LINK	instbin			usr/sbin/pppd
 SPECIAL	/bin/rm instbin
