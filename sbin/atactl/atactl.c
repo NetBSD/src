@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.57 2010/03/13 19:49:50 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.58 2011/01/14 06:02:57 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.57 2010/03/13 19:49:50 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.58 2011/01/14 06:02:57 nisimura Exp $");
 #endif
 
 
@@ -553,8 +553,8 @@ print_smart_status(void *vbuf, void *tbuf)
 		else
 			printf("%" PRIu64, raw_value);
 		printf("\n");
-		}
 	}
+}
 
 struct {
 	int number;
