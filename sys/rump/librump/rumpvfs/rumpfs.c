@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.88 2011/01/13 10:26:47 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.89 2011/01/14 11:07:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.88 2011/01/13 10:26:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.89 2011/01/14 11:07:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -212,6 +212,10 @@ struct rumpfs_node {
 struct rumpfs_mount {
 	struct vnode *rfsmp_rvp;
 };
+
+#define INO_WHITEOUT 1
+static int lastino = 2;
+static kmutex_t reclock;
 
 static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t, bool);
 
@@ -478,8 +482,18 @@ rump_etfs_remove(const char *key)
 	mutex_exit(&etfs_lock);
 
 	/* node is unreachable, safe to nuke all device copies */
-	if (et->et_blkmin != -1)
+	if (et->et_blkmin != -1) {
 		vdevgone(RUMPBLK_DEVMAJOR, et->et_blkmin, et->et_blkmin, VBLK);
+	} else {
+		struct vnode *vp;
+
+		mutex_enter(&reclock);
+		if ((vp = et->et_rn->rn_vp) != NULL)
+			mutex_enter(&vp->v_interlock);
+		mutex_exit(&reclock);
+		if (vp && vget(vp, 0) == 0)
+			vgone(vp);
+	}
 
 	if (et->et_rn->rn_hostpath != NULL)
 		free(et->et_rn->rn_hostpath, M_TEMP);
@@ -492,10 +506,6 @@ rump_etfs_remove(const char *key)
 /*
  * rumpfs
  */
-
-#define INO_WHITEOUT 1
-static int lastino = 2;
-static kmutex_t reclock;
 
 static struct rumpfs_node *
 makeprivate(enum vtype vt, dev_t rdev, off_t size, bool et)
