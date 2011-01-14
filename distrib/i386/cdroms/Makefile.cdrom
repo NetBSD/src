@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.21 2010/08/02 10:03:12 martin Exp $
+# $NetBSD: Makefile.cdrom,v 1.22 2011/01/14 10:26:33 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -47,7 +47,6 @@ CDRUNTIME+=	./usr/lib/libz.so*
 CDRUNTIME+=	./usr/libexec/ld.elf_so
 CDRUNTIME+=	./usr/libexec/getty
 CDRUNTIME+=	./usr/mdec
-CDRUNTIME+=	./usr/sbin/chown
 CDRUNTIME+=	./usr/sbin/chroot
 CDRUNTIME+=	./usr/sbin/installboot
 CDRUNTIME+=	./usr/sbin/wiconfig

@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.16 2010/03/10 23:13:09 abs Exp $
+# $NetBSD: list,v 1.17 2011/01/14 10:26:36 tsutsui Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -115,9 +115,10 @@ PROG	bin/sync
 
 PROG	bin/test	bin/[
 
+PROG	sbin/chown	bin/chgrp
+
 # usr.sbin:
 PROG	usr/sbin/installboot
-PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/rdate
 
 # usr.bin:
