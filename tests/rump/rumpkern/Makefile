@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2011/01/14 13:08:00 pooka Exp $
+# $NetBSD: Makefile,v 1.14 2011/01/14 13:23:15 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ TESTS_C+=	t_vm
 
 TESTS_SH=	t_sp
 
-SUBDIR+=	h_client
+SUBDIR+=	h_client h_server
 
 ADD_TO_LD=	-lrumpvfs -lrump -lrumpuser -lpthread
 LDADD.t_modlinkset+=	-lukfs -lrumpdev_disk -lrumpdev -lrumpfs_msdos 

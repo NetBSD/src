@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.8 2011/01/12 12:32:53 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.9 2011/01/14 13:23:15 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,6 +48,7 @@ test_case fork_simple fork simple
 test_case fork_pipecomm fork pipecomm
 test_case fork_fakeauth fork fakeauth
 test_case sigsafe sigsafe sigsafe
+test_case signal signal
 
 basic()
 {
@@ -79,6 +80,16 @@ sigsafe()
 	export RUMP_SERVER=unix://commsock
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
 	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_sigcli
+
+}
+
+signal()
+{
+
+	export RUMP_SERVER=unix://commsock
+	atf_check -s exit:0 $(atf_get_srcdir)/h_server/h_simpleserver \
+	    ${RUMP_SERVER} sendsig 27
+	atf_check -s signal:27 $(atf_get_srcdir)/h_client/h_simplecli block
 }
 
 atf_init_test_cases()
@@ -92,4 +103,5 @@ atf_init_test_cases()
 	atf_add_test_case fork_pipecomm
 	atf_add_test_case fork_fakeauth
 	atf_add_test_case sigsafe
+	atf_add_test_case signal
 }
