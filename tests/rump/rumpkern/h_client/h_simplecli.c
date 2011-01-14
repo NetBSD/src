@@ -1,4 +1,4 @@
-/*	$NetBSD: h_simplecli.c,v 1.1 2010/11/30 22:09:15 pooka Exp $	*/
+/*	$NetBSD: h_simplecli.c,v 1.2 2011/01/14 13:23:15 pooka Exp $	*/
 
 #include <sys/types.h>
 
@@ -11,13 +11,20 @@
 #include <rump/rumpclient.h>
 
 int
-main(void)
+main(int argc, char *argv[])
 {
 
 	if (rumpclient_init() == -1)
 		err(1, "rumpclient init");
 
-	if (rump_sys_getpid() > 0)
-		exit(0);
-	err(1, "getpid");
+	if (argc > 1) {
+		for (;;) {
+			rump_sys_getpid();
+			usleep(10000);
+		}
+	} else {
+		if (rump_sys_getpid() > 0)
+			exit(0);
+		err(1, "getpid");
+	}
 }
