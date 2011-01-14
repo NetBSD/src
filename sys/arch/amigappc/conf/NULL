@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.28 2010/04/16 13:48:29 pooka Exp $
+# $NetBSD: NULL,v 1.29 2011/01/14 12:54:39 phx Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.28 $"
+#ident          "GENERIC-$Revision: 1.29 $"
 
 maxusers	8
 
@@ -301,6 +301,8 @@ ite0		at grf0			# terminal emulators for grfs
 #scsibus*	at mgnsc0
 #wesc0		at zbus0		# Warp Engine scsi
 #scsibus*	at wesc0
+#bppcsc0 	at zbus0		# BlizzardPPC 603e+ scsi
+#scsibus*	at bppcsc0
 #afsc0		at zbus0		# A4091 scsi
 #scsibus*	at afsc0
 #aftsc0		at mainbus0		# A4000T scsi
