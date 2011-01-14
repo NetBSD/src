@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.29 2011/01/07 18:24:53 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.30 2011/01/14 03:16:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.29 2011/01/07 18:24:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.30 2011/01/14 03:16:37 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1692,18 +1692,18 @@ retry:
 			continue;
 		res = hdaudio_afg_assoc_trace_in(sc, j);
 		if (!res) {
-			hda_error(sc, "disable assoc %d (%d) [trace failed]\n",
+			hda_debug(sc, "disable assoc %d (%d) [trace failed]\n",
 			    j, as[j].as_index);
 			for (i = 0; i < HDAUDIO_MAXPINS; i++) {
 				if (as[j].as_pins[i] == 0)
 					continue;
-				hda_error(sc, "  assoc %d pin%d: %02X\n", j, i,
+				hda_debug(sc, "  assoc %d pin%d: %02X\n", j, i,
 				    as[j].as_pins[i]);
 			}
 			for (i = 0; i < HDAUDIO_MAXPINS; i++) {
 				if (as[j].as_dacs[i] == 0)
 					continue;
-				hda_error(sc, "  assoc %d adc%d: %02X\n", j, i,
+				hda_debug(sc, "  assoc %d adc%d: %02X\n", j, i,
 				    as[j].as_dacs[i]);
 			}
 
