@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.22 2010/04/06 08:09:47 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.23 2011/01/14 02:06:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.22 2010/04/06 08:09:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.23 2011/01/14 02:06:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.22 2010/04/06 08:09:47 skrll Exp 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
+#include <machine/pcb.h>
 #include <machine/mcontext.h>
 #include <hppa/hppa/machdep.h>
 

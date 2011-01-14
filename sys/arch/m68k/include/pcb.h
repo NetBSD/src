@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.8 2009/12/02 15:47:45 tsutsui Exp $	*/
+/*	$NetBSD: pcb.h,v 1.9 2011/01/14 02:06:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -79,6 +79,7 @@
 #define _M68K_PCB_H_
 
 #include <machine/frame.h>
+#include <machine/reg.h>
 
 /*
  * m68k process control block

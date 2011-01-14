@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.92 2010/11/06 21:34:24 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2010/11/06 21:34:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2010/11/06 21:34:24 mrg Exp $");
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/bus.h>
 

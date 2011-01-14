@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.139 2010/12/18 01:36:20 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.140 2011/01/14 02:06:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -81,7 +81,7 @@ struct lwp {
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	int		l_ctxswtch;	/* l: performing a context switch */
-	struct user	*l_addr;	/* l: PCB address; use lwp_getpcb() */
+	void		*l_addr;	/* l: PCB address; use lwp_getpcb() */
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
@@ -192,26 +192,18 @@ struct lwp {
 };
 
 /*
- * USER_TO_UAREA/UAREA_TO_USER: macros to convert between
- * the lowest address of the uarea (UAREA) and lwp::l_addr (USER).
- *
- * the default is just a cast.  MD code can modify it by defining
- * either these macros or UAREA_USER_OFFSET in <machine/proc.h>.
+ * UAREA_PCB_OFFSET: an offset of PCB structure in the uarea.  MD code may
+ * define it in <machine/proc.h>, to indicate a different uarea layout.
  */
-
-#if !defined(USER_TO_UAREA)
-#if !defined(UAREA_USER_OFFSET)
-#define	UAREA_USER_OFFSET	0
-#endif /* !defined(UAREA_USER_OFFSET) */
-#define	USER_TO_UAREA(user)	((vaddr_t)(user) - UAREA_USER_OFFSET)
-#define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
-#endif /* !defined(UAREA_TO_USER) */
+#ifndef UAREA_PCB_OFFSET
+#define	UAREA_PCB_OFFSET	0
+#endif
 
 static __inline void *
 lwp_getpcb(struct lwp *l)
 {
 
-	return &l->l_addr->u_pcb;
+	return l->l_addr;
 }
 
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */

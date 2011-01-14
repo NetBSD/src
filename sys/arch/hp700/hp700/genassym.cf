@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2010/04/02 19:33:16 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.25 2011/01/14 02:06:26 rmind Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -53,6 +53,7 @@ include <uvm/uvm_extern.h>
 include	<machine/types.h>
 include <machine/cpu.h>
 include <machine/psl.h>
+include <machine/pcb.h>
 include <machine/reg.h>
 include <machine/pte.h>
 include <machine/frame.h>
