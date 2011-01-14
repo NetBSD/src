@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.30 2010/12/22 12:15:02 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.31 2011/01/14 09:09:18 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.30 2010/12/22 12:15:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.31 2011/01/14 09:09:18 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -76,15 +76,10 @@ static void udf_record_allocation_in_node(struct udf_mount *ump,
 static void udf_collect_free_space_for_vpart(struct udf_mount *ump,
 	uint16_t vpart_num, uint32_t num_lb);
 
+static int udf_ads_merge(uint32_t max_len, uint32_t lb_size, struct long_ad *a1, struct long_ad *a2);
 static void udf_wipe_adslots(struct udf_node *udf_node);
 static void udf_count_alloc_exts(struct udf_node *udf_node);
 
-/*
- * IDEA/BUSY: Each udf_node gets its own extentwalker state for all operations;
- * this will hopefully/likely reduce O(nlog(n)) to O(1) for most functionality
- * since actions are most likely sequencial and thus seeking doesn't need
- * searching for the same or adjacent position again.
- */
 
 /* --------------------------------------------------------------------- */
 
@@ -1407,10 +1402,12 @@ udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num,
  * no-op since they describe different extents on the disc.
  */
 
-void udf_synchronise_metadatamirror_node(struct udf_mount *ump)
+void
+udf_synchronise_metadatamirror_node(struct udf_mount *ump)
 {
 	struct udf_node *meta_node, *metamirror_node;
 	struct long_ad s_ad;
+	uint32_t len, flags;
 	int slot, cpy_slot;
 	int error, eof;
 
@@ -1430,11 +1427,21 @@ void udf_synchronise_metadatamirror_node(struct udf_mount *ump)
 		udf_get_adslot(meta_node, slot, &s_ad, &eof);
 		if (eof)
 			break;
+		len   = udf_rw32(s_ad.len);
+		flags = UDF_EXT_FLAGS(len);
+		len   = UDF_EXT_LEN(len);
+
+		if (flags == UDF_EXT_REDIRECT) {
+			slot++;
+			continue;
+		}
+
 		error = udf_append_adslot(metamirror_node, &cpy_slot, &s_ad);
 		if (error) {
 			/* WTF, this shouldn't happen, what to do now? */
 			panic("udf_synchronise_metadatamirror_node failed!");
 		}
+		cpy_slot++;
 		slot++;
 	}
 
@@ -1466,6 +1473,7 @@ void udf_synchronise_metadatamirror_node(struct udf_mount *ump)
  * and a metadata partition.
  */
 
+/* implementation limit: ump->datapart is the companion partition */
 static uint32_t
 udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 {
@@ -1474,15 +1482,22 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	struct space_bitmap_desc *sbd, *new_sbd;
 	struct logvol_int_desc *lvid;
 	uint64_t inf_len;
-	uint64_t meta_free_lbs, data_free_lbs;
+	uint64_t meta_free_lbs, data_free_lbs, to_trunc;
 	uint32_t *freepos, *sizepos;
-	uint32_t unit, lb_size, to_trunc;
+	uint32_t unit, lb_size;
 	uint16_t meta_vpart_num, data_vpart_num, num_vpart;
 	int err;
 
 	unit = ump->metadata_alloc_unit_size;
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	lvid = ump->logvol_integrity;
+
+	/* XXX
+	 *
+	 * the following checks will fail for BD-R UDF 2.60! but they are
+	 * read-only for now anyway! Its even doubtfull if it is to be allowed
+	 * for these discs.
+	 */
 
 	/* lookup vpart for metadata partition */
 	meta_vpart_num = ump->node_part;
@@ -1514,7 +1529,7 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	if (to_trunc == 0)
 		return num_lb;
 
-	DPRINTF(RESERVE, ("\ttruncating %d lbs from the metadata bitmap\n",
+	DPRINTF(RESERVE, ("\ttruncating %"PRIu64" lbs from the metadata bitmap\n",
 		to_trunc));
 
 	/* get length of the metadata bitmap node file */
@@ -1530,8 +1545,8 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	/* as per [UDF 2.60/2.2.13.6] : */
 	/* 1) update the SBD in the metadata bitmap file */
 	sbd = (struct space_bitmap_desc *) bitmap->blob;
-	sbd->num_bits  = udf_rw32(sbd->num_bits)  - to_trunc;
-	sbd->num_bytes = udf_rw32(sbd->num_bytes) - to_trunc/8;
+	sbd->num_bits  = udf_rw32(udf_rw32(sbd->num_bits)  - to_trunc);
+	sbd->num_bytes = udf_rw32(udf_rw32(sbd->num_bytes) - to_trunc/8);
 	bitmap->max_offset = udf_rw32(sbd->num_bits);
 
 	num_vpart = udf_rw32(lvid->num_part);
@@ -1551,8 +1566,9 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	ump->lvclose |= UDF_WRITE_PART_BITMAPS;
 
 	/*
-	 * The truncated space is secured now and can't be allocated anymore. Release
-	 * the allocate mutex so we can shrink the nodes the normal way.
+	 * The truncated space is secured now and can't be allocated anymore.
+	 * Release the allocate mutex so we can shrink the nodes the normal
+	 * way.
 	 */
 	mutex_exit(&ump->allocate_mutex);
 
@@ -1561,11 +1577,15 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	KASSERT(err == 0);
 
 	/* 3) trunc the metadata file and mirror file, freeing blocks */
-	inf_len = udf_rw32(sbd->num_bits) * lb_size;	/* [4/14.12.4] */
+	inf_len = (uint64_t) udf_rw32(sbd->num_bits) * lb_size;	/* [4/14.12.4] */
 	err = udf_shrink_node(ump->metadata_node, inf_len);
 	KASSERT(err == 0);
-	if (ump->metadatamirror_node && (ump->metadata_flags & METADATA_DUPLICATED)) {
-		err = udf_shrink_node(ump->metadatamirror_node, inf_len);
+	if (ump->metadatamirror_node) {
+		if (ump->metadata_flags & METADATA_DUPLICATED) {
+			err = udf_shrink_node(ump->metadatamirror_node, inf_len);
+		} else {
+			/* extents will be copied on writeout */
+		}
 		KASSERT(err == 0);
 	}
 	ump->lvclose |= UDF_WRITE_METAPART_NODES;
@@ -1697,15 +1717,13 @@ udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf,
  */
 
 static int
-udf_ads_merge(uint32_t lb_size, struct long_ad *a1, struct long_ad *a2)
+udf_ads_merge(uint32_t max_len, uint32_t lb_size, struct long_ad *a1, struct long_ad *a2)
 {
-	uint32_t max_len, merge_len;
+	uint32_t merge_len;
 	uint32_t a1_len, a2_len;
 	uint32_t a1_flags, a2_flags;
 	uint32_t a1_lbnum, a2_lbnum;
 	uint16_t a1_part, a2_part;
-
-	max_len = ((UDF_EXT_MAXLEN / lb_size) * lb_size);
 
 	a1_flags = UDF_EXT_FLAGS(udf_rw32(a1->len));
 	a1_len   = UDF_EXT_LEN(udf_rw32(a1->len));
@@ -2250,6 +2268,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 	uint64_t inflen, from, till;
 	uint64_t foffset, end_foffset, restart_foffset;
 	uint64_t orig_inflen, orig_lbrec, new_inflen, new_lbrec;
+	uint32_t max_len;
 	uint32_t num_lb, len, flags, lb_num;
 	uint32_t run_start;
 	uint32_t slot_offset, replace_len, replace;
@@ -2269,6 +2288,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 #endif
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
+	max_len = ((UDF_EXT_MAXLEN / lb_size) * lb_size);
 
 	/* do the job */
 	UDF_LOCK_NODE(udf_node, 0);	/* XXX can deadlock ? */
@@ -2550,7 +2570,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 		UDF_EXT_FLAGS(udf_rw32(s_ad.len)) >> 30));
 
 		/* see if we can merge */
-		if (udf_ads_merge(lb_size, &c_ad, &s_ad)) {
+		if (udf_ads_merge(max_len, lb_size, &c_ad, &s_ad)) {
 			/* not mergable (anymore) */
 			DPRINTF(ALLOC, ("\t7: appending vp %d lb %d, "
 				"len %d, flags %d\n",
@@ -2613,7 +2633,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	uint64_t size_diff, old_size, inflen, objsize, chunk, append_len;
 	uint64_t foffset, end_foffset;
 	uint64_t orig_inflen, orig_lbrec, new_inflen, new_lbrec;
-	uint32_t lb_size, dscr_size, crclen, lastblock_grow;
+	uint32_t lb_size, unit_size, dscr_size, crclen, lastblock_grow;
 	uint32_t icbflags, len, flags, max_len;
 	uint32_t max_l_ad, l_ad, l_ea;
 	uint16_t my_part, dst_part;
@@ -2628,7 +2648,12 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	udf_node_sanity_check(udf_node, &orig_inflen, &orig_lbrec);
 
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
-	max_len = ((UDF_EXT_MAXLEN / lb_size) * lb_size);
+
+	/* max_len in unit's IFF its a metadata node or metadata mirror node */
+	unit_size = lb_size;
+	if ((udf_node == ump->metadata_node) || (udf_node == ump->metadatamirror_node))
+		unit_size = ump->metadata_alloc_unit_size * lb_size;
+	max_len = ((UDF_EXT_MAXLEN / unit_size) * unit_size);
 
 	fe  = udf_node->fe;
 	efe = udf_node->efe;
@@ -2804,7 +2829,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 		s_ad.loc.part_num = udf_rw16(0);
 		s_ad.loc.lb_num   = udf_rw32(0);
 
-		if (udf_ads_merge(lb_size, &c_ad, &s_ad)) {
+		if (udf_ads_merge(max_len, lb_size, &c_ad, &s_ad)) {
 			/* not mergable (anymore) */
 			error = udf_append_adslot(udf_node, &slot, &c_ad);
 			if (error)
@@ -2883,7 +2908,7 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 	uint64_t size_diff, old_size, inflen, objsize;
 	uint64_t foffset, end_foffset;
 	uint64_t orig_inflen, orig_lbrec, new_inflen, new_lbrec;
-	uint32_t lb_size, dscr_size, crclen;
+	uint32_t lb_size, unit_size, dscr_size, crclen;
 	uint32_t slot_offset, slot_offset_lb;
 	uint32_t len, flags, max_len;
 	uint32_t num_lb, lb_num;
@@ -2900,7 +2925,12 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 	udf_node_sanity_check(udf_node, &orig_inflen, &orig_lbrec);
 
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
-	max_len = ((UDF_EXT_MAXLEN / lb_size) * lb_size);
+
+	/* max_len in unit's IFF its a metadata node or metadata mirror node */
+	unit_size = lb_size;
+	if ((udf_node == ump->metadata_node) || (udf_node == ump->metadatamirror_node))
+		unit_size = ump->metadata_alloc_unit_size * lb_size;
+	max_len = ((UDF_EXT_MAXLEN / unit_size) * unit_size);
 
 	/* do the work */
 	fe  = udf_node->fe;
@@ -3153,7 +3183,7 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		UDF_EXT_FLAGS(udf_rw32(s_ad.len)) >> 30));
 
 		/* see if we can merge */
-		if (udf_ads_merge(lb_size, &c_ad, &s_ad)) {
+		if (udf_ads_merge(max_len, lb_size, &c_ad, &s_ad)) {
 			/* not mergable (anymore) */
 			DPRINTF(ALLOC, ("\t6: appending vp %d lb %d, "
 				"len %d, flags %d\n",
