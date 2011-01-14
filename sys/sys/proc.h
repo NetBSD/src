@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.298 2010/07/07 01:30:38 chs Exp $	*/
+/*	$NetBSD: proc.h,v 1.299 2011/01/14 02:06:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -537,34 +537,29 @@ _proclist_skipmarker(struct proc *p0)
 #define	tsleep(chan, pri, wmesg, timo)					\
 	ltsleep(chan, pri, wmesg, timo, NULL)
 
+/*
+ * Kernel stack parameters.
+ *
+ * KSTACK_LOWEST_ADDR: return the lowest address of the LWP's kernel stack,
+ * excluding red-zone.
+ *
+ * KSTACK_SIZE: the size kernel stack for a LWP, excluding red-zone.
+ *
+ * if <machine/proc.h> provides the MD definition, it will be used.
+ */
+#ifndef KSTACK_LOWEST_ADDR
+#define	KSTACK_LOWEST_ADDR(l)	((void *)ALIGN((struct pcb *)((l)->l_addr) + 1))
+#endif
+#ifndef KSTACK_SIZE
+#define	KSTACK_SIZE		(USPACE - ALIGN(sizeof(struct pcb)))
+#endif
+
 #ifdef KSTACK_CHECK_MAGIC
 void	kstack_setup_magic(const struct lwp *);
 void	kstack_check_magic(const struct lwp *);
 #else
 #define	kstack_setup_magic(x)
 #define	kstack_check_magic(x)
-#endif
-
-/*
- * kernel stack paramaters
- * XXX require sizeof(struct user)
- */
-/*
- * KSTACK_LOWEST_ADDR: return the lowest address of the lwp's kernel stack,
- * excluding redzone etc.
- *
- * if <machine/proc.h> provides the MD definition, it will be used.
- */
-#ifndef KSTACK_LOWEST_ADDR
-#define	KSTACK_LOWEST_ADDR(l)	((void *)ALIGN((l)->l_addr + 1))
-#endif
-/*
- * KSTACK_SIZE: the size kernel stack for a lwp, excluding redzone etc.
- *
- * if <machine/proc.h> provides the MD definition, it will be used.
- */
-#ifndef KSTACK_SIZE
-#define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif
 
 extern struct emul emul_netbsd;

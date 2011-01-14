@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.145 2010/04/16 03:21:49 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.146 2011/01/14 02:06:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.145 2010/04/16 03:21:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.146 2011/01/14 02:06:34 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -84,10 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.145 2010/04/16 03:21:49 rmind Exp $")
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
-#include <sys/user.h>
 #include <sys/syncobj.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
+#include <sys/lwp.h>
 
 #include <uvm/uvm.h>
 
@@ -208,8 +208,8 @@ uvm_proc_fork(struct proc *p1, struct proc *p2, bool shared)
 /*
  * uvm_lwp_fork: fork a thread
  *
- * - a new "user" structure is allocated for the child process
- *	[filled in by MD layer...]
+ * - a new PCB structure is allocated for the child process,
+ *	and filled in by MD layer
  * - if specified, the child gets a new user stack described by
  *	stack and stacksize
  * - NOTE: the kernel stack may be at a different location in the child
@@ -337,14 +337,14 @@ vaddr_t
 uvm_lwp_getuarea(lwp_t *l)
 {
 
-	return (vaddr_t)l->l_addr - UAREA_USER_OFFSET;
+	return (vaddr_t)l->l_addr - UAREA_PCB_OFFSET;
 }
 
 void
 uvm_lwp_setuarea(lwp_t *l, vaddr_t addr)
 {
 
-	l->l_addr = (void *)(addr + UAREA_USER_OFFSET);
+	l->l_addr = (void *)(addr + UAREA_PCB_OFFSET);
 }
 
 /*

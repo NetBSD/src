@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.19 2009/12/14 12:53:18 uebayasi Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.20 2011/01/14 02:06:28 rmind Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.19 2009/12/14 12:53:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.20 2011/01/14 02:06:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -29,6 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.19 2009/12/14 12:53:18 uebay
 #include <compat/sys/signalvar.h>
 
 #include <mips/regnum.h>
+#include <mips/pcb.h>
 
 #ifdef DEBUG
 extern int sigdebug;

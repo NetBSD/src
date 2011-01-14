@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.62 2010/01/03 23:03:20 mrg Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.63 2011/01/14 02:06:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.62 2010/01/03 23:03:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.63 2011/01/14 02:06:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.62 2010/01/03 23:03:20 mrg Exp $")
 #include <machine/oldmon.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
+#include <machine/pcb.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
@@ -674,15 +675,15 @@ vmeintr4m(void *arg)
 	extern int fkbyte(volatile char *, struct pcb *);
 	volatile char *addr = &ihp->sc->sc_vec->vmebusvec[level];
 	struct pcb *xpcb;
-	u_long saveonfault;
+	void *saveonfault;
 	int s;
 
 	s = splhigh();
 
 	xpcb = lwp_getpcb(curlwp);
-	saveonfault = (u_long)xpcb->pcb_onfault;
+	saveonfault = xpcb->pcb_onfault;
 	vec = fkbyte(addr, xpcb);
-	xpcb->pcb_onfault = (void *)saveonfault;
+	xpcb->pcb_onfault = saveonfault;
 
 	splx(s);
 	}
