@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.90 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.91 2011/01/14 23:56:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.90 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.91 2011/01/14 23:56:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -967,18 +967,24 @@ host_long_port6
 		NUMBER
 		{
 #ifdef INET6
-			char *a, *p;
+			unsigned char buf[16];
 
-			memset(&data_dest, 0, sizeof(data_dest));
+			(void)memset(&data_dest, 0, sizeof(data_dest));
 			data_dest.su_len = sizeof(struct sockaddr_in6);
 			data_dest.su_family = AF_INET6;
-			p = (char *)&data_dest.su_port;
-			p[0] = $39.i; p[1] = $41.i;
-			a = (char *)&data_dest.si_su.su_sin6.sin6_addr;
-			a[0] = $5.i; a[1] = $7.i; a[2] = $9.i; a[3] = $11.i;
-			a[4] = $13.i; a[5] = $15.i; a[6] = $17.i; a[7] = $19.i;
-			a[8] = $21.i; a[9] = $23.i; a[10] = $25.i; a[11] = $27.i;
-			a[12] = $29.i; a[13] = $31.i; a[14] = $33.i; a[15] = $35.i;
+			buf[0] = $39.i; buf[1] = $41.i;
+			(void)memcpy(&data_dest.su_port, buf,
+			    sizeof(&data_dest.su_port));
+			buf[0] = $5.i; buf[1] = $7.i;
+			buf[2] = $9.i; buf[3] = $11.i;
+			buf[4] = $13.i; buf[5] = $15.i;
+			buf[6] = $17.i; buf[7] = $19.i;
+			buf[8] = $21.i; buf[9] = $23.i;
+			buf[10] = $25.i; buf[11] = $27.i;
+			buf[12] = $29.i; buf[13] = $31.i;
+			buf[14] = $33.i; buf[15] = $35.i;
+			(void)memcpy(&data_dest.si_su.su_sin6.sin6_addr,
+			    buf, sizeof(data_dest.si_su.su_sin6.sin6_addr));
 			if (his_addr.su_family == AF_INET6) {
 				/* XXX: more sanity checks! */
 				data_dest.su_scope_id = his_addr.su_scope_id;
