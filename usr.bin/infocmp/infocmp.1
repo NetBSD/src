@@ -1,4 +1,4 @@
-.\"	$NetBSD: infocmp.1,v 1.4 2010/05/14 17:02:01 joerg Exp $
+.\"	$NetBSD: infocmp.1,v 1.5 2011/01/14 14:21:36 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,17 +45,17 @@ The
 .Nm
 reconstructs the first available
 .Xr terminfo 5
-definiton found for
+definition found for
 .Ar term
 and prints the result in a
 .Xr terminfo 5
 format.
-Capabilty types are grouped together and new types start new lines,
+Capability types are grouped together and new types start new lines,
 first flags, then numbers, then strings.
 Capabilities are sorted by their name.
 If a second
 .Ar term
-is given then the capabilies are compared against each other.
+is given then the capabilities are compared against each other.
 .Pp
 The following options are available:
 .Bl -tag -width Ev
@@ -77,12 +77,13 @@ flag as
 .Nm
 retains commented out capabilities as non standard.
 .It Fl c
-Print capabilites common to each definition.
+Print capabilities common to each definition.
 .It Fl n
-Print capabilites that do not exist in either definition.
+Print capabilities that do not exist in either definition.
 .It Fl q
 Make the comparison listing shorter by omitting subheadings and using
-- for absent capabilities, @ for cancelled capapbilites rather than NULL.
+- for absent capabilities, @ for canceled capabilities rather than
+.Dv NULL .
 .It Fl u
 Build a new terminal description for the first terminal description,
 using subsequent terminal descriptions.
@@ -108,7 +109,7 @@ flag passed to
 Override columns returned by the output terminal.
 .Fl w
 .Ar cols
-supercedes this.
+supersedes this.
 .It Ev TERM
 .Nm
 uses the contents of the
