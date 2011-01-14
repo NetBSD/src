@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2011/01/13 21:15:14 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 2011/01/14 16:37:11 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36 2011/01/13 21:15:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37 2011/01/14 16:37:11 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -669,6 +669,7 @@ hppa_pdcmodule_create(struct hppa_pdcmodule *hm, const char *who)
 	nhm = kmem_zalloc(sizeof(*nhm), KM_SLEEP);
 
 	nhm->hm_registered = false;
+	nhm->hm_pir = hm->hm_pir;
 	nhm->hm_type = hm->hm_type;
 	nhm->hm_dp = hm->hm_dp;
 	nhm->hm_hpa = hm->hm_hpa;
