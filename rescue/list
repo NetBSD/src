@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.39 2010/02/13 22:54:51 roy Exp $
+#	$NetBSD: list,v 1.40 2011/01/14 00:59:14 njoly Exp $
 
 SRCDIRS	bin
 
@@ -45,6 +45,7 @@ PROG	atactl
 PROG	badsect
 PROG	brconfig
 PROG	ccdconfig
+PROG	chown		chgrp
 PROG	clri
 PROG	disklabel
 PROG	dkctl
@@ -132,7 +133,6 @@ SPECIAL vi        	srcdir  usr.bin/nvi/build
 
 SRCDIRS	usr.sbin
 
-PROG	chown		chgrp
 PROG	chroot
 PROG	dumpfs
 PROG	dumplfs
