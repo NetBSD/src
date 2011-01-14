@@ -1,7 +1,7 @@
-/*	$NetBSD: kernspace.h,v 1.4 2011/01/14 13:08:00 pooka Exp $	*/
+/*	$NetBSD: sendsig.c,v 1.1 2011/01/14 13:08:00 pooka Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,21 +27,56 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TESTS_RUMP_KERNSPACE_KERNSPACE_H_
-#define _TESTS_RUMP_KERNSPACE_KERNSPACE_H_
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: sendsig.c,v 1.1 2011/01/14 13:08:00 pooka Exp $");
+#endif /* !lint */
 
-enum locktest { LOCKME_MTX, LOCKME_RWDOUBLEX, LOCKME_RWRX, LOCKME_RWXR,
-	LOCKME_DESTROYHELD, LOCKME_DOUBLEINIT, LOCKME_DOUBLEFREE,
-	LOCKME_MEMFREE };
+#include <sys/param.h>
+#include <sys/proc.h>
 
-void rumptest_busypage(void);
-void rumptest_threadjoin(void);
-void rumptest_thread(void);
-void rumptest_tsleep(void);
-void rumptest_alloc(size_t);
-void rumptest_lockme(enum locktest);
+#include <rump/rump.h>
 
-void rumptest_sendsig(char *);
-void rumptest_localsig(int);
+#include "kernspace.h"
 
-#endif /* _TESTS_RUMP_KERNSPACE_KERNSPACE_H_ */
+/*
+ * loop until a non-system process appears and we can send it a signal
+ */
+void
+rumptest_sendsig(char *signo)
+{
+	struct proc *p;
+	bool sent = false;
+	int sig;
+
+	sig = strtoull(signo, NULL, 10);
+	rump_boot_setsigmodel(RUMP_SIGMODEL_RAISE);
+
+	mutex_enter(proc_lock);
+	while (!sent) {
+		PROCLIST_FOREACH(p, &allproc) {
+			if (p->p_pid > 1) {
+				mutex_enter(p->p_lock);
+				psignal(p, sig);
+				mutex_exit(p->p_lock);
+				sent = true;
+				break;
+			}
+		}
+		kpause("w8", false, 1, proc_lock);
+	}
+	mutex_exit(proc_lock);
+
+	/* restore default */
+	rump_boot_setsigmodel(RUMP_SIGMODEL_PANIC);
+}
+
+void
+rumptest_localsig(int signo)
+{
+	struct proc *p = curproc;
+
+	mutex_enter(p->p_lock);
+	psignal(p, signo);
+	mutex_exit(p->p_lock);
+}
