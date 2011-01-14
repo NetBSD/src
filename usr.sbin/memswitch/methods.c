@@ -1,4 +1,4 @@
-/*	$NetBSD: methods.c,v 1.6 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: methods.c,v 1.7 2011/01/14 13:31:47 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "methods.h"
 
 int
-atoi_ (p)
+atoi_(p)
 	 const char **p;
 {
 	const char *p1 = *p;
@@ -52,7 +52,7 @@ atoi_ (p)
 		*p = 0;
 		return 0;
 	}
-	if (strlen (p1) >= 2 && strncasecmp ("0x", p1, 2) == 0) {
+	if (strlen(p1) >= 2 && strncasecmp("0x", p1, 2) == 0) {
 		p1 += 2;
 		while (1) {
 			if (*p1 >= '0' && *p1 <= '9') {
@@ -96,11 +96,11 @@ atoi_ (p)
 }
 
 int
-fill_uchar (prop)
+fill_uchar(prop)
 	struct property *prop;
 {
 	if (current_values == 0)
-		alloc_current_values ();
+		alloc_current_values();
 
 	prop->current_value.byte[0] = current_values[prop->offset];
 	prop->current_value.byte[1] = 0;
@@ -112,11 +112,11 @@ fill_uchar (prop)
 }
 
 int
-fill_ushort (prop)
+fill_ushort(prop)
 	struct property *prop;
 {
 	if (current_values == 0)
-		alloc_current_values ();
+		alloc_current_values();
 
 	prop->current_value.byte[0] = current_values[prop->offset];
 	prop->current_value.byte[1] = current_values[prop->offset+1];
@@ -128,11 +128,11 @@ fill_ushort (prop)
 }
 
 int
-fill_ulong (prop)
+fill_ulong(prop)
 	struct property *prop;
 {
 	if (current_values == 0)
-		alloc_current_values ();
+		alloc_current_values();
 
 	prop->current_value.byte[0] = current_values[prop->offset];
 	prop->current_value.byte[1] = current_values[prop->offset+1];
@@ -144,14 +144,14 @@ fill_ulong (prop)
 }
 
 int
-flush_uchar (prop)
+flush_uchar(prop)
 	struct property *prop;
 {
 	if (!prop->modified)
 		return 0;
 
 	if (modified_values == 0)
-		alloc_modified_values ();
+		alloc_modified_values();
 
 	modified_values[prop->offset] = prop->modified_value.byte[0];
 
@@ -159,14 +159,14 @@ flush_uchar (prop)
 }
 
 int
-flush_ushort (prop)
+flush_ushort(prop)
 	struct property *prop;
 {
 	if (!prop->modified)
 		return 0;
 
 	if (modified_values == 0)
-		alloc_modified_values ();
+		alloc_modified_values();
 
 	modified_values[prop->offset] = prop->modified_value.byte[0];
 	modified_values[prop->offset+1] = prop->modified_value.byte[1];
@@ -175,14 +175,14 @@ flush_ushort (prop)
 }
 
 int
-flush_ulong (prop)
+flush_ulong(prop)
 	struct property *prop;
 {
 	if (!prop->modified)
 		return 0;
 
 	if (modified_values == 0)
-		alloc_modified_values ();
+		alloc_modified_values();
 
 	modified_values[prop->offset] = prop->modified_value.byte[0];
 	modified_values[prop->offset+1] = prop->modified_value.byte[1];
@@ -193,51 +193,51 @@ flush_ulong (prop)
 }
 
 int
-flush_dummy (prop)
+flush_dummy(prop)
 	struct property *prop;
 {
 	return 0;
 }
 
 int
-parse_dummy (prop, value)
+parse_dummy(prop, value)
 	struct property *prop;
 	const char *value;
 {
-	warnx ("Cannot modify %s.%s", prop->class, prop->node);
+	warnx("Cannot modify %s.%s", prop->class, prop->node);
 
 	return -1;
 }
 
 int
-parse_byte (prop, value)
+parse_byte(prop, value)
 	struct property *prop;
 	const char *value;
 {
 	const char *p = value;
 	int v;
 
-	v = atoi_ (&p);
+	v = atoi_(&p);
 	if (p == 0) {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
-	if (strcasecmp ("MB", p) == 0)
+	if (strcasecmp("MB", p) == 0)
 		v *= 1024 * 1024;
-	else if (strcasecmp ("KB", p) == 0)
+	else if (strcasecmp("KB", p) == 0)
 		v *= 1024;
 	else if (*p != 0 &&
-		 strcasecmp ("B", p) != 0) {
-		warnx ("%s: Invalid value", value);
+		 strcasecmp("B", p) != 0) {
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
 	if (v < prop->min) {
-		warnx ("%s: Too small", value);
+		warnx("%s: Too small", value);
 		return -1;
 	} else if (v > prop->max) {
-		warnx ("%s: Too large", value);
+		warnx("%s: Too large", value);
 		return -1;
 	}
 
@@ -248,24 +248,24 @@ parse_byte (prop, value)
 }
 
 int
-parse_uchar (prop, value)
+parse_uchar(prop, value)
 	struct property *prop;
 	const char *value;
 {
 	const char *p = value;
 	int v;
 
-	v = atoi_ (&p);
+	v = atoi_(&p);
 	if (p == 0) {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
 	if (v < prop->min) {
-		warnx ("%s: Too small", value);
+		warnx("%s: Too small", value);
 		return -1;
 	} else if (v > prop->max) {
-		warnx ("%s: Too large", value);
+		warnx("%s: Too large", value);
 		return -1;
 	}
 
@@ -276,24 +276,24 @@ parse_uchar (prop, value)
 }
 
 int
-parse_ulong (prop, value)
+parse_ulong(prop, value)
 	struct property *prop;
 	const char *value;
 {
 	const char *p = value;
 	int v;
 
-	v = atoi_ (&p);
+	v = atoi_(&p);
 	if (p == 0) {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
 	if (v < prop->min) {
-		warnx ("%s: Too small", value);
+		warnx("%s: Too small", value);
 		return -1;
 	} else if (v > prop->max) {
-		warnx ("%s: Too large", value);
+		warnx("%s: Too large", value);
 		return -1;
 	}
 
@@ -304,24 +304,24 @@ parse_ulong (prop, value)
 }
 
 int
-parse_ushort (prop, value)
+parse_ushort(prop, value)
 	struct property *prop;
 	const char *value;
 {
 	const char *p = value;
 	int v;
 
-	v = atoi_ (&p);
+	v = atoi_(&p);
 	if (p == 0) {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
 	if (v < prop->min) {
-		warnx ("%s: Too small", value);
+		warnx("%s: Too small", value);
 		return -1;
 	} else if (v > prop->max) {
-		warnx ("%s: Too large", value);
+		warnx("%s: Too large", value);
 		return -1;
 	}
 
@@ -332,7 +332,7 @@ parse_ushort (prop, value)
 }
 
 int
-parse_time (prop, value)
+parse_time(prop, value)
 	struct property *prop;
 	const char *value;
 {
@@ -342,31 +342,31 @@ parse_time (prop, value)
 	while (*p == ' ' || *p == '\t') p++;
 	if (*p == '-') {
 		p++;
-		v = -atoi_ (&p);
+		v = -atoi_(&p);
 	} else
-		v = atoi_ (&p);
+		v = atoi_(&p);
 	if (p == 0) {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
-	if (strcasecmp ("hours", p) == 0 || strcasecmp ("hour", p) == 0)
+	if (strcasecmp("hours", p) == 0 || strcasecmp("hour", p) == 0)
 		v *= 60 * 60;
-	else if (strcasecmp ("minutes", p) == 0 ||
-		 strcasecmp ("minute", p) == 0)
+	else if (strcasecmp("minutes", p) == 0 ||
+		 strcasecmp("minute", p) == 0)
 		v *= 60;
 	else if (*p != 0 &&
-		 strcasecmp ("second", p) != 0 &&
-		 strcasecmp ("seconds", p) != 0) {
-		warnx ("%s: Invalid value", value);
+		 strcasecmp("second", p) != 0 &&
+		 strcasecmp("seconds", p) != 0) {
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
 	if (v < prop->min) {
-		warnx ("%s: Too small", value);
+		warnx("%s: Too small", value);
 		return -1;
 	} else if (v > prop->max) {
-		warnx ("%s: Too large", value);
+		warnx("%s: Too large", value);
 		return -1;
 	}
 
@@ -377,7 +377,7 @@ parse_time (prop, value)
 }
 
 int
-parse_bootdev (prop, value)
+parse_bootdev(prop, value)
 	struct property *prop;
 	const char *value;
 {
@@ -387,38 +387,38 @@ parse_bootdev (prop, value)
 
 	while (*p == ' ' || *p == '\t') p++;
 
-	if (strcasecmp ("STD", p) == 0)
+	if (strcasecmp("STD", p) == 0)
 		v = 0;
-	else if (strcasecmp ("ROM", p) == 0)
+	else if (strcasecmp("ROM", p) == 0)
 		v = 0xa000;
-	else if (strcasecmp ("RAM", p) == 0)
+	else if (strcasecmp("RAM", p) == 0)
 		v = 0xb000;
-	else if (strncasecmp ("HD", p, 2) == 0) {
+	else if (strncasecmp("HD", p, 2) == 0) {
 		p += 2;
-		v = atoi_ (&p);
+		v = atoi_(&p);
 		if (p == 0 || v < 0 || v > 15) {
-			warnx ("%s: Invalid value", value);
+			warnx("%s: Invalid value", value);
 			return -1;
 		}
 		v *= 0x0100;
 		v += 0x8000;
-	} else if (strncasecmp ("FD", p, 2) == 0) {
+	} else if (strncasecmp("FD", p, 2) == 0) {
 		p += 2;
-		v = atoi_ (&p);
+		v = atoi_(&p);
 		if (p == 0 || v < 0 || v > 3) {
-			warnx ("%s: Invalid value", value);
+			warnx("%s: Invalid value", value);
 			return -1;
 		}
 		v *= 0x0100;
 		v += 0x9070;
-	} else if (strncasecmp ("INSCSI", p, 6) == 0 ||
-		   strncasecmp ("EXSCSI", p, 6) == 0) {
-		int isin = strncasecmp ("EXSCSI", p, 6);
+	} else if (strncasecmp("INSCSI", p, 6) == 0 ||
+		   strncasecmp("EXSCSI", p, 6) == 0) {
+		int isin = strncasecmp("EXSCSI", p, 6);
 
 		p += 6;
-		v = atoi_ (&p);
+		v = atoi_(&p);
 		if (p == 0 || v < 0 || v > 7) {
-			warnx ("%s: Invalid value", value);
+			warnx("%s: Invalid value", value);
 			return -1;
 		}
 
@@ -430,7 +430,7 @@ parse_bootdev (prop, value)
 		/* boot.device again */
 		v = 0xa000;
 	} else {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
@@ -441,12 +441,12 @@ parse_bootdev (prop, value)
 }
 
 int
-parse_serial (prop, value)
+parse_serial(prop, value)
 	struct property *prop;
 	const char *value;
 #define NEXTSPEC	while (*p == ' ' || *p == '\t') p++;		\
 			if (*p++ != ',') {				\
-				warnx ("%s: Invalid value", value);	\
+				warnx("%s: Invalid value", value);	\
 				return -1;				\
 			}						\
 			while (*p == ' ' || *p == '\t') p++;
@@ -462,16 +462,16 @@ parse_serial (prop, value)
 	while (*p == ' ' || *p == '\t') p++;
 
 	/* speed */
-	baud = atoi_ (&p);
+	baud = atoi_(&p);
 	if (p == 0) {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 	for (i = 0; bauds[i]; i++)
 		if (baud == bauds[i])
 			break;
 	if (bauds[i] == 0) {
-		warnx ("%d: Invalid speed", baud);
+		warnx("%d: Invalid speed", baud);
 		return -1;
 	}
 	baud = i;
@@ -480,7 +480,7 @@ parse_serial (prop, value)
 
 	/* bit size */
 	if (*p < '5' || *p > '8') {
-		warnx ("%c: Invalid bit size", *p);
+		warnx("%c: Invalid bit size", *p);
 		return -1;
 	}
 	bit = *p++ - '5';
@@ -490,7 +490,7 @@ parse_serial (prop, value)
 	/* parity */
 	q = strchr(parities, *p++);
 	if (q == 0) {
-		warnx ("%c: Invalid parity spec", *p);
+		warnx("%c: Invalid parity spec", *p);
 		return -1;
 	}
 	parity = q - parities;
@@ -498,17 +498,17 @@ parse_serial (prop, value)
 	NEXTSPEC;
 
 	/* stop bit */
-	if (strncmp (p, "1.5", 3) == 0) {
+	if (strncmp(p, "1.5", 3) == 0) {
 		stop = 2;
 		p += 3;
-	} else if (strncmp (p, "2", 1) == 0) {
+	} else if (strncmp(p, "2", 1) == 0) {
 		stop = 0;
 		p++;
-	} else if (strncmp (p, "1", 1) == 0) {
+	} else if (strncmp(p, "1", 1) == 0) {
 		stop = 1;
 		p++;
 	} else {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
@@ -520,14 +520,14 @@ parse_serial (prop, value)
 	else if (*p == 's')
 		flow = 1;
 	else {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
 	p++;
 	while (*p == ' ' || *p == '\t') p++;
 	if (*p != 0) {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
@@ -543,7 +543,7 @@ parse_serial (prop, value)
 #undef NEXTSPEC
 
 int
-parse_srammode (prop, value)
+parse_srammode(prop, value)
 	struct property *prop;
 	const char *value;
 {
@@ -551,11 +551,11 @@ parse_srammode (prop, value)
 	int i;
 
 	for (i = 0; i <= 2; i++) {
-		if (strcasecmp (value, sramstrs[i]) == 0)
+		if (strcasecmp(value, sramstrs[i]) == 0)
 			break;
 	}
 	if (i > 2) {
-		warnx ("%s: Invalid value", value);
+		warnx("%s: Invalid value", value);
 		return -1;
 	}
 
@@ -566,131 +566,131 @@ parse_srammode (prop, value)
 }
 
 int
-print_uchar (prop, str)
+print_uchar(prop, str)
 	struct property *prop;
 	char *str;
 {
 	if (prop->modified)
-		snprintf (str, MAXVALUELEN,
-			  "%d", prop->modified_value.byte[0]);
+		snprintf(str, MAXVALUELEN,
+			 "%d", prop->modified_value.byte[0]);
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
-		snprintf (str, MAXVALUELEN, "%d",
-			  prop->current_value.byte[0]);
+			prop->fill(prop);
+		snprintf(str, MAXVALUELEN, "%d",
+			 prop->current_value.byte[0]);
 	}
 
 	return 0;
 }
 
 int
-print_ucharh (prop, str)
+print_ucharh(prop, str)
 	struct property *prop;
 	char *str;
 {
 	if (prop->modified)
-		snprintf (str, MAXVALUELEN,
-			  "0x%4.4x", prop->modified_value.byte[0]);
+		snprintf(str, MAXVALUELEN,
+			 "0x%4.4x", prop->modified_value.byte[0]);
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
-		snprintf (str, MAXVALUELEN,
-			  "0x%4.4x", prop->current_value.byte[0]);
+			prop->fill(prop);
+		snprintf(str, MAXVALUELEN,
+			 "0x%4.4x", prop->current_value.byte[0]);
 	}
 
 	return 0;
 }
 
 int
-print_ushorth (prop, str)
+print_ushorth(prop, str)
 	struct property *prop;
 	char *str;
 {
 	if (prop->modified)
-		snprintf (str, MAXVALUELEN,
+		snprintf(str, MAXVALUELEN,
 			  "0x%4.4x", prop->modified_value.word[0]);
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
-		snprintf (str, MAXVALUELEN,
-			  "0x%4.4x", prop->current_value.word[0]);
+			prop->fill(prop);
+		snprintf(str, MAXVALUELEN,
+			 "0x%4.4x", prop->current_value.word[0]);
 	}
 
 	return 0;
 }
 
 int
-print_ulong (prop, str)
+print_ulong(prop, str)
 	struct property *prop;
 	char *str;
 {
 	if (prop->modified)
-		snprintf (str, MAXVALUELEN,
-			  "%ld", prop->modified_value.longword);
+		snprintf(str, MAXVALUELEN,
+			 "%ld", prop->modified_value.longword);
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
-		snprintf (str, MAXVALUELEN,
-			  "%ld", prop->current_value.longword);
+			prop->fill(prop);
+		snprintf(str, MAXVALUELEN,
+			 "%ld", prop->current_value.longword);
 	}
 
 	return 0;
 }
 
 int
-print_ulongh (prop, str)
+print_ulongh(prop, str)
 	struct property *prop;
 	char *str;
 {
 	if (prop->modified)
-		snprintf (str, MAXVALUELEN,
-			  "0x%8.8lx", prop->modified_value.longword);
+		snprintf(str, MAXVALUELEN,
+			 "0x%8.8lx", prop->modified_value.longword);
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
-		snprintf (str, MAXVALUELEN,
-			  "0x%8.8lx", prop->current_value.longword);
+			prop->fill(prop);
+		snprintf(str, MAXVALUELEN,
+			 "0x%8.8lx", prop->current_value.longword);
 	}
 
 	return 0;
 }
 
 int
-print_magic (prop, str)
+print_magic(prop, str)
 	struct property *prop;
 	char *str;
 {
 	if (!prop->value_valid)
-		prop->fill (prop);
-	snprintf (str, MAXVALUELEN, "%c%c%c%c",
-		  prop->current_value.byte[0],
-		  prop->current_value.byte[1],
-		  prop->current_value.byte[2],
-		  prop->current_value.byte[3]);
+		prop->fill(prop);
+	snprintf(str, MAXVALUELEN, "%c%c%c%c",
+		 prop->current_value.byte[0],
+		 prop->current_value.byte[1],
+		 prop->current_value.byte[2],
+		 prop->current_value.byte[3]);
 
 	return 0;
 }
 
 int
-print_timesec (prop, str)
+print_timesec(prop, str)
 	struct property *prop;
 	char *str;
 {
 	if (prop->modified)
-		snprintf (str, MAXVALUELEN,
-			  "%ld second", prop->modified_value.longword);
+		snprintf(str, MAXVALUELEN,
+			 "%ld second", prop->modified_value.longword);
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
-		snprintf (str, MAXVALUELEN,
-			  "%ld second", prop->current_value.longword);
+			prop->fill(prop);
+		snprintf(str, MAXVALUELEN,
+			 "%ld second", prop->current_value.longword);
 	}
 
 	return 0;
 }
 
 int
-print_bootdev (prop, str)
+print_bootdev(prop, str)
 	struct property *prop;
 	char *str;
 {
@@ -700,28 +700,28 @@ print_bootdev (prop, str)
 		v = prop->modified_value.word[0];
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
+			prop->fill(prop);
 		v = prop->current_value.word[0];
 	}
 
 	if (v == 0)
-		strcpy (str, "STD");
+		strcpy(str, "STD");
 	else if (v == 0xa000)
-		strcpy (str, "ROM");
+		strcpy(str, "ROM");
 	else if (v == 0xb000)
-		strcpy (str, "RAM");
+		strcpy(str, "RAM");
 	else if (v >= 0x8000 && v < 0x9000)
-		snprintf (str, MAXVALUELEN, "HD%d", (v & 0x0f00) >> 8);
+		snprintf(str, MAXVALUELEN, "HD%d", (v & 0x0f00) >> 8);
 	else if (v >= 0x9000 && v < 0xa000)
-		snprintf (str, MAXVALUELEN, "FD%d", (v & 0x0f00) >> 8);
+		snprintf(str, MAXVALUELEN, "FD%d", (v & 0x0f00) >> 8);
 	else
-		snprintf (str, MAXVALUELEN, "%8.8x", v);
+		snprintf(str, MAXVALUELEN, "%8.8x", v);
 
 	return 0;
 }
 
 int
-print_serial (prop, str)
+print_serial(prop, str)
 	struct property *prop;
 	char *str;
 {
@@ -739,7 +739,7 @@ print_serial (prop, str)
 		v = prop->modified_value.word[0];
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
+			prop->fill(prop);
 		v = prop->current_value.word[0];
 	}
 
@@ -748,13 +748,13 @@ print_serial (prop, str)
 	parity = parities[(v & 0x3000) >> 12];
 	stop = stops[(v & 0xe000) >> 14];
 	flow = flows[(v & 0x0200) >> 9];
-	sprintf (str, "%s,%c,%c,%s,%c", baud, bit, parity, stop, flow);
+	sprintf(str, "%s,%c,%c,%s,%c", baud, bit, parity, stop, flow);
 
 	return 0;
 }
 
 int
-print_srammode (prop, str)
+print_srammode(prop, str)
 	struct property *prop;
 	char *str;
 {
@@ -765,14 +765,14 @@ print_srammode (prop, str)
 		v = prop->modified_value.byte[0];
 	else {
 		if (!prop->value_valid)
-			prop->fill (prop);
+			prop->fill(prop);
 		v = prop->current_value.byte[0];
 	}
 
 	if (v < 0 || v > 2)
-		strcpy (str, "INVALID");
+		strcpy(str, "INVALID");
 	else
-		strcpy (str, sramstrs[v]);
+		strcpy(str, sramstrs[v]);
 
 	return 0;
 }
