@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.264 2010/05/08 22:18:24 mrg Exp $
+# $NetBSD: GENERIC,v 1.265 2011/01/14 10:03:44 phx Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.76 2010/05/08 22:16:25 mrg Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.77 2011/01/14 10:01:12 phx Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.264 $"
+#ident 		"GENERIC-$Revision: 1.265 $"
 
 
 maxusers	8
@@ -400,6 +400,8 @@ mgnsc0		at zbus0		# Magnum scsi
 scsibus*	at mgnsc0
 wesc0		at zbus0		# Warp Engine scsi
 scsibus*	at wesc0
+bppcsc0		at zbus0		# BlizzardPPC 603e+ scsi
+scsibus*	at bppcsc0
 afsc0		at zbus0		# A4091 scsi
 scsibus*	at afsc0
 aftsc0		at mainbus0		# A4000T scsi
