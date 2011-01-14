@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.22 2011/01/13 13:54:23 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.23 2011/01/14 13:24:45 pooka Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -92,6 +92,7 @@
 ./usr/libdata/debug/usr/tests/rump/modautoload
 ./usr/libdata/debug/usr/tests/rump/rumpkern
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_server
 ./usr/libdata/debug/usr/tests/rump/rumpvfs
 ./usr/libdata/debug/usr/tests/sbin
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs
@@ -201,6 +202,7 @@
 ./usr/tests/rump/modautoload
 ./usr/tests/rump/rumpkern
 ./usr/tests/rump/rumpkern/h_client
+./usr/tests/rump/rumpkern/h_server
 ./usr/tests/rump/rumpvfs
 ./usr/tests/sbin
 ./usr/tests/sbin/resize_ffs
