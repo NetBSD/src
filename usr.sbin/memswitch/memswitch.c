@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.10 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.11 2011/01/14 13:25:16 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -467,7 +467,13 @@ restore (name)
 			err (1, "Opening input file");
 	}
 
-	sramfd = open (_PATH_DEVSRAM, O_RDONLY);
+	if (read (fd, modified_values, 256) != 256)
+		err (1, "Reading input file");
+
+	if (fd != 0)
+		close (fd);
+
+	sramfd = open (_PATH_DEVSRAM, O_RDWR);
 	if (sramfd < 0)
 		err (1, "Opening %s", _PATH_DEVSRAM);
 
