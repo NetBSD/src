@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2010/02/08 19:02:27 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2011/01/14 02:06:25 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2010/02/08 19:02:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2011/01/14 02:06:25 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -256,8 +256,6 @@ void rmixlfw_mmap_print(rmixlfw_mmap_t *);
  * autoconfiguration or after a panic.  Used as an argument to splx().
  */
 int	safepri = MIPS1_PSL_LOWIPL;
-
-extern struct user *proc0paddr;
 
 /*
  * Do all the stuff that locore normally does before calling main().

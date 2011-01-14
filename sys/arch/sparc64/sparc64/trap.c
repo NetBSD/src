@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.164 2010/12/20 00:25:44 matt Exp $ */
+/*	$NetBSD: trap.c,v 1.165 2011/01/14 02:06:32 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2010/12/20 00:25:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165 2011/01/14 02:06:32 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2010/12/20 00:25:44 matt Exp $");
 #include <machine/ctlreg.h>
 #include <machine/trap.h>
 #include <machine/instr.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/userret.h>
 

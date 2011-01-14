@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.25 2010/07/07 01:23:08 chs Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.26 2011/01/14 02:06:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -196,7 +196,7 @@ Lcpu_switch_noctxsave:
 	movl	%a2@(VM_PMAP),%sp@-	| push vm->vm_map.pmap
 	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
 	addql	#4,%sp
-	movl	_C_LABEL(curpcb),%a1	| restore p_addr
+	movl	_C_LABEL(curpcb),%a1	| restore curpcb
 | Note: _pmap_switch() will clear the cache if needed.
 #else
 	/* Use this inline version on sun3x when not debugging the pmap. */

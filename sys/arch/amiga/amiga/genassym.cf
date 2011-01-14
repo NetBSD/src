@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.29 2010/12/20 00:25:25 matt Exp $
+#	$NetBSD: genassym.cf,v 1.30 2011/01/14 02:06:23 rmind Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -51,7 +51,7 @@ include <compat/svr4/svr4_ucontext.h>
 endif
 
 include <machine/psl.h>
-include <machine/reg.h>
+include <machine/pcb.h>
 include <machine/pte.h>
 
 include <amiga/amiga/cia.h>

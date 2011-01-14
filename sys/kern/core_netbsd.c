@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.16 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.17 2011/01/14 02:06:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.16 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.17 2011/01/14 02:06:34 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -91,7 +91,6 @@ CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
 	struct vmspace *vm = p->p_vmspace;
 	int error;
 
-
 	cs.core.c_midmag = 0;
 	strncpy(cs.core.c_name, p->p_comm, MAXCOMLEN);
 	cs.core.c_nseg = 0;
@@ -102,17 +101,6 @@ CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
 	cs.core.c_dsize = (u_long)ctob(vm->vm_dsize);
 	cs.core.c_ssize = (u_long)round_page(ctob(vm->vm_ssize));
 
-#if 0
-	/*
-	 * XXX
-	 * It would be nice if we at least dumped the signal state (and made it
-	 * available at run time to the debugger, as well), but this code
-	 * hasn't actually had any effect for a long time, since we don't dump
-	 * the user area.  For now, it's dead.
-	 */
-	memcpy(&p->p_addr->u_kproc.kp_proc, p, sizeof(struct proc));
-	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc, false);
-#endif
 	error = CORENAME(cpu_coredump)(l, NULL, &cs.core);
 	if (error)
 		return (error);

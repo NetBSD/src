@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31 2010/12/20 00:25:30 matt Exp $
+#	$NetBSD: genassym.cf,v 1.32 2011/01/14 02:06:24 rmind Exp $
 
 #-
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ endif
 include <machine/cpu.h>
 include <machine/trap.h>
 include <machine/psl.h>
-include <machine/reg.h>
+include <machine/pcb.h>
 include <machine/vmparam.h>
 include <machine/pte.h>
 include <machine/iomap.h>

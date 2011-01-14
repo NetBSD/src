@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.58 2010/12/29 13:49:32 nisimura Exp $	*/
+/*	$NetBSD: exception.c,v 1.59 2011/01/14 02:06:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.58 2010/12/29 13:49:32 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.59 2011/01/14 02:06:30 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.58 2010/12/29 13:49:32 nisimura Exp 
 
 #include <sh3/cpu.h>
 #include <sh3/mmu.h>
+#include <sh3/pcb.h>
 #include <sh3/exception.h>
 #include <sh3/userret.h>
 

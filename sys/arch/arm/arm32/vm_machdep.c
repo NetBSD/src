@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 2009/11/29 04:15:42 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54 2011/01/14 02:06:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2009/11/29 04:15:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2011/01/14 02:06:23 rmind Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -238,7 +238,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 		u_char *ptr;
 		int loop;
 
-		ptr = ((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM;
+		ptr = (u_char *)pcb + USPACE_SVC_STACK_BOTTOM;
 		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
 		    && *ptr == 0xdd; ++loop, ++ptr) ;
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);

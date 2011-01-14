@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.87 2010/07/08 12:23:31 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.88 2011/01/14 02:06:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -328,7 +328,6 @@ typedef int pri_t;
  */
 struct	lwp;
 typedef struct lwp lwp_t;
-struct	user;
 struct	__ucontext;
 struct	proc;
 typedef struct proc proc_t;

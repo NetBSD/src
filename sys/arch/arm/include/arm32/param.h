@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 2010/02/08 19:02:26 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.16 2011/01/14 02:06:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -71,15 +71,15 @@
 
 /*
  * The USPACE area contains :
- * 1. the user structure for the process
+ * 1. the pcb structure for the process
  * 2. the fp context for FP emulation
  * 3. the kernel (svc) stack
  *
  * The layout of the area looks like this
  *
- * | user area | FP context | kernel stack |
+ * | uarea | FP context | kernel stack |
  *
- * The size of the user area is known.
+ * The size of the uarea is known.
  * The size of the FP context is variable depending of the FP emulator
  * in use and whether there is hardware FP support. However we can put
  * an upper limit on it.
@@ -92,7 +92,7 @@
 
 #define FPCONTEXTSIZE			(0x100)
 #define USPACE_SVC_STACK_TOP		(USPACE)
-#define USPACE_SVC_STACK_BOTTOM		(sizeof(struct user) + FPCONTEXTSIZE + 10)
+#define USPACE_SVC_STACK_BOTTOM		(sizeof(struct pcb) + FPCONTEXTSIZE + 10)
 
 #define arm_btop(x)			((x) >> PGSHIFT)
 #define arm_ptob(x)			((x) << PGSHIFT)

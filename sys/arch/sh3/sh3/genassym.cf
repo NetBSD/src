@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2010/12/20 00:25:43 matt Exp $
+#	$NetBSD: genassym.cf,v 1.20 2011/01/14 02:06:30 rmind Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/errno.h>
 include <uvm/uvm_extern.h>
+include <sh3/pcb.h>
 include <sh3/vmparam.h>
 include <sh3/pte.h>
 

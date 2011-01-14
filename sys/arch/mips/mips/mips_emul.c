@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.19 2010/07/07 01:23:42 chs Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.20 2011/01/14 02:06:28 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,18 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.19 2010/07/07 01:23:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.20 2011/01/14 02:06:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
-#include <machine/cpu.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/pcb.h>
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 

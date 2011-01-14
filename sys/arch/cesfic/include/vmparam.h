@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2010/11/06 15:42:44 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2011/01/14 02:06:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -164,9 +164,6 @@
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
-
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
 
 /* Use new VM page bootstrap interface. */
 #define	MACHINE_NEW_NONCONTIG

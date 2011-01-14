@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.68 2010/12/29 13:43:58 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.69 2011/01/14 02:06:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2010/12/29 13:43:58 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69 2011/01/14 02:06:31 rmind Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2010/12/29 13:43:58 nisimura Exp
 
 #include <sh3/locore.h>
 #include <sh3/cpu.h>
-#include <sh3/reg.h>
+#include <sh3/pcb.h>
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
 #include <sh3/userret.h>
@@ -313,7 +313,7 @@ cpu_lwp_free2(struct lwp *l)
  * one of five catagories:
  *
  *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
+ *			Address is relative to start of u-area.
  *	B_PHYS|B_PAGET:	User page table swap.
  *			Address is a kernel VA in usrpt (Usrptmap).
  *	B_PHYS|B_DIRTY:	Dirty page push.

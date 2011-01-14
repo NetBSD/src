@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 2009/12/19 18:06:52 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 2011/01/14 02:06:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,11 +77,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 2009/12/19 18:06:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.35 2011/01/14 02:06:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
@@ -89,9 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 2009/12/19 18:06:52 tsutsui Exp 
 #include <sys/exec.h>
 
 #include <machine/frame.h>
-#include <machine/cpu.h>
 #include <machine/pte.h>
-#include <machine/reg.h>
+#include <machine/pcb.h>
 
 #include <uvm/uvm_extern.h>
 

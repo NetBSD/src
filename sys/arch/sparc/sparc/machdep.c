@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.304 2011/01/13 05:20:27 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.305 2011/01/14 02:06:31 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304 2011/01/13 05:20:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2011/01/14 02:06:31 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304 2011/01/13 05:20:27 mrg Exp $");
 #include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>

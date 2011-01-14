@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 2010/12/20 00:25:25 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.132 2011/01/14 02:06:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2011/01/14 02:06:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2010/12/20 00:25:25 matt Exp $");
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/cpu.h>
-#include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/pte.h>
 
 #include <m68k/fpe/fpu_emulate.h>

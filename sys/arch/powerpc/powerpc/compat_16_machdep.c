@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.14 2009/11/27 03:23:12 rmind Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.15 2011/01/14 02:06:30 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14 2009/11/27 03:23:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2011/01/14 02:06:30 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -52,7 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14 2009/11/27 03:23:12 rmind
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 
-#include <machine/fpu.h>
+#include <powerpc/pcb.h>
+#include <powerpc/fpu.h>
 
 /*
  * Send a signal to process.

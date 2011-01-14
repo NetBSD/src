@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.54 2010/02/15 09:39:00 dholland Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.55 2011/01/14 02:06:33 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.54 2010/02/15 09:39:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.55 2011/01/14 02:06:33 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.54 2010/02/15 09:39:00 dholland Ex
 #include <sys/wait.h>
 
 #include <machine/regnum.h>
+#include <machine/pcb.h>
 #include <machine/trap.h>
 
 #include <compat/common/compat_util.h>

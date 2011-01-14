@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.152 2010/12/18 01:36:19 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.153 2011/01/14 02:06:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.152 2010/12/18 01:36:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.153 2011/01/14 02:06:34 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1740,6 +1740,8 @@ lwp_setprivate(struct lwp *l, void *ptr)
 }
 
 #if defined(DDB)
+#include <machine/pcb.h>
+
 void
 lwp_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 {

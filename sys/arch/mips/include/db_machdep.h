@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.22 2007/02/28 04:21:53 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.23 2011/01/14 02:06:28 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -38,7 +38,8 @@
 #include <mips/trap.h>			/* T_BREAK */
 #include <mips/reg.h>			/* register state */
 #include <mips/regnum.h>		/* symbolic register indices */
-#include <mips/proc.h>			/* register state */
+#include <mips/proc.h>
+#include <mips/pcb.h>
 
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 2010/10/16 17:10:43 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145 2011/01/14 02:06:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2010/10/16 17:10:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2011/01/14 02:06:29 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2010/10/16 17:10:43 tsutsui Exp $"
 #define _MVME68K_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #undef _MVME68K_BUS_DMA_PRIVATE
-#include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/prom.h>
 #include <machine/psl.h>
 #include <machine/pte.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2010/11/15 06:08:32 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2011/01/14 02:06:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2010/11/15 06:08:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2011/01/14 02:06:22 rmind Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -146,6 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2010/11/15 06:08:32 uebayasi Exp $"
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/pmon.h>
+#include <machine/pcb.h>
 
 #include <algor/pci/vtpbcvar.h>
 

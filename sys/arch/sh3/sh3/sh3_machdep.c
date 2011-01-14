@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.87 2010/11/06 11:46:02 uebayasi Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.88 2011/01/14 02:06:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.87 2010/11/06 11:46:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.88 2011/01/14 02:06:31 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -102,6 +102,7 @@ const char kgdb_devname[] = KGDB_DEVNAME;
 #include <sh3/exception.h>
 #include <sh3/locore.h>
 #include <sh3/mmu.h>
+#include <sh3/pcb.h>
 #include <sh3/intr.h>
 
 /* Our exported CPU info; we can have only one. */

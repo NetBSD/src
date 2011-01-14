@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 2010/11/10 09:27:23 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 2011/01/14 02:06:29 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2010/11/10 09:27:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2011/01/14 02:06:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1126,7 +1126,7 @@ void
 pmap_activate(struct lwp *l)
 {
 #if 0
-	struct pcb *pcb = &l->l_proc->p_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	/*

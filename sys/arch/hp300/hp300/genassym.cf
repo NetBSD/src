@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43 2010/12/27 15:23:36 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.44 2011/01/14 02:06:25 rmind Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -54,7 +54,7 @@ include <machine/cpu.h>
 include <machine/frame.h>
 include <machine/intr.h>
 include <machine/psl.h>
-include <machine/reg.h>
+include <machine/pcb.h>
 include <machine/pte.h>
 
 include <hp300/dev/intioreg.h>

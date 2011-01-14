@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.17 2006/05/11 11:54:37 yamt Exp $	*/
+/*	$NetBSD: user.h,v 1.18 2011/01/14 02:06:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -34,14 +34,11 @@
 #ifndef _SYS_USER_H_
 #define _SYS_USER_H_
 
-#include <machine/pcb.h>
+#ifdef _KERNEL
+#error "This header has been obsoleted and will be removed."
+#endif
 
-/*
- * Per lwp structure containing data that isn't needed in core
- * when the lwp isn't running (esp. when swapped out).
- * This structure may or may not be at the same kernel address
- * in all processes.
- */
+#include <machine/pcb.h>
 
 struct user {
 	struct pcb u_pcb;

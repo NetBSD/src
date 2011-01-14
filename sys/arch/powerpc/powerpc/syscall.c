@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.44 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: syscall.c,v 1.45 2011/01/14 02:06:30 rmind Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -39,19 +39,20 @@
 /* If needed, they will be included by file that includes this one */
 
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/ktrace.h>
 #include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <powerpc/frame.h>
+#include <powerpc/pcb.h>
 #include <powerpc/userret.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
 
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
@@ -63,7 +64,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.45 2011/01/14 02:06:30 rmind Exp $");
 
 void
 child_return(void *arg)

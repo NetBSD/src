@@ -1,4 +1,4 @@
-/*	$NetBSD: fpuvar.h,v 1.2 2002/03/24 23:37:42 bjh21 Exp $	*/
+/*	$NetBSD: fpuvar.h,v 1.3 2011/01/14 02:06:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -47,8 +47,6 @@ struct fpu_softc {
 
 #ifdef _KERNEL
 extern struct fpu_softc *the_fpu;
-
-extern void fpu_swapout(struct proc *);
 
 void fpctx_save_fpa(struct fpframe *);
 void fpctx_load_fpa(struct fpframe *);

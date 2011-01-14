@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.62 2011/01/13 05:20:27 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.63 2011/01/14 02:06:31 rmind Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ include <sys/mutex.h>
 
 include <uvm/uvm.h>
 
+include <machine/pcb.h>
 include <machine/cpu.h>
 include <machine/oldmon.h>
 include <machine/bsd_openprom.h>

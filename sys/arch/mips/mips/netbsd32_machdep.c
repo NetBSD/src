@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.3 2009/12/14 04:37:02 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.4 2011/01/14 02:06:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3 2009/12/14 04:37:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2011/01/14 02:06:28 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3 2009/12/14 04:37:02 matt Ex
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/exec.h>
+#include <sys/cpu.h>
 #include <sys/core.h>
 #include <sys/file.h>
 #include <sys/time.h>
@@ -50,21 +51,19 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.3 2009/12/14 04:37:02 matt Ex
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
-#include <sys/user.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-#include <mips/cpu.h>
 #include <mips/cache.h>
 #include <mips/sysarch.h>
 #include <mips/cachectl.h>
 #include <mips/locore.h>
 #include <mips/frame.h>
 #include <mips/regnum.h>
-#include <mips/reg.h>
+#include <mips/pcb.h>
 
 #include <uvm/uvm_extern.h>
 

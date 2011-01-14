@@ -1,4 +1,5 @@
-/*	$NetBSD: obs600_locore.S,v 1.1 2010/03/18 14:15:38 kiyohara Exp $	*/
+/*	$NetBSD: obs600_locore.S,v 1.2 2011/01/14 02:06:25 rmind Exp $	*/
+
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -41,13 +42,6 @@
 
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/pmap.h>
-
-
-/*
- * Globals
- */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
