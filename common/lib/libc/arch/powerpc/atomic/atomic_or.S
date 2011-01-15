@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.5 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.6 2011/01/15 07:31:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,14 +31,16 @@
 
 #include "atomic_op_asm.h"
 
-	.text
+__RCSID("$NetBSD: atomic_or.S,v 1.6 2011/01/15 07:31:11 matt Exp $")
 
+	.text
 ENTRY(_atomic_or_32)
 1:	lwarx	%r10,0,%r3
 	or	%r10,%r10,%r4
 	stwcx.	%r10,0,%r3
 	bne-	1b
 	blr
+END(_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
@@ -54,6 +56,7 @@ ENTRY(_atomic_or_32_nv)
 	bne-	1b
 	mr	%r3,%r10
 	blr
+END(_atomic_or_32_nv)
 ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)
 ATOMIC_OP_ALIAS(atomic_or_uint_nv,_atomic_or_32_nv)
 STRONG_ALIAS(_atomic_or_uint_nv,_atomic_or_32_nv)
