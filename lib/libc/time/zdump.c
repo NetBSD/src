@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.18 2011/01/14 23:35:07 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.19 2011/01/15 12:31:57 martin Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.18 2011/01/14 23:35:07 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.19 2011/01/15 12:31:57 martin Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -26,7 +26,6 @@ static char	elsieid[] = "@(#)zdump.c	8.9";
 #include "stdlib.h"	/* for exit, malloc, atoi */
 #include <err.h>
 #include "float.h"	/* for FLT_MAX and DBL_MAX */
-#include "limits.h"	/* for INT_MAX, LONG_MAX, etc. */
 #include "ctype.h"	/* for isalpha et al. */
 #ifndef isascii
 #define isascii(x) 1
@@ -432,25 +431,21 @@ _("%s: use of -v on system with floating time_t other than float or double\n"),
 		}
 	} else if (0 > (time_t) -1) {
 		/*
-		** time_t is signed.
+		** time_t is signed.  Assume overflow wraps around.
 		*/
-		if (sizeof (time_t) == sizeof (int)) {
-			absolute_min_time = INT_MIN;
-			absolute_max_time = INT_MAX;
-		} else if (sizeof (time_t) == sizeof (long)) {
-			absolute_min_time = LONG_MIN;
-			absolute_max_time = LONG_MAX;
-#if defined LLONG_MIN && defined LLONG_MAX
-		} else if (sizeof (time_t) == sizeof (long long)) {
-			absolute_min_time = LLONG_MIN;
-			absolute_max_time = LLONG_MAX;
-#endif
-		} else {
-			(void) fprintf(stderr,
-_("%s: use of -v on system with signed time_t whose extrema are unknown\n"),
-				progname);
-			exit(EXIT_FAILURE);
+		time_t t = 0;
+		time_t t1 = 1;
+
+		while (t < t1) {
+			t = t1;
+			t1 = 2 * t1 + 1;
 		}
+
+		absolute_max_time = t;
+		t = -t;
+		absolute_min_time = t - 1;
+		if (t < absolute_min_time)
+			absolute_min_time = t;
 	} else {
 		/*
 		** time_t is unsigned.
