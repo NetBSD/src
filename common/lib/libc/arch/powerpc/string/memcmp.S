@@ -1,4 +1,4 @@
-/* $NetBSD: memcmp.S,v 1.2 2008/03/06 21:17:17 phx Exp $ */
+/* $NetBSD: memcmp.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
 
 /* stropt/memcmp.S, pl_string_common, pl_linux 10/11/04 11:45:35
  * ==========================================================================
@@ -49,7 +49,6 @@
  * ==========================================================================
  */
 
-#define _NOREGNAMES
 #include <machine/asm.h>
 
         .text
@@ -268,3 +267,4 @@ finish_lt:
 	addi	%r3,0,1			/* Greater than result		*/
 
 	blr
+END(memcmp)
