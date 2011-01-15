@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.30 2010/12/20 21:11:25 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.31 2011/01/15 07:23:49 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -110,6 +110,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	.text; .align 2; .globl x; .type x,@function; x:
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	END(y)		.size _C_LABEL(y),.-_C_LABEL(y)
 
 #define	ENTRY_NOPROFILE(y) _ENTRY(_C_LABEL(y))
 
@@ -123,7 +124,8 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
+#define RCSID(x)	__RCSID(x)
+#define	__RCSID(x)	.pushsection .ident; .asciz x; .popsection
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
