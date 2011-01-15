@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.121 2011/01/02 18:48:04 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.122 2011/01/15 21:56:53 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.121 2011/01/02 18:48:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.122 2011/01/15 21:56:53 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,12 +207,15 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	psize_t ptsize;
 	u_int ptextra, kstsize;
 	paddr_t Sysptmap_pa;
-	register st_entry_t sg_proto, *sg, *esg;
+	register st_entry_t sg_proto, *sg;
+#if defined(M68040) || defined(M68060)
+	register st_entry_t *esg;
+#endif
 	register pt_entry_t pg_proto, *pg, *epg;
 	vaddr_t end_loaded;
-	u_int ncd, i;
+	u_int ncd;
 #if defined(M68040) || defined(M68060)
-	u_int nl1desc, nl2desc;
+	u_int i, nl1desc, nl2desc;
 #endif
 	vaddr_t kva;
 	struct boot_memlist *ml;
