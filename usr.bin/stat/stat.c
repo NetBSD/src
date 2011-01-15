@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.32 2010/12/16 05:42:14 dholland Exp $ */
+/*	$NetBSD: stat.c,v 1.33 2011/01/15 22:54:10 njoly Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.32 2010/12/16 05:42:14 dholland Exp $");
+__RCSID("$NetBSD: stat.c,v 1.33 2011/01/15 22:54:10 njoly Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -719,6 +719,10 @@ format1(const struct stat *st,
 		small = (sizeof(secs) == 4);
 		data = secs;
 		tm = localtime(&secs);
+		if (tm == NULL) {
+			secs = 0;
+			tm = localtime(&secs);
+		}
 		(void)strftime(path, sizeof(path), timefmt, tm);
 		sdata = path;
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
