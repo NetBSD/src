@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.27 2011/01/14 23:35:07 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.28 2011/01/15 12:31:57 martin Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.27 2011/01/14 23:35:07 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.28 2011/01/15 12:31:57 martin Exp $");
 #endif /* !defined lint */
 
 static char	elsieid[] = "@(#)zic.c	8.20";
@@ -2496,11 +2496,14 @@ oadd(t1, t2)
 const long	t1;
 const long	t2;
 {
-	if (t2 < 0 ? t1 < t2 - LONG_MIN : LONG_MAX - t2 < t1) {
+	register long	t;
+
+	t = t1 + t2;
+	if ((t2 > 0 && t <= t1) || (t2 < 0 && t >= t1)) {
 		error(_("time overflow"));
 		exit(EXIT_FAILURE);
 	}
-	return t1 + t2;
+	return t;
 }
 
 static zic_t
@@ -2508,15 +2511,18 @@ tadd(t1, t2)
 const zic_t	t1;
 const long	t2;
 {
+	register zic_t	t;
+
 	if (t1 == max_time && t2 > 0)
 		return max_time;
 	if (t1 == min_time && t2 < 0)
 		return min_time;
-	if (t2 < 0 ? t1 < t2 - LONG_MIN : LONG_MAX - t2 < t1) {
+	t = t1 + t2;
+	if ((t2 > 0 && t <= t1) || (t2 < 0 && t >= t1)) {
 		error(_("time overflow"));
 		exit(EXIT_FAILURE);
 	}
-	return t1 + t2;
+	return t;
 }
 
 /*
