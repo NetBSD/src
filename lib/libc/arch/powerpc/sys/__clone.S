@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.2 2002/07/30 06:07:59 matt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.3 2011/01/15 07:31:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -29,6 +29,10 @@
 #include <sys/errno.h>
 #include "SYS.h"
 
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: __clone.S,v 1.3 2011/01/15 07:31:12 matt Exp $")
+#endif /* LIBC_SCCS && !lint */
+
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(clone, __clone)
 #endif
@@ -47,8 +51,7 @@ ENTRY(__clone)
 
 	mr	%r7,%r3		/* Save fn in r7. */
 	mr	%r3,%r5
-	li	%r0,SYS___clone	/* (flags, stack) */
-	sc
+	_DOSYSCALL(__clone)	/* (flags, stack) */
 	bso	2f		/* error... */
 
 	cmpwi	%r3,0
@@ -63,4 +66,5 @@ ENTRY(__clone)
 1:
 	li	%r3,EINVAL
 2:
-	b	PIC_PLT(_C_LABEL(__cerror))
+	b	_C_LABEL(__cerror)
+END(__clone)

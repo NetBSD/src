@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.2 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.3 2011/01/15 07:31:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,8 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _NOREGNAMES
 #include "SYS.h"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: __sigtramp2.S,v 1.3 2011/01/15 07:31:12 matt Exp $")
+#endif /* LIBC_SCCS && !lint */
 
 /*
  * On entry to user space, stack and registers look like:
@@ -47,3 +50,4 @@ ENTRY_NOPROFILE(__sigtramp_siginfo_2)
 	mr	%r3,%r30		/* restore ucontext pointer */
 	_DOSYSCALL(setcontext)		/* restore machine state */
 	_DOSYSCALL(exit)		/* or exit with errno if failed */
+END(__sigtramp_siginfo_2)

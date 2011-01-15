@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.6 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.7 2011/01/15 07:31:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,8 +31,9 @@
 
 #include "atomic_op_asm.h"
 
-	.text
+__RCSID("$NetBSD: atomic_cas.S,v 1.7 2011/01/15 07:31:11 matt Exp $")
 
+	.text
 ENTRY(_atomic_cas_32)
 1:	lwarx	%r10,0,%r3
 	cmpw	%r10,%r4
@@ -41,6 +42,7 @@ ENTRY(_atomic_cas_32)
 	bne-	1b
 2:	mr	%r3,%r10
 	blr
+END(_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)

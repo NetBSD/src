@@ -1,12 +1,10 @@
-/*	$NetBSD: __setjmp14.S,v 1.4 2006/02/18 00:45:22 matt Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.5 2011/01/15 07:31:12 matt Exp $	*/
 
-#include <sys/syscall.h>
-
-#include <machine/asm.h>
+#include "SYS.h"
+#include "assym.h"
 
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$NetBSD: __setjmp14.S,v 1.4 2006/02/18 00:45:22 matt Exp $"
+__RCSID("$NetBSD: __setjmp14.S,v 1.5 2011/01/15 07:31:12 matt Exp $")
 #endif
 
 /*
@@ -21,11 +19,10 @@
 
 ENTRY(__setjmp14)
 	mr	%r6,%r3
-	li	%r3,1			# SIG_BLOCK
+	li	%r3,SIG_BLOCK
 	li	%r4,0
-	addi	%r5,%r6,100		# &sigmask
-	li	%r0,SYS___sigprocmask14
-	sc				# assume no error	XXX
+	addi	%r5,%r6,4*(1+24)	# &sigmask
+	_DOSYSCALL(__sigprocmask14)	# assume no error	XXX
 	mflr	%r11
 	mfcr	%r12
 	mr	%r10,%r1
@@ -33,6 +30,7 @@ ENTRY(__setjmp14)
 	stmw	%r8,4(%r6)		# save r8-r31
 	li	%r3,0
 	blr
+END(__setjmp14)
 
 ENTRY(__longjmp14)
 	lmw	%r8,4(%r3)		# load r8-r31
@@ -41,12 +39,12 @@ ENTRY(__longjmp14)
 	mtcr	%r12
 	mr	%r2,%r9
 	mr	%r1,%r10
-	addi	%r4,%r3,100		# &sigmask
-	li	%r3,3			# SIG_SETMASK
+	addi	%r4,%r3,4*(1+24)	# &sigmask
+	li	%r3,SIG_SETMASK
 	li	%r5,0
-	li	%r0,SYS___sigprocmask14
-	sc				# assume no error	XXX
+	_DOSYSCALL(__sigprocmask14)	# assume no error	XXX
 	or.	%r3,%r6,%r6
 	bnelr
 	li	%r3,1
 	blr
+END(__longjmp14)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.4 2006/07/07 07:31:03 ross Exp $ */
+/*	$NetBSD: ffs.S,v 1.5 2011/01/15 07:31:12 matt Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -28,11 +28,11 @@
  */
 /*----------------------------------------------------------------------*/
 
-#define _NOREGNAMES
-
 #include <machine/asm.h>
 
-.align 4
+__RCSID("$NetBSD: ffs.S,v 1.5 2011/01/15 07:31:12 matt Exp $")
+
+	.align 4
 ENTRY(ffs)
 	neg	%r4, %r3
 	and	%r3, %r4, %r3
@@ -40,5 +40,6 @@ ENTRY(ffs)
 	li	%r0, 32
 	subf	%r3, %r3, %r0
 	blr
+END(ffs)
 
 /*----------------------------------------------------------------------*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.11 2002/07/30 06:07:56 matt Exp $	*/
+/*	$NetBSD: SYS.h,v 1.12 2011/01/15 07:31:12 matt Exp $	*/
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
@@ -18,7 +18,7 @@
 
 #define _SYSCALL(x,y)		.text				;\
 				.align	2			;\
-			2:	b	PIC_PLT(_C_LABEL(__cerror));\
+			2:	b	_C_LABEL(__cerror)	;\
 				_SYSCALL_NOERROR(x,y)		;\
 				bso	2b
 
@@ -27,11 +27,13 @@
 #define SYSCALL(x)		_SYSCALL(x,x)
 
 #define PSEUDO_NOERROR(x,y)	_SYSCALL_NOERROR(x,y)		;\
-				blr
+				blr				;\
+				END(x)
 
 #define PSEUDO(x,y)		_SYSCALL_NOERROR(x,y)		;\
 				bnslr				;\
-				b	PIC_PLT(_C_LABEL(__cerror))
+				b	_C_LABEL(__cerror)	;\
+				END(x)
 
 #define RSYSCALL_NOERROR(x)	PSEUDO_NOERROR(x,x)
 

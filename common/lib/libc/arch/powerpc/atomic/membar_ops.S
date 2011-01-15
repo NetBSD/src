@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.3 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.4 2011/01/15 07:31:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,17 +31,20 @@
 
 #include "atomic_op_asm.h"
 
-	.text
+__RCSID("$NetBSD: membar_ops.S,v 1.4 2011/01/15 07:31:11 matt Exp $")
 
+	.text
 /* These assume Total Store Order (TSO) */
 
 ENTRY(_membar_consumer)
 	isync
 	blr
+END(_membar_consumer)
 
 ENTRY(_membar_producer)
 	sync
 	blr
+END(_membar_producer)
 
 ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)

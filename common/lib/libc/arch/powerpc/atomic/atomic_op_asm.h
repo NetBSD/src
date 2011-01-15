@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.4 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.5 2011/01/15 07:31:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #ifndef _ATOMIC_OP_ASM_H_
 #define	_ATOMIC_OP_ASM_H_
 
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #if defined(_KERNEL)

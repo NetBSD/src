@@ -1,17 +1,21 @@
-/*	$NetBSD: compat_sigpending13.S,v 1.1 2006/02/18 00:21:28 matt Exp $	*/
+/*	$NetBSD: compat_sigpending13.S,v 1.2 2011/01/15 07:31:13 matt Exp $	*/
 
 #include "SYS.h"
+
+#if defined(LIBC_SCCS)
+__RCSID("$NetBSD: compat_sigpending13.S,v 1.2 2011/01/15 07:31:13 matt Exp $")
+#endif
 
 WARN_REFERENCES(sigpending, \
     "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 ENTRY(sigpending)
 	mr	%r5,%r3			# save pointer
-	li	%r0,SYS_compat_13_sigpending13
-	sc				# sigpending()
+	_DOSYSCALL(compat_13_sigpending13) # sigpending()
 	bso	1f
 	stw	%r3,0(%r5)		# store return value
 	li	%r3,0			# and return 0
 	blr
 1:
-	b	PIC_PLT(_C_LABEL(__cerror))
+	b	_C_LABEL(__cerror)
+END(sigpending)

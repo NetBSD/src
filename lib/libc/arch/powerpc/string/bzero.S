@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.7 2003/07/26 19:24:37 salo Exp $ */
+/*	$NetBSD: bzero.S,v 1.8 2011/01/15 07:31:12 matt Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -29,6 +29,12 @@
 /*----------------------------------------------------------------------*/
 
 #include <machine/asm.h>
+
+
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: bzero.S,v 1.8 2011/01/15 07:31:12 matt Exp $")
+#endif /* LIBC_SCCS && !lint */
+
 #ifdef _KERNEL
 #include <assym.h>
 #endif
@@ -51,6 +57,7 @@
 ENTRY(bzero)
 		li	r_val, 0		/* Value to stuff in */
 		b	cb_memset
+END(bzero)
 
 ENTRY(memset)
 		cmplwi	cr1, %r5, 0
@@ -363,6 +370,7 @@ sf_bytewise:
 #endif
 		mr	%r3, %r8			/* restore orig ptr */
 		blr				/* for memset functionality */
+END(memset)
 
 /*----------------------------------------------------------------------*/
 #ifndef _KERNEL
