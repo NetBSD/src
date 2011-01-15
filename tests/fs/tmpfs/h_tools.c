@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tools.c,v 1.2 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: h_tools.c,v 1.3 2011/01/15 20:16:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ kqueue_main(int argc, char **argv)
 	argc--;
 	argv++;
 
-	changes = malloc(sizeof(struct kevent) * (argc - 1));
+	changes = malloc(sizeof(struct kevent) * argc);
 	if (changes == NULL)
 		errx(EXIT_FAILURE, "not enough memory");
 
