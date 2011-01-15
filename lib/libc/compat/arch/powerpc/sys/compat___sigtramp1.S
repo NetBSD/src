@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigtramp1.S,v 1.2 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: compat___sigtramp1.S,v 1.3 2011/01/15 07:31:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,6 +30,11 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
+
+#if defined(LIBC_SCCS)
+__RCSID("$NetBSD: compat___sigtramp1.S,v 1.3 2011/01/15 07:31:13 matt Exp $")
+#endif
 
 /*
  * On entry, stack and registers look like:
@@ -42,8 +47,9 @@
  *	sp->	sigcontext structure
  */
 ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
-	addi	%r1,%r1,-16		/* space for callee */
+	addi	%r1,%r1,-CALLFRAMELEN	/* space for callee */
 	blrl				/* call handler */
-	addi	%r3,%r1,16		/* compute address of sigcontext */
+	addi	%r3,%r1,CALLFRAMELEN	/* compute address of sigcontext */
 	_DOSYSCALL(compat_16___sigreturn14)	/* and call sigreturn */
 	_DOSYSCALL(exit)		/* or exit with errno if failed */
+END(__sigtramp_sigcontext_1)

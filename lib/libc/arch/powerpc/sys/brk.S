@@ -1,6 +1,10 @@
-/*	$NetBSD: brk.S,v 1.10 2002/07/30 06:07:59 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.11 2011/01/15 07:31:12 matt Exp $	*/
 
 #include "SYS.h"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: brk.S,v 1.11 2011/01/15 07:31:12 matt Exp $")
+#endif /* LIBC_SCCS && !lint */
 
 	.globl	_C_LABEL(__curbrk)
 	.globl	_C_LABEL(__minbrk)
@@ -32,8 +36,7 @@ ENTRY(_brk)
 	mr	%r5,%r3			# r5 = r3
 0:
 	mr	%r3,%r5			# new break value
-	li	%r0,SYS_break
-	sc				# assume, that r5 is kept
+	_DOSYSCALL(break)		# assume, that r5 is kept
 	bso	1f
 #ifdef PIC
 	lwz	%r6,_C_LABEL(__curbrk)@got(%r9)
@@ -45,4 +48,5 @@ ENTRY(_brk)
 	blr				# return 0
 
 1:
-	b	PIC_PLT(_C_LABEL(__cerror))
+	b	_C_LABEL(__cerror)
+END(_brk)

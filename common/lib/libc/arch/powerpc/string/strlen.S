@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.5 2006/08/15 02:23:54 ross Exp $ */
+/*	$NetBSD: strlen.S,v 1.6 2011/01/15 07:31:12 matt Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -28,9 +28,9 @@
  */
 /*----------------------------------------------------------------------*/
 
-#define _NOREGNAMES
-
 #include <machine/asm.h>
+
+__RCSID("$NetBSD: strlen.S,v 1.6 2011/01/15 07:31:12 matt Exp $");
 
 /*----------------------------------------------------------------------*/
 /* The algorithm here uses the following techniques:
@@ -114,5 +114,5 @@ ENTRY(strlen)
 
 		subf	%r3, %r3, %r4
 		blr
-
+END(strlen)
 /*----------------------------------------------------------------------*/

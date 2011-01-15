@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2011/01/14 06:15:27 matt Exp $
+#	$NetBSD: genassym.cf,v 1.2 2011/01/15 07:31:12 matt Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,14 +30,19 @@
 #
 
 include <sys/types.h>
-include <machine/frame.h>
+include <sys/signal.h>
 include <sys/ucontext.h>
 
+include <machine/frame.h>
+
 define CALLFRAMELEN	sizeof(struct callframe)
-define CALLFRAME_LR	offsetof(struct callframe, cf_lr)
-define CALLFRAME_R30	offsetof(struct callframe, cf_r30)
-define CALLFRAME_R31	offsetof(struct callframe, cf_r31)
+define CALLFRAME_LR	offsetof(struct callframe, lr)
+define CALLFRAME_R30	offsetof(struct callframe, r30)
+define CALLFRAME_R31	offsetof(struct callframe, r31)
 
 define UC_GREGS_R1	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R1])
 define UC_GREGS_R3	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R3])
 define UC_GREGS_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
+
+define SIG_BLOCK	SIG_BLOCK
+define SIG_SETMASK	SIG_SETMASK

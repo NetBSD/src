@@ -1,4 +1,4 @@
-/* $NetBSD: memcpy.S,v 1.2 2008/03/06 21:17:17 phx Exp $ */
+/* $NetBSD: memcpy.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
 
 /* stropt/memcpy_440.S, pl_string_common, pl_linux 10/11/04 11:45:36
  * ==========================================================================
@@ -51,7 +51,6 @@
  * ==========================================================================
  */
 
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 	.text
@@ -115,4 +114,4 @@ last2:
 	bdnz+	last2
 
 	blr
-
+END(memcpy)
