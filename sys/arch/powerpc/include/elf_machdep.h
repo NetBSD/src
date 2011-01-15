@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.8 2009/05/30 05:56:53 skrll Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.9 2011/01/15 10:00:07 matt Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -18,6 +18,9 @@
 #else
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 #endif
+
+/* Specify the value of _GLOBAL_OFFSET_TABLE_ */
+#define	DT_PPC_GOT		DT_LOPROC
 
 #define	R_PPC_NONE 		0
 #define	R_PPC_32 		1
@@ -51,7 +54,12 @@
 #define	R_PPC_PLT16_LO 		29
 #define	R_PPC_PLT16_HI 		30
 #define	R_PPC_PLT16_HA 		31
-#define	R_PPC_SDAREL 		32
+#define	R_PPC_SDAREL16 		32
+#define	R_PPC_SECTOFF 		33
+#define	R_PPC_SECTOFF_LO 	34
+#define	R_PPC_SECTOFF_HI	35
+#define	R_PPC_SECTOFF_HA	36
+#define	R_PPC_ADDR30 		37
 
 /* TLS relocations */
 #define	R_PPC_TLS		67
@@ -87,5 +95,11 @@
 #define	R_PPC_GOT_DTPREL16_HA	94
 #define	R_PPC_TLSGD		95
 #define	R_PPC_TLSLD		96
+
+/* Used for the secure-plt PIC code sequences */
+#define	R_PPC_REL16		249
+#define	R_PPC_REL16_LO		250
+#define	R_PPC_REL16_HI		251
+#define	R_PPC_REL16_HA		252
 
 #define R_TYPE(name) 		__CONCAT(R_PPC_,name)
