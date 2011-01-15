@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.exa,v 1.4 2010/11/23 08:22:30 mrg Exp $
+#	$NetBSD: Makefile.exa,v 1.5 2011/01/15 13:54:53 jmcneill Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/exa
 
@@ -23,7 +23,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${X11SRCDIR.xorg-server}/../include
+		-I${X11SRCDIR.xorg-server}/../include \
+		${X11FLAGS.DIX} ${X11INCS.DIX}
 
 .if !defined(XMODULEDIR)
 .include <bsd.x11.mk>
