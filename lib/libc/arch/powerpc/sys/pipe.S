@@ -1,6 +1,10 @@
-/*	$NetBSD: pipe.S,v 1.7 2002/07/30 06:08:00 matt Exp $	*/
+/*	$NetBSD: pipe.S,v 1.8 2011/01/15 07:31:13 matt Exp $	*/
 
 #include "SYS.h"
+
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: pipe.S,v 1.8 2011/01/15 07:31:13 matt Exp $")
+#endif /* LIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(pipe, _pipe)
@@ -8,12 +12,12 @@ WEAK_ALIAS(pipe, _pipe)
 
 ENTRY(_pipe)
 	mr	%r5,%r3		# save pointer
-	li	%r0,SYS_pipe
-	sc			# assume, that r5 is kept
+	_DOSYSCALL(pipe)	# assume, that r5 is kept
 	bso	1f
 	stw	%r3,0(%r5)	# success, store fds
 	stw	%r4,4(%r5)
 	li	%r3,0
 	blr			# and return 0
 1:
-	b	PIC_PLT(_C_LABEL(__cerror))
+	b	_C_LABEL(__cerror)
+END(_pipe)
