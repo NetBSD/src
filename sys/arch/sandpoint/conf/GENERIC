@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.51 2011/01/11 13:29:09 nisimura Exp $
+# $NetBSD: GENERIC,v 1.52 2011/01/15 23:06:07 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.51 $"
+#ident 		"GENERIC-$Revision: 1.52 $"
 
 maxusers	32
 
@@ -47,7 +47,7 @@ options 	KTRACE
 #options 	PMAPDEBUG
 #options 	SYMTAB_SPACE=300000
 #options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Compatibility options
@@ -69,7 +69,7 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	MSGBUFSIZE=65536
 
@@ -102,7 +102,7 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 
 options 	INET
-options		INET6		# IPV6
+options 	INET6		# IPV6
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -162,14 +162,14 @@ pchb*	at pci? dev ? function ?	# PCI host bridge
 eumb*	at mainbus0
 com0	at eumb? unit 0			# console at 0x4500
 #com1	at eumb? unit 1
-satmgr0 at eumb? unit 1			# satmgr at 0x4600
+satmgr0 at eumb? unit 1 		# satmgr at 0x4600
 ociic*	at eumb?
 iic*	at ociic?
 rs5c372rtc* at iic? addr 0x32
 
 # PCI IDE controllers - see pciide(4) for supported hardware.
-cmdide*		at pci? dev ? function ?	# CMD tech IDE controllers
-iteide*		at pci? dev ? function ?	# IT Express IDE controllers
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 
 # ATA (IDE) bus support
@@ -203,6 +203,14 @@ usb*	at ohci?
 # USB Hubs
 uhub*	at usb?
 uhub*	at uhub? port ?
+
+# USB HID devices
+uhidev* at uhub? port ? configuration ? interface ?	# USB HID device
+uthum*	at uhidev? reportid ?				# TEMPerHUM sensors
+uhid*	at uhidev? reportid ?				# USB Generic HID
+
+# USB printer
+ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
