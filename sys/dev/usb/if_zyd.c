@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.27 2010/11/03 22:28:31 dyoung Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.28 2011/01/16 09:08:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.27 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.28 2011/01/16 09:08:29 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -124,6 +124,7 @@ static const struct zyd_type {
 	ZYD_ZD1211B_DEV(BELKIN,		F5D7050C),
 	ZYD_ZD1211B_DEV(BELKIN,		ZD1211B),
 	ZYD_ZD1211B_DEV(CISCOLINKSYS,	WUSBF54G),
+	ZYD_ZD1211B_DEV(CYBERTAN,	ZD1211B),
 	ZYD_ZD1211B_DEV(FIBERLINE,	WL430U),
 	ZYD_ZD1211B_DEV(MELCO,		KG54L),
 	ZYD_ZD1211B_DEV(PHILIPS,	SNU5600),
@@ -997,6 +998,7 @@ zyd_al2230_init(struct zyd_rf *rf)
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_AL2230_PHY;
+	static const struct zyd_phy_pair phy2230s[] = ZYD_AL2230S_PHY_INIT;
 	static const uint32_t rfini[] = ZYD_AL2230_RF;
 	int i, error;
 
@@ -1005,6 +1007,15 @@ zyd_al2230_init(struct zyd_rf *rf)
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
+	}
+
+	if (sc->rf_rev == ZYD_RF_AL2230S) {
+		for (i = 0; i < N(phy2230s); i++) {
+			error = zyd_write16(sc, phy2230s[i].reg,
+			    phy2230s[i].val);
+			if (error != 0)
+				return error;
+		}
 	}
 
 	/* init AL2230 radio */
@@ -1474,6 +1485,7 @@ zyd_rf_attach(struct zyd_softc *sc, uint8_t type)
 		rf->width        = 24;	/* 24-bit RF values */
 		break;
 	case ZYD_RF_AL2230:
+	case ZYD_RF_AL2230S:
 		if (sc->mac_rev == ZYD_ZD1211B)
 			rf->init = zyd_al2230_init_b;
 		else
@@ -1526,7 +1538,7 @@ zyd_rf_name(uint8_t type)
 	static const char * const zyd_rfs[] = {
 		"unknown", "unknown", "UW2451",   "UCHIP",     "AL2230",
 		"AL7230B", "THETA",   "AL2210",   "MAXIM_NEW", "GCT",
-		"PV2000",  "RALINK",  "INTERSIL", "RFMD",      "MAXIM_NEW2",
+		"AL2230S", "RALINK",  "INTERSIL", "RFMD",      "MAXIM_NEW2",
 		"PHILIPS"
 	};
 

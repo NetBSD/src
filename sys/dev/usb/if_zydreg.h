@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.5 2010/11/03 22:30:50 dyoung Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.6 2011/01/16 09:08:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -160,7 +160,7 @@
 #define ZYD_RF_AL2210		0x7
 #define ZYD_RF_MAXIM_NEW	0x8
 #define ZYD_RF_GCT		0x9
-#define ZYD_RF_PV2000		0xa	/* not supported yet */
+#define ZYD_RF_AL2230S		0xa
 #define ZYD_RF_RALINK		0xb	/* not supported yet */
 #define ZYD_RF_INTERSIL		0xc	/* not supported yet */
 #define ZYD_RF_RFMD		0xd
@@ -636,6 +636,14 @@
 	{ ZYD_CR126, 0x6c }, { ZYD_CR127, 0x03 }, { ZYD_CR137, 0x50 },	\
 	{ ZYD_CR138, 0xa8 }, { ZYD_CR144, 0xac }, { ZYD_CR150, 0x0d },	\
 	{ ZYD_CR252, 0x00 }, { ZYD_CR253, 0x00 }			\
+}
+
+#define	ZYD_AL2230S_PHY_INIT						\
+{									\
+	{ ZYD_CR47,  0x1e }, { ZYD_CR106, 0x22 }, { ZYD_CR107, 0x2a },	\
+	{ ZYD_CR109, 0x13 }, { ZYD_CR118, 0xf8 }, { ZYD_CR119, 0x12 },	\
+	{ ZYD_CR122, 0xe0 }, { ZYD_CR128, 0x10 }, { ZYD_CR129, 0x0e },	\
+	{ ZYD_CR130, 0x10 }						\
 }
 
 #define ZYD_AL2230_RF							\
