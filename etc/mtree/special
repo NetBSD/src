@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.121.2.3 2009/09/18 02:01:38 snj Exp $
+#	$NetBSD: special,v 1.121.2.3.2.1 2011/01/16 13:00:39 bouyer Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -381,6 +381,7 @@
 ./var/chroot/named/etc		type=dir  mode=0755
 ./var/chroot/named/etc/namedb	type=dir  mode=0755
 ./var/chroot/named/etc/namedb/cache	type=dir mode=0775 uname=named gname=named
+./var/chroot/named/etc/namedb/keys	type=dir mode=0775 uname=named gname=named
 ./var/chroot/named/usr		type=dir  mode=0755
 ./var/chroot/named/usr/libexec	type=dir  mode=0755
 ./var/chroot/named/var		type=dir  mode=0755
