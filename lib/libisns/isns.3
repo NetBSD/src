@@ -1,4 +1,4 @@
-.\"     $NetBSD: isns.3,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $
+.\"     $NetBSD: isns.3,v 1.2 2011/01/16 08:00:01 wiz Exp $
 .\"
 .\" Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,7 @@ optionally waiting for iSNSP responses
 .Nm
 does not currently support receipt of iSNS Heartbeat messages, State Change
 Notification (SCN) messages, or Entity Status Inquiry (ESI) messages.
-.Sh INITILAIZATION
+.Sh INITIALIZATION
 An iSNS client that uses
 .Nm
 must call
@@ -86,12 +86,16 @@ This call will create a thread to handle client-server communication, and
 as such should only be called when thread creation is appropriate (such
 as after a daemonized program forks).
 .Pp
-The value passed as 'is_server' is used to set iSNSP message format Flags
+The value passed as
+.Ar is_server
+is used to set iSNSP message format Flags
 "Sender is the iSNS client" (bit position 16) and "Sender is the iSNS server"
 (bit position 17).
 For now the value 0 (zero) should be passed for
-'is_server'.
-The value returned in 'h' should be considered opaque by the caller.
+.Ar is_server .
+The value returned in
+.Ar h
+should be considered opaque by the caller.
 This value is passed unchanged to
 .Fn isns_add_servercon ,
 .Fn isns_init_reg_refresh ,
@@ -110,8 +114,11 @@ should be used to make the iSNS environment aware of the iSNS
 server to which iSNSP queries and requests are to be sent.
 This routine should not be called by a program acting as an iSNS server.
 .Pp
-A connected TCP socket descriptor is passed as parameter 'fd'.
-Parameter 'ai' is the address of the remote TCP endpoint.
+A connected TCP socket descriptor is passed as parameter
+.Ar fd .
+Parameter
+.Ar ai
+is the address of the remote TCP endpoint.
 It is included so that reconnection may be attempted by
 .Nm
 in the event that the TCP connection is broken.
@@ -124,20 +131,30 @@ function offers a way for
 .Nm
 to refresh registrations on behalf of the iSNS client.
 .Pp
-Parameter 'node' is the "iSCSI Name" attribute used for the periodic queries.
+Parameter
+.Ar node
+is the
+.Dq iSCSI Name
+attribute used for the periodic queries.
 It should be the name of an iSCSI node within the registered iSNS entity.
-The desired refresh interval, in seconds, is passed in parameter 'interval'.
+The desired refresh interval, in seconds, is passed in parameter
+.Ar interval .
 .Sh TRANSACTIONS
 .Fn isns_new_trans
 creates new iSNS transactions.
 .Pp
-Parameter 'func_id' is used as the iSNSP message id.
-Parameter 'pdu_flags' is used to set iSNSP message format Flags and is
+Parameter
+.Ar func_id
+is used as the iSNSP message id.
+Parameter
+.Ar pdu_flags
+is used to set iSNSP message format Flags and is
 exposed to allow callers to set flag "Replace flag" (bit position 19).
 This provides callers with a way
 to specify whether a Device Attribute Registration Request is intended to
-update or replace an existing registration.  This is currently the only use
-defined for parameter 'pdu_flags'.
+update or replace an existing registration.
+This is currently the only use defined for parameter
+.Ar pdu_flags .
 .Pp
 Once a new transaction has been created, callers can specify iSNS attributes
 used for registration and query requests.
@@ -146,9 +163,15 @@ TLV data may be added using either
 or
 .Fn isns_add_string .
 .Pp
-Parameter 'tag' is the iSNS Tag corresponding to the attribute being added.
-Parameter 'data_len' is the length of the attribute value.
-Parameter 'data_p' references the attribute value.
+Parameter
+.Ar tag
+is the iSNS Tag corresponding to the attribute being added.
+Parameter
+.Ar data_len
+is the length of the attribute value.
+Parameter
+.Ar data_p
+references the attribute value.
 The caller does not need to handle iSNS attribute 4-byte alignment requirements.
 This is handled by the iSNS environment on behalf of the caller.
 .Fn isns_add_string
@@ -163,22 +186,36 @@ Callers that submit iSNSP query messages may need to wait for returned data.
 supports bounded waits.
 Successful waits, those that do not time out, return the iSNSP response
 status code received in the iSNSP response message.
-If a wait does time out, the value of 'status_p' is undefined.
+If a wait does time out, the value of
+.Ar status_p
+is undefined.
 Callers that do not need to wait for returned data can simply
-pass NULL for parameter 'timeout_p'.
-Callers should set parameter 'status_p' to NULL if not waiting.
+pass
+.Dv NULL
+for parameter
+.Ar timeout_p .
+Callers should set parameter
+.Ar status_p
+to
+.Dv NULL
+if not waiting.
 .Pp
 .Fn isns_get_tlv
 is used to retrieve TLV data returned in a transaction.
 The first call to
 .Fn isns_get_tlv
-should pass the value ISNS_TLV_FIRST for parameter 'which_tlv'.
-Each subsequent TLV can be retrieved by passing in ISNS_TLV_NEXT in
-place of ISNS_TLV_FIRST.
+should pass the value
+.Dv ISNS_TLV_FIRST
+for parameter
+.Ar which_tlv .
+Each subsequent TLV can be retrieved by passing in
+.Dv ISNS_TLV_NEXT
+in place of
+.Dv ISNS_TLV_FIRST .
 .Pp
 When a caller is done with a transaction, having submitted either a
 registration or a query message and retrieved any returned TLV data,
-.Fn isns_free_trans()
+.Fn isns_free_trans
 should be used to release resources used by the transaction.
 .Sh RETURN VALUES
 .Fn isns_init ,
@@ -188,16 +225,21 @@ should be used to release resources used by the transaction.
 .Fn isns_add_string ,
 and
 .Fn isns_send_trans
-return 0 on success, or -1 on failure.
+return 0 on success, or \-1 on failure.
 .Fn isns_new_trans
-returns 0 on success, or ISNS_INVALID_TRANS on failure.
+returns 0 on success, or
+.Dv ISNS_INVALID_TRANS
+on failure.
 .Fn isns_get_tlv
-returns 0 on success, or ENOENT if there are no TLVs yo retrieve.
+returns 0 on success, or
+.Er ENOENT
+if there are no TLVs to retrieve.
 .Sh HISTORY
 .Nm
 first appeared in
 .Nx 6.0 .
 The
 .Nm
-implementation was contributed to the NetBSD Foundation
-by Wasabi Systems, Inc.
+implementation was contributed to the
+.Nx
+Foundation by Wasabi Systems, Inc.
