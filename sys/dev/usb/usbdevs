@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.575 2011/01/09 14:30:36 is Exp $
+$NetBSD: usbdevs,v 1.576 2011/01/16 08:58:03 tsutsui Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1056,6 +1056,7 @@ product CYBERPOWER UPS		0x0501	Uninterruptible Power Supply
 
 /* CyberTAN Technology products */
 product CYBERTAN TG54USB	0x1666	TG54USB
+product CYBERTAN ZD1211B	0x1667	ZD1211B
 product CYBERTAN RT2870		0x1828	RT2870
 
 /* Cypress Semiconductor products */
