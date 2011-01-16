@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.38 2011/01/16 03:05:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.38 2011/01/16 03:05:51 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -857,7 +857,7 @@ history_next_evdata(TYPE(History) *h, TYPE(HistEvent) *ev, int num, void **d)
 	int retval;
 
 	for (retval = HCURR(h, ev); retval != -1; retval = HPREV(h, ev))
-		if (num-- <= 0) {
+		if (ev->num == num) {
 			if (d)
 				*d = ((history_t *)h->h_ref)->cursor->data;
 			return (0);
