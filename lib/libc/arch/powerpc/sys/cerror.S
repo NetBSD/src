@@ -1,10 +1,10 @@
-/*	$NetBSD: cerror.S,v 1.7 2011/01/15 07:31:13 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.8 2011/01/16 02:43:10 matt Exp $	*/
 
 #include "SYS.h"
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cerror.S,v 1.7 2011/01/15 07:31:13 matt Exp $")
+__RCSID("$NetBSD: cerror.S,v 1.8 2011/01/16 02:43:10 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #ifndef _REENTRANT
@@ -19,19 +19,25 @@ ENTRY(__cerror)
 	mflr	%r0
 	stwu	%r1,-CALLFRAMELEN(%r1)		# allocate new stack frame
 	stw	%r0,CALLFRAMELEN+CALLFRAME_LR(%r1)
+#ifdef PIC
+	stw	%r30,CALLFRAME_R30(%r1)
+	PIC_TOCSETUP(__cerror, %r30)
+#endif
 	stw	%r31,CALLFRAME_R31(%r1)
-	mr	%r31,%r3			# stash away in callee-saved register
+	mr	%r31,%r3		# stash away in callee-saved register
 	bl	PIC_PLT(_C_LABEL(__errno))
 	stw	%r31,0(%r3)
 	lwz	%r0,CALLFRAMELEN+CALLFRAME_LR(%r1)
 	lwz	%r31,CALLFRAME_R31(%r1)
+#ifdef PIC
+	lwz	%r30,CALLFRAME_R30(%r1)
+#endif
 	mtlr	%r0
 	addi	%r1,%r1,CALLFRAMELEN
 #else
 #ifdef PIC
 	mflr	%r10
-	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	%r4
+	PIC_GOTSETUP(%r4)
 	lwz	%r4,_C_LABEL(errno)@got(%r4)
 	stw	%r3,0(%r4)
 	mtlr	%r10
