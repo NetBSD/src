@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2011/01/14 05:20:00 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2011/01/16 03:29:36 matt Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
@@ -11,7 +11,7 @@ SRCS+=		${PSEUDO}
 CLEANFILES+=	${PSEUDO}
 
 SRCS+=		cerror.S
-CPPFLAGS+=	-D__cerror=__posix_cerror
+CPPFLAGS+=	-D__cerror=__posix_cerror -I../libc
 
 ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
