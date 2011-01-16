@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.98 2011/01/16 01:22:29 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.99 2011/01/16 15:56:37 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -167,9 +167,6 @@ typedef struct Struct_Obj_Entry {
 	Elf_Word        symtabno;	/* Number of dynamic symbols */
 	Elf_Word        gotsym;		/* First dynamic symbol in GOT */
 #endif
-#ifdef __powerpc__
-	Elf_Addr       *gotptr;		/* GOT table (secure-plt only) */
-#endif
 
 	const Elf_Symindx *buckets;	/* Hash table buckets array */
 	unsigned long	unused1;	/* Used to be nbuckets */
@@ -234,6 +231,9 @@ typedef struct Struct_Obj_Entry {
 	size_t		pathlen;	/* Pathname length */
 	STAILQ_HEAD(, Struct_Name_Entry) names;	/* List of names for this object we
 						   know about. */
+#ifdef __powerpc__
+	Elf_Addr       *gotptr;		/* GOT table (secure-plt only) */
+#endif
 } Obj_Entry;
 
 typedef struct Struct_DoneList {
