@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.11 2011/01/16 01:05:45 jmcneill Exp $	*/
+/*	$NetBSD: aps.c,v 1.12 2011/01/16 14:16:03 jmcneill Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.11 2011/01/16 01:05:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.12 2011/01/16 14:16:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ aps_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus_space_valid = true;
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": Thinkpad Active Protection System\n");
 
 	if (aps_init(sc)) {
 		aprint_error_dev(self, "failed to initialize\n");
@@ -364,7 +364,6 @@ aps_attach(device_t parent, device_t self, void *aux)
 	/* Refresh sensor data every 0.5 seconds */
 	callout_schedule(&sc->sc_callout, (hz) / 2);
 
-        aprint_normal_dev(self, "Thinkpad Active Protection System\n");
 	return;
 
 out:
