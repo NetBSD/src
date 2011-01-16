@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.52 2011/01/08 01:27:54 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.53 2011/01/16 13:22:14 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4306,4 +4306,115 @@ share/man/man4/stf.4				1.22-1.23
 	Remove reference to a webpage which no longer exists, and add
 	references to appropriate RFCs.
 	[is, ticket #1514]
+
+sbin/fsck_ext2fs/inode.c			1.24 - 1.28
+sbin/fsck_ext2fs/setup.c			1.26
+sbin/newfs_ext2fs/extern.h			1.3
+sbin/newfs_ext2fs/mke2fs.c			1.10 - 1.12
+sbin/newfs_ext2fs/newfs_ext2fs.8		1.2 - 1.4
+sbin/newfs_ext2fs/newfs_ext2fs.c		1.5 - 1.8
+sys/lib/libsa/ext2fs.c				1.6, 1.7
+sys/ufs/ext2fs/ext2fs_dinode.h			1.18, 1.19
+sys/ufs/ext2fs/ext2fs_inode.c			1.68
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.142
+
+	PR/40936: Frederik Sausmikat: ext2fs: add support for inodes > 128 bytes
+	  Support variable inode sizes.
+	  Handle 32 bit uid field on E2FS_REV1.
+	[tsutsui, ticket #1486]
+
+sys/dev/usb/ukbd.c				1.110
+
+	Cap h.loc.count at MAXKEYCODE instead of bailing out.  This lets
+	some obscure/roque keyboards attach.
+	From loganaden@devio.us (Loganaden Velvindron), thanks!
+	[mbalmer, ticket #1513]
+
+etc/ssh/ssh_known_hosts				1.6
+
+	releng has been on mollari for a while now. Also, add wiki
+	[riz, ticket #1516]
+
+sys/arch/amiga/include/vmparam.h		1.41
+
+	Raise address of user stack to the highest safe (for 68040 mmu) address,
+	which increases available user address space by 256MB.  One file in
+	pkgsrc/lang/php53 was too large for the amiga.  Also remove an old
+	presumably outdated comment.
+	[mhitch, ticket #1518]
+
+distrib/sets/lists/xcomp/md.sparc		patch
+distrib/sets/lists/xserver/md.sparc		patch
+
+	update Xorg set lists for sparc
+	[mrg, ticket #1523]
+
+sys/dev/pci/if_jme.c				1.16
+
+	Try reading MAC addr from register if it fails to read from EEPROM.
+	Copied from FreeBSD driver.
+	Without this my JMC261 doesn't get MAC address properly.
+	[kochi, ticket #1525]
+
+sys/arch/sparc/dev/zs.c				1.115
+sys/arch/sparc64/dev/zs.c			1.68
+sys/dev/ic/z8530sc.c				1.30
+sys/dev/ic/z8530sc.h				1.26
+sys/dev/ic/z8530tty.c				1.127
+
+	add two new functions for z8530tty: zs_chan_lock() and zs_chan_unlock(),
+	and use them instead of various spl's in the zs.c's.
+	[mrg, ticket #1526]
+
+sys/arch/sparc/sparc/cpu.c			1.214
+sys/arch/sparc/sparc/cpuvar.h			1.77
+sys/arch/sparc/sparc/db_interface.c		1.84
+sys/arch/sparc/sparc/locore.s			1.245
+sys/arch/sparc/sparc/pmap.c			1.327, 1.328
+
+	- retire union cpu_info_pg
+	- allocate space for each cpu_info{} in pmap_bootstrap
+	- remap cpu0's space into the PA currently in CPUINFO_VA
+	- cpus[] becomes an array of pointers to cpu_info{}, easy to traverse
+	- only call kernel lock for IPL_VM interrupts (?  as implemented on
+	  x86 and sparc64)
+	- revert a minor part of locore.s:1.241
+	- in cpu_hatch(), set %sp to near the middle of the interrupt stack.
+	  we only need a %sp until we get to run an MI thread (own idlelwp or
+	  real code)
+
+	we still waste one page of space, but this gets SMP much closer to
+	actually working again.
+	[mrg, ticket #1527]
+
+etc/mtree/special				1.133
+etc/named.conf					1.6
+
+	Enable dnssec, and populate managed-keys.bind
+	[spz, ticket #1528]
+
+sys/net/raw_usrreq.c				1.36
+
+	Apply patch from PR kern/44369 by Wolfgang Stukenbrock:
+	Fix a kernel lock leak
+	[pooka, ticket #1529]
+
+sys/dev/ic/ahcisata_core.c			1.31
+
+	Don't call bus_dmamap_load(9) and bus_dmamap_sync(9) on command xfers
+	if (AT_READ|AT_WRITE) in ata_c->flags is set but ata_c->bcount is zero.
+	Someone actually tries to put such a command and it causes
+	DIAGNOSTIC panic in x86/bus_dma.c:_bus_dmamap_sync().
+	I think bus_dma(9) API itself may allow calls with mapsize==0
+	but there are many MD code that asserts offset>=mapsize or len==0.
+
+	The problem is reported and fix is confirmed by Takuro KUBOTA
+	with XEN DOM0 kernel (which has options DIAGNOSTIC).
+	[tsutsui, ticket #1530]
+
+distrib/x68k/floppies/ramdisk/Makefile		1.30
+sys/arch/x68k/conf/INSTALL			1.85
+
+	Increase the image size from 1300KB to 1400KB.
+	[isaki, ticket #1531]
 
