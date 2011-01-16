@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.23 2011/01/04 11:00:31 matt Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.24 2011/01/16 23:21:16 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -400,6 +400,8 @@ netbsd32_from___stat13(const struct stat *sbp, struct netbsd32_stat13 *sb32p)
 	sb32p->st_blocks = sbp->st_blocks;
 	sb32p->st_flags = sbp->st_flags;
 	sb32p->st_gen = sbp->st_gen;
+	sb32p->st_birthtimespec.tv_sec = (int32_t)sbp->st_birthtimespec.tv_sec;
+	sb32p->st_birthtimespec.tv_nsec = (netbsd32_long)sbp->st_birthtimespec.tv_nsec;
 }
 
 static __inline void
@@ -419,6 +421,8 @@ netbsd32_from___stat50(const struct stat *sbp, struct netbsd32_stat50 *sb32p)
 	sb32p->st_mtimespec.tv_nsec = (netbsd32_long)sbp->st_mtimespec.tv_nsec;
 	sb32p->st_ctimespec.tv_sec = (int32_t)sbp->st_ctimespec.tv_sec;
 	sb32p->st_ctimespec.tv_nsec = (netbsd32_long)sbp->st_ctimespec.tv_nsec;
+	sb32p->st_birthtimespec.tv_sec = (int32_t)sbp->st_birthtimespec.tv_sec;
+	sb32p->st_birthtimespec.tv_nsec = (netbsd32_long)sbp->st_birthtimespec.tv_nsec;
 	sb32p->st_blksize = sbp->st_blksize;
 	sb32p->st_blocks = sbp->st_blocks;
 	sb32p->st_flags = sbp->st_flags;
@@ -442,6 +446,8 @@ netbsd32_from_stat(const struct stat *sbp, struct netbsd32_stat *sb32p)
 	sb32p->st_mtimespec.tv_nsec = (netbsd32_long)sbp->st_mtimespec.tv_nsec;
 	sb32p->st_ctimespec.tv_sec = (netbsd32_time_t)sbp->st_ctimespec.tv_sec;
 	sb32p->st_ctimespec.tv_nsec = (netbsd32_long)sbp->st_ctimespec.tv_nsec;
+	sb32p->st_birthtimespec.tv_sec = (netbsd32_time_t)sbp->st_birthtimespec.tv_sec;
+	sb32p->st_birthtimespec.tv_nsec = (netbsd32_long)sbp->st_birthtimespec.tv_nsec;
 	sb32p->st_blksize = sbp->st_blksize;
 	sb32p->st_blocks = sbp->st_blocks;
 	sb32p->st_flags = sbp->st_flags;
