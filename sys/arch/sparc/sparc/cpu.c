@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.211.8.1 2009/05/30 16:57:18 snj Exp $ */
+/*	$NetBSD: cpu.c,v 1.211.8.2 2011/01/16 12:58:23 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.211.8.1 2009/05/30 16:57:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.211.8.2 2011/01/16 12:58:23 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -103,7 +103,7 @@ extern char machine_model[];
 
 int	sparc_ncpus;			/* # of CPUs detected by PROM */
 #ifdef MULTIPROCESSOR
-union cpu_info_pg *cpus;
+struct cpu_info *cpus[4];		/* we only support 4 CPUs. */
 u_int	cpu_ready_mask;			/* the set of CPUs marked as READY */
 #endif
 
@@ -156,10 +156,10 @@ init_cpuinfo(struct cpu_info *cpi, int node)
 	getcpuinfo(cpi, node);
 
 	/*
-	 * Arrange pcb and interrupt stack.
+	 * Arrange interrupt stack.  This cpu will also abuse the bottom
+	 * half of the interrupt stack before it gets to run its idle LWP.
 	 */
-	intstack = uvm_km_alloc(kernel_map, INT_STACK_SIZE,
-		0, UVM_KMF_WIRED);
+	intstack = uvm_km_alloc(kernel_map, INT_STACK_SIZE, 0, UVM_KMF_WIRED);
 	if (intstack == 0)
 		panic("%s: no uspace/intstack", __func__);
 	cpi->eintstack = (void*)(intstack + INT_STACK_SIZE);
@@ -339,7 +339,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		getcpuinfo(&cpuinfo, node);
 
 #if defined(MULTIPROCESSOR)
-		cpi = sc->sc_cpuinfo = cpuinfo.ci_self;
+		cpi = sc->sc_cpuinfo = cpus[idx];
 #else
 		/* The `local' VA is global for uniprocessor. */
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
@@ -362,7 +362,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		/*
 		 * Initialise this cpu's cpu_info.
 		 */
-		cpi = sc->sc_cpuinfo = &cpus[idx].ci;
+		cpi = sc->sc_cpuinfo = cpus[idx];
 		init_cpuinfo(cpi, node);
 
 		/*
