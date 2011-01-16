@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.97 2010/12/24 12:41:43 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.98 2011/01/16 01:22:29 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -166,6 +166,9 @@ typedef struct Struct_Obj_Entry {
 	Elf_Word        local_gotno;	/* Number of local GOT entries */
 	Elf_Word        symtabno;	/* Number of dynamic symbols */
 	Elf_Word        gotsym;		/* First dynamic symbol in GOT */
+#endif
+#ifdef __powerpc__
+	Elf_Addr       *gotptr;		/* GOT table (secure-plt only) */
 #endif
 
 	const Elf_Symindx *buckets;	/* Hash table buckets array */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.45 2010/08/06 16:33:18 joerg Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.46 2011/01/16 01:22:29 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.45 2010/08/06 16:33:18 joerg Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.46 2011/01/16 01:22:29 matt Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -50,10 +50,11 @@ void _rtld_powerpc_pltresolve(Elf_Word, Elf_Word);
 			((u_int32_t)(x) + 0x10000) : (u_int32_t)(x)) >> 16)
 #define l(x) ((u_int32_t)(x) & 0xffff)
 
-void _rtld_bind_start(void);
+void _rtld_bind_bssplt_start(void);
+void _rtld_bind_secureplt_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
-static inline int _rtld_relocate_plt_object(const Obj_Entry *,
+static int _rtld_relocate_plt_object(const Obj_Entry *,
     const Elf_Rela *, int, Elf_Addr *);
 
 /*
@@ -67,7 +68,7 @@ static inline int _rtld_relocate_plt_object(const Obj_Entry *,
  */
 
 /*
- * Setup the plt glue routines.
+ * Setup the plt glue routines (for bss-plt).
  */
 #define PLTCALL_SIZE	20
 #define PLTRESOLVE_SIZE	24
@@ -75,34 +76,42 @@ static inline int _rtld_relocate_plt_object(const Obj_Entry *,
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
 {
-	Elf_Word *pltcall, *pltresolve;
-	Elf_Word *jmptab;
-	int N = obj->pltrelalim - obj->pltrela;
-
-	/* Entries beyond 8192 take twice as much space. */
-	if (N > 8192)
-		N += N-8192;
-
-	pltcall = obj->pltgot;
-	jmptab = pltcall + 18 + N * 2;
-
-	memcpy(pltcall, _rtld_powerpc_pltcall, PLTCALL_SIZE);
-	pltcall[1] |= ha(jmptab);
-	pltcall[2] |= l(jmptab);
-
-	pltresolve = obj->pltgot + 8;
-
-	memcpy(pltresolve, _rtld_powerpc_pltresolve, PLTRESOLVE_SIZE);
-	pltresolve[0] |= ha(_rtld_bind_start);
-	pltresolve[1] |= l(_rtld_bind_start);
-	pltresolve[3] |= ha(obj);
-	pltresolve[4] |= l(obj);
-
 	/*
-	 * Invalidate the icache for only the code part of the PLT
-	 * (and not the jump table at the end).
+	 * Secure-PLT is much more sane.
 	 */
-	__syncicache(pltcall, (char *)jmptab - (char *)pltcall);
+	if (obj->gotptr != NULL) {
+		obj->gotptr[1] = (Elf_Addr) _rtld_bind_secureplt_start;
+		obj->gotptr[2] = (Elf_Addr) obj;
+	} else {
+		Elf_Word *pltcall, *pltresolve;
+		Elf_Word *jmptab;
+		int N = obj->pltrelalim - obj->pltrela;
+
+		/* Entries beyond 8192 take twice as much space. */
+		if (N > 8192)
+			N += N-8192;
+
+		pltcall = obj->pltgot;
+		jmptab = pltcall + 18 + N * 2;
+
+		memcpy(pltcall, _rtld_powerpc_pltcall, PLTCALL_SIZE);
+		pltcall[1] |= ha(jmptab);
+		pltcall[2] |= l(jmptab);
+
+		pltresolve = obj->pltgot + 8;
+
+		memcpy(pltresolve, _rtld_powerpc_pltresolve, PLTRESOLVE_SIZE);
+		pltresolve[0] |= ha(_rtld_bind_bssplt_start);
+		pltresolve[1] |= l(_rtld_bind_bssplt_start);
+		pltresolve[3] |= ha(obj);
+		pltresolve[4] |= l(obj);
+
+		/*
+		 * Invalidate the icache for only the code part of the PLT
+		 * (and not the jump table at the end).
+		 */
+		__syncicache(pltcall, (char *)jmptab - (char *)pltcall);
+	}
 }
 
 void
@@ -207,44 +216,52 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 int
 _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
+	Elf_Addr * const pltresolve = obj->pltgot + 8;
 	const Elf_Rela *rela;
 	int reloff;
 
-	for (rela = obj->pltrela, reloff = 0; rela < obj->pltrelalim; rela++, reloff++) {
+	for (rela = obj->pltrela, reloff = 0;
+	     rela < obj->pltrelalim;
+	     rela++, reloff++) {
 		Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
-		int distance;
-		Elf_Addr *pltresolve;
 
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
 
-		pltresolve = obj->pltgot + 8;
-
-		if (reloff < 32768) {
-	       		/* li	r11,reloff */
-			*where++ = 0x39600000 | reloff;
+		if (obj->gotptr != NULL) {
+			/*
+			 * For now, simply treat then as relative.
+			 */
+			*where += (Elf_Addr)obj->relocbase;
 		} else {
-			/* lis  r11,ha(reloff) */
-			/* addi	r11,l(reloff) */
-			*where++ = 0x3d600000 | ha(reloff);
-			*where++ = 0x396b0000 | l(reloff);
-		}
-		/* b	pltresolve */
-		distance = (Elf_Addr)pltresolve - (Elf_Addr)where;
-		*where++ = 0x48000000 | (distance & 0x03fffffc);
+			int distance;
 
-		/*
-		 * Icache invalidation is not done for each entry here
-		 * because we sync the entire code part of the PLT once
-		 * in _rtld_setup_pltgot() after all the entries have been
-		 * initialized.
-		 */
-		/* __syncicache(where - 3, 12); */
+			if (reloff < 32768) {
+				/* li	r11,reloff */
+				*where++ = 0x39600000 | reloff;
+			} else {
+				/* lis  r11,ha(reloff) */
+				/* addi	r11,l(reloff) */
+				*where++ = 0x3d600000 | ha(reloff);
+				*where++ = 0x396b0000 | l(reloff);
+			}
+			/* b	pltresolve */
+			distance = (Elf_Addr)pltresolve - (Elf_Addr)where;
+			*where++ = 0x48000000 | (distance & 0x03fffffc);
+
+			/*
+			 * Icache invalidation is not done for each entry here
+			 * because we sync the entire code part of the PLT once
+			 * in _rtld_setup_pltgot() after all the entries have been
+			 * initialized.
+			 */
+			/* __syncicache(where - 3, 12); */
+		}
 	}
 
 	return 0;
 }
 
-static inline int
+static int
 _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff, Elf_Addr *tp)
 {
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
@@ -267,7 +284,15 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 	rdbg(("bind now/fixup in %s --> new=%p", 
 	    defobj->strtab + def->st_name, (void *)value));
 
-	if (abs(distance) < 32*1024*1024) {	/* inside 32MB? */
+	if (obj->gotptr != NULL) {
+		/*
+		 * For Secure-PLT we simply replace the entry in GOT with the address
+		 * of the routine.
+		 */
+		assert(where >= (Elf_Word *)obj->pltgot);
+		assert(where < (Elf_Word *)obj->pltgot + (obj->pltrelalim - obj->pltrela));
+		*where = value;
+	} else if (abs(distance) < 32*1024*1024) {	/* inside 32MB? */
 		/* b	value	# branch directly */
 		*where = 0x48000000 | (distance & 0x03fffffc);
 		__syncicache(where, 4);
@@ -288,10 +313,21 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 			/* li	r11,reloff */
 			*where++ = 0x39600000 | reloff;
 		} else {
+#ifdef notyet
+			/* lis  r11,ha(value) */
+			/* addi	r11,l(value) */
+			/* mtctr r11 */
+			/* bctr */
+			*where++ = 0x3d600000 | ha(value);
+			*where++ = 0x396b0000 | l(value);
+			*where++ = 0x7d6903a6;
+			*where++ = 0x4e800420;
+#else
 			/* lis  r11,ha(reloff) */
 			/* addi	r11,l(reloff) */
 			*where++ = 0x3d600000 | ha(reloff);
 			*where++ = 0x396b0000 | l(reloff);
+#endif
 		}
 		/* b	pltcall	*/
 		distance = (Elf_Addr)pltcall - (Elf_Addr)where;
@@ -307,7 +343,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
-	const Elf_Rela *rela = obj->pltrela + reloff;
+	const Elf_Rela *rela = (const void *)((const char *)obj->pltrela + reloff);
 	Elf_Addr new_value;
 	int err;
 

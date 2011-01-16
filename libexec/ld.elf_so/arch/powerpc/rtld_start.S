@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.13 2002/12/04 01:19:37 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.14 2011/01/16 01:22:29 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -44,24 +44,22 @@ _rtld_start:
 /*	stw	%r7,28(%r1)		# cleanup	(always 0) */
 	stw	%r8,32(%r1)		# ps_strings
 
-	bl	_GLOBAL_OFFSET_TABLE_-4@local
-	mflr	%r31			# r31 = (real) GOT
-	lwz	%r28,0(%r31)		# base-relative &_DYNAMIC
-
-	bl	0f			# lr = next instruction
-	b	_DYNAMIC@local
-0:	mflr	%r30
-	lwz	%r29,0(%r30)		# load instruction contents
-	rlwinm	%r29,%r29,0,6,29	# extract PC offset
-	add	%r3,%r29,%r30		# r3 = &_DYNAMIC
-	sub	%r28,%r3,%r28
+	bcl	20,31,1f
+1:	mflr	%r30
+	mr	%r3,%r30		# save for _DYNAMIC
+	addis	%r30,%r30,_GLOBAL_OFFSET_TABLE_-1b@ha
+	addi	%r30,%r30,_GLOBAL_OFFSET_TABLE_-1b@l
+	addis	%r3,%r3,_DYNAMIC-1b@ha	# get _DYNAMIC actual address
+	addi	%r3,%r3,_DYNAMIC-1b@l
+	lwz	%r28,0(%r30)		# get base-relative &_DYNAMIC
+	sub	%r28,%r3,%r28		# r28 = relocbase
 	mr	%r4,%r28		# r4 = relocbase
-	bl	_rtld_relocate_nonplt_self@plt
+	bl	_rtld_relocate_nonplt_self
 
 	lwz	%r3,16(%r1)
 	addi	%r3,%r3,-12		# sp = &argv[-3]	/* XXX */
 	mr	%r4,%r28		# r4 = relocbase
-	bl	_rtld@plt		# _start = _rtld(sp, relocbase)
+	bl	_rtld			# _start = _rtld(sp, relocbase)
 	mtlr	%r3
 
 	lwz	%r3,12(%r1)		# argc
@@ -77,11 +75,20 @@ _rtld_start:
 	li	%r0,1			# _exit()
 	sc
 
+END(_rtld_start)
 
-	.globl	_rtld_bind_start
 	.globl	_rtld_bind
 
-_rtld_bind_start:
+/*
+ * secure-plt expects %r11 to be the offset to the rela entry.
+ * bss-plt expects %r11 to be index of the rela entry.
+ * So for bss-plt, we multiply the index by 12 to get the offset.
+ */
+ENTRY_NOPROFILE(_rtld_bind_bssplt_start)
+	slwi	%r11,%r11,2
+	add	%r0,%r11,%r11
+	add	%r11,%r11,%r0
+ENTRY_NOPROFILE(_rtld_bind_secureplt_start)
 	stwu	%r1,-160(%r1)
 
 	stw	%r0,20(%r1)
@@ -93,7 +100,7 @@ _rtld_bind_start:
 
 	mr	%r3,%r12		# obj
 	mr	%r4,%r11		# reloff
-	bl	_rtld_bind@plt		# _rtld_bind(obj, reloff)
+	bl	_rtld_bind		# _rtld_bind(obj, reloff)
 	mtctr	%r3
 
 	lmw	%r3,24(%r1)		# load r3-r31
@@ -105,6 +112,7 @@ _rtld_bind_start:
 
 	addi	%r1,%r1,160
 	bctr
+END(_rtld_bind_start)
 
 	.globl	_rtld_powerpc_pltcall
 	.globl	_rtld_powerpc_pltresolve
@@ -117,8 +125,8 @@ _rtld_powerpc_pltcall:
 	bctr
 
 _rtld_powerpc_pltresolve:
-	lis	%r12,0			# lis	12,_rtld_bind_start@ha
-	addi	%r12,%r12,0		# addi	12,12,_rtld_bind_start@l
+	lis	%r12,0			# lis	12,_rtld_bind_bssplt_start@ha
+	addi	%r12,%r12,0		# addi	12,12,_rtld_bind_bssplt_start@l
 	mtctr	%r12
 	lis	%r12,0			# lis	12,obj@ha
 	addi	%r12,%r12,0		# addi	12,12,obj@l

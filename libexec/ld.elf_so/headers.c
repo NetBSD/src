@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.38 2010/12/24 12:41:43 skrll Exp $	 */
+/*	$NetBSD: headers.c,v 1.39 2011/01/16 01:22:29 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.38 2010/12/24 12:41:43 skrll Exp $");
+__RCSID("$NetBSD: headers.c,v 1.39 2011/01/16 01:22:29 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -239,6 +239,11 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			*((Elf_Addr *)(dynp->d_un.d_ptr)) = (Elf_Addr)
 			    &_rtld_debug;
 #endif
+			break;
+#endif
+#ifdef __powerpc__
+		case DT_PPC_GOT:
+			obj->gotptr = (Elf_Addr *)(obj->relocbase + dynp->d_un.d_ptr);
 			break;
 #endif
 		case DT_FLAGS_1:
