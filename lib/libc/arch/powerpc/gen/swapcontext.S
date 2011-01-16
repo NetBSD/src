@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.5 2011/01/15 07:31:12 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.6 2011/01/16 02:43:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,30 +32,39 @@
 #include "SYS.h"
 #include "assym.h"
 
-__RCSID("$NetBSD: swapcontext.S,v 1.5 2011/01/15 07:31:12 matt Exp $")
+__RCSID("$NetBSD: swapcontext.S,v 1.6 2011/01/16 02:43:10 matt Exp $")
 
-#define	CALLFRAME_UCP	(CALLFRAMELEN - 1*SZREG)
-#define	CALLFRAME_OUCP	(CALLFRAMELEN - 2*SZREG)
+#define	XCALLFRAMELEN	(((2+3)*SZREG + CALLFRAMELEN - 1) & -CALLFRAMELEN)
+#define	XCALLFRAME_R30	(XCALLFRAMELEN-1*SZREG)
+#define	XCALLFRAME_UCP	(XCALLFRAMELEN-2*SZREG)
+#define	XCALLFRAME_OUCP	(XCALLFRAMELEN-3*SZREG)
 
 ENTRY(swapcontext)
-	stwu	%r1,-CALLFRAMELEN(%r1)		# set up new stack frame
+	stwu	%r1,-XCALLFRAMELEN(%r1)		# set up new stack frame
 	mflr	%r0
-	stw	%r0,CALLFRAMELEN+CALLFRAME_LR(%r1) # save link register
-	stw	%r3,CALLFRAME_OUCP(%r1)		# must save oucp
-	stw	%r4,CALLFRAME_UCP(%r1)		# must save ucp
+	stw	%r0,XCALLFRAMELEN+CALLFRAME_LR(%r1)	# save link register
+	stw	%r3,XCALLFRAME_OUCP(%r1)	# must save oucp
+	stw	%r4,XCALLFRAME_UCP(%r1)		# must save ucp
+#ifdef PIC
+	stw	%r30,XCALLFRAME_R30(%r1)	# must save r30
+	PIC_TOCSETUP(swapcontext,%r30)		# setup toc pointer
+#endif
 	bl	PIC_PLT(_C_LABEL(_getcontext))	# getcontext(oucp)
 	cmpwi	%r3,0
 	bne	1f
-	lwz	%r11,CALLFRAME_OUCP(%r1)	# load oucp for adjustment
-	lwz	%r0,CALLFRAMELEN+CALLFRAME_LR(%r1)
+	lwz	%r11,XCALLFRAME_OUCP(%r1)	# load oucp for adjustment
+	lwz	%r0,XCALLFRAMELEN+CALLFRAME_LR(%r1)
 	stw	%r0,UC_GREGS_PC(%r11)		# pc <- lr
-	addi	%r0,%r1,CALLFRAMELEN
-	stw	%r0,UC_GREGS_R1(%r11)		# save adjusted sp
-	lwz	%r3,CALLFRAME_UCP(%r1)		# load ucp
+	addi	%r0,%r1,XCALLFRAMELEN
+	stw	%r0,UC_GREGS_R1(%r11)		# adjust sp
+	lwz	%r3,XCALLFRAME_UCP(%r1)		# load ucp
 	bl	PIC_PLT(_C_LABEL(setcontext))	# setcontext(ucp)
 1:
-	lwz	%r0,CALLFRAMELEN+CALLFRAME_LR(%r1)
+	lwz	%r0,XCALLFRAMELEN+CALLFRAME_LR(%r1)
+#ifdef PIC
+	lwz	%r30,XCALLFRAME_R30(%r1)
+#endif
 	mtlr	%r0
-	addi	%r1,%r1,CALLFRAMELEN
+	addi	%r1,%r1,XCALLFRAMELEN
 	blr
 END(swapcontext)

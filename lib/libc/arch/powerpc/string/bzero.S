@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.8 2011/01/15 07:31:12 matt Exp $ */
+/*	$NetBSD: bzero.S,v 1.9 2011/01/16 02:43:10 matt Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -32,7 +32,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bzero.S,v 1.8 2011/01/15 07:31:12 matt Exp $")
+__RCSID("$NetBSD: bzero.S,v 1.9 2011/01/16 02:43:10 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #ifdef _KERNEL
@@ -76,8 +76,7 @@ cb_memset:
 		/* First find out cache line size */
 #ifdef PIC
 		mflr	%r9
-		bl	_GLOBAL_OFFSET_TABLE_@local-4
-		mflr	%r10
+		PIC_GOTSETUP(%r10)
 		mtlr	%r9
 		lwz	%r5,cache_info@got(%r10)
 #else
@@ -93,24 +92,33 @@ cb_memset:
 #define CPU_CACHELINE	1
 #define	CPU_CACHEINFO	5
 
-#define STKFRAME_SZ	48
+#define STKFRAME_SZ	64
 #define MIB		8
 #define OLDPLEN		16
 #define R3_SAVE		20
 #define R4_SAVE		24
 #define R0_SAVE		28
 #define R8_SAVE		32
+#define R31_SAVE	36
+#ifdef PIC
+#define R30_SAVE	40
+#endif
 
-		mflr	%r6
-		stw	%r6, 4(%r1)
+		stw	%r9, 4(%r1)
 		stwu	%r1, -STKFRAME_SZ(%r1)
+
+		stw	%r31, R31_SAVE(%r1)
+		mr	%r31, %r5		/* cache info */
+
+#ifdef PIC
+		stw	%r30, R30_SAVE(%r1)
+		PIC_TOCSETUP(cb_memset,%r30)
+#endif
 
 		stw	%r8, R8_SAVE(%r1)
 		stw	%r3, R3_SAVE(%r1)
 		stw	%r4, R4_SAVE(%r1)
 		stw	%r0, R0_SAVE(%r1)
-
-	
 
 		li	%r0, CTL_MACHDEP		/* Construct MIB */
 		stw	%r0, MIB(%r1)
@@ -133,7 +141,7 @@ cb_memset:
 
 		/* Failure, try older sysctl */
 	
-		li	%r0, CTL_MACHDEP		/* Construct MIB */
+		li	%r0, CTL_MACHDEP	/* Construct MIB */
 		stw	%r0, MIB(%r1)
 		li	%r0, CPU_CACHELINE
 		stw	%r0, MIB+4(%r1)
@@ -143,17 +151,7 @@ cb_memset:
 
 		addi	%r3, %r1, MIB
 		li	%r4, 2			/* namelen */
-#ifdef PIC
-		mflr	%r9
-		bl	_GLOBAL_OFFSET_TABLE_@local-4
-		mflr	%r10
-		mtlr	%r9
-		lwz	%r5,cache_info@got(%r10)
-		addi	%r5, %r5, 4
-#else
-		lis	%r5,cache_info+4@h
-		ori	%r5,%r5,cache_info+4@l
-#endif
+		addi	%r5, %r31, 4
 		addi	%r6, %r1, OLDPLEN
 		li	%r7, 0
 		li	%r8, 0
@@ -163,15 +161,10 @@ cb_memset:
 		lwz	%r3, R3_SAVE(%r1)
 		lwz	%r4, R4_SAVE(%r1)
 		lwz	%r0, R0_SAVE(%r1)
-
+		lwz	%r9, 4(%r31)
+		lwz	%r31, R31_SAVE(%r1)
 #ifdef PIC
-		bl	_GLOBAL_OFFSET_TABLE_@local-4
-		mflr	%r10
-		lwz	%r9, cache_info@got(%r10)
-		lwz	%r9, 4(%r9)
-#else
-		lis	%r5, cache_info+4@ha
-		lwz	%r9, cache_info+4@l(%r5)
+		lwz	%r30, R30_SAVE(%r1)
 #endif
 		la	%r1, STKFRAME_SZ(%r1)
 		lwz	%r5, 4(%r1)
