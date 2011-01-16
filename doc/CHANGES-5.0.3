@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.24 2011/01/10 00:45:27 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.25 2011/01/16 13:23:21 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2547,4 +2547,21 @@ etc/rc.d/named					1.19,1.21
 
 	Adjust named startup for new BIND version.
 	[tron, ticket #1519]
+
+etc/ssh/ssh_known_hosts				1.6
+
+	releng has been on mollari for a while now. Also, add wiki
+	[riz, ticket #1516]
+
+etc/mtree/special				1.133
+etc/named.conf					1.6
+
+	Enable dnssec, and populate managed-keys.bind
+	[spz, ticket #1528]
+
+sys/net/raw_usrreq.c				1.36
+
+	Apply patch from PR kern/44369 by Wolfgang Stukenbrock:
+	Fix a kernel lock leak
+	[pooka, ticket #1529]
 
