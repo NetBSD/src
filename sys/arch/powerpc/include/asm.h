@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.31 2011/01/15 07:23:49 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.32 2011/01/16 02:41:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,6 +46,24 @@
 #define PIC_PROLOGUE	XXX
 #define PIC_EPILOGUE	XXX
 #define PIC_PLT(x)	x@plt
+#ifdef __STDC__
+#define	PIC_TOCNAME(name) 	.LCTOC_##name
+#else
+#define	PIC_TOCNAME(name) 	.LCTOC_/**/name
+#endif
+#define	PIC_TOCSETUP(name, reg)						\
+		.pushsection ".got2","aw"				;\
+	PIC_TOCNAME(name) = . + 32768					;\
+		.popsection						;\
+		bcl	20,31,1001f					;\
+	1001:	mflr	reg						;\
+		addis	reg,reg,PIC_TOCNAME(name)-1001b@ha		;\
+		addi	reg,reg,PIC_TOCNAME(name)-1001b@l
+#define	PIC_GOTSETUP(reg)						\
+		bcl	20,31,2002f					;\
+	2002:	mflr	reg						;\
+		addis	reg,reg,_GLOBAL_OFFSET_TABLE_-2002b@ha		;\
+		addi	reg,reg,_GLOBAL_OFFSET_TABLE_-2002b@l
 #ifdef	__STDC__
 #define PIC_GOT(x)	XXX
 #define PIC_GOTOFF(x)	XXX
@@ -59,6 +77,8 @@
 #define PIC_PLT(x)	x
 #define PIC_GOT(x)	x
 #define PIC_GOTOFF(x)	x
+#define	PIC_GOTSETUP(r)
+#define	PIC_TOCSETUP(n, r)
 #endif
 
 #endif
