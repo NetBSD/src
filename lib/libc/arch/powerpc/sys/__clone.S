@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3 2011/01/15 07:31:12 matt Exp $	*/
+/*	$NetBSD: __clone.S,v 1.4 2011/01/16 02:43:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -30,7 +30,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __clone.S,v 1.3 2011/01/15 07:31:12 matt Exp $")
+__RCSID("$NetBSD: __clone.S,v 1.4 2011/01/16 02:43:10 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -61,6 +61,9 @@ ENTRY(__clone)
 	mr	%r3,%r6		/* arg */
 	blrl			/* Call the clone's entry point. */
 
+#ifdef PIC
+	PIC_TOCSETUP(__clone, %r30)	/* exit won't return so blow away r30 */
+#endif
 	bl	PIC_PLT(_C_LABEL(_exit))
 
 1:
