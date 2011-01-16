@@ -1,9 +1,9 @@
-/*	$NetBSD: brk.S,v 1.11 2011/01/15 07:31:12 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.12 2011/01/16 02:43:10 matt Exp $	*/
 
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: brk.S,v 1.11 2011/01/15 07:31:12 matt Exp $")
+__RCSID("$NetBSD: brk.S,v 1.12 2011/01/16 02:43:10 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 	.globl	_C_LABEL(__curbrk)
@@ -19,12 +19,10 @@ _C_LABEL(__minbrk):
 	.long	_C_LABEL(_end)		# XXX not used yet
 
 	.text
-
 ENTRY(_brk)
-#ifdef PIC
+#if defined(PIC)
 	mflr	%r10
-	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	%r9
+	PIC_GOTSETUP(%r9)
 	mtlr	%r10
 	lwz	%r5,_C_LABEL(_end)@got(%r9)
 #else
