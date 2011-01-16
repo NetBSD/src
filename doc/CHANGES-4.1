@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.213 2010/12/10 22:16:45 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.214 2011/01/16 15:36:46 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4283,4 +4283,17 @@ sys/dev/sbus/spif.c				1.19
 	Fix warning about missing initializer that showed up in sparc64
 	builds, but, strangely enough, not in sparc builds.
 	[hauke, ticket #1412]
+
+etc/ssh/ssh_known_hosts				1.6
+
+	releng has been on mollari for a while now. Also, add wiki
+	[riz, ticket #1415]
+
+sys/arch/amiga/include/vmparam.h		1.41
+
+	Raise address of user stack to the highest safe (for 68040 mmu) address,
+	which increases available user address space by 256MB.  One file in
+	pkgsrc/lang/php53 was too large for the amiga.  Also remove an old
+	presumably outdated comment.
+	[mhitch, ticket #1416]
 
