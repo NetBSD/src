@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2011/01/09 15:12:34 jruoho Exp $
+#	$NetBSD: Makefile,v 1.59 2011/01/16 01:13:10 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -142,6 +142,7 @@ SUBDIR+=	pad
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	aps
 SUBDIR+=	au8522
 SUBDIR+=	auvitek
 SUBDIR+=	xc5k
