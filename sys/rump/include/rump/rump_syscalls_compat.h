@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.6 2011/01/17 16:25:39 pooka Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.7 2011/01/17 18:24:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,9 @@
 #define RUMP_SYS_RENAME_UTIMES rump___sysimpl_utimes
 #define RUMP_SYS_RENAME_FUTIMES rump___sysimpl_futimes
 #define RUMP_SYS_RENAME_LUTIMES rump___sysimpl_lutimes
+
+#define RUMP_SYS_RENAME_MKNOD rump___sysimpl_mknod
+#define RUMP_SYS_RENAME_FHSTAT rump___sysimpl_fhstat40
 #endif /* __NetBSD_Prereq(5,99,7) */
 
 #endif /* __NetBSD__ */
