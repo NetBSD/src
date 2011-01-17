@@ -692,6 +692,7 @@
 .ds doc-str-Lb-libi386     i386 Architecture Library (libi386, \-li386)
 .ds doc-str-Lb-libintl     Internationalized Message Handling Library (libintl, \-lintl)
 .ds doc-str-Lb-libipsec    IPsec Policy Control Library (libipsec, \-lipsec)
+.ds doc-str-Lb-libisns     Internet Storage Name Service Library (libisns, \-lisns)
 .ds doc-str-Lb-libkvm      Kernel Data Access Library (libkvm, \-lkvm)
 .ds doc-str-Lb-libm        Math Library (libm, \-lm)
 .ds doc-str-Lb-libm68k     m68k Architecture Library (libm68k, \-lm68k)
