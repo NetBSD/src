@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.6 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.7 2011/01/17 08:23:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include "assym.h"
