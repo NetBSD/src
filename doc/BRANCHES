@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.302 2011/01/07 01:11:03 matt Exp $
+#	$NetBSD: BRANCHES,v 1.303 2011/01/17 07:35:02 jruoho Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -330,6 +330,20 @@ Notes:		To check out the kernel source tree,
 			cvs checkout -ritohy-usb1 src/sys/dev/usb/filelist
 		2. update files in the branch
 			sh -e src/sys/dev/usb/filelist
+
+Branch:		jruoho-x86intr
+Description:	Cleanup and rework the x86 APIC and PIC subsystems
+Status:		Active
+Start Date:	17 January 2011
+End Date:
+Base Tag:	jruoho-x86intr-base
+Maintainer:	Jukka Ruohonen <jruoho@NetBSD.org>
+Scope:		kernel
+Notes:		This branch aims to cleanup the x86 interrupt routing code.
+		In particular, a new implementation is provided for all
+		elements of the APIC that involve ACPI. In addition, better
+		abstractions are provided for the whole PIC layer. The main
+		work areas are sys/arch/x86 and sys/dev/acpi.
 
 Branch:		jym-xensuspend
 Description:	Implement xm save/restore/migrate for NetBSD domU
