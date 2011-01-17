@@ -1689,6 +1689,8 @@ and their results are:
 .Lb libintl
 .It Li libipsec
 .Lb libipsec
+.It Li libisns
+.Lb libisns
 .It Li libkvm
 .Lb libkvm
 .It Li libm
