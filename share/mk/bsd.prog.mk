@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.256 2010/12/13 21:47:04 pooka Exp $
+#	$NetBSD: bsd.prog.mk,v 1.257 2011/01/17 18:05:52 pooka Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -220,6 +220,7 @@ SRCS+=			${PROG}_hostops.c
 SRCS=			${PROG}.c ${PROG}_hostops.c
 SRCS.rump.${PROG}=	${PROG}.c ${PROG}_rumpops.c ${RUMPSRCS}
 . endif
+DPSRCS+=		${PROG}_rumpops.c ${RUMPSRCS}
 LDADD.rump.${PROG}+=	-lrumpclient
 DPADD.rump.${PROG}+=	${LIBRUMPCLIENT}
 MAN.rump.${PROG}=	# defined but feeling empty
