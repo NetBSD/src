@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.115 2011/01/04 06:18:51 dholland Exp $
+$NetBSD: acronyms.comp,v 1.116 2011/01/17 22:08:30 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -149,6 +149,7 @@ DNS	domain name system
 DOM	document object model
 DOS	denial of service
 DOS	disk operating system
+DPC	deferred procedure call
 DPCM	differential pulse code modulation
 DPD	dead peer detection
 DPI	dots per inch
@@ -289,6 +290,7 @@ IGP	interior gateway protocol
 IKE	Internet key exchange
 ILP	instruction level parallelism
 IMC	integrated memory controller
+IMCR	interrupt mode configuration register
 IMAP	Internet mail access protocol
 INCITS	international committee on information technology standards
 IO	input/output
@@ -305,6 +307,7 @@ IPSEC	Internet protocol security
 IRC	Internet relay chat
 IRDA	infrared data association
 IRQ	interrupt request
+IRQL	interrupt request level
 IRTF	Internet research task force
 ISA	industry standard architecture
 ISA	instruction set architecture
@@ -393,6 +396,10 @@ MMU	memory management unit
 MMX	multimedia extension
 MMX	multiple math extension
 MMX	matrix math extension
+MP	multiprocessor
+MP	multiprocessing
+MP	multi-platform
+MP	multiplayer
 MPEG	moving picture experts group
 MPLS	multiprotocol label switching
 MPS	multiprocessor specification
@@ -650,6 +657,7 @@ TMO	timeout
 TOS	terms of service
 TOS	type of service
 TPM	trusted platform module
+TPR	task priority register
 TR	token ring
 TR	task register
 TRNG	true random number generator
