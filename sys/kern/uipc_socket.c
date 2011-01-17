@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.201 2010/10/14 03:07:51 oki Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.202 2011/01/17 07:13:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.201 2010/10/14 03:07:51 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.202 2011/01/17 07:13:32 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -98,7 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.201 2010/10/14 03:07:51 oki Exp $"
 #include <compat/sys/socket.h>
 #endif
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_loan.h>
+#include <uvm/uvm_page.h>
 
 MALLOC_DEFINE(M_SOOPTS, "soopts", "socket options");
 MALLOC_DEFINE(M_SONAME, "soname", "socket name");
