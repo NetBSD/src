@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2011/01/06 14:19:54 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215 2011/01/17 14:36:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2011/01/06 14:19:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2011/01/17 14:36:33 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2011/01/06 14:19:54 tsutsui Exp $"
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 
