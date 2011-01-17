@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.66 2010/12/17 22:35:07 yamt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.67 2011/01/17 07:13:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.66 2010/12/17 22:35:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.67 2011/01/17 07:13:31 uebayasi Exp $");
 
 #include "opt_pax.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.66 2010/12/17 22:35:07 yamt Exp $");
 #include <sys/pax.h>
 #endif /* PAX_MPROTECT */
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #define	VMCMD_EVCNT_DECL(name)					\
 static struct evcnt vmcmd_ev_##name =				\

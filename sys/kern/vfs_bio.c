@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.226 2010/12/22 14:05:50 reinoud Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.227 2011/01/17 07:13:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.226 2010/12/22 14:05:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.227 2011/01/17 07:13:32 uebayasi Exp $");
 
 #include "opt_bufcache.h"
 
@@ -143,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.226 2010/12/22 14:05:50 reinoud Exp $"
 #include <sys/cpu.h>
 #include <sys/wapbl.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm.h>	/* extern struct uvm uvm */
 
 #include <miscfs/specfs/specdev.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.128 2010/08/11 11:46:32 pgoyette Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.129 2011/01/17 07:13:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.128 2010/08/11 11:46:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.129 2011/01/17 07:13:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.128 2010/08/11 11:46:32 pgoyette Exp 
 #include <sys/atomic.h>
 #include <sys/pipe.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Use this to disable direct I/O and decrease the code size:

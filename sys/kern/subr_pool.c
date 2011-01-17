@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.186 2010/06/03 10:40:17 pooka Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.187 2011/01/17 07:13:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.186 2010/06/03 10:40:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.187 2011/01/17 07:13:32 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.186 2010/06/03 10:40:17 pooka Exp $"
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Pool resource management utility.

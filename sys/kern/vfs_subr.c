@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.417 2010/12/17 22:04:42 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.418 2011/01/17 07:13:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.417 2010/12/17 22:04:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.418 2011/01/17 07:13:33 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.417 2010/12/17 22:04:42 yamt Exp $");
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm.h>	/* extern struct uvm uvm */
 #include <uvm/uvm_readahead.h>
 #include <uvm/uvm_ddb.h>
 

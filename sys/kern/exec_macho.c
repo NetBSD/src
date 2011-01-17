@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.44 2010/11/19 06:44:42 dholland Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.45 2011/01/17 07:13:31 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.44 2010/11/19 06:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.45 2011/01/17 07:13:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.44 2010/11/19 06:44:42 dholland Exp
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef DEBUG_MACHO
 #define DPRINTF(a) printf a
