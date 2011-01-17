@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.806 2011/01/13 10:42:54 jruoho Exp $
+#	$NetBSD: 3RDPARTY,v 1.807 2011/01/17 22:04:14 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -131,14 +131,14 @@ Todo[4]: Re-entrant functions of net/*
 Todo[5]: Reconcile the doc directory.
 
 Package:	binutils
-Version:	2.16.1
+Version:	2.19.1
 Current Vers:	2.21
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej, mrg
-License:	GPLv2, LGPLv2, BSD
+License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
 Notes:
 
 Package:	bozohttpd 
