@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.199 2011/01/13 15:41:52 jruoho Exp $
+$NetBSD: acronyms,v 1.200 2011/01/17 15:18:06 jnemeth Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -344,6 +344,7 @@ THNX	thanks
 THX	thanks
 TIA	thanks in advance
 TIAVP	this is a volunteer project
+TIL	today I learned
 TINC	there is no cabal
 TLA	three letter acronym
 TLC	tender loving care
