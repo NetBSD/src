@@ -1,4 +1,4 @@
-.\"	$NetBSD: ioapic.4,v 1.3 2011/01/14 07:11:19 jruoho Exp $
+.\"	$NetBSD: ioapic.4,v 1.4 2011/01/17 07:32:05 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 14, 2011
+.Dd January 17, 2011
 .Dt IOAPIC 4 x86
 .Os
 .Sh NAME
@@ -140,6 +140,19 @@ systems has made this mainly a fallback option.
 .%T 8259A, Programmable Interrupt Controller
 .%D December, 1988
 .%U http://pdos.csail.mit.edu/6.828/2005/readings/hardware/8259A.pdf
+.Re
+.Rs
+.%A John Baldwin
+.%T PCI Interrupts for x86 Machines under FreeBSD
+.%D May 18-19, 2007
+.%O Proceedings of BSDCan 2007
+.%U http://people.freebsd.org/~jhb/papers/bsdcan/2007/article.pdf
+.Re
+.Rs
+.%A Microsoft Corporation
+.%T PCI IRQ Routing on a Multiprocessor ACPI System
+.%D December 4, 2001
+.%U http://www.microsoft.com/whdc/archive/acpi-mp.mspx
 .Re
 .Sh AUTHORS
 .An -nosplit
