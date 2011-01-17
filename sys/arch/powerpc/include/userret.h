@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.15.40.1 2011/01/07 01:55:37 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.15.40.2 2011/01/17 07:45:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,11 +44,8 @@
 static __inline void
 userret(struct lwp *l, struct trapframe *tf)
 {
-#if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
+#if defined(PPC_HAVE_FPU) || defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 	struct cpu_info * const ci = curcpu();
-#endif
-#ifdef PPC_HAVE_FPU
-	struct pcb * const pcb = &l->l_addr->u_pcb;
 #endif
 
 	KASSERTMSG((tf == trapframe(curlwp)),
@@ -66,7 +63,7 @@ userret(struct lwp *l, struct trapframe *tf)
 	 */
 #ifdef PPC_HAVE_FPU
 	if ((tf->tf_srr1 & PSL_FP) &&
-	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
+	    (l != ci->ci_fpulwp || l->l_md.md_fpucpu != ci)) {
 		tf->tf_srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
 	}
 #endif
@@ -90,6 +87,20 @@ userret(struct lwp *l, struct trapframe *tf)
 	 */
 	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {
 		__asm volatile("dssall;sync");
+	}
+#endif
+#ifdef PPC_HAVE_SPE
+	/*
+	 * We need to manually restore PSL_SPV each time we return
+	 * to user mode since PSL_SPV is not preserved in SRR1 since
+	 * we don't include it in PSL_USERSRR1 to control its setting.
+	 */
+	if (tf->tf_srr1 & PSL_SPV) {
+		if (l != ci->ci_veclwp)
+			tf->tf_srr1 &= ~PSL_SPV;
+	} else {
+		if (l == ci->ci_veclwp)
+			tf->tf_srr1 |= PSL_SPV;
 	}
 #endif
 }

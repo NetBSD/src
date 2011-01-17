@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.1.2.1 2011/01/07 01:26:20 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.1.2.2 2011/01/17 07:46:00 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -152,7 +152,7 @@ wrtee(register_t msr)
 }
 
 void	booke_fixup_stubs(void);
-void	booke_cpu_startup(void);
+void	booke_cpu_startup(const char *);	/* model name */
 struct powerpc_bus_dma_tag booke_bus_dma_tag;
 
 void	cpu_evcnt_attach(struct cpu_info *);

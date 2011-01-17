@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2007/11/16 07:36:11 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.40.1 2011/01/17 07:45:59 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,10 +37,15 @@
  * Machine-dependent part of the lwp structure
  */
 struct mdlwp {
-	int md_flags;
+	volatile int md_flags;
+	struct cpu_info * volatile md_fpucpu;	/* last cpu FP was used on */
+	struct cpu_info * volatile md_veccpu;	/* last cpu VEC was used on */
+	struct trapframe *md_utf;		/* user trampframe */
 };
-#define MDP_USEDFP	0x0001	/* this process has used the FPU */
-#define	MDP_USEDVEC	0x0002	/* this process has used AltiVec */
+#define MDLWP_USEDFPU	0x0001	/* this thread has used the FPU */
+#define MDLWP_OWNFPU	0x0002	/* this thread is using the FPU */
+#define	MDLWP_USEDVEC	0x0010	/* this thread has used the VEC */
+#define	MDLWP_OWNVEC	0x0020	/* this thread is using the VEC */
 
 struct trapframe;
 

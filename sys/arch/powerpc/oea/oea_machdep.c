@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.46.18.1 2011/01/07 02:12:19 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.46.18.2 2011/01/17 07:45:59 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46.18.1 2011/01/07 02:12:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46.18.2 2011/01/17 07:45:59 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -153,6 +153,8 @@ oea_init(void (*handler)(void))
 	KASSERT(curcpu() == ci);
 	lwp0.l_cpu = ci;
 	lwp0.l_addr = proc0paddr;
+	lwp0.l_md.md_fpucpu = ci;
+	lwp0.l_md.md_utf = trapframe(&lwp0);
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 	KASSERT(lwp0.l_cpu != NULL);
 
@@ -168,8 +170,12 @@ oea_init(void (*handler)(void))
 		curpcb->pcb_vr.vreg[scratch][2] = 0x7FFFDEAD;
 		curpcb->pcb_vr.vreg[scratch][3] = 0x7FFFDEAD;
 	}
-	curpcb->pcb_vr.vscr = 0;
-	curpcb->pcb_vr.vrsave = 0;
+	lwp0.l_md.md_veccpu = ci;
+	ci->ci_veclwp = &lwp0;
+#endif
+#ifdef PPC_HAVE_FPU
+	lwp0.l_md.md_fpucpu = ci;
+	ci->ci_fpulwp = &lwp0;
 #endif
 	curpm = curpcb->pcb_pm = pmap_kernel();
 
@@ -727,7 +733,6 @@ oea_startup(const char *model)
 
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
-	KASSERT(curcpu()->ci_intstk != 0);
 	KASSERT(curcpu()->ci_idepth == -1);
 
 	/*

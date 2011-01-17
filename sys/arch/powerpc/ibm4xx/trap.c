@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49.16.1 2011/01/07 02:12:18 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.49.16.2 2011/01/17 07:45:59 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.16.1 2011/01/07 02:12:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.16.2 2011/01/17 07:45:59 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -132,12 +132,12 @@ void
 trap(struct trapframe *tf)
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p = l->l_proc;
 	int type = tf->tf_exc;
 	int ftype, rv;
 	ksiginfo_t ksi;
 
-	KASSERT(l == 0 || (l->l_stat == LSONPROC));
+	KASSERT(l->l_stat == LSONPROC);
 
 	if (tf->tf_srr1 & PSL_PR) {
 		LWP_CACHE_CREDS(l, p);
@@ -205,10 +205,11 @@ trap(struct trapframe *tf)
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, tf->tf_esr));
 
-			fb = l->l_addr->u_pcb.pcb_onfault;
-			l->l_addr->u_pcb.pcb_onfault = NULL;
+			struct pcb * const pcb = lwp_getpcb(l);
+			fb = pcb->pcb_onfault;
+			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(map, trunc_page(va), ftype);
-			l->l_addr->u_pcb.pcb_onfault = fb;
+			pcb->pcb_onfault = fb;
 			if (map != kernel_map) {
 				l->l_pflag &= ~LP_SA_PAGEFAULT;
 			}
@@ -315,21 +316,21 @@ trap(struct trapframe *tf)
 			tf->tf_srr0 += 4;
 		break;
 
-	case EXC_PGM|EXC_USER:
+	case EXC_PGM|EXC_USER: {
 		/*
 		 * Illegal insn:
 		 *
 		 * let's try to see if it's FPU and can be emulated.
 		 */
 		uvmexp.traps++;
-		if (!(l->l_addr->u_pcb.pcb_flags & PCB_FPU)) {
-			memset(&l->l_addr->u_pcb.pcb_fpu, 0,
-				sizeof l->l_addr->u_pcb.pcb_fpu);
-			l->l_addr->u_pcb.pcb_flags |= PCB_FPU;
+		struct pcb * const pcb = lwp_getpcb(l);
+		if (!(l->l_md.md_flags & MDLWP_USEDFPU)) {
+			memset(&pcb->pcb_fpu, 0, sizeof pcb->pcb_fpu);
+			l->l_md.md_flags |= MDLWP_USEDFPU;
 		}
 
-		if ((rv = fpu_emulate(tf,
-			(struct fpreg *)&l->l_addr->u_pcb.pcb_fpu))) {
+		rv = fpu_emulate(tf, (struct fpreg *)pcb->pcb_fpu.fpreg);
+		if (rv != 0) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = rv;
 			ksi.ksi_trap = EXC_PGM;
@@ -337,25 +338,26 @@ trap(struct trapframe *tf)
 			trapsignal(l, &ksi);
 		}
 		break;
+	}
 
-	case EXC_MCHK:
-		{
-			struct faultbuf *fb = l->l_addr->u_pcb.pcb_onfault;
+	case EXC_MCHK: {
+		struct pcb * const pcb = lwp_getpcb(l);
+		struct faultbuf * const fb = pcb->pcb_onfault;
 
-			if (fb != NULL) {
-				tf->tf_pid = KERNEL_PID;
-				tf->tf_srr0 = fb->fb_pc;
-				tf->tf_srr1 |= PSL_IR; /* Re-enable IMMU */
-				tf->tf_fixreg[1] = fb->fb_sp;
-				tf->tf_fixreg[2] = fb->fb_r2;
-				tf->tf_fixreg[3] = 1; /* Return TRUE */
-				tf->tf_cr = fb->fb_cr;
-				memcpy(&tf->tf_fixreg[13], fb->fb_fixreg,
-				    sizeof(fb->fb_fixreg));
-				goto done;
-			}
+		if (fb != NULL) {
+			tf->tf_pid = KERNEL_PID;
+			tf->tf_srr0 = fb->fb_pc;
+			tf->tf_srr1 |= PSL_IR; /* Re-enable IMMU */
+			tf->tf_fixreg[1] = fb->fb_sp;
+			tf->tf_fixreg[2] = fb->fb_r2;
+			tf->tf_fixreg[3] = 1; /* Return TRUE */
+			tf->tf_cr = fb->fb_cr;
+			memcpy(&tf->tf_fixreg[13], fb->fb_fixreg,
+			    sizeof(fb->fb_fixreg));
+			goto done;
 		}
 		goto brain_damage;
+	}
 	default:
  brain_damage:
 		printf("trap type 0x%x at 0x%lx\n", type, tf->tf_srr0);

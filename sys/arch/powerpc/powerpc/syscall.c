@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.43.16.1 2011/01/07 02:03:51 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.43.16.2 2011/01/17 07:46:00 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -64,7 +64,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43.16.1 2011/01/07 02:03:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43.16.2 2011/01/17 07:46:00 matt Exp $");
 
 void
 child_return(void *arg)
@@ -77,7 +77,6 @@ child_return(void *arg)
 	tf->tf_cr &= ~0x10000000;
 	tf->tf_srr1 &= ~(PSL_FP|PSL_VEC); /* Disable FP & AltiVec, as we can't
 					   be them. */
-	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 	ktrsysret(SYS_fork, 0, 0);
 	/* Profiling?							XXX */
 }

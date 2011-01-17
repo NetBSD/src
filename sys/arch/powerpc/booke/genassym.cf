@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.2 2011/01/17 07:45:58 matt Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ define	FRAME_EXC	offsetof(struct ktrapframe, ktf_tf.tf_exc)
 define	FRAME_MCSR	offsetof(struct ktrapframe, ktf_tf.tf_mcsr)
 define	FRAME_MCAR	offsetof(struct ktrapframe, ktf_tf.tf_mcar)
 define	FRAME_SPRG1	offsetof(struct ktrapframe, ktf_tf.tf_sprg1)
+define	FRAME_SPEFSCR	offsetof(struct ktrapframe, ktf_tf.tf_spefscr)
 
 define	CALLFRAMELEN	CALLFRAMELEN
 define	CFRAME_SP	offsetof(struct callframe, cf_sp)
@@ -152,14 +153,10 @@ define	PCB_USPRG0	offsetof(struct pcb, pcb_usprg0)
 
 define	L_ADDR		offsetof(struct lwp, l_addr)
 define	L_PCB		offsetof(struct lwp, l_addr)
-define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_CPU		offsetof(struct lwp, l_cpu)
-define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	L_PROC		offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
 
-define	LSRUN		LSRUN
-define	LSONPROC	LSONPROC
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 
 define	CI_SIZE		sizeof(struct cpu_info)

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.11.20.1 2011/01/07 02:01:57 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.11.20.2 2011/01/17 07:46:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11.20.1 2011/01/07 02:01:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11.20.2 2011/01/17 07:46:00 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_altivec.h"
@@ -61,12 +61,15 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct sigcontext *fp, frame;
-	struct trapframe *tf;
+	struct trapframe *tf = trapframe(l);
 	struct utrapframe *utf = &frame.sc_frame;
+#if defined(PPC_HAVE_FPU)
+	struct pcb * const pcb = lwp_getpcb(l);
+#endif
+
 	int onstack, error;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = trapframe(l);
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -91,10 +94,10 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 	utf->srr1 = tf->tf_srr1 & PSL_USERSRR1;
 
 #ifdef PPC_HAVE_FPU
-	utf->srr1 |= l->l_addr->u_pcb.pcb_flags & (PCB_FE0|PCB_FE1);
+	utf->srr1 |= pcb->pcb_flags & (PCB_FE0|PCB_FE1);
 #endif
-#ifdef ALTIVEC
-	utf->srr1 |= l->l_addr->u_pcb.pcb_flags & PCB_ALTIVEC ? PSL_VEC : 0;
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
+	utf->srr1 |= l->l_md.md_flags & MDLWP_USEDVEC ? PSL_VEC : 0;
 #endif
 #ifdef PPC_OEA
 	utf->vrsave = tf->tf_vrsave;
@@ -176,8 +179,11 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	} */
 	struct proc *p = l->l_proc;
 	struct sigcontext sc;
-	struct trapframe *tf;
+	struct trapframe * const tf = trapframe(l);
 	struct utrapframe * const utf = &sc.sc_frame;
+#if defined(PPC_HAVE_FPU)
+	struct pcb * const pcb = lwp_getpcb(l);
+#endif
 	int error;
 
 	/*
@@ -187,9 +193,6 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	 */
 	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
 		return (error);
-
-	/* Restore the register context. */
-	tf = trapframe(l);
 
 	/*
 	 * Make sure SRR1 hasn't been maliciously tampered with.
@@ -206,8 +209,8 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	tf->tf_srr0 = utf->srr0;
 	tf->tf_srr1 = utf->srr1;
 #ifdef PPC_HAVE_FPU
-	l->l_addr->u_pcb.pcb_flags &= ~(PCB_FE0|PCB_FE1);
-	l->l_addr->u_pcb.pcb_flags |= utf->srr1 & (PCB_FE0|PCB_FE1);
+	pcb->pcb_flags &= ~(PCB_FE0|PCB_FE1);
+	pcb->pcb_flags |= utf->srr1 & (PCB_FE0|PCB_FE1);
 #endif
 #ifdef PPC_OEA
 	tf->tf_vrsave = utf->vrsave;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.1.2.2 2011/01/17 07:45:58 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,6 +33,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+RCSID("$NetBSD: trap_subr.S,v 1.1.2.2 2011/01/17 07:45:58 matt Exp $")
 
 	.globl	_C_LABEL(critintr_call)
 	.globl	_C_LABEL(extintr_call)
@@ -139,6 +141,30 @@
 	PROLOGUE_GET_SRRS
 
 /*
+ * DDB expects to fetch the LR from the previous frame.  But it also
+ * expects to be pointing at the instruction after the branch link.  Since
+ * we didn't branch, we need to advance it by to fake out DDB.
+ */
+#ifdef DDB
+#define FRAME_SAVE_SRR0_FOR_DDB						\
+	addi	%r30, %r30, 4;		/* ddb thinks its the next insn */ \
+	stw	%r30, FRAMELEN+SZREG(%r1); /* appease ddb stacktrace */
+#else
+#define FRAME_SAVE_SRR0_FOR_DDB
+#endif
+
+#ifdef PPC_HAVE_SPE
+#define	FRAME_SAVE_SPEFSCR						\
+	mfspefscr %r0;			/* get spefscr */		\
+	stw	%r0, FRAME_SPEFSCR(%r1) /* save into trapframe */
+#define	FRAME_RESTORE_SPEFSCR						\
+	lwz	%r0, FRAME_SPEFSCR(%r1); /* fetch from trapframe */	\
+	mtspefscr %r0			/* save spefscr */
+#else
+#define	FRAME_SAVE_SPEFSCR
+#define	FRAME_RESTORE_SPEFSCR
+#endif
+/*
  * Before the first memory refernence, we must have our state inside registers
  * since the first memory access might cause an exception which would cause
  * SRR0/SRR1 and DEAR/ESR to become unrecoverable.  CR and XER also need to be
@@ -167,6 +193,7 @@
 	mfctr	%r29;			/* get CTR */			\
 	mfcr	%r31;			/* get SRR1 */			\
 	stmw	%r26, FRAME_LR(%r1);	/* save LR CR XER CTR SRR0/1 */	\
+	FRAME_SAVE_SRR0_FOR_DDB;					\
 	mr	%r0, %r31;		/* save SRR1 for a bit */	\
 	mfsprg3	%r2;			/* get save_area pointer */	\
 	addi	%r2,%r2,-4*(32-start);	/* find our save area */	\
@@ -175,6 +202,7 @@
 	stmw	%r3, FRAME_3(%r1);	/* save r2-r31 */		\
 	/* Now everything has been saved */				\
 	mr	%r31, %r0;		/* move SRR1 back to r31 */	\
+	FRAME_SAVE_SPEFSCR;						\
 	li	%r7, exc;		/* load EXC_* */		\
 	stw	%r7, FRAME_EXC(%r1);	/* save into trapframe */	\
 	addi	tf, %r1, FRAME_TF	/* get address of trap frame */
@@ -184,6 +212,7 @@
 	oris	%r31,%r31,PSL_CE@h;					\
 	mtspr	SPR_##srr##1, %r31;	/* restore SRR1 */		\
 	mtspr	SPR_##srr##0, %r30;	/* restore SRR0 */		\
+	FRAME_RESTORE_SPEFSCR;						\
 	mtctr	%r29;			/* restore CTR */		\
 	mtxer	%r28;			/* restore XER */		\
 	mtcr	%r27;			/* restore CR */		\
@@ -248,6 +277,7 @@
 	mfctr	%r29;			/* get CTR */			\
 	mfcr	%r31;			/* get SRR1 */			\
 	stmw	%r26, FRAME_LR(%r1);	/* save LR CR XER CTR SRR0/1 */	\
+	FRAME_SAVE_SRR0_FOR_DDB;					\
 	stw	%r3, FRAME_3(%r1);	/* save r3 */			\
 	stw	%r4, FRAME_4(%r1);	/* save r4 */			\
 	stw	%r5, FRAME_5(%r1);	/* save r5 */			\
@@ -394,6 +424,7 @@ _C_LABEL(intrcall):
 	cmplwi	%r4, 0				/* is there an ast pending */
 	beq+	intrexit			/*    nope, proceed to exit */
 	stmw	%r14, FRAME_14(%r1)		/* save rest of registers */
+	FRAME_SAVE_SPEFSCR
 	mr	%r31, %r5			/* needed for trapagain */
 	li	%r4, EXC_AST			/* */
 	stw	%r4, FRAME_EXC(%r1)		/* pretend this is an AST */

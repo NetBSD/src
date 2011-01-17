@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.1.2.1 2011/01/07 01:26:19 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.1.2.2 2011/01/17 07:45:58 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,6 +50,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <powerpc/altivec.h>
 
 /*
  * Global variables used here and there
@@ -138,6 +139,8 @@ struct cpu_info cpu_info[1] = {
 		.ci_tlb_info = &pmap_tlb0_info,
 		.ci_softc = cpu_softc,
 		.ci_cpl = IPL_HIGH,
+		.ci_fpulwp = &lwp0,
+		.ci_veclwp = &lwp0,
 #if 0
 		.ci_pmap_kern_segtab = &pmap_kern_segtab,
 #endif
@@ -162,10 +165,12 @@ int fake_mapiodev = 1;
 void lcsplx(int);
 
 void
-booke_cpu_startup(void)
+booke_cpu_startup(const char *model)
 {
 	vaddr_t 	minaddr, maxaddr;
 	char 		pbuf[9];
+
+	strlcpy(cpu_model, model, sizeof(cpu_model));
 
 	printf("%s%s", copyright, version);
 
@@ -386,7 +391,7 @@ cpu_evcnt_attach(struct cpu_info *ci)
 		&ci->ci_ev_traps, xname, "PGM traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_fpu, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, xname, "FPU unavailable traps");
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_fpusw, EVCNT_TYPE_TRAP,
+	evcnt_attach_dynamic_nozero(&ci->ci_ev_fpusw, EVCNT_TYPE_MISC,
 		&ci->ci_ev_fpu, xname, "FPU context switches");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_ali, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, xname, "user alignment traps");
@@ -395,13 +400,9 @@ cpu_evcnt_attach(struct cpu_info *ci)
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_umchk, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_umchk, xname, "user MCHK failures");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, xname, "AltiVec unavailable");
-#ifdef ALTIVEC
-	if (cpu_altivec) {
-		evcnt_attach_dynamic_nozero(&ci->ci_ev_vecsw, EVCNT_TYPE_TRAP,
-		    &ci->ci_ev_vec, xname, "AltiVec context switches");
-	}
-#endif
+		&ci->ci_ev_traps, xname, "SPE unavailable");
+	evcnt_attach_dynamic_nozero(&ci->ci_ev_vecsw, EVCNT_TYPE_MISC,
+	    &ci->ci_ev_vec, xname, "SPE context switches");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_ipi, EVCNT_TYPE_INTR,
 		NULL, xname, "IPIs");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_tlbmiss_soft, EVCNT_TYPE_TRAP,

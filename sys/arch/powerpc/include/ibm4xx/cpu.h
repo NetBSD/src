@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2006/08/31 21:32:27 freza Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13.82.1 2011/01/17 07:46:00 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -92,6 +92,25 @@ extern void calc_delayconst(void);
 /* export from ibm4xx/4xx_locore.S */
 extern void ppc4xx_reset(void) __attribute__((__noreturn__));
 
+/*
+ * DCR (Device Control Register) access. These have to be
+ * macros because register address is encoded as immediate
+ * operand.
+ */
+static inline void
+mtdcr(int reg, uint32_t val)
+{
+	__asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val));
+}
+
+static inline uint32_t
+mfdcr(int reg)
+{
+	uint32_t val;
+
+	__asm volatile("mfdcr %0,%1" : "=r"(val) : "K"(reg));
+	return val;
+}
 #endif /* _KERNEL */
 
 #include <powerpc/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1.2.2 2011/01/07 15:14:23 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.1.2.3 2011/01/17 07:45:58 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.2 2011/01/07 15:14:23 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.3 2011/01/17 07:45:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.1.2.2 2011/01/07 15:14:23 matt Exp $");
 #include <powerpc/userret.h>
 #include <powerpc/psl.h>
 #include <powerpc/instr.h>
+#include <powerpc/altivec.h>		/* use same interface for SPE */
 
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
@@ -183,10 +184,11 @@ pagefault(struct vm_map *map, vaddr_t va, vm_prot_t ftype, bool usertrap)
 		if (cpu_intr_p())
 			return EFAULT;
 
-		struct faultbuf * const fb = l->l_addr->u_pcb.pcb_onfault;
-		l->l_addr->u_pcb.pcb_onfault = NULL;
+		struct pcb * const pcb = lwp_getpcb(l);
+		struct faultbuf * const fb = pcb->pcb_onfault;
+		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, trunc_page(va), ftype);
-		l->l_addr->u_pcb.pcb_onfault = fb;
+		pcb->pcb_onfault = fb;
 		if (map != kernel_map) {
 			if (rv == 0)
 				uvm_grow(l->l_proc, trunc_page(va));
@@ -387,6 +389,29 @@ itlb_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	return rv;
 }
 
+static int
+spe_exception(struct trapframe *tf, ksiginfo_t *ksi)
+{
+	struct cpu_info * const ci = curcpu();
+
+	if (!usertrap_p(tf))
+		return EPERM;
+
+	ci->ci_ev_vec.ev_count++;
+
+#ifdef PPC_HAVE_SPE
+	vec_enable();
+	return 0;
+#else
+	KSI_INIT_TRAP(ksi);
+	ksi->ksi_signo = SIGILL;
+	ksi->ksi_trap = EXC_PGM;
+	ksi->ksi_code = ILL_ILLOPC;
+	ksi->ksi_addr = (void *)tf->tf_srr0;
+	return EPERM;
+#endif
+}
+
 static bool
 emulate_opcode(struct trapframe *tf, ksiginfo_t *ksi)
 {
@@ -474,6 +499,54 @@ ali_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	return rv;
 }
 
+static int
+embedded_fp_data_exception(struct trapframe *tf, ksiginfo_t *ksi)
+{
+	struct cpu_info * const ci = curcpu();
+	int rv = EFAULT;
+
+	ci->ci_ev_fpu.ev_count++;
+
+	if (rv != 0 && usertrap_p(tf)) {
+		KSI_INIT_TRAP(ksi);
+#ifdef PPC_HAVE_SPE
+		ksi->ksi_signo = SIGFPE;
+		ksi->ksi_trap = tf->tf_exc;
+		ksi->ksi_code = vec_siginfo_code(tf);
+#else
+		ksi->ksi_signo = SIGILL;
+		ksi->ksi_trap = EXC_PGM;
+		ksi->ksi_code = ILL_ILLOPC;
+#endif
+		ksi->ksi_addr = (void *)tf->tf_srr0;
+	}
+	return rv;
+}
+
+static int
+embedded_fp_round_exception(struct trapframe *tf, ksiginfo_t *ksi)
+{
+	struct cpu_info * const ci = curcpu();
+	int rv = EDOM;
+
+	ci->ci_ev_fpu.ev_count++;
+
+	if (rv != 0 && usertrap_p(tf)) {
+		KSI_INIT_TRAP(ksi);
+#ifdef PPC_HAVE_SPE
+		ksi->ksi_signo = SIGFPE;
+		ksi->ksi_trap = tf->tf_exc;
+		ksi->ksi_code = vec_siginfo_code(tf);
+#else
+		ksi->ksi_signo = SIGILL;
+		ksi->ksi_trap = EXC_PGM;
+		ksi->ksi_code = ILL_ILLOPC;
+#endif
+		ksi->ksi_addr = (void *)tf->tf_srr0;
+	}
+	return rv;
+}
+
 static void
 dump_trapframe(const struct trapframe *tf)
 {
@@ -526,7 +599,8 @@ static bool
 onfaulted(struct trapframe *tf, register_t rv)
 {
 	struct lwp * const l = curlwp;
-	struct faultbuf * const fb = l->l_addr->u_pcb.pcb_onfault;
+	struct pcb * const pcb = lwp_getpcb(l);
+	struct faultbuf * const fb = pcb->pcb_onfault;
 	if (fb == NULL)
 		return false;
 	tf->tf_srr0 = fb->fb_pc;
@@ -535,7 +609,7 @@ onfaulted(struct trapframe *tf, register_t rv)
 	tf->tf_fixreg[1] = fb->fb_sp;
 	tf->tf_fixreg[2] = fb->fb_r2;
 	tf->tf_fixreg[3] = rv;
-	l->l_addr->u_pcb.pcb_onfault = NULL;
+	pcb->pcb_onfault = NULL;
 	return true;
 }
 
@@ -579,14 +653,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	}
 #endif
 
-	if (usertrap && (tf->tf_fixreg[1] & 0x80000000)) {
-		printf("%s(entry): pid %d.%d (%s): %s invalid sp %#lx (sprg1=%#lx)\n",
-		    __func__, p->p_pid, l->l_lid, p->p_comm,
-		    trap_names[trap_code], tf->tf_fixreg[1], mfspr(SPR_SPRG1));
-		dump_trapframe(tf);
-		Debugger();
-	}
-
+#if 0
 	if (usertrap && (tf->tf_srr1 & (PSL_DS|PSL_IS)) != (PSL_DS|PSL_IS)) {
 		printf("%s(entry): pid %d.%d (%s): %s invalid PSL %#lx\n",
 		    __func__, p->p_pid, l->l_lid, p->p_comm,
@@ -594,6 +661,12 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		dump_trapframe(tf);
 		Debugger();
 	}
+#endif
+
+	if (usertrap) {
+		LWP_CACHE_CREDS(l, p);
+	}
+
 
 	switch (trap_code) {
 	case T_CRITIAL_INPUT:
@@ -617,6 +690,9 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	case T_ALIGNMENT:
 		rv = ali_exception(tf, &ksi);
 		break;
+	case T_SPE_UNAVAILABLE:
+		rv = spe_exception(tf, &ksi);
+		break;
 	case T_PROGRAM:
 #ifdef DDB
 		if (!usertrap && ddb_exception(tf))
@@ -635,14 +711,17 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		rv = itlb_exception(tf, &ksi);
 		break;
 	case T_DEBUG:
-	case T_SPE_UNAVAILABLE:
 	case T_EMBEDDED_FP_DATA:
+		rv = embedded_fp_data_exception(tf, &ksi);
+		break;
 	case T_EMBEDDED_FP_ROUND:
+		rv = embedded_fp_round_exception(tf, &ksi);
+		break;
 	case T_EMBEDDED_PERF_MONITOR:
 		//db_stack_trace_print(tf->tf_fixreg[1], true, 40, "", printf);
 		dump_trapframe(tf);
-		panic("trap: unexcepted trap code %d! (tf=%p, srr0/1=%#lx/%#lx)",
-		    trap_code, tf, tf->tf_srr0, tf->tf_srr1);
+		rv = EPERM;
+		break;
 	case T_AST:
 		KASSERT(usertrap);
 		ci->ci_astpending = 0;		/* we are about to do it */
@@ -725,24 +804,20 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 				    " %s exception in user mode\n",
 				    __func__, p->p_pid, l->l_lid, p->p_comm,
 				    trap_names[trap_code]);
-				dump_trapframe(tf);
+				if (cpu_printfataltraps > 1)
+					dump_trapframe(tf);
 			}
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
-		if (tf->tf_fixreg[1] & 0x80000000) {
-			printf("%s(exit): pid %d.%d (%s): invalid sp %#lx\n",
-			    __func__, p->p_pid, l->l_lid, p->p_comm,
-			    tf->tf_fixreg[1]);
-			dump_trapframe(tf);
-			Debugger();
-		}
+#ifdef DEBUG
 		if ((tf->tf_srr1 & (PSL_DS|PSL_IS)) != (PSL_DS|PSL_IS)) {
-			printf("%s(entry): pid %d.%d (%s): %s invalid PSL %#lx\n",
+			printf("%s(exit): pid %d.%d (%s): %s invalid PSL %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    trap_names[trap_code], tf->tf_srr1);
 			dump_trapframe(tf);
 			Debugger();
 		}
+#endif
 #if 0
 		if ((mfmsr() & PSL_CE) == 0) {
 			printf("%s(exit): pid %d.%d (%s): %s: PSL_CE (%#lx) not set\n",

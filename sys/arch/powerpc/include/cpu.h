@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65.22.1 2011/01/07 01:59:40 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.65.22.2 2011/01/17 07:45:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -42,30 +42,34 @@ struct cache_info {
 	int icache_line_size;
 };
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #endif
 
+#ifdef _KERNEL
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
 #include <sys/device.h>
+#include <sys/evcnt.h>
+#endif
 
 #include <sys/cpu_data.h>
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct device *ci_dev;		/* device of corresponding cpu */
+#ifdef _KERNEL
+	device_t ci_dev;		/* device of corresponding cpu */
 	struct cpu_softc *ci_softc;	/* private cpu info */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
-	struct lwp *ci_fpulwp;
-	struct lwp *ci_veclwp;
+	struct lwp * volatile ci_fpulwp;
+	struct lwp * volatile ci_veclwp;
 	int ci_cpuid;
 
 	volatile int ci_astpending;
@@ -81,7 +85,7 @@ struct cpu_info {
 #endif
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
-#ifndef PPC_BOOKE
+#ifdef PPC_IBM4XX
 	char *ci_intstk;
 #endif
 #ifndef PPC_BOOKE
@@ -94,8 +98,8 @@ struct cpu_info {
 #define	CPUSAVE_R30	2		/* where r30 gets saved */
 #define	CPUSAVE_R31	3		/* where r31 gets saved */
 #if defined(PPC_IBM4XX)
-#define	CPUSAVE_DEAR	4		/* where SPR_DAR gets saved */
-#define	CPUSAVE_ESR	5		/* where SPR_DSISR gets saved */
+#define	CPUSAVE_DEAR	4		/* where SPR_DEAR gets saved */
+#define	CPUSAVE_ESR	5		/* where SPR_ESR gets saved */
 	register_t ci_tlbmisssave[CPUSAVE_LEN];
 #else
 #define	CPUSAVE_DAR	4		/* where SPR_DAR gets saved */
@@ -105,14 +109,14 @@ struct cpu_info {
 #endif
 #define	CPUSAVE_SRR0	6		/* where SRR0 gets saved */
 #define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
-#else
+#else /* PPC_BOOKE */
 #define	CPUSAVE_LEN	128
 	register_t ci_savelifo[CPUSAVE_LEN];
 	struct pmap_segtab *ci_pmap_segtabs[2];
 #define	ci_pmap_kern_segtab	ci_pmap_segtabs[0]
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
 	struct pmap_tlb_info *ci_tlb_info;
-#endif
+#endif /* PPC_BOOKE */
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
 	void (*ci_idlespin)(void);
@@ -144,7 +148,11 @@ struct cpu_info {
 	struct evcnt ci_ev_tlbmiss_soft; /* tlb miss (no trap) */
 	struct evcnt ci_ev_dtlbmiss_hard; /* data tlb miss (trap) */
 	struct evcnt ci_ev_itlbmiss_hard; /* instruction tlb miss (trap) */
+#endif /* _KERNEL */
 };
+#endif /* _KERNEL || _KMEMUSER */
+
+#ifdef _KERNEL
 
 #ifdef MULTIPROCESSOR
 
@@ -227,13 +235,13 @@ mftbl(void)
 
 	__asm volatile (
 #ifdef PPC_IBM403
-"	mftblo %0	\n"
+	"	mftblo %[tbl]"		"\n"
 #elif defined(PPC_BOOKE)
-"	mfspr %0,268	\n"
+	"	mfspr %[tbl],268"	"\n"
 #else
-"	mftbl %0	\n"
+	"	mftbl %[tbl]"		"\n"
 #endif
-	: "=r" (tbl));
+	: [tbl] "=r" (tbl));
 
 	return tbl;
 }
@@ -250,21 +258,22 @@ mftb(void)
 
 	__asm volatile (
 #ifdef PPC_IBM403
-"1:	mftbhi %0	\n"
-"	mftblo %0+1	\n"
-"	mftbhi %1	\n"
+	"1:	mftbhi %[tb]"		"\n"
+	"	mftblo %L[tb]"		"\n"
+	"	mftbhi %[tmp]"		"\n"
 #elif defined(PPC_BOOKE)
-"1:	mfspr %0,269	\n"
-"	mfspr %0+1,268	\n"
-"	mfspr %1,269	\n"
+	"1:	mfspr %[tb],269"	"\n"
+	"	mfspr %L[tb],268"	"\n"
+	"	mfspr %[tmp],269"	"\n"
 #else
-"1:	mftbu %0	\n"
-"	mftb %0+1	\n"
-"	mftbu %1	\n"
+	"1:	mftbu %[tb]"		"\n"
+	"	mftb %L[tb]"		"\n"
+	"	mftbu %[tmp]"		"\n"
 #endif
-"	cmplw %0,%1	\n"
-"	bne- 1b		\n"
-	: "=r" (tb), "=r"(tmp) :: "cr0");
+	"	cmplw %[tb],%[tmp]"	"\n"
+	"	bne- 1b"		"\n"
+	    : [tb] "=r" (tb), [tmp] "=r"(tmp)
+	    :: "cr0");
 #endif
 
 	return tb;
@@ -285,12 +294,13 @@ mfrtc(uint32_t *rtcp)
 	uint32_t tmp;
 
 	__asm volatile (
-"1:	mfrtcu	%0	\n"
-"	mfrtcl	%1	\n"
-"	mfrtcu	%2	\n"
-"	cmplw	%0,%2	\n"
-"	bne-	1b"
-	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp) :: "cr0");
+	"1:	mfrtcu	%[rtcu]"	"\n"
+	"	mfrtcl	%[rtcl]"	"\n"
+	"	mfrtcu	%[tmp]"		"\n"
+	"	cmplw	%[rtcu],%[tmp]"	"\n"
+	"	bne-	1b"
+	    : [rtcu] "=r"(rtcp[0]), [rtcl] "=r"(rtcp[1]), [tmp] "=r"(tmp)
+	    :: "cr0");
 }
 
 static __inline uint32_t
@@ -311,29 +321,11 @@ cntlzw(uint32_t val)
 	return (cnt);
 }
 
-#if defined(PPC_IBM4XX) || defined(PPC_IBM403)
-/*
- * DCR (Device Control Register) access. These have to be
- * macros because register address is encoded as immediate
- * operand.
- */
-#define mtdcr(reg, val) 					\
-	__asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val))
-
-#define mfdcr(reg)						\
-({								\
-	uint32_t __val;						\
-								\
-	__asm volatile("mfdcr %0,%1" : "=r"(__val) : "K"(reg)); \
-	__val;							\
-})
-#endif /* PPC_IBM4XX || PPC_IBM403 */
-
 #define	CLKF_USERMODE(frame)	(((frame)->cf_srr1 & PSL_PR) != 0)
 #define	CLKF_PC(frame)		((frame)->cf_srr0)
 #define	CLKF_INTR(frame)	((frame)->cf_idepth >= 0)
-#define	LWP_PC(l)		(trapframe(l)->tf_srr0)
 
+#define	LWP_PC(l)		(trapframe(l)->tf_srr0)
 
 #define	cpu_swapin(p)
 #define	cpu_swapout(p)
