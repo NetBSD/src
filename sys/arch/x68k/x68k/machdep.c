@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.170 2010/11/13 04:16:38 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171 2011/01/17 14:53:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2010/11/13 04:16:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2011/01/17 14:53:44 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2010/11/13 04:16:38 uebayasi Exp $
 
 #include <m68k/cacheops.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>
