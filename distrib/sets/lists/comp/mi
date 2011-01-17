@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1567 2011/01/14 18:12:47 njoly Exp $
+#	$NetBSD: mi,v 1.1568 2011/01/17 11:09:06 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -22215,6 +22215,6 @@
 ./usr/share/misc/indent.pro			comp-util-share		share
 ./usr/share/misc/menu_sys.def			comp-c-share		share
 ./usr/share/misc/msg_sys.def			comp-c-share		share
-./usr/share/misc/operator			comp-c-share		share
+./usr/share/misc/operator			comp-obsolete		obsolete
 ./usr/share/misc/style				comp-c-share		share
 ./var/db/libc.tags                             comp-c-root
