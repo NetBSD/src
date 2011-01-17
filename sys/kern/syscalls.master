@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.241 2011/01/17 16:21:40 pooka Exp $
+	$NetBSD: syscalls.master,v 1.242 2011/01/17 18:24:17 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -80,7 +80,7 @@
 11	OBSOL		execv
 12	STD 	 RUMP	{ int|sys||chdir(const char *path); }
 13	STD 	 RUMP	{ int|sys||fchdir(int fd); }
-14	COMPAT_50 MODULAR { int|sys||mknod(const char *path, mode_t mode, \
+14	COMPAT_50 MODULAR RUMP { int|sys||mknod(const char *path, mode_t mode, \
 			    uint32_t dev); }
 15	STD 	 RUMP	{ int|sys||chmod(const char *path, mode_t mode); }
 16	STD 	 RUMP	{ int|sys||chown(const char *path, uid_t uid, \
@@ -710,7 +710,7 @@
 			    int attrnamespace, void *data, size_t nbytes); }
 372	STD 	RUMP	{ ssize_t|sys||extattr_list_link(const char *path, \
 			    int attrnamespace, void *data, size_t nbytes); }
-373	COMPAT_50 MODULAR { int|sys||pselect(int nd, fd_set *in, fd_set *ou, \
+373	COMPAT_50 MODULAR RUMP { int|sys||pselect(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, const struct timespec50 *ts, \
 			    const sigset_t *mask); }
 374	COMPAT_50 MODULAR RUMP { int|sys||pollts(struct pollfd *fds, u_int nfds, \
@@ -757,7 +757,7 @@
 			    int flags); }
 397	STD 	 RUMP	{ int|sys|40|fhstatvfs1(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
-398	COMPAT_50 MODULAR { int|sys|40|fhstat(const void *fhp, \
+398	COMPAT_50 MODULAR RUMP { int|sys|40|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat30 *sb); }
 
 ; Asynchronous I/O system calls
