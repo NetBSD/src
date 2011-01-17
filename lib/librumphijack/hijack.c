@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.7 2011/01/09 19:56:33 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.8 2011/01/17 16:27:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.7 2011/01/09 19:56:33 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.8 2011/01/17 16:27:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -34,7 +34,6 @@ __RCSID("$NetBSD: hijack.c,v 1.7 2011/01/09 19:56:33 pooka Exp $");
 #include <sys/socket.h>
 #include <sys/poll.h>
 
-#include <rump/rump.h>
 #include <rump/rumpclient.h>
 #include <rump/rump_syscalls.h>
 
@@ -47,6 +46,7 @@ __RCSID("$NetBSD: hijack.c,v 1.7 2011/01/09 19:56:33 pooka Exp $");
 #include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -66,29 +66,32 @@ enum {	RUMPCALL_SOCKET, RUMPCALL_ACCEPT, RUMPCALL_BIND, RUMPCALL_CONNECT,
 	RUMPCALL__NUM
 };
 
+#define RSYS_STRING(a) __STRING(a)
+#define RSYS_NAME(a) RSYS_STRING(__CONCAT(RUMP_SYS_RENAME_,a))
+
 const char *sysnames[] = {
-	"__socket30",
-	"accept",
-	"bind",
-	"connect",
-	"getpeername",
-	"getsockname",
-	"listen",
-	"recvfrom",
-	"recvmsg",
-	"sendto",
-	"sendmsg",
-	"getsockopt",
-	"setsockopt",
-	"shutdown",
-	"read",
-	"readv",
-	"write",
-	"writev",
-	"ioctl",
-	"fcntl",
-	"close",
-	"__pollts50",
+	RSYS_NAME(SOCKET),
+	RSYS_NAME(ACCEPT),
+	RSYS_NAME(BIND),
+	RSYS_NAME(CONNECT),
+	RSYS_NAME(GETPEERNAME),
+	RSYS_NAME(GETSOCKNAME),
+	RSYS_NAME(LISTEN),
+	RSYS_NAME(RECVFROM),
+	RSYS_NAME(RECVMSG),
+	RSYS_NAME(SENDTO),
+	RSYS_NAME(SENDMSG),
+	RSYS_NAME(GETSOCKOPT),
+	RSYS_NAME(SETSOCKOPT),
+	RSYS_NAME(SHUTDOWN),
+	RSYS_NAME(READ),
+	RSYS_NAME(READV),
+	RSYS_NAME(WRITE),
+	RSYS_NAME(WRITEV),
+	RSYS_NAME(IOCTL),
+	RSYS_NAME(FCNTL),
+	RSYS_NAME(CLOSE),
+	RSYS_NAME(POLLTS),
 };
 
 static int	(*host_socket)(int, int, int);
@@ -166,12 +169,10 @@ rcinit(void)
 	host_dup2 = dlsym(RTLD_NEXT, "dup2");
 
 	for (i = 0; i < RUMPCALL__NUM; i++) {
-		char sysname[128];
-
-		snprintf(sysname, sizeof(sysname), "rump_sys_%s", sysnames[i]);
-		rumpcalls[i] = dlsym(hand, sysname);
+		rumpcalls[i] = dlsym(hand, sysnames[i]);
 		if (!rumpcalls[i]) {
-			fprintf(stderr, "cannot find symbol: %s\n", sysname);
+			fprintf(stderr, "rumphijack: cannot find symbol: %s\n",
+			    sysnames[i]);
 			exit(1);
 		}
 	}
@@ -790,11 +791,6 @@ adjustpoll(struct pollfd *fds, nfds_t nfds, int (*fdadj)(int))
 	}
 }
 
-struct mytimespec {
-	uint64_t tv_sec;
-	long tv_nsec;
-};
-
 /*
  * poll is easy as long as the call comes in the fds only in one
  * kernel.  otherwise its quite tricky...
@@ -832,16 +828,6 @@ pollts(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 	pthread_t pt;
 	nfds_t i;
 	int rv;
-
-#if 0
-	/* XXX: quick 5.0 kludge.  do syscall compat in rumpclient properly */
-	struct mytimespec mts;
-	if (ts) {
-		mts.tv_sec = ts->tv_sec;
-		mts.tv_nsec = ts->tv_nsec;
-		ts = (struct timespec *)&mts;
-	}
-#endif
 
 	DPRINTF(("poll\n"));
 	checkpoll(fds, nfds, &hostcall, &rumpcall);
