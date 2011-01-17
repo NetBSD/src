@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.108 2010/12/30 20:09:53 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.109 2011/01/17 16:16:54 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -73,8 +73,10 @@ sysprotos="sys.protos"
 syscompat_pref="sysent."
 sysent="sysent.switch"
 sysnamesbottom="sysnames.bottom"
+rumptypes="rumphdr.types"
+rumpprotos="rumphdr.protos"
 
-trap "rm $sysdcl $sysprotos $sysent $sysnamesbottom $rumpsysent" 0
+trap "rm $sysdcl $sysprotos $sysent $sysnamesbottom $rumpsysent $rumptypes $rumpprotos" 0
 
 # Awk program (must support nawk extensions)
 # Use "awk" at Berkeley, "nawk" or "gawk" elsewhere.
@@ -152,6 +154,8 @@ BEGIN {
 	syscompat_pref = \"$syscompat_pref\"
 	sysent = \"$sysent\"
 	sysnamesbottom = \"$sysnamesbottom\"
+	rumpprotos = \"$rumpprotos\"
+	rumptypes = \"$rumptypes\"
 	sys_nosys = \"$sys_nosys\"
 	maxsysargs = \"$maxsysargs\"
 	infile = \"$2\"
@@ -276,9 +280,10 @@ NR == 1 {
 	printf "#ifdef _KERNEL\n" > rumpcallshdr
 	printf "#error Interface not supported inside kernel\n" > rumpcallshdr
 	printf "#endif /* _KERNEL */\n\n" > rumpcallshdr
-	printf "#include <sys/types.h>\n" > rumpcallshdr
-	printf "#include <sys/select.h>\n\n" > rumpcallshdr
-	printf "#include <signal.h>\n\n" > rumpcallshdr
+	printf "#include <sys/types.h> /* typedefs */\n" > rumpcallshdr
+	printf "#include <sys/select.h> /* typedefs */\n\n" > rumpcallshdr
+	printf "#include <signal.h> /* typedefs */\n\n" > rumpcallshdr
+	printf "#include <rump/rump_syscalls_compat.h>\n\n" > rumpcallshdr
 
 	printf "%s", sysarghdrextra > sysarghdr
 	# Write max number of system call arguments to both headers
@@ -308,6 +313,14 @@ NR == 1 {
 		    "[sizeof (struct call##_args) \\\n" \
 		"\t\t<= %sMAXSYSARGS * sizeof (%s) ? 1 : -1];\n", \
 		constprefix, registertype) >sysarghdr
+
+	# compat types from syscalls.master.  this is slightly ugly,
+	# but given that we have so few compats from over 17 years,
+	# a more complicated solution is not currently warranted.
+	uncompattypes["struct timeval50"] = "struct timeval";
+	uncompattypes["struct timespec50"] = "struct timespec";
+	uncompattypes["struct stat30"] = "struct stat";
+
 	next
 }
 NF == 0 || $1 ~ /^;/ {
@@ -459,13 +472,10 @@ function parseline() {
 		rumphaspipe = 1;
 	}
 
-	funcstdname=fprefix "_" fbase
 	if (fcompat != "") {
 		funcname=fprefix "___" fbase "" fcompat
-		wantrename=1
 	} else {
-		funcname=funcstdname
-		wantrename=0
+		funcname=fprefix "_" fbase
 	}
 	if (returntype == "quad_t" || returntype == "off_t") {
 		if (sycall_flags == "0")
@@ -477,7 +487,11 @@ function parseline() {
 	if (funcalias == "") {
 		funcalias=funcname
 		sub(/^([^_]+_)*sys_/, "", funcalias)
+		realname=fbase
+	} else {
+		realname=funcalias
 	}
+	rumpfname=realname "" fcompat
 	f++
 
 	if ($f != "(")
@@ -571,20 +585,39 @@ function printproto(wrap) {
 	if (!rumpable)
 		return
 
-	if (wantrename)
-		printf("%s rump_%s(", returntype, funcstdname) > rumpcallshdr
-	else
-		printf("%s rump_sys_%s(", returntype, funcalias) > rumpcallshdr
+	# accumulate fbases we have seen.  we want the last
+	# occurence for the default __RENAME()
+	seen = funcseen[fbase]
+	funcseen[fbase] = rumpfname
+	if (seen)
+		return
+
+	printf("%s rump_sys_%s(", returntype, realname) > rumpprotos
+
 	for (i = 1; i < varargc; i++)
 		if (argname[i] != "PAD")
-			printf("%s, ", argtype[i]) > rumpcallshdr
+			printf("%s, ", uncompattype(argtype[i])) > rumpprotos
+
 	if (isvarargs)
-		printf("%s, ...)", argtype[varargc]) > rumpcallshdr
+		printf("%s, ...)", uncompattype(argtype[varargc]))>rumpprotos
 	else
-		printf("%s)", argtype[argc]) > rumpcallshdr
-	if (wantrename)
-		printf(" __RENAME(rump_%s)", funcname) > rumpcallshdr
-	printf(";\n") > rumpcallshdr
+		printf("%s)", uncompattype(argtype[argc])) > rumpprotos
+
+	printf(" __RENAME(RUMP_SYS_RENAME_%s)", toupper(fbase))> rumpprotos
+	printf(";\n") > rumpprotos
+
+	# generate forward-declares for types, apart from the
+	# braindead typedef jungle we cannot easily handle here
+	for (i = 1; i <= varargc; i++) {
+		type=uncompattype(argtype[i])
+		sub("const ", "", type)
+		if (!typeseen[type] && \
+		    match(type, "struct") && match(type, "\\*")) {
+			typeseen[type] = 1
+			sub(" *\\*", "", type);
+			printf("%s;\n", type) > rumptypes
+		}
+	}
 }
 
 function printrumpsysent(insysent, compatwrap) {
@@ -604,12 +637,43 @@ function printrumpsysent(insysent, compatwrap) {
 	if (argc == 0) {
 		printf("0, 0, ") > rumpsysent
 	} else {
-		printf("ns(struct sys_%s%s_args), ", compatwrap_, funcalias) > rumpsysent
+		printf("ns(struct %ssys_%s_args), ", compatwrap_, funcalias) > rumpsysent
 	}
-	printf("0,\n\t    %s },", wfn) > rumpsysent
-	for (i = 0; i < (33 - length(wfn)) / 8; i++)
+
+	if (compatwrap == "") {
+		if (modular)
+			rfn = "(sy_call_t *)sys_nomodule"
+		else
+			rfn = "(sy_call_t *)" funcname
+	} else {
+		rfn = "(sy_call_t *)" compatwrap "_" funcname
+	}
+
+	printf("0,\n\t    %s },", rfn) > rumpsysent
+	for (i = 0; i < (33 - length(rfn)) / 8; i++)
 		printf("\t") > rumpsysent
 	printf("/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > rumpsysent
+}
+
+function iscompattype(type) {
+	for (var in uncompattypes) {
+		if (match(type, var)) {
+			return 1
+		}
+	}
+
+	return 0
+}
+
+function uncompattype(type) {
+	for (var in uncompattypes) {
+		if (match(type, var)) {
+			sub(var, uncompattypes[var], type)
+			return type
+		}
+	}
+
+	return type
 }
 
 function putent(type, compatwrap) {
@@ -696,19 +760,22 @@ function putent(type, compatwrap) {
 	}
 
 	# need a local prototype, we export the re-re-named one in .h
-	printf("\n%s rump_sys_%s(", returntype, funcalias) > rumpcalls
+	printf("\n%s rump___sysimpl_%s(", returntype, rumpfname) \
+	    > rumpcalls
 	for (i = 1; i < argc; i++) {
 		if (argname[i] != "PAD")
-			printf("%s, ", argtype[i]) > rumpcalls
+			printf("%s, ", uncompattype(argtype[i])) > rumpcalls
 	}
-	printf("%s);", argtype[argc]) > rumpcalls
+	printf("%s);", uncompattype(argtype[argc])) > rumpcalls
 
-	printf("\n%s\nrump_sys_%s(", returntype, funcalias) > rumpcalls
+	printf("\n%s\nrump___sysimpl_%s(", returntype, rumpfname) > rumpcalls
 	for (i = 1; i < argc; i++) {
 		if (argname[i] != "PAD")
-			printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
+			printf("%s %s, ", uncompattype(argtype[i]), \
+			    argname[i]) > rumpcalls
 	}
-	printf("%s %s)\n", argtype[argc], argname[argc]) > rumpcalls
+	printf("%s %s)\n", uncompattype(argtype[argc]), argname[argc]) \
+	    > rumpcalls
 	printf("{\n\tregister_t rval[2] = {0, 0};\n\tint error = 0;\n") \
 	    > rumpcalls
 
@@ -724,16 +791,22 @@ function putent(type, compatwrap) {
 				printf("\tSPARG(&callarg, %s) = 0;\n", \
 				    argname[i]) > rumpcalls
 			} else {
-				printf("\tSPARG(&callarg, %s) = %s;\n", \
-				    argname[i], argname[i]) > rumpcalls
+				if (iscompattype(argtype[i])) {
+					printf("\tSPARG(&callarg, %s) = "    \
+					"(%s)%s;\n", argname[i], argtype[i], \
+					argname[i]) > rumpcalls
+				} else {
+					printf("\tSPARG(&callarg, %s) = %s;\n",\
+					    argname[i], argname[i]) > rumpcalls
+				}
 			}
 		}
 		printf("\n") > rumpcalls
 	} else {
 		printf("\n") > rumpcalls
 	}
-	printf("\terror = rsys_syscall(%s%s, " \
-	    "%s, %s, rval);\n", constprefix, funcalias, \
+	printf("\terror = rsys_syscall(%s%s%s, " \
+	    "%s, %s, rval);\n", constprefix, compatwrap_, funcalias, \
 	    argarg, argsize) > rumpcalls
 	printf("\tif (error) {\n\t\trval[0] = -1;\n") > rumpcalls
 	if (returntype != "void") {
@@ -743,7 +816,8 @@ function putent(type, compatwrap) {
 		printf("\t}\n") > rumpcalls
 	}
 	printf("}\n") > rumpcalls
-	printf("rsys_alias(%s,rump_enosys)\n", funcname) > rumpcalls
+	printf("rsys_alias(%s%s,rump_enosys)\n", \
+	    compatwrap_, funcname) > rumpcalls
 
 }
 $2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
@@ -795,7 +869,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 END {
 	# output pipe() syscall with its special rval[2] handling
 	if (rumphaspipe) {
-		printf("int rump_sys_pipe(int *);\n") > rumpcallshdr
+		printf("int rump_sys_pipe(int *);\n") > rumpprotos
 		printf("\nint rump_sys_pipe(int *);\n") > rumpcalls
 		printf("int\nrump_sys_pipe(int *fd)\n{\n") > rumpcalls
 		printf("\tregister_t rval[2] = {0, 0};\n") > rumpcalls
@@ -807,6 +881,15 @@ END {
 		printf("\t} else {\n\t\tfd[0] = rval[0];\n") > rumpcalls
 		printf("\t\tfd[1] = rval[1];\n\t}\n") > rumpcalls
 		printf("\treturn error ? -1 : 0;\n}\n") > rumpcalls
+	}
+
+	# print default rump syscall interfaces
+	for (var in funcseen) {
+		printf("#ifndef RUMP_SYS_RENAME_%s\n", \
+		    toupper(var)) > rumpcallshdr
+		printf("#define RUMP_SYS_RENAME_%s rump___sysimpl_%s\n", \
+		    toupper(var), funcseen[var]) > rumpcallshdr
+		printf("#endif\n\n") > rumpcallshdr
 	}
 
 	maxsyscall = syscall
@@ -838,10 +921,13 @@ END {
 cat $sysprotos >> $sysarghdr
 echo "#endif /* _${constprefix}SYSCALL_H_ */" >> $sysnumhdr
 echo "#endif /* _${constprefix}SYSCALLARGS_H_ */" >> $sysarghdr
-printf "\n#include <rump/rump_syscalls_compat.h>\n" >> $rumpcallshdr
-printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpcallshdr
+printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpprotos
 cat $sysdcl $sysent > $syssw
 cat $sysnamesbottom >> $sysnames
 cat $rumpsysent >> $rumpcalls
+
+cat $rumptypes >> $rumpcallshdr
+echo >> $rumpcallshdr
+cat $rumpprotos >> $rumpcallshdr
 
 #chmod 444 $sysnames $sysnumhdr $syssw
