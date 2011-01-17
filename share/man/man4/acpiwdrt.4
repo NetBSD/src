@@ -1,4 +1,4 @@
-.\"	$NetBSD: acpiwdrt.4,v 1.2 2011/01/17 21:54:28 jruoho Exp $
+.\"	$NetBSD: acpiwdrt.4,v 1.3 2011/01/17 21:59:40 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -29,16 +29,16 @@
 .Os
 .Sh NAME
 .Nm acpiwdrt
-.Nd ACPI Watchdog Resource Table device driver
+.Nd ACPI Watchdog Timer
 .Sh SYNOPSIS
 .Cd "acpiwdrt* at acpi?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for watchdog timers specified in
+driver provides support for watchdog timers specified in a so-called
 .Tn ACPI
-.Dq WDRT
-tables.
+watchdog resource table
+.Pq Tn WDRT .
 The
 .Nm
 watchdog timer is configurable via the
@@ -46,7 +46,7 @@ watchdog timer is configurable via the
 utility.
 .Sh SEE ALSO
 .Xr acpi 4 ,
-.Xr wdogctl 8 ,
+.Xr wdogctl 8
 .Rs
 .%A Microsoft Corporation
 .%N Version 1.01
