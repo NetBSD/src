@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.5.12.1 2011/01/07 01:44:17 matt Exp $
+#	$NetBSD: PMPPC,v 1.5.12.2 2011/01/17 07:37:33 matt Exp $
 #
 #	PMPPC
 #
@@ -73,6 +73,7 @@ file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
+file-system 	TMPFS		# efficient memory file-system
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
