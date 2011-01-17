@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128.4.1.4.2 2011/01/07 15:11:30 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.128.4.1.4.3 2011/01/17 07:46:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.4.1.4.2 2011/01/07 15:11:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.4.1.4.3 2011/01/17 07:46:00 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -72,39 +72,6 @@ static int fix_unaligned(struct lwp *, struct trapframe *);
 static inline vaddr_t setusr(vaddr_t, size_t *);
 static inline void unsetusr(void);
 
-#if 1		/* XXX TMP DEBUG FIXME */
-#define TRAP_TRACE_NELM	1024
-struct trap_trace_elm {
-	int type;
-	struct trapframe *tf;
-	struct lwp *l;
-} trap_trace_log[TRAP_TRACE_NELM];
-static int trap_trace_index;
-static inline void
-trap_trace_enter(int type, struct trapframe *tf, struct lwp *l)
-{
-	if (trap_trace_index < TRAP_TRACE_NELM) {
-		struct trap_trace_elm *te =
-			&trap_trace_log[trap_trace_index++];
-		te->type = type;
-		te->tf = tf;
-		te->l = l;
-	}
-}
-void trap_trace_print(void);
-void
-trap_trace_print()
-{
-	struct trap_trace_elm *te =
-		&trap_trace_log[0];
-	printf("%s: %d\n", __func__, trap_trace_index);
-	for (int i=0; i < trap_trace_index; i++) {
-		printf("%d: %#x, %p, %p\n", 
-			i, te->type, te->tf, te->l);
-		te++;
-	}
-}
-#endif
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
 int badaddr(void *, size_t);
@@ -114,23 +81,21 @@ void
 trap(struct trapframe *tf)
 {
 	struct cpu_info * const ci = curcpu();
-	struct lwp *l = curlwp;
-	struct proc *p = l ? l->l_proc : NULL;
-	struct pcb *pcb = curpcb;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct pcb * const pcb = curpcb;
 	struct vm_map *map;
 	ksiginfo_t ksi;
+	const bool usertrap = (tf->tf_srr1 & PSL_PR);
 	int type = tf->tf_exc;
 	int ftype, rv;
 
 	ci->ci_ev_traps.ev_count++;
 
-#if 0
-	trap_trace_enter(type, tf, l);
-#endif
-	KASSERTMSG(!(tf->tf_srr1 & PSL_PR) || tf == trapframe(l),
+	KASSERTMSG(!usertrap || tf == trapframe(l),
 	    ("trap: tf=%p is invalid: trapframe(%p)=%p", tf, l, trapframe(l)));
 
-	if (tf->tf_srr1 & PSL_PR) {
+	if (usertrap) {
 		type |= EXC_USER;
 #ifdef DIAGNOSTIC
 		if (l == NULL || p == NULL)
@@ -158,9 +123,9 @@ trap(struct trapframe *tf)
 		}
 		break;
 	case EXC_DSI: {
-		struct faultbuf *fb;
+		struct faultbuf * const fb = pcb->pcb_onfault;
 		vaddr_t va = tf->tf_dar;
-		fb = pcb->pcb_onfault;
+
 		ci->ci_ev_kdsi.ev_count++;
 
 		/*
@@ -365,10 +330,7 @@ trap(struct trapframe *tf)
 
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
-		if (pcb->pcb_fpcpu) {
-			save_fpu_lwp(l, FPU_SAVE);
-		}
-		enable_fpu();
+		fpu_enable();
 		break;
 
 	case EXC_AST|EXC_USER:
@@ -376,7 +338,7 @@ trap(struct trapframe *tf)
 		uvmexp.softs++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(p);
+			ADDUPROF(l);
 		}
 		/* Check whether we are being preempted. */
 		if (ci->ci_want_resched)
@@ -408,9 +370,7 @@ trap(struct trapframe *tf)
 	case EXC_VEC|EXC_USER:
 		ci->ci_ev_vec.ev_count++;
 #ifdef ALTIVEC
-		if (pcb->pcb_veccpu)
-			save_vec_lwp(l, ALTIVEC_SAVE);
-		enable_vec();
+		vec_enable();
 		break;
 #else
 		if (cpu_printfataltraps) {
@@ -464,7 +424,7 @@ trap(struct trapframe *tf)
 			ksi.ksi_addr = (void *)tf->tf_srr0;
 			if (tf->tf_srr1 & 0x100000) {
 				ksi.ksi_signo = SIGFPE;
-				ksi.ksi_code = get_fpu_fault_code();
+				ksi.ksi_code = fpu_get_fault_code();
 			} else if (tf->tf_srr1 & 0x40000) {
 				if (emulated_opcode(l, tf)) {
 					tf->tf_srr0 += 4;
@@ -735,7 +695,7 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 	case EXC_ALI_LFD:
 	case EXC_ALI_STFD:
 		{
-			struct pcb * const pcb = &l->l_addr->u_pcb;
+			struct pcb * const pcb = lwp_getpcb(l);
 			const int reg = EXC_ALI_RST(tf->tf_dsisr);
 			double * const fpreg = &pcb->pcb_fpu.fpreg[reg];
 
@@ -745,22 +705,22 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 			 * the PCB.
 			 */
 
-			if (pcb->pcb_fpcpu)
-				save_fpu_lwp(l, FPU_SAVE);
-			if ((pcb->pcb_flags & PCB_FPU) == 0) {
+			if ((l->l_md.md_flags & MDLWP_USEDFPU) == 0) {
 				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-				pcb->pcb_flags |= PCB_FPU;
+				l->l_md.md_flags |= MDLWP_USEDFPU;
 			}
 			if (indicator == EXC_ALI_LFD) {
+				fpu_save_lwp(l, FPU_SAVE_AND_RELEASE);
 				if (copyin((void *)tf->tf_dar, fpreg,
 				    sizeof(double)) != 0)
 					return -1;
 			} else {
+				fpu_save_lwp(l, FPU_SAVE);
 				if (copyout(fpreg, (void *)tf->tf_dar,
 				    sizeof(double)) != 0)
 					return -1;
 			}
-			enable_fpu();
+			fpu_enable();
 			return 0;
 		}
 		break;
@@ -781,21 +741,15 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 		return 1;
 	}
 
-#define	OPC_MFMSR_CODE		0x7c0000a8
-#define	OPC_MFMSR_MASK		0xfc1fffff
-#define	OPC_MFMSR		OPC_MFMSR_CODE
-#define	OPC_MFMSR_REG(o)	(((o) >> 21) & 0x1f)
-#define	OPC_MFMSR_P(o)		(((o) & OPC_MFMSR_MASK) == OPC_MFMSR_CODE)
-
 	if (OPC_MFMSR_P(opcode)) {
-		struct pcb * const pcb = &l->l_addr->u_pcb;
+		struct pcb * const pcb = lwp_getpcb(l);
 		register_t msr = tf->tf_srr1 & PSL_USERSRR1;
 
-		if (pcb->pcb_flags & PCB_FPU)
+		if (l->l_md.md_flags & MDLWP_USEDFPU)
 			msr |= PSL_FP;
 		msr |= (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 #ifdef ALTIVEC
-		if (pcb->pcb_flags & PCB_ALTIVEC)
+		if (l->l_md.md_flags & MDLWP_USEDVEC)
 			msr |= PSL_VEC;
 #endif
 		tf->tf_fixreg[OPC_MFMSR_REG(opcode)] = msr;
@@ -809,7 +763,7 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 #define	OPC_MTMSR_P(o)		(((o) & OPC_MTMSR_MASK) == OPC_MTMSR_CODE)
 
 	if (OPC_MTMSR_P(opcode)) {
-		struct pcb * const pcb = &l->l_addr->u_pcb;
+		struct pcb * const pcb = lwp_getpcb(l);
 		register_t msr = tf->tf_fixreg[OPC_MTMSR_REG(opcode)];
 
 		/*
@@ -919,17 +873,14 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	struct trapframe *tf = trapframe(l);
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
+
 	pool_put(&lwp_uc_pool, uc);
 	userret(l, tf);
 }
@@ -941,25 +892,4 @@ upcallret(struct lwp *l)
 
 	KERNEL_UNLOCK_LAST(l);
 	userret(l, tf);
-}
-
-void dump_trapframe(const struct trapframe *);
-void
-dump_trapframe(const struct trapframe *tf)
-{
-#if defined(PPC_OEA) || defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
-	printf("trapframe %p (exc=%x srr0/1=%#lx/%#lx dsisr/dar=%#x/%#lx)\n",
-	    tf, tf->tf_exc, tf->tf_srr0, tf->tf_srr1, tf->tf_dsisr, tf->tf_dar);
-#endif
-#if defined(PPC_BOOKE) || defined(PPC_IBM4XX)
-	printf("trapframe %p (exc=%x srr0/1=%#lx/%#lx esr/dear=%#x/%#lx)\n",
-	    tf, tf->tf_exc, tf->tf_srr0, tf->tf_srr1, tf->tf_esr, tf->tf_dear);
-#endif
-	printf("lr =%08lx ctr=%08lx cr =%08x xer=%08x\n",
-	    tf->tf_lr, tf->tf_ctr, tf->tf_cr, tf->tf_xer);
-	for (u_int r = 0; r < 32; r += 4) {
-		printf("r%02u=%08lx r%02u=%08lx r%02u=%08lx r%02u=%08lx\n",
-		    r+0, tf->tf_fixreg[r+0], r+1, tf->tf_fixreg[r+1],
-		    r+2, tf->tf_fixreg[r+2], r+3, tf->tf_fixreg[r+3]);
-	}
 }

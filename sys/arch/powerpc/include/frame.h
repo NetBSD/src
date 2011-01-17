@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.20.16.1 2011/01/07 01:50:04 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.20.16.2 2011/01/17 07:45:59 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -95,6 +95,7 @@ struct trapframe {
 	uint32_t tf_esr;
 	uint32_t tf_mcsr;
 	uint32_t tf_pid;
+	uint32_t tf_spefscr;
 #endif
 };
 #define tf_fixreg	tf_ureg.r_fixreg

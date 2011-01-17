@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.26.42.1 2011/01/07 02:03:51 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.26.42.2 2011/01/17 07:46:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26.42.1 2011/01/07 02:03:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26.42.2 2011/01/17 07:46:00 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -48,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26.42.1 2011/01/07 02:03:51 ma
 
 #include <uvm/uvm_extern.h>
 
-#ifdef ALTIVEC
 #include <powerpc/altivec.h>
-#endif
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
@@ -85,16 +83,16 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 
 	/* Is the process using the fpu? */
-	if ((pcb->pcb_flags & PCB_FPU) == 0) {
+	if ((l->l_md.md_flags & MDLWP_USEDFPU) == 0) {
 		memset(fpregs, 0, sizeof (*fpregs));
 		return 0;
 	}
 
 #ifdef PPC_HAVE_FPU
-	save_fpu_lwp(l, FPU_SAVE);
+	fpu_save_lwp(l, FPU_SAVE_AND_RELEASE);
 #endif
 	*fpregs = pcb->pcb_fpu;
 
@@ -104,16 +102,16 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 
 #ifdef PPC_HAVE_FPU
-	save_fpu_lwp(l, FPU_DISCARD);
+	fpu_save_lwp(l, FPU_DISCARD);
 #endif
 
 	pcb->pcb_fpu = *fpregs;
 
 	/* pcb_fpu is initialized now. */
-	pcb->pcb_flags |= PCB_FPU;
+	l->l_md.md_flags |= MDLWP_USEDFPU;
 
 	return 0;
 }
@@ -148,17 +146,19 @@ process_sstep(struct lwp *l, int sstep)
 static int
 process_machdep_read_vecregs(struct lwp *l, struct vreg *vregs)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 
+#ifdef ALTIVEC
 	if (cpu_altivec == 0)
 		return (EINVAL);
+#endif
 
 	/* Is the process using AltiVEC? */
-	if ((pcb->pcb_flags & PCB_ALTIVEC) == 0) {
+	if ((l->l_md.md_flags & MDLWP_USEDVEC) == 0) {
 		memset(vregs, 0, sizeof (*vregs));
 		return 0;
 	}
-	save_vec_lwp(l, ALTIVEC_SAVE);
+	vec_save_lwp(l, VEC_SAVE_AND_RELEASE);
 	*vregs = pcb->pcb_vr;
 
 	return (0);
@@ -167,15 +167,16 @@ process_machdep_read_vecregs(struct lwp *l, struct vreg *vregs)
 static int
 process_machdep_write_vecregs(struct lwp *l, struct vreg *vregs)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 
+#ifdef ALTIVEC
 	if (cpu_altivec == 0)
 		return (EINVAL);
+#endif
 
-	save_vec_lwp(l, ALTIVEC_DISCARD);
-
+	vec_save_lwp(l, VEC_DISCARD);
 	pcb->pcb_vr = *vregs;
-	pcb->pcb_flags |= PCB_ALTIVEC;	/* pcb_vr is initialized now. */
+	l->l_md.md_flags |= MDLWP_USEDVEC;	/* pcb_vr is initialized now. */
 
 	return (0);
 }
@@ -261,6 +262,11 @@ process_machdep_validvecregs(struct proc *p)
 	if (p->p_flag & PK_SYSTEM)
 		return (0);
 
+#ifdef ALTIVEC
 	return (cpu_altivec);
+#endif
+#ifdef PPC_HAVE_SPE
+	return 1;
+#endif
 }
 #endif /* __HAVE_PTRACE_MACHDEP */

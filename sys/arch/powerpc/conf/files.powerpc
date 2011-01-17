@@ -1,6 +1,6 @@
-#	$NetBSD: files.powerpc,v 1.69.28.1 2011/01/07 02:08:24 matt Exp $
+#	$NetBSD: files.powerpc,v 1.69.28.2 2011/01/17 07:45:59 matt Exp $
 
-defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
+defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
 defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK CLOCKBASE
 defflag	opt_ppcarch.h	PPC_OEA PPC_OEA601 PPC_OEA64 PPC_OEA64_BRIDGE PPC_MPC8XX PPC_IBM4XX PPC_IBM403 PPC_BOOKE
@@ -62,6 +62,7 @@ file	arch/powerpc/booke/booke_stubs.c		ppc_booke
 file	arch/powerpc/booke/copyin.c			ppc_booke
 file	arch/powerpc/booke/copyout.c			ppc_booke
 file	arch/powerpc/booke/kcopy.c			ppc_booke
+file	arch/powerpc/booke/spe.c			ppc_booke
 file	arch/powerpc/booke/trap.c			ppc_booke
 file	common/pmap/tlb/pmap.c				ppc_booke
 file	common/pmap/tlb/pmap_segtab.c			ppc_booke

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.50.14.1 2011/01/07 02:12:19 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.50.14.2 2011/01/17 07:45:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50.14.1 2011/01/07 02:12:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50.14.2 2011/01/17 07:45:59 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -226,7 +226,13 @@ static const struct cputab models[] = {
 };
 
 #ifdef MULTIPROCESSOR
-struct cpu_info cpu_info[CPU_MAXNUM] = { { .ci_curlwp = &lwp0, }, }; 
+struct cpu_info cpu_info[CPU_MAXNUM] = {
+   [0] = {
+	.ci_curlwp = &lwp0,
+	.ci_fpulwp = &lwp0,
+	.ci_veclwp = &lwp0,
+   },
+}; 
 volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
 extern int ticks_per_intr;
@@ -235,7 +241,13 @@ extern int ticks_per_intr;
 #include <arch/powerpc/pic/ipivar.h>
 extern struct bat battable[];
 #else
-struct cpu_info cpu_info[1] = { { .ci_curlwp = &lwp0, }, }; 
+struct cpu_info cpu_info[1] = {
+    [0] = {
+	.ci_curlwp = &lwp0,
+	.ci_fpulwp = &lwp0,
+	.ci_veclwp = &lwp0,
+    },
+}; 
 #endif /*MULTIPROCESSOR*/
 
 int cpu_altivec;
@@ -1117,7 +1129,7 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 
 	/* Initialize secondary cpu's initial lwp to its idlelwp. */
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
-	ci->ci_curpcb = &ci->ci_curlwp->l_addr->u_pcb;
+	ci->ci_curpcb = lwp_getpcb(ci->ci_curlwp);
 	ci->ci_curpm = ci->ci_curpcb->pcb_pm;
 
 	cpu_hatch_data = h;
@@ -1265,7 +1277,8 @@ cpu_hatch(void)
 	ci->ci_cpl = 0;
 
 	mtmsr(mfmsr() | PSL_EE);
-	return ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_sp;
+	struct pcb * const idlepcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
+	return idlepcb->pcb_sp;
 }
 
 void
