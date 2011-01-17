@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.425 2011/01/17 07:13:31 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.425 2011/01/17 07:13:31 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -217,7 +217,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $");
 
 #include <sys/cpu.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm.h>	/* extern struct uvm uvm */
 
 #if NSYSMON_TASKQ > 0
 #include <dev/sysmon/sysmon_taskq.h>

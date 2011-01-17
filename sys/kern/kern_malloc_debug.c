@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.23 2010/05/14 05:02:06 cegger Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.24 2011/01/17 07:13:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.23 2010/05/14 05:02:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.24 2011/01/17 07:13:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.23 2010/05/14 05:02:06 cegge
 #include <sys/systm.h>
 #include <sys/pool.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * debug_malloc_type and debug_malloc_size define the type and size of
