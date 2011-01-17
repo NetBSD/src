@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.153 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.154 2011/01/17 08:26:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.153 2011/01/14 02:06:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.154 2011/01/17 08:26:58 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -265,6 +265,9 @@ struct turnstile turnstile0;
 struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 #ifdef LWP0_CPU_INFO
 	.l_cpu = LWP0_CPU_INFO,
+#endif
+#ifdef LWP0_MD_INITIALIZER
+	.l_md = LWP0_MD_INITIALIZER,
 #endif
 	.l_proc = &proc0,
 	.l_lid = 1,
