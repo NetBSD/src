@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.32 2011/01/16 02:41:55 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.33 2011/01/17 08:23:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -212,7 +212,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 /* Condition Register Bit Fields */
 
-#if !defined(_NOREGNAMES)
+#if defined(_REGNAMES)
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define cr0     0
 #define cr1     1
@@ -297,7 +297,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 #define fr30    30
 #define fr31    31
 #endif
-#endif /* !_NOREGNAMES */
+#endif /* _REGNAMES */
 
 /*
  * Add some psuedo instructions to made sharing of assembly versions of
