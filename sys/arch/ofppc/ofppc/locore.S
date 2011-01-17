@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.44 2010/03/10 18:06:57 kiyohara Exp $	*/
+/*	$NetBSD: locore.S,v 1.45 2011/01/17 07:06:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -85,35 +85,35 @@ _C_LABEL(kernel_text):
 __start:
 	bl	_C_LABEL(ofwinit)	/* init our OF hooks */
 
-	li	0,0
-	mtmsr	0			/* Disable FPU/MMU/exceptions */
+	li	%r0,0
+	mtmsr	%r0			/* Disable FPU/MMU/exceptions */
 
 	bl	_C_LABEL(cpu_model_init)
-	lis	12,oeacpufeat@ha
-	lwz	12,oeacpufeat@l(12)
-	andi.	12,12,OEACPU_64_BRIDGE	/* Compare against OEACPU_64_BRIDGE */
+	lis	%r12,oeacpufeat@ha
+	lwz	%r12,oeacpufeat@l(%r12)
+	andi.	%r12,%r12,OEACPU_64_BRIDGE	/* Compare against OEACPU_64_BRIDGE */
 	beq	2f			/* skip if this is a 32bit part */
-	li	0,0
+	li	%r0,0
 	sync
 	slbia				/* invalidate the slb table */
 	sync
-	clrldi	0,0,32			/* clear SF/ISF (high order bits) */
-	mtmsrd	0
+	clrldi	%r0,%r0,32		/* clear SF/ISF (high order bits) */
+	mtmsrd	%r0
 	mtspr	0x118,0		/* clear ASR[V] to enable segregs */
 2:
 	isync
 	/* compute end of kernel memory */
-        lis	4,_C_LABEL(end)@ha
-        addi	4,4,_C_LABEL(end)@l
+        lis	%r4,_C_LABEL(end)@ha
+        addi	%r4,%r4,_C_LABEL(end)@l
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* skip symbol table */
-	cmpwi	6,0
+	cmpwi	%r6,0
 	beq	1f
-	add	9,6,7			/* r9 = args + l */
-	lwz	9,-8(9)			/* esym */
-	cmpwi	9,0
+	add	%r9,%r6,%r7			/* r9 = args + l */
+	lwz	%r9,-8(%r9)			/* esym */
+	cmpwi	%r9,0
 	beq	1f
-	mr	4,9
+	mr	%r4,%r9
 1:
 #endif
 
@@ -121,11 +121,11 @@ __start:
 	/*
 	 * Initialize cpu_info[0]
 	 */
-	INIT_CPUINFO(4,1,9,0)
+	INIT_CPUINFO(%r4,%r1,%r9,%r0)
 
-	lis	3,__start@ha
-	addi	3,3,__start@l
-	mr	5,6			/* args string */
+	lis	%r3,__start@ha
+	addi	%r3,%r3,__start@l
+	mr	%r5,%r6			/* args string */
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 	b	_C_LABEL(OF_exit)
