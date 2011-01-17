@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.336 2010/10/16 17:10:43 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.337 2011/01/17 14:53:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.336 2010/10/16 17:10:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.337 2011/01/17 14:53:43 tsutsui Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -159,6 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.336 2010/10/16 17:10:43 tsutsui Exp $"
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.76 2010/10/16 17:10:43 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.77 2011/01/17 14:53:42 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2010/10/16 17:10:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2011/01/17 14:53:42 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2010/10/16 17:10:43 tsutsui Exp $")
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */

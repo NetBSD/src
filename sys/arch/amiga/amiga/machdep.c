@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.228 2011/01/13 22:02:05 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.229 2011/01/17 14:53:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -87,7 +87,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2011/01/13 22:02:05 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2011/01/17 14:53:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2011/01/13 22:02:05 phx Exp $");
 #include <ddb/db_extern.h>
 
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>
