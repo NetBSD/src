@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.11 2007/10/17 19:56:47 garbled Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.12 2011/01/17 08:23:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -44,7 +44,6 @@
  */
 #include <machine/psl.h>
 #include <machine/trap.h>
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #define	CACHELINE	32		/* Note that this value is really

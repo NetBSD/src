@@ -1,9 +1,8 @@
-/*	$NetBSD: setjmp.S,v 1.3 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.4 2011/01/17 08:23:56 matt Exp $	*/
 /*	from:	OpenBSD: setjmp.S,v 1.2 1996/12/28 06:22:18 rahnds Exp 	*/
 /* kernel version of this file, does not have signal goop */
 /* int setjmp(jmp_buf env) */
 
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #define JMP_r1	0x04
