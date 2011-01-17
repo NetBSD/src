@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.6 2010/03/20 23:31:30 chs Exp $	*/
+/*	$NetBSD: setfault.S,v 1.7 2011/01/17 08:23:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#define _NOREGNAMES
 #include "assym.h"
 #include <machine/asm.h>
 
