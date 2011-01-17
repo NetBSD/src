@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.233 2011/01/13 05:58:05 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.234 2011/01/17 15:49:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.233 2011/01/13 05:58:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.234 2011/01/17 15:49:13 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -613,6 +613,8 @@ acpi_childdet(device_t self, device_t child)
 
 	if (sc->sc_apmbus == child)
 		sc->sc_apmbus = NULL;
+	if (sc->sc_wdrt == child)	
+		sc->sc_wdrt = NULL;
 
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
@@ -805,6 +807,10 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL)
 		sc->sc_apmbus = config_found_ia(sc->sc_dev,
 		    "acpiapmbus", NULL, NULL);
+
+	if (ifattr_match(ifattr, "acpiwdrtbus") && sc->sc_wdrt == NULL)
+		sc->sc_wdrt = config_found_ia(sc->sc_dev,
+		    "acpiwdrtbus", NULL, NULL);
 
 	return 0;
 }

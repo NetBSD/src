@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.84 2011/01/09 15:12:34 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.85 2011/01/17 15:49:13 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -10,8 +10,9 @@ defparam opt_acpi.h	ACPI_BLACKLIST_YEAR = 2000
 define	acpiapmbus { }
 define	acpinodebus { }
 define	acpiecdtbus { }
+define	acpiwdrtbus { }
 
-device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, sysmon_power, sysmon_taskq
+device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, acpiwdrtbus, sysmon_power, sysmon_taskq
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
@@ -87,6 +88,11 @@ file	dev/acpi/acpi_pmtr.c		acpipmtr
 device	acpitz: sysmon_envsys
 attach	acpitz at acpinodebus
 file	dev/acpi/acpi_tz.c		acpitz
+
+# ACPI Watchdog Timer
+device	acpiwdrt
+attach	acpiwdrt at acpiwdrtbus
+file	dev/acpi/acpi_wdrt.c		acpiwdrt
 
 # Serial interface
 attach	com at acpinodebus with com_acpi
