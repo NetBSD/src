@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.148 2010/12/16 18:42:50 christos Exp $
+# $NetBSD: shl.mi,v 1.149 2011/01/17 20:39:05 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -51,6 +51,7 @@
 ./usr/lib/libisccc_pic.a			comp-bind-piclib
 ./usr/lib/libisccfg_pic.a			comp-bind-piclib
 ./usr/lib/libiscsi_pic.a			comp-c-piclib		iscsi
+./usr/lib/libisns_pic.a		comp-isns-piclib	
 ./usr/lib/libkadm5clnt_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libkadm5srv_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libkadm_pic.a				comp-obsolete		obsolete
@@ -247,6 +248,7 @@
 ./usr/libdata/debug/usr/lib/libisccc.so.5.2.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libisccfg.so.5.2.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug
+./usr/libdata/debug/usr/lib/libisns.so.0.0.debug	comp-isns-debug	debug
 ./usr/libdata/debug/usr/lib/libkadm5clnt.so.12.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libkadm5srv.so.13.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libkafs.so.11.0.debug	comp-krb5-debug	kerberos,debug

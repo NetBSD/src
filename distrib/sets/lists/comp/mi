@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1568 2011/01/17 11:09:06 jruoho Exp $
+#	$NetBSD: mi,v 1.1569 2011/01/17 20:39:05 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1300,6 +1300,8 @@
 ./usr/include/ifaddrs.h				comp-c-include
 ./usr/include/inttypes.h			comp-c-include
 ./usr/include/iscsi.h				comp-c-include		iscsi
+./usr/include/isns.h				comp-c-include	
+./usr/include/isns_defs.h			comp-c-include	
 ./usr/include/iso646.h				comp-c-include
 ./usr/include/isofs/cd9660/cd9660_extern.h	comp-c-include
 ./usr/include/isofs/cd9660/cd9660_mount.h	comp-c-include
@@ -2492,6 +2494,9 @@
 ./usr/lib/libiscsi.a				comp-iscsi-lib		iscsi
 ./usr/lib/libiscsi_g.a				-unknown-		debuglib,iscsi
 ./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile,iscsi
+./usr/lib/libisns.a		comp-isns-lib	
+./usr/lib/libisns_g.a		comp-isns-lib	debuglib
+./usr/lib/libisns_p.a		comp-isns-proflib	profile
 ./usr/lib/libkadm.a				comp-obsolete		obsolete
 ./usr/lib/libkadm5clnt.a			comp-krb5-lib		kerberos
 ./usr/lib/libkadm5clnt_g.a			-unknown-		debuglib,kerberos
@@ -3886,6 +3891,7 @@
 ./usr/libdata/lint/llib-lisccc.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lisccfg.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint,iscsi
+./usr/libdata/lint/llib-lisns.ln		comp-isns-lintlib	lint
 ./usr/libdata/lint/llib-lkstream.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
@@ -6439,6 +6445,7 @@
 ./usr/share/man/cat3/isnan.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isnanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isnormal.0			comp-c-catman		.cat
+./usr/share/man/cat3/isns.0			comp-isns-catman		.cat
 ./usr/share/man/cat3/iso646.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iso_addr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isprint.0			comp-c-catman		.cat
@@ -12478,6 +12485,7 @@
 ./usr/share/man/html3/isnan.html		comp-c-htmlman		html
 ./usr/share/man/html3/isnanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/isnormal.html		comp-c-htmlman		html
+./usr/share/man/html3/isns.html		comp-isns-htmlman		.html
 ./usr/share/man/html3/iso646.html		comp-c-htmlman		html
 ./usr/share/man/html3/iso_addr.html		comp-c-htmlman		html
 ./usr/share/man/html3/isprint.html		comp-c-htmlman		html
@@ -13215,6 +13223,7 @@
 ./usr/share/man/html3/libarchive.html		comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_internals.html	comp-c-htmlman		html
 ./usr/share/man/html3/libiscsi.html		comp-c-htmlman		iscsi,html
+./usr/share/man/html3/isns.html			comp-c-htmlman		html
 ./usr/share/man/html3/libmagic.html		comp-c-htmlman		html
 ./usr/share/man/html3/libmj.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
@@ -18434,6 +18443,7 @@
 ./usr/share/man/man3/isnan.3			comp-c-man		.man
 ./usr/share/man/man3/isnanf.3			comp-c-man		.man
 ./usr/share/man/man3/isnormal.3			comp-c-man		.man
+./usr/share/man/man3/isns.3		comp-isns-man		.man
 ./usr/share/man/man3/iso646.3			comp-c-man		.man
 ./usr/share/man/man3/iso_addr.3			comp-c-man		.man
 ./usr/share/man/man3/isprint.3			comp-c-man		.man

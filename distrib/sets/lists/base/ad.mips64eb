@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.34 2010/12/16 18:42:48 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.35 2011/01/17 20:39:04 agc Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -117,6 +117,8 @@
 ./usr/lib/64/libisccfg.so.5.2			base-compat-shlib	compat,pic
 ./usr/lib/64/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/64/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
+./usr/lib/64/libisns.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/libisns.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libkadm5clnt.so.12			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libkadm5clnt.so.12.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libkadm5srv.so.13			base-compat-shlib	compat,pic,kerberos
@@ -370,6 +372,8 @@
 ./usr/lib/o32/libisccfg.so.5.2			base-compat-shlib	compat,pic
 ./usr/lib/o32/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/o32/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
+./usr/lib/o32/libisns.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libisns.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libkadm5clnt.so.12		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libkadm5clnt.so.12.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libkadm5srv.so.13			base-compat-shlib	compat,pic,kerberos

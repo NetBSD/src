@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.15 2010/12/05 20:11:22 pooka Exp $
+# $NetBSD: ad.mips64eb,v 1.16 2011/01/17 20:39:04 agc Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -321,6 +321,10 @@
 ./usr/lib/64/libiscsi.so			base-sys-shlib		compat,pic,iscsi
 ./usr/lib/64/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
 ./usr/lib/64/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
+./usr/lib/64/libisns.a		comp-c-lib	compat
+./usr/lib/64/libisns.so		comp-sys-shlib	compat
+./usr/lib/64/libisns_p.a		comp-c-proflib	compat,profile
+./usr/lib/64/libisns_pic.a		comp-c-piclib	compat,pic
 ./usr/lib/64/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/64/libkadm5clnt.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libkadm5clnt_p.a			comp-c-proflib		compat,profile,kerberos
@@ -822,6 +826,10 @@
 ./usr/lib/o32/libiscsi.so			base-sys-shlib		compat,pic,iscsi
 ./usr/lib/o32/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
 ./usr/lib/o32/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
+./usr/lib/o32/libisns.a		comp-c-lib	compat
+./usr/lib/o32/libisns.so		comp-sys-shlib	compat
+./usr/lib/o32/libisns_p.a		comp-c-proflib	compat,profile
+./usr/lib/o32/libisns_pic.a		comp-c-piclib	compat,pic
 ./usr/lib/o32/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/o32/libkadm5clnt.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libkadm5clnt_p.a			comp-c-proflib		compat,profile,kerberos
