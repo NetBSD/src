@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2010/08/25 20:16:49 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2011/01/17 18:11:10 joerg Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -117,10 +117,10 @@ AFLAGS+=		-Wa,-Av8plusa
 .endif
 
 .if CROSS
-AFLAGS+=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__
+AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__
 CEXTRAFLAGS?=		-D_LP64
 .else
-AFLAGS+=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
+AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
 .endif
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
