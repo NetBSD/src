@@ -1,4 +1,4 @@
-.\"	$NetBSD: acpiwdrt.4,v 1.1 2011/01/17 16:08:20 jmcneill Exp $
+.\"	$NetBSD: acpiwdrt.4,v 1.2 2011/01/17 21:54:28 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -37,7 +37,8 @@ The
 .Nm
 driver provides support for watchdog timers specified in
 .Tn ACPI
-"WDRT" tables.
+.Dq WDRT
+tables.
 The
 .Nm
 watchdog timer is configurable via the
@@ -46,7 +47,13 @@ utility.
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr wdogctl 8 ,
-.Pa http://www.microsoft.com/whdc/system/sysinternals/watchdog.mspx
+.Rs
+.%A Microsoft Corporation
+.%N Version 1.01
+.%D August 28, 2006
+.%T Watchdog Timer Hardware Requirements for Windows Server 2003
+.%U http://www.microsoft.com/whdc/system/sysinternals/watchdog.mspx
+.Re
 .Sh HISTORY
 The
 .Nm
