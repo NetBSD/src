@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.85 2011/01/17 15:49:13 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.86 2011/01/17 15:55:24 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -90,7 +90,7 @@ attach	acpitz at acpinodebus
 file	dev/acpi/acpi_tz.c		acpitz
 
 # ACPI Watchdog Timer
-device	acpiwdrt
+device	acpiwdrt: sysmon_wdog
 attach	acpiwdrt at acpiwdrtbus
 file	dev/acpi/acpi_wdrt.c		acpiwdrt
 
