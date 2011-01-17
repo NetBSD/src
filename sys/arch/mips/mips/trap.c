@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.224 2010/12/20 00:25:38 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.225 2011/01/17 15:32:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.224 2010/12/20 00:25:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.225 2011/01/17 15:32:59 tsutsui Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.224 2010/12/20 00:25:38 matt Exp $");
 #include <mips/trap.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/pcb.h>
 #include <mips/pte.h>
 #include <mips/psl.h>
 #include <mips/userret.h>
