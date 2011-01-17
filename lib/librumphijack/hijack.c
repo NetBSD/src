@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.8 2011/01/17 16:27:54 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.9 2011/01/17 16:30:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.8 2011/01/17 16:27:54 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.9 2011/01/17 16:30:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -932,9 +932,9 @@ pollts(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		if (rpipe[1] != -1)
 			rump_sys_close(rpipe[1]);
 		if (hpipe[0] != -1)
-			close(hpipe[0]);
+			host_close(hpipe[0]);
 		if (hpipe[1] != -1)
-			close(hpipe[1]);
+			host_close(hpipe[1]);
 		free(pfd_host);
 		free(pfd_rump);
 		errno = sverrno;
