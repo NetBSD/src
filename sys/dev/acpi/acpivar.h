@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.66 2011/01/13 05:14:48 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.67 2011/01/17 15:49:13 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -148,6 +148,8 @@ struct acpi_devnode {
 struct acpi_softc {
 	device_t		 sc_dev;	/* base device info */
 	device_t		 sc_apmbus;	/* APM pseudo-bus */
+
+	device_t		 sc_wdrt;	/* WDRT watchdog */
 
 	struct acpi_devnode	*sc_root;	/* root of the device tree */
 
