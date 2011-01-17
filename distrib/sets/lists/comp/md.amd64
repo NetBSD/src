@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.89 2010/12/20 04:29:29 christos Exp $
+# $NetBSD: md.amd64,v 1.90 2011/01/17 20:39:04 agc Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -568,6 +568,11 @@
 ./usr/lib/i386/libiscsi_g.a			base-sys-shlib		compat,debuglib,iscsi
 ./usr/lib/i386/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
 ./usr/lib/i386/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
+./usr/lib/i386/libisns.a		comp-c-lib	compat
+./usr/lib/i386/libisns.so		comp-sys-shlib	compat
+./usr/lib/i386/libisns_g.a		comp-c-proflib	compat,debuglib
+./usr/lib/i386/libisns_p.a		comp-c-proflib	compat,profile
+./usr/lib/i386/libisns_pic.a		comp-c-piclib	compat,pic
 ./usr/lib/i386/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libkadm5clnt.so			comp-sys-shlib		compat,pic,kerberos
 ./usr/lib/i386/libkadm5clnt_g.a			comp-c-proflib		compat,debuglib,kerberos
@@ -928,6 +933,7 @@
 ./usr/libdata/debug/usr/lib/i386/libisccc.so.5.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libisccfg.so.5.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libiscsi.so.2.0.debug	comp-compat-shlib	compat,pic,debug,iscsi
+./usr/libdata/debug/usr/lib/i386/libisns.so.0.0		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libkadm5clnt.so.12.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkadm5srv.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkafs.so.11.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
