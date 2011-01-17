@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.2 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.3 2011/01/17 08:23:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _NOREGNAMES
 #include "SYS.h"
 
 /*
