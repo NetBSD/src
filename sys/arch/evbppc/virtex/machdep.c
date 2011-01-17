@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2010/02/25 23:33:44 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.15 2011/01/17 07:32:54 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2010/02/25 23:33:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2011/01/17 07:32:54 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2010/02/25 23:33:44 matt Exp $");
 #include <machine/bus.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+#include <machine/pcb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
