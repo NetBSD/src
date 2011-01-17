@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.2 2011/01/17 07:47:20 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,9 @@
 __KERNEL_RCSID(0, "$NetSBD$");
 
 #include "opt_mpc85xx.h"
+#include "opt_altivec.h"
 #include "opt_pci.h"
+#include "opt_ddb.h"
 #include "gpio.h"
 #include "pci.h"
 
@@ -65,6 +67,7 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <prop/proplib.h>
 
 #include <machine/stdarg.h>
+#include <powerpc/pcb.h>
 
 #include <dev/cons.h>
 
@@ -247,7 +250,7 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 	{ "spi", SPI_BASE, SPI_SIZE, 0, 1,
 		{ ISOURCE_SPI },
 		1 + ilog2(DEVDISR_SPI) },
-	{ "esdhc", ESDHC_BASE, ESDHC_SIZE, 0, 1,
+	{ "sdhc", ESDHC_BASE, ESDHC_SIZE, 0, 1,
 		{ ISOURCE_ESDHC },
 		1 + ilog2(DEVDISR_ESDHC) },
 #endif
@@ -730,6 +733,17 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 #endif
 
 	/*
+	 * Initialize a few things in lwp0.
+	 */
+	lwp0.l_md.md_veccpu = curcpu();
+	lwp0.l_md.md_fpucpu = curcpu();
+	{
+		extern void *proc0paddr;
+		lwp0.l_addr = proc0paddr;
+	}
+	lwp0.l_md.md_utf = trapframe(&lwp0);
+
+	/*
 	 * Set some more MD helpers
 	 */
 	cpu_md_ops.md_cpunode_locs = mpc8548_cpunode_locs;
@@ -748,7 +762,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	}
 #endif
 
-		printf(" initppc done!\n");
+	printf(" initppc done!\n");
 }
 
 #ifdef MPC8548
@@ -850,7 +864,7 @@ cpu_startup(void)
 {
 	struct cpu_info * const ci = curcpu();
 
-	booke_cpu_startup();
+	booke_cpu_startup(socname(mfspr(SPR_SVR)));
 
 	uint32_t v = cpu_read_4(GLOBAL_BASE + PORPLLSR);
 	uint32_t plat_ratio = PLAT_RATIO_GET(v);

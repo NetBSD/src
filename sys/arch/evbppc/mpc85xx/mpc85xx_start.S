@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc85xx_start.S,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $	*/
+/*	$NetBSD: mpc85xx_start.S,v 1.1.2.2 2011/01/17 07:47:20 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: mpc85xx_start.S,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $")
+RCSID("$NetBSD: mpc85xx_start.S,v 1.1.2.2 2011/01/17 07:47:20 matt Exp $")
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -47,6 +47,7 @@ RCSID("$NetBSD: mpc85xx_start.S,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $")
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #include "opt_ppcparam.h"
+#include "opt_altivec.h"
 
 #include "ksyms.h"
 
@@ -62,7 +63,7 @@ RCSID("$NetBSD: mpc85xx_start.S,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $")
 
 #define	INTSTK	0
 
-	.machine e500
+	.machine e500x2
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
@@ -273,6 +274,9 @@ loop:	b	loop			/* XXX not reached */
 #include <powerpc/booke/trap_subr.S>
 #include <powerpc/powerpc/locore_subr.S>
 #include <powerpc/powerpc/pio_subr.S>
+#ifdef PPC_HAVE_SPE
+#include <powerpc/booke/spe_subr.S>
+#endif
 
 #if 0
 	.p2align 5
