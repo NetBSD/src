@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.5 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.6 2011/01/17 18:11:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
 #define	ATOMIC_OP_ALIAS(a,s)		STRONG_ALIAS(a,s)
 
 #ifdef __arch64__
-#define	ATOMIC_OP_ALIAS_SIZE(a,s)	STRONG_ALIAS(a,s/**/_64)
+#define	ATOMIC_OP_ALIAS_SIZE(a,s)	STRONG_ALIAS(a,s ## _64)
 #else
-#define	ATOMIC_OP_ALIAS_SIZE(a,s)	STRONG_ALIAS(a,s/**/_32)
+#define	ATOMIC_OP_ALIAS_SIZE(a,s)	STRONG_ALIAS(a,s ## _32)
 #endif
 
 #else /* _KERNEL */
@@ -49,17 +49,17 @@
 #define	ATOMIC_OP_ALIAS(a,s)		WEAK_ALIAS(a,s)
 
 #ifdef __arch64__
-#define	ATOMIC_OP_ALIAS_SIZE(a,s)	WEAK_ALIAS(a,s/**/_64)
+#define	ATOMIC_OP_ALIAS_SIZE(a,s)	WEAK_ALIAS(a,s ## _64)
 #else
-#define	ATOMIC_OP_ALIAS_SIZE(a,s)	WEAK_ALIAS(a,s/**/_32)
+#define	ATOMIC_OP_ALIAS_SIZE(a,s)	WEAK_ALIAS(a,s ## _32)
 #endif
 
 #endif /* _KERNEL */
 
 #ifdef __arch64__
-#define	STRONG_ALIAS_SIZE(a,s)		STRONG_ALIAS(a,s/**/_64)
+#define	STRONG_ALIAS_SIZE(a,s)		STRONG_ALIAS(a,s ## _64)
 #else
-#define	STRONG_ALIAS_SIZE(a,s)		STRONG_ALIAS(a,s/**/_32)
+#define	STRONG_ALIAS_SIZE(a,s)		STRONG_ALIAS(a,s ## _32)
 #endif
 
 #endif /* _ATOMIC_OP_ASM_H_ */
