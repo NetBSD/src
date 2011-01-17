@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.240 2011/01/10 04:39:18 christos Exp $
+	$NetBSD: syscalls.master,v 1.241 2011/01/17 16:21:40 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -198,7 +198,7 @@
 90	STD 	 RUMP	{ int|sys||dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	STD	RUMP	{ int|sys||fcntl(int fd, int cmd, ... void *arg); }
-93	COMPAT_50 MODULAR 	{ int|sys||select(int nd, fd_set *in, fd_set *ou, \
+93	COMPAT_50 MODULAR RUMP	{ int|sys||select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval50 *tv); }
 94	UNIMPL		setdopt
 95	STD	RUMP 	{ int|sys||fsync(int fd); }
@@ -266,7 +266,7 @@
 			    int protocol, int *rsv); }
 136	STD 	 RUMP	{ int|sys||mkdir(const char *path, mode_t mode); }
 137	STD 	 RUMP	{ int|sys||rmdir(const char *path); }
-138	COMPAT_50 MODULAR { int|sys||utimes(const char *path, \
+138	COMPAT_50 MODULAR RUMP { int|sys||utimes(const char *path, \
 			    const struct timeval50 *tptr); }
 139	OBSOL		4.2 sigreturn
 140	COMPAT_50 MODULAR { int|sys||adjtime(const struct timeval50 *delta, \
@@ -392,7 +392,7 @@
 203	STD 		{ int|sys||mlock(const void *addr, size_t len); }
 204	STD 		{ int|sys||munlock(const void *addr, size_t len); }
 205	STD 		{ int|sys||undelete(const char *path); }
-206	COMPAT_50 MODULAR { int|sys||futimes(int fd, \
+206	COMPAT_50 MODULAR RUMP { int|sys||futimes(int fd, \
 			    const struct timeval50 *tptr); }
 207	STD 	 RUMP	{ pid_t|sys||getpgid(pid_t pid); }
 208	STD	 RUMP	{ int|sys||reboot(int opt, char *bootstr); }
@@ -527,7 +527,7 @@
 274	STD 	 RUMP	{ int|sys||lchmod(const char *path, mode_t mode); }
 275	STD 	 RUMP	{ int|sys||lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
-276	COMPAT_50 MODULAR { int|sys||lutimes(const char *path, \
+276	COMPAT_50 MODULAR RUMP { int|sys||lutimes(const char *path, \
 			    const struct timeval50 *tptr); }
 277	STD 		{ int|sys|13|msync(void *addr, size_t len, int flags); }
 278	COMPAT_30 MODULAR { int|sys|13|stat(const char *path, struct stat13 *ub); }
@@ -647,7 +647,7 @@
 342	STD		{ int|sys||pmc_control(int ctr, int op, void *args); }
 343	STD 		{ int|sys||rasctl(void *addr, size_t len, int op); }
 344	STD	RUMP	{ int|sys||kqueue(void); }
-345	COMPAT_50 MODULAR { int|sys||kevent(int fd, \
+345	COMPAT_50 MODULAR RUMP { int|sys||kevent(int fd, \
 			    const struct kevent *changelist, size_t nchanges, \
 			    struct kevent *eventlist, size_t nevents, \
 			    const struct timespec50 *timeout); }
@@ -713,7 +713,7 @@
 373	COMPAT_50 MODULAR { int|sys||pselect(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, const struct timespec50 *ts, \
 			    const sigset_t *mask); }
-374	COMPAT_50 MODULAR { int|sys||pollts(struct pollfd *fds, u_int nfds, \
+374	COMPAT_50 MODULAR RUMP { int|sys||pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec50 *ts, const sigset_t *mask); }
 375	STD 	RUMP	{ int|sys||setxattr(const char *path, \
 			    const char *name, void *value, size_t size, \
@@ -742,9 +742,9 @@
 			    const char *name); }
 386	STD 	RUMP	{ int|sys||fremovexattr(int fd, \
 			    const char *name); }
-387	COMPAT_50 MODULAR { int|sys|30|stat(const char *path, struct stat30 *ub); }
-388	COMPAT_50 MODULAR { int|sys|30|fstat(int fd, struct stat30 *sb); }
-389	COMPAT_50 MODULAR { int|sys|30|lstat(const char *path, struct stat30 *ub); }
+387	COMPAT_50 MODULAR RUMP { int|sys|30|stat(const char *path, struct stat30 *ub); }
+388	COMPAT_50 MODULAR RUMP { int|sys|30|fstat(int fd, struct stat30 *sb); }
+389	COMPAT_50 MODULAR RUMP { int|sys|30|lstat(const char *path, struct stat30 *ub); }
 390	STD 	RUMP	{ int|sys|30|getdents(int fd, char *buf, size_t count); }
 391	IGNORED		old posix_fadvise
 392	COMPAT_30 MODULAR { int|sys|30|fhstat(const struct compat_30_fhandle \
