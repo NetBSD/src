@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.1.2.1 2011/01/07 01:40:36 matt Exp $
+#	$NetBSD: MPC8536DS,v 1.1.2.2 2011/01/17 07:36:36 matt Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.1.2.1 $"
+ident 		"MPC8536DS-$Revision: 1.1.2.2 $"
 
 maxusers	32
 
@@ -196,9 +196,9 @@ umass*		at uhub? port ?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?
 
-sdhc*		at cpunode?		# sdmmc
-sdmmc*		at sdhc?		# SD/MMC bus
-ld*		at sdmmc?
+#sdhc*		at cpunode?		# sdmmc
+#sdmmc*		at sdhc?		# SD/MMC bus
+#ld*		at sdmmc?
 
 #siisata*	at pci? dev ? function ?
 #atabus* 	at siisata? channel ?
