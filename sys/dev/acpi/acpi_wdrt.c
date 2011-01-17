@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wdrt.c,v 1.1 2011/01/17 15:49:13 jmcneill Exp $ */
+/* $NetBSD: acpi_wdrt.c,v 1.2 2011/01/17 17:32:11 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 /* #define ACPIWDRT_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wdrt.c,v 1.1 2011/01/17 15:49:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wdrt.c,v 1.2 2011/01/17 17:32:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -194,7 +194,7 @@ acpi_wdrt_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_count_reg = wdrt->CountRegister;
 
 	aprint_naive("\n");
-	aprint_normal(": mem 0x%llx,0x%llx\n",
+	aprint_normal(": mem 0x%" PRIx64 ",0x%" PRIx64 "\n",
 	    sc->sc_control_reg.Address, sc->sc_count_reg.Address);
 
 	if (wdrt->PciVendorId != 0xffff && wdrt->PciDeviceId != 0xffff) {
@@ -344,7 +344,8 @@ acpi_wdrt_read_control(struct acpi_wdrt_softc *sc, uint32_t *val)
 	rv = AcpiOsReadMemory(sc->sc_control_reg.Address,
 	    val, sc->sc_control_reg.BitWidth);
 
-	DPRINTF(("%s: %s 0x%llx/%u 0x%08x (%u)\n", device_xname(sc->sc_dev),
+	DPRINTF(("%s: %s 0x%" PRIx64 "/%u 0x%08x (%u)\n",
+	    device_xname(sc->sc_dev),
 	    __func__, sc->sc_control_reg.Address, sc->sc_control_reg.BitWidth,
 	    *val, rv));
 
@@ -361,7 +362,8 @@ acpi_wdrt_write_control(struct acpi_wdrt_softc *sc, uint32_t val)
 	rv = AcpiOsWriteMemory(sc->sc_control_reg.Address,
 	    val, sc->sc_control_reg.BitWidth);
 
-	DPRINTF(("%s: %s 0x%llx/%u 0x%08x (%u)\n", device_xname(sc->sc_dev),
+	DPRINTF(("%s: %s 0x%" PRIx64 "/%u 0x%08x (%u)\n",
+	    device_xname(sc->sc_dev),
 	    __func__, sc->sc_control_reg.Address, sc->sc_control_reg.BitWidth,
 	    val, rv));
 
@@ -379,7 +381,8 @@ acpi_wdrt_read_count(struct acpi_wdrt_softc *sc, uint32_t *val)
 	rv = AcpiOsReadMemory(sc->sc_count_reg.Address,
 	    val, sc->sc_count_reg.BitWidth);
 
-	DPRINTF(("%s: %s 0x%llx/%u 0x%08x (%u)\n", device_xname(sc->sc_dev),
+	DPRINTF(("%s: %s 0x%" PRIx64 "/%u 0x%08x (%u)\n",
+	    device_xname(sc->sc_dev),
 	    __func__, sc->sc_count_reg.Address, sc->sc_count_reg.BitWidth,
 	    *val, rv));
 
@@ -397,7 +400,8 @@ acpi_wdrt_write_count(struct acpi_wdrt_softc *sc, uint32_t val)
 	rv = AcpiOsWriteMemory(sc->sc_count_reg.Address,
 	    val, sc->sc_count_reg.BitWidth);
 
-	DPRINTF(("%s: %s 0x%llx/%u 0x%08x (%u)\n", device_xname(sc->sc_dev),
+	DPRINTF(("%s: %s 0x%" PRIx64 "/%u 0x%08x (%u)\n",
+	    device_xname(sc->sc_dev),
 	    __func__, sc->sc_count_reg.Address, sc->sc_count_reg.BitWidth,
 	    val, rv));
 
