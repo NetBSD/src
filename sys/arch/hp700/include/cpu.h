@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2010/12/26 21:05:34 he Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56 2011/01/17 12:42:41 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -338,7 +338,7 @@ void	trap(int, struct trapframe *);
 void	hppa_ras(struct lwp *);
 int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
 int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
-		 size_t *);
+    size_t *);
 int	copy_on_fault(void);
 void	lwp_trampoline(void);
 void	setfunc_trampoline(void);

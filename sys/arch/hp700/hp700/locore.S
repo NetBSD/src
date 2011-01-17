@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.48 2011/01/12 21:18:23 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.49 2011/01/17 12:37:46 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -385,15 +385,15 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	/*
 	 * load address of interrupt vector table
 	 */
-	ldil	L%ivaaddr,%t2
-	ldo	R%ivaaddr(%t2),%t2
-	mtctl	%t2,%iva
+	ldil	L%ivaaddr, %t2
+	ldo	R%ivaaddr(%t2), %t2
+	mtctl	%t2, %iva
 
 	/*
 	 * set up the dp pointer so that we can do quick references off of it
 	 */
 	ldil	L%$global$,%dp
-	ldo	R%$global$(%dp),%dp
+	ldo	R%$global$(%dp), %dp
 
 	/*
 	 * Create a stack frame for us to call C with. Clear out the previous
@@ -413,7 +413,7 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	mtctl	%r0, %pcsq
 	mtctl	%r0, %pcsq
 	mtctl	%rp, %pcoq
-	ldo	4(%rp),%rp
+	ldo	4(%rp), %rp
 	mtctl	%rp, %pcoq
 	mtctl	%arg1, %ipsw
 	rfi
