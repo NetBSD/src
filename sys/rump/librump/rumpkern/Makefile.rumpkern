@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.106 2011/01/06 11:22:55 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.107 2011/01/17 16:20:20 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -10,7 +10,8 @@ LIB=		rump
 	${RUMPTOP}/../uvm					\
 	${RUMPTOP}/../conf					\
 	${RUMPTOP}/../dev					\
-	${RUMPTOP}/../secmodel/suser
+	${RUMPTOP}/../secmodel/suser				\
+	${RUMPTOP}/../compat/common
 
 #
 # Source modules, first the ones specifically implemented for librump.
@@ -18,7 +19,6 @@ LIB=		rump
 SRCS=	rump.c rumpcopy.c emul.c intr.c lwproc.c klock.c	\
 	kobj_rename.c ltsleep.c memalloc.c scheduler.c		\
 	signals.c sleepq.c threads.c vm.c
-SRCS+=	compat.c
 
 # Multiprocessor or uniprocessor locking.  TODO: select right
 # locking at runtime.
@@ -116,6 +116,9 @@ SRCS+=	vnode_if.c
 
 # sys/dev
 SRCS+=	clock_subr.c
+
+# compat
+SRCS+=	kern_select_50.c
 
 # Flip the comment to the other line if you want to use malloc(3)
 # directly instead of the kernel allocators backed by malloc(3)/mmap(2).
