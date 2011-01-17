@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2010/03/03 00:30:15 pooka Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 2011/01/17 08:23:56 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
