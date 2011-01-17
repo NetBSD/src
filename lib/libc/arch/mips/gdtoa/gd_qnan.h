@@ -1,4 +1,4 @@
-/* $NetBSD: gd_qnan.h,v 1.1 2006/01/25 15:33:28 kleink Exp $ */
+/* $NetBSD: gd_qnan.h,v 1.2 2011/01/17 23:53:03 matt Exp $ */
 
 #include <machine/endian.h>
 
@@ -6,7 +6,15 @@
 #if BYTE_ORDER == BIG_ENDIAN
 #define d_QNAN0 0x7ff40000
 #define d_QNAN1 0x0
+#define ld_QNAN0 0x7fff8000
+#define ld_QNAN1 0x0
+#define ld_QNAN2 0x0
+#define ld_QNAN3 0x0
 #else
 #define d_QNAN0 0x0
 #define d_QNAN1 0x7ff40000
+#define ld_QNAN0 0x0
+#define ld_QNAN1 0x0
+#define ld_QNAN2 0x0
+#define ld_QNAN3 0x7fff8000
 #endif
