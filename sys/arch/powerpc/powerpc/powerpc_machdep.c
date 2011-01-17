@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.39.16.1 2011/01/07 02:03:51 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.39.16.2 2011/01/17 07:46:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.39.16.1 2011/01/07 02:03:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.39.16.2 2011/01/17 07:46:00 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -67,6 +67,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = trapframe(l);
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct ps_strings arginfo;
 
 	memset(tf, 0, sizeof *tf);
@@ -104,7 +105,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 #ifdef ALTIVEC
 	tf->tf_vrsave = 0;
 #endif
-	l->l_addr->u_pcb.pcb_flags = PSL_FE_DFLT;
+	pcb->pcb_flags = PSL_FE_DFLT;
 }
 
 /*
@@ -198,11 +199,21 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       sysctl_machdep_powersave, 0, &powersave, 0,
 		       CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
 #endif
-#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+#if defined(PPC_IBM4XX)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "altivec", NULL,
 		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
+#elif defined(PPC_BOOKE)
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "altivec", NULL,
+#ifdef PPC_HAVE_SPE
+		       NULL, 2, NULL, 0,
+#else
+		       NULL, 0, NULL, 0,
+#endif
 		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
 #else
 	sysctl_createv(clog, 0, NULL, NULL,

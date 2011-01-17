@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61.12.1 2011/01/07 02:12:19 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61.12.2 2011/01/17 07:45:59 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.12.1 2011/01/07 02:12:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.12.2 2011/01/17 07:45:59 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2376,7 +2376,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 void
 pmap_activate(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	DPRINTFN(ACTIVATE,

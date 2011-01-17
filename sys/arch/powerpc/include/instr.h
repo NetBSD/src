@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.4.104.2 2011/01/07 15:11:30 matt Exp $ */
+/*	$NetBSD: instr.h,v 1.4.104.3 2011/01/17 07:45:59 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -399,6 +399,12 @@ union instr {
 				 (((spr) & 0x3e0) << 6))
 #define	OPC_MFSPR_REG(o)	(((o) >> 21) & 0x1f)
 #define	OPC_MFSPR_P(o, spr)	(((o) & OPC_MFSPR_MASK) == OPC_MFSPR(spr))
+
+#define	OPC_MFMSR_CODE		0x7c0000a8
+#define	OPC_MFMSR_MASK		0xfc1fffff
+#define	OPC_MFMSR		OPC_MFMSR_CODE
+#define	OPC_MFMSR_REG(o)	(((o) >> 21) & 0x1f)
+#define	OPC_MFMSR_P(o)		(((o) & OPC_MFMSR_MASK) == OPC_MFMSR_CODE)
 
 /*
  * booke doesn't have lwsync even though gcc emits it so we have to emulate it.

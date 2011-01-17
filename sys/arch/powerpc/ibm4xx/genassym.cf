@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15.26.1 2011/01/07 02:12:18 matt Exp $
+#	$NetBSD: genassym.cf,v 1.15.26.2 2011/01/17 07:45:59 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -133,15 +133,10 @@ define	MSR_PR		31-ilog2(PSL_PR)
 
 define	L_ADDR		offsetof(struct lwp, l_addr)
 define	L_PCB		offsetof(struct lwp, l_addr)
-define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_CPU		offsetof(struct lwp, l_cpu)
-define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	L_PROC		offsetof(struct lwp, l_proc)
 
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
-
-define	LSRUN		LSRUN
-define	LSONPROC	LSONPROC
 
 define	CI_SIZE		sizeof(struct cpu_info)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)

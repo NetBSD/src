@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.65.16.1 2011/01/07 02:05:58 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.65.16.2 2011/01/17 07:46:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -372,7 +372,7 @@ _C_LABEL(extint):
 	mr	%r30,%r1
 	mfsprg1	%r1			/* get old SP */
 	bf	17,1f			/* branch if PSL_PR is true */
-	ldptr	%r1,CI_CURPCB(%r1)	/* get kernel stack */
+	ldptr	%r1,CI_CURPCB(%r30)	/* get kernel stack */
 	addi	%r1,%r1,USPACE-CALLFRAMELEN /* stack is top of user struct */
 	RESTORE_KERN_SRS(%r30, %r31)
 1:
@@ -1359,3 +1359,10 @@ _C_LABEL(ipkdbsbyte):
 #endif	/* IPKDB */
 	.globl	_C_LABEL(trapend)
 _C_LABEL(trapend):
+
+/*
+ * All OEA have FPUs so include this too.  Some OEA have AltiVec so include
+ * that too.
+ */
+#include <powerpc/powerpc/fpu_subr.S>
+#include <powerpc/oea/altivec_subr.S>
