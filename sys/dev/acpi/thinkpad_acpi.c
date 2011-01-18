@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.32 2010/12/31 08:17:54 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.33 2011/01/18 18:56:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.32 2010/12/31 08:17:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.33 2011/01/18 18:56:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,10 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.32 2010/12/31 08:17:54 jruoho Ex
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecvar.h>
 
-#if defined(__i386__) || defined(__amd64__)
 #include <dev/isa/isareg.h>
-#include <machine/pio.h>
-#endif
 
 #define _COMPONENT		ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME		("thinkpad_acpi")
@@ -590,18 +587,12 @@ thinkpad_wireless_toggle(thinkpad_softc_t *sc)
 static uint8_t
 thinkpad_brightness_read(thinkpad_softc_t *sc)
 {
-#if defined(__i386__) || defined(__amd64__)
-	/*
-	 * We have two ways to get the current brightness -- either via
-	 * magic RTC registers, or using the EC. Since I don't dare mess
-	 * with the EC, and Thinkpads are x86-only, this will have to do
-	 * for now.
-	 */
-	outb(IO_RTC, 0x6c);
-	return inb(IO_RTC+1) & 7;
-#else
-	return 0;
-#endif
+	uint32_t val = 0;
+
+	AcpiOsWritePort(IO_RTC, 0x6c, 8);
+	AcpiOsReadPort(IO_RTC + 1, &val, 8);
+
+	return val & 7;
 }
 
 static void
