@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.18 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.19 2011/01/18 02:25:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.18 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.19 2011/01/18 02:25:42 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -183,7 +183,7 @@ vec_mp_save_lwp(struct lwp *l)
 
 	panic("%s/%d timed out: pid = %d.%d, veccpu->ci_cpuid = %d\n",
 	    __func__, cpu_number(), l->l_proc->p_pid, l->l_lid,
-	    veccpu->ci_cpuid);
+	    l->l_md.md_veccpu->ci_cpuid);
 }
 #endif /*MULTIPROCESSOR*/
 
