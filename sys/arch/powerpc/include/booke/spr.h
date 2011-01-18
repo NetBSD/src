@@ -1,10 +1,16 @@
-/*	$NetBSD: spr.h,v 1.2 2010/04/01 18:25:16 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.3 2011/01/18 01:02:54 matt Exp $	*/
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas <matt@3am-software.com>.
+ * by Raytheon BBN Technologies Corp and Defense Advanced Research Projects
+ * Agency and which was developed by Matt Thomas of 3am Software Foundry.
+ *
+ * This material is based upon work supported by the Defense Advanced Research
+ * Projects Agency and Space and Naval Warfare Systems Center, Pacific, under
+ * Contract No. N66001-09-C-2073.
+ * Approved for Public Release, Distribution Unlimited
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +47,17 @@
 #define	SVR_MPC8547v2		  0x80310120
 #define	SVR_MPC8545v2		  0x80310220
 #define	SVR_MPC8543v2		  0x80320020
-#define	SVR_MPC8572		  0x80300011
+
+#define	SVR_MPC8544v1		  0x80340110
+#define	SVR_MPC8544v1plus	  0x80340111
+
+#define	SVR_MPC8536v1		  0x80370091
+
+#define	SVR_MPC8555v1		  0x80710110
+#define	SVR_MPC8541v1		  0x80720111
+
+#define	SVR_MPC8572		  0x80e00011
+#define	SVR_SECURITY_P(svr)	  (((svr) & 0x00080000) != 0)
 
 /*
  * Special Purpose Register declarations.
@@ -82,6 +98,7 @@
 #define	SPR_RTBU		269	/* E468 Time Base Upper (RO) */
 #define	SPR_WTBL		284	/* E468 Time Base Lower (WO) */
 #define	SPR_WTBU		285	/* E468 Time Base Upper (WO) */
+#define	SPR_PIR			286	/* E... Processor ID Register (RO) */
 
 #define	SPR_DBSR		304	/* E... Debug Status Register (W1C) */
 #define   DBSR_IDE		  0x80000000 /* 0: Imprecise debug event */
@@ -94,10 +111,10 @@
 #define	  DBSR_TRAP		  0x01000000 /* 7: Trap Instruction debug event */
 #define	  DBSR_IAC1		  0x00800000 /* 8: IAC1 debug event */
 #define	  DBSR_IAC2		  0x00400000 /* 9: IAC2 debug event */
-#define	  DBSR_DR1		  0x00080000 /* 12: DAC1 Read debug event */
-#define	  DBSR_DW1		  0x00040000 /* 13: DAC1 Write debug event */
-#define	  DBSR_DR2		  0x00020000 /* 14: DAC2 Read debug event */
-#define	  DBSR_DW2		  0x00010000 /* 15: DAC2 Write debug event */
+#define	  DBSR_DAC1R		  0x00080000 /* 12: DAC1 Read debug event */
+#define	  DBSR_DAC1W		  0x00040000 /* 13: DAC1 Write debug event */
+#define	  DBSR_DAC2R		  0x00020000 /* 14: DAC2 Read debug event */
+#define	  DBSR_DAC2W		  0x00010000 /* 15: DAC2 Write debug event */
 #define	  DBSR_RET		  0x00008000 /* 16: Return debug event */
 #define	SPR_DBCR0		308	/* E... Debug Control Register 0 */
 #define	  DBCR0_EDM		  0x80000000 /* 0: External Debug Mode */
@@ -129,6 +146,27 @@
 #define	  DBCR0_FT		  0x00000001 /* 31: Freeze Timers on debug event */
 #define	SPR_DBCR1		309	/* E... Debug Control Register 1 */
 #define	SPR_DBCR2		310	/* E... Debug Control Register 2 */
+#define	  DBCR2_DAC1US		  0xc0000000 /*  0-1: Data Address Compare 1 user/supervisor mode */
+#define	  DBCR2_DAC1US_ANY	  0x00000000 /*  MSR[PR] = don't care */
+#define	  DBCR2_DAC1US_KERNEL	  0x80000000 /*  MSR[PR] = 0 */
+#define	  DBCR2_DAC1US_USER	  0xc0000000 /*  MSR[PR] = 1 */
+#define	  DBCR2_DAC1ER		  0x30000000 /*  2-3: Data Address Compare 1 effective/real mode */
+#define	  DBCR2_DAC1ER_REAL	  0x00000000 /*  real address */
+#define	  DBCR2_DAC1ER_DS0	  0x20000000 /*  effective address MSR[DS] = 0 */
+#define	  DBCR2_DAC1ER_DS1	  0x30000000 /*  effective address MSR[DS] = 1 */
+#define	  DBCR2_DAC2US		  0x0c000000 /*  0-1: Data Address Compare 1 user/supervisor mode */
+#define	  DBCR2_DAC2US_ANY	  0x00000000 /*  MSR[PR] = don't care */
+#define	  DBCR2_DAC2US_KERNEL	  0x08000000 /*  MSR[PR] = 0 */
+#define	  DBCR2_DAC2US_USER	  0x0c000000 /*  MSR[PR] = 1 */
+#define	  DBCR2_DAC2ER		  0x03000000 /*  2-3: Data Address Compare 1 effective/real mode */
+#define	  DBCR2_DAC2ER_REAL	  0x00000000 /*  real address */
+#define	  DBCR2_DAC2ER_DS0	  0x02000000 /*  effective address MSR[DS] = 0 */
+#define	  DBCR2_DAC2ER_DS1	  0x03000000 /*  effective address MSR[DS] = 1 */
+#define	  DBCR2_DAC12M		  0x00c00000 /*  2-3: Data Address Compare 1 effective/real mode */
+#define	  DBCR2_DAC12M_EXACT	  0x00000000 /*  equal DAC1 or DAC2 */
+#define	  DBCR2_DAC12M_MASK	  0x00400000 /*  (addr & DAC2) == (DAC1 & DAC2) */
+#define	  DBCR2_DAC12M_INCLUSIVE  0x00800000 /*  DAC1 <= addr < DAC2 */
+#define	  DBCR2_DAC12M_EXCLUSIVE  0x00c00000 /*  addr < DAC1 || DAC2 <= addr */
 #define	SPR_IAC1		312	/* E... Instruction Address Compare 1 */
 #define	SPR_IAC2		313	/* E... Instruction Address Compare 2 */
 #define	SPR_IAC3		314	/* E... Instruction Address Compare 3 */
@@ -143,14 +181,15 @@
 #define   TSR_FIS		  0x04000000 /* Fixed-interval Interrupt Status (W1C) */
 #define	SPR_TCR			340	/* E... Timer Control Register */
 #define   TCR_WP		  0xc0000000 /* Watchdog Period */
-#define	  TCR_WP_2_N(n)		  ((((64 - (n)) & 3) << 30) | (((64 - (n)) & 0x3c0) << 15))
+#define	  TCR_WP_2_N(n)		  (__SHIFTIN((n), TCR_WP) | __SHIFTIN((n) >> 2, TCR_WPEXT))
 #define	  TCR_WP_2_64		  0x00000000
 #define	  TCR_WP_2_1		  0xc01e0000
 #define   TCR_WRC		  0x30000000 /* Watchdog Timer Reset Control */
+#define   TCR_WRC_RESET		  0x20000000
 #define   TCR_WIE		  0x08000000 /* Watchdog Time Interrupt Enable */
 #define   TCR_DIE		  0x04000000 /* Decremnter Interrupt Enable */
 #define   TCR_FP		  0x03000000 /* Fixed-interval Timer Period */
-#define	  TCR_FP_2_N(n)		  ((((64 - (n)) & 3) << 24) | (((64 - (n)) & 0x3c0) << 11))
+#define	  TCR_FP_2_N(n)		  ((((64 - (n)) & 0x30) << 20) | (((64 - (n)) & 0xf) << 13))
 #define	  TCR_FP_2_64		  0x00000000
 #define	  TCR_FP_2_1		  0x0301e000
 #define   TCR_FIE		  0x00800000 /* Fixed-interval Interrupt Enable */
@@ -220,7 +259,7 @@
 #define   L1CFG_CREPL_PSEUDO_LRU  1
 #define   L1CFG_CLA_P(n)	  (((n) >> 20) & 1)
 #define   L1CFG_CPA_P(n)	  (((n) >> 19) & 1)
-#define   L1CFG_CNWAY_GET(n)	  ((((n) >> 13) & 0xff) + 1)
+#define   L1CFG_CNWAY_GET(n)	  ((((n) >> 11) & 0xff) + 1)
 #define   L1CFG_CSIZE_GET(n)	  ((((n) >>  0) & 0x7ff) << 10)
 #define	SPR_ATBL		526	/* E... Alternate Time Base Lower */
 #define	SPR_ATBU		527	/* E... Alternate Time Base Upper */
@@ -249,10 +288,10 @@
 #define   MCSR_BUS_RPERR	  0x00000001 /* 31: Bus Read Parity Error */
 #define SPR_MCAR		573	/* E... Machine check address register */
 #define	SPR_MAS0		624	/* E... MAS Register 0 */
-#define   MAS0_TLBSEL		  0x03000000 /* Select TLB<n> for access */
-#define   MAS0_TLBSEL_TLB3	  0x03000000 /* Select TLB3 for access */
-#define   MAS0_TLBSEL_TLB2	  0x02000000 /* Select TLB2 for access */
-#define   MAS0_TLBSEL_TLB1	  0x01000000 /* Select TLB1 for access */
+#define   MAS0_TLBSEL		  0x30000000 /* Select TLB<n> for access */
+#define   MAS0_TLBSEL_TLB3	  0x30000000 /* Select TLB3 for access */
+#define   MAS0_TLBSEL_TLB2	  0x20000000 /* Select TLB2 for access */
+#define   MAS0_TLBSEL_TLB1	  0x10000000 /* Select TLB1 for access */
 #define   MAS0_TLBSEL_TLB0	  0x00000000 /* Select TLB0 for access */
 #define   MASX_TLBSEL_GET(n)	  (((n) >> 28) & 3)
 #define   MASX_TLBSEL_MAKE(n)	  (((n) & 3) << 28)
@@ -269,6 +308,17 @@
 #define   MAS1_TS		  0x00001000 /* Translation Space [IS/DS MSR] */
 #define	  MAS1_TS_SHIFT		  12
 #define   MAS1_TSIZE		  0x00000f00 /* Translation Size (4KB**tsize) */
+#define   MASX_TSIZE_4KB	  0x00000100 /*   4KB TSIZE */
+#define   MASX_TSIZE_16KB	  0x00000200 /*  16KB TSIZE */
+#define   MASX_TSIZE_64KB	  0x00000300 /*  64KB TSIZE */
+#define   MASX_TSIZE_256KB	  0x00000400 /* 256KB TSIZE */
+#define   MASX_TSIZE_1MB	  0x00000500 /*   1MB TSIZE */
+#define   MASX_TSIZE_4MB	  0x00000600 /*   4MB TSIZE */
+#define   MASX_TSIZE_16MB	  0x00000700 /*  16MB TSIZE */
+#define   MASX_TSIZE_64MB	  0x00000800 /*  64MB TSIZE */
+#define   MASX_TSIZE_256MB	  0x00000900 /* 256MB TSIZE */
+#define   MASX_TSIZE_1GB	  0x00000a00 /*   1GB TSIZE */
+#define   MASX_TSIZE_4GB	  0x00000b00 /*   4GB TSIZE */
 #define   MASX_TSIZE_GET(n)	  (((n) >> 8) & 15)
 #define   MASX_TSIZE_MAKE(n)	  (((n) & 15) << 8)
 #define	SPR_MAS2		626	/* E... MAS Register 2 */
@@ -301,8 +351,17 @@
 #define   MAS3_SR		  0x00000001 /* System read permission */
 #define	SPR_MAS4		628	/* E... MAS Register 4 */
 #define   MAS4_TLBSELD		  0x30000000 /* TLBSEL default value */
-#define   MAS4_TIDSELD		  0x0fff0000 /* select TID default value */
+#define   MAS4_TLBSEL_TLB3	  0x30000000 /* Select TLB3 for access */
+#define   MAS4_TLBSEL_TLB2	  0x20000000 /* Select TLB2 for access */
+#define   MAS4_TLBSEL_TLB1	  0x10000000 /* Select TLB1 for access */
+#define   MAS4_TLBSEL_TLB0	  0x00000000 /* Select TLB0 for access */
+#define   MAS4_TIDSELD		  0x00030000 /* select TID default value */
+#define   MAS4_TIDSELD_TIDZ	  0x00030000 /* fill in MAS1[TID] with 0 */
+#define   MAS4_TIDSELD_PID2	  0x00020000 /* fill in MAS1[TAD] from ... */
+#define   MAS4_TIDSELD_PID1	  0x00010000 /* fill in MAS1[TAD] from ... */
+#define   MAS4_TIDSELD_PID0	  0x00000000 /* fill in MAS1[TAD] from ... */
 #define   MAS4_TSIZED		  0x00000f00 /* TSIZE default value */
+#define   MAS4_TSIZED_4KB	  0x00000100 /* 4KB TSIZE */
 #define	  MAS4_ACMD		  0x000000c0 /* Alternate Coherency Mode. */
 #define	  MAS4_X0D		  0x00000040 /* default Impl. dep. page attr. */
 #define	  MAS4_VLED		  0x00000020 /* VLE mode. */
@@ -330,6 +389,15 @@
 #define	SPR_MAS7		944	/* E... MAS Register 7 */
 #define	 MAS7_RPNHI		  0x00000004 /* bits 32-35 of RPN */
 #define	SPR_HID0		1008
+#define   HID0_EMCP		  0x80000000 /* Enable Machine Check Pin */
+#define   HID0_DOZE		  0x00800000 /* Core in doze mode */
+#define   HID0_NAP		  0x00400000 /* Core in nap mode */
+#define   HID0_SLEEP		  0x00200000 /* Core in sleep mode */
+#define   HID0_TBEN		  0x00004000 /* Time Base ENable */
+#define   HID0_SEL_TBCLK	  0x00002000 /* SELect Time Base Clock */
+#define   HID0_EN_MAS7_UPDATE	  0x00000080 /* ENable MAS7 UPDATE */
+#define   HID0_DCFA		  0x00000040 /* Data Cache Flush Assist */
+#define   HID0_NOOPTI		  0x00000001 /* NO-OP Touch Instructions */
 #define	SPR_HID1		1009
 #define	SPR_L1CSR0		1010	/* E... L1 Cache Control and Status Register 0 (Data) */
 #define	SPR_L1CSR1		1011	/* E... L1 Cache Control and Status Register 1 (Instruction) */
@@ -405,4 +473,4 @@
 #define	PMR_UPMLCb3			(PMR_PMLCb3 - 16)
 #define	PMR_UPMGC0			(PMR_PMGC0 - 16)
 
-#endif /* !_POWERPC_SPR_H_ */
+#endif /* !_POWERPC_BOOKE_SPR_H_ */
