@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.90 2011/01/17 20:39:04 agc Exp $
+# $NetBSD: md.amd64,v 1.91 2011/01/18 20:09:38 pooka Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -777,6 +777,7 @@
 ./usr/lib/i386/librumpnet_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/librumpuser.a			comp-c-lib		compat
 ./usr/lib/i386/librumpuser.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/librumphijack.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpuser_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/librumpuser_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/librumpuser_pic.a		comp-c-piclib		compat,pic
@@ -974,6 +975,7 @@
 ./usr/libdata/debug/usr/lib/i386/librumpdev.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpnet.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpuser.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/librumphijack.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpvfs.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libskey.so.2.0.debug	comp-compat-shlib	compat,pic,skey,debug
 ./usr/libdata/debug/usr/lib/i386/libsl.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
