@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.12 2011/01/16 14:16:03 jmcneill Exp $	*/
+/*	$NetBSD: aps.c,v 1.13 2011/01/18 16:45:11 jmcneill Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.12 2011/01/16 14:16:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.13 2011/01/18 16:45:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,23 +460,35 @@ aps_refresh_sensor_data(struct aps_softc *sc)
 {
 	int64_t temp;
 
-	if (aps_read_data(sc))
+	if (aps_read_data(sc)) {
+		printf("aps0: read data failed\n");
 		return;
+	}
 
 	sc->sc_sensor[APS_SENSOR_XACCEL].value_cur = sc->aps_data.x_accel;
 	sc->sc_sensor[APS_SENSOR_YACCEL].value_cur = sc->aps_data.y_accel;
 
-	/* convert to micro (mu) degrees */
-	temp = sc->aps_data.temp1 * 1000000;	
-	/* convert to kelvin */
-	temp += 273150000; 
-	sc->sc_sensor[APS_SENSOR_TEMP1].value_cur = temp;
+	if (sc->aps_data.temp1 == 0xff)
+		sc->sc_sensor[APS_SENSOR_TEMP1].state = ENVSYS_SINVALID;
+	else {
+		/* convert to micro (mu) degrees */
+		temp = sc->aps_data.temp1 * 1000000;	
+		/* convert to kelvin */
+		temp += 273150000; 
+		sc->sc_sensor[APS_SENSOR_TEMP1].value_cur = temp;
+		sc->sc_sensor[APS_SENSOR_TEMP1].state = ENVSYS_SVALID;
+	}
 
-	/* convert to micro (mu) degrees */
-	temp = sc->aps_data.temp2 * 1000000;	
-	/* convert to kelvin */
-	temp += 273150000; 
-	sc->sc_sensor[APS_SENSOR_TEMP2].value_cur = temp;
+	if (sc->aps_data.temp2 == 0xff)
+		sc->sc_sensor[APS_SENSOR_TEMP2].state = ENVSYS_SINVALID;
+	else {
+		/* convert to micro (mu) degrees */
+		temp = sc->aps_data.temp2 * 1000000;	
+		/* convert to kelvin */
+		temp += 273150000; 
+		sc->sc_sensor[APS_SENSOR_TEMP2].value_cur = temp;
+		sc->sc_sensor[APS_SENSOR_TEMP2].state = ENVSYS_SVALID;
+	}
 
 	sc->sc_sensor[APS_SENSOR_XVAR].value_cur = sc->aps_data.x_var;
 	sc->sc_sensor[APS_SENSOR_YVAR].value_cur = sc->aps_data.y_var;
