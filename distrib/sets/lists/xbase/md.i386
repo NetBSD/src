@@ -1,5 +1,11 @@
-# $NetBSD: md.i386,v 1.22 2010/05/28 06:26:55 mrg Exp $
+# $NetBSD: md.i386,v 1.23 2011/01/18 23:33:50 jmcneill Exp $
 ./usr/X11R7/share/pciids/pci.ids		-unknown-		obsolete
+./usr/X11R7/lib/libI810XvMC.so			-unknown-		xorg
+./usr/X11R7/lib/libI810XvMC.so.0		-unknown-		xorg
+./usr/X11R7/lib/libI810XvMC.so.0.0		-unknown-		xorg
+./usr/X11R7/lib/libIntelXvMC.so			-unknown-		xorg
+./usr/X11R7/lib/libIntelXvMC.so.0		-unknown-		xorg
+./usr/X11R7/lib/libIntelXvMC.so.0.0		-unknown-		xorg
 ./usr/X11R7/lib/libchromeXvMC.so		-unknown-		xorg
 ./usr/X11R7/lib/libchromeXvMC.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libchromeXvMC.so.0.0		-unknown-		xorg
