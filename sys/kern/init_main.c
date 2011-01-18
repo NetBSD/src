@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.425 2011/01/17 07:13:31 uebayasi Exp $	*/
+/*	$NetBSD: init_main.c,v 1.426 2011/01/18 08:18:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.425 2011/01/17 07:13:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.426 2011/01/18 08:18:43 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -326,6 +326,9 @@ main(void)
 	/* Initialize the extent manager. */
 	extent_init();
 
+	/* Initialize event counters */
+	evcnt_init();
+
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
@@ -368,7 +371,6 @@ main(void)
 	/*
 	 * The following things must be done before autoconfiguration.
 	 */
-	evcnt_init();		/* initialize event counters */
 #if NRND > 0
 	rnd_init();		/* initialize random number generator */
 #endif
