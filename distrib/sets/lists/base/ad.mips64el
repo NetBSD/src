@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.33 2011/01/17 20:39:04 agc Exp $
+# $NetBSD: ad.mips64el,v 1.34 2011/01/18 20:09:37 pooka Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -195,6 +195,8 @@
 ./usr/lib/64/librumpnet.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpuser.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpuser.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/64/librumphijack.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/librumphijack.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpcrypto.so.0			base-obsolete		obsolete
 ./usr/lib/64/librumpcrypto.so.0.0		base-obsolete		obsolete
 ./usr/lib/64/librumpdev.so.0			base-compat-shlib	compat,pic
@@ -450,6 +452,8 @@
 ./usr/lib/o32/librumpnet.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpuser.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpuser.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/o32/librumphijack.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/librumphijack.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpcrypto.so.0		base-obsolete		obsolete
 ./usr/lib/o32/librumpcrypto.so.0.0		base-obsolete		obsolete
 ./usr/lib/o32/librumpdev.so.0			base-compat-shlib	compat,pic
