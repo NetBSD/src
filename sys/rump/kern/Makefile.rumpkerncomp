@@ -1,7 +1,12 @@
-#	$NetBSD: Makefile.rumpkerncomp,v 1.2 2010/12/05 20:11:22 pooka Exp $
+#	$NetBSD: Makefile.rumpkerncomp,v 1.3 2011/01/18 22:21:23 haad Exp $
 #
 
 RUMPKERNCOMPS=	crypto ksem tty z
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+RUMPKERNCOMPS+=    solaris
+.endif
 
 .for var in ${RUMPKERNCOMPS}
 RUMPKERNLIBS+=lib${var}
