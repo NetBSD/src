@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.59 2010/11/06 11:46:01 uebayasi Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.60 2011/01/18 01:02:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.59 2010/11/06 11:46:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.60 2011/01/18 01:02:55 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -227,7 +227,13 @@ static const struct cputab models[] = {
 };
 
 #ifdef MULTIPROCESSOR
-struct cpu_info cpu_info[CPU_MAXNUM] = { { .ci_curlwp = &lwp0, }, }; 
+struct cpu_info cpu_info[CPU_MAXNUM] = {
+    [0] = {
+	.ci_curlwp = &lwp0,
+	.ci_fpulwp = &lwp0,
+	.ci_veclwp = &lwp0,
+    },
+};
 volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
 extern int ticks_per_intr;
@@ -236,7 +242,13 @@ extern int ticks_per_intr;
 #include <arch/powerpc/pic/ipivar.h>
 extern struct bat battable[];
 #else
-struct cpu_info cpu_info[1] = { { .ci_curlwp = &lwp0, }, }; 
+struct cpu_info cpu_info[1] = {
+    [0] = {
+	.ci_curlwp = &lwp0,
+	.ci_fpulwp = &lwp0,
+	.ci_veclwp = &lwp0,
+    },
+};
 #endif /*MULTIPROCESSOR*/
 
 int cpu_altivec;
@@ -375,7 +387,7 @@ cpu_probe_cache(void)
 }
 
 struct cpu_info *
-cpu_attach_common(struct device *self, int id)
+cpu_attach_common(device_t self, int id)
 {
 	struct cpu_info *ci;
 	u_int pvr, vers;
@@ -395,7 +407,7 @@ cpu_attach_common(struct device *self, int id)
 #endif
 
 	ci->ci_cpuid = id;
-	ci->ci_intrdepth = -1;
+	ci->ci_idepth = -1;
 	ci->ci_dev = self;
 	ci->ci_idlespin = cpu_idlespin;
 
@@ -438,7 +450,7 @@ cpu_attach_common(struct device *self, int id)
 }
 
 void
-cpu_setup(struct device *self, struct cpu_info *ci)
+cpu_setup(device_t self, struct cpu_info *ci)
 {
 	u_int hid0, hid0_save, pvr, vers;
 	const char *bitmask;
@@ -1166,7 +1178,7 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 extern volatile u_int cpu_spinstart_ack;
 
 int
-cpu_spinup(struct device *self, struct cpu_info *ci)
+cpu_spinup(device_t self, struct cpu_info *ci)
 {
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	struct pglist mlist;

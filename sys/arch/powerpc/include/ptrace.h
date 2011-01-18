@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.10 2007/03/04 06:00:37 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.11 2011/01/18 01:02:54 matt Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -22,7 +22,7 @@
 #include "opt_altivec.h"
 #endif
 
-#ifdef ALTIVEC
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 
 /* We have machine-dependent process tracing requests.  */
 #define __HAVE_PTRACE_MACHDEP
@@ -58,7 +58,7 @@ int procfs_machdep_dovecregs(struct lwp *, struct lwp *,
 	struct pfsnode *, struct uio *);
 int procfs_machdep_validvecregs(struct lwp *, struct mount *);
 
-#endif /* ALTIVEC */
+#endif /* ALTIVEC || PPC_HAVE_SPE */
 #endif /* _KERNEL */
 
 #endif /* _POWERPC_PTRACE_H */

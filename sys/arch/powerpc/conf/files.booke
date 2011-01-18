@@ -1,4 +1,4 @@
-#	$NetBSD: files.booke,v 1.1 2010/03/09 22:35:50 matt Exp $
+#	$NetBSD: files.booke,v 1.2 2011/01/18 01:02:53 matt Exp $
 #
 # PPC BookE specific configuration info
 
@@ -7,36 +7,61 @@
 # Board Properties
 file	arch/powerpc/booke/board_prop.c
 
-# Processor Local Bus
-#device	cpuchip {[device = -1], [core = -1]}: gpiobus
-device	cpuchip {}: gpiobus
-attach	cpuchip at root
-file	arch/powerpc/booke/dev/cpuchip.c	cpuchip
-file	arch/powerpc/booke/dev/gpio.c		gpio
+device	mainbus {[node = -1]}
+attach	mainbus at root
 
-# On-chip Peripheral Bus
-device	obio {[addr = -1], [irq = -1]}
-attach	obio at cpuchip
-file	arch/powerpc/booke/dev/obio.c		obio
+# Processor Local Bus
+#device	cpunode {[device = -1], [core = -1]}: gpiobus
+device	cpunode {[instance = -1]}: gpiobus
+attach	cpunode at mainbus
+file	arch/powerpc/booke/dev/cpunode.c	cpunode
+file	arch/powerpc/booke/dev/pq3gpio.c	cpunode & gpio
 
 device	cpu {}
-attach	cpu at cpuchip
-file	arch/powerpc/booke/cpu.c
+attach	cpu at cpunode
 
-device	ecc
-attach	ecc at cpuchip with ecc_cpuchip
-file	arch/powerpc/booke/dev/ecc_cpuchip.c	ecc_cpuchip
+device	ddrc
+attach	ddrc at cpunode with pq3ddrc
+file	arch/powerpc/booke/dev/pq3ddrc.c	pq3ddrc
 
 # On-chip com device(s)
-attach	com at cpuchip with com_cpuchip
-file	arch/powerpc/booke/dev/com_cpuchip.c	com_cpuchip
+device	duart { port=-1 }
+attach	duart at cpunode with pq3duart
+attach	com at duart with com_pq3duart
+file	arch/powerpc/booke/dev/pq3duart.c	pq3duart
+
+# dual i2c device(s)
+device	diic: motoi2c, i2cbus, i2cexec
+attach	diic at cpunode with pq3diic
+file	arch/powerpc/booke/dev/pq3diic.c	pq3diic
 
 # On-chip ethernet device(s)
-device	estec: ether, ifnet, arp, mii
-attach	estec at cpuchip
-file	arch/powerpc/booke/dev/if_etsec.c	etsec
+device	tsec: ether, ifnet, arp, mii
+attach	tsec at cpunode with pq3etsec
+file	arch/powerpc/booke/dev/pq3etsec.c	pq3etsec
+
+# On-chip EHCI device(s)
+attach	ehci at cpunode with pq3ehci
+file	arch/powerpc/booke/dev/pq3ehci.c	pq3ehci
+
+# On-chip SDHC device(s)
+attach	sdhc at cpunode with pq3sdhc
+file	arch/powerpc/booke/dev/pq3sdhc.c	pq3sdhc
 
 # Watchdog timer
-device	wdog: sysmon_wdog
-attach	wdog at cpuchip
-file	arch/powerpc/booke/dev/wdog.c		wdog
+device	e500wdog: sysmon_wdog
+attach	e500wdog at cpunode
+file	arch/powerpc/booke/dev/e500wdog.c	e500wdog
+
+# local bus controller
+device	obio { [addr=-1], [size=-1], [cs=-1], [irq=-1] }
+attach	obio at cpunode with pq3obio
+file	arch/powerpc/booke/dev/pq3obio.c	pq3obio
+
+device	nflash
+attach	nflash at obio with pq3flash
+file	arch/powerpc/booke/dev/pq3flash.c	pq3flash
+
+device	rng
+attach	rng at cpunode with pq3rng
+file	arch/powerpc/booke/dev/pq3rng.c		pq3rng
