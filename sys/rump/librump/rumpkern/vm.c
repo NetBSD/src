@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.106 2011/01/13 15:38:29 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.107 2011/01/18 22:21:23 haad Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.106 2011/01/13 15:38:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.107 2011/01/18 22:21:23 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -337,6 +337,20 @@ uvm_pagewire(struct vm_page *pg)
 
 void
 uvm_pageunwire(struct vm_page *pg)
+{
+
+	/* nada */
+}
+
+void
+uvm_reclaim_hook_add(struct uvm_reclaim_hook *hook_entry)
+{
+
+	/* nada */
+}
+
+void
+uvm_reclaim_hook_del(struct uvm_reclaim_hook *hook_entry)
 {
 
 	/* nada */
