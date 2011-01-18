@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.101 2011/01/17 20:39:04 agc Exp $
+# $NetBSD: md.sparc64,v 1.102 2011/01/18 20:09:38 pooka Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -202,6 +202,8 @@
 ./usr/lib/sparc/librumpnet.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpuser.so.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpuser.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/librumphijack.so.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/librumphijack.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpvfs.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpvfs.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libskey.so.2			base-compat-shlib	compat,pic,skey

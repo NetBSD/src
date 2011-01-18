@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.16 2011/01/17 20:39:04 agc Exp $
+# $NetBSD: ad.mips64eb,v 1.17 2011/01/18 20:09:38 pooka Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -489,6 +489,7 @@
 ./usr/lib/64/librumpnet_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/librumpuser.a			comp-c-lib		compat
 ./usr/lib/64/librumpuser.so			base-sys-shlib		compat,pic
+./usr/lib/64/librumphijack.so			base-sys-shlib		compat,pic
 ./usr/lib/64/librumpuser_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/librumpuser_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/librumpvfs.a			comp-c-lib		compat
@@ -994,6 +995,7 @@
 ./usr/lib/o32/librumpnet_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/librumpuser.a			comp-c-lib		compat
 ./usr/lib/o32/librumpuser.so			base-sys-shlib		compat,pic
+./usr/lib/o32/librumphijack.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/librumpuser_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/librumpuser_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/librumpvfs.a			comp-c-lib		compat
