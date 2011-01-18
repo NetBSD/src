@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.108 2011/01/17 20:39:04 agc Exp $
+# $NetBSD: md.amd64,v 1.109 2011/01/18 20:09:37 pooka Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -205,6 +205,8 @@
 ./usr/lib/i386/librumpnet.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpuser.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpuser.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/i386/librumphijack.so.0			base-compat-shlib	compat,pic
+./usr/lib/i386/librumphijack.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpvfs.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpvfs.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libskey.so.2			base-compat-shlib	compat,pic,skey
