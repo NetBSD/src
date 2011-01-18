@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.94 2011/01/18 23:56:49 matt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94 2011/01/18 23:56:49 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -241,9 +241,6 @@ cpu_lwp_fork(register struct lwp *l1, register struct lwp *l2, void *stack, size
 		    sizeof(struct fpstate64));
 	} else
 		l2->l_md.md_fpstate = NULL;
-
-	if (l1->l_proc->p_flag & PK_32)
-		l2->l_proc->p_flag |= PK_32;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
