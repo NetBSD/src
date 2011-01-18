@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.91 2011/01/18 20:09:38 pooka Exp $
+# $NetBSD: md.amd64,v 1.92 2011/01/18 21:07:51 pooka Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -781,6 +781,7 @@
 ./usr/lib/i386/librumpuser_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/librumpuser_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/librumpuser_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/librumphijack_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/i386/librumpvfs.a			comp-c-lib		compat
 ./usr/lib/i386/librumpvfs.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpvfs_g.a			comp-c-proflib		compat,debuglib
