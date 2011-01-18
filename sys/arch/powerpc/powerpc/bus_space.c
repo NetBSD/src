@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.23 2010/11/06 11:46:02 uebayasi Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.24 2011/01/18 01:02:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.23 2010/11/06 11:46:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2011/01/18 01:02:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ int
 bus_space_init(struct powerpc_bus_space *t, const char *extent_name,
 	void *storage, size_t storage_size)
 {
-	if (t->pbs_extent == NULL) {
+	if (t->pbs_extent == NULL && extent_name != NULL) {
 		t->pbs_extent = extent_create(extent_name, t->pbs_base,
 		    t->pbs_limit-1, M_DEVBUF, storage, storage_size,
 		    EX_NOCOALESCE|EX_NOWAIT);
@@ -535,29 +535,32 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		return (EOPNOTSUPP);
 	}
 
+	if (t->pbs_extent != NULL) {
 #ifdef PPC_IBM4XX
-	/*
-	 * XXX: Temporary kludge.
-	 * Don't bother checking the extent during very early bootstrap.
-	 */
-	if (extent_flags) {
+		/*
+		 * XXX: Temporary kludge.
+		 * Don't bother checking the extent during very early bootstrap.
+		 */
+		if (extent_flags) {
 #endif
-	/*
-	 * Before we go any further, let's make sure that this
-	 * region is available.
-	 */
-	error = extent_alloc_region(t->pbs_extent, bpa, size,
-	    EX_NOWAIT | extent_flags);
-	if (error) {
+		/*
+		 * Before we go any further, let's make sure that this
+		 * region is available.
+		 */
+		error = extent_alloc_region(t->pbs_extent, bpa, size,
+		    EX_NOWAIT | extent_flags);
+		if (error) {
 #ifdef DEBUG
-		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: %d\n",
-		    t, t->pbs_base, t->pbs_limit, bpa, size, error);
+			printf("bus_space_map(%p[%x:%x], %#x, %#x) failed"
+			    ": %d\n",
+			    t, t->pbs_base, t->pbs_limit, bpa, size, error);
 #endif
-		return (error);
-	}
+			return (error);
+		}
 #ifdef PPC_IBM4XX
-	}
+		}
 #endif
+	}
 
 	pa = t->pbs_offset + bpa;
 #if defined (PPC_OEA) || defined(PPC_OEA601)
@@ -588,7 +591,8 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	}
 #endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
 
-#ifndef PPC_IBM4XX
+	if (t->pbs_extent != NULL) {
+#if !defined(PPC_IBM4XX)
 	if (extent_flags == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
 #ifdef DEBUG
@@ -598,6 +602,8 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		return (ENOMEM);
 	}
 #endif
+	}
+
 	/*
 	 * Map this into the kernel pmap.
 	 */
@@ -660,22 +666,14 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 #endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
 	bpa = pa - t->pbs_offset;
 
-#ifdef PPC_IBM4XX
-	/*
-	 * XXX: Temporary kludge.
-	 * Don't bother checking the extent during very early bootstrap.
-	 */
-	if (extent_flags) {
-#endif
-	if (extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags)) {
+	if (t->pbs_extent != NULL
+	    && extent_free(t->pbs_extent, bpa, size,
+			   EX_NOWAIT | extent_flags)) {
 		printf("memio_unmap: %s 0x%lx, size 0x%lx\n",
 		    (t->pbs_flags & _BUS_SPACE_IO_TYPE) ? "port" : "mem",
 		    (unsigned long)bpa, (unsigned long)size);
 		printf("memio_unmap: can't free region\n");
 	}
-#ifdef PPC_IBM4XX
-	}
-#endif
 
 	unmapiodev(va, size);
 }
@@ -691,6 +689,9 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 
 	size = _BUS_SPACE_STRIDE(t, size);
 	rstart = _BUS_SPACE_STRIDE(t, rstart);
+
+	if (t->pbs_extent == NULL)
+		return ENOMEM;
 
 	if (rstart + size > t->pbs_limit) {
 #ifdef DEBUG
@@ -750,6 +751,9 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 void
 memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
+	if (t->pbs_extent == NULL)
+		return;
+
 	/* memio_unmap() does all that we need to do. */
 	memio_unmap(t, bsh, size);
 }

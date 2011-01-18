@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.43 2009/02/15 01:58:01 cube Exp $
+#	$NetBSD: Makefile.powerpc,v 1.44 2011/01/18 01:02:53 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -41,9 +41,10 @@ CPPFLAGS+=	-D${MACHINE}=${MACHINE}
 CWARNFLAGS+=	-Wreturn-type
 .if ${PPCDIR} == "oea"
 CFLAGS+=	-mno-strict-align
+CFLAGS+=	-Wa,-maltivec
 .endif
-CFLAGS+=	-msoft-float ${CCPUOPTS} -Wa,-maltivec
-AFLAGS+=	${AOPTS}
+CFLAGS+=	-msoft-float ${CCPUOPTS}
+AFLAGS+=	${AOPTS} -D_NOREGNAMES
 
 ##
 ## (3) libkern and compat
@@ -72,18 +73,22 @@ ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 ##
 ## (5) link settings
 ##
+KERNLDSCRIPT?=	${POWERPC}/conf/kern.ldscript
 TEXTADDR?=	0x100000
-LINKFORMAT=	-N
+LINKFORMAT=	-N -T ${KERNLDSCRIPT}
+
 ENTRYPOINT=	__start
 
 .if defined(NEED_SREC)
 SYSTEM_LD_TAIL_EXTRA+=; \
-		${OBJCOPY} -v -O srec $@ $@.srec
+		echo ${OBJCOPY} -O srec $@ $@.srec; \
+		${OBJCOPY} -O srec $@ $@.srec
 .endif
 
 .if defined(NEED_BINARY)
 SYSTEM_LD_TAIL_EXTRA+=; \
-		${OBJCOPY} -v -O binary $@ $@.bin
+		echo ${OBJCOPY} -O binary $@ $@.bin; \
+		${OBJCOPY} -O binary $@ $@.bin
 .endif
 
 ##

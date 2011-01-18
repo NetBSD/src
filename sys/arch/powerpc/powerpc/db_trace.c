@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.53 2011/01/14 02:06:30 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.54 2011/01/18 01:02:55 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.53 2011/01/14 02:06:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.54 2011/01/18 01:02:55 matt Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -123,6 +123,10 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	bool trace_thread = false;
 	bool lwpaddr = false;
 	extern int trapexit[], sctrapexit[];
+#ifdef PPC_BOOKE
+	extern int extintr_call[], fitintr_call[], decrintr_call[];
+	extern int critintr_call[], wdogintr_call[];
+#endif
 	bool full = false;
 	bool in_kernel = true;
 
@@ -187,31 +191,38 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		(*pr)("0x%08lx: ", frame);
 		if (lr + 4 == (db_addr_t) trapexit ||
+#ifdef PPC_BOOKE
+		    lr == (db_addr_t) wdogintr_call ||
+		    lr == (db_addr_t) extintr_call ||
+		    lr == (db_addr_t) critintr_call ||
+		    lr == (db_addr_t) decrintr_call ||
+		    lr == (db_addr_t) fitintr_call ||
+#endif
 		    lr + 4 == (db_addr_t) sctrapexit) {
 			const char *trapstr;
-			struct trapframe *tf = (struct trapframe *) (frame+8);
-			(*pr)("%s ", tf->srr1 & PSL_PR ? "user" : "kernel");
+			struct trapframe *tf = &((struct ktrapframe *)frame)->ktf_tf;
+			(*pr)("%s ", tf->tf_srr1 & PSL_PR ? "user" : "kernel");
 			if (lr + 4 == (db_addr_t) sctrapexit) {
-				(*pr)("SC trap #%d by ", tf->fixreg[0]);
+				(*pr)("SC trap #%d by ", tf->tf_fixreg[0]);
 				goto print_trap;
 			}
-			switch (tf->exc) {
+			switch (tf->tf_exc) {
 			case EXC_DSI:
 #ifdef PPC_OEA
 				(*pr)("DSI %s trap @ %#x by ",
-				    tf->dsisr & DSISR_STORE ? "write" : "read",
-				    tf->dar);
+				    tf->tf_dsisr & DSISR_STORE ? "write" : "read",
+				    tf->tf_dar);
 #endif
 #ifdef PPC_IBM4XX
 				(*pr)("DSI %s trap @ %#x by ",
-				    tf->tf_xtra[TF_ESR] & ESR_DST ? "write" : "read",
-				    tf->dar);
+				    tf->tf_esr & ESR_DST ? "write" : "read",
+				    tf->tf_dear);
 #endif
 				goto print_trap;
 			case EXC_ALI:
 #ifdef PPC_OEA
 				(*pr)("ALI trap @ %#x (DSISR %#x) ",
-				    tf->dar, tf->dsisr);
+				    tf->tf_dar, tf->tf_dsisr);
 				goto print_trap;
 #else
 				trapstr = "ALI"; break;
@@ -231,46 +242,50 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			case EXC_PERF: trapstr = "PERF"; break;
 			case EXC_SMI: trapstr = "SMI"; break;
 			case EXC_RST: trapstr = "RST"; break;
+			case EXC_DTMISS: trapstr = "DTMISS"; break;
+			case EXC_ITMISS: trapstr = "ITMISS"; break;
+			case EXC_FIT: trapstr = "FIT"; break;
+			case EXC_PIT: trapstr = "PIT"; break;
+			case EXC_WDOG: trapstr = "WDOG"; break;
 			default: trapstr = NULL; break;
 			}
 			if (trapstr != NULL) {
 				(*pr)("%s trap by ", trapstr);
 			} else {
-				(*pr)("trap %#x by ", tf->exc);
+				(*pr)("trap %#x by ", tf->tf_exc);
 			}
 		   print_trap:	
-			lr = (db_addr_t) tf->srr0;
+			lr = (db_addr_t) tf->tf_srr0;
 			diff = 0;
 			symname = NULL;
-			if (in_kernel && (tf->srr1 & PSL_PR) == 0) {
+			if (in_kernel && (tf->tf_srr1 & PSL_PR) == 0) {
 				sym = db_search_symbol(lr, DB_STGY_ANY, &diff);
 				db_symbol_values(sym, &symname, 0);
 			}
 			if (symname == NULL || !strcmp(symname, "end")) {
-				(*pr)("%p: srr1=%#x\n", lr, tf->srr1);
+				(*pr)("%p: srr1=%#x\n", lr, tf->tf_srr1);
 			} else {
 				(*pr)("%s+%#x: srr1=%#x\n", symname,
-				    diff, tf->srr1);
+				    diff, tf->tf_srr1);
 			}
 			(*pr)("%-10s  r1=%#x cr=%#x xer=%#x ctr=%#x",
-			    "", tf->fixreg[1], tf->cr, tf->xer, tf->ctr);
+			    "", tf->tf_fixreg[1], tf->tf_cr, tf->tf_xer, tf->tf_ctr);
 #ifdef PPC_OEA
-			if (tf->exc == EXC_DSI)
-				(*pr)(" dsisr=%#x", tf->dsisr);
+			if (tf->tf_exc == EXC_DSI)
+				(*pr)(" dsisr=%#x", tf->tf_dsisr);
 #ifdef PPC_OEA601
 			if ((mfpvr() >> 16) == MPC601)
-				(*pr)(" mq=%#x", tf->tf_xtra[TF_MQ]);
+				(*pr)(" mq=%#x", tf->tf_mq);
 #endif /* PPC_OEA601 */
 #endif /* PPC_OEA */
 #ifdef PPC_IBM4XX
-			if (tf->exc == EXC_DSI)
-				(*pr)(" dear=%#x", tf->dar);
-			(*pr)(" esr=%#x pid=%#x", tf->tf_xtra[TF_ESR],
-			    tf->tf_xtra[TF_PID]);
+			if (tf->tf_exc == EXC_DSI)
+				(*pr)(" dear=%#x", tf->tf_dear);
+			(*pr)(" esr=%#x pid=%#x", tf->tf_esr, tf->tf_pid);
 #endif
 			(*pr)("\n");
-			frame = (db_addr_t) tf->fixreg[1];
-			in_kernel = !(tf->srr1 & PSL_PR);
+			frame = (db_addr_t) tf->tf_fixreg[1];
+			in_kernel = !(tf->tf_srr1 & PSL_PR);
 			if (kernel_only && !in_kernel)
 				break;
 			goto next_frame;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.7 2010/02/25 23:31:47 matt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.8 2011/01/18 01:02:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -63,9 +63,10 @@ cpu_counter32(void)
 	    "add	%1,%2,%0	\n"
 	    "b		2f		\n"
 	    "1:				\n"
-#endif /* PPC_OEA601 */
-#ifdef PPC_IBM403
+#elif defined(PPC_IBM403)
 	    "mftblo	%1		\n"
+#elif defined(PPC_BOOKE)
+	    "mfspr	%1,%3		\n"
 #else
 	    "mftb	%1		\n"
 #endif
@@ -73,6 +74,8 @@ cpu_counter32(void)
 		: "=r"(scratch), "=r"(rv), "=r"(rtcu)
 #ifdef PPC_OEA601
 		: "n"(MPC601), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
+#elif defined(PPC_BOOKE)
+		: "n"(SPR_TBL)
 #endif
 	    );
 

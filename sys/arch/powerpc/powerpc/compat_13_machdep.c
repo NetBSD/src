@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.17 2009/11/27 03:23:12 rmind Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.18 2011/01/18 01:02:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17 2009/11/27 03:23:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.18 2011/01/18 01:02:55 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -78,16 +78,16 @@ compat_13_sys_sigreturn(struct lwp *l,
 		return (EINVAL);
 
 	/* Restore register context. */
-	memcpy(tf->fixreg, sc.sc_frame.fixreg, sizeof(tf->fixreg));
-	tf->lr   = sc.sc_frame.lr;
-	tf->cr   = sc.sc_frame.cr;
-	tf->xer  = sc.sc_frame.xer;
-	tf->ctr  = sc.sc_frame.ctr;
-	tf->srr0 = sc.sc_frame.srr0;
-	tf->srr1 = sc.sc_frame.srr1;
+	memcpy(tf->tf_fixreg, sc.sc_frame.fixreg, sizeof(tf->tf_fixreg));
+	tf->tf_lr   = sc.sc_frame.lr;
+	tf->tf_cr   = sc.sc_frame.cr;
+	tf->tf_xer  = sc.sc_frame.xer;
+	tf->tf_ctr  = sc.sc_frame.ctr;
+	tf->tf_srr0 = sc.sc_frame.srr0;
+	tf->tf_srr1 = sc.sc_frame.srr1;
 #ifdef PPC_OEA
-	tf->tf_xtra[TF_VRSAVE] = sc.sc_frame.vrsave;
-	tf->tf_xtra[TF_MQ] = sc.sc_frame.mq;
+	tf->tf_vrsave = sc.sc_frame.vrsave;
+	tf->tf_mq = sc.sc_frame.mq;
 #endif
 
 	mutex_enter(p->p_lock);

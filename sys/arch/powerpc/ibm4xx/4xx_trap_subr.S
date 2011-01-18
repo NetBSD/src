@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_trap_subr.S,v 1.5 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: 4xx_trap_subr.S,v 1.6 2011/01/18 01:02:53 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -62,10 +62,11 @@ wdoghandler:
 	rfi
 	ba	.	/* Protect against prefetch */
 
-#define	tlbstacksize	0x1000
-#define	tlbsave		0x3000
-#define tlbstack	tlbsave+tlbstacksize
+#define	TLBSTK	0x1000
+	.lcomm	tlbstack,TLBSTK,4
+	.type	tlbstack,@object
 
+	.text
 /* If an unaligned excception (0x600) and DTLB miss exception (0x1100)
    occur at the same time, the interrupt vector offsets of the two
    exceptions are logically OR'ed together to produce 0x1700.
@@ -78,19 +79,13 @@ _C_LABEL(errata51size) = .-_C_LABEL(errata51handler)
 
 	.globl _C_LABEL(tlbdmiss4xx),_C_LABEL(tlbdm4size)
 _C_LABEL(tlbdmiss4xx):
-	STANDARD_PROLOG(tlbsave)
-	mfdear	%r30		/* Get fault address */
-	mfesr	%r31
-	stmw	%r30,16+tlbsave(0)
+	ACCESS_PROLOG(CI_TLBMISSSAVE)
 	bla	s4xx_miss
 _C_LABEL(tlbdm4size) = .-_C_LABEL(tlbdmiss4xx)
 
 	.globl _C_LABEL(tlbimiss4xx),_C_LABEL(tlbim4size)
 _C_LABEL(tlbimiss4xx):
-	STANDARD_PROLOG(tlbsave)
-	mfsrr0	%r30		/* XXX Get fault address */
-	mfesr	%r31
-	stmw	%r30,16+tlbsave(0)
+	ACCESS_PROLOG(CI_TLBMISSSAVE)
 	bla	s4xx_miss
 _C_LABEL(tlbim4size) = .-_C_LABEL(tlbimiss4xx)
 
@@ -107,7 +102,7 @@ s4xx_miss:
 	beq	1f
 
 	/*
-	 * The kernel we want to switch to is not in the TLB.
+	 * The kernel stack we want to switch to is not in the TLB.
 	 * To solve this problem, we will simulate a kernel
 	 * fault on the kernel stack and let the miss handler
 	 * bring it in, and return from the trap handler.  The
@@ -118,14 +113,14 @@ s4xx_miss:
 
 	/* Switch to tlbstack */
 	addi	%r30,%r1,-FRAMELEN
-	lis	%r1,tlbstack@ha
-	addi	%r1,%r1,tlbstack@l
-	stw	%r30,4(1)
+	lis	%r1,tlbstack+TLBSTK-CALLFRAMELEN@ha
+	addi	%r1,%r1,tlbstack+TLBSTK-CALLFRAMELEN@l
+	stw	%r30,0(%r1)
 
-	FRAME_SETUP(tlbsave)
+	FRAME_SETUP(CI_TLBMISSSAVE)
 
 	/* Take an explicit fault at (kernelstack,pid) */
-	lwz	%r3, tlbstack+4(0)
+	lwz	%r3, FRAMELEN(%r1)
 	li	%r4,KERNEL_PID
 	bl	_C_LABEL(pmap_tlbmiss)
 	/*
@@ -133,26 +128,24 @@ s4xx_miss:
 	 * take it now.  It's easier to retry.
 	 */
 	mr.	%r3,%r3
-	beq	2f
+	beq	trapexit
 
 	/* kernel stack not in the pmap? we should panic */
 	trap
-	ba	trapagain
+	b	trapagain
 1:
-	FRAME_SETUP(tlbsave)
-	lwz	%r3,FRAME_DEAR+8(1)
-	lwz	%r4,FRAME_PID+8(1)
+	FRAME_SETUP(CI_TLBMISSSAVE)
+	lwz	%r3,FRAME_DEAR(%r1)
+	lwz	%r4,FRAME_PID(%r1)
 	bl	_C_LABEL(pmap_tlbmiss)
 	mr.	%r3,%r3
-	beq	2f
+	beq	trapexit
 
 	/* XXX DEBUG -- make sure we're not on tlbstack */
-	addi	%r7,%r1,-tlbsave
-	twllei	%r7,(tlbstacksize)
+	lis	%r3,tlbstack@ha
+	addi	%r3,%r3,tlbstack@l
+	sub	%r7,%r1,%r3
+	twllei	%r7,TLBSTK
 
 	/* PTE not found, time to cause a fault */
-	ba	trapagain
-2:
-	FRAME_LEAVE(tlbsave)
-	rfi
-	ba	.	/* Protect against prefetch */
+	b	trapagain
