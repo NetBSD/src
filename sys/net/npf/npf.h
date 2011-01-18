@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.6 2011/01/18 20:33:45 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -56,6 +56,7 @@ struct npf_ruleset;
 struct npf_rule;
 struct npf_hook;
 
+typedef struct npf_rproc	npf_rproc_t;
 typedef struct npf_ruleset	npf_ruleset_t;
 typedef struct npf_rule		npf_rule_t;
 typedef struct npf_hook		npf_hook_t;
@@ -146,7 +147,7 @@ int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
 /* Ruleset interface. */
-npf_rule_t *	npf_rule_alloc(prop_dictionary_t, void *, size_t);
+npf_rule_t *	npf_rule_alloc(prop_dictionary_t, npf_rproc_t *, void *, size_t);
 void		npf_rule_free(npf_rule_t *);
 void		npf_activate_rule(npf_rule_t *);
 void		npf_deactivate_rule(npf_rule_t *);
@@ -162,15 +163,16 @@ void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
 #define	NPF_RULE_DEFAULT		0x0002
 #define	NPF_RULE_FINAL			0x0004
 #define	NPF_RULE_KEEPSTATE		0x0008
-#define	NPF_RULE_COUNT			0x0010
-#define	NPF_RULE_LOG			0x0020
-#define	NPF_RULE_RETRST			0x0040
-#define	NPF_RULE_RETICMP		0x0080
-#define	NPF_RULE_NORMALIZE		0x0100
+#define	NPF_RULE_RETRST			0x0010
+#define	NPF_RULE_RETICMP		0x0020
 
 #define	NPF_RULE_IN			0x10000000
 #define	NPF_RULE_OUT			0x20000000
 #define	NPF_RULE_DIMASK			(NPF_RULE_IN | NPF_RULE_OUT)
+
+/* Rule procedure flags. */
+#define	NPF_RPROC_LOG			0x0001
+#define	NPF_RPROC_NORMALIZE		0x0002
 
 /* Address translation types and flags. */
 #define	NPF_NATIN			1
@@ -226,6 +228,11 @@ typedef enum {
 	/* Raced packets. */
 	NPF_STAT_RACE_SESSION,
 	NPF_STAT_RACE_NAT,
+	/* Rule procedure cases. */
+	NPF_STAT_RPROC_LOG,
+	NPF_STAT_RPROC_NORM,
+	/* Other errors. */
+	NPF_STAT_ERROR,
 	/* Count (last). */
 	NPF_STATS_COUNT
 } npf_stats_t;
