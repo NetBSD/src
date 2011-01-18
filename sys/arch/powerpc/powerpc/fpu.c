@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.25 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.26 2011/01/18 02:25:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.25 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26 2011/01/18 02:25:43 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -123,7 +123,7 @@ fpu_save_cpu(enum fpu_op op)
  * (though by the time our IPI is processed, it may have been flushed already).
  */
 static void
-mp_save_fpu_lwp(struct lwp *l)
+fpu_mp_save_lwp(struct lwp *l)
 {
 	/*
 	 * Send an IPI to the other CPU with the data and wait for that CP		 * to flush the data.  Note that the other CPU might have switched
@@ -140,11 +140,11 @@ mp_save_fpu_lwp(struct lwp *l)
 
 	/* Wait for flush. */
 	for (u_int i = 0; i < 0x3fffffff; i++) {
-		if (l->l_md.md_flags & MDLWP_OWNFPU) == 0)
+		if ((l->l_md.md_flags & MDLWP_OWNFPU) == 0)
 			return;
 	}
 
-	aprint_error("mp_save_fpu_proc{%d} pid = %d.%d, fpucpu->ci_cpuid = %d\n",
+	aprint_error("%s/%d pid = %d.%d, fpucpu->ci_cpuid = %d\n", __func__,
 	    cpu_number(), l->l_proc->p_pid, l->l_lid, fpucpu->ci_cpuid);
 	panic("mp_save_fpu_proc: timed out");
 }
@@ -246,17 +246,16 @@ fpu_get_fault_code(void)
 #ifdef DIAGNOSTIC
 	struct cpu_info * const ci = curcpu();
 #endif
-	struct pcb *pcb = curpcb;
-	lwp_t *l = curlwp;
+	struct pcb * const pcb = curpcb;
 	register_t msr;
 	uint64_t tmp, fpscr64;
 	uint32_t fpscr, ofpscr;
 	int code;
 
-	KASSERT(l->l_md.md_fpucpu == ci);
-	KASSERT(l->l_md.md_flags & MDLWP_USEDFPU);
-	KASSERT(l->l_md.md_flags & MDLWP_OWNFPU);
-	KASSERT(ci->ci_fpulwp == l);
+	KASSERT(curlwp->l_md.md_fpucpu == ci);
+	KASSERT(curlwp->l_md.md_flags & MDLWP_USEDFPU);
+	KASSERT(curlwp->l_md.md_flags & MDLWP_OWNFPU);
+	KASSERT(ci->ci_fpulwp == curlwp);
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
 	__asm volatile ("isync");
