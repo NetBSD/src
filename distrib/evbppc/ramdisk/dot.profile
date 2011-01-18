@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.2 2003/07/26 17:06:41 salo Exp $
+# $NetBSD: dot.profile,v 1.3 2011/01/18 01:27:16 matt Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -53,8 +53,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# mount root read-write
 	mount -u /dev/md0a /
 
-	# mount a /tmp on mfs, to avoid filling the md
-	mount -t mfs swap /tmp
+	# mount a /tmp on tmpfs, to avoid filling the md
+	mount_tmpfs tmpfs /tmp
 
 	# get the terminal type
 	_forceloop=""
