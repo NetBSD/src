@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ruleset.c,v 1.5 2010/12/27 14:58:55 uebayasi Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.6 2011/01/18 20:33:46 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -33,9 +33,8 @@
  * NPF ruleset module.
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.5 2010/12/27 14:58:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.6 2011/01/18 20:33:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.5 2010/12/27 14:58:55 uebayasi Exp
 
 #include <net/pfil.h>
 #include <net/if.h>
-#endif
 
 #include "npf_ncode.h"
 #include "npf_impl.h"
@@ -66,10 +64,11 @@ struct npf_hook {
 	LIST_ENTRY(npf_hook)	hk_entry;
 };
 
-/* Rule processing structure. */
+/* Rule procedure structure. */
 struct npf_rproc {
 	/* Reference count. */
 	u_int			rp_refcnt;
+	uint32_t		rp_flags;
 	/* Normalization options. */
 	bool			rp_rnd_ipid;
 	bool			rp_no_df;
@@ -94,9 +93,7 @@ struct npf_rule {
 	uint32_t		r_attr;
 	/* Interface. */
 	u_int			r_ifid;
-	/* Hit counter. */
-	u_long			r_hitcount;
-	/* Rule processing data. */
+	/* Rule procedure data. */
 	npf_rproc_t *		r_rproc;
 	/* List of hooks to process on match. */
 	kmutex_t		r_hooks_lock;
@@ -167,9 +164,31 @@ npf_ruleset_matchnat(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
 	return rl;
 }
 
+npf_rule_t *
+npf_ruleset_sharepm(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
+{
+	npf_natpolicy_t *np;
+	npf_rule_t *rl;
+
+	/* Find a matching NAT policy in the old ruleset. */
+	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
+		/*
+		 * NAT policy might not yet be set during the creation of
+		 * the ruleset (in such case, rule is for our policy), or
+		 * policies might be equal due to rule exchange on reload.
+		 */
+		np = rl->r_natp;
+		if (np == NULL || np == mnp)
+			continue;
+		if (npf_nat_sharepm(np, mnp))
+			break;
+	}
+	return rl;
+}
+
 /*
  * npf_ruleset_natreload: minimum reload of NAT policies by maching
- * two (active  and new) NAT rulesets.
+ * two (active and new) NAT rulesets.
  *
  * => Active ruleset should be exclusively locked.
  */
@@ -192,6 +211,8 @@ npf_ruleset_natreload(npf_ruleset_t *nrlset, npf_ruleset_t *arlset)
 		anp = arl->r_natp;
 		rl->r_natp = anp;
 		arl->r_natp = np;
+		/* Update other NAT policies to share portmap. */
+		(void)npf_ruleset_sharepm(nrlset, anp);
 	}
 }
 
@@ -203,6 +224,10 @@ npf_rproc_create(prop_dictionary_t rpdict)
 
 	rp = kmem_alloc(sizeof(npf_rproc_t), KM_SLEEP);
 	rp->rp_refcnt = 1;
+
+	/* Flags. */
+	obj = prop_dictionary_get(rpdict, "flags");
+	rp->rp_flags = prop_number_integer_value(obj);
 
 	/* Logging interface ID (integer). */
 	obj = prop_dictionary_get(rpdict, "log-interface");
@@ -232,6 +257,7 @@ npf_rproc_return(npf_rule_t *rl)
 {
 	npf_rproc_t *rp = rl->r_rproc;
 
+	KASSERT(npf_core_locked());
 	if (rp) {
 		atomic_inc_uint(&rp->rp_refcnt);
 	}
@@ -252,43 +278,47 @@ npf_rproc_release(npf_rproc_t *rp)
 void
 npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp)
 {
+	const uint32_t flags = rp->rp_flags;
 
 	KASSERT(rp->rp_refcnt > 0);
 
 	/* Normalize the packet, if required. */
-	(void)npf_normalize(npc, nbuf,
-	    rp->rp_rnd_ipid, rp->rp_no_df, rp->rp_minttl, rp->rp_maxmss);
-
-	/* Log packet, if required. */
-	if (rp->rp_log_ifid) {
-		npf_log_packet(npc, nbuf, rp->rp_log_ifid);
+	if (flags & NPF_RPROC_NORMALIZE) {
+		(void)npf_normalize(npc, nbuf,
+		    rp->rp_rnd_ipid, rp->rp_no_df,
+		    rp->rp_minttl, rp->rp_maxmss);
+		npf_stats_inc(NPF_STAT_RPROC_NORM);
 	}
 
+	/* Log packet, if required. */
+	if (flags & NPF_RPROC_LOG) {
+		npf_log_packet(npc, nbuf, rp->rp_log_ifid);
+		npf_stats_inc(NPF_STAT_RPROC_LOG);
+	}
 }
 
 /*
- * npf_rule_alloc: allocate a rule and copy ncode from user-space.
+ * npf_rule_alloc: allocate a rule and copy n-code from user-space.
  *
  * => N-code should be validated by the caller.
  */
 npf_rule_t *
-npf_rule_alloc(prop_dictionary_t rldict, void *nc, size_t nc_size)
+npf_rule_alloc(prop_dictionary_t rldict, npf_rproc_t *rp,
+   void *nc, size_t nc_size)
 {
 	npf_rule_t *rl;
 	prop_object_t obj;
-#ifdef DIAGNOSTIC
 	int errat;
-#endif
 
 	/* Allocate a rule structure. */
 	rl = kmem_alloc(sizeof(npf_rule_t), KM_SLEEP);
 	TAILQ_INIT(&rl->r_subset.rs_queue);
 	mutex_init(&rl->r_hooks_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	LIST_INIT(&rl->r_hooks);
-	rl->r_hitcount = 0;
 	rl->r_natp = NULL;
 
 	/* N-code. */
+	(void)errat;
 	KASSERT(nc == NULL || npf_ncode_validate(nc, nc_size, &errat) == 0);
 	rl->r_ncode = nc;
 	rl->r_nc_size = nc_size;
@@ -305,12 +335,12 @@ npf_rule_alloc(prop_dictionary_t rldict, void *nc, size_t nc_size)
 	obj = prop_dictionary_get(rldict, "interface");
 	rl->r_ifid = prop_number_integer_value(obj);
 
-	/* Create rule processing structure, if any. */
-	if (rl->r_attr & (NPF_RULE_LOG | NPF_RULE_NORMALIZE)) {
-		rl->r_rproc = npf_rproc_create(rldict);
-	} else {
-		rl->r_rproc = NULL;
+	/* Rule procedure. */
+	if (rp) {
+		atomic_inc_uint(&rp->rp_refcnt);
 	}
+	rl->r_rproc = rp;
+
 	return rl;
 }
 
@@ -328,7 +358,7 @@ npf_rule_free(npf_rule_t *rl)
 		npf_nat_freepolicy(np);
 	}
 	if (rp) {
-		/* Release/free rule processing structure. */
+		/* Release rule procedure. */
 		npf_rproc_release(rp);
 	}
 	if (rl->r_ncode) {
@@ -411,7 +441,7 @@ npf_hook_unregister(npf_rule_t *rl, npf_hook_t *hk)
  */
 npf_rule_t *
 npf_ruleset_match(npf_ruleset_t *rlset, npf_cache_t *npc, nbuf_t *nbuf,
-    struct ifnet *ifp, const int di, const int layer)
+    ifnet_t *ifp, const int di, const int layer)
 {
 	npf_rule_t *final_rl = NULL, *rl;
 
@@ -455,7 +485,7 @@ npf_ruleset_match(npf_ruleset_t *rlset, npf_cache_t *npc, nbuf_t *nbuf,
  */
 npf_rule_t *
 npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
-    struct ifnet *ifp, const int di, const int layer)
+    ifnet_t *ifp, const int di, const int layer)
 {
 	npf_ruleset_t *rlset;
 	npf_rule_t *rl;
@@ -497,11 +527,6 @@ npf_rule_apply(npf_cache_t *npc, nbuf_t *nbuf, npf_rule_t *rl, int *retfl)
 	int error;
 
 	KASSERT(npf_core_locked());
-
-	/* Update the "hit" counter. */
-	if (rl->r_attr & NPF_RULE_COUNT) {
-		atomic_inc_ulong(&rl->r_hitcount);
-	}
 
 	/* If not passing - drop the packet. */
 	if ((rl->r_attr & NPF_RULE_PASS) == 0) {

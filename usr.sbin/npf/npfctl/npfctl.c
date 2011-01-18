@@ -1,7 +1,7 @@
-/*	$NetBSD: npfctl.c,v 1.3 2010/12/18 01:07:26 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.4 2011/01/18 20:33:45 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.3 2010/12/18 01:07:26 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.4 2011/01/18 20:33:45 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -81,8 +81,7 @@ zalloc(size_t sz)
 
 	p = malloc(sz);
 	if (p == NULL) {
-		perror("zalloc");
-		exit(EXIT_FAILURE);
+		err(EXIT_FAILURE, "zalloc");
 	}
 	memset(p, 0, sz);
 	return p;
@@ -95,8 +94,7 @@ xstrdup(const char *s)
 
 	p = strdup(s);
 	if (p == NULL) {
-		perror("xstrdup");
-		exit(EXIT_FAILURE);
+		err(EXIT_FAILURE, "xstrdup");
 	}
 	return p;
 }
@@ -132,7 +130,7 @@ npfctl_parsecfg(const char *cfg)
 
 	fp = fopen(cfg, "r");
 	if (fp == NULL) {
-		err(EXIT_FAILURE, "fopen");
+		err(EXIT_FAILURE, "open '%s'", cfg);
 	}
 	l = 0;
 	buf = NULL;
@@ -183,8 +181,14 @@ npfctl_print_stats(int fd)
 	    st[NPF_STAT_INVALID_STATE_TCP3]);
 
 	printf("Packet race cases:\n\t%"PRIu64" NAT association race\n\t"
-	    "%"PRIu64" duplicate session race\n", st[NPF_STAT_RACE_NAT],
+	    "%"PRIu64" duplicate session race\n\n", st[NPF_STAT_RACE_NAT],
 	    st[NPF_STAT_RACE_SESSION]);
+
+	printf("Rule processing procedure cases:\n"
+	    "\t%"PRIu64" packets logged\n\t%"PRIu64" packets normalized\n\n",
+	    st[NPF_STAT_RPROC_LOG], st[NPF_STAT_RPROC_NORM]);
+
+	printf("Unexpected error cases:\n\t%"PRIu64"\n", st[NPF_STAT_ERROR]);
 
 	free(st);
 	return 0;
@@ -197,17 +201,16 @@ npfctl(int action, int argc, char **argv)
 	npf_ioctl_table_t tbl;
 	char *arg;
 
-#ifndef DEBUG
 	fd = open(NPF_DEV_PATH, O_RDONLY);
 	if (fd == -1) {
-		err(EXIT_FAILURE, "cannot open " NPF_DEV_PATH);
+		err(EXIT_FAILURE, "cannot open '%s'", NPF_DEV_PATH);
 	}
 	ret = ioctl(fd, IOC_NPF_VERSION, &ver);
 	if (ver != NPF_VERSION) {
-		errx(EXIT_FAILURE, "incompatible npf interface version "
-		    "(%d, kernel %d)", NPF_VERSION, ver);
+		errx(EXIT_FAILURE,
+		    "incompatible NPF interface version (%d, kernel %d)",
+		    NPF_VERSION, ver);
 	}
-#endif
 	switch (action) {
 	case NPFCTL_START:
 		boolval = true;
@@ -219,10 +222,6 @@ npfctl(int action, int argc, char **argv)
 		break;
 	case NPFCTL_RELOAD:
 		npfctl_init_data();
-#ifdef DEBUG
-		npfctl_parsecfg("npf.conf");
-		return npfctl_ioctl_send(0);
-#endif
 		npfctl_parsecfg(argc < 3 ? NPF_CONF_PATH : argv[2]);
 		ret = npfctl_ioctl_send(fd);
 		break;
@@ -230,6 +229,10 @@ npfctl(int action, int argc, char **argv)
 		/* Pass empty configuration to flush. */
 		npfctl_init_data();
 		ret = npfctl_ioctl_send(fd);
+		if (ret) {
+			break;
+		}
+		ret = npfctl_ioctl_flushse(fd);
 		break;
 	case NPFCTL_TABLE:
 		if (argc < 5) {
@@ -237,12 +240,15 @@ npfctl(int action, int argc, char **argv)
 		}
 		tbl.nct_tid = atoi(argv[2]);
 		if (strcmp(argv[3], "add") == 0) {
+			/* Add table entry. */
 			tbl.nct_action = NPF_IOCTL_TBLENT_ADD;
 			arg = argv[4];
 		} else if (strcmp(argv[3], "rem") == 0) {
+			/* Remove entry. */
 			tbl.nct_action = NPF_IOCTL_TBLENT_REM;
 			arg = argv[4];
 		} else {
+			/* Default: lookup. */
 			tbl.nct_action = 0;
 			arg = argv[3];
 		}
@@ -278,6 +284,14 @@ main(int argc, char **argv)
 		usage();
 	}
 	cmd = argv[1];
+
+#ifdef _NPF_TESTING
+	/* Special testing case. */
+	npfctl_init_data();
+	npfctl_parsecfg("npf.conf");
+	npfctl_ioctl_send(0);
+	return 0;
+#endif
 
 	/* Find and call the subroutine */
 	for (n = 0; operations[n].cmd != NULL; n++) {

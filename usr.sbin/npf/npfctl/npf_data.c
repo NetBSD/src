@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_data.c,v 1.5 2010/12/18 01:07:26 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.6 2011/01/18 20:33:45 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.5 2010/12/18 01:07:26 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.6 2011/01/18 20:33:45 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -58,11 +58,12 @@ __RCSID("$NetBSD: npf_data.c,v 1.5 2010/12/18 01:07:26 rmind Exp $");
 static struct ifaddrs *		ifs_list = NULL;
 
 static prop_dictionary_t	npf_dict, settings_dict;
-static prop_array_t		nat_arr, tables_arr, rules_arr;
+static prop_array_t		nat_arr, tables_arr, rproc_arr, rules_arr;
 
 static pri_t			gr_prio_counter = 1;
 static pri_t			rl_prio_counter = 1;
 static pri_t			nat_prio_counter = 1;
+static u_int			rproc_id_counter = 1;
 
 void
 npfctl_init_data(void)
@@ -82,6 +83,9 @@ npfctl_init_data(void)
 	tables_arr = prop_array_create();
 	prop_dictionary_set(npf_dict, "tables", tables_arr);
 
+	rproc_arr = prop_array_create();
+	prop_dictionary_set(npf_dict, "rprocs", rproc_arr);
+
 	rules_arr = prop_array_create();
 	prop_dictionary_set(npf_dict, "rules", rules_arr);
 }
@@ -91,17 +95,35 @@ npfctl_ioctl_send(int fd)
 {
 	int ret = 0, errval;
 
-#ifdef DEBUG
+#ifdef _NPF_TESTING
 	prop_dictionary_externalize_to_file(npf_dict, "./npf.plist");
 #else
 	errval = prop_dictionary_send_ioctl(npf_dict, fd, IOC_NPF_RELOAD);
 	if (errval) {
-		errx(EXIT_FAILURE, "npf_ioctl_send: %s\n", strerror(errval));
-		ret = -1;
+		errx(EXIT_FAILURE, "npfctl_ioctl_send: %s\n", strerror(errval));
 	}
 #endif
 	prop_object_release(npf_dict);
 	return ret;
+}
+
+int
+npfctl_ioctl_flushse(int fd)
+{
+	prop_dictionary_t sesdict;
+	prop_array_t selist;
+	int errval;
+
+	sesdict = prop_dictionary_create();
+	selist = prop_array_create();
+	prop_dictionary_set(sesdict, "session-list", selist);
+	errval = prop_dictionary_send_ioctl(sesdict, fd, IOC_NPF_SESSIONS_LOAD);
+	if (errval) {
+		errx(EXIT_FAILURE, "npfctl_ioctl_flushse: %s\n",
+		    strerror(errval));
+	}
+	prop_object_release(sesdict);
+	return errval;
 }
 
 int
@@ -149,16 +171,15 @@ npfctl_ioctl_recvse(int fd)
  *	npfctl_parse_tcpfl() - parse TCP flags.
  */
 
-static struct ifaddrs *
-npfctl_getif(char *ifname, unsigned int *if_idx)
+struct ifaddrs *
+npfctl_getif(char *ifname, unsigned int *if_idx, bool reqaddr)
 {
 	struct ifaddrs *ifent;
 	struct sockaddr_in *sin;
 
 	for (ifent = ifs_list; ifent != NULL; ifent = ifent->ifa_next) {
 		sin = (struct sockaddr_in *)ifent->ifa_addr;
-
-		if (sin->sin_family != AF_INET)
+		if (sin->sin_family != AF_INET && reqaddr)
 			continue;
 		if (strcmp(ifent->ifa_name, ifname) == 0)
 			break;
@@ -222,12 +243,16 @@ static void
 npfctl_parse_cidr(char *str, in_addr_t *addr, in_addr_t *mask)
 {
 
-	if (isalpha((unsigned char)*str)) {
+	if (strcmp(str, "any") == 0) {
+		*addr = 0x0;
+		*mask = 0x0;
+
+	} else if (isalpha((unsigned char)*str)) {
 		struct ifaddrs *ifa;
 		struct sockaddr_in *sin;
 		u_int idx;
 
-		if ((ifa = npfctl_getif(str, &idx)) == NULL) {
+		if ((ifa = npfctl_getif(str, &idx, true)) == NULL) {
 			errx(EXIT_FAILURE, "invalid interface '%s'", str);
 		}
 		/* Interface address. */
@@ -286,10 +311,8 @@ npfctl_lookup_table(char *tidstr)
 	prop_object_t obj;
 	u_int tid;
 
-	if ((it = prop_array_iterator(tables_arr)) == NULL)
-		err(EXIT_FAILURE, "prop_array_iterator");
-
 	tid = atoi(tidstr);
+	it = prop_array_iterator(tables_arr);
 	while ((tl = prop_object_iterator_next(it)) != NULL) {
 		obj = prop_dictionary_get(tl, "id");
 		if (tid == prop_number_integer_value(obj))
@@ -299,40 +322,21 @@ npfctl_lookup_table(char *tidstr)
 }
 
 prop_dictionary_t
-npfctl_mk_table(void)
+npfctl_construct_table(int id, int type)
 {
 	prop_dictionary_t tl;
-	prop_array_t tlist;
 
 	tl = prop_dictionary_create();
-	tlist = prop_array_create();
-	prop_dictionary_set(tl, "entries", tlist);
-
+	/* TODO: 1. check ID range 2. check if not a duplicate */
+	prop_dictionary_set(tl, "id", prop_number_create_integer(id));
+	prop_dictionary_set(tl, "type", prop_number_create_integer(type));
+	prop_dictionary_set(tl, "entries", prop_array_create());
+	prop_array_add(tables_arr, tl);
 	return tl;
 }
 
 void
-npfctl_table_setup(prop_dictionary_t tl, char *idstr, char *typestr)
-{
-	prop_number_t typenum;
-	unsigned int id;
-
-	id = atoi(idstr);
-	/* TODO: 1. check ID range 2. check if not a duplicate */
-	prop_dictionary_set(tl, "id", prop_number_create_integer(id));
-
-	if (strcmp(typestr, "hash")) {
-		typenum = prop_number_create_integer(NPF_TABLE_HASH);
-	} else if (strcmp(typestr, "tree")) {
-		typenum = prop_number_create_integer(NPF_TABLE_RBTREE);
-	} else {
-		errx(EXIT_FAILURE, "invalid table type '%s'\n", typestr);
-	}
-	prop_dictionary_set(tl, "type", typenum);
-}
-
-void
-npfctl_construct_table(prop_dictionary_t tl, char *fname)
+npfctl_fill_table(prop_dictionary_t tl, char *fname)
 {
 	prop_dictionary_t entdict;
 	prop_array_t tblents;
@@ -346,7 +350,7 @@ npfctl_construct_table(prop_dictionary_t tl, char *fname)
 
 	fp = fopen(fname, "r");
 	if (fp == NULL) {
-		err(EXIT_FAILURE, "fopen");
+		err(EXIT_FAILURE, "open '%s'", fname);
 	}
 	l = 1;
 	buf = NULL;
@@ -374,23 +378,16 @@ npfctl_construct_table(prop_dictionary_t tl, char *fname)
 	}
 }
 
-void
-npfctl_add_table(prop_dictionary_t tl)
-{
-
-	prop_array_add(tables_arr, tl);
-}
-
 /*
  * npfctl_mk_rule: create a rule (or group) dictionary.
  *
  * Note: group is a rule containing subrules.  It has no n-code, however.
  */
 prop_dictionary_t
-npfctl_mk_rule(bool group)
+npfctl_mk_rule(bool group, prop_dictionary_t parent)
 {
 	prop_dictionary_t rl;
-	prop_array_t subrl;
+	prop_array_t subrl, rlset;
 	pri_t pri;
 
 	rl = prop_dictionary_create();
@@ -403,16 +400,7 @@ npfctl_mk_rule(bool group)
 	} else {
 		pri = rl_prio_counter++;
 	}
-	prop_dictionary_set(rl, "priority",
-	    prop_number_create_integer(pri));
-
-	return rl;
-}
-
-void
-npfctl_add_rule(prop_dictionary_t rl, prop_dictionary_t parent)
-{
-	prop_array_t rlset;
+	prop_dictionary_set(rl, "priority", prop_number_create_integer(pri));
 
 	if (parent) {
 		rlset = prop_dictionary_get(parent, "subrules");
@@ -421,40 +409,19 @@ npfctl_add_rule(prop_dictionary_t rl, prop_dictionary_t parent)
 		rlset = rules_arr;
 	}
 	prop_array_add(rlset, rl);
+	return rl;
 }
 
 void
-npfctl_rule_setattr(prop_dictionary_t rl, int attr, char *iface,
-    char *logiface, bool ipid_rnd, int minttl, int maxmss, bool no_df)
+npfctl_rule_setattr(prop_dictionary_t rl, int attr, u_int iface)
 {
 	prop_number_t attrnum, ifnum;
-	unsigned int if_idx;
 
 	attrnum = prop_number_create_integer(attr);
 	prop_dictionary_set(rl, "attributes", attrnum);
 	if (iface) {
-		if (npfctl_getif(iface, &if_idx) == NULL) {
-			errx(EXIT_FAILURE, "invalid interface '%s'", iface);
-		}
-		ifnum = prop_number_create_integer(if_idx);
+		ifnum = prop_number_create_integer(iface);
 		prop_dictionary_set(rl, "interface", ifnum);
-	}
-	if (logiface) {
-		if (npfctl_getif(logiface, &if_idx) == NULL) {
-			errx(EXIT_FAILURE, "invalid interface '%s'", logiface);
-		}
-		ifnum = prop_number_create_integer(if_idx);
-		prop_dictionary_set(rl, "log-interface", ifnum);
-	}
-	if (attr & NPF_RULE_NORMALIZE) {
-		prop_dictionary_set(rl, "randomize-id",
-		    prop_bool_create(ipid_rnd));
-		prop_dictionary_set(rl, "min-ttl",
-		    prop_number_create_integer(minttl));
-		prop_dictionary_set(rl, "max-mss",
-		    prop_number_create_integer(maxmss));
-		prop_dictionary_set(rl, "no-df",
-		    prop_bool_create(no_df));
 	}
 }
 
@@ -569,7 +536,7 @@ npfctl_rule_protodata(prop_dictionary_t rl, char *proto, char *tcp_flags,
 		/* Default. */
 	}
 skip_proto:
-	if (icmp_type != -1) {
+	if (icmp || icmp_type != -1) {
 		assert(tcp_flags == NULL);
 		icmp = true;
 		nblocks[2] += 1;
@@ -598,7 +565,7 @@ skip_proto:
 	}
 
 	/* Any n-code to generate? */
-	if ((nblocks[0] + nblocks[1] + nblocks[2]) == 0) {
+	if (!icmp && (nblocks[0] + nblocks[1] + nblocks[2]) == 0) {
 		/* Done, if none. */
 		return;
 	}
@@ -673,6 +640,42 @@ skip_proto:
 }
 
 /*
+ * Rule procedure construction routines.
+ */
+
+prop_dictionary_t
+npfctl_mk_rproc(void)
+{
+	prop_dictionary_t rp;
+
+	rp = prop_dictionary_create();
+	prop_dictionary_set(rp, "id",
+	    prop_number_create_unsigned_integer(rproc_id_counter++));
+	prop_array_add(rproc_arr, rp);
+	return rp;
+}
+
+bool
+npfctl_find_rproc(prop_dictionary_t rl, char *name)
+{
+	prop_dictionary_t rp;
+	prop_object_iterator_t it;
+	prop_object_t obj;
+
+	it = prop_array_iterator(rproc_arr);
+	while ((rp = prop_object_iterator_next(it)) != NULL) {
+		obj = prop_dictionary_get(rp, "name");
+		if (strcmp(prop_string_cstring(obj), name) == 0)
+			break;
+	}
+	if (rp == NULL) {
+		return false;
+	}
+	prop_dictionary_set(rl, "rproc-id", prop_dictionary_get(rp, "id"));
+	return true;
+}
+
+/*
  * NAT policy construction routines.
  */
 
@@ -685,23 +688,17 @@ npfctl_mk_nat(void)
 	/* NAT policy is rule with extra info. */
 	rl = prop_dictionary_create();
 	pri = nat_prio_counter++;
-	prop_dictionary_set(rl, "priority",
-	    prop_number_create_integer(pri));
+	prop_dictionary_set(rl, "priority", prop_number_create_integer(pri));
+	prop_array_add(nat_arr, rl);
 	return rl;
 }
 
 void
-npfctl_add_nat(prop_dictionary_t nat)
-{
-	prop_array_add(nat_arr, nat);
-}
-
-void
 npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
-    char *iface, char *taddr, char *rport)
+    u_int iface, char *taddr, char *rport)
 {
 	int attr = NPF_RULE_PASS | NPF_RULE_FINAL;
-	in_addr_t addr, mask;
+	in_addr_t addr, _dummy;
 	prop_data_t addrdat;
 
 	/* Translation type and flags. */
@@ -712,10 +709,10 @@ npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
 
 	/* Interface and attributes. */
 	attr |= (type == NPF_NATOUT) ? NPF_RULE_OUT : NPF_RULE_IN;
-	npfctl_rule_setattr(rl, attr, iface, NULL, false, 0, 0, false);
+	npfctl_rule_setattr(rl, attr, iface);
 
-	/* Translation IP, XXX should be no mask. */
-	npfctl_parse_cidr(taddr, &addr, &mask);
+	/* Translation IP. */
+	npfctl_parse_cidr(taddr, &addr, &_dummy);
 	addrdat = prop_data_create_data(&addr, sizeof(in_addr_t));
 	if (addrdat == NULL) {
 		err(EXIT_FAILURE, "prop_data_create_data");

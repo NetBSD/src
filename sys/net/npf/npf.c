@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.2 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.3 2011/01/18 20:33:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.3 2011/01/18 20:33:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -250,9 +250,9 @@ static void
 npf_core_destroy(npf_core_t *nc)
 {
 
-	npf_tableset_destroy(nc->n_tables);
 	npf_ruleset_destroy(nc->n_rules);
 	npf_ruleset_destroy(nc->n_nat_rules);
+	npf_tableset_destroy(nc->n_tables);
 	kmem_free(nc, sizeof(npf_core_t));
 }
 

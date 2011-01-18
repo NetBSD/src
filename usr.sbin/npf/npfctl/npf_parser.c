@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_parser.c,v 1.4 2010/12/18 01:07:26 rmind Exp $	*/
+/*	$NetBSD: npf_parser.c,v 1.5 2011/01/18 20:33:45 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_parser.c,v 1.4 2010/12/18 01:07:26 rmind Exp $");
+__RCSID("$NetBSD: npf_parser.c,v 1.5 2011/01/18 20:33:45 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,12 +143,36 @@ npfctl_parsevalue(char *buf)
 	return vr;
 }
 
-static inline int
-npfctl_parsenorm(char *buf, bool *rnd, int *minttl, int *maxmss, bool *no_df)
+static char *
+npfctl_val_single(var_t *v, char *p)
+{
+	element_t *el;
+
+	if (v->v_type != VAR_SINGLE) {
+		errx(EXIT_FAILURE, "invalid value '%s'", p);
+	}
+	el = v->v_elements;
+	return el->e_data;
+}
+
+static u_int
+npfctl_val_interface(var_t *v, char *p, bool reqaddr)
+{
+	char *iface = npfctl_val_single(v, p);
+	u_int if_idx;
+
+	if (iface == NULL || npfctl_getif(iface, &if_idx, reqaddr) == NULL) {
+		errx(EXIT_FAILURE, "invalid interface '%s'", iface);
+	}
+	return if_idx;
+}
+
+static int
+npfctl_parsenorm(char *buf, prop_dictionary_t rp)
 {
 	char *p = buf, *sptr;
-
-	DPRINTF(("norm\t|%s|\n", p));
+	int minttl = 0, maxmss = 0;
+	bool rnd = false, no_df = false;
 
 	p = strtok_r(buf, ", \t", &sptr);
 	if (p == NULL) {
@@ -156,40 +180,103 @@ npfctl_parsenorm(char *buf, bool *rnd, int *minttl, int *maxmss, bool *no_df)
 	}
 	do {
 		if (strcmp(p, "random-id") == 0) {
-			*rnd = true;
+			rnd = true;
 		} else if (strcmp(p, "min-ttl") == 0) {
 			p = strtok_r(NULL, ", \t", &sptr);
-			*minttl = atoi(p);
+			minttl = atoi(p);
 		} else if (strcmp(p, "max-mss") == 0) {
 			p = strtok_r(NULL, ", \t", &sptr);
-			*maxmss = atoi(p);
+			maxmss = atoi(p);
 		} else if (strcmp(p, "no-df") == 0) {
-			*no_df = true;
+			no_df = true;
 		} else {
 			return -1;
 		}
 	} while ((p = strtok_r(NULL, ", \t", &sptr)) != 0);
 
+	prop_dictionary_set(rp, "randomize-id", prop_bool_create(rnd));
+	prop_dictionary_set(rp, "min-ttl", prop_number_create_integer(minttl));
+	prop_dictionary_set(rp, "max-mss", prop_number_create_integer(maxmss));
+	prop_dictionary_set(rp, "no-df", prop_bool_create(no_df));
+	return 0;
+}
+
+static int
+npfctl_parserproc(char *buf, prop_dictionary_t rp)
+{
+	char *p = buf, *end;
+
+	DPRINTF(("rproc\t|%s|\n", buf));
+
+	if ((p = strchr(p, '"')) == NULL)
+		return -1;
+	if ((end = strchr(++p, '"')) == NULL)
+		return -1;
+	*end = '\0';
+	prop_dictionary_set(rp, "name", prop_string_create_cstring(p));
+	return 0;
+}
+
+static int
+npfctl_parserproc_lines(char *buf, prop_dictionary_t rp)
+{
+	char *p = buf, *sptr;
+	prop_object_t obj;
+	uint32_t attr;
+
+	DPRINTF(("rproc\t|%s|\n", p));
+	obj = prop_dictionary_get(rp, "flags");
+	attr = obj ? prop_number_integer_value(obj) : 0;
+
+	PARSE_FIRST_TOKEN();
+
+	/* log <interface> */
+	if (strcmp(p, "log") == 0) {
+		var_t *ifvar;
+		u_int if_idx;
+
+		PARSE_NEXT_TOKEN();
+		if ((ifvar = npfctl_parsevalue(p)) == NULL)
+			return PARSE_ERR();
+		if_idx = npfctl_val_interface(ifvar, p, false);
+		prop_dictionary_set(rp, "log-interface",
+		    prop_number_create_integer(if_idx));
+		attr |= NPF_RPROC_LOG;
+
+	} else if (strcmp(p, "normalize") == 0) {
+		/* normalize ( .. ) */
+		p = strtok_r(NULL, "()", &sptr);
+		if (p == NULL) {
+			return PARSE_ERR();
+		}
+		if (npfctl_parsenorm(p, rp)) {
+			return PARSE_ERR();
+		}
+		attr |= NPF_RPROC_NORMALIZE;
+		PARSE_NEXT_TOKEN_NOCHECK();
+	}
+	prop_dictionary_set(rp, "flags", prop_number_create_integer(attr));
 	return 0;
 }
 
 /*
  * npfctl_parserule: main routine to parse a rule.  Syntax:
  *
- *	{ pass | block | count } [ in | out ] [ log ] [ quick ]
+ *	{ pass | block } [ in | out ] [ quick ]
  *	    [on <if>] [inet | inet6 ] proto <array>
  *	    from <addr/mask> port <port(s)|range>
- *	    too <addr/mask> port <port(s)|range>
- *	    [ keep state ]
+ *	    to <addr/mask> port <port(s)|range>
+ *	    [ keep state ] [ apply "<rproc>" ]
  */
-static inline int
+static int
 npfctl_parserule(char *buf, prop_dictionary_t rl)
 {
 	var_t *from_cidr = NULL, *fports = NULL;
 	var_t *to_cidr = NULL, *tports = NULL;
-	char *p, *sptr, *iface, *logiface, *proto = NULL, *tcp_flags = NULL;
-	int icmp_type = -1, icmp_code = -1, minttl = 0, maxmss = 0;
-	bool icmp = false, tcp = false, rnd = false, no_df = false;
+	char *p, *sptr, *proto = NULL, *tcp_flags = NULL;
+	int icmp_type = -1, icmp_code = -1;
+	bool icmp = false, tcp = false;
+	u_int iface = 0;
 	int ret, attr = 0;
 
 	DPRINTF(("rule\t|%s|\n", buf));
@@ -199,7 +286,6 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 
 	/* pass or block (mandatory) */
 	if (strcmp(p, "block") == 0) {
-		attr = 0;
 		PARSE_NEXT_TOKEN();
 		/* return-rst or return-icmp */
 		if (strcmp(p, "return-rst") == 0) {
@@ -213,7 +299,7 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 			PARSE_NEXT_TOKEN();
 		}
 	} else if (strcmp(p, "pass") == 0) {
-		attr = NPF_RULE_PASS;
+		attr |= NPF_RULE_PASS;
 		PARSE_NEXT_TOKEN();
 	} else {
 		return PARSE_ERR();
@@ -230,32 +316,6 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 		attr |= (NPF_RULE_IN | NPF_RULE_OUT);
 	}
 
-	/* log <interface> */
-	if (strcmp(p, "log") == 0) {
-		var_t *ifvar;
-		element_t *el;
-
-		PARSE_NEXT_TOKEN();
-		if ((ifvar = npfctl_parsevalue(p)) == NULL)
-			return PARSE_ERR();
-		if (ifvar->v_type != VAR_SINGLE) {
-			errx(EXIT_FAILURE, "invalid interface value '%s'", p);
-		}
-		el = ifvar->v_elements;
-		logiface = el->e_data;
-
-		attr |= NPF_RULE_LOG;
-		PARSE_NEXT_TOKEN();
-	} else {
-		logiface = NULL;
-	}
-
-	/* count */
-	if (strcmp(p, "count") == 0) {
-		attr |= NPF_RULE_COUNT;
-		PARSE_NEXT_TOKEN();
-	}
-
 	/* quick */
 	if (strcmp(p, "quick") == 0) {
 		attr |= NPF_RULE_FINAL;
@@ -265,20 +325,12 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 	/* on <interface> */
 	if (strcmp(p, "on") == 0) {
 		var_t *ifvar;
-		element_t *el;
 
 		PARSE_NEXT_TOKEN();
 		if ((ifvar = npfctl_parsevalue(p)) == NULL)
 			return PARSE_ERR();
-		if (ifvar->v_type != VAR_SINGLE) {
-			errx(EXIT_FAILURE, "invalid interface value '%s'", p);
-		}
-		el = ifvar->v_elements;
-		iface = el->e_data;
-
+		iface = npfctl_val_interface(ifvar, p, true);
 		PARSE_NEXT_TOKEN();
-	} else {
-		iface = NULL;
 	}
 
 	/* inet, inet6 (TODO) */
@@ -355,12 +407,8 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 		}
 		PARSE_NEXT_TOKEN();
 		var_t *tfvar = npfctl_parsevalue(p);
+		tcp_flags = npfctl_val_single(tfvar, p);
 		PARSE_NEXT_TOKEN_NOCHECK();
-		if (tfvar->v_type != VAR_SINGLE) {
-			errx(EXIT_FAILURE, "invalid TCP flags");
-		}
-		element_t *el = tfvar->v_elements;
-		tcp_flags = el->e_data;
 	}
 
 	/* icmp-type <t> code <c> */
@@ -389,16 +437,18 @@ last:
 		PARSE_NEXT_TOKEN_NOCHECK();
 	}
 
-	/* normalize ( .. ) */
-	if (p && strcmp(p, "normalize") == 0) {
-		p = strtok_r(NULL, "()", &sptr);
-		if (p == NULL) {
+	/* apply "<rproc>" */
+	if (p && strcmp(p, "apply") == 0) {
+		char *end;
+		PARSE_NEXT_TOKEN();
+		if ((p = strchr(p, '"')) == NULL)
 			return PARSE_ERR();
-		}
-		if (npfctl_parsenorm(p, &rnd, &minttl, &maxmss, &no_df)) {
+		if ((end = strchr(++p, '"')) == NULL)
 			return PARSE_ERR();
+		*end = '\0';
+		if (!npfctl_find_rproc(rl, p)) {
+			errx(EXIT_FAILURE, "invalid procedure '%s'", p);
 		}
-		attr |= NPF_RULE_NORMALIZE;
 		PARSE_NEXT_TOKEN_NOCHECK();
 	}
 
@@ -407,13 +457,10 @@ last:
 		return PARSE_ERR();
 	}
 
-	/* Set the rule attributes and interface, if any. */
-	npfctl_rule_setattr(rl, attr, iface, logiface,
-	    rnd, minttl, maxmss, no_df);
-
 	/*
-	 * Generate all protocol data.
+	 * Set the rule attributes and interface.  Generate all protocol data.
 	 */
+	npfctl_rule_setattr(rl, attr, iface);
 	npfctl_rule_protodata(rl, proto, tcp_flags, icmp_type, icmp_code,
 	    from_cidr, fports, to_cidr, tports);
 	return 0;
@@ -428,10 +475,11 @@ last:
 
 #define	GROUP_ATTRS	(NPF_RULE_PASS | NPF_RULE_FINAL)
 
-static inline int
+static int
 npfctl_parsegroup(char *buf, prop_dictionary_t rl)
 {
-	char *p = buf, *end, *sptr, *iface;
+	char *p = buf, *end, *sptr;
+	u_int iface = 0;
 	int attr_dir;
 
 	DPRINTF(("group\t|%s|\n", buf));
@@ -453,10 +501,8 @@ npfctl_parsegroup(char *buf, prop_dictionary_t rl)
 	 * If default group - no other options.
 	 */
 	if (strcmp(p, "default") == 0) {
-		attr_dir = NPF_RULE_IN | NPF_RULE_OUT;
-		npfctl_rule_setattr(rl,
-		    GROUP_ATTRS | NPF_RULE_DEFAULT | attr_dir, NULL,
-		    NULL, false, 0, 0, false);
+		attr_dir = NPF_RULE_DEFAULT | (NPF_RULE_IN | NPF_RULE_OUT);
+		npfctl_rule_setattr(rl, GROUP_ATTRS | attr_dir, 0);
 		return 0;
 	}
 
@@ -477,34 +523,26 @@ npfctl_parsegroup(char *buf, prop_dictionary_t rl)
 	/* Interface for this group (optional). */
 	if (p && strcmp(p, "interface") == 0) {
 		var_t *ifvar;
-		element_t *el;
-
 		PARSE_NEXT_TOKEN();
 		if ((ifvar = npfctl_parsevalue(p)) == NULL)
 			return -1;
-		if (ifvar->v_type != VAR_SINGLE) {
-			errx(EXIT_FAILURE, "invalid key '%s'", ifvar->v_key);
-		}
-		el = ifvar->v_elements;
-		iface = el->e_data;
+		iface = npfctl_val_interface(ifvar, p, true);
 		PARSE_NEXT_TOKEN_NOCHECK();
-	} else {
-		iface = NULL;
 	}
 
 	/* Direction (optional). */
-	if (p == NULL) {
-		attr_dir = NPF_RULE_IN | NPF_RULE_OUT;
-	} else {
+	if (p) {
 		if (strcmp(p, "in") == 0)
 			attr_dir = NPF_RULE_IN;
 		else if (strcmp(p, "out") == 0)
 			attr_dir = NPF_RULE_OUT;
 		else
 			return -1;
+	} else {
+		attr_dir = NPF_RULE_IN | NPF_RULE_OUT;
 	}
-	npfctl_rule_setattr(rl, GROUP_ATTRS | attr_dir, iface, NULL,
-	    false, 0, 0, false);
+
+	npfctl_rule_setattr(rl, GROUP_ATTRS | attr_dir, iface);
 	return 0;
 }
 
@@ -513,11 +551,12 @@ npfctl_parsegroup(char *buf, prop_dictionary_t rl)
  *
  *	table <num> type <t> [ dynamic | file <path> ]
  */
-static inline int
-npfctl_parsetable(char *buf, prop_dictionary_t tl)
+static int
+npfctl_parsetable(char *buf)
 {
-	char *p, *sptr;
-	char *id_ptr, *type_ptr, *fname;
+	prop_dictionary_t tl;
+	char *p, *sptr, *fname;
+	unsigned int id, type;
 
 	DPRINTF(("table\t|%s|\n", buf));
 
@@ -525,7 +564,7 @@ npfctl_parsetable(char *buf, prop_dictionary_t tl)
 	if ((p = strchr(buf, '"')) == NULL) {
 		return PARSE_ERR();
 	}
-	id_ptr = ++p;
+	id = atoi(++p);
 	p = strchr(p, '"');
 	*p++ = '\0';
 
@@ -539,7 +578,13 @@ npfctl_parsetable(char *buf, prop_dictionary_t tl)
 	if (p == NULL || *p != '"') {
 		return PARSE_ERR();
 	}
-	type_ptr = p;
+	if (strcmp(p, "hash")) {
+		type = NPF_TABLE_HASH;
+	} else if (strcmp(p, "tree")) {
+		type = NPF_TABLE_RBTREE;
+	} else {
+		errx(EXIT_FAILURE, "invalid table type '%s'\n", p);
+	}
 	if ((p = strchr(++p, '"')) == NULL) {
 		return PARSE_ERR();
 	}
@@ -548,7 +593,7 @@ npfctl_parsetable(char *buf, prop_dictionary_t tl)
 	/*
 	 * Setup the table.
 	 */
-	npfctl_table_setup(tl, id_ptr, type_ptr);
+	tl = npfctl_construct_table(id, type);
 	PARSE_NEXT_TOKEN();
 
 	/* Dynamic. */
@@ -566,8 +611,8 @@ npfctl_parsetable(char *buf, prop_dictionary_t tl)
 	p = strchr(p, '"');
 	*p = '\0';
 
-	/* Construct the table. */
-	npfctl_construct_table(tl, fname);
+	/* Fill the table. */
+	npfctl_fill_table(tl, fname);
 	return 0;
 }
 
@@ -577,14 +622,16 @@ npfctl_parsetable(char *buf, prop_dictionary_t tl)
  *	[bi]nat <if> from <net> to <net/addr> -> <ip>
  *	rdr <if> from <net> to <addr> -> <ip>
  */
-static inline int
-npfctl_parse_nat(char *buf, prop_dictionary_t nat)
+static int
+npfctl_parse_nat(char *buf)
 {
+	prop_dictionary_t nat, bn;
 	var_t *ifvar, *from_cidr, *to_cidr, *ip;
 	var_t *tports = NULL, *rports = NULL;
-	element_t *iface, *cidr;
+	element_t *cidr;
 	char *p, *sptr;
 	bool binat, rdr;
+	u_int iface;
 
 	DPRINTF(("[bi]nat/rdr\t|%s|\n", buf));
 	binat = (strncmp(buf, "binat", 5) == 0);
@@ -599,11 +646,7 @@ npfctl_parse_nat(char *buf, prop_dictionary_t nat)
 	if ((ifvar = npfctl_parsevalue(p)) == NULL) {
 		return PARSE_ERR();
 	}
-	if (ifvar->v_type != VAR_SINGLE) {
-		errx(EXIT_FAILURE, "invalid interface value '%s'", p);
-	} else {
-		iface = ifvar->v_elements;
-	}
+	iface = npfctl_val_interface(ifvar, p, true);
 	PARSE_NEXT_TOKEN();
 
 	/* from <addr> */
@@ -652,19 +695,21 @@ npfctl_parse_nat(char *buf, prop_dictionary_t nat)
 	 *
 	 * XXX mess
 	 */
+	nat = npfctl_mk_nat();
+
 	if (!rdr) {
 		npfctl_rule_protodata(nat, NULL, NULL, -1, -1, from_cidr,
 		    NULL, to_cidr, NULL);
 		npfctl_nat_setup(nat, NPF_NATOUT,
 		    binat ? 0 : (NPF_NAT_PORTS | NPF_NAT_PORTMAP),
-		    iface->e_data, cidr->e_data, NULL);
+		    iface, cidr->e_data, NULL);
 	} else {
 		element_t *rp = rports->v_elements;
 
 		npfctl_rule_protodata(nat, NULL, NULL, -1, -1, from_cidr,
 		    NULL, to_cidr, tports);
 		npfctl_nat_setup(nat, NPF_NATIN, NPF_NAT_PORTS,
-		    iface->e_data, cidr->e_data, rp->e_data);
+		    iface, cidr->e_data, rp->e_data);
 	}
 
 	/*
@@ -675,14 +720,13 @@ npfctl_parse_nat(char *buf, prop_dictionary_t nat)
 	 * XXX mess
 	 */
 	if (binat) {
-		prop_dictionary_t bn = npfctl_mk_nat();
 		element_t *taddr = from_cidr->v_elements;
 
+		bn = npfctl_mk_nat();
 		npfctl_rule_protodata(bn, NULL, NULL, -1, -1,
 		    to_cidr, NULL, ip, NULL);
-		npfctl_nat_setup(bn, NPF_NATIN, 0, iface->e_data,
+		npfctl_nat_setup(bn, NPF_NATIN, 0, iface,
 		    taddr->e_data, NULL);
-		npfctl_add_nat(bn);
 	}
 	return 0;
 }
@@ -694,7 +738,7 @@ npfctl_parse_nat(char *buf, prop_dictionary_t nat)
  * => Value can be an array, use npf_parsevalue().
  * => Insert variable into the global list.
  */
-static inline int
+static int
 npfctl_parsevar(char *buf)
 {
 	char *s = buf, *p, *key;
@@ -703,27 +747,27 @@ npfctl_parsevar(char *buf)
 	DPRINTF(("def\t|%s|\n", buf));
 
 	if ((p = strpbrk(s, "= \t")) == NULL)
-		return -1;
+		return PARSE_ERR();
 
 	/* Validation of '='. */
 	if (*p != '=' && strchr(p, '=') == NULL)
-		return -1;
+		return PARSE_ERR();
 	*p = '\0';
 	key = s;
 
 	/* Check for duplicates. */
 	if (npfctl_lookup_varlist(key))
-		return -1;
+		return PARSE_ERR();
 
 	/* Parse quotes before. */
 	if ((s = strchr(p + 1, '"')) == NULL)
-		return -1;
+		return PARSE_ERR();
 	if ((p = strchr(++s, '"')) == NULL)
-		return -1;
+		return PARSE_ERR();
 	*p = '\0';
 
 	if ((vr = npfctl_parsevalue(s)) == NULL)
-		return -1;
+		return PARSE_ERR();
 	vr->v_key = xstrdup(key);
 	vr->v_next = var_list;
 	var_list = vr;
@@ -733,23 +777,25 @@ npfctl_parsevar(char *buf)
 /*
  * npf_parseline: main function parsing a single configuration line.
  *
- * => Distinguishes 'group', rule (in-group), 'table' and definitions.
- * => Tracks begin-end of the group i.e. in-group state.
+ * Distinguishes 'group', rule (in-group), 'procedure', in-procedure,
+ * 'table' and definitions.  Tracks begin-end of the group and procedure
+ * i.e. in-group or in-procedure states.
  */
 int
 npf_parseline(char *buf)
 {
 	static prop_dictionary_t curgr = NULL;
+	static prop_dictionary_t currp = NULL;
 	char *p = buf;
 	int ret;
 
-	/* Skip emptry lines and comments. */
+	/* Skip empty lines and comments. */
 	while (isspace((unsigned char)*p))
 		p++;
 	if (*p == '\0' || *p == '\n' || *p == '#')
 		return 0;
 
-	/* At first, check if inside the group. */
+	/* At first, check if inside the group or rproc. */
 	if (curgr) {
 		prop_dictionary_t rl;
 
@@ -759,41 +805,36 @@ npf_parseline(char *buf)
 			return 0;
 		}
 		/* Rule. */
-		rl = npfctl_mk_rule(false);
+		rl = npfctl_mk_rule(false, curgr);
 		ret = npfctl_parserule(p, rl);
-		if (ret)
-			return ret;
-		npfctl_add_rule(rl, curgr);
+
+	} else if (currp) {
+		/* End of the procedure. */
+		if (*p == '}') {
+			currp = NULL;
+			return 0;
+		}
+		/* Procedure contents. */
+		ret = npfctl_parserproc_lines(p, currp);
 
 	} else if (strncmp(p, "group", 5) == 0) {
-
 		/* Group. */
-		curgr = npfctl_mk_rule(true);
+		curgr = npfctl_mk_rule(true, NULL);
 		ret = npfctl_parsegroup(p, curgr);
-		if (ret)
-			return ret;
-		npfctl_add_rule(curgr, NULL);
+
+	} else if (strncmp(p, "procedure", 9) == 0) {
+		/* Rule procedure. */
+		currp = npfctl_mk_rproc();
+		ret = npfctl_parserproc(p, currp);
 
 	} else if (strncmp(p, "table", 5) == 0) {
-		prop_dictionary_t tl;
-
 		/* Table. */
-		tl = npfctl_mk_table();
-		ret = npfctl_parsetable(p, tl);
-		if (ret)
-			return ret;
-		npfctl_add_table(tl);
+		ret = npfctl_parsetable(p);
 
 	} else if (strncmp(p, "nat", 3) == 0 || strncmp(p, "rdr", 3) == 0 ||
 	    strncmp(p, "binat", 5) == 0) {
-		prop_dictionary_t nat;
-
 		/* NAT policy. */
-		nat = npfctl_mk_nat();
-		ret = npfctl_parse_nat(p, nat);
-		if (ret)
-			return ret;
-		npfctl_add_nat(nat);
+		ret = npfctl_parse_nat(p);
 
 	} else {
 		/* Defined variable or syntax error. */

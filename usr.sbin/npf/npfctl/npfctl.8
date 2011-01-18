@@ -1,6 +1,6 @@
-.\"	$NetBSD: npfctl.8,v 1.3 2010/09/14 11:04:57 kim Exp $
+.\"	$NetBSD: npfctl.8,v 1.4 2011/01/18 20:33:45 rmind Exp $
 .\"
-.\" Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 22, 2010
+.Dd January 18, 2011
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -52,20 +52,27 @@ Valid commands are:
 .Bl -tag -width reload
 .It start
 Enable packet inspection using the currently loaded configuration, if any.
-Note that this command does not load or reload the configuration.
+Note that this command does not load or reload the configuration,
+or affect existing sessions.
 .It stop
 Disable packet inspection.
-This command does not change the currently loaded configuration.
+This command does not change the currently loaded configuration,
+or affect existing sessions.
 .It reload Op Ar path
 Load or reload configuration from file.
 The configuration file at
 .Pa /etc/npf.conf
 will be used unless a file is specified by
 .Ar path .
-The reload operation (i.e., replacing the ruleset) is atomic.
+All sessions will be preserved during the reload, except those which
+will lose NAT policy due to removal.
+NAT policy is determined by the translation type and address.
+Note that change of filter criteria will not expire associated sessions.
+The reload operation (i.e., replacing the ruleset, NAT policies and tables)
+is atomic.
 .It flush
 Flush configuration.
-That is, remove all rules and tables.
+That is, remove all rules, tables and expire all sessions.
 This command does not disable packet inspection.
 .It table Ar tid
 List all entries in the currently loaded table specified by
@@ -84,6 +91,22 @@ In table
 .Ar tid ,
 add or remove the IPv4 CIDR specified by
 .Aq Ar addr/mask .
+.It sess-save
+Save all active sessions.
+The data will be stored in the
+.Pa /var/db/npf_sessions.db
+file.
+Administrator may want to stop the packet inspection before the
+session saving.
+.It sess-load
+Load saved sessions from the file.
+Note that original configuration should be loaded before the session loading.
+In a case of NAT policy changes, sessions which lose an associated policy
+will not be loaded.
+Any existing sessions during the load operation will be expired.
+Administrator may want to start packet inspection after the session loading.
+.It stats
+Print various statistics.
 .El
 .\" -----
 .Sh PERFORMANCE
