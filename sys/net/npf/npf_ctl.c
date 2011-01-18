@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ctl.c,v 1.4 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.5 2011/01/18 20:33:45 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.4 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.5 2011/01/18 20:33:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -146,11 +146,43 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables)
 	return error;
 }
 
+static npf_rproc_t *
+npf_mk_rproc(prop_array_t rprocs, uint64_t rproc_id)
+{
+	prop_object_iterator_t it;
+	prop_dictionary_t rpdict;
+	prop_object_t obj;
+	npf_rproc_t *rp;
+	uint64_t id;
+
+	it = prop_array_iterator(rprocs);
+	while ((rpdict = prop_object_iterator_next(it)) != NULL) {
+		obj = prop_dictionary_get(rpdict, "id");
+		id = prop_number_unsigned_integer_value(obj);
+		if (id == rproc_id)
+			break;
+	}
+	if (rpdict == NULL) {
+		return NULL;
+	}
+	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
+	obj = prop_dictionary_get(rpdict, "rproc-ptr");
+	if (obj == NULL) {
+		rp = npf_rproc_create(rpdict);
+		prop_dictionary_set(rpdict, "rproc-ptr",
+		    prop_number_create_unsigned_integer((uintptr_t)rp));
+	} else {
+		rp = (void *)(uintptr_t)prop_number_unsigned_integer_value(obj);
+	}
+	return rp;
+}
+
 static int
-npf_mk_singlerule(prop_dictionary_t rldict,
-    npf_ruleset_t *rlset, npf_rule_t **parent)
+npf_mk_singlerule(prop_dictionary_t rldict, npf_ruleset_t *rlset,
+    prop_array_t rprocs, npf_rule_t **parent)
 {
 	npf_rule_t *rl;
+	npf_rproc_t *rp;
 	prop_object_t obj;
 	size_t nc_size;
 	void *nc;
@@ -190,14 +222,23 @@ npf_mk_singlerule(prop_dictionary_t rldict,
 		nc_size = 0;
 	}
 
-	/* Allocate and setup NPF rule. */
-	rl = npf_rule_alloc(rldict, nc, nc_size);
-	if (rl == NULL) {
-		if (nc) {
-			npf_ncode_free(nc, nc_size);	/* XXX */
+	/* Check for rule procedure. */
+	obj = prop_dictionary_get(rldict, "rproc-id");
+	if (obj && rprocs) {
+		uint64_t rproc_id = prop_number_unsigned_integer_value(obj);
+		rp = npf_mk_rproc(rprocs, rproc_id);
+		if (rp == NULL) {
+			if (nc) {
+				npf_ncode_free(nc, nc_size);	/* XXX */
+			}
+			return EINVAL;
 		}
-		return ENOMEM;
+	} else {
+		rp = NULL;
 	}
+
+	/* Allocate and setup NPF rule. */
+	rl = npf_rule_alloc(rldict, rp, nc, nc_size);
 	npf_ruleset_insert(rlset, rl);
 	if (parent) {
 		*parent = rl;
@@ -206,15 +247,23 @@ npf_mk_singlerule(prop_dictionary_t rldict,
 }
 
 static int
-npf_mk_rules(npf_ruleset_t *rlset, prop_array_t rules)
+npf_mk_rules(npf_ruleset_t *rlset, prop_array_t rules, prop_array_t rprocs)
 {
 	prop_object_iterator_t it;
-	prop_dictionary_t rldict;
+	prop_dictionary_t rldict, rpdict;
 	int error;
 
-	/* Ruleset - array. */
-	if (prop_object_type(rules) != PROP_TYPE_ARRAY)
+	/* Rule procedures and the ruleset - arrays. */
+	if (prop_object_type(rprocs) != PROP_TYPE_ARRAY ||
+	    prop_object_type(rules) != PROP_TYPE_ARRAY)
 		return EINVAL;
+
+	it = prop_array_iterator(rprocs);
+	while ((rpdict = prop_object_iterator_next(it)) != NULL) {
+		if (prop_dictionary_get(rpdict, "rproc-ptr"))
+			return EINVAL;
+	}
+	prop_object_iterator_release(it);
 
 	error = 0;
 	it = prop_array_iterator(rules);
@@ -225,7 +274,7 @@ npf_mk_rules(npf_ruleset_t *rlset, prop_array_t rules)
 		npf_rule_t *myrl;
 
 		/* Generate a single rule. */
-		error = npf_mk_singlerule(rldict, rlset, &myrl);
+		error = npf_mk_singlerule(rldict, rlset, rprocs, &myrl);
 		if (error)
 			break;
 
@@ -244,7 +293,7 @@ npf_mk_rules(npf_ruleset_t *rlset, prop_array_t rules)
 		while ((srldict = prop_object_iterator_next(sit)) != NULL) {
 			/* For subrule, pass ruleset pointer of parent. */
 			error = npf_mk_singlerule(srldict,
-			    npf_rule_subset(myrl), NULL);
+			    npf_rule_subset(myrl), rprocs, NULL);
 			if (error)
 				break;
 		}
@@ -286,12 +335,12 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 		 * NAT policies are standard rules, plus additional
 		 * information for translation.  Make a rule.
 		 */
-		error = npf_mk_singlerule(natdict, nset, &rl);
+		error = npf_mk_singlerule(natdict, nset, NULL, &rl);
 		if (error)
 			break;
 
 		/* Allocate a new NAT policy and assign to the rule. */
-		np = npf_nat_newpolicy(natdict);
+		np = npf_nat_newpolicy(natdict, nset);
 		if (np == NULL) {
 			npf_rule_free(rl);
 			error = ENOMEM;
@@ -315,11 +364,11 @@ int
 npfctl_reload(u_long cmd, void *data)
 {
 	const struct plistref *pref = data;
+	prop_array_t natlist, tables, rprocs, rules;
 	npf_tableset_t *tblset = NULL;
 	npf_ruleset_t *rlset = NULL;
 	npf_ruleset_t *nset = NULL;
 	prop_dictionary_t dict;
-	prop_array_t natlist, tables, rules;
 	int error;
 
 	/* Retrieve the dictionary. */
@@ -346,10 +395,11 @@ npfctl_reload(u_long cmd, void *data)
 	if (error)
 		goto fail;
 
-	/* Rules. */
+	/* Rules and rule procedures. */
 	rlset = npf_ruleset_create();
+	rprocs = prop_dictionary_get(dict, "rprocs");
 	rules = prop_dictionary_get(dict, "rules");
-	error = npf_mk_rules(rlset, rules);
+	error = npf_mk_rules(rlset, rules, rprocs);
 	if (error)
 		goto fail;
 
