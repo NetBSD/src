@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.28 2009/11/21 17:40:29 rmind Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.29 2011/01/18 01:02:55 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.28 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.29 2011/01/18 01:02:55 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -117,16 +117,16 @@ mach_create_thread_child(void *arg)
 	upcallret(l);
 
 	/* Set requested register context */
-	tf->srr0 = regs->srr0;
-	tf->srr1 = regs->srr1;
-	memcpy(tf->fixreg, &regs->r0, 32 * sizeof(register_t));
-	tf->cr = regs->cr;
-	tf->xer = regs->xer;
-	tf->lr = regs->lr;
-	tf->ctr = regs->ctr;
+	tf->tf_srr0 = regs->srr0;
+	tf->tf_srr1 = regs->srr1;
+	memcpy(tf->tf_fixreg, &regs->r0, 32 * sizeof(register_t));
+	tf->tf_cr = regs->cr;
+	tf->tf_xer = regs->xer;
+	tf->tf_lr = regs->lr;
+	tf->tf_ctr = regs->ctr;
 #ifdef PPC_OEA
-	tf->tf_xtra[TF_MQ] = regs->mq;
-	tf->tf_xtra[TF_VRSAVE] = regs->vrsave;
+	tf->tf_tf_mq = regs->mq;
+	tf->tf_tf_vrsave = regs->vrsave;
 #endif
 
 	/* Wakeup the parent */
@@ -151,13 +151,13 @@ mach_thread_get_state_machdep(struct lwp *l, int flavor, void *state, int *size)
 		struct mach_ppc_thread_state *mpts;
 
 		mpts = (struct mach_ppc_thread_state *)state;
-		mpts->srr0 = tf->srr0;
-		mpts->srr1 = tf->srr1 & PSL_USERSRR1;
-		memcpy(mpts->gpreg, tf->fixreg, 32 * sizeof(register_t));
-		mpts->cr = tf->cr;
-		mpts->xer = tf->xer;
-		mpts->lr = tf->lr;
-		mpts->ctr = tf->ctr;
+		mpts->srr0 = tf->tf_srr0;
+		mpts->srr1 = tf->tf_srr1 & PSL_USERSRR1;
+		memcpy(mpts->gpreg, tf->tf_fixreg, 32 * sizeof(register_t));
+		mpts->cr = tf->tf_cr;
+		mpts->xer = tf->tf_xer;
+		mpts->lr = tf->tf_lr;
+		mpts->ctr = tf->tf_ctr;
 		mpts->mq = 0; /* XXX */
 		mpts->vrsave = 0; /* XXX */
 
@@ -193,13 +193,13 @@ mach_thread_set_state_machdep(struct lwp *l, int flavor, void *state)
 		struct mach_ppc_thread_state *mpts;
 
 		mpts = (struct mach_ppc_thread_state *)state;
-		tf->srr0 = mpts->srr0;
-		tf->srr1 = mpts->srr1;
-		memcpy(tf->fixreg, mpts->gpreg, 32 * sizeof(register_t));
-		tf->cr = mpts->cr;
-		tf->xer = mpts->xer;
-		tf->lr = mpts->lr;
-		tf->ctr = mpts->ctr;
+		tf->tf_srr0 = mpts->srr0;
+		tf->tf_srr1 = mpts->srr1;
+		memcpy(tf->tf_fixreg, mpts->gpreg, 32 * sizeof(register_t));
+		tf->tf_cr = mpts->cr;
+		tf->tf_xer = mpts->xer;
+		tf->tf_lr = mpts->lr;
+		tf->tf_ctr = mpts->ctr;
   
   		break;
   	}
