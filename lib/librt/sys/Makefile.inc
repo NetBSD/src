@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2011/01/17 09:43:56 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2011/01/18 16:41:51 matt Exp $
 
 .PATH: ${.CURDIR}/sys
 .PATH: ${ARCHDIR}/sys
@@ -12,8 +12,10 @@ ASM=		aio_cancel.S aio_error.S aio_fsync.S aio_read.S aio_return.S \
 SRCS+=		${ASM}
 CLEANFILES+=	${ASM}
 
+LIBCDIR!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
+
 SRCS+=		cerror.S
-CPPFLAGS+=	-D__cerror=__rt_cerror -I../libc -D_REENTRANT
+CPPFLAGS+=	-D__cerror=__rt_cerror -I${LIBCDIR} -D_REENTRANT
 
 ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
