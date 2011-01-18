@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.163 2010/11/15 21:39:53 wiz Exp $
+.\"	$NetBSD: contents,v 1.164 2011/01/18 00:35:19 jym Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,11 +96,8 @@ The installation kernel.
 A version of
 .Li INSTALL
 for older machines without CD-ROM drives.
-.			It Pa netbsd-INSTALL_XEN2_DOMU.gz
 .			It Pa netbsd-INSTALL_XEN3PAE_DOMU.gz
 .			It Pa netbsd-INSTALL_XEN3_DOMU.gz
-.			It Pa netbsd-XEN2_DOM0.gz
-.			It Pa netbsd-XEN2_DOMU.gz
 .			It Pa netbsd-XEN3PAE_DOMU.gz
 .			It Pa netbsd-XEN3_DOM0.gz
 .			It Pa netbsd-XEN3_DOMU.gz
