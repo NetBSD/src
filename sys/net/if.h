@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.148 2010/11/15 22:42:36 pooka Exp $	*/
+/*	$NetBSD: if.h,v 1.149 2011/01/18 20:33:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ struct ifqueue {
  */
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 
-struct ifnet {				/* and the entries */
+typedef struct ifnet {
 	void	*if_softc;		/* lower-level data for this if */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
@@ -296,7 +296,8 @@ struct ifnet {				/* and the entries */
 					 * same, they are the same ifnet.
 					 */
 	struct sysctllog	*if_sysctl_log;
-};
+} ifnet_t;
+
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
 #define	if_addrlen	if_data.ifi_addrlen
@@ -897,6 +898,9 @@ __END_DECLS
 #endif /* _KERNEL */ /* XXX really ALTQ? */
 
 #ifdef _KERNEL
+
+ifnet_t *	if_byindex(u_int);
+
 /*
  * ifq sysctl support
  */

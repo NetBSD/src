@@ -1,6 +1,6 @@
-.\"	$NetBSD: npf.conf.5,v 1.2 2010/09/16 04:53:27 rmind Exp $
+.\"	$NetBSD: npf.conf.5,v 1.3 2011/01/18 20:33:45 rmind Exp $
 .\"
-.\" Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 16, 2010
+.Dd January 18, 2011
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Sh DESCRIPTION
 .Nm
 is the default configuration file for NPF packet filter.
-It can contain definitions, grouped rules, and tables.
+It can contain definitions, grouped rules, rule procedures, and tables.
 .Sh DEFINITIONS
 Definitions are general purpose keywords which can be used in the
 ruleset to make it more flexible and easier to manage.
@@ -93,9 +93,9 @@ Minimal filtering criteria on local network and destination are provided.
 .\" -----
 .Sh GRAMMAR
 .Bd -literal
-line		= ( def | table | nat | group )
+line		= ( def | table | nat | group | rproc )
 
-def		= ( \*[Lt]name\*[Gt] "=" "{ a, b, ... }" | "text" | "$\*[Lt]interface\*[Gt]" )
+def		= ( \*[Lt]name\*[Gt] "=" "{ a, b, ... }" | "\*[Lt]text\*[Gt]" | "$\*[Lt]interface\*[Gt]" )
 iface		= ( \*[Lt]interface\*[Gt] | def )
 
 table		= "table" \*[Lt]tid\*[Gt] "type" ( "hash" | "tree" )
@@ -105,17 +105,22 @@ nat		= "nat" iface filt-opts "->" \*[Lt]addr\*[Gt]
 binat		= "binat" iface filt-opts "->" \*[Lt]addr\*[Gt]
 rdr		= "rdr" iface filt-opts "->" \*[Lt]addr\*[Gt] port-opts
 
-group		= "group" "(" ( "default" | group-opts ) "") ruleset
+rproc		= "procedure" \*[Lt]name\*[Gt] procs
+procs		= "{" op1 \*[Lt]newline\*[Gt], op2 \*[Lt]newline\*[Gt], ... "}"
+op		= ( "log" iface | "normalize" "(" norm-opt1 "," norm-opt2 ... ")" )
+norm-opt	= [ "random-id" | "min-ttl" \*[Lt]num\*[Gt] | "max-mss" \*[Lt]num\*[Gt] | "no-df" ]
+
+group		= "group" "(" ( "default" | group-opts ) ")" ruleset
 group-opts	= "interface" iface "," [ "in" | "out" ]
 
 ruleset		= "{" rule1 \*[Lt]newline\*[Gt], rule2 \*[Lt]newline\*[Gt], ... "}"
 
-rule		= ( "block" block-opts | "pass" ) [ "in" | out" ] rule-opts
+rule		= ( "block" block-opts | "pass" ) [ "in" | out" ] [ "quick" ]
 		  [ "on" iface ] [ "inet" | "inet6" ] [ "proto" \*[Lt]protocol\*[Gt] ]
 		  ( "all" | filt-opts [ "flags" \*[Lt]tcp_flags> \*[Gt] )
+		  [ "keep state" ] [ "apply" rproc }
 
 block-opts	= [ "return-rst" | "return-icmp" | "return" ]
-rule-opts	= [ "log" ] [ "count" ] [ "quick" ]
 filt-opts	= [ "from" ( iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt] ) port-opts ]
 		  [ "to" ( iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt] ) port-opts ]
 port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] ":" \*[Lt]port-to\*[Gt] | def ) ]
@@ -141,13 +146,21 @@ services_udp = "{ domain, ntp, 6000 }"
 table "1" type "hash" file "/etc/npf_blacklist"
 table "2" type "tree" dynamic
 
-nat $ext_if from 192.168.0.0/24 to 0.0.0.0/0 -> $ext_if
+nat $ext_if from 192.168.0.0/24 to any -> $ext_if
+
+procedure "log" {
+	log npflog0
+}
+
+procedure "rid" {
+	normalize (random-id)
+}
 
 group (name "external", interface $ext_if) {
 	block in quick from \*[Lt]1\*[Gt]
-	pass out quick from $ext_if keep state
+	pass out quick from $ext_if keep state apply "rid"
 
-	pass in log quick inet proto tcp to $ext_if port ssh
+	pass in quick inet proto tcp to $ext_if port ssh apply "log"
 	pass in quick proto tcp to $ext_if port $services_tcp
 	pass in quick proto udp to $ext_if port $services_udp
 	pass in quick proto tcp to $ext_if port 49151:65535	# Passive FTP
@@ -161,7 +174,7 @@ group (name "internal", interface $int_if) {
 }
 
 group (default) {
-        block all
+	block all
 }
 .Ed
 .\" -----
