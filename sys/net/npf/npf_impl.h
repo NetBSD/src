@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_impl.h,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.6 2011/01/18 20:33:45 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -42,12 +42,19 @@
 #include <sys/hash.h>
 #include <sys/rbtree.h>
 #include <sys/rwlock.h>
+#include <net/if.h>
 
 #include "npf.h"
 #include "npf_ncode.h"
 
 #ifdef _NPF_TESTING
 #include "testing.h"
+#endif
+
+#ifdef _NPF_DEBUG
+#define	NPF_PRINTF(x)	printf x
+#else
+#define	NPF_PRINTF(x)
 #endif
 
 /*
@@ -61,7 +68,6 @@ struct npf_rproc;
 struct npf_session;
 
 typedef struct npf_nat		npf_nat_t;
-typedef struct npf_rproc	npf_rproc_t;
 typedef struct npf_alg		npf_alg_t;
 typedef struct npf_natpolicy	npf_natpolicy_t;
 typedef struct npf_session	npf_session_t;
@@ -85,15 +91,9 @@ typedef bool (*npf_algfunc_t)(npf_cache_t *, nbuf_t *, void *);
 #define	NPF_NCODE_LIMIT		1024
 #define	NPF_TABLE_SLOTS		32
 
-
 /*
  * SESSION STATE STRUCTURES
  */
-
-#define	ST_OPENING		1	/* SYN has been sent. */
-#define	ST_ACKNOWLEDGE		2	/* SYN-ACK received, wait for ACK. */
-#define	ST_ESTABLISHED		3	/* ACK seen, connection established. */
-#define	ST_CLOSING		4	/* FIN or RST seen. */
 
 typedef struct {
 	uint32_t	nst_seqend;	/* SEQ number + length. */
@@ -203,11 +203,12 @@ void		npf_ruleset_destroy(npf_ruleset_t *);
 void		npf_ruleset_insert(npf_ruleset_t *, npf_rule_t *);
 void		npf_ruleset_natreload(npf_ruleset_t *, npf_ruleset_t *);
 npf_rule_t *	npf_ruleset_matchnat(npf_ruleset_t *, npf_natpolicy_t *);
+npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
 
 npf_rule_t *	npf_ruleset_match(npf_ruleset_t *, npf_cache_t *, nbuf_t *,
-		    struct ifnet *, const int, const int);
+		    ifnet_t *, const int, const int);
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, nbuf_t *,
-		    struct ifnet *, const int, const int);
+		    ifnet_t *, const int, const int);
 int		npf_rule_apply(npf_cache_t *, nbuf_t *, npf_rule_t *, int *);
 
 npf_ruleset_t *	npf_rule_subset(npf_rule_t *);
@@ -250,12 +251,13 @@ void		npf_state_destroy(npf_state_t *);
 /* NAT. */
 void		npf_nat_sysinit(void);
 void		npf_nat_sysfini(void);
-npf_natpolicy_t *npf_nat_newpolicy(prop_dictionary_t);
+npf_natpolicy_t *npf_nat_newpolicy(prop_dictionary_t, npf_ruleset_t *);
 void		npf_nat_freepolicy(npf_natpolicy_t *);
 bool		npf_nat_matchpolicy(npf_natpolicy_t *, npf_natpolicy_t *);
+bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
 
 int		npf_do_nat(npf_cache_t *, npf_session_t *, nbuf_t *,
-		    struct ifnet *, const int);
+		    ifnet_t *, const int);
 void		npf_nat_expire(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
