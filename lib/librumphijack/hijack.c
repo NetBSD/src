@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.14 2011/01/18 19:41:02 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.15 2011/01/18 23:43:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.14 2011/01/18 19:41:02 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.15 2011/01/18 23:43:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -562,7 +562,7 @@ fork()
 ssize_t
 read(int fd, void *buf, size_t len)
 {
-	int (*op_read)(int, void *, size_t);
+	ssize_t (*op_read)(int, void *, size_t);
 	ssize_t n;
 
 	DPRINTF(("read %d\n", fd));
@@ -580,7 +580,7 @@ read(int fd, void *buf, size_t len)
 ssize_t
 readv(int fd, const struct iovec *iov, int iovcnt)
 {
-	int (*op_readv)(int, const struct iovec *, int);
+	ssize_t (*op_readv)(int, const struct iovec *, int);
 
 	DPRINTF(("readv %d\n", fd));
 	if (fd_isrump(fd)) {
@@ -596,7 +596,7 @@ readv(int fd, const struct iovec *iov, int iovcnt)
 ssize_t
 write(int fd, const void *buf, size_t len)
 {
-	int (*op_write)(int, const void *, size_t);
+	ssize_t (*op_write)(int, const void *, size_t);
 
 	if (fd_isrump(fd)) {
 		fd = fd_host2rump(fd);
@@ -611,7 +611,7 @@ write(int fd, const void *buf, size_t len)
 ssize_t
 writev(int fd, const struct iovec *iov, int iovcnt)
 {
-	int (*op_writev)(int, const struct iovec *, int);
+	ssize_t (*op_writev)(int, const struct iovec *, int);
 
 	DPRINTF(("writev %d\n", fd));
 	if (fd_isrump(fd)) {
