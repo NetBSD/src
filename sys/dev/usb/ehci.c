@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.172 2011/01/18 08:29:24 matt Exp $ */
+/*	$NetBSD: ehci.c,v 1.173 2011/01/18 15:05:03 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.172 2011/01/18 08:29:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.173 2011/01/18 15:05:03 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2353,7 +2353,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			if (!(sc->sc_flags & EHCIF_ETTF)) {
 				/* Terminate reset sequence. */
 				v = EOREAD4(sc, port);
-				EOWRITE4(sc, port, v);
+				EOWRITE4(sc, port, v & ~EHCI_PS_PR);
 				/* Wait for HC to complete reset. */
 				usb_delay_ms(&sc->sc_bus,
 				    EHCI_PORT_RESET_COMPLETE);
