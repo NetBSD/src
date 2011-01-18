@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.10 2011/01/18 11:04:10 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.11 2011/01/18 14:45:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.10 2011/01/18 11:04:10 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.11 2011/01/18 14:45:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -960,7 +960,7 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 
 	if (timeout != INFTIM) {
 		ts.tv_sec = timeout / 1000;
-		ts.tv_nsec = (timeout % 1000) * 1000;
+		ts.tv_nsec = (timeout % 1000) * 1000*1000;
 
 		tsp = &ts;
 	}
