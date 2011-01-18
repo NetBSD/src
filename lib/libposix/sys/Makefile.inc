@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2011/01/17 09:43:56 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2011/01/18 16:41:51 matt Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
@@ -10,8 +10,10 @@ PSEUDO=		chown.S fchown.S lchown.S rename.S
 SRCS+=		${PSEUDO}
 CLEANFILES+=	${PSEUDO}
 
+LIBCDIR!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
+
 SRCS+=		cerror.S
-CPPFLAGS+=	-D__cerror=__posix_cerror -I../libc -D_REENTRANT
+CPPFLAGS+=	-D__cerror=__posix_cerror -I${LIBCDIR} -D_REENTRANT
 
 ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
