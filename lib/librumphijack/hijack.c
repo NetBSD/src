@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.12 2011/01/18 14:51:14 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.13 2011/01/18 16:00:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.12 2011/01/18 14:51:14 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.13 2011/01/18 16:00:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -873,6 +873,7 @@ pollts(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 				pfd_host[i].fd = fds[i].fd;
 				pfd_host[i].events = fds[i].events;
 			}
+			fds[i].revents = 0;
 		}
 
 		/*
