@@ -1,4 +1,4 @@
-.\"	$NetBSD: operator.7,v 1.10 2011/01/17 11:19:07 jruoho Exp $
+.\"	$NetBSD: operator.7,v 1.11 2011/01/18 23:36:07 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,31 +29,78 @@
 .\"
 .\"	@(#)operator.7	8.1 (Berkeley) 6/9/93
 .\"
-.Dd January 17, 2011
+.Dd January 18, 2011
 .Dt OPERATOR 7
 .Os
 .Sh NAME
 .Nm operator
-.Nd C operator precedence and associativity
+.Nd C and C++ operator precedence and associativity
 .Sh DESCRIPTION
-.Bl -column \
-"! ~ ++ -- - (type) * \*[Am] sizeof" "Associativity" -offset indent
-.It Sy Operator	Associativity
-.It \&() [] -\*[Gt] .	left to right
-.It "! ~ ++ -- - (type) * \*[Am] sizeof"	right to left
-.It \&* / %	left to right
-.It \&+ -	left to right
-.It \&\*[Lt]\*[Lt] \*[Gt]\*[Gt]	left to right
-.It \&\*[Lt] \*[Le] \*[Gt] \*[Ge]	left to right
-.It \&== !=	left to right
-.It \&\*[Am]	left to right
-.It \&^	left to right
-.It \&|	left to right
-.It \&\*[Am]\*[Am]	left to right
-.It \&||	left to right
-.It \&?:	right to left
-.It \&= += -= etc.	right to left
-.It \&,	left to right
+.Bl -column -offset indent \
+    ".Li \&! ~ ++ \-\- \- (type) * \*[Am] sizeof new delete" \
+    ".Sy Associativity"
+.\"
+.It Sy Operator \
+ Ta Sy Associativity
+.\"
+.\" XXX: For some reason if anything but tab follows the last dot
+.\" XXX: the space before it is lost and we get ->. in the output.
+.\" XXX: My troff fu is weak, just work around with explicit \<space>.
+.It Li \&() [] \-\*[Gt]\ \. \
+ Ta left to right
+.\"
+.It Li \&! ~ ++ \-\- \- (type) * \*[Am] sizeof new delete \
+ Ta right to left
+.\"
+.It Li \&\-\*[Gt]* .* \
+ Ta left to right
+.\"
+.It Li \&* / % \
+ Ta left to right
+.\"
+.It Li \&+ \- \
+ Ta left to right
+.\"
+.It Li \&\*[Lt]\*[Lt] \*[Gt]\*[Gt] \
+ Ta left to right
+.\"
+.It Li \&\*[Lt] \*[Lt]= \*[Gt] \*[Gt]= \
+ Ta left to right
+.\"
+.It Li \&== != \
+ Ta left to right
+.\"
+.It Li \&\*[Am] \
+ Ta left to right
+.\"
+.It Li \&^ \
+ Ta left to right
+.\"
+.It Li \&| \
+ Ta left to right
+.\"
+.It Li \&\*[Am]\*[Am] \
+ Ta left to right
+.\"
+.It Li \&|| \
+ Ta left to right
+.\"
+.It Li \&?: \
+ Ta right to left
+.\"
+.It Li \&= += \-= *= /= %= \*[Lt]\*[Lt]= \*[Gt]\*[Gt]= \*[Am]= ^= |= throw \
+ Ta right to left
+.\"
+.It Li \&?: No (C++, third operand)\
+ Ta right to left
+.\"
+.It Li \&, \
+ Ta left to right
+.\"
+.El
+.Sh FILES
+.Bl -tag -width ".Pa /usr/share/misc/operator" -compact
+.It Pa /usr/share/misc/operator
 .El
 .Sh SEE ALSO
 .Xr iso646 3
