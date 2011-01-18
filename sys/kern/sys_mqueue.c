@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.30 2010/07/28 20:49:12 jruoho Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.31 2011/01/18 20:32:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.30 2010/07/28 20:49:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.31 2011/01/18 20:32:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -337,16 +337,16 @@ mq_poll_fop(file_t *fp, int events)
 	mutex_enter(&mq->mq_mtx);
 	mqattr = &mq->mq_attrib;
 	if (events & (POLLIN | POLLRDNORM)) {
-		/* Ready for receiving, if there are messages in the queue */
+		/* Ready for receiving, if there are messages in the queue. */
 		if (mqattr->mq_curmsgs)
-			revents |= (POLLIN | POLLRDNORM);
+			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(curlwp, &mq->mq_rsel);
 	}
 	if (events & (POLLOUT | POLLWRNORM)) {
-		/* Ready for sending, if the message queue is not full */
+		/* Ready for sending, if the message queue is not full. */
 		if (mqattr->mq_curmsgs < mqattr->mq_maxmsg)
-			revents |= (POLLOUT | POLLWRNORM);
+			revents |= events & (POLLOUT | POLLWRNORM);
 		else
 			selrecord(curlwp, &mq->mq_wsel);
 	}
