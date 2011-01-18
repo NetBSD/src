@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.9 2011/01/17 16:30:09 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.10 2011/01/18 11:04:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,10 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.9 2011/01/17 16:30:09 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.10 2011/01/18 11:04:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
@@ -182,7 +183,7 @@ rcinit(void)
 }
 
 static unsigned dup2mask;
-#define ISDUP2D(fd) (((fd+1) & dup2mask) == ((fd)+1))
+#define ISDUP2D(fd) (1<<(fd) & dup2mask)
 
 //#define DEBUGJACK
 #ifdef DEBUGJACK
@@ -239,10 +240,6 @@ fd_isrump(int fd)
 
 #define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_ASSERT)
 #undef HIJACK_FDOFF
-
-/*
- * Following wrappers always call the rump kernel.
- */
 
 int __socket30(int, int, int);
 int
@@ -492,11 +489,12 @@ dup2(int oldd, int newd)
 		oldd = fd_host2rump(oldd);
 		rv = rump_sys_dup2(oldd, newd);
 		if (rv != -1)
-			dup2mask |= newd+1;
-		return rv;
+			dup2mask |= 1<<newd;
 	} else {
-		return host_dup2(oldd, newd);
+		rv = host_dup2(oldd, newd);
 	}
+
+	return rv;
 }
 
 /*
@@ -968,4 +966,20 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 	}
 
 	return pollts(fds, nfds, tsp, NULL);
+}
+
+int
+kqueue(void)
+{
+
+	abort();
+}
+
+int
+kevent(int kq, const struct kevent *changelist, size_t nchanges,
+	struct kevent *eventlist, size_t nevents,
+	const struct timespec *timeout)
+{
+
+	abort();
 }
