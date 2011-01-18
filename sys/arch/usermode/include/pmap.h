@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.2 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: pmap.h,v 1.3 2011/01/18 23:02:36 haad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #define PMAP_MAP_POOLPAGE(x)	(x)
 #define PMAP_UNMAP_POOLPAGE(x)	(x)
 
-typedef struct pmap {
-} *pmap_t;
+struct pmap {
+};
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PMAP_H */
