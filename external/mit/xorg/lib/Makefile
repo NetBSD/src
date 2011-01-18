@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2010/07/18 07:07:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2011/01/18 23:33:51 jmcneill Exp $
 
 # build libraries for xorg
 
@@ -21,6 +21,8 @@ SUBDIR+=libdrm_radeon pixman xkeyboard-config \
 	libXres libXtst libXvMC libXv libXxf86dga libXxf86misc libxkbui \
 	.WAIT
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=libI810XvMC
+SUBDIR+=libIntelXvMC
 SUBDIR+=libchromeXvMC
 .endif
 SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
