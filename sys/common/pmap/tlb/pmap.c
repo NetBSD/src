@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2011/01/18 01:11:50 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2011/01/18 01:20:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2011/01/18 01:11:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2011/01/18 01:20:06 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -112,8 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2011/01/18 01:11:50 matt Exp $");
 #include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
-
-#define DEBUG 1
 
 #define	PMAP_COUNT(name)	(pmap_evcnt_##name.ev_count++ + 0)
 #define PMAP_COUNTER(name, desc) \
