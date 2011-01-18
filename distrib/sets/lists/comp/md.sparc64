@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.77 2011/01/17 20:39:04 agc Exp $
+# $NetBSD: md.sparc64,v 1.78 2011/01/18 20:09:38 pooka Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -561,6 +561,7 @@
 ./usr/lib/sparc/librumpnet_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/sparc/librumpuser.a			comp-c-lib		compat
 ./usr/lib/sparc/librumpuser.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/librumphijack.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/librumpuser_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/librumpuser_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/sparc/librumpvfs.a			comp-c-lib		compat
@@ -734,6 +735,7 @@
 ./usr/libdata/debug/usr/lib/sparc/librumpdev.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpnet.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpuser.so.0.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/librumphijack.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpclient.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpvfs.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug,skey

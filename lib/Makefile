@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.159 2011/01/17 20:39:03 agc Exp $
+#	$NetBSD: Makefile,v 1.160 2011/01/18 20:09:37 pooka Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -135,6 +135,8 @@ SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 .if (${MKLDAP} != "no")
 SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 .endif
+
+SUBDIR+=	librumphijack
 
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
