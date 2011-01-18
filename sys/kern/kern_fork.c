@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.178 2010/07/07 01:30:37 chs Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.179 2011/01/18 23:56:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.178 2010/07/07 01:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.179 2011/01/18 23:56:49 matt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -297,9 +297,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Increase reference counts on shared objects.
 	 * Inherit flags we want to keep.  The flags related to SIGCHLD
 	 * handling are important in order to keep a consistent behaviour
-	 * for the child after the fork.
+	 * for the child after the fork.  If we are a 32-bit process, the
+	 * child will be too.
 	 */
-	p2->p_flag = p1->p_flag & (PK_SUGID | PK_NOCLDWAIT | PK_CLDSIGIGN);
+	p2->p_flag =
+	    p1->p_flag & (PK_SUGID | PK_NOCLDWAIT | PK_CLDSIGIGN | PK_32);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
