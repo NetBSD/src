@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.15 2010/03/09 22:37:47 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.16 2011/01/18 01:02:54 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,8 +43,8 @@
  * [*] Little-endian mode on the 601 is implemented in the HID0 register.
  */
 #define	PSL_VEC		0x02000000	/* ..6. AltiVec vector unit available */
+#define	PSL_SPV		0x02000000	/* B... (e500) SPE enable */
 #define	PSL_UCLE	0x00400000	/* B... user-mode cache lock enable */
-#define	PSL_SPV		0x00200000	/* B... (e500) SPE enable */
 #define	PSL_POW		0x00040000	/* ..6. power management */
 #define	PSL_WE		PSL_POW		/* B4.. wait state enable */
 #define	PSL_TGPR	0x00020000	/* ..6. temp. gpr remapping (mpc603e) */
@@ -107,12 +107,18 @@ extern int cpu_psluserset, cpu_pslusermod;
 
 #define	PSL_USERSET		cpu_psluserset
 #define	PSL_USERMOD		cpu_pslusermod
+#elif defined(PPC_BOOKE)
+#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_ME | PSL_CE | PSL_DE | PSL_IS | PSL_DS)
+#define	PSL_USERSRR1		((PSL_USERSET|PSL_USERMOD) & (PSL_CE|0xFFFF))
+#define	PSL_USERMOD		(0)
 #else /* PPC_IBM4XX */
 #define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_ME | PSL_IR | PSL_DR)
 #define	PSL_USERMOD		(0)
 #endif /* PPC_OEA */
 
+#ifndef PSL_USERSRR1
 #define	PSL_USERSRR1		((PSL_USERSET|PSL_USERMOD) & 0xFFFF)
+#endif
 #define	PSL_USEROK_P(psl)	(((psl) & ~PSL_USERMOD) == PSL_USERSET)
 #endif /* !_LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.10 2009/03/14 14:46:05 dsl Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.11 2011/01/18 01:02:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.10 2009/03/14 14:46:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.11 2011/01/18 01:02:55 matt Exp $");
 
 #include <sys/param.h>
 
@@ -67,25 +67,25 @@ ipkdb_poll(void)
 }
 
 int
-ipkdb_trap_glue(struct trapframe *frame)
+ipkdb_trap_glue(struct trapframe *tf)
 {
-	if (!(frame->srr1 & PSL_PR)
-	    && (frame->exc == EXC_TRC
-		|| (frame->exc == EXC_PGM
-		    && (frame->srr1 & 0x20000))
-		|| frame->exc == EXC_BPT)) {
+	if (!(tf->tf_srr1 & PSL_PR)
+	    && (tf->tf_exc == EXC_TRC
+		|| (tf->tf_exc == EXC_PGM
+		    && (tf->tf_srr1 & 0x20000))
+		|| tf->tf_exc == EXC_BPT)) {
 #ifdef	IPKDBUSERHACK
 		/* XXX see above */
 		__asm ("mfsr %0,%1" : "=r"(savesr) : "n"(USER_SR));
 #endif
 		ipkdbzero(ipkdbregs, sizeof ipkdbregs);
-		ipkdbcopy(frame->fixreg, &ipkdbregs[FIX], NFIX * sizeof(int));
-		ipkdbregs[PC] = frame->srr0;
-		ipkdbregs[PS] = frame->srr1 & ~PSL_BE;
-		ipkdbregs[CR] = frame->cr;
-		ipkdbregs[LR] = frame->lr;
-		ipkdbregs[CTR] = frame->ctr;
-		ipkdbregs[XER] = frame->xer;
+		ipkdbcopy(tf->tf_fixreg, &ipkdbregs[FIX], NFIX * sizeof(int));
+		ipkdbregs[PC] = tf->tf_srr0;
+		ipkdbregs[PS] = tf->tf_srr1 & ~PSL_BE;
+		ipkdbregs[CR] = tf->tf_cr;
+		ipkdbregs[LR] = tf->tf_lr;
+		ipkdbregs[CTR] = tf->tf_ctr;
+		ipkdbregs[XER] = tf->tf_xer;
 
 		switch (ipkdbcmds()) {
 		case 2:
@@ -96,13 +96,13 @@ ipkdb_trap_glue(struct trapframe *frame)
 			ipkdbregs[PS] |= PSL_SE;
 			break;
 		}
-		ipkdbcopy(&ipkdbregs[FIX], frame->fixreg, NFIX * sizeof(int));
-		frame->srr0 = ipkdbregs[PC];
-		frame->srr1 = ipkdbregs[PS];
-		frame->cr = ipkdbregs[CR];
-		frame->lr = ipkdbregs[LR];
-		frame->ctr = ipkdbregs[CTR];
-		frame->xer = ipkdbregs[XER];
+		ipkdbcopy(&ipkdbregs[FIX], tf->tf_fixreg, NFIX * sizeof(int));
+		tf->tf_srr0 = ipkdbregs[PC];
+		tf->tf_srr1 = ipkdbregs[PS];
+		tf->tf_cr = ipkdbregs[CR];
+		tf->tf_lr = ipkdbregs[LR];
+		tf->tf_ctr = ipkdbregs[CTR];
+		tf->tf_xer = ipkdbregs[XER];
 #ifdef	IPKDBUSERHACK
 		__asm ("mtsr %0,%1; isync" :: "n"(USER_SR), "r"(savesr));
 #endif

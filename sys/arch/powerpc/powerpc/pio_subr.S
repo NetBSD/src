@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.12 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.13 2011/01/18 01:02:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -39,6 +39,11 @@
 #else
 #define	DBGSYNC	/* nothing */
 #endif
+
+#undef DBGSYNC
+#define	DBGSYNC	msync
+#define	eieio	mbar 0
+
 /* LINTSTUB: include <sys/param.h> */
 /* LINTSTUB: include <sys/types.h> */
 /* LINTSTUB: include <machine/bus.h> */

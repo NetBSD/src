@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.12 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: altivec.h,v 1.13 2011/01/18 01:02:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,15 +36,27 @@
 #define	VSCR_NJ		0x00010000	/* Non Java-IEEE-C9X FP mode */
 
 #ifdef _KERNEL
+#include <powerpc/mcontext.h>
 
-#define	ALTIVEC_SAVE	0
-#define	ALTIVEC_DISCARD	1
+enum vec_op { VEC_SAVE, VEC_DISCARD, VEC_SAVE_AND_RELEASE };
+struct lwp;
+struct vreg;
+struct trapframe;
 
-void enable_vec(void);
-void save_vec_cpu(void);
-void save_vec_lwp(struct lwp *, int /*discard*/);
-void vzeropage(paddr_t);
-void vcopypage(paddr_t, paddr_t);	/* dst, src */
+void	vec_enable(void);
+void	vec_save_cpu(enum vec_op);
+void	vec_save_lwp(struct lwp *, enum vec_op);
+void	vec_restore_from_mcontext(struct lwp *, const mcontext_t *);
+bool	vec_save_to_mcontext(struct lwp *, mcontext_t *, unsigned int *);
+
+void	vec_load_from_vreg(const struct vreg *);
+void	vec_unload_to_vreg(struct vreg *);
+
+int	vec_siginfo_code(const struct trapframe *);
+
+/* OEA only */
+void	vzeropage(paddr_t);
+void	vcopypage(paddr_t, paddr_t);	/* dst, src */
 #endif
 
 #endif	/* _POWERPC_ALTIVEC_H_ */

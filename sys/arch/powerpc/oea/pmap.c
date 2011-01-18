@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2010/11/12 07:59:26 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2011/01/18 01:02:55 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2010/11/12 07:59:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2011/01/18 01:02:55 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -1943,7 +1943,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * asssume it's in memory coherent memory.
 	 */
 	pte_lo = PTE_IG;
-	if ((flags & PMAP_NC) == 0) {
+	if ((flags & PMAP_MD_NOCACHE) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
 				pte_lo = PTE_M;
@@ -2034,7 +2034,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * asssume it's in memory coherent memory.
 	 */
 	pte_lo = PTE_IG;
-	if ((prot & PMAP_NC) == 0) {
+	if ((flags & PMAP_MD_NOCACHE) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
 				pte_lo = PTE_M;

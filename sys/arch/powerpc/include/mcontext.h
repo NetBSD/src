@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9 2011/01/18 01:02:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ typedef struct {
 
 /* Machine-dependent uc_flags */
 #define	_UC_POWERPC_VEC	0x00010000	/* Vector Register File valid */
+#define	_UC_POWERPC_SPE	0x00020000	/* Vector Register File valid */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_R1])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])

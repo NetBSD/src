@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.16 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: userret.h,v 1.17 2011/01/18 01:02:54 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,19 +42,19 @@
  * trap and syscall.
  */
 static __inline void
-userret(struct lwp *l, struct trapframe *frame)
+userret(struct lwp *l, struct trapframe *tf)
 {
-#if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
+#if defined(PPC_HAVE_FPU) || defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 	struct cpu_info * const ci = curcpu();
 #endif
-#ifdef PPC_HAVE_FPU
-	struct pcb * const pcb = lwp_getpcb(l);
-#endif
+
+	KASSERTMSG((tf == trapframe(curlwp)),
+	    ("tf=%p, trapframe(curlwp)=%p\n", tf, trapframe(curlwp)));
 
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	frame->srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
+	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
 
 	/*
 	 * If someone stole the fp or vector unit while we were away,
@@ -62,9 +62,9 @@ userret(struct lwp *l, struct trapframe *frame)
 	 * we don't own it.
 	 */
 #ifdef PPC_HAVE_FPU
-	if ((frame->srr1 & PSL_FP) &&
-	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
-		frame->srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
+	if ((tf->tf_srr1 & PSL_FP) &&
+	    (l != ci->ci_fpulwp || l->l_md.md_fpucpu != ci)) {
+		tf->tf_srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
 	}
 #endif
 #ifdef ALTIVEC
@@ -72,12 +72,12 @@ userret(struct lwp *l, struct trapframe *frame)
 	 * We need to manually restore PSL_VEC each time we return
 	 * to user mode since PSL_VEC is not preserved in SRR1.
 	 */
-	if (frame->srr1 & PSL_VEC) {
+	if (tf->tf_srr1 & PSL_VEC) {
 		if (l != ci->ci_veclwp)
-			frame->srr1 &= ~PSL_VEC;
+			tf->tf_srr1 &= ~PSL_VEC;
 	} else {
 		if (l == ci->ci_veclwp)
-			frame->srr1 |= PSL_VEC;
+			tf->tf_srr1 |= PSL_VEC;
 	}
 
 	/*
@@ -87,6 +87,20 @@ userret(struct lwp *l, struct trapframe *frame)
 	 */
 	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {
 		__asm volatile("dssall;sync");
+	}
+#endif
+#ifdef PPC_HAVE_SPE
+	/*
+	 * We need to manually restore PSL_SPV each time we return
+	 * to user mode since PSL_SPV is not preserved in SRR1 since
+	 * we don't include it in PSL_USERSRR1 to control its setting.
+	 */
+	if (tf->tf_srr1 & PSL_SPV) {
+		if (l != ci->ci_veclwp)
+			tf->tf_srr1 &= ~PSL_SPV;
+	} else {
+		if (l == ci->ci_veclwp)
+			tf->tf_srr1 |= PSL_SPV;
 	}
 #endif
 }

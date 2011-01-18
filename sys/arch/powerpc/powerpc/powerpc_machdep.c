@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.44 2011/01/14 02:06:30 rmind Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.45 2011/01/18 01:02:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.44 2011/01/14 02:06:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.45 2011/01/18 01:02:55 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.44 2011/01/14 02:06:30 rmind E
 #include <machine/pcb.h>
 
 int cpu_timebase;
-int cpu_printfataltraps;
+int cpu_printfataltraps = 1;
 #if !defined(PPC_IBM4XX)
 extern int powersave;
 #endif
@@ -75,7 +75,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct ps_strings arginfo;
 
 	memset(tf, 0, sizeof *tf);
-	tf->fixreg[1] = -roundup(-stack + 8, 16);
+	tf->tf_fixreg[1] = -roundup(-stack + 8, 16);
 
 	/*
 	 * XXX Machine-independent code has already copied arguments and
@@ -97,17 +97,17 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	 * XXX We have to set both regs and retval here due to different
 	 * XXX calling convention in trap.c and init_main.c.
 	 */
-	tf->fixreg[3] = arginfo.ps_nargvstr;
-	tf->fixreg[4] = (register_t)arginfo.ps_argvstr;
-	tf->fixreg[5] = (register_t)arginfo.ps_envstr;
-	tf->fixreg[6] = 0;			/* auxillary vector */
-	tf->fixreg[7] = 0;			/* termination vector */
-	tf->fixreg[8] = (register_t)p->p_psstr;	/* NetBSD extension */
+	tf->tf_fixreg[3] = arginfo.ps_nargvstr;
+	tf->tf_fixreg[4] = (register_t)arginfo.ps_argvstr;
+	tf->tf_fixreg[5] = (register_t)arginfo.ps_envstr;
+	tf->tf_fixreg[6] = 0;			/* auxillary vector */
+	tf->tf_fixreg[7] = 0;			/* termination vector */
+	tf->tf_fixreg[8] = (register_t)p->p_psstr;	/* NetBSD extension */
 
-	tf->srr0 = pack->ep_entry;
-	tf->srr1 = PSL_MBO | PSL_USERSET;
+	tf->tf_srr0 = pack->ep_entry;
+	tf->tf_srr1 = PSL_MBO | PSL_USERSET;
 #ifdef ALTIVEC
-	tf->tf_xtra[TF_VRSAVE] = 0;
+	tf->tf_vrsave = 0;
 #endif
 	pcb->pcb_flags = PSL_FE_DFLT;
 }
@@ -202,16 +202,18 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "powersave", NULL,
 		       sysctl_machdep_powersave, 0, &powersave, 0,
 		       CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
+#endif
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "altivec", NULL,
-		       NULL, cpu_altivec, NULL, 0,
+		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
 #else
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "altivec", NULL,
-		       NULL, 0, NULL, 0,
+		       NULL, cpu_altivec, NULL, 0,
 		       CTL_MACHDEP, CPU_ALTIVEC, CTL_EOL);
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -288,22 +290,30 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->fixreg[1] = (register_t)((struct saframe *)sp - 1);
-	tf->lr = 0;
-	tf->fixreg[3] = (register_t)type;
-	tf->fixreg[4] = (register_t)sas;
-	tf->fixreg[5] = (register_t)nevents;
-	tf->fixreg[6] = (register_t)ninterrupted;
-	tf->fixreg[7] = (register_t)ap;
-	tf->srr0 = (register_t)upcall;
-	tf->srr1 &= ~PSL_SE;
+	tf->tf_fixreg[1] = (register_t)((struct saframe *)sp - 1);
+	tf->tf_lr = 0;
+	tf->tf_fixreg[3] = (register_t)type;
+	tf->tf_fixreg[4] = (register_t)sas;
+	tf->tf_fixreg[5] = (register_t)nevents;
+	tf->tf_fixreg[6] = (register_t)ninterrupted;
+	tf->tf_fixreg[7] = (register_t)ap;
+	tf->tf_srr0 = (register_t)upcall;
+	tf->tf_srr1 &= ~PSL_SE;
 }
 
 bool
 cpu_intr_p(void)
 {
 
-	return curcpu()->ci_idepth != 0;
+	return curcpu()->ci_idepth >= 0;
+}
+
+void
+cpu_idle(void)
+{
+	KASSERT(mfmsr() & PSL_EE);
+	KASSERT(curcpu()->ci_cpl == IPL_NONE);
+	(*curcpu()->ci_idlespin)();
 }
 
 #ifdef MODULAR

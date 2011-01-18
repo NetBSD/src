@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.33 2011/01/17 08:23:56 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.34 2011/01/18 01:02:54 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -144,6 +144,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 #define	ASMSTR		.asciz
 
+#undef __RCSID
 #define RCSID(x)	__RCSID(x)
 #define	__RCSID(x)	.pushsection .ident; .asciz x; .popsection
 
@@ -185,27 +186,40 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
  *	R4[er] = kernelend
  */
 
+#ifdef CI_INTSTK
+#define	INIT_CPUINFO_INTSTK(er,tmp1)					\
+	addi	er,er,INTSTK;						\
+	stptr	er,CI_INTSTK(tmp1)
+#else
+#define	INIT_CPUINFO_INTSTK(er,tmp1)	/* nothing */
+#endif
+
+/*
+ * We use lis/ori instead of lis/addi in case tmp2 is r0.
+ */
 #define	INIT_CPUINFO(er,sp,tmp1,tmp2) 					\
-	li	tmp1,PGOFSET;						\
+	li	tmp1,PAGE_MASK;						\
 	add	er,er,tmp1;						\
 	andc	er,er,tmp1;		/* page align */		\
 	lis	tmp1,_C_LABEL(cpu_info)@ha;				\
 	addi	tmp1,tmp1,_C_LABEL(cpu_info)@l;				\
 	mtsprg0	tmp1;			/* save for later use */	\
-	addi	er,er,INTSTK;						\
-	stptr	er,CI_INTSTK(tmp1);					\
+	INIT_CPUINFO_INTSTK(er,tmp1);					\
 	lis	tmp2,_C_LABEL(emptyidlespin)@h;				\
 	ori	tmp2,tmp2,_C_LABEL(emptyidlespin)@l;			\
 	stptr	tmp2,CI_IDLESPIN(tmp1);					\
 	li	tmp2,-1;						\
-	stint	tmp2,CI_INTRDEPTH(tmp1);				\
+	stint	tmp2,CI_IDEPTH(tmp1);					\
 	li	tmp2,0;							\
-	stptr	tmp2,-CALLFRAMELEN(er);	/* terminate idle stack chain */\
-	lis	tmp1,_C_LABEL(lwp0)+L_PCB@ha; /* XXXuvm_lwp_getuarea */	\
-	stptr	er,_C_LABEL(lwp0)+L_PCB@l(tmp1);			\
-	addi	er,er,USPACE;		/* stackpointer for proc0 */	\
-	addi	sp,er,-FRAMELEN;	/* stackpointer for proc0 */	\
+	lis	tmp2,_C_LABEL(lwp0)@h;					\
+	ori	tmp2,tmp2,_C_LABEL(lwp0)@l;				\
+	stptr	er,L_PCB(tmp2);		/* XXXuvm_lwp_getuarea */	\
+	addi	er,er,USPACE;		/* stackpointer for lwp0 */	\
+	addi	sp,er,-FRAMELEN-CALLFRAMELEN;	/* stackpointer for lwp0 */ \
+	stptr	sp,L_MD_UTF(tmp2);	/* save in lwp0.l_md.md_utf */	\
 		/* er = end of mem reserved for kernel */		\
+	li	tmp2,0;							\
+	stptr	tmp2,-CALLFRAMELEN(er);	/* end of stack chain */	\
 	stptru	tmp2,-CALLFRAMELEN(sp)	/* end of stack chain */
 
 #endif

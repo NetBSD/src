@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.16 2007/10/17 19:56:40 garbled Exp $	*/
+/*	$NetBSD: fpu.h,v 1.17 2011/01/18 01:02:54 matt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -77,13 +77,20 @@
 #if defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #define PPC_HAVE_FPU
 
-#define	FPU_SAVE	0
-#define	FPU_DISCARD	1
+struct lwp;
+struct fpreg;
+enum fpu_op { FPU_SAVE, FPU_DISCARD, FPU_SAVE_AND_RELEASE };
 
-void	enable_fpu(void);
-void	save_fpu_cpu(void);
-void	save_fpu_lwp(struct lwp *, int /*discard*/);
-int	get_fpu_fault_code(void);
+void	fpu_enable(void);
+void	fpu_save_cpu(enum fpu_op);
+void	fpu_save_lwp(struct lwp *, enum fpu_op);
+void	fpu_restore_from_mcontext(struct lwp *, const mcontext_t *);
+bool	fpu_save_to_mcontext(struct lwp *, mcontext_t *, unsigned int *);
+
+int	fpu_get_fault_code(void);
+
+void	fpu_load_from_fpreg(const struct fpreg *);
+void	fpu_unload_to_fpreg(struct fpreg *);
 #endif /* PPC_HAVE_FPU */
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.14 2005/12/11 12:18:42 christos Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.15 2011/01/18 01:02:53 matt Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.14 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.15 2011/01/18 01:02:53 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -183,7 +183,7 @@ fpu_dumpfpn(struct fpn *fp)
  * (Typically: zero, SIGFPE, SIGILL, SIGSEGV)
  */
 int
-fpu_emulate(struct trapframe *frame, struct fpreg *fpf)
+fpu_emulate(struct trapframe *tf, struct fpreg *fpf)
 {
 	static union instr insn;
 	static struct fpemu fe;
@@ -196,7 +196,7 @@ fpu_emulate(struct trapframe *frame, struct fpreg *fpf)
 
 	/* always set this (to avoid a warning) */
 
-	if (copyin((void *) (frame->srr0), &insn.i_int, sizeof (insn.i_int))) {
+	if (copyin((void *) (tf->tf_srr0), &insn.i_int, sizeof (insn.i_int))) {
 #ifdef DEBUG
 		printf("fpu_emulate: fault reading opcode\n");
 #endif
@@ -204,7 +204,7 @@ fpu_emulate(struct trapframe *frame, struct fpreg *fpf)
 	}
 
 	DPRINTF(FPE_EX, ("fpu_emulate: emulating insn %x at %p\n",
-	    insn.i_int, (void *)frame->srr0));
+	    insn.i_int, (void *)tf->tf_srr0));
 
 
 	if ((insn.i_any.i_opcd == OPC_TWI) ||
@@ -215,10 +215,10 @@ fpu_emulate(struct trapframe *frame, struct fpreg *fpf)
 		return (SIGTRAP);
 	}
 	sig = 0;
-	switch (fpu_execute(frame, &fe, &insn)) {
+	switch (fpu_execute(tf, &fe, &insn)) {
 	case 0:
 		DPRINTF(FPE_EX, ("fpu_emulate: success\n"));
-		frame->srr0 += 4;
+		tf->tf_srr0 += 4;
 		break;
 
 	case FPE:
@@ -237,21 +237,21 @@ fpu_emulate(struct trapframe *frame, struct fpreg *fpf)
 #ifdef DEBUG
 		if (fpe_debug & FPE_EX) {
 			printf("fpu_emulate:  illegal insn %x at %p:",
-			insn.i_int, (void *) (frame->srr0));
-			opc_disasm((vaddr_t)(frame->srr0), insn.i_int);
+			insn.i_int, (void *) (tf->tf_srr0));
+			opc_disasm((vaddr_t)(tf->tf_srr0), insn.i_int);
 		}
 #endif
 		/*
 		* XXXX retry an illegal insn once due to cache issues.
 		*/
-		if (lastill == frame->srr0) {
+		if (lastill == tf->tf_srr0) {
 			sig = SIGILL;
 #ifdef DEBUG
 			if (fpe_debug & FPE_EX)
 				Debugger();
 #endif
 		}
-		lastill = frame->srr0;
+		lastill = tf->tf_srr0;
 		break;
 	}
 
@@ -293,7 +293,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 
 #if defined(DDB) && defined(DEBUG)
 	if (fpe_debug & FPE_EX) {
-		vaddr_t loc = tf->srr0;
+		vaddr_t loc = tf->tf_srr0;
 
 		printf("Trying to emulate: %p ", (void *)loc);
 		opc_disasm(loc, instr.i_int);
@@ -327,11 +327,11 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				ra = instr.i_x.i_ra;
 				rb = instr.i_x.i_rb;
 				DPRINTF(FPE_INSN, ("reg %d has %lx reg %d has %lx\n",
-					ra, tf->fixreg[ra], rb, tf->fixreg[rb]));
+					ra, tf->tf_fixreg[ra], rb, tf->tf_fixreg[rb]));
 
-				addr = tf->fixreg[rb];
+				addr = tf->tf_fixreg[rb];
 				if (ra != 0)
-					addr += tf->fixreg[ra];
+					addr += tf->tf_fixreg[ra];
 				rt = instr.i_x.i_rt;
 				a = (int *)&fs->fpreg[rt];
 				DPRINTF(FPE_INSN,
@@ -357,10 +357,10 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			ra = instr.i_x.i_ra;
 			rb = instr.i_x.i_rb;
 			DPRINTF(FPE_INSN, ("reg %d has %lx reg %d has %lx\n",
-				ra, tf->fixreg[ra], rb, tf->fixreg[rb]));
-			addr = tf->fixreg[rb];
+				ra, tf->tf_fixreg[ra], rb, tf->tf_fixreg[rb]));
+			addr = tf->tf_fixreg[rb];
 			if (ra != 0)
-				addr += tf->fixreg[ra];
+				addr += tf->tf_fixreg[ra];
 			rt = instr.i_x.i_rt;
 		} else {
 			store = instr.i_d.i_opcd & 0x4;
@@ -374,9 +374,9 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			ra = instr.i_d.i_ra;
 			addr = instr.i_d.i_d;
 			DPRINTF(FPE_INSN, ("reg %d has %lx displ %lx\n",
-				ra, tf->fixreg[ra], addr));
+				ra, tf->tf_fixreg[ra], addr));
 			if (ra != 0)
-				addr += tf->fixreg[ra];
+				addr += tf->tf_fixreg[ra];
 			rt = instr.i_d.i_rt;
 		}
 
@@ -415,7 +415,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			}
 		}
 		if (update) 
-			tf->fixreg[ra] = addr;
+			tf->tf_fixreg[ra] = addr;
 		/* Complete. */
 		return (0);
 #ifdef notyet
@@ -515,8 +515,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 					(FPSR_EX_MSK | (0xf << (28 - ra)));
 				fe->fe_fpscr &= fe->fe_cx;
 				/* Now shove them in the right part of cr */
-				tf->cr &= ~(0xf << (28 - rt));
-				tf->cr |= (mask << (28 - rt));
+				tf->tf_cr &= ~(0xf << (28 - rt));
+				tf->tf_cr |= (mask << (28 - rt));
 				break;
 			case	OPC63_MTFSB0:
 				FPU_EMU_EVCNT_INCR(mtfsb0);
@@ -763,8 +763,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 		/* Isolate condition codes */
 		cond >>= 28;
 		/* Move fpu condition codes to cr[1] */
-		tf->cr &= (0x0f000000);
-		tf->cr |= (cond<<24);
+		tf->tf_cr &= (0x0f000000);
+		tf->tf_cr |= (cond<<24);
 		DPRINTF(FPE_INSN, ("fpu_execute: cr[1] <= %x\n", cond));
 	}
 
@@ -773,9 +773,9 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 		/* Isolate condition codes */
 		cond <<= 16;
 		/* Move fpu condition codes to cr[1] */
-		tf->cr &= ~(0xf0000000>>bf);
-		tf->cr |= (cond>>bf);
-		DPRINTF(FPE_INSN, ("fpu_execute: cr[%d] (cr=%x) <= %x\n", bf/4, tf->cr, cond));
+		tf->tf_cr &= ~(0xf0000000>>bf);
+		tf->tf_cr |= (cond>>bf);
+		DPRINTF(FPE_INSN, ("fpu_execute: cr[%d] (cr=%x) <= %x\n", bf/4, tf->tf_cr, cond));
 	}
 
 	((int *)&fs->fpscr)[1] = fsr;

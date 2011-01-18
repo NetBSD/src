@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.40 2010/07/07 01:19:54 chs Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.41 2011/01/18 01:02:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -162,13 +162,22 @@ ENTRY(cpu_switchto)
 	mr	%r30,%r3		/* r30 = curlwp */
 	mr	%r31,%r4		/* r31 = newlwp */
 
+#ifdef PPC_BOOKE
+	mfmsr	%r0
+	andis.	%r0,%r0,PSL_CE@h
+	tweqi	%r0,0	
+	mfmsr	%r0
+	andi.	%r0,%r0,PSL_DE@l
+	tweqi	%r0,0	
+#endif
+
 	/* 
 	 * If the oldlwp was null, don't bother saving the switch state.
 	 */
 	cmpwi	%r30,0
 	beq	switchto_restore
 
-#if !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
 	li	%r10,0			/* USER_SR not needed */
@@ -180,10 +189,14 @@ ENTRY(cpu_switchto)
 	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
 	ldptr	%r4,L_PCB(%r30)		/* put PCB addr in r4 */
 	streg	%r1,PCB_SP(%r4)		/* store old lwp's SP */
+#ifdef PCB_USPRG0
+	mfspr	%r9,SPR_USPRG0
+	streg	%r9,PCB_USPRG0(%r4)	/* save in PCB, not switchframe. */
+#endif
 
 switchto_restore:
 /* Lock the scheduler. */
-#if defined(PPC_IBM4XX)
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 	wrteei	0			/* disable interrupts while
 					   manipulating runque */
 #else /* PPC_OEA */
@@ -204,6 +217,9 @@ switchto_restore:
 
 	GET_CPUINFO(%r7)
 	stptr	%r31,CI_CURLWP(%r7)
+#ifdef PPC_BOOKE
+	mtsprg2	%r31			/* save curlwp in sprg2 */
+#endif
 #ifdef MULTIPROCESSOR
 	stptr	%r7,L_CPU(%r31)		/* update cpu pointer */
 #endif
@@ -217,15 +233,19 @@ switchto_restore:
 	 */
 	ldreg	%r1,PCB_SP(%r4)		/* get new lwp's SP */
 	SWITCHFRAME_RESTORE(%r1)	/* get non-volatile, CR, R2, USER_SR */
+#ifdef PCB_USPRG0
+	ldreg	%r9,PCB_USPRG0(%r4)
+	mtspr	SPR_USPRG0,%r9
+#endif
 	ldreg	%r1,0(%r1)		/* get saved SP */
 	mr	%r2,%r12		/* get saved r2 */
 	mtcr	%r11			/* get saved cr */
-#if !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	mtsr	USER_SR,%r10		/* get saved USER_SR */
 #endif
 	isync
 
-#if defined(PPC_IBM4XX)
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 	wrteei	1			/* interrupts are okay again */
 #else /* PPC_OEA */
 	mfmsr	%r4
@@ -235,13 +255,12 @@ switchto_restore:
 
 #if defined(PPC_IBM4XX)
 0:
-	GET_CPUINFO(%r3)
-	ldreg	%r3,CI_CURPM(%r3)	/* Do we need a context? */
+	ldreg	%r3,CI_CURPM(%r7)	/* Do we need a context? */
 	ldreg	%r4,PM_CTX(%r3)
 	cmpwi	%r4,0
-#	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */
 	bne	1f
 	bl	_C_LABEL(ctx_alloc)
+	GET_CPUINFO(%r7)
 	b	0b			/* reload */
 1:
 #endif
@@ -270,12 +289,190 @@ switchto_restore:
 ENTRY_NOPROFILE(emptyidlespin)
 	blr				/* CPUINIT needs a raw blr */
 
+#ifdef __HAVE_FAST_SOFTINTS
+	/*
+	 * This gets executed if the softint thread blocks.
+	 * cpu_switchto has restored r30/r31 for us.
+	 */
+_ENTRY(softint_cleanup)
+	GET_CPUINFO(%r7)
+	ldint	%r5, CI_MTX_COUNT(%r7)
+	addi	%r5, %r5, 1
+	stint	%r5, CI_MTX_COUNT(%r7)
+	li	%r0, 0
+	stptr	%r0, L_CTXSWTCH(%r3)	/* clear ctxswitch of old lwp */
+	ldreg	%r0, CFRAME_R31(%r1)	/* get saved MSR */
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+	wrtee	%r0			/* restore EE */
+#endif
+#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE) || defined(PPC_OEA64)
+	mtmsr	%r0
+	isync
+#endif
+	addi	%r1, %r1, CALLFRAMELEN
+	ldreg	%r0, CFRAME_LR(%r1)
+	mtlr	%r0
+#if IPL_SCHED != IPL_HIGH
+	b	_C_LABEL(splhigh)
+#else
+	blr
+#endif /* IPL SCHED != IPL_HIGH */
+
+_ENTRY(softint_fast_dispatch)
+	/*
+	 * Our call frame which softint will grab LR from.
+	 */
+	mflr	%r0
+	streg	%r0, CFRAME_LR(%r1)
+	stptru	%sp, -CALLFRAMELEN(%sp)
+	mfmsr	%r0
+	streg	%r0, CFRAME_R31(%sp)
+
+	/*
+	 * We need a 2nd callframe from which cpu_switchto will consume
+	 * if the softint thread blocks.
+	 */
+	lis	%r8, _C_LABEL(softint_cleanup)@ha
+	addi	%r8, %r8, _C_LABEL(softint_cleanup)@l
+	streg	%r8, CFRAME_LR(%r1)
+	stptru	%sp, -CALLFRAMELEN(%sp)
+	streg	%r30, CFRAME_R30(%sp)
+	streg	%r31, CFRAME_R31(%sp)
+
+	GET_CPUINFO(%r7)
+#ifdef PPC_BOOKE
+	mfsprg2	%r30
+#else
+	ldptr	%r30, CI_CURLWP(%r7)
+#endif /* PPC_BOOKE */
+
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
+#else
+	li	%r10,0			/* USER_SR not needed */
+#endif
+	mfcr	%r11			/* save cr */
+	mr	%r12,%r2		/* save r2 */
+	CFRAME_LRSAVE(%r1)
+	stptru	%r1, -SFRAMELEN(%r1)	/* still running on old stack */
+	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
+	mr	%r31, %r1
+	ldptr	%r5, L_PCB(%r30)	/* put PCB addr in r5 */
+	streg	%r1, PCB_SP(%r5)	/* store old lwp's SP */
+#ifdef PCB_USPRG0
+	mfspr	%r9,SPR_USPRG0
+	streg	%r9,PCB_USPRG0(%r5)	/* save in PCB, not switchframe. */
+#endif
+
+	mfmsr	%r29
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+	wrteei	0			/* disable interrupts while
+					   manipulating runque */
+#else /* PPC_OEA */
+	andi.	%r28,%r29,~PSL_EE@l	/* disable interrupts while
+					   manipulating runque */
+	mtmsr	%r28
+	isync
+#endif
+
+	/*
+	 * We don't need a ctx for ibm4xx since we are switching
+	 * to a kernel thread
+	 */
+
+	stptr	%r3, CI_CURLWP(%r7)
+#ifdef PPC_BOOKE
+	mtsprg2	%r3
+#endif
+	ldptr	%r5, L_PCB(%r3)
+	stptr	%r5, CI_CURPCB(%r7)
+	ldptr	%r0, PCB_PM(%r5)
+	stptr	%r0, CI_CURPM(%r7)	/* and maybe a new pmap */
+	addi	%r1, %r5, USPACE - FRAMELEN - CALLFRAMELEN
+
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+	wrteei	1			/* interrupts are okay again */
+#else /* PPC_OEA */
+	mtmsr	%r29
+#endif
+
+	/*
+	 * %r3 = softint thread
+	 * %r4 = ipl
+	 */
+	mr	%r3, %r30		/* pass former curlwp */
+	bl	_C_LABEL(softint_dispatch)
+
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+	wrteei	0			/* disable interrupts while
+					   manipulating runque */
+#else /* PPC_OEA */
+	mtmsr	%r28			/* disable interrupts while
+					   manipulating runque */
+	isync
+#endif
+
+	GET_CPUINFO(%r7)
+	stptr	%r30, CI_CURLWP(%r7)
+#ifdef PPC_BOOKE
+	mtsprg2	%r30
+#endif
+	ldptr	%r5, L_PCB(%r30)
+	stptr	%r5, CI_CURPCB(%r7)
+	ldptr	%r0, PCB_PM(%r5)
+	stptr	%r0, CI_CURPM(%r7)	/* and maybe a new pmap */
+	mr	%r1, %r31		/* get saved SP */
+
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+	wrtee	%r29			/* interrupts are okay again */
+#else /* PPC_OEA */
+	mtmsr	%r29
+#endif
+
+	/*
+	 * Since softint_dispatch returned to us, we know that the callee-saved
+	 * registers are intact and thus don't have to restored (except for 
+	 * r28/r29/r30/r31 which we used).
+	 * Since softint's can't copyin/copyout USER_SR couldn't have been
+	 * modified either and CR/R2 could not have been changed as well.
+	 * We can just eat the switchframe and continue.
+	 */
+#if 0
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+	ldreg	%r10,SFRAME_USER_SR(%r1) /* USER_SR */
+	mtsr	USER_SR,%r10		/* restore USER_SR for copyin/copyout */
+#endif
+	ldreg	%r28,SFRAME_R28(%r1)	/* R28 */
+	ldreg	%r29,SFRAME_R29(%r1)	/* R29 */
+	ldreg	%r11,SFRAME_CR(%r1)	/* CR */
+	mtcr	%r11
+	ldreg	%r2,SFRAME_R2(%r1)	/* R2 */
+#endif
+#if 0
+	addi	%r1,%r1,SFRAMELEN	/* remove switch frame */
+
+	ldreg	%r31,CFRAME_R31(%r1)	/* restore saved registers */
+	ldreg	%r30,CFRAME_R30(%r1)	/* from switchto callframe */
+	addi	%r1,%r1,CALLFRAMELEN	/* remove switchto call frame */
+	addi	%r1,%r1,CALLFRAMELEN	/* remove our call frame */
+#else
+	ldreg	%r28,SFRAME_R28(%r1)	/* R28 */
+	ldreg	%r29,SFRAME_R29(%r1)	/* R29 */
+	ldreg	%r31,SFRAMELEN+CFRAME_R31(%r1)	/* restore saved registers */
+	ldreg	%r30,SFRAMELEN+CFRAME_R30(%r1)
+	addi	%r1,%r1,SFRAMELEN+2*CALLFRAMELEN /* remove switch & callframes */
+#endif
+	ldreg	%r0,CFRAME_LR(%r1)
+	mtlr	%r0
+	blr
+#endif /* __HAVE_FAST_SOFTINTS */
+
 /*
  * Child comes here at the end of a fork.
  * Return to userspace via the trap return path.
  */
 	.globl	_C_LABEL(cpu_lwp_bootstrap)
-_C_LABEL(cpu_lwp_bootstrap):
+_ENTRY(cpu_lwp_bootstrap)
 #if defined(MULTIPROCESSOR) && 0
 	mr	%r28,%r3
 	mr	%r29,%r4
@@ -287,16 +484,31 @@ _C_LABEL(cpu_lwp_bootstrap):
 	 * r3 (old lwp) and r4 (new lwp) are setup in cpu_switchto.
 	 */
 	bl	_C_LABEL(lwp_startup)
+	/*
+	 * Fall through into setfunc_trampoline
+	 */
 
 	.globl	_C_LABEL(setfunc_trampoline)
-_C_LABEL(setfunc_trampoline):
+_ENTRY(setfunc_trampoline)
 
 	mtlr	%r31
 	mr	%r3,%r30
 	blrl				/* jump indirect to r31 */
+	lwz	%r31, FRAME_SRR1(%r1)	/* trapexit wants srr1 in r31 */
+#ifdef PPC_BOOKE
+	lis	%r30, 0xbeeffeed@ha
+	addi	%r30, %r30, 0xbeeffeed@l
+	andis.	%r0,%r31,PSL_CE@h
+	tweqi	%r0,0
+	andi.	%r0,%r31,PSL_DE@l
+	tweqi	%r0,0
+#endif
+	li	%r4, 1			/* make sure userret gets called */
+	GET_CPUINFO(%r3)
+	stint	%r4, CI_ASTPENDING(%r3)
 	b	trapexit
 
-#if defined(MULTIPROCESSOR) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
+#if defined(MULTIPROCESSOR) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
 ENTRY(cpu_spinup_trampoline)
 	li	%r0,0
 	mtmsr	%r0
