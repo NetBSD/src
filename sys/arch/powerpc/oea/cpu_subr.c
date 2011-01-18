@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.60 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.61 2011/01/18 02:25:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.60 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.61 2011/01/18 02:25:42 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.60 2011/01/18 01:02:55 matt Exp $");
 
 #include <uvm/uvm.h>
 
+#include <powerpc/pcb.h>
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/hid_601.h>
@@ -1183,30 +1184,11 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	struct pglist mlist;
 	int i, error, pvr, vers;
-	char *cp, *hp;
+	char *hp;
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
 	KASSERT(ci != curcpu());
-
-	/*
-	 * Allocate some contiguous pages for the intteup PCB and stack
-	 * from the lowest 256MB (because bat0 always maps it va == pa).
-	 * Must be 16 byte aligned.
-	 */
-	error = uvm_pglistalloc(INTSTK, 0x10000, 0x10000000, 16, 0,
-	    &mlist, 1, 1);
-	if (error) {
-		aprint_error(": unable to allocate idle stack\n");
-		return -1;
-	}
-
-	KASSERT(ci != &cpu_info[0]);
-
-	cp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	memset(cp, 0, INTSTK);
-
-	ci->ci_intstk = cp;
 
 	/* Now allocate a hatch stack */
 	error = uvm_pglistalloc(0x1000, 0x10000, 0x10000000, 16, 0,
