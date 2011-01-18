@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.7 2010/12/11 22:30:54 matt Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.8 2011/01/18 08:16:43 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.7 2010/12/11 22:30:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.8 2011/01/18 08:16:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.7 2010/12/11 22:30:54 matt Exp $");
 /* list of all events */
 struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
 static kmutex_t evmtx;
+static bool init_done;
 
 /*
  * We need a dummy object to stuff into the evcnt link set to
@@ -105,7 +106,11 @@ evcnt_init(void)
 	__link_set_decl(evcnts, struct evcnt);
 	struct evcnt * const *evp;
 
+	KASSERT(!init_done);
+
 	mutex_init(&evmtx, MUTEX_DEFAULT, IPL_NONE);
+
+	init_done = true;
 
 	__link_set_foreach(evp, evcnts) {
 		if (*evp == &dummy_static_evcnt)
@@ -122,6 +127,10 @@ void
 evcnt_attach_static(struct evcnt *ev)
 {
 	int len;
+
+	KASSERTMSG(init_done,
+	    ("%s: evcnt non initialized: group=<%s> name=<%s>",
+	    __func__, ev->ev_group, ev->ev_name));
 
 	len = strlen(ev->ev_group);
 #ifdef DIAGNOSTIC
