@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.13 2011/01/18 16:00:04 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.14 2011/01/18 19:41:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.13 2011/01/18 16:00:04 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.14 2011/01/18 19:41:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -115,8 +115,28 @@ static int	(*host_pollts)(struct pollfd *, nfds_t,
 			       const struct timespec *, const sigset_t *);
 static pid_t	(*host_fork)(void);
 static int	(*host_dup2)(int, int);
+static int	(*host_shutdown)(int, int);
 
 static void *rumpcalls[RUMPCALL__NUM];
+
+/*
+ * Would be nice to get this automatically in sync with libc.
+ * Also, this does not work for compat-using binaries!
+ */
+
+#if !__NetBSD_Prereq__(5,99,7)
+#define SELECT select
+#define POLLTS pollts
+#define POLL poll
+#else
+#define SELECT __select50
+#define POLLTS __pollts50
+#define POLL __poll50
+
+int SELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+int POLLTS(struct pollfd *, nfds_t, const struct timespec *, const sigset_t *);
+int POLL(struct pollfd *, nfds_t, int);
+#endif
 
 /*
  * This is called from librumpclient in case of LD_PRELOAD.
@@ -130,7 +150,7 @@ hijackdlsym(void *handle, const char *symbol)
 }
 
 /* low calorie sockets? */
-static bool hostlocalsockets = false;
+static bool hostlocalsockets = true;
 
 static void __attribute__((constructor))
 rcinit(void)
@@ -168,6 +188,7 @@ rcinit(void)
 	host_pollts = dlsym(RTLD_NEXT, "pollts");
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_dup2 = dlsym(RTLD_NEXT, "dup2");
+	host_shutdown = dlsym(RTLD_NEXT, "shutdown");
 
 	for (i = 0; i < RUMPCALL__NUM; i++) {
 		rumpcalls[i] = dlsym(hand, sysnames[i]);
@@ -462,9 +483,13 @@ shutdown(int s, int how)
 	int (*rc_shutdown)(int, int);
 
 	DPRINTF(("shutdown -> %d\n", s));
-	assertfd(s);
-	rc_shutdown = rumpcalls[RUMPCALL_SHUTDOWN];
-	return rc_shutdown(fd_host2rump(s), how);
+	if (fd_isrump(s)) {
+		rc_shutdown = rumpcalls[RUMPCALL_SHUTDOWN];
+		s = fd_host2rump(s);
+	} else {
+		rc_shutdown = host_shutdown;
+	}
+	return rc_shutdown(s, how);
 }
 
 /*
@@ -658,7 +683,7 @@ close(int fd)
 }
 
 int
-select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+SELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	struct timeval *timeout)
 {
 	struct pollfd *pfds;
@@ -820,7 +845,7 @@ hostpoll(void *arg)
 }
 
 int
-pollts(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
+POLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 	const sigset_t *sigmask)
 {
 	int (*op_pollts)(struct pollfd *, nfds_t, const struct timespec *,
@@ -957,7 +982,7 @@ pollts(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 }
 
 int
-poll(struct pollfd *fds, nfds_t nfds, int timeout)
+POLL(struct pollfd *fds, nfds_t nfds, int timeout)
 {
 	struct timespec ts;
 	struct timespec *tsp = NULL;
