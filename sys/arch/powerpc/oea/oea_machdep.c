@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.55 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.56 2011/01/18 02:25:42 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.55 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.56 2011/01/18 02:25:42 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -150,6 +150,7 @@ oea_init(void (*handler)(void))
 	/*
 	 * Initialize proc0 and current pcb and pmap pointers.
 	 */
+	(void) ci;
 	KASSERT(ci != NULL);
 	KASSERT(curcpu() == ci);
 	KASSERT(lwp0.l_cpu == ci);
