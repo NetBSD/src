@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.304 2010/12/18 01:36:19 rmind Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.305 2011/01/18 08:21:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.304 2010/12/18 01:36:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.305 2011/01/18 08:21:03 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -112,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.304 2010/12/18 01:36:19 rmind Exp $"
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
 #ifdef DEBUG_EXEC
-#define DPRINTF(a) uprintf a
+#define DPRINTF(a) printf a
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_EXEC */
@@ -586,7 +586,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	error = pathbuf_copyin(path, &pb);
 	if (error) {
-		DPRINTF(("execve: pathbuf_copyin error %d", error));
+		DPRINTF(("execve: pathbuf_copyin path @%p %d\n", path, error));
 		goto clrflg;
 	}
 	pathstring = pathbuf_stringcopy_get(pb);
@@ -825,7 +825,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
 			for (j = 0; j <= i; j++)
 				uprintf(
-			"vmcmd[%zu] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
+			"vmcmd[%zu] = %#"PRIxVADDR"/%#"PRIxVSIZE" fd@%#"PRIxVSIZE" prot=0%o flags=%d\n",
 				    j, vp[j].ev_addr, vp[j].ev_len,
 				    vp[j].ev_offset, vp[j].ev_prot,
 				    vp[j].ev_flags);
@@ -1074,7 +1074,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		(*pack.ep_esch->es_setregs)(l, &pack, (vaddr_t)stack);
 
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(p, pack.ep_esch->es_emul)) {
+	if ((error = exec_sigcode_map(p, pack.ep_esch->es_emul)) != 0) {
 		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
 	}
@@ -1271,8 +1271,10 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	nullp = NULL;
 	argc = arginfo->ps_nargvstr;
 	envc = arginfo->ps_nenvstr;
-	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
+	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(argc)));
 		return error;
+	}
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 	sp = argp;
@@ -1280,23 +1282,39 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	/* XXX don't copy them out, remap them! */
 	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
-	for (; --argc >= 0; sp += len, dp += len)
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	for (; --argc >= 0; sp += len, dp += len) {
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0) {
+			DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(dp)));
 			return error;
+		}
+		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
+			DPRINTF(("copyargs:%d copyoutstr @%p %u\n", __LINE__, dp, ARG_MAX));
+			return error;
+		}
+	}
 
-	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(nullp)));
 		return error;
+	}
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
-	for (; --envc >= 0; sp += len, dp += len)
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	for (; --envc >= 0; sp += len, dp += len) {
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0) {
+			DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(dp)));
 			return error;
+		}
+		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
+			DPRINTF(("copyargs:%d copyoutstr @%p %u\n", __LINE__, dp, ARG_MAX));
+			return error;
+		}
+	}
 
-	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(nullp)));
 		return error;
+	}
 
 	*stackp = (char *)cpp;
 	return 0;
@@ -1550,6 +1568,10 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 			UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX, UVM_INH_SHARE,
 				    UVM_ADV_RANDOM, 0));
 	if (error) {
+		DPRINTF(("exec_sigcode_map:%d map %p "
+		    "uvm_map %#"PRIxVSIZE"@%#"PRIxVADDR" failed %d\n",
+		    __LINE__, &p->p_vmspace->vm_map, round_page(sz), va,
+		    error));
 		(*uobj->pgops->pgo_detach)(uobj);
 		return (error);
 	}
