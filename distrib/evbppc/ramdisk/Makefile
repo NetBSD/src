@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/02/11 09:06:48 roy Exp $
+#	$NetBSD: Makefile,v 1.9 2011/01/18 01:25:29 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,7 +8,7 @@ IMAGESIZE=	2048k
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
-DBG=		-Os -mmultiple -mstring
+DBG=		-Os -mmultiple -mno-string
 
 CRUNCHBIN=	ramdiskbin
 CRUNCHGEN_FLAGS=-d "${DBG}"
