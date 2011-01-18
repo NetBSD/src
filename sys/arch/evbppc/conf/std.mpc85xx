@@ -1,0 +1,26 @@
+#	$NetBSD: std.mpc85xx,v 1.2 2011/01/18 01:10:25 matt Exp $
+#
+# Standard/required options for NetBSD/mpc85xx.
+
+machine	evbppc powerpc
+include		"conf/std"	# MI standard options
+
+# standard ("mandatory") kernel options.
+options 	PPC_BOOKE	# Freescale e500 family
+
+# Executable support:
+options 	EXEC_ELF32	# (native) ELF32 binary support
+options 	EXEC_SCRIPT	# shell script support
+
+makeoptions	TEXTADDR=0x20000
+makeoptions	BOARDTYPE="mpc85xx"
+makeoptions	PPCDIR="booke"
+makeoptions	NEEDS_MDSETIMAGE="yes"
+
+options 	PPC_INTR_IMPL="<powerpc/booke/intr.h>"
+options 	PPC_PCI_MACHDEP_IMPL="<powerpc/pci_machdep.h>"
+options 	KERNBASE=0x20000
+options		GUR_BASE=0xe0000000
+
+include		"arch/powerpc/conf/files.booke"
+include		"arch/evbppc/conf/files.mpc85xx"
