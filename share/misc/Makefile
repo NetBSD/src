@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.35 2011/01/17 11:09:08 jruoho Exp $
+#	$NetBSD: Makefile,v 1.36 2011/01/18 23:12:38 jruoho Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
 
 FILES=	NetBSD.el acronyms acronyms.comp airport ascii \
 	birthtoken bsd-family-tree \
-	country domains \
+	country domains operator \
 	eqnchar flowers indent.pro inter.phone language man.template \
 	mdoc.template na.phone na.postal style zipcodes
 FILESDIR=${BINDIR}/misc
