@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.16 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.17 2011/01/19 10:21:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.16 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.17 2011/01/19 10:21:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
-#include <sys/mount.h>
 #include <sys/shm.h>
 
 #ifndef SYSVSHM
