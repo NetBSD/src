@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/01/19 10:17:04 plunky Exp $
+# $NetBSD: Makefile,v 1.4 2011/01/19 11:38:15 plunky Exp $
 
 PROG=		lua
 SRCS=		lua.c
@@ -6,7 +6,7 @@ BINDIR=		/usr/bin
 
 CPPFLAGS+=	-DLUA_USE_READLINE
 
-LDADD+=		${LIBLUA}
+LDADD+=		-llua
 DPADD+=		${LIBLUA}
 
 LDADD+=		-lterminfo -lm -ledit
