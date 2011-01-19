@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.22 2010/03/22 18:58:32 joerg Exp $
+.\"	$NetBSD: environ.7,v 1.23 2011/01/19 04:00:21 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .Nm environ
 .Nd user process environment
 .Sh SYNOPSIS
-.Ar extern char **environ ;
+.Vt extern char ** Ns Dv environ ;
 .Sh DESCRIPTION
 An array of strings called the
 .Em environment
@@ -46,7 +46,7 @@ when a process begins.
 By convention these strings have the form
 .Dq Ar name=value .
 The following names are used by various commands:
-.Bl -tag -width LIBC_DIAGASSERT
+.Bl -tag -width ".Ev LIBC_DIAGASSERT"
 .It Ev AUDIOCTLDEVICE
 The name of the audio control device to be used by
 .Xr audioctl 1 ,
@@ -67,18 +67,18 @@ and
 .Ev BLOCKSIZE
 may be specified in units of a byte by specifying a number,
 in units of a kilobyte by specifying a number followed by
-.Dq K
+.Ql K
 or
-.Dq k ,
+.Ql k ,
 in units of a megabyte by specifying a number followed by
-.Dq M
+.Ql M
 or
-.Dq m
+.Ql m
 and in units of a gigabyte by specifying a number followed
 by
-.Dq G
+.Ql G
 or
-.Dq g .
+.Ql g .
 Sizes less than 512 bytes or greater than a gigabyte are ignored.
 .It Ev EXINIT
 A startup list of commands read by
@@ -160,8 +160,11 @@ The sequence of directories, separated by colons, searched by
 .Xr system 3 ,
 .Xr execvp 3 ,
 etc, when looking for an executable file.
-PATH is set to
-.Dq /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin
+.Ev PATH
+is set to
+.Pp
+.Dl /usr/bin:/bin:/usr/pkg/bin:/usr/local/bin
+.Pp
 initially by
 .Xr login 1 .
 .It Ev PRINTER
@@ -189,8 +192,11 @@ See
 .Pq Xr termcap 5
 for a list of terminal types.
 .It Ev TERMCAP
-The string describing the terminal in TERM, or, if
-it begins with a '/', the name of the termcap file.
+The string describing the terminal in
+.Ev TERM ,
+or, if it begins with a
+.Ql / ,
+the name of the termcap file.
 See
 .Ev TERMPATH
 below,
@@ -205,7 +211,9 @@ Having no
 is equivalent to a
 .Ev TERMPATH
 of
-.Dq Pa $HOME/.termcap:/usr/share/misc/termcap .
+.Pp
+.Dl $HOME/.termcap:/usr/share/misc/termcap
+.Pp
 .Ev TERMPATH
 is ignored if
 .Ev TERMCAP
@@ -228,7 +236,9 @@ The timezone to use when displaying dates.
 The normal format is a pathname relative to
 .Pa /usr/share/zoneinfo .
 For example, the command
-.Ic env TZ=US/Pacific date
+.Pp
+.Dl env TZ=US/Pacific date
+.Pp
 displays the current time in California.
 See
 .Xr tzset 3
