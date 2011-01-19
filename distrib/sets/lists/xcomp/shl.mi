@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.26 2010/11/25 16:32:39 njoly Exp $
+#	$NetBSD: shl.mi,v 1.27 2011/01/19 16:31:23 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -85,6 +85,7 @@
 ./usr/X11R7/lib/libXt_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXtst_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXvMC_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libXvMCW_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXv_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXxf86dga_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXxf86misc_pic.a			-unknown-	xorg
@@ -222,6 +223,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libXtst.so.7.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXv.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXvMC.so.2.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libXvMCW.so.1.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXxf86dga.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXxf86misc.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXxf86vm.so.2.0.debug	-unknown-		xorg,debug

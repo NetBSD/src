@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.120 2010/11/27 22:21:27 mrg Exp $
+#	 $NetBSD: mi,v 1.121 2011/01/19 16:31:23 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6248,6 +6248,9 @@
 ./usr/X11R7/lib/libXvMC.a				-unknown-	xorg
 ./usr/X11R7/lib/libXvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXvMC_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libXvMCW.a				-unknown-	xorg
+./usr/X11R7/lib/libXvMCW_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libXvMCW_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXv_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXv_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXxf86dga.a				-unknown-	xorg

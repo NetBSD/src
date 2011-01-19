@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.40 2010/11/22 08:54:14 mrg Exp $
+# $NetBSD: shl.mi,v 1.41 2011/01/19 16:31:23 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -285,6 +285,9 @@
 ./usr/X11R7/lib/libXvMC.so			-unknown-		xorg
 ./usr/X11R7/lib/libXvMC.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libXvMC.so.2.0			-unknown-		xorg
+./usr/X11R7/lib/libXvMCW.so			-unknown-		xorg
+./usr/X11R7/lib/libXvMCW.so.1			-unknown-		xorg
+./usr/X11R7/lib/libXvMCW.so.1.0			-unknown-		xorg
 ./usr/X11R7/lib/libXxf86dga.so			-unknown-		xorg
 ./usr/X11R7/lib/libXxf86dga.so.2		-unknown-		xorg
 ./usr/X11R7/lib/libXxf86dga.so.2.0		-unknown-		xorg
