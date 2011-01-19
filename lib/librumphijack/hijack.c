@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.15 2011/01/18 23:43:21 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.16 2011/01/19 11:27:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.15 2011/01/18 23:43:21 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.16 2011/01/19 11:27:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -116,6 +116,9 @@ static int	(*host_pollts)(struct pollfd *, nfds_t,
 static pid_t	(*host_fork)(void);
 static int	(*host_dup2)(int, int);
 static int	(*host_shutdown)(int, int);
+/* XXX */
+static void	*host_sendto;
+static void	*host_recvfrom;
 
 static void *rumpcalls[RUMPCALL__NUM];
 
@@ -189,6 +192,8 @@ rcinit(void)
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_dup2 = dlsym(RTLD_NEXT, "dup2");
 	host_shutdown = dlsym(RTLD_NEXT, "shutdown");
+	host_sendto = dlsym(RTLD_NEXT, "sendto");
+	host_recvfrom = dlsym(RTLD_NEXT, "recvfrom");
 
 	for (i = 0; i < RUMPCALL__NUM; i++) {
 		rumpcalls[i] = dlsym(hand, sysnames[i]);
@@ -401,9 +406,14 @@ recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr *from,
 	    struct sockaddr *, socklen_t *);
 
 	DPRINTF(("recvfrom\n"));
-	assertfd(s);
-	rc_recvfrom = rumpcalls[RUMPCALL_RECVFROM];
-	return rc_recvfrom(fd_host2rump(s), buf, len, flags, from, fromlen);
+	if (fd_isrump(s)) {
+		rc_recvfrom = rumpcalls[RUMPCALL_RECVFROM];
+		s = fd_host2rump(s);
+	} else {
+		rc_recvfrom = host_recvfrom;
+	}
+
+	return rc_recvfrom(s, buf, len, flags, from, fromlen);
 }
 
 ssize_t
@@ -433,11 +443,15 @@ sendto(int s, const void *buf, size_t len, int flags,
 
 	if (s == -1)
 		return len;
-
 	DPRINTF(("sendto\n"));
-	assertfd(s);
-	rc_sendto = rumpcalls[RUMPCALL_SENDTO];
-	return rc_sendto(fd_host2rump(s), buf, len, flags, to, tolen);
+
+	if (fd_isrump(s)) {
+		rc_sendto = rumpcalls[RUMPCALL_SENDTO];
+		s = fd_host2rump(s);
+	} else {
+		rc_sendto = host_sendto;
+	}
+	return rc_sendto(s, buf, len, flags, to, tolen);
 }
 
 ssize_t
