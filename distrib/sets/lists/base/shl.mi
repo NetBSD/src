@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.569 2011/01/18 22:21:22 haad Exp $
+# $NetBSD: shl.mi,v 1.570 2011/01/19 21:07:13 he Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -534,18 +534,18 @@
 ./usr/lib/librumpfs_union.so			base-rump-shlib
 ./usr/lib/librumpfs_union.so.0			base-rump-shlib
 ./usr/lib/librumpfs_union.so.0.0		base-rump-shlib
-./usr/lib/librumpfs_zfs.so			base-rump-shlib
-./usr/lib/librumpfs_zfs.so.0			base-rump-shlib
-./usr/lib/librumpfs_zfs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_zfs.so			base-rump-shlib		zfs
+./usr/lib/librumpfs_zfs.so.0			base-rump-shlib		zfs
+./usr/lib/librumpfs_zfs.so.0.0			base-rump-shlib		zfs
 ./usr/lib/librumpkern_crypto.so			base-rump-shlib
 ./usr/lib/librumpkern_crypto.so.0		base-rump-shlib
 ./usr/lib/librumpkern_crypto.so.0.0		base-rump-shlib
 ./usr/lib/librumpkern_ksem.so			base-rump-shlib
 ./usr/lib/librumpkern_ksem.so.0			base-rump-shlib
 ./usr/lib/librumpkern_ksem.so.0.0		base-rump-shlib
-./usr/lib/librumpkern_solaris.so		base-rump-shlib
-./usr/lib/librumpkern_solaris.so.0		base-rump-shlib
-./usr/lib/librumpkern_solaris.so.0.0		base-rump-shlib
+./usr/lib/librumpkern_solaris.so		base-rump-shlib		zfs
+./usr/lib/librumpkern_solaris.so.0		base-rump-shlib		zfs
+./usr/lib/librumpkern_solaris.so.0.0		base-rump-shlib		zfs
 ./usr/lib/librumpkern_tty.so			base-rump-shlib
 ./usr/lib/librumpkern_tty.so.0			base-rump-shlib
 ./usr/lib/librumpkern_tty.so.0.0		base-rump-shlib
