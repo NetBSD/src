@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1572 2011/01/18 23:12:37 jruoho Exp $
+#	$NetBSD: mi,v 1.1573 2011/01/19 20:34:23 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7655,8 +7655,10 @@
 ./usr/share/man/cat3/prop_array_make_immutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_mutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_recv_ioctl.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_recv_syscall.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_remove.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_send_ioctl.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_send_syscall.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_set_bool.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_set_cstring.0	comp-c-catman		.cat
@@ -7718,9 +7720,11 @@
 ./usr/share/man/cat3/prop_dictionary_make_immutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_mutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_recv_ioctl.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_recv_syscall.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_remove.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_remove_keysym.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_send_ioctl.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_send_syscall.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_sendrecv_ioctl.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_set.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_set_bool.0	comp-c-catman		.cat
@@ -7763,6 +7767,7 @@
 ./usr/share/man/cat3/prop_object_retain.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_type.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_send_ioctl.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_send_syscall.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_string.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_string_append.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_string_append_cstring.0	comp-c-catman		.cat
@@ -13658,8 +13663,10 @@
 ./usr/share/man/html3/prop_array_make_immutable.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_mutable.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_recv_ioctl.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_array_recv_syscall.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_remove.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_send_ioctl.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_array_send_syscall.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_set.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_set_bool.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_array_set_cstring.html	comp-c-htmlman		html
@@ -13721,9 +13728,11 @@
 ./usr/share/man/html3/prop_dictionary_make_immutable.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_mutable.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_recv_ioctl.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_dictionary_recv_syscall.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_remove.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_remove_keysym.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_send_ioctl.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_dictionary_send_syscall.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_sendrecv_ioctl.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_set.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_dictionary_set_bool.html	comp-c-htmlman		html
@@ -13766,6 +13775,7 @@
 ./usr/share/man/html3/prop_object_retain.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_object_type.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_send_ioctl.html	comp-c-htmlman		html
+./usr/share/man/html3/prop_send_syscall.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_string.html		comp-c-htmlman		html
 ./usr/share/man/html3/prop_string_append.html	comp-c-htmlman		html
 ./usr/share/man/html3/prop_string_append_cstring.html	comp-c-htmlman		html
@@ -19653,8 +19663,10 @@
 ./usr/share/man/man3/prop_array_make_immutable.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_mutable.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_recv_ioctl.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_recv_syscall.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_remove.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_send_ioctl.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_send_syscall.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_set.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_set_bool.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_set_cstring.3	comp-c-man		.man
@@ -19716,9 +19728,11 @@
 ./usr/share/man/man3/prop_dictionary_make_immutable.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_mutable.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_recv_ioctl.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_recv_syscall.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_remove.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_remove_keysym.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_send_ioctl.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_send_syscall.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_sendrecv_ioctl.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_set.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_set_bool.3	comp-c-man		.man
@@ -19761,6 +19775,7 @@
 ./usr/share/man/man3/prop_object_retain.3	comp-c-man		.man
 ./usr/share/man/man3/prop_object_type.3		comp-c-man		.man
 ./usr/share/man/man3/prop_send_ioctl.3		comp-c-man		.man
+./usr/share/man/man3/prop_send_syscall.3	comp-c-man		.man
 ./usr/share/man/man3/prop_string.3		comp-c-man		.man
 ./usr/share/man/man3/prop_string_append.3	comp-c-man		.man
 ./usr/share/man/man3/prop_string_append_cstring.3	comp-c-man		.man
