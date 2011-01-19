@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.56 2011/01/19 02:25:17 uwe Exp $
+.\"	$NetBSD: sysctl.7,v 1.57 2011/01/19 08:34:19 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,13 +133,13 @@ for more information.
 .Ss The vfs.* subtree
 A distinguished second level name,
 .Li vfs.generic ( VFS_GENERIC ) ,
-is used to get general information about all filesystems.
+is used to get general information about all file systems.
 It has the following third level identifiers:
 .Bl -tag -width "123456"
 .It Li vfs.generic.maxtypenum ( VFS_MAXTYPENUM )
-The highest valid filesystem type number.
+The highest valid file system type number.
 .It Li vfs.generic.conf ( VFS_CONF )
-Returns configuration information about the file-system type given as a fourth
+Returns configuration information about the file system type given as a fourth
 level identifier.
 .El
 .Pp
@@ -158,15 +158,15 @@ For each transaction log commit, print the number of bytes written
 and the time it took to commit as seconds.nanoseconds.
 .El
 .Pp
-The remaining second level identifiers are the file-system names, identified
+The remaining second level identifiers are the file system names, identified
 by the type number returned by a
 .Xr statvfs 2
 call or from
 .Li vfs.generic.conf .
 .Pp
-The third level identifiers available for each filesystem
+The third level identifiers available for each file system
 are given in the header file that defines the mount
-argument structure for that filesystem.
+argument structure for that file system.
 .Ss The hw.* subtree
 The string and integer information available for the
 .Li hw
@@ -1058,7 +1058,7 @@ Each mount will be under its own
 .No tableN
 node.
 Under each node there will be three variables, indicating the mount
-point, the file-system type, and the number of entries.
+point, the file system type, and the number of entries.
 .It Li kern.veriexec.strict
 Controls the strict level of Veriexec.
 See
