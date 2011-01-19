@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.14 2010/12/14 08:04:14 pooka Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.15 2011/01/19 20:34:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ prop_array_externalize_to_pref(prop_array_t array, struct plistref *prefp)
 		errno = rv;	/* pass up error value in errno */
 	return (rv == 0);
 }
+__strong_alias(prop_array_send_syscall, prop_array_externalize_to_pref)
 
 /*
  * prop_dictionary_externalize_to_pref --
@@ -106,6 +107,8 @@ prop_dictionary_externalize_to_pref(prop_dictionary_t dict, struct plistref *pre
 		errno = rv;	/* pass up error value in errno */
 	return (rv == 0);
 }
+__strong_alias(prop_dictionary_send_syscall,
+    prop_dictionary_externalize_to_pref)
 
 static int
 _prop_object_send_ioctl(prop_object_t obj, int fd, unsigned long cmd)
@@ -218,6 +221,31 @@ prop_dictionary_recv_ioctl(int fd, unsigned long cmd, prop_dictionary_t *dictp)
 		return (errno);
 
 	return (_prop_object_internalize_from_pref(&pref, PROP_TYPE_DICTIONARY,
+					 (prop_object_t *)dictp));
+}
+
+/*
+ * prop_array_recv_syscall --
+ *	Receive an array from the kernel as pref.
+ *	Pref's buf is freed on exit
+ */
+bool
+prop_array_recv_syscall(const struct plistref *pref, prop_array_t *arrayp)
+{
+	return (_prop_object_internalize_from_pref(pref, PROP_TYPE_ARRAY,
+					 (prop_object_t *)arrayp));
+}
+
+/*
+ * prop_dictionary_recv_syscall --
+ *	Receive a dictionary from the kernel as pref.
+ *	Pref's buf is freed on exit
+ */
+bool
+prop_dictionary_recv_syscall(const struct plistref *pref,
+    prop_dictionary_t *dictp)
+{
+	return (_prop_object_internalize_from_pref(pref, PROP_TYPE_DICTIONARY,
 					 (prop_object_t *)dictp));
 }
 
@@ -385,8 +413,7 @@ prop_dictionary_copyin_ioctl(const struct plistref *pref, const u_long cmd,
 }
 
 static int
-_prop_object_copyout_ioctl(struct plistref *pref, const u_long cmd,
-			   prop_object_t obj)
+_prop_object_copyout(struct plistref *pref, prop_object_t obj)
 {
 	struct lwp *l = curlwp;		/* XXX */
 	struct proc *p = l->l_proc;
@@ -394,9 +421,6 @@ _prop_object_copyout_ioctl(struct plistref *pref, const u_long cmd,
 	size_t len, rlen;
 	int error = 0;
 	vaddr_t uaddr;
-
-	if ((cmd & IOC_OUT) == 0)
-		return (EFAULT);
 
 	switch (prop_object_type(obj)) {
 	case PROP_TYPE_ARRAY:
@@ -443,6 +467,36 @@ _prop_object_copyout_ioctl(struct plistref *pref, const u_long cmd,
 }
 
 /*
+ * prop_array_copyout --
+ *	Copy out an array to a syscall arg.
+ */
+int
+prop_array_copyout(struct plistref *pref, prop_array_t *arrayp)
+{
+	return (_prop_object_copyout(pref, (prop_object_t *)arrayp));
+}
+
+/*
+ * prop_dictionary_copyout --
+ *	Copy out a dictionary to a syscall arg.
+ */
+int
+prop_dictionary_copyout(struct plistref *pref, prop_dictionary_t *dictp)
+{
+	return (_prop_object_copyout(pref, (prop_object_t *)dictp));
+}
+
+static int
+_prop_object_copyout_ioctl(struct plistref *pref, const u_long cmd,
+			   prop_object_t obj)
+{
+	if ((cmd & IOC_OUT) == 0)
+		return (EFAULT);
+	return _prop_object_copyout(pref, obj);
+}
+
+
+/*
  * prop_array_copyout_ioctl --
  *	Copy out an array being received with an ioctl.
  */
@@ -461,7 +515,8 @@ int
 prop_dictionary_copyout_ioctl(struct plistref *pref, const u_long cmd,
 			      prop_dictionary_t dict)
 {
-	return (_prop_object_copyout_ioctl(pref, cmd, dict));
+	return (
+	    _prop_object_copyout_ioctl(pref, cmd, dict));
 }
 #endif /* _KERNEL */
 

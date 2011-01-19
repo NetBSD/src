@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2009/10/10 18:06:54 bad Exp $
+#	$NetBSD: Makefile,v 1.18 2011/01/19 20:34:24 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,12 @@ MLINKS+= prop_send_ioctl.3 prop_array_recv_ioctl.3
 MLINKS+= prop_send_ioctl.3 prop_dictionary_send_ioctl.3
 MLINKS+= prop_send_ioctl.3 prop_dictionary_recv_ioctl.3
 MLINKS+= prop_send_ioctl.3 prop_dictionary_sendrecv_ioctl.3
+
+MAN+=	prop_send_syscall.3
+MLINKS+= prop_send_syscall.3 prop_array_send_syscall.3
+MLINKS+= prop_send_syscall.3 prop_array_recv_syscall.3
+MLINKS+= prop_send_syscall.3 prop_dictionary_send_syscall.3
+MLINKS+= prop_send_syscall.3 prop_dictionary_recv_syscall.3
 
 MAN+=	prop_dictionary_util.3
 MLINKS+= prop_dictionary_util.3 prop_dictionary_get_bool.3
