@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.17 2011/01/17 15:57:04 pooka Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.18 2011/01/19 10:21:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.17 2011/01/17 15:57:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.18 2011/01/19 10:21:16 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.17 2011/01/17 15:57:04 pooka Exp 
 #include <sys/stat.h>
 #include <sys/socketvar.h>
 #include <sys/vnode.h>
-#include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/dirent.h>
