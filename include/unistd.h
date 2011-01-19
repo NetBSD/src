@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.124 2010/08/27 08:40:38 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.125 2011/01/19 19:21:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
 #include <sys/types.h>
 #include <sys/unistd.h>
 
+#if _FORTIFY_SOURCE > 0
+#include <ssp/unistd.h>
+#endif
 
 /*
  * IEEE Std 1003.1-90
@@ -107,7 +110,9 @@ int	 execve(const char *, char * const *, char * const *);
 int	 execvp(const char *, char * const *);
 pid_t	 fork(void);
 long	 fpathconf(int, int);
+#if __SSP_FORTIFY_LEVEL == 0
 char	*getcwd(char *, size_t);
+#endif
 gid_t	 getegid(void);
 uid_t	 geteuid(void);
 gid_t	 getgid(void);
@@ -123,7 +128,9 @@ int	 link(const char *, const char *);
 long	 pathconf(const char *, int);
 int	 pause(void);
 int	 pipe(int *);
+#if __SSP_FORTIFY_LEVEL == 0
 ssize_t	 read(int, void *, size_t);
+#endif
 int	 rmdir(const char *);
 int	 setgid(gid_t);
 int	 setpgid(pid_t, pid_t);
@@ -253,7 +260,9 @@ int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
 int	 lchown(const char *, uid_t, gid_t);
 #endif
 int	 lockf(int, int, off_t);
+#if __SSP_FORTIFY_LEVEL == 0
 ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
+#endif
 void	*sbrk(intptr_t);
 /* XXX prototype wrong! */
 int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
@@ -355,8 +364,4 @@ extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif
 
 __END_DECLS
-
-#if _FORTIFY_SOURCE > 0
-#include <ssp/unistd.h>
-#endif
 #endif /* !_UNISTD_H_ */
