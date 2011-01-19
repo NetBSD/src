@@ -1,4 +1,4 @@
-.\" $NetBSD: glob.7,v 1.2 2011/01/19 00:21:19 uwe Exp $
+.\" $NetBSD: glob.7,v 1.3 2011/01/19 00:33:10 uwe Exp $
 .\"
 .\"	$OpenBSD: glob.7,v 1.3 2009/12/26 15:24:54 schwarze Exp $
 .\"
@@ -41,7 +41,7 @@ A glob pattern is a word containing one or more unquoted
 or
 .Ql *
 characters, or
-.Dq [..]
+.Dq Li [..]
 sequences.
 .Pp
 Globs should not be confused with the more powerful
@@ -52,21 +52,21 @@ expressions and globs, their meaning is different.
 .Pp
 The pattern elements have the following meaning:
 .Bl -tag -width Ds
-.It \&?
+.It Li \&?
 Matches any single character.
-.It \&*
+.It Li \&*
 Matches any sequence of zero or more characters.
-.It [..]
+.It Li [..]
 Matches any of the characters inside the brackets.
 Ranges of characters can be specified by separating two characters by a
-.Ql -
+.Ql \-
 (e.g.\&
-.Dq [a0-9]
+.Dq Li [a0-9]
 matches the letter
 .Sq a
 or any digit).
 In order to represent itself, a
-.Ql -
+.Ql \-
 must either be quoted or the first or last character in the character list.
 Similarly, a
 .Ql \&]
@@ -80,9 +80,9 @@ represent itself it must be quoted or appear later in the list.
 Within a bracket expression, the name of a
 .Em character class
 enclosed in
-.Sq [:
+.Ql [:
 and
-.Sq :]
+.Ql :]
 stands for the list of all characters belonging to that class.
 Supported character classes:
 .Bl -column ".Li xdigit" ".Li xdigit" ".Li xdigit" -offset indent
@@ -94,10 +94,11 @@ Supported character classes:
 These match characters using the macros specified in
 .Xr ctype 3 .
 A character class may not be used as an endpoint of a range.
-.It [!..]
-Like [..],
+.It Li [!..]
+Like
+.Li [..] ,
 except it matches any character not inside the brackets.
-.It \e
+.It Li \e
 Matches the character following it verbatim.
 This is useful to quote the special characters
 .Ql \&? ,
@@ -107,7 +108,7 @@ and
 .Ql \e
 such that they lose their special meaning.
 For example, the pattern
-.Dq \e\e\e\&*\e[x]\e\&?
+.Dq Li \e\e\e\&*\e[x]\e\&?
 matches the string
 .Dq \e\&*[x]\&? .
 .El
@@ -119,7 +120,7 @@ is not matched by a
 or
 .Ql * ,
 character or by a
-.Dq [..]
+.Dq Li [..]
 sequence.
 Thus,
 .Pa /usr/*/*/X11
