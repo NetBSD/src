@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.19 2008/04/28 20:23:41 martin Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.20 2011/01/19 10:21:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.19 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.20 2011/01/19 10:21:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.19 2008/04/28 20:23:41 martin Exp 
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <machine/limits.h>
