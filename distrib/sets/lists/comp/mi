@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1573 2011/01/19 20:34:23 bouyer Exp $
+#	$NetBSD: mi,v 1.1574 2011/01/19 21:07:14 he Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2784,16 +2784,16 @@
 ./usr/lib/librumpfs_union.a			comp-c-lib
 ./usr/lib/librumpfs_union_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_zfs.a			comp-c-lib
-./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		profile
+./usr/lib/librumpfs_zfs.a			comp-c-lib		zfs
+./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		profile,zfs
 ./usr/lib/librumpkern_crypto.a			comp-c-lib
 ./usr/lib/librumpkern_crypto_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_crypto_p.a			comp-c-proflib		profile
 ./usr/lib/librumpkern_ksem.a			comp-c-lib
 ./usr/lib/librumpkern_ksem_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_ksem_p.a			comp-c-proflib		profile
-./usr/lib/librumpkern_solaris.a			comp-c-lib
-./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile
+./usr/lib/librumpkern_solaris.a			comp-c-lib		zfs
+./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile,zfs
 ./usr/lib/librumpkern_tty.a			comp-c-lib
 ./usr/lib/librumpkern_tty_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_tty_p.a			comp-c-proflib		profile
