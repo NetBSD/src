@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.4 2010/12/22 19:43:33 jruoho Exp $	*/
+/*	$NetBSD: ssp.h,v 1.5 2011/01/19 19:21:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,21 +43,19 @@
 # endif
 #endif
 
-#define __ssp_alias_name(fun) __ ## fun ## _alias
-#ifdef _NAMESPACE_H_
-#define __ssp_alias_func(fun, args) ___ ## fun ## _alias args
-#else
-#define __ssp_alias_func(fun, args) __ssp_alias_name(fun) args
-#endif
+#define __ssp_weak_name(fun) _ ## fun
 #define __ssp_inline static __inline __attribute__((__always_inline__))
+
 #define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
 #define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
+
 #define __ssp_redirect_raw(rtype, fun, args, call, bos) \
-__ssp_inline rtype __ssp_alias_name(fun) args; \
-__ssp_inline rtype __ssp_alias_name(fun) args { \
+rtype __ssp_weak_name(fun) args; \
+__ssp_inline rtype fun args; \
+__ssp_inline rtype fun args { \
 	if (bos(__buf) != (size_t)-1 && __len > bos(__buf)) \
 		__chk_fail(); \
-	return fun call; \
+	return __ssp_weak_name(fun) call; \
 }
 
 #define __ssp_redirect(rtype, fun, args, call) \
