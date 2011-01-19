@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.58 2011/01/14 06:02:57 nisimura Exp $	*/
+/*	$NetBSD: atactl.c,v 1.59 2011/01/19 07:55:12 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.58 2011/01/14 06:02:57 nisimura Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.59 2011/01/19 07:55:12 nisimura Exp $");
 #endif
 
 
@@ -475,7 +475,7 @@ device_smart_temp(struct ata_smart_attr *attr, uint64_t raw_value)
 {
 	printf("%" PRIu8, attr->raw[0]);
 	if (attr->raw[0] != raw_value)
-		printf(" Lifetime max/min %" PRIu8 "/%" PRIu8, 
+		printf(" Lifetime min/max %" PRIu8 "/%" PRIu8, 
 		    attr->raw[2], attr->raw[4]);
 }
 
