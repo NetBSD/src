@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.20 2010/04/18 23:47:51 jym Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.21 2011/01/19 21:39:41 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.20 2010/04/18 23:47:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.21 2011/01/19 21:39:41 jmcneill Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -694,9 +694,14 @@ cpu_identify(struct cpu_info *ci)
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s %d86-class",
 	    cpu_vendor_names[cpu_vendor], cpu_class + 3);
-	aprint_normal(": %s", cpu_model);
-	if (ci->ci_data.cpu_cc_freq != 0)
-		aprint_normal(", %dMHz", (int)(ci->ci_data.cpu_cc_freq / 1000000));
+	if (cpu_brand_string[0] != '\0') {
+		aprint_normal(": %s", cpu_brand_string);
+	} else {
+		aprint_normal(": %s", cpu_model);
+		if (ci->ci_data.cpu_cc_freq != 0)
+			aprint_normal(", %dMHz",
+			    (int)(ci->ci_data.cpu_cc_freq / 1000000));
+	}
 	if (ci->ci_signature != 0)
 		aprint_normal(", id 0x%x", ci->ci_signature);
 	aprint_normal("\n");
