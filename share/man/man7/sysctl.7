@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.55 2011/01/09 22:21:55 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.56 2011/01/19 02:25:17 uwe Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd January 9, 2011
+.Dd January 19, 2011
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -69,26 +69,28 @@ See the
 .Xr sysctl 3
 manual page for programming examples.
 .Ss Top level names
-The top level names are defined with a CTL_ prefix in
+The top level names are defined with a
+.Va CTL_
+prefix in
 .In sys/sysctl.h ,
 and are as follows.
 The next and subsequent levels down are found in the include files
 listed here, and described in separate sections below.
-.Bl -column security CTL_SECURITY "Next level names" "High kernel limits"
-.It Sy Name	Constant	Next level names	Description
-.It kern	CTL_KERN	sys/sysctl.h	High kernel limits
-.It vm	CTL_VM	uvm/uvm_param.h	Virtual memory
-.It vfs	CTL_VFS	sys/mount.h	Filesystem
-.It net	CTL_NET	sys/socket.h	Networking
-.It debug	CTL_DEBUG	sys/sysctl.h	Debugging
-.It hw	CTL_HW	sys/sysctl.h	Generic CPU, I/O
-.It machdep	CTL_MACHDEP	sys/sysctl.h	Machine dependent
-.It user	CTL_USER	sys/sysctl.h	User-level
-.It ddb	CTL_DDB	sys/sysctl.h	In-kernel debugger
-.It proc	CTL_PROC	sys/sysctl.h	Per-process
-.It vendor	CTL_VENDOR	?	Vendor specific
-.It emul	CTL_EMUL	sys/sysctl.h	Emulation settings
-.It security	CTL_SECURITY	sys/sysctl.h	Security settings
+.Bl -column "security" ".Dv CTL_SECURITY" ".In uvm/uvm_param.h" "High kernel limits"
+.It Sy Name  Ta Sy Constant     Ta Sy Next level names Ta Sy Description
+.It kern     Ta Dv CTL_KERN     Ta In sys/sysctl.h     Ta High kernel limits
+.It vm       Ta Dv CTL_VM       Ta In uvm/uvm_param.h  Ta Virtual memory
+.It vfs      Ta Dv CTL_VFS      Ta In sys/mount.h      Ta Filesystem
+.It net      Ta Dv CTL_NET      Ta In sys/socket.h     Ta Networking
+.It debug    Ta Dv CTL_DEBUG    Ta In sys/sysctl.h     Ta Debugging
+.It hw       Ta Dv CTL_HW       Ta In sys/sysctl.h     Ta Generic CPU, I/O
+.It machdep  Ta Dv CTL_MACHDEP  Ta In sys/sysctl.h     Ta Machine dependent
+.It user     Ta Dv CTL_USER     Ta In sys/sysctl.h     Ta User-level
+.It ddb      Ta Dv CTL_DDB      Ta In sys/sysctl.h     Ta In-kernel debugger
+.It proc     Ta Dv CTL_PROC     Ta In sys/sysctl.h     Ta Per-process
+.It vendor   Ta Dv CTL_VENDOR   Ta ?                   Ta Vendor specific
+.It emul     Ta Dv CTL_EMUL     Ta In sys/sysctl.h     Ta Emulation settings
+.It security Ta Dv CTL_SECURITY Ta In sys/sysctl.h     Ta Security settings
 .El
 .Ss The debug.* subtree
 The debugging variables vary from system to system.
@@ -100,7 +102,7 @@ Each time it runs,
 gets the list of debugging variables from the kernel and
 displays their current values.
 The system defines twenty
-.Va ( struct ctldebug )
+.Vt ( struct ctldebug )
 variables named
 .Dv debug0
 through
@@ -110,7 +112,7 @@ individually initialized at the location of their associated variable.
 The loader prevents multiple use of the same variable by issuing errors
 if a variable is initialized in more than one place.
 For example, to export the variable
-.Dv dospecialcheck
+.Va dospecialcheck
 as a debugging variable, the following declaration would be used:
 .Pp
 .Bd -literal -offset indent -compact
@@ -133,10 +135,10 @@ A distinguished second level name,
 .Li vfs.generic ( VFS_GENERIC ) ,
 is used to get general information about all filesystems.
 It has the following third level identifiers:
-.Bl -tag -width "vfs.generic.maxtypenum (VFS_MAXTYPENUM)"
-.It vfs.generic.maxtypenum ( VFS_MAXTYPENUM )
+.Bl -tag -width "123456"
+.It Li vfs.generic.maxtypenum ( VFS_MAXTYPENUM )
 The highest valid filesystem type number.
-.It vfs.generic.conf ( VFS_CONF )
+.It Li vfs.generic.conf ( VFS_CONF )
 Returns configuration information about the file-system type given as a fourth
 level identifier.
 .El
@@ -145,13 +147,13 @@ A second level name for controlling the
 .Xr wapbl 4
 (Write Ahead Physical Block Logging file system journalling)
 capabilities with the following third level identifiers:
-.Bl -tag -width "vfs.wapbl.flush_disk_cache"
-.It vfs.wapbl.flush_disk_cache
+.Bl -tag -width "123456"
+.It Li vfs.wapbl.flush_disk_cache
 Controls whether to attempt to flush the disk cache on each commit.
 It defaults to 1 and it should always be on to ensure data integrity in
 case of a crash.
 For slow disks, turning it off can improve performance.
-.It vfs.wapbl.verbose_commit
+.It Li vfs.wapbl.verbose_commit
 For each transaction log commit, print the number of bytes written
 and the time it took to commit as seconds.nanoseconds.
 .El
@@ -161,6 +163,7 @@ by the type number returned by a
 .Xr statvfs 2
 call or from
 .Li vfs.generic.conf .
+.Pp
 The third level identifiers available for each filesystem
 are given in the header file that defines the mount
 argument structure for that filesystem.
@@ -194,10 +197,10 @@ Alignment constraint for all possible data types.
 This shows the value
 .Dv ALIGNBYTES
 in
-.Pa /usr/include/machine/param.h ,
+.In machine/param.h ,
 at the kernel compilation time.
 .It Li hw.byteorder ( HW_BYTEORDER )
-The byteorder (4,321, or 1,234).
+The byteorder (4321, or 1234).
 .It Li hw.cnmagic ( HW_CNMAGIC )
 The console magic key sequence.
 .It Li hw.disknames ( HW_DISKNAMES )
@@ -209,15 +212,15 @@ collected on them.
 Return statistical information on the NFS mounts, disk and tape
 devices on the system.
 An array of
-.Va struct io_sysctl
+.Vt struct io_sysctl
 structures is returned,
 whose size depends on the current number of such objects in the system.
 The third level name is the size of the
-.Va struct io_sysctl .
+.Vt struct io_sysctl .
 The type of object can be determined by examining the
 .Va type
 element of
-.Va struct io_sysctl .
+.Vt struct io_sysctl .
 Which can be
 .Dv IOSTAT_DISK
 (disk drive),
@@ -360,7 +363,7 @@ The maximum number of asynchronous I/O operations.
 .It Li kern.arandom
 This variable picks a random number each time it is queried.
 The used random number generator
-.Pq Tn RNG
+.Pf ( Tn RNG )
 is based on
 .Xr arc4random 3 .
 .It Li kern.argmax ( KERN_ARGMAX )
@@ -372,7 +375,7 @@ Flags passed from the boot loader; see
 for the meanings of the flags.
 .It Li kern.boottime ( KERN_BOOTTIME )
 A
-.Va struct timeval
+.Vt struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
 .\" .It Li kern.bufq
@@ -381,7 +384,7 @@ This structure contains the time that the system was booted.
 The scheduler exponential decay value.
 .It Li kern.clockrate ( KERN_CLOCKRATE )
 A
-.Va struct clockinfo
+.Vt struct clockinfo
 structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
@@ -428,7 +431,9 @@ Same syntax as kern.defcorename.
 .It Li kern.cp_id ( KERN_CP_ID )
 Mapping of CPU number to CPU id.
 .It Li kern.cp_time ( KERN_CP_TIME )
-Returns an array of CPUSTATES uint64_ts.
+Returns an array of
+.Dv CPUSTATES
+.Vt uint64_t Ns s.
 This array contains the
 number of clock ticks spent in different CPU states.
 On multi-processor systems, the sum across all CPUs is returned unless
@@ -459,7 +464,7 @@ and
 .Xr core 5
 for format of this template).
 The default value is
-.Nm %n.core
+.Pa %n.core
 and can be changed with the kernel configuration option
 .Cd options DEFCORENAME
 (see
@@ -471,7 +476,7 @@ Detach all devices at shutdown.
 Get or set the YP domain name.
 .It Li kern.drivers ( KERN_DRIVERS )
 Return an array of
-.Va struct kinfo_drivers
+.Vt struct kinfo_drivers
 that contains the name and major device numbers of all the device drivers
 in the current kernel.
 The
@@ -486,9 +491,9 @@ Perform a crash dump on system
 .It Li kern.file ( KERN_FILE )
 Return the entire file table.
 The returned data consists of a single
-.Va struct filelist
+.Vt struct filelist
 followed by an array of
-.Va struct file ,
+.Vt struct file ,
 whose size depends on the current number of such objects in the system.
 .It Li kern.forkfsleep ( KERN_FORKFSLEEP )
 If
@@ -506,7 +511,7 @@ The kernel fixed-point scale factor.
 .It Li kern.fsync ( KERN_FSYNC )
 Return 1 if the POSIX 1003.1b File Synchronization Option is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.hardclock_ticks ( KERN_HARDCLOCK_TICKS )
 Returns the number of
 .Xr hardclock 9
@@ -523,7 +528,7 @@ Get or set the
 .Xr hostname 1 .
 .It Li kern.iov_max ( KERN_IOV_MAX )
 Return the maximum number of
-.Va iovec
+.Vt iovec
 structures that a process has available for use with
 .Xr preadv 2 ,
 .Xr pwritev 2 ,
@@ -556,15 +561,15 @@ The third level names for the ipc variables are detailed below.
 .It Li kern.ipc.sysvmsg ( KERN_SYSVIPC_MSG )
 Returns 1 if System V style message queue functionality is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.ipc.sysvsem ( KERN_SYSVIPC_SEM )
 Returns 1 if System V style semaphore functionality is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.ipc.sysvshm ( KERN_SYSVIPC_SHM )
 Returns 1 if System V style share memory functionality is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.ipc.sysvipc_info ( KERN_SYSVIPC_INFO )
 Return System V style IPC configuration and run-time information.
 The fourth level name selects the System V style IPC facility.
@@ -619,9 +624,11 @@ Max number of number of semaphores in system.
 Max number of undo structures in system.
 .El
 .It Li kern.job_control ( KERN_JOB_CONTROL )
-Return 1 if job control is available on this system, otherwise 0.
+Return 1 if job control is available on this system, otherwise\ 0.
 .It Li kern.labeloffset ( KERN_LABELOFFSET )
-The offset within the sector specified by KERN_LABELSECTOR of the
+The offset within the sector specified by
+.Dv KERN_LABELSECTOR
+of the
 .Xr disklabel 5 .
 .It Li kern.labelsector ( KERN_LABELSECTOR )
 The sector number containing the
@@ -638,7 +645,7 @@ file, and whether the coredump was created.
 .It Li kern.mapped_files ( KERN_MAPPED_FILES )
 Returns 1 if the POSIX 1003.1b Memory Mapped Files Option is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.maxfiles ( KERN_MAXFILES )
 The maximum number of open files that may be open in the system.
 .It Li kern.maxpartitions ( KERN_MAXPARTITIONS )
@@ -692,15 +699,15 @@ direct-mapped pool pages.
 .It Li kern.memlock ( KERN_MEMLOCK )
 Returns 1 if the POSIX 1003.1b Process Memory Locking Option is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.memlock_range ( KERN_MEMLOCK_RANGE )
 Returns 1 if the POSIX 1003.1b Range Memory Locking Option is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.memory_protection ( KERN_MEMORY_PROTECTION )
 Returns 1 if the POSIX 1003.1b Memory Protection Option is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.module
 Settings related to kernel modules.
 The third level names for the settings are described below.
@@ -724,7 +731,7 @@ debug messages related to kernel modules.
 .It Li kern.monotonic_clock ( KERN_MONOTONIC_CLOCK )
 Returns the standard version the implementation of the POSIX 1003.1b
 Monotonic Clock Option conforms to,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.mqueue
 Settings related to
 .Tn POSIX
@@ -767,7 +774,7 @@ The maximum number of supplemental groups.
 .\" XXX: Undocumented.
 .It Li kern.ntptime ( KERN_NTPTIME )
 A
-.Va struct ntptimeval
+.Vt struct ntptimeval
 structure is returned.
 This structure contains data used by the
 .Xr ntpd 8
@@ -799,13 +806,17 @@ The variables are as follows:
 .It Li kern.pipe.kvasiz ( KERN_PIPE_KVASIZ )
 Amount of kernel memory consumed by pipe buffers.
 .It Li kern.pipe.maxbigpipes ( KERN_PIPE_MAXBIGPIPES )
-Maximum number of "big" pipes.
+Maximum number of
+.Dq big
+pipes.
 .It Li kern.pipe.maxkvasz ( KERN_PIPE_MAXKVASZ )
 Maximum amount of kernel memory to be used for pipes.
 .It Li kern.pipe.limitkva ( KERN_PIPE_LIMITKVA )
 Limit for direct transfers via page loan.
 .It Li kern.pipe.nbigpipes ( KERN_PIPE_NBIGPIPES )
-Number of "big" pipes.
+Number of
+.Dq big
+pipes.
 .El
 .\" XXX: Undocumented .It Li kern.posix ( ? )
 .\"	 This is a node in which the only variable is semmax.
@@ -822,14 +833,14 @@ The version of
 and its
 Barriers
 option to which the system attempts to conform,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.posix_reader_writer_locks ( KERN_POSIX_READER_WRITER_LOCKS )
 The version of
 .St -p1003.1
 and its
 Read-Write Locks
 option to which the system attempts to conform,
-otherwise 0.
+otherwise\ 0.
 .\".It Li kern.posix_sched
 .\" XXX: Undocumented.
 .It Li kern.posix_semaphores ( KERN_POSIX_SEMAPHORES )
@@ -838,32 +849,32 @@ The version of
 and its
 Semaphores
 option to which the system attempts to conform,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.posix_spin_locks ( KERN_POSIX_SPIN_LOCKS )
 The version of
 .St -p1003.1
 and its
 Spin Locks
 option to which the system attempts to conform,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.posix_threads ( KERN_POSIX_THREADS )
 The version of
 .St -p1003.1
 and its
 Threads
 option to which the system attempts to conform,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.posix_timers ( KERN_POSIX_TIMERS )
 The version of
 .St -p1003.1
 and its
 Timers
 option to which the system attempts to conform,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.proc ( KERN_PROC )
 Return the entire process table, or a subset of it.
 An array of
-.Va struct kinfo_proc
+.Vt struct kinfo_proc
 structures is returned,
 whose size depends on the current number of such objects in the system.
 The third and fourth level numeric names are as follows:
@@ -880,11 +891,13 @@ The third and fourth level numeric names are as follows:
 .It KERN_PROC_UID	A user ID
 .El
 .It Li kern.proc2 ( KERN_PROC2 )
-As for KERN_PROC, but an array of
-.Va struct kinfo_proc2
+As for
+.Dv KERN_PROC ,
+but an array of
+.Vt struct kinfo_proc2
 structures are returned.
 The fifth level name is the size of the
-.Va struct kinfo_proc2
+.Vt struct kinfo_proc2
 and the sixth level name is the number of structures to return.
 .It Li kern.proc_args ( KERN_PROC_ARGS )
 Return the argv or environment strings (or the number thereof)
@@ -901,8 +914,9 @@ The fourth level name is as follows:
 .It Li kern.profiling ( KERN_PROF )
 Return profiling information about the kernel.
 If the kernel is not compiled for profiling,
-attempts to retrieve any of the KERN_PROF values will
-fail with
+attempts to retrieve any of the
+.Dv KERN_PROF
+values will fail with
 .Er EOPNOTSUPP .
 The third level names for the string and integer profiling information
 is detailed below.
@@ -927,11 +941,15 @@ Array indexed by program counter of call-from points.
 Structure giving the sizes of the above arrays.
 .It Li kern.profiling.state ( GPROF_STATE )
 Profiling state.
-If set to GMON_PROF_ON, starts profiling.
-If set to GMON_PROF_OFF, stops profiling.
+If set to
+.Dv GMON_PROF_ON ,
+starts profiling.
+If set to
+.Dv GMON_PROF_OFF ,
+stops profiling.
 .It Li kern.profiling.tos ( GPROF_TOS )
 Array of
-.Va struct tostruct
+.Vt struct tostruct
 describing destination of calls and their counts.
 .El
 .\" .It Li kern.pset
@@ -961,7 +979,7 @@ Maximum amount of kernel memory to be used for socket buffers.
 .It Li kern.synchronized_io ( KERN_SYNCHRONIZED_IO )
 Returns 1 if the POSIX 1003.1b Synchronized I/O Option is available
 on this system,
-otherwise 0.
+otherwise\ 0.
 .It Li kern.timecounter ( dynamic )
 Display and control the timecounter source of the system.
 .Bl -column "kern.timecounter.timestepwarnings" "integer" "Changeable" -offset indent
@@ -1065,9 +1083,9 @@ the system.
 The returned data consists of an array whose size depends on the
 current number of such objects in the system.
 Each element of the array contains the kernel address of a vnode
-.Va struct vnode *
+.Vt struct vnode *
 followed by the vnode itself
-.Va struct vnode .
+.Vt struct vnode .
 .\" XXX: Undocumented: kern.lwp: no children?
 .El
 .Ss The machdep.* subtree
@@ -1103,7 +1121,7 @@ The data is returned as a sequence of routing messages (see
 for the header file, format and meaning).
 The length of each message is contained in the message header.
 .Pp
-The third level name is a protocol number, which is currently always 0.
+The third level name is a protocol number, which is currently always\ 0.
 The fourth level name is an address family, which may be set to 0 to
 select all address families.
 The fifth and sixth level names are as follows:
@@ -1581,7 +1599,7 @@ The number of IPv6 extension headers permitted on incoming IPv6 packets.
 If set to 0, the node will accept as many extension headers as possible.
 .It Li ip6.hashsize
 The size of IPv6 Fast Forward hash table.
-This value must be a power of 2 (64, 256...).
+This value must be a power of 2 (64, 256, ...).
 A larger hash table size results in fewer collisions.
 Also see
 .Li ip6.maxflows .
@@ -1772,7 +1790,7 @@ The variables are as follows:
 .It Li debug
 Turn on debugging message from within the kernel.
 The value is a bitmap, as defined in
-.Pa /usr/include/netkey/key_debug.h .
+.In netkey/key_debug.h .
 .It Li spi_try
 The number of times the kernel will try to obtain an unique SPI
 when it generates it from random number generator.
@@ -1831,9 +1849,12 @@ The template used for the core dump file name (see
 .Xr core 5
 for details).
 The base name must either be
-.Nm core
-or end with the suffix ``.core'' (the super-user may set arbitrary names).
-By default it points to KERN_DEFCORENAME.
+.Pa core
+or end with the suffix
+.Pa .core
+(the super-user may set arbitrary names).
+By default it points to
+.Dv KERN_DEFCORENAME .
 .It Li proc.pid.rlimit ( PROC_PID_LIMIT )
 Return resources limits, as defined for the
 .Xr getrlimit 2
@@ -1841,7 +1862,7 @@ and
 .Xr setrlimit 2
 system calls.
 The fourth level name is one of:
-.Bl -tag -width PROC_PID_LIMIT_MEMLOCKAA
+.Bl -tag -width "123456"
 .It Li proc.pid.rlimit.cputime ( PROC_PID_LIMIT_CPU )
 The maximum amount of CPU time (in seconds) to be used by each process.
 .It Li proc.pid.rlimit.filesize ( PROC_PID_LIMIT_FSIZE )
@@ -1885,7 +1906,8 @@ options.
 .El
 .Pp
 The fifth level name is one of
-.Li soft ( PROC_PID_LIMIT_TYPE_SOFT ) or
+.Li soft ( PROC_PID_LIMIT_TYPE_SOFT )
+or
 .Li hard ( PROC_PID_LIMIT_TYPE_HARD ) ,
 to select respectively the soft or hard limit.
 Both are of type integer.
@@ -2003,27 +2025,27 @@ The maximum length in bytes of a text-processing utility's input
 line.
 .It Li user.posix2_char_term ( USER_POSIX2_CHAR_TERM )
 Return 1 if the system supports at least one terminal type capable of
-all operations described in POSIX 1003.2, otherwise 0.
+all operations described in POSIX 1003.2, otherwise\ 0.
 .It Li user.posix2_c_bind ( USER_POSIX2_C_BIND )
 Return 1 if the system's C-language development facilities support the
-C-Language Bindings Option, otherwise 0.
+C-Language Bindings Option, otherwise\ 0.
 .It Li user.posix2_c_dev ( USER_POSIX2_C_DEV )
 Return 1 if the system supports the C-Language Development Utilities Option,
-otherwise 0.
+otherwise\ 0.
 .It Li user.posix2_fort_dev ( USER_POSIX2_FORT_DEV )
 Return 1 if the system supports the FORTRAN Development Utilities Option,
-otherwise 0.
+otherwise\ 0.
 .It Li user.posix2_fort_run ( USER_POSIX2_FORT_RUN )
 Return 1 if the system supports the FORTRAN Runtime Utilities Option,
-otherwise 0.
+otherwise\ 0.
 .It Li user.posix2_localedef ( USER_POSIX2_LOCALEDEF )
-Return 1 if the system supports the creation of locales, otherwise 0.
+Return 1 if the system supports the creation of locales, otherwise\ 0.
 .It Li user.posix2_sw_dev ( USER_POSIX2_SW_DEV )
 Return 1 if the system supports the Software Development Utilities Option,
-otherwise 0.
+otherwise\ 0.
 .It Li user.posix2_upe ( USER_POSIX2_UPE )
 Return 1 if the system supports the User Portability Utilities Option,
-otherwise 0.
+otherwise\ 0.
 .It Li user.posix2_version ( USER_POSIX2_VERSION )
 The version of POSIX 1003.2 with which the system attempts to comply.
 .It Li user.re_dup_max ( USER_RE_DUP_MAX )
@@ -2096,25 +2118,25 @@ cached file data.
 .It Li vm.loadavg ( VM_LOADAVG )
 Return the load average history.
 The returned data consists of a
-.Va struct loadavg .
+.Vt struct loadavg .
 .It Li vm.maxslp ( VM_MAXSLP )
 The value of the maxslp kernel global variable.
 .It Li vm.vmmeter ( VM_METER )
 Return system wide virtual memory statistics.
 The returned data consists of a
-.Va struct vmtotal .
+.Vt struct vmtotal .
 .It vm.user_va0_disable
-A flag which controls whether user processes can map virtual address 0.
+A flag which controls whether user processes can map virtual address\ 0.
 .It Li vm.uspace ( VM_USPACE )
 The number of bytes allocated for each kernel stack.
 .It Li vm.uvmexp ( VM_UVMEXP )
 Return system wide virtual memory statistics.
 The returned data consists of a
-.Va struct uvmexp .
+.Vt struct uvmexp .
 .It Li vm.uvmexp2 ( VM_UVMEXP2 )
 Return system wide virtual memory statistics.
 The returned data consists of a
-.Va struct uvmexp_sysctl .
+.Vt struct uvmexp_sysctl .
 .\" XXX vm.idlezero
 .El
 .Ss The ddb.* subtree ( CTL_DDB )
