@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.60 2011/01/18 09:28:42 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.61 2011/01/19 00:10:10 uwe Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,6 +70,7 @@
 .ds doc-operating-system-FreeBSD-7.1   7.1
 .ds doc-operating-system-FreeBSD-7.2   7.2
 .ds doc-operating-system-FreeBSD-8.0   8.0
+.ds doc-operating-system-FreeBSD-9.0   9.0
 .\" Platforms not yet in groff distribution
 .ds doc-volume-as-amigappc              amigappc
 .ds doc-volume-as-evbsh5                evbsh5
