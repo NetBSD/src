@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.9 2011/01/16 02:43:10 matt Exp $ */
+/*	$NetBSD: bzero.S,v 1.10 2011/01/19 02:47:01 matt Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -32,7 +32,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bzero.S,v 1.9 2011/01/16 02:43:10 matt Exp $")
+__RCSID("$NetBSD: bzero.S,v 1.10 2011/01/19 02:47:01 matt Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 #ifdef _KERNEL
@@ -74,8 +74,8 @@ cb_memset:
 /*----------------------------------------------------------------------*/
 #ifndef _KERNEL
 		/* First find out cache line size */
-#ifdef PIC
 		mflr	%r9
+#ifdef PIC
 		PIC_GOTSETUP(%r10)
 		mtlr	%r9
 		lwz	%r5,cache_info@got(%r10)
@@ -157,24 +157,27 @@ cb_memset:
 		li	%r8, 0
 		bl	PIC_PLT(_C_LABEL(sysctl))
 1:
-		lwz	%r8, R8_SAVE(%r1)
 		lwz	%r3, R3_SAVE(%r1)
 		lwz	%r4, R4_SAVE(%r1)
+		lwz	%r8, R8_SAVE(%r1)
 		lwz	%r0, R0_SAVE(%r1)
 		lwz	%r9, 4(%r31)
 		lwz	%r31, R31_SAVE(%r1)
 #ifdef PIC
 		lwz	%r30, R30_SAVE(%r1)
 #endif
-		la	%r1, STKFRAME_SZ(%r1)
-		lwz	%r5, 4(%r1)
-		mtlr	%r5
+		addi	%r1, %r1, STKFRAME_SZ
+		lwz	%r0, 4(%r1)
+		mtlr	%r0
 
 		cntlzw	%r6, %r9			/* compute shift value */
 		li	%r5, 31
 		subf	%r5, %r6, %r5
 
 #ifdef PIC
+		mflr	%r9
+		PIC_GOTSETUP(%r10)
+		mtlr	%r9
 		lwz	%r6, cache_sh@got(%r10)
 		stw	%r5, 0(%r6)
 #else
