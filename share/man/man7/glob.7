@@ -1,4 +1,4 @@
-.\" $NetBSD: glob.7,v 1.1 2010/11/30 20:59:10 jruoho Exp $
+.\" $NetBSD: glob.7,v 1.2 2011/01/19 00:21:19 uwe Exp $
 .\"
 .\"	$OpenBSD: glob.7,v 1.3 2009/12/26 15:24:54 schwarze Exp $
 .\"
@@ -85,10 +85,10 @@ and
 .Sq :]
 stands for the list of all characters belonging to that class.
 Supported character classes:
-.Bl -column "xdigit" "xdigit" "xdigit" -offset indent
-.It Li "alnum" Ta "cntrl" Ta "lower" Ta "space"
-.It Li "alpha" Ta "digit" Ta "print" Ta "upper"
-.It Li "blank" Ta "graph" Ta "punct" Ta "xdigit"
+.Bl -column ".Li xdigit" ".Li xdigit" ".Li xdigit" -offset indent
+.It Li "alnum" Ta Li "cntrl" Ta Li "lower" Ta Li "space"
+.It Li "alpha" Ta Li "digit" Ta Li "print" Ta Li "upper"
+.It Li "blank" Ta Li "graph" Ta Li "punct" Ta Li "xdigit"
 .El
 .Pp
 These match characters using the macros specified in
