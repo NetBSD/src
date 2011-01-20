@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2011/01/17 12:42:41 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57 2011/01/20 19:47:40 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -211,6 +211,8 @@ struct clockframe {
 #define	CLKF_PC(framep)		((framep)->cf_pc)
 #define	CLKF_INTR(framep)	((framep)->cf_flags & TFF_INTR)
 #define	CLKF_USERMODE(framep)	((framep)->cf_flags & T_USER)
+
+int	clock_intr(void *);
 
 #define	cpu_signotify(l)	(setsoftast(l))
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast(l))
