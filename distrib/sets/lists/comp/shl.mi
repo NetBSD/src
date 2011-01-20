@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.152 2011/01/19 21:07:18 he Exp $
+# $NetBSD: shl.mi,v 1.151 2011/01/18 22:21:22 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -147,10 +147,10 @@
 ./usr/lib/librumpfs_umap_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_umapfs_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpfs_union_pic.a			comp-c-piclib
-./usr/lib/librumpfs_zfs_pic.a			comp-c-piclib		zfs
+./usr/lib/librumpfs_zfs_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_crypto_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_ksem_pic.a		comp-c-piclib
-./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib		zfs
+./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib
 ./usr/lib/librumpkern_tty_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_z_pic.a			comp-c-piclib
 ./usr/lib/librumpnet_agr_pic.a		comp-c-piclib

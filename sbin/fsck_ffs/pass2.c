@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.45 2008/02/23 21:41:48 christos Exp $	*/
+/*	$NetBSD: pass2.c,v 1.45.20.1 2011/01/20 14:24:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.45 2008/02/23 21:41:48 christos Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.45.20.1 2011/01/20 14:24:54 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,6 +217,8 @@ pass2(void)
 		}
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;
+		curino.id_uid = iswap32(DIP(dp, uid));
+		curino.id_gid = iswap32(DIP(dp, gid));
 		(void)ckinode(&dino, &curino);
 	}
 
@@ -244,6 +246,8 @@ pass2(void)
 			}
 			curino.id_number = inp->i_number;
 			curino.id_parent = inp->i_parent;
+			curino.id_uid = iswap32(DIP(&dino, uid));
+			curino.id_gid = iswap32(DIP(&dino, gid));
 			(void)ckinode(&dino, &curino);
 		}
 	}

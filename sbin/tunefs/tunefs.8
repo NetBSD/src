@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.38 2009/02/22 20:28:05 ad Exp $
+.\"	$NetBSD: tunefs.8,v 1.38.2.1 2011/01/20 14:24:55 bouyer Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd April 26, 2004
+.Dd December 15, 2010
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@
 .Op Fl m Ar minfree
 .Bk -words
 .Op Fl o Ar optimize_preference
+.Op Fl q Ar quota
 .Ek
 .Ar special | Ar filesys
 .Sh DESCRIPTION
@@ -131,6 +132,22 @@ can be specified as either
 .Li space
 or
 .Li time .
+.It Fl q Ar quota
+enable or disable a quota.
+.Ar quota
+can be one of
+.Li user,
+.Li group,
+.Li nouser
+or
+.Li nogroup
+to enable or disable the specified quota type. Multiple
+.Fl q
+can be used to enable/disable all types at once.
+.Pp
+After enabling a quota,
+.Xr fsck_ffs 8
+has to be run to compute the correct quota values.
 .El
 .Sh SEE ALSO
 .Xr wapbl 4 ,

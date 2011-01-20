@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.42 2009/09/13 18:30:30 bouyer Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.42.2.1 2011/01/20 14:24:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.42 2009/09/13 18:30:30 bouyer Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.42.2.1 2011/01/20 14:24:55 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: tunefs.c,v 1.42 2009/09/13 18:30:30 bouyer Exp $");
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/quota2.h>
 
 #include <machine/bswap.h>
 
@@ -80,6 +81,11 @@ long	dev_bsize = 512;
 int	needswap = 0;
 int	is_ufs2 = 0;
 off_t	sblockloc;
+int	userquota = 0;
+int	groupquota = 0;
+#define Q2_EN  (1)
+#define Q2_IGN (0)
+#define Q2_DIS (-1)
 
 static off_t sblock_try[] = SBLOCKSEARCH;
 
@@ -108,7 +114,7 @@ main(int argc, char *argv[])
 	chg[FS_OPTSPACE] = "space";
 	chg[FS_OPTTIME] = "time";
 
-	while ((ch = getopt(argc, argv, "AFNe:g:h:l:m:o:")) != -1) {
+	while ((ch = getopt(argc, argv, "AFNe:g:h:l:m:o:q:")) != -1) {
 		switch (ch) {
 
 		case 'A':
@@ -160,7 +166,18 @@ main(int argc, char *argv[])
 				    "bad %s (options are `space' or `time')",
 				    "optimization preference");
 			break;
-
+		case 'q':
+			if      (strcmp(optarg, "user") == 0)
+				userquota = Q2_EN;
+			else if (strcmp(optarg, "group") == 0)
+				groupquota = Q2_EN;
+			else if (strcmp(optarg, "nouser") == 0)
+				userquota = Q2_DIS;
+			else if (strcmp(optarg, "nogroup") == 0)
+				groupquota = Q2_DIS;
+			else
+			    errx(11, "invalid quota type %s", optarg);
+			break;
 		default:
 			usage();
 		}
@@ -232,6 +249,51 @@ main(int argc, char *argv[])
 
 	if (logfilesize >= 0)
 		change_log_info(logfilesize);
+	if (userquota == Q2_EN || groupquota == Q2_EN)
+		sblock.fs_flags |= FS_DOQUOTA2;
+	if (sblock.fs_flags & FS_DOQUOTA2) {
+		sblock.fs_quota_magic = Q2_HEAD_MAGIC;
+		switch(userquota) {
+		case Q2_EN:
+			if ((sblock.fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA))
+			    == 0) {
+				printf("enabling user quotas\n");
+				sblock.fs_quota_flags |=
+				    FS_Q2_DO_TYPE(USRQUOTA);
+				sblock.fs_quotafile[USRQUOTA] = 0;
+			}
+			break;
+		case Q2_DIS:
+			if ((sblock.fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA))
+			    != 0) {
+				printf("disabling user quotas\n");
+				sblock.fs_quota_flags &=
+				    ~FS_Q2_DO_TYPE(USRQUOTA);
+			}
+		}
+		switch(groupquota) {
+		case Q2_EN:
+			if ((sblock.fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA))
+			    == 0) {
+				printf("enabling group quotas\n");
+				sblock.fs_quota_flags |=
+				    FS_Q2_DO_TYPE(GRPQUOTA);
+				sblock.fs_quotafile[GRPQUOTA] = 0;
+			}
+			break;
+		case Q2_DIS:
+			if ((sblock.fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA))
+			    != 0) {
+				printf("disabling group quotas\n");
+				sblock.fs_quota_flags &=
+				    ~FS_Q2_DO_TYPE(GRPQUOTA);
+			}
+		}
+	}
+	/*
+	 * if we disabled all quotas, FS_DOQUOTA2 and associated inode(s) will
+	 * be cleared by kernel or fsck.
+	 */
 
 	if (Nflag) {
 		printf("tunefs: current settings of %s\n", special);
@@ -246,6 +308,20 @@ main(int argc, char *argv[])
 		printf("\texpected number of files per directory: %d\n",
 		    sblock.fs_avgfpdir);
 		show_log_info();
+		printf("\tquotas");
+		if (sblock.fs_flags & FS_DOQUOTA2) {
+			if (sblock.fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA)) {
+				printf(" user");
+				if (sblock.fs_quota_flags &
+				    FS_Q2_DO_TYPE(GRPQUOTA))
+					printf(",");
+			}
+			if (sblock.fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA))
+				printf(" group");
+			printf(" enabled\n");
+		} else {
+			printf("disabled\n");
+		}
 		printf("tunefs: no changes made\n");
 		exit(0);
 	}
@@ -403,6 +479,7 @@ usage(void)
 	fprintf(stderr, "\t-l journal log file size (`0' to clear journal)\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
+	fprintf(stderr, "\t-q quota type (`[no]user' or `[no]group')\n");
 	exit(2);
 }
 
