@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.79 2010/08/09 20:23:20 wiz Exp $
+.\"	$NetBSD: newfs.8,v 1.79.2.1 2011/01/20 14:24:54 bouyer Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd August 9, 2010
+.Dd January 13, 2011
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -51,6 +51,7 @@
 .Op Fl n Ar inodes
 .Op Fl O Ar filesystem-format
 .Op Fl o Ar optimization
+.Op Fl q Ar quota
 .Op Fl S Ar sector-size
 .Op Fl s Ar size
 .Op Fl T Ar disk-type
@@ -242,6 +243,16 @@ the default is to optimize for time.
 See
 .Xr tunefs 8
 for more details on how to set this option.
+.It Fl q Ar quota
+enable a quota.
+.Ar quota
+can be one of
+.Li user
+or
+.Li group
+to enable the specified quota type. Multiple
+.Fl q
+can be used to enable all types at once.
 .It Fl s Ar size
 The size of the file system in sectors.
 An

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.204 2011/01/10 04:41:27 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.204.2.1 2011/01/20 14:24:53 bouyer Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -109,7 +109,7 @@ ASM=	access.S acct.S \
 	nfssvc.S __ntp_gettime50.S \
 	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
-	quotactl.S \
+	__quotactl50.S \
 	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 		rmdir.S \
 	sa_register.S sa_stacks.S sa_enable.S sa_setconcurrency.S sa_yield.S \

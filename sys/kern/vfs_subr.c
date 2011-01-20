@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.418 2011/01/17 07:13:33 uebayasi Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.418.2.1 2011/01/20 14:24:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.418 2011/01/17 07:13:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.418.2.1 2011/01/20 14:24:57 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -3021,14 +3021,14 @@ VFS_ROOT(struct mount *mp, struct vnode **a)
 }
 
 int
-VFS_QUOTACTL(struct mount *mp, int a, uid_t b, void *c)
+VFS_QUOTACTL(struct mount *mp, prop_dictionary_t dict)
 {
 	int error;
 
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_LOCK(1, NULL);
 	}
-	error = (*(mp->mnt_op->vfs_quotactl))(mp, a, b, c);
+	error = (*(mp->mnt_op->vfs_quotactl))(mp, dict);
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_UNLOCK_ONE(NULL);
 	}

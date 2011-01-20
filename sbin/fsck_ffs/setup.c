@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.90 2010/01/31 16:04:35 mlelstv Exp $	*/
+/*	$NetBSD: setup.c,v 1.90.2.1 2011/01/20 14:24:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.90 2010/01/31 16:04:35 mlelstv Exp $");
+__RCSID("$NetBSD: setup.c,v 1.90.2.1 2011/01/20 14:24:54 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: setup.c,v 1.90 2010/01/31 16:04:35 mlelstv Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/quota2.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
@@ -205,8 +206,13 @@ setup(const char *dev, const char *origdev)
 	}
 	if (debug)
 		printf("clean = %d\n", sblock->fs_clean);
+
 	if (doswap)
 		doskipclean = 0;
+
+	if (!quota2_check_doquota())
+		doskipclean = 0;
+		
 	if (sblock->fs_clean & FS_ISCLEAN) {
 		if (doskipclean) {
 			if (!quiet)
@@ -536,8 +542,38 @@ setup(const char *dev, const char *origdev)
 	if (debug)
 		printf("isappleufs = %d, dirblksiz = %d\n", isappleufs, dirblksiz);
 
+	if (sblock->fs_flags & FS_DOQUOTA2) {
+		/* allocate the quota hash table */
+		/*
+		 * first compute the size of the hash table
+		 * We know the smallest block size is 4k, so we can use 2k
+		 * for the hash table; as an entry is 8 bytes we can store
+		 * 256 entries. So let start q2h_hash_shift at 8
+		 */
+		for (q2h_hash_shift = 8;
+		    q2h_hash_shift < 15;
+		    q2h_hash_shift++) {
+			if ((sizeof(uint64_t) << (q2h_hash_shift + 1)) +
+			    sizeof(struct quota2_header) > sblock->fs_bsize)
+				break;
+		}
+		q2h_hash_mask = (1 << q2h_hash_shift) - 1;
+		if (debug) {
+			printf("quota hash shift %d, %d entries, mask 0x%x\n",
+			    q2h_hash_shift, (1 << q2h_hash_shift),
+			    q2h_hash_mask);
+		}
+		uquot_user_hash =
+		    malloc((1 << q2h_hash_shift) * sizeof(struct uquot_hash));
+		uquot_group_hash =
+		    malloc((1 << q2h_hash_shift) * sizeof(struct uquot_hash));
+		if (uquot_user_hash == NULL || uquot_group_hash == NULL)
+			errexit("Cannot allocate space for quotas hash\n");
+	} else {
+		uquot_user_hash = uquot_group_hash = NULL;
+		q2h_hash_shift = q2h_hash_mask = 0;
+	}
 	return (1);
-
 badsblabel:
 	markclean=0;
 	ckfini();
