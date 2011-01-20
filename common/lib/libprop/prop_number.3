@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_number.3,v 1.9 2008/04/30 13:10:46 martin Exp $
+.\"	$NetBSD: prop_number.3,v 1.10 2011/01/20 10:44:42 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -150,14 +150,20 @@ Returns
 if the numeric value object has an unsigned value.
 .It Fn prop_number_integer_value "prop_number_t number"
 Returns the signed integer value of the numeric value object.
-If the supplied object isn't a numeric value, zero is returned. Thus,
-it is not possible to distinguish between ``not a prop_number_t''
-and ``prop_number_t has a value of 0''.
+If the supplied object isn't a numeric value, zero is returned.
+Thus,
+it is not possible to distinguish between
+.Dq not a prop_number_t
+and
+.Dq prop_number_t has a value of 0 .
 .It Fn prop_number_unsigned_integer_value "prop_number_t number"
 Returns the unsigned integer value of the numeric value object.
-If the supplied object isn't a numeric value, zero is returned. Thus,
-it is not possible to distinguish between ``not a prop_number_t''
-and ``prop_number_t has a value of 0''.
+If the supplied object isn't a numeric value, zero is returned.
+Thus,
+it is not possible to distinguish between
+.Dq not a prop_number_t
+and
+.Dq prop_number_t has a value of 0 .
 .It Fn prop_number_equals "prop_number_t num1" "prop_number_t num2"
 Returns
 .Dv true
