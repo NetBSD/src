@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.15 2011/01/19 20:34:23 bouyer Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.16 2011/01/20 11:17:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -471,9 +471,9 @@ _prop_object_copyout(struct plistref *pref, prop_object_t obj)
  *	Copy out an array to a syscall arg.
  */
 int
-prop_array_copyout(struct plistref *pref, prop_array_t *arrayp)
+prop_array_copyout(struct plistref *pref, prop_array_t array)
 {
-	return (_prop_object_copyout(pref, (prop_object_t *)arrayp));
+	return (_prop_object_copyout(pref, array));
 }
 
 /*
@@ -481,9 +481,9 @@ prop_array_copyout(struct plistref *pref, prop_array_t *arrayp)
  *	Copy out a dictionary to a syscall arg.
  */
 int
-prop_dictionary_copyout(struct plistref *pref, prop_dictionary_t *dictp)
+prop_dictionary_copyout(struct plistref *pref, prop_dictionary_t dict)
 {
-	return (_prop_object_copyout(pref, (prop_object_t *)dictp));
+	return (_prop_object_copyout(pref, dict));
 }
 
 static int
