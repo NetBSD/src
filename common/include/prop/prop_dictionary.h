@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.11 2011/01/19 20:34:23 bouyer Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.12 2011/01/20 11:17:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ bool		prop_dictionary_recv_syscall(const struct plistref *,
 int		prop_dictionary_copyin(const struct plistref *,
 				       prop_dictionary_t *);
 int		prop_dictionary_copyout(struct plistref *,
-				       prop_dictionary_t *);
+				       prop_dictionary_t);
 int		prop_dictionary_copyin_ioctl(const struct plistref *,
 					     const u_long,
 					     prop_dictionary_t *);
