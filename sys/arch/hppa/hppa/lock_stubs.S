@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.15 2011/01/20 19:49:22 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.16 2011/01/20 19:50:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@
  *
  * Perform an atomic compare-and-swap operation.
  *
- * On single CPU systems, this can use a restartable sequence:
- * there we don't need the overhead of interlocking.
+ * On single CPU systems this can use a restartable sequence as there
+ * we don't need the overhead of interlocking.
  */
 
 #ifndef MULTIPROCESSOR
