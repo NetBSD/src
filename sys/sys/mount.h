@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.196 2010/05/30 02:26:37 dholland Exp $	*/
+/*	$NetBSD: mount.h,v 1.196.4.1 2011/01/20 14:25:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -189,6 +189,7 @@ struct mount {
 }
 
 #if defined(_KERNEL)
+#include <prop/proplib.h>
 #if __STDC__
 struct nameidata;
 #endif
@@ -205,7 +206,7 @@ struct vfsops {
 	int	(*vfs_start)	(struct mount *, int);
 	int	(*vfs_unmount)	(struct mount *, int);
 	int	(*vfs_root)	(struct mount *, struct vnode **);
-	int	(*vfs_quotactl)	(struct mount *, int, uid_t, void *);
+	int	(*vfs_quotactl)	(struct mount *, prop_dictionary_t);
 	int	(*vfs_statvfs)	(struct mount *, struct statvfs *);
 	int	(*vfs_sync)	(struct mount *, int, struct kauth_cred *);
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
@@ -240,7 +241,7 @@ int	VFS_MOUNT(struct mount *, const char *, void *, size_t *);
 int	VFS_START(struct mount *, int);
 int	VFS_UNMOUNT(struct mount *, int);
 int	VFS_ROOT(struct mount *, struct vnode **);
-int	VFS_QUOTACTL(struct mount *, int, uid_t, void *);
+int	VFS_QUOTACTL(struct mount *, prop_dictionary_t);
 int	VFS_STATVFS(struct mount *, struct statvfs *);
 int	VFS_SYNC(struct mount *, int, struct kauth_cred *);
 int	VFS_FHTOVP(struct mount *, struct fid *, struct vnode **);
@@ -266,7 +267,7 @@ int	fsname##_mount(struct mount *, const char *, void *,		\
 int	fsname##_start(struct mount *, int);				\
 int	fsname##_unmount(struct mount *, int);				\
 int	fsname##_root(struct mount *, struct vnode **);			\
-int	fsname##_quotactl(struct mount *, int, uid_t, void *);		\
+int	fsname##_quotactl(struct mount *, prop_dictionary_t);		\
 int	fsname##_statvfs(struct mount *, struct statvfs *);		\
 int	fsname##_sync(struct mount *, int, struct kauth_cred *);	\
 int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\

@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.238 2011/01/18 17:34:28 pooka Exp $ */
+/* $NetBSD: syscall.h,v 1.238.2.1 2011/01/20 14:25:01 bouyer Exp $ */
 
 /*
  * System call numbers.
@@ -432,8 +432,8 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	SYS_setsid	147
 
-/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "void *" */
-#define	SYS_quotactl	148
+/* syscall: "compat_50_quotactl" ret: "int" args: "const char *" "int" "int" "void *" */
+#define	SYS_compat_50_quotactl	148
 
 /* syscall: "compat_43_oquota" ret: "int" args: */
 #define	SYS_compat_43_oquota	149
@@ -1279,6 +1279,9 @@
 /* syscall: "__fhstat50" ret: "int" args: "const void *" "size_t" "struct stat *" */
 #define	SYS___fhstat50	451
 
-#define	SYS_MAXSYSCALL	452
+/* syscall: "__quotactl50" ret: "int" args: "const char *" "struct plistref *" */
+#define	SYS___quotactl50	452
+
+#define	SYS_MAXSYSCALL	453
 #define	SYS_NSYSENT	512
 #endif /* _SYS_SYSCALL_H_ */

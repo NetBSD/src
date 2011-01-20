@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.16 2011/01/19 11:27:01 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.16.2.1 2011/01/20 14:24:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.16 2011/01/19 11:27:01 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.16.2.1 2011/01/20 14:24:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,6 +64,9 @@ enum {	RUMPCALL_SOCKET, RUMPCALL_ACCEPT, RUMPCALL_BIND, RUMPCALL_CONNECT,
 	RUMPCALL_IOCTL, RUMPCALL_FCNTL,
 	RUMPCALL_CLOSE,
 	RUMPCALL_POLLTS,
+	RUMPCALL_QUOTACTL,
+	RUMPCALL_MOUNT,
+	RUMPCALL_GETVFSSTAT,
 	RUMPCALL__NUM
 };
 
@@ -93,6 +96,9 @@ const char *sysnames[] = {
 	RSYS_NAME(FCNTL),
 	RSYS_NAME(CLOSE),
 	RSYS_NAME(POLLTS),
+	RSYS_NAME(QUOTACTL),
+	RSYS_NAME(MOUNT),
+	RSYS_NAME(GETVFSSTAT),
 };
 
 static int	(*host_socket)(int, int, int);
@@ -266,6 +272,43 @@ fd_isrump(int fd)
 
 #define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_ASSERT)
 #undef HIJACK_FDOFF
+
+int
+__quotactl50(const char * mnt, struct plistref *p)
+{
+	int (*qctl)(const char *, struct plistref *);
+	int error;
+
+	qctl = rumpcalls[RUMPCALL_QUOTACTL];
+	error = qctl(mnt, p);
+	DPRINTF(("quotactl <- %d\n", error));
+	return error;
+}
+
+int
+__mount50(const char *type, const char *dir, int flags, void *data,
+    size_t data_len)
+{
+	int (*domount)(const char *, const char *, int, void *, size_t);
+	int error;
+
+	domount = rumpcalls[RUMPCALL_MOUNT];
+	error = domount(type, dir, flags, data, data_len);
+	DPRINTF(("mount <- %d\n", error));
+	return error;
+}
+
+int
+getvfsstat(struct statvfs *buf, size_t bufsize, int flags)
+{
+	int (*dogetvfsstat)(struct statvfs *, size_t, int);
+	int error;
+
+	dogetvfsstat = rumpcalls[RUMPCALL_GETVFSSTAT];
+	error = dogetvfsstat(buf, bufsize, flags);
+	DPRINTF(("getvfsstat <- %d\n", error));
+	return error;
+}
 
 int __socket30(int, int, int);
 int
@@ -1011,6 +1054,7 @@ POLL(struct pollfd *fds, nfds_t nfds, int timeout)
 	return pollts(fds, nfds, tsp, NULL);
 }
 
+#if 0
 int
 kqueue(void)
 {
@@ -1026,3 +1070,4 @@ kevent(int kq, const struct kevent *changelist, size_t nchanges,
 
 	abort();
 }
+#endif

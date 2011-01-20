@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.168 2010/11/19 06:44:37 dholland Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.168.4.1 2011/01/20 14:24:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.168 2010/11/19 06:44:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.168.4.1 2011/01/20 14:24:55 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1185,7 +1185,7 @@ netbsd32_rmdir(struct lwp *l, const struct netbsd32_rmdir_args *uap, register_t 
 }
 
 int
-netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, register_t *retval)
+netbsd32_quotactl50(struct lwp *l, const struct netbsd32_quotactl_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
@@ -1199,7 +1199,26 @@ netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, regis
 	NETBSD32TO64_UAP(cmd);
 	NETBSD32TO64_UAP(uid);
 	NETBSD32TOP_UAP(arg, void *);
+	return (sys_quotactl50(l, &ua, retval));
+}
+
+int
+netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(void *) v;
+	} */
+	struct sys_quotactl_args ua;
+
+	return EOPNOTSUPP;
+#if 0
+	NETBSD32TOP_UAP(path, const char);
+	NETBSD32TO64_UAP(cmd);
+	NETBSD32TO64_UAP(uid);
+	NETBSD32TOP_UAP(arg, void *);
 	return (sys_quotactl(l, &ua, retval));
+#endif
 }
 
 int

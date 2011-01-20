@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.242 2011/01/18 17:34:28 pooka Exp $ */
+/* $NetBSD: syscalls.c,v 1.242.2.1 2011/01/20 14:24:57 bouyer Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.242 2011/01/18 17:34:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.242.2.1 2011/01/20 14:24:57 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_modular.h"
@@ -171,7 +171,7 @@ const char *const syscallnames[] = {
 	/* 145 */	"compat_43_osetrlimit",
 	/* 146 */	"compat_43_okillpg",
 	/* 147 */	"setsid",
-	/* 148 */	"quotactl",
+	/* 148 */	"compat_50_quotactl",
 	/* 149 */	"compat_43_oquota",
 	/* 150 */	"compat_43_ogetsockname",
 	/* 151 */	"#151 (unimplemented)",
@@ -540,7 +540,7 @@ const char *const syscallnames[] = {
 	/* 449 */	"__wait450",
 	/* 450 */	"__mknod50",
 	/* 451 */	"__fhstat50",
-	/* 452 */	"# filler",
+	/* 452 */	"__quotactl50",
 	/* 453 */	"# filler",
 	/* 454 */	"# filler",
 	/* 455 */	"# filler",

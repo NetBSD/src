@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.221 2011/01/18 17:34:28 pooka Exp $ */
+/* $NetBSD: syscallargs.h,v 1.221.2.1 2011/01/20 14:25:01 bouyer Exp $ */
 
 /*
  * System call argument lists.
@@ -804,13 +804,13 @@ struct compat_43_sys_killpg_args {
 };
 check_syscall_args(compat_43_sys_killpg)
 
-struct sys_quotactl_args {
+struct compat_50_sys_quotactl_args {
 	syscallarg(const char *) path;
 	syscallarg(int) cmd;
 	syscallarg(int) uid;
 	syscallarg(void *) arg;
 };
-check_syscall_args(sys_quotactl)
+check_syscall_args(compat_50_sys_quotactl)
 
 struct compat_43_sys_getsockname_args {
 	syscallarg(int) fdec;
@@ -2531,6 +2531,12 @@ struct sys___fhstat50_args {
 };
 check_syscall_args(sys___fhstat50)
 
+struct sys___quotactl50_args {
+	syscallarg(const char *) path;
+	syscallarg(struct plistref *) pref;
+};
+check_syscall_args(sys___quotactl50)
+
 /*
  * System call prototypes.
  */
@@ -2809,7 +2815,7 @@ int	compat_43_sys_killpg(struct lwp *, const struct compat_43_sys_killpg_args *,
 
 int	sys_setsid(struct lwp *, const void *, register_t *);
 
-int	sys_quotactl(struct lwp *, const struct sys_quotactl_args *, register_t *);
+int	compat_50_sys_quotactl(struct lwp *, const struct compat_50_sys_quotactl_args *, register_t *);
 
 int	compat_43_sys_quota(struct lwp *, const void *, register_t *);
 
@@ -3370,5 +3376,7 @@ int	sys___wait450(struct lwp *, const struct sys___wait450_args *, register_t *)
 int	sys___mknod50(struct lwp *, const struct sys___mknod50_args *, register_t *);
 
 int	sys___fhstat50(struct lwp *, const struct sys___fhstat50_args *, register_t *);
+
+int	sys___quotactl50(struct lwp *, const struct sys___quotactl50_args *, register_t *);
 
 #endif /* _SYS_SYSCALLARGS_H_ */

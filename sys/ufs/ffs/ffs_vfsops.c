@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.263 2010/12/27 18:49:42 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.263.4.1 2011/01/20 14:25:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.263 2010/12/27 18:49:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.263.4.1 2011/01/20 14:25:02 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1196,7 +1196,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	devvp->v_specmountpoint = mp;
 	if (ronly == 0 && fs->fs_snapinum[0] != 0)
 		ffs_snapshot_mount(mp);
-
 #ifdef WAPBL
 	if (!ronly) {
 		KDASSERT(fs->fs_ronly == 0);
@@ -1213,6 +1212,28 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 	}
 #endif /* WAPBL */
+	if (ronly == 0) {
+#ifdef QUOTA2
+		error = ffs_quota2_mount(mp);
+		if (error) {
+			free(fs->fs_csp, M_UFSMNT);
+			goto out;
+		}
+#else
+		if (fs->fs_flags & FS_DOQUOTA2) {
+			ump->um_flags |= UFS_QUOTA2;
+			uprintf("%s: options QUOTA2 not enabled%s\n",
+			    mp->mnt_stat.f_mntonname,
+			    (mp->mnt_flag & MNT_FORCE) ? "" : ", not mounting");
+			if ((mp->mnt_flag & MNT_FORCE) == 0) {
+				error = EINVAL;
+				free(fs->fs_csp, M_UFSMNT);
+				goto out;
+			}
+		}
+#endif
+	}
+
 #ifdef UFS_EXTATTR
 	/*
 	 * Initialize file-backed extended attributes on UFS1 file
@@ -1468,6 +1489,9 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 		 */
 	}
 #endif
+#ifdef QUOTA2
+	quota2_umount(mp);
+#endif
 	if ((error = vflush(mp, 0, SKIPSYSTEM | flags)) != 0)
 		return (error);
 	ffs_snapshot_unmount(mp);
@@ -1667,7 +1691,7 @@ loop:
 			goto loop;
 		}
 	}
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	qsync(mp);
 #endif
 	/*
@@ -1756,7 +1780,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ip->i_fs = fs = ump->um_fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	ufsquota_init(ip);
 #endif
 

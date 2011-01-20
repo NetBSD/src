@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.19 2006/11/14 21:01:46 apb Exp $	*/
+/*	$NetBSD: pass3.c,v 1.19.40.1 2011/01/20 14:24:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: pass3.c,v 1.19 2006/11/14 21:01:46 apb Exp $");
+__RCSID("$NetBSD: pass3.c,v 1.19.40.1 2011/01/20 14:24:54 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ pass3(void)
 	ino_t orphan;
 	struct inodesc idesc;
 	char namebuf[MAXNAMLEN+1];
+	union dinode *dp;
 
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--) {
 		int inpindex = inpp - inpsort;
@@ -109,13 +110,16 @@ pass3(void)
 		    (u_long)orphan);
 		if (reply("RECONNECT") == 0)
 			continue;
+		dp = ginode(inp->i_parent);
 		memset(&idesc, 0, sizeof(struct inodesc));
 		idesc.id_type = DATA;
 		idesc.id_number = inp->i_parent;
 		idesc.id_parent = orphan;
 		idesc.id_func = findname;
 		idesc.id_name = namebuf;
-		if ((ckinode(ginode(inp->i_parent), &idesc) & FOUND) == 0)
+		idesc.id_uid = iswap32(DIP(dp, uid));
+		idesc.id_gid = iswap32(DIP(dp, gid));
+		if ((ckinode(dp, &idesc) & FOUND) == 0)
 			pfatal("COULD NOT FIND NAME IN PARENT DIRECTORY");
 		if (linkup(orphan, inp->i_parent, namebuf)) {
 			idesc.id_func = clearentry;

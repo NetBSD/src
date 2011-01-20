@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.91 2010/03/02 21:14:44 pooka Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.91.6.1 2011/01/20 14:24:55 bouyer Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.91 2010/03/02 21:14:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.91.6.1 2011/01/20 14:24:55 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -404,8 +404,8 @@ struct sysent netbsd32_sysent[] = {
 	    (sy_call_t *)compat_43(netbsd32_killpg) },/* 146 = compat_43_netbsd32_killpg */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_setsid },		/* 147 = setsid */
-	{ ns(struct netbsd32_quotactl_args), 0,
-	    (sy_call_t *)netbsd32_quotactl },	/* 148 = netbsd32_quotactl */
+	{ ns(struct compat_50_netbsd32_quotactl50_args), 0,
+	    (sy_call_t *)compat_50(netbsd32_quotactl50) },/* 148 = compat_50_netbsd32_quotactl50 */
 	{ 0, 0, 0,
 	    (sy_call_t *)compat_43(sys_quota) },/* 149 = compat_43_oquota */
 	{ ns(struct compat_43_netbsd32_ogetsockname_args), 0,
@@ -1130,8 +1130,8 @@ struct sysent netbsd32_sysent[] = {
 	    (sy_call_t *)netbsd32___mknod50 },	/* 450 = netbsd32___mknod50 */
 	{ ns(struct netbsd32___fhstat50_args), 0,
 	    (sy_call_t *)netbsd32___fhstat50 },	/* 451 = netbsd32___fhstat50 */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 452 = filler */
+	{ ns(struct sys_quotactl_args), 0,
+	    (sy_call_t *)sys_quotactl },	/* 452 = quotactl */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 453 = filler */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2009/10/21 01:07:46 snj Exp $	*/
+/*	$NetBSD: extern.h,v 1.14.2.1 2011/01/20 14:24:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -55,3 +55,4 @@ extern caddr_t	membase;	/* start address of memory based filesystem */
 extern int	needswap;	/* Filesystem not in native byte order */
 extern int	isappleufs; /* Filesystem is Apple UFS */
 extern char	*appleufs_volname;	/* Apple UFS volume name */
+extern int	quotas;		/* filesystem quota to enable */

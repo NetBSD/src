@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.251 2011/01/18 17:34:28 pooka Exp $ */
+/* $NetBSD: init_sysent.c,v 1.251.2.1 2011/01/20 14:24:57 bouyer Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.251 2011/01/18 17:34:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.251.2.1 2011/01/20 14:24:57 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_ntp.h"
@@ -399,8 +399,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_nomodule },	/* 146 = compat_43_okillpg */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_setsid },		/* 147 = setsid */
-	{ ns(struct sys_quotactl_args), 0,
-	    (sy_call_t *)sys_quotactl },	/* 148 = quotactl */
+	{ ns(struct compat_50_sys_quotactl_args), 0,
+	    (sy_call_t *)sys_nomodule },	/* 148 = compat_50_quotactl */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_nomodule },	/* 149 = compat_43_oquota */
 	{ ns(struct compat_43_sys_getsockname_args), 0,
@@ -1095,8 +1095,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys___mknod50 },	/* 450 = __mknod50 */
 	{ ns(struct sys___fhstat50_args), 0,
 	    (sy_call_t *)sys___fhstat50 },	/* 451 = __fhstat50 */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 452 = filler */
+	{ ns(struct sys___quotactl50_args), 0,
+	    (sy_call_t *)sys___quotactl50 },	/* 452 = __quotactl50 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 453 = filler */
 	{ 0, 0, 0,

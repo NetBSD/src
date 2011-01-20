@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.92 2010/03/02 21:14:44 pooka Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.92.6.1 2011/01/20 14:24:55 bouyer Exp $ */
 
 /*
  * System call argument lists.
@@ -27,7 +27,7 @@
 	}
 
 #undef check_syscall_args
-#define check_syscall_args(call) \
+#define check_syscall_args(call) /*LINTED*/ \
 	typedef char call##_check_args[sizeof (struct call##_args) \
 		<= NETBSD32_SYS_MAXSYSARGS * sizeof (register32_t) ? 1 : -1];
 
@@ -801,13 +801,13 @@ struct compat_43_netbsd32_killpg_args {
 };
 check_syscall_args(compat_43_netbsd32_killpg)
 
-struct netbsd32_quotactl_args {
+struct compat_50_netbsd32_quotactl50_args {
 	syscallarg(netbsd32_charp) path;
 	syscallarg(int) cmd;
 	syscallarg(int) uid;
 	syscallarg(netbsd32_voidp) arg;
 };
-check_syscall_args(netbsd32_quotactl)
+check_syscall_args(compat_50_netbsd32_quotactl50)
 
 struct compat_43_netbsd32_ogetsockname_args {
 	syscallarg(int) fdec;
@@ -2303,6 +2303,12 @@ struct netbsd32___fhstat50_args {
 };
 check_syscall_args(netbsd32___fhstat50)
 
+struct sys_quotactl_args {
+	syscallarg(const char *) path;
+	syscallarg(netbsd32_voidp) pref;
+};
+check_syscall_args(sys_quotactl)
+
 /*
  * System call prototypes.
  */
@@ -2581,7 +2587,7 @@ int	compat_43_netbsd32_killpg(struct lwp *, const struct compat_43_netbsd32_kill
 
 int	sys_setsid(struct lwp *, const void *, register_t *);
 
-int	netbsd32_quotactl(struct lwp *, const struct netbsd32_quotactl_args *, register_t *);
+int	compat_50_netbsd32_quotactl50(struct lwp *, const struct compat_50_netbsd32_quotactl50_args *, register_t *);
 
 int	compat_43_sys_quota(struct lwp *, const void *, register_t *);
 
@@ -3078,5 +3084,7 @@ int	netbsd32___wait450(struct lwp *, const struct netbsd32___wait450_args *, reg
 int	netbsd32___mknod50(struct lwp *, const struct netbsd32___mknod50_args *, register_t *);
 
 int	netbsd32___fhstat50(struct lwp *, const struct netbsd32___fhstat50_args *, register_t *);
+
+int	sys_quotactl(struct lwp *, const struct sys_quotactl_args *, register_t *);
 
 #endif /* _NETBSD32_SYS_SYSCALLARGS_H_ */

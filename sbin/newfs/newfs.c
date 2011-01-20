@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.108 2010/08/09 21:14:26 pooka Exp $	*/
+/*	$NetBSD: newfs.c,v 1.108.2.1 2011/01/20 14:24:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.108 2010/08/09 21:14:26 pooka Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.108.2.1 2011/01/20 14:24:54 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,7 @@ __RCSID("$NetBSD: newfs.c,v 1.108 2010/08/09 21:14:26 pooka Exp $");
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/quota2.h>
 #include <ufs/ffs/fs.h>
 
 #include <ctype.h>
@@ -226,6 +227,7 @@ char	*disktype = NULL;
 int	unlabeled;
 char *appleufs_volname = 0; /* Apple UFS volume name */
 int isappleufs = 0;
+int quotas = 0;
 
 char	device[MAXPATHLEN];
 
@@ -269,8 +271,8 @@ main(int argc, char *argv[])
 	}
 
 	opstring = mfs ?
-	    "NT:V:a:b:d:e:f:g:h:i:m:n:o:p:s:u:" :
-	    "B:FGINO:S:T:V:Za:b:d:e:f:g:h:i:l:m:n:o:r:s:v:";
+	    "NT:V:a:b:d:e:f:g:h:i:m:n:o:p:q:s:u:" :
+	    "B:FGINO:S:T:V:Za:b:d:e:f:g:h:i:l:m:n:o:q:r:s:v:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -385,6 +387,14 @@ main(int argc, char *argv[])
 					"use `space' or `time'.");
 			}
 			break;
+		case 'q':
+			if      (strcmp(optarg, "user") == 0)
+				quotas |= FS_Q2_DO_TYPE(USRQUOTA);
+			else if (strcmp(optarg, "group") == 0)
+				quotas |= FS_Q2_DO_TYPE(GRPQUOTA);
+			else
+				errx(1, "invalid quota type %s", optarg);
+			break;
 		case 'p':
 			/* mfs only */
 			if ((mfsmode = strtol(optarg, NULL, 8)) <= 0)
@@ -412,6 +422,9 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (Oflag < 1 && quotas != 0)
+		errx(1, "in-filesystem quota is incompatible with -O0");
 
 	if (verbosity == -1)
 		/* Default to not showing CG info if mfs */
@@ -843,6 +856,7 @@ struct help_strings {
 	{ BOTH,		"-n inodes\tnumber of inodes (overrides -i density)" },
 	{ BOTH,		"-o optim\toptimization preference (`space' or `time')"
 			    },
+	{ BOTH,		"-q (user|group) enable specified quota" },
 	{ MFS_MOUNT,	"-p perm\t\tpermissions (in octal)" },
 	{ BOTH,		"-s fssize\tfile system size (sectors)" },
 	{ MFS_MOUNT,	"-u username\tuser name of mount point" },
