@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.20 2010/12/08 01:55:12 joerg Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.21 2011/01/20 16:08:35 vanhu Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -2282,7 +2282,7 @@ pfkey_setsadbaddr(caddr_t buf, caddr_t lim, u_int exttype,
  * `buf' must has been allocated sufficiently.
  */
 static caddr_t
-pfkey_setsadbkmaddr(caddr_t buf, caddr_T lim, struct sockaddr *local,
+pfkey_setsadbkmaddr(caddr_t buf, caddr_t lim, struct sockaddr *local,
     struct sockaddr *remote)
 {
 	struct sadb_x_kmaddress *p;
