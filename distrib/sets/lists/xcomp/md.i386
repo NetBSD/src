@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.36 2011/01/19 01:52:43 jakllsch Exp $
+# $NetBSD: md.i386,v 1.37 2011/01/20 18:36:46 jmcneill Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -83,6 +83,10 @@
 ./usr/X11R7/lib/libchromeXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMC_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libchromeXvMC_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libchromeXvMCPro.a			-unknown-	xorg
+./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
+./usr/X11R7/lib/libchromeXvMCPro_p.a			-unknown-	profile,xorg
+./usr/X11R7/lib/libchromeXvMCPro_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg
 ./usr/X11R7/lib/libdrm_intel_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg
@@ -107,6 +111,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libI810XvMC.so.1.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libIntelXvMC.so.1.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libchromeXvMC.so.0.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libchromeXvMCPro.so.1.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_intel.so.0.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libi810_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libi915_dri.so.0.debug	-unknown-		xorg,debug
@@ -188,4 +193,5 @@
 ./usr/libdata/lint/llib-lI810XvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMC.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lchromeXvMCPro.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg
