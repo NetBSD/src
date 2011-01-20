@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.18 2010/01/28 14:15:18 mbalmer Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.19 2011/01/20 15:24:24 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -77,7 +77,7 @@ static const char copyright[] =
 #endif
 #ifdef __IDSTRING
 __IDSTRING(Berkeley, "@(#)unifdef.c	8.1 (Berkeley) 6/6/93");
-__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.18 2010/01/28 14:15:18 mbalmer Exp $");
+__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.19 2011/01/20 15:24:24 ginsbach Exp $");
 __IDSTRING(dotat, "$dotat: things/unifdef.c,v 1.161 2003/07/01 15:32:48 fanf2 Exp $");
 #endif
 #endif /* not lint */
@@ -347,7 +347,7 @@ main(int argc, char *argv[])
 				err(2, "can't fstat %s", filename);
 
 			overwriting = (osb.st_dev == isb.st_dev &&
-			    osb.st_ino == osb.st_ino);
+			    osb.st_ino == isb.st_ino);
 		}
 		if (overwriting) {
 			int ofd;
@@ -506,12 +506,12 @@ done(void)
 	if (fclose(output)) {
 		if (overwriting) {
 			unlink(tmpname);
-			errx(2, "%s unchanged", filename);
+			errx(2, "%s unchanged", ofilename);
 		}
 	}
-	if (overwriting && rename(tmpname, filename)) {
+	if (overwriting && rename(tmpname, ofilename)) {
 		unlink(tmpname);
-		errx(2, "%s unchanged", filename);
+		errx(2, "%s unchanged", ofilename);
 	}
 	exit(exitstat);
 }
@@ -1034,7 +1034,7 @@ error(const char *msg)
 	fclose(output);
 	if (overwriting) {
 		unlink(tmpname);
-		errx(2, "%s unchanged", filename);
+		errx(2, "%s unchanged", ofilename);
 	}
 	errx(2, "output may be truncated");
 }
