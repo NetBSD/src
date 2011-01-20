@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.152 2011/01/19 21:07:18 he Exp $
+# $NetBSD: shl.mi,v 1.153 2011/01/20 15:50:06 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -356,6 +356,7 @@
 ./usr/libdata/debug/usr/lib/librumpnet_sockin.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet_virtif.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpuser.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumphijack.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpclient.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug
