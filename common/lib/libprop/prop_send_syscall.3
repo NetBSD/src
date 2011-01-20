@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_send_syscall.3,v 1.2 2011/01/20 10:42:19 wiz Exp $
+.\"	$NetBSD: prop_send_syscall.3,v 1.3 2011/01/20 10:48:37 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,9 +34,8 @@
 .Nm prop_array_send_syscall ,
 .Nm prop_array_recv_syscall ,
 .Nm prop_dictionary_send_syscall ,
-.Nm prop_dictionary_recv_syscall ,
-.Nd Helper to send and receive propertly lists to and from the kernel using
-syscall
+.Nm prop_dictionary_recv_syscall
+.Nd send and receive property lists to and from the kernel using syscalls
 .Sh SYNOPSIS
 .In prop/proplib.h
 .Ft bool
@@ -61,7 +60,7 @@ functions implement the user space side of a protocol for sending property
 lists to and from the kernel using
 .Xr syscall 2 .
 .Sh RETURN VALUES
-If successful, functions return true, false otherwise.
+If successful, the functions return true, false otherwise.
 .Sh EXAMPLES
 The following
 .Pq simplified
