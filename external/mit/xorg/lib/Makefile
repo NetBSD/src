@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2011/01/19 16:32:12 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.23 2011/01/20 18:36:45 jmcneill Exp $
 
 # build libraries for xorg
 
@@ -25,6 +25,7 @@ SUBDIR+=libdrm_radeon pixman xkeyboard-config \
 SUBDIR+=libI810XvMC
 SUBDIR+=libIntelXvMC
 SUBDIR+=libchromeXvMC
+SUBDIR+=libchromeXvMCPro
 .endif
 SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
 	libXrandr \
