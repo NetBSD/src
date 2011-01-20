@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.12 2011/01/05 09:43:00 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.13 2011/01/20 15:00:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.12 2011/01/05 09:43:00 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.13 2011/01/20 15:00:12 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -491,8 +491,17 @@ rumpuser_getenv(const char *name, char *buf, size_t blen, int *error)
 int
 rumpuser_gethostname(char *name, size_t namelen, int *error)
 {
+	char tmp[MAXHOSTNAMELEN];
 
-	DOCALL(int, (gethostname(name, namelen)));
+	if (gethostname(tmp, sizeof(tmp)) == -1) {
+		snprintf(name, namelen, "rump-%05d.rumpdomain", getpid());
+	} else {
+		snprintf(name, namelen, "rump-%05d.%s.rumpdomain",
+		    getpid(), tmp);
+	}
+
+	*error = 0;
+	return 0;
 }
 
 int
