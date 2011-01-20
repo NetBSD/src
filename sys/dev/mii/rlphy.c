@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.26 2010/11/14 13:40:36 mlelstv Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.27 2011/01/20 14:26:11 pooka Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.26 2010/11/14 13:40:36 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.27 2011/01/20 14:26:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,10 @@ int
 rlphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
+	struct mii_data *mii = ma->mii_data;
+
+	if (mii->mii_instance != 0)
+		return 0;
 
 	if (mii_phy_match(ma, rlphys) != NULL)
 		return (10);
