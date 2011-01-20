@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_object.3,v 1.7 2008/04/30 13:10:46 martin Exp $
+.\"	$NetBSD: prop_object.3,v 1.8 2011/01/20 10:44:42 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,8 @@ Increment the reference count on an object.
 Decrement the reference count on an object.
 If the last reference is dropped, the object is freed.
 .It Fn prop_object_type "prop_object_t obj"
-Determine the type of the object.  Objects are one of the following types:
+Determine the type of the object.
+Objects are one of the following types:
 .Pp
 .Bl -tag -width "PROP_TYPE_DICT_KEYSYM" -compact
 .It Dv PROP_TYPE_BOOL
