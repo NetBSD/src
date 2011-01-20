@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.16 2011/01/20 19:50:41 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.17 2011/01/20 19:51:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ LEAF_ENTRY(mutex_exit)
 	stw	%t2,0(%t3)			/* %t3 is properly aligned */
 	sync
 
-	/*	
+	/*
 	 * We have posted a read memory barrier so the check of mtx_waiters
 	 * will happen in sequence.  If it's set then trap into mutex_wakeup()
 	 * to wake up any threads sleeping on the lock.
