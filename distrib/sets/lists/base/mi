@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.915 2011/01/13 22:28:36 haad Exp $
+# $NetBSD: mi,v 1.916 2011/01/20 18:47:20 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -600,6 +600,7 @@
 ./usr/bin/rs					base-util-bin
 ./usr/bin/rsh					base-netutil-bin
 ./usr/bin/rump_allserver			base-util-bin
+./usr/bin/rump.dhcpclient			base-util-bin
 ./usr/bin/rump_server			base-util-bin
 ./usr/bin/rump.halt			base-util-bin
 ./usr/bin/rup					base-netutil-bin
