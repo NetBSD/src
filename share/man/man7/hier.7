@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.93 2010/12/20 18:11:35 njoly Exp $
+.\"	$NetBSD: hier.7,v 1.94 2011/01/20 23:01:55 mbalmer Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd October 24, 2010
+.Dd January 20, 2011
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -465,6 +465,15 @@ C include files for UFS (The U-word File System)
 .Pp
 .It Sy lib/
 archive, profiled, position independent archive, and shared libraries
+.Pp
+.Bl -tag -width "lua/" -compact
+.It Sy lua/
+.Bl -tag -width "5.1/" -compact
+.It Sy 5.1/
+Lua 5.1 modules
+.El
+.El
+.Pp
 .It Sy libdata/
 miscellaneous utility data files
 .It Sy libexec/
