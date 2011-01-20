@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.14 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.15 2011/01/20 19:49:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include "assym.h"
 
 /*
- * uintptr_t _lock_cas(volatile uintptr_t *val, uintptr_t old, uintptr_t new);
+ * uintptr_t _lock_cas(volatile uintptr_t *ptr, uintptr_t old, uintptr_t new);
  *
  * Perform an atomic compare-and-swap operation.
  *
