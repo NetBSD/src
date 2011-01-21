@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.1 2011/01/21 19:11:47 jakllsch Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.2 2011/01/21 22:42:16 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.1 2011/01/21 19:11:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.2 2011/01/21 22:42:16 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ CFATTACH_DECL_NEW(pcf8563rtc, sizeof(struct pcf8563rtc_softc),
 
 static int pcf8563rtc_clock_read(struct pcf8563rtc_softc *, struct clock_ymdhms *);
 static int pcf8563rtc_clock_write(struct pcf8563rtc_softc *, struct clock_ymdhms *);
-static int pcf8563rtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int pcf8563rtc_settime(struct todr_chip_handle *, struct timeval *);
+static int pcf8563rtc_gettime(struct todr_chip_handle *, struct clock_ymdhms *);
+static int pcf8563rtc_settime(struct todr_chip_handle *, struct clock_ymdhms *);
 
 static int
 pcf8563rtc_match(device_t parent, cfdata_t cf, void *aux)
@@ -81,39 +81,30 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = pcf8563rtc_gettime;
-	sc->sc_todr.todr_settime = pcf8563rtc_settime;
+	sc->sc_todr.todr_gettime_ymdhms = pcf8563rtc_gettime;
+	sc->sc_todr.todr_settime_ymdhms = pcf8563rtc_settime;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }
 
 static int
-pcf8563rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+pcf8563rtc_gettime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct pcf8563rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
-
-	memset(&dt, 0, sizeof(dt));
-
-	if (pcf8563rtc_clock_read(sc, &dt) == 0)
+	
+	if (pcf8563rtc_clock_read(sc, dt) == 0)
 		return -1;
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
 
 	return 0;
 }
 
 static int
-pcf8563rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
+pcf8563rtc_settime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
         struct pcf8563rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
 
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	if (pcf8563rtc_clock_write(sc, &dt) == 0)
+	if (pcf8563rtc_clock_write(sc, dt) == 0)
 		return -1;
 
 	return 0;
