@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.110 2011/01/13 13:13:31 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.111 2011/01/21 20:36:53 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.110 2011/01/13 13:13:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.111 2011/01/21 20:36:53 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -983,6 +983,28 @@ udf_get_record_vpart(struct udf_mount *ump, int udf_c_type)
 	return vpart_num;
 }
 
+
+/* 
+ * BUGALERT: some rogue implementations use random physical partition
+ * numbers to break other implementations so lookup the number.
+ */
+
+static uint16_t
+udf_find_raw_phys(struct udf_mount *ump, uint16_t raw_phys_part)
+{
+	struct part_desc *part;
+	uint16_t phys_part;
+
+	for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
+		part = ump->partitions[phys_part];
+		if (part == NULL)
+			break;
+		if (udf_rw16(part->part_num) == raw_phys_part)
+			break;
+	}
+	return phys_part;
+}
+
 /* --------------------------------------------------------------------- */
 
 /* we dont try to be smart; we just record the parts */
@@ -994,7 +1016,6 @@ udf_get_record_vpart(struct udf_mount *ump, int udf_c_type)
 static int
 udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 {
-	struct part_desc *part;
 	uint16_t phys_part, raw_phys_part;
 
 	DPRINTF(VOLUMES, ("\tprocessing VDS descr %d\n",
@@ -1026,13 +1047,8 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 		 * the number.
 		 */
 		raw_phys_part = udf_rw16(dscr->pd.part_num);
-		for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
-			part = ump->partitions[phys_part];
-			if (part == NULL)
-				break;
-			if (udf_rw16(part->part_num) == raw_phys_part)
-				break;
-		}
+		phys_part = udf_find_raw_phys(ump, raw_phys_part);
+
 		if (phys_part == UDF_PARTITIONS) {
 			free(dscr, M_UDFVOLD);
 			return EINVAL;
@@ -1839,7 +1855,6 @@ udf_process_vds(struct udf_mount *ump) {
 	/* struct udf_args *args = &ump->mount_args; */
 	struct logvol_int_desc *lvint;
 	struct udf_logvol_info *lvinfo;
-	struct part_desc *part;
 	uint32_t n_pm, mt_l;
 	uint8_t *pmap_pos;
 	char *domain_name, *map_name;
@@ -1970,13 +1985,7 @@ udf_process_vds(struct udf_mount *ump) {
 		 * partition numbers to break other implementations so lookup
 		 * the number.
 		 */
-		for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
-			part = ump->partitions[phys_part];
-			if (part == NULL)
-				continue;
-			if (udf_rw16(part->part_num) == raw_phys_part)
-				break;
-		}
+		phys_part = udf_find_raw_phys(ump, raw_phys_part);
 
 		DPRINTF(VOLUMES, ("\t%d -> %d(%d) type %d\n", log_part,
 		    raw_phys_part, phys_part, pmap_type));
@@ -3116,7 +3125,14 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	struct part_map_meta *pmm = &mapping->pmm;
 	struct long_ad	 icb_loc;
 	struct vnode *vp;
+	uint16_t raw_phys_part, phys_part;
 	int error;
+
+	/*
+	 * BUGALERT: some rogue implementations use random physical
+	 * partition numbers to break other implementations so lookup
+	 * the number.
+	 */
 
 	/* extract our allocation parameters set up on format */
 	ump->metadata_alloc_unit_size     = udf_rw32(mapping->pmm.alloc_unit_size);
@@ -3124,9 +3140,13 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	ump->metadata_flags = mapping->pmm.flags;
 
 	DPRINTF(VOLUMES, ("Reading in Metadata files\n"));
-	icb_loc.loc.part_num = pmm->part_num;
-	icb_loc.loc.lb_num   = pmm->meta_file_lbn;
+	raw_phys_part = udf_rw16(pmm->part_num);
+	phys_part = udf_find_raw_phys(ump, raw_phys_part);
+
+	icb_loc.loc.part_num = udf_rw16(phys_part);
+
 	DPRINTF(VOLUMES, ("Metadata file\n"));
+	icb_loc.loc.lb_num   = pmm->meta_file_lbn;
 	error = udf_get_node(ump, &icb_loc, &ump->metadata_node);
 	if (ump->metadata_node) {
 		vp = ump->metadata_node->vnode;
@@ -5309,6 +5329,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	/* garbage check: translate udf_node_icb_loc to sectornr */
 	error = udf_translate_vtop(ump, node_icb_loc, &sector, &dummy);
 	if (error) {
+		DPRINTF(NODE, ("\tcan't translate icb address!\n"));
 		/* no use, this will fail anyway */
 		mutex_exit(&ump->get_node_lock);
 		return EINVAL;
