@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2010/05/27 06:58:12 dholland Exp $
+# $NetBSD: Makefile,v 1.10 2011/01/21 15:59:05 joerg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -21,7 +21,7 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-AFLAGS=    -x assembler-with-cpp -traditional-cpp -mno-abicalls -mips2
+AFLAGS=    -x assembler-with-cpp -mno-abicalls -mips2
 AFLAGS+=   -D_LOCORE -D_KERNEL
 CFLAGS=    -Os -mmemcpy -G 1024
 CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2
