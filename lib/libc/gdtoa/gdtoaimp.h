@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.7 2009/05/07 20:31:44 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.8 2011/01/21 23:36:49 christos Exp $ */
 
 /****************************************************************
 
@@ -276,7 +276,7 @@ extern "C" {
 Exactly one of IEEE_LITTLE_ENDIAN, IEEE_BIG_ENDIAN, VAX, or IBM should be defined.
 #endif
 
-typedef union { double d; ULong L[2]; } U;
+typedef union { double d; ULong L[2]; } __attribute__((__may_alias__)) U;
 
 #ifdef YES_ALIAS
 #define dval(x) x
