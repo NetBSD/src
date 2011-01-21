@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.16 2011/01/14 13:12:15 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.17 2011/01/21 10:43:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -63,12 +63,14 @@ int	(*host_close)(int);
 int	(*host_connect)(int, const struct sockaddr *, socklen_t);
 int	(*host_fcntl)(int, int, ...);
 int	(*host_poll)(struct pollfd *, nfds_t, int);
-int	(*host_pollts)(struct pollfd *, nfds_t, const struct timespec *,
-		      const sigset_t *);
 ssize_t	(*host_read)(int, void *, size_t);
 ssize_t (*host_sendto)(int, const void *, size_t, int,
 		       const struct sockaddr *, socklen_t);
 int	(*host_setsockopt)(int, int, int, const void *, socklen_t);
+
+int	(*host_kqueue)(void);
+int	(*host_kevent)(int, const struct kevent *, size_t,
+		       struct kevent *, size_t, const struct timespec *);
 
 #include "sp_common.c"
 
@@ -101,7 +103,7 @@ waitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask)
 			for (gotresp = 0; !gotresp; ) {
 				switch (readframe(spc)) {
 				case 0:
-					rv = kevent(kq, NULL, 0,
+					rv = host_kevent(kq, NULL, 0,
 					    kev, __arraycount(kev), NULL);
 					assert(rv > 0);
 					for (i = 0; i < rv; i++) {
@@ -449,7 +451,7 @@ doconnect(void)
 	/* parse the banner some day */
 
 	/* setup kqueue, we want all signals and the fd */
-	if ((kq = kqueue()) == -1) {
+	if ((kq = host_kqueue()) == -1) {
 		error = errno;
 		fprintf(stderr, "rump_sp: cannot setup kqueue");
 		errno = error;
@@ -460,7 +462,7 @@ doconnect(void)
 		EV_SET(&kev[i], i+1, EVFILT_SIGNAL, EV_ADD|EV_ENABLE, 0, 0, 0);
 	}
 	EV_SET(&kev[NSIG], s, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
-	if (kevent(kq, kev, NSIG+1, NULL, 0, NULL) == -1) {
+	if (host_kevent(kq, kev, NSIG+1, NULL, 0, NULL) == -1) {
 		error = errno;
 		fprintf(stderr, "rump_sp: kevent() failed");
 		errno = error;
@@ -501,10 +503,11 @@ rumpclient_init()
 	FINDSYM(connect);
 	FINDSYM(fcntl);
 	FINDSYM(poll);
-	FINDSYM(pollts);
 	FINDSYM(read);
 	FINDSYM(sendto);
 	FINDSYM(setsockopt);
+	FINDSYM(kqueue);
+	FINDSYM(kevent);
 #undef	FINDSYM
 #undef	FINDSY2
 
