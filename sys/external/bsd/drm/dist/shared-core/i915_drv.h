@@ -232,9 +232,6 @@ typedef struct drm_i915_private {
 	u8 saveDACDATA[256*3]; /* 256 3-byte colors */
 	u8 saveCR[37];
 	struct {
-#ifdef __linux__
-		struct drm_mm gtt_space;
-#endif
 		/**
 		 * List of objects currently involved in rendering from the
 		 * ringbuffer.
@@ -267,16 +264,6 @@ typedef struct drm_i915_private {
 		 * outstanding.
 		 */
 		struct list_head request_list;
-#ifdef __linux__
-		/**
-		 * We leave the user IRQ off as much as possible,
-		 * but this means that requests will finish and never
-		 * be retired once the system goes idle. Set a timer to
-		 * fire periodically while the ring is running. When it
-		 * fires, go retire requests.
-		 */
-		struct delayed_work retire_work;
-#endif
 		uint32_t next_gem_seqno;
 
 		/**
@@ -555,10 +542,6 @@ extern void opregion_enable_asle(struct drm_device *dev);
 	if (((drm_i915_private_t *)dev->dev_private)->ring.ring_obj == NULL) \
 		LOCK_TEST_WITH_RETURN(dev, file_priv);			\
 } while (0)
-
-#if defined(__FreeBSD__)
-typedef boolean_t bool;
-#endif
 
 #define I915_READ(reg)		DRM_READ32(dev_priv->mmio_map, (reg))
 #define I915_WRITE(reg,val)	DRM_WRITE32(dev_priv->mmio_map, (reg), (val))
