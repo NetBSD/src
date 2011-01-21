@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.9 2011/01/04 23:42:48 wiz Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.10 2011/01/21 22:10:51 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -1549,7 +1549,7 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	/* Formatting can only be done on raw devices */
+	/* formatting can only be done on raw devices */
 	if (!S_ISCHR(st.st_mode)) {
 		printf("%s is not a raw device\n", dev);
 		close(fd);
