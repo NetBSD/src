@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2011/01/18 22:21:23 haad Exp $ */
+/*	$NetBSD: component.c,v 1.2 2011/01/21 12:23:29 pooka Exp $ */
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2011/01/18 22:21:23 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2011/01/21 12:23:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -80,31 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2011/01/18 22:21:23 haad Exp $");
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
-RUMP_COMPONENT(RUMP_COMPONENT_KERN_VFS)
+RUMP_COMPONENT(RUMP_COMPONENT_VFS)
 {
-	int error;
-
 	extern int physmem;
-
-	extern uint_t zfs_fsyncer_key;
-	extern uint_t rrw_tsd_key;
-
-	extern const struct bdevsw zfs_bdevsw;
-	extern const struct cdevsw zfs_cdevsw;
-
-	static int	zfs_bmajor = -1;
-	static int	zfs_cmajor = -1;
 
 	/* Set physmem to fit zfs limits. ZFS_MINMEGS * 2048 / PAGE_SIZE */
 	physmem = 262144;
-	error = devsw_attach("zfs", &zfs_bdevsw, &zfs_bmajor,
-	    &zfs_cdevsw, &zfs_cmajor);
-	if (error != 0) {
-		zvol_fini();
-		zfs_vfsfini();
-		spa_fini();
-		lwp_specific_key_delete(zfs_fsyncer_key);
-		lwp_specific_key_delete(rrw_tsd_key);
-	}
-	return;
 }
