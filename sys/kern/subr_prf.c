@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.138 2010/01/26 12:59:50 he Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.139 2011/01/21 17:46:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.138 2010/01/26 12:59:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.139 2011/01/21 17:46:19 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -1136,6 +1136,18 @@ vsnprintf(char *bf, size_t size, const char *fmt, va_list ap)
 	} else {							\
 		putchar((C), oflags, (struct tty *)vp);			\
 	}								\
+}
+
+void
+device_printf(device_t dev, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	printf("%s: ", device_xname(dev));
+	vprintf(fmt, ap);
+	va_end(ap);
+	return;
 }
 
 /*
