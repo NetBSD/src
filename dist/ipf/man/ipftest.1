@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipftest.1,v 1.7 2006/04/04 16:17:18 martti Exp $
+.\"	$NetBSD: ipftest.1,v 1.8 2011/01/21 09:15:20 wiz Exp $
 .\"
 .TH ipftest 1
 .SH NAME
@@ -178,7 +178,7 @@ Specify the filename from which to read filter rules in \fBipf\fP(5) format.
 Don't attempt to convert IP addresses to hostnames.
 .TP
 .BR \-S \0<ip_address>
-The IP address specifived with this option is used by ipftest to determine
+The IP address specified with this option is used by ipftest to determine
 whether a packet should be treated as "input" or "output".  If the source
 address in an IP packet matches then it is considered to be inbound.  If it
 does not match then it is considered to be outbound.  This is primarily
