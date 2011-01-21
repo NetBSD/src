@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.55 2009/12/14 00:46:04 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.56 2011/01/21 15:59:07 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -67,7 +67,7 @@ SYSTEM_LD_TAIL_EXTRA+= \
 		${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32
 .endif
 .endif # LP64=yes
-AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
+AFLAGS+=	-mno-abicalls -x assembler-with-cpp ${AOPTS}
 
 ##
 ## (3) libkern and compat
