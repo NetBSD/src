@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.80 2008/03/01 13:59:56 joerg Exp $
+#	$NetBSD: Makefile.vax,v 1.81 2011/01/21 15:59:10 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -32,7 +32,7 @@ GENASSYM_CONF=	${VAX}/vax/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-D_VAX_INLINE_
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp -fno-pic
+AFLAGS+=	-x assembler-with-cpp -fno-pic
 CFLAGS+=	-fno-pic
 
 ##
