@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25 2010/02/17 18:55:14 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.1 2011/01/21 16:58:07 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,9 +49,13 @@ __RCSID("$NetBSD: repquota.c,v 1.25 2010/02/17 18:55:14 bouyer Exp $");
  */
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/queue.h>
-#include <ufs/ufs/quota.h>
+#include <sys/types.h>
+#include <sys/statvfs.h>
+#include <prop/proplib.h>
+#include <sys/quota.h>
+
 #include <errno.h>
+#include <err.h>
 #include <fstab.h>
 #include <grp.h>
 #include <pwd.h>
@@ -60,12 +64,17 @@ __RCSID("$NetBSD: repquota.c,v 1.25 2010/02/17 18:55:14 bouyer Exp $");
 #include <string.h>
 #include <unistd.h>
 
-const char *qfname = QUOTAFILENAME;
+#include <ufs/ufs/quota2_prop.h>
+#include <ufs/ufs/quota1.h>
+
+#include <printquota.h>
+
 const char *qfextension[] = INITQFNAMES;
+const char *qfname = QUOTAFILENAME;
 
 struct fileusage {
 	struct	fileusage *fu_next;
-	struct	dqblk fu_dqblk;
+	struct	quota2_entry fu_q2e;
 	u_long	fu_id;
 	char	fu_name[1];
 	/* actually bigger */
@@ -73,33 +82,39 @@ struct fileusage {
 #define FUHASH 1024	/* must be power of two */
 struct fileusage *fuhead[MAXQUOTAS][FUHASH];
 u_long highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
+struct quota2_entry defaultq2e[MAXQUOTAS];
 
-int	vflag;			/* verbose */
-int	aflag;			/* all file systems */
+int	vflag = 0;		/* verbose */
+int	aflag = 0;		/* all file systems */
+int	Dflag = 0;		/* debug */
+int	hflag = 0;		/* debug */
 
-struct fileusage *addid __P((u_long, int, const char *));
-int	hasquota __P((struct fstab *, int, char **));
-struct fileusage *lookup __P((u_long, int));
-int	main __P((int, char **));
-int	oneof __P((const char *, char **, int));
-int	repquota __P((struct fstab *, int, char *));
-const char *timeprt __P((time_t));
-void	usage __P((void));
+struct fileusage *addid(u_long, int, const char *);
+int	hasquota(struct fstab *, int, char **);
+struct fileusage *lookup(u_long, int);
+int	main(int, char **);
+int	oneof(const char *, char **, int);
+int	repquota(const struct statvfs *, int);
+int	repquota2(const struct statvfs *, int);
+int	repquota1(const struct statvfs *, int);
+void	usage(void);
+void	printquotas(int, const struct statvfs *);
+void	dqblk2q2e(const struct dqblk *, struct quota2_entry *);
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	struct fstab *fs;
 	struct passwd *pw;
 	struct group *gr;
 	int gflag = 0, uflag = 0, errs = 0;
 	long i, argnum, done = 0;
-	char *qfnp;
 	int ch;
+	struct statvfs *fst;
+	int nfst;
 
-	while ((ch = getopt(argc, argv, "aguv")) != -1) {
+	while ((ch = getopt(argc, argv, "Daguhv")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
@@ -110,8 +125,14 @@ main(argc, argv)
 		case 'u':
 			uflag++;
 			break;
+		case 'h':
+			hflag++;
+			break;
 		case 'v':
 			vflag++;
+			break;
+		case 'D':
+			Dflag++;
 			break;
 		default:
 			usage();
@@ -138,30 +159,34 @@ main(argc, argv)
 			(void) addid((u_long)pw->pw_uid, USRQUOTA, pw->pw_name);
 		endpwent();
 	}
-	setfsent();
-	while ((fs = getfsent()) != NULL) {
-		if (strcmp(fs->fs_vfstype, "ffs"))
+
+	nfst = getmntinfo(&fst, MNT_WAIT);
+	if (nfst == 0)
+		errx(2, "no filesystems mounted!");
+	for (i = 0; i < nfst; i++) {
+		if (strncmp(fst[i].f_fstypename, "ffs",
+		    sizeof(fst[i].f_fstypename)) != 0 ||
+		    (fst[i].f_flag & ST_QUOTA) == 0)
 			continue;
 		if (aflag) {
-			if (gflag && hasquota(fs, GRPQUOTA, &qfnp))
-				errs += repquota(fs, GRPQUOTA, qfnp);
-			if (uflag && hasquota(fs, USRQUOTA, &qfnp))
-				errs += repquota(fs, USRQUOTA, qfnp);
+			if (gflag)
+				errs += repquota(&fst[i], GRPQUOTA);
+			if (uflag)
+				errs += repquota(&fst[i], USRQUOTA);
 			continue;
 		}
-		if ((argnum = oneof(fs->fs_file, argv, argc)) >= 0 ||
-		    (argnum = oneof(fs->fs_spec, argv, argc)) >= 0) {
+		if ((argnum = oneof(fst[i].f_mntonname, argv, argc)) >= 0 ||
+		    (argnum = oneof(fst[i].f_mntfromname, argv, argc)) >= 0) {
 			done |= 1 << argnum;
-			if (gflag && hasquota(fs, GRPQUOTA, &qfnp))
-				errs += repquota(fs, GRPQUOTA, qfnp);
-			if (uflag && hasquota(fs, USRQUOTA, &qfnp))
-				errs += repquota(fs, USRQUOTA, qfnp);
+			if (gflag)
+				errs += repquota(&fst[i], GRPQUOTA);
+			if (uflag)
+				errs += repquota(&fst[i], USRQUOTA);
 		}
 	}
-	endfsent();
 	for (i = 0; i < argc; i++)
 		if ((done & (1 << i)) == 0)
-			fprintf(stderr, "%s not found in fstab\n", argv[i]);
+			fprintf(stderr, "%s not mounted\n", argv[i]);
 	exit(errs);
 }
 
@@ -169,36 +194,150 @@ void
 usage()
 {
 	fprintf(stderr, "usage:\n\t%s\n\t%s\n",
-		"repquota [-v] [-g] [-u] -a",
-		"repquota [-v] [-g] [-u] filesys ...");
+		"repquota [-D] [-v] [-g] [-u] -a",
+		"repquota [-D] [-v] [-g] [-u] filesys ...");
 	exit(1);
 }
 
 int
-repquota(fs, type, qfpathname)
-	struct fstab *fs;
-	int type;
-	char *qfpathname;
+repquota(const struct statvfs *vfs, int type)
 {
+	if (repquota2(vfs, type) != 0)
+		return (repquota1(vfs, type));
+	return 0;
+}
+
+int
+repquota2(const struct statvfs *vfs, int type)
+{
+	prop_dictionary_t dict, data, cmd;
+	prop_array_t cmds, datas;
+	struct plistref pref;
+	int error;
+	int8_t error8;
+	prop_object_iterator_t iter;
+	struct quota2_entry *q2ep;
+	struct fileusage *fup;
+	const char *strid;
+	uint32_t id;
+
+	dict = quota2_prop_create();
+	cmds = prop_array_create();
+	datas = prop_array_create();
+
+	if (dict == NULL || cmds == NULL || datas == NULL)
+		errx(1, "can't allocate proplist");
+	if (!quota2_prop_add_command(cmds, "getall", qfextension[type], datas))
+		err(1, "prop_add_command");
+	if (!prop_dictionary_set(dict, "commands", cmds))
+		err(1, "prop_dictionary_set(command)");
+	if (Dflag)
+		printf("message to kernel:\n%s\n",
+		    prop_dictionary_externalize(dict));
+	if (!prop_dictionary_send_syscall(dict, &pref))
+		err(1, "prop_dictionary_send_syscall");
+	prop_object_release(dict);
+
+	if (quotactl(vfs->f_mntonname, &pref) != 0)
+		err(1, "quotactl");
+
+	if ((error = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
+		errx(1, "prop_dictionary_recv_syscall: %s\n",
+		    strerror(error));
+	}
+	if (Dflag)
+		printf("reply from kernel:\n%s\n",
+		    prop_dictionary_externalize(dict));
+	if ((error = quota2_get_cmds(dict, &cmds)) != 0) {
+		errx(1, "quota2_get_cmds: %s\n",
+		    strerror(error));
+	}
+	/* only one command, no need to iter */
+	cmd = prop_array_get(cmds, 0);
+	if (cmd == NULL)
+		err(1, "prop_array_get(cmd)");
+
+	if (!prop_dictionary_get_int8(cmd, "return", &error8))
+		err(1, "prop_get(return)");
+
+	if (error8) {
+		prop_object_release(dict);
+		if (error8 != EOPNOTSUPP) {
+			fprintf(stderr, "get %s quotas: %s\n",
+			    qfextension[type], strerror(error8));
+		}
+		return (error8);
+	}
+	datas = prop_dictionary_get(cmd, "data");
+	if (datas == NULL)
+		err(1, "prop_dict_get(datas)");
+
+	iter = prop_array_iterator(datas);
+        if (iter == NULL)
+                err(1, "prop_array_iterator");
+
+	while ((data = prop_object_iterator_next(iter)) != NULL) {
+		strid = NULL;
+		if (!prop_dictionary_get_uint32(data, "id", &id)) {
+			if (!prop_dictionary_get_cstring_nocopy(data, "id",
+			    &strid))
+				errx(1, "can't find id in quota entry");
+			if (strcmp(strid, "default") != 0) {
+				errx(1, "wrong id string %s in quota entry",
+				    strid);
+			}
+			q2ep = &defaultq2e[type];
+		} else {
+			if ((fup = lookup(id, type)) == 0)
+				fup = addid(id, type, (char *)0);
+			q2ep = &fup->fu_q2e;
+			q2ep->q2e_uid = id;
+		}
+			
+		error = quota2_dict_get_q2e_usage(data, q2ep);
+		if (error) {
+			errx(1, "quota2_dict_get_q2e_usage: %s\n",
+			    strerror(error));
+		}
+	}
+	prop_object_iterator_release(iter);
+	prop_object_release(dict);
+	printquotas(type, vfs);
+	return (0);
+}
+
+int repquota1(const struct statvfs *vfs, int type)
+{
+	char *qfpathname;
+	struct fstab *fs;
 	struct fileusage *fup;
 	FILE *qf;
 	u_long id;
 	struct dqblk dqbuf;
-	static struct dqblk zerodqblk;
-	static int warned = 0;
-	static int multiple = 0;
 
+#if 0
+	static int warned = 0;
 	if (quotactl(fs->fs_file, QCMD(Q_SYNC, type), 0, 0) < 0 &&
 	    errno == EOPNOTSUPP && !warned && vflag) {
 		warned++;
 		fprintf(stdout,
 		    "*** Warning: Quotas are not compiled into this kernel\n");
 	}
-	if (multiple++)
-		printf("\n");
-	if (vflag)
-		fprintf(stdout, "*** Report for %s quotas on %s (%s)\n",
-		    qfextension[type], fs->fs_file, fs->fs_spec);
+#endif
+	setfsent();
+	while ((fs = getfsent()) != NULL) {
+		if (strcmp(fs->fs_vfstype, "ffs") == 0 &&
+		   strcmp(fs->fs_file, vfs->f_mntonname) == 0)
+			break;
+	}
+	endfsent();
+	if (fs == NULL) {
+		fprintf(stderr, "%s not found in fstab\n", vfs->f_mntonname);
+		return 1;
+	}
+	if (!hasquota(fs, type, &qfpathname))
+		return 0;
+		
 	if ((qf = fopen(qfpathname, "r")) == NULL) {
 		perror(qfpathname);
 		return (1);
@@ -211,9 +350,25 @@ repquota(fs, type, qfpathname)
 			continue;
 		if ((fup = lookup(id, type)) == 0)
 			fup = addid(id, type, (char *)0);
-		fup->fu_dqblk = dqbuf;
+		dqblk2q2e(&dqbuf, &fup->fu_q2e);
 	}
 	fclose(qf);
+	printquotas(type, vfs);
+	return (0);
+}
+
+void
+printquotas(int type, const struct statvfs *vfs)
+{
+	static int multiple = 0;
+	u_long id;
+	struct fileusage *fup;
+
+	if (multiple++)
+		printf("\n");
+	if (vflag)
+		fprintf(stdout, "*** Report for %s quotas on %s (%s)\n",
+		    qfextension[type], vfs->f_mntonname, vfs->f_mntfromname);
 	printf("                        Block limits               File limits\n");
 	printf(type == USRQUOTA ? "User " : "Group");
 	printf("            used     soft     hard  grace      used    soft    hard  grace\n");
@@ -221,38 +376,45 @@ repquota(fs, type, qfpathname)
 		fup = lookup(id, type);
 		if (fup == 0)
 			continue;
-		if (fup->fu_dqblk.dqb_curinodes == 0 &&
-		    fup->fu_dqblk.dqb_curblocks == 0)
+		if (fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur == 0 &&
+		    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur == 0)
 			continue;
 		if (strlen(fup->fu_name) > 9)
 			printf("%s ", fup->fu_name);
 		else
 			printf("%-10s", fup->fu_name);
-		printf("%c%c%9d%9d%9d%7s",
-			fup->fu_dqblk.dqb_bsoftlimit && 
-			    fup->fu_dqblk.dqb_curblocks >= 
-			    fup->fu_dqblk.dqb_bsoftlimit ? '+' : '-',
-			fup->fu_dqblk.dqb_isoftlimit &&
-			    fup->fu_dqblk.dqb_curinodes >=
-			    fup->fu_dqblk.dqb_isoftlimit ? '+' : '-',
-			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_curblocks) / 1024),
-			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_bsoftlimit) / 1024),
-			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_bhardlimit) / 1024),
-			fup->fu_dqblk.dqb_bsoftlimit && 
-			    fup->fu_dqblk.dqb_curblocks >= 
-			    fup->fu_dqblk.dqb_bsoftlimit ?
-			    timeprt(fup->fu_dqblk.dqb_btime) : "");
-		printf("  %8d%8d%8d%7s\n",
-			fup->fu_dqblk.dqb_curinodes,
-			fup->fu_dqblk.dqb_isoftlimit,
-			fup->fu_dqblk.dqb_ihardlimit,
-			fup->fu_dqblk.dqb_isoftlimit &&
-			    fup->fu_dqblk.dqb_curinodes >=
-			    fup->fu_dqblk.dqb_isoftlimit ?
-			    timeprt(fup->fu_dqblk.dqb_itime) : "");
-		fup->fu_dqblk = zerodqblk;
+		printf("%c%c%9s%9s%9s%7s",
+			fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit && 
+			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur >= 
+			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit ?
+			    '+' : '-',
+			fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit &&
+			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur >=
+			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit ?
+			    '+' : '-',
+			intprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur,
+				HN_B, hflag),
+			intprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit,
+				HN_B, hflag),
+			intprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit,
+				HN_B, hflag),
+			(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit && 
+			 fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur >= 
+			 fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit) ?
+			timeprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_time) : "");
+		printf("  %8s%8s%8s%7s\n",
+			intprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur,
+				0, hflag),
+			intprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit,
+				0, hflag),
+			intprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_hardlimit,
+				0, hflag),
+			(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit && 
+			 fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur >= 
+			 fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit) ?
+			timeprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_time) : "");
+		memset(&fup->fu_q2e, 0, sizeof(fup->fu_q2e));
 	}
-	return (0);
 }
 
 /*
@@ -365,33 +527,16 @@ addid(id, type, name)
 	return (fup);
 }
 
-/*
- * Calculate the grace period and return a printable string for it.
- */
-const char *
-timeprt(seconds)
-	time_t seconds;
-{
-	time_t hours, minutes;
-	static char buf[20];
-	static time_t now;
-
-	if (now == 0)
-		time(&now);
-	if (now > seconds)
-		return ("none");
-	seconds -= now;
-	minutes = (seconds + 30) / 60;
-	hours = (minutes + 30) / 60;
-	if (hours >= 36) {
-		sprintf(buf, "%lddays", (long)((hours + 12) / 24));
-		return (buf);
-	}
-	if (minutes >= 60) {
-		sprintf(buf, "%2ld:%ld", (long)(minutes / 60),
-		    (long)(minutes % 60));
-		return (buf);
-	}
-	sprintf(buf, "%2ld", (long)minutes);
-	return (buf);
-}
+void
+dqblk2q2e(const struct dqblk *dqblk, struct quota2_entry *q2e)
+{ 
+	q2e->q2e_val[Q2V_BLOCK].q2v_hardlimit = dqblk->dqb_bhardlimit;  
+	q2e->q2e_val[Q2V_BLOCK].q2v_softlimit = dqblk->dqb_bsoftlimit; 
+	q2e->q2e_val[Q2V_BLOCK].q2v_cur       = dqblk->dqb_curblocks;
+	q2e->q2e_val[Q2V_BLOCK].q2v_time      = dqblk->dqb_btime;
+  
+	q2e->q2e_val[Q2V_FILE].q2v_hardlimit = dqblk->dqb_ihardlimit;
+	q2e->q2e_val[Q2V_FILE].q2v_softlimit = dqblk->dqb_isoftlimit;
+	q2e->q2e_val[Q2V_FILE].q2v_cur       = dqblk->dqb_curinodes;
+	q2e->q2e_val[Q2V_FILE].q2v_time      = dqblk->dqb_itime;
+} 

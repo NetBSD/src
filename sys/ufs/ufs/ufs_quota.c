@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.1 2011/01/20 14:25:03 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.2 2011/01/21 16:58:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.1 2011/01/20 14:25:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.2 2011/01/21 16:58:06 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -57,9 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.1 2011/01/20 14:25:03 bouyer Ex
 #include <ufs/ufs/ufs_quota.h>
 #include <ufs/ufs/quota2_prop.h>
 
+kmutex_t dqlock;
+kcondvar_t dqcv;
 
 static int quota_handle_cmd_get(struct mount *, struct lwp *,
-    prop_dictionary_t, const char *, prop_array_t);
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_getall(struct mount *, struct lwp *,
+    prop_dictionary_t, int, prop_array_t);
 /*
  * Initialize the quota fields of an inode.
  */
@@ -126,11 +130,18 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
 	int error = 0;
 	const char *cmd, *type;
 	prop_array_t datas;
+	int q2type;
 
 	if (!prop_dictionary_get_cstring_nocopy(cmddict, "command", &cmd))
 		return EINVAL;
 	if (!prop_dictionary_get_cstring_nocopy(cmddict, "type", &type))
 		return EINVAL;
+	if (!strcmp(type, "user")) {
+		q2type = USRQUOTA;
+	} else if (!strcmp(type, "group")) {
+		q2type = GRPQUOTA;
+	} else
+		return EOPNOTSUPP;
 	datas = prop_dictionary_get(cmddict, "data");
 	if (datas == NULL || prop_object_type(datas) != PROP_TYPE_ARRAY)
 		return EINVAL;
@@ -139,12 +150,17 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
 	prop_dictionary_remove(cmddict, "data"); /* prepare for return */
 
 	if (strcmp(cmd, "get") == 0) {
-		error = quota_handle_cmd_get(mp, l, cmddict, type, datas);
+		error = quota_handle_cmd_get(mp, l, cmddict, q2type, datas);
 		goto end;
 	}
-	if (!prop_dictionary_set_int8(cmddict, "return", EOPNOTSUPP))
-		error = ENOMEM;
+	if (strcmp(cmd, "getall") == 0) {
+		error = quota_handle_cmd_getall(mp, l, cmddict, q2type, datas);
+		goto end;
+	}
+	error = EOPNOTSUPP;
 end:
+	error = (prop_dictionary_set_int8(cmddict, "return",
+	    error) ? 0 : ENOMEM);
 	prop_object_release(datas);
 	return error;
 }
@@ -161,7 +177,7 @@ quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 
 static int 
 quota_handle_cmd_get(struct mount *mp, struct lwp *l, 
-    prop_dictionary_t cmddict, const char *type, prop_array_t datas)
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
 {
 	prop_array_t replies;
 	prop_object_iterator_t iter;
@@ -172,19 +188,16 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 	const char *idstr;
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
-		return (prop_dictionary_set_int8(cmddict, "return",
-		    EOPNOTSUPP) ? 0 : ENOMEM);
+		return EOPNOTSUPP;
 	
 	replies = prop_array_create();
 	if (replies == NULL)
-		return (prop_dictionary_set_int8(cmddict, "return", ENOMEM) ?
-		    0 : ENOMEM);
+		return ENOMEM;
 
 	iter = prop_array_iterator(datas);
 	if (iter == NULL) {
 		prop_object_release(replies);
-		return (prop_dictionary_set_int8(cmddict, "return", ENOMEM) ?
-		    0 : ENOMEM);
+		return ENOMEM;
 	}
 	while ((data = prop_object_iterator_next(iter)) != NULL) {
 		if (!prop_dictionary_get_uint32(data, "id", &id)) {
@@ -200,8 +213,6 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 		if (error == EPERM)
 			continue;
 		if (error != 0) {
-			error = (prop_dictionary_set_int8(cmddict, "return",
-			    error) ? 0 : ENOMEM);
 			prop_object_release(replies);
 			return error;
 		}
@@ -219,18 +230,50 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 			panic("quota_handle_cmd_get: no support ?");
 		
 		if (error && error != ENOENT) {
-			error = (prop_dictionary_set_int8(cmddict, "return",
-			    error) ? 0 : ENOMEM);
 			prop_object_release(replies);
 			return error;
 		}
 	}
 	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
-		error = (prop_dictionary_set_int8(cmddict, "return",
-		    ENOMEM) ? 0 : ENOMEM);
+		error = ENOMEM;
 	} else {
-		error = (prop_dictionary_set_int8(cmddict, "return", 0) ?
-		    0 : ENOMEM);
+		error = 0;
+	}
+	return error;
+}
+
+static int 
+quota_handle_cmd_getall(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	prop_array_t replies;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error;
+
+	if ((ump->um_flags & UFS_QUOTA2) == 0)
+		return EOPNOTSUPP;
+	
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
+	if (error)
+		return error;
+		
+	replies = prop_array_create();
+	if (replies == NULL)
+		return ENOMEM;
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		mutex_enter(&dqlock);
+		error = quota2_handle_cmd_getall(ump, type, replies);
+		mutex_exit(&dqlock);
+	} else
+#endif
+		panic("quota_handle_cmd_getall: no support ?");
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+	} else {
+		error = 0;
 	}
 	return error;
 }
