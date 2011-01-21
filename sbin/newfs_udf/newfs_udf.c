@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.10 2011/01/21 22:10:51 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.11 2011/01/21 22:32:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -573,7 +573,7 @@ udf_derive_format(int req_enable, int req_disable, int force)
 
 	/* enable/disable requests */
 	if (req_disable & FORMAT_META) {
-		format_flags &= ~FORMAT_META;
+		format_flags &= ~(FORMAT_META | FORMAT_LOW);
 		req_disable  &= ~FORMAT_META;
 	}
 	if (req_disable || req_enable) {
@@ -608,7 +608,8 @@ udf_derive_format(int req_enable, int req_disable, int force)
 		context.min_udf = MAX(context.min_udf, 0x0260);
 
 	/* adjust maximum version limits not to tease or break things */
-	if (!(format_flags & FORMAT_META) && (context.max_udf > 0x200))
+	if (!(format_flags & (FORMAT_META | FORMAT_LOW)) &&
+	    (context.max_udf > 0x200))
 		context.max_udf = 0x201;
 
 	if ((format_flags & (FORMAT_VAT | FORMAT_SPARABLE)) == 0)
