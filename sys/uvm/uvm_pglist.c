@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.52 2011/01/18 21:43:29 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.53 2011/01/21 16:56:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.52 2011/01/18 21:43:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.53 2011/01/21 16:56:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		 * Found a suitable starting page.  See if the range is free.
 		 */
 #ifdef PGALLOC_VERBOSE
-		printf("%s: ps=%p try=%#x end=%#x skip=%#x, align=%#x",
+		printf("%s: ps=%p try=%#x end=%#x skip=%#x, align=0x%"PRIxPADDR,
 		    __func__, ps, tryidx, end, skip, alignment);
 #endif
 		/*
