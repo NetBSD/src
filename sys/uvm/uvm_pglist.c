@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.53 2011/01/21 16:56:38 cegger Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.54 2011/01/21 19:27:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.53 2011/01/21 16:56:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.54 2011/01/21 19:27:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		 * Found a suitable starting page.  See if the range is free.
 		 */
 #ifdef PGALLOC_VERBOSE
-		printf("%s: ps=%p try=%#x end=%#x skip=%#x, align=0x%"PRIxPADDR,
+		printf("%s: ps=%p try=%#x end=%#x skip=%#x, align=%#"PRIxPADDR,
 		    __func__, ps, tryidx, end, skip, alignment);
 #endif
 		/*
@@ -356,15 +356,16 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	int todo, limit, try;
 	struct vm_page *pg;
 	bool second_pass;
-#ifdef DEBUG
-	int cidx = 0;	/* XXX: GCC */
-#endif
 #ifdef PGALLOC_VERBOSE
 	printf("pgalloc: simple %d pgs from psi %ld\n", num,
 	    (long)(ps - vm_physmem));
 #endif
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
+	KASSERT(ps->start <= ps->avail_start);
+	KASSERT(ps->start <= ps->avail_end);
+	KASSERT(ps->avail_start <= ps->end);
+	KASSERT(ps->avail_end <= ps->end);
 
 	low = atop(low);
 	high = atop(high);
@@ -385,10 +386,16 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			continue;
 		}
 #ifdef DEBUG
-		if (vm_physseg_find(try, &cidx) != ps - vm_physmem)
-			panic("pgalloc simple: botch1");
-		if (cidx != (try - ps->start))
-			panic("pgalloc simple: botch2");
+		{
+			int cidx = 0;
+			const int bank = vm_physseg_find(try, &cidx);
+			KASSERTMSG(bank == ps - vm_physmem,
+			    ("vm_physseg_find(%#x) (%d) != ps %zd",
+			     try, bank, ps - vm_physmem));
+			KASSERTMSG(cidx == try - ps->start,
+			    ("vm_physseg_find(%#x): %#x != off %"PRIxPADDR,
+			     try, cidx, try - ps->start));
+		}
 #endif
 		if (VM_PAGE_IS_FREE(pg) == 0)
 			continue;
