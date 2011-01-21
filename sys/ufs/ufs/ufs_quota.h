@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.h,v 1.1.2.1 2011/01/20 14:25:03 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.h,v 1.1.2.2 2011/01/21 16:58:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -96,8 +96,8 @@ struct dquot {
  */
 #define	NODQUOT		NULL
 
-static kmutex_t dqlock;
-static kcondvar_t dqcv;
+extern kmutex_t dqlock;
+extern kcondvar_t dqcv;
 /*
  * Quota name to error message mapping.
  */
@@ -128,8 +128,9 @@ int dq1sync(struct vnode *, struct dquot *);
 
 int chkdq2(struct inode *, int64_t, kauth_cred_t, int);
 int chkiq2(struct inode *, int32_t, kauth_cred_t, int);
-int quota2_handle_cmd_get(struct ufsmount *, const char *, int, int,
+int quota2_handle_cmd_get(struct ufsmount *, int, int, int,
     prop_array_t);
+int quota2_handle_cmd_getall(struct ufsmount *, int, prop_array_t);
 int q2sync(struct mount *);
 int dq2get(struct vnode *, u_long, struct ufsmount *, int, struct dquot *);
 int dq2sync(struct vnode *, struct dquot *);

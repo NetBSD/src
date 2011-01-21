@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.1 2011/01/20 14:25:03 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.2 2011/01/21 16:58:06 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.1 2011/01/20 14:25:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.2 2011/01/21 16:58:06 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -58,6 +58,9 @@ static int getq2h(struct ufsmount *, int, struct buf **,
     struct quota2_header **, int);
 static int getq2e(struct ufsmount *, int, daddr_t, int, struct buf **,
     struct quota2_entry **, int);
+static int quota2_walk_list(struct ufsmount *, struct buf *, int,
+    uint64_t *, int, void *,
+    int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *, uint64_t, void *));
 
 static int
 getq2h(struct ufsmount *ump, int type,
@@ -107,6 +110,80 @@ getq2e(struct ufsmount *ump, int type, daddr_t lblkno, int blkoffset,
 	*bpp = bp;
 	return 0;
 }
+
+/* walk a quota entry list, calling the callback for each entry */
+#define Q2WL_ABORT 0x10000000
+
+static int
+quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
+    uint64_t *offp, int flags, void *a,
+    int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *, uint64_t, void *))
+{
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	daddr_t off = ufs_rw64(*offp, needswap);
+	struct buf *bp, *obp = hbp;
+	int ret = 0, ret2 = 0;
+	struct quota2_entry *q2e;
+	daddr_t lblkno, blkoff;
+
+	KASSERT(mutex_owner(&dqlock));
+
+	while (off != 0) {
+		lblkno = (off >> ump->um_mountp->mnt_fs_bshift);
+		blkoff = (off & ump->umq2_bmask);
+		if (lblkno == 0) {
+			/* in the header block */
+			bp = hbp;
+		} else {
+			ret = bread(ump->um_quotas[type], lblkno, 
+			    ump->umq2_bsize,
+			    ump->um_cred[type], flags, &bp);
+			if (ret)
+				return ret;
+			if (bp->b_resid != 0) {
+				panic("quota2_walk_list: %s quota file corrupted",
+				    quotatypes[type]);
+			}
+		}
+		q2e = (void *)((char *)(bp->b_data) + blkoff);
+		ret = (*func)(ump, offp, q2e, off, a);
+		if (off != ufs_rw64(*offp, needswap)) {
+			/* callback changed parent's pointer, redo */
+			off = ufs_rw64(*offp, needswap);
+			if (bp != hbp && bp != obp)
+				ret2 = VOP_BWRITE(bp);
+		} else {
+			/* parent if now current */
+			if (obp != bp && obp != hbp) {
+				if (flags & B_MODIFY)
+					ret2 = VOP_BWRITE(obp);
+				else
+					brelse(obp, 0);
+			}
+			obp = bp;
+			offp = &(q2e->q2e_next);
+			off = ufs_rw64(*offp, needswap);
+		}
+		if (ret)
+			break;
+		if (ret2) {
+			ret = ret2;
+			break;
+		}
+	}
+	if (obp != hbp) {
+		if (flags & B_MODIFY)
+			ret2 = VOP_BWRITE(obp);
+		else
+			brelse(obp, 0);
+	}
+	if (ret & Q2WL_ABORT)
+		return 0;
+	if (ret == 0)
+		return ret2;
+	return ret;
+}
+
 void
 quota2_umount(struct mount *mp)
 {
@@ -318,7 +395,7 @@ chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 }
 
 int
-quota2_handle_cmd_get(struct ufsmount *ump, const char *type, int id,
+quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
     int defaultq, prop_array_t replies)
 {
 	struct dquot *dq;
@@ -327,24 +404,19 @@ quota2_handle_cmd_get(struct ufsmount *ump, const char *type, int id,
 	struct quota2_entry *q2e;
 	struct buf *bp;
 	prop_dictionary_t dict;
-	int q2type;
 
-	if (!strcmp(type, "user")) {
-		q2type = USRQUOTA;
-	} else if (!strcmp(type, "group")) {
-		q2type = GRPQUOTA;
-	} else
-		return EOPNOTSUPP;
-
-	if (ump->um_quotas[q2type] == NULLVP)
+	if (ump->um_quotas[type] == NULLVP)
 		return ENODEV;
 	if (defaultq) {
-		error = getq2h(ump, q2type, &bp, &q2h, 0);
-		if (error)
+		mutex_enter(&dqlock);
+		error = getq2h(ump, type, &bp, &q2h, 0);
+		if (error) {
+			mutex_exit(&dqlock);
 			return error;
+		}
 		q2e = &q2h->q2h_defentry;
 	} else {
-		error = dqget(NULLVP, id, ump, q2type, &dq);
+		error = dqget(NULLVP, id, ump, type, &dq);
 
 		if (error)
 			return error;
@@ -353,21 +425,72 @@ quota2_handle_cmd_get(struct ufsmount *ump, const char *type, int id,
 			dqrele(NULLVP, dq);
 			return ENOENT;
 		}
-		error = getq2e(ump, q2type, dq->dq2_lblkno, dq->dq2_blkoff,
+		error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
 		    &bp, &q2e, 0);
-		dqrele(NULLVP, dq);
 		if (error)
 			return error;
 	}
-	dict = q2etoprop(q2e, 0);
+	dict = q2etoprop(q2e, defaultq);
+	if (defaultq)
+		mutex_exit(&dqlock);
+	else
+		dqrele(NULLVP, dq);
 	brelse(bp, 0);
 	if (dict == NULL)
 		return ENOMEM;
 	
-	if (!prop_array_add(replies, dict)) {
+	if (!prop_array_add_and_rel(replies, dict)) {
 		error = ENOMEM;
 	}
-	prop_object_release(dict);
+	return error;
+}
+
+
+static int
+quota2_getall_callback(struct ufsmount *ump, uint64_t *offp,
+    struct quota2_entry *q2e, uint64_t off, void *v)
+{
+	prop_array_t replies = v;
+	prop_dictionary_t dict;
+
+	dict = q2etoprop(q2e, 0);	
+	if (!prop_array_add_and_rel(replies, dict)) {
+		return ENOMEM;
+	}
+	return 0;
+}
+
+int
+quota2_handle_cmd_getall(struct ufsmount *ump, int type, prop_array_t replies)
+{
+	int error;
+	struct quota2_header *q2h;
+	struct buf *hbp;
+	prop_dictionary_t dict;
+	uint64_t offset;
+	int i;
+	int quota2_hash_size;
+	const int needswap = UFS_MPNEEDSWAP(ump);
+
+	if (ump->um_quotas[type] == NULLVP)
+		return ENODEV;
+	error = getq2h(ump, type, &hbp, &q2h, 0);
+	if (error)
+		return error;
+	dict = q2etoprop(&q2h->q2h_defentry, 1);
+	if (!prop_array_add_and_rel(replies, dict)) {
+		brelse(hbp, 0);
+		return ENOMEM;
+	}
+	quota2_hash_size = ufs_rw16(q2h->q2h_hash_size, needswap);
+	for (i = 0; i < quota2_hash_size ; i++) {
+		offset = ufs_rw64(q2h->q2h_entries[i], needswap);
+		error = quota2_walk_list(ump, hbp, type, &offset, 0, replies,
+		    quota2_getall_callback);
+		if (error)
+			break;
+	}
+	brelse(hbp, 0);
 	return error;
 }
 
@@ -377,42 +500,57 @@ q2sync(struct mount *mp)
 	return 0;
 }
 
+struct dq2get_callback {
+	uid_t id;
+	struct dquot *dq;
+};
+
+static int
+dq2get_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
+    uint64_t off, void *v)
+{
+	struct dq2get_callback *c = v;
+	daddr_t lblkno;
+	int blkoff;
+	const int needswap = UFS_MPNEEDSWAP(ump);
+
+	if (ufs_rw32(q2e->q2e_uid, needswap) == c->id) {
+		lblkno = (off >> ump->um_mountp->mnt_fs_bshift);
+		blkoff = (off & ump->umq2_bmask);
+		c->dq->dq2_lblkno = lblkno;
+		c->dq->dq2_blkoff = blkoff;
+		return Q2WL_ABORT;
+	}
+	return 0;
+}
+
 int
 dq2get(struct vnode *dqvp, u_long id, struct ufsmount *ump, int type,
     struct dquot *dq)
 {
 	struct buf *bp;
 	struct quota2_header *q2h;
-	struct quota2_entry *q2e;
 	int error;
-	daddr_t offset, lblkno;
-	int blkoffset;
+	daddr_t offset;
 	u_long hash_mask;
 	const int needswap = UFS_MPNEEDSWAP(ump);
+	struct dq2get_callback c = {
+		.id = id,
+		.dq = dq
+	};
 
+	mutex_enter(&dqlock);
 	error = getq2h(ump, type, &bp, &q2h, 0);
 	if (error)
-		return error;
+		goto out_mutex;
 	/* look for our entry */
 	hash_mask = ((1 << q2h->q2h_hash_shift) - 1);
 	offset = ufs_rw64(q2h->q2h_entries[id & hash_mask], needswap);
-	dq->dq2_lblkno = 0;
-	dq->dq2_blkoff = 0;
-	while (offset != 0) {
-		lblkno = (offset >> ump->um_mountp->mnt_fs_bshift);
-		blkoffset = (offset & ump->umq2_bmask);
-		brelse(bp, 0);
-		error = getq2e(ump, type, lblkno, blkoffset, &bp, &q2e, 0);
-		if (error)
-			return error;
-		if (ufs_rw32(q2e->q2e_uid, needswap) == id) {
-			dq->dq2_lblkno = lblkno;
-			dq->dq2_blkoff = blkoffset;
-			break;
-		}
-		offset = ufs_rw64(q2e->q2e_next, needswap);
-	}
+	error = quota2_walk_list(ump, bp, type, &offset, 0, (void *)&c,
+	    dq2get_callback);
 	brelse(bp, 0);
+out_mutex:
+	mutex_exit(&dqlock);
 	return error;
 }
 
