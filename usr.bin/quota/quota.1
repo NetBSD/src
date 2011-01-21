@@ -1,4 +1,4 @@
-.\"	$NetBSD: quota.1,v 1.14.52.1 2011/01/20 14:25:05 bouyer Exp $
+.\"	$NetBSD: quota.1,v 1.14.52.2 2011/01/21 16:36:57 bouyer Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,14 +135,6 @@ If
 .Nm
 exits with a non-zero status, one or more filesystems
 are over quota.
-.Sh FILES
-.Bl -tag -width quota.group -compact
-.It Pa quota.user
-located at the filesystem root with user quotas
-.It Pa quota.group
-located at the filesystem root with group quotas
-.It Pa /etc/fstab
-to find filesystem names and locations
 .El
 .Sh SEE ALSO
 .Xr quotactl 2 ,
