@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2010/10/14 06:58:22 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.30 2011/01/21 15:59:05 joerg Exp $
 
 NOMAN= # defined
 
@@ -27,7 +27,7 @@ SRCS+= pci.c prf.c sd.c siop.c tgets.c vers.c vga.c video.c vreset.c wdc.c wd.c
 SRCS+= setjmp.S
 
 CFLAGS= -Wno-main -ffreestanding
-AFLAGS= -x assembler-with-cpp -traditional-cpp
+AFLAGS= -x assembler-with-cpp
 
 CPPFLAGS= -nostdinc
 CPPFLAGS+= -I${.OBJDIR} -I${S} -I${COMMONLIBDIR}/include -I${S}/lib/libsa
