@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_prop.h,v 1.1.2.1 2011/01/20 14:25:03 bouyer Exp $ */
+/* $NetBSD: quota2_prop.h,v 1.1.2.2 2011/01/21 16:58:06 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -36,6 +36,7 @@ int quota2_dict_get_q2v_usage(prop_dictionary_t, struct quota2_val *);
 int quota2_dict_get_q2e_usage(prop_dictionary_t, struct quota2_entry *);
 int quota2_get_cmds(prop_dictionary_t, prop_array_t *);
 
+bool prop_array_add_and_rel(prop_array_t, prop_object_t);
 bool prop_dictionary_set_and_rel(prop_dictionary_t, const char *,
      prop_object_t);
 prop_dictionary_t quota2_prop_create(void);

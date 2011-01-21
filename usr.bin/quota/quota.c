@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33.2.1 2011/01/20 14:25:05 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.33.2.2 2011/01/21 16:58:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33.2.1 2011/01/20 14:25:05 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.33.2.2 2011/01/21 16:58:06 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,11 +55,10 @@ __RCSID("$NetBSD: quota.c,v 1.33.2.1 2011/01/20 14:25:05 bouyer Exp $");
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
-#include <sys/queue.h>
-#include <prop/proplib.h>
-#include <sys/quota.h>
 
 #include <ufs/ufs/quota2_prop.h>
+#include <sys/quota.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -77,7 +76,7 @@ __RCSID("$NetBSD: quota.c,v 1.33.2.1 2011/01/20 14:25:05 bouyer Exp $");
 #include <rpc/pmap_prot.h>
 #include <rpcsvc/rquota.h>
 
-const char *qfextension[] = INITQFNAMES;
+#include <printquota.h>
 
 struct quotause {
 	struct	quotause *next;
@@ -93,16 +92,17 @@ int	main(int, char **);
 int	getnfsquota(struct statvfs *, struct fstab *, struct quotause *,
 	    long, int);
 struct quotause	*getprivs(long id, int quotatype);
-int	getufsquota(struct statvfs *, struct quotause *, long, int);
 void	heading(int, u_long, const char *, const char *);
 void	showgid(gid_t);
 void	showgrpname(const char *);
 void	showquotas(int, u_long, const char *);
 void	showuid(uid_t);
 void	showusrname(const char *);
-const char *intprt(uint64_t, int);
-const char *timeprt(time_t seconds);
 void	usage(void);
+
+extern const char *qfextension[];
+
+int  getufsquota(const char *, struct quota2_entry *, long, int, int, int);
 
 int	qflag = 0;
 int	vflag = 0;
@@ -403,21 +403,22 @@ showquotas(type, id, name)
 			printf("%12s%9s%c%8s%9s%8s"
 			    , nam
 			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur
-				,HN_B)
+				,HN_B, hflag)
 			    , (msgb == NULL) ? ' ' : '*'
 			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit
-				, HN_B)
+				, HN_B, hflag)
 			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit
-				, HN_B)
+				, HN_B, hflag)
 			    , (msgb == NULL) ? ""
 			        : timeprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_time));
 			printf("%8s%c%7s%8s%8s\n"
-			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur, 0)
+			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur
+				, 0, hflag)
 			    , (msgi == NULL) ? ' ' : '*'
 			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit
-				, 0)
+				, 0, hflag)
 			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit
-				, 0)
+				, 0, hflag)
 			    , (msgi == NULL) ? ""
 			        : timeprt(qup->q2e.q2e_val[Q2V_FILE].q2v_time)
 			);
@@ -458,63 +459,6 @@ heading(type, id, name, tag)
 }
 
 /*
- * convert 64bit value to a printable string
- */
-const char *
-intprt(uint64_t val, int flags)
-{
-	static char buf[21];
-
-	if (val == UQUAD_MAX)
-		return("-");
-
-	if (flags & HN_B)
-		val = dbtob(val);
-	
-	if (hflag) {
-		humanize_number(buf, 6, val, "", HN_AUTOSCALE, flags);
-		return buf;
-	}
-	if (flags & HN_B) {
-		/* traditionnal display: blocks are in kilobytes */
-		val = val / 1024;
-	}
-	snprintf(buf, sizeof(buf), "%" PRIu64, val);
-	return buf;
-}
-
-/*
- * Calculate the grace period and return a printable string for it.
- */
-const char *
-timeprt(time_t seconds)
-{
-	time_t hours, minutes;
-	static char buf[20];
-	static time_t now;
-
-	if (now == 0)
-		time(&now);
-	if (now > seconds)
-		return ("none");
-	seconds -= now;
-	minutes = (seconds + 30) / 60;
-	hours = (minutes + 30) / 60;
-	if (hours >= 36) {
-		(void)snprintf(buf, sizeof buf, "%ddays",
-		    (int)((hours + 12) / 24));
-		return (buf);
-	}
-	if (minutes >= 60) {
-		(void)snprintf(buf, sizeof buf, "%2d:%d",
-		    (int)(minutes / 60), (int)(minutes % 60));
-		return (buf);
-	}
-	(void)snprintf(buf, sizeof buf, "%2d", (int)minutes);
-	return (buf);
-}
-
-/*
  * Collect the requested quota information.
  */
 struct quotause *
@@ -532,7 +476,6 @@ getprivs(id, quotatype)
 	nfst = getmntinfo(&fst, MNT_WAIT);
 	if (nfst == 0)
 		errx(2, "no filesystems mounted!");
-	setfsent();
 	for (i = 0; i < nfst; i++) {
 		if (qup == NULL) {
 			if ((qup =
@@ -545,8 +488,9 @@ getprivs(id, quotatype)
 				continue;
 		} else if (strncmp(fst[i].f_fstypename, "ffs",
 		    sizeof(fst[i].f_fstypename)) == 0 &&
-		    (fst[i].f_flag &ST_QUOTA) != 0) {
-			if (getufsquota(&fst[i], qup, id, quotatype) == 0)
+		    (fst[i].f_flag & ST_QUOTA) != 0) {
+			if (getufsquota(fst[i].f_mntonname, &qup->q2e,
+			    id, quotatype, dflag, Dflag) == 0)
 				continue;
 		} else
 			continue;
@@ -562,106 +506,7 @@ getprivs(id, quotatype)
 	}
 	if (qup)
 		free(qup);
-	endfsent();
 	return (quphead);
-}
-
-
-int
-getufsquota(struct statvfs *fst, struct quotause *qup, long id, int type)
-{
-	prop_dictionary_t dict, data, cmd;
-	prop_array_t cmds, datas;
-	struct plistref pref;
-	int error;
-	int8_t error8;
-	bool ret;
-
-	dict = quota2_prop_create();
-	cmds = prop_array_create();
-	datas = prop_array_create();
-	data = prop_dictionary_create();
-
-	if (dict == NULL || cmds == NULL || datas == NULL || data == NULL)
-		errx(1, "can't allocate proplist");
-
-	if (dflag)
-		ret = prop_dictionary_set_cstring(data, "id", "default");
-	else
-		ret = prop_dictionary_set_uint32(data, "id", id);
-	if (!ret)
-		err(1, "prop_dictionary_set(id)");
-		
-	if (!prop_array_add(datas, data))
-		err(1, "prop_array_add(data)");
-	prop_object_release(data);
-	if (!quota2_prop_add_command(cmds, "get", qfextension[type], datas))
-		err(1, "prop_add_command");
-	if (!prop_dictionary_set(dict, "commands", cmds))
-		err(1, "prop_dictionary_set(command)");
-	if (Dflag)
-		printf("message to kernel:\n%s\n",
-		    prop_dictionary_externalize(dict));
-
-	if (!prop_dictionary_send_syscall(dict, &pref))
-		err(1, "prop_dictionary_send_syscall");
-	prop_object_release(dict);
-
-	if (quotactl(fst->f_mntonname, &pref) != 0)
-		err(1, "quotactl");
-	
-	if ((error = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
-		errx(1, "prop_dictionary_recv_syscall: %s\n",
-		    strerror(error));
-	}
-	if (Dflag)
-		printf("reply from kernel:\n%s\n",
-		    prop_dictionary_externalize(dict));
-	if ((error = quota2_get_cmds(dict, &cmds)) != 0) {
-		errx(1, "quota2_get_cmds: %s\n",
-		    strerror(error));
-	}
-	/* only one command, no need to iter */
-	cmd = prop_array_get(cmds, 0);
-	if (cmd == NULL)
-		err(1, "prop_array_get(cmd)");
-
-	if (!prop_dictionary_get_int8(cmd, "return", &error8))
-		err(1, "prop_get(return)");
-
-	if (error8) {
-		if (error8 != ENOENT && error8 != ENODEV) {
-			if (dflag)
-				fprintf(stderr, "get default %s quota: %s\n",
-				    qfextension[type], strerror(error8));
-			else 
-				fprintf(stderr, "get %s quota for %ld: %s\n",
-				    qfextension[type], id, strerror(error8));
-		}
-		prop_object_release(dict);
-		return (0);
-	}
-	datas = prop_dictionary_get(cmd, "data");
-	if (datas == NULL)
-		err(1, "prop_dict_get(datas)");
-
-	/* only one data, no need to iter */
-	if (prop_array_count(datas) == 0) {
-		/* no quota for this user/group */
-		prop_object_release(dict);
-		return (0);
-	}
-	
-	data = prop_array_get(datas, 0);
-	if (data == NULL)
-		err(1, "prop_array_get(data)");
-
-	error = quota2_dict_get_q2e_usage(data, &qup->q2e);
-	if (error) {
-		errx(1, "quota2_dict_get_q2e_usage: %s\n",
-		    strerror(error));
-	}
-	return (1);
 }
 
 int
@@ -811,5 +656,106 @@ alldigits(s)
 		if (!isdigit(c))
 			return (0);
 	} while ((c = *s++) != 0);
+	return (1);
+}
+
+const char *qfextension[] = INITQFNAMES;
+
+int
+getufsquota(const char *mp, struct quota2_entry *q2e, long id, int type,
+    int defaultq, int debug)
+{
+	prop_dictionary_t dict, data, cmd;
+	prop_array_t cmds, datas;
+	struct plistref pref;
+	int error;
+	int8_t error8;
+	bool ret;
+
+	dict = quota2_prop_create();
+	cmds = prop_array_create();
+	datas = prop_array_create();
+	data = prop_dictionary_create();
+
+	if (dict == NULL || cmds == NULL || datas == NULL || data == NULL)
+		errx(1, "can't allocate proplist");
+
+	if (defaultq)
+		ret = prop_dictionary_set_cstring(data, "id", "default");
+	else
+		ret = prop_dictionary_set_uint32(data, "id", id);
+	if (!ret)
+		err(1, "prop_dictionary_set(id)");
+		
+	if (!prop_array_add(datas, data))
+		err(1, "prop_array_add(data)");
+	prop_object_release(data);
+	if (!quota2_prop_add_command(cmds, "get", qfextension[type], datas))
+		err(1, "prop_add_command");
+	if (!prop_dictionary_set(dict, "commands", cmds))
+		err(1, "prop_dictionary_set(command)");
+	if (debug)
+		printf("message to kernel:\n%s\n",
+		    prop_dictionary_externalize(dict));
+
+	if (!prop_dictionary_send_syscall(dict, &pref))
+		err(1, "prop_dictionary_send_syscall");
+	prop_object_release(dict);
+
+	if (quotactl(mp, &pref) != 0)
+		err(1, "quotactl");
+	
+	if ((error = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
+		errx(1, "prop_dictionary_recv_syscall: %s\n",
+		    strerror(error));
+	}
+	if (debug)
+		printf("reply from kernel:\n%s\n",
+		    prop_dictionary_externalize(dict));
+	if ((error = quota2_get_cmds(dict, &cmds)) != 0) {
+		errx(1, "quota2_get_cmds: %s\n",
+		    strerror(error));
+	}
+	/* only one command, no need to iter */
+	cmd = prop_array_get(cmds, 0);
+	if (cmd == NULL)
+		err(1, "prop_array_get(cmd)");
+
+	if (!prop_dictionary_get_int8(cmd, "return", &error8))
+		err(1, "prop_get(return)");
+
+	if (error8) {
+		if (error8 != ENOENT && error8 != ENODEV) {
+			if (defaultq)
+				fprintf(stderr, "get default %s quota: %s\n",
+				    qfextension[type], strerror(error8));
+			else 
+				fprintf(stderr, "get %s quota for %ld: %s\n",
+				    qfextension[type], id, strerror(error8));
+		}
+		prop_object_release(dict);
+		return (0);
+	}
+	datas = prop_dictionary_get(cmd, "data");
+	if (datas == NULL)
+		err(1, "prop_dict_get(datas)");
+
+	/* only one data, no need to iter */
+	if (prop_array_count(datas) == 0) {
+		/* no quota for this user/group */
+		prop_object_release(dict);
+		return (0);
+	}
+	
+	data = prop_array_get(datas, 0);
+	if (data == NULL)
+		err(1, "prop_array_get(data)");
+
+	error = quota2_dict_get_q2e_usage(data, q2e);
+	if (error) {
+		errx(1, "quota2_dict_get_q2e_usage: %s\n",
+		    strerror(error));
+	}
+	prop_object_release(dict);
 	return (1);
 }
