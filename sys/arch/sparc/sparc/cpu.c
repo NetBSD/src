@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.224 2011/01/13 05:20:27 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.225 2011/01/22 12:13:25 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224 2011/01/13 05:20:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.225 2011/01/22 12:13:25 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -521,7 +521,7 @@ void
 cpu_init_system(void)
 {
 
-	mutex_init(&xpmsg_mutex, MUTEX_SPIN, IPL_VM);
+	mutex_init(&xpmsg_mutex, MUTEX_SPIN, IPL_SCHED);
 }
 
 /*
