@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.108 2010/01/05 21:38:50 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.109 2011/01/22 10:37:22 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108 2010/01/05 21:38:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.109 2011/01/22 10:37:22 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -132,6 +132,19 @@ strayintr(struct clockframe *fp)
 	static int straytime, nstray;
 	char bits[64];
 	int timesince;
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * XXX
+	 *
+	 * Don't whine about zs interrupts on MP.  We sometimes get
+	 * stray interrupts when polled kernel output on cpu>0 eats
+	 * the interrupt and cpu0 sees it.
+	 */
+#define ZS_INTR_IPL	12
+	if (fp->ipl == ZS_INTR_IPL)
+		return;
+#endif
 
 	snprintb(bits, sizeof(bits), PSR_BITS, fp->psr);
 	printf("stray interrupt cpu%d ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
