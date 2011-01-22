@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.halt.c,v 1.1 2010/12/12 12:48:31 pooka Exp $	*/
+/*	$NetBSD: rump.halt.c,v 1.2 2011/01/22 13:43:07 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump.halt.c,v 1.1 2010/12/12 12:48:31 pooka Exp $");
+__RCSID("$NetBSD: rump.halt.c,v 1.2 2011/01/22 13:43:07 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -84,7 +84,8 @@ main(int argc, char *argv[])
 	if (rumpclient_init() == -1)
 		err(1, "init failed");
 
-	rump_sys_reboot(flags, NULL);
+	if (rump_sys_reboot(flags, NULL) == -1)
+		err(1, "reboot");
 
 	return 0;
 }
