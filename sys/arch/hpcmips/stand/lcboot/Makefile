@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/01/21 15:59:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2011/01/22 19:19:18 joerg Exp $
 .include <bsd.own.mk>
 
 ROMICE?=	no
@@ -70,7 +70,8 @@ SRCS+=	vers.c
 CLEANFILES+=	vers.c
 .PHONY: vers.c
 vers.c: ${VERSIONFILE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} 'hpcmips' ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.ALLSRC} 'hpcmips' ${NEWVERSWHAT}
 .endif
 
 CLEANFILES+=	${PROG}

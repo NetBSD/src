@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/01/21 15:59:05 joerg Exp $
+# $NetBSD: Makefile,v 1.11 2011/01/22 19:19:16 joerg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -38,7 +38,8 @@ TEXTADDR=  0x80f00000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version ${MACHINE}
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c
