@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.246 2011/01/21 17:46:19 dyoung Exp $	*/
+/*	$NetBSD: systm.h,v 1.247 2011/01/22 09:40:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -48,8 +48,9 @@
 
 #ifdef _KERNEL
 #include <sys/types.h>
-#include <sys/device_if.h>
 #endif
+
+#include <sys/device_if.h>
 
 struct clockframe;
 struct lwp;
