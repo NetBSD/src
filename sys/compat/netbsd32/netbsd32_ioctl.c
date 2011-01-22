@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.52 2011/01/18 19:52:24 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.53 2011/01/22 20:51:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.52 2011/01/18 19:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.53 2011/01/22 20:51:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -740,7 +740,7 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	if (memp32)
 		kmem_free(memp32, alloc_size32);
 	if (memp)
-		kmem_free(memp32, size);
+		kmem_free(memp, size);
 	fd_putfile(fd);
 	return (error);
 }
