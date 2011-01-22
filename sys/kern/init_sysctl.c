@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.175 2010/07/01 02:38:30 rmind Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.176 2011/01/22 20:54:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.175 2010/07/01 02:38:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.176 2011/01/22 20:54:43 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -140,9 +140,9 @@ static const u_int sysctl_stflagmap[] = {
 };
 
 static const u_int sysctl_lwpflagmap[] = {
-	LW_SINTR, P_SINTR,
-	LW_SYSTEM, P_SYSTEM,
-	LW_SA, P_SA,	/* WRS ??? */
+	LW_SINTR, L_SINTR,
+	LW_SYSTEM, L_SYSTEM,
+	LW_SA, L_SA,	/* WRS ??? */
 	0
 };
 
