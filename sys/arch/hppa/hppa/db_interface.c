@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 2011/01/22 19:21:40 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.24 2011/01/22 19:25:01 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23 2011/01/22 19:21:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2011/01/22 19:25:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,18 +79,18 @@ const struct db_variable db_regs[] = {
 	{ "r16",	(long *)&ddb_regs.tf_r16,	FCN_NULL },
 	{ "r17",	(long *)&ddb_regs.tf_r17,	FCN_NULL },
 	{ "r18",	(long *)&ddb_regs.tf_r18,	FCN_NULL },
-	{ "t4",		(long *)&ddb_regs.tf_t4,	FCN_NULL },
-	{ "t3",		(long *)&ddb_regs.tf_t3,	FCN_NULL },
-	{ "t2",		(long *)&ddb_regs.tf_t2,	FCN_NULL },
-	{ "t1",		(long *)&ddb_regs.tf_t1,	FCN_NULL },
-	{ "arg3",	(long *)&ddb_regs.tf_arg3,	FCN_NULL },
-	{ "arg2",	(long *)&ddb_regs.tf_arg2,	FCN_NULL },
-	{ "arg1",	(long *)&ddb_regs.tf_arg1,	FCN_NULL },
-	{ "arg0",	(long *)&ddb_regs.tf_arg0,	FCN_NULL },
-	{ "dp",		(long *)&ddb_regs.tf_dp,	FCN_NULL },
-	{ "ret0",	(long *)&ddb_regs.tf_ret0,	FCN_NULL },
-	{ "ret1",	(long *)&ddb_regs.tf_ret1,	FCN_NULL },
-	{ "sp",		(long *)&ddb_regs.tf_sp,	FCN_NULL },
+	{ "r19(t4)",	(long *)&ddb_regs.tf_t4,	FCN_NULL },
+	{ "r20(t3)",	(long *)&ddb_regs.tf_t3,	FCN_NULL },
+	{ "r21(t2)",	(long *)&ddb_regs.tf_t2,	FCN_NULL },
+	{ "r22(t1)",	(long *)&ddb_regs.tf_t1,	FCN_NULL },
+	{ "r23(arg3)",	(long *)&ddb_regs.tf_arg3,	FCN_NULL },
+	{ "r24(arg2)",	(long *)&ddb_regs.tf_arg2,	FCN_NULL },
+	{ "r25(arg1)",	(long *)&ddb_regs.tf_arg1,	FCN_NULL },
+	{ "r26(arg0)",	(long *)&ddb_regs.tf_arg0,	FCN_NULL },
+	{ "r27(dp)",	(long *)&ddb_regs.tf_dp,	FCN_NULL },
+	{ "r28(ret0)",	(long *)&ddb_regs.tf_ret0,	FCN_NULL },
+	{ "r29(ret1)",	(long *)&ddb_regs.tf_ret1,	FCN_NULL },
+	{ "r30(sp)",	(long *)&ddb_regs.tf_sp,	FCN_NULL },
 	{ "r31",	(long *)&ddb_regs.tf_r31,	FCN_NULL },
 
 	{ "sar",	(long *)&ddb_regs.tf_sar,	FCN_NULL },
