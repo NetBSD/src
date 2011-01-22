@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.189 2010/11/14 05:34:56 uebayasi Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.190 2011/01/22 20:54:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -592,7 +592,8 @@ struct kinfo_proc2 {
 #define	L_SINTR			0x00000080
 #define	P_SINTR		     /* 0x00000080 */	L_SINTR
 #define	P_SUGID			0x00000100
-#define	P_SYSTEM		0x00000200
+#define	L_SYSTEM	     	0x00000200
+#define	P_SYSTEM	     /*	0x00000200 */	L_SYSTEM
 #define	L_SA			0x00000400
 #define	P_SA		     /* 0x00000400 */	L_SA
 #define	P_TRACED		0x00000800
