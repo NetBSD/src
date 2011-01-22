@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.24 2011/01/22 19:25:01 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.25 2011/01/22 19:35:48 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2011/01/22 19:25:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.25 2011/01/22 19:35:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,8 @@ const struct db_variable db_regs[] = {
 #endif
 
 	{ "vtop",	(long *)&ddb_regs.tf_vtop,	FCN_NULL },
+	{ "cr24",	(long *)&ddb_regs.tf_cr24,	FCN_NULL },
+	{ "cr27",	(long *)&ddb_regs.tf_cr27,	FCN_NULL },
 	{ "cr28",	(long *)&ddb_regs.tf_cr28,	FCN_NULL },
 	{ "cr30",	(long *)&ddb_regs.tf_cr30,	FCN_NULL },
 };
