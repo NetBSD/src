@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.28 2011/01/21 23:30:31 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.29 2011/01/22 16:24:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.28 2011/01/21 23:30:31 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.29 2011/01/22 16:24:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -638,7 +638,6 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 				errno = 0;
 				*pathend++ = SEP;
 				*pathend = EOS;
-printf("stat limit\n");
 				return GLOB_NOSPACE;
 			}
 			if (((pglob->gl_flags & GLOB_MARK) &&
