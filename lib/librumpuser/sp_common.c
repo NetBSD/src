@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.24 2011/01/14 13:12:14 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.25 2011/01/22 13:41:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -176,6 +176,7 @@ struct spclient {
 	size_t spc_off;
 
 	uint64_t spc_nextreq;
+	uint64_t spc_syscallreq;
 	int spc_ostatus, spc_istatus;
 
 	LIST_HEAD(, prefork) spc_pflist;
