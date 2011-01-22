@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.63 2011/01/14 13:11:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.64 2011/01/22 13:41:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 10
+#define RUMPUSER_VERSION 11
 int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
@@ -230,6 +230,6 @@ int	rumpuser_sp_copyout(void *, const void *, void *, size_t);
 int	rumpuser_sp_copyoutstr(void *, const void *, void *, size_t *);
 int	rumpuser_sp_anonmmap(void *, size_t, void **);
 int	rumpuser_sp_raise(void *, int);
-void	rumpuser_sp_fini(void);
+void	rumpuser_sp_fini(void *);
 
 #endif /* _RUMP_RUMPUSER_H_ */

@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.36 2011/01/14 13:12:14 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.37 2011/01/22 13:41:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.36 2011/01/14 13:12:14 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.37 2011/01/22 13:41:22 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -584,7 +584,9 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	    sysnum, spc->spc_pid));
 
 	lwproc_newlwp(spc->spc_pid);
+	spc->spc_syscallreq = rhdr->rsp_reqno;
 	rv = rumpsyscall(sysnum, data, retval);
+	spc->spc_syscallreq = 0;
 	lwproc_release();
 
 	DPRINTF(("rump_sp: got return value %d & %d/%d\n",
@@ -1143,8 +1145,17 @@ rumpuser_sp_init(const char *url, const struct rumpuser_sp_ops *spopsp,
 }
 
 void
-rumpuser_sp_fini()
+rumpuser_sp_fini(void *arg)
 {
+	struct spclient *spc = arg;
+	register_t retval[2] = {0, 0};
+
+	/*
+	 * stuff response into the socket, since this process is just
+	 * about to exit
+	 */
+	if (spc && spc->spc_syscallreq)
+		send_syscall_resp(spc, spc->spc_syscallreq, 0, retval);
 
 	if (spclist[0].spc_fd) {
 		parsetab[cleanupidx].cleanup(cleanupsa);
