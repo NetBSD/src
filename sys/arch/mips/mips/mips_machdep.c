@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.231 2011/01/14 02:06:28 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.232 2011/01/22 14:47:21 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.231 2011/01/14 02:06:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.232 2011/01/22 14:47:21 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1645,12 +1645,12 @@ void
 mips_init_lwp0_uarea(void)
 {
 	vaddr_t v;
-	struct pcb * pcb0;
+	struct pcb *pcb0;
 
 	v = uvm_pageboot_alloc(USPACE);
 	uvm_lwp_setuarea(&lwp0, v);
 
-	pcb0  = lwp_getpcb(&lwp0);
+	pcb0 = lwp_getpcb(&lwp0);
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	/*
 	 * Now zero out the only two areas of the uarea that we care about.
