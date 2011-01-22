@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.54 2011/01/21 19:27:09 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.55 2011/01/22 01:36:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.54 2011/01/21 19:27:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.55 2011/01/22 01:36:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,12 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	 * the next time we need to search this segment, start after this
 	 * chunk of pages we just allocated.
 	 */
-	ps->start_hint = tryidx + num;
+	ps->start_hint = try + num - ps->avail_start;
+	KASSERTMSG(ps->start_hint <= ps->avail_end - ps->avail_start,
+	    ("%x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
+	    try + num,
+	    ps->start_hint, ps->start_hint, ps->avail_end, ps->avail_start,
+	    ps->avail_end - ps->avail_start));
 
 #ifdef PGALLOC_VERBOSE
 	printf("got %d pgs\n", num);
@@ -410,7 +415,12 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	 * The next time we need to search this segment,
 	 * start just after the pages we just allocated.
 	 */
-	ps->start_hint = try + 1 - ps->start;
+	ps->start_hint = try + 1 - ps->avail_start;
+	KASSERTMSG(ps->start_hint <= ps->avail_end - ps->avail_start,
+	    ("%#x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
+	    try + 1,
+	    ps->start_hint, ps->start_hint, ps->avail_end, ps->avail_start,
+	    ps->avail_end - ps->avail_start));
 
 #ifdef PGALLOC_VERBOSE
 	printf("got %d pgs\n", num - todo);
