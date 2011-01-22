@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_daemonize.c,v 1.1 2010/11/30 14:23:24 pooka Exp $	*/
+/*	$NetBSD: rumpuser_daemonize.c,v 1.2 2011/01/22 14:18:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.1 2010/11/30 14:23:24 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.2 2011/01/22 14:18:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -85,6 +85,7 @@ rumpuser_daemonize_begin(void)
 		else if (n != sizeof(error))
 			error = ESRCH;
 		_exit(error);
+		/*NOTREACHED*/
 	}
 }
 
