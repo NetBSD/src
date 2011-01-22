@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.111 2011/01/21 20:36:53 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.112 2011/01/22 14:51:43 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.111 2011/01/21 20:36:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.112 2011/01/22 14:51:43 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -445,7 +445,7 @@ udf_check_track_metadata_overlap(struct udf_mount *ump,
 
 	/* get our base partition extent */
 	KASSERT(ump->node_part == ump->fids_part);
-	part = ump->partitions[ump->node_part];
+	part = ump->partitions[ump->vtop[ump->node_part]];
 	phys_part_start = udf_rw32(part->start_loc);
 	phys_part_end   = phys_part_start + udf_rw32(part->part_len);
 
