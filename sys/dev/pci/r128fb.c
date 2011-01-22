@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.19 2011/01/06 07:43:05 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.20 2011/01/22 15:14:28 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.19 2011/01/06 07:43:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.20 2011/01/22 15:14:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.19 2011/01/06 07:43:05 macallan Exp $")
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -349,8 +350,11 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	/* PCI config read/write passthrough. */
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
-		return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-		    cmd, data, flag, l));
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc, sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_GINFO:
 		if (ms == NULL)
