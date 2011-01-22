@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.81 2010/12/22 20:46:42 jakllsch Exp $
+#	$NetBSD: Makefile.booters,v 1.82 2011/01/22 19:19:18 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -98,7 +98,7 @@ LDFLAGS+=-Wl,-M -Wl,-e,start 	# -N does not work properly.
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${S}/conf/newvers_stand.sh
-	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${VERSIONFILE} x86 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
