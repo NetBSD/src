@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.8 2011/01/22 08:13:47 cegger Exp $ */
+/*	$NetBSD: atphy.c,v 1.9 2011/01/22 18:26:12 cegger Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.8 2011/01/22 08:13:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.9 2011/01/22 18:26:12 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		PHY_WRITE(sc, MII_ANAR, anar);
 
 		/*
-		 * Reset the PHY so all changes take effect.
+		 * Start autonegotiation.
 		 */
 		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_AUTOEN | BMCR_STARTNEG);
 done:
