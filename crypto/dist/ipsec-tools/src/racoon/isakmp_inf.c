@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.14.4.17 2009/05/18 17:07:46 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.14.4.18 2011/01/22 07:44:39 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1623,6 +1623,15 @@ isakmp_info_send_r_u(arg)
 	plog(LLV_DEBUG, LOCATION, iph1->remote, "DPD monitoring....\n");
 
 	iph1->dpd_r_u=NULL;
+
+	if (iph1->status == PHASE1ST_EXPIRED) {
+		/* This can happen after removing tunnels from the
+		 * config file and then reloading.
+		 * Such iph1 have rmconf=NULL, so return before the if
+		 * block below.
+		 */
+		return;
+	}
 
 	if (iph1->dpd_fails >= iph1->rmconf->dpd_maxfails) {
 
