@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.4 2011/01/22 19:35:00 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.5 2011/01/22 19:46:46 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -311,7 +311,8 @@ send_hello(void)
 		if_sa = (struct sockaddr_in *) ifb->ifa_addr;
 		if (if_sa->sin_family != AF_INET)
 			continue;
-		if (ntohl(if_sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET)
+		if (ntohl(if_sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET ||
+		    ntohl(if_sa->sin_addr.s_addr) >> 24 == 0)
 			continue;
 		/* Send only once per interface, using master address */
 		if (strcmp(ifb->ifa_name, lastifname) == 0)
