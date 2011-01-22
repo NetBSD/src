@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.93 2010/10/02 00:52:02 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.94 2011/01/22 15:14:28 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -541,5 +541,27 @@ struct wsmux_device_list {
 
 #define	WSMUXIO_INJECTEVENT	_IOW('W', 100, struct wscons_event)
 #define	WSMUX_INJECTEVENT	WSMUXIO_INJECTEVENT /* XXX compat */
+
+/* Mapping information retrieval. */
+struct wsdisplayio_bus_id {
+    u_int bus_type;
+#define WSDISPLAYIO_BUS_PCI	0
+#define WSDISPLAYIO_BUS_SBUS	1
+    union bus_data {
+        struct bus_pci {
+            uint32_t domain;
+            uint32_t bus;
+            uint32_t device;
+            uint32_t function;
+        } pci;
+        struct bus_sbus {
+            uint32_t fb_instance;
+        } sbus;
+        /* so the size doesn't change if we add more bus types */
+        char pad[32];
+    } ubus;
+};
+
+#define WSDISPLAYIO_GET_BUSID	_IOR('W', 101, struct wsdisplayio_bus_id)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

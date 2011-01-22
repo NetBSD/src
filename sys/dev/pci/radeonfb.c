@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.40 2010/12/16 06:45:50 cegger Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.41 2011/01/22 15:14:28 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.40 2010/12/16 06:45:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.41 2011/01/22 15:14:28 cegger Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.40 2010/12/16 06:45:50 cegger Exp $")
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -1095,6 +1096,10 @@ radeonfb_ioctl(void *v, void *vs,
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
 		return pci_devioctl(sc->sc_pc, sc->sc_pt, cmd, d, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(&sc->sc_dev, sc->sc_pc,
+		    sc->sc_pt, d);
 
 	default:
 		return EPASSTHROUGH;
