@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.26 2011/01/17 18:11:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.27 2011/01/22 19:19:24 joerg Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
+
+.include <bsd.own.mk>
 
 #
 # Override normal settings
@@ -93,7 +95,8 @@ cleanlibdir:
 	-rm -rf lib
 
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
 
 CLEANFILES+= vers.c
 
