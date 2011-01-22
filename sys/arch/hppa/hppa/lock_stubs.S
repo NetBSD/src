@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.17 2011/01/20 19:51:54 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.18 2011/01/22 19:10:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -195,4 +195,106 @@ EXIT(mutex_enter)
 
 #endif	/* !LOCKDEBUG */
 
-#endif /* !MULTIPROCESSOR */
+#else  /* !MULTIPROCESSOR */
+
+/*
+ * uintptr_t _lock_cas(volatile uintptr_t *ptr, uintptr_t old, uintptr_t new);
+ *
+ * Perform an atomic compare-and-swap operation.
+ *
+ * On multi-CPU systems, this has to use an interlock and disable interrupts.
+ * The interlock is to protect against another CPU attempting to perform the
+ * cas.  Disabling interrupts is to prevent deadlocks on the current CPU.  That
+ * is, we don't want an interrupts attempting to perform a cas on the interlock
+ * at the same time.
+ *
+ */
+
+#define IL	\
+	.word	__SIMPLELOCK_RAW_UNLOCKED ! \
+	.word	__SIMPLELOCK_RAW_UNLOCKED ! \
+	.word	__SIMPLELOCK_RAW_UNLOCKED ! \
+	.word	__SIMPLELOCK_RAW_UNLOCKED ! \
+
+#define I8	\
+	IL IL IL IL IL IL IL IL 
+
+#define I64	\
+	I8 I8 I8 I8 I8 I8 I8 I8
+
+
+
+	.section .data
+	.align 4096
+	.export _lock_hash, data
+_lock_hash:
+	I64 I64
+	I64 I64
+	I64 I64
+	I64 I64
+	I64 I64
+	I64 I64
+	I64 I64
+	I64 I64
+
+LEAF_ENTRY(_lock_cas)
+ALTENTRY(_lock_cas_mp)
+
+	mfctl	%eiem, %t1
+	mtctl	%r0, %eiem			/* disable interrupts */
+
+	extru	%arg0, 21+8-1, 8, %ret0
+	ldil	L%_lock_hash, %r1
+	zdep	%ret0, 27, 28, %ret0
+	ldo	R%_lock_hash(%r1), %r1
+
+	addl	%ret0, %r1, %ret0
+	ldo	15(%ret0), %ret0
+	copy	%ret0, %t3
+	depi	0, 31, 4, %t3
+
+	/* %t3 is the interlock address */
+	ldcw	0(%t3), %ret0
+	comib,<>,n	0,%ret0, _lock_cas_mp_interlocked
+_lock_cas_mp_spin:
+	ldw	0(%t3),%ret0
+	comib,= 0,%ret0, _lock_cas_mp_spin
+	nop
+	ldcw	0(%t3), %ret0
+	comib,= 0,%ret0, _lock_cas_mp_spin
+	nop
+
+_lock_cas_mp_interlocked:
+	ldw	0(%arg0),%ret0
+	comclr,<>	%arg1, %ret0, %r0	/* If *ptr != old, then nullify */
+	stw	%arg2, 0(%arg0)
+
+	sync
+
+	ldi	__SIMPLELOCK_RAW_UNLOCKED, %t4
+	stw	%t4, 0(%t3)
+	bv	%r0(%r2)
+	 mtctl	%t1, %eiem		/* enable interrupts */
+
+EXIT(_lock_cas)
+
+STRONG_ALIAS(_atomic_cas_ulong,_lock_cas_mp)
+STRONG_ALIAS(atomic_cas_ulong,_lock_cas_mp)
+STRONG_ALIAS(_atomic_cas_32,_lock_cas_mp)
+STRONG_ALIAS(atomic_cas_32,_lock_cas_mp)
+STRONG_ALIAS(_atomic_cas_uint,_lock_cas_mp)
+STRONG_ALIAS(atomic_cas_uint,_lock_cas_mp)
+STRONG_ALIAS(_atomic_cas_ptr,_lock_cas_mp)
+STRONG_ALIAS(atomic_cas_ptr,_lock_cas_mp)
+
+STRONG_ALIAS(_atomic_cas_ulong_ni,_lock_cas_mp)
+STRONG_ALIAS(atomic_cas_ulong_ni,_lock_cas_mp)
+STRONG_ALIAS(_atomic_cas_32_ni,_lock_cas_mp)
+STRONG_ALIAS(atomic_cas_32_ni,_lock_cas_mp)
+STRONG_ALIAS(_atomic_cas_uint_ni,_lock_cas_mp)
+STRONG_ALIAS(atomic_cas_uint_ni,_lock_cas_mp)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas_mp)
+STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas_mp)
+
+
+#endif /* MULTIPROCESSOR */
