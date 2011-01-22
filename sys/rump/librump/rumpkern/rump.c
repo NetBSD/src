@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.220 2011/01/22 13:41:22 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.221 2011/01/22 18:33:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.220 2011/01/22 13:41:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.221 2011/01/22 18:33:25 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -794,7 +794,7 @@ rump_proxy_procexit(void)
 	/*
 	 * Don't wait for lwps to exit.  There's refcounting in the
 	 * rumpuser sp code which makes this safe.  Also, this routine
-	 * should sleep for a long time.
+	 * should not sleep for a long time.
 	 */
 }
 
