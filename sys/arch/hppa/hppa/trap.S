@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.50 2010/06/06 12:13:36 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.51 2011/01/22 10:57:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
  */
 
 #include "opt_compat_osf1.h"
+#include "opt_multiprocessor.h"
 #include "opt_cputype.h"
 
 /* 
@@ -203,7 +204,7 @@ syscall_entry:
 	 */
 
 	/* t2 = curlwp PCB */
-	GET_CURLWP(%t3)
+	GET_CURLWP_SPACE(%sr1, %t3)
 	ldw	L_PCB(%sr1, %t3), %t2			/* XXX can use ,sl */
 
 	/*
@@ -507,12 +508,7 @@ syscall_return:
 	ldw	TF_CR30(%sr3, %t3), %t1
 	mtctl	%t1, CR_FPPADDR
 
-#ifdef MULTIPROCESSOR
-	mfctl	CR_CURCPU, %t3
-#else
-	mfctl	CR_CURLWP, %t3
-	ldw	L_CPU(%sr3, %t3), %t3
-#endif
+	GET_CURCPU_SPACE(%sr3, %t3)
 
 	/*
 	 * Clear the system mask, this puts us back into physical mode.  Reload
@@ -1978,7 +1974,7 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	comb,<>	%t1, %t2, L$trap_from_kernel	/* if %t1 != %t2 => kernel */
 	dep	%r0, 31, 6, %sp			/* Assumed stack align step 2 */
 
-	mfctl	CR_CURLWP, %t2
+	GET_CURLWP(%t2)
 	depi	1, T_USER_POS, 1, %r1
 	depi	1, TFF_LAST_POS, 1, %r1
 	ldw	L_PCB(%t2), %sp

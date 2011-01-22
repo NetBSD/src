@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57 2011/01/20 19:47:40 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.58 2011/01/22 10:57:07 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -186,6 +186,26 @@ extern register_t kpsw;
 #define	HPPA_DMA_ENABLE	0x00000001
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
+
+#ifdef MULTIPROCESSOR
+
+#define	GET_CURCPU(r)		mfctl CR_CURCPU, r
+#define	GET_CURCPU_SPACE(s, r)	GET_CURCPU(r)
+#define	GET_CURLWP(r)		mfctl CR_CURCPU, r ! ldw CI_CURLWP(r), r
+#define	GET_CURLWP_SPACE(s, r)	mfctl CR_CURCPU, r ! ldw CI_CURLWP(s, r), r
+
+#define	SET_CURLWP(r,t)		mfctl CR_CURCPU, t ! stw r, CI_CURLWP(t)
+
+#else /*  MULTIPROCESSOR */
+
+#define	GET_CURCPU(r)		mfctl CR_CURLWP, r ! ldw L_CPU(r), r
+#define	GET_CURCPU_SPACE(s, r)	mfctl CR_CURLWP, r ! ldw L_CPU(s, r), r
+#define	GET_CURLWP(r)		mfctl CR_CURLWP, r
+#define	GET_CURLWP_SPACE(s, r)	GET_CURLWP(r)
+
+#define	SET_CURLWP(r,t) mtctl   r, CR_CURLWP
+
+#endif /*  MULTIPROCESSOR */
 
 #ifndef _LOCORE
 #ifdef _KERNEL

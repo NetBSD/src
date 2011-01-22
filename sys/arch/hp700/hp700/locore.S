@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.49 2011/01/17 12:37:46 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.50 2011/01/22 10:57:07 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -57,12 +57,14 @@
  *  suitability of this software for any purpose.
  */
 
+#include "opt_multiprocessor.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include <sys/errno.h>
 #include <machine/param.h>
+#include <machine/cpu.h>
 #include <machine/asm.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -139,16 +141,6 @@
 #define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
 #define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
 #define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
-#endif
-
-#ifdef MULTIPROCESSOR
-#define	GET_CURCPU(r)	mfctl	CR_CURCPU, r
-#define	GET_CURLWP(r)	mfctl	CR_CURCPU, r ! ldw	CI_CURLWP(r), r
-#define	SET_CURLWP(r,s)	mfctl	CR_CURCPU, s ! stw	r, CI_CURLWP(s)
-#else
-#define	GET_CURCPU(r)	mfctl	CR_CURLWP, r ! ldw	L_CPU(r), r
-#define	GET_CURLWP(r)	mfctl	CR_CURLWP, r
-#define	SET_CURLWP(r,s)	mtctl	r, CR_CURLWP
 #endif
 
 	.import	$global$, data
