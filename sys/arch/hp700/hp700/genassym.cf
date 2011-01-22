@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27 2011/01/22 19:27:43 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.28 2011/01/22 19:35:47 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -175,7 +175,9 @@ member	TF_CR20		tf_isr
 member	TF_CR21		tf_ior
 member	TF_CR22		tf_ipsw
 member	TF_CR23		tf_eirr
+member	TF_CR24		tf_cr24
 member	TF_CR25		tf_vtop
+member	TF_CR27		tf_cr27
 member	TF_CR28		tf_cr28
 member	TF_CR30		tf_cr30
 

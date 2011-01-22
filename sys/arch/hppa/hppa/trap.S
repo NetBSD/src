@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.51 2011/01/22 10:57:07 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.52 2011/01/22 19:35:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -375,8 +375,13 @@ syscall_entry:
 	stw	%arg0, TF_CR23-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg1, TF_CR25-TRAPFRAME_SIZEOF(%sr1, %t3)
 
+	mfctl	%cr24, %arg0
 	mfctl	%cr28, %arg1
+	stw	%arg0, TF_CR24-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg1, TF_CR28-TRAPFRAME_SIZEOF(%sr1, %t3)
+
+	mfctl	CR_TLS, %arg0
+	stw	%arg0, TF_CR27-TRAPFRAME_SIZEOF(%sr1, %t3)
 #endif
 
 	/* setup kernel context */
@@ -2185,11 +2190,16 @@ trapnowvirt:
 	stw	%t1, TF_CR23(%t3)
 	stw	%t2, TF_CR25(%t3)
 
+	mfctl	%cr24, %t1
 	mfctl	%cr28, %t2
+	stw	%t1, TF_CR24(%t3)
 	stw	%t2, TF_CR28(%t3)
+
+	mfctl	CR_TLS, %t1
+	stw	%t1, TF_CR27(%t3)
 #endif
-	mfctl	CR_FPPADDR, %t1
-	stw	%t1, TF_CR30(%t3)
+	mfctl	CR_FPPADDR, %t2
+	stw	%t2, TF_CR30(%t3)
 
 	/*
 	 * load the global pointer for the kernel
