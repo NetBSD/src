@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.25 2011/01/22 19:35:48 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.26 2011/01/22 20:24:48 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.25 2011/01/22 19:35:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.26 2011/01/22 20:24:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ db_regs_t	ddb_regs;
 const struct db_variable db_regs[] = {
 	{ "flags",	(long *)&ddb_regs.tf_flags,  FCN_NULL },
 	{ "r1",		(long *)&ddb_regs.tf_r1,	FCN_NULL },
-	{ "rp",		(long *)&ddb_regs.tf_rp,	FCN_NULL },
-	{ "r3",		(long *)&ddb_regs.tf_r3,	FCN_NULL },
+	{ "r2(rp)",	(long *)&ddb_regs.tf_rp,	FCN_NULL },
+	{ "r3(fp)",	(long *)&ddb_regs.tf_r3,	FCN_NULL },
 	{ "r4",		(long *)&ddb_regs.tf_r4,	FCN_NULL },
 	{ "r5",		(long *)&ddb_regs.tf_r5,	FCN_NULL },
 	{ "r6",		(long *)&ddb_regs.tf_r6,	FCN_NULL },
