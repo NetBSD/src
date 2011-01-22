@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.7 2011/01/11 07:01:21 nisimura Exp $ */
+/* $NetBSD: dsk.c,v 1.8 2011/01/22 00:32:41 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -154,7 +154,9 @@ spinwait_unbusy(struct dkdev_ata *l, int n, int milli, const char **err)
 	(void)CSR_READ_1(chan->alt);
 
 	sts = CSR_READ_1(chan->cmd + _STS);
-	while (milli-- > 0 && sts != 0xff && (sts & ATA_STS_BUSY)) {
+	while (milli-- > 0
+	    && sts != 0xff
+	    && (sts & (ATA_STS_BUSY|ATA_STS_DRDY)) != ATA_STS_DRDY) {
 		delay(1000);
 		sts = CSR_READ_1(chan->cmd + _STS);
 	}
@@ -166,6 +168,8 @@ spinwait_unbusy(struct dkdev_ata *l, int n, int milli, const char **err)
 		msg = "returned ERR";
 	else if (sts & ATA_STS_BUSY)
 		msg = "remains BUSY";
+	else if ((sts & ATA_STS_DRDY) == 0)
+		msg = "no DRDY";
 
 	if (err != NULL)
 		*err = msg;
@@ -251,10 +255,10 @@ drive_ident(struct disk *d, char *ident)
 		huge = p[60] | (p[61] << 16);
 	}
 	if ((p[83] & 0xc000) == 0x4000 && (p[83] & (1 << 10))) {
+		printf("LBA48 ");
 		huge = p[100] | (p[101] << 16);
 		huge |= (uint64_t)p[102] << 32;
 		huge |= (uint64_t)p[103] << 48;
-		printf("LBA48 ");
 	}
 	huge >>= (1 + 10);
 	printf("%d MB\n", (int)huge);
@@ -357,10 +361,7 @@ set_xfermode(struct dkdev_ata *l, int n)
 
 	CSR_WRITE_1(chan->cmd + _FEA, ATA_XFER);
 	CSR_WRITE_1(chan->cmd + _NSECT, XFER_PIO0);
-	CSR_WRITE_1(chan->cmd + _LBAL, 0);
-	CSR_WRITE_1(chan->cmd + _LBAM, 0);
-	CSR_WRITE_1(chan->cmd + _LBAH, 0);
-	CSR_WRITE_1(chan->cmd + _DEV, ATA_DEV_OBS);
+	CSR_WRITE_1(chan->cmd + _DEV, ATA_DEV_OBS); /* ??? */
 	CSR_WRITE_1(chan->cmd + _CMD, ATA_CMD_SETF);
 
 	spinwait_unbusy(l, n, 1000, NULL);
@@ -372,7 +373,7 @@ lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 	struct dkdev_ata *l;
 	struct dvata_chan *chan;
 	void (*issue)(struct dvata_chan *, uint64_t, uint32_t);
-	int n, rdcnt, i;
+	int n, rdcnt, i, k;
 	uint16_t *p;
 	const char *err;
 	int error;
@@ -386,16 +387,20 @@ lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 		issue = (bno < (1ULL<<28)) ? issue28 : issue48;
 		rdcnt = (bcnt > 255) ? 255 : bcnt;
 		(*issue)(chan, bno, rdcnt);
-		if (spinwait_unbusy(l, n, 1000, &err) == 0) {
-			printf("%s blk %d %s\n", d->xname, (int)bno, err);
-			error = EIO;
-			continue;
+		for (k = 0; k < rdcnt; k++) {
+			if (spinwait_unbusy(l, n, 1000, &err) == 0) {
+				printf("%s blk %d %s\n",
+				   d->xname, (int)bno, err);
+				error = EIO;
+				break;
+			}
+			for (i = 0; i < 512; i += 2) {
+				/* arrives in native order */
+				*p++ = *(uint16_t *)(chan->cmd + _DAT);
+			}
+			/* clear irq if any */
+			(void)CSR_READ_1(chan->cmd + _STS);
 		}
-		for (i = 0; i < rdcnt * 512; i += 2) {
-			/* arrives in native order */
-			*p++ = *(uint16_t *)(chan->cmd + _DAT);
-		}
-		(void)CSR_READ_1(chan->cmd + _STS);
 	}
 	return error;
 }
@@ -404,7 +409,7 @@ static void
 issue48(struct dvata_chan *chan, uint64_t bno, uint32_t nblk)
 {
 
-	CSR_WRITE_1(chan->cmd + _NSECT, 0);
+	CSR_WRITE_1(chan->cmd + _NSECT, 0); /* always less than 256 */
 	CSR_WRITE_1(chan->cmd + _LBAL, (bno >> 24) & 0xff);
 	CSR_WRITE_1(chan->cmd + _LBAM, (bno >> 32) & 0xff);
 	CSR_WRITE_1(chan->cmd + _LBAH, (bno >> 40) & 0xff);
