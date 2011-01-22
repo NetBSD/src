@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.18 2011/01/22 19:19:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -135,7 +135,6 @@ main(int argc, char **argv)
 	printf("\n");
 	printf("%s " NETBSD_VERS " Bootstrap, Revision %s\n",
 	    bootprog_name, bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
 
 	memset(marks, 0, sizeof marks);
