@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.219 2011/01/12 12:51:21 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.220 2011/01/22 13:41:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.219 2011/01/12 12:51:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.220 2011/01/22 13:41:22 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -498,9 +498,15 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	int ruhow = 0;
+	void *finiarg;
 
 	printf("rump kernel halting...\n");
-	rumpuser_sp_fini();
+
+	if (!RUMP_LOCALPROC_P(curproc))
+		finiarg = curproc->p_vmspace->vm_map.pmap;
+	else
+		finiarg = NULL;
+	rumpuser_sp_fini(finiarg);
 
 	/* dump means we really take the dive here */
 	if ((howto & RB_DUMP) || panicstr) {
