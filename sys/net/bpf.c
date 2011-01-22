@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.160 2011/01/02 21:03:45 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.161 2011/01/22 16:54:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.160 2011/01/02 21:03:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.161 2011/01/22 16:54:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1402,8 +1402,7 @@ _bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 	/*
 	 * Craft on-stack mbuf suitable for passing to bpf_filter.
 	 * Note that we cut corners here; we only setup what's
-	 * absolutely needed--this mbuf should never go anywhere else.
-	 */
+	 * absolutely needed--this mbuf should never go anywhere else.  */
 	(void)memset(&mb, 0, sizeof(mb));
 	mb.m_next = m;
 	mb.m_data = data;
