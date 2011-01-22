@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.107 2011/01/18 22:21:23 haad Exp $	*/
+/*	$NetBSD: vm.c,v 1.108 2011/01/22 13:13:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.107 2011/01/18 22:21:23 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.108 2011/01/22 13:13:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -342,19 +342,20 @@ uvm_pageunwire(struct vm_page *pg)
 	/* nada */
 }
 
+/*
+ * The uvm reclaim hook is not currently necessary because it is
+ * used only by ZFS and implements exactly the same functionality
+ * as the kva reclaim hook which we already run in the pagedaemon
+ * (rump vm does not have a concept of uvm_map(), so we cannot
+ * reclaim kva it when a mapping operation fails due to insufficient
+ * available kva).
+ */
 void
 uvm_reclaim_hook_add(struct uvm_reclaim_hook *hook_entry)
 {
 
-	/* nada */
 }
-
-void
-uvm_reclaim_hook_del(struct uvm_reclaim_hook *hook_entry)
-{
-
-	/* nada */
-}
+__strong_alias(uvm_reclaim_hook_del,uvm_reclaim_hook_add);
 
 /* where's your schmonz now? */
 #define PUNLIMIT(a)	\
