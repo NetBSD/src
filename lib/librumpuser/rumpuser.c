@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.13 2011/01/20 15:00:12 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.14 2011/01/22 14:22:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.13 2011/01/20 15:00:12 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.14 2011/01/22 14:22:10 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -207,7 +207,7 @@ rumpuser_malloc(size_t howmuch, int alignment)
 	if (alignment == 0)
 		alignment = sizeof(void *);
 
-	rv = posix_memalign(&mem, alignment, howmuch);
+	rv = posix_memalign(&mem, (size_t)alignment, howmuch);
 	if (__predict_false(rv != 0)) {
 		if (rv == EINVAL) {
 			printf("rumpuser_malloc: invalid alignment %d\n",
