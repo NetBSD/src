@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.112 2011/01/22 14:51:43 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.113 2011/01/22 18:02:18 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.112 2011/01/22 14:51:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.113 2011/01/22 18:02:18 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1460,7 +1460,6 @@ again:
 	logvol_integrity = udf_rw32(ump->logvol_integrity->integrity_type);
 	if (logvol_integrity == UDF_INTEGRITY_CLOSED) {
 		if ((space < 3) && (lvflag & UDF_APPENDONLY_LVINT)) {
-			/* don't allow this logvol to be opened */
 			/* TODO extent LVINT space if possible */
 			return EROFS;
 		}
@@ -2056,7 +2055,9 @@ udf_process_vds(struct udf_mount *ump) {
 		ump->lvopen  = UDF_WRITE_LVINT;
 		ump->lvclose = UDF_WRITE_LVINT;
 		if ((ump->discinfo.mmc_cur & MMC_CAP_REWRITABLE) == 0)
-			ump->lvopen  |= UDF_APPENDONLY_LVINT;
+			ump->lvopen  |=  UDF_APPENDONLY_LVINT;
+		if ((ump->discinfo.mmc_cur & MMC_CAP_PSEUDOOVERWRITE))
+			ump->lvopen  &= ~UDF_APPENDONLY_LVINT;
 	}
 
 	/*
