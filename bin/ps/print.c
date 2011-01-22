@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.116 2011/01/22 20:55:58 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.117 2011/01/22 21:09:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.116 2011/01/22 20:55:58 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.117 2011/01/22 21:09:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -580,8 +580,11 @@ lstate(void *arg, VARENT *ve, int mode)
 
 	case LSRUN:
 	case LSIDL:
-	case LSONPROC:
 		*cp = 'R';
+		break;
+
+	case LSONPROC:
+		*cp = 'O';
 		break;
 
 	case LSZOMB:
@@ -598,8 +601,10 @@ lstate(void *arg, VARENT *ve, int mode)
 		*cp = '?';
 	}
 	cp++;
-	if (flag & P_SYSTEM)
+	if (flag & L_SYSTEM)
 		*cp++ = 'K';
+	if (flag & L_SA)
+		*cp++ = 'a';
 	if (flag & L_DETACHED)
 		*cp++ = '-';
 	*cp = '\0';
