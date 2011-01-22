@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.298 2010/07/20 06:17:20 jklos Exp $ */
+/* $NetBSD: com.c,v 1.299 2011/01/22 16:59:26 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.298 2010/07/20 06:17:20 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.299 2011/01/22 16:59:26 tsutsui Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -465,8 +465,6 @@ com_attach_subr(struct com_softc *sc)
 					sc->sc_fifolen = 0;
 				} else {
 					SET(sc->sc_hwflags, COM_HW_FLOW);
-					SET(sc->sc_mcr, MCR_PRESCALE);
-					sc->sc_frequency /= 4;
 					sc->sc_fifolen = 32;
 				}
 			} else
