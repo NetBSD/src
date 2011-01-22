@@ -1,5 +1,6 @@
-# $NetBSD: Makefile.booters,v 1.52 2010/05/27 06:58:14 dholland Exp $
+# $NetBSD: Makefile.booters,v 1.53 2011/01/22 19:19:21 joerg Exp $
 
+.include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
@@ -97,10 +98,9 @@ LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
-.include <bsd.own.mk>
-
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-Do} \
+	    -N ${.CURDIR}/version "pmax"
 
 ${PROG}: ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \

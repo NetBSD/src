@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.25 2009/09/11 12:00:12 phx Exp $
+#	$NetBSD: Makefile,v 1.26 2011/01/22 19:19:21 joerg Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
+
+.include <bsd.own.mk>
 
 PROG=		ofwboot
 SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c
@@ -69,7 +71,8 @@ LIBSA=		${SALIB}
 
 .PHONY: vers.c
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -s -N -T ${.CURDIR}/ldscript -Ttext ${RELOC} -Bstatic \

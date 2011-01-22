@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2010/05/27 06:58:15 dholland Exp $
+#	$NetBSD: Makefile,v 1.5 2011/01/22 19:19:25 joerg Exp $
+
+.include <bsd.own.mk>
 
 PROG=		zboot
 
@@ -46,7 +48,8 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 LIBSA=		${SALIB}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 	${CC} -c vers.c
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 

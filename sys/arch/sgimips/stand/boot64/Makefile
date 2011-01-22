@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/05/27 06:58:15 dholland Exp $
+#	$NetBSD: Makefile,v 1.8 2011/01/22 19:19:23 joerg Exp $
 
 PROG=	ip30boot
 
@@ -7,6 +7,7 @@ SRCS=	start64.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
 
 CLEANFILES+=	boot.map
 
+.include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
@@ -41,7 +42,8 @@ LOAD_ADDRESS_IP30?=	0xa800000020080000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "sgimips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "sgimips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c

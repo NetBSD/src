@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: boot.c,v 1.12 2011/01/22 19:19:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -132,7 +132,6 @@ main(void)
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	for (;;) {

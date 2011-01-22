@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2011/01/21 15:59:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.31 2011/01/22 19:19:16 joerg Exp $
 
 NOMAN= # defined
 
@@ -74,8 +74,8 @@ powerpc::
 .endif
 
 vers.c: ${.CURDIR}/../boot/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version \
-		"bebox" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/../boot/version "bebox" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
 	${LD} -o ${PROG}.elf -N -T ${.CURDIR}/../boot/ld.script \

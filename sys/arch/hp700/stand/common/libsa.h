@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.8 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: libsa.h,v 1.9 2011/01/22 19:19:18 joerg Exp $	*/
 
 /*	$OpenBSD: libsa.h,v 1.7 1999/12/23 04:07:47 mickey Exp $	*/
 
@@ -91,5 +91,4 @@ int	som_load(int, struct x_param *);
 int	som_ldsym(int, struct x_param *);
 
 extern int debug;
-extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
-		bootprog_maker[];
+extern	char bootprog_name[], bootprog_rev[];
