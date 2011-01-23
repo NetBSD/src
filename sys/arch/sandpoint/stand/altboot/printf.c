@@ -1,4 +1,4 @@
-/* $NetBSD: printf.c,v 1.2 2011/01/23 01:32:08 nisimura Exp $ */
+/* $NetBSD: printf.c,v 1.3 2011/01/23 02:08:24 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -96,7 +96,8 @@ _doprnt(void (*func)(int), const char *fmt, va_list ap)
 	int length, fmax, fmin, leading;
 	int leftjust, llflag;
 	char fill, sign;
-	long long v;
+	long long d;
+	unsigned long long v;
 
 	outcnt = 0;
 	while ((i = *fmt++) != '\0') {
@@ -160,39 +161,39 @@ _doprnt(void (*func)(int), const char *fmt, va_list ap)
 
 		case 'd':
 			if (llflag)
-				v = va_arg(ap, long long);
+				d = va_arg(ap, long long);
 			else
-				v = va_arg(ap, int);
-			if (v < 0) {
-				sign = '-' ; v = -v;
+				d = va_arg(ap, int);
+			if (d < 0) {
+				sign = '-' ; d = -d;
 			}
-			mkdigit((unsigned long long)v, 10, str);
+			mkdigit((unsigned long long)d, 10, str);
 			break;
 
 		case 'u':
 			if (llflag)
-				v = va_arg(ap, long long);
+				v = va_arg(ap, unsigned long long);
 			else
-				v = va_arg(ap, int);
-			mkdigit((unsigned long long)v, 10, str);
+				v = va_arg(ap, unsigned int);
+			mkdigit(v, 10, str);
 			break;
 
 		case 'o':
 			if (llflag)
-				v = va_arg(ap, long long);
+				v = va_arg(ap, unsigned long long);
 			else
-				v = va_arg(ap, int);
-			mkdigit((unsigned long long)v, 8, str);
+				v = va_arg(ap, unsigned int);
+			mkdigit(v, 8, str);
 			fmax = 0;
 			break;
 
 		case 'X':
 		case 'x':
 			if (llflag)
-				v = va_arg(ap, long long);
+				v = va_arg(ap, unsigned long long);
 			else
-				v = va_arg(ap, int);
-			mkdigit((unsigned long long)v, 16, str);
+				v = va_arg(ap, unsigned int);
+			mkdigit(v, 16, str);
 			fmax = 0;
 			break;
 
