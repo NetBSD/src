@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.22 2011/01/10 18:35:49 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.

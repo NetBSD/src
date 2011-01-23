@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.11 2010/05/02 13:36:30 phx Exp $ */
+/* $NetBSD: fxp.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
