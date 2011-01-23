@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.240 2011/01/23 07:30:07 matt Exp $	*/
+/*	$NetBSD: tty.c,v 1.241 2011/01/23 11:01:08 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.240 2011/01/23 07:30:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.241 2011/01/23 11:01:08 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2433,10 +2433,11 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 #ifdef LWP_PC
 		if (l->l_stat == LSONPROC) {
 			snprintf(lmsg, sizeof(lmsg), "%#"PRIxVADDR"/%d",
-			    LWP_PC(l), cpu_index(l->l_cpu));
+			    (vaddr_t)LWP_PC(l), cpu_index(l->l_cpu));
 			strlcat(buf, lmsg, bufsz);
 		} else if (l->l_stat == LSRUN) {
-			snprintf(lmsg, sizeof(lmsg), "%#"PRIxVADDR, LWP_PC(l));
+			snprintf(lmsg, sizeof(lmsg), "%#"PRIxVADDR,
+			    (vaddr_t)LWP_PC(l));
 			strlcat(buf, lmsg, bufsz);
 		} else {
 			strlcat(buf, l->l_wchan ? l->l_wmesg : "iowait", bufsz);
