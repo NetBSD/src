@@ -1,10 +1,10 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.3.4.1 2007/05/17 00:34:48 jdc Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.1.1.3.4.2 2011/01/23 21:47:07 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkconf.c,v 1.28.18.14 2006/02/28 03:10:47 marka Exp */
+/* Id: named-checkconf.c,v 1.28.18.18 2009/02/16 23:46:03 tbox Exp */
 
 /*! \file */
 
@@ -226,7 +226,8 @@ configure_zone(const char *vclass, const char *view,
 			zone_options |= DNS_ZONEOPT_CHECKINTEGRITY;
 		else
 			zone_options &= ~DNS_ZONEOPT_CHECKINTEGRITY;
-	}
+	} else
+		zone_options |= DNS_ZONEOPT_CHECKINTEGRITY;
 
 	obj = NULL;
 	if (get_maps(maps, "check-mx-cname", &obj)) {
@@ -413,12 +414,6 @@ main(int argc, char **argv) {
 			result = isc_dir_chroot(isc_commandline_argument);
 			if (result != ISC_R_SUCCESS) {
 				fprintf(stderr, "isc_dir_chroot: %s\n",
-					isc_result_totext(result));
-				exit(1);
-			}
-			result = isc_dir_chdir("/");
-			if (result != ISC_R_SUCCESS) {
-				fprintf(stderr, "isc_dir_chdir: %s\n",
 					isc_result_totext(result));
 				exit(1);
 			}

@@ -1,10 +1,10 @@
-/*	$NetBSD: log.h,v 1.1.1.3.4.1 2007/05/17 00:42:31 jdc Exp $	*/
+/*	$NetBSD: log.h,v 1.1.1.3.4.2 2011/01/23 21:47:43 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.h,v 1.47.18.3 2005/04/29 00:16:58 marka Exp */
+/* Id: log.h,v 1.47.18.8 2009/02/16 02:12:58 marka Exp */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -168,6 +168,7 @@ LIBISC_EXTERNAL_DATA extern isc_logmodule_t isc_modules[];
 #define ISC_LOGMODULE_TIME (&isc_modules[1])
 #define ISC_LOGMODULE_INTERFACE (&isc_modules[2])
 #define ISC_LOGMODULE_TIMER (&isc_modules[3])
+#define ISC_LOGMODULE_FILE (&isc_modules[4])
 
 ISC_LANG_BEGINDECLS
 
@@ -479,7 +480,7 @@ isc_log_usechannel(isc_logconfig_t *lcfg, const char *name,
  *	number of named channels.)  When multiple channels of the same
  *	name are defined, the most recent definition is found.
  *
- *\li	Specifing a very large number of channels for a category will have
+ *\li	Specifying a very large number of channels for a category will have
  *	a moderate impact on performance in isc_log_write(), as each
  *	call looks up the category for the start of a linked list, which
  *	it follows all the way to the end to find matching modules.  The
@@ -548,7 +549,7 @@ isc_log_usechannel(isc_logconfig_t *lcfg, const char *name,
  *\li	lctx is a valid logging context.
  *
  *\li	The category and module arguments must have ids that are in the
- *	range of known ids, as estabished by isc_log_registercategories()
+ *	range of known ids, as established by isc_log_registercategories()
  *	and isc_log_registermodules().
  *
  *\li	level != #ISC_LOG_DYNAMIC.  ISC_LOG_DYNAMIC is used only to define
@@ -587,7 +588,7 @@ ISC_FORMAT_PRINTF(5, 6);
  *\li	lctx is a valid logging context.
  *
  *\li	The category and module arguments must have ids that are in the
- *	range of known ids, as estabished by isc_log_registercategories()
+ *	range of known ids, as established by isc_log_registercategories()
  *	and isc_log_registermodules().
  *
  *\li	level != #ISC_LOG_DYNAMIC.  ISC_LOG_DYNAMIC is used only to define
@@ -635,7 +636,7 @@ isc_log_vwrite1(isc_log_t *lctx, isc_logcategory_t *category,
 ISC_FORMAT_PRINTF(5, 0);
 
 /*%
- * These are four internationalized versions of the the isc_log_[v]write[1]
+ * These are four internationalized versions of the isc_log_[v]write[1]
  * functions.  
  *
  * The only difference is that they take arguments for a message
@@ -826,7 +827,7 @@ isc_log_opensyslog(const char *tag, int options, int facility);
  *			declared facility.
  * \endcode
  *
- *\li	Zero effort has been made (yet) to accomodate systems with openlog()
+ *\li	Zero effort has been made (yet) to accommodate systems with openlog()
  *	that only takes two arguments, or to identify valid syslog
  *	facilities or options for any given architecture.
  *

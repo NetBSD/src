@@ -1,10 +1,10 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.3.4.1 2007/05/17 00:35:15 jdc Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.3.4.2 2011/01/23 21:47:10 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrout.c,v 1.115.18.8 2006/03/05 23:58:51 marka Exp */
+/* Id: xfrout.c,v 1.115.18.13 2009/01/19 00:36:26 marka Exp */
 
 #include <config.h>
 
@@ -305,6 +305,11 @@ log_rr(dns_name_t *name, dns_rdata_t *rdata, isc_uint32_t ttl) {
 	rdl.type = rdata->type;
 	rdl.rdclass = rdata->rdclass;
 	rdl.ttl = ttl;
+	if (rdata->type == dns_rdatatype_sig ||
+	    rdata->type == dns_rdatatype_rrsig)
+		rdl.covers = dns_rdata_covers(rdata);
+	else
+		rdl.covers = dns_rdatatype_none;
 	ISC_LIST_INIT(rdl.rdata);
 	ISC_LINK_INIT(&rdl, link);
 	dns_rdataset_init(&rds);
@@ -1193,7 +1198,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	}
 
 	/*
-	 * Bracket the the data stream with SOAs.
+	 * Bracket the data stream with SOAs.
 	 */
 	CHECK(soa_rrstream_create(mctx, db, ver, &soa_stream));
 	CHECK(compound_rrstream_create(mctx, &soa_stream, &data_stream,
@@ -1401,7 +1406,7 @@ failure:
  *
  * Requires:
  *	The stream iterator is initialized and points at an RR,
- *      or possiby at the end of the stream (that is, the
+ *      or possibly at the end of the stream (that is, the
  *      _first method of the iterator has been called).
  */
 static void
@@ -1575,6 +1580,11 @@ sendstream(xfrout_ctx_t *xfr) {
 		msgrdl->type = rdata->type;
 		msgrdl->rdclass = rdata->rdclass;
 		msgrdl->ttl = ttl;
+		if (rdata->type == dns_rdatatype_sig ||
+		    rdata->type == dns_rdatatype_rrsig)
+			msgrdl->covers = dns_rdata_covers(rdata);
+		else
+			msgrdl->covers = dns_rdatatype_none;
 		ISC_LINK_INIT(msgrdl, link);
 		ISC_LIST_INIT(msgrdl->rdata);
 		ISC_LIST_APPEND(msgrdl->rdata, msgrdata, link);

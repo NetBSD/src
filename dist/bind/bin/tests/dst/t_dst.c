@@ -1,10 +1,10 @@
-/*	$NetBSD: t_dst.c,v 1.1.1.4.4.1 2007/05/17 00:35:44 jdc Exp $	*/
+/*	$NetBSD: t_dst.c,v 1.1.1.4.4.2 2011/01/23 21:47:13 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_dst.c,v 1.48.18.3 2005/11/30 23:52:53 marka Exp */
+/* Id: t_dst.c,v 1.48.18.7 2009/01/22 23:46:00 tbox Exp */
 
 #include <config.h>
 
@@ -359,7 +359,7 @@ t1(void) {
 	dns_name_t	*name;
 	isc_buffer_t	b;
 
-	t_assert("dst", 1, T_REQUIRED, a1);
+	t_assert("dst", 1, T_REQUIRED, "%s", a1);
 
 	nfails = 0;
 	nprobs = 0;
@@ -379,7 +379,7 @@ t1(void) {
 		t_result(T_UNRESOLVED);
 		return;
 	}
-	result = isc_entropy_createfilesource(ectx, "randomfile");
+	isc_result = isc_entropy_createfilesource(ectx, "randomfile");
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_entropy_create failed %s\n",
 		       isc_result_totext(isc_result));
@@ -878,7 +878,7 @@ t2_vfy(char **av) {
 		       isc_result_totext(isc_result));
 		return(T_UNRESOLVED);
 	}
-	result = isc_entropy_createfilesource(ectx, "randomfile");
+	isc_result = isc_entropy_createfilesource(ectx, "randomfile");
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_entropy_create failed %s\n",
 		       isc_result_totext(isc_result));
@@ -922,7 +922,7 @@ t2_vfy(char **av) {
 static void
 t2(void) {
 	int	result;
-	t_assert("dst", 2, T_REQUIRED, a2);
+	t_assert("dst", 2, T_REQUIRED, "%s", a2);
 	result = t_eval("dst_2_data", t2_vfy, 6);
 	t_result(result);
 }

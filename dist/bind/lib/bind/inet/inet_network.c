@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1.1.3.4.1 2007/05/17 00:39:40 jdc Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.1.1.3.4.2 2011/01/23 21:47:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -86,9 +86,9 @@ again:
 	}
 	if (!digit)
 		return (INADDR_NONE);
-	if (*cp == '.') {
 		if (pp >= parts + 4 || val > 0xffU)
 			return (INADDR_NONE);
+	if (*cp == '.') {
 		*pp++ = val, cp++;
 		goto again;
 	}

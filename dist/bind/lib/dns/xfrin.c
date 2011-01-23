@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.3.4.3 2008/08/29 20:58:20 bouyer Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.3.4.4 2011/01/23 21:47:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrin.c,v 1.135.18.16.10.3 2008/07/23 23:16:43 marka Exp */
+/* Id: xfrin.c,v 1.135.18.23 2008/09/25 04:15:52 marka Exp */
 
 /*! \file */
 
@@ -427,6 +427,10 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
        dns_rdata_t *rdata)
 {
 	isc_result_t result;
+
+	if (rdata->type == dns_rdatatype_none ||
+	    dns_rdatatype_ismeta(rdata->type))
+		FAIL(DNS_R_FORMERR);
 
  redo:
 	switch (xfr->state) {
@@ -1053,6 +1057,8 @@ xfrin_send_request(dns_xfrin_ctx_t *xfr) {
 	xfr->id++;
 	xfr->nmsg = 0;
 	msg->id = xfr->id;
+	if (xfr->tsigctx != NULL)
+		dst_context_destroy(&xfr->tsigctx);
 
 	CHECK(render(msg, xfr->mctx, &xfr->qbuffer));
 
@@ -1188,7 +1194,10 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 
 	CHECK(dns_message_settsigkey(msg, xfr->tsigkey));
 	CHECK(dns_message_setquerytsig(msg, xfr->lasttsig));
+
 	msg->tsigctx = xfr->tsigctx;
+	xfr->tsigctx = NULL;
+
 	if (xfr->nmsg > 0)
 		msg->tcp_continuation = 1;
 
@@ -1301,9 +1310,11 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 	xfr->nmsg++;
 
 	/*
-	 * Copy the context back.
+	 * Take the context back.
 	 */
+	INSIST(xfr->tsigctx == NULL);
 	xfr->tsigctx = msg->tsigctx;
+	msg->tsigctx = NULL;
 
 	dns_message_destroy(&msg);
 
@@ -1398,6 +1409,9 @@ maybe_free(dns_xfrin_ctx_t *xfr) {
 
 	if (xfr->tcpmsg_valid)
 		dns_tcpmsg_invalidate(&xfr->tcpmsg);
+
+	if (xfr->tsigctx != NULL)
+		dst_context_destroy(&xfr->tsigctx);
 
 	if ((xfr->name.attributes & DNS_NAMEATTR_DYNAMIC) != 0)
 		dns_name_free(&xfr->name, xfr->mctx);

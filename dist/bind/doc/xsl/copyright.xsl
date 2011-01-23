@@ -1,7 +1,7 @@
 <!--
- - Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  -
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: copyright.xsl,v 1.2.2.3 2005/07/19 05:55:48 marka Exp -->
+<!-- Id: copyright.xsl,v 1.2.2.5 2009/07/10 23:46:03 tbox Exp -->
 
 <!-- Generate ISC copyright comments from Docbook copyright metadata. -->
 
@@ -35,7 +35,7 @@
 
   <xsl:variable name="isc.copyright.text">
     <xsl:text>
-      Permission to use, copy, modify, and distribute this software for any
+      Permission to use, copy, modify, and/or distribute this software for any
       purpose with or without fee is hereby granted, provided that the above
       copyright notice and this permission notice appear in all copies.
 

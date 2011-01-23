@@ -1,4 +1,4 @@
-/*	$NetBSD: lwresd.c,v 1.1.1.3.4.2 2008/08/29 20:58:17 bouyer Exp $	*/
+/*	$NetBSD: lwresd.c,v 1.1.1.3.4.3 2011/01/23 21:47:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwresd.c,v 1.46.18.7.52.3 2008/07/23 23:16:43 marka Exp */
+/* Id: lwresd.c,v 1.46.18.10 2008/07/23 23:33:02 marka Exp */
 
 /*! \file 
  * \brief

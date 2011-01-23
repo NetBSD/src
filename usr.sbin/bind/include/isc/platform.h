@@ -1,10 +1,10 @@
-/*	$NetBSD: platform.h,v 1.4.10.1 2007/05/17 00:43:55 jdc Exp $	*/
+/*        $NetBSD: platform.h,v 1.4.10.2 2011/01/23 21:47:52 bouyer Exp $      */
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.34.18.5 2005/06/16 22:01:02 jinmei Exp */
+/* Id: platform.h.in,v 1.34.18.12 2008/12/01 04:02:15 marka Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -27,6 +27,11 @@
 /*****
  ***** Platform-dependent defines.
  *****/
+
+/*
+ * Define if the platform has <strings.h>.
+ */
+#define ISC_PLATFORM_HAVESTRINGSH 1
 
 /***
  *** Network.
@@ -96,11 +101,6 @@
 #undef ISC_PLATFORM_NEEDPTON
 
 /*! \brief
- * If this system needs inet_aton(), ISC_PLATFORM_NEEDATON will be defined.
- */
-#undef ISC_PLATFORM_NEEDATON
-
-/*! \brief
  * If this system needs in_port_t, ISC_PLATFORM_NEEDPORTT will be defined.
  */
 #undef ISC_PLATFORM_NEEDPORTT
@@ -136,6 +136,21 @@
  * IN6_IS_ADDR_* macros.
  */
 #undef ISC_PLATFORM_FIXIN6ISADDR
+
+/*! \brief
+ * Define if the system supports kqueue multiplexing
+ */
+#define ISC_PLATFORM_HAVEKQUEUE 1
+
+/*! \brief
+ * Define if the system supports epoll multiplexing
+ */
+#undef ISC_PLATFORM_HAVEEPOLL
+
+/*! \brief
+ * Define if the system supports /dev/poll multiplexing
+ */
+#undef ISC_PLATFORM_HAVEDEVPOLL
 
 /*
  *** Printing.
@@ -221,19 +236,19 @@
 
 /*
  * If the "xadd" operation is available on this architecture,
- * ISC_PLATFORM_HAVEXADD will be defined. 
+ * ISC_PLATFORM_HAVEXADD will be defined.
  */
 #define ISC_PLATFORM_HAVEXADD 1
 
 /*
  * If the "atomic swap" operation is available on this architecture,
- * ISC_PLATFORM_HAVEATOMICSTORE" will be defined. 
+ * ISC_PLATFORM_HAVEATOMICSTORE" will be defined.
  */
 #define ISC_PLATFORM_HAVEATOMICSTORE 1
 
 /*
  * If the "compare-and-exchange" operation is available on this architecture,
- * ISC_PLATFORM_HAVECMPXCHG will be defined. 
+ * ISC_PLATFORM_HAVECMPXCHG will be defined.
  */
 #define ISC_PLATFORM_HAVECMPXCHG 1
 
@@ -249,6 +264,12 @@
 
 /*
  * Define if the standard __asm function must be used.
+ */
+
+
+/*
+ * Define if MacOS style of PPC assembly must be used.
+ * e.g. "r6", not "6", for register six.
  */
 
 

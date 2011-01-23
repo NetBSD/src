@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddrinfo.c,v 1.4.4.2 2008/07/16 01:57:03 snj Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.4.4.3 2011/01/23 21:47:47 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * This code is derived from software contributed to ISC by
@@ -20,7 +20,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddrinfo.c,v 1.43.18.8 2007/09/13 23:46:26 tbox Exp */
+/* Id: getaddrinfo.c,v 1.43.18.10 2008/11/25 23:46:01 tbox Exp */
 
 /*! \file */
 
@@ -147,7 +147,7 @@
 #define SA(addr)	((struct sockaddr *)(addr))
 #define SIN(addr)	((struct sockaddr_in *)(addr))
 #define SIN6(addr)	((struct sockaddr_in6 *)(addr))
-#define SUN(addr)	((struct sockaddr_un *)(addr))
+#define SLOCAL(addr)	((struct sockaddr_un *)(addr))
 
 /*! \struct addrinfo
  */
@@ -711,17 +711,17 @@ lwres_freeaddrinfo(struct addrinfo *ai) {
 static int
 get_local(const char *name, int socktype, struct addrinfo **res) {
 	struct addrinfo *ai;
-	struct sockaddr_un *sun;
+	struct sockaddr_un *slocal;
 
 	if (socktype == 0)
 		return (EAI_SOCKTYPE);
 
-	ai = ai_alloc(AF_LOCAL, sizeof(*sun));
+	ai = ai_alloc(AF_LOCAL, sizeof(*slocal));
 	if (ai == NULL)
 		return (EAI_MEMORY);
 
-	sun = SUN(ai->ai_addr);
-	strncpy(sun->sun_path, name, sizeof(sun->sun_path));
+	slocal = SLOCAL(ai->ai_addr);
+	strncpy(slocal->sun_path, name, sizeof(slocal->sun_path));
 
 	ai->ai_socktype = socktype;
 	/*

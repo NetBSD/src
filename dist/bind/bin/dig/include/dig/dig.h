@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.h,v 1.1.1.4.4.2 2008/07/16 01:56:33 snj Exp $	*/
+/*	$NetBSD: dig.h,v 1.1.1.4.4.3 2011/01/23 21:47:08 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.h,v 1.82.18.23 2007/08/28 07:19:55 tbox Exp */
+/* Id: dig.h,v 1.82.18.25 2008/12/16 23:46:02 tbox Exp */
 
 #ifndef DIG_H
 #define DIG_H
@@ -286,7 +286,7 @@ extern int idnoptions;
 /*
  * Routines in dighost.c.
  */
-void
+isc_result_t
 get_address(char *host, in_port_t port, isc_sockaddr_t *sockaddr);
 
 isc_result_t

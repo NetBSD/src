@@ -1,7 +1,7 @@
-/*	$NetBSD: control.c,v 1.1.1.4.4.2 2008/07/16 01:56:33 snj Exp $	*/
+/*	$NetBSD: control.c,v 1.1.1.4.4.3 2011/01/23 21:47:09 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: control.c,v 1.20.10.10 2007/09/13 23:46:26 tbox Exp */
+/* Id: control.c,v 1.20.10.12 2009/07/11 23:46:06 tbox Exp */
 
 /*! \file */
 
@@ -161,10 +161,12 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	} else if (command_compare(command, NS_COMMAND_STATUS)) {
 		result = ns_server_status(ns_g_server, text);
 	} else if (command_compare(command, NS_COMMAND_FREEZE)) {
-		result = ns_server_freeze(ns_g_server, ISC_TRUE, command);
+		result = ns_server_freeze(ns_g_server, ISC_TRUE, command,
+					  text);
 	} else if (command_compare(command, NS_COMMAND_UNFREEZE) ||
 		   command_compare(command, NS_COMMAND_THAW)) {
-		result = ns_server_freeze(ns_g_server, ISC_FALSE, command);
+		result = ns_server_freeze(ns_g_server, ISC_FALSE, command,
+					  text);
 	} else if (command_compare(command, NS_COMMAND_RECURSING)) {
 		result = ns_server_dumprecursing(ns_g_server);
 	} else if (command_compare(command, NS_COMMAND_TIMERPOKE)) {

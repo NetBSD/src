@@ -1,10 +1,10 @@
-/*	$NetBSD: entropy.c,v 1.1.1.3.4.1 2007/05/17 00:42:47 jdc Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.3.4.2 2011/01/23 21:47:44 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.c,v 1.71.18.7 2006/12/07 04:53:03 marka Exp */
+/* Id: entropy.c,v 1.71.18.9 2008/12/01 23:45:57 tbox Exp */
 
 /* \file unix/entropy.c
  * \brief
@@ -33,6 +33,9 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#ifdef HAVE_NANOSLEEP
+#include <time.h>
+#endif
 #include <unistd.h>
 
 #include <isc/platform.h>
@@ -176,7 +179,15 @@ get_from_usocketsource(isc_entropysource_t *source, isc_uint32_t desired) {
 					 * just "break", then the "desired"
 					 * amount gets borked.
 					 */
+#ifdef HAVE_NANOSLEEP
+					struct timespec ts;
+
+					ts.tv_sec = 0;
+					ts.tv_nsec = 1000000;
+					nanosleep(&ts, NULL);
+#else
 					usleep(1000);
+#endif
 					goto eagain_loop;
 				}
 				if (errno == EWOULDBLOCK || errno == EINTR)

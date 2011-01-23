@@ -1,10 +1,10 @@
-/*	$NetBSD: hash.h,v 1.1.1.3.4.1 2007/05/17 00:42:28 jdc Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.1.3.4.2 2011/01/23 21:47:43 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hash.h,v 1.4.18.2 2005/04/29 00:16:55 marka Exp */
+/* Id: hash.h,v 1.4.18.4 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -38,7 +38,7 @@
  *	in the random vector are unpredictable, the probability of hash
  *	collision between arbitrary two different values is at most 1/2^16.
  *
- *	Altough the API is generic about the hash keys, it mainly expects
+ *	Although the API is generic about the hash keys, it mainly expects
  *	DNS names (and sometimes IPv4/v6 addresses) as inputs.  It has an
  *	upper limit of the input length, and may run slow to calculate the
  *	hash values for large inputs.

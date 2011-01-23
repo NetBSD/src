@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: makedefs.pl,v 1.6 2004/03/05 05:14:20 marka Exp
+# Id: makedefs.pl,v 1.6.18.2 2009/01/19 23:46:17 tbox Exp
 
 # makedefs.pl
 # This script goes through all of the lib header files and creates a .def file
@@ -24,7 +24,7 @@
 # This program should only be run if it is necessary to regenerate
 # the .def files.  Normally these files should be updated by  hand, adding
 # new functions to the end and removing obsolete ones.
-# If you do renerate them you will also need to modify them by hand to
+# If you do regenerate them you will also need to modify them by hand to
 # to pick up those routines not detected by this program (like openlog).
 #
 # Search String: ^(([_a-z0-9])*( ))*prefix_[_a-z0-9]+_[a-z0-9]+( )*\(

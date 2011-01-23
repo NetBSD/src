@@ -1,10 +1,10 @@
-/*	$NetBSD: random.c,v 1.1.1.3.4.1 2007/05/17 00:41:49 jdc Exp $	*/
+/*	$NetBSD: random.c,v 1.1.1.3.4.2 2011/01/23 21:47:43 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: random.c,v 1.21.18.2 2005/04/29 00:16:48 marka Exp */
+/* Id: random.c,v 1.21.18.4 2009/07/16 23:46:08 tbox Exp */
 
 /*! \file */
 
@@ -86,7 +86,16 @@ isc_random_get(isc_uint32_t *val)
 	 * rand()'s lower bits are not random.
 	 * rand()'s upper bit is zero.
 	 */
+#if RAND_MAX >= 0xfffff
+	/* We have at least 20 bits.  Use lower 16 excluding lower most 4 */
 	*val = ((rand() >> 4) & 0xffff) | ((rand() << 12) & 0xffff0000);
+#elif RAND_MAX >= 0x7fff
+	/* We have at least 15 bits.  Use lower 10/11 excluding lower most 4 */
+	*val = ((rand() >> 4) & 0x000007ff) | ((rand() << 7) & 0x003ff800) |
+		((rand() << 18) & 0xffc00000);
+#else
+#error RAND_MAX is too small
+#endif
 #else
 	*val = arc4random();
 #endif
@@ -94,13 +103,13 @@ isc_random_get(isc_uint32_t *val)
 
 isc_uint32_t
 isc_random_jitter(isc_uint32_t max, isc_uint32_t jitter) {
+	isc_uint32_t rnd;
+
 	REQUIRE(jitter < max);
+
 	if (jitter == 0)
 		return (max);
-	else
-#ifndef HAVE_ARC4RANDOM
-		return (max - rand() % jitter);
-#else
-		return (max - arc4random() % jitter);
-#endif
+
+	isc_random_get(&rnd);
+	return (max - rnd % jitter);
 }

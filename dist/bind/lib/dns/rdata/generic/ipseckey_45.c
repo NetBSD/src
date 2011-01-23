@@ -1,9 +1,9 @@
-/*	$NetBSD: ipseckey_45.c,v 1.1.1.1.2.2 2007/05/17 00:41:18 jdc Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.1.1.1.2.3 2011/01/23 21:47:42 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ipseckey_45.c,v 1.2.2.1 2005/07/07 03:17:36 marka Exp */
+/* Id: ipseckey_45.c,v 1.2.2.4 2009/09/18 21:57:08 jinmei Exp */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -141,7 +141,7 @@ totext_ipseckey(ARGS_TOTEXT) {
                 RETERR(str_totext("( ", target));
 
 	/*
-	 * Precendence.
+	 * Precedence.
 	 */
 	dns_rdata_toregion(rdata, &region);
 	num = uint8_fromregion(&region);
@@ -245,6 +245,7 @@ fromwire_ipseckey(ARGS_FROMWIRE) {
 		isc_buffer_forward(source, 3);
 		RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 		isc_buffer_activeregion(source, &region);
+		isc_buffer_forward(source, region.length);
 		return(mem_tobuffer(target, region.base, region.length));
 
 	default:
