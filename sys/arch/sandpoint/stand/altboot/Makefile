@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/01/23 01:05:30 nisimura Exp $
+#	$NetBSD: Makefile,v 1.2 2011/01/23 07:41:38 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -53,7 +53,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 LIBSA=		${SALIB}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${HOST_SH} ${.CURDIR}/newvers.sh ${.CURDIR}/version
+	${HOST_SH} ${S}/conf/newvers_stand.sh -K ${.CURDIR}/version "sandpoint"
 	${CC} -c vers.c
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
