@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2011/01/13 21:15:15 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2011/01/23 09:44:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2011/01/13 21:15:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2011/01/23 09:44:58 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -425,6 +425,7 @@ hppa_init(paddr_t start, void *bi)
 	int btlb_slot_i;
 	struct btinfo_symtab *bi_sym;
 	struct pcb *pcb0;
+	struct cpu_info *ci;
 
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
@@ -436,6 +437,15 @@ hppa_init(paddr_t start, void *bi)
 	mtctl(&lwp0, CR_CURLWP);
 #endif
 	lwp0.l_cpu = &cpus[0];
+
+	/* curcpu() is now valid */
+	ci = curcpu();
+
+	ci->ci_psw =
+		PSW_Q |         /* Interrupt State Collection Enable */
+		PSW_P |         /* Protection Identifier Validation Enable */
+		PSW_C |         /* Instruction Address Translation Enable */
+		PSW_D;          /* Data Address Translation Enable */
 
 	/* Copy bootinfo */
 	if (bi != NULL)
@@ -632,7 +642,6 @@ cpuid(void)
 	const char *model;
 	u_int cpu_version, cpu_features;
 	int error;
-	extern int kpsw;
 
 	/* may the scientific guessing begin */
 	cpu_type = hpc_unknown;
@@ -809,7 +818,7 @@ cpuid(void)
 
 	/* force strong ordering for now */
 	if (hppa_cpu_ispa20_p())
-		kpsw |= PSW_O;
+		curcpu()->ci_psw |= PSW_O;
 
 	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
 
