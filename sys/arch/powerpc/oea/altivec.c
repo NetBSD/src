@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.19 2011/01/18 02:25:42 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.20 2011/01/23 17:36:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.19 2011/01/18 02:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.20 2011/01/23 17:36:09 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -140,12 +140,16 @@ vec_save_cpu(enum vec_op op)
 		__asm volatile ("dssall; sync");
 
 		/*
+		 * Disclaim ownership.
+		 */
+		l->l_md.md_flags &= ~MDLWP_OWNVEC;
+
+		/*
 		 * Give up the VEC unit if are releasing it too.
 		 */
 		if (op == VEC_SAVE_AND_RELEASE)
 			ci->ci_veclwp = ci->ci_data.cpu_idlelwp;
 	}
-	l->l_md.md_flags &= ~MDLWP_OWNVEC;
 
 	/*
 	 * Restore MSR (turn off AltiVec)
