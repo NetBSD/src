@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_mips.c,v 1.20 2010/09/20 23:23:16 jym Exp $ */
+/* $NetBSD: kvm_mips.c,v 1.21 2011/01/23 06:28:52 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_mips.c,v 1.20 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.21 2011/01/23 06:28:52 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -100,6 +100,23 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	cpu_kh = kd->cpu_data;
 	page_off = va & PGOFSET;
 
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(va)) {
+		/*
+		 * Direct-mapped cached address: just convert it.
+		 */
+		*pa = MIPS_XKPHYS_TO_PHYS(va);
+		return (NBPG - page_off);
+	}
+
+	if (va < MIPS_XKPHYS_START) {
+		/*
+		 * XUSEG (user virtual address space) - invalid.
+		 */
+		_kvm_err(kd, 0, "invalid kernel virtual address");
+		goto lose;
+	}
+#else
 	if (va < MIPS_KSEG0_START) {
 		/*
 		 * KUSEG (user virtual address space) - invalid.
@@ -107,8 +124,9 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 		_kvm_err(kd, 0, "invalid kernel virtual address");
 		goto lose;
 	}
+#endif
 
-	if (va >= MIPS_KSEG0_START && va < MIPS_KSEG1_START) {
+	if (MIPS_KSEG0_P(va)) {
 		/*
 		 * Direct-mapped cached address: just convert it.
 		 */
@@ -116,13 +134,23 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 		return (NBPG - page_off);
 	}
 
-	if (va >= MIPS_KSEG1_START && va < MIPS_KSEG2_START) {
+	if (MIPS_KSEG1_P(va)) {
 		/*
 		 * Direct-mapped uncached address: just convert it.
 		 */
 		*pa = MIPS_KSEG1_TO_PHYS(va);
 		return (NBPG - page_off);
 	}
+
+#ifdef _LP64
+	if (va >= MIPS_KSEG2_START) {
+		/*
+		 * KUSEG (user virtual address space) - invalid.
+		 */
+		_kvm_err(kd, 0, "invalid kernel virtual address");
+		goto lose;
+	}
+#endif
 
 	/*
 	 * We now know that we're a KSEG2 (kernel virtually mapped)
@@ -134,10 +162,17 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	 * Step 1: Make sure the kernel page table has a translation
 	 * for the address.
 	 */
+#ifdef _LP64
+	if (va >= (MIPS_XKSEG_START + (cpu_kh->sysmapsize * NBPG))) {
+		_kvm_err(kd, 0, "invalid XKSEG address");
+		goto lose;
+	}
+#else
 	if (va >= (MIPS_KSEG2_START + (cpu_kh->sysmapsize * NBPG))) {
 		_kvm_err(kd, 0, "invalid KSEG2 address");
 		goto lose;
 	}
+#endif
 
 	/*
 	 * Step 2: Locate and read the PTE.
