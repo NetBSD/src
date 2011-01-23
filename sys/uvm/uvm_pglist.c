@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.55 2011/01/22 01:36:27 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.56 2011/01/23 21:29:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.55 2011/01/22 01:36:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.56 2011/01/23 21:29:52 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			pg = &ps->pgs[try - ps->start];
 			continue;
 		}
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DIAGNOSTIC)
 		{
 			int cidx = 0;
 			const int bank = vm_physseg_find(try, &cidx);
