@@ -1,4 +1,4 @@
-/* $NetBSD: kern.ldscript,v 1.2 2011/01/18 01:02:53 matt Exp $ */
+/* $NetBSD: kern.ldscript,v 1.3 2011/01/23 17:38:37 matt Exp $ */
 
 /*  ldscript for NetBSD/powerpc kernels and LKMs */
 OUTPUT_ARCH(powerpc)
@@ -31,6 +31,12 @@ SECTIONS
     *(.data)
     CONSTRUCTORS
   }
+  .data1			: { *(.data1) }
+  . = ALIGN(32);	/* COHERENCY UNIT */
+  .data.cacheline_aligned	: { *(.data.cacheline_aligned) }
+  . = ALIGN(32);	/* COHERENCY UNIT */
+  .data.read_mostly		: { *(.data.read_mostly) }
+  . = ALIGN(32);	/* COHERENCY UNIT */
   _gp = ALIGN(16) + 0x7ff0;
   .lit8 : { *(.lit8) }
   .lit4 : { *(.lit4) }
