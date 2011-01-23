@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: dsk.c,v 1.2 2011/01/23 01:32:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -82,9 +82,9 @@ static void drive_ident(struct disk *, char *);
 static char *mkident(char *, int);
 static void set_xfermode(struct dkdev_ata *, int);
 static void decode_dlabel(struct disk *, char *);
-static int lba_read(struct disk *, uint64_t, uint32_t, void *);
-static void issue48(struct dvata_chan *, uint64_t, uint32_t);
-static void issue28(struct dvata_chan *, uint64_t, uint32_t);
+static int lba_read(struct disk *, int64_t, int, void *);
+static void issue48(struct dvata_chan *, int64_t, int);
+static void issue28(struct dvata_chan *, int64_t, int);
 static struct disk *lookup_disk(int);
 
 static struct disk ldisk[4];
@@ -368,11 +368,11 @@ set_xfermode(struct dkdev_ata *l, int n)
 }
 
 static int
-lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
+lba_read(struct disk *d, int64_t bno, int bcnt, void *buf)
 {
 	struct dkdev_ata *l;
 	struct dvata_chan *chan;
-	void (*issue)(struct dvata_chan *, uint64_t, uint32_t);
+	void (*issue)(struct dvata_chan *, int64_t, int);
 	int n, rdcnt, i, k;
 	uint16_t *p;
 	const char *err;
@@ -389,8 +389,7 @@ lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 		(*issue)(chan, bno, rdcnt);
 		for (k = 0; k < rdcnt; k++) {
 			if (spinwait_unbusy(l, n, 1000, &err) == 0) {
-				printf("%s blk %d %s\n",
-				   d->xname, (int)bno, err);
+				printf("%s blk %lld %s\n", d->xname, bno, err);
 				error = EIO;
 				break;
 			}
@@ -406,7 +405,7 @@ lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 }
 
 static void
-issue48(struct dvata_chan *chan, uint64_t bno, uint32_t nblk)
+issue48(struct dvata_chan *chan, int64_t bno, int nblk)
 {
 
 	CSR_WRITE_1(chan->cmd + _NSECT, 0); /* always less than 256 */
@@ -422,7 +421,7 @@ issue48(struct dvata_chan *chan, uint64_t bno, uint32_t nblk)
 }
 
 static void
-issue28(struct dvata_chan *chan, uint64_t bno, uint32_t nblk)
+issue28(struct dvata_chan *chan, int64_t bno, int nblk)
 {
 
 	CSR_WRITE_1(chan->cmd + _NSECT, nblk);
@@ -511,10 +510,10 @@ dsk_strategy(void *devdata, int rw, daddr_t dblk, size_t size,
 {
 	struct disk *d = devdata;
 	struct disklabel *dlp;
-	uint64_t bno;
+	int64_t bno;
 
 #if 0
-printf("%s %d %d\n", d->xname, (int)dblk, size);
+printf("%s %lld %d\n", d->xname, dblk, size);
 #endif
 	if (size == 0)
 		return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: printf.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: printf.c,v 1.2 2011/01/23 01:32:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define MAXSTR	80
 
 static int _doprnt(void (*)(int), const char *, va_list);
-static void pr_int(unsigned long, int, char *);
+static void mkdigit(unsigned long long, int, char *);
 static void sputchar(int);
 
 static char *sbuf, *ebuf;
@@ -89,22 +89,14 @@ snprintf(char *buf, size_t size, const char *fmt, ...)
 }
 
 static int
-_doprnt(func, fmt, ap)
-	void (*func)(int);	/* Function to put a character */
-	const char *fmt;	/* Format string for pr_int/pr_float */
-	va_list ap;		/* Arguments to pr_int/pr_float */
+_doprnt(void (*func)(int), const char *fmt, va_list ap)
 {
-	int i;
-	char *str;
-	char string[20];
-	int length;
-	int leftjust;
-	int longflag;
-	int fmax, fmin;
-	int leading;
-	int outcnt;
-	char fill;
-	char sign;
+	int i, outcnt;
+	char buf[23], *str; /* requires 23 digits in octal at most */
+	int length, fmax, fmin, leading;
+	int leftjust, llflag;
+	char fill, sign;
+	long long v;
 
 	outcnt = 0;
 	while ((i = *fmt++) != '\0') {
@@ -141,15 +133,17 @@ _doprnt(func, fmt, ap)
 					fmax = fmax * 10 + *fmt++ - '0';
 			}
 		}
-		longflag = (*fmt == 'l');
-		if (longflag)
-			fmt++;
+		llflag = 0;
+		if (*fmt == 'l' && *++fmt == 'l') {
+			llflag = 1;
+			fmt += 1;
+		}
 		if ((i = *fmt++) == '\0') {
 			(*func)('%');
 			outcnt += 1;
 			break;
 		}
-		str = string;
+		str = buf;
 		sign = ' ';
 		switch (i) {
 		case 'c':
@@ -165,36 +159,52 @@ _doprnt(func, fmt, ap)
 			break;
 
 		case 'd':
-		      {
-			long l = va_arg(ap, long);
-			if (l < 0) { sign = '-' ; l = -l; }
-			pr_int((unsigned long)l, 10, str);
-		      }
+			if (llflag)
+				v = va_arg(ap, long long);
+			else
+				v = va_arg(ap, int);
+			if (v < 0) {
+				sign = '-' ; v = -v;
+			}
+			mkdigit((unsigned long long)v, 10, str);
 			break;
 
 		case 'u':
-			pr_int(va_arg(ap, unsigned long), 10, str);
+			if (llflag)
+				v = va_arg(ap, long long);
+			else
+				v = va_arg(ap, int);
+			mkdigit((unsigned long long)v, 10, str);
 			break;
 
 		case 'o':
-			pr_int(va_arg(ap, unsigned long), 8, str);
+			if (llflag)
+				v = va_arg(ap, long long);
+			else
+				v = va_arg(ap, int);
+			mkdigit((unsigned long long)v, 8, str);
 			fmax = 0;
 			break;
 
 		case 'X':
 		case 'x':
-			pr_int(va_arg(ap, unsigned long), 16, str);
+			if (llflag)
+				v = va_arg(ap, long long);
+			else
+				v = va_arg(ap, int);
+			mkdigit((unsigned long long)v, 16, str);
 			fmax = 0;
 			break;
 
 		case 'p':
-			pr_int(va_arg(ap, unsigned long), 16, str);
+			mkdigit(va_arg(ap, unsigned int), 16, str);
 			fill = '0';
 			fmin = 8;
 			fmax = 0;
 			(*func)('0'); (*func)('x');
 			outcnt += 2;
 			break;
+
 		default:
 			(*func)(i);
 			break;
@@ -232,23 +242,24 @@ _doprnt(func, fmt, ap)
 	return outcnt;
 }
 
-static void pr_int(lval, base, s)
-	unsigned long lval;
-	int base;
-	char *s;
+
+static void
+mkdigit(unsigned long long llval, int base, char *s)
 {
-	char ptmp[12];	/* unsigned long requires 11 digit in octal form */
-	int i;
-	char *t = ptmp;
+	char ptmp[23], *t;	/* requires 22 digit in octal at most */
+	int n;
 	static const char hexdigit[] = "0123456789abcdef";
 
-	i = 1;
+	n = 1;
+	t = ptmp;
 	*t++ = '\0';
 	do {
-		*t++ = hexdigit[lval % base];
-	} while ((lval /= base) != 0 && ++i < sizeof(ptmp));
+		int d = (int)llval % base;
+		*t++ = hexdigit[d];
+		llval /= base;
+	} while (llval != 0 && ++n < sizeof(ptmp));
 	while ((*s++ = *--t) != '\0')
-		;
+		/* copy reserved digits */ ;
 }
 
 static void
