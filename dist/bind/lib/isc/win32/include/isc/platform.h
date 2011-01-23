@@ -1,10 +1,10 @@
-/*	$NetBSD: platform.h,v 1.1.1.3.4.1 2007/05/17 00:43:04 jdc Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:25 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h,v 1.9.18.3 2005/02/24 00:32:23 marka Exp */
+/* Id: platform.h,v 1.9.18.6 2008/12/01 04:02:15 marka Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -36,15 +36,17 @@
 #if _MSC_VER > 1200
 #define ISC_PLATFORM_HAVEIN6PKTINFO
 #endif
+#define ISC_PLATFORM_HAVESCOPEID
 #define ISC_PLATFORM_NEEDPORTT
 #undef MSG_TRUNC
 #define ISC_PLATFORM_NEEDNTOP
 #define ISC_PLATFORM_NEEDPTON
-#define ISC_PLATFORM_NEEDATON
 
 #define ISC_PLATFORM_QUADFORMAT "I64"
 
 #define ISC_PLATFORM_NEEDSTRSEP
+#define ISC_PLATFORM_NEEDSTRLCPY
+#define ISC_PLATFORM_NEEDSTRLCAT
 #define ISC_PLATFORM_NEEDSTRLCPY
 
 /*

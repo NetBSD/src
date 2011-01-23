@@ -1,10 +1,10 @@
-/*	$NetBSD: time.c,v 1.1.1.4.4.1 2007/05/17 00:40:47 jdc Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.4.4.1.2.1 2011/01/23 21:52:13 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.26.18.3 2005/04/29 00:16:06 marka Exp */
+/* Id: time.c,v 1.26.18.5 2009/01/19 23:46:15 tbox Exp */
 
 /*! \file */
 
@@ -147,7 +147,7 @@ dns_time64_fromtext(const char *source, isc_int64_t *target) {
 	RANGE(0, 60, second);		/* 60 == leap second. */
 
 	/*
-	 * Calulate seconds since epoch.
+	 * Calculate seconds since epoch.
 	 */
 	value = second + (60 * minute) + (3600 * hour) + ((day - 1) * 86400);
 	for (i = 0; i < (month - 1); i++)

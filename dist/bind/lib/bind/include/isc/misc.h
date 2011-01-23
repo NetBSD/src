@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.1.1.3.4.1 2007/05/17 00:39:35 jdc Exp $	*/
+/*	$NetBSD: misc.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: misc.h,v 1.4.18.1 2005/04/27 05:00:52 sra Exp
+ * Id: misc.h,v 1.4.18.2 2008/02/18 04:04:06 marka Exp
  */
 
 #ifndef _ISC_MISC_H
@@ -27,6 +27,7 @@
 /*! \file */
 
 #include <stdio.h>
+#include <sys/types.h>
 
 #define	bitncmp		__bitncmp
 /*#define isc_movefile	__isc_movefile */

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.1.1.3.4.1.2.1 2008/08/29 20:54:00 bouyer Exp $	*/
+/*	$NetBSD: timer.h,v 1.1.1.3.4.1.2.2 2011/01/23 21:52:21 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer.h,v 1.31.18.3.52.2 2008/07/24 23:48:09 tbox Exp */
+/* Id: timer.h,v 1.31.18.5 2008/06/24 23:45:55 tbox Exp */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1

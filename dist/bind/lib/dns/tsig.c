@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:37 snj Exp $	*/
+/*	$NetBSD: tsig.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:52:13 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: tsig.c,v 1.117.18.11 2007/09/26 23:46:34 tbox Exp
+ * Id: tsig.c,v 1.117.18.14 2008/01/17 23:46:03 tbox Exp
  */
 /*! \file */
 #include <config.h>
@@ -325,7 +325,8 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	tkey->generated = generated;
 	tkey->inception = inception;
 	tkey->expire = expire;
-	tkey->mctx = mctx;
+	tkey->mctx = NULL;
+	isc_mem_attach(mctx, &tkey->mctx);
 
 	tkey->magic = TSIG_MAGIC;
 
@@ -511,7 +512,7 @@ tsigkey_free(dns_tsigkey_t *key) {
 		isc_mem_put(key->mctx, key->creator, sizeof(dns_name_t));
 	}
 	isc_refcount_destroy(&key->refs);
-	isc_mem_put(key->mctx, key, sizeof(dns_tsigkey_t));
+	isc_mem_putanddetach(&key->mctx, key, sizeof(dns_tsigkey_t));
 }
 
 void
@@ -1444,7 +1445,8 @@ dns_tsigkeyring_create(isc_mem_t *mctx, dns_tsig_keyring_t **ringp) {
 		return (result);
 	}
 
-	ring->mctx = mctx;
+	ring->mctx = NULL;
+	isc_mem_attach(mctx, &ring->mctx);
 
 	*ringp = ring;
 	return (ISC_R_SUCCESS);
@@ -1462,5 +1464,5 @@ dns_tsigkeyring_destroy(dns_tsig_keyring_t **ringp) {
 
 	dns_rbt_destroy(&ring->keys);
 	isc_rwlock_destroy(&ring->lock);
-	isc_mem_put(ring->mctx, ring, sizeof(dns_tsig_keyring_t));
+	isc_mem_putanddetach(&ring->mctx, ring, sizeof(dns_tsig_keyring_t));
 }

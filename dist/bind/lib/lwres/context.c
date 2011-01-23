@@ -1,7 +1,7 @@
-/*	$NetBSD: context.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:54 snj Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:52:27 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context.c,v 1.45.18.7 2007/08/28 07:20:06 tbox Exp */
+/* Id: context.c,v 1.45.18.12 2009/09/01 23:46:02 tbox Exp */
 
 /*! \file context.c 
    lwres_context_create() creates a #lwres_context_t structure for use in
@@ -158,7 +158,6 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 	lwres_context_t *ctx;
 
 	REQUIRE(contextp != NULL && *contextp == NULL);
-	UNUSED(flags);
 
 	/*
 	 * If we were not given anything special to use, use our own
@@ -185,6 +184,17 @@ lwres_context_create(lwres_context_t **contextp, void *arg,
 
 	ctx->timeout = LWRES_DEFAULT_TIMEOUT;
 	ctx->serial = time(NULL); /* XXXMLG or BEW */
+
+	ctx->use_ipv4 = 1;
+	ctx->use_ipv6 = 1;
+	if ((flags & (LWRES_CONTEXT_USEIPV4 | LWRES_CONTEXT_USEIPV6)) ==
+	    LWRES_CONTEXT_USEIPV6) {
+		ctx->use_ipv4 = 0;
+	}
+	if ((flags & (LWRES_CONTEXT_USEIPV4 | LWRES_CONTEXT_USEIPV6)) ==
+	    LWRES_CONTEXT_USEIPV4) {
+		ctx->use_ipv6 = 0;
+	}
 
 	/*
 	 * Init resolv.conf bits.

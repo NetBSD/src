@@ -1,11 +1,11 @@
-/*	$NetBSD: dst_parse.c,v 1.1.1.1.6.1 2007/05/17 00:40:35 jdc Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.1.1.1.6.1.2.1 2011/01/23 21:52:11 bouyer Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -20,7 +20,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * Id: dst_parse.c,v 1.1.6.7 2006/05/16 03:59:26 marka Exp
+ * Id: dst_parse.c,v 1.1.6.11 2009/03/02 23:45:58 tbox Exp
  */
 
 #include <config.h>
@@ -262,6 +262,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 	REQUIRE(priv != NULL);
 
 	priv->nelements = 0;
+	memset(priv->elements, 0, sizeof(priv->elements));
 
 #define NEXTTOKEN(lex, opt, token)				\
 	do {							\
@@ -353,7 +354,6 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 			goto fail;
 		}
 
-		memset(&priv->elements[n], 0, sizeof(dst_private_element_t));
 		tag = find_value(DST_AS_STR(token), alg);
 		if (tag < 0 || TAG_ALG(tag) != alg) {
 			ret = DST_R_INVALIDPRIVATEKEY;
@@ -488,8 +488,10 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 		fprintf(fp, "\n");
 	}
 
+	fflush(fp);
+	iret = ferror(fp) ? DST_R_WRITEERROR : ISC_R_SUCCESS;
 	fclose(fp);
-	return (ISC_R_SUCCESS);
+	return (iret);
 }
 
 /*! \file */

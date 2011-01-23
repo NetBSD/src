@@ -1,7 +1,7 @@
-/*	$NetBSD: check-tool.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:27 snj Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:51:18 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check-tool.c,v 1.10.18.18 2007/09/13 05:04:01 each Exp */
+/* Id: check-tool.c,v 1.10.18.23 2009/09/24 21:38:50 jinmei Exp */
 
 /*! \file */
 
@@ -48,6 +48,14 @@
 
 #include <isccfg/log.h>
 
+#ifndef CHECK_SIBLING
+#define CHECK_SIBLING 1
+#endif
+
+#ifndef CHECK_LOCAL
+#define CHECK_LOCAL 1
+#endif
+
 #ifdef HAVE_ADDRINFO
 #ifdef HAVE_GETADDRINFO
 #ifdef HAVE_GAISTRERROR
@@ -67,14 +75,23 @@ static const char *dbtype[] = { "rbt" };
 
 int debug = 0;
 isc_boolean_t nomerge = ISC_TRUE;
+#if CHECK_LOCAL
 isc_boolean_t docheckmx = ISC_TRUE;
 isc_boolean_t dochecksrv = ISC_TRUE;
 isc_boolean_t docheckns = ISC_TRUE;
+#else
+isc_boolean_t docheckmx = ISC_FALSE;
+isc_boolean_t dochecksrv = ISC_FALSE;
+isc_boolean_t docheckns = ISC_FALSE;
+#endif
 unsigned int zone_options = DNS_ZONEOPT_CHECKNS | 
 			    DNS_ZONEOPT_CHECKMX |
 			    DNS_ZONEOPT_MANYERRORS |
 			    DNS_ZONEOPT_CHECKNAMES |
 			    DNS_ZONEOPT_CHECKINTEGRITY |
+#if CHECK_SIBLING
+			    DNS_ZONEOPT_CHECKSIBLING |
+#endif
 			    DNS_ZONEOPT_CHECKWILDCARD |
 			    DNS_ZONEOPT_WARNMXCNAME |
 			    DNS_ZONEOPT_WARNSRVCNAME;
@@ -90,6 +107,7 @@ static isc_logcategory_t categories[] = {
 	{ "queries",	     0 },
 	{ "unmatched", 	     0 },
 	{ "update-security", 0 },
+	{ "query-errors",    0 },
 	{ NULL,		     0 }
 };
 
@@ -141,7 +159,7 @@ checkns(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner,
 		       cur->ai_next != NULL)
 			cur = cur->ai_next;
 		if (cur != NULL && cur->ai_canonname != NULL &&
-		    strcasecmp(ai->ai_canonname, namebuf) != 0) {
+		    strcasecmp(cur->ai_canonname, namebuf) != 0) {
 			dns_zone_log(zone, ISC_LOG_ERROR,
 				     "%s/NS '%s' (out of zone) "
 				     "is a CNAME (illegal)",

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.2.2.2 2007/05/17 00:43:07 jdc Exp $	*/
+/*        $NetBSD: atomic.h,v 1.2.2.2.2.1 2011/01/23 21:52:26 bouyer Exp $      */
 
 /*
  * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,7 @@
  */
 #include <isc/util.h>		/* for 'UNUSED' macro */
 
-static __inline isc_int32_t
+static isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	UNUSED(p);
 	UNUSED(val);
@@ -60,7 +60,7 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 		);
 }
 
-static __inline void
+static void
 isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 	UNUSED(p);
 	UNUSED(val);
@@ -75,7 +75,7 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 		);
 }
 
-static __inline isc_int32_t
+static isc_int32_t
 isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 	UNUSED(p);
 	UNUSED(cmpval);

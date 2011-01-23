@@ -1,10 +1,10 @@
-/*	$NetBSD: netaddr.h,v 1.1.1.3.4.1 2007/05/17 00:42:32 jdc Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:20 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netaddr.h,v 1.25.18.5 2005/07/28 04:58:47 marka Exp */
+/* Id: netaddr.h,v 1.25.18.7 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
@@ -168,7 +168,7 @@ isc_netaddr_prefixok(const isc_netaddr_t *na, unsigned int prefixlen);
  * Returns:
  *	ISC_R_SUCCESS
  *	ISC_R_RANGE		prefixlen out of range
- *	ISC_R_NOTIMPLENTED	unsupported family
+ *	ISC_R_NOTIMPLEMENTED	unsupported family
  *	ISC_R_FAILURE		extra bits.
  */
 

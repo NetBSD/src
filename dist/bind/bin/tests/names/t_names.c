@@ -1,10 +1,10 @@
-/*	$NetBSD: t_names.c,v 1.1.1.3.4.1 2007/05/17 00:35:46 jdc Exp $	*/
+/*	$NetBSD: t_names.c,v 1.1.1.3.4.1.2.1 2011/01/23 21:51:30 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_names.c,v 1.36.18.5 2006/12/07 23:57:58 marka Exp */
+/* Id: t_names.c,v 1.36.18.10 2009/01/22 23:46:00 tbox Exp */
 
 #include <config.h>
 
@@ -211,6 +211,7 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 		else if (('A' <= c) && (c <= 'Z'))
 			val = c - 'A'+ 10;
 		else {
+			(void)fclose(fp);
 			t_info("Bad format in datafile\n");
 			return (0);
 		}
@@ -224,6 +225,7 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 				/*
 				 * Buffer too small.
 				 */
+				(void)fclose(fp);
 				t_info("Buffer overflow error\n");
 				return (0);
 			}
@@ -366,7 +368,7 @@ t_dns_name_init(void) {
 	unsigned char	offsets[1];
 
 	rval = 0;
-	t_assert("dns_name_init", 1, T_REQUIRED, a3);
+	t_assert("dns_name_init", 1, T_REQUIRED, "%s", a3);
 
 	dns_name_init(&name, offsets);
 	/* magic is hidden in name.c ...
@@ -416,7 +418,7 @@ t_dns_name_invalidate(void) {
 	dns_name_t	name;
 	unsigned char	offsets[1];
 
-	t_assert("dns_name_invalidate", 1, T_REQUIRED, a4);
+	t_assert("dns_name_invalidate", 1, T_REQUIRED, "%s", a4);
 
 	rval = 0;
 	dns_name_init(&name, offsets);
@@ -470,7 +472,7 @@ t_dns_name_setbuffer(void) {
 	dns_name_t	name;
 	isc_buffer_t	buffer;
 
-	t_assert("dns_name_setbuffer", 1, T_REQUIRED, a5);
+	t_assert("dns_name_setbuffer", 1, T_REQUIRED, "%s", a5);
 
 	isc_buffer_init(&buffer, junk, BUFLEN);
 	dns_name_init(&name, NULL);
@@ -494,7 +496,7 @@ t_dns_name_hasbuffer(void) {
 	dns_name_t	name;
 	isc_buffer_t	buffer;
 
-	t_assert("dns_name_hasbuffer", 1, T_REQUIRED, a6);
+	t_assert("dns_name_hasbuffer", 1, T_REQUIRED, "%s", a6);
 
 	rval = 0;
 	isc_buffer_init(&buffer, junk, BUFLEN);
@@ -557,7 +559,7 @@ t_dns_name_isabsolute(void) {
 	char	*p;
 	FILE	*fp;
 
-	t_assert("dns_name_isabsolute", 1, T_REQUIRED, a7);
+	t_assert("dns_name_isabsolute", 1, T_REQUIRED, "%s", a7);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_isabsolute_data", "r");
@@ -670,7 +672,7 @@ t_dns_name_hash(void) {
 	char	*p;
 	FILE	*fp;
 
-	t_assert("dns_name_hash", 1, T_REQUIRED, a8);
+	t_assert("dns_name_hash", 1, T_REQUIRED, "%s", a8);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_hash_data", "r");
@@ -826,7 +828,7 @@ t_dns_name_fullcompare(void) {
 	FILE		*fp;
 	dns_namereln_t	reln;
 
-	t_assert("dns_name_fullcompare", 1, T_REQUIRED, a10);
+	t_assert("dns_name_fullcompare", 1, T_REQUIRED, "%s", a10);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_fullcompare_data", "r");
@@ -946,7 +948,7 @@ t_dns_name_compare(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_compare", 1, T_REQUIRED, a23);
+	t_assert("dns_name_compare", 1, T_REQUIRED, "%s", a23);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_compare_data", "r");
@@ -1048,7 +1050,7 @@ t_dns_name_rdatacompare(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_rdatacompare", 1, T_REQUIRED, a30);
+	t_assert("dns_name_rdatacompare", 1, T_REQUIRED, "%s", a30);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_rdatacompare_data", "r");
@@ -1146,7 +1148,7 @@ t_dns_name_issubdomain(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_issubdomain", 1, T_REQUIRED, a33);
+	t_assert("dns_name_issubdomain", 1, T_REQUIRED, "%s", a33);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_issubdomain_data", "r");
@@ -1229,7 +1231,7 @@ t_dns_name_countlabels(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_countlabels", 1, T_REQUIRED, a35);
+	t_assert("dns_name_countlabels", 1, T_REQUIRED, "%s", a35);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_countlabels_data", "r");
@@ -1341,7 +1343,7 @@ t_dns_name_getlabel(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_getlabel", 1, T_REQUIRED, a36);
+	t_assert("dns_name_getlabel", 1, T_REQUIRED, "%s", a36);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_getlabel_data", "r");
@@ -1471,7 +1473,7 @@ t_dns_name_getlabelsequence(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_getlabelsequence", 1, T_REQUIRED, a37);
+	t_assert("dns_name_getlabelsequence", 1, T_REQUIRED, "%s", a37);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_getlabelsequence_data", "r");
@@ -1561,7 +1563,7 @@ t_dns_name_fromregion(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_fromregion", 1, T_REQUIRED, a38);
+	t_assert("dns_name_fromregion", 1, T_REQUIRED, "%s", a38);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_fromregion_data", "r");
@@ -1611,7 +1613,7 @@ t_dns_name_toregion(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_toregion", 1, T_REQUIRED, a39);
+	t_assert("dns_name_toregion", 1, T_REQUIRED, "%s", a39);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_toregion_data", "r");
@@ -1748,7 +1750,7 @@ t_dns_name_fromtext(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_fromtext", 1, T_REQUIRED, a40);
+	t_assert("dns_name_fromtext", 1, T_REQUIRED, "%s", a40);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_fromtext_data", "r");
@@ -1884,7 +1886,7 @@ t_dns_name_totext(void) {
 	char		*p;
 	FILE		*fp;
 
-	t_assert("dns_name_totext", 1, T_REQUIRED, a41);
+	t_assert("dns_name_totext", 1, T_REQUIRED, "%s", a41);
 
 	result = T_UNRESOLVED;
 	fp = fopen("dns_name_totext_data", "r");
@@ -2118,7 +2120,7 @@ t_dns_name_fromwire_x(const char *testfile, size_t buflen) {
 
 static void
 t_dns_name_fromwire(void) {
-	t_assert("dns_name_fromwire", 1, T_REQUIRED, a42);
+	t_assert("dns_name_fromwire", 1, T_REQUIRED, "%s", a42);
 	t_dns_name_fromwire_x("dns_name_fromwire_1_data", BUFLEN);
 
 #if 0
@@ -2126,26 +2128,26 @@ t_dns_name_fromwire(void) {
 	 * XXXRTH these tests appear to be broken, so I have
 	 * disabled them.
 	 */
-	t_assert("dns_name_fromwire", 2, T_REQUIRED, a43);
+	t_assert("dns_name_fromwire", 2, T_REQUIRED, "%s", a43);
 	t_dns_name_fromwire_x("dns_name_fromwire_2_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 3, T_REQUIRED, a44);
+	t_assert("dns_name_fromwire", 3, T_REQUIRED, "%s", a44);
 	t_dns_name_fromwire_x("dns_name_fromwire_3_data", BUFLEN);
 #endif
 
-	t_assert("dns_name_fromwire", 4, T_REQUIRED, a45);
+	t_assert("dns_name_fromwire", 4, T_REQUIRED, "%s", a45);
 	t_dns_name_fromwire_x("dns_name_fromwire_4_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 5, T_REQUIRED, a46);
+	t_assert("dns_name_fromwire", 5, T_REQUIRED, "%s", a46);
 	t_dns_name_fromwire_x("dns_name_fromwire_5_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 6, T_REQUIRED, a47);
+	t_assert("dns_name_fromwire", 6, T_REQUIRED, "%s", a47);
 	t_dns_name_fromwire_x("dns_name_fromwire_6_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 7, T_REQUIRED, a48);
+	t_assert("dns_name_fromwire", 7, T_REQUIRED, "%s", a48);
 	t_dns_name_fromwire_x("dns_name_fromwire_7_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 9, T_REQUIRED, a49);
+	t_assert("dns_name_fromwire", 9, T_REQUIRED, "%s", a49);
 	t_dns_name_fromwire_x("dns_name_fromwire_8_data", 2);
 }
 
@@ -2284,13 +2286,13 @@ t_dns_name_towire_x(const char *testfile, size_t buflen) {
 
 static void
 t_dns_name_towire_1(void) {
-	t_assert("dns_name_towire", 1, T_REQUIRED, a51);
+	t_assert("dns_name_towire", 1, T_REQUIRED, "%s", a51);
 	t_dns_name_towire_x("dns_name_towire_1_data", BUFLEN);
 }
 
 static void
 t_dns_name_towire_2(void) {
-	t_assert("dns_name_towire", 2, T_REQUIRED, a52);
+	t_assert("dns_name_towire", 2, T_REQUIRED, "%s", a52);
 	t_dns_name_towire_x("dns_name_towire_2_data", 2);
 }
 
@@ -2311,7 +2313,7 @@ static const char *a53 =
 
 static void
 t_dns_name_concatenate(void) {
-	t_assert("dns_name_concatenate", 1, T_REQUIRED, a53);
+	t_assert("dns_name_concatenate", 1, T_REQUIRED, "%s", a53);
 	t_result(T_UNTESTED);
 }
 #endif

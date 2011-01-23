@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.4.4.2.2.2 2008/08/29 20:53:58 bouyer Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.4.4.2.2.3 2011/01/23 21:51:22 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.219.18.28.10.2 2008/07/23 07:28:54 tbox Exp */
+/* Id: client.c,v 1.219.18.33 2009/01/19 23:46:14 tbox Exp */
 
 #include <config.h>
 
@@ -1220,7 +1220,7 @@ allowed(isc_netaddr_t *addr, dns_name_t *signer, dns_acl_t *acl) {
  * delivered to 'myview'.
  *
  * We run this unlocked as both the view list and the interface list
- * are updated when the approprite task has exclusivity.
+ * are updated when the appropriate task has exclusivity.
  */
 isc_boolean_t
 ns_client_isself(dns_view_t *myview, dns_tsigkey_t *mykey,
@@ -1822,10 +1822,10 @@ get_clientmctx(ns_clientmgr_t *manager, isc_mem_t **mctxp) {
 			return (result);
 
 		manager->mctxpool[manager->nextmctx] = clientmctx;
+	}
 		manager->nextmctx++;
 		if (manager->nextmctx == NMCTXS)
 			manager->nextmctx = 0;
-	}
 #else
 	clientmctx = manager->mctx;
 #endif
@@ -2117,7 +2117,7 @@ client_newconn(isc_task_t *task, isc_event_t *event) {
 		 * Let a new client take our place immediately, before
 		 * we wait for a request packet.  If we don't,
 		 * telnetting to port 53 (once per CPU) will
-		 * deny service to legititmate TCP clients.
+		 * deny service to legitimate TCP clients.
 		 */
 		result = isc_quota_attach(&ns_g_server->tcpquota,
 					  &client->tcpquota);

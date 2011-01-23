@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.4.4.1.2.2 2008/08/29 20:53:58 bouyer Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.4.4.1.2.3 2011/01/23 21:51:22 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.47.18.32.10.3 2008/07/23 23:48:17 tbox Exp */
+/* Id: config.c,v 1.47.18.35 2008/09/04 08:03:07 marka Exp */
 
 /*! \file */
 

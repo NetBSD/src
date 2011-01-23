@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:53 snj Exp $	*/
+/*	$NetBSD: symtab.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:52:26 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")

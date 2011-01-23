@@ -1,10 +1,10 @@
-/*	$NetBSD: resolver.h,v 1.1.1.3.4.1 2007/05/17 00:41:03 jdc Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:16 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.h,v 1.40.18.11 2006/02/01 22:39:17 marka Exp */
+/* Id: resolver.h,v 1.40.18.15 2010/02/26 23:46:37 tbox Exp */
 
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
@@ -350,6 +350,23 @@ dns_resolver_destroyfetch(dns_fetch_t **fetchp);
  *\li	*fetchp == NULL.
  */
 
+void
+dns_resolver_logfetch(dns_fetch_t *fetch, isc_log_t *lctx,
+		      isc_logcategory_t *category, isc_logmodule_t *module,
+		      int level, isc_boolean_t duplicateok);
+/*%<
+ * Dump a log message on internal state at the completion of given 'fetch'.
+ * 'lctx', 'category', 'module', and 'level' are used to write the log message.
+ * By default, only one log message is written even if the corresponding fetch
+ * context serves multiple clients; if 'duplicateok' is true the suppression
+ * is disabled and the message can be written every time this function is
+ * called.
+ *
+ * Requires:
+ *
+ *\li	'fetch' is a valid fetch, and has completed.
+ */
+
 dns_dispatchmgr_t *
 dns_resolver_dispatchmgr(dns_resolver_t *resolver);
 
@@ -475,6 +492,48 @@ dns_resolver_getzeronosoattl(dns_resolver_t *resolver);
  
 void
 dns_resolver_setzeronosoattl(dns_resolver_t *resolver, isc_boolean_t state);
+
+void
+dns_resolver_addbadcache(dns_resolver_t *resolver, dns_name_t *name,
+			 dns_rdatatype_t type, isc_time_t *expire);
+/*%<
+ * Add a entry to the bad cache for <name,type> that will expire at 'expire'.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ * \li	name to be valid.
+ */
+
+isc_boolean_t
+dns_resolver_getbadcache(dns_resolver_t *resolver, dns_name_t *name,
+			 dns_rdatatype_t type, isc_time_t *now);
+/*%<
+ * Check to see if there is a unexpired entry in the bad cache for
+ * <name,type>.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ * \li	name to be valid.
+ */
+
+void
+dns_resolver_flushbadcache(dns_resolver_t *resolver, dns_name_t *name);
+/*%<
+ * Flush the bad cache of all entries at 'name' if 'name' is non NULL.
+ * Flush the entire bad cache if 'name' is NULL.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_printbadcache(dns_resolver_t *resolver, FILE *fp);
+/*%
+ * Print out the contents of the bad cache to 'fp'.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
 
 ISC_LANG_ENDDECLS
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:36 snj Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:52:12 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataslab.c,v 1.35.18.8 2007/08/28 07:20:05 tbox Exp */
+/* Id: rdataslab.c,v 1.35.18.12 2010/02/26 23:46:36 tbox Exp */
 
 /*! \file */
 
@@ -67,7 +67,7 @@
  *
  * DNSSEC order traversal is performed by walking the data records.
  *
- * The order is stored with record to allow for efficient reconstuction of
+ * The order is stored with record to allow for efficient reconstruction
  * of the offset table following a merge or subtraction.
  *
  * The iterator methods here currently only support DNSSEC order iteration.
@@ -403,6 +403,8 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	rdataset_current,
 	rdataset_clone,
 	rdataset_count,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,

@@ -1,10 +1,10 @@
-/*	$NetBSD: rbt.h,v 1.1.1.3.4.1 2007/05/17 00:41:00 jdc Exp $	*/
+/*	$NetBSD: rbt.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:15 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.h,v 1.59.18.5 2005/10/13 01:26:07 marka Exp */
+/* Id: rbt.h,v 1.59.18.7 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef DNS_RBT_H
 #define DNS_RBT_H 1
@@ -86,7 +86,7 @@ typedef struct dns_rbtnode {
 	/*!
 	 * The following bitfields add up to a total bitwidth of 32.
 	 * The range of values necessary for each item is indicated,
-	 * but in the case of "attributes" the field is wider to accomodate
+	 * but in the case of "attributes" the field is wider to accommodate
 	 * possible future expansion.  "offsetlen" could be one bit
 	 * narrower by always adjusting its value by 1 to find the real
 	 * offsetlen, but doing so does not gain anything (except perhaps
@@ -147,7 +147,7 @@ typedef isc_result_t (*dns_rbtfindcallback_t)(dns_rbtnode_t *node,
  * tree when a node is added).  The obvious implication of this is that for a
  * chain to remain valid, the tree has to be locked down against writes for the
  * duration of the useful life of the chain, because additions or removals can
- * change the path from the root to the node the chain has targetted.
+ * change the path from the root to the node the chain has targeted.
  *
  * The dns_rbtnodechain_ functions _first, _last, _prev and _next all take
  * dns_name_t parameters for the name and the origin, which can be NULL.  If
@@ -399,7 +399,7 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
  *\li	The 'level_count' of the chain indicates how deep the chain to the
  *	predecessor name is, as an index into the 'levels[]' array.  It does
  *	not count name elements, per se, but only levels of the tree of trees,
- *	the distinction arrising because multiple labels from a name can be
+ *      the distinction arising because multiple labels from a name can be
  *	stored on only one level.  It is also does not include the level
  *	that has the node, since that level is not stored in levels[].
  *
@@ -427,7 +427,7 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
  *\li	rbt is a valid rbt manager.
  *\li	dns_name_isabsolute(name) == TRUE.
  *\li	node != NULL && *node == NULL.
- *\li	#DNS_RBTFIND_NOEXACT and DNS_RBTFIND_NOPREDECESSOR are mutally
+ *\li   #DNS_RBTFIND_NOEXACT and DNS_RBTFIND_NOPREDECESSOR are mutually
  *		exclusive.
  *
  * Ensures:
@@ -536,7 +536,7 @@ dns_rbt_deletenode(dns_rbt_t *rbt, dns_rbtnode_t *node, isc_boolean_t recurse);
  *		'node' does not appear in the tree with data; however,
  *		the node might still exist if it serves as a pointer to
  *		a lower tree level as long as 'recurse' was false, hence
- *		the node could can be found with dns_rbt_findnode whem
+ *              the node could can be found with dns_rbt_findnode when
  *		that function's empty_data_ok parameter is true.
  *
  *\li	If result is ISC_R_NOMEMORY or ISC_R_NOSPACE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:36 snj Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:52:05 bouyer Exp $	*/
 
 #ifndef LINT
 static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/dst_api.c,v 1.10.332.7 2007/09/26 04:41:47 each Exp";
