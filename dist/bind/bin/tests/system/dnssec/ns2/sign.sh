@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.24.18.2 2006/01/04 00:37:23 marka Exp
+# Id: sign.sh,v 1.24.18.6 2010/11/16 23:45:23 tbox Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -113,3 +113,21 @@ dlvkeyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $dlvzone`
 cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
 
 $SIGNER -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
+
+#
+# algroll has just has the old DNSKEY records removed and is waiting
+# for them to be flushed from caches.  We still need to generate
+# RRSIGs for the old DNSKEY.
+#
+zone=algroll.
+infile=algroll.db.in
+zonefile=algroll.db
+
+keyold1=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 1024 -n zone -f KSK $zone`
+keyold2=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 1024 -n zone $zone`
+keynew1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keynew2=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+
+cat $infile $keynew1.key $keynew2.key >$zonefile
+
+$SIGNER -r $RANDFILE -o $zone -k $keyold1 -k $keynew1 $zonefile $keyold1 $keyold2 $keynew1 $keynew2 > /dev/null

@@ -1,3 +1,5 @@
+/*        $NetBSD: sqlitedb.c,v 1.1.1.1.2.3 2011/01/23 21:47:22 bouyer Exp $      */
+
 /*
  * Copyright (C) 2007  Internet Software Consortium.
  *

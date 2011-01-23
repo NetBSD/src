@@ -1,7 +1,7 @@
-/*	$NetBSD: adb.c,v 1.2.4.2 2008/07/16 01:56:47 snj Exp $	*/
+/*        $NetBSD: adb.c,v 1.2.4.3 2011/01/23 21:47:37 bouyer Exp $      */
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb.c,v 1.215.18.17 2007/09/11 02:23:26 marka Exp */
+/* Id: adb.c,v 1.215.18.26 2009/02/03 23:46:04 tbox Exp */
 
-/*! \file 
+/*! \file
  *
  * \note
  * In finds, if task == NULL, no events will be generated, and no events
@@ -73,7 +73,7 @@
 #define DNS_ADBFETCH6_MAGIC	  ISC_MAGIC('a', 'd', 'F', '6')
 #define DNS_ADBFETCH6_VALID(x)	  ISC_MAGIC_VALID(x, DNS_ADBFETCH6_MAGIC)
 
-/*! 
+/*!
  * The number of buckets needs to be a prime (for good hashing).
  *
  * XXXRTH  How many buckets do we need?
@@ -121,6 +121,7 @@ struct dns_adb {
 
 	isc_mutex_t			lock;
 	isc_mutex_t			reflock; /*%< Covers irefcnt, erefcnt */
+	isc_mutex_t                     overmemlock; /*%< Covers overmem */
 	isc_mem_t		       *mctx;
 	dns_view_t		       *view;
 	isc_timermgr_t		       *timermgr;
@@ -203,8 +204,6 @@ struct dns_adbname {
 /*% The adbfetch structure */
 struct dns_adbfetch {
 	unsigned int			magic;
-	dns_adbnamehook_t	       *namehook;
-	dns_adbentry_t		       *entry;
 	dns_fetch_t		       *fetch;
 	dns_rdataset_t			rdataset;
 };
@@ -496,6 +495,7 @@ import_rdataset(dns_adbname_t *adbname, dns_rdataset_t *rdataset,
 	isc_boolean_t new_addresses_added;
 	dns_rdatatype_t rdtype;
 	unsigned int findoptions;
+	dns_adbnamehooklist_t *hookhead;
 
 	INSIST(DNS_ADBNAME_VALID(adbname));
 	adb = adbname->adb;
@@ -520,10 +520,12 @@ import_rdataset(dns_adbname_t *adbname, dns_rdataset_t *rdataset,
 			INSIST(rdata.length == 4);
 			memcpy(&ina.s_addr, rdata.data, 4);
 			isc_sockaddr_fromin(&sockaddr, &ina, 0);
+			hookhead = &adbname->v4;
 		} else {
 			INSIST(rdata.length == 16);
 			memcpy(in6a.s6_addr, rdata.data, 16);
 			isc_sockaddr_fromin6(&sockaddr, &in6a, 0);
+			hookhead = &adbname->v6;
 		}
 
 		INSIST(nh == NULL);
@@ -552,7 +554,7 @@ import_rdataset(dns_adbname_t *adbname, dns_rdataset_t *rdataset,
 
 			link_entry(adb, addr_bucket, entry);
 		} else {
-			for (anh = ISC_LIST_HEAD(adbname->v4);
+			for (anh = ISC_LIST_HEAD(*hookhead);
 			     anh != NULL;
 			     anh = ISC_LIST_NEXT(anh, plink))
 				if (anh->entry == foundentry)
@@ -565,12 +567,8 @@ import_rdataset(dns_adbname_t *adbname, dns_rdataset_t *rdataset,
 		}
 
 		new_addresses_added = ISC_TRUE;
-		if (nh != NULL) {
-			if (rdtype == dns_rdatatype_a)
-				ISC_LIST_APPEND(adbname->v4, nh, plink);
-			else
-				ISC_LIST_APPEND(adbname->v6, nh, plink);
-		}
+		if (nh != NULL)
+			ISC_LIST_APPEND(*hookhead, nh, plink);
 		nh = NULL;
 		result = dns_rdataset_next(rdataset);
 	}
@@ -1465,31 +1463,13 @@ new_adbfetch(dns_adb_t *adb) {
 		return (NULL);
 
 	f->magic = 0;
-	f->namehook = NULL;
-	f->entry = NULL;
 	f->fetch = NULL;
-
-	f->namehook = new_adbnamehook(adb, NULL);
-	if (f->namehook == NULL)
-		goto err;
-
-	f->entry = new_adbentry(adb);
-	if (f->entry == NULL)
-		goto err;
 
 	dns_rdataset_init(&f->rdataset);
 
 	f->magic = DNS_ADBFETCH_MAGIC;
 
 	return (f);
-
- err:
-	if (f->namehook != NULL)
-		free_adbnamehook(adb, &f->namehook);
-	if (f->entry != NULL)
-		free_adbentry(adb, &f->entry);
-	isc_mempool_put(adb->afmp, f);
-	return (NULL);
 }
 
 static inline void
@@ -1501,11 +1481,6 @@ free_adbfetch(dns_adb_t *adb, dns_adbfetch_t **fetch) {
 	*fetch = NULL;
 
 	f->magic = 0;
-
-	if (f->namehook != NULL)
-		free_adbnamehook(adb, &f->namehook);
-	if (f->entry != NULL)
-		free_adbentry(adb, &f->entry);
 
 	if (dns_rdataset_isassociated(&f->rdataset))
 		dns_rdataset_disassociate(&f->rdataset);
@@ -1740,8 +1715,11 @@ copy_namehook_lists(dns_adb_t *adb, dns_adbfind_t *find, dns_name_t *qname,
 			bucket = entry->lock_bucket;
 			LOCK(&adb->entrylocks[bucket]);
 
-			if (entry_is_lame(adb, entry, qname, qtype, now))
+			if (!FIND_RETURNLAME(find)
+			    && entry_is_lame(adb, entry, qname, qtype, now)) {
+				find->options |= DNS_ADBFIND_LAMEPRUNED;
 				goto nextv6;
+			}
 			addrinfo = new_adbaddrinfo(adb, entry, find->port);
 			if (addrinfo == NULL) {
 				find->partial_result |= DNS_ADBFIND_INET6;
@@ -1775,12 +1753,15 @@ shutdown_task(isc_task_t *task, isc_event_t *ev) {
 	INSIST(DNS_ADB_VALID(adb));
 
 	/*
+	 * Wait for lock around check_exit() call to be released.
+	 */
+	LOCK(&adb->lock);
+	/*
 	 * Kill the timer, and then the ADB itself.  Note that this implies
 	 * that this task was the one scheduled to get timer events.  If
 	 * this is not true (and it is unfortunate there is no way to INSIST()
 	 * this) badness will occur.
 	 */
-	LOCK(&adb->lock);
 	isc_timer_detach(&adb->timer);
 	UNLOCK(&adb->lock);
 	isc_event_free(&ev);
@@ -1992,6 +1973,7 @@ destroy(dns_adb_t *adb) {
 	DESTROYLOCK(&adb->reflock);
 	DESTROYLOCK(&adb->lock);
 	DESTROYLOCK(&adb->mplock);
+	DESTROYLOCK(&adb->overmemlock);
 
 	isc_mem_putanddetach(&adb->mctx, adb, sizeof(dns_adb_t));
 }
@@ -2061,6 +2043,10 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *timermgr,
 	result = isc_mutex_init(&adb->reflock);
 	if (result != ISC_R_SUCCESS)
 		goto fail0d;
+
+	result = isc_mutex_init(&adb->overmemlock);
+	if (result != ISC_R_SUCCESS)
+		goto fail0e;
 
 	/*
 	 * Initialize the bucket locks for names and elements.
@@ -2164,6 +2150,8 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *timermgr,
 	if (adb->afmp != NULL)
 		isc_mempool_destroy(&adb->afmp);
 
+	DESTROYLOCK(&adb->overmemlock);
+ fail0e:
 	DESTROYLOCK(&adb->reflock);
  fail0d:
 	DESTROYLOCK(&adb->mplock);
@@ -2942,8 +2930,8 @@ print_namehook_list(FILE *f, const char *legend, dns_adbnamehooklist_t *list,
 
 static inline void
 print_fetch(FILE *f, dns_adbfetch_t *ft, const char *type) {
-	fprintf(f, "\t\tFetch(%s): %p -> { nh %p, entry %p, fetch %p }\n",
-		type, ft, ft->namehook, ft->entry, ft->fetch);
+	fprintf(f, "\t\tFetch(%s): %p -> { fetch %p }\n",
+		type, ft, ft->fetch);
 }
 
 static void
@@ -3104,7 +3092,7 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 	dns_fetchevent_t *dev;
 	dns_adbname_t *name;
 	dns_adb_t *adb;
-	dns_adbfetch_t *fetch = NULL;
+	dns_adbfetch_t *fetch;
 	int bucket;
 	isc_eventtype_t ev_status;
 	isc_stdtime_t now;
@@ -3135,7 +3123,9 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 		address_type = DNS_ADBFIND_INET6;
 		fetch = name->fetch_aaaa;
 		name->fetch_aaaa = NULL;
-	}
+	} else
+		fetch = NULL;
+
 	INSIST(address_type != 0 && fetch != NULL);
 
 	dns_resolver_destroyfetch(&fetch->fetch);
@@ -3584,12 +3574,21 @@ water(void *arg, int mark) {
 	DP(ISC_LOG_DEBUG(1),
 	   "adb reached %s water mark", overmem ? "high" : "low");
 
-	adb->overmem = overmem;
-	if (overmem) {
-		isc_interval_set(&interval, 0, 1);
-		(void)isc_timer_reset(adb->timer, isc_timertype_once, NULL,
-				      &interval, ISC_TRUE);
+	/*
+	 * We can't use adb->lock as there is potential for water
+	 * to be called when adb->lock is held.
+	 */
+	LOCK(&adb->overmemlock);
+	if (adb->overmem != overmem) {
+		adb->overmem = overmem;
+		if (overmem) {
+			isc_interval_set(&interval, 0, 1);
+			(void)isc_timer_reset(adb->timer, isc_timertype_once,
+					      NULL, &interval, ISC_TRUE);
+		}
+		isc_mem_waterack(adb->mctx, mark);
 	}
+	UNLOCK(&adb->overmemlock);
 }
 
 void

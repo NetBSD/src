@@ -1,10 +1,10 @@
-/*	$NetBSD: message.h,v 1.1.1.3.4.1 2007/05/17 00:40:58 jdc Exp $	*/
+/*	$NetBSD: message.h,v 1.1.1.3.4.2 2011/01/23 21:47:41 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.h,v 1.114.18.6 2006/03/02 23:19:20 marka Exp */
+/* Id: message.h,v 1.114.18.8 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef DNS_MESSAGE_H
 #define DNS_MESSAGE_H 1
@@ -159,7 +159,7 @@ typedef int dns_messagetextflag_t;
 						   occurs */
 #define DNS_MESSAGEPARSE_CLONEBUFFER	0x0004	/*%< save a copy of the
 						   source buffer */
-#define DNS_MESSAGEPARSE_IGNORETRUNCATION 0x0008 /*%< trucation errors are
+#define DNS_MESSAGEPARSE_IGNORETRUNCATION 0x0008 /*%< truncation errors are
 						  * not fatal. */
 
 /*
@@ -1197,7 +1197,7 @@ dns_message_takebuffer(dns_message_t *msg, isc_buffer_t **buffer);
  *\li	msg be a valid message.
  *
  *\li	buffer != NULL && *buffer is a valid isc_buffer_t, which was
- *	dynamincally allocated via isc_buffer_allocate().
+ *	dynamically allocated via isc_buffer_allocate().
  */
 
 isc_result_t

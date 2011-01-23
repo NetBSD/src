@@ -1,10 +1,10 @@
-/*	$NetBSD: rwlock.c,v 1.1.1.3.4.1 2007/05/17 00:41:50 jdc Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.1.1.3.4.2 2011/01/23 21:47:43 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rwlock.c,v 1.37.18.5 2005/07/12 01:22:30 marka Exp */
+/* Id: rwlock.c,v 1.37.18.7 2009/01/19 23:46:16 tbox Exp */
 
 /*! \file */
 
@@ -47,7 +47,7 @@
 
 #ifdef ISC_RWLOCK_TRACE
 #include <stdio.h>		/* Required for fprintf/stderr. */
-#include <isc/thread.h>		/* Requried for isc_thread_self(). */
+#include <isc/thread.h>		/* Required for isc_thread_self(). */
 
 static void
 print_lock(const char *operation, isc_rwlock_t *rwl, isc_rwlocktype_t type) {

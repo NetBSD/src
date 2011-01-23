@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2008  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ifconfig.sh,v 1.46.18.3.50.2 2008/07/25 23:48:16 tbox Exp
+# Id: ifconfig.sh,v 1.46.18.8 2009/06/26 23:45:57 tbox Exp
 
 #
 # Set up interface aliases for bind9 system tests.
@@ -32,7 +32,7 @@ done
 
 if test "X$config_guess" = "X"
 then
-	echo <<EOF >&2
+	cat <<EOF >&2
 $0: must be run from the top level source directory or the
 bin/tests/system directory
 EOF
@@ -83,6 +83,9 @@ case "$1" in
 			ifconfig lo0 10.53.0.$ns alias netmask 0xffffffff
 			;;
 		    *-unknown-netbsd*)
+			ifconfig lo0 10.53.0.$ns alias netmask 255.255.255.0
+			;;
+		    *-unknown-openbsd*)
 			ifconfig lo0 10.53.0.$ns alias netmask 255.255.255.0
 			;;
 		    *-*-bsdi[3-5].*)
@@ -143,6 +146,9 @@ case "$1" in
 			ifconfig lo0 10.53.0.$ns delete
 			;;
 		    *-unknown-netbsd*)
+			ifconfig lo0 10.53.0.$ns delete
+			;;
+		    *-unknown-openbsd*)
 			ifconfig lo0 10.53.0.$ns delete
 			;;
 		    *-*-bsdi[3-5].*)

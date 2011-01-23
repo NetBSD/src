@@ -1,7 +1,7 @@
-/*	$NetBSD: enumtype.h,v 1.3.4.1 2007/05/17 00:43:54 jdc Exp $	*/
+/*        $NetBSD: enumtype.h,v 1.3.4.2 2011/01/23 21:47:51 bouyer Exp $      */
 
 /*
- * Copyright (C) 2004-2007 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any

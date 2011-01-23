@@ -1,10 +1,10 @@
-/*	$NetBSD: cache.c,v 1.1.1.3.4.1 2007/05/17 00:40:31 jdc Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.3.4.2 2011/01/23 21:47:37 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cache.c,v 1.57.18.16 2006/08/01 01:06:48 marka Exp */
+/* Id: cache.c,v 1.57.18.20 2009/01/19 23:46:14 tbox Exp */
 
 /*! \file */
 
@@ -62,7 +62,7 @@
  ***/
 
 /*
- * A cache_cleaner_t encapsulsates the state of the periodic
+ * A cache_cleaner_t encapsulates the state of the periodic
  * cache cleaning.
  */
 
@@ -983,8 +983,11 @@ water(void *arg, int mark) {
 
 	LOCK(&cache->cleaner.lock);
 	
+	if (overmem != cache->cleaner.overmem) {
 	dns_db_overmem(cache->db, overmem);
 	cache->cleaner.overmem = overmem;
+		isc_mem_waterack(cache->mctx, mark);
+	}
 
 	if (cache->cleaner.overmem_event != NULL)
 		isc_task_send(cache->cleaner.task,
@@ -1001,7 +1004,7 @@ dns_cache_setcachesize(dns_cache_t *cache, isc_uint32_t size) {
 	REQUIRE(VALID_CACHE(cache));
 
 	/*
-	 * Impose a minumum cache size; pathological things happen if there
+	 * Impose a minimum cache size; pathological things happen if there
 	 * is too little room.
 	 */
 	if (size != 0 && size < DNS_CACHE_MINSIZE)

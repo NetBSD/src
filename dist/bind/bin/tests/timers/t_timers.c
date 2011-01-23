@@ -1,10 +1,10 @@
-/*	$NetBSD: t_timers.c,v 1.1.1.4.4.1 2007/05/17 00:37:16 jdc Exp $	*/
+/*	$NetBSD: t_timers.c,v 1.1.1.4.4.2 2011/01/23 21:47:19 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_timers.c,v 1.23.18.1 2004/06/21 06:45:18 marka Exp */
+/* Id: t_timers.c,v 1.23.18.5 2009/01/22 23:46:00 tbox Exp */
 
 #include <config.h>
 
@@ -258,7 +258,7 @@ t_timers_x(isc_timertype_t timertype, isc_time_t *expires,
 		return;
 	}
 
-	isc_mutex_lock(&Tx_mx);
+	isc_result = isc_mutex_lock(&Tx_mx);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_mutex_lock failed %s\n",
 		       isc_result_totext(isc_result));
@@ -369,7 +369,7 @@ t1(void) {
 	isc_time_t	expires;
 	isc_interval_t	interval;
 
-	t_assert("isc_timer_create", 1, T_REQUIRED, a1);
+	t_assert("isc_timer_create", 1, T_REQUIRED, "%s", a1);
 
 	if (threaded) {
 		Tx_nfails	= 0;
@@ -410,7 +410,7 @@ t2(void) {
 	isc_time_t	expires;
 	isc_interval_t	interval;
 
-	t_assert("isc_timer_create", 2, T_REQUIRED, a2);
+	t_assert("isc_timer_create", 2, T_REQUIRED, "%s", a2);
 
 	if (threaded) {
 		Tx_nfails	= 0;
@@ -536,7 +536,7 @@ t3(void) {
 	isc_time_t	expires;
 	isc_interval_t	interval;
 
-	t_assert("isc_timer_create", 3, T_REQUIRED, a3);
+	t_assert("isc_timer_create", 3, T_REQUIRED, "%s", a3);
 
 	if (threaded) {
 		Tx_nfails	= 0;
@@ -699,7 +699,7 @@ t4(void) {
 	isc_time_t	expires;
 	isc_interval_t	interval;
 
-	t_assert("isc_timer_reset", 4, T_REQUIRED, a4);
+	t_assert("isc_timer_reset", 4, T_REQUIRED, "%s", a4);
 
 	if (threaded) {
 		Tx_nfails = 0;
@@ -1112,7 +1112,7 @@ static const char *a5 =
 
 static void
 t5(void) {
-	t_assert("isc_timer_reset", 5, T_REQUIRED, a5);
+	t_assert("isc_timer_reset", 5, T_REQUIRED, "%s", a5);
 
 	if (threaded)
 		t_result(t_timers5());

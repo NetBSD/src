@@ -28,7 +28,7 @@ BIND 9
 
 
 	BIND version 9 development has been underwritten by the following
-	organizations:
+	organisations:
 
 		Sun Microsystems, Inc.
 		Hewlett Packard
@@ -42,6 +42,19 @@ BIND 9
 		Stichting NLnet - NLnet Foundation
 		Nominum, Inc.
 
+BIND 9.4-ESV (Extended Support Version)
+
+	BIND 9.4-ESV is the Extended Support Version of BIND 9.4
+	and incorporates the final maintenance release fixing bugs
+	in BIND 9.4.3.
+
+	BIND 9.4-ESV will be supported until December 31, 2010, at
+	which time you will need to upgrade to the current release
+	of BIND.
+
+BIND 9.4.3
+
+	BIND 9.4.3 is a maintenance release, fixing bugs in 9.4.2.
 
 BIND 9.4.2
 
@@ -64,7 +77,7 @@ BIND 9.4.0
 	Implemented "additional section caching" (or "acache"), an
 	internal cache framework for additional section content to
 	improve response performance.  Several configuration options
-	were provided to control the behavior.
+	were provided to control the behaviour.
 
 	New notify type 'master-only'.  Enable notify for master
 	zones only.
@@ -73,13 +86,14 @@ BIND 9.4.0
 
 	rndc now allows addresses to be set in the server clauses.
 
-	New option "allow-query-cache".  This lets allow-query be
-	used to specify the default zone access level rather than
-	having to have every zone override the global value.
-	allow-query-cache can be set at both the options and view
-	levels. If allow-query-cache is not set then allow-recursion
-	is used if set, otherwise allow-query is used if set, otherwise
-	the default (localhost; localnets;) is used.
+	New option "allow-query-cache".  This lets "allow-query"
+	be used to specify the default zone access level rather
+	than having to have every zone override the global value.
+	"allow-query-cache" can be set at both the options and view
+	levels.  If "allow-query-cache" is not set then "allow-recursion"
+	is used if set, otherwise "allow-query" is used if set
+	unless "recursion no;" is set in which case "none;" is used,
+	otherwise the default (localhost; localnets;) is used.
 
 	rndc: the source address can now be specified.
 
@@ -147,12 +161,12 @@ BIND 9.4.0
 	options for dnssec-signzone specify the input and output
 	formats.
 
-	dnssec-signzone can now randomize signature end times
+	dnssec-signzone can now randomise signature end times
 	(dnssec-signzone -j jitter).
 
 	Add support for CH A record.
 
-	Add additional zone data consistancy checks.  named-checkzone
+	Add additional zone data consistency checks.  named-checkzone
 	has extended checking of NS, MX and SRV record and the hosts
 	they reference.  named has extended post zone load checks.
 	New zone options: check-mx and integrity-check.
@@ -355,7 +369,7 @@ BIND 9.2.0
 	    This does not apply to the use of TSIG, which does not
 	    require OpenSSL.
 
-	  - The source distribution now builds on Windows NT/2000.
+	  - The source distribution now builds on Windows.
 	    See win32utils/readme1.txt and win32utils/win32-build.txt
 	    for details.
 
@@ -404,11 +418,8 @@ BIND 9.2.0
 
 		--with-libtool does not work on AIX.
 
-		--with-libtool does not work on SunOS 4.  configure
-		requires "printf" which is not available.
-
-	A bug in the Windows 2000 DNS server can cause zone transfers
-	from a BIND 9 server to a W2K server to fail.  For details,
+	A bug in some versions of the Microsoft DNS server can cause zone
+        transfers from a BIND 9 server to a W2K server to fail.  For details,
 	see the "Zone Transfers" section in doc/misc/migration.
 
 	For a detailed list of user-visible changes from
@@ -428,7 +439,11 @@ Building
 		NetBSD 1.5
 		Slackware Linux 8.1
 		Solaris 8, 9, 9 (x86)
-		Windows NT/2000/XP/2003
+		Windows XP/2003/2008
+
+        NOTE:  As of BIND 9.5.1, 9.4.3, and 9.3.6, older versions of
+        Windows, including Windows NT and Windows 2000, are no longer
+        supported.
 
 	Additionally, we have unverified reports of success building
 	previous versions of BIND 9 from users of the following systems:
@@ -482,6 +497,14 @@ Building
 		  -DNS_CLIENT_DROPPORT=0
 		Disable support for "rrset-order fixed".
 		  -DDNS_RDATASET_FIXED=0
+		Sibling glue checking in named-checkzone is enabled by default.
+		To disable the default check set.  -DCHECK_SIBLING=0
+		named-checkzone checks out-of-zone addresses by default.
+		To disable this default set.  -DCHECK_LOCAL=0
+		Enable workaround for Solaris kernel bug about /dev/poll
+		  -DISC_SOCKET_USE_POLLWATCH=1
+		  The watch timeout is also configurable, e.g.,
+		  -DISC_SOCKET_POLLWATCH_TIMEOUT=20
 
 	    LDFLAGS
 		Linker flags. Defaults to empty string.
@@ -509,6 +532,10 @@ Building
 
 	To build libbind (the BIND 8 resolver library), specify
 	"--enable-libbind" on the configure command line.
+
+	On some platforms it is necessary to explictly request large
+	file support to handle files bigger than 2GB.  This can be
+	done by "--enable-largefile" on the configure command line.
 
 	On some platforms, BIND 9 can be built with multithreading
 	support, allowing it to take advantage of multiple CPUs.
@@ -559,6 +586,9 @@ Building
 	on your system, and some require Perl; see bin/tests/system/README
 	for details.
 
+	SunOS 4 requires "printf" to be installed to make the shared
+	libraries.  sh-utils-1.16 provides a "printf" which compiles
+	on SunOS 4.
 
 Documentation
 

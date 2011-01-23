@@ -1,10 +1,10 @@
-/*	$NetBSD: rdata.c,v 1.1.1.3.4.1 2007/05/17 00:40:43 jdc Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.3.4.2 2011/01/23 21:47:39 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.c,v 1.184.18.9 2006/07/21 02:05:57 marka Exp */
+/* Id: rdata.c,v 1.184.18.11 2008/12/12 23:46:04 tbox Exp */
 
 /*! \file */
 
@@ -730,7 +730,7 @@ dns_rdata_totext(dns_rdata_t *rdata, dns_name_t *origin, isc_buffer_t *target)
 isc_result_t
 dns_rdata_tofmttext(dns_rdata_t *rdata, dns_name_t *origin,
 		    unsigned int flags, unsigned int width,
-		    char *linebreak, isc_buffer_t *target)
+		    const char *linebreak, isc_buffer_t *target)
 {
 	dns_rdata_textctx_t tctx;
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: nsec.c,v 1.1.1.1.10.1 2007/05/17 00:40:39 jdc Exp $	*/
+/*	$NetBSD: nsec.c,v 1.1.1.1.10.2 2011/01/23 21:47:38 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.c,v 1.5.20.2 2005/04/29 00:15:59 marka Exp */
+/* Id: nsec.c,v 1.5.20.4 2009/01/06 23:45:57 tbox Exp */
 
 /*! \file */
 
@@ -217,6 +217,6 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type) {
 						   type % 256));
 		break;
 	}
-	dns_rdata_freestruct(&nsec);
+	dns_rdata_freestruct(&nsecstruct);
 	return (present);
 }

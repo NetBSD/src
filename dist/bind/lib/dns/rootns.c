@@ -1,7 +1,7 @@
-/*	$NetBSD: rootns.c,v 1.1.1.3.4.2 2008/07/16 01:56:48 snj Exp $	*/
+/*	$NetBSD: rootns.c,v 1.1.1.3.4.3 2011/01/23 21:47:39 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rootns.c,v 1.26.18.5 2007/10/31 03:02:45 tbox Exp */
+/* Id: rootns.c,v 1.26.18.7 2008/02/05 23:46:09 tbox Exp */
 
 /*! \file */
 
@@ -47,8 +47,6 @@ static char root_ns[] =
 ";\n"
 "; Internet Root Nameservers\n"
 ";\n"
-"; Thu Sep 23 17:57:37 PDT 1999\n"
-";\n"
 "$TTL 518400\n"
 ".                       518400  IN      NS      A.ROOT-SERVERS.NET.\n"
 ".                       518400  IN      NS      B.ROOT-SERVERS.NET.\n"
@@ -64,18 +62,24 @@ static char root_ns[] =
 ".                       518400  IN      NS      L.ROOT-SERVERS.NET.\n"
 ".                       518400  IN      NS      M.ROOT-SERVERS.NET.\n"
 "A.ROOT-SERVERS.NET.     3600000 IN      A       198.41.0.4\n"
+"A.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:BA3E::2:30\n"
 "B.ROOT-SERVERS.NET.     3600000 IN      A       192.228.79.201\n"
 "C.ROOT-SERVERS.NET.     3600000 IN      A       192.33.4.12\n"
 "D.ROOT-SERVERS.NET.     3600000 IN      A       128.8.10.90\n"
 "E.ROOT-SERVERS.NET.     3600000 IN      A       192.203.230.10\n"
 "F.ROOT-SERVERS.NET.     3600000 IN      A       192.5.5.241\n"
+"F.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2F::F\n"
 "G.ROOT-SERVERS.NET.     3600000 IN      A       192.112.36.4\n"
 "H.ROOT-SERVERS.NET.     3600000 IN      A       128.63.2.53\n"
+"H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::803F:235\n"
 "I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
 "J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
+"J.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:C27::2:30\n"
 "K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
+"K.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7FD::1\n"
 "L.ROOT-SERVERS.NET.     3600000 IN      A       199.7.83.42\n"
-"M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n";
+"M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n"
+"M.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:DC3::35\n";
 
 static isc_result_t
 in_rootns(dns_rdataset_t *rootns, dns_name_t *name) {

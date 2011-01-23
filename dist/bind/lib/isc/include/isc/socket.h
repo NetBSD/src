@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.h,v 1.1.1.3.4.2 2008/08/29 20:58:21 bouyer Exp $	*/
+/*	$NetBSD: socket.h,v 1.1.1.3.4.3 2011/01/23 21:47:44 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.h,v 1.57.18.6.46.4 2008/07/23 23:16:43 marka Exp */
+/* Id: socket.h,v 1.57.18.17 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -317,6 +317,51 @@ isc_socket_detach(isc_socket_t **socketp);
  *		for all tasks.
  *
  *		All resources used by the socket have been freed
+ */
+
+isc_result_t
+isc_socket_open(isc_socket_t *sock);
+/*%<
+ * Open a new socket file descriptor of the given socket structure.  It simply
+ * opens a new descriptor; all of the other parameters including the socket
+ * type are inherited from the existing socket.  This function is provided to
+ * avoid overhead of destroying and creating sockets when many short-lived
+ * sockets are frequently opened and closed.  When the efficiency is not an
+ * issue, it should be safer to detach the unused socket and re-create a new
+ * one.  This optimization may not be available for some systems, in which
+ * case this function will return ISC_R_NOTIMPLEMENTED and must not be used.
+ *
+ * Requires:
+ *
+ * \li	there must be no other reference to this socket.
+ *
+ * \li	'socket' is a valid and previously closed by isc_socket_close()
+ *
+ * Returns:
+ *	Same as isc_socket_create().
+ * \li	ISC_R_NOTIMPLEMENTED
+ */
+
+isc_result_t
+isc_socket_close(isc_socket_t *sock);
+/*%<
+ * Close a socket file descriptor of the given socket structure.  This function
+ * is provided as an alternative to destroying an unused socket when overhead
+ * destroying/re-creating sockets can be significant, and is expected to be
+ * used with isc_socket_open().  This optimization may not be available for some
+ * systems, in which case this function will return ISC_R_NOTIMPLEMENTED and
+ * must not be used.
+ *
+ * Requires:
+ *
+ * \li	The socket must have a valid descriptor.
+ *
+ * \li	There must be no other reference to this socket.
+ *
+ * \li	There must be no pending I/O requests.
+ *
+ * Returns:
+ * \li	#ISC_R_NOTIMPLEMENTED
  */
 
 isc_result_t
@@ -646,8 +691,15 @@ isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
 
 isc_result_t
 isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp);
+
+isc_result_t
+isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
+		      unsigned int maxsocks);
 /*%<
- * Create a socket manager.
+ * Create a socket manager.  If "maxsocks" is non-zero, it specifies the
+ * maximum number of sockets that the created manager should handle.
+ * isc_socketmgr_create() is equivalent of isc_socketmgr_create2() with
+ * "maxsocks" being zero.
  *
  * Notes:
  *
@@ -668,6 +720,23 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp);
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMEMORY
  *\li	#ISC_R_UNEXPECTED
+ *\li	#ISC_R_NOTIMPLEMENTED
+ */
+
+isc_result_t
+isc_socketmgr_getmaxsockets(isc_socketmgr_t *manager, unsigned int *nsockp);
+/*%<
+ * Returns in "*nsockp" the maximum number of sockets this manager may open.
+ *
+ * Requires:
+ *
+ *\li	'*manager' is a valid isc_socketmgr_t.
+ *\li	'nsockp' is not NULL.
+ *
+ * Returns:
+ *
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOTIMPLEMENTED
  */
 
 void
@@ -745,7 +814,7 @@ isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
  * Set ownership and file permissions on the UNIX domain socket.
  *
  * Note: On Solaris and SunOS this secures the directory containing
- *       the socket as Solaris and SunOS do not honour the filesytem
+ *       the socket as Solaris and SunOS do not honour the filesystem
  *	 permissions on the socket.
  *
  * Requires:

@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.2.2.3 2008/07/16 01:56:48 snj Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.2.2.4 2011/01/23 21:47:39 bouyer Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.c,v 1.2.2.11 2007/08/28 07:20:05 tbox Exp */
+/* Id: sdlz.c,v 1.2.2.16 2010/02/26 23:46:37 tbox Exp */
 
 /*! \file */
 
@@ -843,9 +843,12 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 				{
 					result = DNS_R_ZONECUT;
 					dns_rdataset_disassociate(rdataset);
-					if (sigrdataset != NULL)
+					if (sigrdataset != NULL &&
+					    dns_rdataset_isassociated
+							(sigrdataset)) {
 						dns_rdataset_disassociate
 							(sigrdataset);
+					}
 				} else
 					result = DNS_R_DELEGATION;
 				break;
@@ -1105,9 +1108,11 @@ dbiterator_seek(dns_dbiterator_t *iterator, dns_name_t *name) {
 	sdlz_dbiterator_t *sdlziter = (sdlz_dbiterator_t *)iterator;
 
 	sdlziter->current = ISC_LIST_HEAD(sdlziter->nodelist);
-	while (sdlziter->current != NULL)
+	while (sdlziter->current != NULL) {
 		if (dns_name_equal(sdlziter->current->name, name))
 			return (ISC_R_SUCCESS);
+		sdlziter->current = ISC_LIST_NEXT(sdlziter->current, link);
+	}
 	return (ISC_R_NOTFOUND);
 }
 
@@ -1193,6 +1198,8 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	isc__rdatalist_count,
 	isc__rdatalist_addnoqname,
 	isc__rdatalist_getnoqname,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL

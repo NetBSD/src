@@ -1,10 +1,10 @@
-/*	$NetBSD: net.h,v 1.1.1.3.4.1 2007/05/17 00:43:02 jdc Exp $	*/
+/*	$NetBSD: net.h,v 1.1.1.3.4.2 2011/01/23 21:47:46 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.h,v 1.21.18.5 2005/04/27 05:02:38 sra Exp */
+/* Id: net.h,v 1.21.18.8 2008/12/01 04:02:15 marka Exp */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1
@@ -308,6 +308,23 @@ isc_net_enableipv4(void);
 void
 isc_net_enableipv6(void);
 
+isc_result_t
+isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high);
+/*%<
+ * Returns system's default range of ephemeral UDP ports, if defined.
+ * If the range is not available or unknown, ISC_NET_PORTRANGELOW and
+ * ISC_NET_PORTRANGEHIGH will be returned.
+ *
+ * Requires:
+ *
+ *\li	'low' and 'high' must be non NULL.
+ *
+ * Returns:
+ *
+ *\li	*low and *high will be the ports specifying the low and high ends of
+ *	the range.
+ */
+
 #ifdef ISC_PLATFORM_NEEDNTOP
 const char *
 isc_net_ntop(int af, const void *src, char *dst, size_t size);
@@ -320,11 +337,9 @@ isc_net_pton(int af, const char *src, void *dst);
 #define inet_pton isc_net_pton
 #endif
 
-#ifdef ISC_PLATFORM_NEEDATON
 int
 isc_net_aton(const char *cp, struct in_addr *addr);
 #define inet_aton isc_net_aton
-#endif
 
 ISC_LANG_ENDDECLS
 

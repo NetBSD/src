@@ -156,11 +156,14 @@ dns_difftuple_copy
 dns_difftuple_create
 dns_difftuple_free
 dns_dispatch_addresponse
+dns_dispatch_addresponse2
 dns_dispatch_attach
 dns_dispatch_cancel
 dns_dispatch_changeattributes
 dns_dispatch_createtcp
 dns_dispatch_detach
+dns_dispatch_getattributes
+dns_dispatch_getentrysocket
 dns_dispatch_getlocaladdress
 dns_dispatch_getsocket
 dns_dispatch_getudp
@@ -170,6 +173,7 @@ dns_dispatch_starttcp
 dns_dispatchmgr_create
 dns_dispatchmgr_destroy
 dns_dispatchmgr_getblackhole
+dns_dispatchmgr_setavailports
 dns_dispatchmgr_setblackhole
 dns_dispatchmgr_setblackportlist
 dns_dlzallowzonexfr
@@ -359,6 +363,7 @@ dns_peer_getsupportedns
 dns_peer_gettransferformat
 dns_peer_gettransfers
 dns_peer_new
+dns_peer_newprefix
 dns_peer_setbogus
 dns_peer_setkey
 dns_peer_setkeybycharp
@@ -435,6 +440,7 @@ dns_rdataset_clone
 dns_rdataset_count
 dns_rdataset_current
 dns_rdataset_disassociate
+dns_rdataset_expire
 dns_rdataset_first
 dns_rdataset_getadditional
 dns_rdataset_getnoqname
@@ -445,6 +451,7 @@ dns_rdataset_makequestion
 dns_rdataset_next
 dns_rdataset_putadditional
 dns_rdataset_setadditional
+dns_rdataset_settrust
 dns_rdataset_totext
 dns_rdataset_towire
 dns_rdataset_towiresorted
@@ -483,6 +490,7 @@ dns_requestmgr_detach
 dns_requestmgr_shutdown
 dns_requestmgr_whenshutdown
 dns_resolver_addalternate
+dns_resolver_addbadcache
 dns_resolver_algorithm_supported
 dns_resolver_attach
 dns_resolver_cancelfetch
@@ -495,12 +503,16 @@ dns_resolver_disable_algorithm
 dns_resolver_dispatchmgr
 dns_resolver_dispatchv4
 dns_resolver_dispatchv6
+dns_resolver_flushbadcache
 dns_resolver_freeze
+dns_resolver_getbadcache
 dns_resolver_getlamettl
 dns_resolver_getudpsize
 dns_resolver_getzeronosoattl
+dns_resolver_logfetch
 dns_resolver_nrunning
 dns_resolver_prime
+dns_resolver_printbadcache
 dns_resolver_reset_algorithms
 dns_resolver_resetmustbesecure
 dns_resolver_setclientsperquery
@@ -669,6 +681,7 @@ dns_zone_iattach
 dns_zone_idetach
 dns_zone_isforced
 dns_zone_load
+dns_zone_loadandthaw
 dns_zone_log
 dns_zone_maintenance
 dns_zone_markdirty

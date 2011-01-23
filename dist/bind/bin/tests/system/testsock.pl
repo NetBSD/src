@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: testsock.pl,v 1.14 2004/03/05 04:59:13 marka Exp
+# Id: testsock.pl,v 1.14.18.2 2010/08/17 23:45:18 tbox Exp
 
 # Test whether the interfaces on 10.53.0.* are up.
 
@@ -33,7 +33,7 @@ my @ids;
 if ($id != 0) {
 	@ids = ($id);
 } else {
-	@ids = (1..5);
+	@ids = (1..6);
 }
 
 foreach $id (@ids) {

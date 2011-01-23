@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.2.10.2 2007/05/17 21:25:14 jdc Exp $	*/
+/*	$NetBSD: assertions.c,v 1.2.10.3 2011/01/23 21:47:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: assertions.c,v 1.2.18.1 2005/04/27 05:01:05 sra Exp";
 #else
-__RCSID("$NetBSD: assertions.c,v 1.2.10.2 2007/05/17 21:25:14 jdc Exp $");
+__RCSID("$NetBSD: assertions.c,v 1.2.10.3 2011/01/23 21:47:50 bouyer Exp $");
 #endif
 #endif
 
@@ -85,6 +85,7 @@ assertion_type_to_text(assertion_type type) {
  * Private.
  */
 
+/* coverity[+kill] */
 static void
 default_assertion_failed(const char *file, int line, assertion_type type,
 			 const char *cond, int print_errno)

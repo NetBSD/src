@@ -1,7 +1,7 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.4.4.2 2008/07/16 01:57:02 snj Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.4.4.3 2011/01/23 21:47:44 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_ioctl.c,v 1.44.18.13 2007/08/31 23:46:25 tbox Exp */
+/* Id: ifiter_ioctl.c,v 1.44.18.17 2009/01/19 23:46:16 tbox Exp */
 
 /*! \file
  * \brief
@@ -128,7 +128,7 @@ getbuf4(isc_interfaceiter_t *iter) {
 		iter->ifc.ifc_len = iter->bufsize;
 		iter->ifc.ifc_buf = iter->buf;
 		/*
-		 * Ignore the HP/UX warning about "interger overflow during
+		 * Ignore the HP/UX warning about "integer overflow during
 		 * conversion".  It comes from its own macro definition,
 		 * and is really hard to shut up.
 		 */
@@ -208,7 +208,7 @@ getbuf6(isc_interfaceiter_t *iter) {
 		iter->lifc.lifc_len = iter->bufsize6;
 		iter->lifc.lifc_buf = iter->buf6;
 		/*
-		 * Ignore the HP/UX warning about "interger overflow during
+		 * Ignore the HP/UX warning about "integer overflow during
 		 * conversion".  It comes from its own macro definition,
 		 * and is really hard to shut up.
 		 */
@@ -481,8 +481,8 @@ linux_if_inet6_current(isc_interfaceiter_t *iter) {
 	for (i = 0; i < 16; i++) {
 		unsigned char byte;
 		static const char hex[] = "0123456789abcdef";
-		byte = ((index(hex, address[i * 2]) - hex) << 4) |
-		       (index(hex, address[i * 2 + 1]) - hex);
+		byte = ((strchr(hex, address[i * 2]) - hex) << 4) |
+		       (strchr(hex, address[i * 2 + 1]) - hex);
 		addr6.s6_addr[i] = byte;
 	}
 	iter->current.af = AF_INET6;
@@ -590,7 +590,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 	iter->current.flags = 0;
 
 	/*
-	 * Ignore the HP/UX warning about "interger overflow during
+	 * Ignore the HP/UX warning about "integer overflow during
 	 * conversion.  It comes from its own macro definition,
 	 * and is really hard to shut up.
 	 */
@@ -668,7 +668,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 	 */
 	if ((iter->current.flags & INTERFACE_F_POINTTOPOINT) != 0) {
 		/*
-		 * Ignore the HP/UX warning about "interger overflow during
+		 * Ignore the HP/UX warning about "integer overflow during
 		 * conversion.  It comes from its own macro definition,
 		 * and is really hard to shut up.
 		 */
@@ -695,7 +695,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 	memset(&ifreq, 0, sizeof(ifreq));
 	memcpy(&ifreq, ifrp, sizeof(ifreq));
 	/*
-	 * Ignore the HP/UX warning about "interger overflow during
+	 * Ignore the HP/UX warning about "integer overflow during
 	 * conversion.  It comes from its own macro definition,
 	 * and is really hard to shut up.
 	 */
@@ -778,7 +778,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 		fd = iter->socket;
 
 	/*
-	 * Ignore the HP/UX warning about "interger overflow during
+	 * Ignore the HP/UX warning about "integer overflow during
 	 * conversion.  It comes from its own macro definition,
 	 * and is really hard to shut up.
 	 */
@@ -807,7 +807,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 	 */
 	if ((iter->current.flags & INTERFACE_F_POINTTOPOINT) != 0) {
 		/*
-		 * Ignore the HP/UX warning about "interger overflow during
+		 * Ignore the HP/UX warning about "integer overflow during
 		 * conversion.  It comes from its own macro definition,
 		 * and is really hard to shut up.
 		 */
@@ -857,7 +857,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 #endif
 
 	/*
-	 * Ignore the HP/UX warning about "interger overflow during
+	 * Ignore the HP/UX warning about "integer overflow during
 	 * conversion.  It comes from its own macro definition,
 	 * and is really hard to shut up.
 	 */

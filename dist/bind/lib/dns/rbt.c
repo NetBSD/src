@@ -1,10 +1,10 @@
-/*	$NetBSD: rbt.c,v 1.4.4.1 2007/05/17 00:40:41 jdc Exp $	*/
+/*	$NetBSD: rbt.c,v 1.4.4.2 2011/01/23 21:47:38 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.c,v 1.128.18.7 2005/10/13 01:26:06 marka Exp */
+/* Id: rbt.c,v 1.128.18.12 2009/01/19 23:46:15 tbox Exp */
 
 /*! \file */
 
@@ -121,7 +121,7 @@ struct dns_rbt {
  * Chain management.
  *
  * The "ancestors" member of chains were removed, with their job now
- * being wholy handled by parent pointers (which didn't exist, because
+ * being wholly handled by parent pointers (which didn't exist, because
  * of memory concerns, when chains were first implemented).
  */
 #define ADD_LEVEL(chain, node) \
@@ -1936,7 +1936,7 @@ dns_rbt_deletefromlevel(dns_rbtnode_t *delete, dns_rbtnode_t **rootp) {
 			} else {
 				/*
 				 * Child is parent's right child.
-				 * Everything is doen the same as above,
+				 * Everything is done the same as above,
 				 * except mirrored.
 				 */
 				sibling = LEFT(parent);
@@ -2053,10 +2053,6 @@ dns_rbt_deletetreeflat(dns_rbt_t *rbt, unsigned int quantum,
 		node = LEFT(node);
 		goto traverse;
 	}
-	if (RIGHT(node) != NULL) {
-		node = RIGHT(node);
-		goto traverse;
-	}
 	if (DOWN(node) != NULL) {
 		node = DOWN(node);
 		goto traverse;
@@ -2073,14 +2069,15 @@ dns_rbt_deletetreeflat(dns_rbt_t *rbt, unsigned int quantum,
 	node->magic = 0;
 #endif
 	parent = PARENT(node);
+	if (RIGHT(node) != NULL)
+		PARENT(RIGHT(node)) = parent;
 	if (parent != NULL) {
 		if (LEFT(parent) == node)
-			LEFT(parent) = NULL;
+			LEFT(parent) = RIGHT(node);
 		else if (DOWN(parent) == node)
-			DOWN(parent) = NULL;
-		else if (RIGHT(parent) == node)
-			RIGHT(parent) = NULL;
-	}
+			DOWN(parent) = RIGHT(node);
+	} else
+		parent = RIGHT(node);
 	isc_mem_put(rbt->mctx, node, NODE_SIZE(node));
 	rbt->nodecount--;
 	node = parent;
@@ -2193,6 +2190,7 @@ dns_rbtnodechain_init(dns_rbtnodechain_t *chain, isc_mem_t *mctx) {
 	chain->end = NULL;
 	chain->level_count = 0;
 	chain->level_matches = 0;
+	memset(chain->levels, 0, sizeof(chain->levels));
 
 	chain->magic = CHAIN_MAGIC;
 }
@@ -2402,7 +2400,7 @@ dns_rbtnodechain_next(dns_rbtnodechain_t *chain, dns_name_t *name,
 		 * reached without having traversed any left links, ascend one
 		 * level and look for either a right link off the point of
 		 * ascent, or search for a left link upward again, repeating
-		 * ascents until either case is true.
+		 * ascends until either case is true.
 		 */
 		do {
 			while (! IS_ROOT(current)) {

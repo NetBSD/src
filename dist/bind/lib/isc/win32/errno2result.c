@@ -1,10 +1,10 @@
-/*	$NetBSD: errno2result.c,v 1.1.1.3.4.1 2007/05/17 00:42:55 jdc Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.1.1.3.4.2 2011/01/23 21:47:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: errno2result.c,v 1.9.18.3 2005/09/01 03:04:30 marka Exp */
+/* Id: errno2result.c,v 1.9.18.8 2008/09/11 23:46:08 tbox Exp */
 
 #include <config.h>
 
@@ -63,22 +63,41 @@ isc__errno2resultx(int posixerrno, const char *file, int line) {
 	case EMFILE:
 	case WSAEMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
-	case ERROR_OPERATION_ABORTED:
-		return (ISC_R_CONNECTIONRESET);
-	case ERROR_PORT_UNREACHABLE:
-		return (ISC_R_HOSTUNREACH);
+	case ERROR_CANCELLED:
+		return (ISC_R_CANCELED);
+	case ERROR_CONNECTION_REFUSED:
+	case WSAECONNREFUSED:
+		return (ISC_R_CONNREFUSED);
+	case WSAENOTCONN:
+	case ERROR_CONNECTION_INVALID:
+		return (ISC_R_NOTCONNECTED);
 	case ERROR_HOST_UNREACHABLE:
-		return (ISC_R_HOSTUNREACH);
-	case ERROR_NETWORK_UNREACHABLE:
-		return (ISC_R_NETUNREACH);
-	case WSAEADDRNOTAVAIL:
-		return (ISC_R_ADDRNOTAVAIL);
 	case WSAEHOSTUNREACH:
 		return (ISC_R_HOSTUNREACH);
-	case WSAEHOSTDOWN:
-		return (ISC_R_HOSTUNREACH);
+	case ERROR_NETWORK_UNREACHABLE:
 	case WSAENETUNREACH:
 		return (ISC_R_NETUNREACH);
+	case ERROR_NO_NETWORK:
+		return (ISC_R_NETUNREACH);
+	case ERROR_PORT_UNREACHABLE:
+		return (ISC_R_HOSTUNREACH);
+	case ERROR_SEM_TIMEOUT:
+		return (ISC_R_TIMEDOUT);
+	case WSAECONNRESET:
+	case WSAENETRESET:
+	case WSAECONNABORTED:
+	case WSAEDISCON:
+	case ERROR_OPERATION_ABORTED:
+	case ERROR_CONNECTION_ABORTED:
+	case ERROR_REQUEST_ABORTED:
+		return (ISC_R_CONNECTIONRESET);
+	case WSAEADDRNOTAVAIL:
+		return (ISC_R_ADDRNOTAVAIL);
+	case ERROR_NETNAME_DELETED:
+	case WSAENETDOWN:
+		return (ISC_R_NETUNREACH);
+	case WSAEHOSTDOWN:
+		return (ISC_R_HOSTUNREACH);
 	case WSAENOBUFS:
 		return (ISC_R_NORESOURCES);
 	default:

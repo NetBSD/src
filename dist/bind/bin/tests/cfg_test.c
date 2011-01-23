@@ -1,10 +1,10 @@
-/*	$NetBSD: cfg_test.c,v 1.1.1.3.4.1 2007/05/17 00:35:33 jdc Exp $	*/
+/*	$NetBSD: cfg_test.c,v 1.1.1.3.4.2 2011/01/23 21:47:12 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cfg_test.c,v 1.15.18.2 2005/04/29 00:15:43 marka Exp */
+/* Id: cfg_test.c,v 1.15.18.4 2009/03/02 23:45:58 tbox Exp */
 
 /*! \file */
 
@@ -149,5 +149,10 @@ main(int argc, char **argv) {
 		isc_mem_stats(mctx, stderr);
 	isc_mem_destroy(&mctx);
 
+	fflush(stdout);
+	if (ferror(stdout)) {
+		fprintf(stderr, "write error\n");
+		return (1);
+	} else
 	return (0);
 }

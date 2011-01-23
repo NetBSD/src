@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.2.4.2 2008/07/16 01:56:33 snj Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.2.4.3 2011/01/23 21:47:09 bouyer Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
@@ -18,7 +18,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-signzone.c,v 1.177.18.24 2007/08/28 07:20:00 tbox Exp */
+/* Id: dnssec-signzone.c,v 1.177.18.29 2009/07/21 06:44:32 tbox Exp */
 
 /*! \file */
 
@@ -130,7 +130,6 @@ static dns_name_t *gorigin;		/* The database origin */
 static isc_task_t *master = NULL;
 static unsigned int ntasks = 0;
 static isc_boolean_t shuttingdown = ISC_FALSE, finished = ISC_FALSE;
-static unsigned int assigned = 0, completed = 0;
 static isc_boolean_t nokeys = ISC_FALSE;
 static isc_boolean_t removefile = ISC_FALSE;
 static isc_boolean_t generateds = ISC_FALSE;
@@ -197,16 +196,30 @@ newkeystruct(dst_key_t *dstkey, isc_boolean_t signwithkey) {
 	return (key);
 }
 
+/*%
+ * Sign the given RRset with given key, and add the signature record to the
+ * given tuple.
+ */
+
 static void
-signwithkey(dns_name_t *name, dns_rdataset_t *rdataset, dns_rdata_t *rdata,
-	    dst_key_t *key, isc_buffer_t *b)
+signwithkey(dns_name_t *name, dns_rdataset_t *rdataset, dst_key_t *key,
+	    dns_ttl_t ttl, dns_diff_t *add, const char *logmsg)
 {
 	isc_result_t result;
 	isc_stdtime_t jendtime;
+	char keystr[KEY_FORMATSIZE];
+	dns_rdata_t trdata = DNS_RDATA_INIT;
+	unsigned char array[BUFSIZE];
+	isc_buffer_t b;
+	dns_difftuple_t *tuple;
+
+	key_format(key, keystr, sizeof(keystr));
+	vbprintf(1, "\t%s %s\n", logmsg, keystr);
 
 	jendtime = (jitter != 0) ? isc_random_jitter(endtime, jitter) : endtime;
+	isc_buffer_init(&b, array, sizeof(array));
 	result = dns_dnssec_sign(name, rdataset, key, &starttime, &jendtime,
-				 mctx, b, rdata);
+				 mctx, &b, &trdata);
 	isc_entropy_stopcallbacksources(ectx);
 	if (result != ISC_R_SUCCESS) {
 		char keystr[KEY_FORMATSIZE];
@@ -218,7 +231,7 @@ signwithkey(dns_name_t *name, dns_rdataset_t *rdataset, dns_rdata_t *rdata,
 
 	if (tryverify) {
 		result = dns_dnssec_verify(name, rdataset, key,
-					   ISC_TRUE, mctx, rdata);
+					   ISC_TRUE, mctx, &trdata);
 		if (result == ISC_R_SUCCESS) {
 			vbprintf(3, "\tsignature verified\n");
 			INCSTAT(nverified);
@@ -227,6 +240,12 @@ signwithkey(dns_name_t *name, dns_rdataset_t *rdataset, dns_rdata_t *rdata,
 			INCSTAT(nverifyfailed);
 		}
 	}
+
+	tuple = NULL;
+	result = dns_difftuple_create(mctx, DNS_DIFFOP_ADD, name, ttl, &trdata,
+				      &tuple);
+	check_result(result, "dns_difftuple_create");
+	dns_diff_append(add, &tuple);
 }
 
 static inline isc_boolean_t
@@ -485,24 +504,11 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 		}
 
 		if (resign) {
-			isc_buffer_t b;
-			dns_rdata_t trdata = DNS_RDATA_INIT;
-			unsigned char array[BUFSIZE];
-			char keystr[KEY_FORMATSIZE];
-
 			INSIST(!keep);
 
-			key_format(key->key, keystr, sizeof(keystr));
-			vbprintf(1, "\tresigning with dnskey %s\n", keystr);
-			isc_buffer_init(&b, array, sizeof(array));
-			signwithkey(name, set, &trdata, key->key, &b);
+			signwithkey(name, set, key->key, ttl, add,
+				    "resigning with dnskey");
 			nowsignedby[key->position] = ISC_TRUE;
-			tuple = NULL;
-			result = dns_difftuple_create(mctx, DNS_DIFFOP_ADD,
-						      name, ttl, &trdata,
-						      &tuple);
-			check_result(result, "dns_difftuple_create");
-			dns_diff_append(add, &tuple);
 		}
 
 		dns_rdata_reset(&sigrdata);
@@ -520,11 +526,6 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 	     key != NULL;
 	     key = ISC_LIST_NEXT(key, link))
 	{
-		isc_buffer_t b;
-		dns_rdata_t trdata;
-		unsigned char array[BUFSIZE];
-		char keystr[KEY_FORMATSIZE];
-
 		if (nowsignedby[key->position])
 			continue;
 
@@ -536,16 +537,8 @@ signset(dns_diff_t *del, dns_diff_t *add, dns_dbnode_t *node, dns_name_t *name,
 		       dns_name_equal(name, gorigin))))
 			continue;
 
-		key_format(key->key, keystr, sizeof(keystr));
-		vbprintf(1, "\tsigning with dnskey %s\n", keystr);
-		dns_rdata_init(&trdata);
-		isc_buffer_init(&b, array, sizeof(array));
-		signwithkey(name, set, &trdata, key->key, &b);
-		tuple = NULL;
-		result = dns_difftuple_create(mctx, DNS_DIFFOP_ADD, name,
-					      ttl, &trdata, &tuple);
-		check_result(result, "dns_difftuple_create");
-		dns_diff_append(add, &tuple);
+		signwithkey(name, set, key->key, ttl, add,
+			    "signing with dnskey");
 	}
 
 	isc_mem_put(mctx, wassignedby, arraysize * sizeof(isc_boolean_t));
@@ -1226,16 +1219,19 @@ assignwork(isc_task_t *task, isc_task_t *worker) {
 	dns_rdataset_t nsec;
 	isc_boolean_t found;
 	isc_result_t result;
+	static unsigned int ended = 0;		/* Protected by namelock. */
 
 	if (shuttingdown)
 		return;
 
+	LOCK(&namelock);
 	if (finished) {
-		if (assigned == completed) {
+		ended++;
+		if (ended == ntasks) {
 			isc_task_detach(&task);
 			isc_app_shutdown();
 		}
-		return;
+		goto unlock;
 	}
 
 	fname = isc_mem_get(mctx, sizeof(dns_fixedname_t));
@@ -1245,7 +1241,6 @@ assignwork(isc_task_t *task, isc_task_t *worker) {
 	name = dns_fixedname_name(fname);
 	node = NULL;
 	found = ISC_FALSE;
-	LOCK(&namelock);
 	while (!found) {
 		result = dns_dbiterator_current(gdbiter, &node, name);
 		if (result != ISC_R_SUCCESS)
@@ -1272,14 +1267,14 @@ assignwork(isc_task_t *task, isc_task_t *worker) {
 			fatal("failure iterating database: %s",
 			      isc_result_totext(result));
 	}
-	UNLOCK(&namelock);
 	if (!found) {
-		if (assigned == completed) {
+		ended++;
+		if (ended == ntasks) {
 			isc_task_detach(&task);
 			isc_app_shutdown();
 		}
 		isc_mem_put(mctx, fname, sizeof(dns_fixedname_t));
-		return;
+		goto unlock;
 	}
 	sevent = (sevent_t *)
 		 isc_event_allocate(mctx, task, SIGNER_EVENT_WORK,
@@ -1290,7 +1285,8 @@ assignwork(isc_task_t *task, isc_task_t *worker) {
 	sevent->node = node;
 	sevent->fname = fname;
 	isc_task_send(worker, ISC_EVENT_PTR(&sevent));
-	assigned++;
+ unlock:
+	UNLOCK(&namelock);
 }
 
 /*%
@@ -1313,7 +1309,6 @@ writenode(isc_task_t *task, isc_event_t *event) {
 	isc_task_t *worker;
 	sevent_t *sevent = (sevent_t *)event;
 
-	completed++;
 	worker = (isc_task_t *)event->ev_sender;
 	dumpnode(dns_fixedname_name(sevent->fname), sevent->node);
 	cleannode(gdb, gversion, sevent->node);
@@ -2107,6 +2102,9 @@ main(int argc, char *argv[]) {
 				fatal("cannot load dnskey %s: %s", argv[i], 
 				      isc_result_totext(result)); 
 
+			if (!dns_name_equal(gorigin, dst_key_name(newkey)))
+				fatal("key %s not at origin\n", argv[i]);
+
 			key = ISC_LIST_HEAD(keylist);
 			while (key != NULL) {
 				dst_key_t *dkey = key->key;
@@ -2143,6 +2141,9 @@ main(int argc, char *argv[]) {
 		if (result != ISC_R_SUCCESS)
 			fatal("cannot load dnskey %s: %s", dskeyfile[i],
 			      isc_result_totext(result)); 
+
+		if (!dns_name_equal(gorigin, dst_key_name(newkey)))
+			fatal("key %s not at origin\n", dskeyfile[i]);
 
 		key = ISC_LIST_HEAD(keylist);
 		while (key != NULL) {

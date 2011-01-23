@@ -1,10 +1,10 @@
-/*	$NetBSD: t_api.c,v 1.1.1.4.4.1 2007/05/17 00:43:42 jdc Exp $	*/
+/*	$NetBSD: t_api.c,v 1.1.1.4.4.2 2011/01/23 21:47:48 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.c,v 1.52.18.6 2005/11/30 03:44:39 marka Exp */
+/* Id: t_api.c,v 1.52.18.11 2009/03/02 23:45:58 tbox Exp */
 
 /*! \file */
 
@@ -132,7 +132,7 @@ main(int argc, char **argv) {
 	/*
 	 * -a option is now default.
 	 */
-	memset(T_tvec, 0xffff, sizeof(T_tvec));
+	memset(T_tvec, 0xff, sizeof(T_tvec));
 
 	/*
 	 * Parse args.
@@ -143,7 +143,7 @@ main(int argc, char **argv) {
 			/*
 			 * Flag all tests to be run.
 			 */
-			memset(T_tvec, 0xffff, sizeof(T_tvec));
+			memset(T_tvec, 0xff, sizeof(T_tvec));
 		}
 		else if (c == 'b') {
 			T_dir = isc_commandline_argument;
@@ -226,8 +226,10 @@ main(int argc, char **argv) {
 	 * Set cwd.
 	 */
 
-	if (T_dir != NULL)
-		(void) chdir(T_dir);
+	if (T_dir != NULL && chdir(T_dir) != 0) {
+		fprintf(stderr, "chdir %s failed\n", T_dir);
+		exit(1);
+	}
 
 	/*
 	 * We don't want buffered output.

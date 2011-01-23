@@ -1,10 +1,10 @@
-/*	$NetBSD: stat.h,v 1.1.1.3.4.1 2007/05/17 00:43:05 jdc Exp $	*/
+/*	$NetBSD: stat.h,v 1.1.1.3.4.2 2011/01/23 21:47:46 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stat.h,v 1.5 2004/03/05 05:12:05 marka Exp */
+/* Id: stat.h,v 1.5.18.2 2009/10/01 23:46:07 tbox Exp */
 
 #ifndef ISC_STAT_H
 #define ISC_STAT_H 1
@@ -37,6 +37,19 @@
 #define S_IWGRP _S_IWRITE	/* Group write permission */
 #define S_IROTH _S_IREAD	/* Other read permission */
 #define S_IWOTH _S_IWRITE	/* Other write permission */
+
+#ifndef S_IFMT
+# define S_IFMT   _S_IFMT
+#endif
+#ifndef S_IFDIR
+# define S_IFDIR  _S_IFDIR
+#endif
+#ifndef S_IFCHR
+# define S_IFCHR  _S_IFCHR
+#endif
+#ifndef S_IFREG
+# define S_IFREG  _S_IFREG
+#endif
 
 #ifndef S_ISDIR
 # define S_ISDIR(m)	(((m) & S_IFMT) == S_IFDIR)

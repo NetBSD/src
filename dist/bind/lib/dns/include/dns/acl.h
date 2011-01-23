@@ -1,10 +1,10 @@
-/*	$NetBSD: acl.h,v 1.1.1.3.4.1 2007/05/17 00:40:51 jdc Exp $	*/
+/*	$NetBSD: acl.h,v 1.1.1.3.4.2 2011/01/23 21:47:41 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acl.h,v 1.22.18.4 2006/03/02 00:37:21 marka Exp */
+/* Id: acl.h,v 1.22.18.6 2009/01/19 23:46:15 tbox Exp */
 
 #ifndef DNS_ACL_H
 #define DNS_ACL_H 1
@@ -196,7 +196,8 @@ dns_aclelement_match(const isc_netaddr_t *reqaddr,
 /*%<
  * Like dns_acl_match, but matches against the single ACL element 'e'
  * rather than a complete list and returns ISC_TRUE iff it matched.
- * To determine whether the match was prositive or negative, the 
+ *
+ * To determine whether the match was positive or negative, the
  * caller should examine e->negative.  Since the element 'e' may be
  * a reference to a named ACL or a nested ACL, the matching element
  * returned through 'matchelt' is not necessarily 'e' itself.

@@ -1,7 +1,7 @@
-/*	$NetBSD: view.c,v 1.1.1.3.4.2 2008/07/16 01:56:48 snj Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.3.4.3 2011/01/23 21:47:40 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.c,v 1.126.18.14 2007/08/28 07:20:05 tbox Exp */
+/* Id: view.c,v 1.126.18.18 2010/02/26 23:46:37 tbox Exp */
 
 /*! \file */
 
@@ -848,17 +848,6 @@ dns_view_find(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 	}
 
  cleanup:
-	if (result == DNS_R_NXDOMAIN || result == DNS_R_NXRRSET) {
-		/*
-		 * We don't care about any DNSSEC proof data in these cases.
-		 */
-		if (dns_rdataset_isassociated(rdataset))
-			dns_rdataset_disassociate(rdataset);
-		if (sigrdataset != NULL &&
-		    dns_rdataset_isassociated(sigrdataset))
-			dns_rdataset_disassociate(sigrdataset);
-	}
-
 	if (dns_rdataset_isassociated(&zrdataset)) {
 		dns_rdataset_disassociate(&zrdataset);
 		if (dns_rdataset_isassociated(&zsigrdataset))
@@ -1211,6 +1200,7 @@ dns_view_dumpdbtostream(dns_view_t *view, FILE *fp) {
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	dns_adb_dump(view->adb, fp);
+	dns_resolver_printbadcache(view->resolver, fp);
 	return (ISC_R_SUCCESS);
 }
 
@@ -1231,6 +1221,8 @@ dns_view_flushcache(dns_view_t *view) {
 	dns_cache_attachdb(view->cache, &view->cachedb);
 	if (view->acache != NULL)
 		dns_acache_setdb(view->acache, view->cachedb);
+	if (view->resolver != NULL)
+		dns_resolver_flushbadcache(view->resolver, NULL);
 
 	dns_adb_flush(view->adb);
 	return (ISC_R_SUCCESS);
@@ -1245,6 +1237,8 @@ dns_view_flushname(dns_view_t *view, dns_name_t *name) {
 		dns_adb_flushname(view->adb, name);
 	if (view->cache == NULL)
 		return (ISC_R_SUCCESS);
+	if (view->resolver != NULL)
+		dns_resolver_flushbadcache(view->resolver, name);
 	return (dns_cache_flushname(view->cache, name));
 }
 

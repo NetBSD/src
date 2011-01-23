@@ -1,9 +1,9 @@
-/*	$NetBSD: acache.c,v 1.1.1.1.2.2 2007/05/17 00:40:30 jdc Exp $	*/
+/*	$NetBSD: acache.c,v 1.1.1.1.2.3 2011/01/23 21:47:37 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acache.c,v 1.3.2.16 2006/07/19 00:34:56 marka Exp */
+/* Id: acache.c,v 1.3.2.18 2008/02/07 23:45:56 tbox Exp */
 
 #include <config.h>
 
@@ -967,10 +967,14 @@ water(void *arg, int mark) {
 
 	LOCK(&acache->cleaner.lock);
 
+	if (acache->cleaner.overmem != overmem) {
 	acache->cleaner.overmem = overmem;
 
 	if (acache->cleaner.overmem_event != NULL)
-		isc_task_send(acache->task, &acache->cleaner.overmem_event);
+			isc_task_send(acache->task,
+				      &acache->cleaner.overmem_event);
+		isc_mem_waterack(acache->mctx, mark);
+	}
 
 	UNLOCK(&acache->cleaner.lock);
 }

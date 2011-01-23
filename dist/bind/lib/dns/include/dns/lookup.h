@@ -1,10 +1,10 @@
-/*	$NetBSD: lookup.h,v 1.1.1.3.4.1 2007/05/17 00:40:58 jdc Exp $	*/
+/*	$NetBSD: lookup.h,v 1.1.1.3.4.2 2011/01/23 21:47:41 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lookup.h,v 1.6.18.2 2005/04/29 00:16:15 marka Exp */
+/* Id: lookup.h,v 1.6.18.4 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef DNS_LOOKUP_H
 #define DNS_LOOKUP_H 1
@@ -30,7 +30,7 @@
  * \brief
  * The lookup module performs simple DNS lookups.  It implements
  * the full resolver algorithm, both looking for local data and 
- * resoving external names as necessary.
+ * resolving external names as necessary.
  *
  * MP:
  *\li	The module ensures appropriate synchronization of data structures it
