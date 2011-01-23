@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.2 2010/08/01 06:57:06 kiyohara Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.3 2011/01/23 18:13:42 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.2 2010/08/01 06:57:06 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.3 2011/01/23 18:13:42 jakllsch Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -109,7 +109,7 @@ mvpex_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t mvpex_chipset;
 	bus_space_tag_t mvpex_io_bs_tag, mvpex_mem_bs_tag;
 	uint64_t iostart = 0, ioend = 0, memstart = 0, memend = 0;
-	uint32_t cl_size;
+	uint32_t cl_size = 0;
 	int i;
 #endif
 
