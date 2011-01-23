@@ -1,10 +1,10 @@
-/*	$NetBSD: task.h,v 1.1.1.3.4.1 2007/05/17 00:42:38 jdc Exp $	*/
+/*	$NetBSD: task.h,v 1.1.1.3.4.2 2011/01/23 21:47:44 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: task.h,v 1.51.18.2 2005/04/29 00:17:03 marka Exp */
+/* Id: task.h,v 1.51.18.4 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -69,7 +69,7 @@
  * Consumers of events should purge, not unsend.
  *
  * Producers of events often want to remove events when the caller indicates
- * it is no longer interested in the object, e.g. by cancelling a timer.
+ * it is no longer interested in the object, e.g. by canceling a timer.
  * Sometimes this can be done by purging, but for some event types, the
  * calls to isc_event_free() cause deadlock because the event free routine
  * wants to acquire a lock the caller is already holding.  Unsending instead
@@ -594,7 +594,7 @@ isc_taskmgr_destroy(isc_taskmgr_t **managerp);
  *	because it would block forever waiting for the event action to
  *	complete.  An event action that wants to cause task manager shutdown
  *	should request some non-event action thread of execution to do the
- *	shutdown, e.g. by signalling a condition variable or using
+ *	shutdown, e.g. by signaling a condition variable or using
  *	isc_app_shutdown().
  *
  *\li	Task manager references are not reference counted, so the caller

@@ -1,10 +1,10 @@
-/*	$NetBSD: dst_test.c,v 1.1.1.4.4.1 2007/05/17 00:35:44 jdc Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.1.1.4.4.2 2011/01/23 21:47:13 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_test.c,v 1.38.18.3 2005/11/30 23:52:53 marka Exp */
+/* Id: dst_test.c,v 1.38.18.5 2009/03/02 23:45:58 tbox Exp */
 
 #include <config.h>
 
@@ -247,7 +247,10 @@ main(void) {
 	current = isc_mem_get(mctx, 256);
 	if (current == NULL)
 		return (1);
-	getcwd(current, 256);
+	if (getcwd(current, 256) == NULL) {
+		perror("getcwd");
+		return (1);
+	}
 
 	dns_result_register();
 

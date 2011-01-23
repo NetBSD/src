@@ -1,10 +1,10 @@
-/*	$NetBSD: unistd.h,v 1.1.1.3.4.1 2007/05/17 00:43:00 jdc Exp $	*/
+/*	$NetBSD: unistd.h,v 1.1.1.3.4.2 2011/01/23 21:47:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: unistd.h,v 1.4 2004/03/05 05:12:00 marka Exp */
+/* Id: unistd.h,v 1.4.18.2 2008/01/23 03:21:46 tbox Exp */
 
 /* None of these are defined in NT, so define them for our use */
 #define O_NONBLOCK 1
@@ -36,5 +36,20 @@
 #undef F_DUPFD 
 
 int fcntl(int, int, ...);
+
+/*
+ * access() related definitions for winXP
+ */
+#include <io.h>
+
+#ifndef W_OK
+#define W_OK 2
+#endif
+
+#ifndef R_OK
+#define R_OK 4
+#endif
+
+#define access _access
 
 #include <process.h>

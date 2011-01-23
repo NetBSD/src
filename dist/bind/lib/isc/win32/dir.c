@@ -1,10 +1,10 @@
-/*	$NetBSD: dir.c,v 1.1.1.3.4.1 2007/05/17 00:42:54 jdc Exp $	*/
+/*	$NetBSD: dir.c,v 1.1.1.3.4.2 2011/01/23 21:47:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dir.c,v 1.12 2004/03/05 05:11:56 marka Exp */
+/* Id: dir.c,v 1.12.18.2 2009/01/19 23:46:17 tbox Exp */
 
 /* Principal Authors: DCL */
 
@@ -125,7 +125,7 @@ isc_dir_read(isc_dir_t *dir) {
 				 &dir->entry.find_data) == FALSE)
 			/*
 			 * Either the last file has been processed or
-			 * an error has occured.  The former is not
+			 * an error has occurred.  The former is not
 			 * really an error, but the latter is.
 			 */
 			if (GetLastError() == ERROR_NO_MORE_FILES)

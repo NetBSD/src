@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkzone.c,v 1.1.1.3.4.2 2008/07/16 01:56:32 snj Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.1.1.3.4.3 2011/01/23 21:47:07 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkzone.c,v 1.29.18.19 2007/08/28 07:19:55 tbox Exp */
+/* Id: named-checkzone.c,v 1.29.18.24 2009/05/29 02:19:20 marka Exp */
 
 /*! \file */
 
@@ -79,8 +79,9 @@ usage(void) {
 		"[-f inputformat] [-F outputformat] "
 		"[-t directory] [-w directory] [-k (ignore|warn|fail)] "
 		"[-n (ignore|warn|fail)] [-m (ignore|warn|fail)] "
-		"[-i (full|local|none)] [-M (ignore|warn|fail)] "
-		"[-S (ignore|warn|fail)] [-W (ignore|warn)] "
+		"[-i (full|full-sibling|local|local-sibling|none)] "
+		"[-M (ignore|warn|fail)] [-S (ignore|warn|fail)] "
+		"[-W (ignore|warn)] "
 		"zonename filename\n", prog_name);
 	exit(1);
 }
@@ -123,9 +124,13 @@ main(int argc, char **argv) {
 	 */
 	if (strncmp(prog_name, "lt-", 3) == 0)
 		prog_name += 3;
-	if (strcmp(prog_name, "named-checkzone") == 0)
+
+#define PROGCMP(X) \
+	(strcasecmp(prog_name, X) == 0 || strcasecmp(prog_name, X ".exe") == 0)
+
+	if (PROGCMP("named-checkzone"))
 		progmode = progmode_check;
-	else if (strcmp(prog_name, "named-compilezone") == 0)
+	else if (PROGCMP("named-compilezone"))
 		progmode = progmode_compile;
 	else
 		INSIST(0);
@@ -263,12 +268,6 @@ main(int argc, char **argv) {
 			if (result != ISC_R_SUCCESS) {
 				fprintf(stderr, "isc_dir_chroot: %s: %s\n",
 					isc_commandline_argument,
-					isc_result_totext(result));
-				exit(1);
-			}
-			result = isc_dir_chdir("/");
-			if (result != ISC_R_SUCCESS) {
-				fprintf(stderr, "isc_dir_chdir: %s\n",
 					isc_result_totext(result));
 				exit(1);
 			}

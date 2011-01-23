@@ -1,10 +1,10 @@
-/*	$NetBSD: time.h,v 1.1.1.3.4.1 2007/05/17 00:43:06 jdc Exp $	*/
+/*	$NetBSD: time.h,v 1.1.1.3.4.2 2011/01/23 21:47:46 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.h,v 1.27 2004/03/16 05:52:23 marka Exp */
+/* Id: time.h,v 1.27.18.2 2009/01/05 23:46:21 tbox Exp */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -221,7 +221,7 @@ isc_time_nanoseconds(const isc_time_t *t);
  * Return the number of nanoseconds stored in a time structure.
  *
  * Notes:
- *	This is the number of nanoseconds in excess of the the number
+ *	This is the number of nanoseconds in excess of the number
  *	of seconds since the epoch; it will always be less than one
  *	full second.
  *

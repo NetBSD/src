@@ -1,10 +1,10 @@
-/*	$NetBSD: db.c,v 1.1.1.3.4.1 2007/05/17 00:40:32 jdc Exp $	*/
+/*	$NetBSD: db.c,v 1.1.1.3.4.2 2011/01/23 21:47:37 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.c,v 1.74.18.6 2005/10/13 02:12:24 marka Exp */
+/* Id: db.c,v 1.74.18.8 2009/04/29 23:46:04 tbox Exp */
 
 /*! \file */
 
@@ -802,12 +802,14 @@ dns_db_unregister(dns_dbimplementation_t **dbimp) {
 	RUNTIME_CHECK(isc_once_do(&once, initialize) == ISC_R_SUCCESS);
 
 	imp = *dbimp;
+	*dbimp = NULL;
 	RWLOCK(&implock, isc_rwlocktype_write);
 	ISC_LIST_UNLINK(implementations, imp, link);
 	mctx = imp->mctx;
 	isc_mem_put(mctx, imp, sizeof(dns_dbimplementation_t));
 	isc_mem_detach(&mctx);
 	RWUNLOCK(&implock, isc_rwlocktype_write);
+	ENSURE(*dbimp == NULL);
 }
 
 isc_result_t

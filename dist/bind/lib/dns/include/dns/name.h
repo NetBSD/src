@@ -1,10 +1,10 @@
-/*	$NetBSD: name.h,v 1.1.1.4.4.1 2007/05/17 00:40:59 jdc Exp $	*/
+/*	$NetBSD: name.h,v 1.1.1.4.4.2 2011/01/23 21:47:41 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.h,v 1.107.18.15 2006/03/02 00:37:21 marka Exp */
+/* Id: name.h,v 1.107.18.17 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -244,7 +244,7 @@ dns_name_setbuffer(dns_name_t *name, isc_buffer_t *buffer);
  *
  * Notes:
  * \li	Specification of a target buffer in dns_name_fromwire(),
- *	dns_name_fromtext(), and dns_name_concatentate() is optional if
+ *	dns_name_fromtext(), and dns_name_concatenate() is optional if
  *	'name' has a dedicated buffer.
  *
  * \li	The caller must not write to buffer until the name has been
@@ -1084,7 +1084,7 @@ dns_name_dynamic(dns_name_t *name);
  *
  * Returns:
  *
- *\li	'ISC_TRUE' if the name is dynamic othewise 'ISC_FALSE'.
+ *\li	'ISC_TRUE' if the name is dynamic otherwise 'ISC_FALSE'.
  */
 
 isc_result_t
@@ -1222,7 +1222,7 @@ dns_name_destroy(void);
 ISC_LANG_ENDDECLS
 
 /*
- *** High Peformance Macros
+ *** High Performance Macros
  ***/
 
 /*

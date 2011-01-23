@@ -1,10 +1,10 @@
-/*	$NetBSD: inet_ntop.c,v 1.1.1.4.4.1 2007/05/17 00:41:46 jdc Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.1.1.4.4.2 2011/01/23 21:47:42 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -21,7 +21,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: inet_ntop.c,v 1.14.18.3 2005/04/29 00:16:46 marka Exp";
+	"Id: inet_ntop.c,v 1.14.18.5 2009/07/18 23:46:03 tbox Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -171,8 +171,9 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 		if (i != 0)
 			*tp++ = ':';
 		/* Is this address an encapsulated IPv4? */
-		if (i == 6 && best.base == 0 &&
-		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
+		if (i == 6 && best.base == 0 && (best.len == 6 ||
+		    (best.len == 7 && words[7] != 0x0001) ||
+		    (best.len == 5 && words[5] == 0xffff))) {
 			if (!inet_ntop4(src+12, tp,
 					sizeof(tmp) - (tp - tmp)))
 				return (NULL);

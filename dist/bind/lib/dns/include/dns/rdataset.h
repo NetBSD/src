@@ -1,10 +1,10 @@
-/*	$NetBSD: rdataset.h,v 1.1.1.3.4.1 2007/05/17 00:41:01 jdc Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.1.1.3.4.2 2011/01/23 21:47:41 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.h,v 1.51.18.7 2006/03/03 00:56:53 marka Exp */
+/* Id: rdataset.h,v 1.51.18.11 2010/02/26 23:46:37 tbox Exp */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -106,6 +106,9 @@ typedef struct dns_rdatasetmethods {
 						 dns_rdataset_t *rdataset,
 						 dns_rdatasetadditional_t type,
 						 dns_rdatatype_t qtype);
+	void			(*settrust)(dns_rdataset_t *rdataset,
+					    dns_trust_t trust);
+	void			(*expire)(dns_rdataset_t *rdataset);
 } dns_rdatasetmethods_t;
 
 #define DNS_RDATASET_MAGIC	       ISC_MAGIC('D','N','S','R')
@@ -413,7 +416,7 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
 			  unsigned int *countp);
 /*%<
  * Like dns_rdataset_towire(), but sorting the rdatasets according to
- * the integer value returned by 'order' when called witih the rdataset
+ * the integer value returned by 'order' when called with the rdataset
  * and 'order_arg' as arguments.
  *
  * Requires:
@@ -592,6 +595,19 @@ dns_rdataset_putadditional(dns_acache_t *acache,
  * \li	#ISC_R_FAILURE	- additional information caching is not supported.
  * \li	#ISC_R_NOTFOUND	- the corresponding DB node has not cached additional
  *			  information for 'rdataset.'
+ */
+
+void
+dns_rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust);
+/*%<
+ * Set the trust of the 'rdataset' to trust in any in the backing database.
+ * The local trust level of 'rdataset' is also set.
+ */
+
+void
+dns_rdataset_expire(dns_rdataset_t *rdataset);
+/*%<
+ * Mark the rdataset to be expired in the backing database.
  */
 
 ISC_LANG_ENDDECLS

@@ -1,10 +1,10 @@
-/*	$NetBSD: server.h,v 1.1.1.3.4.1 2007/05/17 00:35:20 jdc Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.3.4.2 2011/01/23 21:47:10 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.h,v 1.73.18.8 2006/03/09 23:46:20 marka Exp */
+/* Id: server.h,v 1.73.18.10 2009/07/11 23:46:06 tbox Exp */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -209,7 +209,8 @@ ns_server_status(ns_server_t *server, isc_buffer_t *text);
  * Enable or disable updates for a zone.
  */
 isc_result_t
-ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args);
+ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args,
+		 isc_buffer_t *text);
 
 /*%
  * Dump the current recursive queries.

@@ -1,4 +1,4 @@
-/*	$NetBSD: irp.c,v 1.1.1.3.4.1 2007/05/17 00:39:53 jdc Exp $	*/
+/*	$NetBSD: irp.c,v 1.1.1.3.4.2 2011/01/23 21:47:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irp.c,v 1.6.18.3 2006/03/10 00:20:08 marka Exp";
+static const char rcsid[] = "Id: irp.c,v 1.6.18.5 2008/02/28 05:49:37 marka Exp";
 #endif
 
 /* Imports */
@@ -530,7 +530,8 @@ irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...) {
 	}
 
 	va_start(ap, fmt);
-	todo = vsprintf(buffer, fmt, ap);
+	(void) vsprintf(buffer, fmt, ap);
+	todo = strlen(buffer);
 	va_end(ap);
 	if (todo > (int)sizeof(buffer) - 3) {
 		syslog(LOG_CRIT, "memory overrun in irs_irp_send_command()");
