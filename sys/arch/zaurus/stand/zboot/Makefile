@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/01/22 19:19:25 joerg Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.6 2011/01/23 13:17:02 joerg Exp $
 
 PROG=		zboot
 
@@ -12,6 +10,8 @@ SRCS+=		loadfile_zboot.c
 SRCS+=		getsecs.c termios.c unixcons.c unixdev.c unixsys.S
 
 NOMAN=		# defined
+
+.include <bsd.own.mk>
 
 CFLAGS+=	-Wall -Wno-main
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
