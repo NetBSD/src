@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.51 2011/01/23 08:52:02 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.52 2011/01/23 09:44:58 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -150,10 +150,8 @@
 	.import	esym, data
 	.import virtual_avail, data
 	.import	lwp0, data
-	.import	kpsw, data
 	.import	panic, code
 	.import fpu_csw, data
-	.import fpu_cur_uspace, data
 	.import hp700_int_regs, data
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
@@ -296,8 +294,8 @@ qisnowon:
 	mtctl	%t1, %pcoq
 	ldo	4(%t1), %t1
 	mtctl	%t1, %pcoq
-	ldil	L%kpsw, %t1
-	ldw	R%kpsw(%t1), %t2
+	GET_CURCPU(%t1)
+	ldw	CI_PSW(%t1), %t2
 	mtctl	%t2, %ipsw
 	rfi
 	nop
@@ -932,10 +930,10 @@ ALTENTRY(hppa_fpu_nop1)
 	 * we'll get an assist emulation trap to swap
 	 * states.
 	 */
-	ldil	L%fpu_cur_uspace, %t1
+	GET_CURCPU(%t1)
 	mfctl	%ccr, %r1
 	mfctl	CR_FPPADDR, %t2
-	ldw	R%fpu_cur_uspace(%t1), %t1
+	ldw	CI_FPU_STATE(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
 	depi	3, 25, 2, %r1		; enables the FPU
