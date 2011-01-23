@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.78 2011/01/16 15:35:48 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.79 2011/01/23 21:54:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1086,4 +1086,31 @@ etc/ssh/ssh_known_hosts				1.6
 
 	releng has been on mollari for a while now. Also, add wiki
 	[riz, ticket #1415]
+
+dist/bind/							patch
+include/resolv.h						patch
+include/arpa/nameser.h:						patch
+lib/libc/include/isc/assertions.h:				patch
+lib/libc/include/isc/eventlib.h					patch
+lib/libc/isc/assertions.c:					patch
+lib/libc/nameser/ns_parse.c					patch
+lib/libc/resolv/herror.c:					patch
+lib/libc/resolv/res_init.c					patch
+lib/libc/resolv/res_mkquery.c:					patch
+lib/libc/resolv/res_query.c					patch
+lib/libc/resolv/res_send.c:					patch
+usr.sbin/bind/Makefile.inc					patch
+usr.sbin/bind/include/config.h:					patch
+usr.sbin/bind/include/dns/code.h:				patch
+usr.sbin/bind/include/dns/enumclass.h:				patch
+usr.sbin/bind/include/dns/enumtype.h:				patch
+usr.sbin/bind/include/dns/rdatastruct.h:			patch
+usr.sbin/bind/include/isc/platform.h:				patch
+usr.sbin/bind/include/lwres/netdb.h:				patch
+usr.sbin/bind/include/lwres/platform.h:				patch
+usr.sbin/bind/libisc/Makefile:					patch
+lib/libc/inet/inet_addr.c 					new file
+
+	Update bind to 9.4-ESV-R4, latest version of the 9.4 line.
+	[spz, ticket #1413]
 
