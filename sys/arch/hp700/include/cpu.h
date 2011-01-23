@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2011/01/23 09:44:58 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2011/01/23 21:53:40 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -253,9 +253,6 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 #ifndef _KMEMUSER
-#ifdef MULTIPROCESSOR
-	struct	lwp	*ci_curlwp;	/* CPU owner */
-#endif
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 	int		ci_mtx_count;
 	int		ci_mtx_oldspl;
@@ -265,9 +262,20 @@ struct cpu_info {
 	volatile int	ci_ipending;	/* The pending interrupts. */
 	u_int		ci_intr_depth;	/* Nonzero iff running an interrupt. */
 
+	hppa_hpa_t	ci_hpa;
 	register_t	ci_psw;		/* Processor Status Word. */
 	paddr_t		ci_fpu_state;	/* LWP FPU state address, or zero. */
 	u_long		ci_itmr;
+
+#if defined(MULTIPROCESSOR)
+	struct	lwp	*ci_curlwp;	/* CPU owner */
+	paddr_t		ci_stack;	/* stack for spin up */
+	volatile int	ci_flags;	/* CPU status flags */
+#define	CPUF_PRIMARY	0x0001		/* ... is monarch/primary */
+#define	CPUF_RUNNING	0x0002 		/* ... is running. */
+
+#endif
+
 #endif /* !_KMEMUSER */
 } __aligned(64);
 
@@ -369,6 +377,12 @@ void	lwp_trampoline(void);
 void	setfunc_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
+
+#ifdef MULTIPROCESSOR
+void	cpu_boot_secondary_processors(void);
+void	cpu_hw_init(void);
+void	cpu_hatch(void);
+#endif
 #endif	/* _KERNEL */
 
 /*

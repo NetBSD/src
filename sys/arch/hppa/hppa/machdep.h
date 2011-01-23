@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.14 2011/01/23 09:44:59 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.15 2011/01/23 21:53:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  */
 
 #ifdef _KERNEL
+
+/* The primary (aka monarch) CPU HPA */
+extern hppa_hpa_t hppa_mcpuhpa;
 
 /*
  * cache configuration, for most machines is the same
