@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.30 2011/01/23 09:44:58 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.31 2011/01/23 21:53:39 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -101,8 +101,8 @@ define	CI_PSW			offsetof(struct cpu_info, ci_psw)
 define	CI_FPU_STATE		offsetof(struct cpu_info, ci_fpu_state)
 ifdef MULTIPROCESSOR
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CI_STACK		offsetof(struct cpu_info, ci_stack)
 endif
-
 
 define	MTX_IPL			offsetof(struct kmutex, mtx_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, mtx_lock)

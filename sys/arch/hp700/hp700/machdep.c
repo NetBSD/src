@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2011/01/23 09:44:58 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 2011/01/23 21:53:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2011/01/23 09:44:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2011/01/23 21:53:40 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -136,6 +136,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2011/01/23 09:44:58 skrll Exp $");
  * Different kinds of flags used throughout the kernel.
  */
 void *msgbufaddr;
+
+/* The primary (aka monarch) cpu HPA */
+hppa_hpa_t hppa_mcpuhpa;
 
 /*
  * cache configuration, for most machines is the same
@@ -454,8 +457,15 @@ hppa_init(paddr_t start, void *bi)
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
 	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
+
 	delay_init();	/* calculate CPU clock ratio */
 
+	/* fetch the monarch/"default" cpu hpa */
+	
+	error =  pdcproc_hpa_processor(&hppa_mcpuhpa);
+	if (error < 0)
+		panic("%s: PDC_HPA failed", __func__);
+	
 	/* cache parameters */
 	error = pdcproc_cache(&pdc_cache);
 	if (error < 0) {
