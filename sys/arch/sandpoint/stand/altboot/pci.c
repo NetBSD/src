@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.14 2010/06/26 21:45:49 phx Exp $ */
+/* $NetBSD: pci.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.

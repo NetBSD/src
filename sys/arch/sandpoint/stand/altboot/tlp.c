@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.25 2010/05/02 13:36:31 phx Exp $ */
+/* $NetBSD: tlp.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
