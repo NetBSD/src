@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2011/01/22 10:57:07 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59 2011/01/23 09:44:58 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -114,7 +114,6 @@ struct hppa_cpu_info {
 extern const struct hppa_cpu_info *hppa_cpu_info;
 extern int cpu_modelno;
 extern int cpu_revision;
-extern register_t kpsw;
 #endif
 #endif
 
@@ -265,6 +264,10 @@ struct cpu_info {
 	volatile int	ci_cpl;
 	volatile int	ci_ipending;	/* The pending interrupts. */
 	u_int		ci_intr_depth;	/* Nonzero iff running an interrupt. */
+
+	register_t	ci_psw;		/* Processor Status Word. */
+	paddr_t		ci_fpu_state;	/* LWP FPU state address, or zero. */
+	u_long		ci_itmr;
 #endif /* !_KMEMUSER */
 } __aligned(64);
 

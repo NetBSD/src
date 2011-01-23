@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 2010/06/06 09:12:39 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.46 2011/01/23 09:44:59 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 2010/06/06 09:12:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2011/01/23 09:44:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	mfctl(CR_EIEM, tf->tf_eiem);
 	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
-	    (kpsw & PSW_O);
+	    (curcpu()->ci_psw & PSW_O);
 
 	/*
 	 * Set up return value registers as libc:fork() expects
