@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:28 snj Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:51:20 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: host.c,v 1.94.18.19 2007/08/28 07:19:55 tbox Exp */
+/* Id: host.c,v 1.94.18.22 2009/09/08 23:29:03 marka Exp */
 
 /*! \file */
 
@@ -125,6 +125,23 @@ struct rtype rtypes[] = {
 	{ 29,	"location" },
 	{ 0, NULL }
 };
+
+static char *
+rcode_totext(dns_rcode_t rcode)
+{
+	static char buf[sizeof("?65535")];
+	union {
+		const char *consttext;
+		char *deconsttext;
+	} totext;
+
+	if (rcode >= (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
+		snprintf(buf, sizeof(buf), "?%u", rcode);
+		totext.deconsttext = buf;
+	} else
+		totext.consttext = rcodetext[rcode];
+	return totext.deconsttext;
+}
 
 static void
 show_usage(void) {
@@ -431,7 +448,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		printf("Host %s not found: %d(%s)\n",
 		       (msg->rcode != dns_rcode_nxdomain) ? namestr :
 		       query->lookup->textname, msg->rcode,
-		       rcodetext[msg->rcode]);
+		       rcode_totext(msg->rcode));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -473,7 +490,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 
 	if (!short_form) {
 		printf(";; ->>HEADER<<- opcode: %s, status: %s, id: %u\n",
-		       opcodetext[msg->opcode], rcodetext[msg->rcode],
+		       opcodetext[msg->opcode], rcode_totext(msg->rcode),
 		       msg->id);
 		printf(";; flags: ");
 		if ((msg->flags & DNS_MESSAGEFLAG_QR) != 0) {
@@ -823,11 +840,10 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 	} else {
 		strncpy(lookup->textname, hostname, sizeof(lookup->textname));
 		lookup->textname[sizeof(lookup->textname)-1]=0;
+		usesearch = ISC_TRUE;
 	}
 	lookup->new_search = ISC_TRUE;
 	ISC_LIST_APPEND(lookup_list, lookup, link);
-
-	usesearch = ISC_TRUE;
 }
 
 int

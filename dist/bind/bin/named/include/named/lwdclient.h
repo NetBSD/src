@@ -1,10 +1,10 @@
-/*	$NetBSD: lwdclient.h,v 1.1.1.3.4.1 2007/05/17 00:35:18 jdc Exp $	*/
+/*	$NetBSD: lwdclient.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:51:25 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwdclient.h,v 1.14.18.2 2005/04/29 00:15:36 marka Exp */
+/* Id: lwdclient.h,v 1.14.18.4 2009/01/19 23:46:14 tbox Exp */
 
 #ifndef NAMED_LWDCLIENT_H
 #define NAMED_LWDCLIENT_H 1
@@ -41,7 +41,7 @@
 
 #define LWRD_SHUTDOWN		(LWRD_EVENTCLASS + 0x0001)
 
-/*% Lighweight Resolver Daemon Client */
+/*% Lightweight Resolver Daemon Client */
 struct ns_lwdclient {
 	isc_sockaddr_t		address;	/*%< where to reply */
 	struct in6_pktinfo	pktinfo;

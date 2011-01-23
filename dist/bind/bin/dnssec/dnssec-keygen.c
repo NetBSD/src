@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.1.1.4.4.1.2.1 2008/07/16 03:10:28 snj Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.1.1.4.4.1.2.2 2011/01/23 21:51:21 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")

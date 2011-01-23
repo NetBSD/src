@@ -1,10 +1,10 @@
-/*	$NetBSD: entropy.h,v 1.1.1.3.4.1 2007/05/17 00:42:26 jdc Exp $	*/
+/*	$NetBSD: entropy.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:20 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.h,v 1.25.18.2 2005/04/29 00:16:54 marka Exp */
+/* Id: entropy.h,v 1.25.18.4 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef ISC_ENTROPY_H
 #define ISC_ENTROPY_H 1
@@ -105,7 +105,7 @@ typedef void (*isc_entropystop_t)(isc_entropysource_t *source, void *arg);
 /*!
  * \brief
  *	Estimate the amount of entropy contained in the sample pool.
- *	If this is not set, the source will be gathered and perodically
+ *	If this is not set, the source will be gathered and periodically
  *	mixed into the entropy pool, but no increment in contained entropy
  *	will be assumed.  This flag only makes sense on sample sources.
  */

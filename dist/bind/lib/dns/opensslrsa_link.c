@@ -1,10 +1,10 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.1.1.1.6.1.2.1 2010/01/21 18:57:08 snj Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.1.1.1.6.1.2.2 2011/01/23 21:52:12 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -19,7 +19,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: opensslrsa_link.c,v 1.1.6.11 2006/11/07 21:28:49 marka Exp
+ * Id: opensslrsa_link.c,v 1.1.6.14 2009/01/19 00:36:27 marka Exp
  */
 #ifdef OPENSSL
 
@@ -59,8 +59,8 @@
 
 
 	/*
-	 * XXXMPA  Temporarially disable RSA_BLINDING as it requires
-	 * good quality random data that cannot currently be guarenteed.
+	 * XXXMPA  Temporarily disable RSA_BLINDING as it requires
+	 * good quality random data that cannot currently be guaranteed.
 	 * XXXMPA  Find which versions of openssl use pseudo random data
 	 * and set RSA_FLAG_BLINDING for those.
 	 */

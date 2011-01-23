@@ -1,10 +1,10 @@
-/*	$NetBSD: random.h,v 1.1.1.3.4.1 2007/05/17 00:42:34 jdc Exp $	*/
+/*	$NetBSD: random.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:21 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: random.h,v 1.12.18.2 2005/04/29 00:17:01 marka Exp */
+/* Id: random.h,v 1.12.18.4 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef ISC_RANDOM_H
 #define ISC_RANDOM_H 1
@@ -27,7 +27,7 @@
 
 /*! \file
  * \brief Implements a random state pool which will let the caller return a
- * series of possibly non-reproducable random values.  
+ * series of possibly non-reproducible random values.
  *
  * Note that the
  * strength of these numbers is not all that high, and should not be
