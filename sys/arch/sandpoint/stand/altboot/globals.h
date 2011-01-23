@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.2 2011/01/23 01:32:08 nisimura Exp $ */
 
 /* clock feed */
 #ifndef EXT_CLK_FREQ
@@ -186,7 +186,7 @@ struct disk {
 	void *dlabel;
 	int part;
 	void *fsops;
-	int (*lba_read)(struct disk *, uint64_t, uint32_t, void *);
+	int (*lba_read)(struct disk *, int64_t, int, void *);
 };
 
 int spinwait_unbusy(struct dkdev_ata *, int, int, const char **);
