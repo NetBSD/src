@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50 2011/01/22 10:57:07 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.51 2011/01/23 08:52:02 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	 * spl level into eiem, and reset any pending interrupts
 	 */
 	ldi	-1, %r1
-	mtctl	%r0, %eiem	/* IPL_NONE */
+	mtctl	%r0, %eiem		/* disable interrupts */
 	mtctl	%r1, %eirr
 
 	/*
@@ -419,7 +419,7 @@ EXIT(kernel_setup)
 ENTRY(pdc_call,160)
 
 	mfctl	%eiem, %t1
-	mtctl	%r0, %eiem
+	mtctl	%r0, %eiem		/* disable interrupts */
 	stw	%rp, HPPA_FRAME_CRP(%sp)
 	copy	%arg0, %r31
 	copy	%sp, %ret1
@@ -531,7 +531,7 @@ pdc_call_unmapped3:
 	ldw	HPPA_FRAME_PSP(%sp), %sp
 	ldw	HPPA_FRAME_CRP(%sp), %rp
 	bv	%r0(%rp)
-	mtctl	%t2, %eiem
+	 mtctl	%t2, %eiem		/* enable interrupts */
 EXIT(pdc_call)
 
 /*
