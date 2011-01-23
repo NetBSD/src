@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.239 2010/11/19 06:44:43 dholland Exp $	*/
+/*	$NetBSD: tty.c,v 1.240 2011/01/23 07:30:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.239 2010/11/19 06:44:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.240 2011/01/23 07:30:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.239 2010/11/19 06:44:43 dholland Exp $");
 #undef	TTYDEFCHARS
 #include <sys/file.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/dkstat.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -2429,6 +2430,21 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	mutex_enter(pick->p_lock);
 	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
 		lwp_lock(l);
+#ifdef LWP_PC
+		if (l->l_stat == LSONPROC) {
+			snprintf(lmsg, sizeof(lmsg), "%#"PRIxVADDR"/%d",
+			    LWP_PC(l), cpu_index(l->l_cpu));
+			strlcat(buf, lmsg, bufsz);
+		} else if (l->l_stat == LSRUN) {
+			snprintf(lmsg, sizeof(lmsg), "%#"PRIxVADDR, LWP_PC(l));
+			strlcat(buf, lmsg, bufsz);
+		} else {
+			strlcat(buf, l->l_wchan ? l->l_wmesg : "iowait", bufsz);
+		} 
+		lwp_unlock(l);
+		strlcat(buf, (LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ",
+		    bufsz);
+#else
 		snprintf(lmsg, sizeof(lmsg), "%s%s",
 		    l->l_stat == LSONPROC ? "running" :
 		    l->l_stat == LSRUN ? "runnable" :
@@ -2436,6 +2452,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 		    (LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
 		lwp_unlock(l);
 		strlcat(buf, lmsg, bufsz);
+#endif
 		pctcpu += l->l_pctcpu;
 	}
 	pctcpu += pick->p_pctcpu;
