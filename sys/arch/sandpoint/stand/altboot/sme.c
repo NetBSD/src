@@ -1,4 +1,4 @@
-/* $NetBSD: sme.c,v 1.5 2011/01/11 10:10:48 nisimura Exp $ */
+/* $NetBSD: sme.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
