@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.29 2011/01/23 09:18:29 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.30 2011/01/23 09:44:58 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -97,6 +97,8 @@ define	CI_IPENDING		offsetof(struct cpu_info, ci_ipending)
 #define	CI_SOFTLWPS		offsetof(struct cpu_info, ci_softlwps)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 define	CI_TRAPSAVE		offsetof(struct cpu_info, ci_trapsave)
+define	CI_PSW			offsetof(struct cpu_info, ci_psw)
+define	CI_FPU_STATE		offsetof(struct cpu_info, ci_fpu_state)
 ifdef MULTIPROCESSOR
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 endif
