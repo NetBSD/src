@@ -1,4 +1,4 @@
-/*	$NetBSD: dbus_service.h,v 1.1.1.1.2.2.2.1 2008/07/16 03:10:31 snj Exp $	*/
+/*	$NetBSD: dbus_service.h,v 1.1.1.1.2.2.2.2 2011/01/23 21:51:40 bouyer Exp $	*/
 
 /*  D-BUS Service Utilities
  *  

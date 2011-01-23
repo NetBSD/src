@@ -1,7 +1,7 @@
-/*	$NetBSD: lwtest.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:30 snj Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:51:35 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwtest.c,v 1.26.18.2 2007/09/13 23:46:26 tbox Exp */
+/* Id: lwtest.c,v 1.26.18.4 2008/01/14 23:45:59 tbox Exp */
 
 #include <config.h>
 
@@ -352,6 +352,7 @@ test_getipnodebyname(const char *name, const char *address, int af,
 		if (hp->h_addrtype != af) {
 			printf("I:getipnodebyname(%s) returned wrong family\n",
 			       name);
+			freehostent(hp);
 			fails++;
 			return;
 		}
@@ -363,6 +364,7 @@ test_getipnodebyname(const char *name, const char *address, int af,
 					outbuf, sizeof(outbuf));
 			printf("I:getipnodebyname(%s) returned %s, "
 			       "expected %s\n", name, outbuf, address);
+			freehostent(hp);
 			fails++;
 			return;
 		}
@@ -429,20 +431,21 @@ test_getipnodebyaddr(const char *address, int af, const char *name) {
 		if (name == NULL && error_num == HOST_NOT_FOUND)
 			return;
 		else if (error_num != HOST_NOT_FOUND) {
-			printf("I:gethostbyaddr(%s) failed: %d\n",
+			printf("I:getipnodebyaddr(%s) failed: %d\n",
 			       address, error_num);
 			fails++;
 			return;
 		} else {
-			printf("I:gethostbyaddr(%s) returned not found\n",
+			printf("I:getipnodebyaddr(%s) returned not found\n",
 			       address);
 			fails++;
 			return;
 		}
 	} else {
 		if (strcmp(hp->h_name, name) != 0) {
-			printf("I:gethostbyname(%s) returned %s, "
+			printf("I:getipnodebyaddr(%s) returned %s, "
 			       "expected %s\n", address, hp->h_name, name);
+			freehostent(hp);
 			fails++;
 			return;
 		}
@@ -590,12 +593,12 @@ test_getnameinfo(const char *address, int af, const char *name) {
 		}
 	} else {
 		if (name == NULL) {
-			printf("I:getaddrinfo(%s) returned %s, "
+			printf("I:getnameinfo(%s) returned %s, "
 			       "expected NULL\n", address, host);
 			fails++;
 			return;
 		} else if (strcmp(host, name) != 0) {
-			printf("I:getaddrinfo(%s) returned %s, expected %s\n",
+			printf("I:getnameinfo(%s) returned %s, expected %s\n",
 			       address, host, name);
 			fails++;
 			return;

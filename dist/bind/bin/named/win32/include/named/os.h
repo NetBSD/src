@@ -1,10 +1,10 @@
-/*	$NetBSD: os.h,v 1.1.1.3.4.1 2007/05/17 00:35:24 jdc Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:51:27 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.h,v 1.9.18.1 2004/09/29 06:43:54 marka Exp */
+/* Id: os.h,v 1.9.18.3 2008/10/24 01:43:17 tbox Exp */
 
 #ifndef NS_OS_H
 #define NS_OS_H 1
@@ -44,6 +44,9 @@ ns_os_inituserinfo(const char *username);
 
 void
 ns_os_changeuser(void);
+
+void
+ns_os_adjustnofile(void);
 
 void
 ns_os_minprivs(void);

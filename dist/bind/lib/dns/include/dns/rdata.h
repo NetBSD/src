@@ -1,10 +1,10 @@
-/*	$NetBSD: rdata.h,v 1.1.1.3.4.1 2007/05/17 00:41:01 jdc Exp $	*/
+/*	$NetBSD: rdata.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:15 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.h,v 1.60.18.3 2005/05/19 04:59:56 marka Exp */
+/* Id: rdata.h,v 1.60.18.7 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef DNS_RDATA_H
 #define DNS_RDATA_H 1
@@ -51,7 +51,7 @@
  *	build process from a set of source files, one per rdata type.  For
  *	portability, it's probably best that the building be done by a C
  *	program.  Adding a new rdata type will be a simple matter of adding
- *	a file to a directory and rebuilding the server.  *All* knowlege of
+ *	a file to a directory and rebuilding the server.  *All* knowledge of
  *	the format of a particular rdata type is in this file.
  *
  * MP:
@@ -386,7 +386,8 @@ dns_rdata_totext(dns_rdata_t *rdata, dns_name_t *origin, isc_buffer_t *target);
 
 isc_result_t
 dns_rdata_tofmttext(dns_rdata_t *rdata, dns_name_t *origin, unsigned int flags,
-		    unsigned int width, char *linebreak, isc_buffer_t *target);
+		    unsigned int width, const char *linebreak,
+		    isc_buffer_t *target);
 /*%<
  * Like dns_rdata_totext, but do formatted output suitable for
  * database dumps.  This is intended for use by dns_db_dump();

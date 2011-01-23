@@ -1,10 +1,10 @@
-/*	$NetBSD: request.h,v 1.1.1.3.4.1 2007/05/17 00:41:02 jdc Exp $	*/
+/*	$NetBSD: request.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:16 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.h,v 1.21.18.2 2005/04/29 00:16:20 marka Exp */
+/* Id: request.h,v 1.21.18.4 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef DNS_REQUEST_H
 #define DNS_REQUEST_H 1
@@ -346,7 +346,7 @@ dns_request_usedtcp(dns_request_t *request);
 /*%<
  * Return whether this query used TCP or not.  Setting #DNS_REQUESTOPT_TCP
  * in the call to dns_request_create() will cause the function to return
- * #ISC_TRUE, othewise the result is based on the query message size.
+ * #ISC_TRUE, otherwise the result is based on the query message size.
  *
  * Requires:
  *\li	'request' is a valid request.

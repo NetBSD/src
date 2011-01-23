@@ -1,10 +1,10 @@
-/*	$NetBSD: os.c,v 1.1.1.4.4.1 2007/05/17 00:35:22 jdc Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.4.4.1.2.1 2011/01/23 21:51:26 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.66.18.11 2006/02/03 23:51:38 marka Exp */
+/* Id: os.c,v 1.66.18.21 2009/03/02 03:06:25 marka Exp */
 
 /*! \file */
 
@@ -44,6 +44,7 @@
 #include <isc/buffer.h>
 #include <isc/file.h>
 #include <isc/print.h>
+#include <isc/resource.h>
 #include <isc/result.h>
 #include <isc/strerror.h>
 #include <isc/string.h>
@@ -118,6 +119,16 @@ static int dfd[2] = { -1, -1 };
 static isc_boolean_t non_root = ISC_FALSE;
 static isc_boolean_t non_root_caps = ISC_FALSE;
 
+#if defined(HAVE_CAPSET)
+#undef _POSIX_SOURCE
+#ifdef HAVE_SYS_CAPABILITY_H
+#include <sys/capability.h>
+#else
+#include <linux/capability.h>
+int capset(cap_user_header_t hdrp, const cap_user_data_t datap);
+#endif
+#include <sys/prctl.h>
+#else
 /*%
  * We define _LINUX_FS_H to prevent it from being included.  We don't need
  * anything from it, and the files it includes cause warnings with 2.2
@@ -150,6 +161,7 @@ static isc_boolean_t non_root_caps = ISC_FALSE;
 #endif
 #define SYS_capset __NR_capset
 #endif
+#endif
 
 static void
 linux_setcaps(unsigned int caps) {
@@ -167,13 +179,23 @@ linux_setcaps(unsigned int caps) {
 	cap.effective = caps;
 	cap.permitted = caps;
 	cap.inheritable = 0;
-	if (syscall(SYS_capset, &caphead, &cap) < 0) {
+#ifdef HAVE_CAPSET
+	if (capset(&caphead, &cap) < 0 ) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		ns_main_earlyfatal("capset failed: %s:"
 				   " please ensure that the capset kernel"
 				   " module is loaded.  see insmod(8)",
 				   strbuf);
 	}
+#else
+	if (syscall(SYS_capset, &caphead, &cap) < 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		ns_main_earlyfatal("syscall(capset) failed: %s:"
+				   " please ensure that the capset kernel"
+				   " module is loaded.  see insmod(8)",
+				   strbuf);
+	}
+#endif
 }
 
 static void
@@ -385,10 +407,12 @@ ns_os_started(void) {
 	char buf = 0;
 
 	/*
-	 * Signal to the parent that we stated successfully.
+	 * Signal to the parent that we started successfully.
 	 */
 	if (dfd[0] != -1 && dfd[1] != -1) {
-		write(dfd[1], &buf, 1);
+		if (write(dfd[1], &buf, 1) != 1)
+			ns_main_earlyfatal("unable to signal parent that we "
+					   "otherwise started successfully.");
 		close(dfd[1]);
 		dfd[0] = dfd[1] = -1;
 	}
@@ -428,10 +452,14 @@ ns_os_chroot(const char *root) {
 	ns_smf_chroot = 0;
 #endif
 	if (root != NULL) {
+#ifdef HAVE_CHROOT
 		if (chroot(root) < 0) {
 			isc__strerror(errno, strbuf, sizeof(strbuf));
 			ns_main_earlyfatal("chroot(): %s", strbuf);
 		}
+#else
+		ns_main_earlyfatal("chroot(): disabled");
+#endif
 		if (chdir("/") < 0) {
 			isc__strerror(errno, strbuf, sizeof(strbuf));
 			ns_main_earlyfatal("chdir(/): %s", strbuf);
@@ -498,15 +526,37 @@ ns_os_changeuser(void) {
 		ns_main_earlyfatal("setuid(): %s", strbuf);
 	}
 
-#if defined(HAVE_LINUX_CAPABILITY_H) && !defined(HAVE_LINUXTHREADS)
-	linux_minprivs();
-#endif
 #if defined(HAVE_SYS_PRCTL_H) && defined(PR_SET_DUMPABLE)
 	/*
 	 * Restore the ability of named to drop core after the setuid()
 	 * call has disabled it.
 	 */
-	prctl(PR_SET_DUMPABLE,1,0,0,0);
+	if (prctl(PR_SET_DUMPABLE,1,0,0,0) < 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		ns_main_earlywarning("prctl(PR_SET_DUMPABLE) failed: %s",
+				     strbuf);
+	}
+#endif
+#if defined(HAVE_LINUX_CAPABILITY_H) && !defined(HAVE_LINUXTHREADS)
+	linux_minprivs();
+#endif
+}
+
+void
+ns_os_adjustnofile() {
+#ifdef HAVE_LINUXTHREADS
+	isc_result_t result;
+	isc_resourcevalue_t newvalue;
+
+	/*
+	 * Linux: max number of open files specified by one thread doesn't seem
+	 * to apply to other threads on Linux.
+	 */
+	newvalue = ISC_RESOURCE_UNLIMITED;
+
+	result = isc_resource_setlimit(isc_resource_openfiles, newvalue);
+	if (result != ISC_R_SUCCESS)
+		ns_main_earlywarning("couldn't adjust limit on open files");
 #endif
 }
 
@@ -542,7 +592,8 @@ safe_open(const char *filename, isc_boolean_t append) {
 		fd = open(filename, O_WRONLY|O_CREAT|O_APPEND,
 			  S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	else {
-		(void)unlink(filename);
+		if (unlink(filename) < 0 && errno != ENOENT)
+			return (-1);
 		fd = open(filename, O_WRONLY|O_CREAT|O_EXCL,
 			  S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
 	}
@@ -551,8 +602,11 @@ safe_open(const char *filename, isc_boolean_t append) {
 
 static void
 cleanup_pidfile(void) {
+	int n;
 	if (pidfile != NULL) {
-		(void)unlink(pidfile);
+		n = unlink(pidfile);
+		if (n == -1 && errno != ENOENT)
+			ns_main_earlywarning("unlink '%s': failed", pidfile);
 		free(pidfile);
 	}
 	pidfile = NULL;

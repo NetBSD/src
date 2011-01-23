@@ -1,10 +1,10 @@
-/*	$NetBSD: t_rbt.c,v 1.1.1.3.4.1 2007/05/17 00:35:48 jdc Exp $	*/
+/*	$NetBSD: t_rbt.c,v 1.1.1.3.4.1.2.1 2011/01/23 21:51:30 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_rbt.c,v 1.25.18.3 2005/11/30 23:52:53 marka Exp */
+/* Id: t_rbt.c,v 1.25.18.5 2009/01/22 23:46:00 tbox Exp */
 
 #include <config.h>
 
@@ -519,7 +519,7 @@ static void
 t1() {
 	int	result;
 
-	t_assert("dns_rbt_create", 1, T_REQUIRED, a1);
+	t_assert("dns_rbt_create", 1, T_REQUIRED, "%s", a1);
 	result = test_dns_rbt_x("dns_rbt_create_1_data");
 	t_result(result);
 }
@@ -531,7 +531,7 @@ static void
 t2() {
 	int	result;
 
-	t_assert("dns_rbt_addname", 2, T_REQUIRED, a2);
+	t_assert("dns_rbt_addname", 2, T_REQUIRED, "%s", a2);
 	result = test_dns_rbt_x("dns_rbt_addname_1_data");
 	t_result(result);
 }
@@ -543,7 +543,7 @@ static void
 t3() {
 	int	result;
 
-	t_assert("dns_rbt_addname", 3, T_REQUIRED, a3);
+	t_assert("dns_rbt_addname", 3, T_REQUIRED, "%s", a3);
 	result = test_dns_rbt_x("dns_rbt_addname_2_data");
 	t_result(result);
 }
@@ -555,7 +555,7 @@ static void
 t4() {
 	int	result;
 
-	t_assert("dns_rbt_deletename", 4, T_REQUIRED, a4);
+	t_assert("dns_rbt_deletename", 4, T_REQUIRED, "%s", a4);
 	result = test_dns_rbt_x("dns_rbt_deletename_1_data");
 	t_result(result);
 }
@@ -566,7 +566,7 @@ static void
 t5() {
 	int	result;
 
-	t_assert("dns_rbt_deletename", 5, T_REQUIRED, a5);
+	t_assert("dns_rbt_deletename", 5, T_REQUIRED, "%s", a5);
 	result = test_dns_rbt_x("dns_rbt_deletename_2_data");
 	t_result(result);
 }
@@ -578,7 +578,7 @@ static void
 t6() {
 	int	result;
 
-	t_assert("dns_rbt_findname", 6, T_REQUIRED, a6);
+	t_assert("dns_rbt_findname", 6, T_REQUIRED, "%s", a6);
 	result = test_dns_rbt_x("dns_rbt_findname_1_data");
 	t_result(result);
 }
@@ -590,7 +590,7 @@ static void
 t7() {
 	int	result;
 
-	t_assert("dns_rbt_findname", 7, T_REQUIRED, a7);
+	t_assert("dns_rbt_findname", 7, T_REQUIRED, "%s", a7);
 	result = test_dns_rbt_x("dns_rbt_findname_2_data");
 	t_result(result);
 }
@@ -602,7 +602,7 @@ static void
 t8() {
 	int	result;
 
-	t_assert("dns_rbt_findname", 8, T_REQUIRED, a8);
+	t_assert("dns_rbt_findname", 8, T_REQUIRED, "%s", a8);
 	result = test_dns_rbt_x("dns_rbt_findname_3_data");
 	t_result(result);
 }
@@ -1036,7 +1036,7 @@ static void
 t9() {
 	int	result;
 
-	t_assert("dns_rbtnodechain_init", 9, T_REQUIRED, a9);
+	t_assert("dns_rbtnodechain_init", 9, T_REQUIRED, "%s", a9);
 	result = test_dns_rbtnodechain_init("dns_rbtnodechain_init_data");
 	t_result(result);
 }
@@ -1226,7 +1226,7 @@ static void
 t10() {
 	int	result;
 
-	t_assert("dns_rbtnodechain_first", 10, T_REQUIRED, a10);
+	t_assert("dns_rbtnodechain_first", 10, T_REQUIRED, "%s", a10);
 	result = test_dns_rbtnodechain_first("dns_rbtnodechain_first_data");
 	t_result(result);
 }
@@ -1419,7 +1419,7 @@ static void
 t11() {
 	int	result;
 
-	t_assert("dns_rbtnodechain_last", 11, T_REQUIRED, a11);
+	t_assert("dns_rbtnodechain_last", 11, T_REQUIRED, "%s", a11);
 	result = test_dns_rbtnodechain_last("dns_rbtnodechain_last_data");
 	t_result(result);
 }
@@ -1627,7 +1627,7 @@ static void
 t12() {
 	int	result;
 
-	t_assert("dns_rbtnodechain_next", 12, T_REQUIRED, a12);
+	t_assert("dns_rbtnodechain_next", 12, T_REQUIRED, "%s", a12);
 	result = test_dns_rbtnodechain_next("dns_rbtnodechain_next_data");
 	t_result(result);
 }
@@ -1833,7 +1833,7 @@ static void
 t13() {
 	int	result;
 
-	t_assert("dns_rbtnodechain_prev", 13, T_REQUIRED, a13);
+	t_assert("dns_rbtnodechain_prev", 13, T_REQUIRED, "%s", a13);
 	result = test_dns_rbtnodechain_prev("dns_rbtnodechain_prev_data");
 	t_result(result);
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: notify.h,v 1.1.1.3.4.1 2007/05/17 00:35:19 jdc Exp $	*/
+/*	$NetBSD: notify.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:51:25 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: notify.h,v 1.10.18.2 2005/04/29 00:15:37 marka Exp */
+/* Id: notify.h,v 1.10.18.4 2009/01/19 23:46:14 tbox Exp */
 
 #ifndef NAMED_NOTIFY_H
 #define NAMED_NOTIFY_H 1
@@ -43,7 +43,7 @@ void
 ns_notify_start(ns_client_t *client);
 
 /*%<
- *	Examines the incoming message to determine apporiate zone.
+ *	Examines the incoming message to determine appropriate zone.
  *	Returns FORMERR if there is not exactly one question.
  *	Returns REFUSED if we do not serve the listed zone.
  *	Pass the message to the zone module for processing

@@ -1,10 +1,10 @@
-/*	$NetBSD: sdlz.h,v 1.1.1.1.2.2 2007/05/17 00:41:04 jdc Exp $	*/
+/*	$NetBSD: sdlz.h,v 1.1.1.1.2.2.2.1 2011/01/23 21:52:16 bouyer Exp $	*/
 
 /*
- * Portions Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.h,v 1.2.2.2 2005/09/06 03:47:19 marka Exp */
+/* Id: sdlz.h,v 1.2.2.4 2009/01/19 23:46:16 tbox Exp */
 
 /*! \file */
 
@@ -150,7 +150,7 @@ typedef void
 /*%<
  * Method prototype.  Drivers implementing the SDLZ interface may
  * supply a destroy method.  This method is called when the DNS server
- * is shuting down and no longer needs the driver.  A SDLZ driver does
+ * is shutting down and no longer needs the driver.  A SDLZ driver does
  * not have to implement a destroy method.
  */
 
@@ -175,7 +175,7 @@ typedef isc_result_t
  * \li	3) we run out of domain name labels. I.E. we have tried the
  *	   shortest domain name
  *
- * \li	4) the number of labels in the domain name is less than min_lables
+ * \li	4) the number of labels in the domain name is less than min_labels
  *	   for dns_dlzfindzone
  *
  * The driver's find zone method should return ISC_R_SUCCESS if the

@@ -1,10 +1,10 @@
-/*	$NetBSD: serial.h,v 1.1.1.3.4.1 2007/05/17 00:42:36 jdc Exp $	*/
+/*	$NetBSD: serial.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:21 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: serial.h,v 1.10.18.2 2005/04/29 00:17:02 marka Exp */
+/* Id: serial.h,v 1.10.18.4 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1
@@ -25,8 +25,8 @@
 #include <isc/lang.h>
 #include <isc/types.h>
 
-/*! \file
- *	\brief Implement 32 bit serial space arithmetic comparision functions.
+/*! \file isc/serial.h
+ *	\brief Implement 32 bit serial space arithmetic comparison functions.
  *	Note: Undefined results are returned as ISC_FALSE.
  */
 

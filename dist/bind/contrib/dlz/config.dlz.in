@@ -123,6 +123,8 @@ AC_ARG_WITH(dlz_mysql,
                                (Required to use MySQL with DLZ)],
     use_dlz_mysql="$withval", use_dlz_mysql="no")
 
+mysql_include=""
+mysql_lib=""
 if test "$use_dlz_mysql" = "yes"
 then
 	# User did not specify a path - guess it
@@ -132,9 +134,49 @@ then
 		if test -f $d/include/mysql/mysql.h
 		then
 			use_dlz_mysql=$d
+			mysql_include=$d/include/mysql
+			if test -d $d/lib/mysql
+			then
+				mysql_lib=$d/lib/mysql
+			else
+				mysql_lib=$d/lib
+			fi
+			break
+		elif test -f $d/include/mysql.h
+		then
+			use_dlz_mysql=$d
+			mysql_include=$d/include
+			if test -d $d/lib/mysql
+			then
+				mysql_lib=$d/lib/mysql
+			else
+				mysql_lib=$d/lib
+			fi
 			break
 		fi
 	done
+elif test "$use_dlz_mysql" != "no"
+then
+	d=$use_dlz_mysql
+	if test -f $d/include/mysql/mysql.h
+	then
+		mysql_include=$d/include/mysql
+		if test -d $d/lib/mysql
+		then
+			mysql_lib=$d/lib/mysql
+		else
+			mysql_lib=$d/lib
+		fi
+	elif test -f $d/include/mysql.h
+	then
+		mysql_include=$d/include
+		if test -d $d/lib/mysql
+		then
+			mysql_lib=$d/lib/mysql
+		else
+			mysql_lib=$d/lib
+		fi
+	fi
 fi
 
 if test "$use_dlz_mysql" = "yes"
@@ -150,11 +192,11 @@ case "$use_dlz_mysql" in
 		;;
 	*)
 		DLZ_ADD_DRIVER(MYSQL, dlz_mysql_driver,
-				[-I$use_dlz_mysql/include/mysql],
-				[-L$use_dlz_mysql/lib/mysql -lmysqlclient -lz -lcrypt -lm])
+				[-I${mysql_include}],
+				[-L${mysql_lib} -lmysqlclient -lz -lcrypt -lm])
 
 		AC_MSG_RESULT(
-[using mysql from $use_dlz_mysql/lib/mysql and $use_dlz_mysql/include/mysql])
+[using mysql from ${mysql_lib} and ${mysql_include}])
 		;;
 esac
 

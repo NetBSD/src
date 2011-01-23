@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:44 snj Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:52:18 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.c,v 1.116.18.18 2007/10/30 23:31:43 marka Exp */
+/* Id: mem.c,v 1.116.18.25 2009/02/16 03:17:57 marka Exp */
 
 /*! \file */
 
@@ -53,7 +53,7 @@ LIBISC_EXTERNAL_DATA unsigned int isc_mem_debugging = ISC_MEM_DEBUGGING;
 
 #define DEF_MAX_SIZE		1100
 #define DEF_MEM_TARGET		4096
-#define ALIGNMENT_SIZE		8		/*%< must be a power of 2 */
+#define ALIGNMENT_SIZE		8U		/*%< must be a power of 2 */
 #define NUM_BASIC_BLOCKS	64		/*%< must be > 1 */
 #define TABLE_INCREMENT		1024
 #define DEBUGLIST_COUNT		1024
@@ -909,6 +909,7 @@ destroy(isc_mem_t *ctx) {
 		for (i = 0; i < ctx->basic_table_count; i++)
 			(ctx->memfree)(ctx->arg, ctx->basic_table[i]);
 		(ctx->memfree)(ctx->arg, ctx->freelists);
+		if (ctx->basic_table != NULL)
 		(ctx->memfree)(ctx->arg, ctx->basic_table);
 	}
 
@@ -1087,7 +1088,6 @@ isc__mem_get(isc_mem_t *ctx, size_t size FLARG) {
 	ADD_TRACE(ctx, ptr, size, file, line);
 	if (ctx->hi_water != 0U && !ctx->hi_called &&
 	    ctx->inuse > ctx->hi_water) {
-		ctx->hi_called = ISC_TRUE;
 		call_water = ISC_TRUE;
 	}
 	if (ctx->inuse > ctx->maxinuse) {
@@ -1145,8 +1145,6 @@ isc__mem_put(isc_mem_t *ctx, void *ptr, size_t size FLARG)
 	 */
 	if (ctx->hi_called && 
 	    (ctx->inuse < ctx->lo_water || ctx->lo_water == 0U)) {
-		ctx->hi_called = ISC_FALSE;
-
 		if (ctx->water != NULL)
 			call_water = ISC_TRUE;
 	}
@@ -1154,6 +1152,18 @@ isc__mem_put(isc_mem_t *ctx, void *ptr, size_t size FLARG)
 
 	if (call_water)
 		(ctx->water)(ctx->water_arg, ISC_MEM_LOWATER);
+}
+
+void
+isc_mem_waterack(isc_mem_t *ctx, int flag) {
+	REQUIRE(VALID_CONTEXT(ctx));
+
+	MCTXLOCK(ctx, &ctx->lock);
+	if (flag == ISC_MEM_LOWATER)
+		ctx->hi_called = ISC_FALSE;
+	else if (flag == ISC_MEM_HIWATER)
+		ctx->hi_called = ISC_TRUE;
+	MCTXUNLOCK(ctx, &ctx->lock);
 }
 
 #if ISC_MEM_TRACKLINES
@@ -1165,7 +1175,7 @@ print_active(isc_mem_t *mctx, FILE *out) {
 		const char *format;
 		isc_boolean_t found;
 
-		fprintf(out, isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
+		fprintf(out, "%s", isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
 					    ISC_MSG_DUMPALLOC,
 					    "Dump of all outstanding "
 					    "memory allocations:\n"));
@@ -1191,7 +1201,7 @@ print_active(isc_mem_t *mctx, FILE *out) {
 			}
 		}
 		if (!found)
-			fprintf(out, isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
+			fprintf(out, "%s", isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
 						    ISC_MSG_NONE, "\tNone.\n"));
 	}
 }
@@ -1233,7 +1243,7 @@ isc_mem_stats(isc_mem_t *ctx, FILE *out) {
 	 */
 	pool = ISC_LIST_HEAD(ctx->pools);
 	if (pool != NULL) {
-		fprintf(out, isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
+		fprintf(out, "%s", isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
 					    ISC_MSG_POOLSTATS,
 					    "[Pool statistics]\n"));
 		fprintf(out, "%15s %10s %10s %10s %10s %10s %10s %10s %1s\n",
@@ -1337,6 +1347,40 @@ isc__mem_allocate(isc_mem_t *ctx, size_t size FLARG) {
 		(ctx->water)(ctx->water_arg, ISC_MEM_HIWATER);
 
 	return (si);
+}
+
+void *
+isc__mem_reallocate(isc_mem_t *ctx, void *ptr, size_t size FLARG) {
+	void *new_ptr = NULL;
+	size_t oldsize, copysize;
+
+	REQUIRE(VALID_CONTEXT(ctx));
+
+	/*
+	 * This function emulates the realloc(3) standard library function:
+	 * - if size > 0, allocate new memory; and if ptr is non NULL, copy
+	 *   as much of the old contents to the new buffer and free the old one.
+	 *   Note that when allocation fails the original pointer is intact;
+	 *   the caller must free it.
+	 * - if size is 0 and ptr is non NULL, simply free the given ptr.
+	 * - this function returns:
+	 *     pointer to the newly allocated memory, or
+	 *     NULL if allocation fails or doesn't happen.
+	 */
+	if (size > 0U) {
+		new_ptr = isc__mem_allocate(ctx, size FLARG_PASS);
+		if (new_ptr != NULL && ptr != NULL) {
+			oldsize = (((size_info *)ptr)[-1]).u.size;
+			INSIST(oldsize >= ALIGNMENT_SIZE);
+			oldsize -= ALIGNMENT_SIZE;
+			copysize = oldsize > size ? size : oldsize;
+			memcpy(new_ptr, ptr, copysize);
+			isc__mem_free(ctx, ptr FLARG_PASS);
+		}
+	} else if (ptr != NULL)
+		isc__mem_free(ctx, ptr FLARG_PASS);
+
+	return (new_ptr);
 }
 
 void

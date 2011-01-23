@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25.2.3.2.1 2008/07/16 03:10:54 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.25.2.3.2.2 2011/01/23 21:52:34 bouyer Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -20,7 +20,7 @@ BIND_HTMLDIR=	/usr/share/doc/html/bind9
 
 .include "${IDIST}/version"
 
-VERSION=${MAJORVER}.${MINORVER}.${PATCHVER}${RELEASETYPE}${RELEASEVER}
+VERSION=${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}
 SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
 

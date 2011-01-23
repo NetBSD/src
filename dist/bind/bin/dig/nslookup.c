@@ -1,7 +1,7 @@
-/*	$NetBSD: nslookup.c,v 1.1.1.4.4.1.2.1 2008/07/16 03:10:28 snj Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.1.1.4.4.1.2.2 2011/01/23 21:51:20 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nslookup.c,v 1.101.18.15 2007/08/28 07:19:55 tbox Exp */
+/* Id: nslookup.c,v 1.101.18.20 2009/05/06 23:45:59 tbox Exp */
 
 #include <config.h>
 
@@ -28,6 +28,7 @@
 #include <isc/commandline.h>
 #include <isc/event.h>
 #include <isc/parseint.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/timer.h>
 #include <isc/util.h>
@@ -130,6 +131,23 @@ static const char *rtypetext[] = {
 
 static void flush_lookup_list(void);
 static void getinput(isc_task_t *task, isc_event_t *event);
+
+static char *
+rcode_totext(dns_rcode_t rcode)
+{
+	static char buf[sizeof("?65535")];
+	union {
+		const char *consttext;
+		char *deconsttext;
+	} totext;
+
+	if (rcode >= (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
+		snprintf(buf, sizeof(buf), "?%u", rcode);
+		totext.deconsttext = buf;
+	} else
+		totext.consttext = rcodetext[rcode];
+	return totext.deconsttext;
+}
 
 void
 dighost_shutdown(void) {
@@ -414,7 +432,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 				nametext, sizeof(nametext));
 		printf("** server can't find %s: %s\n",
 		       (msg->rcode != dns_rcode_nxdomain) ? nametext :
-		       query->lookup->textname, rcodetext[msg->rcode]);
+		       query->lookup->textname, rcode_totext(msg->rcode));
 		debug("returning with rcode == 0");
 		return (ISC_R_SUCCESS);
 	}
@@ -443,13 +461,16 @@ show_settings(isc_boolean_t full, isc_boolean_t serv_only) {
 	dig_server_t *srv;
 	isc_sockaddr_t sockaddr;
 	dig_searchlist_t *listent;
+	isc_result_t result;
 
 	srv = ISC_LIST_HEAD(server_list);
 
 	while (srv != NULL) {
 		char sockstr[ISC_SOCKADDR_FORMATSIZE];
 
-		get_address(srv->servername, port, &sockaddr);
+		result = get_address(srv->servername, port, &sockaddr);
+		check_result(result, "get_address");
+
 		isc_sockaddr_format(&sockaddr, sockstr, sizeof(sockstr));
 		printf("Default server: %s\nAddress: %s\n",
 			srv->userarg, sockstr);

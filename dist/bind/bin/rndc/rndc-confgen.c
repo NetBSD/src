@@ -1,10 +1,10 @@
-/*	$NetBSD: rndc-confgen.c,v 1.1.1.3.4.1 2007/05/17 00:35:26 jdc Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.1.1.3.4.1.2.1 2011/01/23 21:51:28 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc-confgen.c,v 1.18.18.3 2005/04/29 00:15:40 marka Exp */
+/* Id: rndc-confgen.c,v 1.18.18.5 2008/10/15 23:46:06 tbox Exp */
 
 /*! \file */
 
@@ -64,7 +64,7 @@
 #define DEFAULT_PORT		953
 
 static char program[256];
-char *progname;
+const char *progname;
 
 isc_boolean_t verbose = ISC_FALSE;
 

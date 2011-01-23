@@ -1,7 +1,7 @@
-/*	$NetBSD: zonetodb.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:31 snj Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.1.1.3.4.1.2.2 2011/01/23 21:51:44 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonetodb.c,v 1.13.18.5 2007/08/28 07:20:03 tbox Exp */
+/* Id: zonetodb.c,v 1.13.18.7 2008/11/27 23:46:02 tbox Exp */
 
 #include <stdlib.h>
 #include <string.h>
@@ -167,7 +167,7 @@ main(int argc, char **argv) {
 	check_result(result, "isc_mem_create");
 
 	result = isc_entropy_create(mctx, &ectx);
-	result_check (result, "isc_entropy_create");
+	check_result(result, "isc_entropy_create");
 
 	result = isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE);
 	check_result (result, "isc_hash_create");

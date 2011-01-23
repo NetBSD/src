@@ -1,10 +1,10 @@
-/*	$NetBSD: strerror.h,v 1.1.1.3.4.1 2007/05/17 00:42:53 jdc Exp $	*/
+/*	$NetBSD: strerror.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:23 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: strerror.h,v 1.4.18.2 2005/04/29 00:17:10 marka Exp */
+/* Id: strerror.h,v 1.4.18.4 2008/12/01 23:45:57 tbox Exp */
 
 #ifndef ISC_STRERROR_H
 #define ISC_STRERROR_H
@@ -34,7 +34,7 @@ ISC_LANG_BEGINDECLS
 #define ISC_STRERRORSIZE 128
 
 /*%
- * Provide a thread safe wrapper to strerrror().
+ * Provide a thread safe wrapper to strerror().
  *
  * Requires:
  * 	'buf' to be non NULL.

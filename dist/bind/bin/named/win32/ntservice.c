@@ -1,10 +1,10 @@
-/*	$NetBSD: ntservice.c,v 1.1.1.3.4.1 2007/05/17 00:35:23 jdc Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.1.1.3.4.1.2.1 2011/01/23 21:51:26 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntservice.c,v 1.8 2004/03/05 04:58:08 marka Exp */
+/* Id: ntservice.c,v 1.8.18.2 2009/06/23 23:46:03 tbox Exp */
 
 #include <config.h>
 #include <stdio.h>
@@ -67,9 +67,12 @@ int bindmain()
 	 */
 	GetArgs(&argc, &argv, &envp);
 
-	/* Command line users should put -f in the options */
+	/* Command line users should put -f in the options. */
+	/* XXXMPA should use isc_commandline_parse() here. */
 	while (argv[i]) {
-		if (!strcmp(argv[i], "-f") || !strcmp(argv[i], "-g")) {
+		if (!strcmp(argv[i], "-f") ||
+		    !strcmp(argv[i], "-g") ||
+		    !strcmp(argv[i], "-v")) {
 			foreground = TRUE;
 			break;
 		}

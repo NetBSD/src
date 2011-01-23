@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.19.4.1 2007/05/17 21:25:12 jdc Exp $	*/
+/*	$NetBSD: nameser.h,v 1.19.4.1.2.1 2011/01/23 21:52:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -431,6 +431,7 @@ typedef enum __ns_cert_types {
  * EDNS0 extended flags, host order.
  */
 #define NS_OPT_DNSSEC_OK	0x8000U
+#define NS_OPT_NSID		3
 
 /*%
  * Inline versions of get/put short/long.  Pointer is advanced.

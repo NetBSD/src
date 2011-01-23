@@ -1,10 +1,10 @@
-/*	$NetBSD: journal.h,v 1.1.1.3.4.1 2007/05/17 00:40:56 jdc Exp $	*/
+/*	$NetBSD: journal.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:15 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.h,v 1.25.18.2 2005/04/29 00:16:13 marka Exp */
+/* Id: journal.h,v 1.25.18.4 2009/01/19 23:46:16 tbox Exp */
 
 #ifndef DNS_JOURNAL_H
 #define DNS_JOURNAL_H 1
@@ -28,7 +28,7 @@
 
 /*! \file
  * \brief
- * Database journalling.
+ * Database journaling.
  */
 
 /***
@@ -190,7 +190,7 @@ dns_journal_iter_init(dns_journal_t *j,
  * Returns:
  *\li	ISC_R_SUCCESS
  *\li	ISC_R_RANGE	begin_serial is outside the addressable range.
- *\li	ISC_R_NOTFOUND	begin_serial is within the range of adressable
+ *\li	ISC_R_NOTFOUND	begin_serial is within the range of addressable
  *			serial numbers covered by the journal, but
  *			this particular serial number does not exist.
  */

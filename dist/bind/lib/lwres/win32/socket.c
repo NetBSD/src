@@ -1,3 +1,5 @@
+/*        $NetBSD: socket.c,v 1.1.1.1.6.3 2011/01/23 21:52:30 bouyer Exp $      */
+
 /*
  * Copyright (C) 2007  Internet Systems Consortium, Inc. ("ISC")
  *

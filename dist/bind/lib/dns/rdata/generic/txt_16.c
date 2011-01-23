@@ -1,10 +1,10 @@
-/*	$NetBSD: txt_16.c,v 1.1.1.3.4.1 2007/05/17 00:41:32 jdc Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:17 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: txt_16.c,v 1.41 2004/03/05 05:10:18 marka Exp */
+/* Id: txt_16.c,v 1.41.18.2 2008/02/15 23:45:53 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -144,7 +144,7 @@ fromstruct_txt(ARGS_FROMSTRUCT) {
 	while (region.length > 0) {
 		length = uint8_fromregion(&region);
 		isc_region_consume(&region, 1);
-		if (region.length <= length)
+		if (region.length < length)
 			return (ISC_R_UNEXPECTEDEND);
 		isc_region_consume(&region, length);
 	}

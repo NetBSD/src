@@ -1,10 +1,10 @@
-/*	$NetBSD: file.c,v 1.1.1.3.4.1 2007/05/17 00:42:47 jdc Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:22 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -50,7 +50,7 @@
  * SUCH DAMAGE.
  */
 
-/* Id: file.c,v 1.47.18.2 2005/04/29 00:17:07 marka Exp */
+/* Id: file.c,v 1.47.18.4 2009/02/16 23:46:03 tbox Exp */
 
 /*! \file */
 
@@ -69,6 +69,7 @@
 
 #include <isc/dir.h>
 #include <isc/file.h>
+#include <isc/log.h>
 #include <isc/random.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -237,7 +238,9 @@ isc_file_renameunique(const char *file, char *templet) {
 			}
 		}
 	}
-	(void)unlink(file);
+	if (unlink(file) < 0)
+		if (errno != ENOENT)
+			return (isc__errno2result(errno));
 	return (ISC_R_SUCCESS);
 }
 
@@ -289,7 +292,11 @@ isc_file_openunique(char *templet, FILE **fp) {
 	f = fdopen(fd, "w+");
 	if (f == NULL) {
 		result = isc__errno2result(errno);
-		(void)remove(templet);
+		if (remove(templet) < 0) {
+			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				      ISC_LOGMODULE_FILE, ISC_LOG_ERROR,
+				      "remove '%s': failed", templet);
+		}
 		(void)close(fd);
 	} else
 		*fp = f;
