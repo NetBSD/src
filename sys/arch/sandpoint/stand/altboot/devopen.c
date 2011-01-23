@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.12 2011/01/10 20:14:52 phx Exp $ */
+/* $NetBSD: devopen.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.

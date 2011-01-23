@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.20 2010/06/26 21:45:49 phx Exp $
+#	$NetBSD: Makefile,v 1.1 2011/01/23 01:05:30 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 
-PROG=		netboot
+PROG=		altboot
 SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c nif.c \
 		fxp.c tlp.c rge.c skg.c dsk.c pciide.c siisata.c printf.c
 CLEANFILES+=	vers.c vers.o ${PROG} ${PROG}.bin

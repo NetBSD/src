@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.41 2011/01/22 19:19:22 joerg Exp $ */
+/* $NetBSD: main.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ void module_load(char *);
 int module_open(struct boot_module *);
 
 void main(int, char **);
-extern char bootprog_rev[];
+extern char bootprog_rev[], bootprog_maker[], bootprog_date[];
 
 int brdtype;
 uint32_t busclock, cpuclock;
@@ -110,6 +110,7 @@ main(int argc, char *argv[])
 
 	printf("\n");
 	printf(">> NetBSD/sandpoint Boot, Revision %s\n", bootprog_rev);
+	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	brdprop = brd_lookup(brdtype);
 	printf("%s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", brdprop->verbose,

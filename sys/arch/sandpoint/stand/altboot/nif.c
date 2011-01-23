@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.13 2010/06/26 21:45:49 phx Exp $ */
+/* $NetBSD: nif.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.7 2010/05/19 15:05:58 phx Exp $ */
+/* $NetBSD: entry.S,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>

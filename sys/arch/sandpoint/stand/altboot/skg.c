@@ -1,4 +1,4 @@
-/* $NetBSD: skg.c,v 1.3 2010/05/16 11:27:49 phx Exp $ */
+/* $NetBSD: skg.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 Frank Wille.
