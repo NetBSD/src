@@ -1,4 +1,6 @@
-# $NetBSD: Makefile.booters,v 1.53 2011/01/22 19:19:21 joerg Exp $
+# $NetBSD: Makefile.booters,v 1.54 2011/01/23 13:18:57 joerg Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -30,8 +32,6 @@ CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 PRIMARY_LOAD_ADDRESS?=	0x80700000
 SECONDARY_LOAD_ADDRESS?=0x80710000
-
-NOMAN=		# defined
 
 .if defined(PRIMARY_PROG)
 PROG=		${PRIMARY_PROG}

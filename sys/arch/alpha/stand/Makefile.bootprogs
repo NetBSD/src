@@ -1,4 +1,6 @@
-# $NetBSD: Makefile.bootprogs,v 1.31 2011/01/22 19:19:15 joerg Exp $
+# $NetBSD: Makefile.bootprogs,v 1.32 2011/01/23 13:24:05 joerg Exp $
+
+NOMAN=			# defined
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
