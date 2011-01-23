@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.220 2011/01/21 15:59:04 joerg Exp $
+$NetBSD: UPDATING,v 1.221 2011/01/23 23:40:37 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -16,7 +16,7 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 20110121:
-	Assembler files no longer use -tradition-cpp.  This can break
+	Assembler files no longer use -traditional-cpp.  This can break
 	the build of individual parts of the tree.  This is handled
 	correctly by build.sh.  Manual builds have to update /usr/share/mk
 	and re-run config(1) for any kernel configurations as needed.
