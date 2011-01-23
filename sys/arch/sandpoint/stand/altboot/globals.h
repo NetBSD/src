@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.19 2011/01/10 20:13:47 phx Exp $ */
+/* $NetBSD: globals.h,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /* clock feed */
 #ifndef EXT_CLK_FREQ

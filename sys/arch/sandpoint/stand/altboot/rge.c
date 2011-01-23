@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.17 2010/05/02 13:36:30 phx Exp $ */
+/* $NetBSD: rge.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
