@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.52 2011/01/23 09:44:58 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.53 2011/01/23 21:53:39 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -258,6 +258,18 @@ L$start_zero_tf:
 	 */
 	mtctl	%r0, %ccr
 
+#ifdef MULTIPROCESSOR
+
+#define	PZ_MEM_RENDEZ		0x10
+#define	PZ_MEM_RENDEZ_HI	0x28
+
+	/* Setup SMP rendezvous address. */
+	ldil	L%hw_cpu_spinup_trampoline, %r1
+	ldo	R%hw_cpu_spinup_trampoline(%r1), %r1
+	stw	%r1, PZ_MEM_RENDEZ(%r0)
+	stw	%r0, PZ_MEM_RENDEZ_HI(%r0)
+#endif
+
 	/*
 	 * We need to set the Q bit so that we can take TLB misses after we
 	 * turn on virtual memory.
@@ -410,6 +422,129 @@ LEAF_ENTRY_NOPROFILE(kernel_setup)
 	nop
 	nop
 EXIT(kernel_setup)
+
+
+#ifdef MULTIPROCESSOR
+/*
+ * Trampoline to spin up secondary processors.
+ */
+LEAF_ENTRY_NOPROFILE(hw_cpu_spinup_trampoline)
+
+	/*
+	 * disable interrupts and turn off all bits in the psw so that
+	 * we start in a known state.
+	 */
+	rsm	RESET_PSW, %r0
+	nop ! nop ! nop ! nop ! nop ! nop
+
+	/* go to virtual mode...
+	/* get things ready for the kernel to run in virtual mode */
+	ldi	HPPA_PID_KERNEL, %r1
+	mtctl	%r1, %pidr1
+	mtctl	%r1, %pidr2
+#if pbably_not_worth_it
+	mtctl	%r0, %pidr3
+	mtctl	%r0, %pidr4
+#endif
+	mtsp	%r0, %sr0
+	mtsp	%r0, %sr1
+	mtsp	%r0, %sr2
+	mtsp	%r0, %sr3
+	mtsp	%r0, %sr4
+	mtsp	%r0, %sr5
+	mtsp	%r0, %sr6
+	mtsp	%r0, %sr7
+
+	/*
+	 * disable all coprocessors
+	 */
+	mtctl   %r0, %ccr
+
+	/*
+	 * to keep the spl() routines consistent we need to put the correct
+	 * spl level into eiem, and reset any pending interrupts
+	 */
+	ldi	-1, %r1
+	mtctl	%r0, %eiem		/* disable interrupts */
+	mtctl	%r1, %eirr
+
+	/*
+	 * load address of interrupt vector table
+	 */
+	ldil	L%ivaaddr, %t2
+	ldo	R%ivaaddr(%t2), %t2
+	mtctl	%t2, %iva
+
+	/*
+	 * set up the dp pointer so that we can do quick references off of it
+	 */
+	ldil	L%$global$, %dp
+	ldo	R%$global$(%dp), %dp
+
+	/*
+	 * Store address of cpu_info in CR_CURCPU.
+	 */
+	ldil	L%cpu_hatch_info, %r3
+	ldw	R%cpu_hatch_info(%r3), %r3
+	mtctl	%r3, CR_CURCPU
+
+	/*
+	 * Setup the stack frame for us to call C with and mark this as the
+	 * first frame on the stack.
+	 */
+	ldw	CI_STACK(%r3), %sp
+	stw,ma	%r0, HPPA_FRAME_SIZE(%sp)
+	stw	%r0, HPPA_FRAME_CRP(%sp)
+	stw	%r0, HPPA_FRAME_PSP(%sp)
+
+	/* Provide CPU with page tables. */
+	ldil	L%hppa_vtop, %t1
+	ldw	R%hppa_vtop(%t1), %t1
+	mtctl	%t1, CR_VTOP
+
+	/* Turn on the Q bit so that we can handle TLB traps. */
+	ldil	L%qenabled, %t1
+	ldo	R%qenabled(%t1), %t1
+	mtctl	%r0, %pcsq
+	mtctl	%r0, %pcsq
+	mtctl	%t1, %pcoq
+	ldo	4(%t1), %t1
+	mtctl	%t1, %pcoq
+	ldi	PSW_Q|PSW_I, %t2
+	mtctl	%t2, %ipsw
+	rfi
+	nop
+
+qenabled:
+	/* Call C routine to setup CPU. */
+	.import cpu_hw_init, code
+	CALL(cpu_hw_init, %r1)
+
+	/* Switch CPU mode. */
+	ldil	L%cpu_spinup_vm, %t1
+	ldo	R%cpu_spinup_vm(%t1), %t1
+	mtctl	%r0, %pcsq
+	mtctl	%r0, %pcsq
+	mtctl	%t1, %pcoq
+	ldo	4(%t1), %t1
+	mtctl	%t1, %pcoq
+	mfctl	CR_CURCPU, %t2
+	ldw	CI_PSW(%t2), %t2
+	mtctl	%t2, %ipsw
+	rfi
+	nop
+
+cpu_spinup_vm:
+
+	/*
+	 * Okay, time to return to the land of C.
+	 */
+	b	cpu_hatch
+	nop
+
+EXIT(hw_cpu_spinup_trampoline)
+#endif
+
 
 /*
  * int pdc_call(iodcio_t func,int pdc_flag, ...)
