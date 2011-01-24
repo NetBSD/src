@@ -1,4 +1,4 @@
-.\"	$NetBSD: gcscpcib.4,v 1.4 2011/01/24 17:30:38 plunky Exp $
+.\"	$NetBSD: gcscpcib.4,v 1.5 2011/01/24 22:06:31 wiz Exp $
 .\"     $OpenBSD: glxpcib.4,v 1.7 2007/11/17 11:38:50 mbalmer Exp $
 .\"
 .\" Michael Shalayeff, 2007. Public Domain.
@@ -21,7 +21,8 @@ This device contains a number of components, including a PCI-ISA bridge.
 Besides the core functionality, the
 .Nm
 driver implements a 32-bit 3.5 MHz timecounter, a watchdog timer device,
-and a GPIO device. The watchdog timer may be configured via the
+and a GPIO device.
+The watchdog timer may be configured via the
 .Xr wdogctl 8
 utility and the GPIO pins can be manipulated via the
 .Xr gpioctl 8
@@ -40,7 +41,7 @@ The
 driver first appeared in
 .Ox 4.3
 as
-.Xr glxpcib 4
+.Nm glxpcib
 before being ported to
 .Nx 5.0 .
 .Sh AUTHORS
