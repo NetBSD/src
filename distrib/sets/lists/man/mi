@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1279 2011/01/20 18:47:22 pooka Exp $
+# $NetBSD: mi,v 1.1280 2011/01/24 01:14:59 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1325,6 +1325,7 @@
 ./usr/share/man/cat4/pc532/plip.0		man-obsolete		obsolete
 ./usr/share/man/cat4/pc532/scn.0		man-obsolete		obsolete
 ./usr/share/man/cat4/pcdisplay.0		man-sys-catman		.cat
+./usr/share/man/cat4/pcf8563rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pchb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pciback.0			man-sys-catman		.cat
@@ -4014,6 +4015,7 @@
 ./usr/share/man/html4/pad.html			man-sys-htmlman		html
 ./usr/share/man/html4/pas.html			man-sys-htmlman		html
 ./usr/share/man/html4/pcdisplay.html		man-sys-htmlman		html
+./usr/share/man/html4/pcf8563rtc.html		man-sys-htmlman		html
 ./usr/share/man/html4/pchb.html			man-sys-htmlman		html
 ./usr/share/man/html4/pci.html			man-sys-htmlman		html
 ./usr/share/man/html4/pciback.html		man-sys-htmlman		html
@@ -6581,6 +6583,7 @@
 ./usr/share/man/man4/pc532/plip.4		man-obsolete		obsolete
 ./usr/share/man/man4/pc532/scn.4		man-obsolete		obsolete
 ./usr/share/man/man4/pcdisplay.4		man-sys-man		.man
+./usr/share/man/man4/pcf8563rtc.4		man-sys-man		.man
 ./usr/share/man/man4/pchb.4			man-sys-man		.man
 ./usr/share/man/man4/pci.4			man-sys-man		.man
 ./usr/share/man/man4/pciback.4			man-sys-man		.man
