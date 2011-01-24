@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.56 2011/01/23 21:29:52 he Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.57 2011/01/24 19:13:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.56 2011/01/23 21:29:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.57 2011/01/24 19:13:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	int cidx = 0;	/* XXX: GCC */
 #endif
 #ifdef PGALLOC_VERBOSE
-	printf("pgalloc: contig %d pgs from psi %ld\n", num,
-	(long)(ps - vm_physmem));
+	printf("pgalloc: contig %d pgs from psi %zd\n", num, ps - vm_physmem);
 #endif
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
@@ -139,6 +138,12 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	low = atop(low);
 	high = atop(high);
 	alignment = atop(alignment);
+
+	/*
+	 * Make sure that physseg falls within with range to be allocated from.
+	 */
+	if (high <= ps->avail_start || low >= ps->avail_end)
+		return 0;
 
 	/*
 	 * We start our search at the just after where the last allocation
@@ -169,7 +174,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			 */
 			second_pass = true;
 			try = roundup2(max(low, ps->avail_start), alignment);
-			limit = min(high, ps->avail_start + ps->start_hint);
+			limit = min(limit, ps->avail_start + ps->start_hint);
 			skip = 0;
 			continue;
 		}
@@ -362,8 +367,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	struct vm_page *pg;
 	bool second_pass;
 #ifdef PGALLOC_VERBOSE
-	printf("pgalloc: simple %d pgs from psi %ld\n", num,
-	    (long)(ps - vm_physmem));
+	printf("pgalloc: simple %d pgs from psi %zd\n", num, ps - vm_physmem);
 #endif
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
@@ -380,13 +384,21 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	pg = &ps->pgs[try - ps->start];
 	second_pass = false;
 
+	/*
+	 * Make sure that physseg falls within with range to be allocated from.
+	 */
+	if (high <= ps->avail_start || low >= ps->avail_end)
+		return 0;
+
 	for (;; try++, pg++) {
 		if (try >= limit) {
-			if (ps->start_hint == 0 || second_pass)
+			if (ps->start_hint == 0 || second_pass) {
+				try = limit - 1;
 				break;
+			}
 			second_pass = true;
 			try = max(low, ps->avail_start);
-			limit = min(high, ps->avail_start + ps->start_hint);
+			limit = min(limit, ps->avail_start + ps->start_hint);
 			pg = &ps->pgs[try - ps->start];
 			continue;
 		}
