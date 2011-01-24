@@ -1,4 +1,7 @@
-# $NetBSD: Makefile.booters,v 1.18 2011/01/22 19:19:23 joerg Exp $
+# $NetBSD: Makefile.booters,v 1.19 2011/01/24 19:26:16 joerg Exp $
+
+# PROG set by parent.
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -33,9 +36,6 @@ NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CPPFLAGS+=	-Dsgimips
-
-# PROG set by parent.
-NOMAN=		# defined
 
 # We load the kernel at 420K in from the start of RAM to give the boot
 # loader plenty of breathing room.  Load the boot loader starting at
