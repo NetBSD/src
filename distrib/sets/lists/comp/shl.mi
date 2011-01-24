@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.153 2011/01/20 15:50:06 njoly Exp $
+# $NetBSD: shl.mi,v 1.154 2011/01/24 10:15:39 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -338,10 +338,10 @@
 ./usr/libdata/debug/usr/lib/librumpfs_udf.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_umap.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_union.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpfs_zfs.so.0.0.debug		comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpfs_zfs.so.0.0.debug		comp-rump-debug	debug,zfs
 ./usr/libdata/debug/usr/lib/librumpkern_crypto.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpkern_solaris.so.0.0.debug	comp-rump-debuf	debug
+./usr/libdata/debug/usr/lib/librumpkern_solaris.so.0.0.debug	comp-rump-debug	debug,zfs
 ./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet.so.0.0.debug	comp-rump-debug	debug
