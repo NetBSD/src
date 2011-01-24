@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 2011/01/23 21:53:40 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61 2011/01/24 07:44:16 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -232,6 +232,11 @@ struct clockframe {
 #define	CLKF_USERMODE(framep)	((framep)->cf_flags & T_USER)
 
 int	clock_intr(void *);
+
+/*
+ * LWP_PC: the program counter for the given lwp.
+ */
+#define	LWP_PC(l)		((l)->l_md.md_regs->tf_iioq_head)
 
 #define	cpu_signotify(l)	(setsoftast(l))
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast(l))
