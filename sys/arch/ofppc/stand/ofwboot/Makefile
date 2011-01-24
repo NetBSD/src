@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.26 2011/01/22 19:19:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.27 2011/01/24 19:27:18 joerg Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
-.include <bsd.own.mk>
-
 PROG=		ofwboot
+NOMAN=		# defined
 SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c
 SRCS+=		mbr.c rdb.c vers.c
 CFLAGS+=	-msoft-float -Wno-main -ffreestanding
@@ -13,6 +12,9 @@ CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 #CPPFLAGS+=	-DOFWDUMP
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 CPPFLAGS+=	-DHEAP_VARIABLE
+
+.include <bsd.own.mk>
+
 DBG=		-Os -mmultiple
 
 SRCS+=		ofwmagic.S
@@ -21,7 +23,6 @@ SRCS+=		ofwmagic.S
 SRCS+=		byteorder.c
 .PATH:		${S}/lib/libsa
 
-NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 
