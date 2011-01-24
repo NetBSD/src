@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.57 2011/01/24 19:13:55 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.58 2011/01/24 22:54:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.57 2011/01/24 19:13:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.58 2011/01/24 22:54:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,14 +402,14 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			pg = &ps->pgs[try - ps->start];
 			continue;
 		}
-#if defined(DEBUG) && defined(DIAGNOSTIC)
+#if defined(DEBUG)
 		{
 			int cidx = 0;
 			const int bank = vm_physseg_find(try, &cidx);
-			KASSERTMSG(bank == ps - vm_physmem,
+			KDASSERTMSG(bank == ps - vm_physmem,
 			    ("vm_physseg_find(%#x) (%d) != ps %zd",
 			     try, bank, ps - vm_physmem));
-			KASSERTMSG(cidx == try - ps->start,
+			KDASSERTMSG(cidx == try - ps->start,
 			    ("vm_physseg_find(%#x): %#x != off %"PRIxPADDR,
 			     try, cidx, try - ps->start));
 		}
