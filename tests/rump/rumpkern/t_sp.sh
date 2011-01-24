@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.9 2011/01/14 13:23:15 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.10 2011/01/24 17:51:29 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,7 @@ test_case fork_pipecomm fork pipecomm
 test_case fork_fakeauth fork fakeauth
 test_case sigsafe sigsafe sigsafe
 test_case signal signal
+test_case reconnect reconnect
 
 basic()
 {
@@ -92,6 +93,15 @@ signal()
 	atf_check -s signal:27 $(atf_get_srcdir)/h_client/h_simplecli block
 }
 
+reconnect()
+{
+
+
+	export RUMP_SERVER=unix://commsock
+	atf_check -s exit:0 rump_server ${RUMP_SERVER}
+	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_reconcli 2
+}
+
 atf_init_test_cases()
 {
 
@@ -104,4 +114,5 @@ atf_init_test_cases()
 	atf_add_test_case fork_fakeauth
 	atf_add_test_case sigsafe
 	atf_add_test_case signal
+	atf_add_test_case reconnect
 }
