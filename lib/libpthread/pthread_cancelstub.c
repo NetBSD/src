@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.28 2010/08/06 05:25:46 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.29 2011/01/25 19:13:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.28 2010/08/06 05:25:46 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.29 2011/01/25 19:13:26 christos Exp $");
 
 #ifndef lint
 
@@ -59,7 +59,12 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.28 2010/08/06 05:25:46 christos Exp $
 #include <mqueue.h>
 #include <poll.h>
 #include <stdarg.h>
+
+#define read _read
 #include <unistd.h>
+#undef read
+ssize_t  read(int, void *, size_t);
+
 
 #include <signal.h>
 #include <sys/mman.h>
@@ -468,15 +473,15 @@ pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 	return retval;
 }
 
-#ifdef _FORTIFY_SOURCE
-#undef read
-#endif
-
 ssize_t
 read(int d, void *buf, size_t nbytes)
 {
 	ssize_t retval;
 	pthread_t self;
+
+#ifdef __ssp_check
+	__ssp_check(buf, nbytes, __ssp_bos0);
+#endif
 
 	self = pthread__self();
 	TESTCANCEL(self);
