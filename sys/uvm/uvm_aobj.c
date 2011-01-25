@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.110 2010/07/29 10:54:51 hannken Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.111 2011/01/25 03:34:29 enami Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.110 2010/07/29 10:54:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.111 2011/01/25 03:34:29 enami Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -393,8 +393,6 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 static void
 uao_free(struct uvm_aobj *aobj)
 {
-	int swpgonlydelta = 0;
-
 
 #if defined(VMSWAP)
 	uao_dropswap_range1(aobj, 0, 0);
@@ -426,18 +424,6 @@ uao_free(struct uvm_aobj *aobj)
 
 	UVM_OBJ_DESTROY(&aobj->u_obj);
 	pool_cache_put(&uvm_aobj_cache, aobj);
-
-	/*
-	 * adjust the counter of pages only in swap for all
-	 * the swap slots we've freed.
-	 */
-
-	if (swpgonlydelta > 0) {
-		mutex_enter(&uvm_swap_data_lock);
-		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
-		uvmexp.swpgonly -= swpgonlydelta;
-		mutex_exit(&uvm_swap_data_lock);
-	}
 }
 
 /*
