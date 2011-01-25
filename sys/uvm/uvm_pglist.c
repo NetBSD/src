@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.58 2011/01/24 22:54:01 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.59 2011/01/25 17:22:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.58 2011/01/24 22:54:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.59 2011/01/25 17:22:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		return 0;
 
 	for (;; try++, pg++) {
-		if (try >= limit) {
+		while (try >= limit) {
 			if (ps->start_hint == 0 || second_pass) {
 				try = limit - 1;
 				break;
@@ -400,7 +400,6 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			try = max(low, ps->avail_start);
 			limit = min(limit, ps->avail_start + ps->start_hint);
 			pg = &ps->pgs[try - ps->start];
-			continue;
 		}
 #if defined(DEBUG)
 		{
