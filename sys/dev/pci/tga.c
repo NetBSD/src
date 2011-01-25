@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.81 2011/01/22 15:14:28 cegger Exp $ */
+/* $NetBSD: tga.c,v 1.82 2011/01/25 07:17:07 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.81 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.82 2011/01/25 07:17:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,7 +598,7 @@ tga_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		    cmd, data, flag, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(vc->softc->sc_dev, dc->dc_pc,
+		return wsdisplayio_busid_pci(sc->sc_dev, dc->dc_pc,
 		    dc->dc_pcitag, data);
 	}
 	return EPASSTHROUGH;
