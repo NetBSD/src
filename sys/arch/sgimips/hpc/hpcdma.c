@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.19 2011/01/25 12:21:04 tsutsui Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.20 2011/01/25 12:30:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.19 2011/01/25 12:21:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.20 2011/01/25 12:30:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,28 +85,27 @@ hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 	/*
 	 * Allocate a block of memory for dma chaining pointers
 	 */
-	if (bus_dmamem_alloc(sc->sc_dmat, allocsz, 0, 0,
-			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	if (bus_dmamem_alloc(sc->sc_dmat, allocsz, 0, 0, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT)) {
 		printf(": can't allocate sglist\n");
 		return;
 	}
 	/* Map pages into kernel memory */
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, allocsz,
-			   (void **)&sc->sc_desc_kva, BUS_DMA_NOWAIT)) {
+	    (void **)&sc->sc_desc_kva, BUS_DMA_NOWAIT)) {
 		printf(": can't map sglist\n");
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;
 	}
 
-	if (bus_dmamap_create(sc->sc_dmat, allocsz, 1 /*seg*/,
-			      allocsz, 0, BUS_DMA_WAITOK,
-			      &sc->sc_dmamap) != 0) {
+	if (bus_dmamap_create(sc->sc_dmat, allocsz, 1 /*seg*/, allocsz, 0,
+	    BUS_DMA_WAITOK, &sc->sc_dmamap) != 0) {
 		printf(": failed to create dmamap\n");
 		return;
 	}
 
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_desc_kva,
-			    allocsz, NULL, BUS_DMA_NOWAIT)) {
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
+	    sc->sc_desc_kva, allocsz, NULL, BUS_DMA_NOWAIT)) {
 		printf(": can't load sglist\n");
 		return;
 	}
@@ -142,18 +141,20 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 			hva->hpc3_hdd_ctl    = segp->ds_len;
 			hva->hdd_descptr     = hpa;
 		} else /* HPC 1/1.5 */ {
-			/* there doesn't seem to be any good way of doing this
-		   	   via an abstraction layer */
+			/*
+			 * there doesn't seem to be any good way of doing this
+		   	 * via an abstraction layer
+			 */
 			hva->hpc1_hdd_bufptr = segp->ds_addr;
 			hva->hpc1_hdd_ctl    = segp->ds_len;
 			hva->hdd_descptr     = hpa;
 		}
-		++hva; ++segp;
+		++hva;
+		++segp;
 	}
 
 	/* Work around HPC3 DMA bug */
-	if (sc->hpc->revision == 3)
-	{
+	if (sc->hpc->revision == 3) {
 		hva->hpc3_hdd_bufptr  = 0;
 		hva->hpc3_hdd_ctl     = HPC3_HDD_CTL_EOCHAIN;
 		hva->hdd_descptr = 0;
@@ -199,8 +200,8 @@ hpcdma_flush(struct hpc_dma_softc *sc)
 	uint32_t mode;
 
 	mode = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->hpc->scsi0_ctl);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->hpc->scsi0_ctl,
-	    			mode | sc->hpc->scsi_dmactl_flush);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+	    sc->hpc->scsi0_ctl, mode | sc->hpc->scsi_dmactl_flush);
 
 	/* Wait for Active bit to drop */
 	while (bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->hpc->scsi0_ctl) &
