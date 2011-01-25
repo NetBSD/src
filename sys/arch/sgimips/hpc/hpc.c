@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.64 2011/01/25 12:21:04 tsutsui Exp $	*/
+/*	$NetBSD: hpc.c,v 1.65 2011/01/25 13:22:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.64 2011/01/25 12:21:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.65 2011/01/25 13:22:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ static const struct hpc_device hpc3_devices[] = {
 };
 
 struct hpc_softc {
-	struct device 		sc_dev;
+	device_t		sc_dev;
 
 	bus_addr_t		sc_base;
 
@@ -351,14 +351,13 @@ static struct hpc_values hpc3_values = {
 
 static int powerintr_established;
 
-static int	hpc_match(struct device *, struct cfdata *, void *);
-static void	hpc_attach(struct device *, struct device *, void *);
+static int	hpc_match(device_t, cfdata_t, void *);
+static void	hpc_attach(device_t, device_t, void *);
 static int	hpc_print(void *, const char *);
 
 static int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
 
-static int	hpc_submatch(struct device *, struct cfdata *,
-		     const int *, void *);
+static int	hpc_submatch(device_t, cfdata_t, const int *, void *);
 
 //static int	hpc_power_intr(void *);
 
@@ -370,11 +369,11 @@ static void	hpc_blink(void *);
 static int	hpc_read_eeprom(int, bus_space_tag_t, bus_space_handle_t,
 		    uint8_t *, size_t);
 
-CFATTACH_DECL(hpc, sizeof(struct hpc_softc),
+CFATTACH_DECL_NEW(hpc, sizeof(struct hpc_softc),
     hpc_match, hpc_attach, NULL, NULL);
 
 static int
-hpc_match(struct device *parent, struct cfdata *cf, void *aux)
+hpc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gio_attach_args* ga = aux;
 
@@ -390,9 +389,9 @@ hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-hpc_attach(struct device *parent, struct device *self, void *aux)
+hpc_attach(device_t parent, device_t self, void *aux)
 {
-	struct hpc_softc *sc = (struct hpc_softc *)self;
+	struct hpc_softc *sc = device_private(self);
 	struct gio_attach_args* ga = aux;
 	struct hpc_attach_args ha;
 	const struct hpc_device *hd;
@@ -400,6 +399,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	int isonboard;
 	int isioplus;
 	int sysmask;
+
+	sc->sc_dev = self;
 
 #ifdef BLINK
 	callout_init(&hpc_blink_ch, 0);
@@ -467,11 +468,12 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		if (gio_arb_config(arb_slot, GIO_ARB_LB | GIO_ARB_MST |
 		    GIO_ARB_64BIT | GIO_ARB_HPC2_64BIT)) {
 			printf("%s: failed to configure GIO bus arbiter\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			return;
 		}
 
-		printf("%s: using EXP%d's DMA channel\n", sc->sc_dev.dv_xname,
+		printf("%s: using EXP%d's DMA channel\n",
+		    device_xname(sc->sc_dev),
 		    (arb_slot == GIO_SLOT_EXP0) ? 0 : 1);
 
 		bus_space_write_4(ga->ga_iot, ga->ga_ioh,
@@ -491,7 +493,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 
 		if (gio_arb_config(arb_slot, GIO_ARB_RT | GIO_ARB_MST)) {
 			printf("%s: failed to configure GIO bus arbiter\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			return;
 		}
 	}
@@ -681,9 +683,9 @@ hpc_power_intr(void *arg)
 
 #if defined(BLINK)
 static void
-hpc_blink(void *self)
+hpc_blink(void *arg)
 {
-	struct hpc_softc *sc = (struct hpc_softc *) self;
+	struct hpc_softc *sc = arg;
 	register int	s;
 	int	value;
 
