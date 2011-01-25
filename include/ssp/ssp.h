@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.6 2011/01/20 02:58:17 christos Exp $	*/
+/*	$NetBSD: ssp.h,v 1.7 2011/01/25 19:13:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,12 +54,14 @@
 #define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
 #define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
 
+#define __ssp_check(buf, len, bos) \
+	if (bos(buf) != (size_t)-1 && len > bos(buf)) \
+		__chk_fail()
 #define __ssp_redirect_raw(rtype, fun, args, call, bos) \
 rtype __ssp_weak_name(fun) args; \
 __ssp_inline rtype fun args; \
 __ssp_inline rtype fun args { \
-	if (bos(__buf) != (size_t)-1 && __len > bos(__buf)) \
-		__chk_fail(); \
+	__ssp_check(__buf, __len, bos); \
 	return __ssp_weak_name(fun) call; \
 }
 
