@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.9 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.10 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -152,7 +152,7 @@ struct sq_softc {
 	bus_dmamap_t		sc_txmap[SQ_NTXDESC];
 	struct mbuf*		sc_txmbuf[SQ_NTXDESC];
 
-	u_int8_t		sc_rxcmd;	/* prototype rxcmd */
+	uint8_t			sc_rxcmd;	/* prototype rxcmd */
 
 	struct evcnt		sq_intrcnt;	/* count interrupts */
 
