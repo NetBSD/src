@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.18 2011/01/25 12:21:36 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.19 2011/01/25 12:53:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.18 2011/01/25 12:21:36 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.19 2011/01/25 12:53:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -187,7 +187,7 @@ rcinit(void)
 	int (*rumpcinit)(void);
 	void **rumpcdlsym;
 	void *hand;
-	int i, j;
+	unsigned i, j;
 
 	hand = dlopen("librumpclient.so", RTLD_LAZY|RTLD_GLOBAL);
 	if (!hand)
@@ -448,7 +448,8 @@ LIBCSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 {
 	struct pollfd *pfds;
 	struct timespec ts, *tsp = NULL;
-	nfds_t i, j, realnfds;
+	nfds_t realnfds;
+	int i, j;
 	int rv, incr;
 
 	DPRINTF(("select\n"));
@@ -528,7 +529,7 @@ LIBCSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	}
 
 	/* and then plug in the results */
-	for (i = 0; i < realnfds; i++) {
+	for (i = 0; i < (int)realnfds; i++) {
 		if (readfds) {
 			if (pfds[i].revents & POLLIN) {
 				FD_SET(pfds[i].fd, readfds);
