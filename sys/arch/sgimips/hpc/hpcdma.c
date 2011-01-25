@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.18 2011/01/25 12:11:27 tsutsui Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.19 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.18 2011/01/25 12:11:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.19 2011/01/25 12:21:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ hpcdma_reset(struct hpc_dma_softc *sc)
 void
 hpcdma_flush(struct hpc_dma_softc *sc)
 {
-	u_int32_t	mode;
+	uint32_t mode;
 
 	mode = bus_space_read_4(sc->sc_bst, sc->sc_bsh, sc->hpc->scsi0_ctl);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->hpc->scsi0_ctl,

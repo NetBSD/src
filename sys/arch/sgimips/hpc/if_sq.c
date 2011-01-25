@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.37 2011/01/10 13:29:29 tsutsui Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.38 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.37 2011/01/10 13:29:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.38 2011/01/25 12:21:04 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -419,7 +419,7 @@ sq_init(struct ifnet *ifp)
 	 * chip is configured and assume that it's correct for both.
 	 */
 	if (sc->hpc_regs->revision == 3) {
-		u_int32_t dmareg, pioreg;
+		uint32_t dmareg, pioreg;
 
 		pioreg = HPC3_ENETR_PIOCFG_P1(1) |
 			 HPC3_ENETR_PIOCFG_P2(6) |
@@ -526,7 +526,7 @@ void
 sq_start(struct ifnet *ifp)
 {
 	struct sq_softc *sc = ifp->if_softc;
-	u_int32_t status;
+	uint32_t status;
 	struct mbuf *m0, *m;
 	bus_dmamap_t dmamap;
 	int err, totlen, nexttx, firsttx, lasttx = -1, ofree, seg;
@@ -842,7 +842,7 @@ sq_stop(struct ifnet *ifp, int disable)
 void
 sq_watchdog(struct ifnet *ifp)
 {
-	u_int32_t status;
+	uint32_t status;
 	struct sq_softc *sc = ifp->if_softc;
 
 	status = sq_hpc_read(sc, sc->hpc_regs->enetx_ctl);
@@ -894,7 +894,7 @@ sq_intr(void *arg)
 	struct sq_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int handled = 0;
-	u_int32_t stat;
+	uint32_t stat;
 
 	stat = sq_hpc_read(sc, sc->hpc_regs->enetr_reset);
 
@@ -936,9 +936,9 @@ sq_rxintr(struct sq_softc *sc)
 	int count = 0;
 	struct mbuf* m;
 	int i, framelen;
-	u_int8_t pktstat;
-	u_int32_t status;
-	u_int32_t ctl_reg;
+	uint8_t pktstat;
+	uint32_t status;
+	uint32_t ctl_reg;
 	int new_end, orig_end;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -958,7 +958,7 @@ sq_rxintr(struct sq_softc *sc)
 
 		if (ctl_reg) {
 #if defined(SQ_DEBUG)
-			u_int32_t reg;
+			uint32_t reg;
 
 			reg = sq_hpc_read(sc, sc->hpc_regs->enetr_ctl);
 			SQ_DPRINTF(("%s: rxintr: done at %d (ctl %08x)\n",
@@ -982,7 +982,7 @@ sq_rxintr(struct sq_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
 		    sc->sc_rxmap[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		pktstat = *((u_int8_t*)m->m_data + framelen + 2);
+		pktstat = *((uint8_t*)m->m_data + framelen + 2);
 
 		if ((pktstat & RXSTAT_GOOD) == 0) {
 			ifp->if_ierrors++;
@@ -1066,7 +1066,7 @@ static int
 sq_txintr(struct sq_softc *sc)
 {
 	int shift = 0;
-	u_int32_t status, tmp;
+	uint32_t status, tmp;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (sc->hpc_regs->revision != 3)
@@ -1132,7 +1132,7 @@ sq_txring_hpc1(struct sq_softc *sc)
 	 * For now, we'll only reclaim on inactive DMA and assume
 	 * that a sufficiently large ring keeps us out of trouble.
 	 */
-	u_int32_t reclaimto, status;
+	uint32_t reclaimto, status;
 	int reclaimall, i = sc->sc_prevtx;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1206,7 +1206,7 @@ sq_txring_hpc3(struct sq_softc *sc)
 	 * descriptors are left over. 
 	 */
 	int i;
-	u_int32_t status = 0;
+	uint32_t status = 0;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	i = sc->sc_prevtx;
