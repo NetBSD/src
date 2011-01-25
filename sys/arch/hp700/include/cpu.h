@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61 2011/01/24 07:44:16 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62 2011/01/25 21:27:11 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -402,7 +402,7 @@ void	cpu_hatch(void);
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
-#define CPU_LCD_BLINK           3	/* int: twiddle heartbeat LED/LCD */ 
+#define	CPU_LCD_BLINK           3	/* int: twiddle heartbeat LED/LCD */ 
 #define	CPU_MAXID		4	/* number of valid machdep ids */
 
 #ifdef _KERNEL
