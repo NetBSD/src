@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.38 2011/01/25 12:21:04 tsutsui Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.39 2011/01/25 12:43:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.38 2011/01/25 12:21:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.39 2011/01/25 12:43:30 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.38 2011/01/25 12:21:04 tsutsui Exp $");
  #define SQ_DPRINTF(x)
 #endif
 
-static int	sq_match(struct device *, struct cfdata *, void *);
-static void	sq_attach(struct device *, struct device *, void *);
+static int	sq_match(device_t, cfdata_t, void *);
+static void	sq_attach(device_t, device_t, void *);
 static int	sq_init(struct ifnet *);
 static void	sq_start(struct ifnet *);
 static void	sq_stop(struct ifnet *, int);
@@ -118,7 +118,7 @@ static int 	sq_add_rxbuf(struct sq_softc *, int);
 static void 	sq_dump_buffer(paddr_t addr, psize_t len);
 static void	sq_trace_dump(struct sq_softc *);
 
-CFATTACH_DECL(sq, sizeof(struct sq_softc),
+CFATTACH_DECL_NEW(sq, sizeof(struct sq_softc),
     sq_match, sq_attach, NULL, NULL);
 
 #define        ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
@@ -141,7 +141,7 @@ CFATTACH_DECL(sq, sizeof(struct sq_softc),
 #define SGI_OUI_2		0x69
 
 static int
-sq_match(struct device *parent, struct cfdata *cf, void *aux)
+sq_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
@@ -171,14 +171,15 @@ sq_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sq_attach(struct device *parent, struct device *self, void *aux)
+sq_attach(device_t parent, device_t self, void *aux)
 {
 	int i, err;
 	const char* macaddr;
-	struct sq_softc *sc = (void *)self;
+	struct sq_softc *sc = device_private(self);
 	struct hpc_attach_args *haa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
+	sc->sc_dev = self;
 	sc->sc_hpct = haa->ha_st;
 	sc->hpc_regs = haa->hpc_regs;      /* HPC register definitions */
 
@@ -284,7 +285,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	evcnt_attach_dynamic(&sc->sq_intrcnt, EVCNT_TYPE_INTR, NULL,
-					      self->dv_xname, "intr");
+	    device_xname(self), "intr");
 
 	if ((cpu_intr_establish(haa->ha_irq, IPL_NET, sq_intr, sc)) == NULL) {
 		printf(": unable to establish interrupt!\n");
@@ -310,10 +311,10 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	printf(": SGI Seeq %s\n",
 	    sc->sc_type == SQ_TYPE_80C03 ? "80c03" : "8003");
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-					   ether_sprintf(sc->sc_enaddr));
+	printf("%s: Ethernet address %s\n",
+	    device_xname(self), ether_sprintf(sc->sc_enaddr));
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(self));
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_init = sq_init;
@@ -575,14 +576,15 @@ sq_start(struct ifnet *ifp)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					printf("%s: unable to allocate Tx "
-					    "cluster\n", sc->sc_dev.dv_xname);
+					    "cluster\n",
+					    device_xname(sc->sc_dev));
 					m_freem(m);
 					break;
 				}
@@ -599,7 +601,8 @@ sq_start(struct ifnet *ifp)
 			if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 						m, BUS_DMA_NOWAIT)) != 0) {
 				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", sc->sc_dev.dv_xname, err);
+				    "error = %d\n",
+				    device_xname(sc->sc_dev), err);
 				break;
 			}
 		}
@@ -678,7 +681,8 @@ sq_start(struct ifnet *ifp)
 			sc->sc_txdesc[lasttx].hpc1_hdd_ctl |=
 			    HPC1_HDD_CTL_EOPACKET;
 
-		SQ_DPRINTF(("%s: transmit %d-%d, len %d\n", sc->sc_dev.dv_xname,
+		SQ_DPRINTF(("%s: transmit %d-%d, len %d\n",
+						       device_xname(sc->sc_dev),
 						       sc->sc_nexttx, lasttx,
 						       totlen));
 
@@ -720,7 +724,7 @@ sq_start(struct ifnet *ifp)
 
 	if (sc->sc_nfreetx != ofree) {
 		SQ_DPRINTF(("%s: %d packets enqueued, first %d, INTR on %d\n",
-			    sc->sc_dev.dv_xname, lasttx - firsttx + 1,
+			    device_xname(sc->sc_dev), lasttx - firsttx + 1,
 			    firsttx, lasttx));
 
 		/*
@@ -847,7 +851,7 @@ sq_watchdog(struct ifnet *ifp)
 
 	status = sq_hpc_read(sc, sc->hpc_regs->enetx_ctl);
 	log(LOG_ERR, "%s: device timeout (prev %d, next %d, free %d, "
-		     "status %08x)\n", sc->sc_dev.dv_xname, sc->sc_prevtx,
+		     "status %08x)\n", device_xname(sc->sc_dev), sc->sc_prevtx,
 				       sc->sc_nexttx, sc->sc_nfreetx, status);
 
 	sq_trace_dump(sc);
@@ -882,7 +886,7 @@ sq_trace_dump(struct sq_softc *sc)
 		}
 
 		printf("%s: [%03d] action %-16s buf %03d free %03d "
-		    "status %08x line %d\n", sc->sc_dev.dv_xname, i, act,
+		    "status %08x line %d\n", device_xname(sc->sc_dev), i, act,
 		    sc->sq_trace[i].bufno, sc->sq_trace[i].freebuf,
 		    sc->sq_trace[i].status, sc->sq_trace[i].line);
 	}
@@ -900,7 +904,7 @@ sq_intr(void *arg)
 
 	if ((stat & 2) == 0)
 		SQ_DPRINTF(("%s: Unexpected interrupt!\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 	else
 		sq_hpc_write(sc, sc->hpc_regs->enetr_reset, (stat | 2));
 
@@ -962,7 +966,7 @@ sq_rxintr(struct sq_softc *sc)
 
 			reg = sq_hpc_read(sc, sc->hpc_regs->enetr_ctl);
 			SQ_DPRINTF(("%s: rxintr: done at %d (ctl %08x)\n",
-			    sc->sc_dev.dv_xname, i, reg));
+			    device_xname(sc->sc_dev), i, reg));
 #endif
 			break;
 		}
@@ -989,14 +993,14 @@ sq_rxintr(struct sq_softc *sc)
 
 			if (pktstat & RXSTAT_OFLOW)
 				printf("%s: receive FIFO overflow\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
 			    sc->sc_rxmap[i]->dm_mapsize,
 			    BUS_DMASYNC_PREREAD);
 			SQ_INIT_RXDESC(sc, i);
 			SQ_DPRINTF(("%s: sq_rxintr: buf %d no RXSTAT_GOOD\n",
-			    sc->sc_dev.dv_xname, i));
+			    device_xname(sc->sc_dev), i));
 			continue;
 		}
 
@@ -1007,7 +1011,7 @@ sq_rxintr(struct sq_softc *sc)
 			    BUS_DMASYNC_PREREAD);
 			SQ_INIT_RXDESC(sc, i);
 			SQ_DPRINTF(("%s: sq_rxintr: buf %d sq_add_rxbuf() "
-			    "failed\n", sc->sc_dev.dv_xname, i));
+			    "failed\n", device_xname(sc->sc_dev), i));
 			continue;
 		}
 
@@ -1019,7 +1023,7 @@ sq_rxintr(struct sq_softc *sc)
 		ifp->if_ipackets++;
 
 		SQ_DPRINTF(("%s: sq_rxintr: buf %d len %d\n",
-			    sc->sc_dev.dv_xname, i, framelen));
+			    device_xname(sc->sc_dev), i, framelen));
 
 		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
@@ -1082,13 +1086,14 @@ sq_txintr(struct sq_softc *sc)
 			ifp->if_collisions++;
 
 		if (status & TXSTAT_UFLOW) {
-			printf("%s: transmit underflow\n", sc->sc_dev.dv_xname);
+			printf("%s: transmit underflow\n",
+			    device_xname(sc->sc_dev));
 			ifp->if_oerrors++;
 		}
 
 		if (status & TXSTAT_16COLL) {
 			printf("%s: max collisions reached\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			ifp->if_oerrors++;
 			ifp->if_collisions += 16;
 		}
@@ -1299,7 +1304,7 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 				   m->m_ext.ext_buf, m->m_ext.ext_size,
 				   NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, idx, err);
+		    device_xname(sc->sc_dev), idx, err);
 		panic("sq_add_rxbuf");	/* XXX */
 	}
 

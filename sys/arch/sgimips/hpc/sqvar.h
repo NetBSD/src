@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.10 2011/01/25 12:21:04 tsutsui Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.11 2011/01/25 12:43:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -108,7 +108,7 @@ struct sq_action_trace {
 } while (0)
 
 struct sq_softc {
-	struct device 		sc_dev;
+	device_t 		sc_dev;
 
 	/* HPC registers */
 	bus_space_tag_t 	sc_hpct;
