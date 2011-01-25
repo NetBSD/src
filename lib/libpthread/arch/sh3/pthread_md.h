@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.7 2009/05/16 22:20:41 ad Exp $ */
+/*	$NetBSD: pthread_md.h,v 1.8 2011/01/25 19:12:06 christos Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -38,10 +38,10 @@
 #ifndef _LIB_PTHREAD_SH3_MD_H
 #define _LIB_PTHREAD_SH3_MD_H
 
-static inline long
+static inline unsigned long
 pthread__sp(void)
 {
-	long ret;
+	unsigned long ret;
 	__asm("mov r15, %0" : "=r" (ret));
 
 	return ret;

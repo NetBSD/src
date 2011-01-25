@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.11 2009/05/16 22:23:45 ad Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.12 2011/01/25 19:12:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
 
 #include <sys/ucontext.h>
 
-static inline long
+static inline unsigned long
 pthread__sp(void)
 {
-	long ret;
+	unsigned long ret;
 	__asm("movq %%rsp, %0" : "=g" (ret));
 
 	return ret;
