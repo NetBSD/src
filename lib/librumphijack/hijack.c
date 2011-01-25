@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.19 2011/01/25 12:53:45 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.20 2011/01/25 17:37:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.19 2011/01/25 12:53:45 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.20 2011/01/25 17:37:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -85,9 +85,10 @@ enum dualcall {
 #define LIBCPOLL __poll50
 #endif
 
-int SELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-int POLLTS(struct pollfd *, nfds_t, const struct timespec *, const sigset_t *);
-int POLL(struct pollfd *, nfds_t, int);
+int LIBCSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+int LIBCPOLLTS(struct pollfd *, nfds_t,
+	       const struct timespec *, const sigset_t *);
+int LIBCPOLL(struct pollfd *, nfds_t, int);
 
 #define S(a) __STRING(a)
 struct sysnames {
