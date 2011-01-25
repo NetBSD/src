@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2011/01/18 19:53:23 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2011/01/25 12:56:25 pooka Exp $
 #
 
 LIB=		rumphijack
 NOSTATICLIB=	dlfun
 NOPROFILE=	dlfun
 LIBDPLIBS+=	pthread ${.CURDIR}/../libpthread
+MAN=		rumphijack.3
 
 SRCS=		hijack.c
 
