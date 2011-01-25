@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/10/20 02:59:58 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.2 2011/01/25 08:19:39 mrg Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -10,7 +10,8 @@ FLOPPYBASE=		kernel
 FLOPPYSIZE=		2880
 FLOPPYFILES=		netbsd
 
-FLOPPY_NETBSD=		../kernel-ramdisk/netbsd-INSTALL.gz
+FLOPPYDIR!=  		cd ${.CURDIR}/../kernel-ramdisk && ${PRINTOBJDIR}
+FLOPPY_NETBSD=		${FLOPPYDIR}/netbsd-INSTALL.gz
 FLOPPYPAD=		1
 FLOPPYSUFFIX=		.fs
 
