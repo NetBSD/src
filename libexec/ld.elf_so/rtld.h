@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.99 2011/01/16 15:56:37 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.100 2011/01/25 12:25:43 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -285,7 +285,7 @@ void _rtld_error(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
 void _rtld_die(void) __attribute__((__noreturn__));
 void *_rtld_objmain_sym(const char *);
-void _rtld_debug_state(void);
+__dso_public void _rtld_debug_state(void);
 void _rtld_linkmap_add(Obj_Entry *);
 void _rtld_linkmap_delete(Obj_Entry *);
 void _rtld_objlist_push_head(Objlist *, Obj_Entry *);
