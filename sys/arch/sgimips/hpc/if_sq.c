@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.39 2011/01/25 12:43:30 tsutsui Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.40 2011/01/25 13:12:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.39 2011/01/25 12:43:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.40 2011/01/25 13:12:39 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -114,14 +114,14 @@ static int	sq_txintr(struct sq_softc *);
 static void	sq_txring_hpc1(struct sq_softc *);
 static void	sq_txring_hpc3(struct sq_softc *);
 static void	sq_reset(struct sq_softc *);
-static int 	sq_add_rxbuf(struct sq_softc *, int);
-static void 	sq_dump_buffer(paddr_t addr, psize_t len);
+static int	sq_add_rxbuf(struct sq_softc *, int);
+static void	sq_dump_buffer(paddr_t addr, psize_t len);
 static void	sq_trace_dump(struct sq_softc *);
 
 CFATTACH_DECL_NEW(sq, sizeof(struct sq_softc),
     sq_match, sq_attach, NULL, NULL);
 
-#define        ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
+#define ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 #define sq_seeq_read(sc, off) \
 	bus_space_read_1(sc->sc_regt, sc->sc_regh, off)
@@ -129,9 +129,9 @@ CFATTACH_DECL_NEW(sq, sizeof(struct sq_softc),
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, off, val)
 
 #define sq_hpc_read(sc, off) \
-	bus_space_read_4(sc->sc_hpct, sc->sc_hpch, off)	
+	bus_space_read_4(sc->sc_hpct, sc->sc_hpch, off)
 #define sq_hpc_write(sc, off, val) \
-	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, off, val)	
+	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, off, val)
 
 /* MAC address offset for non-onboard implementations */
 #define SQ_HPC_EEPROM_ENADDR	250
@@ -154,20 +154,20 @@ sq_match(device_t parent, cfdata_t cf, void *aux)
 		    ha->ha_devoff + (SEEQ_TXSTAT << 2));
 
 		if (platform.badaddr((void *)reset, sizeof(reset)))
-			return (0);
+			return 0;
 
 		*(volatile uint32_t *)reset = 0x1;
 		delay(20);
 		*(volatile uint32_t *)reset = 0x0;
 
 		if (platform.badaddr((void *)txstat, sizeof(txstat)))
-			return (0);
+			return 0;
 
 		if ((*(volatile uint32_t *)txstat & 0xff) == TXSTAT_OLDNEW)
-			return (1);
+			return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -184,18 +184,16 @@ sq_attach(device_t parent, device_t self, void *aux)
 	sc->hpc_regs = haa->hpc_regs;      /* HPC register definitions */
 
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-				       haa->ha_dmaoff,
-				       sc->hpc_regs->enet_regs_size,
-				       &sc->sc_hpch)) != 0) {
+	    haa->ha_dmaoff, sc->hpc_regs->enet_regs_size,
+	    &sc->sc_hpch)) != 0) {
 		printf(": unable to map HPC DMA registers, error = %d\n", err);
 		goto fail_0;
 	}
 
 	sc->sc_regt = haa->ha_st;
 	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
-				       haa->ha_devoff,
-				       sc->hpc_regs->enet_devregs_size,
-				       &sc->sc_regh)) != 0) {
+	    haa->ha_devoff, sc->hpc_regs->enet_devregs_size,
+	    &sc->sc_regh)) != 0) {
 		printf(": unable to map Seeq registers, error = %d\n", err);
 		goto fail_0;
 	}
@@ -203,33 +201,32 @@ sq_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = haa->ha_dmat;
 
 	if ((err = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct sq_control),
-				    PAGE_SIZE, PAGE_SIZE, &sc->sc_cdseg,
-				    1, &sc->sc_ncdseg, BUS_DMA_NOWAIT)) != 0) {
+	    PAGE_SIZE, PAGE_SIZE, &sc->sc_cdseg, 1, &sc->sc_ncdseg,
+	    BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to allocate control data, error = %d\n", err);
 		goto fail_0;
 	}
 
 	if ((err = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg,
-				  sizeof(struct sq_control),
-				  (void **)&sc->sc_control,
-				  BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+	    sizeof(struct sq_control), (void **)&sc->sc_control,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf(": unable to map control data, error = %d\n", err);
 		goto fail_1;
 	}
 
-	if ((err = bus_dmamap_create(sc->sc_dmat, sizeof(struct sq_control),
-				     1, sizeof(struct sq_control), PAGE_SIZE,
-				     BUS_DMA_NOWAIT, &sc->sc_cdmap)) != 0) {
+	if ((err = bus_dmamap_create(sc->sc_dmat,
+	    sizeof(struct sq_control), 1, sizeof(struct sq_control), PAGE_SIZE,
+	    BUS_DMA_NOWAIT, &sc->sc_cdmap)) != 0) {
 		printf(": unable to create DMA map for control data, error "
-			"= %d\n", err);
+		    "= %d\n", err);
 		goto fail_2;
 	}
 
-	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_cdmap, sc->sc_control,
-				   sizeof(struct sq_control),
-				   NULL, BUS_DMA_NOWAIT)) != 0) {
+	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_cdmap,
+	    sc->sc_control, sizeof(struct sq_control), NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to load DMA map for control data, error "
-			"= %d\n", err);
+		    "= %d\n", err);
 		goto fail_3;
 	}
 
@@ -237,31 +234,31 @@ sq_attach(device_t parent, device_t self, void *aux)
 
 	/* Create transmit buffer DMA maps */
 	for (i = 0; i < SQ_NTXDESC; i++) {
-	    if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-					 0, BUS_DMA_NOWAIT,
-					 &sc->sc_txmap[i])) != 0) {
-		    printf(": unable to create tx DMA map %d, error = %d\n",
-			   i, err);
-		    goto fail_4;
-	    }
+		if ((err = bus_dmamap_create(sc->sc_dmat,
+		    MCLBYTES, 1, MCLBYTES, 0,
+		    BUS_DMA_NOWAIT, &sc->sc_txmap[i])) != 0) {
+			printf(": unable to create tx DMA map %d, error = %d\n",
+			    i, err);
+			goto fail_4;
+		}
 	}
 
 	/* Create receive buffer DMA maps */
 	for (i = 0; i < SQ_NRXDESC; i++) {
-	    if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-					 0, BUS_DMA_NOWAIT,
-					 &sc->sc_rxmap[i])) != 0) {
-		    printf(": unable to create rx DMA map %d, error = %d\n",
-			   i, err);
-		    goto fail_5;
-	    }
+		if ((err = bus_dmamap_create(sc->sc_dmat,
+		    MCLBYTES, 1, MCLBYTES, 0,
+		    BUS_DMA_NOWAIT, &sc->sc_rxmap[i])) != 0) {
+			printf(": unable to create rx DMA map %d, error = %d\n",
+			    i, err);
+			goto fail_5;
+		}
 	}
 
 	/* Pre-allocate the receive buffers.  */
 	for (i = 0; i < SQ_NRXDESC; i++) {
 		if ((err = sq_add_rxbuf(sc, i)) != 0) {
 			printf(": unable to allocate or map rx buffer %d\n,"
-			       " error = %d\n", i, err);
+			    " error = %d\n", i, err);
 			goto fail_6;
 		}
 	}
@@ -274,7 +271,8 @@ sq_attach(device_t parent, device_t self, void *aux)
 	 * be true of the onboard HPC3 on IP22, since there is no eeprom,
 	 * but rather the DS1386 RTC's battery-backed ram is used.
 	 */
-	if (sc->sc_enaddr[0] != SGI_OUI_0 || sc->sc_enaddr[1] != SGI_OUI_1 ||
+	if (sc->sc_enaddr[0] != SGI_OUI_0 ||
+	    sc->sc_enaddr[1] != SGI_OUI_1 ||
 	    sc->sc_enaddr[2] != SGI_OUI_2) {
 		macaddr = ARCBIOS->GetEnvironmentVariable("eaddr");
 		if (macaddr == NULL) {
@@ -336,32 +334,32 @@ sq_attach(device_t parent, device_t self, void *aux)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
-fail_6:
+ fail_6:
 	for (i = 0; i < SQ_NRXDESC; i++) {
 		if (sc->sc_rxmbuf[i] != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_rxmap[i]);
 			m_freem(sc->sc_rxmbuf[i]);
 		}
 	}
-fail_5:
+ fail_5:
 	for (i = 0; i < SQ_NRXDESC; i++) {
-	    if (sc->sc_rxmap[i] != NULL)
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxmap[i]);
+		if (sc->sc_rxmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxmap[i]);
 	}
-fail_4:
+ fail_4:
 	for (i = 0; i < SQ_NTXDESC; i++) {
-	    if (sc->sc_txmap[i] !=  NULL)
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_txmap[i]);
+		if (sc->sc_txmap[i] !=  NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_txmap[i]);
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cdmap);
-fail_3:
+ fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdmap);
-fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (void *) sc->sc_control,
-				      sizeof(struct sq_control));
-fail_1:
+ fail_2:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (void *)sc->sc_control, sizeof(struct sq_control));
+ fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_ncdseg);
-fail_0:
+ fail_0:
 	return;
 }
 
@@ -389,11 +387,12 @@ sq_init(struct ifnet *ifp)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sq_seeq_write(sc, i, sc->sc_enaddr[i]);
 
-	sc->sc_rxcmd = RXCMD_IE_CRC |
-		       RXCMD_IE_DRIB |
-		       RXCMD_IE_SHORT |
-		       RXCMD_IE_END |
-		       RXCMD_IE_GOOD;
+	sc->sc_rxcmd =
+	    RXCMD_IE_CRC |
+	    RXCMD_IE_DRIB |
+	    RXCMD_IE_SHORT |
+	    RXCMD_IE_END |
+	    RXCMD_IE_GOOD;
 
 	/*
 	 * Set the receive filter -- this will add some bits to the
@@ -404,10 +403,11 @@ sq_init(struct ifnet *ifp)
 	sq_set_filter(sc);
 
 	/* Set up Seeq transmit command register */
-	sq_seeq_write(sc, SEEQ_TXCMD, TXCMD_IE_UFLOW |
-				      TXCMD_IE_COLL |
-				      TXCMD_IE_16COLL |
-				      TXCMD_IE_GOOD);
+	sq_seeq_write(sc, SEEQ_TXCMD,
+	    TXCMD_IE_UFLOW |
+	    TXCMD_IE_COLL |
+	    TXCMD_IE_16COLL |
+	    TXCMD_IE_GOOD);
 
 	/* Now write the receive command register. */
 	sq_seeq_write(sc, SEEQ_RXCMD, sc->sc_rxcmd);
@@ -416,23 +416,25 @@ sq_init(struct ifnet *ifp)
 	 * Set up HPC ethernet PIO and DMA configurations.
 	 *
 	 * The PROM appears to do most of this for the onboard HPC3, but
-	 * not for the Challenge S's IOPLUS chip. We copy how the onboard 
+	 * not for the Challenge S's IOPLUS chip. We copy how the onboard
 	 * chip is configured and assume that it's correct for both.
 	 */
 	if (sc->hpc_regs->revision == 3) {
 		uint32_t dmareg, pioreg;
 
-		pioreg = HPC3_ENETR_PIOCFG_P1(1) |
-			 HPC3_ENETR_PIOCFG_P2(6) |
-			 HPC3_ENETR_PIOCFG_P3(1);
+		pioreg =
+		    HPC3_ENETR_PIOCFG_P1(1) |
+		    HPC3_ENETR_PIOCFG_P2(6) |
+		    HPC3_ENETR_PIOCFG_P3(1);
 
-		dmareg = HPC3_ENETR_DMACFG_D1(6) |
-			 HPC3_ENETR_DMACFG_D2(2) |
-			 HPC3_ENETR_DMACFG_D3(0) |
-			 HPC3_ENETR_DMACFG_FIX_RXDC |
-			 HPC3_ENETR_DMACFG_FIX_INTR |
-			 HPC3_ENETR_DMACFG_FIX_EOP |
-			 HPC3_ENETR_DMACFG_TIMEOUT;
+		dmareg =
+		    HPC3_ENETR_DMACFG_D1(6) |
+		    HPC3_ENETR_DMACFG_D2(2) |
+		    HPC3_ENETR_DMACFG_D3(0) |
+		    HPC3_ENETR_DMACFG_FIX_RXDC |
+		    HPC3_ENETR_DMACFG_FIX_INTR |
+		    HPC3_ENETR_DMACFG_FIX_EOP |
+		    HPC3_ENETR_DMACFG_TIMEOUT;
 
 		sq_hpc_write(sc, HPC3_ENETR_PIOCFG, pioreg);
 		sq_hpc_write(sc, HPC3_ENETR_DMACFG, dmareg);
@@ -448,7 +450,7 @@ sq_init(struct ifnet *ifp)
 	/*
 	 * Turn off delayed receive interrupts on HPC1.
 	 * (see Hollywood HPC Specification 2.1.4.3)
-	 */ 
+	 */
 	if (sc->hpc_regs->revision != 3)
 		sq_hpc_write(sc, HPC1_ENET_INTDELAY, HPC1_ENET_INTDELAY_OFF);
 
@@ -520,7 +522,7 @@ sq_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 void
@@ -572,7 +574,7 @@ sq_start(struct ifnet *ifp)
 		 */
 		if (m0->m_pkthdr.len < ETHER_PAD_LEN ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-						      BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -599,7 +601,7 @@ sq_start(struct ifnet *ifp)
 				m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 
 			if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-						m, BUS_DMA_NOWAIT)) != 0) {
+			    m, BUS_DMA_NOWAIT)) != 0) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n",
 				    device_xname(sc->sc_dev), err);
@@ -655,19 +657,19 @@ sq_start(struct ifnet *ifp)
 		for (nexttx = sc->sc_nexttx, seg = 0, totlen = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = SQ_NEXTTX(nexttx)) {
-			if (sc->hpc_regs->revision == 3) {	
+			if (sc->hpc_regs->revision == 3) {
 				sc->sc_txdesc[nexttx].hpc3_hdd_bufptr =
-					    dmamap->dm_segs[seg].ds_addr;
+				    dmamap->dm_segs[seg].ds_addr;
 				sc->sc_txdesc[nexttx].hpc3_hdd_ctl =
-					    dmamap->dm_segs[seg].ds_len;
+				    dmamap->dm_segs[seg].ds_len;
 			} else {
 				sc->sc_txdesc[nexttx].hpc1_hdd_bufptr =
-					    dmamap->dm_segs[seg].ds_addr;
+				    dmamap->dm_segs[seg].ds_addr;
 				sc->sc_txdesc[nexttx].hpc1_hdd_ctl =
-					    dmamap->dm_segs[seg].ds_len;
+				    dmamap->dm_segs[seg].ds_len;
 			}
-			sc->sc_txdesc[nexttx].hdd_descptr=
-					    SQ_CDTXADDR(sc, SQ_NEXTTX(nexttx));
+			sc->sc_txdesc[nexttx].hdd_descptr =
+			    SQ_CDTXADDR(sc, SQ_NEXTTX(nexttx));
 			lasttx = nexttx;
 			totlen += dmamap->dm_segs[seg].ds_len;
 		}
@@ -682,24 +684,22 @@ sq_start(struct ifnet *ifp)
 			    HPC1_HDD_CTL_EOPACKET;
 
 		SQ_DPRINTF(("%s: transmit %d-%d, len %d\n",
-						       device_xname(sc->sc_dev),
-						       sc->sc_nexttx, lasttx,
-						       totlen));
+		    device_xname(sc->sc_dev), sc->sc_nexttx, lasttx, totlen));
 
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("     transmit chain:\n");
 			for (seg = sc->sc_nexttx;; seg = SQ_NEXTTX(seg)) {
 				printf("     descriptor %d:\n", seg);
 				printf("       hdd_bufptr:      0x%08x\n",
-					(sc->hpc_regs->revision == 3) ?
-					    sc->sc_txdesc[seg].hpc3_hdd_bufptr :
-					    sc->sc_txdesc[seg].hpc1_hdd_bufptr);
+				    (sc->hpc_regs->revision == 3) ?
+				    sc->sc_txdesc[seg].hpc3_hdd_bufptr :
+				    sc->sc_txdesc[seg].hpc1_hdd_bufptr);
 				printf("       hdd_ctl: 0x%08x\n",
-					(sc->hpc_regs->revision == 3) ?
-					    sc->sc_txdesc[seg].hpc3_hdd_ctl:
-					    sc->sc_txdesc[seg].hpc1_hdd_ctl);
+				    (sc->hpc_regs->revision == 3) ?
+				    sc->sc_txdesc[seg].hpc3_hdd_ctl:
+				    sc->sc_txdesc[seg].hpc1_hdd_ctl);
 				printf("       hdd_descptr:      0x%08x\n",
-					sc->sc_txdesc[seg].hdd_descptr);
+				    sc->sc_txdesc[seg].hdd_descptr);
 
 				if (seg == lasttx)
 					break;
@@ -708,7 +708,7 @@ sq_start(struct ifnet *ifp)
 
 		/* Sync the descriptors we're using. */
 		SQ_CDTXSYNC(sc, sc->sc_nexttx, dmamap->dm_nsegs,
-				BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Store a pointer to the packet so we can free it later */
 		sc->sc_txmbuf[sc->sc_nexttx] = m0;
@@ -724,8 +724,8 @@ sq_start(struct ifnet *ifp)
 
 	if (sc->sc_nfreetx != ofree) {
 		SQ_DPRINTF(("%s: %d packets enqueued, first %d, INTR on %d\n",
-			    device_xname(sc->sc_dev), lasttx - firsttx + 1,
-			    firsttx, lasttx));
+		    device_xname(sc->sc_dev), lasttx - firsttx + 1,
+		    firsttx, lasttx));
 
 		/*
 		 * Cause a transmit interrupt to happen on the
@@ -734,7 +734,7 @@ sq_start(struct ifnet *ifp)
 		 *
 		 * HPC1_HDD_CTL_INTR will generate an interrupt on
 		 * HPC1. HPC3 requires HPC3_HDD_CTL_EOPACKET in
-		 * addition to HPC3_HDD_CTL_INTR to interrupt. 
+		 * addition to HPC3_HDD_CTL_INTR to interrupt.
 		 */
 		KASSERT(lasttx != -1);
 		if (sc->hpc_regs->revision == 3) {
@@ -747,7 +747,7 @@ sq_start(struct ifnet *ifp)
 		}
 
 		SQ_CDTXSYNC(sc, lasttx, 1,
-				BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * There is a potential race condition here if the HPC
@@ -779,7 +779,7 @@ sq_start(struct ifnet *ifp)
 
 			SQ_CDTXSYNC(sc, SQ_PREVTX(firsttx),  1,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-		} else if (sc->hpc_regs->revision == 3) { 
+		} else if (sc->hpc_regs->revision == 3) {
 			SQ_TRACE(SQ_START_DMA, sc, firsttx, status);
 
 			sq_hpc_write(sc, HPC3_ENETX_NDBP, SQ_CDTXADDR(sc,
@@ -808,7 +808,7 @@ sq_start(struct ifnet *ifp)
 
 				/* Kick DMA channel into life */
 				sq_hpc_write(sc, HPC1_ENETX_CTL,
-				    HPC1_ENETX_CTL_ACTIVE); 
+				    HPC1_ENETX_CTL_ACTIVE);
 			} else
 				sq_txring_hpc1(sc);
 		}
@@ -824,7 +824,7 @@ sq_stop(struct ifnet *ifp, int disable)
 	int i;
 	struct sq_softc *sc = ifp->if_softc;
 
-	for (i =0; i < SQ_NTXDESC; i++) {
+	for (i = 0; i < SQ_NTXDESC; i++) {
 		if (sc->sc_txmbuf[i] != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_txmap[i]);
 			m_freem(sc->sc_txmbuf[i]);
@@ -851,8 +851,8 @@ sq_watchdog(struct ifnet *ifp)
 
 	status = sq_hpc_read(sc, sc->hpc_regs->enetx_ctl);
 	log(LOG_ERR, "%s: device timeout (prev %d, next %d, free %d, "
-		     "status %08x)\n", device_xname(sc->sc_dev), sc->sc_prevtx,
-				       sc->sc_nexttx, sc->sc_nfreetx, status);
+	    "status %08x)\n", device_xname(sc->sc_dev), sc->sc_prevtx,
+	    sc->sc_nexttx, sc->sc_nfreetx, status);
 
 	sq_trace_dump(sc);
 
@@ -875,7 +875,7 @@ sq_trace_dump(struct sq_softc *sc)
 		case SQ_RESET:		act = "SQ_RESET";		break;
 		case SQ_ADD_TO_DMA:	act = "SQ_ADD_TO_DMA";		break;
 		case SQ_START_DMA:	act = "SQ_START_DMA";		break;
-		case SQ_DONE_DMA:	act = "SQ_DONE_DMA";		break; 
+		case SQ_DONE_DMA:	act = "SQ_DONE_DMA";		break;
 		case SQ_RESTART_DMA:	act = "SQ_RESTART_DMA";		break;
 		case SQ_TXINTR_ENTER:	act = "SQ_TXINTR_ENTER";	break;
 		case SQ_TXINTR_EXIT:	act = "SQ_TXINTR_EXIT";		break;
@@ -931,7 +931,7 @@ sq_intr(void *arg)
 	if (handled)
 		rnd_add_uint32(&sc->rnd_source, stat);
 #endif
-	return (handled);
+	return handled;
 }
 
 static int
@@ -947,18 +947,18 @@ sq_rxintr(struct sq_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	for (i = sc->sc_nextrx;; i = SQ_NEXTRX(i)) {
-		SQ_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD |
-		    BUS_DMASYNC_POSTWRITE);
+		SQ_CDRXSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		/*
 		 * If this is a CPU-owned buffer, we're at the end of the list.
 		 */
 		if (sc->hpc_regs->revision == 3)
-			ctl_reg = sc->sc_rxdesc[i].hpc3_hdd_ctl &
-			    HPC3_HDD_CTL_OWN;
+			ctl_reg =
+			    sc->sc_rxdesc[i].hpc3_hdd_ctl & HPC3_HDD_CTL_OWN;
 		else
-			ctl_reg = sc->sc_rxdesc[i].hpc1_hdd_ctl &
-			    HPC1_HDD_CTL_OWN;
+			ctl_reg =
+			    sc->sc_rxdesc[i].hpc1_hdd_ctl & HPC1_HDD_CTL_OWN;
 
 		if (ctl_reg) {
 #if defined(SQ_DEBUG)
@@ -986,7 +986,7 @@ sq_rxintr(struct sq_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
 		    sc->sc_rxmap[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		pktstat = *((uint8_t*)m->m_data + framelen + 2);
+		pktstat = *((uint8_t *)m->m_data + framelen + 2);
 
 		if ((pktstat & RXSTAT_GOOD) == 0) {
 			ifp->if_ierrors++;
@@ -996,8 +996,7 @@ sq_rxintr(struct sq_softc *sc)
 				    device_xname(sc->sc_dev));
 
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
-			    sc->sc_rxmap[i]->dm_mapsize,
-			    BUS_DMASYNC_PREREAD);
+			    sc->sc_rxmap[i]->dm_mapsize, BUS_DMASYNC_PREREAD);
 			SQ_INIT_RXDESC(sc, i);
 			SQ_DPRINTF(("%s: sq_rxintr: buf %d no RXSTAT_GOOD\n",
 			    device_xname(sc->sc_dev), i));
@@ -1007,8 +1006,7 @@ sq_rxintr(struct sq_softc *sc)
 		if (sq_add_rxbuf(sc, i) != 0) {
 			ifp->if_ierrors++;
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
-			    sc->sc_rxmap[i]->dm_mapsize,
-			    BUS_DMASYNC_PREREAD);
+			    sc->sc_rxmap[i]->dm_mapsize, BUS_DMASYNC_PREREAD);
 			SQ_INIT_RXDESC(sc, i);
 			SQ_DPRINTF(("%s: sq_rxintr: buf %d sq_add_rxbuf() "
 			    "failed\n", device_xname(sc->sc_dev), i));
@@ -1023,7 +1021,7 @@ sq_rxintr(struct sq_softc *sc)
 		ifp->if_ipackets++;
 
 		SQ_DPRINTF(("%s: sq_rxintr: buf %d len %d\n",
-			    device_xname(sc->sc_dev), i, framelen));
+		    device_xname(sc->sc_dev), i, framelen));
 
 		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
@@ -1039,13 +1037,13 @@ sq_rxintr(struct sq_softc *sc)
 
 		new_end = SQ_PREVRX(i);
 		sc->sc_rxdesc[new_end].hpc3_hdd_ctl |= HPC3_HDD_CTL_EOCHAIN;
-		SQ_CDRXSYNC(sc, new_end, BUS_DMASYNC_PREREAD |
-		    BUS_DMASYNC_PREWRITE);
+		SQ_CDRXSYNC(sc, new_end,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		orig_end = SQ_PREVRX(sc->sc_nextrx);
 		sc->sc_rxdesc[orig_end].hpc3_hdd_ctl &= ~HPC3_HDD_CTL_EOCHAIN;
-		SQ_CDRXSYNC(sc, orig_end, BUS_DMASYNC_PREREAD |
-		    BUS_DMASYNC_PREWRITE);
+		SQ_CDRXSYNC(sc, orig_end,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		sc->sc_nextrx = i;
 	}
@@ -1055,8 +1053,8 @@ sq_rxintr(struct sq_softc *sc)
 	/* If receive channel is stopped, restart it... */
 	if ((status & sc->hpc_regs->enetr_ctl_active) == 0) {
 		/* Pass the start of the receive ring to the HPC */
-		sq_hpc_write(sc, sc->hpc_regs->enetr_ndbp, SQ_CDRXADDR(sc,
-		    sc->sc_nextrx));
+		sq_hpc_write(sc, sc->hpc_regs->enetr_ndbp,
+		    SQ_CDRXADDR(sc, sc->sc_nextrx));
 
 		/* And turn on the HPC ethernet receive channel */
 		sq_hpc_write(sc, sc->hpc_regs->enetr_ctl,
@@ -1075,11 +1073,11 @@ sq_txintr(struct sq_softc *sc)
 
 	if (sc->hpc_regs->revision != 3)
 		shift = 16;
-			 
+
 	status = sq_hpc_read(sc, sc->hpc_regs->enetx_ctl) >> shift;
 
 	SQ_TRACE(SQ_TXINTR_ENTER, sc, sc->sc_prevtx, status);
-				  
+
 	tmp = (sc->hpc_regs->enetx_ctl_active >> shift) | TXSTAT_GOOD;
 	if ((status & tmp) == 0) {
 		if (status & TXSTAT_COLL)
@@ -1123,7 +1121,7 @@ sq_txintr(struct sq_softc *sc)
  * Reclaim used transmit descriptors and restart the transmit DMA
  * engine if necessary.
  */
-static void 
+static void
 sq_txring_hpc1(struct sq_softc *sc)
 {
 	/*
@@ -1158,12 +1156,11 @@ sq_txring_hpc1(struct sq_softc *sc)
 			break;
 
 		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
-				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		/* Sync the packet data, unload DMA map, free mbuf */
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_txmap[i], 0,
-				sc->sc_txmap[i]->dm_mapsize,
-				BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_txmap[i],
+		    0, sc->sc_txmap[i]->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_txmap[i]);
 		m_freem(sc->sc_txmbuf[i]);
 		sc->sc_txmbuf[i] = NULL;
@@ -1185,7 +1182,7 @@ sq_txring_hpc1(struct sq_softc *sc)
 		sq_hpc_write(sc, HPC1_ENETX_CBP, reclaimto);
 
 		/* Kick DMA channel into life */
-		sq_hpc_write(sc, HPC1_ENETX_CTL, HPC1_ENETX_CTL_ACTIVE); 
+		sq_hpc_write(sc, HPC1_ENETX_CTL, HPC1_ENETX_CTL_ACTIVE);
 
 		/*
 		 * Set a watchdog timer in case the chip
@@ -1194,21 +1191,21 @@ sq_txring_hpc1(struct sq_softc *sc)
 		ifp->if_timer = 5;
 	}
 
-	sc->sc_prevtx = i;	
+	sc->sc_prevtx = i;
 }
 
 /*
  * Reclaim used transmit descriptors and restart the transmit DMA
  * engine if necessary.
  */
-static void 
+static void
 sq_txring_hpc3(struct sq_softc *sc)
 {
 	/*
 	 * HPC3 tags descriptors with a bit once they've been
 	 * transmitted. We need only free each XMITDONE'd
 	 * descriptor, and restart the DMA engine if any
-	 * descriptors are left over. 
+	 * descriptors are left over.
 	 */
 	int i;
 	uint32_t status = 0;
@@ -1224,10 +1221,11 @@ sq_txring_hpc3(struct sq_softc *sc)
 		status = sq_hpc_read(sc, HPC3_ENETX_CTL);
 
 		SQ_CDTXSYNC(sc, i, sc->sc_txmap[i]->dm_nsegs,
-				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		/* Check for used descriptor and restart DMA chain if needed */
-		if (!(sc->sc_txdesc[i].hpc3_hdd_ctl & HPC3_HDD_CTL_XMITDONE)) {
+		if ((sc->sc_txdesc[i].hpc3_hdd_ctl &
+		    HPC3_HDD_CTL_XMITDONE) == 0) {
 			if ((status & HPC3_ENETX_CTL_ACTIVE) == 0) {
 				SQ_TRACE(SQ_RESTART_DMA, sc, i, status);
 
@@ -1236,7 +1234,7 @@ sq_txring_hpc3(struct sq_softc *sc)
 
 				/* Kick DMA channel into life */
 				sq_hpc_write(sc, HPC3_ENETX_CTL,
-				    HPC3_ENETX_CTL_ACTIVE); 
+				    HPC3_ENETX_CTL_ACTIVE);
 
 				/*
 				 * Set a watchdog timer in case the chip
@@ -1249,9 +1247,8 @@ sq_txring_hpc3(struct sq_softc *sc)
 		}
 
 		/* Sync the packet data, unload DMA map, free mbuf */
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_txmap[i], 0,
-				sc->sc_txmap[i]->dm_mapsize,
-				BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_txmap[i],
+		    0, sc->sc_txmap[i]->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_txmap[i]);
 		m_freem(sc->sc_txmbuf[i]);
 		sc->sc_txmbuf[i] = NULL;
@@ -1263,12 +1260,13 @@ sq_txring_hpc3(struct sq_softc *sc)
 		i = SQ_NEXTTX(i);
 	}
 
-	sc->sc_prevtx = i;	
+	sc->sc_prevtx = i;
 }
 
 void
 sq_reset(struct sq_softc *sc)
 {
+
 	/* Stop HPC dma channels */
 	sq_hpc_write(sc, sc->hpc_regs->enetr_ctl, 0);
 	sq_hpc_write(sc, sc->hpc_regs->enetx_ctl, 0);
@@ -1287,12 +1285,12 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (ENOBUFS);
+		return ENOBUFS;
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 
 	if (sc->sc_rxmbuf[idx] != NULL)
@@ -1301,15 +1299,14 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 	sc->sc_rxmbuf[idx] = m;
 
 	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_rxmap[idx],
-				   m->m_ext.ext_buf, m->m_ext.ext_size,
-				   NULL, BUS_DMA_NOWAIT)) != 0) {
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    device_xname(sc->sc_dev), idx, err);
 		panic("sq_add_rxbuf");	/* XXX */
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[idx], 0,
-			sc->sc_rxmap[idx]->dm_mapsize, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[idx],
+	    0, sc->sc_rxmap[idx]->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	SQ_INIT_RXDESC(sc, idx);
 
@@ -1320,7 +1317,7 @@ void
 sq_dump_buffer(paddr_t addr, psize_t len)
 {
 	u_int i;
-	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1(addr);
+	uint8_t *physaddr = (uint8_t *)MIPS_PHYS_TO_KSEG1(addr);
 
 	if (len == 0)
 		return;
