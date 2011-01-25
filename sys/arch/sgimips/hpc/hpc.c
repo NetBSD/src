@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.63 2009/12/14 00:46:13 matt Exp $	*/
+/*	$NetBSD: hpc.c,v 1.64 2011/01/25 12:21:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.63 2009/12/14 00:46:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.64 2011/01/25 12:21:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,7 @@ hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 	    mach_type == MACH_SGI_IP22) {
 		/* Make sure it's actually there and readable */
 		if (!platform.badaddr((void*)MIPS_PHYS_TO_KSEG1(ga->ga_addr),
-		    sizeof(u_int32_t)))
+		    sizeof(uint32_t)))
 			return 1;
 	}
 
@@ -590,7 +590,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 		return (0);
 
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20) {
-		u_int32_t reg;
+		uint32_t reg;
 
 		if (!platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
 		    HPC1_BIGENDIAN), 4)) {
@@ -665,10 +665,10 @@ hpc_print(void *aux, const char *pnp)
 static int
 hpc_power_intr(void *arg)
 {
-	u_int32_t pwr_reg;
+	uint32_t pwr_reg;
 
-	pwr_reg = *((volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850));
-	*((volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850)) = pwr_reg;
+	pwr_reg = *((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850));
+	*((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850)) = pwr_reg;
 
 	printf("hpc_power_intr: panel reg = %08x\n", pwr_reg);
 
@@ -692,7 +692,7 @@ hpc_blink(void *self)
 	value = *(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_0 +
 	    HPC1_AUX_REGS);
 	value ^= HPC1_AUX_CONSLED;
-	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_0 +
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_0 +
 	    HPC1_AUX_REGS) = value;
 	splx(s);
 
