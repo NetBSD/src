@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.17 2009/12/14 00:46:13 matt Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.18 2011/01/25 12:11:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.17 2009/12/14 00:46:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.18 2011/01/25 12:11:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,14 +81,6 @@ hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 
 	/* Alloc 1 additional descriptor - needed for DMA bug fix */
 	allocsz = sizeof(struct hpc_dma_desc) * (ndesc + 1);
-	KASSERT(allocsz <= PAGE_SIZE);
-
-	if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1 /*seg*/,
-			      PAGE_SIZE, 0, BUS_DMA_WAITOK,
-			      &sc->sc_dmamap) != 0) {
-		printf(": failed to create dmamap\n");
-		return;
-	}
 
 	/*
 	 * Allocate a block of memory for dma chaining pointers
@@ -106,20 +98,28 @@ hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 		return;
 	}
 
+	if (bus_dmamap_create(sc->sc_dmat, allocsz, 1 /*seg*/,
+			      allocsz, 0, BUS_DMA_WAITOK,
+			      &sc->sc_dmamap) != 0) {
+		printf(": failed to create dmamap\n");
+		return;
+	}
+
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_desc_kva,
 			    allocsz, NULL, BUS_DMA_NOWAIT)) {
 		printf(": can't load sglist\n");
 		return;
 	}
 
-	sc->sc_desc_pa = (void *) (vaddr_t)sc->sc_dmamap->dm_segs[0].ds_addr;
+	sc->sc_desc_pa = sc->sc_dmamap->dm_segs[0].ds_addr;
 }
 
 
 void
 hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 {
-	struct hpc_dma_desc *hva, *hpa;
+	struct hpc_dma_desc *hva;
+	bus_addr_t hpa;
 	bus_dma_segment_t *segp;
 	int i;
 
@@ -136,16 +136,17 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 #ifdef DMA_DEBUG
 		printf("%p:%ld, ", (void *)segp->ds_addr, segp->ds_len);
 #endif
+		hpa += sizeof(struct hpc_dma_desc);	/* next chain desc */
 		if (sc->hpc->revision == 3) {
 			hva->hpc3_hdd_bufptr = segp->ds_addr;
 			hva->hpc3_hdd_ctl    = segp->ds_len;
-			hva->hdd_descptr = (uintptr_t) ++hpa;
+			hva->hdd_descptr     = hpa;
 		} else /* HPC 1/1.5 */ {
 			/* there doesn't seem to be any good way of doing this
 		   	   via an abstraction layer */
 			hva->hpc1_hdd_bufptr = segp->ds_addr;
 			hva->hpc1_hdd_ctl    = segp->ds_len;
-			hva->hdd_descptr = (uintptr_t) ++hpa;
+			hva->hdd_descptr     = hpa;
 		}
 		++hva; ++segp;
 	}
@@ -156,7 +157,6 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 		hva->hpc3_hdd_bufptr  = 0;
 		hva->hpc3_hdd_ctl     = HPC3_HDD_CTL_EOCHAIN;
 		hva->hdd_descptr = 0;
-		hva++;
 	} else {
 		hva--;
 		hva->hpc1_hdd_bufptr |= HPC1_HDD_CTL_EOCHAIN;
@@ -167,12 +167,12 @@ hpcdma_sglist_create(struct hpc_dma_softc *sc, bus_dmamap_t dmamap)
 	printf(">\n");
 #endif
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
-	    0, sc->sc_dmamap->dm_mapsize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    0, sizeof(struct hpc_dma_desc) * (dmamap->dm_nsegs + 1),
+	    BUS_DMASYNC_PREWRITE);
 
 	/* Load DMA Descriptor list */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->hpc->scsi0_ndbp,
-			    (uintptr_t)sc->sc_desc_pa);
+	    sc->sc_desc_pa);
 }
 
 void
