@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.17 2011/01/25 12:18:33 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.18 2011/01/25 12:21:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.17 2011/01/25 12:18:33 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.18 2011/01/25 12:21:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -856,7 +856,7 @@ FDCALL(ssize_t, read, DUALCALL_READ,	 				\
 	(int, void *, size_t),						\
 	(fd, buf, buflen))
 
-FDCALL(ssize_t, readv, DUALCALL_READV, 				\
+FDCALL(ssize_t, readv, DUALCALL_READV, 					\
 	(int fd, const struct iovec *iov, int iovcnt),			\
 	(int, const struct iovec *, int),				\
 	(fd, iov, iovcnt))
