@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.17 2009/09/24 14:09:18 tsutsui Exp $ */
+/* $NetBSD: haltwo.c,v 1.18 2011/01/25 12:21:04 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.17 2009/09/24 14:09:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.18 2011/01/25 12:21:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,12 +269,12 @@ haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 
 	if ( platform.badaddr((void *)(vaddr_t)(haa->ha_sh + haa->ha_devoff),
-	    sizeof(u_int32_t)) )
+	    sizeof(uint32_t)) )
 		return 0;
 
 	if ( platform.badaddr(
 	    (void *)(vaddr_t)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
-	    sizeof(u_int32_t)) )
+	    sizeof(uint32_t)) )
 		return 0;
 
 	rev = *(uint32_t *)MIPS_PHYS_TO_KSEG1(haa->ha_sh + haa->ha_devoff +
