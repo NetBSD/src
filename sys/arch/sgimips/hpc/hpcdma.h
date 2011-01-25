@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.h,v 1.8 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: hpcdma.h,v 1.9 2011/01/25 12:11:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -54,7 +54,7 @@ struct hpc_dma_softc {
 	int			sc_ndesc;
 	bus_dmamap_t		sc_dmamap;
 	struct hpc_dma_desc    *sc_desc_kva;	/* Virtual address */
-	struct hpc_dma_desc    *sc_desc_pa;	/* Physical address */
+	bus_addr_t		sc_desc_pa;	/* DMA address */
 	ssize_t			sc_dlen;	/* number of bytes transfered */
 	struct hpc_values       *hpc;		/* constants for HPC1/3 */
 };
