@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.29 2009/12/14 00:46:13 matt Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.30 2011/01/25 12:14:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.29 2009/12/14 00:46:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.30 2011/01/25 12:14:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ wdsc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (bus_dmamap_create(wsc->sc_dmat,
-			      wsc->sc_hpcdma.hpc->scsi_max_xfer,
+			      MAXPHYS,
 			      wsc->sc_hpcdma.hpc->scsi_dma_segs,
 			      wsc->sc_hpcdma.hpc->scsi_dma_segs_size,
 			      wsc->sc_hpcdma.hpc->scsi_dma_segs_size,
@@ -261,7 +261,8 @@ wdsc_dmago(struct wd33c93_softc *sc)
 
 	bus_dmamap_sync(wsc->sc_dmat, wsc->sc_dmamap, 0,
 	    		wsc->sc_dmamap->dm_mapsize,
-			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			(dsc->sc_flags & HPCDMA_READ) ?
+			BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	hpcdma_cntl(dsc, dsc->sc_dmacmd);	/* Thunderbirds are go! */
 
@@ -283,7 +284,8 @@ wdsc_dmastop(struct wd33c93_softc *sc)
 		hpcdma_cntl(dsc, 0);	/* Stop DMA */
 		bus_dmamap_sync(wsc->sc_dmat, wsc->sc_dmamap, 0,
 		    wsc->sc_dmamap->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    (dsc->sc_flags & HPCDMA_READ) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	}
 	if (wsc->sc_flags & WDSC_DMA_MAPLOADED)
 		bus_dmamap_unload(wsc->sc_dmat, wsc->sc_dmamap);
