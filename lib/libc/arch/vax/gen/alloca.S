@@ -27,12 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)alloca.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: alloca.S,v 1.3 2003/08/07 16:42:31 agc Exp $"
+RCSID("$NetBSD: alloca.S,v 1.4 2011/01/25 02:38:15 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#include "DEFS.h"
 
 ENTRY(alloca, 0)
 	movl	4(%ap),%r0	# get allocation size
@@ -44,3 +44,4 @@ here:
 	bicl2	$3,%sp		# align to longword boundary
 	movl	%sp,%r0
 	jmp	(%r2)
+END(alloca)
