@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.65.16.2 2011/01/17 07:46:00 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.65.16.3 2011/01/26 08:52:25 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -236,9 +236,10 @@ _C_LABEL(dsitrap):
 	mtsprg2	%r30			/* in SPRG2 */
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
-	bt	17,1f			/* branch if PSL_PR is set */
+	bt	MSR_PR,1f		/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
-	rlwinm	%r31,%r31,7,25,28	/* get segment * 8 */
+	rlwinm	%r31,%r31,3+(32-BAT_ADDR_SHIFT),BAT_ADDR_SHIFT-3,28
+					/* get segment * 8 */
 
 	/* get batu */
 	addis	%r31,%r31,_C_LABEL(battable)@ha
@@ -304,7 +305,7 @@ _C_LABEL(dsi601trap):
 	mtsprg2	%r30			/* in SPRG2 */
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
-	bt	17,1f			/* branch if PSL_PR is set */
+	bt	MSR_PR,1f		/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,12,20,28	/* get "segment" battable offset */
 
@@ -365,13 +366,13 @@ _C_LABEL(extint):
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* save r29 */
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1)	/* save r30 */
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1)	/* save r31 */
+	mfsprg1	%r1			/* get old SP */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
 	mfsrr1	%r31
 	mtcr	%r31
-	mr	%r30,%r1
-	mfsprg1	%r1			/* get old SP */
-	bf	17,1f			/* branch if PSL_PR is true */
+	bf	MSR_PR,1f		/* branch if PSL_PR is true */
+	GET_CPUINFO(%r30)
 	ldptr	%r1,CI_CURPCB(%r30)	/* get kernel stack */
 	addi	%r1,%r1,USPACE-CALLFRAMELEN /* stack is top of user struct */
 	RESTORE_KERN_SRS(%r30, %r31)
@@ -398,13 +399,13 @@ _C_LABEL(decrint):
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* save r29 */
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1)	/* save r30 */
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1)	/* save r31 */
+	mfsprg1	%r1			/* get old SP */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
 	mfsrr1	%r31
 	mtcr	%r31
-	mr	%r30,%r1
-	mfsprg1	%r1			/* yes, get old SP */
-	bf	17,1f			/* branch if PSL_PR is true */
+	bf	MSR_PR,1f		/* branch if PSL_PR is true */
+	GET_CPUINFO(%r30)
 	ldptr	%r1,CI_CURPCB(%r30)	/* get kernel stack */
 	addi	%r1,%r1,USPACE-CALLFRAMELEN /* stack is top of user struct */
 	RESTORE_KERN_SRS(%r30, %r31)
@@ -630,7 +631,7 @@ _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
  * In case of DDB we want a separate trap catcher for it
  */
 	.local	ddbstk
-	.comm	ddbstk,INTSTK,8		/* ddb stack */
+	.comm	ddbstk,INTSTK,16	/* ddb stack */
 
 /* LINTSTUB: Var: int ddblow[1], ddbsize[1]; */
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
@@ -641,7 +642,7 @@ _C_LABEL(ddblow):
 	mfsrr1	%r1
 	mtcr	%r1
 	GET_CPUINFO(%r1)
-	bf	17,1f			/* branch if privileged */
+	bf	MSR_PR,1f		/* branch if privileged */
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R28)(%r1)	/* free r28 */
 	mfsprg2	%r28
 	streg	%r28,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* free r29 */
@@ -685,7 +686,7 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
  */
 
 	.local	ipkdbstk
-	.comm	ipkdbstk,INTSTK,8		/* ipkdb stack */
+	.comm	ipkdbstk,INTSTK,16		/* ipkdb stack */
 
 /* LINTSTUB: Var: int ipkdblow[1], ipkdbsize[1]; */
 	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
@@ -856,7 +857,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	GET_CPUINFO(%r2);						\
 	ldreg	%r3,(savearea+CPUSAVE_SRR1)(%r2);			\
 	mtcr	%r3;							\
-	bf	17,1f;			/* branch if PSL_PR is false */	\
+	bf	MSR_PR,1f;		/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
 	RESTORE_USER_SRS(%r2,%r3);					\
 1:	mfsprg1	%r2;			/* restore cr */		\
@@ -890,7 +891,7 @@ disitrap:
 #ifdef DDB
 	mfsrr1	%r31
 	mtcr	%r31
-	bt	17,trapstart		/* branch is user mode */
+	bt	MSR_PR,trapstart	/* branch is user mode */
 	mfsprg1	%r31			/* get old SP */
 #if 0
 	subf	%r30,%r30,%r31		/* subtract DAR from it */
@@ -926,7 +927,7 @@ realtrap:
 	mfsprg1	%r1			/* restore SP (might have been
 					   overwritten) */
 s_trap:
-	bf	17,k_trap		/* branch if PSL_PR is false */
+	bf	MSR_PR,k_trap		/* branch if PSL_PR is false */
 	GET_CPUINFO(%r1)		/* get cpu_info for this cpu */
 u_trap:
 	ldptr	%r1,CI_CURPCB(%r1)
@@ -961,7 +962,7 @@ trapexit:
 /* Test AST pending: */
 	ldreg	%r5,FRAME_SRR1(%r1)
 	mtcr	%r5
-	bf	17,trapleave		/* branch if PSL_PR is false */
+	bf	MSR_PR,trapleave	/* branch if PSL_PR is false */
 	GET_CPUINFO(%r3)
 	ldint	%r4,CI_ASTPENDING(%r3)
 	andi.	%r4,%r4,1
@@ -1126,7 +1127,7 @@ intr_exit:
 /* Returning to user mode? */
 	ldreg	%r8,FRAME_SRR1(%r1)
 	mtcr	%r8			/* saved SRR1 */
-	bf	17,intrleave		/* branch if PSL_PR is false */
+	bf	MSR_PR,intrleave	/* branch if PSL_PR is false */
 
 	ldint	%r3,CI_ASTPENDING(%r5)	/* Test AST pending */
 	andi.	%r3,%r3,1

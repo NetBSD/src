@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.14 2007/10/17 19:55:34 garbled Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.14.42.1 2011/01/26 08:52:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.14 2007/10/17 19:55:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.14.42.1 2011/01/26 08:52:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,8 +95,7 @@ rbus_pccbb_parent_mem(pa)
 		size  = 0x10000000;
 	}
 
-	battable[start >> 28].batl = BATL(start, BAT_I, BAT_PP_RW);
-	battable[start >> 28].batu = BATU(start, BAT_BL_256M, BAT_Vs);
+	oea_iobat_add(start, BAT_BL_256M);
 
 	return rbus_new_root_delegate(pa->pa_memt, start, size, 0);
 }

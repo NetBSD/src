@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.46.18.2 2011/01/17 07:45:59 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.46.18.3 2011/01/26 08:52:26 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46.18.2 2011/01/17 07:45:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46.18.3 2011/01/26 08:52:26 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -101,7 +101,7 @@ extern struct user *proc0paddr;
 static void trap0(void *);
 
 /* XXXSL: The battable is not initialized to non-zero for PPC_OEA64 and PPC_OEA64_BRIDGE */
-struct bat battable[512];
+struct bat battable[BAT_VA2IDX(0xffffffff)+1];
 
 register_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
 paddr_t msgbuf_paddr;
@@ -456,32 +456,39 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 void
 oea_iobat_add(paddr_t pa, register_t len)
 {
-	static int n = 1;
-	const u_int i = pa >> 28;
+	static int z = 1;
+	const u_int i = BAT_VA2IDX(pa);
+	const u_int n = __SHIFTOUT(len, (BAT_XBL|BAT_BL) & ~BAT_BL_8M);
+
+	KASSERT(len >= BAT_BL_8M);
+
 	battable[i].batl = BATL(pa, BAT_I|BAT_G, BAT_PP_RW);
 	battable[i].batu = BATU(pa, len, BAT_Vs);
+	for (u_int j = 0; j < n; j++) {
+		battable[i + j] = battable[i];
+	}
 
 	/*
 	 * Let's start loading the BAT registers.
 	 */
-	switch (n) {
+	switch (z) {
 	case 1:
 		__asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
 		    ::	"r"(battable[i].batl),
 			"r"(battable[i].batu));
-		n = 2;
+		z = 2;
 		break;
 	case 2:
 		__asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1;"
 		    ::	"r"(battable[i].batl),
 			"r"(battable[i].batu));
-		n = 3;
+		z = 3;
 		break;
 	case 3:
 		__asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1;"
 		    ::	"r"(battable[i].batl),
 			"r"(battable[i].batu));
-		n = 4;
+		z = 4;
 		break;
 	default:
 		break;
@@ -491,21 +498,25 @@ oea_iobat_add(paddr_t pa, register_t len)
 void
 oea_iobat_remove(paddr_t pa)
 {
-	register_t batu;
-	int i, n;
+	const u_int i = BAT_VA2IDX(pa);
 
-	n = pa >> ADDR_SR_SHFT;
-	if (!BAT_VA_MATCH_P(battable[n].batu, pa) ||
-	    !BAT_VALID_P(battable[n].batu, PSL_PR))
+	if (!BAT_VA_MATCH_P(battable[i].batu, pa) ||
+	    !BAT_VALID_P(battable[i].batu, PSL_PR))
 		return;
-	battable[n].batl = 0;
-	battable[n].batu = 0;
+	const int n =
+	    __SHIFTOUT(battable[i].batu, (BAT_XBL|BAT_BL) & ~BAT_BL_8M) + 1;
+	KASSERT((n & (n-1)) == 0);	/* power of 2 */
+	KASSERT((i & (n-1)) == 0);	/* multiple of n */
+
+	memset(&battable[i], 0, n*sizeof(battable[0]));
+
 #define	BAT_RESET(n) \
 	__asm volatile("mtdbatu %0,%1; mtdbatl %0,%1" :: "n"(n), "r"(0))
 #define	BATU_GET(n, r)	__asm volatile("mfdbatu %0,%1" : "=r"(r) : "n"(n))
 
-	for (i=1 ; i<4 ; i++) {
-		switch (i) {
+	for (u_int k = 1 ; k < 4; k++) {
+		register_t batu;
+		switch (k) {
 		case 1:
 			BATU_GET(1, batu);
 			if (BAT_VA_MATCH_P(batu, pa) &&
@@ -674,18 +685,34 @@ oea_batinit(paddr_t pa, ...)
 #endif
 	{
 		for (mp = allmem; mp->size; mp++) {
-			paddr_t paddr = mp->start & 0xf0000000;
-			paddr_t end = mp->start + mp->size;
+			paddr_t paddr = mp->start & -BAT_IDX2VA(1);
+			paddr_t end =
+			    roundup2(mp->start + mp->size, BAT_IDX2VA(1));
 
-			do {
-				u_int ix = paddr >> 28;
+			while (paddr < end) {
+				psize_t size = 256*1024*1024;
+				register_t bl = BAT_BL_256M;
+				u_int n = BAT_VA2IDX(size);
+				u_int i = BAT_VA2IDX(paddr);
 
-				battable[ix].batl =
-				    BATL(paddr, BAT_M, BAT_PP_RW);
-				battable[ix].batu =
-				    BATU(paddr, BAT_BL_256M, BAT_Vs);
-				paddr += SEGMENT_LENGTH;
-			} while (paddr < end);
+				while ((paddr & (size - 1))
+				    || paddr + size > end) {
+					size >>= 1;
+					bl = (bl >> 1) & BAT_BL;
+					n >>= 1;
+				}
+				KASSERT(size >= BAT_IDX2VA(1));
+				KASSERT(n >= 1);
+				KASSERT(bl >= BAT_BL_8M);
+
+				for (; n-- > 0; i++) {
+					battable[i].batl =
+					    BATL(paddr, BAT_M, BAT_PP_RW);
+					battable[i].batu =
+					    BATU(paddr, bl, BAT_Vs);
+				}
+				paddr += size;
+			}
 		}
 	}
 }
