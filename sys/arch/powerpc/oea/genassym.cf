@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14.26.2 2011/01/17 07:45:59 matt Exp $
+#	$NetBSD: genassym.cf,v 1.14.26.3 2011/01/26 08:52:26 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@ include <sys/time.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
 include <sys/proc.h>
+include <sys/bitops.h>
 
 include <uvm/uvm_extern.h>
 
@@ -48,7 +49,9 @@ include <machine/pcb.h>
 include <machine/pmap.h>
 
 include <powerpc/cpu.h>
+include <powerpc/psl.h>
 include <powerpc/oea/cpufeat.h>
+include <powerpc/oea/bat.h>
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_TF	offsetof(struct ktrapframe, ktf_tf)
@@ -210,6 +213,9 @@ define	VREG_V30	offsetof(struct vreg, vreg[30][0])
 define	VREG_V31	offsetof(struct vreg, vreg[31][0])
 define	VREG_VRSAVE	offsetof(struct vreg, vrsave)
 define	VREG_VSCR	offsetof(struct vreg, vscr)
+
+define	MSR_PR		31-ilog2(PSL_PR)
+define	BAT_ADDR_SHIFT	ilog2(BAT_IDX2VA(1))
 
 define	L_PCB		offsetof(struct lwp, l_addr)
 define	L_ADDR		offsetof(struct lwp, l_addr)

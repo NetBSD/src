@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.2 2008/03/03 17:15:57 phx Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.2.26.1 2011/01/26 08:52:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.2 2008/03/03 17:15:57 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.2.26.1 2011/01/26 08:52:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -199,17 +199,26 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 	if (rascons_enable_cache) {
 		vaddr_t va;
 		/*
-		 * Let's try to find an empty BAT to use 
+		 * Let's try to find an empty 256M BAT to use 
 		 */
 		for (va = SEGMENT_LENGTH; va < (USER_SR << ADDR_SR_SHFT);
 		     va += SEGMENT_LENGTH) {
-			if (battable[va >> ADDR_SR_SHFT].batu == 0) {
-				battable[va >> ADDR_SR_SHFT].batl =
-				    BATL(fbaddr & 0xf0000000,
-					 BAT_G | BAT_W | BAT_M, BAT_PP_RW);
-				battable[va >> ADDR_SR_SHFT].batu =
-				    BATL(va, BAT_BL_256M, BAT_Vs);
-				fbaddr &= 0x0fffffff;
+			const u_int i = BAT_VA2IDX(va);
+			const u_int n = BAT_VA2IDX(SEGMENT_LENGTH);
+			for (u_int j = 0; j < n; j++) {
+				if (battable[i+j].batu != 0) {
+					break;
+				}
+			}
+			if (j == n) {
+				register_t batl = BATL(fbaddr & 0xf0000000,
+				    BAT_G | BAT_W | BAT_M, BAT_PP_RW);
+				register_t batu = BATL(va, BAT_BL_256M, BAT_Vs);
+				for (u_int j = 0; j < n; j++) {
+					battable[i+j].batl = batl;
+					battable[i+j].batu = batu;
+				}
+				fbaddr &= SEGMASK_MASK;
 				fbaddr |= va;
 				break;
 			}
