@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.2 2011/01/23 07:41:38 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.3 2011/01/26 13:13:25 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -110,10 +110,9 @@ main(int argc, char *argv[])
 
 	printf("\n");
 	printf(">> %s altboot, revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	brdprop = brd_lookup(brdtype);
-	printf("%s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", brdprop->verbose,
+	printf(">> %s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", brdprop->verbose,
 	    cpuclock / 1000000, busclock / 1000000, bi_mem.memsize >> 20);
 
 	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
