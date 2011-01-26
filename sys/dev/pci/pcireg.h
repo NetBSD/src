@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.69 2011/01/10 12:23:21 jmcneill Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.70 2011/01/26 00:49:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -428,6 +428,15 @@ typedef u_int8_t pci_revision_t;
  * (PCI rev. 2.1)
  */
 #define PCI_SUBSYS_ID_REG 0x2c
+
+#define	PCI_SUBSYS_VENDOR_MASK	__BITS(15, 0)
+#define	PCI_SUBSYS_ID_MASK		__BITS(31, 16)
+
+#define	PCI_SUBSYS_VENDOR(__subsys_id)	\
+    __SHIFTOUT(__subsys_id, PCI_SUBSYS_VENDOR_MASK)
+
+#define	PCI_SUBSYS_ID(__subsys_id)	\
+    __SHIFTOUT(__subsys_id, PCI_SUBSYS_ID_MASK)
 
 /*
  * Capabilities link list (PCI rev. 2.2)
