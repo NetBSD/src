@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.232 2011/01/22 14:47:21 tsutsui Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.233 2011/01/26 01:18:54 pooka Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.232 2011/01/22 14:47:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.233 2011/01/26 01:18:54 pooka Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -493,6 +493,10 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
 	  CIDFL_RMI_TYPE_XLS,			"XLS408LITE"		},
 
+	/* Microsoft Research' extensible MIPS */
+	{ MIPS_PRID_CID_MICROSOFT, MIPS_eMIPS, 1, -1, CPU_ARCH_MIPS1, 64,
+	  CPU_MIPS_NO_WAIT, 0, 0,		"eMIPS CPU"		},
+
 	{ 0, 0, 0,				0, 0, 0,
 	  0, 0, 0,				NULL			}
 };
@@ -518,7 +522,7 @@ static const char * const cidnames[] = {
 	"SiByte",	/* or "Broadcom Corp. (SiByte)"	*/
 	"SandCraft",
 	"Phillips",
-	"Toshiba",
+	"Toshiba or Microsoft",
 	"LSI",
 	"(unannounced)",
 	"(unannounced)",

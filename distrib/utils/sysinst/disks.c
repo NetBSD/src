@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.111 2010/02/17 16:09:52 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.112 2011/01/26 01:18:46 pooka Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -767,7 +767,7 @@ make_fstab(void)
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
-	scripting_fprintf(f, "/dev/cd0a\t\t/cdrom\tcd9660\tro,noauto\n");
+	scripting_fprintf(f, "/dev/" CD_NAME "\t\t/cdrom\tcd9660\tro,noauto\n");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 	make_target_dir("/dev/pts");

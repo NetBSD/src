@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.78 2010/02/27 22:12:31 snj Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.79 2011/01/26 01:18:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -834,6 +834,11 @@
  * CPU processor revision IDs for company ID == 5 (SandCraft)
  */
 #define	MIPS_SR7100	0x04	/* SandCraft SR7100 		ISA 64  */
+
+/*
+ * CPU processor revision IDs for company ID == 7 (Microsoft)
+ */
+#define	MIPS_eMIPS	0x04	/* MSR's eMIPS */
 
 /*
  * CPU processor revision IDs for company ID == 12 (RMI)

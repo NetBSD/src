@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.81 2010/02/27 19:10:41 snj Exp $ */
+/* $NetBSD: locore.h,v 1.82 2011/01/26 01:18:54 pooka Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -395,6 +395,7 @@ typedef int mips_prid_t;
 #define     MIPS_PRID_CID_SANDCRAFT	0x05	/* SandCraft */
 #define     MIPS_PRID_CID_PHILIPS	0x06	/* Philips */
 #define     MIPS_PRID_CID_TOSHIBA	0x07	/* Toshiba */
+#define     MIPS_PRID_CID_MICROSOFT	0x07	/* Microsoft also, sigh */
 #define     MIPS_PRID_CID_LSI		0x08	/* LSI */
 				/*	0x09	unannounced */
 				/*	0x0a	unannounced */

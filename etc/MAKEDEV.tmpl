@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.136 2010/09/19 20:52:23 jakllsch Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.137 2011/01/26 01:18:47 pooka Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1014,6 +1014,16 @@ ccd*|cgd*|raid*|vnd*)
 
 sd*)
 	name=sd; unit=${i#sd};	blk=%sd_blk%;	chr=%sd_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+ace*)
+	name=ace; unit=${i#ace};	blk=%ace_blk%;		chr=%ace_chr%
+	%MKDISK% $name $unit $blk $chr
+	;;
+
+eflash*)
+	name=eflash; unit=${i#eflash};	blk=%eflash_blk%;	chr=%eflash_chr%
 	%MKDISK% $name $unit $blk $chr
 	;;
 
