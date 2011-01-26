@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.55 2011/01/26 01:18:46 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.56 2011/01/26 10:58:19 pooka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,10 +81,6 @@ struct f_arg {
 	char *var;
 	int size;
 };
-
-#ifndef CD_NAME
-#define CD_NAME "cd0a"
-#endif
 
 static const struct f_arg fflagopts[] = {
 	{"release", REL, rel, sizeof rel},
