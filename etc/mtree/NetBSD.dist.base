@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.72 2011/01/05 14:57:29 haad Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.73 2011/01/26 01:18:47 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -703,6 +703,7 @@
 ./usr/share/man/cat4/atari
 ./usr/share/man/cat4/cobalt
 ./usr/share/man/cat4/dreamcast
+./usr/share/man/cat4/emips
 ./usr/share/man/cat4/evbarm
 ./usr/share/man/cat4/evbmips
 ./usr/share/man/cat4/evbppc
@@ -741,6 +742,7 @@
 ./usr/share/man/cat8/cesfic
 ./usr/share/man/cat8/cobalt
 ./usr/share/man/cat8/dreamcast
+./usr/share/man/cat8/emips
 ./usr/share/man/cat8/evbarm
 ./usr/share/man/cat8/evbmips
 ./usr/share/man/cat8/evbppc
@@ -782,6 +784,7 @@
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amiga
 ./usr/share/man/cat9/atari
+./usr/share/man/cat9/emips
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/i386
 ./usr/share/man/cat9/mac68k
@@ -807,6 +810,7 @@
 ./usr/share/man/man4/atari
 ./usr/share/man/man4/cobalt
 ./usr/share/man/man4/dreamcast
+./usr/share/man/man4/emips
 ./usr/share/man/man4/evbarm
 ./usr/share/man/man4/evbmips
 ./usr/share/man/man4/evbppc
@@ -845,6 +849,7 @@
 ./usr/share/man/man8/cesfic
 ./usr/share/man/man8/cobalt
 ./usr/share/man/man8/dreamcast
+./usr/share/man/man8/emips
 ./usr/share/man/man8/evbarm
 ./usr/share/man/man8/evbmips
 ./usr/share/man/man8/evbppc
@@ -886,6 +891,7 @@
 ./usr/share/man/man9/alpha
 ./usr/share/man/man9/amiga
 ./usr/share/man/man9/atari
+./usr/share/man/man9/emips
 ./usr/share/man/man9/hp300
 ./usr/share/man/man9/i386
 ./usr/share/man/man9/mac68k
@@ -911,6 +917,7 @@
 ./usr/share/man/html4/atari
 ./usr/share/man/html4/cobalt
 ./usr/share/man/html4/dreamcast
+./usr/share/man/html4/emips
 ./usr/share/man/html4/evbarm
 ./usr/share/man/html4/evbmips
 ./usr/share/man/html4/evbppc
@@ -949,6 +956,7 @@
 ./usr/share/man/html8/cesfic
 ./usr/share/man/html8/cobalt
 ./usr/share/man/html8/dreamcast
+./usr/share/man/html8/emips
 ./usr/share/man/html8/evbarm
 ./usr/share/man/html8/evbmips
 ./usr/share/man/html8/evbppc
@@ -990,6 +998,7 @@
 ./usr/share/man/html9/alpha
 ./usr/share/man/html9/amiga
 ./usr/share/man/html9/atari
+./usr/share/man/html9/emips
 ./usr/share/man/html9/hp300
 ./usr/share/man/html9/i386
 ./usr/share/man/html9/mac68k
