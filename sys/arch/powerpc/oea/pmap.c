@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61.12.2 2011/01/17 07:45:59 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61.12.3 2011/01/26 08:52:27 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.12.2 2011/01/17 07:45:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.12.3 2011/01/26 08:52:27 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2151,10 +2151,10 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		} else
 #endif /* PPC_OEA601 */
 		{
-			register_t batu = battable[va >> ADDR_SR_SHFT].batu;
+			register_t batu = battable[BAT_VA2IDX(va)].batu;
 			if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
 				register_t batl =
-				    battable[va >> ADDR_SR_SHFT].batl;
+				    battable[BAT_VA2IDX(va)].batl;
 				register_t mask =
 				    (~(batu & BAT_BL) << 15) & ~0x1ffffL;
 				if (pap)

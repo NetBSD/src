@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.12 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: bat.h,v 1.12.22.1 2011/01/26 08:52:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -194,7 +194,8 @@ struct bat {
 #define	BAT601_VALID_P(batl) \
 	((batl) & BAT601_V)
 
-#define	BAT_VA2IDX(va)	((va) >> ADDR_SR_SHFT)
+#define	BAT_VA2IDX(va)	((va) / (8*1024*1024))
+#define	BAT_IDX2VA(i)	((i) * (8*1024*1024))
 
 #ifdef	_KERNEL
 #ifndef _LOCORE
