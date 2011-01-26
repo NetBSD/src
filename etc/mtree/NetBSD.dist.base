@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.73 2011/01/26 01:18:47 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.74 2011/01/26 15:00:56 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -718,6 +718,7 @@
 ./usr/share/man/cat4/mvme68k
 ./usr/share/man/cat4/pmax
 ./usr/share/man/cat4/prep
+./usr/share/man/cat4/sandpoint
 ./usr/share/man/cat4/sgimips
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sparc64
@@ -825,6 +826,7 @@
 ./usr/share/man/man4/mvme68k
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/prep
+./usr/share/man/man4/sandpoint
 ./usr/share/man/man4/sgimips
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sparc64
@@ -932,6 +934,7 @@
 ./usr/share/man/html4/mvme68k
 ./usr/share/man/html4/pmax
 ./usr/share/man/html4/prep
+./usr/share/man/html4/sandpoint
 ./usr/share/man/html4/sgimips
 ./usr/share/man/html4/sparc
 ./usr/share/man/html4/sparc64
