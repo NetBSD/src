@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1055 2011/01/11 00:13:03 dyoung Exp $
+$NetBSD: pcidevs,v 1.1056 2011/01/26 18:37:06 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -613,6 +613,7 @@ vendor NETCHIP		0x17cc	PLX Technology (NetChip)
 vendor I4		0x17cf	I4
 vendor ARECA		0x17d3	Areca
 vendor S2IO		0x17d5	S2io Technologies
+vendor RDC		0x17F3  RDC Semiconductor
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
 vendor RMI		0x182e	Raza Microelectronics Inc. (NetLogic)
@@ -3877,6 +3878,9 @@ product	RALINK	RT2661		0x0401	RT2661 802.11b/g/n
 
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
+
+/* RDC Semiconductor products */
+product RDC	R6040		0x6040	RDC R6040 10/100 Ethernet
 
 /* Realtek products */
 product REALTEK RT8029		0x8029	8029 Ethernet
