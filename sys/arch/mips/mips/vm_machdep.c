@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.132 2011/01/14 02:06:28 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.133 2011/01/26 01:18:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.132 2011/01/14 02:06:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.133 2011/01/26 01:18:55 pooka Exp $");
 
 #include "opt_ddb.h"
 
@@ -328,4 +328,39 @@ overrun:
 	return 0;	/* XXX */
 #endif
 	panic("kvtophys");
+}
+
+/*
+ * Make a kernel mapping valid for I/O, e.g. non-cachable.
+ * Alignment and length constraints are as-if NBPG==PAGE_SIZE.
+ */
+int
+ioaccess(vaddr_t vaddr, paddr_t paddr, vsize_t len)
+{
+
+	while (len > PAGE_SIZE) {
+		pmap_kenter_pa(vaddr, paddr, VM_PROT_WRITE, 0);
+		len -= PAGE_SIZE;
+		vaddr += PAGE_SIZE;
+		paddr += PAGE_SIZE;
+	}
+
+	if (len) {
+		/* We could warn.. */
+		pmap_kenter_pa(vaddr, paddr, VM_PROT_WRITE, 0);
+	}
+
+	/* BUGBUG should use pmap_enter() instead and check results! */
+	return 0;
+}
+
+/*
+ * Opposite to the above: just forget the mapping.
+ */
+int
+iounaccess(vaddr_t vaddr, vsize_t len)
+{
+
+	pmap_kremove(vaddr, len);
+	return 0;
 }

@@ -1,0 +1,20 @@
+#	$NetBSD: std.emips,v 1.1 2011/01/26 01:18:50 pooka Exp $
+# standard, required emips info
+
+machine emips mips
+include		"conf/std"	# MI standard options
+makeoptions	MACHINE_ARCH="mipseb"
+
+# accelerator support, ENOTYET
+#options     ACCELERATOR
+#defparam    opt_accelerator.h ACCELERATOR_MAX_OPS
+#defparam    opt_accelerator.h ACCELERATOR_MAX_SLOTS
+
+#options     ACCELERATOR_MAX_OPS=8        # fixed by the ISA, more or less
+#options     ACCELERATOR_MAX_SLOTS=4      # should we allow redef in specific config? at runtime?
+
+# Standard exec-package options
+options 	EXEC_ELF32	# 32-bit ELF support (native format)
+options 	EXEC_SCRIPT	# exec of #! scripts
+
+makeoptions	DEFTEXTADDR="0x80020000"
