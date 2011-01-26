@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.32 2010/12/29 00:47:50 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.33 2011/01/26 03:32:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.32 2010/12/29 00:47:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.33 2011/01/26 03:32:31 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -198,7 +198,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	struct lwp * const l = curlwp;
 	struct proc * const p = curproc;
 	struct trapframe * const utf = l->l_md.md_utf;
-	struct cpu_info * const ci = curcpu();
+	struct cpu_info * ci = curcpu();
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
 	extern void fswintrberr(void);
@@ -379,6 +379,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 #endif
 		int rv = 0;
 
+		kpreempt_disable();
 #ifdef _LP64
 		/*
 		 * If the pmap has been activated and we allocated the segtab
@@ -387,10 +388,12 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 * cpu's cpu_info but not other cpu's) so we need to detect
 		 * and fix this here.
 		 */
+		ci = curcpu();
 		if ((va >> XSEGSHIFT) == 0 &&
 		    __predict_false(ci->ci_pmap_seg0tab == NULL
 				&& ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
 			ci->ci_pmap_seg0tab = ci->ci_pmap_segtab->seg_seg[0];
+			kpreempt_enable();
 			if (type & T_USER) {
 				userret(l);
 			}
@@ -399,6 +402,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 #endif
 		KASSERT(va < 0 || ci->ci_pmap_asid_cur != 0);
 		pmap_tlb_asid_check();
+		kpreempt_enable();
 
 #ifdef PMAP_FAULTINFO
 		if (p->p_pid == pfi->pfi_lastpid && va == pfi->pfi_faultaddr) {
