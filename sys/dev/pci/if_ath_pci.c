@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.38 2010/04/28 22:00:39 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.39 2011/01/26 00:08:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.38 2010/04/28 22:00:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.39 2011/01/26 00:08:30 dyoung Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -145,12 +145,13 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	mem_type = pci_mapreg_type(pc, pa->pa_tag, ATH_PCI_MMBA);
 	if (mem_type != PCI_MAPREG_TYPE_MEM &&
 	    mem_type != PCI_MAPREG_MEM_TYPE_64BIT) {
-		aprint_error("bad pci register type %d\n", (int)mem_type);
+		aprint_error_dev(self, "bad pci register type %d\n",
+		    (int)mem_type);
 		goto bad;
 	}
 	if (pci_mapreg_map(pa, ATH_PCI_MMBA, mem_type, 0, &psc->sc_iot,
 		&psc->sc_ioh, NULL, &psc->sc_mapsz) != 0) {
-		aprint_error("cannot map register space\n");
+		aprint_error_dev(self, "cannot map register space\n");
 		goto bad;
 	}
 
