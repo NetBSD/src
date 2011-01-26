@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.7 2011/01/25 19:13:44 christos Exp $	*/
+/*	$NetBSD: ssp.h,v 1.8 2011/01/26 18:08:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,10 +43,12 @@
 # endif
 #endif
 
+#ifndef __ssp_weak_name
 #ifdef _NAMESPACE_H_
 #define __ssp_weak_name(fun) _sys ## fun
 #else
 #define __ssp_weak_name(fun) _sys_ ## fun
+#endif
 #endif
 
 #define __ssp_inline static __inline __attribute__((__always_inline__))
