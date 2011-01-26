@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1052 2011/01/11 00:14:41 dyoung Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1053 2011/01/26 18:37:52 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1055 2011/01/11 00:13:03 dyoung Exp
+ *	NetBSD: pcidevs,v 1.1056 2011/01/26 18:37:06 bouyer Exp
  */
 
 /*
@@ -620,6 +620,7 @@
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
+#define	PCI_VENDOR_RDC	0x17F3		/* RDC Semiconductor */
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
 #define	PCI_VENDOR_RMI	0x182e		/* Raza Microelectronics Inc. (NetLogic) */
@@ -3884,6 +3885,9 @@
 
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
+
+/* RDC Semiconductor products */
+#define	PCI_PRODUCT_RDC_R6040	0x6040		/* RDC R6040 10/100 Ethernet */
 
 /* Realtek products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
