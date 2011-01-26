@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.174 2011/01/22 17:31:31 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.175 2011/01/26 01:18:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,10 +71,14 @@
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
-#if defined(MIPS3_PLUS) && !defined(MIPS1)
+#if (defined(MIPS3_PLUS) && !defined(MIPS1)) || defined(emips)
 	/* keep firmware exception handler until we hook. */
 	mfc0	v0, MIPS_COP_0_STATUS
+#if defined(emips)
+	and	v0, MIPS_SR_TS | MIPS3_SR_RE
+#else
 	and	v0, MIPS_SR_BEV
+#endif
 	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 #else
@@ -100,6 +104,7 @@ _C_LABEL(kernel_text):
 #endif
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
+#if !defined(emips)   /*  XXX??? we have already disabled interrupts! */
 #ifdef _LP64
 	li	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
 #else
@@ -107,6 +112,7 @@ _C_LABEL(kernel_text):
 #endif
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
 	COP0_SYNC
+#endif
 #ifdef HPCMIPS_L1CACHE_DISABLE
 	mfc0	t0, MIPS_COP_0_CONFIG
 	li	t1, 0xfffffff8

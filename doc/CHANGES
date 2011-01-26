@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1495 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1496 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -834,3 +834,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	atactl(8): Fix mislabelled S.M.A.R.T. lifetime temperature record
 		reading. [nisimura 20110119]
 	pcf8563rtc(4): Add a todr(9) driver for NXP PCF8563 [jakllsch 20110124]
+	emips: Initial commit of the emips port [pooka 20110125]

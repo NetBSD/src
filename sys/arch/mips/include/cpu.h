@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.96 2010/12/22 03:22:44 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.97 2011/01/26 01:18:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -482,6 +482,8 @@ void	mips_init_msgbuf(void);
 void	mips_init_lwp0_uarea(void);
 void	savefpregs(struct lwp *);
 void	loadfpregs(struct lwp *);
+int	ioaccess(vaddr_t, paddr_t, vsize_t);
+int	iounaccess(vaddr_t, vsize_t);
 
 /* locore*.S */
 int	badaddr(void *, size_t);
