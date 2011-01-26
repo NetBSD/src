@@ -1,0 +1,80 @@
+.Dd Jan 26, 2011
+.Dt SATMGR 4 sandpoint
+.Os
+.Sh NAME
+.Nm satmgr
+.Nd
+driver for satellite processor, controlling power, front panel LEDs
+and buttons
+.Sh SYNOPSIS
+.Cd "satmgr0 at eumb? unit 0"
+.Cd "satmgr0 at eumb? unit 1"
+.Sh DESCRIPTION
+This driver provides an interface to the
+.Tn NAS
+builtin satellite microprocessor which controls the power, front
+panel LEDs and push buttons. Communication is performed through
+character sequences, whose definition and usage depend on the
+.Tn NAS
+product models.
+.Pp
+The device file
+.Pa /dev/satmgr
+can be written to control the satellite processor and the LEDs.
+Reading it will return single characters for button press events.
+This facility was designed to implement a
+.Tn NAS
+control
+.Tn CGI
+program.
+.Pp
+.Nm
+detects a soft power-off condition, which is triggered by holding
+the front panel power button pressed for several seconds.  This
+driver can optionally invoke
+.Xr powerd 8
+to get a finer control over the system shutdown procedure. It is
+capable of reporting a power-button-pressed event. Refer to the
+.Xr powerd 8
+manual section for more details.
+.Pp
+For
+.Tn "Kurobox/Linkstation"
+.Tn NAS
+products it also provides a way to
+toggle the system watchdog with the
+.Xr sysctl 8
+utility. The usage is:
+.Bd -literal -offset indent
+# sysctl -w machdep.satmgr.hwwdog_enable=1
+# sysctl -w machdep.satmgr.hwwdog_enable=0
+.Ed
+.Pp
+.Tn NAS
+products currently supported by
+.Xr satmgr 4 :
+.Bl -bullet -compact
+.It
+KuroBox
+.It
+Buffalo LinkStation
+.It
+Synology DiskStation
+.El
+.Sh FILES
+.Bl -tag -width /dev/satmgrX -compact
+.It Pa /dev/satmgr
+communication inferface to
+.Nm .
+.It Pa /dev/power
+event notify channel to
+.Xr powerd 8 .
+.El
+.Sh SEE ALSO
+.Xr powerd 8 
+.Sh HISTORY
+The
+.Nm
+driver
+first appeared in
+.Nx 6.0 .
