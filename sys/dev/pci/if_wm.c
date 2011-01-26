@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.217 2010/12/14 02:51:46 dyoung Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.218 2011/01/26 00:25:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.217 2010/12/14 02:51:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.218 2011/01/26 00:25:34 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -510,6 +510,7 @@ static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_read_eeprom_eerd(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_validate_eeprom_checksum(struct wm_softc *);
+static int	wm_check_alt_mac_addr(struct wm_softc *);
 static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_tick(void *);
 
@@ -1186,11 +1187,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 			    PCI_MAPREG_TYPE_IO)
 				break;
 		}
-		if (i == PCI_MAPREG_END)
-			aprint_error_dev(sc->sc_dev,
-			    "WARNING: unable to find I/O BAR\n");
-		else {
+		if (i != PCI_MAPREG_END) {
 			/*
+			 * We found PCI_MAPREG_TYPE_IO. Note that 82580
+			 * (and newer?) chip has no PCI_MAPREG_TYPE_IO.
+			 * It's no problem because newer chips has no this
+			 * bug.
+			 *
 			 * The i8254x doesn't apparently respond when the
 			 * I/O BAR is 0, which looks somewhat like it's not
 			 * been configured.
@@ -4722,69 +4725,101 @@ wm_poll_eerd_eewr_done(struct wm_softc *sc, int rw)
 }
 
 static int
+wm_check_alt_mac_addr(struct wm_softc *sc)
+{
+	uint16_t myea[ETHER_ADDR_LEN / 2];
+	uint16_t offset = EEPROM_OFF_MACADDR;
+
+	/* Try to read alternative MAC address pointer */
+	if (wm_read_eeprom(sc, EEPROM_ALT_MAC_ADDR_PTR, 1, &offset) != 0)
+		return -1;
+
+	/* Check pointer */
+	if (offset == 0xffff)
+		return -1;
+
+	/*
+	 * Check whether alternative MAC address is valid or not.
+	 * Some cards have non 0xffff pointer but those don't use
+	 * alternative MAC address in reality.
+	 *
+	 * Check whether the broadcast bit is set or not.
+	 */
+	if (wm_read_eeprom(sc, offset, 1, myea) == 0)
+		if (((myea[0] & 0xff) & 0x01) == 0)
+			return 0; /* found! */
+
+	/* not found */
+	return -1;
+}
+
+static int
 wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
 	uint16_t offset = EEPROM_OFF_MACADDR;
 	int do_invert = 0;
 
-	if (sc->sc_funcid != 0)
-		switch (sc->sc_type) {
-		case WM_T_82580:
-		case WM_T_82580ER:
-			switch (sc->sc_funcid) {
-			case 1:
-				offset = EEPROM_OFF_LAN1;
-				break;
-			case 2:
-				offset = EEPROM_OFF_LAN2;
-				break;
-			case 3:
-				offset = EEPROM_OFF_LAN3;
-				break;
-			default:
-				goto bad;
-				/* NOTREACHED */
-				break;
-			}
+	switch (sc->sc_type) {
+	case WM_T_82580:
+	case WM_T_82580ER:
+		switch (sc->sc_funcid) {
+		case 0:
+			/* default value (== EEPROM_OFF_MACADDR) */
 			break;
-		case WM_T_82571:
-		case WM_T_82575:
-		case WM_T_82576:
-		case WM_T_80003:
-			if (wm_read_eeprom(sc, EEPROM_ALT_MAC_ADDR_PTR, 1,
-				&offset) != 0) {
-				goto bad;
-			}
-
-			/* no pointer */
-			if (offset == 0xffff) {
-				/* reset the offset to LAN0 */
-				offset = EEPROM_OFF_MACADDR;
-				do_invert = 1;
-				goto do_read;
-			}
-
-			switch (sc->sc_funcid) {
-			case 1:
-				offset += EEPROM_OFF_MACADDR_LAN1;
-				break;
-			case 2:
-				offset += EEPROM_OFF_MACADDR_LAN2;
-				break;
-			case 3:
-				offset += EEPROM_OFF_MACADDR_LAN3;
-				break;
-			default:
-				goto bad;
-				/* NOTREACHED */
-				break;
-			}
+		case 1:
+			offset = EEPROM_OFF_LAN1;
+			break;
+		case 2:
+			offset = EEPROM_OFF_LAN2;
+			break;
+		case 3:
+			offset = EEPROM_OFF_LAN3;
 			break;
 		default:
-			do_invert = 1;
+			goto bad;
+			/* NOTREACHED */
 			break;
 		}
+		break;
+	case WM_T_82571:
+	case WM_T_82575:
+	case WM_T_82576:
+	case WM_T_80003:
+		if (wm_check_alt_mac_addr(sc) != 0) {
+			/* reset the offset to LAN0 */
+			offset = EEPROM_OFF_MACADDR;
+			if ((sc->sc_funcid & 0x01) == 1)
+				do_invert = 1;
+			goto do_read;
+		}
+		switch (sc->sc_funcid) {
+		case 0:
+			/*
+			 * The offset is the value in EEPROM_ALT_MAC_ADDR_PTR
+			 * itself.
+			 */
+			break;
+		case 1:
+			offset += EEPROM_OFF_MACADDR_LAN1;
+			break;
+		case 2:
+			offset += EEPROM_OFF_MACADDR_LAN2;
+			break;
+		case 3:
+			offset += EEPROM_OFF_MACADDR_LAN3;
+			break;
+		default:
+			goto bad;
+			/* NOTREACHED */
+			break;
+		}
+		break;
+	default:
+		if ((sc->sc_funcid & 0x01) == 1)
+			do_invert = 1;
+		break;
+	}
 
  do_read:
 	if (wm_read_eeprom(sc, offset, sizeof(myea) / sizeof(myea[0]),
