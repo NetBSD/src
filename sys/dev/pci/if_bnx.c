@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.41 2011/01/06 03:37:55 jym Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.42 2011/01/26 00:09:27 dyoung Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.41 2011/01/06 03:37:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.42 2011/01/26 00:09:27 dyoung Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5161,10 +5161,12 @@ bnx_intr(void *xsc)
 	const struct status_block *sblk;
 
 	sc = xsc;
-	if (!device_is_active(sc->bnx_dev))
-		return 0;
 
 	ifp = &sc->bnx_ec.ec_if;
+
+	if (!device_is_active(sc->bnx_dev) ||
+	    (ifp->if_flags & IFF_RUNNING) == 0)
+		return 0;
 
 	DBRUNIF(1, sc->interrupts_generated++);
 
