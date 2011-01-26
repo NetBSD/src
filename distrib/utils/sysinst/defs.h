@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.149 2010/12/04 14:57:56 jmmv Exp $	*/
+/*	$NetBSD: defs.h,v 1.150 2011/01/26 10:58:19 pooka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -159,6 +159,11 @@ enum {
 /* What FS type? */
 #define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \
 		       (p)->pi_fstype == FS_BSDFFS)
+
+/* non-standard cd0 driver */
+#ifndef CD_NAME
+#define CD_NAME "cd0a"
+#endif
 
 /* Types */
 typedef struct distinfo {
