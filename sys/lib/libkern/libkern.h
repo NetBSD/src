@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.95 2011/01/24 22:53:07 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.96 2011/01/26 01:02:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -222,11 +222,11 @@ tolower(int ch)
 
 #ifndef DEBUG
 #ifdef lint
-#define	KDASSERT(e)	/* NOTHING */
-#define	KDASSERTMSG(e)	/* NOTHING */
+#define	KDASSERTMSG(e,msg)	/* NOTHING */
+#define	KDASSERT(e)		/* NOTHING */
 #else /* lint */
-#define	KDASSERT(e)	((void)0)
-#define	KDASSERTMSG(e)	((void)0)
+#define	KDASSERTMSG(e,msg)	((void)0)
+#define	KDASSERT(e)		((void)0)
 #endif /* lint */
 #else
 #define	KDASSERTMSG(e, msg) do {	\
