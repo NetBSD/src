@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.26.26.2 2011/01/11 07:10:15 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.26.26.3 2011/01/26 08:51:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -182,11 +182,11 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	li	tmp2,-1;						\
 	stint	tmp2,CI_IDEPTH(tmp1);					\
 	li	tmp2,0;							\
-	stptr	tmp2,-CALLFRAMELEN(er);	/* terminate idle stack chain */\
+	stptr	er,CI_CURPCB(tmp1);					\
 	lis	tmp1,_C_LABEL(proc0paddr)@ha;				\
 	stptr	er,_C_LABEL(proc0paddr)@l(tmp1);			\
-	addi	er,er,USPACE;		/* stackpointer for proc0 */	\
-	addi	sp,er,-FRAMELEN;	/* stackpointer for proc0 */	\
+	addi	er,er,USPACE;		/* stackpointer for lwp0 */	\
+	addi	sp,er,-(FRAMELEN+CALLFRAMELEN);	/* sp for lwp0 */	\
 		/* er = end of mem reserved for kernel */		\
 	stptru	tmp2,-CALLFRAMELEN(sp)	/* end of stack chain */
 
