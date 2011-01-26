@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.76 2010/11/12 16:30:26 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.77 2011/01/26 00:58:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -223,7 +223,7 @@ struct rt_msghdr {
 				 * address has changed
 				 */
 #define RTM_IFINFO	0x14	/* iface/link going up/down etc. */
-#define RTM_CHGADDR	0x15	/* address has changed on iface */
+#define RTM_CHGADDR	0x15	/* address properties changed */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
