@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1281 2011/01/26 01:18:46 pooka Exp $
+# $NetBSD: mi,v 1.1282 2011/01/26 16:53:17 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1425,6 +1425,7 @@
 ./usr/share/man/cat4/rtpphy.0			man-obsolete		obsolete
 ./usr/share/man/cat4/rtw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rum.0			man-sys-catman		.cat
+./usr/share/man/cat4/sandpoint/satmgr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/satalink.0			man-sys-catman		.cat
 ./usr/share/man/cat4/savagedrm.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sdhc.0			man-sys-catman		.cat
@@ -2668,6 +2669,7 @@
 ./usr/share/man/cat8/rwalld.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rwhod.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/sa.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/sandpoint/altboot.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/sandpoint/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/sandpoint/makedev.0	man-obsolete		obsolete
 ./usr/share/man/cat8/savecore.0			man-sysutil-catman	.cat
@@ -4109,6 +4111,7 @@
 ./usr/share/man/html4/rtk.html			man-sys-htmlman		html
 ./usr/share/man/html4/rtw.html			man-sys-htmlman		html
 ./usr/share/man/html4/rum.html			man-sys-htmlman		html
+./usr/share/man/html4/sandpoint/satmgr.html		man-sys-htmlman		html
 ./usr/share/man/html4/satalink.html		man-sys-htmlman		html
 ./usr/share/man/html4/savagedrm.html		man-sys-htmlman		html
 ./usr/share/man/html4/sdhc.html			man-sys-htmlman		html
@@ -5166,6 +5169,7 @@
 ./usr/share/man/html8/rwalld.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rwhod.html		man-netutil-htmlman	html
 ./usr/share/man/html8/sa.html			man-sysutil-htmlman	html
+./usr/share/man/html8/sandpoint/altboot.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/savecore.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/scache.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/scan_ffs.html		man-sysutil-htmlman	html
@@ -6702,6 +6706,7 @@
 ./usr/share/man/man4/rtpphy.4			man-obsolete		obsolete
 ./usr/share/man/man4/rtw.4			man-sys-man		.man
 ./usr/share/man/man4/rum.4			man-sys-man		.man
+./usr/share/man/man4/sandpoint/satmgr.4			man-sys-man		.man
 ./usr/share/man/man4/satalink.4			man-sys-man		.man
 ./usr/share/man/man4/savagedrm.4		man-sys-man		.man
 ./usr/share/man/man4/sdhc.4			man-sys-man		.man
@@ -7945,6 +7950,7 @@
 ./usr/share/man/man8/rwalld.8			man-netutil-man		.man
 ./usr/share/man/man8/rwhod.8			man-netutil-man		.man
 ./usr/share/man/man8/sa.8			man-sysutil-man		.man
+./usr/share/man/man8/sandpoint/altboot.8	man-sysutils-man	.man
 ./usr/share/man/man8/sandpoint/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/sandpoint/makedev.8	man-obsolete		obsolete
 ./usr/share/man/man8/savecore.8			man-sysutil-man		.man
