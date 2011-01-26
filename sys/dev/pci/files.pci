@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.336 2011/01/22 15:14:27 cegger Exp $
+#	$NetBSD: files.pci,v 1.337 2011/01/26 18:48:13 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1032,6 +1032,11 @@ attach	nca at pci with nca_pci
 file	dev/pci/nca_pci.c	nca_pci
 
 # Agere ET1310/1301 Ethernet
-device  et: ether, ifnet, arp, mii, mii_phy
-attach  et at pci
-file    dev/pci/if_et.c                 et
+device	et: ether, ifnet, arp, mii, mii_phy
+attach	et at pci
+file	dev/pci/if_et.c			et
+
+# RDC Semiconductor R6040 10/100 Ethernet
+device	vte: ether, ifnet, arp, mii, mii_phy
+attach	vte at pci
+file	dev/pci/if_vte.c		vte

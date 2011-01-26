@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1282 2011/01/26 16:53:17 pooka Exp $
+# $NetBSD: mi,v 1.1283 2011/01/26 18:48:11 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1416,6 +1416,7 @@
 ./usr/share/man/cat4/rlphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rmidi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rnd.0			man-sys-catman		.cat
+./usr/share/man/cat4/rdcphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/route.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rs5c372rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/rt.0			man-sys-catman		.cat
@@ -1745,6 +1746,7 @@
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vnd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vr.0			man-sys-catman		.cat
+./usr/share/man/cat4/vte.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wapbl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wbsio.0			man-sys-catman		.cat
@@ -4103,6 +4105,7 @@
 ./usr/share/man/html4/rlphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/rmidi.html		man-sys-htmlman		html
 ./usr/share/man/html4/rnd.html			man-sys-htmlman		html
+./usr/share/man/html4/rdcphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/route.html		man-sys-htmlman		html
 ./usr/share/man/html4/rs5c372rtc.html		man-sys-htmlman		html
 ./usr/share/man/html4/rt.html			man-sys-htmlman		html
@@ -4418,6 +4421,7 @@
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html
 ./usr/share/man/html4/vnd.html			man-sys-htmlman		html
 ./usr/share/man/html4/vr.html			man-sys-htmlman		html
+./usr/share/man/html4/vte.html			man-sys-htmlman		html
 ./usr/share/man/html4/wapbl.html		man-sys-htmlman		html
 ./usr/share/man/html4/wb.html			man-sys-htmlman		html
 ./usr/share/man/html4/wbsio.html		man-sys-htmlman		html
@@ -6697,6 +6701,7 @@
 ./usr/share/man/man4/rlphy.4			man-sys-man		.man
 ./usr/share/man/man4/rmidi.4			man-sys-man		.man
 ./usr/share/man/man4/rnd.4			man-sys-man		.man
+./usr/share/man/man4/rdcphy.4			man-sys-man		.man
 ./usr/share/man/man4/route.4			man-sys-man		.man
 ./usr/share/man/man4/rs5c372rtc.4		man-sys-man		.man
 ./usr/share/man/man4/rt.4			man-sys-man		.man
@@ -7026,6 +7031,7 @@
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
 ./usr/share/man/man4/vnd.4			man-sys-man		.man
 ./usr/share/man/man4/vr.4			man-sys-man		.man
+./usr/share/man/man4/vte.4			man-sys-man		.man
 ./usr/share/man/man4/wapbl.4			man-sys-man		.man
 ./usr/share/man/man4/wb.4			man-sys-man		.man
 ./usr/share/man/man4/wbsio.4			man-sys-man		.man
