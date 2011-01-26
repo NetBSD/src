@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.18 2011/01/24 17:47:51 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.19 2011/01/26 14:42:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -489,6 +489,7 @@ doconnect(int retry)
 	if (kq != -1)
 		host_close(kq);
 	kq = -1;
+	s = -1;
 
 	prevreconmsg = 0;
 	reconretries = 0;
@@ -497,6 +498,9 @@ doconnect(int retry)
 	if (clispc.spc_fd != -1)
 		host_close(clispc.spc_fd);
 	clispc.spc_fd = -1;
+	if (s != -1)
+		close(s);
+	s = -1;
 
 	/*
 	 * for reconnect, gate everyone out of the receiver code
