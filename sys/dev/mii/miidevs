@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.98 2010/12/11 18:09:13 matt Exp $
+$NetBSD: miidevs,v 1.99 2011/01/26 18:39:04 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ oui MARVELL			0x005043	Marvell Semiconductor
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui PMCSIERRA			0x00e004	PMC-Sierra
+oui RDC				0x00d02d	RDC Semiconductor
 oui REALTEK			0x00e04c	RealTek
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x00a07d	Seeq
@@ -259,6 +260,8 @@ model PMCSIERRA PM8354		0x0004 PM8354 QuadPHY Gigabit interface
 /* Quality Semiconductor PHYs */
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
+/* RDC Semiconductor PHYs */
+model RDC R6040			0x0003 R6040 10/100 media interface
 /* RealTek PHYs */
 model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
