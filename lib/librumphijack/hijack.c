@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.20 2011/01/25 17:37:00 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.21 2011/01/26 18:48:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.20 2011/01/25 17:37:00 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.21 2011/01/26 18:48:32 christos Exp $");
+
+#define __ssp_weak_name(fun) _hijack_ ## fun
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -853,7 +855,27 @@ FDCALL(int, shutdown, DUALCALL_SHUTDOWN, 				\
 	(int, int),							\
 	(fd, how))
 
-FDCALL(ssize_t, read, DUALCALL_READ,	 				\
+#if _FORTIFY_SOURCE > 0
+#define STUB(fun) __ssp_weak_name(fun)
+ssize_t _sys_readlink(const char * __restrict, char * __restrict, size_t);
+ssize_t
+STUB(readlink)(const char * __restrict path, char * __restrict buf,
+    size_t bufsiz)
+{
+	return _sys_readlink(path, buf, bufsiz);
+}
+
+char *_sys_getcwd(char *, size_t);
+char *
+STUB(getcwd)(char *buf, size_t size)
+{
+	return _sys_getcwd(buf, size);
+}
+#else
+#define STUB(fun) fun
+#endif
+
+FDCALL(ssize_t, STUB(read), DUALCALL_READ,				\
 	(int fd, void *buf, size_t buflen),				\
 	(int, void *, size_t),						\
 	(fd, buf, buflen))
