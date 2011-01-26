@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.43 2011/01/26 01:18:54 pooka Exp $	*/
+/*	$NetBSD: cache.c,v 1.44 2011/01/26 16:31:00 uebayasi Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.43 2011/01/26 01:18:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.44 2011/01/26 16:31:00 uebayasi Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -186,6 +186,7 @@ static void mips_config_cache_emips(void);
 static void mips_config_cache_modern(void);
 #endif
 
+#if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
 /* no-cache definition */
 static void no_cache_op(void);
 static void no_cache_op_range(vaddr_t va, vsize_t size);
@@ -193,6 +194,7 @@ static void no_cache_op_range(vaddr_t va, vsize_t size);
 /* no-cache implementation */
 static void no_cache_op(void) {}
 static void no_cache_op_range(vaddr_t va, vsize_t size) {}
+#endif
 
 /*
  * mips_dcache_compute_align:
@@ -888,6 +890,7 @@ primary_cache_is_2way:
 	mips_dcache_compute_align();
 }
 
+#if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
 void
 mips_config_cache_emips(void)
 {
@@ -934,6 +937,7 @@ mips_config_cache_emips(void)
 		panic("mips_config_cache: unsupported eMIPS");
 	}
 }
+#endif
 
 #ifdef MIPS1
 #ifdef ENABLE_MIPS_TX3900
