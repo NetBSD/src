@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.3 2011/01/26 13:13:25 phx Exp $ */
+/* $NetBSD: main.c,v 1.4 2011/01/26 13:36:49 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ void module_load(char *);
 int module_open(struct boot_module *);
 
 void main(int, char **);
-extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
+extern char bootprog_name[], bootprog_rev[];
 
 int brdtype;
 uint32_t busclock, cpuclock;
