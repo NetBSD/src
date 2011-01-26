@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.88 2011/01/14 02:06:31 rmind Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.89 2011/01/26 23:29:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.88 2011/01/14 02:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.89 2011/01/26 23:29:16 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -511,7 +511,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf;
 
-	l->l_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~(MDP_USEDFPU | MDP_SSTEP);
 
 	tf = l->l_md.md_regs;
 
