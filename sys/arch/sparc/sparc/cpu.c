@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.225 2011/01/22 12:13:25 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.226 2011/01/27 05:31:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.225 2011/01/22 12:13:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.226 2011/01/27 05:31:13 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -301,14 +301,19 @@ cpu_init_evcnt(struct cpu_info *cpi)
 {
 
 	/*
-	 * Setup the per-cpu savefpstate counters.  The "savefp null"
-	 * counter should go away when the NULL struct fpstate * bug
-	 * is fixed.
+	 * Setup the per-cpu counters.
+	 *
+	 * The "savefp null" counter should go away when the NULL
+	 * struct fpstate * bug is fixed.
 	 */
 	evcnt_attach_dynamic(&cpi->ci_savefpstate, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "savefp ipi");
 	evcnt_attach_dynamic(&cpi->ci_savefpstate_null, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "savefp null ipi");
+	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "IPI mutex_trylock fail");
+	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail_call, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "IPI mutex_trylock fail with call");
 }
 
 /*
@@ -581,6 +586,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	struct cpu_info *cpi;
 	int n, i, done, callself, mybit;
 	volatile struct xpmsg_func *p;
+	u_int pil;
 	int fasttrap;
 	int is_noop = func == (xcall_func_t)sparc_noop;
 
@@ -592,7 +598,34 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	cpuset &= cpu_ready_mask;
 
 	/* prevent interrupts that grab the kernel lock */
+#if 0
 	mutex_spin_enter(&xpmsg_mutex);
+#else
+	/*
+	 * There's a deadlock potential between multiple CPUs trying
+	 * to xcall() at the same time, and the thread that loses the
+	 * race to get xpmsg_lock is at an IPL above the incoming IPI
+	 * IPL level, so it sits around waiting to take the lock while
+	 * the other CPU is waiting for this CPU to handle the IPI and
+	 * mark it as completed.
+	 *
+	 * If we fail to get the mutex, and we're at high enough IPL,
+	 * call xcallintr() if there is a valid msg.tag.
+	 */
+	pil = (getpsr() & PSR_PIL) >> 8;
+	
+	if (cold || pil < 13)
+		mutex_spin_enter(&xpmsg_mutex);
+	else {
+		while (mutex_tryenter(&xpmsg_mutex) == 0) {
+			cpuinfo.ci_xpmsg_mutex_fail.ev_count++;
+			if (cpuinfo.msg.tag) {
+				cpuinfo.ci_xpmsg_mutex_fail_call.ev_count++;
+				xcallintr(NULL);
+			}
+		}
+	}
+#endif
 
 	/*
 	 * Firstly, call each CPU.  We do this so that they might have
