@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2011/01/26 13:36:49 nisimura Exp $
+#	$NetBSD: Makefile,v 1.4 2011/01/27 04:32:49 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 
 PROG=		altboot
+NOMAN=		# defined
 SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c nif.c \
 		fxp.c tlp.c rge.c skg.c dsk.c pciide.c siisata.c printf.c
 CLEANFILES+=	vers.c vers.o ${PROG} ${PROG}.bin
@@ -14,19 +15,19 @@ CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S}
 DBG=		-Os
 
+.include <bsd.own.mk>
+
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 
 RELOC=		1000000
 ENTRY=		_start
-
 
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
@@ -53,7 +54,9 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 LIBSA=		${SALIB}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${HOST_SH} ${S}/conf/newvers_stand.sh -KD ${.CURDIR}/version sandpoint
+	echo ${OBJS}
+	${HOST_SH} ${S}/conf/newvers_stand.sh -K \
+	    ${${MKREPRO} == "yes" :?:-D} ${.CURDIR}/version sandpoint
 	${CC} -c vers.c
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
