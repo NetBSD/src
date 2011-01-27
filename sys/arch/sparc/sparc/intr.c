@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.109 2011/01/22 10:37:22 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.110 2011/01/27 05:31:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.109 2011/01/22 10:37:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.110 2011/01/27 05:31:14 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -377,8 +377,11 @@ nmi_soft(struct trapframe *tf)
 #if defined(MULTIPROCESSOR)
 /*
  * Respond to an xcall() request from another CPU.
+ *
+ * This is also called directly from xcall() if we notice an
+ * incoming message while we're waiting to grab the xpmsg_lock.
  */
-static void
+void
 xcallintr(void *v)
 {
 
