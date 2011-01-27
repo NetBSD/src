@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: fxp.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -132,7 +132,9 @@ struct local {
 static void autosize_eeprom(struct local *);
 static int read_eeprom(struct local *, int);
 static void fxp_scb_wait(struct local *);
+#ifdef DEBUG
 static int fxp_mdi_read(struct local *, int, int);
+#endif
 
 /*
  * Template for default configuration parameters.
@@ -208,8 +210,8 @@ fxp_init(unsigned tag, void *data)
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x, ",
 		en[0], en[1], en[2], en[3], en[4], en[5]);
 
-	printf("PHY %d (%04x.%04x)\n", fxp_mdi_read(sc, 1, 18),
-	   fxp_mdi_read(sc, 1, 2), fxp_mdi_read(sc, 1, 3));
+	DPRINTF(("PHY %d (%04x.%04x)\n", fxp_mdi_read(sc, 1, 18),
+	   fxp_mdi_read(sc, 1, 2), fxp_mdi_read(sc, 1, 3)));
 
 	/* 
 	 * Initialize base of CBL and RFA memory. Loading with zero
@@ -505,6 +507,7 @@ fxp_scb_wait(struct local *sc)
 		printf("SCB timeout\n");
 }
 
+#ifdef DEBUG
 static int
 fxp_mdi_read(struct local *sc, int phy, int reg)
 {
@@ -523,3 +526,4 @@ fxp_mdi_read(struct local *sc, int phy, int reg)
 
 	return (value & 0xffff);
 }
+#endif
