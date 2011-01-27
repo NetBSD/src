@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.21 2011/01/26 18:48:32 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.22 2011/01/27 18:05:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.21 2011/01/26 18:48:32 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.22 2011/01/27 18:05:16 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -187,7 +187,6 @@ static bool hostlocalsockets = true;
 static void __attribute__((constructor))
 rcinit(void)
 {
-	int (*rumpcinit)(void);
 	void **rumpcdlsym;
 	void *hand;
 	unsigned i, j;
@@ -195,8 +194,6 @@ rcinit(void)
 	hand = dlopen("librumpclient.so", RTLD_LAZY|RTLD_GLOBAL);
 	if (!hand)
 		err(1, "cannot open librumpclient.so");
-	rumpcinit = dlsym(hand, "rumpclient_init");
-	_DIAGASSERT(rumpcinit);
 
 	rumpcdlsym = dlsym(hand, "rumpclient_dlsym");
 	*rumpcdlsym = hijackdlsym;
@@ -229,8 +226,9 @@ rcinit(void)
 			    syscnames[j].scm_rumpname);
 	}
 
-	if (rumpcinit() == -1)
+	if (rumpclient_init() == -1)
 		err(1, "rumpclient init");
+	rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
 }
 
 /* XXX: need runtime selection.  low for now due to FD_SETSIZE */
