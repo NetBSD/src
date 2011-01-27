@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: pci.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -187,6 +187,7 @@ deviceinit(int bus, int dev, int func, unsigned long data)
 	unsigned val;
 
 	/* 0x00 */
+#ifdef DEBUG
 	printf("%02d:%02d:%02d:", bus, dev, func);
 	val = cfgread(bus, dev, func, 0x00);
 	printf(" chip %04x.%04x", val & 0xffff, val>>16);
@@ -197,6 +198,7 @@ deviceinit(int bus, int dev, int func, unsigned long data)
 		val & 0xff, (val>>24), (val>>16) & 0xff, (val>>8) & 0xff);
 	val = cfgread(bus, dev, func, 0x0c);
 	printf(" hdr %02x\n", (val>>16) & 0xff);
+#endif
 
 	/* 0x04 */
 	val = cfgread(bus, dev, func, 0x04);
@@ -308,7 +310,8 @@ memassign(int bus, int dev, int func)
 				cfgwrite(bus, dev, func, mapr, 0);
 			}
 		}
-printf("%s base %x size %x\n", (val & 01) ? "i/o" : "mem", mapbase, size);
+		DPRINTF(("%s base %x size %x\n", (val & 01) ? "i/o" : "mem",
+		    mapbase, size));
 	}
 }
 

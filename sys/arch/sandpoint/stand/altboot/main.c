@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.4 2011/01/26 13:36:49 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.5 2011/01/27 17:38:04 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -121,27 +121,27 @@ main(int argc, char *argv[])
 		    sizeof(lata)/sizeof(lata[0]));
 	if (n == 0) {
 		dsk = ~0;
-		printf("no IDE found\n");
+		DPRINTF(("No IDE found!\n"));
 	}
 	else {
 		dsk = lata[0][1];
 		pcidecomposetag(dsk, &b, &d, &f);
-		printf("%04x.%04x IDE %02d:%02d:%02d\n",
+		DPRINTF(("%04x.%04x IDE %02d:%02d:%02d\n",
 		    PCI_VENDOR(lata[0][0]), PCI_PRODUCT(lata[0][0]),
-		    b, d, f);
+		    b, d, f));
 	}
 
 	n = pcilookup(PCI_CLASS_ETH, lnif, sizeof(lnif)/sizeof(lnif[0]));
 	if (n == 0) {
 		tag = ~0;
-		printf("no NIC found\n");
+		DPRINTF(("no NIC found\n"));
 	}
 	else {
 		tag = lnif[0][1];
 		pcidecomposetag(tag, &b, &d, &f);
-		printf("%04x.%04x NIC %02d:%02d:%02d\n",
+		DPRINTF(("%04x.%04x NIC %02d:%02d:%02d\n",
 		    PCI_VENDOR(lnif[0][0]), PCI_PRODUCT(lnif[0][0]),
-		    b, d, f);
+		    b, d, f));
 	}
 
 	pcisetup();

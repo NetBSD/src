@@ -1,4 +1,4 @@
-/* $NetBSD: sme.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: sme.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -137,12 +137,11 @@ sme_init(unsigned tag, void *data)
 	en[3] = mac32 >> 24;
 	en[4] = mac16;
 	en[5] = mac16 >> 8;
-#if 1
+
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 		en[0], en[1], en[2], en[3], en[4], en[5]);
-	printf("PHY %d (%04x.%04x)\n", l->phy,
-	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3));
-#endif
+	DPRINTF(("PHY %d (%04x.%04x)\n", l->phy,
+	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3)));
 
 	mii_dealan(l, 5);
 
