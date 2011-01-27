@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.9 2011/01/04 10:42:33 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.10 2011/01/27 13:57:39 skrll Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -266,7 +266,7 @@ apic_get_int_tbl(struct elroy_softc *sc)
 	err = pdcproc_pci_inttblsz(&nentries);
 	if (err)
 		return;
-	
+
 	size = nentries * sizeof(struct pdc_pat_pci_rt);
 	sc->sc_int_tbl_sz = nentries;
 	sc->sc_int_tbl = malloc(size, M_DEVBUF, M_NOWAIT);
@@ -337,9 +337,9 @@ apic_dump(struct elroy_softc *sc)
 	for (i = 0; i < sc->sc_int_tbl_sz; i++) {
 		printf("type=%x ", sc->sc_int_tbl[i].type);
 		printf("len=%d ", sc->sc_int_tbl[i].len);
-		printf("itype=%d ", sc->sc_int_tbl[i].itype);			
-		printf("trigger=%x ", sc->sc_int_tbl[i].trigger);		
-		printf("pin=%x ", sc->sc_int_tbl[i].pin);		
+		printf("itype=%d ", sc->sc_int_tbl[i].itype);
+		printf("trigger=%x ", sc->sc_int_tbl[i].trigger);
+		printf("pin=%x ", sc->sc_int_tbl[i].pin);
 		printf("bus=%d ", sc->sc_int_tbl[i].bus);
 		printf("line=%d ", sc->sc_int_tbl[i].line);
 		printf("addr=%llx\n", sc->sc_int_tbl[i].addr);
