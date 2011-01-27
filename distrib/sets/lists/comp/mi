@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1576 2011/01/25 12:56:25 pooka Exp $
+#	$NetBSD: mi,v 1.1577 2011/01/27 14:48:36 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9243,6 +9243,7 @@
 ./usr/share/man/cat9/dbtob.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ddc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/delay.0			comp-sys-catman		.cat
+./usr/share/man/cat9/device_printf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter_first.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter_init.0		comp-sys-catman		.cat
@@ -15173,6 +15174,7 @@
 ./usr/share/man/html9/dbtob.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ddc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/delay.html		comp-sys-htmlman	html
+./usr/share/man/html9/device_printf.html	comp-sys-htmlman	html
 ./usr/share/man/html9/deviter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/deviter_first.html	comp-sys-htmlman	html
 ./usr/share/man/html9/deviter_init.html		comp-sys-htmlman	html
@@ -21248,6 +21250,7 @@
 ./usr/share/man/man9/dbtob.9			comp-sys-man		.man
 ./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
+./usr/share/man/man9/device_printf.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter.9			comp-sys-man		.man
 ./usr/share/man/man9/deviter_first.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter_init.9		comp-sys-man		.man
