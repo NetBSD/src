@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.60 2010/08/28 15:44:59 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.60 2010/08/28 15:44:59 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.61 2011/01/27 23:11:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -72,6 +72,8 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	el->el_errfile = ferr;
 
 	el->el_infd = fileno(fin);
+	el->el_outfd = fileno(fout);
+	el->el_errfd = fileno(ferr);
 
 	el->el_prog = Strdup(ct_decode_string(prog, &el->el_scratch));
 	if (el->el_prog == NULL) {
@@ -333,9 +335,11 @@ FUN(el,set)(EditLine *el, int op, ...)
 			break;
 		case 1:
 			el->el_outfile = fp;
+			el->el_outfd = fileno(fp);
 			break;
 		case 2:
 			el->el_errfile = fp;
+			el->el_errfd = fileno(fp);
 			break;
 		default:
 			rv = -1;
