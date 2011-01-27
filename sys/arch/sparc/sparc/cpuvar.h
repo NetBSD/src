@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.84 2011/01/13 05:20:27 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.85 2011/01/27 05:31:14 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -340,6 +340,8 @@ struct cpu_info {
 	struct evcnt ci_lev14;
 	struct evcnt ci_savefpstate;
 	struct evcnt ci_savefpstate_null;
+	struct evcnt ci_xpmsg_mutex_fail;
+	struct evcnt ci_xpmsg_mutex_fail_call;
 };
 
 /*
@@ -453,6 +455,8 @@ void cpu_init_system(void);
 typedef void (*xcall_func_t)(int, int, int);
 typedef void (*xcall_trap_t)(int, int, int);
 void xcall(xcall_func_t, xcall_trap_t, int, int, int, u_int);
+/* from intr.c */
+void xcallintr(void *);
 /* Shorthand */
 #define XCALL0(f,cpuset)		\
 	xcall((xcall_func_t)f, NULL, 0, 0, 0, cpuset)
