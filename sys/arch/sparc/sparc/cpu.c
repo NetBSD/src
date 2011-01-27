@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.226 2011/01/27 05:31:13 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.227 2011/01/27 06:24:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.226 2011/01/27 05:31:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.227 2011/01/27 06:24:59 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -296,9 +296,48 @@ cpu_cpuunit_attach(struct device *parent, struct device *self, void *aux)
 }
 #endif /* SUN4D */
 
+static const char * const hard_intr_names[] = {
+	"spur hard",
+	"lev1 hard",
+	"lev2 hard",
+	"lev3 hard",
+	"lev4 hard",
+	"lev5 hard",
+	"lev6 hard",
+	"lev7 hard",
+	"lev8 hard",
+	"lev9 hard",
+	"clock hard",
+	"lev11 hard",
+	"lev12 hard",
+	"lev13 hard",
+	"prof hard",
+	"nmi hard",
+};
+
+static const char * const soft_intr_names[] = {
+	"spur soft",
+	"lev1 soft",
+	"lev2 soft",
+	"lev3 soft",
+	"lev4 soft",
+	"lev5 soft",
+	"lev6 soft",
+	"lev7 soft",
+	"lev8 soft",
+	"lev9 soft",
+	"lev10 soft",
+	"lev11 soft",
+	"lev12 soft",
+	"xcall std",
+	"xcall fast",
+	"nmi soft",
+};
+
 static void
 cpu_init_evcnt(struct cpu_info *cpi)
 {
+	int i;
 
 	/*
 	 * Setup the per-cpu counters.
@@ -313,7 +352,17 @@ cpu_init_evcnt(struct cpu_info *cpi)
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "IPI mutex_trylock fail");
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail_call, EVCNT_TYPE_MISC,
-			     NULL, cpu_name(cpi), "IPI mutex_trylock fail with call");
+			     NULL, cpu_name(cpi), "IPI mutex_trylock fail/call");
+
+	/*
+	 * These are the per-cpu per-IPL hard & soft interrupt counters.
+	 */
+	for (i = 0; i < 16; i++) {
+		evcnt_attach_dynamic(&cpi->ci_intrcnt[i], EVCNT_TYPE_INTR,
+				     NULL, cpu_name(cpi), hard_intr_names[i]);
+		evcnt_attach_dynamic(&cpi->ci_sintrcnt[i], EVCNT_TYPE_INTR,
+				     NULL, cpu_name(cpi), soft_intr_names[i]);
+	}
 }
 
 /*
@@ -621,7 +670,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 			cpuinfo.ci_xpmsg_mutex_fail.ev_count++;
 			if (cpuinfo.msg.tag) {
 				cpuinfo.ci_xpmsg_mutex_fail_call.ev_count++;
-				xcallintr(NULL);
+				xcallintr(xcallintr);
 			}
 		}
 	}
