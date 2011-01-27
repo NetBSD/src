@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.221 2011/01/22 18:33:25 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.222 2011/01/27 17:36:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.221 2011/01/22 18:33:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.222 2011/01/27 17:36:27 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -469,8 +469,38 @@ rump__init(int rump_version)
 		    rump_sysent[i].sy_call == sys_nomodule)
 			continue;
 
-		/* if present, adjust symbol value */
-		sprintf(buf, "rumpns_sys_%s", syscallnames[i]);
+		/*
+		 * deal with compat wrappers.  makesyscalls.sh should
+		 * generate the necessary info instead of this hack,
+		 * though.  ugly, fix it later.
+		 */ 
+#define CPFX "compat_"
+#define CPFXLEN (sizeof(CPFX)-1)
+		if (strncmp(syscallnames[i], CPFX, CPFXLEN) == 0) {
+			const char *p = syscallnames[i] + CPFXLEN;
+			size_t namelen;
+
+			/* skip version number */
+			while (*p >= '0' && *p <= '9')
+				p++;
+			if (p == syscallnames[i] + CPFXLEN || *p != '_')
+				panic("invalid syscall name %s\n",
+				    syscallnames[i]);
+
+			/* skip over the next underscore */
+			p++;
+			namelen = p + (sizeof("rumpns_")-1) - syscallnames[i];
+
+			strcpy(buf, "rumpns_");
+			strcat(buf, syscallnames[i]);
+			/* XXX: no strncat in the kernel */
+			strcpy(buf+namelen, "sys_");
+			strcat(buf, p);
+#undef CPFX
+#undef CPFXLEN
+		} else {
+			sprintf(buf, "rumpns_sys_%s", syscallnames[i]);
+		}
 		if ((sym = rumpuser_dl_globalsym(buf)) != NULL
 		    && sym != rump_sysent[i].sy_call) {
 #if 0
