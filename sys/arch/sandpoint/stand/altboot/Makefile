@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 2011/01/27 04:54:40 nisimura Exp $
+#	$NetBSD: Makefile,v 1.6 2011/01/27 16:13:51 phx Exp $
 
 S=		${.CURDIR}/../../../..
 
 PROG=		altboot
 NOMAN=		# defined
-SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c nif.c \
-		fxp.c tlp.c rge.c skg.c dsk.c pciide.c siisata.c printf.c
-CLEANFILES+=	vers.c vers.o ${PROG} ${PROG}.bin
+SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c nif.c
+SRCS+=		fxp.c tlp.c rge.c skg.c dsk.c pciide.c siisata.c printf.c
+SRCS+=		vers.c
+CLEANFILES+=	vers.c ${PROG} ${PROG}.bin
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
@@ -53,17 +54,14 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+.PHONY: vers.c
+vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -K \
-	    ${${MKREPRO} == "yes" :?:-D} ${.CURDIR}/version sandpoint
-	${CC} -c vers.c
+	    ${${MKREPRO} == "yes" :?:-D} ${.CURDIR}/version "sandpoint"
+
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -S -O binary ${.TARGET} ${.TARGET}.bin
 
 .include <bsd.prog.mk>
-
-cleandir distclean: .WAIT cleanlibdir
-
-cleanlibdir:
-	-rm -rf lib
