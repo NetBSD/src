@@ -1,4 +1,4 @@
-/* $NetBSD: skg.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: skg.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -234,8 +234,8 @@ skg_init(unsigned tag, void *data)
 			en[i] = CSR_READ_1(l, SK_MAC0 + i);
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    en[0], en[1], en[2], en[3], en[4], en[5]);
-	printf("PHY %d (%04x.%04x)\n", l->phy,
-	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3));
+	DPRINTF(("PHY %d (%04x.%04x)\n", l->phy,
+	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3)));
 
 	/* set station address */
 	for (i = 0; i < 3; i++)

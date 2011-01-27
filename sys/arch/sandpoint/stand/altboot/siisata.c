@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: siisata.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ siisata_init(unsigned tag, void *data)
 		if (satapresense(l, n)) {
 			/* drive present, now check whether soft reset works */
 			if (perform_atareset(l, n)) {
-				printf("port %d device present\n", n);
+				DPRINTF(("port %d device present\n", n));
 				l->presense[n] = 1;
 			}
 		} else
