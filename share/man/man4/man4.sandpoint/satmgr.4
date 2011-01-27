@@ -1,11 +1,10 @@
-.Dd Jan 26, 2011
+.\" $NetBSD: satmgr.4,v 1.2 2011/01/27 09:50:00 wiz Exp $
+.Dd January 26, 2011
 .Dt SATMGR 4 sandpoint
 .Os
 .Sh NAME
 .Nm satmgr
-.Nd
-driver for satellite processor, controlling power, front panel LEDs
-and buttons
+.Nd driver for satellite processor, controlling power, front panel LEDs, and buttons
 .Sh SYNOPSIS
 .Cd "satmgr0 at eumb? unit 0"
 .Cd "satmgr0 at eumb? unit 1"
@@ -13,8 +12,9 @@ and buttons
 This driver provides an interface to the
 .Tn NAS
 builtin satellite microprocessor which controls the power, front
-panel LEDs and push buttons. Communication is performed through
-character sequences, whose definition and usage depend on the
+panel LEDs, and push buttons.
+Communication is performed through character sequences, whose
+definition and usage depend on the
 .Tn NAS
 product models.
 .Pp
@@ -30,21 +30,22 @@ program.
 .Pp
 .Nm
 detects a soft power-off condition, which is triggered by holding
-the front panel power button pressed for several seconds.  This
-driver can optionally invoke
+the front panel power button pressed for several seconds.
+This driver can optionally invoke
 .Xr powerd 8
-to get a finer control over the system shutdown procedure. It is
-capable of reporting a power-button-pressed event. Refer to the
+to get a finer control over the system shutdown procedure.
+It is capable of reporting a power-button-pressed event.
+Refer to the
 .Xr powerd 8
 manual section for more details.
 .Pp
 For
 .Tn "Kurobox/Linkstation"
 .Tn NAS
-products it also provides a way to
-toggle the system watchdog with the
+products it also provides a way to toggle the system watchdog with the
 .Xr sysctl 8
-utility. The usage is:
+utility.
+The usage is:
 .Bd -literal -offset indent
 # sysctl -w machdep.satmgr.hwwdog_enable=1
 # sysctl -w machdep.satmgr.hwwdog_enable=0
@@ -52,7 +53,7 @@ utility. The usage is:
 .Pp
 .Tn NAS
 products currently supported by
-.Xr satmgr 4 :
+.Nm :
 .Bl -bullet -compact
 .It
 KuroBox
@@ -71,7 +72,7 @@ event notify channel to
 .Xr powerd 8 .
 .El
 .Sh SEE ALSO
-.Xr powerd 8 
+.Xr powerd 8
 .Sh HISTORY
 The
 .Nm
