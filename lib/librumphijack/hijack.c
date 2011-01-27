@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.22 2011/01/27 18:05:16 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.23 2011/01/27 18:12:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.22 2011/01/27 18:05:16 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.23 2011/01/27 18:12:19 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -187,16 +187,10 @@ static bool hostlocalsockets = true;
 static void __attribute__((constructor))
 rcinit(void)
 {
-	void **rumpcdlsym;
-	void *hand;
+	extern void *(*rumpclient_dlsym)(void *, const char *);
 	unsigned i, j;
 
-	hand = dlopen("librumpclient.so", RTLD_LAZY|RTLD_GLOBAL);
-	if (!hand)
-		err(1, "cannot open librumpclient.so");
-
-	rumpcdlsym = dlsym(hand, "rumpclient_dlsym");
-	*rumpcdlsym = hijackdlsym;
+	rumpclient_dlsym = hijackdlsym;
 	host_fork = dlsym(RTLD_NEXT, "fork");
 
 	/*
@@ -215,12 +209,14 @@ rcinit(void)
 		if (j == __arraycount(syscnames))
 			errx(1, "rumphijack error: syscall pos %d missing", i);
 
-		syscalls[i].bs_host = dlsym(hand,syscnames[j].scm_hostname);
+		syscalls[i].bs_host = dlsym(RTLD_NEXT,
+		    syscnames[j].scm_hostname);
 		if (syscalls[i].bs_host == NULL)
 			errx(1, "hostcall %s not found missing",
 			    syscnames[j].scm_hostname);
 
-		syscalls[i].bs_rump = dlsym(hand,syscnames[j].scm_rumpname);
+		syscalls[i].bs_rump = dlsym(RTLD_NEXT,
+		    syscnames[j].scm_rumpname);
 		if (syscalls[i].bs_rump == NULL)
 			errx(1, "rumpcall %s not found missing",
 			    syscnames[j].scm_rumpname);
