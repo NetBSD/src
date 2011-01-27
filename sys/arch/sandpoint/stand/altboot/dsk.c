@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.2 2011/01/23 01:32:08 nisimura Exp $ */
+/* $NetBSD: dsk.c,v 1.3 2011/01/27 17:38:04 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -239,12 +239,10 @@ drive_ident(struct disk *d, char *ident)
 	uint64_t huge;
 
 	p = (uint16_t *)ident;
-#if 1
-        printf("[49]%04x [82]%04x [83]%04x [84]%04x "
-	       "[85]%04x [86]%04x [87]%04x [88]%04x\n",
-		p[49], p[82], p[83], p[84],
-		p[85], p[86], p[87], p[88]);
-#endif
+	DPRINTF(("[49]%04x [82]%04x [83]%04x [84]%04x "
+	   "[85]%04x [86]%04x [87]%04x [88]%04x\n",
+	    p[49], p[82], p[83], p[84],
+	    p[85], p[86], p[87], p[88]));
 	huge = 0;
 	printf("%s: ", d->xname);
 	printf("<%s> ", mkident((char *)ident + 54, 40));
@@ -332,7 +330,6 @@ decode_dlabel(struct disk *d, char *iobuf)
   found:
 	d->dlabel = allocaligned(sizeof(struct disklabel), 4);
 	memcpy(d->dlabel, dlp, sizeof(struct disklabel));
-#if 1
 	for (i = 0; i < dlp->d_npartitions; i += 1) {
 		const char *type;
 		pp = &dlp->d_partitions[i];
@@ -351,7 +348,6 @@ decode_dlabel(struct disk *d, char *iobuf)
 		if (type != NULL)
 			printf("%s%c: %s\n", d->xname, i + 'a', type);
 	}
-#endif
 }
 
 static void
@@ -480,9 +476,6 @@ dsk_open(struct open_file *f, ...)
 	}
 	return ENXIO;
   found:
-#if 0
-printf("dsk_open found %s\n", fsmod);
-#endif
 	d->fsops = fs;
 	f->f_devdata = d;
 
@@ -512,9 +505,6 @@ dsk_strategy(void *devdata, int rw, daddr_t dblk, size_t size,
 	struct disklabel *dlp;
 	int64_t bno;
 
-#if 0
-printf("%s %lld %d\n", d->xname, dblk, size);
-#endif
 	if (size == 0)
 		return 0;
 	if (rw != F_READ)

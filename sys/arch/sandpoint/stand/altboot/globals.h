@@ -1,4 +1,10 @@
-/* $NetBSD: globals.h,v 1.2 2011/01/23 01:32:08 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.3 2011/01/27 17:38:04 phx Exp $ */
+
+#ifdef DEBUG
+#define	DPRINTF(x)	printf x
+#else
+#define	DPRINTF(x)
+#endif
 
 /* clock feed */
 #ifndef EXT_CLK_FREQ
