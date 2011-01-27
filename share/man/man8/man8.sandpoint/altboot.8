@@ -1,4 +1,5 @@
-.Dd Jan 26, 2011
+.\" $NetBSD: altboot.8,v 1.2 2011/01/27 09:52:13 wiz Exp $
+.Dd January 26, 2011
 .Dt ALTBOOT 8 sandpoint
 .Os
 .Sh NAME
@@ -12,7 +13,8 @@ is a
 .Nx
 program which works on top of a
 .Tn NAS
-product's bootloader. It is capable of loading a
+product's bootloader.
+It is capable of loading a
 .Nx
 kernel from an
 .Tn IDE
@@ -24,9 +26,9 @@ or
 .Tn TFTP
 protocol.
 .Nm
-can be stored in flash ROM. Typically you will first copy it from
-flash into RAM and then invoke it there to boot
-the
+can be stored in flash ROM.
+Typically you will first copy it from flash into RAM and then invoke
+it there to boot the
 .Nx
 kernel.
 .Pp
@@ -35,20 +37,21 @@ runs in conjunction with popular
 .Tn U-Boot/PPCBoot
 bootloaders used by
 .Tn NAS
-products. With an appropriate boot command line,
-saved in the environment,
+products.
+With an appropriate boot command line, saved in the environment,
 .Nm
 can load and start a
 .Nx
-kernel without manual intervention. The original
+kernel without manual intervention.
+The original
 .Tn U-Boot/PPCBoot
 bootloaders remain useful and altboot works as a functional extension
 of them.
 .Sh EXAMPLES
 .Nm
 occupies less than 128KB in volume and can be stored to any vacant
-space of the system's flash. It is made to run at RAM address offset
-0x0100'0000.
+space of the system's flash.
+It is made to run at RAM address offset 0x0100'0000.
 .Tn U-Boot/PPCboot
 is instructed to copy the program to RAM in this way:
 .Pp
@@ -64,11 +67,11 @@ The invocation syntax is:
 .Bl -tag -width xx
 .It Va optN
 multi, auto, ask, single, ddb, userconf, norm, quiet, verb,
-silient, debug
+silent, debug
 .Pp
 Omitting optN makes
 .Nm
-default to multi-user mode boot. 
+default to multi-user mode boot.
 .Pp
 N.B., the maximum number of the go command argument varies
 and depends on the
@@ -126,12 +129,13 @@ kernel
 from an
 .Tn FFSv2
 or
-.Tn FFSv1 
+.Tn FFSv1
 filesystem.
 .Em N
 is a number to distinguish the target drive.
 .Em p
-is a partition specifier. When omitted, partition
+is a partition specifier.
+When omitted, partition
 .Sq a
 is assumed.
 .Dq wd0a
@@ -152,7 +156,8 @@ provides a way to run a short list of commands right after power-on.
 The following is a procedure to setup the system for starting
 .Nx
 after a 5 second delay, allowing the user to break into interactive
-mode. Note that a backslashed
+mode.
+Note that a backslashed
 .Sq \&;
 is necessary to enter the script correctly.
 .Bd -literal -offset indent
