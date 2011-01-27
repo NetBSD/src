@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.59 2011/01/14 02:06:30 rmind Exp $	*/
+/*	$NetBSD: exception.c,v 1.60 2011/01/27 01:01:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.59 2011/01/14 02:06:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.60 2011/01/27 01:01:55 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -257,7 +257,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		printf("fatal %s", exp_type[expevt >> 5]);
 	else
 		printf("EXPEVT 0x%03x", expevt);
-	printf(" in %s mode\n", expevt & EXP_USER ? "user" : "kernel");
+	printf(" in %s mode\n", usermode ? "user" : "kernel");
 	printf(" spc %x ssr %x \n", tf->tf_spc, tf->tf_ssr);
 
 	panic("general_exception");
