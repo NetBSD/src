@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.110 2011/01/27 05:31:14 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.111 2011/01/27 06:24:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.110 2011/01/27 05:31:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.111 2011/01/27 06:24:59 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -74,47 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.110 2011/01/27 05:31:14 mrg Exp $");
 static int intr_biglock_wrapper(void *);
 
 void *xcall_cookie;
-
-/* Stats */
-struct evcnt lev13_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"xcall","std");
-struct evcnt lev14_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"xcall","fast");
-EVCNT_ATTACH_STATIC(lev13_evcnt);
-EVCNT_ATTACH_STATIC(lev14_evcnt);
 #endif
-
-struct evcnt intrcnt[15] = {
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "spur", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev1", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev2", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev3", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev4", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev5", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev6", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev7", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev8", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev9", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "clock", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev11", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev12", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev13", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "prof", "hard"),
-};
-
-EVCNT_ATTACH_STATIC2(intrcnt, 0);
-EVCNT_ATTACH_STATIC2(intrcnt, 1);
-EVCNT_ATTACH_STATIC2(intrcnt, 2);
-EVCNT_ATTACH_STATIC2(intrcnt, 3);
-EVCNT_ATTACH_STATIC2(intrcnt, 4);
-EVCNT_ATTACH_STATIC2(intrcnt, 5);
-EVCNT_ATTACH_STATIC2(intrcnt, 6);
-EVCNT_ATTACH_STATIC2(intrcnt, 7);
-EVCNT_ATTACH_STATIC2(intrcnt, 8);
-EVCNT_ATTACH_STATIC2(intrcnt, 9);
-EVCNT_ATTACH_STATIC2(intrcnt, 10);
-EVCNT_ATTACH_STATIC2(intrcnt, 11);
-EVCNT_ATTACH_STATIC2(intrcnt, 12);
-EVCNT_ATTACH_STATIC2(intrcnt, 13);
-EVCNT_ATTACH_STATIC2(intrcnt, 14);
 
 void	strayintr(struct clockframe *);
 #ifdef DIAGNOSTIC
@@ -243,6 +203,9 @@ nmi_hard(void)
 	char bits[64];
 	u_int afsr, afva;
 
+	/* Tally */
+	cpuinfo.ci_intrcnt[15].ev_count++;
+
 	afsr = afva = 0;
 	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
 		snprintb(bits, sizeof(bits), AFSR_BITS, afsr);
@@ -330,6 +293,10 @@ nmi_hard(void)
 void
 nmi_soft(struct trapframe *tf)
 {
+
+	/* Tally */
+	cpuinfo.ci_sintrcnt[15].ev_count++;
+
 	if (cpuinfo.mailbox) {
 		/* Check PROM messages */
 		uint8_t msg = *(uint8_t *)cpuinfo.mailbox;
@@ -380,13 +347,16 @@ nmi_soft(struct trapframe *tf)
  *
  * This is also called directly from xcall() if we notice an
  * incoming message while we're waiting to grab the xpmsg_lock.
+ * We pass the address of xcallintr() itself to indicate that
+ * this is not a real interrupt.
  */
 void
 xcallintr(void *v)
 {
 
 	/* Tally */
-	lev13_evcnt.ev_count++;
+	if (v != xcallintr)
+		cpuinfo.ci_sintrcnt[13].ev_count++;
 
 	/* notyet - cpuinfo.msg.received = 1; */
 	switch (cpuinfo.msg.tag) {
