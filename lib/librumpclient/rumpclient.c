@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.19 2011/01/26 14:42:41 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.20 2011/01/27 18:04:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -82,27 +82,83 @@ static struct spclient clispc = {
 static int kq = -1;
 static sigset_t fullset;
 
-static int doconnect(int);
+static int doconnect(bool);
 static int handshake_req(struct spclient *, uint32_t *, int, bool);
 
-int didrecon;
+time_t retrytimo = RUMPCLIENT_RETRYCONN_ONCE;
 
 static int
 send_with_recon(struct spclient *spc, const void *data, size_t dlen)
 {
+	struct timeval starttime, curtime;
+	time_t prevreconmsg;
+	unsigned reconretries;
 	int rv;
 
-	do {
+	for (prevreconmsg = 0, reconretries = 0;;) {
 		rv = dosend(spc, data, dlen);
 		if (__predict_false(rv == ENOTCONN || rv == EBADF)) {
-			if ((rv = doconnect(1)) != 0)
+			/* no persistent connections */
+			if (retrytimo == 0)
+				break;
+
+			if (!prevreconmsg) {
+				prevreconmsg = time(NULL);
+				gettimeofday(&starttime, NULL);
+			}
+			if (reconretries == 1) {
+				if (retrytimo == RUMPCLIENT_RETRYCONN_ONCE) {
+					rv = ENOTCONN;
+					break;
+				}
+				fprintf(stderr, "rump_sp: connection to "
+				    "kernel lost, trying to reconnect ...\n");
+			} else if (time(NULL) - prevreconmsg > 120) {
+				fprintf(stderr, "rump_sp: still trying to "
+				    "reconnect ...\n");
+				prevreconmsg = time(NULL);
+			}
+
+			/* check that we aren't over the limit */
+			if (retrytimo > 0) {
+				struct timeval tmp;
+
+				gettimeofday(&curtime, NULL);
+				timersub(&curtime, &starttime, &tmp);
+				if (tmp.tv_sec >= retrytimo) {
+					fprintf(stderr, "rump_sp: reconnect "
+					    "failed, %lld second timeout\n",
+					    (long long)retrytimo);
+					return ENOTCONN;
+				}
+			}
+
+			/* adhoc backoff timer */
+			if (reconretries < 10) {
+				usleep(100000 * reconretries);
+			} else {
+				sleep(MIN(10, reconretries-9));
+			}
+			reconretries++;
+
+			if ((rv = doconnect(false)) != 0)
 				continue;
 			if ((rv = handshake_req(&clispc, NULL, 0, true)) != 0)
 				continue;
-			rv = ENOTCONN;
+
+			/*
+			 * ok, reconnect succesful.  we need to return to
+			 * the upper layer to get the entire PDU resent.
+			 */
+			if (reconretries != 1)
+				fprintf(stderr, "rump_sp: reconnected!\n");
+			rv = EAGAIN;
+			break;
+		} else {
+			_DIAGASSERT(errno != EAGAIN);
 			break;
 		}
-	} while (__predict_false(rv != 0));
+	}
 
 	return rv;
 }
@@ -235,7 +291,9 @@ syscall_req(struct spclient *spc, int sysnum,
 		}
 
 		rv = cliwaitresp(spc, &rw, &omask, false);
-	} while (rv == ENOTCONN || rv == EAGAIN);
+		if (rv == ENOTCONN)
+			rv = EAGAIN;
+	} while (rv == EAGAIN);
 	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 
 	*resp = rw.rw_data;
@@ -316,7 +374,9 @@ prefork_req(struct spclient *spc, void **resp)
 		}
 
 		rv = cliwaitresp(spc, &rw, &omask, false);
-	} while (rv == ENOTCONN || rv == EAGAIN);
+		if (rv == ENOTCONN)
+			rv = EAGAIN;
+	} while (rv == EAGAIN);
 	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 
 	*resp = rw.rw_data;
@@ -474,10 +534,8 @@ static unsigned ptab_idx;
 static struct sockaddr *serv_sa;
 
 static int
-doconnect(int retry)
+doconnect(bool noisy)
 {
-	time_t prevreconmsg;
-	unsigned reconretries;
 	struct respwait rw;
 	struct rsp_hdr rhdr;
 	struct kevent kev[NSIG+1];
@@ -491,16 +549,9 @@ doconnect(int retry)
 	kq = -1;
 	s = -1;
 
-	prevreconmsg = 0;
-	reconretries = 0;
-
- again:
 	if (clispc.spc_fd != -1)
 		host_close(clispc.spc_fd);
 	clispc.spc_fd = -1;
-	if (s != -1)
-		close(s);
-	s = -1;
 
 	/*
 	 * for reconnect, gate everyone out of the receiver code
@@ -538,50 +589,33 @@ doconnect(int retry)
 	while (host_connect(s, serv_sa, (socklen_t)serv_sa->sa_len) == -1) {
 		if (errno == EINTR)
 			continue;
-		if (!retry) {
-			error = errno;
+		error = errno;
+		if (noisy)
 			fprintf(stderr, "rump_sp: client connect failed: %s\n",
 			    strerror(errno));
-			errno = error;
-			return -1;
-		}
-
-		if (prevreconmsg == 0) {
-			fprintf(stderr, "rump_sp: connection to kernel lost, "
-			    "trying to reconnect ...\n");
-			prevreconmsg = time(NULL);
-		}
-		if (time(NULL) - prevreconmsg > 120) {
-			fprintf(stderr, "rump_sp: still trying to "
-			    "reconnect ...\n");
-			prevreconmsg = time(NULL);
-		}
-
-		/* adhoc backoff timer */
-		if (reconretries++ < 10) {
-			usleep(100000 * reconretries);
-		} else {
-			sleep(MIN(10, reconretries-9));
-		}
-		goto again;
+		errno = error;
+		return -1;
 	}
 
 	if ((error = parsetab[ptab_idx].connhook(s)) != 0) {
 		error = errno;
-		fprintf(stderr, "rump_sp: connect hook failed\n");
+		if (noisy)
+			fprintf(stderr, "rump_sp: connect hook failed\n");
 		errno = error;
 		return -1;
 	}
 
 	if ((n = host_read(s, banner, sizeof(banner)-1)) < 0) {
 		error = errno;
-		fprintf(stderr, "rump_sp: failed to read banner\n");
+		if (noisy)
+			fprintf(stderr, "rump_sp: failed to read banner\n");
 		errno = error;
 		return -1;
 	}
 
 	if (banner[n-1] != '\n') {
-		fprintf(stderr, "rump_sp: invalid banner\n");
+		if (noisy)
+			fprintf(stderr, "rump_sp: invalid banner\n");
 		errno = EINVAL;
 		return -1;
 	}
@@ -590,8 +624,9 @@ doconnect(int retry)
 
 	flags = host_fcntl(s, F_GETFL, 0);
 	if (host_fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1) {
-		fprintf(stderr, "rump_sp: socket fd NONBLOCK: %s\n",
-		    strerror(errno));
+		if (noisy)
+			fprintf(stderr, "rump_sp: socket fd NONBLOCK: %s\n",
+			    strerror(errno));
 		errno = EINVAL;
 		return -1;
 	}
@@ -599,14 +634,11 @@ doconnect(int retry)
 	clispc.spc_state = SPCSTATE_RUNNING;
 	clispc.spc_reconnecting = 0;
 
-	if (prevreconmsg) {
-		fprintf(stderr, "rump_sp: reconnected!\n");
-	}
-
 	/* setup kqueue, we want all signals and the fd */
 	if ((kq = host_kqueue()) == -1) {
 		error = errno;
-		fprintf(stderr, "rump_sp: cannot setup kqueue");
+		if (noisy)
+			fprintf(stderr, "rump_sp: cannot setup kqueue");
 		errno = error;
 		return -1;
 	}
@@ -618,7 +650,8 @@ doconnect(int retry)
 	    EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
 	if (host_kevent(kq, kev, NSIG+1, NULL, 0, NULL) == -1) {
 		error = errno;
-		fprintf(stderr, "rump_sp: kevent() failed");
+		if (noisy)
+			fprintf(stderr, "rump_sp: kevent() failed");
 		errno = error;
 		return -1;
 	}
@@ -683,7 +716,7 @@ rumpclient_init()
 
 	if (doinit() == -1)
 		return -1;
-	if (doconnect(0) == -1)
+	if (doconnect(true) == -1)
 		return -1;
 
 	error = handshake_req(&clispc, NULL, 0, false);
@@ -738,7 +771,7 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 
 	if (doinit() == -1)
 		return -1;
-	if (doconnect(1) == -1)
+	if (doconnect(false) == -1)
 		return -1;
 
 	error = handshake_req(&clispc, rpf->fork_auth, 0, false);
@@ -750,4 +783,14 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 	}
 
 	return 0;
+}
+
+void
+rumpclient_setconnretry(time_t timeout)
+{
+
+	if (timeout < RUMPCLIENT_RETRYCONN_ONCE)
+		return; /* gigo */
+
+	retrytimo = timeout;
 }
