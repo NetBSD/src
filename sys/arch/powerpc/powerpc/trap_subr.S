@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.65.16.3 2011/01/26 08:52:25 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.65.16.4 2011/01/28 04:37:25 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -251,15 +251,39 @@ _C_LABEL(dsitrap):
 	ldreg	%r31,_C_LABEL(battable)+SZREG@l(%r31)
 /* We randomly use the highest two bat registers here */
 	mftb	%r28
-	andi.	%r28,%r28,1
-	bne	2f
-	mtdbatu	2,%r30
-	mtdbatl	2,%r31
-	b	3f
-2:
-	mtdbatu	3,%r30
-	mtdbatl	3,%r31
+	mtcr	%r28
+	.globl	dsitrap_fix_dbat4, dsitrap_fix_dbat5
+	.globl	dsitrap_fix_dbat6, dsitrap_fix_dbat7
+dsitrap_fix_dbat4:
+	bt	31,3f
+	/*
+	 * If we are running on a CPU that has HIGHBAT, these will be replaced
+	 * by instructions to test bit 30 (aka bit 1 for normal people) and if
+	 * set skip ahead to 5f (4 instructions),  follored by instructions to
+	 * update BAT4.
+	 */
+	mtspr	SPR_DBAT2U,%r30		/*	bt	30,dsitrap_fix_dbat5 */
+	mtspr	SPR_DBAT2L,%r31		/*	mtspr	SPR_DBAT4U,%r30 */
+	b	8f			/*	mtspr	SPR_DBAT4L,%r31 */	
+	b	8f			/*	do not remove */
+dsitrap_fix_dbat5:
+	mtspr	SPR_DBAT5U,%r30
+	mtspr	SPR_DBAT5L,%r31
+	b	8f
+dsitrap_fix_dbat6:
+	bt	30,3f
+	mtspr	SPR_DBAT6U,%r30
+	mtspr	SPR_DBAT6L,%r31
+	b	8f
 3:
+dsitrap_fix_dbat7:
+	/*
+	 * If we are running on a CPU that has HIGHBAT, these will be replaced
+	 * by instructions to update BAT7.
+	 */
+	mtspr	SPR_DBAT3U,%r30		/*	mtspr	SPR_DBAT7U,%r30 */
+	mtspr	SPR_DBAT3L,%r31		/*	mtspr	SPR_DBAT7L,%r31 */
+8:
 	mfsprg2	%r30			/* restore XER */
 	mtxer	%r30
 	mtcr	%r29			/* restore CR */
