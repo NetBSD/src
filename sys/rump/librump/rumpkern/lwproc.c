@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.12 2011/01/28 16:58:28 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.13 2011/01/28 18:48:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.12 2011/01/28 16:58:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.13 2011/01/28 18:48:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -347,9 +347,9 @@ rump_lwproc_switch(struct lwp *newlwp)
 	mutex_exit(newlwp->l_proc->p_lock);
 
 	l->l_mutex = &unruntime_lock;
-	l->l_cpu = NULL;
 	l->l_pflag &= ~LP_RUNNING;
 	l->l_flag &= ~LW_PENDSIG;
+	l->l_stat = LSRUN;
 
 	if (l->l_flag & LW_WEXIT) {
 		lwproc_freelwp(l);
