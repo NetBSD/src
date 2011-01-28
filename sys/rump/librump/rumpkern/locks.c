@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.49 2011/01/28 16:58:28 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.50 2011/01/28 17:04:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.49 2011/01/28 16:58:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.50 2011/01/28 17:04:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -285,10 +285,11 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 
 	if (__predict_false(l->l_flag & LW_RUMP_DYING)) {
 		/*
-		 * sleepq code expects us to sleep, so set l_mutex
-		 * back to cpu lock here if we didn't.
+		 * yield() here, someone might want the cpu
+		 * to set a condition.  otherwise we'll just
+		 * loop forever.
 		 */
-		l->l_mutex = l->l_cpu->ci_schedstate.spc_mutex;
+		yield();
 		return EINTR;
 	}
 
