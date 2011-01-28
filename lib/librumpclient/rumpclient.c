@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.20 2011/01/27 18:04:05 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.21 2011/01/28 19:21:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -307,10 +307,17 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 	struct rsp_hdr rhdr;
 	struct respwait rw;
 	sigset_t omask;
+	size_t bonus;
 	int rv;
 
+	if (auth) {
+		bonus = sizeof(rf);
+	} else {
+		bonus = strlen(getprogname())+1;
+	}
+
 	/* performs server handshake */
-	rhdr.rsp_len = sizeof(rhdr) + (auth ? sizeof(rf) : 0);
+	rhdr.rsp_len = sizeof(rhdr) + bonus;
 	rhdr.rsp_class = RUMPSP_REQ;
 	rhdr.rsp_type = RUMPSP_HANDSHAKE;
 	if (auth)
@@ -328,6 +335,8 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 		memcpy(rf.rf_auth, auth, AUTHLEN*sizeof(*auth));
 		rf.rf_cancel = cancel;
 		rv = send_with_recon(spc, &rf, sizeof(rf));
+	} else {
+		rv = dosend(spc, getprogname(), strlen(getprogname())+1);
 	}
 	if (rv || cancel) {
 		if (haslock)
