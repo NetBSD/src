@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.222 2011/01/27 17:36:27 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.223 2011/01/28 16:58:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.222 2011/01/27 17:36:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.223 2011/01/28 16:58:28 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -788,7 +788,7 @@ rump_proxy_procexit(void)
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l == curlwp)
 			continue;
-		l->l_stat = LSDEAD;
+		l->l_flag |= LW_RUMP_DYING;
 	}
 	mutex_exit(p->p_lock);
 
@@ -816,8 +816,8 @@ rump_proxy_procexit(void)
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_private)
 			cv_broadcast(l->l_private);
-		l->l_stat = LSZOMB;
 	}
+	p->p_stat = SDYING;
 	cv_broadcast(&p->p_waitcv);
 	mutex_exit(p->p_lock);
 
