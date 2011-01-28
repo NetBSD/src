@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.50.14.2 2011/01/17 07:45:59 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.50.14.3 2011/01/28 02:34:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50.14.2 2011/01/17 07:45:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50.14.3 2011/01/28 02:34:11 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -275,6 +275,9 @@ cpu_model_init(void)
 
 	else if (MPC745X_P(vers) && vers != MPC7450)
 		oeacpufeat |= OEACPU_XBSEN | OEACPU_HIGHBAT | OEACPU_HIGHSPRG;
+
+	else if (vers == IBM750FX)
+		oeacpufeat |= OEACPU_HIGHBAT;
 }
 
 void
