@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_subr.c,v 1.1.2.2 2011/01/28 18:36:06 bouyer Exp $ */
+/* $NetBSD: quota2_subr.c,v 1.1.2.3 2011/01/28 23:30:34 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,6 +26,9 @@
   * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   * POSSIBILITY OF SUCH DAMAGE.
   */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.1.2.3 2011/01/28 23:30:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
