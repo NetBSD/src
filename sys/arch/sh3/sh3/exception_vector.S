@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.46 2010/12/20 00:25:43 matt Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.47 2011/01/28 21:06:08 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_ptrace.h"
+
 #include "assym.h"
 
 #include <sh3/param.h>
@@ -46,7 +48,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.46 2010/12/20 00:25:43 matt Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.47 2011/01/28 21:06:08 uwe Exp $")
 
 
 /*
@@ -97,12 +99,12 @@ NENTRY(sh_vector_generic)
 
 	/* general_exception(curlwp, tf, TEA); */
 1:	mov	r4, r8
-#ifdef DDB
+#if defined(PTRACE) || defined(DDB)
 	mov	#0, r2
 	MOV	(BBRA, r1)
-	mov.w	r2, @r1			/* disable UBC */
 	mov.l	r2, @(TF_UBC, r14)	/* clear tf->tf_ubc */
-#endif /* DDB */
+	mov.w	r2, @r1			/* disable UBC channel A */
+#endif
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	.Lg_general_exception, r0
 	jsr	@r0
@@ -114,9 +116,9 @@ NENTRY(sh_vector_generic)
 	jsr	@r0
 	 mov	r14, r5
 
-#ifdef DDB
+#if defined(PTRACE) || defined(DDB)
 	mov.l	@(TF_UBC, r14), r2
-	tst	r2, r2			! ddb single-step == 0?
+	tst	r2, r2			! single-step == 0?
 	bt	.Lg_return_from_exception
 
 	!! We are returning from DDB to do single step.  Channel A in
@@ -127,7 +129,7 @@ NENTRY(sh_vector_generic)
 	mov.l	@(TF_SPC, r14), r4
 	mov.l	r4, @r5			! BARA = tf->tf_spc
 	mov.w	r2, @r3			! BBRA = tf->tf_ubc
-#endif /* DDB */
+#endif /* PTRACE || DDB */
 .Lg_return_from_exception:
 	__EXCEPTION_RETURN
 
