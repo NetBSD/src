@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.29 2011/01/28 13:00:14 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.30 2011/01/28 13:02:34 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -387,7 +387,7 @@ static void reload_conf(){
 	}
 #endif
 
-	save_sainfotree();
+	sainfo_start_reload();
 
 	/* TODO: save / restore / flush old lcconf (?) / rmtree
 	 */
@@ -429,7 +429,7 @@ static void reload_conf(){
 	/* Update ctdtree ?
 	 */
 
-	save_sainfotree_flush();
+	sainfo_finish_reload();
 	rmconf_finish_reload();
 }
 

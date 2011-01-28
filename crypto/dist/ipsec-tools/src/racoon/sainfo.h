@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.h,v 1.6 2007/09/12 23:39:51 mgrooms Exp $	*/
+/*	$NetBSD: sainfo.h,v 1.7 2011/01/28 13:02:34 tteras Exp $	*/
 
 /* Id: sainfo.h,v 1.5 2006/07/09 17:19:38 manubsd Exp */
 
@@ -85,8 +85,8 @@ extern void delsainfoalg __P((struct sainfoalg *));
 extern void inssainfoalg __P((struct sainfoalg **, struct sainfoalg *));
 extern const char * sainfo2str __P((const struct sainfo *));
 
-extern void save_sainfotree __P((void));
-extern void save_sainfotree_flush __P((void));
+extern void sainfo_start_reload __P((void));
+extern void sainfo_finish_reload __P((void));
 extern void save_sainfotree_restore __P((void));
 
 #endif /* _SAINFO_H */
