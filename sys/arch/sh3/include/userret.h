@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.10 2007/11/05 20:37:48 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.11 2011/01/28 21:06:07 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,12 +81,39 @@
 
 #include <sys/userret.h>
 
+#include <sh3/ubcreg.h>
+#include "opt_ptrace.h"
+
+
 static __inline void
 userret(struct lwp *l)
 {
 
 	/* Invoke MI userret code */
 	mi_userret(l);
+
+#ifdef PTRACE
+	/* Check if lwp is being PT_STEP'ed */
+	if (l->l_md.md_flags & MDP_SSTEP) {
+		struct trapframe *tf = l->l_md.md_regs;
+
+		/*
+		 * Channel A is set up for single stepping in sh_cpu_init().
+		 * Before RTE we write tf_ubc to BBRA and tf_spc to BARA.
+		 */
+#ifdef SH3
+		if (CPU_IS_SH3) {
+			tf->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ
+				| SH3_UBC_CYCLE_CPU;
+	}
+#endif
+#ifdef SH4
+		if (CPU_IS_SH4) {
+			tf->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ;
+		}
+#endif
+	}
+#endif /* PTRACE */
 }
 
 #endif /* !_SH3_USERRET_H_ */

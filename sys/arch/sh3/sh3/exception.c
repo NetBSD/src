@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.60 2011/01/27 01:01:55 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.61 2011/01/28 21:06:08 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.60 2011/01/27 01:01:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.61 2011/01/28 21:06:08 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -185,6 +185,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		break;
 
 	case EXPEVT_BREAK | EXP_USER:
+		l->l_md.md_flags &= ~MDP_SSTEP;
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
