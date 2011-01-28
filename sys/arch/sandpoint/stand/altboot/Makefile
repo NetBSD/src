@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2011/01/27 16:13:51 phx Exp $
+#	$NetBSD: Makefile,v 1.7 2011/01/28 22:15:36 phx Exp $
 
 S=		${.CURDIR}/../../../..
 
 PROG=		altboot
+FILES+=		${PROG}.bin
 NOMAN=		# defined
 SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c nif.c
 SRCS+=		fxp.c tlp.c rge.c skg.c dsk.c pciide.c siisata.c printf.c
