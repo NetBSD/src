@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.918 2011/01/26 15:00:57 pooka Exp $
+# $NetBSD: mi,v 1.919 2011/01/28 18:52:48 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -629,6 +629,7 @@
 ./usr/bin/skeyinit				base-util-bin		skey
 ./usr/bin/slogin				base-secsh-bin		crypto
 ./usr/bin/sockstat				base-util-bin
+./usr/bin/rump.sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin
 ./usr/bin/split					base-util-bin
