@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.177 2011/01/28 18:44:44 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.178 2011/01/28 20:31:10 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.177 2011/01/28 18:44:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.178 2011/01/28 20:31:10 pooka Exp $");
 
 #include "opt_sysv.h"
-#include "opt_compat_netbsd32.h"
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 #include "opt_sa.h"
@@ -71,9 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.177 2011/01/28 18:44:44 pooka Exp 
 #include <sys/ktrace.h>
 #include <sys/ksem.h>
 
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32.h>
-#endif
 #ifdef COMPAT_50
 #include <compat/sys/time.h>
 #endif
