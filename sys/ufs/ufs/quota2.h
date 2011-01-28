@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.1.2.2 2011/01/21 16:58:06 bouyer Exp $ */
+/* $NetBSD: quota2.h,v 1.1.2.3 2011/01/28 18:36:06 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -97,4 +97,6 @@ struct quota2_header {
 /* quota2_subr.c */
 void quota2_addfreeq2e(struct quota2_header *, void *, uint64_t, uint64_t, int);
 void quota2_create_blk0(uint64_t, void *bp, int, int, int);
+void quota2_ufs_rwq2v(const struct quota2_val *, struct quota2_val *, int);
+void quota2_ufs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
 #endif /*  _UFS_UFS_QUOTA2_H_ */

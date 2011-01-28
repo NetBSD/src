@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_subr.c,v 1.1.2.1 2011/01/20 14:25:03 bouyer Exp $ */
+/* $NetBSD: quota2_subr.c,v 1.1.2.2 2011/01/28 18:36:06 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -83,4 +83,25 @@ quota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
 
 	/* first quota entry, after the hash table */
 	quota2_addfreeq2e(q2h, bp, quota2_full_header_size, bsize, ns);
+}
+
+void
+quota2_ufs_rwq2v(const struct quota2_val *s, struct quota2_val *d, int needswap)
+{
+	d->q2v_hardlimit = ufs_rw64(s->q2v_hardlimit, needswap);
+	d->q2v_softlimit = ufs_rw64(s->q2v_softlimit, needswap);
+	d->q2v_cur = ufs_rw64(s->q2v_cur, needswap);
+	d->q2v_time = ufs_rw64(s->q2v_time, needswap);
+	d->q2v_grace = ufs_rw64(s->q2v_grace, needswap);
+}
+
+void
+quota2_ufs_rwq2e(const struct quota2_entry *s, struct quota2_entry *d,
+int needswap)
+{
+	quota2_ufs_rwq2v(&s->q2e_val[Q2V_BLOCK], &d->q2e_val[Q2V_BLOCK],
+	    needswap);
+	quota2_ufs_rwq2v(&s->q2e_val[Q2V_FILE], &d->q2e_val[Q2V_FILE],
+	    needswap);
+	d->q2e_uid = ufs_rw32(s->q2e_uid, needswap);
 }
