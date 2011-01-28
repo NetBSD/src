@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1577 2011/01/27 14:48:36 wiz Exp $
+#	$NetBSD: mi,v 1.1578 2011/01/28 18:52:48 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3369,6 +3369,7 @@
 ./usr/libdata/debug/usr/bin/skeyinfo.debug	comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/skeyinit.debug	comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/sockstat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/rump.sockstat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/soelim.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/sort.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/split.debug		comp-util-debug		debug
