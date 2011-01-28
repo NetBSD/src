@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.12 2010/01/17 23:03:01 wiz Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.13 2011/01/28 13:02:34 tteras Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -64,7 +64,8 @@
 #include "sainfo.h"
 #include "gcmalloc.h"
 
-static LIST_HEAD(_sitree, sainfo) sitree, sitree_save, sitree_tmp;
+typedef LIST_HEAD(_sitree, sainfo) sainfo_tailq_head_t;
+static sainfo_tailq_head_t sitree, sitree_save;
 
 /* %%%
  * modules for ipsec sa info
@@ -392,12 +393,14 @@ sainfo2str(si)
         return buf;
 }
 
-void save_sainfotree(void){
+void sainfo_start_reload(void){
 	sitree_save=sitree;
 	initsainfo();
 }
 
-void save_sainfotree_flush(void){
+void sainfo_finish_reload(void){
+	sainfo_tailq_head_t sitree_tmp;
+
 	sitree_tmp=sitree;
 	sitree=sitree_save;
 	flushsainfo();
