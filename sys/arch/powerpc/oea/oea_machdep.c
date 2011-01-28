@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.46.18.3 2011/01/26 08:52:26 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.46.18.4 2011/01/28 04:37:25 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46.18.3 2011/01/26 08:52:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.46.18.4 2011/01/28 04:37:25 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -105,6 +105,11 @@ struct bat battable[BAT_VA2IDX(0xffffffff)+1];
 
 register_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
 paddr_t msgbuf_paddr;
+
+extern int dsitrap_fix_dbat4[];
+extern int dsitrap_fix_dbat5[];
+extern int dsitrap_fix_dbat6[];
+extern int dsitrap_fix_dbat7[];
 
 void
 oea_init(void (*handler)(void))
@@ -372,6 +377,8 @@ oea_init(void (*handler)(void))
 	 */
 	__syncicache((void *) trapstart,
 	    (uintptr_t) trapend - (uintptr_t) trapstart);
+	__syncicache(dsitrap_fix_dbat4, 16);
+	__syncicache(dsitrap_fix_dbat7, 8);
 #ifdef PPC_OEA601
 
 	/*
@@ -453,19 +460,36 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 #endif /* PPC_OEA601 */
 
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+#define	DBAT_SET(n, batl, batu)				\
+	do {						\
+		mtspr(SPR_DBAT##n##L, (batl));		\
+		mtspr(SPR_DBAT##n##U, (batu));		\
+	} while (/*CONSTCOND*/ 0)
+#define	DBAT_RESET(n)	DBAT_SET(n, 0, 0)
+#define	DBATU_GET(n)	mfspr(SPR_DBAT##n##U)
+#define	IBAT_SET(n, batl, batu)				\
+	do {						\
+		mtspr(SPR_IBAT##n##L, (batl));		\
+		mtspr(SPR_IBAT##n##U, (batu));		\
+	} while (/*CONSTCOND*/ 0)
+#define	IBAT_RESET(n)	IBAT_SET(n, 0, 0)
+	
 void
 oea_iobat_add(paddr_t pa, register_t len)
 {
 	static int z = 1;
-	const u_int i = BAT_VA2IDX(pa);
 	const u_int n = __SHIFTOUT(len, (BAT_XBL|BAT_BL) & ~BAT_BL_8M);
+	const u_int i = BAT_VA2IDX(pa) & -n; /* in case pa was in the middle */
+	const int after_bat3 = (oeacpufeat & OEACPU_HIGHBAT) ? 4 : 8;
 
 	KASSERT(len >= BAT_BL_8M);
 
-	battable[i].batl = BATL(pa, BAT_I|BAT_G, BAT_PP_RW);
-	battable[i].batu = BATU(pa, len, BAT_Vs);
+	const register_t batl = BATL(pa, BAT_I|BAT_G, BAT_PP_RW);
+	const register_t batu = BATU(pa, len, BAT_Vs);
+
 	for (u_int j = 0; j < n; j++) {
-		battable[i + j] = battable[i];
+		battable[i + j].batl = batl;
+		battable[i + j].batu = batu;
 	}
 
 	/*
@@ -473,22 +497,32 @@ oea_iobat_add(paddr_t pa, register_t len)
 	 */
 	switch (z) {
 	case 1:
-		__asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
-		    ::	"r"(battable[i].batl),
-			"r"(battable[i].batu));
+		DBAT_SET(1, batl, batu);
 		z = 2;
 		break;
 	case 2:
-		__asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1;"
-		    ::	"r"(battable[i].batl),
-			"r"(battable[i].batu));
+		DBAT_SET(2, batl, batu);
 		z = 3;
 		break;
 	case 3:
-		__asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1;"
-		    ::	"r"(battable[i].batl),
-			"r"(battable[i].batu));
-		z = 4;
+		DBAT_SET(3, batl, batu);
+		z = after_bat3;			/* no highbat, skip to end */
+		break;
+	case 4:
+		DBAT_SET(4, batl, batu);
+		z = 5;
+		break;
+	case 5:
+		DBAT_SET(5, batl, batu);
+		z = 6;
+		break;
+	case 6:
+		DBAT_SET(6, batl, batu);
+		z = 7;
+		break;
+	case 7:
+		DBAT_SET(7, batl, batu);
+		z = 8;
 		break;
 	default:
 		break;
@@ -510,30 +544,51 @@ oea_iobat_remove(paddr_t pa)
 
 	memset(&battable[i], 0, n*sizeof(battable[0]));
 
-#define	BAT_RESET(n) \
-	__asm volatile("mtdbatu %0,%1; mtdbatl %0,%1" :: "n"(n), "r"(0))
-#define	BATU_GET(n, r)	__asm volatile("mfdbatu %0,%1" : "=r"(r) : "n"(n))
-
-	for (u_int k = 1 ; k < 4; k++) {
+	const int maxbat = oeacpufeat & OEACPU_HIGHBAT ? 8 : 4;
+	for (u_int k = 1 ; k < maxbat; k++) {
 		register_t batu;
 		switch (k) {
 		case 1:
-			BATU_GET(1, batu);
+			batu = DBATU_GET(1);
 			if (BAT_VA_MATCH_P(batu, pa) &&
 			    BAT_VALID_P(batu, PSL_PR))
-				BAT_RESET(1);
+				DBAT_RESET(1);
 			break;
 		case 2:
-			BATU_GET(2, batu);
+			batu = DBATU_GET(2);
 			if (BAT_VA_MATCH_P(batu, pa) &&
 			    BAT_VALID_P(batu, PSL_PR))
-				BAT_RESET(2);
+				DBAT_RESET(2);
 			break;
 		case 3:
-			BATU_GET(3, batu);
+			batu = DBATU_GET(3);
 			if (BAT_VA_MATCH_P(batu, pa) &&
 			    BAT_VALID_P(batu, PSL_PR))
-				BAT_RESET(3);
+				DBAT_RESET(3);
+			break;
+		case 4:
+			batu = DBATU_GET(4);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				DBAT_RESET(4);
+			break;
+		case 5:
+			batu = DBATU_GET(5);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				DBAT_RESET(5);
+			break;
+		case 6:
+			batu = DBATU_GET(6);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				DBAT_RESET(6);
+			break;
+		case 7:
+			batu = DBATU_GET(7);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				DBAT_RESET(7);
 			break;
 		default:
 			break;
@@ -573,14 +628,46 @@ oea_batinit(paddr_t pa, ...)
 		} else
 #endif /* PPC_OEA601 */
 		{
-			__asm volatile ("mtibatu 0,%0" :: "r"(0));
-			__asm volatile ("mtibatu 1,%0" :: "r"(0));
-			__asm volatile ("mtibatu 2,%0" :: "r"(0));
-			__asm volatile ("mtibatu 3,%0" :: "r"(0));
-			__asm volatile ("mtdbatu 0,%0" :: "r"(0));
-			__asm volatile ("mtdbatu 1,%0" :: "r"(0));
-			__asm volatile ("mtdbatu 2,%0" :: "r"(0));
-			__asm volatile ("mtdbatu 3,%0" :: "r"(0));
+			DBAT_RESET(0); IBAT_RESET(0);
+			DBAT_RESET(1); IBAT_RESET(1);
+			DBAT_RESET(2); IBAT_RESET(2);
+			DBAT_RESET(3); IBAT_RESET(3);
+			if (oeacpufeat & OEACPU_HIGHBAT) {
+				DBAT_RESET(4); IBAT_RESET(4);
+				DBAT_RESET(5); IBAT_RESET(5);
+				DBAT_RESET(6); IBAT_RESET(6);
+				DBAT_RESET(7); IBAT_RESET(7);
+
+				/*
+				 * Change the first instruction to branch to
+				 * dsitrap_fix_dbat6
+				 */
+				dsitrap_fix_dbat4[0] &= ~0xfffc;
+				dsitrap_fix_dbat4[0]
+				    += (uintptr_t)dsitrap_fix_dbat6
+				     - (uintptr_t)&dsitrap_fix_dbat4[0];
+
+				/*
+				 * Change the second instruction to branch to
+				 * dsitrap_fix_dbat5 if bit 30 (aka bit 1) is
+				 * true.
+				 */
+				dsitrap_fix_dbat4[1] = 0x419e0000
+				    + (uintptr_t)dsitrap_fix_dbat5
+				    - (uintptr_t)&dsitrap_fix_dbat4[1];
+
+				/*
+				 * Change it load dbat4 instead of dbat2
+				 */
+				dsitrap_fix_dbat4[2] = 0x7fd88ba6;
+				dsitrap_fix_dbat4[3] = 0x7ff98ba6;
+
+				/*
+				 * Change it load dbat7 instead of dbat3
+				 */
+				dsitrap_fix_dbat7[0] = 0x7fde8ba6;
+				dsitrap_fix_dbat7[1] = 0x7fff8ba6;
+			}
 		}
 	}
 
