@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.12 2011/01/27 21:55:25 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.13 2011/01/28 17:57:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.12 2011/01/27 21:55:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.13 2011/01/28 17:57:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -87,12 +87,14 @@ sleepq_block(int timo, bool catch)
 	int biglocks = l->l_biglocks;
 
 	while (l->l_wchan) {
-		l->l_mutex = mp;
+		l->l_mutex = mp; /* keep sleepq lock until woken up */
 		error = cv_timedwait(&sq_cv, mp, timo);
 		if (error == EWOULDBLOCK || error == EINTR) {
-			TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
-			l->l_wchan = NULL;
-			l->l_wmesg = NULL;
+			if (l->l_wchan) {
+				TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
+				l->l_wchan = NULL;
+				l->l_wmesg = NULL;
+			}
 		}
 	}
 	mutex_spin_exit(mp);
@@ -118,7 +120,6 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 			found = true;
 			l->l_wchan = NULL;
 			l->l_wmesg = NULL;
-			l->l_mutex = NULL;
 			TAILQ_REMOVE(sq, l, l_sleepchain);
 		}
 	}
@@ -135,7 +136,6 @@ sleepq_unsleep(struct lwp *l, bool cleanup)
 
 	l->l_wchan = NULL;
 	l->l_wmesg = NULL;
-	l->l_mutex = NULL;
 	TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
 	cv_broadcast(&sq_cv);
 
