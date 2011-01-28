@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.12 2010/06/22 09:41:33 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.13 2011/01/28 13:00:14 tteras Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -209,8 +209,8 @@ extern void insrmconf __P((struct remoteconf *));
 extern void remrmconf __P((struct remoteconf *));
 extern void flushrmconf __P((void));
 extern void initrmconf __P((void));
-extern void save_rmconf __P((void));
-extern void save_rmconf_flush __P((void));
+extern void rmconf_start_reload __P((void));
+extern void rmconf_finish_reload __P((void));
 
 extern int check_etypeok __P((struct remoteconf *, void *));
 
