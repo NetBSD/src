@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.54 2011/01/23 13:18:57 joerg Exp $
+# $NetBSD: Makefile.booters,v 1.55 2011/01/28 11:58:38 tsutsui Exp $
 
 NOMAN=		# defined
 
@@ -99,7 +99,7 @@ LIBSA=		${SALIB}
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-Do} \
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    -N ${.CURDIR}/version "pmax"
 
 ${PROG}: ${OBJS} ${LIBS}
