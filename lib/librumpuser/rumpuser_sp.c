@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.37 2011/01/22 13:41:22 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.38 2011/01/28 19:21:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.37 2011/01/22 13:41:22 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.38 2011/01/28 19:21:28 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -85,7 +85,7 @@ static struct rumpuser_sp_ops spops;
 static char banner[MAXBANNER];
 
 #define PROTOMAJOR 0
-#define PROTOMINOR 1
+#define PROTOMINOR 2
 
 struct prefork {
 	uint32_t pf_auth[AUTHLEN];
@@ -149,12 +149,12 @@ lwproc_release(void)
 }
 
 static int
-lwproc_rfork(struct spclient *spc, int flags)
+lwproc_rfork(struct spclient *spc, int flags, const char *comm)
 {
 	int rv;
 
 	spops.spop_schedule();
-	rv = spops.spop_lwproc_rfork(spc, flags);
+	rv = spops.spop_lwproc_rfork(spc, flags, comm);
 	spops.spop_unschedule();
 
 	return rv;
@@ -779,7 +779,15 @@ handlereq(struct spclient *spc)
 		}
 
 		if (spc->spc_hdr.rsp_handshake == HANDSHAKE_GUEST) {
-			if ((error = lwproc_rfork(spc, RUMP_RFCFDG)) != 0) {
+			char *comm = (char *)spc->spc_buf;
+			size_t commlen = spc->spc_hdr.rsp_len - HDRSZ;
+
+			/* ensure it's 0-terminated */
+			/* XXX make sure it contains sensible chars? */
+			comm[commlen] = '\0';
+
+			if ((error = lwproc_rfork(spc,
+			    RUMP_RFCFDG, comm)) != 0) {
 				shutdown(spc->spc_fd, SHUT_RDWR);
 			}
 
@@ -844,7 +852,7 @@ handlereq(struct spclient *spc)
 			 * the wrong spc pointer.  (yea, optimize
 			 * interfaces some day if anyone cares)
 			 */
-			if ((error = lwproc_rfork(spc, 0)) != 0) {
+			if ((error = lwproc_rfork(spc, 0, NULL)) != 0) {
 				send_error_resp(spc, reqno, error);
 				shutdown(spc->spc_fd, SHUT_RDWR);
 				lwproc_release();
@@ -889,7 +897,7 @@ handlereq(struct spclient *spc)
 		 * so we can safely use it here.
 		 */
 		lwproc_switch(spc->spc_mainlwp);
-		if ((error = lwproc_rfork(spc, RUMP_RFFDG)) != 0) {
+		if ((error = lwproc_rfork(spc, RUMP_RFFDG, NULL)) != 0) {
 			DPRINTF(("rump_sp: fork failed: %d (%p)\n",error, spc));
 			send_error_resp(spc, reqno, error);
 			lwproc_switch(NULL);
