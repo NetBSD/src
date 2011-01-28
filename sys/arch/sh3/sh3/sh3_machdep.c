@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.89 2011/01/26 23:29:16 uwe Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.90 2011/01/28 21:06:08 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,11 +65,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.89 2011/01/26 23:29:16 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.90 2011/01/28 21:06:08 uwe Exp $");
 
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
 #include "opt_kstack_debug.h"
+#include "opt_ptrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +106,7 @@ const char kgdb_devname[] = KGDB_DEVNAME;
 #include <sh3/mmu.h>
 #include <sh3/pcb.h>
 #include <sh3/intr.h>
+#include <sh3/ubcreg.h>
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -190,6 +193,33 @@ sh_cpu_init(int arch, int product)
 
 	/* Set page size (4KB) */
 	uvm_setpagesize();
+
+	/* setup UBC channel A for single-stepping */
+#if defined(PTRACE) || defined(DDB)
+	_reg_write_2(SH_(BBRA), 0); /* disable channel A */
+	_reg_write_2(SH_(BBRB), 0); /* disable channel B */
+
+#ifdef SH3
+	if (CPU_IS_SH3) {
+		/* A: break after execution, ignore ASID */
+		_reg_write_4(SH3_BRCR, (UBC_CTL_A_AFTER_INSN
+					| SH3_UBC_CTL_A_MASK_ASID));
+
+		/* A: compare all address bits */
+		_reg_write_4(SH3_BAMRA, 0x00000000);
+	}
+#endif	/* SH3 */
+
+#ifdef SH4
+	if (CPU_IS_SH4) {
+		/* A: break after execution */
+		_reg_write_2(SH4_BRCR, UBC_CTL_A_AFTER_INSN);
+
+		/* A: compare all address bits, ignore ASID */
+		_reg_write_1(SH4_BAMRA, SH4_UBC_MASK_NONE | SH4_UBC_MASK_ASID);
+	}
+#endif	/* SH4 */
+#endif
 }
 
 
