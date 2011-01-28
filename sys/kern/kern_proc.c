@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.170 2011/01/28 18:44:44 pooka Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.171 2011/01/28 20:31:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,12 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.170 2011/01/28 18:44:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.171 2011/01/28 20:31:10 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
 #include "opt_dtrace.h"
+#include "opt_compat_netbsd32.h"
 #endif
 
 #include <sys/param.h>
@@ -103,6 +104,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.170 2011/01/28 18:44:44 pooka Exp $"
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_extern.h>
+
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32.h>
+#endif
 
 /*
  * Other process lists
