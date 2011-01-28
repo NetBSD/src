@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.190 2011/01/22 20:54:44 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.191 2011/01/28 18:44:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1181,8 +1181,16 @@ int	sysctl_needfunc(SYSCTLFN_PROTO);
 int	sysctl_notavail(SYSCTLFN_PROTO);
 int	sysctl_null(SYSCTLFN_PROTO);
 
+int	sysctl_copyin(struct lwp *, const void *, void *, size_t);
+int	sysctl_copyout(struct lwp *, const void *, void *, size_t);
+int	sysctl_copyinstr(struct lwp *, const void *, void *, size_t, size_t *);
+
+u_int	sysctl_map_flags(const u_int *, u_int);
+
 MALLOC_DECLARE(M_SYSCTLNODE);
 MALLOC_DECLARE(M_SYSCTLDATA);
+
+extern const u_int sysctl_lwpflagmap[];
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>

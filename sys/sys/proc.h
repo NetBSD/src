@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.299 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.300 2011/01/28 18:44:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -463,6 +463,7 @@ proc_t *	proc_find(pid_t);		/* Find process by ID */
 struct pgrp *	pgrp_find(pid_t);		/* Find process group by ID */
 
 void	procinit(void);
+void	procinit_sysctl(void);
 int	proc_enterpgrp(struct proc *, pid_t, pid_t, bool);
 void	proc_leavepgrp(struct proc *);
 void	proc_sesshold(struct session *);
