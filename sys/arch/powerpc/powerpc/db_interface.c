@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.39.42.1 2011/01/07 02:01:21 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.39.42.2 2011/01/28 04:37:25 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39.42.1 2011/01/07 02:01:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39.42.2 2011/01/28 04:37:25 matt Exp $");
 
 #define USERACC
 
@@ -24,6 +24,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39.42.1 2011/01/07 02:01:21 matt 
 #include <powerpc/pte.h>
 
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#include <powerpc/oea/cpufeat.h>
 #include <powerpc/oea/spr.h>
 #endif
 
@@ -314,10 +315,11 @@ print_bat601(struct bat *bat)
 static void
 db_show_bat(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	struct bat ibat[4];
-	struct bat dbat[4];
+	struct bat ibat[8];
+	struct bat dbat[8];
 	unsigned int cpuvers;
 	int i;
+	const int maxbat = oeacpufeat & OEACPU_HIGHBAT ? 8 : 4;
 
 	cpuvers = mfpvr() >> 16;
 
@@ -340,9 +342,27 @@ db_show_bat(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		__asm volatile ("mfdbatl %0,2" : "=r"(dbat[2].batl));
 		__asm volatile ("mfdbatu %0,3" : "=r"(dbat[3].batu));
 		__asm volatile ("mfdbatl %0,3" : "=r"(dbat[3].batl));
+		if (maxbat == 8) {
+			ibat[4].batu = mfspr(SPR_IBAT4U);
+			ibat[4].batl = mfspr(SPR_IBAT4L);
+			ibat[5].batu = mfspr(SPR_IBAT5U);
+			ibat[5].batl = mfspr(SPR_IBAT5L);
+			ibat[6].batu = mfspr(SPR_IBAT6U);
+			ibat[6].batl = mfspr(SPR_IBAT6L);
+			ibat[7].batu = mfspr(SPR_IBAT7U);
+			ibat[7].batl = mfspr(SPR_IBAT7L);
+			dbat[4].batu = mfspr(SPR_DBAT4U);
+			dbat[4].batl = mfspr(SPR_DBAT4L);
+			dbat[5].batu = mfspr(SPR_DBAT5U);
+			dbat[5].batl = mfspr(SPR_DBAT5L);
+			dbat[6].batu = mfspr(SPR_DBAT6U);
+			dbat[6].batl = mfspr(SPR_DBAT6L);
+			dbat[7].batu = mfspr(SPR_DBAT7U);
+			dbat[7].batl = mfspr(SPR_DBAT7L);
+		}
 	}
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < maxbat; i++) {
 #ifdef PPC_OEA601
 		if (cpuvers == MPC601) {
 			db_printf("bat%d:", i);
@@ -355,7 +375,7 @@ db_show_bat(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		}
 	}
 	if (cpuvers != MPC601) {
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < maxbat; i++) {
 			db_printf("dbat%d:", i);
 			print_bat(&dbat[i]);
 		}
