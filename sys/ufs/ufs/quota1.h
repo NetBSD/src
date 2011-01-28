@@ -1,4 +1,4 @@
-/*	$NetBSD: quota1.h,v 1.1.2.1 2011/01/20 14:25:03 bouyer Exp $	*/
+/*	$NetBSD: quota1.h,v 1.1.2.2 2011/01/28 23:31:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -91,5 +91,9 @@ struct dqblk {
 	int32_t	  dqb_btime;		/* time limit for excessive disk use */
 	int32_t	  dqb_itime;		/* time limit for excessive files */
 };
+
+/* quota1_subr.c */
+void dqblk2q2e(const struct dqblk *, struct quota2_entry *);
+void q2e2dqblk(const struct quota2_entry *, struct dqblk *);
 
 #endif /* !_UFS_UFS_QUOTA1_H_ */
