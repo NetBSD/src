@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.225 2011/01/28 18:48:21 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.226 2011/01/28 19:21:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.225 2011/01/28 18:48:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.226 2011/01/28 19:21:29 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -100,7 +100,7 @@ int rump_threads = 1;
 #endif
 
 static int rump_proxy_syscall(int, void *, register_t *);
-static int rump_proxy_rfork(void *, int);
+static int rump_proxy_rfork(void *, int, const char *);
 static void rump_proxy_procexit(void);
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
@@ -752,9 +752,10 @@ rump_proxy_syscall(int num, void *arg, register_t *retval)
 }
 
 static int
-rump_proxy_rfork(void *priv, int flags)
+rump_proxy_rfork(void *priv, int flags, const char *comm)
 {
 	struct vmspace *newspace;
+	struct proc *p;
 	int error;
 
 	if ((error = rump_lwproc_rfork(flags)) != 0)
@@ -764,11 +765,14 @@ rump_proxy_rfork(void *priv, int flags)
 	 * Since it's a proxy proc, adjust the vmspace.
 	 * Refcount will eternally be 1.
 	 */
+	p = curproc;
 	newspace = kmem_alloc(sizeof(*newspace), KM_SLEEP);
 	newspace->vm_refcnt = 1;
 	newspace->vm_map.pmap = priv;
-	KASSERT(curproc->p_vmspace == vmspace_kernel());
-	curproc->p_vmspace = newspace;
+	KASSERT(p->p_vmspace == vmspace_kernel());
+	p->p_vmspace = newspace;
+	if (comm)
+		strlcpy(p->p_comm, comm, sizeof(p->p_comm));
 
 	return 0;
 }
