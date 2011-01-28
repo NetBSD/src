@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.54 2011/01/16 14:36:30 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.55 2011/01/28 07:21:56 snj Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4546,4 +4546,14 @@ xsrc/external/mit/xf86-video-ati/dist/src/parser/xf86Parser.h		remove
 
 	add more support for hd3000/4000 and some for hd5000
 	[mrg, ticket #1524]
+
+sys/arch/sparc/sparc/cpu.c			1.215 via patch
+sys/arch/sparc/sparc/cpuvar.h			1.78 via patch
+sys/arch/sparc/sparc/genassym.cf		1.57 via patch
+sys/arch/sparc/sparc/intr.c			1.103-1.105 via patch
+sys/arch/sparc/sparc/locore.s			1.247, 1.250 via patch
+sys/arch/sparc/sparc/pmap.c			1.329 via patch
+
+	More fixes for sparc SMP.
+	[mrg, ticket #1532]
 
