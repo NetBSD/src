@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.224 2011/01/28 18:45:52 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.225 2011/01/28 18:48:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.224 2011/01/28 18:45:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.225 2011/01/28 18:48:21 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -346,7 +346,6 @@ rump__init(int rump_version)
 
 	rump_scheduler_init(numcpu);
 	/* revert temporary context and schedule a semireal context */
-	l->l_cpu = NULL;
 	rumpuser_set_curlwp(NULL);
 	initproc = &proc0; /* borrow proc0 before we get initproc started */
 	rump_schedule();
