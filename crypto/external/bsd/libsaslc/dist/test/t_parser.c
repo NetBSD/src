@@ -1,4 +1,4 @@
-/* $Id: t_parser.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: t_parser.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,28 +40,44 @@
 #include <dict.h>
 #include <saslc.h>
 #include "parser.h"
-//#include "saslc_private.h"
 
 /* src/parser.c test cases */
+
+static void set_env(atf_tc_t *tc)
+{
+        char *dir;
+
+        asprintf(&dir, "%s/%s/", atf_tc_get_config_var(tc, "srcdir"),
+            "parser_tests");
+
+        if (dir == NULL)
+            exit(-1);
+	
+        setenv(SASLC__ENV_PATH, dir, 1);
+        free(dir);
+}
+
 
 ATF_TC(t_parser_test1);
 ATF_TC_HEAD(t_parser_test1, tc)
 {
+        set_env(tc);
 	atf_tc_set_md_var(tc, "descr", "parser test1");
 }
 ATF_TC_BODY(t_parser_test1, tc)
 {
 	saslc_t *ctx;
-
+        
 	ATF_REQUIRE(ctx = saslc_alloc());
 	ATF_CHECK_EQ(saslc_init(ctx, "test1"), 0);
-	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
+	ATF_REQUIRE_EQ(saslc_end(ctx, true), 0);
 }
 
 ATF_TC(t_parser_test2);
 ATF_TC_HEAD(t_parser_test2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "parser test2");
+        set_env(tc);
 }
 ATF_TC_BODY(t_parser_test2, tc)
 {
@@ -72,22 +88,21 @@ ATF_TC_BODY(t_parser_test2, tc)
 	ATF_REQUIRE(ctx = saslc_alloc());
 	ATF_CHECK_EQ(saslc_init(ctx, "test2"), 0);
 	ATF_REQUIRE((sess = saslc_sess_init(ctx, "ANONYMOUS")));
-	ATF_REQUIRE(val = saslc_sess_getprop(sess, "TEST"));
-	ATF_CHECK_STREQ(val, "one");
-	ATF_REQUIRE(val = saslc_sess_getprop(sess, "TEST2"));
-	ATF_CHECK_STREQ(val, "one two");
-	ATF_REQUIRE(val = saslc_sess_getprop(sess, "TEST3"));
-	ATF_CHECK_STREQ(val, "one two three");
+	ATF_REQUIRE(val = saslc_sess_getprop(sess, "HOSTNAME"));
+	ATF_CHECK_STREQ(val, "szefpodworka.pl");
+	ATF_REQUIRE(val = saslc_sess_getprop(sess, "AUTHZID"));
+	ATF_CHECK_STREQ(val, "test1");
 	ATF_REQUIRE(val = saslc_sess_getprop(sess, "ID"));
 	ATF_CHECK_STREQ(val, "6669");
-	saslc_sess_end(sess);
-	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
+        saslc_sess_end(sess);
+	ATF_REQUIRE_EQ(saslc_end(ctx, false), 0);
 }
 
 ATF_TC(t_parser_test3);
 ATF_TC_HEAD(t_parser_test3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "parser test3");
+        set_env(tc);
 }
 ATF_TC_BODY(t_parser_test3, tc)
 {
@@ -96,7 +111,7 @@ ATF_TC_BODY(t_parser_test3, tc)
 
 	ATF_REQUIRE(ctx = saslc_alloc());
 	ATF_CHECK_EQ(saslc_init(ctx, "test3"), -1);
-	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
+	ATF_REQUIRE_EQ(saslc_end(ctx, false), 0);
 }
 
 
@@ -104,7 +119,7 @@ ATF_TC_BODY(t_parser_test3, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	setenv(SASLC__ENV_PATH, "parser_tests/", 1);
+
 	ATF_TP_ADD_TC(tp, t_parser_test1);
 	ATF_TP_ADD_TC(tp, t_parser_test2);
 	ATF_TP_ADD_TC(tp, t_parser_test3);

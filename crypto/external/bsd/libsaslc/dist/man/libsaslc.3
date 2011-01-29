@@ -3,54 +3,64 @@
 .Dt LIBSASLC 3
 .Os
 .Sh NAME
-.Nm saslc_alloc ,
-.Nm saslc_init ,
-.Nm saslc_end ,
-.Nm saslc_strerror ,
-.Nm saslc_sess_strerror ,
-.Nm saslc_sess_init ,
-.Nm saslc_sess_end ,
-.Nm saslc_sess_setprop ,
-.Nm saslc_sess_getprop ,
-.Nm saslc_sess_getmech ,
-.Nm saslc_sess_cont ,
-.Nm saslc_sess_encode ,
-.Nm saslc_sess_decode 
+.Nm libsaslc
 .Nd Simple Authentication and Security Layer client library
 .Sh LIBRARY
 .Lb libsaslc
 .Sh SYNOPSIS
 .In saslc.h
 .Ft saslc_t *
-.Fn saslc_alloc "void" 
+.Fo saslc_alloc
+.Fa "void" 
+.Fc
 .Ft int
-.Fn saslc_end "saslc_t *ctx"
+.Fo saslc_end
+.Fa "saslc_t *ctx"
+.Fc
 .Ft int
-.Fn saslc_init "saslc_t *ctx" "const char *appname" 
+.Fo saslc_init
+.Fa "saslc_t *ctx" "const char *appname" 
+.Fc
 .Ft int
-.Fn saslc_sess_cont "saslc_sess_t *sess" "const void *in" "size_t inlen" \
-"void* *out" "size_t *outlen" 
+.Fo saslc_sess_cont
+.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen" 
+.Fc
 .Ft int
-.Fn saslc_sess_decode "saslc_sess_t *sess" "const void *in" "size_t inlen" \
-"void* *out" "size_t *outlen" 
+.Fo saslc_sess_decode
+.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen" 
+.Fc
 .Ft int
-.Fn saslc_sess_encode "saslc_sess_t *sess" "const void *in" "size_t inlen" \
-"void* *out" "size_t *outlen" 
+.Fo saslc_sess_encode
+.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen" 
+.Fc
 .Ft void
-.Fn saslc_sess_end "saslc_sess_t *sess" 
+.Fo saslc_sess_end
+.Fa "saslc_sess_t *sess" 
+.Fc
 .Ft const char *
-.Fn saslc_sess_getprop "saslc_sess_t *sess" "const char *name" 
+.Fo saslc_sess_getprop
+.Fa "saslc_sess_t *sess" "const char *name" 
+.Fc
 .Ft saslc_sess_t *
-.Fn saslc_sess_init "saslc_t *ctx" "const char *mechs" 
+.Fo saslc_sess_init
+.Fa "saslc_t *ctx" "const char *mechs" 
+.Fc
 .Ft int
-.Fn saslc_sess_setprop "saslc_sess_t *sess" "const char *name" \
-"const char *value"
+.Fo saslc_sess_setprop
+.Fa "saslc_sess_t *sess" "const char *name" "const char *value"
+.Fc
 .Ft const char *
-.Fn saslc_sess_strerror "saslc_sess_t *sess" 
+.Fo saslc_sess_strerror
+.Fa "saslc_sess_t *sess" 
+.Fc
 .Ft const char *
-.Fn saslc_sess_strmech "saslc_sess_t *sess" 
+.Fo saslc_sess_strmech
+.Fa "saslc_sess_t *sess" 
+.Fc
 .Ft const char *
-.Fn saslc_strerror "saslc_t *ctx" 
+.Fo saslc_strerror
+.Fa "saslc_t *ctx" 
+.Fc
 .Sh DESCRIPTION
 The
 .Fn saslc_alloc
@@ -149,6 +159,6 @@ to the "unknown error" string on failure.
 .Sh STANDARDS
 RFC 2195, RFC 2222, RFC 2245, RFC 2595, RFC 2831
 .Sh OTHER IMPLEMENTATIONS
-There exist other SASL client library implementations include Cyrus SASL
+There exist other SASL client library implementations including Cyrus SASL
 (http://asg.web.cmu.edu/sasl/sasl-library.html) and GNU SASL
 (http://www.gnu.org/software/gsasl/).
