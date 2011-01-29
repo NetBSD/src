@@ -1,4 +1,4 @@
-/*        $NetBSD: atomic.h,v 1.2.2.3 2011/01/23 21:47:43 bouyer Exp $      */
+/*        $NetBSD: atomic.h,v 1.2.2.4 2011/01/29 17:37:27 bouyer Exp $      */
 
 /*
  * Copyright (C) 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -68,7 +68,7 @@
  * can be critical, so we add explicit memory block instructions at the
  * beginning and the end of it (same for other functions).
  */
-static inline isc_int32_t
+static inline isc_int32_t __unused
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	return (asm("mb;"
 		    "1:"
@@ -84,7 +84,7 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 /*
  * This routine atomically stores the value 'val' in 'p'.
  */
-static inline void
+static inline void __unused
 isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 	(void)asm("mb;"
 		  "1:"
@@ -101,7 +101,7 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
  * original value is equal to 'cmpval'.  The original value is returned in any
  * case.
  */
-static inline isc_int32_t
+static inline isc_int32_t __unused
 isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 
 	return(asm("mb;"
@@ -118,7 +118,7 @@ isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 		   p, cmpval, val));
 }
 #elif defined (ISC_PLATFORM_USEGCCASM)
-static inline isc_int32_t
+static inline isc_int32_t __unused
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	isc_int32_t temp, prev;
 
@@ -138,7 +138,7 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	return (prev);
 }
 
-static inline void
+static inline void __unused
 isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 	isc_int32_t temp;
 
@@ -155,7 +155,7 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 		: "memory");
 }
 
-static inline isc_int32_t
+static inline isc_int32_t __unused
 isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 	isc_int32_t temp, prev;
 
