@@ -1,4 +1,4 @@
-/* $Id: mech.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: mech.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,6 +47,10 @@
 
 /* local headers */
 
+static int
+saslc__mech_generic_seclayer(saslc_sess_t *, const void *, size_t, void **,
+    size_t *);
+
 /* mechanisms */
 extern const saslc__mech_t saslc__mech_anonymous;
 extern const saslc__mech_t saslc__mech_crammd5;
@@ -68,45 +72,39 @@ const saslc__mech_t *saslc__mechanisms[] = {
 };
 
 /**
- * @brief creates lists of the mechanisms for the context,
- * function only creates list, it means that it's not assigning mechanism_list
- * with the context.
+ * @brief creates lists of the mechanisms for the context.
  * @param ctx context
- * @return pointer to head od the list, NULL if allocation failed
+ * @return 0 on success, -1 on error
  */
 
-saslc__mech_list_t	*
+int
 saslc__mech_list_create(saslc_t *ctx)
 {
-	saslc__mech_list_t *head = NULL;
 	saslc__mech_list_node_t *node = NULL;
 	size_t i;
 
-	if ((head = calloc(1, sizeof(*head))) == NULL) {
-		saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
-		return NULL;
-	}
+        LIST_INIT(&ctx->mechanisms);
 
-	for (i = 0; saslc__mechanisms[i] != NULL; i++) {	
-		if ((node = calloc(1, sizeof(*node))) == NULL)
+	for (i = 0; saslc__mechanisms[i] != NULL; i++) {
+                node = calloc(1, sizeof(*node));
+
+		if (node == NULL)
 			goto error;
 
-		if ((node->prop = saslc__dict_create()) == NULL) {
-			free(node);
+		if ((node->prop = saslc__dict_create()) == NULL)
 			goto error;
-		}
 
 		node->mech = saslc__mechanisms[i];
-
-		LIST_INSERT_HEAD(head, node, nodes);
+		LIST_INSERT_HEAD(&ctx->mechanisms, node, nodes);
 	}
 
-	return head;
+	return 0;
 
 error:
+	free(node);
 	saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
-	saslc__mech_list_destroy(head);
-	return NULL;
+	saslc__mech_list_destroy(&ctx->mechanisms);
+	return -1;
 }
 
 /**
@@ -121,9 +119,10 @@ saslc__mech_list_get(saslc__mech_list_t *list, const char *mech_name)
 {
 	saslc__mech_list_node_t *node;
 
-	for (node = list->lh_first; node != NULL; node = node->nodes.le_next)
+        LIST_FOREACH(node, list, nodes) {
 		if (strcasecmp(node->mech->name, mech_name) == 0)
 			return node;
+        }
 
 	return NULL;
 }
@@ -138,14 +137,12 @@ saslc__mech_list_destroy(saslc__mech_list_t *list)
 {
 	saslc__mech_list_node_t *node;
 
-	while((node = list->lh_first) != NULL) {	
-		if (node != NULL)
-			saslc__dict_destroy(node->prop);
+	while(!LIST_EMPTY(list)) {
+                node = LIST_FIRST(list);
 		LIST_REMOVE(node, nodes);
+		saslc__dict_destroy(node->prop);
 		free(node);
 	}
-
-	free(list);
 }
 
 /**
@@ -167,13 +164,15 @@ saslc__mech_strdup(saslc_sess_t *sess, char **out, size_t *outlen,
 	const char *value; /* property value */
 
 	/* get value */
-	if ((value = saslc_sess_getprop(sess, name)) == NULL) {
+        value = saslc_sess_getprop(sess, name);
+	if (value == NULL) {
 		saslc__error_set(ERR(sess), ERROR_MECH, error_msg);
 		return MECH_ERROR;
 	}
 
 	/* copy value */
-	if ((*out = strdup(value)) == NULL) {
+        *out = strdup(value);
+	if (*out == NULL) {
 		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 		return MECH_ERROR;
 	}
@@ -182,6 +181,80 @@ saslc__mech_strdup(saslc_sess_t *sess, char **out, size_t *outlen,
 		*outlen = saslc__dict_get_len(sess->prop, name);
 
 	return MECH_OK;
+}
+
+
+/**
+ * @brief transparent security layer
+ * @param sess sasl session
+ * @param in input data
+ * @param inlen input data length
+ * @param out place to store output data
+ * @param outlen output data length
+ * @return MECH_OK - success,
+ * MECH_ERROR - error
+ */
+
+static int
+saslc__mech_generic_seclayer(saslc_sess_t *sess, const void *in,
+    size_t inlen, void **out, size_t *outlen)
+{
+        saslc__mech_sess_t *mech_sess = sess->mech_sess;
+
+        if (mech_sess->status != STATUS_AUTHENTICATED) {
+                saslc__error_set(ERR(sess), ERROR_MECH,
+                        "session is not authenticated");
+                return MECH_ERROR;
+        }
+
+        *out = calloc(inlen, sizeof(char));
+
+        if (*out == NULL) {
+  		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+		return MECH_ERROR;
+        }
+        
+        memcpy(*out, in, inlen);
+
+        *outlen = inlen;
+
+        return MECH_OK;
+}
+
+/**
+ * @brief encodes data using transparent security layer
+ * @param sess sasl session
+ * @param in input data
+ * @param inlen input data length
+ * @param out place to store output data
+ * @param outlen output data length
+ * @return MECH_OK - success,
+ * MECH_ERROR - error
+ */
+
+int
+saslc__mech_generic_encode(saslc_sess_t *sess, const void *in,
+    size_t inlen, void **out, size_t *outlen)
+{
+        return saslc__mech_generic_seclayer(sess, in, inlen, out, outlen);
+}
+
+/**
+ * @brief decodes data using transparent security layer
+ * @param sess sasl session
+ * @param in input data
+ * @param inlen input data length
+ * @param out place to store output data
+ * @param outlen output data length
+ * @return MECH_OK - success,
+ * MECH_ERROR - error
+ */
+
+int
+saslc__mech_generic_decode(saslc_sess_t *sess, const void *in,
+    size_t inlen, void **out, size_t *outlen)
+{
+        return saslc__mech_generic_seclayer(sess, in, inlen, out, outlen);
 }
 
 /**
@@ -193,7 +266,9 @@ saslc__mech_strdup(saslc_sess_t *sess, char **out, size_t *outlen,
 int
 saslc__mech_generic_create(saslc_sess_t *sess)
 {
-	if ((sess->mech_sess = calloc(1, sizeof(saslc__mech_sess_t))) == NULL) {
+        sess->mech_sess = calloc(1, sizeof(saslc__mech_sess_t));
+
+	if (sess->mech_sess == NULL) {
 		saslc__error_set(ERR(sess), ERROR_NOMEM, NULL);
 		return -1;
 	}
