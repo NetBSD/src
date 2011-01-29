@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.2 2011/01/21 16:58:06 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.3 2011/01/29 23:22:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.2 2011/01/21 16:58:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.3 2011/01/29 23:22:00 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -264,9 +264,7 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
-		mutex_enter(&dqlock);
 		error = quota2_handle_cmd_getall(ump, type, replies);
-		mutex_exit(&dqlock);
 	} else
 #endif
 		panic("quota_handle_cmd_getall: no support ?");
