@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigtramp2.S,v 1.2 2011/01/25 02:38:16 matt Exp $	*/
+/*	$NetBSD: compat___sigtramp2.S,v 1.3 2011/01/29 22:58:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson, (ragge@NetBSD.org).
@@ -37,7 +37,7 @@
 #include "SYS.h"
 
 #ifdef SYSLIBC_SCCS
-RCSID("$NetBSD: compat___sigtramp2.S,v 1.2 2011/01/25 02:38:16 matt Exp $")
+RCSID("$NetBSD: compat___sigtramp2.S,v 1.3 2011/01/29 22:58:47 matt Exp $")
 #endif
 
 	.text
@@ -52,4 +52,4 @@ _C_LABEL(__sigtramp_sigcontext_2):
 	movab 8(%ap),%ap		# arg is pointer to sigctx
 	SYSTRAP(compat_16___sigreturn14) # exit from here
 	halt				# illegal insn
-END(__sigtramp_sigcontext_t)
+END(__sigtramp_sigcontext_2)
