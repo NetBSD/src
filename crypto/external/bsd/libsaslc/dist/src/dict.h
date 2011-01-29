@@ -1,4 +1,4 @@
-/* $Id: dict.h,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: dict.h,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,26 +39,25 @@
 #ifndef _DICT_H_
 #define _DICT_H_
 
-#include <stdlib.h>
-
-enum {
+typedef enum {
 	DICT_OK = 0,
 	DICT_NOMEM,
 	DICT_KEYNOTFOUND,
 	DICT_KEYEXISTS,
 	DICT_KEYINVALID,
 	DICT_VALBAD
-};
+} saslc__dict_result_t;
 
 /* dictionary type */
 typedef struct saslc__dict_t saslc__dict_t;
 
 /* interface */
 saslc__dict_t *saslc__dict_create(void);
-int saslc__dict_insert(saslc__dict_t *, const char *, const char *);
+saslc__dict_result_t saslc__dict_insert(saslc__dict_t *, const char *,
+    const char *);
 const char *saslc__dict_get(saslc__dict_t *, const char *);
 size_t saslc__dict_get_len(saslc__dict_t *, const char *);
-int saslc__dict_remove(saslc__dict_t *, const char *);
+saslc__dict_result_t saslc__dict_remove(saslc__dict_t *, const char *);
 void saslc__dict_destroy(saslc__dict_t *);
 
 #endif /* ! _DICT_H_ */
