@@ -1,5 +1,6 @@
+.\" $NetBSD: libsaslc.3,v 1.3 2011/01/29 23:38:34 wiz Exp $
 .\" Draft of the SASL Client library API.
-.Dd 10 August, 2010
+.Dd August 10, 2010
 .Dt LIBSASLC 3
 .Os
 .Sh NAME
@@ -11,7 +12,7 @@
 .In saslc.h
 .Ft saslc_t *
 .Fo saslc_alloc
-.Fa "void" 
+.Fa "void"
 .Fc
 .Ft int
 .Fo saslc_end
@@ -19,31 +20,31 @@
 .Fc
 .Ft int
 .Fo saslc_init
-.Fa "saslc_t *ctx" "const char *appname" 
+.Fa "saslc_t *ctx" "const char *appname"
 .Fc
 .Ft int
 .Fo saslc_sess_cont
-.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen" 
+.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen"
 .Fc
 .Ft int
 .Fo saslc_sess_decode
-.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen" 
+.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen"
 .Fc
 .Ft int
 .Fo saslc_sess_encode
-.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen" 
+.Fa "saslc_sess_t *sess" "const void *in" "size_t inlen" "void* *out" "size_t *outlen"
 .Fc
 .Ft void
 .Fo saslc_sess_end
-.Fa "saslc_sess_t *sess" 
+.Fa "saslc_sess_t *sess"
 .Fc
 .Ft const char *
 .Fo saslc_sess_getprop
-.Fa "saslc_sess_t *sess" "const char *name" 
+.Fa "saslc_sess_t *sess" "const char *name"
 .Fc
 .Ft saslc_sess_t *
 .Fo saslc_sess_init
-.Fa "saslc_t *ctx" "const char *mechs" 
+.Fa "saslc_t *ctx" "const char *mechs"
 .Fc
 .Ft int
 .Fo saslc_sess_setprop
@@ -51,15 +52,15 @@
 .Fc
 .Ft const char *
 .Fo saslc_sess_strerror
-.Fa "saslc_sess_t *sess" 
+.Fa "saslc_sess_t *sess"
 .Fc
 .Ft const char *
 .Fo saslc_sess_strmech
-.Fa "saslc_sess_t *sess" 
+.Fa "saslc_sess_t *sess"
 .Fc
 .Ft const char *
 .Fo saslc_strerror
-.Fa "saslc_t *ctx" 
+.Fa "saslc_t *ctx"
 .Fc
 .Sh DESCRIPTION
 The
@@ -74,14 +75,15 @@ mechanism list for the context.
 .Pp
 The
 .Fn saslc_end
-function destroys and deallocate resources used by the context. Context
-shouldn't have got any sessions assigned to it.
+function destroys and deallocate resources used by the context.
+Context shouldn't have got any sessions assigned to it.
 .Pp
 The
 .Fn saslc_sess_init
 function creates new session assigned to the
 .Ar ctx
-context. Function chooses best mechanism which can be used for an authentication
+context.
+Function chooses best mechanism which can be used for an authentication
 from the
 .Ar mechs
 list.
@@ -96,7 +98,8 @@ function gets property from the session.
 .Pp
 The
 .Fn saslc_sess_setprop
-function sets property for the session. If property already exists in the
+function sets property for the session.
+If property already exists in the
 session, then previous value is replaced by the new value.
 .Pp
 .Fn saslc_strerror
@@ -111,16 +114,18 @@ function gets mechanism name used in sasl session.
 .Pp
 The
 .Fn saslc_sess_cont
-performs one step of the sasl authentication. Input data of length
+performs one step of the sasl authentication.
+Input data of length
 .Ar inlen
 is passed in the
 .Ar in
-argument. Function stores output of length 
+argument.
+Function stores output of length
 .Ar outlen
 in the
-.Ar out.
+.Ar out .
 Note that user is responsible for freeing resources allocated for the
-.Ar out.
+.Ar out .
 .Pp
 .Fn saslc_sess_encode
 and
@@ -129,8 +134,7 @@ encode and decode data using method established during the authentication.
 Functions store output of length
 .Ar outlen
 in the
-.Ar out.
-.Pp
+.Ar out .
 .Sh RETURN VALUES
 Functions
 .Fn saslc_init
@@ -143,18 +147,25 @@ and
 .Fn saslc_sess_decode
 return 0 on success and -1 on failure, additionally
 .Fn saslc_cont
-returns 1 if more SASL authentication steps are needed. The
+returns 1 if more SASL authentication steps are needed.
+The
 .Fn saslc_sess_getprop
-function returns the property on success, or NULL on failure. The
+function returns the property on success, or
+.Dv NULL
+on failure.
+The
 .Fn saslc_alloc
-function returns new context on success, or NULL on failure. Function
+function returns new context on success, or
+.Dv NULL
+on failure.
+Function
 .Fn saslc_strmech
 returns mechanism name.
 Finally,
 .Fn saslc_strerror
 and
 .Fn saslc_sess_strerror
-return pointer to the error description string on success and pointer 
+return pointer to the error description string on success and pointer
 to the "unknown error" string on failure.
 .Sh STANDARDS
 RFC 2195, RFC 2222, RFC 2245, RFC 2595, RFC 2831
