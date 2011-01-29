@@ -257,7 +257,7 @@
 #define HAVE___ATTRIBUTE__ 1
 
 /* if unaligned access fails */
-/* #undef LBL_ALIGN */
+#define LBL_ALIGN 1
 
 /* Define to 1 if netinet/ether.h declares `ether_ntohost' */
 /* #undef NETINET_ETHER_H_DECLARES_ETHER_NTOHOST */
