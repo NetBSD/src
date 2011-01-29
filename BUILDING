@@ -529,9 +529,10 @@ BUILDING
                    ing.
 
                    The INSTALLSETS environment variable may be set to a list
-                   of distribution sets to be installed.  By default, all sets
-                   except ``etc'' and ``xetc'' are installed, so most files in
-                   INSTALLWORLDDIR/etc will not be installed or modified.
+                   of distribution sets to be installed, separated by spaces.
+                   By default, all sets except ``etc'' and ``xetc'' are
+                   extracted, so most files in INSTALLWORLDDIR/etc will not
+                   be installed or modified.
 
                    Note: Before performing this operation with
                    INSTALLWORLDDIR=/, it is highly recommended that you
@@ -665,7 +666,8 @@ BUILDING
 
      install=idir  Install the contents of DESTDIR to idir, using ``make
                    installworld''.  Note that files that are part of the
-                   ``etc'' or ``xetc'' sets will not be installed.
+                   ``etc'' or ``xetc'' sets will not be installed, unless
+                   overridden by the INSTALLSETS environment variable.
 
      kernel=kconf  Build a new kernel.  The kconf argument is the name of a
                    configuration file suitable for use by config(1).  If kconf
