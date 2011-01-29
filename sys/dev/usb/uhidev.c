@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.48 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.49 2011/01/29 14:20:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.48 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.49 2011/01/29 14:20:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 			descptr = uhid_graphire_report_descr;
 			break;
 
+		case USB_PRODUCT_WACOM_GRAPHIRE2:
 		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
 		case USB_PRODUCT_WACOM_GRAPHIRE3_6X8:
 		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5: /* The 6x8 too? */
