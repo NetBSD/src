@@ -1,4 +1,4 @@
-/* $Id: mech_gssapi.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: mech_gssapi.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -125,7 +125,7 @@ saslc__mech_gssapi_destroy(saslc_sess_t *sess)
 	saslc__mech_gssapi_sess_t *mech_sess = sess->mech_sess;
 	OM_uint32 min_s;
 	
-	gss_release_name(&min_s, &mech_sess->name);
+	(void)gss_release_name(&min_s, &mech_sess->name);
 
 	free(sess->mech_sess);
 	sess->mech_sess = NULL;
@@ -183,7 +183,7 @@ saslc__mech_gssapi_encode(saslc_sess_t *sess, const void *in, size_t inlen,
 			return MECH_ERROR;
 		}
 		memcpy(*out, output.value, *outlen);
-		gss_release_buffer(&min_s, &output);
+		(void)gss_release_buffer(&min_s, &output);
 	} else
 		*out = NULL;
 
@@ -238,7 +238,7 @@ saslc__mech_gssapi_decode(saslc_sess_t *sess, const void *in, size_t inlen,
 			return MECH_ERROR;
 		}
 		memcpy(*out, output.value, *outlen);
-		gss_release_buffer(&min_s, &output);
+		(void)gss_release_buffer(&min_s, &output);
 	} else
 		*out = NULL;
 
@@ -298,7 +298,7 @@ saslc__mech_gssapi_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 				return MECH_ERROR;
 			}
 			name.value = input_name;
-			name.length = len + 1;
+			name.length = (size_t)len + 1;
 
 			maj_s = gss_import_name(&min_s, &name,
 			    GSS_C_NT_HOSTBASED_SERVICE, &mech_sess->name);
@@ -321,7 +321,7 @@ saslc__mech_gssapi_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 
 		maj_s = gss_init_sec_context(&min_s, GSS_C_NO_CREDENTIAL,
 		    &mech_sess->context, mech_sess->name, GSS_C_NO_OID,
-		    GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG, 0,
+		    (OM_uint32)(GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG), 0,
 		    GSS_C_NO_CHANNEL_BINDINGS, input_buf, NULL, &output, NULL,
 		    NULL);
 
@@ -340,7 +340,7 @@ saslc__mech_gssapi_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 					return MECH_ERROR;
 				}
 				memcpy(*out, output.value, *outlen);
-				gss_release_buffer(&min_s, &output);
+				(void)gss_release_buffer(&min_s, &output);
 			} else
 				*out = NULL;
 			return MECH_STEP;
@@ -369,8 +369,8 @@ saslc__mech_gssapi_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 			return MECH_ERROR;
 		}
 		name.value = input_name;
-		input.length = len + 1;
-		gss_release_buffer(&min_s, &output);
+		input.length = (size_t)len + 1;
+		(void)gss_release_buffer(&min_s, &output);
 		
 		maj_s = gss_wrap(&min_s, mech_sess->context, 
 		    0 /* FALSE - RFC2222 */, GSS_C_QOP_DEFAULT, &input, NULL,
@@ -390,7 +390,7 @@ saslc__mech_gssapi_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 				return MECH_ERROR;
 			}
 			memcpy(*out, output.value, *outlen);
-			gss_release_buffer(&min_s, &output);
+			(void)gss_release_buffer(&min_s, &output);
 		} else
 			*out = NULL;
 			
@@ -398,7 +398,7 @@ saslc__mech_gssapi_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 		return MECH_OK;
 	default:
 		assert(/*CONSTCOND*/0); /* impossible */
-		/* NOTREACHED */
+		/*NOTREACHED*/
 		return MECH_ERROR;
 	}
 }
@@ -406,7 +406,6 @@ saslc__mech_gssapi_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 /* mechanism definition */
 const saslc__mech_t saslc__mech_gssapi = {
 	"GSSAPI", /* name */
-	FLAG_NONE, /* flags */
 	saslc__mech_gssapi_create, /* create */
 	saslc__mech_gssapi_cont, /* step */
 	saslc__mech_gssapi_encode, /* encode */
