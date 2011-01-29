@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25.2.1 2011/01/21 16:58:07 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.2 2011/01/29 11:04:43 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -526,17 +526,3 @@ addid(id, type, name)
 	}
 	return (fup);
 }
-
-void
-dqblk2q2e(const struct dqblk *dqblk, struct quota2_entry *q2e)
-{ 
-	q2e->q2e_val[Q2V_BLOCK].q2v_hardlimit = dqblk->dqb_bhardlimit;  
-	q2e->q2e_val[Q2V_BLOCK].q2v_softlimit = dqblk->dqb_bsoftlimit; 
-	q2e->q2e_val[Q2V_BLOCK].q2v_cur       = dqblk->dqb_curblocks;
-	q2e->q2e_val[Q2V_BLOCK].q2v_time      = dqblk->dqb_btime;
-  
-	q2e->q2e_val[Q2V_FILE].q2v_hardlimit = dqblk->dqb_ihardlimit;
-	q2e->q2e_val[Q2V_FILE].q2v_softlimit = dqblk->dqb_isoftlimit;
-	q2e->q2e_val[Q2V_FILE].q2v_cur       = dqblk->dqb_curinodes;
-	q2e->q2e_val[Q2V_FILE].q2v_time      = dqblk->dqb_itime;
-} 
