@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.1.2.3 2011/01/28 18:36:06 bouyer Exp $ */
+/* $NetBSD: quota2.h,v 1.1.2.4 2011/01/29 23:22:00 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -39,6 +39,12 @@
  * and quotas metadata are also covered by the filesystem journal if any.
  * quota enable/disable is done on a filesystem basis via flags in the
  * superblock
+ */
+
+/*
+ * The quota file is comprised of 2 parts, the header and the entries.
+ * The header contains global informations, and head of list of quota entries.
+ * A quota entry can either be in the free list, or one of the hash lists.
  */
 
 /* description of a block or inode quota */

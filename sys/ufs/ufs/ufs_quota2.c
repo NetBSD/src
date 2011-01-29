@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.3 2011/01/28 18:36:06 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.4 2011/01/29 23:22:00 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,12 +28,13 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.3 2011/01/28 18:36:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.4 2011/01/29 23:22:00 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/file.h>
 #include <sys/proc.h>
@@ -51,6 +52,16 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.3 2011/01/28 18:36:06 bouyer Ex
 #include <ufs/ufs/ufs_quota.h>
 #include <ufs/ufs/ufs_wapbl.h>
 #include <ufs/ufs/quota2_prop.h>
+
+/*
+ * LOCKING:
+ * Data in the entries are protected by the associated struct dquot's
+ * dq_interlock (this means we can't read or change a quota entry without
+ * grabing a dquot for it).
+ * The header and lists (including pointers in the data entries, and q2e_uid)
+ * are protected by the global dqlock.
+ * the locking order is dq_interlock -> dqlock
+ */
 
 static int getinoquota2(struct inode *, int, struct buf **,
     struct quota2_entry **);
@@ -71,6 +82,7 @@ getq2h(struct ufsmount *ump, int type,
 	struct buf *bp;
 	struct quota2_header *q2h;
 
+	KASSERT(mutex_owned(&dqlock));
 	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize,
 	    ump->um_cred[type], flags, &bp);
 	if (error)
@@ -214,6 +226,7 @@ quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq,
 	u_long hash_mask;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 
+	KASSERT(mutex_owned(&dqlock));
 	error = getq2h(ump, type, &hbp, &q2h, B_MODIFY);
 	if (error)
 		return error;
@@ -318,8 +331,10 @@ getinoquota2(struct inode *ip, int alloc, struct buf **bpp,
 				continue;
 			}
 			/* need to alloc a new on-disk quot */
+			mutex_enter(&dqlock);
 			error = quota2_q2ealloc(ump, i, ino_ids[i], dq,
 			    &bpp[i], &q2ep[i]);
+			mutex_exit(&dqlock);
 			if (error)
 				return error;
 		} else {
@@ -394,14 +409,51 @@ chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 	return quota2_check(ip, Q2V_FILE, change, cred, flags);
 }
 
+static int
+quota2_array_add_q2e(struct ufsmount *ump, int type,
+    int id, prop_array_t replies)
+{
+	struct dquot *dq;
+	int error;
+	struct quota2_entry *q2ep, q2e;
+	struct buf  *bp;
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	prop_dictionary_t dict;
+
+	error = dqget(NULLVP, id, ump, type, &dq);
+	if (error)
+		return error;
+
+	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
+		dqrele(NULLVP, dq);
+		return ENOENT;
+	}
+	error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
+	    &bp, &q2ep, 0);
+	if (error) {
+		dqrele(NULLVP, dq);
+		return error;
+	}
+	mutex_enter(&dq->dq_interlock);
+	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
+	mutex_exit(&dq->dq_interlock);
+	dqrele(NULLVP, dq);
+	brelse(bp, 0);
+	dict = q2etoprop(&q2e, 0);
+	if (dict == NULL)
+		return ENOMEM;
+	if (!prop_array_add_and_rel(replies, dict))
+		return ENOMEM;
+	return 0;
+}
+
 int
 quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
     int defaultq, prop_array_t replies)
 {
-	struct dquot *dq;
 	int error;
 	struct quota2_header *q2h;
-	struct quota2_entry *q2ep, q2e;
+	struct quota2_entry q2e;
 	struct buf *bp;
 	prop_dictionary_t dict;
 	const int needswap = UFS_MPNEEDSWAP(ump);
@@ -415,53 +467,46 @@ quota2_handle_cmd_get(struct ufsmount *ump, int type, int id,
 			mutex_exit(&dqlock);
 			return error;
 		}
-		q2ep = &q2h->q2h_defentry;
-	} else {
-		error = dqget(NULLVP, id, ump, type, &dq);
-
-		if (error)
-			return error;
-
-		if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
-			dqrele(NULLVP, dq);
-			return ENOENT;
-		}
-		error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
-		    &bp, &q2ep, 0);
-		if (error)
-			return error;
-	}
-	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
-	dict = q2etoprop(&q2e, defaultq);
-	if (defaultq)
+		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
 		mutex_exit(&dqlock);
-	else
-		dqrele(NULLVP, dq);
-	brelse(bp, 0);
-	if (dict == NULL)
-		return ENOMEM;
+		brelse(bp, 0);
+		dict = q2etoprop(&q2e, defaultq);
+		if (dict == NULL)
+			return ENOMEM;
+		if (!prop_array_add_and_rel(replies, dict))
+			return ENOMEM;
+	} else
+		error = quota2_array_add_q2e(ump, type, id, replies);
 	
-	if (!prop_array_add_and_rel(replies, dict)) {
-		error = ENOMEM;
-	}
 	return error;
 }
 
+struct getuids {
+	long nuids; /* number of uids in array */
+	long size;  /* size of array */
+	uid_t *uids; /* array of uids, dynamically allocated */
+};
 
 static int
-quota2_getall_callback(struct ufsmount *ump, uint64_t *offp,
+quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
     struct quota2_entry *q2ep, uint64_t off, void *v)
 {
-	prop_array_t replies = v;
-	prop_dictionary_t dict;
+	struct getuids *gu = v;
+	uid_t *newuids;
 	const int needswap = UFS_MPNEEDSWAP(ump);
-	struct quota2_entry q2e;
 
-	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
-	dict = q2etoprop(&q2e, 0);	
-	if (!prop_array_add_and_rel(replies, dict)) {
-		return ENOMEM;
+	if (gu->nuids == gu->size) {
+		newuids = realloc(gu->uids, gu->size + PAGE_SIZE, M_TEMP,
+		    M_WAITOK);
+		if (newuids == NULL) {
+			free(gu->uids, M_TEMP);
+			return ENOMEM;
+		}
+		gu->uids = newuids;
+		gu->size += (PAGE_SIZE / sizeof(uid_t));
 	}
+	gu->uids[gu->nuids] = ufs_rw32(q2ep->q2e_uid, needswap);
+	gu->nuids++;
 	return 0;
 }
 
@@ -470,34 +515,59 @@ quota2_handle_cmd_getall(struct ufsmount *ump, int type, prop_array_t replies)
 {
 	int error;
 	struct quota2_header *q2h;
-	struct quota2_entry q2e;
+	struct quota2_entry  q2e;
 	struct buf *hbp;
 	prop_dictionary_t dict;
 	uint64_t offset;
-	int i;
+	int i, j;
 	int quota2_hash_size;
 	const int needswap = UFS_MPNEEDSWAP(ump);
+	struct getuids gu;
 
 	if (ump->um_quotas[type] == NULLVP)
 		return ENODEV;
+	mutex_enter(&dqlock);
 	error = getq2h(ump, type, &hbp, &q2h, 0);
-	if (error)
+	if (error) {
+		mutex_exit(&dqlock);
 		return error;
+	}
 	quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
 	dict = q2etoprop(&q2e, 1);
 	if (!prop_array_add_and_rel(replies, dict)) {
-		brelse(hbp, 0);
-		return ENOMEM;
+		error = ENOMEM;
+		goto error_bp;
 	}
+	/*
+	 * we can't directly get entries as we can't walk the list
+	 * with qdlock and grab dq_interlock to read the entries
+	 * at the same time. So just walk the lists to build a list of uid,
+	 * and then read entries for these uids
+	 */
+	memset(&gu, 0, sizeof(gu));
 	quota2_hash_size = ufs_rw16(q2h->q2h_hash_size, needswap);
 	for (i = 0; i < quota2_hash_size ; i++) {
-		offset = q2h->q2h_entries[i], needswap;
-		error = quota2_walk_list(ump, hbp, type, &offset, 0, replies,
-		    quota2_getall_callback);
-		if (error)
+		offset = q2h->q2h_entries[i];
+		error = quota2_walk_list(ump, hbp, type, &offset, 0, &gu,
+		    quota2_getuids_callback);
+		if (error) {
+			if (gu.uids != NULL)
+				free(gu.uids, M_TEMP);
+			break;
+		}
+	}
+error_bp:
+	mutex_exit(&dqlock);
+	brelse(hbp, 0);
+	if (error)
+		return error;
+	for (j = 0; j < gu.nuids; j++) {
+		error = quota2_array_add_q2e(ump, type,
+		    gu.uids[j], replies);
+		if (error && error != ENOENT)
 			break;
 	}
-	brelse(hbp, 0);
+	free(gu.uids, M_TEMP);
 	return error;
 }
 
@@ -545,6 +615,7 @@ dq2get(struct vnode *dqvp, u_long id, struct ufsmount *ump, int type,
 		.dq = dq
 	};
 
+	KASSERT(mutex_owned(&dq->dq_interlock));
 	mutex_enter(&dqlock);
 	error = getq2h(ump, type, &bp, &q2h, 0);
 	if (error)
