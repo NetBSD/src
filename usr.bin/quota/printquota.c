@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.1.2.1 2011/01/21 16:58:06 bouyer Exp $	*/
+/*	$NetBSD: printquota.c,v 1.1.2.2 2011/01/29 17:42:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.1.2.1 2011/01/21 16:58:06 bouyer Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.1.2.2 2011/01/29 17:42:37 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,9 @@ __RCSID("$NetBSD: printquota.c,v 1.1.2.1 2011/01/21 16:58:06 bouyer Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
+#include <limits.h>
+#include <inttypes.h>
 
 #include <printquota.h>
 
@@ -62,12 +65,14 @@ __RCSID("$NetBSD: printquota.c,v 1.1.2.1 2011/01/21 16:58:06 bouyer Exp $");
  * convert 64bit value to a printable string
  */
 const char *
-intprt(uint64_t val, int flags, int hflag)
+intprt(uint64_t val, u_int flags, int hflag)
 {
 	static char buf[21];
 
 	if (val == UQUAD_MAX)
-		return("-");
+		return((flags & HN_PRIV_UNLIMITED) ? "unlimited" : "-");
+
+	flags &= ~HN_PRIV_UNLIMITED;
 
 	if (flags & HN_B)
 		val = dbtob(val);
@@ -113,4 +118,38 @@ timeprt(time_t seconds)
 	}
 	(void)snprintf(buf, sizeof buf, "%2d", (int)minutes);
 	return (buf);
+}
+
+/*
+ * convert a string to a uint64 value
+ */
+int
+intrd(char *str, uint64_t *val, u_int flags)
+{
+	char *last = &str[strlen(str) - 1];
+	int ret;
+
+	if (*last >= '0' && *last <= '9') {
+		/* no unit provided, use default */
+		errno = 0;
+		*val = strtoumax(str, NULL, 10);
+		if (flags & HN_B) {
+			/* in kb, convert to disk blocks */
+			*val = btodb(*val * 1024);
+		}
+		
+		return errno;
+	}
+	if (strcmp(str, "-") == 0 || strcmp(str, "unlimited") == 0) {
+		*val = UQUAD_MAX;
+		return 0;
+	}
+	if (flags & HN_B) {
+		if (*last == 'B' || *last == 'b')
+			*last = '\0';
+	}
+	ret = dehumanize_number(str, (int64_t *)val);
+	if (flags & HN_B)
+		*val = btodb(*val);
+	return ret;
 }
