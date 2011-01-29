@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.191 2011/01/28 18:44:45 pooka Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.192 2011/01/29 17:35:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -259,7 +259,8 @@ struct ctlname {
 #define	KERN_ARND		81	/* void *buf, size_t siz random */
 #define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
 #define	KERN_BOOTTIME		83	/* struct: time kernel was booted */
-#define	KERN_MAXID		84	/* number of valid kern ids */
+#define	KERN_EVCNT		84	/* struct: evcnts */
+#define	KERN_MAXID		85	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -347,6 +348,7 @@ struct ctlname {
 	{ "arandom", CTLTYPE_STRUCT }, \
 	{ "sysvipc", CTLTYPE_STRUCT }, \
 	{ "boottime", CTLTYPE_STRUCT }, \
+	{ "evcnt", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -780,6 +782,30 @@ struct kinfo_file {
 #define	KERN_FILE_BYFILE	1
 #define	KERN_FILE_BYPID		2
 #define	KERN_FILESLOP		10
+
+/*
+ * kern.evcnt returns an array of these structures, which are designed both to
+ * be immune to 32/64 bit emulation issues.  Note that the struct here differs
+ * from the real struct evcnt but contains the same information in order to
+ * accomodate sysctl.
+ */
+struct evcnt_sysctl {
+	uint64_t	ev_count;		/* current count */
+	uint64_t	ev_addr;		/* kernel address of evcnt */
+	uint64_t	ev_parent;		/* kernel address of parent */
+	uint8_t		ev_type;		/* EVCNT_TRAP_* */
+	uint8_t		ev_grouplen;		/* length of group with NUL */
+	uint8_t		ev_namelen;		/* length of name with NUL */
+	uint8_t		ev_len;			/* multiply by 8 */
+	/*
+	 * Now the group and name strings follow (both include the trailing
+	 * NUL).  ev_name start at &ev_strings[ev_grouplen+1]
+	 */
+	char		ev_strings[0];
+};
+
+#define	KERN_EVCNT_COUNT_ANY		0
+#define	KERN_EVCNT_COUNT_NONZERO	1
 
 /*
  * CTL_HW identifiers
