@@ -1,4 +1,4 @@
-/* $Id: parser.h,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: parser.h,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,8 +37,6 @@
 
 #ifndef _PARSER_H_
 #define _PARSER_H_
-
-#include <saslc.h>
 
 #define SASLC__CONFIG_PATH "/etc/saslc.d"
 #define SASLC__CONFIG_MAIN_FILE "saslc"
