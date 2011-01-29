@@ -1,4 +1,4 @@
-/* $Id: error.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: error.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,9 +39,9 @@
 #include "error.h"
 
 /**
- * @brief returns text representation of the error
+ * @brief returns error string
  * @param err error
- * @return pointer to the string with error message
+ * @return error string
  */
 
 const char *

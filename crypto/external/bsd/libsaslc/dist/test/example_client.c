@@ -1,4 +1,4 @@
-/* $Id: example_client.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: example_client.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,8 +41,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define MAX_LINE		1024
+#include <limits.h>
 
 static void
 print_help(void)
@@ -82,7 +81,7 @@ main(int argc, char **argv)
 	char *mechanism = NULL;
 	saslc_t *ctx;
 	saslc_sess_t *sess;
-	char input[MAX_LINE];
+	char input[LINE_MAX];
 	char *option, *var;
 	char *output;
 	static char empty[] = "";
@@ -148,14 +147,14 @@ main(int argc, char **argv)
 		cont = saslc_sess_cont(sess, input, input_len, (void **)&output,
 		    &output_len);
 		if (cont < 0)
-		    goto error_sess;
-		printf("%s\n", output);
+		        goto error_sess;
+                printf("%s\n", output==NULL?"empty line":output);
 		if (cont == 0)
-		    break;
+		        break;
 	}
 
 	saslc_sess_end(sess);
-	if (saslc_end(ctx) < 0)
+	if (saslc_end(ctx, true) < 0)
 		goto error;
 
 	return 0;

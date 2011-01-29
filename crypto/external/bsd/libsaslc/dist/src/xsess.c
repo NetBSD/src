@@ -1,4 +1,4 @@
-/* $Id: xsess.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: xsess.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <saslc.h>
+#include <sys/queue.h>
 #include <assert.h>
 #include "dict.h"
 #include "error.h"
@@ -51,12 +52,11 @@ static const saslc__mech_t *
 saslc__sess_choose_mech(saslc_t *, const char *);
 
 /**
- * @brief chooses best mechanism form the mechs list for
- * the sasl session.
+ * @brief chooses best mechanism from the mechs list for the sasl session.
  * @param ctx sasl context
  * @param mechs comma separated list of mechanisms eg. "PLAIN,LOGIN", note that
  * this function is not case sensitive
- * @return pointer to the mech on success, NULL if none mechanism was chose
+ * @return pointer to the mech on success, NULL if none mechanism is chosen
  */
 
 static const saslc__mech_t *
@@ -66,7 +66,8 @@ saslc__sess_choose_mech(saslc_t *ctx, const char *mechs)
 	const char *mech_name;
 	const saslc__mech_list_node_t *m = NULL;
 
-	if ((c = strdup(mechs)) == NULL) {
+        c = strdup(mechs);
+	if (c == NULL) {
 		saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
 		return NULL;
 	}
@@ -78,15 +79,17 @@ saslc__sess_choose_mech(saslc_t *ctx, const char *mechs)
 	if (strchr(e, ',') != NULL) {
 		while ((e = strchr(e, ',')) != NULL) {
 			*e = '\0';
-			if ((m = saslc__mech_list_get(ctx->mechanisms,
-			    mech_name)) != NULL)
-				goto out;
+                        m = saslc__mech_list_get(&ctx->mechanisms,
+                            mech_name);
+			if (m != NULL)
+			        goto out;
 			e++;
 			mech_name = e;
 		}
 	}
 	
-	m = saslc__mech_list_get(ctx->mechanisms, mech_name);
+	m = saslc__mech_list_get(&ctx->mechanisms, mech_name);
+
 out:
 	free(c);
 	return m != NULL ? m->mech : NULL;
@@ -96,46 +99,52 @@ out:
  * @brief sasl session initializaion. Function initializes session
  * property dictionary, chooses best mechanism, creates mech session.
  * @param ctx sasl context
- * @param mechs comma separated list of mechanisms eg. "PLAIN,LOGIN", note that
- * this function is not case sensitive
+ * @param mechs comma separated list of mechanisms eg. "PLAIN,LOGIN", note
+ * that this function is not case sensitive
  * @return pointer to the sasl session on success, NULL on failure
  */
 
 saslc_sess_t	*
 saslc_sess_init(saslc_t *ctx, const char *mechs)
 {
-	saslc_sess_t *sess;
+	saslc_sess_t *sess = NULL;
 
-	if ((sess = calloc(1, sizeof(*sess))) == NULL) {
+        sess = calloc(1, sizeof(*sess));
+	if (sess == NULL) {
 		saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
 		return NULL;
 	}
 
 	/* mechanism initialization */
-	if ((sess->mech = saslc__sess_choose_mech(ctx, mechs)) == NULL) {
-		free(sess);
+        
+        sess->mech = saslc__sess_choose_mech(ctx, mechs);
+	if (sess->mech == NULL) {
 		saslc__error_set(ERR(ctx), ERROR_MECH,
 		    "mechanism is not supported");
-		return NULL;
+                goto error;
 	}
 
 	/* create mechanism session */
-	if (sess->mech->create(sess) < 0) {
-		free(sess);
-		return NULL;
-	}
+	if (sess->mech->create(sess) < 0)
+                /* error is set by mech's create function */
+                goto error;
 
 	/* properties */
-	if ((sess->prop = saslc__dict_create()) == NULL) {
-		free(sess);
+        sess->prop = saslc__dict_create();
+	if (sess->prop == NULL) {
 		saslc__error_set(ERR(ctx), ERROR_NOMEM, NULL);
-		return NULL;
+                goto error;
 	}
 
 	sess->context = ctx;
-	ctx->refcnt++;
+        LIST_INSERT_HEAD(&ctx->sessions, sess, nodes);
 
 	return sess;
+
+error:
+        free(sess);
+
+        return NULL;
 }
 
 /**
@@ -149,7 +158,7 @@ saslc_sess_end(saslc_sess_t *sess)
 {
 	sess->mech->destroy(sess);
 	saslc__dict_destroy(sess->prop);
-	sess->context->refcnt--;
+        LIST_REMOVE(sess, nodes);
 	free(sess);
 }
 
@@ -165,8 +174,7 @@ saslc_sess_end(saslc_sess_t *sess)
 int
 saslc_sess_setprop(saslc_sess_t *sess, const char *name, const char *value)
 {
-	/* check if key exists, if so then remove it from dictionary */
-
+	/* check if key exists, if so then remove it from the dictionary */
 	if (saslc__dict_get(sess->prop, name) != NULL) {
 		if (saslc__dict_remove(sess->prop, name) != DICT_OK)
 			assert(/*CONSTCOND*/0);
@@ -198,7 +206,7 @@ saslc_sess_setprop(saslc_sess_t *sess, const char *name, const char *value)
  * configuration), mechanism dicionary.
  * @param sess sasl session
  * @param name property name
- * @return property value on success, NULL on failure.
+ * @return property value, NULL on failure.
  */
 
 const char	*
@@ -208,23 +216,24 @@ saslc_sess_getprop(saslc_sess_t *sess, const char *name)
 	saslc__mech_list_node_t *m;
 
 	/* get property from the session dictionary */
-	if ((r = saslc__dict_get(sess->prop, name)) != NULL)
+        r = saslc__dict_get(sess->prop, name);
+        if (r != NULL)
 		return r;
 
 	/* get property from the context dictionary */
-	if ((r = saslc__dict_get(sess->context->prop, name)) != NULL)
+	r = saslc__dict_get(sess->context->prop, name);
+        if (r != NULL)
 		return r;
 	
 	/* get property form the mechanism dictionary */
-	if ((m = saslc__mech_list_get(sess->context->mechanisms,
-	    sess->mech->name)) == NULL)
-		return NULL;
+        m = saslc__mech_list_get(&sess->context->mechanisms,
+            sess->mech->name);
 
-	return saslc__dict_get(m->prop, name);
+	return m != NULL ? saslc__dict_get(m->prop, name) : NULL;
 }
 
 /**
- * @brief do one step of the sasl authentication, input data
+ * @brief does one step of the sasl authentication, input data
  * and its lenght are stored in in and inlen, output is stored in out and
  * outlen. This function is and wrapper for mechanism step functions.
  * Additionaly it checks if session is not already authorized and handles
@@ -241,12 +250,12 @@ saslc_sess_getprop(saslc_sess_t *sess, const char *name)
 
 int
 saslc_sess_cont(saslc_sess_t *sess, const void *in, size_t inlen, void **out,
-	size_t *outlen)
+    size_t *outlen)
 {
 	int r;
-	saslc__mech_sess_t *ms = sess->mech_sess;
+	saslc__mech_sess_t *mech_sess = sess->mech_sess;
 
-	if (ms->status == STATUS_AUTHENTICATED) {
+	if (mech_sess->status == STATUS_AUTHENTICATED) {
 		saslc__error_set(ERR(sess), ERROR_MECH,
 		    "session authenticated");
 		return MECH_ERROR;
@@ -255,9 +264,10 @@ saslc_sess_cont(saslc_sess_t *sess, const void *in, size_t inlen, void **out,
 	r = sess->mech->cont(sess, in, inlen, out, outlen);
 
 	if (r == MECH_OK)
-		ms->status = STATUS_AUTHENTICATED;
+		mech_sess->status = STATUS_AUTHENTICATED;
 
-	ms->step++;
+        mech_sess->step++;
+
 	return r;
 }
 

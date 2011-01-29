@@ -1,4 +1,4 @@
-/* $Id: t_session.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: t_session.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,10 +46,10 @@ ATF_TC_HEAD(t_sess, tc)
 }
 ATF_TC_BODY(t_sess, tc)
 {
-		saslc_t *ctx;
+        saslc_t *ctx;
 	saslc_sess_t *sess;
-		ATF_REQUIRE(ctx = saslc_alloc());
-		ATF_REQUIRE_EQ(saslc_init(ctx, NULL), 0);
+        ATF_REQUIRE(ctx = saslc_alloc());
+	ATF_REQUIRE_EQ(saslc_init(ctx, NULL), 0);
 	ATF_CHECK(sess = saslc_sess_init(ctx, "PLAIN"));
 	if (sess != NULL)
 		saslc_sess_end(sess);
@@ -60,15 +60,16 @@ ATF_TC_BODY(t_sess, tc)
 	ATF_CHECK(sess = saslc_sess_init(ctx, "LOGIN,NOTEXISTS"));
 	if (sess != NULL)
 		saslc_sess_end(sess);
-		ATF_REQUIRE(sess = saslc_sess_init(ctx, "LOGiN"));
+	ATF_REQUIRE(sess = saslc_sess_init(ctx, "LOGiN"));
 	ATF_CHECK_STREQ(saslc_sess_strmech(sess), "LOGIN");
+	ATF_REQUIRE_EQ(saslc_end(ctx, false), -1);
 	saslc_sess_end(sess);
-		ATF_REQUIRE_EQ(saslc_end(ctx), 0);
+	ATF_REQUIRE_EQ(saslc_end(ctx, false), 0);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 	/* context initialization */
-		ATF_TP_ADD_TC(tp, t_sess);
+	ATF_TP_ADD_TC(tp, t_sess);
 	return atf_no_error();
 }

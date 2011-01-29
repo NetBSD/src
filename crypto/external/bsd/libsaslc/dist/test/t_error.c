@@ -1,4 +1,4 @@
-/* $Id: t_error.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: t_error.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 ATF_TC(t_saslc__error);
 ATF_TC_HEAD(t_saslc__error, tc)
 {
-		atf_tc_set_md_var(tc, "descr", "saslc__error_*() tests");
+	atf_tc_set_md_var(tc, "descr", "saslc__error_*() tests");
 }
 ATF_TC_BODY(t_saslc__error, tc)
 {
@@ -58,12 +58,11 @@ ATF_TC_BODY(t_saslc__error, tc)
 	ATF_CHECK_STREQ(saslc_strerror(ctx), "test");
 	saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
 	ATF_CHECK_STREQ(saslc_strerror(ctx), "no memory available");
-		ATF_REQUIRE_EQ(saslc_end(ctx), 0);
-
+        ATF_REQUIRE_EQ(saslc_end(ctx, false), 0);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-		ATF_TP_ADD_TC(tp, t_saslc__error);
+	ATF_TP_ADD_TC(tp, t_saslc__error);
 	return atf_no_error();
 }

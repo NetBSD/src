@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $
-CC=gcc
-CFLAGS=-I../include -Wall -pedantic -fPIC -ggdb
+# $Id: Makefile,v 1.2 2011/01/29 23:35:31 agc Exp $
+
+CFLAGS=-I../include -Wall -Werror -pedantic -fPIC -ggdb -D_GNU_SOURCE
 LIBSASLC_OBJS=\
 	dict.o error.o mech_anonymous.o mech_digestmd5.o mech_gssapi.o mech.o parser.o \
 	xsess.o mech_crammd5.o mech_external.o mech_login.o mech_plain.o saslc.o crypto.o
@@ -13,3 +13,6 @@ libsaslc.so: $(LIBSASLC_OBJS)
 
 clean:
 	rm -f *.o *.so
+
+splint:
+	splint -weak -I../include *.[ch]

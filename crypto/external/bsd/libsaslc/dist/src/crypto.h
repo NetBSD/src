@@ -1,4 +1,4 @@
-/* $Id: crypto.h,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: crypto.h,v 1.2 2011/01/29 23:35:31 agc Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,9 +39,6 @@
 #ifndef _CRYPTO_H_
 #define _CRYPTO_H_
 
-/* hmac md5 digest length in ascii format */
-#define HMAC_MD5_DIGEST_LENGTH	32
-
 /* nonce/random functions */
 unsigned char *saslc__crypto_nonce(size_t);
 
@@ -49,7 +46,7 @@ unsigned char *saslc__crypto_nonce(size_t);
 char *saslc__crypto_base64(const unsigned char *, size_t);
 
 /* hashing functions */
-char *saslc__crypto_md5(const char *);
+char *saslc__crypto_md5(const char *, size_t);
 char *saslc__crypto_hmac_md5(const unsigned char *, size_t,
     const unsigned char *, size_t);
 
