@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.3 2010/10/02 05:57:42 kiyohara Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.4 2011/01/29 01:53:18 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.3 2010/10/02 05:57:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.4 2011/01/29 01:53:18 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -81,7 +81,16 @@ int mvgbe_debug = MVGBE_DEBUG;
 	bus_space_set_region_4((sc)->sc_iot, (sc)->sc_dafh, (reg), (val), (c))
 
 #define MVGBE_TX_RING_CNT	256
+#define MVGBE_TX_RING_MSK	(MVGBE_TX_RING_CNT - 1)
+#define MVGBE_TX_RING_NEXT(x)	(((x) + 1) & MVGBE_TX_RING_MSK)
 #define MVGBE_RX_RING_CNT	256
+#define MVGBE_RX_RING_MSK	(MVGBE_RX_RING_CNT - 1)
+#define MVGBE_RX_RING_NEXT(x)	(((x) + 1) & MVGBE_RX_RING_MSK)
+
+CTASSERT(MVGBE_TX_RING_CNT > 1 && MVGBE_TX_RING_NEXT(MVGBE_TX_RING_CNT) ==
+	(MVGBE_TX_RING_CNT + 1) % MVGBE_TX_RING_CNT);
+CTASSERT(MVGBE_RX_RING_CNT > 1 && MVGBE_RX_RING_NEXT(MVGBE_RX_RING_CNT) ==
+	(MVGBE_RX_RING_CNT + 1) % MVGBE_RX_RING_CNT);
 
 #define MVGBE_JSLOTS		384	/* XXXX */
 #define MVGBE_JLEN		(MVGBE_MRU + MVGBE_BUF_ALIGN)
@@ -1014,8 +1023,8 @@ mvgbe_init(struct ifnet *ifp)
 	MVGBE_WRITE(sc, MVGBE_SDC,
 	    MVGBE_SDC_RXBSZ_16_64BITWORDS |
 #if BYTE_ORDER == LITTLE_ENDIAN
-	    MVGBE_SDC_BLMR |	/* Big/Litlle Endian Receive Mode: No swap */
-	    MVGBE_SDC_BLMT |	/* Big/Litlle Endian Transmit Mode: No swap */
+	    MVGBE_SDC_BLMR |	/* Big/Little Endian Receive Mode: No swap */
+	    MVGBE_SDC_BLMT |	/* Big/Little Endian Transmit Mode: No swap */
 #endif
 	    MVGBE_SDC_TXBSZ_16_64BITWORDS);
 
@@ -1543,7 +1552,7 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 		f->bytecnt = txseg[i].ds_len;
 		f->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA;
 		last = current;
-		current = (current + 1) % MVGBE_TX_RING_CNT;
+		current = MVGBE_TX_RING_NEXT(current);
 	}
 
 	if (m_csumflags & M_CSUM_IPv4)
@@ -1650,7 +1659,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 
 		cdata->mvgbe_rx_map[idx] = NULL;
 
-		idx = (idx + 1) % MVGBE_RX_RING_CNT;
+		idx = MVGBE_RX_RING_NEXT(idx);
 
 		if (rxstat & MVGBE_ERROR_SUMMARY) {
 #if 0
@@ -1783,7 +1792,7 @@ mvgbe_txeof(struct mvgbe_softc *sc)
 			cdata->mvgbe_tx_map[idx] = NULL;
 		}
 		cdata->mvgbe_tx_cnt--;
-		idx = (idx + 1) % MVGBE_TX_RING_CNT;
+		idx = MVGBE_TX_RING_NEXT(idx);
 	}
 	if (cdata->mvgbe_tx_cnt == 0)
 		ifp->if_timer = 0;
