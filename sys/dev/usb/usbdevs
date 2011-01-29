@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.576 2011/01/16 08:58:03 tsutsui Exp $
+$NetBSD: usbdevs,v 1.577 2011/01/29 14:17:44 tsutsui Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2768,6 +2768,7 @@ product VTECH ZD1211B		0x3014	ZD1211B
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
+product WACOM GRAPHIRE2		0x0011	Graphire2 ET-0405A-U
 product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM GRAPHIRE3_6X8	0x0014	Graphire3 6x8
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 4x5
