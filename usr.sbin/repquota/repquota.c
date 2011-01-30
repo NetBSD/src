@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25.2.2 2011/01/29 11:04:43 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.3 2011/01/30 19:38:45 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ int	repquota(const struct statvfs *, int);
 int	repquota2(const struct statvfs *, int);
 int	repquota1(const struct statvfs *, int);
 void	usage(void);
-void	printquotas(int, const struct statvfs *);
+void	printquotas(int, const struct statvfs *, int);
 void	dqblk2q2e(const struct dqblk *, struct quota2_entry *);
 
 int
@@ -214,8 +214,8 @@ repquota2(const struct statvfs *vfs, int type)
 	prop_array_t cmds, datas;
 	struct plistref pref;
 	int error;
-	int8_t error8;
-	prop_object_iterator_t iter;
+	int8_t error8, version = 0;
+	prop_object_iterator_t cmditer, dataiter;
 	struct quota2_entry *q2ep;
 	struct fileusage *fup;
 	const char *strid;
@@ -228,6 +228,9 @@ repquota2(const struct statvfs *vfs, int type)
 	if (dict == NULL || cmds == NULL || datas == NULL)
 		errx(1, "can't allocate proplist");
 	if (!quota2_prop_add_command(cmds, "getall", qfextension[type], datas))
+		err(1, "prop_add_command");
+	if (!quota2_prop_add_command(cmds, "get version", qfextension[type],
+	     prop_array_create()))
 		err(1, "prop_add_command");
 	if (!prop_dictionary_set(dict, "commands", cmds))
 		err(1, "prop_dictionary_set(command)");
@@ -252,57 +255,74 @@ repquota2(const struct statvfs *vfs, int type)
 		errx(1, "quota2_get_cmds: %s\n",
 		    strerror(error));
 	}
-	/* only one command, no need to iter */
-	cmd = prop_array_get(cmds, 0);
-	if (cmd == NULL)
-		err(1, "prop_array_get(cmd)");
+	cmditer = prop_array_iterator(cmds);
+	if (cmditer == NULL)
+		err(1, "prop_array_iterator(cmds)");
 
-	if (!prop_dictionary_get_int8(cmd, "return", &error8))
-		err(1, "prop_get(return)");
+	while ((cmd = prop_object_iterator_next(cmditer)) != NULL) {
+		const char *cmdstr;
+		if (!prop_dictionary_get_cstring_nocopy(cmd, "command",
+		    &cmdstr))
+			err(1, "prop_get(command)");
 
-	if (error8) {
-		prop_object_release(dict);
-		if (error8 != EOPNOTSUPP) {
-			fprintf(stderr, "get %s quotas: %s\n",
-			    qfextension[type], strerror(error8));
-		}
-		return (error8);
-	}
-	datas = prop_dictionary_get(cmd, "data");
-	if (datas == NULL)
-		err(1, "prop_dict_get(datas)");
+		if (!prop_dictionary_get_int8(cmd, "return", &error8))
+			err(1, "prop_get(return)");
 
-	iter = prop_array_iterator(datas);
-        if (iter == NULL)
-                err(1, "prop_array_iterator");
-
-	while ((data = prop_object_iterator_next(iter)) != NULL) {
-		strid = NULL;
-		if (!prop_dictionary_get_uint32(data, "id", &id)) {
-			if (!prop_dictionary_get_cstring_nocopy(data, "id",
-			    &strid))
-				errx(1, "can't find id in quota entry");
-			if (strcmp(strid, "default") != 0) {
-				errx(1, "wrong id string %s in quota entry",
-				    strid);
+		if (error8) {
+			prop_object_release(dict);
+			if (error8 != EOPNOTSUPP) {
+				fprintf(stderr, "get %s quotas: %s\n",
+				    qfextension[type], strerror(error8));
 			}
-			q2ep = &defaultq2e[type];
-		} else {
-			if ((fup = lookup(id, type)) == 0)
-				fup = addid(id, type, (char *)0);
-			q2ep = &fup->fu_q2e;
-			q2ep->q2e_uid = id;
+			return (error8);
 		}
-			
-		error = quota2_dict_get_q2e_usage(data, q2ep);
-		if (error) {
-			errx(1, "quota2_dict_get_q2e_usage: %s\n",
-			    strerror(error));
+		datas = prop_dictionary_get(cmd, "data");
+		if (datas == NULL)
+			err(1, "prop_dict_get(datas)");
+
+		if (strcmp("get version", cmdstr) == 0) {
+			data = prop_array_get(datas, 0);
+			if (data == NULL)
+				err(1, "prop_array_get(version)");
+			if (!prop_dictionary_get_int8(data, "version",
+			    &version))
+				err(1, "prop_get_int8(version)");
+			continue;
 		}
+		dataiter = prop_array_iterator(datas);
+		if (dataiter == NULL)
+			err(1, "prop_array_iterator");
+
+		while ((data = prop_object_iterator_next(dataiter)) != NULL) {
+			strid = NULL;
+			if (!prop_dictionary_get_uint32(data, "id", &id)) {
+				if (!prop_dictionary_get_cstring_nocopy(data,
+				    "id", &strid))
+					errx(1, "can't find id in quota entry");
+				if (strcmp(strid, "default") != 0) {
+					errx(1,
+					    "wrong id string %s in quota entry",
+					    strid);
+				}
+				q2ep = &defaultq2e[type];
+			} else {
+				if ((fup = lookup(id, type)) == 0)
+					fup = addid(id, type, (char *)0);
+				q2ep = &fup->fu_q2e;
+				q2ep->q2e_uid = id;
+			}
+				
+			error = quota2_dict_get_q2e_usage(data, q2ep);
+			if (error) {
+				errx(1, "quota2_dict_get_q2e_usage: %s\n",
+				    strerror(error));
+			}
+		}
+		prop_object_iterator_release(dataiter);
 	}
-	prop_object_iterator_release(iter);
+	prop_object_iterator_release(cmditer);
 	prop_object_release(dict);
-	printquotas(type, vfs);
+	printquotas(type, vfs, version);
 	return (0);
 }
 
@@ -353,22 +373,29 @@ int repquota1(const struct statvfs *vfs, int type)
 		dqblk2q2e(&dqbuf, &fup->fu_q2e);
 	}
 	fclose(qf);
-	printquotas(type, vfs);
+	printquotas(type, vfs, 1);
 	return (0);
 }
 
 void
-printquotas(int type, const struct statvfs *vfs)
+printquotas(int type, const struct statvfs *vfs, int version)
 {
 	static int multiple = 0;
 	u_long id;
 	struct fileusage *fup;
+	const char *timemsg;
+	static time_t now;
+
+	if (now == 0)
+		time(&now);
 
 	if (multiple++)
 		printf("\n");
 	if (vflag)
-		fprintf(stdout, "*** Report for %s quotas on %s (%s)\n",
-		    qfextension[type], vfs->f_mntonname, vfs->f_mntfromname);
+		fprintf(stdout,
+		    "*** Report for %s quotas on %s (%s, version %d)\n",
+		    qfextension[type], vfs->f_mntonname, vfs->f_mntfromname,
+		    version);
 	printf("                        Block limits               File limits\n");
 	printf(type == USRQUOTA ? "User " : "Group");
 	printf("            used     soft     hard  grace      used    soft    hard  grace\n");
@@ -383,6 +410,18 @@ printquotas(int type, const struct statvfs *vfs)
 			printf("%s ", fup->fu_name);
 		else
 			printf("%-10s", fup->fu_name);
+
+		if (fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit && 
+		    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur >= 
+		    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit)
+			timemsg = timeprt(now,
+			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_time);
+		else if (vflag && version == 2)
+			timemsg = timeprt(0,
+			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_grace);
+		else
+			timemsg = "";
+
 		printf("%c%c%9s%9s%9s%7s",
 			fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit && 
 			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur >= 
@@ -398,10 +437,17 @@ printquotas(int type, const struct statvfs *vfs)
 				HN_B, hflag),
 			intprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit,
 				HN_B, hflag),
-			(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit && 
-			 fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur >= 
-			 fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit) ?
-			timeprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_time) : "");
+			timemsg);
+		if (fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit && 
+		    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur >= 
+		    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit)
+			timemsg = timeprt(now,
+			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_time);
+		else if (vflag && version == 2)
+			timemsg = timeprt(0,
+			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_grace);
+		else
+			timemsg = "";
 		printf("  %8s%8s%8s%7s\n",
 			intprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur,
 				0, hflag),
@@ -409,10 +455,7 @@ printquotas(int type, const struct statvfs *vfs)
 				0, hflag),
 			intprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_hardlimit,
 				0, hflag),
-			(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit && 
-			 fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur >= 
-			 fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit) ?
-			timeprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_time) : "");
+			timemsg);
 		memset(&fup->fu_q2e, 0, sizeof(fup->fu_q2e));
 	}
 }

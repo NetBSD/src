@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.1.2.3 2011/01/30 00:21:08 bouyer Exp $ */
+/*	$NetBSD: printquota.c,v 1.1.2.4 2011/01/30 19:38:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.1.2.3 2011/01/30 00:21:08 bouyer Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.1.2.4 2011/01/30 19:38:45 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,14 +100,11 @@ intprt(uint64_t val, u_int flags, int hflag)
  * Calculate the grace period and return a printable string for it.
  */
 const char *
-timeprt(time_t seconds)
+timeprt(time_t now, time_t seconds)
 {
 	time_t hours, minutes;
 	static char buf[20];
-	static time_t now;
 
-	if (now == 0)
-		time(&now);
 	if (now > seconds)
 		return ("none");
 	seconds -= now;
