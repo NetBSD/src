@@ -1,0 +1,213 @@
+# $NetBSD: t_setquota.sh,v 1.1.2.1 2011/01/30 12:37:34 bouyer Exp $ 
+#
+#  Copyright (c) 2011 Manuel Bouyer
+#  All rights reserved.
+# 
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+# 
+#  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+#  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+#  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+#  PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+#  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+#
+
+for e in le be; do
+  for v in 1 2; do
+    for q in "user" "group"; do
+      test_case_root set_${e}_${v}_${q} set_quota \
+	 "set quota with ${q} enabled" ${e} ${v} ${q}
+      test_case_root set_new_${e}_${v}_${q} set_quota_new \
+	 "set quota for new id with ${q} enabled" ${e} ${v} ${q}
+      test_case_root set_default_${e}_${v}_${q} set_quota_default \
+	 "set default quota with ${q} enabled" ${e} ${v} ${q}
+    done
+    test_case_root set_${e}_${v}_"both" set_quota \
+	 "set quota with both enabled" ${e} ${v} "both"
+    test_case_root set_new_${e}_${v}_"both" set_quota_new \
+	 "set quota for new id with both enabled" ${e} ${v} "both"
+    test_case_root set_default_${e}_${v}_"both" set_quota_default \
+	 "set default quota with both enabled" ${e} ${v} "both"
+  done
+done
+
+set_quota()
+{
+	create_with_quotas $*
+	local q=$3
+	local expect
+	local fail
+
+	case ${q} in
+	user)
+		expect=u
+		fail=g
+		;;
+	group)
+		expect=g
+		fail=u
+		;;
+	both)
+		expect="u g"
+		fail=""
+		;;
+	*)
+		atf_fail "wrong quota type"
+		;;
+	esac
+
+#check that we can set the expected quota
+	for q in ${expect} ; do
+		local id=$(id -${q})
+		atf_check -s exit:0 \
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		atf_check -s exit:0 \
+-o "match:/mnt        0       10    40960               1      20   51200" \
+-o "match:Disk quotas for .*: $" \
+		    $(atf_get_srcdir)/rump_quota -${q} -v
+		atf_check -s exit:0 \
+-o "match:--        0       10    40960                1      20   51200" \
+		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
+	done
+
+#check that we do not get positive reply for non-expected quota
+	for q in ${fail} ; do
+		local id=$(id -${q})
+		atf_check -s exit:0 \
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		atf_check -s exit:0 -o "not-match:/mnt" \
+		    -o "not-match:Disk quotas for .*: $" \
+		    -o "match:Disk quotas for .*: none$" \
+		    $(atf_get_srcdir)/rump_quota -${q} -v
+		atf_check -s exit:0 \
+-o "not-match:--        0        -        -                1       -       -" \
+		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
+	done
+	atf_check -s exit:0 rump.halt
+	wait $!
+# check that the quota inode creation didn't corrupt the filesystem
+	atf_check -s exit:0 -o "match:already clean" \
+		-o "match:Phase 6 - Check Quotas" \
+		fsck_ffs -nf -F ${IMG}
+}
+
+set_quota_new()
+{
+	create_with_quotas $*
+	local q=$3
+	local expect
+	local fail
+
+	case ${q} in
+	user)
+		expect=u
+		fail=g
+		;;
+	group)
+		expect=g
+		fail=u
+		;;
+	both)
+		expect="u g"
+		fail=""
+		;;
+	*)
+		atf_fail "wrong quota type"
+		;;
+	esac
+
+#check that we can set the expected quota
+	for q in ${expect} ; do
+		local id=1
+		atf_check -s exit:0 \
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		atf_check -s exit:0 \
+-o "match:/mnt        0       10    40960               0      20   51200" \
+-o "match:Disk quotas for .*: $" \
+		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+	done
+
+#check that we do not get positive reply for non-expected quota
+	for q in ${fail} ; do
+		local id=$(id -${q})
+		atf_check -s exit:0 \
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		atf_check -s exit:0 -o "not-match:/mnt" \
+		    -o "not-match:Disk quotas for .*: $" \
+		    -o "match:Disk quotas for .*: none$" \
+		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+	done
+	atf_check -s exit:0 rump.halt
+	wait $!
+# check that the quota inode creation didn't corrupt the filesystem
+	atf_check -s exit:0 -o "match:already clean" \
+		-o "match:Phase 6 - Check Quotas" \
+		fsck_ffs -nf -F ${IMG}
+}
+
+set_quota_default()
+{
+	create_with_quotas $*
+	local q=$3
+	local expect
+	local fail
+
+	case ${q} in
+	user)
+		expect=u
+		fail=g
+		;;
+	group)
+		expect=g
+		fail=u
+		;;
+	both)
+		expect="u g"
+		fail=""
+		;;
+	*)
+		atf_fail "wrong quota type"
+		;;
+	esac
+
+#check that we can set the expected quota
+	for q in ${expect} ; do
+		local id="-d"
+		atf_check -s exit:0 \
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		atf_check -s exit:0 \
+-o "match:/mnt        0       10    40960               0      20   51200" \
+-o "match:Default (user|group) disk quotas: $" \
+		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+	done
+
+#check that we do not get positive reply for non-expected quota
+	for q in ${fail} ; do
+		local id="-d"
+		atf_check -s exit:0 \
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		atf_check -s exit:0 -o "not-match:/mnt" \
+		    -o "not-match:Default (user|group) disk quotas: $" \
+		    -o "match:Default (user|group) disk quotas: none$" \
+		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+	done
+	atf_check -s exit:0 rump.halt
+	wait $!
+# check that the quota inode creation didn't corrupt the filesystem
+	atf_check -s exit:0 -o "match:already clean" \
+		-o "match:Phase 6 - Check Quotas" \
+		fsck_ffs -nf -F ${IMG}
+}

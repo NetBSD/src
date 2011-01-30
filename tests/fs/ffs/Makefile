@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.2.2 2011/01/28 18:38:07 bouyer Exp $
+#	$NetBSD: Makefile,v 1.14.2.3 2011/01/30 12:37:34 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ SRCS.h_quota2_server=	h_quota2_server.c
 MAN.h_quota2_server=	# empty
 BINDIR.h_quota2_server=	${TESTSDIR}
 
-.for name in t_getquota
+.for name in t_getquota t_setquota
 TESTS_SH+=	${name}
 TESTS_SH_SRC_${name}=	quotas_common.sh ${name}.sh
 .endfor
