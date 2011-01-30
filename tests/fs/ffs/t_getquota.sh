@@ -1,4 +1,4 @@
-# $NetBSD: t_getquota.sh,v 1.1.2.1 2011/01/28 18:38:07 bouyer Exp $ 
+# $NetBSD: t_getquota.sh,v 1.1.2.2 2011/01/30 11:33:33 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -86,16 +86,6 @@ get_quota()
 	wait $!
 # check that the quota inode creation didn't corrupt the filesystem
 	atf_check -s exit:0 -o "match:already clean" \
-		-o "match:Phase 6 - Check Quotas" \
-		fsck_ffs -nf -F ${IMG}
-}
-
-quota_enabled_both()
-{
-	create_with_quotas $*
-	
-# check that the quota inode creation didn't corrupt the filesystem
-	atf_check -s exit:0 -o "match:already clean" -o "match:3 files" \
 		-o "match:Phase 6 - Check Quotas" \
 		fsck_ffs -nf -F ${IMG}
 }
