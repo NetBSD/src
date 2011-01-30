@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33.2.3 2011/01/28 22:15:36 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.33.2.4 2011/01/30 19:38:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33.2.3 2011/01/28 22:15:36 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.33.2.4 2011/01/30 19:38:45 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ struct quotause {
 	char	fsname[MAXPATHLEN + 1];
 };
 #define	FOUND	0x01
+#define	QUOTA2	0x02
 
 int	alldigits(char *);
 int	callaurpc(char *, int, int, int, xdrproc_t, void *, xdrproc_t, void *);
@@ -336,7 +337,7 @@ showquotas(type, id, name)
 {
 	struct quotause *qup;
 	struct quotause *quplist;
-	const char *msgi, *msgb, *nam;
+	const char *msgi, *msgb, *nam, *timemsg;
 	int lines = 0;
 	static time_t now;
 
@@ -396,6 +397,15 @@ showquotas(type, id, name)
 				printf("%s\n", qup->fsname);
 				nam = "";
 			} 
+			if (msgb)
+				timemsg = timeprt(now, 
+				    qup->q2e.q2e_val[Q2V_BLOCK].q2v_time);
+			else if ((qup->flags & QUOTA2) != 0 && vflag)
+				timemsg = timeprt(0,
+				    qup->q2e.q2e_val[Q2V_BLOCK].q2v_grace);
+			else
+				timemsg = NULL;
+				
 			printf("%12s%9s%c%8s%9s%8s"
 			    , nam
 			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur
@@ -405,8 +415,17 @@ showquotas(type, id, name)
 				, HN_B, hflag)
 			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit
 				, HN_B, hflag)
-			    , (msgb == NULL) ? ""
-			        : timeprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_time));
+			    , timemsg);
+
+			if (msgi)
+				timemsg = timeprt(now, 
+				    qup->q2e.q2e_val[Q2V_FILE].q2v_time);
+			else if ((qup->flags & QUOTA2) != 0 && vflag)
+				timemsg = timeprt(0,
+				    qup->q2e.q2e_val[Q2V_FILE].q2v_grace);
+			else
+				timemsg = NULL;
+				
 			printf("%8s%c%7s%8s%8s\n"
 			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur
 				, 0, hflag)
@@ -415,9 +434,7 @@ showquotas(type, id, name)
 				, 0, hflag)
 			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit
 				, 0, hflag)
-			    , (msgi == NULL) ? ""
-			        : timeprt(qup->q2e.q2e_val[Q2V_FILE].q2v_time)
-			);
+			    , timemsg);
 			continue;
 		}
 	}
@@ -466,6 +483,7 @@ getprivs(id, quotatype)
 	struct quotause *quphead;
 	struct statvfs *fst;
 	int nfst, i;
+	int8_t version;
 
 	qup = quphead = quptail = NULL;
 
@@ -480,18 +498,21 @@ getprivs(id, quotatype)
 		}
 		if (strncmp(fst[i].f_fstypename, "nfs", 
 		    sizeof(fst[i].f_fstypename)) == 0) {
+			version = 0;
 			if (getnfsquota(&fst[i], NULL, qup, id, quotatype) == 0)
 				continue;
 		} else if (strncmp(fst[i].f_fstypename, "ffs",
 		    sizeof(fst[i].f_fstypename)) == 0 &&
 		    (fst[i].f_flag & ST_QUOTA) != 0) {
-			if (getvfsquota(fst[i].f_mntonname, &qup->q2e,
+			if (getvfsquota(fst[i].f_mntonname, &qup->q2e, &version,
 			    id, quotatype, dflag, Dflag) == 0)
 				continue;
 		} else
 			continue;
 		(void)strncpy(qup->fsname, fst[i].f_mntonname,
 		    sizeof(qup->fsname) - 1);
+		if (version == 2)
+			qup->flags |= QUOTA2;
 		if (quphead == NULL)
 			quphead = qup;
 		else
