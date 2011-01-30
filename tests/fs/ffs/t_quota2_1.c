@@ -1,4 +1,4 @@
-/*	$NetBSD: t_quota2_1.c,v 1.1.2.1 2011/01/20 14:25:04 bouyer Exp $	*/
+/*	$NetBSD: t_quota2_1.c,v 1.1.2.2 2011/01/30 14:28:33 bouyer Exp $	*/
 
 /*
  * Basic tests for quota2
@@ -47,12 +47,13 @@ do_quota(const atf_tc_t *tc, int n, const char *newfs_opts, int log)
 
 	atf_tc_expect_pass();
 	FSTEST_ENTER();
+	RL(rump_sys_chown(".", 0, 0));
 	for (i = 0 ; i < n; i++) {
 		sprintf(buf, "file%d", i);
 		RL(fd = rump_sys_open(buf, O_CREAT | O_RDWR, 0755));
 		sprintf(buf, "test file no %d", i);
 		RL(rump_sys_write(fd, buf, strlen(buf)));
-		RL(rump_sys_fchown(fd, i, i+60000));
+		RL(rump_sys_fchown(fd, i, i+80000));
 		rump_sys_close(fd);
 	}
 	FSTEST_EXIT();
