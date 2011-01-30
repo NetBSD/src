@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.21 2011/01/30 22:36:12 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.22 2011/01/30 22:36:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
 
 LEAF_ENTRY(mutex_exit)
 	/*
-	 * If its a spin mutex or unowned, we have to take the slow path.
+	 * If it's a spin mutex or unowned, we have to take the slow path.
 	 */
 	ldi	MUTEX_ADAPTIVE_UNOWNED, %t1
 	ldw	MTX_OWNER(%arg0),%t2
