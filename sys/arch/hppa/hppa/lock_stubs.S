@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.19 2011/01/30 09:58:03 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.20 2011/01/30 10:09:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ LEAF_ENTRY(mutex_exit)
 	 * field and release the lock.
 	 */
 
-	ldi	1, %t2				/* unlocked = 1 */
+	ldi	__SIMPLELOCK_RAW_UNLOCKED, %t2	/* unlocked = 1 */
 	ldo	(MTX_LOCK + HPPA_LDCW_ALIGN - 1)(%arg0), %t3
 	depi	0, 31, 4, %t3
 	stw	%t1, MTX_OWNER(%arg0)
