@@ -1,4 +1,4 @@
-# $NetBSD: t_getquota.sh,v 1.1.2.2 2011/01/30 11:33:33 bouyer Exp $ 
+# $NetBSD: t_getquota.sh,v 1.1.2.3 2011/01/30 13:23:26 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -83,7 +83,9 @@ get_quota()
 		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
 	done
 	atf_check -s exit:0 rump.halt
-	wait $!
+#wait for rump server to be gone
+	while [ -e ${RUMP_SOCKET} ] ; do done
+	sleep 1
 # check that the quota inode creation didn't corrupt the filesystem
 	atf_check -s exit:0 -o "match:already clean" \
 		-o "match:Phase 6 - Check Quotas" \
