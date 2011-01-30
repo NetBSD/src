@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.1.2.2 2011/01/29 17:42:37 bouyer Exp $ */
+/*	$NetBSD: printquota.c,v 1.1.2.3 2011/01/30 00:21:08 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.1.2.2 2011/01/29 17:42:37 bouyer Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.1.2.3 2011/01/30 00:21:08 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,15 @@ __RCSID("$NetBSD: printquota.c,v 1.1.2.2 2011/01/29 17:42:37 bouyer Exp $");
 const char *
 intprt(uint64_t val, u_int flags, int hflag)
 {
-	static char buf[21];
+#define NBUFS	3
+	static char bufs[NBUFS][21];
+	char *buf;
+	static int i = 0;
 
+	buf = bufs[i++];
+	if (i == NBUFS)
+		i = 0;
+#undef NBUFS
 	if (val == UQUAD_MAX)
 		return((flags & HN_PRIV_UNLIMITED) ? "unlimited" : "-");
 
