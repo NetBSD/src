@@ -1,4 +1,4 @@
-# $NetBSD: quotas_common.sh,v 1.1.2.1 2011/01/28 18:38:07 bouyer Exp $ 
+# $NetBSD: quotas_common.sh,v 1.1.2.2 2011/01/30 12:37:34 bouyer Exp $ 
 
 create_with_quotas()
 {
@@ -29,6 +29,29 @@ test_case()
 
 	eval "${name}_head() { \
 		atf_set "descr" "${descr}"
+		atf_set "timeout" "60"
+	}"
+	eval "${name}_body() { \
+		${check_function} " "${@}" "; \
+	}"
+	eval "${name}_cleanup() { \
+		atf_check -s exit:1 -o ignore -e ignore rump.halt; \
+	}"
+	tests="${tests} ${name}"
+}
+
+test_case_root()
+{
+	local name="${1}"; shift
+	local check_function="${1}"; shift
+	local descr="${1}"; shift
+	
+	atf_test_case "${name}" cleanup
+
+	eval "${name}_head() { \
+		atf_set "descr" "${descr}"
+		atf_set "require.user" "root"
+		atf_set "timeout" "60"
 	}"
 	eval "${name}_body() { \
 		${check_function} " "${@}" "; \
