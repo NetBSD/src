@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.18 2011/01/22 19:10:16 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.19 2011/01/30 09:58:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ _lock_cas_ras_start:
 	comb,<>	%arg1, %t1, 1f
 	 copy	%t1,%ret0
 _lock_cas_ras_end:
-	stw	%arg2,0(%arg0)
+	stw	%arg2, 0(%arg0)
 	copy	%arg1,%ret0
 1:
 	bv,n	%r0(%rp)
@@ -103,10 +103,10 @@ LEAF_ENTRY(mutex_exit)
 	/*
 	 * If its a spin mutex or unowned, we have to take the slow path.
 	 */
-	ldi	MUTEX_ADAPTIVE_UNOWNED,%t1
+	ldi	MUTEX_ADAPTIVE_UNOWNED, %t1
 	ldw	MTX_OWNER(%arg0),%t2
-	depi	0,27,1,%t2			/* bit27 = 0 */
-	comb,=	%t1,%t2,.Lexit_slowpath
+	depi	0, 27, 1, %t2			/* bit27 = 0 */
+	comb,=	%t1, %t2, .Lexit_slowpath
 	 nop
 
 	/*
@@ -114,11 +114,11 @@ LEAF_ENTRY(mutex_exit)
 	 * field and release the lock.
 	 */
 
-	ldi	1,%t2				/* unlocked = 1 */
+	ldi	1, %t2				/* unlocked = 1 */
 	ldo	(MTX_LOCK + HPPA_LDCW_ALIGN - 1)(%arg0), %t3
 	depi	0, 31, 4, %t3
-	stw	%t1,MTX_OWNER(%arg0)
-	stw	%t2,0(%t3)			/* %t3 is properly aligned */
+	stw	%t1, MTX_OWNER(%arg0)
+	stw	%t2, 0(%t3)			/* %t3 is properly aligned */
 	sync
 
 	/*
@@ -126,8 +126,8 @@ LEAF_ENTRY(mutex_exit)
 	 * will happen in sequence.  If it's set then trap into mutex_wakeup()
 	 * to wake up any threads sleeping on the lock.
 	 */
-	ldb	MTX_WAITERS(%arg0),%t4
-	comib,=	0,%t4,.Lexit_done
+	ldb	MTX_WAITERS(%arg0), %t4
+	comib,=	0, %t4, .Lexit_done
 	 nop
 
 	ldil	L%mutex_wakeup, %t1
@@ -157,9 +157,9 @@ LEAF_ENTRY(mutex_enter)
 	 * mutex_vector_enter() if the owners field is not clear.
 	 */
 
-	ldi	MUTEX_ADAPTIVE_UNOWNED,%t1
-	ldw	MTX_OWNER(%arg0),%t2
-	comb,=,n %t1,%t2,.Lmutexunowned
+	ldi	MUTEX_ADAPTIVE_UNOWNED, %t1
+	ldw	MTX_OWNER(%arg0), %t2
+	comb,=,n %t1, %t2, .Lmutexunowned
 .Lenter_slowpath:
 
 	ldil	L%mutex_vector_enter, %t1
@@ -184,13 +184,13 @@ LEAF_ENTRY(mutex_enter)
 	ldcw	0(%t1), %ret0
 
 mutex_enter_crit_start:
-	comib,=	0,%ret0,.Lenter_slowpath
+	comib,=	0, %ret0, .Lenter_slowpath
 
 	mfctl	CR_CURLWP, %t2
 
 	bv	%r0(%rp)
 mutex_enter_crit_end:
-	 stw	%t2,MTX_OWNER(%arg0)
+	 stw	%t2, MTX_OWNER(%arg0)
 EXIT(mutex_enter)
 
 #endif	/* !LOCKDEBUG */
@@ -221,8 +221,6 @@ EXIT(mutex_enter)
 
 #define I64	\
 	I8 I8 I8 I8 I8 I8 I8 I8
-
-
 
 	.section .data
 	.align 4096
@@ -255,17 +253,17 @@ ALTENTRY(_lock_cas_mp)
 
 	/* %t3 is the interlock address */
 	ldcw	0(%t3), %ret0
-	comib,<>,n	0,%ret0, _lock_cas_mp_interlocked
+	comib,<>,n	0, %ret0, _lock_cas_mp_interlocked
 _lock_cas_mp_spin:
-	ldw	0(%t3),%ret0
-	comib,= 0,%ret0, _lock_cas_mp_spin
-	nop
+	 ldw	0(%t3), %ret0
+	comib,= 0, %ret0, _lock_cas_mp_spin
+	 nop
 	ldcw	0(%t3), %ret0
-	comib,= 0,%ret0, _lock_cas_mp_spin
-	nop
+	comib,= 0, %ret0, _lock_cas_mp_spin
+	 nop
 
 _lock_cas_mp_interlocked:
-	ldw	0(%arg0),%ret0
+	ldw	0(%arg0), %ret0
 	comclr,<>	%arg1, %ret0, %r0	/* If *ptr != old, then nullify */
 	stw	%arg2, 0(%arg0)
 
