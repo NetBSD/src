@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.1.2.6 2011/01/30 21:37:39 bouyer Exp $ */
+/*	$NetBSD: printquota.c,v 1.1.2.7 2011/01/30 22:49:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.1.2.6 2011/01/30 21:37:39 bouyer Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.1.2.7 2011/01/30 22:49:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,17 +148,19 @@ timeprt(time_t now, time_t seconds, int space)
 }
 
 /*
- * Calculate the grace period and return a precise string for it.
+ * Calculate the grace period and return a precise string for it,
+ * either in seconds or in format xWyDzHtMuS
  */
 const char *
-timepprt(time_t now, time_t seconds, int space)
+timepprt(time_t seconds, int hflag, int space)
 {
 	static char buf[20], *append;
 	int i, remain = space + 1;
 
-	if (now > seconds)
-		return ("none");
-	seconds -= now;
+	if (hflag == 0) {
+		snprintf(buf, remain, "%" PRId64, seconds);
+		return buf;
+	}
 
 	append = &buf[0];
 	if ((seconds / WEEK) > 0) {
@@ -196,6 +198,55 @@ timepprt(time_t now, time_t seconds, int space)
 		return (buf);
 	i = snprintf(append, remain, "%" PRId64 "S", seconds);
 	return (buf);
+}
+
+/*
+ * convert a string of the form xWyDzHtMuS, or plain decimal, to 
+ * a time in seconds
+ */
+int
+timeprd(const char *str, time_t *valp)
+{
+	char buf[20];
+	char *cur, *next, *end;
+	time_t val= 0;
+
+	strncpy(buf, str, sizeof(buf));
+	next = buf;
+	cur = strsep(&next, "Ww");
+	if (next != NULL) {
+		val = strtoumax(cur, &end, 10) * WEEK;	
+		if (end[0] != '\0')
+			return EINVAL;
+	} else
+		next = cur;
+	cur = strsep(&next, "Dd");
+	if (next != NULL) {
+		val += strtoumax(cur, &end, 10) * DAY;	
+		if (end[0] != '\0')
+			return EINVAL;
+	} else
+		next = cur;
+	cur = strsep(&next, "Hh");
+	if (next != NULL) {
+		val += strtoumax(cur, &end, 10) * HOUR;	
+		if (end[0] != '\0')
+			return EINVAL;
+	} else
+		next = cur;
+	cur = strsep(&next, "Mm");
+	if (next != NULL) {
+		val += strtoumax(cur, &end, 10) * MINUTE;	
+		if (end[0] != '\0')
+			return EINVAL;
+	} else
+		next = cur;
+	cur = strsep(&next, "Ss");
+	val += strtoumax(cur, &end, 10);
+	if (end[0] != '\0')
+		return EINVAL;
+	*valp = val;
+	return 0;
 }
 
 /*

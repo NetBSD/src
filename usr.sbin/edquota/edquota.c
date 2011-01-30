@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.4 2011/01/30 20:54:22 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.5 2011/01/30 22:49:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.4 2011/01/30 20:54:22 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.5 2011/01/30 22:49:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,10 +130,10 @@ main(argc, argv)
 	long id, protoid;
 	int quotatype, tmpfd;
 	char *protoname;
-	char *soft = NULL, *hard = NULL;
+	char *soft = NULL, *hard = NULL, *grace = NULL;
 	char *fs = NULL;
 	int ch;
-	int tflag = 0, pflag = 0;
+	int pflag = 0;
 
 	if (argc < 2)
 		usage();
@@ -141,7 +141,7 @@ main(argc, argv)
 		errx(1, "permission denied");
 	protoname = NULL;
 	quotatype = USRQUOTA;
-	while ((ch = getopt(argc, argv, "DHdugtp:s:h:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "DHdugp:s:h:t:f:")) != -1) {
 		switch(ch) {
 		case 'D':
 			Dflag++;
@@ -162,14 +162,14 @@ main(argc, argv)
 		case 'u':
 			quotatype = USRQUOTA;
 			break;
-		case 't':
-			tflag++;
-			break;
 		case 's':
 			soft = optarg;
 			break;
 		case 'h':
 			hard = optarg;
+			break;
+		case 't':
+			grace = optarg;
 			break;
 		case 'f':
 			fs = optarg;
@@ -182,7 +182,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (pflag) {
-		if (soft || hard || dflag)
+		if (soft || hard || grace || dflag)
 			usage();
 		if ((protoid = getentry(protoname, quotatype)) == -1)
 			exit(1);
@@ -198,12 +198,11 @@ main(argc, argv)
 		}
 		exit(0);
 	}
-	if (soft || hard) {
+	if (soft || hard || grace) {
 		struct quotause *lqup;
 		u_int64_t softb, hardb, softi, hardi;
+		time_t  graceb, gracei;
 		char *str;
-		if (tflag)
-			usage();
 		if (soft) {
 			str = strsep(&soft, "/");
 			if (str[0] == '\0' || soft == NULL || soft[0] == '\0')
@@ -224,6 +223,16 @@ main(argc, argv)
 			if (intrd(hard, &hardi, 0) != 0)
 				errx(1, "%s: bad number", hard);
 		}
+		if (grace) {
+			str = strsep(&grace, "/");
+			if (str[0] == '\0' || grace == NULL || grace[0] == '\0')
+				usage();
+			    
+			if (timeprd(str, &graceb) != 0)
+				errx(1, "%s: bad number", str);
+			if (timeprd(grace, &gracei) != 0)
+				errx(1, "%s: bad number", grace);
+		}
 		if (dflag) {
 			curprivs = getprivs(0, quotatype, fs, 1);
 			for (lqup = curprivs; lqup; lqup = lqup->next) {
@@ -234,6 +243,10 @@ main(argc, argv)
 				if (hard) {
 					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit = hardb;
 					lqup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit = hardi;
+				}
+				if (grace) {
+					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_grace = graceb;
+					lqup->q2e.q2e_val[Q2V_FILE].q2v_grace = gracei;
 				}
 			}
 			putprivs(0, quotatype, curprivs);
@@ -263,6 +276,10 @@ main(argc, argv)
 					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit = hardb;
 					lqup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit = hardi;
 				}
+				if (grace) {
+					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_grace = graceb;
+					lqup->q2e.q2e_val[Q2V_FILE].q2v_grace = gracei;
+				}
 			}
 			putprivs(id, quotatype, curprivs);
 			freeprivs(curprivs);
@@ -271,7 +288,7 @@ main(argc, argv)
 	}
 	tmpfd = mkstemp(tmpfil);
 	fchown(tmpfd, getuid(), getgid());
-	if (tflag) {
+	if (0 /* XXX */) {
 		if (soft || hard)
 			usage();
 		protoprivs = getprivs(0, quotatype, fs, 0);
@@ -311,10 +328,8 @@ usage()
 	    "usage:\n"
 	    "  edquota [-D] [-H] [-u] [-p username] [-f filesystem] [-d] username ...\n"
 	    "  edquota [-D] [-H] -g [-p groupname] [-f filesystem] [-d] groupname ...\n"
-	    "  edquota [-D] [-H] [-u] [-f filesystem] [-s b#/i#] [-h b#/i#] [-d] username ...\n"
-	    "  edquota [-D] [-H] -g [-f filesystem] [-s b#/i#] [-h b#/i#] [-d] groupname ...\n"
-	    "  edquota [-D] [-H] [-u] [-f filesystem] -t\n"
-	    "  edquota [-D] [-H] -g [-f filesystem] -t\n"
+	    "  edquota [-D] [-u] [-f filesystem] [-s b#/i#] [-h b#/i#] [-t t#/t#] \\\n\t[-d] username ...\n"
+	    "  edquota [-D] -g [-f filesystem] [-s b#/i#] [-h b#/i#] [-t t#/t#] \\\n\t[-d] groupname ...\n"
 	    );
 	exit(1);
 }
@@ -679,7 +694,7 @@ writeprivs(quplist, outfd, name, quotatype)
 		    qfextension[quotatype], name);
 	}
 	for (qup = quplist; qup; qup = qup->next) {
-		fprintf(fd, "%s: %s %s, limits (soft = %s, hard = %s)\n",
+		fprintf(fd, "%s: %s %s, limits (soft = %s, hard = %s",
 		    qup->fsname, "blocks in use:",
 		    intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur,
 			HN_NOSPACE | HN_B, Hflag, 20),
@@ -687,7 +702,13 @@ writeprivs(quplist, outfd, name, quotatype)
 			HN_NOSPACE | HN_B, Hflag, 20),
 		    intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit,
 			HN_NOSPACE | HN_B, Hflag, 20));
-		fprintf(fd, "%s %s, limits (soft = %s, hard = %s)\n",
+		if (qup->flags & (QUOTA2|DEFAULT)) {
+		    fprintf(fd, ", grace = %s",
+			timepprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_grace,
+			    Hflag, 20));
+		}
+		fprintf(fd, ")\n");
+		fprintf(fd, "%s %s, limits (soft = %s, hard = %s",
 		    "\tinodes in use:",
 		    intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur,
 			HN_NOSPACE, Hflag, 20),
@@ -695,6 +716,12 @@ writeprivs(quplist, outfd, name, quotatype)
 			HN_NOSPACE, Hflag, 20),
 		    intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit,
 			 HN_NOSPACE, Hflag, 20));
+		if (qup->flags & (QUOTA2|DEFAULT)) {
+		    fprintf(fd, ", grace = %s",
+			timepprt(qup->q2e.q2e_val[Q2V_FILE].q2v_grace,
+			    Hflag, 20));
+		}
+		fprintf(fd, ")\n");
 	}
 	fclose(fd);
 	return (1);
@@ -715,7 +742,9 @@ readprivs(quplist, infd)
 	char *fsp;
 	static char line1[BUFSIZ], line2[BUFSIZ];
 	static char scurb[BUFSIZ], scuri[BUFSIZ], ssoft[BUFSIZ], shard[BUFSIZ];
+	static char stime[BUFSIZ];
 	uint64_t softb, hardb, softi, hardi;
+	time_t graceb = -1, gracei = -1;
 
 	(void)lseek(infd, (off_t)0, SEEK_SET);
 	fd = fdopen(dup(infd), "r");
@@ -730,31 +759,43 @@ readprivs(quplist, infd)
 	while (fgets(line1, sizeof (line1), fd) != NULL &&
 	       fgets(line2, sizeof (line2), fd) != NULL) {
 		if ((fsp = strtok(line1, " \t:")) == NULL) {
-			warnx("%s: 4 bad format", line1);
+			warnx("%s: bad format", line1);
 			goto out;
 		}
 		if ((cp = strtok((char *)0, "\n")) == NULL) {
-			warnx("%s: %s: 5 bad format", fsp,
+			warnx("%s: %s: bad format", fsp,
 			    &fsp[strlen(fsp) + 1]);
 			goto out;
 		}
 #define last_char(str) ((str)[strlen(str) - 1])
 		cnt = sscanf(cp,
-		    " blocks in use: %s limits (soft = %s hard = %s\n",
-		    scurb, ssoft, shard);
-		if (cnt != 3) {
-			warnx("%s:%s: 6 bad format %d", fsp, cp, cnt);
+		    " blocks in use: %s limits (soft = %s hard = %s "
+		    "grace = %s\n", scurb, ssoft, shard, stime);
+		if (cnt == 3) {
+			if (last_char(scurb) != ',' ||
+			    last_char(ssoft) != ',' ||
+			    last_char(shard) != ')') {
+				warnx("%s:%s: bad format %d", fsp, cp, cnt);
+				goto out;
+			}
+			stime[0] = '\0';
+		} else if (cnt == 4) {
+			if (last_char(scurb) != ',' ||
+			    last_char(ssoft) != ',' ||
+			    last_char(shard) != ',' ||
+			    last_char(stime) != ')') {
+				warnx("%s:%s: bad format %d", fsp, cp, cnt);
+				goto out;
+			}
+		} else {
+			warnx("%s: %s: bad format", fsp, line2);
 			goto out;
 		}
 		/* drop last char which is ',' or ')' */
-		if (last_char(scurb) != ',' || last_char(ssoft) != ',' ||
-		    last_char(shard) != ')') {
-			warnx("%s:%s: 61 bad format %d", fsp, cp, cnt);
-			goto out;
-		}
 		last_char(scurb) = '\0';
 		last_char(ssoft) = '\0';
 		last_char(shard) = '\0';
+		last_char(stime) = '\0';
 		
 		if (intrd(ssoft, &softb, HN_B) != 0) {
 			warnx("%s:%s: bad number", fsp, ssoft);
@@ -764,26 +805,45 @@ readprivs(quplist, infd)
 			warnx("%s:%s: bad number", fsp, shard);
 			goto out;
 		}
+		if (cnt == 4) {
+			if (timeprd(stime, &graceb) != 0) {
+				warnx("%s:%s: bad number", fsp, shard);
+				goto out;
+			}
+		}
+
 		if ((cp = strtok(line2, "\n")) == NULL) {
-			warnx("%s: %s: 7 bad format", fsp, line2);
+			warnx("%s: %s: bad format", fsp, line2);
 			goto out;
 		}
 		cnt = sscanf(cp,
-		    "\tinodes in use: %s limits (soft = %s hard = %s\n",
-		    scuri, ssoft, shard);
-		if (cnt != 3) {
-			warnx("%s: %s: 8 bad format", fsp, line2);
+		    "\tinodes in use: %s limits (soft = %s hard = %s "
+		    "grace = %s\n", scuri, ssoft, shard, stime);
+		if (cnt == 3) {
+			if (last_char(scuri) != ',' ||
+			    last_char(ssoft) != ',' ||
+			    last_char(shard) != ')') {
+				warnx("%s:%s: bad format %d", fsp, cp, cnt);
+				goto out;
+			}
+			stime[0] = '\0';
+		} else if (cnt == 4) {
+			if (last_char(scuri) != ',' ||
+			    last_char(ssoft) != ',' ||
+			    last_char(shard) != ',' ||
+			    last_char(stime) != ')') {
+				warnx("%s:%s: bad format %d", fsp, cp, cnt);
+				goto out;
+			}
+		} else {
+			warnx("%s: %s: bad format", fsp, line2);
 			goto out;
 		}
 		/* drop last char which is ',' or ')' */
-		if (last_char(scuri) != ',' || last_char(ssoft) != ',' ||
-		    last_char(shard) != ')') {
-			warnx("%s:%s: 81 bad format %d", fsp, cp, cnt);
-			goto out;
-		}
 		last_char(scuri) = '\0';
 		last_char(ssoft) = '\0';
 		last_char(shard) = '\0';
+		last_char(stime) = '\0';
 		if (intrd(ssoft, &softi, 0) != 0) {
 			warnx("%s:%s: bad number", fsp, ssoft);
 			goto out;
@@ -791,6 +851,12 @@ readprivs(quplist, infd)
 		if (intrd(shard, &hardi, 0) != 0) {
 			warnx("%s:%s: bad number", fsp, shard);
 			goto out;
+		}
+		if (cnt == 4) {
+			if (timeprd(stime, &gracei) != 0) {
+				warnx("%s:%s: bad number", fsp, shard);
+				goto out;
+			}
 		}
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
@@ -825,8 +891,12 @@ readprivs(quplist, infd)
 				qup->q2e.q2e_val[Q2V_FILE].q2v_time = 0;
 			qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit = softb;
 			qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit = hardb;
+			if (graceb >= 0)
+				qup->q2e.q2e_val[Q2V_BLOCK].q2v_grace = graceb;
 			qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit  = softi;
 			qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit  = hardi;
+			if (gracei >= 0)
+				qup->q2e.q2e_val[Q2V_FILE].q2v_grace = gracei;
 			qup->flags |= FOUND;
 		}
 	}
@@ -906,11 +976,11 @@ readtimes(quplist, infd)
 	(void) fgets(line1, sizeof (line1), fd);
 	while (fgets(line1, sizeof (line1), fd) != NULL) {
 		if ((fsp = strtok(line1, " \t:")) == NULL) {
-			warnx("%s: 1 bad format", line1);
+			warnx("%s: bad format", line1);
 			goto bad;
 		}
 		if ((cp = strtok((char *)0, "\n")) == NULL) {
-			warnx("%s: %s: 2 bad format", fsp,
+			warnx("%s: %s: bad format", fsp,
 			    &fsp[strlen(fsp) + 1]);
 			goto bad;
 		}
@@ -918,7 +988,7 @@ readtimes(quplist, infd)
 		    " block grace period: %ld %s file grace period: %ld %s",
 		    &lbtime, bunits, &litime, iunits);
 		if (cnt != 4) {
-			warnx("%s:%s: 3 bad format", fsp, cp);
+			warnx("%s:%s: bad format", fsp, cp);
 			goto bad;
 		}
 		itime = (time_t)litime;
