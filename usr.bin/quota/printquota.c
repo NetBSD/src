@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.1.2.5 2011/01/30 20:54:22 bouyer Exp $ */
+/*	$NetBSD: printquota.c,v 1.1.2.6 2011/01/30 21:37:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.1.2.5 2011/01/30 20:54:22 bouyer Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.1.2.6 2011/01/30 21:37:39 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,16 +95,64 @@ intprt(uint64_t val, u_int flags, int hflag, int space)
 }
 
 /*
- * Calculate the grace period and return a printable string for it.
+ * Calculate the grace period and return a user-friendly string for it.
  */
-const char *
-timeprt(time_t now, time_t seconds, int space)
-{
 #define MINUTE	60
 #define HOUR	(MINUTE * 60)
 #define DAY	(HOUR * 24)
 #define WEEK	(DAY * 7)
+#define MONTH	(DAY * 30)
+#define YEAR	(DAY * 355)
 
+const char *
+timeprt(time_t now, time_t seconds, int space)
+{
+	time_t years, months, weeks, days, hours, minutes;
+	static char buf[20];
+
+	if (now > seconds)
+		return ("none");
+
+	seconds -= now;
+
+	minutes = (seconds + MINUTE / 2) / MINUTE;
+	hours = (seconds + HOUR / 2) / HOUR;
+	days = (seconds + DAY / 2) / DAY;
+	years = (seconds + YEAR / 2) / YEAR;
+	months = (seconds + MONTH / 2) / MONTH;
+	weeks = (seconds + WEEK / 2) / WEEK;
+
+	if (years >= 2) {
+		(void)snprintf(buf, space+1, "%" PRId64 "years", years);
+		return buf;
+	}
+	if (weeks > 9) {
+		(void)snprintf(buf, space+1, "%" PRId64 "months", months);
+		return buf;
+	}
+	if (days > 9) {
+		(void)snprintf(buf, space+1, "%" PRId64 "weeks", weeks);
+		return buf;
+	}
+	if (hours > 36) {
+		(void)snprintf(buf, space+1, "%" PRId64 "days", days);
+		return buf;
+	}
+	if (minutes > 60) {
+		(void)snprintf(buf, space+1, "%2d:%d",
+		    (int)(minutes / 60), (int)(minutes % 60));
+		return buf;
+	}
+	(void)snprintf(buf, sizeof buf, "%2d", (int)minutes);
+	return buf;
+}
+
+/*
+ * Calculate the grace period and return a precise string for it.
+ */
+const char *
+timepprt(time_t now, time_t seconds, int space)
+{
 	static char buf[20], *append;
 	int i, remain = space + 1;
 
