@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.20 2011/01/30 10:09:23 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.21 2011/01/30 22:36:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -152,9 +152,9 @@ EXIT(mutex_exit)
 LEAF_ENTRY(mutex_enter)
 
 	/*
-	 * It might be a spin lock, or might be already owned.
-	 * We short circut the request and go straight into
-	 * mutex_vector_enter() if the owners field is not clear.
+	 * It might be a spin lock (c.f. MUTEX_SPIN_FLAG) or might be
+	 * already owned.  We short circut the request and go straight
+	 * into mutex_vector_enter() if the owners field is not 'unowned'.
 	 */
 
 	ldi	MUTEX_ADAPTIVE_UNOWNED, %t1
