@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_server.c,v 1.1.2.1 2011/01/20 14:25:04 bouyer Exp $	*/
+/*	$NetBSD: h_quota2_server.c,v 1.1.2.2 2011/01/30 13:15:14 bouyer Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -12,6 +12,7 @@
 #include <sys/mount.h>
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <ufs/ufs/ufsmount.h>
 
@@ -20,10 +21,12 @@
 
 #include "../../h_macros.h"
 
+int background = 0;
+
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s diskimage bindurl\n", getprogname());
+	fprintf(stderr, "usage: %s [-b] diskimage bindurl\n", getprogname());
 	exit(1);
 }
 
@@ -32,7 +35,8 @@ die(const char *reason, int error)
 {
 
 	warnx("%s: %s", reason, strerror(error));
-	//rump_daemonize_done(error);
+	if (background)
+		rump_daemonize_done(error);
 	exit(1);
 }
 
@@ -45,25 +49,38 @@ sigreboot(int sig)
 }
 
 int 
-main(int argc, const char *argv[])
+main(int argc, char **argv)
 {
 	int error;
 	struct ufs_args uargs;
 	const char *filename;
 	const char *serverurl;
 	int log = 0;
+	int ch;
 
-	if (argc != 3)
+	while ((ch = getopt(argc, argv, "b")) != -1) {
+		switch(ch) {
+		case 'b':
+			background = 1;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 2)
 		usage();
 
-	filename = argv[1];
-	serverurl = argv[2];
+	filename = argv[0];
+	serverurl = argv[1];
 
-#if 0
-	error = rump_daemonize_begin();
-	if (error)
-		errx(1, "rump daemonize: %s", strerror(error));
-#endif
+	if (background) {
+		error = rump_daemonize_begin();
+		if (error)
+			errx(1, "rump daemonize: %s", strerror(error));
+	}
 
 	error = rump_init();
 	if (error)
@@ -80,7 +97,8 @@ main(int argc, const char *argv[])
 	error = rump_init_server(serverurl);
 	if (error)
 		die("rump server init failed", error);
-	//rump_daemonize_done(RUMP_DAEMONIZE_SUCCESS);
+	if (background)
+		rump_daemonize_done(RUMP_DAEMONIZE_SUCCESS);
 
 	sem_init(&sigsem, 0, 0);
 	signal(SIGTERM, sigreboot);
