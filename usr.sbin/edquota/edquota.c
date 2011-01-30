@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.1 2011/01/30 00:26:03 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.2 2011/01/30 12:38:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.1 2011/01/30 00:26:03 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.2 2011/01/30 12:38:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,18 +200,29 @@ main(argc, argv)
 	}
 	if (soft || hard) {
 		struct quotause *lqup;
-		u_int32_t softb, hardb, softi, hardi;
+		u_int64_t softb, hardb, softi, hardi;
+		char *str;
 		if (tflag)
 			usage();
 		if (soft) {
-			if (sscanf(soft, "%d/%d", &softb, &softi) != 2)
+			str = strsep(&soft, "/");
+			if (str[0] == '\0' || soft == NULL || soft[0] == '\0')
 				usage();
-			softb = btodb((u_quad_t)softb * 1024);
+			    
+			if (intrd(str, &softb, HN_B) != 0)
+				errx(1, "%s: bad number", str);
+			if (intrd(soft, &softi, 0) != 0)
+				errx(1, "%s: bad number", soft);
 		}
 		if (hard) {
-			if (sscanf(hard, "%d/%d", &hardb, &hardi) != 2)
+			str = strsep(&hard, "/");
+			if (str[0] == '\0' || hard == NULL || hard[0] == '\0')
 				usage();
-			hardb = btodb((u_quad_t)hardb * 1024);
+			    
+			if (intrd(str, &hardb, HN_B) != 0)
+				errx(1, "%s: bad number", str);
+			if (intrd(hard, &hardi, 0) != 0)
+				errx(1, "%s: bad number", hard);
 		}
 		if (dflag) {
 			curprivs = getprivs(0, quotatype, fs, 1);
@@ -653,7 +664,7 @@ writeprivs(quplist, outfd, name, quotatype)
 	(void)lseek(outfd, (off_t)0, SEEK_SET);
 	if ((fd = fdopen(dup(outfd), "w")) == NULL)
 		errx(1, "fdopen `%s'", tmpfil);
-	if (quplist->flags & DEFAULT) {
+	if (dflag) {
 		fprintf(fd, "Default %s quotas:\n", qfextension[quotatype]);
 	} else {
 		fprintf(fd, "Quotas for %s %s:\n",
@@ -776,8 +787,6 @@ readprivs(quplist, infd)
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
 				continue;
-			printf("%" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "\n", 
-			    softb, hardb, softi, hardi);
 			if (strcmp(intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur,
 			    HN_NOSPACE | HN_B | HN_PRIV_UNLIMITED, Hflag),
 			    scurb) != 0 ||
