@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.808 2011/01/29 10:51:42 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.809 2011/01/30 17:48:04 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1154,7 +1154,7 @@ Notes:
 
 Package:	xz
 Version:	5.0.0
-Current Vers:	5.0.0
+Current Vers:	5.0.1
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
 Home Page:	http://tukaani.org/xz/
