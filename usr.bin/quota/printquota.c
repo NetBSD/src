@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.1.2.4 2011/01/30 19:38:45 bouyer Exp $ */
+/*	$NetBSD: printquota.c,v 1.1.2.5 2011/01/30 20:54:22 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.1.2.4 2011/01/30 19:38:45 bouyer Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.1.2.5 2011/01/30 20:54:22 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: printquota.c,v 1.1.2.4 2011/01/30 19:38:45 bouyer Exp $");
  * convert 64bit value to a printable string
  */
 const char *
-intprt(uint64_t val, u_int flags, int hflag)
+intprt(uint64_t val, u_int flags, int hflag, int space)
 {
 #define NBUFS	3
 	static char bufs[NBUFS][21];
@@ -77,22 +77,20 @@ intprt(uint64_t val, u_int flags, int hflag)
 		i = 0;
 #undef NBUFS
 	if (val == UQUAD_MAX)
-		return((flags & HN_PRIV_UNLIMITED) ? "unlimited" : "-");
-
-	flags &= ~HN_PRIV_UNLIMITED;
+		return ((u_int)space > strlen("unlimited")) ? "unlimited" : "-";
 
 	if (flags & HN_B)
 		val = dbtob(val);
 	
 	if (hflag) {
-		humanize_number(buf, 6, val, "", HN_AUTOSCALE, flags);
+		humanize_number(buf, space + 1, val, "", HN_AUTOSCALE, flags);
 		return buf;
 	}
 	if (flags & HN_B) {
 		/* traditionnal display: blocks are in kilobytes */
 		val = val / 1024;
 	}
-	snprintf(buf, sizeof(buf), "%" PRIu64, val);
+	snprintf(buf, space + 1, "%" PRIu64, val);
 	return buf;
 }
 
@@ -100,27 +98,55 @@ intprt(uint64_t val, u_int flags, int hflag)
  * Calculate the grace period and return a printable string for it.
  */
 const char *
-timeprt(time_t now, time_t seconds)
+timeprt(time_t now, time_t seconds, int space)
 {
-	time_t hours, minutes;
-	static char buf[20];
+#define MINUTE	60
+#define HOUR	(MINUTE * 60)
+#define DAY	(HOUR * 24)
+#define WEEK	(DAY * 7)
+
+	static char buf[20], *append;
+	int i, remain = space + 1;
 
 	if (now > seconds)
 		return ("none");
 	seconds -= now;
-	minutes = (seconds + 30) / 60;
-	hours = (minutes + 30) / 60;
-	if (hours >= 36) {
-		(void)snprintf(buf, sizeof buf, "%ddays",
-		    (int)((hours + 12) / 24));
-		return (buf);
+
+	append = &buf[0];
+	if ((seconds / WEEK) > 0) {
+		i = snprintf(append, remain, "%" PRId64 "W", (seconds / WEEK));
+		append += i;
+		remain -=i;
+		seconds = seconds % WEEK;
 	}
-	if (minutes >= 60) {
-		(void)snprintf(buf, sizeof buf, "%2d:%d",
-		    (int)(minutes / 60), (int)(minutes % 60));
+	if (remain < 3 || seconds == 0)
 		return (buf);
+	if ((seconds / DAY) > 0) {
+		i = snprintf(append, remain, "%" PRId64 "D", (seconds / DAY));
+		append += i;
+		remain -=i;
+		seconds = seconds % DAY;
 	}
-	(void)snprintf(buf, sizeof buf, "%2d", (int)minutes);
+	if (remain < 4 || seconds == 0)
+		return (buf);
+	if ((seconds / HOUR) > 0) {
+		i = snprintf(append, remain, "%" PRId64 "H", (seconds / HOUR));
+		append += i;
+		remain -=i;
+		seconds = seconds % HOUR;
+	}
+	if (remain < 4 || seconds == 0)
+		return (buf);
+	if ((seconds / MINUTE) > 0) {
+		i = snprintf(append, remain, "%" PRId64 "M",
+		    (seconds / MINUTE));
+		append += i;
+		remain -=i;
+		seconds = seconds % MINUTE;
+	}
+	if (remain < 4 || seconds == 0)
+		return (buf);
+	i = snprintf(append, remain, "%" PRId64 "S", seconds);
 	return (buf);
 }
 

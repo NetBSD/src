@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.3 2011/01/30 19:38:45 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.4 2011/01/30 20:54:22 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.3 2011/01/30 19:38:45 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.4 2011/01/30 20:54:22 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -682,19 +682,19 @@ writeprivs(quplist, outfd, name, quotatype)
 		fprintf(fd, "%s: %s %s, limits (soft = %s, hard = %s)\n",
 		    qup->fsname, "blocks in use:",
 		    intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur,
-			HN_NOSPACE | HN_B | HN_PRIV_UNLIMITED, Hflag),
+			HN_NOSPACE | HN_B, Hflag, 20),
 		    intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit,
-			HN_NOSPACE | HN_B | HN_PRIV_UNLIMITED, Hflag),
+			HN_NOSPACE | HN_B, Hflag, 20),
 		    intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit,
-			HN_NOSPACE | HN_B | HN_PRIV_UNLIMITED, Hflag));
+			HN_NOSPACE | HN_B, Hflag, 20));
 		fprintf(fd, "%s %s, limits (soft = %s, hard = %s)\n",
 		    "\tinodes in use:",
 		    intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur,
-			HN_NOSPACE | HN_PRIV_UNLIMITED, Hflag),
+			HN_NOSPACE, Hflag, 20),
 		    intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit,
-			HN_NOSPACE | HN_PRIV_UNLIMITED, Hflag),
+			HN_NOSPACE, Hflag, 20),
 		    intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit,
-			 HN_NOSPACE | HN_PRIV_UNLIMITED, Hflag));
+			 HN_NOSPACE, Hflag, 20));
 	}
 	fclose(fd);
 	return (1);
@@ -796,10 +796,10 @@ readprivs(quplist, infd)
 			if (strcmp(fsp, qup->fsname))
 				continue;
 			if (strcmp(intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur,
-			    HN_NOSPACE | HN_B | HN_PRIV_UNLIMITED, Hflag),
+			    HN_NOSPACE | HN_B, Hflag, 20),
 			    scurb) != 0 ||
 			    strcmp(intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur,
-			    HN_NOSPACE | HN_PRIV_UNLIMITED, Hflag),
+			    HN_NOSPACE, Hflag, 20),
 			    scuri) != 0) {
 				warnx("%s: cannot change current allocation",
 				    fsp);
