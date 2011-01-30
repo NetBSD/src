@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.2 2011/01/30 12:38:32 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.3 2011/01/30 19:38:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.2 2011/01/30 12:38:32 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.3 2011/01/30 19:38:45 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,18 +405,26 @@ struct quotause *
 getprivs2(long id, int quotatype, const char *filesys, int defaultq)
 {
 	struct quotause *qup;
+	int8_t version;
+
 	if ((qup = (struct quotause *)malloc(sizeof(*qup))) == NULL)
 		errx(2, "out of memory");
-	qup->qfname = NULL;
+	memset(qup, 0, sizeof(*qup));
 	strcpy(qup->fsname, filesys);
-	qup->flags |= QUOTA2;
 	if (defaultq)
 		qup->flags |= DEFAULT;
-	if (!getvfsquota(filesys, &qup->q2e, id, quotatype, defaultq, Dflag)) {
+	if (!getvfsquota(filesys, &qup->q2e, &version,
+	    id, quotatype, defaultq, Dflag)) {
 		/* no entry, get default entry */
-		if (!getvfsquota(filesys, &qup->q2e, id, quotatype, 1, Dflag))
+		if (!getvfsquota(filesys, &qup->q2e, &version,
+		    id, quotatype, 1, Dflag)) {
+			free(qup);
 			return NULL;
+		}
 	}
+	if (version == 2)
+		qup->flags |= QUOTA2;
+	qup->q2e.q2e_uid = id;
 	return qup;
 }
 
@@ -495,7 +503,7 @@ putprivs(long id, int quotatype, struct quotause *quplist)
 	struct quotause *qup;
 
         for (qup = quplist; qup; qup = qup->next) {
-		if (qup->flags & QUOTA2)
+		if (qup->qfname == NULL)
 			putprivs2(id, quotatype, qup);
 		else
 			putprivs1(id, quotatype, qup);
@@ -1041,7 +1049,7 @@ alldigits(s)
 }
 
 /*
- * Check to see if a particular quota is to be enabled.
+ * Check to see if a particular legacy quota is to be enabled in fstab
  */
 int
 hasquota(fs, type, qfnamep)

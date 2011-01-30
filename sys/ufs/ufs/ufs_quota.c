@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.4 2011/01/30 00:25:19 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.5 2011/01/30 19:38:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.4 2011/01/30 00:25:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.5 2011/01/30 19:38:46 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.4 2011/01/30 00:25:19 bouyer Ex
 kmutex_t dqlock;
 kcondvar_t dqcv;
 
+static int quota_handle_cmd_get_version(struct mount *, struct lwp *,
+    prop_dictionary_t, prop_array_t);
 static int quota_handle_cmd_get(struct mount *, struct lwp *,
     prop_dictionary_t, int, prop_array_t);
 static int quota_handle_cmd_set(struct mount *, struct lwp *,
@@ -151,6 +153,10 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
 	prop_object_retain(datas);
 	prop_dictionary_remove(cmddict, "data"); /* prepare for return */
 
+	if (strcmp(cmd, "get version") == 0) {
+		error = quota_handle_cmd_get_version(mp, l, cmddict, datas);
+		goto end;
+	}
 	if (strcmp(cmd, "get") == 0) {
 		error = quota_handle_cmd_get(mp, l, cmddict, q2type, datas);
 		goto end;
@@ -168,6 +174,52 @@ end:
 	error = (prop_dictionary_set_int8(cmddict, "return",
 	    error) ? 0 : ENOMEM);
 	prop_object_release(datas);
+	return error;
+}
+
+static int 
+quota_handle_cmd_get_version(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, prop_array_t datas)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	prop_array_t replies;
+	prop_dictionary_t data;
+	int error = 0;
+
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
+		return EOPNOTSUPP;
+
+	replies = prop_array_create();
+	if (replies == NULL)
+		return ENOMEM;
+
+	data = prop_dictionary_create();
+	if (data == NULL) {
+		prop_object_release(replies);
+		return ENOMEM;
+	}
+
+#ifdef QUOTA
+	if (ump->um_flags & UFS_QUOTA) {
+		if (!prop_dictionary_set_int8(data, "version", 1))
+			error = ENOMEM;
+	} else
+#endif
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		if (!prop_dictionary_set_int8(data, "version", 2))
+			error = ENOMEM;
+	} else
+#endif
+		error = 0;
+	if (error)
+		prop_object_release(data);
+	else if (!prop_array_add_and_rel(replies, data))
+		error = ENOMEM;
+	if (error)
+		prop_object_release(replies);
+	else if (!prop_dictionary_set_and_rel(cmddict, "data", replies))
+		error = ENOMEM;
 	return error;
 }
 

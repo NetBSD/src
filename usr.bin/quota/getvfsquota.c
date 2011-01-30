@@ -1,4 +1,4 @@
-/*	$NetBSD: getvfsquota.c,v 1.1.2.1 2011/01/28 22:15:36 bouyer Exp $ */
+/*	$NetBSD: getvfsquota.c,v 1.1.2.2 2011/01/30 19:38:45 bouyer Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getvfsquota.c,v 1.1.2.1 2011/01/28 22:15:36 bouyer Exp $");
+__RCSID("$NetBSD: getvfsquota.c,v 1.1.2.2 2011/01/30 19:38:45 bouyer Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,15 +48,17 @@ const char *qfextension[] = INITQFNAMES;
 
 /* retrieve quotas from vfs, for the given user id */
 int
-getvfsquota(const char *mp, struct quota2_entry *q2e, long id, int type,
-    int defaultq, int debug)
+getvfsquota(const char *mp, struct quota2_entry *q2e, int8_t *versp,
+    long id, int type, int defaultq, int debug)
 {
 	prop_dictionary_t dict, data, cmd;
 	prop_array_t cmds, datas;
+	prop_object_iterator_t iter;
 	struct plistref pref;
 	int error;
 	int8_t error8;
 	bool ret;
+	int retval = 0;
 
 	dict = quota2_prop_create();
 	cmds = prop_array_create();
@@ -77,6 +79,9 @@ getvfsquota(const char *mp, struct quota2_entry *q2e, long id, int type,
 		err(1, "prop_array_add(data)");
 	prop_object_release(data);
 	if (!quota2_prop_add_command(cmds, "get", qfextension[type], datas))
+		err(1, "prop_add_command");
+	if (!quota2_prop_add_command(cmds, "get version", qfextension[type],
+	    prop_array_create()))
 		err(1, "prop_add_command");
 	if (!prop_dictionary_set(dict, "commands", cmds))
 		err(1, "prop_dictionary_set(command)");
@@ -102,46 +107,64 @@ getvfsquota(const char *mp, struct quota2_entry *q2e, long id, int type,
 		errx(1, "quota2_get_cmds: %s\n",
 		    strerror(error));
 	}
-	/* only one command, no need to iter */
-	cmd = prop_array_get(cmds, 0);
-	if (cmd == NULL)
-		err(1, "prop_array_get(cmd)");
+	iter = prop_array_iterator(cmds);
+	if (iter == NULL)
+		err(1, "prop_array_iterator(cmds)");
 
-	if (!prop_dictionary_get_int8(cmd, "return", &error8))
-		err(1, "prop_get(return)");
+	while ((cmd = prop_object_iterator_next(iter)) != NULL) {
+		const char *cmdstr;
+		if (!prop_dictionary_get_cstring_nocopy(cmd, "command",
+		    &cmdstr))
+			err(1, "prop_get(command)");
+		if (!prop_dictionary_get_int8(cmd, "return", &error8))
+			err(1, "prop_get(return)");
 
-	if (error8) {
-		if (error8 != ENOENT && error8 != ENODEV) {
-			if (defaultq)
-				fprintf(stderr, "get default %s quota: %s\n",
-				    qfextension[type], strerror(error8));
-			else 
-				fprintf(stderr, "get %s quota for %ld: %s\n",
-				    qfextension[type], id, strerror(error8));
+		if (error8) {
+			if (error8 != ENOENT && error8 != ENODEV) {
+				if (defaultq) {
+					fprintf(stderr,
+					    "get default %s quota: %s\n",
+					    qfextension[type],
+					    strerror(error8));
+				} else {
+					fprintf(stderr,
+					    "get %s quota for %ld: %s\n",
+					    qfextension[type], id,
+					    strerror(error8));
+				}
+			}
+			prop_object_release(dict);
+			return (0);
 		}
-		prop_object_release(dict);
-		return (0);
-	}
-	datas = prop_dictionary_get(cmd, "data");
-	if (datas == NULL)
-		err(1, "prop_dict_get(datas)");
+		datas = prop_dictionary_get(cmd, "data");
+		if (datas == NULL)
+			err(1, "prop_dict_get(datas)");
 
-	/* only one data, no need to iter */
-	if (prop_array_count(datas) == 0) {
-		/* no quota for this user/group */
-		prop_object_release(dict);
-		return (0);
-	}
-	
-	data = prop_array_get(datas, 0);
-	if (data == NULL)
-		err(1, "prop_array_get(data)");
+		if (strcmp("get version", cmdstr) == 0) {
+			data = prop_array_get(datas, 0);
+			if (data == NULL)
+				err(1, "prop_array_get(version)");
+			if (!prop_dictionary_get_int8(data, "version", versp))
+				err(1, "prop_get_int8(version)");
+			continue;
+		}
+		if (strcmp("get", cmdstr) != 0)
+			err(1, "unknown command %s in reply", cmdstr);
+				
+		/* only one data, no need to iter */
+		if (prop_array_count(datas) > 0) {
+			data = prop_array_get(datas, 0);
+			if (data == NULL)
+				err(1, "prop_array_get(data)");
 
-	error = quota2_dict_get_q2e_usage(data, q2e);
-	if (error) {
-		errx(1, "quota2_dict_get_q2e_usage: %s\n",
-		    strerror(error));
+			error = quota2_dict_get_q2e_usage(data, q2e);
+			if (error) {
+				errx(1, "quota2_dict_get_q2e_usage: %s\n",
+				    strerror(error));
+			}
+			retval = 1;
+		}
 	}
 	prop_object_release(dict);
-	return (1);
+	return retval;
 }
