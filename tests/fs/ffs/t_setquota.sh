@@ -1,4 +1,4 @@
-# $NetBSD: t_setquota.sh,v 1.1.2.2 2011/01/30 13:23:26 bouyer Exp $ 
+# $NetBSD: t_setquota.sh,v 1.1.2.3 2011/01/30 19:49:48 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -75,7 +75,7 @@ set_quota()
 		atf_check -s exit:0 \
 		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
 		atf_check -s exit:0 \
--o "match:/mnt        0       10    40960               1      20   51200" \
+-o "match:/mnt        0       10    40960   7days       1      20   51200   7days" \
 -o "match:Disk quotas for .*: $" \
 		    $(atf_get_srcdir)/rump_quota -${q} -v
 		atf_check -s exit:0 \
@@ -93,13 +93,10 @@ set_quota()
 		    -o "match:Disk quotas for .*: none$" \
 		    $(atf_get_srcdir)/rump_quota -${q} -v
 		atf_check -s exit:0 \
--o "not-match:--        0        -        -                1       -       -" \
+-o "not-match:--        0        -        -" \
 		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
 	done
 	atf_check -s exit:0 rump.halt
-#wait for rump server to be gone
-	while [ -e ${RUMP_SOCKET} ] ; do done
-	sleep 1
 # check that the quota inode creation didn't corrupt the filesystem
 	atf_check -s exit:0 -o "match:already clean" \
 		-o "match:Phase 6 - Check Quotas" \
@@ -137,7 +134,7 @@ set_quota_new()
 		atf_check -s exit:0 \
 		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
 		atf_check -s exit:0 \
--o "match:/mnt        0       10    40960               0      20   51200" \
+-o "match:/mnt        0       10    40960   7days       0      20   51200   7days" \
 -o "match:Disk quotas for .*: $" \
 		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
 	done
@@ -153,9 +150,6 @@ set_quota_new()
 		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
 	done
 	atf_check -s exit:0 rump.halt
-#wait for rump server to be gone
-	while [ -e ${RUMP_SOCKET} ] ; do done
-	sleep 1
 # check that the quota inode creation didn't corrupt the filesystem
 	atf_check -s exit:0 -o "match:already clean" \
 		-o "match:Phase 6 - Check Quotas" \
@@ -193,7 +187,7 @@ set_quota_default()
 		atf_check -s exit:0 \
 		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
 		atf_check -s exit:0 \
--o "match:/mnt        0       10    40960               0      20   51200" \
+-o "match:/mnt        0       10    40960   7days       0      20   51200   7days" \
 -o "match:Default (user|group) disk quotas: $" \
 		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
 	done
@@ -209,9 +203,6 @@ set_quota_default()
 		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
 	done
 	atf_check -s exit:0 rump.halt
-#wait for rump server to be gone
-	while [ -e ${RUMP_SOCKET} ] ; do done
-	sleep 1
 # check that the quota inode creation didn't corrupt the filesystem
 	atf_check -s exit:0 -o "match:already clean" \
 		-o "match:Phase 6 - Check Quotas" \
