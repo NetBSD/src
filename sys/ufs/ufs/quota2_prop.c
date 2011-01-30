@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_prop.c,v 1.1.2.2 2011/01/21 16:58:06 bouyer Exp $ */
+/* $NetBSD: quota2_prop.c,v 1.1.2.3 2011/01/30 00:25:19 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -68,6 +68,22 @@ quota2_dict_get_q2v_limits(prop_dictionary_t dict, struct quota2_val *q2v,
 			return EINVAL;
 	} else
 		q2v->q2v_grace = v;
+	return 0;
+}
+
+int
+quota2_dict_update_q2e_limits(prop_dictionary_t data, struct quota2_entry *q2e)
+{
+	int i, error;
+	prop_dictionary_t val;
+	for (i = 0; i < NQ2V; i++) {
+		val = prop_dictionary_get_dict(data, quota2_valnames[i]);
+		if (val == NULL)
+			continue;
+		error = quota2_dict_get_q2v_limits(val, &q2e->q2e_val[i], 1);
+		if (error)
+			return error;
+	}
 	return 0;
 }
 
