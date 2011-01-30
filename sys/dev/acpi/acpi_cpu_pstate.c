@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.36 2010/12/30 12:05:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.37 2011/01/30 08:55:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.36 2010/12/30 12:05:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.37 2011/01/30 08:55:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -75,10 +75,16 @@ acpicpu_pstate_attach(device_t self)
 	}
 
 	/*
-	 * Append additional information from the
-	 * extended _PSS, if available. Note that
-	 * XPSS can not be used on Intel systems
-	 * that use either _PDC or _OSC.
+	 * Append additional information from the extended _PSS,
+	 * if available. Note that XPSS can not be used on Intel
+	 * systems that use either _PDC or _OSC. From the XPSS
+	 * method specification:
+	 *
+	 *   "The platform must not require the use of the
+	 *    optional _PDC or _OSC methods to coordinate
+	 *    between the operating system and firmware for
+	 *    the purposes of enabling specific processor
+	 *    power management features or implementations."
 	 */
 	if (sc->sc_cap == 0) {
 
@@ -134,11 +140,11 @@ fail:
 		return;
 
 	case AE_SUPPORT:
-		aprint_verbose_dev(sc->sc_dev, "P-states not supported\n");
+		aprint_verbose_dev(self, "P-states not supported\n");
 		return;
 
 	default:
-		aprint_error_dev(sc->sc_dev, "failed to evaluate "
+		aprint_error_dev(self, "failed to evaluate "
 		    "%s: %s\n", str, AcpiFormatException(rv));
 	}
 }
@@ -164,7 +170,7 @@ acpicpu_pstate_attach_print(struct acpicpu_softc *sc)
 		if (ps->ps_freq == 0)
 			continue;
 
-		aprint_debug_dev(sc->sc_dev, "P%d: %3s, "
+		aprint_verbose_dev(sc->sc_dev, "P%d: %3s, "
 		    "lat %3u us, pow %5u mW, %4u MHz\n", i, str,
 		    ps->ps_latency, ps->ps_power, ps->ps_freq);
 	}
@@ -414,6 +420,8 @@ acpicpu_pstate_pss(struct acpicpu_softc *sc)
 		rv = acpicpu_pstate_pss_add(ps, &obj->Package.Elements[i]);
 
 		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(sc->sc_dev, "failed to add "
+			    "P-state: %s\n", AcpiFormatException(rv));
 			ps->ps_freq = 0;
 			continue;
 		}
@@ -494,7 +502,7 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "XPSS", &buf);
 
 	if (ACPI_FAILURE(rv))
-		return rv;
+		goto out;
 
 	obj = buf.Pointer;
 
@@ -517,6 +525,10 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 	}
 
 out:
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		aprint_error_dev(sc->sc_dev, "failed to evaluate "
+		    "XPSS: %s\n", AcpiFormatException(rv));
+
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 

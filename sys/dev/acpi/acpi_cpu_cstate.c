@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.36 2011/01/13 03:40:51 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.37 2011/01/30 08:55:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.36 2011/01/13 03:40:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.37 2011/01/30 08:55:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -142,7 +142,7 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 			panic("NOTREACHED");
 		}
 
-		aprint_debug_dev(sc->sc_dev, "C%d: %3s, "
+		aprint_verbose_dev(sc->sc_dev, "C%d: %3s, "
 		    "lat %3u us, pow %5u mW, flags 0x%02x\n", i, str,
 		    cs->cs_latency, cs->cs_power, cs->cs_flags);
 	}
@@ -490,8 +490,8 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 
 out:
 	if (ACPI_FAILURE(rv))
-		aprint_debug_dev(sc->sc_dev, "invalid "
-		    "_CST: %s\n", AcpiFormatException(rv));
+		aprint_error_dev(sc->sc_dev, "failed to add "
+		    "C-state: %s\n", AcpiFormatException(rv));
 
 	return rv;
 }
