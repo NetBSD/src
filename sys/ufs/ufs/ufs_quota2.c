@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.4 2011/01/29 23:22:00 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.5 2011/01/30 00:25:20 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.4 2011/01/29 23:22:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.5 2011/01/30 00:25:20 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -407,6 +407,73 @@ int
 chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 {
 	return quota2_check(ip, Q2V_FILE, change, cred, flags);
+}
+
+int
+quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
+    int defaultq, prop_dictionary_t data)
+{
+	int error;
+	struct dquot *dq;
+	struct quota2_header *q2h;
+	struct quota2_entry q2e, *q2ep;
+	struct buf *bp;
+	const int needswap = UFS_MPNEEDSWAP(ump);
+
+	if (ump->um_quotas[type] == NULLVP)
+		return ENODEV;
+	if (defaultq) {
+		mutex_enter(&dqlock);
+		error = getq2h(ump, type, &bp, &q2h, B_MODIFY);
+		if (error) {
+			mutex_exit(&dqlock);
+			return error;
+		}
+		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
+		error = quota2_dict_update_q2e_limits(data, &q2e);
+		if (error) {
+			mutex_exit(&dqlock);
+			brelse(bp, 0);
+			return error;
+		}
+		quota2_ufs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
+		mutex_exit(&dqlock);
+		VOP_BWRITE(bp);
+		return error;
+	}
+
+	error = dqget(NULLVP, id, ump, type, &dq);
+	if (error)
+		return error;
+
+	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
+		/* need to alloc a new on-disk quot */
+		mutex_enter(&dqlock);
+		error = quota2_q2ealloc(ump, type, id, dq, &bp, &q2ep);
+		mutex_exit(&dqlock);
+	} else {
+		error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
+		    &bp, &q2ep, B_MODIFY);
+	}
+	if (error) {
+		dqrele(NULLVP, dq);
+		return error;
+	}
+	mutex_enter(&dq->dq_interlock);
+	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
+	error = quota2_dict_update_q2e_limits(data, &q2e);
+	if (error) {
+		mutex_exit(&dq->dq_interlock);
+		dqrele(NULLVP, dq);
+		brelse(bp, 0);
+		return error;
+	}
+	quota2_ufs_rwq2e(&q2e, q2ep, needswap);
+	mutex_exit(&dq->dq_interlock);
+	dqrele(NULLVP, dq);
+	VOP_BWRITE(bp);
+	
+	return error;
 }
 
 static int
