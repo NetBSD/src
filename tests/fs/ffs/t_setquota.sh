@@ -1,4 +1,4 @@
-# $NetBSD: t_setquota.sh,v 1.1.2.3 2011/01/30 19:49:48 bouyer Exp $ 
+# $NetBSD: t_setquota.sh,v 1.1.2.4 2011/01/30 23:04:52 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -73,9 +73,10 @@ set_quota()
 	for q in ${expect} ; do
 		local id=$(id -${q})
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k \
+		   -t 2W/3D ${id}
 		atf_check -s exit:0 \
--o "match:/mnt        0       10    40960   7days       1      20   51200   7days" \
+-o "match:/mnt        0       10    40960  2weeks       1      20   51200   3days" \
 -o "match:Disk quotas for .*: $" \
 		    $(atf_get_srcdir)/rump_quota -${q} -v
 		atf_check -s exit:0 \
@@ -132,9 +133,10 @@ set_quota_new()
 	for q in ${expect} ; do
 		local id=1
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k \
+		   -t 120W/255D ${id}
 		atf_check -s exit:0 \
--o "match:/mnt        0       10    40960   7days       0      20   51200   7days" \
+-o "match:/mnt        0       10    40960  2years       0      20   51200 9months" \
 -o "match:Disk quotas for .*: $" \
 		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
 	done
@@ -185,9 +187,10 @@ set_quota_default()
 	for q in ${expect} ; do
 		local id="-d"
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k \
+		   -t 2H2M/3540 ${id}
 		atf_check -s exit:0 \
--o "match:/mnt        0       10    40960   7days       0      20   51200   7days" \
+-o "match:/mnt        0       10    40960     2:2       0      20   51200      59" \
 -o "match:Default (user|group) disk quotas: $" \
 		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
 	done
