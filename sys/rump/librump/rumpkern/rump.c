@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.226 2011/01/28 19:21:29 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.227 2011/01/30 16:31:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.226 2011/01/28 19:21:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.227 2011/01/30 16:31:42 bouyer Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -536,7 +536,6 @@ cpu_reboot(int howto, char *bootstr)
 		finiarg = curproc->p_vmspace->vm_map.pmap;
 	else
 		finiarg = NULL;
-	rumpuser_sp_fini(finiarg);
 
 	/* dump means we really take the dive here */
 	if ((howto & RB_DUMP) || panicstr) {
@@ -552,6 +551,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* your wish is my command */
 	if (howto & RB_HALT) {
 		printf("rump kernel halted\n");
+		rumpuser_sp_fini(finiarg);
 		for (;;) {
 			uint64_t sec = 5, nsec = 0;
 			int error;
@@ -563,6 +563,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* this function is __dead, we must exit */
  out:
 	printf("halted\n");
+	rumpuser_sp_fini(finiarg);
 	rumpuser_exit(ruhow);
 }
 
