@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25.2.3 2011/01/30 19:38:45 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.4 2011/01/30 20:54:23 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -415,10 +415,10 @@ printquotas(int type, const struct statvfs *vfs, int version)
 		    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur >= 
 		    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit)
 			timemsg = timeprt(now,
-			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_time);
+			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_time, 7);
 		else if (vflag && version == 2)
 			timemsg = timeprt(0,
-			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_grace);
+			    fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_grace, 7);
 		else
 			timemsg = "";
 
@@ -432,29 +432,29 @@ printquotas(int type, const struct statvfs *vfs, int version)
 			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit ?
 			    '+' : '-',
 			intprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_cur,
-				HN_B, hflag),
+				HN_B, hflag, 9),
 			intprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_softlimit,
-				HN_B, hflag),
+				HN_B, hflag, 9),
 			intprt(fup->fu_q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit,
-				HN_B, hflag),
+				HN_B, hflag, 9),
 			timemsg);
 		if (fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit && 
 		    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur >= 
 		    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit)
 			timemsg = timeprt(now,
-			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_time);
+			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_time, 7);
 		else if (vflag && version == 2)
 			timemsg = timeprt(0,
-			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_grace);
+			    fup->fu_q2e.q2e_val[Q2V_FILE].q2v_grace, 7);
 		else
 			timemsg = "";
 		printf("  %8s%8s%8s%7s\n",
 			intprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_cur,
-				0, hflag),
+				0, hflag, 8),
 			intprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_softlimit,
-				0, hflag),
+				0, hflag, 8),
 			intprt(fup->fu_q2e.q2e_val[Q2V_FILE].q2v_hardlimit,
-				0, hflag),
+				0, hflag, 8),
 			timemsg);
 		memset(&fup->fu_q2e, 0, sizeof(fup->fu_q2e));
 	}

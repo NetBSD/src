@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33.2.4 2011/01/30 19:38:45 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.33.2.5 2011/01/30 20:54:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33.2.4 2011/01/30 19:38:45 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.33.2.5 2011/01/30 20:54:22 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -399,41 +399,41 @@ showquotas(type, id, name)
 			} 
 			if (msgb)
 				timemsg = timeprt(now, 
-				    qup->q2e.q2e_val[Q2V_BLOCK].q2v_time);
+				    qup->q2e.q2e_val[Q2V_BLOCK].q2v_time, 8);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
 				timemsg = timeprt(0,
-				    qup->q2e.q2e_val[Q2V_BLOCK].q2v_grace);
+				    qup->q2e.q2e_val[Q2V_BLOCK].q2v_grace, 8);
 			else
 				timemsg = NULL;
 				
 			printf("%12s%9s%c%8s%9s%8s"
 			    , nam
 			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur
-				,HN_B, hflag)
+				,HN_B, hflag, 8)
 			    , (msgb == NULL) ? ' ' : '*'
 			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit
-				, HN_B, hflag)
+				, HN_B, hflag, 8)
 			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit
-				, HN_B, hflag)
+				, HN_B, hflag, 8)
 			    , timemsg);
 
 			if (msgi)
 				timemsg = timeprt(now, 
-				    qup->q2e.q2e_val[Q2V_FILE].q2v_time);
+				    qup->q2e.q2e_val[Q2V_FILE].q2v_time, 8);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
 				timemsg = timeprt(0,
-				    qup->q2e.q2e_val[Q2V_FILE].q2v_grace);
+				    qup->q2e.q2e_val[Q2V_FILE].q2v_grace, 8);
 			else
 				timemsg = NULL;
 				
 			printf("%8s%c%7s%8s%8s\n"
 			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur
-				, 0, hflag)
+				, 0, hflag, 7)
 			    , (msgi == NULL) ? ' ' : '*'
 			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit
-				, 0, hflag)
+				, 0, hflag, 7)
 			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit
-				, 0, hflag)
+				, 0, hflag, 7)
 			    , timemsg);
 			continue;
 		}
