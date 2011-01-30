@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.58.2.1 2011/01/20 14:24:54 bouyer Exp $	*/
+/*	$NetBSD: utilities.c,v 1.58.2.2 2011/01/30 14:26:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.58.2.1 2011/01/20 14:24:54 bouyer Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.58.2.2 2011/01/30 14:26:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -786,7 +786,7 @@ update_uquot(ino_t inum, uid_t uid, gid_t gid, int64_t bchange, int64_t ichange)
 		uq_u = find_uquot(uquot_user_hash, uid, 1);
 	uq_u->uq_b += bchange;
 	uq_u->uq_i += ichange;
-	if (uq_g == NULL || uq_g->uq_uid != uid)
+	if (uq_g == NULL || uq_g->uq_uid != gid)
 		uq_g = find_uquot(uquot_group_hash, gid, 1);
 	uq_g->uq_b += bchange;    
 	uq_g->uq_i += ichange;
