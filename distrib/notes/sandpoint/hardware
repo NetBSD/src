@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.9 2011/01/30 18:13:31 phx Exp $
+.\"$NetBSD: hardware,v 1.10 2011/01/30 21:18:51 phx Exp $
 .
 .Nx*M
 is a port based on Motorola's
@@ -69,6 +69,7 @@ TS-101, TS-201
 .Pq Em "re/viaide"
 StorCenter XXX
 .bullet)
+.tag)
 .
 .Ss2 824x NAS supported boot devices and media
 .Nx
