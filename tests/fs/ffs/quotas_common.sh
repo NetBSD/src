@@ -1,4 +1,4 @@
-# $NetBSD: quotas_common.sh,v 1.1.2.2 2011/01/30 12:37:34 bouyer Exp $ 
+# $NetBSD: quotas_common.sh,v 1.1.2.3 2011/01/30 13:23:26 bouyer Exp $ 
 
 create_with_quotas()
 {
@@ -13,9 +13,8 @@ create_with_quotas()
 	fi
 	atf_check -o ignore -e ignore newfs ${op} \
 		-B ${endian} -O ${vers} -s 4000 -F ${IMG}
-	#atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_server \
-	#	${IMG} ${RUMP_SERVER}
-	$(atf_get_srcdir)/h_quota2_server ${IMG} ${RUMP_SERVER} &
+	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_server -b \
+		${IMG} ${RUMP_SERVER}
 }
 
 # from tests/ipf/h_common.sh via tests/sbin/resize_ffs
@@ -66,7 +65,8 @@ atf_init_test_cases()
 {
 	IMG=fsimage
 	DIR=target
-	RUMP_SERVER=unix:///tmp/test
+	RUMP_SOCKET=test
+	RUMP_SERVER=unix://${RUMP_SOCKET}
 	export RUMP_SERVER
 	for i in ${tests}; do
 		atf_add_test_case $i
