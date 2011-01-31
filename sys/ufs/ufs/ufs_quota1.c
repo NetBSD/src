@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.1.2.1 2011/01/20 14:25:03 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.1.2.2 2011/01/31 15:24:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.1 2011/01/20 14:25:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.2 2011/01/31 15:24:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,12 +88,13 @@ chkdq1(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 		}
 		return (0);
 	}
-	if ((flags & FORCE) == 0 &&
-	    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_QUOTA,
-	    KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT, NULL, NULL, NULL) != 0) {
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if ((dq = ip->i_dquot[i]) == NODQUOT)
-				continue;
+	for (i = 0; i < MAXQUOTAS; i++) {
+		if ((dq = ip->i_dquot[i]) == NODQUOT)
+			continue;
+		if ((flags & FORCE) == 0 &&
+		    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT, KAUTH_ARG(i),
+		    KAUTH_ARG(QL_BLOCK), NULL) != 0) {
 			mutex_enter(&dq->dq_interlock);
 			error = chkdqchg(ip, change, cred, i);
 			mutex_exit(&dq->dq_interlock);
@@ -195,12 +196,12 @@ chkiq1(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 		}
 		return (0);
 	}
-	if ((flags & FORCE) == 0 && kauth_authorize_system(cred,
-	    KAUTH_SYSTEM_FS_QUOTA, KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT, NULL,
-	    NULL, NULL) != 0) {
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if ((dq = ip->i_dquot[i]) == NODQUOT)
-				continue;
+	for (i = 0; i < MAXQUOTAS; i++) {
+		if ((dq = ip->i_dquot[i]) == NODQUOT)
+			continue;
+		if ((flags & FORCE) == 0 && kauth_authorize_system(cred,
+		    KAUTH_SYSTEM_FS_QUOTA, KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT,
+		    KAUTH_ARG(i), KAUTH_ARG(QL_FILE), NULL) != 0) {
 			mutex_enter(&dq->dq_interlock);
 			error = chkiqchg(ip, change, cred, i);
 			mutex_exit(&dq->dq_interlock);

@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.5 2011/01/30 00:25:20 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.6 2011/01/31 15:24:11 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.5 2011/01/30 00:25:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.6 2011/01/31 15:24:11 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -71,7 +71,10 @@ static int getq2e(struct ufsmount *, int, daddr_t, int, struct buf **,
     struct quota2_entry **, int);
 static int quota2_walk_list(struct ufsmount *, struct buf *, int,
     uint64_t *, int, void *,
-    int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *, uint64_t, void *));
+    int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *,
+      uint64_t, void *));
+
+static const char *valtypes[] = INITQLNAMES;
 
 static int
 getq2h(struct ufsmount *ump, int type,
@@ -354,8 +357,9 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 	int error;
 	struct buf *bp[MAXQUOTAS];
 	struct quota2_entry *q2e[MAXQUOTAS];
+	struct quota2_val *q2v;
 	struct dquot *dq;
-	int64_t ncurblks;
+	uint64_t ncurblks, soft, hard;
 	struct ufsmount *ump = ip->i_ump;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	int i;
@@ -373,40 +377,103 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 		}
 		return 0;
 	}
-	if (change < 0 || change > 0) {
+	if (change < 0) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			dq = ip->i_dquot[i];
 			if (dq == NODQUOT)
 				continue;
-			if (q2e[i] == NULL)
+			if (q2e[i] == NULL) {
+				mutex_exit(&dq->dq_interlock);
 				continue;
-			ncurblks =
-			    ufs_rw64(q2e[i]->q2e_val[vtype].q2v_cur, needswap);
-			if (change < 0 && ncurblks < -change)
+			}
+			q2v = &q2e[i]->q2e_val[vtype];
+			ncurblks = ufs_rw64(q2v->q2v_cur, needswap);
+			if (ncurblks < -change)
 				ncurblks = 0;
 			else
 				ncurblks += change;
-			q2e[i]->q2e_val[vtype].q2v_cur =
-			    ufs_rw64(ncurblks, needswap);
+			q2v->q2v_cur = ufs_rw64(ncurblks, needswap);
 			VOP_BWRITE(bp[i]);
 			mutex_exit(&dq->dq_interlock);
 		}
 		return 0;
 	}
+	/* see if the allocation is allowed */
+	for (i = 0; i < MAXQUOTAS; i++) {
+		if ((flags & FORCE) != 0 ||
+		    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT,
+		    KAUTH_ARG(i), KAUTH_ARG(vtype), NULL) == 0) {
+			/* don't check this limit */
+			continue;
+		}
+		dq = ip->i_dquot[i];
+		if (dq == NODQUOT)
+			continue;
+		KASSERT(q2e[i] != NULL);
+		q2v = &q2e[i]->q2e_val[vtype];
+		ncurblks = ufs_rw64(q2v->q2v_cur, needswap);
+		soft = ufs_rw64(q2v->q2v_softlimit, needswap);
+		hard = ufs_rw64(q2v->q2v_hardlimit, needswap);
+		if (ncurblks + change >= hard) {
+			if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
+				uprintf("\n%s: write failed, %s %s limit "
+				    "reached\n",
+				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
+				    quotatypes[i], valtypes[vtype]);
+				dq->dq_flags |= DQ_WARN(vtype);
+			}
+			error = EDQUOT;
+		} else if (ncurblks >= soft &&
+		    time_second > ufs_rw64(q2v->q2v_time, needswap)) {
+			if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
+				uprintf("\n%s: write failed, %s %s "
+				    "limit reached\n",
+				    ump->um_mountp->mnt_stat.f_mntonname,
+				    quotatypes[i], valtypes[vtype]);
+				dq->dq_flags |= DQ_WARN(vtype);
+			}
+			error = EDQUOT;
+		}
+	}
 
-	return 0;
+	/* now do the allocation if allowed */
+	for (i = 0; i < MAXQUOTAS; i++) {
+		dq = ip->i_dquot[i];
+		if (dq == NODQUOT)
+			continue;
+		KASSERT(q2e[i] != NULL);
+		if (error == 0) {
+			q2v = &q2e[i]->q2e_val[vtype];
+			ncurblks = ufs_rw64(q2v->q2v_cur, needswap);
+			soft = ufs_rw64(q2v->q2v_softlimit, needswap);
+			if (ncurblks < soft && (ncurblks + change) >= soft) {
+				q2v->q2v_time = ufs_rw64(time_second +
+				    ufs_rw64(q2v->q2v_grace, needswap),
+				    needswap);
+				uprintf("\n%s: warning, %s %s quota exceeded\n",
+				    ump->um_mountp->mnt_stat.f_mntonname,
+				    quotatypes[i], valtypes[vtype]);
+			}
+			q2v->q2v_cur = ufs_rw64(ncurblks + change, needswap);
+			VOP_BWRITE(bp[i]);
+		} else
+			brelse(bp[i], 0);
+		mutex_exit(&dq->dq_interlock);
+	}
+	return error;
 }
 
 int
 chkdq2(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 {
-	return quota2_check(ip, Q2V_BLOCK, change, cred, flags);
+	return quota2_check(ip, QL_BLOCK, change, cred, flags);
 }
 
 int
 chkiq2(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 {
-	return quota2_check(ip, Q2V_FILE, change, cred, flags);
+	return quota2_check(ip, QL_FILE, change, cred, flags);
 }
 
 int

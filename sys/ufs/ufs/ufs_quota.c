@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.5 2011/01/30 19:38:46 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.6 2011/01/31 15:24:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.5 2011/01/30 19:38:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.6 2011/01/31 15:24:10 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -681,7 +681,6 @@ qsync(struct mount *mp)
 #endif
 	return 0;
 }
-
 
 #ifdef DIAGNOSTIC
 /*
