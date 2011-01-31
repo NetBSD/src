@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.h,v 1.1.2.3 2011/01/30 00:25:20 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.h,v 1.1.2.4 2011/01/31 15:24:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -73,8 +73,7 @@ struct dquot {
  */
 #define	DQ_MOD		0x04		/* this quota modified since read */
 #define	DQ_FAKE		0x08		/* no limits here, just usage */
-#define	DQ_BLKS		0x10		/* has been warned about blk limit */
-#define	DQ_INODS	0x20		/* has been warned about inode limit */
+#define	DQ_WARN(ltype)	(0x10 << ltype)	/* has been warned about "type" limit */
 /*
  * Shorthand notation.
  */

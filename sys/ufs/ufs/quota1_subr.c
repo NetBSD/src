@@ -1,4 +1,4 @@
-/* $NetBSD: quota1_subr.c,v 1.1.2.1 2011/01/28 23:31:16 bouyer Exp $ */
+/* $NetBSD: quota1_subr.c,v 1.1.2.2 2011/01/31 15:24:10 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.1.2.1 2011/01/28 23:31:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.1.2.2 2011/01/31 15:24:10 bouyer Exp $");
 
 #include <sys/types.h>
 #include <machine/limits.h>
@@ -61,35 +61,35 @@ q2e2dqblk_limit(uint64_t lim)
 void
 dqblk2q2e(const struct dqblk *dqblk, struct quota2_entry *q2e)
 {
-	q2e->q2e_val[Q2V_BLOCK].q2v_hardlimit =
+	q2e->q2e_val[QL_BLOCK].q2v_hardlimit =
 	    dqblk2q2e_limit(dqblk->dqb_bhardlimit);
-	q2e->q2e_val[Q2V_BLOCK].q2v_softlimit =
+	q2e->q2e_val[QL_BLOCK].q2v_softlimit =
 	    dqblk2q2e_limit(dqblk->dqb_bsoftlimit);
-	q2e->q2e_val[Q2V_BLOCK].q2v_cur       = dqblk->dqb_curblocks;
-	q2e->q2e_val[Q2V_BLOCK].q2v_time      = dqblk->dqb_btime;
+	q2e->q2e_val[QL_BLOCK].q2v_cur       = dqblk->dqb_curblocks;
+	q2e->q2e_val[QL_BLOCK].q2v_time      = dqblk->dqb_btime;
 
-	q2e->q2e_val[Q2V_FILE].q2v_hardlimit =
+	q2e->q2e_val[QL_FILE].q2v_hardlimit =
 	    dqblk2q2e_limit(dqblk->dqb_ihardlimit);
-	q2e->q2e_val[Q2V_FILE].q2v_softlimit =
+	q2e->q2e_val[QL_FILE].q2v_softlimit =
 	    dqblk2q2e_limit(dqblk->dqb_isoftlimit);
-	q2e->q2e_val[Q2V_FILE].q2v_cur       = dqblk->dqb_curinodes;
-	q2e->q2e_val[Q2V_FILE].q2v_time      = dqblk->dqb_itime;
+	q2e->q2e_val[QL_FILE].q2v_cur       = dqblk->dqb_curinodes;
+	q2e->q2e_val[QL_FILE].q2v_time      = dqblk->dqb_itime;
 }
 
 void
 q2e2dqblk(const struct quota2_entry *q2e, struct dqblk *dqblk)
 {
 	dqblk->dqb_bhardlimit =
-	    q2e2dqblk_limit(q2e->q2e_val[Q2V_BLOCK].q2v_hardlimit);
+	    q2e2dqblk_limit(q2e->q2e_val[QL_BLOCK].q2v_hardlimit);
 	dqblk->dqb_bsoftlimit =
-	    q2e2dqblk_limit(q2e->q2e_val[Q2V_BLOCK].q2v_softlimit);
-	dqblk->dqb_curblocks  = q2e->q2e_val[Q2V_BLOCK].q2v_cur;
-	dqblk->dqb_btime      = q2e->q2e_val[Q2V_BLOCK].q2v_time;
+	    q2e2dqblk_limit(q2e->q2e_val[QL_BLOCK].q2v_softlimit);
+	dqblk->dqb_curblocks  = q2e->q2e_val[QL_BLOCK].q2v_cur;
+	dqblk->dqb_btime      = q2e->q2e_val[QL_BLOCK].q2v_time;
 
 	dqblk->dqb_ihardlimit =
-	    q2e2dqblk_limit(q2e->q2e_val[Q2V_FILE].q2v_hardlimit);
+	    q2e2dqblk_limit(q2e->q2e_val[QL_FILE].q2v_hardlimit);
 	dqblk->dqb_isoftlimit =
-	    q2e2dqblk_limit(q2e->q2e_val[Q2V_FILE].q2v_softlimit);
-	dqblk->dqb_curinodes  = q2e->q2e_val[Q2V_FILE].q2v_cur;
-	dqblk->dqb_itime      = q2e->q2e_val[Q2V_FILE].q2v_time;
+	    q2e2dqblk_limit(q2e->q2e_val[QL_FILE].q2v_softlimit);
+	dqblk->dqb_curinodes  = q2e->q2e_val[QL_FILE].q2v_cur;
+	dqblk->dqb_itime      = q2e->q2e_val[QL_FILE].q2v_time;
 }
