@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.211 2011/01/31 23:00:34 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.212 2011/01/31 23:07:16 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.211 2011/01/31 23:00:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.212 2011/01/31 23:07:16 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1468,9 +1468,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 			}
 		}
 	}
-#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
-#endif
 
 	/* Let userland know */
 	devmon_report_device(dev, true);
@@ -1490,9 +1488,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 
 	config_process_deferred(&deferred_config_queue, dev);
 
-#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
 	device_register_post_config(dev, aux);
-#endif
 	return dev;
 }
 
@@ -1531,9 +1527,7 @@ config_attach_pseudo(cfdata_t cf)
 	config_devlink(dev);
 
 #if 0	/* XXXJRT not yet */
-#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, NULL);	/* like a root node */
-#endif
 #endif
 	(*dev->dv_cfattach->ca_attach)(ROOT, dev, NULL);
 	config_process_deferred(&deferred_config_queue, dev);
