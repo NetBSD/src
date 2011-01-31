@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.210 2011/01/14 10:18:21 martin Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.211 2011/01/31 23:00:34 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.210 2011/01/14 10:18:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.211 2011/01/31 23:00:34 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1700,8 +1700,14 @@ out:
 	config_alldevs_enter(&af);
 	KASSERT(alldevs_nwrite != 0);
 	--alldevs_nwrite;
-	if (rv == 0 && dev->dv_del_gen == 0)
-		config_devunlink(dev, &af.af_garbage);
+	if (rv == 0 && dev->dv_del_gen == 0) {
+		if (alldevs_nwrite == 0 && alldevs_nread == 0)
+			config_devunlink(dev, &af.af_garbage);
+		else {
+			dev->dv_del_gen = alldevs_gen;
+			alldevs_garbage = true;
+		}
+	}
 	config_alldevs_exit(&af);
 
 	return rv;
