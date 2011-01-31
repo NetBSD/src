@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.25.64.1 2011/01/20 14:25:03 bouyer Exp $	*/
+/*	$NetBSD: quota.h,v 1.25.64.2 2011/01/31 15:19:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,13 +54,23 @@
 #define	GRPQUOTA	1	/* element used for group quotas */
 
 /*
- * Definitions for the default names of the quotas files.
+ * Definitions for the default names of the quotas files/quota types.
  */
 #define INITQFNAMES { \
 	"user",		/* USRQUOTA */ \
 	"group",	/* GRPQUOTA */ \
 	"undefined", \
 }
+
+/* definition of limits types for each quota */
+#define QL_BLOCK 0
+#define QL_FILE  1
+#define N_QL     2
+
+#define INITQLNAMES  {"block", "file", "undefined" }
+
+
+
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
