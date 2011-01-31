@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.242 2011/01/17 18:24:17 pooka Exp $
+	$NetBSD: syscalls.master,v 1.243 2011/01/31 00:05:29 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -72,7 +72,7 @@
 5	STD 	 RUMP	{ int|sys||open(const char *path, \
 			    int flags, ... mode_t mode); }
 6	STD	 RUMP	{ int|sys||close(int fd); }
-7	COMPAT_50 MODULAR { int|sys||wait4(int pid, int *status, \
+7	COMPAT_50 MODULAR { int|sys||wait4(pid_t pid, int *status, \
 			    int options, struct rusage50 *rusage); }
 8	COMPAT_43 MODULAR { int|sys||creat(const char *path, mode_t mode); } ocreat
 9	STD 	 RUMP	{ int|sys||link(const char *path, const char *link); }
@@ -116,7 +116,7 @@
 34	STD 	 RUMP	{ int|sys||chflags(const char *path, u_long flags); }
 35	STD 	RUMP	{ int|sys||fchflags(int fd, u_long flags); }
 36	STD 	 RUMP	{ void|sys||sync(void); }
-37	STD 		{ int|sys||kill(int pid, int signum); }
+37	STD 		{ int|sys||kill(pid_t pid, int signum); }
 38	COMPAT_43 MODULAR { int|sys||stat(const char *path, struct stat43 *ub); } \
 			    stat43
 39	STD 	RUMP	{ pid_t|sys||getppid(void); }
@@ -128,7 +128,7 @@
 44	STD 		{ int|sys||profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
 45	STD 		{ int|sys||ktrace(const char *fname, int ops, \
-			    int facs, int pid); }
+			    int facs, pid_t pid); }
 46	COMPAT_13 MODULAR { int|sys||sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
@@ -182,7 +182,7 @@
 80	STD 	RUMP	{ int|sys||setgroups(int gidsetsize, \
 			    const gid_t *gidset); }
 81	STD 	RUMP	{ int|sys||getpgrp(void); }
-82	STD 	RUMP	{ int|sys||setpgid(int pid, int pgid); }
+82	STD 	RUMP	{ int|sys||setpgid(pid_t pid, pid_t pgid); }
 83	COMPAT_50 MODULAR { int|sys||setitimer(int which, \
 			    const struct itimerval50 *itv, \
 			    struct itimerval50 *oitv); }
@@ -546,7 +546,7 @@
 286	STD 	RUMP	{ pid_t|sys||getsid(pid_t pid); }
 287	STD 		{ pid_t|sys||__clone(int flags, void *stack); }
 288	STD 		{ int|sys||fktrace(int fd, int ops, \
-			    int facs, int pid); }
+			    int facs, pid_t pid); }
 289	STD 		{ ssize_t|sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int PAD, off_t offset); }
@@ -877,7 +877,7 @@
 #else
 448	EXCL		___ntp_gettime50
 #endif
-449	STD 		{ int|sys|50|wait4(int pid, int *status, \
+449	STD 		{ int|sys|50|wait4(pid_t pid, int *status, \
 				    int options, struct rusage *rusage); }
 450	STD  RUMP	{ int|sys|50|mknod(const char *path, mode_t mode, \
 			    dev_t dev); }
