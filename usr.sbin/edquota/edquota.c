@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.5 2011/01/30 22:49:32 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.6 2011/01/31 15:26:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.5 2011/01/30 22:49:32 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.6 2011/01/31 15:26:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,8 +188,8 @@ main(argc, argv)
 			exit(1);
 		protoprivs = getprivs(protoid, quotatype, fs, 0);
 		for (qup = protoprivs; qup; qup = qup->next) {
-			qup->q2e.q2e_val[Q2V_BLOCK].q2v_time = 0;
-			qup->q2e.q2e_val[Q2V_FILE].q2v_time = 0;
+			qup->q2e.q2e_val[QL_BLOCK].q2v_time = 0;
+			qup->q2e.q2e_val[QL_FILE].q2v_time = 0;
 		}
 		while (argc-- > 0) {
 			if ((id = getentry(*argv++, quotatype)) < 0)
@@ -237,16 +237,16 @@ main(argc, argv)
 			curprivs = getprivs(0, quotatype, fs, 1);
 			for (lqup = curprivs; lqup; lqup = lqup->next) {
 				if (soft) {
-					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit = softb;
-					lqup->q2e.q2e_val[Q2V_FILE].q2v_softlimit = softi;
+					lqup->q2e.q2e_val[QL_BLOCK].q2v_softlimit = softb;
+					lqup->q2e.q2e_val[QL_FILE].q2v_softlimit = softi;
 				}
 				if (hard) {
-					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit = hardb;
-					lqup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit = hardi;
+					lqup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit = hardb;
+					lqup->q2e.q2e_val[QL_FILE].q2v_hardlimit = hardi;
 				}
 				if (grace) {
-					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_grace = graceb;
-					lqup->q2e.q2e_val[Q2V_FILE].q2v_grace = gracei;
+					lqup->q2e.q2e_val[QL_BLOCK].q2v_grace = graceb;
+					lqup->q2e.q2e_val[QL_FILE].q2v_grace = gracei;
 				}
 			}
 			putprivs(0, quotatype, curprivs);
@@ -260,25 +260,25 @@ main(argc, argv)
 			for (lqup = curprivs; lqup; lqup = lqup->next) {
 				if (soft) {
 					if (softb &&
-					    lqup->q2e.q2e_val[Q2V_BLOCK].q2v_cur >= softb &&
-					    (lqup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit == 0 ||
-					    lqup->q2e.q2e_val[Q2V_BLOCK].q2v_cur < lqup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit))
-						lqup->q2e.q2e_val[Q2V_BLOCK].q2v_time = 0;
+					    lqup->q2e.q2e_val[QL_BLOCK].q2v_cur >= softb &&
+					    (lqup->q2e.q2e_val[QL_BLOCK].q2v_softlimit == 0 ||
+					    lqup->q2e.q2e_val[QL_BLOCK].q2v_cur < lqup->q2e.q2e_val[QL_BLOCK].q2v_softlimit))
+						lqup->q2e.q2e_val[QL_BLOCK].q2v_time = 0;
 					if (softi &&
-					    lqup->q2e.q2e_val[Q2V_FILE].q2v_cur >= softb &&
-					    (lqup->q2e.q2e_val[Q2V_FILE].q2v_softlimit == 0 ||
-					    lqup->q2e.q2e_val[Q2V_FILE].q2v_cur < lqup->q2e.q2e_val[Q2V_FILE].q2v_softlimit))
-						lqup->q2e.q2e_val[Q2V_FILE].q2v_time = 0;
-					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit = softb;
-					lqup->q2e.q2e_val[Q2V_FILE].q2v_softlimit = softi;
+					    lqup->q2e.q2e_val[QL_FILE].q2v_cur >= softb &&
+					    (lqup->q2e.q2e_val[QL_FILE].q2v_softlimit == 0 ||
+					    lqup->q2e.q2e_val[QL_FILE].q2v_cur < lqup->q2e.q2e_val[QL_FILE].q2v_softlimit))
+						lqup->q2e.q2e_val[QL_FILE].q2v_time = 0;
+					lqup->q2e.q2e_val[QL_BLOCK].q2v_softlimit = softb;
+					lqup->q2e.q2e_val[QL_FILE].q2v_softlimit = softi;
 				}
 				if (hard) {
-					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit = hardb;
-					lqup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit = hardi;
+					lqup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit = hardb;
+					lqup->q2e.q2e_val[QL_FILE].q2v_hardlimit = hardi;
 				}
 				if (grace) {
-					lqup->q2e.q2e_val[Q2V_BLOCK].q2v_grace = graceb;
-					lqup->q2e.q2e_val[Q2V_FILE].q2v_grace = gracei;
+					lqup->q2e.q2e_val[QL_BLOCK].q2v_grace = graceb;
+					lqup->q2e.q2e_val[QL_FILE].q2v_grace = gracei;
 				}
 			}
 			putprivs(id, quotatype, curprivs);
@@ -696,29 +696,29 @@ writeprivs(quplist, outfd, name, quotatype)
 	for (qup = quplist; qup; qup = qup->next) {
 		fprintf(fd, "%s: %s %s, limits (soft = %s, hard = %s",
 		    qup->fsname, "blocks in use:",
-		    intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur,
+		    intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_cur,
 			HN_NOSPACE | HN_B, Hflag, 20),
-		    intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit,
+		    intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit,
 			HN_NOSPACE | HN_B, Hflag, 20),
-		    intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit,
+		    intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit,
 			HN_NOSPACE | HN_B, Hflag, 20));
 		if (qup->flags & (QUOTA2|DEFAULT)) {
 		    fprintf(fd, ", grace = %s",
-			timepprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_grace,
+			timepprt(qup->q2e.q2e_val[QL_BLOCK].q2v_grace,
 			    Hflag, 20));
 		}
 		fprintf(fd, ")\n");
 		fprintf(fd, "%s %s, limits (soft = %s, hard = %s",
 		    "\tinodes in use:",
-		    intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur,
+		    intprt(qup->q2e.q2e_val[QL_FILE].q2v_cur,
 			HN_NOSPACE, Hflag, 20),
-		    intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit,
+		    intprt(qup->q2e.q2e_val[QL_FILE].q2v_softlimit,
 			HN_NOSPACE, Hflag, 20),
-		    intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit,
+		    intprt(qup->q2e.q2e_val[QL_FILE].q2v_hardlimit,
 			 HN_NOSPACE, Hflag, 20));
 		if (qup->flags & (QUOTA2|DEFAULT)) {
 		    fprintf(fd, ", grace = %s",
-			timepprt(qup->q2e.q2e_val[Q2V_FILE].q2v_grace,
+			timepprt(qup->q2e.q2e_val[QL_FILE].q2v_grace,
 			    Hflag, 20));
 		}
 		fprintf(fd, ")\n");
@@ -861,10 +861,10 @@ readprivs(quplist, infd)
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
 				continue;
-			if (strcmp(intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur,
+			if (strcmp(intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_cur,
 			    HN_NOSPACE | HN_B, Hflag, 20),
 			    scurb) != 0 ||
-			    strcmp(intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur,
+			    strcmp(intprt(qup->q2e.q2e_val[QL_FILE].q2v_cur,
 			    HN_NOSPACE, Hflag, 20),
 			    scuri) != 0) {
 				warnx("%s: cannot change current allocation",
@@ -877,26 +877,26 @@ readprivs(quplist, infd)
 			 * or were under it, but now have a soft limit
 			 * and are over it.
 			 */
-			if (qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur &&
-			    qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur >= softb &&
-			    (qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit == 0 ||
-			     qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur <
-			     qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit))
-				qup->q2e.q2e_val[Q2V_BLOCK].q2v_time = 0;
-			if (qup->q2e.q2e_val[Q2V_FILE].q2v_cur &&
-			    qup->q2e.q2e_val[Q2V_FILE].q2v_cur >= softi &&
-			    (qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit == 0 ||
-			     qup->q2e.q2e_val[Q2V_FILE].q2v_cur <
-			     qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit))
-				qup->q2e.q2e_val[Q2V_FILE].q2v_time = 0;
-			qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit = softb;
-			qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit = hardb;
+			if (qup->q2e.q2e_val[QL_BLOCK].q2v_cur &&
+			    qup->q2e.q2e_val[QL_BLOCK].q2v_cur >= softb &&
+			    (qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit == 0 ||
+			     qup->q2e.q2e_val[QL_BLOCK].q2v_cur <
+			     qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit))
+				qup->q2e.q2e_val[QL_BLOCK].q2v_time = 0;
+			if (qup->q2e.q2e_val[QL_FILE].q2v_cur &&
+			    qup->q2e.q2e_val[QL_FILE].q2v_cur >= softi &&
+			    (qup->q2e.q2e_val[QL_FILE].q2v_softlimit == 0 ||
+			     qup->q2e.q2e_val[QL_FILE].q2v_cur <
+			     qup->q2e.q2e_val[QL_FILE].q2v_softlimit))
+				qup->q2e.q2e_val[QL_FILE].q2v_time = 0;
+			qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit = softb;
+			qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit = hardb;
 			if (graceb >= 0)
-				qup->q2e.q2e_val[Q2V_BLOCK].q2v_grace = graceb;
-			qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit  = softi;
-			qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit  = hardi;
+				qup->q2e.q2e_val[QL_BLOCK].q2v_grace = graceb;
+			qup->q2e.q2e_val[QL_FILE].q2v_softlimit  = softi;
+			qup->q2e.q2e_val[QL_FILE].q2v_hardlimit  = hardi;
 			if (gracei >= 0)
-				qup->q2e.q2e_val[Q2V_FILE].q2v_grace = gracei;
+				qup->q2e.q2e_val[QL_FILE].q2v_grace = gracei;
 			qup->flags |= FOUND;
 		}
 	}
@@ -910,10 +910,10 @@ out:
 			qup->flags &= ~FOUND;
 			continue;
 		}
-		qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit = UQUAD_MAX;
-		qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit = UQUAD_MAX;
-		qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit = UQUAD_MAX;
-		qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit = UQUAD_MAX;
+		qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit = UQUAD_MAX;
+		qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit = UQUAD_MAX;
+		qup->q2e.q2e_val[QL_FILE].q2v_softlimit = UQUAD_MAX;
+		qup->q2e.q2e_val[QL_FILE].q2v_hardlimit = UQUAD_MAX;
 	}
 	return (1);
 }
@@ -939,9 +939,9 @@ writetimes(quplist, outfd, quotatype)
 	    qfextension[quotatype]);
 	for (qup = quplist; qup; qup = qup->next) {
 		fprintf(fd, "%s: block grace period: %s, ",
-		    qup->fsname, cvtstoa(qup->q2e.q2e_val[Q2V_BLOCK].q2v_time));
+		    qup->fsname, cvtstoa(qup->q2e.q2e_val[QL_BLOCK].q2v_time));
 		fprintf(fd, "file grace period: %s\n",
-		    cvtstoa(qup->q2e.q2e_val[Q2V_FILE].q2v_time));
+		    cvtstoa(qup->q2e.q2e_val[QL_FILE].q2v_time));
 	}
 	fclose(fd);
 	return (1);
@@ -1003,8 +1003,8 @@ bad:
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
 				continue;
-			qup->q2e.q2e_val[Q2V_BLOCK].q2v_time = bseconds;
-			qup->q2e.q2e_val[Q2V_FILE].q2v_time = iseconds;
+			qup->q2e.q2e_val[QL_BLOCK].q2v_time = bseconds;
+			qup->q2e.q2e_val[QL_FILE].q2v_time = iseconds;
 			qup->flags |= FOUND;
 			break;
 		}
@@ -1019,8 +1019,8 @@ bad:
 			qup->flags &= ~FOUND;
 			continue;
 		}
-		qup->q2e.q2e_val[Q2V_BLOCK].q2v_time = 0;
-		qup->q2e.q2e_val[Q2V_FILE].q2v_time = 0;
+		qup->q2e.q2e_val[QL_BLOCK].q2v_time = 0;
+		qup->q2e.q2e_val[QL_FILE].q2v_time = 0;
 	}
 	return (1);
 }
