@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_subr.c,v 1.1.2.3 2011/01/28 23:30:34 bouyer Exp $ */
+/* $NetBSD: quota2_subr.c,v 1.1.2.4 2011/01/31 15:24:10 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.1.2.3 2011/01/28 23:30:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.1.2.4 2011/01/31 15:24:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -76,7 +76,7 @@ quota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
 	q2h->q2h_hash_shift = q2h_hash_shift;
 	q2h->q2h_hash_size = ufs_rw16(quota2_hash_size, ns);
 	/* setup defaut entry: unlimited, 7 days grace */
-	for (i = 0; i < NQ2V; i++) {
+	for (i = 0; i < N_QL; i++) {
 		q2h->q2h_defentry.q2e_val[i].q2v_hardlimit =
 		    q2h->q2h_defentry.q2e_val[i].q2v_softlimit =
 		    ufs_rw64(UQUAD_MAX, ns);
@@ -102,9 +102,9 @@ void
 quota2_ufs_rwq2e(const struct quota2_entry *s, struct quota2_entry *d,
 int needswap)
 {
-	quota2_ufs_rwq2v(&s->q2e_val[Q2V_BLOCK], &d->q2e_val[Q2V_BLOCK],
+	quota2_ufs_rwq2v(&s->q2e_val[QL_BLOCK], &d->q2e_val[QL_BLOCK],
 	    needswap);
-	quota2_ufs_rwq2v(&s->q2e_val[Q2V_FILE], &d->q2e_val[Q2V_FILE],
+	quota2_ufs_rwq2v(&s->q2e_val[QL_FILE], &d->q2e_val[QL_FILE],
 	    needswap);
 	d->q2e_uid = ufs_rw32(s->q2e_uid, needswap);
 }

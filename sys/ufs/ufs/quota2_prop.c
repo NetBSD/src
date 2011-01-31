@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_prop.c,v 1.1.2.3 2011/01/30 00:25:19 bouyer Exp $ */
+/* $NetBSD: quota2_prop.c,v 1.1.2.4 2011/01/31 15:24:10 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <ufs/ufs/quota2_prop.h>
 
-const char *quota2_valnames[] = QUOTA2_VALNAMES_INIT;
+const char *quota2_valnames[] = INITQLNAMES;
 
 prop_dictionary_t
 prop_dictionary_get_dict(prop_dictionary_t dict, const char *key)
@@ -76,7 +76,7 @@ quota2_dict_update_q2e_limits(prop_dictionary_t data, struct quota2_entry *q2e)
 {
 	int i, error;
 	prop_dictionary_t val;
-	for (i = 0; i < NQ2V; i++) {
+	for (i = 0; i < N_QL; i++) {
 		val = prop_dictionary_get_dict(data, quota2_valnames[i]);
 		if (val == NULL)
 			continue;
@@ -111,7 +111,7 @@ quota2_dict_get_q2e_usage(prop_dictionary_t data, struct quota2_entry *q2e)
 {
 	int i, error;
 	prop_dictionary_t val;
-	for (i = 0; i < NQ2V; i++) {
+	for (i = 0; i < N_QL; i++) {
 		val = prop_dictionary_get_dict(data, quota2_valnames[i]);
 		if (val == NULL)
 			return EINVAL;
@@ -269,7 +269,7 @@ q2etoprop(struct quota2_entry *q2e, int def)
 			goto err;
 		}
 	}
-	for (i = 0; i < NQ2V; i++) {
+	for (i = 0; i < N_QL; i++) {
 		dict2 = q2vtoprop(&q2e->q2e_val[i]);
 		if (dict2 == NULL)
 			goto err;
