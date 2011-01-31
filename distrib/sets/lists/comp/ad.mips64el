@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.18 2011/01/18 21:07:51 pooka Exp $
+# $NetBSD: ad.mips64el,v 1.19 2011/01/31 18:27:53 christos Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -321,10 +321,10 @@
 ./usr/lib/64/libiscsi.so			base-sys-shlib		compat,pic,iscsi
 ./usr/lib/64/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
 ./usr/lib/64/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
-./usr/lib/64/libisns.a		comp-c-lib	compat
-./usr/lib/64/libisns.so		comp-sys-shlib	compat
-./usr/lib/64/libisns_p.a		comp-c-proflib	compat,profile
-./usr/lib/64/libisns_pic.a		comp-c-piclib	compat,pic
+./usr/lib/64/libisns.a				comp-c-lib		compat
+./usr/lib/64/libisns.so				comp-sys-shlib		compat
+./usr/lib/64/libisns_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libisns_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/64/libkadm5clnt.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libkadm5clnt_p.a			comp-c-proflib		compat,profile,kerberos
