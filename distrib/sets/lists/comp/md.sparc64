@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.80 2011/01/31 00:19:33 christos Exp $
+# $NetBSD: md.sparc64,v 1.81 2011/01/31 18:28:05 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -399,6 +399,7 @@
 ./usr/lib/sparc/libisns.so		comp-sys-shlib	compat
 ./usr/lib/sparc/libisns_p.a		comp-c-proflib	compat,profile
 ./usr/lib/sparc/libisns_pic.a		comp-c-piclib	compat,pic
+./usr/lib/sparc/libisns_g.a		comp-c-piclib	compat,debuglib
 ./usr/lib/sparc/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libkadm5clnt.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libkadm5clnt_p.a		comp-c-proflib		compat,profile,kerberos
