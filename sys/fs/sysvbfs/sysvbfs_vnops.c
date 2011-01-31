@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.35 2010/11/30 10:43:04 dholland Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.36 2011/01/31 18:48:50 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.35 2010/11/30 10:43:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.36 2011/01/31 18:48:50 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,9 +85,15 @@ sysvbfs_lookup(void *arg)
 	*a->a_vpp = NULL;
 
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
+
 	if ((error = VOP_ACCESS(a->a_dvp, VEXEC, cnp->cn_cred)) != 0) {
 		return error;	/* directory permission. */
 	}
+
+	/* Deny last component write operation on a read-only mount */
+	if ((cnp->cn_flags & ISLASTCN) && (v->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return EROFS;
 
 	if (namelen == 1 && name[0] == '.') {	/* "." */
 		vref(v);
