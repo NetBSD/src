@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.101 2011/01/12 23:03:56 joerg Exp $
+#  $NetBSD: Makefile,v 1.102 2011/01/31 00:19:33 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -50,6 +50,8 @@ USE_SHLIBDIR=	yes
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
+.elif (${MACHINE_ARCH} == "sparc64")
+.PATH: ${.CURDIR}/arch/sparc64
 .elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
 
 .if (${MACHINE_ARCH} == "x86_64")
@@ -174,7 +176,7 @@ NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 .if (${MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
 .else
-SRCS=	${COMMON_SRCS}
+SRCS=	${COMMON_SRCS} fenv.c
 .endif
 
 .ifdef ARCH_ADDS
