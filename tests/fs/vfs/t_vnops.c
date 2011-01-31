@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.12 2011/01/11 14:03:38 kefren Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.13 2011/01/31 10:01:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,10 +29,12 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 
+#include <assert.h>
 #include <atf-c.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <rump/rump_syscalls.h>
@@ -567,6 +569,122 @@ fcntl_lock(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static int
+flock_compare(const void *p, const void *q)
+{
+	int a = ((const struct flock *)p)->l_start;
+	int b = ((const struct flock *)q)->l_start;
+	return a < b ? -1 : (a > b ? 1 : 0);
+}
+
+static void
+fcntl_getlock_pids(const atf_tc_t *tc, const char *mp)
+{
+	/* test non-overlaping ranges */
+	struct flock expect[4];
+	const struct flock lock[4] = {
+		{ 0, 2, 0, F_WRLCK, SEEK_SET },
+		{ 2, 1, 0, F_WRLCK, SEEK_SET },
+		{ 7, 5, 0, F_WRLCK, SEEK_SET },
+		{ 4, 3, 0, F_WRLCK, SEEK_SET },
+	};
+
+	int fd[4];
+	struct lwp *lwp[4];
+	pid_t prevpid = 0;
+
+	unsigned int i, j;
+	const off_t sz = 8192;
+	int omode  = 0755;
+	int oflags = O_RDWR | O_CREAT;
+
+	memcpy(expect, lock, sizeof(lock));
+	qsort(expect, __arraycount(expect), sizeof(expect[0]), &flock_compare);
+
+	FSTEST_ENTER();
+
+	/*
+	 * First, we create 4 processes and let each lock a range of the
+	 * file.  Note that the third and fourth processes lock in
+	 * "reverse" order, i.e. the greater pid locks a range before
+	 * the lesser pid.
+	 */
+	for(i = 0; i < __arraycount(lwp); i++) {
+		RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
+
+		lwp[i] = rump_pub_lwproc_curlwp();
+		assert(rump_sys_getpid() > prevpid);
+		prevpid = rump_sys_getpid();
+
+		RL(fd[i] = rump_sys_open(TESTFILE, oflags, omode));
+		oflags = O_RDWR;
+		omode  = 0;
+
+		RL(rump_sys_ftruncate(fd[i], sz));
+		RL(rump_sys_fcntl(fd[i], F_SETLK, &lock[i]));
+	}
+
+	atf_tc_expect_fail("PR kern/44494");
+	/*
+	 * In the context of each pid , do GETLK for a readlock from
+	 * i = [0,__arraycount(locks)].  If we try to lock from the same
+	 * start offset as the lock our current process holds, check
+	 * that we fail on the offset of the next lock ("else if" branch).
+	 * Otherwise, expect to get a lock for the current offset
+	 * ("if" branch).  The "else" branch is purely for the last
+	 * process where we expect no blocking locks.
+	 */
+	for(i = 0; i < __arraycount(lwp); i++) {
+		rump_pub_lwproc_switch(lwp[i]);
+
+		for(j = 0; j < __arraycount(lwp); j++) {
+			struct flock l;
+			l = expect[j];
+			l.l_len = sz;
+			l.l_type = F_RDLCK;
+
+			RL(rump_sys_fcntl(fd[i], F_GETLK, &l));
+
+			if(expect[j].l_start != lock[i].l_start) {
+				/*
+				 * lock set by another process
+				 */
+				ATF_CHECK(l.l_type != F_UNLCK);
+				ATF_CHECK_EQ(l.l_start, expect[j].l_start);
+				ATF_CHECK_EQ(l.l_len,   expect[j].l_len);
+			} else if (j != __arraycount(lwp) - 1) {
+				/*
+				 * lock set by the current process
+				 */
+				ATF_CHECK(l.l_type != F_UNLCK);
+				ATF_CHECK_EQ(l.l_start, expect[j+1].l_start);
+				ATF_CHECK_EQ(l.l_len,   expect[j+1].l_len);
+			} else {
+				/*
+				 * there are no other locks after the
+				 * current process lock
+				 */
+				ATF_CHECK_EQ(l.l_type,   F_UNLCK);
+				ATF_CHECK_EQ(l.l_start,  expect[j].l_start);
+				ATF_CHECK_EQ(l.l_len,    sz);
+				ATF_CHECK_EQ(l.l_pid,    expect[j].l_pid);
+				ATF_CHECK_EQ(l.l_whence, expect[j].l_whence);
+			}
+		}
+	}
+
+	/*
+	 * Release processes.  This also releases the fds and locks
+	 * making fs unmount possible
+	 */
+	for(i = 0; i < __arraycount(lwp); i++) {
+		rump_pub_lwproc_switch(lwp[i]);
+		rump_pub_lwproc_releaselwp();
+	}
+
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -579,6 +697,7 @@ ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
 ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
 ATF_TC_FSAPPLY(attrs, "check setting attributes works");
 ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
+ATF_TC_FSAPPLY(fcntl_getlock_pids,"fcntl F_GETLK w/ many procs, PR kern/44494");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -595,6 +714,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(symlink_zerolen);
 	ATF_TP_FSAPPLY(attrs);
 	ATF_TP_FSAPPLY(fcntl_lock);
+	ATF_TP_FSAPPLY(fcntl_getlock_pids);
 
 	return atf_no_error();
 }
