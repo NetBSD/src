@@ -1,4 +1,4 @@
-# $NetBSD: quotas_common.sh,v 1.1.2.3 2011/01/30 13:23:26 bouyer Exp $ 
+# $NetBSD: quotas_common.sh,v 1.1.2.4 2011/01/31 22:04:26 bouyer Exp $ 
 
 create_with_quotas()
 {
@@ -15,6 +15,15 @@ create_with_quotas()
 		-B ${endian} -O ${vers} -s 4000 -F ${IMG}
 	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_server -b \
 		${IMG} ${RUMP_SERVER}
+}
+
+rump_shutdown()
+{
+	atf_check -s exit:0 rump.halt
+# check that the quota inode creation didn't corrupt the filesystem
+	atf_check -s exit:0 -o "match:already clean" \
+		-o "match:Phase 6 - Check Quotas" \
+		fsck_ffs -nf -F ${IMG}
 }
 
 # from tests/ipf/h_common.sh via tests/sbin/resize_ffs
