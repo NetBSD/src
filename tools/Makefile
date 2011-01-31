@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.140 2010/08/15 07:27:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.141 2011/01/31 03:41:10 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -119,7 +119,7 @@ SUBDIR+=	amiga-txlt
 SUBDIR+=	hp300-mkboot
 .endif
 
-.if ${MACHINE} == "evbarm"
+.if ${MACHINE} == "evbarm" || ${MACHINE} == "evbmips" || ${MACHINE} == "evbppc"
 SUBDIR+=	mkubootimage
 .endif
 
