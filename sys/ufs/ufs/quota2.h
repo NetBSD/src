@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.1.2.4 2011/01/29 23:22:00 bouyer Exp $ */
+/* $NetBSD: quota2.h,v 1.1.2.5 2011/01/31 15:19:21 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -55,11 +55,6 @@ struct quota2_val {
 	int64_t q2v_time; /* grace expiration date for softlimit overflow */
 	int64_t q2v_grace; /* allowed time for softlimit overflow */
 };
-#define Q2V_BLOCK 0
-#define Q2V_FILE  1
-#define NQ2V      2
-
-#define QUOTA2_VALNAMES_INIT {"block", "file"}
 
 /*
  * Description of a user or group quota
@@ -69,7 +64,7 @@ struct quota2_val {
 
 struct quota2_entry {
 	/* block & inode limits and status */
-	struct quota2_val q2e_val[NQ2V];
+	struct quota2_val q2e_val[N_QL];
 	/* pointer to next entry for this list (offset in the file) */
 	uint64_t q2e_next;
 	/* ownerchip information */
