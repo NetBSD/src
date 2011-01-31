@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.177 2011/01/31 18:56:04 matt Exp $ */
+/* $NetBSD: vmstat.c,v 1.178 2011/01/31 19:41:19 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.177 2011/01/31 18:56:04 matt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.178 2011/01/31 19:41:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1036,7 +1036,7 @@ drvstats(int *ovflwp)
 void
 cpucounters(struct cpu_counter *cc)
 {
-	struct cpu_info *ci;
+	struct cpu_info *ci, *first = NULL;
 	(void)memset(cc, 0, sizeof(*cc));
 	CIRCLEQ_FOREACH(ci, &cpu_queue, ci_data.cpu_qchain) {
 		struct cpu_info tci;
@@ -1047,9 +1047,8 @@ cpucounters(struct cpu_counter *cc)
 		    (void)memset(cc, 0, sizeof(*cc));
 		    return;
 		}
-		/* Found the fake element, done */
-		if (tci.ci_data.cpu_qchain.cqe_prev == NULL)
-			break;
+		if (first == NULL)
+			first = tci.ci_data.cpu_qchain.cqe_prev;
 		cc->nintr += tci.ci_data.cpu_nintr;
 		cc->nsyscall += tci.ci_data.cpu_nsyscall;
 		cc->nswtch = tci.ci_data.cpu_nswtch;
@@ -1057,6 +1056,8 @@ cpucounters(struct cpu_counter *cc)
 		cc->ntrap = tci.ci_data.cpu_ntrap;
 		cc->nsoft = tci.ci_data.cpu_nsoft;
 		ci = &tci;
+		if (tci.ci_data.cpu_qchain.cqe_next == first)
+			break;
 	}
 }
 
