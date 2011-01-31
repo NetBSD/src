@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 2011/01/23 21:53:39 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.18 2011/01/31 14:11:02 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2011/01/23 21:53:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2011/01/31 14:11:02 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -56,7 +56,8 @@ struct cpu_softc {
 };
 
 #ifdef MULTIPROCESSOR
-int hppa_ncpus;
+
+int hppa_ncpu;
 
 struct cpu_info *cpu_hatch_info;
 static volatile int start_secondary_cpu;
@@ -192,6 +193,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	if (ci->ci_hpa == hppa_mcpuhpa) {
 		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
+		hppa_ncpu++;
 	} else {
 		int err;
 
@@ -278,6 +280,9 @@ cpu_hatch(void)
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_flags |= CPUF_RUNNING;
+#if 0
+	hppa_ncpu++;
+#endif
 
 	/* Wait for additional CPUs to spinup. */
 	while (!start_secondary_cpu)

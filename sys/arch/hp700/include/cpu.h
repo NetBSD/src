@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.63 2011/01/25 21:27:48 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.64 2011/01/31 14:11:02 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -298,14 +298,14 @@ struct cpu_info {
 #ifdef MULTIPROCESSOR
 
 /* Number of CPUs in the system */
-extern int hppa_ncpus;
+extern int hppa_ncpu;
 
 #define	HPPA_MAXCPUS	4
 #define	cpu_number()			(curcpu()->ci_cpuid)
 
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_cpuid == 0)
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpus[0], cii < hppa_ncpus; cii++, ci++
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpus[0], cii < hppa_ncpu; cii++, ci++
 
 void	cpu_boot_secondary_processors(void);
 
