@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33.2.5 2011/01/30 20:54:22 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.33.2.6 2011/01/31 15:26:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33.2.5 2011/01/30 20:54:22 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.33.2.6 2011/01/31 15:26:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,33 +346,33 @@ showquotas(type, id, name)
 	quplist = getprivs(id, type);
 	for (qup = quplist; qup; qup = qup->next) {
 		if (!vflag &&
-		    qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit == UQUAD_MAX &&
-		    qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit == UQUAD_MAX &&
-		    qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit == UQUAD_MAX &&
-		    qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit == UQUAD_MAX)
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit == UQUAD_MAX &&
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit == UQUAD_MAX &&
+		    qup->q2e.q2e_val[QL_FILE].q2v_softlimit == UQUAD_MAX &&
+		    qup->q2e.q2e_val[QL_FILE].q2v_hardlimit == UQUAD_MAX)
 			continue;
 		msgi = NULL;
-		if (qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit &&
-		    qup->q2e.q2e_val[Q2V_FILE].q2v_cur >=
-		    qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit)
+		if (qup->q2e.q2e_val[QL_FILE].q2v_hardlimit &&
+		    qup->q2e.q2e_val[QL_FILE].q2v_cur >=
+		    qup->q2e.q2e_val[QL_FILE].q2v_hardlimit)
 			msgi = "File limit reached on";
-		else if (qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit &&
-		    qup->q2e.q2e_val[Q2V_FILE].q2v_cur >=
-		    qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit) {
-			if (qup->q2e.q2e_val[Q2V_FILE].q2v_time > now)
+		else if (qup->q2e.q2e_val[QL_FILE].q2v_softlimit &&
+		    qup->q2e.q2e_val[QL_FILE].q2v_cur >=
+		    qup->q2e.q2e_val[QL_FILE].q2v_softlimit) {
+			if (qup->q2e.q2e_val[QL_FILE].q2v_time > now)
 				msgi = "In file grace period on";
 			else
 				msgi = "Over file quota on";
 		}
 		msgb = NULL;
-		if (qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit &&
-		    qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur >=
-		    qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit)
+		if (qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit &&
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_cur >=
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit)
 			msgb = "Block limit reached on";
-		else if (qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit &&
-		    qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur >=
-		    qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit) {
-			if (qup->q2e.q2e_val[Q2V_BLOCK].q2v_time > now)
+		else if (qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit &&
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_cur >=
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit) {
+			if (qup->q2e.q2e_val[QL_BLOCK].q2v_time > now)
 				msgb = "In block grace period on";
 			else
 				msgb = "Over block quota on";
@@ -388,8 +388,8 @@ showquotas(type, id, name)
 			continue;
 		}
 		if (vflag || dflag ||
-		    qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur ||
-		    qup->q2e.q2e_val[Q2V_FILE].q2v_cur) {
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_cur ||
+		    qup->q2e.q2e_val[QL_FILE].q2v_cur) {
 			if (lines++ == 0)
 				heading(type, id, name, "");
 			nam = qup->fsname;
@@ -399,40 +399,40 @@ showquotas(type, id, name)
 			} 
 			if (msgb)
 				timemsg = timeprt(now, 
-				    qup->q2e.q2e_val[Q2V_BLOCK].q2v_time, 8);
+				    qup->q2e.q2e_val[QL_BLOCK].q2v_time, 8);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
 				timemsg = timeprt(0,
-				    qup->q2e.q2e_val[Q2V_BLOCK].q2v_grace, 8);
+				    qup->q2e.q2e_val[QL_BLOCK].q2v_grace, 8);
 			else
-				timemsg = NULL;
+				timemsg = "";
 				
 			printf("%12s%9s%c%8s%9s%8s"
 			    , nam
-			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_cur
+			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_cur
 				,HN_B, hflag, 8)
 			    , (msgb == NULL) ? ' ' : '*'
-			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_softlimit
+			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit
 				, HN_B, hflag, 8)
-			    , intprt(qup->q2e.q2e_val[Q2V_BLOCK].q2v_hardlimit
+			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit
 				, HN_B, hflag, 8)
 			    , timemsg);
 
 			if (msgi)
 				timemsg = timeprt(now, 
-				    qup->q2e.q2e_val[Q2V_FILE].q2v_time, 8);
+				    qup->q2e.q2e_val[QL_FILE].q2v_time, 8);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
 				timemsg = timeprt(0,
-				    qup->q2e.q2e_val[Q2V_FILE].q2v_grace, 8);
+				    qup->q2e.q2e_val[QL_FILE].q2v_grace, 8);
 			else
-				timemsg = NULL;
+				timemsg = "";
 				
 			printf("%8s%c%7s%8s%8s\n"
-			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_cur
+			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_cur
 				, 0, hflag, 7)
 			    , (msgi == NULL) ? ' ' : '*'
-			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_softlimit
+			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_softlimit
 				, 0, hflag, 7)
-			    , intprt(qup->q2e.q2e_val[Q2V_FILE].q2v_hardlimit
+			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_hardlimit
 				, 0, hflag, 7)
 			    , timemsg);
 			continue;
@@ -593,26 +593,26 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	case Q_OK:
 		gettimeofday(&tv, NULL);
 			/* blocks*/
-		q2e->q2e_val[Q2V_BLOCK].q2v_hardlimit =
+		q2e->q2e_val[QL_BLOCK].q2v_hardlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		q2e->q2e_val[Q2V_BLOCK].q2v_softlimit =
+		q2e->q2e_val[QL_BLOCK].q2v_softlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		q2e->q2e_val[Q2V_BLOCK].q2v_cur =
+		q2e->q2e_val[QL_BLOCK].q2v_cur =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 			/* inodes */
-		q2e->q2e_val[Q2V_FILE].q2v_hardlimit =
+		q2e->q2e_val[QL_FILE].q2v_hardlimit =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit;
-		q2e->q2e_val[Q2V_FILE].q2v_softlimit =
+		q2e->q2e_val[QL_FILE].q2v_softlimit =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit;
-		q2e->q2e_val[Q2V_FILE].q2v_cur =
+		q2e->q2e_val[QL_FILE].q2v_cur =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles;
 			/* grace times */
-		q2e->q2e_val[Q2V_BLOCK].q2v_time =
+		q2e->q2e_val[QL_BLOCK].q2v_time =
 		    tv.tv_sec + gq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft;
-		q2e->q2e_val[Q2V_FILE].q2v_time =
+		q2e->q2e_val[QL_FILE].q2v_time =
 		    tv.tv_sec + gq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft;
 		*cp = ':';
 		return (1);
