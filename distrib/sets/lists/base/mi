@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.915 2011/01/13 22:28:36 haad Exp $
+# $NetBSD: mi,v 1.915.2.1 2011/01/31 21:14:05 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1330,6 +1330,7 @@
 ./usr/sbin/pwd_mkdb				base-sysutil-bin
 ./usr/sbin/quot					base-sysutil-bin
 ./usr/sbin/quotacheck				base-sysutil-bin
+./usr/sbin/quotactl				base-sysutil-bin
 ./usr/sbin/quotaoff				base-sysutil-bin
 ./usr/sbin/quotaon				base-sysutil-bin
 ./usr/sbin/racoon				base-netutil-bin	crypto
