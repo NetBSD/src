@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.176 2011/01/29 18:10:08 matt Exp $ */
+/* $NetBSD: vmstat.c,v 1.177 2011/01/31 18:56:04 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.176 2011/01/29 18:10:08 matt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.177 2011/01/31 18:56:04 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -730,6 +730,7 @@ dovmstat(struct timespec *interval, int reps)
 	int pagesize = getpagesize();
 	int ovflw;
 
+	getnlist(VMSTAT);
 	uptime = getuptime();
 	halfuptime = uptime / 2;
 	(void)signal(SIGCONT, needhdr);
