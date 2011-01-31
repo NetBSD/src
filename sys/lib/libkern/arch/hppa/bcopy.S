@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.13 2011/01/24 15:01:30 skrll Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.14 2011/01/31 12:10:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,13 +36,20 @@
 #undef _LOCORE
 #define _LOCORE	/* XXX fredette - unfortunate */
 
+#if defined(SPCOPY) && !defined(_STANDALONE)
+
+#include "opt_multiprocessor.h"
+
 #include <machine/cpu.h>
+
+#endif
+
 #include <machine/asm.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.13 2011/01/24 15:01:30 skrll Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.14 2011/01/31 12:10:58 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -485,8 +492,6 @@ RCSID("$NetBSD: bcopy.S,v 1.13 2011/01/24 15:01:30 skrll Exp $")
 #endif
 
 #if defined(SPCOPY) && !defined(_STANDALONE)
-
-#include "opt_multiprocessor.h"
 
 #include <sys/errno.h>
 #include "assym.h"
