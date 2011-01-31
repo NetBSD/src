@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64 2011/01/31 14:11:02 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.65 2011/01/31 18:21:33 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -305,7 +305,7 @@ extern int hppa_ncpu;
 
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_cpuid == 0)
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpus[0], cii < hppa_ncpu; cii++, ci++
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci =  &cpus[0]; cii < hppa_ncpu; cii++, ci++
 
 void	cpu_boot_secondary_processors(void);
 
