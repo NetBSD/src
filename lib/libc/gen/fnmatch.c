@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.22 2011/01/31 04:20:50 christos Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.23 2011/01/31 15:07:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.22 2011/01/31 04:20:50 christos Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.23 2011/01/31 15:07:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -208,5 +208,5 @@ fnmatchx(const char *pattern, const char *string, int flags, size_t recursion)
 int
 fnmatch(const char *pattern, const char *string, int flags)
 {
-	return fnmatchx(pattern, string, flags, 128);
+	return fnmatchx(pattern, string, flags, 64);
 }
