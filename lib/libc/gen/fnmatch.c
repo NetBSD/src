@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.23 2011/01/31 15:07:29 christos Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.24 2011/01/31 19:10:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.23 2011/01/31 15:07:29 christos Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.24 2011/01/31 19:10:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -122,7 +122,7 @@ fnmatchx(const char *pattern, const char *string, int flags, size_t recursion)
 	if (recursion-- == 0)
 		return FNM_NORES;
 
-	for (stringstart = string;;)
+	for (stringstart = string;;) {
 		switch (c = FOLDCASE(*pattern++, flags)) {
 		case EOS:
 			if ((flags & FNM_LEADING_DIR) && *string == '/')
@@ -202,6 +202,7 @@ fnmatchx(const char *pattern, const char *string, int flags, size_t recursion)
 				return FNM_NOMATCH;
 			break;
 		}
+	}
 	/* NOTREACHED */
 }
 
