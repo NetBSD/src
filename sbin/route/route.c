@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.127 2010/12/13 17:39:47 pooka Exp $	*/
+/*	$NetBSD: route.c,v 1.128 2011/02/01 01:39:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.127 2010/12/13 17:39:47 pooka Exp $");
+__RCSID("$NetBSD: route.c,v 1.128 2011/02/01 01:39:19 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ union sockunion {
 	struct	sockaddr_iso siso;
 	struct	sockaddr_mpls smpls;
 #endif /* SMALL */
+	struct	sockaddr_storage sstorage;
 };
 
 typedef union sockunion *sup;
@@ -131,7 +132,7 @@ int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, Sflag;
 int	iflag, verbose, aflen = sizeof(struct sockaddr_in), rtag;
 int	locking, lockrest, debugonly, shortoutput;
 struct	rt_metrics rt_metrics;
-u_int32_t  rtm_inits;
+int	rtm_inits;
 short ns_nullh[] = {0,0,0};
 short ns_bh[] = {-1,-1,-1};
 
@@ -152,9 +153,6 @@ usage(const char *cp)
 #define	PRIETHER	"02x:%02x:%02x:%02x:%02x:%02x"
 #define	PRIETHER_ARGS(__enaddr)	(__enaddr)[0], (__enaddr)[1], (__enaddr)[2], \
 				(__enaddr)[3], (__enaddr)[4], (__enaddr)[5]
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 int
 main(int argc, char * const *argv)
@@ -327,7 +325,7 @@ flushroutes(int argc, char * const argv[], int doall)
 		else {
 			(void)printf("%-20.20s ",
 			    routename(sa, NULL, rtm->rtm_flags));
-			sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) +
+			sa = (struct sockaddr *)(RT_ROUNDUP(sa->sa_len) +
 			    (char *)sa);
 			(void)printf("%-20.20s ",
 			    routename(sa, NULL, RTF_HOST));
@@ -766,10 +764,11 @@ static void
 set_metric(const char *value, int key)
 {
 	int flag = 0;
-	u_long noval, *valp = &noval;
+	uint64_t noval, *valp = &noval;
 
 	switch (key) {
-#define caseof(x, y, z)	case x: valp = &rt_metrics.z; flag = y; break
+#define caseof(x, y, z) \
+	case x: valp = (uint64_t *)&rt_metrics.z; flag = y; break
 	caseof(K_MTU, RTV_MTU, rmx_mtu);
 	caseof(K_HOPCOUNT, RTV_HOPCOUNT, rmx_hopcount);
 	caseof(K_EXPIRE, RTV_EXPIRE, rmx_expire);
@@ -1479,7 +1478,7 @@ rtmsg(int cmd, int flags, struct sou *soup)
 
 #define NEXTADDR(w, u) \
 	if (rtm_addrs & (w)) {\
-	    l = ROUNDUP(u.sa.sa_len); memmove(cp, &(u), l); cp += l;\
+	    l = RT_ROUNDUP(u.sa.sa_len); memmove(cp, &(u), l); cp += l;\
 	    if (verbose && ! shortoutput) sodump(&(u),#u);\
 	}
 
@@ -1600,30 +1599,26 @@ mask_addr(struct sou *soup)
 #endif /* SMALL */
 }
 
-const char *msgtypes[] = {
-	"",
-	"RTM_ADD: Add Route",
-	"RTM_DELETE: Delete Route",
-	"RTM_CHANGE: Change Metrics or flags",
-	"RTM_GET: Report Metrics",
-	"RTM_LOSING: Kernel Suspects Partitioning",
-	"RTM_REDIRECT: Told to use different route",
-	"RTM_MISS: Lookup failed on this address",
-	"RTM_LOCK: fix specified metrics",
-	"RTM_OLDADD: caused by SIOCADDRT",
-	"RTM_OLDDEL: caused by SIOCDELRT",
-	"RTM_RESOLVE: Route created by cloning",
-	"RTM_NEWADDR: address being added to iface",
-	"RTM_DELADDR: address being removed from iface",
-	"RTM_OOIFINFO: iface status change (pre-1.5)",
-	"RTM_OIFINFO: iface status change (pre-6.0)",
-	"RTM_IFANNOUNCE: iface arrival/departure",
-	"RTM_IEEE80211: IEEE80211 wireless event",
-	"",
-	"",
-	"RTM_IFINFO: iface status change",
-	"RTM_CHGADDR: address being changed on iface",
-	0,
+const char * const msgtypes[] = {
+	[RTM_ADD] = "RTM_ADD: Add Route",
+	[RTM_DELETE] = "RTM_DELETE: Delete Route",
+	[RTM_CHANGE] = "RTM_CHANGE: Change Metrics or flags",
+	[RTM_GET] = "RTM_GET: Report Metrics",
+	[RTM_LOSING] = "RTM_LOSING: Kernel Suspects Partitioning",
+	[RTM_REDIRECT] = "RTM_REDIRECT: Told to use different route",
+	[RTM_MISS] = "RTM_MISS: Lookup failed on this address",
+	[RTM_LOCK] = "RTM_LOCK: fix specified metrics",
+	[RTM_OLDADD] = "RTM_OLDADD: caused by SIOCADDRT",
+	[RTM_OLDDEL] = "RTM_OLDDEL: caused by SIOCDELRT",
+	[RTM_RESOLVE] = "RTM_RESOLVE: Route created by cloning",
+	[RTM_NEWADDR] = "RTM_NEWADDR: address being added to iface",
+	[RTM_DELADDR] = "RTM_DELADDR: address being removed from iface",
+	[RTM_OOIFINFO] = "RTM_OOIFINFO: iface status change (pre-1.5)",
+	[RTM_OIFINFO] = "RTM_OIFINFO: iface status change (pre-64bit time)",
+	[RTM_IFANNOUNCE] = "RTM_IFANNOUNCE: iface arrival/departure",
+	[RTM_IEEE80211] = "RTM_IEEE80211: IEEE80211 wireless event",
+	[RTM_IFINFO] = "RTM_IFINFO: iface status change",
+	[RTM_CHGADDR] = "RTM_CHGADDR: address being changed on iface",
 };
 
 const char metricnames[] =
@@ -1805,9 +1800,10 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 	char *cp;
 	int i;
 
-	if (! shortoutput)
+	if (! shortoutput) {
 		(void)printf("   route to: %s\n",
 		    routename(&soup->so_dst.sa, NULL, RTF_HOST));
+	}
 	if (rtm->rtm_version != RTM_VERSION) {
 		warnx("routing message version %d not understood",
 		    rtm->rtm_version);
@@ -1849,7 +1845,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 					mpls = sa;
 					break;
 				}
-				ADVANCE(cp, sa);
+				RT_ADVANCE(cp, sa);
 			}
 	if (dst && mask)
 		mask->sa_family = dst->sa_family;	/* XXX */
@@ -1903,16 +1899,16 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 	if (! shortoutput) {
 		(void)printf("\n%s\n", "\
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire");
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
-		printf("%8ld%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
-		printf("%8ld%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
+		printf("%8"PRId64"%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
+		printf("%8"PRId64"%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
+		printf("%8"PRId64"%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
+		printf("%8"PRId64"%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
+		printf("%8"PRId64"%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
+		printf("%8"PRId64"%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
+		printf("%8"PRId64"%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
 		if (rtm->rtm_rmx.rmx_expire)
 			rtm->rtm_rmx.rmx_expire -= time(0);
-		printf("%8ld%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+		printf("%8"PRId64"%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
 	}
 #undef lock
 #undef msec
@@ -1953,7 +1949,7 @@ extract_addrs(const char *cp, int addrs, const struct sockaddr *sa[], int *nmfp)
 			if ((i == RTAX_DST || i == RTAX_IFA) &&
 			    nmf == -1)
 				nmf = sa[i]->sa_family;
-			ADVANCE(cp, sa[i]);
+			RT_ADVANCE(cp, sa[i]);
 		} else
 			sa[i] = NULL;
 	}
@@ -1996,8 +1992,10 @@ bprintf(FILE *fp, int b, const char *f)
 	int gotsome = 0;
 	const uint8_t *s = (const uint8_t *)f;
 
-	if (b == 0)
+	if (b == 0) {
+		fputs("none", fp);
 		return;
+	}
 	while ((i = *s++) != 0) {
 		if (b & (1 << (i-1))) {
 			if (gotsome == 0)
