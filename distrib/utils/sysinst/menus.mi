@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.39 2010/12/04 14:57:56 jmmv Exp $	*/
+/*	$NetBSD: menus.mi,v 1.40 2011/02/01 01:42:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -230,8 +230,9 @@ menu distmedium, title MSG_Select_medium, y=-5;
 menu distset, title MSG_Select_your_distribution;
 	display action { msg_display (MSG_distset); };
 	option MSG_Full_installation, exit, action { init_set_status(0);  };
-	option MSG_Minimal_installation, exit, action { init_set_status(1); };
-	option MSG_Custom_installation, exit, action { init_set_status(1); customise_sets(); };
+	option MSG_Full_installation_nox, exit, action { init_set_status(SFLAG_NOX); };
+	option MSG_Minimal_installation, exit, action { init_set_status(SFLAG_MINIMAL); };
+	option MSG_Custom_installation, exit, action { init_set_status(SFLAG_MINIMAL); customise_sets(); };
 
 menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Get_Distribution;

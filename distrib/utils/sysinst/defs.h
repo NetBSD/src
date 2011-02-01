@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.150 2011/01/26 10:58:19 pooka Exp $	*/
+/*	$NetBSD: defs.h,v 1.151 2011/02/01 01:42:07 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -147,6 +147,10 @@ enum {
 
 /* All machine dependant sets */
 #define SET_MD SET_MD_1, SET_MD_2, SET_MD_3, SET_MD_4
+
+/* Set list flags */
+#define SFLAG_MINIMAL	1
+#define	SFLAG_NOX	2
 
 /* Macros */
 #define nelem(x) (sizeof (x) / sizeof *(x))
@@ -318,7 +322,7 @@ void set_menu_numopts(int, int);
 
 /* Machine dependent functions .... */
 void	md_init(void);
-void	md_init_set_status(int); /* minimal y/n */
+void	md_init_set_status(int); /* SFLAG_foo */
 
  /* MD functions if user selects install - in order called */
 int	md_get_info(void);
