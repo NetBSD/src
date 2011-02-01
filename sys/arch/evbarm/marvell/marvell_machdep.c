@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.2 2011/02/01 22:36:41 jakllsch Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.3 2011/02/01 22:54:24 jakllsch Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.2 2011/02/01 22:36:41 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.3 2011/02/01 22:54:24 jakllsch Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -175,6 +175,18 @@ static void marvell_device_register(device_t, void *);
 static void marvell_startend_by_tag(int, uint64_t *, uint64_t *);
 #endif
 
+static void
+marvell_system_reset(void)
+{
+	/* unmask soft reset */
+	write_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR,
+	    MVSOC_MLMB_RSTOUTNMASKR_SOFTRSTOUTEN);
+	/* assert soft reset */
+	write_mlmbreg(MVSOC_MLMB_SSRR, MVSOC_MLMB_SSRR_SYSTEMSOFTRST);
+	/* if we're still running, jump to the reset address */
+	cpu_reset();
+	/*NOTREACHED*/
+}
 
 void
 cpu_reboot(int howto, char *bootstr)
@@ -190,7 +202,7 @@ cpu_reboot(int howto, char *bootstr)
 		printf("Please press any key to reboot.\r\n");
 		cngetc();
 		printf("rebooting...\r\n");
-		cpu_reset();
+		marvell_system_reset();
 	}
 
 	/*
@@ -223,7 +235,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\r\n");
-	cpu_reset();
+	marvell_system_reset();
 
 	/*NOTREACHED*/
 }
