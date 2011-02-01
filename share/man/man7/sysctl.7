@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.58 2011/01/19 08:37:56 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.59 2011/02/01 20:43:48 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd January 19, 2011
+.Dd February 1, 2011
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -141,6 +141,80 @@ The highest valid file system type number.
 .It Li vfs.generic.conf ( VFS_CONF )
 Returns configuration information about the file system type given as a fourth
 level identifier.
+.It Li vfs.generic.usermount ( VFS_USERMOUNT )
+Determines if non superuser mounts are allowed, default to no 
+.Dv 0 .
+.It Li vfs.generic.magiclinks ( VFS_MAGICLINKS )
+Controls if expansion of variables is going to be performed on pathnames
+or not.
+Defaults to no variable expansion,
+.Dv 0 .
+Variables are of the form
+.Li @name
+and the following names are supported:
+.Bl -tag -width "kernel_ident"
+.It domainname
+The domain name as determined by 
+.Xr getdomainname 2
+.It emul
+The current process emulation name.
+Defaults to
+.Dv netbsd .
+Other valid emulations are:
+.Dv aout ,
+.Dv aoutm68k ,
+.Dv darwin ,
+.Dv freebsd ,
+.Dv ibcs2 ,
+.Dv irix ,
+.Dv linux ,
+.Dv linux32 ,
+.Dv m68k4k ,
+.Dv mach ,
+.Dv netbsd32 ,
+.Dv osf1 ,
+.Dv pecoff ,
+.Dv sunos ,
+.Dv sunos32 ,
+.Dv svr4 ,
+.Dv svr4_32 ,
+.Dv ultrix ,
+.Dv vax1k .
+.It gid
+The effective group id of the current process.
+.It hostname
+The host name as determined by
+.Xr gethostname 2
+.It kernel_ident
+The kernel identifier, as specified by config.
+For example
+.Dv GENERIC .
+.It machine
+The type of machine as determined by the
+.Xr sysctl 3
+.Dq hw.machine .
+.It machine_arch
+The architecture of the processor as determined by the
+.Xr sysctl 3
+.Dq hw.machine_arch .
+.It osrelease
+The kernel release number as determined by the
+.Xr sysctl 3
+.Dq kern.osrelease .
+.Xr sysctl 3
+.It ostype
+The kernel operating system type as determined by the
+.Xr sysctl 3
+.Dq kern.ostype .
+Defaults to
+.Dv NetBSD .
+.It rgid
+The real group id of the current process.
+.It ruid
+The real user id of the current process.
+.It uid
+The effective user id of the current process.
+.El
 .El
 .Pp
 A second level name for controlling the
