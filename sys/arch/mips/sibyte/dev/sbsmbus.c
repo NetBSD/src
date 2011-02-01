@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.14 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.15 2011/02/01 06:13:08 matt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.14 2011/02/01 03:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.15 2011/02/01 06:13:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,7 +68,6 @@ static const struct smbus_attach_locs smbus_devs[] = {
 	{ X1241_SMBUS_CHAN,	X1241_RTC_SLAVEADDR },
 	{ M41T81_SMBUS_CHAN,	M41T81_SLAVEADDR },
 };
-static const int smbus_dev_count = sizeof smbus_devs / sizeof smbus_devs[0];
 
 static int found = 0;
 
@@ -88,9 +87,9 @@ smbus_attach(device_t parent, device_t self, void *aux)
 	int locs[SMBUSCF_NLOCS];
 
 	found++;
-	printf("\n");
+	aprint_normal("\n");
 
-	for (i = 0; i < smbus_dev_count; i++) {
+	for (i = 0; i < __arraycount(smbus_devs); i++) {
 		if (device_unit(self) != smbus_devs[i].sa_interface)
 			continue;
 
