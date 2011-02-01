@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.31 2009/12/14 00:46:08 matt Exp $ */
+/* $NetBSD: sbscn.c,v 1.32 2011/02/01 03:16:54 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,11 +109,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.31 2009/12/14 00:46:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.32 2011/02/01 03:16:54 matt Exp $");
 
 #define	SBSCN_DEBUG
 
 #include "opt_ddb.h"
+#include "ioconf.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_SBSCN)
@@ -175,8 +176,6 @@ int	sbscn_cngetc(dev_t dev);
 void	sbscn_cnputc(dev_t dev, int c);
 void	sbscn_cnpollc(dev_t dev, int on);
 
-extern struct cfdriver sbscn_cd;
-
 dev_type_open(sbscnopen);
 dev_type_close(sbscnclose);
 dev_type_read(sbscnread);
@@ -228,10 +227,10 @@ int	sbscn_kgdb_getc(void *);
 void	sbscn_kgdb_putc(void *, int);
 #endif /* KGDB */
 
-static int	sbscn_match(struct device *, struct cfdata *, void *);
-static void	sbscn_attach(struct device *, struct device *, void *);
+static int	sbscn_match(device_t, cfdata_t, void *);
+static void	sbscn_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sbscn, sizeof(struct sbscn_softc),
+CFATTACH_DECL_NEW(sbscn, sizeof(struct sbscn_softc),
     sbscn_match, sbscn_attach, NULL, NULL);
 
 #define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
@@ -258,7 +257,7 @@ CFATTACH_DECL(sbscn, sizeof(struct sbscn_softc),
     } while (0)
 
 static int
-sbscn_match(struct device *parent, struct cfdata *match, void *aux)
+sbscn_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sbobio_attach_args *sap = aux;
 
@@ -269,9 +268,9 @@ sbscn_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sbscn_attach(struct device *parent, struct device *self, void *aux)
+sbscn_attach(device_t parent, device_t self, void *aux)
 {
-	struct sbscn_softc *sc = (struct sbscn_softc *)self;
+	struct sbscn_softc *sc = device_private(self);
 	struct sbobio_attach_args *sap = aux;
 	int i;
 
@@ -343,8 +342,9 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 	ch->ch_tty = tp;
 	ch->ch_rbuf = malloc(sbscn_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
 	if (ch->ch_rbuf == NULL) {
-		printf("%s: channel %d: unable to allocate ring buffer\n",
-		    sc->sc_dev.dv_xname, chan);
+		aprint_error_dev(sc->sc_dev,
+		    "channel %d: unable to allocate ring buffer\n",
+		    chan);
 		return;
 	}
 	ch->ch_ebuf = ch->ch_rbuf + (sbscn_rbuf_size << 1);
@@ -358,9 +358,10 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 		maj = cdevsw_lookup_major(&sbscn_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj,
-		    (device_unit(&sc->sc_dev) << 1) + chan);
+		    (device_unit(sc->sc_dev) << 1) + chan);
 
-		printf("%s: channel %d: console\n", sc->sc_dev.dv_xname, chan);
+		aprint_normal_dev(sc->sc_dev, "channel %d: %s\n",
+		    chan, "console");
 	}
 
 #ifdef KGDB
@@ -373,14 +374,15 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 		sbscn_kgdb_attached = 1;
 
 		SET(sc->sc_hwflags, SBSCN_HW_KGDB);
-		printf("%s: channel %d: kgdb\n", sc->sc_dev.dv_xname, chan);
+		aprint_normal_dev(sc->sc_dev, "channel %d: %s\n",
+		    chan, "kgdb");
 	}
 #endif
 
 	ch->ch_si = softint_establish(SOFTINT_SERIAL, sbscn_soft, ch);
 
 #if NRND > 0 && defined(RND_SBSCN)
-	rnd_attach_source(&ch->ch_rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&ch->ch_rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
 
@@ -425,9 +427,10 @@ sbscn_status(struct sbscn_channel *ch, const char *str)
 {
 	struct sbscn_softc *sc = ch->ch_sc;
 	struct tty *tp = ch->ch_tty;
+	const char * const xname = device_xname(sc->sc_dev);
 
 	printf("%s: chan %d: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
-	    sc->sc_dev.dv_xname, ch->ch_num, str,
+	    xname, ch->ch_num, str,
 	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
 	    ISSET(ch->ch_iports, ch->ch_i_dcd) ? "+" : "-",
 	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
@@ -435,7 +438,7 @@ sbscn_status(struct sbscn_channel *ch, const char *str)
 	    ch->ch_tx_stopped ? "+" : "-");
 
 	printf("%s: chan %d: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
-	    sc->sc_dev.dv_xname, ch->ch_num, str,
+	    xname, ch->ch_num, str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
 	    ISSET(ch->ch_iports, ch->ch_i_cts) ? "+" : "-",
 	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
@@ -1135,8 +1138,8 @@ sbscn_iflush(struct sbscn_channel *ch)
 		    READ_REG(ch->ch_base + 0x60);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: sbscn_iflush timeout %02x\n",
-		    ch->ch_sc->sc_dev.dv_xname, reg & 0xff);
+		aprint_debug_dev(ch->ch_sc->sc_dev,
+		    "sbscn_iflush timeout %02x\n", reg & 0xff);
 #endif
 }
 
@@ -1301,7 +1304,7 @@ sbscn_diag(void *arg)
 	splx(s);
 
 	log(LOG_WARNING, "%s: channel %d: %d fifo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev.dv_xname, ch->ch_num,
+	    device_xname(sc->sc_dev), ch->ch_num,
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.15 2009/12/14 00:46:08 matt Exp $ */
+/* $NetBSD: sbtimer.c,v 1.16 2011/02/01 03:16:54 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.15 2009/12/14 00:46:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.16 2011/02/01 03:16:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.15 2009/12/14 00:46:08 matt Exp $");
 #include <mips/sibyte/dev/sbscdvar.h>
 
 struct sbtimer_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void	*sc_intrhand;
 	int	sc_flags;
 	void	*sc_addr_icnt, *sc_addr_cnt, *sc_addr_cfg;
@@ -58,10 +58,10 @@ struct sbtimer_softc {
 #define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
-static int	sbtimer_match(struct device *, struct cfdata *, void *);
-static void	sbtimer_attach(struct device *, struct device *, void *);
+static int	sbtimer_match(device_t, cfdata_t, void *);
+static void	sbtimer_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sbtimer, sizeof(struct sbtimer_softc),
+CFATTACH_DECL_NEW(sbtimer, sizeof(struct sbtimer_softc),
     sbtimer_match, sbtimer_attach, NULL, NULL);
 
 static void	sbtimer_clockintr(void *arg, uint32_t status, vaddr_t pc);
@@ -71,7 +71,7 @@ static void	sbtimer_miscintr(void *arg, uint32_t status, vaddr_t pc);
 static void	sbtimer_clock_init(void *arg);
 
 static int
-sbtimer_match(struct device *parent, struct cfdata *match, void *aux)
+sbtimer_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sbscd_attach_args *sap = aux;
 
@@ -82,15 +82,17 @@ sbtimer_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sbtimer_attach(struct device *parent, struct device *self, void *aux)
+sbtimer_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbscd_attach_args *sa = aux;
-	struct sbtimer_softc *sc = (struct sbtimer_softc *)self;
+	struct sbtimer_softc *sc = device_private(self);
 	void (*fun)(void *, uint32_t, vaddr_t);
 	int ipl;
 	const char *comment = "";
 
-	sc->sc_flags = device_cfdata(&sc->sc_dev)->cf_flags;
+	sc->sc_dev = self;
+
+	sc->sc_flags = device_cfdata(sc->sc_dev)->cf_flags;
 	sc->sc_addr_icnt = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr +
 	    R_SCD_TIMER_INIT);
 	sc->sc_addr_cnt = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr +
@@ -141,8 +143,9 @@ static void
 sbtimer_clock_init(void *arg)
 {
 	struct sbtimer_softc *sc = arg;
+	const char * const xname = device_xname(sc->sc_dev);
 
-	printf("%s: ", sc->sc_dev.dv_xname);
+	printf("%s: ", xname);
 	if ((1000000 % hz) == 0)
 		printf("%dHz system timer\n", hz);
 	else {
@@ -154,7 +157,7 @@ sbtimer_clock_init(void *arg)
 	WRITE_REG(sc->sc_addr_cfg, 0x00);		/* XXX */
 	if (G_SYS_PLL_DIV(READ_REG(MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG))) == 0) {
 		printf("%s: PLL_DIV == 0; speeding up clock ticks for simulator\n",
-		    sc->sc_dev.dv_xname);
+		    xname);
 		WRITE_REG(sc->sc_addr_icnt, (tick/100) - 1); /* XXX */
 	} else {
 		WRITE_REG(sc->sc_addr_icnt, tick - 1);	/* XXX */

@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.24 2009/12/14 00:46:08 matt Exp $ */
+/* $NetBSD: sbjcn.c,v 1.25 2011/02/01 03:16:54 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,11 +103,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.24 2009/12/14 00:46:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.25 2011/02/01 03:16:54 matt Exp $");
 
 #define	SBJCN_DEBUG
 
 #include "opt_ddb.h"
+#include "ioconf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,8 +164,6 @@ int	sbjcn_cngetc(dev_t dev);
 void	sbjcn_cnputc(dev_t dev, int c);
 void	sbjcn_cnpollc(dev_t dev, int on);
 
-extern struct cfdriver sbjcn_cd;
-
 dev_type_open(sbjcnopen);
 dev_type_close(sbjcnclose);
 dev_type_read(sbjcnread);
@@ -218,10 +217,10 @@ int	sbjcn_kgdb_getc(void *);
 void	sbjcn_kgdb_putc(void *, int);
 #endif /* KGDB */
 
-static int	sbjcn_match(struct device *, struct cfdata *, void *);
-static void	sbjcn_attach(struct device *, struct device *, void *);
+static int	sbjcn_match(device_t, cfdata_t, void *);
+static void	sbjcn_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sbjcn, sizeof(struct sbjcn_softc),
+CFATTACH_DECL_NEW(sbjcn, sizeof(struct sbjcn_softc),
     sbjcn_match, sbjcn_attach, NULL, NULL);
 
 #define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
@@ -236,7 +235,7 @@ CFATTACH_DECL(sbjcn, sizeof(struct sbjcn_softc),
 
 
 static int
-sbjcn_match(struct device *parent, struct cfdata *match, void *aux)
+sbjcn_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sbscd_attach_args *sap = aux;
 
@@ -247,11 +246,12 @@ sbjcn_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sbjcn_attach(struct device *parent, struct device *self, void *aux)
+sbjcn_attach(device_t parent, device_t self, void *aux)
 {
-	struct sbjcn_softc *sc = (struct sbjcn_softc *)self;
+	struct sbjcn_softc *sc = device_private(self);
 	struct sbscd_attach_args *sap = aux;
 
+	sc->sc_dev = self;
 	sc->sc_addr = sap->sa_base + sap->sa_locs.sa_offset;
 
 	printf("\n");
