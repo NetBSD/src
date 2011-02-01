@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2010/12/10 07:17:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2011/02/01 21:28:43 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -60,7 +60,7 @@ distrib-dirs: .PHONY check_DESTDIR NetBSD.dist
 # INSTALL_DIR would want to write to the metalog, and it can't do that
 # if the metalog is inside DESTDIR but DESTDIR doesn't yet exist.
 	${HOST_INSTALL_DIR} -m 755 ${DESTDIR}
-# Inkoke mtree to create the directories listed in NetBSD.dist;
+# Invoke mtree to create the directories listed in NetBSD.dist;
 # then invoke mtree again to register those directories in the metalog.
 	${TOOL_MTREE} -def ${.OBJDIR}/NetBSD.dist -N ${.CURDIR}/.. \
 	    -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
