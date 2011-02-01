@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2009/09/19 14:57:28 abs Exp $ */
+/*	$NetBSD: md.c,v 1.30 2011/02/01 01:42:10 joerg Exp $ */
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -54,9 +54,9 @@ md_init(void)
 }
 
 void
-md_init_set_status(int minimal)
+md_init_set_status(int flags)
 {
-	(void)minimal;
+	(void)flags;
 }
 
 int

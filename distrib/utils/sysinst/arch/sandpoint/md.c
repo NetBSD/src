@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.32 2010/06/13 15:32:00 phx Exp $ */
+/*	$NetBSD: md.c,v 1.33 2011/02/01 01:42:14 joerg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,11 +55,11 @@ md_init(void)
 }
 
 void
-md_init_set_status(int minimal)
+md_init_set_status(int flags)
 {
 	struct utsname instsys;
 
-	(void)minimal;
+	(void)flags;
 
 	/*
 	 * Get the name of the Install Kernel we are running under and
