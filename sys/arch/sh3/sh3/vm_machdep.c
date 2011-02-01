@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.69 2011/01/14 02:06:31 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.70 2011/02/01 01:54:14 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69 2011/01/14 02:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70 2011/02/01 01:54:14 uwe Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69 2011/01/14 02:06:31 rmind Exp $"
 #include <sh3/userret.h>
 
 extern void lwp_trampoline(void);
-extern void lwp_setfunc_trampoline(void);
 
 static void sh3_setup_uarea(struct lwp *);
 
@@ -176,7 +175,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	l->l_md.md_regs->tf_ssr = PSL_USERSET;
 
 	/* When lwp is switched to, jump to the trampoline */
-	sf->sf_pr  = (int)lwp_setfunc_trampoline;
+	sf->sf_pr  = (int)lwp_trampoline;
+	sf->sf_r10 = (int)l;	/* "new" lwp for lwp_startup() */
 	sf->sf_r11 = (int)arg;	/* hook function/argument */
 	sf->sf_r12 = (int)func;
 }
