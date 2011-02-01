@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.69 2010/12/04 14:57:57 jmmv Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.70 2011/02/01 01:42:07 joerg Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -898,6 +898,7 @@ message local_fs {Niezamontowany SP}
 message local_dir {Lokalny katalog}
 message Select_your_distribution {Wybierz swoja dystrybucje}
 message Full_installation {Pelna instalacja}
+message Full_installation_nox {Instalacja bez X11}
 message Minimal_installation {Minimalna instalacja}
 message Custom_installation {Inna instalacja}
 message hidden {** ukryte **}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2010/09/04 01:23:25 tsutsui Exp $ */
+/*	$NetBSD: md.c,v 1.9 2011/02/01 01:42:11 joerg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,7 @@ md_init(void)
 }
 
 void
-md_init_set_status(int minimal)
+md_init_set_status(int flags)
 {
 	static const struct {
 		const char *name;
