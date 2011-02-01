@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.47 2010/02/08 19:02:31 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.48 2011/02/01 06:46:47 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2010/02/08 19:02:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/02/01 06:46:47 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -192,8 +192,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	kernend = (void *)mips_round_page(end);
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (magic == BOOTINFO_MAGIC) {
-		ksym_start = (void *)bootinfo.ssym;
-		ksym_end   = (void *)bootinfo.esym;
+		ksym_start = (void *)(intptr_t)bootinfo.ssym;
+		ksym_end   = (void *)(intptr_t)bootinfo.esym;
 		kernend = (void *)mips_round_page((vaddr_t)ksym_end);
 	}
 #endif
