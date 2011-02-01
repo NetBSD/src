@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1498 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1499 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -839,3 +839,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	vmstat(1): add support for getting evcnts and boottime for sysctl.
 		Allow unprived vmstat to function is everything wanted is
 		available via sysctl. [matt 20110129]
+	route: make routing socket interface 64-bit clean. [matt 20110131]
