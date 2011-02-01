@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.20 2011/01/14 02:06:28 rmind Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.21 2011/02/01 06:46:46 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.20 2011/01/14 02:06:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.21 2011/02/01 06:46:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,7 @@ MachEmulateSpecial3(uint32_t inst, struct frame *frame, uint32_t cause)
 		switch (instfmt.RType.rd) {
 		case 29:
 			frame->f_regs[instfmt.RType.rt] =
-				(mips_reg_t)curlwp->l_private;
+				(mips_reg_t)(intptr_t)curlwp->l_private;
 			goto out;
 		}
 		/* FALLTHROUGH */
