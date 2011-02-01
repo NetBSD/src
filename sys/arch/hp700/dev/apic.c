@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.10 2011/01/27 13:57:39 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.11 2011/02/01 18:33:24 skrll Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -139,7 +139,7 @@ apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #endif
 	line = PCI_INTERRUPT_LINE(reg);
 	if (sc->sc_irq[line] == 0)
-		sc->sc_irq[line] = hp700_intr_allocate_bit(&int_reg_cpu);
+		sc->sc_irq[line] = hp700_intr_allocate_bit(&ir_cpu);
 	*ihp = (line << APIC_INT_LINE_SHIFT) | sc->sc_irq[line];
 	return (APIC_INT_IRQ(*ihp) == 0);
 }
@@ -203,7 +203,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 		return arg;
 	}
 
-	iv = hp700_intr_establish(pri, apic_intr, aiv, &int_reg_cpu, irq);
+	iv = hp700_intr_establish(pri, apic_intr, aiv, &ir_cpu, irq);
 	if (iv) {
 		ent0 = (31 - irq) & APIC_ENT0_VEC;
 		ent0 |= apic_get_int_ent0(sc, line);
