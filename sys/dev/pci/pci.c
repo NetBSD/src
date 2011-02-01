@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.130 2010/11/13 13:52:08 uebayasi Exp $	*/
+/*	$NetBSD: pci.c,v 1.131 2011/02/01 19:37:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.130 2010/11/13 13:52:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.131 2011/02/01 19:37:37 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -819,6 +819,7 @@ struct pci_child_power {
 	int p_pm_offset;
 	pcireg_t p_pm_cap;
 	pcireg_t p_class;
+	pcireg_t p_csr;
 };
 
 static bool
@@ -872,9 +873,10 @@ pci_child_shutdown(device_t dv, int how)
 	struct pci_child_power *priv = device_pmf_bus_private(dv);
 	pcireg_t csr;
 
-	/* disable busmastering */
+	/* restore original bus-mastering state */
 	csr = pci_conf_read(priv->p_pc, priv->p_tag, PCI_COMMAND_STATUS_REG);
 	csr &= ~PCI_COMMAND_MASTER_ENABLE;
+	csr |= priv->p_csr & PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(priv->p_pc, priv->p_tag, PCI_COMMAND_STATUS_REG, csr);
 	return true;
 }
@@ -905,6 +907,8 @@ pci_child_register(device_t child)
 	priv->p_tag = pci_make_tag(priv->p_pc, sc->sc_bus, device,
 	    function);
 	priv->p_class = pci_conf_read(priv->p_pc, priv->p_tag, PCI_CLASS_REG);
+	priv->p_csr = pci_conf_read(priv->p_pc, priv->p_tag,
+	    PCI_COMMAND_STATUS_REG);
 
 	if (pci_get_capability(priv->p_pc, priv->p_tag,
 			       PCI_CAP_PWRMGMT, &off, &reg)) {
