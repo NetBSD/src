@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.1 2010/10/03 06:03:10 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.2 2011/02/01 22:36:41 jakllsch Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.1 2010/10/03 06:03:10 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.2 2011/02/01 22:36:41 jakllsch Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -750,11 +750,6 @@ initarm(void *arg)
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
 	}
-#endif
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/* Firmware doesn't load symbols. */
-	ksyms_init();
 #endif
 
 #ifdef DDB
