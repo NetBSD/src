@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2011/02/01 20:19:32 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 2011/02/01 20:20:19 chuck Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -116,7 +116,7 @@
 
 /*
  * pmap.c: i386 pmap module rewrite
- * Chuck Cranor <chuck@ccrc.wustl.edu>
+ * Chuck Cranor <chuck@netbsd>
  * 11-Aug-97
  *
  * history of this pmap module: in addition to my own input, i used
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2011/02/01 20:19:32 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2011/02/01 20:20:19 chuck Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
