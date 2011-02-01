@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 2011/01/31 14:11:02 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 2011/02/01 18:33:24 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2011/01/31 14:11:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/02/01 18:33:24 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -175,7 +175,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	}
 	
 	sc->sc_ih = hp700_intr_establish(IPL_CLOCK, clock_intr,
-	    NULL /*clockframe*/, &int_reg_cpu, 31);
+	    NULL /*clockframe*/, &ir_cpu, 31);
 
 #ifdef MULTIPROCESSOR
 
@@ -214,7 +214,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	 * ASP doesn't seem to like to use interrupt bits above 28
 	 * or below 27.
 	 */
-	int_reg_cpu.int_reg_allocatable_bits =
+	ir_cpu.ir_bits =
 		(1 << 28) | (1 << 27) | (1 << 26);
 }
 

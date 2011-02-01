@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.22 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.23 2011/02/01 18:33:24 skrll Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.22 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.23 2011/02/01 18:33:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,5 +559,5 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 		      "i82596DX",
 		      myaddr, ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
 	gsc->sc_ih = hp700_intr_establish(IPL_NET, i82586_intr, sc,
-	    ga->ga_int_reg, ga->ga_irq);
+	    ga->ga_ir, ga->ga_irq);
 }
