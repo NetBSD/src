@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.53 2011/01/23 21:53:39 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.54 2011/02/01 18:33:25 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -152,7 +152,7 @@
 	.import	lwp0, data
 	.import	panic, code
 	.import fpu_csw, data
-	.import hp700_int_regs, data
+	.import hp700_interrupt_registers, data
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(kernelmapped, 4)	/* set when kernel is mapped */
@@ -780,7 +780,7 @@ ENTRY(hp700_intr_ipending_new,HPPA_FRAME_SIZE)
 	 * and start with the least significant bit and with
 	 * a zero ipending_new value.
 	 */
-	ldo	INT_REG_BITS_MAP(%arg0), %arg0
+	ldo	IR_BITS_MAP(%arg0), %arg0
 	ldi	31, %arg2
 	copy	%r0, %ret0
 
@@ -798,14 +798,14 @@ L$hp700_inew_loop:
 	addib,<,n -1, %arg2, L$hp700_inew_done
 
 	/*
-	 * If the map entry for this bit has INT_REG_BIT_REG
+	 * If the map entry for this bit has IR_BIT_REG
 	 * set, branch to descend into the next interrupt
 	 * register.  Otherwise, set the bits in our ipending_new
 	 * value and loop.
 	 */
 	ldwx,s  %arg2(%arg0), %t1
-	ldil	L%INT_REG_BIT_REG, %t2
-	ldo	R%INT_REG_BIT_REG(%t2), %t2
+	ldil	L%IR_BIT_REG, %t2
+	ldo	R%IR_BIT_REG(%t2), %t2
 	and	%t1, %t2, %t3
 	combt,=,n	%t2, %t3, L$hp700_inew_descend
 	addib,>= -1, %arg2, L$hp700_inew_loop
@@ -837,8 +837,8 @@ L$hp700_inew_descend:
 	stw	%ret0, HPPA_FRAME_ARG(3)(%r3)
 
 	/* Get our new interrupt register. */
-	ldil	L%hp700_int_regs, %arg0
-	ldo	R%hp700_int_regs(%arg0), %arg0
+	ldil	L%hp700_interrupt_registers, %arg0
+	ldo	R%hp700_interrupt_registers(%arg0), %arg0
 	sh2add	%t1, %arg0, %arg0
 	ldw	0(%arg0), %arg0
 
@@ -847,7 +847,7 @@ L$hp700_inew_descend:
 	 * our recursive call.  The read also serves to
 	 * acknowledge the interrupt to the I/O subsystem.
 	 */
-	ldw	INT_REG_REQ(%arg0), %arg1
+	ldw	IR_REQ(%arg0), %arg1
 	bl	hp700_intr_ipending_new, %rp
 	ldw	0(%arg1), %arg1
 

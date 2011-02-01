@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31 2011/01/23 21:53:39 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.32 2011/02/01 18:33:24 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -85,10 +85,10 @@ export	HPPA_BREAK_GET_PSW
 export	HPPA_BREAK_SET_PSW
 
 # hp700_int_reg fields
-struct	hp700_int_reg
-member	INT_REG_REQ		int_reg_req
-member	INT_REG_BITS_MAP	int_reg_bits_map
-export	INT_REG_BIT_REG
+struct	hp700_interrupt_register
+member	IR_REQ			ir_req
+member	IR_BITS_MAP		ir_bits_map
+export	IR_BIT_REG
 
 # struct cpu_info fields
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)

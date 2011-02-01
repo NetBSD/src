@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.18 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.19 2011/02/01 18:33:24 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -280,7 +280,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	    offsetof(struct harmony_empty, playback[0][0]),
 	    PLAYBACK_EMPTYS * HARMONY_BUFSIZE, BUS_DMASYNC_PREWRITE);
 
-	(void) hp700_intr_establish(IPL_AUDIO, harmony_intr, sc, ga->ga_int_reg,
+	(void) hp700_intr_establish(IPL_AUDIO, harmony_intr, sc, ga->ga_ir,
 	     ga->ga_irq);
 
 	/* set defaults */
