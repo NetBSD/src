@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.32 2010/12/24 16:03:54 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.33 2011/02/01 18:12:10 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2010/12/24 16:03:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2011/02/01 18:12:10 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -172,7 +172,7 @@ hp700_intr_establish(int ipl, int (*handler)(void *), void *arg,
 {
 	struct hp700_int_bit *int_bit;
 	int idx;
-	
+
 	/* Panic on a bad interrupt bit. */
 	if (bit_pos < 0 || bit_pos >= HP700_INT_BITS)
 		panic("%s: bad interrupt bit %d", __func__, bit_pos);
@@ -287,7 +287,7 @@ hp700_intr_init(void)
 			continue;
 		imask[int_bit->int_bit_ipl] |= int_bit->int_bit_spl;
 	}
-	
+
 	/* The following bits cribbed from i386/isa/isa_machdep.c: */
 
 	/*
@@ -435,7 +435,7 @@ hppa_intr(struct trapframe *frame)
 	if (ci->ci_ipending & ~ci->ci_cpl)
 		hp700_intr_dispatch(ci->ci_cpl, frame->tf_eiem, frame);
 }
-		
+
 /*
  * Dispatch interrupts.  This dispatches at least one interrupt.
  * This is called with %eiem loaded with zero.
@@ -483,7 +483,7 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 			}
 			arg = &clkframe;
 		}
-	
+
 		/*
 		 * Remove this bit from ipending, raise spl to
 		 * the level required to run this interrupt,
