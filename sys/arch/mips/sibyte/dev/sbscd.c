@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.16 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbscd.c,v 1.17 2011/02/01 06:13:08 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.16 2011/02/01 03:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.17 2011/02/01 06:13:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,7 +105,7 @@ sbscd_attach(device_t parent, device_t self, void *aux)
 	int i;
 	int locs[SBSCDCF_NLOCS];
 
-	printf("\n");
+	aprint_normal("\n");
 
 	for (i = 0; i < sb1250_sbscd_dev_count; i++) {
 		memset(&sa, 0, sizeof sa);

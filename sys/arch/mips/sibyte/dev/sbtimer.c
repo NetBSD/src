@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.16 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbtimer.c,v 1.17 2011/02/01 06:13:08 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.16 2011/02/01 03:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.17 2011/02/01 06:13:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,7 +100,7 @@ sbtimer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr_cfg = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr +
 	    R_SCD_TIMER_CFG);
 
-	printf(": ");
+	aprint_normal(": ");
 	if ((sc->sc_flags & SBTIMER_CLOCK) != 0) {
 		ipl = IPL_CLOCK;
 		fun = sbtimer_clockintr;
@@ -111,7 +111,7 @@ sbtimer_attach(device_t parent, device_t self, void *aux)
 			comment = " (not system timer)";
 			goto not_really;
 		}
-		printf("system timer");
+		aprint_normal("system timer");
 	} else if ((sc->sc_flags & SBTIMER_STATCLOCK) != 0) {
 		ipl = IPL_HIGH;
 		fun = sbtimer_statclockintr;
@@ -123,14 +123,14 @@ sbtimer_attach(device_t parent, device_t self, void *aux)
 			comment = " (not system statistics timer)";
 			goto not_really;
 		}
-		printf("system statistics timer");
+		aprint_normal("system statistics timer");
 	} else {
 not_really:
 		ipl = IPL_BIO;			/* XXX -- pretty low */
 		fun = sbtimer_miscintr;
-		printf("general-purpose timer%s", comment);
+		aprint_normal("general-purpose timer%s", comment);
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	/* clear intr & disable timer. */
 	WRITE_REG(sc->sc_addr_cfg, 0x00);		/* XXX */
@@ -143,21 +143,20 @@ static void
 sbtimer_clock_init(void *arg)
 {
 	struct sbtimer_softc *sc = arg;
-	const char * const xname = device_xname(sc->sc_dev);
 
-	printf("%s: ", xname);
-	if ((1000000 % hz) == 0)
-		printf("%dHz system timer\n", hz);
-	else {
-		printf("cannot get %dHz clock; using 1000Hz\n", hz);
+	if ((1000000 % hz) == 0) {
+		aprint_normal_dev(sc->sc_dev, "%dHz system timer\n", hz);
+	} else {
+		aprint_error_dev(sc->sc_dev,
+		    "cannot get %dHz clock; using 1000Hz\n", hz);
 		hz = 1000;
 		tick = 1000000 / hz;
 	}
 
 	WRITE_REG(sc->sc_addr_cfg, 0x00);		/* XXX */
 	if (G_SYS_PLL_DIV(READ_REG(MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG))) == 0) {
-		printf("%s: PLL_DIV == 0; speeding up clock ticks for simulator\n",
-		    xname);
+		aprint_debug_dev(sc->sc_dev,
+		    "PLL_DIV == 0; speeding up clock ticks for simulator\n");
 		WRITE_REG(sc->sc_addr_icnt, (tick/100) - 1); /* XXX */
 	} else {
 		WRITE_REG(sc->sc_addr_icnt, tick - 1);	/* XXX */
