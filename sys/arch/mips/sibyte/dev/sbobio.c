@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.19 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbobio.c,v 1.20 2011/02/01 06:13:08 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.19 2011/02/01 03:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.20 2011/02/01 06:13:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,7 +230,7 @@ sbobio_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	printf(": %s peripherals\n", dscr);
+	aprint_normal(": %s peripherals\n", dscr);
 
 	for (i = 0; i < devcount; i++) {
 		memset(&sa, 0, sizeof sa);

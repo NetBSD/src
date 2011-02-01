@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.10 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbwdog.c,v 1.11 2011/02/01 06:13:08 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.10 2011/02/01 03:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.11 2011/02/01 06:13:08 matt Exp $");
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +108,7 @@ sbwdog_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		aprint_error_dev(sc->sc_dev,
-		    "unable to register with sysmon\n");
+		aprint_error_dev(self, "unable to register with sysmon\n");
 }
 
 static int

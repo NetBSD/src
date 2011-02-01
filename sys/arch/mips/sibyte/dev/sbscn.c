@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.32 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbscn.c,v 1.33 2011/02/01 06:13:08 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.32 2011/02/01 03:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.33 2011/02/01 06:13:08 matt Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -259,9 +259,9 @@ CFATTACH_DECL_NEW(sbscn, sizeof(struct sbscn_softc),
 static int
 sbscn_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct sbobio_attach_args *sap = aux;
+	struct sbobio_attach_args *sa = aux;
 
-	if (sap->sa_locs.sa_type != SBOBIO_DEVTYPE_DUART)
+	if (sa->sa_locs.sa_type != SBOBIO_DEVTYPE_DUART)
 		return (0);
 
 	return 1;
@@ -271,14 +271,15 @@ static void
 sbscn_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbscn_softc *sc = device_private(self);
-	struct sbobio_attach_args *sap = aux;
+	struct sbobio_attach_args *sa = aux;
 	int i;
 
-	sc->sc_addr = sap->sa_locs.sa_addr;
+	sc->sc_dev = self;
+	sc->sc_addr = sa->sa_locs.sa_addr;
 
-	printf("\n");
+	aprint_normal("\n");
 	for (i = 0; i < 2; i++)
-		sbscn_attach_channel(sc, i, sap->sa_locs.sa_intr[i]);
+		sbscn_attach_channel(sc, i, sa->sa_locs.sa_intr[i]);
 
 	/* init duart_opcr */
 	WRITE_REG(MIPS_PHYS_TO_KSEG1(sc->sc_addr + 0x270), 0);
@@ -427,18 +428,19 @@ sbscn_status(struct sbscn_channel *ch, const char *str)
 {
 	struct sbscn_softc *sc = ch->ch_sc;
 	struct tty *tp = ch->ch_tty;
-	const char * const xname = device_xname(sc->sc_dev);
 
-	printf("%s: chan %d: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
-	    xname, ch->ch_num, str,
+	aprint_normal_dev(sc->sc_dev,
+	    "chan %d: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
+	    ch->ch_num, str,
 	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
 	    ISSET(ch->ch_iports, ch->ch_i_dcd) ? "+" : "-",
 	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
 	    ISSET(ch->ch_oports, ch->ch_o_dtr) ? "+" : "-",
 	    ch->ch_tx_stopped ? "+" : "-");
 
-	printf("%s: chan %d: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
-	    xname, ch->ch_num, str,
+	aprint_normal_dev(sc->sc_dev,
+	    "chan %d: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
+	    ch->ch_num, str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
 	    ISSET(ch->ch_iports, ch->ch_i_cts) ? "+" : "-",
 	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",

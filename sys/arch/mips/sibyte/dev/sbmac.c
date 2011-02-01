@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.38 2011/02/01 03:16:54 matt Exp $ */
+/* $NetBSD: sbmac.c,v 1.39 2011/02/01 06:13:08 matt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.38 2011/02/01 03:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.39 2011/02/01 06:13:08 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -232,35 +232,33 @@ extern paddr_t kvtophys(vaddr_t);
 
 /* Prototypes */
 
-static void sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *s, int chan,
-    int txrx, int maxdescr);
-static void sbdma_channel_start(sbmacdma_t *d);
-static int sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m);
-static int sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m);
-static void sbdma_emptyring(sbmacdma_t *d);
-static void sbdma_fillring(sbmacdma_t *d);
-static void sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d);
-static void sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d);
-static void sbmac_initctx(struct sbmac_softc *s);
-static void sbmac_channel_start(struct sbmac_softc *s);
-static void sbmac_channel_stop(struct sbmac_softc *s);
+static void sbdma_initctx(sbmacdma_t *, struct sbmac_softc *, int, int, int);
+static void sbdma_channel_start(sbmacdma_t *);
+static int sbdma_add_rcvbuffer(sbmacdma_t *, struct mbuf *);
+static int sbdma_add_txbuffer(sbmacdma_t *, struct mbuf *);
+static void sbdma_emptyring(sbmacdma_t *);
+static void sbdma_fillring(sbmacdma_t *);
+static void sbdma_rx_process(struct sbmac_softc *, sbmacdma_t *);
+static void sbdma_tx_process(struct sbmac_softc *, sbmacdma_t *);
+static void sbmac_initctx(struct sbmac_softc *);
+static void sbmac_channel_start(struct sbmac_softc *);
+static void sbmac_channel_stop(struct sbmac_softc *);
 static sbmac_state_t sbmac_set_channel_state(struct sbmac_softc *,
     sbmac_state_t);
-static void sbmac_promiscuous_mode(struct sbmac_softc *sc, int onoff);
-static void sbmac_init_and_start(struct sbmac_softc *sc);
-static uint64_t sbmac_addr2reg(u_char *ptr);
-static void sbmac_intr(void *xsc, uint32_t status, vaddr_t pc);
-static void sbmac_start(struct ifnet *ifp);
-static void sbmac_setmulti(struct sbmac_softc *sc);
-static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data);
+static void sbmac_promiscuous_mode(struct sbmac_softc *, bool);
+static void sbmac_init_and_start(struct sbmac_softc *);
+static uint64_t sbmac_addr2reg(u_char *);
+static void sbmac_intr(void *, uint32_t, vaddr_t);
+static void sbmac_start(struct ifnet *);
+static void sbmac_setmulti(struct sbmac_softc *);
+static int sbmac_ether_ioctl(struct ifnet *, u_long, void *);
 static int sbmac_ioctl(struct ifnet *, u_long, void *);
-static void sbmac_watchdog(struct ifnet *ifp);
-static int sbmac_match(device_t parent, cfdata_t match, void *aux);
-static void sbmac_attach(device_t parent, device_t self, void *aux);
-static int sbmac_set_speed(struct sbmac_softc *s, sbmac_speed_t speed);
-static int sbmac_set_duplex(struct sbmac_softc *s, sbmac_duplex_t duplex,
-    sbmac_fc_t fc);
-static void sbmac_tick(void *arg);
+static void sbmac_watchdog(struct ifnet *);
+static int sbmac_match(device_t, cfdata_t, void *);
+static void sbmac_attach(device_t, device_t, void *);
+static bool sbmac_set_speed(struct sbmac_softc *, sbmac_speed_t);
+static bool sbmac_set_duplex(struct sbmac_softc *, sbmac_duplex_t, sbmac_fc_t);
+static void sbmac_tick(void *);
 
 
 /* Globals */
@@ -372,7 +370,7 @@ sbmac_mii_statchg(device_t self)
  *
  *  Input parameters:
  *	d - sbmacdma_t structure (DMA channel context)
- *	s - sbmac_softc structure (pointer to a MAC)
+ *	sc - sbmac_softc structure (pointer to a MAC)
  *	chan - channel number (0..1 right now)
  *	txrx - Identifies DMA_TX or DMA_RX for channel direction
  *	maxdescr - number of descriptors
@@ -1053,7 +1051,7 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
  *  interface up/down
  *
  *  Input parameters:
- *	s - sbmac context structure
+ *	sc - sbmac context structure
  *
  *  Return value:
  *	0
@@ -1062,7 +1060,6 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 static void
 sbmac_initctx(struct sbmac_softc *sc)
 {
-	const char * const xname = device_xname(sc->sc_dev);
 	uint64_t sysrev;
 
 	/*
@@ -1109,6 +1106,7 @@ sbmac_initctx(struct sbmac_softc *sc)
 			    (SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1250 &&
 			     G_SYS_REVISION(sysrev) >= K_SYS_REVISION_BCM1250_PASS3));
 #ifdef SBMAC_EVENT_COUNTERS
+	const char * const xname = device_xname(sc->sc_dev);
 	evcnt_attach_dynamic(&sc->sbm_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, xname, "rxintr");
 	evcnt_attach_dynamic(&sc->sbm_ev_txintr, EVCNT_TYPE_INTR,
@@ -1132,7 +1130,7 @@ sbmac_initctx(struct sbmac_softc *sc)
  *  Start packet processing on this MAC.
  *
  *  Input parameters:
- *	s - sbmac structure
+ *	sc - sbmac structure
  *
  *  Return value:
  *	nothing
@@ -1327,7 +1325,7 @@ sbmac_channel_start(struct sbmac_softc *sc)
 	 */
 
 	if (sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC)
-		sbmac_promiscuous_mode(sc, 1);
+		sbmac_promiscuous_mode(sc, true);
 
 	/*
 	 * Turn on the once-per-second timer
@@ -1342,7 +1340,7 @@ sbmac_channel_start(struct sbmac_softc *sc)
  *  Stop packet processing on this MAC.
  *
  *  Input parameters:
- *	s - sbmac structure
+ *	sc - sbmac structure
  *
  *  Return value:
  *	nothing
@@ -1425,27 +1423,27 @@ sbmac_set_channel_state(struct sbmac_softc *sc, sbmac_state_t state)
 }
 
 /*
- *  SBMAC_PROMISCUOUS_MODE(sc, onoff)
+ *  SBMAC_PROMISCUOUS_MODE(sc, enabled)
  *
  *  Turn on or off promiscuous mode
  *
  *  Input parameters:
  *	sc - softc
- *	onoff - 1 to turn on, 0 to turn off
+ *	enabled - true to turn on, false to turn off
  *
  *  Return value:
  *	nothing
  */
 
 static void
-sbmac_promiscuous_mode(struct sbmac_softc *sc, int onoff)
+sbmac_promiscuous_mode(struct sbmac_softc *sc, bool enabled)
 {
 	uint64_t reg;
 
 	if (sc->sbm_state != sbmac_state_on)
 		return;
 
-	if (onoff) {
+	if (enabled) {
 		reg = SBMAC_READCSR(sc->sbm_rxfilter);
 		reg |= M_MAC_ALLPKT_EN;
 		SBMAC_WRITECSR(sc->sbm_rxfilter, reg);
@@ -1517,21 +1515,21 @@ sbmac_addr2reg(u_char *ptr)
 }
 
 /*
- *  SBMAC_SET_SPEED(s, speed)
+ *  SBMAC_SET_SPEED(sc, speed)
  *
  *  Configure LAN speed for the specified MAC.
  *  Warning: must be called when MAC is off!
  *
  *  Input parameters:
- *	s - sbmac structure
+ *	sc - sbmac structure
  *	speed - speed to set MAC to (see sbmac_speed_t enum)
  *
  *  Return value:
- *	1 if successful
- *	0 indicates invalid parameters
+ *	true if successful
+ *	false indicates invalid parameters
  */
 
-static int
+static bool
 sbmac_set_speed(struct sbmac_softc *sc, sbmac_speed_t speed)
 {
 	uint64_t cfg;
@@ -1593,7 +1591,7 @@ sbmac_set_speed(struct sbmac_softc *sc, sbmac_speed_t speed)
 	case sbmac_speed_auto:		/* XXX not implemented */
 		/* fall through */
 	default:
-		return 0;
+		return false;
 	}
 
 	/*
@@ -1603,7 +1601,7 @@ sbmac_set_speed(struct sbmac_softc *sc, sbmac_speed_t speed)
 	SBMAC_WRITECSR(sc->sbm_framecfg, framecfg);
 	SBMAC_WRITECSR(sc->sbm_maccfg, cfg);
 
-	return 1;
+	return true;
 }
 
 /*
@@ -1613,16 +1611,16 @@ sbmac_set_speed(struct sbmac_softc *sc, sbmac_speed_t speed)
  *  Warning: must be called when MAC is off!
  *
  *  Input parameters:
- *	s - sbmac structure
+ *	sc - sbmac structure
  *	duplex - duplex setting (see sbmac_duplex_t)
  *	fc - flow control setting (see sbmac_fc_t)
  *
  *  Return value:
- *	1 if ok
- *	0 if an invalid parameter combination was specified
+ *	true if ok
+ *	false if an invalid parameter combination was specified
  */
 
-static int
+static bool
 sbmac_set_duplex(struct sbmac_softc *sc, sbmac_duplex_t duplex, sbmac_fc_t fc)
 {
 	uint64_t cfg;
@@ -1670,7 +1668,7 @@ sbmac_set_duplex(struct sbmac_softc *sc, sbmac_duplex_t duplex, sbmac_fc_t fc)
 		default:			/* invalid selection */
 			panic("%s: invalid half duplex fc selection %d",
 			    device_xname(sc->sc_dev), fc);
-			return 0;
+			return false;
 		}
 		break;
 
@@ -1691,7 +1689,7 @@ sbmac_set_duplex(struct sbmac_softc *sc, sbmac_duplex_t duplex, sbmac_fc_t fc)
 		default:
 			panic("%s: invalid full duplex fc selection %d",
 			    device_xname(sc->sc_dev), fc);
-			return 0;
+			return false;
 		}
 		break;
 
@@ -1709,7 +1707,7 @@ sbmac_set_duplex(struct sbmac_softc *sc, sbmac_duplex_t duplex, sbmac_fc_t fc)
 
 	SBMAC_WRITECSR(sc->sbm_maccfg, cfg);
 
-	return 1;
+	return true;
 }
 
 /*
@@ -2035,11 +2033,11 @@ sbmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if ((ifp->if_flags & IFF_RUNNING) &&
 			    (ifp->if_flags & IFF_PROMISC)) {
 				/* turn on promiscuous mode */
-				sbmac_promiscuous_mode(sc, 1);
+				sbmac_promiscuous_mode(sc, true);
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC)) {
 			    /* turn off promiscuous mode */
-			    sbmac_promiscuous_mode(sc, 0);
+			    sbmac_promiscuous_mode(sc, false);
 			} else
 			    sbmac_set_channel_state(sc, sbmac_state_on);
 		} else {
@@ -2153,13 +2151,12 @@ sbmac_tick(void *arg)
 static int
 sbmac_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct sbobio_attach_args *sap = aux;
+	struct sbobio_attach_args *sa = aux;
 
 	/*
 	 * Make sure it's a MAC
 	 */
-
-	if (sap->sa_locs.sa_type != SBOBIO_DEVTYPE_MAC)
+	if (sa->sa_locs.sa_type != SBOBIO_DEVTYPE_MAC)
 		return 0;
 
 	/*
@@ -2264,10 +2261,9 @@ sbmac_parse_hwaddr(const char *str, u_char *hwaddr)
 static void
 sbmac_attach(device_t parent, device_t self, void *aux)
 {
-	struct ifnet *ifp;
-	struct sbmac_softc *sc = device_private(self);
-	const char * const xname = device_xname(self);
-	struct sbobio_attach_args *sap = aux;
+	struct sbmac_softc * const sc = device_private(self);
+	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
+	struct sbobio_attach_args * const sa = aux;
 	u_char *eaddr;
 	static int unit = 0;	/* XXX */
 	uint64_t ea_reg;
@@ -2277,7 +2273,7 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 
 	/* Determine controller base address */
 
-	sc->sbm_base = sap->sa_locs.sa_addr;
+	sc->sbm_base = sa->sa_locs.sa_addr;
 
 	eaddr = sc->sbm_hwaddr;
 
@@ -2335,9 +2331,8 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	 * Set up ifnet structure
 	 */
 
-	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
-	memcpy(ifp->if_xname, xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
 	    IFF_NOTRAILERS;
 	ifp->if_ioctl = sbmac_ioctl;
@@ -2374,7 +2369,7 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	 * map/route interrupt
 	 */
 
-	sc->sbm_intrhand = cpu_intr_establish(sap->sa_locs.sa_intr[0], IPL_NET,
+	sc->sbm_intrhand = cpu_intr_establish(sa->sa_locs.sa_intr[0], IPL_NET,
 	    sbmac_intr, sc);
 
 	/*
