@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.6 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.7 2011/02/02 02:20:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.6 2011/01/18 20:33:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7 2011/02/02 02:20:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	nbuf_t *nbuf = *mp;
 	npf_cache_t npc;
 	npf_session_t *se;
+	npf_ruleset_t *rlset;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
 	int retfl, error;
@@ -125,8 +126,10 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		goto pass;
 	}
 
-	/* Inspect the ruleset using this packet, acquire the lock. */
-	rl = npf_ruleset_inspect(&npc, nbuf, ifp, di, NPF_LAYER_3);
+	/* Acquire the lock, inspect the ruleset using this packet. */
+	npf_core_enter();
+	rlset = npf_core_ruleset();
+	rl = npf_ruleset_inspect(&npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
 	if (rl == NULL) {
 		if (default_pass) {
 			npf_stats_inc(NPF_STAT_PASS_DEFAULT);
@@ -169,7 +172,7 @@ block:
 	 * Perform rule procedure, if any.
 	 */
 	if (rp) {
-		npf_rproc_run(&npc, nbuf, rp);
+		npf_rproc_run(&npc, nbuf, rp, error);
 	}
 out:
 	/* Release the reference on session, or rule procedure. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.5 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.6 2011/02/02 02:20:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -33,13 +33,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#ifndef _NPF_TESTING
-#include <net/npf.h>
 #include <net/npf_ncode.h>
-#else
-#include "npf.h"
-#include "npf_ncode.h"
-#endif
+#include <net/npf.h>
+
+#define	_NPF_PRIVATE
+#include <npf.h>
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -68,34 +66,23 @@ typedef struct {
 	void *		v_next;
 } var_t;
 
+extern nl_config_t *	npf_conf;
+
 void *		zalloc(size_t);
 char *		xstrdup(const char *);
 
 void		npfctl_init_data(void);
 int		npfctl_ioctl_send(int);
-int		npfctl_ioctl_recvse(int);
-int		npfctl_ioctl_sendse(int);
-int		npfctl_ioctl_flushse(int);
 
 struct ifaddrs *npfctl_getif(char *, unsigned int *, bool);
 bool		npfctl_parse_v4mask(char *, in_addr_t *, in_addr_t *);
+void		npfctl_parse_cidr(char *, in_addr_t *, in_addr_t *);
+bool		npfctl_parse_port(char *, bool *, in_port_t *, in_port_t *);
 
-prop_dictionary_t npfctl_mk_rule(bool, prop_dictionary_t);
-void		npfctl_rule_setattr(prop_dictionary_t, int, u_int);
-void		npfctl_rule_protodata(prop_dictionary_t, char *, char *,
+void		npfctl_fill_table(nl_table_t *, char *);
+
+void		npfctl_rule_ncode(nl_rule_t *, char *, char *,
 		    int, int, var_t *, var_t *, var_t *, var_t *);
-void		npfctl_rule_icmpdata(prop_dictionary_t, var_t *, var_t *);
-
-prop_dictionary_t npfctl_lookup_table(char *);
-prop_dictionary_t npfctl_construct_table(int, int);
-void		npfctl_fill_table(prop_dictionary_t, char *);
-
-prop_dictionary_t npfctl_mk_rproc(void);
-bool		npfctl_find_rproc(prop_dictionary_t, char *);
-
-prop_dictionary_t npfctl_mk_nat(void);
-void		npfctl_nat_setup(prop_dictionary_t, int, int,
-		    u_int, char *, char *);
 
 size_t		npfctl_calc_ncsize(int []);
 size_t		npfctl_failure_offset(int []);

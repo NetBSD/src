@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1578 2011/01/28 18:52:48 pooka Exp $
+#	$NetBSD: mi,v 1.1579 2011/02/02 02:20:27 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1703,6 +1703,7 @@
 ./usr/include/nfs/xdr_subs.h			comp-c-include
 ./usr/include/nl_types.h			comp-c-include
 ./usr/include/nlist.h				comp-c-include
+./usr/include/npf.h				comp-npf-include	npf
 ./usr/include/nsswitch.h			comp-c-include
 ./usr/include/ntfs/ntfs.h			comp-c-include
 ./usr/include/ntfs/ntfs_compr.h			comp-obsolete		obsolete
@@ -2560,6 +2561,9 @@
 ./usr/lib/libnetpgp.a				comp-c-lib		crypto
 ./usr/lib/libnetpgp_g.a				-unknown-		debuglib
 ./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libnpf.a				comp-npf-lib		npf
+./usr/lib/libnpf_g.a				-unknown-		debuglib
+./usr/lib/libnpf_p.a				comp-npf-proflib	profile,npf
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
@@ -3913,6 +3917,7 @@
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lmj.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-lnpf.ln			comp-npf-lintlib	lint,npf
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
@@ -7442,6 +7447,7 @@
 ./usr/share/man/cat3/noqiflush.0		comp-c-catman		.cat
 ./usr/share/man/cat3/noraw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/notimeout.0		comp-c-catman		.cat
+./usr/share/man/cat3/npf.0			comp-npf-catman		.cat
 ./usr/share/man/cat3/nrand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ns.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/ns_addr.0			comp-obsolete		obsolete
@@ -13455,6 +13461,7 @@
 ./usr/share/man/html3/noqiflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/noraw.html		comp-c-htmlman		html
 ./usr/share/man/html3/notimeout.html		comp-c-htmlman		html
+./usr/share/man/html3/npf.html			comp-npf-htmlman	html
 ./usr/share/man/html3/nrand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/nsdispatch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ntoa.html			comp-c-htmlman		html
@@ -19454,6 +19461,7 @@
 ./usr/share/man/man3/noqiflush.3		comp-c-man		.man
 ./usr/share/man/man3/noraw.3			comp-c-man		.man
 ./usr/share/man/man3/notimeout.3		comp-c-man		.man
+./usr/share/man/man3/npf.3			comp-npf-man		.man
 ./usr/share/man/man3/nrand48.3			comp-c-man		.man
 ./usr/share/man/man3/ns.3			comp-obsolete		obsolete
 ./usr/share/man/man3/ns_addr.3			comp-obsolete		obsolete
