@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.h,v 1.7 2011/01/28 13:02:34 tteras Exp $	*/
+/*	$NetBSD: sainfo.h,v 1.8 2011/02/02 15:21:34 vanhu Exp $	*/
 
 /* Id: sainfo.h,v 1.5 2006/07/09 17:19:38 manubsd Exp */
 
@@ -60,7 +60,7 @@ struct sainfo {
 	vchar_t *id_i;		/* identifier of the authorized initiator */
 	struct sainfoalg *algs[MAXALGCLASS];
 
-	int remoteid;
+	uint32_t remoteid;
 
 	LIST_ENTRY(sainfo) chain;
 };
@@ -73,7 +73,7 @@ struct sainfoalg {
 };
 
 extern struct sainfo *getsainfo __P((const vchar_t *,
-	const vchar_t *, const vchar_t *, const vchar_t *, int));
+	const vchar_t *, const vchar_t *, const vchar_t *, uint32_t));
 extern struct sainfo *newsainfo __P((void));
 extern void delsainfo __P((struct sainfo *));
 extern void inssainfo __P((struct sainfo *));
