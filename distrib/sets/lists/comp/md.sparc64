@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.82 2011/01/31 18:49:43 matt Exp $
+# $NetBSD: md.sparc64,v 1.83 2011/02/02 02:20:27 rmind Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -466,6 +466,10 @@
 ./usr/lib/sparc/libnetpgp.so			comp-sys-shlib		compat,pic,crypto
 ./usr/lib/sparc/libnetpgp_p.a			comp-c-proflib		compat,profile,crypto
 ./usr/lib/sparc/libnetpgp_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libnpf.a			comp-c-lib		compat,npf
+./usr/lib/sparc/libnpf.so			comp-sys-shlib		compat,pic,npf
+./usr/lib/sparc/libnpf_p.a			comp-c-proflib		compat,profile,npf
+./usr/lib/sparc/libnpf_pic.a			comp-c-piclib		compat,pic,npf
 ./usr/lib/sparc/libobjc.a			comp-c-lib		compat
 ./usr/lib/sparc/libobjc.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libobjc_p.a			comp-c-proflib		compat,profile
@@ -716,6 +720,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libmenu.so.6.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmj.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libnetpgp.so.3.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libnpf.so.0.0.debug			comp-compat-shlib	compat,pic,debug,npf
 ./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libopcodes.so.4.0.debug		comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libossaudio.so.1.0.debug		comp-compat-shlib	compat,pic,debug

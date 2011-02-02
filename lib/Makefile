@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.160 2011/01/18 20:09:37 pooka Exp $
+#	$NetBSD: Makefile,v 1.161 2011/02/02 02:20:24 rmind Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -87,6 +87,10 @@ SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libedit		# depends on libterminfo
 SUBDIR+=	librefuse	# depends on libpuffs
 SUBDIR+=	librumpuser	# depends on libpthread
+
+.if (${MKNPF} != "no")
+SUBDIR+=	libnpf		# depends on libprop
+.endif
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/openssl/lib # depends on libcrypt
