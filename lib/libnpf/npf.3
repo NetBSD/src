@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf.3,v 1.1 2011/02/02 02:20:25 rmind Exp $
+.\"	$NetBSD: npf.3,v 1.2 2011/02/02 09:05:01 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,16 +110,20 @@ Destroy the configuration.
 .Sh RULE INTERFACE
 .Bl -tag -width 4n
 .It Fn npf_rule_create
-Create a rule with a given name, attribute and priorty.  Name can be NULL,
-in which case rule has no unique identifier.  Otherwise, rules shall not
-have duplicate names.  The following attributes, which can be ORed, are
-available:
+Create a rule with a given name, attribute and priorty.
+Name can be
+.Dv NULL ,
+in which case rule has no unique identifier.
+Otherwise, rules shall not have duplicate names.
+The following attributes, which can be ORed, are available:
 .Bl -tag -width indent
 .It Dv NPF_RULE_PASS
-Decision of this rule is "pass".  If this attribute is not
+Decision of this rule is "pass".
+If this attribute is not
 specified, then packet "block" (drop) is the default.
 .It Dv NPF_RULE_DEFAULT
-This a default rule in the ruleset.  There can only be a
+This a default rule in the ruleset.
+There can only be a
 single rule having this attribute set in the ruleset.
 .It Dv NPF_RULE_FINAL
 Indicates that on rule match, further processing of the
@@ -163,12 +167,14 @@ Insert the rule into the set of parent rule specified by
 .Fa parent .
 If value of
 .Fa parent
-is NULL,
+is
+.Dv NULL ,
 then insert into the main ruleset.
 .Pp
-Priority is the order of the rule in the ruleset.  Lower value means first
-to process, higher value - last to process.  If multiple rules have the same
-priority - order is unspecified.  A special constant
+Priority is the order of the rule in the ruleset.
+Lower value means first to process, higher value - last to process.
+If multiple rules have the same priority - order is unspecified.
+A special constant
 .Dv NPF_PRI_NEXT
 may be passed to use the value of last used priority incremented by 1.
 .It npf_rule_setproc
@@ -220,7 +226,7 @@ is used.
 Translation address is specified by
 .Fa addr ,
 and its family by
-.Fa fa.
+.Fa fa .
 Family must be either
 .Dv AF_INET
 for IPv4 or
@@ -286,5 +292,5 @@ specified by
 .Xr npfctl 8 ,
 .Xr npf_ncode 9
 .Sh HISTORY
-NPF library first appeared in
+The NPF library first appeared in
 .Nx 6.0 .
