@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.13 2011/01/28 13:02:34 tteras Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.14 2011/02/02 15:21:34 vanhu Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -79,7 +79,7 @@ static sainfo_tailq_head_t sitree, sitree_save;
 struct sainfo *
 getsainfo(loc, rmt, peer, client, remoteid)
 	const vchar_t *loc, *rmt, *peer, *client;
-	int remoteid;
+	uint32_t remoteid;
 {
 	struct sainfo *s = NULL;
 
@@ -110,7 +110,7 @@ getsainfo(loc, rmt, peer, client, remoteid)
 			dclient = ipsecdoi_id2str(client);
 
 		plog(LLV_DEBUG, LOCATION, NULL,
-			"getsainfo params: loc=\'%s\' rmt=\'%s\' peer=\'%s\' client=\'%s\' id=%i\n",
+			"getsainfo params: loc=\'%s\' rmt=\'%s\' peer=\'%s\' client=\'%s\' id=%u\n",
 			dloc, drmt, dpeer, dclient, remoteid );
  
                 racoon_free(dloc);
@@ -126,7 +126,7 @@ getsainfo(loc, rmt, peer, client, remoteid)
 
 		if(s->remoteid != remoteid) {
 			plog(LLV_DEBUG, LOCATION, NULL,
-				"remoteid mismatch: %i != %i\n",
+				"remoteid mismatch: %u != %u\n",
 				s->remoteid, remoteid);
 				continue;
 		}
@@ -383,7 +383,7 @@ sainfo2str(si)
         else
                 id_i = ipsecdoi_id2str(si->id_i);
  
-        snprintf(buf, 255, "loc=\'%s\', rmt=\'%s\', peer=\'%s\', id=%i",
+        snprintf(buf, 255, "loc=\'%s\', rmt=\'%s\', peer=\'%s\', id=%u",
 		idloc, idrmt, id_i, si->remoteid);
  
         racoon_free(idloc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.13 2011/01/28 13:00:14 tteras Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.14 2011/02/02 15:21:34 vanhu Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -141,7 +141,7 @@ struct remoteconf {
 #define REKEY_ON		TRUE
 #define REKEY_FORCE		2
 
-	int ph1id; /* ph1id to be matched with sainfo sections */
+	uint32_t ph1id; /* ph1id to be matched with sainfo sections */
 
 	int weak_phase1_check;		/* act on unencrypted deletions ? */
 
