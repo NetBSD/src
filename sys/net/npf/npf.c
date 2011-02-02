@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.3 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.4 2011/02/02 02:20:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.3 2011/01/18 20:33:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.4 2011/02/02 02:20:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -220,6 +220,9 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		break;
 	case IOC_NPF_SESSIONS_LOAD:
 		error = npfctl_sessions_load(cmd, data);
+		break;
+	case IOC_NPF_UPDATE_RULE:
+		error = npfctl_update_rule(cmd, data);
 		break;
 	default:
 		error = ENOTTY;
