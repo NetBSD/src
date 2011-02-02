@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.16 2011/02/02 05:00:56 kiyohara Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.17 2011/02/02 05:06:31 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.16 2011/02/02 05:00:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.17 2011/02/02 05:06:31 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,6 +192,7 @@ static void	mmeyepcmcia_chip_io_unmap(pcmcia_chipset_handle_t, int);
 
 static void	mmeyepcmcia_chip_socket_enable(pcmcia_chipset_handle_t);
 static void	mmeyepcmcia_chip_socket_disable(pcmcia_chipset_handle_t);
+static void	mmeyepcmcia_chip_socket_settype(pcmcia_chipset_handle_t, int);
 
 static inline int mmeyepcmcia_read(struct mmeyepcmcia_handle *, int);
 static inline int
@@ -259,6 +260,8 @@ static struct pcmcia_chip_functions mmeyepcmcia_functions = {
 
 	mmeyepcmcia_chip_socket_enable,
 	mmeyepcmcia_chip_socket_disable,
+	mmeyepcmcia_chip_socket_settype,
+	NULL,
 };
 
 static int
@@ -889,5 +892,10 @@ mmeyepcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 
 static void
 mmeyepcmcia_chip_socket_disable(pcmcia_chipset_handle_t pch)
+{
+}
+
+static void
+mmeyepcmcia_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 {
 }
