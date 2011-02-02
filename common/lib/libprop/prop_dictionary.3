@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.15 2009/12/05 10:17:17 wiz Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.16 2011/02/02 16:37:27 plunky Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -313,7 +313,7 @@ if externalizing or writing the dictionary fails for any reason.
 .It Fn prop_dictionary_internalize_from_file "const char *path"
 Reads the XML property list contained in the file specified by
 .Fa path ,
-internalizes it, and returns the corresponding array.
+internalizes it, and returns the corresponding dictionary.
 Returns
 .Dv NULL
 on failure.
