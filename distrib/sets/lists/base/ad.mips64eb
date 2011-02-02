@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.36 2011/01/18 20:09:37 pooka Exp $
+# $NetBSD: ad.mips64eb,v 1.37 2011/02/02 02:20:26 rmind Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -151,6 +151,8 @@
 ./usr/lib/64/libmj.so.0.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libnpf.so.0			base-compat-shlib	compat,pic,npf
+./usr/lib/64/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libopcodes.so.4			base-compat-shlib	compat,pic,binutils
@@ -408,6 +410,8 @@
 ./usr/lib/o32/libmj.so.0.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libnpf.so.0			base-compat-shlib	compat,pic,npf
+./usr/lib/o32/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libobjc.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libopcodes.so.4			base-compat-shlib	compat,pic,binutils
