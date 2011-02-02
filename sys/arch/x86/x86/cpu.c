@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.79 2011/01/11 18:25:25 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.80 2011/02/02 12:26:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79 2011/01/11 18:25:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.80 2011/02/02 12:26:42 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1080,9 +1080,10 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	uint64_t last_tsc;
 
 	if (cpu_hascounter()) {
-		last_tsc = rdmsr(MSR_TSC);
+		last_tsc = cpu_counter_serializing();
 		i8254_delay(100000);
-		ci->ci_data.cpu_cc_freq = (rdmsr(MSR_TSC) - last_tsc) * 10;
+		ci->ci_data.cpu_cc_freq =
+		    (cpu_counter_serializing() - last_tsc) * 10;
 	}
 }
 
