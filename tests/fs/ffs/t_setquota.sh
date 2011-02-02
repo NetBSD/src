@@ -1,4 +1,4 @@
-# $NetBSD: t_setquota.sh,v 1.1.2.5 2011/01/31 22:04:26 bouyer Exp $ 
+# $NetBSD: t_setquota.sh,v 1.1.2.6 2011/02/02 19:17:08 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -46,7 +46,7 @@ done
 
 set_quota()
 {
-	create_with_quotas $*
+	create_with_quotas_server $*
 	local q=$3
 	local expect
 	local fail
@@ -102,7 +102,7 @@ set_quota()
 
 set_quota_new()
 {
-	create_with_quotas $*
+	create_with_quotas_server $*
 	local q=$3
 	local expect
 	local fail
@@ -152,7 +152,7 @@ set_quota_new()
 
 set_quota_default()
 {
-	create_with_quotas $*
+	create_with_quotas_server $*
 	local q=$3
 	local expect
 	local fail
