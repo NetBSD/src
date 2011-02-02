@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.154 2011/01/24 10:15:39 skrll Exp $
+# $NetBSD: shl.mi,v 1.155 2011/02/02 02:20:27 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -73,6 +73,7 @@
 ./usr/lib/libmenu_pic.a				comp-c-piclib
 ./usr/lib/libmj_pic.a				comp-c-piclib
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
+./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
 ./usr/lib/libopcodes.so.4			comp-c-shlib		binutils
