@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.241 2011/01/23 11:01:08 mbalmer Exp $	*/
+/*	$NetBSD: tty.c,v 1.242 2011/02/02 03:00:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.241 2011/01/23 11:01:08 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.242 2011/02/02 03:00:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2429,32 +2429,36 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 
 	mutex_enter(pick->p_lock);
 	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
+		const char *lp;
 		lwp_lock(l);
 #ifdef LWP_PC
-		if (l->l_stat == LSONPROC) {
-			snprintf(lmsg, sizeof(lmsg), "%#"PRIxVADDR"/%d",
-			    (vaddr_t)LWP_PC(l), cpu_index(l->l_cpu));
-			strlcat(buf, lmsg, bufsz);
-		} else if (l->l_stat == LSRUN) {
-			snprintf(lmsg, sizeof(lmsg), "%#"PRIxVADDR,
-			    (vaddr_t)LWP_PC(l));
-			strlcat(buf, lmsg, bufsz);
-		} else {
-			strlcat(buf, l->l_wchan ? l->l_wmesg : "iowait", bufsz);
-		} 
-		lwp_unlock(l);
-		strlcat(buf, (LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ",
-		    bufsz);
+#define FMT_RUN "%#"PRIxVADDR
+#define VAL_RUNNING (vaddr_t)LWP_PC(l)
+#define VAL_RUNABLE (vaddr_t)LWP_PC(l)
 #else
-		snprintf(lmsg, sizeof(lmsg), "%s%s",
-		    l->l_stat == LSONPROC ? "running" :
-		    l->l_stat == LSRUN ? "runnable" :
-		    l->l_wchan ? l->l_wmesg : "iowait",
-		    (LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
-		lwp_unlock(l);
-		strlcat(buf, lmsg, bufsz);
+#define FMT_RUN "%s"
+#define VAL_RUNNING "running"
+#define VAL_RUNABLE "runnable"
 #endif
+		switch (l->l_stat) {
+		case LSONPROC:
+			snprintf(lmsg, sizeof(lmsg), FMT_RUN"/%d", VAL_RUNNING,
+			    cpu_index(l->l_cpu));
+			lp = lmsg;
+			break;
+		case LSRUN:
+			snprintf(lmsg, sizeof(lmsg), FMT_RUN, VAL_RUNABLE);
+			lp = lmsg;
+			break;
+		default:
+			lp = l->l_wchan ? l->l_wmesg : "iowait";
+			break;
+		} 
+		strlcat(buf, lp, bufsz);
+		strlcat(buf, LIST_NEXT(l, l_sibling) != NULL ? " " : "] ",
+		    bufsz);
 		pctcpu += l->l_pctcpu;
+		lwp_unlock(l);
 	}
 	pctcpu += pick->p_pctcpu;
 	calcru(pick, &utime, &stime, NULL, NULL);
