@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.7 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.8 2011/02/02 23:01:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #include "testing.h"
 #endif
 
-#define	NPF_VERSION		1
+#define	NPF_VERSION		2
 
 /*
  * Public declarations and definitions.
