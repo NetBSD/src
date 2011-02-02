@@ -1,4 +1,4 @@
-# $NetBSD: quotas_common.sh,v 1.1.2.4 2011/01/31 22:04:26 bouyer Exp $ 
+# $NetBSD: quotas_common.sh,v 1.1.2.5 2011/02/02 19:17:08 bouyer Exp $ 
 
 create_with_quotas()
 {
@@ -13,6 +13,11 @@ create_with_quotas()
 	fi
 	atf_check -o ignore -e ignore newfs ${op} \
 		-B ${endian} -O ${vers} -s 4000 -F ${IMG}
+}
+
+create_with_quotas_server()
+{	
+	create_with_quotas $*
 	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_server -b \
 		${IMG} ${RUMP_SERVER}
 }
