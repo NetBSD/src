@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.17 2011/02/02 05:06:31 kiyohara Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.18 2011/02/02 05:10:55 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.17 2011/02/02 05:06:31 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.18 2011/02/02 05:10:55 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,17 +104,12 @@ struct mmeyepcmcia_handle {
 };
 
 /* These four lines are MMTA specific */
-#define MMEYEPCMCIA_IRQ1 10
-#define MMEYEPCMCIA_IRQ2 9
-#define MMEYEPCMCIA_SLOT1_ADDR 0xb8000000
-#define MMEYEPCMCIA_SLOT2_ADDR 0xb9000000
-
-#define	MMEYEPCMCIA_FLAG_SOCKETP		0x0001
 #define	MMEYEPCMCIA_FLAG_CARDP		0x0002
+#define	MMEYEPCMCIA_FLAG_SOCKETP	0x0001
 
 #define MMEYEPCMCIA_LASTSTATE_PRESENT	0x0002
-#define MMEYEPCMCIA_LASTSTATE_HALF		0x0001
-#define MMEYEPCMCIA_LASTSTATE_EMPTY		0x0000
+#define MMEYEPCMCIA_LASTSTATE_HALF	0x0001
+#define MMEYEPCMCIA_LASTSTATE_EMPTY	0x0000
 
 /*
  * This is sort of arbitrary.  It merely needs to be "enough". It can be
@@ -122,7 +117,6 @@ struct mmeyepcmcia_handle {
  */
 
 #define	MMEYEPCMCIA_MEM_PAGES	4
-#define	MMEYEPCMCIA_MEMSIZE	MMEYEPCMCIA_MEM_PAGES*MMEYEPCMCIA_MEM_PAGESIZE
 
 #define	MMEYEPCMCIA_NSLOTS	1
 
