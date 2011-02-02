@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.1 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.2 2011/02/02 15:17:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.1 2011/02/02 02:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2 2011/02/02 15:17:37 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -285,15 +285,15 @@ int
 _npf_rproc_setnorm(nl_rproc_t *rp, bool rnd, bool no_df, int minttl, int maxmss)
 {
 	prop_dictionary_t rpdict = rp->nrp_dict;
-	uint32_t attr;
+	uint32_t fl;
 
 	prop_dictionary_set_bool(rpdict, "randomize-id", rnd);
 	prop_dictionary_set_bool(rpdict, "no-df", no_df);
 	prop_dictionary_set_uint32(rpdict, "min-ttl", minttl);
 	prop_dictionary_set_uint32(rpdict, "max-mss", maxmss);
 
-	prop_dictionary_get_uint32(rpdict, "flags", &attr);
-	prop_dictionary_set_uint32(rpdict, "flags", attr | NPF_RPROC_NORMALIZE);
+	prop_dictionary_get_uint32(rpdict, "flags", &fl);
+	prop_dictionary_set_uint32(rpdict, "flags", fl | NPF_RPROC_NORMALIZE);
 	return 0;
 }
 
@@ -301,12 +301,12 @@ int
 _npf_rproc_setlog(nl_rproc_t *rp, u_int if_idx)
 {
 	prop_dictionary_t rpdict = rp->nrp_dict;
-	uint32_t attr;
+	uint32_t fl;
 
 	prop_dictionary_set_uint32(rpdict, "log-interface", if_idx);
 
-	prop_dictionary_get_uint32(rpdict, "flags", &attr);
-	prop_dictionary_set_uint32(rpdict, "flags", attr | NPF_RPROC_LOG);
+	prop_dictionary_get_uint32(rpdict, "flags", &fl);
+	prop_dictionary_set_uint32(rpdict, "flags", fl | NPF_RPROC_LOG);
 	return 0;
 }
 
@@ -349,7 +349,7 @@ npf_nat_create(int type, int flags, u_int if_idx,
 	}
 
 	attr = NPF_RULE_PASS | NPF_RULE_FINAL |
-	    (type == NPF_NATOUT) ? NPF_RULE_OUT : NPF_RULE_IN;
+	    (type == NPF_NATOUT ? NPF_RULE_OUT : NPF_RULE_IN);
 
 	/* Create a rule for NAT policy.  Next, will add translation data. */
 	rl = npf_rule_create(NULL, attr, if_idx);
