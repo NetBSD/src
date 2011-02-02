@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.90 2011/02/02 14:41:55 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.91 2011/02/02 15:58:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.90 2011/02/02 14:41:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.91 2011/02/02 15:58:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -679,7 +679,8 @@ rump_vop_lookup(void *v)
 		return EOPNOTSUPP;
 
 	/* check for etfs */
-	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
+	if (dvp == rootvnode &&
+	    (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE)) {
 		bool found;
 		mutex_enter(&etfs_lock);
 		found = etfs_find(cnp->cn_nameptr, &et, false);
