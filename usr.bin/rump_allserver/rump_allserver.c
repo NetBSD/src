@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.13 2011/01/03 12:18:25 wiz Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.14 2011/02/03 11:21:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.13 2011/01/03 12:18:25 wiz Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.14 2011/02/03 11:21:16 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -81,6 +81,8 @@ static const char *const disktokens[] = {
 	"hostpath",
 #define DSIZE 2
 	"size",
+#define DOFFSET 3
+	"offset",
 	NULL
 };
 
@@ -88,6 +90,7 @@ struct etfsreg {
 	const char *key;
 	const char *hostpath;
 	off_t flen;
+	off_t foffset;
 	enum rump_etfs_type type;
 };
 
@@ -119,9 +122,9 @@ main(int argc, char *argv[])
 		case 'd': {
 			char *options, *value;
 			char *key, *hostpath;
-			long long flen;
+			long long flen, foffset;
 
-			flen = 0;
+			flen = foffset = 0;
 			key = hostpath = NULL;
 			options = optarg;
 			while (*options) {
@@ -153,6 +156,16 @@ main(int argc, char *argv[])
 					flen = strsuftoll("-d size", value,
 					    0, LLONG_MAX);
 					break;
+				case DOFFSET:
+					if (foffset != 0) {
+						fprintf(stderr,
+						    "offset already given\n");
+						usage();
+					}
+					/* XXX: off_t max? */
+					foffset = strsuftoll("-d offset", value,
+					    0, LLONG_MAX);
+					break;
 				default:
 					fprintf(stderr, "invalid dtoken\n");
 					usage();
@@ -175,6 +188,7 @@ main(int argc, char *argv[])
 			etfs[curetfs].key = key;
 			etfs[curetfs].hostpath = hostpath;
 			etfs[curetfs].flen = flen;
+			etfs[curetfs].foffset = foffset;
 			etfs[curetfs].type = RUMP_ETFS_BLK;
 			curetfs++;
 
@@ -247,17 +261,25 @@ main(int argc, char *argv[])
 
 	/* register host drives */
 	for (i = 0; i < curetfs; i++) {
+		struct stat sb;
+		off_t fsize;
 		int fd;
 
+		fsize = etfs[i].foffset + etfs[i].flen;
 		fd = open(etfs[i].hostpath, O_RDWR | O_CREAT, 0755);
 		if (fd == -1)
-			die(sflag, error, "etfs hostpath create");
-		if (ftruncate(fd, etfs[i].flen) == -1)
-			die(sflag, error, "truncate");
+			die(sflag, errno, "etfs hostpath create");
+		if (fstat(fd, &sb) == -1)
+			die(sflag, errno, "fstat etfs hostpath");
+		if (S_ISREG(sb.st_mode) && sb.st_size < fsize) {
+			if (ftruncate(fd, fsize) == -1)
+				die(sflag, errno, "truncate");
+		}
 		close(fd);
 
-		if ((error = rump_pub_etfs_register(etfs[i].key,
-		    etfs[i].hostpath, etfs[i].type)) != 0)
+		if ((error = rump_pub_etfs_register_withsize(etfs[i].key,
+		    etfs[i].hostpath, etfs[i].type,
+		    etfs[i].foffset, etfs[i].flen)) != 0)
 			die(sflag, error, "etfs register");
 	}
 

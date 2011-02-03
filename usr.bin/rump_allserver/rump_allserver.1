@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.8 2011/01/08 09:36:26 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.9 2011/02/03 11:21:16 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -91,6 +91,25 @@ Similar to
 .Xr dd 1 ,
 this argument accepts a suffix as the multiplier for the number.
 .El
+.Pp
+The following specifier is optional:
+.Bl -tag -width hostpath1234
+.It Ar offset
+Offset of the mapping.
+The window into
+.Ar hostpath
+therefore is
+.Fa [ offset , offset+size ] .
+In case this parameter is not given, the default value 0 is used.
+.El
+.Pp
+In case
+.Ar hostpath
+does not exist, it will be created as a regular file.
+In case
+.Ar hostpath
+is a regular file and is not large enough to accommodate the
+specified size, it will be extended to the specified size.
 .It Fl l Ar library
 Call
 .Fn dlopen
