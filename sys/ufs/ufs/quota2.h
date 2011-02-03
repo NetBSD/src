@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.1.2.5 2011/01/31 15:19:21 bouyer Exp $ */
+/* $NetBSD: quota2.h,v 1.1.2.6 2011/02/03 15:56:16 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -57,7 +57,7 @@ struct quota2_val {
 };
 
 /*
- * Description of a user or group quota
+ * On-disk description of a user or group quota
  * These entries are keept as linked list, either in one of the hash HEAD,
  * or in the free list.
  */
@@ -100,4 +100,16 @@ void quota2_addfreeq2e(struct quota2_header *, void *, uint64_t, uint64_t, int);
 void quota2_create_blk0(uint64_t, void *bp, int, int, int);
 void quota2_ufs_rwq2v(const struct quota2_val *, struct quota2_val *, int);
 void quota2_ufs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
+
+int quota2_check_limit(struct quota2_val *, uint64_t, time_t);
+#define QL_S_ALLOW_OK	0x00 /* below soft limit */
+#define QL_S_ALLOW_SOFT	0x01 /* over soft limit */
+#define QL_S_DENY_GRACE	0x02 /* over soft limit, grace time expired */
+#define QL_S_DENY_HARD	0x03 /* over hard limit */
+
+#define QL_F_CROSS	0x80 /* crossing soft limit */
+
+#define QL_STATUS(x)	((x) & 0x0f)
+#define QL_FLAGS(x)	((x) & 0xf0)
+
 #endif /*  _UFS_UFS_QUOTA2_H_ */
