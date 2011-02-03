@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33.2.6 2011/01/31 15:26:31 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.33.2.7 2011/02/03 15:56:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33.2.6 2011/01/31 15:26:31 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.33.2.7 2011/02/03 15:56:15 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,37 +345,42 @@ showquotas(type, id, name)
 		time(&now);
 	quplist = getprivs(id, type);
 	for (qup = quplist; qup; qup = qup->next) {
+		int ql_stat;
 		if (!vflag &&
 		    qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit == UQUAD_MAX &&
 		    qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit == UQUAD_MAX &&
 		    qup->q2e.q2e_val[QL_FILE].q2v_softlimit == UQUAD_MAX &&
 		    qup->q2e.q2e_val[QL_FILE].q2v_hardlimit == UQUAD_MAX)
 			continue;
-		msgi = NULL;
-		if (qup->q2e.q2e_val[QL_FILE].q2v_hardlimit &&
-		    qup->q2e.q2e_val[QL_FILE].q2v_cur >=
-		    qup->q2e.q2e_val[QL_FILE].q2v_hardlimit)
+		ql_stat = quota2_check_limit(&qup->q2e.q2e_val[QL_FILE],
+		    1, now);
+		switch(QL_STATUS(ql_stat)) {
+		case QL_S_DENY_HARD:
 			msgi = "File limit reached on";
-		else if (qup->q2e.q2e_val[QL_FILE].q2v_softlimit &&
-		    qup->q2e.q2e_val[QL_FILE].q2v_cur >=
-		    qup->q2e.q2e_val[QL_FILE].q2v_softlimit) {
-			if (qup->q2e.q2e_val[QL_FILE].q2v_time > now)
-				msgi = "In file grace period on";
-			else
-				msgi = "Over file quota on";
+			break;
+		case QL_S_DENY_GRACE:
+			msgi = "Over file quota on";
+			break;
+		case QL_S_ALLOW_SOFT:
+			msgi = "In file grace period on";
+			break;
+		default:
+			msgi = NULL;
 		}
-		msgb = NULL;
-		if (qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit &&
-		    qup->q2e.q2e_val[QL_BLOCK].q2v_cur >=
-		    qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit)
+		ql_stat = quota2_check_limit(&qup->q2e.q2e_val[QL_BLOCK],
+		    1, now);
+		switch(QL_STATUS(ql_stat)) {
+		case QL_S_DENY_HARD:
 			msgb = "Block limit reached on";
-		else if (qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit &&
-		    qup->q2e.q2e_val[QL_BLOCK].q2v_cur >=
-		    qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit) {
-			if (qup->q2e.q2e_val[QL_BLOCK].q2v_time > now)
-				msgb = "In block grace period on";
-			else
-				msgb = "Over block quota on";
+			break;
+		case QL_S_DENY_GRACE:
+			msgb = "Over block quota on";
+			break;
+		case QL_S_ALLOW_SOFT:
+			msgb = "In block grace period on";
+			break;
+		default:
+			msgb = NULL;
 		}
 		if (qflag) {
 			if ((msgi != NULL || msgb != NULL) &&

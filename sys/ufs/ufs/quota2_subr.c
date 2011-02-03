@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_subr.c,v 1.1.2.4 2011/01/31 15:24:10 bouyer Exp $ */
+/* $NetBSD: quota2_subr.c,v 1.1.2.5 2011/02/03 15:56:16 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.1.2.4 2011/01/31 15:24:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.1.2.5 2011/02/03 15:56:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -107,4 +107,22 @@ int needswap)
 	quota2_ufs_rwq2v(&s->q2e_val[QL_FILE], &d->q2e_val[QL_FILE],
 	    needswap);
 	d->q2e_uid = ufs_rw32(s->q2e_uid, needswap);
+}
+
+int
+quota2_check_limit(struct quota2_val *q2v, uint64_t change, time_t now)
+{
+	if (q2v->q2v_cur + change >= q2v->q2v_hardlimit) {
+		if (q2v->q2v_cur < q2v->q2v_softlimit) 
+			return (QL_F_CROSS | QL_S_DENY_HARD);
+		return QL_S_DENY_HARD;
+	} else if (q2v->q2v_cur + change >= q2v->q2v_softlimit) {
+		if (q2v->q2v_cur < q2v->q2v_softlimit)
+			return (QL_F_CROSS | QL_S_ALLOW_SOFT);
+		if (now > q2v->q2v_time) {
+			return QL_S_DENY_GRACE;
+		}
+		return QL_S_ALLOW_SOFT;
+	}
+	return QL_S_ALLOW_OK;
 }

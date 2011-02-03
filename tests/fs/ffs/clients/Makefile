@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.4 2011/02/02 19:17:09 bouyer Exp $
+#	$NetBSD: Makefile,v 1.1.2.5 2011/02/03 15:56:16 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ WARNS=		4
 PROGS=			rump_quota rump_repquota rump_edquota rump_quotactl
 
 .PATH: ${NETBSDSRCDIR}/usr.bin/quota
-SRCS.rump_quota=	quota.c printquota.c getvfsquota.c quota_rumpops.c
+SRCS.rump_quota=	quota.c printquota.c getvfsquota.c quota_rumpops.c 
 SRCS.rump_repquota=	printquota.c quota_rumpops.c
 SRCS.rump_edquota=	printquota.c getvfsquota.c quota_rumpops.c
 CPPFLAGS.quota.c+=	-I${NETBSDSRCDIR}/usr.bin/quota
@@ -29,12 +29,13 @@ SRCS.rump_quotactl+=	quotactl.c quota_rumpops.c
 CPPFLAGS.quotactl.c+=	-I${NETBSDSRCDIR}/sys
 
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/ufs 
-SRCS.rump_quota+=	quota2_prop.c
-SRCS.rump_repquota+=	quota2_prop.c quota1_subr.c
+SRCS.rump_quota+=	quota2_prop.c quota2_subr.c
+SRCS.rump_repquota+=	quota2_prop.c quota2_subr.c quota1_subr.c
 SRCS.rump_edquota+=	quota2_prop.c quota1_subr.c
 SRCS.rump_quotactl+=	quota2_prop.c
 CPPFLAGS.quota2_prop.c+=-I${NETBSDSRCDIR}/sys
 CPPFLAGS.quota1_subr.c+=-I${NETBSDSRCDIR}/sys
+CPPFLAGS.quota2_subr.c+=-I${NETBSDSRCDIR}/sys
 
 DPADD.rump_quota=	${LIBRPCSVC} ${LIBPROP} ${LIBRUMPCLIENT}
 LDADD.rump_quota=	-lrpcsvc -lprop -lrumpclient
