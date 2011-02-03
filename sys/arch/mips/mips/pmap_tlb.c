@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.15 2010/12/29 00:33:32 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.16 2011/02/03 02:36:41 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.15 2010/12/29 00:33:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.16 2011/02/03 02:36:41 cliff Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.15 2010/12/29 00:33:32 matt Exp $
  * a lot of overhead for not much gain.
  */
 
+#include "opt_multiprocessor.h"
 #include "opt_sysv.h"
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1011,7 +1012,7 @@ pmap_tlb_asid_check(void)
 	uint32_t tlb_hi;
 	__asm("mfc0 %0,$%1" : "=r"(tlb_hi) : "n"(MIPS_COP_0_TLB_HI));
 	uint32_t asid = (tlb_hi & MIPS_TLB_PID) >> MIPS_TLB_PID_SHIFT;
-	KASSERTMSG(asid != curcpu()->ci_pmap_asid_cur,
+	KASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
 	   ("tlb_hi (%#x) asid (%#x) != current asid (%#x)",
 	    tlb_hi, asid, curcpu()->ci_pmap_asid_cur));
 #endif
