@@ -1,4 +1,4 @@
-/* $NetBSD: quota1_subr.c,v 1.1.2.2 2011/01/31 15:24:10 bouyer Exp $ */
+/* $NetBSD: quota1_subr.c,v 1.1.2.3 2011/02/03 17:36:30 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.1.2.2 2011/01/31 15:24:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.1.2.3 2011/02/03 17:36:30 bouyer Exp $");
 
 #include <sys/types.h>
 #include <machine/limits.h>
@@ -41,10 +41,8 @@ dqblk2q2e_limit(uint32_t lim)
 {
 	if (lim == 0)
 		return UQUAD_MAX;
-	else if (lim == 1)
-		return 0;
 	else
-		return lim;
+		return (lim - 1);
 }
 
 static uint32_t
@@ -52,10 +50,8 @@ q2e2dqblk_limit(uint64_t lim)
 {
 	if (lim == UQUAD_MAX)
 		return 0;
-	else if (lim == 0)
-		return 1;
 	else
-		return lim;
+		return (lim + 1);
 }
 
 void

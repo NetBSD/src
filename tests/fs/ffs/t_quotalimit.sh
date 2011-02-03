@@ -1,4 +1,4 @@
-# $NetBSD: t_quotalimit.sh,v 1.1.2.2 2011/02/02 21:01:08 bouyer Exp $ 
+# $NetBSD: t_quotalimit.sh,v 1.1.2.3 2011/02/03 17:36:31 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -82,10 +82,10 @@ limit_quota()
 	    $(atf_get_srcdir)/h_quota2_tests -b 0 ${IMG} ${RUMP_SERVER}
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		    -o match:'/mnt   2560 B\*  2048 B   3072 B     2:0      2       4       6         ' \
+		    -o match:'/mnt   3072 B\*  2048 B   3072 B     2:0      2       4       6         ' \
 		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
 		atf_check -s exit:0 \
-		    -o match:'daemon    \+-        2        2        3    2:0         2       4       6' \
+		    -o match:'daemon    \+-        3        2        3    2:0         2       4       6' \
 		    $(atf_get_srcdir)/rump_repquota -$q /mnt
 	done
 	rump_shutdown
@@ -129,7 +129,7 @@ limit_softquota()
 	    $(atf_get_srcdir)/h_quota2_tests -b 1 ${IMG} ${RUMP_SERVER}
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		    -o match:'/mnt   2048 B\*  2048 B   3072 B    none      2       4       6         ' \
+		    -o match:'/mnt   2560 B\*  2048 B   3072 B    none      2       4       6         ' \
 		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
 		atf_check -s exit:0 \
 		    -o match:'daemon    \+-        2        2        3   none         2       4       6' \
@@ -176,10 +176,10 @@ limit_iquota()
 	    $(atf_get_srcdir)/h_quota2_tests -b 2 ${IMG} ${RUMP_SERVER}
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		    -o match:'/mnt   2560 B   2048 K   3072 K              5 \*     4       6      2:0' \
+		    -o match:'/mnt   3072 B   2048 K   3072 K              6 \*     4       6      2:0' \
 		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
 		atf_check -s exit:0 \
-		    -o match:'daemon    -\+        2     2048     3072                5       4       6    2:0' \
+		    -o match:'daemon    -\+        3     2048     3072                6       4       6    2:0' \
 		    $(atf_get_srcdir)/rump_repquota -$q /mnt
 	done
 	rump_shutdown
@@ -223,10 +223,10 @@ limit_softiquota()
 	    $(atf_get_srcdir)/h_quota2_tests -b 3 ${IMG} ${RUMP_SERVER}
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		    -o match:'/mnt   2048 B   2048 K   3072 K              4 \*     4       6     none' \
+		    -o match:'/mnt   2560 B   2048 K   3072 K              5 \*     4       6     none' \
 		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
 		atf_check -s exit:0 \
-		    -o match:'daemon    -\+        2     2048     3072                4       4       6   none' \
+		    -o match:'daemon    -\+        2     2048     3072                5       4       6   none' \
 		    $(atf_get_srcdir)/rump_repquota -$q /mnt
 	done
 	rump_shutdown
@@ -275,10 +275,10 @@ inherit_defaultquota()
 	    $(atf_get_srcdir)/h_quota2_tests -b 0 ${IMG} ${RUMP_SERVER}
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		    -o match:'/mnt   2560 B\*  2048 B   3072 B     2:0      2       4       6         ' \
+		    -o match:'/mnt   3072 B\*  2048 B   3072 B     2:0      2       4       6         ' \
 		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
 		atf_check -s exit:0 \
-		    -o match:'daemon    \+-        2        2        3    2:0         2       4       6' \
+		    -o match:'daemon    \+-        3        2        3    2:0         2       4       6' \
 		    $(atf_get_srcdir)/rump_repquota -$q /mnt
 	done
 	rump_shutdown
@@ -327,10 +327,10 @@ inherit_defaultiquota()
 	    $(atf_get_srcdir)/h_quota2_tests -b 2 ${IMG} ${RUMP_SERVER}
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		    -o match:'/mnt   2560 B   2048 K   3072 K              5 \*     4       6      2:0' \
+		    -o match:'/mnt   3072 B   2048 K   3072 K              6 \*     4       6      2:0' \
 		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
 		atf_check -s exit:0 \
-		    -o match:'daemon    -\+        2     2048     3072                5       4       6    2:0' \
+		    -o match:'daemon    -\+        3     2048     3072                6       4       6    2:0' \
 		    $(atf_get_srcdir)/rump_repquota -$q /mnt
 	done
 	rump_shutdown
