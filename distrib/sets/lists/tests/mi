@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.241 2011/01/24 17:52:07 pooka Exp $
+# $NetBSD: mi,v 1.242 2011/02/03 15:39:50 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -533,6 +533,7 @@
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df					tests-util-debug
@@ -1989,6 +1990,11 @@
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
+./usr/tests/usr.bin				tests-util-tests
+./usr/tests/usr.bin/Atffile			tests-sbin-tests	atf
+./usr/tests/usr.bin/rump_server			tests-util-tests
+./usr/tests/usr.bin/rump_server/Atffile		tests-util-tests	atf
+./usr/tests/usr.bin/rump_server/t_disk	tests-util-tests	atf
 ./usr/tests/usr.sbin				tests-util-tests
 ./usr/tests/usr.sbin/Atffile			tests-sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute			tests-util-tests
