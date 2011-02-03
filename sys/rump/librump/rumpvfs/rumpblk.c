@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.45 2011/02/03 15:36:30 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.46 2011/02/03 22:16:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.45 2011/02/03 15:36:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.46 2011/02/03 22:16:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -368,6 +368,7 @@ rumpblk_init(void)
 	for (i = 0; i < RUMPBLK_SIZE; i++) {
 		mutex_init(&minors[i].rblk_memmtx, MUTEX_DEFAULT, IPL_NONE);
 		cv_init(&minors[i].rblk_memcv, "rblkmcv");
+		minors[i].rblk_fd = -1;
 	}
 
 	evcnt_attach_dynamic(&ev_io_total, EVCNT_TYPE_MISC, NULL,
@@ -501,7 +502,7 @@ backend_open(struct rblkdev *rblk, const char *path)
 {
 	int error, fd;
 
-	KASSERT(rblk->rblk_fd != -1);
+	KASSERT(rblk->rblk_fd == -1);
 	fd = rumpuser_open(path, O_RDWR, &error);
 	if (error) {
 		fd = rumpuser_open(path, O_RDONLY, &error);
