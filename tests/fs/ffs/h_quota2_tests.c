@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_tests.c,v 1.1.2.1 2011/02/02 19:17:08 bouyer Exp $	*/
+/*	$NetBSD: h_quota2_tests.c,v 1.1.2.2 2011/02/03 17:36:31 bouyer Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -87,8 +87,8 @@ quota_test1(void)
 		 */
 		int i;
 
-		/* write 1.5k: with the directory this makes 2K */
-		for (i = 0; i < 3; i++) {
+		/* write 2k: with the directory this makes 2.5K */
+		for (i = 0; i < 4; i++) {
 			error = rump_sys_write(fd, buf, sizeof(buf));
 			if (error != sizeof(buf))
 				err(1, "write failed early");
@@ -162,10 +162,10 @@ quota_test3(void)
 	}
 
 	/*
-	 * create files up to the soft limit: one less as we already own the
+	 * create files one past the soft limit: one less as we already own the
 	 * root directory
 	 */
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 4; i++) {
 		sprintf(buf, "file%d", i);
 		fd = rump_sys_open(buf, O_EXCL| O_CREAT | O_RDWR, 0644);
 		if (fd < 0)
