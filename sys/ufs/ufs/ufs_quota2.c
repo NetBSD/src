@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.6 2011/01/31 15:24:11 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.7 2011/02/03 15:56:16 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.6 2011/01/31 15:24:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.7 2011/02/03 15:56:16 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -357,10 +357,11 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 	int error;
 	struct buf *bp[MAXQUOTAS];
 	struct quota2_entry *q2e[MAXQUOTAS];
-	struct quota2_val *q2v;
+	struct quota2_val *q2vp;
 	struct dquot *dq;
-	uint64_t ncurblks, soft, hard;
+	uint64_t ncurblks;
 	struct ufsmount *ump = ip->i_ump;
+	struct mount *mp = ump->um_mountp;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	int i;
 
@@ -386,13 +387,13 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 				mutex_exit(&dq->dq_interlock);
 				continue;
 			}
-			q2v = &q2e[i]->q2e_val[vtype];
-			ncurblks = ufs_rw64(q2v->q2v_cur, needswap);
+			q2vp = &q2e[i]->q2e_val[vtype];
+			ncurblks = ufs_rw64(q2vp->q2v_cur, needswap);
 			if (ncurblks < -change)
 				ncurblks = 0;
 			else
 				ncurblks += change;
-			q2v->q2v_cur = ufs_rw64(ncurblks, needswap);
+			q2vp->q2v_cur = ufs_rw64(ncurblks, needswap);
 			VOP_BWRITE(bp[i]);
 			mutex_exit(&dq->dq_interlock);
 		}
@@ -400,40 +401,61 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 	}
 	/* see if the allocation is allowed */
 	for (i = 0; i < MAXQUOTAS; i++) {
-		if ((flags & FORCE) != 0 ||
-		    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_QUOTA,
-		    KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT,
-		    KAUTH_ARG(i), KAUTH_ARG(vtype), NULL) == 0) {
-			/* don't check this limit */
-			continue;
-		}
+		struct quota2_val q2v;
+		int ql_stat;
 		dq = ip->i_dquot[i];
 		if (dq == NODQUOT)
 			continue;
 		KASSERT(q2e[i] != NULL);
-		q2v = &q2e[i]->q2e_val[vtype];
-		ncurblks = ufs_rw64(q2v->q2v_cur, needswap);
-		soft = ufs_rw64(q2v->q2v_softlimit, needswap);
-		hard = ufs_rw64(q2v->q2v_hardlimit, needswap);
-		if (ncurblks + change >= hard) {
-			if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
-				uprintf("\n%s: write failed, %s %s limit "
-				    "reached\n",
-				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
-				    quotatypes[i], valtypes[vtype]);
-				dq->dq_flags |= DQ_WARN(vtype);
+		quota2_ufs_rwq2v(&q2e[i]->q2e_val[vtype], &q2v, needswap);
+		ql_stat = quota2_check_limit(&q2v, change, time_second);
+
+		if ((flags & FORCE) == 0 &&
+		    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT,
+		    KAUTH_ARG(i), KAUTH_ARG(vtype), NULL) != 0) {
+			/* enforce this limit */
+			switch(QL_STATUS(ql_stat)) {
+			case QL_S_DENY_HARD:
+				if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
+					uprintf("\n%s: write failed, %s %s "
+					    "limit reached\n",
+					    mp->mnt_stat.f_mntonname,
+					    quotatypes[i], valtypes[vtype]);
+					dq->dq_flags |= DQ_WARN(vtype);
+				}
+				error = EDQUOT;
+				break;
+			case QL_S_DENY_GRACE:
+				if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
+					uprintf("\n%s: write failed, %s %s "
+					    "limit reached\n",
+					    mp->mnt_stat.f_mntonname,
+					    quotatypes[i], valtypes[vtype]);
+					dq->dq_flags |= DQ_WARN(vtype);
+				}
+				error = EDQUOT;
+				break;
+			case QL_S_ALLOW_SOFT:
+				if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
+					uprintf("\n%s: warning, %s %s "
+					    "quota exceeded\n",
+					    mp->mnt_stat.f_mntonname,
+					    quotatypes[i], valtypes[vtype]);
+					dq->dq_flags |= DQ_WARN(vtype);
+				}
+				break;
 			}
-			error = EDQUOT;
-		} else if (ncurblks >= soft &&
-		    time_second > ufs_rw64(q2v->q2v_time, needswap)) {
-			if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
-				uprintf("\n%s: write failed, %s %s "
-				    "limit reached\n",
-				    ump->um_mountp->mnt_stat.f_mntonname,
-				    quotatypes[i], valtypes[vtype]);
-				dq->dq_flags |= DQ_WARN(vtype);
-			}
-			error = EDQUOT;
+		}
+		/*
+		 * always do this; we don't know if the allocation will
+		 * succed or not in the end. if we don't do the allocation
+		 * q2v_time will be ignored anyway
+		 */
+		if (ql_stat & QL_F_CROSS) {
+			q2v.q2v_time = time_second + q2v.q2v_grace;
+			quota2_ufs_rwq2v(&q2v, &q2e[i]->q2e_val[vtype],
+			    needswap);
 		}
 	}
 
@@ -444,18 +466,9 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 			continue;
 		KASSERT(q2e[i] != NULL);
 		if (error == 0) {
-			q2v = &q2e[i]->q2e_val[vtype];
-			ncurblks = ufs_rw64(q2v->q2v_cur, needswap);
-			soft = ufs_rw64(q2v->q2v_softlimit, needswap);
-			if (ncurblks < soft && (ncurblks + change) >= soft) {
-				q2v->q2v_time = ufs_rw64(time_second +
-				    ufs_rw64(q2v->q2v_grace, needswap),
-				    needswap);
-				uprintf("\n%s: warning, %s %s quota exceeded\n",
-				    ump->um_mountp->mnt_stat.f_mntonname,
-				    quotatypes[i], valtypes[vtype]);
-			}
-			q2v->q2v_cur = ufs_rw64(ncurblks + change, needswap);
+			q2vp = &q2e[i]->q2e_val[vtype];
+			ncurblks = ufs_rw64(q2vp->q2v_cur, needswap);
+			q2vp->q2v_cur = ufs_rw64(ncurblks + change, needswap);
 			VOP_BWRITE(bp[i]);
 		} else
 			brelse(bp[i], 0);
