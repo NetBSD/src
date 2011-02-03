@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.14 2011/02/03 11:21:16 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.15 2011/02/03 11:25:27 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.14 2011/02/03 11:21:16 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.15 2011/02/03 11:25:27 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 		int fd;
 
 		fsize = etfs[i].foffset + etfs[i].flen;
-		fd = open(etfs[i].hostpath, O_RDWR | O_CREAT, 0755);
+		fd = open(etfs[i].hostpath, O_RDWR | O_CREAT, 0644);
 		if (fd == -1)
 			die(sflag, errno, "etfs hostpath create");
 		if (fstat(fd, &sb) == -1)
