@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.10 2011/01/30 21:18:51 phx Exp $
+.\"$NetBSD: hardware,v 1.11 2011/02/03 21:04:52 phx Exp $
 .
 .Nx*M
 is a port based on Motorola's
@@ -73,6 +73,8 @@ StorCenter XXX
 .
 .Ss2 824x NAS supported boot devices and media
 .Nx
-is booted by
+is booted using the
 .Pa altboot
-, which can load the kernel from NFS or from the local disk.
+bootloader, which can load the kernel via TFTP, from NFS or from the
+local disk. You will have to transfer the bootloader into memory by
+any means the firmware offers (serial upload, TFTP, Flash ROM).
