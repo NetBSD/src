@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.6 2010/02/22 20:17:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.7 2011/02/03 02:39:46 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -104,7 +104,7 @@ softint_trigger(uintptr_t si)
 		softint_fast_dispatch(ci->ci_softlwps[SOFTINT_##level], \
 		    IPL_SOFT##level); \
 		KASSERT(ci->ci_softlwps[SOFTINT_##level]->l_ctxswtch == 0); \
-		KASSERTMSG(ci->ci_cpl != IPL_HIGH, ("cpl (%d) != HIGH", ci->ci_cpl)); \
+		KASSERTMSG(ci->ci_cpl == IPL_HIGH, ("cpl (%d) != HIGH", ci->ci_cpl)); \
 		continue; \
 	}
 
