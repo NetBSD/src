@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1053 2011/01/26 18:37:52 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1054 2011/02/03 22:04:09 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1056 2011/01/26 18:37:06 bouyer Exp
+ *	NetBSD: pcidevs,v 1.1057 2011/02/03 22:03:09 njoly Exp
  */
 
 /*
@@ -3514,6 +3514,11 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_HDA	0x026c		/* nForce430 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_OHCI	0x026d		/* nForce430 USB Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_EHCI	0x026e		/* nForce430 USB2 Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_PPB	0x026f		/* nForce430 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_HB	0x0270		/* nForce430 Host Bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_MC	0x0272		/* nForce430 Memory Controller */
+#define	PCI_PRODUCT_NVIDIA_C51_MC2	0x027e		/* C51 Memory Controller 2 */
+#define	PCI_PRODUCT_NVIDIA_C51_MC3	0x027f		/* C51 Memory Controller 3 */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4800	0x0280		/* GeForce4 Ti 4800 */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4200_8X	0x0281		/* GeForce4 Ti 4200 (AGP8X) */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4800_SE	0x0282		/* GeForce4 Ti 4800 SE */

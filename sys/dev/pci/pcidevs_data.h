@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1052 2011/01/26 18:37:52 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1053 2011/02/03 22:04:09 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1056 2011/01/26 18:37:06 bouyer Exp
+ *	NetBSD: pcidevs,v 1.1057 2011/02/03 22:03:09 njoly Exp
  */
 
 /*
@@ -5607,54 +5607,64 @@ static const uint16_t pci_products[] = {
 	    20901, 6624, 6139, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_EHCI, 
 	    20901, 8788, 6139, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_PPB, 
+	    20901, 7775, 6242, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_HB, 
+	    20901, 6632, 6242, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_MC, 
+	    20901, 13199, 6139, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC2, 
+	    20911, 13199, 6139, 6095, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC3, 
+	    20911, 13199, 6139, 6106, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800, 
-	    20750, 20849, 20911, 0,
+	    20750, 20849, 20915, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4200_8X, 
 	    20750, 20849, 20875, 20792, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800_SE, 
-	    20750, 20849, 20911, 20771, 0,
+	    20750, 20849, 20915, 20771, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4200_GO, 
-	    20750, 20849, 20875, 20708, 7788, 20916, 0,
+	    20750, 20849, 20875, 20708, 7788, 20920, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_980_XGL, 
-	    20654, 20919, 20804, 0,
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_780_XGL, 
 	    20654, 20923, 20804, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_780_XGL, 
+	    20654, 20927, 20804, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOXFB, 
-	    20823, 20927, 20933, 0,
+	    20823, 20931, 20937, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_PCHB, 
 	    20823, 20812, 6530, 6242, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F0, 
-	    20940, 6632, 6242, 20944, 0,
+	    20911, 6632, 6242, 20944, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F1, 
-	    20940, 6632, 6242, 20953, 0,
+	    20911, 6632, 6242, 20953, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F2, 
-	    20940, 6632, 6242, 20962, 0,
+	    20911, 6632, 6242, 20962, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F3, 
-	    20940, 6632, 6242, 20971, 0,
+	    20911, 6632, 6242, 20971, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F4, 
-	    20940, 6632, 6242, 20980, 0,
+	    20911, 6632, 6242, 20980, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F5, 
-	    20940, 6632, 6242, 20989, 0,
+	    20911, 6632, 6242, 20989, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F6, 
-	    20940, 6632, 6242, 20998, 0,
+	    20911, 6632, 6242, 20998, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F7, 
-	    20940, 6632, 6242, 21007, 0,
+	    20911, 6632, 6242, 21007, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC5, 
-	    20940, 13199, 6139, 12998, 0,
+	    20911, 13199, 6139, 12998, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC4, 
-	    20940, 13199, 6139, 6465, 0,
+	    20911, 13199, 6139, 6465, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC0, 
-	    20940, 13199, 6139, 9835, 0,
+	    20911, 13199, 6139, 9835, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FB, 
-	    20940, 615, 4337, 6242, 21016, 0,
+	    20911, 615, 4337, 6242, 21016, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FC, 
-	    20940, 615, 4337, 6242, 21025, 0,
+	    20911, 615, 4337, 6242, 21025, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FD, 
-	    20940, 615, 4337, 6242, 21034, 0,
+	    20911, 615, 4337, 6242, 21034, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC1, 
-	    20940, 13199, 6139, 9837, 0,
+	    20911, 13199, 6139, 9837, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02FF, 
-	    20940, 6632, 6242, 21043, 0,
+	    20911, 6632, 6242, 21043, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800U, 
 	    20585, 20677, 21052, 6807, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800, 
@@ -8438,16 +8448,16 @@ static const char pci_words[] = { "."
 	    "DELTA\0" /* 1 refs @ 6074 */
 	    "Permedia\0" /* 5 refs @ 6080 */
 	    "500MX\0" /* 1 refs @ 6089 */
-	    "2\0" /* 28 refs @ 6095 */
+	    "2\0" /* 29 refs @ 6095 */
 	    "GAMMA\0" /* 1 refs @ 6097 */
 	    "2V\0" /* 1 refs @ 6103 */
-	    "3\0" /* 8 refs @ 6106 */
+	    "3\0" /* 9 refs @ 6106 */
 	    "WILDCAT\0" /* 1 refs @ 6108 */
 	    "5110\0" /* 1 refs @ 6116 */
 	    "Escalade\0" /* 2 refs @ 6121 */
 	    "ATA\0" /* 51 refs @ 6130 */
 	    "RAID\0" /* 31 refs @ 6134 */
-	    "Controller\0" /* 732 refs @ 6139 */
+	    "Controller\0" /* 735 refs @ 6139 */
 	    "7000/8000\0" /* 1 refs @ 6150 */
 	    "Series\0" /* 27 refs @ 6160 */
 	    "9000\0" /* 5 refs @ 6167 */
@@ -8462,7 +8472,7 @@ static const char pci_words[] = { "."
 	    "ACCM\0" /* 1 refs @ 6225 */
 	    "2188\0" /* 1 refs @ 6230 */
 	    "VL-PCI\0" /* 3 refs @ 6235 */
-	    "Bridge\0" /* 528 refs @ 6242 */
+	    "Bridge\0" /* 530 refs @ 6242 */
 	    "2051\0" /* 2 refs @ 6249 */
 	    "Single\0" /* 5 refs @ 6254 */
 	    "Solution\0" /* 2 refs @ 6261 */
@@ -8519,7 +8529,7 @@ static const char pci_words[] = { "."
 	    "M5237\0" /* 1 refs @ 6618 */
 	    "USB\0" /* 138 refs @ 6624 */
 	    "1.1\0" /* 1 refs @ 6628 */
-	    "Host\0" /* 199 refs @ 6632 */
+	    "Host\0" /* 200 refs @ 6632 */
 	    "M5239\0" /* 1 refs @ 6637 */
 	    "2.0\0" /* 8 refs @ 6643 */
 	    "M5243\0" /* 1 refs @ 6647 */
@@ -8666,7 +8676,7 @@ static const char pci_words[] = { "."
 	    "Elan\0" /* 1 refs @ 7757 */
 	    "SC520\0" /* 1 refs @ 7762 */
 	    "AMD751\0" /* 2 refs @ 7768 */
-	    "PCI-PCI\0" /* 63 refs @ 7775 */
+	    "PCI-PCI\0" /* 64 refs @ 7775 */
 	    "IGR4\0" /* 2 refs @ 7783 */
 	    "AGP\0" /* 62 refs @ 7788 */
 	    "AMD762\0" /* 2 refs @ 7792 */
@@ -9475,7 +9485,7 @@ static const char pci_words[] = { "."
 	    "(I2O)\0" /* 2 refs @ 13180 */
 	    "Zero\0" /* 1 refs @ 13186 */
 	    "Channel\0" /* 1 refs @ 13191 */
-	    "Memory\0" /* 35 refs @ 13199 */
+	    "Memory\0" /* 38 refs @ 13199 */
 	    "PCI-SCI\0" /* 3 refs @ 13206 */
 	    "(32-bit,\0" /* 1 refs @ 13214 */
 	    "33\0" /* 2 refs @ 13223 */
@@ -10499,14 +10509,14 @@ static const char pci_words[] = { "."
 	    "900XGL\0" /* 1 refs @ 20880 */
 	    "750XGL\0" /* 1 refs @ 20887 */
 	    "700XGL\0" /* 1 refs @ 20894 */
-	    "nForce430\0" /* 11 refs @ 20901 */
-	    "4800\0" /* 2 refs @ 20911 */
-	    "8x\0" /* 1 refs @ 20916 */
-	    "980\0" /* 1 refs @ 20919 */
-	    "780\0" /* 1 refs @ 20923 */
-	    "Frame\0" /* 1 refs @ 20927 */
-	    "Buffer\0" /* 1 refs @ 20933 */
-	    "C51\0" /* 16 refs @ 20940 */
+	    "nForce430\0" /* 14 refs @ 20901 */
+	    "C51\0" /* 18 refs @ 20911 */
+	    "4800\0" /* 2 refs @ 20915 */
+	    "8x\0" /* 1 refs @ 20920 */
+	    "980\0" /* 1 refs @ 20923 */
+	    "780\0" /* 1 refs @ 20927 */
+	    "Frame\0" /* 1 refs @ 20931 */
+	    "Buffer\0" /* 1 refs @ 20937 */
 	    "(0x02f0)\0" /* 1 refs @ 20944 */
 	    "(0x02f1)\0" /* 1 refs @ 20953 */
 	    "(0x02f2)\0" /* 1 refs @ 20962 */
