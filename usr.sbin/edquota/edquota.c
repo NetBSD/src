@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.6 2011/01/31 15:26:31 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.7 2011/02/03 15:53:25 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.6 2011/01/31 15:26:31 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.7 2011/02/03 15:53:25 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -401,11 +401,13 @@ getprivs(long id, int quotatype, const char *filesys, int defaultq)
 		qup->next = 0;
 	}
 
-	if (filesys) {
+	if (filesys && quphead == NULL) {
 		if (defaultq)
 			errx(1, "no default quota for version 1");
 		/* if we get there, filesys is not mounted. try the old way */
 		qup = getprivs1(id, quotatype, filesys);
+		if (qup == NULL)
+			return NULL;
 		if (quphead == NULL)
 			quphead = qup;
 		else
