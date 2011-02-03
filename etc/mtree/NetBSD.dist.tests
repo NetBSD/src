@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.23 2011/01/14 13:24:45 pooka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.24 2011/02/03 15:39:50 pooka Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -97,6 +97,7 @@
 ./usr/libdata/debug/usr/tests/sbin
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs
 ./usr/libdata/debug/usr/tests/syscall
+./usr/libdata/debug/usr/tests/usr.bin
 ./usr/libdata/debug/usr/tests/usr.sbin
 ./usr/libdata/debug/usr/tests/util
 ./usr/libdata/debug/usr/tests/util/df
@@ -209,6 +210,8 @@
 ./usr/tests/sys
 ./usr/tests/sys/rc
 ./usr/tests/syscall
+./usr/tests/usr.bin
+./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.sbin
 ./usr/tests/usr.sbin/traceroute
 ./usr/tests/util
