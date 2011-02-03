@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.77 2011/01/23 21:53:40 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.78 2011/02/03 20:37:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.77 2011/01/23 21:53:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.78 2011/02/03 20:37:09 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1401,7 +1401,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	/* get some power */
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "power";
-	nca.ca_irq = -1;
+	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
 	config_found(self, &nca, mbprint);
 #endif
@@ -1414,7 +1414,7 @@ mbattach(device_t parent, device_t self, void *aux)
 		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
 		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 		nca.ca_dp.dp_mod = -1;
-		nca.ca_irq = -1;
+		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_iot = &hppa_bustag;
 		nca.ca_hpa = nca.ca_pcl.cmd_addr;
 
