@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.43 2011/02/02 15:55:22 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.44 2011/02/03 10:06:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.43 2011/02/02 15:55:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.44 2011/02/03 10:06:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -99,7 +99,6 @@ struct blkwin {
 static struct rblkdev {
 	char *rblk_path;
 	int rblk_fd;
-	int rblk_opencnt;
 #ifdef HAS_ODIRECT
 	int rblk_dfd;
 #endif
@@ -467,7 +466,6 @@ rumpblk_deregister(const char *path)
 
 	rblk = &minors[i];
 	KASSERT(rblk->rblk_fd == -1);
-	KASSERT(rblk->rblk_opencnt == 0);
 
 	wincleanup(rblk);
 	free(rblk->rblk_path, M_TEMP);
@@ -632,6 +630,11 @@ dostrategy(struct buf *bp)
 	int async = bp->b_flags & B_ASYNC;
 	int error;
 
+	if (bp->b_bcount % (1<<sectshift) != 0) {
+		rump_biodone(bp, 0, EINVAL);
+		return;
+	}
+
 	/* collect statistics */
 	ev_io_total.ev_count++;
 	if (async)
@@ -644,7 +647,13 @@ dostrategy(struct buf *bp)
 		ev_bread_total.ev_count++;
 	}
 
-	off = bp->b_blkno << sectshift;
+	/*
+	 * b_blkno is always in terms of DEV_BSIZE, and since we need
+	 * to translate to a byte offset for the host read, this
+	 * calculation does not need sectshift.
+	 */
+	off = bp->b_blkno << DEV_BSHIFT;
+
 	/*
 	 * Do bounds checking if we're working on a file.  Otherwise
 	 * invalid file systems might attempt to read beyond EOF.  This
