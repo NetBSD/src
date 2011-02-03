@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.227 2011/01/30 16:31:42 bouyer Exp $	*/
+/*	$NetBSD: rump.c,v 1.228 2011/02/03 11:01:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.227 2011/01/30 16:31:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.228 2011/02/03 11:01:51 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -155,6 +155,7 @@ __weak_alias(usermount_common_policy,rump__unavailable_vfs_panic);
 
 /* easier to write vfs-less clients */
 __weak_alias(rump_pub_etfs_register,rump__unavailable);
+__weak_alias(rump_pub_etfs_register_withsize,rump__unavailable);
 __weak_alias(rump_pub_etfs_remove,rump__unavailable);
 
 rump_proc_vfs_init_fn rump_proc_vfs_init;
