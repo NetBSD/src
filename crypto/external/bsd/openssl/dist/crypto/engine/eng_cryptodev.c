@@ -33,7 +33,7 @@
 #include <openssl/bn.h>
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
-	(defined(OpenBSD) || defined(__FreeBSD__))
+	(defined(OpenBSD) || defined(__FreeBSD__)) || defined(__NetBSD__)
 #include <sys/param.h>
 # if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041) || defined(__NetBSD__)
 #  define HAVE_CRYPTODEV
@@ -192,8 +192,6 @@ get_dev_crypto(void)
 {
 	static int fd = -1;
 
-	if (fd == -1)
-		fd = get_dev_crypto();
 	if (fd == -1)
 		fd = open_dev_crypto();
 	return fd;
@@ -910,7 +908,7 @@ crparam2bn(struct crparam *crp, BIGNUM *a)
 		return (-1);
 
 	for (i = 0; i < bytes; i++)
-		pd[i] = crp->crp_p[bytes - i - 1];
+		pd[i] = ((char *)crp->crp_p)[bytes - i - 1];
 
 	BN_bin2bn(pd, bytes, a);
 	free(pd);
@@ -936,7 +934,7 @@ cryptodev_asym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 {
 	int fd, ret = -1;
 
-	if ((fd = get_asym_dev_crypto()) < 0)
+	if ((fd = get_dev_crypto()) < 0)
 		return (ret);
 
 	if (r) {
