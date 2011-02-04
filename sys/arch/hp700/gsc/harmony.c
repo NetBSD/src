@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.20 2011/02/04 07:44:53 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.21 2011/02/04 10:56:03 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -92,26 +92,26 @@
 #include <hp700/gsc/harmonyreg.h>
 #include <hp700/gsc/harmonyvar.h>
 
-int     harmony_open(void *, int);
-void    harmony_close(void *);
-int     harmony_query_encoding(void *, struct audio_encoding *);
-int     harmony_set_params(void *, int, int, audio_params_t *,
+int	harmony_open(void *, int);
+void	harmony_close(void *);
+int	harmony_query_encoding(void *, struct audio_encoding *);
+int	harmony_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-int     harmony_round_blocksize(void *, int, int, const audio_params_t *);
-int     harmony_commit_settings(void *);
-int     harmony_halt_output(void *);
-int     harmony_halt_input(void *);
-int     harmony_getdev(void *, struct audio_device *);
-int     harmony_set_port(void *, mixer_ctrl_t *);
-int     harmony_get_port(void *, mixer_ctrl_t *);
-int     harmony_query_devinfo(void *, mixer_devinfo_t *);
-void * harmony_allocm(void *, int, size_t, struct malloc_type *, int);
-void    harmony_freem(void *, void *, struct malloc_type *);
-size_t  harmony_round_buffersize(void *, int, size_t);
-int     harmony_get_props(void *);
-int     harmony_trigger_output(void *, void *, void *, int,
+int	harmony_round_blocksize(void *, int, int, const audio_params_t *);
+int	harmony_commit_settings(void *);
+int	harmony_halt_output(void *);
+int	harmony_halt_input(void *);
+int	harmony_getdev(void *, struct audio_device *);
+int	harmony_set_port(void *, mixer_ctrl_t *);
+int	harmony_get_port(void *, mixer_ctrl_t *);
+int	harmony_query_devinfo(void *, mixer_devinfo_t *);
+void *	harmony_allocm(void *, int, size_t, struct malloc_type *, int);
+void	harmony_freem(void *, void *, struct malloc_type *);
+size_t	harmony_round_buffersize(void *, int, size_t);
+int	harmony_get_props(void *);
+int	harmony_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, const audio_params_t *);
-int     harmony_trigger_input(void *, void *, void *, int,
+int	harmony_trigger_input(void *, void *, void *, int,
     void (*)(void *), void *, const audio_params_t *);
 
 const struct audio_hw_if harmony_sa_hw_if = {
