@@ -62,10 +62,6 @@
 #include "if-options.h"
 #include "net.h"
 
-#define ROUNDUP(a)							      \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
-
 /* FIXME: Why do we need to check for sa_family 255 */
 #define COPYOUT(sin, sa)						      \
 	sin.s_addr = ((sa) != NULL) ?					      \
@@ -196,7 +192,7 @@ if_route(const struct interface *iface, const struct in_addr *dest,
 	int retval = 0;
 
 #define ADDSU(_su) {							      \
-		l = ROUNDUP(_su.sa.sa_len);				      \
+		l = RT_ROUNDUP(_su.sa.sa_len);				      \
 		memcpy(bp, &(_su), l);					      \
 		bp += l;						      \
 	}
