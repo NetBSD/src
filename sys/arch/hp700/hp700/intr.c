@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.35 2011/02/04 14:35:30 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.36 2011/02/04 14:51:02 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2011/02/04 14:35:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2011/02/04 14:51:02 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -235,7 +235,8 @@ hp700_intr_establish(int ipl, int (*handler)(void *), void *arg,
 int
 hp700_intr_allocate_bit(struct hp700_interrupt_register *ir)
 {
-	int bit_pos, mask;
+	int bit_pos;
+	u_int mask;
 
 	for (bit_pos = 31, mask = (1 << bit_pos);
 	     bit_pos >= 0;
