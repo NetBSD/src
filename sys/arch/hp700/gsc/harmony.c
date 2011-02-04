@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.19 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.20 2011/02/04 07:44:53 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -679,12 +679,14 @@ harmony_commit_settings(void *vsc)
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CNTL,
 	    sc->sc_cntlbits | CNTL_C);
 
+#if 0
 	for (;;) {
 		/* Wait for it to come out of control mode */
 		reg = READ_REG(sc, HARMONY_CNTL);
 		if ((reg & CNTL_C) == 0)
 			break;
 	}
+#endif
 
 	sc->sc_need_commit = 0;
 
