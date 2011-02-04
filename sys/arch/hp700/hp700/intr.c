@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.34 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.35 2011/02/04 14:35:30 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2011/02/04 14:35:30 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -233,17 +233,18 @@ hp700_intr_establish(int ipl, int (*handler)(void *), void *arg,
  * It returns the bit position, or -1 if no bits were available.
  */
 int
-hp700_intr_allocate_bit(struct hp700_interrupt_register *int_reg)
+hp700_intr_allocate_bit(struct hp700_interrupt_register *ir)
 {
 	int bit_pos, mask;
 
 	for (bit_pos = 31, mask = (1 << bit_pos);
 	     bit_pos >= 0;
 	     bit_pos--, mask >>= 1)
-		if (int_reg->ir_bits & mask)
+		if (ir->ir_bits & mask)
 			break;
 	if (bit_pos >= 0)
-		int_reg->ir_bits &= ~mask;
+		ir->ir_bits &= ~mask;
+
 	return bit_pos;
 }
 
