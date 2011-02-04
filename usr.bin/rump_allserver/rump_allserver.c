@@ -1,7 +1,7 @@
-/*	$NetBSD: rump_allserver.c,v 1.15 2011/02/03 11:25:27 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.16 2011/02/04 20:06:23 pooka Exp $	*/
 
 /*-
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,10 +27,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.15 2011/02/03 11:25:27 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.16 2011/02/04 20:06:23 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
+#include <sys/disklabel.h>
 #include <sys/signal.h>
 #include <sys/module.h>
 
@@ -46,6 +47,7 @@ __RCSID("$NetBSD: rump_allserver.c,v 1.15 2011/02/03 11:25:27 pooka Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 static void
 usage(void)
@@ -83,6 +85,8 @@ static const char *const disktokens[] = {
 	"size",
 #define DOFFSET 3
 	"offset",
+#define DLABEL 4
+	"disklabel",
 	NULL
 };
 
@@ -91,6 +95,7 @@ struct etfsreg {
 	const char *hostpath;
 	off_t flen;
 	off_t foffset;
+	char partition;
 	enum rump_etfs_type type;
 };
 
@@ -123,8 +128,10 @@ main(int argc, char *argv[])
 			char *options, *value;
 			char *key, *hostpath;
 			long long flen, foffset;
+			char partition;
 
 			flen = foffset = 0;
+			partition = 0;
 			key = hostpath = NULL;
 			options = optarg;
 			while (*options) {
@@ -138,6 +145,7 @@ main(int argc, char *argv[])
 					}
 					key = value;
 					break;
+
 				case DFILE:
 					if (hostpath != NULL) {
 						fprintf(stderr,
@@ -146,6 +154,7 @@ main(int argc, char *argv[])
 					}
 					hostpath = value;
 					break;
+
 				case DSIZE:
 					if (flen != 0) {
 						fprintf(stderr,
@@ -166,6 +175,23 @@ main(int argc, char *argv[])
 					foffset = strsuftoll("-d offset", value,
 					    0, LLONG_MAX);
 					break;
+
+				case DLABEL:
+					if (foffset != 0 || flen != 0) {
+						fprintf(stderr,
+						    "disklabel needs to be "
+						    "used alone\n");
+						usage();
+					}
+					if (strlen(value) != 1 ||
+					    *value < 'a' || *value > 'z') {
+						fprintf(stderr,
+						    "invalid label part\n");
+						usage();
+					}
+					partition = *value;
+					break;
+
 				default:
 					fprintf(stderr, "invalid dtoken\n");
 					usage();
@@ -173,7 +199,8 @@ main(int argc, char *argv[])
 				}
 			}
 
-			if (key == NULL || hostpath == NULL || flen == 0) {
+			if (key == NULL || hostpath == NULL ||
+			    (flen == 0 && partition == 0)) {
 				fprintf(stderr, "incomplete drivespec\n");
 				usage();
 			}
@@ -189,6 +216,7 @@ main(int argc, char *argv[])
 			etfs[curetfs].hostpath = hostpath;
 			etfs[curetfs].flen = flen;
 			etfs[curetfs].foffset = foffset;
+			etfs[curetfs].partition = partition;
 			etfs[curetfs].type = RUMP_ETFS_BLK;
 			curetfs++;
 
@@ -261,25 +289,46 @@ main(int argc, char *argv[])
 
 	/* register host drives */
 	for (i = 0; i < curetfs; i++) {
+		char buf[1<<16];
+		struct disklabel dl;
 		struct stat sb;
-		off_t fsize;
+		off_t foffset, flen, fendoff;
 		int fd;
 
-		fsize = etfs[i].foffset + etfs[i].flen;
 		fd = open(etfs[i].hostpath, O_RDWR | O_CREAT, 0644);
 		if (fd == -1)
 			die(sflag, errno, "etfs hostpath create");
+
+		if (etfs[i].partition) {
+			int partition = etfs[i].partition - 'a';
+
+			pread(fd, buf, sizeof(buf), 0);
+			if (disklabel_scan(&dl, buf, sizeof(buf)))
+				die(sflag, ENOENT, "disklabel not found");
+
+			if (partition >= dl.d_npartitions)
+				die(sflag, ENOENT, "partition not available");
+
+			foffset = dl.d_partitions[partition].p_offset
+			    << DEV_BSHIFT;
+			flen = dl.d_partitions[partition].p_size
+			    << DEV_BSHIFT;
+		} else {
+			foffset = etfs[i].foffset;
+			flen = etfs[i].flen;
+		}
+		fendoff = foffset + flen;
+
 		if (fstat(fd, &sb) == -1)
 			die(sflag, errno, "fstat etfs hostpath");
-		if (S_ISREG(sb.st_mode) && sb.st_size < fsize) {
-			if (ftruncate(fd, fsize) == -1)
+		if (S_ISREG(sb.st_mode) && sb.st_size < fendoff) {
+			if (ftruncate(fd, fendoff) == -1)
 				die(sflag, errno, "truncate");
 		}
 		close(fd);
 
 		if ((error = rump_pub_etfs_register_withsize(etfs[i].key,
-		    etfs[i].hostpath, etfs[i].type,
-		    etfs[i].foffset, etfs[i].flen)) != 0)
+		    etfs[i].hostpath, etfs[i].type, foffset, flen)) != 0)
 			die(sflag, error, "etfs register");
 	}
 
