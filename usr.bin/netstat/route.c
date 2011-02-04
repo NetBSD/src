@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.76 2011/02/01 01:39:21 matt Exp $	*/
+/*	$NetBSD: route.c,v 1.77 2011/02/04 14:31:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.76 2011/02/01 01:39:21 matt Exp $");
+__RCSID("$NetBSD: route.c,v 1.77 2011/02/04 14:31:23 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,11 +69,6 @@ __RCSID("$NetBSD: route.c,v 1.76 2011/02/01 01:39:21 matt Exp $");
 #include "netstat.h"
 
 #define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
-
-/* alignment constraint for routing socket */
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /*
  * XXX we put all of the sockaddr types in here to force the alignment

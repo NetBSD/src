@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.42 2010/12/13 17:39:47 pooka Exp $	*/
+/*	$NetBSD: show.c,v 1.43 2011/02/04 14:31:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.42 2010/12/13 17:39:47 pooka Exp $");
+__RCSID("$NetBSD: show.c,v 1.43 2011/02/04 14:31:23 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,9 +65,6 @@ __RCSID("$NetBSD: show.c,v 1.42 2010/12/13 17:39:47 pooka Exp $");
 #include "extern.h"
 #include "prog_ops.h"
 
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /*
  * Definitions for showing gateway flags.
@@ -290,14 +287,14 @@ p_rtentry(struct rt_msghdr *rtm)
 		else {
 			/* skip to gateway */
 			nm = (struct sockaddr *)
-			    (ROUNDUP(sa->sa_len) + (char *)sa);
+			    (RT_ROUNDUP(sa->sa_len) + (char *)sa);
 			/* skip over gateway to netmask */
 			nm = (struct sockaddr *)
-			    (ROUNDUP(nm->sa_len) + (char *)nm);
+			    (RT_ROUNDUP(nm->sa_len) + (char *)nm);
 		}
 
 		p_sockaddr(sa, nm, rtm->rtm_flags, WID_DST(af));
-		sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
+		sa = (struct sockaddr *)(RT_ROUNDUP(sa->sa_len) + (char *)sa);
 		p_sockaddr(sa, NULL, 0, WID_GW(af));
 	}
 	p_flags(rtm->rtm_flags & interesting);

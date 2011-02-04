@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.70 2010/12/13 21:15:30 pooka Exp $	*/
+/*	$NetBSD: if.c,v 1.71 2011/02/04 14:31:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.70 2010/12/13 21:15:30 pooka Exp $");
+__RCSID("$NetBSD: if.c,v 1.71 2011/02/04 14:31:23 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -948,13 +948,6 @@ catchalarm(signo)
 	signalled = true;
 }
 
-#define ROUNDUP(a, size) \
-	(((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
-
-#define NEXT_SA(ap) (ap) = (struct sockaddr *) \
-	((caddr_t)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
-	sizeof(u_long)) : sizeof(u_long)))
-
 static void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 {   
@@ -963,9 +956,8 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	for (i = 0; i < RTAX_MAX; i++) {
 		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
-			NEXT_SA(sa);
-			/* sa = (struct sockaddr *)((char *)(sa) +
-			    roundup(sa->sa_len, sizeof(long))); */
+			sa = (struct sockaddr *)((char *)(sa) +
+			    RT_ROUNDUP(sa->sa_len));
 		} else 
 			rti_info[i] = NULL;
 	}
