@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.66 2010/12/18 20:57:41 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.67 2011/02/04 23:31:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.66 2010/12/18 20:57:41 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.67 2011/02/04 23:31:23 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1139,7 +1139,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 		goto assign;
 	case SHRASS:
 		if (pflag && !isutyp(lt) && !(tflag && isutyp(rt))) {
-			/* bitwise operation on s.v. possibly nonportabel */
+			/* bitwise operation on s.v. possibly nonportable */
 			warning(117);
 		}
 		goto assign;
