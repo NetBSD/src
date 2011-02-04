@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.9 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.10 2011/02/04 22:07:07 christos Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.9 2005/12/24 21:11:16 perry Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.10 2011/02/04 22:07:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,9 +44,9 @@ __weak_alias(arc4random,_arc4random)
 #endif
 
 struct arc4_stream {
-	u_int8_t i;
-	u_int8_t j;
-	u_int8_t s[256];
+	uint8_t i;
+	uint8_t j;
+	uint8_t s[256];
 };
 
 static int rs_initialized;
@@ -55,12 +55,11 @@ static struct arc4_stream rs;
 static inline void arc4_init(struct arc4_stream *);
 static inline void arc4_addrandom(struct arc4_stream *, u_char *, int);
 static void arc4_stir(struct arc4_stream *);
-static inline u_int8_t arc4_getbyte(struct arc4_stream *);
-static inline u_int32_t arc4_getword(struct arc4_stream *);
+static inline uint8_t arc4_getbyte(struct arc4_stream *);
+static inline uint32_t arc4_getword(struct arc4_stream *);
 
 static inline void
-arc4_init(as)
-	struct arc4_stream *as;
+arc4_init(struct arc4_stream *as)
 {
 	int     n;
 
@@ -71,13 +70,10 @@ arc4_init(as)
 }
 
 static inline void
-arc4_addrandom(as, dat, datlen)
-	struct arc4_stream *as;
-	u_char *dat;
-	int     datlen;
+arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 {
 	int     n;
-	u_int8_t si;
+	uint8_t si;
 
 	as->i--;
 	for (n = 0; n < 256; n++) {
@@ -91,8 +87,7 @@ arc4_addrandom(as, dat, datlen)
 }
 
 static void
-arc4_stir(as)
-	struct arc4_stream *as;
+arc4_stir(struct arc4_stream *as)
 {
 	int     fd;
 	struct {
@@ -140,11 +135,10 @@ arc4_stir(as)
 		arc4_getbyte(as);
 }
 
-static inline u_int8_t
-arc4_getbyte(as)
-	struct arc4_stream *as;
+static inline uint8_t
+arc4_getbyte(struct arc4_stream *as)
 {
-	u_int8_t si, sj;
+	uint8_t si, sj;
 
 	as->i = (as->i + 1);
 	si = as->s[as->i];
@@ -155,11 +149,10 @@ arc4_getbyte(as)
 	return (as->s[(si + sj) & 0xff]);
 }
 
-static inline u_int32_t
-arc4_getword(as)
-	struct arc4_stream *as;
+static inline uint32_t
+arc4_getword(struct arc4_stream *as)
 {
-	u_int32_t val;
+	uint32_t val;
 	val = arc4_getbyte(as) << 24;
 	val |= arc4_getbyte(as) << 16;
 	val |= arc4_getbyte(as) << 8;
@@ -168,7 +161,7 @@ arc4_getword(as)
 }
 
 void
-arc4random_stir()
+arc4random_stir(void)
 {
 	if (!rs_initialized) {
 		arc4_init(&rs);
@@ -178,22 +171,88 @@ arc4random_stir()
 }
 
 void
-arc4random_addrandom(dat, datlen)
-	u_char *dat;
-	int     datlen;
+arc4random_addrandom(u_char *dat, int datlen)
 {
 	if (!rs_initialized)
 		arc4random_stir();
 	arc4_addrandom(&rs, dat, datlen);
 }
 
-u_int32_t
-arc4random()
+uint32_t
+arc4random(void)
 {
 	if (!rs_initialized)
 		arc4random_stir();
 	return arc4_getword(&rs);
 }
+
+void
+arc4random_buf(void *buf, size_t len)
+{
+	uint8_t *bp = buf;
+	uint8_t *ep = bp + len;
+
+	bp[0] = arc4_getbyte(&rs) % 3;
+	while (bp[0]--)
+		(void)arc4_getbyte(&rs);
+
+	while (bp < ep)
+		*bp++ = arc4_getbyte(&rs);
+}
+
+/*-
+ * Written by Damien Miller.
+ * With simplifications by Jinmei Tatuya.
+ */
+
+/*
+ * Calculate a uniformly distributed random number less than
+ * upper_bound avoiding "modulo bias".
+ *
+ * Uniformity is achieved by generating new random numbers
+ * until the one returned is outside the range
+ * [0, 2^32 % upper_bound[. This guarantees the selected
+ * random number will be inside the range
+ * [2^32 % upper_bound, 2^32[ which maps back to
+ * [0, upper_bound[ after reduction modulo upper_bound.
+ */
+uint32_t
+arc4random_uniform(uint32_t upper_bound)
+{
+	uint32_t r, min;
+
+	if (upper_bound < 2)
+		return 0;
+
+#if defined(ULONG_MAX) && (ULONG_MAX > 0xFFFFFFFFUL)
+	min = 0x100000000UL % upper_bound;
+#else
+	/* calculate (2^32 % upper_bound) avoiding 64-bit math */
+	if (upper_bound > 0x80000000U)
+		/* 2^32 - upper_bound (only one "value area") */
+		min = 1 + ~upper_bound;
+	else
+		/* ((2^32 - x) % x) == (2^32 % x) when x <= 2^31 */
+		min = (0xFFFFFFFFU - upper_bound + 1) % upper_bound;
+#endif
+
+	/*
+	 * This could theoretically loop forever but each retry has
+	 * p > 0.5 (worst case, usually far better) of selecting a
+	 * number inside the range we need, so it should rarely need
+	 * to re-roll (at all).
+	 */
+	if (!rs_initialized)
+		arc4random_stir();
+	if (arc4_getbyte(&rs) & 1)
+		(void)arc4_getbyte(&rs);
+	do
+		r = arc4_getword(&rs);
+	while (r < min);
+
+	return r % upper_bound;
+}
+
 
 #if 0
 /*-------- Test code for i386 --------*/
