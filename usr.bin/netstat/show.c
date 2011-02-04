@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.12 2011/02/01 01:39:21 matt Exp $	*/
+/*	$NetBSD: show.c,v 1.13 2011/02/04 14:31:23 martin Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -62,10 +62,6 @@
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
 char	*mpls_ntoa(const struct sockaddr *); 
-
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 #define PFKEYV2_CHUNK sizeof(u_int64_t)
 
@@ -229,7 +225,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
 			sa = (struct sockaddr *)((char *)(sa) +
-			    ROUNDUP(sa->sa_len));
+			    RT_ROUNDUP(sa->sa_len));
 		} else
 			rti_info[i] = NULL;
 	}
