@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.47 2011/01/28 21:06:08 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.48 2011/02/04 03:23:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.47 2011/01/28 21:06:08 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.48 2011/02/04 03:23:33 uwe Exp $")
 
 
 /*
@@ -458,7 +458,10 @@ VECTOR_END_MARKER(sh4_vector_tlbmiss_end)
  */
 NENTRY(sh_vector_interrupt)
 	__EXCEPTION_ENTRY
-	stc	r0_bank, r6		! ssp - 3rd arg to intc_intr()
+	!! arguments for intc_intr(): for struct clockframe
+	stc	ssr, r4
+	stc	spc, r5
+	stc	r0_bank, r6		! ssp
 
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)	! enable exceptions for P3 access
