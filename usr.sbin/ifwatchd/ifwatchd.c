@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.24 2009/04/15 08:33:04 lukem Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.25 2011/02/04 14:31:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,11 +83,6 @@ static int check_is_connected(const char * ifname, int def_retvalue);
 #define	if_is_connected(X)	1
 #define	if_is_not_connected(X)	1
 #endif
-
-/* stolen from /sbin/route */
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /* global variables */
 static int verbose = 0, quiet = 0;
@@ -317,7 +312,7 @@ check_addrs(char *cp, int addrs, enum event ev)
 			ifa = sa;
 		else if (i == RTA_BRD)
 			brd = sa;
-		ADVANCE(cp, sa);
+		RT_ADVANCE(cp, sa);
 	}
 	if (ifa != NULL) {
 		ifname = if_indextoname(ifndx, ifname_buf);
