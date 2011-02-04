@@ -277,7 +277,7 @@ You can use this option to stop this from happening.
 Request the
 .Ar address
 in the DHCP DISCOVER message.
-There is no guarantee this is the address the DHCP server will actual give.
+There is no guarantee this is the address the DHCP server will actually give.
 If no
 .Ar address
 is given then the first address currently assigned to the
