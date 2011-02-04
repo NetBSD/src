@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.23 2011/02/04 17:36:54 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.24 2011/02/04 17:38:15 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.23 2011/02/04 17:36:54 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.24 2011/02/04 17:38:15 christos Exp $");
 #endif
 #endif
 
@@ -583,7 +583,7 @@ write_vc(caddr_t xprtp, caddr_t buf, int len)
 				cd->strm_stat = XPRT_DIED;
 				return -1;
 			}
-			if (cd->nonblock && i != cnt) {
+			if (cd->nonblock) {
 				/*
 				 * For non-blocking connections, do not
 				 * take more than 2 seconds writing the
@@ -597,6 +597,7 @@ write_vc(caddr_t xprtp, caddr_t buf, int len)
 					return -1;
 				}
 			}
+			i = 0;
 		}
 	}
 	return len;
