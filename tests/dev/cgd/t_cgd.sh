@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.6 2011/02/04 19:44:00 pooka Exp $
+#	$NetBSD: t_cgd.sh,v 1.7 2011/02/04 19:58:10 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,9 +97,38 @@ wrongpass_cleanup()
 	env RUMP_SERVER=unix://csock rump.halt
 }
 
+
+atf_test_case non512 cleanup
+non512_head()
+{
+
+	atf_set "descr" "Write a non-512 block to a raw cgd device"
+}
+
+non512_body()
+{
+	d=$(atf_get_srcdir)
+	atf_check -s exit:0 \
+	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
+
+	export RUMP_SERVER=unix://csock
+	atf_check -s exit:0 sh -c "echo 12345 | \
+	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
+
+	atf_expect_fail "PR kern/44515"
+	atf_check -s exit:0 -e ignore sh -c \
+	    "echo die hard | rump.dd of=${rawcgd} bs=123 conv=sync"
+}
+
+non512_cleanup()
+{
+	env RUMP_SERVER=unix://csock rump.halt
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case basic
 	atf_add_test_case wrongpass
+	atf_add_test_case non512
 }
