@@ -1,0 +1,62 @@
+no-op	NOOP
+->	ARROW
+.	POINT
+!	NOT
+~	COMPL
+p + 1	INC
+p - 1	DEC
+++p	INCBEF
+--p	DECBEF
+p++	INCAFT
+p--	DECAFT
++p	UPLUS
+-p	UMINUS
+*p	STAR
+&	AMPER
+p * p	MULT
+p / p	DIV
+p % p	MOD
+p + p	PLUS
+p - p	MINUS
+p << p	SHL
+p >> p	SHR
+p < p	LT
+p <= p	LE
+p > p	GT
+p >= p	GE
+p == p	EQ
+p != p	NE
+p & p	AND
+p ^ p 	XOR
+p | p	OR
+p && p	LOGAND
+p || p	LOGOR
+?	QUEST
+:	COLON
+p = p	ASSIGN
+p *= p	MULASS
+p /= p	DIVASS
+p %= p	MODASS
+p += p	ADDASS
+p -= p	SUBASS
+p << p	SHLASS
+p >> p	SHRASS
+p &= p	ANDASS
+p ^= p	XORASS
+p |= p	ORASS
+n	NAME
+const	CON
+char *	STRING
+fsel	FSEL
+p()	CALL
+,	COMMA
+(cast)p	CVT
+icall	ICALL
+load	LOAD
+push	PUSH
+return	RETURN
+p.re	REAL
+p.im	IMAG
+p = {}	INIT	/* pseudo op not used in trees */
+case	CASE	/* pseudo op not used in trees */
+f(p)	FARG	/* pseudo op not used in trees */
