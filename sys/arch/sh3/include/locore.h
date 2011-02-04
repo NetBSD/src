@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.21 2011/02/04 03:23:33 uwe Exp $	*/
+/*	$NetBSD: locore.h,v 1.22 2011/02/04 04:13:52 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -200,6 +200,23 @@
 	stc	sr,	Rm						;\
 	and	Rn,	Rm						;\
 	ldc	Rm,	sr	/* unmask all interrupts */
+
+
+/*
+ * Since __INTR_MASK + __EXCEPTION_UNBLOCK is common sequence, provide
+ * this combo version that does stc/ldc just once.
+ */
+#define __INTR_MASK_EXCEPTION_UNBLOCK(Rs, Ri, Rb)			 \
+	mov	#0x78, Ri	/* 0xf0 >> 1 */				;\
+	mov	#0xef, Rb	/* ~0x10 */				;\
+	shll	Ri		/* Ri = PSL_IMASK */			;\
+	swap.b	Rb, Rb							;\
+	stc	sr, Rs							;\
+	swap.w	Rb, Rb		/* Rb = ~PSL_BL */			;\
+	or	Ri, Rs		/* SR |= PSL_IMASK */			;\
+	and	Rb, Rs		/* SR &= ~PSL_BL */			;\
+	ldc	Rs, sr
+
 
 #else /* !_LOCORE */
 
