@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.48 2011/02/04 03:23:33 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.49 2011/02/04 04:14:25 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.48 2011/02/04 03:23:33 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.49 2011/02/04 04:14:25 uwe Exp $")
 
 
 /*
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.48 2011/02/04 03:23:33 uwe Ex
  */
 NENTRY(sh_vector_generic)
 	__EXCEPTION_ENTRY
-	__INTR_MASK(r0, r1)
 	/* Identify exception cause */
 	MOV	(EXPEVT, r0)
 	mov.l	@r0, r0
@@ -90,7 +89,7 @@ NENTRY(sh_vector_generic)
 	bt	1f
 
 	/* tlb_exception(curlwp, tf, TEA); */
-	__EXCEPTION_UNBLOCK(r0, r1)
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.Lg_tlb_exception, r0
 	jsr	@r0
 	 mov	r14, r5			/* 2nd arg */
@@ -105,7 +104,7 @@ NENTRY(sh_vector_generic)
 	mov.l	r2, @(TF_UBC, r14)	/* clear tf->tf_ubc */
 	mov.w	r2, @r1			/* disable UBC channel A */
 #endif
-	__EXCEPTION_UNBLOCK(r0, r1)
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.Lg_general_exception, r0
 	jsr	@r0
 	 mov	r14, r5			/* 2nd arg */
@@ -270,8 +269,7 @@ NENTRY(sh3_vector_tlbmiss)
 	mov.l	@r2, r2			! *SH3_EXPEVT
 	mov.l	@r0, r6			! arg3: va = *SH3_TEA
 	mov.l	@r1, r4			! arg1: curlwp
-	__INTR_MASK(r0, r1)
-	__EXCEPTION_UNBLOCK(r0, r1)
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.L3_tlb_exception, r0
 	mov.l	r2, @(TF_EXPEVT, r14)	! tf->tf_expevt = EXPEVT
 	jsr	@r0
@@ -421,8 +419,7 @@ NENTRY(sh4_vector_tlbmiss)
 	mov.l	@(0x24, r0), r2		! *SH4_EXPEVT
 	mov.l	@(0x0c, r0), r6		! arg3: va = *SH4_TEA
 	mov.l	@r1, r4			! arg1: curlwp
-	__INTR_MASK(r0, r1)
-	__EXCEPTION_UNBLOCK(r0, r1)
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.L4_tlb_exception, r0
 	mov.l	r2, @(TF_EXPEVT, r14)	! tf->tf_expevt = EXPEVT
 	jsr	@r0
@@ -462,9 +459,7 @@ NENTRY(sh_vector_interrupt)
 	stc	ssr, r4
 	stc	spc, r5
 	stc	r0_bank, r6		! ssp
-
-	__INTR_MASK(r0, r1)
-	__EXCEPTION_UNBLOCK(r0, r1)	! enable exceptions for P3 access
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 
 	mov.l	.Li_ci_idepth, r8	! callee-saved
 	mov.l	.Li_intc_intr, r0
