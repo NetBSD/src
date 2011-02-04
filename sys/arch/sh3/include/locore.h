@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.20 2011/01/18 00:26:57 joerg Exp $	*/
+/*	$NetBSD: locore.h,v 1.21 2011/02/04 03:23:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,26 +68,24 @@
  *	+ save all registers to trapframe.
  *	+ setup kernel stack.
  *	+ change bank from 1 to 0
- *	+ set BANK0 (r4, r5, r6) = (ssr, spc, ssp)
+ *	+ NB: interrupt vector "knows" that r0_bank1 = ssp
  */
 #define	__EXCEPTION_ENTRY						;\
 	/* Check kernel/user mode. */					;\
 	mov	#0x40,	r3						;\
+	stc	ssr,	r2	/* r2 = SSR */				;\
 	swap.b	r3,	r3						;\
-	stc	ssr,	r2						;\
-	swap.w	r3,	r3	/* r3 = 0x40000000 */			;\
-	mov	r2,	r0	/* r2 = r0 = SSR */			;\
-	and	r3,	r0						;\
-	tst	r0,	r0	/* if (SSR.MD == 0) T = 1 */		;\
 	mov	r14,	r1						;\
-	mov	r6,	r14	/* frame pointer */			;\
+	swap.w	r3,	r3	/* r3 = PSL_MD */			;\
+	mov	r6,	r14	/* trapframe pointer */			;\
+	tst	r3,	r2	/* if (SSR.MD == 0) T = 1 */		;\
+	mov.l	r1,	@-r14	/* save tf_r14 */			;\
 	bf/s	1f		/* T==0 ...Exception from kernel mode */;\
 	 mov	r15,	r0						;\
 	/* Exception from user mode */					;\
 	mov	r7,	r15	/* change to kernel stack */		;\
 1:									;\
-	/* Save registers */						;\
-	mov.l	r1,	@-r14	/* tf_r14 */				;\
+	/* Save remaining registers */					;\
 	mov.l	r0,	@-r14	/* tf_r15 */				;\
 	stc.l	r0_bank,@-r14	/* tf_r0  */				;\
 	stc.l	r1_bank,@-r14	/* tf_r1  */				;\
@@ -112,14 +110,12 @@
 	add	#-8,	r14	/* skip tf_ubc, tf_expevt */		;\
 	mov	r14,	r6	/* store frame pointer */		;\
 	/* Change register bank to 0 */					;\
-	shlr	r3		/* r3 = 0x20000000 */			;\
+	shlr	r3		/* r3 = PSL_RB */			;\
 	stc	sr,	r1	/* r1 = SR */				;\
 	not	r3,	r3						;\
 	and	r1,	r3						;\
-	ldc	r3,	sr	/* SR.RB = 0 */				;\
-	/* Set up arguments. r4 = ssr, r5 = spc */			;\
-	stc	r2_bank,r4						;\
-	stc	spc,	r5
+	ldc	r3,	sr	/* SR.RB = 0 */
+
 
 /*
  * __EXCEPTION_RETURN:
