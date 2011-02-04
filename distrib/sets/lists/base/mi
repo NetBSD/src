@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.919 2011/01/28 18:52:48 pooka Exp $
+# $NetBSD: mi,v 1.920 2011/02/04 19:42:12 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -24,6 +24,7 @@
 ./bin/chgrp					base-util-root
 ./bin/date					base-util-root
 ./bin/dd					base-util-root
+./bin/rump.dd					base-util-root
 ./bin/df					base-util-root
 ./bin/domainname				base-nis-root
 ./bin/echo					base-util-root
