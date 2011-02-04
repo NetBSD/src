@@ -1,4 +1,4 @@
-#	$NetBSD: t_disk.sh,v 1.1 2011/02/03 15:38:18 pooka Exp $
+#	$NetBSD: t_disk.sh,v 1.2 2011/02/04 19:44:00 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,7 +76,8 @@ test_case data -d key=/img,hostpath=the.img,size=8k,offset=16k
 data()
 {
 	echo 'test string' | dd of=testfile ibs=512 count=1 conv=sync
-	atf_check -s exit:0 -e ignore dd if=testfile rof=/img bs=512 count=1
+	atf_check -s exit:0 -e ignore sh -c \
+	    "dd if=testfile | rump.dd of=/img bs=512 count=1"
 
 	# cheap fsync
 	atf_check -s exit:0 rump.halt

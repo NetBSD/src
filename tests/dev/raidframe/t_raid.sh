@@ -1,4 +1,4 @@
-#	$NetBSD: t_raid.sh,v 1.5 2010/12/30 16:58:07 pooka Exp $
+#	$NetBSD: t_raid.sh,v 1.6 2011/02/04 19:44:00 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,7 +98,8 @@ raid1_compfail_body()
 	# put some data there
 	atf_check -s exit:0 -e ignore \
 	    dd if=$(atf_get_srcdir)/t_raid of=testfile count=4
-	atf_check -s exit:0 -e ignore dd if=testfile rof=${rawraid} conv=sync
+	atf_check -s exit:0 -e ignore sh -c \
+	    "dd if=testfile | rump.dd of=${rawraid} conv=sync"
 
 	# restart server with failed component
 	rump.halt
@@ -111,7 +112,8 @@ raid1_compfail_body()
 	atf_check -s exit:0 rump.raidctl -c raid.conf raid0
 
 	# check if we we get what we wrote
-	atf_check -s exit:0 -o file:testfile -e ignore dd rif=${rawraid} count=4
+	atf_check -s exit:0 -o file:testfile -e ignore \
+	    rump.dd if=${rawraid} count=4
 }
 
 raid1_compfail_cleanup()
@@ -183,7 +185,8 @@ raid5_compfail_body()
 	# put some data there
 	atf_check -s exit:0 -e ignore \
 	    dd if=$(atf_get_srcdir)/t_raid of=testfile count=4
-	atf_check -s exit:0 -e ignore dd if=testfile rof=${rawraid} conv=sync
+	atf_check -s exit:0 -e ignore sh -c \
+	    "dd if=testfile | rump.dd of=${rawraid} conv=sync"
 
 	# restart server with failed component
 	rump.halt
@@ -197,7 +200,8 @@ raid5_compfail_body()
 	atf_check -s exit:0 rump.raidctl -c raid.conf raid0
 
 	# check if we we get what we wrote
-	atf_check -s exit:0 -o file:testfile -e ignore dd rif=${rawraid} count=4
+	atf_check -s exit:0 -o file:testfile -e ignore \
+	    rump.dd if=${rawraid} count=4
 }
 
 raid5_compfail_cleanup()
