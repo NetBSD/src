@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.14 2010/12/06 15:23:29 pooka Exp $	*/
+/*	$NetBSD: dd.h,v 1.15 2011/02/04 19:42:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,6 +38,8 @@
 #include <sys/stat.h>
 
 struct ddfops {
+	int (*op_init)(void);
+
 	int (*op_open)(const char *, int, ...);
 	int (*op_close)(int);
 
@@ -119,6 +121,3 @@ typedef struct {
 #define	C_UNBLOCK	0x80000
 #define	C_OSYNC		0x100000
 #define	C_SPARSE	0x200000
-#define C_RIF		0x400000
-#define C_ROF		0x800000
-#define C_RUMP		0x1000000

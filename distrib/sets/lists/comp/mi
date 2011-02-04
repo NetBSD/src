@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1580 2011/02/04 07:32:37 yamt Exp $
+#	$NetBSD: mi,v 1.1581 2011/02/04 19:42:13 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2934,6 +2934,7 @@
 ./usr/libdata/debug/bin/csh.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/date.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/dd.debug		comp-util-debug		debug
+./usr/libdata/debug/bin/rump.dd.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/df.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/domainname.debug	comp-nis-debug		debug
 ./usr/libdata/debug/bin/echo.debug		comp-util-debug		debug
