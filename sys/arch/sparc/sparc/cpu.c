@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.227 2011/01/27 06:24:59 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.228 2011/02/04 09:23:00 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.227 2011/01/27 06:24:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.228 2011/02/04 09:23:00 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -638,6 +638,9 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	u_int pil;
 	int fasttrap;
 	int is_noop = func == (xcall_func_t)sparc_noop;
+	static char errbuf[160];
+	char *bufp = errbuf;
+	size_t bufsz = sizeof errbuf, wrsz;
 
 	mybit = (1 << cpuinfo.ci_cpuid);
 	callself = func && (cpuset & mybit) != 0;
@@ -702,7 +705,6 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	/*
 	 * Second, call ourselves.
 	 */
-	p = &cpuinfo.msg.u.xpmsg_func;
 	if (callself)
 		(*func)(arg0, arg1, arg2);
 
@@ -715,8 +717,11 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	i = 100000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
-			printf_nolog("xcall(cpu%d,%p): couldn't ping cpus:",
+			wrsz = snprintf(bufp, bufsz,
+			    "xcall(cpu%d,%p): couldn't ping cpus:",
 			    cpu_number(), func);
+			bufsz -= wrsz;
+			bufp += wrsz;
 		}
 
 		done = 1;
@@ -726,7 +731,13 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 
 			if (cpi->msg.complete == 0) {
 				if (i < 0) {
-					printf_nolog(" cpu%d", cpi->ci_cpuid);
+					wrsz = snprintf(bufp, bufsz,
+							" cpu%d", cpi->ci_cpuid);
+					bufsz -= wrsz;
+					bufp += wrsz;
+					/* insanity */
+					if (bufsz < 0)
+						break;
 				} else {
 					done = 0;
 					break;
@@ -735,8 +746,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 		}
 	}
 	if (i < 0)
-		printf_nolog("\n");
-
+		printf_nolog("%s\n", errbuf);
 	mutex_spin_exit(&xpmsg_mutex);
 }
 
