@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.21 2011/02/04 10:56:03 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.22 2011/02/04 11:00:30 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -98,7 +98,10 @@ int	harmony_query_encoding(void *, struct audio_encoding *);
 int	harmony_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
 int	harmony_round_blocksize(void *, int, int, const audio_params_t *);
+
+int	harmony_control_wait(struct harmony_softc *);
 int	harmony_commit_settings(void *);
+
 int	harmony_halt_output(void *);
 int	harmony_halt_input(void *);
 int	harmony_getdev(void *, struct audio_device *);
@@ -623,6 +626,24 @@ harmony_round_blocksize(void *vsc, int blk,
 }
 
 int
+harmony_control_wait(struct harmony_softc *sc)
+{
+	uint32_t reg;
+	int j = 0;
+
+	while (j < 10) {
+		/* Wait for it to come out of control mode */
+		reg = READ_REG(sc, HARMONY_CNTL);
+		if ((reg & CNTL_C) == 0)
+			return 0;
+		DELAY(50000);		/* wait 0.05 */
+		j++;
+	}
+
+	return 1;
+}
+
+int
 harmony_commit_settings(void *vsc)
 {
 	struct harmony_softc *sc;
@@ -669,24 +690,12 @@ harmony_commit_settings(void *vsc)
 	    offsetof(struct harmony_empty, playback[0][0]),
 	    PLAYBACK_EMPTYS * HARMONY_BUFSIZE, BUS_DMASYNC_PREWRITE);
 
-	for (;;) {
-		/* Wait for it to come out of control mode */
-		reg = READ_REG(sc, HARMONY_CNTL);
-		if ((reg & CNTL_C) == 0)
-			break;
-	}
+	harmony_control_wait(sc);
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CNTL,
 	    sc->sc_cntlbits | CNTL_C);
 
-#if 0
-	for (;;) {
-		/* Wait for it to come out of control mode */
-		reg = READ_REG(sc, HARMONY_CNTL);
-		if ((reg & CNTL_C) == 0)
-			break;
-	}
-#endif
+	harmony_control_wait(sc);
 
 	sc->sc_need_commit = 0;
 
