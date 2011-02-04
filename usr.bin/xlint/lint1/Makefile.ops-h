@@ -1,0 +1,10 @@
+#	$NetBSD: Makefile.ops-h,v 1.1 2011/02/04 23:32:44 christos Exp $
+
+ops.h: ops.def
+	${_MKTARGET_CREATE}
+	AWK=${TOOL_AWK:Q} ${HOST_SH} ${.CURDIR}/mkops -h ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+=	ops.h
+
+op.h: ops.h
+.BEGIN: ops.h
