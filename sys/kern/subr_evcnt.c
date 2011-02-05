@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.4.94.1 2011/02/05 06:13:45 cliff Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.4.94.2 2011/02/05 06:54:58 cliff Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.4.94.1 2011/02/05 06:13:45 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.4.94.2 2011/02/05 06:54:58 cliff Exp $");
 
 #include "opt_ddb.h"
 
@@ -125,9 +125,6 @@ evcnt_attach_static(struct evcnt *ev)
 {
 	int len;
 
-#ifdef DEBUG	/* XXX TMP FIXME */
-	printf("%s: %p \"%s\"\n", __func__, ev, ev->ev_name);
-#endif
 	len = strlen(ev->ev_group);
 #ifdef DIAGNOSTIC
 	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
