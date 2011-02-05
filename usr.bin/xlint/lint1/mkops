@@ -1,7 +1,7 @@
 #!/bin/sh -
-#	$NetBSD: mkops,v 1.2 2011/02/05 17:14:14 christos Exp $
+#	$NetBSD: mkops,v 1.3 2011/02/05 17:29:48 christos Exp $
 #
-# Copyright (c) 2003 The NetBSD Foundation, Inc.
+# Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
