@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.23 2011/01/27 18:12:19 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.24 2011/02/05 12:38:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.23 2011/01/27 18:12:19 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.24 2011/02/05 12:38:19 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -80,17 +80,14 @@ enum dualcall {
 #if !__NetBSD_Prereq__(5,99,7)
 #define LIBCSELECT select
 #define LIBCPOLLTS pollts
-#define LIBCPOLL poll
 #else
-#define LIBCSELECT __select50
-#define LIBCPOLLTS __pollts50
-#define LIBCPOLL __poll50
+#define LIBCSELECT _sys___select50
+#define LIBCPOLLTS _sys___pollts50
 #endif
 
 int LIBCSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int LIBCPOLLTS(struct pollfd *, nfds_t,
 	       const struct timespec *, const sigset_t *);
-int LIBCPOLL(struct pollfd *, nfds_t, int);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -745,7 +742,7 @@ LIBCPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 }
 
 int
-LIBCPOLL(struct pollfd *fds, nfds_t nfds, int timeout)
+poll(struct pollfd *fds, nfds_t nfds, int timeout)
 {
 	struct timespec ts;
 	struct timespec *tsp = NULL;
