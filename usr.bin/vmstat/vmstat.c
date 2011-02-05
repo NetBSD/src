@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.178 2011/01/31 19:41:19 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.179 2011/02/05 13:12:07 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.178 2011/01/31 19:41:19 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.179 2011/02/05 13:12:07 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -865,6 +865,8 @@ dosum(void)
 	size_t ssize;
 	int active_kernel;
 	struct cpu_counter cc;
+
+	getnlist(INTRSTAT);
 
 	/*
 	 * The "active" and "inactive" variables
