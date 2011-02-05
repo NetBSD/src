@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.155 2011/01/02 05:12:34 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.156 2011/02/05 13:35:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.155 2011/01/02 05:12:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.156 2011/02/05 13:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3486,7 +3486,7 @@ nfsmout:
  *     what the heck.
  *
  * The exception to rule 2 is EPERM. If a file is IMMUTABLE, VOP_ACCESS()
- * will return EPERM instead of EACCESS. EPERM is always an error.
+ * will return EPERM instead of EACCES. EPERM is always an error.
  */
 int
 nfsrv_access(struct vnode *vp, int flags, kauth_cred_t cred, int rdonly, struct lwp *lwp, int override)
