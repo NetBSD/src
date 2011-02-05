@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.16 2011/01/07 00:17:22 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.17 2011/02/05 06:10:29 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,10 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.16 2011/01/07 00:17:22 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.17 2011/02/05 06:10:29 cliff Exp $");
+
+#include "opt_multiprocessor.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.16 2011/01/07 00:17:22 cliff Exp
 #include <mips/rmi/rmixl_cpuvar.h>
 #include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_fmnvar.h>
+#ifdef DDB
+#include <mips/db_machdep.h>
+#endif
 
 
 static int	cpu_rmixl_match(device_t, cfdata_t, void *);
@@ -90,6 +96,20 @@ CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
 #ifdef MULTIPROCESSOR
 static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
 #endif
+
+#if defined(DDB) && defined(MIPS_DDB_WATCH)
+/*
+ * cpu_rmixl_db_watch_init - initialize COP0 watchpoint stuff
+ *
+ * clear IEU_DEFEATURE[DBE] to ensure T_WATCH on watchpoint exception
+ * set COP0 watchhi and watchlo
+ */
+static void
+cpu_rmixl_db_watch_init(void)
+{
+	db_mach_watch_set_all();
+}
+#endif	/* DDB && MIPS_DDB_WATCH */
 
 /*
  * cpu_xls616_erratum
@@ -222,6 +242,10 @@ cpu_rmixl_attach_once(struct rmixl_cpu_softc * const sc)
 		return;
 	once = true;
 
+#if defined(DDB) && defined(MIPS_DDB_WATCH)
+	cpu_rmixl_db_watch_init();
+#endif
+
 	rmixl_fmn_init();
 
 	sc->sc_ih_clk = rmixl_intr_init_clk();
@@ -280,6 +304,10 @@ cpu_rmixl_hatch(struct cpu_info *ci)
 #endif
 
 	cpucore_rmixl_hatch(device_parent(sc->sc_dev));
+
+#if defined(DDB) && defined(MIPS_DDB_WATCH)
+	cpu_rmixl_db_watch_init();
+#endif
 }
 
 static int
@@ -422,6 +450,7 @@ rmixl_cpuinfo_print(cpuid_t cpuid)
 		for (int i=0; i < SOFTINT_COUNT; i++)
 			printf("ci_softlwps[%d] %p\n", i, ci->ci_softlwps[i]);
 		printf("ci_tlb_slot %d\n", ci->ci_tlb_slot);
+		printf("ci_pmap_asid_cur %d\n", ci->ci_pmap_asid_cur);
 		printf("ci_tlb_info %p\n", ci->ci_tlb_info);
 		printf("ci_pmap_seg0tab %p\n", ci->ci_pmap_seg0tab);
 #ifdef _LP64
@@ -441,5 +470,4 @@ rmixl_cpuinfo_print(cpuid_t cpuid)
 
 	return ci;
 }
-
 #endif	/* DEBUG */
