@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.32 2011/01/07 00:17:42 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.33 2011/02/05 06:02:51 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,10 +112,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.32 2011/01/07 00:17:42 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.33 2011/02/05 06:02:51 cliff Exp $");
 
 #define __INTR_PRIVATE
 
+#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
 #include "opt_com.h"
 #include "opt_execfmt.h"
@@ -488,6 +489,17 @@ rmixl_pcr_init_core()
 	r = rmixl_mfcr(RMIXL_PCR_L1D_CONFIG0);
 	r &= ~__BIT(14);			/* disable Unaligned Access */
 	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
+
+#if defined(DDB) && defined(MIPS_DDB_WATCH)
+	/*
+	 * clear IEU_DEFEATURE[DBE]
+	 * this enables COP0 watchpoint to trigger T_WATCH exception
+	 * instead of signaling JTAG.
+	 */
+	r = rmixl_mfcr(RMIXL_PCR_IEU_DEFEATURE);
+	r &= ~__BIT(7);
+	rmixl_mtcr(RMIXL_PCR_IEU_DEFEATURE, r);
+#endif
 }
 
 #ifdef MULTIPROCESSOR
