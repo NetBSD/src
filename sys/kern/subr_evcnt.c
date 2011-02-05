@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.4 2005/12/11 12:24:30 christos Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.4.94.1 2011/02/05 06:13:45 cliff Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,16 +77,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.4 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.4.94.1 2011/02/05 06:13:45 cliff Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/mutex.h>
 #include <sys/systm.h>
 
 /* list of all events */
 struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
+static kmutex_t evcnt_lock;
 
 /*
  * We need a dummy object to stuff into the evcnt link set to
@@ -105,6 +107,8 @@ evcnt_init(void)
 	__link_set_decl(evcnts, struct evcnt);
 	struct evcnt * const *evp;
 
+	mutex_init(&evcnt_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	__link_set_foreach(evp, evcnts) {
 		if (*evp == &dummy_static_evcnt)
 			continue;
@@ -121,6 +125,9 @@ evcnt_attach_static(struct evcnt *ev)
 {
 	int len;
 
+#ifdef DEBUG	/* XXX TMP FIXME */
+	printf("%s: %p \"%s\"\n", __func__, ev, ev->ev_name);
+#endif
 	len = strlen(ev->ev_group);
 #ifdef DIAGNOSTIC
 	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
@@ -135,7 +142,9 @@ evcnt_attach_static(struct evcnt *ev)
 #endif
 	ev->ev_namelen = len;
 
+	mutex_enter(&evcnt_lock);
 	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
+	mutex_exit(&evcnt_lock);
 }
 
 /*
@@ -162,7 +171,9 @@ void
 evcnt_detach(struct evcnt *ev)
 {
 
+	mutex_enter(&evcnt_lock);
 	TAILQ_REMOVE(&allevents, ev, ev_list);
+	mutex_exit(&evcnt_lock);
 }
 
 #ifdef DDB
