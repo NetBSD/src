@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.4 2010/05/21 23:35:42 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.5 2011/02/05 06:12:42 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,6 +31,8 @@
 #ifndef _MIPS_RMI_RMIXL_INTR_H_
 #define _MIPS_RMI_RMIXL_INTR_H_
 
+#include "opt_multiprocessor.h"
+
 /*
  * A 'vector' is bit number in EIRR/EIMR
  * - non-IRT-based interrupts use vectors 0..31
@@ -54,7 +56,7 @@
  * vectors (8 <= vec < 31) are for other non-IRT based interrupts
  */
 #define RMIXL_INTRVEC_IPI	8
-#define RMIXL_INTRVEC_FMN	9
+#define RMIXL_INTRVEC_FMN	(RMIXL_INTRVEC_IPI + NIPIS)
 
 typedef enum {
 	RMIXL_TRIG_NONE=0,
