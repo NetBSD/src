@@ -432,7 +432,7 @@ namespace __gnu_cxx
     {
       size_t __old_len = __r->_M_size;
       _CharT* __new_data = (_CharT*)
-	_Data_allocate(_S_rounded_up_size(__old_len + __len));
+	_Rope_rep_base<_CharT, _Alloc>::_Data_allocate(_S_rounded_up_size(__old_len + __len));
       _RopeLeaf* __result;
 
       uninitialized_copy_n(__r->_M_data, __old_len, __new_data);
@@ -817,7 +817,7 @@ namespace __gnu_cxx
 	    if (__result_len > __lazy_threshold)
 	      goto lazy;
 	    __section = (_CharT*)
-	      _Data_allocate(_S_rounded_up_size(__result_len));
+	      _Rope_rep_base<_CharT, _Alloc>::_Data_allocate(_S_rounded_up_size(__result_len));
 	    try
 	      {	(*(__f->_M_fn))(__start, __result_len, __section); }
 	    catch(...)
