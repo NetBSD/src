@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof.c,v 1.7 2010/08/11 11:36:02 pgoyette Exp $	*/
+/*	$NetBSD: tprof.c,v 1.8 2011/02/05 14:04:40 yamt Exp $	*/
 
 /*-
- * Copyright (c)2008,2009 YAMAMOTO Takashi,
+ * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.7 2010/08/11 11:36:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.8 2011/02/05 14:04:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.7 2010/08/11 11:36:02 pgoyette Exp $");
 #include <sys/callout.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/proc.h>
 #include <sys/workqueue.h>
 #include <sys/queue.h>
 
@@ -55,11 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.7 2010/08/11 11:36:02 pgoyette Exp $");
  *	L: tprof_lock
  *	R: tprof_reader_lock
  *	S: tprof_startstop_lock
+ *	s: writer should hold tprof_startstop_lock and tprof_lock
+ *	   reader should hold tprof_startstop_lock or tprof_lock
  */
-
-typedef struct {
-	uintptr_t s_pc;	/* program counter */
-} tprof_sample_t;
 
 typedef struct tprof_buf {
 	u_int b_used;
@@ -89,7 +88,7 @@ typedef struct tprof_backend {
 } tprof_backend_t;
 
 static kmutex_t tprof_lock;
-static bool tprof_running;
+static bool tprof_running;		/* s: */
 static u_int tprof_nworker;		/* L: # of running worker LWPs */
 static lwp_t *tprof_owner;
 static STAILQ_HEAD(, tprof_buf) tprof_list; /* L: global buffer list */
@@ -318,8 +317,6 @@ done:
 static void
 tprof_stop(void)
 {
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
 	tprof_backend_t *tb;
 
 	KASSERT(mutex_owned(&tprof_startstop_lock));
@@ -335,15 +332,10 @@ tprof_stop(void)
 	mutex_enter(&tprof_lock);
 	tprof_running = false;
 	cv_broadcast(&tprof_reader_cv);
-	mutex_exit(&tprof_lock);
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		mutex_enter(&tprof_lock);
-		while (tprof_nworker > 0) {
-			cv_wait(&tprof_cv, &tprof_lock);
-		}
-		mutex_exit(&tprof_lock);
+	while (tprof_nworker > 0) {
+		cv_wait(&tprof_cv, &tprof_lock);
 	}
+	mutex_exit(&tprof_lock);
 
 	tprof_stop1();
 done:
@@ -400,7 +392,7 @@ tprof_backend_lookup(const char *name)
  * tprof_sample: record a sample on the per-cpu buffer.
  *
  * be careful; can be called in NMI context.
- * we are assuming that curcpu() is safe.
+ * we are bluntly assuming that curcpu() and curlwp->l_proc->p_pid are safe.
  */
 
 void
@@ -408,6 +400,7 @@ tprof_sample(tprof_backend_cookie_t *cookie, const tprof_frame_info_t *tfi)
 {
 	tprof_cpu_t * const c = tprof_curcpu();
 	tprof_buf_t * const buf = c->c_buf;
+	tprof_sample_t *sp;
 	const uintptr_t pc = tfi->tfi_pc;
 	u_int idx;
 
@@ -416,7 +409,10 @@ tprof_sample(tprof_backend_cookie_t *cookie, const tprof_frame_info_t *tfi)
 		buf->b_overflow++;
 		return;
 	}
-	buf->b_data[idx].s_pc = pc;
+	sp = &buf->b_data[idx];
+	sp->s_pid = curlwp->l_proc->p_pid;
+	sp->s_flags = (tfi->tfi_inkernel) ? TPROF_SAMPLE_INKERNEL : 0;
+	sp->s_pc = pc;
 	buf->b_used = idx + 1;
 }
 

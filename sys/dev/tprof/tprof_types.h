@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof.h,v 1.5 2011/02/05 14:04:40 yamt Exp $	*/
+/*	$NetBSD: tprof_types.h,v 1.1 2011/02/05 14:04:40 yamt Exp $	*/
 
 /*-
- * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
+ * Copyright (c)2010 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,34 +26,29 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _DEV_TPROF_TPROF_H_
-#define _DEV_TPROF_TPROF_H_
+#ifndef _DEV_TPROF_TPROF_TYPES_H_
+#define _DEV_TPROF_TPROF_TYPES_H_
 
 /*
- * definitions used by backend drivers
+ * definitions used by both of kernel and userland
  */
 
+#if defined(_KERNEL)
 #include <sys/types.h>
-
-#include <dev/tprof/tprof_types.h>
-
-typedef struct tprof_backend_cookie tprof_backend_cookie_t;
-
-typedef struct tprof_backend_ops {
-	uint64_t (*tbo_estimate_freq)(void);	/* samples per second */
-	int (*tbo_start)(tprof_backend_cookie_t *);
-	void (*tbo_stop)(tprof_backend_cookie_t *);
-} tprof_backend_ops_t;
-
-#define	TPROF_BACKEND_VERSION	3
-int tprof_backend_register(const char *, const tprof_backend_ops_t *, int);
-int tprof_backend_unregister(const char *);
+#else /* defined(_KERNEL) */
+#include <stdint.h>
+#endif /* defined(_KERNEL) */
 
 typedef struct {
-	uintptr_t tfi_pc;	/* program counter */
-	bool tfi_inkernel;	/* if tfi_pc is in the kernel address space */
-} tprof_frame_info_t;
+	uint32_t s_pid;		/* process id */
+	uint32_t s_flags;	/* flags */
+	uintptr_t s_pc;		/* program counter */
+} tprof_sample_t;
 
-void tprof_sample(tprof_backend_cookie_t *, const tprof_frame_info_t *);
+/*
+ * s_flags
+ */
 
-#endif /* _DEV_TPROF_TPROF_H_ */
+#define	TPROF_SAMPLE_INKERNEL	1	/* s_pc is in kernel address space */
+
+#endif /* _DEV_TPROF_TPROF_TYPES_H_ */
