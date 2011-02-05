@@ -29,8 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.8 2010/12/29 00:46:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.9 2011/02/05 06:00:13 cliff Exp $");
 
+#include "opt_multiprocessor.h"
 #include "opt_mips3_wired.h"
 #include <sys/param.h>
 

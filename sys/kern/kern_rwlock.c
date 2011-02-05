@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.28.10.2.2.1 2010/04/21 00:28:17 matt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.28.10.2.2.2 2011/02/05 06:00:14 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.28.10.2.2.1 2010/04/21 00:28:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.28.10.2.2.2 2011/02/05 06:00:14 cliff Exp $");
+
+#include "opt_multiprocessor.h"
 
 #define	__RWLOCK_PRIVATE
 
