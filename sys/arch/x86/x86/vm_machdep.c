@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 2011/01/18 23:56:48 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12 2011/02/05 13:47:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11 2011/01/18 23:56:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12 2011/02/05 13:47:57 yamt Exp $");
 
 #include "opt_mtrr.h"
 
@@ -275,7 +275,8 @@ void
 cpu_lwp_free2(struct lwp *l)
 {
 
-	/* nothing */
+	KASSERT(l->l_md.md_gc_ptp == NULL);
+	KASSERT(l->l_md.md_gc_pmap == NULL);
 }
 
 /*
