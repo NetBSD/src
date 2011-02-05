@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115 2011/02/01 20:20:19 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.116 2011/02/05 13:50:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2011/02/01 20:20:19 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2011/02/05 13:50:08 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1905,6 +1905,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 static inline void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
+	lwp_t *l;
 	int lidx;
 	struct uvm_object *obj;
 
@@ -1920,8 +1921,10 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
 	ptp->wire_count = 0;
 	uvm_pagerealloc(ptp, NULL, 0);
-	VM_PAGE_TO_PP(ptp)->pp_link = curlwp->l_md.md_gc_ptp;
-	curlwp->l_md.md_gc_ptp = ptp;
+	l = curlwp;
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+	VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
+	l->l_md.md_gc_ptp = ptp;
 	if (lidx != 0)
 		mutex_exit(&obj->vmobjlock);
 }
@@ -4676,7 +4679,8 @@ pmap_update(struct pmap *pmap)
 	 * but not from interrupt context.
 	 */
 	if (l->l_md.md_gc_ptp != NULL) {
-		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
+		KASSERT((l->l_pflag & LP_INTR) == 0);
+		if (cpu_intr_p()) {
 			return;
 		}
 
