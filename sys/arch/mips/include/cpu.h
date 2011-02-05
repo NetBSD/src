@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.32 2010/09/01 00:59:42 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.33 2011/02/05 06:04:07 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,15 +46,17 @@
 #ifdef _KERNEL
 
 #ifndef _LOCORE
-#include <sys/cpu_data.h>
-#include <sys/device.h>
-#include <sys/evcnt.h>
-
 #if defined(_KERNEL_OPT)
 #include "opt_cputype.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #endif
+
+#include <sys/cpu_data.h>
+#include <sys/device.h>
+#include <sys/evcnt.h>
+#include <mips/reg.h>
+#include <mips/cpuset.h>
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
@@ -352,6 +354,16 @@ extern struct mips_options mips_options;
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
+ * Send an inter-processor interupt to each other CPU (excludes curcpu())
+ */
+void cpu_broadcast_ipi(int);
+
+/*
+ * Send an inter-processor interupt to CPUs in cpuset (excludes curcpu())
+ */
+void cpu_multicast_ipi(mips_cpuset_t, int);
+
+/*
  * Send an inter-processor interupt to another CPU.
  */
 int cpu_send_ipi(struct cpu_info *, int);
@@ -426,13 +438,6 @@ void	cpu_set_curpri(int);
 
 extern int mips_poolpage_vmfreelist;	/* freelist to allocate poolpages */
 
-/* cpu_subr.c */
-#ifdef MULTIPROCESSOR
-extern volatile u_long cpus_running;
-extern volatile u_long cpus_hatched;
-extern volatile u_long cpus_halted;
-#endif
-
 struct cpu_info *
 	cpu_info_alloc(struct pmap_tlb_info *, cpuid_t, cpuid_t, cpuid_t,
 	    cpuid_t);
@@ -441,10 +446,25 @@ void	cpu_startup_common(void);
 #ifdef _LP64
 void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 #endif
+
 #ifdef MULTIPROCESSOR
 void	cpu_hatch(struct cpu_info *ci);
 void	cpu_trampoline(void);
 void	cpu_boot_secondary_processors(void);
+void	cpu_halt(void);
+void	cpu_halt_others(void);
+void	cpu_pause(struct reg *);
+void	cpu_pause_others(void);
+void	cpu_resume(int);
+void	cpu_resume_others(void);
+int	cpu_is_paused(int);
+void	cpu_debug_dump(void);
+
+extern volatile mips_cpuset_t cpus_running;
+extern volatile mips_cpuset_t cpus_hatched;
+extern volatile mips_cpuset_t cpus_paused;
+extern volatile mips_cpuset_t cpus_resumed;
+extern volatile mips_cpuset_t cpus_halted;
 #endif
 
 /* copy.S */
