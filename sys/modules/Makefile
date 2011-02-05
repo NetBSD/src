@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2011/01/16 01:13:10 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.60 2011/02/05 14:08:13 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -87,6 +87,7 @@ SUBDIR+=	exec_elf64
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	tprof_pmi
+SUBDIR+=	tprof_amdpmi
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
