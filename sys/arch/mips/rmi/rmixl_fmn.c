@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.1.2.4 2010/04/13 18:15:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.1.2.5 2011/02/05 06:11:16 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -644,10 +644,15 @@ rmixl_fmn_init_cpu_intr(void)
 	/*
 	 * establish dispatcher for FMN interrupt
 	 */
-	void *ih = rmixl_vec_establish(RMIXL_INTRVEC_FMN, -1, RMIXL_FMN_INTR_IPL,
+	extern kmutex_t rmixl_intr_lock;
+	void *ih;
+
+	mutex_enter(&rmixl_intr_lock);
+	ih = rmixl_vec_establish(RMIXL_INTRVEC_FMN, -1, RMIXL_FMN_INTR_IPL,
 		rmixl_fmn_intr_dispatch, fmnp, "fmn");
 	if (ih == NULL)
 		panic("%s: rmixl_vec_establish failed", __func__);
+	mutex_exit(&rmixl_intr_lock);
 	fmnp->fmn_ih = ih;
 #endif
 
