@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.15 2011/02/05 06:05:35 cliff Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.16 2011/02/05 06:31:05 cliff Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,9 @@
 #ifndef _MIPS_INTR_H_
 #define	_MIPS_INTR_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 /*
  * This is a common <machine/intr.h> for all MIPS platforms.
