@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.21 2011/01/28 19:21:28 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.22 2011/02/05 12:38:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -709,7 +709,11 @@ rumpclient_init()
 	FINDSYM(sendto);
 	FINDSYM(setsockopt);
 	FINDSYM(kqueue);
+#if !__NetBSD_Prereq__(5,99,7)
 	FINDSYM(kevent);
+#else
+	FINDSYM2(kevent,_sys___kevent50);
+#endif
 #undef	FINDSYM
 #undef	FINDSY2
 
