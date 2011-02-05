@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.25 2011/02/05 16:57:39 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.26 2011/02/05 16:59:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.25 2011/02/05 16:57:39 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.26 2011/02/05 16:59:24 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -425,7 +425,7 @@ fork()
 		break;
 	case 0:
 		if (rumpclient_fork_init(rf) == -1)
-			return -1;
+			rv = -1;
 		break;
 	default:
 		break;
