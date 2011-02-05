@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.108 2011/01/22 13:13:46 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.109 2011/02/05 17:25:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.108 2011/01/22 13:13:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.109 2011/02/05 17:25:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -260,7 +260,7 @@ uvm_init(void)
 		char *ep;
 		int mult;
 
-		tmp = strtoll(buf, &ep, 10);
+		tmp = strtoul(buf, &ep, 10);
 		if (strlen(ep) > 1)
 			panic("uvm_init: invalid RUMP_MEMLIMIT: %s", buf);
 
