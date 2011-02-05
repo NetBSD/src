@@ -29,7 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.3 2010/05/15 20:13:43 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.4 2011/02/05 06:00:13 cliff Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/mutex.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.10.28.1 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.10.28.2 2011/02/05 06:00:13 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.10.28.1 2010/01/20 06:58:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.10.28.2 2011/02/05 06:00:13 cliff Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.126.2.2 2009/03/08 03:15:36 snj Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.126.2.2.4.1 2011/02/05 06:00:13 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -206,8 +206,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.126.2.2 2009/03/08 03:15:36 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.126.2.2.4.1 2011/02/05 06:00:13 cliff Exp $");
 
+#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_sa.h"
