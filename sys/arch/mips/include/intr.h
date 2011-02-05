@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.14 2010/12/22 06:09:02 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.15 2011/02/05 06:05:35 cliff Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,8 @@
 
 #ifndef _MIPS_INTR_H_
 #define	_MIPS_INTR_H_
+
+#include "opt_multiprocessor.h"
 
 /*
  * This is a common <machine/intr.h> for all MIPS platforms.
@@ -63,7 +65,9 @@
 #define	IPI_FPSAVE	3		/* save current fp registers */
 #define	IPI_SYNCICACHE	4		/* sync icache for pages */
 #define	IPI_KPREEMPT	5		/* schedule a kernel preemption */
-#define	NIPIS		6
+#define	IPI_SUSPEND	6		/* DDB suspend signaling */
+#define	IPI_HALT	7		/* halt cpu */
+#define	NIPIS		8
 
 #ifdef __INTR_PRIVATE
 struct splsw {
