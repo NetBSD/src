@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.ops-c,v 1.1 2011/02/04 23:32:44 christos Exp $
+#	$NetBSD: Makefile.ops-c,v 1.2 2011/02/05 03:09:46 christos Exp $
 
 ops.c: ops.def
 	${_MKTARGET_CREATE}
-	AWK=${TOOL_AWK:Q} ${HOST_SH} ${.CURDIR}/mkops -c ${.ALLSRC} > ${.TARGET}
+	AWK=${TOOL_AWK:Q} ${HOST_SH} ${NETBSDSRCDIR}/usr.bin/xlint/lint1/mkops -c ${.ALLSRC} > ${.TARGET}
 
 SRCS+=		ops.c
 CLEANFILES+=	ops.c
