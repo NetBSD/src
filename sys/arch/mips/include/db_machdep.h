@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.22.62.1 2010/02/01 04:16:19 matt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.22.62.2 2011/02/05 06:04:59 cliff Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -112,6 +112,13 @@ bool	inst_store(int inst);
 bool	inst_unconditional_flow_transfer(int inst);
 db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 db_addr_t next_instr_address(db_addr_t pc, bool bd);
+
+bool ddb_running_on_this_cpu(void);
+bool ddb_running_on_any_cpu(void);
+void db_resume_others(void);
+#ifdef MIPS_DDB_WATCH
+void db_mach_watch_set_all(void);
+#endif
 
 /*
  * We have machine-dependent commands.
