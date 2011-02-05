@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.15 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.16 2011/02/05 13:33:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.15 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.16 2011/02/05 13:33:47 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -502,9 +502,7 @@ pageobj(struct vm_page *pg)
 	if (obj == NULL) {
 		obj = pg->uanon;
 		KASSERT(obj != NULL);
-		KASSERT(pg->offset == 0);
 	}
-
 	return (objid_t)obj;
 }
 
