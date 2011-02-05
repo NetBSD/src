@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.5 2011/02/05 06:12:42 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.6 2011/02/05 06:31:06 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,9 @@
 #ifndef _MIPS_RMI_RMIXL_INTR_H_
 #define _MIPS_RMI_RMIXL_INTR_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 /*
  * A 'vector' is bit number in EIRR/EIMR
