@@ -29,10 +29,11 @@
 
 #include <sys/cdefs.h>
 
+#include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.13 2010/12/22 05:53:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.14 2011/02/05 06:06:11 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -57,6 +58,15 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.13 2010/12/22 05:53:38 matt Exp $
 #include <mips/frame.h>
 #include <mips/userret.h>
 #include <mips/pte.h>
+#include <mips/cpuset.h>
+
+#if defined(DDB) || defined(KGDB)
+#ifdef DDB 
+#include <mips/db_machdep.h>
+#include <ddb/db_command.h>
+#include <ddb/db_output.h>
+#endif
+#endif
 
 struct cpu_info cpu_info_store
 #ifdef MULTIPROCESSOR
@@ -82,9 +92,15 @@ struct cpu_info cpu_info_store
 
 #ifdef MULTIPROCESSOR
 
-volatile u_long cpus_running = 1;
-volatile u_long cpus_hatched = 1;
-volatile u_long cpus_paused = 0;
+volatile mips_cpuset_t cpus_running = 1;
+volatile mips_cpuset_t cpus_hatched = 1;
+volatile mips_cpuset_t cpus_paused = 0;
+volatile mips_cpuset_t cpus_resumed = 0;
+volatile mips_cpuset_t cpus_halted = 0;
+
+static int  cpu_ipi_wait(volatile mips_cpuset_t *, u_long);
+static void cpu_ipi_error(const char *, mips_cpuset_t, mips_cpuset_t);
+
 
 static struct cpu_info *cpu_info_last = &cpu_info_store;
 
@@ -602,6 +618,32 @@ cpu_intr_p(void)
 }
 
 #ifdef MULTIPROCESSOR
+
+void
+cpu_broadcast_ipi(int tag)
+{
+	(void)cpu_multicast_ipi(
+		CPUSET_EXCEPT(cpus_running, cpu_index(curcpu())), tag);
+}
+
+void
+cpu_multicast_ipi(mips_cpuset_t cpuset, int tag)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	CPUSET_DEL(cpuset, cpu_index(curcpu()));
+	if (CPUSET_EMPTY(cpuset))
+		return;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (CPUSET_HAS(cpuset, cpu_index(ci))) {
+			CPUSET_DEL(cpuset, cpu_index(ci));
+			(void)cpu_send_ipi(ci, tag);
+		}
+	}
+}
+
 int
 cpu_send_ipi(struct cpu_info *ci, int tag)
 {
@@ -609,11 +651,192 @@ cpu_send_ipi(struct cpu_info *ci, int tag)
 	return (*mips_locoresw.lsw_send_ipi)(ci, tag);
 }
 
+static void
+cpu_ipi_error(const char *s, mips_cpuset_t succeeded, mips_cpuset_t expected)
+{
+	CPUSET_SUB(expected, succeeded);
+	if (!CPUSET_EMPTY(expected)) {
+		printf("Failed to %s:", s);
+		do {
+			int index = CPUSET_NEXT(expected);
+			CPUSET_DEL(expected, index);
+			printf(" cpu%d", index);
+		} while(!CPUSET_EMPTY(expected));
+		printf("\n");
+	}
+}
+
+static int
+cpu_ipi_wait(volatile mips_cpuset_t *watchset, u_long mask)
+{
+	u_long limit = curcpu()->ci_cpu_freq;	/* some finite amount of time */
+
+	while (limit--)
+		if (*watchset == mask)
+			return 0;		/* success */
+
+	return 1;				/* timed out */
+}
+
+/*
+ * Halt this cpu
+ */
+void
+cpu_halt(void)
+{
+	int index = cpu_index(curcpu());
+
+	printf("cpu%d: shutting down\n", index);
+	CPUSET_ADD(cpus_halted, index);
+	spl0();		/* allow interrupts e.g. further ipi ? */
+	for (;;) ;	/* spin */
+
+	/* NOTREACHED */
+}
+
+/*
+ * Halt all running cpus, excluding current cpu.
+ */
+void
+cpu_halt_others(void)
+{
+	mips_cpuset_t cpumask, cpuset;
+
+	CPUSET_ASSIGN(cpuset, cpus_running);
+	CPUSET_DEL(cpuset, cpu_index(curcpu()));
+	CPUSET_ASSIGN(cpumask, cpuset);
+	CPUSET_SUB(cpuset, cpus_halted);
+
+	if (CPUSET_EMPTY(cpuset))
+		return;
+
+	cpu_multicast_ipi(cpuset, IPI_HALT);
+	if (cpu_ipi_wait(&cpus_halted, cpumask))
+		cpu_ipi_error("halt", cpumask, cpus_halted);
+
+	/*
+	 * TBD
+	 * Depending on available firmware methods, other cpus will
+	 * either shut down themselfs, or spin and wait for us to
+	 * stop them.
+	 */
+}
+
+/*
+ * Pause this cpu
+ */
+void
+cpu_pause(struct reg *regsp)
+{
+	int s = splhigh();
+	int index = cpu_index(curcpu());
+
+	for (;;) {
+		CPUSET_ADD(cpus_paused, index);
+		do {
+			;
+		} while(CPUSET_HAS(cpus_paused, index));
+		CPUSET_ADD(cpus_resumed, index);
+
+#if defined(DDB)
+		if (ddb_running_on_this_cpu())
+			cpu_Debugger();
+		if (ddb_running_on_any_cpu())
+			continue;
+#endif
+		break;
+	}
+#if defined(DDB) && defined(MIPS_DDB_WATCH)
+	db_mach_watch_set_all();
+#endif
+
+	splx(s);
+}
+
+/*
+ * Pause all running cpus, excluding current cpu.
+ */
+void
+cpu_pause_others(void)
+{
+	mips_cpuset_t cpuset;
+
+	CPUSET_ASSIGN(cpuset, cpus_running);
+	CPUSET_DEL(cpuset, cpu_index(curcpu()));
+
+	if (CPUSET_EMPTY(cpuset))
+		return;
+
+	cpu_multicast_ipi(cpuset, IPI_SUSPEND);
+	if (cpu_ipi_wait(&cpus_paused, cpuset))
+		cpu_ipi_error("pause", cpus_paused, cpuset);
+}
+
+/*
+ * Resume a single cpu
+ */
+void
+cpu_resume(int index)
+{
+	CPUSET_CLEAR(cpus_resumed);
+	CPUSET_DEL(cpus_paused, index);
+
+	if (cpu_ipi_wait(&cpus_resumed, CPUSET_SINGLE(index)))
+		cpu_ipi_error("resume", cpus_resumed, CPUSET_SINGLE(index));
+}
+
+/*
+ * Resume all paused cpus.
+ */
+void
+cpu_resume_others(void)
+{
+	mips_cpuset_t cpuset;
+
+	CPUSET_CLEAR(cpus_resumed);
+	CPUSET_ASSIGN(cpuset, cpus_paused);
+	CPUSET_CLEAR(cpus_paused);
+
+	/* CPUs awake on cpus_paused clear */
+	if (cpu_ipi_wait(&cpus_resumed, cpuset))
+		cpu_ipi_error("resume", cpus_resumed, cpuset);
+}
+
+int
+cpu_is_paused(int index)
+{
+
+	return CPUSET_HAS(cpus_paused, index);
+}
+
+void
+cpu_debug_dump(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	char running, hatched, paused, resumed, halted;
+
+	db_printf("CPU STATE CPUINFO            CPL INT MTX IPIS\n");
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		hatched = (CPUSET_HAS(cpus_hatched, cpu_index(ci)) ? 'H' : '-');
+		running = (CPUSET_HAS(cpus_running, cpu_index(ci)) ? 'R' : '-');
+		paused  = (CPUSET_HAS(cpus_paused,  cpu_index(ci)) ? 'P' : '-');
+		resumed = (CPUSET_HAS(cpus_resumed, cpu_index(ci)) ? 'r' : '-');
+		halted  = (CPUSET_HAS(cpus_halted,  cpu_index(ci)) ? 'h' : '-');
+		db_printf("%3d %c%c%c%c%c %p "
+			"%3d %3d %3d "
+			"0x%02" PRIx64 "/0x%02" PRIx64 "\n",
+			cpu_index(ci),
+			running, hatched, paused, resumed, halted,
+			ci, ci->ci_cpl, ci->ci_idepth, ci->ci_mtx_count,
+			ci->ci_active_ipis, ci->ci_request_ipis);
+	}
+}
+
 void
 cpu_hatch(struct cpu_info *ci)
 {
 	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
-	const u_long cpu_mask = 1L << cpu_index(ci);
 
 	/*
 	 * Invalidate all the TLB enties (even wired ones) and then reserve
@@ -648,12 +871,12 @@ cpu_hatch(struct cpu_info *ci)
 	/*
 	 * Announce we are hatched
 	 */
-	atomic_or_ulong(&cpus_hatched, cpu_mask);
+	CPUSET_ADD(cpus_hatched, cpu_index(ci));
 
 	/*
 	 * Now wait to be set free!
 	 */
-	while ((cpus_running & cpu_mask) == 0) {
+	while (! CPUSET_HAS(cpus_running, cpu_index(ci))) {
 		/* spin, spin, spin */
 	}
 
@@ -683,19 +906,18 @@ cpu_boot_secondary_processors(void)
 	for (struct cpu_info *ci = cpu_info_store.ci_next;
 	     ci != NULL;
 	     ci = ci->ci_next) {
-		const u_long cpu_mask = 1L << cpu_index(ci);
 		KASSERT(!CPU_IS_PRIMARY(ci));
 		KASSERT(ci->ci_data.cpu_idlelwp);
 
 		/*
 		 * Skip this CPU if it didn't sucessfully hatch.
 		 */
-		if ((cpus_hatched & cpu_mask) == 0)
+		if (! CPUSET_HAS(cpus_hatched, cpu_index(ci)))
 			continue;
 
 		ci->ci_data.cpu_cc_skew = mips3_cp0_count_read();
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
-		atomic_or_ulong(&cpus_running, cpu_mask);
+		CPUSET_ADD(cpus_running, cpu_index(ci));
 	}
 }
 #endif /* MULTIPROCESSOR */
