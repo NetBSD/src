@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.24 2011/02/05 12:38:19 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.25 2011/02/05 16:57:39 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.24 2011/02/05 12:38:19 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.25 2011/02/05 16:57:39 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -127,7 +127,8 @@ struct bothsys {
 } syscalls[DUALCALL__NUM];
 #define GETSYSCALL(which, name) syscalls[DUALCALL_##name].bs_##which
 
-pid_t (*host_fork)(void);
+pid_t	(*host_fork)(void);
+int	(*host_daemon)(int, int);
 
 static unsigned dup2mask;
 #define ISDUP2D(fd) (1<<(fd) & dup2mask)
@@ -189,6 +190,7 @@ rcinit(void)
 
 	rumpclient_dlsym = hijackdlsym;
 	host_fork = dlsym(RTLD_NEXT, "fork");
+	host_daemon = dlsym(RTLD_NEXT, "daemon");
 
 	/*
 	 * In theory cannot print anything during lookups because
@@ -423,7 +425,7 @@ fork()
 		break;
 	case 0:
 		if (rumpclient_fork_init(rf) == -1)
-			rv = -1;
+			return -1;
 		break;
 	default:
 		break;
@@ -431,6 +433,23 @@ fork()
 
 	DPRINTF(("fork returns %d\n", rv));
 	return rv;
+}
+
+int
+daemon(int nochdir, int noclose)
+{
+	struct rumpclient_fork *rf;
+
+	if ((rf = rumpclient_prefork()) == NULL)
+		return -1;
+
+	if (host_daemon(nochdir, noclose) == -1)
+		return -1;
+
+	if (rumpclient_fork_init(rf) == -1)
+		return -1;
+
+	return 0;
 }
 
 /*
