@@ -27,9 +27,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.4 2010/12/22 05:57:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.5 2011/02/05 06:07:38 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -38,6 +40,13 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.4 2010/12/22 05:57:48 matt Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#ifdef DDB
+#include <mips/db_machdep.h>
+#endif
+
+
+static void ipi_halt(void) __attribute__((__noreturn__));
+
 
 static const char * const ipi_names[] = {
 	[IPI_NOP]	= "ipi nop",
@@ -46,6 +55,8 @@ static const char * const ipi_names[] = {
 	[IPI_FPSAVE]	= "ipi fpsave",
 	[IPI_SYNCICACHE]	= "ipi isync",
 	[IPI_KPREEMPT]	= "ipi kpreempt",
+	[IPI_SUSPEND]	= "ipi suspend",
+	[IPI_HALT]	= "ipi halt",
 };
 
 static void
@@ -89,6 +100,22 @@ ipi_kpreempt(struct cpu_info *ci)
 }
 #endif
 
+/*
+ * Process cpu stop-self event.
+ * XXX could maybe add/use locoresw halt function?
+ */
+static void
+ipi_halt(void)
+{
+	int index = cpu_index(curcpu());
+	printf("cpu%d: shutting down\n", index);
+	CPUSET_ADD(cpus_halted, index);
+	splhigh();
+	for (;;)
+		;
+	/* NOTREACHED */
+}
+
 void
 ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 {
@@ -114,12 +141,14 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
 		ipi_syncicache(ci);
 	}
-#ifdef IPI_HALT
+	if (ipi_mask & __BIT(IPI_SUSPEND)) {
+		ci->ci_evcnt_per_ipi[IPI_SUSPEND].ev_count++;
+		cpu_pause(NULL);
+	}
 	if (ipi_mask & __BIT(IPI_HALT)) {
-		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
+		ci->ci_evcnt_per_ipi[IPI_HALT].ev_count++;
 		ipi_halt();
 	}
-#endif
 }
 
 void
