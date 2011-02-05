@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.58.24.12 2010/12/29 00:40:40 matt Exp $
+#	$NetBSD: files.mips,v 1.58.24.13 2011/02/05 06:01:23 cliff Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -17,6 +17,7 @@ defflag	opt_mips_cache.h		MIPS3_NO_PV_UNCACHED
 defflag opt_mips3_wired.h		ENABLE_MIPS3_WIRED_MAP
 
 defflag	opt_ddb.h		DDB_TRACE
+defflag	opt_ddb.h		MIPS_DDB_WATCH
 
 file	arch/mips/mips/locore_mips1.S		mips1
 file	arch/mips/mips/locore_mips3.S		mips3 | mips4 | mips32 | mips64
