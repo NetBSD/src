@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.18 2011/02/05 06:00:12 cliff Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.19 2011/02/05 06:31:05 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,9 @@
 #ifndef _MIPS_VMPARAM_H_
 #define	_MIPS_VMPARAM_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 /*
  * Machine dependent VM constants for MIPS.

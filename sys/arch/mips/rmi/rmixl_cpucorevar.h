@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucorevar.h,v 1.1.2.5 2011/02/05 06:00:13 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpucorevar.h,v 1.1.2.6 2011/02/05 06:31:05 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,9 @@
 #ifndef _ARCH_MIPS_RMI_RMIXL_CPUCOREVAR_H_
 #define _ARCH_MIPS_RMI_RMIXL_CPUCOREVAR_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 struct cpucore_softc {
 	device_t	sc_dev;

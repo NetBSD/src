@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.114.4.1.4.1 2011/02/05 06:00:15 cliff Exp $	*/
+/*	$NetBSD: lwp.h,v 1.114.4.1.4.2 2011/02/05 06:31:06 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,9 @@
 #ifndef _SYS_LWP_H_
 #define _SYS_LWP_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/time.h>
 #include <sys/queue.h>
