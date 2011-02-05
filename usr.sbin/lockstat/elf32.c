@@ -1,4 +1,4 @@
-/*	$NetBSD: elf32.c,v 1.8 2009/04/16 06:14:13 lukem Exp $	*/
+/*	$NetBSD: elf32.c,v 1.9 2011/02/05 13:32:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: elf32.c,v 1.8 2009/04/16 06:14:13 lukem Exp $");
+__RCSID("$NetBSD: elf32.c,v 1.9 2011/02/05 13:32:32 yamt Exp $");
 #endif
 
 #ifndef ELFSIZE
@@ -148,7 +148,7 @@ NAME(loadsym)(int fd)
 
 	if ((symp = malloc(symhdr.sh_size)) == NULL)
 		err(EXIT_FAILURE, "malloc (symbol table)");
-	sz = pread(fd, symp, symhdr.sh_size, symhdr.sh_offset	);
+	sz = pread(fd, symp, symhdr.sh_size, symhdr.sh_offset);
 	if (sz != symhdr.sh_size)
 		err(EXIT_FAILURE, "pread (symbol table)");
 
