@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.5 2011/02/04 23:32:44 christos Exp $	*/
+/*	$NetBSD: op.h,v 1.6 2011/02/05 17:14:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -55,5 +55,7 @@ typedef	struct {
 	u_int	m_rqintcomp : 1;/* operands must be integer or complex */
 	const char *m_name;	/* name of op. */
 } mod_t;
+
+extern mod_t   modtab[];
 
 #include "ops.h"
