@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.33 2011/01/26 03:32:31 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.34 2011/02/05 06:08:12 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,8 +78,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.33 2011/01/26 03:32:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.34 2011/02/05 06:08:12 cliff Exp $");
 
+#include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -217,21 +218,42 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	default:
 	dopanic:
 		(void)splhigh();
-		printf("pid %d(%s): ", p->p_pid, p->p_comm);
-		printf("trap: %s in %s mode\n",
-			trap_type[TRAPTYPE(cause)],
+
+		/*
+		 * use snprintf to allow a single, idempotent, readable printf
+		 */
+		char strbuf[256], *str = strbuf;
+		int n, sz = sizeof(strbuf);
+
+		n = snprintf(str, sz, "pid %d(%s): ", p->p_pid, p->p_comm);
+		sz -= n; 
+		str += n;
+		n = snprintf(str, sz, "trap: cpu%d, %s in %s mode\n",
+			cpu_index(ci), trap_type[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
-		printf("status=0x%x, cause=0x%x, epc=%#" PRIxVADDR
-			", vaddr=%#" PRIxVADDR, status, cause, pc, vaddr);
+		sz -= n; 
+		str += n;
+		n = snprintf(str, sz, "status=0x%x, cause=0x%x, epc=%#"
+			PRIxVADDR ", vaddr=%#" PRIxVADDR "\n",
+			status, cause, pc, vaddr);
+		sz -= n; 
+		str += n;
 		if (USERMODE(status)) {
 			KASSERT(tf == utf);
-			printf(" frame=%p usp=%#" PRIxREGISTER
+			n = snprintf(str, sz, "frame=%p usp=%#" PRIxREGISTER
 			    " ra=%#" PRIxREGISTER "\n",
-			   tf, tf->tf_regs[_R_SP], tf->tf_regs[_R_RA]);
+			    tf, tf->tf_regs[_R_SP], tf->tf_regs[_R_RA]);
+			sz -= n; 
+			str += n;
 		} else {
-			printf(" tf=%p ksp=%p ra=%#" PRIxREGISTER "\n",
-			   tf, tf+1, tf->tf_regs[_R_RA]);
+			n = snprintf(str, sz, "tf=%p ksp=%p ra=%#"
+			    PRIxREGISTER " ppl=%#x\n",
+			    tf, tf+1, tf->tf_regs[_R_RA],
+			    tf->tf_ppl);
+			sz -= n; 
+			str += n;
 		}
+		printf("%s", strbuf);
 
 		if ((TRAPTYPE(cause) == 6) || (TRAPTYPE(cause) == 7))
 			(void)(*mips_locoresw.lsw_bus_error)(cause);
@@ -530,6 +552,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		}
 		break; /* SIGNAL */
 
+	case T_WATCH:	/* XXX */
 	case T_BREAK:
 #if defined(DDB)
 		kdb_trap(type, &tf->tf_registers);
