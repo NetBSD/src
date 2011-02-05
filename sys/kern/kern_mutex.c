@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.44 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.44.10.1 2011/02/05 06:00:13 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,9 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.44 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.44.10.1 2011/02/05 06:00:13 cliff Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

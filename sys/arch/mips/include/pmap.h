@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.15 2010/12/22 06:05:41 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.16 2011/02/05 06:00:12 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,8 @@
 
 #ifndef	_MIPS_PMAP_H_
 #define	_MIPS_PMAP_H_
+
+#include "opt_multiprocessor.h"
 
 #include <mips/cpuregs.h>	/* for KSEG0 below */
 //#include <mips/pte.h>

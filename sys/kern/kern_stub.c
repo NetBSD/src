@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.11 2008/10/15 16:03:29 wrstuden Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.11.8.1 2011/02/05 06:00:14 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,8 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.11 2008/10/15 16:03:29 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.11.8.1 2011/02/05 06:00:14 cliff Exp $");
 
+#include "opt_multiprocessor.h"
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_sa.h"
