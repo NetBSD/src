@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.24 2010/09/20 19:41:05 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.25 2011/02/05 06:11:47 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,8 +64,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.24 2010/09/20 19:41:05 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.25 2011/02/05 06:11:47 cliff Exp $");
 
+#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
 
@@ -76,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.24 2010/09/20 19:41:05 cliff Ex
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
+#include <sys/mutex.h>
 #include <sys/cpu.h>
 
 #include <machine/bus.h>
@@ -290,14 +292,14 @@ static const char * const rmixl_vecnames_common[NINTRVECS] = {
 	"vec 6",		/*  6 */
 	"vec 7",		/*  7 */
 	"vec 8 (ipi)",		/*  8 */
-	"vec 9 (fmn)",		/*  9 */
-	"vec 10",		/* 10 */
-	"vec 11",		/* 11 */
-	"vec 12",		/* 12 */
-	"vec 13",		/* 13 */
-	"vec 14",		/* 14 */
-	"vec 15",		/* 15 */
-	"vec 16",		/* 16 */
+	"vec 9 (ipi)",		/*  9 */
+	"vec 10 (ipi)",		/* 10 */
+	"vec 11 (ipi)",		/* 11 */
+	"vec 12 (ipi)",		/* 12 */
+	"vec 13 (ipi)",		/* 13 */
+	"vec 14 (ipi)",		/* 14 */
+	"vec 15 (ipi)",		/* 15 */
+	"vec 16 (fmn)",		/* 16 */
 	"vec 17",		/* 17 */
 	"vec 18",		/* 18 */
 	"vec 19",		/* 19 */
@@ -353,6 +355,8 @@ static const char * const rmixl_vecnames_common[NINTRVECS] = {
  */
 static uint32_t cpu_present_mask;
 
+kmutex_t rmixl_ipi_lock;	/* covers RMIXL_PIC_IPIBASE */
+kmutex_t rmixl_intr_lock;	/* covers rest of PIC, and rmixl_intrhand[] */
 rmixl_intrhand_t rmixl_intrhand[NINTRVECS];
 
 #ifdef DIAGNOSTIC
@@ -407,6 +411,11 @@ evbmips_intr_init(void)
 			__func__, rmixl_pic_init_done);
 #endif
 
+	mutex_init(&rmixl_ipi_lock, MUTEX_DEFAULT, IPL_HIGH);
+	mutex_init(&rmixl_intr_lock, MUTEX_DEFAULT, IPL_HIGH);
+
+	mutex_enter(&rmixl_intr_lock);
+
 	/*
 	 * initialize (zero) all IRT Entries in the PIC
 	 */
@@ -427,6 +436,7 @@ evbmips_intr_init(void)
 #ifdef DIAGNOSTIC
 	rmixl_pic_init_done = 1;
 #endif
+	mutex_exit(&rmixl_intr_lock);
 
 }
 
@@ -440,9 +450,14 @@ void *
 rmixl_intr_init_clk(void)
 {
 	int vec = ffs(MIPS_INT_MASK_5 >> 8) - 1;
+
+	mutex_enter(&rmixl_intr_lock);
+
 	void *ih = rmixl_vec_establish(vec, 0, IPL_SCHED, NULL, NULL, false);
 	if (ih == NULL)
 		panic("%s: establish vec %d failed", __func__, vec);
+
+	mutex_exit(&rmixl_intr_lock);
 	
 	return ih;
 }
@@ -454,13 +469,23 @@ rmixl_intr_init_clk(void)
 void *
 rmixl_intr_init_ipi(void)
 {
-	void *ih = rmixl_vec_establish(RMIXL_INTRVEC_IPI, -1, IPL_SCHED,
-		rmixl_ipi_intr, NULL, false);
-	if (ih == NULL)
-		panic("%s: establish vec %d failed",
-			__func__, RMIXL_INTRVEC_IPI);
+	u_int ipi, vec;
+	void *ih;
+
+	mutex_enter(&rmixl_intr_lock);
+
+	for (ipi=0; ipi < NIPIS; ipi++) {
+		vec = RMIXL_INTRVEC_IPI + ipi;
+		ih = rmixl_vec_establish(vec, -1, IPL_SCHED,
+			rmixl_ipi_intr, (void *)(uintptr_t)ipi, true);
+		if (ih == NULL)
+			panic("%s: establish ipi %d at vec %d failed",
+				__func__, ipi, vec);
+	}
 
 	mips_locoresw.lsw_send_ipi = rmixl_send_ipi;
+
+	mutex_exit(&rmixl_intr_lock);
 
 	return ih;
 }
@@ -484,7 +509,7 @@ rmixl_intr_init_cpu(struct cpu_info *ci)
 			rmixl_intr_string(vec));
 
 	KASSERT(ci->ci_cpuid < (sizeof(cpu_present_mask) * 8));
-	cpu_present_mask |= 1 << ci->ci_cpuid;
+	atomic_or_32((volatile uint32_t *)&cpu_present_mask, 1 << ci->ci_cpuid);
 }
 
 /*
@@ -623,6 +648,7 @@ rmixl_irt_init(int irt)
 static void
 rmixl_irt_disestablish(int irt)
 {
+	KASSERT(mutex_owned(&rmixl_intr_lock));
 	DPRINTF(("%s: irt %d, irtc1 %#x\n", __func__, irt, 0));
 	rmixl_irt_init(irt);
 }
@@ -637,6 +663,8 @@ rmixl_irt_establish(int irt, int vec, int cpumask, rmixl_intr_trigger_t trigger,
 {
 	uint32_t irtc1;
 	uint32_t irtc0;
+
+	KASSERT(mutex_owned(&rmixl_intr_lock));
 
 	if (irt >= NIRTS)
 		panic("%s: bad irt %d\n", __func__, irt);
@@ -698,6 +726,8 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 	uint64_t eimr_bit;
 	int s;
 
+	KASSERT(mutex_owned(&rmixl_intr_lock));
+
 	DPRINTF(("%s: vec %d, cpumask %#x, ipl %d, func %p, arg %p\n"
 			__func__, vec, cpumask, ipl, func, arg));
 #ifdef DIAGNOSTIC
@@ -756,7 +786,6 @@ rmixl_intr_establish(int irt, int cpumask, int ipl,
 {
 	rmixl_intrhand_t *ih;
 	int vec;
-	int s;
 
 #ifdef DIAGNOSTIC
 	if (rmixl_pic_init_done == 0)
@@ -777,7 +806,7 @@ rmixl_intr_establish(int irt, int cpumask, int ipl,
 
 	DPRINTF(("%s: irt %d, vec %d, ipl %d\n", __func__, irt, vec, ipl));
 
-	s = splhigh();
+	mutex_enter(&rmixl_intr_lock);
 
 	/*
 	 * establish vector
@@ -789,7 +818,7 @@ rmixl_intr_establish(int irt, int cpumask, int ipl,
 	 */
 	rmixl_irt_establish(irt, vec, cpumask, trigger, polarity);
 
-	splx(s);
+	mutex_exit(&rmixl_intr_lock);
 
 	return ih;
 }
@@ -799,12 +828,10 @@ rmixl_vec_disestablish(void *cookie)
 {
 	rmixl_intrhand_t *ih = cookie;
 	uint64_t eimr_bit;
-	int s;
 
+	KASSERT(mutex_owned(&rmixl_intr_lock));
 	KASSERT(ih->ih_vec < NINTRVECS);
 	KASSERT(ih == &rmixl_intrhand[ih->ih_vec]);
-
-	s = splhigh();
 
 	ih->ih_func = NULL;	/* do this first */
 
@@ -813,8 +840,6 @@ rmixl_vec_disestablish(void *cookie)
 		KASSERT((ipl_eimr_map[i] & eimr_bit) != 0);
 		ipl_eimr_map[i] ^= eimr_bit;
 	}
-
-	splx(s);
 }
 
 void
@@ -822,14 +847,13 @@ rmixl_intr_disestablish(void *cookie)
 {
 	rmixl_intrhand_t *ih = cookie;
 	int vec;
-	int s;
 
 	vec = ih->ih_vec;
 
 	KASSERT(vec < NINTRVECS);
 	KASSERT(ih == &rmixl_intrhand[vec]);
 
-	s = splhigh();
+	mutex_enter(&rmixl_intr_lock);
 
 	/*
 	 * disable/invalidate the IRT Entry if needed
@@ -842,7 +866,7 @@ rmixl_intr_disestablish(void *cookie)
 	 */
 	rmixl_vec_disestablish(cookie);
 
-	splx(s);
+	mutex_exit(&rmixl_intr_lock);
 }
 
 void
@@ -936,20 +960,21 @@ rmixl_send_ipi(struct cpu_info *ci, int tag)
 	uint32_t thread = (uint32_t)(cpu & __BITS(1,0));
 	uint64_t req = 1 << tag;
 	uint32_t r;
-	extern volatile u_long cpus_running;
+	extern volatile mips_cpuset_t cpus_running;
 
-	if ((cpus_running & 1 << ci->ci_index) == 0)
+	if (! CPUSET_HAS(cpus_running, cpu_index(ci)))
 		return -1;
 
-	KASSERT(tag < NIPIS);
+	KASSERT((tag >= 0) && (tag < NIPIS));
 
 	r = (thread << RMIXL_PIC_IPIBASE_ID_THREAD_SHIFT)
 	  | (core << RMIXL_PIC_IPIBASE_ID_CORE_SHIFT)
-	  | RMIXL_INTRVEC_IPI;
+	  | (RMIXL_INTRVEC_IPI + tag);
 
+	mutex_enter(&rmixl_ipi_lock);
 	atomic_or_64(&ci->ci_request_ipis, req);
-
 	RMIXL_PICREG_WRITE(RMIXL_PIC_IPIBASE, r);
+	mutex_exit(&rmixl_ipi_lock);
 
 	return 0;
 }
@@ -960,11 +985,16 @@ rmixl_ipi_intr(void *arg)
 	struct cpu_info * const ci = curcpu();
 	uint64_t ipi_mask;
 
-	ipi_mask = atomic_swap_64(&ci->ci_request_ipis, 0);
-	if (ipi_mask == 0)
-		return 0;
+	KASSERT((uintptr_t)arg < NIPIS);
+	ipi_mask = 1 << (uintptr_t)arg;
+	KASSERT((ci->ci_request_ipis & ipi_mask) != 0);
+
+	atomic_or_64(&ci->ci_active_ipis, ipi_mask);
+	atomic_and_64(&ci->ci_request_ipis, ~ipi_mask);
 
 	ipi_process(ci, ipi_mask);
+
+	atomic_and_64(&ci->ci_active_ipis, ~ipi_mask);
 
 	return 1;
 }
