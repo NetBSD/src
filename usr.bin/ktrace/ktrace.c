@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.43 2009/01/11 03:05:23 christos Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.44 2011/02/05 15:22:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.43 2009/01/11 03:05:23 christos Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.44 2011/02/05 15:22:17 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ static void
 usage(void)
 {
 
-#define	TRPOINTS "[AaceilmnsUuvw+-]"
+#define	TRPOINTS "[AaceilmnSsuvw+-]"
 #ifdef KTRUSS
 	(void)fprintf(stderr, "usage:\t%s "
 	    "[-aCcdilnRT] [-e emulation] [-f infile] [-g pgrp] "
