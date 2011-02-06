@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.38 2011/01/28 19:21:28 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.39 2011/02/06 18:25:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.38 2011/01/28 19:21:28 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.39 2011/02/06 18:25:48 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -615,19 +615,18 @@ serv_syscallbouncer(void *arg)
 
 	for (;;) {
 		pthread_mutex_lock(&sbamtx);
-		if (idleworker >= rumpsp_idleworker) {
+		if (__predict_false(idleworker >= rumpsp_idleworker)) {
 			nworker--;
 			pthread_mutex_unlock(&sbamtx);
 			break;
 		}
-		idleworker++;
-		while (TAILQ_EMPTY(&syslist)) {
+		if (TAILQ_EMPTY(&syslist))
+			idleworker++;
+		while (TAILQ_EMPTY(&syslist))
 			pthread_cond_wait(&sbacv, &sbamtx);
-		}
 
 		sba = TAILQ_FIRST(&syslist);
 		TAILQ_REMOVE(&syslist, sba, sba_entries);
-		idleworker--;
 		pthread_mutex_unlock(&sbamtx);
 
 		serv_handlesyscall(sba->sba_spc,
@@ -952,6 +951,7 @@ handlereq(struct spclient *spc)
 	if (idleworker > 0) {
 		/* do we have a daemon's tool (i.e. idle threads)? */
 		pthread_cond_signal(&sbacv);
+		idleworker--;
 	} else if (nworker < rumpsp_maxworker) {
 		/*
 		 * Else, need to create one
@@ -959,8 +959,9 @@ handlereq(struct spclient *spc)
 		 * worker to pick up the syscall)
 		 */
 		if (pthread_create(&pt, &pattr_detached,
-		    serv_syscallbouncer, NULL) == 0)
+		    serv_syscallbouncer, NULL) == 0) {
 			nworker++;
+		}
 	}
 	pthread_mutex_unlock(&sbamtx);
 }
