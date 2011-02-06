@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.24 2011/02/03 15:39:50 pooka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.25 2011/02/06 18:47:55 pooka Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -75,6 +75,7 @@
 ./usr/libdata/debug/usr/tests/lib/libprop
 ./usr/libdata/debug/usr/tests/lib/libpthread
 ./usr/libdata/debug/usr/tests/lib/librt
+./usr/libdata/debug/usr/tests/lib/librumphijack
 ./usr/libdata/debug/usr/tests/lib/libskey
 ./usr/libdata/debug/usr/tests/lib/libutil
 ./usr/libdata/debug/usr/tests/libexec
@@ -186,6 +187,7 @@
 ./usr/tests/lib/libprop
 ./usr/tests/lib/libpthread
 ./usr/tests/lib/librt
+./usr/tests/lib/librumphijack
 ./usr/tests/lib/libskey
 ./usr/tests/lib/libutil
 ./usr/tests/libexec
