@@ -1,8 +1,15 @@
-/*	$NetBSD: kbdmap.h,v 1.12 2005/12/11 12:17:14 christos Exp $	*/
+/*	$OpenBSD: hyperreg.h,v 1.3 2005/01/24 21:36:39 miod Exp $	*/
+/*	$NetBSD: hyperreg.h,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
 
 /*
- * Copyright (c) 1982, 1990, 1993
+ * Copyright (c) 1991 University of Utah.
+ * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department and Mark Davies of the Department of Computer
+ * Science, Victoria University of Wellington, New Zealand.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,26 +35,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kbdmap.h	8.1 (Berkeley) 6/10/93
+ * from: Utah $Hdr: grf_hyreg.h 1.1 92/01/22$
+ *
+ *	@(#)grf_hyreg.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	ESC	'\033'
-#define	DEL	'\177'
-
-struct kbdmap {
-	int	kbd_code;
-	const char *kbd_desc;
-	char	*kbd_keymap;
-	char	*kbd_shiftmap;
-	char	*kbd_ctrlmap;
-	char	*kbd_ctrlshiftmap;
-	const char **kbd_stringmap;
+struct hyboxfb {
+	struct diofbreg regs;
+	u_int8_t f2[0x4000-0x5f-1];
+	u_int8_t nblank;		/* display enable planes      0x4000 */
 };
 
-/* kbd_code */
-#define KBD_SPECIAL	0x00		/* user defined */
-#define KBD_US		0x1F		/* US ASCII */
-#define KBD_UK		0x17		/* United Kingdom */
-#define KBD_SE		0x0e		/* Swedish */
-
-#define KBD_DEFAULT	KBD_US		/* default type */
+/* Values for nblank */
+#define	DISP_SYNC_ENABLE	0x01
+#define	DISP_VIDEO_ENABLE	0x04

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.14 2009/05/08 17:18:06 tsutsui Exp $
+#	$NetBSD: install.md,v 1.15 2011/02/06 18:26:51 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,8 +41,8 @@ md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
 	fi
-	echo -n "Specify terminal type [hp300h]: "
-	getresp "hp300h"
+	echo -n "Specify terminal type [vt100]: "
+	getresp "vt100"
 	TERM="$resp"
 	export TERM
 	# XXX call tset?
