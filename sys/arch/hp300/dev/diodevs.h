@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs.h,v 1.14 2010/12/31 22:49:55 tsutsui Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.15 2011/02/06 03:51:58 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.11 2010/12/31 22:48:59 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.12 2011/02/06 03:51:22 tsutsui Exp 
  */
 
 /*-
@@ -96,8 +96,8 @@
 #define	DIO_DEVICE_SECID_TOPCAT	0x02
 #define	DIO_DEVICE_DESC_TOPCAT	"98544/98545/98547 (\"topcat\") display"
 
-#define	DIO_DEVICE_SECID_RENASSIANCE	0x04
-#define	DIO_DEVICE_DESC_RENASSIANCE	"98720/98721 (\"renassiance\") display"
+#define	DIO_DEVICE_SECID_RENAISSANCE	0x04
+#define	DIO_DEVICE_DESC_RENAISSANCE	"98720/98721 (\"renaissance\") display"
 
 #define	DIO_DEVICE_SECID_LRCATSEYE	0x05
 #define	DIO_DEVICE_DESC_LRCATSEYE	"low-res catseye display"
