@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2010/12/05 05:59:59 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2011/02/06 01:13:43 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,9 @@ SUBDIR+= iscsi
 .endif
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
+.endif
+.if (${MKLLVM} != "no")
+SUBDIR+= llvm
 .endif
 .if (${MKCRYPTO} != "no")
 SUBDIR+= pkg_install ../../crypto/external/bsd
