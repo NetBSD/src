@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.8 2011/02/06 19:24:20 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.9 2011/02/06 22:18:38 bouyer Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.8 2011/02/06 19:24:20 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.9 2011/02/06 22:18:38 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,10 +312,10 @@ usage()
 {
 	fprintf(stderr,
 	    "usage:\n"
-	    "  edquota [-D] [-H] [-u] [-p username] [-f filesystem] [-d] username ...\n"
-	    "  edquota [-D] [-H] -g [-p groupname] [-f filesystem] [-d] groupname ...\n"
-	    "  edquota [-D] [-u] [-f filesystem] [-s b#/i#] [-h b#/i#] [-t t#/t#] \\\n\t[-d] username ...\n"
-	    "  edquota [-D] -g [-f filesystem] [-s b#/i#] [-h b#/i#] [-t t#/t#] \\\n\t[-d] groupname ...\n"
+	    "  edquota [-D] [-H] [-u] [-p username] [-f filesystem] -d | username ...\n"
+	    "  edquota [-D] [-H] -g [-p groupname] [-f filesystem] -d | groupname ...\n"
+	    "  edquota [-D] [-u] [-f filesystem] [-s b#/i#] [-h b#/i#] [-t t#/t#] \\\n\t-d | username ...\n"
+	    "  edquota [-D] -g [-f filesystem] [-s b#/i#] [-h b#/i#] [-t t#/t#] \\\n\t-d | groupname ...\n"
 	    );
 	exit(1);
 }
