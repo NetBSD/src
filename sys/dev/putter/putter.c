@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.29 2010/08/27 07:40:01 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.30 2011/02/06 01:28:16 haad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.29 2010/08/27 07:40:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.30 2011/02/06 01:28:16 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -644,7 +644,7 @@ get_pi_idx(struct putter_instance *pi_i)
 	return i;
 }
 
-MODULE(MODULE_CLASS_DRIVER, putter, NULL);
+MODULE(MODULE_CLASS_DRIVER, putter, "puffs");
 
 static int
 putter_modcmd(modcmd_t cmd, void *arg)
