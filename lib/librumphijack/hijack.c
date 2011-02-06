@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.26 2011/02/05 16:59:24 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.27 2011/02/06 13:05:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.26 2011/02/05 16:59:24 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.27 2011/02/06 13:05:19 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -780,9 +780,11 @@ int
 kqueue(void)
 {
 
-	fprintf(stderr, "kqueue unsupported");
-	abort();
-	/*NOTREACHED*/
+	if (!ISDUP2D(STDERR_FILENO) && isatty(STDERR_FILENO)) {
+		fprintf(stderr, "rumphijack: kqueue currently unsupported\n");
+	}
+	errno = ENOSYS;
+	return -1;
 }
 
 /*ARGSUSED*/
@@ -792,7 +794,7 @@ kevent(int kq, const struct kevent *changelist, size_t nchanges,
 	const struct timespec *timeout)
 {
 
-	fprintf(stderr, "kqueue unsupported");
+	fprintf(stderr, "kevent impossible\n");
 	abort();
 	/*NOTREACHED*/
 }
