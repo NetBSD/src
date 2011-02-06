@@ -1,4 +1,4 @@
-$NetBSD: diodevs,v 1.12 2011/02/06 03:51:22 tsutsui Exp $
+$NetBSD: diodevs,v 1.13 2011/02/06 04:06:11 tsutsui Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ framebuffer HYPERION	0x0e	1	A1096A (\"hyperion\") display
 /* Unsupported framebuffers. */
 
 framebuffer XGENESIS	0x0b	1	x-genesis display
-framebuffer TIGER	0x0c	1	tiger display
+framebuffer TIGERSHARK	0x0c	3	TurboVRX (\"tigershark\") display
 framebuffer YGENESIS	0x0d	1	y-genesis display
 framebuffer A1474MID	0x10	4	A1474-69511 on-board mid-res graphics
 framebuffer A147xVGA	0x11	4	A147x-69510 on-board VGA graphics
