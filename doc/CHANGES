@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1500 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1501 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -841,3 +841,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		available via sysctl. [matt 20110129]
 	route: make routing socket interface 64-bit clean. [matt 20110131]
 	dhcpcd(8): Import dhcpcd-5.2.11. [roy 20110204]
+	hp300: Switch NetBSD/hp300 to wscons with rasops.
+		Simply ported from OpenBSD/hp300.  [tsutsui 20110206]
