@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.577 2011/01/29 14:17:44 tsutsui Exp $
+$NetBSD: usbdevs,v 1.578 2011/02/06 23:11:11 njoly Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -509,6 +509,7 @@ vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
 vendor QUANTA		0x1a32	Quanta
 vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
+vendor MPMAN		0x1cae	MPMan
 vendor PEGATRON		0x1d4d	Pegatron
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
