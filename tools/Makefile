@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.141 2011/01/31 03:41:10 matt Exp $
+#	$NetBSD: Makefile,v 1.142 2011/02/06 01:14:11 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -62,6 +62,16 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		.WAIT fdisk \
 		.WAIT installboot \
 		pwd_mkdb stat strfile sunlabel zic
+
+.if ${MKLLVM} != "no"
+SUBDIR+= \
+	llvm .WAIT \
+	llvm-lib/libLLVMSupport .WAIT \
+	llvm-tblgen .WAIT \
+	llvm-include .WAIT \
+	llvm-lib .WAIT \
+	llvm-clang
+.endif
 
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"
 .  if ${MKGROFF} != "no"
