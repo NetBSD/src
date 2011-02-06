@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs.h,v 1.15 2011/02/06 03:51:58 tsutsui Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.16 2011/02/06 04:06:58 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.12 2011/02/06 03:51:22 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.13 2011/02/06 04:06:11 tsutsui Exp 
  */
 
 /*-
@@ -123,8 +123,8 @@
 #define	DIO_DEVICE_SECID_XGENESIS	0x0b
 #define	DIO_DEVICE_DESC_XGENESIS	"x-genesis display"
 
-#define	DIO_DEVICE_SECID_TIGER	0x0c
-#define	DIO_DEVICE_DESC_TIGER	"tiger display"
+#define	DIO_DEVICE_SECID_TIGERSHARK	0x0c
+#define	DIO_DEVICE_DESC_TIGERSHARK	"TurboVRX (\"tigershark\") display"
 
 #define	DIO_DEVICE_SECID_YGENESIS	0x0d
 #define	DIO_DEVICE_DESC_YGENESIS	"y-genesis display"
