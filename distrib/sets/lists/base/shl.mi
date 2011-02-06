@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.572 2011/02/04 22:09:17 christos Exp $
+# $NetBSD: shl.mi,v 1.573 2011/02/06 00:44:08 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -48,7 +48,7 @@
 ./lib/liblzma.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
-./lib/libm.so.0.8				base-sys-shlib		dynamicroot
+./lib/libm.so.0.9				base-sys-shlib		dynamicroot
 ./lib/libprop.so				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
@@ -304,7 +304,7 @@
 ./usr/lib/liblzf.so.0.0				base-sys-shlib
 ./usr/lib/libm.so				base-sys-shlib
 ./usr/lib/libm.so.0				base-sys-shlib
-./usr/lib/libm.so.0.8				base-sys-shlib
+./usr/lib/libm.so.0.9				base-sys-shlib
 ./usr/lib/libmagic.so				base-sys-shlib
 ./usr/lib/libmagic.so.3				base-sys-shlib
 ./usr/lib/libmagic.so.3.0			base-sys-shlib
