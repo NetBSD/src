@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.76 2010/04/11 08:23:51 hannken Exp $	*/
+/*	$NetBSD: main.c,v 1.77 2011/02/06 12:02:59 njoly Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.76 2010/04/11 08:23:51 hannken Exp $");
+__RCSID("$NetBSD: main.c,v 1.77 2011/02/06 12:02:59 njoly Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,12 @@ main(int argc, char *argv[])
 
 	while (argc-- > 0) {
 		int nret;
-		char *path = strdup(blockcheck(*argv));
+		char *path;
+
+		if (!forceimage)
+			path = strdup(blockcheck(*argv));
+		else
+			path = strdup(*argv);
 
 		if (path == NULL)
 			pfatal("Can't check %s\n", *argv);
