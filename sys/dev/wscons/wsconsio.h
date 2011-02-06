@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.94 2011/01/22 15:14:28 cegger Exp $ */
+/* $NetBSD: wsconsio.h,v 1.95 2011/02/06 18:26:53 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -296,12 +296,12 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
 #define	WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
 #define	WSDISPLAY_TYPE_DCPVR	24	/* Dreamcast PowerVR */
-#define	WSDISPLAY_TYPE_GATOR	25	/* HP Gator */
+#define	WSDISPLAY_TYPE_GBOX	25	/* HP Gator */
 #define	WSDISPLAY_TYPE_TOPCAT	26	/* HP TopCat */
-#define	WSDISPLAY_TYPE_RENAISSANCE	27	/* HP Renaissance */
+#define	WSDISPLAY_TYPE_RBOX	27	/* HP Renaissance */
 #define	WSDISPLAY_TYPE_CATSEYE	28	/* HP CatsEye */
-#define	WSDISPLAY_TYPE_DAVINCI	29	/* HP DaVinci */
-#define	WSDISPLAY_TYPE_TIGER	30	/* HP Tiger */
+#define	WSDISPLAY_TYPE_DVBOX	29	/* HP DaVinci */
+#define	WSDISPLAY_TYPE_TVRX	30	/* HP TigerShark */
 #define	WSDISPLAY_TYPE_HYPERION	31	/* HP Hyperion */
 #define	WSDISPLAY_TYPE_AMIGACC	32	/* Amiga custom chips */
 #define	WSDISPLAY_TYPE_SUN24	33	/* Sun 24 bit framebuffers */
