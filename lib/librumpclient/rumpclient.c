@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.22 2011/02/05 12:38:19 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.23 2011/02/06 15:41:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -777,10 +777,13 @@ int
 rumpclient_fork_init(struct rumpclient_fork *rpf)
 {
 	int error;
+	int osock;
 
+	osock = clispc.spc_fd;
 	memset(&clispc, 0, sizeof(clispc));
-	clispc.spc_fd = -1;
-	kq = -1;
+	clispc.spc_fd = osock;
+
+	kq = -1; /* kqueue descriptor is not copied over fork() */
 
 	if (doinit() == -1)
 		return -1;
