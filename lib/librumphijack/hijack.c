@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.27 2011/02/06 13:05:19 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.28 2011/02/06 15:48:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.27 2011/02/06 13:05:19 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.28 2011/02/06 15:48:20 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: hijack.c,v 1.27 2011/02/06 13:05:19 pooka Exp $");
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -185,6 +186,7 @@ static bool hostlocalsockets = true;
 static void __attribute__((constructor))
 rcinit(void)
 {
+	char buf[64];
 	extern void *(*rumpclient_dlsym)(void *, const char *);
 	unsigned i, j;
 
@@ -223,7 +225,30 @@ rcinit(void)
 
 	if (rumpclient_init() == -1)
 		err(1, "rumpclient init");
-	rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
+
+	/* set client persistence level */
+	if (getenv_r("RUMPHIJACK_RETRY", buf, sizeof(buf)) == -1) {
+		if (errno == ERANGE)
+			err(1, "invalid RUMPHIJACK_RETRY");
+		rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
+	} else {
+		if (strcmp(buf, "die") == 0)
+			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_DIE);
+		else if (strcmp(buf, "inftime") == 0)
+			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
+		else if (strcmp(buf, "once") == 0)
+			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_ONCE);
+		else {
+			time_t timeout;
+
+			timeout = (time_t)strtoll(buf, NULL, 10);
+			if (timeout <= 0)
+				errx(1, "RUMPHIJACK_RETRY must be keyword "
+				    "or a positive integer, got: %s", buf);
+
+			rumpclient_setconnretry(timeout);
+		}
+	}
 }
 
 /* XXX: need runtime selection.  low for now due to FD_SETSIZE */
