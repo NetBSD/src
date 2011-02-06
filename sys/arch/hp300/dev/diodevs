@@ -1,4 +1,4 @@
-$NetBSD: diodevs,v 1.11 2010/12/31 22:48:59 tsutsui Exp $
+$NetBSD: diodevs,v 1.12 2011/02/06 03:51:22 tsutsui Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ device FRAMEBUFFER	0x39	1	bitmapped display
 
 framebuffer GATORBOX	0x01	1	98700/98710 (\"gatorbox\") display
 framebuffer TOPCAT	0x02	1	98544/98545/98547 (\"topcat\") display
-framebuffer RENASSIANCE	0x04	2	98720/98721 (\"renassiance\") display
+framebuffer RENAISSANCE	0x04	2	98720/98721 (\"renaissance\") display
 framebuffer LRCATSEYE	0x05	1	low-res catseye display
 framebuffer HRCCATSEYE	0x06	1	high-res color catseye display
 framebuffer HRMCATSEYE	0x07	1	high-res mono catseye display
