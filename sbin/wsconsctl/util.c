@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.28 2009/04/06 12:35:20 lukem Exp $ */
+/*	$NetBSD: util.c,v 1.29 2011/02/06 21:38:09 pooka Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006 The NetBSD Foundation, Inc.
@@ -118,12 +118,12 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_SB_P9100,	"sparcbook-p9100" },
 	{ WSDISPLAY_TYPE_EGA,		"ega" },
 	{ WSDISPLAY_TYPE_DCPVR,		"dreamcast-pvr" },
-	{ WSDISPLAY_TYPE_GATOR,		"hp-gator" },
+	{ WSDISPLAY_TYPE_GBOX,		"hp-gator" },
 	{ WSDISPLAY_TYPE_TOPCAT,	"hp-topcat" },
-	{ WSDISPLAY_TYPE_RENAISSANCE,	"hp-renaissance" },
+	{ WSDISPLAY_TYPE_RBOX,		"hp-renaissance" },
 	{ WSDISPLAY_TYPE_CATSEYE,	"hp-catseye" },
-	{ WSDISPLAY_TYPE_DAVINCI,	"hp-davinci" },
-	{ WSDISPLAY_TYPE_TIGER,		"hp-tiger" },
+	{ WSDISPLAY_TYPE_DVBOX,		"hp-davinci" },
+	{ WSDISPLAY_TYPE_TVRX,		"hp-tiger" },
 	{ WSDISPLAY_TYPE_HYPERION,	"hp-hyperion" },
 	{ WSDISPLAY_TYPE_AMIGACC,	"amiga-cc" },
 	{ WSDISPLAY_TYPE_SUN24,		"sun24" },
