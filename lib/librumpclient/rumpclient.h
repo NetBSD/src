@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.3 2011/01/27 18:04:05 pooka Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.4 2011/02/06 15:43:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -39,6 +39,7 @@ int			rumpclient_fork_init(struct rumpclient_fork *);
 
 #define RUMPCLIENT_RETRYCONN_INFTIME ((time_t)-1)
 #define RUMPCLIENT_RETRYCONN_ONCE ((time_t)-2)
+#define RUMPCLIENT_RETRYCONN_DIE ((time_t)-3)
 void rumpclient_setconnretry(time_t);
 
 __END_DECLS
