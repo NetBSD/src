@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1582 2011/02/06 00:44:09 christos Exp $
+#	$NetBSD: mi,v 1.1583 2011/02/06 01:13:42 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13,6 +13,8 @@
 ./usr/bin/c89					comp-c-bin
 ./usr/bin/c99					comp-c-bin
 ./usr/bin/cc					comp-c-bin		gcccmds
+./usr/bin/clang					comp-c-bin		llvm
+./usr/bin/clang++				comp-c-bin		llvm
 ./usr/bin/config				comp-util-bin
 ./usr/bin/crunchgen				comp-c-bin
 ./usr/bin/crunchide				comp-c-bin
@@ -46,6 +48,7 @@
 ./usr/bin/lint					comp-c-bin
 ./usr/bin/lorder				comp-util-bin
 ./usr/bin/luac					comp-util-bin
+./usr/bin/llvm-tblgen				comp-c-bin		llvm
 ./usr/bin/menuc					comp-c-bin
 ./usr/bin/mkstr					comp-c-bin
 ./usr/bin/mkubootimage				comp-util-bin
