@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.159 2011/01/03 06:07:43 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.160 2011/02/06 06:47:15 tsutsui Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.159 $"
+#ident 		"GENERIC-$Revision: 1.160 $"
 
 maxusers	32		# estimated number of users
 
@@ -59,7 +59,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	MODULAR		# new style module(7) framework
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -191,14 +191,14 @@ dma* 		at intio?		# DMA controller
 hil*		at intio?		# Human Interface Loop
 options 	UK_KEYBOARD		# include United Kingdom HIL keymap
 options 	SE_KEYBOARD		# include Swedish HIL keymap
-frodo*		at intio?		# Frodo utility chip found on 3x2, 4xx
+frodo*		at intio?		# Frodo utility chip found on 382, 4xx
 nhpib*		at intio?		# slow internal HP-IB
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
 com*		at frodo? offset ?	# tty flavor
 
-dvbox*		at intio? 		# Davinci framebuffer
+dvbox*		at intio?		# Davinci framebuffer
 dvbox*		at dio? scode ?
 
 gbox*		at intio?		# Gatorbox framebuffer
