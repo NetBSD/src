@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.103 2011/01/31 15:06:01 christos Exp $
+#  $NetBSD: Makefile,v 1.104 2011/02/06 00:44:09 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -136,7 +136,7 @@ COMMON_SRCS+= e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
 	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_matherr.c s_modff.c s_nextafter.c \
-	s_nextafterf.c s_rint.c s_rintf.c s_round.c s_roundf.c s_scalbn.c \
+	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c s_round.c s_roundf.c s_scalbn.c \
 	s_scalbnf.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
 	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c s_truncf.c \
 	w_acos.c w_acosf.c w_acosh.c w_acoshf.c w_asin.c w_asinf.c w_atan2.c \
@@ -247,6 +247,7 @@ MLINKS+=ieee.3 copysign.3 ieee.3 copysignf.3 ieee.3 copysignl.3 	\
 	ieee.3 nextafter.3 ieee.3 nextafterf.3 ieee.3 nextafterl.3	\
 	ieee.3 nexttoward.3						\
 	ieee.3 remainder.3 ieee.3 remainderf.3 				\
+	ieee.3 remquo.3 ieee.3 remquof.3				\
 	ieee.3 scalbn.3 ieee.3 scalbnf.3
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3
