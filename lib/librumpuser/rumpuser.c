@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.14 2011/01/22 14:22:10 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.15 2011/02/06 21:05:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.14 2011/01/22 14:22:10 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.15 2011/02/06 21:05:53 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -45,7 +45,9 @@ __RCSID("$NetBSD: rumpuser.c,v 1.14 2011/01/22 14:22:10 pooka Exp $");
 #include <sys/uio.h>
 
 #ifdef __NetBSD__
+#include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <sys/sysctl.h>
 #endif
 
@@ -147,6 +149,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 #else
 		struct disklabel lab;
 		struct partition *parta;
+		struct dkwedge_info dkw;
 
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
@@ -155,14 +158,26 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 			goto out;
 		}
 
-		if (ioctl(fd, DIOCGDINFO, &lab) == -1) {
-			seterror(errno);
-			rv = -1;
+		if (ioctl(fd, DIOCGDINFO, &lab) == 0) {
+			parta = &lab.d_partitions[DISKPART(sb.st_rdev)];
+			size = (uint64_t)lab.d_secsize * parta->p_size;
 			goto out;
 		}
 
-		parta = &lab.d_partitions[DISKPART(sb.st_rdev)];
-		size = (uint64_t)lab.d_secsize * parta->p_size;
+		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
+			/*
+			 * XXX: should use DIOCGDISKINFO to query
+			 * sector size, but that requires proplib,
+			 * so just don't bother for now.  it's nice
+			 * that something as difficult as figuring out
+			 * a partition's size has been made so easy.
+			 */
+			size = dkw.dkw_size << DEV_BSHIFT;
+			goto out;
+		}
+
+		seterror(errno);
+		rv = -1;
 #endif /* __NetBSD__ */
 	}
 
