@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.36 2011/02/06 12:37:48 darcy Exp $
+.\"	$NetBSD: cp.1,v 1.37 2011/02/06 12:49:32 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,7 +106,6 @@ If the
 option is specified, all symbolic links are followed.
 .It Fl l
 Create hard links to regular files in a hierarchy instead of copying.
-The -l option is expected to behave similar to cp(1) in GNU coreutils.
 .It Fl N
 When used with
 .Fl p ,
@@ -226,8 +225,10 @@ compatible.
 .Pp
 The
 .Fl a
-is a non-standard extension.
-It is intended to be compatible with the same option which
+and
+.Fl l
+flags are non-standard extensions.
+They are intended to be compatible with the same options which
 other implementations, namely GNU coreutils and
 .Fx ,
 of this utility have.
