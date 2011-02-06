@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1581 2011/02/04 19:42:13 pooka Exp $
+#	$NetBSD: mi,v 1.1582 2011/02/06 00:44:09 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7995,6 +7995,8 @@
 ./usr/share/man/cat3/remainderf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/remove.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remque.0			comp-c-catman		.cat
+./usr/share/man/cat3/remquo.0			comp-c-catman		.cat
+./usr/share/man/cat3/remquof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/request_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/request_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_close.0		comp-c-catman		.cat
@@ -14001,6 +14003,8 @@
 ./usr/share/man/html3/remainderf.html		comp-c-htmlman		html
 ./usr/share/man/html3/remove.html		comp-c-htmlman		html
 ./usr/share/man/html3/remque.html		comp-c-htmlman		html
+./usr/share/man/html3/remquo.html		comp-c-htmlman		html
+./usr/share/man/html3/remquof.html		comp-c-htmlman		html
 ./usr/share/man/html3/request_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/request_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_close.html		comp-c-htmlman		html
@@ -20009,6 +20013,8 @@
 ./usr/share/man/man3/remainderf.3		comp-c-man		.man
 ./usr/share/man/man3/remove.3			comp-c-man		.man
 ./usr/share/man/man3/remque.3			comp-c-man		.man
+./usr/share/man/man3/remquo.3			comp-c-man		.man
+./usr/share/man/man3/remquof.3			comp-c-man		.man
 ./usr/share/man/man3/request_init.3		comp-c-man		.man
 ./usr/share/man/man3/request_set.3		comp-c-man		.man
 ./usr/share/man/man3/res_close.3		comp-c-man		.man

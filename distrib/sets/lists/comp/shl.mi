@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.157 2011/02/04 22:09:17 christos Exp $
+# $NetBSD: shl.mi,v 1.158 2011/02/06 00:44:09 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -265,7 +265,7 @@
 ./usr/libdata/debug/usr/lib/liblwres.so.5.2.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/liblzma.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.0.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libm.so.0.8.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libm.so.0.9.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmagic.so.3.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmj.so.0.0.debug		comp-crypto-debug	debug
