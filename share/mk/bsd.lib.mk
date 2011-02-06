@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.310 2010/12/08 01:57:22 joerg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.311 2011/02/06 00:52:49 joerg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -64,7 +64,8 @@ DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
 MKDEP_SUFFIXES?=	.o .po .pico .go .ln
 
 # Use purely kernel private headers in rump builds
-.if !defined(RUMPKERNEL)
+# Skip NetBSD headers for the toolchain builds
+.if !defined(RUMPKERNEL) && !defined(HOSTLIB)
 .if empty(CPPFLAGS:M-nostdinc)
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 .endif
