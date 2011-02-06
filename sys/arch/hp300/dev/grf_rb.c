@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.40 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.41 2011/02/06 03:53:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rb.c,v 1.40 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rb.c,v 1.41 2011/02/06 03:53:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ rbox_intio_match(device_t parent, cfdata_t cf, void *aux)
 	grf = (struct grfreg *)ia->ia_addr;
 
 	if (grf->gr_id == DIO_DEVICE_ID_FRAMEBUFFER &&
-	    grf->gr_id2 == DIO_DEVICE_SECID_RENASSIANCE) {
+	    grf->gr_id2 == DIO_DEVICE_SECID_RENAISSANCE) {
 		return 1;
 	}
 
@@ -229,7 +229,7 @@ rbox_dio_match(device_t parent, cfdata_t cf, void *aux)
 	struct dio_attach_args *da = aux;
 
 	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
-	    da->da_secid == DIO_DEVICE_SECID_RENASSIANCE)
+	    da->da_secid == DIO_DEVICE_SECID_RENAISSANCE)
 		return 1;
 
 	return 0;
