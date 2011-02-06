@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs_data.h,v 1.14 2010/12/31 22:49:55 tsutsui Exp $	*/
+/*	$NetBSD: diodevs_data.h,v 1.15 2011/02/06 03:51:58 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.11 2010/12/31 22:48:59 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.12 2011/02/06 03:51:22 tsutsui Exp 
  */
 
 /*-
@@ -108,7 +108,7 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x39,	0,	DIO_DEVICE_DESC_FRAMEBUFFER },
 	{ 0x39,	0x01,	DIO_DEVICE_DESC_GATORBOX },
 	{ 0x39,	0x02,	DIO_DEVICE_DESC_TOPCAT },
-	{ 0x39,	0x04,	DIO_DEVICE_DESC_RENASSIANCE },
+	{ 0x39,	0x04,	DIO_DEVICE_DESC_RENAISSANCE },
 	{ 0x39,	0x05,	DIO_DEVICE_DESC_LRCATSEYE },
 	{ 0x39,	0x06,	DIO_DEVICE_DESC_HRCCATSEYE },
 	{ 0x39,	0x07,	DIO_DEVICE_DESC_HRMCATSEYE },
