@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.23 2011/02/06 15:41:37 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.24 2011/02/06 15:43:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -101,6 +101,8 @@ send_with_recon(struct spclient *spc, const void *data, size_t dlen)
 			/* no persistent connections */
 			if (retrytimo == 0)
 				break;
+			if (retrytimo == RUMPCLIENT_RETRYCONN_DIE)
+				exit(1);
 
 			if (!prevreconmsg) {
 				prevreconmsg = time(NULL);
@@ -805,7 +807,7 @@ void
 rumpclient_setconnretry(time_t timeout)
 {
 
-	if (timeout < RUMPCLIENT_RETRYCONN_ONCE)
+	if (timeout < RUMPCLIENT_RETRYCONN_DIE)
 		return; /* gigo */
 
 	retrytimo = timeout;
