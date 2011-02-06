@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.32 2010/10/07 07:53:53 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.33 2011/02/06 23:25:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.32 2010/10/07 07:53:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.33 2011/02/06 23:25:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	long defattr;
 	int i, j;
 	bool console;
+#ifdef SPLASHSCREEN
+	int error = ENXIO;
+#endif
 
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &console);
@@ -271,26 +274,23 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
 		sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
-		genfb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
-		    rasops_cmap[j + 2]);
 		j += 3;
 #else
-		if(i >= SPLASH_CMAP_OFFSET &&
+		if (i >= SPLASH_CMAP_OFFSET &&
 		    i < SPLASH_CMAP_OFFSET + SPLASH_CMAP_SIZE) {
-			sc->sc_cmap_red[i] = _splash_header_data_cmap[j][0];
-			sc->sc_cmap_green[i] = _splash_header_data_cmap[j][1];
-			sc->sc_cmap_blue[i] = _splash_header_data_cmap[j][2];
+			splash_get_cmap(i,
+			    &sc->sc_cmap_red[i],
+			    &sc->sc_cmap_green[i],
+			    &sc->sc_cmap_blue[i]);
 		} else {
 			sc->sc_cmap_red[i] = rasops_cmap[j];
 			sc->sc_cmap_green[i] = rasops_cmap[j + 1];
 			sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
-			genfb_putpalreg(sc, i, rasops_cmap[j],
-				rasops_cmap[j + 1],
-				rasops_cmap[j + 2]);
 		}
 		j += 3;
 #endif
 	}
+	genfb_restore_palette(sc);
 
 #ifdef SPLASHSCREEN
 	sc->sc_splash.si_depth = sc->sc_depth;
@@ -300,17 +300,14 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_splash.si_height = sc->sc_height;
 	sc->sc_splash.si_stride = sc->sc_stride;
 	sc->sc_splash.si_fillrect = NULL;
-	if (!DISABLESPLASH)
-		splash_render(&sc->sc_splash, SPLASH_F_CENTER|SPLASH_F_FILL);
-#ifdef SPLASHSCREEN_PROGRESS
-	sc->sc_progress.sp_top = (sc->sc_height / 8) * 7;
-	sc->sc_progress.sp_width = (sc->sc_width / 4) * 3;
-	sc->sc_progress.sp_left = (sc->sc_width / 8) * 7;
-	sc->sc_progress.sp_height = 20;
-	sc->sc_progress.sp_state = -1;
-	sc->sc_progress.sp_si = &sc->sc_splash;
-	splash_progress_init(&sc->sc_progress);
-#endif
+	if (!DISABLESPLASH) {
+		error = splash_render(&sc->sc_splash,
+		    SPLASH_F_CENTER|SPLASH_F_FILL);
+		if (error) {
+			SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
+			vcons_replay_msgbuf(&sc->sc_console_screen);
+		}
+	}
 #else
 	vcons_replay_msgbuf(&sc->sc_console_screen);
 #endif
@@ -324,7 +321,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	aa.accesscookie = &sc->vd;
 
 #ifdef GENFB_DISABLE_TEXT
-	if (!DISABLESPLASH)
+	if (!DISABLESPLASH && error == 0)
 		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
 #endif
 
@@ -392,25 +389,9 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
 				splash_render(&sc->sc_splash,
 						SPLASH_F_CENTER|SPLASH_F_FILL);
-#if defined(SPLASHSCREEN_PROGRESS)
-				sc->sc_progress.sp_running = 1;
-#endif
 			} else {
 				SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
-#if defined(SPLASHSCREEN_PROGRESS)
-				sc->sc_progress.sp_running = 0;
-#endif
 			}
-			vcons_redraw_screen(ms);
-			return 0;
-#else
-			return ENODEV;
-#endif
-		case WSDISPLAYIO_SPROGRESS:
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-			sc->sc_progress.sp_force = 1;
-			splash_progress_update(&sc->sc_progress);
-			sc->sc_progress.sp_force = 0;
 			vcons_redraw_screen(ms);
 			return 0;
 #else
