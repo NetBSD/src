@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.212 2011/01/31 23:07:16 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.213 2011/02/06 23:25:17 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.212 2011/01/31 23:07:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.213 2011/02/06 23:25:17 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -111,14 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.212 2011/01/31 23:07:16 dyoung E
 #include <sys/disk.h>
 
 #include <machine/limits.h>
-
-#if defined(__i386__) && defined(_KERNEL_OPT)
-#include "opt_splash.h"
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-#include <dev/splash/splash.h>
-extern struct splash_progress *splash_progress_state;
-#endif
-#endif
 
 /*
  * Autoconfiguration subroutines.
@@ -1048,11 +1040,6 @@ config_found_sm_loc(device_t parent,
 {
 	cfdata_t cf;
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
-
 	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
@@ -1060,11 +1047,6 @@ config_found_sm_loc(device_t parent,
 			twiddle();
 		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
 	}
-
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 
 	return NULL;
 }
@@ -1418,11 +1400,6 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	struct cftable *ct;
 	const char *drvname;
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
-
 	dev = config_devalloc(parent, cf, locs);
 	if (!dev)
 		panic("config_attach: allocation of device softc failed");
@@ -1473,15 +1450,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	/* Let userland know */
 	devmon_report_device(dev, true);
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 	(*dev->dv_cfattach->ca_attach)(parent, dev, aux);
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 
 	if (!device_pmf_is_registered(dev))
 		aprint_debug_dev(dev, "WARNING: power management not supported\n");

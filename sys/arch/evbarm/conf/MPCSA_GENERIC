@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.17 2010/11/23 11:13:56 hannken Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.18 2011/02/06 23:25:16 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -250,7 +250,6 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	VGA_RASTERCONSOLE
 # enable splash screen support; requires hw driver support
 #options 	SPLASHSCREEN
-#options 	SPLASHSCREEN_PROGRESS
 
 # Kernel root file system and dump configuration.
 #config		netbsd root on sd0c type ffs
