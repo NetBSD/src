@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.48 2008/02/02 20:56:46 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.49 2011/02/07 21:39:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.48 2008/02/02 20:56:46 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.49 2011/02/07 21:39:47 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: getcap.c,v 1.48 2008/02/02 20:56:46 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __weak_alias
+#if defined(__weak_alias) && !defined(SMALL)
 __weak_alias(cgetcap,_cgetcap)
 __weak_alias(cgetclose,_cgetclose)
 __weak_alias(cgetent,_cgetent)
