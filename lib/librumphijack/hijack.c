@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.29 2011/02/07 10:28:18 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.30 2011/02/07 11:51:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.29 2011/02/07 10:28:18 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.30 2011/02/07 11:51:02 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -912,7 +912,7 @@ STUB(getcwd)(char *buf, size_t size)
 #define STUB(fun) fun
 #endif
 
-FDCALL(ssize_t, STUB(read), DUALCALL_READ,				\
+FDCALL(ssize_t, read, DUALCALL_READ,					\
 	(int fd, void *buf, size_t buflen),				\
 	(int, void *, size_t),						\
 	(fd, buf, buflen))
