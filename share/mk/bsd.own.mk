@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.651 2011/02/06 01:14:10 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.652 2011/02/07 21:23:47 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -982,7 +982,7 @@ X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
 .endfor
 
 .for _i in \
-	elographics keyboard mouse vmmouse void ws
+	elographics keyboard mouse synaptics vmmouse void ws
 X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .endfor
 
