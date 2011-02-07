@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.25 2011/02/07 14:49:53 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.26 2011/02/07 15:25:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -267,12 +267,11 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 }
 
 static int
-syscall_req(struct spclient *spc, int sysnum,
+syscall_req(struct spclient *spc, sigset_t *omask, int sysnum,
 	const void *data, size_t dlen, void **resp)
 {
 	struct rsp_hdr rhdr;
 	struct respwait rw;
-	sigset_t omask;
 	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr) + dlen;
@@ -280,7 +279,6 @@ syscall_req(struct spclient *spc, int sysnum,
 	rhdr.rsp_type = RUMPSP_SYSCALL;
 	rhdr.rsp_sysnum = sysnum;
 
-	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	do {
 		putwait(spc, &rw, &rhdr);
 		if ((rv = send_with_recon(spc, &rhdr, sizeof(rhdr))) != 0) {
@@ -292,11 +290,10 @@ syscall_req(struct spclient *spc, int sysnum,
 			continue;
 		}
 
-		rv = cliwaitresp(spc, &rw, &omask, false);
+		rv = cliwaitresp(spc, &rw, omask, false);
 		if (rv == ENOTCONN)
 			rv = EAGAIN;
 	} while (rv == EAGAIN);
-	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 
 	*resp = rw.rw_data;
 	return rv;
@@ -346,28 +343,27 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 		else
 			unputwait(spc, &rw);
 		if (cancel) {
-			pthread_sigmask(SIG_SETMASK, &omask, NULL);
-			return rv;
+			goto out;
 		}
 	} else {
 		rv = cliwaitresp(spc, &rw, &omask, haslock);
 	}
-	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 	if (rv)
-		return rv;
+		goto out;
 
 	rv = *(int *)rw.rw_data;
 	free(rw.rw_data);
 
+ out:
+	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 	return rv;
 }
 
 static int
-prefork_req(struct spclient *spc, void **resp)
+prefork_req(struct spclient *spc, sigset_t *omask, void **resp)
 {
 	struct rsp_hdr rhdr;
 	struct respwait rw;
-	sigset_t omask;
 	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr);
@@ -375,7 +371,6 @@ prefork_req(struct spclient *spc, void **resp)
 	rhdr.rsp_type = RUMPSP_PREFORK;
 	rhdr.rsp_error = 0;
 
-	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	do {
 		putwait(spc, &rw, &rhdr);
 		rv = send_with_recon(spc, &rhdr, sizeof(rhdr));
@@ -384,11 +379,10 @@ prefork_req(struct spclient *spc, void **resp)
 			continue;
 		}
 
-		rv = cliwaitresp(spc, &rw, &omask, false);
+		rv = cliwaitresp(spc, &rw, omask, false);
 		if (rv == ENOTCONN)
 			rv = EAGAIN;
 	} while (rv == EAGAIN);
-	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 
 	*resp = rw.rw_data;
 	return rv;
@@ -463,15 +457,18 @@ rumpclient_syscall(int sysnum, const void *data, size_t dlen,
 	register_t *retval)
 {
 	struct rsp_sysresp *resp;
+	sigset_t omask;
 	void *rdata;
 	int rv;
+
+	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 
 	DPRINTF(("rumpsp syscall_req: syscall %d with %p/%zu\n",
 	    sysnum, data, dlen));
 
-	rv = syscall_req(&clispc, sysnum, data, dlen, &rdata);
+	rv = syscall_req(&clispc, &omask, sysnum, data, dlen, &rdata);
 	if (rv)
-		return rv;
+		goto out;
 
 	resp = rdata;
 	DPRINTF(("rumpsp syscall_resp: syscall %d error %d, rv: %d/%d\n",
@@ -481,6 +478,8 @@ rumpclient_syscall(int sysnum, const void *data, size_t dlen,
 	rv = resp->rsys_error;
 	free(rdata);
 
+ out:
+	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 	return rv;
 }
 
@@ -757,22 +756,27 @@ struct rumpclient_fork *
 rumpclient_prefork(void)
 {
 	struct rumpclient_fork *rpf;
+	sigset_t omask;
 	void *resp;
 	int rv;
 
+	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	rpf = malloc(sizeof(*rpf));
 	if (rpf == NULL)
 		return NULL;
 
-	if ((rv = prefork_req(&clispc, &resp)) != 0) {
+	if ((rv = prefork_req(&clispc, &omask, &resp)) != 0) {
 		free(rpf);
 		errno = rv;
-		return NULL;
+		rpf = NULL;
+		goto out;
 	}
 
 	memcpy(rpf->fork_auth, resp, sizeof(rpf->fork_auth));
 	free(resp);
 
+ out:
+	pthread_sigmask(SIG_SETMASK, &omask, NULL);
 	return rpf;
 }
 
