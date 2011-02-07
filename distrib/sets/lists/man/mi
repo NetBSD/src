@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1283 2011/01/26 18:48:11 bouyer Exp $
+# $NetBSD: mi,v 1.1284 2011/02/07 18:11:28 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -183,7 +183,7 @@
 ./usr/share/man/cat1/history.0			man-util-catman		.cat
 ./usr/share/man/cat1/host.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/hostname.0			man-util-catman		.cat
-./usr/share/man/cat1/hp300/grfinfo.0		man-sysutil-catman	.cat
+./usr/share/man/cat1/hp300/grfinfo.0		man-obsolete		obsolete
 ./usr/share/man/cat1/i386			man-obsolete		obsolete
 ./usr/share/man/cat1/i386/cursor.0		man-obsolete		obsolete
 ./usr/share/man/cat1/i386/fed.0			man-obsolete		obsolete
@@ -3015,7 +3015,7 @@
 ./usr/share/man/html1/history.html		man-util-htmlman	html
 ./usr/share/man/html1/host.html			man-netutil-htmlman	html
 ./usr/share/man/html1/hostname.html		man-util-htmlman	html
-./usr/share/man/html1/hp300/grfinfo.html	man-sysutil-htmlman	html
+./usr/share/man/html1/hp300/grfinfo.html	man-obsolete		obsolete
 ./usr/share/man/html1/iconv.html		man-util-htmlman	html
 ./usr/share/man/html1/id.html			man-util-htmlman	html
 ./usr/share/man/html1/ident.html		man-util-htmlman	html
@@ -5468,7 +5468,7 @@
 ./usr/share/man/man1/history.1			man-util-man		.man
 ./usr/share/man/man1/host.1			man-netutil-man		.man
 ./usr/share/man/man1/hostname.1			man-util-man		.man
-./usr/share/man/man1/hp300/grfinfo.1		man-sysutil-man		.man
+./usr/share/man/man1/hp300/grfinfo.1		man-obsolete		obsolete
 ./usr/share/man/man1/i386			man-obsolete		obsolete
 ./usr/share/man/man1/i386/cursor.1		man-obsolete		obsolete
 ./usr/share/man/man1/i386/fed.1			man-obsolete		obsolete
