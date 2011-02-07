@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.24 2011/02/06 15:43:20 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.25 2011/02/07 14:49:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -689,6 +689,8 @@ rumpclient_init()
 	char *p;
 	int error;
 
+	sigfillset(&fullset);
+
 	/* dlsym overrided by rumphijack? */
 	if (!rumpclient_dlsym)
 		rumpclient_dlsym = dlsym;
@@ -744,7 +746,6 @@ rumpclient_init()
 		return -1;
 	}
 
-	sigfillset(&fullset);
 	return 0;
 }
 
