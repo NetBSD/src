@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1009 2011/01/26 18:48:12 bouyer Exp $
+# $NetBSD: GENERIC,v 1.1010 2011/02/07 04:05:49 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1009 $"
+#ident 		"GENERIC-$Revision: 1.1010 $"
 
 maxusers	64		# estimated number of users
 
@@ -304,7 +304,6 @@ options 	WSDISPLAY_SCROLLSUPPORT
 #options 	VGA_RASTERCONSOLE
 # enable splash screen support; requires genfb or radeonfb
 #options 	SPLASHSCREEN
-#options 	SPLASHSCREEN_PROGRESS
 
 # Keylock support
 #options 	KEYLOCK
