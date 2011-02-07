@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdv.c,v 1.6 2011/01/04 20:45:13 christos Exp $	*/
+/*	$NetBSD: fwdv.c,v 1.7 2011/02/07 01:37:12 dholland Exp $	*/
 /*
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -149,7 +149,7 @@ dvrecv(int d, const char *filename, char ich, int count)
 						continue;
 				} else
 					err(EXIT_FAILURE, "%s: read failed",
-					    __fnc__);
+					    __func__);
 			}
 			tlen += len;
 			if ((RBUFSIZE - tlen) < PSIZE)
