@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.9 2011/01/28 23:54:28 haad Exp $	*/
+/*	$NetBSD: pud.c,v 1.10 2011/02/07 03:14:28 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.9 2011/01/28 23:54:28 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.10 2011/02/07 03:14:28 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -383,7 +383,7 @@ pudattach(void)
 	mutex_init(&pud_mtx, MUTEX_DEFAULT, IPL_NONE);
 }
 
-MODULE(MODULE_CLASS_DRIVER, pud, putter);
+MODULE(MODULE_CLASS_DRIVER, pud, "putter");
 
 static int
 pud_modcmd(modcmd_t cmd, void *arg)
