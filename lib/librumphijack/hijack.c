@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.30 2011/02/07 11:51:02 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.31 2011/02/07 12:23:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.30 2011/02/07 11:51:02 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.31 2011/02/07 12:23:05 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -85,10 +85,12 @@ enum dualcall {
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
 #endif
+#define REALREAD _sys_read
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
 	       const struct timespec *, const sigset_t *);
+ssize_t REALREAD(int, void *, size_t);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -110,7 +112,7 @@ struct sysnames {
 	{ DUALCALL_GETSOCKOPT,	"getsockopt",	RSYS_NAME(GETSOCKOPT)	},
 	{ DUALCALL_SETSOCKOPT,	"setsockopt",	RSYS_NAME(SETSOCKOPT)	},
 	{ DUALCALL_SHUTDOWN,	"shutdown",	RSYS_NAME(SHUTDOWN)	},
-	{ DUALCALL_READ,	"read",		RSYS_NAME(READ)		},
+	{ DUALCALL_READ,	S(REALREAD),	RSYS_NAME(READ)		},
 	{ DUALCALL_READV,	"readv",	RSYS_NAME(READV)	},
 	{ DUALCALL_WRITE,	"write",	RSYS_NAME(WRITE)	},
 	{ DUALCALL_WRITEV,	"writev",	RSYS_NAME(WRITEV)	},
@@ -912,7 +914,7 @@ STUB(getcwd)(char *buf, size_t size)
 #define STUB(fun) fun
 #endif
 
-FDCALL(ssize_t, read, DUALCALL_READ,					\
+FDCALL(ssize_t, REALREAD, DUALCALL_READ,				\
 	(int fd, void *buf, size_t buflen),				\
 	(int, void *, size_t),						\
 	(fd, buf, buflen))
