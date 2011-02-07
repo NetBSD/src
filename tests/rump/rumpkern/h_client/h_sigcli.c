@@ -1,4 +1,4 @@
-/*	$NetBSD: h_sigcli.c,v 1.2 2011/01/10 19:30:21 pooka Exp $	*/
+/*	$NetBSD: h_sigcli.c,v 1.3 2011/02/07 20:05:09 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -35,6 +35,7 @@ int
 main(void)
 {
 	char buf[128];
+	time_t tstart;
 	struct itimerval itv;
 	size_t hnbsize;
 	int i;
@@ -57,13 +58,24 @@ main(void)
 	if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
 		err(1, "itimer");
 
-	for (i = 0; i < 20000; i++) {
+	tstart = time(NULL);
+	for (i = 0;; i++) {
 		blen = sizeof(buf);
 		if (rump_sys___sysctl(hostnamemib, __arraycount(hostnamemib),
 		    buf, &blen, NULL, 0) == -1)
 			err(1, "sysctl");
 		if (strcmp(buf, hostnamebuf) != 0)
 			errx(1, "main hostname");
+
+		/*
+		 * check every 100 cycles to avoid doing
+		 * nothing but gettimeofday()
+		 */
+		if (i == 100) {
+			if (time(NULL) - tstart > 5)
+				break;
+			i = 0;
+		}
 	}
 
 	if (!sigexecs) {
