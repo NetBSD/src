@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.7 2011/02/03 15:56:16 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.8 2011/02/07 16:24:13 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.7 2011/02/03 15:56:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.8 2011/02/07 16:24:13 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -502,29 +502,33 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 
 	if (ump->um_quotas[type] == NULLVP)
 		return ENODEV;
+	error = UFS_WAPBL_BEGIN(ump->um_mountp);
+	if (error)
+		return error;
+	
 	if (defaultq) {
 		mutex_enter(&dqlock);
 		error = getq2h(ump, type, &bp, &q2h, B_MODIFY);
 		if (error) {
 			mutex_exit(&dqlock);
-			return error;
+			goto out_wapbl;
 		}
 		quota2_ufs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
 		error = quota2_dict_update_q2e_limits(data, &q2e);
 		if (error) {
 			mutex_exit(&dqlock);
 			brelse(bp, 0);
-			return error;
+			goto out_wapbl;
 		}
 		quota2_ufs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
 		mutex_exit(&dqlock);
 		VOP_BWRITE(bp);
-		return error;
+		goto out_wapbl;
 	}
 
 	error = dqget(NULLVP, id, ump, type, &dq);
 	if (error)
-		return error;
+		goto out_wapbl;
 
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		/* need to alloc a new on-disk quot */
@@ -537,7 +541,7 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 	}
 	if (error) {
 		dqrele(NULLVP, dq);
-		return error;
+		goto out_wapbl;
 	}
 	mutex_enter(&dq->dq_interlock);
 	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
@@ -546,13 +550,15 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 		mutex_exit(&dq->dq_interlock);
 		dqrele(NULLVP, dq);
 		brelse(bp, 0);
-		return error;
+		goto out_wapbl;
 	}
 	quota2_ufs_rwq2e(&q2e, q2ep, needswap);
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
 	VOP_BWRITE(bp);
-	
+
+out_wapbl:
+	UFS_WAPBL_END(ump->um_mountp);
 	return error;
 }
 
