@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.7 2011/02/07 13:11:41 tsutsui Exp $	*/
+/*	$NetBSD: grf_hyreg.h,v 1.1 2011/02/07 13:11:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -6,7 +6,8 @@
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * Science Department and Mark Davies of the Department of Computer
+ * Science, Victoria University of Wellington, New Zealand.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +33,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: ite_tc.c 1.11 92/01/20$
+ * from: Utah $Hdr: grf_hyreg.h 1.1 92/01/22$
  *
- *	@(#)ite_tc.c	8.1 (Berkeley) 6/10/93
+ *	@(#)grf_hyreg.h	8.1 (Berkeley) 6/10/93
  */
+
 /*
- * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1991 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * Science Department and Mark Davies of the Department of Computer
+ * Science, Victoria University of Wellington, New Zealand.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,144 +74,45 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: ite_tc.c 1.11 92/01/20$
+ * from: Utah $Hdr: grf_hyreg.h 1.1 92/01/22$
  *
- *	@(#)ite_tc.c	8.1 (Berkeley) 6/10/93
+ *	@(#)grf_hyreg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifdef ITECONSOLE
+#include <hp300/dev/iotypes.h>	/* XXX */
 
-#include <sys/param.h>
+struct hyboxfb {
+  u_char 	:8;
+  vu_char 	reset;			/* reset register		0x01 */
+  vu_char	fb_address;		/* frame buffer address 	0x02 */
+  vu_char	interrupt;		/* interrupt register		0x03 */
+  u_char	:8;
+  vu_char	fbwmsb;			/* frame buffer width MSB	0x05 */
+  u_char	:8;
+  vu_char	fbwlsb;			/* frame buffer width MSB	0x07 */
+  u_char	:8;
+  vu_char	fbhmsb;			/* frame buffer height MSB	0x09 */
+  u_char	:8;
+  vu_char	fbhlsb;			/* frame buffer height MSB	0x0b */
+  u_char	:8;
+  vu_char	dwmsb;			/* display width MSB		0x0d */
+  u_char	:8;
+  vu_char	dwlsb;			/* display width MSB		0x0f */
+  u_char	:8;
+  vu_char	dhmsb;			/* display height MSB		0x11 */
+  u_char	:8;
+  vu_char	dhlsb;			/* display height MSB		0x13 */
+  u_char	:8;
+  vu_char	fbid;			/* Scondary frame buffer id	0x15 */
+  u_char	:8;
+  vu_char	bits;			/* square(0)/double-high(1) 	0x17 */
+  u_char	f1[0x5b-0x17-1];
+  vu_char	num_planes;		/* number of color planes       0x5b */
+  u_char	:8;
+  vu_char	fbomsb;			/* frame buffer offset MSB	0x5d */
+  u_char	:8;
+  vu_char	fbolsb;			/* frame buffer offset LSB	0x5f */
+  u_char	f2[0x4000-0x5f-1];
+  vu_char	nblank;			/* display enable planes      0x4000 */
+};
 
-#include <hp300/stand/common/itereg.h>
-#include <hp300/stand/common/grfreg.h>
-#include <hp300/stand/common/grf_tcreg.h>
-
-#include <hp300/stand/common/samachdep.h>
-#include <hp300/stand/common/itevar.h>
-
-#define WINDOWMOVER 	topcat_windowmove
-
-void topcat_windowmove(struct ite_data *, int, int, int, int, int, int, int);
-
-void
-topcat_init(struct ite_data *ip)
-{
-	struct tcboxfb *regbase = (void *)ip->regbase;
-
-	/*
-	 * Catseye looks a lot like a topcat, but not completely.
-	 * So, we set some bits to make it work.
-	 */
-	if (regbase->fbid != GID_TOPCAT) {
-		while ((regbase->catseye_status & 1))
-			;
-		regbase->catseye_status = 0x0;
-		regbase->vb_select      = 0x0;
-		regbase->tcntrl         = 0x0;
-		regbase->acntrl         = 0x0;
-		regbase->pncntrl        = 0x0;
-		regbase->rug_cmdstat    = 0x90;
-	}
-
-	/*
-	 * Determine the number of planes by writing to the first frame
-	 * buffer display location, then reading it back. 
-	 */
-	regbase->wen = ~0;
-	regbase->fben = ~0;
-	regbase->prr = RR_COPY;
-	*FBBASE = 0xFF;
-	ip->planemask = *FBBASE;
-
-	/*
-	 * Enable reading/writing of all the planes.
-	 */
-	regbase->fben = ip->planemask;
-	regbase->wen  = ip->planemask;
-	regbase->ren  = ip->planemask;
-	regbase->prr  = RR_COPY;
-
-	ite_fontinfo(ip);
-
-	/*
-	 * Clear the framebuffer on all planes.
-	 */
-	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
-	tc_waitbusy(regbase, ip->planemask);
-
-	ite_fontinit(ip);
-
-	/*
-	 * Stash the inverted cursor.
-	 */
-	topcat_windowmove(ip, charY(ip, ' '), charX(ip, ' '),
-			  ip->cblanky, ip->cblankx, ip->ftheight,
-			  ip->ftwidth, RR_COPYINVERTED);
-}
-
-void
-topcat_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
-{
-
-	topcat_windowmove(ip, charY(ip, c), charX(ip, c),
-			  dy * ip->ftheight, dx * ip->ftwidth,
-			  ip->ftheight, ip->ftwidth, RR_COPY);
-}
-
-void
-topcat_cursor(struct ite_data *ip, int flag)
-{
-
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	} else
-		erase_cursor(ip)
-}
-
-void
-topcat_clear(struct ite_data *ip, int sy, int sx, int h, int w)
-{
-
-	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			  sy * ip->ftheight, sx * ip->ftwidth, 
-			  h  * ip->ftheight, w  * ip->ftwidth,
-			  RR_CLEAR);
-}
-
-void
-topcat_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
-{
-	int dy = sy - count;
-	int height = ip->rows - sy;
-
-	topcat_cursor(ip, ERASE_CURSOR);
-
-	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			  dy * ip->ftheight, sx * ip->ftwidth,
-			  height * ip->ftheight,
-			  ip->cols  * ip->ftwidth, RR_COPY);
-}
-
-void
-topcat_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
-    int h, int w, int func)
-{
-	struct tcboxfb *rp = (void *)ip->regbase;
-	
-	if (h == 0 || w == 0)
-		return;
-	tc_waitbusy(rp, ip->planemask);
-	rp->wmrr     = func;
-	rp->source_y = sy;
-	rp->source_x = sx;
-	rp->dest_y   = dy;
-	rp->dest_x   = dx;
-	rp->wheight  = h;
-	rp->wwidth   = w;
-	rp->wmove    = ip->planemask;
-}
-#endif
