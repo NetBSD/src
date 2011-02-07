@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.23 2009/04/11 07:14:50 lukem Exp $	*/
+/*	$NetBSD: dir.c,v 1.24 2011/02/07 17:36:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.23 2009/04/11 07:14:50 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.24 2011/02/07 17:36:42 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -204,6 +204,7 @@ calcShortSum(u_char *p)
  * Global variables temporarily used during a directory scan
  */
 static char longName[DOSLONGNAMELEN] = "";
+static char *eLongName = longName + sizeof(longName);
 static u_char *buffer = NULL;
 static u_char *delbuf = NULL;
 
@@ -432,6 +433,26 @@ checksize(struct bootblock *boot, struct fatEntry *fat, u_char *p,
 	return FSOK;
 }
 
+static int
+procName(int from, int to, char **dst, const u_char *src)
+{
+	int k;
+	char *t = *dst;
+
+	for (k = from; k < to && t < eLongName; k += 2) {
+		if (!src[k] && !src[k + 1])
+			break;
+		*t++ = src[k];
+		/*
+		 * Warn about those unusable chars in msdosfs here?	XXX
+		 */
+		if (src[k + 1])
+		    t[-1] = '?';
+	}
+	*dst = t;
+	return k;
+}
+
 /*
  * Read a directory and
  *   - resolve long name records
@@ -526,6 +547,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 			}
 
 			if (p[11] == ATTR_WIN95) {
+				u_int lrnomask = *p & LRNOMASK;
 				if (*p & LRFIRST) {
 					if (shortSum != -1) {
 						if (!invlfn) {
@@ -538,7 +560,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 					vallfn = p;
 					valcl = cl;
 				} else if (shortSum != p[13]
-					   || lidx != (*p & LRNOMASK)) {
+				   || lidx != lrnomask || lrnomask != 0) {
 					if (!invlfn) {
 						invlfn = vallfn;
 						invcl = valcl;
@@ -549,52 +571,35 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 					}
 					vallfn = NULL;
 				}
-				lidx = *p & LRNOMASK;
-				t = longName + --lidx * 13;
-				for (k = 1; k < 11 && t < longName + sizeof(longName); k += 2) {
-					if (!p[k] && !p[k + 1])
-						break;
-					*t++ = p[k];
-					/*
-					 * Warn about those unusable chars in msdosfs here?	XXX
-					 */
-					if (p[k + 1])
-						t[-1] = '?';
-				}
-				if (k >= 11)
-					for (k = 14; k < 26 && t < longName + sizeof(longName); k += 2) {
-						if (!p[k] && !p[k + 1])
-							break;
-						*t++ = p[k];
-						if (p[k + 1])
-							t[-1] = '?';
+				lidx = lrnomask;
+				if (lidx != 0) {
+					t = longName + --lidx * 13;
+					k = procName(1, 11, &t, p);
+					if (k >= 11)
+						k = procName(14, 26, &t, p);
+					if (k >= 26)
+						k = procName(28, 32, &t, p);
+					if (t >= eLongName) {
+						pwarn(
+						    "long filename too long\n");
+						if (!invlfn) {
+							invlfn = vallfn;
+							invcl = valcl;
+						}
+						vallfn = NULL;
 					}
-				if (k >= 26)
-					for (k = 28; k < 32 && t < longName + sizeof(longName); k += 2) {
-						if (!p[k] && !p[k + 1])
-							break;
-						*t++ = p[k];
-						if (p[k + 1])
-							t[-1] = '?';
-					}
-				if (t >= longName + sizeof(longName)) {
-					pwarn("long filename too long\n");
-					if (!invlfn) {
-						invlfn = vallfn;
-						invcl = valcl;
-					}
-					vallfn = NULL;
 				}
 				if (p[26] | (p[27] << 8)) {
-					pwarn("long filename record cluster start != 0\n");
+					pwarn("long filename record cluster "
+					    "start != 0\n");
 					if (!invlfn) {
 						invlfn = vallfn;
 						invcl = cl;
 					}
 					vallfn = NULL;
 				}
-				continue;	/* long records don't carry further
-						 * information */
+				continue; 	/* long records don't carry
+						 * further information */
 			}
 
 			/*
