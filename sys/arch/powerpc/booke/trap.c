@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 2011/02/07 06:41:08 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.3 2011/02/07 06:41:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -847,7 +847,7 @@ startlwp(void *arg)
 	struct lwp * const l = curlwp;
 
 	int error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-	KASSERT(error);
+	KASSERT(error == 0);
 	(void)error;
         kmem_free(uc, sizeof(ucontext_t)); 
 	upcallret(l);
