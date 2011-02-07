@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.8 2011/01/10 13:45:57 phx Exp $
+$NetBSD: README.NAS,v 1.9 2011/02/07 15:58:35 nisimura Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -22,10 +22,12 @@ sk.15	satalink.12/13	Synology CS-406/RS-406/CS-406e/CS-407e
 			>> Board type BRD_QNAPTS101 <<
 wm.15	satalink.13 	QNAP TS-100/101
 
+			>> Board type BRD_STORCENTER <<
+re.15	viaide.13	IOMEGA StorCenter
+
 			>> Not yet recognized, research in progress <<
 re.15	satalink.13 	QNAP TS-201
-re.15	viaide.13	IOMEGA StorCenter
-ste.?	acardide.?	DLink DSM-G600
+stge.15	acardide.16	D-Link DSM-G600
 
 
 PCI line/pin and EPIC IRQ assignments
@@ -35,6 +37,7 @@ Kurobox		11, 12, 13, 14	-> 0, 1, 4, 3
 Synology	12, 13, 14, 15	-> 4, 0, 1, 2
 QNAP		13, 14, 15, 16	-> 0, 1, 2, 3
 StorCenter	12, 13, 14, 15  -> 0, 1, 2, 3
+DLink		13, 14, 15, 16	-> 0, 1, 2, 3
 
 - USB EHCI is a multiple function PCI device which has
   pin assignment A, B and C.
