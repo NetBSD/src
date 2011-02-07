@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.2 2011/02/07 12:45:21 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ BRD_DECL(enc);
 BRD_DECL(kuro);
 BRD_DECL(syno);
 BRD_DECL(qnap);
+BRD_DECL(iomega);
 
 static struct brdprop brdlist[] = {
     {
@@ -92,11 +93,11 @@ static struct brdprop brdlist[] = {
 	NULL, NULL, qnappcifix },
     {
 	"iomega",
-	"IOMEGA Storcenter",
+	"IOMEGA StorCenter",
 	BRD_STORCENTER,
 	0,
 	"eumb", 0x4500, 115200,
-	NULL, NULL, NULL },
+	NULL, iomegabrdfix, iomegapcifix },
     {
 	"unknown",
 	"Unknown board",
@@ -693,6 +694,14 @@ synopcifix(struct brdprop *brd)
 }
 
 void
+synoreset()
+{
+
+	send_sat("C");
+	/*NOTRECHED*/
+}
+
+void
 qnappcifix(struct brdprop *brd)
 {
 	unsigned ide, nic, usb, val;
@@ -724,11 +733,41 @@ qnappcifix(struct brdprop *brd)
 }
 
 void
-synoreset()
+iomegabrdfix(struct brdprop *brd)
 {
 
-	send_sat("C");
-	/*NOTRECHED*/
+	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
+}
+
+void
+iomegapcifix(struct brdprop *brd)
+{
+	unsigned ide, nic, usb, val;
+
+	ide = pcimaketag(0, 13, 0);
+	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	val |= 13;
+	pcicfgwrite(ide, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 0);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 1);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 2);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	nic = pcimaketag(0, 15, 0);
+	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	val |= 15;
+	pcicfgwrite(nic, 0x3c, val);
 }
 
 void
