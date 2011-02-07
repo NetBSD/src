@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.28 2011/02/06 15:48:20 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.29 2011/02/07 10:28:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.28 2011/02/06 15:48:20 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.29 2011/02/07 10:28:18 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -79,15 +79,15 @@ enum dualcall {
  * Also, this does not work for compat-using binaries!
  */
 #if !__NetBSD_Prereq__(5,99,7)
-#define LIBCSELECT select
-#define LIBCPOLLTS pollts
+#define REALSELECT select
+#define REALPOLLTS pollts
 #else
-#define LIBCSELECT _sys___select50
-#define LIBCPOLLTS _sys___pollts50
+#define REALSELECT _sys___select50
+#define REALPOLLTS _sys___pollts50
 #endif
 
-int LIBCSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-int LIBCPOLLTS(struct pollfd *, nfds_t,
+int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+int REALPOLLTS(struct pollfd *, nfds_t,
 	       const struct timespec *, const sigset_t *);
 
 #define S(a) __STRING(a)
@@ -118,7 +118,7 @@ struct sysnames {
 	{ DUALCALL_FCNTL,	"fcntl",	RSYS_NAME(FCNTL)	},
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
-	{ DUALCALL_POLLTS,	S(LIBCPOLLTS),	RSYS_NAME(POLLTS)	},
+	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
 };
 #undef S
 
@@ -481,7 +481,7 @@ daemon(int nochdir, int noclose)
  * select is done by calling poll.
  */
 int
-LIBCSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	struct timeval *timeout)
 {
 	struct pollfd *pfds;
@@ -549,7 +549,7 @@ LIBCSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		TIMEVAL_TO_TIMESPEC(timeout, &ts);
 		tsp = &ts;
 	}
-	rv = pollts(pfds, realnfds, tsp, NULL);
+	rv = REALPOLLTS(pfds, realnfds, tsp, NULL);
 	if (rv <= 0)
 		goto out;
 
@@ -647,7 +647,7 @@ hostpoll(void *arg)
 }
 
 int
-LIBCPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
+REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 	const sigset_t *sigmask)
 {
 	int (*op_pollts)(struct pollfd *, nfds_t, const struct timespec *,
@@ -798,7 +798,7 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 		tsp = &ts;
 	}
 
-	return pollts(fds, nfds, tsp, NULL);
+	return REALPOLLTS(fds, nfds, tsp, NULL);
 }
 
 int
