@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_dv.c,v 1.6 2006/01/28 12:00:56 tsutsui Exp $	*/
+/*	$NetBSD: ite_dv.c,v 1.7 2011/02/07 13:11:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -80,8 +80,8 @@
 
 #include <sys/param.h>
 
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grf_dvreg.h>
+#include <hp300/stand/common/itereg.h>
+#include <hp300/stand/common/grf_dvreg.h>
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>

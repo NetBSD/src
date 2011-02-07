@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.9 2007/03/07 09:10:20 he Exp $	*/
+/*	$NetBSD: ite.c,v 1.10 2011/02/07 13:11:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -85,7 +85,7 @@
 #include <sys/param.h>
 #include <dev/cons.h>
 
-#include <hp300/dev/grfreg.h>
+#include <hp300/stand/common/grfreg.h>
 #include <hp300/dev/intioreg.h>
 
 #include <hp300/stand/common/device.h>

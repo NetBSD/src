@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.7 2011/02/07 13:11:41 tsutsui Exp $	*/
+/*	$NetBSD: itereg.h,v 1.1 2011/02/07 13:11:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: ite_tc.c 1.11 92/01/20$
+ * from: Utah $Hdr: itereg.h 1.3 92/01/21$
  *
- *	@(#)ite_tc.c	8.1 (Berkeley) 6/10/93
+ *	@(#)itereg.h	8.1 (Berkeley) 6/10/93
  */
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,144 +71,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: ite_tc.c 1.11 92/01/20$
+ * from: Utah $Hdr: itereg.h 1.3 92/01/21$
  *
- *	@(#)ite_tc.c	8.1 (Berkeley) 6/10/93
+ *	@(#)itereg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifdef ITECONSOLE
+/*
+ * Offsets into the display ROM that is part of the first 4K of each
+ * display device.
+ */
+#define FONTROM		0x3B	/* Offset of font information structure. */
+#define FONTADDR	0x4	/* Offset from FONTROM to font address. */
+#define FONTHEIGHT	0x0	/* Offset from font address to font height. */
+#define FONTWIDTH	0x2	/* Offset from font address to font width. */
+#define FONTDATA	0xA	/* Offset from font address to font glyphs. */
 
-#include <sys/param.h>
-
-#include <hp300/stand/common/itereg.h>
-#include <hp300/stand/common/grfreg.h>
-#include <hp300/stand/common/grf_tcreg.h>
-
-#include <hp300/stand/common/samachdep.h>
-#include <hp300/stand/common/itevar.h>
-
-#define WINDOWMOVER 	topcat_windowmove
-
-void topcat_windowmove(struct ite_data *, int, int, int, int, int, int, int);
-
-void
-topcat_init(struct ite_data *ip)
-{
-	struct tcboxfb *regbase = (void *)ip->regbase;
-
-	/*
-	 * Catseye looks a lot like a topcat, but not completely.
-	 * So, we set some bits to make it work.
-	 */
-	if (regbase->fbid != GID_TOPCAT) {
-		while ((regbase->catseye_status & 1))
-			;
-		regbase->catseye_status = 0x0;
-		regbase->vb_select      = 0x0;
-		regbase->tcntrl         = 0x0;
-		regbase->acntrl         = 0x0;
-		regbase->pncntrl        = 0x0;
-		regbase->rug_cmdstat    = 0x90;
-	}
-
-	/*
-	 * Determine the number of planes by writing to the first frame
-	 * buffer display location, then reading it back. 
-	 */
-	regbase->wen = ~0;
-	regbase->fben = ~0;
-	regbase->prr = RR_COPY;
-	*FBBASE = 0xFF;
-	ip->planemask = *FBBASE;
-
-	/*
-	 * Enable reading/writing of all the planes.
-	 */
-	regbase->fben = ip->planemask;
-	regbase->wen  = ip->planemask;
-	regbase->ren  = ip->planemask;
-	regbase->prr  = RR_COPY;
-
-	ite_fontinfo(ip);
-
-	/*
-	 * Clear the framebuffer on all planes.
-	 */
-	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
-	tc_waitbusy(regbase, ip->planemask);
-
-	ite_fontinit(ip);
-
-	/*
-	 * Stash the inverted cursor.
-	 */
-	topcat_windowmove(ip, charY(ip, ' '), charX(ip, ' '),
-			  ip->cblanky, ip->cblankx, ip->ftheight,
-			  ip->ftwidth, RR_COPYINVERTED);
-}
-
-void
-topcat_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
-{
-
-	topcat_windowmove(ip, charY(ip, c), charX(ip, c),
-			  dy * ip->ftheight, dx * ip->ftwidth,
-			  ip->ftheight, ip->ftwidth, RR_COPY);
-}
-
-void
-topcat_cursor(struct ite_data *ip, int flag)
-{
-
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	} else
-		erase_cursor(ip)
-}
-
-void
-topcat_clear(struct ite_data *ip, int sy, int sx, int h, int w)
-{
-
-	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			  sy * ip->ftheight, sx * ip->ftwidth, 
-			  h  * ip->ftheight, w  * ip->ftwidth,
-			  RR_CLEAR);
-}
-
-void
-topcat_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
-{
-	int dy = sy - count;
-	int height = ip->rows - sy;
-
-	topcat_cursor(ip, ERASE_CURSOR);
-
-	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			  dy * ip->ftheight, sx * ip->ftwidth,
-			  height * ip->ftheight,
-			  ip->cols  * ip->ftwidth, RR_COPY);
-}
-
-void
-topcat_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
-    int h, int w, int func)
-{
-	struct tcboxfb *rp = (void *)ip->regbase;
-	
-	if (h == 0 || w == 0)
-		return;
-	tc_waitbusy(rp, ip->planemask);
-	rp->wmrr     = func;
-	rp->source_y = sy;
-	rp->source_x = sx;
-	rp->dest_y   = dy;
-	rp->dest_x   = dx;
-	rp->wheight  = h;
-	rp->wwidth   = w;
-	rp->wmove    = ip->planemask;
-}
+#ifdef hp300
+#define FBBASE		((volatile u_char *)ip->fbbase)
+#else
+#define FBBASE		((volatile u_long *)ip->fbbase)
 #endif

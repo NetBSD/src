@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.6 2011/02/07 13:11:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-#include <hp300/dev/itereg.h>
+#include <hp300/stand/common/itereg.h>
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
