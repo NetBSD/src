@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mkops,v 1.7 2011/02/07 00:26:27 christos Exp $
+#	$NetBSD: mkops,v 1.8 2011/02/07 23:56:18 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -122,7 +122,7 @@ END {
 		printf("{\n");
 		printf("\tsize_t i;\n");
 		printf("\n");
-		printf("\tfor (i=0; i<sizeof(imods)/sizeof(imods[0]); i++)\n");
+		printf("\tfor (i = 0; i < __arraycount(imods); i++)\n");
 		printf("\t\tif (imods[i].ok)\n");
 		printf("\t\t\tSTRUCT_ASSIGN(modtab[i], imods[i].m);\n");
 		printf("}\n");
