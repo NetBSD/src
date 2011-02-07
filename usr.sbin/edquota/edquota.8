@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)edquota.8	8.2 (Berkeley) 4/27/95
-.\"	$NetBSD: edquota.8,v 1.12.50.1 2011/02/06 22:18:38 bouyer Exp $
+.\"	$NetBSD: edquota.8,v 1.12.50.2 2011/02/07 20:31:20 bouyer Exp $
 .\"
 .Dd February 6, 2011
 .Dt EDQUOTA 8
@@ -73,6 +73,20 @@
 .Op Fl s Ar block#/inode#
 .Op Fl t Ar block grace time/inode grace time
 .Ar -d |
+.Ar groupname ...
+.Nm
+.Op Fl D
+.Op Fl H
+.Op Fl u
+.Fl c
+.Op Fl f Ar filesystem
+.Ar username ...
+.Nm
+.Op Fl D
+.Op Fl H
+.Fl g
+.Fl c
+.Op Fl f Ar filesystem
 .Ar groupname ...
 .Sh DESCRIPTION
 .Nm
@@ -164,6 +178,12 @@ flag adds the default quota to the list of users or groups to edit.
 For quota version 1, there is no default block/inode quota, and no
 per-user/group grace time. To edit the filesystem-wide grace time, use
 .Fl d .
+.Pp
+On quota2-enabled filesystems, the
+.Fl c
+flag cause edquota to clear quota entries for the specified users or groups.
+If disk or inode usages is not 0, limits are reverted to the default quota. 
+If disk and inode usages are 0, the existing quota entries are freed.
 .Pp
 The
 .Fl D
