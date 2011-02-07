@@ -1,4 +1,4 @@
-# $NetBSD: t_setquota.sh,v 1.1.2.6 2011/02/02 19:17:08 bouyer Exp $ 
+# $NetBSD: t_setquota.sh,v 1.1.2.7 2011/02/07 16:22:50 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -29,25 +29,27 @@ for e in le be; do
   for v in 1 2; do
     for q in "user" "group"; do
       test_case_root set_${e}_${v}_${q} set_quota \
-	 "set quota with ${q} enabled" ${e} ${v} ${q}
+	 "set quota with ${q} enabled" -b ${e} ${v} ${q}
       test_case_root set_new_${e}_${v}_${q} set_quota_new \
-	 "set quota for new id with ${q} enabled" ${e} ${v} ${q}
+	 "set quota for new id with ${q} enabled" -b ${e} ${v} ${q}
       test_case_root set_default_${e}_${v}_${q} set_quota_default \
-	 "set default quota with ${q} enabled" ${e} ${v} ${q}
+	 "set default quota with ${q} enabled" -b ${e} ${v} ${q}
     done
     test_case_root set_${e}_${v}_"both" set_quota \
-	 "set quota with both enabled" ${e} ${v} "both"
+	 "set quota with both enabled" -b ${e} ${v} "both"
     test_case_root set_new_${e}_${v}_"both" set_quota_new \
-	 "set quota for new id with both enabled" ${e} ${v} "both"
+	 "set quota for new id with both enabled" -b ${e} ${v} "both"
+    test_case_root set_new_${e}_${v}_"both_log" set_quota_new \
+	 "set quota for new id with both enabled, WAPBL" -bl ${e} ${v} "both"
     test_case_root set_default_${e}_${v}_"both" set_quota_default \
-	 "set default quota with both enabled" ${e} ${v} "both"
+	 "set default quota with both enabled" -b ${e} ${v} "both"
   done
 done
 
 set_quota()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local fail
 
@@ -103,7 +105,7 @@ set_quota()
 set_quota_new()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local fail
 
@@ -153,7 +155,7 @@ set_quota_new()
 set_quota_default()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local fail
 
