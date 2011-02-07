@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_hy.c,v 1.8 2007/03/07 09:10:21 he Exp $	*/
+/*	$NetBSD: ite_hy.c,v 1.9 2011/02/07 13:11:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,8 +83,8 @@
 
 #include <sys/param.h>
 
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grf_hyreg.h>
+#include <hp300/stand/common/itereg.h>
+#include <hp300/stand/common/grf_hyreg.h>
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
@@ -204,7 +204,7 @@ hyper_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
 			 ip->cols  * ip->ftwidth, RR_COPY);
 }
 
-#include <hp300/dev/maskbits.h>
+#include <hp300/stand/common/maskbits.h>
 
 /* NOTE:
  * the first element in starttab could be 0xffffffff.  making it 0
