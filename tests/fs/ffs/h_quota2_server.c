@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_server.c,v 1.1.2.2 2011/01/30 13:15:14 bouyer Exp $	*/
+/*	$NetBSD: h_quota2_server.c,v 1.1.2.3 2011/02/07 16:22:50 bouyer Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -26,7 +26,8 @@ int background = 0;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-b] diskimage bindurl\n", getprogname());
+	fprintf(stderr, "usage: %s [-b] [-l] diskimage bindurl\n",
+	    getprogname());
 	exit(1);
 }
 
@@ -58,10 +59,13 @@ main(int argc, char **argv)
 	int log = 0;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "b")) != -1) {
+	while ((ch = getopt(argc, argv, "bl")) != -1) {
 		switch(ch) {
 		case 'b':
 			background = 1;
+			break;
+		case 'l':
+			log = 1;
 			break;
 		default:
 			usage();

@@ -1,4 +1,4 @@
-# $NetBSD: t_getquota.sh,v 1.1.2.6 2011/02/02 19:17:08 bouyer Exp $ 
+# $NetBSD: t_getquota.sh,v 1.1.2.7 2011/02/07 16:22:50 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -29,17 +29,17 @@ for e in le be; do
   for v in 1 2; do
     for q in "user" "group"; do
       test_case get_${e}_${v}_${q} get_quota \
-	 "get quota with ${q} enabled" ${e} ${v} ${q}
+	 "get quota with ${q} enabled" -b ${e} ${v} ${q}
     done
     test_case get_${e}_${v}_"both" get_quota \
-	 "get quota with both enabled" ${e} ${v} "both"
+	 "get quota with both enabled" -b ${e} ${v} "both"
   done
 done
 
 get_quota()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local fail
 
