@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.9 2011/02/06 22:18:38 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.10 2011/02/07 20:31:20 bouyer Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.9 2011/02/06 22:18:38 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.10 2011/02/07 20:31:20 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,7 @@ void	freeq(struct quotause *);
 void	freeprivs(struct quotause *);
 int	alldigits(const char *);
 int	hasquota(struct fstab *, int, char **);
+static void clearpriv(int, char **, const char *, int);
 
 int Hflag = 0;
 int Dflag = 0;
@@ -131,6 +132,7 @@ main(argc, argv)
 	char *fs = NULL;
 	int ch;
 	int pflag = 0;
+	int cflag = 0;
 
 	if (argc < 2)
 		usage();
@@ -138,13 +140,16 @@ main(argc, argv)
 		errx(1, "permission denied");
 	protoname = NULL;
 	quotatype = USRQUOTA;
-	while ((ch = getopt(argc, argv, "DHdugp:s:h:t:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "DHcdugp:s:h:t:f:")) != -1) {
 		switch(ch) {
 		case 'D':
 			Dflag++;
 			break;
 		case 'H':
 			Hflag++;
+			break;
+		case 'c':
+			cflag++;
 			break;
 		case 'd':
 			dflag++;
@@ -179,7 +184,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (pflag) {
-		if (soft || hard || grace || dflag)
+		if (soft || hard || grace || dflag || cflag)
 			usage();
 		if ((protoid = getentry(protoname, quotatype)) == -1)
 			exit(1);
@@ -200,6 +205,9 @@ main(argc, argv)
 		u_int64_t softb, hardb, softi, hardi;
 		time_t  graceb, gracei;
 		char *str;
+
+		if (cflag)
+			usage();
 		if (soft) {
 			str = strsep(&soft, "/");
 			if (str[0] == '\0' || soft == NULL || soft[0] == '\0')
@@ -283,6 +291,12 @@ main(argc, argv)
 		}
 		exit(0);
 	}
+	if (cflag) {
+		if (dflag)
+			usage();
+		clearpriv(argc, argv, fs, quotatype);
+		exit(0);
+	}
 	tmpfd = mkstemp(tmpfil);
 	fchown(tmpfd, getuid(), getgid());
 	if (dflag) {
@@ -316,6 +330,8 @@ usage()
 	    "  edquota [-D] [-H] -g [-p groupname] [-f filesystem] -d | groupname ...\n"
 	    "  edquota [-D] [-u] [-f filesystem] [-s b#/i#] [-h b#/i#] [-t t#/t#] \\\n\t-d | username ...\n"
 	    "  edquota [-D] -g [-f filesystem] [-s b#/i#] [-h b#/i#] [-t t#/t#] \\\n\t-d | groupname ...\n"
+	    "  edquota [-D] [-H] [-u] -c [-f filesystem] username ...\n"
+	    "  edquota [-D] [-H] -g -c [-f filesystem] groupname ...\n"
 	    );
 	exit(1);
 }
@@ -1059,4 +1075,98 @@ hasquota(fs, type, qfnamep)
 	(void) sprintf(*qfnamep, "%s/%s.%s", fs->fs_file, qfname,
 	    qfextension[type]);
 	return (1);
+}
+
+static void
+clearpriv(int argc, char **argv, const char *filesys, int quotatype)
+{
+	prop_array_t cmds, datas;
+	prop_dictionary_t protodict, dict, data, cmd;
+	struct plistref pref;
+	bool ret;
+	struct statvfs *fst;
+	int nfst, i, error;
+	int8_t error8;
+	int id;
+
+	/* build a generic command */
+	protodict = quota2_prop_create();
+	cmds = prop_array_create();
+	datas = prop_array_create();
+	if (protodict == NULL || cmds == NULL || datas == NULL) {
+		errx(1, "can't allocate proplist");
+	}
+
+	for ( ; argc > 0; argc--, argv++) {
+		if ((id = getentry(*argv, quotatype)) == -1)
+			continue;
+		data = prop_dictionary_create();
+		if (data == NULL)
+			errx(1, "can't allocate proplist");
+
+		ret = prop_dictionary_set_uint32(data, "id", id);
+		if (!ret)
+			err(1, "prop_dictionary_set(id)");
+		if (!prop_array_add_and_rel(datas, data))
+			err(1, "prop_array_add(data)");
+	}
+	if (!quota2_prop_add_command(cmds, "clear", qfextension[quotatype],
+	    datas))
+		err(1, "prop_add_command");
+
+	if (!prop_dictionary_set(protodict, "commands", cmds))
+		err(1, "prop_dictionary_set(command)");
+
+	/* now loop over quota-enabled filesystems */
+	nfst = getmntinfo(&fst, MNT_WAIT);
+	if (nfst == 0)
+		errx(2, "no filesystems mounted!");
+
+	for (i = 0; i < nfst; i++) {
+		if (strcmp(fst[i].f_fstypename, "ffs") != 0 ||
+		    (fst[i].f_flag & ST_QUOTA) == 0)
+			continue;
+		if (filesys && strcmp(fst[i].f_mntonname, filesys) != 0 &&
+		    strcmp(fst[i].f_mntfromname, filesys) != 0)
+			continue;
+		if (Dflag) {
+			fprintf(stderr, "message to kernel for %s:\n%s\n",
+			    fst[i].f_mntonname,
+			    prop_dictionary_externalize(protodict));
+		}
+
+		if (!prop_dictionary_send_syscall(protodict, &pref))
+			err(1, "prop_dictionary_send_syscall");
+		if (quotactl(fst[i].f_mntonname, &pref) != 0)
+			err(1, "quotactl");
+
+		if ((error = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
+			errx(1, "prop_dictionary_recv_syscall: %s\n",
+			    strerror(error));
+		}
+
+		if (Dflag) {
+			fprintf(stderr, "reply from kernel for %s:\n%s\n",
+			    fst[i].f_mntonname,
+			    prop_dictionary_externalize(dict));
+		}
+		if ((error = quota2_get_cmds(dict, &cmds)) != 0) {
+			errx(1, "quota2_get_cmds: %s\n",
+			    strerror(error));
+		}
+		/* only one command, no need to iter */
+		cmd = prop_array_get(cmds, 0);
+		if (cmd == NULL)
+			err(1, "prop_array_get(cmd)");
+
+		if (!prop_dictionary_get_int8(cmd, "return", &error8))
+			err(1, "prop_get(return)");
+		if (error8) {
+			fprintf(stderr, "clear %s quota entries on %s: %s\n",
+			    qfextension[quotatype], fst[i].f_mntonname,
+			    strerror(error8));
+		}
+		prop_object_release(dict);
+	}
+	prop_object_release(protodict);
 }
