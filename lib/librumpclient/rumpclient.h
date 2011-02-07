@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.4 2011/02/06 15:43:20 pooka Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.5 2011/02/07 14:49:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,8 @@
 
 #ifndef _RUMP_RUMPCLIENT_H_
 #define _RUMP_RUMPCLIENT_H_
+
+#include <sys/types.h>
 
 __BEGIN_DECLS
 
