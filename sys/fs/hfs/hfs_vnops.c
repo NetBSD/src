@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.19 2011/02/07 02:06:20 christos Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.20 2011/02/07 03:03:16 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.19 2011/02/07 02:06:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.20 2011/02/07 03:03:16 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -993,8 +993,10 @@ error:
 			free(childnames, M_TEMP);
 	}
 
-	if (error)
+	if (error) {
 		DPRINTF(("ERROR = %i\n", error));
+	}
+
 	return error;
 }
 
