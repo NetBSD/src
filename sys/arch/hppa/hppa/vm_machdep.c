@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.46 2011/01/23 09:44:59 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.47 2011/02/07 12:19:35 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2011/01/23 09:44:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.47 2011/02/07 12:19:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 	*(register_t *)(sp) = 0;	/* previous frame pointer */
 	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)setfunc_trampoline;
+	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
 
 	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;
