@@ -1,4 +1,4 @@
-# $NetBSD: quotas_common.sh,v 1.1.2.5 2011/02/02 19:17:08 bouyer Exp $ 
+# $NetBSD: quotas_common.sh,v 1.1.2.6 2011/02/07 16:22:50 bouyer Exp $ 
 
 create_with_quotas()
 {
@@ -17,9 +17,10 @@ create_with_quotas()
 
 create_with_quotas_server()
 {	
+	local sarg=$1; shift
 	create_with_quotas $*
-	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_server -b \
-		${IMG} ${RUMP_SERVER}
+	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_server \
+		${sarg} ${IMG} ${RUMP_SERVER}
 }
 
 rump_shutdown()

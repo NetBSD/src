@@ -1,4 +1,4 @@
-# $NetBSD: t_quotalimit.sh,v 1.1.2.3 2011/02/03 17:36:31 bouyer Exp $ 
+# $NetBSD: t_quotalimit.sh,v 1.1.2.4 2011/02/07 16:22:50 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -29,17 +29,25 @@ for e in le; do
   for v in 1; do
     for q in "user" "group"; do
       test_case_root limit_${e}_${v}_${q} limit_quota \
-	 "hit hard limit quota with ${q} enabled" ${e} ${v} ${q}
+	 "hit hard limit quota with ${q} enabled" -b ${e} ${v} ${q}
+      test_case_root limit_${e}_${v}_${q}_log limit_quota \
+	 "hit hard limit quota with ${q} enabled, WAPBL" -bl ${e} ${v} ${q}
       test_case_root slimit_${e}_${v}_${q} limit_softquota \
-	 "hit soft limit quota with ${q} enabled after grace time" ${e} ${v} ${q}
+	 "hit soft limit quota with ${q} enabled after grace time" \
+	 -b ${e} ${v} ${q}
       test_case_root inolimit_${e}_${v}_${q} limit_iquota \
-	 "hit hard limit ino quota with ${q} enabled" ${e} ${v} ${q}
+	 "hit hard limit ino quota with ${q} enabled" -b ${e} ${v} ${q}
+      test_case_root inolimit_${e}_${v}_${q}_log limit_iquota \
+	 "hit hard limit ino quota with ${q} enabled, WAPBL" -bl ${e} ${v} ${q}
       test_case_root sinolimit_${e}_${v}_${q} limit_softiquota \
-	 "hit soft limit ino quota with ${q} enabled after grace time" ${e} ${v} ${q}
+	 "hit soft limit ino quota with ${q} enabled after grace time" \
+	 -b ${e} ${v} ${q}
       test_case_root herit_defq_${e}_${v}_${q} inherit_defaultquota \
-	 "new id herit from default for ${q} quota" ${e} ${v} ${q}
-      test_case_root herit_idefq_${e}_${v}_${q} inherit_defaultiquota \
-	 "new id herit from default for ${q} ino quota" ${e} ${v} ${q}
+	 "new id herit from default for ${q} quota" -b ${e} ${v} ${q}
+      test_case_root herit_defq_${e}_${v}_${q}_log inherit_defaultquota \
+	 "new id herit from default for ${q} quota, WAPBL" -bl ${e} ${v} ${q}
+      test_case_root herit_idefq_${e}_${v}_${q}_log inherit_defaultiquota \
+	 "new id herit from default for ${q} ino quota, WAPBL" -bl ${e} ${v} ${q}
     done
   done
 done
@@ -47,7 +55,7 @@ done
 limit_quota()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local id=1
 
@@ -94,7 +102,7 @@ limit_quota()
 limit_softquota()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local id=1
 
@@ -141,7 +149,7 @@ limit_softquota()
 limit_iquota()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local id=1
 
@@ -188,7 +196,7 @@ limit_iquota()
 limit_softiquota()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local id=1
 
@@ -235,7 +243,7 @@ limit_softiquota()
 inherit_defaultquota()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local id=1
 
@@ -287,7 +295,7 @@ inherit_defaultquota()
 inherit_defaultiquota()
 {
 	create_with_quotas_server $*
-	local q=$3
+	local q=$4
 	local expect
 	local id=1
 
