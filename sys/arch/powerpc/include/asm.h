@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.35 2011/01/23 15:51:07 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.36 2011/02/07 06:37:01 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,7 @@
 #ifdef PIC
 #define PIC_PROLOGUE	XXX
 #define PIC_EPILOGUE	XXX
-#define PIC_PLT(x)	x@plt
+#define PIC_PLT(x)	x+32768@plt
 #ifdef __STDC__
 #define	PIC_TOCNAME(name) 	.LCTOC_##name
 #else
