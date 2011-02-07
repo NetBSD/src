@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.8 2011/02/07 16:24:13 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.9 2011/02/07 20:30:39 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.8 2011/02/07 16:24:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.9 2011/02/07 20:30:39 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -229,6 +229,7 @@ quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq,
 	u_long hash_mask;
 	const int needswap = UFS_MPNEEDSWAP(ump);
 
+	KASSERT(mutex_owned(&dq->dq_interlock));
 	KASSERT(mutex_owned(&dqlock));
 	error = getq2h(ump, type, &hbp, &q2h, B_MODIFY);
 	if (error)
@@ -530,6 +531,7 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 	if (error)
 		goto out_wapbl;
 
+	mutex_enter(&dq->dq_interlock);
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		/* need to alloc a new on-disk quot */
 		mutex_enter(&dqlock);
@@ -539,26 +541,142 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 		error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
 		    &bp, &q2ep, B_MODIFY);
 	}
-	if (error) {
-		dqrele(NULLVP, dq);
-		goto out_wapbl;
-	}
-	mutex_enter(&dq->dq_interlock);
+	if (error)
+		goto out_il;
+	
 	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
 	error = quota2_dict_update_q2e_limits(data, &q2e);
 	if (error) {
-		mutex_exit(&dq->dq_interlock);
-		dqrele(NULLVP, dq);
 		brelse(bp, 0);
-		goto out_wapbl;
+		goto out_il;
 	}
 	quota2_ufs_rwq2e(&q2e, q2ep, needswap);
-	mutex_exit(&dq->dq_interlock);
-	dqrele(NULLVP, dq);
 	VOP_BWRITE(bp);
 
+out_il:
+	mutex_exit(&dq->dq_interlock);
+	dqrele(NULLVP, dq);
 out_wapbl:
 	UFS_WAPBL_END(ump->um_mountp);
+	return error;
+}
+
+struct dq2clear_callback {
+	uid_t id;
+	struct dquot *dq;
+	struct quota2_header *q2h;
+};
+
+static int
+dq2clear_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
+    uint64_t off, void *v)
+{
+	struct dq2clear_callback *c = v;
+	const int needswap = UFS_MPNEEDSWAP(ump);
+	uint64_t myoff;
+
+	if (ufs_rw32(q2e->q2e_uid, needswap) == c->id) {
+		KASSERT(mutex_owned(&c->dq->dq_interlock));
+		c->dq->dq2_lblkno = 0;
+		c->dq->dq2_blkoff = 0;
+		myoff = *offp;
+		/* remove from hash list */
+		*offp = q2e->q2e_next;
+		/* add to free list */
+		q2e->q2e_next = c->q2h->q2h_free;
+		c->q2h->q2h_free = myoff;
+		return Q2WL_ABORT;
+	}
+	return 0;
+}
+int
+quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
+    int defaultq, prop_dictionary_t data)
+{
+	int error, i;
+	struct dquot *dq;
+	struct quota2_header *q2h;
+	struct quota2_entry q2e, *q2ep;
+	struct buf *hbp, *bp;
+	u_long hash_mask;
+	struct dq2clear_callback c;
+
+	if (ump->um_quotas[type] == NULLVP)
+		return ENODEV;
+	if (defaultq)
+		return EOPNOTSUPP;
+
+	/* get the default entry before locking the entry's buffer */
+	mutex_enter(&dqlock);
+	error = getq2h(ump, type, &hbp, &q2h, 0);
+	if (error) {
+		mutex_exit(&dqlock);
+		return error;
+	}
+	/* we'll copy to another disk entry, so no need to swap */
+	memcpy(&q2e, &q2h->q2h_defentry, sizeof(q2e));
+	mutex_exit(&dqlock);
+	brelse(hbp, 0);
+
+	error = dqget(NULLVP, id, ump, type, &dq);
+	if (error)
+		return error;
+
+	mutex_enter(&dq->dq_interlock);
+	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
+		/* already clear, nothing to do */
+		error = ENOENT;
+		goto out_il;
+	}
+	error = UFS_WAPBL_BEGIN(ump->um_mountp);
+	if (error)
+		goto out_dq;
+	
+	error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
+	    &bp, &q2ep, B_MODIFY);
+	if (error)
+		goto out_wapbl;
+
+	if (q2ep->q2e_val[QL_BLOCK].q2v_cur != 0 ||
+	    q2ep->q2e_val[QL_FILE].q2v_cur != 0) {
+		/* can't free this entry; revert to default */
+		for (i = 0; i < N_QL; i++) {
+			q2ep->q2e_val[i].q2v_softlimit =
+			    q2e.q2e_val[i].q2v_softlimit;
+			q2ep->q2e_val[i].q2v_hardlimit =
+			    q2e.q2e_val[i].q2v_hardlimit;
+			q2ep->q2e_val[i].q2v_grace =
+			    q2e.q2e_val[i].q2v_grace;
+			q2ep->q2e_val[i].q2v_time = 0;
+		}
+		VOP_BWRITE(bp);
+		goto out_wapbl;
+	}
+	/* we can free it. release bp so we can walk the list */
+	brelse(bp, 0);
+	mutex_enter(&dqlock);
+	error = getq2h(ump, type, &hbp, &q2h, 0);
+	if (error)
+		goto out_dqlock;
+
+	hash_mask = ((1 << q2h->q2h_hash_shift) - 1);
+	c.dq = dq;
+	c.id = id;
+	c.q2h = q2h;
+	error = quota2_walk_list(ump, hbp, type,
+	    &q2h->q2h_entries[id & hash_mask], B_MODIFY, &c,
+	    dq2clear_callback);
+
+	VOP_BWRITE(hbp);
+
+out_dqlock:
+	mutex_exit(&dqlock);
+out_wapbl:
+	UFS_WAPBL_END(ump->um_mountp);
+out_il:
+	mutex_exit(&dq->dq_interlock);
+out_dq:
+	dqrele(NULLVP, dq);
 	return error;
 }
 
@@ -577,21 +695,23 @@ quota2_array_add_q2e(struct ufsmount *ump, int type,
 	if (error)
 		return error;
 
+	mutex_enter(&dq->dq_interlock);
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
+		mutex_exit(&dq->dq_interlock);
 		dqrele(NULLVP, dq);
 		return ENOENT;
 	}
 	error = getq2e(ump, type, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, 0);
 	if (error) {
+		mutex_exit(&dq->dq_interlock);
 		dqrele(NULLVP, dq);
 		return error;
 	}
-	mutex_enter(&dq->dq_interlock);
 	quota2_ufs_rwq2e(q2ep, &q2e, needswap);
+	brelse(bp, 0);
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
-	brelse(bp, 0);
 	dict = q2etoprop(&q2e, 0);
 	if (dict == NULL)
 		return ENOMEM;
@@ -745,6 +865,7 @@ dq2get_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
 	const int needswap = UFS_MPNEEDSWAP(ump);
 
 	if (ufs_rw32(q2e->q2e_uid, needswap) == c->id) {
+		KASSERT(mutex_owned(&c->dq->dq_interlock));
 		lblkno = (off >> ump->um_mountp->mnt_fs_bshift);
 		blkoff = (off & ump->umq2_bmask);
 		c->dq->dq2_lblkno = lblkno;

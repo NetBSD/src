@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.h,v 1.1.2.4 2011/01/31 15:24:10 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.h,v 1.1.2.5 2011/02/07 20:30:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -129,6 +129,7 @@ int chkdq2(struct inode *, int64_t, kauth_cred_t, int);
 int chkiq2(struct inode *, int32_t, kauth_cred_t, int);
 int quota2_handle_cmd_get(struct ufsmount *, int, int, int, prop_array_t);
 int quota2_handle_cmd_set(struct ufsmount *, int, int, int, prop_dictionary_t);
+int quota2_handle_cmd_clear(struct ufsmount *, int, int, int, prop_dictionary_t);
 int quota2_handle_cmd_getall(struct ufsmount *, int, prop_array_t);
 int q2sync(struct mount *);
 int dq2get(struct vnode *, u_long, struct ufsmount *, int, struct dquot *);

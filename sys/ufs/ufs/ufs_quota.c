@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.7 2011/01/31 21:09:53 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.8 2011/02/07 20:30:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.7 2011/01/31 21:09:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.8 2011/02/07 20:30:39 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -67,6 +67,8 @@ static int quota_handle_cmd_get(struct mount *, struct lwp *,
 static int quota_handle_cmd_set(struct mount *, struct lwp *,
     prop_dictionary_t, int, prop_array_t);
 static int quota_handle_cmd_getall(struct mount *, struct lwp *,
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_clear(struct mount *, struct lwp *,
     prop_dictionary_t, int, prop_array_t);
 /*
  * Initialize the quota fields of an inode.
@@ -167,6 +169,10 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
 	}
 	if (strcmp(cmd, "getall") == 0) {
 		error = quota_handle_cmd_getall(mp, l, cmddict, q2type, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "clear") == 0) {
+		error = quota_handle_cmd_clear(mp, l, cmddict, q2type, datas);
 		goto end;
 	}
 	error = EOPNOTSUPP;
@@ -352,6 +358,69 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
 			error = quota2_handle_cmd_set(ump, type, id, defaultq,
+			    data);
+		} else
+#endif
+			panic("quota_handle_cmd_get: no support ?");
+		
+		if (error && error != ENOENT) {
+			prop_object_release(replies);
+			return error;
+		}
+	}
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+	} else {
+		error = 0;
+	}
+	return error;
+}
+
+static int 
+quota_handle_cmd_clear(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	prop_array_t replies;
+	prop_object_iterator_t iter;
+	prop_dictionary_t data;
+	uint32_t id;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error, defaultq = 0;
+	const char *idstr;
+
+	if ((ump->um_flags & UFS_QUOTA2) == 0)
+		return EOPNOTSUPP;
+	
+	replies = prop_array_create();
+	if (replies == NULL)
+		return ENOMEM;
+
+	iter = prop_array_iterator(datas);
+	if (iter == NULL) {
+		prop_object_release(replies);
+		return ENOMEM;
+	}
+	while ((data = prop_object_iterator_next(iter)) != NULL) {
+		if (!prop_dictionary_get_uint32(data, "id", &id)) {
+			if (!prop_dictionary_get_cstring_nocopy(data, "id",
+			    &idstr))
+				continue;
+			if (strcmp(idstr, "default"))
+				continue;
+			id = 0;
+			defaultq = 1;
+		} else {
+			defaultq = 0;
+		}
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
+		if (error != 0) {
+			prop_object_release(replies);
+			return error;
+		}
+#ifdef QUOTA2
+		if (ump->um_flags & UFS_QUOTA2) {
+			error = quota2_handle_cmd_clear(ump, type, id, defaultq,
 			    data);
 		} else
 #endif
