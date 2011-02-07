@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.9 2011/02/07 15:58:35 nisimura Exp $
+$NetBSD: README.NAS,v 1.10 2011/02/07 19:20:35 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -23,7 +23,7 @@ sk.15	satalink.12/13	Synology CS-406/RS-406/CS-406e/CS-407e
 wm.15	satalink.13 	QNAP TS-100/101
 
 			>> Board type BRD_STORCENTER <<
-re.15	viaide.13	IOMEGA StorCenter
+re.15	viaide.13	IOMEGA StorCenter 250/500/1T
 
 			>> Not yet recognized, research in progress <<
 re.15	satalink.13 	QNAP TS-201
