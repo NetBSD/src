@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.14 2011/02/05 06:06:11 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.15 2011/02/08 06:01:47 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -816,17 +816,17 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	char running, hatched, paused, resumed, halted;
 
-	db_printf("CPU STATE CPUINFO            CPL INT MTX IPIS\n");
+	db_printf("CPU CPUID STATE CPUINFO            CPL INT MTX IPIS\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		hatched = (CPUSET_HAS(cpus_hatched, cpu_index(ci)) ? 'H' : '-');
 		running = (CPUSET_HAS(cpus_running, cpu_index(ci)) ? 'R' : '-');
 		paused  = (CPUSET_HAS(cpus_paused,  cpu_index(ci)) ? 'P' : '-');
 		resumed = (CPUSET_HAS(cpus_resumed, cpu_index(ci)) ? 'r' : '-');
 		halted  = (CPUSET_HAS(cpus_halted,  cpu_index(ci)) ? 'h' : '-');
-		db_printf("%3d %c%c%c%c%c %p "
+		db_printf("%3d 0x%03lx %c%c%c%c%c %p "
 			"%3d %3d %3d "
 			"0x%02" PRIx64 "/0x%02" PRIx64 "\n",
-			cpu_index(ci),
+			cpu_index(ci), ci->ci_cpuid,
 			running, hatched, paused, resumed, halted,
 			ci, ci->ci_cpl, ci->ci_idepth, ci->ci_mtx_count,
 			ci->ci_active_ipis, ci->ci_request_ipis);
