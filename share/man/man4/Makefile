@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.544 2011/01/17 16:08:20 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.544.2.1 2011/02/08 16:19:07 bouyer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -42,13 +42,13 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	nadb.4 ne.4 neo.4 netintro.4 nfe.4 nfsmb.4 njata.4 njs.4 \
 	nsclpcsio.4 nside.4 nsp.4 nsphy.4 nsphyter.4 ntwoc.4 null.4 nsmb.4 \
 	oak.4 oosiop.4 opl.4 options.4 optiide.4 osiop.4 otus.4 \
-	pad.4 pas.4 pcdisplay.4 pciide.4 pckbc.4 pckbd.4 pcn.4 pcppi.4 \
-	pcscp.4 pcweasel.4 pdcide.4 pdcsata.4 piixide.4 piixpcib.4 piixpm.4 \
-	pim.4 plip.4 pms.4 pmu.4 pnaphy.4 ppbus.4 ppp.4 pppoe.4 pseye.4 \
-	ptm.4 pty.4 puc.4 pud.4 puffs.4 px.4 pxg.4 \
+	pad.4 pas.4 pcdisplay.4 pcf8563rtc.4 pciide.4 pckbc.4 pckbd.4 pcn.4 \
+	pcppi.4 pcscp.4 pcweasel.4 pdcide.4 pdcsata.4 piixide.4 piixpcib.4 \
+	piixpm.4 pim.4 plip.4 pms.4 pmu.4 pnaphy.4 ppbus.4 ppp.4 pppoe.4 \
+	pseye.4 ptm.4 pty.4 puc.4 pud.4 puffs.4 px.4 pxg.4 \
 	qe.4 qec.4 qsphy.4 \
-	raid.4 ral.4 ray.4 rcons.4 re.4 rgephy.4 rlphy.4 rnd.4 route.4 \
-	rs5c372rtc.4 rtk.4 rtw.4 rum.4 \
+	raid.4 ral.4 ray.4 rcons.4 rdcphy.4 re.4 rgephy.4 rlphy.4 rnd.4 \
+	route.4 rs5c372rtc.4 rtk.4 rtw.4 rum.4 \
 	satalink.4 sbus.4 scc.4 schide.4 scsi.4 sd.4 se.4 seeprom.4 sem.4 \
 	ses.4 sf.4 sfb.4 sgsmix.4 shb.4 shmif.4 \
 	shpcic.4 siisata.4 siop.4 sip.4 siside.4 sk.4 sl.4 slide.4 \
@@ -60,7 +60,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	tp.4 tr.4 tra.4 trm.4 tty.4 tun.4 tqphy.4 twa.4 twe.4 txp.4 \
 	uark.4 ubsec.4 udp.4 uep.4 ug.4 uha.4 uk.4 ukphy.4 unix.4 userconf.4 \
 	vald.4 veriexec.4 vga.4 vge.4 viaide.4 video.4 virt.4 vlan.4 vmmon.4 \
-	vmnet.4 vnd.4 vr.4 \
+	vmnet.4 vnd.4 vr.4 vte.4 \
 	wapbl.4 wb.4 wbsio.4 wd.4 wdc.4 wi.4 wm.4 wpi.4 \
 	wscons.4 wsdisplay.4 wsfont.4 wskbd.4 wsmouse.4 wsmux.4 \
 	xbox.4 xge.4 \
@@ -217,11 +217,12 @@ MLINKS+=zstty.4 zs.4 zstty.4 zsc.4
 MLINKS+=edc.4 i386/ed.4
 
 SUBDIR= man4.acorn26 man4.acorn32 man4.alpha man4.amiga man4.arc man4.atari \
-	man4.cobalt man4.dreamcast man4.evbarm man4.evbmips man4.evbppc \
+	man4.cobalt man4.dreamcast man4.emips man4.evbarm man4.evbmips \
+	man4.evbppc \
 	man4.hp300 man4.hp700 man4.hpcarm man4.hpcmips man4.hpcsh man4.i386 \
 	man4.mac68k man4.macppc man4.mvme68k man4.pmax man4.prep \
-	man4.sgimips man4.sparc man4.sparc64 man4.sun2 man4.sun3 man4.vax \
-	man4.x68k man4.x86
+	man4.sandpoint man4.sgimips man4.sparc man4.sparc64 man4.sun2 \
+	man4.sun3 man4.vax man4.x68k man4.x86
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>

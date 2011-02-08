@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.24 2010/12/23 21:11:37 cegger Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.24.4.1 2011/02/08 16:19:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.24 2010/12/23 21:11:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.24.4.1 2011/02/08 16:19:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.24 2010/12/23 21:11:37 cegger Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -849,6 +850,10 @@ chipsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case PCI_IOC_CFGWRITE:
 		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
 		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(&sc->sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_SMODE: {
 		int new_mode = *(int*)data;

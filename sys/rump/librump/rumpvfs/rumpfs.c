@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.89 2011/01/14 11:07:42 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.89.4.1 2011/02/08 16:20:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.89 2011/01/14 11:07:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.89.4.1 2011/02/08 16:20:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -679,7 +679,8 @@ rump_vop_lookup(void *v)
 		return EOPNOTSUPP;
 
 	/* check for etfs */
-	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
+	if (dvp == rootvnode &&
+	    (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE)) {
 		bool found;
 		mutex_enter(&etfs_lock);
 		found = etfs_find(cnp->cn_nameptr, &et, false);
@@ -855,8 +856,24 @@ rump_vop_setattr(void *v)
 	SETIFVAL(va_flags, u_long);
 #undef  SETIFVAL
 
-	if (vp->v_type == VREG && vap->va_size != VSIZENOTSET)
-		uvm_vnp_setsize(vp, vap->va_size);
+	if (vp->v_type == VREG &&
+	    vap->va_size != VSIZENOTSET &&
+	    vap->va_size != rn->rn_dlen) {
+		void *newdata;
+		size_t copylen, newlen;
+
+		newlen = vap->va_size;
+		newdata = rump_hypermalloc(newlen, 0, true, "rumpfs");
+
+		copylen = MIN(rn->rn_dlen, newlen);
+		memset(newdata, 0, newlen);
+		memcpy(newdata, rn->rn_data, copylen);
+		rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+
+		rn->rn_data = newdata;
+		rn->rn_dlen = newlen;
+		uvm_vnp_setsize(vp, newlen);
+	}
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.4 2008/04/25 22:18:34 christos Exp $	*/
+/*	$NetBSD: op.h,v 1.4.18.1 2011/02/08 16:20:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -56,68 +56,6 @@ typedef	struct {
 	const char *m_name;	/* name of op. */
 } mod_t;
 
-typedef	enum {
-	NOOP	= 0,
-	ARROW,
-	POINT,
-	NOT,
-	COMPL,
-	INC,
-	DEC,
-	INCBEF,
-	DECBEF,
-	INCAFT,
-	DECAFT,
-	UPLUS,
-	UMINUS,
-	STAR,
-	AMPER,
-	MULT,
-	DIV,
-	MOD,
-	PLUS,
-	MINUS,
-	SHL,
-	SHR,
-	LT,
-	LE,
-	GT,
-	GE,
-	EQ,
-	NE,
-	AND,
-	XOR,
-	OR,
-	LOGAND,
-	LOGOR,
-	QUEST,
-	COLON,
-	ASSIGN,
-	MULASS,
-	DIVASS,
-	MODASS,
-	ADDASS,
-	SUBASS,
-	SHLASS,
-	SHRASS,
-	ANDASS,
-	XORASS,
-	ORASS,
-	NAME,
-	CON,
-	STRING,
-	FSEL,
-	CALL,
-	COMMA,
-	CVT,
-	ICALL,
-	LOAD,
-	PUSH,
-	RETURN,
-	REAL,
-	IMAG,
-	INIT,		/* pseudo op, not used in trees */
-	CASE,		/* pseudo op, not used in trees */
-	FARG		/* pseudo op, not used in trees */
-#define NOPS	((int)FARG + 1)
-} op_t;
+extern mod_t   modtab[];
+
+#include "ops.h"

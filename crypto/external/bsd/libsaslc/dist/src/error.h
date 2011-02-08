@@ -1,4 +1,4 @@
-/* $Id: error.h,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: error.h,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,19 +39,19 @@
 #define _ERROR_H_
 
 /** error definitions */
-enum {
+typedef enum {
 	ERROR_GENERAL,		/**< general error */
 	ERROR_NOMEM,		/**< no memory available */
 	ERROR_BADARG,		/**< bad argument passed to function */
 	ERROR_NOTEXISTS,	/**< key/node does not exist */
 	ERROR_MECH,		/**< mechanism error */
 	ERROR_PARSE		/**< parse error */
-};
+} saslc__error_code_t;
 
 /** error type */
 typedef struct saslc__error_t {
-	int err_no;		/**< error number */
-	const char *err_str;	/**< string error */
+	saslc__error_code_t err_no;     /**< error number */
+	const char *err_str;	        /**< string error */
 } saslc__error_t;
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.915.2.1 2011/01/31 21:14:05 bouyer Exp $
+# $NetBSD: mi,v 1.915.2.2 2011/02/08 16:18:35 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -24,6 +24,7 @@
 ./bin/chgrp					base-util-root
 ./bin/date					base-util-root
 ./bin/dd					base-util-root
+./bin/rump.dd					base-util-root
 ./bin/df					base-util-root
 ./bin/domainname				base-nis-root
 ./bin/echo					base-util-root
@@ -217,6 +218,7 @@
 ./sbin/dkctl					base-sysutil-root
 ./sbin/dkscan_bsdlabel				base-sysutil-root
 ./sbin/dmesg					base-sysutil-root
+./sbin/dmctl					base-sysutil-root
 ./sbin/dmsetup					base-lvm-root		lvm
 ./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
@@ -600,6 +602,7 @@
 ./usr/bin/rs					base-util-bin
 ./usr/bin/rsh					base-netutil-bin
 ./usr/bin/rump_allserver			base-util-bin
+./usr/bin/rump.dhcpclient			base-util-bin
 ./usr/bin/rump_server			base-util-bin
 ./usr/bin/rump.halt			base-util-bin
 ./usr/bin/rup					base-netutil-bin
@@ -628,6 +631,7 @@
 ./usr/bin/skeyinit				base-util-bin		skey
 ./usr/bin/slogin				base-secsh-bin		crypto
 ./usr/bin/sockstat				base-util-bin
+./usr/bin/rump.sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin
 ./usr/bin/split					base-util-bin
@@ -3309,6 +3313,7 @@
 ./usr/share/man/cat4/atari			base-man-share
 ./usr/share/man/cat4/cobalt			base-man-share
 ./usr/share/man/cat4/dreamcast			base-man-share
+./usr/share/man/cat4/emips			base-man-share
 ./usr/share/man/cat4/evbarm			base-man-share
 ./usr/share/man/cat4/evbmips			base-man-share
 ./usr/share/man/cat4/evbppc			base-man-share
@@ -3325,6 +3330,7 @@
 ./usr/share/man/cat4/pmax			base-man-share
 ./usr/share/man/cat4/pmppc			base-obsolete		obsolete
 ./usr/share/man/cat4/prep			base-man-share
+./usr/share/man/cat4/sandpoint			base-man-share
 ./usr/share/man/cat4/sgimips			base-man-share
 ./usr/share/man/cat4/sparc			base-man-share
 ./usr/share/man/cat4/sparc64			base-man-share
@@ -3353,6 +3359,7 @@
 ./usr/share/man/cat8/cesfic			base-man-share
 ./usr/share/man/cat8/cobalt			base-man-share
 ./usr/share/man/cat8/dreamcast			base-man-share
+./usr/share/man/cat8/emips			base-man-share
 ./usr/share/man/cat8/evbarm			base-man-share
 ./usr/share/man/cat8/evbmips			base-man-share
 ./usr/share/man/cat8/evbppc			base-man-share
@@ -3402,6 +3409,7 @@
 ./usr/share/man/cat9/arm26			base-obsolete		obsolete
 ./usr/share/man/cat9/arm32			base-obsolete		obsolete
 ./usr/share/man/cat9/atari			base-man-share
+./usr/share/man/cat9/emips			base-man-share
 ./usr/share/man/cat9/hp300			base-man-share
 ./usr/share/man/cat9/i386			base-man-share
 ./usr/share/man/cat9/mac68k			base-man-share
@@ -3430,6 +3438,7 @@
 ./usr/share/man/html4/atari			base-man-share
 ./usr/share/man/html4/cobalt			base-man-share
 ./usr/share/man/html4/dreamcast			base-man-share
+./usr/share/man/html4/emips			base-man-share
 ./usr/share/man/html4/evbarm			base-man-share
 ./usr/share/man/html4/evbmips			base-man-share
 ./usr/share/man/html4/evbppc			base-man-share
@@ -3446,6 +3455,7 @@
 ./usr/share/man/html4/pmax			base-man-share
 ./usr/share/man/html4/pmppc			base-obsolete		obsolete
 ./usr/share/man/html4/prep			base-man-share
+./usr/share/man/html4/sandpoint			base-man-share
 ./usr/share/man/html4/sgimips			base-man-share
 ./usr/share/man/html4/sparc			base-man-share
 ./usr/share/man/html4/sparc64			base-man-share
@@ -3473,6 +3483,7 @@
 ./usr/share/man/html8/cesfic			base-man-share
 ./usr/share/man/html8/cobalt			base-man-share
 ./usr/share/man/html8/dreamcast			base-man-share
+./usr/share/man/html8/emips			base-man-share
 ./usr/share/man/html8/evbarm			base-man-share
 ./usr/share/man/html8/evbmips			base-man-share
 ./usr/share/man/html8/evbppc			base-man-share
@@ -3522,6 +3533,7 @@
 ./usr/share/man/html9/arm26			base-obsolete		obsolete
 ./usr/share/man/html9/arm32			base-obsolete		obsolete
 ./usr/share/man/html9/atari			base-man-share
+./usr/share/man/html9/emips			base-man-share
 ./usr/share/man/html9/hp300			base-man-share
 ./usr/share/man/html9/i386			base-man-share
 ./usr/share/man/html9/mac68k			base-man-share
@@ -3552,6 +3564,7 @@
 ./usr/share/man/man4/atari			base-man-share
 ./usr/share/man/man4/cobalt			base-man-share
 ./usr/share/man/man4/dreamcast			base-man-share
+./usr/share/man/man4/emips			base-man-share
 ./usr/share/man/man4/evbarm			base-man-share
 ./usr/share/man/man4/evbmips			base-man-share
 ./usr/share/man/man4/evbppc			base-man-share
@@ -3568,6 +3581,7 @@
 ./usr/share/man/man4/pmax			base-man-share
 ./usr/share/man/man4/pmppc			base-obsolete		obsolete
 ./usr/share/man/man4/prep			base-man-share
+./usr/share/man/man4/sandpoint			base-man-share
 ./usr/share/man/man4/sgimips			base-man-share
 ./usr/share/man/man4/sparc			base-man-share
 ./usr/share/man/man4/sparc64			base-man-share
@@ -3596,6 +3610,7 @@
 ./usr/share/man/man8/cesfic			base-man-share
 ./usr/share/man/man8/cobalt			base-man-share
 ./usr/share/man/man8/dreamcast			base-man-share
+./usr/share/man/man8/emips			base-man-share
 ./usr/share/man/man8/evbarm			base-man-share
 ./usr/share/man/man8/evbmips			base-man-share
 ./usr/share/man/man8/evbppc			base-man-share
@@ -3645,6 +3660,7 @@
 ./usr/share/man/man9/arm26			base-obsolete		obsolete
 ./usr/share/man/man9/arm32			base-obsolete		obsolete
 ./usr/share/man/man9/atari			base-man-share
+./usr/share/man/man9/emips			base-man-share
 ./usr/share/man/man9/hp300			base-man-share
 ./usr/share/man/man9/i386			base-man-share
 ./usr/share/man/man9/mac68k			base-man-share

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.2.1 2011/02/08 16:19:35 bouyer Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,6 +46,7 @@
 #include <powerpc/booke/cpuvar.h>
 
 #define	PMAP_MD_NOCACHE		0x01000000
+#define	PMAP_NEED_PROCWR
 
 #include <powerpc/booke/pte.h>
 

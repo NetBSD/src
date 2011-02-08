@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.36 2011/01/14 13:12:14 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.36.2.1 2011/02/08 16:19:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.36 2011/01/14 13:12:14 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.36.2.1 2011/02/08 16:19:04 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -85,7 +85,7 @@ static struct rumpuser_sp_ops spops;
 static char banner[MAXBANNER];
 
 #define PROTOMAJOR 0
-#define PROTOMINOR 1
+#define PROTOMINOR 2
 
 struct prefork {
 	uint32_t pf_auth[AUTHLEN];
@@ -149,12 +149,12 @@ lwproc_release(void)
 }
 
 static int
-lwproc_rfork(struct spclient *spc, int flags)
+lwproc_rfork(struct spclient *spc, int flags, const char *comm)
 {
 	int rv;
 
 	spops.spop_schedule();
-	rv = spops.spop_lwproc_rfork(spc, flags);
+	rv = spops.spop_lwproc_rfork(spc, flags, comm);
 	spops.spop_unschedule();
 
 	return rv;
@@ -584,7 +584,9 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	    sysnum, spc->spc_pid));
 
 	lwproc_newlwp(spc->spc_pid);
+	spc->spc_syscallreq = rhdr->rsp_reqno;
 	rv = rumpsyscall(sysnum, data, retval);
+	spc->spc_syscallreq = 0;
 	lwproc_release();
 
 	DPRINTF(("rump_sp: got return value %d & %d/%d\n",
@@ -602,7 +604,7 @@ struct sysbouncearg {
 };
 static pthread_mutex_t sbamtx;
 static pthread_cond_t sbacv;
-static int nworker, idleworker;
+static int nworker, idleworker, nwork;
 static TAILQ_HEAD(, sysbouncearg) syslist = TAILQ_HEAD_INITIALIZER(syslist);
 
 /*ARGSUSED*/
@@ -613,19 +615,21 @@ serv_syscallbouncer(void *arg)
 
 	for (;;) {
 		pthread_mutex_lock(&sbamtx);
-		if (idleworker >= rumpsp_idleworker) {
+		if (__predict_false(idleworker >= rumpsp_idleworker)) {
 			nworker--;
 			pthread_mutex_unlock(&sbamtx);
 			break;
 		}
 		idleworker++;
 		while (TAILQ_EMPTY(&syslist)) {
+			_DIAGASSERT(nwork == 0);
 			pthread_cond_wait(&sbacv, &sbamtx);
 		}
+		idleworker--;
 
 		sba = TAILQ_FIRST(&syslist);
 		TAILQ_REMOVE(&syslist, sba, sba_entries);
-		idleworker--;
+		nwork--;
 		pthread_mutex_unlock(&sbamtx);
 
 		serv_handlesyscall(sba->sba_spc,
@@ -777,7 +781,15 @@ handlereq(struct spclient *spc)
 		}
 
 		if (spc->spc_hdr.rsp_handshake == HANDSHAKE_GUEST) {
-			if ((error = lwproc_rfork(spc, RUMP_RFCFDG)) != 0) {
+			char *comm = (char *)spc->spc_buf;
+			size_t commlen = spc->spc_hdr.rsp_len - HDRSZ;
+
+			/* ensure it's 0-terminated */
+			/* XXX make sure it contains sensible chars? */
+			comm[commlen] = '\0';
+
+			if ((error = lwproc_rfork(spc,
+			    RUMP_RFCFDG, comm)) != 0) {
 				shutdown(spc->spc_fd, SHUT_RDWR);
 			}
 
@@ -842,7 +854,7 @@ handlereq(struct spclient *spc)
 			 * the wrong spc pointer.  (yea, optimize
 			 * interfaces some day if anyone cares)
 			 */
-			if ((error = lwproc_rfork(spc, 0)) != 0) {
+			if ((error = lwproc_rfork(spc, 0, NULL)) != 0) {
 				send_error_resp(spc, reqno, error);
 				shutdown(spc->spc_fd, SHUT_RDWR);
 				lwproc_release();
@@ -887,7 +899,7 @@ handlereq(struct spclient *spc)
 		 * so we can safely use it here.
 		 */
 		lwproc_switch(spc->spc_mainlwp);
-		if ((error = lwproc_rfork(spc, RUMP_RFFDG)) != 0) {
+		if ((error = lwproc_rfork(spc, RUMP_RFFDG, NULL)) != 0) {
 			DPRINTF(("rump_sp: fork failed: %d (%p)\n",error, spc));
 			send_error_resp(spc, reqno, error);
 			lwproc_switch(NULL);
@@ -939,7 +951,8 @@ handlereq(struct spclient *spc)
 
 	pthread_mutex_lock(&sbamtx);
 	TAILQ_INSERT_TAIL(&syslist, sba, sba_entries);
-	if (idleworker > 0) {
+	nwork++;
+	if (nwork <= idleworker) {
 		/* do we have a daemon's tool (i.e. idle threads)? */
 		pthread_cond_signal(&sbacv);
 	} else if (nworker < rumpsp_maxworker) {
@@ -949,8 +962,9 @@ handlereq(struct spclient *spc)
 		 * worker to pick up the syscall)
 		 */
 		if (pthread_create(&pt, &pattr_detached,
-		    serv_syscallbouncer, NULL) == 0)
+		    serv_syscallbouncer, NULL) == 0) {
 			nworker++;
+		}
 	}
 	pthread_mutex_unlock(&sbamtx);
 }
@@ -1143,8 +1157,17 @@ rumpuser_sp_init(const char *url, const struct rumpuser_sp_ops *spopsp,
 }
 
 void
-rumpuser_sp_fini()
+rumpuser_sp_fini(void *arg)
 {
+	struct spclient *spc = arg;
+	register_t retval[2] = {0, 0};
+
+	/*
+	 * stuff response into the socket, since this process is just
+	 * about to exit
+	 */
+	if (spc && spc->spc_syscallreq)
+		send_syscall_resp(spc, spc->spc_syscallreq, 0, retval);
 
 	if (spclist[0].spc_fd) {
 		parsetab[cleanupidx].cleanup(cleanupsa);

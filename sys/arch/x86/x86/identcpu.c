@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.21 2011/01/19 21:39:41 jmcneill Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.21.2.1 2011/02/08 16:19:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.21 2011/01/19 21:39:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.21.2.1 2011/02/08 16:19:45 bouyer Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -89,7 +89,8 @@ const int i386_nocpuid_cpus[] = {
 };
 
 static const char cpu_vendor_names[][10] = {
-	"Unknown", "Intel", "NS/Cyrix", "NexGen", "AMD", "IDT/VIA", "Transmeta"
+	"Unknown", "Intel", "NS/Cyrix", "NexGen", "AMD", "IDT/VIA", "Transmeta",
+	"Vortex86"
 };
 
 static const struct x86_cache_info *
@@ -552,6 +553,47 @@ cpu_probe_geode(struct cpu_info *ci)
 	cpu_probe_amd_cache(ci);
 }
 
+static void
+cpu_probe_vortex86(struct cpu_info *ci)
+{
+#define PCI_MODE1_ADDRESS_REG	0x0cf8
+#define PCI_MODE1_DATA_REG	0x0cfc
+#define PCI_MODE1_ENABLE	0x80000000UL
+
+	uint32_t reg;
+
+	if (cpu_vendor != CPUVENDOR_VORTEX86)
+		return;
+	/*
+	 * CPU model available from "Customer ID register" in
+	 * North Bridge Function 0 PCI space
+	 * we can't use pci_conf_read() because the PCI subsystem is not
+	 * not initialised early enough
+	 */
+
+	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE | 0x90);
+	reg = inl(PCI_MODE1_DATA_REG);
+
+	switch(reg) {
+	case 0x31504d44:
+		strcpy(cpu_brand_string, "Vortex86SX");
+		break;
+	case 0x32504d44:
+		strcpy(cpu_brand_string, "Vortex86DX");
+		break;
+	case 0x33504d44:
+		strcpy(cpu_brand_string, "Vortex86MX");
+		break;
+	default:
+		strcpy(cpu_brand_string, "Unknown Vortex86");
+		break;
+	}
+
+#undef PCI_MODE1_ENABLE
+#undef PCI_MODE1_ADDRESS_REG
+#undef PCI_MODE1_DATA_REG
+}
+
 void
 cpu_probe(struct cpu_info *ci)
 {
@@ -591,6 +633,8 @@ cpu_probe(struct cpu_info *ci)
 		cpu_vendor = CPUVENDOR_IDT;
 	else if (memcmp(ci->ci_vendor, "GenuineTMx86", 12) == 0)
 		cpu_vendor = CPUVENDOR_TRANSMETA;
+	else if (memcmp(ci->ci_vendor, "Vortex86 SoC", 12) == 0)
+		cpu_vendor = CPUVENDOR_VORTEX86;
 	else
 		cpu_vendor = CPUVENDOR_UNKNOWN;
 
@@ -655,6 +699,7 @@ cpu_probe(struct cpu_info *ci)
 	cpu_probe_winchip(ci);
 	cpu_probe_c3(ci);
 	cpu_probe_geode(ci);
+	cpu_probe_vortex86(ci);
 
 	x86_cpu_topology(ci);
 

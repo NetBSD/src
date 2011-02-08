@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.24 2010/12/20 00:25:42 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24.4.1 2011/02/08 16:19:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2010/12/20 00:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24.4.1 2011/02/08 16:19:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2010/12/20 00:25:42 matt Exp $");
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 
-static int	cpu_match(struct device *, struct cfdata *, void *);
-static void	cpu_attach(struct device *, struct device *, void *);
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
 void		cpu_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
 void *cpu_intr_establish(int, int, int (*func)(void *), void *);
 void		mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
@@ -82,17 +82,17 @@ static struct evcnt mips_int5_evcnt =
 static struct evcnt mips_spurint_evcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 static int
-cpu_match(struct device *parent, struct cfdata *match, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 static void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 	printf(": ");
 	cpu_identify();

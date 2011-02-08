@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2006/03/08 09:32:22 sekiya Exp $
+#	$NetBSD: Makefile,v 1.37.98.1 2011/02/08 16:19:43 bouyer Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -33,7 +33,8 @@ LIBKERN=${KERNLIB}
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "${MACHINE}"
 
 ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}

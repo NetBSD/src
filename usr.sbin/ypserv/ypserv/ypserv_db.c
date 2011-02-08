@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.21 2009/10/19 23:25:43 snj Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.21.2.1 2011/02/08 16:20:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -29,12 +29,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.21 2009/10/19 23:25:43 snj Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.21.2.1 2011/02/08 16:20:16 bouyer Exp $");
 #endif
 
 /*
  * major revision/cleanup of Mats' version done by
- * Chuck Cranor <chuck@ccrc.wustl.edu> Jan 1996.
+ * Chuck Cranor <chuck@netbsd> Jan 1996.
  */
 
 #include <sys/types.h>

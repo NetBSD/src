@@ -1,5 +1,6 @@
-# $NetBSD: Makefile.bootprogs,v 1.7 2009/01/12 07:30:45 tsutsui Exp $
+# $NetBSD: Makefile.bootprogs,v 1.7.10.1 2011/02/08 16:19:38 bouyer Exp $
 
+.include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
@@ -49,7 +50,8 @@ CWARNFLAGS+=	-Wno-pointer-sign
 .if exists(version)
 .PHONY: vers.c
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sbmips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    -N ${.CURDIR}/version "sbmips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c

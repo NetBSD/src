@@ -1,4 +1,4 @@
-.\"     $NetBSD: KASSERT.9,v 1.9 2010/10/29 09:34:03 wiz Exp $
+.\"     $NetBSD: KASSERT.9,v 1.9.2.1 2011/02/08 16:19:08 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 Igor Sobrado
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 28, 2010
+.Dd January 26, 2011
 .Dt KASSERT 9
 .Os
 .Sh NAME
@@ -63,11 +63,24 @@ are identical except for the controlling option
 vs
 .Dv DIAGNOSTIC ) .
 .Pp
+Basically,
+.Fn KASSERT
+should be used for light-weight checks and
+.Fn KDASSERT
+should be used for heavier ones.
+.Pp
+Callers should not rely on the side effects of
+.Ar expression
+because, depending on the kernel compile options mentioned above,
+.Ar expression
+might not be evaluated at all.
+.Pp
 The panic message will display the style of assertion (debugging
 vs. diagnostic), the expression that failed and the filename, and line
 number the failure happened on.
 .Sh SEE ALSO
 .Xr config 1 ,
+.Xr options 4 ,
 .Xr CTASSERT 9 ,
 .Xr panic 9 ,
 .Xr printf 9

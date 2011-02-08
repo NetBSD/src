@@ -1,4 +1,4 @@
-/* $NetBSD: gsckbc.c,v 1.6 2010/12/05 12:19:09 skrll Exp $ */
+/* $NetBSD: gsckbc.c,v 1.6.4.1 2011/02/08 16:19:23 bouyer Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.6 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.6.4.1 2011/02/08 16:19:23 bouyer Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -268,7 +268,7 @@ gsckbc_attach(device_t parent, device_t self, void *aux)
 		}
 		aprint_debug(" (master)");
 		sc->sc_ih = hp700_intr_establish(IPL_TTY, gsckbc_intr, sc,
-		    ga->ga_int_reg, ga->ga_irq);
+		    ga->ga_ir, ga->ga_irq);
 		master_sc = sc;
 	} else {
 		if (master_sc == NULL) {

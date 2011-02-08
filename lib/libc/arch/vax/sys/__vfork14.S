@@ -27,17 +27,17 @@
  * SUCH DAMAGE.
  */
 
+#include "SYS.h"
+
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)Ovfork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: __vfork14.S,v 1.5 2003/08/07 16:42:33 agc Exp $"
+RCSID("$NetBSD: __vfork14.S,v 1.5.52.1 2011/02/08 16:18:58 bouyer Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
  * @(#)vfork.s	4.1 (Berkeley) 12/21/80
  * C library -- vfork
  */
-
-#include "SYS.h"
 
 /*
  * pid = vfork();
@@ -74,3 +74,4 @@ err:
 	mnegl	$1,%r0
 	jmp	(%r2)
 #endif
+END(__vfork14)

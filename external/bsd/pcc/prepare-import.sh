@@ -54,12 +54,13 @@ cd ../..
 # modify the PACKAGE_STRING to include the checkout date
 # define PREPROCESSOR as pcpp to avoid conflicts with GCC
 #
+datestamp=$(cat work/pcc/DATESTAMP)
 sed -e "s,^\(#define[[:space:]]*VERSSTR[[:>:]].*\)\$,/* \1 */,"					\
     -e "s,^\(#define[[:space:]]*HOST_BIG_ENDIAN[[:>:]].*\)\$,/* \1 */,"				\
     -e "s,^\(#define[[:space:]]*HOST_LITTLE_ENDIAN[[:>:]].*\)\$,/* \1 */,"			\
     -e "s,^\(#define[[:space:]]*TARGET_BIG_ENDIAN[[:>:]].*\)\$,/* \1 */,"			\
     -e "s,^\(#define[[:space:]]*TARGET_LITTLE_ENDIAN[[:>:]].*\)\$,/* \1 */,"			\
-    -e "s,^\(#define[[:space:]]*PACKAGE_STRING[[:>:]].*\".*\)\(\".*\)\$,\1 [$(date +%Y%m%d)]\2,"\
+    -e "s,^\(#define[[:space:]]*PACKAGE_STRING[[:>:]].*\".*\)\(\".*\)\$,\1 [${datestamp}]\2,"	\
     -e "s,^\(.*[[:<:]]PREPROCESSOR[[:>:]].*\)\$,#define PREPROCESSOR \"pcpp\","			\
     < work/tmp/config.h > work/config.h
 
@@ -77,6 +78,6 @@ rm -Rf work
 echo ""
 echo "after testing, use the following command to import from the dist directory,"
 echo ""
-echo "    cvs import src/external/bsd/pcc/dist ragge pcc-$(date +%y%m%d)"
+echo "    cvs import src/external/bsd/pcc/dist ragge pcc-${datestamp}"
 echo ""
 echo "providing a ChangeLog in the commit message."

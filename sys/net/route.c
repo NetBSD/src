@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.123 2010/06/26 14:24:28 kefren Exp $	*/
+/*	$NetBSD: route.c,v 1.123.4.1 2011/02/08 16:20:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.123 2010/06/26 14:24:28 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.123.4.1 2011/02/08 16:20:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.123 2010/06/26 14:24:28 kefren Exp $");
 #define	rtcache_debug() 0
 #endif /* RTFLUSH_DEBUG */
 
-struct	route_cb route_cb;
 struct	rtstat	rtstat;
 struct	radix_node_head *rt_tables[AF_MAX+1];
 
@@ -283,7 +282,7 @@ route_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 }
 
 void
-route_init(void)
+rt_init(void)
 {
 
 #ifdef RTFLUSH_DEBUG
@@ -295,7 +294,6 @@ route_init(void)
 	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
 	    NULL, IPL_SOFTNET);
 
-	rt_init();
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
 

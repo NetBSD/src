@@ -1,4 +1,4 @@
-/*        $NetBSD: libdm-netbsd.h,v 1.1 2009/12/05 11:38:40 haad Exp $
+/*        $NetBSD: libdm-netbsd.h,v 1.1.2.1 2011/02/08 16:18:52 bouyer Exp $
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define __LIB_DM_H__
 
 #include <prop/proplib.h>
+#include <dm.h>
 
 #  define MAJOR(x) major((x))
 #  define MINOR(x) minor((x))
@@ -48,11 +49,9 @@
 /* libdm_netbsd.c */
 int nbsd_get_dm_major(uint32_t *, int); /* Get dm device major numbers */
 
-int nbsd_dmi_add_cmd(const char *, prop_dictionary_t);
-int nbsd_dmi_add_version(const int [3], prop_dictionary_t);
-int nbsd_dm_add_uint(const char *, uint64_t, prop_dictionary_t);
-int nbsd_dm_add_str(const char *, char *, prop_dictionary_t );
+int nbsd_dmi_add_cmd(const char *, libdm_task_t);
+int nbsd_dmi_add_version(const int [3], libdm_task_t);
 
-struct dm_ioctl* nbsd_dm_dict_to_dmi(prop_dictionary_t, const int);
+struct dm_ioctl* nbsd_dm_dict_to_dmi(libdm_task_t, const int);
 
 #endif /* __NETBSD_DM_H__ */

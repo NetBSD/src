@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.38 2011/01/04 10:35:10 wiz Exp $ */
+/* $NetBSD: utils.c,v 1.38.2.1 2011/02/08 16:18:27 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.38 2011/01/04 10:35:10 wiz Exp $");
+__RCSID("$NetBSD: utils.c,v 1.38.2.1 2011/02/08 16:18:27 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,11 +145,23 @@ copy_file(FTSENT *entp, int dne)
 
 	rval = 0;
 
+	/* if hard linking then simply close the open fds, link and return */
+	if (lflag) {
+		(void)close(from_fd);
+		(void)close(to_fd);
+		(void)unlink(to.p_path);
+		if (link(entp->fts_path, to.p_path)) {
+			warn("%s", to.p_path);
+			return (1);
+		}
+		return (0);
+	}
+	/* NOTREACHED */
+
 	/*
 	 * There's no reason to do anything other than close the file
 	 * now if it's empty, so let's not bother.
 	 */
-
 	if (fs->st_size > 0) {
 		/*
 		 * Mmap and write if less than 8M (the limit is so
@@ -215,8 +227,9 @@ copy_file(FTSENT *entp, int dne)
 		}
 	}
 
+	(void)close(from_fd);
+
 	if (rval == 1) {
-		(void)close(from_fd);
 		(void)close(to_fd);
 		return (1);
 	}
@@ -240,7 +253,6 @@ copy_file(FTSENT *entp, int dne)
 			rval = 1;
 		}
 	}
-	(void)close(from_fd);
 	if (close(to_fd)) {
 		warn("%s", to.p_path);
 		rval = 1;
@@ -368,8 +380,8 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-R [-H | -L | -P]] [-f | -i] [-aNpv] src target\n"
-	    "       %s [-R [-H | -L | -P]] [-f | -i] [-aNpv] src1 ... srcN directory\n",
+	    "usage: %s [-R [-H | -L | -P]] [-f | -i] [-alNpv] src target\n"
+	    "       %s [-R [-H | -L | -P]] [-f | -i] [-alNpv] src1 ... srcN directory\n",
 	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */

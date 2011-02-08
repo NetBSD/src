@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
+/*	$NetBSD: key.c,v 1.4.2.1 2011/02/08 16:18:32 bouyer Exp $	*/
 /* $OpenBSD: key.c,v 1.90 2010/07/13 23:13:16 djm Exp $ */
 /*
  * read_bignum():
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.4 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: key.c,v 1.4.2.1 2011/02/08 16:18:32 bouyer Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -1514,10 +1514,8 @@ key_certify(Key *k, Key *ca)
 	buffer_put_cstring(&k->cert->certblob, key_ssh_name(k));
 
 	/* -v01 certs put nonce first */
+	arc4random_buf(&nonce, sizeof(nonce));
 	if (k->type == KEY_DSA_CERT || k->type == KEY_RSA_CERT) {
-		/*arc4random_buf(&nonce, sizeof(nonce));*/
-		for (i = 0; i < sizeof(nonce); i += 4)
-			*(uint32_t *)&(nonce[i]) = arc4random();
 		buffer_put_string(&k->cert->certblob, nonce, sizeof(nonce));
 	}
 

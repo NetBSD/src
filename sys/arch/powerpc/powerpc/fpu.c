@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.26 2011/01/18 02:25:43 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.26.2.1 2011/02/08 16:19:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26 2011/01/18 02:25:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26.2.1 2011/02/08 16:19:35 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,7 +107,10 @@ fpu_save_cpu(enum fpu_op op)
 
 		fpu_unload_to_fpreg(&pcb->pcb_fpu);
 
-		__asm volatile ("sync");
+		/*
+		 * Disclaim ownership.
+		 */
+		l->l_md.md_flags &= ~MDLWP_OWNFPU;
 
 		if (op == FPU_SAVE_AND_RELEASE)
 			ci->ci_fpulwp = ci->ci_data.cpu_idlelwp;
@@ -136,7 +139,7 @@ fpu_mp_save_lwp(struct lwp *l)
 	if (fpucpu == NULL)
 		return;
 
-	ppc_send_ipi(fpucpu->ci_index, PPC_IPI_FLUSH_FPU);
+	ppc_send_ipi(fpucpu->ci_cpuid, PPC_IPI_FLUSH_FPU);
 
 	/* Wait for flush. */
 	for (u_int i = 0; i < 0x3fffffff; i++) {

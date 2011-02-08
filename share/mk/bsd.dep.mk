@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.70 2011/01/12 23:12:11 joerg Exp $
+#	$NetBSD: bsd.dep.mk,v 1.70.2.1 2011/02/08 16:19:08 bouyer Exp $
 
 ##### Basic targets
 cleandir:	cleandepend
@@ -57,8 +57,8 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} \
 	    ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
-			${DESTDIR}/usr/include/g++} \
+	    ${HOSTLIB:U${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
+			${DESTDIR}/usr/include/g++}} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .endif # defined(SRCS)							# }

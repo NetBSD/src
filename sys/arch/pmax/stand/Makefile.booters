@@ -1,5 +1,8 @@
-# $NetBSD: Makefile.booters,v 1.52 2010/05/27 06:58:14 dholland Exp $
+# $NetBSD: Makefile.booters,v 1.52.4.1 2011/02/08 16:19:33 bouyer Exp $
 
+NOMAN=		# defined
+
+.include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
@@ -29,8 +32,6 @@ CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 PRIMARY_LOAD_ADDRESS?=	0x80700000
 SECONDARY_LOAD_ADDRESS?=0x80710000
-
-NOMAN=		# defined
 
 .if defined(PRIMARY_PROG)
 PROG=		${PRIMARY_PROG}
@@ -97,10 +98,9 @@ LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
-.include <bsd.own.mk>
-
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    -N ${.CURDIR}/version "pmax"
 
 ${PROG}: ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \

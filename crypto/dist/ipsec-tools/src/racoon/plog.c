@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.c,v 1.6 2009/04/20 13:23:55 tteras Exp $	*/
+/*	$NetBSD: plog.c,v 1.6.2.1 2011/02/08 16:18:30 bouyer Exp $	*/
 
 /* Id: plog.c,v 1.11 2006/06/20 09:57:31 vanhu Exp */
 
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -78,7 +79,7 @@ int print_location = 0;
 static struct log *logp = NULL;
 static char *logfile = NULL;
 
-static char *plog_common __P((int, const char *, const char *));
+static char *plog_common __P((int, const char *, const char *, struct sockaddr *));
 
 static struct plogtags {
 	char *name;
@@ -94,11 +95,13 @@ static struct plogtags {
 };
 
 static char *
-plog_common(pri, fmt, func)
+plog_common(pri, fmt, func, sa)
 	int pri;
 	const char *fmt, *func;
+	struct sockaddr *sa;
 {
 	static char buf[800];	/* XXX shoule be allocated every time ? */
+	void *addr;
 	char *p;
 	int reslen, len;
 
@@ -116,19 +119,43 @@ plog_common(pri, fmt, func)
 		reslen -= len;
 	}
 
+	if (sa && reslen > 3) {
+		addr = NULL;
+		switch (sa->sa_family) {
+		case AF_INET:
+			addr = &((struct sockaddr_in*)sa)->sin_addr;
+			break;
+		case AF_INET6:
+			addr = &((struct sockaddr_in6*)sa)->sin6_addr;
+			break;
+		}
+		if (inet_ntop(sa->sa_family, addr, p + 1, reslen - 3) != NULL) {
+			*p++ = '[';
+			len = strlen(p);
+			p += len;
+			*p++ = ']';
+			*p++ = ' ';
+			reslen -= len + 3;
+		}
+	}
+
 	if (pri < ARRAYLEN(ptab)) {
 		len = snprintf(p, reslen, "%s: ", ptab[pri].name);
-		if (len >= 0 && len < reslen) {
-			p += len;
-			reslen -= len;
-		} else
-			*p = '\0';
+		p += len;
+		reslen -= len;
 	}
 
 	if (print_location)
-		snprintf(p, reslen, "%s: %s", func, fmt);
+		len = snprintf(p, reslen, "%s: %s", func, fmt);
 	else
-		snprintf(p, reslen, "%s", fmt);
+		len = snprintf(p, reslen, "%s", fmt);
+	p += len;
+	reslen -= len;
+
+	/* Force nul termination */
+	if (reslen == 0)
+		p[-1] = 0;
+
 #ifdef BROKEN_PRINTF
 	while ((p = strstr(buf,"%z")) != NULL)
 		p[1] = 'l';
@@ -157,7 +184,7 @@ plogv(int pri, const char *func, struct sockaddr *sa,
 	if (pri > loglevel)
 		return;
 
-	newfmt = plog_common(pri, fmt, func);
+	newfmt = plog_common(pri, fmt, func, sa);
 
 	VA_COPY(ap_bak, ap);
 	

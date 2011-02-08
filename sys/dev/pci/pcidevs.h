@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1052 2011/01/11 00:14:41 dyoung Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1052.4.1 2011/02/08 16:19:51 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1055 2011/01/11 00:13:03 dyoung Exp
+ *	NetBSD: pcidevs,v 1.1057 2011/02/03 22:03:09 njoly Exp
  */
 
 /*
@@ -620,6 +620,7 @@
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
+#define	PCI_VENDOR_RDC	0x17F3		/* RDC Semiconductor */
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
 #define	PCI_VENDOR_RMI	0x182e		/* Raza Microelectronics Inc. (NetLogic) */
@@ -3513,6 +3514,11 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_HDA	0x026c		/* nForce430 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_OHCI	0x026d		/* nForce430 USB Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE430_EHCI	0x026e		/* nForce430 USB2 Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_PPB	0x026f		/* nForce430 PCI-PCI Bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_HB	0x0270		/* nForce430 Host Bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE430_MC	0x0272		/* nForce430 Memory Controller */
+#define	PCI_PRODUCT_NVIDIA_C51_MC2	0x027e		/* C51 Memory Controller 2 */
+#define	PCI_PRODUCT_NVIDIA_C51_MC3	0x027f		/* C51 Memory Controller 3 */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4800	0x0280		/* GeForce4 Ti 4800 */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4200_8X	0x0281		/* GeForce4 Ti 4200 (AGP8X) */
 #define	PCI_PRODUCT_NVIDIA_GF4_TI_4800_SE	0x0282		/* GeForce4 Ti 4800 SE */
@@ -3884,6 +3890,9 @@
 
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
+
+/* RDC Semiconductor products */
+#define	PCI_PRODUCT_RDC_R6040	0x6040		/* RDC R6040 10/100 Ethernet */
 
 /* Realtek products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.92 2008/12/19 17:11:57 pgoyette Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.92.10.1 2011/02/08 16:19:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -136,18 +136,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2008/12/19 17:11:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92.10.1 2011/02/08 16:19:22 bouyer Exp $");
 
-#include "hil.h"
 #include "dvbox.h"
 #include "gbox.h"
 #include "hyper.h"
 #include "rbox.h"
 #include "topcat.h"
+#include "tvrx.h"
 #include "com_dio.h"
 #include "com_frodo.h"
 #include "dcm.h"
-#include "ite.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,6 +164,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2008/12/19 17:11:57 pgoyette Exp $
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -184,10 +187,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2008/12/19 17:11:57 pgoyette Exp $
 #include <hp300/dev/intioreg.h>
 #include <hp300/dev/dmavar.h>
 #include <hp300/dev/frodoreg.h>
-#include <hp300/dev/grfreg.h>
-#include <hp300/dev/hilreg.h>
-#include <hp300/dev/hilioctl.h>
-#include <hp300/dev/hilvar.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -198,20 +197,16 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2008/12/19 17:11:57 pgoyette Exp $
 #include <hp300/dev/com_frodovar.h>
 #endif
 
+#include <hp300/dev/diofbreg.h>
+#include <hp300/dev/diofbvar.h>
+
 /* should go away with a cleanup */
 extern int dcmcnattach(bus_space_tag_t, bus_addr_t, int);
-extern int dvboxcnattach(bus_space_tag_t, bus_addr_t, int);
-extern int gboxcnattach(bus_space_tag_t, bus_addr_t, int);
-extern int rboxcnattach(bus_space_tag_t, bus_addr_t, int);
-extern int hypercnattach(bus_space_tag_t, bus_addr_t, int);
-extern int topcatcnattach(bus_space_tag_t, bus_addr_t, int);
 extern int dnkbdcnattach(bus_space_tag_t, bus_addr_t);
 
 static int	dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int));
 static int	dio_scode_probe(int,
 		    int (*func)(bus_space_tag_t, bus_addr_t, int));
-
-extern	void *internalhpib;
 
 /* How we were booted. */
 u_int	bootdev;
@@ -794,6 +789,9 @@ dev_data_insert(struct dev_data *dd, ddlist_t *ddlist)
  * Code to find and initialize the console
  **********************************************************************/
 
+int conscode;
+void *conaddr;
+
 void
 hp300_cninit(void)
 {
@@ -808,37 +806,37 @@ hp300_cninit(void)
 	 * Look for serial consoles first.
 	 */
 #if NCOM_FRODO > 0
-	if (!com_frodo_cnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(1), -1))
+	if (!com_frodo_cnattach(bst, FRODO_BASE + FRODO_APCI_OFFSET(1),
+	    CONSCODE_INTERNAL))
 		return;
 #endif
 #if NCOM_DIO > 0
 	if (!dio_scan(com_dio_cnattach))
-		return;
+		;//return;
 #endif
 #if NDCM > 0
 	if (!dio_scan(dcmcnattach))
 		return;
 #endif
 
-#if NITE > 0
 #ifndef CONSCODE
 	/*
 	 * Look for internal framebuffers.
 	 */
 #if NDVBOX > 0
-	if (!dvboxcnattach(bst, FB_BASE,-1))
+	if (!dvboxcnattach(bst, FB_BASE, CONSCODE_INTERNAL))
 		goto find_kbd;
 #endif
 #if NGBOX > 0
-	if (!gboxcnattach(bst, FB_BASE,-1))
+	if (!gboxcnattach(bst, FB_BASE, CONSCODE_INTERNAL))
 		goto find_kbd;
 #endif
 #if NRBOX > 0
-	if (!rboxcnattach(bst, FB_BASE,-1))
+	if (!rboxcnattach(bst, FB_BASE, CONSCODE_INTERNAL))
 		goto find_kbd;
 #endif
 #if NTOPCAT > 0
-	if (!topcatcnattach(bst, FB_BASE,-1))
+	if (!topcatcnattach(bst, FB_BASE, CONSCODE_INTERNAL))
 		goto find_kbd;
 #endif
 #endif	/* CONSCODE */
@@ -866,6 +864,10 @@ hp300_cninit(void)
 	if (!dio_scan(topcatcnattach))
 		goto find_kbd;
 #endif
+#if NTVRX > 0
+	if (!dio_scan(tvrxcnattach))
+		goto find_kbd;
+#endif
 
 find_kbd:
 
@@ -876,7 +878,7 @@ find_kbd:
 #if NHIL > 0
 	hilkbdcnattach(bst, HIL_BASE);
 #endif
-#endif	/* NITE */
+;
 }
 
 static int

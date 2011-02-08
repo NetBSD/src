@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.40 2010/12/16 06:45:50 cegger Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.40.4.1 2011/02/08 16:19:53 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.40 2010/12/16 06:45:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.40.4.1 2011/02/08 16:19:53 bouyer Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.40 2010/12/16 06:45:50 cegger Exp $")
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -872,24 +873,12 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 			wsdisplay_cnattach(dp->rd_wsscreens, ri, 0, 0,
 			    defattr);
 #ifdef SPLASHSCREEN
-			splash_render(&dp->rd_splash,
-			    SPLASH_F_CENTER|SPLASH_F_FILL);
-#else
-			vcons_replay_msgbuf(&dp->rd_vscreen);
+			if (splash_render(&dp->rd_splash,
+			    SPLASH_F_CENTER|SPLASH_F_FILL) == 0)
+				SCREEN_DISABLE_DRAWING(&dp->rd_vscreen);
+			else
 #endif
-
-#ifdef SPLASHSCREEN_PROGRESS
-			dp->rd_progress.sp_top = (dp->rd_virty / 8) * 7;
-			dp->rd_progress.sp_width = (dp->rd_virtx / 4) * 3;
-			dp->rd_progress.sp_left = (dp->rd_virtx -
-			    dp->rd_progress.sp_width) / 2;
-			dp->rd_progress.sp_height = 20;
-			dp->rd_progress.sp_state = -1;
-			dp->rd_progress.sp_si = &dp->rd_splash;
-			splash_progress_init(&dp->rd_progress);
-			SCREEN_DISABLE_DRAWING(&dp->rd_vscreen);
-#endif
-
+				vcons_replay_msgbuf(&dp->rd_vscreen);
 		} else {
 
 			/*
@@ -902,9 +891,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 			radeonfb_modeswitch(dp);
 #ifdef SPLASHSCREEN
-			splash_render(&dp->rd_splash,
-			    SPLASH_F_CENTER|SPLASH_F_FILL);
-			SCREEN_DISABLE_DRAWING(&dp->rd_vscreen);
+			if (splash_render(&dp->rd_splash,
+			    SPLASH_F_CENTER|SPLASH_F_FILL) == 0)
+				SCREEN_DISABLE_DRAWING(&dp->rd_vscreen);
 #endif
 		}
 
@@ -1065,15 +1054,6 @@ radeonfb_ioctl(void *v, void *vs,
 #else
 		return ENODEV;
 #endif
-	case WSDISPLAYIO_SPROGRESS:
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-		dp->rd_progress.sp_force = 1;
-		splash_progress_update(&dp->rd_progress);
-		dp->rd_progress.sp_force = 0;
-		return 0;
-#else
-		return ENODEV;
-#endif
 	case WSDISPLAYIO_GETPARAM:
 		param = (struct wsdisplay_param *)d;
 		if (param->param == WSDISPLAYIO_PARAM_BACKLIGHT) {
@@ -1095,6 +1075,10 @@ radeonfb_ioctl(void *v, void *vs,
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
 		return pci_devioctl(sc->sc_pc, sc->sc_pt, cmd, d, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(&sc->sc_dev, sc->sc_pc,
+		    sc->sc_pt, d);
 
 	default:
 		return EPASSTHROUGH;

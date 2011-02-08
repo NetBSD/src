@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.22 2010/01/13 02:17:12 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.22.8.1 2011/02/08 16:19:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.22 2010/01/13 02:17:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.22.8.1 2011/02/08 16:19:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -136,7 +136,6 @@ clockintr_4m(void *cap)
 	 * For MP, we defer calling hardclock() to the schedintr so
 	 * that we call it on all cpus.
 	 */
-	cpuinfo.ci_lev10.ev_count++;
 	if (cold)
 		return 0;
 	/* read the limit register to clear the interrupt */
@@ -156,8 +155,6 @@ statintr_4m(void *cap)
 {
 	struct clockframe *frame = cap;
 	u_long newint;
-
-	cpuinfo.ci_lev14.ev_count++;
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&counterreg4m->t_limit);
@@ -254,12 +251,6 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		cpi->counterreg_4m = (struct counter_4m *)bh;
-	}
-
-	/* Install timer/statclock event counters, per cpu */
-	for (CPU_INFO_FOREACH(n, cpi)) {
-		evcnt_attach_dynamic(&cpi->ci_lev10, EVCNT_TYPE_INTR, NULL, cpu_name(cpi), "lev10");
-		evcnt_attach_dynamic(&cpi->ci_lev14, EVCNT_TYPE_INTR, NULL, cpu_name(cpi), "lev14");
 	}
 
 	/* Put processor counter in "timer" mode */

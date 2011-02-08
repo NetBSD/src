@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 2010/07/24 00:45:56 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.1 2011/02/08 16:19:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -42,7 +42,6 @@
  */
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -54,12 +53,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -123,7 +116,7 @@
 
 /*
  * pmap.c: i386 pmap module rewrite
- * Chuck Cranor <chuck@ccrc.wustl.edu>
+ * Chuck Cranor <chuck@netbsd>
  * 11-Aug-97
  *
  * history of this pmap module: in addition to my own input, i used
@@ -149,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2010/07/24 00:45:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113.4.1 2011/02/08 16:19:45 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1912,6 +1905,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 static inline void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
+	lwp_t *l;
 	int lidx;
 	struct uvm_object *obj;
 
@@ -1927,8 +1921,10 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
 	ptp->wire_count = 0;
 	uvm_pagerealloc(ptp, NULL, 0);
-	VM_PAGE_TO_PP(ptp)->pp_link = curlwp->l_md.md_gc_ptp;
-	curlwp->l_md.md_gc_ptp = ptp;
+	l = curlwp;
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+	VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
+	l->l_md.md_gc_ptp = ptp;
 	if (lidx != 0)
 		mutex_exit(&obj->vmobjlock);
 }
@@ -4683,7 +4679,8 @@ pmap_update(struct pmap *pmap)
 	 * but not from interrupt context.
 	 */
 	if (l->l_md.md_gc_ptp != NULL) {
-		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
+		KASSERT((l->l_pflag & LP_INTR) == 0);
+		if (cpu_intr_p()) {
 			return;
 		}
 

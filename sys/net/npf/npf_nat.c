@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.5 2011/01/18 20:33:46 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.5.2.1 2011/02/08 16:20:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.5 2011/01/18 20:33:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.5.2.1 2011/02/08 16:20:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -117,7 +117,7 @@ struct npf_natpolicy {
 	kcondvar_t		n_cv;
 	npf_portmap_t *		n_portmap;
 	int			n_type;
-	int			n_flags;
+	u_int			n_flags;
 	size_t			n_addr_sz;
 	npf_addr_t		n_taddr;
 	in_port_t		n_tport;
@@ -174,7 +174,6 @@ npf_nat_sysfini(void)
 npf_natpolicy_t *
 npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 {
-	const npf_addr_t *taddr;
 	npf_natpolicy_t *np;
 	prop_object_t obj;
 	npf_portmap_t *pm;
@@ -184,26 +183,19 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *nrlset)
 	cv_init(&np->n_cv, "npfnatcv");
 	LIST_INIT(&np->n_nat_list);
 
-	/* Translation type. */
-	obj = prop_dictionary_get(natdict, "type");
-	np->n_type = prop_number_integer_value(obj);
-
-	/* Translation type. */
-	obj = prop_dictionary_get(natdict, "flags");
-	np->n_flags = prop_number_integer_value(obj);
+	/* Translation type and flags. */
+	prop_dictionary_get_int32(natdict, "type", &np->n_type);
+	prop_dictionary_get_uint32(natdict, "flags", &np->n_flags);
+	KASSERT(np->n_type == NPF_NATIN || np->n_type == NPF_NATOUT);
 
 	/* Translation IP. */
 	obj = prop_dictionary_get(natdict, "translation-ip");
 	np->n_addr_sz = prop_data_size(obj);
 	KASSERT(np->n_addr_sz > 0 && np->n_addr_sz <= sizeof(npf_addr_t));
-	taddr = (const npf_addr_t *)prop_data_data_nocopy(obj);
-	memcpy(&np->n_taddr, taddr, np->n_addr_sz);
+	memcpy(&np->n_taddr, prop_data_data_nocopy(obj), np->n_addr_sz);
 
 	/* Translation port (for redirect case). */
-	obj = prop_dictionary_get(natdict, "translation-port");
-	np->n_tport = (in_port_t)prop_number_integer_value(obj);
-
-	KASSERT(np->n_type == NPF_NATIN || np->n_type == NPF_NATOUT);
+	prop_dictionary_get_uint16(natdict, "translation-port", &np->n_tport);
 
 	/* Determine if port map is needed. */
 	np->n_portmap = NULL;
@@ -401,11 +393,21 @@ static npf_natpolicy_t *
 npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, ifnet_t *ifp, const int di)
 {
 	npf_ruleset_t *rlset;
+	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
+	npf_core_enter();
 	rlset = npf_core_natset();
-	rl = npf_ruleset_match(rlset, npc, nbuf, ifp, di, NPF_LAYER_3);
-	return rl ? npf_rule_getnat(rl) : NULL;
+	rl = npf_ruleset_inspect(npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
+	if (rl == NULL) {
+		return NULL;
+	}
+	np = npf_rule_getnat(rl);
+	if (np == NULL) {
+		npf_core_exit();
+		return NULL;
+	}
+	return np;
 }
 
 /*
@@ -580,12 +582,13 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
 		goto translate;
 	}
 
-	/* Inspect the packet for a NAT policy, if there is no session. */
-	npf_core_enter();
+	/*
+	 * Inspect the packet for a NAT policy, if there is no session.
+	 * Note: acquires the lock (releases, if not found).
+	 */
 	np = npf_nat_inspect(npc, nbuf, ifp, di);
 	if (np == NULL) {
 		/* If packet does not match - done. */
-		npf_core_exit();
 		return 0;
 	}
 	forw = true;
@@ -728,13 +731,13 @@ npf_nat_save(prop_dictionary_t sedict, prop_array_t natlist, npf_nat_t *nt)
 	/* Set NAT entry data. */
 	nd = prop_data_create_data(nt, sizeof(npf_nat_t));
 	prop_dictionary_set(sedict, "nat-data", nd);
+	prop_object_release(nd);
 
 	/* Find or create a NAT policy. */
 	it = prop_array_iterator(natlist);
 	while ((npdict = prop_object_iterator_next(it)) != NULL) {
 		CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-		itnp = (uintptr_t)prop_number_unsigned_integer_value(
-		    prop_dictionary_get(npdict, "id-ptr"));
+		prop_dictionary_get_uint64(npdict, "id-ptr", (uint64_t *)&itnp);
 		if (itnp == (uintptr_t)np) {
 			break;
 		}
@@ -743,16 +746,16 @@ npf_nat_save(prop_dictionary_t sedict, prop_array_t natlist, npf_nat_t *nt)
 		/* Create NAT policy dictionary and copy the data. */
 		npdict = prop_dictionary_create();
 		npd = prop_data_create_data(np, sizeof(npf_natpolicy_t));
-
-		/* Set the data, insert into the array. */
-		CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-		prop_dictionary_set(npdict, "id-ptr",
-		    prop_number_create_unsigned_integer((uintptr_t)np));
 		prop_dictionary_set(npdict, "nat-policy-data", npd);
+		prop_object_release(npd);
+
+		CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
+		prop_dictionary_set_uint64(npdict, "id-ptr", (uintptr_t)np);
 		prop_array_add(natlist, npdict);
+		prop_object_release(npdict);
 	}
-	prop_dictionary_set(sedict, "nat-policy",
-	    prop_dictionary_copy(npdict));
+	prop_dictionary_set(sedict, "nat-policy", npdict);
+	prop_object_release(npdict);
 	return 0;
 }
 

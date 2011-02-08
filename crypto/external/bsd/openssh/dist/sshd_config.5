@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.7 2010/11/21 18:59:04 adam Exp $
+.\"	$NetBSD: sshd_config.5,v 1.7.2.1 2011/02/08 16:18:32 bouyer Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $OpenBSD: sshd_config.5,v 1.125 2010/06/30 07:28:34 jmc Exp $
-.Dd June 30, 2010
+.Dd February 3, 2010
 .Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
@@ -589,7 +589,9 @@ options must precede this option for non-port qualified addresses.
 The server disconnects after this time if the user has not
 successfully logged in.
 If the value is 0, there is no time limit.
-The default is 120 seconds.
+The default is 120 seconds but the default
+.Pa /etc/ssh/sshd_config
+overwrites it to 600 seconds.
 .It Cm LogLevel
 Gives the verbosity level that is used when logging messages from
 .Xr sshd 8 .

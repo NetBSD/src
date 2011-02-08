@@ -1,4 +1,4 @@
-/* $Id: mech.h,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: mech.h,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,6 @@
 #ifndef _MECH_H_
 #define _MECH_H_
 
-#include <stdint.h>
 #include <sys/queue.h>
 #include "dict.h"
 
@@ -46,19 +45,8 @@
 enum {
 	STATUS_AUTHENTICATION,	/**< authentication in progress */
 	STATUS_AUTHENTICATED	/**< session authenticated. this value is used
-				   after last step of the authentication and
-				   means only that last step was performed. */
-};
-
-/** mechanism flags - currently unused */
-enum {
-	FLAG_NONE	= 0, 		/**< none flag */
-	FLAG_ANONYMOUS	= 1 << 0,	/**< anonymous authentication */
-	FLAG_DICTIONARY = 1 << 1,	/**< dictionary attack against 
-					 * authentication is possible */
-	FLAG_PLAINTEXT	= 1 << 2,	/**< mechanism uses plaintext for sharing
-				  	   secrets */
-	FLAG_MUTUAL	= 1 << 3	/**< mutual authentication */
+			         * after last step of the authentication and
+			         * means only that last step was performed. */
 };
 
 /** mechanism cont return values - used by _cont() functions */
@@ -70,8 +58,8 @@ enum {
 
 /** mechanism session */
 typedef struct saslc__mech_sess_t {
-	uint32_t status;	/**< status of authentication */
-	uint32_t step;		/**< step counter */
+	unsigned int status;    /**< status of authentication */
+	unsigned int step;      /**< step counter */
 } saslc__mech_sess_t;
 
 /* mechanism functions */
@@ -86,29 +74,26 @@ typedef int (*saslc__mech_destroy_t)(saslc_sess_t *);
 
 /** mechanism structure */
 typedef struct saslc__mech_t {
-	const char *name; /**< mechanism name */
-	const uint32_t flags; /**< mechanism flags */
+	const char *name;            /**< mechanism name */
 	saslc__mech_create_t create; /**< create function - creates mechanism
-					instance */
-	saslc__mech_cont_t cont; /**< step function - performs one step of
-					authentication */
+				      * instance */
+	saslc__mech_cont_t cont;     /**< step function - performs one step of
+				      * authentication */
 	saslc__mech_encode_t encode; /**< encoding function - encodes input
-					according to negotiated security
-					layer */
+				      * according to negotiated security
+				      * layer */
 	saslc__mech_decode_t decode; /**< decoding function - decodes input
-					according to negotiated security
-					layer */
+				      * according to negotiated security
+				      * layer */
 	saslc__mech_destroy_t destroy; /**< destroy function - destroys
-					  mechanism instance */
+					* mechanism instance */
 } saslc__mech_t;
 
-/** mechanism list */
-
-/* mechanisms list node */
+/** mechanisms list node */
 typedef struct saslc__mech_list_node_t {
-	LIST_ENTRY(saslc__mech_list_node_t) nodes;
-	const saslc__mech_t *mech; /**< mechanism */
-	saslc__dict_t *prop; /**< mechanism configuration */
+	LIST_ENTRY(saslc__mech_list_node_t) nodes; /**< nodes */
+	const saslc__mech_t *mech;                 /**< mechanism */
+        saslc__dict_t *prop;                  /**< mechanism configuration */
 } saslc__mech_list_node_t;
 
 /* mechanisms list head */
@@ -116,13 +101,18 @@ typedef struct saslc__mech_list_t saslc__mech_list_t;
 LIST_HEAD(saslc__mech_list_t, saslc__mech_list_node_t);
 
 /* mechanism list functions */
-saslc__mech_list_t *saslc__mech_list_create(saslc_t *);
+int saslc__mech_list_create(saslc_t *);
 void saslc__mech_list_destroy(saslc__mech_list_t *);
-saslc__mech_list_node_t *saslc__mech_list_get(saslc__mech_list_t *, const char *);
+saslc__mech_list_node_t *saslc__mech_list_get(saslc__mech_list_t *,
+    const char *);
 
 /* generic functions */
 int saslc__mech_generic_create(saslc_sess_t *);
 int saslc__mech_generic_destroy(saslc_sess_t *);
+int saslc__mech_generic_encode(saslc_sess_t *, const void *, size_t, void **,
+    size_t *);
+int saslc__mech_generic_decode(saslc_sess_t *, const void *, size_t, void **,
+    size_t *);
 
 /* additional functions */
 int saslc__mech_strdup(saslc_sess_t *, char **, size_t *, const char *,

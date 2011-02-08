@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.28 2010/10/21 06:15:28 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.28.2.1 2011/02/08 16:18:30 bouyer Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -387,12 +387,11 @@ static void reload_conf(){
 	}
 #endif
 
-	save_sainfotree();
+	sainfo_start_reload();
 
 	/* TODO: save / restore / flush old lcconf (?) / rmtree
 	 */
-	save_rmconf();
-	initrmconf();
+	rmconf_start_reload();
 
 #ifdef HAVE_LIBRADIUS
 	/* free and init radius configuration */
@@ -430,8 +429,8 @@ static void reload_conf(){
 	/* Update ctdtree ?
 	 */
 
-	save_sainfotree_flush();
-	save_rmconf_flush();
+	sainfo_finish_reload();
+	rmconf_finish_reload();
 }
 
 static void

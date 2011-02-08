@@ -1,4 +1,4 @@
-/* $Id: mech_plain.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: mech_plain.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -109,10 +109,12 @@ saslc__mech_plain_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 
 	len = asprintf(&outstr, "%s%c%s%c%s", authzid != NULL ? 
 	    authzid : "", NUL_DELIM, authcid, NUL_DELIM, passwd);
-	if (len == -1)
+	if (len == -1) {
+                saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 		return MECH_ERROR;
+        }
 	*out = outstr;
-	*outlen = len + 1;
+	*outlen = (size_t)len + 1;
 
 	return MECH_OK;
 }
@@ -121,10 +123,9 @@ saslc__mech_plain_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 /* mechanism definition */
 const saslc__mech_t saslc__mech_plain = {
 	"PLAIN", /* name */
-	FLAG_PLAINTEXT, /* flags */
 	saslc__mech_generic_create, /* create */
 	saslc__mech_plain_cont, /* step */
-	NULL, /* encode */
-	NULL, /* decode */
+	saslc__mech_generic_encode, /* encode */
+	saslc__mech_generic_decode, /* decode */
 	saslc__mech_generic_destroy /* destroy */
 };

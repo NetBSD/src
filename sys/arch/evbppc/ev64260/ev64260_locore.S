@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.16 2011/01/17 08:23:54 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.16.2.1 2011/02/08 16:19:19 bouyer Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -229,6 +229,7 @@ __start:
 	li	5,0
 	li	6,0
 
+	bl	_C_LABEL(cpu_model_init)
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.103 2011/01/17 18:11:10 joerg Exp $
+#	$NetBSD: sys.mk,v 1.103.2.1 2011/02/08 16:19:08 bouyer Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -15,13 +15,7 @@ AS?=		as
 AFLAGS?=
 COMPILE.s?=	${CC} ${AFLAGS} -c
 LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "sparc" || \
-    ${MACHINE_ARCH} == "sparc64"
 _ASM_TRADITIONAL_CPP=	-x assembler-with-cpp
-.else
-_ASM_TRADITIONAL_CPP=	-traditional-cpp
-.endif
 COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${_ASM_TRADITIONAL_CPP} -c
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 

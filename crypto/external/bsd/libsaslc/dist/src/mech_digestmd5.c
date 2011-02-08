@@ -1,4 +1,4 @@
-/* $Id: mech_digestmd5.c,v 1.2 2010/12/18 18:22:24 christos Exp $ */
+/* $Id: mech_digestmd5.c,v 1.2.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@ saslc__mech_digestmd5_userhash(const char *username, const char *realm,
 	if (asprintf(&tmp, "%s:%s:%s", username, realm, password) == -1)
 		return NULL;
 
-	r = saslc__crypto_md5(tmp);
+	r = saslc__crypto_md5(tmp, strlen(tmp));
 	free(tmp);
 
 	return r;
@@ -168,10 +168,10 @@ saslc__mech_digestmd5_a1(const char *userhash, const char *nonce,
 	char *tmp, *r;
 
 	if (asprintf(&tmp, "%s:%s:%s:%s", userhash, nonce, cnonce, authzid)
-	    == -1 || tmp == NULL)
+	    == -1)
 		return NULL;
 
-	r = saslc__crypto_md5(tmp);
+	r = saslc__crypto_md5(tmp, strlen(tmp));
 	free(tmp);
 
 	return r;
@@ -193,7 +193,7 @@ saslc__mech_digestmd5_a2(const char *digesturi, int qop)
 	    qop != QOP_AUTH ? AUTH_INT_CONF_SUFFIX : "") == -1)
 		return NULL;
 
-	r = saslc__crypto_md5(tmp);
+	r = saslc__crypto_md5(tmp, strlen(tmp));
 	free(tmp);
 
 	return r;
@@ -229,7 +229,7 @@ saslc__mech_digestmd5_rhash(const char *a1, const char *a2, const char *nonce,
 	    cnonce, saslc__qop_str[qop], a2) == -1)
 		return NULL;
 
-	r = saslc__crypto_md5(tmp);
+	r = saslc__crypto_md5(tmp, strlen(tmp));
 	free(tmp);
 
 	return r;
@@ -355,6 +355,10 @@ saslc__mech_digestmd5_parse_challenge(saslc__mech_digestmd5_sess_t *mech_sess,
 		if (c == '\0')
 			goto out;
 		n = strchr(c, '=');
+                if (n == NULL) {
+                    free(copy);
+                    return -1;
+                }
 		c = n;
 		*c = '\0';
 		c++;
@@ -556,6 +560,10 @@ saslc__mech_digestmd5_cont(saslc_sess_t *sess, const void *in, size_t inlen,
  
 		*out = saslc__mech_digestmd5_response(mech_sess, authid, pass,
 		    authzid);
+                if (*out == NULL) {
+                        saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+                        return MECH_ERROR;
+                }
 		*outlen = strlen(*out);
 
 		return MECH_OK;
@@ -568,10 +576,9 @@ saslc__mech_digestmd5_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 /* mechanism definition */
 const saslc__mech_t saslc__mech_digestmd5 = {
 	"DIGEST-MD5", /* name */
-	FLAG_MUTUAL | FLAG_DICTIONARY, /* flags */
 	saslc__mech_digestmd5_create, /* create */
 	saslc__mech_digestmd5_cont, /* step */
-	NULL, /* encode */
-	NULL, /* decode */
+	saslc__mech_generic_encode, /* encode */
+	saslc__mech_generic_decode, /* decode */
 	saslc__mech_digestmd5_destroy /* destroy */
 };
