@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.34 2011/02/08 14:45:35 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.35 2011/02/08 19:12:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.34 2011/02/08 14:45:35 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.35 2011/02/08 19:12:54 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -684,7 +684,7 @@ hostpoll(void *arg)
 	struct pollarg *parg = arg;
 	intptr_t rv;
 
-	op_pollts = syscalls[DUALCALL_POLLTS].bs_host;
+	op_pollts = GETSYSCALL(host, POLLTS);
 	rv = op_pollts(parg->pfds, parg->nfds, parg->ts, parg->sigmask);
 	if (rv == -1)
 		parg->errnum = errno;
@@ -777,7 +777,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		parg.pipefd = rpipe[1];
 		pthread_create(&pt, NULL, hostpoll, &parg);
 
-		op_pollts = syscalls[DUALCALL_POLLTS].bs_rump;
+		op_pollts = GETSYSCALL(rump, POLLTS);
 		lrv = op_pollts(pfd_rump, nfds+1, ts, NULL);
 		sverrno = errno;
 		write(hpipe[1], &rv, sizeof(rv));
@@ -804,7 +804,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		}
 
  out:
-		host_close = syscalls[DUALCALL_CLOSE].bs_host;
+		host_close = GETSYSCALL(host, CLOSE);
 		if (rpipe[0] != -1)
 			rump_sys_close(rpipe[0]);
 		if (rpipe[1] != -1)
@@ -818,9 +818,9 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		errno = sverrno;
 	} else {
 		if (hostcall) {
-			op_pollts = syscalls[DUALCALL_POLLTS].bs_host;
+			op_pollts = GETSYSCALL(host, POLLTS);
 		} else {
-			op_pollts = syscalls[DUALCALL_POLLTS].bs_rump;
+			op_pollts = GETSYSCALL(rump, POLLTS);
 			adjustpoll(fds, nfds, fd_host2rump);
 		}
 
@@ -873,7 +873,7 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 		}
 	}
 
-	op_kevent = GETSYSCALL(host, ACCEPT);
+	op_kevent = GETSYSCALL(host, KEVENT);
 	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
 }
 
