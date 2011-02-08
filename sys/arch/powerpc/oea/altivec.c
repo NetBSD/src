@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.20 2011/01/23 17:36:09 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.21 2011/02/08 06:14:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.20 2011/01/23 17:36:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.21 2011/02/08 06:14:50 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -177,7 +177,7 @@ vec_mp_save_lwp(struct lwp *l)
 	if ((l->l_md.md_flags & MDLWP_OWNVEC) == 0)
 		return;
 
-	ppc_send_ipi(l->l_md.md_veccpu->ci_index, PPC_IPI_FLUSH_VEC);
+	ppc_send_ipi(l->l_md.md_veccpu->ci_cpuid, PPC_IPI_FLUSH_VEC);
 
 	/* Wait for flush. */
 	for (u_int i = 0; i < 0x3fffffff; i++) {
