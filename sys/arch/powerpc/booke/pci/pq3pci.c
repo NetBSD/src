@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.2 2011/01/18 01:02:53 matt Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.3 2011/02/08 06:19:13 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.2 2011/01/18 01:02:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.3 2011/02/08 06:19:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,91 +69,111 @@ __KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.2 2011/01/18 01:02:53 matt Exp $");
 
 #define	PORDEVSR_MPC8536_TRUTH_ENCODE(inst, field, value, result) \
     TRUTH_ENCODE(SVR_MPC8536v1, inst, PORDEVSR_##field, \
-	__SHIFTIN(field##_##MPC8536##_##value, PORDEVSR_##field), result) 
+	__SHIFTIN(field##_##MPC8536##_##value, PORDEVSR_##field), result)
 #define	PORDEVSR_MPC8544_TRUTH_ENCODE(inst, field, value, result) \
     TRUTH_ENCODE(SVR_MPC8544v1, inst, PORDEVSR_##field, \
-	__SHIFTIN(field##_##MPC8544##_##value, PORDEVSR_##field), result) 
+	__SHIFTIN(field##_##MPC8544##_##value, PORDEVSR_##field), result)
 #define	PORDEVSR_MPC8548_TRUTH_ENCODE(inst, field, value, result) \
     TRUTH_ENCODE(SVR_MPC8548v1, inst, PORDEVSR_##field, \
-	__SHIFTIN(field##_##MPC8548##_##value, PORDEVSR_##field), result) 
+	__SHIFTIN(field##_##MPC8548##_##value, PORDEVSR_##field), result)
 #define	PORDEVSR_MPC8555_TRUTH_ENCODE(inst, field, value, result) \
     TRUTH_ENCODE(SVR_MPC8555v1, inst, PORDEVSR_##field, \
-	__SHIFTIN(field##_##MPC8555##_##value, PORDEVSR_##field), result) 
+	__SHIFTIN(field##_##MPC8555##_##value, PORDEVSR_##field), result)
 #define	PORDEVSR_MPC8572_TRUTH_ENCODE(inst, field, value, result) \
     TRUTH_ENCODE(SVR_MPC8572v1, inst, PORDEVSR_##field, \
-	__SHIFTIN(field##_##MPC8572##_##value, PORDEVSR_##field), result) 
-
+	__SHIFTIN(field##_##MPC8572##_##value, PORDEVSR_##field), result)
+#define	PORDEVSR_P20x0_TRUTH_ENCODE(inst, field, value, result) \
+    TRUTH_ENCODE(SVR_P2020, inst, PORDEVSR_##field, \
+	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
+    TRUTH_ENCODE(SVR_P2010, inst, PORDEVSR_##field, \
+	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
 
 #define	PORDEVSR_TRUTH_ENCODE(svr, inst, field, value, result) \
     TRUTH_ENCODE(svr, inst, PORDEVSR_##field, \
-	__SHIFTIN(field##_##value, PORDEVSR_##field), result) 
+	__SHIFTIN(field##_##value, PORDEVSR_##field), result)
 
 const struct e500_truthtab pq3pci_pcie_lanes[] = {
 #ifdef MPC8548
-    PORDEVSR_MPC8548_TRUTH_ENCODE(0, IOSEL, SRIO2500_PCIE1_X4, 4), 
-    PORDEVSR_MPC8548_TRUTH_ENCODE(0, IOSEL, SRIO1250_PCIE1_X4, 4), 
-    PORDEVSR_MPC8548_TRUTH_ENCODE(0, IOSEL, PCIE1_X8, 8), 
+    PORDEVSR_MPC8548_TRUTH_ENCODE(0, IOSEL, SRIO2500_PCIE1_X4, 4),
+    PORDEVSR_MPC8548_TRUTH_ENCODE(0, IOSEL, SRIO1250_PCIE1_X4, 4),
+    PORDEVSR_MPC8548_TRUTH_ENCODE(0, IOSEL, PCIE1_X8, 8),
 #endif
 
 #ifdef MPC8544
-    PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE1_ON, 4), 
-    PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE1_SGMII_ON, 4), 
-    PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE12_ON, 4), 
-    PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE12_SGMII_ON, 4), 
+    PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE1_ON, 4),
+    PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE1_SGMII_ON, 4),
+    PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE12_ON, 4),
+    PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE12_SGMII_ON, 4),
     PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE123_ON, 4),
     PORDEVSR_MPC8544_TRUTH_ENCODE(1, IOSEL, PCIE123_SGMII_ON, 4),
 
-    PORDEVSR_MPC8544_TRUTH_ENCODE(2, IOSEL, PCIE12_ON, 4), 
-    PORDEVSR_MPC8544_TRUTH_ENCODE(2, IOSEL, PCIE12_SGMII_ON, 4), 
+    PORDEVSR_MPC8544_TRUTH_ENCODE(2, IOSEL, PCIE12_ON, 4),
+    PORDEVSR_MPC8544_TRUTH_ENCODE(2, IOSEL, PCIE12_SGMII_ON, 4),
     PORDEVSR_MPC8544_TRUTH_ENCODE(2, IOSEL, PCIE123_ON, 4),
     PORDEVSR_MPC8544_TRUTH_ENCODE(2, IOSEL, PCIE123_SGMII_ON, 4),
 
-    PORDEVSR_MPC8544_TRUTH_ENCODE(3, IOSEL, PCIE123_ON, 1), 
+    PORDEVSR_MPC8544_TRUTH_ENCODE(3, IOSEL, PCIE123_ON, 1),
     PORDEVSR_MPC8544_TRUTH_ENCODE(3, IOSEL, PCIE123_SGMII_ON, 1),
 #endif
 
 #ifdef MPC8536
-    PORDEVSR_MPC8536_TRUTH_ENCODE(1, IOSEL, PCIE1_X4, 4), 
-    PORDEVSR_MPC8536_TRUTH_ENCODE(1, IOSEL, PCIE1_X8, 8), 
+    PORDEVSR_MPC8536_TRUTH_ENCODE(1, IOSEL, PCIE1_X4, 4),
+    PORDEVSR_MPC8536_TRUTH_ENCODE(1, IOSEL, PCIE1_X8, 8),
     PORDEVSR_MPC8536_TRUTH_ENCODE(1, IOSEL, PCIE12_X4, 4),
     PORDEVSR_MPC8536_TRUTH_ENCODE(1, IOSEL, PCIE1_X4_PCI23_X2, 4),
 
-    PORDEVSR_MPC8536_TRUTH_ENCODE(2, IOSEL, PCIE12_X4, 4), 
+    PORDEVSR_MPC8536_TRUTH_ENCODE(2, IOSEL, PCIE12_X4, 4),
     PORDEVSR_MPC8536_TRUTH_ENCODE(2, IOSEL, PCIE1_X4_PCI23_X2, 2),
 
     PORDEVSR_MPC8536_TRUTH_ENCODE(3, IOSEL, PCIE1_X4_PCI23_X2, 2),
 #endif
 
 #ifdef MPC8572
-    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, SRIO2500_PCIE1_X4, 4), 
-    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, SRIO1250_PCIE1_X4, 4), 
-    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, PCIE1_X4, 4), 
-    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, PCIE12_X4, 4), 
-    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, PCIE1_X4_23_X2, 4), 
-    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, PCIE1_X8, 8), 
+    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, SRIO2500_PCIE1_X4, 4),
+    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, SRIO1250_PCIE1_X4, 4),
+    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, PCIE1_X4, 4),
+    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, PCIE12_X4, 4),
+    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, PCIE1_X4_23_X2, 4),
+    PORDEVSR_MPC8572_TRUTH_ENCODE(1, IOSEL, PCIE1_X8, 8),
 
-    PORDEVSR_MPC8572_TRUTH_ENCODE(2, IOSEL, PCIE12_X4, 4), 
-    PORDEVSR_MPC8572_TRUTH_ENCODE(2, IOSEL, PCIE1_X4_23_X2, 2), 
+    PORDEVSR_MPC8572_TRUTH_ENCODE(2, IOSEL, PCIE12_X4, 4),
+    PORDEVSR_MPC8572_TRUTH_ENCODE(2, IOSEL, PCIE1_X4_23_X2, 2),
 
-    PORDEVSR_MPC8572_TRUTH_ENCODE(3, IOSEL, PCIE1_X4_23_X2, 2), 
+    PORDEVSR_MPC8572_TRUTH_ENCODE(3, IOSEL, PCIE1_X4_23_X2, 2),
+#endif
+
+#ifdef P2020
+    PORDEVSR_P20x0_TRUTH_ENCODE(1, IOSEL, PCIE1_X1, 1),
+    PORDEVSR_P20x0_TRUTH_ENCODE(1, IOSEL, PCIE12_X1_3_X2, 1),
+    PORDEVSR_P20x0_TRUTH_ENCODE(1, IOSEL, PCIE13_X2, 2),
+    PORDEVSR_P20x0_TRUTH_ENCODE(1, IOSEL, PCIE1_X4, 4),
+    PORDEVSR_P20x0_TRUTH_ENCODE(1, IOSEL, PCIE1_X1_SRIO2500_1X, 1),
+    PORDEVSR_P20x0_TRUTH_ENCODE(1, IOSEL, PCIE12_X1_SGMII23, 1),
+    PORDEVSR_P20x0_TRUTH_ENCODE(1, IOSEL, PCIE1_X2_SGMII23, 2),
+
+    PORDEVSR_P20x0_TRUTH_ENCODE(2, IOSEL, PCIE12_X1_3_X2, 1),
+    PORDEVSR_P20x0_TRUTH_ENCODE(2, IOSEL, PCIE12_X1_SGMII23, 1),
+
+    PORDEVSR_P20x0_TRUTH_ENCODE(3, IOSEL, PCIE12_X1_3_X2, 2),
+    PORDEVSR_P20x0_TRUTH_ENCODE(3, IOSEL, PCIE13_X2, 2),
 #endif
 };
 
 static const struct e500_truthtab pq3pci_pci_pcix[] = {
 #ifdef MPC8548
-    PORDEVSR_TRUTH_ENCODE(SVR_MPC8548v1, 1, PCI1, PCIX, 1), 
+    PORDEVSR_TRUTH_ENCODE(SVR_MPC8548v1, 1, PCI1, PCIX, 1),
 #endif
 };
 
 static const struct e500_truthtab pq3pci_pci_pci32[] = {
 #ifdef MPC8548
-    PORDEVSR_TRUTH_ENCODE(SVR_MPC8548v1, 1, PCI32, FALSE, 64), 
-    PORDEVSR_TRUTH_ENCODE(SVR_MPC8548v1, 1, PCI32, TRUE, 32), 
+    PORDEVSR_TRUTH_ENCODE(SVR_MPC8548v1, 1, PCI32, FALSE, 64),
+    PORDEVSR_TRUTH_ENCODE(SVR_MPC8548v1, 1, PCI32, TRUE, 32),
 #endif
 
 #ifdef MPC8555
-    PORDEVSR_TRUTH_ENCODE(SVR_MPC8555v1, 0, PCI32, FALSE, 64), 
-    PORDEVSR_TRUTH_ENCODE(SVR_MPC8555v1, 0, PCI32, TRUE, 32), 
+    PORDEVSR_TRUTH_ENCODE(SVR_MPC8555v1, 0, PCI32, FALSE, 64),
+    PORDEVSR_TRUTH_ENCODE(SVR_MPC8555v1, 0, PCI32, TRUE, 32),
 #endif
 };
 
@@ -370,7 +390,7 @@ pq3pci_owin_setup(struct pq3pci_softc *sc, u_int winnum,
 	     "outbound window %u: potar=%#x, potear=%#x, powbar=%x, powar=%#x\n",
 	     winnum, owin->potar, owin->potear, owin->powbar, owin->powar);
 	aprint_normal_dev(sc->sc_dev,
-	    "outbound window %u: maps %u%cB of PCI %s space @ %#"PRIx64" onto local addresses @ %#"PRIx64".\n", 
+	    "outbound window %u: maps %u%cB of PCI %s space @ %#"PRIx64" onto local addresses @ %#"PRIx64".\n",
 	    winnum, 1 << (win_size_log2 % 10), units[win_size_log2 / 10],
 	    (owin->powar & PEXOWAR_RTT) == PEXOWAR_RTT_IO ? "I/O" : "memory",
 	    local_base, pci_base);
@@ -418,7 +438,7 @@ pq3pci_iwin_setup(struct pq3pci_softc *sc, u_int winnum,
 	    "inbound window %u: pitar=%#x, piwbar=%x, piwbear=%#x, piwar=%#x\n",
 	    winnum, iwin->pitar, iwin->piwbar, iwin->piwbear, iwin->piwar);
 	aprint_normal_dev(sc->sc_dev,
-	    "inbound window %u: maps %u%cB of PCI address space @ %#"PRIx64" to local memory @ %#"PRIx64".\n", 
+	    "inbound window %u: maps %u%cB of PCI address space @ %#"PRIx64" to local memory @ %#"PRIx64".\n",
 	    winnum, 1 << (win_size_log2 % 10), units[win_size_log2 / 10],
 	    pci_base, local_base);
 #endif /* DEBUG */
@@ -561,7 +581,7 @@ pq3pci_pis_intr(void *v)
 #if 0
 		printf("%s %d:%s %"PRIu64": %p(%p) %"PRIu64": %d\n", __func__,
 		    curcpu()->ci_idepth,
-		    pis->pis_ev.ev_group, pis->pis_ev.ev_count, 
+		    pis->pis_ev.ev_group, pis->pis_ev.ev_count,
 		    pih->pih_ih.ih_func, pih->pih_ih.ih_arg, pih->pih_count, rv);
 #endif
 		if (rv != 0) {
@@ -618,7 +638,7 @@ pq3pci_intrmap_setup(struct pq3pci_softc *sc,
 	if (sc->sc_ih == NULL)
 		panic("%s: failed to establish interrupt %d\n",
 		    device_xname(sc->sc_dev), cnl->cnl_intrs[0]);
-    
+
 	return true;
 }
 
@@ -833,10 +853,10 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 		     M_DEVBUF, NULL, 0, EX_NOWAIT);
 		struct extent *memext = extent_create("pcimem", membase,
 		     membase + PCI_MEMSIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
- 
+
 		error = pci_configure_bus(pc, ioext, memext, NULL, 0,
 		    curcpu()->ci_ci.dcache_line_size);
- 
+
 		extent_destroy(ioext);
 		extent_destroy(memext);
 
@@ -1452,7 +1472,7 @@ pq3pci_pci_chipset_init(struct pq3pci_softc *sc)
         pc->pc_bus = 0;
         pc->pc_memt = &sc->sc_pci_mem_bst.bs_tag;
         pc->pc_iot = &sc->sc_pci_io_bst.bs_tag;
-        
+
 	SIMPLEQ_INIT(&pc->pc_pbi);
 
 	return pc;
