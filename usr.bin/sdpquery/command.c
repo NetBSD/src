@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.3 2009/12/05 16:54:13 plunky Exp $	*/
+/*	$NetBSD: command.c,v 1.4 2011/02/08 18:14:00 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: command.c,v 1.3 2009/12/05 16:54:13 plunky Exp $");
+__RCSID("$NetBSD: command.c,v 1.4 2011/02/08 18:14:00 plunky Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -97,9 +97,7 @@ static struct alias {
 int
 do_sdp_browse(int argc, const char **argv)
 {
-#define STR(x)	__STRING(x)
-	const char *av = STR(SDP_SERVICE_CLASS_PUBLIC_BROWSE_GROUP);
-#undef STR
+	const char *av = ___STRING(SDP_SERVICE_CLASS_PUBLIC_BROWSE_GROUP);
 
 	if (argc > 1)
 		errx(EXIT_FAILURE, "Too many arguments");
