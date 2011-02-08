@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243 2011/02/06 18:47:55 pooka Exp $
+# $NetBSD: mi,v 1.244 2011/02/08 10:13:13 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1942,6 +1942,9 @@
 ./usr/tests/net/net				tests-net-tests
 ./usr/tests/net/net/Atffile			tests-net-tests		atf
 ./usr/tests/net/net/t_raw		tests-net-tests		atf
+./usr/tests/net/route				tests-net-tests
+./usr/tests/net/route/Atffile			tests-net-tests		atf
+./usr/tests/net/route/t_change		tests-net-tests		atf
 ./usr/tests/net/sys				tests-net-tests
 ./usr/tests/net/sys/Atffile			tests-net-tests		atf
 ./usr/tests/net/sys/t_connect			tests-net-tests		atf
