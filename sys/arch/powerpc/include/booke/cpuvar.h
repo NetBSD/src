@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.2 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.3 2011/02/08 06:21:03 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -69,6 +69,7 @@ struct cpunode_locators {
 	uint8_t cnl_nintr;
 	uint8_t cnl_intrs[4];
 	uint32_t cnl_flags;
+	uint16_t cnl_ids[6];
 };
 
 struct cpunode_attach_args {
