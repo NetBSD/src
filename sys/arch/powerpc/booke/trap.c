@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 2011/02/07 06:41:08 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 2011/02/08 01:38:48 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.3 2011/02/07 06:41:08 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.4 2011/02/08 01:38:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,14 +460,16 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	KSI_INIT_TRAP(ksi);
 	ksi->ksi_signo = SIGILL;
 	ksi->ksi_trap = EXC_PGM;
-	if (tf->tf_esr & ESR_PIL)
+	if (tf->tf_esr & ESR_PIL) {
 		ksi->ksi_code = ILL_ILLOPC;
-	else if (tf->tf_esr & ESR_PPR)
+	} else if (tf->tf_esr & ESR_PPR) {
 		ksi->ksi_code = ILL_PRVOPC;
-	else if (tf->tf_esr & ESR_PTR)
-		ksi->ksi_code = ILL_ILLTRP;
-	else
+	} else if (tf->tf_esr & ESR_PTR) {
+		ksi->ksi_signo = SIGTRAP;
+		ksi->ksi_code = TRAP_BRKPT;
+	} else {
 		ksi->ksi_code = 0;
+	}
 	ksi->ksi_addr = (void *)tf->tf_srr0;
 	return rv;
 }
