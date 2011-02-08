@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1284 2011/02/07 18:11:28 tsutsui Exp $
+# $NetBSD: mi,v 1.1285 2011/02/08 03:20:14 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2162,6 +2162,7 @@
 ./usr/share/man/cat8/diskpart.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dkctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dkscan_bsdlabel.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/dmctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dmsetup.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/dnssec-dsfromkey.0		man-bind-catman		.cat
@@ -4776,6 +4777,7 @@
 ./usr/share/man/html8/diskpart.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dkctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dkscan_bsdlabel.html	man-sysutil-htmlman	html
+./usr/share/man/html8/dmctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dmesg.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dmsetup.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/dnssec-dsfromkey.html	man-bind-htmlman	html
@@ -7446,6 +7448,7 @@
 ./usr/share/man/man8/diskpart.8			man-sysutil-man		.man
 ./usr/share/man/man8/dkctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dkscan_bsdlabel.8		man-sysutil-man		.man
+./usr/share/man/man8/dmctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man		.man
 ./usr/share/man/man8/dmsetup.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/dnssec-dsfromkey.8		man-bind-man		.man

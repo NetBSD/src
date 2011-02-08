@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.158 2011/02/06 00:44:09 christos Exp $
+# $NetBSD: shl.mi,v 1.159 2011/02/08 03:20:14 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -25,6 +25,7 @@
 ./usr/lib/libcurses_pic.a			comp-c-piclib
 ./usr/lib/libdes_pic.a				comp-c-piclib		crypto
 ./usr/lib/libdevmapper_pic.a			comp-lvm-piclib		lvm
+./usr/lib/libdm_pic.a				comp-c-piclib
 ./usr/lib/libdns_pic.a				comp-bind-piclib
 ./usr/lib/libdns_sd_pic.a			comp-mdns-piclib	mdns
 ./usr/lib/libdtrace_pic.a			comp-c-piclib		dtrace
@@ -230,6 +231,7 @@
 ./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug
+./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 		comp-sys-debug
 ./usr/libdata/debug/usr/lib/libdns.so.5.2.debug		comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug
 ./usr/libdata/debug/usr/lib/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug
