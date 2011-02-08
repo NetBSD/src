@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.c,v 1.1.2.1 2011/01/20 14:24:54 bouyer Exp $ */
+/* $NetBSD: quota2.c,v 1.1.2.2 2011/02/08 14:50:37 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -117,8 +117,8 @@ quota2_alloc_quota(union dinode * dp, struct bufarea *hbp,
 
 	memcpy(q2e, &q2h->q2h_defentry, sizeof(*q2e));
 	q2e->q2e_uid = iswap32(uid);
-	q2e->q2e_val[Q2V_BLOCK].q2v_cur = iswap64(u_b);
-	q2e->q2e_val[Q2V_FILE].q2v_cur = iswap64(u_i);
+	q2e->q2e_val[QL_BLOCK].q2v_cur = iswap64(u_b);
+	q2e->q2e_val[QL_FILE].q2v_cur = iswap64(u_i);
 	/* insert in hash list */
 	q2e->q2e_next = q2h->q2h_entries[uid & q2h_hash_mask];
 	q2h->q2h_entries[uid & q2h_hash_mask] = iswap64(off);
@@ -439,21 +439,21 @@ quota2_list_qcheck(uint64_t *offp, struct quota2_entry *q2e, uint64_t off,
 	else
 		remove_uquot(a->uquot_hash, uq);
 		
-	if (iswap64(q2e->q2e_val[Q2V_BLOCK].q2v_cur) == uq->uq_b && 
-	    iswap64(q2e->q2e_val[Q2V_FILE].q2v_cur) == uq->uq_i)
+	if (iswap64(q2e->q2e_val[QL_BLOCK].q2v_cur) == uq->uq_b && 
+	    iswap64(q2e->q2e_val[QL_FILE].q2v_cur) == uq->uq_i)
 		return 0;
 	pwarn("%s QUOTA MISMATCH FOR ID %d: %" PRIu64 "/%" PRIu64 " SHOULD BE "
 	    "%" PRIu64 "/%" PRIu64, a->capstrtype, uid,
-	    iswap64(q2e->q2e_val[Q2V_BLOCK].q2v_cur),
-	    iswap64(q2e->q2e_val[Q2V_FILE].q2v_cur), uq->uq_b, uq->uq_i);
+	    iswap64(q2e->q2e_val[QL_BLOCK].q2v_cur),
+	    iswap64(q2e->q2e_val[QL_FILE].q2v_cur), uq->uq_b, uq->uq_i);
 	if (preen) {
 		printf(" (FIXED)\n");
 	} else if (!reply("FIX")) {
 		markclean = 0;
 		return 0;
 	}
-	q2e->q2e_val[Q2V_BLOCK].q2v_cur = iswap64(uq->uq_b);
-	q2e->q2e_val[Q2V_FILE].q2v_cur = iswap64(uq->uq_i);
+	q2e->q2e_val[QL_BLOCK].q2v_cur = iswap64(uq->uq_b);
+	q2e->q2e_val[QL_FILE].q2v_cur = iswap64(uq->uq_i);
 	return Q2WL_DIRTY;
 }
 
