@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.2 2011/02/07 12:45:21 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.3 2011/02/08 00:33:05 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ BRD_DECL(kuro);
 BRD_DECL(syno);
 BRD_DECL(qnap);
 BRD_DECL(iomega);
+BRD_DECL(dlink);
 
 static struct brdprop brdlist[] = {
     {
@@ -98,6 +99,13 @@ static struct brdprop brdlist[] = {
 	0,
 	"eumb", 0x4500, 115200,
 	NULL, iomegabrdfix, iomegapcifix },
+    {
+	"dlink",
+	"D-Link GSM-G600",
+	BRD_DLINKGSM,
+	0,
+	"eumb", 0x4500, 9600,
+	NULL, dlinkbrdfix, dlinkpcifix },
     {
 	"unknown",
 	"Unknown board",
@@ -204,6 +212,10 @@ brdsetup(void)
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 13, 0), PCI_ID_REG)) ==
 	    0x1106) {				/* PCI_VENDOR_VIA */
 		brdtype = BRD_STORCENTER;
+	}
+	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 16, 0), PCI_ID_REG)) ==
+	    0x1191) {				/* PCI_VENDOR_ACARD */
+		brdtype = BRD_DLINKGSM;
 	}
 
 	brdprop = brd_lookup(brdtype);
@@ -768,6 +780,44 @@ iomegapcifix(struct brdprop *brd)
 	val = pcicfgread(nic, 0x3c) & 0xffffff00;
 	val |= 15;
 	pcicfgwrite(nic, 0x3c, val);
+}
+
+void
+dlinkbrdfix(struct brdprop *brd)
+{
+
+	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
+}
+
+void
+dlinkpcifix(struct brdprop *brd)
+{
+	unsigned usb, nic, ide, val;
+
+	usb = pcimaketag(0, 14, 0);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 1);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 2);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	nic = pcimaketag(0, 15, 0);
+	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	val |= 15;
+	pcicfgwrite(nic, 0x3c, val);
+
+	ide = pcimaketag(0, 16, 0);
+	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	val |= 16;
+	pcicfgwrite(ide, 0x3c, val);
 }
 
 void
