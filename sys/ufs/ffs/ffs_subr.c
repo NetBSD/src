@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.45.28.2 2011/02/08 16:20:05 bouyer Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.45.28.3 2011/02/08 21:29:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.45.28.2 2011/02/08 16:20:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.45.28.3 2011/02/08 21:29:45 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.45.28.2 2011/02/08 16:20:05 bouyer Ex
 extern const int inside[], around[];
 extern const u_char * const fragtbl[];
 
+#ifndef _KERNEL
+#define FFS_EI /* always include byteswapped filesystems support */
+#endif
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
