@@ -474,7 +474,7 @@ dmctl_table_reload(int argc, char *argv[], libdm_task_t task)
 	while ((params = parse_stdin(file_path)) != NULL) {
 		table = libdm_table_create();
 
-		sscanf(params, "%llu %llu %s %n", &start, &length, target, &len);
+		sscanf(params, "%"PRIu64" %"PRIu64" %s %n", &start, &length, target, &len);
 
 		libdm_table_set_start(start, table);
 		libdm_table_set_length(length, table);
