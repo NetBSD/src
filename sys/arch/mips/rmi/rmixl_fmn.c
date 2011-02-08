@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.1.2.5 2011/02/05 06:11:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.1.2.6 2011/02/08 06:03:56 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/cpu.h>
 #include <mips/cpuregs.h>
 #include <mips/rmi/rmixlreg.h>
@@ -404,8 +405,9 @@ rmixl_fmn_init(void)
 	fmn_t *fmnp;
 	static bool once=false;
 
-	KASSERT(cpu_number() == 0);
-	fmnp = fmn_lookup(cpu_number());
+	KASSERTMSG((CPU_IS_PRIMARY(curcpu())), ("ci=%p, index=%d\n",
+		curcpu(), cpu_index(curcpu())));
+	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 
 	if (once == true)
 		panic("%s: call only once!", __func__);
@@ -480,10 +482,10 @@ rmixl_fmn_init_core(void)
 	fmn_t *fmnp;
 	kmutex_t *lk;
 
-	fmnp = fmn_lookup(cpu_number());
+	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 	KASSERT(fmnp != NULL);
-	KASSERT(fmnp->fmn_core == RMIXL_CPU_CORE(cpu_number()));
-	KASSERT(fmnp->fmn_thread == RMIXL_CPU_THREAD(cpu_number()));
+	KASSERT(fmnp->fmn_core == RMIXL_CPU_CORE(curcpu()->ci_cpuid));
+	KASSERT(fmnp->fmn_thread == RMIXL_CPU_THREAD(curcpu()->ci_cpuid));
 
 	lk = mutex_obj_alloc(MUTEX_DEFAULT, RMIXL_FMN_INTR_IPL);
 	if (lk == NULL)
@@ -633,7 +635,7 @@ rmixl_fmn_init_cpu_intr(void)
 {
 	fmn_t *fmnp;
 
-	fmnp = fmn_lookup(cpu_number());
+	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 	mutex_enter(fmnp->fmn_lock);
 
 	for (int i=0; i < fmnp->fmn_nstid; i++)
@@ -665,7 +667,7 @@ rmixl_fmn_intr_establish(int txstid, int (*func)(void *, rmixl_fmn_rxmsg_t *), v
 	fmn_t *fmnp;
 	fmn_intrhand_t *ih;
 
-	fmnp = fmn_lookup(cpu_number());
+	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 
 	mutex_enter(fmnp->fmn_lock);
 
@@ -692,7 +694,7 @@ rmixl_fmn_intr_disestablish(void *cookie)
 	fmn_t *fmnp;
 	fmn_intrhand_t *ih = cookie;
 
-	fmnp = fmn_lookup(cpu_number());
+	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 	mutex_enter(fmnp->fmn_lock);
 
 	if (ih->ih_func != NULL) {
@@ -786,7 +788,7 @@ rmixl_fmn_msg_send(u_int size, u_int code, u_int dest_id, rmixl_fmn_msg_t *msg)
 	KASSERT(code <= 0xff);
 	KASSERT(dest_id <= 0xff);
 
-	fmnp = fmn_lookup(cpu_number());
+	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 	mutex_enter(fmnp->fmn_lock);
         cp0_status = rmixl_cp2_enable();
 
@@ -821,13 +823,13 @@ rmixl_fmn_msg_send(u_int size, u_int code, u_int dest_id, rmixl_fmn_msg_t *msg)
 			goto send;
 		DELAY(10);		/* XXX ??? */
 	}
-	DIAG_PRF(("%s: cpu=%ld, msg %p, dst_id=%d, sts=%#x: can't send\n",
+	DIAG_PRF(("%s: cpu%d, msg %p, dst_id=%d, sts=%#x: can't send\n",
 		__func__, cpu_number(), msg, dest_id, msg_status));
 	rv = -1;
 	goto out;
  send:
 	desc = RMIXL_MSGSND_DESC(size, code, dest_id);
-	DPRINTF(("%s: cpu %ld, desc %#x\n", __func__, cpu_number(), desc));
+	DPRINTF(("%s: cpu%d, desc %#x\n", __func__, cpu_number(), desc));
 	for (int try=16; try--; ) {
 		rmixl_msgsnd(desc);
 		RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 0, msg_status);
@@ -853,7 +855,7 @@ rmixl_fmn_msg_send(u_int size, u_int code, u_int dest_id, rmixl_fmn_msg_t *msg)
 			RMIXL_MTC2(RMIXL_COP_2_MSG_STS, 1, msg_status1);
 		}
 		DIAG_PRF(("%s: src=%ld, dst=%d, sts=%#x, %#x: send error, try %d\n",
-			__func__, cpu_number(), dest_id, msg_status, msg_status1, try));
+			__func__, curcpu()->ci_cpuid, dest_id, msg_status, msg_status1, try));
 		DELAY(10);
 	}
 	rv = -1;
@@ -876,7 +878,7 @@ rmixl_fmn_msg_recv(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 	fmn_t *fmnp;
 	int rv;
 
-	fmnp = fmn_lookup(cpu_number());
+	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 	mutex_enter(fmnp->fmn_lock);
 	rv = rmixl_fmn_msg_recv_subr(bucket, rxmsg);
 	mutex_exit(fmnp->fmn_lock);
@@ -897,7 +899,7 @@ rmixl_fmn_msg_recv_subr(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 	uint32_t msg_status;
 	int rv;
 
-	fmnp = fmn_lookup(cpu_number());
+	fmnp = fmn_lookup(curcpu()->ci_cpuid);
 	KASSERT(mutex_owned(fmnp->fmn_lock) != 0);
 
 	for (int try=16; try--; ) {
@@ -905,14 +907,14 @@ rmixl_fmn_msg_recv_subr(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 		if ((msg_status & (RMIXL_MSG_STS0_LPF)) == 0)
 			goto recv;
 	}
-	DIAG_PRF(("%s: cpu=%ld, bucket=%d, sts=%#x: Load Pending Fail\n",
+	DIAG_PRF(("%s: cpu%d, bucket=%d, sts=%#x: Load Pending Fail\n",
 		__func__, cpu_number(), bucket, msg_status));
 	rv = -1;
 	goto out;
  recv:
 	rmixl_msgld(bucket);
 	RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 0, msg_status);
-	DPRINTF(("%s: cpu=%ld, bucket=%d, sts=%#x\n",
+	DPRINTF(("%s: cpu%d, bucket=%d, sts=%#x\n",
 		__func__, cpu_number(), bucket, msg_status));
 	rv = msg_status & (RMIXL_MSG_STS0_LEF|RMIXL_MSG_STS0_LPF);
 	if (rv == 0) {
@@ -1146,7 +1148,7 @@ rmixl_fmn_cc_dump(void)
 	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+3, 0, &cc[3][0]);
 	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+3, 4, &cc[3][4]);
 
-	printf("%s: cpu %ld\n", __func__, cpu_number());
+	printf("%s: cpu%d\n", __func__, cpu_number());
 	for (int i=0; i < 4; i++) {
 		for (int j=0; j < 8; j++)
 			printf(" %#x,", cc[i][j]);
