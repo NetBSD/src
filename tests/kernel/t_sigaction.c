@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigaction.c,v 1.1 2010/07/14 21:47:06 jmmv Exp $ */
+/* $NetBSD: t_sigaction.c,v 1.1.2.1 2011/02/08 16:20:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sigaction.c,v 1.1 2010/07/14 21:47:06 jmmv Exp $");
+__RCSID("$NetBSD: t_sigaction.c,v 1.1.2.1 2011/02/08 16:20:09 bouyer Exp $");
 
 #include <sys/wait.h>
 
@@ -110,9 +110,6 @@ ATF_TC_BODY(sa_resethand, tc)
 	else if (pid == 0)
 		sa_resethand_child(SA_RESETHAND);
 	else {
-		if (strcmp("macppc", atf_config_get("atf_arch")) == 0)
-			atf_tc_expect_fail("PR port-macppc/43619");
-
 		wait_and_check_child(pid, "Child process did not exit cleanly; "
 		    "it either failed to process the signal or SA_RESETHAND is "
 		    "broken");

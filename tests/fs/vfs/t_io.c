@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.6 2011/01/03 09:35:33 pooka Exp $	*/
+/*	$NetBSD: t_io.c,v 1.6.2.1 2011/02/08 16:20:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -117,10 +117,54 @@ extendfile_append(const atf_tc_t *tc, const char *mp)
 	extendbody(tc, 37);
 }
 
+static void
+overwritebody(const atf_tc_t *tc, off_t count, bool dotrunc)
+{
+	char *buf;
+	int fd;
+
+	REQUIRE_LIBC(buf = malloc(count), NULL);
+	FSTEST_ENTER();
+	RL(fd = rump_sys_open("testi", O_CREAT | O_RDWR));
+	ATF_REQUIRE_EQ(rump_sys_write(fd, buf, count), count);
+	RL(rump_sys_close(fd));
+
+	RL(fd = rump_sys_open("testi", O_CREAT | O_RDWR));
+	if (dotrunc)
+		RL(rump_sys_ftruncate(fd, 0));
+	ATF_REQUIRE_EQ(rump_sys_write(fd, buf, count), count);
+	RL(rump_sys_close(fd));
+	FSTEST_EXIT();
+}
+
+static void
+overwrite512(const atf_tc_t *tc, const char *mp)
+{
+
+	overwritebody(tc, 512, false);
+}
+
+static void
+overwrite64k(const atf_tc_t *tc, const char *mp)
+{
+
+	overwritebody(tc, 1<<16, false);
+}
+
+static void
+overwrite_trunc(const atf_tc_t *tc, const char *mp)
+{
+
+	overwritebody(tc, 1<<16, true);
+}
+
 ATF_TC_FSAPPLY(holywrite, "create a sparse file and fill hole");
 ATF_TC_FSAPPLY(extendfile, "check that extending a file works");
 ATF_TC_FSAPPLY(extendfile_append, "check that extending a file works "
 				  "with a append-only fd");
+ATF_TC_FSAPPLY(overwrite512, "write a 512 byte file twice");
+ATF_TC_FSAPPLY(overwrite64k, "write a 64k byte file twice");
+ATF_TC_FSAPPLY(overwrite_trunc, "write 64k + truncate + rewrite");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -128,6 +172,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(holywrite);
 	ATF_TP_FSAPPLY(extendfile);
 	ATF_TP_FSAPPLY(extendfile_append);
+	ATF_TP_FSAPPLY(overwrite512);
+	ATF_TP_FSAPPLY(overwrite64k);
+	ATF_TP_FSAPPLY(overwrite_trunc);
 
 	return atf_no_error();
 }

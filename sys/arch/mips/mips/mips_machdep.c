@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.231 2011/01/14 02:06:28 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.231.4.1 2011/02/08 16:19:28 bouyer Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.231 2011/01/14 02:06:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.231.4.1 2011/02/08 16:19:28 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -493,6 +493,10 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
 	  CIDFL_RMI_TYPE_XLS,			"XLS408LITE"		},
 
+	/* Microsoft Research' extensible MIPS */
+	{ MIPS_PRID_CID_MICROSOFT, MIPS_eMIPS, 1, -1, CPU_ARCH_MIPS1, 64,
+	  CPU_MIPS_NO_WAIT, 0, 0,		"eMIPS CPU"		},
+
 	{ 0, 0, 0,				0, 0, 0,
 	  0, 0, 0,				NULL			}
 };
@@ -518,7 +522,7 @@ static const char * const cidnames[] = {
 	"SiByte",	/* or "Broadcom Corp. (SiByte)"	*/
 	"SandCraft",
 	"Phillips",
-	"Toshiba",
+	"Toshiba or Microsoft",
 	"LSI",
 	"(unannounced)",
 	"(unannounced)",
@@ -1645,12 +1649,12 @@ void
 mips_init_lwp0_uarea(void)
 {
 	vaddr_t v;
-	struct pcb * pcb0;
+	struct pcb *pcb0;
 
 	v = uvm_pageboot_alloc(USPACE);
 	uvm_lwp_setuarea(&lwp0, v);
 
-	pcb0  = lwp_getpcb(&lwp0);
+	pcb0 = lwp_getpcb(&lwp0);
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	/*
 	 * Now zero out the only two areas of the uarea that we care about.

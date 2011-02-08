@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.71 2010/12/22 01:34:17 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.71.4.1 2011/02/08 16:19:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -826,10 +826,11 @@ LEAF_NOPROFILE(mips1_TLBMissException)
 	rfe
 
 outofworld:
+	mfc0	a1, MIPS_COP_0_BAD_VADDR	# get the fault address
 	/* Ensure we have a valid sp so panic has a chance */
-	move	a1, sp
+	move	a2, sp
 	la	sp, start			# set sp to a valid place
-	PANIC("TLB out of universe: ksp was %p")
+	PANIC("TLB v=%p out of universe: ksp was %p")
 	.set	at
 END(mips1_TLBMissException)
 
@@ -933,6 +934,41 @@ LEAF(mips1_TLBRead)
 	j	ra
 	sw	t3, 4(a1)
 END(mips1_TLBRead)
+
+/*--------------------------------------------------------------------------
+ *
+ * mips1_TLBWrite --
+ *
+ *	Write the TLB entry.
+ *
+ *	mips1_TLBWrite(entry, tlb)
+ *		unsigned entry;
+ *		struct mips1_tlb *tlb;
+ *
+ * Results:
+ *	None.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(mips1_TLBWrite)
+	lw	t2, 0(a1)                       # fetch the hi entry
+	lw	t3, 4(a1)                       # fetch the low entry
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
+
+	sll	a0, a0, MIPS1_TLB_INDEX_SHIFT
+	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
+	nop
+	mtc0	t2, MIPS_COP_0_TLB_HI		
+	mtc0	t3, MIPS_COP_0_TLB_LOW		
+	
+	tlbwi					# Write to the TLB entry
+
+	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+END(mips1_TLBWrite)
 
 /*----------------------------------------------------------------------------
  *

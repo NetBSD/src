@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.146 2011/01/17 14:53:42 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.146.2.1 2011/02/08 16:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2011/01/17 14:53:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146.2.1 2011/02/08 16:19:22 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -367,7 +367,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		fp->f_stackadj = exframesize[fp->f_format];
 		fp->f_format = fp->f_vector = 0;
 		fp->f_pc = (int)onfault;
-		fp->f_regs[D0] = rv;		
+		fp->f_regs[D0] = rv;
 		return;
 
 	case T_BUSERR|T_USER:	/* bus error */

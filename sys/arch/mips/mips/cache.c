@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.42 2009/08/11 02:38:30 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.42.8.1 2011/02/08 16:19:28 bouyer Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.42 2009/08/11 02:38:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.42.8.1 2011/02/08 16:19:28 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -180,9 +180,20 @@ void	mips4_get_cache_config(int);
 
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
 static void mips_config_cache_prehistoric(void);
+static void mips_config_cache_emips(void);
 #endif
 #if defined(MIPS32) || defined(MIPS64)
 static void mips_config_cache_modern(void);
+#endif
+
+#if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
+/* no-cache definition */
+static void no_cache_op(void);
+static void no_cache_op_range(vaddr_t va, vsize_t size);
+
+/* no-cache implementation */
+static void no_cache_op(void) {}
+static void no_cache_op_range(vaddr_t va, vsize_t size) {}
 #endif
 
 /*
@@ -221,6 +232,8 @@ mips_config_cache(void)
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC)
 		mips_config_cache_prehistoric();
+	else if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_MICROSOFT)
+		mips_config_cache_emips();
 #endif
 #if defined(MIPS32) || defined(MIPS64)
 	if (MIPS_PRID_CID(cpu_id) != MIPS_PRID_CID_PREHISTORIC)
@@ -876,6 +889,55 @@ primary_cache_is_2way:
 
 	mips_dcache_compute_align();
 }
+
+#if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
+void
+mips_config_cache_emips(void)
+{
+	KASSERT(PAGE_SIZE != 0);
+
+	/*
+	 * Configure primary caches.
+	 */
+	switch (MIPS_PRID_IMPL(cpu_id)) {
+	case MIPS_eMIPS:
+		mips_picache_size = 0;
+		mips_pdcache_size = 0;
+
+		mips_picache_line_size = 4;
+		mips_pdcache_line_size = 4;
+
+		mips_picache_ways = 1;
+		mips_pdcache_ways = 1;
+
+		mips_pdcache_write_through = 1;
+
+		mips_cache_ops.mco_icache_sync_all =
+		    no_cache_op;
+		mips_cache_ops.mco_icache_sync_range =
+		    no_cache_op_range;
+		mips_cache_ops.mco_icache_sync_range_index =
+		    mips_cache_ops.mco_icache_sync_range;
+
+		mips_cache_ops.mco_pdcache_wbinv_all =
+		    no_cache_op;
+		mips_cache_ops.mco_pdcache_wbinv_range =
+		    no_cache_op_range;
+		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		    mips_cache_ops.mco_pdcache_wbinv_range;
+		mips_cache_ops.mco_pdcache_inv_range =
+		    no_cache_op_range;
+		mips_cache_ops.mco_pdcache_wb_range =
+		    no_cache_op_range;
+
+		uvmexp.ncolors = 1;
+		break;
+
+	default:
+		panic("mips_config_cache: unsupported eMIPS");
+	}
+}
+#endif
 
 #ifdef MIPS1
 #ifdef ENABLE_MIPS_TX3900

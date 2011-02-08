@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215 2011/01/17 14:36:33 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215.2.1 2011/02/08 16:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,13 +77,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2011/01/17 14:36:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215.2.1 2011/02/08 16:19:22 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
-#include "hil.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,9 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2011/01/17 14:36:33 tsutsui Exp $"
 
 #include "opt_useleds.h"
 
-#include <hp300/dev/hilreg.h>
-#include <hp300/dev/hilioctl.h>
-#include <hp300/dev/hilvar.h>
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif

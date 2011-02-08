@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.146 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.146.4.1 2011/02/08 16:20:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -17,12 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and
- *      its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -67,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.146 2011/01/14 02:06:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.146.4.1 2011/02/08 16:20:06 bouyer Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"

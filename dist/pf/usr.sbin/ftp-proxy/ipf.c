@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.2 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$NetBSD: ipf.c,v 1.2.16.1 2011/02/08 16:18:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,30 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "ipf.h"
+#include "filter.h"
+
+void ipf_init_filter(char *, char *, int);
+int ipf_add_filter(u_int32_t, u_int8_t, struct sockaddr *, struct sockaddr *,
+    u_int16_t);
+int ipf_add_nat(u_int32_t, struct sockaddr *, struct sockaddr *, u_int16_t,
+    struct sockaddr *, u_int16_t, u_int16_t);
+int ipf_add_rdr(u_int32_t, struct sockaddr *, struct sockaddr *, u_int16_t,
+    struct sockaddr *, u_int16_t);
+int ipf_server_lookup(struct sockaddr *, struct sockaddr *, struct sockaddr *);
+int ipf_prepare_commit(u_int32_t);
+int ipf_do_commit(void);
+int ipf_do_rollback(void);
+
+const ftp_proxy_ops_t ipf_fprx_ops = {
+	.init_filter	= ipf_init_filter,
+	.add_filter	= ipf_add_filter,
+	.add_nat	= ipf_add_nat,
+	.add_rdr	= ipf_add_rdr,
+	.server_lookup	= ipf_server_lookup,
+	.prepare_commit	= ipf_prepare_commit,
+	.do_commit	= ipf_do_commit,
+	.do_rollback	= ipf_do_rollback
+};
 
 /* From netinet/in.h, but only _KERNEL_ gets them. */
 #define	satosin(sa)	((struct sockaddr_in *)(sa))

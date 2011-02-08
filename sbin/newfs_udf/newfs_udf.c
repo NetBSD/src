@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.9 2011/01/04 23:42:48 wiz Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.9.2.1 2011/02/08 16:19:06 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -573,7 +573,7 @@ udf_derive_format(int req_enable, int req_disable, int force)
 
 	/* enable/disable requests */
 	if (req_disable & FORMAT_META) {
-		format_flags &= ~FORMAT_META;
+		format_flags &= ~(FORMAT_META | FORMAT_LOW);
 		req_disable  &= ~FORMAT_META;
 	}
 	if (req_disable || req_enable) {
@@ -608,7 +608,8 @@ udf_derive_format(int req_enable, int req_disable, int force)
 		context.min_udf = MAX(context.min_udf, 0x0260);
 
 	/* adjust maximum version limits not to tease or break things */
-	if (!(format_flags & FORMAT_META) && (context.max_udf > 0x200))
+	if (!(format_flags & (FORMAT_META | FORMAT_LOW)) &&
+	    (context.max_udf > 0x200))
 		context.max_udf = 0x201;
 
 	if ((format_flags & (FORMAT_VAT | FORMAT_SPARABLE)) == 0)
@@ -1549,7 +1550,7 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	/* Formatting can only be done on raw devices */
+	/* formatting can only be done on raw devices */
 	if (!S_ISCHR(st.st_mode)) {
 		printf("%s is not a raw device\n", dev);
 		close(fd);

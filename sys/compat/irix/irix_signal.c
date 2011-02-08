@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.55 2011/01/14 02:06:33 rmind Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.55.4.1 2011/02/08 16:19:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.55 2011/01/14 02:06:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.55.4.1 2011/02/08 16:19:46 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -706,6 +706,8 @@ irix_sys_getcontext(struct lwp *l, const struct irix_sys_getcontext_args *uap, r
 	int i, error;
 
 	f = (struct frame *)l->l_md.md_regs;
+
+	memset(&kucp, 0, sizeof(kucp));
 
 	kucp.iuc_flags = IRIX_UC_ALL;
 	kucp.iuc_link = NULL;		/* XXX */

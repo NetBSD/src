@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.20 2010/12/20 00:25:42 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.20.4.1 2011/02/08 16:19:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20 2010/12/20 00:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20.4.1 2011/02/08 16:19:37 bouyer Exp $");
 
 #include "opt_pci.h"
 
@@ -94,6 +94,7 @@ static int brdtype;
 #define BRD_KUROBOX		100
 #define BRD_QNAPTS101		101
 #define BRD_SYNOLOGY		102
+#define BRD_STORCENTER		103
 #define BRD_UNKNOWN		-1
 
 #define	PCI_CONFIG_ENABLE	0x80000000UL
@@ -103,7 +104,7 @@ pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
 	pcitag_t tag;
-	pcireg_t dev11, dev22, dev15;
+	pcireg_t dev11, dev22, dev15, dev13;
 
 	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 11, 0);
 	dev11 = pci_conf_read(pba->pba_pc, tag, PCI_CLASS_REG);
@@ -142,6 +143,14 @@ pci_attach_hook(struct device *parent, struct device *self,
 		brdtype = BRD_SYNOLOGY;
 		return;
 	}
+	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 13, 0);
+	dev13 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(dev13) == PCI_VENDOR_VIATECH) {
+		/* VIA 6410 PCIIDE at dev 13 */
+		brdtype = BRD_STORCENTER;
+		return;
+	}
+	
 	brdtype = BRD_UNKNOWN;
 }
 
@@ -327,6 +336,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		/* map line 12,13-15 to EPIC IRQ4,0-2 */
 		*ihp = (line == 12) ? 4 : line - 13;
 		break;
+	case BRD_STORCENTER:
 	default:
 		/* map line 12-15 to EPIC IRQ0-3 */
 		*ihp = line - 12;

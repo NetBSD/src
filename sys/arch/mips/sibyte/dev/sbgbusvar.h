@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbusvar.h,v 1.2 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbgbusvar.h,v 1.2.138.1 2011/02/08 16:19:29 bouyer Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -38,7 +38,7 @@
 struct sbgbus_attach_args {
 	/* from locators */
 	u_int		sga_chipsel;
-	u_int		sga_offset;
+	u_long		sga_offset;
 	u_int		sga_intr[2];
 
 	/* calculated by sbgbus */

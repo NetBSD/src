@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.27 2010/11/02 18:14:06 chs Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.27.4.1 2011/02/08 16:19:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.27 2010/11/02 18:14:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.27.4.1 2011/02/08 16:19:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -433,11 +433,11 @@ linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
 		return EINVAL;
 
 	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
-	    !(scp->sc_fs == GSEL(GUFS_SEL, SEL_UPL) && pcb->pcb_fs != 0))
+	    !(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
 		return EINVAL;
 
 	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
-	    !(scp->sc_gs == GSEL(GUGS_SEL, SEL_UPL) && pcb->pcb_gs != 0))
+	    !(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
 		return EINVAL;
 
 	if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))

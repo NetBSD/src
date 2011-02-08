@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.110 2010/07/29 10:54:51 hannken Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.110.4.1 2011/02/08 16:20:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -13,12 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -43,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.110 2010/07/29 10:54:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.110.4.1 2011/02/08 16:20:06 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -393,8 +387,6 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 static void
 uao_free(struct uvm_aobj *aobj)
 {
-	int swpgonlydelta = 0;
-
 
 #if defined(VMSWAP)
 	uao_dropswap_range1(aobj, 0, 0);
@@ -426,18 +418,6 @@ uao_free(struct uvm_aobj *aobj)
 
 	UVM_OBJ_DESTROY(&aobj->u_obj);
 	pool_cache_put(&uvm_aobj_cache, aobj);
-
-	/*
-	 * adjust the counter of pages only in swap for all
-	 * the swap slots we've freed.
-	 */
-
-	if (swpgonlydelta > 0) {
-		mutex_enter(&uvm_swap_data_lock);
-		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
-		uvmexp.swpgonly -= swpgonlydelta;
-		mutex_exit(&uvm_swap_data_lock);
-	}
 }
 
 /*

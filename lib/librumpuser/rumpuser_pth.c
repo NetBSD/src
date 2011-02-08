@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.6 2010/12/01 17:22:51 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.6.2.1 2011/02/08 16:19:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.6 2010/12/01 17:22:51 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.6.2.1 2011/02/08 16:19:04 bouyer Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -58,7 +58,7 @@ do {									\
 	if (fail_rv) {							\
 		printf("panic: rumpuser fatal failure %d (%s)\n",	\
 		    fail_rv, strerror(fail_rv));			\
-		    abort();						\
+		abort();						\
 	}								\
 } while (/*CONSTCOND*/0)
 

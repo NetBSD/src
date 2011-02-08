@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.6 2006/01/28 12:00:57 tsutsui Exp $	*/
+/*	$NetBSD: ite_tc.c,v 1.6.106.1 2011/02/08 16:19:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -80,9 +80,9 @@
 
 #include <sys/param.h>
 
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grfreg.h>
-#include <hp300/dev/grf_tcreg.h>
+#include <hp300/stand/common/itereg.h>
+#include <hp300/stand/common/grfreg.h>
+#include <hp300/stand/common/grf_tcreg.h>
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>

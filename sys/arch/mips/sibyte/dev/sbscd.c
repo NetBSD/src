@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.15 2009/08/12 12:56:29 simonb Exp $ */
+/* $NetBSD: sbscd.c,v 1.15.8.1 2011/02/08 16:19:29 bouyer Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.15 2009/08/12 12:56:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.15.8.1 2011/02/08 16:19:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,10 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.15 2009/08/12 12:56:29 simonb Exp $");
 
 #include "locators.h"
 
-static int	sbscd_match(struct device *, struct cfdata *, void *);
-static void	sbscd_attach(struct device *, struct device *, void *);
+static int	sbscd_match(device_t, cfdata_t, void *);
+static void	sbscd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sbscd, sizeof(struct device),
+CFATTACH_DECL_NEW(sbscd, 0,
     sbscd_match, sbscd_attach, NULL, NULL);
 
 static int	sbscd_print(void *, const char *);
@@ -88,7 +88,7 @@ static const struct sbscd_attach_locs sb1250_sbscd_devs[] = {
 static const int sb1250_sbscd_dev_count = __arraycount(sb1250_sbscd_devs);
 
 static int
-sbscd_match(struct device *parent, struct cfdata *match, void *aux)
+sbscd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct zbbus_attach_args *zap = aux;
 
@@ -99,13 +99,13 @@ sbscd_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sbscd_attach(struct device *parent, struct device *self, void *aux)
+sbscd_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbscd_attach_args sa;
 	int i;
 	int locs[SBSCDCF_NLOCS];
 
-	printf("\n");
+	aprint_normal("\n");
 
 	for (i = 0; i < sb1250_sbscd_dev_count; i++) {
 		memset(&sa, 0, sizeof sa);

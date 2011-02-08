@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.210 2011/01/14 10:18:21 martin Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.210.4.1 2011/02/08 16:19:59 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.210 2011/01/14 10:18:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.210.4.1 2011/02/08 16:19:59 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -111,14 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.210 2011/01/14 10:18:21 martin E
 #include <sys/disk.h>
 
 #include <machine/limits.h>
-
-#if defined(__i386__) && defined(_KERNEL_OPT)
-#include "opt_splash.h"
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-#include <dev/splash/splash.h>
-extern struct splash_progress *splash_progress_state;
-#endif
-#endif
 
 /*
  * Autoconfiguration subroutines.
@@ -1048,11 +1040,6 @@ config_found_sm_loc(device_t parent,
 {
 	cfdata_t cf;
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
-
 	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
@@ -1060,11 +1047,6 @@ config_found_sm_loc(device_t parent,
 			twiddle();
 		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
 	}
-
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 
 	return NULL;
 }
@@ -1418,11 +1400,6 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	struct cftable *ct;
 	const char *drvname;
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
-
 	dev = config_devalloc(parent, cf, locs);
 	if (!dev)
 		panic("config_attach: allocation of device softc failed");
@@ -1468,31 +1445,19 @@ config_attach_loc(device_t parent, cfdata_t cf,
 			}
 		}
 	}
-#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
-#endif
 
 	/* Let userland know */
 	devmon_report_device(dev, true);
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 	(*dev->dv_cfattach->ca_attach)(parent, dev, aux);
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 
 	if (!device_pmf_is_registered(dev))
 		aprint_debug_dev(dev, "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
 
-#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
 	device_register_post_config(dev, aux);
-#endif
 	return dev;
 }
 
@@ -1531,9 +1496,7 @@ config_attach_pseudo(cfdata_t cf)
 	config_devlink(dev);
 
 #if 0	/* XXXJRT not yet */
-#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, NULL);	/* like a root node */
-#endif
 #endif
 	(*dev->dv_cfattach->ca_attach)(ROOT, dev, NULL);
 	config_process_deferred(&deferred_config_queue, dev);
@@ -1700,8 +1663,14 @@ out:
 	config_alldevs_enter(&af);
 	KASSERT(alldevs_nwrite != 0);
 	--alldevs_nwrite;
-	if (rv == 0 && dev->dv_del_gen == 0)
-		config_devunlink(dev, &af.af_garbage);
+	if (rv == 0 && dev->dv_del_gen == 0) {
+		if (alldevs_nwrite == 0 && alldevs_nread == 0)
+			config_devunlink(dev, &af.af_garbage);
+		else {
+			dev->dv_del_gen = alldevs_gen;
+			alldevs_garbage = true;
+		}
+	}
 	config_alldevs_exit(&af);
 
 	return rv;

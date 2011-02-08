@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.9 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9.2.1 2011/02/08 16:19:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ typedef	__greg_t	__gregset_t[_NGREG];
 #define	_REG_PC		34		/* PC (copy of SRR0) */
 #define	_REG_MSR	35		/* MSR (copy of SRR1) */
 #define	_REG_CTR	36		/* Count Register */
-#define	_REG_XER	37		/* Integet Exception Reigster */
+#define	_REG_XER	37		/* Integer Exception Register */
 #define	_REG_MQ		38		/* MQ Register (POWER only) */
 
 typedef struct {
@@ -98,7 +98,10 @@ typedef struct {
 		unsigned char	__vr8[16];
 		unsigned short	__vr16[8];
 		unsigned int	__vr32[4];
-	} 		__vrs[_NVR] __attribute__((__aligned__(16)));
+		unsigned char	__spe8[8];
+		unsigned short	__spe16[4];
+		unsigned int	__spe32[2];
+	} 		__vrs[_NVR] __aligned(16);
 	unsigned int	__vscr;		/* VSCR */
 	unsigned int	__vrsave;	/* VRSAVE */
 } __vrf_t;

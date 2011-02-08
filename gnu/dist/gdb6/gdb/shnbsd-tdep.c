@@ -286,14 +286,14 @@ shnbsd_get_next_pc (CORE_ADDR pc)
     {
       sr = read_register (SR_REGNUM);
 
+      delay_slot = CONDITIONAL_BRANCH_SLOT_P(insn);
       if (!CONDITIONAL_BRANCH_TAKEN_P(insn, sr))
-	next_pc = pc + 2;
+	next_pc = pc + (delay_slot ? 4 : 2);
       else
 	{
 	  displacement = shnbsd_displacement_8 (insn);
 
 	  next_pc = pc + 4 + (displacement << 1);
-	  delay_slot = CONDITIONAL_BRANCH_SLOT_P(insn);
 	}
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.9 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.9.30.1 2011/02/08 16:19:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.9 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.9.30.1 2011/02/08 16:19:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +70,9 @@ CFATTACH_DECL_NEW(com_mainbus, sizeof(struct com_mainbus_softc),
 int
 com_mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
-	extern struct cfdriver com_cd;
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ma->ma_name, com_cd.cd_name) == 0)
+	if (strcmp(ma->ma_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);
@@ -85,13 +84,20 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args *ma = aux;
 	struct com_mainbus_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
+	const bus_space_tag_t iot = 0;
+	bus_space_handle_t ioh;
 
+	if (!com_is_console(iot, ma->ma_addr1, &ioh))
+		if (bus_space_map(iot, ma->ma_addr1, COM_NPORTS, 0, &ioh)) {
+			aprint_error(": can't map i/o space\n");
+			return;
+		}
 	csc->sc_dev = self;
 	csc->sc_frequency = COM_FREQ;
-	COM_INIT_REGS(csc->sc_regs, 0, ma->ma_addr1, 0);
+	COM_INIT_REGS(csc->sc_regs, iot, ioh, ma->ma_addr1);
 
 	/* sanity check */
-	if (!comprobe1(0, ma->ma_addr1)) {
+	if (!comprobe1(iot, ioh)) {
 		aprint_error(": device problem. don't attach.\n");
 		return;
 	}
@@ -115,7 +121,8 @@ comcnprobe(struct consdev *cp)
 void
 comcninit(struct consdev *cp)
 {
+	const bus_space_tag_t iot = 0;
 
-	comcnattach(0, CONADDR, COMCN_SPEED, COM_FREQ, COM_TYPE_NORMAL,
+	comcnattach(iot, CONADDR, COMCN_SPEED, COM_FREQ, COM_TYPE_NORMAL,
 	    CONMODE);
 }

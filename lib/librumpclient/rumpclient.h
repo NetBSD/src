@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.2 2011/01/05 17:14:50 pooka Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.2.2.1 2011/02/08 16:19:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -28,6 +28,8 @@
 #ifndef _RUMP_RUMPCLIENT_H_
 #define _RUMP_RUMPCLIENT_H_
 
+#include <sys/types.h>
+
 __BEGIN_DECLS
 
 int rumpclient_syscall(int, const void *, size_t, register_t *);
@@ -36,6 +38,11 @@ int rumpclient_init(void);
 struct rumpclient_fork;
 struct rumpclient_fork *rumpclient_prefork(void);
 int			rumpclient_fork_init(struct rumpclient_fork *);
+
+#define RUMPCLIENT_RETRYCONN_INFTIME ((time_t)-1)
+#define RUMPCLIENT_RETRYCONN_ONCE ((time_t)-2)
+#define RUMPCLIENT_RETRYCONN_DIE ((time_t)-3)
+void rumpclient_setconnretry(time_t);
 
 __END_DECLS
 

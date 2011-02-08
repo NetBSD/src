@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.7 2011/01/18 20:33:46 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.7.2.1 2011/02/08 16:20:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.7 2011/01/18 20:33:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.7.2.1 2011/02/08 16:20:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -952,9 +952,12 @@ npf_session_save(prop_array_t selist, prop_array_t nplist)
 			sedict = prop_dictionary_create();
 			sd = prop_data_create_data(se, sizeof(npf_session_t));
 			prop_dictionary_set(sedict, "data", sd);
+			prop_object_release(sd);
+
 			CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-			prop_dictionary_set(sedict, "id-ptr",
-			    prop_number_create_unsigned_integer((uintptr_t)se));
+			prop_dictionary_set_uint64(
+			    sedict, "id-ptr", (uintptr_t)se);
+
 			if (se->s_nat) {
 				/* Save NAT entry and policy, if any. */
 				error = npf_nat_save(sedict, nplist, se->s_nat);
@@ -964,6 +967,7 @@ npf_session_save(prop_array_t selist, prop_array_t nplist)
 				}
 			}
 			prop_array_add(selist, sedict);
+			prop_object_release(sedict);
 		}
 		rw_exit(&sh->sh_lock);
 		if (error) {

@@ -353,6 +353,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	   dprintf( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
 		vp, NN(vp->nval), t,t, vp->tval, donerec, donefld) );
 
+	vp->sval = t;
 	if (&vp->fval == NF) {
 		donerec = 0;	/* mark $0 invalid */
 		f = getfval(vp);
@@ -360,7 +361,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 		dprintf( ("setting NF to %g\n", f) );
 	}
 
-	return(vp->sval = t);
+	return(vp->sval);
 }
 
 Awkfloat getfval(Cell *vp)	/* get float val of a Cell */

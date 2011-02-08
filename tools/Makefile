@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.140 2010/08/15 07:27:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.140.2.1 2011/02/08 16:20:10 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -63,6 +63,16 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		.WAIT installboot \
 		pwd_mkdb stat strfile sunlabel zic
 
+.if ${MKLLVM} != "no"
+SUBDIR+= \
+	llvm .WAIT \
+	llvm-lib/libLLVMSupport .WAIT \
+	llvm-tblgen .WAIT \
+	llvm-include .WAIT \
+	llvm-lib .WAIT \
+	llvm-clang
+.endif
+
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"
 .  if ${MKGROFF} != "no"
 SUBDIR+=	groff
@@ -119,7 +129,7 @@ SUBDIR+=	amiga-txlt
 SUBDIR+=	hp300-mkboot
 .endif
 
-.if ${MACHINE} == "evbarm"
+.if ${MACHINE} == "evbarm" || ${MACHINE} == "evbmips" || ${MACHINE} == "evbppc"
 SUBDIR+=	mkubootimage
 .endif
 

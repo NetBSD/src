@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.4 2010/07/10 07:48:25 kiyohara Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.4.2.1 2011/02/08 16:20:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.4 2010/07/10 07:48:25 kiyohara Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.4.2.1 2011/02/08 16:20:11 bouyer Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -65,6 +65,8 @@ struct uboot_arch {
 	const char *name;
 } uboot_arch[] = {
 	{ IH_ARCH_ARM,		"arm" },
+	{ IH_ARCH_MIPS,		"mips" },
+	{ IH_ARCH_MIPS64,	"mips64" },
 	{ IH_ARCH_PPC,		"powerpc" },
 };
 
@@ -128,7 +130,7 @@ get_comp(const char *name)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: mkubootimage -A <arm|powerpc>");
+	fprintf(stderr, "usage: mkubootimage -A <arm|mips|mips64|powerpc>");
 	fprintf(stderr, " -T <kernel|ramdisk|fs>");
 	fprintf(stderr, " -C <none|gz|bz2>");
 	fprintf(stderr, " -a <addr> [-e <ep>] -n <name>");

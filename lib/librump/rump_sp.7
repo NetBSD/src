@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_sp.7,v 1.2 2010/12/16 17:17:07 wiz Exp $
+.\"     $NetBSD: rump_sp.7,v 1.2.2.1 2011/02/08 16:19:04 bouyer Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -23,8 +23,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 16, 2010
-.Dt RUMP_SP 3
+.Dd February 7, 2011
+.Dt RUMP_SP 7
 .Os
 .Sh NAME
 .Nm rump_sp
@@ -79,6 +79,16 @@ To keep track of which rump kernel the current shell is using,
 modifying the shell prompt is recommended -- this is analoguous
 to the visual clue you have when you login from one machine to
 another.
+.Ss Client credentials and access control
+The current scheme gives all connecting clients root credentials.
+It is recommended to take precautions which prevent unauthorized
+access.
+For a unix domain socket it is enough to prevent access to the
+socket using file system permissions.
+For TCP/IP sockets the only available means is to prevent network
+access to the socket with the use of firewalls.
+More fine-grained access control based on cryptographic credentials
+may be implemented at a future date.
 .Sh EXAMPLES
 Get a list of file systems supported by a rump kernel server
 (in case that particular server does not support file systems,

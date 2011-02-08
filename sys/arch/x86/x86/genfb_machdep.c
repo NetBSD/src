@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.4 2010/04/28 19:17:04 dyoung Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.4.4.1 2011/02/08 16:19:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,16 +31,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.4 2010/04/28 19:17:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.4.4.1 2011/02/08 16:19:45 bouyer Exp $");
+
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
+#include <machine/mtrr.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -69,6 +73,40 @@ static struct wsscreen_descr x86_genfb_stdscreen = {
 	0,
 	NULL
 };
+
+void
+x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)
+{
+#ifdef MTRR
+	struct mtrr mtrr;
+	int error, n;
+
+	if (mtrr_funcs == NULL) {
+		aprint_debug("%s: no mtrr funcs\n", __func__);
+		return;
+	}
+
+	mtrr.base = physaddr;
+	mtrr.len = size;
+	mtrr.type = MTRR_TYPE_WC;
+	mtrr.flags = MTRR_VALID;
+	mtrr.owner = 0;
+
+	aprint_debug("%s: 0x%llx-0x%llx\n", __func__,
+	    mtrr.base, mtrr.base + mtrr.len - 1);
+
+	n = 1;
+	KERNEL_LOCK(1, NULL);
+	error = mtrr_set(&mtrr, &n, curlwp->l_proc, MTRR_GETSET_KERNEL);
+	if (n != 0)
+		mtrr_commit();
+	KERNEL_UNLOCK_ONE(NULL);
+
+	aprint_debug("%s: mtrr_set returned %d\n", __func__, error);
+#else
+	aprint_debug("%s: kernel lacks MTRR option\n", __func__);
+#endif
+}
 
 int
 x86_genfb_cnattach(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: channel.c,v 1.3 2009/05/12 21:08:30 plunky Exp $	*/
+/*	$NetBSD: channel.c,v 1.3.2.1 2011/02/08 16:20:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: channel.c,v 1.3 2009/05/12 21:08:30 plunky Exp $");
+__RCSID("$NetBSD: channel.c,v 1.3.2.1 2011/02/08 16:20:13 bouyer Exp $");
 
 #include <sys/ioctl.h>
 
@@ -312,7 +312,7 @@ channel_watchdog(int fd, short ev, void *arg)
 			channel_tick = tick;
 	}
 
-	if (channel_tick != 0 && evtimer_add(arg, &tv) < 0) {
+	if (channel_tick != 0 && evtimer_add(arg, &tv) == -1) {
 		log_err("Could not add watchdog event: %m");
 		exit(EXIT_FAILURE);
 	}

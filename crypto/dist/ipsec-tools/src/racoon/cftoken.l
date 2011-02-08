@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.22 2010/09/24 15:09:29 vanhu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.22.2.1 2011/02/08 16:18:29 bouyer Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -580,7 +580,7 @@ no		{ YYD; yylval.num = FALSE; return(BOOLEAN); }
 			char *bp;
 
 			YYD;
-			yylval.num = strtol(yytext, &bp, 10);
+			yylval.num = strtoul(yytext, &bp, 10);
 			return(NUMBER);
 		}
 

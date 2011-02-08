@@ -1,4 +1,4 @@
-/* $Id: saslc_private.h,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: saslc_private.h,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,27 +39,31 @@
 #define _SASLC_PRIVATE_H_
 
 #include <saslc.h>
-#include <stdint.h>
+#include <sys/queue.h>
 #include "dict.h"
 #include "mech.h"
 #include "error.h"
 
+typedef struct saslc__sess_list_t saslc__sess_list_t;
+LIST_HEAD(saslc__sess_list_t, saslc_sess_t);
+
 /** library context structure */
 struct saslc_t {
-	const char *appname; /**< application name */
-	saslc__dict_t *prop; /**< configuration options */
-	saslc__mech_list_t *mechanisms; /**< avaiable mechanisms */
-	uint32_t refcnt; /**< reference count */
-	saslc__error_t err; /**< error */
+	char *appname;                  /**< application name */
+	saslc__dict_t *prop;            /**< configuration options */
+	saslc__mech_list_t mechanisms;  /**< available mechanisms */
+	saslc__error_t err;             /**< error */
+        saslc__sess_list_t sessions;    /**< sessions */
 };
 
 /** session context structure */
 struct saslc_sess_t {
-	saslc_t *context; /**< library context */
-	const saslc__mech_t *mech; /**< mechanism */
-	void *mech_sess; /**< mechanism session */
-	saslc__dict_t *prop; /**< session properties */
-	saslc__error_t err; /**< error */
+	saslc_t *context;               /**< library context */
+	const saslc__mech_t *mech;      /**< mechanism */
+	void *mech_sess;                /**< mechanism session */
+	saslc__dict_t *prop;            /**< session properties */
+	saslc__error_t err;             /**< error */
+        LIST_ENTRY(saslc_sess_t) nodes; /**< nodes */
 };
 
 #endif /* ! _SASLC_PRIVATE_H_ */

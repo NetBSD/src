@@ -1,4 +1,4 @@
-#	$NetBSD: t_md.sh,v 1.5 2011/01/03 09:39:46 pooka Exp $
+#	$NetBSD: t_md.sh,v 1.5.2.1 2011/02/08 16:20:08 bouyer Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,8 +45,10 @@ basic_body()
 	atf_check -s exit:0 $(atf_get_srcdir)/h_mdserv ${rawmd}
 
 	export RUMP_SERVER=unix://commsock
-	atf_check -s exit:0 -e ignore dd if=/bin/ls rof=${rawmd} seek=100 count=10
-	atf_check -s exit:0 -e ignore dd of=testfile rif=${rawmd} skip=100 count=10
+	atf_check -s exit:0 -e ignore sh -c \
+	    "dd if=/bin/ls count=10 | rump.dd of=${rawmd} seek=100"
+	atf_check -s exit:0 -e ignore sh -c \
+	    "rump.dd if=${rawmd} skip=100 count=10 | dd of=testfile"
 	atf_check -s exit:0 -e ignore -o file:testfile dd if=/bin/ls count=10
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.52 2011/01/18 19:52:24 matt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.52.2.1 2011/02/08 16:19:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.52 2011/01/18 19:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.52.2.1 2011/02/08 16:19:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,8 @@ static inline void netbsd32_to_oifreq(struct netbsd32_oifreq *, struct oifreq *,
 				       u_long cmd);
 static inline void netbsd32_to_ifreq(struct netbsd32_ifreq *, struct ifreq *,
 				       u_long cmd);
+static inline void netbsd32_to_if_addrprefreq(
+    const struct netbsd32_if_addrprefreq *, struct if_addrprefreq *, u_long);
 static inline void netbsd32_to_ifconf(struct netbsd32_ifconf *,
 					struct ifconf *, u_long);
 static inline void netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *,
@@ -102,6 +104,9 @@ static inline void netbsd32_from_format_op(struct format_op *,
 					     struct netbsd32_format_op *,
 					     u_long);
 #endif
+static inline void netbsd32_from_if_addrprefreq(const struct if_addrprefreq *,
+					struct netbsd32_if_addrprefreq *,
+					u_long);
 static inline void netbsd32_from_ifreq(struct ifreq *,
                                          struct netbsd32_ifreq *, u_long);
 static inline void netbsd32_from_oifreq(struct oifreq *,
@@ -170,6 +175,16 @@ netbsd32_to_oifreq(struct netbsd32_oifreq *s32p, struct oifreq *p, u_long cmd)
 	 */
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
 		p->ifr_data = (void *)NETBSD32PTR64(s32p->ifr_data);
+}
+
+static inline void
+netbsd32_to_if_addrprefreq(const struct netbsd32_if_addrprefreq *ifap32,
+	struct if_addrprefreq *ifap, u_long cmd)
+{
+	strlcpy(ifap->ifap_name, ifap32->ifap_name, sizeof(ifap->ifap_name));
+	ifap->ifap_preference = ifap32->ifap_preference;
+	memcpy(&ifap->ifap_addr, &ifap32->ifap_addr,
+	    max(ifap32->ifap_addr.ss_len, _SS_MAXSIZE));
 }
 
 static inline void
@@ -319,6 +334,16 @@ netbsd32_from_oifreq(struct oifreq *p, struct netbsd32_oifreq *s32p, u_long cmd)
 	memcpy(s32p, p, sizeof *s32p);
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
 		NETBSD32PTR32(s32p->ifr_data, p->ifr_data);
+}
+
+static inline void
+netbsd32_from_if_addrprefreq(const struct if_addrprefreq *ifap,
+	struct netbsd32_if_addrprefreq *ifap32, u_long cmd)
+{
+	strlcpy(ifap32->ifap_name, ifap->ifap_name, sizeof(ifap32->ifap_name));
+	ifap32->ifap_preference = ifap->ifap_preference;
+	memcpy(&ifap32->ifap_addr, &ifap->ifap_addr,
+	    max(ifap->ifap_addr.ss_len, _SS_MAXSIZE));
 }
 
 static inline void
@@ -674,6 +699,12 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case SIOCSIFFLAGS32:
 		IOCTL_STRUCT_CONV_TO(SIOCSIFFLAGS, ifreq);
 
+	case SIOCGIFADDRPREF32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFADDRPREF, if_addrprefreq);
+	case SIOCSIFADDRPREF32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFADDRPREF, if_addrprefreq);
+
+
 	case OSIOCGIFFLAGS32:
 		IOCTL_STRUCT_CONV_TO(OSIOCGIFFLAGS, oifreq);
 	case OSIOCSIFFLAGS32:
@@ -740,7 +771,7 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	if (memp32)
 		kmem_free(memp32, alloc_size32);
 	if (memp)
-		kmem_free(memp32, size);
+		kmem_free(memp, size);
 	fd_putfile(fd);
 	return (error);
 }

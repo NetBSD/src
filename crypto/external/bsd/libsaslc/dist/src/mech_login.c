@@ -1,4 +1,4 @@
-/* $Id: mech_login.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: mech_login.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -90,10 +90,9 @@ saslc__mech_login_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 /* mechanism definition */
 const saslc__mech_t saslc__mech_login = {
 	"LOGIN", /* name */
-	FLAG_PLAINTEXT, /* flags */
 	saslc__mech_generic_create, /* create */
 	saslc__mech_login_cont, /* step */
-	NULL, /* encode */
-	NULL, /* decode */
+	saslc__mech_generic_encode, /* encode */
+	saslc__mech_generic_decode, /* decode */
 	saslc__mech_generic_destroy /* destroy */
 };

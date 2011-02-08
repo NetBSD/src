@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2010/11/28 18:40:56 skrll Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2011/02/08 16:18:56 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -6,11 +6,11 @@ CSU_MACHINE_ARCH?=	${MACHINE_ARCH}
 
 .if ${USE_COMPILERCRTSTUFF} != "yes"
 
-ARCHDIR:=	${.PARSEDIR}/arch/${CSU_MACHINE_ARCH}
+ARCHDIR:=	${.CURDIR}/arch/${CSU_MACHINE_ARCH}
 .PATH:	${ARCHDIR}
 .  include "${ARCHDIR}/Makefile.inc"
 
-.  include "${.PARSEDIR}/common/Makefile.inc"
+.  include "${.CURDIR}/common/Makefile.inc"
 
 .else
 

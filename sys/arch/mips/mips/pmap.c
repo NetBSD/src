@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.192 2010/11/12 07:59:26 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.192.4.1 2011/02/08 16:19:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192 2010/11/12 07:59:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192.4.1 2011/02/08 16:19:28 bouyer Exp $");
 
 /*
  *	Manages physical address maps.
@@ -199,6 +199,8 @@ struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
 paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */
 vaddr_t virtual_end;	/* VA of last avail page (end of kernel AS) */
+vaddr_t iospace;        /* VA of start of I/O space, if needed  */
+vsize_t iospace_size = 0; /* Size of (initial) range of I/O addresses */
 
 struct pv_entry	*pv_table;
 int		 pv_table_npages;
@@ -322,7 +324,7 @@ pmap_bootstrap(void)
 	buf_setvalimit(bufsz);
 
 	Sysmapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
-	    bufsz + 16 * NCARGS + pager_map_size) / NBPG +
+	    bufsz + 16 * NCARGS + pager_map_size + iospace_size) / NBPG +
 	    (maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM
@@ -342,7 +344,18 @@ pmap_bootstrap(void)
 	 */
 	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
 	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
-	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
+	virtual_end = VM_MIN_KERNEL_ADDRESS
+	    + (Sysmapsize * NBPG) - iospace_size;
+
+	/* Need space for I/O (not in K1SEG) ? */
+	if (iospace_size) {
+		iospace = virtual_end;
+		virtual_end += iospace_size;
+#ifdef DEBUG
+		printf("io: %x.%x %x\n",
+		    (int)iospace, (int)iospace_size, (int)virtual_end);
+#endif
+	}
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done

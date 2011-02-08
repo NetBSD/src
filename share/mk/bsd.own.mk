@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.647 2011/01/18 08:31:18 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.647.2.1 2011/02/08 16:19:08 bouyer Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -278,6 +278,7 @@ TOOL_MKESDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkesdb
 TOOL_MKLOCALE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
 TOOL_MKMAGIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
 TOOL_MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
+TOOL_MKUBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
 TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
 TOOL_NBPERF=		${TOOLDIR}/bin/${_TOOL_PREFIX}nbperf
@@ -301,6 +302,7 @@ TOOL_STAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}stat
 TOOL_STRFILE=		${TOOLDIR}/bin/${_TOOL_PREFIX}strfile
 TOOL_SUNLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
 TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
+TOOL_TBLGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}tblgen
 TOOL_TIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}tic
 TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
 TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
@@ -355,6 +357,7 @@ TOOL_MKESDB=		mkesdb
 TOOL_MKLOCALE=		mklocale
 TOOL_MKMAGIC=		file
 TOOL_MKTEMP=		mktemp
+TOOL_MKUBOOTIMAGE=	mkubootimage
 TOOL_MSGC=		msgc
 TOOL_MTREE=		mtree
 TOOL_NBPERF=		nbperf
@@ -378,6 +381,7 @@ TOOL_STAT=		stat
 TOOL_STRFILE=		strfile
 TOOL_SUNLABEL=		sunlabel
 TOOL_TBL=		tbl
+TOOL_TBLGEN=		llvm-tblgen
 TOOL_TIC=		tic
 TOOL_UUDECODE=		uudecode
 TOOL_VGRIND=		vgrind -f
@@ -687,9 +691,15 @@ MKCOMPAT:=	no
 
 #
 # Default mips64 to softfloat now.
+# emips is always softfloat.
 #
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE} == "emips"
 MKSOFTFLOAT?=	yes
+.endif
+
+.if ${MACHINE} == "emips"
+SOFTFLOAT_BITS=	32
 .endif
 
 #
@@ -749,8 +759,9 @@ _MKVARS.no= \
 	MKBSDTAR MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
 	MKDTRACE MKEXTSRC \
 	MKMANDOC MKMANZ MKOBJDIRS \
-	MKPCC MKPCCCMDS \
+	MKLLVM MKPCC MKPCCCMDS \
 	MKPIGZGZIP \
+	MKREPRO \
 	MKSOFTFLOAT MKSTRIPIDENT \
 	MKUNPRIVED MKUPDATE MKX11 MKZFS
 .for var in ${_MKVARS.no}
@@ -971,7 +982,7 @@ X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
 .endfor
 
 .for _i in \
-	elographics keyboard mouse vmmouse void ws
+	elographics keyboard mouse synaptics vmmouse void ws
 X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .endfor
 

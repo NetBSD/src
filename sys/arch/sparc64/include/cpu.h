@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93 2010/12/26 12:06:57 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.93.4.1 2011/02/08 16:19:41 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -263,6 +263,9 @@ typedef void (*ipi_c_call_func_t)(void*);
 void	sparc64_generic_xcall(struct cpu_info*, ipi_c_call_func_t, void*);
 
 #endif
+
+/* Provide %pc of a lwp */
+#define	LWP_PC(l)	((l)->l_md.md_tf->tf_pc)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the

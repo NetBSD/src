@@ -35,7 +35,7 @@ G_tm_defines=TARGET_ENDIAN_DEFAULT=0  NETBSD_ENABLE_PTHREADS MIPS_ABI_DEFAULT=AB
 G_host_xm_file=
 G_host_xm_defines=
 G_tm_p_file=
-G_target_cpu_default=((MASK_ABICALLS|MASK_64BIT|MASK_FLOAT64|MASK_SPLIT_ADDRESSES))|MASK_EXPLICIT_RELOCS
+G_target_cpu_default=((MASK_ABICALLS|MASK_64BIT|MASK_FLOAT64|MASK_SPLIT_ADDRESSES|MASK_SOFT_FLOAT))|MASK_EXPLICIT_RELOCS
 G_TM_H=tm.h      options.h ${GNUHOSTDIST}/gcc/config/elfos.h ${GNUHOSTDIST}/gcc/config/mips/mips.h ${GNUHOSTDIST}/gcc/config/mips/elf.h ${GNUHOSTDIST}/gcc/config/netbsd.h ${GNUHOSTDIST}/gcc/config/netbsd-elf.h ${GNUHOSTDIST}/gcc/config/mips/netbsd.h ${GNUHOSTDIST}/gcc/config/mips/netbsd64.h ${GNUHOSTDIST}/gcc/defaults.h insn-constants.h insn-flags.h options.h
 G_ALL_OPT_FILES=${GNUHOSTDIST}/gcc/c.opt ${GNUHOSTDIST}/gcc/common.opt ${GNUHOSTDIST}/gcc/config/mips/mips.opt
 G_tm_file_list=options.h ${GNUHOSTDIST}/gcc/config/elfos.h ${GNUHOSTDIST}/gcc/config/mips/mips.h ${GNUHOSTDIST}/gcc/config/mips/elf.h ${GNUHOSTDIST}/gcc/config/netbsd.h ${GNUHOSTDIST}/gcc/config/netbsd-elf.h ${GNUHOSTDIST}/gcc/config/mips/netbsd.h ${GNUHOSTDIST}/gcc/config/mips/netbsd64.h ${GNUHOSTDIST}/gcc/defaults.h

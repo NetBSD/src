@@ -1,4 +1,4 @@
-.\"	$NetBSD: cp.1,v 1.33 2010/12/22 09:02:32 wiz Exp $
+.\"	$NetBSD: cp.1,v 1.33.2.1 2011/02/08 16:18:27 bouyer Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd December 21, 2010
+.Dd February 6, 2010
 .Dt CP 1
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl f | i
-.Op Fl aNpv
+.Op Fl alNpv
 .Ar source_file target_file
 .Nm cp
 .Oo
@@ -53,7 +53,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl f | i
-.Op Fl aNpv
+.Op Fl alNpv
 .Ar source_file ... target_directory
 .Sh DESCRIPTION
 In the first synopsis form, the
@@ -104,6 +104,8 @@ the file copy is attempted.
 If the
 .Fl R
 option is specified, all symbolic links are followed.
+.It Fl l
+Create hard links to regular files in a hierarchy instead of copying.
 .It Fl N
 When used with
 .Fl p ,
@@ -220,9 +222,16 @@ The
 utility is expected to be
 .St -p1003.2
 compatible.
+.Pp
 The
 .Fl a
-is a non-standard extension.
+and
+.Fl l
+flags are non-standard extensions.
+They are intended to be compatible with the same options which
+other implementations, namely GNU coreutils and
+.Fx ,
+of this utility have.
 .Pp
 The
 .Fl v

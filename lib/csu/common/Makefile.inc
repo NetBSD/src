@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.2 2010/12/07 19:51:02 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.2.2.1 2011/02/08 16:18:56 bouyer Exp $
 
 .include <bsd.own.mk>
 
-COMMON_DIR:=	${.PARSEDIR}
+COMMON_DIR:=	${.CURDIR}/common
 .PATH:		${COMMON_DIR}
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so -I${COMMON_DIR} -I.

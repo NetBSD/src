@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.55 2009/12/14 00:46:04 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.55.8.1 2011/02/08 16:19:28 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -56,18 +56,18 @@ AFLAGS+=	-msym32 -mabi=64
 LDFLAGS+=	-m elf64btsmip
 LINKFORMAT+=	-m elf64btsmip
 SYSTEM_LD_TAIL_EXTRA+= \
-		;echo ${OBJCOPY} -O elf32-nbigmips $@ $@.elf32; \
-		${OBJCOPY} -O elf32-nbigmips $@ $@.elf32
+		;echo ${OBJCOPY} -O elf32-ntradbigmips $@ $@.elf32; \
+		${OBJCOPY} -O elf32-ntradbigmips $@ $@.elf32
 .endif
 .if ${MACHINE_ARCH} == "mips64el"
 LDFLAGS+=	-m elf64ltsmip
 LINKFORMAT+=	-m elf64ltsmip
 SYSTEM_LD_TAIL_EXTRA+= \
-		;echo ${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32; \
-		${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32
+		;echo ${OBJCOPY} -O elf32-ntradlittlemips $@ $@.elf32; \
+		${OBJCOPY} -O elf32-ntradlittlemips $@ $@.elf32
 .endif
 .endif # LP64=yes
-AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}
+AFLAGS+=	-mno-abicalls -x assembler-with-cpp ${AOPTS}
 
 ##
 ## (3) libkern and compat

@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.5 2009/03/18 16:00:14 cegger Exp $ */
+/* $NetBSD: boot.c,v 1.5.8.1 2011/02/08 16:19:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,7 +92,6 @@ main(long fwhandle,long fd,long fwentry)
 	printf("\n");
 	printf("NetBSD/sbmips " NETBSD_VERS " " BOOT_TYPE_NAME " Bootstrap, Revision %s\n",
 	    bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
 
 	/* set up the booted device descriptor */

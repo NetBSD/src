@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.16.2.1 2011/01/20 14:24:53 bouyer Exp $	*/
+/*      $NetBSD: hijack.c,v 1.16.2.2 2011/02/08 16:19:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.16.2.1 2011/01/20 14:24:53 bouyer Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.16.2.2 2011/02/08 16:19:04 bouyer Exp $");
+#define __ssp_weak_name(fun) _hijack_ ## fun
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,169 +51,94 @@ __RCSID("$NetBSD: hijack.c,v 1.16.2.1 2011/01/20 14:24:53 bouyer Exp $");
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
-enum {	RUMPCALL_SOCKET, RUMPCALL_ACCEPT, RUMPCALL_BIND, RUMPCALL_CONNECT,
-	RUMPCALL_GETPEERNAME, RUMPCALL_GETSOCKNAME, RUMPCALL_LISTEN,
-	RUMPCALL_RECVFROM, RUMPCALL_RECVMSG,
-	RUMPCALL_SENDTO, RUMPCALL_SENDMSG,
-	RUMPCALL_GETSOCKOPT, RUMPCALL_SETSOCKOPT,
-	RUMPCALL_SHUTDOWN,
-	RUMPCALL_READ, RUMPCALL_READV,
-	RUMPCALL_WRITE, RUMPCALL_WRITEV,
-	RUMPCALL_IOCTL, RUMPCALL_FCNTL,
-	RUMPCALL_CLOSE,
-	RUMPCALL_POLLTS,
-	RUMPCALL_QUOTACTL,
-	RUMPCALL_MOUNT,
-	RUMPCALL_GETVFSSTAT,
-	RUMPCALL__NUM
+enum dualcall {
+	DUALCALL_WRITE, DUALCALL_WRITEV,
+	DUALCALL_IOCTL, DUALCALL_FCNTL,
+	DUALCALL_SOCKET, DUALCALL_ACCEPT, DUALCALL_BIND, DUALCALL_CONNECT,
+	DUALCALL_GETPEERNAME, DUALCALL_GETSOCKNAME, DUALCALL_LISTEN,
+	DUALCALL_RECVFROM, DUALCALL_RECVMSG,
+	DUALCALL_SENDTO, DUALCALL_SENDMSG,
+	DUALCALL_GETSOCKOPT, DUALCALL_SETSOCKOPT,
+	DUALCALL_SHUTDOWN,
+	DUALCALL_READ, DUALCALL_READV,
+	DUALCALL_DUP, DUALCALL_DUP2,
+	DUALCALL_CLOSE,
+	DUALCALL_POLLTS,
+	DUALCALL_KEVENT,
+	DUALCALL__NUM
 };
 
 #define RSYS_STRING(a) __STRING(a)
 #define RSYS_NAME(a) RSYS_STRING(__CONCAT(RUMP_SYS_RENAME_,a))
 
-const char *sysnames[] = {
-	RSYS_NAME(SOCKET),
-	RSYS_NAME(ACCEPT),
-	RSYS_NAME(BIND),
-	RSYS_NAME(CONNECT),
-	RSYS_NAME(GETPEERNAME),
-	RSYS_NAME(GETSOCKNAME),
-	RSYS_NAME(LISTEN),
-	RSYS_NAME(RECVFROM),
-	RSYS_NAME(RECVMSG),
-	RSYS_NAME(SENDTO),
-	RSYS_NAME(SENDMSG),
-	RSYS_NAME(GETSOCKOPT),
-	RSYS_NAME(SETSOCKOPT),
-	RSYS_NAME(SHUTDOWN),
-	RSYS_NAME(READ),
-	RSYS_NAME(READV),
-	RSYS_NAME(WRITE),
-	RSYS_NAME(WRITEV),
-	RSYS_NAME(IOCTL),
-	RSYS_NAME(FCNTL),
-	RSYS_NAME(CLOSE),
-	RSYS_NAME(POLLTS),
-	RSYS_NAME(QUOTACTL),
-	RSYS_NAME(MOUNT),
-	RSYS_NAME(GETVFSSTAT),
-};
-
-static int	(*host_socket)(int, int, int);
-static int	(*host_connect)(int, const struct sockaddr *, socklen_t);
-static int	(*host_bind)(int, const struct sockaddr *, socklen_t);
-static int	(*host_listen)(int, int);
-static int	(*host_accept)(int, struct sockaddr *, socklen_t *);
-static int	(*host_getpeername)(int, struct sockaddr *, socklen_t *);
-static int	(*host_getsockname)(int, struct sockaddr *, socklen_t *);
-static int	(*host_setsockopt)(int, int, int, const void *, socklen_t);
-
-static ssize_t	(*host_read)(int, void *, size_t);
-static ssize_t	(*host_readv)(int, const struct iovec *, int);
-static ssize_t	(*host_write)(int, const void *, size_t);
-static ssize_t	(*host_writev)(int, const struct iovec *, int);
-static int	(*host_ioctl)(int, unsigned long, ...);
-static int	(*host_fcntl)(int, int, ...);
-static int	(*host_close)(int);
-static int	(*host_pollts)(struct pollfd *, nfds_t,
-			       const struct timespec *, const sigset_t *);
-static pid_t	(*host_fork)(void);
-static int	(*host_dup2)(int, int);
-static int	(*host_shutdown)(int, int);
-/* XXX */
-static void	*host_sendto;
-static void	*host_recvfrom;
-
-static void *rumpcalls[RUMPCALL__NUM];
-
 /*
  * Would be nice to get this automatically in sync with libc.
  * Also, this does not work for compat-using binaries!
  */
-
 #if !__NetBSD_Prereq__(5,99,7)
-#define SELECT select
-#define POLLTS pollts
-#define POLL poll
+#define REALSELECT select
+#define REALPOLLTS pollts
+#define REALKEVENT kevent
 #else
-#define SELECT __select50
-#define POLLTS __pollts50
-#define POLL __poll50
-
-int SELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-int POLLTS(struct pollfd *, nfds_t, const struct timespec *, const sigset_t *);
-int POLL(struct pollfd *, nfds_t, int);
+#define REALSELECT _sys___select50
+#define REALPOLLTS _sys___pollts50
+#define REALKEVENT _sys___kevent50
 #endif
+#define REALREAD _sys_read
 
-/*
- * This is called from librumpclient in case of LD_PRELOAD.
- * It ensures correct RTLD_NEXT.
- */
-static void *
-hijackdlsym(void *handle, const char *symbol)
-{
+int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+int REALPOLLTS(struct pollfd *, nfds_t,
+	       const struct timespec *, const sigset_t *);
+int REALKEVENT(int, const struct kevent *, size_t, struct kevent *, size_t,
+	       const struct timespec *);
+ssize_t REALREAD(int, void *, size_t);
 
-	return dlsym(handle, symbol);
-}
+#define S(a) __STRING(a)
+struct sysnames {
+	enum dualcall scm_callnum;
+	const char *scm_hostname;
+	const char *scm_rumpname;
+} syscnames[] = {
+	{ DUALCALL_SOCKET,	"__socket30",	RSYS_NAME(SOCKET)	},
+	{ DUALCALL_ACCEPT,	"accept",	RSYS_NAME(ACCEPT)	},
+	{ DUALCALL_BIND,	"bind",		RSYS_NAME(BIND)		},
+	{ DUALCALL_CONNECT,	"connect",	RSYS_NAME(CONNECT)	},
+	{ DUALCALL_GETPEERNAME,	"getpeername",	RSYS_NAME(GETPEERNAME)	},
+	{ DUALCALL_GETSOCKNAME,	"getsockname",	RSYS_NAME(GETSOCKNAME)	},
+	{ DUALCALL_LISTEN,	"listen",	RSYS_NAME(LISTEN)	},
+	{ DUALCALL_RECVFROM,	"recvfrom",	RSYS_NAME(RECVFROM)	},
+	{ DUALCALL_RECVMSG,	"recvmsg",	RSYS_NAME(RECVMSG)	},
+	{ DUALCALL_SENDTO,	"sendto",	RSYS_NAME(SENDTO)	},
+	{ DUALCALL_SENDMSG,	"sendmsg",	RSYS_NAME(SENDMSG)	},
+	{ DUALCALL_GETSOCKOPT,	"getsockopt",	RSYS_NAME(GETSOCKOPT)	},
+	{ DUALCALL_SETSOCKOPT,	"setsockopt",	RSYS_NAME(SETSOCKOPT)	},
+	{ DUALCALL_SHUTDOWN,	"shutdown",	RSYS_NAME(SHUTDOWN)	},
+	{ DUALCALL_READ,	S(REALREAD),	RSYS_NAME(READ)		},
+	{ DUALCALL_READV,	"readv",	RSYS_NAME(READV)	},
+	{ DUALCALL_WRITE,	"write",	RSYS_NAME(WRITE)	},
+	{ DUALCALL_WRITEV,	"writev",	RSYS_NAME(WRITEV)	},
+	{ DUALCALL_IOCTL,	"ioctl",	RSYS_NAME(IOCTL)	},
+	{ DUALCALL_FCNTL,	"fcntl",	RSYS_NAME(FCNTL)	},
+	{ DUALCALL_DUP,		"dup",		RSYS_NAME(DUP)		},
+	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
+	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
+	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
+	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
+};
+#undef S
 
-/* low calorie sockets? */
-static bool hostlocalsockets = true;
+struct bothsys {
+	void *bs_host;
+	void *bs_rump;
+} syscalls[DUALCALL__NUM];
+#define GETSYSCALL(which, name) syscalls[DUALCALL_##name].bs_##which
 
-static void __attribute__((constructor))
-rcinit(void)
-{
-	int (*rumpcinit)(void);
-	void **rumpcdlsym;
-	void *hand;
-	int i;
-
-	hand = dlopen("librumpclient.so", RTLD_LAZY|RTLD_GLOBAL);
-	if (!hand)
-		err(1, "cannot open librumpclient.so");
-	rumpcinit = dlsym(hand, "rumpclient_init");
-	_DIAGASSERT(rumpcinit);
-
-	rumpcdlsym = dlsym(hand, "rumpclient_dlsym");
-	*rumpcdlsym = hijackdlsym;
-
-	host_socket = dlsym(RTLD_NEXT, "__socket30");
-	host_listen = dlsym(RTLD_NEXT, "listen");
-	host_connect = dlsym(RTLD_NEXT, "connect");
-	host_bind = dlsym(RTLD_NEXT, "bind");
-	host_accept = dlsym(RTLD_NEXT, "accept");
-	host_getpeername = dlsym(RTLD_NEXT, "getpeername");
-	host_getsockname = dlsym(RTLD_NEXT, "getsockname");
-	host_setsockopt = dlsym(RTLD_NEXT, "setsockopt");
-
-	host_read = dlsym(RTLD_NEXT, "read");
-	host_readv = dlsym(RTLD_NEXT, "readv");
-	host_write = dlsym(RTLD_NEXT, "write");
-	host_writev = dlsym(RTLD_NEXT, "writev");
-	host_ioctl = dlsym(RTLD_NEXT, "ioctl");
-	host_fcntl = dlsym(RTLD_NEXT, "fcntl");
-	host_close = dlsym(RTLD_NEXT, "close");
-	host_pollts = dlsym(RTLD_NEXT, "pollts");
-	host_fork = dlsym(RTLD_NEXT, "fork");
-	host_dup2 = dlsym(RTLD_NEXT, "dup2");
-	host_shutdown = dlsym(RTLD_NEXT, "shutdown");
-	host_sendto = dlsym(RTLD_NEXT, "sendto");
-	host_recvfrom = dlsym(RTLD_NEXT, "recvfrom");
-
-	for (i = 0; i < RUMPCALL__NUM; i++) {
-		rumpcalls[i] = dlsym(hand, sysnames[i]);
-		if (!rumpcalls[i]) {
-			fprintf(stderr, "rumphijack: cannot find symbol: %s\n",
-			    sysnames[i]);
-			exit(1);
-		}
-	}
-
-	if (rumpcinit() == -1)
-		err(1, "rumpclient init");
-}
+pid_t	(*host_fork)(void);
+int	(*host_daemon)(int, int);
 
 static unsigned dup2mask;
 #define ISDUP2D(fd) (1<<(fd) & dup2mask)
@@ -237,9 +163,119 @@ mydprintf(const char *fmt, ...)
 #define DPRINTF(x)
 #endif
 
+#define FDCALL(type, name, rcname, args, proto, vars)			\
+type name args								\
+{									\
+	type (*fun) proto;						\
+									\
+	DPRINTF(("%s -> %d\n", __STRING(name), fd));			\
+	if (fd_isrump(fd)) {						\
+		fun = syscalls[rcname].bs_rump;				\
+		fd = fd_host2rump(fd);					\
+	} else {							\
+		fun = syscalls[rcname].bs_host;				\
+	}								\
+									\
+	return fun vars;						\
+}
+
+/*
+ * This is called from librumpclient in case of LD_PRELOAD.
+ * It ensures correct RTLD_NEXT.
+ *
+ * ... except, it's apparently extremely difficult to force
+ * at least gcc to generate an actual stack frame here.  So
+ * sprinkle some volatile foobar and baz to throw the optimizer
+ * off the scent and generate a variable assignment with the
+ * return value.  The posterboy for this meltdown is amd64
+ * with -O2.  At least with gcc 4.1.3 i386 works regardless of
+ * optimization.
+ */
+volatile int rumphijack_unrope; /* there, unhang yourself */
+static void *
+hijackdlsym(void *handle, const char *symbol)
+{
+	void *rv;
+
+	rv = dlsym(handle, symbol);
+	rumphijack_unrope = *(volatile int *)rv;
+
+	return (void *)rv;
+}
+
+/* low calorie sockets? */
+static bool hostlocalsockets = true;
+
+static void __attribute__((constructor))
+rcinit(void)
+{
+	char buf[64];
+	extern void *(*rumpclient_dlsym)(void *, const char *);
+	unsigned i, j;
+
+	rumpclient_dlsym = hijackdlsym;
+	host_fork = dlsym(RTLD_NEXT, "fork");
+	host_daemon = dlsym(RTLD_NEXT, "daemon");
+
+	/*
+	 * In theory cannot print anything during lookups because
+	 * we might not have the call vector set up.  so, the errx()
+	 * is a bit of a strech, but it might work.
+	 */
+
+	for (i = 0; i < DUALCALL__NUM; i++) {
+		/* build runtime O(1) access */
+		for (j = 0; j < __arraycount(syscnames); j++) {
+			if (syscnames[j].scm_callnum == i)
+				break;
+		}
+
+		if (j == __arraycount(syscnames))
+			errx(1, "rumphijack error: syscall pos %d missing", i);
+
+		syscalls[i].bs_host = dlsym(RTLD_NEXT,
+		    syscnames[j].scm_hostname);
+		if (syscalls[i].bs_host == NULL)
+			errx(1, "hostcall %s not found missing",
+			    syscnames[j].scm_hostname);
+
+		syscalls[i].bs_rump = dlsym(RTLD_NEXT,
+		    syscnames[j].scm_rumpname);
+		if (syscalls[i].bs_rump == NULL)
+			errx(1, "rumpcall %s not found missing",
+			    syscnames[j].scm_rumpname);
+	}
+
+	if (rumpclient_init() == -1)
+		err(1, "rumpclient init");
+
+	/* set client persistence level */
+	if (getenv_r("RUMPHIJACK_RETRY", buf, sizeof(buf)) == -1) {
+		if (errno == ERANGE)
+			err(1, "invalid RUMPHIJACK_RETRY");
+		rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
+	} else {
+		if (strcmp(buf, "die") == 0)
+			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_DIE);
+		else if (strcmp(buf, "inftime") == 0)
+			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
+		else if (strcmp(buf, "once") == 0)
+			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_ONCE);
+		else {
+			time_t timeout;
+
+			timeout = (time_t)strtoll(buf, NULL, 10);
+			if (timeout <= 0)
+				errx(1, "RUMPHIJACK_RETRY must be keyword "
+				    "or a positive integer, got: %s", buf);
+
+			rumpclient_setconnretry(timeout);
+		}
+	}
+}
+
 /* XXX: need runtime selection.  low for now due to FD_SETSIZE */
 #define HIJACK_FDOFF 128
-#define HIJACK_SELECT 128 /* XXX */
 #define HIJACK_ASSERT 128 /* XXX */
 static int
 fd_rump2host(int fd)
@@ -273,58 +309,21 @@ fd_isrump(int fd)
 #define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_ASSERT)
 #undef HIJACK_FDOFF
 
-int
-__quotactl50(const char * mnt, struct plistref *p)
-{
-	int (*qctl)(const char *, struct plistref *);
-	int error;
-
-	qctl = rumpcalls[RUMPCALL_QUOTACTL];
-	error = qctl(mnt, p);
-	DPRINTF(("quotactl <- %d\n", error));
-	return error;
-}
-
-int
-__mount50(const char *type, const char *dir, int flags, void *data,
-    size_t data_len)
-{
-	int (*domount)(const char *, const char *, int, void *, size_t);
-	int error;
-
-	domount = rumpcalls[RUMPCALL_MOUNT];
-	error = domount(type, dir, flags, data, data_len);
-	DPRINTF(("mount <- %d\n", error));
-	return error;
-}
-
-int
-getvfsstat(struct statvfs *buf, size_t bufsize, int flags)
-{
-	int (*dogetvfsstat)(struct statvfs *, size_t, int);
-	int error;
-
-	dogetvfsstat = rumpcalls[RUMPCALL_GETVFSSTAT];
-	error = dogetvfsstat(buf, bufsize, flags);
-	DPRINTF(("getvfsstat <- %d\n", error));
-	return error;
-}
-
 int __socket30(int, int, int);
 int
 __socket30(int domain, int type, int protocol)
 {
-	int (*rc_socket)(int, int, int);
+	int (*op_socket)(int, int, int);
 	int fd;
 	bool dohost;
 
 	dohost = hostlocalsockets && (domain == AF_LOCAL);
 
 	if (dohost)
-		rc_socket = host_socket;
+		op_socket = GETSYSCALL(host, SOCKET);
 	else
-		rc_socket = rumpcalls[RUMPCALL_SOCKET];
-	fd = rc_socket(domain, type, protocol);
+		op_socket = GETSYSCALL(rump, SOCKET);
+	fd = op_socket(domain, type, protocol);
 
 	if (!dohost)
 		fd = fd_rump2host(fd);
@@ -336,7 +335,7 @@ __socket30(int domain, int type, int protocol)
 int
 accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
-	int (*rc_accept)(int, struct sockaddr *, socklen_t *);
+	int (*op_accept)(int, struct sockaddr *, socklen_t *);
 	int fd;
 	bool isrump;
 
@@ -344,12 +343,12 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 
 	DPRINTF(("accept -> %d", s));
 	if (isrump) {
-		rc_accept = rumpcalls[RUMPCALL_ACCEPT];
+		op_accept = GETSYSCALL(rump, ACCEPT);
 		s = fd_host2rump(s);
 	} else {
-		rc_accept = host_accept;
+		op_accept = GETSYSCALL(host, ACCEPT);
 	}
-	fd = rc_accept(s, addr, addrlen);
+	fd = op_accept(s, addr, addrlen);
 	if (fd != -1 && isrump)
 		fd = fd_rump2host(fd);
 
@@ -358,195 +357,69 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	return fd;
 }
 
+/*
+ * ioctl and fcntl are varargs calls and need special treatment
+ */
 int
-bind(int s, const struct sockaddr *name, socklen_t namelen)
+ioctl(int fd, unsigned long cmd, ...)
 {
-	int (*rc_bind)(int, const struct sockaddr *, socklen_t);
+	int (*op_ioctl)(int, unsigned long cmd, ...);
+	va_list ap;
+	int rv;
 
-	DPRINTF(("bind -> %d\n", s));
-	if (fd_isrump(s)) {
-		rc_bind = rumpcalls[RUMPCALL_BIND];
-		s = fd_host2rump(s);
+	DPRINTF(("ioctl -> %d\n", fd));
+	if (fd_isrump(fd)) {
+		fd = fd_host2rump(fd);
+		op_ioctl = GETSYSCALL(rump, IOCTL);
 	} else {
-		rc_bind = host_bind;
-	}
-	return rc_bind(s, name, namelen);
-}
-
-int
-connect(int s, const struct sockaddr *name, socklen_t namelen)
-{
-	int (*rc_connect)(int, const struct sockaddr *, socklen_t);
-
-	DPRINTF(("connect -> %d\n", s));
-	if (fd_isrump(s)) {
-		rc_connect = rumpcalls[RUMPCALL_CONNECT];
-		s = fd_host2rump(s);
-	} else {
-		rc_connect = host_connect;
+		op_ioctl = GETSYSCALL(host, IOCTL);
 	}
 
-	return rc_connect(s, name, namelen);
+	va_start(ap, cmd);
+	rv = op_ioctl(fd, cmd, va_arg(ap, void *));
+	va_end(ap);
+	return rv;
 }
 
+
+/* TODO: support F_DUPFD, F_CLOSEM, F_MAXFD */
 int
-getpeername(int s, struct sockaddr *name, socklen_t *namelen)
+fcntl(int fd, int cmd, ...)
 {
-	int (*rc_getpeername)(int, struct sockaddr *, socklen_t *);
+	int (*op_fcntl)(int, int, ...);
+	va_list ap;
+	int rv;
 
-	DPRINTF(("getpeername -> %d\n", s));
-	if (fd_isrump(s)) {
-		rc_getpeername = rumpcalls[RUMPCALL_GETPEERNAME];
-		s = fd_host2rump(s);
+	DPRINTF(("fcntl -> %d\n", fd));
+	if (fd_isrump(fd)) {
+		fd = fd_host2rump(fd);
+		op_fcntl = GETSYSCALL(rump, FCNTL);
 	} else {
-		rc_getpeername = host_getpeername;
+		op_fcntl = GETSYSCALL(host, FCNTL);
 	}
-	return rc_getpeername(s, name, namelen);
+
+	va_start(ap, cmd);
+	rv = op_fcntl(fd, cmd, va_arg(ap, void *));
+	va_end(ap);
+	return rv;
 }
 
-int
-getsockname(int s, struct sockaddr *name, socklen_t *namelen)
-{
-	int (*rc_getsockname)(int, struct sockaddr *, socklen_t *);
-
-	DPRINTF(("getsockname -> %d\n", s));
-	if (fd_isrump(s)) {
-		rc_getsockname = rumpcalls[RUMPCALL_GETSOCKNAME];
-		s = fd_host2rump(s);
-	} else {
-		rc_getsockname = host_getsockname;
-	}
-	return rc_getsockname(s, name, namelen);
-}
-
-int
-listen(int s, int backlog)
-{
-	int (*rc_listen)(int, int);
-
-	DPRINTF(("listen -> %d\n", s));
-	if (fd_isrump(s)) {
-		rc_listen = rumpcalls[RUMPCALL_LISTEN];
-		s = fd_host2rump(s);
-	} else {
-		rc_listen = host_listen;
-	}
-	return rc_listen(s, backlog);
-}
-
+/*
+ * write cannot issue a standard debug printf due to recursion
+ */
 ssize_t
-recv(int s, void *buf, size_t len, int flags)
+write(int fd, const void *buf, size_t blen)
 {
+	ssize_t (*op_write)(int, const void *, size_t);
 
-	return recvfrom(s, buf, len, flags, NULL, NULL);
-}
-
-ssize_t
-recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr *from,
-	socklen_t *fromlen)
-{
-	int (*rc_recvfrom)(int, void *, size_t, int,
-	    struct sockaddr *, socklen_t *);
-
-	DPRINTF(("recvfrom\n"));
-	if (fd_isrump(s)) {
-		rc_recvfrom = rumpcalls[RUMPCALL_RECVFROM];
-		s = fd_host2rump(s);
+	if (fd_isrump(fd)) {
+		fd = fd_host2rump(fd);
+		op_write = GETSYSCALL(rump, WRITE);
 	} else {
-		rc_recvfrom = host_recvfrom;
+		op_write = GETSYSCALL(host, WRITE);
 	}
 
-	return rc_recvfrom(s, buf, len, flags, from, fromlen);
-}
-
-ssize_t
-recvmsg(int s, struct msghdr *msg, int flags)
-{
-	int (*rc_recvmsg)(int, struct msghdr *, int);
-
-	DPRINTF(("recvmsg\n"));
-	assertfd(s);
-	rc_recvmsg = rumpcalls[RUMPCALL_RECVMSG];
-	return rc_recvmsg(fd_host2rump(s), msg, flags);
-}
-
-ssize_t
-send(int s, const void *buf, size_t len, int flags)
-{
-
-	return sendto(s, buf, len, flags, NULL, 0);
-}
-
-ssize_t
-sendto(int s, const void *buf, size_t len, int flags,
-	const struct sockaddr *to, socklen_t tolen)
-{
-	int (*rc_sendto)(int, const void *, size_t, int,
-	    const struct sockaddr *, socklen_t);
-
-	if (s == -1)
-		return len;
-	DPRINTF(("sendto\n"));
-
-	if (fd_isrump(s)) {
-		rc_sendto = rumpcalls[RUMPCALL_SENDTO];
-		s = fd_host2rump(s);
-	} else {
-		rc_sendto = host_sendto;
-	}
-	return rc_sendto(s, buf, len, flags, to, tolen);
-}
-
-ssize_t
-sendmsg(int s, const struct msghdr *msg, int flags)
-{
-	int (*rc_sendmsg)(int, const struct msghdr *, int);
-
-	DPRINTF(("sendmsg\n"));
-	assertfd(s);
-	rc_sendmsg = rumpcalls[RUMPCALL_SENDTO];
-	return rc_sendmsg(fd_host2rump(s), msg, flags);
-}
-
-int
-getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
-{
-	int (*rc_getsockopt)(int, int, int, void *, socklen_t *);
-
-	DPRINTF(("getsockopt -> %d\n", s));
-	assertfd(s);
-	rc_getsockopt = rumpcalls[RUMPCALL_GETSOCKOPT];
-	return rc_getsockopt(fd_host2rump(s), level, optname, optval, optlen);
-}
-
-int
-setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
-{
-	int (*rc_setsockopt)(int, int, int, const void *, socklen_t);
-
-	DPRINTF(("setsockopt -> %d\n", s));
-	if (fd_isrump(s)) {
-		rc_setsockopt = rumpcalls[RUMPCALL_SETSOCKOPT];
-		s = fd_host2rump(s);
-	} else {
-		rc_setsockopt = host_setsockopt;
-	}
-	return rc_setsockopt(s, level, optname, optval, optlen);
-}
-
-int
-shutdown(int s, int how)
-{
-	int (*rc_shutdown)(int, int);
-
-	DPRINTF(("shutdown -> %d\n", s));
-	if (fd_isrump(s)) {
-		rc_shutdown = rumpcalls[RUMPCALL_SHUTDOWN];
-		s = fd_host2rump(s);
-	} else {
-		rc_shutdown = host_shutdown;
-	}
-	return rc_shutdown(s, how);
+	return op_write(fd, buf, blen);
 }
 
 /*
@@ -555,12 +428,11 @@ shutdown(int s, int how)
  * not >= fdoff is an error.
  *
  * Note: cannot rump2host newd, because it is often hardcoded.
- *
- * XXX: should disable debug prints after stdout/stderr are dup2'd
  */
 int
 dup2(int oldd, int newd)
 {
+	int (*host_dup2)(int, int);
 	int rv;
 
 	DPRINTF(("dup2 -> %d (o) -> %d (n)\n", oldd, newd));
@@ -573,10 +445,33 @@ dup2(int oldd, int newd)
 		if (rv != -1)
 			dup2mask |= 1<<newd;
 	} else {
+		host_dup2 = syscalls[DUALCALL_DUP2].bs_host;
 		rv = host_dup2(oldd, newd);
 	}
 
 	return rv;
+}
+
+int
+dup(int oldd)
+{
+	int (*op_dup)(int);
+	int newd;
+
+	DPRINTF(("dup -> %d\n", oldd));
+	if (fd_isrump(oldd)) {
+		op_dup = GETSYSCALL(rump, DUP);
+	} else {
+		op_dup = GETSYSCALL(host, DUP);
+	}
+
+	newd = op_dup(oldd);
+
+	if (fd_isrump(oldd))
+		newd = fd_rump2host(newd);
+	DPRINTF(("dup <- %d\n", newd));
+
+	return newd;
 }
 
 /*
@@ -584,7 +479,6 @@ dup2(int oldd, int newd)
  * the file descriptors of the forked parent in the child, but
  * prevent double use of connection fd.
  */
-
 pid_t
 fork()
 {
@@ -612,140 +506,34 @@ fork()
 	return rv;
 }
 
+int
+daemon(int nochdir, int noclose)
+{
+	struct rumpclient_fork *rf;
+
+	if ((rf = rumpclient_prefork()) == NULL)
+		return -1;
+
+	if (host_daemon(nochdir, noclose) == -1)
+		return -1;
+
+	if (rumpclient_fork_init(rf) == -1)
+		return -1;
+
+	return 0;
+}
+
 /*
- * Hybrids
+ * select is done by calling poll.
  */
-
-ssize_t
-read(int fd, void *buf, size_t len)
-{
-	ssize_t (*op_read)(int, void *, size_t);
-	ssize_t n;
-
-	DPRINTF(("read %d\n", fd));
-	if (fd_isrump(fd)) {
-		fd = fd_host2rump(fd);
-		op_read = rumpcalls[RUMPCALL_READ];
-	} else {
-		op_read = host_read;
-	}
-
-	n = op_read(fd, buf, len);
-	return n;
-}
-
-ssize_t
-readv(int fd, const struct iovec *iov, int iovcnt)
-{
-	ssize_t (*op_readv)(int, const struct iovec *, int);
-
-	DPRINTF(("readv %d\n", fd));
-	if (fd_isrump(fd)) {
-		fd = fd_host2rump(fd);
-		op_readv = rumpcalls[RUMPCALL_READV];
-	} else {
-		op_readv = host_readv;
-	}
-
-	return op_readv(fd, iov, iovcnt);
-}
-
-ssize_t
-write(int fd, const void *buf, size_t len)
-{
-	ssize_t (*op_write)(int, const void *, size_t);
-
-	if (fd_isrump(fd)) {
-		fd = fd_host2rump(fd);
-		op_write = rumpcalls[RUMPCALL_WRITE];
-	} else {
-		op_write = host_write;
-	}
-
-	return op_write(fd, buf, len);
-}
-
-ssize_t
-writev(int fd, const struct iovec *iov, int iovcnt)
-{
-	ssize_t (*op_writev)(int, const struct iovec *, int);
-
-	DPRINTF(("writev %d\n", fd));
-	if (fd_isrump(fd)) {
-		fd = fd_host2rump(fd);
-		op_writev = rumpcalls[RUMPCALL_WRITEV];
-	} else {
-		op_writev = host_writev;
-	}
-
-	return op_writev(fd, iov, iovcnt);
-}
-
 int
-ioctl(int fd, unsigned long cmd, ...)
-{
-	int (*op_ioctl)(int, unsigned long cmd, ...);
-	va_list ap;
-	int rv;
-
-	DPRINTF(("ioctl\n"));
-	if (fd_isrump(fd)) {
-		fd = fd_host2rump(fd);
-		op_ioctl = rumpcalls[RUMPCALL_IOCTL];
-	} else {
-		op_ioctl = host_ioctl;
-	}
-
-	va_start(ap, cmd);
-	rv = op_ioctl(fd, cmd, va_arg(ap, void *));
-	va_end(ap);
-	return rv;
-}
-
-int
-fcntl(int fd, int cmd, ...)
-{
-	int (*op_fcntl)(int, int, ...);
-	va_list ap;
-	int rv;
-
-	DPRINTF(("fcntl\n"));
-	if (fd_isrump(fd)) {
-		fd = fd_host2rump(fd);
-		op_fcntl = rumpcalls[RUMPCALL_FCNTL];
-	} else {
-		op_fcntl = host_fcntl;
-	}
-
-	va_start(ap, cmd);
-	rv = op_fcntl(fd, cmd, va_arg(ap, void *));
-	va_end(ap);
-	return rv;
-}
-
-int
-close(int fd)
-{
-	int (*op_close)(int);
-
-	DPRINTF(("close %d\n", fd));
-	if (fd_isrump(fd)) {
-		fd = fd_host2rump(fd);
-		op_close = rumpcalls[RUMPCALL_CLOSE];
-	} else {
-		op_close = host_close;
-	}
-
-	return op_close(fd);
-}
-
-int
-SELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	struct timeval *timeout)
 {
 	struct pollfd *pfds;
 	struct timespec ts, *tsp = NULL;
-	nfds_t i, j, realnfds;
+	nfds_t realnfds;
+	int i, j;
 	int rv, incr;
 
 	DPRINTF(("select\n"));
@@ -753,7 +541,7 @@ SELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	/*
 	 * Well, first we must scan the fds to figure out how many
 	 * fds there really are.  This is because up to and including
-	 * nb5 poll() silently refuses nfds > process_open_fds.
+	 * nb5 poll() silently refuses nfds > process_maxopen_fds.
 	 * Seems to be fixed in current, thank the maker.
 	 * god damn cluster...bomb.
 	 */
@@ -807,7 +595,7 @@ SELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		TIMEVAL_TO_TIMESPEC(timeout, &ts);
 		tsp = &ts;
 	}
-	rv = pollts(pfds, realnfds, tsp, NULL);
+	rv = REALPOLLTS(pfds, realnfds, tsp, NULL);
 	if (rv <= 0)
 		goto out;
 
@@ -825,7 +613,7 @@ SELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	}
 
 	/* and then plug in the results */
-	for (i = 0; i < realnfds; i++) {
+	for (i = 0; i < (int)realnfds; i++) {
 		if (readfds) {
 			if (pfds[i].revents & POLLIN) {
 				FD_SET(pfds[i].fd, readfds);
@@ -890,10 +678,13 @@ struct pollarg {
 static void *
 hostpoll(void *arg)
 {
+	int (*op_pollts)(struct pollfd *, nfds_t, const struct timespec *,
+			 const sigset_t *);
 	struct pollarg *parg = arg;
 	intptr_t rv;
 
-	rv = host_pollts(parg->pfds, parg->nfds, parg->ts, parg->sigmask);
+	op_pollts = syscalls[DUALCALL_POLLTS].bs_host;
+	rv = op_pollts(parg->pfds, parg->nfds, parg->ts, parg->sigmask);
 	if (rv == -1)
 		parg->errnum = errno;
 	rump_sys_write(parg->pipefd, &rv, sizeof(rv));
@@ -902,11 +693,12 @@ hostpoll(void *arg)
 }
 
 int
-POLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
+REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 	const sigset_t *sigmask)
 {
 	int (*op_pollts)(struct pollfd *, nfds_t, const struct timespec *,
 			 const sigset_t *);
+	int (*host_close)(int);
 	int hostcall = 0, rumpcall = 0;
 	pthread_t pt;
 	nfds_t i;
@@ -984,7 +776,7 @@ POLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		parg.pipefd = rpipe[1];
 		pthread_create(&pt, NULL, hostpoll, &parg);
 
-		op_pollts = rumpcalls[RUMPCALL_POLLTS];
+		op_pollts = syscalls[DUALCALL_POLLTS].bs_rump;
 		lrv = op_pollts(pfd_rump, nfds+1, ts, NULL);
 		sverrno = errno;
 		write(hpipe[1], &rv, sizeof(rv));
@@ -1011,6 +803,7 @@ POLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		}
 
  out:
+		host_close = syscalls[DUALCALL_CLOSE].bs_host;
 		if (rpipe[0] != -1)
 			rump_sys_close(rpipe[0]);
 		if (rpipe[1] != -1)
@@ -1024,9 +817,9 @@ POLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		errno = sverrno;
 	} else {
 		if (hostcall) {
-			op_pollts = host_pollts;
+			op_pollts = syscalls[DUALCALL_POLLTS].bs_host;
 		} else {
-			op_pollts = rumpcalls[RUMPCALL_POLLTS];
+			op_pollts = syscalls[DUALCALL_POLLTS].bs_rump;
 			adjustpoll(fds, nfds, fd_host2rump);
 		}
 
@@ -1039,7 +832,7 @@ POLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 }
 
 int
-POLL(struct pollfd *fds, nfds_t nfds, int timeout)
+poll(struct pollfd *fds, nfds_t nfds, int timeout)
 {
 	struct timespec ts;
 	struct timespec *tsp = NULL;
@@ -1051,23 +844,142 @@ POLL(struct pollfd *fds, nfds_t nfds, int timeout)
 		tsp = &ts;
 	}
 
-	return pollts(fds, nfds, tsp, NULL);
-}
-
-#if 0
-int
-kqueue(void)
-{
-
-	abort();
+	return REALPOLLTS(fds, nfds, tsp, NULL);
 }
 
 int
-kevent(int kq, const struct kevent *changelist, size_t nchanges,
+REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 	struct kevent *eventlist, size_t nevents,
 	const struct timespec *timeout)
 {
+	int (*op_kevent)(int, const struct kevent *, size_t,
+		struct kevent *, size_t, const struct timespec *);
+	const struct kevent *ev;
+	size_t i;
 
-	abort();
+	/*
+	 * Check that we don't attempt to kevent rump kernel fd's.
+	 * That needs similar treatment to select/poll, but is slightly
+	 * trickier since we need to manage to different kq descriptors.
+	 * (TODO, in case you're wondering).
+	 */
+	for (i = 0; i < nchanges; i++) {
+		ev = &changelist[i];
+		if (ev->filter == EVFILT_READ || ev->filter == EVFILT_WRITE ||
+		    ev->filter == EVFILT_VNODE) {
+			if (fd_isrump(ev->ident))
+				return ENOTSUP;
+		}
+	}
+
+	op_kevent = GETSYSCALL(host, ACCEPT);
+	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
 }
+
+/*
+ * Rest are std type calls.
+ */
+
+FDCALL(int, bind, DUALCALL_BIND,					\
+	(int fd, const struct sockaddr *name, socklen_t namelen),	\
+	(int, const struct sockaddr *, socklen_t),			\
+	(fd, name, namelen))
+
+FDCALL(int, connect, DUALCALL_CONNECT,					\
+	(int fd, const struct sockaddr *name, socklen_t namelen),	\
+	(int, const struct sockaddr *, socklen_t),			\
+	(fd, name, namelen))
+
+FDCALL(int, getpeername, DUALCALL_GETPEERNAME,				\
+	(int fd, struct sockaddr *name, socklen_t *namelen),		\
+	(int, struct sockaddr *, socklen_t *),				\
+	(fd, name, namelen))
+
+FDCALL(int, getsockname, DUALCALL_GETSOCKNAME, 				\
+	(int fd, struct sockaddr *name, socklen_t *namelen),		\
+	(int, struct sockaddr *, socklen_t *),				\
+	(fd, name, namelen))
+
+FDCALL(int, listen, DUALCALL_LISTEN,	 				\
+	(int fd, int backlog),						\
+	(int, int),							\
+	(fd, backlog))
+
+FDCALL(ssize_t, recvfrom, DUALCALL_RECVFROM, 				\
+	(int fd, void *buf, size_t len, int flags,			\
+	    struct sockaddr *from, socklen_t *fromlen),			\
+	(int, void *, size_t, int, struct sockaddr *, socklen_t *),	\
+	(fd, buf, len, flags, from, fromlen))
+
+FDCALL(ssize_t, sendto, DUALCALL_SENDTO, 				\
+	(int fd, const void *buf, size_t len, int flags,		\
+	    const struct sockaddr *to, socklen_t tolen),		\
+	(int, const void *, size_t, int,				\
+	    const struct sockaddr *, socklen_t),			\
+	(fd, buf, len, flags, to, tolen))
+
+FDCALL(ssize_t, recvmsg, DUALCALL_RECVMSG, 				\
+	(int fd, struct msghdr *msg, int flags),			\
+	(int, struct msghdr *, int),					\
+	(fd, msg, flags))
+
+FDCALL(ssize_t, sendmsg, DUALCALL_SENDMSG, 				\
+	(int fd, const struct msghdr *msg, int flags),			\
+	(int, const struct msghdr *, int),				\
+	(fd, msg, flags))
+
+FDCALL(int, getsockopt, DUALCALL_GETSOCKOPT, 				\
+	(int fd, int level, int optn, void *optval, socklen_t *optlen),	\
+	(int, int, int, void *, socklen_t *),				\
+	(fd, level, optn, optval, optlen))
+
+FDCALL(int, setsockopt, DUALCALL_SETSOCKOPT, 				\
+	(int fd, int level, int optn,					\
+	    const void *optval, socklen_t optlen),			\
+	(int, int, int, const void *, socklen_t),			\
+	(fd, level, optn, optval, optlen))
+
+FDCALL(int, shutdown, DUALCALL_SHUTDOWN, 				\
+	(int fd, int how),						\
+	(int, int),							\
+	(fd, how))
+
+#if _FORTIFY_SOURCE > 0
+#define STUB(fun) __ssp_weak_name(fun)
+ssize_t _sys_readlink(const char * __restrict, char * __restrict, size_t);
+ssize_t
+STUB(readlink)(const char * __restrict path, char * __restrict buf,
+    size_t bufsiz)
+{
+	return _sys_readlink(path, buf, bufsiz);
+}
+
+char *_sys_getcwd(char *, size_t);
+char *
+STUB(getcwd)(char *buf, size_t size)
+{
+	return _sys_getcwd(buf, size);
+}
+#else
+#define STUB(fun) fun
 #endif
+
+FDCALL(ssize_t, REALREAD, DUALCALL_READ,				\
+	(int fd, void *buf, size_t buflen),				\
+	(int, void *, size_t),						\
+	(fd, buf, buflen))
+
+FDCALL(ssize_t, readv, DUALCALL_READV, 					\
+	(int fd, const struct iovec *iov, int iovcnt),			\
+	(int, const struct iovec *, int),				\
+	(fd, iov, iovcnt))
+
+FDCALL(ssize_t, writev, DUALCALL_WRITEV, 				\
+	(int fd, const struct iovec *iov, int iovcnt),			\
+	(int, const struct iovec *, int),				\
+	(fd, iov, iovcnt))
+
+FDCALL(int, close, DUALCALL_CLOSE,	 				\
+	(int fd),							\
+	(int),								\
+	(fd))

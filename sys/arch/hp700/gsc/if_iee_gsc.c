@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.18 2010/12/05 12:19:09 skrll Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.18.4.1 2011/02/08 16:19:23 bouyer Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.18 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.18.4.1 2011/02/08 16:19:23 bouyer Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -250,7 +250,7 @@ iee_gsc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc_gsc->sc_ih = hp700_intr_establish(IPL_NET, iee_intr, sc,
-	    ga->ga_int_reg, ga->ga_irq);
+	    ga->ga_ir, ga->ga_irq);
 
 	sc->sc_iee_reset = iee_gsc_reset;
 	sc->sc_iee_cmd = iee_gsc_cmd;

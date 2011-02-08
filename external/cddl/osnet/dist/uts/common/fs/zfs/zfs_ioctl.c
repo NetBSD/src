@@ -4601,6 +4601,9 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		if (!rootvnode)
+			return EAGAIN;
+
 		printf("WARNING: ZFS on NetBSD is under development\n");
 		availrmem = (uint64_t)physmem * PAGE_SIZE / 1048576;
 		if (availrmem < ZFS_MIN_MEGS * 80 / 100) {

@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.242 2010/12/06 09:08:39 pooka Exp $
+#	$NetBSD: build.sh,v 1.242.2.1 2011/02/08 16:18:27 bouyer Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -379,11 +379,11 @@ getarch()
 		MACHINE_ARCH=mips64eb
 		;;
 
-	ews4800mips|mipsco|newsmips|sgimips)
+	ews4800mips|mipsco|newsmips|sgimips|emips)
 		MACHINE_ARCH=mipseb
 		;;
 
-	algor64|cobalt64|pmax64)
+	algor64|arc64|cobalt64|pmax64)
 		makewrappermachine=${MACHINE}
 		MACHINE=${MACHINE%64}
 		MACHINE_ARCH=mips64el
@@ -456,7 +456,7 @@ validatearch()
 		arches="arm armeb"
 		;;
 
-	algor|cobalt|pmax)
+	algor|arc|cobalt|pmax)
 		arches="mipsel mips64el"
 		;;
 
@@ -1384,7 +1384,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.242 2010/12/06 09:08:39 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.242.2.1 2011/02/08 16:18:27 bouyer Exp $
 # with these arguments: ${_args}
 #
 

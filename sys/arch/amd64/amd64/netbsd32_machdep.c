@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.68 2010/11/17 18:22:17 dholland Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.68.4.1 2011/02/08 16:19:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.68 2010/11/17 18:22:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.68.4.1 2011/02/08 16:19:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -952,6 +952,7 @@ startlwp32(void *arg)
  * and rely on catching invalid user contexts on exit from the kernel.
  * These functions perform the needed checks.
  */
+
 static int
 check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 {
@@ -965,10 +966,10 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 	    !VALID_USER_CSEL32(scp->sc_cs))
 		return EINVAL;
 	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
-	    !(scp->sc_fs == GSEL(GUFS_SEL, SEL_UPL) && pcb->pcb_fs != 0))
+	    !(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
 		return EINVAL;
 	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
-	    !(scp->sc_gs == GSEL(GUGS_SEL, SEL_UPL) && pcb->pcb_gs != 0))
+	    !(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
 		return EINVAL;
 	if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
 		return EINVAL;
@@ -994,10 +995,10 @@ check_mcontext32(struct lwp *l, const mcontext32_t *mcp)
 	    !VALID_USER_CSEL32(gr[_REG32_CS]))
 		return EINVAL;
 	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
-	    !(gr[_REG32_FS] == GSEL(GUFS_SEL, SEL_UPL) && pcb->pcb_fs != 0))
+	    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
 		return EINVAL;
 	if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
-	    !(gr[_REG32_GS] == GSEL(GUGS_SEL, SEL_UPL) && pcb->pcb_gs != 0))
+	    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
 		return EINVAL;
 	if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
 		return EINVAL;

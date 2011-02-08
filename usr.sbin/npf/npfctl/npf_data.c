@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.6 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.6.2.1 2011/02/08 16:20:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -27,13 +27,11 @@
  */
 
 /*
- * NPF proplib(9) dictionary producer.
- *
- * XXX: Needs some clean-up.
+ * npfctl(8) helper routines.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.6 2011/01/18 20:33:45 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.6.2.1 2011/02/08 16:20:15 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -42,7 +40,6 @@ __RCSID("$NetBSD: npf_data.c,v 1.6 2011/01/18 20:33:45 rmind Exp $");
 #include <netinet/tcp.h>
 
 #include <arpa/inet.h>
-#include <prop/proplib.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -56,110 +53,27 @@ __RCSID("$NetBSD: npf_data.c,v 1.6 2011/01/18 20:33:45 rmind Exp $");
 #include "npfctl.h"
 
 static struct ifaddrs *		ifs_list = NULL;
-
-static prop_dictionary_t	npf_dict, settings_dict;
-static prop_array_t		nat_arr, tables_arr, rproc_arr, rules_arr;
-
-static pri_t			gr_prio_counter = 1;
-static pri_t			rl_prio_counter = 1;
-static pri_t			nat_prio_counter = 1;
-static u_int			rproc_id_counter = 1;
+nl_config_t *			npf_conf = NULL;
 
 void
 npfctl_init_data(void)
 {
 
-	if (getifaddrs(&ifs_list) == -1)
+	npf_conf = npf_config_create();
+	if (npf_conf == NULL) {
+		errx(EXIT_FAILURE, "npf_config_create");
+	}
+	if (getifaddrs(&ifs_list) == -1) {
 		err(EXIT_FAILURE, "getifaddrs");
-
-	npf_dict = prop_dictionary_create();
-
-	nat_arr = prop_array_create();
-	prop_dictionary_set(npf_dict, "translation", nat_arr);
-
-	settings_dict = prop_dictionary_create();
-	prop_dictionary_set(npf_dict, "settings", settings_dict);
-
-	tables_arr = prop_array_create();
-	prop_dictionary_set(npf_dict, "tables", tables_arr);
-
-	rproc_arr = prop_array_create();
-	prop_dictionary_set(npf_dict, "rprocs", rproc_arr);
-
-	rules_arr = prop_array_create();
-	prop_dictionary_set(npf_dict, "rules", rules_arr);
+	}
 }
 
 int
 npfctl_ioctl_send(int fd)
 {
-	int ret = 0, errval;
-
-#ifdef _NPF_TESTING
-	prop_dictionary_externalize_to_file(npf_dict, "./npf.plist");
-#else
-	errval = prop_dictionary_send_ioctl(npf_dict, fd, IOC_NPF_RELOAD);
-	if (errval) {
-		errx(EXIT_FAILURE, "npfctl_ioctl_send: %s\n", strerror(errval));
-	}
-#endif
-	prop_object_release(npf_dict);
-	return ret;
-}
-
-int
-npfctl_ioctl_flushse(int fd)
-{
-	prop_dictionary_t sesdict;
-	prop_array_t selist;
-	int errval;
-
-	sesdict = prop_dictionary_create();
-	selist = prop_array_create();
-	prop_dictionary_set(sesdict, "session-list", selist);
-	errval = prop_dictionary_send_ioctl(sesdict, fd, IOC_NPF_SESSIONS_LOAD);
-	if (errval) {
-		errx(EXIT_FAILURE, "npfctl_ioctl_flushse: %s\n",
-		    strerror(errval));
-	}
-	prop_object_release(sesdict);
-	return errval;
-}
-
-int
-npfctl_ioctl_sendse(int fd)
-{
-	prop_dictionary_t sesdict;
-	int error;
-
-	sesdict = prop_dictionary_internalize_from_file(NPF_SESSDB_PATH);
-	if (sesdict == NULL) {
-		errx(EXIT_FAILURE, "npfctl: no sessions saved "
-		    "('%s' does not exist)", NPF_SESSDB_PATH);
-	}
-	error = prop_dictionary_send_ioctl(sesdict, fd, IOC_NPF_SESSIONS_LOAD);
-	prop_object_release(sesdict);
-	if (error) {
-		err(EXIT_FAILURE, "npfctl_ioctl_sendse");
-	}
-	return 0;
-}
-
-int
-npfctl_ioctl_recvse(int fd)
-{
-	prop_dictionary_t sesdict;
-	int error;
-
-	error = prop_dictionary_recv_ioctl(fd, IOC_NPF_SESSIONS_SAVE, &sesdict);
-	if (error) {
-		err(EXIT_FAILURE, "prop_array_recv_ioctl");
-	}
-	if (!prop_dictionary_externalize_to_file(sesdict, NPF_SESSDB_PATH)) {
-		errx(EXIT_FAILURE, "could not save to '%s'", NPF_SESSDB_PATH);
-	}
-	prop_object_release(sesdict);
-	return 0;
+	int error = npf_config_submit(npf_conf, fd);
+	npf_config_destroy(npf_conf);
+	return error;
 }
 
 /*
@@ -211,7 +125,7 @@ npfctl_parse_v4mask(char *ostr, in_addr_t *addr, in_addr_t *mask)
 	return ret;
 }
 
-static bool
+bool
 npfctl_parse_port(char *ostr, bool *range, in_port_t *fport, in_port_t *tport)
 {
 	char *str = xstrdup(ostr), *sep;
@@ -239,7 +153,7 @@ npfctl_parse_port(char *ostr, bool *range, in_port_t *fport, in_port_t *tport)
 	return true;
 }
 
-static void
+void
 npfctl_parse_cidr(char *str, in_addr_t *addr, in_addr_t *mask)
 {
 
@@ -299,54 +213,13 @@ npfctl_parse_tcpfl(char *s, uint8_t *tfl, uint8_t *tfl_mask)
 	return true;
 }
 
-/*
- * NPF table creation and construction routines.
- */
-
-prop_dictionary_t
-npfctl_lookup_table(char *tidstr)
-{
-	prop_dictionary_t tl;
-	prop_object_iterator_t it;
-	prop_object_t obj;
-	u_int tid;
-
-	tid = atoi(tidstr);
-	it = prop_array_iterator(tables_arr);
-	while ((tl = prop_object_iterator_next(it)) != NULL) {
-		obj = prop_dictionary_get(tl, "id");
-		if (tid == prop_number_integer_value(obj))
-			break;
-	}
-	return tl;
-}
-
-prop_dictionary_t
-npfctl_construct_table(int id, int type)
-{
-	prop_dictionary_t tl;
-
-	tl = prop_dictionary_create();
-	/* TODO: 1. check ID range 2. check if not a duplicate */
-	prop_dictionary_set(tl, "id", prop_number_create_integer(id));
-	prop_dictionary_set(tl, "type", prop_number_create_integer(type));
-	prop_dictionary_set(tl, "entries", prop_array_create());
-	prop_array_add(tables_arr, tl);
-	return tl;
-}
-
 void
-npfctl_fill_table(prop_dictionary_t tl, char *fname)
+npfctl_fill_table(nl_table_t *tl, char *fname)
 {
-	prop_dictionary_t entdict;
-	prop_array_t tblents;
 	char *buf;
 	FILE *fp;
 	size_t n;
 	int l;
-
-	tblents = prop_dictionary_get(tl, "entries");
-	assert(tblents != NULL);
 
 	fp = fopen(fname, "r");
 	if (fp == NULL) {
@@ -361,16 +234,12 @@ npfctl_fill_table(prop_dictionary_t tl, char *fname)
 			continue;
 
 		/* IPv4 CIDR: a.b.c.d/mask */
-		if (!npfctl_parse_v4mask(buf, &addr, &mask))
+		if (!npfctl_parse_v4mask(buf, &addr, &mask)) {
 			errx(EXIT_FAILURE, "invalid table entry at line %d", l);
+		}
 
 		/* Create and add table entry. */
-		entdict = prop_dictionary_create();
-		prop_dictionary_set(entdict, "addr",
-		    prop_number_create_integer(addr));
-		prop_dictionary_set(entdict, "mask",
-		    prop_number_create_integer(mask));
-		prop_array_add(tblents, entdict);
+		npf_table_add_entry(tl, addr, mask);
 		l++;
 	}
 	if (buf != NULL) {
@@ -379,54 +248,7 @@ npfctl_fill_table(prop_dictionary_t tl, char *fname)
 }
 
 /*
- * npfctl_mk_rule: create a rule (or group) dictionary.
- *
- * Note: group is a rule containing subrules.  It has no n-code, however.
- */
-prop_dictionary_t
-npfctl_mk_rule(bool group, prop_dictionary_t parent)
-{
-	prop_dictionary_t rl;
-	prop_array_t subrl, rlset;
-	pri_t pri;
-
-	rl = prop_dictionary_create();
-	if (group) {
-		subrl = prop_array_create();
-		prop_dictionary_set(rl, "subrules", subrl);
-		/* Give new priority, reset rule priority counter. */
-		pri = gr_prio_counter++;
-		rl_prio_counter = 1;
-	} else {
-		pri = rl_prio_counter++;
-	}
-	prop_dictionary_set(rl, "priority", prop_number_create_integer(pri));
-
-	if (parent) {
-		rlset = prop_dictionary_get(parent, "subrules");
-		assert(rlset != NULL);
-	} else {
-		rlset = rules_arr;
-	}
-	prop_array_add(rlset, rl);
-	return rl;
-}
-
-void
-npfctl_rule_setattr(prop_dictionary_t rl, int attr, u_int iface)
-{
-	prop_number_t attrnum, ifnum;
-
-	attrnum = prop_number_create_integer(attr);
-	prop_dictionary_set(rl, "attributes", attrnum);
-	if (iface) {
-		ifnum = prop_number_create_integer(iface);
-		prop_dictionary_set(rl, "interface", ifnum);
-	}
-}
-
-/*
- * Main rule generation routines.
+ * N-code generation helpers.
  */
 
 static void
@@ -497,15 +319,13 @@ npfctl_rulenc_block(void **nc, int nblocks[], var_t *cidr, var_t *ports,
 }
 
 void
-npfctl_rule_protodata(prop_dictionary_t rl, char *proto, char *tcp_flags,
-    int icmp_type, int icmp_code,
-    var_t *from, var_t *fports, var_t *to, var_t *tports)
+npfctl_rule_ncode(nl_rule_t *rl, char *proto, char *tcpfl, int icmp_type,
+    int icmp_code, var_t *from, var_t *fports, var_t *to, var_t *tports)
 {
-	prop_data_t ncdata;
+	int nblocks[3] = { 0, 0, 0 };
 	bool icmp, tcpudp, both;
-	int foff, nblocks[3] = { 0, 0, 0 };
 	void *ncptr, *nc;
-	size_t sz;
+	size_t sz, foff;
 
 	/*
 	 * Default: both TCP and UDP.
@@ -537,11 +357,11 @@ npfctl_rule_protodata(prop_dictionary_t rl, char *proto, char *tcp_flags,
 	}
 skip_proto:
 	if (icmp || icmp_type != -1) {
-		assert(tcp_flags == NULL);
+		assert(tcpfl == NULL);
 		icmp = true;
 		nblocks[2] += 1;
 	}
-	if (tcpudp && tcp_flags) {
+	if (tcpudp && tcpfl) {
 		assert(icmp_type == -1 && icmp_code == -1);
 		nblocks[2] += 1;
 	}
@@ -574,8 +394,7 @@ skip_proto:
 	sz = npfctl_calc_ncsize(nblocks);
 	ncptr = malloc(sz);
 	if (ncptr == NULL) {
-		perror("malloc");
-		exit(EXIT_FAILURE);
+		err(EXIT_FAILURE, "malloc");
 	}
 	nc = ncptr;
 
@@ -599,7 +418,7 @@ skip_proto:
 		foff = npfctl_failure_offset(nblocks);
 		npfctl_gennc_icmp(&nc, foff, icmp_type, icmp_code);
 
-	} else if (tcpudp && tcp_flags) {
+	} else if (tcpudp && tcpfl) {
 		/*
 		 * TCP case, flags.
 		 */
@@ -607,8 +426,8 @@ skip_proto:
 
 		nblocks[2]--;
 		foff = npfctl_failure_offset(nblocks);
-		if (!npfctl_parse_tcpfl(tcp_flags, &tfl, &tfl_mask)) {
-			errx(EXIT_FAILURE, "invalid TCP flags '%s'", tcp_flags);
+		if (!npfctl_parse_tcpfl(tcpfl, &tfl, &tfl_mask)) {
+			errx(EXIT_FAILURE, "invalid TCP flags '%s'", tcpfl);
 		}
 		npfctl_gennc_tcpfl(&nc, foff, tfl, tfl_mask);
 	}
@@ -630,107 +449,8 @@ skip_proto:
 #endif
 
 	/* Create a final memory block of data, ready to send. */
-	ncdata = prop_data_create_data(ncptr, sz);
-	if (ncdata == NULL) {
-		perror("prop_data_create_data");
-		exit(EXIT_FAILURE);
+	if (npf_rule_setcode(rl, NPF_CODE_NCODE, ncptr, sz) == -1) {
+		errx(EXIT_FAILURE, "npf_rule_setcode");
 	}
-	prop_dictionary_set(rl, "ncode", ncdata);
 	free(ncptr);
-}
-
-/*
- * Rule procedure construction routines.
- */
-
-prop_dictionary_t
-npfctl_mk_rproc(void)
-{
-	prop_dictionary_t rp;
-
-	rp = prop_dictionary_create();
-	prop_dictionary_set(rp, "id",
-	    prop_number_create_unsigned_integer(rproc_id_counter++));
-	prop_array_add(rproc_arr, rp);
-	return rp;
-}
-
-bool
-npfctl_find_rproc(prop_dictionary_t rl, char *name)
-{
-	prop_dictionary_t rp;
-	prop_object_iterator_t it;
-	prop_object_t obj;
-
-	it = prop_array_iterator(rproc_arr);
-	while ((rp = prop_object_iterator_next(it)) != NULL) {
-		obj = prop_dictionary_get(rp, "name");
-		if (strcmp(prop_string_cstring(obj), name) == 0)
-			break;
-	}
-	if (rp == NULL) {
-		return false;
-	}
-	prop_dictionary_set(rl, "rproc-id", prop_dictionary_get(rp, "id"));
-	return true;
-}
-
-/*
- * NAT policy construction routines.
- */
-
-prop_dictionary_t
-npfctl_mk_nat(void)
-{
-	prop_dictionary_t rl;
-	pri_t pri;
-
-	/* NAT policy is rule with extra info. */
-	rl = prop_dictionary_create();
-	pri = nat_prio_counter++;
-	prop_dictionary_set(rl, "priority", prop_number_create_integer(pri));
-	prop_array_add(nat_arr, rl);
-	return rl;
-}
-
-void
-npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
-    u_int iface, char *taddr, char *rport)
-{
-	int attr = NPF_RULE_PASS | NPF_RULE_FINAL;
-	in_addr_t addr, _dummy;
-	prop_data_t addrdat;
-
-	/* Translation type and flags. */
-	prop_dictionary_set(rl, "type",
-	    prop_number_create_integer(type));
-	prop_dictionary_set(rl, "flags",
-	    prop_number_create_integer(flags));
-
-	/* Interface and attributes. */
-	attr |= (type == NPF_NATOUT) ? NPF_RULE_OUT : NPF_RULE_IN;
-	npfctl_rule_setattr(rl, attr, iface);
-
-	/* Translation IP. */
-	npfctl_parse_cidr(taddr, &addr, &_dummy);
-	addrdat = prop_data_create_data(&addr, sizeof(in_addr_t));
-	if (addrdat == NULL) {
-		err(EXIT_FAILURE, "prop_data_create_data");
-	}
-	prop_dictionary_set(rl, "translation-ip", addrdat);
-
-	/* Translation port (for redirect case). */
-	if (rport) {
-		in_port_t port;
-		bool range;
-
-		if (!npfctl_parse_port(rport, &range, &port, &port)) {
-			errx(EXIT_FAILURE, "invalid service '%s'", rport);
-		}
-		if (range) {
-			errx(EXIT_FAILURE, "range is not supported for 'rdr'");
-		}
-		prop_dictionary_set(rl, "translation-port",
-		    prop_number_create_integer(port));
-	}
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.18 2010/12/30 12:05:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.18.4.1 2011/02/08 16:19:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.18 2010/12/30 12:05:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.18.4.1 2011/02/08 16:19:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -134,7 +134,7 @@ acpicpu_tstate_attach_print(struct acpicpu_softc *sc)
 		if (ts->ts_percent == 0)
 			continue;
 
-		aprint_debug_dev(sc->sc_dev, "T%u: %3s, "
+		aprint_verbose_dev(sc->sc_dev, "T%u: %3s, "
 		    "lat %3u us, pow %5u mW, %3u %%\n", i, str,
 		    ts->ts_latency, ts->ts_power, ts->ts_percent);
 	}

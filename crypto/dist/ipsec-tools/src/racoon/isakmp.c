@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.66 2010/11/17 10:40:41 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.66.2.1 2011/02/08 16:18:30 bouyer Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2246,7 +2246,7 @@ isakmp_get_sainfo(iph2, sp_out, sp_in)
 	struct secpolicy *sp_out, *sp_in;
 {
 	struct remoteconf *conf;
-	int remoteid = 0;
+	uint32_t remoteid = 0;
 
 	plog(LLV_DEBUG, LOCATION, NULL,
 		"new acquire %s\n", spidx2str(&sp_out->spidx));

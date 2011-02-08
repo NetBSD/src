@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -61,9 +61,11 @@
 #include "if-options.h"
 #include "net.h"
 
-#define ROUNDUP(a)							      \
+#ifndef RT_ROUNDUP
+#define RT_ROUNDUP(a)							      \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+#define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
+#endif
 
 /* FIXME: Why do we need to check for sa_family 255 */
 #define COPYOUT(sin, sa)						      \
@@ -198,7 +200,7 @@ if_route(const struct interface *iface, const struct in_addr *dest,
 	int retval = 0;
 
 #define ADDSU(_su) {							      \
-		l = ROUNDUP(_su.sa.sa_len);				      \
+		l = RT_ROUNDUP(_su.sa.sa_len);				      \
 		memcpy(bp, &(_su), l);					      \
 		bp += l;						      \
 	}
@@ -298,7 +300,7 @@ get_addrs(int type, char *cp, struct sockaddr **sa)
 			    inet_ntoa(((struct sockaddr_in *)sa[i])->
 				sin_addr));
 #endif
-			ADVANCE(cp, sa[i]);
+			RT_ADVANCE(cp, sa[i]);
 		} else
 			sa[i] = NULL;
 	}

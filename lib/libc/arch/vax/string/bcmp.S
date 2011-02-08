@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.3 2003/08/07 16:42:32 agc Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.3.52.1 2011/02/08 16:18:58 bouyer Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,10 @@
 
 #include "DEFS.h"
 
+#ifdef LIBC_SCCS
+RCSID("$NetBSD: bcmp.S,v 1.3.52.1 2011/02/08 16:18:58 bouyer Exp $")
+#endif
+
 /* Since "cmpc3" is not portable across VAXen, do it the hard way */
 /*  still, this is four times faster than the generic C version on a uvax2 */
 
@@ -56,3 +60,4 @@ ENTRY(bcmp, 0)
 	clrl	%r0		# we have a match!
 9:
 	ret
+END(bcmp)

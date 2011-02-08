@@ -1,4 +1,4 @@
-/* $Id: crypto.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: crypto.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,39 +46,40 @@
 #include <openssl/buffer.h>
 #include "crypto.h"
 
+/* local headers */
+
 #define HMAC_MD5_KEYSIZE	64
 #define HMAC_MD5_IPAD		0x36
 #define HMAC_MD5_OPAD		0x5C
 
-/* local header */
-
 static const char saslc__hex[] = "0123456789abcdef";
 
-static char * saslc__digest_to_ascii(const unsigned char *);
+static char *saslc__digest_to_ascii(const unsigned char *);
 
 /**
- * @brief converts MD5 binary digest into text representation.
- * @param d MD5 digest
+ * @brief converts MD5 binary digest into its text representation.
+ * @param d MD5 digest in binary form
  * @return the text representation, note that user is responsible for freeing
  * allocated memory.
  */
 
 static char *
-saslc__digest_to_ascii(const unsigned char *d)
+saslc__digest_to_ascii(const unsigned char *digest)
 {
-	char *r;
-	size_t i;
+	char *result;
+	size_t i,j;
 
-	if ((r = calloc((MD5_DIGEST_LENGTH << 1) + 1, sizeof(*r))) == NULL)
+	result = calloc((2 * MD5_DIGEST_LENGTH) + 1, sizeof(*result));
+        if (result == NULL)
 		return NULL;
 
 	for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
-		size_t j = i << 1;
-		r[j] = saslc__hex[(unsigned int)d[i] >> 4];
-		r[j + 1] = saslc__hex[d[i] & 0x0F];
+		j = 2*i;
+		result[j] = saslc__hex[(unsigned char)digest[i] >> 4];
+		result[j + 1] = saslc__hex[digest[i] & 0x0F];
 	}
 
-	return r;
+	return result;
 }
 
 /**
@@ -102,23 +103,18 @@ saslc__crypto_base64(const unsigned char *in, size_t len)
 	/* base64 -> mem */
 	base64 = BIO_push(base64, m);
 	/*LINTED len should be size_t in api*/
-	BIO_write(base64, in, len);
+	BIO_write(base64, in, (int)len);
 	/*LINTED wrong argument, null effect*/
 	(void)BIO_flush(base64);
 	/*LINTED wrong argument, non-portable cast*/
-	BIO_get_mem_ptr(base64, &c);
-#if 0
-	/* c->length is unsigned and cannot be < 0 */
-	if (c->length < 0)
-		return NULL;
-#endif
+	(void)BIO_get_mem_ptr(base64, &c);
 	/*LINTED length should be size_t in api*/
 	r = calloc(c->length, sizeof(*r));
 	if (r == NULL)
 		goto end;
 	if (c->length != 0) {
 		/*LINTED length should be size_t in api*/
-		memcpy(r, c->data, c->length - 1);
+		memcpy(r, c->data, (size_t)(c->length - 1));
 	}
 end:
 	BIO_free_all(base64);
@@ -127,44 +123,46 @@ end:
 }
 
 /**
- * @brief generates safe nonce basing on OpenSSL
- * RAND_pseudo_bytes, which should be enough for our purposes.
+ * @brief generates safe nonce basing on the OpenSSL
+ * RAND_pseudo_bytes, which should be good enough for our purposes.
  * @param b nonce length
  * @return nonce, user is responsible for freeing nonce.
  */
 
 unsigned char *
-saslc__crypto_nonce(size_t b)
+saslc__crypto_nonce(size_t len)
 {
-	unsigned char *n;
+	unsigned char *nonce;
 
-	if ((n = calloc(b, sizeof(*n))) == NULL)
+        nonce = calloc(len, sizeof(*nonce));
+	if (nonce == NULL)
 		return NULL;
 	
 	/*LINTED b should be size_t in api*/
-	if (RAND_pseudo_bytes(n, b) != 1) {
-		free(n);
+	if (RAND_pseudo_bytes(nonce, (int)len) != 1) {
+		free(nonce);
 		return NULL;
 	}
 
-	return n;
+	return nonce;
 }
 
 /**
  * @brief computes md5(D)
- * @param d data (string)
- * @return the text representation of the computed digest, note that user is
+ * @param str data
+ * @param len data length
+ * @return text representation of the computed digest, note that user is
  * responsible for freeing allocated memory.
  */
 
 char *
-saslc__crypto_md5(const char *d)
+saslc__crypto_md5(const char *str, size_t len)
 {
 	unsigned char digest[MD5_DIGEST_LENGTH];
 	MD5_CTX md5c;
 
 	MD5_Init(&md5c);
-	MD5_Update(&md5c, d, strlen(d));
+	MD5_Update(&md5c, str, len);
 	MD5_Final(digest, &md5c);
 
 	return saslc__digest_to_ascii(digest);
@@ -176,7 +174,7 @@ saslc__crypto_md5(const char *d)
  * @param keylen hmac_md5 key length
  * @param in hmac_md5 input
  * @param inlen hmac_md5 input length
- * @return the text representation of the computed digest, note that user is
+ * @returntext representation of the computed digest, note that user is
  * responsible for freeing allocated memory.
  */
 

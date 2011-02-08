@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm_netbsd.c,v 1.6 2010/12/23 17:44:33 christos Exp $        */
+/*      $NetBSD: libdm_netbsd.c,v 1.6.2.1 2011/02/08 16:18:52 bouyer Exp $        */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+#include <dm.h>
 #include <dev/dm/netbsd-dm.h>
 
 #include <dm-ioctl.h>
@@ -51,10 +52,10 @@
 
 #define DMI_SIZE 16 * 1024
 
-static int dm_list_versions(prop_dictionary_t, struct dm_ioctl *);
-static int dm_list_devices(prop_dictionary_t, struct dm_ioctl *);
-static int dm_dev_deps(prop_dictionary_t, struct dm_ioctl *);
-static int dm_table_status(prop_dictionary_t, struct dm_ioctl *);
+static int dm_list_versions(libdm_task_t, struct dm_ioctl *);
+static int dm_list_devices(libdm_task_t, struct dm_ioctl *);
+static int dm_dev_deps(libdm_task_t, struct dm_ioctl *);
+static int dm_table_status(libdm_task_t, struct dm_ioctl *);
 
 int
 nbsd_get_dm_major(uint32_t *major,  int type)
@@ -78,8 +79,7 @@ nbsd_get_dm_major(uint32_t *major,  int type)
 	}
 
 	for (i = 0, val_len /= sizeof(*kd); i < val_len; i++) {
-
-		if (strncmp(kd[i].d_name,DM_NAME,strlen(kd[i].d_name)) == 0){
+		if (strncmp(kd[i].d_name,DM_NAME,strlen(kd[i].d_name)) == 0) {
 
 			if (type == DM_CHAR_MAJOR)
 				/* Set major to dm-driver char major number. */
@@ -87,7 +87,6 @@ nbsd_get_dm_major(uint32_t *major,  int type)
 			else
 				if (type == DM_BLOCK_MAJOR)
 					*major = kd[i].d_bmajor;
-			
 			free(kd);
 
 			return 1;
@@ -95,113 +94,89 @@ nbsd_get_dm_major(uint32_t *major,  int type)
 	}
 
 	free(kd);
-	
-	return 0;
-}
 
-int
-nbsd_dmi_add_version(const int *version, prop_dictionary_t dm_dict)
-{
-	prop_array_t ver;
-	size_t i;
-
-	if ((ver = prop_array_create()) == NULL)
-		return -1;
-
-       	for (i=0;i<3;i++)
-		prop_array_set_uint32(ver,i,version[i]);
-
-	if ((prop_dictionary_set(dm_dict,"version",ver)) == false)
-		return -1;
-
-	prop_object_release(ver);
-	
 	return 0;
 }
 
 struct dm_ioctl*
-nbsd_dm_dict_to_dmi(prop_dictionary_t dm_dict,const int cmd)
+nbsd_dm_dict_to_dmi(libdm_task_t task, const int cmd)
 {
 	struct dm_ioctl *dmi;
-	prop_array_t ver;
-	
-	size_t i;
+
 	int r;
 	char *name, *uuid;
 	uint32_t major,minor;
-	
+
 	name = NULL;
 	uuid = NULL;
 	minor = 0;
-	
+
 	nbsd_get_dm_major(&major, DM_BLOCK_MAJOR);
-	
+
 	if (!(dmi = dm_malloc(DMI_SIZE)))
 		return NULL;
 
-	memset(dmi,0,DMI_SIZE);
-	
-	prop_dictionary_get_int32(dm_dict, DM_IOCTL_OPEN, &dmi->open_count);
-	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_EVENT, &dmi->event_nr);
-	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &dmi->flags);
-	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_TARGET_COUNT, 
-		&dmi->target_count);
+	memset(dmi, 0, DMI_SIZE);
 
-	if (prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor))
+	dmi->open_count = libdm_task_get_open_num(task);
+	dmi->event_nr = libdm_task_get_event_num(task);
+	dmi->flags = libdm_task_get_flags(task);
+	dmi->target_count = libdm_task_get_target_num(task);
+
+	minor = libdm_task_get_minor(task);
+
+	if (minor != 0)
 		dmi->dev = MKDEV(major, minor);
 	else
 		dmi->dev = 0;
-	
+
+	name = libdm_task_get_name(task);
+	uuid = libdm_task_get_uuid(task);
+
 	/* Copy name and uuid to dm_ioctl. */
-	if (prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME,
-		(const char **)&name)){
+	if (name != NULL)
 		strlcpy(dmi->name, name, DM_NAME_LEN);
-	} else
+	else
 		dmi->name[0] = '\0';
-	
-	if (prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID,
-		(const char **)&uuid)){
+
+	if (uuid != NULL)
 		strlcpy(dmi->uuid, uuid, DM_UUID_LEN);
-	}  else
+        else
 		dmi->uuid[0] = '\0';
 
 	/* dmi parsing values, size of dmi block and offset to data. */
 	dmi->data_size  = DMI_SIZE;
 	dmi->data_start = sizeof(struct dm_ioctl);
-	
-	/* Get kernel version from dm_dict. */
-	ver = prop_dictionary_get(dm_dict,DM_IOCTL_VERSION);
-	
-	for(i=0; i<3; i++)
-		prop_array_get_uint32(ver,i,&dmi->version[i]);
+
+	libdm_task_get_cmd_version(task, dmi->version, 3);
 
 	switch (cmd){
 
 	case DM_LIST_VERSIONS:
-		r = dm_list_versions(dm_dict,dmi);
+		r = dm_list_versions(task, dmi);
 		if (r >= 0)
 			dmi->target_count = r;
 		break;
 
 	case DM_LIST_DEVICES:
-		r = dm_list_devices(dm_dict,dmi);
+		r = dm_list_devices(task, dmi);
 		if (r >= 0)
 			dmi->target_count = r;
-		break;	
+		break;
 
 	case DM_TABLE_STATUS:
-		r = dm_table_status(dm_dict,dmi);
+		r = dm_table_status(task, dmi);
 		if (r >= 0)
 			dmi->target_count = r;
-		break;	
+		break;
 
 	case DM_TABLE_DEPS:
-		r = dm_dev_deps(dm_dict,dmi);
+		r = dm_dev_deps(task, dmi);
 		if (r >= 0)
 			dmi->target_count = r;
-		break;	
-	}	
-	
+		break;
+	}
+
 	return dmi;
 }
 
@@ -212,21 +187,22 @@ nbsd_dm_dict_to_dmi(prop_dictionary_t dm_dict,const int cmd)
  */
 
 static int
-dm_list_versions(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
+dm_list_versions(libdm_task_t task, struct dm_ioctl *dmi)
 {
 	struct dm_target_versions *dmtv,*odmtv;
 
-	prop_array_t targets,ver;
-	prop_dictionary_t target_dict;
-	prop_object_iterator_t iter;
-	
+	libdm_cmd_t cmd;
+	libdm_iter_t iter;
+	libdm_target_t target;
+	uint32_t ver[3];
+
 	char *name;
 	size_t j,i,slen,rec_size;
-	
+
 	odmtv = NULL;
 	name = NULL;
 	j = 0;
-	
+
 	dmtv = (struct dm_target_versions *)((uint8_t *)dmi + dmi->data_start);
 
 /*	printf("dmi: vers: %d.%d.%d data_size: %d data_start: %d name: %s t_count: %d\n",
@@ -237,61 +213,55 @@ dm_list_versions(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
 	printf("dmtv: size: %p --- %p\n",dmtv,(struct dm_target_versions *)(dmi+312));*/
 
 	/* get prop_array of target_version dictionaries */
-	if ((targets = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA))){
+	if ((cmd = libdm_task_get_cmd(task)) == NULL)
+		return -ENOENT;
 
-		iter = prop_array_iterator(targets);
-		if (!iter)
-			err(EXIT_FAILURE,"dm_list_versions %s",__func__);
+	iter = libdm_cmd_iter_create(cmd);
 
-		while((target_dict = prop_object_iterator_next(iter)) != NULL){
-			j++;
-	
-			prop_dictionary_get_cstring_nocopy(target_dict,
-			    DM_TARGETS_NAME,(const char **)&name);
-			
-			slen = strlen(name) + 1;
-			rec_size = sizeof(struct dm_target_versions) + slen + 1;
+	while((target = libdm_cmd_get_target(iter)) != NULL){
+		j++;
 
-			if (rec_size > dmi->data_size)
-				return -ENOMEM;
-			
-			ver = prop_dictionary_get(target_dict,DM_TARGETS_VERSION);
-						
-			for (i=0; i<3; i++)
-				prop_array_get_uint32(ver,i,&dmtv->version[i]);
+		name = libdm_target_get_name(target);
 
-			dmtv->next = rec_size;
+		slen = strlen(name) + 1;
+		rec_size = sizeof(struct dm_target_versions) + slen + 1;
 
-			strlcpy(dmtv->name,name,slen);
+		if (rec_size > dmi->data_size)
+			return -ENOMEM;
 
-			odmtv = dmtv;
-			
-			dmtv =(struct dm_target_versions *)((uint8_t *)dmtv + rec_size);
-		}
+		libdm_target_get_version(target, dmtv->version, sizeof(ver));
 
-		if (odmtv != NULL)
-			odmtv->next = 0;
-	}			
+		dmtv->next = rec_size;
+		strlcpy(dmtv->name,name,slen);
+		odmtv = dmtv;
+		dmtv =(struct dm_target_versions *)((uint8_t *)dmtv + rec_size);
 
-	prop_object_iterator_release(iter);
+		libdm_target_destroy(target);
+	}
+
+	if (odmtv != NULL)
+		odmtv->next = 0;
+
+	libdm_iter_destroy(iter);
+
 	return j;
 }
 
 /*
- * List all available dm devices in system. 
- */	
+ * List all available dm devices in system.
+ */
 static int
-dm_list_devices(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
+dm_list_devices(libdm_task_t task, struct dm_ioctl *dmi)
 {
 	struct dm_name_list *dml,*odml;
-	
-	prop_array_t targets;
-	prop_dictionary_t target_dict;
-	prop_object_iterator_t iter;
+
+	libdm_cmd_t cmd;
+	libdm_iter_t iter;
+	libdm_dev_t dev;
 
 	uint32_t minor;
 	uint32_t major;
-	
+
 	char *name;
 	size_t j,slen,rec_size;
 
@@ -300,170 +270,150 @@ dm_list_devices(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
 	minor = 0;
 	j = 0;
 
-	nbsd_get_dm_major(&major,DM_BLOCK_MAJOR);
-		
+	nbsd_get_dm_major(&major, DM_BLOCK_MAJOR);
+
 	dml = (struct dm_name_list *)((uint8_t *)dmi + dmi->data_start);
 
-	if ((targets = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA))){
+	if ((cmd = libdm_task_get_cmd(task)) == NULL)
+		return -ENOENT;
 
-		iter = prop_array_iterator(targets);
-		if (!iter)
-			err(EXIT_FAILURE,"dm_list_devices %s",__func__);
+	iter = libdm_cmd_iter_create(cmd);
 
-		while((target_dict = prop_object_iterator_next(iter)) != NULL){
+	while((dev = libdm_cmd_get_dev(iter)) != NULL){
 
-			prop_dictionary_get_cstring_nocopy(target_dict,
-			    DM_DEV_NAME,(const char **)&name);
+		name = libdm_dev_get_name(dev);
+		minor = libdm_dev_get_minor(dev);
+		dml->dev = MKDEV(major, minor);
 
-			prop_dictionary_get_uint32(target_dict,DM_DEV_DEV,&minor);
+		slen = strlen(name) + 1;
+		rec_size = sizeof(struct dm_name_list) + slen + 1;
 
-			dml->dev = MKDEV(major,minor);
-			
-			slen = strlen(name) + 1;
-			rec_size = sizeof(struct dm_name_list) + slen + 1;
+		if (rec_size > dmi->data_size)
+			return -ENOMEM;
 
-			if (rec_size > dmi->data_size)
-				return -ENOMEM;
-			
-			dml->next = rec_size;
-			
-			strlcpy(dml->name,name,slen);
-			
-			odml = dml;
-			
-			dml =(struct dm_name_list *)((uint8_t *)dml + rec_size);
+		dml->next = rec_size;
+		strlcpy(dml->name, name, slen);
+		odml = dml;
+		dml =(struct dm_name_list *)((uint8_t *)dml + rec_size);
+		j++;
 
-			j++;
-		}
-
-		if (odml != NULL)
-			odml->next = 0;
+		libdm_dev_destroy(dev);
 	}
-	prop_object_iterator_release(iter);
+
+	if (odml != NULL)
+		odml->next = 0;
+
+	libdm_iter_destroy(iter);
+
 	return j;
 }
 
 /*
- * Print status of each table, target arguments, start sector, 
+ * Print status of each table, target arguments, start sector,
  * size and target name.
  */
 static int
-dm_table_status(prop_dictionary_t dm_dict,struct dm_ioctl *dmi)
+dm_table_status(libdm_task_t task, struct dm_ioctl *dmi)
 {
 	struct dm_target_spec *dmts, *odmts;
 
-	prop_array_t targets;
-	prop_dictionary_t target_dict;
-	prop_object_iterator_t iter;
+	libdm_cmd_t cmd;
+	libdm_table_t table;
+	libdm_iter_t iter;
+	uint32_t flags;
 
-	char *type,*params,*params_start;
+	char *type, *params, *params_start;
+	size_t j, plen, rec_size, next;
 
-	bool prm;
-	size_t j,plen,rec_size,next;
-
-	j = 0;
-	next = 0;
+	j = next = rec_size = 0;
 	params = NULL;
 	odmts = NULL;
-	rec_size = 0;
 	plen = -1;
-	prm = false;
-	
-	dmts = (struct dm_target_spec *)((uint8_t *)dmi + dmi->data_start);	
-		
-	if ((targets = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA))){
 
-		iter = prop_array_iterator(targets);
-		if (!iter)
-			err(EXIT_FAILURE,"dm_table_status %s",__func__);
+	dmts = (struct dm_target_spec *)((uint8_t *)dmi + dmi->data_start);
 
-		while((target_dict = prop_object_iterator_next(iter)) != NULL){
+	if ((cmd = libdm_task_get_cmd(task)) == NULL)
+		return ENOENT;
 
-			prop_dictionary_get_cstring_nocopy(target_dict,
-			    DM_TABLE_TYPE,(const char **)&type);
+	iter = libdm_cmd_iter_create(cmd);
 
-			prm = prop_dictionary_get_cstring_nocopy(target_dict,
-			    DM_TABLE_PARAMS,(const char **)&params);
+	while ((table = libdm_cmd_get_table(iter)) != NULL) {
+		dmts->sector_start = libdm_table_get_start(table);
+		dmts->length = libdm_table_get_length(table);
+		dmts->status = libdm_table_get_status(table);
 
-			prop_dictionary_get_uint64(target_dict,DM_TABLE_START,&dmts->sector_start);
-			prop_dictionary_get_uint64(target_dict,DM_TABLE_LENGTH,&dmts->length);
-			prop_dictionary_get_int32(target_dict,DM_TABLE_STAT,&dmts->status);
+		type = libdm_table_get_target(table);
+		params = libdm_table_get_params(table);
 
-			if (prm)
-				plen = strlen(params) + 1;
+		if (params != NULL)
+			plen = strlen(params) + 1;
 
-			rec_size = sizeof(struct dm_target_spec) + plen;
+		rec_size = sizeof(struct dm_target_spec) + plen;
 
-			/*
-			 * In linux when copying table status from kernel next is
-			 * number of bytes from the start of the first dm_target_spec
-			 * structure. I don't know why but, it has to be done this way.
-			 */
-			next += rec_size; 
-			
-			if (rec_size > dmi->data_size)
-				return -ENOMEM;
+		/*
+		 * In linux when copying table status from kernel next is
+		 * number of bytes from the start of the first dm_target_spec
+		 * structure. I don't know why but, it has to be done this way.
+		 */
+		next += rec_size;
 
-			dmts->next = next;
-			
-			strlcpy(dmts->target_type, type, DM_MAX_TYPE_NAME);
+		if (rec_size > dmi->data_size)
+			return -ENOMEM;
 
-			params_start = (char *)dmts + sizeof(struct dm_target_spec);
+		dmts->next = next;
+		strlcpy(dmts->target_type, type, DM_MAX_TYPE_NAME);
+		params_start = (char *)dmts + sizeof(struct dm_target_spec);
 
-			if (prm) 
-				strlcpy(params_start, params, plen);
-			else
-				params_start = "\0";
+		if (params != NULL)
+			strlcpy(params_start, params, plen);
+		else
+			params_start = "\0";
 
-			
-			odmts = dmts;
-			
-			dmts = (struct dm_target_spec *)((uint8_t *)dmts + rec_size);
+		odmts = dmts;
+		dmts = (struct dm_target_spec *)((uint8_t *)dmts + rec_size);
+		j++;
 
-			j++;
-			
-		}
+		libdm_table_destroy(table);
+	}
 
-		if (odmts != NULL)
-			odmts->next = 0;
-	}			
-	prop_object_iterator_release(iter);
+	if (odmts != NULL)
+		odmts->next = 0;
+
+	libdm_iter_destroy(iter);
 
 	return j;
 }
 
 /*
- * Print dm device dependiences, get minor/major number for 
- * devices. From kernel I will receive major:minor number of 
- * block device used with target. I have to translate it to 
- * raw device numbers and use them, because all other parts of lvm2 
- * uses raw devices internaly.
+ * Print dm device dependiences, get minor/major number for
+ * devices. From kernel I will receive major:minor number of
+ * block device used with target. I have to translate it to
+ * raw device numbers and use them, because all other parts of lvm2
+ * uses raw devices internally.
  */
 static int
-dm_dev_deps(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
+dm_dev_deps(libdm_task_t task, struct dm_ioctl *dmi)
 {
 	struct dm_target_deps *dmtd;
 	struct kinfo_drivers *kd;
-	
-	prop_array_t targets;
-	prop_object_iterator_t iter;
-	
+
+	libdm_cmd_t cmd;
+	libdm_iter_t iter;
+	dev_t dev_deps;
+
 	uint32_t major;
-	
 	size_t val_len, i, j;
 
-	uint64_t dev_tmp;
-
-	dev_tmp = 0;
+	dev_deps = 0;
 	j = 0;
 	i = 0;
-	
+
 	if (sysctlbyname("kern.drivers",NULL,&val_len,NULL,0) < 0) {
 		printf("sysctlbyname failed");
 		return 0;
 	}
 
-	if ((kd = malloc (val_len)) == NULL){
+	if ((kd = malloc(val_len)) == NULL){
 		printf("malloc kd info error\n");
 		return 0;
 	}
@@ -472,35 +422,31 @@ dm_dev_deps(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
 		printf("sysctlbyname failed kd");
 		return 0;
 	}
-	
+
 	dmtd = (struct dm_target_deps *)((uint8_t *)dmi + dmi->data_start);
 
-	if ((targets = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA))){
+	if ((cmd = libdm_task_get_cmd(task)) == NULL)
+		return -ENOENT;
 
-		iter = prop_array_iterator(targets);
-		if (!iter)
-			err(EXIT_FAILURE,"dm_target_deps %s", __func__);
+	iter = libdm_cmd_iter_create(cmd);
 
-		while((prop_object_iterator_next(iter)) != NULL){
-
-			prop_array_get_uint64(targets, j, &dev_tmp);
-			
-			for (i = 0, val_len /= sizeof(*kd); i < val_len; i++){
-				if (kd[i].d_bmajor == MAJOR(dev_tmp)) {
-					major = kd[i].d_cmajor;
-					break;
-				}
+	while((dev_deps = libdm_cmd_get_deps(iter)) != 0) {
+		for (i = 0, val_len /= sizeof(*kd); i < val_len; i++){
+			if (kd[i].d_bmajor == MAJOR(dev_deps)) {
+				major = kd[i].d_cmajor;
+				break;
 			}
-			
-			dmtd->dev[j] = MKDEV(major,MINOR(dev_tmp));
-			
-			j++;
 		}
-	}	
-	
+
+		dmtd->dev[j] = MKDEV(major, MINOR(dev_deps));
+
+		j++;
+	}
+
 	dmtd->count = j;
 
-	prop_object_iterator_release(iter);
-	
+	libdm_iter_destroy(iter);
+	free(kd);
+
 	return j;
 }

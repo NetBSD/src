@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.30 2010/12/04 14:57:56 jmmv Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.30.2.1 2011/02/08 16:18:40 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -930,6 +930,7 @@ message local_fs {Sistema de archivos desmontado}
 message local_dir {Directorio Local}
 message Select_your_distribution {Seleccione su distribución}
 message Full_installation {Instalación completa}
+message Full_installation_nox {Instalación sin X11}
 message Minimal_installation {Instalación mínima}
 message Custom_installation {Instalación personalizada}
 message hidden {** oculto **}

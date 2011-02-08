@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.1 2010/08/07 18:01:33 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.1.2.1 2011/02/08 16:18:56 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.1 2010/08/07 18:01:33 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.1.2.1 2011/02/08 16:18:56 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/syscall.h>
@@ -105,7 +105,9 @@ ___start(int argc, char **argv, char **envp,
 		__ps_strings = ps_strings;
 
 	if (&_DYNAMIC != NULL) {
-		if ((obj == NULL) || (obj->magic != RTLD_MAGIC))
+		if (obj == NULL)
+			_FATAL("NULL Obj_Entry pointer in GOT\n");
+		if (obj->magic != RTLD_MAGIC)
 			_FATAL("Corrupt Obj_Entry pointer in GOT\n");
 		if (obj->version != RTLD_VERSION)
 			_FATAL("Dynamic linker version mismatch\n");

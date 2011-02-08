@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.26 2010/12/16 06:45:50 cegger Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.26.4.1 2011/02/08 16:19:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.26 2010/12/16 06:45:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.26.4.1 2011/02/08 16:19:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.26 2010/12/16 06:45:50 cegger Exp $"
 #include <dev/pci/pciio.h>
 
 #include <dev/wsfb/genfbvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/pci/genfb_pcivar.h>
 
@@ -197,6 +198,11 @@ pci_genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case PCI_IOC_CFGWRITE:
 		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
 		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_gen.sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
+
 	case WSDISPLAYIO_SMODE: {
 		int new_mode = *(int*)data, i;
 		if (new_mode == WSDISPLAYIO_MODE_EMUL) {

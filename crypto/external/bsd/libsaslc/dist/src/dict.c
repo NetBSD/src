@@ -1,4 +1,4 @@
-/* $Id: dict.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: dict.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,7 +48,7 @@
 /** dictionary */
 LIST_HEAD(saslc__dict_t, saslc__dict_node_t);
 
-/** linked list */
+/** dictionary linked list */
 typedef struct saslc__dict_node_t {
 	LIST_ENTRY(saslc__dict_node_t) nodes;
 	char *key; /**< key */
@@ -70,10 +70,14 @@ static saslc__dict_node_t *saslc__get_node_by_key(saslc__dict_t *,
 static bool
 saslc__valid_key(const char *key)
 {
-	size_t i; /* index */
+	size_t i;
 
-	for (i = 0; key[i]; i++) {
-		if (!isalnum((unsigned char)key[i]))
+        /* key is empty string */
+        if (key == NULL)
+                return false;
+
+	for (i = 0; key[i] != '\0'; i++) {
+		if (isalnum((unsigned char)key[i]) == 0)
 			return false;
 	}
 
@@ -107,7 +111,8 @@ static saslc__dict_node_t *
 saslc__get_node_by_key(saslc__dict_t *dict, const char *key)
 {
 	saslc__dict_node_t *node;
-	for (node = dict->lh_first; node != NULL; node = node->nodes.le_next) {
+
+        LIST_FOREACH(node, dict, nodes) {
 		if (strcmp(node->key, key) == 0)
 			return node;
 	}
@@ -123,8 +128,8 @@ saslc__get_node_by_key(saslc__dict_t *dict, const char *key)
 void
 saslc__dict_destroy(saslc__dict_t *dict)
 {
-	while(dict->lh_first != NULL)
-		saslc__list_node_destroy(dict->lh_first);
+	while(!LIST_EMPTY(dict))
+		saslc__list_node_destroy(LIST_FIRST(dict));
 
 	free(dict);
 }
@@ -137,13 +142,12 @@ saslc__dict_destroy(saslc__dict_t *dict)
  * does not exist in the dictionary.
  */
 
-int
+saslc__dict_result_t
 saslc__dict_remove(saslc__dict_t *dict, const char *key)
 {
 	saslc__dict_node_t *node;
 
-	for (node = dict->lh_first; node != NULL;
-	    node = node->nodes.le_next) {
+        LIST_FOREACH(node, dict, nodes) {
 		if (strcmp(node->key, key) == 0) {
 			saslc__list_node_destroy(node);
 			return DICT_OK;
@@ -219,13 +223,14 @@ saslc__dict_create(void)
  * DICT_NOMEM - on allocation failure
  */
 
-int
+saslc__dict_result_t
 saslc__dict_insert(saslc__dict_t *dict, const char *key, const char *val)
 {
-	char *d_key, *d_val;
+	int err;
+	char *d_key = NULL, *d_val = NULL;
 	saslc__dict_node_t *node;
 
-	if (key == NULL || saslc__valid_key(key) == false) 
+	if (saslc__valid_key(key) == false) 
 		return DICT_KEYINVALID;
 
 	if (val == NULL)
@@ -235,18 +240,13 @@ saslc__dict_insert(saslc__dict_t *dict, const char *key, const char *val)
 	if (saslc__dict_get(dict, key) != NULL)
 		return DICT_KEYEXISTS;
 
-	if ((d_key = strdup(key)) == NULL)
-		return DICT_NOMEM;
+        d_key = strdup(key);
+        d_val = strdup(val);
+        node = calloc(1, sizeof(*node));
 
-	if ((d_val = strdup(val)) == NULL) {
-		free(d_key);
-		return DICT_NOMEM;
-	}
-
-	if ((node = calloc(1, sizeof(*node))) == NULL) {
-		free(d_val);
-		free(d_key);
-		return DICT_NOMEM;
+	if (d_key == NULL || d_val == NULL || node == NULL) {
+		err = DICT_NOMEM;
+		goto error;
 	}
 
 	LIST_INSERT_HEAD(dict, node, nodes);
@@ -255,4 +255,10 @@ saslc__dict_insert(saslc__dict_t *dict, const char *key, const char *val)
 	node->value_len = strlen(node->value);
 
 	return DICT_OK;
+
+error:
+	free(d_val);
+        free(d_key);
+        free(node);
+	return err;
 }

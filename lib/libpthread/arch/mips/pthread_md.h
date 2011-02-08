@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.8 2009/05/16 22:20:41 ad Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.8.2.1 2011/02/08 16:19:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,10 +32,10 @@
 #ifndef _LIB_PTHREAD_MIPS_MD_H
 #define _LIB_PTHREAD_MIPS_MD_H
 
-static inline long
+static inline unsigned long
 pthread__sp(void)
 {
-	long ret;
+	unsigned long ret;
 
 	__asm("move %0, $sp" : "=r" (ret));
 

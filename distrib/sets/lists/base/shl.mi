@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.569 2011/01/18 22:21:22 haad Exp $
+# $NetBSD: shl.mi,v 1.569.2.1 2011/02/08 16:18:36 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -15,7 +15,7 @@
 #
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.175				base-sys-shlib		dynamicroot
+./lib/libc.so.12.176				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -25,6 +25,9 @@
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
+./lib/libdm.so					base-sys-shlib		dynamicroot
+./lib/libdm.so.0				base-sys-shlib		dynamicroot
+./lib/libdm.so.0.0				base-sys-shlib		dynamicroot
 ./lib/libedit.so				base-sys-shlib		dynamicroot
 ./lib/libedit.so.3				base-sys-shlib		dynamicroot
 ./lib/libedit.so.3.0				base-sys-shlib		dynamicroot
@@ -48,7 +51,7 @@
 ./lib/liblzma.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
-./lib/libm.so.0.8				base-sys-shlib		dynamicroot
+./lib/libm.so.0.9				base-sys-shlib		dynamicroot
 ./lib/libprop.so				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
@@ -170,7 +173,7 @@
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
 ./usr/lib/libc.so				base-sys-shlib
 ./usr/lib/libc.so.12				base-sys-shlib
-./usr/lib/libc.so.12.175			base-sys-shlib
+./usr/lib/libc.so.12.176			base-sys-shlib
 ./usr/lib/libcdk.so				base-obsolete		obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
 ./usr/lib/libcom_err.so.6			base-krb5-shlib		kerberos
@@ -193,6 +196,9 @@
 ./usr/lib/libdevmapper.so			base-lvm-shlib		lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		lvm
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm
+./usr/lib/libdm.so				base-sys-shlib
+./usr/lib/libdm.so.0				base-sys-shlib
+./usr/lib/libdm.so.0.0				base-sys-shlib
 ./usr/lib/libdns.so				base-bind-shlib
 ./usr/lib/libdns.so.5				base-bind-shlib
 ./usr/lib/libdns.so.5.2				base-bind-shlib
@@ -304,7 +310,7 @@
 ./usr/lib/liblzf.so.0.0				base-sys-shlib
 ./usr/lib/libm.so				base-sys-shlib
 ./usr/lib/libm.so.0				base-sys-shlib
-./usr/lib/libm.so.0.8				base-sys-shlib
+./usr/lib/libm.so.0.9				base-sys-shlib
 ./usr/lib/libmagic.so				base-sys-shlib
 ./usr/lib/libmagic.so.3				base-sys-shlib
 ./usr/lib/libmagic.so.3.0			base-sys-shlib
@@ -317,6 +323,9 @@
 ./usr/lib/libnetpgp.so				base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so.3			base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	crypto
+./usr/lib/libnpf.so				base-npf-shlib		npf
+./usr/lib/libnpf.so.0				base-npf-shlib		npf
+./usr/lib/libnpf.so.0.0				base-npf-shlib		npf
 ./usr/lib/libnvpair.so				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libnvpair.so.0			base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libnvpair.so.0.0			base-zfs-shlib		zfs,dynamicroot
@@ -534,18 +543,18 @@
 ./usr/lib/librumpfs_union.so			base-rump-shlib
 ./usr/lib/librumpfs_union.so.0			base-rump-shlib
 ./usr/lib/librumpfs_union.so.0.0		base-rump-shlib
-./usr/lib/librumpfs_zfs.so			base-rump-shlib
-./usr/lib/librumpfs_zfs.so.0			base-rump-shlib
-./usr/lib/librumpfs_zfs.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_zfs.so			base-rump-shlib		zfs
+./usr/lib/librumpfs_zfs.so.0			base-rump-shlib		zfs
+./usr/lib/librumpfs_zfs.so.0.0			base-rump-shlib		zfs
 ./usr/lib/librumpkern_crypto.so			base-rump-shlib
 ./usr/lib/librumpkern_crypto.so.0		base-rump-shlib
 ./usr/lib/librumpkern_crypto.so.0.0		base-rump-shlib
 ./usr/lib/librumpkern_ksem.so			base-rump-shlib
 ./usr/lib/librumpkern_ksem.so.0			base-rump-shlib
 ./usr/lib/librumpkern_ksem.so.0.0		base-rump-shlib
-./usr/lib/librumpkern_solaris.so		base-rump-shlib
-./usr/lib/librumpkern_solaris.so.0		base-rump-shlib
-./usr/lib/librumpkern_solaris.so.0.0		base-rump-shlib
+./usr/lib/librumpkern_solaris.so		base-rump-shlib		zfs
+./usr/lib/librumpkern_solaris.so.0		base-rump-shlib		zfs
+./usr/lib/librumpkern_solaris.so.0.0		base-rump-shlib		zfs
 ./usr/lib/librumpkern_tty.so			base-rump-shlib
 ./usr/lib/librumpkern_tty.so.0			base-rump-shlib
 ./usr/lib/librumpkern_tty.so.0.0		base-rump-shlib

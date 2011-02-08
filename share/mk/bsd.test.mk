@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.13 2010/08/23 16:03:03 joerg Exp $
+# $NetBSD: bsd.test.mk,v 1.13.2.1 2011/02/08 16:19:08 bouyer Exp $
 #
 
 .include <bsd.init.mk>
@@ -99,6 +99,15 @@ clean-atffile: .PHONY
 TESTS_PATH += ${DESTDIR}/bin ${DESTDIR}/sbin ${DESTDIR}/usr/bin ${DESTDIR}/usr/sbin
 TESTS_LD_LIBRARY_PATH += ${DESTDIR}/lib ${DESTDIR}/usr/lib
 
+TESTS_ENV += ATF_BUILD_CC=${DESTDIR}/usr/bin/cc
+TESTS_ENV += ATF_BUILD_CPP=${DESTDIR}/usr/bin/cpp
+TESTS_ENV += ATF_BUILD_CXX=${DESTDIR}/usr/bin/c++
+TESTS_ENV += ATF_CONFDIR=${DESTDIR}/etc
+TESTS_ENV += ATF_INCLUDEDIR=${DESTDIR}/usr/include
+TESTS_ENV += ATF_LIBDIR=${DESTDIR}/usr/lib
+TESTS_ENV += ATF_LIBEXECDIR=${DESTDIR}/usr/libexec
+TESTS_ENV += ATF_PKGDATADIR=${DESTDIR}/usr/share/atf
+TESTS_ENV += ATF_SHELL=${DESTDIR}/bin/sh
 TESTS_ENV += LD_LIBRARY_PATH=${TESTS_LD_LIBRARY_PATH:tW:S/ /:/g}
 TESTS_ENV += PATH=${TESTS_PATH:tW:S/ /:/g}
 

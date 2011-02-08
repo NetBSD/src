@@ -1,4 +1,4 @@
-.\"	$NetBSD: ichlpcib.4,v 1.2 2011/01/14 06:46:35 jruoho Exp $
+.\"	$NetBSD: ichlpcib.4,v 1.2.2.1 2011/02/08 16:19:07 bouyer Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 14, 2011
+.Dd January 20, 2011
 .Dt ICHLPCIB 4 x86
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nd Intel ICH LPC Interface Bridge
 .Sh SYNOPSIS
 .Cd "ichlpcib* at pci? dev ? function ?"
+.Cd "fwhrng*   at ichlpcib?"
 .Cd "hpet0     at ichlpcib?"
 .Cd "isa0      at ichlpcib?"
 .Cd "gpio*     at ichlpcib?"
@@ -55,7 +56,7 @@ Power Management timer.
 A 24-bit timer available to be used by the timecounters framework.
 .It
 SpeedStep.
-In some systems the SpeedStep function is also available, and can be
+In some older systems the SpeedStep function is also available, and can be
 used to switch between high and low frequency (to reduce power consumption)
 via the
 .Li machdep.speedstep_state

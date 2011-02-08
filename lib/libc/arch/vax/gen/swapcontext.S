@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.3 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3.20.1 2011/02/08 16:18:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #include "SYS.h"
 
+#ifdef LIBC_SCCS
+RCSID("$NetBSD: swapcontext.S,v 1.3.20.1 2011/02/08 16:18:57 bouyer Exp $")
+#endif
+
 ENTRY(swapcontext, 0)
 	clrl	%r0			/* assume getcontext succeeds */
 	chmk	$SYS_getcontext		/* getcontext(oucp) */
@@ -48,3 +52,4 @@ ENTRY(swapcontext, 0)
 	pushl	8(%ap)
 	calls	$1,_C_LABEL(setcontext) /* setcontext(ucp) */
 	ret
+END(swapcontext)

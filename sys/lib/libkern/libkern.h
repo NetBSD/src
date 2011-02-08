@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.94 2010/04/25 15:39:41 rmind Exp $	*/
+/*	$NetBSD: libkern.h,v 1.94.4.1 2011/02/08 16:20:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -222,11 +222,17 @@ tolower(int ch)
 
 #ifndef DEBUG
 #ifdef lint
-#define	KDASSERT(e)	/* NOTHING */
+#define	KDASSERTMSG(e,msg)	/* NOTHING */
+#define	KDASSERT(e)		/* NOTHING */
 #else /* lint */
-#define	KDASSERT(e)	((void)0)
+#define	KDASSERTMSG(e,msg)	((void)0)
+#define	KDASSERT(e)		((void)0)
 #endif /* lint */
 #else
+#define	KDASSERTMSG(e, msg) do {	\
+	if (__predict_false(!(e)))	\
+		panic msg;		\
+	} while (/*CONSTCOND*/ 0)
 #ifdef __STDC__
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    kern_assert("debugging ", __FILE__, __LINE__, #e))

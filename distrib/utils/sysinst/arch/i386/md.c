@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.126 2010/04/19 21:12:52 martin Exp $ */
+/*	$NetBSD: md.c,v 1.126.2.1 2011/02/08 16:18:44 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,9 +77,9 @@ md_init(void)
 }
 
 void
-md_init_set_status(int minimal)
+md_init_set_status(int flags)
 {
-	(void)minimal;
+	(void)flags;
 
 	/* Default to install same type of kernel as we are running */
 	set_kernel_set(get_bootmodel());

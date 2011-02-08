@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.240 2011/01/14 13:24:45 pooka Exp $
+# $NetBSD: mi,v 1.240.2.1 2011/02/08 16:18:39 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -469,6 +469,8 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/librumphijack					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/librumphijack/h_netget.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey
 ./usr/libdata/debug/usr/tests/lib/libutil				tests-lib-debug
@@ -519,6 +521,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client			tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_reboot.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_forkcli.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_reconcli.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_sigcli.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_simplecli.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_stresscli.debug			tests-syscall-debug	debug,atf
@@ -532,6 +535,7 @@
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/util					tests-util-debug
 ./usr/libdata/debug/usr/tests/util/df					tests-util-debug
@@ -1890,6 +1894,12 @@
 ./usr/tests/lib/librt				tests-lib-tests		atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sem			tests-lib-tests		atf
+./usr/tests/lib/librumphijack			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/Atffile			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/h_netget			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/index.html			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/netstat.expout			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/t_tcpip			tests-lib-tests		atf
 ./usr/tests/lib/libskey				tests-lib-tests		atf
 ./usr/tests/lib/libskey/Atffile			tests-lib-tests		atf,skey
 ./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf,skey
@@ -1932,6 +1942,9 @@
 ./usr/tests/net/net				tests-net-tests
 ./usr/tests/net/net/Atffile			tests-net-tests		atf
 ./usr/tests/net/net/t_raw		tests-net-tests		atf
+./usr/tests/net/route				tests-net-tests
+./usr/tests/net/route/Atffile			tests-net-tests		atf
+./usr/tests/net/route/t_change		tests-net-tests		atf
 ./usr/tests/net/sys				tests-net-tests
 ./usr/tests/net/sys/Atffile			tests-net-tests		atf
 ./usr/tests/net/sys/t_connect			tests-net-tests		atf
@@ -1956,6 +1969,7 @@
 ./usr/tests/rump/rumpkern/h_client			tests-rump-tests
 ./usr/tests/rump/rumpkern/h_client/h_reboot		tests-obsolete		obsolete
 ./usr/tests/rump/rumpkern/h_client/h_forkcli		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/h_client/h_reconcli		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/h_client/h_sigcli		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/h_client/h_simplecli		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/h_client/h_stresscli		tests-rump-tests	atf
@@ -1987,6 +2001,11 @@
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
+./usr/tests/usr.bin				tests-util-tests
+./usr/tests/usr.bin/Atffile			tests-sbin-tests	atf
+./usr/tests/usr.bin/rump_server			tests-util-tests
+./usr/tests/usr.bin/rump_server/Atffile		tests-util-tests	atf
+./usr/tests/usr.bin/rump_server/t_disk	tests-util-tests	atf
 ./usr/tests/usr.sbin				tests-util-tests
 ./usr/tests/usr.sbin/Atffile			tests-sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute			tests-util-tests

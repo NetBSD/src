@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.471 2010/12/20 19:51:03 ryo Exp $
+.\"	$NetBSD: main,v 1.471.2.1 2011/02/08 16:18:34 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1301,6 +1301,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Jeff Rizzo Ta Mt riz@NetBSD.org
 .It Ta Hans Rosenfeld Ta Mt hans@NetBSD.org
 .It Ta Steve Rumble Ta Mt rumble@NetBSD.org
+.It Ta Rumko Ta Mt rumko@NetBSD.org
 .It Ta Jukka Ruohonen Ta Mt jruoho@NetBSD.org
 .It Ta Blair J. Sadewitz Ta Mt bjs@NetBSD.org
 .It Ta David Sainty Ta Mt dsainty@NetBSD.org

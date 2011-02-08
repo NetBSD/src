@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2009/01/12 11:32:43 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.10.1 2011/02/08 16:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -82,7 +82,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <hp300/dev/hilreg.h>
+#include <hp300/stand/common/hilreg.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>

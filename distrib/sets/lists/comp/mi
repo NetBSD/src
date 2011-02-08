@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1573.2.1 2011/01/20 14:24:48 bouyer Exp $
+#	$NetBSD: mi,v 1.1573.2.2 2011/02/08 16:18:37 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13,6 +13,8 @@
 ./usr/bin/c89					comp-c-bin
 ./usr/bin/c99					comp-c-bin
 ./usr/bin/cc					comp-c-bin		gcccmds
+./usr/bin/clang					comp-c-bin		llvm
+./usr/bin/clang++				comp-c-bin		llvm
 ./usr/bin/config				comp-util-bin
 ./usr/bin/crunchgen				comp-c-bin
 ./usr/bin/crunchide				comp-c-bin
@@ -46,6 +48,7 @@
 ./usr/bin/lint					comp-c-bin
 ./usr/bin/lorder				comp-util-bin
 ./usr/bin/luac					comp-util-bin
+./usr/bin/llvm-tblgen				comp-c-bin		llvm
 ./usr/bin/menuc					comp-c-bin
 ./usr/bin/mkstr					comp-c-bin
 ./usr/bin/mkubootimage				comp-util-bin
@@ -621,6 +624,7 @@
 ./usr/include/dirent.h				comp-c-include
 ./usr/include/disktab.h				comp-c-include
 ./usr/include/dlfcn.h				comp-c-include
+./usr/include/dm.h                              comp-c-include
 ./usr/include/dns_sd.h				comp-mdns-include	mdns
 ./usr/include/dwarf.h				comp-c-include
 ./usr/include/elf.h				comp-c-include
@@ -1703,6 +1707,7 @@
 ./usr/include/nfs/xdr_subs.h			comp-c-include
 ./usr/include/nl_types.h			comp-c-include
 ./usr/include/nlist.h				comp-c-include
+./usr/include/npf.h				comp-npf-include	npf
 ./usr/include/nsswitch.h			comp-c-include
 ./usr/include/ntfs/ntfs.h			comp-c-include
 ./usr/include/ntfs/ntfs_compr.h			comp-obsolete		obsolete
@@ -2416,6 +2421,9 @@
 ./usr/lib/libdevmapper.a			comp-lvm-lib		lvm
 ./usr/lib/libdevmapper_g.a			-unknown-		debuglib,lvm
 ./usr/lib/libdevmapper_p.a			comp-lvm-proflib	profile,lvm
+./usr/lib/libdm.a				comp-c-lib
+./usr/lib/libdm_g.a				-unknown-		debuglib
+./usr/lib/libdm_p.a				comp-c-proflib		profile
 ./usr/lib/libdns.a				comp-bind-lib
 ./usr/lib/libdns_g.a				-unknown-		debuglib
 ./usr/lib/libdns_p.a				comp-bind-proflib	profile
@@ -2563,6 +2571,9 @@
 ./usr/lib/libnetpgp.a				comp-c-lib		crypto
 ./usr/lib/libnetpgp_g.a				-unknown-		debuglib
 ./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libnpf.a				comp-npf-lib		npf
+./usr/lib/libnpf_g.a				-unknown-		debuglib
+./usr/lib/libnpf_p.a				comp-npf-proflib	profile,npf
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
@@ -2787,16 +2798,18 @@
 ./usr/lib/librumpfs_union.a			comp-c-lib
 ./usr/lib/librumpfs_union_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_zfs.a			comp-c-lib
-./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		profile
+./usr/lib/librumpfs_zfs.a			comp-c-lib		zfs
+./usr/lib/librumpfs_zfs_g.a			-unknown-		debuglib
+./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		profile,zfs
 ./usr/lib/librumpkern_crypto.a			comp-c-lib
 ./usr/lib/librumpkern_crypto_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_crypto_p.a			comp-c-proflib		profile
 ./usr/lib/librumpkern_ksem.a			comp-c-lib
 ./usr/lib/librumpkern_ksem_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_ksem_p.a			comp-c-proflib		profile
-./usr/lib/librumpkern_solaris.a			comp-c-lib
-./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile
+./usr/lib/librumpkern_solaris.a			comp-c-lib		zfs
+./usr/lib/librumpkern_solaris_g.a		-unknown-		debuglib,zfs
+./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile,zfs
 ./usr/lib/librumpkern_tty.a			comp-c-lib
 ./usr/lib/librumpkern_tty_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_tty_p.a			comp-c-proflib		profile
@@ -2931,6 +2944,7 @@
 ./usr/libdata/debug/bin/csh.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/date.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/dd.debug		comp-util-debug		debug
+./usr/libdata/debug/bin/rump.dd.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/df.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/domainname.debug	comp-nis-debug		debug
 ./usr/libdata/debug/bin/echo.debug		comp-util-debug		debug
@@ -2975,6 +2989,7 @@
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkscan_bsdlabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dmesg.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/dmctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dmsetup.debug		comp-sysutil-debug	lvm,debug
 ./usr/libdata/debug/sbin/drvctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump.debug		comp-sysutil-debug	debug
@@ -3348,6 +3363,7 @@
 ./usr/libdata/debug/usr/bin/rs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rsh.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/rump_allserver.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/rump.dhcpclient.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rump_server.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rump.halt.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rup.debug		comp-netutil-debug	debug
@@ -3371,6 +3387,7 @@
 ./usr/libdata/debug/usr/bin/skeyinfo.debug	comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/skeyinit.debug	comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/sockstat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/rump.sockstat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/soelim.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/sort.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/split.debug		comp-util-debug		debug
@@ -3883,6 +3900,7 @@
 ./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-c-lintlib		lint,crypto_rc5
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-ldm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-ldns_sd.ln		comp-mdns-lintlib	lint,mdns
 ./usr/libdata/lint/llib-ldwarf.ln		comp-c-lintlib		lint
@@ -3914,6 +3932,7 @@
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lmj.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-lnpf.ln			comp-npf-lintlib	lint,npf
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
@@ -5717,6 +5736,7 @@
 ./usr/share/man/cat3/dlfcn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dlopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dlsym.0			comp-c-catman		.cat
+./usr/share/man/cat3/dm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dn_comp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dn_expand.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dngettext.0		comp-c-catman		.cat
@@ -7443,6 +7463,7 @@
 ./usr/share/man/cat3/noqiflush.0		comp-c-catman		.cat
 ./usr/share/man/cat3/noraw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/notimeout.0		comp-c-catman		.cat
+./usr/share/man/cat3/npf.0			comp-npf-catman		.cat
 ./usr/share/man/cat3/nrand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ns.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/ns_addr.0			comp-obsolete		obsolete
@@ -7987,6 +8008,8 @@
 ./usr/share/man/cat3/remainderf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/remove.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remque.0			comp-c-catman		.cat
+./usr/share/man/cat3/remquo.0			comp-c-catman		.cat
+./usr/share/man/cat3/remquof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/request_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/request_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_close.0		comp-c-catman		.cat
@@ -8058,6 +8081,7 @@
 ./usr/share/man/cat3/rresvport_af.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rsa.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/rump.0			comp-c-catman		.cat
+./usr/share/man/cat3/rumphijack.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rump_etfs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rump_lwproc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rumpuser.0			comp-c-catman		.cat
@@ -9244,6 +9268,7 @@
 ./usr/share/man/cat9/dbtob.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ddc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/delay.0			comp-sys-catman		.cat
+./usr/share/man/cat9/device_printf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter_first.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter_init.0		comp-sys-catman		.cat
@@ -11767,6 +11792,7 @@
 ./usr/share/man/html3/dlfcn.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlsym.html		comp-c-htmlman		html
+./usr/share/man/html3/dm.html			comp-c-htmlman		html
 ./usr/share/man/html3/dn_comp.html		comp-c-htmlman		html
 ./usr/share/man/html3/dn_expand.html		comp-c-htmlman		html
 ./usr/share/man/html3/dngettext.html		comp-c-htmlman		html
@@ -13454,6 +13480,7 @@
 ./usr/share/man/html3/noqiflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/noraw.html		comp-c-htmlman		html
 ./usr/share/man/html3/notimeout.html		comp-c-htmlman		html
+./usr/share/man/html3/npf.html			comp-npf-htmlman	html
 ./usr/share/man/html3/nrand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/nsdispatch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ntoa.html			comp-c-htmlman		html
@@ -13990,6 +14017,8 @@
 ./usr/share/man/html3/remainderf.html		comp-c-htmlman		html
 ./usr/share/man/html3/remove.html		comp-c-htmlman		html
 ./usr/share/man/html3/remque.html		comp-c-htmlman		html
+./usr/share/man/html3/remquo.html		comp-c-htmlman		html
+./usr/share/man/html3/remquof.html		comp-c-htmlman		html
 ./usr/share/man/html3/request_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/request_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_close.html		comp-c-htmlman		html
@@ -14059,6 +14088,7 @@
 ./usr/share/man/html3/rresvport.html		comp-c-htmlman		html
 ./usr/share/man/html3/rresvport_af.html		comp-c-htmlman		html
 ./usr/share/man/html3/rump.html			comp-c-htmlman		html
+./usr/share/man/html3/rumphijack.html			comp-c-htmlman		html
 ./usr/share/man/html3/rump_etfs.html			comp-c-htmlman		html
 ./usr/share/man/html3/rump_lwproc.html			comp-c-htmlman		html
 ./usr/share/man/html3/rumpuser.html		comp-c-htmlman		html
@@ -15173,6 +15203,7 @@
 ./usr/share/man/html9/dbtob.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ddc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/delay.html		comp-sys-htmlman	html
+./usr/share/man/html9/device_printf.html	comp-sys-htmlman	html
 ./usr/share/man/html9/deviter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/deviter_first.html	comp-sys-htmlman	html
 ./usr/share/man/html9/deviter_init.html		comp-sys-htmlman	html
@@ -17725,6 +17756,7 @@
 ./usr/share/man/man3/dlfcn.3			comp-c-man		.man
 ./usr/share/man/man3/dlopen.3			comp-c-man		.man
 ./usr/share/man/man3/dlsym.3			comp-c-man		.man
+./usr/share/man/man3/dm.3			comp-c-man		.man
 ./usr/share/man/man3/dn_comp.3			comp-c-man		.man
 ./usr/share/man/man3/dn_expand.3		comp-c-man		.man
 ./usr/share/man/man3/dngettext.3		comp-c-man		.man
@@ -19451,6 +19483,7 @@
 ./usr/share/man/man3/noqiflush.3		comp-c-man		.man
 ./usr/share/man/man3/noraw.3			comp-c-man		.man
 ./usr/share/man/man3/notimeout.3		comp-c-man		.man
+./usr/share/man/man3/npf.3			comp-npf-man		.man
 ./usr/share/man/man3/nrand48.3			comp-c-man		.man
 ./usr/share/man/man3/ns.3			comp-obsolete		obsolete
 ./usr/share/man/man3/ns_addr.3			comp-obsolete		obsolete
@@ -19995,6 +20028,8 @@
 ./usr/share/man/man3/remainderf.3		comp-c-man		.man
 ./usr/share/man/man3/remove.3			comp-c-man		.man
 ./usr/share/man/man3/remque.3			comp-c-man		.man
+./usr/share/man/man3/remquo.3			comp-c-man		.man
+./usr/share/man/man3/remquof.3			comp-c-man		.man
 ./usr/share/man/man3/request_init.3		comp-c-man		.man
 ./usr/share/man/man3/request_set.3		comp-c-man		.man
 ./usr/share/man/man3/res_close.3		comp-c-man		.man
@@ -20066,6 +20101,7 @@
 ./usr/share/man/man3/rresvport_af.3		comp-c-man		.man
 ./usr/share/man/man3/rsa.3			comp-obsolete		obsolete
 ./usr/share/man/man3/rump.3			comp-c-man		.man
+./usr/share/man/man3/rumphijack.3			comp-c-man		.man
 ./usr/share/man/man3/rump_etfs.3			comp-c-man		.man
 ./usr/share/man/man3/rump_lwproc.3			comp-c-man		.man
 ./usr/share/man/man3/rumpuser.3			comp-c-man		.man
@@ -21247,6 +21283,7 @@
 ./usr/share/man/man9/dbtob.9			comp-sys-man		.man
 ./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
+./usr/share/man/man9/device_printf.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter.9			comp-sys-man		.man
 ./usr/share/man/man9/deviter_first.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter_init.9		comp-sys-man		.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.75 2010/06/27 06:52:38 kefren Exp $	*/
+/*	$NetBSD: route.c,v 1.75.2.1 2011/02/08 16:20:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.75 2010/06/27 06:52:38 kefren Exp $");
+__RCSID("$NetBSD: route.c,v 1.75.2.1 2011/02/08 16:20:11 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,11 +69,6 @@ __RCSID("$NetBSD: route.c,v 1.75 2010/06/27 06:52:38 kefren Exp $");
 #include "netstat.h"
 
 #define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
-
-/* alignment constraint for routing socket */
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 /*
  * XXX we put all of the sockaddr types in here to force the alignment
@@ -267,9 +262,9 @@ p_krtentry(rt)
 	p_addr(addr, mask, rt->rt_flags);
 	p_gwaddr(kgetsa(rt->rt_gateway), kgetsa(rt->rt_gateway)->sa_family);
 	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%6d %8lu ", rt->rt_refcnt, rt->rt_use);
+	printf("%6d %8"PRIu64" ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6lu", rt->rt_rmx.rmx_mtu); 
+		printf("%6"PRIu64, rt->rt_rmx.rmx_mtu); 
 	else
 		printf("%6s", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
@@ -298,23 +293,23 @@ p_krtentry(rt)
 	}
 	putchar('\n');
  	if (vflag) {
- 		printf("\texpire   %10lld%c  recvpipe %10ld%c  "
-		       "sendpipe %10ld%c\n",
- 			(long long)rt->rt_rmx.rmx_expire, 
+ 		printf("\texpire   %10"PRId64"%c  recvpipe %10"PRIu64"%c  "
+		       "sendpipe %10"PRIu64"%c\n",
+ 			(int64_t)rt->rt_rmx.rmx_expire, 
  			(rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ',
  			rt->rt_rmx.rmx_recvpipe,
  			(rt->rt_rmx.rmx_locks & RTV_RPIPE) ? 'L' : ' ',
  			rt->rt_rmx.rmx_sendpipe,
  			(rt->rt_rmx.rmx_locks & RTV_SPIPE) ? 'L' : ' ');
- 		printf("\tssthresh %10lu%c  rtt      %10ld%c  "
-		       "rttvar   %10ld%c\n",
+ 		printf("\tssthresh %10"PRIu64"%c  rtt      %10"PRIu64"%c  "
+		       "rttvar   %10"PRIu64"%c\n",
  			rt->rt_rmx.rmx_ssthresh, 
  			(rt->rt_rmx.rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
  			rt->rt_rmx.rmx_rtt, 
  			(rt->rt_rmx.rmx_locks & RTV_RTT) ? 'L' : ' ',
  			rt->rt_rmx.rmx_rttvar, 
 			(rt->rt_rmx.rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
- 		printf("\thopcount %10lu%c\n",
+ 		printf("\thopcount %10"PRIu64"%c\n",
  			rt->rt_rmx.rmx_hopcount, 
 			(rt->rt_rmx.rmx_locks & RTV_HOPCOUNT) ? 'L' : ' ');
  	}

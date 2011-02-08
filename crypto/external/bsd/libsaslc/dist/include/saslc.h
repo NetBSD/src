@@ -1,4 +1,4 @@
-/* $Id: saslc.h,v 1.1.1.1 2010/11/27 21:23:58 agc Exp $ */
+/* $Id: saslc.h,v 1.1.1.1.2.1 2011/02/08 16:18:30 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,6 +38,7 @@
 #ifndef _SASLC_H_
 #define _SASLC_H_
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 typedef struct saslc_t saslc_t;
@@ -46,7 +47,7 @@ typedef struct saslc_sess_t saslc_sess_t;
 /* begin and end */
 saslc_t *saslc_alloc(void);
 int saslc_init(saslc_t *, const char *);
-int saslc_end(saslc_t *);
+int saslc_end(saslc_t *, bool);
 
 /* error */
 const char *saslc_strerror(saslc_t *);
@@ -68,4 +69,4 @@ int saslc_sess_encode(saslc_sess_t *, const void *, size_t, void **,
 int saslc_sess_decode(saslc_sess_t *, const void *, size_t, void **,
     size_t *);
 
-#endif /* !_SASLC_H_ */
+#endif /* ! _SASLC_H_ */

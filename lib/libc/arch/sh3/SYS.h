@@ -30,16 +30,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.9 2006/01/06 06:19:20 uwe Exp $
+ *	$NetBSD: SYS.h,v 1.9.40.1 2011/02/08 16:18:57 bouyer Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
 #ifdef __STDC__
+#define	IMMEDIATE	#
 #define SYSTRAP(x)					\
 		mov.l	903f, r0;			\
-		.long	0xc380;	/* trapa #0x80 */	\
+		trapa	IMMEDIATE 0x80;			\
 		bra	904f;				\
 		 nop;					\
 		.align	2;				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90 2011/01/13 05:20:27 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.90.4.1 2011/02/08 16:19:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,6 +150,9 @@ extern int cpu_arch;
 
 /* Number of CPUs in the system */
 extern int sparc_ncpus;
+
+/* Provide %pc of a lwp */
+#define LWP_PC(l)       ((l)->l_md.md_tf->tf_pc)
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for

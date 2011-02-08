@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 2010/06/06 09:12:39 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45.4.1 2011/02/08 16:19:25 bouyer Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 2010/06/06 09:12:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45.4.1 2011/02/08 16:19:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	mfctl(CR_EIEM, tf->tf_eiem);
 	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
-	    (kpsw & PSW_O);
+	    (curcpu()->ci_psw & PSW_O);
 
 	/*
 	 * Set up return value registers as libc:fork() expects
@@ -205,7 +205,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 	*(register_t *)(sp) = 0;	/* previous frame pointer */
 	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)setfunc_trampoline;
+	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
 
 	*HPPA_FRAME_CARG(2, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(3, sp) = (register_t)arg;

@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.18 2011/01/18 21:07:51 pooka Exp $
+# $NetBSD: ad.mips64eb,v 1.18.2.1 2011/02/08 16:18:36 bouyer Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -321,10 +321,10 @@
 ./usr/lib/64/libiscsi.so			base-sys-shlib		compat,pic,iscsi
 ./usr/lib/64/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
 ./usr/lib/64/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
-./usr/lib/64/libisns.a		comp-c-lib	compat
-./usr/lib/64/libisns.so		comp-sys-shlib	compat
-./usr/lib/64/libisns_p.a		comp-c-proflib	compat,profile
-./usr/lib/64/libisns_pic.a		comp-c-piclib	compat,pic
+./usr/lib/64/libisns.a				comp-c-lib		compat
+./usr/lib/64/libisns.so				comp-sys-shlib		compat
+./usr/lib/64/libisns_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libisns_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/64/libkadm5clnt.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libkadm5clnt_p.a			comp-c-proflib		compat,profile,kerberos
@@ -392,6 +392,10 @@
 ./usr/lib/64/libnetpgp.so			comp-sys-shlib		compat,crypto,pic
 ./usr/lib/64/libnetpgp_p.a			comp-c-proflib		compat,crypto,profile
 ./usr/lib/64/libnetpgp_pic.a			comp-c-piclib		compat,crypto,pic
+./usr/lib/64/libnpf.a				comp-c-lib		compat,npf
+./usr/lib/64/libnpf.so				comp-sys-shlib		compat,npf,pic
+./usr/lib/64/libnpf_p.a				comp-c-proflib		compat,npf,profile
+./usr/lib/64/libnpf_pic.a			comp-c-piclib		compat,npf,pic
 ./usr/lib/64/libobjc.a				comp-c-lib		compat
 ./usr/lib/64/libobjc.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libobjc_p.a			comp-c-proflib		compat,profile
@@ -899,6 +903,10 @@
 ./usr/lib/o32/libnetpgp.so			comp-sys-shlib		compat,crypto,pic
 ./usr/lib/o32/libnetpgp_p.a			comp-c-proflib		compat,crypto,profile
 ./usr/lib/o32/libnetpgp_pic.a			comp-c-piclib		compat,crypto,pic
+./usr/lib/o32/libnpf.a				comp-c-lib		compat,npf
+./usr/lib/o32/libnpf.so				comp-sys-shlib		compat,npf,pic
+./usr/lib/o32/libnpf_p.a			comp-c-proflib		compat,npf,profile
+./usr/lib/o32/libnpf_pic.a			comp-c-piclib		compat,npf,pic
 ./usr/lib/o32/libobjc.a				comp-c-lib		compat
 ./usr/lib/o32/libobjc.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libobjc_p.a			comp-c-proflib		compat,profile

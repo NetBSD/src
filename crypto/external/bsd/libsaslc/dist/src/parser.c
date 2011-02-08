@@ -1,4 +1,4 @@
-/* $Id: parser.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: parser.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -209,8 +209,9 @@ saslc__get_tokens(char *line)
 static int
 saslc__parse_line(char *line, saslc__dict_t *dict)
 {
-	char *opt, *val, len;
+	char *opt, *val;
 	int rv = -1;
+        size_t len;
 	saslc__token_t *token, *head;
 
 	token = saslc__get_tokens(line);
@@ -244,7 +245,7 @@ saslc__parse_line(char *line, saslc__dict_t *dict)
 		    TOKEN_NUM)
 			goto out;
 		/* insert (option, value) into dictionary */
-		if (saslc__dict_insert(dict, opt, val) < 0)
+		if (saslc__dict_insert(dict, opt, val) != DICT_OK)
 			goto out;
 		token = token->next; /* parse next token */
 	}
@@ -274,12 +275,12 @@ saslc__parse_file(saslc_t *ctx, char *path, saslc__dict_t *dict)
 	fd = fopen(path, "r");
 
 	if (fd == NULL) {
-		/* XXX */
-		saslc__error_set(ERR(ctx), ERROR_PARSE, "can't open file");
+		saslc__error_set(ERR(ctx), ERROR_PARSE,
+                    "can't open configuration file");
 		return 0;
 	}
 
-	while (fgets(input, sizeof(input), fd) != NULL) {
+	while (fgets(input, (int)sizeof(input), fd) != NULL) {
 		/* strip newline char */
 		c = strchr(input, '\n');
 		if (c != NULL)
@@ -334,8 +335,7 @@ saslc__parser_config(saslc_t *ctx)
 		return -1;
 	
 	/* parse mechs */
-	for (mech_node = ctx->mechanisms->lh_first; mech_node != NULL;
-	    mech_node = mech_node->nodes.le_next) {
+        LIST_FOREACH(mech_node, &ctx->mechanisms, nodes) {
 		snprintf(path, sizeof(path), "%s/%s/%s/%s%s",
 		    config_path, appname, SASLC__CONFIG_MECH_DIRECTORY,
 		    mech_node->mech->name, SASLC__CONFIG_SUFFIX);

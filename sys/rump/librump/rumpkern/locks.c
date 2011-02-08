@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.48 2011/01/18 22:21:23 haad Exp $	*/
+/*	$NetBSD: locks.c,v 1.48.2.1 2011/02/08 16:20:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.48 2011/01/18 22:21:23 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.48.2.1 2011/02/08 16:20:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -283,12 +283,13 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 	struct lwp *l = curlwp;
 	int rv;
 
-	if (__predict_false(l->l_stat == LSDEAD || l->l_stat == LSZOMB)) {
+	if (__predict_false(l->l_flag & LW_RUMP_DYING)) {
 		/*
-		 * sleepq code expects us to sleep, so set l_mutex
-		 * back to cpu lock here if we didn't.
+		 * yield() here, someone might want the cpu
+		 * to set a condition.  otherwise we'll just
+		 * loop forever.
 		 */
-		l->l_mutex = l->l_cpu->ci_schedstate.spc_mutex;
+		yield();
 		return EINTR;
 	}
 
@@ -305,21 +306,21 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 	}
 
 	/*
-	 * Check for LSDEAD.  if so, we need to wait here until we
+	 * Check for DYING.  if so, we need to wait here until we
 	 * are allowed to exit.
 	 */
-	if (__predict_false(l->l_stat == LSDEAD)) {
+	if (__predict_false(l->l_flag & LW_RUMP_DYING)) {
 		struct proc *p = l->l_proc;
 
 		mutex_exit(mtx); /* drop and retake later */
 
 		mutex_enter(p->p_lock);
-		while (l->l_stat == LSDEAD) {
+		while (p->p_stat != SDYING) {
 			/* avoid recursion */
 			rumpuser_cv_wait(RUMPCV(&p->p_waitcv),
 			    RUMPMTX(p->p_lock));
 		}
-		KASSERT(l->l_stat == LSZOMB);
+		KASSERT(p->p_stat == SDYING);
 		mutex_exit(p->p_lock);
 
 		/* ok, we can exit and remove "reference" to l->private */

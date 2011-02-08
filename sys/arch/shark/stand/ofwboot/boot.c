@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.6 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.6.30.1 2011/02/08 16:19:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -186,8 +186,7 @@ _rtt(void)
 void
 main(void)
 {
-	extern char bootprog_name[], bootprog_rev[],
-		    bootprog_maker[], bootprog_date[];
+	extern char bootprog_name[], bootprog_rev[];
 	int chosen;
 	char bootline[512];		/* Should check size? */
 	char *cp, *startbuf, *endbuf;
@@ -197,7 +196,6 @@ main(void)
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/*
 	 * Get the boot arguments from Openfirmware

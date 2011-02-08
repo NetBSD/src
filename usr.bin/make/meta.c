@@ -713,7 +713,7 @@ meta_oodate(GNode *gn, Boolean oodate)
     char *p;
     char *cp;
     size_t cwdlen;
-    size_t tmplen = 0;
+    static size_t tmplen = 0;
     FILE *fp;
     Boolean ignoreOODATE = FALSE;
 
@@ -781,6 +781,10 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 	    /* Delimit the record type. */
 	    p = buf;
+#ifdef DEBUG_META_MODE
+	    if (DEBUG(META))
+		fprintf(debug_file, "%s: %d: %s\n", fname, lineno, buf);
+#endif
 	    strsep(&p, " ");
 	    if (f) {
 		/*
@@ -840,6 +844,10 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    /* Skip past the pid. */
 		    if (strsep(&p, " ") == NULL)
 			continue;
+#ifdef DEBUG_META_MODE
+		    if (DEBUG(META))
+			fprintf(debug_file, "%s: %d: cwd=%s ldir=%s\n", fname, lineno, cwd, latestdir);
+#endif
 		    break;
 		}
 
@@ -876,7 +884,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		     * they are _expected_ to change.
 		     */
 		    if (strncmp(p, "/tmp/", 5) == 0 ||
-			strncmp(p, tmpdir, tmplen) == 0)
+			(tmplen > 0 && strncmp(p, tmpdir, tmplen) == 0))
 			break;
 
 		    if (strncmp(p, "/var/", 5) == 0)
@@ -919,12 +927,20 @@ meta_oodate(GNode *gn, Boolean oodate)
 			sdirs[sdx++] = NULL;
 
 			for (sdp = sdirs; *sdp && !found; sdp++) {
+#ifdef DEBUG_META_MODE
+			    if (DEBUG(META))
+				fprintf(debug_file, "%s: %d: looking for: %s\n", fname, lineno, *sdp);
+#endif
 			    if (stat(*sdp, &fs) == 0) {
 				found = 1;
 				p = *sdp;
 			    }
 			}
 			if (found) {
+#ifdef DEBUG_META_MODE
+			    if (DEBUG(META))
+				fprintf(debug_file, "%s: %d: found: %s\n", fname, lineno, p);
+#endif
 			    if (!S_ISDIR(fs.st_mode) &&
 				fs.st_mtime > gn->mtime) {
 				if (DEBUG(META))

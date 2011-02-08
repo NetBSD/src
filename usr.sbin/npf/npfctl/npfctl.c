@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.4 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.4.2.1 2011/02/08 16:20:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.4 2011/01/18 20:33:45 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.4.2.1 2011/02/08 16:20:15 bouyer Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -232,7 +232,7 @@ npfctl(int action, int argc, char **argv)
 		if (ret) {
 			break;
 		}
-		ret = npfctl_ioctl_flushse(fd);
+		ret = npf_sessions_send(fd, NULL);
 		break;
 	case NPFCTL_TABLE:
 		if (argc < 5) {
@@ -262,10 +262,18 @@ npfctl(int action, int argc, char **argv)
 		ret = npfctl_print_stats(fd);
 		break;
 	case NPFCTL_SESSIONS_SAVE:
-		ret = npfctl_ioctl_recvse(fd);
+		ret = npf_sessions_recv(fd, NPF_SESSDB_PATH);
+		if (ret) {
+			errx(EXIT_FAILURE, "could not save sessions to '%s'",
+			    NPF_SESSDB_PATH);
+		}
 		break;
 	case NPFCTL_SESSIONS_LOAD:
-		ret = npfctl_ioctl_sendse(fd);
+		ret = npf_sessions_send(fd, NPF_SESSDB_PATH);
+		if (ret) {
+			errx(EXIT_FAILURE, "no sessions loaded from '%s'",
+			    NPF_SESSDB_PATH);
+		}
 		break;
 	}
 	if (ret == -1) {

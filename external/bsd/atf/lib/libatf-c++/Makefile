@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2010/11/07 17:46:46 jmmv Exp $
+# $NetBSD: Makefile,v 1.6.2.1 2011/02/08 16:18:50 bouyer Exp $
 
 NOLINT=		# defined
 
@@ -6,6 +6,7 @@ NOLINT=		# defined
 
 LIB=		atf-c++
 LDADD=		-L${.OBJDIR}/../libatf-c -latf-c
+DPADD=		libatf-c.a
 NOPIC=		# defined; interface is still too unstable
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist

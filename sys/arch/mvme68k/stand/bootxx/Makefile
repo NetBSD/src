@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.9 2011/01/02 05:30:12 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.9.4.1 2011/02/08 16:19:31 bouyer Exp $
 
-COMPILE.S= $(CC) -x assembler-with-cpp -traditional-cpp \
+COMPILE.S= $(CC) -x assembler-with-cpp \
 		$(ASFLAGS) $(CPPFLAGS) $(INCPATH) -c -o $*.o
 
 SRCS=   bootxx.c conf.c block_x.S

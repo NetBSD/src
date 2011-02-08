@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.33 2011/01/13 23:45:13 jym Exp $	*/
+/*	$NetBSD: args.c,v 1.33.2.1 2011/02/08 16:18:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.33 2011/01/13 23:45:13 jym Exp $");
+__RCSID("$NetBSD: args.c,v 1.33.2.1 2011/02/08 16:18:27 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,12 +54,6 @@ __RCSID("$NetBSD: args.c,v 1.33 2011/01/13 23:45:13 jym Exp $");
 
 #include "dd.h"
 #include "extern.h"
-
-#if !defined(SMALL) && defined(__NetBSD__)
-#define _HAVE_RUMPOPS
-
-#include <rump/rumpclient.h>
-#endif
 
 static int	c_arg(const void *, const void *);
 #ifndef	NO_CONV
@@ -78,11 +72,6 @@ static void	f_seek(char *);
 static void	f_skip(char *);
 static void	f_progress(char *);
 
-#ifdef _HAVE_RUMPOPS
-static void	f_rif(char *);
-static void	f_rof(char *);
-#endif
-
 static const struct arg {
 	const char *name;
 	void (*f)(char *);
@@ -96,16 +85,12 @@ static const struct arg {
 	{ "count",	f_count,	C_COUNT, C_COUNT },
 	{ "files",	f_files,	C_FILES, C_FILES },
 	{ "ibs",	f_ibs,		C_IBS,	 C_BS|C_IBS },
-	{ "if",		f_if,		C_IF,	 C_IF|C_RIF },
+	{ "if",		f_if,		C_IF,	 C_IF },
 	{ "iseek",	f_skip,		C_SKIP,	 C_SKIP },
 	{ "obs",	f_obs,		C_OBS,	 C_BS|C_OBS },
-	{ "of",		f_of,		C_OF,	 C_OF|C_ROF },
+	{ "of",		f_of,		C_OF,	 C_OF },
 	{ "oseek",	f_seek,		C_SEEK,	 C_SEEK },
 	{ "progress",	f_progress,	0,	 0 },
-#ifdef _HAVE_RUMPOPS
-	{ "rif",	f_rif,		C_RIF|C_RUMP,	 C_RIF|C_IF },
-	{ "rof",	f_rof,		C_ROF|C_RUMP,	 C_ROF|C_OF },
-#endif
 	{ "seek",	f_seek,		C_SEEK,	 C_SEEK },
 	{ "skip",	f_skip,		C_SKIP,	 C_SKIP },
 };
@@ -207,12 +192,6 @@ jcl(char **argv)
 	 * if (in.offset > INT_MAX/in.dbsz || out.offset > INT_MAX/out.dbsz)
 	 *	errx(1, "seek offsets cannot be larger than %d", INT_MAX);
 	 */
-	
-#ifdef _HAVE_RUMPOPS
-	if (ddflags & C_RUMP)
-		if (rumpclient_init() == -1)
-			err(1, "rumpclient init failed");
-#endif
 }
 
 static int
@@ -284,40 +263,6 @@ f_of(char *arg)
 
 	out.name = arg;
 }
-
-#ifdef _HAVE_RUMPOPS
-#include <rump/rump.h>
-#include <rump/rump_syscalls.h>
-
-static const struct ddfops ddfops_rump = {
-	.op_open = rump_sys_open,
-	.op_close = rump_sys_close,
-	.op_fcntl = rump_sys_fcntl,
-	.op_ioctl = rump_sys_ioctl,
-	.op_fstat = rump_sys_fstat,
-	.op_fsync = rump_sys_fsync,
-	.op_ftruncate = rump_sys_ftruncate,
-	.op_lseek = rump_sys_lseek,
-	.op_read = rump_sys_read,
-	.op_write = rump_sys_write,
-};
-
-static void
-f_rif(char *arg)
-{
-
-	in.name = arg;
-	in.ops = &ddfops_rump;
-}
-
-static void
-f_rof(char *arg)
-{
-
-	out.name = arg;
-	out.ops = &ddfops_rump;
-}
-#endif
 
 static void
 f_seek(char *arg)

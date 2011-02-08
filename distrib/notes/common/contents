@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.164 2011/01/18 00:35:19 jym Exp $
+.\"	$NetBSD: contents,v 1.164.2.1 2011/02/08 16:18:34 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -372,9 +372,9 @@ Tape boot programs, and a RAMDISK kernel; see below.
 .\}
 .
 .if \n[sandpoint] \{\
-.		It Pa netboot
+.		It Pa altboot
 \*M bootloader in ELF format; see below
-.		It Pa netboot.bin
+.		It Pa altboot.bin
 \*M bootloader in binary format; see below
 .\}
 .

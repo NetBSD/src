@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.45.28.1 2011/01/20 14:25:02 bouyer Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.45.28.2 2011/02/08 16:20:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.45.28.1 2011/01/20 14:25:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.45.28.2 2011/02/08 16:20:05 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -283,11 +283,7 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 	int32_t *lp;
 	u_char *freemapp, *mapp;
 	int i, start, end, forw, back, map, bit;
-#if !defined(_KERNEL)
-	const int needswap = 0;
-#elif defined(FFS_EI)
 	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
 
 	/* KASSERT(mutex_owned(&ump->um_lock)); */
 

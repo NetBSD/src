@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.54 2010/12/21 20:56:01 christos Exp $ */
+/* $NetBSD: cp.c,v 1.54.2.1 2011/02/08 16:18:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.54 2010/12/21 20:56:01 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.54.2.1 2011/02/08 16:18:27 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ static char empty[] = "";
 PATH_T to = { .p_end = to.p_path, .target_end = empty  };
 
 uid_t myuid;
-int Hflag, Lflag, Rflag, Pflag, fflag, iflag, pflag, rflag, vflag, Nflag;
+int Hflag, Lflag, Rflag, Pflag, fflag, iflag, lflag, pflag, rflag, vflag, Nflag;
 mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLNPRfaiprv")) != -1) 
+	while ((ch = getopt(argc, argv, "HLNPRfailprv")) != -1) 
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -139,6 +139,9 @@ main(int argc, char *argv[])
 		case 'i':
 			iflag = isatty(fileno(stdin));
 			fflag = 0;
+			break;
+		case 'l':
+			lflag = 1;
 			break;
 		case 'p':
 			pflag = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.S,v 1.3 2003/08/07 16:42:32 agc Exp $	*/
+/*	$NetBSD: memcmp.S,v 1.3.52.1 2011/02/08 16:18:58 bouyer Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,10 @@
 
 #include "DEFS.h"
 
+#ifdef LIBC_SCCS
+RCSID("$NetBSD: memcmp.S,v 1.3.52.1 2011/02/08 16:18:58 bouyer Exp $")
+#endif
+
 ENTRY(memcmp, 0)
 	movl	12(%ap),%r0
 	jeql	9f
@@ -63,3 +67,4 @@ ENTRY(memcmp, 0)
 	subl3	%r4,%r3,%r0
 9:
 	ret
+END(memcmp)

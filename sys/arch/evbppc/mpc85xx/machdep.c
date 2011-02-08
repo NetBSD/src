@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2011/01/18 01:10:25 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.2.1 2011/02/08 16:19:19 bouyer Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -168,91 +168,156 @@ static struct consdev e500_earlycons = {
 static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 	{ "cpu" },	/* not a real device */
 	{ "wdog" },	/* not a real device */
-	{ "duart", DUART1_BASE, 2*DUART_SIZE, 0, 1,
-		{ ISOURCE_DUART },
+	{ "duart", DUART1_BASE, 2*DUART_SIZE, 0,
+		1, { ISOURCE_DUART },
 		1 + ilog2(DEVDISR_DUART) },
+	{ "tsec", ETSEC1_BASE, ETSEC_SIZE, 1,
+		3, { ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
+		1 + ilog2(DEVDISR_TSEC1) },
+#if defined(MPC8548) || defined(MPC8555) || defined(MPC8572) || defined(P2020)
+	{ "tsec", ETSEC2_BASE, ETSEC_SIZE, 2,
+		3, { ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
+		1 + ilog2(DEVDISR_TSEC2),
+		{ SVR_MPC8548v1 >> 16, SVR_MPC8555v1 >> 16,
+		  SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+#endif
+#if defined(MPC8544) || defined(MPC8536)
+	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 2,
+		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
+#endif
+#if defined(MPC8548) || defined(MPC8572) || defined(P2020)
+	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 3,
+		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_MPC8548v1 >> 16, SVR_MPC8572v1 >> 16,
+		  SVR_P2020v2 >> 16 } },
+#endif
 #if defined(MPC8548) || defined(MPC8572)
-	{ "tsec", ETSEC1_BASE, ETSEC_SIZE, 1, 3,
-		{ ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
-		1 + ilog2(DEVDISR_TSEC1) },
-	{ "tsec", ETSEC2_BASE, ETSEC_SIZE, 2, 3,
-		{ ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
-		1 + ilog2(DEVDISR_TSEC2) },
-	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 3, 3,
-		{ ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
-		1 + ilog2(DEVDISR_TSEC3) },
-	{ "tsec", ETSEC4_BASE, ETSEC_SIZE, 4, 3,
-		{ ISOURCE_ETSEC4_TX, ISOURCE_ETSEC4_RX, ISOURCE_ETSEC4_ERR },
-		1 + ilog2(DEVDISR_TSEC4) },
+	{ "tsec", ETSEC4_BASE, ETSEC_SIZE, 4,
+		3, { ISOURCE_ETSEC4_TX, ISOURCE_ETSEC4_RX, ISOURCE_ETSEC4_ERR },
+		1 + ilog2(DEVDISR_TSEC4),
+		{ SVR_MPC8548v1 >> 16, SVR_MPC8572v1 >> 16 } },
 #endif
-#if defined(MPC8544) || defined(MPC8536)
-	{ "tsec", ETSEC1_BASE, ETSEC_SIZE, 1, 3,
-		{ ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
-		1 + ilog2(DEVDISR_TSEC1) },
-	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 2, 3,
-		{ ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
-		1 + ilog2(DEVDISR_TSEC2) },
-#endif
-	{ "diic", I2C1_BASE, 2*I2C_SIZE, 0, 1,
-		{ ISOURCE_I2C },
-		1 + ilog2(DEVDISR_TSEC2) },
-#ifndef MPC8572
+	{ "diic", I2C1_BASE, 2*I2C_SIZE, 0,
+		1, { ISOURCE_I2C },
+		1 + ilog2(DEVDISR_I2C) },
 	/* MPC8572 doesn't have any GPIO */
-	{ "gpio", GLOBAL_BASE, GLOBAL_SIZE, 0, 0 },
+	{ "gpio", GLOBAL_BASE, GLOBAL_SIZE, 0, 
+		1, { ISOURCE_GPIO },
+		0, 
+		{ 0xffff, SVR_MPC8572v1 >> 16 } },
+	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 0,
+		1, { ISOURCE_DDR },
+		1 + ilog2(DEVDISR_DDR_15),
+		{ 0xffff, SVR_MPC8572v1 >> 16, SVR_MPC8536v1 >> 16 } },
+#if defined(MPC8536)
+	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 0,
+		1, { ISOURCE_DDR },
+		1 + ilog2(DEVDISR_DDR_16),
+		{ SVR_MPC8536v1 >> 16 } },
 #endif
-	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 0, 1,
-		{ ISOURCE_DDR },
-		1 + ilog2(DEVDISR_TSEC2) },
+#if defined(MPC8572)
+	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 1,
+		1, { ISOURCE_DDR },
+		1 + ilog2(DEVDISR_DDR_15),
+		{ SVR_MPC8572v1 >> 16 } },
+	{ "ddrc", DDRC1_BASE, DDRC_SIZE, 2,
+		1, { ISOURCE_DDR },
+		1 + ilog2(DEVDISR_DDR2_14),
+		{ SVR_MPC8572v1 >> 16 } },
+#endif
 #if defined(MPC8544) || defined(MPC8536)
-	{ "pcie", PCIE1_BASE, PCI_SIZE, 1, 1,
-		{ ISOURCE_PCIEX },
-		1 + ilog2(DEVDISR_PCIE) },
-	{ "pcie", PCIE2_MPC8544_BASE, PCI_SIZE, 2, 1,
-		{ ISOURCE_PCIEX2 },
-		1 + ilog2(DEVDISR_PCIE3) },
-	{ "pcie", PCIE3_MPC8544_BASE, PCI_SIZE, 3, 1,
-		{ ISOURCE_PCIEX3 },
-		1 + ilog2(DEVDISR_PCIE2) },
-	{ "pci", PCIX1_MPC8544_BASE, PCI_SIZE, 1, 1,
-		{ ISOURCE_PCI1 },
-		1 + ilog2(DEVDISR_PCI1) },
+	{ "pcie", PCIE1_BASE, PCI_SIZE, 1,
+		1, { ISOURCE_PCIEX },
+		1 + ilog2(DEVDISR_PCIE),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
+	{ "pcie", PCIE2_MPC8544_BASE, PCI_SIZE, 2,
+		1, { ISOURCE_PCIEX2 },
+		1 + ilog2(DEVDISR_PCIE2),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
+	{ "pcie", PCIE3_MPC8544_BASE, PCI_SIZE, 3,
+		1, { ISOURCE_PCIEX3 },
+		1 + ilog2(DEVDISR_PCIE3),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
+	{ "pci", PCIX1_MPC8544_BASE, PCI_SIZE, 0,
+		1, { ISOURCE_PCI1 },
+		1 + ilog2(DEVDISR_PCI1),
+		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
 #endif
 #ifdef MPC8548
-	{ "pcie", PCIE1_BASE, PCI_SIZE, 0, 1,
-		{ ISOURCE_PCIEX },
-		1 + ilog2(DEVDISR_PCIE) },
-	{ "pci", PCIX1_MPC8548_BASE, PCI_SIZE, 1, 1,
-		{ ISOURCE_PCI1 },
-		1 + ilog2(DEVDISR_PCI1) },
-	{ "pci", PCIX2_MPC8548_BASE, PCI_SIZE, 2, 1,
-		{ ISOURCE_PCI2 },
-		1 + ilog2(DEVDISR_PCI2) },
+	{ "pcie", PCIE1_BASE, PCI_SIZE, 0,
+		1, { ISOURCE_PCIEX },
+		1 + ilog2(DEVDISR_PCIE),
+		{ SVR_MPC8538v1 >> 16 }, },
+	{ "pci", PCIX1_MPC8548_BASE, PCI_SIZE, 1,
+		1, { ISOURCE_PCI1 },
+		1 + ilog2(DEVDISR_PCI1),
+		{ SVR_MPC8538v1 >> 16 }, },
+	{ "pci", PCIX2_MPC8548_BASE, PCI_SIZE, 2,
+		1, { ISOURCE_PCI2 },
+		1 + ilog2(DEVDISR_PCI2),
+		{ SVR_MPC8538v1 >> 16 }, },
+#endif
+#if defined(MPC8572) || defined(P2020)
+	{ "pcie", PCIE1_BASE, PCI_SIZE, 1,
+		1, { ISOURCE_PCIEX },
+		1 + ilog2(DEVDISR_PCIE),
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+	{ "pcie", PCIE2_MPC8572_BASE, PCI_SIZE, 2,
+		1, { ISOURCE_PCIEX2 },
+		1 + ilog2(DEVDISR_PCIE2),
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+	{ "pcie", PCIE3_MPC8572_BASE, PCI_SIZE, 3,
+		1, { ISOURCE_PCIEX3_MPC8572 },
+		1 + ilog2(DEVDISR_PCIE3),
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+#endif
+#if defined(MPC8536) || defined(P2020)
+	{ "ehci", USB1_BASE, USB_SIZE, 1,
+		1, { ISOURCE_USB1 },
+		1 + ilog2(DEVDISR_USB1),
+		{ SVR_MPC8536v1 >> 16, SVR_P2020v2 >> 16 } },
 #endif
 #ifdef MPC8536
-	{ "ehci", USB1_BASE, USB_SIZE, 1, 1,
-		{ ISOURCE_USB1 },
-		1 + ilog2(DEVDISR_USB1) },
-	{ "ehci", USB2_BASE, USB_SIZE, 2, 1,
-		{ ISOURCE_USB2 },
-		1 + ilog2(DEVDISR_USB2) },
-	{ "ehci", USB3_BASE, USB_SIZE, 3, 1,
-		{ ISOURCE_USB3 },
-		1 + ilog2(DEVDISR_USB3) },
-	{ "sata", SATA1_BASE, SATA_SIZE, 1, 1,
-		{ ISOURCE_SATA1 },
-		1 + ilog2(DEVDISR_SATA1) },
-	{ "sata", SATA2_BASE, SATA_SIZE, 2, 1,
-		{ ISOURCE_SATA2 },
-		1 + ilog2(DEVDISR_SATA2) },
-	{ "spi", SPI_BASE, SPI_SIZE, 0, 1,
-		{ ISOURCE_SPI },
-		1 + ilog2(DEVDISR_SPI) },
-	{ "sdhc", ESDHC_BASE, ESDHC_SIZE, 0, 1,
-		{ ISOURCE_ESDHC },
-		1 + ilog2(DEVDISR_ESDHC) },
+	{ "ehci", USB2_BASE, USB_SIZE, 2,
+		1, { ISOURCE_USB2 },
+		1 + ilog2(DEVDISR_USB2),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "ehci", USB3_BASE, USB_SIZE, 3,
+		1, { ISOURCE_USB3 },
+		1 + ilog2(DEVDISR_USB3),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "sata", SATA1_BASE, SATA_SIZE, 1,
+		1, { ISOURCE_SATA1 },
+		1 + ilog2(DEVDISR_SATA1),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "sata", SATA2_BASE, SATA_SIZE, 2,
+		1, { ISOURCE_SATA2 },
+		1 + ilog2(DEVDISR_SATA2),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "spi", SPI_BASE, SPI_SIZE, 0,
+		1, { ISOURCE_SPI },
+		1 + ilog2(DEVDISR_SPI_15),
+		{ SVR_MPC8536v1 >> 16 }, },
+	{ "sdhc", ESDHC_BASE, ESDHC_SIZE, 0,
+		1, { ISOURCE_ESDHC },
+		1 + ilog2(DEVDISR_ESDHC_12),
+		{ SVR_MPC8536v1 >> 16 }, },
 #endif
-	{ "lbc", LBC_BASE, LBC_SIZE, 0, 1,
-		{ ISOURCE_LBC },
+#if defined(P2020)
+	{ "spi", SPI_BASE, SPI_SIZE, 0,
+		1, { ISOURCE_SPI },
+		1 + ilog2(DEVDISR_SPI_28),
+		{ SVR_P2020v2 >> 16 }, },
+	{ "sdhc", ESDHC_BASE, ESDHC_SIZE, 0,
+		1, { ISOURCE_ESDHC },
+		1 + ilog2(DEVDISR_ESDHC_10),
+		{ SVR_P2020v2 >> 16 }, },
+#endif
+	{ "lbc", LBC_BASE, LBC_SIZE, 0,
+		1, { ISOURCE_LBC },
 		1 + ilog2(DEVDISR_LBC) },
 	//{ "sec", RNG_BASE, RNG_SIZE, 0, 0, },
 	{ NULL }
@@ -438,18 +503,38 @@ cpu_probe_cache(void)
 #endif
 }
 
+static uint16_t
+getsvr(void)
+{
+	uint16_t svr = mfspr(SPR_SVR) >> 16;
+
+	svr &= ~0x8;		/* clear security bit */
+	switch (svr) {
+	case SVR_MPC8543v1 >> 16:	return SVR_MPC8548v1 >> 16;
+	case SVR_MPC8541v1 >> 16:	return SVR_MPC8555v1 >> 16;
+	case SVR_P2010v2 >> 16:		return SVR_P2020v2 >> 16;
+	default:			return svr;
+	}
+}
+
 static const char *
 socname(uint32_t svr)
 {
-	svr &= ~0x80000;
+	svr &= ~0x80000;	/* clear security bit */
 	switch (svr >> 8) {
-	case SVR_MPC8548v2 >> 8: return "MPC8548";
-	case SVR_MPC8547v2 >> 8: return "MPC8547";
-	case SVR_MPC8545v2 >> 8: return "MPC8545";
+	case SVR_MPC8536v1 >> 8: return "MPC8536";
+	case SVR_MPC8541v1 >> 8: return "MPC8541";
 	case SVR_MPC8543v2 >> 8: return "MPC8543";
 	case SVR_MPC8544v1 >> 8: return "MPC8544";
-	case SVR_MPC8536v1 >> 8: return "MPC8536";
-	case SVR_MPC8572 >> 8: return "MPC8572";
+	case SVR_MPC8545v2 >> 8: return "MPC8545";
+	case SVR_MPC8547v2 >> 8: return "MPC8547";
+	case SVR_MPC8548v2 >> 8: return "MPC8548";
+	case SVR_MPC8555v1 >> 8: return "MPC8555";
+	case SVR_MPC8568v1 >> 8: return "MPC8568";
+	case SVR_MPC8567v1 >> 8: return "MPC8567";
+	case SVR_MPC8572v1 >> 8: return "MPC8572";
+	case SVR_P2020v2 >> 8: return "P2020";
+	case SVR_P2010v2 >> 8: return "P2010";
 	default:
 		panic("%s: unknown SVR %#x", __func__, svr);
 	}
@@ -841,6 +926,7 @@ void
 cpu_startup(void)
 {
 	struct cpu_info * const ci = curcpu();
+	const uint16_t svr = getsvr();
 
 	booke_cpu_startup(socname(mfspr(SPR_SVR)));
 
@@ -854,13 +940,14 @@ cpu_startup(void)
 	ci->ci_khz = (cpu_freq + 500) / 1000;
 	cpu_timebase = ci->ci_data.cpu_cc_freq = ccb_freq / 8;
 
+	board_info_add_number("my-id", svr);
 	board_info_add_bool("pq3");
 	board_info_add_number("mem-size", pmemsize);
 	const uint32_t l2ctl = cpu_read_4(L2CACHE_BASE + L2CTL);
 	uint32_t l2siz = L2CTL_L2SIZ_GET(l2ctl);
 	uint32_t l2banks = l2siz >> 16;
 #ifdef MPC85555
-	if (e500_get_svr() == (MPC8555v1 >> 16)) {
+	if (svr == (MPC8555v1 >> 16)) {
 		l2siz >>= 1;
 		l2banks >>= 1;
 	}
@@ -908,21 +995,48 @@ cpu_startup(void)
 	 * PCI-Express virtual wire interrupts on combined with
 	 * External IRQ0/1/2/3.
 	 */
+	switch (svr) {
 #if defined(MPC8548)
-	mpc85xx_pci_setup("pcie0-interrupt-map", 0x001800, IST_LEVEL, 0, 1, 2, 3);
+	case SVR_MPC8548v1 >> 16:
+		mpc85xx_pci_setup("pcie0-interrupt-map", 0x001800,
+		    IST_LEVEL, 0, 1, 2, 3);
+		break;
 #endif
-#if defined(MPC8544) || defined(MPC8572) || defined(MPC8536)
-	mpc85xx_pci_setup("pcie1-interrupt-map", 0x001800, IST_LEVEL, 0, 1, 2, 3);
-	mpc85xx_pci_setup("pcie2-interrupt-map", 0x001800, IST_LEVEL, 4, 5, 6, 7);
-	mpc85xx_pci_setup("pcie3-interrupt-map", 0x001800, IST_LEVEL, 8, 9, 10, 11);
+#if defined(MPC8544) || defined(MPC8572) || defined(MPC8536) || defined(P2020)
+	case SVR_MPC8536v1 >> 16:
+	case SVR_MPC8544v1 >> 16:
+	case SVR_MPC8572v1 >> 16:
+	case SVR_P2010v2 >> 16:
+	case SVR_P2020v2 >> 16:
+		mpc85xx_pci_setup("pcie1-interrupt-map", 0x001800, IST_LEVEL,
+		    0, 1, 2, 3);
+		mpc85xx_pci_setup("pcie2-interrupt-map", 0x001800, IST_LEVEL,
+		    4, 5, 6, 7);
+		mpc85xx_pci_setup("pcie3-interrupt-map", 0x001800, IST_LEVEL,
+		    8, 9, 10, 11);
+		break;
 #endif
-#if defined(MPC8544) || defined(MPC8548)
-	mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL, 0, 1, 2, 3);
-#endif
+	}
+	switch (svr) {
 #if defined(MPC8536)
-	mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL, 1, 2, 3, 4);
+	case SVR_MPC8536v1 >> 16:
+		mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL,
+		    1, 2, 3, 4);
+		break;
+#endif
+#if defined(MPC8544)
+	case SVR_MPC8544v1 >> 16:
+		mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL,
+		    0, 1, 2, 3);
+		break;
 #endif
 #if defined(MPC8548)
-	mpc85xx_pci_setup("pci2-interrupt-map", 0x001800, IST_LEVEL, 11, 1, 2, 3);
+	case SVR_MPC8548v1 >> 16:
+		mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL,
+		    0, 1, 2, 3);
+		mpc85xx_pci_setup("pci2-interrupt-map", 0x001800, IST_LEVEL,
+		    11, 1, 2, 3);
+		break;
 #endif
+	}
 }
