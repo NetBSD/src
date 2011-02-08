@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.11 2010/11/27 20:18:46 christos Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.11.4.1 2011/02/08 19:29:35 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -119,7 +119,8 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	TMPFS		# Efficient memory file-system
 
 # Filesystem options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER	# Network File System server
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

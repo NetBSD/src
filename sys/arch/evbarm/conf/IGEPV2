@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.2 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: IGEPV2,v 1.2.4.1 2011/02/08 19:29:32 bouyer Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -44,7 +44,8 @@ file-system	TMPFS		# memory file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	SOFTDEP

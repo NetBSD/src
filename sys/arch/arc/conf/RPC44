@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.37 2010/11/23 11:13:54 hannken Exp $
+# $NetBSD: RPC44,v 1.37.4.1 2011/02/08 19:29:31 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.37 $"
+#ident		"GENERIC-$Revision: 1.37.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -105,7 +105,8 @@ file-system 	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

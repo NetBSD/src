@@ -1,4 +1,4 @@
-# $NetBSD: MONOLITHIC,v 1.13 2010/12/15 08:09:02 haad Exp $
+# $NetBSD: MONOLITHIC,v 1.13.4.1 2011/02/08 19:29:35 bouyer Exp $
 #
 # Non MODULAR, used mostly as a reference as to what we modularized.
 #
@@ -43,7 +43,8 @@ file-system 	PTYFS		# /dev/ptm support
 file-system 	TMPFS		# Efficient memory file-system
 file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 
 options 	NFSSERVER
 
