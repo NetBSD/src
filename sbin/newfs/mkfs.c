@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.108.2.1 2011/01/20 14:24:54 bouyer Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.108.2.2 2011/02/08 14:51:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.108.2.1 2011/01/20 14:24:54 bouyer Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.108.2.2 2011/02/08 14:51:36 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1182,8 +1182,8 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		q2h->q2h_free = q2e->q2e_next;
 		memcpy(q2e, &q2h->q2h_defentry, sizeof(*q2e));
 		q2e->q2e_uid = ufs_rw32(uid, needswap);
-		q2e->q2e_val[Q2V_BLOCK].q2v_cur = ufs_rw64(qblocks, needswap);
-		q2e->q2e_val[Q2V_FILE].q2v_cur = ufs_rw64(qinos, needswap);
+		q2e->q2e_val[QL_BLOCK].q2v_cur = ufs_rw64(qblocks, needswap);
+		q2e->q2e_val[QL_FILE].q2v_cur = ufs_rw64(qinos, needswap);
 		/* add to the hash entry */
 		q2e->q2e_next = q2h->q2h_entries[uid & q2h_hash_mask];
 		q2h->q2h_entries[uid & q2h_hash_mask] =
