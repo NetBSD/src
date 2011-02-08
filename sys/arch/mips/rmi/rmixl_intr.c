@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.25 2011/02/05 06:11:47 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.26 2011/02/08 06:04:20 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.25 2011/02/05 06:11:47 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.26 2011/02/08 06:04:20 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -508,8 +508,8 @@ rmixl_intr_init_cpu(struct cpu_info *ci)
 			device_xname(sc->sc_dev),
 			rmixl_intr_string(vec));
 
-	KASSERT(ci->ci_cpuid < (sizeof(cpu_present_mask) * 8));
-	atomic_or_32((volatile uint32_t *)&cpu_present_mask, 1 << ci->ci_cpuid);
+	KASSERT(cpu_index(ci) < (sizeof(cpu_present_mask) * 8));
+	atomic_or_32((volatile uint32_t *)&cpu_present_mask, 1 << cpu_index(ci));
 }
 
 /*
@@ -955,9 +955,9 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 static int
 rmixl_send_ipi(struct cpu_info *ci, int tag)
 {
-	const cpuid_t cpu = ci->ci_cpuid;
-	uint32_t core = (uint32_t)(cpu >> 2);
-	uint32_t thread = (uint32_t)(cpu & __BITS(1,0));
+	const cpuid_t cpuid = ci->ci_cpuid;
+	uint32_t core = (uint32_t)(cpuid >> 2);
+	uint32_t thread = (uint32_t)(cpuid & __BITS(1,0));
 	uint64_t req = 1 << tag;
 	uint32_t r;
 	extern volatile mips_cpuset_t cpus_running;
