@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.9 2011/02/08 06:03:36 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.10 2011/02/08 23:01:28 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.9 2011/02/08 06:03:36 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.10 2011/02/08 23:01:28 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -91,9 +91,10 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_core = na->na_core;
-	sc->sc_hatched = false;
 
 #ifdef MULTIPROCESSOR
+	sc->sc_hatched = false;
+
 	/*
 	 * Create the TLB structure needed - one per core and core0 uses the
 	 * default one for the system.
