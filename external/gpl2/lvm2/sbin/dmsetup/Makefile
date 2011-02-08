@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/12/23 17:46:55 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2011/02/08 03:26:13 haad Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -13,6 +13,8 @@ MAN=		dmsetup.8
 
 BINDIR=		/sbin
 
+#CFLAGS+= -g -O0
+
 CPPFLAGS+=      -I${LIBDM_DISTDIR}/ -I${LIBDM_DISTDIR}/misc \
 		-I. -I${LIBDM_DISTDIR}/ioctl -I${LVM2_DISTDIR}/include
 
@@ -22,8 +24,9 @@ LIBDM_OBJDIR!=	cd ${LIBDM_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=		-L${LIBDM_OBJDIR} -ldevmapper
 DPADD+=		${LIBDM_OBJDIR}/libdevmapper.a
 
-LDADD+=		-lprop
+LDADD+=		-ldm -lprop
 
+LDSTATIC= -static
 .PATH:	${LVM2_DISTDIR}/tools
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/12/01 23:12:51 haad Exp $
+#	$NetBSD: Makefile,v 1.8 2011/02/08 03:26:13 haad Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -99,7 +99,7 @@ LIBDM_OBJDIR!=  cd ${LIBDM_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBDM_OBJDIR} -ldevmapper
 DPADD+=         ${LIBDM_OBJDIR}/libdevmapper.a
 
-LDADD+=		-lprop -ledit -ltermcap
+LDADD+=		-ldm -lprop -ledit -ltermcap
 
 LDSTATIC= 	-static
 
