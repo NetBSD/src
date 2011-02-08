@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.3 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.4 2011/02/08 06:18:04 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,13 +39,14 @@
 
 #define PVR_MPCe500		  0x8020
 #define PVR_MPCe500v2		  0x8021
+
 #define	SVR_MPC8548v1		  0x80310010
-#define	SVR_MPC8543v1		  0x80320010
 #define	SVR_MPC8548v1plus	  0x80310011
-#define	SVR_MPC8543v1plus	  0x80320011
 #define	SVR_MPC8548v2		  0x80310020
 #define	SVR_MPC8547v2		  0x80310120
 #define	SVR_MPC8545v2		  0x80310220
+#define	SVR_MPC8543v1		  0x80320010
+#define	SVR_MPC8543v1plus	  0x80320011
 #define	SVR_MPC8543v2		  0x80320020
 
 #define	SVR_MPC8544v1		  0x80340110
@@ -56,7 +57,14 @@
 #define	SVR_MPC8555v1		  0x80710110
 #define	SVR_MPC8541v1		  0x80720111
 
-#define	SVR_MPC8572		  0x80e00011
+#define	SVR_MPC8567v1		  0x80750111
+#define	SVR_MPC8568v1		  0x80750011
+
+#define	SVR_MPC8572v1		  0x80e00011
+
+#define	SVR_P2020v2		  0x80e20020
+#define	SVR_P2010v2		  0x80e30020
+
 #define	SVR_SECURITY_P(svr)	  (((svr) & 0x00080000) != 0)
 
 /*
@@ -109,8 +117,12 @@
 #define	  DBSR_BRT		  0x04000000 /* 5: Branch Taken debug event */
 #define	  DBSR_IRPT		  0x02000000 /* 6: Interrupt Taken debug event */
 #define	  DBSR_TRAP		  0x01000000 /* 7: Trap Instruction debug event */
+#define   DBSR_IAC		  0x00f00000 /* 8-11: IAC debug event */
 #define	  DBSR_IAC1		  0x00800000 /* 8: IAC1 debug event */
 #define	  DBSR_IAC2		  0x00400000 /* 9: IAC2 debug event */
+#define	  DBSR_IAC3		  0x00200000 /* 10: IAC3 debug event */
+#define	  DBSR_IAC4		  0x00100000 /* 11: IAC4 debug event */
+#define   DBSR_DAC		  0x000f0000 /* 12-15: DAC debug event */
 #define	  DBSR_DAC1R		  0x00080000 /* 12: DAC1 Read debug event */
 #define	  DBSR_DAC1W		  0x00040000 /* 13: DAC1 Write debug event */
 #define	  DBSR_DAC2R		  0x00020000 /* 14: DAC2 Read debug event */
@@ -124,49 +136,114 @@
 #define	  DBCR0_RST_CORE	  0x10000000 /*   Core reset */
 #define	  DBCR0_RST_CHIP	  0x20000000 /*   Chip reset */
 #define	  DBCR0_RST_SYSTEM	  0x30000000 /*   System reset */
-#define	  DBCR0_IC		  0x08000000 /* 4: Instruction Completion debug event */
-#define	  DBCR0_BT		  0x04000000 /* 5: Branch Taken debug event */
-#define	  DBCR0_EDE		  0x02000000 /* 6: Exception Debug Event */
-#define	  DBCR0_TDE		  0x01000000 /* 7: Trap Debug Event */
+#define	  DBCR0_ICMP		  0x08000000 /* 4: Instruction Completion debug event */
+#define	  DBCR0_BRT		  0x04000000 /* 5: Branch Taken debug event */
+#define	  DBCR0_IRPT		  0x02000000 /* 6: Interrupt Taken debug event */
+#define	  DBCR0_TRAP		  0x01000000 /* 7: Trap Instruction Debug Event */
 #define	  DBCR0_IA1		  0x00800000 /* 8: IAC (Instruction Address Compare) 1 debug event */
 #define	  DBCR0_IA2		  0x00400000 /* 9: IAC 2 debug event */
-#define	  DBCR0_IA12		  0x00200000 /* 10: Instruction Address Range Compare 1-2 */
-#define	  DBCR0_IA12X		  0x00100000 /* 11: IA12 eXclusive */
-#define	  DBCR0_IA3		  0x00080000 /* 12: IAC 3 debug event */
-#define	  DBCR0_DAC1_LOAD	  0x00080000 /* 12: DAC (Data Address Compare) 1 load event (e500) */
-#define	  DBCR0_IA4		  0x00040000 /* 13: IAC 4 debug event */
-#define	  DBCR0_DAC1_STORE	  0x00040000 /* 13: DAC (Data Address Compare) 1 store event (e500) */
-#define	  DBCR0_IA34		  0x00020000 /* 14: Instruction Address Range Compare 3-4 */
-#define	  DBCR0_DAC2_LOAD	  0x00020000 /* 14: DAC 2 load event (e500) */
-#define	  DBCR0_IA34X		  0x00010000 /* 15: IA34 eXclusive */
-#define	  DBCR0_DAC2_STORE	  0x00010000 /* 15: DAC 2 store event (e500) */
-#define	  DBCR0_IA12T		  0x00008000 /* 16: Instruction Address Range Compare 1-2 range Toggle */
-#define	  DBCR0_RET		  0x00008000 /* 16: Return debug event (e500) */
-#define	  DBCR0_IA34T		  0x00004000 /* 17: Instruction Address Range Compare 3-4 range Toggle */
+#define	  DBCR0_IA3		  0x00200000 /* 10: IAC 3 debug event */
+#define	  DBCR0_IA4		  0x00100000 /* 11: IAC 4 debug event */
+#define	  DBCR0_DAC1_LOAD	  0x00080000 /* 12: DAC (Data Address Compare) 1 load event */
+#define	  DBCR0_DAC1_STORE	  0x00040000 /* 13: DAC (Data Address Compare) 1 store event */
+#define	  DBCR0_DAC2_LOAD	  0x00020000 /* 14: DAC 2 load event */
+#define	  DBCR0_DAC2_STORE	  0x00010000 /* 15: DAC 2 store event */
+#define	  DBCR0_RET		  0x00008000 /* 16: Return debug event */
 #define	  DBCR0_FT		  0x00000001 /* 31: Freeze Timers on debug event */
 #define	SPR_DBCR1		309	/* E... Debug Control Register 1 */
+#define	  DBCR1_IAC1US		  0xc0000000 /*  0-1: Data Address Compare 1 user/supervisor mode */
+#define	  DBCR1_IAC1US_ANY	  0x00000000 /*  MSR[PR] = don't care */
+#define	  DBCR1_IAC1US_KERNEL	  0x80000000 /*  MSR[PR] = 0 */
+#define	  DBCR1_IAC1US_USER	  0xc0000000 /*  MSR[PR] = 1 */
+#define	  DBCR1_IAC1ER		  0x30000000 /*  2-3: Data Address Compare 1 effective/real mode */
+#define	  DBCR1_IAC1ER_DSX	  0x00000000 /*  effective address */
+#define	  DBCR1_IAC1ER_REAL	  0x10000000 /*  real address */
+#define	  DBCR1_IAC1ER_DS0	  0x20000000 /*  effective address MSR[DS] = 0 */
+#define	  DBCR1_IAC1ER_DS1	  0x30000000 /*  effective address MSR[DS] = 1 */
+#define	  DBCR1_IAC2US		  0x0c000000 /*  4-5: Data Address Compare 1 user/supervisor mode */
+#define	  DBCR1_IAC2US_ANY	  0x00000000 /*  MSR[PR] = don't care */
+#define	  DBCR1_IAC2US_KERNEL	  0x08000000 /*  MSR[PR] = 0 */
+#define	  DBCR1_IAC2US_USER	  0x0c000000 /*  MSR[PR] = 1 */
+#define	  DBCR1_IAC2ER		  0x03000000 /*  6-7: Data Address Compare 1 effective/real mode */
+#define	  DBCR1_IAC2ER_DSX	  0x00000000 /*  effective address */
+#define	  DBCR1_IAC2ER_REAL	  0x01000000 /*  real address */
+#define	  DBCR1_IAC2ER_DS0	  0x02000000 /*  effective address MSR[DS] = 0 */
+#define	  DBCR1_IAC2ER_DS1	  0x03000000 /*  effective address MSR[DS] = 1 */
+#define	  DBCR1_IAC12M		  0x00c00000 /*  8-9: Data Address Compare 1 effective/real mode */
+#define	  DBCR1_IAC12M_EXACT	  0x00000000 /*  equal IAC1 or IAC2 */
+#define	  DBCR1_IAC12M_MASK	  0x00400000 /*  (addr & IAC2) == (IAC1 & IAC2) */
+#define	  DBCR1_IAC12M_INCLUSIVE  0x00800000 /*  IAC1 <= addr < IAC2 */
+#define	  DBCR1_IAC12M_EXCLUSIVE  0x00c00000 /*  addr < IAC1 || IAC2 <= addr */
+#define	  DBCR1_IAC3US		  0x0000c000 /*  16-17: Data Address Compare 3 user/supervisor mode */
+#define	  DBCR1_IAC3US_ANY	  0x00000000 /*  MSR[PR] = don't care */
+#define	  DBCR1_IAC3US_KERNEL	  0x00008000 /*  MSR[PR] = 0 */
+#define	  DBCR1_IAC3US_USER	  0x0000c000 /*  MSR[PR] = 1 */
+#define	  DBCR1_IAC3ER		  0x00003000 /*  18-19: Data Address Compare 3 effective/real mode */
+#define	  DBCR1_IAC3ER_DSX	  0x00000000 /*  effective address */
+#define	  DBCR1_IAC3ER_REAL	  0x00001000 /*  real address */
+#define	  DBCR1_IAC3ER_DS0	  0x00002000 /*  effective address MSR[DS] = 0 */
+#define	  DBCR1_IAC3ER_DS1	  0x00003000 /*  effective address MSR[DS] = 1 */
+#define	  DBCR1_IAC4US		  0x00000c00 /*  20-21: Data Address Compare 3 user/supervisor mode */
+#define	  DBCR1_IAC4US_ANY	  0x00000000 /*  MSR[PR] = don't care */
+#define	  DBCR1_IAC4US_KERNEL	  0x00000800 /*  MSR[PR] = 0 */
+#define	  DBCR1_IAC4US_USER	  0x00000c00 /*  MSR[PR] = 1 */
+#define	  DBCR1_IAC4ER		  0x00000300 /*  22-23: Data Address Compare 4 effective/real mode */
+#define	  DBCR1_IAC4ER_DSX	  0x00000000 /*  effective address */
+#define	  DBCR1_IAC4ER_REAL	  0x00000100 /*  real address */
+#define	  DBCR1_IAC4ER_DS0	  0x00000200 /*  effective address MSR[DS] = 0 */
+#define	  DBCR1_IAC4ER_DS1	  0x00000300 /*  effective address MSR[DS] = 1 */
+#define	  DBCR1_IAC34M		  0x000000c0 /*  24-25: Data Address Compare 4 effective/real mode */
+#define	  DBCR1_IAC34M_EXACT	  0x00000000 /*  equal IAC3 or IAC4 */
+#define	  DBCR1_IAC34M_MASK	  0x00000040 /*  (addr & IAC4) == (IAC3 & IAC4) */
+#define	  DBCR1_IAC34M_INCLUSIVE  0x00000080 /*  IAC3 <= addr < IAC4 */
+#define	  DBCR1_IAC34M_EXCLUSIVE  0x000000c0 /*  addr < IAC3 || IAC4 <= addr */
 #define	SPR_DBCR2		310	/* E... Debug Control Register 2 */
 #define	  DBCR2_DAC1US		  0xc0000000 /*  0-1: Data Address Compare 1 user/supervisor mode */
 #define	  DBCR2_DAC1US_ANY	  0x00000000 /*  MSR[PR] = don't care */
 #define	  DBCR2_DAC1US_KERNEL	  0x80000000 /*  MSR[PR] = 0 */
 #define	  DBCR2_DAC1US_USER	  0xc0000000 /*  MSR[PR] = 1 */
 #define	  DBCR2_DAC1ER		  0x30000000 /*  2-3: Data Address Compare 1 effective/real mode */
-#define	  DBCR2_DAC1ER_REAL	  0x00000000 /*  real address */
+#define	  DBCR2_DAC1ER_DSX	  0x00000000 /*  effective address */
+#define	  DBCR2_DAC1ER_REAL	  0x10000000 /*  real address */
 #define	  DBCR2_DAC1ER_DS0	  0x20000000 /*  effective address MSR[DS] = 0 */
 #define	  DBCR2_DAC1ER_DS1	  0x30000000 /*  effective address MSR[DS] = 1 */
-#define	  DBCR2_DAC2US		  0x0c000000 /*  0-1: Data Address Compare 1 user/supervisor mode */
+#define	  DBCR2_DAC2US		  0x0c000000 /*  4-5: Data Address Compare 1 user/supervisor mode */
 #define	  DBCR2_DAC2US_ANY	  0x00000000 /*  MSR[PR] = don't care */
 #define	  DBCR2_DAC2US_KERNEL	  0x08000000 /*  MSR[PR] = 0 */
 #define	  DBCR2_DAC2US_USER	  0x0c000000 /*  MSR[PR] = 1 */
-#define	  DBCR2_DAC2ER		  0x03000000 /*  2-3: Data Address Compare 1 effective/real mode */
-#define	  DBCR2_DAC2ER_REAL	  0x00000000 /*  real address */
+#define	  DBCR2_DAC2ER		  0x03000000 /*  6-7: Data Address Compare 1 effective/real mode */
+#define	  DBCR2_DAC2ER_DSX	  0x00000000 /*  effective address */
+#define	  DBCR2_DAC2ER_REAL	  0x01000000 /*  real address */
 #define	  DBCR2_DAC2ER_DS0	  0x02000000 /*  effective address MSR[DS] = 0 */
 #define	  DBCR2_DAC2ER_DS1	  0x03000000 /*  effective address MSR[DS] = 1 */
-#define	  DBCR2_DAC12M		  0x00c00000 /*  2-3: Data Address Compare 1 effective/real mode */
+#define	  DBCR2_DAC12M		  0x00c00000 /*  8-9: Data Address Compare 1 effective/real mode */
 #define	  DBCR2_DAC12M_EXACT	  0x00000000 /*  equal DAC1 or DAC2 */
 #define	  DBCR2_DAC12M_MASK	  0x00400000 /*  (addr & DAC2) == (DAC1 & DAC2) */
 #define	  DBCR2_DAC12M_INCLUSIVE  0x00800000 /*  DAC1 <= addr < DAC2 */
 #define	  DBCR2_DAC12M_EXCLUSIVE  0x00c00000 /*  addr < DAC1 || DAC2 <= addr */
+#define	  DBCR2_DAC3US		  0x0000c000 /*  16-17: Data Address Compare 3 user/supervisor mode */
+#define	  DBCR2_DAC3US_ANY	  0x00000000 /*  MSR[PR] = don't care */
+#define	  DBCR2_DAC3US_KERNEL	  0x00008000 /*  MSR[PR] = 0 */
+#define	  DBCR2_DAC3US_USER	  0x0000c000 /*  MSR[PR] = 1 */
+#define	  DBCR2_DAC3ER		  0x00003000 /*  18-19: Data Address Compare 3 effective/real mode */
+#define	  DBCR2_DAC3ER_DSX	  0x00000000 /*  effective address */
+#define	  DBCR2_DAC3ER_REAL	  0x00001000 /*  real address */
+#define	  DBCR2_DAC3ER_DS0	  0x00002000 /*  effective address MSR[DS] = 0 */
+#define	  DBCR2_DAC3ER_DS1	  0x00003000 /*  effective address MSR[DS] = 1 */
+#define	  DBCR2_DAC4US		  0x00000c00 /*  20-21: Data Address Compare 3 user/supervisor mode */
+#define	  DBCR2_DAC4US_ANY	  0x00000000 /*  MSR[PR] = don't care */
+#define	  DBCR2_DAC4US_KERNEL	  0x00000800 /*  MSR[PR] = 0 */
+#define	  DBCR2_DAC4US_USER	  0x00000c00 /*  MSR[PR] = 1 */
+#define	  DBCR2_DAC4ER		  0x00000300 /*  22-23: Data Address Compare 4 effective/real mode */
+#define	  DBCR2_DAC4ER_DSX	  0x00000000 /*  effective address */
+#define	  DBCR2_DAC4ER_REAL	  0x00000100 /*  real address */
+#define	  DBCR2_DAC4ER_DS0	  0x00000200 /*  effective address MSR[DS] = 0 */
+#define	  DBCR2_DAC4ER_DS1	  0x00000300 /*  effective address MSR[DS] = 1 */
+#define	  DBCR2_DAC34M		  0x000000c0 /*  24-25: Data Address Compare 4 effective/real mode */
+#define	  DBCR2_DAC34M_EXACT	  0x00000000 /*  equal DAC3 or DAC4 */
+#define	  DBCR2_DAC34M_MASK	  0x00000040 /*  (addr & DAC4) == (DAC3 & DAC4) */
+#define	  DBCR2_DAC34M_INCLUSIVE  0x00000080 /*  DAC3 <= addr < DAC4 */
+#define	  DBCR2_DAC34M_EXCLUSIVE  0x000000c0 /*  addr < DAC3 || DAC4 <= addr */
 #define	SPR_IAC1		312	/* E... Instruction Address Compare 1 */
 #define	SPR_IAC2		313	/* E... Instruction Address Compare 2 */
 #define	SPR_IAC3		314	/* E... Instruction Address Compare 3 */
