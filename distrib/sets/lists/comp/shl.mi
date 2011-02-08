@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.159 2011/02/08 03:20:14 haad Exp $
+# $NetBSD: shl.mi,v 1.160 2011/02/08 14:24:59 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -231,7 +231,7 @@
 ./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug
-./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 		comp-sys-debug
+./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libdns.so.5.2.debug		comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug	comp-mdns-debug	mdns,debug
 ./usr/libdata/debug/usr/lib/libdtrace.so.2.0.debug	comp-sys-debug	dtrace,debug
