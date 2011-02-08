@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.15 2011/02/08 06:01:47 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.16 2011/02/08 19:18:22 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -739,7 +739,7 @@ cpu_pause(struct reg *regsp)
 		CPUSET_ADD(cpus_resumed, index);
 
 #if defined(DDB)
-		if (ddb_running_on_this_cpu())
+		if (ddb_running_on_this_cpu_p())
 			cpu_Debugger();
 		if (ddb_running_on_any_cpu())
 			continue;

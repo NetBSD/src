@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.19 2011/02/05 06:07:07 cliff Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.20 2011/02/08 19:18:22 cliff Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.19 2011/02/05 06:07:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.20 2011/02/08 19:18:22 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -108,8 +108,6 @@ void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
-
-bool ddb_running_on_this_cpu(void);
 
 static void	kdbpoke_4(vaddr_t addr, int newval);
 static void	kdbpoke_2(vaddr_t addr, short newval);
@@ -1081,7 +1079,7 @@ next_instr_address(db_addr_t pc, bool bd)
 #ifdef MULTIPROCESSOR
 
 bool 
-ddb_running_on_this_cpu(void)
+ddb_running_on_this_cpu_p(void)
 {               
 	return ddb_cpu == cpu_index(curcpu());
 }
