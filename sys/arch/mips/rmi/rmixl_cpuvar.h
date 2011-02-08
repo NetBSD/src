@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpuvar.h,v 1.1.2.2 2010/04/13 18:15:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpuvar.h,v 1.1.2.3 2011/02/08 19:50:22 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,9 +40,6 @@ struct rmixl_cpu_trampoline_args {
 struct rmixl_cpu_softc {
 	device_t sc_dev;
 	struct cpu_info *sc_ci;
-	void *sc_ih_clk;
-	void *sc_ih_fmn;
-	void *sc_ih_ipi;
 	struct evcnt sc_vec_evcnts[64];
 };
 
