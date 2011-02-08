@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.96 2011/02/06 00:44:09 christos Exp $
+# $NetBSD: md.amd64,v 1.97 2011/02/08 19:57:11 haad Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -444,6 +444,9 @@
 ./usr/lib/i386/libdes_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libdes_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libdes_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libdm.a				comp-c-lib		compat
+./usr/lib/i386/libdm_p.a			comp-c-proflb		compat,profile
+./usr/lib/i386/libdm_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libdns.a				comp-c-lib		compat
 ./usr/lib/i386/libdns.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libdns_g.a			comp-c-proflib		compat,debuglib
@@ -919,6 +922,7 @@
 ./usr/libdata/debug/usr/lib/i386/libcrypto.so.6.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcurses.so.7.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdes.so.8.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libdm.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdns.so.5.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdns_sd.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdwarf.so.0.0.debug	comp-compat-shlib	compat,pic,debug
