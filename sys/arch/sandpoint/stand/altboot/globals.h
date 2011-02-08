@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.3 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: globals.h,v 1.4 2011/02/08 00:33:05 nisimura Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -20,6 +20,7 @@ extern int brdtype;
 #define BRD_QNAPTS101		101
 #define BRD_SYNOLOGY		102
 #define BRD_STORCENTER		103
+#define BRD_DLINKGSM		104
 #define BRD_UNKNOWN		-1
 
 struct brdprop {
