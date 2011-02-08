@@ -1,4 +1,4 @@
-/*	$NetBSD: cpunode.c,v 1.2 2011/01/18 01:02:53 matt Exp $	*/
+/*	$NetBSD: cpunode.c,v 1.3 2011/02/08 06:21:03 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.2 2011/01/18 01:02:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.3 2011/02/08 06:21:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,7 +105,35 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 
 	nodes |= 1 << ma->ma_node;
 
-	for (u_int childmask = 1; cnl->cnl_name != NULL; cnl++, childmask <<= 1) {
+	const uint16_t my_id = board_info_get_number("my-id");
+
+	for (u_int childmask = 1; cnl->cnl_name != NULL; cnl++) {
+		bool inclusive = true;
+		bool found = (cnl->cnl_ids[0] == 0);
+		for (u_int i = 0;
+		     !found
+		     && i < __arraycount(cnl->cnl_ids)
+		     && cnl->cnl_ids[i] != 0;
+		     i++) {
+			if (cnl->cnl_ids[i] == 0xffff) {
+				inclusive = false;
+				continue;
+			}
+			found = (cnl->cnl_ids[i] == my_id);
+		}
+		/*
+		 * found & inclusive == match
+		 * !found & !inclusive == match
+		 * found & !inclusive == no match
+		 * !found & inclusive == no match
+		 * therefore
+		 * found ^ inclusive = no match
+		 * so
+		 * !(found ^ inclusive) = match
+		 */
+		if (found ^ inclusive)
+			continue;
+
 		cna.cna_busname = "cpunode";
 		cna.cna_memt = ma->ma_memt;
 		cna.cna_dmat = ma->ma_dmat;
@@ -125,6 +153,7 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 #endif
 		(void)config_found_sm_loc(self, "cpunode", NULL, &cna,
 		    cpunode_print, NULL);
+		childmask <<= 1;
 	}
 	/*
 	 * Anything MD left to do?
