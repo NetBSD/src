@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.19 2011/02/08 19:50:22 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.20 2011/02/08 23:01:28 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.19 2011/02/08 19:50:22 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.20 2011/02/08 23:01:28 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -168,7 +168,6 @@ static void
 cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 {
 	struct rmixl_cpu_softc * const sc = device_private(self);
-	struct cpucore_attach_args *ca = aux;
 	struct cpu_info *ci = NULL;
 	static bool once = false;
 	extern void rmixl_spl_init_cpu(void);
@@ -190,6 +189,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 		struct cpucore_softc * const ccsc = device_private(parent);
 		rmixlfw_psb_type_t psb_type = rmixl_configuration.rc_psb_type;
 		cpuid_t cpuid;
+		struct cpucore_attach_args *ca = aux;
 
 		KASSERT(ca->ca_core < 8);
 		KASSERT(ca->ca_thread < 4);
