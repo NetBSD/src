@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.163.4.2.4.2 2011/02/08 06:04:59 cliff Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.163.4.2.4.3 2011/02/08 21:56:01 cliff Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163.4.2.4.2 2011/02/08 06:04:59 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163.4.2.4.3 2011/02/08 21:56:01 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -204,14 +204,14 @@ TAILQ_HEAD(deferred_config_head, deferred_config);
  * - interrupt_config_queue
  * is held for short durations, and is initialized to spin
  */
-static kmutex_t config_queues_lock;
+static kmutex_t *config_queues_lock;
 
 /*
  * dc_funcs_lock ensures the driver dc_func's are not called concurrently
  * many (most?) are not MP safe
  * is held for unknown durations, and is initialized to sleep
  */
-static kmutex_t dc_funcs_lock;
+static kmutex_t *dc_funcs_lock;
 
 struct deferred_config_head deferred_config_queue =
 	TAILQ_HEAD_INITIALIZER(deferred_config_queue);
@@ -376,9 +376,8 @@ config_init(void)
 	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&config_misc_cv, "cfgmisc");
 
-	mutex_init(&dc_funcs_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-
-	mutex_init(&config_queues_lock, MUTEX_DEFAULT, IPL_VM);
+	dc_funcs_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
+	config_queues_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_VM);
 
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
@@ -416,18 +415,18 @@ config_interrupts_thread(void *cookie)
 {
 	struct deferred_config *dc;
 
-	mutex_enter(&config_queues_lock);
+	mutex_enter(config_queues_lock);
 	while ((dc = TAILQ_FIRST(&interrupt_config_queue)) != NULL) {
 		TAILQ_REMOVE(&interrupt_config_queue, dc, dc_queue);
-		mutex_exit(&config_queues_lock);
-		mutex_enter(&dc_funcs_lock);
+		mutex_exit(config_queues_lock);
+		mutex_enter(dc_funcs_lock);
 		(*dc->dc_func)(dc->dc_dev);
-		mutex_exit(&dc_funcs_lock);
+		mutex_exit(dc_funcs_lock);
 		kmem_free(dc, sizeof(*dc));
 		config_pending_decr();
-		mutex_enter(&config_queues_lock);
+		mutex_enter(config_queues_lock);
 	}
-	mutex_exit(&config_queues_lock);
+	mutex_exit(config_queues_lock);
 
 	kthread_exit(0);
 }
@@ -1677,13 +1676,13 @@ config_defer(device_t dev, void (*func)(device_t))
 		panic("config_defer: can't defer config of a root device");
 
 #ifdef DIAGNOSTIC
-	mutex_enter(&config_queues_lock);
+	mutex_enter(config_queues_lock);
 	for (dc = TAILQ_FIRST(&deferred_config_queue); dc != NULL;
 	     dc = TAILQ_NEXT(dc, dc_queue)) {
 		if (dc->dc_dev == dev)
 			panic("config_defer: deferred twice");
 	}
-	mutex_exit(&config_queues_lock);
+	mutex_exit(config_queues_lock);
 #endif
 
 	dc = kmem_alloc(sizeof(*dc), kmflags);
@@ -1693,9 +1692,9 @@ config_defer(device_t dev, void (*func)(device_t))
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 
-	mutex_enter(&config_queues_lock);
+	mutex_enter(config_queues_lock);
 	TAILQ_INSERT_TAIL(&deferred_config_queue, dc, dc_queue);
-	mutex_exit(&config_queues_lock);
+	mutex_exit(config_queues_lock);
 
 	config_pending_incr();
 }
@@ -1719,13 +1718,13 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	}
 
 #ifdef DIAGNOSTIC
-	mutex_enter(&config_queues_lock);
+	mutex_enter(config_queues_lock);
 	for (dc = TAILQ_FIRST(&interrupt_config_queue); dc != NULL;
 	     dc = TAILQ_NEXT(dc, dc_queue)) {
 		if (dc->dc_dev == dev)
 			panic("config_interrupts: deferred twice");
 	}
-	mutex_exit(&config_queues_lock);
+	mutex_exit(config_queues_lock);
 #endif
 
 	dc = kmem_alloc(sizeof(*dc), kmflags);
@@ -1734,9 +1733,9 @@ config_interrupts(device_t dev, void (*func)(device_t))
 
 	dc->dc_dev = dev;
 	dc->dc_func = func;
-	mutex_enter(&config_queues_lock);
+	mutex_enter(config_queues_lock);
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
-	mutex_exit(&config_queues_lock);
+	mutex_exit(config_queues_lock);
 	config_pending_incr();
 }
 
@@ -1749,21 +1748,21 @@ config_process_deferred(struct deferred_config_head *queue,
 {
 	struct deferred_config *dc, *ndc;
 
-	mutex_enter(&config_queues_lock);
+	mutex_enter(config_queues_lock);
 	for (dc = TAILQ_FIRST(queue); dc != NULL; dc = ndc) {
 		ndc = TAILQ_NEXT(dc, dc_queue);
 		if (parent == NULL || dc->dc_dev->dv_parent == parent) {
 			TAILQ_REMOVE(queue, dc, dc_queue);
-			mutex_exit(&config_queues_lock);
-			mutex_enter(&dc_funcs_lock);
+			mutex_exit(config_queues_lock);
+			mutex_enter(dc_funcs_lock);
 			(*dc->dc_func)(dc->dc_dev);
-			mutex_exit(&dc_funcs_lock);
+			mutex_exit(dc_funcs_lock);
 			kmem_free(dc, sizeof(*dc));
 			config_pending_decr();
-			mutex_enter(&config_queues_lock);
+			mutex_enter(config_queues_lock);
 		}
 	}
-	mutex_exit(&config_queues_lock);
+	mutex_exit(config_queues_lock);
 }
 
 /*
