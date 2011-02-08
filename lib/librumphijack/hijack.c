@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.32 2011/02/07 19:34:39 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.33 2011/02/08 12:20:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.32 2011/02/07 19:34:39 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.33 2011/02/08 12:20:11 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -161,6 +161,7 @@ type name args								\
 {									\
 	type (*fun) proto;						\
 									\
+	DPRINTF(("%s -> %d\n", __STRING(name), fd));			\
 	if (fd_isrump(fd)) {						\
 		fun = syscalls[rcname].bs_rump;				\
 		fd = fd_host2rump(fd);					\
