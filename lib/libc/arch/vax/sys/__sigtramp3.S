@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp3.S,v 1.1 2003/09/30 19:05:41 matt Exp $	*/
+/*	$NetBSD: __sigtramp3.S,v 1.1.52.1 2011/02/08 16:18:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas <matt@3am-software.com>
@@ -39,11 +39,16 @@
 
 #include "SYS.h"
 
+#ifdef SYSLIBC_SCCS
+RCSID("$NetBSD: __sigtramp3.S,v 1.1.52.1 2011/02/08 16:18:58 bouyer Exp $")
+#endif
+
 	.text
 	_ALIGN_TEXT
 
 	.globl	_C_LABEL(__sigtramp_siginfo_3)
 _C_LABEL(__sigtramp_siginfo_3):
+	nop; nop
 	callg (%ap),(%fp)		# use global arg list
 	addl2 $8,%ap			# arg is pointer to ucontext
 	SYSTRAP(setcontext)		# exit from here

@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.13 2010/11/05 16:23:56 pooka Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.13.2.1 2011/02/08 16:18:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.13 2010/11/05 16:23:56 pooka Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.13.2.1 2011/02/08 16:18:59 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -58,8 +58,7 @@ __weak_alias(freeifaddrs,_freeifaddrs)
 #define sysctl(a,b,c,d,e,f) rump_sys___sysctl(a,b,c,d,e,f)
 #endif
 
-#define	SALIGN	(sizeof(long) - 1)
-#define	SA_RLEN(sa)	((sa)->sa_len ? (((sa)->sa_len + SALIGN) & ~SALIGN) : (SALIGN + 1))
+#define	SA_RLEN(sa)	RT_ROUNDUP((sa)->sa_len)
 
 int
 getifaddrs(struct ifaddrs **pif)

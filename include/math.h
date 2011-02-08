@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.53 2010/09/15 16:11:30 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.53.2.1 2011/02/08 16:18:55 bouyer Exp $	*/
 
 /*
  * ====================================================
@@ -348,6 +348,10 @@ long long int	llroundf(float);
 
 float	fmodf(float, float);
 float	remainderf(float, float);
+
+/* 7.12.10.3 The remquo functions */
+double	remquo(double, double, int *);
+float	remquof(float, float, int *);
 
 /* 7.12.11 manipulation */
 

@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.40 2008/11/29 17:57:33 tsutsui Exp $
+# $NetBSD: md.hp300,v 1.40.4.1 2011/02/08 16:18:35 bouyer Exp $
 ./usr/mdec/bootct				base-sysutil-bin
 ./usr/mdec/bootrd				base-sysutil-bin
 ./usr/mdec/bootsd				base-sysutil-bin
@@ -12,5 +12,5 @@
 ./usr/mdec/rdboot				base-sysutil-bin
 ./usr/mdec/sdboot				base-sysutil-bin
 ./usr/mdec/uboot.lif				base-sysutil-bin
-./usr/sbin/grfinfo				base-sysutil-bin
-./usr/sbin/hilinfo				base-sysutil-bin
+./usr/sbin/grfinfo				base-obsolete		obsolete
+./usr/sbin/hilinfo				base-obsolete		obsolete

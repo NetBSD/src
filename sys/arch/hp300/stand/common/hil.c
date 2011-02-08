@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.12 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: hil.c,v 1.12.30.1 2011/02/08 16:19:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -113,9 +113,9 @@
 
 #include <sys/param.h>
 
-#include <hp300/dev/hilreg.h>
-#include <hp300/dev/kbdmap.h>
-#include <hp300/dev/itevar.h>
+#include <hp300/stand/common/hilreg.h>
+#include <hp300/stand/common/kbdmap.h>
+#include <hp300/stand/common/itevar.h>
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/kbdvar.h>

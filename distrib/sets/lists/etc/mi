@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.218 2011/01/13 10:55:19 kefren Exp $
+# $NetBSD: mi,v 1.218.2.1 2011/02/08 16:18:38 bouyer Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -236,6 +236,7 @@
 ./etc/rc.d/newsyslog				etc-sys-rc
 ./etc/rc.d/nfsd					etc-nfsserver-rc
 ./etc/rc.d/nfslocking				etc-nfsserver-rc
+./etc/rc.d/npf					etc-npf-rc
 ./etc/rc.d/ntpd					etc-ntp-rc
 ./etc/rc.d/ntpdate				etc-ntp-rc
 ./etc/rc.d/perusertmp				etc-sys-rc

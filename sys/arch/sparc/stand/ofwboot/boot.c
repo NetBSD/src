@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.26 2010/11/06 21:33:42 mrg Exp $	*/
+/*	$NetBSD: boot.c,v 1.26.4.1 2011/02/08 16:19:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -507,7 +507,6 @@ main(void *ofw)
 	prom_init();
 
 	printf("\r>> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	DPRINTF((">> (%s, %s)\n", bootprog_maker, bootprog_date));
 
 	/* Figure boot arguments */
 	strncpy(bootdev, prom_getbootpath(), sizeof(bootdev) - 1);

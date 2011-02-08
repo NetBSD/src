@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.2.2.1 2011/02/08 16:19:35 bouyer Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -64,6 +64,9 @@
 #define IST_MAX		(NIPL+10)
 #endif
 
+#define	IPI_DST_ALL	-2
+#define	IPI_DST_NOTME	-1
+
 #define	__HAVE_FAST_SOFTINTS	1
 
 #ifndef _LOCORE
@@ -74,6 +77,8 @@ void	intr_cpu_init(struct cpu_info *);
 void	intr_init(void);
 const char *
 	intr_string(int, int);
+
+void	cpu_send_ipi(cpuid_t, uintptr_t);
 
 void	spl0(void);
 int 	splraise(int);
@@ -109,6 +114,7 @@ struct intrsw {
 	void (*intrsw_spl0)(void);
 	void (*intrsw_splx)(int);
 	const char *(*intrsw_string)(int, int);
+	void (*intrsw_send_ipi)(cpuid_t, uintptr_t);
 #ifdef __HAVE_FAST_SOFTINTS
 	void (*intrsw_softint_init_md)(struct lwp *, u_int, uintptr_t *);
 	void (*intrsw_softint_trigger)(uintptr_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.6 2009/05/16 22:20:40 ad Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.6.2.1 2011/02/08 16:19:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,10 +34,10 @@
 
 #define	PTHREAD__ASM_RASOPS
 
-static inline long
+static inline unsigned long
 pthread__sp(void)
 {
-	long ret;
+	unsigned long ret;
 
 	__asm("mov $30, %0" : "=r" (ret));
 

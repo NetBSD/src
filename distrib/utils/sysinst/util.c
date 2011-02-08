@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.166 2010/12/04 14:57:57 jmmv Exp $	*/
+/*	$NetBSD: util.c,v 1.166.2.1 2011/02/08 16:18:40 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,6 +66,9 @@
 #endif
 #ifndef MD_SETS_SELECTED_MINIMAL
 #define MD_SETS_SELECTED_MINIMAL SET_KERNEL_1, SET_CORE
+#endif
+#ifndef MD_SETS_SELECTED_NOX
+#define MD_SETS_SELECTED_NOX SET_KERNEL_1, SET_SYSTEM, SET_MD
 #endif
 #ifndef MD_SETS_VALID
 #define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD
@@ -169,19 +172,23 @@ static int get_iso9660_volname(int dev, int sess, char *volname);
 static int get_available_cds(void);
 
 void
-init_set_status(int minimal)
+init_set_status(int flags)
 {
 	static const uint8_t sets_valid[] = {MD_SETS_VALID};
 	static const uint8_t sets_selected_full[] = {MD_SETS_SELECTED};
 	static const uint8_t sets_selected_minimal[] = {MD_SETS_SELECTED_MINIMAL};
+	static const uint8_t sets_selected_nox[] = {MD_SETS_SELECTED_NOX};
 	static const uint8_t *sets_selected;
 	unsigned int nelem_selected;
 	unsigned int i, len;
 	const char *longest;
 
-	if (minimal) {
+	if (flags & SFLAG_MINIMAL) {
 		sets_selected = sets_selected_minimal;
 		nelem_selected = nelem(sets_selected_minimal);
+	} else if (flags & SFLAG_NOX) {
+		sets_selected = sets_selected_nox;
+		nelem_selected = nelem(sets_selected_nox);
 	} else {
 		sets_selected = sets_selected_full;
 		nelem_selected = nelem(sets_selected_full);
@@ -211,7 +218,7 @@ init_set_status(int minimal)
 	select_menu_width = snprintf(NULL, 0, msg_cur_distsets_row, "",longest);
 
 	/* Give the md code a chance to choose the right kernel, etc. */
-	md_init_set_status(minimal);
+	md_init_set_status(flags);
 }
 
 int

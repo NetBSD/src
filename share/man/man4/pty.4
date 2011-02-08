@@ -1,4 +1,4 @@
-.\"	$NetBSD: pty.4,v 1.12 2006/10/13 20:30:16 wiz Exp $
+.\"	$NetBSD: pty.4,v 1.12.38.1 2011/02/08 16:19:07 bouyer Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)pty.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd October 7, 2006
+.Dd February 1, 2011
 .Dt PTY 4
 .Os
 .Sh NAME
@@ -63,7 +63,8 @@ In configuring, if an optional
 .Ar count
 is given in
 the specification, that number of pseudo terminal pairs is initially configured;
-the default count is 16. Additional pseudo terminal pairs are allocated on
+the default count is 16.
+Additional pseudo terminal pairs are allocated on
 as-needed basis, maximum number of them is controlled via
 .Em kern.maxptys
 sysctl (defaults to 992).
@@ -72,6 +73,21 @@ The following
 .Xr ioctl 2
 calls apply only to pseudo terminals:
 .Bl -tag -width TIOCREMOTE
+.It Dv TIOCEXT
+Enable/disable
+.Dq "external processing" .
+This affects delivery of
+.Dv TIOCPKT_IOCTL
+packets.
+External processing is enabled by specifying (by reference) a nonzero
+.Vt int
+parameter and disabled by specifying (by reference) a zero
+.Vt int
+parameter.
+.Pp
+.Dv TIOCEXT
+is reset to its default (disabled) when the slave closes the
+.Nm .
 .It Dv TIOCSTOP
 Stops output to a terminal (e.g. like typing
 .Ql ^S ) .
@@ -88,7 +104,10 @@ Enable/disable
 .Em packet
 mode.
 Packet mode is enabled by specifying (by reference) a nonzero
-parameter and disabled by specifying (by reference) a zero parameter.
+.Vt int
+parameter and disabled by specifying (by reference) a zero
+.Vt int
+parameter.
 When applied to the master side of a pseudo
 terminal, each subsequent
 .Xr read 2
@@ -139,12 +158,27 @@ used by other similar programs.
 .It Dv TIOCPKT_IOCTL
 When this bit is set, the slave has changed the
 .Xr termios 4
-structure (TTY state), and the remainder of the data read from
+structure (TTY state),
+and the remainder of the data read from
 the master side of the
 .Nm
-is a copy of the new
+is the new
 .Xr termios 4
 structure.
+The master side of the
+.Nm
+can also use
+.Xr tcgetattr 3
+to read the new
+.Xr termios 4
+structure.
+.Pp
+The master will not read packets with the bit
+.Dv TIOCPKT_IOCTL
+set until it has activated
+.Dq "external processing"
+using
+.Dv TIOCEXT .
 .Pp
 This is used by
 .Xr telnetd 8
@@ -168,8 +202,12 @@ and
 modes are mutually exclusive.
 This mode is enabled from the master side of a pseudo terminal
 by specifying (by reference)
-a nonzero parameter and disabled by specifying (by reference)
-a zero parameter.
+a nonzero
+.Vt int
+parameter and disabled by specifying (by reference)
+a zero
+.Vt int
+parameter.
 Each subsequent
 .Xr read 2
 from the master side will return data written on the slave part of

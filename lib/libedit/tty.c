@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.33 2010/04/18 21:17:22 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.33.2.1 2011/02/08 16:19:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.33 2010/04/18 21:17:22 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.33.2.1 2011/02/08 16:19:00 bouyer Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: tty.c,v 1.33 2010/04/18 21:17:22 christos Exp $");
  */
 #include <assert.h>
 #include <errno.h>
+#include <unistd.h>	/* for isatty */
 #include <strings.h>	/* for ffs */
 #include "el.h"
 #include "tty.h"
@@ -496,6 +497,13 @@ tty_setup(EditLine *el)
 	if (el->el_flags & EDIT_DISABLED)
 		return (0);
 
+	if (!isatty(el->el_outfd)) {
+#ifdef DEBUG_TTY
+		(void) fprintf(el->el_errfile,
+		    "tty_setup: isatty: %s\n", strerror(errno));
+#endif /* DEBUG_TTY */
+		return (-1);
+	}
 	if (tty_getty(el, &el->el_tty.t_ed) == -1) {
 #ifdef DEBUG_TTY
 		(void) fprintf(el->el_errfile,

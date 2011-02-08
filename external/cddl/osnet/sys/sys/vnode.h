@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.7 2010/12/14 01:21:02 haad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.7.2.1 2011/02/08 16:18:51 bouyer Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -536,7 +536,7 @@ zfs_vn_open(const char *pnamep, enum uio_seg seg, int filemode, int createmode,
 	int error;
 
 	ASSERT(seg == UIO_SYSSPACE);
-	ASSERT(filemode == (FWRITE | FCREAT | FTRUNC | FOFFMAX));
+	ASSERT((filemode & (FWRITE | FCREAT | FTRUNC | FOFFMAX)) != 0);
 	ASSERT(crwhy == CRCREAT);
 	ASSERT(umask == 0);
 

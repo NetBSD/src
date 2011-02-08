@@ -1,4 +1,4 @@
-/* $NetBSD: netdate.c,v 1.28 2010/12/11 16:57:51 christos Exp $ */
+/* $NetBSD: netdate.c,v 1.28.2.1 2011/02/08 16:18:27 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.28 2010/12/11 16:57:51 christos Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.28.2.1 2011/02/08 16:18:27 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,9 +123,9 @@ netsettime(time_t tval)
 		goto bad;
 	}
 	(void)strlcpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
-	msg.tsp_seq = htons((uint16_t)0);
-	msg.tsp_time.tv_sec = htonl((uint32_t)tval); /* XXX: y2038 */
-	msg.tsp_time.tv_usec = htonl((uint32_t)0);
+	msg.tsp_seq = htons((in_port_t)0);
+	msg.tsp_time.tv_sec = htonl((in_addr_t)tval); /* XXX: y2038 */
+	msg.tsp_time.tv_usec = htonl((in_addr_t)0);
 	if (connect(s, (const void *)&dest, sizeof(dest)) == -1) {
 		warn("connect");
 		goto bad;
@@ -144,14 +144,19 @@ loop:
 	found = poll(&ready, 1, waittime);
 
 	{
-		socklen_t length;
+		socklen_t len;
 		int error;
 
-		length = sizeof(error);
-		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &length) == -1
-		    && error) {
-			if (error != ECONNREFUSED)
+		len = sizeof(error);
+		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
+			warn("getsockopt");
+			goto bad;
+		}
+		if (error) {
+			if (error != ECONNREFUSED) {
+				errno = error;
 				warn("send (delayed error)");
+			}
 			goto bad;
 		}
 	}
@@ -160,7 +165,6 @@ loop:
 		ssize_t ret;
 
 		if ((ret = recv(s, &msg, sizeof(msg), 0)) == -1) {
-		if (ret < 0)
 			if (errno != ECONNREFUSED)
 				warn("recv");
 			goto bad;

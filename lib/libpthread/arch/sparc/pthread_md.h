@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.7 2009/05/16 22:20:41 ad Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.7.2.1 2011/02/08 16:19:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,10 +32,10 @@
 /*
  * pthread__sp used for identifying thread
  */
-static inline long
+static inline unsigned long
 pthread__sp(void)
 {
-	long ret;
+	unsigned long ret;
 
 	__asm("mov %%sp, %0" : "=r" (ret));
 

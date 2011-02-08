@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.22 2011/01/14 10:26:33 tsutsui Exp $
+# $NetBSD: Makefile.cdrom,v 1.22.2.1 2011/02/08 16:18:34 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -55,15 +55,15 @@ CDRUNTIME+=	./usr/share/locale
 
 image_md_pre:
 	${MKDIR} cdrom/libexec/dhcpcd-hooks
-	${CP} ${.CURDIR}/../../../common/10-resolv.conf cdrom/libexec/dhcpcd-hooks
-	${CP} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
+	${INSTALL} ${COPY} ${.CURDIR}/../../../common/10-resolv.conf cdrom/libexec/dhcpcd-hooks
+	${INSTALL} ${COPY} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
 	${MKDIR} cdrom/etc
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.ttys cdrom/etc/ttys
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.rc cdrom/etc/rc
 	${INSTALL} ${COPY} -m 0555 ${.CURDIR}/../install.sh cdrom/install.sh
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
-	${CP} ${SYSINSTDIR}/sysinst cdrom
+	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinst cdrom
 	${CHMOD} ugo+rx cdrom/sysinst
-	${CP} ${SYSINSTDIR}/sysinstmsgs.?? cdrom
+	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom
 	${MKDIR} cdrom/var

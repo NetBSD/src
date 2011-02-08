@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.28 2010/08/06 05:25:46 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.28.2.1 2011/02/08 16:19:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.28 2010/08/06 05:25:46 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.28.2.1 2011/02/08 16:19:01 bouyer Exp $");
 
 #ifndef lint
 
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.28 2010/08/06 05:25:46 christos Exp $
  * XXX intimate with libc already.
  */
 #define __LIBC12_SOURCE__
+
+#define __ssp_weak_name(fun)	_cancelstub_ ## fun
 
 #include <sys/msg.h>
 #include <sys/types.h>
@@ -468,12 +470,28 @@ pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 	return retval;
 }
 
-#ifdef _FORTIFY_SOURCE
-#undef read
+#if _FORTIFY_SOURCE > 0
+#define STUB(fun) __ssp_weak_name(fun)
+ssize_t _sys_readlink(const char * __restrict, char * __restrict, size_t);
+ssize_t
+STUB(readlink)(const char * __restrict path, char * __restrict buf,
+    size_t bufsiz)
+{
+	return _sys_readlink(path, buf, bufsiz);
+}
+
+char *_sys_getcwd(char *, size_t);
+char *
+STUB(getcwd)(char *buf, size_t size)
+{
+	return _sys_getcwd(buf, size);
+}
+#else
+#define STUB(fun) fun
 #endif
 
 ssize_t
-read(int d, void *buf, size_t nbytes)
+STUB(read)(int d, void *buf, size_t nbytes)
 {
 	ssize_t retval;
 	pthread_t self;

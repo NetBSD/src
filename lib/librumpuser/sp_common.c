@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.24 2011/01/14 13:12:14 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.24.2.1 2011/02/08 16:19:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -176,7 +176,10 @@ struct spclient {
 	size_t spc_off;
 
 	uint64_t spc_nextreq;
+	uint64_t spc_syscallreq;
+	uint64_t spc_generation;
 	int spc_ostatus, spc_istatus;
+	int spc_reconnecting;
 
 	LIST_HEAD(, prefork) spc_pflist;
 };
@@ -222,7 +225,7 @@ sendlockl(struct spclient *spc)
 	spc->spc_ostatus = SPCSTATUS_BUSY;
 }
 
-static void
+static void __unused
 sendlock(struct spclient *spc)
 {
 
@@ -272,13 +275,15 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 
 		n = host_sendto(fd, sdata + sent, dlen - sent,
 		    MSG_NOSIGNAL, NULL, 0);
-		if (n == 0) {
-			return ENOTCONN;
-		}
 		if (n == -1)  {
+			if (errno == EPIPE)
+				return ENOTCONN;
 			if (errno != EAGAIN)
 				return errno;
 			continue;
+		}
+		if (n == 0) {
+			return ENOTCONN;
 		}
 		sent += n;
 	}
@@ -287,7 +292,7 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 }
 
 static void
-putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
+doputwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
 {
 
 	rw->rw_data = NULL;
@@ -297,9 +302,41 @@ putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
 	pthread_mutex_lock(&spc->spc_mtx);
 	rw->rw_reqno = rhdr->rsp_reqno = spc->spc_nextreq++;
 	TAILQ_INSERT_TAIL(&spc->spc_respwait, rw, rw_entries);
+}
 
+static void __unused
+putwait_locked(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
+{
+
+	doputwait(spc, rw, rhdr);
+	pthread_mutex_unlock(&spc->spc_mtx);
+}
+
+static void
+putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
+{
+
+	doputwait(spc, rw, rhdr);
 	sendlockl(spc);
 	pthread_mutex_unlock(&spc->spc_mtx);
+}
+
+static void
+dounputwait(struct spclient *spc, struct respwait *rw)
+{
+
+	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
+	pthread_mutex_unlock(&spc->spc_mtx);
+	pthread_cond_destroy(&rw->rw_cv);
+
+}
+
+static void __unused
+unputwait_locked(struct spclient *spc, struct respwait *rw)
+{
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	dounputwait(spc, rw);
 }
 
 static void
@@ -309,9 +346,7 @@ unputwait(struct spclient *spc, struct respwait *rw)
 	pthread_mutex_lock(&spc->spc_mtx);
 	sendunlockl(spc);
 
-	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
-	pthread_mutex_unlock(&spc->spc_mtx);
-	pthread_cond_destroy(&rw->rw_cv);
+	dounputwait(spc, rw);
 }
 
 static void

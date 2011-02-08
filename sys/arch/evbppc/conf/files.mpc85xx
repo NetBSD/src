@@ -1,8 +1,9 @@
-#	$NetBSD: files.mpc85xx,v 1.2 2011/01/18 01:10:25 matt Exp $
+#	$NetBSD: files.mpc85xx,v 1.2.2.1 2011/02/08 16:19:19 bouyer Exp $
 #
 # mpc85xx-specific configuration info
 
-defflag	opt_mpc85xx.h	MPC8536 MPC8544 MPC8548 MPC8572 CADMUS PIXIS
+defflag	opt_mpc85xx.h	MPC8536 MPC8544 MPC8548 MPC8555 MPC8568 MPC8572
+			P2020 CADMUS PIXIS
 defparam opt_mpc85xx.h	SYS_CLK
 
 file	arch/evbppc/mpc85xx/autoconf.c

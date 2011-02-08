@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.202 2011/01/17 07:13:32 uebayasi Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.202.2.1 2011/02/08 16:20:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.202 2011/01/17 07:13:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.202.2.1 2011/02/08 16:20:00 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -463,9 +463,10 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 	case KAUTH_REQ_NETWORK_SOCKET_OPEN:
 		/* We allow "raw" routing/bluetooth sockets to anyone. */
-		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_BLUETOOTH)
+		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_OROUTE
+		    || (u_long)arg1 == PF_BLUETOOTH) {
 			result = KAUTH_RESULT_ALLOW;
-		else {
+		} else {
 			/* Privileged, let secmodel handle this. */
 			if ((u_long)arg2 == SOCK_RAW)
 				break;

@@ -1,5 +1,4 @@
-/*	$NetBSD: filter.h,v 1.2 2008/06/18 09:06:26 yamt Exp $ */
-/*	$OpenBSD: filter.h,v 1.4 2007/08/01 09:31:41 henning Exp $ */
+/*	$NetBSD: filter.h,v 1.2.16.1 2011/02/08 16:18:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -17,16 +16,34 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define	FTP_PROXY_ANCHOR "ftp-proxy"
+#ifndef _FTP_PROXY_FILTER_H_
+#define _FTP_PROXY_FILTER_H_
 
-int add_filter(u_int32_t, u_int8_t, struct sockaddr *, struct sockaddr *,
-    u_int16_t);
-int add_nat(u_int32_t, struct sockaddr *, struct sockaddr *, u_int16_t,
-    struct sockaddr *, u_int16_t, u_int16_t);
-int add_rdr(u_int32_t, struct sockaddr *, struct sockaddr *, u_int16_t,
-    struct sockaddr *, u_int16_t);
-int do_commit(void);
-int do_rollback(void);
-void init_filter(char *, char *, int);
-int prepare_commit(u_int32_t);
-int server_lookup(struct sockaddr *, struct sockaddr *, struct sockaddr *);
+typedef struct {
+	void	(*init_filter)(char *, char *, int);
+	int	(*add_filter)(uint32_t, uint8_t, struct sockaddr *,
+		    struct sockaddr *, uint16_t);
+	int	(*add_nat)(uint32_t, struct sockaddr *, struct sockaddr *,
+		    uint16_t, struct sockaddr *, u_int16_t, u_int16_t);
+	int	(*add_rdr)(uint32_t, struct sockaddr *, struct sockaddr *,
+		    uint16_t, struct sockaddr *, uint16_t);
+	int	(*server_lookup)(struct sockaddr *, struct sockaddr *,
+		    struct sockaddr *);
+	int	(*prepare_commit)(u_int32_t);
+	int	(*do_commit)(void);
+	int	(*do_rollback)(void);
+} ftp_proxy_ops_t;
+
+extern const ftp_proxy_ops_t	pf_fprx_ops;
+
+#if defined(__NetBSD__) && defined(WITH_NPF)
+extern const ftp_proxy_ops_t	npf_fprx_ops;
+extern const char *		netif;
+#endif
+
+#if defined(__NetBSD__) && defined(WITH_IPF)
+extern const ftp_proxy_ops_t	ipf_fprx_ops;
+extern char *			npfopts;
+#endif
+
+#endif

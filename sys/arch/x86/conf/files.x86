@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.56 2010/07/18 09:29:12 jruoho Exp $
+#	$NetBSD: files.x86,v 1.56.4.1 2011/02/08 16:19:44 bouyer Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -119,7 +119,8 @@ file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
 file	arch/x86/x86/vga_post.c		vga_post
 
-file	arch/x86/x86/tprof_pmi.c	tprof	needs-flag
+file	arch/x86/x86/tprof_pmi.c	tprof_pmi
+file	arch/x86/x86/tprof_amdpmi.c	tprof_amdpmi
 
 file	arch/x86/pci/pci_machdep.c	pci
 file	arch/x86/pci/pci_intr_machdep.c	pci

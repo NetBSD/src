@@ -1,4 +1,4 @@
-/* $Id: t_saslc.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: t_saslc.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@ ATF_TC_BODY(t_session_init, tc)
 		saslc_t *ctx;
 		ATF_REQUIRE(ctx = saslc_alloc());
 		ATF_REQUIRE_EQ(saslc_init(ctx, NULL), 0);
-		ATF_REQUIRE_EQ(saslc_end(ctx), 0);
+		ATF_REQUIRE_EQ(saslc_end(ctx, true), 0);
 }
 
 ATF_TP_ADD_TCS(tp)

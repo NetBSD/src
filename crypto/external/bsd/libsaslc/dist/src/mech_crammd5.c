@@ -1,4 +1,4 @@
-/* $Id: mech_crammd5.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: mech_crammd5.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -69,8 +69,22 @@ saslc__mech_crammd5_cont(saslc_sess_t *sess, const void *in, size_t inlen,
     void **out, size_t *outlen)
 {
 	const char *authid, *passwd;
-	char *digest, *name;
-	int len;
+	char *digest;
+        int len;
+
+        authid = saslc_sess_getprop(sess, SASLC_CRAM_MD5_AUTHID);
+	if (authid == NULL) {
+		saslc__error_set(ERR(sess), ERROR_MECH,
+		    "authid is required for an authentication");
+		return MECH_ERROR;
+	}
+
+        passwd = saslc_sess_getprop(sess, SASLC_CRAM_MD5_PASSWORD);
+	if (passwd == NULL) {
+		saslc__error_set(ERR(sess), ERROR_MECH,
+		    "passwd is required for an authentication");
+		return MECH_ERROR;
+	}
 
 	/* server is doing first step, but some clients may call this function
 	 * before getting data from server */
@@ -79,34 +93,26 @@ saslc__mech_crammd5_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 		*outlen = 0;
 		return MECH_STEP;
 	}
-
-	if ((authid = saslc_sess_getprop(sess, SASLC_CRAM_MD5_AUTHID))
-	    == NULL) {
-		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "authid is required for an authentication");
-		return MECH_ERROR;
-	}
-
-	if ((passwd = saslc_sess_getprop(sess, SASLC_CRAM_MD5_PASSWORD))
-	    == NULL) {
-		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "passwd is required for an authentication");
-		return MECH_ERROR;
-	}
-
-
+ 
 	digest = saslc__crypto_hmac_md5((const unsigned char *)passwd,
 	    strlen(passwd), in, inlen);
 
-	if ((len = asprintf(&name, "%s %s", authid, digest)) == -1) {
-		free(digest);
+        if (digest == NULL) {
+                saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+                return MECH_ERROR;
+        }
+
+	len = asprintf((char **)out, "%s %s", authid, digest);
+
+        /* no longer need to keep the digest */
+        free(digest);
+
+        if (len == -1) {
 		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 		return MECH_ERROR;
 	}
-	*out = name;
-	*outlen = len + 1;
 
-	free(digest);
+        *outlen = (size_t)len + 1;
 
 	return MECH_OK;
 }
@@ -114,10 +120,9 @@ saslc__mech_crammd5_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 /* mechanism definition */
 const saslc__mech_t saslc__mech_crammd5 = {
 	"CRAM-MD5", /* name */
-	FLAG_DICTIONARY, /* flags */
 	saslc__mech_generic_create, /* create */
 	saslc__mech_crammd5_cont, /* step */
-	NULL, /* encode */
-	NULL, /* decode */
+	saslc__mech_generic_encode, /* encode */
+	saslc__mech_generic_decode, /* decode */
 	saslc__mech_generic_destroy /* destroy */
 };

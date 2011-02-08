@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.23 2011/01/19 04:00:21 uwe Exp $
+.\"	$NetBSD: environ.7,v 1.23.2.1 2011/02/08 16:19:07 bouyer Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)environ.7	8.3 (Berkeley) 4/19/94
 .\"
-.Dd July 5, 2005
+.Dd January 21, 2011
 .Dt ENVIRON 7
 .Os
 .Sh NAME
@@ -188,8 +188,8 @@ This information is used by commands, such as
 .\" .Xr plot 1
 which may exploit special terminal capabilities.
 See
-.Pa /usr/share/misc/termcap
-.Pq Xr termcap 5
+.Pa /usr/share/misc/terminfo
+.Pq Xr terminfo 5
 for a list of terminal types.
 .It Ev TERMCAP
 The string describing the terminal in
@@ -197,27 +197,15 @@ The string describing the terminal in
 or, if it begins with a
 .Ql / ,
 the name of the termcap file.
-See
-.Ev TERMPATH
-below,
-.Xr termcap 5 ,
-and
-.Xr termcap 3 .
-.It Ev TERMPATH
-A sequence of pathnames of termcap files, separated by colons or spaces,
-which are searched for terminal descriptions in the order listed.
-Having no
-.Ev TERMPATH
-is equivalent to a
-.Ev TERMPATH
-of
-.Pp
-.Dl $HOME/.termcap:/usr/share/misc/termcap
-.Pp
-.Ev TERMPATH
-is ignored if
-.Ev TERMCAP
-contains a full pathname.
+This is only checked if
+.Ev TERMINFO
+is not set.
+.It Ev TERMINFO
+The string describing the terminal in
+.Ev TERM ,
+or, if it begins with a
+.Ql / ,
+the name of the terminfo file.
 .It Ev TIMEFORMAT
 A
 .Xr strftime 3
@@ -288,8 +276,9 @@ unless you know what you are doing.
 .Xr rcmd 3 ,
 .Xr system 3 ,
 .Xr termcap 3 ,
+.Xr terminfo 3 ,
 .Xr audio 4 ,
-.Xr termcap 5 ,
+.Xr terminfo 5 ,
 .Xr nls 7 ,
 .Xr dump 8
 .Sh HISTORY

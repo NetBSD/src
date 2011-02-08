@@ -1,6 +1,6 @@
-.\"	$NetBSD: npf_ncode.9,v 1.5 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: npf_ncode.9,v 1.5.2.1 2011/02/08 16:19:08 bouyer Exp $
 .\"
-.\" Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 16, 2010
+.Dd January 30, 2011
 .Dt NPF_NCODE 9
 .Os
 .Sh NAME
@@ -155,9 +155,9 @@ Add a tag with specified key and value to the primary network buffer (nbuf).
 .\" ---
 Set and load operations.
 .Bl -tag -width indent
-.It Sy 0x10 NPF_OPCODE_MOV <value>, <register>
+.It Sy 0x10 NPF_OPCODE_MOVE <value>, <register>
 Set the specified value to a register.
-.It Sy 0x11 NPF_OPCODE_LOAD <length>, <register>
+.It Sy 0x11 NPF_OPCODE_LW <length>, <register>
 Load specified length of packet data into the register.
 The data is read starting from the current network buffer offset.
 The operation does not advance the offset after read, however.
@@ -191,13 +191,27 @@ Otherwise, continue processing with the next instruction.
 .El
 .Pp
 .\" ---
+.\" Arithmetic operations.
+.\" .Bl -tag -width indent
+.\" .It Sy 0x30 NPF_OPCODE_ADD
+.\" .It Sy 0x31 NPF_OPCODE_SUB
+.\" .It Sy 0x32 NPF_OPCODE_MULT
+.\" .It Sy 0x33 NPF_OPCODE_DIV
+.\" .El
+.\" .Pp
+.\" ---
 Bitwise operations.
 .Bl -tag -width indent
-.It Sy 0x30 NPF_OPCODE_AND <value>, <register>
+.\" .It Sy 0x40 NPF_OPCODE_NOT
+.It Sy 0x41 NPF_OPCODE_AND <value>, <register>
 Perform bitwise
 .Dv AND
 with a specified value and the value in the register.
 The result is stored in the register.
+.\" .It Sy 0x42 NPF_OPCODE_OR
+.\" .It Sy 0x43 NPF_OPCODE_XOR
+.\" .It Sy 0x44 NPF_OPCODE_SLL
+.\" .It Sy 0x45 NPF_OPCODE_SRL
 .El
 .Pp
 .\" -----
@@ -228,7 +242,7 @@ If comparison is required, the type and code values are represented by
 lower 16 bits.
 The higher 8 bits represent type, and the lower 8 bits code number.
 .\" -
-.It Sy 0xa0 NPF_OPCODE_TCP_PORT	<s/d>, <port range>
+.It Sy 0xa0 NPF_OPCODE_TCP_PORTS <s/d>, <port range>
 Match the TCP source or destination port with a specified port range.
 The higher 16 bits of the second argument represent the "from" and
 the lower 16 bits represent the "to" values of the range.
@@ -237,7 +251,7 @@ The 32-bit port range value is in host byte order, however the actual
 The value of the first argument indicates whether source (if 0x1) or
 destination (if 0x0) port should be matched.
 .\" -
-.It Sy 0xa1 NPF_OPCODE_UDP_PORT <s/d>, <port range>
+.It Sy 0xa1 NPF_OPCODE_UDP_PORTS <s/d>, <port range>
 Equivalent of
 .Dv NPF_OPCODE_TCP_PORT ,
 but for UDP protocol.

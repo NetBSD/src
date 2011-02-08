@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2009/10/18 12:09:48 ahoka Exp $	*/
+/*	$NetBSD: main.c,v 1.54.2.1 2011/02/08 16:18:40 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,7 +95,7 @@ static const struct f_arg fflagopts[] = {
 	{"ftp proxy", "", ftp.proxy, sizeof ftp.proxy},
 	{"nfs host", "", nfs_host, sizeof nfs_host},
 	{"nfs dir", "/bsd/release", nfs_dir, sizeof nfs_dir},
-	{"cd dev", "cd0a", cdrom_dev, sizeof cdrom_dev},
+	{"cd dev", CD_NAME, cdrom_dev, sizeof cdrom_dev},
 	{"fd dev", "/dev/fd0a", fd_dev, sizeof fd_dev},
 	{"local dev", "", localfs_dev, sizeof localfs_dev},
 	{"local fs", "ffs", localfs_fs, sizeof localfs_fs},

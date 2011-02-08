@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.6 2011/01/18 20:33:45 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.6.2.1 2011/02/08 16:20:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@
  * Public NPF interfaces.
  */
 
-#ifndef _NPF_H_
-#define _NPF_H_
+#ifndef _NPF_NET_H_
+#define _NPF_NET_H_
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,49 +42,41 @@
 #include <sys/ioctl.h>
 #include <prop/proplib.h>
 
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
+
 #ifdef _NPF_TESTING
 #include "testing.h"
 #endif
 
-#define	NPF_VERSION		1
+#define	NPF_VERSION		2
 
 /*
- * Public declarations.
+ * Public declarations and definitions.
  */
 
-struct npf_ruleset;
-struct npf_rule;
-struct npf_hook;
-
-typedef struct npf_rproc	npf_rproc_t;
-typedef struct npf_ruleset	npf_ruleset_t;
-typedef struct npf_rule		npf_rule_t;
-typedef struct npf_hook		npf_hook_t;
-
-/*
- * Public definitions.
- */
-
-typedef void			nbuf_t;
+/* Storage of address (both for IPv4 and IPv6). */
+typedef struct in6_addr		npf_addr_t;
 
 #if defined(_KERNEL) || defined(_NPF_TESTING)
 
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
+/* Network buffer. */
+typedef void			nbuf_t;
+
+struct npf_rproc;
+struct npf_hook;
+
+typedef struct npf_rproc	npf_rproc_t;
+typedef struct npf_hook		npf_hook_t;
+
+/*
+ * Packet information cache.
+ */
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-
-/*
- * Storage of address, both IPv4 and IPv6.
- */
-typedef struct in6_addr		npf_addr_t;
-
-/*
- * Packet information cache.
- */
 
 #define	NPC_IP4		0x01	/* Indicates fetched IPv4 header. */
 #define	NPC_IP6		0x02	/* Indicates IPv6 header. */
@@ -146,15 +138,11 @@ int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
-/* Ruleset interface. */
-npf_rule_t *	npf_rule_alloc(prop_dictionary_t, npf_rproc_t *, void *, size_t);
-void		npf_rule_free(npf_rule_t *);
-void		npf_activate_rule(npf_rule_t *);
-void		npf_deactivate_rule(npf_rule_t *);
-
+#if 0
 npf_hook_t *	npf_hook_register(npf_rule_t *,
 		    void (*)(npf_cache_t *, nbuf_t *, void *), void *);
 void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
+#endif
 
 #endif	/* _KERNEL */
 
@@ -250,5 +238,6 @@ typedef enum {
 #define	IOC_NPF_STATS		_IOW('N', 104, void *)
 #define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
 #define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
+#define	IOC_NPF_UPDATE_RULE	_IOW('N', 107, struct plistref)
 
-#endif	/* _NPF_H_ */
+#endif	/* _NPF_NET_H_ */

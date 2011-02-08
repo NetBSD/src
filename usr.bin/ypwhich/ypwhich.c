@@ -1,7 +1,6 @@
-/*	$NetBSD: ypwhich.c,v 1.17 2009/06/21 15:04:56 wiz Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.17.2.1 2011/02/08 16:20:13 bouyer Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor
  * All rights reserved.
  *
@@ -13,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +27,7 @@
 
 /*
  * ypwhich
- * author: Chuck Cranor <chuck@ccrc.wustl.edu>
+ * author: Chuck Cranor <chuck@netbsd>
  * date: 31-Oct-97
  *
  * notes: this is a full rewrite of Theo de Raadt's ypwhich.

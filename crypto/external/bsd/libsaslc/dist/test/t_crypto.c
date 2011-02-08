@@ -1,4 +1,4 @@
-/* $Id: t_crypto.c,v 1.1.1.1 2010/11/27 21:23:59 agc Exp $ */
+/* $Id: t_crypto.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -168,7 +168,9 @@ ATF_TC_BODY(t_crypto_md5, tc)
 		const char *digest;
 		int i;
 		for (i = 0; i < MD5_TEST_CASES; i++) {
-				digest = saslc__crypto_md5(md5_test_cases[i].in);
+				digest =
+                                    saslc__crypto_md5(md5_test_cases[i].in,
+                                            strlen(md5_test_cases[i].in));
 				ATF_CHECK_STREQ_MSG(digest, md5_test_cases[i].out,
 					"saslc__crypto_md5() failed on %s got %s should be: %s",
 					md5_test_cases[i].in, digest, md5_test_cases[i].out);

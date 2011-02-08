@@ -27,14 +27,14 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)fabs.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: fabs.S,v 1.3 2003/08/07 16:42:31 agc Exp $"
+RCSID("$NetBSD: fabs.S,v 1.3.52.1 2011/02/08 16:18:57 bouyer Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /* fabs - floating absolute value */
-
-#include "DEFS.h"
 
 ENTRY(fabs, 0)
 	movd	4(%ap),%r0
@@ -42,3 +42,4 @@ ENTRY(fabs, 0)
 	mnegd	%r0,%r0
 1:
 	ret
+END(fabs)

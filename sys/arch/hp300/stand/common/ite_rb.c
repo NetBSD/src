@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rb.c,v 1.7 2007/03/07 09:10:21 he Exp $	*/
+/*	$NetBSD: ite_rb.c,v 1.7.74.1 2011/02/08 16:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -80,8 +80,8 @@
 
 #include <sys/param.h>
 
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grf_rbreg.h>
+#include <hp300/stand/common/itereg.h>
+#include <hp300/stand/common/grf_rbreg.h>
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>

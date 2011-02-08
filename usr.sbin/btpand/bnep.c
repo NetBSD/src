@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.8 2009/05/12 21:08:30 plunky Exp $	*/
+/*	$NetBSD: bnep.c,v 1.8.2.1 2011/02/08 16:20:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.8 2009/05/12 21:08:30 plunky Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.8.2.1 2011/02/08 16:20:13 bouyer Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -370,6 +370,10 @@ done:
 	    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
 
 	bnep_send_control(chan, BNEP_SETUP_CONNECTION_RESPONSE, rsp);
+	if (rsp == BNEP_SETUP_SUCCESS) {
+		bnep_send_control(chan, BNEP_FILTER_NET_TYPE_SET);
+		bnep_send_control(chan, BNEP_FILTER_MULTI_ADDR_SET);
+	}
 	return (len * 2 + 1);
 }
 
@@ -394,6 +398,8 @@ bnep_recv_setup_connection_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 	if (rsp == BNEP_SETUP_SUCCESS) {
 		chan->state = CHANNEL_OPEN;
 		channel_timeout(chan, 0);
+		bnep_send_control(chan, BNEP_FILTER_NET_TYPE_SET);
+		bnep_send_control(chan, BNEP_FILTER_MULTI_ADDR_SET);
 	} else {
 		chan->down(chan);
 	}
@@ -480,7 +486,6 @@ bnep_recv_filter_net_type_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 		log_err("filter_net_type: addr %s response 0x%2.2x",
 		    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
 
-	/* we did not send any filter_net_type_set message */
 	return 2;
 }
 
@@ -570,7 +575,6 @@ bnep_recv_filter_multi_addr_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 		log_err("filter_multi_addr: addr %s response 0x%2.2x",
 		    ether_ntoa((struct ether_addr *)chan->raddr), rsp);
 
-	/* we did not send any filter_multi_addr_set message */
 	return 2;
 }
 
@@ -613,8 +617,12 @@ bnep_send_control(channel_t *chan, uint8_t type, ...)
 		p += 2;
 		break;
 
-	case BNEP_FILTER_NET_TYPE_SET:		/* TODO */
-	case BNEP_FILTER_MULTI_ADDR_SET:	/* TODO */
+	case BNEP_FILTER_NET_TYPE_SET:
+	case BNEP_FILTER_MULTI_ADDR_SET:
+		be16enc(p, 0);	/* just clear filters for now */
+		p += 2;
+		break;
+
 	default:
 		log_err("Can't send control type 0x%2.2x", type);
 		break;

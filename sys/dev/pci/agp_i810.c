@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.69 2010/11/13 13:52:04 uebayasi Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.69.4.1 2011/02/08 16:19:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.69 2010/11/13 13:52:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.69.4.1 2011/02/08 16:19:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ static bool agp_i810_resume(device_t, const pmf_qual_t *);
 static int agp_i810_init(struct agp_softc *);
 
 static int agp_i810_init(struct agp_softc *);
-static void agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t,
-				     u_int32_t);
+static int agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t,
+				    bus_addr_t);
 
 static struct agp_methods agp_i810_methods = {
 	agp_i810_get_aperture,
@@ -116,12 +116,37 @@ static struct agp_methods agp_i810_methods = {
 	agp_i810_unbind_memory,
 };
 
-static void
-agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, u_int32_t v)
+static int
+agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, bus_addr_t v)
 {
-	u_int32_t base_off;
+	u_int32_t pte;
+	bus_size_t base_off, wroff;
+
+	/* Bits 11:4 (physical start address extension) should be zero. */
+	if ((v & 0xff0) != 0)
+		return EINVAL;
+
+	pte = (u_int32_t)v;
+	/*
+	 * We need to massage the pte if bus_addr_t is wider than 32 bits.
+	 * The compiler isn't smart enough, hence the casts to uintmax_t.
+	 */
+	if (sizeof(bus_addr_t) > sizeof(u_int32_t)) {
+		/* 965+ can do 36-bit addressing, add in the extra bits. */
+		if (isc->chiptype == CHIP_I965 ||
+		    isc->chiptype == CHIP_G33 ||
+		    isc->chiptype == CHIP_G4X) {
+			if (((uintmax_t)v >> 36) != 0)
+				return EINVAL;
+			pte |= (v >> 28) & 0xf0;
+		} else {
+			if (((uintmax_t)v >> 32) != 0)
+				return EINVAL;
+		}
+	}
 
 	base_off = 0;
+	wroff = (off >> AGP_PAGE_SHIFT) * 4;
 
 	switch (isc->chiptype) {
 	case CHIP_I810:
@@ -137,12 +162,12 @@ agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, u_int32_t v)
 		break;
 	case CHIP_I915:
 	case CHIP_G33:
-		bus_space_write_4(isc->gtt_bst, isc->gtt_bsh,
-		    (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4, (v));
-		return;
+		bus_space_write_4(isc->gtt_bst, isc->gtt_bsh, wroff, pte);
+		return 0;
 	}
-		
-	WRITE4(base_off + (u_int32_t)(off >> AGP_PAGE_SHIFT) * 4, v);
+
+	WRITE4(base_off + wroff, pte);
+	return 0;
 }
 
 /* XXXthorpej -- duplicated code (see arch/x86/pci/pchb.c) */
@@ -819,18 +844,17 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 		return EINVAL;
 	}
 
-	if (isc->chiptype != CHIP_I830) {
+	if (isc->chiptype != CHIP_I810) {
 		if ((offset >> AGP_PAGE_SHIFT) < isc->stolen) {
 #ifdef AGP_DEBUG
-			printf("%s: trying to bind into stolen memory",
+			printf("%s: trying to bind into stolen memory\n",
 			    device_xname(sc->as_dev));
 #endif
 			return EINVAL;
 		}
 	}
 
-	agp_i810_write_gtt_entry(isc, offset, physical | 1);
-	return 0;
+	return agp_i810_write_gtt_entry(isc, offset, physical | 1);
 }
 
 static int
@@ -844,15 +868,14 @@ agp_i810_unbind_page(struct agp_softc *sc, off_t offset)
 	if (isc->chiptype != CHIP_I810 ) {
 		if ((offset >> AGP_PAGE_SHIFT) < isc->stolen) {
 #ifdef AGP_DEBUG
-			printf("%s: trying to unbind from stolen memory",
+			printf("%s: trying to unbind from stolen memory\n",
 			    device_xname(sc->as_dev));
 #endif
 			return EINVAL;
 		}
 	}
 
-	agp_i810_write_gtt_entry(isc, offset, 0);
-	return 0;
+	return agp_i810_write_gtt_entry(isc, offset, 0);
 }
 
 /*
@@ -968,6 +991,9 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	struct agp_i810_softc *isc = sc->as_chipc;
 	u_int32_t regval, i;
 
+	if (mem->am_is_bound != 0)
+		return EINVAL;
+
 	/*
 	 * XXX evil hack: the PGTBL_CTL appearently gets overwritten by the
 	 * X server for mysterious reasons which leads to crashes if we write
@@ -983,7 +1009,9 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	}
 
 	if (mem->am_type == 2) {
-		agp_i810_write_gtt_entry(isc, offset, mem->am_physical | 1);
+		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
+			agp_i810_bind_page(sc, offset + i,
+			    mem->am_physical + i);
 		mem->am_offset = offset;
 		mem->am_is_bound = 1;
 		return 0;
@@ -996,7 +1024,7 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		return EINVAL;
 
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-		agp_i810_write_gtt_entry(isc, offset, i | 3);
+		agp_i810_write_gtt_entry(isc, i, i | 3);
 	mem->am_is_bound = 1;
 	return 0;
 }
@@ -1007,8 +1035,12 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	struct agp_i810_softc *isc = sc->as_chipc;
 	u_int32_t i;
 
+	if (mem->am_is_bound == 0)
+		return EINVAL;
+
 	if (mem->am_type == 2) {
-		agp_i810_write_gtt_entry(isc, mem->am_offset, 0);
+		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
+			agp_i810_unbind_page(sc, mem->am_offset + i);
 		mem->am_offset = 0;
 		mem->am_is_bound = 0;
 		return 0;

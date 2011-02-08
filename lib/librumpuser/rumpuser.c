@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.12 2011/01/05 09:43:00 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.12.2.1 2011/02/08 16:19:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.12 2011/01/05 09:43:00 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.12.2.1 2011/02/08 16:19:04 bouyer Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -45,7 +45,9 @@ __RCSID("$NetBSD: rumpuser.c,v 1.12 2011/01/05 09:43:00 pooka Exp $");
 #include <sys/uio.h>
 
 #ifdef __NetBSD__
+#include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <sys/sysctl.h>
 #endif
 
@@ -147,6 +149,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 #else
 		struct disklabel lab;
 		struct partition *parta;
+		struct dkwedge_info dkw;
 
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
@@ -155,14 +158,26 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 			goto out;
 		}
 
-		if (ioctl(fd, DIOCGDINFO, &lab) == -1) {
-			seterror(errno);
-			rv = -1;
+		if (ioctl(fd, DIOCGDINFO, &lab) == 0) {
+			parta = &lab.d_partitions[DISKPART(sb.st_rdev)];
+			size = (uint64_t)lab.d_secsize * parta->p_size;
 			goto out;
 		}
 
-		parta = &lab.d_partitions[DISKPART(sb.st_rdev)];
-		size = (uint64_t)lab.d_secsize * parta->p_size;
+		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
+			/*
+			 * XXX: should use DIOCGDISKINFO to query
+			 * sector size, but that requires proplib,
+			 * so just don't bother for now.  it's nice
+			 * that something as difficult as figuring out
+			 * a partition's size has been made so easy.
+			 */
+			size = dkw.dkw_size << DEV_BSHIFT;
+			goto out;
+		}
+
+		seterror(errno);
+		rv = -1;
 #endif /* __NetBSD__ */
 	}
 
@@ -207,7 +222,7 @@ rumpuser_malloc(size_t howmuch, int alignment)
 	if (alignment == 0)
 		alignment = sizeof(void *);
 
-	rv = posix_memalign(&mem, alignment, howmuch);
+	rv = posix_memalign(&mem, (size_t)alignment, howmuch);
 	if (__predict_false(rv != 0)) {
 		if (rv == EINVAL) {
 			printf("rumpuser_malloc: invalid alignment %d\n",
@@ -491,8 +506,17 @@ rumpuser_getenv(const char *name, char *buf, size_t blen, int *error)
 int
 rumpuser_gethostname(char *name, size_t namelen, int *error)
 {
+	char tmp[MAXHOSTNAMELEN];
 
-	DOCALL(int, (gethostname(name, namelen)));
+	if (gethostname(tmp, sizeof(tmp)) == -1) {
+		snprintf(name, namelen, "rump-%05d.rumpdomain", getpid());
+	} else {
+		snprintf(name, namelen, "rump-%05d.%s.rumpdomain",
+		    getpid(), tmp);
+	}
+
+	*error = 0;
+	return 0;
 }
 
 int

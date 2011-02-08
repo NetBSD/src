@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon-bozo.c,v 1.11 2010/06/22 05:24:12 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.11.2.1 2011/02/08 16:19:05 bouyer Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.22 2010/06/21 06:45:45 mrg Exp $	*/
 
@@ -79,12 +79,7 @@ bozo_daemon_init(bozohttpd_t *httpd)
 	if (!httpd->background)
 		return;
 
-	if (httpd->foreground == 0)
-		daemon(1, 0);
-
 	portnum = (httpd->bindport) ? httpd->bindport : "http";
-	bozo_warn(httpd, "started in daemon mode as `%s' port `%s' root `%s'",
-	    httpd->virthostname, portnum, httpd->slashdir);
 	
 	memset(&h, 0, sizeof(h));
 	h.ai_family = PF_UNSPEC;
@@ -120,6 +115,12 @@ bozo_daemon_init(bozohttpd_t *httpd)
 		bozo_err(httpd, 1, "could not find any addresses to bind");
 	httpd->nsock = i;
 	freeaddrinfo(r0);
+
+	if (httpd->foreground == 0)
+		daemon(1, 0);
+
+	bozo_warn(httpd, "started in daemon mode as `%s' port `%s' root `%s'",
+	    httpd->virthostname, portnum, httpd->slashdir);
 
 	signal(SIGCHLD, sigchild);
 }

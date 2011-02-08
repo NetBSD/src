@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.335 2010/12/11 18:18:09 matt Exp $
+#	$NetBSD: files.pci,v 1.335.4.1 2011/02/08 16:19:50 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -27,6 +27,8 @@ file	dev/pci/pciconf.c		pci & pci_netbsd_configure
 file	dev/pci/pcibusprint.c		pcibus
 
 file	dev/pci/pci_verbose.c		pci & pciverbose
+
+file	dev/pci/wsdisplay_pci.c		wsdisplay & pci
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
@@ -1030,6 +1032,11 @@ attach	nca at pci with nca_pci
 file	dev/pci/nca_pci.c	nca_pci
 
 # Agere ET1310/1301 Ethernet
-device  et: ether, ifnet, arp, mii, mii_phy
-attach  et at pci
-file    dev/pci/if_et.c                 et
+device	et: ether, ifnet, arp, mii, mii_phy
+attach	et at pci
+file	dev/pci/if_et.c			et
+
+# RDC Semiconductor R6040 10/100 Ethernet
+device	vte: ether, ifnet, arp, mii, mii_phy
+attach	vte at pci
+file	dev/pci/if_vte.c		vte

@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.46 2010/12/23 21:55:40 riz Exp $	*/
+/*	$NetBSD: dd.c,v 1.46.2.1 2011/02/08 16:18:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.46 2010/12/23 21:55:40 riz Exp $");
+__RCSID("$NetBSD: dd.c,v 1.46.2.1 2011/02/08 16:18:27 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,10 @@ uint64_t	progress = 0;		/* display sign of life */
 const u_char	*ctab;			/* conversion table */
 sigset_t	infoset;		/* a set blocking SIGINFO */
 
-static const struct ddfops ddfops_host = {
+/*
+ * Ops for stdin/stdout and crunch'd dd.  These are always host ops.
+ */
+static const struct ddfops ddfops_stdfd = {
 	.op_open = open,
 	.op_close = close,
 	.op_fcntl = fcntl,
@@ -99,6 +102,7 @@ static const struct ddfops ddfops_host = {
 	.op_read = read,
 	.op_write = write,
 };
+extern const struct ddfops ddfops_prog;
 
 int
 main(int argc, char *argv[])
@@ -119,6 +123,10 @@ main(int argc, char *argv[])
 	argv += (optind - 1);
 
 	jcl(argv);
+#ifndef CRUNCHOPS
+	if (ddfops_prog.op_init && ddfops_prog.op_init() == -1)
+		err(1, "prog init");
+#endif
 	setup();
 
 	(void)signal(SIGINFO, summaryx);
@@ -139,15 +147,18 @@ main(int argc, char *argv[])
 static void
 setup(void)
 {
+#ifdef CRUNCHOPS
+	const struct ddfops *prog_ops = &ddfops_stdfd;
+#else
+	const struct ddfops *prog_ops = &ddfops_prog;
+#endif
 
-	if (in.ops == NULL)
-		in.ops = &ddfops_host;
-	if (out.ops == NULL)
-		out.ops = &ddfops_host;
 	if (in.name == NULL) {
 		in.name = "stdin";
 		in.fd = STDIN_FILENO;
+		in.ops = &ddfops_stdfd;
 	} else {
+		in.ops = prog_ops;
 		in.fd = ddop_open(in, in.name, O_RDONLY, 0);
 		if (in.fd < 0)
 			err(EXIT_FAILURE, "%s", in.name);
@@ -168,7 +179,9 @@ setup(void)
 		/* No way to check for read access here. */
 		out.fd = STDOUT_FILENO;
 		out.name = "stdout";
+		out.ops = &ddfops_stdfd;
 	} else {
+		out.ops = prog_ops;
 #define	OFLAGS \
     (O_CREAT | (ddflags & (C_SEEK | C_NOTRUNC) ? 0 : O_TRUNC))
 		out.fd = ddop_open(out, out.name, O_RDWR | OFLAGS, DEFFILEMODE);

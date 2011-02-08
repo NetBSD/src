@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.14 2010/11/13 13:52:11 uebayasi Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.14.4.1 2011/02/08 16:19:55 bouyer Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.14 2010/11/13 13:52:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.14.4.1 2011/02/08 16:19:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -425,11 +425,12 @@ sdmmc_print_csd(sdmmc_response resp, struct sdmmc_csd *csd)
 
 	printf("csdver = %d\n", csd->csdver);
 	printf("mmcver = %d\n", csd->mmcver);
-	printf("capacity = %08x\n", csd->capacity);
+	printf("capacity = 0x%08x\n", csd->capacity);
 	printf("read_bl_len = %d\n", csd->read_bl_len);
 	printf("write_cl_len = %d\n", csd->write_bl_len);
 	printf("r2w_factor = %d\n", csd->r2w_factor);
 	printf("tran_speed = %d\n", csd->tran_speed);
+	printf("ccc = 0x%x\n", csd->ccc);
 }
 #endif
 
@@ -574,10 +575,10 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 static int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
-	struct {
+	static const struct {
 		int v;
 		int freq;
-	} switch_group0_functions [] = {
+	} switch_group0_functions[] = {
 		/* Default/SDR12 */
 		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V |
 		  MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V,	 25000 },
@@ -609,6 +610,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_4BIT_MODE) &&
 	    ISSET(sf->scr.bus_width, SCR_SD_BUS_WIDTHS_4BIT)) {
+		DPRINTF(("%s: change bus width\n", SDMMCDEVNAME(sc)));
 		error = sdmmc_set_bus_width(sf, 4);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
@@ -616,11 +618,13 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return error;
 		}
 		sf->width = 4;
-	} else
+	} else {
 		sf->width = 1;
+	}
 
 	if (sf->scr.sd_spec >= SCR_SD_SPEC_VER_1_10 &&
 	    ISSET(sf->csd.ccc, SD_CSD_CCC_SWITCH)) {
+		DPRINTF(("%s: switch func mode 0\n", SDMMCDEVNAME(sc)));
 		error = sdmmc_mem_sd_switch(sf, 0, 1, 0, status);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
@@ -638,7 +642,10 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			if (g & support_func)
 				best_func = i;
 		}
-		if (best_func != 0) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_SD_HIGHSPEED) &&
+		    best_func != 0) {
+			DPRINTF(("%s: switch func mode 1(func=%d)\n",
+			    SDMMCDEVNAME(sc), best_func));
 			error =
 			    sdmmc_mem_sd_switch(sf, 1, 1, best_func, status);
 			if (error) {
@@ -653,19 +660,16 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 			/* Wait 400KHz x 8 clock */
 			delay(1);
-			if (sc->sc_busclk > sf->csd.tran_speed)
-				sc->sc_busclk = sf->csd.tran_speed;
+		}
+	}
 
-			error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
-			    sc->sc_busclk);
-			if (error) {
-				aprint_error_dev(sc->sc_dev,
-				    "can't change bus clock\n");
-				return error;
-			}
-		} else
-			if (sc->sc_busclk > sf->csd.tran_speed)
-				sc->sc_busclk = sf->csd.tran_speed;
+	/* change bus clock */
+	if (sc->sc_busclk > sf->csd.tran_speed)
+		sc->sc_busclk = sf->csd.tran_speed;
+	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
+		return error;
 	}
 
 	return 0;

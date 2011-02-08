@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.22 2009/01/12 07:49:57 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.22.10.1 2011/02/08 16:19:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -188,8 +188,7 @@ _rtt(void)
 void
 main(void)
 {
-	extern char bootprog_name[], bootprog_rev[],
-		    bootprog_maker[], bootprog_date[];
+	extern char bootprog_name[], bootprog_rev[];
 	int chosen, cpu, cpunode, j, is64=0;
 	char bootline[512];		/* Should check size? */
 	char *cp;
@@ -199,7 +198,6 @@ main(void)
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 #ifdef OFWDUMP
 	chosen = OF_finddevice("/");

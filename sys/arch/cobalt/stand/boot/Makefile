@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2010/05/27 06:58:13 dholland Exp $
+#	$NetBSD: Makefile,v 1.21.4.1 2011/02/08 16:19:14 bouyer Exp $
 
 NOMAN= # defined
 
@@ -97,7 +97,8 @@ LIBS=		${SALIB} ${ZLIB} ${KERNLIB}
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "cobalt"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "cobalt"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \

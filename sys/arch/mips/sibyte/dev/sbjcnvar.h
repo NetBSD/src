@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcnvar.h,v 1.2 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbjcnvar.h,v 1.2.138.1 2011/02/08 16:19:29 bouyer Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -163,7 +163,7 @@ struct sbjcn_channel {
 };
 
 struct sbjcn_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 
 	/* shared data structures */
 	u_long		sc_addr;	/* phys addr of JTAG console bus_space */

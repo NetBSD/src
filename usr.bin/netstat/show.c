@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.11 2010/12/13 21:15:30 pooka Exp $	*/
+/*	$NetBSD: show.c,v 1.11.2.1 2011/02/08 16:20:11 bouyer Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -62,10 +62,6 @@
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
 char	*mpls_ntoa(const struct sockaddr *); 
-
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 #define PFKEYV2_CHUNK sizeof(u_int64_t)
 
@@ -229,7 +225,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
 			sa = (struct sockaddr *)((char *)(sa) +
-			    ROUNDUP(sa->sa_len));
+			    RT_ROUNDUP(sa->sa_len));
 		} else
 			rti_info[i] = NULL;
 	}
@@ -263,13 +259,13 @@ p_rtentry(struct rt_msghdr *rtm)
 	    WID_GW(sa->sa_family));
 	p_flags(rtm->rtm_flags, "%-6.6s ");
 #if 0 /* XXX-elad */
-	printf("%6d %8ld ", (int)rtm->rtm_rmx.rmx_refcnt,
+	printf("%6d %8"PRId64" ", (int)rtm->rtm_rmx.rmx_refcnt,
 	    rtm->rtm_rmx.rmx_pksent);
 #else
 	printf("%6s %8s ", "-", "-");
 #endif
 	if (rtm->rtm_rmx.rmx_mtu)
-		printf("%6ld", rtm->rtm_rmx.rmx_mtu);
+		printf("%6"PRId64, rtm->rtm_rmx.rmx_mtu);
 	else
 		printf("%6s", "-");
 	putchar((rtm->rtm_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');

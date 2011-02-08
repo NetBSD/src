@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.5 2011/01/19 19:21:29 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.5.2.1 2011/02/08 16:18:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ __BEGIN_DECLS
 __ssp_redirect0(ssize_t, read, (int __fd, void *__buf, size_t __len), \
     (__fd, __buf, __len));
 
-__ssp_redirect(int, readlink, (const char *__restrict __path, \
+__ssp_redirect(ssize_t, readlink, (const char *__restrict __path, \
     char *__restrict __buf, size_t __len), (__path, __buf, __len));
 
 __ssp_redirect(char *, getcwd, (char *__buf, size_t __len), (__buf, __len));

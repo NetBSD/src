@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.3 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.3.2.1 2011/02/08 16:20:15 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -311,7 +311,8 @@ send_hello(void)
 		if_sa = (struct sockaddr_in *) ifb->ifa_addr;
 		if (if_sa->sin_family != AF_INET)
 			continue;
-		if (ntohl(if_sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET)
+		if (ntohl(if_sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET ||
+		    ntohl(if_sa->sin_addr.s_addr) >> 24 == 0)
 			continue;
 		/* Send only once per interface, using master address */
 		if (strcmp(ifb->ifa_name, lastifname) == 0)
@@ -457,7 +458,7 @@ recv_pdu(int sock)
 void 
 send_hello_alarm(int unused)
 {
-	struct ldp_peer *p;
+	struct ldp_peer *p, *ptmp;
 	struct hello_info *hi, *hinext;
 	time_t          t = time(NULL);
 	int             olderrno = errno;
@@ -471,15 +472,14 @@ send_hello_alarm(int unused)
 		p->timeout--;
 
 	/* Check for timeout */
-check_peer:
-	SLIST_FOREACH(p, &ldp_peer_head, peers)
+	SLIST_FOREACH_SAFE(p, &ldp_peer_head, peers, ptmp)
 		if (p->timeout < 1)
 			switch (p->state) {
 			case LDP_PEER_HOLDDOWN:
 				debugp("LDP holddown expired for peer %s\n",
 				       inet_ntoa(p->ldp_id));
 				ldp_peer_delete(p);
-				goto check_peer;
+				break;
 			case LDP_PEER_ESTABLISHED:
 			case LDP_PEER_CONNECTED:
 				send_notification(p, 0,

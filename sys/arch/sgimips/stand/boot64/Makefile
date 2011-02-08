@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 2010/05/27 06:58:15 dholland Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 2011/02/08 16:19:39 bouyer Exp $
 
 PROG=	ip30boot
+NOMAN=	# defined
 
 SRCS=	start64.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
 	getopt.c disk.c
 
 CLEANFILES+=	boot.map
 
+.include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
@@ -27,9 +29,6 @@ CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CPPFLAGS+=	-Dsgimips
 
-# PROG set by parent.
-NOMAN=		# defined
-
 # We load the kernel at 420K in from the start of RAM to give the boot
 # loader plenty of breathing room.  Load the boot loader starting at
 # the second page of RAM.
@@ -41,7 +40,8 @@ LOAD_ADDRESS_IP30?=	0xa800000020080000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "sgimips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "sgimips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c
