@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.30 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: IXDP425,v 1.30.4.1 2011/02/08 19:29:32 bouyer Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -49,7 +49,8 @@ file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental

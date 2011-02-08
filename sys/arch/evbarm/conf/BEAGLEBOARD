@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.14 2011/01/04 11:38:58 matt Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.14.4.1 2011/02/08 19:29:32 bouyer Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -43,7 +43,8 @@ file-system	TMPFS		# memory file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental

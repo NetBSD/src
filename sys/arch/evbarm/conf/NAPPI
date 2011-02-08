@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.37 2010/12/16 12:49:19 uebayasi Exp $
+#	$NetBSD: NAPPI,v 1.37.4.1 2011/02/08 19:29:33 bouyer Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -44,7 +44,8 @@ file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental

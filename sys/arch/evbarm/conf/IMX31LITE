@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.11 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: IMX31LITE,v 1.11.4.1 2011/02/08 19:29:32 bouyer Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -44,7 +44,8 @@ file-system	TMPFS		# memory file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
