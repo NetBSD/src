@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1583 2011/02/06 01:13:42 joerg Exp $
+#	$NetBSD: mi,v 1.1584 2011/02/08 03:20:14 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -624,6 +624,7 @@
 ./usr/include/dirent.h				comp-c-include
 ./usr/include/disktab.h				comp-c-include
 ./usr/include/dlfcn.h				comp-c-include
+./usr/include/dm.h                              comp-c-include
 ./usr/include/dns_sd.h				comp-mdns-include	mdns
 ./usr/include/dwarf.h				comp-c-include
 ./usr/include/elf.h				comp-c-include
@@ -2417,6 +2418,9 @@
 ./usr/lib/libdevmapper.a			comp-lvm-lib		lvm
 ./usr/lib/libdevmapper_g.a			-unknown-		debuglib,lvm
 ./usr/lib/libdevmapper_p.a			comp-lvm-proflib	profile,lvm
+./usr/lib/libdm.a				comp-c-lib
+./usr/lib/libdm_g.a				-unknown-		debuglib
+./usr/lib/libdm_p.a				comp-c-proflib		profile
 ./usr/lib/libdns.a				comp-bind-lib
 ./usr/lib/libdns_g.a				-unknown-		debuglib
 ./usr/lib/libdns_p.a				comp-bind-proflib	profile
@@ -2982,6 +2986,7 @@
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkscan_bsdlabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dmesg.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/dmctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dmsetup.debug		comp-sysutil-debug	lvm,debug
 ./usr/libdata/debug/sbin/drvctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump.debug		comp-sysutil-debug	debug
@@ -3892,6 +3897,7 @@
 ./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-c-lintlib		lint,crypto_rc5
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-ldm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-ldns_sd.ln		comp-mdns-lintlib	lint,mdns
 ./usr/libdata/lint/llib-ldwarf.ln		comp-c-lintlib		lint
@@ -5727,6 +5733,7 @@
 ./usr/share/man/cat3/dlfcn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dlopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dlsym.0			comp-c-catman		.cat
+./usr/share/man/cat3/dm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dn_comp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dn_expand.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dngettext.0		comp-c-catman		.cat
@@ -11782,6 +11789,7 @@
 ./usr/share/man/html3/dlfcn.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlsym.html		comp-c-htmlman		html
+./usr/share/man/html3/dm.html			comp-c-htmlman		html
 ./usr/share/man/html3/dn_comp.html		comp-c-htmlman		html
 ./usr/share/man/html3/dn_expand.html		comp-c-htmlman		html
 ./usr/share/man/html3/dngettext.html		comp-c-htmlman		html
@@ -17745,6 +17753,7 @@
 ./usr/share/man/man3/dlfcn.3			comp-c-man		.man
 ./usr/share/man/man3/dlopen.3			comp-c-man		.man
 ./usr/share/man/man3/dlsym.3			comp-c-man		.man
+./usr/share/man/man3/dm.3			comp-c-man		.man
 ./usr/share/man/man3/dn_comp.3			comp-c-man		.man
 ./usr/share/man/man3/dn_expand.3		comp-c-man		.man
 ./usr/share/man/man3/dngettext.3		comp-c-man		.man
