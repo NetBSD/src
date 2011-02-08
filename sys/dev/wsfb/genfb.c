@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.33 2011/02/06 23:25:17 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.34 2011/02/08 10:52:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.33 2011/02/06 23:25:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.34 2011/02/08 10:52:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ void
 genfb_init(struct genfb_softc *sc)
 {
 	prop_dictionary_t dict;
-	uint64_t cmap_cb, pmf_cb, bl_cb;
+	uint64_t cmap_cb, pmf_cb, mode_cb, bl_cb;
 	uint32_t fboffset;
 	bool console;
 
@@ -157,6 +157,13 @@ genfb_init(struct genfb_softc *sc)
 	if (prop_dictionary_get_uint64(dict, "pmf_callback", &pmf_cb)) {
 		if (pmf_cb != 0)
 			sc->sc_pmfcb = (void *)(vaddr_t)pmf_cb;
+	}
+
+	/* optional mode callback */
+	sc->sc_modecb = NULL;
+	if (prop_dictionary_get_uint64(dict, "mode_callback", &mode_cb)) {
+		if (mode_cb != 0)
+			sc->sc_modecb = (void *)(vaddr_t)mode_cb;
 	}
 
 	/* optional backlight control callback */
@@ -228,6 +235,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	memcpy(&sc->sc_ops, ops, sizeof(struct genfb_ops));
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	if (sc->sc_modecb->gmc_setmode)
+		sc->sc_modecb->gmc_setmode(sc, sc->sc_mode);
 
 #ifdef GENFB_SHADOWFB
 	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
@@ -377,6 +386,9 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 			if (new_mode != sc->sc_mode) {
 				sc->sc_mode = new_mode;
+				if (sc->sc_modecb->gmc_setmode)
+					sc->sc_modecb->gmc_setmode(sc,
+					    sc->sc_mode);
 				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
 					genfb_restore_palette(sc);
 					vcons_redraw_screen(ms);
