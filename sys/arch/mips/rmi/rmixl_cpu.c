@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.18 2011/02/08 06:03:01 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.19 2011/02/08 19:50:22 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.18 2011/02/08 06:03:01 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.19 2011/02/08 19:50:22 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -258,9 +258,9 @@ cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
 
 	rmixl_fmn_init();
 
-	sc->sc_ih_clk = rmixl_intr_init_clk();
+	rmixl_intr_init_clk();
 #ifdef MULTIPROCESSOR
-	sc->sc_ih_ipi = rmixl_intr_init_ipi();
+	rmixl_intr_init_ipi();
 #endif
 
 #ifdef NOTYET
@@ -269,7 +269,6 @@ cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
 	if (ih == NULL)
 		panic("%s: rmixl_fmn_intr_establish failed",
 			__func__);
-	sc->sc_ih_fmn = ih;
 #endif
 
 }
