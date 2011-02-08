@@ -1,4 +1,4 @@
-/*        $NetBSD: libdm-netbsd.h,v 1.2 2011/02/08 03:26:13 haad Exp $
+/*        $NetBSD: libdm-netbsd.h,v 1.3 2011/02/08 10:45:40 rmind Exp $
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define __LIB_DM_H__
 
 #include <prop/proplib.h>
-#include <libdm.h>
+#include <dm.h>
 
 #  define MAJOR(x) major((x))
 #  define MINOR(x) minor((x))
