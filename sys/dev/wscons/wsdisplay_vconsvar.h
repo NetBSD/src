@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.15 2011/02/08 13:40:35 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.16 2011/02/08 23:06:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -31,8 +31,6 @@
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_vcons.h"
-
-#include <sys/workqueue.h>
 
 struct vcons_data;
 
@@ -76,7 +74,7 @@ struct vcons_screen {
 	int scr_current_offset;
 #endif
 #ifdef VCONS_DRAW_INTR
-	int scr_dirty;
+	unsigned int scr_dirty;
 #endif
 };
 
@@ -139,8 +137,7 @@ struct vcons_data {
 #endif
 #ifdef VCONS_DRAW_INTR
 	callout_t intr;
-	struct workqueue *intr_wq;
-	struct work wk;
+	void *intr_softint;
 	int use_intr;		/* use intr drawing when non-zero */
 #endif
 };
