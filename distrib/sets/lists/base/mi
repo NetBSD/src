@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.920 2011/02/04 19:42:12 pooka Exp $
+# $NetBSD: mi,v 1.921 2011/02/08 03:20:13 haad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -218,6 +218,7 @@
 ./sbin/dkctl					base-sysutil-root
 ./sbin/dkscan_bsdlabel				base-sysutil-root
 ./sbin/dmesg					base-sysutil-root
+./sbin/dmctl					base-sysutil-root
 ./sbin/dmsetup					base-lvm-root		lvm
 ./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
