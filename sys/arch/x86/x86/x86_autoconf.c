@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.53 2011/01/10 21:26:38 jakllsch Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.54 2011/02/08 10:52:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.53 2011/01/10 21:26:38 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.54 2011/02/08 10:52:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.53 2011/01/10 21:26:38 jakllsch E
 #include <dev/pci/pcivar.h>
 #endif
 #include <dev/wsfb/genfbvar.h>
+#include <arch/x86/include/genfb_machdep.h>
 #if NPCI > 0
 #include <dev/pci/genfb_pcivar.h>
 #endif
@@ -80,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.53 2011/01/10 21:26:38 jakllsch E
 #if NPCI > 0
 static struct genfb_colormap_callback gfb_cb;
 static struct genfb_pmf_callback pmf_cb;
+static struct genfb_mode_callback mode_cb;
 #endif
 #ifdef VGA_POST
 static struct vga_post *vga_posth = NULL;
@@ -96,6 +98,15 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)r >> 2);
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)g >> 2);
 	outb(0x3c0 + VGA_DAC_PALETTE, (uint8_t)b >> 2);
+}
+
+static bool
+x86_genfb_setmode(struct genfb_softc *sc, int newmode)
+{
+	if (newmode == WSDISPLAYIO_MODE_EMUL)
+		x86_genfb_mtrr_init(sc->sc_fboffset,
+		    sc->sc_height * sc->sc_stride);
+	return true;
 }
 
 static bool
@@ -674,6 +685,12 @@ device_register(device_t dev, void *aux)
 					    x86_genfb_set_mapreg;
 					prop_dictionary_set_uint64(dict,
 					    "cmap_callback", (uint64_t)&gfb_cb);
+				}
+				if (fbinfo->physaddr != 0) {
+					mode_cb.gmc_setmode = x86_genfb_setmode;
+					prop_dictionary_set_uint64(dict,
+					    "mode_callback",
+					    (uint64_t)&mode_cb);
 				}
 			}
 			prop_dictionary_set_bool(dict, "is_console", true);
