@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.39 2011/02/06 18:25:48 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.40 2011/02/08 11:21:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.39 2011/02/06 18:25:48 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.40 2011/02/08 11:21:22 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -604,7 +604,7 @@ struct sysbouncearg {
 };
 static pthread_mutex_t sbamtx;
 static pthread_cond_t sbacv;
-static int nworker, idleworker;
+static int nworker, idleworker, nwork;
 static TAILQ_HEAD(, sysbouncearg) syslist = TAILQ_HEAD_INITIALIZER(syslist);
 
 /*ARGSUSED*/
@@ -620,13 +620,16 @@ serv_syscallbouncer(void *arg)
 			pthread_mutex_unlock(&sbamtx);
 			break;
 		}
-		if (TAILQ_EMPTY(&syslist))
-			idleworker++;
-		while (TAILQ_EMPTY(&syslist))
+		idleworker++;
+		while (TAILQ_EMPTY(&syslist)) {
+			_DIAGASSERT(nwork == 0);
 			pthread_cond_wait(&sbacv, &sbamtx);
+		}
+		idleworker--;
 
 		sba = TAILQ_FIRST(&syslist);
 		TAILQ_REMOVE(&syslist, sba, sba_entries);
+		nwork--;
 		pthread_mutex_unlock(&sbamtx);
 
 		serv_handlesyscall(sba->sba_spc,
@@ -948,10 +951,10 @@ handlereq(struct spclient *spc)
 
 	pthread_mutex_lock(&sbamtx);
 	TAILQ_INSERT_TAIL(&syslist, sba, sba_entries);
-	if (idleworker > 0) {
+	nwork++;
+	if (nwork <= idleworker) {
 		/* do we have a daemon's tool (i.e. idle threads)? */
 		pthread_cond_signal(&sbacv);
-		idleworker--;
 	} else if (nworker < rumpsp_maxworker) {
 		/*
 		 * Else, need to create one
