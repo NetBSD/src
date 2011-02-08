@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.25 2011/02/06 18:47:55 pooka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.26 2011/02/08 10:13:13 pooka Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -200,6 +200,7 @@
 ./usr/tests/net/if
 ./usr/tests/net/if_loop
 ./usr/tests/net/net
+./usr/tests/net/route
 ./usr/tests/net/sys
 ./usr/tests/rump
 ./usr/tests/rump/modautoload
