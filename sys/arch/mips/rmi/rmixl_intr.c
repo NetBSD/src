@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.28 2011/02/08 21:27:15 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.29 2011/02/08 22:37:36 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.28 2011/02/08 21:27:15 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.29 2011/02/08 22:37:36 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -449,7 +449,7 @@ evbmips_intr_init(void)
 void
 rmixl_intr_init_clk(void)
 {
-	int vec = ffs(MIPS_INT_MASK_5 >> 8) - 1;
+	int vec = ffs(MIPS_INT_MASK_5 >> MIPS_INT_MASK_SHIFT) - 1;
 
 	mutex_enter(rmixl_intr_lock);
 
