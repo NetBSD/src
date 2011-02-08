@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.20 2011/02/08 12:45:04 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.21 2011/02/08 13:40:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.20 2011/02/08 12:45:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.21 2011/02/08 13:40:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ static void vcons_kthread(void *);
 #ifdef VCONS_DRAW_INTR
 static void vcons_intr(void *);
 static void vcons_intr_work(struct work *, void *);
+static void vcons_intr_enable(device_t);
 #endif
 
 int
@@ -176,7 +177,9 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	    vcons_intr_work, vd, PRI_KTHREAD, IPL_TTY, WQ_MPSAFE);
 	callout_init(&vd->intr, 0);
 	callout_setfunc(&vd->intr, vcons_intr, vd);
-	callout_schedule(&vd->intr, mstohz(33));
+
+	/* XXX assume that the 'dev' arg is never dereferenced */
+	config_interrupts((device_t)vd, vcons_intr_enable);
 #endif
 	return 0;
 }
@@ -586,14 +589,16 @@ vcons_copycols_buffer(void *cookie, int row, int srccol, int dstcol, int ncols)
 static void
 vcons_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 {
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
-#endif
 
 	vcons_copycols_buffer(cookie, row, srccol, dstcol, ncols);
 
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
+#if defined(VCONS_DRAW_INTR)
+	if (scr->scr_vd->use_intr)
+		return;
+#endif
+
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 #ifdef VCONS_DRAW_ASYNC
@@ -605,7 +610,6 @@ vcons_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 			scr->scr_vd->copycols(cookie, row, srccol, dstcol, ncols);
 	}
 	vcons_unlock(scr);
-#endif
 }
 
 static void
@@ -662,14 +666,16 @@ vcons_erasecols_buffer(void *cookie, int row, int startcol, int ncols, long fill
 static void
 vcons_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 {
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
-#endif
 
 	vcons_erasecols_buffer(cookie, row, startcol, ncols, fillattr);
 
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
+#if defined(VCONS_DRAW_INTR)
+	if (scr->scr_vd->use_intr)
+		return;
+#endif
+
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 #ifdef VCONS_DRAW_ASYNC
@@ -683,7 +689,6 @@ vcons_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 			    fillattr);
 	}
 	vcons_unlock(scr);
-#endif
 }
 
 static void
@@ -729,14 +734,16 @@ vcons_copyrows_buffer(void *cookie, int srcrow, int dstrow, int nrows)
 static void
 vcons_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 {
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
-#endif
 
 	vcons_copyrows_buffer(cookie, srcrow, dstrow, nrows);
 
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
+#if defined(VCONS_DRAW_INTR)
+	if (scr->scr_vd->use_intr)
+		return;
+#endif
+
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 #ifdef VCONS_DRAW_ASYNC
@@ -748,7 +755,6 @@ vcons_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 			scr->scr_vd->copyrows(cookie, srcrow, dstrow, nrows);
 	}
 	vcons_unlock(scr);
-#endif
 }
 
 static void
@@ -807,14 +813,16 @@ vcons_eraserows_buffer(void *cookie, int row, int nrows, long fillattr)
 static void
 vcons_eraserows(void *cookie, int row, int nrows, long fillattr)
 {
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
-#endif
 
 	vcons_eraserows_buffer(cookie, row, nrows, fillattr);
 
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
+#if defined(VCONS_DRAW_INTR)
+	if (scr->scr_vd->use_intr)
+		return;
+#endif
+
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 #ifdef VCONS_DRAW_ASYNC
@@ -826,7 +834,6 @@ vcons_eraserows(void *cookie, int row, int nrows, long fillattr)
 			scr->scr_vd->eraserows(cookie, row, nrows, fillattr);
 	}
 	vcons_unlock(scr);
-#endif
 }
 
 static void
@@ -863,14 +870,16 @@ vcons_putchar_buffer(void *cookie, int row, int col, u_int c, long attr)
 static void
 vcons_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
-#endif
 	
 	vcons_putchar_buffer(cookie, row, col, c, attr);
-	
-#if !defined(VCONS_DRAW_INTR) || defined(VCONS_INTR_DEBUG)
+
+#if defined(VCONS_DRAW_INTR)
+	if (scr->scr_vd->use_intr)
+		return;
+#endif
+
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 #ifdef VCONS_DRAW_ASYNC
@@ -882,7 +891,6 @@ vcons_putchar(void *cookie, int row, int col, u_int c, long attr)
 			scr->scr_vd->putchar(cookie, row, col, c, attr);
 	}
 	vcons_unlock(scr);
-#endif
 }
 
 static void
@@ -892,14 +900,21 @@ vcons_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 
 
-	vcons_lock(scr);
 #if defined(VCONS_DRAW_INTR)
-	if (scr->scr_ri.ri_crow != row || scr->scr_ri.ri_ccol != col) {
-		scr->scr_ri.ri_crow = row;
-		scr->scr_ri.ri_ccol = col;
-		scr->scr_dirty++;
+	if (scr->scr_vd->use_intr) {
+		vcons_lock(scr);
+		if (scr->scr_ri.ri_crow != row || scr->scr_ri.ri_ccol != col) {
+			scr->scr_ri.ri_crow = row;
+			scr->scr_ri.ri_ccol = col;
+			scr->scr_dirty++;
+		}
+		vcons_unlock(scr);
+		return;
 	}
-#else
+#endif
+
+	vcons_lock(scr);
+
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 #ifdef VCONS_DRAW_ASYNC
 		struct vcons_data *vd = scr->scr_vd;
@@ -912,7 +927,6 @@ vcons_cursor(void *cookie, int on, int row, int col)
 		scr->scr_ri.ri_crow = row;
 		scr->scr_ri.ri_ccol = col;
 	}
-#endif
 	vcons_unlock(scr);
 }
 
@@ -1419,6 +1433,15 @@ vcons_intr_work(struct work *wk, void *cookie)
 		}
 	}
 
+	callout_schedule(&vd->intr, mstohz(33));
+}
+
+static void
+vcons_intr_enable(device_t dev)
+{
+	/* the 'dev' arg we pass to config_interrupts isn't a device_t */
+	struct vcons_data *vd = (struct vcons_data *)dev;
+	vd->use_intr = 1;
 	callout_schedule(&vd->intr, mstohz(33));
 }
 #endif /* VCONS_DRAW_INTR */

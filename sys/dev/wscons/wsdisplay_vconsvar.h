@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.14 2011/02/08 12:45:04 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.15 2011/02/08 13:40:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -141,6 +141,7 @@ struct vcons_data {
 	callout_t intr;
 	struct workqueue *intr_wq;
 	struct work wk;
+	int use_intr;		/* use intr drawing when non-zero */
 #endif
 };
 
