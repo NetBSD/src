@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.33 2011/02/08 12:20:11 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.34 2011/02/08 14:45:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.33 2011/02/08 12:20:11 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.34 2011/02/08 14:45:35 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -66,8 +66,10 @@ enum dualcall {
 	DUALCALL_GETSOCKOPT, DUALCALL_SETSOCKOPT,
 	DUALCALL_SHUTDOWN,
 	DUALCALL_READ, DUALCALL_READV,
-	DUALCALL_DUP2, DUALCALL_CLOSE,
+	DUALCALL_DUP, DUALCALL_DUP2,
+	DUALCALL_CLOSE,
 	DUALCALL_POLLTS,
+	DUALCALL_KEVENT,
 	DUALCALL__NUM
 };
 
@@ -81,15 +83,19 @@ enum dualcall {
 #if !__NetBSD_Prereq__(5,99,7)
 #define REALSELECT select
 #define REALPOLLTS pollts
+#define REALKEVENT kevent
 #else
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
+#define REALKEVENT _sys___kevent50
 #endif
 #define REALREAD _sys_read
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
 	       const struct timespec *, const sigset_t *);
+int REALKEVENT(int, const struct kevent *, size_t, struct kevent *, size_t,
+	       const struct timespec *);
 ssize_t REALREAD(int, void *, size_t);
 
 #define S(a) __STRING(a)
@@ -118,9 +124,11 @@ struct sysnames {
 	{ DUALCALL_WRITEV,	"writev",	RSYS_NAME(WRITEV)	},
 	{ DUALCALL_IOCTL,	"ioctl",	RSYS_NAME(IOCTL)	},
 	{ DUALCALL_FCNTL,	"fcntl",	RSYS_NAME(FCNTL)	},
+	{ DUALCALL_DUP,		"dup",		RSYS_NAME(DUP)		},
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
 	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
+	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
 };
 #undef S
 
@@ -269,7 +277,6 @@ rcinit(void)
 
 /* XXX: need runtime selection.  low for now due to FD_SETSIZE */
 #define HIJACK_FDOFF 128
-#define HIJACK_SELECT 128 /* XXX */
 #define HIJACK_ASSERT 128 /* XXX */
 static int
 fd_rump2host(int fd)
@@ -375,6 +382,8 @@ ioctl(int fd, unsigned long cmd, ...)
 	return rv;
 }
 
+
+/* TODO: support F_DUPFD, F_CLOSEM, F_MAXFD */
 int
 fcntl(int fd, int cmd, ...)
 {
@@ -442,6 +451,28 @@ dup2(int oldd, int newd)
 	}
 
 	return rv;
+}
+
+int
+dup(int oldd)
+{
+	int (*op_dup)(int);
+	int newd;
+
+	DPRINTF(("dup -> %d\n", oldd));
+	if (fd_isrump(oldd)) {
+		op_dup = GETSYSCALL(rump, DUP);
+	} else {
+		op_dup = GETSYSCALL(host, DUP);
+	}
+
+	newd = op_dup(oldd);
+
+	if (fd_isrump(oldd))
+		newd = fd_rump2host(newd);
+	DPRINTF(("dup <- %d\n", newd));
+
+	return newd;
 }
 
 /*
@@ -818,26 +849,32 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 }
 
 int
-kqueue(void)
-{
-
-	if (!ISDUP2D(STDERR_FILENO) && isatty(STDERR_FILENO)) {
-		fprintf(stderr, "rumphijack: kqueue currently unsupported\n");
-	}
-	errno = ENOSYS;
-	return -1;
-}
-
-/*ARGSUSED*/
-int
-kevent(int kq, const struct kevent *changelist, size_t nchanges,
+REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 	struct kevent *eventlist, size_t nevents,
 	const struct timespec *timeout)
 {
+	int (*op_kevent)(int, const struct kevent *, size_t,
+		struct kevent *, size_t, const struct timespec *);
+	const struct kevent *ev;
+	size_t i;
 
-	fprintf(stderr, "kevent impossible\n");
-	abort();
-	/*NOTREACHED*/
+	/*
+	 * Check that we don't attempt to kevent rump kernel fd's.
+	 * That needs similar treatment to select/poll, but is slightly
+	 * trickier since we need to manage to different kq descriptors.
+	 * (TODO, in case you're wondering).
+	 */
+	for (i = 0; i < nchanges; i++) {
+		ev = &changelist[i];
+		if (ev->filter == EVFILT_READ || ev->filter == EVFILT_WRITE ||
+		    ev->filter == EVFILT_VNODE) {
+			if (fd_isrump(ev->ident))
+				return ENOTSUP;
+		}
+	}
+
+	op_kevent = GETSYSCALL(host, ACCEPT);
+	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
 }
 
 /*
