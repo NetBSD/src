@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.9 2011/02/07 20:30:39 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.10 2011/02/08 20:00:53 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.9 2011/02/07 20:30:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.10 2011/02/08 20:00:53 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -199,11 +199,14 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 	return ret;
 }
 
-void
-quota2_umount(struct mount *mp)
+int
+quota2_umount(struct mount *mp, int flags)
 {
 	int i, error;
 	struct ufsmount *ump = VFSTOUFS(mp);
+
+	if ((ump->um_flags & UFS_QUOTA2) == 0)
+		return 0;
 
 	for (i = 0; i < MAXQUOTAS; i++) {
 		if (ump->um_quotas[i]) {
@@ -212,9 +215,11 @@ quota2_umount(struct mount *mp)
 			if (error) {
 				printf("quota2_umount failed: close(%p) %d\n",
 				    ump->um_quotas[i], error);
+				return error;
 			}
 		}
 	}
+	return 0;
 }
 
 static int 
@@ -322,13 +327,12 @@ getinoquota2(struct inode *ip, int alloc, struct buf **bpp,
 	}
 	/* now get the corresponding quota entry */
 	for (i = 0; i < MAXQUOTAS; i++) {
-		struct vnode *dqvp = ump->um_quotas[i];
 		bpp[i] = NULL;
 		q2ep[i] = NULL;
 		dq = ip->i_dquot[i];
 		if (dq == NODQUOT)
 			continue;
-		KASSERT(dqvp != NULL);
+		KASSERT(ump->um_quotas[i] != NULL);
 
 		if ((dq->dq2_lblkno | dq->dq2_blkoff) == 0) {
 			if (alloc == 0) {
