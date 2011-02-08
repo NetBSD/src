@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.8 2011/02/05 06:00:13 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.9 2011/02/08 06:03:36 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.8 2011/02/05 06:00:13 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.9 2011/02/08 06:03:36 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,6 +87,7 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 	struct cpunode_attach_args *na = aux;
 	struct cpucore_attach_args ca;
 	u_int nthreads;
+	struct rmixl_config *rcp = &rmixl_configuration;
 
 	sc->sc_dev = self;
 	sc->sc_core = na->na_core;
@@ -132,10 +133,30 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * Attach CPU (RMI thread contexts) devices
+	 * according to userapp_cpu_map bitmask.
 	 */
-	for (int i=0; i < nthreads; i++) {
+	u_int thread_mask = (1 << nthreads) - 1;
+	u_int core_shft = sc->sc_core * nthreads;
+	u_int threads_enb =
+		(u_int)(rcp->rc_psb_info.userapp_cpu_map >> core_shft) & thread_mask;
+	u_int threads_dis = (~threads_enb) & thread_mask;
+
+	if (threads_dis != 0) {
+		aprint_normal_dev(self, "threads");
+		while (threads_dis != 0) {
+			u_int t = ffs(threads_dis) - 1;
+			threads_dis ^= (1 << t);
+			aprint_normal(" %d%s",
+				t, (threads_dis==0) ? "" : ",");
+		}
+		aprint_normal(" offline (disabled by firmware)\n");
+	}
+
+	while (threads_enb != 0) {
+		u_int t = ffs(threads_enb) - 1;
+		threads_enb ^= (1 << t);
 		ca.ca_name = "cpu";
-		ca.ca_thread = i;
+		ca.ca_thread = t;
 		ca.ca_core = sc->sc_core;
 		config_found(self, &ca, cpucore_rmixl_print);
 	}
