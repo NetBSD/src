@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.61 2010/11/27 20:19:41 christos Exp $
+# $NetBSD: XEN3_DOM0,v 1.61.4.1 2011/02/08 19:29:30 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -108,7 +108,8 @@ file-system 	PTYFS		# /dev/pts/N support
 file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

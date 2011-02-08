@@ -1,11 +1,11 @@
 #
-#	$NetBSD: XLS6ATX_7A,v 1.5 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: XLS6ATX_7A,v 1.5.4.1 2011/02/08 19:29:33 bouyer Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"XLS6ATX_7A-$Revision: 1.5 $"
+#ident 		"XLS6ATX_7A-$Revision: 1.5.4.1 $"
 
 maxusers	32
 
@@ -85,7 +85,8 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental

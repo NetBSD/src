@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.30 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: ALCHEMY,v 1.30.4.1 2011/02/08 19:29:33 bouyer Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.30 $"
+#ident 		"ALCHEMY-$Revision: 1.30.4.1 $"
 
 maxusers	32
 
@@ -86,7 +86,8 @@ file-system	FDESC		# user file descriptor filesystem
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

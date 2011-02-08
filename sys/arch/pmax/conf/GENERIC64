@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.4 2010/04/29 22:40:53 chs Exp $
+# $NetBSD: GENERIC64,v 1.4.4.1 2011/02/08 19:29:39 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.4 $"
+#ident		"GENERIC-$Revision: 1.4.4.1 $"
 
 maxusers	64
 
@@ -87,7 +87,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
