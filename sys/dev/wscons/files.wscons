@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.42 2011/01/25 20:28:21 macallan Exp $
+# $NetBSD: files.wscons,v 1.43 2011/02/08 12:45:04 jmcneill Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -76,3 +76,4 @@ defflag opt_tpcalib.h		TPCALIBDEBUG
 file	dev/wscons/wsdisplay_vcons.c		vcons
 file	dev/wscons/wsdisplay_vcons_util.c	vcons
 defflag	opt_vcons.h		VCONS_DRAW_ASYNC VCONS_ASYNC_DEBUG
+				VCONS_DRAW_INTR VCONS_INTR_DEBUG
