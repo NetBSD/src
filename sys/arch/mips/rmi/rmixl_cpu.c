@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.17 2011/02/05 06:10:29 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.18 2011/02/08 06:03:01 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.17 2011/02/05 06:10:29 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.18 2011/02/08 06:03:01 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.17 2011/02/05 06:10:29 cliff Exp
 
 static int	cpu_rmixl_match(device_t, cfdata_t, void *);
 static void	cpu_rmixl_attach(device_t, device_t, void *);
-static void	cpu_rmixl_attach_once(struct rmixl_cpu_softc * const);
+static void	cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const);
 #ifdef NOTYET
 static int	cpu_fmn_intr(void *, rmixl_fmn_rxmsg_t *);
 #endif
@@ -87,7 +87,7 @@ static void	cpu_setup_trampoline_callback(struct cpu_info *);
 #ifdef DEBUG
 void		rmixl_cpu_data_print(struct cpu_data *);
 struct cpu_info *
-		rmixl_cpuinfo_print(cpuid_t);
+		rmixl_cpuinfo_print(u_int);
 #endif	/* DEBUG */
 
 CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
@@ -170,16 +170,19 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 	struct rmixl_cpu_softc * const sc = device_private(self);
 	struct cpucore_attach_args *ca = aux;
 	struct cpu_info *ci = NULL;
+	static bool once = false;
 	extern void rmixl_spl_init_cpu(void);
-
-	if (ca->ca_thread == 0 && ca->ca_core == 0) {
+	
+	if (once == false) {
+		/* first attach is the primary cpu */
+		once = true;
 		ci = curcpu();
 		sc->sc_dev = self;
 		sc->sc_ci = ci;
 		ci->ci_softc = (void *)sc;
 
 		rmixl_spl_init_cpu();	/* spl initialization for CPU#0 */
-		cpu_rmixl_attach_once(sc);
+		cpu_rmixl_attach_primary(sc);
 
 #ifdef MULTIPROCESSOR
 		mips_locoresw.lsw_cpu_init = cpu_rmixl_hatch;
@@ -232,15 +235,22 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
         cpu_attach_common(self, ci);
 }
 
+/*
+ * attach the primary processor
+ */
 static void
-cpu_rmixl_attach_once(struct rmixl_cpu_softc * const sc)
+cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
 {
-	static bool once = false;
+	struct cpu_info *ci = sc->sc_ci;
+	uint32_t ebase;
 
-	KASSERT("once != true");
-	if (once == true)
-		return;
-	once = true;
+	KASSERT(CPU_IS_PRIMARY(ci));
+
+	/*
+	 * obtain and set cpuid of the primary processor
+	 */
+	asm volatile("dmfc0 %0, $15, 1;" : "=r"(ebase));
+	ci->ci_cpuid = ebase & __BITS(9,0);
 
 #if defined(DDB) && defined(MIPS_DDB_WATCH)
 	cpu_rmixl_db_watch_init();
@@ -268,8 +278,8 @@ cpu_rmixl_attach_once(struct rmixl_cpu_softc * const sc)
 static int
 cpu_fmn_intr(void *arg, rmixl_fmn_rxmsg_t *rxmsg)
 {
-	if (cpu_number() == 0) {
-		printf("%s: cpu %ld: rxsid=%#x, code=%d, size=%d\n",
+	if (CPU_IS_PRIMARY(curcpu())) {
+		printf("%s: cpu%ld: rxsid=%#x, code=%d, size=%d\n",
 			__func__, cpu_number(),
 			rxmsg->rxsid, rxmsg->code, rxmsg->size);
 		for (int i=0; i < rxmsg->size; i++)
@@ -426,9 +436,9 @@ rmixl_cpu_data_print(struct cpu_data *dp)
 }
 
 struct cpu_info *
-rmixl_cpuinfo_print(cpuid_t cpuid)
+rmixl_cpuinfo_print(u_int cpuindex)
 {
-	struct cpu_info * const ci = cpu_lookup(cpuid);
+	struct cpu_info * const ci = cpu_lookup(cpuindex);
 
 	if (ci != NULL) {
 		rmixl_cpu_data_print(&ci->ci_data);
