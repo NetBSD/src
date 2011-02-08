@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.33 2011/02/05 06:04:07 cliff Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.34 2011/02/08 06:01:08 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -199,8 +199,8 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	curcpu()		(curlwp->l_cpu)
 #define	curpcb			(&curlwp->l_addr->u_pcb)
 #ifdef MULTIPROCESSOR
-#define	cpu_number()		(curcpu()->ci_cpuid)
-#define	CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define	cpu_number()		(curcpu()->ci_index)
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 #else
 #define	cpu_number()		(0L)
 #endif
