@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.263.4.1 2011/01/20 14:25:02 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.263.4.2 2011/02/08 20:00:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.263.4.1 2011/01/20 14:25:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.263.4.2 2011/02/08 20:00:53 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1474,23 +1474,12 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 		flags &= ~FORCECLOSE;
 	ump = VFSTOUFS(mp);
 #ifdef QUOTA
-	if (mp->mnt_flag & MNT_QUOTA) {
-		int i;
-		if ((error = vflush(mp, NULLVP, SKIPSYSTEM | flags)) != 0)
-			return (error);
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if (ump->um_quotas[i] == NULLVP)
-				continue;
-			quotaoff(l, mp, i);
-		}
-		/*
-		 * Here we fall through to vflush again to ensure
-		 * that we have gotten rid of all the system vnodes.
-		 */
-	}
+	if ((error = quota1_umount(mp, flags)) != 0)
+		return (error);
 #endif
 #ifdef QUOTA2
-	quota2_umount(mp);
+	if ((error = quota2_umount(mp, flags)) != 0)
+		return (error);
 #endif
 	if ((error = vflush(mp, 0, SKIPSYSTEM | flags)) != 0)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.h,v 1.1.2.5 2011/02/07 20:30:39 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.h,v 1.1.2.6 2011/02/08 20:00:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -83,8 +83,8 @@ struct dquot {
 #define	dq_ihardlimit	dq_un.dq1_dqb.dqb_ihardlimit
 #define	dq_isoftlimit	dq_un.dq1_dqb.dqb_isoftlimit
 #define	dq_curinodes	dq_un.dq1_dqb.dqb_curinodes
-#define	dq_btime	dq_un.dq_dqb.dqb_btime
-#define	dq_itime	dq_un.dq_dqb.dqb_itime
+#define	dq_btime	dq_un.dq1_dqb.dqb_btime
+#define	dq_itime	dq_un.dq1_dqb.dqb_itime
 
 #define dq2_lblkno	dq_un.dq2_desc.dq2_lblkno
 #define dq2_blkoff	dq_un.dq2_desc.dq2_blkoff
@@ -124,6 +124,8 @@ int setquota1(struct mount *, u_long, int, struct dqblk *);
 int q1sync(struct mount *);
 int dq1get(struct vnode *, u_long, struct ufsmount *, int, struct dquot *);
 int dq1sync(struct vnode *, struct dquot *);
+int quota1_handle_cmd_get(struct ufsmount *, int, int, int, prop_array_t);
+int quota1_handle_cmd_set(struct ufsmount *, int, int, int, prop_dictionary_t);
 
 int chkdq2(struct inode *, int64_t, kauth_cred_t, int);
 int chkiq2(struct inode *, int32_t, kauth_cred_t, int);

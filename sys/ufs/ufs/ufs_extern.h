@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.62.8.1 2011/01/20 14:25:03 bouyer Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.62.8.2 2011/02/08 20:00:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -144,8 +144,11 @@ int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
 int	quota_handle_cmd(struct mount *, struct lwp *, prop_dictionary_t);
 int	qsync(struct mount *);
 
+/* ufs_quota1.c */
+int	quota1_umount(struct mount *, int);
+
 /* ufs_quota2.c */
-void	quota2_umount(struct mount *);
+int	quota2_umount(struct mount *, int);
 
 /* ufs_vfsops.c */
 void	ufs_init(void);

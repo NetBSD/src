@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.8 2011/02/07 20:30:39 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.9 2011/02/08 20:00:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.8 2011/02/07 20:30:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.9 2011/02/08 20:00:53 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -284,7 +284,8 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 		}
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_get(ump, type, id, replies)
+			error = quota1_handle_cmd_get(ump, type, id, defaultq,
+			    replies);
 		else
 #endif
 #ifdef QUOTA2
@@ -352,7 +353,8 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 		}
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
-			error = quota1_handle_cmd_get(ump, type, id, data);
+			error = quota1_handle_cmd_set(ump, type, id, defaultq,
+			    data);
 		else
 #endif
 #ifdef QUOTA2
