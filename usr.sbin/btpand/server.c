@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.6 2009/10/25 19:28:45 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.7 2011/02/08 21:59:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.6 2009/10/25 19:28:45 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.7 2011/02/08 21:59:50 plunky Exp $");
 
 #include <sys/ioctl.h>
 
@@ -134,7 +134,7 @@ server_read(int s, short ev, void *arg)
 	struct sockaddr_bt ra, la;
 	channel_t *chan;
 	socklen_t len;
-	int fd, n;
+	int fd, n, bufsize;
 	uint16_t mru, mtu;
 
 	assert(server_count < server_limit);
@@ -161,6 +161,20 @@ server_read(int s, short ev, void *arg)
 		log_err("L2CAP IMTU too small (%d)", mru);
 		close(fd);
 		return;
+	}
+
+	len = sizeof(bufsize);
+	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize, &len) == -1) {
+		log_err("Could not read SO_RCVBUF");
+		close(fd);
+		return;
+	}
+	if (bufsize < 10 * mru) {
+		bufsize = 10 * mru;
+		if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize,
+		    sizeof(bufsize)) == -1)
+			log_info("Could not increase SO_RCVBUF (from %d)",
+			    bufsize);
 	}
 
 	len = sizeof(mtu);
