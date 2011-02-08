@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: pciide.c,v 1.2 2011/02/08 00:33:05 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ struct myops {
 };
 static int cmdidefix(struct dkdev_ata *);
 static struct myops cmdideops = { cmdidefix, NULL };
-static struct myops *myops = &cmdideops;
+static struct myops *myops;
 
 int pciide_match(unsigned, void *);
 void *pciide_init(unsigned, void *);
@@ -56,10 +56,13 @@ pciide_match(unsigned tag, void *data)
 	v = pcicfgread(tag, PCI_ID_REG);
 	switch (v) {
 	case PCI_DEVICE(0x1095, 0x0680): /* SiI 0680 IDE */
+		myops = &cmdideops;
+		return 1;
 	case PCI_DEVICE(0x1283, 0x8211): /* ITE 8211 IDE */
 	case PCI_DEVICE(0x1106, 0x1571): /* VIA 82C586 IDE */
 	case PCI_DEVICE(0x10ad, 0x0105): /* Symphony Labs 82C105 IDE */
 	case PCI_DEVICE(0x10b8, 0x5229): /* ALi IDE */
+	case PCI_DEVICE(0x1191, 0x0008): /* ACARD ATP865 */
 		return 1;
 	}
 	return 0;
