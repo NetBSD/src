@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.20 2011/02/08 19:18:22 cliff Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.21 2011/02/08 22:42:32 cliff Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.20 2011/02/08 19:18:22 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.21 2011/02/08 22:42:32 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.20 2011/02/08 19:18:22 clif
 #include <ddb/db_run.h>	/* for db_continue_cmd() proto */
 #endif
 
-#define NOCPU   -1
-int ddb_cpu = NOCPU;
+#define NOCPU   ~0
+u_int ddb_cpu = NOCPU;
 
 int		db_active = 0;
 db_regs_t	ddb_regs;
@@ -211,8 +211,9 @@ kdb_trap(int type, struct reg *regs)
 
 #ifdef MULTIPROCESSOR
 	bool first_in_ddb = false;
-	int cpu_me = cpu_index(curcpu());
-	int old_ddb_cpu = atomic_cas_32(&ddb_cpu, NOCPU, cpu_me);
+	u_int cpu_me = cpu_number();
+	u_int old_ddb_cpu =
+		atomic_cas_uint(&ddb_cpu, NOCPU, cpu_me);
 	if (old_ddb_cpu == NOCPU) {
 		first_in_ddb = true;
 		cpu_pause_others();
@@ -1081,7 +1082,7 @@ next_instr_address(db_addr_t pc, bool bd)
 bool 
 ddb_running_on_this_cpu_p(void)
 {               
-	return ddb_cpu == cpu_index(curcpu());
+	return ddb_cpu == cpu_number();
 }
 
 bool 
@@ -1093,9 +1094,9 @@ ddb_running_on_any_cpu(void)
 void
 db_resume_others(void)
 {
-	int cpu_me = cpu_index(curcpu());
+	u_int cpu_me = cpu_number();
 
-	if (atomic_cas_32(&ddb_cpu, cpu_me, NOCPU) == cpu_me)
+	if (atomic_cas_uint(&ddb_cpu, cpu_me, NOCPU) == cpu_me)
 		cpu_resume_others();
 }
 
