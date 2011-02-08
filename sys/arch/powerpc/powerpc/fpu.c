@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.27 2011/01/23 17:36:09 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.28 2011/02/08 06:14:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27 2011/01/23 17:36:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28 2011/02/08 06:14:50 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -139,7 +139,7 @@ fpu_mp_save_lwp(struct lwp *l)
 	if (fpucpu == NULL)
 		return;
 
-	ppc_send_ipi(fpucpu->ci_index, PPC_IPI_FLUSH_FPU);
+	ppc_send_ipi(fpucpu->ci_cpuid, PPC_IPI_FLUSH_FPU);
 
 	/* Wait for flush. */
 	for (u_int i = 0; i < 0x3fffffff; i++) {
