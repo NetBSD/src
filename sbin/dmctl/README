@@ -1,9 +1,8 @@
-
 = RUMP howto =
 
-Build rump dm library, buidl libdm with RUMP_ACTION, build dmct with RUMP_ACTION.
+Build rump dm library, build libdm with RUMP_ACTION, build dmct with RUMP_ACTION.
 
-cd local/lib/libdm/
+cd lib/libdm/
 RUMP_ACTION=1 USETOOLS=no make
 
 cd ../../sbin/dmctl
