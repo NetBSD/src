@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.10 2011/02/07 19:20:35 phx Exp $
+$NetBSD: README.NAS,v 1.11 2011/02/08 12:21:26 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -28,6 +28,10 @@ re.15	viaide.13	IOMEGA StorCenter 250/500/1T
 			>> Not yet recognized, research in progress <<
 re.15	satalink.13 	QNAP TS-201
 stge.15	acardide.16	D-Link DSM-G600
+re.?	iteide.16	Allnet ALL6250
+re.?	satalink.?	Allnet ALL6260, Longshine LCS-8311, Nettronix NH231,
+			Fujitsu-Siemens SBLAN2
+?	?		LevelOne NASCon FNS-5000B (GBit, SATA)
 
 
 PCI line/pin and EPIC IRQ assignments
