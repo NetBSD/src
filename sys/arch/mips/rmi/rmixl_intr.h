@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.6 2011/02/05 06:31:06 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.7 2011/02/08 19:50:22 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,9 +102,9 @@ extern void *rmixl_vec_establish(int, int, int,
 extern void  rmixl_vec_disestablish(void *);
 extern const char *rmixl_intr_string(int);
 extern void rmixl_intr_init_cpu(struct cpu_info *);
-extern void *rmixl_intr_init_clk(void);
+extern void rmixl_intr_init_clk(void);
 #ifdef MULTIPROCESSOR
-extern void *rmixl_intr_init_ipi(void);
+extern void rmixl_intr_init_ipi(void);
 #endif
 
 #endif	/* _MIPS_RMI_RMIXL_INTR_H_ */

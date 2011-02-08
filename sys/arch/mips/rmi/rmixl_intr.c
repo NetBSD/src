@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.26 2011/02/08 06:04:20 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.27 2011/02/08 19:50:22 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.26 2011/02/08 06:04:20 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.27 2011/02/08 19:50:22 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -446,7 +446,7 @@ evbmips_intr_init(void)
  * even though cpu_intr() handles the interrupt
  * note the 'mpsafe' arg here is a placeholder only
  */
-void *
+void
 rmixl_intr_init_clk(void)
 {
 	int vec = ffs(MIPS_INT_MASK_5 >> 8) - 1;
@@ -459,14 +459,13 @@ rmixl_intr_init_clk(void)
 
 	mutex_exit(&rmixl_intr_lock);
 	
-	return ih;
 }
 
 #ifdef MULTIPROCESSOR
 /*
  * establish IPI interrupt and send function
  */
-void *
+void
 rmixl_intr_init_ipi(void)
 {
 	u_int ipi, vec;
@@ -487,7 +486,6 @@ rmixl_intr_init_ipi(void)
 
 	mutex_exit(&rmixl_intr_lock);
 
-	return ih;
 }
 #endif 	/* MULTIPROCESSOR */
 
