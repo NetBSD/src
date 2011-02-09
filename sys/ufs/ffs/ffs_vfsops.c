@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.263.4.2 2011/02/08 20:00:53 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.263.4.3 2011/02/09 19:49:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.263.4.2 2011/02/08 20:00:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.263.4.3 2011/02/09 19:49:44 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -492,6 +492,16 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			/*
 			 * Changing from read-only to read/write
 			 */
+#ifndef QUOTA2
+			if (fs->fs_flags & FS_DOQUOTA2) {
+				ump->um_flags |= UFS_QUOTA2;
+				uprintf("%s: options QUOTA2 not enabled%s\n",
+				    mp->mnt_stat.f_mntonname,
+				    (mp->mnt_flag & MNT_FORCE) ? "" :
+				    ", not mounting");
+				return EINVAL;
+			}
+#endif
 			fs->fs_ronly = 0;
 			fs->fs_clean <<= 1;
 			fs->fs_fmod = 1;
@@ -519,6 +529,14 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			return error;
 #endif /* WAPBL */
 
+#ifdef QUOTA2
+		if (!fs->fs_ronly) {
+			error = ffs_quota2_mount(mp);
+			if (error) {
+				return error;
+			}
+		}
+#endif
 		if (args->fspec == NULL)
 			return 0;
 	}
