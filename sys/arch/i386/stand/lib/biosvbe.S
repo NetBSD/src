@@ -1,4 +1,4 @@
-/* $NetBSD: biosvbe.S,v 1.1 2009/02/16 22:39:30 jmcneill Exp $ */
+/* $NetBSD: biosvbe.S,v 1.2 2011/02/09 04:37:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -254,3 +254,101 @@ ENTRY(biosvbe_palette_data)
 	popl	%ebx
 	popl	%ebp
 	ret
+
+/*
+ * Function 15h BL=00h - Report VBE/DDC Capabilities
+ *
+ * int biosvbe_ddc_caps(void)
+ * return: VBE/DDC capabilities
+ */
+ENTRY(biosvbe_ddc_caps)
+	pushl	%ebp
+	movl	%esp,%ebp
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	push	%esi
+	push	%edi
+
+	call	_C_LABEL(prot_to_real)
+	.code16
+
+	movw	$0x4f15, %ax	/* display identification extensions */
+	mov	$0x00, %bx	/* report DDC capabilities */
+
+	movl	$0x0000, %esi	/* ES:DI == 0:0 */
+	movl	$0x0000, %edi
+	mov	$0x00, %cx	/* controller unit number (00h = primary) */
+	int	$0x10
+
+	calll	_C_LABEL(real_to_prot)
+	.code32
+
+	movl	%eax,%ecx
+	movl	$0x0000,%eax
+	andl	$0xffff,%ecx
+	cmpl	$0x004f,%ecx
+	jne	1f
+	andl	$0xffff,%ebx
+	movl	%ebx,%eax
+1:
+
+	pop	%edi
+	pop	%esi
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%ebp
+	ret
+
+/*
+ * Function 15h BL=01h - Read EDID
+ *
+ * int biosvbe_ddc_read_edid(int blockno, void *buf)
+ * return: VBE call status
+ */
+ENTRY(biosvbe_ddc_read_edid)
+	pushl	%ebp
+	movl	%esp,%ebp
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	push	%esi
+	push	%edi
+
+	movl	8(%ebp), %edx	/* EDID block number */
+	movl	12(%ebp), %edi	/* EDID block address */
+
+	call	_C_LABEL(prot_to_real)
+	.code16
+
+	push	%es
+
+	push	%di
+	shrl	$4, %edi
+	mov	%ds, %ax
+	add	%di, %ax
+	mov	%ax, %es
+	pop	%di
+	and	$0xf, %di	/* EDID block address now in es:di */
+
+	movw	$0x4f15, %ax	/* display identification extensions */
+	mov	$0x01, %bx	/* read EDID */
+	mov	$0x00, %cx	/* controller unit number (00h = primary) */
+	int	$0x10
+
+	pop	%es
+
+	calll	_C_LABEL(real_to_prot)
+	.code32
+
+	andl	$0xffff,%eax
+
+	pop	%edi
+	pop	%esi
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%ebp
+	ret
+
