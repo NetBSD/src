@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.996.4.2 2011/02/08 16:19:47 bouyer Exp $
+#	$NetBSD: files,v 1.996.4.3 2011/02/09 20:32:49 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -225,7 +225,7 @@ defparam			SB_MAX
 
 # file system options
 #
-defflag				QUOTA QUOTA2		# XXX files.ufs?
+defflag	opt_quota.h		QUOTA QUOTA2		# XXX files.ufs?
 defflag				VNODE_LOCKDEBUG
 defflag				MAGICLINKS
 
