@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1285 2011/02/08 03:20:14 haad Exp $
+# $NetBSD: mi,v 1.1286 2011/02/09 15:12:40 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1004,6 +1004,10 @@
 ./usr/share/man/cat4/hdaudio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hdaudiobus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hifn.0			man-sys-catman		.cat
+./usr/share/man/cat4/hil.0			man-sys-catman		.cat
+./usr/share/man/cat4/hilkbd.0			man-sys-catman		.cat
+./usr/share/man/cat4/hilid.0			man-sys-catman		.cat
+./usr/share/man/cat4/hilms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/apci.0		man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/autoconf.0		man-sys-catman		.cat
@@ -1020,14 +1024,14 @@
 ./usr/share/man/cat4/hp300/frodo.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/gb.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/gbox.0		man-sys-catman		.cat
-./usr/share/man/cat4/hp300/grf.0		man-sys-catman		.cat
-./usr/share/man/cat4/hp300/hil.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp300/grf.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp300/hil.0		man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/hpib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/hpibbus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/hyper.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/intio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/intro.0		man-sys-catman		.cat
-./usr/share/man/cat4/hp300/ite.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp300/ite.0		man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/kmem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/le.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/mem.0		man-sys-catman		.cat
@@ -3759,6 +3763,10 @@
 ./usr/share/man/html4/hdaudiobus.html		man-sys-htmlman		html
 ./usr/share/man/html4/hdaudio.html		man-sys-htmlman		html
 ./usr/share/man/html4/hifn.html			man-sys-htmlman		html
+./usr/share/man/html4/hil.html			man-sys-htmlman		html
+./usr/share/man/html4/hilkbd.html		man-sys-htmlman		html
+./usr/share/man/html4/hilid.html		man-sys-htmlman		html
+./usr/share/man/html4/hilms.html		man-sys-htmlman		html
 ./usr/share/man/html4/hme.html			man-sys-htmlman		html
 ./usr/share/man/html4/hp300/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/hp300/cons.html		man-sys-htmlman		html
@@ -3770,14 +3778,14 @@
 ./usr/share/man/html4/hp300/fhpib.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/frodo.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/gbox.html		man-sys-htmlman		html
-./usr/share/man/html4/hp300/grf.html		man-sys-htmlman		html
-./usr/share/man/html4/hp300/hil.html		man-sys-htmlman		html
+./usr/share/man/html4/hp300/grf.html		man-obsolete		obsolete
+./usr/share/man/html4/hp300/hil.html		man-obsolete		obsolete
 ./usr/share/man/html4/hp300/hpib.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/hpibbus.html	man-sys-htmlman		html
 ./usr/share/man/html4/hp300/hyper.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/intio.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/intro.html		man-sys-htmlman		html
-./usr/share/man/html4/hp300/ite.html		man-sys-htmlman		html
+./usr/share/man/html4/hp300/ite.html		man-obsolete		obsolete
 ./usr/share/man/html4/hp300/kmem.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/nhpib.html		man-sys-htmlman		html
@@ -6291,6 +6299,10 @@
 ./usr/share/man/man4/hdaudio.4			man-sys-man		.man
 ./usr/share/man/man4/hdaudiobus.4		man-sys-man		.man
 ./usr/share/man/man4/hifn.4			man-sys-man		.man
+./usr/share/man/man4/hil.4			man-sys-man		.man
+./usr/share/man/man4/hilkbd.4			man-sys-man		.man
+./usr/share/man/man4/hilid.4			man-sys-man		.man
+./usr/share/man/man4/hilms.4			man-sys-man		.man
 ./usr/share/man/man4/hme.4			man-sys-man		.man
 ./usr/share/man/man4/hp300/apci.4		man-obsolete		obsolete
 ./usr/share/man/man4/hp300/autoconf.4		man-sys-man		.man
@@ -6307,14 +6319,14 @@
 ./usr/share/man/man4/hp300/frodo.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/gb.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/gbox.4		man-sys-man		.man
-./usr/share/man/man4/hp300/grf.4		man-sys-man		.man
-./usr/share/man/man4/hp300/hil.4		man-sys-man		.man
+./usr/share/man/man4/hp300/grf.4		man-obsolete		obsolete
+./usr/share/man/man4/hp300/hil.4		man-obsolete		obsolete
 ./usr/share/man/man4/hp300/hpib.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/hpibbus.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/hyper.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/intio.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/intro.4		man-sys-man		.man
-./usr/share/man/man4/hp300/ite.4		man-sys-man		.man
+./usr/share/man/man4/hp300/ite.4		man-obsolete		obsolete
 ./usr/share/man/man4/hp300/kmem.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/le.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/mem.4		man-sys-man		.man
