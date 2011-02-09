@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.1 2010/12/15 18:37:55 pooka Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.2 2011/02/09 11:22:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@ struct prog_ops {
 
 	int (*op_open)(const char *, int, ...);
 	int (*op_ioctl)(int, unsigned long, ...);
+	int (*op_fstat)(int, struct stat *);
 	int (*op_close)(int);
 };
 extern const struct prog_ops prog_ops;
@@ -44,11 +45,13 @@ extern const struct prog_ops prog_ops;
 #define prog_init prog_ops.op_init
 #define prog_open prog_ops.op_open
 #define prog_ioctl prog_ops.op_ioctl
+#define prog_fstat prog_ops.op_fstat
 #define prog_close prog_ops.op_close
 #else
 #define prog_init ((int (*)(void))NULL)
 #define prog_open open
 #define prog_ioctl ioctl
+#define prog_fstat fstat
 #define prog_close close
 #endif
 
