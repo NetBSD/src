@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.26 2011/02/07 15:25:41 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.27 2011/02/09 14:29:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,7 @@ ssize_t	(*host_read)(int, void *, size_t);
 ssize_t (*host_sendto)(int, const void *, size_t, int,
 		       const struct sockaddr *, socklen_t);
 int	(*host_setsockopt)(int, int, int, const void *, socklen_t);
+int	(*host_dup)(int);
 
 int	(*host_kqueue)(void);
 int	(*host_kevent)(int, const struct kevent *, size_t,
@@ -543,6 +544,26 @@ handlereq(struct spclient *spc)
 static unsigned ptab_idx;
 static struct sockaddr *serv_sa;
 
+/* dup until we get a "good" fd which does not collide with stdio */
+static int
+dupgood(int myfd)
+{
+	int ofds[3];
+	int i;
+
+	for (i = 0; myfd <= 2 && myfd != -1; i++) {
+		assert(i < __arraycount(ofds));
+		ofds[i] = myfd;
+		myfd = host_dup(myfd);
+	}
+
+	for (i--; i >= 0; i--) {
+		host_close(ofds[i]);
+	}
+
+	return myfd;
+}
+
 static int
 doconnect(bool noisy)
 {
@@ -590,7 +611,7 @@ doconnect(bool noisy)
 	free(clispc.spc_buf);
 	clispc.spc_off = 0;
 
-	s = host_socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0);
+	s = dupgood(host_socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0));
 	if (s == -1)
 		return -1;
 
@@ -645,7 +666,7 @@ doconnect(bool noisy)
 	clispc.spc_reconnecting = 0;
 
 	/* setup kqueue, we want all signals and the fd */
-	if ((kq = host_kqueue()) == -1) {
+	if ((kq = dupgood(host_kqueue())) == -1) {
 		error = errno;
 		if (noisy)
 			fprintf(stderr, "rump_sp: cannot setup kqueue");
@@ -711,6 +732,7 @@ rumpclient_init()
 	FINDSYM(read);
 	FINDSYM(sendto);
 	FINDSYM(setsockopt);
+	FINDSYM(dup);
 	FINDSYM(kqueue);
 #if !__NetBSD_Prereq__(5,99,7)
 	FINDSYM(kevent);
