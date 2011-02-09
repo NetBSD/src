@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 2011/02/08 20:20:13 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218 2011/02/09 09:32:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2011/02/08 20:20:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2011/02/09 09:32:49 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1022,7 +1022,8 @@ candbtimer(void *arg)
 static int innmihand;	/* simple mutex */
 
 /*
- * Level 7 interrupts can be caused by the keyboard or parity errors.
+ * Level 7 interrupts can be caused by HIL keyboards (in cooked mode only,
+ * but we run them in raw mode) or parity errors.
  */
 void
 nmihand(struct frame frame)
@@ -1033,57 +1034,12 @@ nmihand(struct frame frame)
 		return;
 	innmihand = 1;
 
-#if NHIL > 0
-	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
-	if (kbdnmi()) {
-		printf("Got a keyboard NMI");
-
-		/*
-		 * We can:
-		 *
-		 *	- enter DDB
-		 *
-		 *	- Start the crashandburn sequence
-		 *
-		 *	- Ignore it.
-		 */
-#ifdef DDB
-		printf(": entering debugger\n");
-		Debugger();
-#else
-#ifdef PANICBUTTON
-		if (panicbutton) {
-			/* XXX */
-			callout_init(&candbtimer_ch, 0);
-			if (crashandburn) {
-				crashandburn = 0;
-				printf(": CRASH AND BURN!\n");
-				panic("forced crash");
-			} else {
-				/* Start the crashandburn sequence */
-				printf("\n");
-				crashandburn = 1;
-				callout_reset(&candbtimer_ch, hz / candbdiv,
-				    candbtimer, NULL);
-			}
-		} else
-#endif /* PANICBUTTON */
-			printf(": ignoring\n");
-#endif /* DDB */
-
-		goto nmihand_out;	/* no more work to do */
-	}
-#endif
-
 	if (parityerror(&frame))
 		return;
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 
-#if NHIL > 0
-nmihand_out:
 	innmihand = 0;
-#endif
 }
 
 /*
