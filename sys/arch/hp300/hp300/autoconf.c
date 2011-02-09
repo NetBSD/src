@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.94 2011/02/08 20:20:13 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.95 2011/02/09 09:29:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94 2011/02/08 20:20:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.95 2011/02/09 09:29:57 tsutsui Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -764,7 +764,7 @@ hp300_cninit(void)
 #endif
 #if NCOM_DIO > 0
 	if (!dio_scan(com_dio_cnattach))
-		;//return;
+		return;
 #endif
 #if NDCM > 0
 	if (!dio_scan(dcmcnattach))
