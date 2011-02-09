@@ -1,4 +1,4 @@
-.\"     $NetBSD: hyper.4,v 1.4 2011/02/09 14:13:09 tsutsui Exp $
+.\"     $NetBSD: hyper.4,v 1.5 2011/02/09 14:37:55 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,12 +34,13 @@
 .Nm hyper
 .Nd
 .Tn A1096A
-``Hyperion'' graphics device interface
+.Dq Hyperion
+graphics device interface
 .Sh SYNOPSIS
 .Cd "hyper* at dio? scode ?"
 .Cd "wsdisplay* at hyper?"
 .Sh DESCRIPTION
 This driver is for the Hyperion monochrome framebuffer.
 .Sh SEE ALSO
-.Xr wsdisplay 4 ,
-.Xr wscons 4
+.Xr wscons 4 ,
+.Xr wsdisplay 4
