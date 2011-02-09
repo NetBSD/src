@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.h,v 1.1.2.7 2011/02/08 20:09:56 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.h,v 1.1.2.8 2011/02/09 11:18:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -100,16 +100,7 @@ extern kcondvar_t dqcv;
 /*
  * Quota name to error message mapping.
  */
-static const char *quotatypes[] = INITQFNAMES;
-
-/*       
- * Code pertaining to management of the in-core dquot data structures.
- */      
-#define DQHASH(dqvp, id) \
-	(((((long)(dqvp)) >> 8) + id) & dqhash) 
-static LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
-static u_long dqhash;
-static pool_cache_t dquot_cache;
+const char *quotatypes[MAXQUOTAS];
 
 int  getinoquota(struct inode *);
 int  dqget(struct vnode *, u_long, struct ufsmount *, int, struct dquot **);

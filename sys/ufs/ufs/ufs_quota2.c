@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.10 2011/02/08 20:00:53 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.11 2011/02/09 11:18:30 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.10 2011/02/08 20:00:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.11 2011/02/09 11:18:30 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -80,7 +80,9 @@ static int
 getq2h(struct ufsmount *ump, int type,
     struct buf **bpp, struct quota2_header **q2hp, int flags)
 {
+#ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
+#endif
 	int error;
 	struct buf *bp;
 	struct quota2_header *q2h;
@@ -134,7 +136,9 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
     uint64_t *offp, int flags, void *a,
     int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *, uint64_t, void *))
 {
+#ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
+#endif
 	daddr_t off = ufs_rw64(*offp, needswap);
 	struct buf *bp, *obp = hbp;
 	int ret = 0, ret2 = 0;
@@ -576,7 +580,9 @@ dq2clear_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e
     uint64_t off, void *v)
 {
 	struct dq2clear_callback *c = v;
+#ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
+#endif
 	uint64_t myoff;
 
 	if (ufs_rw32(q2e->q2e_uid, needswap) == c->id) {
@@ -770,7 +776,9 @@ quota2_getuids_callback(struct ufsmount *ump, uint64_t *offp,
 {
 	struct getuids *gu = v;
 	uid_t *newuids;
+#ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
+#endif
 
 	if (gu->nuids == gu->size) {
 		newuids = realloc(gu->uids, gu->size + PAGE_SIZE, M_TEMP,
@@ -866,7 +874,9 @@ dq2get_callback(struct ufsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
 	struct dq2get_callback *c = v;
 	daddr_t lblkno;
 	int blkoff;
+#ifdef FFS_EI
 	const int needswap = UFS_MPNEEDSWAP(ump);
+#endif
 
 	if (ufs_rw32(q2e->q2e_uid, needswap) == c->id) {
 		KASSERT(mutex_owned(&c->dq->dq_interlock));

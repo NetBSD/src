@@ -1,4 +1,4 @@
-/*	$NetBSD: quota1.h,v 1.1.2.2 2011/01/28 23:31:16 bouyer Exp $	*/
+/*	$NetBSD: quota1.h,v 1.1.2.3 2011/02/09 11:18:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -93,6 +93,7 @@ struct dqblk {
 };
 
 /* quota1_subr.c */
+struct quota2_entry;
 void dqblk2q2e(const struct dqblk *, struct quota2_entry *);
 void q2e2dqblk(const struct quota2_entry *, struct dqblk *);
 
