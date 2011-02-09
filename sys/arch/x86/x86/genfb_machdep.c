@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.6 2011/02/09 02:30:09 jmcneill Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.7 2011/02/09 13:24:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.6 2011/02/09 02:30:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.7 2011/02/09 13:24:24 jmcneill Exp $");
 
 #include "opt_mtrr.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.6 2011/02/09 02:30:09 jmcneill E
 #include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
+#include <dev/wsfb/genfbvar.h>
 #include <arch/x86/include/genfb_machdep.h>
 
 #include "wsdisplay.h"
@@ -65,6 +66,8 @@ struct vcons_screen x86_genfb_console_screen;
 extern int acpi_md_vesa_modenum;
 #endif
 
+static device_t x86_genfb_console_dev = NULL;
+
 static struct wsscreen_descr x86_genfb_stdscreen = {
 	"std",
 	0, 0,
@@ -73,6 +76,26 @@ static struct wsscreen_descr x86_genfb_stdscreen = {
 	0,
 	NULL
 };
+
+void
+x86_genfb_set_console_dev(device_t dev)
+{
+	KASSERT(x86_genfb_console_dev != NULL);
+	x86_genfb_console_dev = dev;
+}
+
+void
+x86_genfb_ddb_trap_callback(int where)
+{
+	if (x86_genfb_console_dev == NULL)
+		return;
+
+	if (where) {
+		genfb_enable_polling(x86_genfb_console_dev);
+	} else {
+		genfb_disable_polling(x86_genfb_console_dev);
+	}
+}
 
 void
 x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)

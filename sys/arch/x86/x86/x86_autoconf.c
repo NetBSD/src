@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.54 2011/02/08 10:52:56 jmcneill Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.55 2011/02/09 13:24:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.54 2011/02/08 10:52:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.55 2011/02/09 13:24:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.54 2011/02/08 10:52:56 jmcneill E
 #include "genfb.h"
 #include "wsdisplay.h"
 #include "opt_vga.h"
+#include "opt_ddb.h"
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -692,6 +699,16 @@ device_register(device_t dev, void *aux)
 					    "mode_callback",
 					    (uint64_t)&mode_cb);
 				}
+
+#if NWSDISPLAY > 0 && NGENFB > 0
+				if (device_is_a(dev, "genfb")) {
+					x86_genfb_set_console_dev(dev);
+#ifdef DDB
+					db_trap_callback =
+					    x86_genfb_ddb_trap_callback;
+#endif
+				}
+#endif
 			}
 			prop_dictionary_set_bool(dict, "is_console", true);
 			prop_dictionary_set_bool(dict, "clear-screen", false);
