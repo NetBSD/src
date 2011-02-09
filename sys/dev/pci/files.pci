@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.337 2011/01/26 18:48:13 bouyer Exp $
+#	$NetBSD: files.pci,v 1.338 2011/02/09 21:21:32 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -846,11 +846,8 @@ file	dev/pci/cxgb/cxgb_l2t.c		cxgbc | cxgb
 file	dev/pci/cxgb/cxgb_osdep.c	cxgbc | cxgb
 
 # Chips & Technologies 65550 framebuffer console driver
-device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
-attach	chipsfb at pci
-file	dev/pci/chipsfb.c		chipsfb
-defflag	opt_chipsfb.h	CHIPSFB_DEBUG
-defflag	opt_chipsfb.h	CHIPSFB_WAIT
+attach	chipsfb at pci with chipsfb_pci
+file	dev/pci/chipsfb.c		chipsfb_pci
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp
