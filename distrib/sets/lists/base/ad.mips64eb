@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.39 2011/02/06 00:44:08 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.40 2011/02/09 08:11:37 haad Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -77,6 +77,9 @@
 ./usr/lib/64/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libdes.so.8			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libdm.so				base-compat-shlib	compat,pic
+./usr/lib/64/libdm.so.0				base-compat-shlib	compat,pic
+./usr/lib/64/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns.so.5.2			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
@@ -336,6 +339,9 @@
 ./usr/lib/o32/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdes.so.8			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libdm.so				base-compat-shlib	compat,pic
+./usr/lib/o32/libdm.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns.so.5.2			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
