@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.1.2.5 2011/02/09 16:15:01 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.1.2.6 2011/02/09 17:43:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.5 2011/02/09 16:15:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.6 2011/02/09 17:43:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -325,9 +325,9 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 
 	vpp = &ump->um_quotas[type];
 
-	error = pathbuf_copyin(fname, &pb);
-	if (error) {
-		return error;
+	pb = pathbuf_create(fname);
+	if (pb == NULL) {
+		return ENOMEM;
 	}
 	NDINIT(&nd, LOOKUP, FOLLOW, pb);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
@@ -518,8 +518,16 @@ quota1_handle_cmd_get(struct ufsmount *ump, int type, int id,
 	dqblk2q2e(&dq->dq_un.dq1_dqb, &q2e);
 	dqrele(NULLVP, dq);
 	if (defaultq) {
-		q2e.q2e_val[QL_BLOCK].q2v_grace = q2e.q2e_val[QL_BLOCK].q2v_time;
-		q2e.q2e_val[QL_FILE].q2v_grace = q2e.q2e_val[QL_FILE].q2v_time;
+		if (q2e.q2e_val[QL_BLOCK].q2v_time > 0)
+			q2e.q2e_val[QL_BLOCK].q2v_grace =
+			    q2e.q2e_val[QL_BLOCK].q2v_time;
+		else
+			q2e.q2e_val[QL_BLOCK].q2v_grace = MAX_DQ_TIME;
+		if (q2e.q2e_val[QL_FILE].q2v_time > 0)
+			q2e.q2e_val[QL_FILE].q2v_grace =
+			    q2e.q2e_val[QL_FILE].q2v_time;
+		else
+			q2e.q2e_val[QL_FILE].q2v_grace = MAX_DQ_TIME;
 	}
 	dict = q2etoprop(&q2e, defaultq);
 	if (dict == NULL)
@@ -550,10 +558,12 @@ quota1_handle_cmd_set(struct ufsmount *ump, int type, int id,
 		if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
 			return error;
 		mutex_enter(&dq->dq_interlock);
-		ump->umq1_btime[type] = dq->dq_btime =
-		    q2e.q2e_val[QL_BLOCK].q2v_grace;
-		ump->umq1_itime[type] = dq->dq_itime =
-		    q2e.q2e_val[QL_FILE].q2v_grace;
+		if (q2e.q2e_val[QL_BLOCK].q2v_grace > 0)
+			ump->umq1_btime[type] = dq->dq_btime =
+			    q2e.q2e_val[QL_BLOCK].q2v_grace;
+		if (q2e.q2e_val[QL_FILE].q2v_grace > 0)
+			ump->umq1_itime[type] = dq->dq_itime =
+			    q2e.q2e_val[QL_FILE].q2v_grace;
 		mutex_exit(&dq->dq_interlock);
 		dq->dq_flags |= DQ_MOD;
 		dqrele(NULLVP, dq);
