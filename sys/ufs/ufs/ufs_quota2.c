@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.11 2011/02/09 11:18:30 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.12 2011/02/09 21:17:17 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.11 2011/02/09 11:18:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.12 2011/02/09 21:17:17 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -213,7 +213,7 @@ quota2_umount(struct mount *mp, int flags)
 		return 0;
 
 	for (i = 0; i < MAXQUOTAS; i++) {
-		if (ump->um_quotas[i]) {
+		if (ump->um_quotas[i] != NULLVP) {
 			error = vn_close(ump->um_quotas[i], FREAD|FWRITE,
 			    ump->um_cred[i]);
 			if (error) {
@@ -222,6 +222,7 @@ quota2_umount(struct mount *mp, int flags)
 				return error;
 			}
 		}
+		ump->um_quotas[i] = NULLVP;
 	}
 	return 0;
 }
