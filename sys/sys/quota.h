@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.1.2.1 2011/01/20 14:25:01 bouyer Exp $ */
+/* $NetBSD: quota.h,v 1.1.2.2 2011/02/09 11:31:25 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -29,23 +29,6 @@
 
 #ifndef _SYS_QUOTA_H_
 #define _SYS_QUOTA_H_
-
-/*
- * quota types available in the system. We expect this to be shared
- * by all filesystems.
- */
-#define MAXQUOTAS	2
-#define USRQUOTA	0	/* element used for user quotas */
-#define GRPQUOTA	1	/* element used for group quotas */
-
-/*
- * Definitions for the default names for types above
- */
-#define INITQFNAMES { \
-	"user",		/* USRQUOTA */ \
-	"group",	/* GRPQUOTA */ \
-	"undefined", \
-}
 
 #ifndef _KERNEL
 __BEGIN_DECLS
