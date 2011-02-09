@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.4.4.1 2011/02/08 16:19:45 bouyer Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.4.4.2 2011/02/09 11:00:08 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.4.4.1 2011/02/08 16:19:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.4.4.2 2011/02/09 11:00:08 bouyer Exp $");
 
 #include "opt_mtrr.h"
 
@@ -92,7 +92,7 @@ x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)
 	mtrr.flags = MTRR_VALID;
 	mtrr.owner = 0;
 
-	aprint_debug("%s: 0x%llx-0x%llx\n", __func__,
+	aprint_debug("%s: 0x%" PRIx64 "-0x%" PRIx64 "\n", __func__,
 	    mtrr.base, mtrr.base + mtrr.len - 1);
 
 	n = 1;
