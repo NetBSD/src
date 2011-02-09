@@ -1,4 +1,4 @@
-.\"     $NetBSD: hyper.4,v 1.3 2008/04/30 13:10:56 martin Exp $
+.\"     $NetBSD: hyper.4,v 1.4 2011/02/09 14:13:09 tsutsui Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 10, 2001
+.Dd February 9, 2011
 .Dt HYPER 4 hp300
 .Os
 .Sh NAME
@@ -37,8 +37,9 @@
 ``Hyperion'' graphics device interface
 .Sh SYNOPSIS
 .Cd "hyper* at dio? scode ?"
+.Cd "wsdisplay* at hyper?"
 .Sh DESCRIPTION
 This driver is for the Hyperion monochrome framebuffer.
 .Sh SEE ALSO
-.Xr grf 4 ,
-.Xr ite 4
+.Xr wsdisplay 4 ,
+.Xr wscons 4
