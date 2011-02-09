@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.30 2011/02/08 22:16:58 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.31 2011/02/09 06:26:48 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -114,7 +114,7 @@ struct netidlist {
 };
 
 struct verslist {
-	int vers;
+	rpcvers_t vers;
 	struct verslist *next;
 };
 
@@ -843,7 +843,7 @@ failed:
 			(void)printf("%10lu  ", (unsigned long)rs->prog);
 			for (vl = rs->vlist; vl; vl = vl->next) {
 				(void)snprintf(q, sizeof(buf) - (q - buf),
-				    "%d", vl->vers);
+				    "%lu", (unsigned long)vl->vers);
 				q = q + strlen(q);
 				if (vl->next) {
 					(void)snprintf(q,
@@ -1531,12 +1531,14 @@ getvers(const char *arg)
 {
 	char *strptr;
 	rpcvers_t vers;
+	unsigned long ulvers;
 
-	vers = strtoul(arg, &strptr, 0);
+	ulvers = strtoul(arg, &strptr, 0);
 	if (strptr == arg || *strptr != '\0' ||
-	    (vers == ULONG_MAX && errno == ERANGE))
+	    (ulvers == ULONG_MAX && errno == ERANGE))
 		errx(1, "Illegal version number `%s'", arg);
-	return (rpcvers_t)vers;
+	vers = (rpcvers_t)ulvers;
+	return vers;
 }
 
 /*
