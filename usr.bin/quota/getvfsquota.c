@@ -1,4 +1,4 @@
-/*	$NetBSD: getvfsquota.c,v 1.1.2.2 2011/01/30 19:38:45 bouyer Exp $ */
+/*	$NetBSD: getvfsquota.c,v 1.1.2.3 2011/02/09 10:21:36 bouyer Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getvfsquota.c,v 1.1.2.2 2011/01/30 19:38:45 bouyer Exp $");
+__RCSID("$NetBSD: getvfsquota.c,v 1.1.2.3 2011/02/09 10:21:36 bouyer Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,9 +75,8 @@ getvfsquota(const char *mp, struct quota2_entry *q2e, int8_t *versp,
 	if (!ret)
 		err(1, "prop_dictionary_set(id)");
 		
-	if (!prop_array_add(datas, data))
+	if (!prop_array_add_and_rel(datas, data))
 		err(1, "prop_array_add(data)");
-	prop_object_release(data);
 	if (!quota2_prop_add_command(cmds, "get", qfextension[type], datas))
 		err(1, "prop_add_command");
 	if (!quota2_prop_add_command(cmds, "get version", qfextension[type],
