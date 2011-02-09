@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.20 2009/10/24 17:24:01 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.21 2011/02/09 09:46:59 pooka Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.20 2009/10/24 17:24:01 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.21 2011/02/09 09:46:59 pooka Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -157,8 +157,6 @@ __weak_alias(res_nsend,__res_nsend)
 
 #ifndef USE_POLL
 static const int highestFD = FD_SETSIZE - 1;
-#else
-static int highestFD = 0;
 #endif
 
 /* Forward. */
@@ -332,10 +330,6 @@ res_nsend(res_state statp,
 {
 	int gotsomewhere, terrno, tries, v_circuit, resplen, ns, n;
 	char abuf[NI_MAXHOST];
-
-#ifdef USE_POLL
-	highestFD = sysconf(_SC_OPEN_MAX) - 1;
-#endif
 
 	(void)res_check(statp, NULL);
 
@@ -669,10 +663,12 @@ send_vc(res_state statp,
 			res_nclose(statp);
 
 		statp->_vcsock = socket(nsap->sa_family, SOCK_STREAM, 0);
+#ifndef USE_POLL
 		if (statp->_vcsock > highestFD) {
 			res_nclose(statp);
 			errno = ENOTSOCK;
 		}
+#endif
 		if (statp->_vcsock < 0) {
 			switch (errno) {
 			case EPROTONOSUPPORT:
@@ -848,10 +844,12 @@ send_dg(res_state statp, const u_char *buf, int buflen, u_char *ans,
 	nsaplen = get_salen(nsap);
 	if (EXT(statp).nssocks[ns] == -1) {
 		EXT(statp).nssocks[ns] = socket(nsap->sa_family, SOCK_DGRAM, 0);
+#ifndef USE_POLL
 		if (EXT(statp).nssocks[ns] > highestFD) {
 			res_nclose(statp);
 			errno = ENOTSOCK;
 		}
+#endif
 		if (EXT(statp).nssocks[ns] < 0) {
 			switch (errno) {
 			case EPROTONOSUPPORT:
