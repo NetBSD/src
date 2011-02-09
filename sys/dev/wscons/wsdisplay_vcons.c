@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.22 2011/02/08 23:06:25 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.23 2011/02/09 13:19:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.22 2011/02/08 23:06:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.23 2011/02/09 13:19:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,7 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	    vcons_softintr, vd);
 	callout_init(&vd->intr, 0);
 	callout_setfunc(&vd->intr, vcons_intr, vd);
+	vd->intr_valid = 1;
 
 	/* XXX assume that the 'dev' arg is never dereferenced */
 	config_interrupts((device_t)vd, vcons_intr_enable);
@@ -1426,7 +1427,7 @@ vcons_softintr(void *cookie)
 	struct vcons_screen *scr = vd->active;
 	unsigned int dirty;
 
-	if (scr) {
+	if (scr && vd->use_intr == 1) {
 		if (!SCREEN_IS_BUSY(scr)) {
 			dirty = atomic_swap_uint(&scr->scr_dirty, 0);
 			if (dirty > 0) {
@@ -1448,3 +1449,33 @@ vcons_intr_enable(device_t dev)
 	callout_schedule(&vd->intr, mstohz(33));
 }
 #endif /* VCONS_DRAW_INTR */
+
+void
+vcons_enable_polling(struct vcons_data *vd)
+{
+	struct vcons_screen *scr = vd->active;
+
+#ifdef VCONS_DRAW_INTR
+	vd->use_intr = 0;
+#endif
+
+	if (scr && !SCREEN_IS_BUSY(scr)) {
+		if ((scr->scr_flags & VCONS_NO_REDRAW) == 0)
+			vcons_redraw_screen(scr);
+	}
+}
+
+void
+vcons_disable_polling(struct vcons_data *vd)
+{
+#ifdef VCONS_DRAW_INTR
+	struct vcons_screen *scr = vd->active;
+
+	if (!vd->intr_valid)
+		return;
+
+	vd->use_intr = 1;
+	if (scr)
+		atomic_inc_uint(&scr->scr_dirty);
+#endif
+}

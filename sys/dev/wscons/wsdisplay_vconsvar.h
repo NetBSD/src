@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.16 2011/02/08 23:06:25 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.17 2011/02/09 13:19:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -137,6 +137,7 @@ struct vcons_data {
 #endif
 #ifdef VCONS_DRAW_INTR
 	callout_t intr;
+	int intr_valid;
 	void *intr_softint;
 	int use_intr;		/* use intr drawing when non-zero */
 #endif
@@ -173,5 +174,8 @@ int	vcons_init_screen(struct vcons_data *, struct vcons_screen *, int,
 void	vcons_redraw_screen(struct vcons_screen *);
 
 void	vcons_replay_msgbuf(struct vcons_screen *);
+
+void	vcons_enable_polling(struct vcons_data *);
+void	vcons_disable_polling(struct vcons_data *);
 
 #endif /* _WSDISPLAY_VCONS_H_ */
