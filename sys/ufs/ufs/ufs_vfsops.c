@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.40.8.1 2011/01/20 14:25:03 bouyer Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.40.8.2 2011/02/09 11:37:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.40.8.1 2011/01/20 14:25:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.40.8.2 2011/02/09 11:37:16 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -106,7 +106,7 @@ ufs_quotactl(struct mount *mp, prop_dictionary_t dict)
 
 #if !defined(QUOTA) && !defined(QUOTA2)
 	(void) mp;
-	(void) pref;
+	(void) dict;
 	(void) l;
 	return (EOPNOTSUPP);
 #else
