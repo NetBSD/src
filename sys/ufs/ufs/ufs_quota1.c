@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.1.2.4 2011/02/09 12:01:20 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.1.2.5 2011/02/09 16:15:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.4 2011/02/09 12:01:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.5 2011/02/09 16:15:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.4 2011/02/09 12:01:20 bouyer Ex
 #include <sys/mount.h>
 #include <sys/kauth.h>
 
+#include <ufs/ufs/quota2_prop.h>
 #include <ufs/ufs/quota1.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -55,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.4 2011/02/09 12:01:20 bouyer Ex
 
 static int chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
 static int chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
-static int quotaoff(struct lwp *, struct mount *, int);
 
 /*
  * Update disk usage, and take corrective action.
@@ -287,7 +287,7 @@ quota1_umount(struct mount *mp, int flags)
 
 	for (i = 0; i < MAXQUOTAS; i++) {
 		if (ump->um_quotas[i] != NULLVP) {
-			quotaoff(l, mp, i);
+			quota1_handle_cmd_quotaoff(l, ump, i);
 		}
 	}
 	return 0;
@@ -297,14 +297,14 @@ quota1_umount(struct mount *mp, int flags)
  * Code to process quotactl commands.
  */
 
-#if 0
 /*
  * set up a quota file for a particular file system.
  */
-static int
-quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
+int
+quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
+    const char *fname)
 {
-	struct ufsmount *ump = VFSTOUFS(mp);
+	struct mount *mp = ump->um_mountp;
 	struct vnode *vp, **vpp, *mvp;
 	struct dquot *dq;
 	int error;
@@ -317,9 +317,8 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 		return (EBUSY);
 	}
 		
-	/* XXX XXX XXX */
 	if (mp->mnt_wapbl != NULL) {
-		printf("%s: quotas cannot yet be used with -o log\n",
+		printf("%s: quota v1 cannot be used with -o log\n",
 		    mp->mnt_stat.f_mntonname);
 		return (EOPNOTSUPP);
 	}
@@ -344,7 +343,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 		return (EACCES);
 	}
 	if (*vpp != vp)
-		quotaoff(l, mp, type);
+		quota1_handle_cmd_quotaoff(l, ump, type);
 	mutex_enter(&dqlock);
 	while ((ump->umq1_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
 		cv_wait(&dqcv, &dqlock);
@@ -414,20 +413,19 @@ again:
 		ump->um_flags |= UFS_QUOTA;
 	mutex_exit(&dqlock);
 	if (error)
-		quotaoff(l, mp, type);
+		quota1_handle_cmd_quotaoff(l, ump, type);
 	return (error);
 }
-#endif
 
 /*
  * turn off disk quotas for a filesystem.
  */
-static int
-quotaoff(struct lwp *l, struct mount *mp, int type)
+int
+quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 {
+	struct mount *mp = ump->um_mountp;
 	struct vnode *vp;
 	struct vnode *qvp, *mvp;
-	struct ufsmount *ump = VFSTOUFS(mp);
 	struct dquot *dq;
 	struct inode *ip;
 	kauth_cred_t cred;
@@ -502,34 +500,108 @@ int
 quota1_handle_cmd_get(struct ufsmount *ump, int type, int id,
     int defaultq, prop_array_t replies)
 {
-	return EOPNOTSUPP;
+	struct dquot *dq;
+	struct quota2_entry q2e;
+	prop_dictionary_t dict;
+	int error;
+
+	if (ump->um_quotas[type] == NULLVP)
+		return ENODEV;
+
+	if (defaultq) { /* we want the grace period of id 0 */
+		if ((error = dqget(NULLVP, 0, ump, type, &dq)) != 0)
+			return error;
+	} else {
+		if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
+			return error;
+	}
+	dqblk2q2e(&dq->dq_un.dq1_dqb, &q2e);
+	dqrele(NULLVP, dq);
+	if (defaultq) {
+		q2e.q2e_val[QL_BLOCK].q2v_grace = q2e.q2e_val[QL_BLOCK].q2v_time;
+		q2e.q2e_val[QL_FILE].q2v_grace = q2e.q2e_val[QL_FILE].q2v_time;
+	}
+	dict = q2etoprop(&q2e, defaultq);
+	if (dict == NULL)
+		return ENOMEM;
+	if (!prop_array_add_and_rel(replies, dict))
+		return ENOMEM;
+	return 0;
 }
 
 int
 quota1_handle_cmd_set(struct ufsmount *ump, int type, int id,
     int defaultq, prop_dictionary_t data)
 {
-	return EOPNOTSUPP;
+	struct dquot *dq;
+	struct quota2_entry q2e;
+	struct dqblk dqb;
+	int error;
+
+	if (ump->um_quotas[type] == NULLVP)
+		return ENODEV;
+
+	error = quota2_dict_update_q2e_limits(data, &q2e);
+	if (error)
+		return error;
+
+	if (defaultq) {
+		/* just update grace times */
+		if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
+			return error;
+		mutex_enter(&dq->dq_interlock);
+		ump->umq1_btime[type] = dq->dq_btime =
+		    q2e.q2e_val[QL_BLOCK].q2v_grace;
+		ump->umq1_itime[type] = dq->dq_itime =
+		    q2e.q2e_val[QL_FILE].q2v_grace;
+		mutex_exit(&dq->dq_interlock);
+		dq->dq_flags |= DQ_MOD;
+		dqrele(NULLVP, dq);
+		return 0;
+	}
+
+	q2e2dqblk(&q2e, &dqb);
+
+	if ((error = dqget(NULLVP, id, ump, type, &dq)) != 0)
+		return (error);
+	mutex_enter(&dq->dq_interlock);
+	/*
+	 * Copy all but the current values.
+	 * Reset time limit if previously had no soft limit or were
+	 * under it, but now have a soft limit and are over it.
+	 */
+	dqb.dqb_curblocks = dq->dq_curblocks;
+	dqb.dqb_curinodes = dq->dq_curinodes;
+	if (dq->dq_id != 0) {
+		dqb.dqb_btime = dq->dq_btime;
+		dqb.dqb_itime = dq->dq_itime;
+	}
+	if (dqb.dqb_bsoftlimit &&
+	    dq->dq_curblocks >= dqb.dqb_bsoftlimit &&
+	    (dq->dq_bsoftlimit == 0 || dq->dq_curblocks < dq->dq_bsoftlimit))
+		dqb.dqb_btime = time_second + ump->umq1_btime[type];
+	if (dqb.dqb_isoftlimit &&
+	    dq->dq_curinodes >= dqb.dqb_isoftlimit &&
+	    (dq->dq_isoftlimit == 0 || dq->dq_curinodes < dq->dq_isoftlimit))
+		dqb.dqb_itime = time_second + ump->umq1_itime[type];
+	dq->dq_un.dq1_dqb = dqb;
+	if (dq->dq_curblocks < dq->dq_bsoftlimit)
+		dq->dq_flags &= ~DQ_WARN(QL_BLOCK);
+	if (dq->dq_curinodes < dq->dq_isoftlimit)
+		dq->dq_flags &= ~DQ_WARN(QL_FILE);
+	if (dq->dq_isoftlimit == 0 && dq->dq_bsoftlimit == 0 &&
+	    dq->dq_ihardlimit == 0 && dq->dq_bhardlimit == 0)
+		dq->dq_flags |= DQ_FAKE;
+	else
+		dq->dq_flags &= ~DQ_FAKE;
+	dq->dq_flags |= DQ_MOD;
+	mutex_exit(&dq->dq_interlock);
+	dqrele(NULLVP, dq);
+	return (0);
 }
 
 
 #if 0
-/*
- * Q_GETQUOTA - return current values in a dqblk structure.
- */
-int
-getquota1(struct mount *mp, u_long id, int type, struct dqblk *dqb)
-{
-	struct dquot *dq;
-	int error;
-
-	if ((error = dqget(NULLVP, id, VFSTOUFS(mp), type, &dq)) != 0)
-		return (error);
-	memcpy(dqb, (void *)&dq->dq_un.dq1_dqb, sizeof (struct dqblk));
-	dqrele(NULLVP, dq);
-	return (error);
-}
-
 /*
  * Q_SETQUOTA - assign an entire dqblk structure.
  */
@@ -539,7 +611,7 @@ setquota1(struct mount *mp, u_long id, int type, struct dqblk *dqb)
 	struct dquot *dq;
 	struct dquot *ndq;
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int error;
+	
 
 	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
 		return (error);
