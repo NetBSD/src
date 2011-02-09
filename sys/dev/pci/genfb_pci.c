@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.27 2011/01/22 15:14:28 cegger Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.28 2011/02/09 13:19:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.27 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.28 2011/02/09 13:19:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ static int	pci_genfb_ioctl(void *, void *, u_long, void *, int,
 static paddr_t	pci_genfb_mmap(void *, void *, off_t, int);
 static int	pci_genfb_borrow(void *, bus_addr_t, bus_space_handle_t *);
 static int	pci_genfb_drm_print(void *, const char *);
+static bool	pci_genfb_shutdown(device_t, int);
 
 CFATTACH_DECL_NEW(genfb_pci, sizeof(struct pci_genfb_softc),
     pci_genfb_match, pci_genfb_attach, NULL, NULL);
@@ -117,11 +118,13 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 
 	/* firmware / MD code responsible for restoring the display */
 	if (sc->sc_gen.sc_pmfcb == NULL)
-		pmf_device_register(self, NULL, NULL);
+		pmf_device_register1(self, NULL, NULL,
+		    pci_genfb_shutdown);
 	else
-		pmf_device_register(self,
+		pmf_device_register1(self,
 		    sc->sc_gen.sc_pmfcb->gpc_suspend,
-		    sc->sc_gen.sc_pmfcb->gpc_resume);
+		    sc->sc_gen.sc_pmfcb->gpc_resume,
+		    pci_genfb_shutdown);
 
 	if ((sc->sc_gen.sc_width == 0) || (sc->sc_gen.sc_fbsize == 0)) {
 		aprint_debug_dev(self, "not configured by firmware\n");
@@ -325,4 +328,11 @@ pci_genfb_borrow(void *opaque, bus_addr_t addr, bus_space_handle_t *hdlp)
 		return 0;
 	*hdlp = sc->sc_memh;
 	return 1;
+}
+
+static bool
+pci_genfb_shutdown(device_t self, int flags)
+{
+	genfb_enable_polling(self);
+	return true;
 }
