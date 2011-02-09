@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.40 2008/10/09 14:56:35 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.40.14.1 2011/02/09 09:51:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.40 2008/10/09 14:56:35 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.40.14.1 2011/02/09 09:51:17 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,10 @@ __RCSID("$NetBSD: quotacheck.c,v 1.40 2008/10/09 14:56:35 christos Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/queue.h>
+#include <sys/statvfs.h>
 
 #include <ufs/ufs/dinode.h>
-#include <ufs/ufs/quota.h>
+#include <ufs/ufs/quota1.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -482,9 +483,25 @@ update(fsname, quotafile, type)
 	u_int32_t id, lastid, nextid;
 	int need_seek;
 	struct dqblk dqbuf;
-	static int warned = 0;
 	static struct dqblk zerodqbuf;
 	static struct fileusage zerofileusage;
+	struct statvfs *fst;
+	int nfst, i;
+
+	nfst = getmntinfo(&fst, MNT_WAIT);
+	if (nfst == 0)
+		errx(1, "no filesystems mounted!");
+
+	for (i = 0; i < nfst; i++) {
+		if (strncmp(fst[i].f_fstypename, "ffs",
+		    sizeof(fst[i].f_fstypename)) == 0 &&
+		    strncmp(fst[i].f_mntonname, fsname,
+		    sizeof(fst[i].f_mntonname)) == 0 &&
+		    (fst[i].f_flag & ST_QUOTA) != 0) {
+			warnx("filesystem %s has quotas already turned on",
+			    fsname);
+		}
+	}
 
 	if ((qfo = fopen(quotafile, "r+")) == NULL) {
 		if (errno == ENOENT)
@@ -506,12 +523,6 @@ update(fsname, quotafile, type)
 		    "quotacheck: %s: %s\n", quotafile, strerror(errno));
 		(void) fclose(qfo);
 		return (1);
-	}
-	if (quotactl(fsname, QCMD(Q_SYNC, type), 0, (void *) NULL) < 0 &&
-	    errno == EOPNOTSUPP && !warned && vflag) {
-		warned++;
-		(void)printf("*** Warning: %s\n",
-		    "Quotas are not compiled into this kernel");
 	}
 	need_seek = 1;
 	for (lastid = highid[type], id = 0; id <= lastid; id = nextid) {
@@ -576,10 +587,6 @@ update(fsname, quotafile, type)
 			need_seek = nextid != id + 1;
 		}
 		(void) fwrite((char *)&dqbuf, sizeof(struct dqblk), 1, qfo);
-
-		if (!warned)
-			(void) quotactl(fsname, QCMD(Q_SETUSE, type), id,
-			    (caddr_t)&dqbuf);
 
 		fup->fu_curinodes = 0;
 		fup->fu_curblocks = 0;
