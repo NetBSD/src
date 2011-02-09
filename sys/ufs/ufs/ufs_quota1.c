@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.1.2.3 2011/02/08 20:00:53 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.1.2.4 2011/02/09 12:01:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.3 2011/02/08 20:00:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.1.2.4 2011/02/09 12:01:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -701,7 +701,7 @@ dq1get(struct vnode *dqvp, u_long id, struct ufsmount *ump, int type,
 	struct uio auio;
 	int error;
 
-	KASSERT(mutex_locked(&dq->dq_interlock));
+	KASSERT(mutex_owned(&dq->dq_interlock));
 	vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
