@@ -58,6 +58,10 @@
 #include <netinet/tcp.h>
 #endif
   
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+  
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
