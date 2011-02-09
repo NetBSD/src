@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.10 2011/02/09 11:18:30 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.11 2011/02/09 16:15:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.10 2011/02/09 11:18:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.11 2011/02/09 16:15:01 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -81,6 +81,10 @@ static int quota_handle_cmd_set(struct mount *, struct lwp *,
 static int quota_handle_cmd_getall(struct mount *, struct lwp *,
     prop_dictionary_t, int, prop_array_t);
 static int quota_handle_cmd_clear(struct mount *, struct lwp *,
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *, 
     prop_dictionary_t, int, prop_array_t);
 /*
  * Initialize the quota fields of an inode.
@@ -169,6 +173,16 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
 
 	if (strcmp(cmd, "get version") == 0) {
 		error = quota_handle_cmd_get_version(mp, l, cmddict, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "quotaon") == 0) {
+		error = quota_handle_cmd_quotaon(mp, l, cmddict,
+		    q2type, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "quotaoff") == 0) {
+		error = quota_handle_cmd_quotaoff(mp, l, cmddict,
+		    q2type, datas);
 		goto end;
 	}
 	if (strcmp(cmd, "get") == 0) {
@@ -484,6 +498,69 @@ quota_handle_cmd_getall(struct mount *mp, struct lwp *l,
 	} else {
 		error = 0;
 	}
+	return error;
+}
+
+static int 
+quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	prop_dictionary_t data;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error;
+	const char *qfile;
+
+	if ((ump->um_flags & UFS_QUOTA2) != 0)
+		return EBUSY;
+	
+	if (prop_array_count(datas) != 1)
+		return EINVAL;
+
+	data = prop_array_get(datas, 0);
+	if (data == NULL)
+		return ENOMEM;
+	if (!prop_dictionary_get_cstring_nocopy(data, "quotafile",
+	    &qfile))
+		return EINVAL;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
+	if (error != 0) {
+		return error;
+	}
+#ifdef QUOTA
+	error = quota1_handle_cmd_quotaon(l, ump, type, qfile);
+#else
+	error = EOPNOTSUPP;
+#endif
+	
+	return error;
+}
+
+static int 
+quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error;
+
+	if ((ump->um_flags & UFS_QUOTA2) != 0)
+		return EOPNOTSUPP;
+	
+	if (prop_array_count(datas) != 0)
+		return EINVAL;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
+	if (error != 0) {
+		return error;
+	}
+#ifdef QUOTA
+	error = quota1_handle_cmd_quotaoff(l, ump, type);
+#else
+	error = EOPNOTSUPP;
+#endif
+	
 	return error;
 }
 
