@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.25.64.2 2011/01/31 15:19:21 bouyer Exp $	*/
+/*	$NetBSD: quota.h,v 1.25.64.3 2011/02/09 11:18:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,7 +59,6 @@
 #define INITQFNAMES { \
 	"user",		/* USRQUOTA */ \
 	"group",	/* GRPQUOTA */ \
-	"undefined", \
 }
 
 /* definition of limits types for each quota */
