@@ -1,4 +1,4 @@
-/*	$NetBSD: raidctl_rumpops.c,v 1.1 2010/12/15 18:37:55 pooka Exp $	*/
+/*	$NetBSD: raidctl_rumpops.c,v 1.2 2011/02/09 11:22:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: raidctl_rumpops.c,v 1.1 2010/12/15 18:37:55 pooka Exp $");
+__RCSID("$NetBSD: raidctl_rumpops.c,v 1.2 2011/02/09 11:22:49 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -44,5 +44,6 @@ const struct prog_ops prog_ops = {
 
 	.op_open =	rump_sys_open,
 	.op_ioctl =	rump_sys_ioctl,
+	.op_fstat =	rump_sys_fstat,
 	.op_close =	rump_sys_close,
 };
