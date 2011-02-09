@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.10 2011/02/07 20:31:20 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.11 2011/02/09 17:48:45 bouyer Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.10 2011/02/07 20:31:20 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.11 2011/02/09 17:48:45 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -794,7 +794,7 @@ readprivs(quplist, infd)
 		last_char(line2) = '\0';
 		if (dflag && version == 1) {
 			if (sscanf(line1,
-			    "\tblocks:(grace = %s\n", stime) != 1) {
+			    "\tblocks: (grace = %s\n", stime) != 1) {
 				warnx("%s:%s: bad format", fsp, line1);
 				goto out;
 			}
@@ -808,7 +808,7 @@ readprivs(quplist, infd)
 				goto out;
 			}
 			if (sscanf(line2,
-			    "\tinodes:(grace = %s\n", stime) != 1) {
+			    "\tinodes: (grace = %s\n", stime) != 1) {
 				warnx("%s:%s: bad format", fsp, line2);
 				goto out;
 			}
