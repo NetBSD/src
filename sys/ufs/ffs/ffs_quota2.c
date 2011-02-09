@@ -1,4 +1,4 @@
-/* $NetBSD: ffs_quota2.c,v 1.1.2.1 2011/01/20 14:25:02 bouyer Exp $ */
+/* $NetBSD: ffs_quota2.c,v 1.1.2.2 2011/02/09 19:49:44 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.1.2.1 2011/01/20 14:25:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.1.2.2 2011/02/09 19:49:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,7 +82,8 @@ ffs_quota2_mount(struct mount *mp)
 	if (error)
 		return error;
 
-        if (fs->fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA)) {
+        if (fs->fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA) &&
+	    ump->um_quotas[USRQUOTA] == NULLVP) {
 		error = VFS_VGET(mp, fs->fs_quotafile[USRQUOTA], &vp);
 		if (error) {
 			printf("%s: can't vget() user quota inode: %d\n",
@@ -96,7 +97,8 @@ ffs_quota2_mount(struct mount *mp)
 		mutex_exit(&vp->v_interlock);
 		VOP_UNLOCK(vp);
 	}
-        if (fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA)) {
+        if (fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA) &&
+	    ump->um_quotas[GRPQUOTA] == NULLVP) {
 		error = VFS_VGET(mp, fs->fs_quotafile[GRPQUOTA], &vp);
 		if (error) {
 			vn_close(ump->um_quotas[USRQUOTA],
