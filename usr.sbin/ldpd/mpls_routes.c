@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.3 2011/01/04 10:58:15 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.4 2011/02/09 11:38:57 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,14 +71,12 @@ extern struct sockaddr mplssockaddr;
 
 /* Many lines inspired or shamelessly stolen from sbin/route/route.c */
 
-#define ROUNDUP(a) \
-	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define NEXTADDR(u) \
-	do { l = ROUNDUP(u->sa.sa_len); memcpy(cp, u, l); cp += l; } while(0);
+	do { l = RT_ROUNDUP(u->sa.sa_len); memcpy(cp, u, l); cp += l; } while(0);
 #define NEXTADDR2(u) \
-	do { l = ROUNDUP(u.sa_len); memcpy(cp, &u, l); cp += l; } while(0);
+	do { l = RT_ROUNDUP(u.sa_len); memcpy(cp, &u, l); cp += l; } while(0);
 #define GETNEXT(sunion) \
-	(union sockunion *) ((char *) (sunion)  + ROUNDUP((sunion)->sa.sa_len))
+	(union sockunion *) ((char *) (sunion)  + RT_ROUNDUP((sunion)->sa.sa_len))
 
 int 
 read_route_socket(char *s, int max)
