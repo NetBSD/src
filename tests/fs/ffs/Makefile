@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.2.5 2011/02/07 20:31:46 bouyer Exp $
+#	$NetBSD: Makefile,v 1.14.2.6 2011/02/09 20:53:10 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -28,6 +28,7 @@ TESTS_C+=	t_snapshot_log
 TESTS_C+=	t_snapshot_v2
 TESTS_C+=	t_mount
 TESTS_C+=	t_quota2_1
+TESTS_C+=	t_quota2_remount
 
 LDADD+=-lrumpfs_ffs						# ffs
 LDADD+=-lrumpdev_fss						# snapshot dev
