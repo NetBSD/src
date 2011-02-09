@@ -1,15 +1,9 @@
-# $NetBSD: md.ews4800mips,v 1.7 2011/02/09 13:41:00 tsutsui Exp $
-./usr/X11R6/bin/X					-unknown-	x11
-./usr/X11R6/bin/Xews4800mips				-unknown-	x11
-./usr/X11R6/man/cat1/Xews4800mips.0			-unknown-	.cat,x11
-./usr/X11R6/man/html1/Xews4800mips.html			-unknown-	html,x11
-./usr/X11R6/man/man1/Xews4800mips.1			-unknown-	.man,x11
+# $NetBSD: md.hp300,v 1.9 2011/02/09 13:41:00 tsutsui Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
 ./usr/X11R7/bin/gtf					-unknown-	xorg
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
