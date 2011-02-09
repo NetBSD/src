@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.34 2011/02/08 10:52:56 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.35 2011/02/09 13:19:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.34 2011/02/08 10:52:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.35 2011/02/09 13:19:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,4 +684,21 @@ genfb_brightness_down(device_t dev)
 	struct genfb_softc *sc = device_private(dev);
 
 	genfb_set_backlight(sc, sc->sc_backlight_level - 8);
+}
+
+void
+genfb_enable_polling(device_t dev)
+{
+	struct genfb_softc *sc = device_private(dev);
+
+	SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
+	vcons_enable_polling(&sc->vd);
+}
+
+void
+genfb_disable_polling(device_t dev)
+{
+	struct genfb_softc *sc = device_private(dev);
+
+	vcons_disable_polling(&sc->vd);
 }
