@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.9 2011/02/08 20:00:53 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.10 2011/02/09 11:18:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.9 2011/02/08 20:00:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.10 2011/02/09 11:18:30 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -59,6 +59,18 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.9 2011/02/08 20:00:53 bouyer Ex
 
 kmutex_t dqlock;
 kcondvar_t dqcv;
+
+const char *quotatypes[MAXQUOTAS] = INITQFNAMES;
+
+/*
+ * Code pertaining to management of the in-core dquot data structures.
+ */
+#define DQHASH(dqvp, id) \
+	(((((long)(dqvp)) >> 8) + id) & dqhash)
+static LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
+static u_long dqhash;
+static pool_cache_t dquot_cache;
+
 
 static int quota_handle_cmd_get_version(struct mount *, struct lwp *,
     prop_dictionary_t, prop_array_t);
