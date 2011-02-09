@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.4 2011/01/04 10:18:42 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.5 2011/02/09 11:38:57 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netmpls/mpls.h>
+#include <net/route.h>
 
 #include <sys/param.h>
 
@@ -48,9 +49,6 @@
 #include "label.h"
 #include "mpls_interface.h"
 #include "mpls_routes.h"
-
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 int
 mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
@@ -116,7 +114,7 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 
 	so_gate = (union sockunion *) rgp->m_space;
 	so_gate = (union sockunion *)((char*)so_gate +
-	    ROUNDUP(so_gate->sa.sa_len));
+	    RT_ROUNDUP(so_gate->sa.sa_len));
 	if (rgp->m_rtm.rtm_addrs & RTA_IFA) {
 		int li = 1;
 		so_oldifa = so_gate;
@@ -128,7 +126,7 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 			li++;
 		for (int i = 0; i < li; i++)
 			so_oldifa = (union sockunion *)((char*)so_oldifa +
-			    ROUNDUP(so_oldifa->sa.sa_len));
+			    RT_ROUNDUP(so_oldifa->sa.sa_len));
 	}
 
 	if (so_gate->sa.sa_family != AF_INET) {
