@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.55 2011/02/09 13:24:24 jmcneill Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.56 2011/02/09 15:02:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.55 2011/02/09 13:24:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.56 2011/02/09 15:02:00 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,11 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 static bool
 x86_genfb_setmode(struct genfb_softc *sc, int newmode)
 {
+#if NGENFB > 0
 	if (newmode == WSDISPLAYIO_MODE_EMUL)
 		x86_genfb_mtrr_init(sc->sc_fboffset,
 		    sc->sc_height * sc->sc_stride);
+#endif
 	return true;
 }
 
