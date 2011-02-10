@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.169 2011/02/02 15:13:34 chuck Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.170 2011/02/10 14:46:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -559,7 +559,7 @@ MALLOC_DECLARE(M_VMMAP);
 MALLOC_DECLARE(M_VMPMAP);
 
 /* vm_machdep.c */
-void		vmapbuf(struct buf *, vsize_t);
+int		vmapbuf(struct buf *, vsize_t);
 void		vunmapbuf(struct buf *, vsize_t);
 
 /* uvm_aobj.c */
