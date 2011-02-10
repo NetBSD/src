@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_dv.c,v 1.8 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: ite_dv.c,v 1.9 2011/02/10 11:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -115,7 +115,7 @@ dvbox_init(struct ite_data *ip)
 	db_waitbusy(regbase);
 
 	ite_fontinfo(ip);
-	ite_fontinit(ip);
+	ite_fontinit8bpp(ip);
 
 	/*
 	 * Clear the (visible) framebuffer.

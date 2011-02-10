@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.8 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: ite_tc.c,v 1.9 2011/02/10 11:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,7 +99,7 @@ topcat_init(struct ite_data *ip)
 	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 	tc_waitbusy(regbase, ip->planemask);
 
-	ite_fontinit(ip);
+	ite_fontinit8bpp(ip);
 
 	/*
 	 * Stash the inverted cursor.

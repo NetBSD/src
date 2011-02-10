@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rb.c,v 1.9 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: ite_rb.c,v 1.10 2011/02/10 11:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,7 +113,7 @@ rbox_init(struct ite_data *ip)
 	regbase->write_enable = 0x01;
 	regbase->opwen = 0x00;
 	
-	ite_fontinit(ip);
+	ite_fontinit8bpp(ip);
 
 	/*
 	 * Stash the inverted cursor.

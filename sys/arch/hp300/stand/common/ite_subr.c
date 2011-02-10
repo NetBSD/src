@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.8 2011/02/10 10:44:22 tsutsui Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.9 2011/02/10 11:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,7 +82,35 @@ ite_fontinfo(struct ite_data *ip)
 }
 
 void
-ite_fontinit(struct ite_data *ip)
+ite_fontinit1bpp(struct ite_data *ip)
+{
+	u_char *fbmem, *dp;
+	int c, l, b;
+	int stride, width;
+
+	dp = (u_char *)(getword(ip, getword(ip, FONTROM) + FONTADDR) +
+	    (char *)ip->regbase) + FONTDATA;
+	stride = ip->fbwidth >> 3;
+	width = (ip->ftwidth + 7) / 8;
+
+	for (c = 0; c < 128; c++) {
+		fbmem = (u_char *) FBBASE +
+			(ip->fonty + (c / ip->cpl) * ip->ftheight) *
+			stride;
+		fbmem += (ip->fontx >> 3) + (c % ip->cpl) * width;
+		for (l = 0; l < ip->ftheight; l++) {
+			for (b = 0; b < width; b++) {
+				*fbmem++ = *dp;
+				dp += 2;
+			}
+			fbmem -= width;
+			fbmem += stride;
+		}
+	}
+}
+
+void
+ite_fontinit8bpp(struct ite_data *ip)
 {
 	int bytewidth = (((ip->ftwidth - 1) / 8) + 1);
 	int glyphsize = bytewidth * ip->ftheight;
