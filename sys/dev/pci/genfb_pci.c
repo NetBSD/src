@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.28 2011/02/09 13:19:53 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.29 2011/02/10 10:23:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.28 2011/02/09 13:19:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.29 2011/02/10 10:23:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,9 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
-	    sc->sc_gen.sc_fbsize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
-
+	    sc->sc_gen.sc_fbsize,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+	    &sc->sc_memh) != 0) {
 		aprint_error_dev(self, "unable to map the framebuffer\n");
 		return;
 	}
@@ -244,7 +245,8 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	    (sc->sc_want_wsfb == 1)) {
 
 		return bus_space_mmap(sc->sc_memt, sc->sc_gen.sc_fboffset,
-		   offset, prot, BUS_SPACE_MAP_LINEAR);
+		   offset, prot,
+		   BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 	}
 
 	/*
