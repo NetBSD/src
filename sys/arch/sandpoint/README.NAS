@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.11 2011/02/08 12:21:26 phx Exp $
+$NetBSD: README.NAS,v 1.12 2011/02/10 13:54:45 nisimura Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -41,7 +41,7 @@ Kurobox		11, 12, 13, 14	-> 0, 1, 4, 3
 Synology	12, 13, 14, 15	-> 4, 0, 1, 2
 QNAP		13, 14, 15, 16	-> 0, 1, 2, 3
 StorCenter	12, 13, 14, 15  -> 0, 1, 2, 3
-DLink		13, 14, 15, 16	-> 0, 1, 2, 3
+DLink		13, 14, 15, 16	-> 0, 1, 3, 4
 
 - USB EHCI is a multiple function PCI device which has
   pin assignment A, B and C.
