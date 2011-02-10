@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1585 2011/02/10 14:04:29 rmind Exp $
+#	$NetBSD: mi,v 1.1586 2011/02/10 20:56:02 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2541,7 +2541,7 @@
 ./usr/lib/libldap_r_g.a				-unknown-		debuglib,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	profile,ldap
 ./usr/lib/liblua.a				comp-c-lib
-./usr/lib/liblua_g.a				comp-c-proflib		debuglib
+./usr/lib/liblua_g.a				-unknown-		debuglib
 ./usr/lib/liblua_p.a				comp-c-proflib		profile
 ./usr/lib/liblwres.a				comp-bind-lib
 ./usr/lib/liblwres_g.a				-unknown-		debuglib
@@ -2892,7 +2892,7 @@
 ./usr/lib/libtermcap_g.a			comp-obsolete		obsolete
 ./usr/lib/libtermcap_p.a			comp-c-proflib		profile
 ./usr/lib/libterminfo.a				comp-c-lib
-./usr/lib/libterminfo_g.a			comp-c-proflib		profile,debuglib
+./usr/lib/libterminfo_g.a			-unknown-		debuglib
 ./usr/lib/libterminfo_p.a			comp-c-proflib		profile
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
