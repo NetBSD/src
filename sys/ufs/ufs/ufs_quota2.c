@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.12 2011/02/09 21:17:17 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.13 2011/02/10 16:16:05 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.12 2011/02/09 21:17:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.13 2011/02/10 16:16:05 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.12 2011/02/09 21:17:17 bouyer E
  * the locking order is dq_interlock -> dqlock
  */
 
+static int quota2_bwrite(struct mount *, struct buf *);
 static int getinoquota2(struct inode *, int, struct buf **,
     struct quota2_entry **);
 static int getq2h(struct ufsmount *, int, struct buf **,
@@ -75,6 +76,17 @@ static int quota2_walk_list(struct ufsmount *, struct buf *, int,
       uint64_t, void *));
 
 static const char *valtypes[] = INITQLNAMES;
+
+static int
+quota2_bwrite(struct mount *mp, struct buf *bp)
+{
+	if (mp->mnt_flag & MNT_SYNCHRONOUS)
+		return bwrite(bp);
+	else {
+		bdwrite(bp);
+		return 0;
+	}
+}
 
 static int
 getq2h(struct ufsmount *ump, int type,
@@ -170,12 +182,12 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 			/* callback changed parent's pointer, redo */
 			off = ufs_rw64(*offp, needswap);
 			if (bp != hbp && bp != obp)
-				ret2 = VOP_BWRITE(bp);
+				ret2 = bwrite(bp);
 		} else {
 			/* parent if now current */
 			if (obp != bp && obp != hbp) {
 				if (flags & B_MODIFY)
-					ret2 = VOP_BWRITE(obp);
+					ret2 = bwrite(obp);
 				else
 					brelse(obp, 0);
 			}
@@ -192,7 +204,7 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 	}
 	if (obp != hbp) {
 		if (flags & B_MODIFY)
-			ret2 = VOP_BWRITE(obp);
+			ret2 = bwrite(obp);
 		else
 			brelse(obp, 0);
 	}
@@ -263,7 +275,7 @@ quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq,
 		uvm_vnp_setsize(vp, ip->i_size);
 		quota2_addfreeq2e(q2h, bp->b_data, size, ump->umq2_bsize,
 		    needswap);
-		error = VOP_BWRITE(bp);
+		error = bwrite(bp);
 		error2 = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 		if (error || error2) {
 			brelse(hbp, 0);
@@ -297,7 +309,7 @@ quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq,
 	q2e->q2e_next = q2h->q2h_entries[uid & hash_mask];
 	q2h->q2h_entries[uid & hash_mask] = ufs_rw64(offset, needswap);
 	if (hbp != bp) {
-		VOP_BWRITE(hbp);
+		bwrite(hbp);
 	}
 	*q2ep = q2e;
 	*bpp = bp;
@@ -404,7 +416,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 			else
 				ncurblks += change;
 			q2vp->q2v_cur = ufs_rw64(ncurblks, needswap);
-			VOP_BWRITE(bp[i]);
+			quota2_bwrite(mp, bp[i]);
 			mutex_exit(&dq->dq_interlock);
 		}
 		return 0;
@@ -479,7 +491,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 			q2vp = &q2e[i]->q2e_val[vtype];
 			ncurblks = ufs_rw64(q2vp->q2v_cur, needswap);
 			q2vp->q2v_cur = ufs_rw64(ncurblks + change, needswap);
-			VOP_BWRITE(bp[i]);
+			quota2_bwrite(mp, bp[i]);
 		} else
 			brelse(bp[i], 0);
 		mutex_exit(&dq->dq_interlock);
@@ -532,7 +544,7 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 		}
 		quota2_ufs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
 		mutex_exit(&dqlock);
-		VOP_BWRITE(bp);
+		quota2_bwrite(ump->um_mountp, bp);
 		goto out_wapbl;
 	}
 
@@ -560,7 +572,7 @@ quota2_handle_cmd_set(struct ufsmount *ump, int type, int id,
 		goto out_il;
 	}
 	quota2_ufs_rwq2e(&q2e, q2ep, needswap);
-	VOP_BWRITE(bp);
+	quota2_bwrite(ump->um_mountp, bp);
 
 out_il:
 	mutex_exit(&dq->dq_interlock);
@@ -660,7 +672,7 @@ quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
 			    q2e.q2e_val[i].q2v_grace;
 			q2ep->q2e_val[i].q2v_time = 0;
 		}
-		VOP_BWRITE(bp);
+		quota2_bwrite(ump->um_mountp, bp);
 		goto out_wapbl;
 	}
 	/* we can free it. release bp so we can walk the list */
@@ -678,7 +690,7 @@ quota2_handle_cmd_clear(struct ufsmount *ump, int type, int id,
 	    &q2h->q2h_entries[id & hash_mask], B_MODIFY, &c,
 	    dq2clear_callback);
 
-	VOP_BWRITE(hbp);
+	bwrite(hbp);
 
 out_dqlock:
 	mutex_exit(&dqlock);
