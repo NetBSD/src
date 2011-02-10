@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.9 2010/11/15 20:39:00 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.10 2011/02/10 20:10:54 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -190,7 +190,7 @@ ATF_TC_HEAD(root_chrdev, tc)
 
 ATF_TC_BODY(root_chrdev, tc)
 {
-	MAKEOPTS("-r", "chr 2 0");
+	MAKEOPTS("-r", "chr 2 2");
 	void *args;
 	ssize_t rv;
 	char buf[512];
