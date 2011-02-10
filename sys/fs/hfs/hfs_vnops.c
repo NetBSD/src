@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.20 2011/02/07 03:03:16 jakllsch Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.21 2011/02/10 01:49:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.20 2011/02/07 03:03:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.21 2011/02/10 01:49:51 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -408,15 +408,20 @@ hfs_vop_lookup(void *v)
 		*vpp = vdp;
 	} else {
 		hfs_callback_args cbargs;
-		uint8_t len;
+		uint8_t len, ni;
 
 		hfslib_init_cbargs(&cbargs);
 
 		/* XXX: when decomposing, string could grow
 		   and we have to handle overflow */
-		unicn = malloc(cnp->cn_namelen*sizeof(unicn[0]), M_TEMP, M_WAITOK);
+		unicn = malloc(cnp->cn_namelen * sizeof(unicn[0]),
+		    M_TEMP, M_WAITOK);
 		len = utf8_to_utf16(unicn, cnp->cn_namelen,
 		    cnp->cn_nameptr, cnp->cn_namelen, 0, NULL);
+		/* XXX: perhaps check for colons too, and encode them? */
+		for (ni = 0; ni < len; ni++)
+			if (unicn[ni] == (unichar_t)'/')
+				unicn[ni] = (unichar_t)':';
 		/* XXX: check conversion errors? */
 		if (hfslib_make_catalog_key(VTOH(vdp)->h_rec.u.cnid, len, unicn,
 		    &key) == 0) {
@@ -879,7 +884,7 @@ struct vop_readdir_args /* {
 	off_t bufoff; /* offset in buffer relative to start of dirents */
 	uint32_t numchildren;
 	uint32_t curchild; /* index of child we are stuffing into dirent */
-	size_t namlen;
+	size_t namlen, ni;
 	int error;
 	int i; /* dummy variable */
 	
@@ -927,6 +932,10 @@ struct vop_readdir_args /* {
 			/* XXX: how to handle name too long? */
 			continue;
 		}
+		/* XXX: perhaps check for colons too, and encode them? */
+		for (ni = 0; ni < namlen; ni++)
+			if (curent.d_name[ni] == '/')
+				curent.d_name[ni] = ':';
 		curent.d_namlen = namlen;
 		curent.d_reclen = _DIRENT_SIZE(&curent);
 		
