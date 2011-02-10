@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.13 2011/02/10 12:46:22 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.14 2011/02/10 13:04:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -132,3 +132,4 @@ void gbox_scroll(struct ite_data *);
 void rbox_init(struct ite_data *);
 void dvbox_init(struct ite_data *);
 void hyper_init(struct ite_data *);
+void tvrx_init(struct ite_data *);
