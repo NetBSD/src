@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.14 2011/02/10 13:31:30 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.15 2011/02/10 13:40:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.14 2011/02/10 13:31:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.15 2011/02/10 13:40:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -111,6 +111,16 @@ lwproc_newproc(struct proc *parent, int flags)
 	memcpy(&p->p_startcopy, &parent->p_startcopy,
 	    offsetof(struct proc, p_endcopy)
 	      - offsetof(struct proc, p_startcopy));
+
+	/* some other garbage we need to zero */
+	p->p_sigacts = NULL;
+	p->p_aio = NULL;
+	p->p_dtrace = NULL;
+	p->p_mqueue_cnt = p->p_exitsig = 0;
+	p->p_flag = p->p_sflag = p->p_slflag = p->p_lflag = p->p_stflag = 0;
+	p->p_trace_enabled = 0;
+	p->p_xstat = p->p_acflag = 0;
+	p->p_stackbase = 0;
 
 	p->p_stats = pstatscopy(parent->p_stats);
 
