@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.37 2008/09/03 22:07:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.38 2011/02/10 00:43:19 jym Exp $
 
 SUBDIR=
 SUBDIR+=	bootfloppy
-SUBDIR+=	bootfloppy-big
 SUBDIR+=	bootfloppy-com
+# SUBDIR+=	bootfloppy-big
 # These are all rather archaic...
 # SUBDIR+=	bootfloppy-ps2
 # SUBDIR+=	bootfloppy-small
