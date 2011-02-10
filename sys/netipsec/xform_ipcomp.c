@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.20 2010/09/21 13:41:18 degroote Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.21 2011/02/10 20:24:27 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.20 2010/09/21 13:41:18 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.21 2011/02/10 20:24:27 drochner Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.20 2010/09/21 13:41:18 degroote E
 #include <sys/kernel.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
+#include <sys/socketvar.h> /* for softnet_lock */
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -257,6 +258,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	}
 #endif
 
+	mutex_enter(softnet_lock);
 	s = splsoftnet();
 
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
@@ -282,6 +284,7 @@ ipcomp_input_cb(struct cryptop *crp)
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
 			splx(s);
+			mutex_exit(softnet_lock);
 			return crypto_dispatch(crp);
 		}
 
@@ -340,11 +343,13 @@ ipcomp_input_cb(struct cryptop *crp)
 
 	KEY_FREESAV(&sav);
 	splx(s);
+	mutex_exit(softnet_lock);
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
 	splx(s);
+	mutex_exit(softnet_lock);
 	if (m)
 		m_freem(m);
 	if (tc != NULL)
@@ -513,6 +518,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	skip = tc->tc_skip;
 	rlen = crp->crp_ilen - skip;
 
+	mutex_enter(softnet_lock);
 	s = splsoftnet();
 
 	isr = tc->tc_isr;
@@ -534,6 +540,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
 			splx(s);
+			mutex_exit(softnet_lock);
 			return crypto_dispatch(crp);
 		}
 		IPCOMP_STATINC(IPCOMP_STAT_NOXFORM);
@@ -629,11 +636,13 @@ ipcomp_output_cb(struct cryptop *crp)
 	error = ipsec_process_done(m, isr);
 	KEY_FREESAV(&sav);
 	splx(s);
+	mutex_exit(softnet_lock);
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
 	splx(s);
+	mutex_exit(softnet_lock);
 	if (m)
 		m_freem(m);
 	free(tc, M_XDATA);
