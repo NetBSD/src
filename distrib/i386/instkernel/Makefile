@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2009/03/07 21:35:10 ad Exp $
+#	$NetBSD: Makefile,v 1.13 2011/02/10 00:43:20 jym Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,9 +18,10 @@ ${V}=		${${V}DIR}/${F}.fs
 # If you change the list of distributed install kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 MDSETTARGETS+=	GENERIC			${RAMDISK_B}	-
-MDSETTARGETS+=	INSTALL_FLOPPY		${RAMDISK_B}	-
+MDSETTARGETS+=	INSTALL			${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_XEN3_DOMU	${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_XEN3PAE_DOMU	${RAMDISK_B}	-
+# MDSETTARGETS+=	INSTALL_FLOPPY		${RAMDISK_B}	-
 # MDSETTARGETS+=	INSTALL_SMALL		${RAMDISK_S}	-
 # MDSETTARGETS+=	INSTALL_TINY		${RAMDISK_T}	-
 # MDSETTARGETS+=	INSTALL_PS2		${RAMDISK_S}	-
