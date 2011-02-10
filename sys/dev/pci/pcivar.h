@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.90 2010/06/09 02:39:32 mrg Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.91 2011/02/10 12:37:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -196,11 +196,18 @@ struct pci_conf_state {
 	pcireg_t reg[16];
 };
 
+struct pci_range {
+	bus_addr_t		r_offset;
+	bus_size_t		r_size;
+	int			r_flags;
+};
+
 struct pci_child {
 	device_t		c_dev;
 	bool			c_psok;
 	pcireg_t		c_powerstate;
 	struct pci_conf_state	c_conf;
+	struct pci_range	c_range[8];
 };
 
 struct pci_softc {
