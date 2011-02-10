@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.4 2011/02/08 00:33:05 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.5 2011/02/10 13:38:08 nisimura Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -20,7 +20,7 @@ extern int brdtype;
 #define BRD_QNAPTS101		101
 #define BRD_SYNOLOGY		102
 #define BRD_STORCENTER		103
-#define BRD_DLINKGSM		104
+#define BRD_DLINKDSM		104
 #define BRD_UNKNOWN		-1
 
 struct brdprop {
@@ -64,12 +64,17 @@ void run(void *, void *, void *, void *, void *);
 void delay(unsigned);
 
 /* PCI stuff */
+struct pcidev {
+	unsigned bdf;	/* bus.dev.func */
+	unsigned pvd;	/* device ID */
+	void *drv;	/* driver */
+};
 void  pcisetup(void);
 void  pcifixup(void);
 unsigned pcimaketag(int, int, int);
 void  pcidecomposetag(unsigned, int *, int *, int *);
 int   pcifinddev(unsigned, unsigned, unsigned *);
-int   pcilookup(unsigned, unsigned [][2], int);
+int   pcilookup(unsigned, struct pcidev *, int);
 unsigned pcicfgread(unsigned, int);
 void  pcicfgwrite(unsigned, int, unsigned);
 
@@ -86,6 +91,7 @@ void  pcicfgwrite(unsigned, int, unsigned);
 #define  PCI_CLASS_RAID			0x0104
 #define  PCI_CLASS_SATA			0x0106
 #define  PCI_CLASS_MISCSTORAGE		0x0180
+#define  PCI_CLASS_USB			0x0c03
 #define PCI_BHLC_REG			0x0c
 #define  PCI_HDRTYPE_TYPE(r)		(((r) >> 16) & 0x7f)
 #define  PCI_HDRTYPE_MULTIFN(r)		((r) & (0x80 << 16))
@@ -117,7 +123,7 @@ int net_open(struct open_file *, ...);
 int net_close(struct open_file *);
 int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 
-int netif_init(unsigned);
+int netif_init(void *);
 int netif_open(void *); 
 int netif_close(int); 
 
@@ -133,8 +139,7 @@ NIF_DECL(rge);
 NIF_DECL(skg);
 
 /* DSK support */
-int dskdv_init(unsigned, void **);
-int disk_scan(void *);
+int dskdv_init(void *);
 
 int dsk_open(struct open_file *, ...);
 int dsk_close(struct open_file *);
