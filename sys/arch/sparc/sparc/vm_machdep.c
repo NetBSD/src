@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.103 2011/01/14 02:06:32 rmind Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.104 2011/02/10 14:46:47 pooka Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104 2011/02/10 14:46:47 pooka Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2011/01/14 02:06:32 rmind Exp $
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap, *kpmap;
@@ -121,6 +121,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	} while (len);
 	pmap_update(kpmap);
+
+	return 0;
 }
 
 /*
