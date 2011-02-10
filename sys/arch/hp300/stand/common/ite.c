@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.14 2011/02/10 12:46:22 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.15 2011/02/10 13:04:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,6 +91,10 @@ struct itesw itesw[] = {
 
 	{ GID_HYPERION,
 	hyper_init,	ite_dio_clear,	ite_dio_putc1bpp,
+	ite_dio_cursor,	ite_dio_scroll },
+
+	{ GID_TIGER,
+	tvrx_init,	ite_dio_clear,	ite_dio_putc1bpp,
 	ite_dio_cursor,	ite_dio_scroll },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
