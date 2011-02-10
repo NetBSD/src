@@ -1,0 +1,15 @@
+# $NetBSD: INSTALL,v 1.327 2011/02/10 00:43:19 jym Exp $
+#
+#	INSTALL - Installation kernel.
+#
+#	This kernel is derived from GENERIC with additional memory disk
+#	options.
+
+include	"arch/i386/conf/GENERIC"
+
+#ident 		"INSTALL-$Revision: 1.327 $"
+
+no options	MEMORY_DISK_DYNAMIC
+options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
+options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks

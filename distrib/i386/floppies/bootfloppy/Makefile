@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2008/04/30 15:29:11 ad Exp $
+#	$NetBSD: Makefile,v 1.13 2011/02/10 00:43:19 jym Exp $
 
 FLOPPYBASE=	boot
-FLOPPYMAX=	3
-FLOPPYKERNEL=	netbsd-INSTALL_FLOPPY.gz
+FLOPPYKERNEL=	netbsd-INSTALL.gz
 
 .include "${.CURDIR}/../common/Makefile.bootfloppy"
