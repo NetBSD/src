@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.30 2011/02/10 20:24:27 drochner Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.31 2011/02/10 20:42:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.30 2011/02/10 20:24:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.31 2011/02/10 20:42:30 drochner Exp $");
 
 /*
  * IPsec output processing.
@@ -137,7 +137,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 		ip->ip_off = ntohs(ip->ip_off);
 #endif /* __FreeBSD_ */
 		KERNEL_LOCK(1, NULL);
-		rv = ip_output(m, NULL, NULL, IP_RAWOUTPUT,
+		rv = ip_output(m, NULL, NULL, IP_RAWOUTPUT|IP_NOIPNEWID,
 		    (struct ip_moptions *)NULL, (struct socket *)NULL);
 		KERNEL_UNLOCK_ONE(NULL);
 		return rv;
