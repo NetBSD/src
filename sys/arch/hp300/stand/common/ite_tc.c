@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.9 2011/02/10 11:08:23 tsutsui Exp $	*/
+/*	$NetBSD: ite_tc.c,v 1.10 2011/02/10 12:46:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,14 +49,14 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
-#define WINDOWMOVER 	topcat_windowmove
-
 void topcat_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 
 void
 topcat_init(struct ite_data *ip)
 {
 	struct tcboxfb *regbase = (void *)ip->regbase;
+
+	ip->bmv = topcat_windowmove;
 
 	/*
 	 * Catseye looks a lot like a topcat, but not completely.
@@ -75,7 +75,7 @@ topcat_init(struct ite_data *ip)
 
 	/*
 	 * Determine the number of planes by writing to the first frame
-	 * buffer display location, then reading it back. 
+	 * buffer display location, then reading it back.
 	 */
 	regbase->wen = ~0;
 	regbase->fben = ~0;
@@ -110,57 +110,11 @@ topcat_init(struct ite_data *ip)
 }
 
 void
-topcat_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
-{
-
-	topcat_windowmove(ip, charY(ip, c), charX(ip, c),
-			  dy * ip->ftheight, dx * ip->ftwidth,
-			  ip->ftheight, ip->ftwidth, RR_COPY);
-}
-
-void
-topcat_cursor(struct ite_data *ip, int flag)
-{
-
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	} else
-		erase_cursor(ip)
-}
-
-void
-topcat_clear(struct ite_data *ip, int sy, int sx, int h, int w)
-{
-
-	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			  sy * ip->ftheight, sx * ip->ftwidth, 
-			  h  * ip->ftheight, w  * ip->ftwidth,
-			  RR_CLEAR);
-}
-
-void
-topcat_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
-{
-	int dy = sy - count;
-	int height = ip->rows - sy;
-
-	topcat_cursor(ip, ERASE_CURSOR);
-
-	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			  dy * ip->ftheight, sx * ip->ftwidth,
-			  height * ip->ftheight,
-			  ip->cols  * ip->ftwidth, RR_COPY);
-}
-
-void
-topcat_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
-    int h, int w, int func)
+topcat_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int func)
 {
 	struct tcboxfb *rp = (void *)ip->regbase;
-	
+
 	if (h == 0 || w == 0)
 		return;
 	tc_waitbusy(rp, ip->planemask);
