@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2011/02/05 13:50:08 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2011/02/10 00:23:14 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2011/02/05 13:50:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2011/02/10 00:23:14 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1497,7 +1497,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
-	xpq_queue_pin_table(xpmap_ptom_masked(xen_dummy_user_pgd));
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 #endif /* __x86_64__ */
 	idt_vaddr = virtual_avail;                      /* don't need pte */
 	idt_paddr = avail_start;                        /* steal a page */
@@ -2182,12 +2182,17 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		if (i == l2tol3(PDIR_SLOT_PTE))
 			continue;
 #endif
-		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+
+#ifdef __x86_64__
+		xpq_queue_pin_l4_table(xpmap_ptom_masked(pdirpa));
+#else
+		xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
+#endif
 	}
 #ifdef PAE
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
-	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+	xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
 #endif
 	splx(s);
 #endif /* XEN */
