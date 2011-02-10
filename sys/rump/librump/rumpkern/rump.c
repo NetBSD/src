@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.228 2011/02/03 11:01:51 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.229 2011/02/10 13:31:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.228 2011/02/03 11:01:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.229 2011/02/10 13:31:55 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -768,7 +768,7 @@ rump_proxy_rfork(void *priv, int flags, const char *comm)
 	 * Refcount will eternally be 1.
 	 */
 	p = curproc;
-	newspace = kmem_alloc(sizeof(*newspace), KM_SLEEP);
+	newspace = kmem_zalloc(sizeof(*newspace), KM_SLEEP);
 	newspace->vm_refcnt = 1;
 	newspace->vm_map.pmap = priv;
 	KASSERT(p->p_vmspace == vmspace_kernel());
