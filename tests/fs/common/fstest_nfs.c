@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.5 2010/12/31 18:11:27 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.6 2011/02/10 16:35:01 njoly Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -149,6 +149,9 @@ donewfs(const atf_tc_t *tc, void **argp,
 	 * the mountpath available here.
 	 */
 	args = malloc(sizeof(*args));
+	if (args == NULL)
+		return errno;
+	memset(args, 0, sizeof(*args));
 	args->ta_childpid = childpid;
 	strcpy(args->ta_ethername, ethername);
 
