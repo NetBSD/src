@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.12 2011/02/10 10:44:22 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.13 2011/02/10 11:17:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,41 +57,40 @@
 #include <hp300/stand/common/samachdep.h>
 
 static void iteconfig(void);
-static void ite_deinit_noop(struct ite_data *);
 static void ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
 static void itecheckwrap(struct ite_data *, struct itesw *);
 
 struct itesw itesw[] = {
 	{ GID_TOPCAT,
-	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
+	topcat_init,	topcat_clear,	topcat_putc,
 	topcat_cursor,	topcat_scroll },
 
 	{ GID_GATORBOX,
-	gbox_init,	ite_deinit_noop, gbox_clear,	gbox_putc,
+	gbox_init,	gbox_clear,	gbox_putc,
 	gbox_cursor,	gbox_scroll },
 
 	{ GID_RENAISSANCE,
-	rbox_init,	ite_deinit_noop, rbox_clear,	rbox_putc,
+	rbox_init,	rbox_clear,	rbox_putc,
 	rbox_cursor,	rbox_scroll },
 
 	{ GID_LRCATSEYE,
-	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
+	topcat_init,	topcat_clear,	topcat_putc,
 	topcat_cursor,	topcat_scroll },
 
 	{ GID_HRCCATSEYE,
-	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
+	topcat_init,	topcat_clear,	topcat_putc,
 	topcat_cursor,	topcat_scroll },
 
 	{ GID_HRMCATSEYE,
-	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
+	topcat_init,	topcat_clear,	topcat_putc,
 	topcat_cursor,	topcat_scroll },
 
 	{ GID_DAVINCI,
-      	dvbox_init,	ite_deinit_noop, dvbox_clear,	dvbox_putc,
+      	dvbox_init,	dvbox_clear,	dvbox_putc,
 	dvbox_cursor,	dvbox_scroll },
 
 	{ GID_HYPERION,
-	hyper_init,	ite_deinit_noop, hyper_clear,	hyper_putc,
+	hyper_init,	hyper_clear,	hyper_putc,
 	hyper_cursor,	hyper_scroll },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
@@ -303,9 +302,3 @@ itegetchar(dev_t dev)
 #endif
 }
 #endif
-
-/* ARGSUSED */
-static void
-ite_deinit_noop(struct ite_data *ip)
-{
-}
