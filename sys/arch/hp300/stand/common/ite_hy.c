@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_hy.c,v 1.10 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: ite_hy.c,v 1.11 2011/02/10 11:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,6 @@
 #define	charX(ip,c)	\
 	(((c) % (ip)->cpl) * ((((ip)->ftwidth + 7) / 8) * 8) + (ip)->fontx)
 
-void hyper_ite_fontinit(struct ite_data *);
 void hyper_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 
 void
@@ -76,7 +75,7 @@ hyper_init(struct ite_data *ip)
 	 */
 	hyper_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 
-	hyper_ite_fontinit(ip);
+	ite_fontinit1bpp(ip);
 
 	/*
 	 * Stash the inverted cursor.
@@ -84,34 +83,6 @@ hyper_init(struct ite_data *ip)
 	hyper_windowmove(ip, charY(ip, ' '), charX(ip, ' '),
 			 ip->cblanky, ip->cblankx, ip->ftheight,
 			 ip->ftwidth, RR_COPYINVERTED);
-}
-
-void
-hyper_ite_fontinit(struct ite_data *ip)
-{
-	u_char *fbmem, *dp;
-	int c, l, b;
-	int stride, width;
-
-	dp = (u_char *)(getword(ip, getword(ip, FONTROM) + FONTADDR) +
-	    (char *)ip->regbase) + FONTDATA;
-	stride = ip->fbwidth >> 3;
-	width = (ip->ftwidth + 7) / 8;
-
-	for (c = 0; c < 128; c++) {
-		fbmem = (u_char *) FBBASE +
-			(ip->fonty + (c / ip->cpl) * ip->ftheight) *
-			stride;
-		fbmem += (ip->fontx >> 3) + (c % ip->cpl) * width;
-		for (l = 0; l < ip->ftheight; l++) {
-			for (b = 0; b < width; b++) {
-				*fbmem++ = *dp;
-				dp += 2;
-			}
-			fbmem -= width;
-			fbmem += stride;
-		}
-	}
 }
 
 void

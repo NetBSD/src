@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.10 2011/02/10 10:52:01 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.11 2011/02/10 11:08:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -186,7 +186,8 @@ extern	int nitesw;
  * Prototypes.
  */
 void ite_fontinfo(struct ite_data *);
-void ite_fontinit(struct ite_data *);
+void ite_fontinit1bpp(struct ite_data *);
+void ite_fontinit8bpp(struct ite_data *);
 
 /*
  * Framebuffer-specific ITE prototypes.
