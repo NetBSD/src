@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.29 2009/12/01 01:01:34 dyoung Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.30 2011/02/10 20:24:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.29 2009/12/01 01:01:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.30 2011/02/10 20:24:27 drochner Exp $");
 
 /*
  * IPsec output processing.
@@ -123,6 +123,9 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 #ifdef INET
 	struct ip * ip;
 #endif /* INET */
+#if defined(INET) || defined(INET6)
+	int rv;
+#endif
 
 	switch (af) {
 #ifdef INET
@@ -133,8 +136,11 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 		ip->ip_len = ntohs(ip->ip_len);
 		ip->ip_off = ntohs(ip->ip_off);
 #endif /* __FreeBSD_ */
-		return ip_output(m, NULL, NULL, IP_RAWOUTPUT,
+		KERNEL_LOCK(1, NULL);
+		rv = ip_output(m, NULL, NULL, IP_RAWOUTPUT,
 		    (struct ip_moptions *)NULL, (struct socket *)NULL);
+		KERNEL_UNLOCK_ONE(NULL);
+		return rv;
 
 #endif /* INET */
 #ifdef INET6
@@ -143,7 +149,10 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 		 * We don't need massage, IPv6 header fields are always in
 		 * net endian.
 		 */
-		return ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL);
+		KERNEL_LOCK(1, NULL);
+		rv = ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL);
+		KERNEL_UNLOCK_ONE(NULL);
+		return rv;
 #endif /* INET6 */
 	}
 
