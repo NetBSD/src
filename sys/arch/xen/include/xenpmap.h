@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.24 2009/10/23 02:32:33 snj Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.25 2011/02/10 00:23:14 jym Exp $	*/
 
 /*
  *
@@ -40,9 +40,18 @@ void xpq_queue_pt_switch(paddr_t);
 void xpq_flush_queue(void);
 void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
-void xpq_queue_pin_table(paddr_t);
+void xpq_queue_pin_table(paddr_t, int);
 void xpq_queue_unpin_table(paddr_t);
 int  xpq_update_foreign(paddr_t, pt_entry_t, int);
+
+#define xpq_queue_pin_l1_table(pa)	\
+	xpq_queue_pin_table(pa, MMUEXT_PIN_L1_TABLE)
+#define xpq_queue_pin_l2_table(pa)	\
+	xpq_queue_pin_table(pa, MMUEXT_PIN_L2_TABLE)
+#define xpq_queue_pin_l3_table(pa)	\
+	xpq_queue_pin_table(pa, MMUEXT_PIN_L3_TABLE)
+#define xpq_queue_pin_l4_table(pa)	\
+	xpq_queue_pin_table(pa, MMUEXT_PIN_L4_TABLE)
 
 extern unsigned long *xpmap_phys_to_machine_mapping;
 
