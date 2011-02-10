@@ -44,6 +44,8 @@
       builtin_define ("__powerpc__");		\
       builtin_assert ("cpu=powerpc");		\
       builtin_assert ("machine=powerpc");	\
+      if (TARGET_SECURE_PLT)			\
+        builtin_define ("_SECURE_PLT");		\
     }						\
   while (0)
 
@@ -111,6 +113,7 @@
 
 #undef  SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS					\
+  { "cc1_secure_plt_default",	CC1_SECURE_PLT_DEFAULT_SPEC },	\
   { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },		\
   { "netbsd_entry_point",	NETBSD_ENTRY_POINT },		\
   { "netbsd_endfile_spec",	NETBSD_ENDFILE_SPEC },
