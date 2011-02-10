@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.133 2011/02/01 01:39:20 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.134 2011/02/10 07:42:18 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.133 2011/02/01 01:39:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.134 2011/02/10 07:42:18 kefren Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -138,6 +138,8 @@ struct route_info COMPATNAME(route_info) = {
 	.ri_src = { .sa_len = 2, .sa_family = PF_XROUTE, },
 	.ri_maxqlen = IFQ_MAXLEN,
 };
+
+#define	PRESERVED_RTF	(RTF_UP | RTF_GATEWAY | RTF_HOST | RTF_DONE | RTF_MASK)
 
 static void COMPATNAME(route_init)(void);
 static int COMPATNAME(route_output)(struct mbuf *, ...);
@@ -473,6 +475,9 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 			if (ifp && rt->rt_ifp != ifp)
 				rt->rt_ifp = ifp;
 			rt_setmetrics(rtm->rtm_inits, rtm, rt);
+			if (rt->rt_flags != info.rti_flags)
+				rt->rt_flags = (info.rti_flags & ~PRESERVED_RTF)
+				    | (rt->rt_flags & PRESERVED_RTF);
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
 			/*FALLTHROUGH*/
