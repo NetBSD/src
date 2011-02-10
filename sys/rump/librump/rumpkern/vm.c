@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.110 2011/02/10 13:49:10 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.111 2011/02/10 14:46:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.110 2011/02/10 13:49:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.111 2011/02/10 14:46:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -771,9 +771,10 @@ uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
  * For the remote case we need to reserve space and copy data in or
  * out, depending on B_READ/B_WRITE.
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
+	int error = 0;
 
 	bp->b_saveaddr = bp->b_data;
 
@@ -781,10 +782,16 @@ vmapbuf(struct buf *bp, vsize_t len)
 	if (!RUMP_LOCALPROC_P(curproc)) {
 		bp->b_data = rump_hypermalloc(len, 0, true, "vmapbuf");
 		if (BUF_ISWRITE(bp)) {
-			copyin(bp->b_saveaddr, bp->b_data, len);
-			/* XXX: error? */
+			error = copyin(bp->b_saveaddr, bp->b_data, len);
+			if (error) {
+				rump_hyperfree(bp->b_data, len);
+				bp->b_data = bp->b_saveaddr;
+				bp->b_saveaddr = 0;
+			}
 		}
 	}
+
+	return error;
 }
 
 void

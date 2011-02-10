@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.134 2011/02/08 20:20:19 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.135 2011/02/10 14:46:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.134 2011/02/08 20:20:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.135 2011/02/10 14:46:47 pooka Exp $");
 
 #include "opt_ddb.h"
 
@@ -191,7 +191,7 @@ cpu_lwp_free2(struct lwp *l)
 /*
  * Map a user I/O request into kernel virtual address space.
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap;
@@ -219,6 +219,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	} while (len);
 	pmap_update(vm_map_pmap(phys_map));
+
+	return 0;
 }
 
 /*
