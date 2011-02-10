@@ -1,7 +1,8 @@
-$NetBSD: acronyms.comp,v 1.116 2011/01/17 22:08:30 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.117 2011/02/10 17:52:18 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
+ACID	atomicity, consistency, isolation, durability
 ACL	access control list
 ACPI	advanced configuration and power interface
 ADB	Apple desktop bus
@@ -47,6 +48,7 @@ BER	basic encoding rules
 BER	bit error rate
 BFD	binary formats descriptor
 BFKL	big fscking kernel lock
+BFS	breadth-first search
 BGA	ball grid array
 BGP	border gateway protocol
 BIND	Berkeley Internet Name Daemon
@@ -89,6 +91,7 @@ CHAP	challenge-handshake authentication protocol
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CIFS	common internet file system
+CIL	common intermediate language
 CIS	contact image sensor
 CJK	Chinese, Japanese, and Korean
 CLI	command line interface
@@ -121,6 +124,7 @@ CVS	concurrent versions system
 DAC	discretionary access control
 DAC	digital [to] analog converter
 DB	database
+DBMS	database management system
 DCC	direct client [to] client
 DCE	data control equipment
 DCE	distributed computing environment
@@ -133,6 +137,7 @@ DE	debugging extensions
 DEP	data execution prevention
 DER	distinguished encoding rules
 DES	Data Encryption Standard
+DFA	deterministic finite automaton
 DFS	depth first search
 DFS	distributed file system
 DFT	discrete Fourier transform
@@ -223,7 +228,7 @@ FQDN	fully qualified domain name
 FRU	field replaceable unit
 FSB	front side bus
 FSCK	file system check
-FSCK	fuck
+FSM	finite-state machine
 FTP	file transfer protocol
 FTPS	file transfer protocol, secure
 FWH	firmware hub
@@ -241,6 +246,7 @@ GOT	global offset table
 GPE	general purpose event
 GPF	general protection fault
 GPL	GNU/general public license
+GPS	global positioning system
 GPU	graphics processing unit
 GRE	generic routing encapsulation
 GSI	global system interrupt
@@ -354,6 +360,7 @@ LKM	{Linux, loadable} kernel module
 LKML	Linux kernel mailing list
 LL/SC	load linked / store conditional
 LLC	logical link control
+LLVM	Low Level Virtual Machine
 LOC	lines of code
 LPC	low pin count
 LRC	longitudinal redundancy check
@@ -373,6 +380,7 @@ MADT	multiple APIC descriptor table
 MBR	master boot record
 MC	memory controller
 MCA	machine check architecture
+MCC	multiversion concurrency control
 MCE	machine check exception
 MCGA	multicolor graphics adapter
 MCH	memory controller hub
@@ -390,6 +398,11 @@ MIME	multipurpose Internet mail extensions
 MIMO	multiple input multiple output
 MIPS	million instructions per second
 MIT	Massachusetts Institute of Technology
+ML	mailing list
+ML	machine language
+ML	machine learning
+ML	markup language
+ML	maximum likelihood
 MLC	multi-level cell
 MMIO	memory mapped input/output
 MMU	memory management unit
@@ -420,6 +433,7 @@ NAT	network address translation
 NAV	network allocation vector
 NCP	network control protocol
 NCQ	native command queuing
+NFA	nondeterministic finite automaton
 NFS	network file system
 NIC	network interface card
 NIS	network information service
@@ -427,8 +441,10 @@ NLS	native language support
 NMI	non-maskable interrupt
 NNTP	network news transfer protocol
 NOP	no operation
+NP	nondeterministic polynomial time
 NRZ	non-return to zero
 NSA	National Security Agency
+NTM	non-deterministic Turing machine
 NTP	network time protocol
 NUMA	non-uniform memory access
 NVRAM	non-volatile random access memory
@@ -448,6 +464,7 @@ OOB	out of band
 OOE	out of order execution
 OOM	out of memory
 OOP	object oriented programming
+OOSE	object oriented software engineering
 OQL	object query language
 ORM	object-relational mapping
 OS	operating system
@@ -460,6 +477,7 @@ OSS	open source software
 OSS	open sound system
 OSVW	operating system visible workarounds
 OTP	one time password
+OTS	off the shelf
 OUI	organizationally unique identifier
 OWL	Web ontology language
 P2P	peer to peer
@@ -482,6 +500,7 @@ PCI	peripheral component interconnect
 PCM	pulse code modulation
 PCMCIA	personal computer memory card international association
 PDA	personal digital assistant
+PDA	pushdown automaton
 PDF	portable document format
 PDN	pull-down network
 PDP	page descriptor page
@@ -559,6 +578,7 @@ RPL	requested privilege level
 RPM	revolutions per minute
 RSA	Rivest, Shamir and Adleman
 RSS	really simple syndication
+RSS	residual sum of squares
 RT	real time
 RTC	real time clock
 RTC	real time computing
@@ -567,6 +587,7 @@ RTL	resistor-transistor logic
 RTOS	real time operating system
 RTS	request to send
 RTT	round time trip
+RUP	rational unified process
 RX	receive, receiver
 S/PDIF	Sony/Phillips digital interface
 SACD	super audio compact disc
@@ -585,7 +606,9 @@ SCI	scalable coherent interface
 SCSI	small computer system interface
 SCTP	stream control transmission protocol
 SDK	software development kit
+SDL	simple declarative language
 SDRAM	synchronous dynamic random access memory
+SDT	syntax-directed translation
 SEGV	segmentation violation
 SFI	simple firmware interface
 SGRAM	synchronous graphics random access memory
@@ -642,6 +665,7 @@ TCP	transmission control protocol
 TCQ	tagged command queueing
 TDD	test driven development
 TDP	thermal design power
+TECO	Text Editor and Corrector
 TFT	thin film transistor
 TFTP	trivial file transfer protocol
 TIAS	try it and see
@@ -652,10 +676,13 @@ TLB	transition lookaside buffer
 TLD	top level domain
 TLS	transport layer security
 TLS	thread local storage
+TM	trademark
+TM	Turing machine
 TMDS	transition minimized differential signaling
 TMO	timeout
 TOS	terms of service
 TOS	type of service
+TP	transaction processing
 TPM	trusted platform module
 TPR	task priority register
 TR	token ring
@@ -676,6 +703,7 @@ TX	transmit out, transmitter
 TZ	time zone
 UART	universal asynchronous receiver/transmitter
 UC	uncacheable
+UCS	uniform-cost search
 UDMA	ultra DMA
 UDO	ultra density optical (storage)
 UDP	user datagram protocol
@@ -737,6 +765,7 @@ XER	XML encoding rules
 XGA	extended graphics {array,adapter}
 XIP	execute in place
 XML	extensible markup language
+XOR	exclusive or
 XP	extreme programming
 XSL	extensible stylesheet language
 XSS	cross site scripting
