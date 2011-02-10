@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.21 2011/02/10 01:49:51 christos Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.22 2011/02/10 03:30:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.21 2011/02/10 01:49:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.22 2011/02/10 03:30:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -418,10 +418,9 @@ hfs_vop_lookup(void *v)
 		    M_TEMP, M_WAITOK);
 		len = utf8_to_utf16(unicn, cnp->cn_namelen,
 		    cnp->cn_nameptr, cnp->cn_namelen, 0, NULL);
-		/* XXX: perhaps check for colons too, and encode them? */
 		for (ni = 0; ni < len; ni++)
-			if (unicn[ni] == (unichar_t)'/')
-				unicn[ni] = (unichar_t)':';
+			if (unicn[ni] == (unichar_t)':')
+				unicn[ni] = (unichar_t)'/';
 		/* XXX: check conversion errors? */
 		if (hfslib_make_catalog_key(VTOH(vdp)->h_rec.u.cnid, len, unicn,
 		    &key) == 0) {
@@ -932,7 +931,6 @@ struct vop_readdir_args /* {
 			/* XXX: how to handle name too long? */
 			continue;
 		}
-		/* XXX: perhaps check for colons too, and encode them? */
 		for (ni = 0; ni < namlen; ni++)
 			if (curent.d_name[ni] == '/')
 				curent.d_name[ni] = ':';
