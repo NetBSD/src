@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.31 2011/02/09 06:26:48 dholland Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.32 2011/02/10 00:05:52 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -1530,15 +1530,13 @@ static rpcvers_t
 getvers(const char *arg)
 {
 	char *strptr;
-	rpcvers_t vers;
-	unsigned long ulvers;
+	u_long vers;
 
-	ulvers = strtoul(arg, &strptr, 0);
+	vers = strtoul(arg, &strptr, 0);
 	if (strptr == arg || *strptr != '\0' ||
-	    (ulvers == ULONG_MAX && errno == ERANGE))
+	    (vers == ULONG_MAX && errno == ERANGE))
 		errx(1, "Illegal version number `%s'", arg);
-	vers = (rpcvers_t)ulvers;
-	return vers;
+	return (rpcvers_t)vers;
 }
 
 /*
