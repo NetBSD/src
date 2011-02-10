@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.131 2011/02/01 19:37:37 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.132 2011/02/10 12:37:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.131 2011/02/01 19:37:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.132 2011/02/10 12:37:58 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -272,8 +272,8 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
-	pcireg_t id, csr, class, intr, bhlcr;
-	int ret, pin, bus, device, function;
+	pcireg_t id, csr, class, intr, bhlcr, bar;
+	int ret, pin, bus, device, function, i, width;
 	int locs[PCICF_NLOCS];
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
@@ -296,6 +296,27 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	/* XXX Not invalid, but we've done this ~forever. */
 	if (PCI_VENDOR(id) == 0)
 		return 0;
+
+	/* Collect memory range info */
+	memset(sc->PCI_SC_DEVICESC(device, function).c_range, 0,
+	    sizeof(sc->PCI_SC_DEVICESC(device, function).c_range));
+	i = 0;
+	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += width) {
+		int type = pci_mapreg_type(pc, tag, bar);
+		struct pci_range *r;
+
+		width = 4;
+		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM) {
+			if (PCI_MAPREG_MEM_TYPE(type) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT)
+				width = 8;
+
+			r = &sc->PCI_SC_DEVICESC(device, function).c_range[i++];
+			if (pci_mapreg_info(pc, tag, bar, type,
+			    &r->r_offset, &r->r_size, &r->r_flags) != 0)
+				break;
+		}
+	}
 
 	pa.pa_iot = sc->sc_iot;
 	pa.pa_memt = sc->sc_memt;
