@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.7 2011/02/09 13:24:24 jmcneill Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.8 2011/02/10 10:21:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.7 2011/02/09 13:24:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.8 2011/02/10 10:21:40 jmcneill Exp $");
 
 #include "opt_mtrr.h"
 
@@ -100,6 +100,7 @@ x86_genfb_ddb_trap_callback(int where)
 void
 x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)
 {
+#if notyet
 #ifdef MTRR
 	struct mtrr mtrr;
 	int error, n;
@@ -128,6 +129,7 @@ x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)
 	aprint_debug("%s: mtrr_set returned %d\n", __func__, error);
 #else
 	aprint_debug("%s: kernel lacks MTRR option\n", __func__);
+#endif
 #endif
 }
 
@@ -158,7 +160,7 @@ x86_genfb_cnattach(void)
 
 	err = _x86_memio_map(t, (bus_addr_t)fbinfo->physaddr,
 	    fbinfo->width * fbinfo->stride,
-	    BUS_SPACE_MAP_LINEAR, &h);
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &h);
 	if (err) {
 		aprint_error("x86_genfb_cnattach: couldn't map framebuffer\n");
 		return 0;
