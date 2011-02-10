@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.13 2011/02/10 11:17:21 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.14 2011/02/10 12:46:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,36 +62,36 @@ static void itecheckwrap(struct ite_data *, struct itesw *);
 
 struct itesw itesw[] = {
 	{ GID_TOPCAT,
-	topcat_init,	topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll },
+	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_GATORBOX,
-	gbox_init,	gbox_clear,	gbox_putc,
-	gbox_cursor,	gbox_scroll },
+	gbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	gbox_scroll },
 
 	{ GID_RENAISSANCE,
-	rbox_init,	rbox_clear,	rbox_putc,
-	rbox_cursor,	rbox_scroll },
+	rbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_LRCATSEYE,
-	topcat_init,	topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll },
+	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HRCCATSEYE,
-	topcat_init,	topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll },
+	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HRMCATSEYE,
-	topcat_init,	topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll },
+	topcat_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_DAVINCI,
-      	dvbox_init,	dvbox_clear,	dvbox_putc,
-	dvbox_cursor,	dvbox_scroll },
+      	dvbox_init,	ite_dio_clear,	ite_dio_putc8bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 
 	{ GID_HYPERION,
-	hyper_init,	hyper_clear,	hyper_putc,
-	hyper_cursor,	hyper_scroll },
+	hyper_init,	ite_dio_clear,	ite_dio_putc1bpp,
+	ite_dio_cursor,	ite_dio_scroll },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
@@ -150,7 +150,7 @@ iteconfig(void)
 			ip->dwidth = ip->fbwidth;
 		if (ip->dheight > ip->fbheight)
 			ip->dheight = ip->fbheight;
-		ip->flags = ITE_ALIVE|ITE_CONSOLE;
+		ip->alive = 1;
 		i++;
 	}
 }
@@ -186,8 +186,7 @@ iteprobe(struct consdev *cp)
 			continue;
 #endif
 		ip = &ite_data[ite];
-		if ((ip->flags & (ITE_ALIVE|ITE_CONSOLE))
-		    != (ITE_ALIVE|ITE_CONSOLE))
+		if (ip->alive == 0)
 			continue;
 		if ((int)ip->regbase == INTIOBASE + FB_BASE) {
 			pri = CN_INTERNAL;
@@ -238,7 +237,7 @@ iteputchar(dev_t dev, int c)
 	case '\n':
 		if (++ip->cury == ip->rows) {
 			ip->cury--;
-			(*sp->ite_scroll)(ip, 1, 0, 1, SCROLL_UP);
+			(*sp->ite_scroll)(ip);
 			ite_clrtoeol(ip, sp, ip->cury, 0);
 		}
 		else
@@ -260,7 +259,7 @@ iteputchar(dev_t dev, int c)
 	default:
 		if (c < ' ' || c == 0177)
 			break;
-		(*sp->ite_putc)(ip, c, ip->cury, ip->curx, ATTR_NOR);
+		(*sp->ite_putc)(ip, c, ip->cury, ip->curx);
 		(*sp->ite_cursor)(ip, DRAW_CURSOR);
 		itecheckwrap(ip, sp);
 		break;
@@ -274,7 +273,7 @@ itecheckwrap(struct ite_data *ip, struct itesw *sp)
 		ip->curx = 0;
 		if (++ip->cury == ip->rows) {
 			--ip->cury;
-			(*sp->ite_scroll)(ip, 1, 0, 1, SCROLL_UP);
+			(*sp->ite_scroll)(ip);
 			ite_clrtoeol(ip, sp, ip->cury, 0);
 			return;
 		}
