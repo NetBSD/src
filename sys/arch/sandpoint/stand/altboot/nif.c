@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: nif.c,v 1.2 2011/02/10 13:38:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -62,15 +62,18 @@ static struct nifdv lnifdv[] = {
 static int nnifdv = sizeof(lnifdv)/sizeof(lnifdv[0]);
 
 int
-netif_init(unsigned tag)
+netif_init(void *self)
 {
+	struct pcidev *pci = self;
 	struct iodesc *s;
 	struct nifdv *dv;
+	unsigned tag;
 	int n;
 	uint8_t enaddr[6];
 	extern struct btinfo_net bi_net;
 	extern struct btinfo_rootdevice bi_rdev;
 
+	tag = pci->bdf;
 	for (n = 0; n < nnifdv; n++) {
 		dv = &lnifdv[n];
 		if ((*dv->match)(tag, NULL) > 0)
@@ -78,11 +81,10 @@ netif_init(unsigned tag)
 	}
 	return 0;
   found:
-	dv->priv = (*dv->init)(tag, enaddr);
+	pci->drv = dv->priv = (*dv->init)(tag, enaddr);
 	s = &netdesc;
 	s->io_netif = dv;
 	memcpy(s->myea, enaddr, sizeof(s->myea));
-
 	/* build btinfo to identify NIF device */
 	snprintf(bi_net.devname, sizeof(bi_net.devname), dv->name);
 	memcpy(bi_net.mac_address, enaddr, sizeof(bi_net.mac_address));

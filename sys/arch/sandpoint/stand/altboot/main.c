@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: main.c,v 1.6 2011/02/10 13:38:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -91,6 +91,11 @@ int module_open(struct boot_module *);
 void main(int, char **);
 extern char bootprog_name[], bootprog_rev[];
 
+struct pcidev lata[2];
+struct pcidev lnif[1];
+struct pcidev lusb[3];
+int nata, nnif, nusb;
+
 int brdtype;
 uint32_t busclock, cpuclock;
 
@@ -102,11 +107,8 @@ main(int argc, char *argv[])
 {
 	struct brdprop *brdprop;
 	unsigned long marks[MARK_MAX];
-	unsigned lata[1][2], lnif[1][2];
-	unsigned tag, dsk;
-	int b, d, f, fd, howto, i, n;
+	int n, i, fd, howto;
 	char *bname;
-	void *dev;
 
 	printf("\n");
 	printf(">> %s altboot, revision %s\n", bootprog_name, bootprog_rev);
@@ -115,43 +117,54 @@ main(int argc, char *argv[])
 	printf(">> %s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", brdprop->verbose,
 	    cpuclock / 1000000, busclock / 1000000, bi_mem.memsize >> 20);
 
-	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
-	if (n == 0)
-		n = pcilookup(PCI_CLASS_MISCSTORAGE, lata,
-		    sizeof(lata)/sizeof(lata[0]));
-	if (n == 0) {
-		dsk = ~0;
-		DPRINTF(("No IDE found!\n"));
-	}
-	else {
-		dsk = lata[0][1];
-		pcidecomposetag(dsk, &b, &d, &f);
-		DPRINTF(("%04x.%04x IDE %02d:%02d:%02d\n",
-		    PCI_VENDOR(lata[0][0]), PCI_PRODUCT(lata[0][0]),
-		    b, d, f));
-	}
+	nata = pcilookup(PCI_CLASS_IDE, lata, 2);
+	if (nata == 0)
+		nata = pcilookup(PCI_CLASS_MISCSTORAGE, lata, 2);
+	nnif = pcilookup(PCI_CLASS_ETH, lnif, 1);
+	nusb = pcilookup(PCI_CLASS_USB, lusb, 3);
 
-	n = pcilookup(PCI_CLASS_ETH, lnif, sizeof(lnif)/sizeof(lnif[0]));
-	if (n == 0) {
-		tag = ~0;
-		DPRINTF(("no NIC found\n"));
+#ifdef DEBUG
+	if (nata == 0)
+		printf("No IDE/SATA found\n");
+	else for (n = 0; n < nata; n++) {
+		int b, d, f, bdf, pvd;
+		bdf = lata[n].bdf;
+		pvd = lata[n].pvd;
+		pcidecomposetag(bdf, &b, &d, &f);
+		printf("%04x.%04x DSK %02d:%02d:%02d\n",
+		    PCI_VENDOR(pvd), PCI_PRODUCT(pvd), b, d, f);
 	}
+	if (nnif == 0)
+		printf("no NET found\n");
 	else {
-		tag = lnif[0][1];
-		pcidecomposetag(tag, &b, &d, &f);
-		DPRINTF(("%04x.%04x NIC %02d:%02d:%02d\n",
-		    PCI_VENDOR(lnif[0][0]), PCI_PRODUCT(lnif[0][0]),
-		    b, d, f));
+		int b, d, f, bdf, pvd;
+		bdf = lnif[0].bdf;
+		pvd = lnif[0].pvd;
+		pcidecomposetag(bdf, &b, &d, &f);
+		printf("%04x.%04x NET %02d:%02d:%02d\n",
+		    PCI_VENDOR(pvd), PCI_PRODUCT(pvd), b, d, f);
 	}
+	if (nusb == 0)
+		printf("no USB found\n");
+	else for (n = 0; n < nusb; n++) {
+		int b, d, f, bdf, pvd;
+		bdf = lusb[0].bdf;
+		pvd = lusb[0].pvd;
+		pcidecomposetag(bdf, &b, &d, &f);
+		printf("%04x.%04x USB %02d:%02d:%02d\n",
+		    PCI_VENDOR(pvd), PCI_PRODUCT(pvd), b, d, f);
+	}
+#endif
 
 	pcisetup();
 	pcifixup();
 
-	if (dskdv_init(dsk, &dev) == 0 || disk_scan(dev) == 0)
-		printf("no IDE/SATA device driver was found\n");
+	if (dskdv_init(&lata[0]) == 0
+	    || (nata == 2 && dskdv_init(&lata[1]) == 0))
+		printf("IDE/SATA device driver was not found\n");
 
-	if (netif_init(tag) == 0)
-		printf("no NIC device driver was found\n");
+	if (netif_init(&lnif[0]) == 0)
+		printf("no NET device driver was found\n");
 
 	howto = RB_AUTOBOOT;		/* default is autoboot = 0 */
 
