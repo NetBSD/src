@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.13 2011/01/28 18:48:21 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.14 2011/02/10 13:31:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.13 2011/01/28 18:48:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.14 2011/02/10 13:31:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -116,7 +116,10 @@ lwproc_newproc(struct proc *parent, int flags)
 
 	p->p_vmspace = vmspace_kernel();
 	p->p_emul = &emul_netbsd;
-	strcpy(p->p_comm, "rumproc");
+	if (*parent->p_comm)
+		strcpy(p->p_comm, parent->p_comm);
+	else
+		strcpy(p->p_comm, "rumproc");
 
 	if ((flags & RUMP_RFCFDG) == 0)
 		KASSERT(parent == curproc);
