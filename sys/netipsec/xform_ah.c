@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.27 2011/02/10 20:24:27 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.27 2011/02/10 20:24:27 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $"
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/socketvar.h> /* for softnet_lock */
 
 #include <net/if.h>
 
@@ -828,6 +829,7 @@ ah_input_cb(struct cryptop *crp)
 	}
 #endif
 
+	mutex_enter(softnet_lock);
 	s = splsoftnet();
 
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
@@ -851,8 +853,11 @@ ah_input_cb(struct cryptop *crp)
 		if (sav->tdb_cryptoid != 0)
 			sav->tdb_cryptoid = crp->crp_sid;
 
-		if (crp->crp_etype == EAGAIN)
+		if (crp->crp_etype == EAGAIN) {
+			splx(s);
+			mutex_exit(softnet_lock);
 			return crypto_dispatch(crp);
+		}
 
 		AH_STATINC(AH_STAT_NOXFORM);
 		DPRINTF(("ah_input_cb: crypto error %d\n", crp->crp_etype));
@@ -960,11 +965,13 @@ ah_input_cb(struct cryptop *crp)
 
 	KEY_FREESAV(&sav);
 	splx(s);
+	mutex_exit(softnet_lock);
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
 	splx(s);
+	mutex_exit(softnet_lock);
 	if (m != NULL)
 		m_freem(m);
 	if (tc != NULL)
@@ -1228,6 +1235,7 @@ ah_output_cb(struct cryptop *crp)
 	ptr = (tc + 1);
 	m = (struct mbuf *) crp->crp_buf;
 
+	mutex_enter(softnet_lock);
 	s = splsoftnet();
 
 	isr = tc->tc_isr;
@@ -1248,6 +1256,7 @@ ah_output_cb(struct cryptop *crp)
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
 			splx(s);
+			mutex_exit(softnet_lock);
 			return crypto_dispatch(crp);
 		}
 
@@ -1294,11 +1303,13 @@ ah_output_cb(struct cryptop *crp)
 	err = ipsec_process_done(m, isr);
 	KEY_FREESAV(&sav);
 	splx(s);
+	mutex_exit(softnet_lock);
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
 	splx(s);
+	mutex_exit(softnet_lock);
 	if (m)
 		m_freem(m);
 	free(tc, M_XDATA);
