@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.9 2011/02/10 10:44:23 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.10 2011/02/10 10:52:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,9 +99,9 @@ struct itesw {
 	memset(ip->attrbuf + ((sy) * ip->cols) + (sx), 0, (h) * (w))
   
 #define attrmov(ip, sy, sx, dy, dx, h, w) \
-	bcopy(ip->attrbuf + ((sy) * ip->cols) + (sx), \
-	      ip->attrbuf + ((dy) * ip->cols) + (dx), \
-	      (h) * (w))
+	memmove(ip->attrbuf + ((dy) * ip->cols) + (dx), \
+	    ip->attrbuf + ((sy) * ip->cols) + (sx), \
+	    (h) * (w))
 
 #define attrtest(ip, attr) \
 	((* (u_char *) attrloc(ip, ip->cury, ip->curx)) & attr)
