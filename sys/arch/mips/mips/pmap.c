@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.193 2011/01/26 01:18:54 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.194 2011/02/10 06:42:17 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.193 2011/01/26 01:18:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2011/02/10 06:42:17 macallan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1192,14 +1192,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (pa & 0x80000000)	/* this is not error in general. */
 		panic("pmap_enter: pa");
 #endif
+	if (flags & PMAP_NOCACHE)
+		cached = 0;
 
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-	if (flags & PMAP_NOCACHE) {
+	if (pa & PGC_NOCACHE) {
 		cached = 0;
 		pa &= ~PGC_NOCACHE;
-	} else {
-		cached = 1;
-		pa |= PGC_NOCACHE;
 	}
 #endif
 
