@@ -1,4 +1,4 @@
-/*	$NetBSD: prsa_par.y,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: prsa_par.y,v 1.4.6.1 2011/02/10 11:21:55 tteras Exp $	*/
 
 /* Id: prsa_par.y,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -246,6 +246,9 @@ addr4:
 		$$->prefix = $2;
 		sap = (struct sockaddr_in *)(&$$->sa);
 		sap->sin_family = AF_INET;
+#ifndef __linux__
+		sap->sin_len = sizeof(*sap);
+#endif
 		err = inet_pton(AF_INET, $1, (struct in_addr*)(&sap->sin_addr));
 		if (err <= 0) {
 			prsaerror("inet_pton(%s): %s\n", $1, strerror(errno));
@@ -269,6 +272,9 @@ addr6:
 		$$->prefix = $2;
 		sap = (struct sockaddr_in6 *)(&$$->sa);
 		sap->sin6_family = AF_INET6;
+#ifndef __linux__
+		sap->sin6_len = sizeof(*sap);
+#endif
 		err = inet_pton(AF_INET6, $1, (struct in6_addr*)(&sap->sin6_addr));
 		if (err <= 0) {
 			prsaerror("inet_pton(%s): %s\n", $1, strerror(errno));
