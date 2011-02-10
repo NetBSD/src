@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.3 2011/02/08 00:33:05 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.4 2011/02/10 13:38:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -101,8 +101,8 @@ static struct brdprop brdlist[] = {
 	NULL, iomegabrdfix, iomegapcifix },
     {
 	"dlink",
-	"D-Link GSM-G600",
-	BRD_DLINKGSM,
+	"D-Link DSM-G600",
+	BRD_DLINKDSM,
 	0,
 	"eumb", 0x4500, 9600,
 	NULL, dlinkbrdfix, dlinkpcifix },
@@ -215,7 +215,7 @@ brdsetup(void)
 	}
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 16, 0), PCI_ID_REG)) ==
 	    0x1191) {				/* PCI_VENDOR_ACARD */
-		brdtype = BRD_DLINKGSM;
+		brdtype = BRD_DLINKDSM;
 	}
 
 	brdprop = brd_lookup(brdtype);
@@ -406,12 +406,12 @@ motbrdfix(struct brdprop *brd)
 void
 motpcifix(struct brdprop *brd)
 {
-	unsigned ide, nic, pcib, steer, val;
+	unsigned ide, net, pcib, steer, val;
 	int line;
 
 	pcib = pcimaketag(0, 11, 0);
 	ide  = pcimaketag(0, 11, 1);
-	nic  = pcimaketag(0, 15, 0);
+	net  = pcimaketag(0, 15, 0);
 
 	/*
 	 * //// WinBond PIRQ ////
@@ -492,21 +492,21 @@ motpcifix(struct brdprop *brd)
 	 * //// fxp fixup ////
 	 * - use PCI pin A line 15 (fxp 0x3d/3c)
 	 */
-	val = pcicfgread(nic, 0x3c) & 0xffff0000;
-	pcidecomposetag(nic, NULL, &line, NULL);
+	val = pcicfgread(net, 0x3c) & 0xffff0000;
+	pcidecomposetag(net, NULL, &line, NULL);
 	val |= (('A' - '@') << 8) | line;
-	pcicfgwrite(nic, 0x3c, val);
+	pcicfgwrite(net, 0x3c, val);
 }
 
 void
 encpcifix(struct brdprop *brd)
 {
-	unsigned ide, irq, nic, pcib, steer, val;
+	unsigned ide, irq, net, pcib, steer, val;
 
 #define	STEER(v, b) (((v) & (b)) ? "edge" : "level")
 	pcib = pcimaketag(0, 22, 0);
 	ide  = pcimaketag(0, 22, 1);
-	nic  = pcimaketag(0, 25, 0);
+	net  = pcimaketag(0, 25, 0);
 
 	/*
 	 * //// VIA PIRQ ////
@@ -603,9 +603,9 @@ encpcifix(struct brdprop *brd)
 	 * - use PCI pin A line 25 (fxp 0x3d/3c)
 	 */
 	/* 0x3d/3c - PCI pin/line */
-	val = pcicfgread(nic, 0x3c) & 0xffff0000;
+	val = pcicfgread(net, 0x3c) & 0xffff0000;
 	val |= (('A' - '@') << 8) | 25;
-	pcicfgwrite(nic, 0x3c, val);
+	pcicfgwrite(net, 0x3c, val);
 }
 
 void
@@ -630,17 +630,17 @@ kurobrdfix(struct brdprop *brd)
 void
 kuropcifix(struct brdprop *brd)
 {
-	unsigned ide, nic, usb, val;
+	unsigned dsk, net, usb, val;
 
-	nic = pcimaketag(0, 11, 0);
-	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	net = pcimaketag(0, 11, 0);
+	val = pcicfgread(net, 0x3c) & 0xffffff00;
 	val |= 11;
-	pcicfgwrite(nic, 0x3c, val);
+	pcicfgwrite(net, 0x3c, val);
 
-	ide = pcimaketag(0, 12, 0);
-	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	dsk = pcimaketag(0, 12, 0);
+	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
 	val |= 12;
-	pcicfgwrite(ide, 0x3c, val);
+	pcicfgwrite(dsk, 0x3c, val);
 
 	usb = pcimaketag(0, 14, 0);
 	val = pcicfgread(usb, 0x3c) & 0xffffff00;
@@ -677,12 +677,12 @@ synobrdfix(struct brdprop *brd)
 void
 synopcifix(struct brdprop *brd)
 {
-	unsigned ide, nic, usb, val;
+	unsigned dsk, net, usb, val;
 
-	ide = pcimaketag(0, 13, 0);
-	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	dsk = pcimaketag(0, 13, 0);
+	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
 	val |= 13;
-	pcicfgwrite(ide, 0x3c, val);
+	pcicfgwrite(dsk, 0x3c, val);
 
 	usb = pcimaketag(0, 14, 0);
 	val = pcicfgread(usb, 0x3c) & 0xffffff00;
@@ -699,10 +699,10 @@ synopcifix(struct brdprop *brd)
 	val |= 14;
 	pcicfgwrite(usb, 0x3c, val);
 
-	nic = pcimaketag(0, 15, 0);
-	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	net = pcimaketag(0, 15, 0);
+	val = pcicfgread(net, 0x3c) & 0xffffff00;
 	val |= 15;
-	pcicfgwrite(nic, 0x3c, val);
+	pcicfgwrite(net, 0x3c, val);
 }
 
 void
@@ -716,12 +716,12 @@ synoreset()
 void
 qnappcifix(struct brdprop *brd)
 {
-	unsigned ide, nic, usb, val;
+	unsigned dsk, net, usb, val;
 
-	ide = pcimaketag(0, 13, 0);
-	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	dsk = pcimaketag(0, 13, 0);
+	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
 	val |= 13;
-	pcicfgwrite(ide, 0x3c, val);
+	pcicfgwrite(dsk, 0x3c, val);
 
 	usb = pcimaketag(0, 14, 0);
 	val = pcicfgread(usb, 0x3c) & 0xffffff00;
@@ -738,10 +738,10 @@ qnappcifix(struct brdprop *brd)
 	val |= 14;
 	pcicfgwrite(usb, 0x3c, val);
 
-	nic = pcimaketag(0, 15, 0);
-	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	net = pcimaketag(0, 15, 0);
+	val = pcicfgread(net, 0x3c) & 0xffffff00;
 	val |= 15;
-	pcicfgwrite(nic, 0x3c, val);
+	pcicfgwrite(net, 0x3c, val);
 }
 
 void
@@ -754,12 +754,12 @@ iomegabrdfix(struct brdprop *brd)
 void
 iomegapcifix(struct brdprop *brd)
 {
-	unsigned ide, nic, usb, val;
+	unsigned dsk, net, usb, val;
 
-	ide = pcimaketag(0, 13, 0);
-	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	dsk = pcimaketag(0, 13, 0);
+	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
 	val |= 13;
-	pcicfgwrite(ide, 0x3c, val);
+	pcicfgwrite(dsk, 0x3c, val);
 
 	usb = pcimaketag(0, 14, 0);
 	val = pcicfgread(usb, 0x3c) & 0xffffff00;
@@ -776,10 +776,10 @@ iomegapcifix(struct brdprop *brd)
 	val |= 14;
 	pcicfgwrite(usb, 0x3c, val);
 
-	nic = pcimaketag(0, 15, 0);
-	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	net = pcimaketag(0, 15, 0);
+	val = pcicfgread(net, 0x3c) & 0xffffff00;
 	val |= 15;
-	pcicfgwrite(nic, 0x3c, val);
+	pcicfgwrite(net, 0x3c, val);
 }
 
 void
@@ -792,7 +792,7 @@ dlinkbrdfix(struct brdprop *brd)
 void
 dlinkpcifix(struct brdprop *brd)
 {
-	unsigned usb, nic, ide, val;
+	unsigned usb, net, dsk, val;
 
 	usb = pcimaketag(0, 14, 0);
 	val = pcicfgread(usb, 0x3c) & 0xffffff00;
@@ -809,15 +809,15 @@ dlinkpcifix(struct brdprop *brd)
 	val |= 14;
 	pcicfgwrite(usb, 0x3c, val);
 
-	nic = pcimaketag(0, 15, 0);
-	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	net = pcimaketag(0, 15, 0);
+	val = pcicfgread(net, 0x3c) & 0xffffff00;
 	val |= 15;
-	pcicfgwrite(nic, 0x3c, val);
+	pcicfgwrite(net, 0x3c, val);
 
-	ide = pcimaketag(0, 16, 0);
-	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	dsk = pcimaketag(0, 16, 0);
+	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
 	val |= 16;
-	pcicfgwrite(ide, 0x3c, val);
+	pcicfgwrite(dsk, 0x3c, val);
 }
 
 void

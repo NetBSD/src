@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.3 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.4 2011/02/10 13:38:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,15 +68,15 @@ struct dskdv {
 	char *name;
 	int (*match)(unsigned, void *);
 	void *(*init)(unsigned, void *);
-	void *priv;
 };
 
 static struct dskdv ldskdv[] = {
-	{ "pciide", pciide_match, pciide_init, },
-	{ "siisata", siisata_match, siisata_init, },
+	{ "pciide", pciide_match, pciide_init },
+	{ "siisata", siisata_match, siisata_init },
 };
 static int ndskdv = sizeof(ldskdv)/sizeof(ldskdv[0]);
 
+static int disk_scan(void *);
 static int probe_drive(struct dkdev_ata *, int);
 static void drive_ident(struct disk *, char *);
 static char *mkident(char *, int);
@@ -90,11 +90,14 @@ static struct disk *lookup_disk(int);
 static struct disk ldisk[4];
 
 int
-dskdv_init(unsigned tag, void **cookie)
+dskdv_init(void *self)
 {
+	struct pcidev *pci = self;
 	struct dskdv *dv;
+	unsigned tag;
 	int n;
 
+	tag = pci->bdf;
 	for (n = 0; n < ndskdv; n++) {
 		dv = &ldskdv[n];
 		if ((*dv->match)(tag, NULL) > 0)
@@ -102,16 +105,15 @@ dskdv_init(unsigned tag, void **cookie)
 	}
 	return 0;
   found:
-	dv->priv = (*dv->init)(tag, NULL);
-	*cookie = dv;
+	pci->drv = (*dv->init)(tag, NULL);
+	disk_scan(pci->drv);
 	return 1;
 }
 
-int
-disk_scan(void *cookie)
+static int
+disk_scan(void *drv)
 {
-	struct dskdv *dv = cookie;
-	struct dkdev_ata *l = dv->priv;
+	struct dkdev_ata *l = drv;
 	struct disk *d;
 	int n, ndrive;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: pci.c,v 1.3 2011/02/10 13:38:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ static void _buswalk(int,
 		int (*)(int, int, int, unsigned long), unsigned long);
 static int _pcilookup(int,
 		int (*)(int, int, int, unsigned long), unsigned long,
-		unsigned [][2], int, int);
+		struct pcidev *, int, int);
 static int deviceinit(int, int, int, unsigned long);
 static void memassign(int, int, int);
 static int devmatch(int, int, int, unsigned long);
@@ -70,11 +70,12 @@ pcisetup(void)
 int
 pcifinddev(unsigned vend, unsigned prod, unsigned *tag)
 {
-	unsigned pciid, target[1][2];
+	unsigned pciid;
+	struct pcidev target;
 
 	pciid = PCI_DEVICE(vend, prod);
-	if (_pcilookup(0, devmatch, pciid, target, 0, 1)) {
-		*tag = target[0][1];
+	if (_pcilookup(0, devmatch, pciid, &target, 0, 1)) {
+		*tag = target.bdf;
 		return 0;
 	}
 	*tag = ~0;
@@ -84,7 +85,7 @@ pcifinddev(unsigned vend, unsigned prod, unsigned *tag)
 int
 pcilookup(type, list, max)
 	unsigned type;
-	unsigned list[][2];
+	struct pcidev *list;
 	int max;
 {
 
@@ -334,7 +335,7 @@ clsmatch(int bus, int dev, int func, unsigned long data)
 }
 
 static int
-_pcilookup(int bus, int (*match)(int, int, int, unsigned long), unsigned long data, unsigned list[][2], int index, int limit)
+_pcilookup(int bus, int (*match)(int, int, int, unsigned long), unsigned long data, struct pcidev *list, int index, int limit)
 {
 	int device, function, nfuncs;
 	unsigned pciid, bhlcr, class;
@@ -363,8 +364,8 @@ _pcilookup(int bus, int (*match)(int, int, int, unsigned long), unsigned long da
 			if (PCI_VENDOR(pciid) == 0)
 				continue;
 			if ((*match)(bus, device, function, data)) {
-				list[index][0] = pciid;
-				list[index][1] =
+				list[index].pvd = pciid;
+				list[index].bdf =
 				     pcimaketag(bus, device, function);
 				index += 1;
 				if (index >= limit)
