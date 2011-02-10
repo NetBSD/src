@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.109 2011/02/05 17:25:45 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.110 2011/02/10 13:49:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.109 2011/02/05 17:25:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.110 2011/02/10 13:49:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -782,6 +782,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		bp->b_data = rump_hypermalloc(len, 0, true, "vmapbuf");
 		if (BUF_ISWRITE(bp)) {
 			copyin(bp->b_saveaddr, bp->b_data, len);
+			/* XXX: error? */
 		}
 	}
 }
@@ -793,7 +794,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	/* remote case */
 	if (!RUMP_LOCALPROC_P(bp->b_proc)) {
 		if (BUF_ISREAD(bp)) {
-			copyout_proc(bp->b_proc,
+			bp->b_error = copyout_proc(bp->b_proc,
 			    bp->b_data, bp->b_saveaddr, len);
 		}
 		rump_hyperfree(bp->b_data, len);
