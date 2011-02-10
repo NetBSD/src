@@ -1,4 +1,4 @@
-/*	$NetBSD: plainrsa-gen.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: plainrsa-gen.c,v 1.5 2011/02/10 11:20:08 tteras Exp $	*/
 
 /* Id: plainrsa-gen.c,v 1.6 2005/04/21 09:08:40 monas Exp */
 /*
@@ -43,11 +43,13 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 #ifdef HAVE_OPENSSL_ENGINE_H
@@ -72,6 +74,7 @@ usage (char *argv0)
 	fprintf(stderr, "  -b bits       Generate <bits> long RSA key (default=1024)\n");
 	fprintf(stderr, "  -e pubexp     Public exponent to use (default=0x3)\n");
 	fprintf(stderr, "  -f filename   Filename to store the key to (default=stdout)\n");
+	fprintf(stderr, "  -i filename   Input source for format conversion\n");
 	fprintf(stderr, "  -h            Help\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Report bugs to <ipsec-tools-devel@lists.sourceforge.net>\n");
@@ -82,7 +85,7 @@ usage (char *argv0)
  * See RFC 2065, section 3.5 for details about the output format.
  */
 vchar_t *
-mix_b64_pubkey(RSA *key)
+mix_b64_pubkey(const RSA *key)
 {
 	char *binbuf;
 	long binlen, ret;
@@ -116,17 +119,10 @@ lowercase(char *input)
 }
 
 int
-gen_rsa_key(FILE *fp, size_t bits, unsigned long exp)
+print_rsa_key(FILE *fp, const RSA *key)
 {
-	RSA *key;
 	vchar_t *pubkey64 = NULL;
 
-	key = RSA_generate_key(bits, exp, NULL, NULL);
-	if (!key) {
-		fprintf(stderr, "RSA_generate_key(): %s\n", eay_strerror());
-		return -1;
-	}
-	
 	pubkey64 = mix_b64_pubkey(key);
 	if (!pubkey64) {
 		fprintf(stderr, "mix_b64_pubkey(): %s\n", eay_strerror());
@@ -135,7 +131,7 @@ gen_rsa_key(FILE *fp, size_t bits, unsigned long exp)
 	
 	fprintf(fp, "# : PUB 0s%s\n", pubkey64->v);
 	fprintf(fp, ": RSA\t{\n");
-	fprintf(fp, "\t# RSA %zu bits\n", bits);
+	fprintf(fp, "\t# RSA %zu bits\n", BN_num_bits(key->n));
 	fprintf(fp, "\t# pubkey=0s%s\n", pubkey64->v);
 	fprintf(fp, "\tModulus: 0x%s\n", lowercase(BN_bn2hex(key->n)));
 	fprintf(fp, "\tPublicExponent: 0x%s\n", lowercase(BN_bn2hex(key->e)));
@@ -148,23 +144,92 @@ gen_rsa_key(FILE *fp, size_t bits, unsigned long exp)
 	fprintf(fp, "  }\n");
 
 	vfree(pubkey64);
-
 	return 0;
+}
+
+int
+print_public_rsa_key(FILE *fp, const RSA *key)
+{
+	vchar_t *pubkey64 = NULL;
+
+	pubkey64 = mix_b64_pubkey(key);
+	if (!pubkey64) {
+		fprintf(stderr, "mix_b64_pubkey(): %s\n", eay_strerror());
+		return -1;
+	}
+	
+	fprintf(fp, ": PUB 0s%s\n", pubkey64->v);
+
+	vfree(pubkey64);
+	return 0;
+}
+
+int
+convert_rsa_key(FILE *fpout, FILE *fpin)
+{
+	int ret;
+	RSA *key = NULL;
+
+	key = PEM_read_RSAPrivateKey(fpin, NULL, NULL, NULL);
+	if (key) {
+		ret = print_rsa_key(fpout, key);
+		RSA_free(key);
+
+		return ret;
+	}
+	
+	rewind(fpin);
+
+	key = PEM_read_RSA_PUBKEY(fpin, NULL, NULL, NULL);
+	if (key) {
+		ret = print_public_rsa_key(fpout, key);
+		RSA_free(key);
+
+		return ret;
+	}
+
+	/* Implement parsing of input stream containing
+	 * private or public "plainrsa" formatted text.
+	 * Convert the result to PEM formatted output.
+	 *
+	 * This seemingly needs manual use of prsaparse().
+	 * An expert ought to do this. */
+
+	fprintf(stderr, "convert_rsa_key: %s\n", "Only conversion from PEM at this time");
+	return -1;
+}
+
+int
+gen_rsa_key(FILE *fp, size_t bits, unsigned long exp)
+{
+	int ret;
+	RSA *key;
+
+	key = RSA_generate_key(bits, exp, NULL, NULL);
+	if (!key) {
+		fprintf(stderr, "RSA_generate_key(): %s\n", eay_strerror());
+		return -1;
+	}
+	
+	ret = print_rsa_key(fp, key);
+	RSA_free(key);
+
+	return ret;
 }
 
 int
 main (int argc, char *argv[])
 {
-	FILE *fp = stdout;
+	FILE *fp = stdout, *fpin = NULL;
 	size_t bits = 1024;
 	unsigned int pubexp = 0x3;
 	struct stat st;
 	extern char *optarg;
 	extern int optind;
-	int c;
-	char *fname = NULL;
+	int c, fd = -1, fdin = -1;
+	char *fname = NULL, *finput = NULL;
 
-	while ((c = getopt(argc, argv, "e:b:f:h")) != -1)
+	while ((c = getopt(argc, argv, "e:b:f:i:h")) != -1)
 		switch (c) {
 			case 'e':
 				if (strncmp(optarg, "0x", 2) == 0)
@@ -178,31 +243,65 @@ main (int argc, char *argv[])
 			case 'f':
 				fname = optarg;
 				break;
+			case 'i':
+				finput = optarg;
+				break;
 			case 'h':
 			default:
 				usage(argv[0]);
 		}
 
 	if (fname) {
-		if (stat(fname, &st) >= 0) {
-			fprintf(stderr, "%s: file exists! Please use a different name.\n", fname);
+		umask(0077);
+		/* Restrictive access due to private key material. */
+		fd = open(fname, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, S_IRUSR | S_IWUSR);
+		if (fd < 0) {
+			if (errno == EEXIST)
+				fprintf(stderr, "%s: file exists! Please use a different name.\n", fname);
+			else
+				fprintf(stderr, "%s: %s\n", fname, strerror(errno));
+			exit(1);
+		}
+		fp = fdopen(fd, "w");
+		if (fp == NULL) {
+			fprintf(stderr, "%s: %s\n", fname, strerror(errno));
+			close(fd);
+			exit(1);
+		}
+	}
+
+	if (finput) {
+		/* Restrictive access once more. Do not be fooled by a link. */
+		fdin = open(finput, O_RDONLY | O_NOFOLLOW);
+		if (fdin < 0) {
+			if (errno == ELOOP)
+				fprintf(stderr, "%s: file is a link. Discarded for security.\n", fname);
+			if (fp)
+				fclose(fp);
+			exit(1);
+		}
+		fpin = fdopen(fdin, "r");
+		if (fpin == NULL) {
+			fprintf(stderr, "%s: %s\n", fname, strerror(errno));
+			close(fdin);
+			if (fp)
+				fclose(fp);
 			exit(1);
 		}
 
-		umask(0077);
-		fp = fopen(fname, "w");
-		if (fp == NULL) {
-			fprintf(stderr, "%s: %s\n", fname, strerror(errno));
-			exit(1);
-		}
 	}
 
 	ploginit();
 	eay_init();
 
-	gen_rsa_key(fp, bits, pubexp);
+	if (fpin)
+		convert_rsa_key(fp, fpin);
+	else
+		gen_rsa_key(fp, bits, pubexp);
 
 	fclose(fp);
+	if (fpin)
+		fclose(fpin);
 
 	return 0;
 }
