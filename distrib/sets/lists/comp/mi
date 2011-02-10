@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1584 2011/02/08 03:20:14 haad Exp $
+#	$NetBSD: mi,v 1.1585 2011/02/10 14:04:29 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1501,8 +1501,8 @@
 ./usr/include/net/if_vlanvar.h			comp-c-include
 ./usr/include/net/net_stats.h			comp-c-include
 ./usr/include/net/netisr.h			comp-c-include
-./usr/include/net/npf.h				comp-npf-include	npf
-./usr/include/net/npf_ncode.h			comp-npf-include	npf
+./usr/include/net/npf.h				comp-c-include
+./usr/include/net/npf_ncode.h			comp-c-include
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include
 ./usr/include/net/pfvar.h			comp-c-include
@@ -7460,7 +7460,7 @@
 ./usr/share/man/cat3/noqiflush.0		comp-c-catman		.cat
 ./usr/share/man/cat3/noraw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/notimeout.0		comp-c-catman		.cat
-./usr/share/man/cat3/npf.0			comp-npf-catman		.cat
+./usr/share/man/cat3/npf.0			comp-npf-catman		.cat,npf
 ./usr/share/man/cat3/nrand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ns.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/ns_addr.0			comp-obsolete		obsolete
@@ -13477,7 +13477,7 @@
 ./usr/share/man/html3/noqiflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/noraw.html		comp-c-htmlman		html
 ./usr/share/man/html3/notimeout.html		comp-c-htmlman		html
-./usr/share/man/html3/npf.html			comp-npf-htmlman	html
+./usr/share/man/html3/npf.html			comp-npf-htmlman	html,npf
 ./usr/share/man/html3/nrand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/nsdispatch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ntoa.html			comp-c-htmlman		html
@@ -19480,7 +19480,7 @@
 ./usr/share/man/man3/noqiflush.3		comp-c-man		.man
 ./usr/share/man/man3/noraw.3			comp-c-man		.man
 ./usr/share/man/man3/notimeout.3		comp-c-man		.man
-./usr/share/man/man3/npf.3			comp-npf-man		.man
+./usr/share/man/man3/npf.3			comp-npf-man		.man,npf
 ./usr/share/man/man3/nrand48.3			comp-c-man		.man
 ./usr/share/man/man3/ns.3			comp-obsolete		obsolete
 ./usr/share/man/man3/ns_addr.3			comp-obsolete		obsolete
