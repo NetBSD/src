@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.8 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: itevar.h,v 1.9 2011/02/10 10:44:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,13 +45,10 @@
 #define ITEUNIT(dev)       minor(dev)
 
 #define getbyte(ip, offset) \
-	((*(ip)->isw->ite_readbyte)(ip, offset))
+	*(((u_char *)(ip)->regbase) + (offset))
 
 #define getword(ip, offset) \
 	((getbyte(ip, offset) << 8) | getbyte(ip, (offset) + 2))
-
-#define writeglyph(ip, offset, fontbuf) \
-	((*(ip)->isw->ite_writeglyph)((ip), (offset), (fontbuf)))
 
 struct ite_data {
 	int	flags;
@@ -84,8 +81,6 @@ struct itesw {
 	void	(*ite_putc)(struct ite_data *, int, int, int, int);
 	void	(*ite_cursor)(struct ite_data *, int);
 	void	(*ite_scroll)(struct ite_data *, int, int, int, int);
-	u_char	(*ite_readbyte)(struct ite_data *, int);
-	void	(*ite_writeglyph)(struct ite_data *, u_char *, u_char *);
 };
 
 /* Flags */
@@ -190,8 +185,6 @@ extern	int nitesw;
 /*
  * Prototypes.
  */
-u_char ite_readbyte(struct ite_data *, int);
-void ite_writeglyph(struct ite_data *, u_char *, u_char *);
 void ite_fontinfo(struct ite_data *);
 void ite_fontinit(struct ite_data *);
 

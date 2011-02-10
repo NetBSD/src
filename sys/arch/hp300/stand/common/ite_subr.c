@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.7 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.8 2011/02/10 10:44:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,8 @@
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
+
+static void ite_writeglyph(struct ite_data *, u_char *, u_char *);
 
 void
 ite_fontinfo(struct ite_data *ip)
@@ -99,21 +101,11 @@ ite_fontinit(struct ite_data *ip)
 			*dp++ = getbyte(ip, romp);
 			romp += 2;
 		}
-		writeglyph(ip, fbmem, fontbuf);
+		ite_writeglyph(ip, fbmem, fontbuf);
 	}
 }
 
-/*
- * Display independent versions of the readbyte and writeglyph routines.
- */
-u_char
-ite_readbyte(struct ite_data *ip, int disp)
-{
-
-	return (u_char)*(((u_char *)ip->regbase) + disp);
-}
-
-void
+static void
 ite_writeglyph(struct ite_data *ip, u_char *fbmem, u_char *glyphp)
 {
 	int bn;

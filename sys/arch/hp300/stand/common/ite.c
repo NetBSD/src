@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.11 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: ite.c,v 1.12 2011/02/10 10:44:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,35 +64,35 @@ static void itecheckwrap(struct ite_data *, struct itesw *);
 struct itesw itesw[] = {
 	{ GID_TOPCAT,
 	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+	topcat_cursor,	topcat_scroll },
 
 	{ GID_GATORBOX,
 	gbox_init,	ite_deinit_noop, gbox_clear,	gbox_putc,
-	gbox_cursor,	gbox_scroll,	ite_readbyte,	ite_writeglyph },
+	gbox_cursor,	gbox_scroll },
 
 	{ GID_RENAISSANCE,
 	rbox_init,	ite_deinit_noop, rbox_clear,	rbox_putc,
-	rbox_cursor,	rbox_scroll,	ite_readbyte,	ite_writeglyph },
+	rbox_cursor,	rbox_scroll },
 
 	{ GID_LRCATSEYE,
 	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+	topcat_cursor,	topcat_scroll },
 
 	{ GID_HRCCATSEYE,
 	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+	topcat_cursor,	topcat_scroll },
 
 	{ GID_HRMCATSEYE,
 	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+	topcat_cursor,	topcat_scroll },
 
 	{ GID_DAVINCI,
       	dvbox_init,	ite_deinit_noop, dvbox_clear,	dvbox_putc,
-	dvbox_cursor,	dvbox_scroll,	ite_readbyte,	ite_writeglyph },
+	dvbox_cursor,	dvbox_scroll },
 
 	{ GID_HYPERION,
 	hyper_init,	ite_deinit_noop, hyper_clear,	hyper_putc,
-	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph },
+	hyper_cursor,	hyper_scroll },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
