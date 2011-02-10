@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.11 2011/02/10 11:08:23 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.12 2011/02/10 11:17:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,6 @@ struct ite_data {
 struct itesw {
 	int	ite_hwid;
 	void	(*ite_init)(struct ite_data *);
-	void	(*ite_deinit)(struct ite_data *);
 	void	(*ite_clear)(struct ite_data *, int, int, int, int);
 	void	(*ite_putc)(struct ite_data *, int, int, int, int);
 	void	(*ite_cursor)(struct ite_data *, int);
