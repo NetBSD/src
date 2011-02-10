@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.33 2010/07/27 05:29:05 jakllsch Exp $ */
+/* $NetBSD: piixpm.c,v 1.34 2011/02/10 13:52:36 hannken Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.33 2010/07/27 05:29:05 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.34 2011/02/10 13:52:36 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
 
-	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
+	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
+	    (cmdlen == 0 && len > 1))
 		return (1);
 
 	/* Setup transfer */
@@ -340,7 +341,10 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_WRITE_P(op)) {
 		/* Write data */
 		b = buf;
-		if (len > 0)
+		if (cmdlen == 0 && len == 1)
+			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+			    PIIX_SMB_HCMD, b[0]);
+		else if (len > 0)
 			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD0, b[0]);
 		if (len > 1)
@@ -349,8 +353,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	/* Set SMBus command */
-	if (len == 0) {
-		if (cmdlen == 0)
+	if (cmdlen == 0) {
+		if (len == 0)
 			ctl = PIIX_SMB_HC_CMD_QUICK;
 		else
 			ctl = PIIX_SMB_HC_CMD_BYTE;
