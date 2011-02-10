@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25.2.6 2011/02/03 15:56:16 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.7 2011/02/10 17:11:35 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,12 +82,15 @@ struct fileusage {
 #define FUHASH 1024	/* must be power of two */
 struct fileusage *fuhead[MAXQUOTAS][FUHASH];
 u_long highid[MAXQUOTAS];	/* highest addid()'ed identifier per type */
+int valid[MAXQUOTAS];
 struct quota2_entry defaultq2e[MAXQUOTAS];
 
 int	vflag = 0;		/* verbose */
 int	aflag = 0;		/* all file systems */
 int	Dflag = 0;		/* debug */
-int	hflag = 0;		/* debug */
+int	hflag = 0;		/* humanize */
+int	xflag = 0;		/* export */
+
 
 struct fileusage *addid(u_long, int, const char *);
 int	hasquota(struct fstab *, int, char **);
@@ -99,6 +102,7 @@ int	repquota2(const struct statvfs *, int);
 int	repquota1(const struct statvfs *, int);
 void	usage(void);
 void	printquotas(int, const struct statvfs *, int);
+void	exportquotas(void);
 void	dqblk2q2e(const struct dqblk *, struct quota2_entry *);
 
 int
@@ -114,7 +118,7 @@ main(argc, argv)
 	struct statvfs *fst;
 	int nfst;
 
-	while ((ch = getopt(argc, argv, "Daguhv")) != -1) {
+	while ((ch = getopt(argc, argv, "Daguhvx")) != -1) {
 		switch(ch) {
 		case 'a':
 			aflag++;
@@ -134,12 +138,17 @@ main(argc, argv)
 		case 'D':
 			Dflag++;
 			break;
+		case 'x':
+			xflag++;
+			break;
 		default:
 			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
+	if (xflag && argc != 1)
+		usage();
 	if (argc == 0 && !aflag)
 		usage();
 	if (!gflag && !uflag) {
@@ -184,6 +193,8 @@ main(argc, argv)
 				errs += repquota(&fst[i], USRQUOTA);
 		}
 	}
+	if (xflag)
+		exportquotas();
 	for (i = 0; i < argc; i++)
 		if ((done & (1 << i)) == 0)
 			fprintf(stderr, "%s not mounted\n", argv[i]);
@@ -193,9 +204,10 @@ main(argc, argv)
 void
 usage()
 {
-	fprintf(stderr, "usage:\n\t%s\n\t%s\n",
-		"repquota [-D] [-v] [-g] [-u] -a",
-		"repquota [-D] [-v] [-g] [-u] filesys ...");
+	fprintf(stderr, "usage:\n"
+		"\trepquota [-D] [-v] [-g] [-u] -a\n"
+		"\trepquota [-D] [-v] [-g] [-u] filesys ...\n"
+		"\trepquota -x [-D] [-g] [-u] filesys\n");
 	exit(1);
 }
 
@@ -293,6 +305,7 @@ repquota2(const struct statvfs *vfs, int type)
 		if (dataiter == NULL)
 			err(1, "prop_array_iterator");
 
+		valid[type] = 1;
 		while ((data = prop_object_iterator_next(dataiter)) != NULL) {
 			strid = NULL;
 			if (!prop_dictionary_get_uint32(data, "id", &id)) {
@@ -322,7 +335,8 @@ repquota2(const struct statvfs *vfs, int type)
 	}
 	prop_object_iterator_release(cmditer);
 	prop_object_release(dict);
-	printquotas(type, vfs, version);
+	if (xflag == 0)
+		printquotas(type, vfs, version);
 	return (0);
 }
 
@@ -334,16 +348,8 @@ int repquota1(const struct statvfs *vfs, int type)
 	FILE *qf;
 	u_long id;
 	struct dqblk dqbuf;
+	time_t bgrace = MAX_DQ_TIME, igrace = MAX_DQ_TIME;
 
-#if 0
-	static int warned = 0;
-	if (quotactl(fs->fs_file, QCMD(Q_SYNC, type), 0, 0) < 0 &&
-	    errno == EOPNOTSUPP && !warned && vflag) {
-		warned++;
-		fprintf(stdout,
-		    "*** Warning: Quotas are not compiled into this kernel\n");
-	}
-#endif
 	setfsent();
 	while ((fs = getfsent()) != NULL) {
 		if (strcmp(fs->fs_vfstype, "ffs") == 0 &&
@@ -366,14 +372,26 @@ int repquota1(const struct statvfs *vfs, int type)
 		fread(&dqbuf, sizeof(struct dqblk), 1, qf);
 		if (feof(qf))
 			break;
+		if (id == 0) {
+			if (dqbuf.dqb_btime > 0)
+				bgrace = dqbuf.dqb_btime;
+			if (dqbuf.dqb_itime > 0)
+				igrace = dqbuf.dqb_itime;
+		}
 		if (dqbuf.dqb_curinodes == 0 && dqbuf.dqb_curblocks == 0)
 			continue;
 		if ((fup = lookup(id, type)) == 0)
 			fup = addid(id, type, (char *)0);
 		dqblk2q2e(&dqbuf, &fup->fu_q2e);
+		fup->fu_q2e.q2e_val[QL_BLOCK].q2v_grace = bgrace;
+		fup->fu_q2e.q2e_val[QL_FILE].q2v_grace = igrace;
 	}
+	defaultq2e[type].q2e_val[QL_BLOCK].q2v_grace = bgrace;
+	defaultq2e[type].q2e_val[QL_FILE].q2v_grace = igrace;
 	fclose(qf);
-	printquotas(type, vfs, 1);
+	valid[type] = 1;
+	if (xflag == 0)
+		printquotas(type, vfs, 1);
 	return (0);
 }
 
@@ -451,6 +469,59 @@ printquotas(int type, const struct statvfs *vfs, int version)
 			timemsg[QL_FILE]);
 		memset(&fup->fu_q2e, 0, sizeof(fup->fu_q2e));
 	}
+}
+
+void
+exportquotas()
+{
+	u_long id;
+	struct fileusage *fup;
+	prop_dictionary_t dict, data;
+	prop_array_t cmds, datas;
+	int type;
+
+	dict = quota2_prop_create();
+	cmds = prop_array_create();
+
+	if (dict == NULL || cmds == NULL) {
+		errx(1, "can't allocate proplist");
+	}
+
+
+	for (type = 0; type < MAXQUOTAS; type++) {
+		if (valid[type] == 0)
+			continue;
+		datas = prop_array_create();
+		if (datas == NULL)
+			errx(1, "can't allocate proplist");
+		data = q2etoprop(&defaultq2e[type], 1);
+		if (data == NULL)
+			err(1, "q2etoprop(default)");
+		if (!prop_array_add_and_rel(datas, data))
+			err(1, "prop_array_add(data)");
+
+		for (id = 0; id <= highid[type]; id++) {
+			fup = lookup(id, type);
+			if (fup == 0)
+				continue;
+			fup->fu_q2e.q2e_uid = id;
+			data = q2etoprop(&fup->fu_q2e, 0);
+			if (data == NULL)
+				err(1, "q2etoprop(default)");
+			if (!prop_array_add_and_rel(datas, data))
+				err(1, "prop_array_add(data)");
+		}
+
+		if (!quota2_prop_add_command(cmds, "set",
+		    qfextension[type], datas))
+			err(1, "prop_add_command");
+	}
+
+	if (!prop_dictionary_set(dict, "commands", cmds))
+		err(1, "prop_dictionary_set(command)");
+
+	printf("%s\n", prop_dictionary_externalize(dict));
+	return;
 }
 
 /*

@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)repquota.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: repquota.8,v 1.9.50.1 2011/01/21 16:58:07 bouyer Exp $
+.\"	$NetBSD: repquota.8,v 1.9.50.2 2011/02/10 17:11:35 bouyer Exp $
 .\"
-.Dd January 21, 2011
+.Dd February 10, 2011
 .Dt REPQUOTA 8
 .Os
 .Sh NAME
@@ -52,6 +52,12 @@
 .Op Fl u
 .Op Fl v
 .Fl a
+.Nm
+.Fl x
+.Op Fl D
+.Op Fl g
+.Op Fl u
+.Ar filesystem
 .Sh DESCRIPTION
 .Nm
 prints a summary of the disk usage and quotas for the
@@ -73,6 +79,10 @@ Print a header line before printing each filesystem quotas.
 Debug: print plist sent to and received from kernel.
 .It Fl h
 Numbers are displayed in a human readable format.
+.It Fl x
+export filesystem quota in a plist format suitable for
+.Xr quotactl 8 .
+A single filesystem should be specified.
 .El
 .Pp
 For each user or group, the current
@@ -83,14 +93,13 @@ printed, along with any quotas created with
 .Xr edquota 8 .
 .Pp
 Only the super-user may use this command.
-.Sh DIAGNOSTICS
-Various messages about inaccessible files; self-explanatory.
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr quotactl 2 ,
 .Xr fstab 5 ,
 .Xr edquota 8 ,
 .Xr quotacheck 8 ,
+.Xr quotactl 8 ,
 .Xr quotaon 8
 .Sh HISTORY
 The
