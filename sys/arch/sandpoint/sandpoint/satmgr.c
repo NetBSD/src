@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.2 2010/06/03 10:44:21 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.3 2011/02/10 13:54:45 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
 #include <sandpoint/sandpoint/eumbvar.h>
 #include "locators.h"
 
+
+struct satops;
+
 struct satmgr_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -71,6 +74,8 @@ struct satmgr_softc {
 	char sc_rd_buf[16], *sc_rd_lim, *sc_rd_cur, *sc_rd_ptr;
 	char sc_wr_buf[16], *sc_wr_lim, *sc_wr_cur, *sc_wr_ptr;
 	int sc_rd_cnt, sc_wr_cnt;
+	int sc_btnstate;
+	struct satops		*sc_ops;
 };
 
 static int  satmgr_match(device_t, cfdata_t, void *);
@@ -104,24 +109,30 @@ static void rxintr(struct satmgr_softc *);
 static void txintr(struct satmgr_softc *);
 static void startoutput(struct satmgr_softc *);
 static void swintr(void *);
+static void kreboot(struct satmgr_softc *);
+static void sreboot(struct satmgr_softc *);
+static void qreboot(struct satmgr_softc *);
+static void kpwroff(struct satmgr_softc *);
+static void spwroff(struct satmgr_softc *);
+static void qpwroff(struct satmgr_softc *);
 static void kbutton(struct satmgr_softc *, int);
 static void sbutton(struct satmgr_softc *, int);
 static void qbutton(struct satmgr_softc *, int);
 static void guarded_pbutton(void *);
 static void sched_sysmon_pbutton(void *);
 
-struct satmsg {
+struct satops {
 	const char *family;
-	const char *reboot, *poweroff;
+	void (*reboot)(struct satmgr_softc *);
+	void (*pwroff)(struct satmgr_softc *);
 	void (*dispatch)(struct satmgr_softc *, int);
 };
 
-static const struct satmsg satmodel[] = {
-    { "kurobox",  "CCGG", "EEGG", kbutton },
-    { "synology", "C",    "1",    sbutton },
-    { "qnap",     "f",    "A",    qbutton }
+static struct satops satmodel[] = {
+    { "kurobox",  kreboot, kpwroff, kbutton },
+    { "synology", sreboot, spwroff, sbutton },
+    { "qnap",     qreboot, qpwroff, qbutton }
 };
-static const struct satmsg *satmgr_msg;
 
 /* single byte stride register layout */
 #define RBR		0
@@ -156,23 +167,24 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	struct eumb_attach_args *eaa = aux;
 	struct satmgr_softc *sc = device_private(self);
 	struct btinfo_prodfamily *pfam;
+	struct satops *ops;
 	int i, sataddr, epicirq;
 
 	found = 1;
 	
 	if ((pfam = lookup_bootinfo(BTINFO_PRODFAMILY)) == NULL)
 		goto notavail;
-	satmgr_msg = NULL;
+	ops = NULL;
 	for (i = 0; i < (int)(sizeof(satmodel)/sizeof(satmodel[0])); i++) {
 		if (strcmp(pfam->name, satmodel[i].family) == 0) {
-			satmgr_msg = &satmodel[i];
+			ops = &satmodel[i];
 			break;
 		}
 	}
-	if (satmgr_msg == NULL)
+	if (ops == NULL)
 		goto notavail;
-	
-	aprint_normal(": button manager (%s)\n", satmgr_msg->family);
+	aprint_normal(": button manager (%s)\n", ops->family);
+	sc->sc_ops = ops;
 
 	sc->sc_dev = self;
 	sataddr = (eaa->eumb_unit == 0) ? 0x4500 : 0x4600;
@@ -192,6 +204,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	cv_init(&sc->sc_rdcv, "satrd");
 	cv_init(&sc->sc_wrcv, "satwr");
+	sc->sc_btnstate = 0;
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
 	intr_establish(epicirq + 16, IST_LEVEL, IPL_SERIAL, hwintr, sc);
@@ -210,7 +223,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev,
 		    "unable to register power button with sysmon\n");
 
-	if (strcmp(satmgr_msg->family, "kurobox") == 0) {
+	if (strcmp(ops->family, "kurobox") == 0) {
 		const struct sysctlnode *rnode;
 		struct sysctllog *clog;
 
@@ -244,14 +257,12 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 static void
 satmgr_reboot(int howto)
 {
-	const char *msg;
 	struct satmgr_softc *sc = device_lookup_private(&satmgr_cd, 0);
-
+	
 	if ((howto & RB_POWERDOWN) == RB_AUTOBOOT)
-		msg = satmgr_msg->reboot;	/* REBOOT */
+		(*sc->sc_ops->reboot)(sc);	/* REBOOT */
 	else
-		msg = satmgr_msg->poweroff;	/* HALT or POWERDOWN */
-	send_sat(sc, msg);
+		(*sc->sc_ops->pwroff)(sc);	/* HALT or POWERDOWN */
 	tsleep(satmgr_reboot, PWAIT, "reboot", 0);
 	/*NOTREACHED*/
 }
@@ -576,7 +587,7 @@ swintr(void *arg)
 	mutex_spin_enter(&sc->sc_lock);
 	ptr = sc->sc_rd_ptr;
 	for (n = 0; n < sc->sc_rd_cnt; n++) {
-		(*satmgr_msg->dispatch)(sc, *ptr);
+		(*sc->sc_ops->dispatch)(sc, *ptr);
 		if (++ptr == sc->sc_rd_lim)
 			ptr = &sc->sc_rd_buf[0];
 	}
@@ -589,6 +600,20 @@ swintr(void *arg)
 	cv_signal(&sc->sc_rdcv);
 	selnotify(&sc->sc_rsel, 0, 0);
 	mutex_spin_exit(&sc->sc_lock);
+}
+
+static void
+kreboot(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "CCGG");
+}
+
+static void
+kpwroff(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "EEGG");
 }
 
 static void
@@ -616,6 +641,20 @@ kbutton(struct satmgr_softc *sc, int ch)
 }
 
 static void
+sreboot(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "C");
+}
+
+static void
+spwroff(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "1");
+}
+
+static void
 sbutton(struct satmgr_softc *sc, int ch)
 {
 
@@ -628,6 +667,20 @@ sbutton(struct satmgr_softc *sc, int ch)
 	case '`':
 		break;
 	}
+}
+
+static void
+qreboot(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "f");
+}
+
+static void
+qpwroff(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "A");
 }
 
 static void
