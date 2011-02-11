@@ -44,12 +44,17 @@
 # else
 #  if defined(_KERNEL_OPT)
 #    include "agp_i810.h"
+#    include "genfb.h"
 #  else
 #   define NAGP_I810 1
+#   define NGENFB 1
 #  endif
 # endif
 # if NAGP_I810 > 0
 #  include <dev/pci/agpvar.h>
+# endif
+# if NGENFB > 0
+#  include <dev/wsfb/genfbvar.h>
 # endif
 #endif
 
@@ -138,6 +143,10 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 				dev->pci_map_data[i].mapped--;
 #if NAGP_I810 > 0 /* XXX horrible kludge: agp might have mapped it */
 				if (agp_i810_borrow(map->offset, &map->bsh))
+					return bus_space_vaddr(map->bst, map->bsh);
+#endif
+#if NGENFB > 0
+				if (genfb_borrow(map->offset, &map->bsh))
 					return bus_space_vaddr(map->bst, map->bsh);
 #endif
 				DRM_DEBUG("ioremap: failed to map (%d)\n",
