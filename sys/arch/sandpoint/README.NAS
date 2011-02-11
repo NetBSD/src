@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.13 2011/02/10 17:11:33 phx Exp $
+$NetBSD: README.NAS,v 1.14 2011/02/11 12:26:04 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -26,12 +26,12 @@ wm.15	satalink.13 	QNAP TS-100/101
 re.15	viaide.13	IOMEGA StorCenter 250/500/1T
 
 			>> Not yet recognized, research in progress <<
-re.15	satalink.13 	QNAP TS-201
+re.15	satalink.13 	QNAP TS-201, LevelOne FNS-5000B
 stge.15	acardide.16	D-Link DSM-G600
-re.?	iteide.16	Allnet ALL6250
-re.?	satalink.?	Allnet ALL6260, Longshine LCS-8311, Netronix NH231,
+re.15	iteide.16	Netronix NH-230, Allnet ALL6250, Encore ENNHD-1000,
+			Planex NAS-01G
+re.15	satalink.16	Netronix NH-231, Allnet ALL6260, Longshine LCS-8311,
 			Fujitsu-Siemens AMS150, Fujitsu-Siemens SBLAN2
-?	?		LevelOne NASCon FNS-5000B (GBit, SATA)
 
 
 PCI line/pin and EPIC IRQ assignments
@@ -42,6 +42,7 @@ Synology	12, 13, 14, 15	-> 4, 0, 1, 2
 QNAP		13, 14, 15, 16	-> 0, 1, 2, 3
 StorCenter	12, 13, 14, 15  -> 0, 1, 2, 3
 DLink		13, 14, 15, 16	-> 0, 1, 3, 4
+NH230		13, 14, 15, 16	-> 0, 3, 1, 2
 
 - USB EHCI is a multiple function PCI device which has
   pin assignment A, B and C.
