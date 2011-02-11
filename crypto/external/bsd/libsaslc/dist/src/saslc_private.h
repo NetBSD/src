@@ -1,4 +1,4 @@
-/* $Id: saslc_private.h,v 1.2 2011/01/29 23:35:31 agc Exp $ */
+/* $NetBSD: saslc_private.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,31 +39,34 @@
 #define _SASLC_PRIVATE_H_
 
 #include <saslc.h>
-#include <sys/queue.h>
+#include <stdint.h>
 #include "dict.h"
-#include "mech.h"
 #include "error.h"
-
-typedef struct saslc__sess_list_t saslc__sess_list_t;
-LIST_HEAD(saslc__sess_list_t, saslc_sess_t);
+#include "mech.h"
 
 /** library context structure */
 struct saslc_t {
-	char *appname;                  /**< application name */
-	saslc__dict_t *prop;            /**< configuration options */
-	saslc__mech_list_t mechanisms;  /**< available mechanisms */
-	saslc__error_t err;             /**< error */
-        saslc__sess_list_t sessions;    /**< sessions */
+	char *appname;			/* application name */
+	char *pathname;			/* location of config files */
+	saslc__dict_t *prop;		/* configuration options */
+	saslc__mech_list_t *mechanisms; /* avaiable mechanisms */
+	uint32_t refcnt;		/* reference count */
+	saslc__error_t err;		/* error */
 };
 
 /** session context structure */
 struct saslc_sess_t {
-	saslc_t *context;               /**< library context */
-	const saslc__mech_t *mech;      /**< mechanism */
-	void *mech_sess;                /**< mechanism session */
-	saslc__dict_t *prop;            /**< session properties */
-	saslc__error_t err;             /**< error */
-        LIST_ENTRY(saslc_sess_t) nodes; /**< nodes */
+	saslc_t *context;		/* library context */
+	const saslc__mech_t *mech;	/* mechanism */
+	void *mech_sess;		/* mechanism session */
+	saslc__dict_t *prop;		/* session properties */
+	saslc__error_t err;		/* error info */
+	uint32_t flags;			/* session flags */
+#define SASLC_FLAGS_BASE64_IN		0x0001
+#define SASLC_FLAGS_BASE64_OUT		0x0002
+#define SASLC_FLAGS_BASE64 \
+	(SASLC_FLAGS_BASE64_IN | SASLC_FLAGS_BASE64_OUT)
+#define SASLC_FLAGS_DEFAULT	SASLC_FLAGS_BASE64
 };
 
 #endif /* ! _SASLC_PRIVATE_H_ */

@@ -1,15 +1,31 @@
-# $Id: Makefile,v 1.2 2011/01/29 23:35:31 agc Exp $
+# $NetBSD: Makefile,v 1.3 2011/02/11 23:44:43 christos Exp $
 
-CFLAGS=-I../include -Wall -Werror -pedantic -fPIC -ggdb -D_GNU_SOURCE
-LIBSASLC_OBJS=\
-	dict.o error.o mech_anonymous.o mech_digestmd5.o mech_gssapi.o mech.o parser.o \
-	xsess.o mech_crammd5.o mech_external.o mech_login.o mech_plain.o saslc.o crypto.o
+CC=gcc
+CFLAGS=-I../include -Wall -pedantic -std=c99 -fPIC -ggdb
+OBJS=
+OBJS+= buffer.o
+OBJS+= crypto.o
+OBJS+= dict.o
+OBJS+= error.o
+OBJS+= list.o
+OBJS+= mech.o parser.o
+OBJS+= mech_anonymous.o
+OBJS+= mech_crammd5.o
+OBJS+= mech_digestmd5.o
+OBJS+= mech_external.o
+OBJS+= mech_gssapi.o
+OBJS+= mech_login.o
+OBJS+= mech_plain.o
+OBJS+= msg.o
+OBJS+= saslc.o
+OBJS+= xsess.o
+
 LDFLAGS=-lssl -lgssapi -ggdb
 
 all: libsaslc.so
 
-libsaslc.so: $(LIBSASLC_OBJS)
-	$(CC) -shared -fPIC -o $@ $(LIBSASLC_OBJS) $(LDFLAGS)
+libsaslc.so: $(OBJS)
+	$(CC) -shared -fPIC -o $@ $(OBJS) $(LDFLAGS)
 
 clean:
 	rm -f *.o *.so
