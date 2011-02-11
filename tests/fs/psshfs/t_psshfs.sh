@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.3 2011/01/06 07:28:32 pooka Exp $
+# $NetBSD: t_psshfs.sh,v 1.4 2011/02/11 13:19:46 pooka Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,8 +80,10 @@ start_ssh() {
 	atf_check -s eq:0 -o empty -e empty chmod 400 ssh_host_key
 	atf_check -s eq:0 -o empty -e empty chmod 444 ssh_host_key.pub
 
-	/usr/sbin/sshd -e -D -f ./sshd_config >sshd.log 2>&1 &
-	echo $! >sshd.pid
+	/usr/sbin/sshd -e -f ./sshd_config >sshd.log 2>&1 &
+	while [ ! -f sshd.pid ]; do
+		sleep 0.01
+	done
 	echo "SSH server started (pid $(cat sshd.pid))"
 
 	echo "Setting up SSH client configuration"
