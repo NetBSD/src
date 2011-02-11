@@ -1719,6 +1719,8 @@ and their results are:
 .Lb libresolv
 .It Li librt
 .Lb librt
+.It Li libsaslc
+.Lb libsaslc
 .It Li libtermcap
 .Lb libtermcap
 .It Li libusbhid
