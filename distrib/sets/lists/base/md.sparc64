@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.106 2011/02/09 08:11:37 haad Exp $
+# $NetBSD: md.sparc64,v 1.107 2011/02/11 06:50:13 matt Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -78,7 +78,8 @@
 ./usr/lib/sparc/libcurses.so.7.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.8			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libdm.so			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdevmapper.so.1		base-compat-shlib	compat,pic,lvm
+./usr/lib/sparc/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/sparc/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.5			base-compat-shlib	compat,pic
@@ -145,6 +146,8 @@
 
 ./usr/lib/sparc/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblwres.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblzf.so.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblzma.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0			base-compat-shlib	compat,pic

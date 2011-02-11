@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.40 2011/02/09 08:11:37 haad Exp $
+# $NetBSD: ad.mips64eb,v 1.41 2011/02/11 06:50:13 matt Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -525,6 +525,10 @@
 ./usr/lib/o32/security/pam_skey.so.3		base-compat-shlib	compat,pic,skey,pam
 ./usr/lib/o32/security/pam_ssh.so.3		base-compat-shlib	compat,pic,crypto,pam
 ./usr/lib/o32/security/pam_unix.so.3		base-compat-shlib	compat,pic,pam
+./usr/libdata/debug/usr/lib/64			base-compat-lib		compat
+./usr/libdata/debug/usr/lib/64/i18n		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/o32			base-compat-lib		compat
+./usr/libdata/debug/usr/lib/o32/i18n		base-compat-lib		compat
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic
 ./usr/libexec/ld.elf_so-o32			base-sysutil-bin	compat,pic
 ./usr/lkm/ldscript				base-obsolete		obsolete
