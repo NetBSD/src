@@ -1,4 +1,4 @@
-# $NetBSD: sshd_config.in,v 1.1 2010/07/06 14:06:22 pooka Exp $
+# $NetBSD: sshd_config.in,v 1.2 2011/02/11 13:19:46 pooka Exp $
 
 # Basic settings.
 Port 10000
@@ -20,7 +20,7 @@ AuthorizedKeysFile @WORKDIR@/authorized_keys
 StrictModes no
 
 # Some settings to allow user runs of sshd.
-PidFile @WORKDIR@/sshd.pid.2
+PidFile @WORKDIR@/sshd.pid
 Subsystem sftp @WORKDIR@/sftp-server
 UsePam no
 UsePrivilegeSeparation no
