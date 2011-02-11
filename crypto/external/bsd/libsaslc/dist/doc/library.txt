@@ -1,7 +1,7 @@
 SASL client library - draft
 ---------------------------
 
-Version: $Id: library.txt,v 1.2 2011/01/29 23:35:30 agc Exp $
+Version: $NetBSD: library.txt,v 1.3 2011/02/11 23:44:42 christos Exp $
 
 1. Typedefs
 
