@@ -1,10 +1,7 @@
-/* $NetBSD: parser.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: buffer.h,v 1.1 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Mateusz Kocielski.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,12 +32,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PARSER_H_
-#define _PARSER_H_
+#ifndef _BUFFER_H_
+#define _BUFFER_H_
 
-#include <saslc.h>
+typedef struct saslc__buffer_context_t   saslc__buffer_context_t;
+typedef struct saslc__buffer32_context_t saslc__buffer32_context_t;
 
-int saslc__parser_config(saslc_t *);
-bool saslc__parser_is_true(const char *);
+saslc__buffer_context_t *saslc__buffer_create(saslc_sess_t *, size_t);
+void    saslc__buffer_destroy(saslc__buffer_context_t *);
+ssize_t saslc__buffer_fetch(saslc__buffer_context_t *, const uint8_t *,
+    size_t, uint8_t **, size_t *);
 
-#endif /* ! _PARSER_H_ */
+saslc__buffer32_context_t *saslc__buffer32_create(saslc_sess_t *, size_t);
+void    saslc__buffer32_destroy(saslc__buffer32_context_t *);
+ssize_t saslc__buffer32_fetch(saslc__buffer32_context_t *, const uint8_t *,
+    size_t, uint8_t **, size_t *);
+
+#endif /* ! _BUFFER_H_ */

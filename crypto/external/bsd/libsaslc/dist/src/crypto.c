@@ -1,4 +1,4 @@
-/* $Id: crypto.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
+/* $NetBSD: crypto.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,186 +35,246 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: crypto.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <openssl/rand.h>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/buffer.h>
+#include <openssl/hmac.h>
+
 #include "crypto.h"
 
-/* local headers */
-
-#define HMAC_MD5_KEYSIZE	64
-#define HMAC_MD5_IPAD		0x36
-#define HMAC_MD5_OPAD		0x5C
-
-static const char saslc__hex[] = "0123456789abcdef";
-
-static char *saslc__digest_to_ascii(const unsigned char *);
-
 /**
- * @brief converts MD5 binary digest into its text representation.
- * @param d MD5 digest in binary form
- * @return the text representation, note that user is responsible for freeing
- * allocated memory.
+ * @brief base64 encode data.
+ * @param in input data
+ * @param inlen input data length (in bytes)
+ * @param out output data
+ * @param outlen output data length (in bytes)
+ * @return 0 on success, -1 on failure
  */
-
-static char *
-saslc__digest_to_ascii(const unsigned char *digest)
+int
+saslc__crypto_encode_base64(const void *in, size_t inlen,
+    char **out, size_t *outlen)
 {
-	char *result;
-	size_t i,j;
+	BIO *bio;
+	BIO *b64;
+	size_t enclen;
+	char *r;
+	int n;
 
-	result = calloc((2 * MD5_DIGEST_LENGTH) + 1, sizeof(*result));
-        if (result == NULL)
-		return NULL;
+	enclen = (((inlen + 2) / 3)) * 4;
+	r = calloc(enclen + 1, sizeof(*r));
+	if (r == NULL)
+		return -1;
 
-	for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
-		j = 2*i;
-		result[j] = saslc__hex[(unsigned char)digest[i] >> 4];
-		result[j + 1] = saslc__hex[digest[i] & 0x0F];
+	if ((bio = BIO_new(BIO_s_mem())) == NULL)
+		goto err;
+
+	if ((b64 = BIO_new(BIO_f_base64())) == NULL) {
+		BIO_free(bio);
+		goto err;
 	}
-
-	return result;
+	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+	b64 = BIO_push(b64, bio);
+	if (BIO_write(b64, in, (int)inlen) != (int)inlen) {
+		BIO_free_all(b64);
+		goto err;
+	}
+	/*LINTED: no effect*/
+	(void)BIO_flush(b64);
+	n = BIO_read(bio, r, (int)enclen);
+	BIO_free_all(b64);
+	if (n < 0)
+		goto err;
+	if (out)
+		*out = r;
+	if (outlen)
+		*outlen = n;
+	return 0;
+ err:
+	free(r);
+	return -1;
 }
 
 /**
- * @brief encode data to base64.
+ * @brief decode base64 data.
  * @param in input data
- * @param len input data length
- * @return in encoded using base64. User is responsible for freeing string.
+ * @param inlen input data length (in bytes)
+ * @param out output data
+ * @param outlen output data length (in bytes)
+ * @return 0 on success, -1 on failure
  */
-
-char *
-saslc__crypto_base64(const unsigned char *in, size_t len)
+int
+saslc__crypto_decode_base64(const char *in, size_t inlen,
+    void **out, size_t *outlen)
 {
-	BIO *m;
-	BIO *base64;
-	BUF_MEM *c;
-	char *r;
-	
-	m = BIO_new(BIO_s_mem());
-	base64 = BIO_new(BIO_f_base64());
+	BIO *bio;
+	BIO *b64;
+	void *r;
+	size_t declen;
+	int n;
 
-	/* base64 -> mem */
-	base64 = BIO_push(base64, m);
-	/*LINTED len should be size_t in api*/
-	BIO_write(base64, in, (int)len);
-	/*LINTED wrong argument, null effect*/
-	(void)BIO_flush(base64);
-	/*LINTED wrong argument, non-portable cast*/
-	(void)BIO_get_mem_ptr(base64, &c);
-	/*LINTED length should be size_t in api*/
-	r = calloc(c->length, sizeof(*r));
+	declen = ((inlen + 3) / 4) * 3;
+	r = malloc(declen + 1);
 	if (r == NULL)
-		goto end;
-	if (c->length != 0) {
-		/*LINTED length should be size_t in api*/
-		memcpy(r, c->data, (size_t)(c->length - 1));
-	}
-end:
-	BIO_free_all(base64);
+		return -1;
 
+	if ((bio = BIO_new(BIO_s_mem())) == NULL)
+		goto err;
+
+	if ((b64 = BIO_new(BIO_f_base64())) == NULL) {
+		BIO_free(bio);
+		goto err;
+	}
+	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+	b64 = BIO_push(b64, bio);
+	if (BIO_write(bio, in, (int)inlen) != (int)inlen) {
+		BIO_free_all(b64);
+		goto err;
+	}
+	n = BIO_read(b64, r, (int)declen);
+	BIO_free_all(b64);
+	if (n < 0)
+		goto err;
+	((char *)r)[n] = '\0';
+	if (out)
+		*out = r;
+	if (outlen)
+		*outlen = n;
+	return 0;
+ err:
+	free(r);
+	return -1;
+}
+
+/**
+ * @brief generates safe nonce basing on OpenSSL
+ * RAND_pseudo_bytes, which should be enough for our purposes.
+ * @param len nonce length in bytes
+ * @return nonce, user is responsible for freeing nonce.
+ */
+char *
+saslc__crypto_nonce(size_t len)
+{
+	char *n;
+
+	if ((n = malloc(len)) == NULL)
+		return NULL;
+
+	if (RAND_pseudo_bytes((unsigned char *)n, (int)len) != 1) {
+		free(n);
+		return NULL;
+	}
+	return n;
+}
+
+/**
+ * @brief converts MD5 binary digest into text representation.
+ * @param hash MD5 digest (16 bytes) to convert
+ * @return the '\0' terminated text representation of the hash.  Note
+ * that user is responsible for freeing allocated memory.
+ */
+char *
+saslc__crypto_hash_to_hex(const uint8_t *hash)
+{
+	static const char hex[] = "0123456789abcdef";
+	char *r;
+	size_t i, j;
+
+	if ((r = malloc(MD5_DIGEST_LENGTH * 2 + 1)) == NULL)
+		return NULL;
+
+	for (i = 0; i < MD5_DIGEST_LENGTH; i++) {
+		j = i * 2;
+		r[j] = hex[(unsigned)hash[i] >> 4];
+		r[j + 1] = hex[hash[i] & 0x0F];
+	}
+	r[MD5_DIGEST_LENGTH * 2] = '\0';
 	return r;
 }
 
 /**
- * @brief generates safe nonce basing on the OpenSSL
- * RAND_pseudo_bytes, which should be good enough for our purposes.
- * @param b nonce length
- * @return nonce, user is responsible for freeing nonce.
+ * @brief computes md5(D)
+ * @param buf input data buffer
+ * @param buflen number of bytes in input data buffer
+ * @param digest buffer for hash (must not be NULL)
+ * @return the md5 digest, note that user is responsible for freeing
+ * allocated memory if digest is not NULL.
  */
-
-unsigned char *
-saslc__crypto_nonce(size_t len)
+void
+saslc__crypto_md5_hash(const char *buf, size_t buflen, unsigned char *digest)
 {
-	unsigned char *nonce;
 
-        nonce = calloc(len, sizeof(*nonce));
-	if (nonce == NULL)
-		return NULL;
-	
-	/*LINTED b should be size_t in api*/
-	if (RAND_pseudo_bytes(nonce, (int)len) != 1) {
-		free(nonce);
-		return NULL;
-	}
-
-	return nonce;
+	assert(digest != NULL);
+	if (digest != NULL)
+		(void)MD5((const unsigned char *)buf, (int)buflen, digest);
 }
 
 /**
  * @brief computes md5(D)
- * @param str data
- * @param len data length
- * @return text representation of the computed digest, note that user is
- * responsible for freeing allocated memory.
+ * @param buf input data buffer
+ * @param buflen number of bytes in input data buffer
+ * @return the text representation of the computed digest, note that
+ * user is responsible for freeing allocated memory.
  */
-
 char *
-saslc__crypto_md5(const char *str, size_t len)
+saslc__crypto_md5_hex(const char *buf, size_t buflen)
 {
 	unsigned char digest[MD5_DIGEST_LENGTH];
-	MD5_CTX md5c;
 
-	MD5_Init(&md5c);
-	MD5_Update(&md5c, str, len);
-	MD5_Final(digest, &md5c);
-
-	return saslc__digest_to_ascii(digest);
+	(void)MD5((const unsigned char *)buf, (int)buflen, digest);
+	return saslc__crypto_hash_to_hex(digest);
 }
 
 /**
  * @brief computes hmac_md5(K, I)
  * @param key hmac_md5 key
  * @param keylen hmac_md5 key length
- * @param in hmac_md5 input
- * @param inlen hmac_md5 input length
- * @returntext representation of the computed digest, note that user is
+ * @param in input data to compute hash for
+ * @param inlen input data length in bytes
+ * @param hmac space for output (MD5_DIGEST_LENGTH bytes)
+ * @return 0 on success, -1 on error
+ */
+int
+saslc__crypto_hmac_md5_hash(const unsigned char *key, size_t keylen,
+    const unsigned char *in, size_t inlen, unsigned char *hmac)
+{
+	unsigned int hmac_len;
+
+	assert(hmac != NULL);
+	if (hmac == NULL ||
+	    HMAC(EVP_md5(), key, (int)keylen, in, (int)inlen, hmac, &hmac_len)
+	    == NULL)
+		return -1;
+
+	assert(hmac_len == MD5_DIGEST_LENGTH);
+	return 0;
+}
+
+/**
+ * @brief computes hmac_md5(K, I)
+ * @param key hmac_md5 key
+ * @param keylen hmac_md5 key length
+ * @param in input data to compute hash for
+ * @param inlen input data length in bytes
+ * @return the text representation of the computed digest, note that user is
  * responsible for freeing allocated memory.
  */
-
 char *
-saslc__crypto_hmac_md5(const unsigned char *key, size_t keylen,
-	const unsigned char *in, size_t inlen)
+saslc__crypto_hmac_md5_hex(const unsigned char *key, size_t keylen,
+    const unsigned char *in, size_t inlen)
 {
-	unsigned char ipad_key[HMAC_MD5_KEYSIZE],
-	    opad_key[HMAC_MD5_KEYSIZE], digest[MD5_DIGEST_LENGTH];
-	const unsigned char *hmac_key;
-	size_t i;
-	MD5_CTX md5c;
+	unsigned char digest[MD5_DIGEST_LENGTH];
 
-	/* HMAC_MD5(K, T) = MD5(K XOR OPAD, MD5(K XOR IPAD, T)) */
+	if (saslc__crypto_hmac_md5_hash(key, keylen, in, inlen, digest) == -1)
+		return NULL;
 
-	memset(ipad_key, 0, sizeof(ipad_key));
-	memset(opad_key, 0, sizeof(opad_key));
-
-	if (keylen > 64) {
-		hmac_key = MD5(key, keylen, NULL);
-		keylen = MD5_DIGEST_LENGTH;
-	} else
-		hmac_key = (const unsigned char *)key;
-
-	for (i = 0; i < HMAC_MD5_KEYSIZE ; i++) {
-		unsigned char k = i < keylen ? hmac_key[i] : 0;
-		ipad_key[i] = k ^ HMAC_MD5_IPAD;
-		opad_key[i] = k ^ HMAC_MD5_OPAD;
-	}
-
-	/* d = MD5(K XOR IPAD, T) */
-	MD5_Init(&md5c);
-	MD5_Update(&md5c, ipad_key, HMAC_MD5_KEYSIZE);
-	MD5_Update(&md5c, in, inlen);
-	MD5_Final(digest, &md5c);
-	/* MD5(K XOR OPAD, d) */
-	MD5_Init(&md5c);
-	MD5_Update(&md5c, opad_key, HMAC_MD5_KEYSIZE);
-	MD5_Update(&md5c, digest, MD5_DIGEST_LENGTH);
-	MD5_Final(digest, &md5c);
-
-	return saslc__digest_to_ascii(digest);
+	return saslc__crypto_hash_to_hex(digest);
 }
