@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.26.2.1 2011/02/11 12:35:27 bouyer Exp $
+.\"	$NetBSD: quotactl.2,v 1.26.2.2 2011/02/11 12:50:11 bouyer Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -180,6 +180,20 @@ an invalid
 .Fa addr
 was supplied; the associated structure could not be copied in or out
 of the kernel.
+.El
+.Sh FILES
+Example of usage of the
+.Nm
+syscall, with construction of the pref argument an interpretation of
+the reply, can be found in the following
+.Nx
+source files:
+.Bl -tag
+.It src/usr.bin/quota/getvfsquota.c
+.It src/usr.sbin/repquota/repquota.c
+.It src/usr.sbin/edquota/edquota.c
+.It src/usr.sbin/quotaon/quotaon.c
+.It src/sys/ufs/ufs/quota2_prop.c
 .El
 .Sh SEE ALSO
 .Xr quota 1 ,
