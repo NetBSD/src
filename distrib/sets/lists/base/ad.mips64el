@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.38 2011/02/09 08:11:37 haad Exp $
+# $NetBSD: ad.mips64el,v 1.39 2011/02/11 06:50:13 matt Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -77,6 +77,8 @@
 ./usr/lib/64/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libdes.so.8			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libdevmapper.so.1			base-compat-shlib	compat,pic,lvm
+./usr/lib/64/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/64/libdm.so				base-compat-shlib	compat,pic
 ./usr/lib/64/libdm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/64/libdm.so.0.0			base-compat-shlib	compat,pic
@@ -138,6 +140,8 @@
 ./usr/lib/64/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
+./usr/lib/64/liblzf.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
@@ -339,6 +343,8 @@
 ./usr/lib/o32/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdes.so.8			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libdevmapper.so.1			base-compat-shlib	compat,pic,lvm
+./usr/lib/o32/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/o32/libdm.so				base-compat-shlib	compat,pic
 ./usr/lib/o32/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdm.so.0.0			base-compat-shlib	compat,pic
@@ -400,6 +406,9 @@
 ./usr/lib/o32/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
+./usr/lib/o32/liblzf.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/liblzf.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/64/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
@@ -525,6 +534,10 @@
 ./usr/lib/o32/security/pam_skey.so.3		base-compat-shlib	compat,pic,skey,pam
 ./usr/lib/o32/security/pam_ssh.so.3		base-compat-shlib	compat,pic,crypto,pam
 ./usr/lib/o32/security/pam_unix.so.3		base-compat-shlib	compat,pic,pam
+./usr/libdata/debug/usr/lib/64			base-compat-lib		compat
+./usr/libdata/debug/usr/lib/64/i18n		base-compat-lib		compat
+./usr/libdata/debug/usr/lib/o32			base-compat-lib		compat
+./usr/libdata/debug/usr/lib/o32/i18n		base-compat-lib		compat
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic
 ./usr/libexec/ld.elf_so-o32			base-sysutil-bin	compat,pic
 ./usr/lkm/ldscript				base-obsolete		obsolete

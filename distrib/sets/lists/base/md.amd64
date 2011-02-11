@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.113 2011/02/08 19:57:10 haad Exp $
+# $NetBSD: md.amd64,v 1.114 2011/02/11 06:50:13 matt Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -80,7 +80,8 @@
 ./usr/lib/i386/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.8.1			base-compat-shlib	compat,pic
-./usr/lib/i386/libdm.so				base-compat-shlib	compat,pic
+./usr/lib/i386/libdevmapper.so.1		base-compat-shlib	compat,pic,lvm
+./usr/lib/i386/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
 ./usr/lib/i386/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns.so.5			base-compat-shlib	compat,pic
@@ -148,6 +149,8 @@
 ./usr/lib/i386/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/i386/liblzf.so.0			base-compat-shlib	compat,pic
+./usr/lib/i386/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzma.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0			base-compat-shlib	compat,pic
