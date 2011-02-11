@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.85 2011/02/06 00:44:09 christos Exp $
+# $NetBSD: md.sparc64,v 1.86 2011/02/11 06:54:18 matt Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -301,6 +301,14 @@
 ./usr/lib/sparc/libdes.so			base-sys-shlib		compat,pic,crypto
 ./usr/lib/sparc/libdes_p.a			comp-c-proflib		compat,profile,crypto
 ./usr/lib/sparc/libdes_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libdevmapper.a			comp-c-lib		compat,lvm
+./usr/lib/sparc/libdevmapper.so			base-sys-shlib		compat,pic,lvm
+./usr/lib/sparc/libdevmapper_p.a		comp-c-proflib		compat,profile,lvm
+./usr/lib/sparc/libdevmapper_pic.a		comp-c-piclib		compat,pic,lvm
+./usr/lib/sparc/libdm.a				comp-c-lib		compat
+./usr/lib/sparc/libdm.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libdm_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libdm_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libdns.a			comp-c-lib		compat
 ./usr/lib/sparc/libdns.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libdns_p.a			comp-c-proflib		compat,profile
@@ -435,6 +443,10 @@
 ./usr/lib/sparc/libldap_r.so			base-sys-shlib		compat,pic,ldap
 ./usr/lib/sparc/libldap_r_p.a			comp-c-proflib		compat,profile,ldap
 ./usr/lib/sparc/libldap_r_pic.a			comp-c-piclib		compat,pic,ldap
+./usr/lib/sparc/liblzf.a			comp-c-lib		compat
+./usr/lib/sparc/liblzf.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/liblzf_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/liblzf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/liblua.a			comp-c-lib		compat
 ./usr/lib/sparc/liblua_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/liblua_pic.a			comp-c-piclib		compat,pic
