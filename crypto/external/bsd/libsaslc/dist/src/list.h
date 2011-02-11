@@ -1,10 +1,7 @@
-/* $NetBSD: parser.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: list.h,v 1.1 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Mateusz Kocielski.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,12 +32,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PARSER_H_
-#define _PARSER_H_
+#ifndef _LIST_H_
+#define _LIST_H_
 
-#include <saslc.h>
+typedef struct list_s {
+	char *value;
+	struct list_s *next;
+} list_t;
 
-int saslc__parser_config(saslc_t *);
-bool saslc__parser_is_true(const char *);
+typedef struct {
+	const char *name;
+	unsigned int flag;
+} named_flag_t;
 
-#endif /* ! _PARSER_H_ */
+int      saslc__list_append(list_t **l, const char *);
+uint32_t saslc__list_flags(list_t *, const named_flag_t *);
+void     saslc__list_free(list_t *);
+void     saslc__list_log(list_t *, const char *);
+list_t * saslc__list_parse(const char *);
+
+#endif /* ! _LIST_H_ */

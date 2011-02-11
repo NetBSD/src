@@ -1,4 +1,4 @@
-/* $Id: saslc.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
+/* $NetBSD: saslc.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,160 +34,163 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: saslc.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 
-#include <saslc.h>
 #include <ctype.h>
+#include <saslc.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
+
+#include "crypto.h"  /* XXX: for saslc_{de,en}code64() */
 #include "dict.h"
+#include "error.h"
+#include "mech.h"
+#include "msg.h"
 #include "parser.h"
 #include "saslc_private.h"
-#include "mech.h"
-#include "error.h"
 
-/* local headers */
-
-static bool saslc__valid_appname(const char *);
 
 /**
- * @brief checks if application name is valid
+ * @brief check for a valid application name (no path separator)
  * @param appname application name
  * @return true if application name is valid, false otherwise
  */
-
 static bool
 saslc__valid_appname(const char *appname)
 {
         const char *p;
 
         for (p = appname; *p; p++)
-                if (!isalnum((unsigned char)*p))
+		if (*p == '/')
                         return false;
 
         return true;
 }
 
-
 /**
  * @brief allocates new saslc context
- * @return saslc context
+ * @return pointer to the saslc context
  */
-
-saslc_t * 
+saslc_t *
 saslc_alloc(void)
 {
-        return calloc(1, sizeof(saslc_t));
+
+	/* XXX: Check this as early as possible. */
+	saslc_debug = getenv(SASLC_ENV_DEBUG) != NULL;
+
+	return calloc(1, sizeof(saslc_t));
 }
 
 /**
  * @brief initializes sasl context, basing on application name function
- * parses configuration files, sets up default peroperties and creates
+ * parses configuration files, sets up default properties and creates
  * mechanisms list for the context.
  * @param ctx sasl context
  * @param appname application name, NULL could be used for generic aplication
+ * @param pathname location of config files. if NULL, use environment or default
  * @return 0 on success, -1 otherwise.
  */
-
 int
-saslc_init(saslc_t *ctx, const char *appname)
+saslc_init(saslc_t *ctx, const char *appname, const char *pathname)
 {
-        memset(ctx, 0, sizeof(*ctx));
+	memset(ctx, 0, sizeof(*ctx));
 
-        LIST_INIT(&ctx->sessions);
+	ctx->refcnt = 0;	/* context reference counter */
+	ctx->prop = saslc__dict_create();
 
-        ctx->prop = saslc__dict_create();
+	ctx->appname = NULL;
+	ctx->pathname = NULL;
 
-        if (ctx->prop == NULL)
-                return -1;
+	if (appname != NULL) {
+		if (saslc__valid_appname(appname) == false) {
+			saslc__error_set(ERR(ctx), ERROR_BADARG,
+			    "application name is not permited");
+			goto error;
+		}
+		if ((ctx->appname = strdup(appname)) == NULL) {
+			saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
+			goto error;
+		}
+	}
+	if (pathname != NULL && *pathname != '\0') {
+		if ((ctx->pathname = strdup(pathname)) == NULL) {
+			saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
+			goto error;
+		}
+	}
+	ctx->mechanisms = saslc__mech_list_create(ctx);
+	if (ctx->mechanisms == NULL)
+		goto error;
 
-        /* appname */
-        if (appname != NULL) { 
-                /* check if appname is valid */
-                if (saslc__valid_appname(appname) == false) {
-                        saslc__error_set(ERR(ctx), ERROR_BADARG,
-                            "application name is not permited");
-                        goto error;
-                }
+	/* load the global and mechanism dictionaries */
+	if (saslc__parser_config(ctx) == -1) {
+		free((void *)(intptr_t)ctx->appname);
+		ctx->appname = NULL;
+		saslc__dict_destroy(ctx->prop);
+		ctx->prop = NULL;
+		saslc__mech_list_destroy(ctx->mechanisms);
+		ctx->mechanisms = NULL;
+		return -1;
+	}
+	return 0;
 
-                ctx->appname = strdup(appname);
-                if (ctx->appname == NULL) {
-                        saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
-                        goto error;
-                }
-        } else
-                ctx->appname = NULL;
-
-        /* mechanisms list */
-        if (saslc__mech_list_create(ctx) == -1)
-                goto error;
-
-        /* parse configuration files */
-        if (saslc__parser_config(ctx) == -1)
-                /* errno is set up by parser */
-                goto error;
-
-        return 0;
-
-error:
-        if (ctx->appname != NULL)
-                free((void *)ctx->appname);
-        if (ctx->prop != NULL)
-                saslc__dict_destroy(ctx->prop);
-
-        ctx->appname = NULL;
-        ctx->prop = NULL;
-
-        return -1;
+ error:
+	if (ctx->pathname != NULL) {
+		free(ctx->pathname);
+		ctx->pathname = NULL;
+	}
+	if (ctx->appname != NULL) {
+		free(ctx->appname);
+		ctx->appname = NULL;
+	}
+	free(ctx->prop);
+	ctx->prop = NULL;
+	return -1;
 }
 
 /**
  * @brief gets string message of last error.
  * @param ctx context
- * @return error string
+ * @return pointer to the error message.
  */
-
 const char *
 saslc_strerror(saslc_t *ctx)
 {
-        return saslc__error_get_strerror(ERR(ctx));
+
+	return saslc__error_get_strerror(ERR(ctx));
 }
 
 /**
  * @brief destroys and deallocate resources used by the context.
  * @param ctx context
- * @param destroy_sessions indicates if all existing sessions assigned to
  * the context (if any) should be destroyed
  * @return 0 on success, -1 on failure
  */
-
 int
-saslc_end(saslc_t *ctx, bool destroy_sessions)
+saslc_end(saslc_t *ctx)
 {
-        /* check if there're any assigned sessions */
-        if (!LIST_EMPTY(&ctx->sessions) && destroy_sessions == false) {
-                saslc__error_set(ERR(ctx), ERROR_GENERAL,
-                    "context has got assigned active sessions");
-                return -1;
-        }
 
-        /* destroy all assigned sessions (note that if any nodes are assigned,
-         * then destroy_sessions == true) */
-        assert(LIST_EMPTY(&ctx->sessions) || destroy_sessions == true);
-        while (!LIST_EMPTY(&ctx->sessions))
-                saslc_sess_end(LIST_FIRST(&ctx->sessions));
+	if (ctx->refcnt > 0) {
+		saslc__error_set(ERR(ctx), ERROR_GENERAL,
+		    "context has got assigned active sessions");
+		return -1;
+	}
 
-        /* mechanism list */
-        if (!LIST_EMPTY(&ctx->mechanisms))
-                saslc__mech_list_destroy(&ctx->mechanisms);
+	/* mechanism list */
+	if (ctx->mechanisms != NULL)
+		saslc__mech_list_destroy(ctx->mechanisms);
 
-        /* properties */
-        if (ctx->prop != NULL)
-                saslc__dict_destroy(ctx->prop);
+	/* properties */
+	if (ctx->prop != NULL)
+		saslc__dict_destroy(ctx->prop);
 
-        /* application name */
-        free(ctx->appname);
+	/* application name */
+	if (ctx->appname != NULL)
+		free((void *)(intptr_t)ctx->appname);
 
         /* free context */
         free(ctx);

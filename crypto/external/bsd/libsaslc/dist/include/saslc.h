@@ -1,4 +1,4 @@
-/* $Id: saslc.h,v 1.2 2011/01/29 23:35:30 agc Exp $ */
+/*	$NetBSD: saslc.h,v 1.3 2011/02/11 23:44:42 christos Exp $	*/
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,32 +41,52 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+/* properties */
+#define	SASLC_PROP_AUTHCID	"AUTHCID"
+#define SASLC_PROP_AUTHZID	"AUTHZID"
+#define SASLC_PROP_BASE64IO	"BASE64IO"
+#define SASLC_PROP_CIPHERMASK	"CIPHERMASK"
+#define SASLC_PROP_DEBUG	"DEBUG"
+#define SASLC_PROP_HOSTNAME	"HOSTNAME"
+#define SASLC_PROP_MAXBUF	"MAXBUF"
+#define SASLC_PROP_PASSWD	"PASSWD"
+#define SASLC_PROP_QOPMASK	"QOPMASK"
+#define SASLC_PROP_REALM	"REALM"
+#define SASLC_PROP_SECURITY	"SECURITY"
+#define SASLC_PROP_SERVICE	"SERVICE"
+#define SASLC_PROP_SERVICENAME	"SERVICENAME"
+
+/* environment variables */
+#define SASLC_ENV_CONFIG	"SASLC_CONFIG"
+#define SASLC_ENV_DEBUG		"SASLC_DEBUG"
+
+/* opaque types */
 typedef struct saslc_t saslc_t;
 typedef struct saslc_sess_t saslc_sess_t;
 
 /* begin and end */
 saslc_t *saslc_alloc(void);
-int saslc_init(saslc_t *, const char *);
-int saslc_end(saslc_t *, bool);
+int saslc_init(saslc_t *, const char *, const char *);
+int saslc_end(saslc_t *);
 
 /* error */
 const char *saslc_strerror(saslc_t *);
 const char *saslc_sess_strerror(saslc_sess_t *);
 
 /* session begin and end */
-saslc_sess_t *saslc_sess_init(saslc_t *, const char *);
+saslc_sess_t *saslc_sess_init(saslc_t *, const char *, const char *);
 void saslc_sess_end(saslc_sess_t *);
 
 /* session properties */
 int saslc_sess_setprop(saslc_sess_t *, const char *, const char *);
 const char *saslc_sess_getprop(saslc_sess_t *, const char *);
-const char *saslc_sess_strmech(saslc_sess_t *);
+const char *saslc_sess_getmech(saslc_sess_t *);
 
 /* session management */
 int saslc_sess_cont(saslc_sess_t *, const void *, size_t, void **, size_t *);
-int saslc_sess_encode(saslc_sess_t *, const void *, size_t, void **,
+ssize_t saslc_sess_encode(saslc_sess_t *, const void *, size_t, void **,
     size_t *);
-int saslc_sess_decode(saslc_sess_t *, const void *, size_t, void **,
+ssize_t saslc_sess_decode(saslc_sess_t *, const void *, size_t, void **,
     size_t *);
 
 #endif /* ! _SASLC_H_ */

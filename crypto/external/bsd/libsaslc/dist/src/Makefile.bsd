@@ -1,20 +1,35 @@
-# $Id: Makefile.bsd,v 1.2 2011/01/29 23:35:31 agc Exp $
+# $NetBSD: Makefile.bsd,v 1.3 2011/02/11 23:44:43 christos Exp $
 
 .include <bsd.own.mk>
 
-USE_FORT?= yes
+WARNS?= 4
 
 LIB=saslc
-SRCS+= dict.c error.c mech_anonymous.c mech_digestmd5.c mech_gssapi.c mech.c
-SRCS+= parser.c xsess.c mech_crammd5.c mech_external.c mech_login.c
-SRCS+= mech_plain.c saslc.c crypto.c
-CPPFLAGS+=-I${EXTDIST}/include
-MAN=libsaslc.3
-WARNS?=4
+SRCS=
+SRCS+= buffer.c
+SRCS+= crypto.c
+SRCS+= dict.c
+SRCS+= error.c
+SRCS+= list.c
+SRCS+= mech.c
+SRCS+= mech_anonymous.c
+SRCS+= mech_crammd5.c
+SRCS+= mech_digestmd5.c
+SRCS+= mech_external.c
+SRCS+= mech_gssapi.c
+SRCS+= mech_login.c
+SRCS+= mech_plain.c
+SRCS+= msg.c
+SRCS+= parser.c
+SRCS+= saslc.c
+SRCS+= xsess.c
 
 EXTDIST=${.CURDIR}/../dist
-
 .PATH: ${EXTDIST}/include ${EXTDIST}/src ${EXTDIST}/man
+CPPFLAGS+= -I${EXTDIST}/include
+
+MAN=libsaslc.3
+
 
 INCS+= saslc.h
 INCSDIR=/usr/include

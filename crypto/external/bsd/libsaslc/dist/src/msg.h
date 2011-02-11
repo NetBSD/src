@@ -1,10 +1,7 @@
-/* $NetBSD: parser.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: msg.h,v 1.1 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Mateusz Kocielski.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,12 +32,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PARSER_H_
-#define _PARSER_H_
+#ifndef _MSG_H_
+#define _MSG_H_
 
-#include <saslc.h>
+#include <stdbool.h>
+#include <syslog.h>
 
-int saslc__parser_config(saslc_t *);
-bool saslc__parser_is_true(const char *);
+extern bool saslc_debug;
 
-#endif /* ! _PARSER_H_ */
+void saslc__msg_syslog(bool, int, const char *, ...) __printflike(3, 4);
+
+#define saslc__msg_dbg(...) saslc__msg_syslog(saslc_debug, LOG_INFO, __VA_ARGS__)
+#define saslc__msg_log(...) saslc__msg_syslog(true,        LOG_INFO, __VA_ARGS__)
+#define saslc__msg_err(...) saslc__msg_syslog(true,        LOG_ERR,  __VA_ARGS__)
+
+#endif /* ! _MSG_H_ */

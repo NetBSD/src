@@ -1,4 +1,4 @@
-/* $Id: example_client.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
+/* $NetBSD: example_client.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: example_client.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 #include <stdio.h>
 #include <saslc.h>
 #include <err.h>
@@ -46,6 +47,7 @@
 static void
 print_help(void)
 {
+
 	printf("usage: [-hl] {-m mech_name}\n");
 	printf("-h - help\n");
 	printf("-l - mechanisms list\n");
@@ -55,6 +57,7 @@ print_help(void)
 static void
 list_mechanisms(void)
 {
+
 	printf("available mechanisms:\n");
 	printf("ANONYMOUS, CRAM-MD5, DIGEST-MD5, GSSAPI, EXTERNAL, LOGIN, "
 	    "PLAIN\n");
@@ -113,11 +116,11 @@ main(int argc, char **argv)
 	}
 
 	ctx = saslc_alloc();
-	
-	if (saslc_init(ctx, NULL) < 0)
+
+	if (saslc_init(ctx, NULL, NULL) < 0)
 		goto error;
-	
-	if ((sess = saslc_sess_init(ctx, mechanism)) == NULL)
+
+	if ((sess = saslc_sess_init(ctx, mechanism, NULL)) == NULL)
 		goto error;
 
 	/* reading properties */
@@ -148,9 +151,9 @@ main(int argc, char **argv)
 		    &output_len);
 		if (cont < 0)
 		        goto error_sess;
-                printf("%s\n", output==NULL?"empty line":output);
+                printf("%s\n", output == NULL ? "empty line" : output);
 		if (cont == 0)
-		        break;
+			break;
 	}
 
 	saslc_sess_end(sess);
@@ -158,10 +161,10 @@ main(int argc, char **argv)
 		goto error;
 
 	return 0;
-eof:
+ eof:
 	err(EXIT_FAILURE, "Unexpected EOF");
-error:
+ error:
 	errx(EXIT_FAILURE, "%s", saslc_strerror(ctx));
-error_sess:
+ error_sess:
 	errx(EXIT_FAILURE, "%s", saslc_sess_strerror(sess));
 }

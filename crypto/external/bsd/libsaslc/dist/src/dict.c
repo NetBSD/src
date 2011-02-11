@@ -1,4 +1,4 @@
-/* $Id: dict.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
+/* $NetBSD: dict.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,16 +34,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dict.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 
-#include <assert.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
 #include <sys/queue.h>
-#include "dict.h"
+#include <ctype.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
-/* local headers */
+#include "dict.h"
+#include "msg.h"
+
 
 /** dictionary */
 LIST_HEAD(saslc__dict_t, saslc__dict_node_t);
@@ -51,47 +54,88 @@ LIST_HEAD(saslc__dict_t, saslc__dict_node_t);
 /** dictionary linked list */
 typedef struct saslc__dict_node_t {
 	LIST_ENTRY(saslc__dict_node_t) nodes;
-	char *key; /**< key */
-	char *value; /**< value */
-	size_t value_len; /**< value length */
+	char * key;		/* key */
+	char * value;		/* value */
+	size_t value_len;	/* value length */
 } saslc__dict_node_t;
 
-static bool saslc__valid_key(const char *);
-static void saslc__list_node_destroy(saslc__dict_node_t *);
-static saslc__dict_node_t *saslc__get_node_by_key(saslc__dict_t *,
-    const char *);
+/*
+ * XXX: If you add property keys, readjust these values so that
+ * saslc__dict_hashval() remains collisionless.  test_hash.c can help
+ * with this.
+ */
+/* no collisions: hsize=15  hinit=3  shift=7 */
+#define HASH_SIZE	15
+#define HASH_INIT	3
+#define HASH_SHIFT	7
 
 /**
- * @brief checks if the key is legal
+ * @brief compute the hash value for a given string.
+ * @param cp string to hash.
+ * @return the hash value.
+ *
+ * NB: The defines HASH_INIT, HASH_SHIFT, and HASH_SIZE should be
+ * adjusted to make this collisionless for the keys used.
+ */
+static size_t
+saslc__dict_hashval(const char *cp)
+{
+	size_t hval;
+
+	hval = HASH_INIT;
+	for (/*EMPTY*/; *cp != '\0'; cp++) {
+		hval <<= HASH_SHIFT;
+		hval += (size_t)*cp;
+	}
+	return hval % HASH_SIZE;
+}
+
+/**
+ * @brief return the hash bucket corresponding to the key string
+ * @param dict dictionary to use
+ * @param cp key to use for lookup
+ * @return the hash bucket for the key.
+ */
+static saslc__dict_t *
+saslc__dict_hash(saslc__dict_t *dict, const char *cp)
+{
+
+	return dict + saslc__dict_hashval(cp);
+}
+
+/**
+ * @brief checks if the key is legal.
  * @param key node key
  * @return true if key is legal, false otherwise
+ *
+ * Note: A legal key begins with an isalpha(3) character and is
+ * followed by isalnum(3) or '_' characters.
  */
-
 static bool
-saslc__valid_key(const char *key)
+saslc__dict_valid_key(const char *key)
 {
-	size_t i;
-
         /* key is empty string */
         if (key == NULL)
                 return false;
 
-	for (i = 0; key[i] != '\0'; i++) {
-		if (isalnum((unsigned char)key[i]) == 0)
-			return false;
-	}
+	if (!isalpha((unsigned char)*key))
+		return false;
 
-	return true;
+	key++;
+	while (isalnum((unsigned char)*key) || *key == '_')
+		key++;
+
+	return *key == '\0';
 }
 
 /**
  * @brief destroys and deallocates list node
  * @param node list node
  */
-
 static void
-saslc__list_node_destroy(saslc__dict_node_t *node)
+saslc__dict_list_node_destroy(saslc__dict_node_t *node)
 {
+
 	free(node->key);
 	/* zero value, it may contain sensitive data */
 	memset(node->value, 0, node->value_len);
@@ -106,17 +150,16 @@ saslc__list_node_destroy(saslc__dict_node_t *node)
  * @param key node key
  * @return pointer to node if key is in the dictionary, NULL otherwise
  */
-
 static saslc__dict_node_t *
-saslc__get_node_by_key(saslc__dict_t *dict, const char *key)
+saslc__dict_get_node_by_key(saslc__dict_t *dict, const char *key)
 {
 	saslc__dict_node_t *node;
 
-        LIST_FOREACH(node, dict, nodes) {
+	dict = saslc__dict_hash(dict, key);
+	LIST_FOREACH(node, dict, nodes) {
 		if (strcmp(node->key, key) == 0)
 			return node;
 	}
-
 	return NULL;
 }
 
@@ -124,13 +167,15 @@ saslc__get_node_by_key(saslc__dict_t *dict, const char *key)
  * @brief destroys and deallocates dictionary
  * @param dict dictionary
  */
-
 void
 saslc__dict_destroy(saslc__dict_t *dict)
 {
-	while(!LIST_EMPTY(dict))
-		saslc__list_node_destroy(LIST_FIRST(dict));
+	size_t i;
 
+	for (i = 0; i < HASH_SIZE; i++) {
+		while (!LIST_EMPTY(dict + i))
+			saslc__dict_list_node_destroy(LIST_FIRST(dict + i));
+	}
 	free(dict);
 }
 
@@ -141,20 +186,18 @@ saslc__dict_destroy(saslc__dict_t *dict)
  * @return DICT_OK on success, DICT_KEYNOTFOUND if node was not found (key
  * does not exist in the dictionary.
  */
-
 saslc__dict_result_t
 saslc__dict_remove(saslc__dict_t *dict, const char *key)
 {
 	saslc__dict_node_t *node;
 
-        LIST_FOREACH(node, dict, nodes) {
-		if (strcmp(node->key, key) == 0) {
-			saslc__list_node_destroy(node);
-			return DICT_OK;
-		}
-	}
+	node = saslc__dict_get_node_by_key(dict, key);
+	if (node == NULL)
+		return DICT_KEYNOTFOUND;
 
-	return DICT_KEYNOTFOUND;
+	saslc__dict_list_node_destroy(node);
+	saslc__msg_dbg("%s: removed key %s", __func__, key);
+	return DICT_OK;
 }
 
 /**
@@ -164,13 +207,13 @@ saslc__dict_remove(saslc__dict_t *dict, const char *key)
  * @return pointer to the value if key was found in the dictionary, NULL
  * otherwise.
  */
-
 const char *
 saslc__dict_get(saslc__dict_t *dict, const char *key)
 {
-	saslc__dict_node_t *node = saslc__get_node_by_key(dict, key);
+	saslc__dict_node_t *node;
 
-	return (node != NULL) ? node->value : NULL;
+	node = saslc__dict_get_node_by_key(dict, key);
+	return node != NULL ? node->value : NULL;
 }
 
 /**
@@ -179,32 +222,34 @@ saslc__dict_get(saslc__dict_t *dict, const char *key)
  * @param key node key
  * @return length of the node value, 0 is returned in case when key does not
  * exist in the dictionary.
+ *
+ * XXX: currently unused.
  */
-
 size_t
 saslc__dict_get_len(saslc__dict_t *dict, const char *key)
 {
-	saslc__dict_node_t *node = saslc__get_node_by_key(dict, key);
+	saslc__dict_node_t *node;
 
-	return (node != NULL) ? node->value_len : 0;
+	node = saslc__dict_get_node_by_key(dict, key);
+	return node != NULL ? node->value_len : 0;
 }
 
 /**
  * @brief creates and allocates dictionary
  * @return pointer to new dictionary, NULL is returned on allocation failure
  */
-
 saslc__dict_t *
 saslc__dict_create(void)
 {
 	saslc__dict_t *head;
+	int i;
 
-	head = calloc(1, sizeof(saslc__dict_t));
-
+	head = calloc(HASH_SIZE, sizeof(*head));
 	if (head == NULL)
 		return NULL;
 
-	LIST_INIT(head);
+	for (i = 0; i < HASH_SIZE; i++)
+		LIST_INIT(head + i);
 
 	return head;
 }
@@ -222,43 +267,50 @@ saslc__dict_create(void)
  * dictionary,
  * DICT_NOMEM - on allocation failure
  */
-
 saslc__dict_result_t
 saslc__dict_insert(saslc__dict_t *dict, const char *key, const char *val)
 {
-	int err;
-	char *d_key = NULL, *d_val = NULL;
+	char *d_key, *d_val;
 	saslc__dict_node_t *node;
 
-	if (saslc__valid_key(key) == false) 
+	if (key == NULL || saslc__dict_valid_key(key) == false) {
+		saslc__msg_dbg("%s: invalid key: %s", __func__,
+		    key ? key : "<null>");
 		return DICT_KEYINVALID;
-
-	if (val == NULL)
-		return DICT_VALBAD;
-
-	/* check if key exists in dictionary */
-	if (saslc__dict_get(dict, key) != NULL)
-		return DICT_KEYEXISTS;
-
-        d_key = strdup(key);
-        d_val = strdup(val);
-        node = calloc(1, sizeof(*node));
-
-	if (d_key == NULL || d_val == NULL || node == NULL) {
-		err = DICT_NOMEM;
-		goto error;
 	}
+	if (val == NULL) {
+		saslc__msg_dbg("%s: NULL value for key %s", __func__, key);
+		return DICT_VALBAD;
+	}
+	/* check if key exists in dictionary */
+	if (saslc__dict_get(dict, key) != NULL) {
+		saslc__msg_dbg("%s: key exists (ignoring): %s", __func__, key);
+		return DICT_KEYEXISTS;
+	}
+	if ((d_key = strdup(key)) == NULL)
+		goto nomem;
 
+	if ((d_val = strdup(val)) == NULL) {
+		free(d_key);
+		goto nomem;
+	}
+	if ((node = calloc(1, sizeof(*node))) == NULL) {
+		free(d_val);
+		free(d_key);
+		goto nomem;
+	}
+	dict = saslc__dict_hash(dict, key);
+	if (!LIST_EMPTY(dict))
+		saslc__msg_dbg("%s: hash collision: '%s' vs '%s'\n",
+		    __func__, key, LIST_FIRST(dict)->key);
+
+	saslc__msg_dbg("%s: %s=\"%s\"", __func__, d_key, d_val);
 	LIST_INSERT_HEAD(dict, node, nodes);
 	node->key = d_key;
 	node->value = d_val;
 	node->value_len = strlen(node->value);
-
 	return DICT_OK;
-
-error:
-	free(d_val);
-        free(d_key);
-        free(node);
-	return err;
+ nomem:
+	saslc__msg_dbg("%s: %s", __func__, strerror(errno));
+	return DICT_NOMEM;
 }

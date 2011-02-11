@@ -1,4 +1,4 @@
-/* $Id: parser.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
+/* $NetBSD: parser.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,169 +34,140 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: parser.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <saslc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <limits.h>
-#include <err.h>
-#include <saslc.h>
-#include "saslc_private.h"
-#include "dict.h"
-#include "parser.h"
+#include <sys/syslimits.h>	/* for PATH_MAX */
+#include <sys/stat.h>
 
-/* local headers */
+#include "dict.h"
+#include "msg.h"
+#include "parser.h"
+#include "saslc_private.h"
+
+#define SASLC__COMMENT_CHAR	'#'
+
+/* config file location defines */
+#define SASLC__CONFIG_PATH		"/etc/saslc.d"
+#define SASLC__CONFIG_MAIN_FILE		"saslc"
+#define SASLC__CONFIG_MECH_DIRECTORY	"mech"
+#define SASLC__CONFIG_SUFFIX		".conf"
+#define SASLC__DEFAULT_APPNAME		"saslc"
 
 /* token types */
 enum {
-	TOKEN_OPTION,	/* option */
-	TOKEN_STRING,	/* quoted string */
-	TOKEN_NUM,	/* number */
-	TOKEN_UNKNOWN	/* unknown */
+	TOKEN_KEY,		/* option (key) */
+	TOKEN_STRING,		/* quoted string */
+	TOKEN_NUM,		/* number */
+	TOKEN_COMMENT,		/* comment character */
+	TOKEN_UNKNOWN		/* unknown */
 };
 
-/** token structure */
+/* token structure */
 typedef struct saslc__token_t {
-	int type; /**< token type */
-	char *val; /**< token value */
-	struct saslc__token_t *next; /**< next token */
+	int type;		/**< token type */
+	char *val;		/**< token string value */
 } saslc__token_t;
 
-
-static void saslc__destroy_tokens(saslc__token_t *);
-static saslc__token_t *saslc__get_token(char **);
-static saslc__token_t *saslc__get_tokens(char *);
-static int saslc__parse_line(char *, saslc__dict_t *); 
-static int saslc__parse_file(saslc_t *, char *, saslc__dict_t *);
- 
-/**
- * @brief destroys tokens list and freeing resouces.
- * @param token token
- */
-
-static void
-saslc__destroy_tokens(saslc__token_t *token)
+static inline char *
+skip_WS(char *p)
 {
-	saslc__token_t *next;
 
-	while(token != NULL) {
-		next = token->next;
-		free(token);
-		token = next;
-	}
-
-	return;
+	while (*p == ' ' || *p == '\t')
+		p++;
+	return p;
 }
 
 /**
  * @brief gets token from string c and updates pointer position.
  * @param c pointer to string
- * @return token on success, NULL on failure (e.g. at end of string). Note that
- * c is updated to point on next token.
+ * @return token on success, NULL on failure (e.g. at end of string).
+ * On success, c is updated to point on next token.  It's position is
+ * undefined on failure.
+ *
+ * Note: A legal key begins with an isalpha(3) character and is
+ * followed by isalnum(3) or '_' characters.
  */
-
 static saslc__token_t *
-saslc__get_token(char **c)
+saslc__parse_get_token(char **c)
 {
 	saslc__token_t *token;
+	char *e;
 
-	/* omit spaces and tabs */
-	while (**c == ' ' || **c == '\t')
-		(*c)++;
-
+	*c = skip_WS(*c);
 	if (**c == '\0')
 		return NULL;
 
-	if ((token = calloc(1, sizeof(saslc__token_t))) == NULL)
+	if ((token = calloc(1, sizeof(*token))) == NULL)
 		return NULL;
 
 	token->val = *c;
-	token->type = TOKEN_UNKNOWN;
 
-	/* try to recognize type of the token by prefix */
-	if (**c == '\"')
+	if (**c == SASLC__COMMENT_CHAR)
+		token->type = TOKEN_COMMENT;
+
+	else if (**c == '\"')
 		token->type = TOKEN_STRING;
 
-	if (isdigit((unsigned char)**c))
+	else if (isdigit((unsigned char)**c))
 		token->type = TOKEN_NUM;
 
-	if (isalpha((unsigned char)**c))
-		token->type = TOKEN_OPTION;
+	else if (isalpha((unsigned char)**c))
+		token->type = TOKEN_KEY;
 
-	/* move to the next unchecked character */
-	(*c)++;
+	else
+		token->type = TOKEN_UNKNOWN;
 
-	switch(token->type)
-	{
-	case TOKEN_NUM:
-		while (isdigit((unsigned char)**c))
-			(*c)++;
+	switch (token->type) {
+	case TOKEN_COMMENT:
 		break;
-	case TOKEN_OPTION:
-		while (isalnum((unsigned char)**c))
+	case TOKEN_NUM:
+		errno = 0;
+		(void)strtoll(*c, &e, 0);
+		if (errno != 0)
+			goto err;
+		*c = e;
+		break;
+	case TOKEN_KEY:
+		(*c)++;
+		while (isalnum((unsigned char)**c) || **c == '_')
 			(*c)++;
 		break;
 	case TOKEN_STRING:
+		token->val++;	/* skip initial '\"' */
+		(*c)++;
+		/*
+		 * XXX: should we allow escapes inside the string?
+		 */
 		while (**c != '\0' && **c != '\"')
 			(*c)++;
-		if (**c == '\"') {
-			(*c)++;
-			break;
-		}
-	/*FALLTHROUGH*/
-	default:
-		/* UNKNOWN TOKEN */
-		free(token);
-		return NULL;
+		if (**c != '\"')
+			goto err;
+		**c = '\0';	/* kill trailing '\"' */
+		(*c)++;
+		break;
+	case TOKEN_UNKNOWN:
+		goto err;
 	}
 
-	if (isspace((unsigned char)**c)) {
+	if (isspace((unsigned char)**c))
+		*(*c)++ = '\0';
+	else if (**c == SASLC__COMMENT_CHAR)
 		**c = '\0';
-		(*c)++;
-	}
+	else if (**c != '\0')
+		goto err;
 
 	return token;
-}
-
-/**
- * @brief tokenizes line.
- * @param line input line
- * @return list of tokens, NULL on error
- */
-
-static saslc__token_t *
-saslc__get_tokens(char *line)
-{
-	saslc__token_t *act, *prev;
-	saslc__token_t *head;
-	char *c;
-
-	c = line;
-
-	for (head = NULL, prev = NULL, act = saslc__get_token(&c);
-	    act != NULL;) {
-		/* set head */
-		if (head == NULL)
-			head = act;
-		
-		/* remember previous node */
-		if (prev != NULL)
-			prev->next = act;
-
-		/* get next token */
-		prev = act;
-		act = saslc__get_token(&c);
-
-		/* an error occured */
-		if (act == NULL && *c != '\0') {
-			/* free list */
-		    	saslc__destroy_tokens(head);
-			return NULL;
-		}
-	}
-
-	return head;
+ err:
+	free(token);
+	return NULL;
 }
 
 /**
@@ -205,56 +176,41 @@ saslc__get_tokens(char *line)
  * @param dict dictionary in which parsed options will be stored
  * @return 0 on success, -1 on failure.
  */
-
 static int
 saslc__parse_line(char *line, saslc__dict_t *dict)
 {
-	char *opt, *val;
-	int rv = -1;
-        size_t len;
-	saslc__token_t *token, *head;
+	saslc__dict_result_t rv;
+	saslc__token_t *t;
+	char *key;
 
-	token = saslc__get_tokens(line);
+	key = NULL;
+	while ((t = saslc__parse_get_token(&line)) != NULL) {
+		if (t->type == TOKEN_COMMENT)
+			break;
 
-	/* line can't be parsed */
-	if (token == NULL)
-		return -1;
-
-	head = token; /* keep pointer to head (to free memory at the end) */
-
-	while (token != NULL) {
-		if (token->type != TOKEN_OPTION)
-		goto out;
-		/* get option */
-		opt = token->val;
-		token = token->next;
-		/* check if value is specified */
-		if (token == NULL)
-			goto out;
-		val = token->val;
-		if (token->type == TOKEN_STRING) {
-			/* striping " */
-			val++;
-			len = strlen(val);
-			if (len == 0)
-				goto out;
-			val[len-1] = '\0';
+		if (key == NULL) {  /* get the key */
+			if (t->type != TOKEN_KEY)
+				goto err;
+			key = t->val;
 		}
-		/* check if value has got proper type */
-		if (token->type != TOKEN_STRING && token->type !=
-		    TOKEN_NUM)
-			goto out;
-		/* insert (option, value) into dictionary */
-		if (saslc__dict_insert(dict, opt, val) != DICT_OK)
-			goto out;
-		token = token->next; /* parse next token */
+		else {  /* get the value and insert in dictionary */
+			if (t->type != TOKEN_STRING && t->type != TOKEN_NUM)
+				goto err;
+			rv = saslc__dict_insert(dict, key, t->val);
+			if (rv != DICT_OK && rv != DICT_KEYEXISTS)
+				goto err;
+			key = NULL;
+		}
+		free(t);
 	}
-	rv = 0;
-
-out:
-	saslc__destroy_tokens(head);
-
-	return rv;
+	if (*line != '\0')	/* processed entire line */
+		return -1;
+	if (key != NULL)	/* completed key/value cycle */
+		return -1;
+	return 0;
+ err:
+	free(t);
+	return -1;
 }
 
 /**
@@ -264,43 +220,84 @@ out:
  * @param dict dictionary in which parsed options will be stored
  * @return 0 on success, -1 on failure.
  */
-
 static int
 saslc__parse_file(saslc_t *ctx, char *path, saslc__dict_t *dict)
 {
-	char input[LINE_MAX], *c;
-	FILE *fd;
-	int rv = 0;
+	FILE *fp;
+	char *buf, *lbuf;
+	size_t len;
+	int rv;
 
-	fd = fopen(path, "r");
-
-	if (fd == NULL) {
-		saslc__error_set(ERR(ctx), ERROR_PARSE,
-                    "can't open configuration file");
+	if ((fp = fopen(path, "r")) == NULL) {
+		/* Don't fail if we can't open the file. */
+		saslc__msg_dbg("%s: fopen: %s: %s", __func__, path,
+		    strerror(errno));
 		return 0;
 	}
-
-	while (fgets(input, (int)sizeof(input), fd) != NULL) {
-		/* strip newline char */
-		c = strchr(input, '\n');
-		if (c != NULL)
-			*c = '\0';
-		
-		if (feof(fd) > 0)
-			break;
-
-		/* parse line */
-		if (saslc__parse_line(input, dict) < 0) {
-			/* XXX */
+	saslc__msg_dbg("%s: parsing: \"%s\"", __func__, path);
+	rv = 0;
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &len)) != NULL) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			if ((lbuf = malloc(len + 1)) == NULL) {
+				saslc__error_set(ERR(ctx), ERROR_NOMEM, NULL);
+				rv = -1;
+				break;
+			}
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
+		if (saslc__parse_line(buf, dict) == -1) {
 			saslc__error_set(ERR(ctx), ERROR_PARSE,
 			    "can't parse file");
 			rv = -1;
 			break;
 		}
+		if (lbuf != NULL) {
+			free(lbuf);
+			lbuf = NULL;
+		}
 	}
+	if (lbuf != NULL)
+		free(lbuf);
 
-	fclose(fd);
+	fclose(fp);
 	return rv;
+}
+
+/**
+ * @brief determine if a string indicates true or not.
+ * @return true if the string is "true", "yes", or any nonzero
+ * integer; false otherwise.
+ *
+ * XXX: does this really belong here?  Used in parser.c and xsess.c.
+ */
+bool
+saslc__parser_is_true(const char *str)
+{
+	static const char *true_str[] = {
+		"true",
+		"yes"
+	};
+	char *e;
+	size_t i;
+	long int val;
+
+	if (str == NULL)
+		return false;
+
+	val = strtol(str, &e, 0);
+	if (*str != '\0' && *e == '\0')
+		return val != 0;
+
+	for (i = 0; i < __arraycount(true_str); i++)
+		if (strcasecmp(str, true_str[i]) == 0)
+			return true;
+
+	return false;
 }
 
 /**
@@ -312,34 +309,47 @@ saslc__parse_file(saslc_t *ctx, char *path, saslc__dict_t *dict)
  * @param ctx saslc context
  * @return 0 on success, -1 on failure.
  */
-
 int
 saslc__parser_config(saslc_t *ctx)
 {
-	char path[FILENAME_MAX];
-	const char *config_path;
-	const char *appname;
+	char path[PATH_MAX + 1];
+	struct stat sb;
 	saslc__mech_list_node_t *mech_node;
+	const char *config_path, *debug, *appname;
 
-
-	if ((config_path = getenv(SASLC__ENV_PATH)) == NULL)
+	config_path = ctx->pathname;
+	if (config_path == NULL)
+		config_path = getenv(SASLC_ENV_CONFIG);
+	if (config_path == NULL)
 		config_path = SASLC__CONFIG_PATH;
+
+	if (stat(config_path, &sb) == -1 || !S_ISDIR(sb.st_mode)) {
+		/* XXX: should this be fatal or silently ignored? */
+		saslc__msg_err("%s: stat: config_path='%s': %s", __func__,
+		    config_path, strerror(errno));
+		return 0;
+	}
 
 	if ((appname = ctx->appname) == NULL)
 		appname = SASLC__DEFAULT_APPNAME;
 
-	/* parse general */
+	/* parse global config file */
 	snprintf(path, sizeof(path), "%s/%s/%s%s", config_path,
-	    appname,SASLC__CONFIG_MAIN_FILE, SASLC__CONFIG_SUFFIX);
-	if (saslc__parse_file(ctx, path, ctx->prop) < 0)
+	    appname, SASLC__CONFIG_MAIN_FILE, SASLC__CONFIG_SUFFIX);
+	if (saslc__parse_file(ctx, path, ctx->prop) == -1)
 		return -1;
-	
-	/* parse mechs */
-        LIST_FOREACH(mech_node, &ctx->mechanisms, nodes) {
+
+	/* XXX: check this as early as possible! */
+	debug = saslc__dict_get(ctx->prop, SASLC_PROP_DEBUG);
+	if (debug != NULL)
+		saslc_debug = saslc__parser_is_true(debug);
+
+	/* parse mechanism config files */
+	LIST_FOREACH(mech_node, ctx->mechanisms, nodes) {
 		snprintf(path, sizeof(path), "%s/%s/%s/%s%s",
 		    config_path, appname, SASLC__CONFIG_MECH_DIRECTORY,
 		    mech_node->mech->name, SASLC__CONFIG_SUFFIX);
-		if (saslc__parse_file(ctx, path, mech_node->prop) < 0)
+		if (saslc__parse_file(ctx, path, mech_node->prop) == -1)
 			return -1;
 	}
 

@@ -1,10 +1,7 @@
-/* $NetBSD: parser.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: msg.c,v 1.1 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Mateusz Kocielski.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,13 +31,50 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: msg.c,v 1.1 2011/02/11 23:44:43 christos Exp $");
 
-#ifndef _PARSER_H_
-#define _PARSER_H_
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <syslog.h>
 
-#include <saslc.h>
+#include "msg.h"
 
-int saslc__parser_config(saslc_t *);
-bool saslc__parser_is_true(const char *);
 
-#endif /* ! _PARSER_H_ */
+/**
+ * XXX: global debug flag.  This is unique as it is set as early as
+ * possible by checking the environment (looking for SASLC_ENV_DEBUG)
+ * and the context, mechanism, and session dictionaries (looking for
+ * SASLC_PROP_DEBUG) as soon as they become available.  Hence, the
+ * lookups are scattered in 4 places.  It's ugly.
+ *
+ * It's also global so it isn't tied to a session, but this makes it
+ * easly to use debugging messages as you don't need a context
+ * pointer.
+ */
+bool saslc_debug = false;
+
+/**
+ * @brief conditionally log a message via syslogd
+ * @param flag log the message or not
+ * @param priority syslogd priority to log with
+ * @param fmt message format string
+ * @param ... format parameters
+ */
+void
+saslc__msg_syslog(bool flag, int priority, const char *fmt, ...)
+{
+	va_list ap;
+	char *tmp;
+
+	if (!flag)
+		return;
+
+	va_start(ap, fmt);
+	if (asprintf(&tmp, "libsaslc: %s", fmt) != -1) {
+		vsyslog(priority, tmp, ap);
+		free(tmp);
+	}
+	va_end(ap);
+}

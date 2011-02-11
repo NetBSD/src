@@ -1,4 +1,4 @@
-/* $Id: error.c,v 1.2 2011/01/29 23:35:31 agc Exp $ */
+/* $NetBSD: error.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,19 +34,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: error.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 
 #include <stdio.h>
+
 #include "error.h"
+
 
 /**
  * @brief returns error string
  * @param err error
  * @return error string
  */
-
 const char *
 saslc__error_get_strerror(saslc__error_t *err)
 {
+
 	if (err->err_str == NULL) {
 		switch (err->err_no) {
 		case ERROR_NOMEM:
@@ -57,6 +61,5 @@ saslc__error_get_strerror(saslc__error_t *err)
 			return "unknown";
 		}
 	}
-
 	return err->err_str;
 }
