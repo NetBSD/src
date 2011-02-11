@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.97 2011/02/08 19:57:11 haad Exp $
+# $NetBSD: md.amd64,v 1.98 2011/02/11 06:54:18 matt Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -441,10 +441,15 @@
 ./usr/lib/i386/libcurses_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libdes.a				comp-c-lib		compat
 ./usr/lib/i386/libdes.so			comp-sys-shlib		compat,pic
-./usr/lib/i386/libdes_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libdes_g.a			-unknown-		compat,debuglib
 ./usr/lib/i386/libdes_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libdes_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libdevmapper.a			comp-c-lib		compat,lvm
+./usr/lib/i386/libdevmapper.so			comp-sys-shlib		compat,pic,lvm
+./usr/lib/i386/libdevmapper_g.a			-unknown-		compat,debuglib,lvm
+./usr/lib/i386/libdevmapper_p.a			comp-c-proflib		compat,profile,lvm
 ./usr/lib/i386/libdm.a				comp-c-lib		compat
+./usr/lib/i386/libdm.so				comp-sys-shlib		compat,pic
 ./usr/lib/i386/libdm_p.a			comp-c-proflb		compat,profile
 ./usr/lib/i386/libdm_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libdns.a				comp-c-lib		compat
@@ -630,6 +635,10 @@
 ./usr/lib/i386/liblwres_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/liblwres_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/liblwres_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/liblzf.a				comp-c-lib		compat
+./usr/lib/i386/liblzf.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/liblzf_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/liblzf_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/liblzma.a			comp-c-lib		compat
 ./usr/lib/i386/liblzma.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/liblzma_g.a			comp-c-proflib		compat,debuglib
