@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.13 2011/02/10 16:16:05 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.14 2011/02/11 16:55:35 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.13 2011/02/10 16:16:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.14 2011/02/11 16:55:35 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -155,7 +155,7 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 	struct buf *bp, *obp = hbp;
 	int ret = 0, ret2 = 0;
 	struct quota2_entry *q2e;
-	daddr_t lblkno, blkoff;
+	daddr_t lblkno, blkoff, olblkno = 0;
 
 	KASSERT(mutex_owner(&dqlock));
 
@@ -165,6 +165,9 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 		if (lblkno == 0) {
 			/* in the header block */
 			bp = hbp;
+		} else if (lblkno == olblkno) {
+			/* still in the same buf */
+			bp = obp;
 		} else {
 			ret = bread(ump->um_quotas[type], lblkno, 
 			    ump->umq2_bsize,
@@ -192,6 +195,7 @@ quota2_walk_list(struct ufsmount *ump, struct buf *hbp, int type,
 					brelse(obp, 0);
 			}
 			obp = bp;
+			olblkno = lblkno;
 			offp = &(q2e->q2e_next);
 			off = ufs_rw64(*offp, needswap);
 		}
