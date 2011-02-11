@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.8,v 1.1.2.1 2011/01/31 21:14:06 bouyer Exp $
+.\"	$NetBSD: quotactl.8,v 1.1.2.2 2011/02/11 12:44:39 bouyer Exp $
 .\"
 .\" Copyright (c) 2011 Manuel Bouyer
 .\" All rights reserved.
@@ -67,6 +67,62 @@ Unless
 .Fl x
 is present, a message is printed to stderr for each failed command,
 and the exit status will be 2 if any comand failed.
+.Sh EXAMPLES
+This will set the quota limits for user id 100 on the filesystem /home:
+.Bd -literal
+quotactl /home << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>commands</key>
+        <array>
+                <dict>
+                        <key>command</key>
+                        <string>set</string>
+                        <key>data</key>
+                        <array>
+                                <dict>
+                                        <key>block</key>
+                                        <dict>
+                                                <key>expire time</key>
+                                                <integer>0</integer>
+                                                <key>grace time</key>
+                                                <integer>2419200</integer>
+                                                <key>hard</key>
+                                                <integer>0x2000</integer>
+                                                <key>soft</key>
+                                                <integer>0x1000</integer>
+                                                <key>usage</key>
+                                                <integer>0x0</integer>
+                                        </dict>
+                                        <key>file</key>
+                                        <dict>
+                                                <key>expire time</key>
+                                                <integer>0</integer>
+                                                <key>grace time</key>
+                                                <integer>172800</integer>
+                                                <key>hard</key>
+                                                <integer>0x800</integer>
+                                                <key>soft</key>
+                                                <integer>0x400</integer>
+                                                <key>usage</key>
+                                                <integer>0x0</integer>
+                                        </dict>
+                                        <key>id</key>
+                                        <integer>100</integer>
+                                </dict>
+                        </array>
+                        <key>type</key>
+                        <string>user</string>
+                </dict>
+        </array>
+        <key>interface version</key>
+        <integer>0x1</integer>
+</dict>
+</plist>
+EOF
+
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr quotactl 2 ,
