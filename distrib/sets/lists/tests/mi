@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.240.2.3 2011/02/09 20:53:10 bouyer Exp $
+# $NetBSD: mi,v 1.240.2.4 2011/02/11 16:54:35 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1189,6 +1189,7 @@
 ./usr/tests/fs/ffs/t_quota2_remount		tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_quotalimit			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_setquota			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_miscquota			tests-fs-tests		atf
 ./usr/tests/fs/kernfs				tests-fs-tests
 ./usr/tests/fs/kernfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/kernfs/t_basic			tests-fs-tests		atf
