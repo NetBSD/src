@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.414.4.1 2011/01/20 14:24:58 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.414.4.2 2011/02/11 11:27:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414.4.1 2011/01/20 14:24:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414.4.2 2011/02/11 11:27:29 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -899,27 +899,21 @@ sys___quotactl50(struct lwp *l, const struct sys___quotactl50_args *uap,
 
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_FOLLOW_TRYEMULROOT, &vp);
-	printf("namei error %d\n", error);
 	if (error != 0)
 		return (error);
 	mp = vp->v_mount;
 	error = copyin(SCARG(uap, pref), &pref, sizeof(pref));
-	printf("copyin error %d\n", error);
 	if (error)
 		return error;
 	error = prop_dictionary_copyin(&pref, &dict);
-	printf("prop_dictionary_copyin error %d\n", error);
 	if (error)
 		return error;
 	error = VFS_QUOTACTL(mp, dict);
-	printf("VFS_QUOTACTL error %d\n", error);
 	vrele(vp);
 	if (!error)
 		error = prop_dictionary_copyout(&pref, dict);
-	printf("prop_dictionary_copyout error %d\n", error);
 	if (!error)
 		error = copyout(&pref, SCARG(uap, pref), sizeof(pref));
-	printf("copyout error %d\n", error);
 	prop_object_release(dict);
 	return (error);
 }
