@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.48 2010/07/21 20:41:31 jakllsch Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.49 2011/02/11 17:53:35 drochner Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.48 2010/07/21 20:41:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.49 2011/02/11 17:53:35 drochner Exp $");
 
 /*
  * IPsec controller part.
@@ -1437,6 +1437,10 @@ ipsec4_delete_pcbpolicy(struct inpcb *inp)
 	if (inp->inp_sp->sp_out != NULL)
 		KEY_FREESP(&inp->inp_sp->sp_out);
 
+#ifdef __NetBSD__
+	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
+#endif
+
 	ipsec_delpcbpolicy(inp->inp_sp);
 	inp->inp_sp = NULL;
 
@@ -1520,6 +1524,10 @@ ipsec6_delete_pcbpolicy(struct in6pcb *in6p)
 
 	if (in6p->in6p_sp->sp_out != NULL)
 		KEY_FREESP(&in6p->in6p_sp->sp_out);
+
+#ifdef __NetBSD
+	ipsec_invalpcbcache(in6p->in6p_sp, IPSEC_DIR_ANY);
+#endif
 
 	ipsec_delpcbpolicy(in6p->in6p_sp);
 	in6p->in6p_sp = NULL;
