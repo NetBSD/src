@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.36 2011/02/11 12:46:41 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.37 2011/02/11 14:02:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.36 2011/02/11 12:46:41 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.37 2011/02/11 14:02:12 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -591,7 +591,7 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		if (incr)
 			j++;
 	}
-	assert(j == realnfds);
+	assert(j == (int)realnfds);
 
 	if (timeout) {
 		TIMEVAL_TO_TIMESPEC(timeout, &ts);
