@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_prop.c,v 1.1.2.4 2011/01/31 15:24:10 bouyer Exp $ */
+/* $NetBSD: quota2_prop.c,v 1.1.2.5 2011/02/11 11:38:44 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -134,12 +134,6 @@ quota2_get_cmds(prop_dictionary_t qdict, prop_array_t *cmds)
 	if (prop_number_integer_value(pn) != 1)
 		return EINVAL;
 
-	pn = prop_dictionary_get(qdict, "quota version");
-	if (pn == NULL)
-		return EINVAL;
-	if (prop_number_integer_value(pn) != 2)
-		return EINVAL;
-
 	o = prop_dictionary_get(qdict, "commands");
 	if (o == NULL)
 		return ENOMEM;
@@ -181,9 +175,6 @@ quota2_prop_create(void)
 		return NULL;
 
 	if (!prop_dictionary_set_uint8(dict, "interface version", 1)) {
-		goto err;
-	}
-	if (!prop_dictionary_set_uint8(dict, "quota version", 2)) {
 		goto err;
 	}
 	return dict;
@@ -247,7 +238,6 @@ q2vtoprop(struct quota2_val *q2v)
 err:
 	prop_object_release(dict1);
 	return NULL;
-	
 }
 
 prop_dictionary_t
