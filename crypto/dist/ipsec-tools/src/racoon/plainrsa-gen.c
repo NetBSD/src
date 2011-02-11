@@ -1,4 +1,4 @@
-/*	$NetBSD: plainrsa-gen.c,v 1.5 2011/02/10 11:20:08 tteras Exp $	*/
+/*	$NetBSD: plainrsa-gen.c,v 1.6 2011/02/11 10:07:19 tteras Exp $	*/
 
 /* Id: plainrsa-gen.c,v 1.6 2005/04/21 09:08:40 monas Exp */
 /*
@@ -131,7 +131,7 @@ print_rsa_key(FILE *fp, const RSA *key)
 	
 	fprintf(fp, "# : PUB 0s%s\n", pubkey64->v);
 	fprintf(fp, ": RSA\t{\n");
-	fprintf(fp, "\t# RSA %zu bits\n", BN_num_bits(key->n));
+	fprintf(fp, "\t# RSA %d bits\n", BN_num_bits(key->n));
 	fprintf(fp, "\t# pubkey=0s%s\n", pubkey64->v);
 	fprintf(fp, "\tModulus: 0x%s\n", lowercase(BN_bn2hex(key->n)));
 	fprintf(fp, "\tPublicExponent: 0x%s\n", lowercase(BN_bn2hex(key->e)));
