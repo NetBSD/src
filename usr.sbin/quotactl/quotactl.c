@@ -1,4 +1,4 @@
-/* $NetBSD: quotactl.c,v 1.1.2.1 2011/01/31 21:14:06 bouyer Exp $ */
+/* $NetBSD: quotactl.c,v 1.1.2.2 2011/02/11 15:05:35 bouyer Exp $ */
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quotactl.c,v 1.1.2.1 2011/01/31 21:14:06 bouyer Exp $");
+__RCSID("$NetBSD: quotactl.c,v 1.1.2.2 2011/02/11 15:05:35 bouyer Exp $");
 #endif /* not lint */
 
 /*
@@ -107,10 +107,10 @@ main(int argc, char * const argv[])
 		plist = realloc(plist, plistsize + READ_SIZE);
 		if (plist == NULL)
 			err(1, "realloc buffer");
-		p += READ_SIZE;
+		p = plist + plistsize;
 		plistsize += READ_SIZE;
 	}
-	if (ferror(f))
+	if (!feof(f))
 		err(1, "error reading %s", xmlfile);
 
 	qdict = prop_dictionary_internalize(plist);
