@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.35 2011/02/08 19:12:54 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.36 2011/02/11 12:46:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.35 2011/02/08 19:12:54 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.36 2011/02/11 12:46:41 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -591,18 +591,27 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		if (incr)
 			j++;
 	}
+	assert(j == realnfds);
 
 	if (timeout) {
 		TIMEVAL_TO_TIMESPEC(timeout, &ts);
 		tsp = &ts;
 	}
 	rv = REALPOLLTS(pfds, realnfds, tsp, NULL);
-	if (rv <= 0)
+	/*
+	 * "If select() returns with an error the descriptor sets
+	 * will be unmodified"
+	 */
+	if (rv < 0)
 		goto out;
 
 	/*
-	 * ok, harvest results.  first zero out entries (can't use
-	 * FD_ZERO for the obvious select-me-not reason).  whee.
+	 * zero out results (can't use FD_ZERO for the
+	 * obvious select-me-not reason).  whee.
+	 *
+	 * We do this here since some software ignores the return
+	 * value of select, and hence if the timeout expires, it may
+	 * assume all input descriptors have activity.
 	 */
 	for (i = 0; i < nfds; i++) {
 		if (readfds)
@@ -612,8 +621,12 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		if (exceptfds)
 			FD_CLR(i, exceptfds);
 	}
+	if (rv == 0)
+		goto out;
 
-	/* and then plug in the results */
+	/*
+	 * We have >0 fds with activity.  Harvest the results.
+	 */
 	for (i = 0; i < (int)realnfds; i++) {
 		if (readfds) {
 			if (pfds[i].revents & POLLIN) {
