@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.64 2010/11/21 18:22:32 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.65 2011/02/11 09:01:42 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.64 2010/11/21 18:22:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.65 2011/02/11 09:01:42 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -215,17 +215,6 @@ startover:
 	 */
 
 	if (flags & PGO_LOCKED) {
-#if 0
-		genfs_getpages_mem();
-	} else {
-		genfs_getpages_io();
-	}
-}
-
-int
-genfs_getpages_mem()
-{
-#endif
 		int nfound;
 		struct vm_page *pg;
 
@@ -274,13 +263,7 @@ genfs_getpages_mem()
 		goto out_err;
 	}
 	mutex_exit(&uobj->vmobjlock);
-#if 0
-}
 
-int
-genfs_getpages_io()
-{
-#endif
 	/*
 	 * find the requested pages and make some simple checks.
 	 * leave space in the page array for a whole block.
@@ -325,13 +308,7 @@ genfs_getpages_io()
 
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
-#if 0
-}
 
-int
-genfs_getpages_io_relock()
-{
-#endif
 	if (!has_trans) {
 		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		has_trans = true;
@@ -360,13 +337,7 @@ genfs_getpages_io_relock()
 			kmem_free(pgs, pgs_size);
 		goto startover;
 	}
-#if 0
-}
 
-int
-genfs_getpages_io_findpages()
-{
-#endif
     if (!xip) {
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
 	    async ? UFP_NOWAIT : UFP_ALL) != orignmempages) {
@@ -407,18 +378,7 @@ genfs_getpages_io_findpages()
 	 */
 
 	if (overwrite) {
-#if 0
-		genfs_getpages_io_overwrite();
-	} else {
-		genfs_getpages_io_read();
-	}
-}
 
-int
-genfs_getpages_io_overwrite()
-{
-	{
-#endif
 		KASSERT(!xip);
 
 		if (!glocked) {
@@ -434,25 +394,13 @@ genfs_getpages_io_overwrite()
 		npages += ridx;
 		goto out;
 	}
-#if 0
-}
 
-int
-genfs_getpages_io_read()
-{
-#endif
 	/*
 	 * the page wasn't resident and we're not overwriting,
 	 * so we're going to have to do some i/o.
 	 * find any additional pages needed to cover the expanded range.
 	 */
-#if 0
-}
 
-int
-genfs_getpages_io_read_allocpages()
-{
-#endif
     if (!xip) {
 	npages = (endoffset - startoffset) >> PAGE_SHIFT;
 	if (startoffset != origoffset || npages != orignmempages) {
@@ -483,13 +431,7 @@ genfs_getpages_io_read_allocpages()
 		}
 	}
     }
-#if 0
-}
 
-int
-genfs_getpages_io_read_bio()
-{
-#endif
 	mutex_exit(&uobj->vmobjlock);
 
     {
@@ -506,13 +448,7 @@ genfs_getpages_io_read_bio()
 	bytes = MIN(totalbytes, MAX(diskeof - startoffset, 0));
 	tailbytes = totalbytes - bytes;
 	skipbytes = 0;
-#if 0
-}
 
-int
-genfs_getpages_io_read_bio_prepare()
-{
-#endif
     if (!xip) {
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
@@ -534,10 +470,7 @@ genfs_getpages_io_read_bio_prepare()
 	else
 		BIO_SETPRIO(mbp, BPRIO_TIMECRITICAL);
     }
-#if 0
-}
 
-#endif
 	/*
 	 * if EOF is in the middle of the range, zero the part past EOF.
 	 * skip over pages which are not PG_FAKE since in that case they have
@@ -557,13 +490,7 @@ genfs_getpages_io_read_bio_prepare()
 		tailstart += len;
 		tailbytes -= len;
 	}
-#if 0
-}
 
-int
-genfs_getpages_io_read_bio_loop()
-{
-#endif
 	/*
 	 * now loop over the pages, reading as needed.
 	 */
@@ -743,12 +670,7 @@ genfs_getpages_io_read_bio_loop()
 	}
 
 loopdone:
-#if 0
 
-int
-genfs_getpages_biodone()
-{
-#endif
     if (!xip) {
 	nestiobuf_done(mbp, skipbytes, error);
 	if (async) {
@@ -809,10 +731,7 @@ genfs_getpages_biodone()
 
 	putiobuf(mbp);
     }
-#if 0
-}
 
-#endif
     }
 
 	if (!glocked) {
@@ -820,13 +739,7 @@ genfs_getpages_biodone()
 	}
 
 	mutex_enter(&uobj->vmobjlock);
-#if 0
-}
 
-int
-genfs_getpages_generic_io_done()
-{
-#endif
 	/*
 	 * we're almost done!  release the pages...
 	 * for errors, we free the pages.
@@ -931,10 +844,6 @@ out:
 		    orignmempages * sizeof(struct vm_page *));
 		KASSERT(error != 0 || ap->a_m[ap->a_centeridx] != NULL);
 	}
-#if 0
-}
-
-#endif
 
 out_err_free:
 	if (pgs != NULL && pgs != pgs_onstack)
