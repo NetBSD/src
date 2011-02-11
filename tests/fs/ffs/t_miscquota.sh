@@ -1,4 +1,4 @@
-# $NetBSD: t_miscquota.sh,v 1.1.2.1 2011/02/11 16:54:03 bouyer Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.1.2.2 2011/02/11 17:28:29 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -25,7 +25,7 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-test_case walk_list_user quota_walk_list \
+test_case_root walk_list_user quota_walk_list \
     "walk user quota list over several disk blocks" -b le 1 user
 
 quota_walk_list()
