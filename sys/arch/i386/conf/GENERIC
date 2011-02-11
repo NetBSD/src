@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1010 2011/02/07 04:05:49 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1011 2011/02/11 01:59:57 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1010 $"
+#ident 		"GENERIC-$Revision: 1.1011 $"
 
 maxusers	64		# estimated number of users
 
@@ -564,15 +564,15 @@ pcppi0		at isa?
 sysbeep0	at pcppi?
 
 # DRI driver
-i915drm*	at vga?		# Intel i915, i945 DRM driver
-mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
-mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
-r128drm*	at vga?		# ATI Rage 128 DRM driver
-radeondrm*	at vga?		# ATI Radeon DRM driver
-savagedrm*	at vga?		# S3 Savage DRM driver
-sisdrm*		at vga?		# SiS DRM driver
-tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
-viadrm*		at vga?		# VIA DRM driver
+i915drm*	at drm?		# Intel i915, i945 DRM driver
+mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
+mgadrm*		at drm?		# Matrox G[24]00, G[45]50 DRM driver
+r128drm*	at drm?		# ATI Rage 128 DRM driver
+radeondrm*	at drm?		# ATI Radeon DRM driver
+savagedrm*	at drm?		# S3 Savage DRM driver
+sisdrm*		at drm?		# SiS DRM driver
+tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
+viadrm*		at drm?		# VIA DRM driver
 
 # Serial Devices
 

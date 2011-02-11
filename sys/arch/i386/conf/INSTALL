@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.328 2011/02/10 16:49:19 jym Exp $
+# $NetBSD: INSTALL,v 1.329 2011/02/11 01:59:57 jmcneill Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,7 +7,7 @@
 
 include	"arch/i386/conf/MONOLITHIC"
 
-#ident 		"INSTALL-$Revision: 1.328 $"
+#ident 		"INSTALL-$Revision: 1.329 $"
 
 no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
@@ -16,11 +16,12 @@ options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # DRI driver
-no i915drm*	at vga?		# Intel i915, i945 DRM driver
-no mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
-no mgadrm*	at vga?		# Matrox G[24]00, G[45]50 DRM driver
-no r128drm*	at vga?		# ATI Rage 128 DRM driver
-no radeondrm*	at vga?		# ATI Radeon DRM driver
-no savagedrm*	at vga?		# S3 Savage DRM driver
-no sisdrm*	at vga?		# SiS DRM driver
-no tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
+no i915drm*	at drm?		# Intel i915, i945 DRM driver
+no mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
+no mgadrm*	at drm?		# Matrox G[24]00, G[45]50 DRM driver
+no r128drm*	at drm?		# ATI Rage 128 DRM driver
+no radeondrm*	at drm?		# ATI Radeon DRM driver
+no savagedrm*	at drm?		# S3 Savage DRM driver
+no sisdrm*	at drm?		# SiS DRM driver
+no tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
+no viadrm*	at drm?		# VIA DRM driver
