@@ -1,4 +1,4 @@
-# $NetBSD: t_getquota.sh,v 1.1.2.8 2011/02/11 16:54:03 bouyer Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.1.2.1 2011/02/11 16:54:03 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -25,65 +25,8 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-for e in le be; do
-  for v in 1 2; do
-    for q in "user" "group"; do
-      test_case get_${e}_${v}_${q} get_quota \
-	 "get quota with ${q} enabled" -b ${e} ${v} ${q}
-    done
-    test_case get_${e}_${v}_"both" get_quota \
-	 "get quota with both enabled" -b ${e} ${v} "both"
-  done
-done
-
-get_quota()
-{
-	create_with_quotas_server $*
-	local q=$4
-	local expect
-	local fail
-
-	case ${q} in
-	user)
-		expect=u
-		fail=g
-		;;
-	group)
-		expect=g
-		fail=u
-		;;
-	both)
-		expect="u g"
-		fail=""
-		;;
-	*)
-		atf_fail "wrong quota type"
-		;;
-	esac
-
-#check that we can get the expected quota
-	for q in ${expect} ; do
-		atf_check -s exit:0 \
--o "match:/mnt        0        -        -   7days       1       -       -   7days" \
--o "match:Disk quotas for .*: $" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v
-		atf_check -s exit:0 \
--o "match:--        0        -        -                1       -       -" \
-		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
-	done
-
-#check that we do not get positive reply for non-expected quota
-	for q in ${fail} ; do
-		atf_check -s exit:0 -o "not-match:/mnt" \
-		    -o "not-match:Disk quotas for .*: $" \
-		    -o "match:Disk quotas for .*: none$" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v
-		atf_check -s exit:0 \
--o "not-match:--        0        -        -                1       -       -" \
-		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
-	done
-	rump_shutdown
-}
+test_case walk_list_user quota_walk_list \
+    "walk user quota list over several disk blocks" -b le 1 user
 
 quota_walk_list()
 {
@@ -100,12 +43,21 @@ quota_walk_list()
 		expect=g
 		fail=u
 		;;
-	both)
-		expect="u g"
-		fail=""
-		;;
 	*)
 		atf_fail "wrong quota type"
 		;;
 	esac
+
+	# create 100 users, all in the same hash list
+	local i=1;
+	while [ $i -lt 101 ]; do
+		atf_check -s exit:0 \
+		   $(atf_get_srcdir)/rump_edquota -${expect} \
+		   -s10k/20 -h40M/50k -t 2W/3D $((i * 4096))
+		i=$((i + 1))
+	done
+	# do a repquota
+	atf_check -s exit:0 -o 'match:<integer>0x64000' \
+	    $(atf_get_srcdir)/rump_repquota -x -${expect} /mnt
+	rump_shutdown
 }
