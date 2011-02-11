@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2011/02/01 20:19:32 chuck Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35 2011/02/11 23:08:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -198,9 +198,18 @@ extern long nkptp[PTP_LEVELS];
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)
-#define pmap_phys_address(ppn)		x86_ptob(ppn)
+#define pmap_phys_address(ppn)		(x86_ptob(ppn) & ~X86_MMAP_FLAG_MASK)
+#define pmap_mmap_flags(ppn)		x86_mmap_flags(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
+#if defined(__x86_64__) || defined(PAE)
+#define X86_MMAP_FLAG_SHIFT	(64 - PGSHIFT)
+#else
+#define X86_MMAP_FLAG_SHIFT	(32 - PGSHIFT)
+#endif
+
+#define X86_MMAP_FLAG_MASK	0xf
+#define X86_MMAP_FLAG_PREFETCH	0x1
 
 /*
  * prototypes
@@ -228,6 +237,8 @@ void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
 void		pmap_unmap_ptes(struct pmap *, struct pmap *);
 
 int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
+
+u_int		x86_mmap_flags(paddr_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 

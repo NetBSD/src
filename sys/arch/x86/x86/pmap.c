@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 2011/02/10 00:23:14 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 2011/02/11 23:08:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2011/02/10 00:23:14 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2011/02/11 23:08:38 jmcneill Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4780,4 +4780,16 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 #endif
 
 	return x86_tmp_pml_paddr[PTP_LEVELS - 1];
+}
+
+u_int
+x86_mmap_flags(paddr_t mdpgno)
+{
+	u_int nflag = (mdpgno >> X86_MMAP_FLAG_SHIFT) & X86_MMAP_FLAG_MASK;
+	u_int pflag = 0;
+
+	if (nflag & X86_MMAP_FLAG_PREFETCH)
+		pflag |= PMAP_WRITE_COMBINE;
+
+	return pflag;
 }
