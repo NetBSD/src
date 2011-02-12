@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb_mono.c,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: diofb_mono.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
 /*	$OpenBSD: diofb_mono.c,v 1.3 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -115,8 +115,8 @@
 #include <hp300/dev/maskbits.h>
 
 int
-diofb_mono_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
-    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+diofb_mono_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
+    uint16_t dx, uint16_t dy, uint16_t cx, uint16_t cy, int16_t rop,
     int16_t planemask /* ignored */)
 {
 	int width;		/* add to get to same position in next line */
@@ -271,5 +271,5 @@ diofb_mono_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 		}
 	}
 
-	return (0);
+	return 0;
 }

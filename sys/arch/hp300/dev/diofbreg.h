@@ -1,4 +1,4 @@
-/*	$NetBSD: diofbreg.h,v 1.2 2011/02/12 05:08:40 tsutsui Exp $	*/
+/*	$NetBSD: diofbreg.h,v 1.3 2011/02/12 16:40:29 tsutsui Exp $	*/
 /*	$OpenBSD: diofbreg.h,v 1.3 2007/01/07 15:13:52 miod Exp $	*/
 
 /*
@@ -63,33 +63,33 @@
 
 #ifndef	_LOCORE
 struct	diofbreg {
-	u_int8_t	:8;
-	u_int8_t	id;		/* id and reset register	0x01 */
-	u_int8_t 	sec_interrupt;	/* secondary interrupt register	0x02 */
-	u_int8_t	interrupt;	/* interrupt register		0x03 */
-	u_int8_t	:8;
-	u_int8_t	fbwmsb;		/* frame buffer width MSB	0x05 */
-	u_int8_t	:8;
-	u_int8_t	fbwlsb;		/* frame buffer height LSB	0x07 */
-	u_int8_t	:8;
-	u_int8_t	fbhmsb;		/* frame buffer height MSB	0x09 */
-	u_int8_t	:8;
-	u_int8_t	fbhlsb;		/* frame buffer height LSB	0x0b */
-	u_int8_t	:8;
-	u_int8_t	dwmsb;		/* display width MSB		0x0d */
-	u_int8_t	:8;
-	u_int8_t	dwlsb;		/* display width LSB		0x0f */
-	u_int8_t	:8;
-	u_int8_t	dhmsb;		/* display height MSB		0x11 */
-	u_int8_t	:8;
-	u_int8_t	dhlsb;		/* display height LSB		0x13 */
-	u_int8_t	:8;
-	u_int8_t	fbid;		/* frame buffer id		0x15 */
-	u_int8_t	pad2[0x45];
-	u_int8_t	num_planes;	/* number of color planes	0x5b */
-	u_int8_t	:8;
-	u_int8_t	fbomsb;		/* frame buffer offset MSB	0x5d */
-	u_int8_t	:8;
-	u_int8_t	fbolsb;		/* frame buffer offset LSB	0x5f */
+	uint8_t		:8;
+	uint8_t		id;		/* id and reset register	0x01 */
+	uint8_t 	sec_interrupt;	/* secondary interrupt register	0x02 */
+	uint8_t		interrupt;	/* interrupt register		0x03 */
+	uint8_t		:8;
+	uint8_t		fbwmsb;		/* frame buffer width MSB	0x05 */
+	uint8_t		:8;
+	uint8_t		fbwlsb;		/* frame buffer height LSB	0x07 */
+	uint8_t		:8;
+	uint8_t		fbhmsb;		/* frame buffer height MSB	0x09 */
+	uint8_t		:8;
+	uint8_t		fbhlsb;		/* frame buffer height LSB	0x0b */
+	uint8_t		:8;
+	uint8_t		dwmsb;		/* display width MSB		0x0d */
+	uint8_t		:8;
+	uint8_t		dwlsb;		/* display width LSB		0x0f */
+	uint8_t		:8;
+	uint8_t		dhmsb;		/* display height MSB		0x11 */
+	uint8_t		:8;
+	uint8_t		dhlsb;		/* display height LSB		0x13 */
+	uint8_t		:8;
+	uint8_t		fbid;		/* frame buffer id		0x15 */
+	uint8_t		pad2[0x45];
+	uint8_t		num_planes;	/* number of color planes	0x5b */
+	uint8_t		:8;
+	uint8_t		fbomsb;		/* frame buffer offset MSB	0x5d */
+	uint8_t		:8;
+	uint8_t		fbolsb;		/* frame buffer offset LSB	0x5f */
 };
 #endif
