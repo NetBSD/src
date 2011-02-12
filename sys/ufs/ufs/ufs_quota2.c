@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.14 2011/02/11 16:55:35 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.15 2011/02/12 21:48:09 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.14 2011/02/11 16:55:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.15 2011/02/12 21:48:09 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -353,7 +353,16 @@ getinoquota2(struct inode *ip, int alloc, struct buf **bpp,
 		dq = ip->i_dquot[i];
 		if (dq == NODQUOT)
 			continue;
-		KASSERT(ump->um_quotas[i] != NULL);
+		if (__predict_false(ump->um_quotas[i] == NULL)) {
+			/*
+			 * quotas have been turned off. This can happen
+			 * at umount time.
+			 */
+			mutex_exit(&dq->dq_interlock);
+			dqrele(NULLVP, dq);
+			ip->i_dquot[i] = NULL;
+			continue;
+		}
 
 		if ((dq->dq2_lblkno | dq->dq2_blkoff) == 0) {
 			if (alloc == 0) {

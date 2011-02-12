@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.12 2011/02/12 19:52:40 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.13 2011/02/12 21:48:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.12 2011/02/12 19:52:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.13 2011/02/12 21:48:09 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -139,6 +139,9 @@ chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 int
 chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 {
+	/* do not track snapshot usage, or we will deadlock */
+	if ((ip->i_flags & SF_SNAPSHOT) != 0)
+		return 0;
 #ifdef QUOTA
 	if (ip->i_ump->um_flags & UFS_QUOTA)
 		return chkiq1(ip, change, cred, flags);
