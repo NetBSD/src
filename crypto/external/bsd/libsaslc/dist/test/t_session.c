@@ -1,4 +1,4 @@
-/* $NetBSD: t_session.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: t_session.c,v 1.4 2011/02/12 23:21:33 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_session.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: t_session.c,v 1.4 2011/02/12 23:21:33 christos Exp $");
+
 #include <atf-c.h>
 #include <saslc.h>
 #include <stdio.h>
@@ -48,7 +49,7 @@ ATF_TC_HEAD(t_sess, tc)
 }
 ATF_TC_BODY(t_sess, tc)
 {
-        saslc_t *ctx;
+	saslc_t *ctx;
 	saslc_sess_t *sess;
 
 	ATF_REQUIRE(ctx = saslc_alloc());
@@ -65,9 +66,9 @@ ATF_TC_BODY(t_sess, tc)
 		saslc_sess_end(sess);
 	ATF_REQUIRE(sess = saslc_sess_init(ctx, "LOGiN", NULL));
 	ATF_CHECK_STREQ(saslc_sess_getmech(sess), "LOGIN");
-	ATF_REQUIRE_EQ(saslc_end(ctx, false), -1);
+	ATF_REQUIRE_EQ(saslc_end(ctx), -1);
 	saslc_sess_end(sess);
-	ATF_REQUIRE_EQ(saslc_end(ctx, false), 0);
+	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
 }
 
 ATF_TP_ADD_TCS(tp)

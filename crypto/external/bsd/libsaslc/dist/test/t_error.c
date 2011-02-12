@@ -1,4 +1,4 @@
-/* $NetBSD: t_error.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: t_error.c,v 1.4 2011/02/12 23:21:33 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,16 +35,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: t_error.c,v 1.4 2011/02/12 23:21:33 christos Exp $");
 
-__RCSID("$NetBSD: t_error.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 #include <atf-c.h>
-#include <stdio.h>
 #include <saslc.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "error.h"
 #include "saslc_private.h"
-
 
 ATF_TC(t_saslc__error);
 ATF_TC_HEAD(t_saslc__error, tc)
@@ -63,7 +62,7 @@ ATF_TC_BODY(t_saslc__error, tc)
 	ATF_CHECK_STREQ(saslc_strerror(ctx), "test");
 	saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
 	ATF_CHECK_STREQ(saslc_strerror(ctx), "no memory available");
-        ATF_REQUIRE_EQ(saslc_end(ctx, false), 0);
+	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
 }
 
 ATF_TP_ADD_TCS(tp)

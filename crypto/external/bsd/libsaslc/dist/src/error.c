@@ -1,4 +1,4 @@
-/* $NetBSD: error.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: error.c,v 1.4 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,12 +35,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: error.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.4 2011/02/12 23:21:32 christos Exp $");
 
 #include <stdio.h>
 
 #include "error.h"
-
 
 /**
  * @brief returns error string

@@ -1,4 +1,4 @@
-/* $NetBSD: saslc.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: saslc.c,v 1.4 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,15 +35,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: saslc.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: saslc.c,v 1.4 2011/02/12 23:21:32 christos Exp $");
 
+#include <assert.h>
 #include <ctype.h>
 #include <saslc.h>
 #include <stdbool.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
-#include <assert.h>
 
 #include "crypto.h"  /* XXX: for saslc_{de,en}code64() */
 #include "dict.h"
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: saslc.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 #include "parser.h"
 #include "saslc_private.h"
 
-
 /**
  * @brief check for a valid application name (no path separator)
  * @param appname application name
@@ -62,13 +61,13 @@ __RCSID("$NetBSD: saslc.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 static bool
 saslc__valid_appname(const char *appname)
 {
-        const char *p;
+	const char *p;
 
-        for (p = appname; *p; p++)
+	for (p = appname; *p; p++)
 		if (*p == '/')
-                        return false;
+			return false;
 
-        return true;
+	return true;
 }
 
 /**
@@ -97,13 +96,9 @@ saslc_alloc(void)
 int
 saslc_init(saslc_t *ctx, const char *appname, const char *pathname)
 {
-	memset(ctx, 0, sizeof(*ctx));
 
-	ctx->refcnt = 0;	/* context reference counter */
+	/* ctx is already zeroed by saslc_alloc(). */
 	ctx->prop = saslc__dict_create();
-
-	ctx->appname = NULL;
-	ctx->pathname = NULL;
 
 	if (appname != NULL) {
 		if (saslc__valid_appname(appname) == false) {
@@ -128,7 +123,7 @@ saslc_init(saslc_t *ctx, const char *appname, const char *pathname)
 
 	/* load the global and mechanism dictionaries */
 	if (saslc__parser_config(ctx) == -1) {
-		free((void *)(intptr_t)ctx->appname);
+		free(ctx->appname);
 		ctx->appname = NULL;
 		saslc__dict_destroy(ctx->prop);
 		ctx->prop = NULL;
@@ -180,20 +175,13 @@ saslc_end(saslc_t *ctx)
 		return -1;
 	}
 
-	/* mechanism list */
 	if (ctx->mechanisms != NULL)
 		saslc__mech_list_destroy(ctx->mechanisms);
 
-	/* properties */
 	if (ctx->prop != NULL)
 		saslc__dict_destroy(ctx->prop);
 
-	/* application name */
-	if (ctx->appname != NULL)
-		free((void *)(intptr_t)ctx->appname);
-
-        /* free context */
-        free(ctx);
-
-        return 0;
+	free(ctx->appname);
+	free(ctx);
+	return 0;
 }

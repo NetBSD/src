@@ -1,4 +1,4 @@
-/* $NetBSD: msg.c,v 1.1 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: msg.c,v 1.2 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,15 +32,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: msg.c,v 1.1 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.2 2011/02/12 23:21:32 christos Exp $");
 
-#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
 
 #include "msg.h"
-
 
 /**
  * XXX: global debug flag.  This is unique as it is set as early as

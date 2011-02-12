@@ -1,4 +1,4 @@
-/* $NetBSD: xsess.c,v 1.4 2011/02/12 22:46:14 christos Exp $ */
+/* $NetBSD: xsess.c,v 1.5 2011/02/12 23:21:32 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xsess.c,v 1.4 2011/02/12 22:46:14 christos Exp $");
+__RCSID("$NetBSD: xsess.c,v 1.5 2011/02/12 23:21:32 christos Exp $");
 
 #include <assert.h>
 #include <saslc.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: xsess.c,v 1.4 2011/02/12 22:46:14 christos Exp $");
 #include "mech.h"
 #include "parser.h"
 #include "saslc_private.h"
-
 
 /*
  * TODO:
@@ -160,14 +159,12 @@ mechanism_flags_OK(const saslc__mech_list_node_t *mech, uint32_t flags)
  * the sasl session.
  * @param ctx sasl context
  * @param mechs comma or space separated list of mechanisms
- * e.g., "PLAIN,LOGIN" or "PLAIN LOGIN". Note that
- * this function is not case sensitive
+ * e.g., "PLAIN,LOGIN" or "PLAIN LOGIN".
  * @param sec_opts comma or space separated list of security options
- * @return pointer to the mech on success, NULL if none found.
+ * @return pointer to the mech on success, NULL if none mechanism is chosen
  *
  * Note: this uses SASLC_PROP_SECURITY from the context dictionary.
- * Note: this function is not case sensitive regarding sec_opts.
- * @return pointer to the mech on success, NULL if none mechanism is chosen
+ * Note: this function is not case sensitive with regard to mechs or sec_opts.
  */
 static const saslc__mech_t *
 saslc__sess_choose_mech(saslc_t *ctx, const char *mechs, const char *sec_opts)
@@ -240,7 +237,7 @@ saslc_sess_init(saslc_t *ctx, const char *mechs, const char *sec_opts)
 	    == NULL) {
 		saslc__error_set(ERR(ctx), ERROR_MECH,
 		    "mechanism is not supported");
-                goto error;
+		goto error;
 	}
 
 	/* XXX: special early check of mechanism dictionary for debug flag */
@@ -258,7 +255,7 @@ saslc_sess_init(saslc_t *ctx, const char *mechs, const char *sec_opts)
 	/* properties */
 	if ((sess->prop = saslc__dict_create()) == NULL) {
 		saslc__error_set(ERR(ctx), ERROR_NOMEM, NULL);
-                goto error;
+		goto error;
 	}
 
 	sess->context = ctx;
@@ -269,9 +266,8 @@ saslc_sess_init(saslc_t *ctx, const char *mechs, const char *sec_opts)
 	return sess;
 
 error:
-        free(sess);
-
-        return NULL;
+	free(sess);
+	return NULL;
 }
 
 /**

@@ -1,4 +1,4 @@
-/* $NetBSD: example_client.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: example_client.c,v 1.4 2011/02/12 23:21:33 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,14 +35,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: example_client.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
-#include <stdio.h>
-#include <saslc.h>
+__RCSID("$NetBSD: example_client.c,v 1.4 2011/02/12 23:21:33 christos Exp $");
+
 #include <err.h>
-#include <unistd.h>
+#include <limits.h>
+#include <saslc.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
+#include <unistd.h>
 
 static void
 print_help(void)
@@ -150,14 +151,14 @@ main(int argc, char **argv)
 		cont = saslc_sess_cont(sess, input, input_len, (void **)&output,
 		    &output_len);
 		if (cont < 0)
-		        goto error_sess;
-                printf("%s\n", output == NULL ? "empty line" : output);
+			goto error_sess;
+		printf("%s\n", output == NULL ? "empty line" : output);
 		if (cont == 0)
 			break;
 	}
 
 	saslc_sess_end(sess);
-	if (saslc_end(ctx, true) < 0)
+	if (saslc_end(ctx) < 0)
 		goto error;
 
 	return 0;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.6 2011/02/12 16:08:18 wiz Exp $
+.\"	$NetBSD: libsaslc.3,v 1.7 2011/02/12 23:21:32 christos Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,6 +142,7 @@ See
 .Sx CONFIGURATION
 below for the supported mechanisms.
 The valid security options are
+.Pp
 .Bl -tag -width "nodictionaryxxx" -offset indent -compact
 .It Qo noanonymous Qc
 reject anonymous mechanisms
@@ -154,6 +155,7 @@ reject mechanisms prone to active non-dictionary attacks
 .It Qo mutual Qc
 require mutual authentication mechanisms
 .El
+.Pp
 Unknown security options are ignored.
 Returns a session handle or
 .Dv NULL
@@ -488,7 +490,8 @@ QOP.
 By default all supported ciphers are used, but they may be limited by
 a comma delimited list of cipher names.
 The recognized cipher names for DIGEST-MD5 are:
-.Bl -tag -offset indent
+.Pp
+.Bl -tag -offset indent -compact
 .It Li "3des"
 Triple-DES Cipher in CBC "two keys" mode with 112 bit key
 .It Li "aes"
@@ -539,7 +542,8 @@ and GSSAPI mechanisms.
 By default all supported QOP values are allowed, but they may be
 limited by a comma delimited list of QOP values.
 The recognized QOP values are:
-.Bl -tag -offset indent
+.Pp
+.Bl -tag -offset indent -compact
 .It Li "auth"
 authentication only
 .It Li "auth-int"

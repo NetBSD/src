@@ -1,4 +1,4 @@
-/* $NetBSD: t_crypto.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: t_crypto.c,v 1.4 2011/02/12 23:21:33 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,11 +35,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_crypto.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: t_crypto.c,v 1.4 2011/02/12 23:21:33 christos Exp $");
 
 #include <atf-c.h>
-#include <stdio.h>
 #include <saslc.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "crypto.h"

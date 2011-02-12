@@ -1,4 +1,4 @@
-/* $NetBSD: parser.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: parser.c,v 1.4 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parser.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.4 2011/02/12 23:21:32 christos Exp $");
+
+#include <sys/stat.h>
+#include <sys/syslimits.h>	/* for PATH_MAX */
 
 #include <ctype.h>
 #include <err.h>
@@ -44,8 +47,6 @@ __RCSID("$NetBSD: parser.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/syslimits.h>	/* for PATH_MAX */
-#include <sys/stat.h>
 
 #include "dict.h"
 #include "msg.h"

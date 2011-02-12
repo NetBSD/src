@@ -1,4 +1,4 @@
-/* $NetBSD: t_parser.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: t_parser.c,v 1.4 2011/02/12 23:21:33 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,12 +35,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parser.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
-#include <atf-c.h>
-#include <stdio.h>
-#include <dict.h>
-#include <saslc.h>
+__RCSID("$NetBSD: t_parser.c,v 1.4 2011/02/12 23:21:33 christos Exp $");
 
+#include <atf-c.h>
+#include <saslc.h>
+#include <stdio.h>
+
+#include "dict.h"
 #include "parser.h"
 
 
@@ -60,8 +61,8 @@ static void set_env(atf_tc_t *tc)
 
         if (dir == NULL)
             exit(-1);
-	
-        setenv(SASLC__ENV_PATH, dir, 1);
+
+        setenv(SASLC_ENV_CONFIG, dir, 1);
         free(dir);
 }
 
@@ -69,23 +70,23 @@ static void set_env(atf_tc_t *tc)
 ATF_TC(t_parser_test1);
 ATF_TC_HEAD(t_parser_test1, tc)
 {
-        set_env(tc);
+	set_env(tc);
 	atf_tc_set_md_var(tc, "descr", "parser test1");
 }
 ATF_TC_BODY(t_parser_test1, tc)
 {
 	saslc_t *ctx;
-        
+
 	ATF_REQUIRE(ctx = saslc_alloc());
 	ATF_CHECK_EQ(saslc_init(ctx, "test1", NULL), 0);
-	ATF_REQUIRE_EQ(saslc_end(ctx, true), 0);
+	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
 }
 
 ATF_TC(t_parser_test2);
 ATF_TC_HEAD(t_parser_test2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "parser test2");
-        set_env(tc);
+	set_env(tc);
 }
 ATF_TC_BODY(t_parser_test2, tc)
 {
@@ -104,15 +105,15 @@ ATF_TC_BODY(t_parser_test2, tc)
 	ATF_CHECK_STREQ(val, "one two three");
 	ATF_REQUIRE(val = saslc_sess_getprop(sess, "ID"));
 	ATF_CHECK_STREQ(val, "6669");
-        saslc_sess_end(sess);
-	ATF_REQUIRE_EQ(saslc_end(ctx, false), 0);
+	saslc_sess_end(sess);
+	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
 }
 
 ATF_TC(t_parser_test3);
 ATF_TC_HEAD(t_parser_test3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "parser test3");
-        set_env(tc);
+	set_env(tc);
 }
 ATF_TC_BODY(t_parser_test3, tc)
 {
@@ -121,8 +122,7 @@ ATF_TC_BODY(t_parser_test3, tc)
 
 	ATF_REQUIRE(ctx = saslc_alloc());
 	ATF_CHECK_EQ(saslc_init(ctx, "test3", NULL), -1);
-	ATF_CHECK_EQ(saslc_init(ctx, "test3"), -1);
-	ATF_REQUIRE_EQ(saslc_end(ctx, false), 0);
+	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
 }
 
 

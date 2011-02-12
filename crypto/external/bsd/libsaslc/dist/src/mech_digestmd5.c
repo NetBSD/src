@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.6 2011/02/12 22:46:14 christos Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.7 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,17 +35,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.6 2011/02/12 22:46:14 christos Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.7 2011/02/12 23:21:32 christos Exp $");
+
+#include <sys/param.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <md5.h>
 #include <saslc.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+
 #include <openssl/evp.h>
-#include <sys/param.h>
 
 #include "buffer.h"
 #include "crypto.h"
@@ -201,7 +203,7 @@ typedef struct coder_context_t {
 	uint8_t *key;			/* key for coding */
 	uint32_t seqnum;		/* 4 byte sequence number */
 
-	void         *buf_ctx;		/* buffer context */
+	void *buf_ctx;			/* buffer context */
 	cipher_context_t *cph_ctx;	/* cipher context */
 	saslc_sess_t *sess;		/* session: for error setting */
 } coder_context_t;
@@ -231,8 +233,8 @@ utf8_to_8859_1(char *utf8, char **iso8859)
 
 	src = (unsigned char *)utf8;
 	cnt = 0;
-        end = src + strlen(utf8);
-        for (s = src; s < end; ++s) {
+	end = src + strlen(utf8);
+	for (s = src; s < end; ++s) {
 		if (*s > 0xC3) /* abort if outside 8859-1 range */
 			return -1;
 		/*
@@ -244,7 +246,7 @@ utf8_to_8859_1(char *utf8, char **iso8859)
 				return -1;	/* broken utf-8 encoding */
 		}
 		cnt++;
-        }
+	}
 
 	/* Allocate adequate space. */
 	d = malloc(cnt + 1);
@@ -254,14 +256,14 @@ utf8_to_8859_1(char *utf8, char **iso8859)
 	*iso8859 = (char *)d;
 
 	/* convert to 8859-1 */
-        do {
+	do {
 		for (s = src; s < end && *s < 0xC0; ++s)
 			*d++ = *s;
 		if (s + 1 >= end)
 			break;
 		*d++ = ((s[0] & 0x3) << 6) | (s[1] & 0x3f);
 		src = s + 2;
-        } while (src < end);
+	} while (src < end);
 
 	*d = '\0';
 	return 0;
@@ -319,11 +321,11 @@ saslc__mech_digestmd5_userhash(saslc__mech_digestmd5_sess_t *ms, uint8_t *buf)
 	if ((unq_username = unq(ms->rdata.authcid)) == NULL)
 		return -1;
 
-        /********************************************************/
+	/********************************************************/
 	/* RFC 2831 section 2.1.2				*/
 	/* ...  If the directive is missing, "realm-value" will */
 	/* set to the empty string when computing A1.	  	*/
-        /********************************************************/
+	/********************************************************/
 	if (ms->rdata.realm == NULL)
 		unq_realm = strdup("");
 	else
@@ -809,13 +811,13 @@ choose_realm(saslc_sess_t *sess, list_t *realms)
 	char *p;
 
 	/*****************************************************************/
-        /* The realm containing the user's account. This directive is	 */
+	/* The realm containing the user's account. This directive is	 */
 	/* required if the server provided any realms in the		 */
 	/* "digest-challenge", in which case it may appear exactly once  */
 	/* and its value SHOULD be one of those realms. If the directive */
 	/* is missing, "realm-value" will set to the empty string when	 */
 	/* computing A1 (see below for details).			 */
-        /*****************************************************************/
+	/*****************************************************************/
 
 	hostname    = saslc_sess_getprop(sess, SASLC_DIGESTMD5_HOSTNAME);
 	user_realms = saslc_sess_getprop(sess, SASLC_DIGESTMD5_REALM);
@@ -873,13 +875,11 @@ static void
 cipher_context_destroy(cipher_context_t *ctx)
 {
 
-	if (ctx == NULL)
-		return;
-
-	if (ctx->evp_ctx != NULL)
-		EVP_CIPHER_CTX_free(ctx->evp_ctx);
-
-	free(ctx);
+	if (ctx != NULL) {
+		if (ctx->evp_ctx != NULL)
+			EVP_CIPHER_CTX_free(ctx->evp_ctx);
+		free(ctx);
+	}
 }
 
 /**
@@ -1799,30 +1799,23 @@ static void
 free_cdata(cdata_t *cdata)
 {
 
-	if (cdata->nonce != NULL)
-		free(cdata->nonce);
-	if (cdata->realm != NULL)
-		saslc__list_free(cdata->realm);
+	free(cdata->nonce);
+	saslc__list_free(cdata->realm);
 }
 
 static void
 free_rdata(rdata_t *rdata)
 {
 
-	if (rdata->authcid != NULL)
-		free(rdata->authcid);
-	if (rdata->authzid != NULL)
-		free(rdata->authzid);
-	if (rdata->cnonce != NULL)
-		free(rdata->cnonce);
-	if (rdata->digesturi != NULL)
-		free(rdata->digesturi);
+	free(rdata->authcid);
+	free(rdata->authzid);
+	free(rdata->cnonce);
+	free(rdata->digesturi);
 	if (rdata->passwd != NULL) {
 		memset(rdata->passwd, 0, strlen(rdata->passwd));
 		free(rdata->passwd);
 	}
-	if (rdata->realm != NULL)
-		free(rdata->realm);
+	free(rdata->realm);
 }
 
 /**

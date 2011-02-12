@@ -1,4 +1,4 @@
-/* $NetBSD: saslc_private.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: saslc_private.h,v 1.4 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,6 +40,7 @@
 
 #include <saslc.h>
 #include <stdint.h>
+
 #include "dict.h"
 #include "error.h"
 #include "mech.h"

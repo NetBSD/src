@@ -1,4 +1,4 @@
-/* $NetBSD: mech.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: mech.c,v 1.4 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,9 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: mech.c,v 1.4 2011/02/12 23:21:32 christos Exp $");
 
 #include <sys/queue.h>
+
 #include <saslc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +49,6 @@ __RCSID("$NetBSD: mech.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
 #include "mech.h"
 #include "msg.h"
 #include "saslc_private.h"
-
 
 /* mechanisms */
 extern const saslc__mech_t saslc__mech_anonymous;
@@ -134,8 +134,7 @@ saslc__mech_list_get(saslc__mech_list_t *list, const char *mech_name)
 	LIST_FOREACH(node, list, nodes) {
 		if (strcasecmp(node->mech->name, mech_name) == 0)
 			return node;
-        }
-
+	}
 	return NULL;
 }
 
@@ -218,8 +217,8 @@ saslc__mech_generic_create(saslc_sess_t *sess)
 int
 saslc__mech_generic_destroy(saslc_sess_t *sess)
 {
+
 	free(sess->mech_sess);
 	sess->mech_sess = NULL;
-
 	return 0;
 }

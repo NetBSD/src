@@ -1,4 +1,4 @@
-/* $NetBSD: mech.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: mech.h,v 1.4 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,9 +38,10 @@
 #ifndef _MECH_H_
 #define _MECH_H_
 
+#include <sys/queue.h>
+
 #include <assert.h>
 #include <stdint.h>
-#include <sys/queue.h>
 
 #include "dict.h"
 #include "list.h"
@@ -129,7 +130,7 @@ typedef struct saslc__mech_t {
 typedef struct saslc__mech_list_node_t {
 	LIST_ENTRY(saslc__mech_list_node_t) nodes;	/**< nodes */
 	const saslc__mech_t *mech;			/**< mechanism */
-        saslc__dict_t *prop;				/**< mechanism config */
+	saslc__dict_t *prop;				/**< mechanism config */
 } saslc__mech_list_node_t;
 
 /* mechanisms list head */
@@ -145,10 +146,6 @@ saslc__mech_list_node_t *saslc__mech_list_get(saslc__mech_list_t *,
 /* generic functions */
 int saslc__mech_generic_create(saslc_sess_t *);
 int saslc__mech_generic_destroy(saslc_sess_t *);
-int saslc__mech_generic_encode(saslc_sess_t *, const void *, size_t, void **,
-    size_t *);
-int saslc__mech_generic_decode(saslc_sess_t *, const void *, size_t, void **,
-    size_t *);
 
 /* additional functions */
 int saslc__mech_strdup(saslc_sess_t *, char **, size_t *, const char *,
