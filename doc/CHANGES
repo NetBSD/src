@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1501 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1502 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -843,3 +843,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.11. [roy 20110204]
 	hp300: Switch NetBSD/hp300 to wscons with rasops.
 		Simply ported from OpenBSD/hp300.  [tsutsui 20110206]
+	hp300: Add support for framebuffers on HP362 and HP382.
+		[tsutsui 20110212]
+	hp300: Add support for Apollo Domain keyboard. From OpenBSD.
+		[tsutsui 20110212]
