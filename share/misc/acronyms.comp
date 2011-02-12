@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.117 2011/02/10 17:52:18 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.118 2011/02/12 19:32:42 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -246,7 +246,6 @@ GOT	global offset table
 GPE	general purpose event
 GPF	general protection fault
 GPL	GNU/general public license
-GPS	global positioning system
 GPU	graphics processing unit
 GRE	generic routing encapsulation
 GSI	global system interrupt
@@ -477,7 +476,6 @@ OSS	open source software
 OSS	open sound system
 OSVW	operating system visible workarounds
 OTP	one time password
-OTS	off the shelf
 OUI	organizationally unique identifier
 OWL	Web ontology language
 P2P	peer to peer
@@ -676,7 +674,6 @@ TLB	transition lookaside buffer
 TLD	top level domain
 TLS	transport layer security
 TLS	thread local storage
-TM	trademark
 TM	Turing machine
 TMDS	transition minimized differential signaling
 TMO	timeout
