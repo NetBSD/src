@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.59 2011/02/11 23:05:55 jmcneill Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.60 2011/02/12 14:45:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.59 2011/02/11 23:05:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.60 2011/02/12 14:45:31 jmcneill Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.59 2011/02/11 23:05:55 jmcneill Exp
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
+#include <uvm/uvm_pmap.h>
 
 /*
  * private global data structure
