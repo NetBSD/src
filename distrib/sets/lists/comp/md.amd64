@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.98 2011/02/11 06:54:18 matt Exp $
+# $NetBSD: md.amd64,v 1.99 2011/02/12 19:21:29 nakayama Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -450,7 +450,7 @@
 ./usr/lib/i386/libdevmapper_p.a			comp-c-proflib		compat,profile,lvm
 ./usr/lib/i386/libdm.a				comp-c-lib		compat
 ./usr/lib/i386/libdm.so				comp-sys-shlib		compat,pic
-./usr/lib/i386/libdm_p.a			comp-c-proflb		compat,profile
+./usr/lib/i386/libdm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libdm_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libdns.a				comp-c-lib		compat
 ./usr/lib/i386/libdns.so			comp-sys-shlib		compat,pic

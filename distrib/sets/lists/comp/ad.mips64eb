@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.21 2011/02/11 06:38:39 matt Exp $
+# $NetBSD: ad.mips64eb,v 1.22 2011/02/12 19:21:29 nakayama Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -234,7 +234,7 @@
 ./usr/lib/64/libdevmapper_pic.a			comp-lvm-piclib		compat,pic,lvm
 ./usr/lib/64/libdm.a				comp-c-lib		compat
 ./usr/lib/64/libdm_g.a				-unknown-		compat,debuglib
-./usr/lib/64/libdm_p.a				comp-c-proflb		compat,profile
+./usr/lib/64/libdm_p.a				comp-c-proflib		compat,profile
 ./usr/lib/64/libdm_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libdns.a				comp-c-lib		compat
 ./usr/lib/64/libdns.so				base-sys-shlib		compat,pic
@@ -759,7 +759,7 @@
 ./usr/lib/o32/libdevmapper_pic.a		comp-lvm-piclib		compat,pic,lvm
 ./usr/lib/o32/libdm.a				comp-c-lib		compat
 ./usr/lib/o32/libdm_g.a				-unknown-		compat,debuglib
-./usr/lib/o32/libdm_p.a				comp-c-proflb		compat,profile
+./usr/lib/o32/libdm_p.a				comp-c-proflib		compat,profile
 ./usr/lib/o32/libdm_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libdns.a				comp-c-lib		compat
 ./usr/lib/o32/libdns.so				base-sys-shlib		compat,pic
