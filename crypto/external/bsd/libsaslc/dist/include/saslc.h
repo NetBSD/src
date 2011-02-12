@@ -1,4 +1,4 @@
-/*	$NetBSD: saslc.h,v 1.3 2011/02/11 23:44:42 christos Exp $	*/
+/*	$NetBSD: saslc.h,v 1.4 2011/02/12 19:03:39 christos Exp $	*/
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,8 +38,7 @@
 #ifndef _SASLC_H_
 #define _SASLC_H_
 
-#include <stdbool.h>
-#include <stdlib.h>
+#include <sys/types.h>
 
 /* properties */
 #define	SASLC_PROP_AUTHCID	"AUTHCID"
