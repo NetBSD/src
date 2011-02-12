@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.575 2011/02/08 19:57:10 haad Exp $
+# $NetBSD: shl.mi,v 1.576 2011/02/12 22:25:59 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -606,6 +606,9 @@
 ./usr/lib/librumpvfs_layerfs.so			base-rump-shlib
 ./usr/lib/librumpvfs_layerfs.so.0		base-rump-shlib
 ./usr/lib/librumpvfs_layerfs.so.0.0		base-rump-shlib
+./usr/lib/libsaslc.so				base-sys-shlib		crypto
+./usr/lib/libsaslc.so.0				base-sys-shlib		crypto
+./usr/lib/libsaslc.so.0.0			base-sys-shlib		crypto
 ./usr/lib/libsdp.so				base-obsolete		obsolete
 ./usr/lib/libskey.so				base-sys-shlib		skey
 ./usr/lib/libskey.so.2				base-sys-shlib		skey

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.99 2011/02/12 19:21:29 nakayama Exp $
+# $NetBSD: md.amd64,v 1.100 2011/02/12 22:25:59 matt Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -448,6 +448,7 @@
 ./usr/lib/i386/libdevmapper.so			comp-sys-shlib		compat,pic,lvm
 ./usr/lib/i386/libdevmapper_g.a			-unknown-		compat,debuglib,lvm
 ./usr/lib/i386/libdevmapper_p.a			comp-c-proflib		compat,profile,lvm
+./usr/lib/i386/libdevmapper_pic.a		comp-c-piclib		compat,pic,lvm
 ./usr/lib/i386/libdm.a				comp-c-lib		compat
 ./usr/lib/i386/libdm.so				comp-sys-shlib		compat,pic
 ./usr/lib/i386/libdm_p.a			comp-c-proflib		compat,profile
@@ -606,7 +607,6 @@
 ./usr/lib/i386/libkvm_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libkvm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libkvm_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/liblzma_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libl.a				comp-c-lib		compat
 ./usr/lib/i386/libl_g.a				comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libl_p.a				comp-c-proflib		compat,profile
@@ -639,10 +639,12 @@
 ./usr/lib/i386/liblzf.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/liblzf_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/liblzf_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/liblzf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/liblzma.a			comp-c-lib		compat
 ./usr/lib/i386/liblzma.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/liblzma_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/liblzma_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/liblzma_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libm.a				comp-c-lib		compat
 ./usr/lib/i386/libm.so				comp-sys-shlib		compat,pic
 ./usr/lib/i386/libm_g.a				comp-c-proflib		compat,debuglib
@@ -804,6 +806,11 @@
 ./usr/lib/i386/librumpvfs_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/librumpvfs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/librumpvfs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libsaslc.a			comp-c-lib		compat,crypto
+./usr/lib/i386/libsaslc.so			comp-sys-shlib		compat,pic,crypto
+./usr/lib/i386/libsaslc_g.a			comp-c-proflib		compat,debuglib,crypto
+./usr/lib/i386/libsaslc_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/i386/libsaslc_pic.a			comp-c-piclib		compat,pic,crypto
 ./usr/lib/i386/libsdp.a				comp-obsolete		obsolete
 ./usr/lib/i386/libsdp.so			comp-obsolete		obsolete
 ./usr/lib/i386/libsdp_p.a			comp-obsolete		obsolete
@@ -931,6 +938,7 @@
 ./usr/libdata/debug/usr/lib/i386/libcrypto.so.6.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcurses.so.7.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdes.so.8.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libdevmapper.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdm.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdns.so.5.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdns_sd.so.0.0.debug	comp-compat-shlib	compat,pic,debug
@@ -964,6 +972,7 @@
 ./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblwres.so.5.2.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblzf.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblzma.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libm.so.0.9.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmagic.so.3.0.debug	comp-compat-shlib	compat,pic,debug
@@ -997,6 +1006,7 @@
 ./usr/libdata/debug/usr/lib/i386/librumpuser.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumphijack.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpvfs.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libsaslc.so.0.0.debug	comp-compat-shlib	compat,pic,crypto,debug
 ./usr/libdata/debug/usr/lib/i386/libskey.so.2.0.debug	comp-compat-shlib	compat,pic,skey,debug
 ./usr/libdata/debug/usr/lib/i386/libsl.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
