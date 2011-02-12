@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/02/11 23:44:44 christos Exp $
+# $NetBSD: Makefile,v 1.3 2011/02/12 22:23:11 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,9 @@ SRCS+= mech_anonymous.c
 SRCS+= mech_crammd5.c
 SRCS+= mech_digestmd5.c
 SRCS+= mech_external.c
+.if (${MKKERBEROS} != "no")
 SRCS+= mech_gssapi.c
+.endif
 SRCS+= mech_login.c
 SRCS+= mech_plain.c
 SRCS+= msg.c
@@ -35,7 +37,9 @@ EXTDIST=${.CURDIR}/../dist
 INCS+= saslc.h
 INCSDIR=/usr/include
 
-LDADD+=-lssl -lgssapi
-DPADD+=${LIBSSL}
+LIBDPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
+.if (${MKKERBEROS} != "no")
+LIBDPLIBS+= gssapi ${NETBSDSRCDIR}/lib/libgssapi
+.endif
 
 .include <bsd.lib.mk>
