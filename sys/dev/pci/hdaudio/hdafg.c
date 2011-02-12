@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.30 2011/01/14 03:16:37 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.1 2011/02/12 15:01:00 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.30 2011/01/14 03:16:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.1 2011/02/12 15:01:00 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

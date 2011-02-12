@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/01/07 15:32:11 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2011/02/12 15:01:00 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 KMOD=	hdafg
 IOCONF=	hdafg.ioconf
-SRCS=	hdaudio_afg.c
+SRCS=	hdafg.c
 
 WARNS=	3
 
