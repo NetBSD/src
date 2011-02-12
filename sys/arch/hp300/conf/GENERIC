@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.163 2011/02/12 05:15:39 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.164 2011/02/12 15:49:01 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.163 $"
+#ident 		"GENERIC-$Revision: 1.164 $"
 
 maxusers	32		# estimated number of users
 
@@ -210,9 +210,9 @@ frodo*		at intio?		# Frodo utility chip found on 382, 4xx
 nhpib*		at intio?		# slow internal HP-IB
 
 # 8250-like serial ports found on Frodo ASIC
-#dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
-#wskbd*		at dnkbd? mux 1
-#wsmouse*	at dnkbd? mux 0
+dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
+wskbd*		at dnkbd? mux 1
+wsmouse*	at dnkbd? mux 0
 com*		at frodo? offset ?	# tty flavor
 
 dvbox*		at intio?		# Davinci framebuffer
