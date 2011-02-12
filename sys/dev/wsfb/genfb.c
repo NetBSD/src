@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.35 2011/02/09 13:19:19 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.36 2011/02/12 17:15:27 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.35 2011/02/09 13:19:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.36 2011/02/12 17:15:27 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	memcpy(&sc->sc_ops, ops, sizeof(struct genfb_ops));
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-	if (sc->sc_modecb->gmc_setmode)
+	if (sc->sc_modecb != NULL)
 		sc->sc_modecb->gmc_setmode(sc, sc->sc_mode);
 
 #ifdef GENFB_SHADOWFB
@@ -386,7 +386,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 			if (new_mode != sc->sc_mode) {
 				sc->sc_mode = new_mode;
-				if (sc->sc_modecb->gmc_setmode)
+				if (sc->sc_modecb != NULL)
 					sc->sc_modecb->gmc_setmode(sc,
 					    sc->sc_mode);
 				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
