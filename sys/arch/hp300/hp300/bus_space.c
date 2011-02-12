@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.18 2011/02/12 03:43:50 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.19 2011/02/12 04:52:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.18 2011/02/12 03:43:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.19 2011/02/12 04:52:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	}
 
 	if (t->bustype != HP300_BUS_SPACE_DIO)
-		panic("%s: bad space tag", __FUNC__);
+		panic("%s: bad space tag", __func__);
 
 	/*
 	 * Allocate virtual address space from the extio extent map.
@@ -153,7 +153,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	if (extent_free(extio_ex, kva, size,
 	    EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0)))
 		printf("%s: kva 0x%lx size 0x%lx: "
-		    "can't free region\n", __func-_, (u_long)bsh, size);
+		    "can't free region\n", __func__, (u_long)bsh, size);
 }
 
 /* ARGSUSED */
