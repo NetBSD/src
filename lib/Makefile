@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.163 2011/02/10 20:57:22 matt Exp $
+#	$NetBSD: Makefile,v 1.164 2011/02/12 22:24:40 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -183,6 +183,13 @@ SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
 
 .if (${MKPAM} != "no")
 SUBDIR+=	libpam		# depends on libkafs, libkrb5, ...
+.endif
+
+#==================== 6th library dependency barrier ====================
+SUBDIR+=	.WAIT
+
+.if (${MKCRYPTO} != "no")
+SUBDIR+=	../crypto/external/bsd/libsaslc		# depends on gssapi
 .endif
 
 .include <bsd.subdir.mk>
