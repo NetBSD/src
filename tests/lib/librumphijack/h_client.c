@@ -1,4 +1,4 @@
-/*	$NetBSD: h_client.c,v 1.1 2011/02/11 15:38:14 pooka Exp $	*/
+/*	$NetBSD: h_client.c,v 1.2 2011/02/12 10:28:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -64,6 +64,29 @@ main(int argc, char *argv[])
 
 		if (FD_ISSET(STDIN_FILENO, &rfds))
 			errx(1, "stdin fileno is still set");
+		exit(0);
+	} else if (strcmp(argv[1], "select_allunset") == 0) {
+		fd_set fds;
+		struct timeval tv;
+		int rv;
+
+		tv.tv_sec = 0;
+		tv.tv_usec = 1;
+
+		FD_ZERO(&fds);
+
+		rv = select(100, &fds, &fds, &fds, &tv);
+		if (rv == -1)
+			err(1, "select");
+		if (rv != 0)
+			errx(1, "select succesful");
+
+		rv = select(0, NULL, NULL, NULL, &tv);
+		if (rv == -1)
+			err(1, "select2");
+		if (rv != 0)
+			errx(1, "select2 succesful");
+
 		exit(0);
 	} else {
 		return ENOTSUP;

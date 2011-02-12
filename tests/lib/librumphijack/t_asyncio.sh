@@ -1,4 +1,4 @@
-#       $NetBSD: t_asyncio.sh,v 1.1 2011/02/11 15:38:14 pooka Exp $
+#       $NetBSD: t_asyncio.sh,v 1.2 2011/02/12 10:28:08 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,7 +47,27 @@ select_timeout_cleanup()
 	rump.halt
 }
 
+atf_test_case select_allunset cleanup
+select_allunset_head()
+{
+        atf_set "descr" "select() with no set fds in fd_set should not crash"
+}
+
+select_allunset_body()
+{
+
+	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
+	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
+	    $(atf_get_srcdir)/h_client select_allunset
+}
+
+select_allunset_cleanup()
+{
+	rump.halt
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case select_timeout
+	atf_add_test_case select_allunset
 }
