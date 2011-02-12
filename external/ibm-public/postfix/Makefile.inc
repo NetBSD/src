@@ -1,19 +1,32 @@
-#	$NetBSD: Makefile.inc,v 1.2 2009/06/25 18:21:50 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2011/02/12 19:07:08 christos Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
+HAVE_LIB_SASLC?= yes
 
 WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
 
-CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH -DDEF_SERVER_SASL_TYPE=\"dovecot\" \
+CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH \
 	-I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl
+
+.if defined(HAVE_LIB_SASLC)
+CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_SASLC_SASL
+LDADD+=	 -lsaslc
+.elif defined(HAVE_CYRUS_SASL)
+CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
+	-DDEF_SERVER_SASL_TYPE=\"cyrus\" \
+	-I/usr/pkg/include/sasl
+LDADD+=	 -lsasl2 -L/usr/pkg/lib -Wl,-R/usr/pkg/lib
+.else
+CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
+.endif
 
 .if defined(HAVE_PCC)
 # code uses gcc-specific aggregate dynamic array
