@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.86 2011/02/11 06:54:18 matt Exp $
+# $NetBSD: md.sparc64,v 1.87 2011/02/12 22:25:59 matt Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -587,6 +587,10 @@
 ./usr/lib/sparc/librumpvfs.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/librumpvfs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/librumpvfs_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libsaslc.a			comp-c-lib		compat,crypto
+./usr/lib/sparc/libsaslc.so			base-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libsaslc_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libsaslc_pic.a			comp-c-piclib		compat,pic,crypto
 ./usr/lib/sparc/libsdp.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libsdp.so			base-obsolete		obsolete
 ./usr/lib/sparc/libsdp_p.a			comp-obsolete		obsolete
@@ -694,7 +698,9 @@
 ./usr/libdata/debug/usr/lib/sparc/libcrypt.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libcrypto.so.6.1.debug		comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libcurses.so.7.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libdevmapper.so.1.0.debug			comp-compat-shlib	compat,pic,debug,lvm
 ./usr/libdata/debug/usr/lib/sparc/libdes.so.8.1.debug			comp-compat-shlib	compat,pic,debug,crypto
+./usr/libdata/debug/usr/lib/sparc/libdm.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libdns.so.5.2.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libdns_sd.so.0.0.debug		comp-compat-shlib	compat,pic,debug,mdns
 ./usr/libdata/debug/usr/lib/sparc/libdwarf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
@@ -726,6 +732,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libldap_r.so.4.2.debug		comp-compat-shlib	compat,pic,debug,ldap
 ./usr/libdata/debug/usr/lib/sparc/liblua.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblwres.so.5.2.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblzf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblzma.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libm.so.0.9.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmagic.so.3.0.debug			comp-compat-shlib	compat,pic,debug
@@ -759,6 +766,7 @@
 ./usr/libdata/debug/usr/lib/sparc/librumphijack.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpclient.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpvfs.so.0.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libsaslc.so.0.0.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug,skey
 ./usr/libdata/debug/usr/lib/sparc/libsl.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	compat,pic,debug
