@@ -1,4 +1,4 @@
-/* $NetBSD: mech_gssapi.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: mech_gssapi.c,v 1.4 2011/02/12 22:46:14 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_gssapi.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: mech_gssapi.c,v 1.4 2011/02/12 22:46:14 christos Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -269,7 +269,7 @@ prep_packet(saslc_sess_t *sess, gss_buffer_t outbuf, void **out, size_t *outlen)
 	}
 	buflen = outbuf->length + 4;
 	if (buflen > ms->omaxbuf) {
-		saslc__error_set(ERR(sess), MECH_ERROR,
+		saslc__error_set(ERR(sess), ERROR_MECH,
 		    "output exceeds server maxbuf size");
 		gss_release_buffer(&min_s, outbuf);
 		return -1;
