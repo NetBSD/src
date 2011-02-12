@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.79 2011/02/06 18:26:53 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.80 2011/02/12 05:08:40 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -112,6 +112,10 @@ file	arch/hp300/dev/topcat.c			topcat	needs-flag
 device	tvrx: wsemuldisplaydev, diofb_mono, rasops1
 attach	tvrx at dio
 file	arch/hp300/dev/tvrx.c			tvrx	needs-flag
+
+device	gendiofb: wsemuldisplaydev, diofb, rasops8
+attach	gendiofb at dio
+file	arch/hp300/dev/gendiofb.c		gendiofb	needs-flag
 
 #
 # Devices on the DIO bus

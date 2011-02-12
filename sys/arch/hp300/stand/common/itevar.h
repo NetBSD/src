@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.14 2011/02/10 13:04:32 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.15 2011/02/12 05:08:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,12 @@
 /*
  * Standalone version of hp300 ITE.
  */
+
+#define getbyte(ip, offset) \
+	*(((u_char *)(ip)->regbase) + (offset))
+
+#define getword(ip, offset) \
+	((getbyte(ip, offset) << 8) | getbyte(ip, (offset) + 2))
 
 struct ite_data;
 
@@ -133,3 +139,8 @@ void rbox_init(struct ite_data *);
 void dvbox_init(struct ite_data *);
 void hyper_init(struct ite_data *);
 void tvrx_init(struct ite_data *);
+void dumb_init(struct ite_data *);
+void dumb_cursor(struct ite_data *, int);
+void dumb_putc(struct ite_data *, int, int, int);
+void dumb_clear(struct ite_data *, int, int, int, int);
+void dumb_scroll(struct ite_data *);

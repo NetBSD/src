@@ -1,4 +1,4 @@
-/*	$NetBSD: grfreg.h,v 1.2 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: grfreg.h,v 1.3 2011/02/12 05:08:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -54,6 +54,8 @@
 #define GID_TIGER      12
 #define GID_YGENESIS   13
 #define GID_HYPERION   14
+#define GID_A1474MID   16
+#define GID_A147xVGA   17
 
 typedef unsigned char	grftype;
 

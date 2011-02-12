@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.15 2011/02/10 13:04:32 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.16 2011/02/12 05:08:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,6 +96,14 @@ struct itesw itesw[] = {
 	{ GID_TIGER,
 	tvrx_init,	ite_dio_clear,	ite_dio_putc1bpp,
 	ite_dio_cursor,	ite_dio_scroll },
+
+	{ GID_A1474MID,
+	dumb_init,	dumb_clear,	dumb_putc,
+	dumb_cursor,	dumb_scroll },
+
+	{ GID_A147xVGA,
+	dumb_init,	dumb_clear,	dumb_putc,
+	dumb_cursor,	dumb_scroll },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
