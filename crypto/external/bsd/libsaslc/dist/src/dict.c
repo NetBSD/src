@@ -1,4 +1,4 @@
-/* $NetBSD: dict.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: dict.c,v 1.4 2011/02/12 14:24:18 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dict.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: dict.c,v 1.4 2011/02/12 14:24:18 christos Exp $");
 
 #include <sys/queue.h>
 #include <ctype.h>
@@ -115,9 +115,6 @@ static bool
 saslc__dict_valid_key(const char *key)
 {
         /* key is empty string */
-        if (key == NULL)
-                return false;
-
 	if (!isalpha((unsigned char)*key))
 		return false;
 
