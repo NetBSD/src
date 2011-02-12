@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.19 2011/02/12 04:52:28 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20 2011/02/12 05:15:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.19 2011/02/12 04:52:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20 2011/02/12 05:15:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,8 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		return 0;
 	}
 
-	if (t->bustype != HP300_BUS_SPACE_DIO)
+	if (t->bustype != HP300_BUS_SPACE_DIO &&
+	    t->bustype != HP300_BUS_SPACE_SGC)
 		panic("%s: bad space tag", __func__);
 
 	/*
@@ -129,7 +130,8 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		return;
 	}
 
-	if (t->bustype != HP300_BUS_SPACE_DIO)
+	if (t->bustype != HP300_BUS_SPACE_DIO &&
+	    t->bustype != HP300_BUS_SPACE_SGC)
 		panic("%s: bad space tag", __func__);
 
 	kva = m68k_trunc_page(bsh);

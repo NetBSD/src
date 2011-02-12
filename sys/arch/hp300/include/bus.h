@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.16 2011/02/12 05:15:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
  */
 #define	HP300_BUS_SPACE_INTIO	0	/* space is intio space */
 #define	HP300_BUS_SPACE_DIO	1	/* space is dio space */
+#define	HP300_BUS_SPACE_SGC	2	/* space is sgc space */
 
 /*
  * Bus address and size types

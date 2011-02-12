@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.80 2011/02/12 05:08:40 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.81 2011/02/12 05:15:39 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -41,6 +41,14 @@ file	arch/hp300/dev/intio.c		intio
 device	dio { scode = -1 }
 attach	dio at mainbus
 file	arch/hp300/dev/dio.c		dio
+
+#
+# SGC bus
+#
+
+device	sgc { scode = -1 }
+attach	sgc at mainbus
+file	arch/hp300/dev/sgc.c		sgc
 
 #
 # Devices in Internal i/o space
