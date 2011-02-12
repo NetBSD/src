@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb.c,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: diofb.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
 /*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
@@ -80,12 +80,12 @@
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
 
-void	diofb_do_cursor(struct rasops_info *);
-void	diofb_copycols(void *, int, int, int, int);
-void	diofb_erasecols(void *, int, int, int, long);
-void	diofb_copyrows(void *, int, int, int);
-void	diofb_eraserows(void *, int, int, long);
-int	diofb_allocattr(void *, int, int, int, long *);
+static void	diofb_do_cursor(struct rasops_info *);
+static void	diofb_copycols(void *, int, int, int, int);
+static void	diofb_erasecols(void *, int, int, int, long);
+static void	diofb_copyrows(void *, int, int, int);
+static void	diofb_eraserows(void *, int, int, long);
+static int	diofb_allocattr(void *, int, int, int, long *);
 
 struct diofb diofb_cn;
 
@@ -130,7 +130,7 @@ diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr)
 		 */
 		fb->fbkva = iomap(fb->fbaddr, fb->fbsize);
 		if (fb->fbkva == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 	}
 	if (fb->dwidth == 0 || fb->dheight == 0) {
 		fb->dwidth = (fbr->dwmsb << 8) | fbr->dwlsb;
@@ -153,7 +153,7 @@ diofb_fbinquire(struct diofb *fb, int scode, struct diofbreg *fbr)
 
 	fb->mapmode = WSDISPLAYIO_MODE_DUMBFB;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -335,8 +335,9 @@ diofb_end_attach(device_t self, struct wsdisplay_accessops *accessops,
 int
 diofb_allocattr(void *cookie, int fg, int bg, int flg, long *attr)
 {
+
 	if ((flg & (WSATTR_BLINK | WSATTR_HILIT)) != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((flg & WSATTR_WSCOLORS) == 0) {
 		fg = WSCOL_WHITE;
@@ -460,14 +461,14 @@ diofb_alloc_screen(void *v, const struct wsscreen_descr *type,
 	struct rasops_info *ri = &fb->ri;
 
 	if (fb->nscreens > 0)
-		return (ENOMEM);
+		return ENOMEM;
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
 	ri->ri_ops.allocattr(ri, 0, 0, 0, attrp);
 	fb->nscreens++;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -482,7 +483,8 @@ int
 diofb_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
-	return (0);
+
+	return 0;
 }
 
 paddr_t
@@ -491,7 +493,7 @@ diofb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct diofb *fb = v;
 
 	if ((offset & PAGE_MASK) != 0)
-		return (-1);
+		return -1;
 
 	switch (fb->mapmode) {
 	case WSDISPLAYIO_MODE_MAPPED:
@@ -505,7 +507,7 @@ diofb_mmap(void *v, void *vs, off_t offset, int prot)
 		break;
 	}
 
-	return (-1);
+	return -1;
 }
 
 int
@@ -516,14 +518,14 @@ diofb_getcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
 	int error;
 
 	if (index >= colcount || count > colcount - index)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((error = copyout(fb->cmap.r + index, cm->red, count)) != 0)
-		return (error);
+		return error;
 	if ((error = copyout(fb->cmap.g + index, cm->green, count)) != 0)
-		return (error);
+		return error;
 	if ((error = copyout(fb->cmap.b + index, cm->blue, count)) != 0)
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }

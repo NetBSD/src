@@ -1,4 +1,4 @@
-/*	$NetBSD: rbox.c,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: rbox.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
 /*	$OpenBSD: rbox.c,v 1.14 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -127,10 +127,10 @@ struct	rbox_softc {
 	int		sc_scode;
 };
 
-int	rbox_dio_match(device_t, cfdata_t, void *);
-void	rbox_dio_attach(device_t, device_t, void *);
-int	rbox_intio_match(device_t, cfdata_t, void *);
-void	rbox_intio_attach(device_t, device_t, void *);
+static int	rbox_dio_match(device_t, cfdata_t, void *);
+static void	rbox_dio_attach(device_t, device_t, void *);
+static int	rbox_intio_match(device_t, cfdata_t, void *);
+static void	rbox_intio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(rbox_dio, sizeof(struct rbox_softc),
     rbox_dio_match, rbox_dio_attach, NULL, NULL);
@@ -138,16 +138,14 @@ CFATTACH_DECL_NEW(rbox_dio, sizeof(struct rbox_softc),
 CFATTACH_DECL_NEW(rbox_intio, sizeof(struct rbox_softc),
     rbox_intio_match, rbox_intio_attach, NULL, NULL);
 
-int	rbox_reset(struct diofb *, int, struct diofbreg *);
-void	rbox_restore(struct diofb *);
-void	rbox_setcolor(struct diofb *, u_int,
-	    u_int8_t, u_int8_t, u_int8_t);
-int	rbox_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
-	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
+static int	rbox_reset(struct diofb *, int, struct diofbreg *);
+static void	rbox_restore(struct diofb *);
+static int	rbox_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
+		    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 
-int	rbox_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	rbox_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
-struct	wsdisplay_accessops	rbox_accessops = {
+static struct wsdisplay_accessops rbox_accessops = {
 	rbox_ioctl,
 	diofb_mmap,
 	diofb_alloc_screen,
@@ -172,13 +170,13 @@ rbox_intio_match(device_t parent, cfdata_t cf, void *aux)
 	fbr = (struct diofbreg *)ia->ia_addr;
 
 	if (badaddr((void *)fbr))
-		return (0);
+		return 0;
 
 	if (fbr->id == GRFHWID && fbr->fbid == GID_RENAISSANCE) {
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -210,9 +208,9 @@ rbox_dio_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    da->da_secid == DIO_DEVICE_SECID_RENAISSANCE)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -255,7 +253,7 @@ rbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	int rc;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
-		return (rc);
+		return rc;
 
 	/*
 	 * Restrict the framebuffer to a monochrome view for now, until
@@ -268,7 +266,7 @@ rbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	rbox_restore(fb);
 	diofb_fbsetup(fb);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -371,14 +369,14 @@ rbox_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 }
 
 int
-rbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
-    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+rbox_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
+    uint16_t dx, uint16_t dy, uint16_t cx, uint16_t cy, int16_t rop,
     int16_t planemask)
 {
 	volatile struct rboxfb *rb = (struct rboxfb *)fb->regkva;
 
 	if (planemask != 0xff)
-		return (EINVAL);
+		return EINVAL;
 
 	rb_waitbusy(rb);
 
@@ -393,7 +391,7 @@ rbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 
 	rb_waitbusy(rb);
 
-	return (0);
+	return 0;
 }
 
 /*

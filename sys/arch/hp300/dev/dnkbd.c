@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.3 2011/02/12 16:37:32 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.4 2011/02/12 16:41:54 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ struct dnkbd_softc {
 			sc_state, sc_prevstate;
 	u_int		sc_echolen;
 
-	u_int8_t	sc_mousepkt[3];	/* mouse packet being constructed */
+	uint8_t		sc_mousepkt[3];	/* mouse packet being constructed */
 	u_int		sc_mousepos;	/* index in above */
 
 	struct callout	sc_bellstop_tmo;
@@ -160,46 +160,46 @@ struct dnkbd_softc {
 #endif
 };
 
-int	dnkbd_match(device_t, cfdata_t, void *);
-void	dnkbd_attach(device_t, device_t, void *);
+static int	dnkbd_match(device_t, cfdata_t, void *);
+static void	dnkbd_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(dnkbd, sizeof(struct dnkbd_softc),
     dnkbd_match, dnkbd_attach, NULL, NULL);
 
-void	dnkbd_init(struct dnkbd_softc *, uint16_t, uint16_t);
-int	dnkbd_enable(void *, int);
-void	dnkbd_set_leds(void *, int);
-int	dnkbd_ioctl(void *, u_long, void *, int, struct lwp *);
+static void	dnkbd_init(struct dnkbd_softc *, uint16_t, uint16_t);
+static int	dnkbd_enable(void *, int);
+static void	dnkbd_set_leds(void *, int);
+static int	dnkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
-const struct wskbd_accessops dnkbd_accessops = {
+static const struct wskbd_accessops dnkbd_accessops = {
 	dnkbd_enable,
 	dnkbd_set_leds,
 	dnkbd_ioctl
 };
 
 #if NWSMOUSE > 0
-int	dnmouse_enable(void *);
-int	dnmouse_ioctl(void *, u_long, void *, int, struct lwp *);
-void	dnmouse_disable(void *);
+static int	dnmouse_enable(void *);
+static int	dnmouse_ioctl(void *, u_long, void *, int, struct lwp *);
+static void	dnmouse_disable(void *);
 
-const struct wsmouse_accessops dnmouse_accessops = {
+static const struct wsmouse_accessops dnmouse_accessops = {
 	dnmouse_enable,
 	dnmouse_ioctl,
 	dnmouse_disable
 };
 #endif
 
-void	dnkbd_bell(void *, u_int, u_int, u_int);
-void	dnkbd_cngetc(void *, u_int *, int *);
-void	dnkbd_cnpollc(void *, int);
+static void	dnkbd_bell(void *, u_int, u_int, u_int);
+static void	dnkbd_cngetc(void *, u_int *, int *);
+static void	dnkbd_cnpollc(void *, int);
 
-const struct wskbd_consops dnkbd_consops = {
+static const struct wskbd_consops dnkbd_consops = {
 	dnkbd_cngetc,
 	dnkbd_cnpollc,
 	dnkbd_bell
 };
 
-struct wskbd_mapdata dnkbd_keymapdata = {
+static struct wskbd_mapdata dnkbd_keymapdata = {
 	dnkbd_keydesctab,
 #ifdef DNKBD_LAYOUT
 	DNKBD_LAYOUT
@@ -210,21 +210,23 @@ struct wskbd_mapdata dnkbd_keymapdata = {
 
 typedef enum { EVENT_NONE, EVENT_KEYBOARD, EVENT_MOUSE } dnevent;
 
-void	dnevent_kbd(struct dnkbd_softc *, int);
-void	dnevent_kbd_internal(struct dnkbd_softc *, int);
-void	dnevent_mouse(struct dnkbd_softc *, u_int8_t *);
-void	dnkbd_attach_subdevices(struct dnkbd_softc *);
-void	dnkbd_bellstop(void *);
-void	dnkbd_decode(int, u_int *, int *);
-dnevent	dnkbd_input(struct dnkbd_softc *, int);
-int	dnkbd_intr(void *);
-int	dnkbd_pollin(struct dnkbd_softc *, u_int);
-int	dnkbd_pollout(struct dnkbd_softc *, int);
-int	dnkbd_probe(struct dnkbd_softc *);
-void	dnkbd_rawrepeat(void *);
-int	dnkbd_send(struct dnkbd_softc *, const u_int8_t *, size_t);
-int	dnsubmatch_kbd(device_t, cfdata_t, const int *, void *);
-int	dnsubmatch_mouse(device_t, cfdata_t, const int *, void *);
+static void	dnevent_kbd(struct dnkbd_softc *, int);
+static void	dnevent_kbd_internal(struct dnkbd_softc *, int);
+static void	dnevent_mouse(struct dnkbd_softc *, uint8_t *);
+static void	dnkbd_attach_subdevices(struct dnkbd_softc *);
+static void	dnkbd_bellstop(void *);
+static void	dnkbd_decode(int, u_int *, int *);
+static dnevent	dnkbd_input(struct dnkbd_softc *, int);
+static int	dnkbd_intr(void *);
+static int	dnkbd_pollin(struct dnkbd_softc *, u_int);
+static int	dnkbd_pollout(struct dnkbd_softc *, int);
+static int	dnkbd_probe(struct dnkbd_softc *);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+static void	dnkbd_rawrepeat(void *);
+#endif
+static int	dnkbd_send(struct dnkbd_softc *, const uint8_t *, size_t);
+static int	dnsubmatch_kbd(device_t, cfdata_t, const int *, void *);
+static int	dnsubmatch_mouse(device_t, cfdata_t, const int *, void *);
 
 int
 dnkbd_match(device_t parent, cfdata_t cf, void *aux)
@@ -232,7 +234,7 @@ dnkbd_match(device_t parent, cfdata_t cf, void *aux)
 	struct frodo_attach_args *fa = aux;
 
 	if (strcmp(fa->fa_name, dnkbd_cd.cd_name) != 0)
-		return (0);
+		return 0;
 
 	if (machineid == HP_382) {
 		/* 382 has frodo but no Domain keyboard connector. */
@@ -240,7 +242,7 @@ dnkbd_match(device_t parent, cfdata_t cf, void *aux)
 	}
 
 	/* only attach to the first frodo port */
-	return (fa->fa_offset == FRODO_APCI_OFFSET(0));
+	return fa->fa_offset == FRODO_APCI_OFFSET(0);
 }
 
 void
@@ -364,7 +366,7 @@ dnsubmatch_kbd(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
 
 	if (strcmp(cf->cf_name, wskbd_cd.cd_name) != 0)
-		return (0);
+		return 0;
 
 	return config_match(parent, cf, aux);
 }
@@ -375,7 +377,7 @@ dnsubmatch_mouse(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
 
 	if (strcmp(cf->cf_name, wsmouse_cd.cd_name) != 0)
-		return (0);
+		return 0;
 
 	return config_match(parent, cf, aux);
 }
@@ -385,7 +387,7 @@ int
 dnkbd_probe(struct dnkbd_softc *sc)
 {
 	int dat, rc, flags;
-	u_int8_t cmdbuf[2];
+	uint8_t cmdbuf[2];
 	char rspbuf[MAX_IDENTLEN], *word, *end;
 	u_int i;
 	int s;
@@ -506,7 +508,7 @@ out:
 	sc->sc_flags = flags;
 	splx(s);
 
-	return (rc);
+	return rc;
 }
 
 /*
@@ -625,7 +627,7 @@ dnkbd_input(struct dnkbd_softc *sc, int dat)
 		break;
 	}
 
-	return (event);
+	return event;
 }
 
 /*
@@ -704,7 +706,7 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 			callout_stop(&sc->sc_rawrepeat_ch);
 			sc->sc_nrep = j;
 			callout_schedule(&sc->sc_rawrepeat_ch,
-			    hstohz(REP_DELAY1));
+			    mstohz(REP_DELAY1));
 		}
 	} else
 #endif
@@ -726,13 +728,13 @@ dnkbd_rawrepeat(void *v)
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
 
-	callout_schedule(&sc->sc_rawrepeat_ch, hztoms(REP_DELAYN));
+	callout_schedule(&sc->sc_rawrepeat_ch, mstohz(REP_DELAYN));
 }
 #endif
 
 #if NWSMOUSE > 0
 void
-dnevent_mouse(struct dnkbd_softc *sc, u_int8_t *dat)
+dnevent_mouse(struct dnkbd_softc *sc, uint8_t *dat)
 {
 	if (!ISSET(sc->sc_flags, SF_PLUGGED))
 		return;
@@ -782,7 +784,7 @@ dnkbd_pollin(struct dnkbd_softc *sc, u_int tries)
 	}
 
 	if (cnt == 0)
-		return (-1);
+		return -1;
 	else
 		return (int)bus_space_read_1(bst, bsh, com_data);
 }
@@ -803,15 +805,15 @@ dnkbd_pollout(struct dnkbd_softc *sc, int dat)
 		DELAY(10);
 	}
 	if (cnt == 0)
-		return (EBUSY);
+		return EBUSY;
 	else {
 		bus_space_write_1(bst, bsh, com_data, dat);
-		return (0);
+		return 0;
 	}
 }
 
 int
-dnkbd_send(struct dnkbd_softc *sc, const u_int8_t *cmdbuf, size_t cmdlen)
+dnkbd_send(struct dnkbd_softc *sc, const uint8_t *cmdbuf, size_t cmdlen)
 {
 	int cnt, rc, dat;
 	u_int cmdpos;
@@ -822,32 +824,32 @@ dnkbd_send(struct dnkbd_softc *sc, const u_int8_t *cmdbuf, size_t cmdlen)
 			break;
 	}
 	if (cnt == 0)
-		return (EBUSY);
+		return EBUSY;
 
 	/* send command escape */
 	if ((rc = dnkbd_pollout(sc, DNCMD_PREFIX)) != 0)
-		return (rc);
+		return rc;
 
 	/* send command buffer */
 	for (cmdpos = 0; cmdpos < cmdlen; cmdpos++) {
 		if ((rc = dnkbd_pollout(sc, cmdbuf[cmdpos])) != 0)
-			return (rc);
+			return rc;
 	}
 
 	/* wait for command echo */
 	do {
 		dat = dnkbd_pollin(sc, 10000);
 		if (dat == -1)
-			return (EIO);
+			return EIO;
 	} while (dat != DNCMD_PREFIX);
 
 	for (cmdpos = 0; cmdpos < cmdlen; cmdpos++) {
 		dat = dnkbd_pollin(sc, 10000);
 		if (dat != cmdbuf[cmdpos])
-			return (EIO);
+			return EIO;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -856,7 +858,7 @@ dnkbd_intr(void *v)
 	struct dnkbd_softc *sc = v;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
-	u_int8_t iir, lsr, c;
+	uint8_t iir, lsr, c;
 	int claimed = 0;
 
 	bst = sc->sc_bst;
@@ -881,7 +883,7 @@ dnkbd_intr(void *v)
 			 * unless we are doing polling work...
 			 */
 			if (ISSET(sc->sc_flags, SF_POLLING)) {
-				return (1);
+				return 1;
 			}
 
 			for (;;) {
@@ -918,7 +920,7 @@ dnkbd_intr(void *v)
 
 		default:
 			if (iir & IIR_NOPEND)
-				return (claimed);
+				return claimed;
 			/* FALLTHROUGH */
 
 		case IIR_MLSC:
@@ -945,15 +947,15 @@ dnkbd_enable(void *v, int on)
 
 	if (on) {
 		if (ISSET(sc->sc_flags, SF_ENABLED))
-			return (EBUSY);
+			return EBUSY;
 		SET(sc->sc_flags, SF_ENABLED);
 	} else {
 		if (ISSET(sc->sc_flags, SF_CONSOLE))
-			return (EBUSY);
+			return EBUSY;
 		CLR(sc->sc_flags, SF_ENABLED);
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -977,22 +979,22 @@ dnkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_UNKNOWN;	/* XXX */
-		return (0);
+		return 0;
 	case WSKBDIO_SETLEDS:
-		return (ENXIO);
+		return ENXIO;
 	case WSKBDIO_GETLEDS:
 		*(int *)data = 0;
-		return (0);
+		return 0;
 	case WSKBDIO_COMPLEXBELL:
 #define	d	((struct wskbd_bell_data *)data)
 		dnkbd_bell(v, d->period, d->pitch, d->volume);
 #undef d
-		return (0);
+		return 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
 		callout_stop(&sc->sc_rawrepeat_ch);
-		return (0);
+		return 0;
 #endif
 	}
 
@@ -1010,10 +1012,10 @@ dnmouse_enable(void *v)
 	struct dnkbd_softc *sc = v;
 
 	if (ISSET(sc->sc_flags, SF_MOUSE))
-		return (EBUSY);
+		return EBUSY;
 	SET(sc->sc_flags, SF_MOUSE);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1028,10 +1030,10 @@ dnmouse_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(int *)data = WSMOUSE_TYPE_UNKNOWN;	/* XXX */
-		return (0);
+		return 0;
 	}
 
-	return (-1);
+	return -1;
 }
 
 void

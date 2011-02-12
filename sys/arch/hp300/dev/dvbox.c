@@ -1,4 +1,4 @@
-/*	$NetBSD: dvbox.c,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: dvbox.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
 /*	$OpenBSD: dvbox.c,v 1.13 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -127,10 +127,10 @@ struct	dvbox_softc {
 	int		sc_scode;
 };
 
-int	dvbox_dio_match(device_t, cfdata_t, void *);
-void	dvbox_dio_attach(device_t, device_t, void *);
-int	dvbox_intio_match(device_t, cfdata_t, void *);
-void	dvbox_intio_attach(device_t, device_t, void *);
+static int	dvbox_dio_match(device_t, cfdata_t, void *);
+static void	dvbox_dio_attach(device_t, device_t, void *);
+static int	dvbox_intio_match(device_t, cfdata_t, void *);
+static void	dvbox_intio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(dvbox_dio, sizeof(struct dvbox_softc),
     dvbox_dio_match, dvbox_dio_attach, NULL, NULL);
@@ -138,16 +138,14 @@ CFATTACH_DECL_NEW(dvbox_dio, sizeof(struct dvbox_softc),
 CFATTACH_DECL_NEW(dvbox_intio, sizeof(struct dvbox_softc),
     dvbox_intio_match, dvbox_intio_attach, NULL, NULL);
 
-int	dvbox_reset(struct diofb *, int, struct diofbreg *);
-void	dvbox_restore(struct diofb *);
-void	dvbox_setcolor(struct diofb *, u_int,
-	    u_int8_t, u_int8_t, u_int8_t);
-int	dvbox_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
-	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
+static int	dvbox_reset(struct diofb *, int, struct diofbreg *);
+static void	dvbox_restore(struct diofb *);
+static int	dvbox_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
+		    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 
-int	dvbox_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	dvbox_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
-struct	wsdisplay_accessops	dvbox_accessops = {
+static struct wsdisplay_accessops dvbox_accessops = {
 	dvbox_ioctl,
 	diofb_mmap,
 	diofb_alloc_screen,
@@ -172,13 +170,13 @@ dvbox_intio_match(device_t parent, cfdata_t cf, void *aux)
 	fbr = (struct diofbreg *)ia->ia_addr;
 
 	if (badaddr((void *)fbr))
-		return (0);
+		return 0;
 
 	if (fbr->id == GRFHWID && fbr->fbid == GID_DAVINCI) {
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -210,9 +208,9 @@ dvbox_dio_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    da->da_secid == DIO_DEVICE_SECID_DAVINCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -255,7 +253,7 @@ dvbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	int rc;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
-		return (rc);
+		return rc;
 
 	/*
 	 * Restrict the framebuffer to a monochrome view for now, until
@@ -268,7 +266,7 @@ dvbox_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	dvbox_restore(fb);
 	diofb_fbsetup(fb);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -410,14 +408,14 @@ dvbox_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 }
 
 int
-dvbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
-    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+dvbox_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
+    uint16_t dx, uint16_t dy, uint16_t cx, uint16_t cy, int16_t rop,
     int16_t planemask)
 {
 	volatile struct dvboxfb *db = (struct dvboxfb *)fb->regkva;
 
 	if (planemask != 0xff)
-		return (EINVAL);
+		return EINVAL;
 
 	db_waitbusy(db);
 
@@ -432,7 +430,7 @@ dvbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 
 	db_waitbusy(db);
 
-	return (0);
+	return 0;
 }
 
 /*

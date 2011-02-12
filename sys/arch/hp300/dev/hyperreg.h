@@ -1,5 +1,5 @@
 /*	$OpenBSD: hyperreg.h,v 1.3 2005/01/24 21:36:39 miod Exp $	*/
-/*	$NetBSD: hyperreg.h,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: hyperreg.h,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -42,8 +42,8 @@
 
 struct hyboxfb {
 	struct diofbreg regs;
-	u_int8_t f2[0x4000-0x5f-1];
-	u_int8_t nblank;		/* display enable planes      0x4000 */
+	uint8_t f2[0x4000-0x5f-1];
+	uint8_t nblank;			/* display enable planes      0x4000 */
 };
 
 /* Values for nblank */
