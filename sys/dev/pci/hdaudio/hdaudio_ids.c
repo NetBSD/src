@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_ids.c,v 1.2 2010/09/13 22:37:02 jmcneill Exp $ */
+/* $NetBSD: hdaudio_ids.c,v 1.3 2011/02/12 15:15:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,14 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.2 2010/09/13 22:37:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.3 2011/02/12 15:15:34 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 
-#include <dev/pci/hdaudio/hdaudio_ids.h>
+#include "hdaudio_ids.h"
 
 static const struct hdaudio_id {
 	uint16_t vendor;
@@ -47,7 +47,7 @@ static const struct hdaudio_id {
 	{ HDA_VENDOR_ATI, 0x7919, "RS600 HDMI" },
 	{ HDA_VENDOR_ATI, 0x793c, "RS600 HDMI" },
 	{ HDA_VENDOR_ATI, 0x791a, "RS690/780 HDMI" },
-	{ HDA_VENDOR_ATI, 0xaa01, "RS600 HDMI" },
+	{ HDA_VENDOR_ATI, 0xaa01, "R6xx HDMI" },
 	{ HDA_VENDOR_ATI, HDA_PRODUCT_ANY, "ATI" },
 	/* NVIDIA */
 	{ HDA_VENDOR_NVIDIA, 0x0002, "MCP77/78 HDMI" },
