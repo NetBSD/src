@@ -1,4 +1,4 @@
-/* $NetBSD: crypto.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: crypto.c,v 1.4 2011/02/12 22:46:14 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crypto.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.4 2011/02/12 22:46:14 christos Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -214,7 +214,7 @@ saslc__crypto_md5_hash(const char *buf, size_t buflen, unsigned char *digest)
 
 	assert(digest != NULL);
 	if (digest != NULL)
-		(void)MD5((const unsigned char *)buf, (int)buflen, digest);
+		(void)MD5((const unsigned char *)buf, buflen, digest);
 }
 
 /**
@@ -229,7 +229,7 @@ saslc__crypto_md5_hex(const char *buf, size_t buflen)
 {
 	unsigned char digest[MD5_DIGEST_LENGTH];
 
-	(void)MD5((const unsigned char *)buf, (int)buflen, digest);
+	(void)MD5((const unsigned char *)buf, buflen, digest);
 	return saslc__crypto_hash_to_hex(digest);
 }
 
@@ -249,9 +249,8 @@ saslc__crypto_hmac_md5_hash(const unsigned char *key, size_t keylen,
 	unsigned int hmac_len;
 
 	assert(hmac != NULL);
-	if (hmac == NULL ||
-	    HMAC(EVP_md5(), key, (int)keylen, in, (int)inlen, hmac, &hmac_len)
-	    == NULL)
+	if (hmac == NULL || HMAC(EVP_md5(), key, (int)keylen, in,
+	    inlen, hmac, &hmac_len) == NULL)
 		return -1;
 
 	assert(hmac_len == MD5_DIGEST_LENGTH);
