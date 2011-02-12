@@ -1,4 +1,4 @@
-# $NetBSD: t_miscquota.sh,v 1.1.2.2 2011/02/11 17:28:29 bouyer Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.1.2.3 2011/02/12 21:49:08 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -27,6 +27,23 @@
 
 test_case_root walk_list_user quota_walk_list \
     "walk user quota list over several disk blocks" -b le 1 user
+
+test_case_root psnapshot_user quota_snap \
+    "create a persistent shapshot of quota-enabled fs, and do some writes" \
+    -b le 1 user
+
+test_case_root npsnapshot_user quota_snap \
+    "create a non-persistent shapshot of quota-enabled fs, and do some writes" \
+    -boL le 1 user
+
+test_case_root psnapshot_unconf_user quota_snap \
+    "create a persistent shapshot of quota-enabled fs, and do some writes and unconf" \
+    -boC le 1 user
+
+test_case_root npsnapshot_unconf_user quota_snap \
+    "create a non-persistent shapshot of quota-enabled fs, and do some writes and unconf" \
+    -boLC le 1 user
+
 
 quota_walk_list()
 {
@@ -59,5 +76,45 @@ quota_walk_list()
 	# do a repquota
 	atf_check -s exit:0 -o 'match:<integer>0x64000' \
 	    $(atf_get_srcdir)/rump_repquota -x -${expect} /mnt
+	rump_shutdown
+}
+
+quota_snap()
+{
+	local flag=$1; shift
+	create_with_quotas $*
+	local q=$3
+	local expect
+
+	case ${q} in
+	user)
+		expect=u
+		fail=g
+		;;
+	group)
+		expect=g
+		fail=u
+		;;
+	*)
+		atf_fail "wrong quota type"
+		;;
+	esac
+
+	#start our server which takes a snapshot
+	atf_check -s exit:0 -o ignore \
+	    $(atf_get_srcdir)/h_quota2_tests ${flag} 4 ${IMG} ${RUMP_SERVER}
+	# create a few users
+	local i=1;
+	while [ $i -lt 11 ]; do
+		atf_check -s exit:0 \
+		   $(atf_get_srcdir)/rump_edquota -${expect} \
+		   -s10k/20 -h40M/50k -t 2W/3D $i
+		i=$((i + 1))
+	done
+	# we should have 5 files (root + 4 regular files)
+	atf_check -s exit:0 \
+	    -o 'match:-        -  7days         5       -       -  7days' \
+	    $(atf_get_srcdir)/rump_repquota -av
+	#shutdown and check filesystem
 	rump_shutdown
 }

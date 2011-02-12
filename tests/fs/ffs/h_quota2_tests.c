@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_tests.c,v 1.1.2.3 2011/02/07 16:22:50 bouyer Exp $	*/
+/*	$NetBSD: h_quota2_tests.c,v 1.1.2.4 2011/02/12 21:49:08 bouyer Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include <ufs/ufs/ufsmount.h>
+#include <dev/fssvar.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -28,7 +29,7 @@ int background = 0;
 #define TEST_NONROOT_ID 1
 
 static int
-quota_test0(void)
+quota_test0(const char *testopts)
 {
 	static char buf[512];
 	int fd;
@@ -60,7 +61,7 @@ quota_test0(void)
 }
 
 static int
-quota_test1(void)
+quota_test1(const char *testopts)
 {
 	static char buf[512];
 	int fd;
@@ -107,7 +108,7 @@ quota_test1(void)
 }
 
 static int
-quota_test2(void)
+quota_test2(const char *testopts)
 {
 	static char buf[512];
 	int fd;
@@ -143,7 +144,7 @@ quota_test2(void)
 }
 
 static int
-quota_test3(void)
+quota_test3(const char *testopts)
 {
 	static char buf[512];
 	int fd;
@@ -189,8 +190,71 @@ quota_test3(void)
 	return error;
 }
 
+static int
+quota_test4(const char *testopts)
+{
+	static char buf[512];
+	int fd, fssfd;
+	struct fss_set fss;
+	unsigned int i;
+	int unl=0;
+	int unconf=0;
+
+	/*
+	 * take an internal snapshot of the filesystem, and create a new
+	 * file with some data
+	 */
+
+	for (i =0; testopts && i < strlen(testopts); i++) {
+		switch(testopts[i]) {
+		case 'L':
+			unl++;
+			break;
+		case 'C':
+			unconf++;
+			break;
+		default:
+			errx(1, "test4: unknown option %c", testopts[i]);
+		}
+	}
+
+	/* first create the snapshot */
+
+	 fd = rump_sys_open(FSTEST_MNTNAME "/le_snap", O_CREAT | O_RDWR, 0777);
+	 if (fd == -1)
+		err(1, "create " FSTEST_MNTNAME "/le_snap");
+	 rump_sys_close(fd);
+	 fssfd = rump_sys_open("/dev/rfss0", O_RDWR);
+	 if (fssfd == -1)
+		err(1, "cannot open fss");
+	memset(&fss, 0, sizeof(fss));
+	fss.fss_mount = __UNCONST("/mnt");
+	fss.fss_bstore = __UNCONST(FSTEST_MNTNAME "/le_snap");
+	fss.fss_csize = 0;
+	if (rump_sys_ioctl(fssfd, FSSIOCSET, &fss) == -1)
+		err(1, "create snapshot");
+	if (unl)
+		rump_sys_unlink(FSTEST_MNTNAME "/le_snap");
+
+	/* now create some extra files */
+
+	for (i = 0; i < 4; i++) {
+		sprintf(buf, "file%d", i);
+		fd = rump_sys_open(buf, O_EXCL| O_CREAT | O_RDWR, 0644);
+		if (fd < 0)
+			err(1, "create %s", buf);
+		sprintf(buf, "test file no %d", i);
+		rump_sys_write(fd, buf, strlen(buf));
+		rump_sys_close(fd);
+	}
+	if (unconf)
+		if (rump_sys_ioctl(fssfd, FSSIOCCLR, NULL) == -1)
+			err(1, "unconfigure snapshot");
+	return 0;
+}
+
 struct quota_test {
-	int (*func)(void);
+	int (*func)(const char *);
 	const char *desc;
 };
 
@@ -199,13 +263,19 @@ struct quota_test quota_tests[] = {
 	{ quota_test1, "write beyond the soft limit after grace time"},
 	{ quota_test2, "create file up to hard limit"},
 	{ quota_test3, "create file beyond the soft limit after grace time"},
+	{ quota_test4, "take a snapshot and add some data"},
 };
 
 static void
 usage(void)
 {
+	unsigned int test;
 	fprintf(stderr, "usage: %s [-b] [-l] test# diskimage bindurl\n",
 	    getprogname());
+	fprintf(stderr, "available tests:\n");
+	for (test = 0; test < sizeof(quota_tests) / sizeof(quota_tests[0]);
+	    test++)
+		fprintf(stderr, "\t%d: %s\n", test, quota_tests[test].desc);
 	exit(1);
 }
 
@@ -236,16 +306,20 @@ main(int argc, char **argv)
 	struct ufs_args uargs;
 	const char *filename;
 	const char *serverurl;
+	const char *topts = NULL;
 	int log = 0;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "bl")) != -1) {
+	while ((ch = getopt(argc, argv, "blo:")) != -1) {
 		switch(ch) {
 		case 'b':
 			background = 1;
 			break;
 		case 'l':
 			log = 1;
+			break;
+		case 'o':
+			topts = optarg;
 			break;
 		default:
 			usage();
@@ -265,8 +339,7 @@ main(int argc, char **argv)
 		usage();
 	}
 	if (test > sizeof(quota_tests) / sizeof(quota_tests[0])) {
-		fprintf(stderr, "test number %lu too big\n", test);
-		exit(1);
+		usage();
 	}
 
 	if (background) {
@@ -291,7 +364,7 @@ main(int argc, char **argv)
 		err(1, "cd %s", FSTEST_MNTNAME);
 	rump_sys_chown(".", 0, 0);
 	rump_sys_chmod(".", 0777);
-	error = quota_tests[test].func();
+	error = quota_tests[test].func(topts);
 	if (error) {
 		fprintf(stderr, " test %lu: %s returned %d: %s\n",
 		    test, quota_tests[test].desc, error, strerror(error));
