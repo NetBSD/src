@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.5 2011/02/12 22:24:01 matt Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.6 2011/02/12 22:46:14 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.5 2011/02/12 22:24:01 matt Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.6 2011/02/12 22:46:14 christos Exp $");
 
 #include <assert.h>
 #include <md5.h>
@@ -167,7 +167,7 @@ typedef struct { /* data parsed from challenge */
 	list_t *	realm;
 	uint32_t	cipher_flags;
 	uint32_t	qop_flags;
-	unsigned long	maxbuf;
+	size_t		maxbuf;
 } cdata_t;
 
 typedef struct { /* response data */
@@ -461,7 +461,8 @@ saslc__mech_digestmd5_a1(saslc__mech_digestmd5_sess_t *ms)
 	char *tmp1, *tmp2, *r;
 	char *unq_authzid;
 	md5hash_t a1hash, userhash;
-	int len;
+	int plen;
+	size_t len;
  /*****************************************************************************/
  /* If authzid is specified, then A1 is                                       */
  /*                                                                           */
@@ -478,18 +479,19 @@ saslc__mech_digestmd5_a1(saslc__mech_digestmd5_sess_t *ms)
 		return NULL;
 
 	if (ms->rdata.authzid == NULL)
-		len = asprintf(&tmp1, ":%s:%s",
+		plen = asprintf(&tmp1, ":%s:%s",
 		    ms->cdata.nonce, ms->rdata.cnonce);
 	else {
 		if ((unq_authzid = unq(ms->rdata.authzid)) == NULL)
 			return NULL;
 
-		len = asprintf(&tmp1, ":%s:%s:%s",
+		plen = asprintf(&tmp1, ":%s:%s:%s",
 		    ms->cdata.nonce, ms->rdata.cnonce, unq_authzid);
 		free(unq_authzid);
 	}
-	if (len == -1)
+	if (plen == -1)
 		return NULL;
+	len = plen;
 
 	tmp2 = malloc(MD5_DIGEST_LENGTH + len);
 	if (tmp2 == NULL) {
@@ -939,7 +941,7 @@ cipher_context_create(saslc_sess_t *sess, cipher_t cipher, int do_enc, uint8_t *
 	static const struct cipher_ctx_tbl_s {
 		cipher_t eval;			/* for error checking */
 		const EVP_CIPHER *(*evp_type)(void);/* type of cipher */
-		int keylen;			/* key length */
+		size_t keylen;			/* key length */
 		ssize_t blksize;		/* block size for cipher */
 		size_t ivlen;			/* initial value length */
 	} cipher_ctx_tbl[] = {
@@ -1017,7 +1019,8 @@ cipher_context_create(saslc_sess_t *sess, cipher_t cipher, int do_enc, uint8_t *
 	case CIPHER_RC4_40:
 	case CIPHER_RC4_56:
 		assert(ctp->ivlen == 0);	/* no IV */
-		rv = EVP_CIPHER_CTX_set_key_length(ctx->evp_ctx, ctp->keylen);
+		rv = EVP_CIPHER_CTX_set_key_length(ctx->evp_ctx,
+		    (int)ctp->keylen);
 		if (rv == 0) {
 			errmsg = "EVP_CIPHER_CTX_set_key_length failed";
 			goto err;
@@ -1510,7 +1513,7 @@ saslc__mech_digestmd5_parse_challenge(saslc_sess_t *sess, const char *challenge)
 	list_t *l, *n;
 	list_t *tmp_list;
 	cdata_t *cdata;
-	unsigned long maxbuf;
+	size_t maxbuf;
 	uint32_t tmp_flags;
 	int rv;
 
@@ -1640,7 +1643,7 @@ saslc__mech_digestmd5_parse_challenge(saslc_sess_t *sess, const char *challenge)
 				    "multiple maxbuf in challenge");
 				goto out;
 			}
-			maxbuf = strtoul(val, NULL, 10);
+			maxbuf = (size_t)strtoul(val, NULL, 10);
 			if (INVALID_MAXBUF(maxbuf)) {
 				saslc__error_set(ERR(sess), ERROR_MECH,
 				    "invalid maxbuf in challenge");
@@ -1954,7 +1957,7 @@ saslc__mech_digestmd5_response_data(saslc_sess_t *sess)
 	if (ms->mech_sess.qop != QOP_NONE) {
 		maxbuf = saslc_sess_getprop(sess, SASLC_DIGESTMD5_MAXBUF);
 		if (maxbuf != NULL)
-			rdata->maxbuf = strtoul(maxbuf, NULL, 10);
+			rdata->maxbuf = (size_t)strtoul(maxbuf, NULL, 10);
 		if (rdata->maxbuf == 0)
 			rdata->maxbuf = cdata->maxbuf;
 		if (INVALID_MAXBUF(rdata->maxbuf)) {
