@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.50.14.3 2011/01/28 02:34:11 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.50.14.4 2011/02/12 00:45:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50.14.3 2011/01/28 02:34:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.50.14.4 2011/02/12 00:45:22 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -209,6 +209,7 @@ static const struct cputab models[] = {
 	{ "620",	MPC620,  	REVFMT_HEX },
 	{ "750",	MPC750,		REVFMT_MAJMIN },
 	{ "750FX",	IBM750FX,	REVFMT_MAJMIN },
+	{ "750GX",	IBM750GX,	REVFMT_MAJMIN },
 	{ "7400",	MPC7400,	REVFMT_MAJMIN },
 	{ "7410",	MPC7410,	REVFMT_MAJMIN },
 	{ "7450",	MPC7450,	REVFMT_MAJMIN },
@@ -276,7 +277,7 @@ cpu_model_init(void)
 	else if (MPC745X_P(vers) && vers != MPC7450)
 		oeacpufeat |= OEACPU_XBSEN | OEACPU_HIGHBAT | OEACPU_HIGHSPRG;
 
-	else if (vers == IBM750FX)
+	else if (vers == IBM750FX || vers == IBM750GX)
 		oeacpufeat |= OEACPU_HIGHBAT;
 }
 
@@ -325,6 +326,7 @@ cpu_probe_cache(void)
 	switch (vers) {
 #define	K	*1024
 	case IBM750FX:
+	case IBM750GX:
 	case MPC601:
 	case MPC750:
 	case MPC7400:
@@ -493,6 +495,7 @@ cpu_setup(self, ci)
 	case MPC603ev:
 	case MPC750:
 	case IBM750FX:
+	case IBM750GX:
 	case MPC7400:
 	case MPC7410:
 	case MPC8240:
@@ -537,6 +540,7 @@ cpu_setup(self, ci)
 #ifdef NAPMODE
 	switch (vers) {
 	case IBM750FX:
+	case IBM750GX:
 	case MPC750:
 	case MPC7400:
 		/* Select NAP mode. */
@@ -548,6 +552,7 @@ cpu_setup(self, ci)
 
 	switch (vers) {
 	case IBM750FX:
+	case IBM750GX:
 	case MPC750:
 		hid0 &= ~HID0_DBP;		/* XXX correct? */
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
@@ -600,6 +605,7 @@ cpu_setup(self, ci)
 	case MPC604ev:
 	case MPC750:
 	case IBM750FX:
+	case IBM750GX:
 	case MPC7400:
 	case MPC7410:
 	case MPC7447A:
@@ -618,6 +624,7 @@ cpu_setup(self, ci)
 			cpu_config_l3cr(vers);
 			break;
 		case IBM750FX:
+		case IBM750GX:
 		case MPC750:
 		case MPC7400:
 		case MPC7410:
@@ -639,7 +646,7 @@ cpu_setup(self, ci)
 	 * XXX supported by Motorola and may return values that are off by 
 	 * XXX 35-55 degrees C.
 	 */
-	if (vers == MPC750 || vers == IBM750FX)
+	if (vers == MPC750 || vers == IBM750FX || vers == IBM750GX)
 		cpu_tau_setup(ci);
 #endif
 
@@ -899,6 +906,7 @@ cpu_config_l2cr(int pvr)
 
 	switch (vers) {
 	case IBM750FX:
+	case IBM750GX:
 		cpu_fmttab_print(cpu_ibm750_l2cr_formats, l2cr);
 		break;
 	case MPC750:
