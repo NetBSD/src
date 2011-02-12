@@ -47,7 +47,7 @@
 #    include "genfb.h"
 #  else
 #   define NAGP_I810 1
-#   define NGENFB 1
+#   define NGENFB 0
 #  endif
 # endif
 # if NAGP_I810 > 0
