@@ -3596,12 +3596,15 @@ mDNSlocal void read_msg(request_state *req)
 #if !defined(_WIN32)
 		cmsg = CMSG_FIRSTHDR(&msg);
 #if DEBUG_64BIT_SCM_RIGHTS
-		LogMsg("%3d: Expecting %d %d %d %d", req->sd, sizeof(cbuf),       sizeof(cbuf),   SOL_SOCKET,       SCM_RIGHTS);
-		LogMsg("%3d: Got       %d %d %d %d", req->sd, msg.msg_controllen, cmsg->cmsg_len, cmsg->cmsg_level, cmsg->cmsg_type);
+		LogMsg("%3d: Expecting %d %d %d %d", req->sd, sizeof(cbuf),       CMSG_LEN(sizeof(dnssd_sock_t)),   SOL_SOCKET,       SCM_RIGHTS);
+		if (cmsg)
+			LogMsg("%3d: Got       %d %d %d %d", req->sd, msg.msg_controllen, cmsg->cmsg_len, cmsg->cmsg_level, cmsg->cmsg_type);
+		else
+			LogMsg("%3d: Got       %d NULL", req->sd, msg.msg_controllen);
 #endif // DEBUG_64BIT_SCM_RIGHTS
 		if (msg.msg_controllen == sizeof(cbuf) &&
-			cmsg->cmsg_len     == sizeof(cbuf) &&
-			cmsg->cmsg_level   == SOL_SOCKET   &&
+			cmsg->cmsg_len     == CMSG_LEN(sizeof(dnssd_sock_t)) &&
+			cmsg->cmsg_level   == SOL_SOCKET &&
 			cmsg->cmsg_type    == SCM_RIGHTS)
 			{
 #if APPLE_OSX_mDNSResponder
