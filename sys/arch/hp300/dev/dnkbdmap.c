@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbdmap.c,v 1.1 2011/02/12 15:49:01 tsutsui Exp $	*/
+/*	$NetBSD: dnkbdmap.c,v 1.2 2011/02/12 16:36:37 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbdmap.c,v 1.2 2005/05/06 22:22:53 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -24,6 +24,8 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_wsdisplay_compat.h"
 
 #include <sys/types.h>
 
