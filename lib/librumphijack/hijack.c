@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.37 2011/02/11 14:02:12 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.38 2011/02/12 10:25:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.37 2011/02/11 14:02:12 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.38 2011/02/12 10:25:46 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -563,7 +563,7 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	}
 
 	if (realnfds) {
-		pfds = malloc(sizeof(*pfds) * realnfds);
+		pfds = calloc(realnfds, sizeof(*pfds));
 		if (!pfds)
 			return -1;
 	} else {
@@ -572,7 +572,6 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 
 	for (i = 0, j = 0; i < nfds; i++) {
 		incr = 0;
-		pfds[j].events = pfds[j].revents = 0;
 		if (readfds && FD_ISSET(i, readfds)) {
 			pfds[j].fd = i;
 			pfds[j].events |= POLLIN;
