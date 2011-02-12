@@ -1,4 +1,4 @@
-/* $NetBSD: list.c,v 1.1 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: list.c,v 1.2 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,10 +32,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: list.c,v 1.1 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.2 2011/02/12 23:21:32 christos Exp $");
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "list.h"
@@ -154,11 +154,10 @@ saslc__list_free(list_t *l)
 {
 	list_t *n;
 
-	while (l != NULL) {
+	for (/*EMPTY*/; l != NULL; l = n) {
 		n = l->next;
 		free(l->value);
 		free(l);
-		l = n;
 	}
 }
 

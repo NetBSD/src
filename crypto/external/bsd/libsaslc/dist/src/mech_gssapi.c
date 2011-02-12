@@ -1,4 +1,4 @@
-/* $NetBSD: mech_gssapi.c,v 1.4 2011/02/12 22:46:14 christos Exp $ */
+/* $NetBSD: mech_gssapi.c,v 1.5 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_gssapi.c,v 1.4 2011/02/12 22:46:14 christos Exp $");
+__RCSID("$NetBSD: mech_gssapi.c,v 1.5 2011/02/12 23:21:32 christos Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: mech_gssapi.c,v 1.4 2011/02/12 22:46:14 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <gssapi/gssapi.h>
 
 #include "buffer.h"
@@ -129,10 +130,9 @@ saslc__mech_gssapi_destroy(saslc_sess_t *sess)
 		gss_release_name(&min_s, &ms->server_name);
 	if (ms->client_name != GSS_C_NO_NAME)
 		gss_release_name(&min_s, &ms->client_name);
-	if (ms->enc_ctx)
-		saslc__buffer_destroy(ms->enc_ctx);
-	if (ms->dec_ctx)
-		saslc__buffer32_destroy(ms->dec_ctx);
+
+	saslc__buffer_destroy(ms->enc_ctx);
+	saslc__buffer32_destroy(ms->dec_ctx);
 	free(ms);
 	sess->mech_sess = NULL;
 
@@ -434,7 +434,7 @@ get_service(saslc_sess_t *sess, gss_name_t *service)
 	saslc__msg_dbg("%s: buf='%s'", __func__, buf);
 
 	maj_s = gss_import_name(&min_s, &bufdesc, GSS_C_NT_HOSTBASED_SERVICE,
-	                        service);
+	    service);
 	free(buf);
 	if (GSS_ERROR(maj_s)) {
 		saslc__mech_gssapi_set_err(sess, ERROR_MECH, maj_s, min_s);
@@ -870,9 +870,11 @@ saslc__mech_gssapi_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 		    "already authenticated");
 		return MECH_ERROR;
 
+#if 0	/* no default so the compiler can tell us if we miss an enum */
 	default:
 		assert(/*CONSTCOND*/0); /* impossible */
 		/*NOTREACHED*/
+#endif
 	}
 	/*LINTED*/
 	assert(/*CONSTCOND*/0);		/* XXX: impossible */

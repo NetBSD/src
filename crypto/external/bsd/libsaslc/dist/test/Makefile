@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/02/11 23:44:43 christos Exp $
+# $NetBSD: Makefile,v 1.4 2011/02/12 23:21:33 christos Exp $
 
 CC=gcc
 SRC_PREFIX=../src
@@ -6,7 +6,6 @@ CFLAGS=-I../include -I$(SRC_PREFIX) -D SASLC_TEST_DIR=\"`pwd`/\"
 ATFLIBS=-latf-c -lssl
 LDFLAGS=`pwd`/$(SRC_PREFIX)/libsaslc.so -ggdb
 TEST_CASES_C=t_dict t_session t_crypto t_error t_saslc t_parser
-TEST_CASES_SH=t_mech
 TEST_CASES=$(TEST_CASES_C)
 VALGRIND=valgrind
 VALGRIND_OPTS=--leak-check=full -q
