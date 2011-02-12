@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.63.2.1 2011/01/20 14:24:53 bouyer Exp $	*/
+/*	$NetBSD: inode.c,v 1.63.2.2 2011/02/12 19:53:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.63.2.1 2011/01/20 14:24:53 bouyer Exp $");
+__RCSID("$NetBSD: inode.c,v 1.63.2.2 2011/02/12 19:53:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -830,12 +831,15 @@ freeino(ino_t ino)
 	}
 
 	memset(&idesc, 0, sizeof(struct inodesc));
-	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
 	idesc.id_number = ino;
 	dp = ginode(ino);
 	idesc.id_uid = iswap32(DIP(dp, uid));
 	idesc.id_gid = iswap32(DIP(dp, gid));
+	if (iswap32(DIP(dp, flags)) & SF_SNAPSHOT)
+		idesc.id_type = SNAP;
+	else
+		idesc.id_type = ADDR;
 	(void)ckinode(dp, &idesc);
 	clearinode(dp);
 	inodirty();

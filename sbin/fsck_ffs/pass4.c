@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.25.14.1 2011/01/20 14:24:54 bouyer Exp $	*/
+/*	$NetBSD: pass4.c,v 1.25.14.2 2011/02/12 19:53:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.25.14.1 2011/01/20 14:24:54 bouyer Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.25.14.2 2011/02/12 19:53:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/dinode.h>
@@ -65,7 +66,6 @@ pass4(void)
 	struct inostat *info;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
-	idesc.id_type = ADDR;
 	idesc.id_func = pass4check;
 
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
@@ -89,6 +89,10 @@ pass4(void)
 			idesc.id_number = inumber;
 			idesc.id_uid = iswap32(DIP(dp, uid));
 			idesc.id_gid = iswap32(DIP(dp, gid));
+			if (iswap32(DIP(dp, flags)) & SF_SNAPSHOT)
+				idesc.id_type = SNAP;
+			else
+				idesc.id_type = ADDR;
 			switch (info->ino_state) {
 			case FSTATE:
 			case DFOUND:
@@ -189,7 +193,8 @@ pass4check(struct inodesc *idesc)
 
 				n_blks--;
 				update_uquot(idesc->id_number, idesc->id_uid,
-				    idesc->id_gid, -btodb(sblock->fs_fsize), 0);
+				    idesc->id_gid, (idesc->id_type == SNAP) ?
+				    0 : -btodb(sblock->fs_fsize), 0);
 				if (idesc->id_numfrags != sblock->fs_frag &&
 				    cgp) {
 					cgp->cg_cs.cs_nffree ++;
