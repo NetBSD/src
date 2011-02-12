@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.43 2011/02/12 05:08:40 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.44 2011/02/12 05:15:39 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -135,6 +135,7 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
+#sgc0		at mainbus0	# SGC bus
 
 # Real-time clock (not optional)
 rtc*		at intio?
