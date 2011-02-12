@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2009/12/13 05:01:32 nakayama Exp $
+#	$NetBSD: Makefile,v 1.67 2011/02/12 22:23:01 dholland Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -40,8 +40,8 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
     )
 # use MBR partition info
 CPPFLAGS+= -DUSE_MBR
-# recognize old MBR partition ID for a while
-CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
+# do not recognize old MBR partition ID any more
+#CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 .endif
 
 .if (${MACHINE} == "acorn32" || ${MACHINE} == "acorn26")
