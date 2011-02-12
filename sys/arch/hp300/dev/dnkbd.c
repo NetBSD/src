@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.1 2011/02/12 15:49:01 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.2 2011/02/12 16:30:22 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -30,6 +30,8 @@
 /*
  * Driver for the Apollo Domain keyboard and mouse.
  */
+
+#include "opt_wsdisplay_compat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -681,7 +683,7 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 		int c, j = 0;
 
 		c = dnkbd_raw[key];
-		if (c != RAWKEY_Null) {
+		if (c != 0) {
 			/* fake extended scancode if necessary */
 			if (c & 0x80)
 				cbuf[j++] = 0xe0;
