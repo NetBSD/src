@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.2 2011/02/12 16:30:22 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.3 2011/02/12 16:37:32 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -991,7 +991,7 @@ dnkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		timeout_del(&sc->sc_rawrepeat_ch);
+		callout_stop(&sc->sc_rawrepeat_ch);
 		return (0);
 #endif
 	}
