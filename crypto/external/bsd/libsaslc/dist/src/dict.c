@@ -1,4 +1,4 @@
-/* $NetBSD: dict.c,v 1.4 2011/02/12 14:24:18 christos Exp $ */
+/* $NetBSD: dict.c,v 1.5 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,9 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dict.c,v 1.4 2011/02/12 14:24:18 christos Exp $");
+__RCSID("$NetBSD: dict.c,v 1.5 2011/02/12 23:21:32 christos Exp $");
 
 #include <sys/queue.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -46,7 +47,6 @@ __RCSID("$NetBSD: dict.c,v 1.4 2011/02/12 14:24:18 christos Exp $");
 
 #include "dict.h"
 #include "msg.h"
-
 
 /** dictionary */
 LIST_HEAD(saslc__dict_t, saslc__dict_node_t);
@@ -60,9 +60,9 @@ typedef struct saslc__dict_node_t {
 } saslc__dict_node_t;
 
 /*
- * XXX: If you add property keys, readjust these values so that
- * saslc__dict_hashval() remains collisionless.  test_hash.c can help
- * with this.
+ * XXX: If you add property keys, please readjust these values so that
+ * saslc__dict_hashval() remains collisionless.
+ * dist/test_hash/test_hash.c can help with this.
  */
 /* no collisions: hsize=15  hinit=3  shift=7 */
 #define HASH_SIZE	15
@@ -105,7 +105,7 @@ saslc__dict_hash(saslc__dict_t *dict, const char *cp)
 
 /**
  * @brief checks if the key is legal.
- * @param key node key
+ * @param key node key - must not be NULL
  * @return true if key is legal, false otherwise
  *
  * Note: A legal key begins with an isalpha(3) character and is
@@ -114,7 +114,8 @@ saslc__dict_hash(saslc__dict_t *dict, const char *cp)
 static bool
 saslc__dict_valid_key(const char *key)
 {
-        /* key is empty string */
+
+        /* key is not NULL */
 	if (!isalpha((unsigned char)*key))
 		return false;
 
