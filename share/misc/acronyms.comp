@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.118 2011/02/12 19:32:42 dholland Exp $
+$NetBSD: acronyms.comp,v 1.119 2011/02/12 19:33:16 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -426,6 +426,7 @@ MTA	mail transfer agent
 MTRR	memory type range register
 MTU	maximum transmission unit
 MUA	mail user agent
+MVCC	multiversion concurrency control
 MWE	module width encoding
 NAS	network attached storage
 NAT	network address translation
