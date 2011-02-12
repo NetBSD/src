@@ -1,4 +1,4 @@
-/* $NetBSD: dict.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: dict.h,v 1.4 2011/02/12 23:21:32 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,8 +39,8 @@
 #ifndef _DICT_H_
 #define _DICT_H_
 
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 typedef enum {
 	DICT_OK = 0,
