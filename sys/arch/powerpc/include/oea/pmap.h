@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.20 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21 2011/02/12 18:23:10 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -130,12 +130,9 @@ pmap_remove_all(struct pmap *pmap)
 }
 
 #if (defined(PPC_OEA) + defined(PPC_OEA64) + defined(PPC_OEA64_BRIDGE)) != 1
-#define	PMAP_EXCLUDE_DECLS
+#define	PMAP_NEEDS_FIXUP
 #endif
 
-#ifndef PMAP_NOOPNAMES
-
-#if !defined(PMAP_EXCLUDE_DECLS)
 void pmap_bootstrap(vaddr_t, vaddr_t);
 bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
 bool pmap_query_bit(struct vm_page *, int);
@@ -144,45 +141,6 @@ void pmap_real_memory(paddr_t *, psize_t *);
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 int pmap_pte_spill(pmap_t, vaddr_t, bool);
 void pmap_pinit(pmap_t);
-
-#else
-#define	PMAPOPNAME(name) (*pmapops->pmapop_##name)
-extern const struct pmap_ops *pmapops;
-#define	pmap_pte_spill		PMAPOPNAME(pte_spill)
-#define	pmap_real_memory	PMAPOPNAME(real_memory)
-#define	pmap_init		PMAPOPNAME(init)
-#define	pmap_virtual_space	PMAPOPNAME(virtual_space)
-#define	pmap_create		PMAPOPNAME(create)
-#define	pmap_reference		PMAPOPNAME(reference)
-#define	pmap_destroy		PMAPOPNAME(destroy)
-#define	pmap_copy		PMAPOPNAME(copy)
-#define	pmap_update		PMAPOPNAME(update)
-#define	pmap_enter		PMAPOPNAME(enter)
-#define	pmap_remove		PMAPOPNAME(remove)
-#define	pmap_kenter_pa		PMAPOPNAME(kenter_pa)
-#define	pmap_kremove		PMAPOPNAME(kremove)
-#define	pmap_extract		PMAPOPNAME(extract)
-#define	pmap_protect		PMAPOPNAME(protect)
-#define	pmap_unwire		PMAPOPNAME(unwire)
-#define	pmap_page_protect	PMAPOPNAME(page_protect)
-#define	pmap_query_bit		PMAPOPNAME(query_bit)
-#define	pmap_clear_bit		PMAPOPNAME(clear_bit)
-
-#define	pmap_activate		PMAPOPNAME(activate)
-#define	pmap_deactivate		PMAPOPNAME(deactivate)
-
-#define	pmap_pinit		PMAPOPNAME(pinit)
-#define	pmap_procwr		PMAPOPNAME(procwr)
-
-#define	pmap_pte_print		PMAPOPNAME(pte_print)
-#define	pmap_pteg_check		PMAPOPNAME(pteg_check)
-#define	pmap_print_mmuregs	PMAPOPNAME(print_mmuregs)
-#define	pmap_print_pte		PMAPOPNAME(print_pte)
-#define	pmap_pteg_dist		PMAPOPNAME(pteg_dist)
-#define	pmap_pvo_verify		PMAPOPNAME(pvo_verify)
-#define	pmap_steal_memory	PMAPOPNAME(steal_memory)
-#define	pmap_bootstrap		PMAPOPNAME(bootstrap)
-#endif /* PMAP_EXCLUDE_DECLS */
 
 static inline paddr_t vtophys (vaddr_t);
 
@@ -206,34 +164,37 @@ vtophys(vaddr_t va)
 
 	if (pmap_extract(pmap_kernel(), va, &pa))
 		return pa;
-	KASSERT(0);
+	KASSERTMSG(0, ("vtophys: pmap_extract of %#"PRIxVADDR" failed", va));
 	return (paddr_t) -1;
 }
 
+
+#ifdef PMAP_NEEDS_FIXUP
 extern const struct pmap_ops *pmapops;
 extern const struct pmap_ops pmap32_ops;
 extern const struct pmap_ops pmap64_ops;
 extern const struct pmap_ops pmap64bridge_ops;
 
+void	pmap_fixup_stubs(const struct pmap_ops *);
+
 static inline void
 pmap_setup32(void)
 {
-	pmapops = &pmap32_ops;
+	pmap_fixup_stubs(&pmap32_ops);
 }
 
 static inline void
 pmap_setup64(void)
 {
-	pmapops = &pmap64_ops;
+	pmap_fixup_stubs(&pmap64_ops);
 }
 
 static inline void
 pmap_setup64bridge(void)
 {
-	pmapops = &pmap64bridge_ops;
+	pmap_fixup_stubs(&pmap64bridge_ops);
 }
-
-#endif /* !PMAP_NOOPNAMES */
+#endif
 
 bool pmap_pageidlezero (paddr_t);
 void pmap_syncicache (paddr_t, psize_t);
