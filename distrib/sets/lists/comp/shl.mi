@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.160 2011/02/08 14:24:59 njoly Exp $
+# $NetBSD: shl.mi,v 1.161 2011/02/12 22:26:00 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -172,6 +172,7 @@
 ./usr/lib/librumpvfs_fifofs_pic.a		comp-c-piclib
 ./usr/lib/librumpvfs_layerfs_pic.a		comp-c-piclib
 ./usr/lib/librumpvfs_pic.a			comp-c-piclib
+./usr/lib/libsaslc_pic.a			comp-c-piclib		crypto
 ./usr/lib/libsdp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libskey_pic.a				comp-c-piclib		skey
 ./usr/lib/libsl_pic.a				comp-c-piclib		kerberos
@@ -365,6 +366,7 @@
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
 ./usr/libdata/debug/usr/lib/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libss.so.6.0.debug		comp-krb5-debug	kerberos,debug
