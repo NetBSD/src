@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.63.2.2 2011/02/12 19:53:32 bouyer Exp $	*/
+/*	$NetBSD: inode.c,v 1.63.2.3 2011/02/12 21:48:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.63.2.2 2011/02/12 19:53:32 bouyer Exp $");
+__RCSID("$NetBSD: inode.c,v 1.63.2.3 2011/02/12 21:48:41 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -580,8 +580,9 @@ clri(struct inodesc *idesc, const char *type, int flag)
 		 * ckinode will call id_func (actually always pass4check)
 		 * which will update the block count
 		 */
-		update_uquot(idesc->id_number, idesc->id_uid, idesc->id_gid,
-		    0, -1);
+		if (idesc->id_type != SNAP)
+			update_uquot(idesc->id_number,
+			    idesc->id_uid, idesc->id_gid, 0, -1);
 		(void)ckinode(dp, idesc);
 		clearinode(dp);
 		inoinfo(idesc->id_number)->ino_state = USTATE;
@@ -844,7 +845,9 @@ freeino(ino_t ino)
 	clearinode(dp);
 	inodirty();
 	inoinfo(ino)->ino_state = USTATE;
-	update_uquot(idesc.id_number, idesc.id_uid, idesc.id_gid, 0, -1);
+	if (idesc.id_type != SNAP)
+		update_uquot(idesc.id_number,
+		    idesc.id_uid, idesc.id_gid, 0, -1);
 	n_files--;
 	if (cgp) {
 		clrbit(cg_inosused(cgp, 0), ino % sblock->fs_ipg);

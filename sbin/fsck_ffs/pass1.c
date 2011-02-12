@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.46.14.2 2011/02/12 19:53:32 bouyer Exp $	*/
+/*	$NetBSD: pass1.c,v 1.46.14.3 2011/02/12 21:48:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.46.14.2 2011/02/12 19:53:32 bouyer Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.46.14.3 2011/02/12 21:48:41 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -466,8 +466,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			dp->dp1.di_blocks = iswap32((int32_t)idesc->id_entryno);
 		inodirty();
 	}
-	update_uquot(inumber, idesc->id_uid, idesc->id_gid,
-	    (idesc->id_type == SNAP) ? 0 : idesc->id_entryno, 1);
+	if (idesc->id_type != SNAP)
+		update_uquot(inumber, idesc->id_uid, idesc->id_gid,
+		    idesc->id_entryno, 1);
 	return;
 unknown:
 	pfatal("UNKNOWN FILE TYPE I=%llu", (unsigned long long)inumber);
