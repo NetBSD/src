@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: hyper.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
 /*	$OpenBSD: hyper.c,v 1.15 2006/04/14 21:05:43 miod Exp $	*/
 
 /*
@@ -130,17 +130,17 @@ struct	hyper_softc {
 	int			sc_scode;
 };
 
-int	hyper_match(device_t, cfdata_t, void *);
-void	hyper_attach(device_t, device_t, void *);
+static int	hyper_match(device_t, cfdata_t, void *);
+static void	hyper_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(hyper, sizeof(struct hyper_softc),
     hyper_match, hyper_attach, NULL, NULL);
 
-int	hyper_reset(struct diofb *, int, struct diofbreg *);
+static int	hyper_reset(struct diofb *, int, struct diofbreg *);
 
-int	hyper_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	hyper_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
-struct	wsdisplay_accessops hyper_accessops = {
+static struct wsdisplay_accessops hyper_accessops = {
 	hyper_ioctl,
 	diofb_mmap,
 	diofb_alloc_screen,
@@ -160,9 +160,9 @@ hyper_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (da->da_id == DIO_DEVICE_ID_FRAMEBUFFER &&
 	    da->da_secid == DIO_DEVICE_SECID_HYPERION)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -206,7 +206,7 @@ hyper_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	int rc;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
-		return (rc);
+		return rc;
 
 	fb->bmv = diofb_mono_windowmove;
 
@@ -216,7 +216,7 @@ hyper_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	/* enable display */
 	hy->nblank = DISP_VIDEO_ENABLE | DISP_SYNC_ENABLE;
 
-	return (0);
+	return 0;
 }
 
 int
