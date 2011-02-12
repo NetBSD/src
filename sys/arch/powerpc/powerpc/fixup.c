@@ -1,4 +1,4 @@
-/*	$NetBSD: fixup.c,v 1.2 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: fixup.c,v 1.3 2011/02/12 18:23:10 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.2 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixup.c,v 1.3 2011/02/12 18:23:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -65,13 +65,19 @@ fixup_jump(uint32_t *insnp, const struct powerpc_jump_fixup_info *jfi)
 }
 
 void
-powerpc_fixup_stubs(uint32_t *start, uint32_t *end)
+powerpc_fixup_stubs(uint32_t *start, uint32_t *end,
+	uint32_t *stub_start, uint32_t *stub_end)
 {
 	extern uint32_t __stub_start[], __stub_end[];
 #ifdef DEBUG
 	size_t fixups_done = 0;
 	uint64_t cycles = mftb();
 #endif
+
+	if (stub_start == NULL) {
+		stub_start = __stub_start;
+		stub_end = __stub_end;
+	}
 
 	if (end > __stub_start)
 		end = __stub_start;
@@ -86,8 +92,7 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end)
 		 * First we check to see if this is a jump and whether it is
 		 * within the range we are interested in.
 		 */
-		if (opcode != OPC_B || stub < __stub_start
-		    || __stub_end <= stub)
+		if (opcode != OPC_B || stub < stub_start || stub_end <= stub)
 			continue;
 
 		fixup.jfi_stub = fixup_addr2offset(stub);
@@ -100,26 +105,32 @@ powerpc_fixup_stubs(uint32_t *start, uint32_t *end)
 		register_t ctr = 0;
 		uint32_t valid_mask = (1 << 1);
 		int r_lr = -1;
-		for (; stub < __stub_end && fixup.jfi_real == 0; stub++) {
+		for (; stub < stub_end && fixup.jfi_real == 0; stub++) {
 			const union instr i = { .i_int = *stub };
 
 			switch (i.i_any.i_opcd) {
 			case OPC_integer_31: {
 				const u_int rs = i.i_x.i_rs;
+#ifdef DIAGNOSTIC
 				const u_int ra = i.i_x.i_ra;
 				const u_int rb = i.i_x.i_rb;
+#endif
 				switch (i.i_x.i_xo) {
 				case OPC31_MFSPR: {
+#ifdef DIAGNOSTIC
 					const u_int spr = (rb << 5) | ra;
 					KASSERT(spr == SPR_LR);
+#endif
 					valid_mask |= (1 << rs);
 					r_lr = rs;
 					break;
 				}
 				case OPC31_MTSPR: {
+#ifdef DIAGNOSTIC
 					const u_int spr = (rb << 5) | ra;
 					KASSERT(valid_mask & (1 << rs));
 					KASSERT(spr == SPR_CTR);
+#endif
 					ctr = fixreg[rs];
 					break;
 				}
