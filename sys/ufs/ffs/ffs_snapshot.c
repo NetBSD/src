@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.102 2010/12/20 00:25:47 matt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.102.4.1 2011/02/12 19:52:39 bouyer Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102 2010/12/20 00:25:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102.4.1 2011/02/12 19:52:39 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -213,12 +213,6 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	error = snapshot_setup(mp, vp);
 	if (error)
 		goto out;
-	/*
-	 * Change inode to snapshot type file.
-	 */
-	ip->i_flags |= SF_SNAPSHOT;
-	DIP_ASSIGN(ip, flags, ip->i_flags);
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
 	 * Copy all the cylinder group maps. Although the
 	 * filesystem is still active, we hope that only a few
@@ -408,6 +402,7 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	struct buf *ibp, *nbp;
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
 	struct lwp *l = curlwp;
+	struct inode *ip = VTOI(vp);
 
 	/*
 	 * Check mount, exclusive reference and owner.
@@ -426,6 +421,13 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		if (error)
 			return error;
 	}
+	/*
+	 * Change inode to snapshot type file.
+	 * Do it now so that allocations below are not recorded in quotas
+	 */
+	ip->i_flags |= SF_SNAPSHOT;
+	DIP_ASSIGN(ip, flags, ip->i_flags);
+	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
 	 * Write an empty list of preallocated blocks to the end of
 	 * the snapshot to set size to at least that of the filesystem.
