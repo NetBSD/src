@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 2011/02/12 18:23:10 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2011/02/12 18:23:10 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -121,21 +121,6 @@ static u_int mem_cnt, avail_cnt;
 
 #if !defined(PMAP_OEA64) && !defined(PMAP_OEA64_BRIDGE)
 # define	PMAP_OEA 1
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
-#endif
-
-#if defined(PMAP_OEA64)
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA) && !defined(PPC_OEA64_BRIDGE)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
-#endif
-
-#if defined(PMAP_OEA64_BRIDGE)
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA) && !defined(PPC_OEA64)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
 #endif
 
 #if defined(PMAP_OEA)
@@ -147,7 +132,7 @@ static u_int mem_cnt, avail_cnt;
 #define	_PRIxva		"lx"
 #define	_PRIsr  	"lx"
 
-#if defined(PMAP_EXCLUDE_DECLS) && !defined(PMAPNAME)
+#ifdef PMAP_NEEDS_FIXUP
 #if defined(PMAP_OEA)
 #define	PMAPNAME(name)	pmap32_##name
 #elif defined(PMAP_OEA64)
@@ -157,9 +142,9 @@ static u_int mem_cnt, avail_cnt;
 #else
 #error unknown variant for pmap
 #endif
-#endif /* PMAP_EXLCUDE_DECLS && !PMAPNAME */
+#endif /* PMAP_NEEDS_FIXUP */
 
-#if defined(PMAPNAME)
+#ifdef PMAPNAME
 #define	STATIC			static
 #define pmap_pte_spill		PMAPNAME(pte_spill)
 #define pmap_real_memory	PMAPNAME(real_memory)
