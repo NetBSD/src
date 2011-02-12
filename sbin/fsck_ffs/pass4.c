@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.25.14.2 2011/02/12 19:53:32 bouyer Exp $	*/
+/*	$NetBSD: pass4.c,v 1.25.14.3 2011/02/12 21:48:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.25.14.2 2011/02/12 19:53:32 bouyer Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.25.14.3 2011/02/12 21:48:41 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,9 +192,11 @@ pass4check(struct inodesc *idesc)
 					    dtogd(sblock, blkno));
 
 				n_blks--;
-				update_uquot(idesc->id_number, idesc->id_uid,
-				    idesc->id_gid, (idesc->id_type == SNAP) ?
-				    0 : -btodb(sblock->fs_fsize), 0);
+				if (idesc->id_type != SNAP) {
+					update_uquot(idesc->id_number,
+					    idesc->id_uid, idesc->id_gid, 
+					    -btodb(sblock->fs_fsize), 0);
+				}
 				if (idesc->id_numfrags != sblock->fs_frag &&
 				    cgp) {
 					cgp->cg_cs.cs_nffree ++;
