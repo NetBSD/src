@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.14 2011/02/11 12:26:04 phx Exp $
+$NetBSD: README.NAS,v 1.15 2011/02/12 03:25:37 nisimura Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -47,23 +47,40 @@ NH230		13, 14, 15, 16	-> 0, 3, 1, 2
 - USB EHCI is a multiple function PCI device which has
   pin assignment A, B and C.
 
-- *attention* Synology DS407 is a MPC8349E product.
-
-
 //// e300 NAS products ////
 
-Freescale MPC8349E-mITXE
-		PCI IDSEL 	   MPC8349 IRQ
-  1st PCI	16		-> 22
-		satalink
-  2nd PCI	14, 15		-> 21, 20
-		miniPCI, 3.3VPCI
+- Freescale MPC8349E-mITXE
 
-Synology DS407
-		PCI IDSEL	   MPC8349 IRQ
-  1st PCI	13, 14, 15, 16	-> 20, 21, 22, 19
-		satalink,satalink,ehci,PCI
-  2nd PCI	???
+  PCI		bus:IDSEL	IPIC IRQ
+satalink	0:16		22
+miniPCI		1:14		21
+3.3vPCI		1:15		20
+
+  I2C		bus:addr
+ds1339 RTC	1:0x68
+sat MCU		1:0x0a
+
+- Thecus N1200
+
+  PCI		bus:IDSEL	IPIC IRQ
+satalink	0:16		22
+
+  I2C		bus:addr
+f75375 fanctl	0:0x2e
+rs5c372a RTC	0:0x32
+sat MCU		0:0x36
+
+- Synology DS407
+
+  PCI		bus:IDSEL	IPIC IRQ
+satalink	0:13		20
+satalink	0:14		21
+USB ?		0:15		22
+PCI ?		0:16		19
+
+  I2C
+ds1337 RTC	1:0x68
+
 
 [ research still in progress ]
 
