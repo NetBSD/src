@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.5 2011/02/12 15:58:03 wiz Exp $
+.\"	$NetBSD: libsaslc.3,v 1.6 2011/02/12 16:08:18 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,7 @@
 .Ft void
 .Fn saslc_sess_end "saslc_sess_t *sess"
 .Ft const char *
-.Fn saslc_sess_getmech "saslc_sess_t *"
+.Fn saslc_sess_getmech "saslc_sess_t *sess"
 .Ft const char *
 .Fn saslc_sess_getprop "saslc_sess_t *sess" "const char *key"
 .Ft saslc_sess_t *
@@ -92,14 +92,16 @@ The
 function allocates and returns a new saslc context.
 The context is uninitialized: see
 .Fn saslc_init .
-Returns NULL on error.
+Returns
+.Dv NULL
+on error.
 .Pp
 The
 .Fn saslc_end
 function destroys and deallocate resources used by the context
 .Ar ctx .
 The context shouldn't have any sessions assigned to it.
-Returns 0 on success and -1 if the context has active sessions and
+Returns 0 on success and \-1 if the context has active sessions and
 cannot be deallocated.
 .Pp
 The
@@ -114,11 +116,13 @@ sets up the context and mechanism dictionaries, and creates mechanism
 list for the context.
 If
 .Ar cfgpath
-is NULL, it checks the environment variable
+is
+.Dv NULL ,
+it checks the environment variable
 .Ev SASLC_CONFIG
 for a location and if that is not found it uses the default path
 .Pa /etc/saslc.d .
-Returns 0 on success and -1 on failure.
+Returns 0 on success and \-1 on failure.
 .Pp
 The
 .Fn saslc_sess_init
@@ -134,7 +138,9 @@ Both lists may be space or comma delimited.
 The first matching mechanism from the
 .Ar mechs
 list is used.
-See CONFIGURATION below for the supported mechanisms.
+See
+.Sx CONFIGURATION
+below for the supported mechanisms.
 The valid security options are
 .Bl -tag -width "nodictionaryxxx" -offset indent -compact
 .It Qo noanonymous Qc
@@ -149,7 +155,9 @@ reject mechanisms prone to active non-dictionary attacks
 require mutual authentication mechanisms
 .El
 Unknown security options are ignored.
-Returns a session handle or NULL on error or no match.
+Returns a session handle or
+.Dv NULL
+on error or no match.
 .Pp
 The
 .Fn saslc_sess_end
@@ -167,7 +175,9 @@ Dictionaries are searched in following order: session
 .Ar sess
 dictionary,
 context dictionary (global configuration), and mechanism dictionary.
-Returns the property value or NULL if the property is not found.
+Returns the property value or
+.Dv NULL
+if the property is not found.
 .Pp
 The
 .Fn saslc_sess_setprop
@@ -182,8 +192,10 @@ If the property already exists in the session dictionary, then the
 previous value is replaced by the new value.
 If
 .Ar value
-is NULL, then any previous value in the session dictionary is removed.
-Returns 0 on success or -1 on failure.
+is
+.Dv NULL ,
+then any previous value in the session dictionary is removed.
+Returns 0 on success or \-1 on failure.
 .Pp
 .Fn saslc_strerror
 and
@@ -194,7 +206,8 @@ context
 or session
 .Ar sess ,
 respectively.
-It never returns NULL.
+It never returns
+.Dv NULL .
 .Pp
 The
 .Fn saslc_strmech
@@ -219,7 +232,7 @@ bytes of output data in
 The user is responsible for freeing memory allocated for
 .Ar out .
 It returns 0 if the authentication process is completed, 1 if another
-step is required, and -1 on error.
+step is required, and \-1 on error.
 Note that the completion of authentication process does not mean the
 client is authenticated; that is determined by the server.
 .Pp
@@ -236,7 +249,7 @@ They encode and, respectively, decode
 bytes of data from the
 .Ar in
 buffer using the method negotiated during authentication.
-On error they return -1.
+On error they return \-1.
 Otherwise, they return the number of bytes consumed from
 .Ar in
 and output
@@ -285,8 +298,8 @@ decode_stream(saslc_sess_t *sess, int fdin, int fdout)
 	ssize_t n, rval;
 .Pp
 	for (;;) {
-		if ((rval = read(fdin, buf, sizeof(buf))) == -1)
-			return -1;
+		if ((rval = read(fdin, buf, sizeof(buf))) == \-1)
+			return \-1;
 		if (rval == 0)
 			break;
 		in = buf;
@@ -294,13 +307,13 @@ decode_stream(saslc_sess_t *sess, int fdin, int fdout)
 		while (inlen > 0) {
 			rval = saslc_sess_decode(sess, in, inlen, &out,
 			    &outlen);
-			if (rval == -1)
-				return -1;
+			if (rval == \-1)
+				return \-1;
 			if (outlen > 0) {
 				n = write(fdout, out, outlen);
 				free(out);
-				if (n == -1)
-					return -1;
+				if (n == \-1)
+					return \-1;
 			}
 			in += rval;
 			inlen -= rval;
@@ -319,8 +332,8 @@ encode_stream(saslc_sess_t *sess, int fdin, int fdout)
 	ssize_t n, rval;
 .Pp
 	for (;;) {
-		if ((rval = read(fdin, buf, sizeof(buf))) == -1)
-			return -1;
+		if ((rval = read(fdin, buf, sizeof(buf))) == \-1)
+			return \-1;
 		if (rval == 0)
 			break;
 		in = buf;
@@ -328,24 +341,24 @@ encode_stream(saslc_sess_t *sess, int fdin, int fdout)
 		while (inlen > 0) {
 			rval = saslc_sess_encode(sess, in, inlen, &out,
 			    &outlen);
-			if (rval == -1)
-				return -1;
+			if (rval == \-1)
+				return \-1;
 			if (outlen > 0) {
 				n = write(fdout, out, outlen);
 				free(out);
-				if (n == -1)
-					return -1;
+				if (n == \-1)
+					return \-1;
 			}
 			in += rval;
 			inlen -= rval;
 		}
 	}
 	/* flush internal encoder buffer */
-	if (saslc_sess_encode(sess, NULL, 0, &out, &outlen) == -1)
-		return -1;
+	if (saslc_sess_encode(sess, NULL, 0, &out, &outlen) == \-1)
+		return \-1;
 	if (outlen > 0)
-		if (write(fdout, out, outlen) == -1)
-			return -1;
+		if (write(fdout, out, outlen) == \-1)
+			return \-1;
 	return 0;
 }
 .Ed
@@ -435,7 +448,9 @@ indicates that the rest of the line is a comment.
 .Pp
 NOTE: Currently, no escaping is supported in strings, so they may not
 contain quotes.
-Numbers must be between 0 and LLONG_MAX, inclusive.
+Numbers must be between 0 and
+.Dv LLONG_MAX ,
+inclusive.
 Any base supported by
 .Xr strtoll 3
 is allowed.
@@ -473,15 +488,20 @@ QOP.
 By default all supported ciphers are used, but they may be limited by
 a comma delimited list of cipher names.
 The recognized cipher names for DIGEST-MD5 are:
-.Bd -literal -offset indent
-"3des"      Triple-DES Cipher in CBC "two keys" mode with
-            112 bit key
-"aes"       AES Cipher in CBC mode with 128 bit key
-"des"       DES Cipher in CBC mode with 56 bit key
-"rc4"       RC4 Cipher with 128 bit key
-"rc4-40"    RC4 Cipher with 40 bit key
-"rc4-56"    RC4 Cipher with 56 bit key
-.Ed
+.Bl -tag -offset indent
+.It Li "3des"
+Triple-DES Cipher in CBC "two keys" mode with 112 bit key
+.It Li "aes"
+AES Cipher in CBC mode with 128 bit key
+.It Li "des"
+DES Cipher in CBC mode with 56 bit key
+.It Li "rc4"
+RC4 Cipher with 128 bit key
+.It Li "rc4-40"
+RC4 Cipher with 40 bit key
+.It Li "rc4-56"
+RC4 Cipher with 56 bit key
+.El
 .Pp
 The default value is
 .Qq des,3des,rc4,rc4_40,rc4_56,aes .
@@ -498,7 +518,9 @@ it should be set before the first call to
 .Po
 Also see the environment variable
 .Ev SASLC_ENV_DEBUG
-in the ENVIRONMENT section below.
+in the
+.Sx ENVIRONMENT
+section below.
 .Pc
 .It SASLC_PROP_HOSTNAME Po Qo HOSTNAME Qc Pc
 The hostname.
@@ -517,11 +539,14 @@ and GSSAPI mechanisms.
 By default all supported QOP values are allowed, but they may be
 limited by a comma delimited list of QOP values.
 The recognized QOP values are:
-.Bd -literal -offset indent
-"auth"         authentication only
-"auth-int"     authentication with integrity
-"auth-conf"    authentication with confidentiality
-.Ed
+.Bl -tag -offset indent
+.It Li "auth"
+authentication only
+.It Li "auth-int"
+authentication with integrity
+.It Li "auth-conf"
+authentication with confidentiality
+.El
 .Pp
 so the default value of the mask is
 .Qq auth,auth-int,auth-conf .
@@ -549,7 +574,9 @@ together with those passed to
 Since these flags are used to choose the session mechanism, they are
 only effective if they are in the context configuration file.
 .Po
-See the CONFIGURATION section and the
+See the
+.Sx CONFIGURATION
+section and the
 .Fn saslc_sess_init
 function.
 .Pc
@@ -672,7 +699,9 @@ to
 Setup the
 .Pa /etc/saslc.d
 configuration directory
-.Pq see CONFIGURATION above .
+.Po see Sx CONFIGURATION
+above
+.Pc .
 Add the line
 .Bd -literal -offset indent
 AUTHCID		"postfix"
@@ -717,7 +746,7 @@ There exist other SASL client library implementations including Cyrus SASL
 (http://asg.web.cmu.edu/sasl/sasl-library.html) and GNU SASL
 (http://www.gnu.org/software/gsasl/).
 .Sh CAVEATS
-The API was heavily influenced by it's use with
+The API was heavily influenced by its use with
 .Xr postfix 1 .
 .Pp
 Currently the ANONYMOUS, LOGIN, PLAIN, CRAM-MD5, DIGEST-MD5, and
