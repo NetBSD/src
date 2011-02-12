@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.7 2011/01/07 15:30:30 jmcneill Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.8 2011/02/12 15:15:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,11 +30,11 @@
  */
 
 /*
- * Intel High Definition Audio (Revision 1.0) device driver.
+ * Intel High Definition Audio (Revision 1.0a) device driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.7 2011/01/07 15:30:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.8 2011/02/12 15:15:34 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.7 2011/01/07 15:30:30 jmcneill Exp
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/pci/hdaudio/hdaudioreg.h>
-#include <dev/pci/hdaudio/hdaudiovar.h>
-#include <dev/pci/hdaudio/hdaudio_pci.h>
+#include "hdaudioreg.h"
+#include "hdaudiovar.h"
+#include "hdaudio_pci.h"
 
 struct hdaudio_pci_softc {
 	struct hdaudio_softc	sc_hdaudio;	/* must be first */

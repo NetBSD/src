@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.9 2011/01/07 15:30:29 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.10 2011/02/12 15:15:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,20 +30,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.9 2011/01/07 15:30:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.10 2011/02/12 15:15:34 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
 
-#include <dev/pci/hdaudio/hdaudiovar.h>
-#include <dev/pci/hdaudio/hdaudioreg.h>
-#include <dev/pci/hdaudio/hdaudioio.h>
+#include "hdaudiovar.h"
+#include "hdaudioreg.h"
+#include "hdaudioio.h"
 
 /* #define	HDAUDIO_DEBUG */
 
@@ -239,7 +240,32 @@ hdaudio_corb_enqueue(struct hdaudio_softc *sc, int addr, int nid,
 	hda_write2(sc, HDAUDIO_MMIO_CORBWP, wp);
 }
 
-static uint32_t
+static void
+hdaudio_rirb_unsol(struct hdaudio_softc *sc, struct rirb_entry *entry)
+{
+	struct hdaudio_codec *co;
+	struct hdaudio_function_group *fg;
+	uint8_t codecid = RIRB_CODEC_ID(entry);
+	unsigned int i;
+
+	if (codecid >= HDAUDIO_MAX_CODECS) {
+		hda_error(sc, "unsol: codec id 0x%02x out of range\n", codecid);
+		return;
+	}
+	co = &sc->sc_codec[codecid];
+	if (sc->sc_codec[codecid].co_valid == false) {
+		hda_error(sc, "unsol: codec id 0x%02x not valid\n", codecid);
+		return;
+	}
+
+	for (i = 0; i < co->co_nfg; i++) {
+		fg = &co->co_fg[i];
+		if (fg->fg_device && fg->fg_unsol)
+			fg->fg_unsol(fg->fg_device, entry->resp);
+	}
+}
+
+static void
 hdaudio_rirb_dequeue(struct hdaudio_softc *sc)
 {
 	uint16_t rirbwp;
@@ -256,8 +282,10 @@ hdaudio_rirb_dequeue(struct hdaudio_softc *sc)
 			rirbwp = hda_read2(sc, HDAUDIO_MMIO_RIRBWP);
 		}
 		if (retry == 0) {
-			hda_error(sc, "RIRB timeout\n");
-			return 0xffffffff;
+			if (sc->sc_rirbpoll)
+				hda_error(sc, "RIRB timeout [poll]\n");
+			sc->sc_rirbdata = 0xffffffff;
+			return;
 		}
 
 		sc->sc_rirbrp++;
@@ -270,13 +298,16 @@ hdaudio_rirb_dequeue(struct hdaudio_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rirb.dma_map, 0,
 		    sc->sc_rirb.dma_size, BUS_DMASYNC_PREREAD);
 
+		hda_trace(sc, "rirb: response %08X %08X\n",
+		    entry.resp, entry.resp_ex);
+
 		if (RIRB_UNSOL(&entry)) {
-			hda_print(sc, "unsolicited response: %08X %08X\n",
-			    entry.resp, entry.resp_ex);
+			hdaudio_rirb_unsol(sc, &entry);
 			continue;
 		}
 
-		return entry.resp;
+		sc->sc_rirbdata = entry.resp;
+		return;
 	}
 }
 
@@ -285,14 +316,28 @@ hdaudio_command(struct hdaudio_codec *co, int nid, uint32_t control,
     uint32_t param)
 {
 	struct hdaudio_softc *sc = co->co_host;
-	uint32_t result;
+	int error;
 
 	mutex_enter(&sc->sc_corb_mtx);
 	hdaudio_corb_enqueue(sc, co->co_addr, nid, control, param);
-	result = hdaudio_rirb_dequeue(sc);
+	if (sc->sc_rirbpoll) {
+		hdaudio_rirb_dequeue(sc);
+	} else {
+		error = cv_timedwait_sig(&sc->sc_corb_cv, &sc->sc_corb_mtx, hz);
+		switch (error) {
+		case EWOULDBLOCK:
+			hda_error(sc, "cmd: %02X %02X (%02X) RIRB timeout\n",
+			    control, param, nid);
+			break;
+		case EINTR:
+			hda_trace(sc, "cmd: %02X %02X (%02X) RIRB cancelled\n",
+			    control, param, nid);
+			break;
+		}
+	}
 	mutex_exit(&sc->sc_corb_mtx);
 
-	return result;
+	return sc->sc_rirbdata;
 }
 
 static int
@@ -419,12 +464,13 @@ hdaudio_rirb_stop(struct hdaudio_softc *sc)
 
 	/* Stop the RIRB if necessary */
 	rirbctl = hda_read1(sc, HDAUDIO_MMIO_RIRBCTL);
-	if (rirbctl & HDAUDIO_RIRBCTL_RUN) {
+	if (rirbctl & (HDAUDIO_RIRBCTL_RUN|HDAUDIO_RIRBCTL_ROI_EN)) {
 		rirbctl &= ~HDAUDIO_RIRBCTL_RUN;
-		hda_write4(sc, HDAUDIO_MMIO_RIRBCTL, rirbctl);
+		rirbctl &= ~HDAUDIO_RIRBCTL_ROI_EN;
+		hda_write1(sc, HDAUDIO_MMIO_RIRBCTL, rirbctl);
 		do {
 			hda_delay(10);
-			rirbctl = hda_read4(sc, HDAUDIO_MMIO_RIRBCTL);
+			rirbctl = hda_read1(sc, HDAUDIO_MMIO_RIRBCTL);
 		} while (--retry > 0 && (rirbctl & HDAUDIO_RIRBCTL_RUN) != 0);
 		if (retry == 0) {
 			hda_error(sc, "timeout stopping RIRB\n");
@@ -443,12 +489,13 @@ hdaudio_rirb_start(struct hdaudio_softc *sc)
 
 	/* Start the RIRB if necessary */
 	rirbctl = hda_read1(sc, HDAUDIO_MMIO_RIRBCTL);
-	if ((rirbctl & HDAUDIO_RIRBCTL_RUN) == 0) {
+	if ((rirbctl & (HDAUDIO_RIRBCTL_RUN|HDAUDIO_RIRBCTL_INT_EN)) == 0) {
 		rirbctl |= HDAUDIO_RIRBCTL_RUN;
-		hda_write4(sc, HDAUDIO_MMIO_RIRBCTL, rirbctl);
+		rirbctl |= HDAUDIO_RIRBCTL_INT_EN;
+		hda_write1(sc, HDAUDIO_MMIO_RIRBCTL, rirbctl);
 		do {
 			hda_delay(10);
-			rirbctl = hda_read4(sc, HDAUDIO_MMIO_RIRBCTL);
+			rirbctl = hda_read1(sc, HDAUDIO_MMIO_RIRBCTL);
 		} while (--retry > 0 && (rirbctl & HDAUDIO_RIRBCTL_RUN) == 0);
 		if (retry == 0) {
 			hda_error(sc, "timeout starting RIRB\n");
@@ -582,6 +629,9 @@ hdaudio_reset(struct hdaudio_softc *sc)
 		return ETIME;
 	}
 
+	/* Accept unsolicited responses */
+	hda_write4(sc, HDAUDIO_MMIO_GCTL, gctl | HDAUDIO_GCTL_UNSOL_EN);
+
 	return 0;
 }
 
@@ -592,11 +642,13 @@ hdaudio_intr_enable(struct hdaudio_softc *sc)
 	    hda_read4(sc, HDAUDIO_MMIO_INTSTS));
 	hda_write4(sc, HDAUDIO_MMIO_INTCTL,
 	    HDAUDIO_INTCTL_GIE | HDAUDIO_INTCTL_CIE);
+	sc->sc_rirbpoll = false;
 }
 
 static void
 hdaudio_intr_disable(struct hdaudio_softc *sc)
 {
+	sc->sc_rirbpoll = true;
 	hda_write4(sc, HDAUDIO_MMIO_INTCTL, 0);
 }
 
@@ -740,6 +792,8 @@ hdaudio_attach(device_t dev, struct hdaudio_softc *sc)
 	sc->sc_dev = dev;
 	mutex_init(&sc->sc_corb_mtx, MUTEX_DEFAULT, IPL_AUDIO);
 	mutex_init(&sc->sc_stream_mtx, MUTEX_DEFAULT, IPL_AUDIO);
+	cv_init(&sc->sc_corb_cv, "hdacodec");
+	sc->sc_rirbpoll = true;
 
 	hdaudio_init(sc);
 
@@ -829,6 +883,13 @@ hdaudio_detach(struct hdaudio_softc *sc, int flags)
 	/* Disable interrupts */
 	hdaudio_intr_disable(sc);
 
+	mutex_destroy(&sc->sc_corb_mtx);
+	mutex_destroy(&sc->sc_stream_mtx);
+	cv_destroy(&sc->sc_corb_cv);
+
+	hdaudio_dma_free(sc, &sc->sc_corb);
+	hdaudio_dma_free(sc, &sc->sc_rirb);
+
 	return 0;
 }
 
@@ -911,16 +972,22 @@ hdaudio_intr(struct hdaudio_softc *sc)
 	struct hdaudio_stream *st;
 	uint32_t intsts, stream_mask;
 	int streamid = 0;
-	uint32_t rirbsts;
+	uint8_t rirbsts;
 
 	intsts = hda_read4(sc, HDAUDIO_MMIO_INTSTS);
 	if (!(intsts & HDAUDIO_INTSTS_GIS))
 		return 0;
 
 	if (intsts & HDAUDIO_INTSTS_CIS) {
-		rirbsts = hda_read4(sc, HDAUDIO_MMIO_RIRBSTS);
+		rirbsts = hda_read1(sc, HDAUDIO_MMIO_RIRBSTS);
+		if (rirbsts & HDAUDIO_RIRBSTS_RINTFL) {
+			mutex_enter(&sc->sc_corb_mtx);
+			hdaudio_rirb_dequeue(sc);
+			cv_signal(&sc->sc_corb_cv);
+			mutex_exit(&sc->sc_corb_mtx);
+		}
 		if (rirbsts & (HDAUDIO_RIRBSTS_RIRBOIS|HDAUDIO_RIRBSTS_RINTFL))
-			hda_write4(sc, HDAUDIO_MMIO_RIRBSTS, rirbsts);
+			hda_write1(sc, HDAUDIO_MMIO_RIRBSTS, rirbsts);
 		hda_write4(sc, HDAUDIO_MMIO_INTSTS, HDAUDIO_INTSTS_CIS);
 	}
 	if (intsts & HDAUDIO_INTSTS_SIS_MASK) {
