@@ -1,4 +1,4 @@
-/* $NetBSD: xsess.c,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: xsess.c,v 1.4 2011/02/12 22:46:14 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xsess.c,v 1.3 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: xsess.c,v 1.4 2011/02/12 22:46:14 christos Exp $");
 
 #include <assert.h>
 #include <saslc.h>
@@ -429,7 +429,7 @@ saslc_sess_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 			saslc_debug = saslc__parser_is_true(debug);
 	}
 
-	saslc__msg_dbg("%s: encoded: inlen=%zd in='%s'", __func__, inlen,
+	saslc__msg_dbg("%s: encoded: inlen=%zu in='%s'", __func__, inlen,
 	    in ? (const char *)in : "<null>");
 	if (inlen == 0 || (sess->flags & SASLC_FLAGS_BASE64_IN) == 0)
 		dec = NULL;
@@ -442,7 +442,7 @@ saslc_sess_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 		}
 		in = dec;
 	}
-	saslc__msg_dbg("%s: decoded: inlen=%zd in='%s'", __func__, inlen,
+	saslc__msg_dbg("%s: decoded: inlen=%zu in='%s'", __func__, inlen,
 	    in ? (const char *)in : "<null>");
 	rv = sess->mech->cont(sess, in, inlen, out, outlen);
 	if (dec != NULL)
