@@ -1,4 +1,4 @@
-/* $NetBSD: crypto.c,v 1.4 2011/02/12 22:46:14 christos Exp $ */
+/* $NetBSD: crypto.c,v 1.5 2011/02/12 23:21:32 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,18 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crypto.c,v 1.4 2011/02/12 22:46:14 christos Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.5 2011/02/12 23:21:32 christos Exp $");
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <openssl/md5.h>
 #include <openssl/rand.h>
-#include <openssl/hmac.h>
 
 #include "crypto.h"
 
