@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.c,v 1.5 2010/11/07 17:51:17 jmmv Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.6 2011/02/12 18:13:46 bouyer Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -65,7 +65,7 @@ ATF_TC_BODY(snapshot, tc)
 		atf_tc_fail_errno("write fail");
 
 	fssfd = rump_sys_open("/dev/rfss0", O_RDWR);
-	if (fd == -1)
+	if (fssfd == -1)
 		atf_tc_fail_errno("cannot open fss");
 	makefile(BAKNAME);
 	memset(&fss, 0, sizeof(fss));
