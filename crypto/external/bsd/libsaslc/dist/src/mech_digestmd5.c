@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.4 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.5 2011/02/12 22:24:01 matt Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.4 2011/02/11 23:44:43 christos Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.5 2011/02/12 22:24:01 matt Exp $");
 
 #include <assert.h>
 #include <md5.h>
@@ -180,7 +180,7 @@ typedef struct { /* response data */
 	char *realm;
 	cipher_t cipher;
 	int nonce_cnt;
-	unsigned long maxbuf;
+	size_t maxbuf;
 } rdata_t;
 
 typedef uint8_t md5hash_t[MD5_DIGEST_LENGTH];
@@ -1240,8 +1240,8 @@ decode_buffer(coder_context_t *ctx, void *in, size_t inlen,
 			    "cipher error");
 			return -1;
 		}
-		assert(tmplen == len - 6);
-		if (tmplen != len - 6)
+		assert(tmplen == (ssize_t)len - 6);
+		if (tmplen != (ssize_t)len - 6)
 			return -1;
 	}
 
@@ -2115,7 +2115,7 @@ saslc__mech_digestmd5_reply(saslc_sess_t *sess, char *response)
 		}
 		/*FALLTHROUGH*/
 	case QOP_INT:
-		if (asprintf(&maxbuf, "maxbuf=%zd,", ms->rdata.maxbuf) == -1) {
+		if (asprintf(&maxbuf, "maxbuf=%zu,", ms->rdata.maxbuf) == -1) {
 			saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 			goto done;
 		}
