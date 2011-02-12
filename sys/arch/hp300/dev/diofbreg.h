@@ -1,4 +1,4 @@
-/*	$NetBSD: diofbreg.h,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: diofbreg.h,v 1.2 2011/02/12 05:08:40 tsutsui Exp $	*/
 /*	$OpenBSD: diofbreg.h,v 1.3 2007/01/07 15:13:52 miod Exp $	*/
 
 /*
@@ -58,6 +58,8 @@
 #define GID_TIGER      12
 #define GID_YGENESIS   13
 #define GID_HYPERION   14
+#define GID_A1474MID   16
+#define GID_A147xVGA   17
 
 #ifndef	_LOCORE
 struct	diofbreg {

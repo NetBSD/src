@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.10 2011/02/10 12:46:22 tsutsui Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.11 2011/02/12 05:08:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,12 +46,6 @@
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
-
-#define getbyte(ip, offset) \
-	*(((u_char *)(ip)->regbase) + (offset))
-
-#define getword(ip, offset) \
-	((getbyte(ip, offset) << 8) | getbyte(ip, (offset) + 2))
 
 static void ite_writeglyph(struct ite_data *, u_char *, u_char *);
 

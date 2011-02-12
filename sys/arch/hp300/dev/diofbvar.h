@@ -1,4 +1,4 @@
-/*	$NetBSD: diofbvar.h,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: diofbvar.h,v 1.2 2011/02/12 05:08:40 tsutsui Exp $	*/
 /*	$OpenBSD: diofbvar.h,v 1.10 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ int	hypercnattach(bus_space_tag_t, bus_addr_t, int);
 int	rboxcnattach(bus_space_tag_t, bus_addr_t, int);
 int	topcatcnattach(bus_space_tag_t, bus_addr_t, int);
 int	tvrxcnattach(bus_space_tag_t, bus_addr_t, int);
+int	gendiofbcnattach(bus_space_tag_t, bus_addr_t, int);
 extern	struct diofb diofb_cn;		/* struct diofb for console device */
 
 #endif

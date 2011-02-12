@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.42 2011/02/06 18:26:53 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.43 2011/02/12 05:08:40 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -182,6 +182,9 @@ wsdisplay*	at topcat?
 # TurboVRX framebuffer
 tvrx*		at dio? scode ?
 wsdisplay*	at tvrx?
+
+gendiofb*	at dio? scode ?
+wsdisplay*	at gendiofb?
 
 com*		at dio0 scode 9		# DCA serial interfaces
 com*		at dio? scode ?
