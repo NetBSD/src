@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.81 2011/02/12 05:15:39 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.82 2011/02/12 15:49:01 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -80,10 +80,10 @@ attach	com at frodo with com_frodo
 file	arch/hp300/dev/com_frodo.c	com_frodo needs-flag
 
 # Apollo Keyboard and mouse
-#device	dnkbd: wskbddev, wsmousedev
-#attach	dnkbd at frodo
-#file	arch/hp300/dev/dnkbd.c			dnkbd	needs-flag
-#file	arch/hp300/dev/dnkbdmap.c		dnkbd
+device	dnkbd: wskbddev, wsmousedev
+attach	dnkbd at frodo
+file	arch/hp300/dev/dnkbd.c			dnkbd	needs-flag
+file	arch/hp300/dev/dnkbdmap.c		dnkbd
 
 #
 # Frame buffer devices on Internal I/O and the DIO bus
