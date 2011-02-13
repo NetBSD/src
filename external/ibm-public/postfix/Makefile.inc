@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.6 2011/02/13 01:53:50 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2011/02/13 05:12:55 christos Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
-USE_LIB_SASLC?= yes
+USE_LIB_SASL?= saslc
 PKGROOT?= /usr/pkg
 
 WARNS?=	0
@@ -17,7 +17,7 @@ CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl
 
-.if ${USE_LIB_SASLC} != "no"
+.if ${USE_LIB_SASL} == "sasl"
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_SASLC_SASL
 .if (${MKCRYPTO} != "mo")
 DPADD+= ${LIBSASCL} ${LIBSSL}
@@ -27,7 +27,7 @@ DPADD+= ${LIBGSSAPI}
 LDADD+= -lgssapi
 .endif
 .endif
-.elif defined(HAVE_CYRUS_SASL)
+.elif ${USE_LIB_SASL} == "cyrus"
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
 	-DDEF_SERVER_SASL_TYPE=\"cyrus\" \
 	-I${PKGROOT}/include/sasl
