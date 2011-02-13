@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68.4.13 2011/02/12 21:48:09 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.4.14 2011/02/13 00:11:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.13 2011/02/12 21:48:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.4.14 2011/02/13 00:11:09 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -301,8 +301,10 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 			if (!prop_dictionary_get_cstring_nocopy(data, "id",
 			    &idstr))
 				continue;
-			if (strcmp(idstr, "default"))
-				continue;
+			if (strcmp(idstr, "default")) {
+				error = EINVAL;
+				goto err;
+			}
 			id = 0;
 			defaultq = 1;
 		} else {
@@ -311,10 +313,8 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 		error = quota_get_auth(mp, l, id);
 		if (error == EPERM)
 			continue;
-		if (error != 0) {
-			prop_object_release(replies);
-			return error;
-		}
+		if (error != 0) 
+			goto err;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
 			error = quota1_handle_cmd_get(ump, type, id, defaultq,
@@ -329,16 +329,21 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 #endif
 			panic("quota_handle_cmd_get: no support ?");
 		
-		if (error && error != ENOENT) {
-			prop_object_release(replies);
-			return error;
-		}
+		if (error == ENOENT)
+			continue;
+		if (error != 0)
+			goto err;
 	}
+	prop_object_iterator_release(iter);
 	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
 		error = ENOMEM;
 	} else {
 		error = 0;
 	}
+	return error;
+err:
+	prop_object_iterator_release(iter);
+	prop_object_release(replies);
 	return error;
 }
 
@@ -380,10 +385,8 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 		}
 		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
-		if (error != 0) {
-			prop_object_release(replies);
-			return error;
-		}
+		if (error != 0)
+			goto err;
 #ifdef QUOTA
 		if (ump->um_flags & UFS_QUOTA)
 			error = quota1_handle_cmd_set(ump, type, id, defaultq,
@@ -398,16 +401,19 @@ quota_handle_cmd_set(struct mount *mp, struct lwp *l,
 #endif
 			panic("quota_handle_cmd_get: no support ?");
 		
-		if (error && error != ENOENT) {
-			prop_object_release(replies);
-			return error;
-		}
+		if (error && error != ENOENT)
+			goto err;
 	}
+	prop_object_iterator_release(iter);
 	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
 		error = ENOMEM;
 	} else {
 		error = 0;
 	}
+	return error;
+err:
+	prop_object_iterator_release(iter);
+	prop_object_release(replies);
 	return error;
 }
 
@@ -449,10 +455,8 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 		}
 		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
-		if (error != 0) {
-			prop_object_release(replies);
-			return error;
-		}
+		if (error != 0)
+			goto err;
 #ifdef QUOTA2
 		if (ump->um_flags & UFS_QUOTA2) {
 			error = quota2_handle_cmd_clear(ump, type, id, defaultq,
@@ -461,16 +465,19 @@ quota_handle_cmd_clear(struct mount *mp, struct lwp *l,
 #endif
 			panic("quota_handle_cmd_get: no support ?");
 		
-		if (error && error != ENOENT) {
-			prop_object_release(replies);
-			return error;
-		}
+		if (error && error != ENOENT)
+			goto err;
 	}
+	prop_object_iterator_release(iter);
 	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
 		error = ENOMEM;
 	} else {
 		error = 0;
 	}
+	return error;
+err:
+	prop_object_iterator_release(iter);
+	prop_object_release(replies);
 	return error;
 }
 
