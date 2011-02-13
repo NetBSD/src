@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.4 2011/02/13 00:41:20 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2011/02/13 01:50:03 christos Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
-HAVE_LIB_SASLC?= yes
+USE_LIB_SASLC?= yes
 
 WARNS?=	0
 
@@ -16,7 +16,7 @@ CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl
 
-.if defined(HAVE_LIB_SASLC)
+.if ${USE_LIB_SASLC} != "no"
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_SASLC_SASL
 .if (${MKCRYPTO} != "mo")
 DPADD+= ${LIBSASCL} ${LIBSSL}
