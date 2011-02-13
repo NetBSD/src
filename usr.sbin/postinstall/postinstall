@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.112 2010/12/17 22:56:22 njoly Exp $
+# $NetBSD: postinstall,v 1.113 2011/02/13 20:17:26 tron Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1065,7 +1065,8 @@ do_rc()
 		ldconfig local lpd lvm\
 		mdnsd mixerctl mopd motd mountall mountcritlocal \
 		mountcritremote mountd moused mrouted \
-		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
+		named ndbootd network newsyslog nfsd nfslocking npf \
+		ntpd ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity rarpd rbootd rndctl \
