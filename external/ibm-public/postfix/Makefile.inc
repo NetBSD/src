@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2011/02/13 05:12:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2011/02/13 05:45:47 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -17,9 +17,9 @@ CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl
 
-.if ${USE_LIB_SASL} == "sasl"
+.if ${USE_LIB_SASL} == "saslc"
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_SASLC_SASL
-.if (${MKCRYPTO} != "mo")
+.if (${MKCRYPTO} != "no")
 DPADD+= ${LIBSASCL} ${LIBSSL}
 LDADD+= -lsaslc -lssl
 .if (${MKKERBEROS} != "no")
