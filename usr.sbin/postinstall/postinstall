@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.113 2011/02/13 20:17:26 tron Exp $
+# $NetBSD: postinstall,v 1.114 2011/02/13 20:25:35 tron Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -816,6 +816,23 @@ do_gid()
 	check_ids "$1" groups "${DEST_DIR}/etc/group" \
 	    named ntpd sshd authpf _pflogd _rwhod _proxy _timedc \
 	    _sdpd _httpd _mdnsd _atf _tcpdump
+}
+
+#
+#	gpio
+#
+additem gpio "gpio configuration is up to date"
+do_gpio()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_gpio fix|check"
+	op="$1"
+	failed=0
+
+	populate_dir "$op" true "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
+		gpio.conf
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
