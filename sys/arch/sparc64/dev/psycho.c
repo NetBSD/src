@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.101 2010/07/10 10:07:40 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.102 2011/02/13 11:54:24 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.101 2010/07/10 10:07:40 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.102 2011/02/13 11:54:24 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -299,6 +299,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
 	char *model = prom_getpropstring(ma->ma_node, "model");
+	extern char machine_model[];
 
 	aprint_normal("\n");
 
@@ -527,10 +528,15 @@ found:
 		psycho_set_intr(sc, 15, psycho_bus_a,
 			&sc->sc_regs->pciaerr_int_map,
 			&sc->sc_regs->pciaerr_clr_int);
-		psycho_set_intr(sc, 15, psycho_powerfail,
-			&sc->sc_regs->power_int_map,
-			&sc->sc_regs->power_clr_int);
-		psycho_register_power_button(sc);
+		/*
+		 * Netra X1 may hang when the powerfail interrupt is enabled.
+		 */
+		if (strcmp(machine_model, "SUNW,UltraAX-i2") != 0) {
+			psycho_set_intr(sc, 15, psycho_powerfail,
+				&sc->sc_regs->power_int_map,
+				&sc->sc_regs->power_clr_int);
+			psycho_register_power_button(sc);
+		}
 		if (sc->sc_mode != PSYCHO_MODE_SABRE) {
 			/* sabre doesn't have these interrupts */
 			psycho_set_intr(sc, 15, psycho_bus_b,
