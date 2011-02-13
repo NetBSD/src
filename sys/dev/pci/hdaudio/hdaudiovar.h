@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.8 2011/02/12 15:15:34 jmcneill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.9 2011/02/13 17:49:12 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -158,12 +158,9 @@ struct hdaudio_softc {
 	uint32_t		sc_subsystem;
 
 	kmutex_t		sc_corb_mtx;
-	kcondvar_t		sc_corb_cv;
 	struct hdaudio_dma	sc_corb;
 	struct hdaudio_dma	sc_rirb;
 	uint16_t		sc_rirbrp;
-	uint32_t		sc_rirbdata;
-	bool			sc_rirbpoll;
 
 	struct hdaudio_codec	sc_codec[HDAUDIO_MAX_CODECS];
 
