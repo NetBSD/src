@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.16 2011/02/13 06:43:52 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.17 2011/02/13 07:25:56 nonaka Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.16 2011/02/13 06:43:52 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.17 2011/02/13 07:25:56 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -685,7 +685,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			aprint_error_dev(sc->sc_dev, "can't read EXT_CSD\n");
 			return error;
 		}
-		if ((sf->csd.csdver == 3) &&
+		if ((sf->csd.csdver == MMC_CSD_CSDVER_EXT_CSD) &&
 		    (ext_csd[EXT_CSD_STRUCTURE] > EXT_CSD_STRUCTURE_VER_1_2)) {
 			aprint_error_dev(sc->sc_dev,
 			    "unrecognised future version (%d)\n",
