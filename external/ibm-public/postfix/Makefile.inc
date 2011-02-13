@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.5 2011/02/13 01:50:03 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2011/02/13 01:53:50 christos Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
 USE_LIB_SASLC?= yes
+PKGROOT?= /usr/pkg
 
 WARNS?=	0
 
@@ -29,8 +30,8 @@ LDADD+= -lgssapi
 .elif defined(HAVE_CYRUS_SASL)
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
 	-DDEF_SERVER_SASL_TYPE=\"cyrus\" \
-	-I/usr/pkg/include/sasl
-LDADD+= -L/usr/pkg/lib -Wl,-R/usr/pkg/lib -lsasl2 
+	-I${PKGROOT}/include/sasl
+LDADD+= -L${PKGROOT}/lib -Wl,-R${PKGROOT}/lib -lsasl2 
 .else
 CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
 .endif
