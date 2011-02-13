@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.32 2011/02/13 05:36:34 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.33 2011/02/13 14:28:29 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -204,6 +204,7 @@ wskbd* at zrc? mux 1
 
 # LCD
 lcd0 at pxaip?
+options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
 
 # Audio
