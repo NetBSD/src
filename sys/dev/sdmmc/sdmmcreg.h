@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.6 2011/02/13 06:43:52 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.7 2011/02/13 07:25:56 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -165,6 +165,7 @@
 #define  MMC_CSD_CSDVER_1_0		0
 #define  MMC_CSD_CSDVER_1_1		1
 #define  MMC_CSD_CSDVER_1_2		2 /* MMC 4.1 - 4.2 - 4.3 */
+#define  MMC_CSD_CSDVER_EXT_CSD		3 /* Version is coded in CSD_STRUCTURE in EXT_CSD */
 #define MMC_CSD_MMCVER(resp)		MMC_RSP_BITS((resp), 122, 4)
 #define  MMC_CSD_MMCVER_1_0		0 /* MMC 1.0 - 1.2 */
 #define  MMC_CSD_MMCVER_1_4		1 /* MMC 1.4 */
