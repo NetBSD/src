@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.6 2010/11/07 17:51:24 jmmv Exp $
+# $NetBSD: t_mtree.sh,v 1.7 2011/02/13 12:47:27 uebayasi Exp $
 #
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Postprocess mtreee output, canonicalising portions that
+# Postprocess mtree output, canonicalising portions that
 # are expected to differ from one run to another.
 h_postprocess()
 {
