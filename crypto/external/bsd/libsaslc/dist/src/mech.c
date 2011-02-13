@@ -1,4 +1,4 @@
-/* $NetBSD: mech.c,v 1.4 2011/02/12 23:21:32 christos Exp $ */
+/* $NetBSD: mech.c,v 1.5 2011/02/13 05:39:52 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech.c,v 1.4 2011/02/12 23:21:32 christos Exp $");
+__RCSID("$NetBSD: mech.c,v 1.5 2011/02/13 05:39:52 christos Exp $");
 
 #include <sys/queue.h>
 
@@ -51,13 +51,20 @@ __RCSID("$NetBSD: mech.c,v 1.4 2011/02/12 23:21:32 christos Exp $");
 #include "saslc_private.h"
 
 /* mechanisms */
-extern const saslc__mech_t saslc__mech_anonymous;
-extern const saslc__mech_t saslc__mech_crammd5;
-extern const saslc__mech_t saslc__mech_digestmd5;
-extern const saslc__mech_t saslc__mech_external;
-extern const saslc__mech_t saslc__mech_gssapi;
-extern const saslc__mech_t saslc__mech_login;
-extern const saslc__mech_t saslc__mech_plain;
+extern const saslc__mech_t saslc__mech_anonymous
+    __weak_reference(saslc__mech_anonymous);
+extern const saslc__mech_t saslc__mech_crammd5
+    __weak_reference(saslc__mech_crammd5);
+extern const saslc__mech_t saslc__mech_digestmd5
+    __weak_reference(saslc__mech_digestmd5);
+extern const saslc__mech_t saslc__mech_external
+    __weak_reference(saslc__mech_external);
+extern const saslc__mech_t saslc__mech_gssapi
+    __weak_reference(saslc__mech_gssapi);
+extern const saslc__mech_t saslc__mech_login
+    __weak_reference(saslc__mech_login);
+extern const saslc__mech_t saslc__mech_plain
+    __weak_reference(saslc__mech_plain);
 
 static const saslc__mech_t *saslc__mechanisms[] = {
 	&saslc__mech_anonymous,
@@ -67,7 +74,6 @@ static const saslc__mech_t *saslc__mechanisms[] = {
 	&saslc__mech_gssapi,
 	&saslc__mech_login,
 	&saslc__mech_plain,
-	NULL
 };
 
 /*
@@ -100,7 +106,9 @@ saslc__mech_list_create(saslc_t *ctx)
 		saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
 		return NULL;
 	}
-	for (i = 0; saslc__mechanisms[i] != NULL; i++) {
+	for (i = 0; __arraycount(saslc__mechanisms); i++) {
+		if (saslc__mechanisms[i] == NULL)
+			continue;
 		if ((node = calloc(1, sizeof(*node))) == NULL)
 			goto error;
 
