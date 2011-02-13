@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.302 2011/02/11 02:06:09 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.303 2011/02/13 04:21:23 jym Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.302 $"
+#ident 		"GENERIC-$Revision: 1.303 $"
 
 maxusers	64		# estimated number of users
 
@@ -175,6 +175,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
+#options	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	ISO,TPIP	# OSI
