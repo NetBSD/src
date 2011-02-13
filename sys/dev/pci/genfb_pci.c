@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.30 2011/02/10 11:35:20 jmcneill Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.31 2011/02/13 11:00:58 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.30 2011/02/10 11:35:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.31 2011/02/13 11:00:58 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,16 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	bar = PCI_MAPREG_START;
 	while (bar <= PCI_MAPREG_ROM) {
 
-		type = pci_mapreg_type(sc->sc_pc, sc->sc_pcitag, bar);
+		sc->sc_bars[(bar - PCI_MAPREG_START) >> 2] = rom =
+		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, bar);
+
+		if ((bar >= PCI_MAPREG_END && bar < PCI_MAPREG_ROM) ||
+		    pci_mapreg_probe(sc->sc_pc, sc->sc_pcitag, bar, &type)
+		    == 0) {
+			/* skip unimplemented and non-BAR registers */
+			bar += 4;
+			continue;
+		}
 		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM || 
 		    PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_ROM) {
 			pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, bar, type,
@@ -154,13 +163,10 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 			    &sc->sc_ranges[idx].flags);
 			idx++;
 		}
-		sc->sc_bars[(bar - PCI_MAPREG_START) >> 2] = rom =
-		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, bar);
 		if ((bar == PCI_MAPREG_ROM) && (rom != 0)) {
 			pci_conf_write(sc->sc_pc, sc->sc_pcitag, bar, rom |
 			    PCI_MAPREG_ROM_ENABLE);
 		}
-
 		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM &&
 		    PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT)
 			bar += 8;
