@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2011/02/12 19:07:08 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2011/02/13 00:41:20 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -18,12 +18,19 @@ CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH \
 
 .if defined(HAVE_LIB_SASLC)
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_SASLC_SASL
-LDADD+=	 -lsaslc
+.if (${MKCRYPTO} != "mo")
+DPADD+= ${LIBSASCL} ${LIBSSL}
+LDADD+= -lsaslc -lssl
+.if (${MKKERBEROS} != "no")
+DPADD+= ${LIBGSSAPI}
+LDADD+= -lgssapi
+.endif
+.endif
 .elif defined(HAVE_CYRUS_SASL)
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
 	-DDEF_SERVER_SASL_TYPE=\"cyrus\" \
 	-I/usr/pkg/include/sasl
-LDADD+=	 -lsasl2 -L/usr/pkg/lib -Wl,-R/usr/pkg/lib
+LDADD+= -L/usr/pkg/lib -Wl,-R/usr/pkg/lib -lsasl2 
 .else
 CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
 .endif
