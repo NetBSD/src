@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.15 2011/02/12 03:25:37 nisimura Exp $
+$NetBSD: README.NAS,v 1.16 2011/02/13 20:39:11 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -27,7 +27,7 @@ re.15	viaide.13	IOMEGA StorCenter 250/500/1T
 
 			>> Not yet recognized, research in progress <<
 re.15	satalink.13 	QNAP TS-201, LevelOne FNS-5000B
-stge.15	acardide.16	D-Link DSM-G600
+stge.15	acardide.16	D-Link DSM-G600 (Rev.B only!)
 re.15	iteide.16	Netronix NH-230, Allnet ALL6250, Encore ENNHD-1000,
 			Planex NAS-01G
 re.15	satalink.16	Netronix NH-231, Allnet ALL6260, Longshine LCS-8311,
