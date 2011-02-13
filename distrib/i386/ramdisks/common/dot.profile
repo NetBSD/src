@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.5 2010/04/04 22:56:44 martin Exp $
+#	$NetBSD: dot.profile,v 1.6 2011/02/13 03:58:38 jym Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -46,21 +46,23 @@ export EDITOR
 
 umask 022
 
+ROOTDEV=/dev/md0a
+
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 	export DONEPROFILE
 
-	echo ''
-	echo 'Please wait.'
-	echo ''
-
 	# set up some sane defaults
-	stty newcrt werase ^W intr ^C kill ^U erase ^H
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^?
 	mount -t tmpfs tmpfs /tmp
 	mount -t tmpfs tmpfs /var
 	mount -t tmpfs -o union tmpfs /etc
 
 	mkdir -p /var/run /var/db
+
+	# mount the ramdisk read write
+	mount -u $ROOTDEV /
 
 	grep() sed -n "/$1/p"
 
