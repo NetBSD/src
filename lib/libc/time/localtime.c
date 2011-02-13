@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.54 2011/01/15 15:42:10 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.55 2011/02/13 23:58:40 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.9";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.54 2011/01/15 15:42:10 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.55 2011/02/13 23:58:40 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1477,7 +1477,12 @@ gmtsub(const timezone_t sp, const time_t * const timep, const long offset,
 struct tm *
 gmtime(const time_t *const timep)
 {
-	return gmtsub(NULL, timep, 0L, &tm);
+	struct tm *tmp = gmtsub(NULL, timep, 0L, &tm);
+
+	if (tmp == NULL)
+		errno = EOVERFLOW;
+
+	return tmp;
 }
 
 /*
@@ -1487,7 +1492,12 @@ gmtime(const time_t *const timep)
 struct tm *
 gmtime_r(const time_t * const timep, struct tm *tmp)
 {
-	return gmtsub(NULL, timep, 0L, tmp);
+	tmp = gmtsub(NULL, timep, 0L, tmp);
+
+	if (tmp == NULL)
+		errno = EOVERFLOW;
+
+	return tmp;
 }
 
 #ifdef STD_INSPIRED
@@ -1495,13 +1505,23 @@ gmtime_r(const time_t * const timep, struct tm *tmp)
 struct tm *
 offtime(const time_t *const timep, long offset)
 {
-	return gmtsub(NULL, timep, offset, &tm);
+	struct tm *tmp = gmtsub(NULL, timep, offset, &tm);
+
+	if (tmp == NULL)
+		errno = EOVERFLOW;
+
+	return tmp;
 }
 
 struct tm *
 offtime_r(const time_t *timep, long offset, struct tm *tmp)
 {
-	return gmtsub(NULL, timep, offset, tmp);
+	tmp = gmtsub(NULL, timep, offset, tmp);
+
+	if (tmp == NULL)
+		errno = EOVERFLOW;
+
+	return tmp;
 }
 
 #endif /* defined STD_INSPIRED */
