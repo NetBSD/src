@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.30 2010/12/24 13:00:24 wiz Exp $
+.\"	$NetBSD: dlfcn.3,v 1.31 2011/02/13 16:01:39 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 24, 2010
+.Dd February 13, 2011
 .Dt DLFCN 3
 .Os
 .Sh NAME
@@ -325,6 +325,12 @@ Thus, invoking
 a second time, immediately following a prior invocation, will result in
 .Dv NULL
 being returned.
+.Sh ERRORS
+The error
+.Dq Cannot dlopen non-loadable /usr/lib/libpthread.so.1
+is generated when a program
+.Fn dlopen Ns No s
+a module that needs libpthread but isn't linked against it itself.
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr rtld 1 ,
