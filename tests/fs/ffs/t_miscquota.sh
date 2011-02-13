@@ -1,4 +1,4 @@
-# $NetBSD: t_miscquota.sh,v 1.1.2.3 2011/02/12 21:49:08 bouyer Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.1.2.4 2011/02/13 20:58:28 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -43,6 +43,14 @@ test_case_root psnapshot_unconf_user quota_snap \
 test_case_root npsnapshot_unconf_user quota_snap \
     "create a non-persistent shapshot of quota-enabled fs, and do some writes and unconf" \
     -boLC le 1 user
+
+test_case log_unlink quota_log \
+    "an unlinked file cleaned by the log replay should update quota" \
+    -l le 1 user
+
+test_case log_unlink_remount quota_log \
+    "an unlinked file cleaned by the log replay after remount" \
+    -oRL le 1 user
 
 
 quota_walk_list()
@@ -115,6 +123,42 @@ quota_snap()
 	atf_check -s exit:0 \
 	    -o 'match:-        -  7days         5       -       -  7days' \
 	    $(atf_get_srcdir)/rump_repquota -av
+	#shutdown and check filesystem
+	rump_shutdown
+}
+
+quota_log()
+{
+	local srv2args=$1; shift
+	create_with_quotas $*
+	local q=$3
+	local expect
+
+	case ${q} in
+	user)
+		expect=u
+		fail=g
+		;;
+	group)
+		expect=g
+		fail=u
+		;;
+	*)
+		atf_fail "wrong quota type"
+		;;
+	esac
+
+	#start our server which create a file and unlink while keeping
+	# it open. The server halts itself without flush
+	atf_check -s exit:0 -o ignore \
+	    $(atf_get_srcdir)/h_quota2_tests -loU 5 ${IMG} ${RUMP_SERVER}
+	# we should have one unlinked file, but the log covers it.
+	atf_check -s exit:0 -o match:'3 files' -e ignore \
+	    fsck_ffs -nf -F ${IMG}
+	# have a kernel mount the fs again; it should cleanup the
+	# unlinked file
+	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_tests \
+	    ${srv2args} -b 5 ${IMG} ${RUMP_SERVER}
 	#shutdown and check filesystem
 	rump_shutdown
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_tests.c,v 1.1.2.4 2011/02/12 21:49:08 bouyer Exp $	*/
+/*	$NetBSD: h_quota2_tests.c,v 1.1.2.5 2011/02/13 20:58:28 bouyer Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -35,6 +35,7 @@ quota_test0(const char *testopts)
 	int fd;
 	int error;
 	rump_sys_chown(".", TEST_NONROOT_ID, TEST_NONROOT_ID);
+	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
 		perror("rump_sys_setegid");
@@ -67,6 +68,7 @@ quota_test1(const char *testopts)
 	int fd;
 	int error;
 	rump_sys_chown(".", TEST_NONROOT_ID, TEST_NONROOT_ID);
+	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
 		perror("rump_sys_setegid");
@@ -115,6 +117,7 @@ quota_test2(const char *testopts)
 	int error;
 	int i;
 	rump_sys_chown(".", TEST_NONROOT_ID, TEST_NONROOT_ID);
+	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
 		perror("rump_sys_setegid");
@@ -151,6 +154,7 @@ quota_test3(const char *testopts)
 	int error;
 	int i;
 	rump_sys_chown(".", TEST_NONROOT_ID, TEST_NONROOT_ID);
+	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
 		perror("rump_sys_setegid");
@@ -204,6 +208,8 @@ quota_test4(const char *testopts)
 	 * take an internal snapshot of the filesystem, and create a new
 	 * file with some data
 	 */
+	rump_sys_chown(".", 0, 0);
+	rump_sys_chmod(".", 0777);
 
 	for (i =0; testopts && i < strlen(testopts); i++) {
 		switch(testopts[i]) {
@@ -233,8 +239,10 @@ quota_test4(const char *testopts)
 	fss.fss_csize = 0;
 	if (rump_sys_ioctl(fssfd, FSSIOCSET, &fss) == -1)
 		err(1, "create snapshot");
-	if (unl)
-		rump_sys_unlink(FSTEST_MNTNAME "/le_snap");
+	if (unl) {
+		if (rump_sys_unlink(FSTEST_MNTNAME "/le_snap") == -1)
+			err(1, "unlink snapshot");
+	}
 
 	/* now create some extra files */
 
@@ -253,6 +261,63 @@ quota_test4(const char *testopts)
 	return 0;
 }
 
+static int
+quota_test5(const char *testopts)
+{
+	static char buf[512];
+	int fd;
+	int remount = 0;
+	int unlnk = 0;
+	int log = 0;
+	unsigned int i;
+
+	for (i =0; testopts && i < strlen(testopts); i++) {
+		switch(testopts[i]) {
+		case 'L':
+			log++;
+			break;
+		case 'R':
+			remount++;
+			break;
+		case 'U':
+			unlnk++;
+			break;
+		default:
+			errx(1, "test4: unknown option %c", testopts[i]);
+		}
+	}
+	if (remount) {
+		struct ufs_args uargs;
+		uargs.fspec = __UNCONST("/diskdev");
+		/* remount the fs read/write */
+		if (rump_sys_mount(MOUNT_FFS, FSTEST_MNTNAME,
+		    MNT_UPDATE | (log ? MNT_LOG : 0),
+		    &uargs, sizeof(uargs)) == -1)
+			err(1, "mount ffs rw %s", FSTEST_MNTNAME);
+	}
+
+	if (unlnk) {
+		/*
+		 * open and unlink a file
+		 */
+
+		fd = rump_sys_open("unlinked_file",
+		    O_EXCL| O_CREAT | O_RDWR, 0644);
+		if (fd < 0)
+			err(1, "create %s", "unlinked_file");
+		sprintf(buf, "test unlinked_file");
+		rump_sys_write(fd, buf, strlen(buf));
+		if (rump_sys_unlink("unlinked_file") == -1)
+			err(1, "unlink unlinked_file");
+		if (rump_sys_fsync(fd) == -1) 
+			err(1, "fsync unlinked_file");
+		rump_sys_reboot(RUMP_RB_NOSYNC, NULL);
+		errx(1, "reboot failed");
+		return 1;
+	}
+	return 0;
+}
+
 struct quota_test {
 	int (*func)(const char *);
 	const char *desc;
@@ -264,6 +329,7 @@ struct quota_test quota_tests[] = {
 	{ quota_test2, "create file up to hard limit"},
 	{ quota_test3, "create file beyond the soft limit after grace time"},
 	{ quota_test4, "take a snapshot and add some data"},
+	{ quota_test5, "open and unlink a file"},
 };
 
 static void
@@ -307,16 +373,19 @@ main(int argc, char **argv)
 	const char *filename;
 	const char *serverurl;
 	const char *topts = NULL;
-	int log = 0;
+	int mntopts = 0;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "blo:")) != -1) {
+	while ((ch = getopt(argc, argv, "blo:r")) != -1) {
 		switch(ch) {
 		case 'b':
 			background = 1;
 			break;
 		case 'l':
-			log = 1;
+			mntopts |= MNT_LOG;
+			break;
+		case 'r':
+			mntopts |= MNT_RDONLY;
 			break;
 		case 'o':
 			topts = optarg;
@@ -356,14 +425,12 @@ main(int argc, char **argv)
 		err(1, "mount point create");
 	rump_pub_etfs_register("/diskdev", filename, RUMP_ETFS_BLK);
 	uargs.fspec = __UNCONST("/diskdev");
-	if (rump_sys_mount(MOUNT_FFS, FSTEST_MNTNAME, (log) ? MNT_LOG : 0,
+	if (rump_sys_mount(MOUNT_FFS, FSTEST_MNTNAME, mntopts,
 	    &uargs, sizeof(uargs)) == -1)
 		die("mount ffs", errno);
 
 	if (rump_sys_chdir(FSTEST_MNTNAME) == -1)
 		err(1, "cd %s", FSTEST_MNTNAME);
-	rump_sys_chown(".", 0, 0);
-	rump_sys_chmod(".", 0777);
 	error = quota_tests[test].func(topts);
 	if (error) {
 		fprintf(stderr, " test %lu: %s returned %d: %s\n",
