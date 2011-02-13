@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 2008/10/22 11:58:00 tsutsui Exp $
+#	$NetBSD: dot.profile,v 1.3 2011/02/13 03:58:38 jym Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -36,13 +36,13 @@
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 TERM=wsvt25
+export TERM
 HOME=/
 export HOME
 BLOCKSIZE=1k
 export BLOCKSIZE
 EDITOR=ed
 export EDITOR
-export TERM
 
 umask 022
 
@@ -55,14 +55,15 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^?
-	echo ''
+	mount -t tmpfs tmpfs /tmp
+	mount -t tmpfs tmpfs /var
+	mount -t tmpfs -o union tmpfs /etc
+
+	mkdir -p /var/run /var/db
 
 	# mount the ramdisk read write
 	mount -u $ROOTDEV /
 
-	# pull in the functions that people will use from the shell prompt.
-	# . /.commonutils
-	# . /.instutils
 	grep() sed -n "/$1/p"
 
 	if [ -x /sysinst ]; then
