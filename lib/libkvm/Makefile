@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2010/10/05 23:48:16 jym Exp $
+#	$NetBSD: Makefile,v 1.47 2011/02/14 18:27:24 matt Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_FORT?= yes	# used primarily by setgid programs
@@ -6,7 +6,7 @@ USE_FORT?= yes	# used primarily by setgid programs
 USE_SHLIBDIR=	yes
 
 LIB=	kvm
-CPPFLAGS+=-DLIBC_SCCS -I${NETBSDSRCDIR}/sys
+CPPFLAGS+=-DLIBC_SCCS -I${NETBSDSRCDIR}/sys -D_KMEMUSER
 
 SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 
