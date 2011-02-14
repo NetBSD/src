@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25.2.7 2011/02/10 17:11:35 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.8 2011/02/14 20:55:36 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -378,7 +378,9 @@ int repquota1(const struct statvfs *vfs, int type)
 			if (dqbuf.dqb_itime > 0)
 				igrace = dqbuf.dqb_itime;
 		}
-		if (dqbuf.dqb_curinodes == 0 && dqbuf.dqb_curblocks == 0)
+		if (dqbuf.dqb_curinodes == 0 && dqbuf.dqb_curblocks == 0 &&
+		    dqbuf.dqb_bsoftlimit == 0 && dqbuf.dqb_bhardlimit == 0 &&
+		    dqbuf.dqb_isoftlimit == 0 && dqbuf.dqb_ihardlimit == 0)
 			continue;
 		if ((fup = lookup(id, type)) == 0)
 			fup = addid(id, type, (char *)0);
@@ -388,6 +390,10 @@ int repquota1(const struct statvfs *vfs, int type)
 	}
 	defaultq2e[type].q2e_val[QL_BLOCK].q2v_grace = bgrace;
 	defaultq2e[type].q2e_val[QL_FILE].q2v_grace = igrace;
+	defaultq2e[type].q2e_val[QL_BLOCK].q2v_softlimit = 
+	    defaultq2e[type].q2e_val[QL_BLOCK].q2v_hardlimit = 
+	    defaultq2e[type].q2e_val[QL_FILE].q2v_softlimit = 
+	    defaultq2e[type].q2e_val[QL_FILE].q2v_hardlimit = UQUAD_MAX;
 	fclose(qf);
 	valid[type] = 1;
 	if (xflag == 0)
@@ -423,13 +429,6 @@ printquotas(int type, const struct statvfs *vfs, int version)
 		fup = lookup(id, type);
 		if (fup == 0)
 			continue;
-		if (fup->fu_q2e.q2e_val[QL_BLOCK].q2v_cur == 0 &&
-		    fup->fu_q2e.q2e_val[QL_FILE].q2v_cur == 0)
-			continue;
-		if (strlen(fup->fu_name) > 9)
-			printf("%s ", fup->fu_name);
-		else
-			printf("%-10s", fup->fu_name);
 		for (i = 0; i < N_QL; i++) {
 			switch (QL_STATUS(quota2_check_limit(
 			     &fup->fu_q2e.q2e_val[i], 1, now))) {
@@ -450,6 +449,14 @@ printquotas(int type, const struct statvfs *vfs, int version)
 			}
 		}
 
+		if (fup->fu_q2e.q2e_val[QL_BLOCK].q2v_cur == 0 &&
+		    fup->fu_q2e.q2e_val[QL_FILE].q2v_cur == 0 && vflag == 0 &&
+		    overchar[QL_BLOCK] == '-' && overchar[QL_FILE] == '-')
+			continue;
+		if (strlen(fup->fu_name) > 9)
+			printf("%s ", fup->fu_name);
+		else
+			printf("%-10s", fup->fu_name);
 		printf("%c%c%9s%9s%9s%7s",
 			overchar[QL_BLOCK], overchar[QL_FILE],
 			intprt(fup->fu_q2e.q2e_val[QL_BLOCK].q2v_cur,
