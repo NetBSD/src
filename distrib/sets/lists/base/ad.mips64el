@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.39 2011/02/11 06:50:13 matt Exp $
+# $NetBSD: ad.mips64el,v 1.40 2011/02/14 18:20:44 matt Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -79,7 +79,6 @@
 ./usr/lib/64/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libdevmapper.so.1			base-compat-shlib	compat,pic,lvm
 ./usr/lib/64/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
-./usr/lib/64/libdm.so				base-compat-shlib	compat,pic
 ./usr/lib/64/libdm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/64/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns.so.5			base-compat-shlib	compat,pic
@@ -140,12 +139,12 @@
 ./usr/lib/64/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
-./usr/lib/64/liblzf.so.0			base-compat-shlib	compat,pic
-./usr/lib/64/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/64/liblzf.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzma.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libm.so.0				base-compat-shlib	compat,pic
@@ -212,6 +211,8 @@
 ./usr/lib/64/librumpdev.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpvfs.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpvfs.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/64/libsaslc.so.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libsaslc.so.0.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libsdp.so.2			base-obsolete		obsolete
 ./usr/lib/64/libsdp.so.2.0			base-obsolete		obsolete
 ./usr/lib/64/libskey.so.2			base-compat-shlib	compat,pic,skey
@@ -345,7 +346,6 @@
 ./usr/lib/o32/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libdevmapper.so.1			base-compat-shlib	compat,pic,lvm
 ./usr/lib/o32/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
-./usr/lib/o32/libdm.so				base-compat-shlib	compat,pic
 ./usr/lib/o32/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns.so.5			base-compat-shlib	compat,pic
@@ -406,13 +406,12 @@
 ./usr/lib/o32/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
-./usr/lib/o32/liblzf.so.0			base-compat-shlib	compat,pic
-./usr/lib/o32/liblzf.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/64/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/o32/liblzf.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzma.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libm.so.0				base-compat-shlib	compat,pic
@@ -479,6 +478,8 @@
 ./usr/lib/o32/librumpdev.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpvfs.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpvfs.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libsaslc.so.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libsaslc.so.0.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libsdp.so.2			base-obsolete		obsolete
 ./usr/lib/o32/libsdp.so.2.0			base-obsolete		obsolete
 ./usr/lib/o32/libskey.so.2			base-compat-shlib	compat,pic,skey
