@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.38 2011/02/12 10:25:46 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.39 2011/02/14 14:56:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.38 2011/02/12 10:25:46 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.39 2011/02/14 14:56:23 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -140,9 +140,10 @@ struct bothsys {
 
 pid_t	(*host_fork)(void);
 int	(*host_daemon)(int, int);
+int	(*host_execve)(const char *, char *const[], char *const[]);
 
 static unsigned dup2mask;
-#define ISDUP2D(fd) (1<<(fd) & dup2mask)
+#define ISDUP2D(fd) ((fd < 32) && (1<<(fd) & dup2mask))
 
 //#define DEBUGJACK
 #ifdef DEBUGJACK
@@ -217,6 +218,7 @@ rcinit(void)
 	rumpclient_dlsym = hijackdlsym;
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_daemon = dlsym(RTLD_NEXT, "daemon");
+	host_execve = dlsym(RTLD_NEXT, "execve");
 
 	/*
 	 * In theory cannot print anything during lookups because
@@ -272,6 +274,10 @@ rcinit(void)
 
 			rumpclient_setconnretry(timeout);
 		}
+	}
+
+	if (getenv_r("RUMPHIJACK__DUP2MASK", buf, sizeof(buf)) == 0) {
+		dup2mask = atoi(buf);
 	}
 }
 
@@ -397,11 +403,42 @@ fcntl(int fd, int cmd, ...)
 		op_fcntl = GETSYSCALL(rump, FCNTL);
 	} else {
 		op_fcntl = GETSYSCALL(host, FCNTL);
+		if (cmd == F_CLOSEM)
+			if (rumpclient__closenotify(&fd,
+			    RUMPCLIENT_CLOSE_FCLOSEM) == -1)
+				return -1;
 	}
 
 	va_start(ap, cmd);
 	rv = op_fcntl(fd, cmd, va_arg(ap, void *));
 	va_end(ap);
+	return rv;
+}
+
+int
+close(int fd)
+{
+	int (*op_close)(int);
+	int rv;
+
+	DPRINTF(("close -> %d\n", fd));
+	if (fd_isrump(fd)) {
+		int undup2 = 0;
+
+		if (ISDUP2D(fd))
+			undup2 = 1;
+		fd = fd_host2rump(fd);
+		op_close = GETSYSCALL(rump, CLOSE);
+		rv = op_close(fd);
+		if (rv == 0 && undup2)
+			dup2mask &= ~(1 << fd);
+	} else {
+		if (rumpclient__closenotify(&fd, RUMPCLIENT_CLOSE_CLOSE) == -1)
+			return -1;
+		op_close = GETSYSCALL(host, CLOSE);
+		rv = op_close(fd);
+	}
+
 	return rv;
 }
 
@@ -447,6 +484,8 @@ dup2(int oldd, int newd)
 			dup2mask |= 1<<newd;
 	} else {
 		host_dup2 = syscalls[DUALCALL_DUP2].bs_host;
+		if (rumpclient__closenotify(&newd, RUMPCLIENT_CLOSE_DUP2) == -1)
+			return -1;
 		rv = host_dup2(oldd, newd);
 	}
 
@@ -458,17 +497,21 @@ dup(int oldd)
 {
 	int (*op_dup)(int);
 	int newd;
+	int isrump;
 
 	DPRINTF(("dup -> %d\n", oldd));
 	if (fd_isrump(oldd)) {
 		op_dup = GETSYSCALL(rump, DUP);
+		oldd = fd_host2rump(oldd);
+		isrump = 1;
 	} else {
 		op_dup = GETSYSCALL(host, DUP);
+		isrump = 0;
 	}
 
 	newd = op_dup(oldd);
 
-	if (fd_isrump(oldd))
+	if (isrump)
 		newd = fd_rump2host(newd);
 	DPRINTF(("dup <- %d\n", newd));
 
@@ -522,6 +565,35 @@ daemon(int nochdir, int noclose)
 		return -1;
 
 	return 0;
+}
+
+int
+execve(const char *path, char *const argv[], char *const oenvp[])
+{
+	char buf[128];
+	char **env;
+	char *dup2maskenv[2];
+	char *dup2str;
+	int rv;
+
+	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%d", dup2mask);
+	dup2str = malloc(strlen(buf)+1);
+	if (dup2str == NULL)
+		return ENOMEM;
+	strcpy(dup2str, buf);
+	dup2maskenv[0] = dup2str;
+	dup2maskenv[1] = NULL;
+
+	rv = rumpclient__exec_augmentenv(oenvp, dup2maskenv, &env);
+	if (rv)
+		return rv;
+
+	rv = host_execve(path, argv, env);
+	if (rv != 0) {
+		free(dup2str);
+		free(env); /* XXX missing some strings within env */
+	}
+	return rv;
 }
 
 /*
@@ -760,6 +832,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 				pfd_host[i].fd = fds[i].fd;
 				pfd_host[i].events = fds[i].events;
 			}
+			pfd_rump[i].revents = pfd_host[i].revents = 0;
 			fds[i].revents = 0;
 		}
 
@@ -991,8 +1064,3 @@ FDCALL(ssize_t, writev, DUALCALL_WRITEV, 				\
 	(int fd, const struct iovec *iov, int iovcnt),			\
 	(int, const struct iovec *, int),				\
 	(fd, iov, iovcnt))
-
-FDCALL(int, close, DUALCALL_CLOSE,	 				\
-	(int fd),							\
-	(int),								\
-	(fd))
