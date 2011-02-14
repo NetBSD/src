@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.16 2011/02/13 20:39:11 phx Exp $
+$NetBSD: README.NAS,v 1.17 2011/02/14 12:36:38 nisimura Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -60,10 +60,20 @@ miniPCI		1:14		21
 ds1339 RTC	1:0x68
 sat MCU		1:0x0a
 
-- Thecus N1200
+- Thecus N1200 (MPC8347)
+- Thecus N3200 (MPC8347)
+
+  PCI		IDSEL		IPIC IRQ
+satalink	16		20
+
+  I2C		bus:addr
+f75375 fanctl	0:0x2e
+rs5c372a RTC	0:0x32
+sat MCU		0:0x36
+
 
   PCI		bus:IDSEL	IPIC IRQ
-satalink	0:16		22
+satalink	16		20
 
   I2C		bus:addr
 f75375 fanctl	0:0x2e
