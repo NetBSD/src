@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22 2011/02/10 13:54:45 nisimura Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.23 2011/02/14 09:00:04 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2011/02/10 13:54:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2011/02/14 09:00:04 nisimura Exp $");
 
 #include "opt_pci.h"
 
@@ -96,6 +96,7 @@ static int brdtype;
 #define BRD_SYNOLOGY		102
 #define BRD_STORCENTER		103
 #define BRD_DLINKDSM		104
+#define BRD_NH230NAS		105
 #define BRD_UNKNOWN		-1
 
 #define	PCI_CONFIG_ENABLE	0x80000000UL
@@ -156,6 +157,11 @@ pci_attach_hook(struct device *parent, struct device *self,
 	if (PCI_VENDOR(dev16) == PCI_VENDOR_ACARD) {
 		/* ACARD ATP865 at dev 16 */
 		brdtype = BRD_DLINKDSM;
+		return;
+	}
+	if (PCI_VENDOR(dev16) == PCI_VENDOR_ITE
+	    || PCI_VENDOR(dev16) == PCI_VENDOR_CMDTECH) {
+		brdtype = BRD_NH230NAS;
 		return;
 	}
 
@@ -347,6 +353,12 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	case BRD_DLINKDSM:
 		/* map line 13,14,15,16 to EPIC IRQ0,1,3,4 */
 		*ihp = (line < 15) ? line - 13 : line - 12;
+		break;
+	case BRD_NH230NAS:
+		/* map line 13,14,15,16 to EPIC IRQ0,3,1,2 */
+		*ihp =  (line == 16) ? 2 :
+			(line == 15) ? 1 :
+			(line == 14) ? 3 : 0;
 		break;
 	case BRD_STORCENTER:
 	default:
