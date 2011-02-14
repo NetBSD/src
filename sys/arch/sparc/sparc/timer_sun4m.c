@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.23 2011/01/27 06:24:59 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.24 2011/02/14 10:21:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.23 2011/01/27 06:24:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.24 2011/02/14 10:21:05 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,7 +106,8 @@ schedintr_4m(void *v)
 	 * all CPUs.  This function ends up being called on sun4m systems
 	 * every tick.
 	 */
-	hardclock(v);
+	if (!CPU_IS_PRIMARY(curcpu()))
+		hardclock(v);
 
 	/*
 	 * The factor 8 is only valid for stathz==100.
@@ -125,6 +126,7 @@ int
 clockintr_4m(void *cap)
 {
 
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
 	/*
 	 * XXX this needs to be fixed in a more general way
 	 * problem is that the kernel enables interrupts and THEN
@@ -141,9 +143,7 @@ clockintr_4m(void *cap)
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4m->t_limit);
 	tickle_tc();
-#if !defined(MULTIPROCESSOR)
 	hardclock((struct clockframe *)cap);
-#endif
 	return (1);
 }
 
