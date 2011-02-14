@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33.2.8 2011/02/14 20:35:24 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.33.2.9 2011/02/14 20:38:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33.2.8 2011/02/14 20:35:24 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.33.2.9 2011/02/14 20:38:56 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -393,7 +393,7 @@ showquotas(type, id, name)
 				printf("\t%s %s\n", msgb, qup->fsname);
 			continue;
 		}
-		if (vflag || dflag ||
+		if (vflag || dflag || msgi || msgb ||
 		    qup->q2e.q2e_val[QL_BLOCK].q2v_cur ||
 		    qup->q2e.q2e_val[QL_FILE].q2v_cur) {
 			if (lines++ == 0)
