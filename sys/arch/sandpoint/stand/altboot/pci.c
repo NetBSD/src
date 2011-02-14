@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.3 2011/02/10 13:38:08 nisimura Exp $ */
+/* $NetBSD: pci.c,v 1.4 2011/02/14 06:21:29 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -209,6 +209,11 @@ deviceinit(int bus, int dev, int func, unsigned long data)
 	/* 0x0c */
 	val = 0x80 << 8 | 0x08 /* 32B cache line */;
 	cfgwrite(bus, dev, func, 0x0c, val);
+
+	/* 0x3c */
+	val = cfgread(bus, dev, func, 0x3c) & ~0xff;
+	val |= dev; /* assign IDSEL */
+	cfgwrite(bus, dev, func, 0x3c, val);
 
 	/* skip legacy mode IDE controller BAR assignment */
 	val = cfgread(bus, dev, func, PCI_CLASS_REG);
