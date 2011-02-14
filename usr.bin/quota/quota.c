@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33.2.7 2011/02/03 15:56:15 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.33.2.8 2011/02/14 20:35:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33.2.7 2011/02/03 15:56:15 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.33.2.8 2011/02/14 20:35:24 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: quota.c,v 1.33.2.7 2011/02/03 15:56:15 bouyer Exp $");
 #include <unistd.h>
 
 #include <ufs/ufs/quota2.h>
+#include <ufs/ufs/quota1.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
@@ -543,6 +544,7 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	struct ext_getquota_args ext_gq_args;
 	struct getquota_rslt gq_rslt;
 	struct quota2_entry *q2e = &qup->q2e;
+	struct dqblk dqblk;
 	struct timeval tv;
 	char *cp;
 	int ret;
@@ -599,26 +601,28 @@ getnfsquota(fst, fs, qup, id, quotatype)
 		gettimeofday(&tv, NULL);
 			/* blocks*/
 		q2e->q2e_val[QL_BLOCK].q2v_hardlimit =
+		dqblk.dqb_bhardlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		q2e->q2e_val[QL_BLOCK].q2v_softlimit =
+		dqblk.dqb_bsoftlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		q2e->q2e_val[QL_BLOCK].q2v_cur =
+		dqblk.dqb_curblocks =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 			/* inodes */
-		q2e->q2e_val[QL_FILE].q2v_hardlimit =
+		dqblk.dqb_ihardlimit =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit;
-		q2e->q2e_val[QL_FILE].q2v_softlimit =
+		dqblk.dqb_isoftlimit =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit;
-		q2e->q2e_val[QL_FILE].q2v_cur =
+		dqblk.dqb_curinodes =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles;
 			/* grace times */
-		q2e->q2e_val[QL_BLOCK].q2v_time =
+		dqblk.dqb_btime =
 		    tv.tv_sec + gq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft;
-		q2e->q2e_val[QL_FILE].q2v_time =
+		dqblk.dqb_itime =
 		    tv.tv_sec + gq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft;
+		dqblk2q2e(&dqblk, q2e);
 		*cp = ':';
 		return (1);
 	default:

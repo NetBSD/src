@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.24.2.1 2011/02/08 22:14:22 bouyer Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.24.2.2 2011/02/14 20:35:24 bouyer Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.24.2.1 2011/02/08 22:14:22 bouyer Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.24.2.2 2011/02/14 20:35:24 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -30,6 +30,7 @@ __RCSID("$NetBSD: rquotad.c,v 1.24.2.1 2011/02/08 22:14:22 bouyer Exp $");
 #include <syslog.h>
 
 #include <ufs/ufs/quota2_prop.h>
+#include <ufs/ufs/quota1.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/rquota.h>
 #include <arpa/inet.h>
@@ -164,6 +165,7 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 	struct ext_getquota_args ext_getq_args;
 	struct getquota_rslt getq_rslt;
 	struct quota2_entry q2e;
+	struct dqblk dqblk;
 	int type;
 	int8_t version;
 	struct timeval timev;
@@ -207,26 +209,27 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 		/* failed, return noquota */
 		getq_rslt.status = Q_NOQUOTA;
 	} else {
+		q2e2dqblk(&q2e, &dqblk);
 		gettimeofday(&timev, NULL);
 		getq_rslt.status = Q_OK;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_active = TRUE;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize = DEV_BSIZE;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit =
-		    q2e.q2e_val[QL_BLOCK].q2v_hardlimit;
+		    dqblk.dqb_bhardlimit;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit =
-		    q2e.q2e_val[QL_BLOCK].q2v_softlimit;
+		    dqblk.dqb_bsoftlimit;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks =
-		    q2e.q2e_val[QL_BLOCK].q2v_cur;
+		    dqblk.dqb_curblocks;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit =
-		    q2e.q2e_val[QL_FILE].q2v_hardlimit;
+		    dqblk.dqb_ihardlimit;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit =
-		    q2e.q2e_val[QL_FILE].q2v_softlimit;
+		    dqblk.dqb_isoftlimit;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles =
-		    q2e.q2e_val[QL_FILE].q2v_softlimit;
+		    dqblk.dqb_curinodes;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft =
-		    q2e.q2e_val[QL_BLOCK].q2v_time - timev.tv_sec;
+		    dqblk.dqb_btime;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft =
-		    q2e.q2e_val[QL_FILE].q2v_time - timev.tv_sec;
+		    dqblk.dqb_itime;
 	}
 out:
 	if (!svc_sendreply(transp, xdr_getquota_rslt, (char *)&getq_rslt))

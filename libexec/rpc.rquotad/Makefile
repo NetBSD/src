@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.64.1 2011/02/08 22:14:22 bouyer Exp $
+#	$NetBSD: Makefile,v 1.6.64.2 2011/02/14 20:35:24 bouyer Exp $
 
 .include <bsd.own.mk>
 PROG =	rpc.rquotad
@@ -13,7 +13,7 @@ LDADD=	-lrpcsvc -lprop
 .PATH:  ${NETBSDSRCDIR}/usr.bin/quota
 SRCS+=	getvfsquota.c
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/ufs
-SRCS+=	quota2_prop.c
+SRCS+=	quota2_prop.c quota1_subr.c
 
 
 .include <bsd.prog.mk>
