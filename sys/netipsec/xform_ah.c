@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.27 2011/02/10 20:24:27 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.28 2011/02/14 13:43:45 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.27 2011/02/10 20:24:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.28 2011/02/14 13:43:45 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -829,8 +829,8 @@ ah_input_cb(struct cryptop *crp)
 	}
 #endif
 
-	mutex_enter(softnet_lock);
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
@@ -854,8 +854,8 @@ ah_input_cb(struct cryptop *crp)
 			sav->tdb_cryptoid = crp->crp_sid;
 
 		if (crp->crp_etype == EAGAIN) {
-			splx(s);
 			mutex_exit(softnet_lock);
+			splx(s);
 			return crypto_dispatch(crp);
 		}
 
@@ -964,14 +964,14 @@ ah_input_cb(struct cryptop *crp)
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag);
 
 	KEY_FREESAV(&sav);
-	splx(s);
 	mutex_exit(softnet_lock);
+	splx(s);
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
-	splx(s);
 	mutex_exit(softnet_lock);
+	splx(s);
 	if (m != NULL)
 		m_freem(m);
 	if (tc != NULL)
@@ -1235,8 +1235,8 @@ ah_output_cb(struct cryptop *crp)
 	ptr = (tc + 1);
 	m = (struct mbuf *) crp->crp_buf;
 
-	mutex_enter(softnet_lock);
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
@@ -1255,8 +1255,8 @@ ah_output_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
-			splx(s);
 			mutex_exit(softnet_lock);
+			splx(s);
 			return crypto_dispatch(crp);
 		}
 
@@ -1302,14 +1302,14 @@ ah_output_cb(struct cryptop *crp)
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr);
 	KEY_FREESAV(&sav);
-	splx(s);
 	mutex_exit(softnet_lock);
+	splx(s);
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
-	splx(s);
 	mutex_exit(softnet_lock);
+	splx(s);
 	if (m)
 		m_freem(m);
 	free(tc, M_XDATA);
