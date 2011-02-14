@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.86 2011/01/27 06:24:59 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.87 2011/02/14 03:18:10 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -496,5 +496,12 @@ extern u_int cpu_ready_mask;		/* the set of CPUs marked as READY */
 
 #define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
 
+#if defined(DDB) || defined(MULTIPROCESSOR)
+/*
+ * These are called by ddb mach functions.
+ */
+void cpu_debug_dump(void);
+void cpu_xcall_dump(void);
+#endif
 
 #endif	/* _sparc_cpuvar_h */
