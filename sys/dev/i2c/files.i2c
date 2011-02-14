@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.32 2011/01/21 19:11:47 jakllsch Exp $
+#	$NetBSD: files.i2c,v 1.33 2011/02/14 08:50:39 hannken Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -145,3 +145,8 @@ file	dev/i2c/smscmon.c		smscmon
 device	g760a: sysmon_envsys
 attach	g760a at iic
 file	dev/i2c/g760a.c			g760a
+
+# IBM Hawk Integrated Systems Management Processor
+device	ibmhawk: sysmon_envsys
+attach	ibmhawk at iic
+file	dev/i2c/ibmhawk.c		ibmhawk

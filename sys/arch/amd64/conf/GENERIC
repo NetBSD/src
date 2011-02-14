@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.303 2011/02/13 04:21:23 jym Exp $
+# $NetBSD: GENERIC,v 1.304 2011/02/14 08:50:39 hannken Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.303 $"
+#ident 		"GENERIC-$Revision: 1.304 $"
 
 maxusers	64		# estimated number of users
 
@@ -427,6 +427,9 @@ amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e
 #wbsio*	at isa? port 0x4e
+
+# IBM Hawk Integrated Systems Management Processor
+#ibmhawk0	at iic? addr 0x37
 
 # LM7[89] and compatible hardware monitors
 # Use flags to select temp sensor type (see lm(4) man page for details)
