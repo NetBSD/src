@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)repquota.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: repquota.8,v 1.9.50.2 2011/02/10 17:11:35 bouyer Exp $
+.\"	$NetBSD: repquota.8,v 1.9.50.3 2011/02/14 20:55:36 bouyer Exp $
 .\"
 .Dd February 10, 2011
 .Dt REPQUOTA 8
@@ -75,6 +75,7 @@ Print only user quotas (the default is to print both
 group and user quotas if they exist).
 .It Fl v
 Print a header line before printing each filesystem quotas.
+Print all exiting quotas, including those whose current usage is 0.
 .It Fl D
 Debug: print plist sent to and received from kernel.
 .It Fl h
