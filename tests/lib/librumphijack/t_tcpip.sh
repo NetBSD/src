@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.3 2011/02/14 19:54:29 pooka Exp $
+#       $NetBSD: t_tcpip.sh,v 1.4 2011/02/14 19:56:30 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -134,8 +134,10 @@ ssh_body()
 
 	atf_check -s exit:0 -o save:ssh.out				\
 	    env LD_PRELOAD=/usr/lib/librumphijack.so			\
-	    ssh -T -F ssh_config 127.0.0.1 ls -li $(pwd)/testdir
-	atf_check -s exit:0 -o file:ssh.out ls -li $(pwd)/testdir
+	    ssh -T -F ssh_config 127.0.0.1 env BLOCKSIZE=512		\
+	    ls -li $(pwd)/testdir
+	atf_check -s exit:0 -o file:ssh.out env BLOCKSIZE=512 		\
+	    ls -li $(pwd)/testdir
 }
 
 ssh_cleanup()
