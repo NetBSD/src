@@ -1,4 +1,4 @@
-/* $NetBSD: ibmhawk.c,v 1.1 2011/02/14 08:50:39 hannken Exp $ */
+/* $NetBSD: ibmhawk.c,v 1.2 2011/02/14 14:15:25 hannken Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -318,15 +318,11 @@ ibmhawk_set(struct ibmhawk_softc *sc,
 			    "failed to attach \"%s\"\n", dp->desc);
 	}
 
-	dp->value_cur = ibmhawk_normalize(value, dp->units);
-	if (!valid)
-		dp->state = ENVSYS_SINVALID;
-	else if (sd->ihs_warnmin != 0 && value < sd->ihs_warnmin)
-		dp->state = ENVSYS_SWARNUNDER;
-	else if (sd->ihs_warnmax != 0 && value > sd->ihs_warnmax)
-		dp->state = ENVSYS_SWARNOVER;
-	else
+	if (valid) {
+		dp->value_cur = ibmhawk_normalize(value, dp->units);
 		dp->state = ENVSYS_SVALID;
+	} else
+		dp->state = ENVSYS_SINVALID;
 }
 
 static void
