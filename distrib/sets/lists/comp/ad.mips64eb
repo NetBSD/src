@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.22 2011/02/12 19:21:29 nakayama Exp $
+# $NetBSD: ad.mips64eb,v 1.23 2011/02/14 18:20:44 matt Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -233,6 +233,7 @@
 ./usr/lib/64/libdevmapper_p.a			comp-lvm-proflib	compat,profile,lvm
 ./usr/lib/64/libdevmapper_pic.a			comp-lvm-piclib		compat,pic,lvm
 ./usr/lib/64/libdm.a				comp-c-lib		compat
+./usr/lib/64/libdm.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libdm_g.a				-unknown-		compat,debuglib
 ./usr/lib/64/libdm_p.a				comp-c-proflib		compat,profile
 ./usr/lib/64/libdm_pic.a			comp-c-piclib		compat,pic
@@ -515,6 +516,10 @@
 ./usr/lib/64/librumpvfs.so			base-sys-shlib		compat,pic
 ./usr/lib/64/librumpvfs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/librumpvfs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libsaslc.a				comp-c-lib		compat,crypto
+./usr/lib/64/libsaslc.so			base-sys-shlib		compat,pic,crypto
+./usr/lib/64/libsaslc_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/64/libsaslc_pic.a			comp-c-piclib		compat,pic,crypto
 ./usr/lib/64/libsdp.a				comp-obsolete		obsolete
 ./usr/lib/64/libsdp.so				base-obsolete		obsolete
 ./usr/lib/64/libsdp_p.a				comp-obsolete		obsolete
@@ -758,6 +763,7 @@
 ./usr/lib/o32/libdevmapper_p.a			comp-lvm-proflib	compat,profile,lvm
 ./usr/lib/o32/libdevmapper_pic.a		comp-lvm-piclib		compat,pic,lvm
 ./usr/lib/o32/libdm.a				comp-c-lib		compat
+./usr/lib/o32/libdm.so				base-sys-shlib		compat,pic
 ./usr/lib/o32/libdm_g.a				-unknown-		compat,debuglib
 ./usr/lib/o32/libdm_p.a				comp-c-proflib		compat,profile
 ./usr/lib/o32/libdm_pic.a			comp-c-piclib		compat,pic
@@ -1040,6 +1046,10 @@
 ./usr/lib/o32/librumpvfs.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/librumpvfs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/librumpvfs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libsaslc.a			comp-c-lib		compat,crypto
+./usr/lib/o32/libsaslc.so			base-sys-shlib		compat,pic,crypto
+./usr/lib/o32/libsaslc_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/o32/libsaslc_pic.a			comp-c-piclib		compat,pic,crypto
 ./usr/lib/o32/libsdp.a				comp-obsolete		obsolete
 ./usr/lib/o32/libsdp.so				base-obsolete		obsolete
 ./usr/lib/o32/libsdp_p.a			comp-obsolete		obsolete
@@ -1285,6 +1295,7 @@
 ./usr/libdata/debug/usr/lib/64/librumpvfs.so.0.0.debug	comp-rump-debug	debug,compat
 #./usr/libdata/debug/usr/lib/64/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug,compat
 #./usr/libdata/debug/usr/lib/64/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
 ./usr/libdata/debug/usr/lib/64/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libss.so.6.0.debug		comp-krb5-debug	kerberos,debug,compat
@@ -1476,6 +1487,7 @@
 ./usr/libdata/debug/usr/lib/o32/librumpvfs.so.0.0.debug	comp-rump-debug	debug,compat
 #./usr/libdata/debug/usr/lib/o32/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug,compat
 #./usr/libdata/debug/usr/lib/o32/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libss.so.6.0.debug		comp-krb5-debug	kerberos,debug,compat
