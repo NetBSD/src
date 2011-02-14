@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.4 2011/02/10 13:38:08 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.5 2011/02/14 06:21:29 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ BRD_DECL(syno);
 BRD_DECL(qnap);
 BRD_DECL(iomega);
 BRD_DECL(dlink);
+BRD_DECL(nhnas);
 
 static struct brdprop brdlist[] = {
     {
@@ -62,21 +63,21 @@ static struct brdprop brdlist[] = {
 	BRD_SANDPOINTX3,
 	0,
 	"com", 0x3f8, 115200,
-	motsetup, motbrdfix, motpcifix },
+	motsetup, motbrdfix, motpcifix, NULL },
     {
 	"encpp1",
 	"EnCore PP1",
 	BRD_ENCOREPP1,
 	0,
 	"com", 0x3f8, 115200,
-	encsetup, encbrdfix, encpcifix },
+	encsetup, encbrdfix, encpcifix, NULL },
     {
 	"kurobox",
 	"KuroBox",
 	BRD_KUROBOX,
 	32768000,
 	"eumb", 0x4600, 57600,
-	kurosetup, kurobrdfix, kuropcifix },
+	kurosetup, kurobrdfix, NULL, NULL },
     {
 	"synology",
 	"Synology DS",
@@ -84,35 +85,42 @@ static struct brdprop brdlist[] = {
 	33164691,	/* from Synology/Linux source */
 	/* 33168000,		XXX better precision? */
 	"eumb", 0x4500, 115200,
-	synosetup, synobrdfix, synopcifix, synoreset },
+	NULL, synobrdfix, NULL, synoreset },
     {
 	"qnap",
 	"QNAP TS-101",
 	BRD_QNAPTS101,
 	0,
 	"eumb", 0x4500, 115200,
-	NULL, NULL, qnappcifix },
+	NULL, qnapbrdfix, NULL, NULL },
     {
 	"iomega",
 	"IOMEGA StorCenter",
 	BRD_STORCENTER,
 	0,
 	"eumb", 0x4500, 115200,
-	NULL, iomegabrdfix, iomegapcifix },
+	NULL, iomegabrdfix, NULL, NULL },
     {
 	"dlink",
 	"D-Link DSM-G600",
 	BRD_DLINKDSM,
 	0,
 	"eumb", 0x4500, 9600,
-	NULL, dlinkbrdfix, dlinkpcifix },
+	NULL, dlinkbrdfix, NULL, NULL },
+    {
+	"nhnas",
+	"Netronics NH230/231",
+	BRD_NH230NAS,
+	0,
+	"eumb", 0x4500, 9600,
+	NULL, nhnasbrdfix, NULL, NULL },
     {
 	"unknown",
 	"Unknown board",
 	BRD_UNKNOWN,
 	0,
 	"eumb", 0x4500, 115200,
-	NULL, NULL, NULL }, /* must be the last */
+	NULL, NULL, NULL, NULL }, /* must be the last */
 };
 
 static struct brdprop *brdprop;
@@ -169,7 +177,7 @@ brdsetup(void)
 	char *consname;
 	int consport;
 	uint32_t extclk;
-	unsigned pchb, pcib, val;
+	unsigned pchb, pcib, dev11, dev13, dev15, dev16, val;
 	extern struct btinfo_memory bi_mem;
 	extern struct btinfo_console bi_cons;
 	extern struct btinfo_clock bi_clk;
@@ -190,32 +198,43 @@ brdsetup(void)
 	extclk = EXT_CLK_FREQ;	/* usually 33MHz */
 	busclock = 0;
 
+	dev11 = pcimaketag(0, 11, 0);
+	dev13 = pcimaketag(0, 13, 0);
+	dev15 = pcimaketag(0, 15, 0);
+	dev16 = pcimaketag(0, 16, 0);
+
 	if (pcifinddev(0x10ad, 0x0565, &pcib) == 0) {
+		/* WinBond 553 southbridge at dev 11 */
 		brdtype = BRD_SANDPOINTX3;
 	}
 	else if (pcifinddev(0x1106, 0x0686, &pcib) == 0) {
+		/* VIA 686B southbridge at dev 22 */
 		brdtype = BRD_ENCOREPP1;
 	}
-	else if ((pcicfgread(pcimaketag(0, 11, 0), PCI_CLASS_REG) >> 16) ==
-	    PCI_CLASS_ETH) {
-		/* tlp (ADMtek AN985) or re (RealTek 8169S) at dev 11 */
+	else if ((pcicfgread(dev11, PCI_CLASS_REG) >> 16) == PCI_CLASS_ETH) {
+		/* ADMtek AN985 (tlp) or RealTek 8169S (re) at dev 11 */
 		brdtype = BRD_KUROBOX;
 	}
-	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
-	    0x11ab) {				/* PCI_VENDOR_MARVELL */
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
+		/* SKnet/Marvell (sk) at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 	}
-	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
-	    0x8086) {				/* PCI_VENDOR_INTEL */
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086) {
+		/* Intel (wm) at dev 15 */
 		brdtype = BRD_QNAPTS101;
 	}
-	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 13, 0), PCI_ID_REG)) ==
-	    0x1106) {				/* PCI_VENDOR_VIA */
+	else if (PCI_VENDOR(pcicfgread(dev13, PCI_ID_REG)) == 0x1106) {
+		/* VIA 6410 (viaide) at dev 13 */
 		brdtype = BRD_STORCENTER;
 	}
-	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 16, 0), PCI_ID_REG)) ==
-	    0x1191) {				/* PCI_VENDOR_ACARD */
+	else if (PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1191) {
+		/* ACARD ATP865 (acardide) at dev 16 */
 		brdtype = BRD_DLINKDSM;
+	}
+	else if (PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1283
+		   || PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1095) {
+		/* ITE (iteide) or SiI (satalink) at dev 16 */
+		brdtype = BRD_NH230NAS;
 	}
 
 	brdprop = brd_lookup(brdtype);
@@ -320,7 +339,7 @@ encsetup(struct brdprop *brd)
 void
 encbrdfix(struct brdprop *brd)
 {
-	unsigned ac97, ide, pcib, pmgt, usb12, umot4, val;
+	unsigned ac97, ide, pcib, pmgt, usb12, usb34, val;
 
 /*
  * VIA82C686B Southbridge
@@ -334,7 +353,7 @@ encbrdfix(struct brdprop *brd)
 	pcib  = pcimaketag(0, 22, 0);
 	ide   = pcimaketag(0, 22, 1);
 	usb12 = pcimaketag(0, 22, 2);
-	umot4 = pcimaketag(0, 22, 3);
+	usb34 = pcimaketag(0, 22, 3);
 	pmgt  = pcimaketag(0, 22, 4);
 	ac97  = pcimaketag(0, 22, 5);
 
@@ -368,12 +387,122 @@ encbrdfix(struct brdprop *brd)
 	val = pcicfgread(usb12, 0x3c) &~ 0xff;
 	val |= 11;
 	pcicfgwrite(usb12, 0x3c, val);
-	val = pcicfgread(umot4, 0x3c) &~ 0xff;
+	val = pcicfgread(usb34, 0x3c) &~ 0xff;
 	val |= 11;
-	pcicfgwrite(umot4, 0x3c, val);
+	pcicfgwrite(usb34, 0x3c, val);
 	val = pcicfgread(ac97, 0x3c) &~ 0xff;
 	val |= 5;
 	pcicfgwrite(ac97, 0x3c, val);
+}
+
+void
+encpcifix(struct brdprop *brd)
+{
+	unsigned ide, irq, net, pcib, steer, val;
+
+#define	STEER(v, b) (((v) & (b)) ? "edge" : "level")
+	pcib = pcimaketag(0, 22, 0);
+	ide  = pcimaketag(0, 22, 1);
+	net  = pcimaketag(0, 25, 0);
+
+	/*
+	 * //// VIA PIRQ ////
+	 * 0x57/56/55/54 - Dx CB Ax xS
+	 */
+	val = pcicfgread(pcib, 0x54);	/* Dx CB Ax xs */
+	steer = val & 0xf;
+	irq = (val >> 12) & 0xf;	/* 15:12 */
+	if (irq) {
+		printf("pin A -> irq %d, %s\n",
+			irq, STEER(steer, 0x1));
+	}
+	irq = (val >> 16) & 0xf;	/* 19:16 */
+	if (irq) {
+		printf("pin B -> irq %d, %s\n",
+			irq, STEER(steer, 0x2));
+	}
+	irq = (val >> 20) & 0xf;	/* 23:20 */
+	if (irq) {
+		printf("pin C -> irq %d, %s\n",
+			irq, STEER(steer, 0x4));
+	}
+	irq = (val >> 28);		/* 31:28 */
+	if (irq) {
+		printf("pin D -> irq %d, %s\n",
+			irq, STEER(steer, 0x8));
+	}
+#if 0
+	/*
+	 * //// IDE fixup ////
+	 * - "native mode" (ide 0x09)
+	 * - use primary only (ide 0x40)
+	 */
+	/* ide: 0x09 - programming interface; 1000'SsPp */
+	val = pcicfgread(ide, 0x08) & 0xffff00ff;
+	pcicfgwrite(ide, 0x08, val | (0x8f << 8));
+
+	/* ide: 0x10-20 - leave them PCI memory space assigned */
+
+	/* ide: 0x40 - use primary only */
+	val = pcicfgread(ide, 0x40) &~ 03;
+	val |= 02;
+	pcicfgwrite(ide, 0x40, val);
+#else
+	/*
+	 * //// IDE fixup ////
+	 * - "compatiblity mode" (ide 0x09)
+	 * - use primary only (ide 0x40)
+	 * - remove PCI pin assignment (ide 0x3d)
+	 */
+	/* ide: 0x09 - programming interface; 1000'SsPp */
+	val = pcicfgread(ide, 0x08) & 0xffff00ff;
+	val |= (0x8a << 8);
+	pcicfgwrite(ide, 0x08, val);
+
+	/* ide: 0x10-20 */
+	/*
+	experiment shows writing ide: 0x09 changes these
+	register behaviour. The pcicfgwrite() above writes
+	0x8a at ide: 0x09 to make sure legacy IDE.  Then
+	reading BAR0-3 is to return value 0s even though
+	pcisetup() has written range assignments.  Value
+	overwrite makes no effect. Having 0x8f for native
+	PCIIDE doesn't change register values and brings no
+	weirdness.
+	 */
+
+	/* ide: 0x40 - use primary only */
+	val = pcicfgread(ide, 0x40) &~ 03;
+	val |= 02;
+	pcicfgwrite(ide, 0x40, val);
+
+		/* ide: 0x3d/3c - turn off PCI pin */
+	val = pcicfgread(ide, 0x3c) & 0xffff00ff;
+	pcicfgwrite(ide, 0x3c, val);
+#endif
+	/*
+	 * //// USBx2, audio, and modem fixup ////
+	 * - disable USB #0 and #1 (pcib 0x48 and 0x85)
+	 * - disable AC97 audio and MC97 modem (pcib 0x85)
+	 */
+
+	/* pcib: 0x48 - disable USB #0 at function 2 */
+	val = pcicfgread(pcib, 0x48);
+	pcicfgwrite(pcib, 0x48, val | 04);
+
+	/* pcib: 0x85 - disable USB #1 at function 3 */
+	/* pcib: 0x85 - disable AC97/MC97 at function 5/6 */
+	val = pcicfgread(pcib, 0x84);
+	pcicfgwrite(pcib, 0x84, val | 0x1c00);
+
+	/*
+	 * //// fxp fixup ////
+	 * - use PCI pin A line 25 (fxp 0x3d/3c)
+	 */
+	/* 0x3d/3c - PCI pin/line */
+	val = pcicfgread(net, 0x3c) & 0xffff0000;
+	val |= (('A' - '@') << 8) | 25;
+	pcicfgwrite(net, 0x3c, val);
 }
 
 void
@@ -499,116 +628,6 @@ motpcifix(struct brdprop *brd)
 }
 
 void
-encpcifix(struct brdprop *brd)
-{
-	unsigned ide, irq, net, pcib, steer, val;
-
-#define	STEER(v, b) (((v) & (b)) ? "edge" : "level")
-	pcib = pcimaketag(0, 22, 0);
-	ide  = pcimaketag(0, 22, 1);
-	net  = pcimaketag(0, 25, 0);
-
-	/*
-	 * //// VIA PIRQ ////
-	 * 0x57/56/55/54 - Dx CB Ax xS
-	 */
-	val = pcicfgread(pcib, 0x54);	/* Dx CB Ax xs */
-	steer = val & 0xf;
-	irq = (val >> 12) & 0xf;	/* 15:12 */
-	if (irq) {
-		printf("pin A -> irq %d, %s\n",
-			irq, STEER(steer, 0x1));
-	}
-	irq = (val >> 16) & 0xf;	/* 19:16 */
-	if (irq) {
-		printf("pin B -> irq %d, %s\n",
-			irq, STEER(steer, 0x2));
-	}
-	irq = (val >> 20) & 0xf;	/* 23:20 */
-	if (irq) {
-		printf("pin C -> irq %d, %s\n",
-			irq, STEER(steer, 0x4));
-	}
-	irq = (val >> 28);		/* 31:28 */
-	if (irq) {
-		printf("pin D -> irq %d, %s\n",
-			irq, STEER(steer, 0x8));
-	}
-#if 0
-	/*
-	 * //// IDE fixup ////
-	 * - "native mode" (ide 0x09)
-	 * - use primary only (ide 0x40)
-	 */
-	/* ide: 0x09 - programming interface; 1000'SsPp */
-	val = pcicfgread(ide, 0x08) & 0xffff00ff;
-	pcicfgwrite(ide, 0x08, val | (0x8f << 8));
-
-	/* ide: 0x10-20 - leave them PCI memory space assigned */
-
-	/* ide: 0x40 - use primary only */
-	val = pcicfgread(ide, 0x40) &~ 03;
-	val |= 02;
-	pcicfgwrite(ide, 0x40, val);
-#else
-	/*
-	 * //// IDE fixup ////
-	 * - "compatiblity mode" (ide 0x09)
-	 * - use primary only (ide 0x40)
-	 * - remove PCI pin assignment (ide 0x3d)
-	 */
-	/* ide: 0x09 - programming interface; 1000'SsPp */
-	val = pcicfgread(ide, 0x08) & 0xffff00ff;
-	val |= (0x8a << 8);
-	pcicfgwrite(ide, 0x08, val);
-
-	/* ide: 0x10-20 */
-	/*
-	experiment shows writing ide: 0x09 changes these
-	register behaviour. The pcicfgwrite() above writes
-	0x8a at ide: 0x09 to make sure legacy IDE.  Then
-	reading BAR0-3 is to return value 0s even though
-	pcisetup() has written range assignments.  Value
-	overwrite makes no effect. Having 0x8f for native
-	PCIIDE doesn't change register values and brings no
-	weirdness.
-	 */
-
-	/* ide: 0x40 - use primary only */
-	val = pcicfgread(ide, 0x40) &~ 03;
-	val |= 02;
-	pcicfgwrite(ide, 0x40, val);
-
-		/* ide: 0x3d/3c - turn off PCI pin */
-	val = pcicfgread(ide, 0x3c) & 0xffff00ff;
-	pcicfgwrite(ide, 0x3c, val);
-#endif
-	/*
-	 * //// USBx2, audio, and modem fixup ////
-	 * - disable USB #0 and #1 (pcib 0x48 and 0x85)
-	 * - disable AC97 audio and MC97 modem (pcib 0x85)
-	 */
-
-	/* pcib: 0x48 - disable USB #0 at function 2 */
-	val = pcicfgread(pcib, 0x48);
-	pcicfgwrite(pcib, 0x48, val | 04);
-
-	/* pcib: 0x85 - disable USB #1 at function 3 */
-	/* pcib: 0x85 - disable AC97/MC97 at function 5/6 */
-	val = pcicfgread(pcib, 0x84);
-	pcicfgwrite(pcib, 0x84, val | 0x1c00);
-
-	/*
-	 * //// fxp fixup ////
-	 * - use PCI pin A line 25 (fxp 0x3d/3c)
-	 */
-	/* 0x3d/3c - PCI pin/line */
-	val = pcicfgread(net, 0x3c) & 0xffff0000;
-	val |= (('A' - '@') << 8) | 25;
-	pcicfgwrite(net, 0x3c, val);
-}
-
-void
 kurosetup(struct brdprop *brd)
 {
 
@@ -628,81 +647,12 @@ kurobrdfix(struct brdprop *brd)
 }
 
 void
-kuropcifix(struct brdprop *brd)
-{
-	unsigned dsk, net, usb, val;
-
-	net = pcimaketag(0, 11, 0);
-	val = pcicfgread(net, 0x3c) & 0xffffff00;
-	val |= 11;
-	pcicfgwrite(net, 0x3c, val);
-
-	dsk = pcimaketag(0, 12, 0);
-	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
-	val |= 12;
-	pcicfgwrite(dsk, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 0);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 1);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 2);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-}
-
-void
-synosetup(struct brdprop *brd)
-{
-
-	/* nothing */
-}
-
-void
 synobrdfix(struct brdprop *brd)
 {
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
 	/* beep, power LED on, status LED off */
 	send_sat("247");
-}
-
-void
-synopcifix(struct brdprop *brd)
-{
-	unsigned dsk, net, usb, val;
-
-	dsk = pcimaketag(0, 13, 0);
-	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
-	val |= 13;
-	pcicfgwrite(dsk, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 0);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 1);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 2);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	net = pcimaketag(0, 15, 0);
-	val = pcicfgread(net, 0x3c) & 0xffffff00;
-	val |= 15;
-	pcicfgwrite(net, 0x3c, val);
 }
 
 void
@@ -714,34 +664,10 @@ synoreset()
 }
 
 void
-qnappcifix(struct brdprop *brd)
+qnapbrdfix(struct brdprop *brd)
 {
-	unsigned dsk, net, usb, val;
 
-	dsk = pcimaketag(0, 13, 0);
-	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
-	val |= 13;
-	pcicfgwrite(dsk, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 0);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 1);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 2);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	net = pcimaketag(0, 15, 0);
-	val = pcicfgread(net, 0x3c) & 0xffffff00;
-	val |= 15;
-	pcicfgwrite(net, 0x3c, val);
+	/* illuminate LEDs */
 }
 
 void
@@ -749,37 +675,7 @@ iomegabrdfix(struct brdprop *brd)
 {
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
-}
-
-void
-iomegapcifix(struct brdprop *brd)
-{
-	unsigned dsk, net, usb, val;
-
-	dsk = pcimaketag(0, 13, 0);
-	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
-	val |= 13;
-	pcicfgwrite(dsk, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 0);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 1);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 2);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	net = pcimaketag(0, 15, 0);
-	val = pcicfgread(net, 0x3c) & 0xffffff00;
-	val |= 15;
-	pcicfgwrite(net, 0x3c, val);
+	/* illuminate LEDs */
 }
 
 void
@@ -787,37 +683,14 @@ dlinkbrdfix(struct brdprop *brd)
 {
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
+	/* illuminate LEDs */
 }
 
 void
-dlinkpcifix(struct brdprop *brd)
+nhnasbrdfix(struct brdprop *brd)
 {
-	unsigned usb, net, dsk, val;
 
-	usb = pcimaketag(0, 14, 0);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 1);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	usb = pcimaketag(0, 14, 2);
-	val = pcicfgread(usb, 0x3c) & 0xffffff00;
-	val |= 14;
-	pcicfgwrite(usb, 0x3c, val);
-
-	net = pcimaketag(0, 15, 0);
-	val = pcicfgread(net, 0x3c) & 0xffffff00;
-	val |= 15;
-	pcicfgwrite(net, 0x3c, val);
-
-	dsk = pcimaketag(0, 16, 0);
-	val = pcicfgread(dsk, 0x3c) & 0xffffff00;
-	val |= 16;
-	pcicfgwrite(dsk, 0x3c, val);
+	/* illuminate LEDs */
 }
 
 void
