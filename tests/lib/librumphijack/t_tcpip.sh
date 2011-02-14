@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.2 2011/02/14 15:14:00 pooka Exp $
+#       $NetBSD: t_tcpip.sh,v 1.3 2011/02/14 19:54:29 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -122,8 +122,6 @@ ssh_body()
 	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
 	# make sure clients die after we nuke the server
 	export RUMPHIJACK_RETRY='die'
-
-	export LD_LIBRARY_PATH=/home/pooka/src/nb5/src/lib/libssh
 
 	start_sshd
 
