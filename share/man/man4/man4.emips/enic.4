@@ -1,4 +1,4 @@
-.\"	$NetBSD: enic.4,v 1.1 2011/01/26 01:18:48 pooka Exp $
+.\"	$NetBSD: enic.4,v 1.2 2011/02/14 21:00:17 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Microsoft Corp.
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,9 +61,9 @@ The
 interface is present on the BEE3 and Xilinx XUP boards. The interface speed is wired at 1Gbps.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "le%d: enic_put: no mem?"
+.It "enic%d: enic_put: no mem?"
 The driver could not allocate a transmit buffer, packet was not sent.
-.It "le%d: internal error"
+.It "enic%d: internal error"
 This and other messages are indicative of bad hardware or software driver coding errors.
 .El
 .Sh SEE ALSO
