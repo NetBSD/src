@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.27 2011/02/09 14:29:58 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.28 2011/02/14 14:56:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -197,6 +197,10 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 				case 0:
 					rv = host_kevent(kq, NULL, 0,
 					    kev, __arraycount(kev), NULL);
+
+					if (__predict_false(rv == -1)) {
+						goto cleanup;
+					}
 
 					/*
 					 * XXX: don't know how this can
@@ -546,15 +550,19 @@ static struct sockaddr *serv_sa;
 
 /* dup until we get a "good" fd which does not collide with stdio */
 static int
-dupgood(int myfd)
+dupgood(int myfd, int mustchange)
 {
-	int ofds[3];
+	int ofds[4];
 	int i;
 
-	for (i = 0; myfd <= 2 && myfd != -1; i++) {
+	for (i = 0; (myfd <= 2 || mustchange) && myfd != -1; i++) {
 		assert(i < __arraycount(ofds));
 		ofds[i] = myfd;
 		myfd = host_dup(myfd);
+		if (mustchange) {
+			i--; /* prevent closing old fd */
+			mustchange = 0;
+		}
 	}
 
 	for (i--; i >= 0; i--) {
@@ -611,7 +619,7 @@ doconnect(bool noisy)
 	free(clispc.spc_buf);
 	clispc.spc_off = 0;
 
-	s = dupgood(host_socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0));
+	s = dupgood(host_socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0), 0);
 	if (s == -1)
 		return -1;
 
@@ -666,7 +674,7 @@ doconnect(bool noisy)
 	clispc.spc_reconnecting = 0;
 
 	/* setup kqueue, we want all signals and the fd */
-	if ((kq = dupgood(host_kqueue())) == -1) {
+	if ((kq = dupgood(host_kqueue(), 0)) == -1) {
 		error = errno;
 		if (noisy)
 			fprintf(stderr, "rump_sp: cannot setup kqueue");
@@ -742,9 +750,11 @@ rumpclient_init()
 #undef	FINDSYM
 #undef	FINDSY2
 
-	if ((p = getenv("RUMP_SERVER")) == NULL) {
-		errno = ENOENT;
-		return -1;
+	if ((p = getenv("RUMP__PARSEDSERVER")) == NULL) {
+		if ((p = getenv("RUMP_SERVER")) == NULL) {
+			errno = ENOENT;
+			return -1;
+		}
 	}
 
 	if ((error = parseurl(p, &serv_sa, &ptab_idx, 0)) != 0) {
@@ -754,6 +764,13 @@ rumpclient_init()
 
 	if (doinit() == -1)
 		return -1;
+
+	if ((p = getenv("RUMPCLIENT__EXECFD")) != NULL) {
+		sscanf(p, "%d,%d", &clispc.spc_fd, &kq);
+		unsetenv("RUMPCLIENT__EXECFD");
+		return 0;
+	}
+
 	if (doconnect(true) == -1)
 		return -1;
 
@@ -838,4 +855,127 @@ rumpclient_setconnretry(time_t timeout)
 		return; /* gigo */
 
 	retrytimo = timeout;
+}
+
+int
+rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
+{
+	int fd = *fdp;
+	int untilfd, rv;
+	int newfd;
+
+	switch (variant) {
+	case RUMPCLIENT_CLOSE_FCLOSEM:
+		untilfd = MAX(clispc.spc_fd, kq);
+		for (; fd <= untilfd; fd++) {
+			if (fd == clispc.spc_fd || fd == kq)
+				continue;
+			rv = host_close(fd);
+			if (rv == -1)
+				return -1;
+		}
+		*fdp = fd;
+		break;
+
+	case RUMPCLIENT_CLOSE_CLOSE:
+	case RUMPCLIENT_CLOSE_DUP2:
+		if (fd == clispc.spc_fd) {
+			struct kevent kev[2];
+
+			newfd = dupgood(clispc.spc_fd, 1);
+			if (newfd == -1)
+				return -1;
+			/*
+			 * now, we have a new socket number, so change
+			 * the file descriptor that kqueue is
+			 * monitoring.  remove old and add new.
+			 */
+			EV_SET(&kev[0], clispc.spc_fd,
+			    EVFILT_READ, EV_DELETE, 0, 0, 0);
+			EV_SET(&kev[1], newfd,
+			    EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+			if (host_kevent(kq, kev, 2, NULL, 0, NULL) == -1) {
+				int sverrno = errno;
+				host_close(newfd);
+				errno = sverrno;
+				return -1;
+			}
+			clispc.spc_fd = newfd;
+		}
+		if (fd == kq) {
+			newfd = dupgood(kq, 1);
+			if (newfd == -1)
+				return -1;
+			kq = newfd;
+		}
+		break;
+	}
+
+	return 0;
+}
+
+/*
+ * Process is about to exec.  Save info about our existing connection
+ * in the env.  rumpclient will check for this info in init().
+ * This is mostly for the benefit of rumphijack, but regular applications
+ * may use it as well.
+ */
+int
+rumpclient__exec_augmentenv(char *const oenv1[], char *const oenv2[],
+	char ***newenvp)
+{
+	char buf[4096];
+	char **newenv;
+	char *envstr, *envstr2;
+	size_t nelem1, nelem2;
+
+	snprintf(buf, sizeof(buf), "RUMPCLIENT__EXECFD=%d,%d",
+	    clispc.spc_fd, kq);
+	envstr = malloc(strlen(buf)+1);
+	if (envstr == NULL) {
+		return ENOMEM;
+	}
+	strcpy(envstr, buf);
+
+	/* do we have a fully parsed url we want to forward in the env? */
+	if (*parsedurl != '\0') {
+		snprintf(buf, sizeof(buf),
+		    "RUMP__PARSEDSERVER=%s", parsedurl);
+		envstr2 = malloc(strlen(buf)+1);
+		if (envstr2 == NULL) {
+			free(envstr);
+			return ENOMEM;
+		}
+		strcpy(envstr2, buf);
+	} else {
+		envstr2 = NULL;
+	}
+
+	nelem1 = 0;
+	if (oenv1) {
+		for (; oenv1[nelem1]; nelem1++)
+			continue;
+	}
+	nelem2 = 0;
+	if (oenv2) {
+		for (; oenv2[nelem2]; nelem2++)
+			continue;
+	}
+
+	newenv = malloc(sizeof(*newenv) * nelem1+nelem2+3);
+	if (newenv == NULL) {
+		free(envstr2);
+		free(envstr);
+		return ENOMEM;
+	}
+	memcpy(&newenv[0], oenv1, sizeof(*oenv1) * nelem1);
+	memcpy(&newenv[nelem1], oenv2, sizeof(*oenv2) * nelem2);
+
+	newenv[nelem1+nelem2] = envstr;
+	newenv[nelem1+nelem2+1] = envstr2;
+	newenv[nelem1+nelem2+2] = NULL;
+
+	*newenvp = newenv;
+
+	return 0;
 }
