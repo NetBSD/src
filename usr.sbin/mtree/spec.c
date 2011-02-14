@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.78 2009/09/22 04:38:21 apb Exp $	*/
+/*	$NetBSD: spec.c,v 1.79 2011/02/14 16:27:58 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.78 2009/09/22 04:38:21 apb Exp $");
+__RCSID("$NetBSD: spec.c,v 1.79 2011/02/14 16:27:58 uebayasi Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,7 +358,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 		if (MATCHFLAG(F_SIZE))
 			appendfield(pathlast, "size=%lld", (long long)cur->st_size);
 		if (MATCHFLAG(F_TIME))
-			appendfield(pathlast, "time=%lld.%ld ",
+			appendfield(pathlast, "time=%lld.%ld",
 			    (long long)cur->st_mtimespec.tv_sec,
 			    cur->st_mtimespec.tv_nsec);
 		if (MATCHFLAG(F_CKSUM))
