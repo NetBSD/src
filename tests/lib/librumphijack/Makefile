@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/02/11 15:38:14 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2011/02/14 15:14:00 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,6 +12,12 @@ TESTS_C+=	h_netget
 
 FILES=		netstat.expout index.html
 FILESDIR=	${TESTSDIR}
+
+# ssh test
+FILES+=		ssh_config.in
+FILES+=		ssh_host_key
+FILES+=		ssh_host_key.pub
+FILES+=		sshd_config.in
 
 ATFFILE=	yes
 
