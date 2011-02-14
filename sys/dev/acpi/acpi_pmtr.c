@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pmtr.c,v 1.1 2011/01/05 20:08:12 jruoho Exp $ */
+/*	$NetBSD: acpi_pmtr.c,v 1.2 2011/02/14 18:51:44 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.1 2011/01/05 20:08:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.2 2011/02/14 18:51:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -289,7 +289,7 @@ acpipmtr_dev_print(device_t self)
 
 		ad = acpi_get_node(hdl);
 
-		if (ACPI_FAILURE(rv))
+		if (ad == NULL)
 			continue;
 
 		aprint_debug("%s ", ad->ad_name);
