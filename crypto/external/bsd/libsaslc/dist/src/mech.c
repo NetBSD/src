@@ -1,4 +1,4 @@
-/* $NetBSD: mech.c,v 1.5 2011/02/13 05:39:52 christos Exp $ */
+/* $NetBSD: mech.c,v 1.6 2011/02/14 12:45:31 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech.c,v 1.5 2011/02/13 05:39:52 christos Exp $");
+__RCSID("$NetBSD: mech.c,v 1.6 2011/02/14 12:45:31 christos Exp $");
 
 #include <sys/queue.h>
 
@@ -106,7 +106,7 @@ saslc__mech_list_create(saslc_t *ctx)
 		saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
 		return NULL;
 	}
-	for (i = 0; __arraycount(saslc__mechanisms); i++) {
+	for (i = 0; i < __arraycount(saslc__mechanisms); i++) {
 		if (saslc__mechanisms[i] == NULL)
 			continue;
 		if ((node = calloc(1, sizeof(*node))) == NULL)
