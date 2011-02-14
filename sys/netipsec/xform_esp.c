@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.24 2011/02/14 13:43:45 drochner Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.25 2011/02/14 16:34:43 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.24 2011/02/14 13:43:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.25 2011/02/14 16:34:43 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -774,7 +774,7 @@ esp_output(
 	}
 
 	/* Update the counters. */
-	ESP_STATADD(ESP_STAT_OUTPUT, m->m_pkthdr.len - skip);
+	ESP_STATADD(ESP_STAT_OBYTES, m->m_pkthdr.len - skip);
 
 	m = m_clone(m);
 	if (m == NULL) {
