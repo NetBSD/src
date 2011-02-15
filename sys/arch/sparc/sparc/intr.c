@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.113 2011/02/15 09:56:32 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.114 2011/02/15 10:59:25 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.113 2011/02/15 09:56:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.114 2011/02/15 10:59:25 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -205,6 +205,7 @@ nmi_hard(void)
 
 	/* Tally */
 	cpuinfo.ci_intrcnt[15].ev_count++;
+	cpuinfo.ci_data.cpu_nintr++;
 
 	afsr = afva = 0;
 	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
@@ -296,6 +297,7 @@ nmi_soft(struct trapframe *tf)
 
 	/* Tally */
 	cpuinfo.ci_sintrcnt[15].ev_count++;
+	cpuinfo.ci_data.cpu_nintr++;
 
 	if (cpuinfo.mailbox) {
 		/* Check PROM messages */
