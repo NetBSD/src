@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.19 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.20 2011/02/15 08:56:11 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.19 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.20 2011/02/15 08:56:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,14 +105,14 @@ agp_via_attach(device_t parent, device_t self, void *aux)
 		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_VIA_AGPSEL);
 		if ((agpsel & (1 << 9)) == 0) {
 			asc->regs = via_v3_regs;
-			aprint_normal(" (v3)");
+			aprint_debug(" (v3)");
 		} else {
 			asc->regs = via_v2_regs;
-			aprint_normal(" (v2 compat mode)");
+			aprint_debug(" (v2 compat mode)");
 		}
 	} else {
 		asc->regs = via_v2_regs;
-		aprint_normal(" (v2)");
+		aprint_debug(" (v2)");
 	}
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE) != 0) {
