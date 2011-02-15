@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1014 2011/02/14 08:50:39 hannken Exp $
+# $NetBSD: GENERIC,v 1.1015 2011/02/15 12:06:22 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1014 $"
+#ident 		"GENERIC-$Revision: 1.1015 $"
 
 maxusers	64		# estimated number of users
 
@@ -1334,7 +1334,7 @@ auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
-azalia* at pci? dev ? function ?	# High Definition Audio
+#azalia* at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
