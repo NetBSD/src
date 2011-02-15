@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_test.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.1.1.3 2011/02/15 19:30:56 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_test.c,v 1.46 2009/09/01 00:22:25 jinmei Exp */
+/* Id: dst_test.c,v 1.46 2009-09-01 00:22:25 jinmei Exp */
 
 #include <config.h>
 

@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-keygen.docbook,v 1.33.24.2 2010/08/16 23:46:30 tbox Exp -->
+<!-- Id: dnssec-keygen.docbook,v 1.36 2010-12-23 04:07:59 marka Exp -->
 <refentry id="man.dnssec-keygen">
   <refentryinfo>
     <date>June 30, 2000</date>
@@ -114,7 +114,7 @@
           <para>
             Selects the cryptographic algorithm.  For DNSSEC keys, the value
             of <option>algorithm</option> must be one of RSAMD5, RSASHA1,
-	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256 or RSASHA512.
+	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512 or ECCGOST.
 	    For TSIG/TKEY, the value must
             be DH (Diffie Hellman), HMAC-MD5, HMAC-SHA1, HMAC-SHA224,
             HMAC-SHA256, HMAC-SHA384, or HMAC-SHA512.  These values are
@@ -184,7 +184,7 @@
 	    Use an NSEC3-capable algorithm to generate a DNSSEC key.
             If this option is used and no algorithm is explicitly
             set on the command line, NSEC3RSASHA1 will be used by
-            default. Note that RSASHA256 and RSASHA512 algorithms
+            default. Note that RSASHA256, RSASHA512 and ECCGOST algorithms
 	    are NSEC3-capable.
           </para>
         </listitem>

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.10 2007/06/19 23:47:06 tbox Exp 
+# Id: tests.sh,v 1.10 2007-06-19 23:47:06 tbox Exp 
 
 # ns1 = stealth master
 # ns2 = slave with update forwarding disabled; not currently used

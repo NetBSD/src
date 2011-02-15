@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.1.1.3 2009/12/26 22:24:29 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.1.1.4 2011/02/15 19:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: diff.c,v 1.23 2009/12/01 00:47:09 each Exp */
+/* Id: diff.c,v 1.23 2009-12-01 00:47:09 each Exp */
 
 /*! \file */
 

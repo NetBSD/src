@@ -1,4 +1,4 @@
-/*	$NetBSD: cert.h,v 1.1.1.1 2009/03/22 15:01:41 christos Exp $	*/
+/*	$NetBSD: cert.h,v 1.1.1.2 2011/02/15 19:37:35 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cert.h,v 1.19 2007/06/19 23:47:16 tbox Exp */
+/* Id: cert.h,v 1.19 2007-06-19 23:47:16 tbox Exp */
 
 #ifndef DNS_CERT_H
 #define DNS_CERT_H 1

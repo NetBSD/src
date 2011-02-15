@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-keygen.8,v 1.1.1.4 2010/12/02 14:22:25 christos Exp $
+.\"	$NetBSD: dnssec-keygen.8,v 1.1.1.5 2011/02/15 19:29:51 christos Exp $
 .\"
 .\" Copyright (C) 2004, 2005, 2007-2010 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-keygen.8,v 1.53.24.1 2010/08/17 00:08:22 tbox Exp
+.\" Id: dnssec-keygen.8,v 1.55 2010-12-24 01:14:19 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -50,7 +50,7 @@ of the key is specified on the command line. For DNSSEC keys, this must match th
 .RS 4
 Selects the cryptographic algorithm. For DNSSEC keys, the value of
 \fBalgorithm\fR
-must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256 or RSASHA512. For TSIG/TKEY, the value must be DH (Diffie Hellman), HMAC\-MD5, HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256, HMAC\-SHA384, or HMAC\-SHA512. These values are case insensitive.
+must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512 or ECCGOST. For TSIG/TKEY, the value must be DH (Diffie Hellman), HMAC\-MD5, HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256, HMAC\-SHA384, or HMAC\-SHA512. These values are case insensitive.
 .sp
 If no algorithm is specified, then RSASHA1 will be used by default, unless the
 \fB\-3\fR
@@ -83,7 +83,7 @@ must either be ZONE (for a DNSSEC zone key (KEY/DNSKEY)), HOST or ENTITY (for a 
 .PP
 \-3
 .RS 4
-Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this option is used and no algorithm is explicitly set on the command line, NSEC3RSASHA1 will be used by default. Note that RSASHA256 and RSASHA512 algorithms are NSEC3\-capable.
+Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this option is used and no algorithm is explicitly set on the command line, NSEC3RSASHA1 will be used by default. Note that RSASHA256, RSASHA512 and ECCGOST algorithms are NSEC3\-capable.
 .RE
 .PP
 \-C

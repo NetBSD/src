@@ -1,4 +1,4 @@
-/*	$NetBSD: win32.c,v 1.1.1.2 2009/12/26 22:19:41 christos Exp $	*/
+/*	$NetBSD: win32.c,v 1.1.1.3 2011/02/15 19:30:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: win32.c,v 1.5 2009/10/26 23:47:35 tbox Exp */
+/* Id: win32.c,v 1.5 2009-10-26 23:47:35 tbox Exp */
 
 /* $Id */
 

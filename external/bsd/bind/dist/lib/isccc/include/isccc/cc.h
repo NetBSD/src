@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.1.1.1 2009/03/22 15:02:31 christos Exp $	*/
+/*	$NetBSD: cc.h,v 1.1.1.2 2011/02/15 19:38:41 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cc.h,v 1.11 2007/08/28 07:20:43 tbox Exp */
+/* Id: cc.h,v 1.11 2007-08-28 07:20:43 tbox Exp */
 
 #ifndef ISCCC_CC_H
 #define ISCCC_CC_H 1

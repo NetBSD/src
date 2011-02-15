@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.1 2008/07/17 01:14:16 marka Exp
+# Id: clean.sh,v 1.1 2008-07-17 01:14:16 marka Exp
 
 #
 # Clean up after lwresd tests.

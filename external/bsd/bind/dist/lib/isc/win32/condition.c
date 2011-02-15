@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.c,v 1.1.1.1 2009/03/22 15:02:23 christos Exp $	*/
+/*	$NetBSD: condition.c,v 1.1.1.2 2011/02/15 19:38:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: condition.c,v 1.23 2007/06/18 23:47:49 tbox Exp */
+/* Id: condition.c,v 1.23 2007-06-18 23:47:49 tbox Exp */
 
 #include <config.h>
 

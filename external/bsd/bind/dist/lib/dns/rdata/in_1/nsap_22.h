@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_22.h,v 1.1.1.1 2009/03/22 15:01:58 christos Exp $	*/
+/*	$NetBSD: nsap_22.h,v 1.1.1.2 2011/02/15 19:38:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef IN_1_NSAP_22_H
 #define IN_1_NSAP_22_H 1
 
-/* Id: nsap_22.h,v 1.18 2007/06/19 23:47:17 tbox Exp */
+/* Id: nsap_22.h,v 1.18 2007-06-19 23:47:17 tbox Exp */
 
 /*! 
  *  \brief Per RFC1706 */

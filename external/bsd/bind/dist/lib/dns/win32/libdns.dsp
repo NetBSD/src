@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "BIND9" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "libdns_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../../../../openssl-0.9.8l/inc32/openssl/include" /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../isc/noatomic/include" /I "../../../../openssl-0.9.8l/inc32" /I "../../../../libxml2-2.7.3/include" /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "./" /I "../../../" /I "include" /I "../include" /I "../../isc/win32" /I "../../isc/win32/include" /I "../../isc/include" /I "../../isc/noatomic/include" /I "../../../../libxml2-2.7.3/include" /I "../../../../openssl-0.9.8l/inc32" /D "NDEBUG" /D "BIND9" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBDNS_EXPORTS" /YX /FD /c
 # SUBTRACT CPP /X
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -159,6 +159,10 @@ SOURCE=..\include\dns\dispatch.h
 # Begin Source File
 
 SOURCE=..\include\dns\dlz.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\dns\dns64.h
 # End Source File
 # Begin Source File
 
@@ -334,6 +338,10 @@ SOURCE=..\include\dns\rootns.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\rpz.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\rriterator.h
 # End Source File
 # Begin Source File
@@ -486,6 +494,10 @@ SOURCE=.\DLLMain.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\dns64.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\dnssec.c
 # End Source File
 # Begin Source File
@@ -622,6 +634,10 @@ SOURCE=..\rootns.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\rpz.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\rriterator.c
 # End Source File
 # Begin Source File
@@ -639,6 +655,10 @@ SOURCE=..\sdlz.c
 # Begin Source File
 
 SOURCE=..\ssu.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\ssu_external.c
 # End Source File
 # Begin Source File
 
@@ -747,6 +767,10 @@ SOURCE=..\openssldh_link.c
 # Begin Source File
 
 SOURCE=..\openssldsa_link.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\opensslgost_link.c
 # End Source File
 # Begin Source File
 

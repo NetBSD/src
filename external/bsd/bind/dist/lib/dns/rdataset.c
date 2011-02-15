@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.3 2010/08/05 20:12:38 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.1.1.4 2011/02/15 19:37:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.c,v 1.84.186.2 2010/02/25 05:25:51 tbox Exp */
+/* Id: rdataset.c,v 1.86 2010-02-25 05:08:01 tbox Exp */
 
 /*! \file */
 

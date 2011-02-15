@@ -1,4 +1,4 @@
-/*	$NetBSD: os-ultrix4.h,v 1.1.1.1 2009/03/22 14:57:58 christos Exp $	*/
+/*	$NetBSD: os-ultrix4.h,v 1.1.1.2 2011/02/15 19:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /proj/cvs/prod/bind9/contrib/nslint-2.1a3/lbl/os-ultrix4.h,v 1.1 2001/12/21 04:12:05 marka Exp (LBL)
+ * @(#) Header: /proj/cvs/prod/bind9/contrib/nslint-2.1a3/lbl/os-ultrix4.h,v 1.1 2001-12-21 04:12:05 marka Exp (LBL)
  */
 
 /* Prototypes missing in Ultrix 4 */

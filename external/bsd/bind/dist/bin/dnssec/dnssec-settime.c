@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.1.1.4 2010/12/02 14:22:25 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.1.1.5 2011/02/15 19:29:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-settime.c,v 1.19.34.8 2010/08/16 23:46:30 tbox Exp */
+/* Id: dnssec-settime.c,v 1.28 2010-12-19 07:29:36 each Exp */
 
 /*! \file */
 
@@ -388,7 +388,7 @@ main(int argc, char **argv) {
 			      "generating a successor.");
 
 		pub = act - prepub;
-		if (pub < now)
+		if (pub < now && prepub != 0)
 			fatal("Predecessor will become inactive before the\n\t"
 			      "prepublication period ends.  Either change "
 			      "its inactivation date,\n\t"

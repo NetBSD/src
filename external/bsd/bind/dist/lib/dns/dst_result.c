@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_result.c,v 1.1.1.1 2009/03/22 15:01:04 christos Exp $	*/
+/*	$NetBSD: dst_result.c,v 1.1.1.2 2011/02/15 19:36:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * Id: dst_result.c,v 1.7 2008/04/01 23:47:10 tbox Exp
+ * Id: dst_result.c,v 1.7 2008-04-01 23:47:10 tbox Exp
  */
 
 #include <config.h>

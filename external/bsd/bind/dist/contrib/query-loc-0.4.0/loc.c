@@ -1,8 +1,8 @@
-/*	$NetBSD: loc.c,v 1.1.1.1 2009/03/22 14:58:04 christos Exp $	*/
+/*	$NetBSD: loc.c,v 1.1.1.2 2011/02/15 19:33:01 christos Exp $	*/
 
 #include "loc.h"
 
-/* Id: loc.c,v 1.1 2008/02/15 01:47:15 marka Exp */
+/* Id: loc.c,v 1.1 2008-02-15 01:47:15 marka Exp */
 
 /* Global variables */
 

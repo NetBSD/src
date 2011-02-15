@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.138 2009/12/05 23:31:40 each Exp
+# Id: Makefile.in,v 1.144.10.1 2011-02-03 05:50:05 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -41,7 +41,8 @@ LWRESDEPLIBS =	../../lib/lwres/liblwres.@A@
 
 LIBS =		@LIBS@
 
-SUBDIRS = db dst master mem names net rbt sockaddr tasks timers system
+SUBDIRS =	atomic db dst master mem hashes names net rbt resolver \
+		sockaddr tasks timers system
 
 # Test programs that are built by default:
 # cfg_test is needed for regenerating doc/misc/options

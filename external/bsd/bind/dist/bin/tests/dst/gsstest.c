@@ -1,7 +1,7 @@
-/*	$NetBSD: gsstest.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.1.1.3 2011/02/15 19:30:57 christos Exp $	*/
 
 /*
- * Copyright (C) 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gsstest.c,v 1.8 2009/09/02 23:48:01 tbox Exp */
+/* Id: gsstest.c,v 1.14 2011-01-08 01:26:01 each Exp */
 
 #include <config.h>
 
@@ -99,15 +99,17 @@ static void
 console(isc_task_t *task, isc_event_t *event)
 {
 	char buf[32];
+	int c;
+
 	isc_event_t *ev = NULL;
 
 	isc_event_free(&event);
 
 	while(1) {
 		printf("\nCommand => ");
-		scanf("%s", buf);
+		c = scanf("%s", buf);
 
-		if(strcmp(buf, "quit") == 0) {
+		if(c == EOF || strcmp(buf, "quit") == 0) {
 			isc_app_shutdown();
 			return;
 		}
@@ -202,13 +204,15 @@ sendquery(isc_task_t *task, isc_event_t *event)
 	isc_buffer_t buf;
 	isc_buffer_t outbuf;
 	char output[10 * 1024];
-
 	static char host[256];
+	int c;
 
 	isc_event_free(&event);
 
 	printf("Query => ");
-	scanf("%s", host);
+	c = scanf("%s", host);
+	if (c == EOF)
+		return;
 
 	dns_fixedname_init(&queryname);
 	isc_buffer_init(&buf, host, strlen(host));
@@ -306,7 +310,7 @@ initctx2(isc_task_t *task, isc_event_t *event) {
 	result = dns_tkey_processgssresponse(query, response,
 					     dns_fixedname_name(&gssname),
 					     &gssctx, &outtoken,
-					     &tsigkey, ring);
+					     &tsigkey, ring, NULL);
 	gssctx = *gssctxp;
 	CHECK("dns_tkey_processgssresponse", result);
 	printf("Context accepted\n");
@@ -350,18 +354,21 @@ initctx1(isc_task_t *task, isc_event_t *event) {
 	isc_buffer_t buf;
 	dns_message_t *query;
 	dns_request_t *request;
+	int c;
 
 	isc_event_free(&event);
 
 	printf("Initctx - GSS name => ");
-	scanf("%s", gssid);
+	c = scanf("%s", gssid);
+	if (c == EOF)
+		return;
 
 	sprintf(contextname, "gsstest.context.%d.", (int)time(NULL));
 
 	printf("Initctx - context name we're using: %s\n", contextname);
 
 	printf("Negotiating GSSAPI context: ");
-	printf(gssid);
+	printf("%s", gssid);
 	printf("\n");
 
 	/*
@@ -390,7 +397,8 @@ initctx1(isc_task_t *task, isc_event_t *event) {
 	gssctx = GSS_C_NO_CONTEXT;
 	result = dns_tkey_buildgssquery(query, dns_fixedname_name(&servername),
 					dns_fixedname_name(&gssname),
-					NULL, 36000, &gssctx, ISC_TRUE);
+					NULL, 36000, &gssctx, ISC_TRUE,
+					mctx, NULL);
 	CHECK("dns_tkey_buildgssquery", result);
 
 	printf("Sending context token to server\n");

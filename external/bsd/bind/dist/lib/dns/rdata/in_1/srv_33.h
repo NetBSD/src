@@ -1,4 +1,4 @@
-/*	$NetBSD: srv_33.h,v 1.1.1.1 2009/03/22 15:01:58 christos Exp $	*/
+/*	$NetBSD: srv_33.h,v 1.1.1.2 2011/02/15 19:38:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef IN_1_SRV_33_H
 #define IN_1_SRV_33_H 1
 
-/* Id: srv_33.h,v 1.19 2007/06/19 23:47:17 tbox Exp */
+/* Id: srv_33.h,v 1.19 2007-06-19 23:47:17 tbox Exp */
 
 /* Reviewed: Fri Mar 17 13:01:00 PST 2000 by bwelling */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.h,v 1.1.1.1 2009/03/22 15:01:52 christos Exp $	*/
+/*	$NetBSD: key_25.h,v 1.1.1.2 2011/02/15 19:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_KEY_25_H
 #define GENERIC_KEY_25_H 1
 
-/* Id: key_25.h,v 1.19 2007/06/19 23:47:17 tbox Exp */
+/* Id: key_25.h,v 1.19 2007-06-19 23:47:17 tbox Exp */
 
 /*!
  * \brief Per RFC2535 */

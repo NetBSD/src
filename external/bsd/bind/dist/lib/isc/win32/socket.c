@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.4 2010/12/02 14:23:35 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.5 2011/02/15 19:38:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.81.22.1.6.2 2010/11/18 00:59:28 tbox Exp */
+/* Id: socket.c,v 1.87 2010-12-09 06:08:05 marka Exp */
 
 /* This code uses functions which are only available on Server 2003 and
  * higher, and Windows XP and higher.
@@ -3315,6 +3315,12 @@ isc__socket_accept(isc_socket_t *sock,
 	 * Attach to socket and to task.
 	 */
 	isc_task_attach(task, &ntask);
+	if (isc_task_exiting(ntask)) {
+		isc_task_detach(&ntask);
+		isc_event_free(ISC_EVENT_PTR(&adev));
+		UNLOCK(&sock->lock);
+		return (ISC_R_SHUTTINGDOWN);
+	}
 	nsock->references++;
 
 	adev->ev_sender = ntask;

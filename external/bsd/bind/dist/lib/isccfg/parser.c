@@ -1,7 +1,7 @@
-/*	$NetBSD: parser.c,v 1.1.1.4 2010/12/02 14:23:36 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.5 2011/02/15 19:38:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.132.104.3 2010/08/11 18:19:58 each Exp */
+/* Id: parser.c,v 1.139 2011-01-04 23:47:14 tbox Exp */
 
 /*! \file */
 
@@ -870,8 +870,8 @@ cfg_obj_asboolean(const cfg_obj_t *obj) {
 	return (obj->value.boolean);
 }
 
-static isc_result_t
-parse_boolean(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
+isc_result_t
+cfg_parse_boolean(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 {
 	isc_result_t result;
 	isc_boolean_t value;
@@ -910,8 +910,8 @@ parse_boolean(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 	return (result);
 }
 
-static void
-print_boolean(cfg_printer_t *pctx, const cfg_obj_t *obj) {
+void
+cfg_print_boolean(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 	if (obj->value.boolean)
 		cfg_print_chars(pctx, "yes", 3);
 	else
@@ -919,7 +919,7 @@ print_boolean(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 }
 
 cfg_type_t cfg_type_boolean = {
-	"boolean", parse_boolean, print_boolean, cfg_doc_terminal,
+	"boolean", cfg_parse_boolean, cfg_print_boolean, cfg_doc_terminal,
 	&cfg_rep_boolean, NULL
 };
 

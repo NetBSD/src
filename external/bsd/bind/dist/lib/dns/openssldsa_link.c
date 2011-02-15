@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldsa_link.c,v 1.1.1.3 2009/12/26 22:24:32 christos Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.1.1.4 2011/02/15 19:37:01 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: openssldsa_link.c,v 1.18 2009/10/30 05:08:23 marka Exp */
+/* Id: openssldsa_link.c,v 1.20 2011-01-11 23:47:13 tbox Exp */
 
 #ifdef OPENSSL
 #ifndef USE_EVP
@@ -620,6 +620,8 @@ static dst_func_t openssldsa_functions = {
 	openssldsa_parse,
 	NULL, /*%< cleanup */
 	NULL, /*%< fromlabel */
+	NULL, /*%< dump */
+	NULL, /*%< restore */
 };
 
 isc_result_t

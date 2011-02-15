@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_ldap_driver.c,v 1.1.1.1 2009/03/22 14:57:10 christos Exp $	*/
+/*	$NetBSD: dlz_ldap_driver.c,v 1.1.1.2 2011/02/15 19:32:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -1289,7 +1289,14 @@ static dns_sdlzmethods_t dlz_ldap_methods = {
 	dlz_ldap_lookup,
 	dlz_ldap_authority,
 	dlz_ldap_allnodes,
-	dlz_ldap_allowzonexfr
+	dlz_ldap_allowzonexfr,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*%

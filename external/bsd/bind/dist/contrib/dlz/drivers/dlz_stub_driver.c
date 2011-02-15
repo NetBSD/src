@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_stub_driver.c,v 1.1.1.1 2009/03/22 14:57:12 christos Exp $	*/
+/*	$NetBSD: dlz_stub_driver.c,v 1.1.1.2 2011/02/15 19:32:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -166,7 +166,7 @@ stub_dlz_findzonedb(void *driverarg, void *dbdata, const char *name)
 	if (strcmp(cd->myzone, name) == 0)
 		return (ISC_R_SUCCESS);
 	else
-		return (ISC_R_SUCCESS);
+		return (ISC_R_NOTFOUND);
 }
 
 
@@ -281,7 +281,14 @@ static dns_sdlzmethods_t dlz_stub_methods = {
 	stub_dlz_lookup,
 	stub_dlz_authority,
 	stub_dlz_allnodes,
-	stub_dlz_allowzonexfr
+	stub_dlz_allowzonexfr,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*%

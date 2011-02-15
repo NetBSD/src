@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.1.1.4 2010/12/02 14:23:36 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.1.1.5 2011/02/15 19:38:46 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: grammar.h,v 1.19.136.3 2010/08/11 18:19:58 each Exp */
+/* Id: grammar.h,v 1.24 2011-01-04 23:47:14 tbox Exp */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -330,8 +330,14 @@ cfg_parse_rawport(cfg_parser_t *pctx, unsigned int flags, in_port_t *port);
 isc_result_t
 cfg_parse_sockaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
+isc_result_t
+cfg_parse_boolean(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
 void
 cfg_print_sockaddr(cfg_printer_t *pctx, const cfg_obj_t *obj);
+
+void
+cfg_print_boolean(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
 cfg_doc_sockaddr(cfg_printer_t *pctx, const cfg_type_t *type);

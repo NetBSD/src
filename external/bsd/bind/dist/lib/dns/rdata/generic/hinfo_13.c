@@ -1,4 +1,4 @@
-/*	$NetBSD: hinfo_13.c,v 1.1.1.2 2009/12/26 22:25:24 christos Exp $	*/
+/*	$NetBSD: hinfo_13.c,v 1.1.1.3 2011/02/15 19:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hinfo_13.c,v 1.46 2009/12/04 22:06:37 tbox Exp */
+/* Id: hinfo_13.c,v 1.46 2009-12-04 22:06:37 tbox Exp */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.

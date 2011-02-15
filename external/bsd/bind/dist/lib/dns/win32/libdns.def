@@ -124,6 +124,8 @@ dns_db_origin
 dns_db_overmem
 dns_db_printnode
 dns_db_register
+dns_db_rpz_enabled
+dns_db_rpz_findips
 dns_db_subtractrdataset
 dns_db_unregister
 dns_dbiterator_current
@@ -189,6 +191,13 @@ dns_dlzfindzone
 dns_dlzregister
 dns_dlzstrtoargv
 dns_dlzunregister
+dns_dns64_aaaafroma
+dns_dns64_aaaaok
+dns_dns64_append
+dns_dns64_create
+dns_dns64_destroy
+dns_dns64_next
+dns_dns64_unlink
 dns_dnssec_findmatchingkeys
 dns_dnssec_findzonekeys
 dns_dnssec_findzonekeys2
@@ -353,6 +362,7 @@ dns_name_format
 dns_name_free
 dns_name_fromregion
 dns_name_fromstring
+dns_name_fromstring2
 dns_name_fromtext
 dns_name_fromwire
 dns_name_fullcompare
@@ -374,11 +384,9 @@ dns_name_setbuffer
 dns_name_settotextfilter
 dns_name_split
 dns_name_tofilenametext
-dns_name_toprincipal
 dns_name_toregion
 dns_name_tostring
 dns_name_totext
-dns_name_totext2
 dns_name_towire
 dns_ncache_add
 dns_ncache_getrdataset
@@ -568,6 +576,7 @@ dns_resolver_createfetch
 dns_resolver_createfetch2
 dns_resolver_destroyfetch
 dns_resolver_detach
+dns_resolver_settimeout
 dns_resolver_disable_algorithm
 dns_resolver_dispatchmgr
 dns_resolver_dispatchv4
@@ -577,6 +586,7 @@ dns_resolver_freeze
 dns_resolver_getbadcache
 dns_resolver_getlamettl
 dns_resolver_getoptions
+dns_resolver_gettimeout
 dns_resolver_getudpsize
 dns_resolver_getzeronosoattl
 dns_resolver_logfetch
@@ -598,6 +608,18 @@ dns_result_register
 dns_result_torcode
 dns_result_totext
 dns_rootns_create
+dns_rpz_cidr_addip
+dns_rpz_cidr_deleteip
+dns_rpz_cidr_find
+dns_rpz_cidr_free
+dns_rpz_decode_cname
+dns_rpz_enabled
+dns_rpz_needed
+dns_rpz_new_cidr
+dns_rpz_set_need
+dns_rpz_str2policy
+dns_rpz_type2str
+dns_rpz_view_destroy
 dns_rriterator_current
 dns_rriterator_destroy
 dns_rriterator_first
@@ -624,6 +646,7 @@ dns_secproto_totext
 dns_soa_getminimum
 dns_soa_getserial
 dns_soa_setserial
+dns_ssu_external_match
 dns_ssutable_addrule
 dns_ssutable_attach
 dns_ssutable_checkrules
@@ -661,8 +684,10 @@ dns_tsigkey_detach
 dns_tsigkey_find
 dns_tsigkey_setdeleted
 dns_tsigkeyring_add
+dns_tsigkeyring_attach
 dns_tsigkeyring_create
-dns_tsigkeyring_destroy
+dns_tsigkeyring_detach
+dns_tsigkeyring_dumpanddetach
 dns_tsigrcode_fromtext
 dns_tsigrcode_totext
 dns_ttl_fromtext
@@ -690,6 +715,7 @@ dns_view_flushcache2
 dns_view_flushname
 dns_view_freeze
 dns_view_freezezones
+dns_view_getdynamickeyring
 dns_view_getpeertsig
 dns_view_getresquerystats
 dns_view_getresstats
@@ -700,9 +726,11 @@ dns_view_iscacheshared
 dns_view_issecuredomain
 dns_view_load
 dns_view_loadnew
+dns_view_restorekeyring
 dns_view_setcache
 dns_view_setcache2
 dns_view_setdstport
+dns_view_setdynamickeyring
 dns_view_sethints
 dns_view_setkeyring
 dns_view_setnewzones
@@ -806,6 +834,7 @@ dns_zone_setchecknames
 dns_zone_setcheckns
 dns_zone_setchecksrv
 dns_zone_setclass
+dns_zone_setdb
 dns_zone_setdbtype
 dns_zone_setdialup
 dns_zone_setfile
@@ -893,10 +922,12 @@ dst_gssapi_acceptctx
 dst_gssapi_acquirecred
 dst_gssapi_initctx
 dst_key_alg
+dst_key_attach
 dst_key_buildfilename
 dst_key_class
 dst_key_compare
 dst_key_computesecret
+dst_key_dump
 dst_key_flags
 dst_key_format
 dst_key_free
@@ -918,6 +949,7 @@ dst_key_name
 dst_key_paramcompare
 dst_key_proto
 dst_key_pubcompare
+dst_key_restore
 dst_key_secretsize
 dst_key_setbits
 dst_key_setflags

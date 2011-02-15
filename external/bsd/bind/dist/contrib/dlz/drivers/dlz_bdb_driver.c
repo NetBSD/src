@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdb_driver.c,v 1.1.1.2 2009/10/25 00:01:39 christos Exp $	*/
+/*	$NetBSD: dlz_bdb_driver.c,v 1.1.1.3 2011/02/15 19:32:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -744,7 +744,14 @@ static dns_sdlzmethods_t dlz_bdb_methods = {
 	bdb_lookup,
 	NULL,
 	bdb_allnodes,
-	bdb_allowzonexfr
+	bdb_allowzonexfr,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*%

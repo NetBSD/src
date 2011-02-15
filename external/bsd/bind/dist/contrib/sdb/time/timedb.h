@@ -1,4 +1,4 @@
-/*	$NetBSD: timedb.h,v 1.1.1.1 2009/03/22 14:58:13 christos Exp $	*/
+/*	$NetBSD: timedb.h,v 1.1.1.2 2011/02/15 19:33:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timedb.h,v 1.5 2007/06/19 23:47:13 tbox Exp */
+/* Id: timedb.h,v 1.5 2007-06-19 23:47:13 tbox Exp */
 
 #include <isc/types.h>
 

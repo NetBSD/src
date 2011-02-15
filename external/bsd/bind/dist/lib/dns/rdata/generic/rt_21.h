@@ -1,4 +1,4 @@
-/*	$NetBSD: rt_21.h,v 1.1.1.1 2009/03/22 15:01:55 christos Exp $	*/
+/*	$NetBSD: rt_21.h,v 1.1.1.2 2011/02/15 19:37:56 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_RT_21_H
 #define GENERIC_RT_21_H 1
 
-/* Id: rt_21.h,v 1.21 2007/06/19 23:47:17 tbox Exp */
+/* Id: rt_21.h,v 1.21 2007-06-19 23:47:17 tbox Exp */
 
 /*!
  *  \brief Per RFC1183 */

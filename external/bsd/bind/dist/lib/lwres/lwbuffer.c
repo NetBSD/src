@@ -1,4 +1,4 @@
-/*	$NetBSD: lwbuffer.c,v 1.1.1.1 2009/03/22 15:02:37 christos Exp $	*/
+/*	$NetBSD: lwbuffer.c,v 1.1.1.2 2011/02/15 19:38:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwbuffer.c,v 1.15 2007/06/19 23:47:22 tbox Exp */
+/* Id: lwbuffer.c,v 1.15 2007-06-19 23:47:22 tbox Exp */
 
 /*! \file */
 

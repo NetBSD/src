@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.h,v 1.1.1.1 2009/03/22 14:56:14 christos Exp $	*/
+/*	$NetBSD: statschannel.h,v 1.1.1.2 2011/02/15 19:30:25 christos Exp $	*/
 
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: statschannel.h,v 1.3 2008/04/03 05:55:51 marka Exp */
+/* Id: statschannel.h,v 1.3 2008-04-03 05:55:51 marka Exp */
 
 #ifndef NAMED_STATSCHANNEL_H
 #define NAMED_STATSCHANNEL_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1.1.1 2009/03/22 15:01:48 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.1.1.2 2011/02/15 19:37:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.h,v 1.17 2007/06/19 23:47:17 tbox Exp */
+/* Id: time.h,v 1.17 2007-06-19 23:47:17 tbox Exp */
 
 #ifndef DNS_TIME_H
 #define DNS_TIME_H 1

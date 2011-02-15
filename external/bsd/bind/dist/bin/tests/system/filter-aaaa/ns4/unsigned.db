@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: unsigned.db,v 1.2.2.2 2010/06/22 04:02:44 marka Exp
+; Id: unsigned.db,v 1.2 2010-06-22 03:58:38 marka Exp
 
 $TTL	120
 @		SOA	ns.utld.  hostmaster.ns.utld. ( 1 3600 1200 604800 60 )

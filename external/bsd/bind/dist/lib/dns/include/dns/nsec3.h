@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.h,v 1.1.1.3 2010/08/05 20:13:42 christos Exp $	*/
+/*	$NetBSD: nsec3.h,v 1.1.1.4 2011/02/15 19:37:42 christos Exp $	*/
 
 /*
  * Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3.h,v 1.10.54.2 2010/05/18 02:35:12 tbox Exp */
+/* Id: nsec3.h,v 1.12 2010-05-18 02:38:10 tbox Exp */
 
 #ifndef DNS_NSEC3_H
 #define DNS_NSEC3_H 1

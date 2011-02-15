@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.h,v 1.1.1.1 2009/03/22 15:01:54 christos Exp $	*/
+/*	$NetBSD: nsec3_50.h,v 1.1.1.2 2011/02/15 19:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_NSEC3_50_H
 #define GENERIC_NSEC3_50_H 1
 
-/* Id: nsec3_50.h,v 1.4 2008/09/25 04:02:39 tbox Exp */
+/* Id: nsec3_50.h,v 1.4 2008-09-25 04:02:39 tbox Exp */
 
 /*!
  * \brief Per RFC 5155 */

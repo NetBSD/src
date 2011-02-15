@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.h,v 1.1.1.4 2010/08/05 20:13:37 christos Exp $	*/
+/*	$NetBSD: keytable.h,v 1.1.1.5 2011/02/15 19:37:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keytable.h,v 1.20.4.2 2010/06/25 03:51:07 marka Exp */
+/* Id: keytable.h,v 1.23 2010-06-25 03:24:05 marka Exp */
 
 #ifndef DNS_KEYTABLE_H
 #define DNS_KEYTABLE_H 1
