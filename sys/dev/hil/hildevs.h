@@ -1,4 +1,4 @@
-/*	$NetBSD: hildevs.h,v 1.1 2011/02/06 18:26:54 tsutsui Exp $	*/
+/*	$NetBSD: hildevs.h,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
 /*	$OpenBSD: hildevs.h,v 1.4 2005/05/13 14:54:44 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -41,7 +41,7 @@ struct hil_attach_args {
 	int		ha_type;	/* hil device type */
 	int		ha_console;	/* console set to hil */
 	int		ha_infolen;	/* identify info length */
-	u_int8_t	ha_info[HILBUFSIZE];	/* identify info bits */
+	uint8_t		ha_info[HILBUFSIZE];	/* identify info bits */
 #define	ha_id		ha_info[0]	/* hil probe id */
 
 	const char	*ha_descr;	/* device description */
@@ -61,9 +61,9 @@ struct hildev_softc {
 	int		sc_type;	/* hil device type */
 
 	int		sc_infolen;	/* identify info length */
-	u_int8_t	sc_info[HILBUFSIZE];	/* identify info bits */
+	uint8_t		sc_info[HILBUFSIZE];	/* identify info bits */
 
-	void		(*sc_fn)(struct hildev_softc *, u_int, u_int8_t *);
+	void		(*sc_fn)(struct hildev_softc *, u_int, uint8_t *);
 };
 
 #define	hd_code		sc_hildev.sc_code
