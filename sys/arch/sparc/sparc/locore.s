@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.260 2011/01/27 06:24:59 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.261 2011/02/15 10:59:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3062,9 +3062,7 @@ _ENTRY(_C_LABEL(nmi_common))
 
 #if defined(SUN4M)
 _ENTRY(_C_LABEL(nmi_sun4m))
-	INTR_SETUP(-CCFSZ-80)
-	! tally intr (curcpu()->cpu_data.cpu_nintr++) (clobbers %o0,%o1,%o2)
-	INCR64(CPUINFO_VA + CPUINFO_NINTR)
+	INTR_SETUP(-CCFSZ-80-8-8)	! normal frame, plus g2..g5
 
 #if !defined(MSIIEP) /* normal sun4m */
 
