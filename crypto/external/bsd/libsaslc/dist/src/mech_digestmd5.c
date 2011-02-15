@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.7 2011/02/12 23:21:32 christos Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.8 2011/02/15 18:36:08 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.7 2011/02/12 23:21:32 christos Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.8 2011/02/15 18:36:08 christos Exp $");
 
 #include <sys/param.h>
 
@@ -56,7 +56,6 @@ __RCSID("$NetBSD: mech_digestmd5.c,v 1.7 2011/02/12 23:21:32 christos Exp $");
 #include "mech.h"
 #include "msg.h"
 #include "saslc_private.h"
-
 
 /* See RFC 2831. */
 
@@ -220,10 +219,12 @@ typedef struct {
 
 /**
  * @brief if possible convert a UTF-8 string to a ISO8859-1 string.
- * The caller is responsible for freeing memory.
  * @param utf8 original UTF-8 string.
  * @param iso8859 pointer to pointer to the malloced ISO8859-1 string.
  * @return -1 if the string cannot be translated.
+ *
+ * NOTE: this allocates memory for its output and the caller is
+ * responsible for freeing it.
  */
 static int
 utf8_to_8859_1(char *utf8, char **iso8859)
@@ -270,10 +271,12 @@ utf8_to_8859_1(char *utf8, char **iso8859)
 }
 
 /**
- * @brief unquote a string by removing escapes.  Allocates memory for
- * new string which the caller is responsible for freeing.
+ * @brief unquote a string by removing escapes.
  * @param str string to unquote.
  * @return NULL on failure
+ *
+ * NOTE: this allocates memory for its output and the caller is
+ * responsible for freeing it.
  */
 static char *
 unq(const char *str)
@@ -642,25 +645,119 @@ saslc__mech_digestmd5_response(saslc__mech_digestmd5_sess_t *ms,
 }
 
 /**
+ * @brief Choose a string from a user provided host qualified list,
+ * i.e., a comma delimited list with possible hostname qualifiers on
+ * the elements.
+ * @param hqlist a comma delimited list with entries of the form
+ * "[hostname:]string".
+ * @param hostname the hostname to use in the selection.
+ * @return the best matching string or NULL if none found.
+ *
+ * NOTE: hqlist must not be NULL.
+ * NOTE: this allocates memory for its output and the caller is
+ * responsible for freeing it.
+ */
+static char *
+choose_from_hqlist(const char *hqlist, const char *hostname)
+{
+	list_t *l, *list;
+	size_t len;
+	char *p;
+
+	list = saslc__list_parse(hqlist);
+	if (list == NULL)
+		return NULL;
+
+	/*
+	 * If the user provided a list and the caller provided a
+	 * hostname, pick the first string from the list that
+	 * corresponds to the hostname.
+	 */
+	if (hostname != NULL) {
+		len = strlen(hostname);
+		for (l = list; l != NULL; l = l->next) {
+			p = l->value + len;
+			if (strncasecmp(l->value, hostname, len) != 0 ||
+			    *p != ':')
+				continue;
+
+			if (*(++p) != '\0' && isalnum((unsigned char)*p)) {
+				p = strdup(p);
+				saslc__list_free(list);
+				return p;
+			}
+		}
+	}
+	/*
+	 * If one couldn't be found, look for first string in the list
+	 * without a hostname specifier.
+	 */
+	p = NULL;
+	for (l = list; l != NULL; l = l->next) {
+		if (strchr(l->value, ':') == NULL) {
+			p = strdup(l->value);
+			break;
+		}
+	}
+	saslc__list_free(list);
+	return p;
+}
+
+/**
  * @brief builds digesturi string
- * @param service service
- * @param service_name service name
- * @param realm realm
+ * @param serv_type type of service to use, e.g., "smtp"
+ * @param host fully-qualified canonical DNS name of host
+ * @param serv_name service name if it is replicated via DNS records; may
+ * be NULL.
  * @return digesturi string, NULL on failure.
  */
 static char *
-saslc__mech_digestmd5_digesturi(const char *service, const char *service_name,
-	const char *realm)
+saslc__mech_digestmd5_digesturi(saslc_sess_t *sess, const char *serv_host)
 {
+	saslc__mech_digestmd5_sess_t *ms;
+	const char *serv_list;
+	char *serv_name;
+	const char *serv_type;
 	char *r;
 	int rv;
 
-	rv = service_name == NULL
-	    ? asprintf(&r, "%s/%s", service, realm)
-	    : asprintf(&r, "%s/%s/%s", service, realm, service_name);
-	if (rv == -1)
-		return NULL;
+	ms = sess->mech_sess;
 
+	serv_type = saslc_sess_getprop(sess, SASLC_DIGESTMD5_SERVICE);
+	if (serv_type == NULL) {
+		saslc__error_set(ERR(sess), ERROR_MECH,
+		    "service is required for an authentication");
+		return NULL;
+	}
+	serv_list = saslc_sess_getprop(sess, SASLC_DIGESTMD5_SERVICENAME);
+	serv_name = serv_list != NULL
+	    ? choose_from_hqlist(serv_list, serv_host) : NULL;
+
+	saslc__msg_dbg("%s: serv_name='%s'", __func__, serv_name);
+
+	/****************************************************************/
+	/* digest-uri       = "digest-uri" "=" <"> digest-uri-value <">	*/
+	/* digest-uri-value  = serv-type "/" host [ "/" serv-name ]	*/
+	/*								*/
+	/* If the service is not replicated, or the serv-name is	*/
+	/* identical to the host, then the serv-name component MUST be	*/
+	/* omitted.  The service is considered to be replicated if the	*/
+	/* client's service-location process involves resolution using	*/
+	/* standard DNS lookup operations, and if these operations	*/
+	/* involve DNS records (such as SRV, or MX) which resolve one	*/
+	/* DNS name into a set of other DNS names.			*/
+	/****************************************************************/
+
+	rv = serv_name == NULL || strcmp(serv_host, serv_name) == 0
+	    ? asprintf(&r, "%s/%s", serv_type, serv_host)
+	    : asprintf(&r, "%s/%s/%s", serv_type, serv_host, serv_name);
+	if (serv_name != NULL)
+		free(serv_name);
+	if (rv == -1) {
+		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+		return NULL;
+	}
+	saslc__msg_dbg("%s: digest-uri='%s'", __func__, r);
 	return r;
 }
 
@@ -743,60 +840,6 @@ stringprep_realms(bool is_utf8, list_t *realms)
 }
 
 /**
- * @brief Choose a realm from a user provided list which may have
- * hostname qualifiers.
- * @param user_realm a comma delimited list with entries of the form
- * "[hostname:]realm".
- * @param hostname the hostname of the server provided by the caller.
- * @return the best matching realm or NULL
- */
-static char *
-choose_user_realm(const char *user_realms, const char *hostname)
-{
-	list_t *l, *list;
-	size_t len;
-	char *p;
-
-	list = saslc__list_parse(user_realms);
-	if (list == NULL)
-		return NULL;
-
-	/*
-	 * If the user provided a realm list and the caller provided a
-	 * hostname, pick the first realm from the list that
-	 * corresponds to the hostname.
-	 */
-	if (hostname != NULL) {
-		len = strlen(hostname);
-		for (l = list; l != NULL; l = l->next) {
-			p = l->value + len;
-			if (strncasecmp(l->value, hostname, len) != 0 ||
-			    *p != ':')
-				continue;
-
-			if (*(++p) != '\0' && isalnum((unsigned char)*p)) {
-				p = strdup(p);
-				saslc__list_free(list);
-				return p;
-			}
-		}
-	}
-	/*
-	 * If one couldn't be found, look for first user provided
-	 * realm without a hostname specifier.
-	 */
-	p = NULL;
-	for (l = list; l != NULL; l = l->next) {
-		if (strchr(l->value, ':') == NULL) {
-			p = strdup(l->value);
-			break;
-		}
-	}
-	saslc__list_free(list);
-	return p;
-}
-
-/**
  * @brief choose a realm from a list of possible realms provided by the server
  * @param sess the session context
  * @param realms the list of realms
@@ -804,9 +847,9 @@ choose_user_realm(const char *user_realms, const char *hostname)
  * responsibility to free the memory allocated for the return string.
  */
 static char *
-choose_realm(saslc_sess_t *sess, list_t *realms)
+choose_realm(saslc_sess_t *sess, const char *hostname, list_t *realms)
 {
-	const char *hostname, *user_realms;
+	const char *user_realms;
 	list_t *l;
 	char *p;
 
@@ -819,7 +862,6 @@ choose_realm(saslc_sess_t *sess, list_t *realms)
 	/* computing A1 (see below for details).			 */
 	/*****************************************************************/
 
-	hostname    = saslc_sess_getprop(sess, SASLC_DIGESTMD5_HOSTNAME);
 	user_realms = saslc_sess_getprop(sess, SASLC_DIGESTMD5_REALM);
 
 	/*
@@ -833,7 +875,7 @@ choose_realm(saslc_sess_t *sess, list_t *realms)
 		 * default.
 		 */
 		if (user_realms != NULL) {
-			p = choose_user_realm(user_realms, hostname);
+			p = choose_from_hqlist(user_realms, hostname);
 			if (p != NULL)
 				return p;
 		}
@@ -851,7 +893,7 @@ choose_realm(saslc_sess_t *sess, list_t *realms)
 	 * from the challenge.
 	 */
 	if (user_realms == NULL ||
-	    (p = choose_user_realm(user_realms, hostname)) == NULL)
+	    (p = choose_from_hqlist(user_realms, hostname)) == NULL)
 		return strdup(realms->value);
 
 	/*
@@ -985,15 +1027,18 @@ cipher_context_create(saslc_sess_t *sess, cipher_t cipher, int do_enc, uint8_t *
 	/* follows: IVs = MD5({Kcs, "aes-128"})                                  */
 	/*************************************************************************/
 
+	assert(cipher < __arraycount(cipher_ctx_tbl));
+	if (cipher >= __arraycount(cipher_ctx_tbl)) {
+		saslc__error_set_errno(ERR(sess), ERROR_BADARG);
+		return NULL;
+	}
+
 	ctx = malloc(sizeof(*ctx));
 	if (ctx == NULL) {
 		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 		return NULL;
 	}
 
-	assert(cipher < __arraycount(cipher_ctx_tbl));
-	if (cipher >= __arraycount(cipher_ctx_tbl))
-		return NULL;
 	ctp = &cipher_ctx_tbl[cipher];
 	assert(ctp->eval == cipher);
 
@@ -1133,7 +1178,7 @@ cipher_update(cipher_context_t *ctx, void *in, size_t inlen)
  * @param outlen decoded output packet length
  * @returns 0 on success, -1 on failure
  *
- * NOTE: this mallocs memory for its output and the caller is
+ * NOTE: this allocates memory for its output and the caller is
  * responsible for freeing it.
  *
  * integrity (auth-int):
@@ -1203,7 +1248,7 @@ encode_buffer(coder_context_t *ctx, const void *in, size_t inlen,
  * @returns 0 on success, -1 on failure
  *
  * NOTE: this modifies the intput buffer!
- * NOTE: this mallocs memory for its output and the caller is
+ * NOTE: this allocates memory for its output and the caller is
  * responsible for freeing it.
  *
  * integrity (auth-int):
@@ -1867,10 +1912,9 @@ saslc__mech_digestmd5_response_data(saslc_sess_t *sess)
 	rdata_t *rdata;
 	const char *authcid;
 	const char *authzid;
-	const char *passwd;
-	const char *service;
-	const char *service_name;
+	const char *hostname;
 	const char *maxbuf;
+	const char *passwd;
 	int rv;
 
 	ms = sess->mech_sess;
@@ -1892,19 +1936,23 @@ saslc__mech_digestmd5_response_data(saslc_sess_t *sess)
 		rdata->cipher = rv;
 	}
 
-	service = saslc_sess_getprop(sess, SASLC_DIGESTMD5_SERVICE);
-	if (service == NULL) {
+	hostname = saslc_sess_getprop(sess, SASLC_DIGESTMD5_HOSTNAME);
+	if (hostname == NULL) {
 		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "service is required for an authentication");
+		    "hostname is required for authentication");
 		return -1;
 	}
 
-	service_name = saslc_sess_getprop(sess, SASLC_DIGESTMD5_SERVICENAME);
+	rdata->realm = choose_realm(sess, hostname, cdata->realm);
+	if (rdata->realm == NULL) {
+		saslc__error_set(ERR(sess), ERROR_MECH,
+		    "cannot determine the realm");
+		return -1;
+	}
 
-	rdata->realm = choose_realm(sess, cdata->realm);
-
-	rdata->digesturi = saslc__mech_digestmd5_digesturi(service,
-	    service_name, rdata->realm);
+	rdata->digesturi = saslc__mech_digestmd5_digesturi(sess, hostname);
+	if (rdata->digesturi == NULL)
+		return -1;	/* error message already set */
 
 	authcid = saslc_sess_getprop(sess, SASLC_DIGESTMD5_AUTHCID);
 	if (authcid == NULL) {
