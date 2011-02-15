@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.41 2011/02/15 10:37:07 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.42 2011/02/15 16:10:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.41 2011/02/15 10:37:07 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.42 2011/02/15 16:10:41 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -1191,6 +1191,10 @@ rumpuser_sp_fini(void *arg)
 	struct spclient *spc = arg;
 	register_t retval[2] = {0, 0};
 
+	if (spclist[0].spc_fd) {
+		parsetab[cleanupidx].cleanup(cleanupsa);
+	}
+
 	/*
 	 * stuff response into the socket, since this process is just
 	 * about to exit
@@ -1199,7 +1203,6 @@ rumpuser_sp_fini(void *arg)
 		send_syscall_resp(spc, spc->spc_syscallreq, 0, retval);
 
 	if (spclist[0].spc_fd) {
-		parsetab[cleanupidx].cleanup(cleanupsa);
 		shutdown(spclist[0].spc_fd, SHUT_RDWR);
 		spfini = 1;
 	}
