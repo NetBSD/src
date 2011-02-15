@@ -1,4 +1,4 @@
-/*	$NetBSD: isc-hmac-fixup.c,v 1.1.1.1 2010/08/05 19:56:23 christos Exp $	*/
+/*	$NetBSD: isc-hmac-fixup.c,v 1.1.1.2 2011/02/15 19:31:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: isc-hmac-fixup.c,v 1.2.2.3 2010/03/10 02:19:08 marka Exp */
+/* Id: isc-hmac-fixup.c,v 1.4 2010-03-10 02:17:52 marka Exp */
 
 #include <config.h>
 

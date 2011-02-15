@@ -1,4 +1,4 @@
-Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2004, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2000, 2001  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
@@ -17,6 +17,7 @@ involving a different DNS setup.  They are:
   nsupdate/	Dynamic update and IXFR tests
   resolver/     Regression tests for resolver bugs that have been fixed
 		(not a complete resolver test suite)
+  rpz/		Tests of response policy zone (RPZ) rewriting
   stub/		Tests of stub zone functionality
   unknown/	Unknown type and class tests
   upforwd/	Update forwarding tests
@@ -39,6 +40,13 @@ separate virtual IP address on the loopback interface.  ns1 runs on
 10.53.0.1, ns2 on 10.53.0.2, etc.  Before running any tests, you must
 set up these addresses by running "ifconfig.sh up" as root.
 
+Mac OS X:
+If you wish to make the interfaces survive across reboots
+copy org.isc.bind.system and org.isc.bind.system to
+/Library/LaunchDaemons then run
+"launchctl load /Library/LaunchDaemons/org.isc.bind.system.plist" as
+root.
+
 The servers use port 5300 instead of the usual port 53, so they can be
 run without root privileges once the interfaces have been set up.
 
@@ -50,5 +58,4 @@ The tests can be run individually like this:
 
 To run all the tests, just type "make test".
 
-
-Id: README,v 1.12 2004/03/05 04:59:12 marka Exp
+Id: README,v 1.16 2011-01-13 04:59:24 tbox Exp

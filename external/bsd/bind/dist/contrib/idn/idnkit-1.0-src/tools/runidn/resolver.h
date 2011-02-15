@@ -1,6 +1,6 @@
-/*	$NetBSD: resolver.h,v 1.1.1.1 2009/03/22 14:57:49 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.2 2011/02/15 19:32:50 christos Exp $	*/
 
-/* Id: resolver.h,v 1.1.1.1 2003/06/04 00:27:13 marka Exp */
+/* Id: resolver.h,v 1.1.1.1 2003-06-04 00:27:13 marka Exp */
 /*
  * Copyright (c) 2001 Japan Network Information Center.  All rights reserved.
  *  

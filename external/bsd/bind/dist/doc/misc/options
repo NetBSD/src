@@ -100,13 +100,23 @@ options {
         directory <quoted_string>;
         disable-algorithms <string> { <string>; ... };
         disable-empty-zone <string>;
+        dns64 <netprefix> {
+                break-dnssec <boolean>;
+                clients { <address_match_element>; ... };
+                exclude { <address_match_element>; ... };
+                mapped { <address_match_element>; ... };
+                recursive-only <boolean>;
+                suffix <ipv6_address>;
+        };
+        dns64-contact <string>;
+        dns64-server <string>;
         dnssec-accept-expired <boolean>;
         dnssec-dnskey-kskonly <boolean>;
         dnssec-enable <boolean>;
         dnssec-lookaside <string> trust-anchor <string>;
         dnssec-must-be-secure <string> <boolean>;
         dnssec-secure-to-insecure <boolean>;
-        dnssec-validation <boolean>;
+        dnssec-validation ( yes | no | auto );
         dual-stack-servers [ port <integer> ] { ( <quoted_string> [ port
             <integer> ] | <ipv4_address> [ port <integer> ] |
             <ipv6_address> [ port <integer> ] ); ... };
@@ -184,6 +194,11 @@ options {
         request-ixfr <boolean>;
         request-nsid <boolean>;
         reserved-sockets <integer>;
+        resolver-query-timeout <integer>;
+        response-policy {
+                zone <string> [ policy ( given | no-op | nxdomain | nodata
+                    | cname <domain> ) ];
+        };
         rfc2308-type1 <boolean>; // not yet implemented
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         rrset-order { [ class <string> ] [ type <string> ] [ name
@@ -209,6 +224,7 @@ options {
         tkey-dhkey <quoted_string> <integer>;
         tkey-domain <quoted_string>;
         tkey-gssapi-credential <quoted_string>;
+        tkey-gssapi-keytab <quoted_string>;
         topology { <address_match_element>; ... }; // not implemented
         transfer-format ( many-answers | one-answer );
         transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ];
@@ -303,13 +319,23 @@ view <string> <optional_class> {
         dlz <string> {
                 database <string>;
         };
+        dns64 <netprefix> {
+                break-dnssec <boolean>;
+                clients { <address_match_element>; ... };
+                exclude { <address_match_element>; ... };
+                mapped { <address_match_element>; ... };
+                recursive-only <boolean>;
+                suffix <ipv6_address>;
+        };
+        dns64-contact <string>;
+        dns64-server <string>;
         dnssec-accept-expired <boolean>;
         dnssec-dnskey-kskonly <boolean>;
         dnssec-enable <boolean>;
         dnssec-lookaside <string> trust-anchor <string>;
         dnssec-must-be-secure <string> <boolean>;
         dnssec-secure-to-insecure <boolean>;
-        dnssec-validation <boolean>;
+        dnssec-validation ( yes | no | auto );
         dual-stack-servers [ port <integer> ] { ( <quoted_string> [ port
             <integer> ] | <ipv4_address> [ port <integer> ] |
             <ipv6_address> [ port <integer> ] ); ... };
@@ -371,6 +397,11 @@ view <string> <optional_class> {
         recursion <boolean>;
         request-ixfr <boolean>;
         request-nsid <boolean>;
+        resolver-query-timeout <integer>;
+        response-policy {
+                zone <string> [ policy ( given | no-op | nxdomain | nodata
+                    | cname <domain> ) ];
+        };
         rfc2308-type1 <boolean>; // not yet implemented
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         rrset-order { [ class <string> ] [ type <string> ] [ name
@@ -477,6 +508,9 @@ view <string> <optional_class> {
                 nsec3-test-zone <boolean>; // test only
                 pubkey <integer> <integer> <integer>
                     <quoted_string>; // obsolete
+                server-addresses { ( <ipv4_address> | <ipv6_address> ) [
+                    port <integer> ]; ... };
+                server-names { <quoted_string>; ... };
                 sig-signing-nodes <integer>;
                 sig-signing-signatures <integer>;
                 sig-signing-type <integer>;
@@ -486,14 +520,14 @@ view <string> <optional_class> {
                 transfer-source-v6 ( <ipv6_address> | * ) [ port (
                     <integer> | * ) ];
                 try-tcp-refresh <boolean>;
-                type ( master | slave | stub | hint | forward |
-                    delegation-only );
+                type ( master | slave | stub | static-stub | hint | forward
+                    | delegation-only );
                 update-check-ksk <boolean>;
                 update-policy ( local | { ( grant | deny ) <string> ( name
                     | subdomain | wildcard | self | selfsub | selfwild |
                     krb5-self | ms-self | krb5-subdomain | ms-subdomain |
-                    tcp-self | 6to4-self | zonesub ) [ <string> ]
-                    <rrtypelist>; ... };
+                    tcp-self | 6to4-self | zonesub | external ) [ <string>
+                    ] <rrtypelist>; ... };
                 use-alt-transfer-source <boolean>;
                 zero-no-soa-ttl <boolean>;
                 zone-statistics <boolean>;
@@ -559,6 +593,9 @@ zone <string> <optional_class> {
         notify-to-soa <boolean>;
         nsec3-test-zone <boolean>; // test only
         pubkey <integer> <integer> <integer> <quoted_string>; // obsolete
+        server-addresses { ( <ipv4_address> | <ipv6_address> ) [ port
+            <integer> ]; ... };
+        server-names { <quoted_string>; ... };
         sig-signing-nodes <integer>;
         sig-signing-signatures <integer>;
         sig-signing-type <integer>;
@@ -566,12 +603,13 @@ zone <string> <optional_class> {
         transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ];
         transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ];
         try-tcp-refresh <boolean>;
-        type ( master | slave | stub | hint | forward | delegation-only );
+        type ( master | slave | stub | static-stub | hint | forward |
+            delegation-only );
         update-check-ksk <boolean>;
         update-policy ( local | { ( grant | deny ) <string> ( name |
             subdomain | wildcard | self | selfsub | selfwild | krb5-self |
             ms-self | krb5-subdomain | ms-subdomain | tcp-self | 6to4-self
-            | zonesub ) [ <string> ] <rrtypelist>; ... };
+            | zonesub | external ) [ <string> ] <rrtypelist>; ... };
         use-alt-transfer-source <boolean>;
         zero-no-soa-ttl <boolean>;
         zone-statistics <boolean>;

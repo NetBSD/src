@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.1.1.2 2009/10/25 00:02:44 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.1.1.3 2011/02/15 19:38:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: error.h,v 1.22 2009/09/29 23:48:04 tbox Exp */
+/* Id: error.h,v 1.22 2009-09-29 23:48:04 tbox Exp */
 
 #ifndef ISC_ERROR_H
 #define ISC_ERROR_H 1

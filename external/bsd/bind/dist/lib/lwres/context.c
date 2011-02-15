@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.3 2011/02/15 19:38:47 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context.c,v 1.55 2009/09/02 23:48:03 tbox Exp */
+/* Id: context.c,v 1.55 2009-09-02 23:48:03 tbox Exp */
 
 /*! \file context.c
    lwres_context_create() creates a #lwres_context_t structure for use in

@@ -1,4 +1,4 @@
-/*	$NetBSD: x25_19.c,v 1.1.1.2 2009/12/26 22:25:29 christos Exp $	*/
+/*	$NetBSD: x25_19.c,v 1.1.1.3 2011/02/15 19:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: x25_19.c,v 1.41 2009/12/04 22:06:37 tbox Exp */
+/* Id: x25_19.c,v 1.41 2009-12-04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 

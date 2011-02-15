@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.3 2009/12/26 22:24:39 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.1.1.4 2011/02/15 19:36:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.c,v 1.99 2009/11/17 23:55:18 marka Exp */
+/* Id: masterdump.c,v 1.99 2009-11-17 23:55:18 marka Exp */
 
 /*! \file */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: arpaname.c,v 1.1.1.2 2009/12/26 22:20:28 christos Exp $	*/
+/*	$NetBSD: arpaname.c,v 1.1.1.3 2011/02/15 19:31:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: arpaname.c,v 1.4 2009/10/27 03:05:33 marka Exp */
+/* Id: arpaname.c,v 1.4 2009-10-27 03:05:33 marka Exp */
 
 #include "config.h"
 

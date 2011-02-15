@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.2 2009/10/25 00:02:46 christos Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.3 2011/02/15 19:38:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_ioctl.c,v 1.62 2009/01/18 23:48:14 tbox Exp */
+/* Id: ifiter_ioctl.c,v 1.62 2009-01-18 23:48:14 tbox Exp */
 
 /*! \file
  * \brief
