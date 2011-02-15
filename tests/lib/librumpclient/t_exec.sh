@@ -1,4 +1,4 @@
-#       $NetBSD: t_exec.sh,v 1.1 2011/02/15 15:16:46 pooka Exp $
+#       $NetBSD: t_exec.sh,v 1.2 2011/02/15 15:54:56 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -77,9 +77,33 @@ exec_cleanup()
 	rump.halt
 }
 
+atf_test_case cloexec cleanup
+cloexec_head()
+{
+        atf_set "descr" "check that FD_CLOEXEC works"
+}
+
+cloexec_body()
+{
+
+	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
+	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
+	    $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_ution cloexec1
+	atf_check -s exit:0 -o save:sstat.out rump.sockstat
+	atf_check -s exit:0 -o inline:'2\n' sed -n '$=' sstat.out
+	atf_check -s exit:0 -o match:'^root.*h_ution.*tcp.*\*\.2345' \
+	    sed -n 2p sstat.out
+}
+
+cloexec_cleanup()
+{
+	rump.halt
+}
+
 
 atf_init_test_cases()
 {
 	atf_add_test_case noexec
 	atf_add_test_case exec
+	atf_add_test_case cloexec
 }
