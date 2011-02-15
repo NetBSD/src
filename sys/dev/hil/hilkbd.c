@@ -1,4 +1,4 @@
-/*	$NetBSD: hilkbd.c,v 1.1 2011/02/06 18:26:54 tsutsui Exp $	*/
+/*	$NetBSD: hilkbd.c,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
 /*	$OpenBSD: hilkbd.c,v 1.14 2009/01/21 21:53:59 grange Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -72,34 +72,34 @@ struct hilkbd_softc {
 #endif
 };
 
-int	hilkbdprobe(device_t, cfdata_t, void *);
-void	hilkbdattach(device_t, device_t, void *);
-int	hilkbddetach(device_t, int);
+static int	hilkbdprobe(device_t, cfdata_t, void *);
+static void	hilkbdattach(device_t, device_t, void *);
+static int	hilkbddetach(device_t, int);
 
 CFATTACH_DECL_NEW(hilkbd, sizeof(struct hilkbd_softc),
     hilkbdprobe, hilkbdattach, hilkbddetach, NULL);
 
-int	hilkbd_enable(void *, int);
-void	hilkbd_set_leds(void *, int);
-int	hilkbd_ioctl(void *, u_long, void *, int, struct lwp *);
+static int	hilkbd_enable(void *, int);
+static void	hilkbd_set_leds(void *, int);
+static int	hilkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
-const struct wskbd_accessops hilkbd_accessops = {
+static const struct wskbd_accessops hilkbd_accessops = {
 	hilkbd_enable,
 	hilkbd_set_leds,
 	hilkbd_ioctl,
 };
 
-void	hilkbd_cngetc(void *, u_int *, int *);
-void	hilkbd_cnpollc(void *, int);
-void	hilkbd_cnbell(void *, u_int, u_int, u_int);
+static void	hilkbd_cngetc(void *, u_int *, int *);
+static void	hilkbd_cnpollc(void *, int);
+static void	hilkbd_cnbell(void *, u_int, u_int, u_int);
 
-const struct wskbd_consops hilkbd_consops = {
+static const struct wskbd_consops hilkbd_consops = {
 	hilkbd_cngetc,
 	hilkbd_cnpollc,
 	hilkbd_cnbell,
 };
 
-struct wskbd_mapdata hilkbd_keymapdata = {
+static struct wskbd_mapdata hilkbd_keymapdata = {
 	hilkbd_keydesctab,
 #ifdef HILKBD_LAYOUT
 	HILKBD_LAYOUT,
@@ -108,7 +108,7 @@ struct wskbd_mapdata hilkbd_keymapdata = {
 #endif
 };
 
-struct wskbd_mapdata hilkbd_keymapdata_ps2 = {
+static struct wskbd_mapdata hilkbd_keymapdata_ps2 = {
 	hilkbd_keydesctab_ps2,
 #ifdef HILKBD_LAYOUT
 	HILKBD_LAYOUT,
@@ -117,13 +117,14 @@ struct wskbd_mapdata hilkbd_keymapdata_ps2 = {
 #endif
 };
 
-void	hilkbd_bell(struct hil_softc *, u_int, u_int, u_int);
-void	hilkbd_callback(struct hildev_softc *, u_int, u_int8_t *);
-void	hilkbd_decode(struct hilkbd_softc *, u_int8_t, u_int *, int *, int);
-int	hilkbd_is_console(int);
-void	hilkbd_rawrepeat(void *);
+static void	hilkbd_bell(struct hil_softc *, u_int, u_int, u_int);
+static void	hilkbd_callback(struct hildev_softc *, u_int, uint8_t *);
+static void	hilkbd_decode(struct hilkbd_softc *, uint8_t, u_int *, int *,
+		    int);
+static int	hilkbd_is_console(int);
+static void	hilkbd_rawrepeat(void *);
 
-int	seen_hilkbd_console;
+static int	seen_hilkbd_console;
 
 int
 hilkbdprobe(device_t parent, cfdata_t cf, void *aux)
@@ -132,9 +133,9 @@ hilkbdprobe(device_t parent, cfdata_t cf, void *aux)
 
 	if (ha->ha_type != HIL_DEVICE_KEYBOARD &&
 	    ha->ha_type != HIL_DEVICE_BUTTONBOX)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -143,7 +144,7 @@ hilkbdattach(device_t parent, device_t self, void *aux)
 	struct hilkbd_softc *sc = device_private(self);
 	struct hil_attach_args *ha = aux;
 	struct wskbddev_attach_args a;
-	u_int8_t layoutcode;
+	uint8_t layoutcode;
 	int ps2;
 
 	sc->sc_hildev.sc_dev = self;
@@ -167,7 +168,7 @@ hilkbdattach(device_t parent, device_t self, void *aux)
 			    hilkbd_layouts[layoutcode];
 #endif
 
-		printf(", layout %x", layoutcode);
+		aprint_normal(", layout %x", layoutcode);
 	}
 
 	/*
@@ -177,10 +178,10 @@ hilkbdattach(device_t parent, device_t self, void *aux)
 		/* HILIOB_PROMPT is not always reported... */
 		sc->sc_numleds = (ha->ha_info[2] & HILIOB_PMASK) >> 4;
 		if (sc->sc_numleds != 0)
-			printf(", %d leds", sc->sc_numleds);
+			aprint_normal(", %d leds", sc->sc_numleds);
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Red lettered keyboards come in two flavours, the old one
@@ -227,7 +228,7 @@ hilkbdattach(device_t parent, device_t self, void *aux)
 }
 
 int
-hilkbddetach(struct device *self, int flags)
+hilkbddetach(device_t self, int flags)
 {
 	struct hilkbd_softc *sc = device_private(self);
 
@@ -243,7 +244,7 @@ hilkbddetach(struct device *self, int flags)
 	if (sc->sc_wskbddev != NULL)
 		return config_detach(sc->sc_wskbddev, flags);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -253,15 +254,15 @@ hilkbd_enable(void *v, int on)
 
 	if (on) {
 		if (sc->sc_enabled)
-			return (EBUSY);
+			return EBUSY;
 	} else {
 		if (sc->sc_console)
-			return (EBUSY);
+			return EBUSY;
 	}
 
 	sc->sc_enabled = on;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -332,7 +333,7 @@ hilkbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct hilkbd_softc *sc = v;
 	struct hildev_softc *hdsc = &sc->sc_hildev;
-	u_int8_t c, stat;
+	uint8_t c, stat;
 
 	for (;;) {
 		while (hil_poll_data(hdsc, &stat, &c) != 0)
@@ -369,7 +370,7 @@ hilkbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 void
 hilkbd_bell(struct hil_softc *sc, u_int pitch, u_int period, u_int volume)
 {
-	u_int8_t buf[2];
+	uint8_t buf[2];
 
 	/* XXX there could be at least a pitch -> HIL pitch conversion here */
 #define	BELLDUR		80	/* tone duration in msec (10-2560) */
@@ -380,7 +381,7 @@ hilkbd_bell(struct hil_softc *sc, u_int pitch, u_int period, u_int volume)
 }
 
 void
-hilkbd_callback(struct hildev_softc *hdsc, u_int buflen, u_int8_t *buf)
+hilkbd_callback(struct hildev_softc *hdsc, u_int buflen, uint8_t *buf)
 {
 	struct hilkbd_softc *sc = device_private(hdsc->sc_dev);
 	u_int type;
@@ -405,7 +406,7 @@ hilkbd_callback(struct hildev_softc *hdsc, u_int buflen, u_int8_t *buf)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
-		u_char cbuf[HILBUFSIZE * 2];
+		uint8_t cbuf[HILBUFSIZE * 2];
 		int c, j, npress;
 
 		npress = j = 0;
@@ -452,9 +453,10 @@ hilkbd_callback(struct hildev_softc *hdsc, u_int buflen, u_int8_t *buf)
 }
 
 void
-hilkbd_decode(struct hilkbd_softc *sc, u_int8_t data, u_int *type, int *key,
+hilkbd_decode(struct hilkbd_softc *sc, uint8_t data, u_int *type, int *key,
     int kbdtype)
 {
+
 	if (kbdtype == HIL_BUTTONBOX) {
 		if (data == 0x02)	/* repeat arrow */
 			data = sc->sc_lastarrow;
@@ -469,16 +471,17 @@ hilkbd_decode(struct hilkbd_softc *sc, u_int8_t data, u_int *type, int *key,
 int
 hilkbd_is_console(int hil_is_console)
 {
+
 	/* if not first hil keyboard, then not the console */
 	if (seen_hilkbd_console)
-		return (0);
+		return 0;
 
 	/* if PDC console does not match hil bus path, then not the console */
 	if (hil_is_console == 0)
-		return (0);
+		return 0;
 
 	seen_hilkbd_console = 1;
-	return (1);
+	return 1;
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD

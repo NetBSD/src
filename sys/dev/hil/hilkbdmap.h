@@ -1,4 +1,4 @@
-/*	$NetBSD: hilkbdmap.h,v 1.1 2011/02/06 18:26:54 tsutsui Exp $	*/
+/*	$NetBSD: hilkbdmap.h,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
 /*	$OpenBSD: hilkbdmap.h,v 1.3 2005/05/07 22:42:30 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -33,4 +33,4 @@ extern const struct wscons_keydesc hilkbd_keydesctab_ps2[];
 #define	MAXHILKBDLAYOUT	0x20
 
 extern const kbd_t hilkbd_layouts[MAXHILKBDLAYOUT];
-extern const u_int8_t hilkbd_raw[0x80];
+extern const uint8_t hilkbd_raw[0x80];

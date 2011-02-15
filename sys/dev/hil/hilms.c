@@ -1,4 +1,4 @@
-/*	$NetBSD: hilms.c,v 1.1 2011/02/06 18:26:54 tsutsui Exp $	*/
+/*	$NetBSD: hilms.c,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
 /*	$OpenBSD: hilms.c,v 1.5 2007/04/10 22:37:17 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -55,24 +55,24 @@ struct hilms_softc {
 	device_t	sc_wsmousedev;
 };
 
-int	hilmsprobe(device_t, cfdata_t, void *);
-void	hilmsattach(device_t, device_t, void *);
-int	hilmsdetach(device_t, int);
+static int	hilmsprobe(device_t, cfdata_t, void *);
+static void	hilmsattach(device_t, device_t, void *);
+static int	hilmsdetach(device_t, int);
 
 CFATTACH_DECL_NEW(hilms, sizeof(struct hilms_softc),
     hilmsprobe, hilmsattach, hilmsdetach, NULL);
 
-int	hilms_enable(void *);
-int	hilms_ioctl(void *, u_long, void *, int, struct lwp *);
-void	hilms_disable(void *);
+static int	hilms_enable(void *);
+static int	hilms_ioctl(void *, u_long, void *, int, struct lwp *);
+static void	hilms_disable(void *);
 
-const struct wsmouse_accessops hilms_accessops = {
+static const struct wsmouse_accessops hilms_accessops = {
 	hilms_enable,
 	hilms_ioctl,
 	hilms_disable,
 };
 
-void	hilms_callback(struct hildev_softc *, u_int, u_int8_t *);
+static void	hilms_callback(struct hildev_softc *, u_int, uint8_t *);
 
 int
 hilmsprobe(device_t parent, cfdata_t cf, void *aux)
@@ -80,16 +80,16 @@ hilmsprobe(device_t parent, cfdata_t cf, void *aux)
 	struct hil_attach_args *ha = aux;
 
 	if (ha->ha_type != HIL_DEVICE_MOUSE)
-		return (0);
+		return 0;
 
 	/*
 	 * Reject anything that has only buttons - they are handled as
 	 * keyboards, really.
 	 */
 	if (ha->ha_infolen > 1 && (ha->ha_info[1] & HIL_AXMASK) == 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -137,23 +137,24 @@ hilmsattach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	printf(", %d axes", sc->sc_axes);
+	aprint_normal(", %d axes", sc->sc_axes);
 	if (sc->sc_buttons == 1)
-		printf(", 1 button");
+		aprint_normal(", 1 button");
 	else if (sc->sc_buttons > 1)
-		printf(", %d buttons", sc->sc_buttons);
+		aprint_normal(", %d buttons", sc->sc_buttons);
 	if (sc->sc_features & HILIOB_PIO)
-		printf(", pressure sensor");
+		aprint_normal(", pressure sensor");
 	if (sc->sc_features & HIL_ABSOLUTE) {
-		printf ("\n%s: %d", device_xname(self), rx);
+		aprint_normal("\n");
+		aprint_normal_dev(self, "%d", rx);
 		if (ry != 0)
-			printf("x%d", ry);
+			aprint_normal("x%d", ry);
 		else
-			printf(" linear");
-		printf(" fixed area");
+			aprint_normal(" linear");
+		aprint_normal(" fixed area");
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_enabled = 0;
 
@@ -171,7 +172,7 @@ hilmsdetach(device_t self, int flags)
 	if (sc->sc_wsmousedev != NULL)
 		return config_detach(sc->sc_wsmousedev, flags);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -185,7 +186,7 @@ hilms_enable(void *v)
 	sc->sc_enabled = 1;
 	sc->sc_buttonstate = 0;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -213,7 +214,7 @@ hilms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 void
-hilms_callback(struct hildev_softc *hdsc, u_int buflen, u_int8_t *buf)
+hilms_callback(struct hildev_softc *hdsc, u_int buflen, uint8_t *buf)
 {
 	struct hilms_softc *sc = device_private(hdsc->sc_dev);
 	int type, flags;
