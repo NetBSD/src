@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.20 2011/01/22 15:14:28 cegger Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.21 2011/02/15 04:06:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.20 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.21 2011/02/15 04:06:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -962,8 +962,7 @@ r128fb_set_backlight(struct r128fb_softc *sc, int level)
 	level = 255 - level;
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	reg &= ~R128_LEVEL_MASK;
-	reg |= (level << R128_LEVEL_SHIFT) | 
-	       (level != 255 ? R128_LVDS_BLON : 0);
+	reg |= (level << R128_LEVEL_SHIFT);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
 	DPRINTF("backlight level: %d reg %08x\n", level, reg);
 }
@@ -979,10 +978,6 @@ r128fb_switch_backlight(struct r128fb_softc *sc, int on)
 	sc->sc_bl_on = on;
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	reg &= ~R128_LEVEL_MASK;
-	if (on) {
-		reg |= R128_LVDS_BLON;
-	} else
-		reg &= ~R128_LVDS_BLON;
 	level = on ? 255 - sc->sc_bl_level : 255;
 	reg |= level << R128_LEVEL_SHIFT;
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
