@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_gsc.c,v 1.1 2011/02/15 10:32:56 tsutsui Exp $	*/
+/*	$NetBSD: hil_gsc.c,v 1.2 2011/02/15 10:35:39 tsutsui Exp $	*/
 /*	$OpenBSD: hil_gsc.c,v 1.5 2005/12/22 07:09:52 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -45,8 +45,8 @@
 
 #include <dev/hil/hilvar.h>
 
-int	hil_gsc_match(device_t, cfdata_t, void *);
-void	hil_gsc_attach(device_t, device_t, void *);
+static int	hil_gsc_match(device_t, cfdata_t, void *);
+static void	hil_gsc_attach(device_t, device_t, void *);
 
 struct hil_gsc_softc {
 	struct hil_softc sc_hs;
@@ -64,9 +64,9 @@ hil_gsc_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    ga->ga_type.iodc_sv_model != HPPA_FIO_HIL)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -81,7 +81,7 @@ hil_gsc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = ga->ga_iot;
 	if (bus_space_map(ga->ga_iot, ga->ga_hpa,
 	    HILMAPSIZE, 0, &sc->sc_bsh)) {
-		printf(": couldn't map hil controller\n");
+		aprint_error(": couldn't map hil controller\n");
 		return;
 	}
 
