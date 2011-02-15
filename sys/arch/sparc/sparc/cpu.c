@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.229 2011/02/14 03:18:10 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.230 2011/02/15 09:05:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.229 2011/02/14 03:18:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.230 2011/02/15 09:05:14 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -555,12 +555,10 @@ cpu_boot_secondary_processors(void)
 			continue;
 
 		printf(" cpu%d", cpi->ci_cpuid);
-		cpi->flags |= CPUFLG_READY;
 		cpu_ready_mask |= (1 << n);
 	}
 
 	/* Mark the boot CPU as ready */
-	cpuinfo.flags |= CPUFLG_READY;
 	cpu_ready_mask |= (1 << 0);
 
 	/* Tell the other CPU's to start up.  */
