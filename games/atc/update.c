@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.21 2009/08/12 04:48:03 dholland Exp $	*/
+/*	$NetBSD: update.c,v 1.22 2011/02/15 08:25:25 is Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.21 2009/08/12 04:48:03 dholland Exp $");
+__RCSID("$NetBSD: update.c,v 1.22 2011/02/15 08:25:25 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ next_plane(void)
 					break;
 				}
 	} while (found && last_plane != start_plane);
-	if (last_plane == start_plane)
+	if (found)
 		return (-1);
 	return (last_plane);
 }
