@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.24.6.3 2011/02/09 16:15:01 bouyer Exp $
+#	$NetBSD: files.ufs,v 1.24.6.4 2011/02/15 16:45:57 bouyer Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -62,9 +62,9 @@ file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_quota.c		(quota | quota2) & (ffs | lfs | mfs | ext2fs)
 file	ufs/ufs/ufs_quota1.c		quota & (ffs | lfs | mfs | ext2fs)
 file	ufs/ufs/ufs_quota2.c		quota2 & (ffs | lfs | mfs | ext2fs)
-file	ufs/ufs/quota1_subr.c		quota & (ffs | lfs | mfs | ext2fs)
-file	ufs/ufs/quota2_subr.c		quota2 & (ffs | lfs | mfs | ext2fs)
-file	ufs/ufs/quota2_prop.c		(quota | quota2) & (ffs | lfs | mfs | ext2fs)
+file	ufs/ufs/quota1_subr.c
+file	ufs/ufs/quota2_subr.c
+file	ufs/ufs/quota2_prop.c
 file	ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_wapbl.c		ffs & wapbl
