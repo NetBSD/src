@@ -14,13 +14,13 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: mksymtbl.pl,v 1.4 2009/10/05 22:39:09 jinmei Exp
+# Id: mksymtbl.pl,v 1.4 2009-10-05 22:39:09 jinmei Exp
 
 use strict;
 use diagnostics;
 $^W = 1;
 
-my $rev = 'Id: mksymtbl.pl,v 1.4 2009/10/05 22:39:09 jinmei Exp';
+my $rev = 'Id: mksymtbl.pl,v 1.4 2009-10-05 22:39:09 jinmei Exp';
 $rev =~ s/\$//g;
 $rev =~ s/,v//g;
 $rev =~ s/Id: //;
