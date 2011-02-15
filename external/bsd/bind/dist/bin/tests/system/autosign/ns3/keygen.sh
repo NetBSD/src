@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: keygen.sh,v 1.3.6.4 2010/05/19 07:47:11 marka Exp
+# Id: keygen.sh,v 1.8 2010-12-15 18:44:37 each Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -195,4 +195,13 @@ ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
 echo $ksk > ../del1.key
 zsk=`$KEYGEN -q -3 -r $RANDFILE $zone`
 echo $zsk > ../del2.key
+$SIGNER -S -3 beef -o $zone -f $zonefile $infile > /dev/null 2>&1
+
+#
+# Introducing a pre-published key test.
+#
+zone=prepub.example
+zonefile="${zone}.db"
+$KEYGEN -3 -q -r $RANDFILE -fk $zone > /dev/null
+$KEYGEN -3 -q -r $RANDFILE $zone > /dev/null
 $SIGNER -S -3 beef -o $zone -f $zonefile $infile > /dev/null 2>&1

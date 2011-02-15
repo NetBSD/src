@@ -1,4 +1,4 @@
-/*	$NetBSD: minfo_14.c,v 1.1.1.2 2009/12/26 22:25:26 christos Exp $	*/
+/*	$NetBSD: minfo_14.c,v 1.1.1.3 2011/02/15 19:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: minfo_14.c,v 1.47 2009/12/04 22:06:37 tbox Exp */
+/* Id: minfo_14.c,v 1.47 2009-12-04 22:06:37 tbox Exp */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 

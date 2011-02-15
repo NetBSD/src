@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.h,v 1.1.1.1 2009/03/22 15:01:43 christos Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.1.1.2 2011/02/15 19:37:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.h,v 1.42 2008/09/24 02:46:23 marka Exp */
+/* Id: masterdump.h,v 1.42 2008-09-24 02:46:23 marka Exp */
 
 #ifndef DNS_MASTERDUMP_H
 #define DNS_MASTERDUMP_H 1

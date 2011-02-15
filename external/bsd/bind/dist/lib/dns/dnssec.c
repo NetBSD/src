@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.1.1.5 2010/08/05 20:11:48 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.1.1.6 2011/02/15 19:36:47 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: dnssec.c,v 1.115.10.4 2010/01/13 23:48:20 tbox Exp
+ * Id: dnssec.c,v 1.119 2010-01-13 23:48:59 tbox Exp
  */
 
 /*! \file */

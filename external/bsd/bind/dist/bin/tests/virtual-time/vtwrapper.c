@@ -1,4 +1,4 @@
-/*	$NetBSD: vtwrapper.c,v 1.1.1.1 2010/08/05 19:56:21 christos Exp $	*/
+/*	$NetBSD: vtwrapper.c,v 1.1.1.2 2011/02/15 19:31:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: vtwrapper.c,v 1.2.2.3 2010/06/18 23:46:26 tbox Exp */
+/* Id: vtwrapper.c,v 1.4 2010-08-12 09:31:50 fdupont Exp */
 
 #define _GNU_SOURCE
 #include <sys/syscall.h>
@@ -280,7 +280,7 @@ kevent(int kq, struct kevent *changelist, int nchanges,
 		       nevents, &ts);
 #else
 	return syscall(SYS_kevent, kq, changelist, nchanges, eventlist,
-			nevents, timeout);
+		       nevents, timeout);
 #endif
 }
 #endif

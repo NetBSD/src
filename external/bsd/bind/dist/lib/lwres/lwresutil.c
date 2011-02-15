@@ -1,4 +1,4 @@
-/*	$NetBSD: lwresutil.c,v 1.1.1.1 2009/03/22 15:02:38 christos Exp $	*/
+/*	$NetBSD: lwresutil.c,v 1.1.1.2 2011/02/15 19:38:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwresutil.c,v 1.34 2007/06/19 23:47:22 tbox Exp */
+/* Id: lwresutil.c,v 1.34 2007-06-19 23:47:22 tbox Exp */
 
 /*! \file */
 

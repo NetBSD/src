@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata.c,v 1.1.1.3 2009/12/26 22:24:51 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.4 2011/02/15 19:37:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.c,v 1.204 2009/12/04 21:09:33 marka Exp */
+/* Id: rdata.c,v 1.209 2011-01-13 04:59:25 tbox Exp */
 
 /*! \file */
 
@@ -1150,6 +1150,11 @@ name_prefix(dns_name_t *name, dns_name_t *origin, dns_name_t *target) {
 	l2 = dns_name_countlabels(origin);
 
 	if (l1 == l2)
+		goto return_false;
+
+	/* Master files should be case preserving. */
+	dns_name_getlabelsequence(name, l1 - l2, l2, target);
+	if (!dns_name_caseequal(origin, target))
 		goto return_false;
 
 	dns_name_getlabelsequence(name, 0, l1 - l2, target);
