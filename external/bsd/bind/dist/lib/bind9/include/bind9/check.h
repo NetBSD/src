@@ -1,4 +1,4 @@
-/*	$NetBSD: check.h,v 1.1.1.1 2009/03/22 15:00:56 christos Exp $	*/
+/*	$NetBSD: check.h,v 1.1.1.2 2011/02/15 19:36:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check.h,v 1.9 2007/06/19 23:47:16 tbox Exp */
+/* Id: check.h,v 1.9 2007-06-19 23:47:16 tbox Exp */
 
 #ifndef BIND9_CHECK_H
 #define BIND9_CHECK_H 1

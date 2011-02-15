@@ -1,6 +1,6 @@
-/*	$NetBSD: debug.h,v 1.1.1.1 2009/03/22 14:57:21 christos Exp $	*/
+/*	$NetBSD: debug.h,v 1.1.1.2 2011/02/15 19:32:18 christos Exp $	*/
 
-/* Id: debug.h,v 1.1.1.1 2003/06/04 00:25:36 marka Exp */
+/* Id: debug.h,v 1.1.1.1 2003-06-04 00:25:36 marka Exp */
 /*
  * Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
  *  

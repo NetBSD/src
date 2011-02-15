@@ -13,7 +13,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: dnssec-keyfromlabel.html,v 1.15.24.1 2010/01/20 02:08:51 tbox Exp -->
+<!-- Id: dnssec-keyfromlabel.html,v 1.17.14.1 2011-02-03 12:29:12 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -51,7 +51,7 @@
 <p>
 	    Selects the cryptographic algorithm.  The value of
             <code class="option">algorithm</code> must be one of RSAMD5, RSASHA1,
-	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256 or RSASHA512.
+	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512 or ECCGOST.
 	    These values are case insensitive.
 	  </p>
 <p>
@@ -195,7 +195,7 @@
             date, the key will be flagged as revoked.  It will be included
             in the zone and will be used to sign it.
           </p></dd>
-<dt><span class="term">-U <em class="replaceable"><code>date/offset</code></em></span></dt>
+<dt><span class="term">-I <em class="replaceable"><code>date/offset</code></em></span></dt>
 <dd><p>
             Sets the date on which the key is to be retired.  After that
             date, the key will still be included in the zone, but it

@@ -1,4 +1,4 @@
-/*	$NetBSD: dname_39.h,v 1.1.1.1 2009/03/22 15:01:51 christos Exp $	*/
+/*	$NetBSD: dname_39.h,v 1.1.1.2 2011/02/15 19:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_DNAME_39_H
 #define GENERIC_DNAME_39_H 1
 
-/* Id: dname_39.h,v 1.21 2007/06/19 23:47:17 tbox Exp */
+/* Id: dname_39.h,v 1.21 2007-06-19 23:47:17 tbox Exp */
 
 /*! 
  *  \brief per RFC2672 */

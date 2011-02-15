@@ -219,6 +219,8 @@ isc_file_ischdiridempotent
 isc_file_iscurrentdir
 isc_file_mktemplate
 isc_file_openunique
+isc_file_openuniquemode
+isc_file_openuniqueprivate
 isc_file_progname
 isc_file_remove
 isc_file_rename
@@ -382,6 +384,7 @@ isc_netaddr_fromin6
 isc_netaddr_frompath
 isc_netaddr_fromsockaddr
 isc_netaddr_fromv4mapped
+isc_netaddr_getzone
 isc_netaddr_ismulticast
 isc_netaddr_masktoprefixlen
 isc_netaddr_prefixok

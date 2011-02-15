@@ -1,4 +1,4 @@
-/*	$NetBSD: a6_38.c,v 1.1.1.2 2009/12/26 22:25:30 christos Exp $	*/
+/*	$NetBSD: a6_38.c,v 1.1.1.3 2011/02/15 19:37:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: a6_38.c,v 1.56 2009/12/04 22:06:37 tbox Exp */
+/* Id: a6_38.c,v 1.56 2009-12-04 22:06:37 tbox Exp */
 
 /* RFC2874 */
 
