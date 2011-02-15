@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.84.8.1 2011/02/08 16:19:47 bouyer Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.84.8.2 2011/02/15 17:52:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -787,6 +787,12 @@ struct netbsd32_timex {
 	netbsd32_long calcnt;	/* calibration intervals (ro) */
 	netbsd32_long errcnt;	/* calibration errors (ro) */
 	netbsd32_long stbcnt;	/* stability limit exceeded (ro) */
+};
+
+/* <prop/plistref.h> */
+struct netbsd32_plistref {
+	netbsd32_pointer_t pref_plist;
+	netbsd32_size_t pref_len;
 };
 
 /* from <ufs/lfs/lfs.h> */

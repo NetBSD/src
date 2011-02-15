@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.168.4.2 2011/02/09 16:09:55 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.168.4.3 2011/02/15 17:52:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.168.4.2 2011/02/09 16:09:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.168.4.3 2011/02/15 17:52:51 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1185,40 +1185,39 @@ netbsd32_rmdir(struct lwp *l, const struct netbsd32_rmdir_args *uap, register_t 
 }
 
 int
-compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quotactl_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) cmd;
-		syscallarg(int) uid;
-		syscallarg(netbsd32_voidp) arg;
-	} */
-	struct compat_50_sys_quotactl_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(cmd);
-	NETBSD32TO64_UAP(uid);
-	NETBSD32TOP_UAP(arg, void *);
-	return (compat_50_sys_quotactl(l, &ua, retval));
-}
-
-int
 netbsd32___quotactl50(struct lwp *l, const struct netbsd32___quotactl50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
-		syscallarg(void *) v;
+		syscallarg(netbsd32_voidp) v;
 	} */
-	//struct sys___quotactl50_args ua;
+	struct plistref pref;
+	int error;
+	struct vnode *vp;
+	struct mount *mp;
+	prop_dictionary_t dict;
 
-	return EOPNOTSUPP;
-#if 0
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(cmd);
-	NETBSD32TO64_UAP(uid);
-	NETBSD32TOP_UAP(arg, void *);
-	return (sys_quotactl(l, &ua, retval));
-#endif
+	error = namei_simple_user(SCARG_P32(uap, path),
+	    NSM_FOLLOW_TRYEMULROOT, &vp);
+
+	if (error != 0)
+		return (error);
+	mp = vp->v_mount;
+
+	error = netbsd32_copyin_plistref(SCARG(uap, pref), &pref);
+	if (error)
+		return error;
+	error = prop_dictionary_copyin(&pref, &dict);
+	if (error)
+		return error;
+	error = VFS_QUOTACTL(mp, dict);
+	vrele(vp);
+	if (!error)
+		error = prop_dictionary_copyout(&pref, dict);
+	if (!error)
+		error = netbsd32_copyout_plistref(SCARG(uap, pref), &pref);
+	prop_object_release(dict);
+	return (error);
 }
 
 int

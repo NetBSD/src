@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.29.4.1 2011/02/08 16:19:47 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.29.4.2 2011/02/15 17:52:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -388,11 +388,6 @@ struct netbsd32_vnd_ioctl50 {
 /* from <dev/vnd.c> */
 #define VNDIOCSET5032	_IOWR('F', 0, struct netbsd32_vnd_ioctl50)
 #define VNDIOCCLR5032	_IOW('F', 1, struct netbsd32_vnd_ioctl50)
-
-struct netbsd32_plistref {
-	netbsd32_voidp	pref_plist;	/* plist data */
-	netbsd32_size_t	pref_len;	/* total length of plist data */
-};
 
 #define ENVSYS_GETDICTIONARY32	_IOWR('E', 0, struct netbsd32_plistref)
 #define ENVSYS_SETDICTIONARY32	_IOWR('E', 1, struct netbsd32_plistref)
