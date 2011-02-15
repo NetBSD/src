@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.261 2011/02/15 10:59:25 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.262 2011/02/15 11:30:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1786,6 +1786,7 @@ ctw_invalid:
  */
 
 #if defined(SUN4)
+_ENTRY(memfault_sun4)
 memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
 	! tally interrupt (curcpu()->cpu_data.cpu_nfault++) (clobbers %o0,%o1)
@@ -1851,8 +1852,9 @@ memfault_sun4:
 #endif /* SUN4C || SUN4M */
 #endif /* SUN4 */
 
-memfault_sun4c:
 #if defined(SUN4C)
+_ENTRY(memfault_sun4c)
+memfault_sun4c:
 	TRAP_SETUP(-CCFSZ-80)
 	! tally fault (curcpu()->cpu_data.cpu_nfault++) (clobbers %o0,%o1,%o2)
 	INCR64(CPUINFO_VA + CPUINFO_NFAULT)
@@ -1951,6 +1953,7 @@ memfault_sun4c:
 #endif /* SUN4C */
 
 #if defined(SUN4M)
+_ENTRY(memfault_sun4m)
 memfault_sun4m:
 	sethi	%hi(CPUINFO_VA), %l4
 	ld	[%l4 + %lo(CPUINFO_VA+CPUINFO_GETSYNCFLT)], %l5
