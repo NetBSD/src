@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1504 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1505 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -849,10 +849,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[tsutsui 20110212]
 	disklabel(8): Disable COMPAT_386BSD_MBRPART. The related kernel
 		compat option was disabled by default four years ago, and
-		NetBSD has not used partition id 0x165 for much longer.
+		NetBSD has not used partition id 165 (0xA5) for much longer.
 		Meanwhile the presence of this code in disklabel can
 		cause sysinst to clobber FreeBSD installs on the same
 		disk. Those with very, very old NetBSD installations may
 		need to use fdisk(8) to change the NetBSD partition ids
-		from 0x165 to 0x169. [dholland 20110212]
+		from 165 (0xA5) to 169 (0xA9). [dholland 20110212]
 	hp700: Add support for HIL devices. From OpenBSD. [tsutsui 20110215]
