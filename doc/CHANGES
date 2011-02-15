@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1503 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1504 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -855,3 +855,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		disk. Those with very, very old NetBSD installations may
 		need to use fdisk(8) to change the NetBSD partition ids
 		from 0x165 to 0x169. [dholland 20110212]
+	hp700: Add support for HIL devices. From OpenBSD. [tsutsui 20110215]
