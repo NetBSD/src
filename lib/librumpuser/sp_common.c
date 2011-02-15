@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.27 2011/02/14 14:56:23 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.28 2011/02/15 10:37:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -91,7 +91,7 @@ enum {	RUMPSP_HANDSHAKE,
 	RUMPSP_PREFORK,
 	RUMPSP_RAISE };
 
-enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK };
+enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK, HANDSHAKE_EXEC };
 
 #define AUTHLEN 4 /* 128bit fork auth */
 
