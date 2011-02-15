@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.414.4.2 2011/02/11 11:27:29 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.414.4.3 2011/02/15 16:45:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414.4.2 2011/02/11 11:27:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414.4.3 2011/02/15 16:45:56 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -845,38 +845,6 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 		vfs_bufstats();
 #endif /* DEBUG */
 	return (0);
-}
-
-/*
- * Change filesystem quotas.
- */
-/* ARGSUSED */
-int
-compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(int) cmd;
-		syscallarg(int) uid;
-		syscallarg(void *) arg;
-	} */
-	struct mount *mp;
-	int error;
-	struct vnode *vp;
-
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_TRYEMULROOT, &vp);
-	if (error != 0)
-		return (error);
-	mp = vp->v_mount;
-#if 0
-	error = VFS_QUOTACTL(mp, SCARG(uap, cmd), SCARG(uap, uid),
-	    SCARG(uap, arg));
-#else
-	error = EOPNOTSUPP;
-#endif
-	vrele(vp);
-	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.6 2010/07/13 15:38:15 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.6.4.1 2011/02/15 16:45:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.6 2010/07/13 15:38:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.6.4.1 2011/02/15 16:45:56 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,4 +311,219 @@ compat_50_sys_mknod(struct lwp *l,
 	} */
 	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
 	    SCARG(uap, dev), retval, UIO_USERSPACE);
+}
+
+#include <ufs/ufs/quota1.h>
+#include <ufs/ufs/quota2_prop.h>
+
+/* ARGSUSED */
+int   
+compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const char *) path;
+		syscallarg(int) cmd;
+		syscallarg(int) uid;
+		syscallarg(void *) arg; 
+	} */
+	struct mount *mp;
+	int error;
+	uint8_t error8;
+	struct vnode *vp;
+	int q1cmd = SCARG(uap, cmd);
+	prop_dictionary_t dict, data, cmd;
+	prop_array_t cmds, datas;
+	char *bufpath;
+	struct dqblk dqblk;
+	struct quota2_entry q2e;
+	static const char *quotatypes[MAXQUOTAS] = INITQFNAMES;
+
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_TRYEMULROOT, &vp);
+	if (error != 0)
+		return (error);       
+	error = ENOMEM;
+	mp = vp->v_mount;
+	if ((dict = quota2_prop_create()) == NULL)
+		goto out;
+	if ((cmds = prop_array_create()) == NULL)
+		goto out_dict;
+	if ((datas = prop_array_create()) == NULL)
+		goto out_cmds;
+
+	switch((q1cmd & ~SUBCMDMASK) >> SUBCMDSHIFT) {
+	case Q_QUOTAON:
+		data = prop_dictionary_create();
+		if (data == NULL)
+			goto out_datas;
+		bufpath = malloc(PATH_MAX * sizeof(char), M_TEMP, M_WAITOK);
+		if (bufpath == NULL)
+			goto out_data;
+		error = copyinstr(SCARG(uap, arg), bufpath, PATH_MAX, NULL);
+		if (error != 0) {
+			free(bufpath, M_TEMP);
+			goto out_data;
+		}
+		if (!prop_dictionary_set_cstring(data, "quotafile", bufpath))
+			error = ENOMEM;
+		free(bufpath, M_TEMP);
+		if (error)
+			goto out_data;
+		error = ENOMEM;
+		if (!prop_array_add_and_rel(datas, data))
+			goto out_datas;
+		if (!quota2_prop_add_command(cmds, "quotaon",
+		    quotatypes[q1cmd & SUBCMDMASK], datas))
+			goto out_cmds;
+		goto do_quotaonoff;
+
+	case Q_QUOTAOFF:
+		error = ENOMEM;
+		if (!quota2_prop_add_command(cmds, "quotaoff",
+		    quotatypes[q1cmd & SUBCMDMASK], datas))
+			goto out_cmds;
+do_quotaonoff:
+		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
+			goto out_dict;
+		error = VFS_QUOTACTL(mp, dict);
+		if (error)
+			goto out_dict;
+		if ((error = quota2_get_cmds(dict, &cmds)) != 0)
+			goto out_dict;
+		cmd = prop_array_get(cmds, 0);
+		if (cmd == NULL) {
+			error = EINVAL;
+			goto out_dict;
+		}
+		if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
+			error = EINVAL;
+			goto out_dict;
+		}
+		error = error8;
+		goto out_dict;
+
+	case Q_GETQUOTA:
+		error = ENOMEM;
+		data = prop_dictionary_create();
+		if (data == NULL)
+			goto out_datas;
+		if (!prop_dictionary_set_uint32(data, "id", SCARG(uap, uid)))
+			goto out_data;
+		if (!prop_array_add_and_rel(datas, data))
+			goto out_datas;
+		if (!quota2_prop_add_command(cmds, "get",
+		    quotatypes[q1cmd & SUBCMDMASK], datas))
+			goto out_cmds;
+		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
+			goto out_dict;
+		error = VFS_QUOTACTL(mp, dict);
+		if (error)
+			goto out_dict;
+		if ((error = quota2_get_cmds(dict, &cmds)) != 0)
+			goto out_dict;
+		cmd = prop_array_get(cmds, 0);
+		if (cmd == NULL) {
+			error = EINVAL;
+			goto out_dict;
+		}
+		if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
+			error = EINVAL;
+			goto out_dict;
+		}
+		error = error8;
+		if (error)
+			goto out_dict;
+		datas = prop_dictionary_get(cmd, "data");
+		error = EINVAL;
+		if (datas == NULL)
+			goto out_dict;
+		data = prop_array_get(datas, 0);
+		if (data == NULL)
+			goto out_dict;
+		error = quota2_dict_get_q2e_usage(data, &q2e);
+		if (error)
+			goto out_dict;
+		q2e2dqblk(&q2e, &dqblk);
+		error = copyout(&dqblk, SCARG(uap, arg), sizeof(dqblk));
+		goto out_dict;
+		
+	case Q_SETQUOTA:
+		error = copyin(SCARG(uap, arg), &dqblk, sizeof(dqblk));
+		if (error)
+			goto out_datas;
+		dqblk2q2e(&dqblk, &q2e);
+		q2e.q2e_uid = SCARG(uap, uid);
+
+		error = ENOMEM;
+		data = q2etoprop(&q2e, 0);
+		if (data == NULL)
+			goto out_data;
+		if (!prop_array_add_and_rel(datas, data))
+			goto out_datas;
+		if (!quota2_prop_add_command(cmds, "set",
+		    quotatypes[q1cmd & SUBCMDMASK], datas))
+			goto out_cmds;
+		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
+			goto out_dict;
+		error = VFS_QUOTACTL(mp, dict);
+		if (error)
+			goto out_dict;
+		if ((error = quota2_get_cmds(dict, &cmds)) != 0)
+			goto out_dict;
+		cmd = prop_array_get(cmds, 0);
+		if (cmd == NULL) {
+			error = EINVAL;
+			goto out_dict;
+		}
+		if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
+			error = EINVAL;
+			goto out_dict;
+		}
+		error = error8;
+		goto out_dict;
+		
+	case Q_SYNC:
+		/*
+		 * not supported but used only to see if quota is supported,
+		 * emulate with a "get version"
+		 */
+		error = ENOMEM;
+		if (!quota2_prop_add_command(cmds, "get version",
+		    quotatypes[q1cmd & SUBCMDMASK], datas))
+			goto out_cmds;
+		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
+			goto out_dict;
+		error = VFS_QUOTACTL(mp, dict);
+		if (error)
+			goto out_dict;
+		if ((error = quota2_get_cmds(dict, &cmds)) != 0)
+			goto out_dict;
+		cmd = prop_array_get(cmds, 0);
+		if (cmd == NULL) {
+			error = EINVAL;
+			goto out_dict;
+		}
+		if (!prop_dictionary_get_int8(cmd, "return", &error8)) {
+			error = EINVAL;
+			goto out_dict;
+		}
+		error = error8;
+		goto out_dict;
+
+	case Q_SETUSE:
+	default:
+		error = EOPNOTSUPP;
+		goto out_datas;
+	}
+out_data:
+	prop_object_release(data);
+out_datas:
+	prop_object_release(datas);
+out_cmds:
+	prop_object_release(cmds);
+out_dict:
+	prop_object_release(dict);
+out:
+	vrele(vp);
+	return error;
 }
