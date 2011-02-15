@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.87 2011/02/14 03:18:10 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.88 2011/02/15 09:05:14 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -419,7 +419,6 @@ struct cpu_info {
 #define CPUFLG_HATCHED		0x1000	/* CPU is alive */
 #define CPUFLG_PAUSED		0x2000	/* CPU is paused */
 #define CPUFLG_GOTMSG		0x4000	/* CPU got an lev13 IPI */
-#define CPUFLG_READY		0x8000	/* CPU available for IPI */
 
 
 #define CPU_INFO_ITERATOR		int
@@ -435,11 +434,6 @@ struct cpu_info {
 #define CPU_INFO_FOREACH(cii, cp)	cii = 0, cp = curcpu(); cp != NULL; cp = NULL
 #endif
 
-/*
- * Useful macros.
- */
-#define CPU_NOTREADY(cpi)	((cpi) == NULL || cpuinfo.mid == (cpi)->mid || \
-				    ((cpi)->flags & CPUFLG_READY) == 0)
 
 /*
  * Related function prototypes

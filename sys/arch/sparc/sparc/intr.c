@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.111 2011/01/27 06:24:59 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.112 2011/02/15 09:05:14 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.111 2011/01/27 06:24:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.112 2011/02/15 09:05:14 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -305,7 +305,6 @@ nmi_soft(struct trapframe *tf)
 		case OPENPROM_MBX_WD:
 			/* In case there's an xcall in progress (unlikely) */
 			spl0();
-			cpuinfo.flags &= ~CPUFLG_READY;
 #ifdef MULTIPROCESSOR
 			cpu_ready_mask &= ~(1 << cpu_number());
 #endif
