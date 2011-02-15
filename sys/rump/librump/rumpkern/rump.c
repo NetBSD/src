@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.230 2011/02/15 10:35:05 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.231 2011/02/15 15:54:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.230 2011/02/15 10:35:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.231 2011/02/15 15:54:28 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -786,10 +786,8 @@ rump_proxy_execnotify(const char *comm)
 {
 	struct proc *p = curproc;
 
+	fd_closeexec();
 	strlcpy(p->p_comm, comm, sizeof(p->p_comm));
-
-	/* TODO: apply CLOEXEC */
-	/* TODO: other stuff? */
 }
 
 static void
