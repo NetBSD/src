@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.40 2011/02/15 13:59:28 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.41 2011/02/15 14:01:52 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.40 2011/02/15 13:59:28 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.41 2011/02/15 14:01:52 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -66,7 +66,7 @@ enum dualcall {
 	DUALCALL_GETSOCKOPT, DUALCALL_SETSOCKOPT,
 	DUALCALL_SHUTDOWN,
 	DUALCALL_READ, DUALCALL_READV,
-	DUALCALL_DUP, DUALCALL_DUP2,
+	DUALCALL_DUP2,
 	DUALCALL_CLOSE,
 	DUALCALL_POLLTS,
 	DUALCALL_KEVENT,
@@ -124,7 +124,6 @@ struct sysnames {
 	{ DUALCALL_WRITEV,	"writev",	RSYS_NAME(WRITEV)	},
 	{ DUALCALL_IOCTL,	"ioctl",	RSYS_NAME(IOCTL)	},
 	{ DUALCALL_FCNTL,	"fcntl",	RSYS_NAME(FCNTL)	},
-	{ DUALCALL_DUP,		"dup",		RSYS_NAME(DUP)		},
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
 	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
