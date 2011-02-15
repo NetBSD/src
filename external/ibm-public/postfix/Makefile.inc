@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.8 2011/02/13 05:45:47 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2011/02/15 16:19:33 christos Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
-USE_LIB_SASL?= saslc
 PKGROOT?= /usr/pkg
 
 WARNS?=	0
@@ -17,23 +16,25 @@ CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl
 
-.if ${USE_LIB_SASL} == "saslc"
-CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_SASLC_SASL
+CPPFLAGS+= -DUSE_SASL_AUTH
+CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
+
 .if (${MKCRYPTO} != "no")
+CPPFLAGS+= -DUSE_SASLC_SASL
+CPPFLAGS+= -DDEF_CLIENT_SASL_TYPE=\"saslc\"
 DPADD+= ${LIBSASCL} ${LIBSSL}
 LDADD+= -lsaslc -lssl
-.if (${MKKERBEROS} != "no")
+. if (${MKKERBEROS} != "no")
 DPADD+= ${LIBGSSAPI}
 LDADD+= -lgssapi
+. endif
 .endif
-.endif
-.elif ${USE_LIB_SASL} == "cyrus"
+
+# XXX: Use only if you have cyrus-sasl installed; never part of a normal build!
+.if defined(HAVE_CYRUS_SASL)
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
-	-DDEF_SERVER_SASL_TYPE=\"cyrus\" \
 	-I${PKGROOT}/include/sasl
 LDADD+= -L${PKGROOT}/lib -Wl,-R${PKGROOT}/lib -lsasl2 
-.else
-CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
 .endif
 
 .if defined(HAVE_PCC)
