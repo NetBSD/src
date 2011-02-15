@@ -1,4 +1,4 @@
-/*	$NetBSD: h_exec.c,v 1.1 2011/02/15 15:16:46 pooka Exp $	*/
+/*	$NetBSD: h_exec.c,v 1.2 2011/02/15 15:54:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -56,10 +56,10 @@ main(int argc, char *argv[])
 	if (argc > 1) {
 		if (strcmp(argv[1], "_didexec") == 0) {
 			daemon(0, 0); /* detach-me-notnot ergo detach */
-			s1 = atoi(argv[2]);
+			s2 = atoi(argv[2]);
 			slen = sizeof(sin);
 			/* see below */
-			accept(s1, (struct sockaddr *)&sin, &slen);
+			accept(s2, (struct sockaddr *)&sin, &slen);
 		}
 	}
 
@@ -92,11 +92,18 @@ main(int argc, char *argv[])
 		 * "pause()", but conveniently gets rid of this helper
 		 * since we were called with RUMPCLIENT_RETRYCONN_DIE set
 		 */
-		accept(s1, (struct sockaddr *)&sin, &slen);
+		accept(s2, (struct sockaddr *)&sin, &slen);
+	}
+
+	if (argc == 3 && strcmp(argv[2], "cloexec1") == 0) {
+		if (fcntl(s1, F_SETFD, FD_CLOEXEC) == -1) {
+			fprintf(stderr, "repomies jumalauta %d!\n", errno);
+			err(1, "cloexec failed");
+		}
 	}
 
 	/* omstart! */
-	sprintf(buf, "%d", s1);
+	sprintf(buf, "%d", s2);
 	if (execl(argv[1], "h_ution", "_didexec", buf, NULL) == -1)
 		err(1, "exec");
 }
