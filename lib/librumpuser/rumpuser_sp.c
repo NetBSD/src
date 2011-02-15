@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.40 2011/02/08 11:21:22 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.41 2011/02/15 10:37:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.40 2011/02/08 11:21:22 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.41 2011/02/15 10:37:07 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -85,7 +85,7 @@ static struct rumpuser_sp_ops spops;
 static char banner[MAXBANNER];
 
 #define PROTOMAJOR 0
-#define PROTOMINOR 2
+#define PROTOMINOR 3
 
 struct prefork {
 	uint32_t pf_auth[AUTHLEN];
@@ -194,6 +194,14 @@ lwproc_getpid(void)
 	spops.spop_unschedule();
 
 	return p;
+}
+static void
+lwproc_execnotify(const char *comm)
+{
+
+	spops.spop_schedule();
+	spops.spop_execnotify(comm);
+	spops.spop_unschedule();
 }
 
 static void
@@ -770,11 +778,13 @@ handlereq(struct spclient *spc)
 {
 	struct sysbouncearg *sba;
 	pthread_t pt;
+	uint64_t reqno;
 	int retries, error, i;
 
+	reqno = spc->spc_hdr.rsp_reqno;
 	if (__predict_false(spc->spc_state == SPCSTATE_NEW)) {
 		if (spc->spc_hdr.rsp_type != RUMPSP_HANDSHAKE) {
-			send_error_resp(spc, spc->spc_hdr.rsp_reqno, EAUTH);
+			send_error_resp(spc, reqno, EAUTH);
 			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
@@ -799,15 +809,13 @@ handlereq(struct spclient *spc)
 
 			spc->spc_mainlwp = lwproc_curlwp();
 
-			send_handshake_resp(spc, spc->spc_hdr.rsp_reqno, 0);
+			send_handshake_resp(spc, reqno, 0);
 		} else if (spc->spc_hdr.rsp_handshake == HANDSHAKE_FORK) {
 			struct lwp *tmpmain;
 			struct prefork *pf;
 			struct handshake_fork *rfp;
-			uint64_t reqno;
 			int cancel;
 
-			reqno = spc->spc_hdr.rsp_reqno;
 			if (spc->spc_off-HDRSZ != sizeof(*rfp)) {
 				send_error_resp(spc, reqno, EINVAL);
 				shutdown(spc->spc_fd, SHUT_RDWR);
@@ -880,11 +888,9 @@ handlereq(struct spclient *spc)
 
 	if (__predict_false(spc->spc_hdr.rsp_type == RUMPSP_PREFORK)) {
 		struct prefork *pf;
-		uint64_t reqno;
 		uint32_t auth[AUTHLEN];
 
 		DPRINTF(("rump_sp: prefork handler executing for %p\n", spc));
-		reqno = spc->spc_hdr.rsp_reqno;
 		spcfreebuf(spc);
 
 		pf = malloc(sizeof(*pf));
@@ -925,8 +931,31 @@ handlereq(struct spclient *spc)
 		return;
 	}
 
+	if (__predict_false(spc->spc_hdr.rsp_type == RUMPSP_HANDSHAKE)) {
+		char *comm = (char *)spc->spc_buf;
+		size_t commlen = spc->spc_hdr.rsp_len - HDRSZ;
+
+		if (spc->spc_hdr.rsp_handshake != HANDSHAKE_EXEC) {
+			send_error_resp(spc, reqno, EINVAL);
+			spcfreebuf(spc);
+			return;
+		}
+
+		/* ensure it's 0-terminated */
+		/* XXX make sure it contains sensible chars? */
+		comm[commlen] = '\0';
+
+		lwproc_switch(spc->spc_mainlwp);
+		lwproc_execnotify(comm);
+		lwproc_switch(NULL);
+
+		send_handshake_resp(spc, reqno, 0);
+		spcfreebuf(spc);
+		return;
+	}
+
 	if (__predict_false(spc->spc_hdr.rsp_type != RUMPSP_SYSCALL)) {
-		send_error_resp(spc, spc->spc_hdr.rsp_reqno, EINVAL);
+		send_error_resp(spc, reqno, EINVAL);
 		spcfreebuf(spc);
 		return;
 	}
@@ -934,7 +963,7 @@ handlereq(struct spclient *spc)
 	retries = 0;
 	while ((sba = malloc(sizeof(*sba))) == NULL) {
 		if (nworker == 0 || retries > 10) {
-			send_error_resp(spc, spc->spc_hdr.rsp_reqno, EAGAIN);
+			send_error_resp(spc, reqno, EAGAIN);
 			spcfreebuf(spc);
 			return;
 		}

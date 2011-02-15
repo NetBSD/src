@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.28 2011/02/14 14:56:23 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.29 2011/02/15 10:37:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,7 @@ static int kq = -1;
 static sigset_t fullset;
 
 static int doconnect(bool);
-static int handshake_req(struct spclient *, uint32_t *, int, bool);
+static int handshake_req(struct spclient *, int, void *, int, bool);
 
 time_t retrytimo = RUMPCLIENT_RETRYCONN_ONCE;
 
@@ -146,7 +146,8 @@ send_with_recon(struct spclient *spc, const void *data, size_t dlen)
 
 			if ((rv = doconnect(false)) != 0)
 				continue;
-			if ((rv = handshake_req(&clispc, NULL, 0, true)) != 0)
+			if ((rv = handshake_req(&clispc, HANDSHAKE_GUEST,
+			    NULL, 0, true)) != 0)
 				continue;
 
 			/*
@@ -305,7 +306,8 @@ syscall_req(struct spclient *spc, sigset_t *omask, int sysnum,
 }
 
 static int
-handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
+handshake_req(struct spclient *spc, int type, void *data,
+	int cancel, bool haslock)
 {
 	struct handshake_fork rf;
 	struct rsp_hdr rhdr;
@@ -314,7 +316,7 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 	size_t bonus;
 	int rv;
 
-	if (auth) {
+	if (type == HANDSHAKE_FORK) {
 		bonus = sizeof(rf);
 	} else {
 		bonus = strlen(getprogname())+1;
@@ -324,10 +326,7 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 	rhdr.rsp_len = sizeof(rhdr) + bonus;
 	rhdr.rsp_class = RUMPSP_REQ;
 	rhdr.rsp_type = RUMPSP_HANDSHAKE;
-	if (auth)
-		rhdr.rsp_handshake = HANDSHAKE_FORK;
-	else
-		rhdr.rsp_handshake = HANDSHAKE_GUEST;
+	rhdr.rsp_handshake = type;
 
 	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	if (haslock)
@@ -335,8 +334,8 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 	else
 		putwait(spc, &rw, &rhdr);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	if (auth) {
-		memcpy(rf.rf_auth, auth, AUTHLEN*sizeof(*auth));
+	if (type == HANDSHAKE_FORK) {
+		memcpy(rf.rf_auth, data, sizeof(rf.rf_auth)); /* uh, why? */
 		rf.rf_cancel = cancel;
 		rv = send_with_recon(spc, &rf, sizeof(rf));
 	} else {
@@ -710,12 +709,19 @@ doinit(void)
 }
 
 void *(*rumpclient_dlsym)(void *, const char *);
+static int init_done = 0;
 
 int
 rumpclient_init()
 {
 	char *p;
 	int error;
+	int rv = -1;
+	int hstype;
+
+	if (init_done)
+		return 0;
+	init_done = 1;
 
 	sigfillset(&fullset);
 
@@ -753,38 +759,43 @@ rumpclient_init()
 	if ((p = getenv("RUMP__PARSEDSERVER")) == NULL) {
 		if ((p = getenv("RUMP_SERVER")) == NULL) {
 			errno = ENOENT;
-			return -1;
+			goto out;
 		}
 	}
 
 	if ((error = parseurl(p, &serv_sa, &ptab_idx, 0)) != 0) {
 		errno = error;
-		return -1;
+		goto out;
 	}
 
 	if (doinit() == -1)
-		return -1;
+		goto out;
 
 	if ((p = getenv("RUMPCLIENT__EXECFD")) != NULL) {
 		sscanf(p, "%d,%d", &clispc.spc_fd, &kq);
 		unsetenv("RUMPCLIENT__EXECFD");
-		return 0;
+		hstype = HANDSHAKE_EXEC;
+	} else {
+		if (doconnect(true) == -1)
+			goto out;
+		hstype = HANDSHAKE_GUEST;
 	}
 
-	if (doconnect(true) == -1)
-		return -1;
-
-	error = handshake_req(&clispc, NULL, 0, false);
+	error = handshake_req(&clispc, hstype, NULL, 0, false);
 	if (error) {
 		pthread_mutex_destroy(&clispc.spc_mtx);
 		pthread_cond_destroy(&clispc.spc_cv);
 		if (clispc.spc_fd != -1)
 			host_close(clispc.spc_fd);
 		errno = error;
-		return -1;
+		goto out;
 	}
+	rv = 0;
 
-	return 0;
+ out:
+	if (rv == -1)
+		init_done = 0;
+	return rv;
 }
 
 struct rumpclient_fork {
@@ -836,7 +847,8 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 	if (doconnect(false) == -1)
 		return -1;
 
-	error = handshake_req(&clispc, rpf->fork_auth, 0, false);
+	error = handshake_req(&clispc, HANDSHAKE_FORK, rpf->fork_auth,
+	    0, false);
 	if (error) {
 		pthread_mutex_destroy(&clispc.spc_mtx);
 		pthread_cond_destroy(&clispc.spc_cv);
