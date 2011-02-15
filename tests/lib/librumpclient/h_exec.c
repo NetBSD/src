@@ -1,4 +1,4 @@
-/*	$NetBSD: h_exec.c,v 1.2 2011/02/15 15:54:56 pooka Exp $	*/
+/*	$NetBSD: h_exec.c,v 1.3 2011/02/15 15:57:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -97,7 +97,6 @@ main(int argc, char *argv[])
 
 	if (argc == 3 && strcmp(argv[2], "cloexec1") == 0) {
 		if (fcntl(s1, F_SETFD, FD_CLOEXEC) == -1) {
-			fprintf(stderr, "repomies jumalauta %d!\n", errno);
 			err(1, "cloexec failed");
 		}
 	}
