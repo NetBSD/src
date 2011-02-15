@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.24 2011/02/14 10:21:05 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.25 2011/02/15 09:56:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.24 2011/02/14 10:21:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.25 2011/02/15 09:56:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,6 +100,7 @@ void
 schedintr_4m(void *v)
 {
 
+	kpreempt_disable();
 #ifdef MULTIPROCESSOR
 	/*
 	 * We call hardclock() here so that we make sure it is called on
@@ -116,6 +117,7 @@ schedintr_4m(void *v)
 	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0 && schedhz != 0)
 #endif
 		schedclock(curlwp);
+	kpreempt_enable();
 }
 
 
@@ -138,12 +140,14 @@ clockintr_4m(void *cap)
 	 * For MP, we defer calling hardclock() to the schedintr so
 	 * that we call it on all cpus.
 	 */
+	kpreempt_disable();
 	if (cold)
 		return 0;
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4m->t_limit);
 	tickle_tc();
 	hardclock((struct clockframe *)cap);
+	kpreempt_enable();
 	return (1);
 }
 
@@ -155,6 +159,8 @@ statintr_4m(void *cap)
 {
 	struct clockframe *frame = cap;
 	u_long newint;
+
+	kpreempt_disable();
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&counterreg4m->t_limit);
@@ -194,6 +200,7 @@ statintr_4m(void *cap)
 #if !defined(MULTIPROCESSOR)
 	}
 #endif
+	kpreempt_enable();
 
 	return (1);
 }
