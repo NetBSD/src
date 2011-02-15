@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.7 2011/02/12 23:21:32 christos Exp $
+.\"	$NetBSD: libsaslc.3,v 1.8 2011/02/15 18:36:08 christos Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 31, 2010
+.Dd February 14, 2011
 .Dt LIBSASLC 3
 .Os
 .Sh NAME
@@ -364,7 +364,7 @@ encode_stream(saslc_sess_t *sess, int fdin, int fdout)
 	return 0;
 }
 .Ed
-.Sh CONFIGURATION
+.Ss CONFIGURATION
 .Nm
 uses three types of dictionaries: context (or global), session, and
 mechanism, and they are searched in that order by
@@ -456,7 +456,7 @@ inclusive.
 Any base supported by
 .Xr strtoll 3
 is allowed.
-.Sh PROPERTIES
+.Ss PROPERTIES
 Most of the control of the
 .Nm
 behavior is done via setting various properties in the context or
@@ -508,7 +508,11 @@ RC4 Cipher with 56 bit key
 .Pp
 The default value is
 .Qq des,3des,rc4,rc4_40,rc4_56,aes .
-.Pq Note that Qo aes Qc is not part of the official standard.
+.Po
+Note that
+.Qq aes
+is not part of the official standard.
+.Pc
 Used by the DIGEST-MD5 mechanism.
 .It SASLC_PROP_DEBUG Po Qo DEBUG Qc Pc
 If true, then enable debug messages.
@@ -526,7 +530,7 @@ in the
 section below.
 .Pc
 .It SASLC_PROP_HOSTNAME Po Qo HOSTNAME Qc Pc
-The hostname.
+The fully qualified domain name of the server host.
 Used by the DIGEST-MD5 and GSSAPI mechanisms.
 .It SASLC_PROP_MAXBUF Po Qo MAXBUF Qc Pc
 The size of the decode buffer.
@@ -588,7 +592,23 @@ function.
 The service being used, e.g., smtp, imap, etc.
 Used by the DIGEST-MD5 and GSSAPI mechanisms.
 .It SASLC_PROP_SERVICENAME Po Qo SERVICENAME Qc Pc
-The service name to use.
+A comma delimited list of possible service names with elements of the
+form
+.Qq Oo Ao hostname Ac : Oc Ns Ao serv-name Ac
+and with the same rules as for the SASLC_PROP_REALM list.
+This should only be used if the client uses a DNS name for the service
+that is different from the FQDN of the server.
+For example, the service name
+.Em example.com
+might resolve
+.Pq via SRV or MX records
+into a set of other DNS names, one of which,
+.Em mail3.example.com ,
+is the FQDN of the server.
+.Po
+See RFC 2831 section 2.1.2
+.Qq serv-name .
+.Pc
 Used by the DIGEST-MD5 mechanism.
 .El
 .Pp
@@ -613,7 +633,7 @@ This may be overridden by
 If set, turn on debugging messages.
 This turns on debugging as early as possible and is a global setting.
 .El
-.Sh GSSAPI and Kerberos
+.Ss GSSAPI and Kerberos
 The following is a minimal
 .Pq Heimdal
 Kerberos 5 setup for use with an smtp server that has been configured
@@ -742,13 +762,13 @@ su -m postfix -c kinit
 .Pp
 to obtain a ticket for the postfix user with the postfix credential
 and you should be good to go!
-.Sh STANDARDS
-RFC 2195, RFC 2222, RFC 2245, RFC 2595, RFC 2831, RFC 4422, RFC 4505,
-RFC 4616, RFC 4752.
-.Sh OTHER IMPLEMENTATIONS
+.Sh COMPATIBILITY
 There exist other SASL client library implementations including Cyrus SASL
 (http://asg.web.cmu.edu/sasl/sasl-library.html) and GNU SASL
 (http://www.gnu.org/software/gsasl/).
+.Sh STANDARDS
+RFC 2195, RFC 2222, RFC 2245, RFC 2595, RFC 2831, RFC 4422, RFC 4505,
+RFC 4616, RFC 4752.
 .Sh CAVEATS
 The API was heavily influenced by its use with
 .Xr postfix 1 .
