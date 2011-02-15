@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_odbc_driver.c,v 1.1.1.1 2009/03/22 14:57:12 christos Exp $	*/
+/*	$NetBSD: dlz_odbc_driver.c,v 1.1.1.2 2011/02/15 19:32:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -1508,7 +1508,14 @@ static dns_sdlzmethods_t dlz_odbc_methods = {
 	odbc_lookup,
 	odbc_authority,
 	odbc_allnodes,
-	odbc_allowzonexfr
+	odbc_allowzonexfr,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*%

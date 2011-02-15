@@ -1,4 +1,4 @@
-/*	$NetBSD: rp_17.h,v 1.1.1.1 2009/03/22 15:01:55 christos Exp $	*/
+/*	$NetBSD: rp_17.h,v 1.1.1.2 2011/02/15 19:37:56 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_RP_17_H
 #define GENERIC_RP_17_H 1
 
-/* Id: rp_17.h,v 1.21 2007/06/19 23:47:17 tbox Exp */
+/* Id: rp_17.h,v 1.21 2007-06-19 23:47:17 tbox Exp */
 
 /*!
  *  \brief Per RFC1183 */

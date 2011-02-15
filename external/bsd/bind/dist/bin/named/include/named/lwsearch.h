@@ -1,4 +1,4 @@
-/*	$NetBSD: lwsearch.h,v 1.1.1.1 2009/03/22 14:56:13 christos Exp $	*/
+/*	$NetBSD: lwsearch.h,v 1.1.1.2 2011/02/15 19:30:25 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwsearch.h,v 1.9 2007/06/19 23:46:59 tbox Exp */
+/* Id: lwsearch.h,v 1.9 2007-06-19 23:46:59 tbox Exp */
 
 #ifndef NAMED_LWSEARCH_H
 #define NAMED_LWSEARCH_H 1

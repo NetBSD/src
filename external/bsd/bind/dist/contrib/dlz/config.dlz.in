@@ -456,6 +456,29 @@ case "$use_dlz_stub" in
 		;;
 esac
 
+#
+# Was --with-dlz-dlopen specified?
+#
+
+AC_MSG_CHECKING(for dlopen DLZ driver)
+AC_ARG_WITH(dlz_dlopen,
+[  --with-dlz-dlopen[=PATH]   Build with dlopen DLZ driver [yes|no].
+                               (Required to use dlopen driver with DLZ)],
+    use_dlz_dlopen="$withval", use_dlz_dlopen="no")
+
+case "$use_dlz_dlopen" in
+	no)
+		AC_MSG_RESULT(no)
+		;;
+	*)
+		AC_CHECK_LIB(dl, dlclose)
+		AC_CHECK_FUNCS(dlopen dlclose dlsym)
+		DLZ_ADD_DRIVER(DLOPEN, dlz_dlopen_driver)
+
+		AC_MSG_RESULT(yes)
+		;;
+esac
+
 
 # Add any additional DLZ drivers here.
 

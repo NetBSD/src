@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.h,v 1.1.1.2 2009/10/25 00:02:37 christos Exp $	*/
+/*	$NetBSD: forward.h,v 1.1.1.3 2011/02/15 19:37:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: forward.h,v 1.13 2009/09/02 23:48:02 tbox Exp */
+/* Id: forward.h,v 1.13 2009-09-02 23:48:02 tbox Exp */
 
 #ifndef DNS_FORWARD_H
 #define DNS_FORWARD_H 1

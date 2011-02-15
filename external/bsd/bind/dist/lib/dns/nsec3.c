@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.c,v 1.1.1.5 2010/08/05 20:12:16 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.1.1.6 2011/02/15 19:37:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3.c,v 1.13.6.5 2010/06/02 00:41:34 marka Exp */
+/* Id: nsec3.c,v 1.19 2010-12-07 02:53:34 marka Exp */
 
 #include <config.h>
 
@@ -1145,6 +1145,7 @@ dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
 		CHECK(do_one_tuple(&tuple, db, ver, diff));
 		INSIST(tuple == NULL);
 
+		rdata.data = buf;
 		buf[2] = DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC;
 
 		CHECK(rr_exists(db, ver, origin, &rdata, &flag));

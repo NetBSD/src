@@ -1,7 +1,7 @@
-/*	$NetBSD: dlv_32769.c,v 1.1.1.2 2009/12/26 22:25:24 christos Exp $	*/
+/*	$NetBSD: dlv_32769.c,v 1.1.1.3 2011/02/15 19:37:51 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlv_32769.c,v 1.8 2009/12/04 22:06:37 tbox Exp */
+/* Id: dlv_32769.c,v 1.10 2010-12-23 23:47:08 tbox Exp */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 
@@ -76,12 +76,20 @@ fromtext_dlv(ARGS_FROMTEXT) {
 	/*
 	 * Digest.
 	 */
-	if (c == DNS_DSDIGEST_SHA1)
+	switch (c) {
+	case DNS_DSDIGEST_SHA1:
 		length = ISC_SHA1_DIGESTLENGTH;
-	else if (c == DNS_DSDIGEST_SHA256)
+		break;
+	case DNS_DSDIGEST_SHA256:
 		length = ISC_SHA256_DIGESTLENGTH;
-	else
+		break;
+	case DNS_DSDIGEST_GOST:
+		length = ISC_GOST_DIGESTLENGTH;
+		break;
+	default:
 		length = -1;
+		break;
+	}
 	return (isc_hex_tobuffer(lexer, target, -1));
 }
 
@@ -154,7 +162,9 @@ fromwire_dlv(ARGS_FROMWIRE) {
 	    (sr.base[3] == DNS_DSDIGEST_SHA1 &&
 	     sr.length < 4 + ISC_SHA1_DIGESTLENGTH) ||
 	    (sr.base[3] == DNS_DSDIGEST_SHA256 &&
-	     sr.length < 4 + ISC_SHA256_DIGESTLENGTH))
+	     sr.length < 4 + ISC_SHA256_DIGESTLENGTH) ||
+	    (sr.base[3] == DNS_DSDIGEST_GOST &&
+	     sr.length < 4 + ISC_GOST_DIGESTLENGTH))
 		return (ISC_R_UNEXPECTEDEND);
 
 	/*
@@ -166,6 +176,8 @@ fromwire_dlv(ARGS_FROMWIRE) {
 		sr.length = 4 + ISC_SHA1_DIGESTLENGTH;
 	else if (sr.base[3] == DNS_DSDIGEST_SHA256)
 		sr.length = 4 + ISC_SHA256_DIGESTLENGTH;
+	else if (sr.base[3] == DNS_DSDIGEST_GOST)
+		sr.length = 4 + ISC_GOST_DIGESTLENGTH;
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
@@ -214,6 +226,9 @@ fromstruct_dlv(ARGS_FROMSTRUCT) {
 		break;
 	case DNS_DSDIGEST_SHA256:
 		REQUIRE(dlv->length == ISC_SHA256_DIGESTLENGTH);
+		break;
+	case DNS_DSDIGEST_GOST:
+		REQUIRE(dlv->length == ISC_GOST_DIGESTLENGTH);
 		break;
 	}
 

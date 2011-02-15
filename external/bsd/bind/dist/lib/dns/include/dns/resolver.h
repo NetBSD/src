@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.h,v 1.1.1.3 2010/08/05 20:13:48 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.4 2011/02/15 19:37:44 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.h,v 1.64.104.3 2010/07/11 00:12:19 each Exp */
+/* Id: resolver.h,v 1.67.86.1 2011-02-03 05:50:07 marka Exp */
 
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
@@ -493,6 +493,27 @@ dns_resolver_setmustbesecure(dns_resolver_t *resolver, dns_name_t *name,
 
 isc_boolean_t
 dns_resolver_getmustbesecure(dns_resolver_t *resolver, dns_name_t *name);
+
+
+void
+dns_resolver_settimeout(dns_resolver_t *resolver, unsigned int seconds);
+/*%<
+ * Set the length of time the resolver will work on a query, in seconds.
+ *
+ * If timeout is 0, the default timeout will be applied.
+ *
+ * Requires:
+ * \li  resolver to be valid.
+ */
+
+unsigned int
+dns_resolver_gettimeout(dns_resolver_t *resolver);
+/*%<
+ * Get the current length of time the resolver will work on a query, in seconds.
+ *
+ * Requires:
+ * \li  resolver to be valid.
+ */
 
 void
 dns_resolver_setclientsperquery(dns_resolver_t *resolver,

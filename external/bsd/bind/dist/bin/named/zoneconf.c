@@ -1,7 +1,7 @@
-/*	$NetBSD: zoneconf.c,v 1.1.1.5 2010/12/02 14:22:29 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.1.1.6 2011/02/15 19:30:24 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zoneconf.c,v 1.161.4.3.6.1 2010/09/15 03:42:58 marka Exp */
+/* Id: zoneconf.c,v 1.170 2011-01-06 23:47:00 tbox Exp */
 
 /*% */
 
@@ -32,10 +32,16 @@
 #include <isc/util.h>
 
 #include <dns/acl.h>
+#include <dns/db.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/name.h>
+#include <dns/rdata.h>
 #include <dns/rdatatype.h>
+#include <dns/rdataset.h>
+#include <dns/rdatalist.h>
+#include <dns/result.h>
+#include <dns/sdlz.h>
 #include <dns/ssu.h>
 #include <dns/stats.h>
 #include <dns/view.h>
@@ -258,7 +264,9 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone,
 		else if (strcasecmp(str, "zonesub") == 0) {
 			mtype = DNS_SSUMATCHTYPE_SUBDOMAIN;
 			usezone = ISC_TRUE;
-		} else
+		} else if (strcasecmp(str, "external") == 0)
+			mtype = DNS_SSUMATCHTYPE_EXTERNAL;
+		else
 			INSIST(0);
 
 		dns_fixedname_init(&fident);
@@ -379,6 +387,323 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone,
 
  cleanup:
 	dns_ssutable_detach(&table);
+	return (result);
+}
+
+/*
+ * This is the TTL used for internally generated RRsets for static-stub zones.
+ * The value doesn't matter because the mapping is static, but needs to be
+ * defined for the sake of implementation.
+ */
+#define STATICSTUB_SERVER_TTL 86400
+
+/*%
+ * Configure an apex NS with glues for a static-stub zone.
+ * For example, for the zone named "example.com", the following RRs will be
+ * added to the zone DB:
+ * example.com. NS example.com.
+ * example.com. A 192.0.2.1
+ * example.com. AAAA 2001:db8::1
+ */
+static isc_result_t
+configure_staticstub_serveraddrs(const cfg_obj_t *zconfig, dns_zone_t *zone,
+				 dns_rdatalist_t *rdatalist_ns,
+				 dns_rdatalist_t *rdatalist_a,
+				 dns_rdatalist_t *rdatalist_aaaa)
+{
+	const cfg_listelt_t *element;
+	isc_mem_t *mctx = dns_zone_getmctx(zone);
+	isc_region_t region, sregion;
+	dns_rdata_t *rdata;
+	isc_result_t result = ISC_R_SUCCESS;
+
+	for (element = cfg_list_first(zconfig);
+	     element != NULL;
+	     element = cfg_list_next(element))
+	{
+		const isc_sockaddr_t* sa;
+		isc_netaddr_t na;
+		const cfg_obj_t *address = cfg_listelt_value(element);
+		dns_rdatalist_t *rdatalist;
+
+		sa = cfg_obj_assockaddr(address);
+		if (isc_sockaddr_getport(sa) != 0) {
+			cfg_obj_log(zconfig, ns_g_lctx, ISC_LOG_ERROR,
+				    "port is not configurable for "
+				    "static stub server-addresses");
+			return (ISC_R_FAILURE);
+		}
+		isc_netaddr_fromsockaddr(&na, sa);
+		if (isc_netaddr_getzone(&na) != 0) {
+			cfg_obj_log(zconfig, ns_g_lctx, ISC_LOG_ERROR,
+					    "scoped address is not allowed "
+					    "for static stub "
+					    "server-addresses");
+			return (ISC_R_FAILURE);
+		}
+
+		switch (na.family) {
+		case AF_INET:
+			region.length = sizeof(na.type.in);
+			rdatalist = rdatalist_a;
+			break;
+		default:
+			INSIST(na.family == AF_INET6);
+			region.length = sizeof(na.type.in6);
+			rdatalist = rdatalist_aaaa;
+			break;
+		}
+
+		rdata = isc_mem_get(mctx, sizeof(*rdata) + region.length);
+		if (rdata == NULL)
+			return (ISC_R_NOMEMORY);
+		region.base = (unsigned char *)(rdata + 1);
+		memcpy(region.base, &na.type, region.length);
+		dns_rdata_init(rdata);
+		dns_rdata_fromregion(rdata, dns_zone_getclass(zone),
+				     rdatalist->type, &region);
+		ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
+	}
+
+	/*
+	 * If no address is specified (unlikely in this context, but possible),
+	 * there's nothing to do anymore.
+	 */
+	if (ISC_LIST_EMPTY(rdatalist_a->rdata) &&
+	    ISC_LIST_EMPTY(rdatalist_aaaa->rdata)) {
+		return (ISC_R_SUCCESS);
+	}
+
+	/* Add to the list an apex NS with the ns name being the origin name */
+	dns_name_toregion(dns_zone_getorigin(zone), &sregion);
+	rdata = isc_mem_get(mctx, sizeof(*rdata) + sregion.length);
+	if (rdata == NULL) {
+		/*
+		 * Already allocated data will be freed in the caller, so
+		 * we can simply return here.
+		 */
+		return (ISC_R_NOMEMORY);
+	}
+	region.length = sregion.length;
+	region.base = (unsigned char *)(rdata + 1);
+	memcpy(region.base, sregion.base, region.length);
+	dns_rdata_init(rdata);
+	dns_rdata_fromregion(rdata, dns_zone_getclass(zone),
+			     dns_rdatatype_ns, &region);
+	ISC_LIST_APPEND(rdatalist_ns->rdata, rdata, link);
+
+	return (result);
+}
+
+/*%
+ * Configure an apex NS with an out-of-zone NS names for a static-stub zone.
+ * For example, for the zone named "example.com", something like the following
+ * RRs will be added to the zone DB:
+ * example.com. NS ns.example.net.
+ */
+static isc_result_t
+configure_staticstub_servernames(const cfg_obj_t *zconfig, dns_zone_t *zone,
+				 dns_rdatalist_t *rdatalist, const char *zname)
+{
+	const cfg_listelt_t *element;
+	isc_mem_t *mctx = dns_zone_getmctx(zone);
+	dns_rdata_t *rdata;
+	isc_region_t sregion, region;
+	isc_result_t result = ISC_R_SUCCESS;
+
+	for (element = cfg_list_first(zconfig);
+	     element != NULL;
+	     element = cfg_list_next(element))
+	{
+		const cfg_obj_t *obj;
+		const char *str;
+		dns_fixedname_t fixed_name;
+		dns_name_t *nsname;
+		isc_buffer_t b;
+
+		obj = cfg_listelt_value(element);
+		str = cfg_obj_asstring(obj);
+
+		dns_fixedname_init(&fixed_name);
+		nsname = dns_fixedname_name(&fixed_name);
+
+		isc_buffer_init(&b, str, strlen(str));
+		isc_buffer_add(&b, strlen(str));
+		result = dns_name_fromtext(nsname, &b, dns_rootname, 0, NULL);
+		if (result != ISC_R_SUCCESS) {
+			cfg_obj_log(zconfig, ns_g_lctx, ISC_LOG_ERROR,
+					    "server-name '%s' is not a valid "
+					    "name", str);
+			return (result);
+		}
+		if (dns_name_issubdomain(nsname, dns_zone_getorigin(zone))) {
+			cfg_obj_log(zconfig, ns_g_lctx, ISC_LOG_ERROR,
+				    "server-name '%s' must not be a "
+				    "subdomain of zone name '%s'",
+				    str, zname);
+			return (ISC_R_FAILURE);
+		}
+
+		dns_name_toregion(nsname, &sregion);
+		rdata = isc_mem_get(mctx, sizeof(*rdata) + sregion.length);
+		if (rdata == NULL)
+			return (ISC_R_NOMEMORY);
+		region.length = sregion.length;
+		region.base = (unsigned char *)(rdata + 1);
+		memcpy(region.base, sregion.base, region.length);
+		dns_rdata_init(rdata);
+		dns_rdata_fromregion(rdata, dns_zone_getclass(zone),
+				     dns_rdatatype_ns, &region);
+		ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
+	}
+
+	return (result);
+}
+
+/*%
+ * Configure static-stub zone.
+ */
+static isc_result_t
+configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
+		     const char *zname, const char *dbtype)
+{
+	int i = 0;
+	const cfg_obj_t *obj;
+	isc_mem_t *mctx = dns_zone_getmctx(zone);
+	dns_db_t *db = NULL;
+	dns_dbversion_t *dbversion = NULL;
+	dns_dbnode_t *apexnode = NULL;
+	dns_name_t apexname;
+	isc_result_t result;
+	dns_rdataset_t rdataset;
+	dns_rdatalist_t rdatalist_ns, rdatalist_a, rdatalist_aaaa;
+	dns_rdatalist_t* rdatalists[] = {
+		&rdatalist_ns, &rdatalist_a, &rdatalist_aaaa, NULL
+	};
+	dns_rdata_t *rdata;
+	isc_region_t region;
+
+	/* Create the DB beforehand */
+	RETERR(dns_db_create(mctx, dbtype, dns_zone_getorigin(zone),
+			     dns_dbtype_stub, dns_zone_getclass(zone),
+			     0, NULL, &db));
+	dns_zone_setdb(zone, db);
+
+	dns_rdatalist_init(&rdatalist_ns);
+	rdatalist_ns.rdclass = dns_zone_getclass(zone);
+	rdatalist_ns.type = dns_rdatatype_ns;
+	rdatalist_ns.ttl = STATICSTUB_SERVER_TTL;
+
+	dns_rdatalist_init(&rdatalist_a);
+	rdatalist_a.rdclass = dns_zone_getclass(zone);
+	rdatalist_a.type = dns_rdatatype_a;
+	rdatalist_a.ttl = STATICSTUB_SERVER_TTL;
+
+	dns_rdatalist_init(&rdatalist_aaaa);
+	rdatalist_aaaa.rdclass = dns_zone_getclass(zone);
+	rdatalist_aaaa.type = dns_rdatatype_aaaa;
+	rdatalist_aaaa.ttl = STATICSTUB_SERVER_TTL;
+
+	/* Prepare zone RRs from the configuration */
+	obj = NULL;
+	result = cfg_map_get(zconfig, "server-addresses", &obj);
+	if (obj != NULL) {
+		result = configure_staticstub_serveraddrs(obj, zone,
+							  &rdatalist_ns,
+							  &rdatalist_a,
+							  &rdatalist_aaaa);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+	}
+
+	obj = NULL;
+	result = cfg_map_get(zconfig, "server-names", &obj);
+	if (obj != NULL) {
+		result = configure_staticstub_servernames(obj, zone,
+							  &rdatalist_ns,
+							  zname);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+	}
+
+	/*
+	 * Sanity check: there should be at least one NS RR at the zone apex
+	 * to trigger delegation.
+	 */
+	if (ISC_LIST_EMPTY(rdatalist_ns.rdata)) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
+			      "No NS record is configured for a "
+			      "static-stub zone '%s'", zname);
+		result = ISC_R_FAILURE;
+		goto cleanup;
+	}
+
+	/*
+	 * Now add NS and glue A/AAAA RRsets to the zone DB.
+	 * First open a new version for the add operation and get a pointer
+	 * to the apex node (all RRs are of the apex name).
+	 */
+	result = dns_db_newversion(db, &dbversion);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+	dns_name_init(&apexname, NULL);
+	dns_name_clone(dns_zone_getorigin(zone), &apexname);
+	result = dns_db_findnode(db, &apexname, ISC_FALSE, &apexnode);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
+	/* Add NS RRset */
+	dns_rdataset_init(&rdataset);
+	RUNTIME_CHECK(dns_rdatalist_tordataset(&rdatalist_ns, &rdataset)
+		      == ISC_R_SUCCESS);
+	result = dns_db_addrdataset(db, apexnode, dbversion, 0, &rdataset,
+				    0, NULL);
+	dns_rdataset_disassociate(&rdataset);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
+	/* Add glue A RRset, if any */
+	if (!ISC_LIST_EMPTY(rdatalist_a.rdata)) {
+		RUNTIME_CHECK(dns_rdatalist_tordataset(&rdatalist_a, &rdataset)
+			      == ISC_R_SUCCESS);
+		result = dns_db_addrdataset(db, apexnode, dbversion, 0,
+					    &rdataset, 0, NULL);
+		dns_rdataset_disassociate(&rdataset);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+	}
+
+	/* Add glue AAAA RRset, if any */
+	if (!ISC_LIST_EMPTY(rdatalist_aaaa.rdata)) {
+		RUNTIME_CHECK(dns_rdatalist_tordataset(&rdatalist_aaaa,
+						       &rdataset)
+			      == ISC_R_SUCCESS);
+		result = dns_db_addrdataset(db, apexnode, dbversion, 0,
+					    &rdataset, 0, NULL);
+		dns_rdataset_disassociate(&rdataset);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+	}
+
+	result = ISC_R_SUCCESS;
+
+  cleanup:
+	if (apexnode != NULL)
+		dns_db_detachnode(db, &apexnode);
+	if (dbversion != NULL)
+		dns_db_closeversion(db, &dbversion, ISC_TRUE);
+	if (db != NULL)
+		dns_db_detach(&db);
+	for (i = 0; rdatalists[i] != NULL; i++) {
+		while ((rdata = ISC_LIST_HEAD(rdatalists[i]->rdata)) != NULL) {
+			ISC_LIST_UNLINK(rdatalists[i]->rdata, rdata, link);
+			dns_rdata_toregion(rdata, &region);
+			isc_mem_put(mctx, rdata,
+				    sizeof(*rdata) + region.length);
+		}
+	}
+
 	return (result);
 }
 
@@ -650,7 +975,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	 * to primary masters (type "master") and slaves
 	 * acting as masters (type "slave"), but not to stubs.
 	 */
-	if (ztype != dns_zone_stub) {
+	if (ztype != dns_zone_stub && ztype != dns_zone_staticstub) {
 		obj = NULL;
 		result = ns_config_get(maps, "notify", &obj);
 		INSIST(result == ISC_R_SUCCESS);
@@ -1097,12 +1422,42 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 				   cfg_obj_asboolean(obj));
 		break;
 
+	case dns_zone_staticstub:
+		RETERR(configure_staticstub(zoptions, zone, zname,
+					    default_dbtype));
+		break;
+
 	default:
 		break;
 	}
 
 	return (ISC_R_SUCCESS);
 }
+
+
+#ifdef DLZ
+/*
+ * Set up a DLZ zone as writeable
+ */
+isc_result_t
+ns_zone_configure_writeable_dlz(dns_dlzdb_t *dlzdatabase, dns_zone_t *zone,
+				dns_rdataclass_t rdclass, dns_name_t *name)
+{
+	dns_db_t *db = NULL;
+	isc_time_t now;
+	isc_result_t result;
+
+	TIME_NOW(&now);
+
+	dns_zone_settype(zone, dns_zone_dlz);
+	result = dns_sdlz_setdb(dlzdatabase, rdclass, name, &db);
+	if (result != ISC_R_SUCCESS)
+		return result;
+	result = dns_zone_dlzpostload(zone, db);
+	dns_db_detach(&db);
+	return result;
+}
+#endif
 
 isc_boolean_t
 ns_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig) {
@@ -1114,6 +1469,13 @@ ns_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig) {
 	zoptions = cfg_tuple_get(zconfig, "options");
 
 	if (zonetype_fromconfig(zoptions) != dns_zone_gettype(zone))
+		return (ISC_FALSE);
+
+	/*
+	 * We always reconfigure a static-stub zone for simplicity, assuming
+	 * the amount of data to be loaded is small.
+	 */
+	if (zonetype_fromconfig(zoptions) == dns_zone_staticstub)
 		return (ISC_FALSE);
 
 	obj = NULL;
