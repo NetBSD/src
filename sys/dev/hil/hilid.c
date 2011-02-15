@@ -1,4 +1,4 @@
-/*	$NetBSD: hilid.c,v 1.1 2011/02/06 18:26:54 tsutsui Exp $	*/
+/*	$NetBSD: hilid.c,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
 /*	$OpenBSD: hilid.c,v 1.4 2005/01/09 23:49:36 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -43,12 +43,12 @@
 struct hilid_softc {
 	struct hildev_softc sc_hildev;
 
-	u_int8_t	sc_id[16];
+	uint8_t sc_id[16];
 };
 
-int	hilidprobe(device_t, cfdata_t, void *);
-void	hilidattach(device_t, struct device *, void *);
-int	hiliddetach(device_t, int);
+static int	hilidprobe(device_t, cfdata_t, void *);
+static void	hilidattach(device_t, device_t, void *);
+static int	hiliddetach(device_t, int);
 
 CFATTACH_DECL_NEW(hilid, sizeof(struct hilid_softc),
     hilidprobe, hilidattach, hiliddetach, NULL);
@@ -59,9 +59,9 @@ hilidprobe(device_t parent, cfdata_t cf, void *aux)
 	struct hil_attach_args *ha = aux;
 
 	if (ha->ha_type != HIL_DEVICE_IDMODULE)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -79,23 +79,24 @@ hilidattach(device_t parent, device_t self, void *aux)
 	memcpy(sc->hd_info, ha->ha_info, ha->ha_infolen);
 	sc->hd_fn = NULL;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	memset(sc->sc_id, 0, sizeof(sc->sc_id));
 	len = sizeof(sc->sc_id);
-	printf("%s: security code", device_xname(self));
+	aprint_normal("%s: security code", device_xname(self));
 
 	if (send_hildev_cmd(hdsc,
 	    HIL_SECURITY, sc->sc_id, &len) == 0) {
 		for (i = 0; i < sizeof(sc->sc_id); i++)
 			printf(" %02x", sc->sc_id[i]);
-		printf("\n");
+		aprint_normal("\n");
 	} else
-		printf(" unavailable\n");
+		aprint_normal(" unavailable\n");
 }
 
 int
-hiliddetach(struct device *self, int flags)
+hiliddetach(device_t self, int flags)
 {
-	return (0);
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.1 2011/02/06 18:26:54 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
 /*	$OpenBSD: hil.c,v 1.24 2010/11/20 16:45:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
@@ -86,15 +86,15 @@
 
 #include "hilkbd.h"
 
-void	hilconfig(struct hil_softc *, u_int);
-void	hilempty(struct hil_softc *);
-int	hilsubmatch(device_t, cfdata_t, const int *, void *);
-void	hil_process_int(struct hil_softc *, u_int8_t, u_int8_t);
-int	hil_process_poll(struct hil_softc *, u_int8_t, u_int8_t);
-void	hil_thread(void *);
-int	send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd);
-void	polloff(struct hil_softc *);
-void	pollon(struct hil_softc *);
+static void	hilconfig(struct hil_softc *, u_int);
+static void	hilempty(struct hil_softc *);
+static int	hilsubmatch(device_t, cfdata_t, const int *, void *);
+static void	hil_process_int(struct hil_softc *, uint8_t, uint8_t);
+static int	hil_process_poll(struct hil_softc *, uint8_t, uint8_t);
+static void	hil_thread(void *);
+static int	send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd);
+static void	polloff(struct hil_softc *);
+static void	pollon(struct hil_softc *);
 
 static int hilwait(struct hil_softc *);
 static int hildatawait(struct hil_softc *);
@@ -113,7 +113,7 @@ hilwait(struct hil_softc *sc)
 			break;
 	}
 
-	return (cnt);
+	return cnt;
 }
 
 static __inline int
@@ -128,7 +128,7 @@ hildatawait(struct hil_softc *sc)
 			break;
 	}
 
-	return (cnt);
+	return cnt;
 }
 
 /*
@@ -138,7 +138,8 @@ hildatawait(struct hil_softc *sc)
 void
 hil_attach(struct hil_softc *sc, int *hil_is_console)
 {
-	printf("\n");
+
+	aprint_normal("\n");
 
 	/*
 	 * Initialize loop information
@@ -161,15 +162,15 @@ hildevprint(void *aux, const char *pnp)
 	struct hil_attach_args *ha = aux;
 
 	if (pnp != NULL) {
-		printf("\"%s\" at %s id %x",
+		aprint_normal("\"%s\" at %s id %x",
 		    ha->ha_descr, pnp, ha->ha_id);
 	}
-	printf(" code %d", ha->ha_code);
+	aprint_normal(" code %d", ha->ha_code);
 	if (pnp == NULL) {
-		printf(": %s", ha->ha_descr);
+		aprint_normal(": %s", ha->ha_descr);
 	}
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
@@ -179,7 +180,7 @@ hilsubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	if (cf->cf_loc[0] != -1 &&
 	    cf->cf_loc[0] != ha->ha_code)
-		return (0);
+		return 0;
 
 	return config_match(parent, cf, aux);
 }
@@ -189,7 +190,7 @@ hil_attach_deferred(device_t self)
 {
 	struct hil_softc *sc = device_private(self);
 	int tries;
-	u_int8_t db;
+	uint8_t db;
 
 	sc->sc_status = HIL_STATUS_BUSY;
 
@@ -224,15 +225,14 @@ hil_attach_deferred(device_t self)
 		}
 
 #ifdef HILDEBUG
-		printf("%s: loop not ready, retrying...\n",
-		    device_xname(sc->sc_dev));
+		aprint_debug(self, "%s: loop not ready, retrying...\n");
 #endif
 
 		DELAY(1000000);
         }
 
 	if (tries == 0 || (db & LPS_CONFFAIL)) {
-		printf("%s: no devices\n", device_xname(sc->sc_dev));
+		aprint_normal_dev(self, "no devices\n");
 		sc->sc_pending = 0;
 		if (tries == 0)
 			return;
@@ -243,8 +243,7 @@ hil_attach_deferred(device_t self)
 	 */
 	if (kthread_create(PRI_NONE, 0, NULL, hil_thread, sc, &sc->sc_thread,
 	    "%s", device_xname(sc->sc_dev)) != 0) {
-		printf("%s: unable to create event thread\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(self, "unable to create event thread\n");
 		return;
 	}
 
@@ -268,10 +267,10 @@ int
 hil_intr(void *v)
 {
 	struct hil_softc *sc = v;
-	u_int8_t c, stat;
+	uint8_t c, stat;
 
 	if (cold)
-		return (0);
+		return 0;
 
 	stat = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
 
@@ -280,7 +279,7 @@ hil_intr(void *v)
 	 * loop.
 	 */
 	if ((stat & HIL_DATA_RDY) == 0)
-		return (0);	/* not for us */
+		return 0;	/* not for us */
 
 	c = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
 	    HILP_DATA);	/* clears interrupt */
@@ -291,11 +290,11 @@ hil_intr(void *v)
 	if (sc->sc_status != HIL_STATUS_BUSY)
 		hil_process_pending(sc);
 
-	return (1);
+	return 1;
 }
 
 void
-hil_process_int(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
+hil_process_int(struct hil_softc *sc, uint8_t stat, uint8_t c)
 {
 	device_t child;
 	struct hildev_softc *hdsc;
@@ -362,9 +361,9 @@ hil_process_int(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
  * of buffering it.
  */
 int
-hil_process_poll(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
+hil_process_poll(struct hil_softc *sc, uint8_t stat, uint8_t c)
 {
-	u_int8_t db;
+	uint8_t db;
 
 	switch ((stat >> HIL_SSHIFT) & HIL_SMASK) {
 	case HIL_STATUS:
@@ -484,7 +483,7 @@ void
 hilconfig(struct hil_softc *sc, u_int knowndevs)
 {
 	struct hil_attach_args ha;
-	u_int8_t db;
+	uint8_t db;
 	int id, s;
 
 	s = splhil();
@@ -513,8 +512,8 @@ hilconfig(struct hil_softc *sc, u_int knowndevs)
 		const struct hildevice *hd;
 		
 		if (send_device_cmd(sc, id, HIL_IDENTIFY) != 0) {
-			printf("%s: no answer from device %d\n",
-			    device_xname(sc->sc_dev), id);
+			aprint_normal_dev(sc->sc_dev,
+			    "no answer from device %d\n", id);
 			continue;
 		}
 
@@ -578,7 +577,7 @@ hilconfig(struct hil_softc *sc, u_int knowndevs)
 void
 hilempty(struct hil_softc *sc)
 {
-	u_int8_t db;
+	uint8_t db;
 	int id, s;
 	u_int oldmaxdev;
 
@@ -639,10 +638,10 @@ hilempty(struct hil_softc *sc)
  * If rdata is non-null, wait for and return a byte of data.
  */
 int
-send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
-    u_int8_t *rdata)
+send_hil_cmd(struct hil_softc *sc, u_int cmd, uint8_t *data, u_int dlen,
+    uint8_t *rdata)
 {
-	u_int8_t status;
+	uint8_t status;
 	int s;
 	
 	s = splhil();
@@ -653,7 +652,7 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
 		    device_xname(sc->sc_dev));
 #endif
 		splx(s);
-		return (EBUSY);
+		return EBUSY;
 	}
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, HILP_CMD, cmd);
@@ -679,7 +678,7 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
 		} while (((status >> HIL_SSHIFT) & HIL_SMASK) != HIL_68K);
 	}
 	splx(s);
-	return (0);
+	return 0;
 }
 
 /*
@@ -694,7 +693,7 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
 int
 send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd)
 {
-	u_int8_t status, c;
+	uint8_t status, c;
 	int rc = 0;
 
 	polloff(sc);
@@ -746,12 +745,12 @@ out:
 	sc->sc_cmddev = 0;
 
 	pollon(sc);
-	return (rc);
+	return rc;
 }
 
 int
 send_hildev_cmd(struct hildev_softc *hdsc, u_int cmd,
-    u_int8_t *outbuf, u_int *outlen)
+    uint8_t *outbuf, u_int *outlen)
 {
 	struct hil_softc *sc = device_private(device_parent(hdsc->sc_dev));
 	int s, rc;
@@ -769,7 +768,7 @@ send_hildev_cmd(struct hildev_softc *hdsc, u_int cmd,
 	}
 
 	splx(s);
-	return (rc);
+	return rc;
 }
 
 /*
@@ -778,7 +777,7 @@ send_hildev_cmd(struct hildev_softc *hdsc, u_int cmd,
 void
 polloff(struct hil_softc *sc)
 {
-	u_int8_t db;
+	uint8_t db;
 
 	if (hilwait(sc) == 0)
 		return;
@@ -820,7 +819,7 @@ polloff(struct hil_softc *sc)
 void
 pollon(struct hil_softc *sc)
 {
-	u_int8_t db;
+	uint8_t db;
 
 	if (hilwait(sc) == 0)
 		return;
@@ -859,10 +858,10 @@ hil_set_poll(struct hil_softc *sc, int on)
 }
 
 int
-hil_poll_data(struct hildev_softc *hdsc, u_int8_t *stat, u_int8_t *data)
+hil_poll_data(struct hildev_softc *hdsc, uint8_t *stat, uint8_t *data)
 {
 	struct hil_softc *sc = device_private(device_parent(hdsc->sc_dev));
-	u_int8_t s, c;
+	uint8_t s, c;
 
 	s = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
 	if ((s & HIL_DATA_RDY) == 0)
