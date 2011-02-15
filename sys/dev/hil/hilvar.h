@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.1 2011/02/06 18:26:54 tsutsui Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
 /*	$OpenBSD: hilvar.h,v 1.10 2006/11/05 14:39:32 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -81,10 +81,10 @@ struct hil_softc {
 	int		sc_cmdending;
 	u_int		sc_actdev;	/* current input device */
 	u_int		sc_cmddev;	/* device to perform command on */
-	u_int8_t	sc_pollbuf[HILBUFSIZE];	/* interrupt time input buf */
-	u_int8_t	sc_cmdbuf[HILBUFSIZE];
-	u_int8_t	*sc_pollbp;	/* pointer into sc_pollbuf */
-	u_int8_t	*sc_cmdbp;	/* pointer into sc_cmdbuf */
+	uint8_t		sc_pollbuf[HILBUFSIZE];	/* interrupt time input buf */
+	uint8_t		sc_cmdbuf[HILBUFSIZE];
+	uint8_t		*sc_pollbp;	/* pointer into sc_pollbuf */
+	uint8_t		*sc_cmdbp;	/* pointer into sc_cmdbuf */
 
 	int		sc_status;	/* initialization status */
 #define	HIL_STATUS_BUSY		0x00
@@ -98,10 +98,10 @@ struct hil_softc {
 
 #ifdef _KERNEL
 
-int	send_hil_cmd(struct hil_softc *, u_int, u_int8_t *, u_int, u_int8_t *);
-int	send_hildev_cmd(struct hildev_softc *, u_int, u_int8_t *, u_int *);
+int	send_hil_cmd(struct hil_softc *, u_int, uint8_t *, u_int, uint8_t *);
+int	send_hildev_cmd(struct hildev_softc *, u_int, uint8_t *, u_int *);
 void	hil_set_poll(struct hil_softc *, int);
-int	hil_poll_data(struct hildev_softc *, u_int8_t *, u_int8_t *);
+int	hil_poll_data(struct hildev_softc *, uint8_t *, uint8_t *);
 
 void	hil_attach(struct hil_softc *, int *);
 void	hil_attach_deferred(device_t);
