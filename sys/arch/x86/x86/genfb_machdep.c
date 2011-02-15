@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.8 2011/02/10 10:21:40 jmcneill Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.9 2011/02/15 18:10:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.8 2011/02/10 10:21:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.9 2011/02/15 18:10:33 jruoho Exp $");
 
 #include "opt_mtrr.h"
 
@@ -80,7 +80,7 @@ static struct wsscreen_descr x86_genfb_stdscreen = {
 void
 x86_genfb_set_console_dev(device_t dev)
 {
-	KASSERT(x86_genfb_console_dev != NULL);
+	KASSERT(x86_genfb_console_dev == NULL);
 	x86_genfb_console_dev = dev;
 }
 
