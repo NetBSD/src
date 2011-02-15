@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2011/02/12 18:23:10 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 2011/02/15 19:39:12 macallan Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2011/02/12 18:23:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2011/02/15 19:39:12 macallan Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -1927,7 +1927,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * it's in our available memory array.  If it is in the memory array,
 	 * asssume it's in memory coherent memory.
 	 */
-	pte_lo = PTE_IG;
+	if (flags & PMAP_MD_PREFETCHABLE) {
+		pte_lo = 0;
+	} else
+		pte_lo = PTE_G;
+
 	if ((flags & PMAP_MD_NOCACHE) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
@@ -1935,6 +1939,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				break;
 			}
 		}
+	} else {
+		pte_lo |= PTE_I;
 	}
 
 	if (prot & VM_PROT_WRITE)
@@ -3514,3 +3520,16 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	}
 #endif
 }
+
+u_int
+powerpc_mmap_flags(paddr_t pa)
+{
+	u_int flags = PMAP_MD_NOCACHE;
+
+	if (pa & POWERPC_MMAP_FLAG_PREFETCHABLE)
+		flags |= PMAP_MD_PREFETCHABLE;
+	if (pa & POWERPC_MMAP_FLAG_CACHEABLE)
+		flags &= ~PMAP_MD_NOCACHE;
+	return flags;
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2011/02/12 18:23:10 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 2011/02/15 19:39:12 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -117,8 +117,6 @@ extern int pmap_use_altivec;
 #define	pmap_is_modified(pg)		(pmap_query_bit((pg), PTE_CHG))
 #define	pmap_is_referenced(pg)		(pmap_query_bit((pg), PTE_REF))
 
-#define	pmap_phys_address(x)		(x)
-
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
@@ -141,6 +139,14 @@ void pmap_real_memory(paddr_t *, psize_t *);
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 int pmap_pte_spill(pmap_t, vaddr_t, bool);
 void pmap_pinit(pmap_t);
+
+u_int powerpc_mmap_flags(paddr_t);
+#define POWERPC_MMAP_FLAG_MASK	0xf
+#define POWERPC_MMAP_FLAG_PREFETCHABLE	0x1
+#define POWERPC_MMAP_FLAG_CACHEABLE	0x2
+
+#define pmap_phys_address(ppn)		(ppn & ~POWERPC_MMAP_FLAG_MASK)
+#define pmap_mmap_flags(ppn)		powerpc_mmap_flags(ppn)
 
 static inline paddr_t vtophys (vaddr_t);
 
@@ -208,6 +214,7 @@ int pmap_setup_segment0_map(int use_large_pages, ...);
 #endif
 
 #define PMAP_MD_NOCACHE			0x1000000
+#define PMAP_MD_PREFETCHABLE		0x2000000
 #define PMAP_STEAL_MEMORY
 #define PMAP_NEED_PROCWR
 

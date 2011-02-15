@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.24 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.25 2011/02/15 19:39:12 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25 2011/02/15 19:39:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,6 +499,7 @@ memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 	paddr_t ret;
 	/* XXX what about stride? */
 	ret = trunc_page(t->pbs_offset + bpa + offset);
+
 #ifdef DEBUG
 	if (ret == 0) {
 		printf("%s: [%08x, %08x %08x] mmaps to 0?!\n", __func__,
@@ -506,6 +507,14 @@ memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 		return -1;
 	}
 #endif
+
+#ifdef POWERPC_MMAP_FLAG_MASK
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		ret |= POWERPC_MMAP_FLAG_PREFETCHABLE;
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
+		ret |= POWERPC_MMAP_FLAG_CACHEABLE;
+#endif
+
 	return ret;
 }
 
