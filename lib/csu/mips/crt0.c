@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.19.32.1 2009/08/30 09:59:26 matt Exp $ */
+/* $NetBSD: crt0.c,v 1.19.32.2 2011/02/15 18:07:30 matt Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -118,7 +118,7 @@ __start(u_long sp,
 #endif
 
 
-	argc = *(int *)ksp;
+	argc = *(long *)ksp;
 	argv = ksp + 1;
 	environ = ksp + 2 + argc;	/* 2: argc + NULL ending argv */
 
@@ -163,7 +163,7 @@ __start(u_long sp,
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.19.32.1 2009/08/30 09:59:26 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.19.32.2 2011/02/15 18:07:30 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
