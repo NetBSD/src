@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.112 2011/02/15 09:05:14 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.113 2011/02/15 09:56:32 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.112 2011/02/15 09:05:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.113 2011/02/15 09:56:32 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -353,6 +353,8 @@ void
 xcallintr(void *v)
 {
 
+	kpreempt_disable();
+
 	/* Tally */
 	if (v != xcallintr)
 		cpuinfo.ci_sintrcnt[13].ev_count++;
@@ -370,6 +372,8 @@ xcallintr(void *v)
 	}
 	cpuinfo.msg.tag = 0;
 	cpuinfo.msg.complete = 1;
+
+	kpreempt_enable();
 }
 #endif /* MULTIPROCESSOR */
 #endif /* SUN4M || SUN4D */
@@ -843,6 +847,11 @@ intr_biglock_wrapper(void *vp)
 bool
 cpu_intr_p(void)
 {
+	int idepth;
 
-	return curcpu()->ci_idepth != 0;
+	kpreempt_disable();
+	idepth = curcpu()->ci_idepth;
+	kpreempt_enable();
+
+	return idepth != 0;
 }
