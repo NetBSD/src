@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.9 2011/02/15 16:19:33 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2011/02/15 23:17:02 tron Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
-PKGROOT?= /usr/pkg
 
 WARNS?=	0
 
@@ -32,6 +31,7 @@ LDADD+= -lgssapi
 
 # XXX: Use only if you have cyrus-sasl installed; never part of a normal build!
 .if defined(HAVE_CYRUS_SASL)
+PKGROOT?= /usr/pkg
 CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
 	-I${PKGROOT}/include/sasl
 LDADD+= -L${PKGROOT}/lib -Wl,-R${PKGROOT}/lib -lsasl2 
