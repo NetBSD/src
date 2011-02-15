@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.39 2011/02/14 14:56:23 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.40 2011/02/15 13:59:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.39 2011/02/14 14:56:23 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.40 2011/02/15 13:59:28 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -142,8 +142,12 @@ pid_t	(*host_fork)(void);
 int	(*host_daemon)(int, int);
 int	(*host_execve)(const char *, char *const[], char *const[]);
 
-static unsigned dup2mask;
-#define ISDUP2D(fd) ((fd < 32) && (1<<(fd) & dup2mask))
+static uint32_t dup2mask;
+#define ISDUP2D(fd) (((fd) < 32) && (1<<(fd) & dup2mask))
+#define SETDUP2(fd) \
+    do { if ((fd) < 32) dup2mask |= (1<<(fd)); } while (/*CONSTCOND*/0)
+#define CLRDUP2(fd) \
+    do { if ((fd) < 32) dup2mask &= ~(1<<(fd)); } while (/*CONSTCOND*/0)
 
 //#define DEBUGJACK
 #ifdef DEBUGJACK
@@ -277,13 +281,12 @@ rcinit(void)
 	}
 
 	if (getenv_r("RUMPHIJACK__DUP2MASK", buf, sizeof(buf)) == 0) {
-		dup2mask = atoi(buf);
+		dup2mask = strtoul(buf, NULL, 10);
 	}
 }
 
 /* XXX: need runtime selection.  low for now due to FD_SETSIZE */
 #define HIJACK_FDOFF 128
-#define HIJACK_ASSERT 128 /* XXX */
 static int
 fd_rump2host(int fd)
 {
@@ -313,8 +316,33 @@ fd_isrump(int fd)
 	return ISDUP2D(fd) || fd >= HIJACK_FDOFF;
 }
 
-#define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_ASSERT)
-#undef HIJACK_FDOFF
+#define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_FDOFF)
+
+static int
+dodup(int oldd, int minfd)
+{
+	int (*op_fcntl)(int, int, ...);
+	int newd;
+	int isrump;
+
+	DPRINTF(("dup -> %d (minfd %d)\n", oldd, minfd));
+	if (fd_isrump(oldd)) {
+		op_fcntl = GETSYSCALL(rump, FCNTL);
+		oldd = fd_host2rump(oldd);
+		isrump = 1;
+	} else {
+		op_fcntl = GETSYSCALL(host, FCNTL);
+		isrump = 0;
+	}
+
+	newd = op_fcntl(oldd, F_DUPFD, minfd);
+
+	if (isrump)
+		newd = fd_rump2host(newd);
+	DPRINTF(("dup <- %d\n", newd));
+
+	return newd;
+}
 
 int __socket30(int, int, int);
 int
@@ -388,31 +416,99 @@ ioctl(int fd, unsigned long cmd, ...)
 	return rv;
 }
 
-
-/* TODO: support F_DUPFD, F_CLOSEM, F_MAXFD */
+#include <syslog.h>
 int
 fcntl(int fd, int cmd, ...)
 {
 	int (*op_fcntl)(int, int, ...);
 	va_list ap;
-	int rv;
+	int rv, minfd, i;
 
-	DPRINTF(("fcntl -> %d\n", fd));
-	if (fd_isrump(fd)) {
-		fd = fd_host2rump(fd);
-		op_fcntl = GETSYSCALL(rump, FCNTL);
-	} else {
-		op_fcntl = GETSYSCALL(host, FCNTL);
-		if (cmd == F_CLOSEM)
-			if (rumpclient__closenotify(&fd,
+	DPRINTF(("fcntl -> %d (cmd %d)\n", fd, cmd));
+
+	switch (cmd) {
+	case F_DUPFD:
+		va_start(ap, cmd);
+		minfd = va_arg(ap, int);
+		va_end(ap);
+		return dodup(fd, minfd);
+
+	case F_CLOSEM:
+		/*
+		 * So, if fd < HIJACKOFF, we want to do a host closem.
+		 */
+
+		if (fd < HIJACK_FDOFF) {
+			int closemfd = fd;
+
+			if (rumpclient__closenotify(&closemfd,
 			    RUMPCLIENT_CLOSE_FCLOSEM) == -1)
 				return -1;
-	}
+			op_fcntl = GETSYSCALL(host, FCNTL);
+			rv = op_fcntl(closemfd, cmd);
+			if (rv)
+				return rv;
+		}
 
-	va_start(ap, cmd);
-	rv = op_fcntl(fd, cmd, va_arg(ap, void *));
-	va_end(ap);
-	return rv;
+		/*
+		 * Additionally, we want to do a rump closem, but only
+		 * for the file descriptors not within the dup2mask.
+		 */
+
+		/* why don't we offer fls()? */
+		for (i = 31; i >= 0; i--) {
+			if (dup2mask & 1<<i)
+				break;
+		}
+		
+		if (fd >= HIJACK_FDOFF)
+			fd -= HIJACK_FDOFF;
+		else
+			fd = 0;
+		fd = MAX(i+1, fd);
+
+		/* hmm, maybe we should close rump fd's not within dup2mask? */
+
+		return rump_sys_fcntl(fd, F_CLOSEM);
+
+	case F_MAXFD:
+		/*
+		 * For maxfd, if there's a rump kernel fd, return
+		 * it hostified.  Otherwise, return host's MAXFD
+		 * return value.
+		 */
+		if ((rv = rump_sys_fcntl(fd, F_MAXFD)) != -1) {
+			/*
+			 * This might go a little wrong in case
+			 * of dup2 to [012], but I'm not sure if
+			 * there's a justification for tracking
+			 * that info.  Consider e.g.
+			 * dup2(rumpfd, 2) followed by rump_sys_open()
+			 * returning 1.  We should return 1+HIJACKOFF,
+			 * not 2+HIJACKOFF.  However, if [01] is not
+			 * open, the correct return value is 2.
+			 */
+			return fd_rump2host(fd);
+		} else {
+			op_fcntl = GETSYSCALL(host, FCNTL);
+			return op_fcntl(fd, F_MAXFD);
+		}
+		/*NOTREACHED*/
+
+	default:
+		if (fd_isrump(fd)) {
+			fd = fd_host2rump(fd);
+			op_fcntl = GETSYSCALL(rump, FCNTL);
+		} else {
+			op_fcntl = GETSYSCALL(host, FCNTL);
+		}
+
+		va_start(ap, cmd);
+		rv = op_fcntl(fd, cmd, va_arg(ap, void *));
+		va_end(ap);
+		return rv;
+	}
+	/*NOTREACHED*/
 }
 
 int
@@ -431,7 +527,7 @@ close(int fd)
 		op_close = GETSYSCALL(rump, CLOSE);
 		rv = op_close(fd);
 		if (rv == 0 && undup2)
-			dup2mask &= ~(1 << fd);
+			CLRDUP2(fd);
 	} else {
 		if (rumpclient__closenotify(&fd, RUMPCLIENT_CLOSE_CLOSE) == -1)
 			return -1;
@@ -481,7 +577,7 @@ dup2(int oldd, int newd)
 		oldd = fd_host2rump(oldd);
 		rv = rump_sys_dup2(oldd, newd);
 		if (rv != -1)
-			dup2mask |= 1<<newd;
+			SETDUP2(newd);
 	} else {
 		host_dup2 = syscalls[DUALCALL_DUP2].bs_host;
 		if (rumpclient__closenotify(&newd, RUMPCLIENT_CLOSE_DUP2) == -1)
@@ -495,27 +591,8 @@ dup2(int oldd, int newd)
 int
 dup(int oldd)
 {
-	int (*op_dup)(int);
-	int newd;
-	int isrump;
 
-	DPRINTF(("dup -> %d\n", oldd));
-	if (fd_isrump(oldd)) {
-		op_dup = GETSYSCALL(rump, DUP);
-		oldd = fd_host2rump(oldd);
-		isrump = 1;
-	} else {
-		op_dup = GETSYSCALL(host, DUP);
-		isrump = 0;
-	}
-
-	newd = op_dup(oldd);
-
-	if (isrump)
-		newd = fd_rump2host(newd);
-	DPRINTF(("dup <- %d\n", newd));
-
-	return newd;
+	return dodup(oldd, 0);
 }
 
 /*
@@ -576,7 +653,7 @@ execve(const char *path, char *const argv[], char *const oenvp[])
 	char *dup2str;
 	int rv;
 
-	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%d", dup2mask);
+	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%u", dup2mask);
 	dup2str = malloc(strlen(buf)+1);
 	if (dup2str == NULL)
 		return ENOMEM;
@@ -953,7 +1030,7 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 		ev = &changelist[i];
 		if (ev->filter == EVFILT_READ || ev->filter == EVFILT_WRITE ||
 		    ev->filter == EVFILT_VNODE) {
-			if (fd_isrump(ev->ident))
+			if (fd_isrump((int)ev->ident))
 				return ENOTSUP;
 		}
 	}
