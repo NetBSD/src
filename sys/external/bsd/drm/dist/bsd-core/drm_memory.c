@@ -197,7 +197,8 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 			dev->agp_map_data[i].mapped++;
 			dev->agp_map_data[i].base = map->offset;
 			dev->agp_map_data[i].size = map->size;
-			dev->agp_map_data[i].flags = BUS_SPACE_MAP_LINEAR;
+			dev->agp_map_data[i].flags = BUS_SPACE_MAP_LINEAR |
+			    BUS_SPACE_MAP_PREFETCHABLE;
 			dev->agp_map_data[i].maptype = PCI_MAPREG_TYPE_MEM;
 			map->fullmap = &(dev->agp_map_data[i]);
 			map->mapsize = dev->agp_map_data[i].size;
