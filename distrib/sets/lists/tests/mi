@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.247 2011/02/14 15:15:40 pooka Exp $
+# $NetBSD: mi,v 1.248 2011/02/15 15:18:37 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -470,6 +470,8 @@
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumpclient					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/librumpclient/h_exec.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/librumpclient/h_ution.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumpclient/t_fd.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumphijack					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librumphijack/h_client.debug			tests-lib-debug		debug,atf
@@ -1899,6 +1901,9 @@
 ./usr/tests/lib/librt/t_sem			tests-lib-tests		atf
 ./usr/tests/lib/librumpclient				tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/Atffile			tests-lib-tests		atf
+./usr/tests/lib/librumpclient/h_exec			tests-lib-tests		atf
+./usr/tests/lib/librumpclient/h_ution			tests-lib-tests		atf
+./usr/tests/lib/librumpclient/t_exec			tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/t_fd			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/Atffile			tests-lib-tests		atf
