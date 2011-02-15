@@ -1,4 +1,4 @@
-/*	$NetBSD: taskpool.c,v 1.1.1.1 2009/03/22 15:02:09 christos Exp $	*/
+/*	$NetBSD: taskpool.c,v 1.1.1.2 2011/02/15 19:38:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: taskpool.c,v 1.18 2007/06/18 23:47:44 tbox Exp */
+/* Id: taskpool.c,v 1.18 2007-06-18 23:47:44 tbox Exp */
 
 /*! \file */
 

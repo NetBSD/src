@@ -1,6 +1,6 @@
-/*	$NetBSD: api.h,v 1.1.1.1 2009/03/22 14:57:21 christos Exp $	*/
+/*	$NetBSD: api.h,v 1.1.1.2 2011/02/15 19:32:17 christos Exp $	*/
 
-/* Id: api.h,v 1.1.1.1 2003/06/04 00:25:35 marka Exp */
+/* Id: api.h,v 1.1.1.1 2003-06-04 00:25:35 marka Exp */
 /*
  * Copyright (c) 2001,2002 Japan Network Information Center.
  * All rights reserved.

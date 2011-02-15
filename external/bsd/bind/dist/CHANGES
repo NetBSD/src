@@ -1,4 +1,171 @@
-	--- 9.7.2-P3 released ---
+	--- 9.8.0rc1 released ---
+
+3018.	[bug]		Named failed to check for the "none;" acl when deciding
+			if a zone may need to be re-signed. [RT #23120]
+
+3017.	[doc]		dnssec-keyfromlabel -I was not properly documented.
+			[RT #22887]
+
+3016.	[bug]		rndc usage missing '-b'. [RT #22937]
+
+3015.	[port]		win32: fix IN6_IS_ADDR_LINKLOCAL and
+			IN6_IS_ADDR_SITELOCAL macros. [RT #22724]
+
+3013.	[bug]		The DNS64 ttl was not always being set as expected.
+			[RT #23034]
+
+3012.	[bug]		Remove DNSKEY TTL change pairs before generating
+			signing records for any remaining DNSKEY changes.
+			[RT #22590]
+
+3011.	[func]		Allow setting this in named.conf using the new
+			'resolver-query-timeout' option, which specifies a max
+			time in seconds.  0 means 'default' and anything longer
+			than 30 will be silently set to 30. [RT #22852]
+ 
+3010.	[bug]		Fixed a bug where "rndc reconfig" stopped the timer
+			for refreshing managed-keys. [RT #22296]
+
+3009.	[bug]		clients-per-query code didn't work as expected with
+			particular query patterns. [RT #22972]
+
+	--- 9.8.0b1 released ---
+
+3008.	[func]		Response policy zones (RPZ) support. [RT #21726]
+
+3007.	[bug]		Named failed to preserve the case of domain names in
+			rdata which is not compressible when writing master
+			files.  [RT #22863]
+
+3006.	[func]		Allow dynamically generated TSIG keys to be preserved
+			across restarts of named.  Initially this is for
+			TSIG keys generated using GSSAPI. [RT #22639]
+
+3005.	[port]		Solaris: Work around the lack of
+			gsskrb5_register_acceptor_identity() by setting
+			the KRB5_KTNAME environment variable to the
+			contents of tkey-gssapi-keytab.  Also fixed
+			test errors on MacOSX.  [RT #22853]
+
+3004.	[func]		DNS64 reverse support. [RT #22769]
+
+3003.	[experimental]	Added update-policy match type "external",
+			enabling named to defer the decision of whether to
+			allow a dynamic update to an external daemon.
+			(Contributed by Andrew Tridgell.) [RT #22758]
+
+3002.	[bug]		isc_mutex_init_errcheck() failed to destroy attr.
+			[RT #22766]
+
+3001.	[func]		Added a default trust anchor for the root zone, which
+			can be switched on by setting "dnssec-validation auto;"
+			in the named.conf options. [RT #21727]
+
+3000.	[bug]		More TKEY/GSS fixes:
+			 - nsupdate can now get the default realm from
+			   the user's Kerberos principal
+			 - corrected gsstest compilation flags
+			 - improved documentation
+			 - fixed some NULL dereferences
+			[RT #22795]
+
+2999.	[func]		Add GOST support (RFC 5933). [RT #20639]
+
+2998.	[func]		Add isc_task_beginexclusive and isc_task_endexclusive
+			to the task api. [RT #22776]
+
+2997.	[func]		named -V now reports the OpenSSL and libxml2 verions
+			it was compiled against. [RT #22687]
+
+2996.	[security]	Temporarily disable SO_ACCEPTFILTER support.
+			[RT #22589]
+
+2995.	[bug]		The Kerberos realm was not being correctly extracted
+			from the signer's identity. [RT #22770]
+
+2994.	[port]		NetBSD: use pthreads by default on NetBSD >= 5.0, and
+			do not use threads on earlier versions.  Also kill
+			the unproven-pthreads, mit-pthreads, and ptl2 support.
+
+2993.	[func]		Dynamically grow adb hash tables. [RT #21186]
+
+2992.	[contrib]	contrib/check-secure-delegation.pl:  A simple tool
+			for looking at a secure delegation. [RT #22059]
+
+2991.	[contrib]	contrib/zone-edit.sh: A simple zone editing tool for
+			dynamic zones. [RT #22365]
+
+2990.	[bug]		'dnssec-settime -S' no longer tests prepublication
+			interval validity when the interval is set to 0.
+			[RT #22761]
+
+2989.	[func]		Added support for writable DLZ zones. (Contributed
+			by Andrew Tridgell of the Samba project.) [RT #22629]
+
+2988.	[experimental]	Added a "dlopen" DLZ driver, allowing the creation
+			of external DLZ drivers that can be loaded as
+			shared objects at runtime rather than linked with
+			named.  Currently this is switched on via a
+			compile-time option, "configure --with-dlz-dlopen".
+			Note: the syntax for configuring DLZ zones
+			is likely to be refined in future releases.
+			(Contributed by Andrew Tridgell of the Samba
+			project.) [RT #22629]
+
+2987.	[func]		Improve ease of configuring TKEY/GSS updates by
+			adding a "tkey-gssapi-keytab" option.  If set,
+			updates will be allowed with any key matching
+			a principal in the specified keytab file.
+			"tkey-gssapi-credential" is no longer required
+			and is expected to be deprecated.  (Contributed
+			by Andrew Tridgell of the Samba project.)
+			[RT #22629]
+
+2986.	[func]		Add new zone type "static-stub".  It's like a stub
+			zone, but the nameserver names and/or their IP
+			addresses are statically configured. [RT #21474]
+
+2985.	[bug]		Add a regression test for change #2896. [RT #21324]
+
+2984.	[bug]		Don't run MX checks when the target of the MX record
+			is ".".  [RT #22645]
+
+2983.	[bug]		Include "loadkeys" in rndc help output. [RT #22493]
+
+	--- 9.8.0a1 released ---
+
+2982.	[bug]		Reference count dst keys.  dst_key_attach() can be used
+			increment the reference count.
+
+			Note: dns_tsigkey_createfromkey() callers should now
+			always call dst_key_free() rather than setting it
+			to NULL on success. [RT #22672]
+
+2981.	[func]		Partial DNS64 support (AAAA synthesis). [RT #21991]
+
+2980.	[bug]		named didn't properly handle UPDATES that changed the
+			TTL of the NSEC3PARAM RRset. [RT #22363]
+
+2979.	[bug]		named could deadlock during shutdown if two
+			"rndc stop" commands were issued at the same
+			time. [RT #22108]
+
+2978.	[port]		hpux: look for <devpoll.h> [RT #21919]
+
+2977.	[bug]		'nsupdate -l' report if the session key is missing.
+			[RT #21670]
+
+2976.	[bug]		named could die on exit after negotiating a GSS-TSIG
+			key. [RT #22573]
+
+2975.	[bug]		rbtdb.c:cleanup_dead_nodes_callback() aquired the
+			wrong lock which could lead to server deadlock.
+			[RT #22614]
+
+2974.	[bug]		Some valid UPDATE requests could fail due to a
+			consistency check examining the existing version
+			of the zone rather than the new version resulting
+			from the UPDATE. [RT #22413]
 
 2973.	[bug]		bind.keys.h was being removed by the "make clean"
 			at the end of configure resulting in build failures
@@ -32,12 +199,24 @@
 
 			CVE-2010-3614, VU#837744. [RT #22309]
 
-	--- 9.7.2-P2 released ---
+2967.	[bug]		'host -D' now turns on debugging messages earlier.
+			[RT #22361]
+
+2966.	[bug]		isc_print_vsnprintf() failed to check if there was
+			space available in the buffer when adding a left
+			justified character with a non zero width,
+			(e.g. "%-1c"). [RT #22270]
+
+2965.	[func]		Test HMAC functions using test data from RFC 2104 and
+			RFC 4634. [RT #21702]
+
+2964.	[placeholder]
 
 2963.	[security]	The allow-query acl was being applied instead of the
 			allow-query-cache acl to cache lookups. [RT #22114]
 
-	--- 9.7.2-P1 released ---
+2962.	[port]		win32: add more dependencies to BINDBuild.dsw.
+			[RT #22062]
 
 2961.	[bug]		Be still more selective about the non-authoritative
 			answers we apply change 2748 to. [RT #22074]
@@ -51,10 +230,40 @@
 2958.	[bug]		named failed to start with a missing master file.
 			[RT #22076]
 
-2928.	[bug]		Be more selective about the non-authoritative
-			answer we apply change 2748 to. [RT #21594]
+2957.	[bug]		entropy_get() and entropy_getpseudo() failed to match
+			the API for RAND_bytes() and RAND_pseudo_bytes()
+			respectively. [RT #21962]
 
-	--- 9.7.2 released ---
+2956.	[port]		Enable atomic operations on the PowerPC64. [RT #21899]
+
+2955.	[func]		Provide more detail in the recursing log. [RT #22043]
+
+2954.	[bug]		contrib: dlz_mysql_driver.c bad error handling on
+			build_sqldbinstance failure. [RT #21623]
+
+2953.	[bug]		Silence spurious "expected covering NSEC3, got an
+			exact match" message when returning a wildcard
+			no data response. [RT #21744]
+
+2952.	[port]		win32: named-checkzone and named-checkconf failed
+			to initialise winsock. [RT #21932]
+
+2951.	[bug]		named failed to generate a correct signed response
+			in a optout, delegation only zone with no secure
+			delegations. [RT #22007]
+
+2950.	[bug]		named failed to perform a SOA up to date check when
+			falling back to TCP on UDP timeouts when
+			ixfr-from-differences was set. [RT #21595]
+
+2949.	[bug]		dns_view_setnewzones() contained a memory leak if
+			it was called multiple times. [RT #21942]
+
+2948.	[port]		MacOS: provide a mechanism to configure the test
+			interfaces at reboot. See bin/tests/system/README
+			for details.
+
+2947.	[placeholder]
 
 2946.	[doc]		Document the default values for the minimum and maximum
 			zone refresh and retry values in the ARM. [RT #21886]
@@ -63,8 +272,6 @@
 
 2944.	[maint]		Remove ORCHID prefix from built in empty zones.
 			[RT #21772]
-
-	--- 9.7.2rc1 released ---
 
 2943.	[func]		Add support to load new keys into managed zones
 			without signing immediately with "rndc loadkeys".
@@ -133,10 +340,8 @@
 2932.	[cleanup]	Corrected a numbering error in the "dnssec" test.
 			[RT #21597]
 
-	--- 9.7.2b1 released ---
-
 2931.	[bug]		Temporarily and partially disable change 2864
-			because it would cause inifinite attempts of RRSIG
+			because it would cause infinite attempts of RRSIG
 			queries.  This is an urgent care fix; we'll
 			revisit the issue and complete the fix later.
 			[RT #21710]
@@ -152,7 +357,7 @@
 			This feature is not yet documented, and its syntax
 			is expected to change.) [RT #19447]
 
-2929.	[bug]		Improved handling of GSS security contexts: 
+2929.	[bug]		Improved handling of GSS security contexts:
 			 - added LRU expiration for generated TSIGs
 			 - added the ability to use a non-default realm
                          - added new "realm" keyword in nsupdate
@@ -161,6 +366,13 @@
 			   smaller)
 			[RT #19737]
 
+2928.	[bug]		Be more selective about the non-authoritative
+			answer we apply change 2748 to. [RT #21594]
+
+2927.	[placeholder]
+
+2926.	[placeholder]
+h
 2925.	[bug]		Named failed to accept uncachable negative responses
 			from insecure zones. [RT# 21555]
 
@@ -205,10 +417,6 @@
 
 2910.	[func]		Sanity check Kerberos credentials. [RT #20986]
 
-	--- 9.7.1 released ---
-
-	--- 9.7.1rc1 released ---
-
 2909.	[bug]		named-checkconf -p could die if "update-policy local;"
 			was specified in named.conf. [RT #21416]
 
@@ -231,24 +439,22 @@
 2903.	[bug]		managed-keys-directory missing from namedconf.c.
 			[RT #21370]
 
-	--- 9.7.1b1 released ---
-
 2902.	[func]		Add regression test for change 2897. [RT #21040]
 
 2901.	[port]		Use AC_C_FLEXIBLE_ARRAY_MEMBER. [RT #21316]
 
 2900.	[bug]		The placeholder negative caching element was not
-			properly constructed triggering a INSIST in 
+			properly constructed triggering a INSIST in
 			dns_ncache_towire(). [RT #21346]
-			
+
 2899.	[port]		win32: Support linking against OpenSSL 1.0.0.
 
-2898.	[bug]		nslookup leaked memory when -domain=value was 
+2898.	[bug]		nslookup leaked memory when -domain=value was
 			specified. [RT #21301]
 
 2897.	[bug]		NSEC3 chains could be left behind when transitioning
 			to insecure. [RT #21040]
-			
+
 2896.	[bug]		"rndc sign" failed to properly update the zone
 			when adding a DNSKEY for publication only. [RT #21045]
 
@@ -282,7 +488,7 @@
 2885.	[bug]		Improve -fno-strict-aliasing support probing in
 			configure. [RT #21080]
 
-2884.	[bug]		Insufficient valadation in dns_name_getlabelsequence().
+2884.	[bug]		Insufficient validation in dns_name_getlabelsequence().
 			[RT #21283]
 
 2883.	[bug]		'dig +short' failed to handle really large datasets.
@@ -316,7 +522,7 @@
 			successfully responds to the query using plain DNS.
 			[RT #20930]
 
-2873.	[bug]		Canceling a dynamic update via the dns/client module
+2873.	[bug]		Cancelling a dynamic update via the dns/client module
 			could trigger an assertion failure. [RT #21133]
 
 2872.	[bug]		Modify dns/client.c:dns_client_createx() to only
@@ -370,6 +576,12 @@
 2856.	[bug]		The size of a memory allocation was not always properly
 			recorded. [RT #20927]
 
+2855.	[func]		nsupdate will now preserve the entered case of domain
+			names in update requests it sends. [RT #20928]
+
+2854.	[func]		dig: allow the final soa record in a axfr response to
+			be suppressed, dig +onesoa. [RT #20929]
+
 2853.	[bug]		add_sigs() could run out of scratch space. [RT #21015]
 
 2852.	[bug]		Handle broken DNSSEC trust chains better. [RT #15619]
@@ -379,8 +591,6 @@
 
 2850.	[bug]		If isc_heap_insert() failed due to memory shortage
 			the heap would have corrupted entries. [RT #20951]
-
-	--- 9.7.0 released ---
 
 2849.	[bug]		Don't treat errors from the xml2 library as fatal.
 			[RT #20945]
@@ -397,8 +607,6 @@
 
 2844.	[doc]		notify-delay default in ARM was wrong.  It should have
 			been five (5) seconds.
-
-	--- 9.7.0rc2 released ---
 
 2843.	[func]		Prevent dnssec-keygen and dnssec-keyfromlabel from
 			creating key files if there is a chance that the new
@@ -449,7 +657,7 @@
 			[RT #20851]
 
 2832.	[bug]		Modify "struct stat" in lib/export/samples/nsprobe.c
-			to avoid redefinition in some OSes [RT 20831]
+			to avoid redefinition in some OSs [RT 20831]
 
 2831.	[security]	Do not attempt to validate or cache
 			out-of-bailiwick data returned with a secure
@@ -485,10 +693,14 @@
 2821.	[doc]		Add note that named-checkconf doesn't automatically
 			read rndc.key and bind.keys [RT #20758]
 
+2820.	[func]		Handle read access failure of OpenSSL configuration
+			file more user friendly (PKCS#11 engine patch).
+			[RT #20668]
+
 2819.	[cleanup]	Removed unnecessary DNS_POINTER_MAXHOPS define.
 			[RT #20771]
 
-2818.	[cleanup]	rndc could return an incorrect error code 
+2818.	[cleanup]	rndc could return an incorrect error code
 			when a zone was not found. [RT #20767]
 
 2817.	[cleanup]	Removed unnecessary isc_task_endexclusive() calls.
@@ -502,7 +714,7 @@
 
 2814.	[func]		Provide a definitive error message when a master
 			zone is not loaded. [RT #20757]
- 
+
 2813.	[bug]		Better handling of unreadable DNSSEC key files.
 			[RT #20710]
 
@@ -543,7 +755,7 @@
 2802.	[cleanup]	Rename journalprint to named-journalprint. [RT #20670]
 
 2801.	[func]		Detect and report records that are different according
-			to DNSSEC but are sematically equal according to plain
+			to DNSSEC but are semantically equal according to plain
 			DNS.  Apply plain DNS comparisons rather than DNSSEC
 			comparisons when processing UPDATE requests.
 			dnssec-signzone now removes such semantically duplicate
@@ -551,7 +763,7 @@
 
 			named-checkzone -r {ignore|warn|fail} (default warn)
 			named-compilezone -r {ignore|warn|fail} (default warn)
-			
+
 			named.conf: check-dup-records {ignore|warn|fail};
 
 2800.	[func]		Reject zones which have NS records which refer to
@@ -563,7 +775,7 @@
 			"dnssec-secure-to-insecure", and "dnskey-ksk-only"
 			to "dnssec-dnskey-kskonly", for clarity. [RT #20586]
 
-2798.	[bug]		Addressed bugs in managed-keys initialization 
+2798.	[bug]		Addressed bugs in managed-keys initialization
 			and rollover. [RT #20683]
 
 2797.	[bug]		Don't decrement the dispatch manager's maxbuffers.
@@ -616,7 +828,7 @@
 2780.	[bug]		dnssec-keygen -A none didn't properly unset the
 			activation date in all cases. [RT #20648]
 
-2779.	[bug]		Dynamic key revokation could fail. [RT #20644]
+2779.	[bug]		Dynamic key revocation could fail. [RT #20644]
 
 2778.	[bug]		dnssec-signzone could fail when a key was revoked
 			without deleting the unrevoked version. [RT #20638]
@@ -737,7 +949,7 @@
 2738.	[func]		Add RSASHA256 and RSASHA512 tests to the dnssec system
 			test. [RT #20453]
 
-2737.	[func]		UPDATE requests can leak existance information.
+2737.	[func]		UPDATE requests can leak existence information.
 			[RT #17261]
 
 2736.	[func]		Improve the performance of NSEC signed zones with

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmacsha.h,v 1.1.1.2 2009/10/25 00:02:45 christos Exp $	*/
+/*	$NetBSD: hmacsha.h,v 1.1.1.3 2011/02/15 19:38:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacsha.h,v 1.9 2009/02/06 23:47:42 tbox Exp */
+/* Id: hmacsha.h,v 1.9 2009-02-06 23:47:42 tbox Exp */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,

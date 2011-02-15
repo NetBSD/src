@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-settime.docbook,v 1.7.24.4 2010/08/16 22:27:16 marka Exp -->
+<!-- Id: dnssec-settime.docbook,v 1.11 2010-08-16 22:21:06 marka Exp -->
 <refentry id="man.dnssec-settime">
   <refentryinfo>
     <date>July 15, 2009</date>

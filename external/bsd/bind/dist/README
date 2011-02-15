@@ -48,32 +48,9 @@ BIND 9
 	For a detailed list of user-visible changes from
 	previous releases, see the CHANGES file.
 
-BIND 9.7.2
+BIND 9.8.0
 
-	BIND 9.7.2 will address bugs in 9.7.1, and also introduces
-        some new functionality:
-
-	- "rndc loadkeys" to allow new keys to be added to a managed
-	  zone without having them sign the content immediately.
-        - "rndc addzone" and "rndc delzone" allow adding and deleting
-          zones at runtime.  This requires the view to have the
-          "new-zone-file" option set to a filename.  Zone configuration
-          information for new zones is specified in the 'rndc addzone'
-          command line, and is stored in that file.  To make new
-	  zones persist after a restart, "include" the file
-	  into named.conf in the appropriate view.  (Note:
-	  This feature is not yet documented, and its syntax
-          is expected to change.)
-        - "rndc secroots" dumps a list of the current trusted and
-          managed DNSSEC keys for each view.
-        - "filter-aaaa-on-v4" can now be applied selectively to
-          some IPv4 clients but not others, using the "filter-aaaa"
-          ACL.  (This feature requires BIND 9 to be built with
-          the --enable-filter-aaaa configure option.)
-
-BIND 9.7.1
-
-	BIND 9.7.1 is a maintenance release, fixing bugs in 9.7.0.
+	DNS64 support (AAAA synthesis only initially).
 
 BIND 9.7.0
 
@@ -105,17 +82,6 @@ BIND 9.7.0
 	  OpenSSL engine selection.
 
 	Known issues in this release:
-
-	- A validating resolver that has been incorrectly configured with
-	  an invalid trust anchor will be unable to resolve names covered
-	  by that trust anchor.  In all current versions of BIND 9, such a
-	  resolver will also generate significant unnecessary DNS traffic
-	  while trying to validate.  The latter problem will be addressed
-	  in future BIND 9 releases.  In the meantime, to avoid these
-	  problems, exercise caution when configuring "trusted-keys":
-	  make sure all keys are correct and current when you add them,
-	  and update your configuration in a timely manner when keys
-	  roll over.
 
 	- In rare cases, DNSSEC validation can leak memory.  When this 
 	  happens, it will cause an assertion failure when named exits,
@@ -170,9 +136,9 @@ Building
 		Ubuntu 7.04, 7.10
 		Windows XP/2003/2008
 
-	NOTE:  As of BIND 9.5.1, 9.4.3, and 9.3.6, older versions of
-	Windows, including Windows NT and Windows 2000, are no longer
-	supported.
+        NOTE:  As of BIND 9.5.1, 9.4.3, and 9.3.6, older versions of
+        Windows, including Windows NT and Windows 2000, are no longer
+        supported.
 
 	We have recent reports from the user community that a supported
 	version of BIND will build and run on the following systems:
@@ -272,10 +238,10 @@ Building
 	on the configure command line.  The default is operating
 	system dependent.
 
-	Support for the "fixed" rrset-order option can be enabled
-	or disabled by specifying "--enable-fixed-rrset" or
-	"--disable-fixed-rrset" on the configure command line.
-	The default is "disabled", to reduce memory footprint.
+        Support for the "fixed" rrset-order option can be enabled
+        or disabled by specifying "--enable-fixed-rrset" or
+        "--disable-fixed-rrset" on the configure command line.
+        The default is "disabled", to reduce memory footprint.
 
 	If your operating system has integrated support for IPv6, it
 	will be used automatically.  If you have installed KAME IPv6
@@ -341,8 +307,8 @@ Documentation
 	Frequently asked questions and their answers can be found in
 	FAQ.
 
-	Additional information on various subjects can be found
-	in the other README files.
+        Additional information on various subjects can be found
+        in the other README files.
 
 
 Bug Reports and Mailing Lists

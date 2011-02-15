@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.1.1.4 2010/08/05 19:53:47 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.1.1.5 2011/02/15 19:30:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: statschannel.c,v 1.24.40.2 2010/02/04 23:48:30 tbox Exp */
+/* Id: statschannel.c,v 1.26 2010-02-04 23:49:13 tbox Exp */
 
 /*! \file */
 

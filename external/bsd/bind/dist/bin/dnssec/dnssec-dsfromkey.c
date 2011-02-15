@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.1.1.3 2010/08/05 19:52:55 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.1.1.4 2011/02/15 19:29:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-dsfromkey.c,v 1.16.50.1 2010/01/13 19:31:51 each Exp */
+/* Id: dnssec-dsfromkey.c,v 1.19 2010-12-23 04:07:59 marka Exp */
 
 /*! \file */
 
@@ -301,7 +301,7 @@ usage(void) {
 	fprintf(stderr, "    -K <directory>: directory in which to find "
 			"key file or keyset file\n");
 	fprintf(stderr, "    -a algorithm: digest algorithm "
-			"(SHA-1 or SHA-256)\n");
+			"(SHA-1, SHA-256 or GOST)\n");
 	fprintf(stderr, "    -1: use SHA-1\n");
 	fprintf(stderr, "    -2: use SHA-256\n");
 	fprintf(stderr, "    -l: add lookaside zone and print DLV records\n");
@@ -416,6 +416,10 @@ main(int argc, char **argv) {
 		else if (strcasecmp(algname, "SHA256") == 0 ||
 			 strcasecmp(algname, "SHA-256") == 0)
 			dtype = DNS_DSDIGEST_SHA256;
+#ifdef HAVE_OPENSSL_GOST
+		else if (strcasecmp(algname, "GOST") == 0)
+			dtype = DNS_DSDIGEST_GOST;
+#endif
 		else
 			fatal("unknown algorithm %s", algname);
 	}
