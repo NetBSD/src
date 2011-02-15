@@ -15,9 +15,9 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: named-bootconf.sh,v 1.12 2007/06/19 23:47:07 tbox Exp
+# Id: named-bootconf.sh,v 1.12 2007-06-19 23:47:07 tbox Exp
 
-# $NetBSD: named-bootconf.sh,v 1.1.1.1 2009/03/22 14:57:55 christos Exp $
+# $NetBSD: named-bootconf.sh,v 1.1.1.2 2011/02/15 19:32:56 christos Exp $
 #
 # Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
 # All rights reserved.

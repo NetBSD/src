@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.1.1.1 2009/03/22 14:55:56 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.1.1.2 2011/02/15 19:30:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: controlconf.c,v 1.60 2008/07/23 23:27:54 marka Exp */
+/* Id: controlconf.c,v 1.60 2008-07-23 23:27:54 marka Exp */
 
 /*! \file */
 

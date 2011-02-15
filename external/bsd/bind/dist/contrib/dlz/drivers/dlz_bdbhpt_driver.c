@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.1.1.2 2010/08/05 19:56:45 christos Exp $	*/
+/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.1.1.3 2011/02/15 19:32:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -809,7 +809,14 @@ static dns_sdlzmethods_t dlz_bdbhpt_methods = {
 	bdbhpt_lookup,
 	NULL,
 	bdbhpt_allnodes,
-	bdbhpt_allowzonexfr
+	bdbhpt_allowzonexfr,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*%

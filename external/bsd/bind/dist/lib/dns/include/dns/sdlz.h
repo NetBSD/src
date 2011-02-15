@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.h,v 1.1.1.2 2009/10/25 00:02:39 christos Exp $	*/
+/*	$NetBSD: sdlz.h,v 1.1.1.3 2011/02/15 19:37:46 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.h,v 1.9 2009/01/17 23:47:43 tbox Exp */
+/* Id: sdlz.h,v 1.14 2011-01-13 08:50:29 tbox Exp */
 
 /*! \file dns/sdlz.h */
 
@@ -76,11 +76,10 @@ typedef struct dns_sdlzlookup dns_sdlzlookup_t;
  /* A simple DLZ database traversal in progress. */
 typedef struct dns_sdlzallnodes dns_sdlzallnodes_t;
 
-
-typedef isc_result_t
-(*dns_sdlzallnodesfunc_t)(const char *zone, void *driverarg, void *dbdata,
-			  dns_sdlzallnodes_t *allnodes);
-
+typedef isc_result_t (*dns_sdlzallnodesfunc_t)(const char *zone,
+					       void *driverarg,
+					       void *dbdata,
+					       dns_sdlzallnodes_t *allnodes);
 /*%<
  * Method prototype.  Drivers implementing the SDLZ interface may
  * supply an all nodes method.  This method is called when the DNS
@@ -94,9 +93,9 @@ typedef isc_result_t
  * does not have to implement an all nodes method.
  */
 
-typedef isc_result_t
-(*dns_sdlzallowzonexfr_t)(void *driverarg, void *dbdata, const char *name,
-			  const char *client);
+typedef isc_result_t (*dns_sdlzallowzonexfr_t)(void *driverarg,
+					       void *dbdata, const char *name,
+					       const char *client);
 
 /*%<
  * Method prototype.  Drivers implementing the SDLZ interface may
@@ -119,9 +118,9 @@ typedef isc_result_t
  * error.
  */
 
-typedef isc_result_t
-(*dns_sdlzauthorityfunc_t)(const char *zone, void *driverarg, void *dbdata,
-			   dns_sdlzlookup_t *lookup);
+typedef isc_result_t (*dns_sdlzauthorityfunc_t)(const char *zone,
+						void *driverarg, void *dbdata,
+						dns_sdlzlookup_t *lookup);
 
 /*%<
  * Method prototype.  Drivers implementing the SDLZ interface may
@@ -133,9 +132,9 @@ typedef isc_result_t
  * method.
  */
 
-typedef isc_result_t
-(*dns_sdlzcreate_t)(const char *dlzname, unsigned int argc, char *argv[],
-		    void *driverarg, void **dbdata);
+typedef isc_result_t (*dns_sdlzcreate_t)(const char *dlzname,
+					 unsigned int argc, char *argv[],
+					 void *driverarg, void **dbdata);
 
 /*%<
  * Method prototype.  Drivers implementing the SDLZ interface may
@@ -144,8 +143,7 @@ typedef isc_result_t
  * does not have to implement a create method.
  */
 
-typedef void
-(*dns_sdlzdestroy_t)(void *driverarg, void *dbdata);
+typedef void (*dns_sdlzdestroy_t)(void *driverarg, void *dbdata);
 
 /*%<
  * Method prototype.  Drivers implementing the SDLZ interface may
@@ -200,6 +198,87 @@ typedef isc_result_t
  * lookup method.
  */
 
+typedef isc_result_t (*dns_sdlznewversion_t)(const char *zone,
+					     void *driverarg, void *dbdata,
+					     void **versionp);
+/*%<
+ * Method prototype.  Drivers implementing the SDLZ interface may
+ * supply a newversion method.  This method is called to start a
+ * write transaction on a zone and should only be implemented by
+ * writeable backends.
+ * When implemented, the driver should create a new transaction, and
+ * fill *versionp with a pointer to the transaction state. The
+ * closeversion function will be called to close the transaction.
+ */
+
+typedef void (*dns_sdlzcloseversion_t)(const char *zone, isc_boolean_t commit,
+				       void *driverarg, void *dbdata,
+				       void **versionp);
+/*%<
+ * Method prototype.  Drivers implementing the SDLZ interface must
+ * supply a closeversion method if they supply a newversion method.
+ * When implemented, the driver should close the given transaction,
+ * committing changes if 'commit' is ISC_TRUE. If 'commit' is not true
+ * then all changes should be discarded and the database rolled back.
+ * If the call is successful then *versionp should be set to NULL
+ */
+
+typedef isc_result_t (*dns_sdlzconfigure_t)(dns_view_t *view, void *driverarg,
+					    void *dbdata);
+/*%<
+ * Method prototype.  Drivers implementing the SDLZ interface may
+ * supply a configure method. When supplied, it will be called
+ * immediately after the create method to give the driver a chance
+ * to configure writeable zones
+ */
+
+
+typedef isc_boolean_t (*dns_sdlzssumatch_t)(const char *signer,
+					    const char *name,
+					    const char *tcpaddr,
+					    const char *type,
+					    const char *key,
+					    isc_uint32_t keydatalen,
+					    unsigned char *keydata,
+					    void *driverarg,
+					    void *dbdata);
+
+/*%<
+ * Method prototype.  Drivers implementing the SDLZ interface may
+ * supply a ssumatch method. If supplied, then ssumatch will be
+ * called to authorize any zone updates. The driver should return
+ * ISC_TRUE to allow the update, and ISC_FALSE to deny it. For a DLZ
+ * controlled zone, this is the only access control on updates.
+ */
+
+
+typedef isc_result_t (*dns_sdlzmodrdataset_t)(const char *name,
+					      const char *rdatastr,
+					      void *driverarg, void *dbdata,
+					      void *version);
+/*%<
+ * Method prototype.  Drivers implementing the SDLZ interface may
+ * supply addrdataset and subtractrdataset methods. If supplied, then these
+ * will be called when rdatasets are added/subtracted during
+ * updates. The version parameter comes from a call to the sdlz
+ * newversion() method from the driver. The rdataset parameter is a
+ * linearise string representation of the rdataset change. The format
+ * is the same as used by dig when displaying records. The fields are
+ * tab delimited.
+ */
+
+typedef isc_result_t (*dns_sdlzdelrdataset_t)(const char *name,
+					      const char *type,
+					      void *driverarg, void *dbdata,
+					      void *version);
+/*%<
+ * Method prototype.  Drivers implementing the SDLZ interface may
+ * supply a delrdataset method. If supplied, then this
+ * function will be called when rdatasets are deleted during
+ * updates. The call should remove all rdatasets of the given type for
+ * the specified name.
+ */
+
 typedef struct dns_sdlzmethods {
 	dns_sdlzcreate_t	create;
 	dns_sdlzdestroy_t	destroy;
@@ -208,6 +287,13 @@ typedef struct dns_sdlzmethods {
 	dns_sdlzauthorityfunc_t	authority;
 	dns_sdlzallnodesfunc_t	allnodes;
 	dns_sdlzallowzonexfr_t	allowzonexfr;
+	dns_sdlznewversion_t    newversion;
+	dns_sdlzcloseversion_t  closeversion;
+	dns_sdlzconfigure_t	configure;
+	dns_sdlzssumatch_t	ssumatch;
+	dns_sdlzmodrdataset_t	addrdataset;
+	dns_sdlzmodrdataset_t	subtractrdataset;
+	dns_sdlzdelrdataset_t	delrdataset;
 } dns_sdlzmethods_t;
 
 isc_result_t
@@ -260,6 +346,14 @@ dns_sdlz_putsoa(dns_sdlzlookup_t *lookup, const char *mname, const char *rname,
  * responsibility of the driver to increment the serial number between
  * responses if necessary.  All other SOA fields will have reasonable
  * default values.
+ */
+
+
+isc_result_t
+dns_sdlz_setdb(dns_dlzdb_t *dlzdatabase, dns_rdataclass_t rdclass,
+	       dns_name_t *name, dns_db_t **dbp);
+/*%<
+ * Create the database pointers for a writeable SDLZ zone
  */
 
 

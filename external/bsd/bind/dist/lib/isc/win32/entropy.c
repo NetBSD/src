@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.c,v 1.1.1.2 2009/10/25 00:02:47 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.3 2011/02/15 19:38:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.c,v 1.10 2009/01/18 23:48:14 tbox Exp */
+/* Id: entropy.c,v 1.10 2009-01-18 23:48:14 tbox Exp */
 
 /*
  * This is the system dependent part of the ISC entropy API.

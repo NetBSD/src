@@ -1,4 +1,4 @@
-/*	$NetBSD: hinfo_13.h,v 1.1.1.1 2009/03/22 15:01:52 christos Exp $	*/
+/*	$NetBSD: hinfo_13.h,v 1.1.1.2 2011/02/15 19:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_HINFO_13_H
 #define GENERIC_HINFO_13_H 1
 
-/* Id: hinfo_13.h,v 1.25 2007/06/19 23:47:17 tbox Exp */
+/* Id: hinfo_13.h,v 1.25 2007-06-19 23:47:17 tbox Exp */
 
 typedef struct dns_rdata_hinfo {
 	dns_rdatacommon_t	common;

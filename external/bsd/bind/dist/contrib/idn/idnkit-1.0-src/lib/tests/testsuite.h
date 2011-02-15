@@ -1,6 +1,6 @@
-/*	$NetBSD: testsuite.h,v 1.1.1.1 2009/03/22 14:57:42 christos Exp $	*/
+/*	$NetBSD: testsuite.h,v 1.1.1.2 2011/02/15 19:32:42 christos Exp $	*/
 
-/* Id: testsuite.h,v 1.1.1.1 2003/06/04 00:27:03 marka Exp */
+/* Id: testsuite.h,v 1.1.1.1 2003-06-04 00:27:03 marka Exp */
 /*
  * Copyright (c) 2002 Japan Network Information Center.
  * All rights reserved.

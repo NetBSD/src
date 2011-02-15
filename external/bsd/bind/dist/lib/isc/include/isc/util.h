@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1.1.2 2010/08/05 20:15:18 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.1.1.3 2011/02/15 19:38:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.h,v 1.30.558.1 2010/01/13 19:31:53 each Exp */
+/* Id: util.h,v 1.32 2010-01-11 23:48:37 tbox Exp */
 
 #ifndef ISC_UTIL_H
 #define ISC_UTIL_H 1

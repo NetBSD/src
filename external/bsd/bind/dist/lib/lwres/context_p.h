@@ -1,4 +1,4 @@
-/*	$NetBSD: context_p.h,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
+/*	$NetBSD: context_p.h,v 1.1.1.3 2011/02/15 19:38:47 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context_p.h,v 1.19 2008/12/17 23:47:58 tbox Exp */
+/* Id: context_p.h,v 1.19 2008-12-17 23:47:58 tbox Exp */
 
 #ifndef LWRES_CONTEXT_P_H
 #define LWRES_CONTEXT_P_H 1

@@ -1,7 +1,7 @@
-/*	$NetBSD: sdb.c,v 1.1.1.5 2010/12/02 14:23:24 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.1.1.6 2011/02/15 19:37:18 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.c,v 1.71.54.3 2010/08/16 05:14:15 marka Exp */
+/* Id: sdb.c,v 1.76 2011-01-13 04:59:25 tbox Exp */
 
 /*! \file */
 
@@ -1256,6 +1256,8 @@ static dns_dbmethods_t sdb_methods = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL
 };
 
 static isc_result_t

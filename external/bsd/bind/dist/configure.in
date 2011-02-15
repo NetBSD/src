@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@ AC_DIVERT_PUSH(1)dnl
 esyscmd([sed "s/^/# /" COPYRIGHT])dnl
 AC_DIVERT_POP()dnl
 
-AC_REVISION(Revision: 1.489.22.12)
+AC_REVISION(Revision: 1.512.8.1)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.59)
@@ -308,7 +308,7 @@ AC_TRY_COMPILE(, [
 	],
 	[AC_MSG_RESULT(no)],
 	[AC_MSG_RESULT(yes)
-	 AC_DEFINE(inline, )])
+	 AC_DEFINE(inline, ,[Define to empty if your compiler does not support "static inline".])])
 
 AC_TYPE_SIZE_T
 AC_CHECK_TYPE(ssize_t, int)
@@ -437,7 +437,7 @@ AC_ARG_ENABLE(devpoll,
 	      want_devpoll="$enableval",  want_devpoll="yes")
 case $want_devpoll in
 yes)
-	AC_CHECK_HEADERS(sys/devpoll.h,
+	AC_CHECK_HEADERS(sys/devpoll.h devpoll.h,
 	ISC_PLATFORM_HAVEDEVPOLL="#define ISC_PLATFORM_HAVEDEVPOLL 1"
 	,
 	ISC_PLATFORM_HAVEDEVPOLL="#undef ISC_PLATFORM_HAVEDEVPOLL"
@@ -517,6 +517,7 @@ then
 		fi
 	done
 fi
+OPENSSL_GOST=""
 case "$use_openssl" in
 	no)
 		AC_MSG_RESULT(no)
@@ -672,6 +673,42 @@ esac
 			AC_MSG_RESULT(no)
 		fi
 		AC_CHECK_FUNCS(EVP_sha256 EVP_sha512)
+
+		AC_MSG_CHECKING(for OpenSSL GOST support)
+		have_gost=""
+		AC_TRY_RUN([
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+int main() {
+#if (OPENSSL_VERSION_NUMBER >= 0x10000000L)
+	ENGINE *e;
+
+	OPENSSL_config(NULL);
+
+	e = ENGINE_by_id("gost");
+	if (e == NULL)
+		return (1);
+	if (ENGINE_init(e) <= 0)
+		return (1);
+	return (0);
+#else
+	return (1);
+#endif
+}
+],
+		[AC_MSG_RESULT(yes)
+		have_gost="yes"],
+		[AC_MSG_RESULT(no)
+		have_gost="no"])
+		case $have_gost in
+		yes)
+			OPENSSL_GOST="yes"
+			AC_DEFINE(HAVE_OPENSSL_GOST, 1,
+				  [Define if your OpenSSL version supports GOST.])
+			;;
+		*)
+			;;
+		esac
 		CFLAGS="$saved_cflags"
 		LIBS="$saved_libs"
 		OPENSSLLINKOBJS='${OPENSSLLINKOBJS}'
@@ -689,6 +726,7 @@ AC_SUBST(USE_OPENSSL)
 AC_SUBST(DST_OPENSSL_INC)
 AC_SUBST(OPENSSLLINKOBJS)
 AC_SUBST(OPENSSLLINKSRCS)
+AC_SUBST(OPENSSL_GOST)
 DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DNS_OPENSSL_LIBS"
 
 #
@@ -793,6 +831,9 @@ case "$use_gssapi" in
 		    AC_MSG_ERROR([gssapi.h not found])
 		fi
 
+		AC_CHECK_HEADERS(gssapi_krb5.h gssapi/gssapi_krb5.h,
+		    [ISC_PLATFORM_GSSAPI_KRB5_HEADER="#define ISC_PLATFORM_GSSAPI_KRB5_HEADER <$ac_header>"])
+
 		AC_CHECK_HEADERS(krb5.h krb5/krb5.h kerberosv5/krb5.h,
 		    [ISC_PLATFORM_KRB5HEADER="#define ISC_PLATFORM_KRB5HEADER <$ac_header>"])
 
@@ -837,7 +878,12 @@ case "$use_gssapi" in
 		    # -L/usr/local/lib to LIBS, which can make the
 		    # -lgssapi_krb5 test succeed with shared libraries even
 		    # when you are trying to build with KTH in /usr/lib.
-		    LIBS="-L$use_gssapi/lib $TRY_LIBS"
+		    if test "$use_gssapi" = "/usr"
+		    then
+			    LIBS="$TRY_LIBS"
+		    else
+			    LIBS="-L$use_gssapi/lib $TRY_LIBS"
+		    fi
 		    AC_MSG_CHECKING(linking as $TRY_LIBS)
 		    AC_TRY_LINK( , [gss_acquire_cred();krb5_init_context()],
 				gssapi_linked=yes, gssapi_linked=no)
@@ -901,6 +947,7 @@ esac
 
 AC_SUBST(ISC_PLATFORM_HAVEGSSAPI)
 AC_SUBST(ISC_PLATFORM_GSSAPIHEADER)
+AC_SUBST(ISC_PLATFORM_GSSAPI_KRB5_HEADER)
 AC_SUBST(ISC_PLATFORM_KRB5HEADER)
 
 AC_SUBST(USE_GSSAPI)
@@ -2545,7 +2592,7 @@ main() {
 	alpha*-*)
 		arch=alpha
 	;;
-	powerpc-*)
+	powerpc-*|powerpc64-*)
 		arch=powerpc
 	;;
 	mips-*|mipsel-*|mips64-*|mips64el-*)
@@ -2675,6 +2722,42 @@ case "$enable_fixed" in
 	yes)
 		AC_DEFINE(DNS_RDATASET_FIXED, 1,
 			  [Define to enable "rrset-order fixed" syntax.])
+		;;
+	no)
+		;;
+	*)
+		;;
+esac
+
+#
+# Enable response policy rewriting using NS IP addresses
+#
+AC_ARG_ENABLE(rpz-nsip,
+	[  --enable-rpz-nsip	  enable rpz-nsip rules [[default=no]]],
+			enable_nsip="$enableval",
+			enable_nsip="no")
+case "$enable_nsip" in
+	yes)
+		AC_DEFINE(ENABLE_RPZ_NSIP, 1,
+			  [Define to enable rpz-nsip rules.])
+		;;
+	no)
+		;;
+	*)
+		;;
+esac
+
+#
+# Enable response policy rewriting using NS name
+#
+AC_ARG_ENABLE(rpz-nsdname,
+	[  --enable-rpz-nsdname	  enable rpz-nsdname rules [[default=no]]],
+			enable_nsdname="$enableval",
+			enable_nsdname="no")
+case "$enable_nsdname" in
+	yes)
+		AC_DEFINE(ENABLE_RPZ_NSDNAME, 1,
+			  [Define to enable rpz-nsdname rules.])
 		;;
 	no)
 		;;
@@ -3191,50 +3274,68 @@ AC_CONFIG_COMMANDS(
 #
 
 AC_CONFIG_FILES([
+  make/Makefile
+  make/mkdep
 	Makefile
-	make/Makefile
-	make/mkdep
+	bin/Makefile
+	bin/check/Makefile
+	bin/confgen/Makefile
+	bin/confgen/unix/Makefile
+	bin/dig/Makefile
+	bin/dnssec/Makefile
+	bin/named/Makefile
+	bin/named/unix/Makefile
+	bin/nsupdate/Makefile
+	bin/pkcs11/Makefile
+	bin/rndc/Makefile
+	bin/tests/Makefile
+	bin/tests/atomic/Makefile
+	bin/tests/db/Makefile
+	bin/tests/dst/Makefile
+	bin/tests/hashes/Makefile
+	bin/tests/headerdep_test.sh
+	bin/tests/master/Makefile
+	bin/tests/mem/Makefile
+	bin/tests/names/Makefile
+	bin/tests/net/Makefile
+	bin/tests/rbt/Makefile
+	bin/tests/resolver/Makefile
+	bin/tests/sockaddr/Makefile
+	bin/tests/system/Makefile
+	bin/tests/system/conf.sh
+	bin/tests/system/filter-aaaa/Makefile
+	bin/tests/system/gost/prereq.sh
+	bin/tests/system/lwresd/Makefile
+	bin/tests/system/rpz/Makefile
+	bin/tests/system/tkey/Makefile
+	bin/tests/tasks/Makefile
+	bin/tests/timers/Makefile
+	bin/tests/virtual-time/Makefile
+	bin/tests/virtual-time/conf.sh
+	bin/tools/Makefile
+	contrib/check-secure-delegation.pl
+	contrib/zone-edit.sh
+	doc/Makefile
+	doc/arm/Makefile
+	doc/doxygen/Doxyfile
+	doc/doxygen/Makefile
+	doc/doxygen/doxygen-input-filter
+	doc/misc/Makefile
+	doc/xsl/Makefile
+	doc/xsl/isc-docbook-chunk.xsl
+	doc/xsl/isc-docbook-html.xsl
+	doc/xsl/isc-docbook-latex.xsl
+	doc/xsl/isc-manpage.xsl
+	isc-config.sh
 	lib/Makefile
-	lib/isc/Makefile
-	lib/isc/include/Makefile
-	lib/isc/include/isc/Makefile
-	lib/isc/include/isc/platform.h
-	lib/isc/unix/Makefile
-	lib/isc/unix/include/Makefile
-	lib/isc/unix/include/isc/Makefile
-	lib/isc/nls/Makefile
-	lib/isc/$thread_dir/Makefile
-	lib/isc/$thread_dir/include/Makefile
-	lib/isc/$thread_dir/include/isc/Makefile
-	lib/isc/$arch/Makefile
-	lib/isc/$arch/include/Makefile
-	lib/isc/$arch/include/isc/Makefile
-	lib/isccc/Makefile
-	lib/isccc/include/Makefile
-	lib/isccc/include/isccc/Makefile
-	lib/isccfg/Makefile
-	lib/isccfg/include/Makefile
-	lib/isccfg/include/isccfg/Makefile
-	lib/irs/Makefile
-	lib/irs/include/Makefile
-	lib/irs/include/irs/Makefile
-	lib/irs/include/irs/netdb.h
-	lib/irs/include/irs/platform.h
+	lib/bind9/Makefile
+	lib/bind9/include/Makefile
+	lib/bind9/include/bind9/Makefile
 	lib/dns/Makefile
 	lib/dns/include/Makefile
 	lib/dns/include/dns/Makefile
 	lib/dns/include/dst/Makefile
 	lib/export/Makefile
-	lib/export/isc/Makefile
-	lib/export/isc/include/Makefile
-	lib/export/isc/include/isc/Makefile
-	lib/export/isc/unix/Makefile
-	lib/export/isc/unix/include/Makefile
-	lib/export/isc/unix/include/isc/Makefile
-	lib/export/isc/nls/Makefile
-	lib/export/isc/$thread_dir/Makefile
-	lib/export/isc/$thread_dir/include/Makefile
-	lib/export/isc/$thread_dir/include/isc/Makefile
 	lib/export/dns/Makefile
 	lib/export/dns/include/Makefile
 	lib/export/dns/include/dns/Makefile
@@ -3242,14 +3343,46 @@ AC_CONFIG_FILES([
 	lib/export/irs/Makefile
 	lib/export/irs/include/Makefile
 	lib/export/irs/include/irs/Makefile
+	lib/export/isc/$thread_dir/Makefile
+	lib/export/isc/$thread_dir/include/Makefile
+	lib/export/isc/$thread_dir/include/isc/Makefile
+	lib/export/isc/Makefile
+	lib/export/isc/include/Makefile
+	lib/export/isc/include/isc/Makefile
+	lib/export/isc/nls/Makefile
+	lib/export/isc/unix/Makefile
+	lib/export/isc/unix/include/Makefile
+	lib/export/isc/unix/include/isc/Makefile
 	lib/export/isccfg/Makefile
 	lib/export/isccfg/include/Makefile
 	lib/export/isccfg/include/isccfg/Makefile
 	lib/export/samples/Makefile
 	lib/export/samples/Makefile-postinstall
-	lib/bind9/Makefile
-	lib/bind9/include/Makefile
-	lib/bind9/include/bind9/Makefile
+	lib/irs/Makefile
+	lib/irs/include/Makefile
+	lib/irs/include/irs/Makefile
+	lib/irs/include/irs/netdb.h
+	lib/irs/include/irs/platform.h
+	lib/isc/$arch/Makefile
+	lib/isc/$arch/include/Makefile
+	lib/isc/$arch/include/isc/Makefile
+	lib/isc/$thread_dir/Makefile
+	lib/isc/$thread_dir/include/Makefile
+	lib/isc/$thread_dir/include/isc/Makefile
+	lib/isc/Makefile
+	lib/isc/include/Makefile
+	lib/isc/include/isc/Makefile
+	lib/isc/include/isc/platform.h
+	lib/isc/nls/Makefile
+	lib/isc/unix/Makefile
+	lib/isc/unix/include/Makefile
+	lib/isc/unix/include/isc/Makefile
+	lib/isccc/Makefile
+	lib/isccc/include/Makefile
+	lib/isccc/include/isccc/Makefile
+	lib/isccfg/Makefile
+	lib/isccfg/include/Makefile
+	lib/isccfg/include/isccfg/Makefile
 	lib/lwres/Makefile
 	lib/lwres/include/Makefile
 	lib/lwres/include/lwres/Makefile
@@ -3262,49 +3395,6 @@ AC_CONFIG_FILES([
 	lib/tests/Makefile
 	lib/tests/include/Makefile
 	lib/tests/include/tests/Makefile
-	bin/Makefile
-	bin/check/Makefile
-	bin/confgen/Makefile
-	bin/confgen/unix/Makefile
-	bin/named/Makefile
-	bin/named/unix/Makefile
-	bin/rndc/Makefile
-	bin/dig/Makefile
-	bin/nsupdate/Makefile
-	bin/tests/Makefile
-	bin/tests/names/Makefile
-	bin/tests/master/Makefile
-	bin/tests/rbt/Makefile
-	bin/tests/db/Makefile
-	bin/tests/tasks/Makefile
-	bin/tests/timers/Makefile
-	bin/tests/dst/Makefile
-	bin/tests/mem/Makefile
-	bin/tests/net/Makefile
-	bin/tests/sockaddr/Makefile
-	bin/tests/system/Makefile
-	bin/tests/system/conf.sh
-	bin/tests/system/filter-aaaa/Makefile
-	bin/tests/system/lwresd/Makefile
-	bin/tests/system/tkey/Makefile
-	bin/tests/headerdep_test.sh
-	bin/tests/virtual-time/Makefile
-	bin/tests/virtual-time/conf.sh
-	bin/tools/Makefile
-	bin/dnssec/Makefile
-	bin/pkcs11/Makefile
-	doc/Makefile
-	doc/arm/Makefile
-	doc/misc/Makefile
-	isc-config.sh
-	doc/xsl/Makefile
-	doc/xsl/isc-docbook-chunk.xsl
-	doc/xsl/isc-docbook-html.xsl
-	doc/xsl/isc-docbook-latex.xsl
-	doc/xsl/isc-manpage.xsl
-	doc/doxygen/Doxyfile
-	doc/doxygen/Makefile
-	doc/doxygen/doxygen-input-filter
 ])
 
 #
