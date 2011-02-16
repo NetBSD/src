@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.31 2011/02/16 17:56:46 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.32 2011/02/16 19:26:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -88,7 +88,11 @@ static sigset_t fullset;
 static int doconnect(bool);
 static int handshake_req(struct spclient *, int, void *, int, bool);
 
-time_t retrytimo = RUMPCLIENT_RETRYCONN_ONCE;
+/*
+ * Default: don't retry.  Most clients can't handle it
+ * (consider e.g. fds suddenly going missing).
+ */
+static time_t retrytimo = 0;
 
 static int
 send_with_recon(struct spclient *spc, const void *data, size_t dlen)
@@ -102,8 +106,10 @@ send_with_recon(struct spclient *spc, const void *data, size_t dlen)
 		rv = dosend(spc, data, dlen);
 		if (__predict_false(rv == ENOTCONN || rv == EBADF)) {
 			/* no persistent connections */
-			if (retrytimo == 0)
+			if (retrytimo == 0) {
+				rv = ENOTCONN;
 				break;
+			}
 			if (retrytimo == RUMPCLIENT_RETRYCONN_DIE)
 				exit(1);
 
