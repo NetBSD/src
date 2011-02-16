@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.6 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: deflate.h,v 1.7 2011/02/16 19:08:58 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.h,v 1.3 2002/03/14 01:26:51 millert Exp $ */
 
@@ -52,7 +52,6 @@ void z_free(void *, void *);
 struct deflate_buf {
 	u_int8_t *out;
 	u_int32_t size;
-	int flag;
 };
 
 #endif /* _CRYPTO_DEFLATE_H_ */
