@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.56 2011/02/16 20:40:22 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.57 2011/02/16 21:23:44 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4635,4 +4635,81 @@ sys/net/if.c					1.247 via patch
 	old code there, to handle cases we did not handle in the first switch,
 	but this is a hack and should be removed.
 	[chs, ticket #1541]
+
+lib/libc/resolv/res_send.c			1.21
+
+	Don't do highestFD check with USE_POLL.  It provides no benefit
+	but causes a dependency between RLIMIT_NOFILE and rumphijack FDOFF.
+	[pooka, ticket #1546]
+
+sys/arch/x86/x86/mtrr_i686.c			1.23, 1.24
+
+	allows overlapping uncached and cached mappings 
+	corrects an off-by-one which prevents adjacent mappings from
+	being setup.
+	[jmcneill, ticket #1547]
+
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c	1.4 via patch
+
+	fix for CVE-2011-0014 (OCSP stapling vulnerability in OpenSSL)
+	patch taken from http://www.openssl.org/news/secadv_20110208.txt
+	[spz, ticket #1545]
+
+usr.sbin/ypbind/ypbind.c			1.58 - 1.61
+
+	in the case where ypbind is serving more than one domain (i.e.
+	not just the yp_get_default_domain() domain), we must remove
+	any old binding files from /var/yp/binding (BINDINGDIR) from
+	previous runs, or the non-yp_get_default_domain()'s will not
+	bind properly.   add a purge_bindingdir() function that basically
+	does "rm BINDINGDIR/*.[0-9]" at ypbind startup time.
+	[chuck, ticket #1549]
+
+usr.sbin/ypserv/ypxfr/ypxfr.c			1.16 - 1.19
+
+	yppush RPC is supposed to return yppush_status error/status codes
+	(e.g. YPPUSH_SUCC, YPPUSH_NOMAP, etc.).
+	Functions like yp_master, yp_order_host, yp_master_host, and
+	yp_match_host return YPERR-style error codes.  YPERR-style error
+	codes do not directly correspond to yppush_status codes, so it
+	is a bad idea to just directly YPERR codes into the yppush return
+	status value (it causes failing yppush runs to print confusing
+	error messages).
+	[chuck, ticket #1550]
+
+sys/arch/powerpc/powerpc/sig_machdep.c		1.39 via patch
+
+	PR port-macppc/43619
+	Save handler before calling sendsig_reset before it will reset to
+	SIG_DFL is SA_RESETHAND is set.
+	[jmmv, ticket #1551]
+
+usr.bin/xargs/xargs.1				1.21, 1.22
+
+	PR/44259: Aleksey Cheusov: xargs: -r option is supported but not
+	documented.
+	Synced with the FreeBSD doc.
+	[dholland, ticket #1552]
+
+sys/fs/hfs/hfs_vnops.c				1.21, 1.22 via patch
+
+	PR/44523: Taylor R Campbell: mount_hfs badly handles file names with
+	slashes in them, encode them as colons. XXX: Should encode : as :: too?
+	remove comments about needing to encode : since the on disk format does
+	not allow them. Also fix reversed encoding in lookup.
+	From Taylor R Campbell.
+	[dholland, ticket #1554]
+
+sys/arch/sparc64/dev/psycho.c			1.102 via patch
+
+	Don't enable the powerfail interrupt on Netra X1 since it may hang.
+	[nakayama, ticket #1555]
+
+sys/compat/irix/irix_signal.c			1.56
+sys/compat/netbsd32/netbsd32_signal.c		1.35
+sys/compat/svr4/svr4_signal.c			1.65
+sys/kern/sys_sig.c				1.31
+
+	Explicitly initialize ucontext before calling getmcontext.
+	[joerg, ticket #1556]
 
