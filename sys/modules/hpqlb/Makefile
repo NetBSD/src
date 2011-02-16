@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2010/10/26 05:36:49 jruoho Exp $
+#	$NetBSD: Makefile,v 1.2 2011/02/16 08:08:14 jruoho Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/acpi
 
 KMOD=	hpqlb
-IOCONF=	HPQLB.ioconf
+IOCONF=	hpqlb.ioconf
 SRCS=	hpqlb_acpi.c
 
 WARNS=	4
