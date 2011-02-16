@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.6 2011/02/15 19:37:19 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2005-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -177,14 +177,14 @@ typedef struct sdlz_rdatasetiter {
 		unsigned int flags = imp->flags; \
 		if ((flags & DNS_SDLZFLAG_THREADSAFE) == 0) \
 			LOCK(&imp->driverlock); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define MAYBE_UNLOCK(imp) \
 	do { \
 		unsigned int flags = imp->flags; \
 		if ((flags & DNS_SDLZFLAG_THREADSAFE) == 0) \
 			UNLOCK(&imp->driverlock); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 
 /*

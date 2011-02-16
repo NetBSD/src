@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.1.1.3 2011/02/15 19:38:34 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.2 2011/02/16 03:47:15 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")

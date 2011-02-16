@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.4 2011/02/15 19:37:10 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -57,7 +57,7 @@
 		isc_result_t _r = (x); \
 		if (_r != ISC_R_SUCCESS) \
 			return (_r); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define RETTOK(x) \
 	do { \
@@ -66,7 +66,7 @@
 			isc_lex_ungettoken(lexer, &token); \
 			return (_r); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define DNS_AS_STR(t) ((t).value.as_textregion.base)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.c,v 1.1.1.3 2011/02/15 19:30:20 christos Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #include<named/log.h>
 #define LOG(msg) \

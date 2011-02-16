@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkzone.c,v 1.1.1.5 2011/02/15 19:29:36 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.2 2011/02/16 03:46:44 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -70,7 +70,7 @@ static enum { progmode_check, progmode_compile } progmode;
 					function, dns_result_totext(result)); \
 			return (result); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 ISC_PLATFORM_NORETURN_PRE static void
 usage(void) ISC_PLATFORM_NORETURN_POST;

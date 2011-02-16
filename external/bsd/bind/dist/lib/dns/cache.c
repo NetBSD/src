@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.1.5 2011/02/15 19:36:41 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")

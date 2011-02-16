@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.c,v 1.1.1.5 2011/02/15 19:36:49 christos Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -365,7 +365,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		ret = isc_lex_gettoken(lex, opt, token);	\
 		if (ret != ISC_R_SUCCESS)			\
 			goto fail;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define READLINE(lex, opt, token)				\
 	do {							\

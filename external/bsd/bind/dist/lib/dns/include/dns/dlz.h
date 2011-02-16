@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz.h,v 1.1.1.3 2011/02/15 19:37:38 christos Exp $	*/
+/*	$NetBSD: dlz.h,v 1.2 2011/02/16 03:47:06 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2005-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")

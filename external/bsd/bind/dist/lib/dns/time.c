@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.4 2011/02/15 19:37:21 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -131,7 +131,7 @@ dns_time64_fromtext(const char *source, isc_int64_t *target) {
 	do { \
 		if (value < (min) || value > (max)) \
 			return (ISC_R_RANGE); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	if (strlen(source) != 14U)
 		return (DNS_R_SYNTAX);

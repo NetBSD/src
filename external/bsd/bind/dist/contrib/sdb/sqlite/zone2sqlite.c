@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2sqlite.c,v 1.1.1.4 2011/02/15 19:33:11 christos Exp $	*/
+/*	$NetBSD: zone2sqlite.c,v 1.2 2011/02/16 03:47:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Software Consortium.
@@ -42,7 +42,7 @@
 #include <sqlite3.h>
 
 #ifndef UNUSED
-#define UNUSED(x)  (x) = (x)
+#define UNUSED(x)  (void)&(x)
 #endif
 
 /*

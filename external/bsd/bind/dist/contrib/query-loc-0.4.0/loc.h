@@ -1,4 +1,4 @@
-/*	$NetBSD: loc.h,v 1.1.1.2 2011/02/15 19:33:05 christos Exp $	*/
+/*	$NetBSD: loc.h,v 1.2 2011/02/16 03:46:59 christos Exp $	*/
 
 /* Id: loc.h,v 1.1 2008-02-15 01:47:15 marka Exp */
 

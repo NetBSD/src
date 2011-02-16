@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.1.1.6 2011/02/15 19:29:58 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.2 2011/02/16 03:46:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")

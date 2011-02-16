@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.4 2011/02/15 19:36:55 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -61,12 +61,12 @@
 	isc_result_t _r = (x); \
 	if (_r != ISC_R_SUCCESS) \
 		return (_r); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECK(x) do { \
 	if ((x) != ISC_R_SUCCESS) \
 		goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 struct dns_master_style {
 	unsigned int flags;		/* DNS_STYLEFLAG_* */
@@ -327,7 +327,7 @@ totext_ctx_init(const dns_master_style_t *style, dns_totext_ctx_t *ctx) {
 				      ctx->style.tab_width, target)) \
 		     != ISC_R_SUCCESS) \
 			    return (result); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 static isc_result_t

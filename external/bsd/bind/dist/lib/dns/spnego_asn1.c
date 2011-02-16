@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego_asn1.c,v 1.1.1.2 2011/02/15 19:37:00 christos Exp $	*/
+/*	$NetBSD: spnego_asn1.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -61,7 +61,7 @@ typedef struct oid {
         (B) = NULL;                                            \
       }                                                        \
     }                                                          \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 #endif
 

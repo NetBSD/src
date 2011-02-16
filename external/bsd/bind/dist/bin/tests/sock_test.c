@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_test.c,v 1.1.1.2 2011/02/15 19:30:51 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.2 2011/02/16 03:46:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")

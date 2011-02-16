@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.c,v 1.1.1.4 2011/02/15 19:38:00 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.2 2011/02/16 03:47:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")

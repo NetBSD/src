@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named.conf.docbook,v 1.44.4.2 2010/05/14 23:49:18 tbox Exp -->
+<!-- Id: named.conf.docbook,v 1.49.14.1 2011-02-03 05:50:05 marka Exp -->
 <refentry>
   <refentryinfo>
     <date>Aug 13, 2004</date>
@@ -43,6 +43,7 @@
       <year>2008</year>
       <year>2009</year>
       <year>2010</year>
+      <year>2011</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -225,6 +226,7 @@ options {
 	tcp-listen-queue <replaceable>integer</replaceable>;
 	tkey-dhkey <replaceable>quoted_string</replaceable> <replaceable>integer</replaceable>;
 	tkey-gssapi-credential <replaceable>quoted_string</replaceable>;
+	tkey-gssapi-keytab <replaceable>quoted_string</replaceable>;
 	tkey-domain <replaceable>quoted_string</replaceable>;
 	transfers-per-ns <replaceable>integer</replaceable>;
 	transfers-in <replaceable>integer</replaceable>;
@@ -253,6 +255,7 @@ options {
 	queryport-pool-ports <replaceable>integer</replaceable>;
 	queryport-pool-updateinterval <replaceable>integer</replaceable>;
 	cleaning-interval <replaceable>integer</replaceable>;
+	resolver-query-timeout <replaceable>integer</replaceable>;
 	min-roots <replaceable>integer</replaceable>; // not implemented
 	lame-ttl <replaceable>integer</replaceable>;
 	max-ncache-ttl <replaceable>integer</replaceable>;
@@ -286,6 +289,17 @@ options {
 	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
 	dnssec-must-be-secure <replaceable>string</replaceable> <replaceable>boolean</replaceable>;
 	dnssec-accept-expired <replaceable>boolean</replaceable>;
+
+	dns64-server <replaceable>string</replaceable>;
+	dns64-contact <replaceable>string</replaceable>;
+	dns64 <replaceable>prefix</replaceable> {
+		clients { <replacable>acl</replacable>; };
+		exclude { <replacable>acl</replacable>; };
+		mapped { <replacable>acl</replacable>; };
+		break-dnssec <replaceable>boolean</replaceable>;
+		recursive-only <replaceable>boolean</replaceable>;
+		suffix <replaceable>ipv6_address</replaceable>;
+	};
 
 	empty-server <replaceable>string</replaceable>;
 	empty-contact <replaceable>string</replaceable>;
@@ -429,6 +443,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	queryport-pool-ports <replaceable>integer</replaceable>;
 	queryport-pool-updateinterval <replaceable>integer</replaceable>;
 	cleaning-interval <replaceable>integer</replaceable>;
+	resolver-query-timeout <replaceable>integer</replaceable>;
 	min-roots <replaceable>integer</replaceable>; // not implemented
 	lame-ttl <replaceable>integer</replaceable>;
 	max-ncache-ttl <replaceable>integer</replaceable>;
@@ -461,6 +476,17 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	dnssec-lookaside <replaceable>string</replaceable> trust-anchor <replaceable>string</replaceable>;
 	dnssec-must-be-secure <replaceable>string</replaceable> <replaceable>boolean</replaceable>;
 	dnssec-accept-expired <replaceable>boolean</replaceable>;
+
+	dns64-server <replaceable>string</replaceable>;
+	dns64-contact <replaceable>string</replaceable>;
+	dns64 <replaceable>prefix</replaceable> {
+		clients { <replacable>acl</replacable>; };
+		exclude { <replacable>acl</replacable>; };
+		mapped { <replacable>acl</replacable>; };
+		break-dnssec <replaceable>boolean</replaceable>;
+		recursive-only <replaceable>boolean</replaceable>;
+		suffix <replaceable>ipv6_address</replaceable>;
+	};
 
 	empty-server <replaceable>string</replaceable>;
 	empty-contact <replaceable>string</replaceable>;

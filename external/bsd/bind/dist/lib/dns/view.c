@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.1.1.6 2011/02/15 19:37:26 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")

@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.4 2011/02/15 19:38:47 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -556,7 +556,7 @@ static char v4_loop[4] = { 127, 0, 0, 1 };
 #define SETERROR(code) \
 	do { result = (code);			\
 		if (result != 0) goto cleanup;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static int
 add_ipv4(const char *hostname, int flags, struct addrinfo **aip,

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1.1.2 2011/02/15 19:32:49 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.2 2011/02/16 03:46:57 christos Exp $	*/
 
 /* Id: util.h,v 1.1.1.1 2003-06-04 00:27:09 marka Exp */
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.1.1.2 2011/02/15 19:31:51 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.2 2011/02/16 03:46:54 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")

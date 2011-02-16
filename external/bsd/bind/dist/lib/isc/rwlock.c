@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.c,v 1.3 2009/10/25 00:14:33 christos Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.4 2011/02/16 03:47:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rwlock.c,v 1.46 2009/01/18 23:48:14 tbox Exp */
+/* Id: rwlock.c,v 1.46 2009-01-18 23:48:14 tbox Exp */
 
 /*! \file */
 

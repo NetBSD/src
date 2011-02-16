@@ -1,4 +1,4 @@
-/*	$NetBSD: ucs4.h,v 1.1.1.2 2011/02/15 19:32:19 christos Exp $	*/
+/*	$NetBSD: ucs4.h,v 1.2 2011/02/16 03:46:56 christos Exp $	*/
 
 /* Id: ucs4.h,v 1.1.1.1 2003-06-04 00:25:42 marka Exp */
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.1.1.4 2011/02/15 19:37:02 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -81,12 +81,12 @@
 	do { \
 	(rsa)->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE); \
 	(rsa)->flags |= RSA_FLAG_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
 #define SET_FLAGS(rsa) \
 	do { \
 		(rsa)->flags |= RSA_FLAG_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 #endif
 
@@ -95,18 +95,18 @@
 	do { \
 	(rsa)->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE); \
 	(rsa)->flags &= ~RSA_FLAG_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #elif defined(RSA_FLAG_NO_BLINDING)
 #define SET_FLAGS(rsa) \
 	do { \
 		(rsa)->flags &= ~RSA_FLAG_BLINDING; \
 		(rsa)->flags |= RSA_FLAG_NO_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
 #define SET_FLAGS(rsa) \
 	do { \
 		(rsa)->flags &= ~RSA_FLAG_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 
 #define DST_RET(a) {ret = a; goto err;}

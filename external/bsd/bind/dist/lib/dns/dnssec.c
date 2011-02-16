@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.1.1.6 2011/02/15 19:36:47 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,7 @@
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 #define TYPE_SIGN 0

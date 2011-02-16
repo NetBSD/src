@@ -1,4 +1,4 @@
-/*	$NetBSD: assert_p.h,v 1.1.1.2 2011/02/15 19:38:46 christos Exp $	*/
+/*	$NetBSD: assert_p.h,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -29,7 +29,7 @@
 #define REQUIRE(x)		assert(x)
 #define INSIST(x)		assert(x)
 
-#define UNUSED(x)		((void)(x))
+#define UNUSED(x)		((void)&(x))
 
 #define SPACE_OK(b, s)		(LWRES_BUFFER_AVAILABLECOUNT(b) >= (s))
 #define SPACE_REMAINING(b, s)	(LWRES_BUFFER_REMAINING(b) >= (s))

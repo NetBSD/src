@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.1.1.6 2011/02/15 19:30:24 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -67,13 +67,13 @@ typedef enum {
 	isc_result_t _r = (x); \
 	if (_r != ISC_R_SUCCESS) \
 		return (_r); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECK(x) do { \
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Convenience function for configuring a single zone ACL.

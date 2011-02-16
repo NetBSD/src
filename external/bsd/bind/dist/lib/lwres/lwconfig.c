@@ -1,4 +1,4 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.3 2011/02/15 19:38:49 christos Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -184,7 +184,7 @@ getword(FILE *fp, char *buffer, size_t size) {
 	if (ch == EOF)
 		return (EOF);
 
-	do {
+	for (;;) {
 		*p = '\0';
 
 		if (ch == EOF || isspace((unsigned char)ch))
@@ -194,7 +194,7 @@ getword(FILE *fp, char *buffer, size_t size) {
 
 		*p++ = (char)ch;
 		ch = fgetc(fp);
-	} while (1);
+	}
 
 	return (ch);
 }
@@ -587,7 +587,7 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 		return (LWRES_R_NOTFOUND);
 
 	ret = LWRES_R_SUCCESS;
-	do {
+	for (;;) {
 		stopchar = getword(fp, word, sizeof(word));
 		if (stopchar == EOF) {
 			rval = LWRES_R_SUCCESS;
@@ -618,7 +618,7 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 		}
 		if (ret == LWRES_R_SUCCESS && rval != LWRES_R_SUCCESS)
 			ret = rval;
-	} while (1);
+	}
 
 	fclose(fp);
 

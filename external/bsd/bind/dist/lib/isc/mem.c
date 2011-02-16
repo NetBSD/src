@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.5 2011/02/15 19:38:11 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 2011/02/16 03:47:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -211,7 +211,7 @@ struct isc__mempool {
 					  ISC_MEM_DEBUGRECORD)) != 0 && \
 		     b != NULL) \
 			 add_trace_entry(a, b, c, d, e); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define DELETE_TRACE(a, b, c, d, e)	delete_trace_entry(a, b, c, d, e)
 
 static void

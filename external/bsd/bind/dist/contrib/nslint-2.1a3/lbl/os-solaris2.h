@@ -1,4 +1,4 @@
-/*	$NetBSD: os-solaris2.h,v 1.1.1.2 2011/02/15 19:33:00 christos Exp $	*/
+/*	$NetBSD: os-solaris2.h,v 1.2 2011/02/16 03:46:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 2000

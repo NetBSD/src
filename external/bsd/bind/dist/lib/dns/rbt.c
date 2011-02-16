@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.1.1.4 2011/02/15 19:37:04 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -152,7 +152,7 @@ do { \
 	(name)->offsets = OFFSETS(node); \
 	(name)->attributes = ATTRS(node); \
 	(name)->attributes |= DNS_NAMEATTR_READONLY; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #ifdef DNS_RBT_USEHASH
 static isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.c,v 1.1.1.4 2011/02/15 19:37:09 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@
 		isc_result_t _r = (x); \
 		if (_r != ISC_R_SUCCESS) \
 			return (_r); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define NUMBERSIZE sizeof("037777777777") /* 2^32-1 octal + NUL */
 

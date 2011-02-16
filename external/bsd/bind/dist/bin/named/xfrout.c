@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.4 2011/02/15 19:30:23 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 			   "bad zone transfer request: %s (%s)", \
 			   msg, isc_result_totext(code));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FAILQ(code, msg, question, rdclass) \
 	do {							\
@@ -107,12 +107,12 @@
 			   "bad zone transfer request: '%s/%s': %s (%s)", \
 			   _buf1, _buf2, msg, isc_result_totext(code));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECK(op) \
 	do { result = (op); 					\
 		if (result != ISC_R_SUCCESS) goto failure; 	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /**************************************************************************/
 

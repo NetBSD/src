@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.1.1.4 2011/02/15 19:30:44 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.2 2011/02/16 03:46:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")

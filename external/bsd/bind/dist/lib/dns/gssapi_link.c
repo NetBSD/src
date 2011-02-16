@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.3 2011/02/15 19:36:48 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -45,13 +45,13 @@
 	do { \
 		(gb).length = (r).length; \
 		(gb).value = (r).base; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define GBUFFER_TO_REGION(gb, r) \
 	do { \
 		(r).length = (gb).length; \
 		(r).base = (gb).value; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 struct dst_gssapi_signverifyctx {

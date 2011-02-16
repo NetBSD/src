@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2010/12/02 14:52:18 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2011/02/16 03:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.175.60.3.8.1 2010/09/15 12:13:29 marka Exp */
+/* Id: main.c,v 1.180 2010-12-22 03:59:02 marka Exp */
 
 /*! \file */
 
@@ -72,6 +72,12 @@
 #include <named/ns_smf_globals.h>
 #endif
 
+#ifdef OPENSSL
+#include <openssl/opensslv.h>
+#endif
+#ifdef HAVE_LIBXML2
+#include <libxml/xmlversion.h>
+#endif
 /*
  * Include header files for database drivers here.
  */
@@ -530,6 +536,14 @@ parse_command_line(int argc, char *argv[]) {
 		case 'V':
 			printf("BIND %s built with %s\n", ns_g_version,
 				ns_g_configargs);
+#ifdef OPENSSL
+			printf("using OpenSSL version: %s\n",
+			       OPENSSL_VERSION_TEXT);
+#endif
+#ifdef HAVE_LIBXML2
+			printf("using libxml2 version: %s\n",
+			       LIBXML_DOTTED_VERSION);
+#endif
 			exit(0);
 		case 'F':
 			/* Reserved for FIPS mode */
