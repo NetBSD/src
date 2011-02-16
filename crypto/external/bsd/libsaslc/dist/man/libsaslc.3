@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.8 2011/02/15 18:36:08 christos Exp $
+.\"	$NetBSD: libsaslc.3,v 1.9 2011/02/16 02:14:22 christos Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -364,7 +364,7 @@ encode_stream(saslc_sess_t *sess, int fdin, int fdout)
 	return 0;
 }
 .Ed
-.Ss CONFIGURATION
+.Sh CONFIGURATION
 .Nm
 uses three types of dictionaries: context (or global), session, and
 mechanism, and they are searched in that order by
@@ -456,7 +456,7 @@ inclusive.
 Any base supported by
 .Xr strtoll 3
 is allowed.
-.Ss PROPERTIES
+.Sh PROPERTIES
 Most of the control of the
 .Nm
 behavior is done via setting various properties in the context or
@@ -591,7 +591,7 @@ function.
 .It SASLC_PROP_SERVICE Po Qo SERVICE Qc Pc
 The service being used, e.g., smtp, imap, etc.
 Used by the DIGEST-MD5 and GSSAPI mechanisms.
-.It SASLC_PROP_SERVICENAME Po Qo SERVICENAME Qc Pc
+.It SASLC_PROP_SERVNAME Po Qo SERVNAME Qc Pc
 A comma delimited list of possible service names with elements of the
 form
 .Qq Oo Ao hostname Ac : Oc Ns Ao serv-name Ac
@@ -633,7 +633,7 @@ This may be overridden by
 If set, turn on debugging messages.
 This turns on debugging as early as possible and is a global setting.
 .El
-.Ss GSSAPI and Kerberos
+.Sh GSSAPI AND KERBEROS
 The following is a minimal
 .Pq Heimdal
 Kerberos 5 setup for use with an smtp server that has been configured
