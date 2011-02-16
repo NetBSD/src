@@ -1,4 +1,4 @@
-#       $NetBSD: t_exec.sh,v 1.5 2011/02/16 17:57:44 pooka Exp $
+#       $NetBSD: t_exec.sh,v 1.6 2011/02/16 19:31:31 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 rumpsrv='rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet'
 export RUMP_SERVER=unix://csock
-export RUMPHIJACK_RETRY='die'
+export RUMPHIJACK_RETRYCONNECT='die'
 
 atf_test_case noexec cleanup
 noexec_head()
