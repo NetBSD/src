@@ -1,9 +1,9 @@
-# $NetBSD: bsd.test.mk,v 1.14 2011/02/06 19:38:48 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.15 2011/02/16 10:13:00 jmmv Exp $
 #
 
 .include <bsd.init.mk>
 
-_TESTS=		# empty
+_TESTS:=	# empty
 
 .if defined(TESTS_SUBDIRS)
 SUBDIR+=	${TESTS_SUBDIRS}
@@ -13,33 +13,34 @@ _TESTS:=	${TESTS_SUBDIRS:N.WAIT}
 .include <bsd.subdir.mk>
 
 .if defined(TESTS_C)
+_TESTS+=	${TESTS_C}
 PROGS+=		${TESTS_C}
 LDADD+=		-latf-c
 .  for _T in ${TESTS_C}
 BINDIR.${_T}=	${TESTSDIR}
 MAN.${_T}?=	# empty
-_TESTS+=	${_T}
 .  endfor
 .endif
 
 .if defined(TESTS_CXX)
+_TESTS+=	${TESTS_CXX}
 PROGS_CXX+=	${TESTS_CXX}
 LDADD+=		-latf-c++ -latf-c
 .  for _T in ${TESTS_CXX}
 BINDIR.${_T}=	${TESTSDIR}
 MAN.${_T}?=	# empty
-_TESTS+=	${_T}
 .  endfor
 .endif
 
 .if defined(TESTS_SH)
+_TESTS+=		${TESTS_SH}
+CLEANFILES+=		${TESTS_SH}
 
 .  for _T in ${TESTS_SH}
 SCRIPTS+=		${_T}
 SCRIPTSDIR_${_T}=	${TESTSDIR}
 
-_TESTS+=		${_T}
-CLEANFILES+=		${_T} ${_T}.tmp
+CLEANFILES+=		${_T}.tmp
 
 TESTS_SH_SRC_${_T}?=	${_T}.sh
 ${_T}: ${TESTS_SH_SRC_${_T}}
@@ -53,11 +54,13 @@ ${_T}: ${TESTS_SH_SRC_${_T}}
 
 ATFFILE?=	auto
 
-.if empty(ATFFILE:M[Nn][Oo])
+.if ${ATFFILE:tl} != "no"
 FILES+=			Atffile
 FILESDIR_Atffile=	${TESTSDIR}
 
-.  if !empty(ATFFILE:M[Aa][Uu][Tt][Oo])
+.  if ${ATFFILE:tl} == "auto"
+CLEANFILES+=	Atffile Atffile.tmp
+
 realall: Atffile
 Atffile: Makefile
 	${_MKTARGET_CREATE}
@@ -71,10 +74,6 @@ Atffile: Makefile
 	    echo "tp: $${tp}"; \
 	done; } >Atffile.tmp
 	@mv Atffile.tmp Atffile
-
-clean: clean-atffile
-clean-atffile: .PHONY
-	rm -f Atffile Atffile.tmp
 .  endif
 
 .include <bsd.files.mk>
