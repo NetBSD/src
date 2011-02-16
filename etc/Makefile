@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.385 2011/02/16 15:52:51 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.386 2011/02/16 16:20:06 uebayasi Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -173,7 +173,8 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 
 
 CLEANFILES+=	MAKEDEV
-MAKEDEV: .EXEC
+MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
+    ${.CURDIR}/etc.${MACHINE}/MAKEDEV.conf
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
