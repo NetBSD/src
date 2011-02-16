@@ -1,4 +1,4 @@
-#	$NetBSD: HPQLB.ioconf,v 1.1 2010/10/26 05:36:49 jruoho Exp $
+# $NetBSD: hpqlb.ioconf,v 1.1 2011/02/16 08:08:14 jruoho Exp $
 
 ioconf hpqlb
 
