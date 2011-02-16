@@ -1,4 +1,4 @@
-/*	$NetBSD: h_exec.c,v 1.4 2011/02/16 15:34:18 pooka Exp $	*/
+/*	$NetBSD: h_exec.c,v 1.5 2011/02/16 16:02:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ main(int argc, char *argv[])
 	int s1, s2;
 	char buf[12];
 	char *eargv[4];
+	char *ename;
 	extern char **environ;
 
 	if (rumpclient_init() == -1)
@@ -104,9 +105,11 @@ main(int argc, char *argv[])
 		}
 	}
 
+	ename = __UNCONST("h_ution");
+
 	/* omstart! */
 	sprintf(buf, "%d", s2);
-	eargv[0] = __UNCONST("h_ution");
+	eargv[0] = ename;
 	eargv[1] = __UNCONST("_didexec");
 	eargv[2] = buf;
 	eargv[3] = NULL;

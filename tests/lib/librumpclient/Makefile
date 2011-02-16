@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/02/15 15:16:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2011/02/16 16:02:52 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,9 +9,6 @@ TESTS_C=	t_fd
 TESTS_C+=	h_exec
 
 TESTS_SH=	t_exec
-
-# what do you mean I missed?
-LINKS+=		${TESTSDIR}/h_exec ${TESTSDIR}/h_ution
 
 ATFFILE=	yes
 
