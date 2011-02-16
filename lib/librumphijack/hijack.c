@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.41 2011/02/15 14:01:52 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.42 2011/02/16 15:33:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.41 2011/02/15 14:01:52 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.42 2011/02/16 15:33:46 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -594,33 +594,14 @@ dup(int oldd)
 	return dodup(oldd, 0);
 }
 
-/*
- * We just wrap fork the appropriate rump client calls to preserve
- * the file descriptors of the forked parent in the child, but
- * prevent double use of connection fd.
- */
 pid_t
 fork()
 {
-	struct rumpclient_fork *rf;
 	pid_t rv;
 
 	DPRINTF(("fork\n"));
 
-	if ((rf = rumpclient_prefork()) == NULL)
-		return -1;
-
-	switch ((rv = host_fork())) {
-	case -1:
-		/* XXX: cancel rf */
-		break;
-	case 0:
-		if (rumpclient_fork_init(rf) == -1)
-			rv = -1;
-		break;
-	default:
-		break;
-	}
+	rv = rumpclient_fork(host_fork);
 
 	DPRINTF(("fork returns %d\n", rv));
 	return rv;
@@ -644,31 +625,38 @@ daemon(int nochdir, int noclose)
 }
 
 int
-execve(const char *path, char *const argv[], char *const oenvp[])
+execve(const char *path, char *const argv[], char *const envp[])
 {
 	char buf[128];
-	char **env;
-	char *dup2maskenv[2];
 	char *dup2str;
-	int rv;
+	char **newenv;
+	size_t nelem;
+	int rv, sverrno;
 
 	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%u", dup2mask);
 	dup2str = malloc(strlen(buf)+1);
 	if (dup2str == NULL)
 		return ENOMEM;
 	strcpy(dup2str, buf);
-	dup2maskenv[0] = dup2str;
-	dup2maskenv[1] = NULL;
 
-	rv = rumpclient__exec_augmentenv(oenvp, dup2maskenv, &env);
-	if (rv)
-		return rv;
-
-	rv = host_execve(path, argv, env);
-	if (rv != 0) {
+	for (nelem = 0; envp && envp[nelem]; nelem++)
+		continue;
+	newenv = malloc(sizeof(*newenv) * nelem+2);
+	if (newenv == NULL) {
 		free(dup2str);
-		free(env); /* XXX missing some strings within env */
+		return ENOMEM;
 	}
+	memcpy(newenv, envp, nelem*sizeof(*newenv));
+	newenv[nelem] = dup2str;
+	newenv[nelem+1] = NULL;
+
+	rv = rumpclient_exec(path, argv, newenv);
+
+	_DIAGASSERT(rv != 0);
+	sverrno = errno;
+	free(newenv);
+	free(dup2str);
+	errno = sverrno;
 	return rv;
 }
 
