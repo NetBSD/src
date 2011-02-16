@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.230.4.3 2010/06/12 16:37:55 riz Exp $	*/
+/*	$NetBSD: if.c,v 1.230.4.4 2011/02/16 20:37:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230.4.3 2010/06/12 16:37:55 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230.4.4 2011/02/16 20:37:47 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -1812,19 +1812,33 @@ ifconf(u_long cmd, void *data)
 }
 
 int
-ifreq_setaddr(const u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
+ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 {
 	uint8_t len;
-	u_long ncmd;
-
-	if ((ncmd = compat_cvtcmd(cmd)) != cmd)
-		len = sizeof(ifr->ifr_addr);
-	else
+#ifdef COMPAT_OIFREQ
+	struct ifreq ifrb;
+	struct oifreq *oifr = NULL;
+	u_long ocmd = cmd;
+	cmd = compat_cvtcmd(cmd);
+	if (cmd != ocmd) {
+		oifr = (struct oifreq *)(void *)ifr;
+		ifr = &ifrb;
+		ifreqo2n(oifr, ifr);
+		len = sizeof(oifr->ifr_addr);
+	} else
+#endif
 		len = sizeof(ifr->ifr_ifru.ifru_space);
+
 	if (len < sa->sa_len)
 		return EFBIG;
+
 	memset(&ifr->ifr_addr, 0, len);
 	sockaddr_copy(&ifr->ifr_addr, len, sa);
+
+#ifdef COMPAT_OIFREQ
+	if (cmd != ocmd)
+		ifreqn2o(oifr, ifr);
+#endif
 	return 0;
 }
 
