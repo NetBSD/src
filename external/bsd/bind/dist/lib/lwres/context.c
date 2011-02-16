@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.1.1.3 2011/02/15 19:38:47 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -127,7 +127,7 @@ do { \
 		retval |= O_NONBLOCK; \
 		retval = fcntl(sd, F_SETFL, retval); \
 	} \
-} while (0)
+} while (/*CONSTCOND*/0)
 #endif
 
 LIBLWRES_EXTERNAL_DATA lwres_uint16_t lwres_udp_port = LWRES_UDP_PORT;

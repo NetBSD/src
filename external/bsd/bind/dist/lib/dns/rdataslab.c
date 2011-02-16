@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.4 2011/02/15 19:37:11 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")

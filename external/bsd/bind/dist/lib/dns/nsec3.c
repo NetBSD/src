@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.c,v 1.1.1.6 2011/02/15 19:37:00 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define OPTOUT(x) (((x) & DNS_NSEC3FLAG_OPTOUT) != 0)
 #define CREATE(x) (((x) & DNS_NSEC3FLAG_CREATE) != 0)

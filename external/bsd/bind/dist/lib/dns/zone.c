@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.7 2011/02/15 19:37:34 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -144,9 +144,9 @@ typedef struct dns_keyfetch dns_keyfetch_t;
 	 do { LOCK(&(z)->lock); \
 	      INSIST((z)->locked == ISC_FALSE); \
 	     (z)->locked = ISC_TRUE; \
-		} while (0)
+		} while (/*CONSTCOND*/0)
 #define UNLOCK_ZONE(z) \
-	do { (z)->locked = ISC_FALSE; UNLOCK(&(z)->lock); } while (0)
+	do { (z)->locked = ISC_FALSE; UNLOCK(&(z)->lock); } while (/*CONSTCOND*/0)
 #define LOCKED_ZONE(z) ((z)->locked)
 #else
 #define LOCK_ZONE(z) LOCK(&(z)->lock)
@@ -335,11 +335,11 @@ struct dns_zone {
 #define DNS_ZONE_SETFLAG(z,f) do { \
 		INSIST(LOCKED_ZONE(z)); \
 		(z)->flags |= (f); \
-		} while (0)
+		} while (/*CONSTCOND*/0)
 #define DNS_ZONE_CLRFLAG(z,f) do { \
 		INSIST(LOCKED_ZONE(z)); \
 		(z)->flags &= ~(f); \
-		} while (0)
+		} while (/*CONSTCOND*/0)
 	/* XXX MPA these may need to go back into zone.h */
 #define DNS_ZONEFLG_REFRESH	0x00000001U	/*%< refresh check in progress */
 #define DNS_ZONEFLG_NEEDDUMP	0x00000002U	/*%< zone need consolidation */
@@ -394,7 +394,7 @@ struct dns_zone {
 #define CHECK(op) \
 	do { result = (op); \
 		if (result != ISC_R_SUCCESS) goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 struct dns_unreachable {
 	isc_sockaddr_t	remote;
@@ -681,7 +681,7 @@ static const char *dbargv_default[] = { "rbt" };
 			isc_interval_set(&_i, _j/2, 0); \
 			(void)isc_time_add((a), &_i, (c)); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define DNS_ZONE_TIME_ADD(a, b, c) \
 	do { \
@@ -694,7 +694,7 @@ static const char *dbargv_default[] = { "rbt" };
 			isc_interval_set(&_i, (b)/2, 0); \
 			(void)isc_time_add((a), &_i, (c)); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Increment resolver-related statistics counters.  Zone must be locked.

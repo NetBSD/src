@@ -1,4 +1,4 @@
-/*	$NetBSD: lwdgabn.c,v 1.1.1.3 2011/02/15 19:30:06 christos Exp $	*/
+/*	$NetBSD: lwdgabn.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
