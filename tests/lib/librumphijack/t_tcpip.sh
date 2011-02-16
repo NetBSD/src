@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.4 2011/02/14 19:56:30 pooka Exp $
+#       $NetBSD: t_tcpip.sh,v 1.5 2011/02/16 19:31:31 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@ http_body()
 
 	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
 	# make sure clients die after we nuke the server
-	export RUMPHIJACK_RETRY='die'
+	export RUMPHIJACK_RETRYCONNECT='die'
 
 	# start bozo in daemon mode
 	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
@@ -121,7 +121,7 @@ ssh_body()
 
 	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
 	# make sure clients die after we nuke the server
-	export RUMPHIJACK_RETRY='die'
+	export RUMPHIJACK_RETRYCONNECT='die'
 
 	start_sshd
 
@@ -143,7 +143,7 @@ ssh_body()
 ssh_cleanup()
 {
 	rump.halt
-	# sshd dies due to RUMPHIJACK_RETRY=1d6
+	# sshd dies due to RUMPHIJACK_RETRYCONNECT=1d6
 }
 
 atf_init_test_cases()
