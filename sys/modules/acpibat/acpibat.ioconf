@@ -1,4 +1,4 @@
-#	$NetBSD: ACPIBAT.ioconf,v 1.1 2010/03/21 07:09:56 pooka Exp $
+# $NetBSD: acpibat.ioconf,v 1.1 2011/02/16 08:01:52 jruoho Exp $
 
 ioconf acpibat
 
