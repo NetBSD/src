@@ -1,4 +1,4 @@
-/*	$NetBSD: h_exec.c,v 1.5 2011/02/16 16:02:52 pooka Exp $	*/
+/*	$NetBSD: h_exec.c,v 1.6 2011/02/16 17:57:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ main(int argc, char *argv[])
 
 	if (argc > 1) {
 		if (strcmp(argv[1], "_didexec") == 0) {
-			daemon(0, 0); /* detach-me-notnot ergo detach */
+			rumpclient_daemon(0, 0); /* detach-me-notnot */
 			s2 = atoi(argv[2]);
 			slen = sizeof(sin);
 			/* see below */
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 		err(1, "listen2");
 
 	if (argc == 1) {
-		daemon(0, 0);
+		rumpclient_daemon(0, 0);
 		slen = sizeof(sin);
 		/*
 		 * "pause()", but conveniently gets rid of this helper
@@ -105,10 +105,24 @@ main(int argc, char *argv[])
 		}
 	}
 
-	ename = __UNCONST("h_ution");
+	sprintf(buf, "%d", s2);
+
+	if (argc == 3 && strcmp(argv[2], "vfork_please") == 0) {
+		switch (rumpclient_vfork()) {
+		case 0:
+			ename = __UNCONST("fourchette");
+			break;
+		case -1:
+			err(1, "vfork");
+		default:
+			ename = __UNCONST("h_ution");
+			break;
+		}
+	} else {
+		ename = __UNCONST("h_ution");
+	}
 
 	/* omstart! */
-	sprintf(buf, "%d", s2);
 	eargv[0] = ename;
 	eargv[1] = __UNCONST("_didexec");
 	eargv[2] = buf;
