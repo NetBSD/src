@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.80 2010/08/15 07:27:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.81 2011/02/16 05:18:35 uebayasi Exp $
+
+# Experimental RCS METALOG versioning
+# (Needs host's rcs(1) commands)
+#RCSMETALOG=1
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -120,13 +124,26 @@ ${METALOG}.sanitised: ${METALOG}
 	${TOOL_MTREE} -CSM -k all -N ${NETBSDSRCDIR}/etc <${METALOG} \
 	    >${METALOG}.new
 	mv ${METALOG}.new ${METALOG}.sanitised
+.if defined(RCSMETALOG)
+	. ./metalog.subr; \
+	xrcs_descr="build distribution METALOG"; \
+	xrcs_msg="$$(date)"; \
+	xrcs_cur=${METALOG}.sanitised; \
+	xrcs update
+.endif
 .if ${MKUPDATE} == "no" || !exists(${METALOG})
 clean_METALOG: .PHONY
 	rm -f ${METALOG} ${METALOG}.*
 .else	# MKUPDATE
 clean_METALOG: .PHONY ${METALOG}.sanitised
 	mv ${METALOG}.sanitised ${METALOG}
+.if defined(RCSMETALOG)
+	mv ${METALOG}.sanitised,v ${METALOG},v
+.endif
 	rm -f ${METALOG}.*
+.if defined(RCSMETALOG)
+	mv ${METALOG},v ${METALOG}.sanitised,v
+.endif
 .endif	# MKUPDATE
 .endif	# MKUNPRIVED
 
