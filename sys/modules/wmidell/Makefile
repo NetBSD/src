@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2010/10/25 07:53:22 jruoho Exp $
+# $NetBSD: Makefile,v 1.3 2011/02/16 08:19:56 jruoho Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/acpi/wmi
 
 KMOD=   wmidell
+IOCONF=	wmidell.ioconf
 SRCS=	wmi_dell.c
 
 WARNS=	4
