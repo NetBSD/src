@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.6 2011/02/15 19:38:44 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.2 2011/02/16 03:47:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -41,11 +41,11 @@
 #define CHECK(op)						\
 	do { result = (op);					\
 		if (result != ISC_R_SUCCESS) goto cleanup;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*% Clean up a configuration object if non-NULL. */
 #define CLEANUP_OBJ(obj) \
-	do { if ((obj) != NULL) cfg_obj_destroy(pctx, &(obj)); } while (0)
+	do { if ((obj) != NULL) cfg_obj_destroy(pctx, &(obj)); } while (/*CONSTCOND*/0)
 
 
 /*%

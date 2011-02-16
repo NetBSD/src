@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.5 2011/02/15 19:36:48 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -123,7 +123,7 @@ static isc_result_t	addsuffix(char *filename, int len,
 		result = (x);			\
 		if (result != ISC_R_SUCCESS)	\
 			goto out;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECKALG(alg)				\
 	do {					\
@@ -131,7 +131,7 @@ static isc_result_t	addsuffix(char *filename, int len,
 		_r = algorithm_status(alg);	\
 		if (_r != ISC_R_SUCCESS)	\
 			return (_r);		\
-	} while (0);				\
+	} while (/*CONSTCOND*/0);
 
 #if defined(OPENSSL) && defined(BIND9)
 static void *

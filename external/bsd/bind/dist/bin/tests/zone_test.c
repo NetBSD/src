@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.1.1.3 2011/02/15 19:30:52 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.2 2011/02/16 03:46:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -67,7 +67,7 @@ isc_sockaddr_t addr;
 				function, dns_result_totext(result)); \
 			return; \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ERRCONT(result, function) \
 		if (result != ISC_R_SUCCESS) { \

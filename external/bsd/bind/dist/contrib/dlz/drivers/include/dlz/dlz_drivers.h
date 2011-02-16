@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_drivers.h,v 1.1.1.2 2011/02/15 19:32:06 christos Exp $	*/
+/*	$NetBSD: dlz_drivers.h,v 1.2 2011/02/16 03:46:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")

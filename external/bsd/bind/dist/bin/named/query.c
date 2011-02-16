@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.1.1.6 2011/02/15 19:30:14 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -4459,7 +4459,7 @@ do { \
 	eresult = r; \
 	want_restart = ISC_FALSE; \
 	line = __LINE__; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define RECURSE_ERROR(r) \
 do { \
@@ -4467,7 +4467,7 @@ do { \
 		QUERY_ERROR(r); \
 	else \
 		QUERY_ERROR(DNS_R_SERVFAIL); \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /*
  * Extract a network address from the RDATA of an A or AAAA

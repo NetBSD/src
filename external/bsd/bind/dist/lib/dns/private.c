@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.1.1.2 2011/02/15 19:37:03 christos Exp $	*/
+/*	$NetBSD: private.c,v 1.2 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
 			 result = (x);			\
 			 if (result != ISC_R_SUCCESS)	\
 				goto failure;		\
-		 } while (0)
+		 } while (/*CONSTCOND*/0)
 
 /*
  * Work out if 'param' should be ignored or not (i.e. it is in the process

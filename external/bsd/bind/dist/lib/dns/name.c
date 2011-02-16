@@ -1,7 +1,7 @@
-/*	$NetBSD: name.c,v 1.2 2010/12/14 23:43:32 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.3 2011/02/16 03:47:04 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.c,v 1.169.104.3 2010/07/09 05:14:08 each Exp */
+/* Id: name.c,v 1.174 2011-01-13 04:59:25 tbox Exp */
 
 /*! \file */
 
@@ -140,7 +140,7 @@ do { \
 	name->length = 0; \
 	name->labels = 0; \
 	name->attributes &= ~DNS_NAMEATTR_ABSOLUTE; \
-} while (0);
+} while (/*CONSTCOND*/0);
 
 /*%
  * A name is "bindable" if it can be set to point to a new value, i.e.
@@ -1023,7 +1023,7 @@ dns_name_toregion(dns_name_t *name, isc_region_t *r) {
 
 isc_result_t
 dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
-		  dns_name_t *origin, unsigned int options,
+		  const dns_name_t *origin, unsigned int options,
 		  isc_buffer_t *target)
 {
 	unsigned char *ndata, *label;
@@ -2398,6 +2398,14 @@ isc_result_t
 dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
 		    isc_mem_t *mctx)
 {
+	return (dns_name_fromstring2(target, src, dns_rootname, options, mctx));
+}
+
+isc_result_t
+dns_name_fromstring2(dns_name_t *target, const char *src,
+		     const dns_name_t *origin, unsigned int options,
+		     isc_mem_t *mctx)
+{
 	isc_result_t result;
 	isc_buffer_t buf;
 	dns_fixedname_t fn;
@@ -2407,14 +2415,19 @@ dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
 
 	isc_buffer_init(&buf, src, strlen(src));
 	isc_buffer_add(&buf, strlen(src));
-	dns_fixedname_init(&fn);
-	name = dns_fixedname_name(&fn);
+	if (BINDABLE(target) && target->buffer != NULL)
+		name = target;
+	else {
+		dns_fixedname_init(&fn);
+		name = dns_fixedname_name(&fn);
+	}
 
-	result = dns_name_fromtext(name, &buf, dns_rootname, options, NULL);
+	result = dns_name_fromtext(name, &buf, origin, options, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	result = dns_name_dup(name, mctx, target);
+	if (name != target)
+		result = dns_name_dupwithoffsets(name, mctx, target);
 	return (result);
 }
 
