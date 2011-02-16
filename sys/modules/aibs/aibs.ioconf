@@ -1,4 +1,4 @@
-#	$NetBSD: AIBS.ioconf,v 1.1 2010/10/25 17:17:57 jruoho Exp $
+# $NetBSD: aibs.ioconf,v 1.1 2011/02/16 08:08:14 jruoho Exp $
 
 ioconf aibs
 
