@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.55 2011/01/28 07:21:56 snj Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.56 2011/02/16 20:40:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4556,4 +4556,83 @@ sys/arch/sparc/sparc/pmap.c			1.329 via patch
 
 	More fixes for sparc SMP.
 	[mrg, ticket #1532]
+
+distrib/sets/lists/base/mi			1.821
+distrib/sets/lists/man/mi			1.1143
+usr.sbin/Makefile				1.242
+usr.sbin/wake/Makefile				1.1, 1.2
+usr.sbin/wake/wake.8				1.1 - 1.8
+usr.sbin/wake/wake.c				1.1 - 1.12
+
+	wake(8) is a command to send Wake-on-LAN packets to machines on the
+	local ethernet, allowing machines to be powered up without physical
+	access to them.
+	[mbalmer, ticket #1533]
+
+sys/kern/vfs_wapbl.c				1.39 via patch
+
+	Add two sysctls one that does verbose transaction logging and a
+	second one that disables flushing the disk cache (which is fast but
+	dangerous for data integrity). From simon a long while back.
+	[tron, ticket #1535]
+
+gnu/dist/gdb6/gdb/shnbsd-tdep.c			1.6
+
+	Branch with delay slot executes delay slot even if branch is not
+	taken, so adjust next_pc logic accordingly.  Fixes SIGILL
+	(breakpoint's "trapa" causes an illegal slot instruction exception)
+	when stepping through such branches.
+	[uwe, ticket #1542]
+
+external/mit/xorg/lib/libX11/Makefile		1.8
+
+	USETBL=yes.  several of these manuals need it.  from PR#36600.
+	[dholland, ticket #1538]
+
+xsrc/external/mit/xf86-input-elographics/dist/COPYING	1.1.1.1
+xsrc/external/mit/xf86-input-elographics/dist/ChangeLog	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/Makefile.am	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/Makefile.in	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/README	1.1.1.1
+xsrc/external/mit/xf86-input-elographics/dist/aclocal.m4	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/config.guess	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/config.h.in	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/config.sub	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/configure		1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/configure.ac	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/depcomp		1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/install-sh	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/ltmain.sh		1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/missing		1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/man/Makefile.am	1.1.1.1
+xsrc/external/mit/xf86-input-elographics/dist/man/Makefile.in	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/man/elographics.man 1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/src/Makefile.am	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/src/Makefile.in	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/dist/src/xf86Elo.c	1.1.1.2
+xsrc/external/mit/xf86-input-elographics/include/config.h	1.2
+distrib/sets/lists/xserver/md.i386		1.73
+external/mit/xorg/server/drivers/Makefile	1.35
+external/mit/xorg/server/drivers/xf86-input-elographics/Makefile 1.1
+share/mk/bsd.own.mk				1.597
+
+	Add the xf86-input-elographics driver
+	[mbalmer, ticket #1534]
+
+sys/dev/pci/pci.c				1.131
+
+	During shutdown, restore the each PCI device's bus-mastering enable to
+	the state that we found it in before attaching a driver to it.
+	[dyoung, ticket #1540]
+
+sys/compat/common/if_43.c			1.3 via patch
+sys/net/if.c					1.247 via patch
+
+	PR/44054: Onno van der Linden: Stacksmashing in handling of
+	ioctl OOSIO* parameter.
+	can't map the old and the new SIO calls the way we did before
+	because the numbers have changed. Instead provide a switch. Keep the
+	old code there, to handle cases we did not handle in the first switch,
+	but this is a hack and should be removed.
+	[chs, ticket #1541]
 
