@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.8 2011/02/16 17:56:46 pooka Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.9 2011/02/16 19:58:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@ int			rumpclient_fork_init(struct rumpclient_fork *);
 void			rumpclient_fork_cancel(struct rumpclient_fork *);
 void			rumpclient_fork_vparent(struct rumpclient_fork *);
 
-int rumpclient_fork(void);
+pid_t rumpclient_fork(void);
 int rumpclient_exec(const char *, char *const [], char *const[]);
 int rumpclient_daemon(int, int);
 
