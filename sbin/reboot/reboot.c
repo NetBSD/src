@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.37 2011/02/16 17:53:31 dyoung Exp $	*/
+/*	$NetBSD: reboot.c,v 1.38 2011/02/16 19:32:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.37 2011/02/16 17:53:31 dyoung Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.38 2011/02/16 19:32:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,7 +251,7 @@ usage(void)
 {
 	const char *pflag = dohalt ? "p" : "";
 
-	(void)fprintf(stderr, "usage: %s [-dln%sq] [-- <boot string>]\n",
+	(void)fprintf(stderr, "usage: %s [-dln%sqvxz] [-- <boot string>]\n",
 	    getprogname(), pflag);
 	exit(1);
 }
