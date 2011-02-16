@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.28 2011/02/14 13:43:45 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.29 2011/02/16 18:39:33 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.28 2011/02/14 13:43:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.29 2011/02/16 18:39:33 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -718,7 +718,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		 * Save the authenticator, the skipped portion of the packet,
 		 * and the AH header.
 		 */
-		m_copydata(m, 0, skip + rplen + authsize, (char *)(tc+1));
+		m_copydata(m, 0, skip + rplen + authsize, (tc + 1));
 
 		{
 			u_int8_t *pppp = ((char *)(tc+1))+skip+rplen;
@@ -1083,7 +1083,7 @@ ah_output(
 	ah = (struct newah *)(mtod(mi, char *) + roff);
 
 	/* Initialize the AH header. */
-	m_copydata(m, protoff, sizeof(u_int8_t), (char *) &ah->ah_nxt);
+	m_copydata(m, protoff, sizeof(u_int8_t), &ah->ah_nxt);
 	ah->ah_len = (rplen + authsize - sizeof(struct ah)) / sizeof(u_int32_t);
 	ah->ah_reserve = 0;
 	ah->ah_spi = sav->spi;
