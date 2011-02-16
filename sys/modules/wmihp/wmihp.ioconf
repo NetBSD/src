@@ -1,0 +1,10 @@
+# $NetBSD: wmihp.ioconf,v 1.1 2011/02/16 08:19:56 jruoho Exp $
+
+ioconf wmihp
+
+include "conf/files"
+include "dev/acpi/wmi/files.wmi"
+
+pseudo-root acpiwmi*
+
+wmihp* at acpiwmibus?
