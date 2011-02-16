@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.550 2011/02/14 08:50:39 hannken Exp $
+#	$NetBSD: Makefile,v 1.551 2011/02/16 07:30:26 jruoho Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -155,6 +155,7 @@ MLINKS+=drm.4 viadrm.4
 MLINKS+=acpiec.4 acpiecdt.4
 MLINKS+=acpivga.4 acpiout.4
 MLINKS+=acpiwmi.4 wmidell.4 \
+	acpiwmi.4 wmieeepc.4 \
 	acpiwmi.4 wmihp.4 \
 	acpiwmi.4 wmimsi.4
 MLINKS+=aibs.4 aiboost.4
