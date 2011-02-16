@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.48 2011/02/15 16:29:09 christos Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.49 2011/02/16 20:20:25 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.48 2011/02/15 16:29:09 christos Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.49 2011/02/16 20:20:25 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,12 +58,14 @@ __weak_alias(getcwd,_sys_getcwd)
 __weak_alias(_getcwd,_sys_getcwd)
 __weak_alias(realpath,_realpath)
 
+#if !defined(lint)
 #undef getcwd
 #define getcwd _sys_getcwd
 #if !defined(_FORTIFY_SOURCE)
 char *_sys_getcwd(char *, size_t);
 #endif
 
+#endif
 #endif
 
 /*
