@@ -1,4 +1,4 @@
-/*	$NetBSD: saslc.h,v 1.4 2011/02/12 19:03:39 christos Exp $	*/
+/*	$NetBSD: saslc.h,v 1.5 2011/02/16 02:14:22 christos Exp $	*/
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -53,7 +53,7 @@
 #define SASLC_PROP_REALM	"REALM"
 #define SASLC_PROP_SECURITY	"SECURITY"
 #define SASLC_PROP_SERVICE	"SERVICE"
-#define SASLC_PROP_SERVICENAME	"SERVICENAME"
+#define SASLC_PROP_SERVNAME	"SERVNAME"
 
 /* environment variables */
 #define SASLC_ENV_CONFIG	"SASLC_CONFIG"
