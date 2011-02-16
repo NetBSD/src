@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.5 2011/02/16 08:19:56 jruoho Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.6 2011/02/16 13:15:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.5 2011/02/16 08:19:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.6 2011/02/16 13:15:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -531,7 +531,7 @@ wmi_hp_sensor_update(void *aux)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, wmihp, NULL);
+MODULE(MODULE_CLASS_DRIVER, wmihp, "acpiwmi");
 
 #ifdef _MODULE
 #include "ioconf.c"
