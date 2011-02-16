@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.39 2010/10/25 07:48:03 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.40 2011/02/16 08:35:51 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.39 2010/10/25 07:48:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.40 2011/02/16 08:35:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -191,78 +191,38 @@ acpibut_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 	}
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpibut, NULL);
-CFDRIVER_DECL(acpibut, DV_DULL, NULL);
 
-static int acpibutloc[] = { -1 };
-extern struct cfattach acpibut_ca;
-
-static struct cfparent acpiparent = {
-	"acpinodebus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata acpibut_cfdata[] = {
-	{
-		.cf_name = "acpibut",
-		.cf_atname = "acpibut",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = acpibutloc,
-		.cf_flags = 0,
-		.cf_pspec = &acpiparent,
-	},
-
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
-acpibut_modcmd(modcmd_t cmd, void *context)
+acpibut_modcmd(modcmd_t cmd, void *aux)
 {
-	int err;
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
 
-		err = config_cfdriver_attach(&acpibut_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("acpibut", &acpibut_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&acpibut_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(acpibut_cfdata, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("acpibut", &acpibut_ca);
-			config_cfdriver_detach(&acpibut_cd);
-			return err;
-		}
-
-		return 0;
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpibut,
+		    cfattach_ioconf_acpibut, cfdata_ioconf_acpibut);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(acpibut_cfdata);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("acpibut", &acpibut_ca);
-		config_cfdriver_detach(&acpibut_cd);
-
-		return 0;
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpibut,
+		    cfattach_ioconf_acpibut, cfdata_ioconf_acpibut);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

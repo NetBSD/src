@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.33 2011/01/18 18:56:25 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.34 2011/02/16 08:35:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.33 2011/01/18 18:56:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.34 2011/02/16 08:35:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -647,78 +647,38 @@ thinkpad_resume(device_t dv, const pmf_qual_t *qual)
 	return true;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, thinkpad, NULL);
-CFDRIVER_DECL(thinkpad, DV_DULL, NULL);
 
-static int thinkpadloc[] = { -1 };
-extern struct cfattach thinkpad_ca;
-
-static struct cfparent acpiparent = {
-	"acpinodebus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata thinkpad_cfdata[] = {
-	{
-		.cf_name = "thinkpad",
-		.cf_atname = "thinkpad",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = thinkpadloc,
-		.cf_flags = 0,
-		.cf_pspec = &acpiparent,
-	},
-
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
-thinkpad_modcmd(modcmd_t cmd, void *opaque)
+thinkpad_modcmd(modcmd_t cmd, void *aux)
 {
-	int err;
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
 
-		err = config_cfdriver_attach(&thinkpad_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("thinkpad", &thinkpad_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&thinkpad_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(thinkpad_cfdata, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("thinkpad", &thinkpad_ca);
-			config_cfdriver_detach(&thinkpad_cd);
-			return err;
-		}
-
-		return 0;
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_thinkpad,
+		    cfattach_ioconf_thinkpad, cfdata_ioconf_thinkpad);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(thinkpad_cfdata);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("thinkpad", &thinkpad_ca);
-		config_cfdriver_detach(&thinkpad_cd);
-
-		return 0;
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_thinkpad,
+		    cfattach_ioconf_thinkpad, cfdata_ioconf_thinkpad);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}
