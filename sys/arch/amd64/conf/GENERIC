@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.305 2011/02/16 03:16:57 jym Exp $
+# $NetBSD: GENERIC,v 1.306 2011/02/16 09:57:57 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.305 $"
+#ident 		"GENERIC-$Revision: 1.306 $"
 
 maxusers	64		# estimated number of users
 
@@ -475,6 +475,9 @@ iic*	at ichsmb?
 #dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
 #dbcool* at iic? addr 0x2D		# Tyan S2881
 #dbcool* at iic? addr 0x2E		# Tyan S2882-D
+
+# IBM Thinkpad Active Protection System
+#aps0 	at isa? port 0x1600
 
 # Fintek Super I/O with hardware monitor
 #finsio0 	at isa? port 0x4e
