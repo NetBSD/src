@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/10/27 20:24:10 cube Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2011/02/16 19:39:55 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -79,6 +79,8 @@ MAN=		AllPlanes.3 BlackPixelOfScreen.3 DisplayOfCCC.3 \
 		XrmEnumerateDatabase.3 XrmGetFileDatabase.3 \
 		XrmGetResource.3 XrmInitialize.3 XrmMergeDatabases.3 \
 		XrmPutResource.3 XrmUniqueQuark.3
+
+USETBL=		yes
 
 FILES=		XErrorDB XKeysymDB Xcms.txt
 FILESDIR=	${X11LIBDIR}
