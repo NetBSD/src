@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.8 2011/01/25 12:21:04 tsutsui Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.9 2011/02/16 23:44:20 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.8 2011/01/25 12:21:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.9 2011/02/16 23:44:20 jmcneill Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -162,6 +162,11 @@ CFATTACH_DECL_NEW(pi1ppc, sizeof(struct pi1ppc_softc),
 static int
 pi1ppc_match(device_t parent, cfdata_t match, void *aux)
 {
+	struct hpc_attach_args *ha = aux;
+
+	if (strcmp(ha->ha_name, match->cf_name) != 0)
+		return 0;
+
 	if (mach_type == MACH_SGI_IP22)
 		return 1;
 
