@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.57 2007/07/07 22:33:57 christos Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.57.18.1 2011/02/16 21:04:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.57 2007/07/07 22:33:57 christos Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.57.18.1 2011/02/16 21:04:03 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -129,6 +129,7 @@ static void yp_log(int, const char *, ...)
 static struct _dom_binding *makebinding(const char *);
 static int makelock(struct _dom_binding *);
 static void removelock(struct _dom_binding *);
+static int purge_bindingdir(const char *);
 static void *ypbindproc_null_2(SVCXPRT *, void *);
 static void *ypbindproc_domain_2(SVCXPRT *, void *);
 static void *ypbindproc_setdom_2(SVCXPRT *, void *);
@@ -219,6 +220,50 @@ removelock(struct _dom_binding *ypdb)
 	(void)snprintf(path, sizeof(path), "%s/%s.%ld",
 	    BINDINGDIR, ypdb->dom_domain, ypdb->dom_vers);
 	(void)unlink(path);
+}
+
+/*
+ * purge_bindingdir: remove old binding files (i.e. "rm BINDINGDIR\/\*.[0-9]")
+ *
+ * local YP functions [e.g. yp_master()] will fail without even talking
+ * to ypbind if there is a stale (non-flock'd) binding file present.
+ * we have to scan the entire BINDINGDIR for binding files, because
+ * ypbind may bind more than just the yp_get_default_domain() domain.
+ */
+static int
+purge_bindingdir(const char *dirpath)
+{
+	DIR *dirp;
+	int unlinkedfiles, l;
+	struct dirent *dp;
+	char pathname[MAXPATHLEN];
+
+	if ((dirp = opendir(dirpath)) == NULL)
+		return(-1);   /* at this point, shouldn't ever happen */
+
+	do {
+		unlinkedfiles = 0;
+		while ((dp = readdir(dirp)) != NULL) {
+			l = dp->d_namlen;
+			/* 'rm *.[0-9]' */
+			if (l > 2 && dp->d_name[l-2] == '.' &&
+			    dp->d_name[l-1] >= '0' && dp->d_name[l-1] <= '9') {
+				(void)snprintf(pathname, sizeof(pathname), 
+					"%s/%s", dirpath, dp->d_name);
+				if (unlink(pathname) < 0 && errno != ENOENT)
+					return(-1);
+				unlinkedfiles++;
+			}
+		}
+
+		/* rescan dir if we removed it */
+		if (unlinkedfiles)
+			rewinddir(dirp);
+
+	} while (unlinkedfiles);
+
+	closedir(dirp);
+	return(0);
 }
 
 static void *
@@ -507,8 +552,6 @@ main(int argc, char *argv[])
 	/* initialise syslog */
 	openlog("ypbind", LOG_PERROR | LOG_PID, LOG_DAEMON);
 
-	/* blow away everything in BINDINGDIR */
-
 	lockfd = open(_PATH_YPBIND_LOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644);
 	if (lockfd == -1)
 		err(1, "Cannot create %s", _PATH_YPBIND_LOCK);
@@ -558,6 +601,10 @@ main(int argc, char *argv[])
 
 	if (_yp_invalid_domain(domainname))
 		errx(1, "bad domainname: %s", domainname);
+
+	/* blow away old bindings in BINDINGDIR */
+	if (purge_bindingdir(BINDINGDIR) < 0)
+		errx(1, "unable to purge old bindings from %s", BINDINGDIR);
 
 	/* build initial domain binding, make it "unsuccessful" */
 	ypbindlist = makebinding(domainname);
@@ -966,7 +1013,7 @@ direct_set(char *buf, int outlen, struct _dom_binding *ypdb)
 	iov[1].iov_len = sizeof(ybr);
 	bytes = readv(fd, iov, 2);
 	(void)close(fd);
-	if (bytes != (iov[0].iov_len + iov[1].iov_len)) {
+	if ((size_t)bytes != (iov[0].iov_len + iov[1].iov_len)) {
 		/* Binding file corrupt? */
 		yp_log(LOG_WARNING, "%s: %m", path);
 		been_ypset = 0;
@@ -1022,7 +1069,7 @@ try_again:
 #endif
 		return RPC_CANTRECV;
 	}
-	if (inlen < sizeof(u_int32_t))
+	if ((size_t)inlen < sizeof(u_int32_t))
 		goto recv_again;
 
 	/*
@@ -1083,7 +1130,7 @@ try_again:
 #endif
 		return RPC_CANTRECV;
 	}
-	if (inlen < sizeof(u_int32_t))
+	if ((size_t)inlen < sizeof(u_int32_t))
 		goto recv_again;
 
 	/*
@@ -1188,7 +1235,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port =
 	    raddrp->sin_port;
 
-	if (writev(ypdb->dom_lockfd, iov, 2) !=
+	if ((size_t)writev(ypdb->dom_lockfd, iov, 2) !=
 	    iov[0].iov_len + iov[1].iov_len) {
 		yp_log(LOG_WARNING, "writev: %m");
 		(void)close(ypdb->dom_lockfd);
