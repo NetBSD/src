@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.82 2011/02/16 06:02:01 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.83 2011/02/16 06:14:01 uebayasi Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
+#
+# TODO:
+# - In 'build.sh distribution', print diff to previous
 #RCSMETALOG=1
 
 # The `all' target must appear before bsd.own.mk is pulled in.
