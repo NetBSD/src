@@ -387,6 +387,8 @@ cpu_evcnt_attach(struct cpu_info *ci)
 		&ci->ci_ev_traps, xname, "system call traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_pgm, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, xname, "PGM traps");
+	evcnt_attach_dynamic_nozero(&ci->ci_ev_debug, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_traps, xname, "debug traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_fpu, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, xname, "FPU unavailable traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_fpusw, EVCNT_TYPE_MISC,
