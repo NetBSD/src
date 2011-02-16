@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.40 2011/02/14 16:05:11 bouyer Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.41 2011/02/16 19:43:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.40 2011/02/14 16:05:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.41 2011/02/16 19:43:05 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -479,7 +479,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wl->wl_bufcount_max = (nbuf / 2) * 1024;
 
 	/* XXX tie this into resource estimation */
-	wl->wl_dealloclim = 2 * btodb(wl->wl_bufbytes_max);
+	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
 	
 	wl->wl_deallocblks = wapbl_malloc(sizeof(*wl->wl_deallocblks) *
 	    wl->wl_dealloclim);
