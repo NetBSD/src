@@ -1,4 +1,4 @@
-#       $NetBSD: t_exec.sh,v 1.3 2011/02/16 15:34:18 pooka Exp $
+#       $NetBSD: t_exec.sh,v 1.4 2011/02/16 16:02:52 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,7 +62,7 @@ exec_body()
 {
 
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
-	atf_check -s exit:0 $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_ution
+	atf_check -s exit:0 $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_exec
 	atf_check -s exit:0 -o save:sstat.out rump.sockstat
 	atf_check -s exit:0 -o match:'^root.*h_ution.*tcp.*\*\.1234' \
 	    sed -n 2p sstat.out
@@ -86,7 +86,7 @@ cloexec_body()
 
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
 	atf_check -s exit:0  \
-	    $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_ution cloexec1
+	    $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_exec cloexec1
 	atf_check -s exit:0 -o save:sstat.out rump.sockstat
 	atf_check -s exit:0 -o inline:'2\n' sed -n '$=' sstat.out
 	atf_check -s exit:0 -o match:'^root.*h_ution.*tcp.*\*\.2345' \
