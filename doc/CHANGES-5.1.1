@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.9 2011/02/16 20:39:07 bouyer Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.10 2011/02/16 21:24:31 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2245,4 +2245,10 @@ sys/dev/pci/pci.c				1.131
 	During shutdown, restore the each PCI device's bus-mastering enable to
 	the state that we found it in before attaching a driver to it.
 	[dyoung, ticket #1540]
+
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c	1.4 via patch
+
+	fix for CVE-2011-0014 (OCSP stapling vulnerability in OpenSSL)
+	patch taken from http://www.openssl.org/news/secadv_20110208.txt
+	[spz, ticket #1545]
 
