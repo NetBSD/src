@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.6 2010/12/02 14:52:18 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.7 2011/02/16 03:47:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.174.4.4 2010/08/16 22:27:18 marka Exp */
+/* Id: zone.h,v 1.182 2010-12-18 01:56:22 each Exp */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -43,7 +43,9 @@ typedef enum {
 	dns_zone_master,
 	dns_zone_slave,
 	dns_zone_stub,
-	dns_zone_key
+	dns_zone_staticstub,
+	dns_zone_key,
+	dns_zone_dlz
 } dns_zonetype_t;
 
 #define DNS_ZONEOPT_SERVERS	  0x00000001U	/*%< perform server checks */
@@ -380,6 +382,22 @@ dns_zone_getdb(dns_zone_t *zone, dns_db_t **dbp);
  * Returns:
  *\li	#ISC_R_SUCCESS
  *\li	DNS_R_NOTLOADED
+ */
+
+void
+dns_zone_setdb(dns_zone_t *zone, dns_db_t *db);
+/*%<
+ *	Sets the zone database to 'db'.
+ *
+ *	This function is expected to be used to configure a zone with a
+ *	database which is not loaded from a file or zone transfer.
+ *	It can be used for a general purpose zone, but right now its use
+ *	is limited to static-stub zones to avoid possible undiscovered
+ *	problems in the general cases.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone of static-stub.
+ *\li	zone doesn't have a database.
  */
 
 isc_result_t
@@ -1688,7 +1706,7 @@ void
 dns_zone_setcheckmx(dns_zone_t *zone, dns_checkmxfunc_t checkmx);
 /*%<
  *	Set the post load integrity callback function 'checkmx'.
- *	'checkmx' will be called if the MX is not within the zone.
+ *	'checkmx' will be called if the MX TARGET is not within the zone.
  *
  * Require:
  *	'zone' to be a valid zone.
@@ -1707,8 +1725,8 @@ dns_zone_setchecksrv(dns_zone_t *zone, dns_checkmxfunc_t checksrv);
 void
 dns_zone_setcheckns(dns_zone_t *zone, dns_checknsfunc_t checkns);
 /*%<
- *	Set the post load integrity callback function 'checkmx'.
- *	'checkmx' will be called if the MX is not within the zone.
+ *	Set the post load integrity callback function 'checkns'.
+ *	'checkns' will be called if the NS TARGET is not within the zone.
  *
  * Require:
  *	'zone' to be a valid zone.
@@ -1828,6 +1846,12 @@ dns_zone_getadded(dns_zone_t *zone);
  *
  * Requires:
  * \li	'zone' to be valid.
+ */
+
+isc_result_t
+dns_zone_dlzpostload(dns_zone_t *zone, dns_db_t *db);
+/*%
+ * Load the origin names for a writeable DLZ database.
  */
 
 ISC_LANG_ENDDECLS

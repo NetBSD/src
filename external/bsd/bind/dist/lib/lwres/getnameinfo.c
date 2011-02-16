@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.2 2011/02/15 19:38:48 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -156,7 +156,7 @@ static struct afd {
 #define ERR(code) \
 	do { result = (code);			\
 		if (result != 0) goto cleanup;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*% lightweight resolver socket address structure to hostname and service name */
 int

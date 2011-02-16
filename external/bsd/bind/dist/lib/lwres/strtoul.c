@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.1.1.2 2011/02/15 19:38:51 christos Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.2 2011/02/16 03:47:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -70,7 +70,7 @@ static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 		union { const void *k; void *v; } _u; \
 		_u.k = konst; \
 		var = _u.v; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*!
  * Convert a string to an unsigned long integer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_api.h,v 1.1.1.3 2011/02/15 19:39:02 christos Exp $	*/
+/*	$NetBSD: t_api.h,v 1.2 2011/02/16 03:47:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")

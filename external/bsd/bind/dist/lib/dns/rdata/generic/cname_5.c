@@ -1,4 +1,4 @@
-/*	$NetBSD: cname_5.c,v 1.1.1.3 2011/02/15 19:37:51 christos Exp $	*/
+/*	$NetBSD: cname_5.c,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
