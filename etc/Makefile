@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.386 2011/02/16 16:20:06 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.387 2011/02/16 16:22:13 uebayasi Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -378,6 +378,7 @@ OBSOLETE.files+=	tests
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif
 
+# XXX make "makeobsolete" set wise; then generate files respectively
 install-obsolete-lists: .PHONY .MAKE
 	mkdir -p ${OBSOLETE.dir}
 .if ${MKX11} != "no"
@@ -389,8 +390,11 @@ install-obsolete-lists: .PHONY .MAKE
 .endif
 .for file in ${OBSOLETE.files}
 	${_MKMSG_INSTALL} ${DESTDIR}/var/db/obsolete/${file}
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete
+	if [ ! -e ${DESTDIR}/var/db/obsolete/${file} ] || \
+	    ! cmp -s ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete/${file}; then \
+		${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+		    ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete; \
+	else true; fi
 .endfor
 
 
