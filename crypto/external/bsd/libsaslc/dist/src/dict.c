@@ -1,4 +1,4 @@
-/* $NetBSD: dict.c,v 1.5 2011/02/12 23:21:32 christos Exp $ */
+/* $NetBSD: dict.c,v 1.6 2011/02/16 02:14:22 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dict.c,v 1.5 2011/02/12 23:21:32 christos Exp $");
+__RCSID("$NetBSD: dict.c,v 1.6 2011/02/16 02:14:22 christos Exp $");
 
 #include <sys/queue.h>
 
@@ -60,14 +60,14 @@ typedef struct saslc__dict_node_t {
 } saslc__dict_node_t;
 
 /*
- * XXX: If you add property keys, please readjust these values so that
- * saslc__dict_hashval() remains collisionless.
+ * XXX: If you add or change property keys, please readjust these
+ * values so that saslc__dict_hashval() remains collisionless.
  * dist/test_hash/test_hash.c can help with this.
  */
-/* no collisions: hsize=15  hinit=3  shift=7 */
-#define HASH_SIZE	15
-#define HASH_INIT	3
-#define HASH_SHIFT	7
+/* no collisions: hsize=18  hinit=0  shift=2 */
+#define HASH_SIZE       18
+#define HASH_INIT       0
+#define HASH_SHIFT      2
 
 /**
  * @brief compute the hash value for a given string.

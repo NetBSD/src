@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.8 2011/02/15 18:36:08 christos Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.9 2011/02/16 02:14:22 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.8 2011/02/15 18:36:08 christos Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.9 2011/02/16 02:14:22 christos Exp $");
 
 #include <sys/param.h>
 
@@ -75,7 +75,7 @@ __RCSID("$NetBSD: mech_digestmd5.c,v 1.8 2011/02/15 18:36:08 christos Exp $");
 #define SASLC_DIGESTMD5_QOPMASK		SASLC_PROP_QOPMASK
 #define SASLC_DIGESTMD5_REALM		SASLC_PROP_REALM
 #define SASLC_DIGESTMD5_SERVICE		SASLC_PROP_SERVICE
-#define SASLC_DIGESTMD5_SERVICENAME	SASLC_PROP_SERVICENAME
+#define SASLC_DIGESTMD5_SERVNAME	SASLC_PROP_SERVNAME
 /*
  * XXX: define this if you want to be able to set a fixed cnonce for
  * debugging purposes.
@@ -729,7 +729,7 @@ saslc__mech_digestmd5_digesturi(saslc_sess_t *sess, const char *serv_host)
 		    "service is required for an authentication");
 		return NULL;
 	}
-	serv_list = saslc_sess_getprop(sess, SASLC_DIGESTMD5_SERVICENAME);
+	serv_list = saslc_sess_getprop(sess, SASLC_DIGESTMD5_SERVNAME);
 	serv_name = serv_list != NULL
 	    ? choose_from_hqlist(serv_list, serv_host) : NULL;
 
