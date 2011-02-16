@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.8 2011/01/16 13:23:09 bouyer Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.9 2011/02/16 20:39:07 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2239,4 +2239,10 @@ sys/arch/x68k/conf/INSTALL			1.85
 
 	Increase the image size from 1300KB to 1400KB.
 	[isaki, ticket #1531]
+
+sys/dev/pci/pci.c				1.131
+
+	During shutdown, restore the each PCI device's bus-mastering enable to
+	the state that we found it in before attaching a driver to it.
+	[dyoung, ticket #1540]
 
