@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.29 2011/02/15 10:37:07 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.30 2011/02/16 15:33:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -73,6 +73,8 @@ int	(*host_dup)(int);
 int	(*host_kqueue)(void);
 int	(*host_kevent)(int, const struct kevent *, size_t,
 		       struct kevent *, size_t, const struct timespec *);
+
+int	(*host_execve)(const char *, char *const[], char *const[]);
 
 #include "sp_common.c"
 
@@ -748,6 +750,7 @@ rumpclient_init()
 	FINDSYM(setsockopt);
 	FINDSYM(dup);
 	FINDSYM(kqueue);
+	FINDSYM(execve);
 #if !__NetBSD_Prereq__(5,99,7)
 	FINDSYM(kevent);
 #else
@@ -813,7 +816,7 @@ rumpclient_prefork(void)
 	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	rpf = malloc(sizeof(*rpf));
 	if (rpf == NULL)
-		return NULL;
+		goto out;
 
 	if ((rv = prefork_req(&clispc, &omask, &resp)) != 0) {
 		free(rpf);
@@ -926,6 +929,30 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 	return 0;
 }
 
+pid_t
+rumpclient_fork(pid_t (*forkfn)(void))
+{
+	struct rumpclient_fork *rf;
+	pid_t rv;
+
+	if ((rf = rumpclient_prefork()) == NULL)
+		return -1;
+                
+	switch ((rv = forkfn())) {
+	case -1:
+		/* XXX: cancel rf */
+		break;
+	case 0:
+		if (rumpclient_fork_init(rf) == -1)
+			rv = -1;
+		break;
+	default:
+		break;
+	}
+
+	return rv;
+}
+
 /*
  * Process is about to exec.  Save info about our existing connection
  * in the env.  rumpclient will check for this info in init().
@@ -933,13 +960,13 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
  * may use it as well.
  */
 int
-rumpclient__exec_augmentenv(char *const oenv1[], char *const oenv2[],
-	char ***newenvp)
+rumpclient_exec(const char *path, char *const argv[], char *const envp[])
 {
 	char buf[4096];
 	char **newenv;
 	char *envstr, *envstr2;
-	size_t nelem1, nelem2;
+	size_t nelem;
+	int rv, sverrno;
 
 	snprintf(buf, sizeof(buf), "RUMPCLIENT__EXECFD=%d,%d",
 	    clispc.spc_fd, kq);
@@ -963,31 +990,28 @@ rumpclient__exec_augmentenv(char *const oenv1[], char *const oenv2[],
 		envstr2 = NULL;
 	}
 
-	nelem1 = 0;
-	if (oenv1) {
-		for (; oenv1[nelem1]; nelem1++)
-			continue;
-	}
-	nelem2 = 0;
-	if (oenv2) {
-		for (; oenv2[nelem2]; nelem2++)
-			continue;
-	}
+	for (nelem = 0; envp && envp[nelem]; nelem++)
+		continue;
 
-	newenv = malloc(sizeof(*newenv) * nelem1+nelem2+3);
+	newenv = malloc(sizeof(*newenv) * nelem+3);
 	if (newenv == NULL) {
 		free(envstr2);
 		free(envstr);
 		return ENOMEM;
 	}
-	memcpy(&newenv[0], oenv1, sizeof(*oenv1) * nelem1);
-	memcpy(&newenv[nelem1], oenv2, sizeof(*oenv2) * nelem2);
+	memcpy(&newenv[0], envp, nelem*sizeof(*envp));
 
-	newenv[nelem1+nelem2] = envstr;
-	newenv[nelem1+nelem2+1] = envstr2;
-	newenv[nelem1+nelem2+2] = NULL;
+	newenv[nelem] = envstr;
+	newenv[nelem+1] = envstr2;
+	newenv[nelem+2] = NULL;
 
-	*newenvp = newenv;
+	rv = host_execve(path, argv, newenv);
 
-	return 0;
+	_DIAGASSERT(rv != 0);
+	sverrno = errno;
+	free(envstr2);
+	free(envstr);
+	free(newenv);
+	errno = sverrno;
+	return rv;
 }
