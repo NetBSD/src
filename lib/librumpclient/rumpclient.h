@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.9 2011/02/16 19:58:01 pooka Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.10 2011/02/16 22:35:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
 #define _RUMP_RUMPCLIENT_H_
 
 #include <sys/types.h>
+#include <sys/null.h>
 
 struct rumpclient_fork;
 
