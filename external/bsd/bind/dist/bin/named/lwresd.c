@@ -1,4 +1,4 @@
-/*	$NetBSD: lwresd.c,v 1.1.1.3 2011/02/15 19:30:08 christos Exp $	*/
+/*	$NetBSD: lwresd.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -98,7 +98,7 @@ ns__lwresd_memfree(void *arg, void *mem, size_t size) {
 #define CHECK(op)						\
 	do { result = (op);					\
 		if (result != ISC_R_SUCCESS) goto cleanup;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static isc_result_t
 buffer_putstr(isc_buffer_t *b, const char *s) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.c,v 1.1.1.2 2011/02/15 19:37:23 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.2 2011/02/16 03:47:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@
 	isc_result_t _r = (x); \
 	if (_r != ISC_R_SUCCESS) \
 		return (_r); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 static isc_result_t bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl);

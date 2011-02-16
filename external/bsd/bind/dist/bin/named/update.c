@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.6 2011/02/15 19:30:22 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -88,7 +88,7 @@
 #define CHECK(op) \
 	do { result = (op); \
 		if (result != ISC_R_SUCCESS) goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally with result 'code', which must not
@@ -103,7 +103,7 @@
 	do {							\
 		result = (code);				\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally and log as a client error.
@@ -125,12 +125,12 @@
 			   "update %s: %s (%s)", _what,		\
 			   msg, isc_result_totext(result));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define PREREQFAILC(code, msg) \
 	do {							\
 		inc_stats(zone, dns_nsstatscounter_updatebadprereq); \
 		FAILC(code, msg);				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FAILN(code, name, msg) \
 	do {								\
@@ -151,12 +151,12 @@
 				   msg, isc_result_totext(result));	\
 		}							\
 		if (result != ISC_R_SUCCESS) goto failure;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define PREREQFAILN(code, name, msg) \
 	do {								\
 		inc_stats(zone, dns_nsstatscounter_updatebadprereq); \
 		FAILN(code, name, msg);					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FAILNT(code, name, type, msg) \
 	do {								\
@@ -180,12 +180,12 @@
 				   isc_result_totext(result));		\
 		}							\
 		if (result != ISC_R_SUCCESS) goto failure;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define PREREQFAILNT(code, name, type, msg)				\
 	do {								\
 		inc_stats(zone, dns_nsstatscounter_updatebadprereq); \
 		FAILNT(code, name, type, msg);				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally and log as a server error.
@@ -199,7 +199,7 @@
 			   "error: %s: %s",			\
 			   msg, isc_result_totext(result));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * Return TRUE if NS_CLIENTATTR_TCP is set in the attributes other FALSE.

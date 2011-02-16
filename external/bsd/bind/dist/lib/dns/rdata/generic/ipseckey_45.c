@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.1.1.4 2011/02/15 19:37:51 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.2 2011/02/16 03:47:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")

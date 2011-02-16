@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace-emptytbl.c,v 1.1.1.2 2011/02/15 19:38:05 christos Exp $	*/
+/*	$NetBSD: backtrace-emptytbl.c,v 1.2 2011/02/16 03:47:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")

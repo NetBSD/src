@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.1.1.5 2011/02/15 19:36:52 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.2 2011/02/16 03:47:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -106,12 +106,12 @@ static isc_boolean_t bind8_compat = ISC_TRUE; /* XXX config */
 #define FAIL(code) \
 	do { result = (code);					\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECK(op) \
 	do { result = (op); 					\
 		if (result != ISC_R_SUCCESS) goto failure; 	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static isc_result_t index_to_disk(dns_journal_t *);
 
