@@ -1,4 +1,4 @@
-#       $NetBSD: t_exec.sh,v 1.2 2011/02/15 15:54:56 pooka Exp $
+#       $NetBSD: t_exec.sh,v 1.3 2011/02/16 15:34:18 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,8 +39,7 @@ noexec_body()
 {
 
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
-	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    $(atf_get_srcdir)/h_exec
+	atf_check -s exit:0 env $(atf_get_srcdir)/h_exec
 	atf_check -s exit:0 -o save:sstat.out rump.sockstat
 	atf_check -s exit:0 -o match:'^root.*h_exec.*tcp.*\*\.1234' \
 	    sed -n 2p sstat.out
@@ -63,8 +62,7 @@ exec_body()
 {
 
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
-	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_ution
+	atf_check -s exit:0 $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_ution
 	atf_check -s exit:0 -o save:sstat.out rump.sockstat
 	atf_check -s exit:0 -o match:'^root.*h_ution.*tcp.*\*\.1234' \
 	    sed -n 2p sstat.out
@@ -87,7 +85,7 @@ cloexec_body()
 {
 
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
-	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
+	atf_check -s exit:0  \
 	    $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_ution cloexec1
 	atf_check -s exit:0 -o save:sstat.out rump.sockstat
 	atf_check -s exit:0 -o inline:'2\n' sed -n '$=' sstat.out
