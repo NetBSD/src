@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.4 2011/02/08 06:18:04 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.5 2011/02/16 18:39:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,6 +51,7 @@
 
 #define	SVR_MPC8544v1		  0x80340110
 #define	SVR_MPC8544v1plus	  0x80340111
+#define	SVR_MPC8533		  0x80340010
 
 #define	SVR_MPC8536v1		  0x80370091
 
@@ -140,10 +141,10 @@
 #define	  DBCR0_BRT		  0x04000000 /* 5: Branch Taken debug event */
 #define	  DBCR0_IRPT		  0x02000000 /* 6: Interrupt Taken debug event */
 #define	  DBCR0_TRAP		  0x01000000 /* 7: Trap Instruction Debug Event */
-#define	  DBCR0_IA1		  0x00800000 /* 8: IAC (Instruction Address Compare) 1 debug event */
-#define	  DBCR0_IA2		  0x00400000 /* 9: IAC 2 debug event */
-#define	  DBCR0_IA3		  0x00200000 /* 10: IAC 3 debug event */
-#define	  DBCR0_IA4		  0x00100000 /* 11: IAC 4 debug event */
+#define	  DBCR0_IAC1		  0x00800000 /* 8: IAC (Instruction Address Compare) 1 debug event */
+#define	  DBCR0_IAC2		  0x00400000 /* 9: IAC 2 debug event */
+#define	  DBCR0_IAC3		  0x00200000 /* 10: IAC 3 debug event */
+#define	  DBCR0_IAC4		  0x00100000 /* 11: IAC 4 debug event */
 #define	  DBCR0_DAC1_LOAD	  0x00080000 /* 12: DAC (Data Address Compare) 1 load event */
 #define	  DBCR0_DAC1_STORE	  0x00040000 /* 13: DAC (Data Address Compare) 1 store event */
 #define	  DBCR0_DAC2_LOAD	  0x00020000 /* 14: DAC 2 load event */
