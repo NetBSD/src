@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.52 2010/06/09 04:51:53 riz Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.53 2011/02/16 17:53:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.52 2010/06/09 04:51:53 riz Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.53 2011/02/16 17:53:31 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ static time_t offset, shuttime;
 static int dofast, dohalt, doreboot, killflg, nofork, nosync, dodump;
 static size_t mbuflen;
 static int dopowerdown;
+static int dodebug, dosilent, doverbose;
 static const char *whom;
 static char mbuf[BUFSIZ];
 static char *bootstr;
@@ -120,7 +121,7 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "%s: Not super-user", strerror(EPERM));
 #endif
-	while ((ch = getopt(argc, argv, "b:Ddfhknpr")) != -1)
+	while ((ch = getopt(argc, argv, "b:Ddfhknprvxz")) != -1)
 		switch (ch) {
 		case 'b':
 			bootstr = optarg;
@@ -148,6 +149,15 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			doreboot = 1;
+			break;
+		case 'v':
+			doverbose = 1;
+			break;
+		case 'x':
+			dodebug = 1;
+			break;
+		case 'z':
+			dosilent = 1;
 			break;
 		case '?':
 		default:
@@ -370,7 +380,7 @@ die_you_gravy_sucking_pig_dog(void)
 		doitfast();
 	dorcshutdown();
 	if (doreboot || dohalt) {
-		const char *args[16];
+		const char *args[20];
 		const char **arg, *path;
 #ifndef DEBUG
 		int serrno;
@@ -384,6 +394,12 @@ die_you_gravy_sucking_pig_dog(void)
 			path = _PATH_HALT;
 			*arg++ = "halt";
 		}
+		if (doverbose)
+			*arg++ = "-v";
+		if (dodebug)
+			*arg++ = "-x";
+		if (dosilent)
+			*arg++ = "-z";
 		if (dodump)
 			*arg++ = "-d";
 		if (nosync)

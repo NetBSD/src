@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.28 2008/10/21 02:35:51 lukem Exp $
+.\"	$NetBSD: shutdown.8,v 1.29 2011/02/16 17:53:31 dyoung Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd October 21, 2008
+.Dd February 16, 2011
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -110,6 +110,27 @@ The system is rebooted at the specified
 .Ar time ,
 using
 .Xr reboot 8 .
+.It Fl v
+To enable verbose messages on the console, pass
+.Fl v
+to
+.Xr reboot 8
+or
+.Xr halt 8 .
+.It Fl x
+To enable debugging messages on the console, pass
+.Fl x
+to
+.Xr reboot 8
+or
+.Xr halt 8 .
+.It Fl z
+To silence some shutdown messages on the console, pass
+.Fl z
+to
+.Xr reboot 8
+or
+.Xr halt 8 .
 .It Fl D
 Prevents
 .Nm
