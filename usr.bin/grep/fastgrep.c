@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fastgrep.c,v 1.1 2011/02/16 01:31:33 joerg Exp $");
+__RCSID("$NetBSD: fastgrep.c,v 1.2 2011/02/16 18:35:39 joerg Exp $");
 
 #include <limits.h>
 #include <stdbool.h>
@@ -61,8 +61,7 @@ fgrepcomp(fastgrep_t *fg, const char *pat)
 	fg->eol = false;
 	fg->reversed = false;
 
-	fg->pattern = grep_malloc(strlen(pat) + 1);
-	strcpy(fg->pattern, pat);
+	fg->pattern = (unsigned char *)grep_strdup(pat);
 
 	/* Preprocess pattern. */
 	for (i = 0; i <= UCHAR_MAX; i++)
@@ -120,7 +119,8 @@ fastcomp(fastgrep_t *fg, const char *pat)
 	 * string respectively.
 	 */
 	fg->pattern = grep_malloc(fg->len + 1);
-	strlcpy(fg->pattern, pat + (bol ? 1 : 0) + wflag, fg->len + 1);
+	strlcpy((char *)fg->pattern, pat + (bol ? 1 : 0) + wflag,
+	    fg->len + 1);
 
 	/* Look for ways to cheat...er...avoid the full regex engine. */
 	for (i = 0; i < fg->len; i++) {
