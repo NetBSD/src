@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.179 2011/02/05 13:12:07 mlelstv Exp $ */
+/* $NetBSD: vmstat.c,v 1.180 2011/02/16 12:58:38 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.179 2011/02/05 13:12:07 mlelstv Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.180 2011/02/16 12:58:38 nakayama Exp $");
 #endif
 #endif /* not lint */
 
@@ -1137,7 +1137,9 @@ doevcnt(int verbose, int type)
 
 	counttotal = 0;
 	uptime = getuptime();
-	(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate", "type");
+	if (type == EVCNT_TYPE_ANY)
+		(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate",
+		    "type");
 
 	if (memf == NULL) do {
 		const int mib[4] = { CTL_KERN, KERN_EVCNT, type,
@@ -1175,7 +1177,9 @@ doevcnt(int verbose, int type)
 		while (evs < last_evs
 		    && buflen >= sizeof(*evs)/sizeof(uint64_t)
 		    && buflen >= evs->ev_len) {
-			(void)printf("%s %s%*s %16"PRIu64" %8"PRIu64" %s\n",
+			(void)printf(type == EVCNT_TYPE_ANY ?
+			    "%s %s%*s %16"PRIu64" %8"PRIu64" %s\n" :
+			    "%s %s%*s %16"PRIu64" %8"PRIu64"\n",
 			    evs->ev_strings,
 			    evs->ev_strings + evs->ev_grouplen + 1,
 			    34 - (evs->ev_grouplen + 1 + evs->ev_namelen), "",
@@ -1184,8 +1188,8 @@ doevcnt(int verbose, int type)
 			    (evs->ev_type < __arraycount(evtypes) ?
 				evtypes[evs->ev_type] : "?"));
 			buflen -= evs->ev_len;
+			counttotal += evs->ev_count;
 			evs = (const void *)((const uint64_t *)evs + evs->ev_len);
-			counttotal += evcnt.ev_count++;
 		}
 		free(buf);
 		if (type != EVCNT_TYPE_ANY)
@@ -1211,7 +1215,9 @@ doevcnt(int verbose, int type)
 		deref_kptr(evcnt.ev_name, evname,
 		    (size_t)evcnt.ev_namelen + 1, "event chain trashed");
 
-		(void)printf("%s %s%*s %16"PRIu64" %8"PRIu64" %s\n",
+		(void)printf(type == EVCNT_TYPE_ANY ?
+		    "%s %s%*s %16"PRIu64" %8"PRIu64" %s\n" :
+		    "%s %s%*s %16"PRIu64" %8"PRIu64"\n",
 		    evgroup, evname,
 		    34 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
 		    evcnt.ev_count,
@@ -1219,7 +1225,7 @@ doevcnt(int verbose, int type)
 		    (evcnt.ev_type < __arraycount(evtypes) ?
 			evtypes[evcnt.ev_type] : "?"));
 
-		counttotal += evcnt.ev_count++;
+		counttotal += evcnt.ev_count;
 	}
 	if (type != EVCNT_TYPE_ANY)
 		(void)printf("%-34s %16"PRIu64" %8"PRIu64"\n",
