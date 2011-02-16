@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/23 12:41:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2011/02/16 23:45:40 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
 
 LIB=		rumpclient
 USE_SHLIBDIR=	yes
+MAN=		rumpclient.3
 
 .include <bsd.own.mk>
 
