@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.36 2008/07/20 01:20:23 lukem Exp $	*/
+/*	$NetBSD: reboot.c,v 1.37 2011/02/16 17:53:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.36 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.37 2011/02/16 17:53:31 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 	} else
 		howto = 0;
 	lflag = nflag = qflag = 0;
-	while ((ch = getopt(argc, argv, "dlnpq")) != -1)
+	while ((ch = getopt(argc, argv, "dlnpqvxz")) != -1)
 		switch(ch) {
 		case 'd':
 			howto |= RB_DUMP;
@@ -104,6 +104,15 @@ main(int argc, char *argv[])
 			break;
 		case 'q':
 			qflag = 1;
+			break;
+		case 'v':
+			howto |= AB_VERBOSE;
+			break;
+		case 'x':
+			howto |= AB_DEBUG;
+			break;
+		case 'z':
+			howto |= AB_SILENT;
 			break;
 		case '?':
 		default:
