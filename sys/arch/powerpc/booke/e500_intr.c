@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.3 2011/02/16 18:43:35 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,6 +33,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_mpc85xx.h"
 
 #define __INTR_PRIVATE
 
@@ -108,6 +110,7 @@ static const struct e500_intr_name e500_onchip_intr_names[] = {
 	{ ISOURCE_PCIEX2, "pcie2" },
 	{ ISOURCE_PCIEX	, "pcie1" },
 	{ ISOURCE_PCIEX3, "pcie3" },
+	{ ISOURCE_USB1, "usb1" },
 	{ ISOURCE_ETSEC1_TX, "etsec1-tx" },
 	{ ISOURCE_ETSEC1_RX, "etsec1-rx" },
 	{ ISOURCE_ETSEC3_TX, "etsec3-tx" },
@@ -124,72 +127,24 @@ static const struct e500_intr_name e500_onchip_intr_names[] = {
 	{ ISOURCE_I2C, "i2c" },
 	{ ISOURCE_PERFMON, "perfmon" },
 	{ ISOURCE_SECURITY1, "sec1" },
+	{ ISOURCE_GPIO, "gpio" },
 	{ ISOURCE_SRIO_EWPU, "srio-ewpu" },
 	{ ISOURCE_SRIO_ODBELL, "srio-odbell" },
 	{ ISOURCE_SRIO_IDBELL, "srio-idbell" },
 	{ ISOURCE_SRIO_OMU1, "srio-omu1" },
 	{ ISOURCE_SRIO_IMU1, "srio-imu1" },
 	{ ISOURCE_SRIO_OMU2, "srio-omu2" },
-	{ ISOURCE_SRIO_IMU2, "srio-imu2" },
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8548_external_intr_names[] = {
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8536_external_intr_names[] = {
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8572_external_intr_names[] = {
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8548_onchip_intr_names[] = {
-	{ ISOURCE_PCI1, "pci1" },
-	{ ISOURCE_PCI2, "pci2" },
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8544_onchip_intr_names[] = {
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8536_onchip_intr_names[] = {
-	{ ISOURCE_USB1, "usb1" },
-	{ ISOURCE_SATA2, "sata2" },
-	{ ISOURCE_USB2, "usb2" },
 	{ ISOURCE_SECURITY2, "sec2" },
 	{ ISOURCE_SPI, "spi" },
-	{ ISOURCE_USB3, "usb3" },
-	{ ISOURCE_ETSEC1_PTP, "etsec1-ptp" },
-	{ ISOURCE_ETSEC3_PTP, "etsec3-ptp" },
-	{ ISOURCE_ESDHC, "esdhc" },
-	{ ISOURCE_SATA1, "sata1" },
-	{ 0, "" },
-};
-
-const struct e500_intr_name mpc8572_onchip_intr_names[] = {
-	{ ISOURCE_PCIEX3_MPC8572, "pcie3" },
-	{ ISOURCE_FEC, "fec" },
-	{ ISOURCE_GPIO, "gpio" },
-	{ ISOURCE_PME_GENERAL, "pme" },
-	{ ISOURCE_SECURITY2, "sec2" },
-	{ ISOURCE_TLU1, "tlu1" },
-	{ ISOURCE_TLU2, "tlu2" },
-	{ ISOURCE_PME_CHAN1, "pme-chan1" },
-	{ ISOURCE_PME_CHAN2, "pme-chan2" },
-	{ ISOURCE_PME_CHAN3, "pme-chan3" },
-	{ ISOURCE_PME_CHAN4, "pme-chan4" },
 	{ ISOURCE_ETSEC1_PTP, "etsec1-ptp" },
 	{ ISOURCE_ETSEC2_PTP, "etsec2-ptp" },
 	{ ISOURCE_ETSEC3_PTP, "etsec3-ptp" },
 	{ ISOURCE_ETSEC4_PTP, "etsec4-ptp" },
-	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
-	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
-	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
-	{ ISOURCE_DMA2_CHAN4, "dma2-chan4" },
+	{ ISOURCE_ESDHC, "esdhc" },
+	{ 0, "" },
+};
+
+const struct e500_intr_name default_external_intr_names[] = {
 	{ 0, "" },
 };
 
@@ -243,131 +198,140 @@ struct e500_intr_info {
 	u_int8_t ii_ist_vectors[IST_MAX+1];
 };
 
-static kmutex_t e500_intr_lock __aligned(32);
+static kmutex_t e500_intr_lock __cacheline_aligned;
 static struct e500_intr_info e500_intr_info;
 
-static const struct e500_intr_info mpc8548_intr_info = {
-	.ii_external_sources = MPC8548_EXTERNALSOURCES,
-	.ii_onchip_bitmap = MPC8548_ONCHIPBITMAP,
-	.ii_onchip_sources = MPC8548_ONCHIPSOURCES,
-	.ii_msigroup_sources = MPC8548_MSIGROUPSOURCES,
-	.ii_timer_sources = MPC8548_TIMERSOURCES,
-	.ii_ipi_sources = MPC8548_IPISOURCES,
-	.ii_mi_sources = MPC8548_MISOURCES,
-	.ii_percpu_sources = MPC8548_TIMERSOURCES
-	    + MPC8548_IPISOURCES + MPC8548_MISOURCES, 
-	.ii_external_intr_names = mpc8548_external_intr_names,
-	.ii_onchip_intr_names = mpc8548_onchip_intr_names,
-	.ii_ist_vectors = {
-		[IST_NONE]		= ~0,
-		[IST_EDGE]		= 0,
-		[IST_LEVEL_LOW]		= 0,
-		[IST_LEVEL_HIGH]	= 0,
-		[IST_ONCHIP]		= MPC8548_EXTERNALSOURCES,
-		[IST_MSIGROUP]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES,
-		[IST_TIMER]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES
-					    + MPC8548_MSIGROUPSOURCES,
-		[IST_IPI]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES
-					    + MPC8548_MSIGROUPSOURCES
-					    + MPC8548_TIMERSOURCES,
-		[IST_MI]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES
-					    + MPC8548_MSIGROUPSOURCES
-					    + MPC8548_TIMERSOURCES
-					    + MPC8548_IPISOURCES,
-		[IST_MAX]		= MPC8548_EXTERNALSOURCES
-					    + MPC8548_ONCHIPSOURCES
-					    + MPC8548_MSIGROUPSOURCES
-					    + MPC8548_TIMERSOURCES
-					    + MPC8548_IPISOURCES
-					    + MPC8548_MISOURCES,
-	},
+#define	INTR_INFO_DECL(lc_chip, UC_CHIP)				\
+static const struct e500_intr_info lc_chip##_intr_info = {		\
+	.ii_external_sources = UC_CHIP ## _EXTERNALSOURCES,		\
+	.ii_onchip_bitmap = UC_CHIP ## _ONCHIPBITMAP,			\
+	.ii_onchip_sources = UC_CHIP ## _ONCHIPSOURCES,			\
+	.ii_msigroup_sources = UC_CHIP ## _MSIGROUPSOURCES,		\
+	.ii_timer_sources = UC_CHIP ## _TIMERSOURCES,			\
+	.ii_ipi_sources = UC_CHIP ## _IPISOURCES,			\
+	.ii_mi_sources = UC_CHIP ## _MISOURCES,				\
+	.ii_percpu_sources = UC_CHIP ## _TIMERSOURCES			\
+	    + UC_CHIP ## _IPISOURCES + UC_CHIP ## _MISOURCES, 		\
+	.ii_external_intr_names = lc_chip ## _external_intr_names,	\
+	.ii_onchip_intr_names = lc_chip ## _onchip_intr_names,		\
+	.ii_ist_vectors = {						\
+		[IST_NONE]		= ~0,				\
+		[IST_EDGE]		= 0,				\
+		[IST_LEVEL_LOW]		= 0,				\
+		[IST_LEVEL_HIGH]	= 0,				\
+		[IST_ONCHIP]		= UC_CHIP ## _EXTERNALSOURCES,	\
+		[IST_MSIGROUP]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES, \
+		[IST_TIMER]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES	\
+					    + UC_CHIP ## _MSIGROUPSOURCES, \
+		[IST_IPI]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES	\
+					    + UC_CHIP ## _MSIGROUPSOURCES \
+					    + UC_CHIP ## _TIMERSOURCES,	\
+		[IST_MI]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES	\
+					    + UC_CHIP ## _MSIGROUPSOURCES \
+					    + UC_CHIP ## _TIMERSOURCES	\
+					    + UC_CHIP ## _IPISOURCES,	\
+		[IST_MAX]		= UC_CHIP ## _EXTERNALSOURCES	\
+					    + UC_CHIP ## _ONCHIPSOURCES	\
+					    + UC_CHIP ## _MSIGROUPSOURCES \
+					    + UC_CHIP ## _TIMERSOURCES	\
+					    + UC_CHIP ## _IPISOURCES	\
+					    + UC_CHIP ## _MISOURCES,	\
+	},								\
+}
+
+#ifdef MPC8536
+#define	mpc8536_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8536_onchip_intr_names[] = {
+	{ ISOURCE_SATA2, "sata2" },
+	{ ISOURCE_USB2, "usb2" },
+	{ ISOURCE_USB3, "usb3" },
+	{ ISOURCE_SATA1, "sata1" },
+	{ 0, "" },
 };
 
-static const struct e500_intr_info mpc8536_intr_info = {
-	.ii_external_sources = MPC8536_EXTERNALSOURCES,
-	.ii_onchip_bitmap = MPC8536_ONCHIPBITMAP,
-	.ii_onchip_sources = MPC8536_ONCHIPSOURCES,
-	.ii_msigroup_sources = MPC8536_MSIGROUPSOURCES,
-	.ii_timer_sources = MPC8536_TIMERSOURCES,
-	.ii_ipi_sources = MPC8536_IPISOURCES,
-	.ii_mi_sources = MPC8536_MISOURCES,
-	.ii_percpu_sources = MPC8536_TIMERSOURCES
-	    + MPC8536_IPISOURCES + MPC8536_MISOURCES, 
-	.ii_external_intr_names = mpc8536_external_intr_names,
-	.ii_onchip_intr_names = mpc8536_onchip_intr_names,
-	.ii_ist_vectors = {
-		[IST_NONE]		= ~0,
-		[IST_EDGE]		= 0,
-		[IST_LEVEL_LOW]		= 0,
-		[IST_LEVEL_HIGH]	= 0,
-		[IST_ONCHIP]		= MPC8536_EXTERNALSOURCES,
-		[IST_MSIGROUP]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES,
-		[IST_TIMER]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES
-					    + MPC8536_MSIGROUPSOURCES,
-		[IST_IPI]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES
-					    + MPC8536_MSIGROUPSOURCES
-					    + MPC8536_TIMERSOURCES,
-		[IST_MI]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES
-					    + MPC8536_MSIGROUPSOURCES
-					    + MPC8536_TIMERSOURCES
-					    + MPC8536_IPISOURCES,
-		[IST_MAX]		= MPC8536_EXTERNALSOURCES
-					    + MPC8536_ONCHIPSOURCES
-					    + MPC8536_MSIGROUPSOURCES
-					    + MPC8536_TIMERSOURCES
-					    + MPC8536_IPISOURCES
-					    + MPC8536_MISOURCES,
-	},
+INTR_INFO_DECL(mpc8536, MPC8536);
+#endif
+
+#ifdef MPC8544
+#define	mpc8544_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8544_onchip_intr_names[] = {
+	{ 0, "" },
 };
 
-static const struct e500_intr_info mpc8572_intr_info = {
-	.ii_external_sources = MPC8572_EXTERNALSOURCES,
-	.ii_onchip_bitmap = MPC8572_ONCHIPBITMAP,
-	.ii_onchip_sources = MPC8572_ONCHIPSOURCES,
-	.ii_msigroup_sources = MPC8572_MSIGROUPSOURCES,
-	.ii_timer_sources = MPC8572_TIMERSOURCES,
-	.ii_ipi_sources = MPC8572_IPISOURCES,
-	.ii_mi_sources = MPC8572_MISOURCES,
-	.ii_percpu_sources = MPC8572_TIMERSOURCES
-	    + MPC8572_IPISOURCES + MPC8572_MISOURCES, 
-	.ii_external_intr_names = mpc8572_external_intr_names,
-	.ii_onchip_intr_names = mpc8572_onchip_intr_names,
-	.ii_ist_vectors = {
-		[IST_NONE]		= ~0,
-		[IST_EDGE]		= 0,
-		[IST_LEVEL_LOW]		= 0,
-		[IST_LEVEL_HIGH]	= 0,
-		[IST_ONCHIP]		= MPC8572_EXTERNALSOURCES,
-		[IST_MSIGROUP]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES,
-		[IST_TIMER]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES
-					    + MPC8572_MSIGROUPSOURCES,
-		[IST_IPI]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES
-					    + MPC8572_MSIGROUPSOURCES
-					    + MPC8572_TIMERSOURCES,
-		[IST_MI]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES
-					    + MPC8572_MSIGROUPSOURCES
-					    + MPC8572_TIMERSOURCES
-					    + MPC8572_IPISOURCES,
-		[IST_MAX]		= MPC8572_EXTERNALSOURCES
-					    + MPC8572_ONCHIPSOURCES
-					    + MPC8572_MSIGROUPSOURCES
-					    + MPC8572_TIMERSOURCES
-					    + MPC8572_IPISOURCES
-					    + MPC8572_MISOURCES,
-	},
+INTR_INFO_DECL(mpc8544, MPC8544);
+#endif
+#ifdef MPC8548
+#define	mpc8548_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8548_onchip_intr_names[] = {
+	{ ISOURCE_PCI1, "pci1" },
+	{ ISOURCE_PCI2, "pci2" },
+	{ 0, "" },
 };
+
+INTR_INFO_DECL(mpc8548, MPC8548);
+#endif
+#ifdef MPC8555
+#define	mpc8555_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8555_onchip_intr_names[] = {
+	{ ISOURCE_PCI2, "pci2" },
+	{ ISOURCE_CPM, "CPM" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(mpc8555, MPC8555);
+#endif
+#ifdef MPC8568
+#define	mpc8568_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8568_onchip_intr_names[] = {
+	{ ISOURCE_QEB_LOW, "QEB low" },
+	{ ISOURCE_QEB_PORT, "QEB port" },
+	{ ISOURCE_QEB_IECC, "QEB iram ecc" },
+	{ ISOURCE_QEB_MUECC, "QEB ram ecc" },
+	{ ISOURCE_TLU1, "tlu1" },
+	{ ISOURCE_QEB_HIGH, "QEB high" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(mpc8568, MPC8568);
+#endif
+#ifdef MPC8572
+#define	mpc8572_external_intr_names	default_external_intr_names
+const struct e500_intr_name mpc8572_onchip_intr_names[] = {
+	{ ISOURCE_PCIEX3_MPC8572, "pcie3" },
+	{ ISOURCE_FEC, "fec" },
+	{ ISOURCE_PME_GENERAL, "pme" },
+	{ ISOURCE_TLU1, "tlu1" },
+	{ ISOURCE_TLU2, "tlu2" },
+	{ ISOURCE_PME_CHAN1, "pme-chan1" },
+	{ ISOURCE_PME_CHAN2, "pme-chan2" },
+	{ ISOURCE_PME_CHAN3, "pme-chan3" },
+	{ ISOURCE_PME_CHAN4, "pme-chan4" },
+	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
+	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
+	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
+	{ ISOURCE_DMA2_CHAN4, "dma2-chan4" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(mpc8572, MPC8572);
+#endif
+#ifdef P2020
+#define	p20x0_external_intr_names	default_external_intr_names
+const struct e500_intr_name p20x0_onchip_intr_names[] = {
+	{ ISOURCE_PCIEX3_MPC8572, "pcie3" },
+	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
+	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
+	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
+	{ ISOURCE_DMA2_CHAN4, "dma2-chan4" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(p20x0, P20x0);
+#endif
 
 static const char ist_names[][12] = {
 	[IST_NONE] = "none",
@@ -1054,28 +1018,49 @@ e500_intr_init(void)
 	struct intr_source *is;
 	struct e500_intr_info * const ii = &e500_intr_info;
 
-	switch (nirq) {
-	case MPC8548_SOURCES: {
-		CTASSERT(MPC8548_ONCHIPSOURCES == MPC8544_ONCHIPSOURCES);
-		*ii = mpc8548_intr_info;
-		if ((mfspr(SPR_SVR) >> 16) == (SVR_MPC8544v1 >> 16)) {
-			uint32_t bitmap[2] = MPC8548_ONCHIPBITMAP;
-			ii->ii_onchip_bitmap[0] = bitmap[0];
-			ii->ii_onchip_bitmap[1] = bitmap[1];
-			ii->ii_onchip_sources = MPC8544_ONCHIPSOURCES;
-			ii->ii_onchip_intr_names = mpc8544_onchip_intr_names;
-		}
-		break;
-	}
-	case MPC8536_SOURCES:
+	const uint16_t svr = mfspr(SPR_SVR) >> 16;
+	switch (svr) {
+#ifdef MPC8536
+	case SVR_MPC8536v1 >> 16:
 		*ii = mpc8536_intr_info;
 		break;
-	case MPC8572_SOURCES:
+#endif
+#ifdef MPC8544
+	case SVR_MPC8544v1 >> 16:
+		*ii = mpc8544_intr_info;
+		break;
+#endif
+#ifdef MPC8548
+	case SVR_MPC8543v1 >> 16:
+	case SVR_MPC8548v1 >> 16:
+		*ii = mpc8548_intr_info;
+		break;
+#endif
+#ifdef MPC8555
+	case SVR_MPC8541v1 >> 16:
+	case SVR_MPC8555v1 >> 16:
+		*ii = mpc8555_intr_info;
+		break;
+#endif
+#ifdef MPC8568
+	case SVR_MPC8568v1 >> 16:
+		*ii = mpc8568_intr_info;
+		break;
+#endif
+#ifdef MPC8572
+	case SVR_MPC8572v1 >> 16:
 		*ii = mpc8572_intr_info;
 		break;
+#endif
+#ifdef P2020
+	case SVR_P2010v2 >> 16:
+	case SVR_P2020v2 >> 16:
+		*ii = p20x0_intr_info;
+		break;
+#endif
 	default:
-		panic("%s: don't know how to deal with %u interrupt sources",
-		    __func__, nirq);
+		panic("%s: don't know how to deal with SVR %#lx",
+		    __func__, mfspr(SPR_SVR));
 	}
 
 	/*
