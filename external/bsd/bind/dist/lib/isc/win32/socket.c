@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.5 2011/02/15 19:38:37 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.2 2011/02/16 03:47:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -95,7 +95,7 @@ LPFN_GETACCEPTEXSOCKADDRS ISCGetAcceptExSockaddrs;
 #ifdef ISC_SOCKET_CONSISTENCY_CHECKS
 #define CONSISTENT(sock) consistent(sock)
 #else
-#define CONSISTENT(sock) do {} while (0)
+#define CONSISTENT(sock) do {} while (/*CONSTCOND*/0)
 #endif
 static void consistent(isc_socket_t *sock);
 
@@ -276,7 +276,7 @@ struct isc_socket {
 	int			state_lineno;  /* line which last touched state */
 };
 
-#define _set_state(sock, _state) do { (sock)->state = (_state); (sock)->state_lineno = __LINE__; } while (0)
+#define _set_state(sock, _state) do { (sock)->state = (_state); (sock)->state_lineno = __LINE__; } while (/*CONSTCOND*/0)
 
 /*
  * Buffer structure

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwtest.c,v 1.1.1.2 2011/02/15 19:31:37 christos Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.2 2011/02/16 03:46:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
