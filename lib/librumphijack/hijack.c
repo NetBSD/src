@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.43 2011/02/16 17:56:46 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.44 2011/02/16 19:26:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.43 2011/02/16 17:56:46 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.44 2011/02/16 19:26:58 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -256,11 +256,7 @@ rcinit(void)
 		err(1, "rumpclient init");
 
 	/* set client persistence level */
-	if (getenv_r("RUMPHIJACK_RETRY", buf, sizeof(buf)) == -1) {
-		if (errno == ERANGE)
-			err(1, "invalid RUMPHIJACK_RETRY");
-		rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
-	} else {
+	if (getenv_r("RUMPHIJACK_RETRYCONNECT", buf, sizeof(buf)) != -1) {
 		if (strcmp(buf, "die") == 0)
 			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_DIE);
 		else if (strcmp(buf, "inftime") == 0)
@@ -269,11 +265,12 @@ rcinit(void)
 			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_ONCE);
 		else {
 			time_t timeout;
+			char *ep;
 
-			timeout = (time_t)strtoll(buf, NULL, 10);
-			if (timeout <= 0)
-				errx(1, "RUMPHIJACK_RETRY must be keyword "
-				    "or a positive integer, got: %s", buf);
+			timeout = (time_t)strtoll(buf, &ep, 10);
+			if (timeout <= 0 || ep != buf + strlen(buf))
+				errx(1, "RUMPHIJACK_RETRYCONNECT must be "
+				    "keyword or integer, got: %s", buf);
 
 			rumpclient_setconnretry(timeout);
 		}
