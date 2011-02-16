@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.32 2008/04/24 18:39:21 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.32.12.1 2011/02/16 21:16:13 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32.12.1 2011/02/16 21:16:13 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -58,9 +58,11 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = trapframe(l);
-	struct sigaltstack *ss = &l->l_sigstk;
-	const struct sigact_sigdesc *sd =
+	struct sigaltstack * const ss = &l->l_sigstk;
+	const struct sigact_sigdesc * const sd =
 	    &p->p_sigacts->sa_sigdesc[ksi->ksi_signo];
+	/* save handler before sendsig_reset trashes it! */
+	const void * const handler = sd->sd_sigact.sa_handler;
 	ucontext_t uc;
 	vaddr_t sp, sip, ucp;
 	int onstack, error;
@@ -130,7 +132,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		/* Preserve ucp across call to signal function */
 		tf->fixreg[30] = (register_t)ucp;
 		tf->lr         = (register_t)sd->sd_tramp;
-		tf->srr0       = (register_t)sd->sd_sigact.sa_handler;
+		tf->srr0       = (register_t)handler;
 		break;
 
 	default:
