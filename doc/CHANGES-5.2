@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.58 2011/02/16 21:35:18 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.59 2011/02/16 21:36:01 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4743,5 +4743,8 @@ sys/arch/sparc/sparc/timer_sun4m.c		patch
 	  occurs if a cpu isn't attached (such as a MP kernel with only "cpu0"
 	  listed in the config file..)
 	- fix the previous to compile !MULTIPROCESSOR.
+	from tsutsui:
+	- Make sure to initialize cpus[0] which will also be used as cpuinfo
+	for sun4 and sun4c, not only for sun4m. Okay'ed by mrg@.
 	[mrg, ticket 1553]
 
