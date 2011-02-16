@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2011/02/16 05:18:35 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.82 2011/02/16 06:02:01 uebayasi Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -138,11 +138,11 @@ clean_METALOG: .PHONY
 clean_METALOG: .PHONY ${METALOG}.sanitised
 	mv ${METALOG}.sanitised ${METALOG}
 .if defined(RCSMETALOG)
-	mv ${METALOG}.sanitised,v ${METALOG},v
+	[ -f ${METALOG}.sanitised,v ] && mv ${METALOG}.sanitised,v ${METALOG},v
 .endif
 	rm -f ${METALOG}.*
 .if defined(RCSMETALOG)
-	mv ${METALOG},v ${METALOG}.sanitised,v
+	[ -f ${METALOG},v ] && mv ${METALOG},v ${METALOG}.sanitised,v
 .endif
 .endif	# MKUPDATE
 .endif	# MKUNPRIVED
