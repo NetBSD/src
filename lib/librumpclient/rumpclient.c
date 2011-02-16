@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.30 2011/02/16 15:33:47 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.31 2011/02/16 17:56:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -803,6 +803,8 @@ rumpclient_init()
 
 struct rumpclient_fork {
 	uint32_t fork_auth[AUTHLEN];
+	struct spclient fork_spc;
+	int fork_kq;
 };
 
 struct rumpclient_fork *
@@ -827,6 +829,9 @@ rumpclient_prefork(void)
 
 	memcpy(rpf->fork_auth, resp, sizeof(rpf->fork_auth));
 	free(resp);
+
+	rpf->fork_spc = clispc;
+	rpf->fork_kq = kq;
 
  out:
 	pthread_sigmask(SIG_SETMASK, &omask, NULL);
@@ -860,6 +865,21 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 	}
 
 	return 0;
+}
+
+void
+rumpclient_fork_cancel(struct rumpclient_fork *rpf)
+{
+
+	/* EUNIMPL */
+}
+
+void
+rumpclient_fork_vparent(struct rumpclient_fork *rpf)
+{
+
+	clispc = rpf->fork_spc;
+	kq = rpf->fork_kq;
 }
 
 void
@@ -930,27 +950,10 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 }
 
 pid_t
-rumpclient_fork(pid_t (*forkfn)(void))
+rumpclient_fork()
 {
-	struct rumpclient_fork *rf;
-	pid_t rv;
 
-	if ((rf = rumpclient_prefork()) == NULL)
-		return -1;
-                
-	switch ((rv = forkfn())) {
-	case -1:
-		/* XXX: cancel rf */
-		break;
-	case 0:
-		if (rumpclient_fork_init(rf) == -1)
-			rv = -1;
-		break;
-	default:
-		break;
-	}
-
-	return rv;
+	return rumpclient__dofork(fork);
 }
 
 /*
@@ -1014,4 +1017,26 @@ rumpclient_exec(const char *path, char *const argv[], char *const envp[])
 	free(newenv);
 	errno = sverrno;
 	return rv;
+}
+
+int
+rumpclient_daemon(int nochdir, int noclose)
+{
+	struct rumpclient_fork *rf;
+	int sverrno;
+
+	if ((rf = rumpclient_prefork()) == NULL)
+		return -1;
+
+	if (daemon(nochdir, noclose) == -1) {
+		sverrno = errno;
+		rumpclient_fork_cancel(rf);
+		errno = sverrno;
+		return -1;
+	}
+
+	if (rumpclient_fork_init(rf) == -1)
+		return -1;
+
+	return 0;
 }
