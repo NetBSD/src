@@ -1,4 +1,4 @@
-/* $NetBSD: test_hash.c,v 1.1 2011/02/11 23:44:44 christos Exp $ */
+/* $NetBSD: test_hash.c,v 1.2 2011/02/16 02:14:23 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <saslc.h>
 
-__RCSID("$NetBSD: test_hash.c,v 1.1 2011/02/11 23:44:44 christos Exp $");
+__RCSID("$NetBSD: test_hash.c,v 1.2 2011/02/16 02:14:23 christos Exp $");
 
 #define MAX_HASH_SIZE	256
 
@@ -65,7 +65,7 @@ static const char *keys[] = {
 	SASLC_PROP_REALM,
 	SASLC_PROP_SECURITY,
 	SASLC_PROP_SERVICE,
-	SASLC_PROP_SERVICENAME
+	SASLC_PROP_SERVNAME
 };
 
 /*
