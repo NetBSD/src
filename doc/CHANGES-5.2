@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.57 2011/02/16 21:23:44 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.58 2011/02/16 21:35:18 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4712,4 +4712,36 @@ sys/kern/sys_sig.c				1.31
 
 	Explicitly initialize ucontext before calling getmcontext.
 	[joerg, ticket #1556]
+
+sys/arch/sparc/sparc/cpu.c			patch
+sys/arch/sparc/sparc/cpuvar.h			patch
+sys/arch/sparc/sparc/pmap.c			patch
+sys/arch/sparc/sparc/timer_sun4m.c		patch
+
+	- print the curpcb in ddb "mach cpu" output as well.
+	- bump the size of cpus[] by one, so we have a NULL pointer at the end,
+	  from tsutsui
+	- for MP kernels, copy the loop to find the bootcpu in mainbus_attach() 
+	  into getcacheinfo_obp() so we can get cache properties on the bootcpu
+	  before calling main()
+	- in getcpuinfo(), move the call of getmid() before the call to
+	  getcacheinfo() so that the above change to getcacheinfo_obp() can work
+	- move the struct cpu_info setup to the end of the initial kernel page
+	  setup and don't access this space until after we have switched to the
+	  kernel pagetables
+	- revive most of the old CPUINFO_VA alignment/congruency code from the
+	  old alloc_cpuinfo_global_va() function, and ensure that all cpuinfo
+	  structures are sanely aligned.  this makes hypersparc work again
+	- introduce a new way to free the wasted pages back to UVM, as we can't
+	  simply uvm_unmap() them this early in bootstrap
+	- make sure to initialise the cpuinfo sz in all cases.  noted by martin.
+	- add per-cpu event counters for lev10 and lev14 interrupts.
+	- make CPU_INFO_FOREACH() set the iterator count to '0' in the !MP case.
+	- add some disabled MP code to poke other cpus on level 14 interrupts.
+	- add a diagnostic to ensure that cpus[0] == cpu0's cpu_info->ci_self
+	- if a cpu doesn't have any mappings allocated, don't copy them.  this
+	  occurs if a cpu isn't attached (such as a MP kernel with only "cpu0"
+	  listed in the config file..)
+	- fix the previous to compile !MULTIPROCESSOR.
+	[mrg, ticket 1553]
 
