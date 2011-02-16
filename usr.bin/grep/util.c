@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 2011/02/16 01:31:33 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.8 2011/02/16 18:35:39 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.7 2011/02/16 01:31:33 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.8 2011/02/16 18:35:39 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -57,20 +57,23 @@ static int	 procline(struct str *l, int);
 bool
 file_matching(const char *fname)
 {
+	char *fname_base, *fname_copy;
 	bool ret;
 
 	ret = finclude ? false : true;
+	fname_copy = grep_strdup(fname);
+	fname_base = basename(fname_copy);
 
 	for (unsigned int i = 0; i < fpatterns; ++i) {
-		if (fnmatch(fpattern[i].pat,
-		    fname, 0) == 0 || fnmatch(fpattern[i].pat,
-		    basename(fname), 0) == 0) {
+		if (fnmatch(fpattern[i].pat, fname, 0) == 0 ||
+		    fnmatch(fpattern[i].pat, fname_base, 0) == 0) {
 			if (fpattern[i].mode == EXCL_PAT)
 				return (false);
 			else
 				ret = true;
 		}
 	}
+	free(fname_copy);
 	return (ret);
 }
 
@@ -279,7 +282,7 @@ procfile(const char *fn)
  * matches.  The matching lines are passed to printline() to display the
  * appropriate output.
  */
-static inline int
+static int
 procline(struct str *l, int nottext)
 {
 	regmatch_t matches[MAX_LINE_MATCHES];
