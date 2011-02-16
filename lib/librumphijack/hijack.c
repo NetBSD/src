@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.42 2011/02/16 15:33:46 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.43 2011/02/16 17:56:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.42 2011/02/16 15:33:46 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.43 2011/02/16 17:56:46 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -601,11 +601,13 @@ fork()
 
 	DPRINTF(("fork\n"));
 
-	rv = rumpclient_fork(host_fork);
+	rv = rumpclient__dofork(host_fork);
 
 	DPRINTF(("fork returns %d\n", rv));
 	return rv;
 }
+/* we do not have the luxury of not requiring a stackframe */
+__strong_alias(__vfork14,fork);
 
 int
 daemon(int nochdir, int noclose)
