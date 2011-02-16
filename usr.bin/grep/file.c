@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.4 2011/02/16 01:31:33 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.5 2011/02/16 18:35:39 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/file.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.4 2011/02/16 01:31:33 joerg Exp $");
+__RCSID("$NetBSD: file.c,v 1.5 2011/02/16 18:35:39 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -139,13 +139,13 @@ grep_fgetln(struct file *f, size_t *lenp)
 	if (bufrem == 0) {
 		/* Return zero length to indicate EOF */
 		*lenp = 0;
-		return (bufpos);
+		return ((char *)bufpos);
 	}
 
 	/* Look for a newline in the remaining part of the buffer */
 	if ((p = memchr(bufpos, '\n', bufrem)) != NULL) {
 		++p; /* advance over newline */
-		ret = bufpos;
+		ret = (char *)bufpos;
 		len = p - bufpos;
 		bufrem -= len;
 		bufpos = p;
@@ -179,7 +179,7 @@ grep_fgetln(struct file *f, size_t *lenp)
 		break;
 	}
 	*lenp = len;
-	return (lnbuf);
+	return ((char *)lnbuf);
 
 error:
 	*lenp = 0;
