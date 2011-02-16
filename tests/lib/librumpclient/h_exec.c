@@ -1,4 +1,4 @@
-/*	$NetBSD: h_exec.c,v 1.3 2011/02/15 15:57:33 pooka Exp $	*/
+/*	$NetBSD: h_exec.c,v 1.4 2011/02/16 15:34:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -40,10 +40,8 @@
 #include <string.h>
 #include <unistd.h>
 
-/*
- * Uses rumphijack because it's convenient with exec.  XXX: fixme to
- * have sensible exec support in rumpclient.
- */
+#include <rump/rumpclient.h>
+#include <rump/rump_syscalls.h>
 
 int
 main(int argc, char *argv[])
@@ -52,6 +50,11 @@ main(int argc, char *argv[])
 	socklen_t slen;
 	int s1, s2;
 	char buf[12];
+	char *eargv[4];
+	extern char **environ;
+
+	if (rumpclient_init() == -1)
+		err(1, "init");
 
 	if (argc > 1) {
 		if (strcmp(argv[1], "_didexec") == 0) {
@@ -59,14 +62,14 @@ main(int argc, char *argv[])
 			s2 = atoi(argv[2]);
 			slen = sizeof(sin);
 			/* see below */
-			accept(s2, (struct sockaddr *)&sin, &slen);
+			rump_sys_accept(s2, (struct sockaddr *)&sin, &slen);
 		}
 	}
 
 	/* open and listenize two TCP4 suckets */
-	if ((s1 = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+	if ((s1 = rump_sys_socket(PF_INET, SOCK_STREAM, 0)) == -1)
 		err(1, "socket 1");
-	if ((s2 = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+	if ((s2 = rump_sys_socket(PF_INET, SOCK_STREAM, 0)) == -1)
 		err(1, "socket 2");
 
 	memset(&sin, 0, sizeof(sin));
@@ -74,15 +77,15 @@ main(int argc, char *argv[])
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(1234);
 
-	if (bind(s1, (struct sockaddr *)&sin, sizeof(sin)) == -1)
+	if (rump_sys_bind(s1, (struct sockaddr *)&sin, sizeof(sin)) == -1)
 		err(1, "bind1");
 	sin.sin_port = htons(2345);
-	if (bind(s2, (struct sockaddr *)&sin, sizeof(sin)) == -1)
+	if (rump_sys_bind(s2, (struct sockaddr *)&sin, sizeof(sin)) == -1)
 		err(1, "bind2");
 
-	if (listen(s1, 1) == -1)
+	if (rump_sys_listen(s1, 1) == -1)
 		err(1, "listen1");
-	if (listen(s2, 1) == -1)
+	if (rump_sys_listen(s2, 1) == -1)
 		err(1, "listen2");
 
 	if (argc == 1) {
@@ -92,17 +95,21 @@ main(int argc, char *argv[])
 		 * "pause()", but conveniently gets rid of this helper
 		 * since we were called with RUMPCLIENT_RETRYCONN_DIE set
 		 */
-		accept(s2, (struct sockaddr *)&sin, &slen);
+		rump_sys_accept(s2, (struct sockaddr *)&sin, &slen);
 	}
 
 	if (argc == 3 && strcmp(argv[2], "cloexec1") == 0) {
-		if (fcntl(s1, F_SETFD, FD_CLOEXEC) == -1) {
+		if (rump_sys_fcntl(s1, F_SETFD, FD_CLOEXEC) == -1) {
 			err(1, "cloexec failed");
 		}
 	}
 
 	/* omstart! */
 	sprintf(buf, "%d", s2);
-	if (execl(argv[1], "h_ution", "_didexec", buf, NULL) == -1)
+	eargv[0] = __UNCONST("h_ution");
+	eargv[1] = __UNCONST("_didexec");
+	eargv[2] = buf;
+	eargv[3] = NULL;
+	if (rumpclient_exec(argv[1], __UNCONST(eargv), environ) == -1)
 		err(1, "exec");
 }
