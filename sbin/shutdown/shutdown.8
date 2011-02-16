@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.29 2011/02/16 17:53:31 dyoung Exp $
+.\"	$NetBSD: shutdown.8,v 1.30 2011/02/16 19:33:39 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,8 +37,8 @@
 .Nd close down the system at a given time
 .Sh SYNOPSIS
 .Nm
+.Op Fl Ddfhknprvxz
 .Op Fl b Ar bootstr
-.Op Fl Ddfhknpr
 .Ar time
 .Op Ar message ... | Ar -
 .Sh DESCRIPTION
