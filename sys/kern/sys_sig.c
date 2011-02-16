@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.17.4.3 2010/01/07 07:04:50 snj Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.17.4.4 2011/02/16 21:22:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17.4.3 2010/01/07 07:04:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17.4.4 2011/02/16 21:22:45 bouyer Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -306,6 +306,8 @@ sys_getcontext(struct lwp *l, const struct sys_getcontext_args *uap, register_t 
 	} */
 	struct proc *p = l->l_proc;
 	ucontext_t uc;
+
+	memset(&uc, 0, sizeof(uc));
 
 	mutex_enter(p->p_lock);
 	getucontext(l, &uc);
