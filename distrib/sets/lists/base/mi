@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.17 2011/01/06 21:42:07 riz Exp $
+# $NetBSD: mi,v 1.780.2.18 2011/02/16 19:27:15 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1627,6 +1627,7 @@
 ./usr/sbin/veriexecgen				base-sysutil-bin
 ./usr/sbin/vipw					base-sysutil-bin
 ./usr/sbin/vnconfig				base-sysutil-bin
+./usr/sbin/wake					base-netutil-bin
 ./usr/sbin/wiconfig				base-sysutil-bin
 ./usr/sbin/wire-test				base-netutil-bin
 ./usr/sbin/wlanctl				base-sysutil-bin
