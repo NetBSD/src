@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/23 08:22:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/02/17 23:50:19 jmcneill Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -22,6 +22,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/../include
 
 CPPFLAGS+=	${X11FLAGS.DIX}
+CPPFLAGS+=	-DPROJECTROOT='"${X11ROOTDIR}"'
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
