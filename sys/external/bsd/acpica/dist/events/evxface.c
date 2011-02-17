@@ -749,6 +749,8 @@ AcpiInstallGpeHandler (
 
     /* Disable the GPE before installing the handler */
 
+    if (GpeEventInfo->RuntimeCount)
+        GpeEventInfo->RuntimeCount--;
     Status = AcpiEvDisableGpe (GpeEventInfo);
     if (ACPI_FAILURE (Status))
     {

@@ -632,7 +632,7 @@ AcpiRsMatchVendorResource (
 ACPI_STATUS
 AcpiWalkResources (
     ACPI_HANDLE                 DeviceHandle,
-    char                        *Name,
+    const char                  *Name,
     ACPI_WALK_RESOURCE_CALLBACK UserFunction,
     void                        *Context)
 {
@@ -640,7 +640,7 @@ AcpiWalkResources (
     ACPI_BUFFER                 Buffer;
     ACPI_RESOURCE               *Resource;
     ACPI_RESOURCE               *ResourceEnd;
-
+    char                        *UName = __UNCONST(Name);
 
     ACPI_FUNCTION_TRACE (AcpiWalkResources);
 
@@ -648,8 +648,8 @@ AcpiWalkResources (
     /* Parameter validation */
 
     if (!DeviceHandle || !UserFunction || !Name ||
-        (!ACPI_COMPARE_NAME (Name, METHOD_NAME__CRS) &&
-         !ACPI_COMPARE_NAME (Name, METHOD_NAME__PRS)))
+        (!ACPI_COMPARE_NAME (UName, METHOD_NAME__CRS) &&
+         !ACPI_COMPARE_NAME (UName, METHOD_NAME__PRS)))
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -657,7 +657,7 @@ AcpiWalkResources (
     /* Get the _CRS or _PRS resource list */
 
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-    Status = AcpiRsGetMethodData (DeviceHandle, Name, &Buffer);
+    Status = AcpiRsGetMethodData (DeviceHandle, UName, &Buffer);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);

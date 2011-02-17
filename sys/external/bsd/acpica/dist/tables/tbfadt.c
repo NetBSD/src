@@ -148,7 +148,7 @@ AcpiTbSetupFadtRegisters (
 
 typedef struct acpi_fadt_info
 {
-    char                    *Name;
+    const char              *Name;
     UINT8                   Address64;
     UINT8                   Address32;
     UINT8                   Length;
@@ -566,7 +566,7 @@ static void
 AcpiTbValidateFadt (
     void)
 {
-    char                    *Name;
+    const char              *Name;
     ACPI_GENERIC_ADDRESS    *Address64;
     UINT8                   Length;
     UINT32                  i;

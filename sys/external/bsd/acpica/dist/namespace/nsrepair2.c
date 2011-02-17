@@ -326,7 +326,7 @@ AcpiNsRepair_ALR (
 
 
     Status = AcpiNsCheckSortedList (Data, ReturnObject, 2, 1,
-                ACPI_SORT_ASCENDING, "AmbientIlluminance");
+	ACPI_SORT_ASCENDING, __UNCONST("AmbientIlluminance"));
 
     return (Status);
 }
@@ -450,7 +450,7 @@ AcpiNsRepair_TSS (
 
 
     Status = AcpiNsCheckSortedList (Data, ReturnObject, 5, 1,
-                ACPI_SORT_DESCENDING, "PowerDissipation");
+	ACPI_SORT_DESCENDING, __UNCONST("PowerDissipation"));
 
     return (Status);
 }
@@ -495,7 +495,7 @@ AcpiNsRepair_PSS (
      * should be proportional to the power.
      */
     Status =AcpiNsCheckSortedList (Data, ReturnObject, 6, 0,
-                ACPI_SORT_DESCENDING, "CpuFrequency");
+	ACPI_SORT_DESCENDING, __UNCONST("CpuFrequency"));
     if (ACPI_FAILURE (Status))
     {
         return (Status);
