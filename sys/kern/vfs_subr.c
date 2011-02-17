@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.418 2011/01/17 07:13:33 uebayasi Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.419 2011/02/17 19:04:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.418 2011/01/17 07:13:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.419 2011/02/17 19:04:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2369,12 +2369,9 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 void
 vfs_shutdown(void)
 {
-	struct lwp *l;
 
 	/* XXX we're certainly not running in lwp0's context! */
-	l = (curlwp == NULL) ? &lwp0 : curlwp;
-
-	vfs_shutdown1(l);
+	vfs_shutdown1(curlwp);
 }
 
 void
