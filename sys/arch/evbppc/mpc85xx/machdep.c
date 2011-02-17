@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2011/02/13 05:03:27 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2011/02/17 13:57:12 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -124,6 +124,12 @@ struct extent *pciio_ex;
 
 struct powerpc_bus_space gur_bst = {
 	.pbs_flags = _BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	.pbs_offset = GUR_BASE,
+	.pbs_limit = GUR_SIZE,
+};
+
+struct powerpc_bus_space gur_le_bst = {
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	.pbs_offset = GUR_BASE,
 	.pbs_limit = GUR_SIZE,
 };
@@ -522,6 +528,7 @@ socname(uint32_t svr)
 {
 	svr &= ~0x80000;	/* clear security bit */
 	switch (svr >> 8) {
+	case SVR_MPC8533 >> 8: return "MPC8533";
 	case SVR_MPC8536v1 >> 8: return "MPC8536";
 	case SVR_MPC8541v1 >> 8: return "MPC8541";
 	case SVR_MPC8543v2 >> 8: return "MPC8543";
@@ -696,7 +703,9 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	CTASSERT(offsetof(struct tlb_md_ops, md_tlb_mapiodev) == 0);
 	cpu_md_ops.md_tlb_ops = (const void *)&early_tlb_mapiodev;
 	bus_space_init(&gur_bst, NULL, NULL, 0);
+	bus_space_init(&gur_le_bst, NULL, NULL, 0);
 	cpu->cpu_bst = &gur_bst;
+	cpu->cpu_le_bst = &gur_le_bst;
 	cpu->cpu_bsh = gur_bsh;
 
 	/*
@@ -735,6 +744,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 * Now find out how much memory is attached
 	 */
 	pmemsize = memprobe(endkernel);
+	cpu->cpu_highmem = pmemsize;
 		printf(" memprobe=%zuMB", (size_t) (pmemsize >> 20));
 
 	/*
@@ -1020,13 +1030,13 @@ cpu_startup(void)
 	switch (svr) {
 #if defined(MPC8536)
 	case SVR_MPC8536v1 >> 16:
-		mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL,
+		mpc85xx_pci_setup("pci0-interrupt-map", 0x001800, IST_LEVEL,
 		    1, 2, 3, 4);
 		break;
 #endif
 #if defined(MPC8544)
 	case SVR_MPC8544v1 >> 16:
-		mpc85xx_pci_setup("pci1-interrupt-map", 0x001800, IST_LEVEL,
+		mpc85xx_pci_setup("pci0-interrupt-map", 0x001800, IST_LEVEL,
 		    0, 1, 2, 3);
 		break;
 #endif
