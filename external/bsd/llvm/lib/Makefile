@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/02/06 01:13:52 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2011/02/17 18:35:35 joerg Exp $
 
 SUBDIR=	\
 	libLLVMAnalysis \
@@ -60,7 +60,9 @@ SUBDIR+= \
 	libclangRewrite \
 	libclangSema \
 	libclangSerialization \
-	libclangStaticAnalyzer \
-	libclangStaticAnalyzerCheckers
+	libclangStaticAnalyzerCheckers \
+	libclangStaticAnalyzerCore \
+	.WAIT \
+	libclangStaticAnalyzerFrontend
 
 .include <bsd.subdir.mk>
