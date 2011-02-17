@@ -121,14 +121,14 @@
 
 typedef struct CommandInfo
 {
-    char                    *Name;          /* Command Name */
+    const char              *Name;          /* Command Name */
     UINT8                   MinArgs;        /* Minimum arguments required */
 
 } COMMAND_INFO;
 
 typedef struct ArgumentInfo
 {
-    char                    *Name;          /* Argument Name */
+    const char              *Name;          /* Argument Name */
 
 } ARGUMENT_INFO;
 

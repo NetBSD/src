@@ -1088,7 +1088,7 @@ typedef struct acpi_srat_cpu_affinity
     UINT32                  Flags;
     UINT8                   LocalSapicEid;
     UINT8                   ProximityDomainHi[3];
-    UINT32                  Reserved;           /* Reserved, must be zero */
+    UINT32                  ClockDomain;
 
 } ACPI_SRAT_CPU_AFFINITY;
 
