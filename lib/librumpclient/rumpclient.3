@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpclient.3,v 1.1 2011/02/16 23:45:40 pooka Exp $
+.\"     $NetBSD: rumpclient.3,v 1.2 2011/02/17 17:03:17 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Antti Kantee.  All rights reserved.
 .\"
@@ -75,7 +75,7 @@ it is possible to form process trees.
 Initialize
 .Nm .
 The server address is determined from the environment variable
-.Dv RUMP_SERVER
+.Ev RUMP_SERVER
 according to syntax described in
 .Xr rump_sp 7 .
 The new process is registered to the rump kernel with the command
@@ -92,14 +92,16 @@ Like above, but the host uses
 .It Fn rumpclient_prefork
 Low-level routine which instructs the rump kernel that the current
 process is planning to fork.
-The routine returns a non-NULL cookie if succesful.
+The routine returns a
+.Pf non- Dv NULL
+cookie if successful.
 .It Fn rumpclient_fork_init rfp
 Low-level routine which works like
 .Fn rumpclient_init ,
 with the exception that it uses the
 .Ar rfp
 context created by a call to
-.Xr rumpclient_prefork .
+.Fn rumpclient_prefork .
 This is typically called from the child of a
 .Xr fork 2
 call.
@@ -154,7 +156,7 @@ is a positive integer, it means the number of seconds for which
 reconnection will be attempted.
 The value 0 means that reconnection will not be attempted, and all
 subsequent operations will return the errno
-.Dv ENOTCONN .
+.Er ENOTCONN .
 .Pp
 Additionally, the following special values are accepted:
 .Bl -tag -width xxxx
@@ -163,7 +165,7 @@ Attempt reconnection indefinitely.
 .It Dv RUMPCLIENT_RETRYCONN_ONCE
 Attempt reconnect exactly once.
 What this precisely means depends on the situation: e.g. getting
-.Dv EHOSTUNREACH
+.Er EHOSTUNREACH
 immediately or the TCP connection request timeouting are considered
 to be one retry.
 .It Dv RUMPCLIENT_RETRYCONN_DIE
