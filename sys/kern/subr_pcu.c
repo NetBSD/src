@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.1 2011/02/17 18:32:29 rmind Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.2 2011/02/17 18:44:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.1 2011/02/17 18:32:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.2 2011/02/17 18:44:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -98,7 +98,7 @@ pcu_cpu_op(const pcu_ops_t *pcu, const int flags)
 		return;
 	}
 	if (flags & PCU_SAVE) {
-		pcu->pcu_state_save(l);
+		pcu->pcu_state_save(l, (flags & PCU_RELEASE) != 0);
 	}
 	if (flags & PCU_RELEASE) {
 		ci->ci_pcu_curlwp[id] = NULL;
@@ -131,7 +131,7 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, int flags)
 		KASSERT(ci->ci_pcu_curlwp[id] == l);
 
 		if (flags & PCU_SAVE) {
-			pcu->pcu_state_save(l);
+			pcu->pcu_state_save(l, (flags & PCU_RELEASE) != 0);
 		}
 		if (flags & PCU_RELEASE) {
 			ci->ci_pcu_curlwp[id] = NULL;
