@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1588 2011/02/16 23:48:51 pooka Exp $
+#	$NetBSD: mi,v 1.1589 2011/02/17 19:58:34 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2104,6 +2104,7 @@
 ./usr/include/sys/null.h			comp-c-include
 ./usr/include/sys/optstr.h			comp-obsolete		obsolete
 ./usr/include/sys/param.h			comp-c-include
+./usr/include/sys/pcu.h				comp-c-include
 ./usr/include/sys/pipe.h			comp-c-include
 ./usr/include/sys/pmc.h				comp-c-include
 ./usr/include/sys/pmf.h				comp-obsolete		obsolete
