@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2009/06/25 18:21:50 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.2.6.1 2011/02/17 11:59:17 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -8,12 +8,34 @@ WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
 
-CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH -DDEF_SERVER_SASL_TYPE=\"dovecot\" \
+CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH \
 	-I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl
+
+CPPFLAGS+= -DUSE_SASL_AUTH
+CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
+
+.if (${MKCRYPTO} != "no")
+CPPFLAGS+= -DUSE_SASLC_SASL
+CPPFLAGS+= -DDEF_CLIENT_SASL_TYPE=\"saslc\"
+DPADD+= ${LIBSASCL} ${LIBSSL}
+LDADD+= -lsaslc -lssl
+. if (${MKKERBEROS} != "no")
+DPADD+= ${LIBGSSAPI}
+LDADD+= -lgssapi
+. endif
+.endif
+
+# XXX: Use only if you have cyrus-sasl installed; never part of a normal build!
+.if defined(HAVE_CYRUS_SASL)
+PKGROOT?= /usr/pkg
+CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
+	-I${PKGROOT}/include/sasl
+LDADD+= -L${PKGROOT}/lib -Wl,-R${PKGROOT}/lib -lsasl2 
+.endif
 
 .if defined(HAVE_PCC)
 # code uses gcc-specific aggregate dynamic array

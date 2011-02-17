@@ -1,4 +1,4 @@
-/* $Id: error.h,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
+/* $NetBSD: error.h,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,24 +56,22 @@ typedef struct saslc__error_t {
 
 /*
  * saslc__error_set - sets error for the context of sasl session
- * 
+ *
  * E - error
  * N - error type
  * S - error message
  */
-
 #define saslc__error_set(E, N, S)	\
 do {					\
 	(E)->err_no = (N);		\
 	(E)->err_str = (S);		\
-} while(/*CONSTCOND*/0);			 
+} while(/*CONSTCOND*/0);
 
 /*
  * saslc__eror_get_errno - gets error type
  *
  * E - error
  */
-
 #define saslc__error_get_errno(E) ((E)->err_no)
 
 const char *saslc__error_get_strerror(saslc__error_t *);
@@ -84,7 +82,6 @@ const char *saslc__error_get_strerror(saslc__error_t *);
  * E - error
  * N - error type
  */
-
 #define saslc__error_set_errno(E, N) saslc__error_set((E), (N), NULL)
 
 /*
@@ -93,7 +90,6 @@ const char *saslc__error_get_strerror(saslc__error_t *);
  *
  * X - context or session
  */
-
 #define ERR(X) (&((X)->err))
 
 #endif /* ! _ERROR_H_ */

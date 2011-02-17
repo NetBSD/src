@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.1.1.1 2009/03/22 15:02:39 christos Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.1.1.1.4.1 2011/02/17 11:59:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -55,7 +55,7 @@
 static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-/* Id: strtoul.c,v 1.4 2007/06/19 23:47:22 tbox Exp */
+/* Id: strtoul.c,v 1.4 2007-06-19 23:47:22 tbox Exp */
 
 #include <config.h>
 
@@ -70,7 +70,7 @@ static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 		union { const void *k; void *v; } _u; \
 		_u.k = konst; \
 		var = _u.v; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*!
  * Convert a string to an unsigned long integer.

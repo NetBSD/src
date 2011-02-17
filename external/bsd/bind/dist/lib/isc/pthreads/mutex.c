@@ -1,7 +1,7 @@
-/*	$NetBSD: mutex.c,v 1.1.1.1 2009/03/22 15:02:17 christos Exp $	*/
+/*	$NetBSD: mutex.c,v 1.1.1.1.4.1 2011/02/17 11:59:02 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mutex.c,v 1.16 2008/04/04 23:47:01 tbox Exp */
+/* Id: mutex.c,v 1.18 2011-01-04 23:47:14 tbox Exp */
 
 /*! \file */
 
@@ -45,7 +45,7 @@
 			(vvp)->tv_sec++;                                \
 			(vvp)->tv_usec -= 1000000;                      \
 		}                                                       \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define timevalsub(vvp, uvp)                                            \
 	do {                                                            \
 		(vvp)->tv_sec -= (uvp)->tv_sec;                         \
@@ -54,7 +54,7 @@
 			(vvp)->tv_sec--;                                \
 			(vvp)->tv_usec += 1000000;                      \
 		}                                                       \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*@}*/
 
@@ -236,10 +236,13 @@ isc_mutex_init_errcheck(isc_mutex_t *mp)
 	if (pthread_mutexattr_init(&attr) != 0)
 		return (ISC_R_UNEXPECTED);
 
-	if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK) != 0)
+	if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK) != 0) {
+		pthread_mutexattr_destroy(&attr);
 		return (ISC_R_UNEXPECTED);
+	}
 
 	err = pthread_mutex_init(mp, &attr) != 0)
+	pthread_mutexattr_destroy(&attr);
 	if (err == ENOMEM)
 		return (ISC_R_NOMEMORY);
 	return ((err == 0) ? ISC_R_SUCCESS : ISC_R_UNEXPECTED);

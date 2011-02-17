@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.4 2009/12/26 22:24:31 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.1.1.4.2.1 2011/02/17 11:58:39 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dispatch.c,v 1.168 2009/12/02 23:15:14 marka Exp */
+/* Id: dispatch.c,v 1.168.248.1 2011-02-03 05:50:06 marka Exp */
 
 /*! \file */
 
@@ -1749,8 +1749,10 @@ destroy_mgr(dns_dispatchmgr_t **mgrp) {
 	isc_mempool_destroy(&mgr->epool);
 	isc_mempool_destroy(&mgr->rpool);
 	isc_mempool_destroy(&mgr->dpool);
-	isc_mempool_destroy(&mgr->bpool);
-	isc_mempool_destroy(&mgr->spool);
+	if (mgr->bpool != NULL)
+		isc_mempool_destroy(&mgr->bpool);
+	if (mgr->spool != NULL)
+		isc_mempool_destroy(&mgr->spool);
 
 	DESTROYLOCK(&mgr->pool_lock);
 

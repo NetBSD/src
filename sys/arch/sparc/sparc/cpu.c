@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.224.4.1 2011/02/08 16:19:41 bouyer Exp $ */
+/*	$NetBSD: cpu.c,v 1.224.4.2 2011/02/17 12:00:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224.4.1 2011/02/08 16:19:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224.4.2 2011/02/17 12:00:00 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224.4.1 2011/02/08 16:19:41 bouyer Exp $")
 #include <machine/pmap.h>
 
 #if defined(MULTIPROCESSOR) && defined(DDB)
+#include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 #endif
 
@@ -554,12 +555,10 @@ cpu_boot_secondary_processors(void)
 			continue;
 
 		printf(" cpu%d", cpi->ci_cpuid);
-		cpi->flags |= CPUFLG_READY;
 		cpu_ready_mask |= (1 << n);
 	}
 
 	/* Mark the boot CPU as ready */
-	cpuinfo.flags |= CPUFLG_READY;
 	cpu_ready_mask |= (1 << 0);
 
 	/* Tell the other CPU's to start up.  */
@@ -2165,8 +2164,6 @@ fsrtoname(int impl, int vers, int fver)
 
 #include "ioconf.h"
 
-void cpu_debug_dump(void);
-
 /*
  * Dump CPU information from ddb.
  */
@@ -2189,4 +2186,35 @@ cpu_debug_dump(void)
 		    ci->curpcb);
 	}
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Dump CPU xcall from ddb.
+ */
+void
+cpu_xcall_dump(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	db_printf("%-4s %-10s %-10s %-10s %-10s %-10s "
+		    "%-4s %-4s %-4s\n",
+	          "CPU#", "FUNC", "TRAP", "ARG0", "ARG1", "ARG2",
+	            "TAG", "RECV", "COMPL");
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		db_printf("%-4d %-10p %-10p 0x%-8x 0x%-8x 0x%-8x "
+			    "%-4d %-4d %-4d\n",
+		    ci->ci_cpuid,
+		    ci->msg.u.xpmsg_func.func,
+		    ci->msg.u.xpmsg_func.trap,
+		    ci->msg.u.xpmsg_func.arg0,
+		    ci->msg.u.xpmsg_func.arg1,
+		    ci->msg.u.xpmsg_func.arg2,
+		    ci->msg.tag,
+		    ci->msg.received,
+		    ci->msg.complete);
+	}
+}
+#endif
+
 #endif

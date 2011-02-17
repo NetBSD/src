@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.26.4.1 2011/02/08 16:19:50 bouyer Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.26.4.2 2011/02/17 12:00:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.26.4.1 2011/02/08 16:19:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.26.4.2 2011/02/17 12:00:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ static int	pci_genfb_ioctl(void *, void *, u_long, void *, int,
 static paddr_t	pci_genfb_mmap(void *, void *, off_t, int);
 static int	pci_genfb_borrow(void *, bus_addr_t, bus_space_handle_t *);
 static int	pci_genfb_drm_print(void *, const char *);
+static bool	pci_genfb_shutdown(device_t, int);
 
 CFATTACH_DECL_NEW(genfb_pci, sizeof(struct pci_genfb_softc),
     pci_genfb_match, pci_genfb_attach, NULL, NULL);
@@ -117,11 +118,13 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 
 	/* firmware / MD code responsible for restoring the display */
 	if (sc->sc_gen.sc_pmfcb == NULL)
-		pmf_device_register(self, NULL, NULL);
+		pmf_device_register1(self, NULL, NULL,
+		    pci_genfb_shutdown);
 	else
-		pmf_device_register(self,
+		pmf_device_register1(self,
 		    sc->sc_gen.sc_pmfcb->gpc_suspend,
-		    sc->sc_gen.sc_pmfcb->gpc_resume);
+		    sc->sc_gen.sc_pmfcb->gpc_resume,
+		    pci_genfb_shutdown);
 
 	if ((sc->sc_gen.sc_width == 0) || (sc->sc_gen.sc_fbsize == 0)) {
 		aprint_debug_dev(self, "not configured by firmware\n");
@@ -129,8 +132,9 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
-	    sc->sc_gen.sc_fbsize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
-
+	    sc->sc_gen.sc_fbsize,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+	    &sc->sc_memh) != 0) {
 		aprint_error_dev(self, "unable to map the framebuffer\n");
 		return;
 	}
@@ -138,26 +142,36 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 
 	/* mmap()able bus ranges */
 	idx = 0;
-	bar = 0x10;
-	while (bar < 0x34) {
+	bar = PCI_MAPREG_START;
+	while (bar <= PCI_MAPREG_ROM) {
 
-		type = pci_mapreg_type(sc->sc_pc, sc->sc_pcitag, bar);
-		if ((type == PCI_MAPREG_TYPE_MEM) || 
-		    (type == PCI_MAPREG_TYPE_ROM)) {
+		sc->sc_bars[(bar - PCI_MAPREG_START) >> 2] = rom =
+		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, bar);
 
+		if ((bar >= PCI_MAPREG_END && bar < PCI_MAPREG_ROM) ||
+		    pci_mapreg_probe(sc->sc_pc, sc->sc_pcitag, bar, &type)
+		    == 0) {
+			/* skip unimplemented and non-BAR registers */
+			bar += 4;
+			continue;
+		}
+		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM || 
+		    PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_ROM) {
 			pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, bar, type,
 			    &sc->sc_ranges[idx].offset,
 			    &sc->sc_ranges[idx].size,
 			    &sc->sc_ranges[idx].flags);
 			idx++;
 		}
-		sc->sc_bars[(bar - 0x10) >> 2] = rom =
-		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, bar);
 		if ((bar == PCI_MAPREG_ROM) && (rom != 0)) {
 			pci_conf_write(sc->sc_pc, sc->sc_pcitag, bar, rom |
 			    PCI_MAPREG_ROM_ENABLE);
 		}
-		bar += 4;
+		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM &&
+		    PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT)
+			bar += 8;
+		else
+			bar += 4;
 	}
 
 	sc->sc_ranges_used = idx;			    
@@ -241,7 +255,8 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	    (sc->sc_want_wsfb == 1)) {
 
 		return bus_space_mmap(sc->sc_memt, sc->sc_gen.sc_fboffset,
-		   offset, prot, BUS_SPACE_MAP_LINEAR);
+		   offset, prot,
+		   BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 	}
 
 	/*
@@ -325,4 +340,11 @@ pci_genfb_borrow(void *opaque, bus_addr_t addr, bus_space_handle_t *hdlp)
 		return 0;
 	*hdlp = sc->sc_memh;
 	return 1;
+}
+
+static bool
+pci_genfb_shutdown(device_t self, int flags)
+{
+	genfb_enable_polling(self);
+	return true;
 }

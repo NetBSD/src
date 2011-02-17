@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.29 2009/11/17 18:31:13 drochner Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.29.2.1 2011/02/17 12:00:56 bouyer Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -73,6 +73,7 @@ static char sccsid[] = "@(#)rpcinfo.c 1.16 89/04/05 Copyr 1986 Sun Micro";
 #include <unistd.h>
 #include <err.h>
 #include <ctype.h>
+#include <errno.h>
 
 #ifdef PORTMAP		/* Support for version 2 portmapper */
 #include <netinet/in.h>
@@ -82,9 +83,14 @@ static char sccsid[] = "@(#)rpcinfo.c 1.16 89/04/05 Copyr 1986 Sun Micro";
 #include <rpc/pmap_clnt.h>
 #endif
 
-#define	MIN_VERS	((u_long)0)
-#define	MAX_VERS	((u_long)4294967295UL)
-#define	UNKNOWN		"unknown"
+#define	MIN_VERS	((rpcvers_t)0)
+#define	MAX_VERS	((rpcvers_t)4294967295UL)
+#define PMAP_PROG	((rpcprog_t)PMAPPROG)
+#define PMAP_VERS	((rpcvers_t)PMAPVERS)
+#define RPCB_VERS	((rpcvers_t)RPCBVERS)
+#define RPCB_VERS4	((rpcvers_t)RPCB_VERS)
+#define UL(a)		((unsigned long)a)
+static char unknown[] = "unknown";
 
 /*
  * Functions to be performed.
@@ -108,12 +114,12 @@ struct netidlist {
 };
 
 struct verslist {
-	int vers;
+	rpcvers_t vers;
 	struct verslist *next;
 };
 
 struct rpcbdump_short {
-	u_long prog;
+	rpcprog_t prog;
 	struct verslist *vlist;
 	struct netidlist *nlist;
 	struct rpcbdump_short *next;
@@ -124,41 +130,40 @@ struct rpcbdump_short {
 
 #ifdef PORTMAP
 static void	ip_ping(u_short, const char *, int, char **);
-static CLIENT	*clnt_com_create(struct sockaddr_in *, u_long, u_long, int *,
-				 const char *);
+static CLIENT	*clnt_com_create(struct sockaddr_in *, rpcprog_t, rpcvers_t,
+    int *, const char *);
 static void	pmapdump(int, char **);
 static void	get_inet_address(struct sockaddr_in *, const char *);
 #endif
 
 static bool_t	reply_proc(void *, struct netbuf *, struct netconfig *);
 static void	brdcst(int, char **);
-static void	addrping(char *, char *, int, char **);
-static void	progping(char *, int, char **);
-static CLIENT	*clnt_addr_create(char *, struct netconfig *, u_long, u_long);
-static CLIENT   *clnt_rpcbind_create(char *, int, struct netbuf **);
-static CLIENT   *getclnthandle(char *, struct netconfig *, u_long,
-			       struct netbuf **);
-static CLIENT	*local_rpcb(u_long, u_long);
-static int	pstatus(CLIENT *, u_long, u_long);
-static void	rpcbdump(int, char *, int, char **);
+static void	addrping(const char *, const char *, int, char **);
+static void	progping(const char *, int, char **);
+static CLIENT	*clnt_addr_create(const char *, const struct netconfig *,
+    rpcprog_t, rpcvers_t);
+static CLIENT   *clnt_rpcbind_create(const char *, rpcvers_t, struct netbuf **);
+static CLIENT   *getclnthandle(const char *, const struct netconfig *,
+    rpcvers_t, struct netbuf **);
+static CLIENT	*local_rpcb(rpcprog_t, rpcvers_t);
+static int	pstatus(CLIENT *, rpcprog_t, rpcvers_t);
+static void	rpcbdump(int, const char *, int, char **);
 static void	rpcbgetstat(int, char **);
-static void	rpcbaddrlist(char *, int, char **);
-static void	deletereg(char *, int, char **);
-static void	print_rmtcallstat(int, rpcb_stat *);
-static void	print_getaddrstat(int, rpcb_stat *);
-static void	usage(void);
-static u_long	getprognum(char *);
-static u_long	getvers(char *);
-static char	*spaces(int);
-static bool_t	add_version(struct rpcbdump_short *, u_long);
+static void	rpcbaddrlist(const char *, int, char **);
+static void	deletereg(const char *, int, char **);
+static void	print_rmtcallstat(int, const rpcb_stat *);
+static void	print_getaddrstat(int, const rpcb_stat *);
+static void	usage(void)__attribute__((__noreturn__));
+static rpcprog_t	getprognum(const char *);
+static rpcvers_t	getvers(const char *);
+static const char *spaces(size_t);
+static bool_t	add_version(struct rpcbdump_short *, rpcvers_t);
 static bool_t	add_netid(struct rpcbdump_short *, char *);
-
-int		main(int argc, char **argv);
 
 int
 main(int argc, char **argv)
 {
-	register int c;
+	int c;
 	int errflg;
 	int function;
 	char *netid = NULL;
@@ -255,10 +260,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (errflg || ((function == ADDRPING) && !netid)) {
+	if (errflg || ((function == ADDRPING) && !netid))
 		usage();
-		return (1);
-	}
 
 	if (function == NONE) {
 		if (argc - optind > 1)
@@ -270,10 +273,8 @@ main(int argc, char **argv)
 	switch (function) {
 #ifdef PORTMAP
 	case PMAPDUMP:
-		if (portnum != 0) {
+		if (portnum != 0)
 			usage();
-			return (1);
-		}
 		pmapdump(argc - optind, argv + optind);
 		break;
 
@@ -312,19 +313,19 @@ main(int argc, char **argv)
 }
 
 static CLIENT *
-local_rpcb(u_long prog, u_long vers)
+local_rpcb(rpcprog_t prog, rpcvers_t vers)
 {
 	struct netbuf nbuf;
 	struct sockaddr_un sun;
 	int sock;
 
-	memset(&sun, 0, sizeof sun);
+	(void)memset(&sun, 0, sizeof sun);
 	sock = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (sock < 0)
 		return NULL;
 
 	sun.sun_family = AF_LOCAL;
-	strcpy(sun.sun_path, _PATH_RPCBINDSOCK);
+	(void)strlcpy(sun.sun_path, _PATH_RPCBINDSOCK, sizeof(sun.sun_path));
 	nbuf.len = sun.sun_len = SUN_LEN(&sun);
 	nbuf.maxlen = sizeof (struct sockaddr_un);
 	nbuf.buf = &sun;
@@ -334,30 +335,30 @@ local_rpcb(u_long prog, u_long vers)
 
 #ifdef PORTMAP
 static CLIENT *
-clnt_com_create(struct sockaddr_in *addr, u_long prog, u_long vers,
-		int *fdp, const char *trans)
+clnt_com_create(struct sockaddr_in *addr, rpcprog_t prog, rpcvers_t vers,
+    int *fdp, const char *trans)
 {
 	CLIENT *clnt;
 
 	if (strcmp(trans, "tcp") == 0) {
-		clnt = clnttcp_create(addr, prog, vers, fdp, 0, 0);
+		clnt = clnttcp_create(addr, UL(prog), UL(vers), fdp, 0, 0);
 	} else {
 		struct timeval to;
 
 		to.tv_sec = 5;
 		to.tv_usec = 0;
-		clnt = clntudp_create(addr, prog, vers, to, fdp);
+		clnt = clntudp_create(addr, UL(prog), UL(vers), to, fdp);
 	}
 	if (clnt == NULL) {
-		clnt_pcreateerror(getprogname());
+		char *m = clnt_spcreateerror("") + 2;
 		if (vers == MIN_VERS)
-			printf("program %lu is not available\n", prog);
+			errx(1, "Program %lu is not available (%s)",
+			    (unsigned long)prog, m);
 		else
-			printf("program %lu version %lu is not available\n",
-							prog, vers);
-		exit(1);
+			errx(1, "Program %lu version %lu is not available (%s)",
+			    (unsigned long)prog, (unsigned long)vers, m);
 	}
-	return (clnt);
+	return clnt;
 }
 
 /*
@@ -375,14 +376,12 @@ ip_ping(u_short portnum, const char *trans, int argc, char **argv)
 	struct timeval to;
 	struct sockaddr_in addr;
 	enum clnt_stat rpc_stat;
-	u_long prognum, vers, minvers, maxvers;
+	rpcprog_t prognum, vers, minvers, maxvers;
 	struct rpc_err rpcerr;
 	int failure = 0;
 
-	if (argc < 2 || argc > 3) {
+	if (argc < 2 || argc > 3)
 		usage();
-		exit(1);
-	}
 	to.tv_sec = 10;
 	to.tv_usec = 0;
 	prognum = getprognum(argv[1]);
@@ -398,17 +397,17 @@ ip_ping(u_short portnum, const char *trans, int argc, char **argv)
 	}
 	addr.sin_port = htons(portnum);
 	client = clnt_com_create(&addr, prognum, vers, &fd, trans);
-	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-	    NULL, (xdrproc_t) xdr_void, NULL, to);
+	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
+	    NULL, (xdrproc_t)xdr_void, NULL, to);
 	if (argc != 2) {
 		/* Version number was known */
 		if (pstatus(client, prognum, vers) < 0)
 			exit(1);
-		(void) CLNT_DESTROY(client);
+		(void)CLNT_DESTROY(client);
 		return;
 	}
 	/* Version number not known */
-	(void) CLNT_CONTROL(client, CLSET_FD_NCLOSE, NULL);
+	(void)CLNT_CONTROL(client, CLSET_FD_NCLOSE, NULL);
 	if (rpc_stat == RPC_PROGVERSMISMATCH) {
 		clnt_geterr(client, &rpcerr);
 		minvers = rpcerr.re_vers.low;
@@ -418,11 +417,12 @@ ip_ping(u_short portnum, const char *trans, int argc, char **argv)
 		 * Oh dear, it DOES support version 0.
 		 * Let's try version MAX_VERS.
 		 */
-		(void) CLNT_DESTROY(client);
+		(void)CLNT_DESTROY(client);
 		addr.sin_port = htons(portnum);
-		client = clnt_com_create(&addr, prognum, MAX_VERS, &fd, trans);
-		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-		    NULL, (xdrproc_t) xdr_void, NULL, to);
+		client = clnt_com_create(&addr, (unsigned int)prognum,
+		    MAX_VERS, &fd, trans);
+		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
+		    NULL, (xdrproc_t)xdr_void, NULL, to);
 		if (rpc_stat == RPC_PROGVERSMISMATCH) {
 			clnt_geterr(client, &rpcerr);
 			minvers = rpcerr.re_vers.low;
@@ -437,26 +437,26 @@ ip_ping(u_short portnum, const char *trans, int argc, char **argv)
 			minvers = 0;
 			maxvers = MAX_VERS;
 		} else {
-			(void) pstatus(client, prognum, MAX_VERS);
+			(void)pstatus(client, prognum, MAX_VERS);
 			exit(1);
 		}
 	} else {
-		(void) pstatus(client, prognum, (u_long)0);
+		(void)pstatus(client, prognum, MIN_VERS);
 		exit(1);
 	}
-	(void) CLNT_DESTROY(client);
+	(void)CLNT_DESTROY(client);
 	for (vers = minvers; vers <= maxvers; vers++) {
 		addr.sin_port = htons(portnum);
 		client = clnt_com_create(&addr, prognum, vers, &fd, trans);
-		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-		    NULL, (xdrproc_t) xdr_void, NULL, to);
+		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
+		    NULL, (xdrproc_t)xdr_void, NULL, to);
 		if (pstatus(client, prognum, vers) < 0)
-				failure = 1;
-		(void) CLNT_DESTROY(client);
+		    failure = 1;
+		(void)CLNT_DESTROY(client);
 	}
 	if (failure)
 		exit(1);
-	(void) close(fd);
+	(void)close(fd);
 	return;
 }
 
@@ -470,16 +470,14 @@ pmapdump(int argc, char **argv)
 	struct pmaplist *head = NULL;
 	int sock = RPC_ANYSOCK;
 	struct timeval minutetimeout;
-	register CLIENT *client;
+	CLIENT *client;
 	struct rpcent *rpc;
 	enum clnt_stat clnt_st;
 	struct rpc_err error;
 	char *host = NULL;
 
-	if (argc > 1) {
+	if (argc > 1)
 		usage();
-		exit(1);
-	}
 	if (argc == 1) {
 		host = argv[0];
 		get_inet_address(&server_addr, host);
@@ -487,7 +485,7 @@ pmapdump(int argc, char **argv)
 		client = clnttcp_create(&server_addr, PMAPPROG, PMAPVERS,
 		    &sock, 50, 500);
 	} else
-		client = local_rpcb(PMAPPROG, PMAPVERS);
+		client = local_rpcb(PMAP_PROG, PMAP_VERS);
 
 	if (client == NULL) {
 		if (rpc_createerr.cf_stat == RPC_TLIERROR) {
@@ -499,54 +497,55 @@ pmapdump(int argc, char **argv)
 			rpc_createerr.cf_stat = RPC_PMAPFAILURE;
 			rpc_createerr.cf_error.re_status = RPC_FAILED;
 		}
-		clnt_pcreateerror("rpcinfo: can't contact portmapper");
-		exit(1);
+		errx(1, "Can't contact portmapper (%s)",
+		    clnt_spcreateerror("") + 2);
 	}
 
 	minutetimeout.tv_sec = 60;
 	minutetimeout.tv_usec = 0;
 
-	clnt_st = CLNT_CALL(client, PMAPPROC_DUMP, (xdrproc_t) xdr_void,
-		NULL, (xdrproc_t) xdr_pmaplist_ptr, (char *)&head,
-		minutetimeout);
+	clnt_st = CLNT_CALL(client, (unsigned int)PMAPPROC_DUMP,
+	    (xdrproc_t)xdr_void, NULL, (xdrproc_t)xdr_pmaplist_ptr,
+	    (char *)(void *)&head, minutetimeout);
 	if (clnt_st != RPC_SUCCESS) {
 		if ((clnt_st == RPC_PROGVERSMISMATCH) ||
 		    (clnt_st == RPC_PROGUNAVAIL)) {
 			CLNT_GETERR(client, &error);
 			if (error.re_vers.low > PMAPVERS) {
 				if (host)
-					fprintf(stderr,
-	"%s does not support portmapper.  Try 'rpcinfo %s' instead\n",
+					warnx(
+	"%s does not support portmapper. Try 'rpcinfo %s' instead",
 					    host, host);
 				else
-					fprintf(stderr,
+					warnx(
 	"local host does not support portmapper.  Try 'rpcinfo' instead\n");
 			}
 			exit(1);
 		}
-		clnt_perror(client, "rpcinfo: can't contact portmapper");
+		errx(1, "Can't contact portmapper (%s)",
+		    clnt_sperror(client, "") + 2);
 		exit(1);
 	}
 	if (head == NULL) {
-		printf("No remote programs registered.\n");
+		(void)printf("No remote programs registered.\n");
 	} else {
-		printf("   program vers proto   port  service\n");
+		(void)printf("   program vers proto   port  service\n");
 		for (; head != NULL; head = head->pml_next) {
-			printf("%10ld%5ld",
+			(void)printf("%10ld%5ld",
 				head->pml_map.pm_prog,
 				head->pml_map.pm_vers);
 			if (head->pml_map.pm_prot == IPPROTO_UDP)
-				printf("%6s", "udp");
+				(void)printf("%6s", "udp");
 			else if (head->pml_map.pm_prot == IPPROTO_TCP)
-				printf("%6s", "tcp");
+				(void)printf("%6s", "tcp");
 			else
-				printf("%6ld", head->pml_map.pm_prot);
-			printf("%7ld", head->pml_map.pm_port);
-			rpc = getrpcbynumber(head->pml_map.pm_prog);
+				(void)printf("%6ld", head->pml_map.pm_prot);
+			(void)printf("%7ld", head->pml_map.pm_port);
+			rpc = getrpcbynumber((int)head->pml_map.pm_prog);
 			if (rpc)
-				printf("  %s\n", rpc->r_name);
+				(void)printf("  %s\n", rpc->r_name);
 			else
-				printf("\n");
+				(void)printf("\n");
 		}
 	}
 }
@@ -558,23 +557,25 @@ get_inet_address(struct sockaddr_in *addr, const char *host)
 	struct addrinfo hints, *res;
 	int error;
 
-	(void) memset((char *)addr, 0, sizeof (*addr));
+	(void)memset(addr, 0, sizeof (*addr));
 	addr->sin_addr.s_addr = inet_addr(host);
-	if (addr->sin_addr.s_addr == -1 || addr->sin_addr.s_addr == 0) {
+	if (addr->sin_addr.s_addr == (in_addr_t)-1 ||
+	    addr->sin_addr.s_addr == 0) {
 		if ((nconf = __rpc_getconfip("udp")) == NULL &&
 		    (nconf = __rpc_getconfip("tcp")) == NULL) {
 			errx(1, "Couldn't find a suitable transport");
 		} else {
-			memset(&hints, 0, sizeof hints);
+			(void)memset(&hints, 0, sizeof hints);
 			hints.ai_family = AF_INET;
 			if ((error = getaddrinfo(host, "rpcbind", &hints, &res))
 			    != 0) {
 				errx(1, "%s: %s", host, gai_strerror(error));
 			} else {
-				memcpy(addr, res->ai_addr, res->ai_addrlen);
+				(void)memcpy(addr, res->ai_addr,
+				    res->ai_addrlen);
 				freeaddrinfo(res);
 			}
-			(void) freenetconfigent(nconf);
+			(void)freenetconfigent(nconf);
 		}
 	} else {
 		addr->sin_family = AF_INET;
@@ -590,46 +591,46 @@ get_inet_address(struct sockaddr_in *addr, const char *host)
 
 /*ARGSUSED*/
 static bool_t
-reply_proc(res, who, nconf)
-	void *res;		/* Nothing comes back */
-	struct netbuf *who;	/* Who sent us the reply */
-	struct netconfig *nconf; /* On which transport the reply came */
+reply_proc(
+	void *res,		/* Nothing comes back */
+	struct netbuf *who,	/* Who sent us the reply */
+	struct netconfig *nconf /* On which transport the reply came */
+)
 {
-	char *uaddr;
+	const char *uaddr;
+	char *uf;
 	char hostbuf[NI_MAXHOST];
-	char *hostname;
+	const char *hostname;
 	struct sockaddr *sa = (struct sockaddr *)who->buf;
 
-	if (getnameinfo(sa, sa->sa_len, hostbuf, NI_MAXHOST, NULL, 0, 0)) {
-		hostname = UNKNOWN;
+	if (getnameinfo(sa, (socklen_t)sa->sa_len, hostbuf, NI_MAXHOST, NULL,
+	    0, 0)) {
+		hostname = unknown;
 	} else {
 		hostname = hostbuf;
 	}
-	if (!(uaddr = taddr2uaddr(nconf, who))) {
-		uaddr = UNKNOWN;
+	if (!(uaddr = uf = taddr2uaddr(nconf, who))) {
+		uaddr = unknown;
 	}
-	printf("%s\t%s\n", uaddr, hostname);
-	if (strcmp(uaddr, UNKNOWN))
-		free((char *)uaddr);
-	return (FALSE);
+	(void)printf("%s\t%s\n", uaddr, hostname);
+	if (uf)
+		free(uf);
+	return FALSE;
 }
 
 static void
-brdcst(argc, argv)
-	int argc;
-	char **argv;
+brdcst(int argc, char **argv)
 {
 	enum clnt_stat rpc_stat;
-	u_long prognum, vers;
+	rpcprog_t prognum;
+	rpcvers_t vers;
 
-	if (argc != 2) {
+	if (argc != 2)
 		usage();
-		exit(1);
-	}
 	prognum = getprognum(argv[0]);
 	vers = getvers(argv[1]);
 	rpc_stat = rpc_broadcast(prognum, vers, NULLPROC,
-	    (xdrproc_t) xdr_void, NULL, (xdrproc_t) xdr_void,
+	    (xdrproc_t)xdr_void, NULL, (xdrproc_t)xdr_void,
 	    NULL, (resultproc_t) reply_proc, NULL);
 	if ((rpc_stat != RPC_SUCCESS) && (rpc_stat != RPC_TIMEDOUT))
 		errx(1, "broadcast failed: %s", clnt_sperrno(rpc_stat));
@@ -637,9 +638,7 @@ brdcst(argc, argv)
 }
 
 static bool_t
-add_version(rs, vers)
-	struct rpcbdump_short *rs;
-	u_long vers;
+add_version(struct rpcbdump_short *rs, rpcvers_t vers)
 {
 	struct verslist *vl;
 
@@ -647,20 +646,18 @@ add_version(rs, vers)
 		if (vl->vers == vers)
 			break;
 	if (vl)
-		return (TRUE);
+		return TRUE;
 	vl = malloc(sizeof (struct verslist));
 	if (vl == NULL)
-		return (FALSE);
+		return FALSE;
 	vl->vers = vers;
 	vl->next = rs->vlist;
 	rs->vlist = vl;
-	return (TRUE);
+	return TRUE;
 }
 
 static bool_t
-add_netid(rs, netid)
-	struct rpcbdump_short *rs;
-	char *netid;
+add_netid(struct rpcbdump_short *rs, char *netid)
 {
 	struct netidlist *nl;
 
@@ -668,26 +665,22 @@ add_netid(rs, netid)
 		if (strcmp(nl->netid, netid) == 0)
 			break;
 	if (nl)
-		return (TRUE);
-	nl = malloc(sizeof (struct netidlist));
+		return TRUE;
+	nl = malloc(sizeof(*nl));
 	if (nl == NULL)
-		return (FALSE);
+		return FALSE;
 	nl->netid = netid;
 	nl->next = rs->nlist;
 	rs->nlist = nl;
-	return (TRUE);
+	return TRUE;
 }
 
 static void
-rpcbdump(dumptype, netid, argc, argv)
-	int dumptype;
-	char *netid;
-	int argc;
-	char **argv;
+rpcbdump(int dumptype, const char *netid, int argc, char **argv)
 {
 	rpcblist_ptr head = NULL, p;
 	struct timeval minutetimeout;
-	register CLIENT *client = NULL;
+	CLIENT *client = NULL;
 	struct rpcent *rpc;
 	char *host;
 	struct netidlist *nl;
@@ -698,10 +691,8 @@ rpcbdump(dumptype, netid, argc, argv)
 	struct rpc_err error;
 	struct rpcbdump_short *rs_head = NULL;
 
-	if (argc > 1) {
+	if (argc > 1)
 		usage();
-		exit(1);
-	}
 	if (argc == 1) {
 		host = argv[0];
 		if (netid == NULL) {
@@ -710,25 +701,23 @@ rpcbdump(dumptype, netid, argc, argv)
 			struct netconfig *nconf;
 	
 			nconf = getnetconfigent(netid);
-			if (nconf == NULL) {
-				nc_perror("rpcinfo: invalid transport");
-				exit(1);
-			}
+			if (nconf == NULL)
+				errx(1, "Invalid transport (%s)",
+				    nc_sperror());
 			client = getclnthandle(host, nconf, RPCBVERS, NULL);
 			if (nconf)
-				(void) freenetconfigent(nconf);
+				(void)freenetconfigent(nconf);
 		}
 	} else
-		client = local_rpcb(PMAPPROG, RPCBVERS);
+		client = local_rpcb(PMAP_PROG, RPCB_VERS);
 
-	if (client == NULL) {
-		clnt_pcreateerror("rpcinfo: can't contact rpcbind");
-		exit(1);
-	}
+	if (client == NULL)
+		errx(1, "Can't contact rpcbind (%s)",
+		    clnt_spcreateerror(""));
 	minutetimeout.tv_sec = 60;
 	minutetimeout.tv_usec = 0;
-	clnt_st = CLNT_CALL(client, RPCBPROC_DUMP, (xdrproc_t) xdr_void,
-		NULL, (xdrproc_t) xdr_rpcblist_ptr, (char *) &head,
+	clnt_st = CLNT_CALL(client, RPCBPROC_DUMP, (xdrproc_t)xdr_void,
+		NULL, (xdrproc_t)xdr_rpcblist_ptr, (char *)(void *)&head,
 		minutetimeout);
 	if (clnt_st != RPC_SUCCESS) {
 	    if ((clnt_st == RPC_PROGVERSMISMATCH) ||
@@ -738,10 +727,10 @@ rpcbdump(dumptype, netid, argc, argv)
 		CLNT_GETERR(client, &error);
 		if (error.re_vers.low == RPCBVERS4) {
 		    vers = RPCBVERS4;
-		    clnt_control(client, CLSET_VERS, (char *)&vers);
+		    clnt_control(client, CLSET_VERS, (char *)(void *)&vers);
 		    clnt_st = CLNT_CALL(client, RPCBPROC_DUMP,
-			(xdrproc_t) xdr_void, NULL,
-			(xdrproc_t) xdr_rpcblist_ptr, (char *) &head,
+			(xdrproc_t)xdr_void, NULL,
+			(xdrproc_t)xdr_rpcblist_ptr, (char *)(void *)&head,
 			minutetimeout);
 		    if (clnt_st != RPC_SUCCESS)
 			goto failed;
@@ -752,11 +741,11 @@ rpcbdump(dumptype, netid, argc, argv)
 			rpcblist_ptr list, prev = NULL;
 
 			vers = PMAPVERS;
-			clnt_control(client, CLSET_VERS, (char *)&vers);
-			clnt_st = CLNT_CALL(client, PMAPPROC_DUMP,
-				(xdrproc_t) xdr_void, NULL,
-				(xdrproc_t) xdr_pmaplist_ptr,
-				(char *)&pmaphead, minutetimeout);
+			clnt_control(client, CLSET_VERS, (char *)(void *)&vers);
+			clnt_st = CLNT_CALL(client, (unsigned int)PMAPPROC_DUMP,
+				(xdrproc_t)xdr_void, NULL,
+				(xdrproc_t)xdr_pmaplist_ptr,
+				(char *)(void *)&pmaphead, minutetimeout);
 			if (clnt_st != RPC_SUCCESS)
 				goto failed;
 			/*
@@ -780,46 +769,44 @@ rpcbdump(dumptype, netid, argc, argv)
 			    else if (pmaphead->pml_map.pm_prot == IPPROTO_TCP)
 				list->rpcb_map.r_netid = strdup("tcp");
 			    else {
-#define	MAXLONG_AS_STRING	"2147483648"
-				list->rpcb_map.r_netid =
-					malloc(strlen(MAXLONG_AS_STRING) + 1);
+				(void)asprintf(&list->rpcb_map.r_netid, "%6ld",
+				    pmaphead->pml_map.pm_prot);
 				if (list->rpcb_map.r_netid == NULL)
 					goto error;
-				sprintf(list->rpcb_map.r_netid, "%6ld",
-					pmaphead->pml_map.pm_prot);
 			    }
-			    list->rpcb_map.r_owner = UNKNOWN;
+			    list->rpcb_map.r_owner = unknown;
 			    low = pmaphead->pml_map.pm_port & 0xff;
 			    high = (pmaphead->pml_map.pm_port >> 8) & 0xff;
-			    list->rpcb_map.r_addr = strdup("0.0.0.0.XXX.XXX");
-			    sprintf(&list->rpcb_map.r_addr[8], "%d.%d",
-				high, low);
+			    (void)asprintf(&list->rpcb_map.r_addr,
+				"0.0.0.0.%d.%d", high, low);
+			    if (list->rpcb_map.r_addr == NULL)
+				    goto error;
 			    prev = list;
 			}
 		    }
 		}
 	    } else {	/* any other error */
 failed:
-		    clnt_perror(client, "rpcinfo: can't contact rpcbind: ");
-		    exit(1);
+		    errx(1, "Can't contact rpcbind (%s)",
+			clnt_sperror(client, "") + 2);
 	    }
 	}
 	if (head == NULL) {
-		printf("No remote programs registered.\n");
+		(void)printf("No remote programs registered.\n");
 	} else if (dumptype == RPCBDUMP) {
-		printf(
+		(void)printf(
 "   program version netid     address                service    owner\n");
 		for (p = head; p != NULL; p = p->rpcb_next) {
-			printf("%10u%5u    ",
-				p->rpcb_map.r_prog, p->rpcb_map.r_vers);
-			printf("%-9s ", p->rpcb_map.r_netid);
-			printf("%-22s", p->rpcb_map.r_addr);
-			rpc = getrpcbynumber(p->rpcb_map.r_prog);
+			(void)printf("%10u%5u    ",
+			    p->rpcb_map.r_prog, p->rpcb_map.r_vers);
+			(void)printf("%-9s ", p->rpcb_map.r_netid);
+			(void)printf("%-22s", p->rpcb_map.r_addr);
+			rpc = getrpcbynumber((int)p->rpcb_map.r_prog);
 			if (rpc)
-				printf(" %-10s", rpc->r_name);
+				(void)printf(" %-10s", rpc->r_name);
 			else
-				printf(" %-10s", "-");
-			printf(" %s\n", p->rpcb_map.r_owner);
+				(void)printf(" %-10s", "-");
+			(void)printf(" %s\n", p->rpcb_map.r_owner);
 		}
 	} else if (dumptype == RPCBDUMP_SHORT) {
 		for (p = head; p != NULL; p = p->rpcb_next) {
@@ -827,7 +814,7 @@ failed:
 				if (p->rpcb_map.r_prog == rs->prog)
 					break;
 			if (rs == NULL) {
-				rs = malloc(sizeof (struct rpcbdump_short));
+				rs = malloc(sizeof(*rs));
 				if (rs == NULL)
 					goto error;
 				rs->next = NULL;
@@ -848,32 +835,36 @@ failed:
 			if (add_netid(rs, p->rpcb_map.r_netid) == FALSE)
 				goto error;
 		}
-		printf(
+		(void)printf(
 "   program version(s) netid(s)                         service     owner\n");
 		for (rs = rs_head; rs; rs = rs->next) {
-			char *bp = buf;
+			char *q = buf;
 
-			printf("%10ld  ", rs->prog);
+			(void)printf("%10lu  ", (unsigned long)rs->prog);
 			for (vl = rs->vlist; vl; vl = vl->next) {
-				sprintf(bp, "%d", vl->vers);
-				bp = bp + strlen(bp);
-				if (vl->next)
-					sprintf(bp++, ",");
+				(void)snprintf(q, sizeof(buf) - (q - buf),
+				    "%lu", (unsigned long)vl->vers);
+				q = q + strlen(q);
+				if (vl->next) {
+					(void)snprintf(q,
+					    sizeof(buf) - (q - buf), ",");
+					q++;
+				}
 			}
-			printf("%-10s", buf);
+			(void)printf("%-10s", buf);
 			buf[0] = 0;
 			for (nl = rs->nlist; nl; nl = nl->next) {
-				strcat(buf, nl->netid);
+				(void)strlcat(buf, nl->netid, sizeof(buf));
 				if (nl->next)
-					strcat(buf, ",");
+					(void)strlcat(buf, ",", sizeof(buf));
 			}
-			printf("%-32s", buf);
-			rpc = getrpcbynumber(rs->prog);
+			(void)printf("%-32s", buf);
+			rpc = getrpcbynumber((int)rs->prog);
 			if (rpc)
-				printf(" %-11s", rpc->r_name);
+				(void)printf(" %-11s", rpc->r_name);
 			else
-				printf(" %-11s", "-");
-			printf(" %s\n", rs->owner);
+				(void)printf(" %-11s", "-");
+			(void)printf(" %s\n", rs->owner);
 		}
 	}
 	if (client)
@@ -899,23 +890,18 @@ error:	err(1, "Cannot allocate memory");
 static char nullstring[] = "\000";
 
 static void
-rpcbaddrlist(netid, argc, argv)
-	char *netid;
-	int argc;
-	char **argv;
+rpcbaddrlist(const char *netid, int argc, char **argv)
 {
 	rpcb_entry_list_ptr head = NULL;
 	struct timeval minutetimeout;
-	register CLIENT *client;
+	CLIENT *client;
 	struct rpcent *rpc;
 	char *host;
 	RPCB parms;
 	struct netbuf *targaddr;
 
-	if (argc != 3) {
+	if (argc != 3)
 		usage();
-		exit(1);
-	}
 	host = argv[0];
 	if (netid == NULL) {
 		client = clnt_rpcbind_create(host, RPCBVERS4, &targaddr);
@@ -923,18 +909,15 @@ rpcbaddrlist(netid, argc, argv)
 		struct netconfig *nconf;
 
 		nconf = getnetconfigent(netid);
-		if (nconf == NULL) {
-			nc_perror("rpcinfo: invalid transport");
-			exit(1);
-		}
+		if (nconf == NULL)
+			errx(1, "Invalid transport (%s)", nc_sperror());
 		client = getclnthandle(host, nconf, RPCBVERS4, &targaddr);
 		if (nconf)
-			(void) freenetconfigent(nconf);
+			(void)freenetconfigent(nconf);
 	}
-	if (client == NULL) {
-		clnt_pcreateerror("rpcinfo: can't contact rpcbind");
-		exit(1);
-	}
+	if (client == NULL)
+		errx(1, "Can't contact rpcbind (%s)", 
+		    clnt_spcreateerror("") + 2);
 	minutetimeout.tv_sec = 60;
 	minutetimeout.tv_usec = 0;
 
@@ -965,37 +948,37 @@ rpcbaddrlist(netid, argc, argv)
 	}
 	parms.r_owner = nullstring;
 
-	if (CLNT_CALL(client, RPCBPROC_GETADDRLIST, (xdrproc_t) xdr_rpcb,
-		(char *) &parms, (xdrproc_t) xdr_rpcb_entry_list_ptr,
-		(char *) &head, minutetimeout) != RPC_SUCCESS) {
-		clnt_perror(client, "rpcinfo: can't contact rpcbind: ");
-		exit(1);
+	if (CLNT_CALL(client, RPCBPROC_GETADDRLIST, (xdrproc_t)xdr_rpcb,
+		(char *)(void *)&parms, (xdrproc_t)xdr_rpcb_entry_list_ptr,
+		(char *)(void *)&head, minutetimeout) != RPC_SUCCESS) {
+		errx(1, "Can't contact rpcbind (%s)",
+		    clnt_sperror(client, "") + 2);
 	}
 	if (head == NULL) {
-		printf("No remote programs registered.\n");
+		(void)printf("No remote programs registered.\n");
 	} else {
-		printf(
+		(void)printf(
 	"   program vers  tp_family/name/class    address\t\t  service\n");
 		for (; head != NULL; head = head->rpcb_entry_next) {
 			rpcb_entry *re;
 			char buf[128];
 
 			re = &head->rpcb_entry_map;
-			printf("%10u%3u    ",
-				parms.r_prog, parms.r_vers);
-			sprintf(buf, "%s/%s/%s ",
-				re->r_nc_protofmly, re->r_nc_proto,
-				re->r_nc_semantics == NC_TPI_CLTS ? "clts" :
-				re->r_nc_semantics == NC_TPI_COTS ? "cots" :
-						"cots_ord");
-			printf("%-24s", buf);
-			printf("%-24s", re->r_maddr);
-			rpc = getrpcbynumber(parms.r_prog);
+			(void)printf("%10u%3u    ",
+			    parms.r_prog, parms.r_vers);
+			(void)snprintf(buf, sizeof(buf), "%s/%s/%s ",
+			    re->r_nc_protofmly, re->r_nc_proto,
+			    re->r_nc_semantics == NC_TPI_CLTS ? "clts" :
+			    re->r_nc_semantics == NC_TPI_COTS ? "cots" :
+			    "cots_ord");
+			(void)printf("%-24s", buf);
+			(void)printf("%-24s", re->r_maddr);
+			rpc = getrpcbynumber((int)parms.r_prog);
 			if (rpc)
-				printf(" %-13s", rpc->r_name);
+				(void)printf(" %-13s", rpc->r_name);
 			else
-				printf(" %-13s", "-");
-			printf("\n");
+				(void)printf(" %-13s", "-");
+			(void)printf("\n");
 		}
 	}
 	clnt_destroy(client);
@@ -1006,32 +989,30 @@ rpcbaddrlist(netid, argc, argv)
  * monitor rpcbind
  */
 static void
-rpcbgetstat(argc, argv)
-	int argc;
-	char **argv;
+rpcbgetstat(int argc, char **argv)
 {
 	rpcb_stat_byvers inf;
 	struct timeval minutetimeout;
-	register CLIENT *client;
+	CLIENT *client;
 	char *host;
 	int i, j;
 	rpcbs_addrlist *pa;
 	rpcbs_rmtcalllist *pr;
-	int cnt, flen;
+	size_t cnt, flen;
 #define	MAXFIELD	64
 	char fieldbuf[MAXFIELD];
 #define	MAXLINE		256
 	char linebuf[MAXLINE];
 	char *cp, *lp;
-	char *pmaphdr[] = {
+	static const char *pmaphdr[] = {
 		"NULL", "SET", "UNSET", "GETPORT",
 		"DUMP", "CALLIT"
 	};
-	char *rpcb3hdr[] = {
+	static const char *rpcb3hdr[] = {
 		"NULL", "SET", "UNSET", "GETADDR", "DUMP", "CALLIT", "TIME",
 		"U2T", "T2U"
 	};
-	char *rpcb4hdr[] = {
+	static const char *rpcb4hdr[] = {
 		"NULL", "SET", "UNSET", "GETADDR", "DUMP", "CALLIT", "TIME",
 		"U2T",  "T2U", "VERADDR", "INDRECT", "GETLIST", "GETSTAT"
 	};
@@ -1042,127 +1023,130 @@ rpcbgetstat(argc, argv)
 		host = argv[0];
 		client = clnt_rpcbind_create(host, RPCBVERS4, NULL);
 	} else
-		client = local_rpcb(PMAPPROG, RPCBVERS4);
-	if (client == NULL) {
-		clnt_pcreateerror("rpcinfo: can't contact rpcbind");
-		exit(1);
-	}
+		client = local_rpcb(PMAP_PROG, RPCB_VERS4);
+	if (client == NULL)
+		errx(1, "Can't contact rpcbind (%s)",
+		    clnt_spcreateerror("") + 2);
 	minutetimeout.tv_sec = 60;
 	minutetimeout.tv_usec = 0;
-	memset((char *)&inf, 0, sizeof (rpcb_stat_byvers));
-	if (CLNT_CALL(client, RPCBPROC_GETSTAT, (xdrproc_t) xdr_void, NULL,
-		(xdrproc_t) xdr_rpcb_stat_byvers, (char *)&inf, minutetimeout)
-			!= RPC_SUCCESS) {
-		clnt_perror(client, "rpcinfo: can't contact rpcbind: ");
-		exit(1);
+	(void)memset(&inf, 0, sizeof (rpcb_stat_byvers));
+	if (CLNT_CALL(client, RPCBPROC_GETSTAT, (xdrproc_t)xdr_void, NULL,
+	    (xdrproc_t)xdr_rpcb_stat_byvers, (char *)(void *)&inf,
+	    minutetimeout) != RPC_SUCCESS) {
+		errx(1, "Can't contact rpcbind (%s)",
+		    clnt_sperror(client, "") + 2);
 	}
-	printf("PORTMAP (version 2) statistics\n");
+	(void)printf("PORTMAP (version 2) statistics\n");
 	lp = linebuf;
 	for (i = 0; i <= rpcb_highproc_2; i++) {
 		fieldbuf[0] = '\0';
 		switch (i) {
 		case PMAPPROC_SET:
-			sprintf(fieldbuf, "%d/", inf[RPCBVERS_2_STAT].setinfo);
+			(void)snprintf(fieldbuf, sizeof(fieldbuf), "%d/",
+			    inf[RPCBVERS_2_STAT].setinfo);
 			break;
 		case PMAPPROC_UNSET:
-			sprintf(fieldbuf, "%d/",
-				inf[RPCBVERS_2_STAT].unsetinfo);
+			(void)snprintf(fieldbuf, sizeof(fieldbuf), "%d/",
+			    inf[RPCBVERS_2_STAT].unsetinfo);
 			break;
 		case PMAPPROC_GETPORT:
 			cnt = 0;
 			for (pa = inf[RPCBVERS_2_STAT].addrinfo; pa;
-				pa = pa->next)
+			    pa = pa->next)
 				cnt += pa->success;
-			sprintf(fieldbuf, "%d/", cnt);
+			(void)snprintf(fieldbuf, sizeof(fieldbuf), "%zu/", cnt);
 			break;
 		case PMAPPROC_CALLIT:
 			cnt = 0;
 			for (pr = inf[RPCBVERS_2_STAT].rmtinfo; pr;
-				pr = pr->next)
+			    pr = pr->next)
 				cnt += pr->success;
-			sprintf(fieldbuf, "%d/", cnt);
+			(void)snprintf(fieldbuf, sizeof(fieldbuf), "%zu/", cnt);
 			break;
 		default: break;  /* For the remaining ones */
 		}
 		cp = &fieldbuf[0] + strlen(fieldbuf);
-		sprintf(cp, "%d", inf[RPCBVERS_2_STAT].info[i]);
+		(void)snprintf(cp, sizeof(fieldbuf) - (cp - fieldbuf), "%d",
+		    inf[RPCBVERS_2_STAT].info[i]);
 		flen = strlen(fieldbuf);
-		printf("%s%s", pmaphdr[i],
-			spaces((TABSTOP * (1 + flen / TABSTOP))
-			- strlen(pmaphdr[i])));
-		sprintf(lp, "%s%s", fieldbuf,
-			spaces(cnt = ((TABSTOP * (1 + flen / TABSTOP))
-			- flen)));
+		(void)printf("%s%s", pmaphdr[i],
+		    spaces((TABSTOP * (1 + flen / TABSTOP))
+		    - strlen(pmaphdr[i])));
+		(void)snprintf(lp, sizeof(linebuf) - (lp - linebuf), "%s%s",
+		    fieldbuf, spaces(cnt = ((TABSTOP * (1 + flen / TABSTOP))
+		    - flen)));
 		lp += (flen + cnt);
 	}
-	printf("\n%s\n\n", linebuf);
+	(void)printf("\n%s\n\n", linebuf);
 
 	if (inf[RPCBVERS_2_STAT].info[PMAPPROC_CALLIT]) {
-		printf("PMAP_RMTCALL call statistics\n");
+		(void)printf("PMAP_RMTCALL call statistics\n");
 		print_rmtcallstat(RPCBVERS_2_STAT, &inf[RPCBVERS_2_STAT]);
-		printf("\n");
+		(void)printf("\n");
 	}
 
 	if (inf[RPCBVERS_2_STAT].info[PMAPPROC_GETPORT]) {
-		printf("PMAP_GETPORT call statistics\n");
+		(void)printf("PMAP_GETPORT call statistics\n");
 		print_getaddrstat(RPCBVERS_2_STAT, &inf[RPCBVERS_2_STAT]);
-		printf("\n");
+		(void)printf("\n");
 	}
 
-	printf("RPCBIND (version 3) statistics\n");
+	(void)printf("RPCBIND (version 3) statistics\n");
 	lp = linebuf;
 	for (i = 0; i <= rpcb_highproc_3; i++) {
 		fieldbuf[0] = '\0';
 		switch (i) {
 		case RPCBPROC_SET:
-			sprintf(fieldbuf, "%d/", inf[RPCBVERS_3_STAT].setinfo);
+			(void)snprintf(fieldbuf, sizeof(fieldbuf), "%d/",
+			    inf[RPCBVERS_3_STAT].setinfo);
 			break;
 		case RPCBPROC_UNSET:
-			sprintf(fieldbuf, "%d/",
-				inf[RPCBVERS_3_STAT].unsetinfo);
+			(void)snprintf(fieldbuf, sizeof(fieldbuf), "%d/",
+			    inf[RPCBVERS_3_STAT].unsetinfo);
 			break;
 		case RPCBPROC_GETADDR:
 			cnt = 0;
 			for (pa = inf[RPCBVERS_3_STAT].addrinfo; pa;
-				pa = pa->next)
+			    pa = pa->next)
 				cnt += pa->success;
-			sprintf(fieldbuf, "%d/", cnt);
+			(void)snprintf(fieldbuf, sizeof(fieldbuf), "%zu/", cnt);
 			break;
 		case RPCBPROC_CALLIT:
 			cnt = 0;
 			for (pr = inf[RPCBVERS_3_STAT].rmtinfo; pr;
-				pr = pr->next)
+			    pr = pr->next)
 				cnt += pr->success;
-			sprintf(fieldbuf, "%d/", cnt);
+			(void)snprintf(fieldbuf, sizeof(fieldbuf), "%zu/", cnt);
 			break;
 		default: break;  /* For the remaining ones */
 		}
 		cp = &fieldbuf[0] + strlen(fieldbuf);
-		sprintf(cp, "%d", inf[RPCBVERS_3_STAT].info[i]);
+		(void)snprintf(cp, sizeof(fieldbuf) - (cp - fieldbuf),
+		    "%d", inf[RPCBVERS_3_STAT].info[i]);
 		flen = strlen(fieldbuf);
-		printf("%s%s", rpcb3hdr[i],
-			spaces((TABSTOP * (1 + flen / TABSTOP))
-			- strlen(rpcb3hdr[i])));
-		sprintf(lp, "%s%s", fieldbuf,
-			spaces(cnt = ((TABSTOP * (1 + flen / TABSTOP))
-			- flen)));
+		(void)printf("%s%s", rpcb3hdr[i],
+		    spaces((TABSTOP * (1 + flen / TABSTOP))
+		    - strlen(rpcb3hdr[i])));
+		(void)snprintf(lp, sizeof(linebuf) - (lp - linebuf), "%s%s",
+		    fieldbuf, spaces(cnt = ((TABSTOP * (1 + flen / TABSTOP))
+		    - flen)));
 		lp += (flen + cnt);
 	}
-	printf("\n%s\n\n", linebuf);
+	(void)printf("\n%s\n\n", linebuf);
 
 	if (inf[RPCBVERS_3_STAT].info[RPCBPROC_CALLIT]) {
-		printf("RPCB_RMTCALL (version 3) call statistics\n");
+		(void)printf("RPCB_RMTCALL (version 3) call statistics\n");
 		print_rmtcallstat(RPCBVERS_3_STAT, &inf[RPCBVERS_3_STAT]);
-		printf("\n");
+		(void)printf("\n");
 	}
 
 	if (inf[RPCBVERS_3_STAT].info[RPCBPROC_GETADDR]) {
-		printf("RPCB_GETADDR (version 3) call statistics\n");
+		(void)printf("RPCB_GETADDR (version 3) call statistics\n");
 		print_getaddrstat(RPCBVERS_3_STAT, &inf[RPCBVERS_3_STAT]);
-		printf("\n");
+		(void)printf("\n");
 	}
 
-	printf("RPCBIND (version 4) statistics\n");
+	(void)printf("RPCBIND (version 4) statistics\n");
 
 	for (j = 0; j <= 9; j += 9) { /* Just two iterations for printing */
 		lp = linebuf;
@@ -1170,26 +1154,28 @@ rpcbgetstat(argc, argv)
 			fieldbuf[0] = '\0';
 			switch (i) {
 			case RPCBPROC_SET:
-				sprintf(fieldbuf, "%d/",
-					inf[RPCBVERS_4_STAT].setinfo);
+				(void)snprintf(fieldbuf, sizeof(fieldbuf),
+				    "%d/", inf[RPCBVERS_4_STAT].setinfo);
 				break;
 			case RPCBPROC_UNSET:
-				sprintf(fieldbuf, "%d/",
-					inf[RPCBVERS_4_STAT].unsetinfo);
+				(void)snprintf(fieldbuf, sizeof(fieldbuf),
+				    "%d/", inf[RPCBVERS_4_STAT].unsetinfo);
 				break;
 			case RPCBPROC_GETADDR:
 				cnt = 0;
 				for (pa = inf[RPCBVERS_4_STAT].addrinfo; pa;
 					pa = pa->next)
 					cnt += pa->success;
-				sprintf(fieldbuf, "%d/", cnt);
+				(void)snprintf(fieldbuf, sizeof(fieldbuf),
+				    "%zu/", cnt);
 				break;
 			case RPCBPROC_CALLIT:
 				cnt = 0;
 				for (pr = inf[RPCBVERS_4_STAT].rmtinfo; pr;
-					pr = pr->next)
+				    pr = pr->next)
 					cnt += pr->success;
-				sprintf(fieldbuf, "%d/", cnt);
+				(void)snprintf(fieldbuf, sizeof(fieldbuf),
+				    "%zu/", cnt);
 				break;
 			default: break;  /* For the remaining ones */
 			}
@@ -1200,32 +1186,38 @@ rpcbgetstat(argc, argv)
 			 * RPCB_GETADDRLIST successes in RPCB_GETADDR.
 			 */
 			if (i != RPCBPROC_GETADDR)
-			    sprintf(cp, "%d", inf[RPCBVERS_4_STAT].info[i]);
+			    (void)snprintf(cp,
+				sizeof(fieldbuf) - (cp - fieldbuf),
+				"%d", inf[RPCBVERS_4_STAT].info[i]);
 			else
-			    sprintf(cp, "%d", inf[RPCBVERS_4_STAT].info[i] +
-			    inf[RPCBVERS_4_STAT].info[RPCBPROC_GETADDRLIST]);
+			    (void)snprintf(cp,
+				sizeof(fieldbuf) - (cp - fieldbuf),
+				"%d", inf[RPCBVERS_4_STAT].info[i] +
+				inf[RPCBVERS_4_STAT].
+				info[RPCBPROC_GETADDRLIST]);
 			flen = strlen(fieldbuf);
-			printf("%s%s", rpcb4hdr[i],
-				spaces((TABSTOP * (1 + flen / TABSTOP))
-				- strlen(rpcb4hdr[i])));
-			sprintf(lp, "%s%s", fieldbuf,
-				spaces(cnt = ((TABSTOP * (1 + flen / TABSTOP))
-				- flen)));
+			(void)printf("%s%s", rpcb4hdr[i],
+			    spaces((TABSTOP * (1 + flen / TABSTOP))
+			    - strlen(rpcb4hdr[i])));
+			(void)snprintf(lp, sizeof(linebuf) - (lp - linebuf),
+			    "%s%s", fieldbuf,
+			    spaces(cnt = ((TABSTOP * (1 + flen / TABSTOP))
+			    - flen)));
 			lp += (flen + cnt);
 		}
-		printf("\n%s\n", linebuf);
+		(void)printf("\n%s\n", linebuf);
 	}
 
 	if (inf[RPCBVERS_4_STAT].info[RPCBPROC_CALLIT] ||
 			    inf[RPCBVERS_4_STAT].info[RPCBPROC_INDIRECT]) {
-		printf("\n");
-		printf("RPCB_RMTCALL (version 4) call statistics\n");
+		(void)printf("\n");
+		(void)printf("RPCB_RMTCALL (version 4) call statistics\n");
 		print_rmtcallstat(RPCBVERS_4_STAT, &inf[RPCBVERS_4_STAT]);
 	}
 
 	if (inf[RPCBVERS_4_STAT].info[RPCBPROC_GETADDR]) {
-		printf("\n");
-		printf("RPCB_GETADDR (version 4) call statistics\n");
+		(void)printf("\n");
+		(void)printf("RPCB_GETADDR (version 4) call statistics\n");
 		print_getaddrstat(RPCBVERS_4_STAT, &inf[RPCBVERS_4_STAT]);
 	}
 	clnt_destroy(client);
@@ -1235,31 +1227,20 @@ rpcbgetstat(argc, argv)
  * Delete registeration for this (prog, vers, netid)
  */
 static void
-deletereg(netid, argc, argv)
-	char *netid;
-	int argc;
-	char **argv;
+deletereg(const char *netid, int argc, char **argv)
 {
 	struct netconfig *nconf = NULL;
 
-	if (argc != 2) {
+	if (argc != 2)
 		usage();
-		exit(1);
-	}
 	if (netid) {
 		nconf = getnetconfigent(netid);
-		if (nconf == NULL) {
-			fprintf(stderr, "rpcinfo: netid %s not supported\n",
-					netid);
-			exit(1);
-		}
+		if (nconf == NULL)
+			errx(1, "netid %s not supported", netid);
 	}
-	if ((rpcb_unset(getprognum(argv[0]), getvers(argv[1]), nconf)) == 0) {
-		fprintf(stderr,
-	"rpcinfo: Could not delete registration for prog %s version %s\n",
-			argv[0], argv[1]);
-		exit(1);
-	}
+	if ((rpcb_unset(getprognum(argv[0]), getvers(argv[1]), nconf)) == 0)
+		errx(1, "Could not delete registration for prog %s version %s",
+		    argv[0], argv[1]);
 }
 
 /*
@@ -1267,11 +1248,8 @@ deletereg(netid, argc, argv)
  * Exit if cannot create handle.
  */
 static CLIENT *
-clnt_addr_create(address, nconf, prog, vers)
-	char *address;
-	struct netconfig *nconf;
-	u_long prog;
-	u_long vers;
+clnt_addr_create(const char *address, const struct netconfig *nconf,
+    rpcprog_t prog, rpcvers_t vers)
 {
 	CLIENT *client;
 	static struct netbuf *nbuf;
@@ -1280,22 +1258,20 @@ clnt_addr_create(address, nconf, prog, vers)
 	if (fd == RPC_ANYFD) {
 		if ((fd = __rpc_nconf2fd(nconf)) == -1) {
 			rpc_createerr.cf_stat = RPC_TLIERROR;
-			clnt_pcreateerror("rpcinfo");
+			clnt_pcreateerror(getprogname());
 			exit(1);
 		}
 		/* Convert the uaddr to taddr */
 		nbuf = uaddr2taddr(nconf, address);
-		if (nbuf == NULL) {
+		if (nbuf == NULL)
 			errx(1, "No address for client handle");
-			exit(1);
-		}
 	}
 	client = clnt_tli_create(fd, nconf, nbuf, prog, vers, 0, 0);
 	if (client == NULL) {
 		clnt_pcreateerror(getprogname());
 		exit(1);
 	}
-	return (client);
+	return client;
 }
 
 /*
@@ -1305,25 +1281,19 @@ clnt_addr_create(address, nconf, prog, vers)
  * sent directly to the services themselves.
  */
 static void
-addrping(address, netid, argc, argv)
-	char *address;
-	char *netid;
-	int argc;
-	char **argv;
+addrping(const char *address, const char *netid, int argc, char **argv)
 {
 	CLIENT *client;
 	struct timeval to;
 	enum clnt_stat rpc_stat;
-	u_long prognum, versnum, minvers, maxvers;
+	rpcprog_t prognum, versnum, minvers, maxvers;
 	struct rpc_err rpcerr;
 	int failure = 0;
 	struct netconfig *nconf;
 	int fd;
 
-	if (argc < 1 || argc > 2 || (netid == NULL)) {
+	if (argc < 1 || argc > 2 || (netid == NULL))
 		usage();
-		exit(1);
-	}
 	nconf = getnetconfigent(netid);
 	if (nconf == NULL)
 		errx(1, "Could not find %s", netid);
@@ -1340,20 +1310,20 @@ addrping(address, netid, argc, argv)
 		versnum = getvers(argv[1]);
 	}
 	client = clnt_addr_create(address, nconf, prognum, versnum);
-	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-	    NULL, (xdrproc_t) xdr_void, NULL, to);
+	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
+	    NULL, (xdrproc_t)xdr_void, NULL, to);
 	if (argc == 2) {
 		/* Version number was known */
 		if (pstatus(client, prognum, versnum) < 0)
 			failure = 1;
-		(void) CLNT_DESTROY(client);
+		(void)CLNT_DESTROY(client);
 		if (failure)
 			exit(1);
 		return;
 	}
 	/* Version number not known */
-	(void) CLNT_CONTROL(client, CLSET_FD_NCLOSE, NULL);
-	(void) CLNT_CONTROL(client, CLGET_FD, (char *)&fd);
+	(void)CLNT_CONTROL(client, CLSET_FD_NCLOSE, NULL);
+	(void)CLNT_CONTROL(client, CLGET_FD, (char *)(void *)&fd);
 	if (rpc_stat == RPC_PROGVERSMISMATCH) {
 		clnt_geterr(client, &rpcerr);
 		minvers = rpcerr.re_vers.low;
@@ -1363,10 +1333,10 @@ addrping(address, netid, argc, argv)
 		 * Oh dear, it DOES support version 0.
 		 * Let's try version MAX_VERS.
 		 */
-		(void) CLNT_DESTROY(client);
+		(void)CLNT_DESTROY(client);
 		client = clnt_addr_create(address, nconf, prognum, MAX_VERS);
-		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-		    NULL, (xdrproc_t) xdr_void, NULL, to);
+		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
+		    NULL, (xdrproc_t)xdr_void, NULL, to);
 		if (rpc_stat == RPC_PROGVERSMISMATCH) {
 			clnt_geterr(client, &rpcerr);
 			minvers = rpcerr.re_vers.low;
@@ -1381,23 +1351,23 @@ addrping(address, netid, argc, argv)
 			minvers = 0;
 			maxvers = MAX_VERS;
 		} else {
-			(void) pstatus(client, prognum, MAX_VERS);
+			(void)pstatus(client, prognum, MAX_VERS);
 			exit(1);
 		}
 	} else {
-		(void) pstatus(client, prognum, (u_long)0);
+		(void)pstatus(client, prognum, MIN_VERS);
 		exit(1);
 	}
-	(void) CLNT_DESTROY(client);
+	(void)CLNT_DESTROY(client);
 	for (versnum = minvers; versnum <= maxvers; versnum++) {
 		client = clnt_addr_create(address, nconf, prognum, versnum);
-		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-		    NULL, (xdrproc_t) xdr_void, NULL, to);
+		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
+		    NULL, (xdrproc_t)xdr_void, NULL, to);
 		if (pstatus(client, prognum, versnum) < 0)
-				failure = 1;
-		(void) CLNT_DESTROY(client);
+			failure = 1;
+		(void)CLNT_DESTROY(client);
 	}
-	(void) close(fd);
+	(void)close(fd);
 	if (failure)
 		exit(1);
 	return;
@@ -1410,23 +1380,19 @@ addrping(address, netid, argc, argv)
  * then sent directly to the services themselves.
  */
 static void
-progping(netid, argc, argv)
-	char *netid;
-	int argc;
-	char **argv;
+progping(const char *netid, int argc, char **argv)
 {
 	CLIENT *client;
 	struct timeval to;
 	enum clnt_stat rpc_stat;
-	u_long prognum, versnum, minvers, maxvers;
+	rpcprog_t prognum;
+	rpcvers_t versnum, minvers, maxvers;
 	struct rpc_err rpcerr;
 	int failure = 0;
 	struct netconfig *nconf;
 
-	if (argc < 2 || argc > 3 || (netid == NULL)) {
+	if (argc < 2 || argc > 3 || (netid == NULL))
 		usage();
-		exit(1);
-	}
 	prognum = getprognum(argv[1]);
 	if (argc == 2) { /* Version number not known */
 		/*
@@ -1451,13 +1417,13 @@ progping(netid, argc, argv)
 	}
 	to.tv_sec = 10;
 	to.tv_usec = 0;
-	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-	    NULL, (xdrproc_t) xdr_void, NULL, to);
+	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
+	    NULL, (xdrproc_t)xdr_void, NULL, to);
 	if (argc == 3) {
 		/* Version number was known */
 		if (pstatus(client, prognum, versnum) < 0)
 			failure = 1;
-		(void) CLNT_DESTROY(client);
+		(void)CLNT_DESTROY(client);
 		if (failure)
 			exit(1);
 		return;
@@ -1473,9 +1439,10 @@ progping(netid, argc, argv)
 		 * Let's try version MAX_VERS.
 		 */
 		versnum = MAX_VERS;
-		(void) CLNT_CONTROL(client, CLSET_VERS, (char *)&versnum);
+		(void)CLNT_CONTROL(client, CLSET_VERS,
+		    (char *)(void *)&versnum);
 		rpc_stat = CLNT_CALL(client, NULLPROC,
-		    (xdrproc_t) xdr_void, NULL, (xdrproc_t) xdr_void, NULL, to);
+		    (xdrproc_t)xdr_void, NULL, (xdrproc_t)xdr_void, NULL, to);
 		if (rpc_stat == RPC_PROGVERSMISMATCH) {
 			clnt_geterr(client, &rpcerr);
 			minvers = rpcerr.re_vers.low;
@@ -1490,125 +1457,127 @@ progping(netid, argc, argv)
 			minvers = 0;
 			maxvers = MAX_VERS;
 		} else {
-			(void) pstatus(client, prognum, MAX_VERS);
+			(void)pstatus(client, prognum, MAX_VERS);
 			exit(1);
 		}
 	} else {
-		(void) pstatus(client, prognum, (u_long)0);
+		(void)pstatus(client, prognum, MIN_VERS);
 		exit(1);
 	}
 	for (versnum = minvers; versnum <= maxvers; versnum++) {
-		(void) CLNT_CONTROL(client, CLSET_VERS, (char *)&versnum);
-		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-		    NULL, (xdrproc_t) xdr_void, NULL, to);
+		(void)CLNT_CONTROL(client, CLSET_VERS,
+		    (char *)(void *)&versnum);
+		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t)xdr_void,
+		    NULL, (xdrproc_t)xdr_void, NULL, to);
 		if (pstatus(client, prognum, versnum) < 0)
-				failure = 1;
+			failure = 1;
 	}
-	(void) CLNT_DESTROY(client);
+	(void)CLNT_DESTROY(client);
 	if (failure)
 		exit(1);
 	return;
 }
 
 static void
-usage()
+usage(void)
 {
-	fprintf(stderr, "usage: rpcinfo [-m | -s] [host]\n");
+	(void)fprintf(stderr, "Usage: %s [-m | -s] [host]\n", getprogname());
 #ifdef PORTMAP
-	fprintf(stderr, "       rpcinfo -p [host]\n");
+	(void)fprintf(stderr, "\t%s -p [host]\n", getprogname());
 #endif
-	fprintf(stderr, "       rpcinfo -T netid host prognum [versnum]\n");
-	fprintf(stderr, "       rpcinfo -l host prognum versnum\n");
+	(void)fprintf(stderr, "\t%s -T netid host prognum [versnum]\n",
+	    getprogname());
+	(void)fprintf(stderr, "\t%s -l host prognum versnum\n", getprogname());
 #ifdef PORTMAP
-	fprintf(stderr,
-"       rpcinfo [-n portnum] -u | -t host prognum [versnum]\n");
+	(void)fprintf(stderr,
+	    "\t%s [-n portnum] -u | -t host prognum [versnum]\n",
+	    getprogname());
 #endif
-	fprintf(stderr,
-"       rpcinfo -a serv_address -T netid prognum [version]\n");
-	fprintf(stderr, "       rpcinfo -b prognum versnum\n");
-	fprintf(stderr, "       rpcinfo -d [-T netid] prognum versnum\n");
+	(void)fprintf(stderr,
+	    "\t%s -a serv_address -T netid prognum [version]\n",
+	    getprogname());
+	(void)fprintf(stderr, "\t%s -b prognum versnum\n", getprogname());
+	(void)fprintf(stderr, "\t%s -d [-T netid] prognum versnum\n",
+	    getprogname());
 }
 
-static u_long
-getprognum  (arg)
-	char *arg;
+static rpcprog_t
+getprognum(const char *arg)
 {
 	char *strptr;
-	register struct rpcent *rpc;
-	register u_long prognum;
-	char *tptr = arg;
+	struct rpcent *rpc;
+	u_long prognum;
+	const char *tptr = arg;
 
-	while (*tptr && isdigit((unsigned char)*tptr++));
+	while (*tptr && isdigit((unsigned char)*tptr++))
+		continue;
 	if (*tptr || isalpha((unsigned char)*(tptr - 1))) {
 		rpc = getrpcbyname(arg);
 		if (rpc == NULL)
 			errx(1, "Unknown service `%s'", arg);
 		prognum = rpc->r_number;
 	} else {
-		prognum = strtol(arg, &strptr, 10);
-		if (strptr == arg || *strptr != '\0')
+		errno = 0;
+		prognum = strtoul(arg, &strptr, 0);
+		if (strptr == arg || *strptr != '\0' ||
+		    (prognum == ULONG_MAX && errno == ERANGE))
 			errx(1, "Illegal program number `%s'", arg);
 	}
-	return (prognum);
+	return (rpcprog_t)prognum;
 }
 
-static u_long
-getvers(arg)
-	char *arg;
+static rpcvers_t
+getvers(const char *arg)
 {
 	char *strptr;
-	register u_long vers;
+	u_long vers;
 
-	vers = (int) strtol(arg, &strptr, 10);
-	if (strptr == arg || *strptr != '\0')
+	vers = strtoul(arg, &strptr, 0);
+	if (strptr == arg || *strptr != '\0' ||
+	    (vers == ULONG_MAX && errno == ERANGE))
 		errx(1, "Illegal version number `%s'", arg);
-	return (vers);
+	return (rpcvers_t)vers;
 }
 
 /*
  * This routine should take a pointer to an "rpc_err" structure, rather than
- * a pointer to a CLIENT structure, but "clnt_perror" takes a pointer to
+ * a pointer to a CLIENT structure, but "clnt_sperror" takes a pointer to
  * a CLIENT structure rather than a pointer to an "rpc_err" structure.
  * As such, we have to keep the CLIENT structure around in order to print
  * a good error message.
  */
 static int
-pstatus(client, prog, vers)
-	register CLIENT *client;
-	u_long prog;
-	u_long vers;
+pstatus(CLIENT *client, rpcprog_t prog, rpcvers_t vers)
 {
 	struct rpc_err rpcerr;
 
 	clnt_geterr(client, &rpcerr);
 	if (rpcerr.re_status != RPC_SUCCESS) {
-		clnt_perror(client, getprogname());
-		printf("program %lu version %lu is not available\n",
-			prog, vers);
-		return (-1);
+		warnx("Program %lu version %lu is not available (%s)",
+		    (unsigned long)prog, (unsigned long)vers,
+		    clnt_sperror(client, "") + 2);
+		return -1;
 	} else {
-		printf("program %lu version %lu ready and waiting\n",
-			prog, vers);
-		return (0);
+		(void)printf("program %lu version %lu ready and waiting\n",
+		    (unsigned long)prog, (unsigned long)vers);
+		return 0;
 	}
 }
 
 static CLIENT *
-clnt_rpcbind_create(host, rpcbversnum, targaddr)
-	char *host;
-	int rpcbversnum;
-	struct netbuf **targaddr;
+clnt_rpcbind_create(const char *host, rpcvers_t rpcbversnum,
+    struct netbuf **targaddr)
 {
-	static char *tlist[3] = {
+	static const char *tlist[] = {
 		"circuit_n", "circuit_v", "datagram_v"
 	};
-	int i;
+	size_t i;
 	struct netconfig *nconf;
 	CLIENT *clnt = NULL;
 	void *handle;
 
 	rpc_createerr.cf_stat = RPC_SUCCESS;
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < __arraycount(tlist); i++) {
 		if ((handle = __rpc_setconf(tlist[i])) == NULL)
 			continue;
 		while (clnt == NULL) {
@@ -1618,46 +1587,43 @@ clnt_rpcbind_create(host, rpcbversnum, targaddr)
 				break;
 			}
 			clnt = getclnthandle(host, nconf, rpcbversnum,
-					targaddr);
+			    targaddr);
 		}
-		if (clnt)
-			break;
 		__rpc_endconf(handle);
+		if (clnt)
+			return clnt;
 	}
-	return (clnt);
+	return NULL;
 }
 
 static CLIENT*
-getclnthandle(host, nconf, rpcbversnum, targaddr)
-	char *host;
-	struct netconfig *nconf;
-	u_long rpcbversnum;
-	struct netbuf **targaddr;
+getclnthandle(const char *host, const struct netconfig *nconf,
+    rpcvers_t rpcbversnum, struct netbuf **targaddr)
 {
 	struct netbuf addr;
 	struct addrinfo hints, *res;
 	CLIENT *client = NULL;
 
 	/* Get the address of the rpcbind */
-	memset(&hints, 0, sizeof hints);
+	(void)memset(&hints, 0, sizeof hints);
 	if (getaddrinfo(host, "rpcbind", &hints, &res) != 0) {
 		rpc_createerr.cf_stat = RPC_N2AXLATEFAILURE;
-		return (NULL);
+		return NULL;
 	}
 	addr.len = addr.maxlen = res->ai_addrlen;
 	addr.buf = res->ai_addr;
 	client = clnt_tli_create(RPC_ANYFD, nconf, &addr, RPCBPROG,
-			rpcbversnum, 0, 0);
+	    rpcbversnum, 0, 0);
 	if (client) {
 		if (targaddr != NULL) {
-			*targaddr = malloc(sizeof (struct netbuf));
+			*targaddr = malloc(sizeof(**targaddr));
 			if (*targaddr != NULL) {
 				(*targaddr)->maxlen = addr.maxlen;
 				(*targaddr)->len = addr.len;
 				(*targaddr)->buf = malloc(addr.len);
 				if ((*targaddr)->buf != NULL) {
-					memcpy((*targaddr)->buf, addr.buf,
-						addr.len);
+					(void)memcpy((*targaddr)->buf, addr.buf,
+					    addr.len);
 				}
 			}
 		}
@@ -1672,66 +1638,61 @@ getclnthandle(host, nconf, rpcbversnum, targaddr)
 		}
 	}
 	freeaddrinfo(res);
-	return (client);
+	return client;
 }
 
 static void
-print_rmtcallstat(rtype, infp)
-	int rtype;
-	rpcb_stat *infp;
+print_rmtcallstat(int rtype, const rpcb_stat *infp)
 {
-	register rpcbs_rmtcalllist_ptr pr;
-	struct rpcent *rpc;
+	rpcbs_rmtcalllist_ptr pr;
+	const struct rpcent *rpc;
 
 	if (rtype == RPCBVERS_4_STAT)
-		printf(
-		"prog\t\tvers\tproc\tnetid\tindirect success failure\n");
+		(void)printf(
+		    "prog\t\tvers\tproc\tnetid\tindirect success failure\n");
 	else
-		printf("prog\t\tvers\tproc\tnetid\tsuccess\tfailure\n");
+		(void)printf("prog\t\tvers\tproc\tnetid\tsuccess\tfailure\n");
 	for (pr = infp->rmtinfo; pr; pr = pr->next) {
-		rpc = getrpcbynumber(pr->prog);
+		rpc = getrpcbynumber((int)pr->prog);
 		if (rpc)
-			printf("%-16s", rpc->r_name);
+			(void)printf("%-16s", rpc->r_name);
 		else
-			printf("%-16d", pr->prog);
-		printf("%d\t%d\t%s\t",
+			(void)printf("%-16d", pr->prog);
+		(void)printf("%d\t%d\t%s\t",
 			pr->vers, pr->proc, pr->netid);
 		if (rtype == RPCBVERS_4_STAT)
-			printf("%d\t ", pr->indirect);
-		printf("%d\t%d\n", pr->success, pr->failure);
+			(void)printf("%d\t ", pr->indirect);
+		(void)printf("%d\t%d\n", pr->success, pr->failure);
 	}
 }
 
 static void
-print_getaddrstat(rtype, infp)
-	int rtype;
-	rpcb_stat *infp;
+/*ARGSUSED*/
+print_getaddrstat(int rtype, const rpcb_stat *infp)
 {
 	rpcbs_addrlist_ptr al;
-	register struct rpcent *rpc;
+	const struct rpcent *rpc;
 
-	printf("prog\t\tvers\tnetid\t  success\tfailure\n");
+	(void)printf("prog\t\tvers\tnetid\t  success\tfailure\n");
 	for (al = infp->addrinfo; al; al = al->next) {
-		rpc = getrpcbynumber(al->prog);
+		rpc = getrpcbynumber((int)al->prog);
 		if (rpc)
-			printf("%-16s", rpc->r_name);
+			(void)printf("%-16s", rpc->r_name);
 		else
-			printf("%-16d", al->prog);
-		printf("%d\t%s\t  %-12d\t%d\n",
-			al->vers, al->netid,
-			al->success, al->failure);
+			(void)printf("%-16d", al->prog);
+		(void)printf("%d\t%s\t  %-12d\t%d\n", al->vers, al->netid,
+		    al->success, al->failure);
 	}
 }
 
-static char *
-spaces(howmany)
-	int howmany;
+static const char *
+spaces(size_t howmany)
 {
-	static char space_array[] =		/* 64 spaces */
+	static const char space_array[] =	/* 64 spaces */
 	"                                                                ";
 
-	if (howmany <= 0 || howmany > sizeof (space_array)) {
+	if (howmany >= sizeof(space_array)) {
 		return ("");
 	}
-	return (&space_array[sizeof (space_array) - howmany - 1]);
+	return &space_array[sizeof(space_array) - howmany - 1];
 }

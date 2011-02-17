@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.1.1.2.2.1 2011/02/17 11:57:37 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone_test.c,v 1.35 2009/09/02 23:48:01 tbox Exp */
+/* Id: zone_test.c,v 1.35 2009-09-02 23:48:01 tbox Exp */
 
 #include <config.h>
 
@@ -67,7 +67,7 @@ isc_sockaddr_t addr;
 				function, dns_result_totext(result)); \
 			return; \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ERRCONT(result, function) \
 		if (result != ISC_R_SUCCESS) { \

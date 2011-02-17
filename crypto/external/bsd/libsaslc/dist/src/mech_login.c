@@ -1,4 +1,4 @@
-/* $Id: mech_login.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
+/* $NetBSD: mech_login.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,22 +34,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mech_login.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $");
 
+#include <assert.h>
 #include <saslc.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
-#include "saslc_private.h"
-#include "mech.h"
 
-/* local headers */
+#include "mech.h"
+#include "saslc_private.h"
+
+
+/* Non-standard: no RFC. */
 
 /* properties */
-#define SASLC_LOGIN_AUTHID	"AUTHID"
-#define SASLC_LOGIN_PASSWORD	"PASSWD"
-
-static int saslc__mech_login_cont(saslc_sess_t *, const void *, size_t,
-    void **, size_t *);
+#define SASLC_LOGIN_AUTHCID	SASLC_PROP_AUTHCID
+#define SASLC_LOGIN_PASSWD	SASLC_PROP_PASSWD
 
 /**
  * @brief doing one step of the sasl authentication
@@ -62,24 +63,24 @@ static int saslc__mech_login_cont(saslc_sess_t *, const void *, size_t,
  * MECH_STEP - more steps are needed,
  * MECH_ERROR - error
  */
-
 /*ARGSUSED*/
 static int
-saslc__mech_login_cont(saslc_sess_t *sess, const void *in, size_t inlen,
-    void **out, size_t *outlen)
+saslc__mech_login_cont(saslc_sess_t *sess,  const void *in __unused,
+    size_t inlen __unused, void **out, size_t *outlen)
 {
 	saslc__mech_sess_t *ms = sess->mech_sess;
+
 	switch (ms->step) {
 	case 0:
 		if (saslc__mech_strdup(sess, (char **)out, outlen,
-		    SASLC_LOGIN_AUTHID,
-		    "authid is required for an authentication") == MECH_OK) 
+		    SASLC_LOGIN_AUTHCID,
+		    "authcid is required for an authentication") == MECH_OK)
 			return MECH_STEP;
 		else
 			return MECH_ERROR;
 	case 1:
 		return saslc__mech_strdup(sess, (char **)out, outlen,
-		    SASLC_LOGIN_PASSWORD,
+		    SASLC_LOGIN_PASSWD,
 		    "passwd is required for an authentication");
 	default:
 		assert(/*CONSTCOND*/0); /* impossible */
@@ -89,10 +90,11 @@ saslc__mech_login_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 
 /* mechanism definition */
 const saslc__mech_t saslc__mech_login = {
-	"LOGIN", /* name */
-	saslc__mech_generic_create, /* create */
-	saslc__mech_login_cont, /* step */
-	saslc__mech_generic_encode, /* encode */
-	saslc__mech_generic_decode, /* decode */
-	saslc__mech_generic_destroy /* destroy */
+	.name	 = "LOGIN",
+	.flags	 = FLAG_PLAINTEXT,
+	.create	 = saslc__mech_generic_create,
+	.cont	 = saslc__mech_login_cont,
+	.encode	 = NULL,
+	.decode	 = NULL,
+	.destroy = saslc__mech_generic_destroy
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75.2.1 2011/02/17 11:59:57 bouyer Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75.2.1 2011/02/17 11:59:57 bouyer Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -121,21 +121,6 @@ static u_int mem_cnt, avail_cnt;
 
 #if !defined(PMAP_OEA64) && !defined(PMAP_OEA64_BRIDGE)
 # define	PMAP_OEA 1
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
-#endif
-
-#if defined(PMAP_OEA64)
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA) && !defined(PPC_OEA64_BRIDGE)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
-#endif
-
-#if defined(PMAP_OEA64_BRIDGE)
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA) && !defined(PPC_OEA64)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
 #endif
 
 #if defined(PMAP_OEA)
@@ -147,7 +132,7 @@ static u_int mem_cnt, avail_cnt;
 #define	_PRIxva		"lx"
 #define	_PRIsr  	"lx"
 
-#if defined(PMAP_EXCLUDE_DECLS) && !defined(PMAPNAME)
+#ifdef PMAP_NEEDS_FIXUP
 #if defined(PMAP_OEA)
 #define	PMAPNAME(name)	pmap32_##name
 #elif defined(PMAP_OEA64)
@@ -157,9 +142,9 @@ static u_int mem_cnt, avail_cnt;
 #else
 #error unknown variant for pmap
 #endif
-#endif /* PMAP_EXLCUDE_DECLS && !PMAPNAME */
+#endif /* PMAP_NEEDS_FIXUP */
 
-#if defined(PMAPNAME)
+#ifdef PMAPNAME
 #define	STATIC			static
 #define pmap_pte_spill		PMAPNAME(pte_spill)
 #define pmap_real_memory	PMAPNAME(real_memory)
@@ -1942,7 +1927,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * it's in our available memory array.  If it is in the memory array,
 	 * asssume it's in memory coherent memory.
 	 */
-	pte_lo = PTE_IG;
+	if (flags & PMAP_MD_PREFETCHABLE) {
+		pte_lo = 0;
+	} else
+		pte_lo = PTE_G;
+
 	if ((flags & PMAP_MD_NOCACHE) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
@@ -1950,6 +1939,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				break;
 			}
 		}
+	} else {
+		pte_lo |= PTE_I;
 	}
 
 	if (prot & VM_PROT_WRITE)
@@ -3529,3 +3520,16 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	}
 #endif
 }
+
+u_int
+powerpc_mmap_flags(paddr_t pa)
+{
+	u_int flags = PMAP_MD_NOCACHE;
+
+	if (pa & POWERPC_MMAP_FLAG_PREFETCHABLE)
+		flags |= PMAP_MD_PREFETCHABLE;
+	if (pa & POWERPC_MMAP_FLAG_CACHEABLE)
+		flags &= ~PMAP_MD_NOCACHE;
+	return flags;
+}
+

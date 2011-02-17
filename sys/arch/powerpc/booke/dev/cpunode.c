@@ -1,4 +1,4 @@
-/*	$NetBSD: cpunode.c,v 1.2.2.1 2011/02/08 16:19:34 bouyer Exp $	*/
+/*	$NetBSD: cpunode.c,v 1.2.2.2 2011/02/17 11:59:55 bouyer Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.2.2.1 2011/02/08 16:19:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.2.2.2 2011/02/17 11:59:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,6 +136,7 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 
 		cna.cna_busname = "cpunode";
 		cna.cna_memt = ma->ma_memt;
+		cna.cna_le_memt = ma->ma_le_memt;
 		cna.cna_dmat = ma->ma_dmat;
 		cna.cna_childmask = childmask;
 		cna.cna_locs = *cnl;

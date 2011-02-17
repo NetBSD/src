@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.1.1.3 2009/12/26 22:24:44 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.1.1.3.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -19,7 +19,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: opensslrsa_link.c,v 1.37 2009/10/30 05:08:23 marka Exp
+ * Id: opensslrsa_link.c,v 1.39 2011-01-11 23:47:13 tbox Exp
  */
 #ifdef OPENSSL
 #include <config.h>
@@ -81,12 +81,12 @@
 	do { \
 	(rsa)->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE); \
 	(rsa)->flags |= RSA_FLAG_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
 #define SET_FLAGS(rsa) \
 	do { \
 		(rsa)->flags |= RSA_FLAG_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 #endif
 
@@ -95,18 +95,18 @@
 	do { \
 	(rsa)->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE); \
 	(rsa)->flags &= ~RSA_FLAG_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #elif defined(RSA_FLAG_NO_BLINDING)
 #define SET_FLAGS(rsa) \
 	do { \
 		(rsa)->flags &= ~RSA_FLAG_BLINDING; \
 		(rsa)->flags |= RSA_FLAG_NO_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
 #define SET_FLAGS(rsa) \
 	do { \
 		(rsa)->flags &= ~RSA_FLAG_BLINDING; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 
 #define DST_RET(a) {ret = a; goto err;}
@@ -1388,6 +1388,8 @@ static dst_func_t opensslrsa_functions = {
 	opensslrsa_parse,
 	NULL, /*%< cleanup */
 	opensslrsa_fromlabel,
+	NULL, /*%< dump */
+	NULL, /*%< restore */
 };
 
 isc_result_t

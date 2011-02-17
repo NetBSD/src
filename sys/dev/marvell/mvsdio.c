@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsdio.c,v 1.2.8.1 2011/02/08 16:19:49 bouyer Exp $	*/
+/*	$NetBSD: mvsdio.c,v 1.2.8.2 2011/02/17 12:00:13 bouyer Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.2.8.1 2011/02/08 16:19:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.2.8.2 2011/02/17 12:00:13 bouyer Exp $");
 
 #include "opt_mvsdio.h"
 
@@ -239,7 +239,7 @@ mvsdio_attach(device_t parent, device_t self, void *aux)
 	saa.saa_clkmin = 100;		/* XXXX: 100 kHz from SheevaPlug LSP */
 	saa.saa_clkmax = MVSDIO_MAX_CLOCK;
 	saa.saa_caps = SMC_CAPS_AUTO_STOP | SMC_CAPS_4BIT_MODE | SMC_CAPS_DMA |
-	    SMC_CAPS_SD_HIGHSPEED;
+	    SMC_CAPS_SD_HIGHSPEED | SMC_CAPS_MMC_HIGHSPEED;
 #ifndef MVSDIO_CARD_DETECT
 	saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 #endif

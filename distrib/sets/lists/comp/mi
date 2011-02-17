@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1573.2.2 2011/02/08 16:18:37 bouyer Exp $
+#	$NetBSD: mi,v 1.1573.2.3 2011/02/17 11:57:19 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1501,8 +1501,8 @@
 ./usr/include/net/if_vlanvar.h			comp-c-include
 ./usr/include/net/net_stats.h			comp-c-include
 ./usr/include/net/netisr.h			comp-c-include
-./usr/include/net/npf.h				comp-npf-include	npf
-./usr/include/net/npf_ncode.h			comp-npf-include	npf
+./usr/include/net/npf.h				comp-c-include
+./usr/include/net/npf_ncode.h			comp-c-include
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include
 ./usr/include/net/pfvar.h			comp-c-include
@@ -1950,6 +1950,7 @@
 ./usr/include/rump/scsitest.h			comp-c-include
 ./usr/include/rump/ukfs.h			comp-c-include
 ./usr/include/sa.h				comp-obsolete		obsolete
+./usr/include/saslc.h				comp-c-include		crypto
 ./usr/include/sched.h				comp-c-include
 ./usr/include/sdp.h				comp-c-include
 ./usr/include/search.h				comp-c-include
@@ -2544,7 +2545,7 @@
 ./usr/lib/libldap_r_g.a				-unknown-		debuglib,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	profile,ldap
 ./usr/lib/liblua.a				comp-c-lib
-./usr/lib/liblua_g.a				comp-c-proflib		debuglib
+./usr/lib/liblua_g.a				-unknown-		debuglib
 ./usr/lib/liblua_p.a				comp-c-proflib		profile
 ./usr/lib/liblwres.a				comp-bind-lib
 ./usr/lib/liblwres_g.a				-unknown-		debuglib
@@ -2861,6 +2862,9 @@
 ./usr/lib/librumpvfs_layerfs_g.a		-unknown-		debuglib
 ./usr/lib/librumpvfs_layerfs_p.a		comp-c-proflib		profile
 ./usr/lib/librumpvfs_p.a			comp-c-proflib		profile
+./usr/lib/libsaslc.a				comp-c-clib		crypto
+./usr/lib/libsaslc_g.a				-unknown-		crypto,debuglib
+./usr/lib/libsaslc_p.a				comp-c-proflib		crypto,profile
 ./usr/lib/libsdp.a				comp-obsolete		obsolete
 ./usr/lib/libsdp_g.a				-obsolete		obsolete
 ./usr/lib/libsdp_p.a				comp-obsolete		obsolete
@@ -2895,7 +2899,7 @@
 ./usr/lib/libtermcap_g.a			comp-obsolete		obsolete
 ./usr/lib/libtermcap_p.a			comp-c-proflib		profile
 ./usr/lib/libterminfo.a				comp-c-lib
-./usr/lib/libterminfo_g.a			comp-c-proflib		profile,debuglib
+./usr/lib/libterminfo_g.a			-unknown-		debuglib
 ./usr/lib/libterminfo_p.a			comp-c-proflib		profile
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
@@ -3955,6 +3959,7 @@
 ./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrumphijack.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lsaslc.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lsdp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
@@ -7237,6 +7242,7 @@
 ./usr/share/man/cat3/libmj.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libnetpgp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
+./usr/share/man/cat3/libsaslc.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/link_addr.0		comp-c-catman		.cat
@@ -7463,7 +7469,7 @@
 ./usr/share/man/cat3/noqiflush.0		comp-c-catman		.cat
 ./usr/share/man/cat3/noraw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/notimeout.0		comp-c-catman		.cat
-./usr/share/man/cat3/npf.0			comp-npf-catman		.cat
+./usr/share/man/cat3/npf.0			comp-npf-catman		.cat,npf
 ./usr/share/man/cat3/nrand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ns.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/ns_addr.0			comp-obsolete		obsolete
@@ -8081,6 +8087,7 @@
 ./usr/share/man/cat3/rresvport_af.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rsa.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/rump.0			comp-c-catman		.cat
+./usr/share/man/cat3/rumpclient.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rumphijack.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rump_etfs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rump_lwproc.0			comp-c-catman		.cat
@@ -13267,6 +13274,7 @@
 ./usr/share/man/html3/libmj.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
+./usr/share/man/html3/libsaslc.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_addr.html		comp-c-htmlman		html
 ./usr/share/man/html3/link_field.html		comp-c-htmlman		html
@@ -13480,7 +13488,7 @@
 ./usr/share/man/html3/noqiflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/noraw.html		comp-c-htmlman		html
 ./usr/share/man/html3/notimeout.html		comp-c-htmlman		html
-./usr/share/man/html3/npf.html			comp-npf-htmlman	html
+./usr/share/man/html3/npf.html			comp-npf-htmlman	html,npf
 ./usr/share/man/html3/nrand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/nsdispatch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ntoa.html			comp-c-htmlman		html
@@ -14088,6 +14096,7 @@
 ./usr/share/man/html3/rresvport.html		comp-c-htmlman		html
 ./usr/share/man/html3/rresvport_af.html		comp-c-htmlman		html
 ./usr/share/man/html3/rump.html			comp-c-htmlman		html
+./usr/share/man/html3/rumpclient.html			comp-c-htmlman		html
 ./usr/share/man/html3/rumphijack.html			comp-c-htmlman		html
 ./usr/share/man/html3/rump_etfs.html			comp-c-htmlman		html
 ./usr/share/man/html3/rump_lwproc.html			comp-c-htmlman		html
@@ -19257,6 +19266,7 @@
 ./usr/share/man/man3/libmj.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libnetpgp.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
+./usr/share/man/man3/libsaslc.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man		.man
 ./usr/share/man/man3/link_addr.3		comp-c-man		.man
@@ -19483,7 +19493,7 @@
 ./usr/share/man/man3/noqiflush.3		comp-c-man		.man
 ./usr/share/man/man3/noraw.3			comp-c-man		.man
 ./usr/share/man/man3/notimeout.3		comp-c-man		.man
-./usr/share/man/man3/npf.3			comp-npf-man		.man
+./usr/share/man/man3/npf.3			comp-npf-man		.man,npf
 ./usr/share/man/man3/nrand48.3			comp-c-man		.man
 ./usr/share/man/man3/ns.3			comp-obsolete		obsolete
 ./usr/share/man/man3/ns_addr.3			comp-obsolete		obsolete
@@ -20101,6 +20111,7 @@
 ./usr/share/man/man3/rresvport_af.3		comp-c-man		.man
 ./usr/share/man/man3/rsa.3			comp-obsolete		obsolete
 ./usr/share/man/man3/rump.3			comp-c-man		.man
+./usr/share/man/man3/rumpclient.3			comp-c-man		.man
 ./usr/share/man/man3/rumphijack.3			comp-c-man		.man
 ./usr/share/man/man3/rump_etfs.3			comp-c-man		.man
 ./usr/share/man/man3/rump_lwproc.3			comp-c-man		.man

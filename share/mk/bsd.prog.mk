@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.257.2.1 2011/02/08 16:19:08 bouyer Exp $
+#	$NetBSD: bsd.prog.mk,v 1.257.2.2 2011/02/17 11:59:27 bouyer Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -102,7 +102,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	fetch form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
 	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r lua \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
-	puffs radius resolv rmt roken rpcsvc rt rump rumpuser skey sl ss \
+	puffs radius resolv rmt roken rpcsvc rt rump rumpuser saslc skey sl ss \
 	ssh ssl termcap usbhid util wrap y z bind9 dns lwres isccfg isccc isc \
 	\
 	rumpfs_cd9660fs rumpfs_efs rumpfs_ext2fs rumpfs_ffs rumpfs_hfs \

@@ -1,6 +1,6 @@
-/*	$NetBSD: util.h,v 1.1.1.1 2009/03/22 14:57:48 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.1.1.1.4.1 2011/02/17 11:58:26 bouyer Exp $	*/
 
-/* Id: util.h,v 1.1.1.1 2003/06/04 00:27:09 marka Exp */
+/* Id: util.h,v 1.1.1.1 2003-06-04 00:27:09 marka Exp */
 /*
  * Copyright (c) 2000,2001 Japan Network Information Center.
  * All rights reserved.

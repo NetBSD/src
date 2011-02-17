@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.17.4.1 2011/02/08 16:19:57 bouyer Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.17.4.2 2011/02/17 12:00:16 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.17.4.1 2011/02/08 16:19:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.17.4.2 2011/02/17 12:00:16 bouyer Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -119,6 +119,7 @@ void	genfb_init(struct genfb_softc *);
 int	genfb_attach(struct genfb_softc *, struct genfb_ops *);
 int	genfb_borrow(bus_addr_t, bus_space_handle_t *);
 void	genfb_restore_palette(struct genfb_softc *);
-
+void	genfb_enable_polling(device_t);
+void	genfb_disable_polling(device_t);
 
 #endif /* GENFBVAR_H */

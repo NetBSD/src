@@ -1,4 +1,4 @@
-/*	$NetBSD: offset.h,v 1.1.1.1 2009/03/22 15:02:29 christos Exp $	*/
+/*	$NetBSD: offset.h,v 1.1.1.1.4.1 2011/02/17 11:59:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: offset.h,v 1.6 2007/06/19 23:47:20 tbox Exp */
+/* Id: offset.h,v 1.6 2007-06-19 23:47:20 tbox Exp */
 
 #ifndef ISC_OFFSET_H
 #define ISC_OFFSET_H 1

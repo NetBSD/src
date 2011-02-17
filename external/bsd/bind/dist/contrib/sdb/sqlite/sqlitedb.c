@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlitedb.c,v 1.1.1.1 2009/03/22 14:58:12 christos Exp $	*/
+/*	$NetBSD: sqlitedb.c,v 1.1.1.1.4.1 2011/02/17 11:58:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Software Consortium.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sqlitedb.c,v 1.1 2007/03/05 05:30:22 marka Exp */
+/* Id: sqlitedb.c,v 1.1 2007-03-05 05:30:22 marka Exp */
 
 #include <config.h>
 
@@ -242,7 +242,7 @@ sqlitedb_destroy(const char *zone, void *driverdata, void **dbdata)
 			result = ISC_R_NOMEMORY;		\
 			goto cleanup;				\
 		}						\
-	} while (0);
+	} while (/*CONSTCOND*/0);
 
 /*
  * Create a connection to the database and save any necessary information

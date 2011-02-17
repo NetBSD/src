@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump.dhcpclient.1,v 1.2.2.2 2011/02/08 19:01:38 bouyer Exp $
+.\"	$NetBSD: rump.dhcpclient.1,v 1.2.2.3 2011/02/17 12:00:56 bouyer Exp $
 .\"
 .\" Copyright (c) 2011 Antti Kantee.  All rights reserved.
 .\"
@@ -43,8 +43,7 @@ does not store leases or renew expired leases.
 The reason for this is the typical transient nature of a rump kernel.
 Additionally,
 .Nm
-does not store a DNS resolver address since a rump
-kernel may not have file system support.
+does not save DNS resolver information.
 .Pp
 After having succesfully configured networking,
 .Nm

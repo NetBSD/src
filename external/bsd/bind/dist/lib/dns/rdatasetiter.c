@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatasetiter.c,v 1.1.1.1 2009/03/22 15:01:21 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.c,v 1.1.1.1.4.1 2011/02/17 11:58:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatasetiter.c,v 1.16 2007/06/19 23:47:16 tbox Exp */
+/* Id: rdatasetiter.c,v 1.16 2007-06-19 23:47:16 tbox Exp */
 
 /*! \file */
 

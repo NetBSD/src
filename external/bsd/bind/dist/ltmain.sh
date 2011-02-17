@@ -5081,7 +5081,7 @@ EOF
 #define XMALLOC(type, num)      ((type *) xmalloc ((num) * sizeof(type)))
 #define XFREE(stale) do { \
   if (stale) { free ((void *) stale); stale = 0; } \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* -DDEBUG is fairly common in CFLAGS.  */
 #undef DEBUG

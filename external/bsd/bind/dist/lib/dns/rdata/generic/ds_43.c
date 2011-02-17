@@ -1,7 +1,7 @@
-/*	$NetBSD: ds_43.c,v 1.1.1.2 2009/12/26 22:25:24 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.1.1.2.2.1 2011/02/17 11:58:48 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ds_43.c,v 1.14 2009/12/04 22:06:37 tbox Exp */
+/* Id: ds_43.c,v 1.16 2010-12-23 23:47:08 tbox Exp */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 
@@ -76,12 +76,20 @@ fromtext_ds(ARGS_FROMTEXT) {
 	/*
 	 * Digest.
 	 */
-	if (c == DNS_DSDIGEST_SHA1)
+	switch (c) {
+	case DNS_DSDIGEST_SHA1:
 		length = ISC_SHA1_DIGESTLENGTH;
-	else if (c == DNS_DSDIGEST_SHA256)
+		break;
+	case DNS_DSDIGEST_SHA256:
 		length = ISC_SHA256_DIGESTLENGTH;
-	else
+		break;
+	case DNS_DSDIGEST_GOST:
+		length = ISC_GOST_DIGESTLENGTH;
+		break;
+	default:
 		length = -1;
+		break;
+	}
 	return (isc_hex_tobuffer(lexer, target, length));
 }
 
@@ -154,7 +162,9 @@ fromwire_ds(ARGS_FROMWIRE) {
 	    (sr.base[3] == DNS_DSDIGEST_SHA1 &&
 	     sr.length < 4 + ISC_SHA1_DIGESTLENGTH) ||
 	    (sr.base[3] == DNS_DSDIGEST_SHA256 &&
-	     sr.length < 4 + ISC_SHA256_DIGESTLENGTH))
+	     sr.length < 4 + ISC_SHA256_DIGESTLENGTH) ||
+	    (sr.base[3] == DNS_DSDIGEST_GOST &&
+	     sr.length < 4 + ISC_GOST_DIGESTLENGTH))
 		return (ISC_R_UNEXPECTEDEND);
 
 	/*
@@ -166,6 +176,8 @@ fromwire_ds(ARGS_FROMWIRE) {
 		sr.length = 4 + ISC_SHA1_DIGESTLENGTH;
 	else if (sr.base[3] == DNS_DSDIGEST_SHA256)
 		sr.length = 4 + ISC_SHA256_DIGESTLENGTH;
+	else if (sr.base[3] == DNS_DSDIGEST_GOST)
+		sr.length = 4 + ISC_GOST_DIGESTLENGTH;
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
@@ -214,6 +226,9 @@ fromstruct_ds(ARGS_FROMSTRUCT) {
 		break;
 	case DNS_DSDIGEST_SHA256:
 		REQUIRE(ds->length == ISC_SHA256_DIGESTLENGTH);
+		break;
+	case DNS_DSDIGEST_GOST:
+		REQUIRE(ds->length == ISC_GOST_DIGESTLENGTH);
 		break;
 	}
 

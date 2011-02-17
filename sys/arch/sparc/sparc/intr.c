@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.108.8.1 2011/02/08 16:19:41 bouyer Exp $ */
+/*	$NetBSD: intr.c,v 1.108.8.2 2011/02/17 12:00:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108.8.1 2011/02/08 16:19:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108.8.2 2011/02/17 12:00:01 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -205,6 +205,7 @@ nmi_hard(void)
 
 	/* Tally */
 	cpuinfo.ci_intrcnt[15].ev_count++;
+	cpuinfo.ci_data.cpu_nintr++;
 
 	afsr = afva = 0;
 	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
@@ -296,6 +297,7 @@ nmi_soft(struct trapframe *tf)
 
 	/* Tally */
 	cpuinfo.ci_sintrcnt[15].ev_count++;
+	cpuinfo.ci_data.cpu_nintr++;
 
 	if (cpuinfo.mailbox) {
 		/* Check PROM messages */
@@ -305,7 +307,6 @@ nmi_soft(struct trapframe *tf)
 		case OPENPROM_MBX_WD:
 			/* In case there's an xcall in progress (unlikely) */
 			spl0();
-			cpuinfo.flags &= ~CPUFLG_READY;
 #ifdef MULTIPROCESSOR
 			cpu_ready_mask &= ~(1 << cpu_number());
 #endif
@@ -354,6 +355,8 @@ void
 xcallintr(void *v)
 {
 
+	kpreempt_disable();
+
 	/* Tally */
 	if (v != xcallintr)
 		cpuinfo.ci_sintrcnt[13].ev_count++;
@@ -371,6 +374,8 @@ xcallintr(void *v)
 	}
 	cpuinfo.msg.tag = 0;
 	cpuinfo.msg.complete = 1;
+
+	kpreempt_enable();
 }
 #endif /* MULTIPROCESSOR */
 #endif /* SUN4M || SUN4D */
@@ -844,6 +849,11 @@ intr_biglock_wrapper(void *vp)
 bool
 cpu_intr_p(void)
 {
+	int idepth;
 
-	return curcpu()->ci_idepth != 0;
+	kpreempt_disable();
+	idepth = curcpu()->ci_idepth;
+	kpreempt_enable();
+
+	return idepth != 0;
 }

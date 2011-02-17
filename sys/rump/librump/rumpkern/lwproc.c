@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.10.4.1 2011/02/08 16:20:04 bouyer Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.10.4.2 2011/02/17 12:00:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.10.4.1 2011/02/08 16:20:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.10.4.2 2011/02/17 12:00:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -112,11 +112,24 @@ lwproc_newproc(struct proc *parent, int flags)
 	    offsetof(struct proc, p_endcopy)
 	      - offsetof(struct proc, p_startcopy));
 
+	/* some other garbage we need to zero */
+	p->p_sigacts = NULL;
+	p->p_aio = NULL;
+	p->p_dtrace = NULL;
+	p->p_mqueue_cnt = p->p_exitsig = 0;
+	p->p_flag = p->p_sflag = p->p_slflag = p->p_lflag = p->p_stflag = 0;
+	p->p_trace_enabled = 0;
+	p->p_xstat = p->p_acflag = 0;
+	p->p_stackbase = 0;
+
 	p->p_stats = pstatscopy(parent->p_stats);
 
 	p->p_vmspace = vmspace_kernel();
 	p->p_emul = &emul_netbsd;
-	strcpy(p->p_comm, "rumproc");
+	if (*parent->p_comm)
+		strcpy(p->p_comm, parent->p_comm);
+	else
+		strcpy(p->p_comm, "rumproc");
 
 	if ((flags & RUMP_RFCFDG) == 0)
 		KASSERT(parent == curproc);

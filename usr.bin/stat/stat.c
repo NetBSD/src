@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.33 2011/01/15 22:54:10 njoly Exp $ */
+/*	$NetBSD: stat.c,v 1.33.2.1 2011/02/17 12:00:57 bouyer Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.33 2011/01/15 22:54:10 njoly Exp $");
+__RCSID("$NetBSD: stat.c,v 1.33.2.1 2011/02/17 12:00:57 bouyer Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -176,13 +176,13 @@ __RCSID("$NetBSD: stat.c,v 1.33 2011/01/15 22:54:10 njoly Exp $");
 
 void	usage(const char *);
 void	output(const struct stat *, const char *,
-	    const char *, int, int);
+	    const char *, int, int, int);
 int	format1(const struct stat *,	/* stat info */
 	    const char *,		/* the file name */
 	    const char *, int,		/* the format string itself */
 	    char *, size_t,		/* a place to put the output */
 	    int, int, int, int,		/* the parsed format */
-	    int, int);
+	    int, int, int);
 
 const char *timefmt;
 int linkfail;
@@ -211,10 +211,12 @@ main(int argc, char *argv[])
 	statfmt = NULL;
 	timefmt = NULL;
 
+	setprogname(argv[0]);
+
 	if (strcmp(getprogname(), "readlink") == 0) {
 		am_readlink = 1;
-		options = "fn";
-		synopsis = "[-fn] [file ...]";
+		options = "fnqsv";
+		synopsis = "[-fnqsv] [file ...]";
 		statfmt = "%Y";
 		fmtchar = 'f';
 		quiet = 1;
@@ -247,6 +249,11 @@ main(int argc, char *argv[])
 		case 'l':
 		case 'r':
 		case 's':
+			if (am_readlink) {
+				quiet = 1;
+				break;
+			}
+			/*FALLTHROUGH*/
 		case 'x':
 			if (fmtchar != 0)
 				errx(1, "can't use format '%c' with '%c'",
@@ -255,6 +262,9 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			timefmt = optarg;
+			break;
+		case 'v':
+			quiet = 0;
 			break;
 		default:
 			usage(synopsis);
@@ -329,7 +339,7 @@ main(int argc, char *argv[])
 				    usestat ? "stat" : "lstat");
 		}
 		else
-			output(&st, argv[0], statfmt, fn, nonl);
+			output(&st, argv[0], statfmt, fn, nonl, quiet);
 
 		argv++;
 		argc--;
@@ -352,7 +362,7 @@ usage(const char *synopsis)
  */
 void
 output(const struct stat *st, const char *file,
-    const char *statfmt, int fn, int nonl)
+    const char *statfmt, int fn, int nonl, int quiet)
 {
 	int flags, size, prec, ofmt, hilo, what;
 	char buf[PATH_MAX + 4 + 1];
@@ -523,7 +533,7 @@ output(const struct stat *st, const char *file,
 		     file,
 		     subfmt, statfmt - subfmt,
 		     buf, sizeof(buf),
-		     flags, size, prec, ofmt, hilo, what);
+		     flags, size, prec, ofmt, hilo, what, quiet);
 
 		for (i = 0; i < t && i < (int)(sizeof(buf) - 1); i++)
 			addchar(stdout, buf[i], &nl);
@@ -549,7 +559,7 @@ format1(const struct stat *st,
     const char *fmt, int flen,
     char *buf, size_t blen,
     int flags, int size, int prec, int ofmt,
-    int hilo, int what)
+    int hilo, int what, int quiet)
 {
 	u_int64_t data;
 	char *stmp, lfmt[24], tmp[20];
@@ -797,6 +807,8 @@ format1(const struct stat *st,
 		} else {
 			snprintf(path, sizeof(path), " -> ");
 			if (realpath(file, path + 4) == NULL) {
+				if (!quiet)
+					warn("realpath `%s'", file);
 				linkfail = 1;
 				l = 0;
 				path[0] = '\0';
@@ -815,6 +827,8 @@ format1(const struct stat *st,
 			snprintf(path, sizeof(path), " -> ");
 			l = readlink(file, path + 4, sizeof(path) - 4 - 1);
 			if (l == -1) {
+				if (!quiet)
+					warn("readlink `%s'", file);
 				linkfail = 1;
 				l = 0;
 				path[0] = '\0';
@@ -933,13 +947,13 @@ format1(const struct stat *st,
 			    fmt, flen,
 			    majdev, sizeof(majdev),
 			    flags, size, prec,
-			    ofmt, HIGH_PIECE, SHOW_st_rdev);
+			    ofmt, HIGH_PIECE, SHOW_st_rdev, quiet);
 			l2 = format1(st,
 			    file,
 			    fmt, flen,
 			    mindev, sizeof(mindev),
 			    flags, size, prec,
-			    ofmt, LOW_PIECE, SHOW_st_rdev);
+			    ofmt, LOW_PIECE, SHOW_st_rdev, quiet);
 			return (snprintf(buf, blen, "%.*s,%.*s",
 			    l1, majdev, l2, mindev));
 		}
@@ -949,7 +963,7 @@ format1(const struct stat *st,
 			    fmt, flen,
 			    buf, blen,
 			    flags, size, prec,
-			    ofmt, 0, SHOW_st_size));
+			    ofmt, 0, SHOW_st_size, quiet));
 		}
 		/*NOTREACHED*/
 	default:

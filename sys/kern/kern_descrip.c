@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.209.4.1 2011/02/08 16:19:59 bouyer Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.209.4.2 2011/02/17 12:00:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.209.4.1 2011/02/08 16:19:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.209.4.2 2011/02/17 12:00:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1688,6 +1688,57 @@ fd_dupopen(int old, int *new, int mode, int error)
 
 	fd_putfile(old);
 	return error;
+}
+
+/*
+ * Close open files on exec.
+ */
+void
+fd_closeexec(void)
+{
+	proc_t *p;
+	filedesc_t *fdp;
+	fdfile_t *ff;
+	lwp_t *l;
+	fdtab_t *dt;
+	int fd;
+
+	l = curlwp;
+	p = l->l_proc;
+	fdp = p->p_fd;
+
+	if (fdp->fd_refcnt > 1) {
+		fdp = fd_copy();
+		fd_free();
+		p->p_fd = fdp;
+		l->l_fd = fdp;
+	}
+	if (!fdp->fd_exclose) {
+		return;
+	}
+	fdp->fd_exclose = false;
+	dt = fdp->fd_dt;
+
+	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
+		if ((ff = dt->dt_ff[fd]) == NULL) {
+			KASSERT(fd >= NDFDFILE);
+			continue;
+		}
+		KASSERT(fd >= NDFDFILE ||
+		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
+		if (ff->ff_file == NULL)
+			continue;
+		if (ff->ff_exclose) {
+			/*
+			 * We need a reference to close the file.
+			 * No other threads can see the fdfile_t at
+			 * this point, so don't bother locking.
+			 */
+			KASSERT((ff->ff_refcnt & FR_CLOSING) == 0);
+			ff->ff_refcnt++;
+			fd_close(fd);
+		}
+	}
 }
 
 /*

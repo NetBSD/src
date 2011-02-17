@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.h,v 1.2.16.1 2011/02/08 16:18:32 bouyer Exp $ */
+/*	$NetBSD: filter.h,v 1.2.16.2 2011/02/17 11:57:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -36,14 +36,19 @@ typedef struct {
 
 extern const ftp_proxy_ops_t	pf_fprx_ops;
 
-#if defined(__NetBSD__) && defined(WITH_NPF)
-extern const ftp_proxy_ops_t	npf_fprx_ops;
+#if defined(__NetBSD__)
+
 extern const char *		netif;
+
+#if defined(WITH_NPF)
+extern const ftp_proxy_ops_t	npf_fprx_ops;
+extern char *			npfopts;
 #endif
 
-#if defined(__NetBSD__) && defined(WITH_IPF)
+#if defined(WITH_IPF)
 extern const ftp_proxy_ops_t	ipf_fprx_ops;
-extern char *			npfopts;
+#endif
+
 #endif
 
 #endif

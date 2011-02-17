@@ -1,4 +1,4 @@
-.\"	$NetBSD: gbox.4,v 1.5 2010/03/22 18:58:31 joerg Exp $
+.\"	$NetBSD: gbox.4,v 1.5.4.1 2011/02/17 11:59:26 bouyer Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,36 +33,50 @@
 .\"
 .\"     from: @(#)gb.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd February 9, 2011
 .Dt GB 4 hp300
 .Os
 .Sh NAME
 .Nm gb
 .Nd
 .Tn HP98700
-``Gatorbox'' graphics device interface
+.Dq Gatorbox
+graphics device interface
+.Sh SYNOPSIS
+.Cd "gbox* at intio?"
+.Cd "gbox* at dio? scode ?"
+.Cd "wsdisplay* at gbox?"
 .Sh DESCRIPTION
 This driver is for the
 .Tn HP98700
 and 98710 graphics devices, also known as
-the Gatorbox.  The term ``Gator'' will often be used, and it is not to be
-confused with ``Gator'' used in reference to an
+the Gatorbox.
+The term
+.Dq Gator
+will often be used, and it is not to be confused with
+.Dq Gator
+used in reference to an
 .Tn HP
 9837 or 200/237 machine.
 Also, the term Gatorbox is used for the 98700 alone, with the 98701 frame
-buffer memory or with the 98710 accelerator installed.  This driver merely
-checks for the existence of the device and does minimal set up, as it is
+buffer memory or with the 98710 accelerator installed.
+This driver merely
+checks for the existence of the device and does minimal setup, as it is
 expected the applications will initialize the device to their requirements.
 .Pp
 The 98700 can be used as the only graphics device on a system, in which case
-it will be used as the system console.  It can also be installed as a secondary
-display device.  For the first case, the
+it will be used as the system console.
+It can also be installed as a secondary display device.
+For the first case, the
 .Tn HP
 .Tn 98287A M.A.D.
 interface card
-should be set to internal control space.  This will put the frame buffer at
+should be set to internal control space.
+This will put the frame buffer at
 the DIO address 0x200000 and the control registers at 0x560000.
-At this address it will be the ``preferred'' console device (see
+At this address it will be the
+.Dq preferred
+console device (see
 .Xr cons 4 ) .
 For use as a secondary device,
 the 98287A should be set to frame buffer address 0x300000,
@@ -75,104 +89,6 @@ The 98700 should only be installed as a secondary device in a machine with a
 The
 .%T 98700H Installation Guide
 contains further configuration information.
-.Pp
-The
-.Xr ioctl 2
-calls supported by the
-.Bx
-system for the Gatorbox are:
-.Bl -tag -width indent
-.It Dv GRFIOCGINFO
-Get Graphics Info
-.Pp
-Get info about device, setting the entries in the
-.Em grfinfo
-structure, as defined in
-.In hpdev/grfioctl.h .
-For the standard 98700, the number of planes should be 4.  The number of
-colors would therefore be 15, excluding black.  With the 98701 option installed
-there will be another 4 planes for a total of 8, giving 255 colors.
-.It Dv GRFIOCON
-Graphics On
-.Pp
-Turn graphics on by enabling
-.Tn CRT
-output.  The screen will come on, displaying
-whatever is in the frame buffer, using whatever colormap is in place.
-.It Dv GRFIOCOFF
-Graphics Off
-.Pp
-Turn graphics off by disabling output to the
-.Tn CRT .
-The frame buffer contents
-are not affected.
-.It Dv GRFIOCMAP
-Map Device to user space
-.Pp
-Map in control registers and framebuffer space. Once the device file is
-mapped, the frame buffer structure is accessible.
-The frame buffer structure describing the 98700
-is given in
-.In hpdev/grf_gbreg.h .
-.It Dv GRFIOCUNMAP
-Unmap Device
-.Pp
-Unmap control registers and framebuffer space.
-.Pp
-For further information about the use of ioctl see the man page.
-.El
-.Sh FILES
-.Bl -tag -width /dev/crt98700 -compact
-.It Pa /dev/grf?
-.Bx
-special file
-.It Pa /dev/crt98700
-.Tn HP-UX
-.Em starbase
-special file
-.El
-.Sh EXAMPLES
-A small example of opening, mapping and using the device is given below.
-For more examples of the details on the behavior of the device, see the device
-dependent source files for the X Window System, in the
-.Pa /usr/src/new/X/libhp.fb
-directory.
-.Bd -literal -offset indent
-struct gboxfb *gbox;
-u_char *Addr, frame_buffer;
-struct grfinfo gi;
-int disp_fd;
-
-disp_fd = open("/dev/grf0",1);
-
-if (ioctl (disp_fd, GRFIOCGINFO, \*[Am]gi) \*[Lt] 0) return -1;
-
-(void) ioctl (disp_fd, GRFIOCON, 0);
-
-Addr = (u_char *) 0;
-if (ioctl (disp_fd, GRFIOCMAP, \*[Am]Addr) \*[Lt] 0) {
-(void) ioctl (disp_fd, GRFIOCOFF, 0);
-return -1;
-}
-gbox = (gboxfb *) Addr;                         /* Control Registers   */
-frame_buffer = (u_char *) Addr + gi.gd_regsize; /* Frame buffer memory */
-.Ed
-.Sh DIAGNOSTICS
-None under
-.Bx .
-.Tn HP-UX
-The
-.Tn CE.utilities/Crtadjust
-programs must be used.
-.Sh ERRORS
-.Bl -tag -width [EINVAL]
-.It Bq Er ENODEV
-no such device.
-.It Bq Er EBUSY
-Another process has the device open.
-.It Bq Er EINVAL
-Invalid ioctl specification.
-.El
 .Sh SEE ALSO
-.Xr ioctl 2 ,
-.Xr grf 4
+.Xr wscons 4 ,
+.Xr wsdisplay 4

@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2010/10/25 07:53:23 jruoho Exp $
+# $NetBSD: Makefile,v 1.2.6.1 2011/02/17 12:00:49 bouyer Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/acpi/wmi
 
 KMOD=   wmimsi
+IOCONF=	wmimsi.ioconf
 SRCS=	wmi_msi.c
 
 WARNS=	4

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.9 2011/01/07 11:50:37 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.9.2.1 2011/02/17 12:00:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -260,6 +260,7 @@ donewfs(const atf_tc_t *tc, void **argp,
 	args = malloc(sizeof(*args));
 	if (args == NULL)
 		return errno;
+	memset(args, 0, sizeof(*args));
 
 	pflags = &args->pta_pflags;
 

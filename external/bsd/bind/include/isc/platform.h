@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.53.66.2 2010/06/03 23:49:23 tbox Exp */
+/* Id: platform.h.in,v 1.56 2010-12-18 01:56:23 each Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -206,10 +206,7 @@
 /*
  * Defined if we are using threads.
  */
-#if 0
-/* Put in the Makefile */
 #define ISC_PLATFORM_USETHREADS 1
-#endif
 
 /*
  * Defined if unistd.h does not cause fd_set to be delared.
@@ -219,6 +216,12 @@
 /*
  * Defined to <gssapi.h> or <gssapi/gssapi.h> for how to include
  * the GSSAPI header.
+ */
+
+
+/*
+ * Defined to <gssapi_krb5.h> or <gssapi/gssapi_krb5.h> for how to
+ * include the GSSAPI KRB5 header.
  */
 
 
@@ -258,17 +261,13 @@
  * If the "xadd" operation is available on this architecture,
  * ISC_PLATFORM_HAVEXADD will be defined.
  */
-#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADD 1
-#endif
 
 /*
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
-#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADDQ 1
-#endif
 
 /*
  * If the "atomic swap" operation is available on this architecture,

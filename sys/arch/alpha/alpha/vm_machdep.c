@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.104 2009/11/29 04:15:42 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.104.8.1 2011/02/17 11:59:29 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104 2009/11/29 04:15:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104.8.1 2011/02/17 11:59:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
@@ -219,6 +219,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		taddr += PAGE_SIZE;
 	}
 	pmap_update(vm_map_pmap(phys_map));
+
+	return 0;
 }
 
 /*

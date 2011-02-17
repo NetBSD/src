@@ -1,7 +1,7 @@
-/*	$NetBSD: dst.h,v 1.1.1.3 2009/12/26 22:25:22 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.1.1.3.2.1 2011/02/17 11:58:47 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst.h,v 1.25 2009/10/26 21:18:24 each Exp */
+/* Id: dst.h,v 1.31 2011-01-11 23:47:14 tbox Exp */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -60,6 +60,7 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_NSEC3RSASHA1	7
 #define DST_ALG_RSASHA256	8
 #define DST_ALG_RSASHA512	10
+#define DST_ALG_ECCGOST		12
 #define DST_ALG_HMACMD5		157
 #define DST_ALG_GSSAPI		160
 #define DST_ALG_HMACSHA1	161	/* XXXMPA */
@@ -472,7 +473,7 @@ dst_key_getgssctx(const dst_key_t *key);
 
 isc_result_t
 dst_key_fromgssapi(dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
-		   dst_key_t **keyp);
+		   dst_key_t **keyp, isc_region_t *intoken);
 /*%<
  * Converts a GSSAPI opaque context id into a DST key.
  *
@@ -591,6 +592,16 @@ dst_key_paramcompare(const dst_key_t *key1, const dst_key_t *key2);
  * Returns:
  *\li 	ISC_TRUE
  * \li	ISC_FALSE
+ */
+
+void
+dst_key_attach(dst_key_t *source, dst_key_t **target);
+/*
+ * Attach to a existing key increasing the reference count.
+ *
+ * Requires:
+ *\li 'source' to be a valid key.
+ *\li 'target' to be non-NULL and '*target' to be NULL.
  */
 
 void
@@ -823,11 +834,45 @@ dst_key_setprivateformat(dst_key_t *key, int major, int minor);
 #define DST_KEY_FORMATSIZE (DNS_NAME_FORMATSIZE + DNS_SECALG_FORMATSIZE + 7)
 
 void
-dst_key_format(dst_key_t *key, char *cp, unsigned int size);
+dst_key_format(const dst_key_t *key, char *cp, unsigned int size);
 /*%<
  * Write the uniquely identifying information about the key (name,
  * algorithm, key ID) into a string 'cp' of size 'size'.
  */
+
+
+isc_buffer_t *
+dst_key_tkeytoken(const dst_key_t *key);
+/*%<
+ * Return the token from the TKEY request, if any.  If this key was
+ * not negotiated via TKEY, return NULL.
+ */
+
+
+isc_result_t
+dst_key_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length);
+/*%<
+ * Allocate 'buffer' and dump the key into it in base64 format. The buffer
+ * is not NUL terminated. The length of the buffer is returned in *length.
+ *
+ * 'buffer' needs to be freed using isc_mem_put(mctx, buffer, length);
+ *
+ * Requires:
+ *	'buffer' to be non NULL and *buffer to be NULL.
+ *	'length' to be non NULL and *length to be zero.
+ *
+ * Returns:
+ *	ISC_R_SUCCESS
+ *	ISC_R_NOMEMORY
+ *	ISC_R_NOTIMPLEMENTED
+ *	others.
+ */
+
+isc_result_t
+dst_key_restore(dns_name_t *name, unsigned int alg, unsigned int flags,
+		unsigned int protocol, dns_rdataclass_t rdclass,
+		isc_mem_t *mctx, const char *keystr, dst_key_t **keyp);
+
 
 ISC_LANG_ENDDECLS
 

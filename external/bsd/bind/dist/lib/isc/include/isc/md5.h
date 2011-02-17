@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.h,v 1.1.1.3 2010/08/05 20:15:09 christos Exp $	*/
+/*	$NetBSD: md5.h,v 1.1.1.3.2.1 2011/02/17 11:58:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: md5.h,v 1.18.168.2 2010/01/07 23:48:16 tbox Exp */
+/* Id: md5.h,v 1.20 2010-01-07 23:48:54 tbox Exp */
 
 /*! \file isc/md5.h
  * \brief This is the header file for the MD5 message-digest algorithm.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsprobe.c,v 1.1.1.2 2010/08/05 20:14:26 christos Exp $	*/
+/*	$NetBSD: nsprobe.c,v 1.1.1.2.2.1 2011/02/17 11:58:55 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsprobe.c,v 1.5.66.2 2010/01/07 23:48:16 tbox Exp */
+/* Id: nsprobe.c,v 1.7 2010-01-07 23:48:54 tbox Exp */
 
 #include <config.h>
 

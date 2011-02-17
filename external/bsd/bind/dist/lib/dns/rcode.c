@@ -1,7 +1,7 @@
-/*	$NetBSD: rcode.c,v 1.1.1.3 2009/12/26 22:24:50 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.1.1.3.2.1 2011/02/17 11:58:41 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rcode.c,v 1.12 2009/10/22 02:21:30 each Exp */
+/* Id: rcode.c,v 1.16 2010-12-23 04:07:58 marka Exp */
 
 #include <config.h>
 #include <ctype.h>
@@ -47,7 +47,7 @@
 		isc_result_t _r = (x); \
 		if (_r != ISC_R_SUCCESS) \
 			return (_r); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define NUMBERSIZE sizeof("037777777777") /* 2^32-1 octal + NUL */
 
@@ -109,6 +109,7 @@
 	{ DNS_KEYALG_NSEC3RSASHA1, "NSEC3RSASHA1", 0 }, \
 	{ DNS_KEYALG_RSASHA256, "RSASHA256", 0 }, \
 	{ DNS_KEYALG_RSASHA512, "RSASHA512", 0 }, \
+	{ DNS_KEYALG_ECCGOST, "ECCGOST", 0 }, \
 	{ DNS_KEYALG_INDIRECT, "INDIRECT", 0 }, \
 	{ DNS_KEYALG_PRIVATEDNS, "PRIVATEDNS", 0 }, \
 	{ DNS_KEYALG_PRIVATEOID, "PRIVATEOID", 0 }, \

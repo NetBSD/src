@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31.4.1 2011/02/08 19:29:42 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.31.4.2 2011/02/17 12:00:07 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -205,6 +205,7 @@ wskbd* at zrc? mux 1
 
 # LCD
 lcd0 at pxaip?
+options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
 
 # Audio
@@ -216,6 +217,7 @@ audio* at audiobus?
 
 # integrated 16550 UARTs
 options 	COM_PXA2X0
+#options 	FFUARTCONSOLE
 com0 at pxaip?  addr 0x40100000 intr 22	# Full Function UART
 com1 at pxaip?  addr 0x40200000 intr 21	# Bluetooth UART
 com2 at pxaip?  addr 0x40700000 intr 20	# Standard UART (for IrDA)

@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1494.2.1 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1494.2.2 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -614,8 +614,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	hpcarm: Add support for Sharp W-ZERO3 series. [nonaka 20100417]
 	acpi(4): The sysctl(8) tree was reorganized into hw.acpi.
 		[jruoho 20100419]
-	acpiwmi(4): Add three mappings, wmidell(4), wmihp(4), and wmimsi(4).
-		[jruoho 20100419]
+	acpiwmi(4): Add four mappings; wmidell(4), wmieeepc(4),
+		wmihp(4), and wmimsi(4). [jruoho 20100419]
 	kernel: Enforce RLIMIT_FSIZE above the file system.  This fixes
 		the feature for some file systems.  [pooka 20100423]
 	libc: Added a space-efficient write-once database (cdbr(3), cdbw(3)).
@@ -843,3 +843,18 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.11. [roy 20110204]
 	hp300: Switch NetBSD/hp300 to wscons with rasops.
 		Simply ported from OpenBSD/hp300.  [tsutsui 20110206]
+	hp300: Add support for framebuffers on HP362 and HP382.
+		[tsutsui 20110212]
+	hp300: Add support for Apollo Domain keyboard. From OpenBSD.
+		[tsutsui 20110212]
+	disklabel(8): Disable COMPAT_386BSD_MBRPART. The related kernel
+		compat option was disabled by default four years ago, and
+		NetBSD has not used partition id 165 (0xA5) for much longer.
+		Meanwhile the presence of this code in disklabel can
+		cause sysinst to clobber FreeBSD installs on the same
+		disk. Those with very, very old NetBSD installations may
+		need to use fdisk(8) to change the NetBSD partition ids
+		from 165 (0xA5) to 169 (0xA9). [dholland 20110212]
+	hp700: Add support for HIL devices. From OpenBSD. [tsutsui 20110215]
+	bind: Update to 9.8.0rc1: Response policy zones (RPZ) and DNS64 support.
+		[christos 20110215]

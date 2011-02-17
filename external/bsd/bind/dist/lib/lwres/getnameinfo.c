@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.1 2009/03/22 15:02:37 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.1.4.1 2011/02/17 11:59:09 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getnameinfo.c,v 1.39 2007/06/19 23:47:22 tbox Exp */
+/* Id: getnameinfo.c,v 1.39 2007-06-19 23:47:22 tbox Exp */
 
 /*! \file */
 
@@ -156,7 +156,7 @@ static struct afd {
 #define ERR(code) \
 	do { result = (code);			\
 		if (result != 0) goto cleanup;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*% lightweight resolver socket address structure to hostname and service name */
 int

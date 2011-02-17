@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.69.4.1 2011/02/08 16:19:40 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.69.4.2 2011/02/17 12:00:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69.4.1 2011/02/08 16:19:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69.4.2 2011/02/17 12:00:00 bouyer Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -327,7 +327,7 @@ cpu_lwp_free2(struct lwp *l)
  * (a name with only slightly more meaning than "kernel_map")
  */
 
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
@@ -365,6 +365,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	}
 	pmap_update(kpmap);
+
+	return 0;
 }
 
 /*

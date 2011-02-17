@@ -1,4 +1,4 @@
-/*	$NetBSD: netscope.c,v 1.1.1.1 2009/03/22 15:02:06 christos Exp $	*/
+/*	$NetBSD: netscope.c,v 1.1.1.1.4.1 2011/02/17 11:58:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: netscope.c,v 1.13 2007/06/19 23:47:17 tbox Exp";
+	"Id: netscope.c,v 1.13 2007-06-19 23:47:17 tbox Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>

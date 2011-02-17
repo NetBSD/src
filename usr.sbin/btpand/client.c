@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.4 2009/05/12 21:50:38 plunky Exp $	*/
+/*	$NetBSD: client.c,v 1.4.2.1 2011/02/17 12:00:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.4 2009/05/12 21:50:38 plunky Exp $");
+__RCSID("$NetBSD: client.c,v 1.4.2.1 2011/02/17 12:00:57 bouyer Exp $");
 
 #include <bluetooth.h>
 #include <errno.h>
@@ -45,7 +45,7 @@ client_init(void)
 	struct sockaddr_bt sa;
 	channel_t *chan;
 	socklen_t len;
-	int fd;
+	int fd, bufsize;
 	uint16_t mru, mtu;
 
 	if (bdaddr_any(&remote_bdaddr))
@@ -100,6 +100,19 @@ client_init(void)
 	if (mru < BNEP_MTU_MIN) {
 		log_err("L2CAP IMTU too small (%d)", mru);
 		exit(EXIT_FAILURE);
+	}
+
+	len = sizeof(bufsize);
+	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize, &len) == -1) {
+		log_err("Could not read SO_RCVBUF");
+		exit(EXIT_FAILURE);
+	}
+	if (bufsize < 10 * mru) {
+		bufsize = 10 * mru;
+		if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize,
+		    sizeof(bufsize)) == -1)
+			log_info("Could not increase SO_RCVBUF (from %d)",
+			    bufsize);
 	}
 
 	len = sizeof(mtu);

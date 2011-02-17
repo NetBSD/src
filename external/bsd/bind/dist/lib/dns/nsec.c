@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.1.1.2 2009/10/25 00:02:31 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.1.1.2.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.c,v 1.13 2009/01/06 23:47:57 tbox Exp */
+/* Id: nsec.c,v 1.13 2009-01-06 23:47:57 tbox Exp */
 
 /*! \file */
 
@@ -41,7 +41,7 @@
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static void
 set_bit(unsigned char *array, unsigned int index, unsigned int bit) {

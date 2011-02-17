@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mdserv.c,v 1.3 2010/11/30 14:31:14 pooka Exp $	*/
+/*	$NetBSD: h_mdserv.c,v 1.3.2.1 2011/02/17 12:00:53 bouyer Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	if (argc != 2)
 		exit(1);
 
-	md.md_addr = malloc(MDSIZE);
+	md.md_addr = calloc(1, MDSIZE);
 	md.md_size = MDSIZE;
 	md.md_type = MD_UMEM_SERVER;
 

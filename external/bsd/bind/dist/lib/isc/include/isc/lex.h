@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.h,v 1.1.1.1 2009/03/22 15:02:13 christos Exp $	*/
+/*	$NetBSD: lex.h,v 1.1.1.1.4.1 2011/02/17 11:58:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lex.h,v 1.37 2008/05/30 23:47:01 tbox Exp */
+/* Id: lex.h,v 1.37 2008-05-30 23:47:01 tbox Exp */
 
 #ifndef ISC_LEX_H
 #define ISC_LEX_H 1

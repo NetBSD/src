@@ -1,4 +1,4 @@
-/* $NetBSD: splash.c,v 1.8.6.1 2011/02/08 16:19:55 bouyer Exp $ */
+/* $NetBSD: splash.c,v 1.8.6.2 2011/02/17 12:00:16 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.8.6.1 2011/02/08 16:19:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.8.6.2 2011/02/17 12:00:16 bouyer Exp $");
 
 #include "opt_splash.h"
 
@@ -151,7 +151,7 @@ splash_setimage(const void *imgdata, size_t imgdatalen)
 		return EBUSY;
 	}
 
-	aprint_verbose("%s: splash image @ %p, %zd bytes\n",
+	aprint_verbose("%s: splash image @ %p, %zu bytes\n",
 	    __func__, imgdata, imgdatalen);
 	splash_image.data = imgdata;
 	splash_image.datalen = imgdatalen;

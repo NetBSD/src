@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.305 2011/01/18 08:21:03 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.305.2.1 2011/02/17 12:00:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.305 2011/01/18 08:21:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.305.2.1 2011/02/17 12:00:44 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -951,6 +951,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
+	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 

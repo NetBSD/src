@@ -1,4 +1,4 @@
-/*	$NetBSD: gen-win32.h,v 1.1.1.2 2009/10/25 00:02:29 christos Exp $	*/
+/*	$NetBSD: gen-win32.h,v 1.1.1.2.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -50,7 +50,7 @@
  * SUCH DAMAGE.
  */
 
-/* Id: gen-win32.h,v 1.25 2009/01/17 23:47:42 tbox Exp */
+/* Id: gen-win32.h,v 1.25 2009-01-17 23:47:42 tbox Exp */
 
 /*! \file
  * \author Principal Authors: Computer Systems Research Group at UC Berkeley

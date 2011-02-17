@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.22.8.1 2011/02/08 16:19:41 bouyer Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.22.8.2 2011/02/17 12:00:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.22.8.1 2011/02/08 16:19:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.22.8.2 2011/02/17 12:00:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,13 +100,15 @@ void
 schedintr_4m(void *v)
 {
 
+	kpreempt_disable();
 #ifdef MULTIPROCESSOR
 	/*
 	 * We call hardclock() here so that we make sure it is called on
 	 * all CPUs.  This function ends up being called on sun4m systems
 	 * every tick.
 	 */
-	hardclock(v);
+	if (!CPU_IS_PRIMARY(curcpu()))
+		hardclock(v);
 
 	/*
 	 * The factor 8 is only valid for stathz==100.
@@ -115,6 +117,7 @@ schedintr_4m(void *v)
 	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0 && schedhz != 0)
 #endif
 		schedclock(curlwp);
+	kpreempt_enable();
 }
 
 
@@ -125,6 +128,7 @@ int
 clockintr_4m(void *cap)
 {
 
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
 	/*
 	 * XXX this needs to be fixed in a more general way
 	 * problem is that the kernel enables interrupts and THEN
@@ -136,14 +140,14 @@ clockintr_4m(void *cap)
 	 * For MP, we defer calling hardclock() to the schedintr so
 	 * that we call it on all cpus.
 	 */
+	kpreempt_disable();
 	if (cold)
 		return 0;
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4m->t_limit);
 	tickle_tc();
-#if !defined(MULTIPROCESSOR)
 	hardclock((struct clockframe *)cap);
-#endif
+	kpreempt_enable();
 	return (1);
 }
 
@@ -155,6 +159,8 @@ statintr_4m(void *cap)
 {
 	struct clockframe *frame = cap;
 	u_long newint;
+
+	kpreempt_disable();
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&counterreg4m->t_limit);
@@ -194,6 +200,7 @@ statintr_4m(void *cap)
 #if !defined(MULTIPROCESSOR)
 	}
 #endif
+	kpreempt_enable();
 
 	return (1);
 }

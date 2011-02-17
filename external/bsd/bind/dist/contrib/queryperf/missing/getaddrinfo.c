@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.1 2009/03/22 14:58:11 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.1.1.1.4.1 2011/02/17 11:58:29 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

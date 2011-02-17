@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 2010/03/20 02:07:33 uwe Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2011/02/17 11:57:11 bouyer Exp $
 
 .include <bsd.own.mk>
 
 .if (${MKCRYPTO} != "no")
-SUBDIR+= openssl .WAIT netpgp openssh
+SUBDIR+= openssl .WAIT netpgp openssh libsaslc
 .endif
 
 .include <bsd.subdir.mk>

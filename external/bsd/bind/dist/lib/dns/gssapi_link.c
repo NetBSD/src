@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.2 2009/12/26 22:24:33 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.1.1.2.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -18,13 +18,14 @@
  */
 
 /*
- * Id: gssapi_link.c,v 1.14 2009/10/24 23:47:36 tbox Exp
+ * Id: gssapi_link.c,v 1.16 2011-01-11 23:47:13 tbox Exp
  */
 
 #include <config.h>
 
 #ifdef GSSAPI
 
+#include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/string.h>
@@ -44,7 +45,13 @@
 	do { \
 		(gb).length = (r).length; \
 		(gb).value = (r).base; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
+
+#define GBUFFER_TO_REGION(gb, r) \
+	do { \
+		(r).length = (gb).length; \
+		(r).base = (gb).value; \
+	} while (/*CONSTCOND*/0)
 
 
 struct dst_gssapi_signverifyctx {
@@ -278,6 +285,79 @@ gssapi_destroy(dst_key_t *key) {
 	key->keydata.gssctx = NULL;
 }
 
+static isc_result_t
+gssapi_restore(dst_key_t *key, const char *keystr) {
+	OM_uint32 major, minor;
+	size_t len;
+	isc_buffer_t *b = NULL;
+	isc_region_t r;
+	gss_buffer_desc gssbuffer;
+	isc_result_t result;
+
+	len = strlen(keystr);
+	if ((len % 4) != 0)
+		return (ISC_R_BADBASE64);
+
+	len = (len / 4) * 3;
+
+	result = isc_buffer_allocate(key->mctx, &b, len);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	result = isc_base64_decodestring(keystr, b);
+	if (result != ISC_R_SUCCESS) {
+		isc_buffer_free(&b);
+		return (result);
+	}
+
+	isc_buffer_remainingregion(b, &r);
+	REGION_TO_GBUFFER(r, gssbuffer);
+	major = gss_import_sec_context(&minor, &gssbuffer,
+				       &key->keydata.gssctx);
+	if (major != GSS_S_COMPLETE) {
+		isc_buffer_free(&b);
+		return (ISC_R_FAILURE);
+	}
+
+	isc_buffer_free(&b);
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+gssapi_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length) {
+	OM_uint32 major, minor;
+	gss_buffer_desc gssbuffer;
+	size_t len;
+	char *buf;
+	isc_buffer_t b;
+	isc_region_t r;
+	isc_result_t result;
+
+	major = gss_export_sec_context(&minor, &key->keydata.gssctx,
+				       &gssbuffer);
+	if (major != GSS_S_COMPLETE) {
+		fprintf(stderr, "gss_export_sec_context -> %d, %d\n",
+			major, minor);
+		return (ISC_R_FAILURE);
+	}
+	if (gssbuffer.length == 0)
+		return (ISC_R_FAILURE);
+	len = ((gssbuffer.length + 2)/3) * 4;
+	buf = isc_mem_get(mctx, len);
+	if (buf == NULL) {
+		gss_release_buffer(&minor, &gssbuffer);
+		return (ISC_R_NOMEMORY);
+	}
+	isc_buffer_init(&b, buf, len);
+	GBUFFER_TO_REGION(gssbuffer, r);
+	result = isc_base64_totext(&r, 0, "", &b);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	gss_release_buffer(&minor, &gssbuffer);
+	*buffer = buf;
+	*length = len;
+	return (ISC_R_SUCCESS);
+}
+
 static dst_func_t gssapi_functions = {
 	gssapi_create_signverify_ctx,
 	gssapi_destroy_signverify_ctx,
@@ -296,6 +376,8 @@ static dst_func_t gssapi_functions = {
 	NULL, /*%< parse */
 	NULL, /*%< cleanup */
 	NULL,  /*%< fromlabel */
+	gssapi_dump,
+	gssapi_restore,
 };
 
 isc_result_t

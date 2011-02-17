@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2009/09/20 22:46:12 abs Exp $
+#	$NetBSD: list,v 1.4.2.1 2011/02/17 11:57:17 bouyer Exp $
 
 PROG	bin/chio
 PROG	bin/dd
@@ -8,9 +8,14 @@ PROG	bin/mt
 PROG	bin/rcmd
 PROG	bin/sync
 
+PROG	libexec/lfs_cleanerd
+
 PROG	sbin/fdisk
+PROG	sbin/mbrlabel
 PROG	sbin/mount_ext2fs
+PROG	sbin/mount_lfs
 PROG	sbin/mount_ntfs
+PROG	sbin/newfs_lfs
 PROG	sbin/raidctl
 PROG	sbin/restore	sbin/rrestore
 PROG	sbin/scsictl

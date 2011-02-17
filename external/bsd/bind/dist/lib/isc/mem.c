@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.4 2010/12/02 14:23:31 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.1.4.2.1 2011/02/17 11:58:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.c,v 1.153.104.6 2010/08/11 23:46:20 tbox Exp */
+/* Id: mem.c,v 1.160 2010-12-08 02:46:16 marka Exp */
 
 /*! \file */
 
@@ -211,7 +211,7 @@ struct isc__mempool {
 					  ISC_MEM_DEBUGRECORD)) != 0 && \
 		     b != NULL) \
 			 add_trace_entry(a, b, c, d, e); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define DELETE_TRACE(a, b, c, d, e)	delete_trace_entry(a, b, c, d, e)
 
 static void
@@ -1275,7 +1275,7 @@ isc___mem_get(isc_mem_t *ctx0, size_t size FLARG) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
 	if ((isc_mem_debugging & (ISC_MEM_DEBUGSIZE|ISC_MEM_DEBUGCTX)) != 0)
-		return (isc_mem_allocate((isc_mem_t *)ctx, size));
+		return (isc__mem_allocate(ctx0, size FLARG_PASS));
 
 	if ((ctx->flags & ISC_MEMFLAG_INTERNAL) != 0) {
 		MCTXLOCK(ctx, &ctx->lock);

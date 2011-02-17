@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.112 2010/12/17 22:56:22 njoly Exp $
+# $NetBSD: postinstall,v 1.112.2.1 2011/02/17 12:00:58 bouyer Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -819,6 +819,23 @@ do_gid()
 }
 
 #
+#	gpio
+#
+additem gpio "gpio configuration is up to date"
+do_gpio()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_gpio fix|check"
+	op="$1"
+	failed=0
+
+	populate_dir "$op" true "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
+		gpio.conf
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
 #	hosts
 #
 additem hosts "/etc/hosts being up to date"
@@ -1065,7 +1082,8 @@ do_rc()
 		ldconfig local lpd lvm\
 		mdnsd mixerctl mopd motd mountall mountcritlocal \
 		mountcritremote mountd moused mrouted \
-		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
+		named ndbootd network newsyslog nfsd nfslocking npf \
+		ntpd ntpdate \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity rarpd rbootd rndctl \

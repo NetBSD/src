@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatalist.c,v 1.1.1.2 2010/08/05 20:12:37 christos Exp $	*/
+/*	$NetBSD: rdatalist.c,v 1.1.1.2.2.1 2011/02/17 11:58:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatalist.c,v 1.36.270.2 2010/02/25 05:25:51 tbox Exp */
+/* Id: rdatalist.c,v 1.40 2010-11-16 05:38:31 marka Exp */
 
 /*! \file */
 

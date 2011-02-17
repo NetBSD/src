@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2011/01/02 11:24:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.52.2.1 2011/02/17 11:59:19 bouyer Exp $
 
 # xf86-input drivers
 
@@ -146,6 +146,16 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "dreamcast"
+
+.if ${MACHINE} == "ews4800mips"
+SUBDIR+= \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "ews4800mips"
+
+.if ${MACHINE} == "hp300"
+SUBDIR+= \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "hp300"
 
 .if ${MACHINE} == "hpcarm" || \
     ${MACHINE} == "hpcmips" || \
