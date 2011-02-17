@@ -374,7 +374,7 @@ AcpiUtTraceStr (
     const char              *FunctionName,
     const char              *ModuleName,
     UINT32                  ComponentId,
-    char                    *String)
+    const char              *String)
 {
 
     AcpiGbl_NestingLevel++;
