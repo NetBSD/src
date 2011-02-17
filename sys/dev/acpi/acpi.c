@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.235 2011/02/15 20:24:11 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.236 2011/02/17 19:36:49 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.235 2011/02/15 20:24:11 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.236 2011/02/17 19:36:49 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -685,6 +685,14 @@ acpi_build_tree(struct acpi_softc *sc)
 	(void)acpi_rescan(sc->sc_dev, NULL, NULL);
 
 	/*
+	 * Update GPE information.
+	 *
+	 * Note that this must be called after
+	 * all GPE handlers have been installed.
+	 */
+	(void)AcpiUpdateAllGpes();
+
+	/*
 	 * Defer rest of the configuration.
 	 */
 	(void)config_defer(sc->sc_dev, acpi_rescan_capabilities);
@@ -724,6 +732,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		ad->ad_device = NULL;
 		ad->ad_notify = NULL;
 		ad->ad_pciinfo = NULL;
+		ad->ad_wakedev = NULL;
 
 		ad->ad_type = type;
 		ad->ad_handle = handle;
@@ -734,6 +743,13 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 		acpi_set_node(ad);
 		acpi_make_name(ad, devinfo->Name);
+
+		/*
+		 * Identify wake GPEs from the _PRW. Note that
+		 * AcpiUpdateAllGpes() must be called afterwards.
+		 */
+		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE)
+			acpi_wakedev_init(ad);
 
 		SIMPLEQ_INIT(&ad->ad_child_head);
 		SIMPLEQ_INSERT_TAIL(&sc->ad_head, ad, ad_list);
@@ -940,9 +956,7 @@ acpi_rescan_capabilities(device_t self)
 		/*
 		 * Scan wake-up capabilities.
 		 */
-		rv = AcpiGetHandle(ad->ad_handle, "_PRW", &tmp);
-
-		if (ACPI_SUCCESS(rv)) {
+		if (ad->ad_wakedev != NULL) {
 			ad->ad_flags |= ACPI_DEVICE_WAKEUP;
 			acpi_wakedev_add(ad);
 		}
