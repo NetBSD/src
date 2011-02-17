@@ -1,4 +1,4 @@
-# $NetBSD: files.acpica,v 1.2.2.2 2011/02/17 12:00:17 bouyer Exp $
+# $NetBSD: files.acpica,v 1.2.2.3 2011/02/17 13:58:45 bouyer Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
@@ -10,6 +10,8 @@ file	external/bsd/acpica/dist/debugger/dbexec.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbfileio.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbhistry.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbinput.c		acpica & acpi_debug & ddb
+file	external/bsd/acpica/dist/debugger/dbmethod.c		acpica & acpi_debug & ddb
+file	external/bsd/acpica/dist/debugger/dbnames.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbstats.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbutils.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbxface.c		acpica & acpi_debug & ddb

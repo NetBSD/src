@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.9.4.1 2011/02/17 12:00:10 bouyer Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.9.4.2 2011/02/17 13:58:45 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.9.4.1 2011/02/17 12:00:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.9.4.2 2011/02/17 13:58:45 bouyer Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.9.4.1 2011/02/17 12:00:10 bouyer Exp $
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpi_osd.h>
+
+#ifdef ACPI_DEBUG
+#include <external/bsd/acpica/dist/include/acdebug.h>
+#endif
 
 #ifdef ACPI_DSDT_OVERRIDE
 #ifndef ACPI_DSDT_FILE

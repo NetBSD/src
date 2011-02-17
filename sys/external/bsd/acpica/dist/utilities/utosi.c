@@ -64,23 +64,23 @@
  */
 static ACPI_INTERFACE_INFO    AcpiDefaultSupportedInterfaces[] =
 {
-    /* Operating System Vendor Strings */
+	/* Operating System Vendor Strings */
 
-    {"Windows 2000",        NULL, 0, ACPI_OSI_WIN_2000},         /* Windows 2000 */
-    {"Windows 2001",        NULL, 0, ACPI_OSI_WIN_XP},           /* Windows XP */
-    {"Windows 2001 SP1",    NULL, 0, ACPI_OSI_WIN_XP_SP1},       /* Windows XP SP1 */
-    {"Windows 2001.1",      NULL, 0, ACPI_OSI_WINSRV_2003},      /* Windows Server 2003 */
-    {"Windows 2001 SP2",    NULL, 0, ACPI_OSI_WIN_XP_SP2},       /* Windows XP SP2 */
-    {"Windows 2001.1 SP1",  NULL, 0, ACPI_OSI_WINSRV_2003_SP1},  /* Windows Server 2003 SP1 - Added 03/2006 */
-    {"Windows 2006",        NULL, 0, ACPI_OSI_WIN_VISTA},        /* Windows Vista - Added 03/2006 */
-    {"Windows 2006.1",      NULL, 0, ACPI_OSI_WINSRV_2008},      /* Windows Server 2008 - Added 09/2009 */
-    {"Windows 2006 SP1",    NULL, 0, ACPI_OSI_WIN_VISTA_SP1},    /* Windows Vista SP1 - Added 09/2009 */
-    {"Windows 2006 SP2",    NULL, 0, ACPI_OSI_WIN_VISTA_SP2},    /* Windows Vista SP2 - Added 09/2010 */
-    {"Windows 2009",        NULL, 0, ACPI_OSI_WIN_7},            /* Windows 7 and Server 2008 R2 - Added 09/2009 */
+	{__UNCONST("Windows 2000"),        NULL, 0, ACPI_OSI_WIN_2000},         /* Windows 2000 */
+	{__UNCONST("Windows 2001"),        NULL, 0, ACPI_OSI_WIN_XP},           /* Windows XP */
+	{__UNCONST("Windows 2001 SP1"),    NULL, 0, ACPI_OSI_WIN_XP_SP1},       /* Windows XP SP1 */
+	{__UNCONST("Windows 2001.1"),      NULL, 0, ACPI_OSI_WINSRV_2003},      /* Windows Server 2003 */
+	{__UNCONST("Windows 2001 SP2"),    NULL, 0, ACPI_OSI_WIN_XP_SP2},       /* Windows XP SP2 */
+	{__UNCONST("Windows 2001.1 SP1"),  NULL, 0, ACPI_OSI_WINSRV_2003_SP1},  /* Windows Server 2003 SP1 - Added 03/2006 */
+	{__UNCONST("Windows 2006"),        NULL, 0, ACPI_OSI_WIN_VISTA},        /* Windows Vista - Added 03/2006 */
+	{__UNCONST("Windows 2006.1"),      NULL, 0, ACPI_OSI_WINSRV_2008},      /* Windows Server 2008 - Added 09/2009 */
+	{__UNCONST("Windows 2006 SP1"),    NULL, 0, ACPI_OSI_WIN_VISTA_SP1},    /* Windows Vista SP1 - Added 09/2009 */
+	{__UNCONST("Windows 2006 SP2"),    NULL, 0, ACPI_OSI_WIN_VISTA_SP2},    /* Windows Vista SP2 - Added 09/2010 */
+	{__UNCONST("Windows 2009"),        NULL, 0, ACPI_OSI_WIN_7},            /* Windows 7 and Server 2008 R2 - Added 09/2009 */
 
-    /* Feature Group Strings */
+	/* Feature Group Strings */
 
-    {"Extended Address Space Descriptor", NULL, 0, 0}
+	{__UNCONST("Extended Address Space Descriptor"), NULL, 0, 0}
 
     /*
      * All "optional" feature group strings (features that are implemented

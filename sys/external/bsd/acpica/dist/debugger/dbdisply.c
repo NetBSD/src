@@ -925,7 +925,7 @@ static ACPI_ADR_SPACE_TYPE  SpaceIdList[] =
 typedef struct acpi_handler_info
 {
     void                    *Handler;
-    char                    *Name;
+    const char              *Name;
 
 } ACPI_HANDLER_INFO;
 
