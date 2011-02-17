@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.1 2011/02/17 18:32:29 rmind Exp $	*/
+/*	$NetBSD: pcu.h,v 1.2 2011/02/17 18:44:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 typedef struct {
 	u_int	pcu_id;
-	void	(*pcu_state_save)(lwp_t *);
+	void	(*pcu_state_save)(lwp_t *, bool);
 	void	(*pcu_state_load)(lwp_t *, bool);
 } pcu_ops_t;
 
