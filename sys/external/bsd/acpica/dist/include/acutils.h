@@ -133,7 +133,7 @@ AcpiUtGetNotifyName (
 
 #endif
 
-const char *
+char *
 AcpiUtGetTypeName (
     ACPI_OBJECT_TYPE        Type);
 
@@ -375,7 +375,7 @@ AcpiUtTraceStr (
     const char              *FunctionName,
     const char              *ModuleName,
     UINT32                  ComponentId,
-    char                    *String);
+    const char              *String);
 
 void
 AcpiUtExit (
