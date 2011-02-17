@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.44 2011/02/16 19:26:58 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.45 2011/02/17 12:23:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.44 2011/02/16 19:26:58 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.45 2011/02/17 12:23:58 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: hijack.c,v 1.44 2011/02/16 19:26:58 pooka Exp $");
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
+#include <sys/statvfs.h>
 
 #include <rump/rumpclient.h>
 #include <rump/rump_syscalls.h>
@@ -70,6 +71,20 @@ enum dualcall {
 	DUALCALL_CLOSE,
 	DUALCALL_POLLTS,
 	DUALCALL_KEVENT,
+	DUALCALL_STAT, DUALCALL_LSTAT, DUALCALL_FSTAT,
+	DUALCALL_CHMOD, DUALCALL_LCHMOD, DUALCALL_FCHMOD,
+	DUALCALL_CHOWN, DUALCALL_LCHOWN, DUALCALL_FCHOWN,
+	DUALCALL_OPEN,
+	DUALCALL_STATVFS1, DUALCALL_FSTATVFS1,
+	DUALCALL_CHDIR, DUALCALL_FCHDIR,
+	DUALCALL_LSEEK,
+	DUALCALL_GETDENTS,
+	DUALCALL_UNLINK, DUALCALL_SYMLINK, DUALCALL_READLINK,
+	DUALCALL_RENAME,
+	DUALCALL_MKDIR, DUALCALL_RMDIR,
+	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
+	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
+	DUALCALL_FSYNC, DUALCALL_FSYNC_RANGE,
 	DUALCALL__NUM
 };
 
@@ -84,12 +99,25 @@ enum dualcall {
 #define REALSELECT select
 #define REALPOLLTS pollts
 #define REALKEVENT kevent
+#define REALSTAT __stat30
+#define REALLSTAT __lstat30
+#define REALFSTAT __fstat30
+#define REALUTIMES utimes
+#define REALLUTIMES lutimes
+#define REALFUTIMES futimes
 #else
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
 #define REALKEVENT _sys___kevent50
+#define REALSTAT __stat50
+#define REALLSTAT __lstat50
+#define REALFSTAT __fstat50
+#define REALUTIMES __utimes50
+#define REALLUTIMES __lutimes50
+#define REALFUTIMES __futimes50
 #endif
 #define REALREAD _sys_read
+#define REALGETDENTS __getdents30
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -97,6 +125,13 @@ int REALPOLLTS(struct pollfd *, nfds_t,
 int REALKEVENT(int, const struct kevent *, size_t, struct kevent *, size_t,
 	       const struct timespec *);
 ssize_t REALREAD(int, void *, size_t);
+int REALSTAT(const char *, struct stat *);
+int REALLSTAT(const char *, struct stat *);
+int REALFSTAT(int, struct stat *);
+int REALGETDENTS(int, char *, size_t);
+int REALUTIMES(const char *, const struct timeval [2]);
+int REALLUTIMES(const char *, const struct timeval [2]);
+int REALFUTIMES(int, const struct timeval [2]);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -128,6 +163,35 @@ struct sysnames {
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
 	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
 	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
+	{ DUALCALL_STAT,	S(REALSTAT),	RSYS_NAME(STAT)		},
+	{ DUALCALL_LSTAT,	S(REALLSTAT),	RSYS_NAME(LSTAT)	},
+	{ DUALCALL_FSTAT,	S(REALFSTAT),	RSYS_NAME(FSTAT)	},
+	{ DUALCALL_CHOWN,	"chown",	RSYS_NAME(CHOWN)	},
+	{ DUALCALL_LCHOWN,	"lchown",	RSYS_NAME(LCHOWN)	},
+	{ DUALCALL_FCHOWN,	"fchown",	RSYS_NAME(FCHOWN)	},
+	{ DUALCALL_CHMOD,	"chmod",	RSYS_NAME(CHMOD)	},
+	{ DUALCALL_LCHMOD,	"lchmod",	RSYS_NAME(LCHMOD)	},
+	{ DUALCALL_FCHMOD,	"fchmod",	RSYS_NAME(FCHMOD)	},
+	{ DUALCALL_UTIMES,	S(REALUTIMES),	RSYS_NAME(UTIMES)	},
+	{ DUALCALL_LUTIMES,	S(REALLUTIMES),	RSYS_NAME(LUTIMES)	},
+	{ DUALCALL_FUTIMES,	S(REALFUTIMES),	RSYS_NAME(FUTIMES)	},
+	{ DUALCALL_OPEN,	"open",		RSYS_NAME(OPEN)		},
+	{ DUALCALL_STATVFS1,	"statvfs1",	RSYS_NAME(STATVFS1)	},
+	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
+	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
+	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
+	{ DUALCALL_LSEEK,	"lseek",	RSYS_NAME(LSEEK)	},
+	{ DUALCALL_GETDENTS,	"__getdents30",	RSYS_NAME(GETDENTS)	},
+	{ DUALCALL_UNLINK,	"unlink",	RSYS_NAME(UNLINK)	},
+	{ DUALCALL_SYMLINK,	"symlink",	RSYS_NAME(SYMLINK)	},
+	{ DUALCALL_READLINK,	"readlink",	RSYS_NAME(READLINK)	},
+	{ DUALCALL_RENAME,	"rename",	RSYS_NAME(RENAME)	},
+	{ DUALCALL_MKDIR,	"mkdir",	RSYS_NAME(MKDIR)	},
+	{ DUALCALL_RMDIR,	"rmdir",	RSYS_NAME(RMDIR)	},
+	{ DUALCALL_TRUNCATE,	"truncate",	RSYS_NAME(TRUNCATE)	},
+	{ DUALCALL_FTRUNCATE,	"ftruncate",	RSYS_NAME(FTRUNCATE)	},
+	{ DUALCALL_FSYNC,	"fsync",	RSYS_NAME(FSYNC)	},
+	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
 };
 #undef S
 
@@ -184,6 +248,22 @@ type name args								\
 	return fun vars;						\
 }
 
+#define PATHCALL(type, name, rcname, args, proto, vars)			\
+type name args								\
+{									\
+	type (*fun) proto;						\
+									\
+	DPRINTF(("%s -> %s\n", __STRING(name), path));			\
+	if (path_isrump(path)) {					\
+		fun = syscalls[rcname].bs_rump;				\
+		path = path_host2rump(path);				\
+	} else {							\
+		fun = syscalls[rcname].bs_host;				\
+	}								\
+									\
+	return fun vars;						\
+}
+
 /*
  * This is called from librumpclient in case of LD_PRELOAD.
  * It ensures correct RTLD_NEXT.
@@ -207,6 +287,8 @@ hijackdlsym(void *handle, const char *symbol)
 
 	return (void *)rv;
 }
+
+static int pwdinrump = 0;
 
 /* low calorie sockets? */
 static bool hostlocalsockets = true;
@@ -278,6 +360,11 @@ rcinit(void)
 
 	if (getenv_r("RUMPHIJACK__DUP2MASK", buf, sizeof(buf)) == 0) {
 		dup2mask = strtoul(buf, NULL, 10);
+		unsetenv("RUMPHIJACK__DUP2MASK");
+	}
+	if (getenv_r("RUMPHIJACK__PWDINRUMP", buf, sizeof(buf)) == 0) {
+		pwdinrump = strtoul(buf, NULL, 10);
+		unsetenv("RUMPHIJACK__PWDINRUMP");
 	}
 }
 
@@ -314,6 +401,37 @@ fd_isrump(int fd)
 
 #define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_FDOFF)
 
+#define RUMPPREFIX "/rump"
+static int
+path_isrump(const char *path)
+{
+
+	if (*path == '/') {
+		if (strncmp(path, RUMPPREFIX, sizeof(RUMPPREFIX)-1) == 0)
+			return 1;
+		return 0;
+	} else {
+		return pwdinrump;
+	}
+}
+
+static const char *rootpath = "/";
+static const char *
+path_host2rump(const char *path)
+{
+	const char *rv;
+
+	if (*path == '/') {
+		rv = path + (sizeof(RUMPPREFIX)-1);
+		if (*rv == '\0')
+			rv = rootpath;
+	} else {
+		rv = path;
+	}
+
+	return rv;
+}
+
 static int
 dodup(int oldd, int minfd)
 {
@@ -338,6 +456,86 @@ dodup(int oldd, int minfd)
 	DPRINTF(("dup <- %d\n", newd));
 
 	return newd;
+}
+
+int
+open(const char *path, int flags, ...)
+{
+	int (*op_open)(const char *, int, ...);
+	bool isrump;
+	va_list ap;
+	int fd;
+
+	if (path_isrump(path)) {
+		path = path_host2rump(path);
+		op_open = GETSYSCALL(rump, OPEN);
+		isrump = true;
+	} else {
+		op_open = GETSYSCALL(host, OPEN);
+		isrump = false;
+	}
+
+	va_start(ap, flags);
+	fd = op_open(path, flags, va_arg(ap, mode_t));
+	va_end(ap);
+
+	if (isrump)
+		fd = fd_rump2host(fd);
+	return fd;
+}
+
+int
+chdir(const char *path)
+{
+	int (*op_chdir)(const char *);
+	bool isrump;
+	int rv;
+
+	if (path_isrump(path)) {
+		op_chdir = GETSYSCALL(rump, CHDIR);
+		isrump = true;
+		path = path_host2rump(path);
+	} else {
+		op_chdir = GETSYSCALL(host, CHDIR);
+		isrump = false;
+	}
+
+	rv = op_chdir(path);
+	if (rv == 0) {
+		if (isrump)
+			pwdinrump = true;
+		else
+			pwdinrump = false;
+	}
+
+	return rv;
+}
+
+int
+fchdir(int fd)
+{
+	int (*op_fchdir)(int);
+	bool isrump;
+	int rv;
+
+	if (fd_isrump(fd)) {
+		op_fchdir = GETSYSCALL(rump, FCHDIR);
+		isrump = true;
+		fd = fd_host2rump(fd);
+	} else {
+		op_fchdir = GETSYSCALL(host, FCHDIR);
+		isrump = false;
+	}
+
+	rv = op_fchdir(fd);
+	if (rv == 0) {
+		if (isrump)
+			pwdinrump = true;
+		else
+			pwdinrump = false;
+	}
+
+	return rv;
 }
 
 int __socket30(int, int, int);
@@ -628,26 +826,56 @@ execve(const char *path, char *const argv[], char *const envp[])
 {
 	char buf[128];
 	char *dup2str;
+	char *pwdinrumpstr;
 	char **newenv;
 	size_t nelem;
 	int rv, sverrno;
+	int bonus = 1, i = 0;
 
-	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%u", dup2mask);
-	dup2str = malloc(strlen(buf)+1);
-	if (dup2str == NULL)
-		return ENOMEM;
-	strcpy(dup2str, buf);
+	if (dup2mask) {
+		snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%u", dup2mask);
+		dup2str = malloc(strlen(buf)+1);
+		if (dup2str == NULL)
+			return ENOMEM;
+		strcpy(dup2str, buf);
+		bonus++;
+	} else {
+		dup2str = NULL;
+	}
+
+	if (pwdinrump) {
+		snprintf(buf, sizeof(buf), "RUMPHIJACK__PWDINRUMP=%u",
+		    pwdinrump);
+		pwdinrumpstr = malloc(strlen(buf)+1);
+		if (pwdinrumpstr == NULL) {
+			free(dup2str);
+			return ENOMEM;
+		}
+		strcpy(pwdinrumpstr, buf);
+		bonus++;
+	} else {
+		pwdinrumpstr = NULL;
+	}
 
 	for (nelem = 0; envp && envp[nelem]; nelem++)
 		continue;
-	newenv = malloc(sizeof(*newenv) * nelem+2);
+	newenv = malloc(sizeof(*newenv) * nelem+bonus);
 	if (newenv == NULL) {
 		free(dup2str);
+		free(pwdinrumpstr);
 		return ENOMEM;
 	}
 	memcpy(newenv, envp, nelem*sizeof(*newenv));
-	newenv[nelem] = dup2str;
-	newenv[nelem+1] = NULL;
+	if (dup2str) {
+		newenv[nelem+i] = dup2str;
+		i++;
+	}
+	if (pwdinrumpstr) {
+		newenv[nelem+i] = pwdinrumpstr;
+		i++;
+	}
+	newenv[nelem+i] = NULL;
+	_DIAGASSERT(i < bonus);
 
 	rv = rumpclient_exec(path, argv, newenv);
 
@@ -1127,3 +1355,138 @@ FDCALL(ssize_t, writev, DUALCALL_WRITEV, 				\
 	(int fd, const struct iovec *iov, int iovcnt),			\
 	(int, const struct iovec *, int),				\
 	(fd, iov, iovcnt))
+
+FDCALL(int, REALFSTAT, DUALCALL_FSTAT,					\
+	(int fd, struct stat *sb),					\
+	(int, struct stat *),						\
+	(fd, sb))
+
+FDCALL(int, fstatvfs1, DUALCALL_FSTATVFS1,				\
+	(int fd, struct statvfs *buf, int flags),			\
+	(int, struct statvfs *, int),					\
+	(fd, buf, flags))
+
+FDCALL(off_t, lseek, DUALCALL_LSEEK,					\
+	(int fd, off_t offset, int whence),				\
+	(int, off_t, int),						\
+	(fd, offset, whence))
+
+FDCALL(int, REALGETDENTS, DUALCALL_GETDENTS,				\
+	(int fd, char *buf, size_t nbytes),				\
+	(int, char *, size_t),						\
+	(fd, buf, nbytes))
+
+FDCALL(int, fchown, DUALCALL_FCHOWN,					\
+	(int fd, uid_t owner, gid_t group),				\
+	(int, uid_t, gid_t),						\
+	(fd, owner, group))
+
+FDCALL(int, fchmod, DUALCALL_FCHMOD,					\
+	(int fd, mode_t mode),						\
+	(int, mode_t),							\
+	(fd, mode))
+
+FDCALL(int, ftruncate, DUALCALL_FTRUNCATE,				\
+	(int fd, off_t length),						\
+	(int, off_t),							\
+	(fd, length))
+
+FDCALL(int, fsync, DUALCALL_FSYNC,					\
+	(int fd),							\
+	(int),								\
+	(fd))
+
+FDCALL(int, fsync_range, DUALCALL_FSYNC_RANGE,				\
+	(int fd, int how, off_t start, off_t length),			\
+	(int, int, off_t, off_t),					\
+	(fd, how, start, length))
+
+FDCALL(int, futimes, DUALCALL_FUTIMES,					\
+	(int fd, const struct timeval *tv),				\
+	(int, const struct timeval *),					\
+	(fd, tv))
+
+/*
+ * path-based selectors
+ */
+
+PATHCALL(int, REALSTAT, DUALCALL_STAT,					\
+	(const char *path, struct stat *sb),				\
+	(const char *, struct stat *),					\
+	(path, sb))
+
+PATHCALL(int, REALLSTAT, DUALCALL_LSTAT,				\
+	(const char *path, struct stat *sb),				\
+	(const char *, struct stat *),					\
+	(path, sb))
+
+PATHCALL(int, chown, DUALCALL_CHOWN,					\
+	(const char *path, uid_t owner, gid_t group),			\
+	(const char *, uid_t, gid_t),					\
+	(path, owner, group))
+
+PATHCALL(int, lchown, DUALCALL_LCHOWN,					\
+	(const char *path, uid_t owner, gid_t group),			\
+	(const char *, uid_t, gid_t),					\
+	(path, owner, group))
+
+PATHCALL(int, chmod, DUALCALL_CHMOD,					\
+	(const char *path, mode_t mode),				\
+	(const char *, mode_t),						\
+	(path, mode))
+
+PATHCALL(int, lchmod, DUALCALL_LCHMOD,					\
+	(const char *path, mode_t mode),				\
+	(const char *, mode_t),						\
+	(path, mode))
+
+PATHCALL(int, statvfs1, DUALCALL_STATVFS1,				\
+	(const char *path, struct statvfs *buf, int flags),		\
+	(const char *, struct statvfs *, int),				\
+	(path, buf, flags))
+
+PATHCALL(int, unlink, DUALCALL_UNLINK,					\
+	(const char *path),						\
+	(const char *),							\
+	(path))
+
+PATHCALL(int, symlink, DUALCALL_SYMLINK,				\
+	(const char *path, const char *target),				\
+	(const char *, const char *),					\
+	(path, target))
+
+PATHCALL(int, readlink, DUALCALL_READLINK,				\
+	(const char *path, char *buf, size_t bufsiz),			\
+	(const char *, char *, size_t),					\
+	(path, buf, bufsiz))
+
+/* XXX: cross-kernel renames need to be blocked */
+PATHCALL(int, rename, DUALCALL_RENAME,					\
+	(const char *path, const char *to),				\
+	(const char *, const char *),					\
+	(path, to))
+
+PATHCALL(int, mkdir, DUALCALL_MKDIR,					\
+	(const char *path, mode_t mode),				\
+	(const char *, mode_t),						\
+	(path, mode))
+
+PATHCALL(int, rmdir, DUALCALL_RMDIR,					\
+	(const char *path),						\
+	(const char *),							\
+	(path))
+
+PATHCALL(int, utimes, DUALCALL_UTIMES,					\
+	(const char *path, const struct timeval *tv),			\
+	(const char *, const struct timeval *),				\
+	(path, tv))
+
+PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
+	(const char *path, const struct timeval *tv),			\
+	(const char *, const struct timeval *),				\
+	(path, tv))
+
+PATHCALL(int, truncate, DUALCALL_TRUNCATE,				\
+	(const char *path, off_t length),				\
+	(const char *, off_t),						\
+	(path, length))
