@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.90.2.1 2011/01/20 14:24:54 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.90.2.2 2011/02/17 17:13:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.90.2.1 2011/01/20 14:24:54 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.90.2.2 2011/02/17 17:13:48 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,6 +174,10 @@ setup(const char *dev, const char *origdev)
 		doskipclean = 0;
 		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
 	}
+
+	if (!quota2_check_doquota())
+		doskipclean = 0;
+		
 	/* ffs_superblock_layout() == 2 */
 	if (sblock->fs_magic != FS_UFS1_MAGIC ||
 	    (sblock->fs_old_flags & FS_FLAGS_UPDATED) != 0) {
@@ -182,7 +186,7 @@ setup(const char *dev, const char *origdev)
 			doskipclean = 0;
 		}
 		if (sblock->fs_flags & FS_DOWAPBL) {
-			if (preen && skipclean) {
+			if (preen && doskipclean) {
 				if (!quiet)
 					pwarn("file system is journaled; "
 					    "not checking\n");
@@ -210,9 +214,6 @@ setup(const char *dev, const char *origdev)
 	if (doswap)
 		doskipclean = 0;
 
-	if (!quota2_check_doquota())
-		doskipclean = 0;
-		
 	if (sblock->fs_clean & FS_ISCLEAN) {
 		if (doskipclean) {
 			if (!quiet)
