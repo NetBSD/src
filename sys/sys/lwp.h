@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.145 2011/02/17 20:55:01 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.146 2011/02/17 21:02:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -44,9 +44,7 @@
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
 #include <sys/resource.h>
-#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/pcu.h>
-#endif
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
