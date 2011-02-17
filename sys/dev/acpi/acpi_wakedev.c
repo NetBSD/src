@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.20 2011/01/02 12:06:02 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.21 2011/02/17 10:49:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.20 2011/01/02 12:06:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.21 2011/02/17 10:49:29 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -287,12 +287,17 @@ acpi_wakedev_gpe(struct acpi_devnode *ad, int enable, int state)
 		acpi_wakedev_power(ad, obj);
 
 	/*
-	 * Set both runtime and wake GPEs, but unset only wake GPEs.
+	 * This affects only wake GPEs, provided that _PRW works.
 	 */
 	if (enable != 0)
-		(void)AcpiEnableGpe(hdl, val, ACPI_GPE_TYPE_WAKE_RUN);
+		(void)AcpiSetGpe(hdl, val, ACPI_GPE_ENABLE);
 	else
-		(void)AcpiDisableGpe(hdl, val, ACPI_GPE_TYPE_WAKE);
+		(void)AcpiSetGpe(hdl, val, ACPI_GPE_DISABLE);
+
+	/*
+	 * XXX: Is this right?
+	 */
+	(void)AcpiUpdateAllGpes();
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "wake GPE %s for %s\n",
 		(enable != 0) ? "enabled" : "disabled", ad->ad_name));
