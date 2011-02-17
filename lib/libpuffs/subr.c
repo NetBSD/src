@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.25 2010/07/15 21:53:10 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.26 2011/02/17 15:41:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.25 2010/07/15 21:53:10 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.26 2011/02/17 15:41:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -282,7 +282,7 @@ puffs_stat2vattr(struct vattr *va, const struct stat *sb)
 	va->va_gen = sb->st_gen;
 	va->va_flags = sb->st_flags;
 	va->va_rdev = sb->st_rdev;
-	va->va_bytes = sb->st_blocks * sb->st_blksize;
+	va->va_bytes = sb->st_blocks << DEV_BSHIFT;
 	va->va_filerev = 0;
 	va->va_vaflags = 0;
 }
