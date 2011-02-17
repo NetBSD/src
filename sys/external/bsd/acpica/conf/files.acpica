@@ -1,4 +1,4 @@
-# $NetBSD: files.acpica,v 1.1 2011/02/17 07:27:17 jruoho Exp $
+# $NetBSD: files.acpica,v 1.2 2011/02/17 10:13:35 jruoho Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
@@ -26,6 +26,8 @@ file	external/bsd/acpica/dist/disassembler/dmutils.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/disassembler/dmwalk.c		acpica & acpi_debug & ddb
 
 # dispatcher/
+file	external/bsd/acpica/dist/dispatcher/dsargs.c		acpica
+file	external/bsd/acpica/dist/dispatcher/dscontrol.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dsfield.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dsinit.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dsmethod.c		acpica
@@ -35,6 +37,7 @@ file	external/bsd/acpica/dist/dispatcher/dsopcode.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dsutils.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dswexec.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dswload.c		acpica
+file	external/bsd/acpica/dist/dispatcher/dswload2.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dswscope.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dswstate.c		acpica
 
@@ -50,6 +53,7 @@ file	external/bsd/acpica/dist/events/evrgnini.c		acpica
 file	external/bsd/acpica/dist/events/evsci.c			acpica
 file	external/bsd/acpica/dist/events/evxface.c		acpica
 file	external/bsd/acpica/dist/events/evxfevnt.c		acpica
+file	external/bsd/acpica/dist/events/evxfgpe.c		acpica
 file	external/bsd/acpica/dist/events/evxfregn.c		acpica
 
 # executer/
@@ -81,6 +85,7 @@ file	external/bsd/acpica/dist/executer/exutils.c		acpica
 # hardware/
 file	external/bsd/acpica/dist/hardware/hwacpi.c		acpica
 file	external/bsd/acpica/dist/hardware/hwgpe.c		acpica
+file	external/bsd/acpica/dist/hardware/hwpci.c		acpica
 file	external/bsd/acpica/dist/hardware/hwregs.c		acpica
 file	external/bsd/acpica/dist/hardware/hwsleep.c		acpica
 file	external/bsd/acpica/dist/hardware/hwtimer.c		acpica
@@ -146,17 +151,20 @@ file	external/bsd/acpica/dist/utilities/utalloc.c		acpica
 file	external/bsd/acpica/dist/utilities/utcache.c		acpica
 file	external/bsd/acpica/dist/utilities/utcopy.c		acpica
 file	external/bsd/acpica/dist/utilities/utdebug.c		acpica
+file	external/bsd/acpica/dist/utilities/utdecode.c		acpica
 file	external/bsd/acpica/dist/utilities/utdelete.c		acpica
 file	external/bsd/acpica/dist/utilities/uteval.c		acpica
 file	external/bsd/acpica/dist/utilities/utglobal.c		acpica
-file	external/bsd/acpica/dist/utilities/utinit.c		acpica
 file	external/bsd/acpica/dist/utilities/utids.c		acpica
+file	external/bsd/acpica/dist/utilities/utinit.c		acpica
 file	external/bsd/acpica/dist/utilities/utlock.c		acpica
 file	external/bsd/acpica/dist/utilities/utmath.c		acpica
 file	external/bsd/acpica/dist/utilities/utmisc.c		acpica
 file	external/bsd/acpica/dist/utilities/utmutex.c		acpica
 file	external/bsd/acpica/dist/utilities/utobject.c		acpica
+file	external/bsd/acpica/dist/utilities/utosi.c		acpica
 file	external/bsd/acpica/dist/utilities/utresrc.c		acpica
 file	external/bsd/acpica/dist/utilities/utstate.c		acpica
 file	external/bsd/acpica/dist/utilities/uttrack.c		acpica
 file	external/bsd/acpica/dist/utilities/utxface.c		acpica
+file	external/bsd/acpica/dist/utilities/utxferror.c		acpica
