@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.143 2011/02/17 18:32:29 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.144 2011/02/17 19:28:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -45,6 +45,9 @@
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
 #include <sys/resource.h>
+#if defined(_KERNEL) || defined(_KMEMUSER)
+#include <sys/pcu.h>
+#endif
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
@@ -67,6 +70,7 @@
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
+#if defined(_KERNEL) || defined(_KMEMUSER)
 struct lockdebug;
 struct sadata_vp;
 struct sysent;
@@ -193,6 +197,7 @@ struct lwp {
 
 	struct kdtrace_thread *l_dtrace; /* (: DTrace-specific data. */
 };
+#endif /* _KERNEL || _KMEMUSER */
 
 /*
  * UAREA_PCB_OFFSET: an offset of PCB structure in the uarea.  MD code may
@@ -201,13 +206,6 @@ struct lwp {
 #ifndef UAREA_PCB_OFFSET
 #define	UAREA_PCB_OFFSET	0
 #endif
-
-static __inline void *
-lwp_getpcb(struct lwp *l)
-{
-
-	return l->l_addr;
-}
 
 LIST_HEAD(lwplist, lwp);		/* A list of LWPs. */
 
@@ -289,6 +287,13 @@ do {									\
 	if (__predict_false((l)->l_prflag & LPR_CRMOD))			\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
+
+static __inline void *
+lwp_getpcb(struct lwp *l)
+{
+
+	return l->l_addr;
+}
 
 void	lwpinit(void);
 void	lwp0_init(void);
