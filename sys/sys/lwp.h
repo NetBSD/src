@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.144 2011/02/17 19:28:46 matt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.145 2011/02/17 20:55:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -39,7 +39,6 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <sys/pcu.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/specificdata.h>
