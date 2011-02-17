@@ -1,4 +1,4 @@
-# $NetBSD: metalog.subr,v 1.1 2011/02/16 05:18:35 uebayasi Exp $
+# $NetBSD: metalog.subr,v 1.2 2011/02/17 08:41:35 uebayasi Exp $
 
 #
 # xrcs add
@@ -14,6 +14,20 @@ xrcs_msg=
 xrcs_cur=
 xrcs_new=
 
+xrcs_latest()
+{
+	rcslog -rlatest ${xrcs_cur} | \
+	sed -n '/^revision/ { s/^revision //; p; }'
+}
+
+xrcs_retag()
+{
+	previous=$( xrcs_latest 2>/dev/null )
+	if [ -n "$previous" ]; then
+		rcs -q -Nprevious: ${xrcs_cur}
+	fi
+}
+
 xrcs_unlock()
 {
 	rcs -q -u -U -M ${xrcs_cur}
@@ -21,7 +35,8 @@ xrcs_unlock()
 
 xrcs_ci()
 {
-	ci -q -f -u -t-"$xrcs_descr" -m"$xrcs_msg" ${xrcs_cur}
+	xrcs_retag
+	ci -q -f -u -t-"$xrcs_descr" -m"$xrcs_msg" -Nlatest ${xrcs_cur}
 	rcs -q -kb -U ${xrcs_cur}
 }
 
