@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.7 2011/02/17 10:20:32 jruoho Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.8 2011/02/17 10:23:43 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.7 2011/02/17 10:20:32 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.8 2011/02/17 10:23:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -199,7 +199,7 @@ AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
  *	Read a value from a PCI configuration register.
  */
 ACPI_STATUS
-AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
+AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, UINT64 *Value,
     UINT32 Width)
 {
 	pcitag_t tag;
