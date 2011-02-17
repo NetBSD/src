@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.30 2010/06/13 04:13:31 yamt Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.31 2011/02/17 19:27:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.30 2010/06/13 04:13:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.31 2011/02/17 19:27:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	va_list ap;
 
 	lwp_flags = LWP_DETACHED;
-	
-	uaddr = uvm_uarea_alloc();
+
+	uaddr = uvm_uarea_system_alloc();
 	if (uaddr == 0) {
 		return ENOMEM;
 	}
@@ -88,7 +88,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	error = lwp_create(&lwp0, &proc0, uaddr, lwp_flags, NULL,
 	    0, func, arg, &l, lc);
 	if (error) {
-		uvm_uarea_free(uaddr);
+		uvm_uarea_system_free(uaddr);
 		return error;
 	}
 	if (fmt != NULL) {
