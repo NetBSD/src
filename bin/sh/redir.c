@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.30 2008/01/21 06:43:03 msaitoh Exp $	*/
+/*	$NetBSD: redir.c,v 1.31 2011/02/17 15:13:49 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.30 2008/01/21 06:43:03 msaitoh Exp $");
+__RCSID("$NetBSD: redir.c,v 1.31 2011/02/17 15:13:49 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,7 +222,7 @@ openredirect(union node *redir, char memory[10], int flags)
 			if (memory[redir->ndup.dupfd])
 				memory[fd] = 1;
 			else
-				copyfd(redir->ndup.dupfd, fd);
+				copyfd(redir->ndup.dupfd, fd, 1);
 		}
 		INTON;
 		return;
@@ -235,7 +235,7 @@ openredirect(union node *redir, char memory[10], int flags)
 	}
 
 	if (f != fd) {
-		copyfd(f, fd);
+		copyfd(f, fd, 1);
 		close(f);
 	}
 	INTON;
@@ -308,7 +308,7 @@ popredir(void)
                                 fd0_redirected--;
 			close(i);
 			if (rp->renamed[i] >= 0) {
-				copyfd(rp->renamed[i], i);
+				copyfd(rp->renamed[i], i, 1);
 				close(rp->renamed[i]);
 			}
 		}
@@ -375,11 +375,14 @@ clearredir(vforked)
  */
 
 int
-copyfd(int from, int to)
+copyfd(int from, int to, int equal)
 {
 	int newfd;
 
-	newfd = fcntl(from, F_DUPFD, to);
+	if (equal)
+		newfd = dup2(from, to);
+	else
+		newfd = fcntl(from, F_DUPFD, to);
 	if (newfd < 0) {
 		if (errno == EMFILE)
 			return EMPTY;
