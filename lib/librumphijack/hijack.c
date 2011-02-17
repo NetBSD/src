@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.47 2011/02/17 15:20:10 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.48 2011/02/17 17:18:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.47 2011/02/17 15:20:10 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.48 2011/02/17 17:18:08 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -34,8 +34,9 @@ __RCSID("$NetBSD: hijack.c,v 1.47 2011/02/17 15:20:10 pooka Exp $");
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
+#include <sys/mount.h>
 #include <sys/poll.h>
+#include <sys/socket.h>
 #include <sys/statvfs.h>
 
 #include <rump/rumpclient.h>
@@ -85,6 +86,7 @@ enum dualcall {
 	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
 	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
 	DUALCALL_FSYNC, DUALCALL_FSYNC_RANGE,
+	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
 	DUALCALL__NUM
 };
 
@@ -118,6 +120,7 @@ enum dualcall {
 #endif
 #define REALREAD _sys_read
 #define REALGETDENTS __getdents30
+#define REALMOUNT __mount50
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -132,6 +135,7 @@ int REALGETDENTS(int, char *, size_t);
 int REALUTIMES(const char *, const struct timeval [2]);
 int REALLUTIMES(const char *, const struct timeval [2]);
 int REALFUTIMES(int, const struct timeval [2]);
+int REALMOUNT(const char *, const char *, int, void *, size_t);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -192,6 +196,8 @@ struct sysnames {
 	{ DUALCALL_FTRUNCATE,	"ftruncate",	RSYS_NAME(FTRUNCATE)	},
 	{ DUALCALL_FSYNC,	"fsync",	RSYS_NAME(FSYNC)	},
 	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
+	{ DUALCALL_MOUNT,	S(REALMOUNT),	RSYS_NAME(MOUNT)	},
+	{ DUALCALL_UNMOUNT,	"unmount",	RSYS_NAME(UNMOUNT)	},
 };
 #undef S
 
@@ -1532,3 +1538,20 @@ PATHCALL(int, truncate, DUALCALL_TRUNCATE,				\
 	(const char *path, off_t length),				\
 	(const char *, off_t),						\
 	(path, length))
+
+/*
+ * Note: with mount the decisive parameter is the mount
+ * destination directory.  This is because we don't really know
+ * about the "source" directory in a generic call (and besides,
+ * it might not even exist, cf. nfs).
+ */
+PATHCALL(int, REALMOUNT, DUALCALL_MOUNT,				\
+	(const char *type, const char *path, int flags,			\
+	    void *data, size_t dlen),					\
+	(const char *, const char *, int, void *, size_t),		\
+	(type, path, flags, data, dlen))
+
+PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
+	(const char *path, int flags),					\
+	(const char *, int),						\
+	(path, flags))
