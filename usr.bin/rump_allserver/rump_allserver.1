@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.13 2011/02/17 16:03:05 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.14 2011/02/17 16:59:46 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -86,10 +86,17 @@ Host file used for storage.
 If the file does not exist, it will be created.
 .It Ar size
 Size of the mapping.
-The host file will be truncated to the size indicated.
 Similar to
 .Xr dd 1 ,
 this argument accepts a suffix as the multiplier for the number.
+The special value
+.Dq e
+indicates that the current size of
+.Ar hostpath
+will be used.
+It is assumed that
+.Ar hostpath
+exists and is a regular file.
 .It OR
 .It Ar disklabel
 Use a disklabel partition identifier to specify the offset and size
