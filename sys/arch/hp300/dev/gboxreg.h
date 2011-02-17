@@ -1,4 +1,4 @@
-/*	$NetBSD: gboxreg.h,v 1.1.2.2 2011/02/08 16:19:21 bouyer Exp $	*/
+/*	$NetBSD: gboxreg.h,v 1.1.2.3 2011/02/17 11:59:39 bouyer Exp $	*/
 /*	$OpenBSD: gboxreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
 /*	NetBSD: grf_gbreg.h,v 1.4 1994/10/26 07:23:53 cgd Exp 	*/
 
@@ -55,52 +55,52 @@
 do {									\
 	while (((volatile struct gboxfb *)(regaddr))->regs.sec_interrupt & 0x10) \
 		DELAY(1);						\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define line_mover_waitbusy(regaddr)					\
 do {									\
 	while ((((volatile struct gboxfb *)(regaddr))->status & 0x80) == 0) \
 		DELAY(1);						\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define gbcm_waitbusy(regaddr)						\
 do {									\
 	while (((volatile struct gboxfb *)(regaddr))->cmap_busy != 0xff) \
 		DELAY(1);						\
-} while (0)
+} while (/* CONSTCOND */0)
 
 struct gboxfb {
 	struct diofbreg regs;
-	u_int8_t f2[0x4000-0x5f-1];
-	u_int8_t crtc_address;		/* CTR controller address reg 0x4000 */
-	u_int8_t status;		/* Status register	      0x4001 */
-	u_int8_t crtc_data;		/* CTR controller data reg    0x4002 */
-	u_int8_t f3[6];
-	u_int8_t line_mover_rep_rule;	/* Line move rep rule		     */
-	u_int8_t :8, :8;
-	u_int8_t line_mover_width;	/* Line move width		     */
-	u_int8_t f4[0xff3];
-	u_int8_t width;			/* width in tiles	      0x5001 */
-	u_int8_t :8;
-	u_int8_t height;		/* height in tiles	      0x5003 */
-	u_int8_t f5[3];
-	u_int8_t rep_rule;		/* replacement rule	      0x5007 */
-	u_int8_t f6[0x6001-0x5007-1];
-	u_int8_t blink1;		/* blink 1		      0x6001 */
-	u_int8_t f7[3];
-	u_int8_t blink2;		/* blink 2		      0x6005 */
-	u_int8_t f8[3];
-	u_int8_t write_protect;		/* write protect	      0x6009 */
-	u_int8_t f9[0x6803-0x6009-1];
-	u_int8_t cmap_busy;		/* color map busy	      0x6803 */
-	u_int8_t f10[0x68b9-0x6803-1];
-	u_int8_t creg_select;		/* color map register select  0x68b8 */
-	u_int8_t f11[0x68f1-0x68b9-1];
-	u_int8_t cmap_write;		/* color map write trigger    0x68f1 */
-	u_int8_t f12[0x69b3-0x68f1-1];
-	u_int8_t cmap_red;		/* red value register	      0x69b3 */
-	u_int8_t :8;
-	u_int8_t cmap_grn;		/* green value register	      0x69b5 */
-	u_int8_t :8;
-	u_int8_t cmap_blu;		/* blue value register	      0x69b6 */
+	uint8_t f2[0x4000-0x5f-1];
+	uint8_t crtc_address;		/* CTR controller address reg 0x4000 */
+	uint8_t status;			/* Status register	      0x4001 */
+	uint8_t crtc_data;		/* CTR controller data reg    0x4002 */
+	uint8_t f3[6];
+	uint8_t line_mover_rep_rule;	/* Line move rep rule		     */
+	uint8_t :8, :8;
+	uint8_t line_mover_width;	/* Line move width		     */
+	uint8_t f4[0xff3];
+	uint8_t width;			/* width in tiles	      0x5001 */
+	uint8_t :8;
+	uint8_t height;			/* height in tiles	      0x5003 */
+	uint8_t f5[3];
+	uint8_t rep_rule;		/* replacement rule	      0x5007 */
+	uint8_t f6[0x6001-0x5007-1];
+	uint8_t blink1;			/* blink 1		      0x6001 */
+	uint8_t f7[3];
+	uint8_t blink2;			/* blink 2		      0x6005 */
+	uint8_t f8[3];
+	uint8_t write_protect;		/* write protect	      0x6009 */
+	uint8_t f9[0x6803-0x6009-1];
+	uint8_t cmap_busy;		/* color map busy	      0x6803 */
+	uint8_t f10[0x68b9-0x6803-1];
+	uint8_t creg_select;		/* color map register select  0x68b8 */
+	uint8_t f11[0x68f1-0x68b9-1];
+	uint8_t cmap_write;		/* color map write trigger    0x68f1 */
+	uint8_t f12[0x69b3-0x68f1-1];
+	uint8_t cmap_red;		/* red value register	      0x69b3 */
+	uint8_t :8;
+	uint8_t cmap_grn;		/* green value register	      0x69b5 */
+	uint8_t :8;
+	uint8_t cmap_blu;		/* blue value register	      0x69b6 */
 };

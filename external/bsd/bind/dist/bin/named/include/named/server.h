@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.1.1.5 2010/12/02 14:22:29 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.5.2.1 2011/02/17 11:57:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.h,v 1.104.8.6 2010/08/16 23:46:30 tbox Exp */
+/* Id: server.h,v 1.110 2010-08-16 23:46:52 tbox Exp */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1

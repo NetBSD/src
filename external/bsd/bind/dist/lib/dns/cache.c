@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.1.4 2009/12/26 22:24:27 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.4.2.1 2011/02/17 11:58:39 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cache.c,v 1.87 2009/11/12 23:43:02 each Exp */
+/* Id: cache.c,v 1.87 2009-11-12 23:43:02 each Exp */
 
 /*! \file */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.1.2.2 2011/02/08 16:19:21 bouyer Exp $	*/
+/*	$NetBSD: topcat.c,v 1.1.2.3 2011/02/17 11:59:39 bouyer Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -140,13 +140,13 @@ CFATTACH_DECL_NEW(topcat_dio, sizeof(struct topcat_softc),
 CFATTACH_DECL_NEW(topcat_intio, sizeof(struct topcat_softc),
     topcat_intio_match, topcat_intio_attach, NULL, NULL);
 
-void	topcat_end_attach(struct topcat_softc *, u_int8_t);
+void	topcat_end_attach(struct topcat_softc *, uint8_t);
 int	topcat_reset(struct diofb *, int, struct diofbreg *);
 void	topcat_restore(struct diofb *);
 int	topcat_setcmap(struct diofb *, struct wsdisplay_cmap *);
 void	topcat_setcolor(struct diofb *, u_int);
-int	topcat_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
-	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
+int	topcat_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
+	    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 
 int	topcat_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
@@ -175,7 +175,7 @@ topcat_intio_match(device_t parent, cfdata_t cf, void *aux)
 	fbr = (struct diofbreg *)ia->ia_addr;
 
 	if (badaddr((void *)fbr))
-		return (0);
+		return 0;
 
 	if (fbr->id == GRFHWID) {
 		switch (fbr->fbid) {
@@ -186,11 +186,11 @@ topcat_intio_match(device_t parent, cfdata_t cf, void *aux)
 #if 0
 		case GID_XXXCATSEYE:
 #endif
-			return (1);
+			return 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -228,11 +228,11 @@ topcat_dio_match(device_t parent, cfdata_t cf, void *aux)
 #if 0
 		case DIO_DEVICE_SECID_XXXCATSEYE:
 #endif
-			return (1);
+			return 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -266,7 +266,7 @@ topcat_dio_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-topcat_end_attach(struct topcat_softc *sc, u_int8_t id)
+topcat_end_attach(struct topcat_softc *sc, uint8_t id)
 {
 	const char *fbname = "unknown";
 
@@ -313,7 +313,7 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	u_int i;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
-		return (rc);
+		return rc;
 
 	/*
 	 * If we could not get a valid number of planes, determine it
@@ -321,10 +321,10 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	 * then reading it back.
 	 */
 	if (fb->planes == 0) {
-		volatile u_int8_t *fbp;
-		u_int8_t save;
+		volatile uint8_t *fbp;
+		uint8_t save;
 
-		fbp = (u_int8_t *)fb->fbkva;
+		fbp = (uint8_t *)fb->fbkva;
 		tc->fben = ~0;
 		tc->wen = ~0;
 		tc->ren = ~0;
@@ -347,7 +347,7 @@ topcat_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	for (i = 0; i <= fb->planemask; i++)
 		topcat_setcolor(fb, i);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -413,9 +413,9 @@ topcat_ioctl(void *v, void *vs, u_long cmd, void *data, int flags,
 		*(u_int *)data = fb->ri.ri_stride;
 		return 0;
 	case WSDISPLAYIO_GETCMAP:
-		return (diofb_getcmap(fb, (struct wsdisplay_cmap *)data));
+		return diofb_getcmap(fb, (struct wsdisplay_cmap *)data);
 	case WSDISPLAYIO_PUTCMAP:
-		return (topcat_setcmap(fb, (struct wsdisplay_cmap *)data));
+		return topcat_setcmap(fb, (struct wsdisplay_cmap *)data);
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
 		return EPASSTHROUGH;
@@ -460,20 +460,20 @@ topcat_setcolor(struct diofb *fb, u_int index)
 int
 topcat_setcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
 {
-	u_int8_t r[256], g[256], b[256];
+	uint8_t r[256], g[256], b[256];
 	u_int index = cm->index, count = cm->count;
 	u_int colcount = 1 << fb->planes;
 	int error;
 
 	if (index >= colcount || count > colcount - index)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((error = copyin(cm->red, r, count)) != 0)
-		return (error);
+		return error;
 	if ((error = copyin(cm->green, g, count)) != 0)
-		return (error);
+		return error;
 	if ((error = copyin(cm->blue, b, count)) != 0)
-		return (error);
+		return error;
 
 	memcpy(fb->cmap.r + index, r, count);
 	memcpy(fb->cmap.g + index, g, count);
@@ -482,7 +482,7 @@ topcat_setcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
 	while (count-- != 0)
 		topcat_setcolor(fb, index++);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -490,8 +490,8 @@ topcat_setcmap(struct diofb *fb, struct wsdisplay_cmap *cm)
  */
 
 int
-topcat_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
-    u_int16_t dx, u_int16_t dy, u_int16_t cx, u_int16_t cy, int16_t rop,
+topcat_windowmove(struct diofb *fb, uint16_t sx, uint16_t sy,
+    uint16_t dx, uint16_t dy, uint16_t cx, uint16_t cy, int16_t rop,
     int16_t planemask)
 {
 	volatile struct tcboxfb *tc = (struct tcboxfb *)fb->regkva;
@@ -515,7 +515,7 @@ topcat_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 
 	tc_waitbusy(tc, fb->planemask);
 
-	return (0);
+	return 0;
 }
 
 

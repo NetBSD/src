@@ -1,4 +1,4 @@
-/*	$NetBSD: tcldb.h,v 1.1.1.1 2009/03/22 14:58:13 christos Exp $	*/
+/*	$NetBSD: tcldb.h,v 1.1.1.1.4.1 2011/02/17 11:58:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tcldb.h,v 1.7 2007/06/19 23:47:10 tbox Exp */
+/* Id: tcldb.h,v 1.7 2007-06-19 23:47:10 tbox Exp */
 
 #include <isc/types.h>
 

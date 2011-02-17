@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.5 2011/02/03 15:56:16 bouyer Exp $
+#	$NetBSD: Makefile,v 1.1.2.6 2011/02/17 12:00:53 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -29,7 +29,7 @@ SRCS.rump_quotactl+=	quotactl.c quota_rumpops.c
 CPPFLAGS.quotactl.c+=	-I${NETBSDSRCDIR}/sys
 
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/ufs 
-SRCS.rump_quota+=	quota2_prop.c quota2_subr.c
+SRCS.rump_quota+=	quota2_prop.c quota2_subr.c quota1_subr.c
 SRCS.rump_repquota+=	quota2_prop.c quota2_subr.c quota1_subr.c
 SRCS.rump_edquota+=	quota2_prop.c quota1_subr.c
 SRCS.rump_quotactl+=	quota2_prop.c

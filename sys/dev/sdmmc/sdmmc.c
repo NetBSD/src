@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.6.4.1 2011/02/08 16:19:54 bouyer Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.6.4.2 2011/02/17 12:00:15 bouyer Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.6.4.1 2011/02/08 16:19:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.6.4.2 2011/02/17 12:00:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -576,6 +576,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->cis.manufacturer = SDMMC_VENDOR_INVALID;
 	sf->cis.product = SDMMC_PRODUCT_INVALID;
 	sf->cis.function = SDMMC_FUNCTION_INVALID;
+	sf->width = 1;
 
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
 	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&

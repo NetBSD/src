@@ -1,4 +1,4 @@
-/*	$NetBSD: rootns.c,v 1.1.1.2 2010/08/05 20:12:52 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.1.1.2.2.1 2011/02/17 11:58:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rootns.c,v 1.36.270.4 2010/06/18 05:37:15 marka Exp */
+/* Id: rootns.c,v 1.40 2010-06-18 05:36:24 marka Exp */
 
 /*! \file */
 

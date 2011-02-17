@@ -1,7 +1,7 @@
-/*	$NetBSD: file.c,v 1.1.1.2 2009/10/25 00:02:47 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2.2.1 2011/02/17 11:59:04 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.c,v 1.35 2009/09/02 17:58:06 each Exp */
+/* Id: file.c,v 1.39 2011-01-13 06:36:04 marka Exp */
 
 #include <config.h>
 
@@ -319,7 +319,19 @@ isc_file_renameunique(const char *file, char *templet) {
 }
 
 isc_result_t
+isc_file_openuniqueprivate(char *templet, FILE **fp) {
+	int mode = _S_IREAD | _S_IWRITE;
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
 isc_file_openunique(char *templet, FILE **fp) {
+	int mode = _S_IREAD | _S_IWRITE;
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
+isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 	int fd;
 	FILE *f;
 	isc_result_t result = ISC_R_SUCCESS;
@@ -335,6 +347,11 @@ isc_file_openunique(char *templet, FILE **fp) {
 	if (fd == -1)
 		result = isc__errno2result(errno);
 	if (result == ISC_R_SUCCESS) {
+#if 1
+		UNUSED(mode);
+#else
+		(void)fchmod(fd, mode);
+#endif
 		f = fdopen(fd, "w+");
 		if (f == NULL) {
 			result = isc__errno2result(errno);

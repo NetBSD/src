@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159.4.2 2011/02/08 19:29:34 bouyer Exp $
+# $NetBSD: GENERIC,v 1.159.4.3 2011/02/17 11:59:38 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.159.4.2 $"
+#ident 		"GENERIC-$Revision: 1.159.4.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -195,6 +195,7 @@ mainbus0	at root			# root "bus"
 
 intio0		at mainbus0		# internal i/o space
 dio0		at mainbus0		# DIO/DIO-II bus
+#sgc0		at mainbus0		# SGC bus
 
 # Human Interface Loop devices
 hil0		at intio?		# HIL controller
@@ -210,9 +211,9 @@ frodo*		at intio?		# Frodo utility chip found on 382, 4xx
 nhpib*		at intio?		# slow internal HP-IB
 
 # 8250-like serial ports found on Frodo ASIC
-#dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
-#wskbd*		at dnkbd? mux 1
-#wsmouse*	at dnkbd? mux 0
+dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
+wskbd*		at dnkbd? mux 1
+wsmouse*	at dnkbd? mux 0
 com*		at frodo? offset ?	# tty flavor
 
 dvbox*		at intio?		# Davinci framebuffer
@@ -236,6 +237,9 @@ wsdisplay*	at topcat?
 
 tvrx*		at dio? scode ?		# TurboVRX framebuffer
 wsdisplay*	at tvrx?
+
+gendiofb*	at dio? scode ?		# dumb framebuffer support for 362/382
+wsdisplay*	at gendiofb?
 
 com0		at dio0 scode 9		# DCA serial interfaces
 com*		at dio? scode ?

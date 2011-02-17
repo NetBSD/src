@@ -1,7 +1,7 @@
-/*	$NetBSD: sdb.c,v 1.2 2010/12/25 18:23:39 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.2.2.1 2011/02/17 11:58:41 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.c,v 1.71.54.3 2010/08/16 05:14:15 marka Exp */
+/* Id: sdb.c,v 1.76 2011-01-13 04:59:25 tbox Exp */
 
 /*! \file */
 
@@ -132,14 +132,14 @@ typedef struct sdb_rdatasetiter {
 		unsigned int flags = sdb->implementation->flags;	\
 		if ((flags & DNS_SDBFLAG_THREADSAFE) == 0)		\
 			LOCK(&sdb->implementation->driverlock);		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define MAYBE_UNLOCK(sdb)						\
 	do {								\
 		unsigned int flags = sdb->implementation->flags;	\
 		if ((flags & DNS_SDBFLAG_THREADSAFE) == 0)		\
 			UNLOCK(&sdb->implementation->driverlock);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 
 static int dummy;
@@ -1256,6 +1256,8 @@ static dns_dbmethods_t sdb_methods = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL
 };
 
 static isc_result_t

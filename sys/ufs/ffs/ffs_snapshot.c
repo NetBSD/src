@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.102.4.3 2011/02/17 10:37:55 bouyer Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.102.4.4 2011/02/17 12:00:52 bouyer Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102.4.3 2011/02/17 10:37:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102.4.4 2011/02/17 12:00:52 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -115,6 +115,7 @@ static int snapblkaddr(struct vnode *, daddr_t, daddr_t *);
 static int rwfsblk(struct vnode *, int, void *, daddr_t);
 static int syncsnap(struct vnode *);
 static int wrsnapblk(struct vnode *, void *, daddr_t);
+static int blocks_in_journal(struct fs *);
 
 static inline bool is_active_snapshot(struct snap_info *, struct inode *);
 static inline daddr_t db_get(struct inode *, int);
@@ -411,11 +412,12 @@ out:
 static int
 snapshot_setup(struct mount *mp, struct vnode *vp)
 {
-	int error, i, len, loc;
+	int error, n, len, loc;
 	daddr_t blkno, numblks;
 	struct buf *ibp, *nbp;
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
 	struct lwp *l = curlwp;
+	const int wbreak = blocks_in_journal(fs)/8;
 
 	/*
 	 * Check mount, exclusive reference and owner.
@@ -460,13 +462,13 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
 		return error;
-	for (blkno = NDADDR, i = 0; blkno < numblks; blkno += NINDIR(fs)) {
+	for (blkno = NDADDR, n = 0; blkno < numblks; blkno += NINDIR(fs)) {
 		error = ffs_balloc(vp, lblktosize(fs, (off_t)blkno),
 		    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp);
 		if (error)
 			goto out;
 		brelse(ibp, 0);
-		if ((++i % 16) == 0) {
+		if (wbreak > 0 && (++n % wbreak) == 0) {
 			UFS_WAPBL_END(mp);
 			error = UFS_WAPBL_BEGIN(mp);
 			if (error)
@@ -569,7 +571,6 @@ static int
 snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
     daddr_t *snaplistsize, daddr_t **snaplist)
 {
-	bool has_wapbl = false;
 	int cg, error, len, loc;
 	daddr_t blkno, *blkp;
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
@@ -601,10 +602,6 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	 */
 	*snaplistsize = fs->fs_ncg + howmany(fs->fs_cssize, fs->fs_bsize) +
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
-	error = UFS_WAPBL_BEGIN(mp);
-	if (error)
-		goto out;
-	has_wapbl = true;
 	mutex_enter(&mntvnode_lock);
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
@@ -656,19 +653,30 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		if (loc < NDADDR) {
 			len = fragroundup(fs, blkoff(fs, xp->i_size));
 			if (len > 0 && len < fs->fs_bsize) {
+				error = UFS_WAPBL_BEGIN(mp);
+				if (error) {
+					(void)vunmark(mvp);
+					goto out;
+				}
 				ffs_blkfree_snap(copy_fs, vp, db_get(xp, loc),
 				    len, xp->i_number);
 				blkno = db_get(xp, loc);
 				db_assign(xp, loc, 0);
+				UFS_WAPBL_END(mp);
 			}
 		}
 		*snaplistsize += 1;
 		error = expunge(vp, xp, copy_fs, fullacct, BLK_NOCOPY);
 		if (blkno)
 			db_assign(xp, loc, blkno);
-		if (!error)
-			error = ffs_freefile_snap(copy_fs, vp, xp->i_number,
-			    xp->i_mode);
+		if (!error) {
+			error = UFS_WAPBL_BEGIN(mp);
+			if (!error) {
+				error = ffs_freefile_snap(copy_fs, vp,
+				    xp->i_number, xp->i_mode);
+				UFS_WAPBL_END(mp);
+			}
+		}
 		if (error) {
 			(void)vunmark(mvp);
 			goto out;
@@ -696,8 +704,6 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	(*snaplist)[0] = blkp - &(*snaplist)[0];
 
 out:
-	if (has_wapbl)
-		UFS_WAPBL_END(mp);
 	if (mvp != NULL)
 		vnfree(mvp);
 	if (logvp != NULL)
@@ -719,16 +725,13 @@ static int
 snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
     struct fs *copy_fs, daddr_t snaplistsize)
 {
-	int error, i;
+	int error = 0, i;
 	daddr_t numblks, *snaplist = NULL;
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
 	struct inode *ip = VTOI(vp), *xp;
 	struct lwp *l = curlwp;
 	struct snap_info *si = VFSTOUFS(mp)->um_snapinfo;
 
-	error = UFS_WAPBL_BEGIN(mp);
-	if (error)
-		return error;
 	TAILQ_FOREACH(xp, &si->si_snapshots, i_nextsnap) {
 		if (xp == ip)
 			break;
@@ -737,7 +740,11 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 			break;
 		if (xp->i_nlink != 0)
 			continue;
+		error = UFS_WAPBL_BEGIN(mp);
+		if (error)
+			break;
 		error = ffs_freefile_snap(copy_fs, vp, xp->i_number, xp->i_mode);
+		UFS_WAPBL_END(mp);
 		if (error)
 			break;
 	}
@@ -769,12 +776,10 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 		snaplist[i] = ufs_rw64(snaplist[i], UFS_FSNEEDSWAP(fs));
 	error = vn_rdwr(UIO_WRITE, vp, (void *)snaplist,
 	    snaplistsize * sizeof(daddr_t), lblktosize(fs, (off_t)numblks),
-	    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED | IO_UNIT,
-	    l->l_cred, NULL, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED | IO_UNIT, l->l_cred, NULL, NULL);
 	for (i = 0; i < snaplistsize; i++)
 		snaplist[i] = ufs_rw64(snaplist[i], UFS_FSNEEDSWAP(fs));
 out:
-	UFS_WAPBL_END(mp);
 	if (error && snaplist != NULL) {
 		free(snaplist, M_UFSMNT);
 		ip->i_snapblklist = NULL;
@@ -867,13 +872,10 @@ out:
 static int
 cgaccount(struct vnode *vp, int passno, int *redo)
 {
-	int cg, error;
+	int cg, error = 0;
 	struct buf *nbp;
 	struct fs *fs = VTOI(vp)->i_fs;
 
-	error = UFS_WAPBL_BEGIN(vp->v_mount);
-	if (error)
-		return error;
 	if (redo != NULL)
 		*redo = 0;
 	if (passno == 1)
@@ -882,18 +884,24 @@ cgaccount(struct vnode *vp, int passno, int *redo)
 	for (cg = 0; cg < fs->fs_ncg; cg++) {
 		if (passno == 2 && ACTIVECG_ISSET(fs, cg))
 			continue;
+
 		if (redo != NULL)
 			*redo += 1;
+		error = UFS_WAPBL_BEGIN(vp->v_mount);
+		if (error)
+			return error;
 		error = ffs_balloc(vp, lfragtosize(fs, cgtod(fs, cg)),
 		    fs->fs_bsize, curlwp->l_cred, 0, &nbp);
-		if (error)
+		if (error) {
+			UFS_WAPBL_END(vp->v_mount);
 			break;
+		}
 		error = cgaccount1(cg, vp, nbp->b_data, passno);
 		bawrite(nbp);
+		UFS_WAPBL_END(vp->v_mount);
 		if (error)
 			break;
 	}
-	UFS_WAPBL_END(vp->v_mount);
 	return error;
 }
 
@@ -1000,8 +1008,14 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	struct lwp *l = curlwp;
 	void *bap;
 	struct buf *bp;
+	struct mount *mp;
 
 	ns = UFS_FSNEEDSWAP(fs);
+	mp = snapvp->v_mount;
+
+	error = UFS_WAPBL_BEGIN(mp);
+	if (error)
+		return error;
 	/*
 	 * Prepare to expunge the inode. If its inode block has not
 	 * yet been copied, then allocate and fill the copy.
@@ -1019,8 +1033,10 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		if (! error)
 			error = rwfsblk(snapvp, B_READ, bp->b_data, lbn);
 	}
-	if (error)
+	if (error) {
+		UFS_WAPBL_END(mp);
 		return error;
+	}
 	/*
 	 * Set a snapshot inode to be a zero length file, regular files
 	 * or unlinked snapshots to be completely unallocated.
@@ -1048,6 +1064,7 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		memset(&dip2->di_db[0], 0, (NDADDR + NIADDR) * sizeof(int64_t));
 	}
 	bdwrite(bp);
+	UFS_WAPBL_END(mp);
 	/*
 	 * Now go through and expunge all the blocks in the file
 	 * using the function requested.
@@ -1057,13 +1074,15 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		bap = &cancelip->i_ffs1_db[0];
 	else
 		bap = &cancelip->i_ffs2_db[0];
-	if ((error = (*acctfunc)(snapvp, bap, 0, NDADDR, fs, 0, expungetype)))
+	error = (*acctfunc)(snapvp, bap, 0, NDADDR, fs, 0, expungetype);
+	if (error)
 		return (error);
 	if (fs->fs_magic == FS_UFS1_MAGIC)
 		bap = &cancelip->i_ffs1_ib[0];
 	else
 		bap = &cancelip->i_ffs2_ib[0];
-	if ((error = (*acctfunc)(snapvp, bap, 0, NIADDR, fs, -1, expungetype)))
+	error = (*acctfunc)(snapvp, bap, 0, NIADDR, fs, -1, expungetype);
+	if (error)
 		return (error);
 	blksperindir = 1;
 	lbn = -NDADDR;
@@ -1179,12 +1198,17 @@ snapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 {
 	struct inode *ip = VTOI(vp);
 	struct lwp *l = curlwp;
+	struct mount *mp = vp->v_mount;
 	daddr_t blkno;
 	daddr_t lbn;
 	struct buf *ibp;
-	int error;
+	int error, n;
+	const int wbreak = blocks_in_journal(VFSTOUFS(mp)->um_fs)/8;
 
-	for ( ; oldblkp < lastblkp; oldblkp++) {
+	error = UFS_WAPBL_BEGIN(mp);
+	if (error)
+		return error;
+	for ( n = 0; oldblkp < lastblkp; oldblkp++) {
 		blkno = idb_get(ip, bap, oldblkp);
 		if (blkno == 0 || blkno == BLK_NOCOPY || blkno == BLK_SNAP)
 			continue;
@@ -1196,7 +1220,7 @@ snapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 			error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn),
 			    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp);
 			if (error)
-				return (error);
+				break;
 			blkno = idb_get(ip, ibp->b_data,
 			    (lbn - NDADDR) % NINDIR(fs));
 		}
@@ -1220,8 +1244,15 @@ snapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 				bdwrite(ibp);
 			}
 		}
+		if (wbreak > 0 && (++n % wbreak) == 0) {
+			UFS_WAPBL_END(mp);
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error)
+				return error;
+		}
 	}
-	return (0);
+	UFS_WAPBL_END(mp);
+	return error;
 }
 
 /*
@@ -1233,16 +1264,21 @@ mapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 {
 	daddr_t blkno;
 	struct inode *ip;
+	struct mount *mp = vp->v_mount;
 	ino_t inum;
-	int acctit;
+	int acctit, error, n;
+	const int wbreak = blocks_in_journal(VFSTOUFS(mp)->um_fs)/8;
 
+	error = UFS_WAPBL_BEGIN(mp);
+	if (error)
+		return error;
 	ip = VTOI(vp);
 	inum = ip->i_number;
 	if (lblkno == -1)
 		acctit = 0;
 	else
 		acctit = 1;
-	for ( ; oldblkp < lastblkp; oldblkp++, lblkno++) {
+	for ( n = 0; oldblkp < lastblkp; oldblkp++, lblkno++) {
 		blkno = idb_get(ip, bap, oldblkp);
 		if (blkno == 0 || blkno == BLK_NOCOPY)
 			continue;
@@ -1251,7 +1287,14 @@ mapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 		if (blkno == BLK_SNAP)
 			blkno = blkstofrags(fs, lblkno);
 		ffs_blkfree_snap(fs, vp, blkno, fs->fs_bsize, inum);
+		if (wbreak > 0 && (++n % wbreak) == 0) {
+			UFS_WAPBL_END(mp);
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error)
+				return error;
+		}
 	}
+	UFS_WAPBL_END(mp);
 	return (0);
 }
 #endif /* defined(FFS_NO_SNAPSHOT) */
@@ -1318,7 +1361,8 @@ ffs_snapremove(struct vnode *vp)
 	struct snap_info *si;
 	struct lwp *l = curlwp;
 	daddr_t numblks, blkno, dblk;
-	int error, loc, last;
+	int error, loc, last, n;
+	const int wbreak = blocks_in_journal(fs)/8;
 
 	si = VFSTOUFS(mp)->um_snapinfo;
 	/*
@@ -1366,7 +1410,7 @@ ffs_snapremove(struct vnode *vp)
 		}
 	}
 	numblks = howmany(ip->i_size, fs->fs_bsize);
-	for (blkno = NDADDR; blkno < numblks; blkno += NINDIR(fs)) {
+	for (blkno = NDADDR, n = 0; blkno < numblks; blkno += NINDIR(fs)) {
 		error = ffs_balloc(vp, lblktosize(fs, (off_t)blkno),
 		    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp);
 		if (error)
@@ -1376,6 +1420,12 @@ ffs_snapremove(struct vnode *vp)
 		else
 			last = fs->fs_size - blkno;
 		for (loc = 0; loc < last; loc++) {
+			if (wbreak > 0 && (++n % wbreak) == 0) {
+				UFS_WAPBL_END(mp);
+				error = UFS_WAPBL_BEGIN(mp);
+				if (error)
+					panic("UFS_WAPBL_BEGIN failed");
+			}
 			dblk = idb_get(ip, ibp->b_data, loc);
 			if (dblk == BLK_NOCOPY || dblk == BLK_SNAP)
 				idb_assign(ip, ibp->b_data, loc, 0);
@@ -2151,6 +2201,33 @@ is_active_snapshot(struct snap_info *si, struct inode *ip)
 		if (xp == ip)
 			return true;
 	return false;
+}
+
+/*
+ * Number of blocks that fit into the journal or zero if not logging.
+ */
+static int
+blocks_in_journal(struct fs *fs)
+{
+	off_t bpj;
+
+	if ((fs->fs_flags & FS_DOWAPBL) == 0)
+		return 0;
+	bpj = 1;
+	if (fs->fs_journal_version == UFS_WAPBL_VERSION) {
+		switch (fs->fs_journal_location) {
+		case UFS_WAPBL_JOURNALLOC_END_PARTITION:
+			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_EPART_BLKSZ]*
+			    fs->fs_journallocs[UFS_WAPBL_EPART_COUNT];
+			break;
+		case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
+			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ]*
+			    fs->fs_journallocs[UFS_WAPBL_INFS_COUNT];
+			break;
+		}
+	}
+	bpj /= fs->fs_bsize;
+	return (bpj > 0 ? bpj : 1);
 }
 
 /*

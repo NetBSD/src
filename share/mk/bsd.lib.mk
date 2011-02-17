@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.310.2.1 2011/02/08 16:19:08 bouyer Exp $
+#	$NetBSD: bsd.lib.mk,v 1.310.2.2 2011/02/17 11:59:27 bouyer Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -536,10 +536,14 @@ _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 # -Xl,-nostdlib is not enough because we want to tell the compiler-driver not
 # to add standard libraries, not the linker.
 .if !defined(LIB)
+.if !empty(LIBC_SO)
 DPLIBC ?= ${DESTDIR}${LIBC_SO}
+.endif
 .else
 .if ${LIB} != "c" && ${LIB:Mgcc*} == ""
+.if !empty(LIBC_SO)
 DPLIBC ?= ${DESTDIR}${LIBC_SO}
+.endif
 .else
 LDLIBC ?= -nodefaultlibs
 .if ${LIB} == "c"

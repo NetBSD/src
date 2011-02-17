@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.3 2010/08/05 19:53:53 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.3.2.1 2011/02/17 11:57:32 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrout.c,v 1.136.132.2 2010/05/27 23:49:54 tbox Exp */
+/* Id: xfrout.c,v 1.139 2010-12-18 01:56:19 each Exp */
 
 #include <config.h>
 
@@ -93,7 +93,7 @@
 			   "bad zone transfer request: %s (%s)", \
 			   msg, isc_result_totext(code));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FAILQ(code, msg, question, rdclass) \
 	do {							\
@@ -107,12 +107,12 @@
 			   "bad zone transfer request: '%s/%s': %s (%s)", \
 			   _buf1, _buf2, msg, isc_result_totext(code));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECK(op) \
 	do { result = (op); 					\
 		if (result != ISC_R_SUCCESS) goto failure; 	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /**************************************************************************/
 
@@ -865,6 +865,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 		switch(dns_zone_gettype(zone)) {
 			case dns_zone_master:
 			case dns_zone_slave:
+			case dns_zone_dlz:
 				break;	/* Master and slave zones are OK for transfer. */
 			default:
 				FAILQ(DNS_R_NOTAUTH, "non-authoritative zone", question_name, question_class);

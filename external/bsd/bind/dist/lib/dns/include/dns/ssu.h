@@ -1,7 +1,7 @@
-/*	$NetBSD: ssu.h,v 1.1.1.1 2009/03/22 15:01:48 christos Exp $	*/
+/*	$NetBSD: ssu.h,v 1.1.1.1.4.1 2011/02/17 11:58:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ssu.h,v 1.24 2008/01/18 23:46:58 tbox Exp */
+/* Id: ssu.h,v 1.28 2011-01-06 23:47:00 tbox Exp */
 
 #ifndef DNS_SSU_H
 #define DNS_SSU_H 1
@@ -27,6 +27,7 @@
 #include <isc/lang.h>
 
 #include <dns/types.h>
+#include <dst/dst.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -42,7 +43,9 @@ ISC_LANG_BEGINDECLS
 #define DNS_SSUMATCHTYPE_SUBDOMAINKRB5	9
 #define DNS_SSUMATCHTYPE_TCPSELF	10
 #define DNS_SSUMATCHTYPE_6TO4SELF	11
-#define DNS_SSUMATCHTYPE_MAX 		11  /* max value */
+#define DNS_SSUMATCHTYPE_EXTERNAL	12
+#define DNS_SSUMATCHTYPE_DLZ		13
+#define DNS_SSUMATCHTYPE_MAX 		12  /* max value */
 
 isc_result_t
 dns_ssutable_create(isc_mem_t *mctx, dns_ssutable_t **table);
@@ -57,6 +60,16 @@ dns_ssutable_create(isc_mem_t *mctx, dns_ssutable_t **table);
  *	Returns:
  *\li		ISC_R_SUCCESS
  *\li		ISC_R_NOMEMORY
+ */
+
+isc_result_t
+dns_ssutable_createdlz(isc_mem_t *mctx, dns_ssutable_t **tablep,
+		       dns_dlzdb_t *dlzdatabase);
+/*%<
+ * Create an SSU table that contains a dlzdatabase pointer, and a
+ * single rule with matchtype DNS_SSUMATCHTYPE_DLZ. This type of SSU
+ * table is used by writeable DLZ drivers to offload authorization for
+ * updates to the driver.
  */
 
 void
@@ -122,7 +135,7 @@ dns_ssutable_addrule(dns_ssutable_t *table, isc_boolean_t grant,
 isc_boolean_t
 dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 			dns_name_t *name, isc_netaddr_t *tcpaddr,
-			dns_rdatatype_t type);
+			dns_rdatatype_t type, const dst_key_t *key);
 /*%<
  *	Checks that the attempted update of (name, type) is allowed according
  *	to the rules specified in the simple-secure-update rule table.  If
@@ -185,6 +198,16 @@ isc_result_t	dns_ssutable_nextrule(dns_ssurule_t *rule,
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMORE
  */
+
+
+/*%<
+ * Check a policy rule via an external application
+ */
+isc_boolean_t
+dns_ssu_external_match(dns_name_t *identity, dns_name_t *signer,
+		       dns_name_t *name, isc_netaddr_t *tcpaddr,
+		       dns_rdatatype_t type, const dst_key_t *key,
+		       isc_mem_t *mctx);
 
 ISC_LANG_ENDDECLS
 

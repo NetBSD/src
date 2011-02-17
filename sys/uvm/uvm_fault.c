@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.180.4.1 2011/02/08 16:20:06 bouyer Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.180.4.2 2011/02/17 12:00:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.180.4.1 2011/02/08 16:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.180.4.2 2011/02/17 12:00:52 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1754,7 +1754,7 @@ uvm_fault_lower_neighbor(
 	struct uvm_faultinfo *ufi, const struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
-	UVMHIST_FUNC("uvm_fault_lower_neighor"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap(if there), uobj */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.c,v 1.1.1.2 2010/08/05 20:14:38 christos Exp $	*/
+/*	$NetBSD: heap.c,v 1.1.1.2.2.1 2011/02/17 11:58:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: heap.c,v 1.37.466.1 2010/02/24 01:46:55 marka Exp */
+/* Id: heap.c,v 1.39 2010-02-04 23:49:13 tbox Exp */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:

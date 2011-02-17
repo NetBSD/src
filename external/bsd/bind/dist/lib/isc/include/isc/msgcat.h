@@ -1,4 +1,4 @@
-/*	$NetBSD: msgcat.h,v 1.1.1.1 2009/03/22 15:02:13 christos Exp $	*/
+/*	$NetBSD: msgcat.h,v 1.1.1.1.4.1 2011/02/17 11:58:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: msgcat.h,v 1.13 2007/06/19 23:47:18 tbox Exp */
+/* Id: msgcat.h,v 1.13 2007-06-19 23:47:18 tbox Exp */
 
 #ifndef ISC_MSGCAT_H
 #define ISC_MSGCAT_H 1

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.6 2010/12/19 16:25:16 jruoho Exp $ */
+/* $NetBSD: acpi.c,v 1.6.2.1 2011/02/17 12:00:57 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.6 2010/12/19 16:25:16 jruoho Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.6.2.1 2011/02/17 12:00:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -103,6 +103,7 @@ static void	acpi_handle_waet(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_wdat(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_wdrt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_sdt(ACPI_TABLE_HEADER *sdp);
+static void	acpi_dump_bytes(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_fadt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_facs(ACPI_TABLE_FACS *facs);
 static void	acpi_print_dsdt(ACPI_TABLE_HEADER *dsdp);
@@ -1883,9 +1884,11 @@ acpi_print_sdt(ACPI_TABLE_HEADER *sdp)
 {
 	printf("  ");
 	acpi_print_string(sdp->Signature, ACPI_NAME_SIZE);
-	printf(": Length=%d, Revision=%d, Checksum=%d,\n",
+	printf(": Length=%d, Revision=%d, Checksum=%d",
 	       sdp->Length, sdp->Revision, sdp->Checksum);
-	printf("\tOEMID=");
+	if (acpi_checksum(sdp, sdp->Length))
+		printf(" (Incorrect)");
+	printf(",\n\tOEMID=");
 	acpi_print_string(sdp->OemId, ACPI_OEM_ID_SIZE);
 	printf(", OEM Table ID=");
 	acpi_print_string(sdp->OemTableId, ACPI_OEM_TABLE_ID_SIZE);
@@ -1893,6 +1896,32 @@ acpi_print_sdt(ACPI_TABLE_HEADER *sdp)
 	printf("\tCreator ID=");
 	acpi_print_string(sdp->AslCompilerId, ACPI_NAME_SIZE);
 	printf(", Creator Revision=0x%x\n", sdp->AslCompilerRevision);
+}
+
+static void
+acpi_dump_bytes(ACPI_TABLE_HEADER *sdp)
+{
+	unsigned int i;
+	uint8_t *p;
+
+	p = (uint8_t *)sdp;
+	printf("\n\tData={");
+	for (i = 0; i < sdp->Length; i++) {
+		if (cflag) {
+			if (i % 64 == 0)
+				printf("\n\t ");
+			else if (i % 16 == 0)
+				printf(" ");
+			printf("%c", (p[i] >= ' ' && p[i] <= '~') ? p[i] : '.');
+		} else {
+			if (i % 16 == 0)
+				printf("\n\t\t");
+			else if (i % 8 == 0)
+				printf("   ");
+			printf(" %02x", p[i]);
+		}
+	}
+	printf("\n\t}\n");
 }
 
 static void
@@ -2194,7 +2223,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 		if (acpi_checksum(sdp, sdp->Length)) {
 			warnx("RSDT entry %d (sig %.4s) is corrupt", i,
 			    sdp->Signature);
-			continue;
+			if (sflag)
+				continue;
 		}
 		if (!memcmp(sdp->Signature, ACPI_SIG_FADT, 4))
 			acpi_handle_fadt(sdp);
@@ -2241,6 +2271,7 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 		else {
 			printf(BEGIN_COMMENT);
 			acpi_print_sdt(sdp);
+			acpi_dump_bytes(sdp);
 			printf(END_COMMENT);
 		}
 	}

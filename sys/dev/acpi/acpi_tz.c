@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.78 2011/01/18 21:15:54 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.78.2.1 2011/02/17 12:00:09 bouyer Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.78 2011/01/18 21:15:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.78.2.1 2011/02/17 12:00:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -861,29 +861,38 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	}
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpitz, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-acpitz_modcmd(modcmd_t cmd, void *context)
+acpitz_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_acpitz,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpitz,
 		    cfattach_ioconf_acpitz, cfdata_ioconf_acpitz);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_acpitz,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpitz,
 		    cfattach_ioconf_acpitz, cfdata_ioconf_acpitz);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

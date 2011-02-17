@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1278.2.2 2011/02/08 16:18:38 bouyer Exp $
+# $NetBSD: mi,v 1.1278.2.3 2011/02/17 11:57:20 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1004,6 +1004,10 @@
 ./usr/share/man/cat4/hdaudio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hdaudiobus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hifn.0			man-sys-catman		.cat
+./usr/share/man/cat4/hil.0			man-sys-catman		.cat
+./usr/share/man/cat4/hilkbd.0			man-sys-catman		.cat
+./usr/share/man/cat4/hilid.0			man-sys-catman		.cat
+./usr/share/man/cat4/hilms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/apci.0		man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/autoconf.0		man-sys-catman		.cat
@@ -1020,14 +1024,14 @@
 ./usr/share/man/cat4/hp300/frodo.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/gb.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/gbox.0		man-sys-catman		.cat
-./usr/share/man/cat4/hp300/grf.0		man-sys-catman		.cat
-./usr/share/man/cat4/hp300/hil.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp300/grf.0		man-obsolete		obsolete
+./usr/share/man/cat4/hp300/hil.0		man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/hpib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/hpibbus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/hyper.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/intio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/intro.0		man-sys-catman		.cat
-./usr/share/man/cat4/hp300/ite.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp300/ite.0		man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/kmem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp300/le.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/mem.0		man-sys-catman		.cat
@@ -1126,6 +1130,7 @@
 ./usr/share/man/cat4/i4btrc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i915drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iavc.0			man-sys-catman		.cat
+./usr/share/man/cat4/ibmhawk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ichlpcib.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ichsmb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/icmp.0			man-sys-catman		.cat
@@ -1757,6 +1762,7 @@
 ./usr/share/man/cat4/wi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wmidell.0			man-sys-catman		.cat
+./usr/share/man/cat4/wmieeepc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wmihp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wmimsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wpi.0			man-sys-catman		.cat
@@ -1914,7 +1920,7 @@
 ./usr/share/man/cat5/nicknames.0		man-nis-catman		yp,.cat
 ./usr/share/man/cat5/nisplus_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/nologin.0			man-sysutil-catman	.cat
-./usr/share/man/cat5/npf.conf.0			man-npf-catman		.cat
+./usr/share/man/cat5/npf.conf.0			man-npf-catman		.cat,npf
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat5/pam.conf.0			man-sys-catman		.cat
@@ -2492,7 +2498,7 @@
 ./usr/share/man/cat8/nis.0			man-nis-catman		.cat
 ./usr/share/man/cat8/nologin.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/npf.conf.0			man-obsolete		obsolete
-./usr/share/man/cat8/npfctl.0			man-npf-catman		.cat
+./usr/share/man/cat8/npfctl.0			man-npf-catman		.cat,npf
 ./usr/share/man/cat8/nqmgr.0			man-obsolete		obsolete
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-obsolete		obsolete
@@ -3760,6 +3766,10 @@
 ./usr/share/man/html4/hdaudiobus.html		man-sys-htmlman		html
 ./usr/share/man/html4/hdaudio.html		man-sys-htmlman		html
 ./usr/share/man/html4/hifn.html			man-sys-htmlman		html
+./usr/share/man/html4/hil.html			man-sys-htmlman		html
+./usr/share/man/html4/hilkbd.html		man-sys-htmlman		html
+./usr/share/man/html4/hilid.html		man-sys-htmlman		html
+./usr/share/man/html4/hilms.html		man-sys-htmlman		html
 ./usr/share/man/html4/hme.html			man-sys-htmlman		html
 ./usr/share/man/html4/hp300/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/hp300/cons.html		man-sys-htmlman		html
@@ -3771,14 +3781,14 @@
 ./usr/share/man/html4/hp300/fhpib.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/frodo.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/gbox.html		man-sys-htmlman		html
-./usr/share/man/html4/hp300/grf.html		man-sys-htmlman		html
-./usr/share/man/html4/hp300/hil.html		man-sys-htmlman		html
+./usr/share/man/html4/hp300/grf.html		man-obsolete		obsolete
+./usr/share/man/html4/hp300/hil.html		man-obsolete		obsolete
 ./usr/share/man/html4/hp300/hpib.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/hpibbus.html	man-sys-htmlman		html
 ./usr/share/man/html4/hp300/hyper.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/intio.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/intro.html		man-sys-htmlman		html
-./usr/share/man/html4/hp300/ite.html		man-sys-htmlman		html
+./usr/share/man/html4/hp300/ite.html		man-obsolete		obsolete
 ./usr/share/man/html4/hp300/kmem.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/nhpib.html		man-sys-htmlman		html
@@ -3853,6 +3863,7 @@
 ./usr/share/man/html4/i386/vesafb.html		man-obsolete		obsolete
 ./usr/share/man/html4/i915drm.html		man-sys-htmlman		html
 ./usr/share/man/html4/iavc.html			man-sys-htmlman		html
+./usr/share/man/html4/ibmhawk.html		man-sys-htmlman		html
 ./usr/share/man/html4/ichlpcib.html		man-obsolete		obsolete
 ./usr/share/man/html4/ichsmb.html		man-sys-htmlman		html
 ./usr/share/man/html4/icmp.html			man-sys-htmlman		html
@@ -4434,6 +4445,7 @@
 ./usr/share/man/html4/wi.html			man-sys-htmlman		html
 ./usr/share/man/html4/wm.html			man-sys-htmlman		html
 ./usr/share/man/html4/wmidell.html		man-sys-htmlman		html
+./usr/share/man/html4/wmieeepc.html		man-sys-htmlman		html
 ./usr/share/man/html4/wmihp.html		man-sys-htmlman		html
 ./usr/share/man/html4/wmimsi.html		man-sys-htmlman		html
 ./usr/share/man/html4/wpi.html			man-sys-htmlman		html
@@ -4583,7 +4595,7 @@
 ./usr/share/man/html5/nicknames.html		man-nis-htmlman		yp,html
 ./usr/share/man/html5/nisplus_table.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/nologin.html		man-sysutil-htmlman	html
-./usr/share/man/html5/npf.conf.html		man-npf-htmlman		html
+./usr/share/man/html5/npf.conf.html		man-npf-htmlman		html,npf
 ./usr/share/man/html5/nsswitch.conf.html	man-net-htmlman		html
 ./usr/share/man/html5/openssl.cnf.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html5/pam.conf.html		man-sys-htmlman		html
@@ -5024,7 +5036,7 @@
 ./usr/share/man/html8/nis.html			man-nis-htmlman		html
 ./usr/share/man/html8/nologin.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/npf.conf.html		man-obsolete		obsolete
-./usr/share/man/html8/npfctl.html		man-npf-htmlman		html
+./usr/share/man/html8/npfctl.html		man-npf-htmlman		html,npf
 ./usr/share/man/html8/nslookup.html		man-netutil-htmlman	html
 ./usr/share/man/html8/nsupdate.html		man-obsolete		obsolete
 ./usr/share/man/html8/ntalkd.html		man-netutil-htmlman	html
@@ -6293,6 +6305,10 @@
 ./usr/share/man/man4/hdaudio.4			man-sys-man		.man
 ./usr/share/man/man4/hdaudiobus.4		man-sys-man		.man
 ./usr/share/man/man4/hifn.4			man-sys-man		.man
+./usr/share/man/man4/hil.4			man-sys-man		.man
+./usr/share/man/man4/hilkbd.4			man-sys-man		.man
+./usr/share/man/man4/hilid.4			man-sys-man		.man
+./usr/share/man/man4/hilms.4			man-sys-man		.man
 ./usr/share/man/man4/hme.4			man-sys-man		.man
 ./usr/share/man/man4/hp300/apci.4		man-obsolete		obsolete
 ./usr/share/man/man4/hp300/autoconf.4		man-sys-man		.man
@@ -6309,14 +6325,14 @@
 ./usr/share/man/man4/hp300/frodo.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/gb.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/gbox.4		man-sys-man		.man
-./usr/share/man/man4/hp300/grf.4		man-sys-man		.man
-./usr/share/man/man4/hp300/hil.4		man-sys-man		.man
+./usr/share/man/man4/hp300/grf.4		man-obsolete		obsolete
+./usr/share/man/man4/hp300/hil.4		man-obsolete		obsolete
 ./usr/share/man/man4/hp300/hpib.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/hpibbus.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/hyper.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/intio.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/intro.4		man-sys-man		.man
-./usr/share/man/man4/hp300/ite.4		man-sys-man		.man
+./usr/share/man/man4/hp300/ite.4		man-obsolete		obsolete
 ./usr/share/man/man4/hp300/kmem.4		man-sys-man		.man
 ./usr/share/man/man4/hp300/le.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/mem.4		man-sys-man		.man
@@ -6415,6 +6431,7 @@
 ./usr/share/man/man4/i4btrc.4			man-obsolete		obsolete
 ./usr/share/man/man4/i915drm.4			man-sys-man		.man
 ./usr/share/man/man4/iavc.4			man-sys-man		.man
+./usr/share/man/man4/ibmhawk.4			man-sys-man		.man
 ./usr/share/man/man4/ichlpcib.4			man-obsolete		obsolete
 ./usr/share/man/man4/ichsmb.4			man-sys-man		.man
 ./usr/share/man/man4/icmp.4			man-sys-man		.man
@@ -7046,6 +7063,7 @@
 ./usr/share/man/man4/wi.4			man-sys-man		.man
 ./usr/share/man/man4/wm.4			man-sys-man		.man
 ./usr/share/man/man4/wmidell.4			man-sys-man		.man
+./usr/share/man/man4/wmieeepc.4			man-sys-man		.man
 ./usr/share/man/man4/wmihp.4			man-sys-man		.man
 ./usr/share/man/man4/wmimsi.4			man-sys-man		.man
 ./usr/share/man/man4/wpi.4			man-sys-man		.man
@@ -7203,7 +7221,7 @@
 ./usr/share/man/man5/nicknames.5		man-nis-man		yp,.man
 ./usr/share/man/man5/nisplus_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/nologin.5			man-sysutil-man		.man
-./usr/share/man/man5/npf.conf.5			man-npf-man		.man
+./usr/share/man/man5/npf.conf.5			man-npf-man		.man,npf
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
 ./usr/share/man/man5/openssl.cnf.5		man-crypto-man		crypto,.man
 ./usr/share/man/man5/pam.conf.5			man-sys-man		.man
@@ -7781,7 +7799,7 @@
 ./usr/share/man/man8/nis.8			man-nis-man		.man
 ./usr/share/man/man8/nologin.8			man-sysutil-man		.man
 ./usr/share/man/man8/npf.conf.8			man-obsolete		obsolete
-./usr/share/man/man8/npfctl.8			man-npf-man		.man
+./usr/share/man/man8/npfctl.8			man-npf-man		.man,npf
 ./usr/share/man/man8/nqmgr.8			man-obsolete		obsolete
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-obsolete		obsolete

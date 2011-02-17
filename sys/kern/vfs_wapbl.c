@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.39 2011/01/08 20:37:05 christos Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.39.4.1 2011/02/17 12:00:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.39 2011/01/08 20:37:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.39.4.1 2011/02/17 12:00:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -479,7 +479,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wl->wl_bufcount_max = (nbuf / 2) * 1024;
 
 	/* XXX tie this into resource estimation */
-	wl->wl_dealloclim = 2 * btodb(wl->wl_bufbytes_max);
+	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
 	
 	wl->wl_deallocblks = wapbl_malloc(sizeof(*wl->wl_deallocblks) *
 	    wl->wl_dealloclim);
@@ -899,6 +899,18 @@ wapbl_end(struct wapbl *wl)
 	      "bufbytes=%zu bcount=%zu\n",
 	      curproc->p_pid, curlwp->l_lid, wl->wl_bufcount,
 	      wl->wl_bufbytes, wl->wl_bcount));
+#endif
+
+#ifdef DIAGNOSTIC
+	size_t flushsize = wapbl_transaction_len(wl);
+	if (flushsize > (wl->wl_circ_size - wl->wl_reserved_bytes)) {
+		/*
+		 * XXX this could be handled more gracefully, perhaps place
+		 * only a partial transaction in the log and allow the
+		 * remaining to flush without the protection of the journal.
+		 */
+		panic("wapbl_end: current transaction too big to flush\n");
+	}
 #endif
 
 	mutex_enter(&wl->wl_mtx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.h,v 1.3 2009/10/25 00:14:31 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.3.2.1 2011/02/17 11:57:30 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.h,v 1.111 2009/09/29 15:06:06 fdupont Exp */
+/* Id: dig.h,v 1.111 2009-09-29 15:06:06 fdupont Exp */
 
 #ifndef DIG_H
 #define DIG_H

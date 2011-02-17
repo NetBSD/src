@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.win32,v 1.24 2009/11/24 02:09:28 marka Exp */
+/* Id: config.h.win32,v 1.26 2011-01-13 08:50:28 tbox Exp */
 
 /*
  * win32 configuration file
@@ -263,3 +263,11 @@ typedef long off_t;
 /** define if gai_strerror() exists */
 #define HAVE_GAISTRERROR
 
+/* Define if your OpenSSL version supports GOST. */
+#define HAVE_OPENSSL_GOST
+
+/* Define to enable rpz-nsdname rules. */
+#define ENABLE_RPZ_NSDNAME
+
+/* Define to enable rpz-nsip rules. */
+#define ENABLE_RPZ_NSIP

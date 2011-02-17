@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.1.1.1 2009/10/25 00:02:31 christos Exp $	*/
+/*	$NetBSD: private.c,v 1.1.1.1.2.1 2011/02/17 11:58:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: private.c,v 1.3 2009/10/09 23:48:09 tbox Exp */
+/* Id: private.c,v 1.3 2009-10-09 23:48:09 tbox Exp */
 
 #include "config.h"
 
@@ -52,7 +52,7 @@
 			 result = (x);			\
 			 if (result != ISC_R_SUCCESS)	\
 				goto failure;		\
-		 } while (0)
+		 } while (/*CONSTCOND*/0)
 
 /*
  * Work out if 'param' should be ignored or not (i.e. it is in the process

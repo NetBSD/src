@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.12 2010/01/07 13:26:00 tsutsui Exp $ */
+/* $NetBSD: hp300.c,v 1.12.2.1 2011/02/17 12:00:58 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.12 2010/01/07 13:26:00 tsutsui Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.12.2.1 2011/02/17 12:00:58 bouyer Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -108,7 +108,8 @@ hp300_setboot(ib_params *params)
 		 * The bootstrap can be well over 8k, and must go into a BOOT
 		 * partition. Read NetBSD label to locate BOOT partition.
 		 */
-		if (pread(params->fsfd, label, params->sectorsize, LABELSECTOR)
+		if (pread(params->fsfd, label, params->sectorsize,
+		    LABELSECTOR * params->sectorsize)
 		    != (ssize_t)params->sectorsize) {
 			warn("reading disklabel");
 			goto done;

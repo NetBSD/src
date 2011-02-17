@@ -1,7 +1,7 @@
-/*	$NetBSD: hip_55.c,v 1.1.1.2 2009/12/26 22:25:24 christos Exp $	*/
+/*	$NetBSD: hip_55.c,v 1.1.1.2.2.1 2011/02/17 11:58:48 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hip_55.c,v 1.6 2009/12/04 22:06:37 tbox Exp */
+/* Id: hip_55.c,v 1.8 2011-01-13 04:59:26 tbox Exp */
 
 /* reviewed: TBC */
 
@@ -124,8 +124,6 @@ static inline isc_result_t
 totext_hip(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
-	dns_name_t prefix;
-	isc_boolean_t sub;
 	size_t length, key_len, hit_len;
 	unsigned char algorithm;
 	char buf[sizeof("225 ")];
@@ -177,12 +175,10 @@ totext_hip(ARGS_TOTEXT) {
 	 * Rendezvous Servers.
 	 */
 	dns_name_init(&name, NULL);
-	dns_name_init(&prefix, NULL);
 	while (region.length > 0) {
 		dns_name_fromregion(&name, &region);
 
-		sub = name_prefix(&name, tctx->origin, &prefix);
-		RETERR(dns_name_totext(&prefix, sub, target));
+		RETERR(dns_name_totext(&name, ISC_FALSE, target));
 		isc_region_consume(&region, name.length);
 		if (region.length > 0)
 			RETERR(str_totext(tctx->linebreak, target));

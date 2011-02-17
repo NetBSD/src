@@ -1,7 +1,7 @@
-/*	$NetBSD: view.h,v 1.1.1.5 2010/12/02 14:23:28 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.1.1.5.2.1 2011/02/17 11:58:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.h,v 1.120.8.6.6.1 2010/09/24 06:32:57 marka Exp */
+/* Id: view.h,v 1.132 2011-01-13 01:59:28 marka Exp */
 
 #ifndef DNS_VIEW_H
 #define DNS_VIEW_H 1
@@ -76,6 +76,7 @@
 #include <dns/acl.h>
 #include <dns/fixedname.h>
 #include <dns/rdatastruct.h>
+#include <dns/rpz.h>
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -160,6 +161,9 @@ struct dns_view {
 	isc_uint16_t			maxudp;
 	dns_v4_aaaa_t			v4_aaaa;
 	dns_acl_t *			v4_aaaa_acl;
+	dns_dns64list_t 		dns64;
+	unsigned int 			dns64cnt;
+	ISC_LIST(dns_rpz_zone_t)	rpz_zones;
 
 	/*
 	 * Configurable data for server use only,
@@ -376,6 +380,8 @@ dns_view_sethints(dns_view_t *view, dns_db_t *hints);
 
 void
 dns_view_setkeyring(dns_view_t *view, dns_tsig_keyring_t *ring);
+void
+dns_view_setdynamickeyring(dns_view_t *view, dns_tsig_keyring_t *ring);
 /*%<
  * Set the view's static TSIG keys
  *
@@ -389,6 +395,15 @@ dns_view_setkeyring(dns_view_t *view, dns_tsig_keyring_t *ring);
  * Ensures:
  *
  *\li      The static TSIG keyring of 'view' is 'ring'.
+ */
+
+void
+dns_view_getdynamickeyring(dns_view_t *view, dns_tsig_keyring_t **ringp);
+/*%<
+ * Return the views dynamic keys.
+ *
+ *   \li  'view' is a valid, unfrozen view.
+ *   \li  'ringp' != NULL && ringp == NULL.
  */
 
 void
@@ -459,9 +474,24 @@ dns_view_find(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 	      isc_stdtime_t now, unsigned int options, isc_boolean_t use_hints,
 	      dns_db_t **dbp, dns_dbnode_t **nodep, dns_name_t *foundname,
 	      dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
+isc_result_t
+dns_view_find2(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
+	       isc_stdtime_t now, unsigned int options,
+	       isc_boolean_t use_hints, isc_boolean_t use_static_stub,
+	       dns_db_t **dbp, dns_dbnode_t **nodep, dns_name_t *foundname,
+	       dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
 /*%<
  * Find an rdataset whose owner name is 'name', and whose type is
  * 'type'.
+ * In general, this function first searches view's zone and cache DBs for the
+ * best match data against 'name'.  If nothing found there, and if 'use_hints'
+ * is ISC_TRUE, the view's hint DB (if configured) is searched.
+ * If the view is configured with a static-stub zone which gives the longest
+ * match for 'name' among the zones, however, the cache DB is not consulted
+ * unless 'use_static_stub' is ISC_FALSE (see below about this argument).
+ *
+ * dns_view_find() is a backward compatible version equivalent to
+ * dns_view_find2() with use_static_stub argument being ISC_FALSE.
  *
  * Notes:
  *
@@ -476,6 +506,23 @@ dns_view_find(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
  *	database, the result code will be DNS_R_HINT.  If the name is found
  *	in the hints database but not the type, the result code will be
  *	#DNS_R_HINTNXRRSET.
+ *
+ *\li	If 'use_static_stub' is ISC_FALSE and the longest match zone for 'name'
+ *	is a static-stub zone, it's ignored and the cache and/or hints will be
+ *	searched.  In the majority of the cases this argument should be
+ *	ISC_FALSE.  The only known usage of this argument being ISC_TRUE is
+ *	if this search is for a "bailiwick" glue A or AAAA RRset that may
+ *	best match a static-stub zone.  Consider the following example:
+ *	this view is configured with a static-stub zone "example.com",
+ *	and an attempt of recursive resolution needs to send a query for the
+ *	zone.  In this case it's quite likely that the resolver is trying to
+ *	find A/AAAA RRs for the apex name "example.com".  And, to honor the
+ *	static-stub configuration it needs to return the glue RRs in the
+ *	static-stub zone even if that exact RRs coming from the authoritative
+ *	zone has been cached.
+ *	In other general cases, the requested data is better to be
+ *	authoritative, either locally configured or retrieved from an external
+ *	server, and the data in the static-stub zone should better be ignored.
  *
  *\li	'foundname' must meet the requirements of dns_db_find().
  *
@@ -1026,5 +1073,8 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
  * Requires:
  * \li 'view' is valid.
  */
+
+void
+dns_view_restorekeyring(dns_view_t *view);
 
 #endif /* DNS_VIEW_H */

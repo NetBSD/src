@@ -1,4 +1,4 @@
-/*	$NetBSD: sample-gai.c,v 1.1.1.1 2009/10/25 00:02:42 christos Exp $	*/
+/*	$NetBSD: sample-gai.c,v 1.1.1.1.2.1 2011/02/17 11:58:55 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sample-gai.c,v 1.4 2009/09/02 23:48:02 tbox Exp */
+/* Id: sample-gai.c,v 1.4 2009-09-02 23:48:02 tbox Exp */
 
 #include <config.h>
 

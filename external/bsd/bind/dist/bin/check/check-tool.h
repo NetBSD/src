@@ -1,7 +1,7 @@
-/*	$NetBSD: check-tool.h,v 1.1.1.1 2009/03/22 14:55:40 christos Exp $	*/
+/*	$NetBSD: check-tool.h,v 1.1.1.1.4.1 2011/02/17 11:57:29 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check-tool.h,v 1.14 2007/06/18 23:47:17 tbox Exp */
+/* Id: check-tool.h,v 1.16 2010-09-07 23:46:59 tbox Exp */
 
 #ifndef CHECK_TOOL_H
 #define CHECK_TOOL_H
@@ -44,6 +44,11 @@ load_zone(isc_mem_t *mctx, const char *zonename, const char *filename,
 isc_result_t
 dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 	  dns_masterformat_t fileformat, const dns_master_style_t *style);
+
+#ifdef _WIN32
+void InitSockets(void);
+void DestroySockets(void);
+#endif
 
 extern int debug;
 extern isc_boolean_t nomerge;

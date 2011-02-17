@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.1.1.4 2010/12/02 14:23:21 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.1.1.4.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.c,v 1.110.194.2 2010/11/17 23:46:50 tbox Exp */
+/* Id: journal.c,v 1.112 2010-11-17 23:47:08 tbox Exp */
 
 #include <config.h>
 
@@ -106,12 +106,12 @@ static isc_boolean_t bind8_compat = ISC_TRUE; /* XXX config */
 #define FAIL(code) \
 	do { result = (code);					\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECK(op) \
 	do { result = (op); 					\
 		if (result != ISC_R_SUCCESS) goto failure; 	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static isc_result_t index_to_disk(dns_journal_t *);
 

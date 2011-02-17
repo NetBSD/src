@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.1.1.2 2010/08/05 20:14:40 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.1.1.2.2.1 2011/02/17 11:58:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2006-2008, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: httpd.c,v 1.16.284.2 2010/02/04 23:48:30 tbox Exp */
+/* Id: httpd.c,v 1.20 2010-11-16 05:38:31 marka Exp */
 
 /*! \file */
 
@@ -47,9 +47,9 @@
 #define MSETSHUTTINGDOWN(cm) (cm->flags |= ISC_HTTPDMGR_FLAGSHUTTINGDOWN)
 
 #ifdef DEBUG_HTTPD
-#define ENTER(x) do { fprintf(stderr, "ENTER %s\n", (x)); } while (0)
-#define EXIT(x) do { fprintf(stderr, "EXIT %s\n", (x)); } while (0)
-#define NOTICE(x) do { fprintf(stderr, "NOTICE %s\n", (x)); } while (0)
+#define ENTER(x) do { fprintf(stderr, "ENTER %s\n", (x)); } while (/*CONSTCOND*/0)
+#define EXIT(x) do { fprintf(stderr, "EXIT %s\n", (x)); } while (/*CONSTCOND*/0)
+#define NOTICE(x) do { fprintf(stderr, "NOTICE %s\n", (x)); } while (/*CONSTCOND*/0)
 #else
 #define ENTER(x) do { } while(0)
 #define EXIT(x) do { } while(0)

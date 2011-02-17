@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.544.2.1 2011/02/08 16:19:07 bouyer Exp $
+#	$NetBSD: Makefile,v 1.544.2.2 2011/02/17 11:59:26 bouyer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -28,7 +28,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	gcscaudio.4 gem.4 genfb.4 gentbi.4 geodeide.4 \
 	glxtphy.4 gpib.4 gpio.4 gpiolock.4 gpiosim.4 gre.4 gphyter.4 gsip.4 \
 	hdaudio.4 hifn.4 hme.4 hpqlb.4 hptide.4 \
-	ichsmb.4 icmp.4 icp.4 icsphy.4 iee.4 ieee80211.4 \
+	ibmhawk.4 ichsmb.4 icmp.4 icp.4 icsphy.4 iee.4 ieee80211.4 \
 	ifmedia.4 igphy.4 igsfb.4 iha.4 ihphy.4 iic.4 inet.4 ikphy.4 inphy.4 \
 	intersil7170.4 \
 	ioasic.4 ioat.4 iop.4 iophy.4 iopsp.4 ip.4 ipkdb.4 ipmi.4 ipw.4 \
@@ -125,6 +125,9 @@ MAN +=	m25p.4 tm121temp.4
 # machine-independent SD/MMC devices
 MAN +=	sbt.4 sdhc.4 sdmmc.4
 
+# machine-independent HIL devices
+MAN +=	hil.4 hilkbd.4 hilid.4 hilms.4
+
 # IPv6/IPsec
 MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4
 
@@ -152,6 +155,7 @@ MLINKS+=drm.4 viadrm.4
 MLINKS+=acpiec.4 acpiecdt.4
 MLINKS+=acpivga.4 acpiout.4
 MLINKS+=acpiwmi.4 wmidell.4 \
+	acpiwmi.4 wmieeepc.4 \
 	acpiwmi.4 wmihp.4 \
 	acpiwmi.4 wmimsi.4
 MLINKS+=aibs.4 aiboost.4

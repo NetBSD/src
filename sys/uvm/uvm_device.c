@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.57.8.1 2011/02/08 16:20:06 bouyer Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.57.8.2 2011/02/17 12:00:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.8.1 2011/02/08 16:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.8.2 2011/02/17 12:00:52 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.8.1 2011/02/08 16:20:06 bouyer E
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
+#include <uvm/uvm_pmap.h>
 
 /*
  * private global data structure
@@ -355,6 +356,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	vaddr_t curr_va;
 	off_t curr_offset;
 	paddr_t paddr, mdpgno;
+	u_int mmapflags;
 	int lcv, retval;
 	dev_t device;
 	vm_prot_t mapprot;
@@ -415,12 +417,13 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			break;
 		}
 		paddr = pmap_phys_address(mdpgno);
+		mmapflags = pmap_mmap_flags(mdpgno);
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%lx, at=%d",
 		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
-		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
-		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
+		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr, mapprot,
+		    PMAP_CANFAIL | mapprot | mmapflags) != 0) {
 			/*
 			 * pmap_enter() didn't have the resource to
 			 * enter this mapping.  Unlock everything,

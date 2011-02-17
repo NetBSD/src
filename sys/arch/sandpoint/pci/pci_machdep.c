@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.20.4.1 2011/02/08 16:19:37 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.20.4.2 2011/02/17 11:59:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20.4.1 2011/02/08 16:19:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20.4.2 2011/02/17 11:59:58 bouyer Exp $");
 
 #include "opt_pci.h"
 
@@ -95,6 +95,8 @@ static int brdtype;
 #define BRD_QNAPTS101		101
 #define BRD_SYNOLOGY		102
 #define BRD_STORCENTER		103
+#define BRD_DLINKDSM		104
+#define BRD_NH230NAS		105
 #define BRD_UNKNOWN		-1
 
 #define	PCI_CONFIG_ENABLE	0x80000000UL
@@ -104,7 +106,7 @@ pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
 	pcitag_t tag;
-	pcireg_t dev11, dev22, dev15, dev13;
+	pcireg_t dev11, dev22, dev15, dev13, dev16;
 
 	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 11, 0);
 	dev11 = pci_conf_read(pba->pba_pc, tag, PCI_CLASS_REG);
@@ -150,7 +152,19 @@ pci_attach_hook(struct device *parent, struct device *self,
 		brdtype = BRD_STORCENTER;
 		return;
 	}
-	
+	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 16, 0);
+	dev16 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(dev16) == PCI_VENDOR_ACARD) {
+		/* ACARD ATP865 at dev 16 */
+		brdtype = BRD_DLINKDSM;
+		return;
+	}
+	if (PCI_VENDOR(dev16) == PCI_VENDOR_ITE
+	    || PCI_VENDOR(dev16) == PCI_VENDOR_CMDTECH) {
+		brdtype = BRD_NH230NAS;
+		return;
+	}
+
 	brdtype = BRD_UNKNOWN;
 }
 
@@ -335,6 +349,16 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	case BRD_SYNOLOGY:
 		/* map line 12,13-15 to EPIC IRQ4,0-2 */
 		*ihp = (line == 12) ? 4 : line - 13;
+		break;
+	case BRD_DLINKDSM:
+		/* map line 13,14,15,16 to EPIC IRQ0,1,3,4 */
+		*ihp = (line < 15) ? line - 13 : line - 12;
+		break;
+	case BRD_NH230NAS:
+		/* map line 13,14,15,16 to EPIC IRQ0,3,1,2 */
+		*ihp =  (line == 16) ? 2 :
+			(line == 15) ? 1 :
+			(line == 14) ? 3 : 0;
 		break;
 	case BRD_STORCENTER:
 	default:

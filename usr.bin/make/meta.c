@@ -169,6 +169,49 @@ filemon_read(FILE *mfp, int fd)
 }
 #endif
 
+/*
+ * when realpath() fails,
+ * we use this, to clean up ./ and ../
+ */
+static void
+eat_dots(char *buf, size_t bufsz, int dots)
+{
+    char *cp;
+    char *cp2;
+    const char *eat;
+    size_t eatlen;
+
+    switch (dots) {
+    case 1:
+	eat = "/./";
+	eatlen = 2;
+	break;
+    case 2:
+	eat = "/../";
+	eatlen = 3;
+	break;
+    default:
+	return;
+    }
+    
+    do {
+	cp = strstr(buf, eat);
+	if (cp) {
+	    cp2 = cp + eatlen;
+	    if (dots == 2 && cp > buf) {
+		do {
+		    cp--;
+		} while (cp > buf && *cp != '/');
+	    }
+	    if (*cp == '/') {
+		strlcpy(cp, cp2, bufsz - (cp - buf));
+	    } else {
+		return;			/* can't happen? */
+	    }
+	}
+    } while (cp);
+}
+
 static char *
 meta_name(struct GNode *gn, char *mname, size_t mnamelen,
 	  const char *dname,
@@ -188,6 +231,9 @@ meta_name(struct GNode *gn, char *mname, size_t mnamelen,
     if (!tname)
 	tname = Var_Value(TARGET, gn, &p[i++]);
 
+    if (realpath(dname, cwd))
+	dname = cwd;
+
     /*
      * Weed out relative paths from the target file name.
      * We have to be careful though since if target is a
@@ -204,10 +250,23 @@ meta_name(struct GNode *gn, char *mname, size_t mnamelen,
 		    strlcpy(rp, cp, sizeof(buf) - (rp - buf));
 	    }
 	    tname = buf;
+	} else {
+	    /*
+	     * We likely have a directory which is about to be made.
+	     * We pretend realpath() succeeded, to have a chance
+	     * of generating the same meta file name that we will
+	     * next time through.
+	     */
+	    if (tname[0] == '/') {
+		strlcpy(buf, tname, sizeof(buf));
+	    } else {
+		snprintf(buf, sizeof(buf), "%s/%s", cwd, tname);
+	    }
+	    eat_dots(buf, sizeof(buf), 1);	/* ./ */
+	    eat_dots(buf, sizeof(buf), 2);	/* ../ */
+	    tname = buf;
 	}
     }
-    if (realpath(dname, cwd))
-	dname = cwd;
     /* on some systems dirname may modify its arg */
     tp = bmake_strdup(tname);
     if (strcmp(dname, dirname(tp)) == 0)
@@ -424,6 +483,11 @@ meta_create(BuildMon *pbm, GNode *gn)
 
     fname = meta_name(gn, pbm->meta_fname, sizeof(pbm->meta_fname),
 		      dname, tname);
+
+#ifdef DEBUG_META_MODE
+    if (DEBUG(META))
+	fprintf(debug_file, "meta_create: %s\n", fname);
+#endif
 
     if ((mf.fp = fopen(fname, "w")) == NULL)
 	err(1, "Could not open meta file '%s'", fname);
@@ -732,6 +796,11 @@ meta_oodate(GNode *gn, Boolean oodate)
 	err(1, "Could not get current working directory");
 
     meta_name(gn, fname, sizeof(fname), NULL, NULL);
+
+#ifdef DEBUG_META_MODE
+    if (DEBUG(META))
+	fprintf(debug_file, "meta_oodate: %s\n", fname);
+#endif
 
     if ((fp = fopen(fname, "r")) != NULL) {
 	static char *buf = NULL;

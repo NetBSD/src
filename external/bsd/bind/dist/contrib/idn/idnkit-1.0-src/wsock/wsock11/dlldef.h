@@ -1,4 +1,4 @@
-/*	$NetBSD: dlldef.h,v 1.1.1.1 2009/03/22 14:57:53 christos Exp $	*/
+/*	$NetBSD: dlldef.h,v 1.1.1.1.4.1 2011/02/17 11:58:27 bouyer Exp $	*/
 
 /*
  * dlldef.h

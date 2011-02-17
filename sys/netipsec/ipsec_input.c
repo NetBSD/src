@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.23 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.23.8.1 2011/02/17 12:00:50 bouyer Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.23 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.23.8.1 2011/02/17 12:00:50 bouyer Exp $");
 
 /*
  * IPsec input processing.
@@ -606,13 +606,13 @@ int
 ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int protoff,
     struct m_tag *mt)
 {
-	int prot, af, sproto;
+	int af, sproto;
 	struct ip6_hdr *ip6;
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct secasindex *saidx;
 	int nxt;
-	u_int8_t nxt8;
+	u_int8_t prot, nxt8;
 	int error, nest;
 
 	IPSEC_ASSERT(m != NULL, ("ipsec6_common_input_cb: null mbuf"));
@@ -655,7 +655,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 
 	/* Save protocol */
-	m_copydata(m, protoff, 1, (unsigned char *) &prot);
+	m_copydata(m, protoff, 1, &prot);
 
 #ifdef INET
 	/* IP-in-IP encapsulation */

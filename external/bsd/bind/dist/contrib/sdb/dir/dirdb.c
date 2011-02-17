@@ -1,4 +1,4 @@
-/*	$NetBSD: dirdb.c,v 1.1.1.1 2009/03/22 14:58:12 christos Exp $	*/
+/*	$NetBSD: dirdb.c,v 1.1.1.1.4.1 2011/02/17 11:58:30 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dirdb.c,v 1.12 2007/06/19 23:47:07 tbox Exp */
+/* Id: dirdb.c,v 1.12 2007-06-19 23:47:07 tbox Exp */
 
 /*
  * A simple database driver that returns basic information about
@@ -48,12 +48,12 @@ static dns_sdbimplementation_t *dirdb = NULL;
 #define CHECK(op)						\
 	do { result = (op);					\
 		if (result != ISC_R_SUCCESS) return (result);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECKN(op)						\
 	do { n = (op);						\
 		if (n < 0) return (ISC_R_FAILURE);		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 /*

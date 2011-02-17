@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.1 2009/10/25 00:02:42 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.1.2.1 2011/02/17 11:58:55 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getnameinfo.c,v 1.4 2009/09/02 23:48:02 tbox Exp */
+/* Id: getnameinfo.c,v 1.4 2009-09-02 23:48:02 tbox Exp */
 
 /*! \file */
 
@@ -142,7 +142,7 @@ static struct afd {
 #define ERR(code) \
 	do { result = (code);			\
 		if (result != 0) goto cleanup;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 int
 getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,

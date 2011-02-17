@@ -1,4 +1,4 @@
-/*	$NetBSD: zonetodb.c,v 1.1.1.2 2009/10/25 00:01:52 christos Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.1.1.2.2.1 2011/02/17 11:58:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonetodb.c,v 1.23 2009/09/02 23:48:01 tbox Exp */
+/* Id: zonetodb.c,v 1.23 2009-09-02 23:48:01 tbox Exp */
 
 #include <stdlib.h>
 #include <string.h>

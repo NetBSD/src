@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.50 2010/12/15 18:37:55 pooka Exp $   */
+/*      $NetBSD: raidctl.c,v 1.50.2.1 2011/02/17 11:59:25 bouyer Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.50 2010/12/15 18:37:55 pooka Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.50.2.1 2011/02/17 11:59:25 bouyer Exp $");
 #endif
 
 
@@ -265,7 +265,7 @@ main(int argc,char *argv[])
 	    prog_open);
 	if (fd == -1)
 		err(1, "Unable to open device file: %s", name);
-	if (fstat(fd, &st) == -1)
+	if (prog_fstat(fd, &st) == -1)
 		err(1, "stat failure on: %s", dev_name);
 	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
 		err(1, "invalid device: %s", dev_name);

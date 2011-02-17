@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec_47.c,v 1.1.1.2 2009/12/26 22:25:27 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.1.1.2.2.1 2011/02/17 11:58:48 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec_47.c,v 1.13 2009/12/04 22:06:37 tbox Exp */
+/* Id: nsec_47.c,v 1.15 2011-01-13 04:59:26 tbox Exp */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -90,20 +90,18 @@ totext_nsec(ARGS_TOTEXT) {
 	isc_region_t sr;
 	unsigned int i, j, k;
 	dns_name_t name;
-	dns_name_t prefix;
-	isc_boolean_t sub;
 	unsigned int window, len;
 
 	REQUIRE(rdata->type == 47);
 	REQUIRE(rdata->length != 0);
 
+	UNUSED(tctx);
+
 	dns_name_init(&name, NULL);
-	dns_name_init(&prefix, NULL);
 	dns_rdata_toregion(rdata, &sr);
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
-	sub = name_prefix(&name, tctx->origin, &prefix);
-	RETERR(dns_name_totext(&prefix, sub, target));
+	RETERR(dns_name_totext(&name, ISC_FALSE, target));
 
 
 	for (i = 0; i < sr.length; i += len) {

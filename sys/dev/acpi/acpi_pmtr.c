@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pmtr.c,v 1.1 2011/01/05 20:08:12 jruoho Exp $ */
+/*	$NetBSD: acpi_pmtr.c,v 1.1.4.1 2011/02/17 12:00:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.1 2011/01/05 20:08:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.1.4.1 2011/02/17 12:00:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -289,7 +289,7 @@ acpipmtr_dev_print(device_t self)
 
 		ad = acpi_get_node(hdl);
 
-		if (ACPI_FAILURE(rv))
+		if (ad == NULL)
 			continue;
 
 		aprint_debug("%s ", ad->ad_name);
@@ -490,29 +490,38 @@ acpipmtr_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	}
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpipmtr, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-acpipmtr_modcmd(modcmd_t cmd, void *context)
+acpipmtr_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_acpipmtr,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpipmtr,
 		    cfattach_ioconf_acpipmtr, cfdata_ioconf_acpipmtr);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_acpipmtr,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpipmtr,
 		    cfattach_ioconf_acpipmtr, cfdata_ioconf_acpipmtr);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.h,v 1.1.1.3 2010/08/05 20:13:52 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.1.1.3.2.1 2011/02/17 11:58:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsig.h,v 1.53.136.2 2010/07/09 23:46:27 tbox Exp */
+/* Id: tsig.h,v 1.59 2011-01-11 23:47:13 tbox Exp */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1
@@ -27,6 +27,7 @@
 #include <isc/lang.h>
 #include <isc/refcount.h>
 #include <isc/rwlock.h>
+#include <isc/stdio.h>
 #include <isc/stdtime.h>
 
 #include <dns/types.h>
@@ -71,6 +72,7 @@ struct dns_tsig_keyring {
 	unsigned int generated;
 	unsigned int maxgenerated;
 	ISC_LIST(dns_tsigkey_t) lru;
+	unsigned int references;
 };
 
 struct dns_tsigkey {
@@ -119,12 +121,15 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
  *	allows a transient key with an invalid algorithm to exist long enough
  *	to generate a BADKEY response.
  *
+ *	If dns_tsigkey_createfromkey is successful a new reference to 'dstkey'
+ *	will have been made.
+ *
  *	Requires:
  *\li		'name' is a valid dns_name_t
  *\li		'algorithm' is a valid dns_name_t
  *\li		'secret' is a valid pointer
  *\li		'length' is an integer >= 0
- *\li		'key' is a valid dst key or NULL
+ *\li		'dstkey' is a valid dst key or NULL
  *\li		'creator' points to a valid dns_name_t or is NULL
  *\li		'mctx' is a valid memory context
  *\li		'ring' is a valid TSIG keyring or NULL
@@ -268,13 +273,23 @@ dns_tsigkeyring_add(dns_tsig_keyring_t *ring, dns_name_t *name,
 
 
 void
-dns_tsigkeyring_destroy(dns_tsig_keyring_t **ringp);
+dns_tsigkeyring_attach(dns_tsig_keyring_t *source, dns_tsig_keyring_t **target);
+
+void
+dns_tsigkeyring_detach(dns_tsig_keyring_t **ringp);
+
+isc_result_t
+dns_tsigkeyring_dumpanddetach(dns_tsig_keyring_t **ringp, FILE *fp);
+
 /*%<
  *	Destroy a TSIG key ring.
  *
  *	Requires:
  *\li		'ringp' is not NULL
  */
+
+void
+dns_keyring_restore(dns_tsig_keyring_t *ring, FILE *fp);
 
 ISC_LANG_ENDDECLS
 

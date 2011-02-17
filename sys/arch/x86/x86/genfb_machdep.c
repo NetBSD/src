@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.4.4.2 2011/02/09 11:00:08 bouyer Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.4.4.3 2011/02/17 12:00:06 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.4.4.2 2011/02/09 11:00:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.4.4.3 2011/02/17 12:00:06 bouyer Exp $");
 
 #include "opt_mtrr.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.4.4.2 2011/02/09 11:00:08 bouyer
 #include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
+#include <dev/wsfb/genfbvar.h>
 #include <arch/x86/include/genfb_machdep.h>
 
 #include "wsdisplay.h"
@@ -65,6 +66,8 @@ struct vcons_screen x86_genfb_console_screen;
 extern int acpi_md_vesa_modenum;
 #endif
 
+static device_t x86_genfb_console_dev = NULL;
+
 static struct wsscreen_descr x86_genfb_stdscreen = {
 	"std",
 	0, 0,
@@ -75,8 +78,29 @@ static struct wsscreen_descr x86_genfb_stdscreen = {
 };
 
 void
+x86_genfb_set_console_dev(device_t dev)
+{
+	KASSERT(x86_genfb_console_dev == NULL);
+	x86_genfb_console_dev = dev;
+}
+
+void
+x86_genfb_ddb_trap_callback(int where)
+{
+	if (x86_genfb_console_dev == NULL)
+		return;
+
+	if (where) {
+		genfb_enable_polling(x86_genfb_console_dev);
+	} else {
+		genfb_disable_polling(x86_genfb_console_dev);
+	}
+}
+
+void
 x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)
 {
+#if notyet
 #ifdef MTRR
 	struct mtrr mtrr;
 	int error, n;
@@ -105,6 +129,7 @@ x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)
 	aprint_debug("%s: mtrr_set returned %d\n", __func__, error);
 #else
 	aprint_debug("%s: kernel lacks MTRR option\n", __func__);
+#endif
 #endif
 }
 
@@ -135,7 +160,7 @@ x86_genfb_cnattach(void)
 
 	err = _x86_memio_map(t, (bus_addr_t)fbinfo->physaddr,
 	    fbinfo->width * fbinfo->stride,
-	    BUS_SPACE_MAP_LINEAR, &h);
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &h);
 	if (err) {
 		aprint_error("x86_genfb_cnattach: couldn't map framebuffer\n");
 		return 0;

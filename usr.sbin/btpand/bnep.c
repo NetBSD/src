@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.8.2.1 2011/02/08 16:20:13 bouyer Exp $	*/
+/*	$NetBSD: bnep.c,v 1.8.2.2 2011/02/17 12:00:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.8.2.1 2011/02/08 16:20:13 bouyer Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.8.2.2 2011/02/17 12:00:57 bouyer Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -429,6 +429,10 @@ bnep_recv_filter_net_type_set(channel_t *chan, uint8_t *ptr, size_t size)
 	}
 
 	nf = len / 4;
+	if (nf > BNEP_MAX_NET_TYPE_FILTERS) {
+		rsp = BNEP_FILTER_TOO_MANY_FILTERS;
+		goto done;
+	}
 	pf = malloc(nf * sizeof(pfilter_t));
 	if (pf == NULL) {
 		rsp = BNEP_FILTER_TOO_MANY_FILTERS;
@@ -511,6 +515,10 @@ bnep_recv_filter_multi_addr_set(channel_t *chan, uint8_t *ptr, size_t size)
 	}
 
 	nf = len / (ETHER_ADDR_LEN * 2);
+	if (nf > BNEP_MAX_MULTI_ADDR_FILTERS) {
+		rsp = BNEP_FILTER_TOO_MANY_FILTERS;
+		goto done;
+	}
 	mf = malloc(nf * sizeof(mfilter_t));
 	if (mf == NULL) {
 		rsp = BNEP_FILTER_TOO_MANY_FILTERS;

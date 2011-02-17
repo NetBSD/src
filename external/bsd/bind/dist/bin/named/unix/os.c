@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.2.2.1 2011/02/17 11:57:33 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.101 2009/08/13 07:04:38 marka Exp */
+/* Id: os.c,v 1.104 2010-11-17 23:47:08 tbox Exp */
 
 /*! \file */
 
@@ -212,7 +212,7 @@ linux_setcaps(cap_t caps) {
 				ns_main_earlyfatal("cap_set_proc failed: %s", strbuf); \
 			} \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define INIT_CAP \
 	do { \
 		caps = cap_init(); \
@@ -225,15 +225,15 @@ linux_setcaps(cap_t caps) {
 			isc__strerror(errno, strbuf, sizeof(strbuf)); \
 			ns_main_earlyfatal("cap_get_proc failed: %s", strbuf); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define FREE_CAP \
 	{ \
 		cap_free(caps); \
 		cap_free(curcaps); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
-#define SET_CAP(flag) do { caps |= (1 << (flag)); } while (0)
-#define INIT_CAP do { caps = 0; } while (0)
+#define SET_CAP(flag) do { caps |= (1 << (flag)); } while (/*CONSTCOND*/0)
+#define INIT_CAP do { caps = 0; } while (/*CONSTCOND*/0)
 #endif /* HAVE_LIBCAP */
 
 static void

@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.24.2.1 2011/02/08 16:19:04 bouyer Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.24.2.2 2011/02/17 11:59:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -91,7 +91,7 @@ enum {	RUMPSP_HANDSHAKE,
 	RUMPSP_PREFORK,
 	RUMPSP_RAISE };
 
-enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK };
+enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK, HANDSHAKE_EXEC };
 
 #define AUTHLEN 4 /* 128bit fork auth */
 
@@ -560,12 +560,15 @@ tcp_connecthook(int s)
 	return 0;
 }
 
+static char parsedurl[256];
+
 /*ARGSUSED*/
 static int
 unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 {
 	struct sockaddr_un sun;
 	size_t slen;
+	int savepath = 0;
 
 	if (strlen(addr) > sizeof(sun.sun_path))
 		return ENAMETOOLONG;
@@ -590,11 +593,17 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 				return ENAMETOOLONG;
 			strlcpy(sun.sun_path, mywd, sizeof(sun.sun_path));
 			strlcat(sun.sun_path, "/", sizeof(sun.sun_path));
+			savepath = 1;
 		}
 	}
 	strlcat(sun.sun_path, addr, sizeof(sun.sun_path));
 	sun.sun_len = SUN_LEN(&sun);
 	slen = sun.sun_len+1; /* get the 0 too */
+
+	if (savepath && *parsedurl == '\0') {
+		snprintf(parsedurl, sizeof(parsedurl),
+		    "unix://%s", sun.sun_path);
+	}
 
 	*sa = malloc(slen);
 	if (*sa == NULL)

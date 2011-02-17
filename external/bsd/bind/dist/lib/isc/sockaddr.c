@@ -1,7 +1,7 @@
-/*	$NetBSD: sockaddr.c,v 1.1.1.1 2009/03/22 15:02:08 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.1.1.1.4.1 2011/02/17 11:58:56 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sockaddr.c,v 1.70 2007/06/19 23:47:17 tbox Exp */
+/* Id: sockaddr.c,v 1.73 2010-11-17 23:47:09 tbox Exp */
 
 /*! \file */
 
@@ -392,8 +392,8 @@ isc_sockaddr_fromnetaddr(isc_sockaddr_t *sockaddr, const isc_netaddr_t *na,
 #endif
 		sockaddr->type.sin6.sin6_port = htons(port);
 		break;
-        default:
-                INSIST(0);
+	default:
+		INSIST(0);
 	}
 	ISC_LINK_INIT(sockaddr, link);
 }

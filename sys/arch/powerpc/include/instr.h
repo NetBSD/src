@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.5 2011/01/18 01:02:54 matt Exp $ */
+/*	$NetBSD: instr.h,v 1.5.2.1 2011/02/17 11:59:56 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -438,7 +438,7 @@ struct powerpc_jump_fixup_info {
 	uint32_t jfi_real;
 };
  
-void	powerpc_fixup_stubs(uint32_t *, uint32_t *);
+void	powerpc_fixup_stubs(uint32_t *, uint32_t *, uint32_t *, uint32_t *);
 
 
 #endif /* !_POWERPC_INSTR_H_ */

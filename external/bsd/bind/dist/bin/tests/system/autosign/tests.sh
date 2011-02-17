@@ -14,10 +14,12 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.4.6.7 2010/08/16 22:27:17 marka Exp
+# Id: tests.sh,v 1.12 2010-12-15 18:44:37 each Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
+
+RANDFILE=random.data
 
 status=0
 n=0
@@ -587,7 +589,7 @@ status=`expr $status + $ret`
 
 echo "I:checking that standby key does not sign records ($n)"
 ret=0
-id=`sed 's/^K.+007+0*//' < standby.key`
+ed=`sed 's/^K.+007+0*//' < standby.key`
 $DIG $DIGOPTS dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep 'RRSIG.*'" $id "'\. ' dig.out.ns1.test$n > /dev/null && ret=1
 n=`expr $n + 1`
@@ -660,6 +662,32 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking that serial number and RRSIGs are both updated (rt21045) ($n)"
+ret=0
+oldserial=`$DIG $DIGOPTS +short soa prepub.example @10.53.0.3 | awk '$0 !~ /SOA/ {print $3}'`
+oldinception=`$DIG $DIGOPTS +short soa prepub.example @10.53.0.3 | awk '/SOA/ {print $6}' | sort -u`
+
+$KEYGEN -3 -q -r $RANDFILE -K ns3 -P 0 -A +6d -I +38d -D +45d prepub.example > /dev/null
+
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 sign prepub.example 2>&1 | sed 's/^/I:ns1 /'
+newserial=$oldserial
+try=0
+while [ $oldserial -eq $newserial -a $try -lt 42 ]
+do
+	newserial=`$DIG $DIGOPTS +short soa prepub.example @10.53.0.3 |
+		 awk '$0 !~ /SOA/ {print $3}'`
+	sleep 1
+	try=`expr $try + 1`
+done
+newinception=`$DIG $DIGOPTS +short soa prepub.example @10.53.0.3 | awk '/SOA/ {print $6}' | sort -u`
+#echo "$oldserial : $newserial"
+#echo "$oldinception : $newinception"
+
+[ "$oldserial" = "$newserial" ] && ret=1
+[ "$oldinception" = "$newinception" ] && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:preparing to test key change corner cases"
 echo "I:removing a private key file"
 file="ns1/`cat vanishing.key`.private"
@@ -672,6 +700,9 @@ newfile=`cat standby.key`
 newid=`sed 's/^K.+007+0*//' < standby.key`
 $SETTIME -K ns1 -I now -D now+15 $oldfile > /dev/null
 $SETTIME -K ns1 -i 0 -S $oldfile $newfile > /dev/null
+
+# note previous zone serial number
+oldserial=`$DIG $DIGOPTS +short soa . @10.53.0.1 | awk '{print $3}'`
 
 $RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 loadkeys . 2>&1 | sed 's/^/I:ns1 /'
 
@@ -711,6 +742,14 @@ ret=0
 $DIG $DIGOPTS txt . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep 'RRSIG.*'" $newid "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
 grep 'RRSIG.*'" $oldid "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking SOA serial number has been incremented ($n)"
+ret=0
+newserial=`$DIG $DIGOPTS +short soa . @10.53.0.1 | awk '{print $3}'`
+[ "$newserial" != "$oldserial" ] || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
