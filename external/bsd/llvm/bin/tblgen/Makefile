@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:49 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/02/17 18:35:35 joerg Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -15,6 +15,7 @@ SRCS=	ARMDecoderEmitter.cpp \
 	ClangASTNodesEmitter.cpp \
 	ClangAttrEmitter.cpp \
 	ClangDiagnosticsEmitter.cpp \
+	ClangSACheckersEmitter.cpp \
 	CodeEmitterGen.cpp \
 	CodeGenDAGPatterns.cpp \
 	CodeGenInstruction.cpp \

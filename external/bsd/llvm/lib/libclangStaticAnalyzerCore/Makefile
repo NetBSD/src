@@ -1,31 +1,30 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.1 2011/02/17 18:35:36 joerg Exp $
 
-LIB=	clangStaticAnalyzer
+LIB=	clangStaticAnalyzerCore
 
 .include <bsd.init.mk>
 
-.PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer
+.PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Core
 
 SRCS+=	AggExprVisitor.cpp \
 	AnalysisManager.cpp \
-	AnalyzerStatsChecker.cpp \
 	BasicConstraintManager.cpp \
 	BasicStore.cpp \
 	BasicValueFactory.cpp \
+	BlockCounter.cpp \
 	BugReporter.cpp \
 	BugReporterVisitors.cpp \
 	CFRefCount.cpp \
 	Checker.cpp \
 	CheckerHelpers.cpp \
+	CheckerManager.cpp \
 	Environment.cpp \
 	ExplodedGraph.cpp \
 	FlatStore.cpp \
-	BlockCounter.cpp \
 	CXXExprEngine.cpp \
 	CoreEngine.cpp \
 	GRState.cpp \
 	HTMLDiagnostics.cpp \
-	ManagerRegistry.cpp \
 	MemRegion.cpp \
 	ObjCMessage.cpp \
 	PathDiagnostic.cpp \

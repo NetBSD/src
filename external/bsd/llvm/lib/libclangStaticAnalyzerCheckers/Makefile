@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/02/17 18:35:36 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -7,12 +7,13 @@ LIB=	clangStaticAnalyzerCheckers
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers
 
 SRCS+=	AdjustedReturnValueChecker.cpp \
-	AnalysisConsumer.cpp \
+	AnalyzerStatsChecker.cpp \
 	ArrayBoundChecker.cpp \
 	ArrayBoundCheckerV2.cpp \
 	AttrNonNullChecker.cpp \
 	BasicObjCFoundationChecks.cpp \
 	BuiltinFunctionChecker.cpp \
+	ClangSACheckerProvider.cpp \
 	CStringChecker.cpp \
 	CallAndMessageChecker.cpp \
 	CastSizeChecker.cpp \
@@ -25,10 +26,9 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	DeadStoresChecker.cpp \
 	DereferenceChecker.cpp \
 	DivZeroChecker.cpp \
+	ExperimentalChecks.cpp \
 	ExprEngine.cpp \
-	ExprEngineExperimentalChecks.cpp \
 	FixedAddressChecker.cpp \
-	FrontendActions.cpp \
 	IdempotentOperationChecker.cpp \
 	LLVMConventionsChecker.cpp \
 	MacOSXAPIChecker.cpp \
@@ -55,6 +55,12 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	UnixAPIChecker.cpp \
 	UnreachableCodeChecker.cpp \
 	VLASizeChecker.cpp
+
+TABLEGEN_SRC=		Checkers.td
+TABLEGEN_INCLUDES=	-I${CLANG_SRCDIR}/include
+TABLEGEN_OUTPUT=	Checkers.inc|-gen-clang-sa-checkers
+
+.include "${.PARSEDIR}/../../tablegen.mk"
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
