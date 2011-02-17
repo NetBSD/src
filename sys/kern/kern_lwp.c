@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.154 2011/01/17 08:26:58 matt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.155 2011/02/17 18:50:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.154 2011/01/17 08:26:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.155 2011/02/17 18:50:02 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1076,6 +1076,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
+	KASSERT(l->l_blcnt == 0);
 	kdtrace_thread_dtor(NULL, l);
 	if (!recycle)
 		pool_cache_put(lwp_cache, l);
