@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.c,v 1.3 2011/02/17 02:55:16 jmcneill Exp $ */
+/* $NetBSD: acpidump.c,v 1.4 2011/02/17 10:18:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpidump.c,v 1.3 2011/02/17 02:55:16 jmcneill Exp $");
+__RCSID("$NetBSD: acpidump.c,v 1.4 2011/02/17 10:18:05 jmcneill Exp $");
 
 
 #include <sys/param.h>
@@ -42,18 +42,19 @@ __RCSID("$NetBSD: acpidump.c,v 1.3 2011/02/17 02:55:16 jmcneill Exp $");
 
 #include "acpidump.h"
 
+int	cflag;	/* Dump unknown table data as characters */
 int	dflag;	/* Disassemble AML using iasl(8) */
+int	sflag;	/* Skip tables with bad checksums */
 int	tflag;	/* Dump contents of SDT tables */
 int	vflag;	/* Use verbose messages */
-int	cflag;	/* Dump unknown table data as characters */
 
 static void
 usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s [-c] [-d] [-t] [-h] [-v] [-f dsdt_input] "
-			"[-o dsdt_output]\n", progname);
+	fprintf(stderr, "usage: %s [-c] [-d] [-s] [-t] [-h] [-v] "
+			"[-f dsdt_input] [-o dsdt_output]\n", progname);
 	fprintf(stderr, "To send ASL:\n\t%s -dt | gzip -c9 > foo.asl.gz\n",
 	    progname);
 	exit(EXIT_FAILURE);
@@ -78,6 +79,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			dflag = 1;
+			break;
+		case 's':
+			sflag = 1;
 			break;
 		case 't':
 			tflag = 1;

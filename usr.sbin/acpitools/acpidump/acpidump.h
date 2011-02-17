@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.h,v 1.3 2011/02/17 02:55:16 jmcneill Exp $ */
+/* $NetBSD: acpidump.h,v 1.4 2011/02/17 10:18:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -83,6 +83,7 @@ int	 acpi_checksum(void *, size_t);
 /* Command line flags */
 extern int	cflag;
 extern int	dflag;
+extern int	sflag;
 extern int	tflag;
 extern int	vflag;
 
