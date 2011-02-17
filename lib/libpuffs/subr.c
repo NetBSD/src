@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.26 2011/02/17 15:41:34 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.27 2011/02/17 17:55:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.26 2011/02/17 15:41:34 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.27 2011/02/17 17:55:36 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -297,6 +297,21 @@ puffs_addvtype2mode(mode_t mode, enum vtype type)
 		break;
 	case VBLK:
 		mode |= S_IFBLK;
+		break;
+	case VSOCK:
+		mode |= S_IFSOCK;
+		break;
+	case VFIFO:
+		mode |= S_IFIFO;
+		break;
+	case VREG:
+		mode |= S_IFREG;
+		break;
+	case VLNK:
+		mode |= S_IFLNK;
+		break;
+	case VDIR:
+		mode |= S_IFDIR;
 		break;
 	default:
 		break;
