@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.43 2010/08/30 06:27:14 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.44 2011/02/17 15:13:49 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.43 2010/08/30 06:27:14 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.44 2011/02/17 15:13:49 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,7 +405,7 @@ setinputfile(const char *fname, int push)
 	}
 
 	if (fd < 10) {
-		fd2 = copyfd(fd, 10);
+		fd2 = copyfd(fd, 10, 0);
 		close(fd);
 		if (fd2 < 0)
 			error("Out of file descriptors");
