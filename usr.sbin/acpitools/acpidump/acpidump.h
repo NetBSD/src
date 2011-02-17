@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.h,v 1.2.2.1 2011/02/17 12:00:57 bouyer Exp $ */
+/* $NetBSD: acpidump.h,v 1.2.2.2 2011/02/17 15:24:51 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -53,6 +53,8 @@
 #define	ACPI_HPET_ID_COUNT_SIZE_CAP	0x00002000
 #define	ACPI_HPET_ID_LEGACY_CAPABLE	0x00008000
 #define	ACPI_HPET_ID_PCI_VENDOR_ID	0xffff0000
+
+#define ACPI_RSDP_REV0_SIZE     20  /* Size of original ACPI 1.0 RSDP */
 
 /* Find and map the RSD PTR structure and return it for parsing */
 ACPI_TABLE_HEADER *sdt_load_devmem(void);
