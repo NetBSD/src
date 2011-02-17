@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.6 2010/12/19 16:25:16 jruoho Exp $ */
+/* $NetBSD: acpi.c,v 1.7 2011/02/17 02:55:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.6 2010/12/19 16:25:16 jruoho Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.7 2011/02/17 02:55:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -103,6 +103,7 @@ static void	acpi_handle_waet(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_wdat(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_wdrt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_sdt(ACPI_TABLE_HEADER *sdp);
+static void	acpi_dump_bytes(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_fadt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_facs(ACPI_TABLE_FACS *facs);
 static void	acpi_print_dsdt(ACPI_TABLE_HEADER *dsdp);
@@ -1896,6 +1897,32 @@ acpi_print_sdt(ACPI_TABLE_HEADER *sdp)
 }
 
 static void
+acpi_dump_bytes(ACPI_TABLE_HEADER *sdp)
+{
+	unsigned int i;
+	uint8_t *p;
+
+	p = (uint8_t *)sdp + sizeof(*sdp);
+	printf("\n\tData={");
+	for (i = 0; i < sdp->Length; i++) {
+		if (cflag) {
+			if (i % 64 == 0)
+				printf("\n\t ");
+			else if (i % 16 == 0)
+				printf(" ");
+			printf("%c", (p[i] >= ' ' && p[i] <= '~') ? p[i] : '.');
+		} else {
+			if (i % 16 == 0)
+				printf("\n\t\t");
+			else if (i % 8 == 0)
+				printf("   ");
+			printf(" %02x", p[i]);
+		}
+	}
+	printf("\n\t}\n");
+}
+
+static void
 acpi_print_rsdt(ACPI_TABLE_HEADER *rsdp)
 {
 	ACPI_TABLE_RSDT *rsdt;
@@ -2241,6 +2268,7 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 		else {
 			printf(BEGIN_COMMENT);
 			acpi_print_sdt(sdp);
+			acpi_dump_bytes(sdp);
 			printf(END_COMMENT);
 		}
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.c,v 1.2 2009/12/22 08:44:03 cegger Exp $ */
+/* $NetBSD: acpidump.c,v 1.3 2011/02/17 02:55:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpidump.c,v 1.2 2009/12/22 08:44:03 cegger Exp $");
+__RCSID("$NetBSD: acpidump.c,v 1.3 2011/02/17 02:55:16 jmcneill Exp $");
 
 
 #include <sys/param.h>
@@ -45,13 +45,14 @@ __RCSID("$NetBSD: acpidump.c,v 1.2 2009/12/22 08:44:03 cegger Exp $");
 int	dflag;	/* Disassemble AML using iasl(8) */
 int	tflag;	/* Dump contents of SDT tables */
 int	vflag;	/* Use verbose messages */
+int	cflag;	/* Dump unknown table data as characters */
 
 static void
 usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s [-d] [-t] [-h] [-v] [-f dsdt_input] "
+	fprintf(stderr, "usage: %s [-c] [-d] [-t] [-h] [-v] [-f dsdt_input] "
 			"[-o dsdt_output]\n", progname);
 	fprintf(stderr, "To send ASL:\n\t%s -dt | gzip -c9 > foo.asl.gz\n",
 	    progname);
@@ -70,8 +71,11 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((c = getopt(argc, argv, "dhtvf:o:")) != -1) {
+	while ((c = getopt(argc, argv, "cdhtvf:o:")) != -1) {
 		switch (c) {
+		case 'c':
+			cflag = 1;
+			break;
 		case 'd':
 			dflag = 1;
 			break;
