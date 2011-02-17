@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.102.4.4 2011/02/17 12:00:52 bouyer Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.102.4.5 2011/02/17 13:28:15 bouyer Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102.4.4 2011/02/17 12:00:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102.4.5 2011/02/17 13:28:15 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1051,7 +1051,6 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		dip1->di_flags =
 		    ufs_rw32(ufs_rw32(dip1->di_flags, ns) & ~SF_SNAPSHOT, ns);
 		memset(&dip1->di_db[0], 0, (NDADDR + NIADDR) * sizeof(int32_t));
-		/* quota inodes are not accounted in quotas */
 	} else {
 		dip2 = (struct ufs2_dinode *)bp->b_data +
 		    ino_to_fsbo(fs, cancelip->i_number);
