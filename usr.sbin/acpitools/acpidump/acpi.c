@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.7 2011/02/17 02:55:16 jmcneill Exp $ */
+/* $NetBSD: acpi.c,v 1.8 2011/02/17 10:18:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.7 2011/02/17 02:55:16 jmcneill Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.8 2011/02/17 10:18:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1884,9 +1884,11 @@ acpi_print_sdt(ACPI_TABLE_HEADER *sdp)
 {
 	printf("  ");
 	acpi_print_string(sdp->Signature, ACPI_NAME_SIZE);
-	printf(": Length=%d, Revision=%d, Checksum=%d,\n",
+	printf(": Length=%d, Revision=%d, Checksum=%d",
 	       sdp->Length, sdp->Revision, sdp->Checksum);
-	printf("\tOEMID=");
+	if (acpi_checksum(sdp, sdp->Length))
+		printf(" (Incorrect)");
+	printf(",\n\tOEMID=");
 	acpi_print_string(sdp->OemId, ACPI_OEM_ID_SIZE);
 	printf(", OEM Table ID=");
 	acpi_print_string(sdp->OemTableId, ACPI_OEM_TABLE_ID_SIZE);
@@ -1902,7 +1904,7 @@ acpi_dump_bytes(ACPI_TABLE_HEADER *sdp)
 	unsigned int i;
 	uint8_t *p;
 
-	p = (uint8_t *)sdp + sizeof(*sdp);
+	p = (uint8_t *)sdp;
 	printf("\n\tData={");
 	for (i = 0; i < sdp->Length; i++) {
 		if (cflag) {
@@ -2221,7 +2223,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 		if (acpi_checksum(sdp, sdp->Length)) {
 			warnx("RSDT entry %d (sig %.4s) is corrupt", i,
 			    sdp->Signature);
-			continue;
+			if (sflag)
+				continue;
 		}
 		if (!memcmp(sdp->Signature, ACPI_SIG_FADT, 4))
 			acpi_handle_fadt(sdp);
