@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.17 2011/02/17 16:03:05 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.18 2011/02/17 16:59:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.17 2011/02/17 16:03:05 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.18 2011/02/17 16:59:46 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -82,6 +82,7 @@ static const char *const disktokens[] = {
 #define DFILE 1
 	"hostpath",
 #define DSIZE 2
+#define DSIZE_E -1
 	"size",
 #define DOFFSET 3
 	"offset",
@@ -174,14 +175,31 @@ main(int argc, char *argv[])
 						    "size already given\n");
 						usage();
 					}
-					/* XXX: off_t max? */
-					flen = strsuftoll("-d size", value,
-					    0, LLONG_MAX);
+					if (strcmp(value, "e") == 0) {
+						if (foffset != 0) {
+							fprintf(stderr,
+							    "cannot specify "
+							    "offset with "
+							    "size=e\n");
+							usage();
+						}
+						flen = DSIZE_E;
+					} else {
+						/* XXX: off_t max? */
+						flen = strsuftoll("-d size",
+						    value, 0, LLONG_MAX);
+					}
 					break;
 				case DOFFSET:
 					if (foffset != 0) {
 						fprintf(stderr,
 						    "offset already given\n");
+						usage();
+					}
+					if (flen == DSIZE_E) {
+						fprintf(stderr, "cannot "
+						    "specify offset with "
+						    "size=e\n");
 						usage();
 					}
 					/* XXX: off_t max? */
@@ -330,11 +348,12 @@ main(int argc, char *argv[])
 		struct disklabel dl;
 		struct stat sb;
 		off_t foffset, flen, fendoff;
-		int fd;
+		int fd, oflags;
 
-		fd = open(etfs[i].hostpath, O_RDWR | O_CREAT, 0644);
+		oflags = etfs[i].flen == DSIZE_E ? 0 : O_CREAT;
+		fd = open(etfs[i].hostpath, O_RDWR | oflags, 0644);
 		if (fd == -1)
-			die(sflag, errno, "etfs hostpath create");
+			die(sflag, errno, "etfs hostpath open");
 
 		if (etfs[i].partition) {
 			int partition = etfs[i].partition - 'a';
@@ -354,10 +373,15 @@ main(int argc, char *argv[])
 			foffset = etfs[i].foffset;
 			flen = etfs[i].flen;
 		}
-		fendoff = foffset + flen;
 
 		if (fstat(fd, &sb) == -1)
 			die(sflag, errno, "fstat etfs hostpath");
+		if (flen == DSIZE_E) {
+			if (!S_ISREG(sb.st_mode))
+				die(sflag, EINVAL, "size=e requires reg file");
+			flen = sb.st_size;
+		}
+		fendoff = foffset + flen;
 		if (S_ISREG(sb.st_mode) && sb.st_size < fendoff) {
 			if (ftruncate(fd, fendoff) == -1)
 				die(sflag, errno, "truncate");
