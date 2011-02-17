@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.16 2011/02/04 20:06:23 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.17 2011/02/17 16:03:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.16 2011/02/04 20:06:23 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.17 2011/02/17 16:03:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -87,6 +87,8 @@ static const char *const disktokens[] = {
 	"offset",
 #define DLABEL 4
 	"disklabel",
+#define DTYPE 5
+	"type",
 	NULL
 };
 
@@ -97,6 +99,15 @@ struct etfsreg {
 	off_t foffset;
 	char partition;
 	enum rump_etfs_type type;
+};
+
+struct etfstype {
+	const char *name;
+	enum rump_etfs_type type;
+} etfstypes[] = {
+	{ "blk", RUMP_ETFS_BLK },
+	{ "chr", RUMP_ETFS_CHR },
+	{ "reg", RUMP_ETFS_REG },
 };
 
 int
@@ -129,10 +140,12 @@ main(int argc, char *argv[])
 			char *key, *hostpath;
 			long long flen, foffset;
 			char partition;
+			int ftype;
 
 			flen = foffset = 0;
 			partition = 0;
 			key = hostpath = NULL;
+			ftype = -1;
 			options = optarg;
 			while (*options) {
 				switch (getsubopt(&options,
@@ -192,6 +205,28 @@ main(int argc, char *argv[])
 					partition = *value;
 					break;
 
+				case DTYPE:
+					if (ftype != -1) {
+						fprintf(stderr,
+						    "type already specified\n");
+						usage();
+					}
+
+					for (i = 0;
+					    i < __arraycount(etfstypes);
+					    i++) {
+						if (strcmp(etfstypes[i].name,
+						    value) == 0)
+							break;
+					}
+					if (i == __arraycount(etfstypes)) {
+						fprintf(stderr,
+						    "invalid type %s\n", value);
+						usage();
+					}
+					ftype = etfstypes[i].type;
+					break;
+
 				default:
 					fprintf(stderr, "invalid dtoken\n");
 					usage();
@@ -204,6 +239,8 @@ main(int argc, char *argv[])
 				fprintf(stderr, "incomplete drivespec\n");
 				usage();
 			}
+			if (ftype == -1)
+				ftype = RUMP_ETFS_BLK;
 
 			if (netfs - curetfs == 0) {
 				etfs = realloc(etfs, (netfs+16)*sizeof(*etfs));
@@ -217,7 +254,7 @@ main(int argc, char *argv[])
 			etfs[curetfs].flen = flen;
 			etfs[curetfs].foffset = foffset;
 			etfs[curetfs].partition = partition;
-			etfs[curetfs].type = RUMP_ETFS_BLK;
+			etfs[curetfs].type = ftype;
 			curetfs++;
 
 			break;
