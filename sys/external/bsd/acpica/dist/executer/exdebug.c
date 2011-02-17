@@ -140,10 +140,9 @@
  *
  * This function is not compiled if ACPI_NO_ERROR_MESSAGES is set.
  *
- * This function is only enabled if AcpiGbl_EnableAmlDebugObject is set, or
- * if ACPI_LV_DEBUG_OBJECT is set in the AcpiDbgLevel. Thus, in the normal
- * operational case, stores to the debug object are ignored but can be easily
- * enabled if necessary.
+ * This function is only enabled if AcpiGbl_EnableAmlDebugObject is set.
+ * Thus, in the normal operational case, stores to the debug object are
+ * ignored but can be easily enabled if necessary.
  *
  ******************************************************************************/
 
@@ -159,10 +158,9 @@ AcpiExDoDebugObject (
     ACPI_FUNCTION_TRACE_PTR (ExDoDebugObject, SourceDesc);
 
 
-    /* Output must be enabled via the DebugObject global or the DbgLevel */
+    /* Output must be enabled via the DebugObject global */
 
-    if (!AcpiGbl_EnableAmlDebugObject &&
-        !(AcpiDbgLevel & ACPI_LV_DEBUG_OBJECT))
+    if (!AcpiGbl_EnableAmlDebugObject)
     {
         return_VOID;
     }
