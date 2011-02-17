@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.2 2011/01/18 01:11:50 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.3 2011/02/17 13:55:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.2 2011/01/18 01:11:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3 2011/02/17 13:55:45 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -121,6 +121,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.2 2011/01/18 01:11:50 matt Exp $");
  * spaces.  Since the number of TLB entries is usually quite small, this avoids
  * a lot of overhead for not much gain.
  */
+
+#define _PMAP_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
