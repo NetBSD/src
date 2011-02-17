@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.15 2011/02/16 19:08:57 drochner Exp $ */
+/*	$NetBSD: deflate.c,v 1.16 2011/02/17 17:10:18 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.15 2011/02/16 19:08:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.16 2011/02/17 17:10:18 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -125,10 +125,22 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 	for (;;) {
 		error = decomp ? inflate(&zbuf, Z_SYNC_FLUSH) :
 				 deflate(&zbuf, Z_FINISH);
-		if (error != Z_OK && error != Z_STREAM_END)
+		if (error == Z_STREAM_END) /* success */
+			break;
+		/*
+		 * XXX compensate for two problems:
+		 * -Former versions of this code didn't set Z_FINISH
+		 *  on compression, so the compressed data are not correctly
+		 *  terminated and the decompressor doesn't get Z_STREAM_END.
+		 *  Accept such packets for interoperability.
+		 * -sys/net/zlib.c has a bug which makes that Z_BUF_ERROR is
+		 *  set after successful decompression under rare conditions.
+		 */
+		else if (decomp && (error == Z_OK || error == Z_BUF_ERROR)
+			 && zbuf.avail_in == 0 && zbuf.avail_out != 0)
+				break;
+		else if (error != Z_OK)
 			goto bad;
-		else if (zbuf.avail_in == 0 && zbuf.avail_out != 0)
-			goto end;
 		else if (zbuf.avail_out == 0) {
 			if (i == len) {
 				len += ZBUF;
@@ -146,11 +158,9 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 			buf[i].size = size;
 			zbuf.avail_out = buf[i].size;
 			i++;
-		} else
-			goto bad;
+		}
 	}
 
-end:
 	result = count = zbuf.total_out;
 
 	if (i != 1) { /* copy everything into one buffer */
