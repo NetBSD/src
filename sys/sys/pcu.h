@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.2 2011/02/17 18:44:54 matt Exp $	*/
+/*	$NetBSD: pcu.h,v 1.3 2011/02/17 19:58:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,16 +32,14 @@
 #ifndef _SYS_PCU_H_
 #define _SYS_PCU_H_
 
-#if !defined(_KERNEL) && !defined(_KMEMUSER)
-#error "Kernel-only header"
-#endif
-
 /*
  * Default: one PCU for MD.
  */
 #ifndef	PCU_UNIT_COUNT
 #define	PCU_UNIT_COUNT		1
 #endif
+
+#if defined(_KERNEL)
 
 typedef struct {
 	u_int	pcu_id;
@@ -53,5 +51,7 @@ void	pcu_load(const pcu_ops_t *);
 void	pcu_save_lwp(const pcu_ops_t *, lwp_t *);
 void	pcu_discard(const pcu_ops_t *);
 bool	pcu_used(const pcu_ops_t *, lwp_t *);
+
+#endif
 
 #endif
