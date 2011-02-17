@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.142 2011/01/28 16:58:27 pooka Exp $	*/
+/*	$NetBSD: lwp.h,v 1.143 2011/02/17 18:32:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -39,6 +39,7 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/pcu.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/specificdata.h>
@@ -122,6 +123,9 @@ struct lwp {
 	u_int		l_slptime;	/* l: time since last blocked */
 	callout_t	l_timeout_ch;	/* !: callout for tsleep */
 	u_int		l_emap_gen;	/* !: emap generation number */
+
+	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
+	uint32_t	l_pcu_used;
 
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
