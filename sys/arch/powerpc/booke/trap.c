@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 2011/02/08 01:38:48 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 2011/02/17 13:53:32 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.4 2011/02/08 01:38:48 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.5 2011/02/17 13:53:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.4 2011/02/08 01:38:48 matt Exp $");
 
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
+#include <powerpc/booke/cpuvar.h>
 
 #include <powerpc/db_machdep.h>
 #include <ddb/db_interface.h>
@@ -450,7 +451,9 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 			tf->tf_srr0 += 4;
 			return 0;
 		}
-	} else if (tf->tf_esr & (ESR_PIL|ESR_PPR)) {
+	}
+
+	if (tf->tf_esr & (ESR_PIL|ESR_PPR)) {
 		if (emulate_opcode(tf, ksi)) {
 			tf->tf_srr0 += 4;
 			return 0;
@@ -471,6 +474,41 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		ksi->ksi_code = 0;
 	}
 	ksi->ksi_addr = (void *)tf->tf_srr0;
+	return rv;
+}
+
+static int
+debug_exception(struct trapframe *tf, ksiginfo_t *ksi)
+{
+	struct cpu_info * const ci = curcpu();
+	int rv = EPERM;
+
+	if (!usertrap_p(tf))
+		return rv;
+
+	ci->ci_ev_debug.ev_count++;
+
+	/*
+	 * Ack the interrupt.
+	 */
+	mtspr(SPR_DBSR, tf->tf_esr);
+	KASSERT(tf->tf_esr & (DBSR_IAC1|DBSR_IAC2));
+	KASSERT((tf->tf_srr1 & PSL_SE) == 0);
+
+	/*
+	 * Disable debug events
+	 */
+	mtspr(SPR_DBCR1, 0);
+	mtspr(SPR_DBCR0, 0);
+
+	/*
+	 * Tell the debugger ...
+	 */
+	KSI_INIT_TRAP(ksi);
+	ksi->ksi_signo = SIGTRAP;
+	ksi->ksi_trap = EXC_TRC;
+	ksi->ksi_addr = (void *)tf->tf_srr0;
+	ksi->ksi_code = TRAP_TRACE;
 	return rv;
 }
 
@@ -578,6 +616,7 @@ ddb_exception(struct trapframe *tf)
 	}
 	return false;
 #else
+#if 0
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
 	printf("CPL stack:");
@@ -588,6 +627,7 @@ ddb_exception(struct trapframe *tf)
 	}
 	printf(" %u\n", ci->ci_cpl);
 	dump_trapframe(tf);
+#endif
 	if (kdb_trap(tf->tf_exc, tf)) {
 		tf->tf_srr0 += 4;
 		return true;
@@ -713,6 +753,12 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		rv = itlb_exception(tf, &ksi);
 		break;
 	case T_DEBUG:
+#ifdef DDB
+		if (!usertrap && ddb_exception(tf))
+			return;
+#endif
+		rv = debug_exception(tf, &ksi);
+		break;
 	case T_EMBEDDED_FP_DATA:
 		rv = embedded_fp_data_exception(tf, &ksi);
 		break;

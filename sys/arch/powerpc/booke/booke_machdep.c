@@ -50,7 +50,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <powerpc/altivec.h>
+#include <powerpc/spr.h>
+#include <powerpc/booke/spr.h>
+#include <powerpc/booke/cpuvar.h>
 
 /*
  * Global variables used here and there
@@ -441,4 +443,38 @@ cpu_write_1(bus_addr_t a, uint8_t v)
 {
 	struct cpu_softc * const cpu = curcpu()->ci_softc;
 	bus_space_write_1(cpu->cpu_bst, cpu->cpu_bsh, a, v);
+}
+
+void
+booke_sstep(struct trapframe *tf)
+{
+	KASSERT(tf->tf_srr1 & PSL_DE);
+	const uint32_t insn = ufetch_32((const void *)tf->tf_srr0);
+	register_t dbcr0 = DBCR0_IAC1 | DBCR0_IDM;
+	register_t dbcr1 = DBCR1_IAC1US_USER | DBCR1_IAC1ER_DS1;
+	if ((insn >> 28) == 4) {
+		uint32_t iac2 = 0;
+		if ((insn >> 26) == 0x12) {
+			const int32_t off = (((int32_t)insn << 6) >> 6) & ~3;
+			iac2 = ((insn & 2) ? 0 : tf->tf_srr0) + off;
+			dbcr0 |= DBCR0_IAC2;
+		} else if ((insn >> 26) == 0x10) {
+			const int16_t off = insn & ~3;
+			iac2 = ((insn & 2) ? 0 : tf->tf_srr0) + off;
+			dbcr0 |= DBCR0_IAC2;
+		} else if ((insn & 0xfc00ffde) == 0x4c000420) {
+			iac2 = tf->tf_ctr;
+			dbcr0 |= DBCR0_IAC2;
+		} else if ((insn & 0xfc00ffde) == 0x4c000020) {
+			iac2 = tf->tf_lr;
+			dbcr0 |= DBCR0_IAC2;
+		}
+		if (dbcr0 & DBCR0_IAC2) {
+			dbcr1 |= DBCR1_IAC2US_USER | DBCR1_IAC2ER_DS1;
+			mtspr(SPR_IAC2, iac2);
+		}
+	}
+	mtspr(SPR_IAC1, tf->tf_srr0 + 4);
+	mtspr(SPR_DBCR1, dbcr1);
+	mtspr(SPR_DBCR0, dbcr0);
 }

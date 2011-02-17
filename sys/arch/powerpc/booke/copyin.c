@@ -1,4 +1,4 @@
-/*	$NetBSD: copyin.c,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: copyin.c,v 1.3 2011/02/17 13:53:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,12 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.3 2011/02/17 13:53:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
 
 #include <machine/pcb.h>
+
+#include <powerpc/booke/cpuvar.h>
 
 static inline uint8_t
 copyin_byte(const uint8_t * const usaddr8, register_t ds_msr)
@@ -193,6 +195,24 @@ copyin_words(vaddr_t usaddr, vaddr_t kdaddr, size_t len, register_t ds_msr)
 	while (len-- > 0) {
 		*kdaddr32++ = copyin_word(usaddr32++, ds_msr);
 	}
+}
+
+uint32_t
+ufetch_32(const void *vusaddr)
+{
+	struct pcb * const pcb = lwp_getpcb(curlwp);
+	struct faultbuf env;
+
+	if (setfault(&env) != 0) {
+		pcb->pcb_onfault = NULL;
+		return -1;
+	}
+
+	uint32_t rv = copyin_word(vusaddr, mfmsr() | PSL_DS);
+
+	pcb->pcb_onfault = NULL;
+
+	return rv;
 }
 
 int
