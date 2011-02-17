@@ -4,114 +4,42 @@
  *
  *****************************************************************************/
 
-/******************************************************************************
- *
- * 1. Copyright Notice
- *
- * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
+/*
+ * Copyright (C) 2000 - 2011, Intel Corp.
  * All rights reserved.
  *
- * 2. License
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights.  You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
  *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code.  No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision.  In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change.  Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee.  Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution.  In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE.  ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT,  ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES.  THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government.  In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************/
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
 
 #include "aecommon.h"
 
@@ -120,19 +48,19 @@
 
 /* Local prototypes */
 
-void
+static void
 AeNotifyHandler (
     ACPI_HANDLE             Device,
     UINT32                  Value,
     void                    *Context);
 
-void
+static void
 AeDeviceNotifyHandler (
     ACPI_HANDLE             Device,
     UINT32                  Value,
     void                    *Context);
 
-ACPI_STATUS
+static ACPI_STATUS
 AeExceptionHandler (
     ACPI_STATUS             AmlStatus,
     ACPI_NAME               Name,
@@ -140,26 +68,62 @@ AeExceptionHandler (
     UINT32                  AmlOffset,
     void                    *Context);
 
-ACPI_STATUS
+static ACPI_STATUS
 AeTableHandler (
     UINT32                  Event,
     void                    *Table,
     void                    *Context);
 
-ACPI_STATUS
+static ACPI_STATUS
 AeRegionInit (
     ACPI_HANDLE             RegionHandle,
     UINT32                  Function,
     void                    *HandlerContext,
     void                    **RegionContext);
 
-void
+static void
 AeAttachedDataHandler (
     ACPI_HANDLE             Object,
     void                    *Data);
 
-UINT32                      SigintCount = 0;
-AE_DEBUG_REGIONS            AeRegions;
+static UINT32
+AeInterfaceHandler (
+    ACPI_STRING             InterfaceName,
+    UINT32                  Supported);
+
+static UINT32
+AeEventHandler (
+    void                    *Context);
+
+static UINT32               SigintCount = 0;
+static AE_DEBUG_REGIONS     AeRegions;
+
+
+/*
+ * We will override default region handlers for memory and I/O. Especially
+ * the SystemMemory handler, which must be implemented locally to simulate
+ * memory operation regions. Do not override the PCI_Config handler since
+ * we would like to exercise the default handler code. Do not override
+ * DataTable handler, since the default handler works correctly under
+ * acpiexec (and is used by the test suites.)
+ */
+static ACPI_ADR_SPACE_TYPE  DefaultSpaceIdList[] =
+{
+    ACPI_ADR_SPACE_SYSTEM_MEMORY,
+    ACPI_ADR_SPACE_SYSTEM_IO
+};
+
+/*
+ * We will install handlers for some of the various address space IDs
+ */
+static ACPI_ADR_SPACE_TYPE  SpaceIdList[] =
+{
+    ACPI_ADR_SPACE_EC,
+    ACPI_ADR_SPACE_SMBUS,
+    ACPI_ADR_SPACE_PCI_BAR_TARGET,
+    ACPI_ADR_SPACE_IPMI,
+    ACPI_ADR_SPACE_FIXED_HARDWARE
+};
 
 
 /******************************************************************************
@@ -174,7 +138,7 @@ AE_DEBUG_REGIONS            AeRegions;
  *
  *****************************************************************************/
 
-void __cdecl
+void ACPI_SYSTEM_XFACE
 AeCtrlCHandler (
     int                     Sig)
 {
@@ -213,7 +177,7 @@ AeCtrlCHandler (
  *
  *****************************************************************************/
 
-void
+static void
 AeNotifyHandler (
     ACPI_HANDLE                 Device,
     UINT32                      Value,
@@ -263,7 +227,6 @@ AeNotifyHandler (
         (void) AcpiEvaluateObject (Device, "_NOT", NULL, NULL);
         break;
     }
-
 }
 
 
@@ -281,7 +244,7 @@ AeNotifyHandler (
  *
  *****************************************************************************/
 
-void
+static void
 AeDeviceNotifyHandler (
     ACPI_HANDLE                 Device,
     UINT32                      Value,
@@ -312,7 +275,7 @@ AeDeviceNotifyHandler (
  *
  *****************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AeExceptionHandler (
     ACPI_STATUS             AmlStatus,
     ACPI_NAME               Name,
@@ -356,7 +319,7 @@ AeExceptionHandler (
     Arg[1].String.Length = ACPI_STRLEN (Exception);
 
     Arg[2].Type = ACPI_TYPE_INTEGER;
-    Arg[2].Integer.Value = ACPI_TO_INTEGER (AcpiOsGetThreadId());
+    Arg[2].Integer.Value = AcpiOsGetThreadId();
 
     /* Setup return buffer */
 
@@ -411,26 +374,31 @@ AeExceptionHandler (
  *
  *****************************************************************************/
 
-char                *TableEvents[] =
+static char                *TableEvents[] =
 {
     "LOAD",
     "UNLOAD",
     "UNKNOWN"
 };
 
-ACPI_STATUS
+static ACPI_STATUS
 AeTableHandler (
     UINT32                  Event,
     void                    *Table,
     void                    *Context)
 {
+    ACPI_STATUS             Status;
+
 
     if (Event > ACPI_NUM_TABLE_EVENTS)
     {
         Event = ACPI_NUM_TABLE_EVENTS;
     }
 
-    /* TBD: could dump entire table header, need a header dump routine */
+    /* Enable any GPEs associated with newly-loaded GPE methods */
+
+    Status = AcpiUpdateAllGpes ();
+    AE_CHECK_OK (AcpiUpdateAllGpes, Status);
 
     printf ("[AcpiExec] Table Event %s, [%4.4s] %p\n",
         TableEvents[Event], ((ACPI_TABLE_HEADER *) Table)->Signature, Table);
@@ -442,16 +410,61 @@ AeTableHandler (
  *
  * FUNCTION:    AeGpeHandler
  *
- * DESCRIPTION: GPE handler for acpiexec
+ * DESCRIPTION: Common GPE handler for acpiexec
  *
  *****************************************************************************/
 
 UINT32
 AeGpeHandler (
+    ACPI_HANDLE             GpeDevice,
+    UINT32                  GpeNumber,
     void                    *Context)
 {
-    AcpiOsPrintf ("Received a GPE at handler\n");
-    return (0);
+    ACPI_NAMESPACE_NODE     *DeviceNode = (ACPI_NAMESPACE_NODE *) GpeDevice;
+
+
+    AcpiOsPrintf ("[AcpiExec] GPE Handler received GPE%02X (GPE block %4.4s)\n",
+        GpeNumber, GpeDevice ? DeviceNode->Name.Ascii : "FADT");
+
+    return (ACPI_REENABLE_GPE);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeGlobalEventHandler
+ *
+ * DESCRIPTION: Global GPE/Fixed event handler
+ *
+ *****************************************************************************/
+
+void
+AeGlobalEventHandler (
+    UINT32                  Type,
+    ACPI_HANDLE             Device,
+    UINT32                  EventNumber,
+    void                    *Context)
+{
+    char                    *TypeName;
+
+
+    switch (Type)
+    {
+    case ACPI_EVENT_TYPE_GPE:
+        TypeName = "GPE";
+        break;
+
+    case ACPI_EVENT_TYPE_FIXED:
+        TypeName = "FixedEvent";
+        break;
+
+    default:
+        TypeName = "UNKNOWN";
+        break;
+    }
+
+    AcpiOsPrintf ("[AcpiExec] Global Event Handler received: Type %s Number %.2X Dev %p\n",
+        TypeName, EventNumber, Device);
 }
 
 
@@ -464,7 +477,7 @@ AeGpeHandler (
  *
  *****************************************************************************/
 
-void
+static void
 AeAttachedDataHandler (
     ACPI_HANDLE             Object,
     void                    *Data)
@@ -474,6 +487,46 @@ AeAttachedDataHandler (
 
     AcpiOsPrintf ("Received an attached data deletion on %4.4s\n",
         Node->Name.Ascii);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeInterfaceHandler
+ *
+ * DESCRIPTION: Handler for _OSI invocations
+ *
+ *****************************************************************************/
+
+static UINT32
+AeInterfaceHandler (
+    ACPI_STRING             InterfaceName,
+    UINT32                  Supported)
+{
+    ACPI_FUNCTION_NAME (AeInterfaceHandler);
+
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
+        "Received _OSI (\"%s\"), is %ssupported\n",
+        InterfaceName, Supported == 0 ? "not " : ""));
+
+    return (Supported);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeEventHandler
+ *
+ * DESCRIPTION: Handler for Fixed Events
+ *
+ *****************************************************************************/
+
+static UINT32
+AeEventHandler (
+    void                    *Context)
+{
+    return (0);
 }
 
 
@@ -489,7 +542,7 @@ AeAttachedDataHandler (
  *
  *****************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AeRegionInit (
     ACPI_HANDLE                 RegionHandle,
     UINT32                      Function,
@@ -501,13 +554,13 @@ AeRegionInit (
      */
     *RegionContext = RegionHandle;
 
-    return AE_OK;
+    return (AE_OK);
 }
 
 
 /******************************************************************************
  *
- * FUNCTION:    AeInstallHandlers
+ * FUNCTION:    AeInstallLateHandlers
  *
  * PARAMETERS:  None
  *
@@ -517,11 +570,63 @@ AeRegionInit (
  *
  *****************************************************************************/
 
-ACPI_ADR_SPACE_TYPE         SpaceId[] = {0, 1, 2, 3, 4, 5, 6, 7, 0x80};
-#define AEXEC_NUM_REGIONS   9
+ACPI_STATUS
+AeInstallLateHandlers (
+    void)
+{
+    ACPI_STATUS             Status;
+    UINT32                  i;
+
+
+    /* Install some fixed event handlers */
+
+    Status = AcpiInstallFixedEventHandler (ACPI_EVENT_GLOBAL, AeEventHandler, NULL);
+    AE_CHECK_OK (AcpiInstallFixedEventHandler, Status);
+
+    Status = AcpiInstallFixedEventHandler (ACPI_EVENT_RTC, AeEventHandler, NULL);
+    AE_CHECK_OK (AcpiInstallFixedEventHandler, Status);
+
+    /*
+     * Install handlers for some of the "device driver" address spaces
+     * such as EC, SMBus, etc.
+     */
+    for (i = 0; i < ACPI_ARRAY_LENGTH (SpaceIdList); i++)
+    {
+        /* Install handler at the root object */
+
+        Status = AcpiInstallAddressSpaceHandler (AcpiGbl_RootNode,
+                        SpaceIdList[i], AeRegionHandler, AeRegionInit, NULL);
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not install an OpRegion handler for %s space(%u)",
+                AcpiUtGetRegionName((UINT8) SpaceIdList[i]), SpaceIdList[i]));
+            return (Status);
+        }
+    }
+
+    return (AE_OK);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeInstallEarlyHandlers
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Install handlers for the AcpiExec utility.
+ *
+ * Notes:       Don't install handler for PCI_Config, we want to use the
+ *              default handler to exercise that code.
+ *
+ *****************************************************************************/
 
 ACPI_STATUS
-AeInstallHandlers (void)
+AeInstallEarlyHandlers (
+    void)
 {
     ACPI_STATUS             Status;
     UINT32                  i;
@@ -530,6 +635,13 @@ AeInstallHandlers (void)
 
     ACPI_FUNCTION_ENTRY ();
 
+
+    Status = AcpiInstallInterfaceHandler (AeInterfaceHandler);
+    if (ACPI_FAILURE (Status))
+    {
+        printf ("Could not install interface handler, %s\n",
+            AcpiFormatException (Status));
+    }
 
     Status = AcpiInstallTableHandler (AeTableHandler, NULL);
     if (ACPI_FAILURE (Status))
@@ -584,8 +696,12 @@ AeInstallHandlers (void)
 
         Status = AcpiInstallNotifyHandler (Handle, ACPI_ALL_NOTIFY,
                                             AeNotifyHandler, NULL);
+        AE_CHECK_OK (AcpiInstallNotifyHandler, Status);
+
         Status = AcpiRemoveNotifyHandler (Handle, ACPI_ALL_NOTIFY,
                                             AeNotifyHandler);
+        AE_CHECK_OK (AcpiRemoveNotifyHandler, Status);
+
         Status = AcpiInstallNotifyHandler (Handle, ACPI_ALL_NOTIFY,
                                             AeNotifyHandler, NULL);
         if (ACPI_FAILURE (Status))
@@ -595,31 +711,37 @@ AeInstallHandlers (void)
         }
 
         Status = AcpiAttachData (Handle, AeAttachedDataHandler, Handle);
+        AE_CHECK_OK (AcpiAttachData, Status);
+
         Status = AcpiDetachData (Handle, AeAttachedDataHandler);
+        AE_CHECK_OK (AcpiDetachData, Status);
+
         Status = AcpiAttachData (Handle, AeAttachedDataHandler, Handle);
+        AE_CHECK_OK (AcpiAttachData, Status);
     }
     else
     {
         printf ("No _SB_ found, %s\n", AcpiFormatException (Status));
     }
 
-    /* Set a handler for all supported operation regions */
 
-    for (i = 0; i < AEXEC_NUM_REGIONS; i++)
+    /*
+     * Install handlers that will override the default handlers for some of
+     * the space IDs.
+     */
+    for (i = 0; i < ACPI_ARRAY_LENGTH (DefaultSpaceIdList); i++)
     {
-        Status = AcpiRemoveAddressSpaceHandler (AcpiGbl_RootNode,
-                        SpaceId[i], AeRegionHandler);
+        /* Install handler at the root object */
 
-        /* Install handler at the root object.
-         * TBD: all default handlers should be installed here!
-         */
         Status = AcpiInstallAddressSpaceHandler (AcpiGbl_RootNode,
-                        SpaceId[i], AeRegionHandler, AeRegionInit, NULL);
+                    DefaultSpaceIdList[i], AeRegionHandler,
+                    AeRegionInit, NULL);
         if (ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
-                "Could not install an OpRegion handler for %s space(%u)",
-                AcpiUtGetRegionName((UINT8) SpaceId[i]), SpaceId[i]));
+                "Could not install a default OpRegion handler for %s space(%u)",
+                AcpiUtGetRegionName ((UINT8) DefaultSpaceIdList[i]),
+                DefaultSpaceIdList[i]));
             return (Status);
         }
     }
@@ -630,8 +752,7 @@ AeInstallHandlers (void)
      */
     AeRegions.NumberOfRegions = 0;
     AeRegions.RegionList = NULL;
-
-    return Status;
+    return (Status);
 }
 
 
@@ -678,7 +799,7 @@ AeRegionHandler (
      */
     if (RegionObject->Region.Type != ACPI_TYPE_REGION)
     {
-        return AE_OK;
+        return (AE_OK);
     }
 
     /*
@@ -720,10 +841,12 @@ AeRegionHandler (
         {
         case ACPI_READ:
             Status = AcpiHwReadPort (Address, (UINT32 *) Value, BitWidth);
+            AE_CHECK_OK (AcpiHwReadPort, Status);
             break;
 
         case ACPI_WRITE:
             Status = AcpiHwWritePort (Address, (UINT32) *Value, BitWidth);
+            AE_CHECK_OK (AcpiHwWritePort, Status);
             break;
 
         default:
@@ -867,14 +990,14 @@ AeRegionHandler (
         RegionElement = AcpiOsAllocate (sizeof (AE_REGION));
         if (!RegionElement)
         {
-            return AE_NO_MEMORY;
+            return (AE_NO_MEMORY);
         }
 
         RegionElement->Buffer = AcpiOsAllocate (Length);
         if (!RegionElement->Buffer)
         {
             AcpiOsFree (RegionElement);
-            return AE_NO_MEMORY;
+            return (AE_NO_MEMORY);
         }
 
         /* Initialize the region with the default fill value */
@@ -927,7 +1050,7 @@ AeRegionHandler (
             ByteWidth, (UINT32)(RegionElement->Address),
             RegionElement->Length));
 
-        return AE_AML_REGION_LIMIT;
+        return (AE_AML_REGION_LIMIT);
     }
 
     /*
@@ -958,9 +1081,10 @@ DoFunction:
         break;
 
     default:
-        return AE_BAD_PARAMETER;
+        return (AE_BAD_PARAMETER);
     }
-    return AE_OK;
+
+    return (AE_OK);
 }
 
 
