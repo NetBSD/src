@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.46 2011/02/17 12:52:33 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.47 2011/02/17 15:20:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.46 2011/02/17 12:52:33 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.47 2011/02/17 15:20:10 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -205,12 +205,18 @@ pid_t	(*host_fork)(void);
 int	(*host_daemon)(int, int);
 int	(*host_execve)(const char *, char *const[], char *const[]);
 
+/* ok, we need *two* bits per dup2'd fd to track fd+HIJACKOFF aliases */
 static uint32_t dup2mask;
-#define ISDUP2D(fd) (((fd) < 32) && (1<<(fd) & dup2mask))
+#define ISDUP2D(fd) (((fd) < 16) && (1<<(fd) & dup2mask))
 #define SETDUP2(fd) \
-    do { if ((fd) < 32) dup2mask |= (1<<(fd)); } while (/*CONSTCOND*/0)
+    do { if ((fd) < 16) dup2mask |= (1<<(fd)); } while (/*CONSTCOND*/0)
 #define CLRDUP2(fd) \
-    do { if ((fd) < 32) dup2mask &= ~(1<<(fd)); } while (/*CONSTCOND*/0)
+    do { if ((fd) < 16) dup2mask &= ~(1<<(fd)); } while (/*CONSTCOND*/0)
+#define ISDUP2ALIAS(fd) (((fd) < 16) && (1<<((fd)+16) & dup2mask))
+#define SETDUP2ALIAS(fd) \
+    do { if ((fd) < 16) dup2mask |= (1<<((fd)+16)); } while (/*CONSTCOND*/0)
+#define CLRDUP2ALIAS(fd) \
+    do { if ((fd) < 16) dup2mask &= ~(1<<((fd)+16)); } while (/*CONSTCOND*/0)
 
 //#define DEBUGJACK
 #ifdef DEBUGJACK
@@ -458,6 +464,25 @@ dodup(int oldd, int minfd)
 	return newd;
 }
 
+/*
+ * dup a host file descriptor so that it doesn't collide with the dup2mask
+ */
+static int
+fd_dupgood(int fd)
+{
+	int (*op_fcntl)(int, int, ...) = GETSYSCALL(host, FCNTL);
+	int (*op_close)(int) = GETSYSCALL(host, CLOSE);
+	int ofd, i;
+
+	for (i = 1; ISDUP2D(fd); i++) {
+		ofd = fd;
+		fd = op_fcntl(ofd, F_DUPFD, i);
+		op_close(ofd);
+	}
+
+	return fd;
+}
+
 int
 open(const char *path, int flags, ...)
 {
@@ -481,6 +506,8 @@ open(const char *path, int flags, ...)
 
 	if (isrump)
 		fd = fd_rump2host(fd);
+	else
+		fd = fd_dupgood(fd);
 	return fd;
 }
 
@@ -556,6 +583,8 @@ __socket30(int domain, int type, int protocol)
 
 	if (!dohost)
 		fd = fd_rump2host(fd);
+	else
+		fd = fd_dupgood(fd);
 	DPRINTF(("socket <- %d\n", fd));
 
 	return fd;
@@ -580,6 +609,8 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	fd = op_accept(s, addr, addrlen);
 	if (fd != -1 && isrump)
 		fd = fd_rump2host(fd);
+	else
+		fd = fd_dupgood(fd);
 
 	DPRINTF((" <- %d\n", fd));
 
@@ -650,8 +681,8 @@ fcntl(int fd, int cmd, ...)
 		 */
 
 		/* why don't we offer fls()? */
-		for (i = 31; i >= 0; i--) {
-			if (dup2mask & 1<<i)
+		for (i = 15; i >= 0; i--) {
+			if (ISDUP2D(i))
 				break;
 		}
 		
@@ -715,9 +746,15 @@ close(int fd)
 	if (fd_isrump(fd)) {
 		int undup2 = 0;
 
+		fd = fd_host2rump(fd);
+		if (ISDUP2ALIAS(fd)) {
+			_DIAGASSERT(ISDUP2D(fd));
+			CLRDUP2ALIAS(fd);
+			return 0;
+		}
+
 		if (ISDUP2D(fd))
 			undup2 = 1;
-		fd = fd_host2rump(fd);
 		op_close = GETSYSCALL(rump, CLOSE);
 		rv = op_close(fd);
 		if (rv == 0 && undup2)
@@ -769,6 +806,11 @@ dup2(int oldd, int newd)
 		if (!(newd >= 0 && newd <= 2))
 			return EBADF;
 		oldd = fd_host2rump(oldd);
+		if (oldd == newd) {
+			SETDUP2(newd);
+			SETDUP2ALIAS(newd);
+			return newd;
+		}
 		rv = rump_sys_dup2(oldd, newd);
 		if (rv != -1)
 			SETDUP2(newd);
