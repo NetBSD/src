@@ -4,115 +4,45 @@
  *
  *****************************************************************************/
 
-/******************************************************************************
- *
- * 1. Copyright Notice
- *
- * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
+/*
+ * Copyright (C) 2000 - 2011, Intel Corp.
  * All rights reserved.
  *
- * 2. License
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights.  You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
  *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code.  No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision.  In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change.  Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee.  Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution.  In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE.  ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT,  ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES.  THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government.  In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************/
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
 
+#include "acpi.h"
+#include "accommon.h"
 
 #ifdef WIN32
 #pragma warning(disable:4115)   /* warning C4115: named type definition in parentheses (caused by rpcasync.h> */
@@ -130,12 +60,40 @@
 #include <process.h>
 #include <time.h>
 
-#include "acpi.h"
-#include "accommon.h"
-
 #define _COMPONENT          ACPI_OS_SERVICES
         ACPI_MODULE_NAME    ("oswinxf")
 
+
+extern FILE                 *AcpiGbl_DebugFile;
+extern BOOLEAN              AcpiGbl_DebugTimeout;
+
+FILE                        *AcpiGbl_OutputFile;
+UINT64                      TimerFrequency;
+char                        TableName[ACPI_NAME_SIZE + 1];
+
+#define ACPI_OS_DEBUG_TIMEOUT   30000 /* 30 seconds */
+
+
+/* Upcalls to application */
+
+ACPI_PHYSICAL_ADDRESS
+AeLocalGetRootPointer (
+    void);
+
+void
+AeTableOverride (
+    ACPI_TABLE_HEADER       *ExistingTable,
+    ACPI_TABLE_HEADER       **NewTable);
+
+ACPI_TABLE_HEADER *
+OsGetTable (
+    char                    *Signature);
+
+
+/*
+ * Real semaphores are only used for a multi-threaded application
+ */
+#ifndef ACPI_SINGLE_THREADED
 
 /* Semaphore information structure */
 
@@ -153,31 +111,7 @@ typedef struct acpi_os_semaphore_info
 
 ACPI_OS_SEMAPHORE_INFO          AcpiGbl_Semaphores[ACPI_OS_MAX_SEMAPHORES];
 
-
-/* Upcalls to AcpiExec */
-
-ACPI_PHYSICAL_ADDRESS
-AeLocalGetRootPointer (
-    void);
-
-void
-AeTableOverride (
-    ACPI_TABLE_HEADER       *ExistingTable,
-    ACPI_TABLE_HEADER       **NewTable);
-
-ACPI_TABLE_HEADER *
-OsGetTable (
-    char                    *Signature);
-
-
-extern FILE                 *AcpiGbl_DebugFile;
-extern BOOLEAN              AcpiGbl_DebugTimeout;
-
-FILE                        *AcpiGbl_OutputFile;
-UINT64                      TimerFrequency;
-char                        TableName[ACPI_NAME_SIZE + 1];
-
-#define ACPI_OS_DEBUG_TIMEOUT   30000 /* 30 seconds */
+#endif /* ACPI_SINGLE_THREADED */
 
 
 /******************************************************************************
@@ -186,16 +120,17 @@ char                        TableName[ACPI_NAME_SIZE + 1];
  *
  * PARAMETERS:  None
  *
- * RETURN:      None
+ * RETURN:      Status
  *
  * DESCRIPTION: Nothing to do for windows
  *
  *****************************************************************************/
 
 ACPI_STATUS
-AcpiOsTerminate (void)
+AcpiOsTerminate (
+    void)
 {
-    return AE_OK;
+    return (AE_OK);
 }
 
 
@@ -212,16 +147,19 @@ AcpiOsTerminate (void)
  *****************************************************************************/
 
 ACPI_STATUS
-AcpiOsInitialize (void)
+AcpiOsInitialize (
+    void)
 {
     LARGE_INTEGER           LocalTimerFrequency;
 
 
-    AcpiGbl_OutputFile = stdout;
-
+#ifndef ACPI_SINGLE_THREADED
     /* Clear the semaphore info array */
 
     memset (AcpiGbl_Semaphores, 0x00, sizeof (AcpiGbl_Semaphores));
+#endif
+
+    AcpiGbl_OutputFile = stdout;
 
     /* Get the timer frequency for use in AcpiOsGetTimer */
 
@@ -233,7 +171,7 @@ AcpiOsInitialize (void)
         TimerFrequency = LocalTimerFrequency.QuadPart;
     }
 
-    return AE_OK;
+    return (AE_OK);
 }
 
 
@@ -262,10 +200,10 @@ AcpiOsGetRootPointer (
  *
  * FUNCTION:    AcpiOsPredefinedOverride
  *
- * PARAMETERS:  InitVal     - Initial value of the predefined object
- *              NewVal      - The new value for the object
+ * PARAMETERS:  InitVal             - Initial value of the predefined object
+ *              NewVal              - The new value for the object
  *
- * RETURN:      Status, pointer to value.  Null pointer returned if not
+ * RETURN:      Status, pointer to value. Null pointer returned if not
  *              overriding.
  *
  * DESCRIPTION: Allow the OS to override predefined names
@@ -292,10 +230,10 @@ AcpiOsPredefinedOverride (
  *
  * FUNCTION:    AcpiOsTableOverride
  *
- * PARAMETERS:  ExistingTable   - Header of current table (probably firmware)
- *              NewTable        - Where an entire new table is returned.
+ * PARAMETERS:  ExistingTable       - Header of current table (probably firmware)
+ *              NewTable            - Where an entire new table is returned.
  *
- * RETURN:      Status, pointer to new table.  Null pointer returned if no
+ * RETURN:      Status, pointer to new table. Null pointer returned if no
  *              table is available to override
  *
  * DESCRIPTION: Return a different version of a table if one is available
@@ -460,7 +398,7 @@ AcpiOsRedirectOutput (
  *
  * FUNCTION:    AcpiOsPrintf
  *
- * PARAMETERS:  fmt, ...            Standard printf format
+ * PARAMETERS:  Fmt, ...            - Standard printf format
  *
  * RETURN:      None
  *
@@ -489,8 +427,8 @@ AcpiOsPrintf (
  *
  * FUNCTION:    AcpiOsVprintf
  *
- * PARAMETERS:  fmt                 Standard printf format
- *              args                Argument list
+ * PARAMETERS:  Fmt                 - Standard printf format
+ *              Args                - Argument list
  *
  * RETURN:      None
  *
@@ -539,8 +477,7 @@ AcpiOsVprintf (
  *
  * FUNCTION:    AcpiOsGetLine
  *
- * PARAMETERS:  fmt                 Standard printf format
- *              args                Argument list
+ * PARAMETERS:  Buffer              - Where to store the line
  *
  * RETURN:      Actual bytes read
  *
@@ -581,10 +518,10 @@ AcpiOsGetLine (
  *
  * FUNCTION:    AcpiOsMapMemory
  *
- * PARAMETERS:  where               Physical address of memory to be mapped
- *              length              How much memory to map
+ * PARAMETERS:  Where               - Physical address of memory to be mapped
+ *              Length              - How much memory to map
  *
- * RETURN:      Pointer to mapped memory.  Null on error.
+ * RETURN:      Pointer to mapped memory. Null on error.
  *
  * DESCRIPTION: Map physical memory into caller's address space
  *
@@ -592,11 +529,11 @@ AcpiOsGetLine (
 
 void *
 AcpiOsMapMemory (
-    ACPI_PHYSICAL_ADDRESS   where,
-    ACPI_SIZE               length)
+    ACPI_PHYSICAL_ADDRESS   Where,
+    ACPI_SIZE               Length)
 {
 
-    return (ACPI_TO_POINTER ((ACPI_SIZE) where));
+    return (ACPI_TO_POINTER ((ACPI_SIZE) Where));
 }
 
 
@@ -604,20 +541,20 @@ AcpiOsMapMemory (
  *
  * FUNCTION:    AcpiOsUnmapMemory
  *
- * PARAMETERS:  where               Logical address of memory to be unmapped
- *              length              How much memory to unmap
+ * PARAMETERS:  Where               - Logical address of memory to be unmapped
+ *              Length              - How much memory to unmap
  *
  * RETURN:      None.
  *
- * DESCRIPTION: Delete a previously created mapping.  Where and Length must
+ * DESCRIPTION: Delete a previously created mapping. Where and Length must
  *              correspond to a previous mapping exactly.
  *
  *****************************************************************************/
 
 void
 AcpiOsUnmapMemory (
-    void                    *where,
-    ACPI_SIZE               length)
+    void                    *Where,
+    ACPI_SIZE               Length)
 {
 
     return;
@@ -628,24 +565,24 @@ AcpiOsUnmapMemory (
  *
  * FUNCTION:    AcpiOsAllocate
  *
- * PARAMETERS:  Size                Amount to allocate, in bytes
+ * PARAMETERS:  Size                - Amount to allocate, in bytes
  *
- * RETURN:      Pointer to the new allocation.  Null on error.
+ * RETURN:      Pointer to the new allocation. Null on error.
  *
- * DESCRIPTION: Allocate memory.  Algorithm is dependent on the OS.
+ * DESCRIPTION: Allocate memory. Algorithm is dependent on the OS.
  *
  *****************************************************************************/
 
 void *
 AcpiOsAllocate (
-    ACPI_SIZE               size)
+    ACPI_SIZE               Size)
 {
     void                    *Mem;
 
 
-    Mem = (void *) malloc ((size_t) size);
+    Mem = (void *) malloc ((size_t) Size);
 
-    return Mem;
+    return (Mem);
 }
 
 
@@ -653,7 +590,7 @@ AcpiOsAllocate (
  *
  * FUNCTION:    AcpiOsFree
  *
- * PARAMETERS:  mem                 Pointer to previously allocated memory
+ * PARAMETERS:  Mem                 - Pointer to previously allocated memory
  *
  * RETURN:      None.
  *
@@ -670,6 +607,52 @@ AcpiOsFree (
 }
 
 
+#ifdef ACPI_SINGLE_THREADED
+/******************************************************************************
+ *
+ * FUNCTION:    Semaphore stub functions
+ *
+ * DESCRIPTION: Stub functions used for single-thread applications that do
+ *              not require semaphore synchronization. Full implementations
+ *              of these functions appear after the stubs.
+ *
+ *****************************************************************************/
+
+ACPI_STATUS
+AcpiOsCreateSemaphore (
+    UINT32              MaxUnits,
+    UINT32              InitialUnits,
+    ACPI_HANDLE         *OutHandle)
+{
+    *OutHandle = (ACPI_HANDLE) 1;
+    return (AE_OK);
+}
+
+ACPI_STATUS
+AcpiOsDeleteSemaphore (
+    ACPI_HANDLE         Handle)
+{
+    return (AE_OK);
+}
+
+ACPI_STATUS
+AcpiOsWaitSemaphore (
+    ACPI_HANDLE         Handle,
+    UINT32              Units,
+    UINT16              Timeout)
+{
+    return (AE_OK);
+}
+
+ACPI_STATUS
+AcpiOsSignalSemaphore (
+    ACPI_HANDLE         Handle,
+    UINT32              Units)
+{
+    return (AE_OK);
+}
+
+#else
 /******************************************************************************
  *
  * FUNCTION:    AcpiOsCreateSemaphore
@@ -690,12 +673,10 @@ AcpiOsCreateSemaphore (
     UINT32              InitialUnits,
     ACPI_SEMAPHORE      *OutHandle)
 {
-#ifdef _MULTI_THREADED
     void                *Mutex;
     UINT32              i;
 
     ACPI_FUNCTION_NAME (OsCreateSemaphore);
-#endif
 
 
     if (MaxUnits == ACPI_UINT32_MAX)
@@ -710,10 +691,8 @@ AcpiOsCreateSemaphore (
 
     if (InitialUnits > MaxUnits)
     {
-        return AE_BAD_PARAMETER;
+        return (AE_BAD_PARAMETER);
     }
-
-#ifdef _MULTI_THREADED
 
     /* Find an empty slot */
 
@@ -728,7 +707,7 @@ AcpiOsCreateSemaphore (
     {
         ACPI_EXCEPTION ((AE_INFO, AE_LIMIT,
             "Reached max semaphores (%u), could not create", ACPI_OS_MAX_SEMAPHORES));
-        return AE_LIMIT;
+        return (AE_LIMIT);
     }
 
     /* Create an OS semaphore */
@@ -737,7 +716,7 @@ AcpiOsCreateSemaphore (
     if (!Mutex)
     {
         ACPI_ERROR ((AE_INFO, "Could not create semaphore"));
-        return AE_NO_MEMORY;
+        return (AE_NO_MEMORY);
     }
 
     AcpiGbl_Semaphores[i].MaxUnits = (UINT16) MaxUnits;
@@ -748,9 +727,7 @@ AcpiOsCreateSemaphore (
             i, MaxUnits, InitialUnits, Mutex));
 
     *OutHandle = (void *) i;
-#endif
-
-    return AE_OK;
+    return (AE_OK);
 }
 
 
@@ -776,17 +753,12 @@ AcpiOsDeleteSemaphore (
     if ((Index >= ACPI_OS_MAX_SEMAPHORES) ||
         !AcpiGbl_Semaphores[Index].OsHandle)
     {
-        return AE_BAD_PARAMETER;
+        return (AE_BAD_PARAMETER);
     }
-
-
-#ifdef _MULTI_THREADED
 
     CloseHandle (AcpiGbl_Semaphores[Index].OsHandle);
     AcpiGbl_Semaphores[Index].OsHandle = NULL;
-#endif
-
-    return AE_OK;
+    return (AE_OK);
 }
 
 
@@ -810,7 +782,6 @@ AcpiOsWaitSemaphore (
     UINT32              Units,
     UINT16              Timeout)
 {
-#ifdef _MULTI_THREADED
     UINT32              Index = (UINT32) Handle;
     UINT32              WaitStatus;
     UINT32              OsTimeout = Timeout;
@@ -822,13 +793,13 @@ AcpiOsWaitSemaphore (
     if ((Index >= ACPI_OS_MAX_SEMAPHORES) ||
         !AcpiGbl_Semaphores[Index].OsHandle)
     {
-        return AE_BAD_PARAMETER;
+        return (AE_BAD_PARAMETER);
     }
 
     if (Units > 1)
     {
         printf ("WaitSemaphore: Attempt to receive %u units\n", Units);
-        return AE_NOT_IMPLEMENTED;
+        return (AE_NOT_IMPLEMENTED);
     }
 
     if (Timeout == ACPI_WAIT_FOREVER)
@@ -857,7 +828,7 @@ AcpiOsWaitSemaphore (
                 "Debug timeout on semaphore 0x%04X (%ums)\n",
                 Index, ACPI_OS_DEBUG_TIMEOUT));
         }
-        return AE_TIME;
+        return (AE_TIME);
     }
 
     if (AcpiGbl_Semaphores[Index].CurrentUnits == 0)
@@ -865,13 +836,11 @@ AcpiOsWaitSemaphore (
         ACPI_ERROR ((AE_INFO, "%s - No unit received. Timeout 0x%X, OS_Status 0x%X",
             AcpiUtGetMutexName (Index), Timeout, WaitStatus));
 
-        return AE_OK;
+        return (AE_OK);
     }
 
     AcpiGbl_Semaphores[Index].CurrentUnits--;
-#endif
-
-    return AE_OK;
+    return (AE_OK);
 }
 
 
@@ -893,8 +862,6 @@ AcpiOsSignalSemaphore (
     ACPI_SEMAPHORE      Handle,
     UINT32              Units)
 {
-#ifdef _MULTI_THREADED
-
     UINT32              Index = (UINT32) Handle;
 
 
@@ -904,19 +871,19 @@ AcpiOsSignalSemaphore (
     if (Index >= ACPI_OS_MAX_SEMAPHORES)
     {
         printf ("SignalSemaphore: Index/Handle out of range: %2.2X\n", Index);
-        return AE_BAD_PARAMETER;
+        return (AE_BAD_PARAMETER);
     }
 
     if (!AcpiGbl_Semaphores[Index].OsHandle)
     {
         printf ("SignalSemaphore: Null OS handle, Index %2.2X\n", Index);
-        return AE_BAD_PARAMETER;
+        return (AE_BAD_PARAMETER);
     }
 
     if (Units > 1)
     {
         printf ("SignalSemaphore: Attempt to signal %u units, Index %2.2X\n", Units, Index);
-        return AE_NOT_IMPLEMENTED;
+        return (AE_NOT_IMPLEMENTED);
     }
 
     if ((AcpiGbl_Semaphores[Index].CurrentUnits + 1) >
@@ -933,13 +900,19 @@ AcpiOsSignalSemaphore (
     AcpiGbl_Semaphores[Index].CurrentUnits++;
     ReleaseSemaphore (AcpiGbl_Semaphores[Index].OsHandle, Units, NULL);
 
-#endif
-
     return (AE_OK);
 }
 
+#endif /* ACPI_SINGLE_THREADED */
 
-/* Spinlock interfaces, just implement with a semaphore */
+
+/******************************************************************************
+ *
+ * FUNCTION:    Spinlock interfaces
+ *
+ * DESCRIPTION: Map these interfaces to semaphore interfaces
+ *
+ *****************************************************************************/
 
 ACPI_STATUS
 AcpiOsCreateLock (
@@ -1012,13 +985,13 @@ AcpiOsReleaseMutex (
  *
  * FUNCTION:    AcpiOsInstallInterruptHandler
  *
- * PARAMETERS:  InterruptNumber     Level handler should respond to.
- *              Isr                 Address of the ACPI interrupt handler
- *              ExceptPtr           Where status is returned
+ * PARAMETERS:  InterruptNumber     - Level handler should respond to.
+ *              ServiceRoutine      - Address of the ACPI interrupt handler
+ *              Context             - User context
  *
  * RETURN:      Handle to the newly installed handler.
  *
- * DESCRIPTION: Install an interrupt handler.  Used to install the ACPI
+ * DESCRIPTION: Install an interrupt handler. Used to install the ACPI
  *              OS-independent handler.
  *
  *****************************************************************************/
@@ -1030,7 +1003,7 @@ AcpiOsInstallInterruptHandler (
     void                    *Context)
 {
 
-    return AE_OK;
+    return (AE_OK);
 }
 
 
@@ -1038,7 +1011,7 @@ AcpiOsInstallInterruptHandler (
  *
  * FUNCTION:    AcpiOsRemoveInterruptHandler
  *
- * PARAMETERS:  Handle              Returned when handler was installed
+ * PARAMETERS:  Handle              - Returned when handler was installed
  *
  * RETURN:      Status
  *
@@ -1052,7 +1025,7 @@ AcpiOsRemoveInterruptHandler (
     ACPI_OSD_HANDLER        ServiceRoutine)
 {
 
-    return AE_OK;
+    return (AE_OK);
 }
 
 
@@ -1077,7 +1050,7 @@ AcpiOsGetThreadId (
     /* Ensure ID is never 0 */
 
     ThreadId = GetCurrentThreadId ();
-    return (ThreadId + 1);
+    return ((ACPI_THREAD_ID) (ThreadId + 1));
 }
 
 
@@ -1085,9 +1058,9 @@ AcpiOsGetThreadId (
  *
  * FUNCTION:    AcpiOsExecute
  *
- * PARAMETERS:  Type            - Type of execution
- *              Function        - Address of the function to execute
- *              Context         - Passed as a parameter to the function
+ * PARAMETERS:  Type                - Type of execution
+ *              Function            - Address of the function to execute
+ *              Context             - Passed as a parameter to the function
  *
  * RETURN:      Status
  *
@@ -1102,11 +1075,11 @@ AcpiOsExecute (
     void                    *Context)
 {
 
-#ifdef _MULTI_THREADED
+#ifndef ACPI_SINGLE_THREADED
     _beginthread (Function, (unsigned) 0, Context);
 #endif
 
-    return 0;
+    return (0);
 }
 
 
@@ -1114,9 +1087,9 @@ AcpiOsExecute (
  *
  * FUNCTION:    AcpiOsStall
  *
- * PARAMETERS:  microseconds        To sleep
+ * PARAMETERS:  Microseconds        - Time to stall
  *
- * RETURN:      Blocks until sleep is completed.
+ * RETURN:      None. Blocks until stall is completed.
  *
  * DESCRIPTION: Sleep at microsecond granularity
  *
@@ -1124,10 +1097,10 @@ AcpiOsExecute (
 
 void
 AcpiOsStall (
-    UINT32                  microseconds)
+    UINT32                  Microseconds)
 {
 
-    Sleep ((microseconds / 1000) + 1);
+    Sleep ((Microseconds / 1000) + 1);
     return;
 }
 
@@ -1136,9 +1109,9 @@ AcpiOsStall (
  *
  * FUNCTION:    AcpiOsSleep
  *
- * PARAMETERS:  milliseconds        To sleep
+ * PARAMETERS:  Milliseconds        - Time to sleep
  *
- * RETURN:      Blocks until sleep is completed.
+ * RETURN:      None. Blocks until sleep is completed.
  *
  * DESCRIPTION: Sleep at millisecond granularity
  *
@@ -1146,35 +1119,13 @@ AcpiOsStall (
 
 void
 AcpiOsSleep (
-    UINT64                  milliseconds)
+    UINT64                  Milliseconds)
 {
 
     /* Add 10ms to account for clock tick granularity */
 
-    Sleep (((unsigned long) milliseconds) + 10);
+    Sleep (((unsigned long) Milliseconds) + 10);
     return;
-}
-
-
-/******************************************************************************
- *
- * FUNCTION:    AcpiOsValidateInterface
- *
- * PARAMETERS:  Interface           - Requested interface to be validated
- *
- * RETURN:      AE_OK if interface is supported, AE_SUPPORT otherwise
- *
- * DESCRIPTION: Match an interface string to the interfaces supported by the
- *              host. Strings originate from an AML call to the _OSI method.
- *
- *****************************************************************************/
-
-ACPI_STATUS
-AcpiOsValidateInterface (
-    char                    *Interface)
-{
-
-    return (AE_SUPPORT);
 }
 
 
@@ -1182,10 +1133,10 @@ AcpiOsValidateInterface (
  *
  * FUNCTION:    AcpiOsReadPciConfiguration
  *
- * PARAMETERS:  PciId               Seg/Bus/Dev
- *              Register            Device Register
- *              Value               Buffer where value is placed
- *              Width               Number of bits
+ * PARAMETERS:  PciId               - Seg/Bus/Dev
+ *              Register            - Device Register
+ *              Value               - Buffer where value is placed
+ *              Width               - Number of bits
  *
  * RETURN:      Status
  *
@@ -1197,7 +1148,7 @@ ACPI_STATUS
 AcpiOsReadPciConfiguration (
     ACPI_PCI_ID             *PciId,
     UINT32                  Register,
-    void                    *Value,
+    UINT64                  *Value,
     UINT32                  Width)
 {
 
@@ -1209,12 +1160,12 @@ AcpiOsReadPciConfiguration (
  *
  * FUNCTION:    AcpiOsWritePciConfiguration
  *
- * PARAMETERS:  PciId               Seg/Bus/Dev
- *              Register            Device Register
- *              Value               Value to be written
- *              Width               Number of bits
+ * PARAMETERS:  PciId               - Seg/Bus/Dev
+ *              Register            - Device Register
+ *              Value               - Value to be written
+ *              Width               - Number of bits
  *
- * RETURN:      Status.
+ * RETURN:      Status
  *
  * DESCRIPTION: Write data to PCI configuration space
  *
@@ -1231,25 +1182,14 @@ AcpiOsWritePciConfiguration (
     return (AE_OK);
 }
 
-/* TEMPORARY STUB FUNCTION */
-void
-AcpiOsDerivePciId(
-    ACPI_HANDLE             Device,
-    ACPI_HANDLE             Region,
-    ACPI_PCI_ID             **PciId)
-{
-
-    return;
-}
-
 
 /******************************************************************************
  *
  * FUNCTION:    AcpiOsReadPort
  *
- * PARAMETERS:  Address             Address of I/O port/register to read
- *              Value               Where value is placed
- *              Width               Number of bits
+ * PARAMETERS:  Address             - Address of I/O port/register to read
+ *              Value               - Where value is placed
+ *              Width               - Number of bits
  *
  * RETURN:      Value read from port
  *
@@ -1290,9 +1230,9 @@ AcpiOsReadPort (
  *
  * FUNCTION:    AcpiOsWritePort
  *
- * PARAMETERS:  Address             Address of I/O port/register to write
- *              Value               Value to write
- *              Width               Number of bits
+ * PARAMETERS:  Address             - Address of I/O port/register to write
+ *              Value               - Value to write
+ *              Width               - Number of bits
  *
  * RETURN:      None
  *
@@ -1315,11 +1255,11 @@ AcpiOsWritePort (
  *
  * FUNCTION:    AcpiOsReadMemory
  *
- * PARAMETERS:  Address             Physical Memory Address to read
- *              Value               Where value is placed
- *              Width               Number of bits
+ * PARAMETERS:  Address             - Physical Memory Address to read
+ *              Value               - Where value is placed
+ *              Width               - Number of bits
  *
- * RETURN:      Value read from physical memory address.  Always returned
+ * RETURN:      Value read from physical memory address. Always returned
  *              as a 32-bit integer, regardless of the read width.
  *
  * DESCRIPTION: Read data from a physical memory address
@@ -1354,9 +1294,9 @@ AcpiOsReadMemory (
  *
  * FUNCTION:    AcpiOsWriteMemory
  *
- * PARAMETERS:  Address             Physical Memory Address to write
- *              Value               Value to write
- *              Width               Number of bits
+ * PARAMETERS:  Address             - Physical Memory Address to write
+ *              Value               - Value to write
+ *              Width               - Number of bits
  *
  * RETURN:      None
  *
@@ -1379,8 +1319,8 @@ AcpiOsWriteMemory (
  *
  * FUNCTION:    AcpiOsSignal
  *
- * PARAMETERS:  Function            ACPI CA signal function code
- *              Info                Pointer to function-dependent structure
+ * PARAMETERS:  Function            - ACPI CA signal function code
+ *              Info                - Pointer to function-dependent structure
  *
  * RETURN:      Status
  *
