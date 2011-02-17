@@ -237,7 +237,7 @@ AcpiDbExecuteMethod (
 
                     Params[1].Type           = ACPI_TYPE_STRING;
                     Params[1].String.Length  = 12;
-                    Params[1].String.Pointer = "AML Debugger";
+                    Params[1].String.Pointer = __UNCONST("AML Debugger");
                     break;
 
                 default:
