@@ -521,8 +521,8 @@ UtDisplaySummary (
     {
         /* Compiler name and version number */
 
-        FlPrintFile (FileId, "%s version %X [%s]\n",
-            CompilerId, (UINT32) ACPI_CA_VERSION, __DATE__);
+        FlPrintFile (FileId, "%s version %X\n",
+            CompilerId, (UINT32) ACPI_CA_VERSION);
     }
 
     if (Gbl_FileType == ASL_INPUT_TYPE_ASCII_DATA)

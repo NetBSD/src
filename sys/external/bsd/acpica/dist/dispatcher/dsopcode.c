@@ -1564,7 +1564,7 @@ AcpiDsExecEndControlOp (
         /* Call to the OSL in case OS wants a piece of the action */
 
         Status = AcpiOsSignal (ACPI_SIGNAL_BREAKPOINT,
-                    "Executed AML Breakpoint opcode");
+                    __UNCONST("Executed AML Breakpoint opcode"));
         break;
 
 

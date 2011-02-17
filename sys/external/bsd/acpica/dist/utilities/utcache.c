@@ -140,7 +140,7 @@
 
 ACPI_STATUS
 AcpiOsCreateCache (
-    char                    *CacheName,
+    const char              *CacheName,
     UINT16                  ObjectSize,
     UINT16                  MaxDepth,
     ACPI_MEMORY_LIST        **ReturnCache)
@@ -168,7 +168,7 @@ AcpiOsCreateCache (
 
     ACPI_MEMSET (Cache, 0, sizeof (ACPI_MEMORY_LIST));
     Cache->LinkOffset = 8;
-    Cache->ListName   = CacheName;
+    Cache->ListName   = __UNCONST(CacheName);
     Cache->ObjectSize = ObjectSize;
     Cache->MaxDepth   = MaxDepth;
 
