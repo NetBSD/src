@@ -312,7 +312,7 @@ static const char           *AcpiGbl_NsTypeNames[] =
 };
 
 
-const char *
+char *
 AcpiUtGetTypeName (
     ACPI_OBJECT_TYPE        Type)
 {
@@ -522,7 +522,7 @@ AcpiUtGetReferenceName (
 
 /* Names for internal mutex objects, used for debug output */
 
-static char                 *AcpiGbl_MutexNames[ACPI_NUM_MUTEX] =
+static const char              *AcpiGbl_MutexNames[ACPI_NUM_MUTEX] =
 {
     "ACPI_MTX_Interpreter",
     "ACPI_MTX_Namespace",
