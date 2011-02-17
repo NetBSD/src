@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.164.2.1 2011/02/08 16:18:34 bouyer Exp $
+.\"	$NetBSD: contents,v 1.164.2.2 2011/02/17 11:57:17 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,11 +91,6 @@ Symbols for
 The monolithic kernel which doesn't use kernel modules.
 .			It Pa netbsd-INSTALL.gz
 The installation kernel.
-.
-.			It Pa netbsd-INSTALL_FLOPPY.gz
-A version of
-.Li INSTALL
-for older machines without CD-ROM drives.
 .			It Pa netbsd-INSTALL_XEN3PAE_DOMU.gz
 .			It Pa netbsd-INSTALL_XEN3_DOMU.gz
 .			It Pa netbsd-XEN3PAE_DOMU.gz

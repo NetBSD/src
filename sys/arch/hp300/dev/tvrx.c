@@ -1,4 +1,4 @@
-/*	$NetBSD: tvrx.c,v 1.1.2.2 2011/02/08 16:19:21 bouyer Exp $	*/
+/*	$NetBSD: tvrx.c,v 1.1.2.3 2011/02/17 11:59:39 bouyer Exp $	*/
 /*	$OpenBSD: tvrx.c,v 1.1 2006/04/14 21:05:43 miod Exp $	*/
 
 /*
@@ -63,17 +63,17 @@ struct	tvrx_softc {
 	int		sc_scode;
 };
 
-int	tvrx_match(device_t, cfdata_t, void *);
-void	tvrx_attach(device_t, device_t, void *);
+static int	tvrx_match(device_t, cfdata_t, void *);
+static void	tvrx_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(tvrx, sizeof(struct tvrx_softc),
     tvrx_match, tvrx_attach, NULL, NULL);
 
-int	tvrx_reset(struct diofb *, int, struct diofbreg *);
+static int	tvrx_reset(struct diofb *, int, struct diofbreg *);
 
-int	tvrx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	tvrx_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
-struct	wsdisplay_accessops	tvrx_accessops = {
+static struct wsdisplay_accessops tvrx_accessops = {
 	tvrx_ioctl,
 	diofb_mmap,
 	diofb_alloc_screen,
@@ -93,9 +93,9 @@ tvrx_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (da->da_id != DIO_DEVICE_ID_FRAMEBUFFER ||
 	    da->da_secid != DIO_DEVICE_SECID_TIGERSHARK)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -138,7 +138,7 @@ tvrx_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	int rc;
 
 	if ((rc = diofb_fbinquire(fb, scode, fbr)) != 0)
-		return (rc);
+		return rc;
 
 	/*
 	 * We rely on the PROM to initialize the frame buffer in the mode
@@ -153,7 +153,7 @@ tvrx_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	fb->bmv = diofb_mono_windowmove;
 	diofb_fbsetup(fb);
 
-	return (0);
+	return 0;
 }
 
 int

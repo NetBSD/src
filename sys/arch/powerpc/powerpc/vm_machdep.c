@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.81.2.1 2011/02/08 16:19:35 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.81.2.2 2011/02/17 11:59:57 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81.2.1 2011/02/08 16:19:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81.2.2 2011/02/17 11:59:57 bouyer Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -232,7 +232,7 @@ vunmaprange(vaddr_t kaddr, vsize_t len)
  * Map a user I/O request into kernel virtual address space.
  * Note: these pages have already been locked by uvm_vslock.
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr;
@@ -265,6 +265,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		taddr += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
+
+	return 0;
 }
 
 /*

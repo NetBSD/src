@@ -1,6 +1,6 @@
-/*	$NetBSD: setenv.h,v 1.1.1.1 2009/03/22 14:57:42 christos Exp $	*/
+/*	$NetBSD: setenv.h,v 1.1.1.1.4.1 2011/02/17 11:58:25 bouyer Exp $	*/
 
-/* Id: setenv.h,v 1.1.1.1 2003/06/04 00:27:01 marka Exp */
+/* Id: setenv.h,v 1.1.1.1 2003-06-04 00:27:01 marka Exp */
 /*
  * Copyright (c) 2002 Japan Network Information Center.
  * All rights reserved.

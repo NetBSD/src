@@ -1,4 +1,4 @@
-/*	$NetBSD: errno2result.c,v 1.1.1.1 2009/03/22 15:02:23 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.1.1.1.4.1 2011/02/17 11:59:04 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: errno2result.c,v 1.17 2008/09/12 04:46:25 marka Exp */
+/* Id: errno2result.c,v 1.17 2008-09-12 04:46:25 marka Exp */
 
 #include <config.h>
 

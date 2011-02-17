@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_postgres_driver.c,v 1.1.1.1 2009/03/22 14:57:10 christos Exp $	*/
+/*	$NetBSD: dlz_postgres_driver.c,v 1.1.1.1.4.1 2011/02/17 11:58:21 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -1312,7 +1312,14 @@ static dns_sdlzmethods_t dlz_postgres_methods = {
 	postgres_lookup,
 	postgres_authority,
 	postgres_allnodes,
-	postgres_allowzonexfr
+	postgres_allowzonexfr,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*%

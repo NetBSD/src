@@ -1,4 +1,4 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.1 2009/03/22 15:02:35 christos Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.1.1.1.4.1 2011/02/17 11:59:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gai_strerror.c,v 1.22 2007/06/19 23:47:22 tbox Exp */
+/* Id: gai_strerror.c,v 1.22 2007-06-19 23:47:22 tbox Exp */
 
 /*! \file gai_strerror.c
  * lwres_gai_strerror() returns an error message corresponding to an

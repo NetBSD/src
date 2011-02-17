@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,12 +15,13 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.28 2009/09/04 17:14:58 each Exp
+# Id: tests.sh,v 1.32.24.1 2011-02-03 06:18:51 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
+n=0
 
 # wait for zone transfer to complete
 tries=0
@@ -61,8 +62,8 @@ update add updated.example.nil. 600 TXT Foo
 update delete t.example.nil.
 
 END
-echo "I:sleeping 15 seconds for server to incorporate changes"
-sleep 15
+echo "I:sleeping 5 seconds for server to incorporate changes"
+sleep 5
 
 echo "I:fetching first copy of zone after update"
 $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
@@ -97,6 +98,48 @@ post=`$DIG +short new.other.nil. @10.53.0.1 a -p 5300` || status=1
 
 echo "I:comparing post-update copy to known good data"
 $PERL ../digcomp.pl knowngood.ns1.after dig.out.ns1 || status=1
+
+echo "I:testing zone consistency checks"
+# inserting an NS record without a corresponding A or AAAA record should fail
+$NSUPDATE -l -p 5300 -k ns1/session.key > nsupdate.out 2>&1 << END && status=1
+update add other.nil. 600 in ns ns3.other.nil.
+send
+END
+grep REFUSED nsupdate.out > /dev/null 2>&1 || status=1
+# ...but should work if an A record is inserted first:
+$NSUPDATE -l -p 5300 -k ns1/session.key > nsupdate.out 2>&1 << END || status=1
+update add ns4.other.nil 600 in a 10.53.0.1
+send
+update add other.nil. 600 in ns ns4.other.nil.
+send
+END
+grep REFUSED nsupdate.out > /dev/null 2>&1 && status=1
+# ...or if an AAAA record does:
+$NSUPDATE -l -p 5300 -k ns1/session.key > nsupdate.out 2>&1 << END || status=1
+update add ns5.other.nil 600 in aaaa 2001:db8::1
+send
+update add other.nil. 600 in ns ns5.other.nil.
+send
+END
+grep REFUSED nsupdate.out > /dev/null 2>&1 && status=1
+# ...or if the NS and A/AAAA are inserted together:
+$NSUPDATE -l -p 5300 -k ns1/session.key > nsupdate.out 2>&1 << END || status=1
+update add other.nil. 600 in ns ns6.other.nil.
+update add ns6.other.nil 600 in a 10.53.0.1
+send
+END
+grep REFUSED nsupdate.out > /dev/null 2>&1 && status=1
+
+echo "I:sleeping 5 seconds for server to incorporate changes"
+sleep 5
+
+echo "I:checking result of update"
+$DIG +short @10.53.0.1 -p 5300 ns other.nil > dig.out.ns1 || status=1
+grep ns3.other.nil dig.out.ns1 > /dev/null 2>&1 && status=1
+grep ns4.other.nil dig.out.ns1 > /dev/null 2>&1 || status=1
+grep ns5.other.nil dig.out.ns1 > /dev/null 2>&1 || status=1
+grep ns6.other.nil dig.out.ns1 > /dev/null 2>&1 || status=1
+
 
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then
@@ -181,6 +224,90 @@ fi
 
 echo "I:end RT #482 regression test"
 
+n=`expr $n + 1`
+echo "I:start NSEC3PARAM changes via UPDATE on a unsigned zone test ($n)"
+ret=0
+$NSUPDATE << EOF
+server 10.53.0.3 5300
+update add example 3600 nsec3param 1 0 0 -
+send
+EOF
+
+sleep 1
+
+# the zone is not signed.  The nsec3param records should be removed.
+# this also proves that the server is still running.
+$DIG +tcp +noadd +nosea +nostat +noquest +nocmd +norec example.\
+	@10.53.0.3 nsec3param -p 5300 > dig.out.ns3.$n || ret=1
+grep "ANSWER: 0" dig.out.ns3.$n > /dev/null || ret=1
+grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
+if [ $ret != 0 ] ; then echo "I: failed"; status=`expr $ret + $status`; fi
+
+n=`expr $n + 1`
+echo "I:change the NSEC3PARAM ttl via update ($n)"
+ret=0
+$NSUPDATE << EOF
+server 10.53.0.3 5300
+update add nsec3param.test 3600 NSEC3PARAM 1 0 1 -
+send
+EOF
+
+sleep 1
+
+$DIG +tcp +noadd +nosea +nostat +noquest +nocmd +norec nsec3param.test.\
+        @10.53.0.3 nsec3param -p 5300 > dig.out.ns3.$n || ret=1
+grep "ANSWER: 1" dig.out.ns3.$n > /dev/null || ret=1
+grep "3600.*NSEC3PARAM" dig.out.ns3.$n > /dev/null || ret=1
+grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
+if [ $ret != 0 ] ; then echo "I: failed"; status=`expr $ret + $status`; fi
+
+n=`expr $n + 1`
+echo "I:add a new the NSEC3PARAM via update ($n)"
+ret=0
+$NSUPDATE << EOF
+server 10.53.0.3 5300
+update add nsec3param.test 3600 NSEC3PARAM 1 0 4 -
+send
+EOF
+
+sleep 1
+
+$DIG +tcp +noadd +nosea +nostat +noquest +nocmd +norec nsec3param.test.\
+        @10.53.0.3 nsec3param -p 5300 > dig.out.ns3.$n || ret=1
+grep "ANSWER: 2" dig.out.ns3.$n > /dev/null || ret=1
+grep "NSEC3PARAM 1 0 4 -" dig.out.ns3.$n > /dev/null || ret=1
+grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
+if [ $ret != 0 ] ; then echo "I: failed"; status=`expr $ret + $status`; fi
+
+n=`expr $n + 1`
+echo "I:add, delete and change the ttl of the NSEC3PARAM rrset via update ($n)"
+ret=0
+$NSUPDATE << EOF
+server 10.53.0.3 5300
+update delete nsec3param.test NSEC3PARAM
+update add nsec3param.test 7200 NSEC3PARAM 1 0 5 -
+send
+EOF
+
+sleep 1
+
+$DIG +tcp +noadd +nosea +nostat +noquest +nocmd +norec nsec3param.test.\
+        @10.53.0.3 nsec3param -p 5300 > dig.out.ns3.$n || ret=1
+grep "ANSWER: 1" dig.out.ns3.$n > /dev/null || ret=1
+grep "7200.*NSEC3PARAM 1 0 5 -" dig.out.ns3.$n > /dev/null || ret=1
+grep "flags:[^;]* aa[ ;]" dig.out.ns3.$n > /dev/null || ret=1
+$JOURNALPRINT ns3/nsec3param.test.db.signed.jnl > jp.out.ns3.$n
+# intermediate TTL changes.
+grep "add nsec3param.test.	7200	IN	NSEC3PARAM 1 0 4 -" jp.out.ns3.$n > /dev/null || ret=1
+grep "add nsec3param.test.	7200	IN	NSEC3PARAM 1 0 1 -" jp.out.ns3.$n > /dev/null || ret=1
+# delayed adds and deletes.
+grep "add nsec3param.test.	0	IN	TYPE65534 .# 6 000180000500" jp.out.ns3.$n > /dev/null || ret=1
+grep "add nsec3param.test.	0	IN	TYPE65534 .# 6 000140000100" jp.out.ns3.$n > /dev/null || ret=1
+grep "add nsec3param.test.	0	IN	TYPE65534 .# 6 000140000400" jp.out.ns3.$n > /dev/null || ret=1
+if [ $ret != 0 ] ; then echo "I: failed"; status=`expr $ret + $status`; fi
+
+
+
 echo "I:testing that rndc stop updates the master file"
 $NSUPDATE -k ns1/ddns.key <<END > /dev/null || status=1
 server 10.53.0.1 5300
@@ -196,6 +323,34 @@ $PERL $SYSTEMTESTTOP/start.pl --noclean . ns1
 $DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd updated4.example.nil.\
 	@10.53.0.1 a -p 5300 > dig.out.ns1 || status=1
 $PERL ../digcomp.pl knowngood.ns1.afterstop dig.out.ns1 || status=1
+
+ret=0
+echo "I:check that 'nsupdate -l' with a missing keyfile reports the missing file"
+$NSUPDATE -l -p 5300 -k ns1/nonexistant.key 2> nsupdate.out < /dev/null
+grep ns1/nonexistant.key nsupdate.out > /dev/null || ret=1
+if test $ret -ne 0
+then
+echo "I:failed"; status=1
+fi
+
+n=`expr $n + 1`
+ret=0
+echo "I:check that changes to the DNSKEY RRset TTL do not have side effects ($n)"
+$DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd dnskey.test. \
+        @10.53.0.3 -p 5300 dnskey | \
+	sed -n 's/\(.*\)10.IN/update add \1600 IN/p' |
+	(echo server 10.53.0.3 5300; cat - ; echo send ) |
+$NSUPDATE 
+
+$DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd dnskey.test. \
+	@10.53.0.3 -p 5300 any > dig.out.ns3.$n
+
+grep "600.*DNSKEY" dig.out.ns3.$n > /dev/null || ret=1
+grep TYPE65534 dig.out.ns3.$n > dev/null && ret=1
+if test $ret -ne 0
+then
+echo "I:failed"; status=1
+fi
 
 echo "I:exit status: $status"
 exit $status

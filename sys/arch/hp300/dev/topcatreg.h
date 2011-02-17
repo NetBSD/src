@@ -1,5 +1,5 @@
 /*	$OpenBSD: topcatreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
-/*	$NetBSD: topcatreg.h,v 1.1.2.2 2011/02/08 16:19:21 bouyer Exp $	*/
+/*	$NetBSD: topcatreg.h,v 1.1.2.3 2011/02/17 11:59:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,75 +43,75 @@
 do { \
 	while (((volatile struct tcboxfb *)(regaddr))->cmap_busy & 0x04) \
 		DELAY(10); \
-} while (0)
+} while (/* CONSTCOND */0)
 
 #define tc_waitbusy(regaddr,planes) \
 do { \
 	while (((volatile struct tcboxfb *)(regaddr))->busy & planes) \
 		DELAY(10); \
-} while (0)
+} while (/* CONSTCOND */0)
 
 struct tcboxfb {
 	struct diofbreg regs;
-	u_int8_t f2[0x4040-0x5f-1];
-	u_int8_t vblank;		/* vertical blanking	      0x4040 */
-	u_int8_t :8,:8,:8;
-	u_int8_t busy;			/* window move active	      0x4044 */
-	u_int8_t :8,:8,:8;
-	u_int8_t vtrace_request;	/* vert retrace intr request  0x4048 */
-	u_int8_t :8,:8,:8;
-	u_int8_t move_request;		/* window move intr request   0x404C */
-	u_int8_t f3[0x4080-0x404c-1];
-	u_int8_t nblank;		/* display enable planes      0x4080 */
-	u_int8_t f4[0x4088-0x4080-1];
-	u_int8_t wen;			/* write enable plane 	      0x4088 */
-	u_int8_t f5[0x408c-0x4088-1];
-	u_int8_t ren;			/* read enable plane          0x408c */
-	u_int8_t f6[0x4090-0x408c-1];
-	u_int8_t fben;			/* frame buffer write enable  0x4090 */
-	u_int8_t f7[0x409c-0x4090-1];
-	u_int8_t wmove;			/* start window move 	      0x409c */
-	u_int8_t f8[0x40a0-0x409c-1];
-	u_int8_t blink;			/* enable blink planes 	      0x40a0 */
-	u_int8_t f9[0x40a8-0x40a0-1];
-	u_int8_t altframe;		/* enable alternate frame     0x40a8 */
-	u_int8_t f10[0x40ac-0x40a8-1];
-	u_int8_t curon;			/* cursor control register    0x40ac */
-	u_int8_t f11[0x40ea-0x40ac-1];
-	u_int8_t prr;			/* pixel replacement rule     0x40ea */
-	u_int8_t f12[0x40ef-0x40ea-1];
-	u_int8_t wmrr;			/* move replacement rule      0x40ef */
-	u_int8_t f13[0x40f2-0x40ef-1];
-	u_int16_t source_x;		/* source x pixel # 	      0x40f2 */
-	u_int8_t f14[0x40f6-0x40f2-2];
-	u_int16_t source_y;		/* source y pixel # 	      0x40f6 */
-	u_int8_t f15[0x40fa-0x40f6-2];
-	u_int16_t dest_x;		/* dest x pixel # 	      0x40fa */
-	u_int8_t f16[0x40fe -0x40fa-2];
-	u_int16_t dest_y;		/* dest y pixel # 	      0x40fe */
-	u_int8_t f17[0x4102-0x40fe -2];
-	u_int16_t wwidth;		/* block mover pixel width    0x4102 */
-	u_int8_t f18[0x4106-0x4102-2];
-	u_int16_t wheight;		/* block mover pixel height   0x4106 */
+	uint8_t f2[0x4040-0x5f-1];
+	uint8_t vblank;			/* vertical blanking	      0x4040 */
+	uint8_t :8,:8,:8;
+	uint8_t busy;			/* window move active	      0x4044 */
+	uint8_t :8,:8,:8;
+	uint8_t vtrace_request;		/* vert retrace intr request  0x4048 */
+	uint8_t :8,:8,:8;
+	uint8_t move_request;		/* window move intr request   0x404C */
+	uint8_t f3[0x4080-0x404c-1];
+	uint8_t nblank;			/* display enable planes      0x4080 */
+	uint8_t f4[0x4088-0x4080-1];
+	uint8_t wen;			/* write enable plane 	      0x4088 */
+	uint8_t f5[0x408c-0x4088-1];
+	uint8_t ren;			/* read enable plane          0x408c */
+	uint8_t f6[0x4090-0x408c-1];
+	uint8_t fben;			/* frame buffer write enable  0x4090 */
+	uint8_t f7[0x409c-0x4090-1];
+	uint8_t wmove;			/* start window move 	      0x409c */
+	uint8_t f8[0x40a0-0x409c-1];
+	uint8_t blink;			/* enable blink planes 	      0x40a0 */
+	uint8_t f9[0x40a8-0x40a0-1];
+	uint8_t altframe;		/* enable alternate frame     0x40a8 */
+	uint8_t f10[0x40ac-0x40a8-1];
+	uint8_t curon;			/* cursor control register    0x40ac */
+	uint8_t f11[0x40ea-0x40ac-1];
+	uint8_t prr;			/* pixel replacement rule     0x40ea */
+	uint8_t f12[0x40ef-0x40ea-1];
+	uint8_t wmrr;			/* move replacement rule      0x40ef */
+	uint8_t f13[0x40f2-0x40ef-1];
+	uint16_t source_x;		/* source x pixel # 	      0x40f2 */
+	uint8_t f14[0x40f6-0x40f2-2];
+	uint16_t source_y;		/* source y pixel # 	      0x40f6 */
+	uint8_t f15[0x40fa-0x40f6-2];
+	uint16_t dest_x;		/* dest x pixel # 	      0x40fa */
+	uint8_t f16[0x40fe -0x40fa-2];
+	uint16_t dest_y;		/* dest y pixel # 	      0x40fe */
+	uint8_t f17[0x4102-0x40fe -2];
+	uint16_t wwidth;		/* block mover pixel width    0x4102 */
+	uint8_t f18[0x4106-0x4102-2];
+	uint16_t wheight;		/* block mover pixel height   0x4106 */
   /* Catseye */
-	u_int8_t f19[0x4206-0x4106-2];
-	u_int16_t rug_cmdstat;		/* RUG Command/Staus	      0x4206 */
-	u_int8_t f20[0x4510-0x4206-2];
-	u_int16_t vb_select;		/* Vector/BitBlt Select	      0x4510 */
-	u_int16_t tcntrl;		/* Three Operand Control      0x4512 */
-	u_int16_t acntrl;		/* BitBlt Mode		      0x4514 */
-	u_int16_t pncntrl;		/* Plane Control	      0x4516 */
-	u_int8_t f21[0x4800-0x4516-2];
-	u_int16_t catseye_status;	/* Catseye Status	      0x4800 */
+	uint8_t f19[0x4206-0x4106-2];
+	uint16_t rug_cmdstat;		/* RUG Command/Staus	      0x4206 */
+	uint8_t f20[0x4510-0x4206-2];
+	uint16_t vb_select;		/* Vector/BitBlt Select	      0x4510 */
+	uint16_t tcntrl;		/* Three Operand Control      0x4512 */
+	uint16_t acntrl;		/* BitBlt Mode		      0x4514 */
+	uint16_t pncntrl;		/* Plane Control	      0x4516 */
+	uint8_t f21[0x4800-0x4516-2];
+	uint16_t catseye_status;	/* Catseye Status	      0x4800 */
   /* End of Catseye */
-	u_int8_t f22[0x6002-0x4800-2];
-	u_int16_t cmap_busy;		/* Color Ram busy	      0x6002 */
-	u_int8_t f23[0x60b2-0x6002-2];
-	u_int16_t rdata;		/* color map red data 	      0x60b2 */
-	u_int16_t gdata;		/* color map green data       0x60b4 */
-	u_int16_t bdata;		/* color map blue data 	      0x60b6 */
-	u_int16_t cindex;		/* color map index 	      0x60b8 */
-	u_int16_t plane_mask;		/* plane mask select	      0x60ba */
-	u_int8_t f24[0x60f0-0x60ba-2];
-	u_int16_t strobe;		/* color map trigger 	      0x60f0 */
+	uint8_t f22[0x6002-0x4800-2];
+	uint16_t cmap_busy;		/* Color Ram busy	      0x6002 */
+	uint8_t f23[0x60b2-0x6002-2];
+	uint16_t rdata;			/* color map red data 	      0x60b2 */
+	uint16_t gdata;			/* color map green data       0x60b4 */
+	uint16_t bdata;			/* color map blue data 	      0x60b6 */
+	uint16_t cindex;		/* color map index 	      0x60b8 */
+	uint16_t plane_mask;		/* plane mask select	      0x60ba */
+	uint8_t f24[0x60f0-0x60ba-2];
+	uint16_t strobe;		/* color map trigger 	      0x60f0 */
 };

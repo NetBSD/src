@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.16.2.2 2011/02/08 16:19:04 bouyer Exp $	*/
+/*      $NetBSD: hijack.c,v 1.16.2.3 2011/02/17 11:59:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.16.2.2 2011/02/08 16:19:04 bouyer Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.16.2.3 2011/02/17 11:59:23 bouyer Exp $");
+
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
 #include <sys/param.h>
@@ -65,7 +66,7 @@ enum dualcall {
 	DUALCALL_GETSOCKOPT, DUALCALL_SETSOCKOPT,
 	DUALCALL_SHUTDOWN,
 	DUALCALL_READ, DUALCALL_READV,
-	DUALCALL_DUP, DUALCALL_DUP2,
+	DUALCALL_DUP2,
 	DUALCALL_CLOSE,
 	DUALCALL_POLLTS,
 	DUALCALL_KEVENT,
@@ -123,7 +124,6 @@ struct sysnames {
 	{ DUALCALL_WRITEV,	"writev",	RSYS_NAME(WRITEV)	},
 	{ DUALCALL_IOCTL,	"ioctl",	RSYS_NAME(IOCTL)	},
 	{ DUALCALL_FCNTL,	"fcntl",	RSYS_NAME(FCNTL)	},
-	{ DUALCALL_DUP,		"dup",		RSYS_NAME(DUP)		},
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
 	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
@@ -139,9 +139,14 @@ struct bothsys {
 
 pid_t	(*host_fork)(void);
 int	(*host_daemon)(int, int);
+int	(*host_execve)(const char *, char *const[], char *const[]);
 
-static unsigned dup2mask;
-#define ISDUP2D(fd) (1<<(fd) & dup2mask)
+static uint32_t dup2mask;
+#define ISDUP2D(fd) (((fd) < 32) && (1<<(fd) & dup2mask))
+#define SETDUP2(fd) \
+    do { if ((fd) < 32) dup2mask |= (1<<(fd)); } while (/*CONSTCOND*/0)
+#define CLRDUP2(fd) \
+    do { if ((fd) < 32) dup2mask &= ~(1<<(fd)); } while (/*CONSTCOND*/0)
 
 //#define DEBUGJACK
 #ifdef DEBUGJACK
@@ -216,6 +221,7 @@ rcinit(void)
 	rumpclient_dlsym = hijackdlsym;
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_daemon = dlsym(RTLD_NEXT, "daemon");
+	host_execve = dlsym(RTLD_NEXT, "execve");
 
 	/*
 	 * In theory cannot print anything during lookups because
@@ -250,11 +256,7 @@ rcinit(void)
 		err(1, "rumpclient init");
 
 	/* set client persistence level */
-	if (getenv_r("RUMPHIJACK_RETRY", buf, sizeof(buf)) == -1) {
-		if (errno == ERANGE)
-			err(1, "invalid RUMPHIJACK_RETRY");
-		rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
-	} else {
+	if (getenv_r("RUMPHIJACK_RETRYCONNECT", buf, sizeof(buf)) != -1) {
 		if (strcmp(buf, "die") == 0)
 			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_DIE);
 		else if (strcmp(buf, "inftime") == 0)
@@ -263,20 +265,24 @@ rcinit(void)
 			rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_ONCE);
 		else {
 			time_t timeout;
+			char *ep;
 
-			timeout = (time_t)strtoll(buf, NULL, 10);
-			if (timeout <= 0)
-				errx(1, "RUMPHIJACK_RETRY must be keyword "
-				    "or a positive integer, got: %s", buf);
+			timeout = (time_t)strtoll(buf, &ep, 10);
+			if (timeout <= 0 || ep != buf + strlen(buf))
+				errx(1, "RUMPHIJACK_RETRYCONNECT must be "
+				    "keyword or integer, got: %s", buf);
 
 			rumpclient_setconnretry(timeout);
 		}
+	}
+
+	if (getenv_r("RUMPHIJACK__DUP2MASK", buf, sizeof(buf)) == 0) {
+		dup2mask = strtoul(buf, NULL, 10);
 	}
 }
 
 /* XXX: need runtime selection.  low for now due to FD_SETSIZE */
 #define HIJACK_FDOFF 128
-#define HIJACK_ASSERT 128 /* XXX */
 static int
 fd_rump2host(int fd)
 {
@@ -306,8 +312,33 @@ fd_isrump(int fd)
 	return ISDUP2D(fd) || fd >= HIJACK_FDOFF;
 }
 
-#define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_ASSERT)
-#undef HIJACK_FDOFF
+#define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_FDOFF)
+
+static int
+dodup(int oldd, int minfd)
+{
+	int (*op_fcntl)(int, int, ...);
+	int newd;
+	int isrump;
+
+	DPRINTF(("dup -> %d (minfd %d)\n", oldd, minfd));
+	if (fd_isrump(oldd)) {
+		op_fcntl = GETSYSCALL(rump, FCNTL);
+		oldd = fd_host2rump(oldd);
+		isrump = 1;
+	} else {
+		op_fcntl = GETSYSCALL(host, FCNTL);
+		isrump = 0;
+	}
+
+	newd = op_fcntl(oldd, F_DUPFD, minfd);
+
+	if (isrump)
+		newd = fd_rump2host(newd);
+	DPRINTF(("dup <- %d\n", newd));
+
+	return newd;
+}
 
 int __socket30(int, int, int);
 int
@@ -381,26 +412,125 @@ ioctl(int fd, unsigned long cmd, ...)
 	return rv;
 }
 
-
-/* TODO: support F_DUPFD, F_CLOSEM, F_MAXFD */
+#include <syslog.h>
 int
 fcntl(int fd, int cmd, ...)
 {
 	int (*op_fcntl)(int, int, ...);
 	va_list ap;
+	int rv, minfd, i;
+
+	DPRINTF(("fcntl -> %d (cmd %d)\n", fd, cmd));
+
+	switch (cmd) {
+	case F_DUPFD:
+		va_start(ap, cmd);
+		minfd = va_arg(ap, int);
+		va_end(ap);
+		return dodup(fd, minfd);
+
+	case F_CLOSEM:
+		/*
+		 * So, if fd < HIJACKOFF, we want to do a host closem.
+		 */
+
+		if (fd < HIJACK_FDOFF) {
+			int closemfd = fd;
+
+			if (rumpclient__closenotify(&closemfd,
+			    RUMPCLIENT_CLOSE_FCLOSEM) == -1)
+				return -1;
+			op_fcntl = GETSYSCALL(host, FCNTL);
+			rv = op_fcntl(closemfd, cmd);
+			if (rv)
+				return rv;
+		}
+
+		/*
+		 * Additionally, we want to do a rump closem, but only
+		 * for the file descriptors not within the dup2mask.
+		 */
+
+		/* why don't we offer fls()? */
+		for (i = 31; i >= 0; i--) {
+			if (dup2mask & 1<<i)
+				break;
+		}
+		
+		if (fd >= HIJACK_FDOFF)
+			fd -= HIJACK_FDOFF;
+		else
+			fd = 0;
+		fd = MAX(i+1, fd);
+
+		/* hmm, maybe we should close rump fd's not within dup2mask? */
+
+		return rump_sys_fcntl(fd, F_CLOSEM);
+
+	case F_MAXFD:
+		/*
+		 * For maxfd, if there's a rump kernel fd, return
+		 * it hostified.  Otherwise, return host's MAXFD
+		 * return value.
+		 */
+		if ((rv = rump_sys_fcntl(fd, F_MAXFD)) != -1) {
+			/*
+			 * This might go a little wrong in case
+			 * of dup2 to [012], but I'm not sure if
+			 * there's a justification for tracking
+			 * that info.  Consider e.g.
+			 * dup2(rumpfd, 2) followed by rump_sys_open()
+			 * returning 1.  We should return 1+HIJACKOFF,
+			 * not 2+HIJACKOFF.  However, if [01] is not
+			 * open, the correct return value is 2.
+			 */
+			return fd_rump2host(fd);
+		} else {
+			op_fcntl = GETSYSCALL(host, FCNTL);
+			return op_fcntl(fd, F_MAXFD);
+		}
+		/*NOTREACHED*/
+
+	default:
+		if (fd_isrump(fd)) {
+			fd = fd_host2rump(fd);
+			op_fcntl = GETSYSCALL(rump, FCNTL);
+		} else {
+			op_fcntl = GETSYSCALL(host, FCNTL);
+		}
+
+		va_start(ap, cmd);
+		rv = op_fcntl(fd, cmd, va_arg(ap, void *));
+		va_end(ap);
+		return rv;
+	}
+	/*NOTREACHED*/
+}
+
+int
+close(int fd)
+{
+	int (*op_close)(int);
 	int rv;
 
-	DPRINTF(("fcntl -> %d\n", fd));
+	DPRINTF(("close -> %d\n", fd));
 	if (fd_isrump(fd)) {
+		int undup2 = 0;
+
+		if (ISDUP2D(fd))
+			undup2 = 1;
 		fd = fd_host2rump(fd);
-		op_fcntl = GETSYSCALL(rump, FCNTL);
+		op_close = GETSYSCALL(rump, CLOSE);
+		rv = op_close(fd);
+		if (rv == 0 && undup2)
+			CLRDUP2(fd);
 	} else {
-		op_fcntl = GETSYSCALL(host, FCNTL);
+		if (rumpclient__closenotify(&fd, RUMPCLIENT_CLOSE_CLOSE) == -1)
+			return -1;
+		op_close = GETSYSCALL(host, CLOSE);
+		rv = op_close(fd);
 	}
 
-	va_start(ap, cmd);
-	rv = op_fcntl(fd, cmd, va_arg(ap, void *));
-	va_end(ap);
 	return rv;
 }
 
@@ -443,9 +573,11 @@ dup2(int oldd, int newd)
 		oldd = fd_host2rump(oldd);
 		rv = rump_sys_dup2(oldd, newd);
 		if (rv != -1)
-			dup2mask |= 1<<newd;
+			SETDUP2(newd);
 	} else {
 		host_dup2 = syscalls[DUALCALL_DUP2].bs_host;
+		if (rumpclient__closenotify(&newd, RUMPCLIENT_CLOSE_DUP2) == -1)
+			return -1;
 		rv = host_dup2(oldd, newd);
 	}
 
@@ -455,56 +587,24 @@ dup2(int oldd, int newd)
 int
 dup(int oldd)
 {
-	int (*op_dup)(int);
-	int newd;
 
-	DPRINTF(("dup -> %d\n", oldd));
-	if (fd_isrump(oldd)) {
-		op_dup = GETSYSCALL(rump, DUP);
-	} else {
-		op_dup = GETSYSCALL(host, DUP);
-	}
-
-	newd = op_dup(oldd);
-
-	if (fd_isrump(oldd))
-		newd = fd_rump2host(newd);
-	DPRINTF(("dup <- %d\n", newd));
-
-	return newd;
+	return dodup(oldd, 0);
 }
 
-/*
- * We just wrap fork the appropriate rump client calls to preserve
- * the file descriptors of the forked parent in the child, but
- * prevent double use of connection fd.
- */
 pid_t
 fork()
 {
-	struct rumpclient_fork *rf;
 	pid_t rv;
 
 	DPRINTF(("fork\n"));
 
-	if ((rf = rumpclient_prefork()) == NULL)
-		return -1;
-
-	switch ((rv = host_fork())) {
-	case -1:
-		/* XXX: cancel rf */
-		break;
-	case 0:
-		if (rumpclient_fork_init(rf) == -1)
-			rv = -1;
-		break;
-	default:
-		break;
-	}
+	rv = rumpclient__dofork(host_fork);
 
 	DPRINTF(("fork returns %d\n", rv));
 	return rv;
 }
+/* we do not have the luxury of not requiring a stackframe */
+__strong_alias(__vfork14,fork);
 
 int
 daemon(int nochdir, int noclose)
@@ -521,6 +621,42 @@ daemon(int nochdir, int noclose)
 		return -1;
 
 	return 0;
+}
+
+int
+execve(const char *path, char *const argv[], char *const envp[])
+{
+	char buf[128];
+	char *dup2str;
+	char **newenv;
+	size_t nelem;
+	int rv, sverrno;
+
+	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%u", dup2mask);
+	dup2str = malloc(strlen(buf)+1);
+	if (dup2str == NULL)
+		return ENOMEM;
+	strcpy(dup2str, buf);
+
+	for (nelem = 0; envp && envp[nelem]; nelem++)
+		continue;
+	newenv = malloc(sizeof(*newenv) * nelem+2);
+	if (newenv == NULL) {
+		free(dup2str);
+		return ENOMEM;
+	}
+	memcpy(newenv, envp, nelem*sizeof(*newenv));
+	newenv[nelem] = dup2str;
+	newenv[nelem+1] = NULL;
+
+	rv = rumpclient_exec(path, argv, newenv);
+
+	_DIAGASSERT(rv != 0);
+	sverrno = errno;
+	free(newenv);
+	free(dup2str);
+	errno = sverrno;
+	return rv;
 }
 
 /*
@@ -562,7 +698,7 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	}
 
 	if (realnfds) {
-		pfds = malloc(sizeof(*pfds) * realnfds);
+		pfds = calloc(realnfds, sizeof(*pfds));
 		if (!pfds)
 			return -1;
 	} else {
@@ -571,7 +707,6 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 
 	for (i = 0, j = 0; i < nfds; i++) {
 		incr = 0;
-		pfds[j].events = pfds[j].revents = 0;
 		if (readfds && FD_ISSET(i, readfds)) {
 			pfds[j].fd = i;
 			pfds[j].events |= POLLIN;
@@ -590,18 +725,27 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		if (incr)
 			j++;
 	}
+	assert(j == (int)realnfds);
 
 	if (timeout) {
 		TIMEVAL_TO_TIMESPEC(timeout, &ts);
 		tsp = &ts;
 	}
 	rv = REALPOLLTS(pfds, realnfds, tsp, NULL);
-	if (rv <= 0)
+	/*
+	 * "If select() returns with an error the descriptor sets
+	 * will be unmodified"
+	 */
+	if (rv < 0)
 		goto out;
 
 	/*
-	 * ok, harvest results.  first zero out entries (can't use
-	 * FD_ZERO for the obvious select-me-not reason).  whee.
+	 * zero out results (can't use FD_ZERO for the
+	 * obvious select-me-not reason).  whee.
+	 *
+	 * We do this here since some software ignores the return
+	 * value of select, and hence if the timeout expires, it may
+	 * assume all input descriptors have activity.
 	 */
 	for (i = 0; i < nfds; i++) {
 		if (readfds)
@@ -611,8 +755,12 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 		if (exceptfds)
 			FD_CLR(i, exceptfds);
 	}
+	if (rv == 0)
+		goto out;
 
-	/* and then plug in the results */
+	/*
+	 * We have >0 fds with activity.  Harvest the results.
+	 */
 	for (i = 0; i < (int)realnfds; i++) {
 		if (readfds) {
 			if (pfds[i].revents & POLLIN) {
@@ -683,7 +831,7 @@ hostpoll(void *arg)
 	struct pollarg *parg = arg;
 	intptr_t rv;
 
-	op_pollts = syscalls[DUALCALL_POLLTS].bs_host;
+	op_pollts = GETSYSCALL(host, POLLTS);
 	rv = op_pollts(parg->pfds, parg->nfds, parg->ts, parg->sigmask);
 	if (rv == -1)
 		parg->errnum = errno;
@@ -747,6 +895,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 				pfd_host[i].fd = fds[i].fd;
 				pfd_host[i].events = fds[i].events;
 			}
+			pfd_rump[i].revents = pfd_host[i].revents = 0;
 			fds[i].revents = 0;
 		}
 
@@ -776,7 +925,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		parg.pipefd = rpipe[1];
 		pthread_create(&pt, NULL, hostpoll, &parg);
 
-		op_pollts = syscalls[DUALCALL_POLLTS].bs_rump;
+		op_pollts = GETSYSCALL(rump, POLLTS);
 		lrv = op_pollts(pfd_rump, nfds+1, ts, NULL);
 		sverrno = errno;
 		write(hpipe[1], &rv, sizeof(rv));
@@ -803,7 +952,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		}
 
  out:
-		host_close = syscalls[DUALCALL_CLOSE].bs_host;
+		host_close = GETSYSCALL(host, CLOSE);
 		if (rpipe[0] != -1)
 			rump_sys_close(rpipe[0]);
 		if (rpipe[1] != -1)
@@ -817,9 +966,9 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		errno = sverrno;
 	} else {
 		if (hostcall) {
-			op_pollts = syscalls[DUALCALL_POLLTS].bs_host;
+			op_pollts = GETSYSCALL(host, POLLTS);
 		} else {
-			op_pollts = syscalls[DUALCALL_POLLTS].bs_rump;
+			op_pollts = GETSYSCALL(rump, POLLTS);
 			adjustpoll(fds, nfds, fd_host2rump);
 		}
 
@@ -867,12 +1016,12 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 		ev = &changelist[i];
 		if (ev->filter == EVFILT_READ || ev->filter == EVFILT_WRITE ||
 		    ev->filter == EVFILT_VNODE) {
-			if (fd_isrump(ev->ident))
+			if (fd_isrump((int)ev->ident))
 				return ENOTSUP;
 		}
 	}
 
-	op_kevent = GETSYSCALL(host, ACCEPT);
+	op_kevent = GETSYSCALL(host, KEVENT);
 	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
 }
 
@@ -978,8 +1127,3 @@ FDCALL(ssize_t, writev, DUALCALL_WRITEV, 				\
 	(int fd, const struct iovec *iov, int iovcnt),			\
 	(int, const struct iovec *, int),				\
 	(fd, iov, iovcnt))
-
-FDCALL(int, close, DUALCALL_CLOSE,	 				\
-	(int fd),							\
-	(int),								\
-	(fd))

@@ -150,7 +150,7 @@ diff -u openssl/Makefile.org:1.1.3.1 openssl/Makefile.org:1.3
  
 Index: openssl/README.pkcs11
 diff -u /dev/null openssl/README.pkcs11:1.6
---- /dev/null	Mon Oct  5 13:17:23 2009
+--- /dev/null	Thu Dec 24 13:00:42 2009
 +++ openssl/README.pkcs11	Mon Oct  5 13:16:50 2009
 @@ -0,0 +1,247 @@
 +ISC modified
@@ -471,6 +471,19 @@ diff -u openssl/crypto/opensslconf.h:1.1.3.1 openssl/crypto/opensslconf.h:1.5
  #endif
  
  /* These default values were supplied by
+Index: openssl/crypto/bio/bss_file.c
+diff -u openssl/crypto/bio/bss_file.c:1.1.3.1 openssl/crypto/bio/bss_file.c:1.4
+--- openssl/crypto/bio/bss_file.c:1.1.3.1	Tue Dec 30 13:30:55 2008
++++ openssl/crypto/bio/bss_file.c	Fri Nov 27 12:32:32 2009
+@@ -125,7 +125,7 @@
+ 		{
+ 		SYSerr(SYS_F_FOPEN,get_last_sys_error());
+ 		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
+-		if (errno == ENOENT)
++		if ((errno == ENOENT) || ((*mode == 'r') && (errno == EACCES)))
+ 			BIOerr(BIO_F_BIO_NEW_FILE,BIO_R_NO_SUCH_FILE);
+ 		else
+ 			BIOerr(BIO_F_BIO_NEW_FILE,ERR_R_SYS_LIB);
 Index: openssl/crypto/engine/Makefile
 diff -u openssl/crypto/engine/Makefile:1.1.3.1 openssl/crypto/engine/Makefile:1.5
 --- openssl/crypto/engine/Makefile:1.1.3.1	Wed Sep 17 17:10:59 2008
@@ -597,7 +610,7 @@ diff -u openssl/crypto/engine/Makefile:1.1.3.1 openssl/crypto/engine/Makefile:1.
  tb_cipher.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 Index: openssl/crypto/engine/cryptoki.h
 diff -u /dev/null openssl/crypto/engine/cryptoki.h:1.4
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:45 2009
 +++ openssl/crypto/engine/cryptoki.h	Thu Dec 18 00:14:12 2008
 @@ -0,0 +1,103 @@
 +/*
@@ -757,7 +770,7 @@ diff -u openssl/crypto/engine/engine.h:1.1.3.1 openssl/crypto/engine/engine.h:1.
  #ifndef OPENSSL_NO_CAPIENG
 Index: openssl/crypto/engine/hw_pk11.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.26
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:45 2009
 +++ openssl/crypto/engine/hw_pk11.c	Mon Oct  5 13:16:50 2009
 @@ -0,0 +1,3927 @@
 +/*
@@ -4689,7 +4702,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.26
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11_err.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11_err.c:1.4
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:45 2009
 +++ openssl/crypto/engine/hw_pk11_err.c	Wed Dec 17 16:14:26 2008
 @@ -0,0 +1,259 @@
 +/*
@@ -4953,7 +4966,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_err.c:1.4
 +}
 Index: openssl/crypto/engine/hw_pk11_err.h
 diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.9
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:45 2009
 +++ openssl/crypto/engine/hw_pk11_err.h	Wed Dec 17 15:01:45 2008
 @@ -0,0 +1,402 @@
 +/*
@@ -5360,7 +5373,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.9
 +#endif /* HW_PK11_ERR_H */
 Index: openssl/crypto/engine/hw_pk11_pub.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.32
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:45 2009
 +++ openssl/crypto/engine/hw_pk11_pub.c	Mon Oct  5 13:16:55 2009
 @@ -0,0 +1,3140 @@
 +/*
@@ -8505,7 +8518,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.32
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11ca.h
 diff -u /dev/null openssl/crypto/engine/hw_pk11ca.h:1.2
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:45 2009
 +++ openssl/crypto/engine/hw_pk11ca.h	Mon Oct  5 13:17:03 2009
 @@ -0,0 +1,28 @@
 +/* Redefine all pk11/PK11 external symbols to pk11ca/PK11CA */
@@ -8538,7 +8551,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11ca.h:1.2
 +#define ENGINE_load_pk11		ENGINE_load_pk11ca
 Index: openssl/crypto/engine/hw_pk11so.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.2
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:46 2009
 +++ openssl/crypto/engine/hw_pk11so.c	Mon Oct  5 13:17:03 2009
 @@ -0,0 +1,1618 @@
 +/*
@@ -10161,7 +10174,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.2
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11so.h
 diff -u /dev/null openssl/crypto/engine/hw_pk11so.h:1.2
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:46 2009
 +++ openssl/crypto/engine/hw_pk11so.h	Mon Oct  5 13:17:03 2009
 @@ -0,0 +1,28 @@
 +/* Redefine all pk11/PK11 external symbols to pk11so/PK11SO */
@@ -10194,7 +10207,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so.h:1.2
 +#define ENGINE_load_pk11		ENGINE_load_pk11so
 Index: openssl/crypto/engine/hw_pk11so_pub.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.2
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:46 2009
 +++ openssl/crypto/engine/hw_pk11so_pub.c	Mon Oct  5 13:17:03 2009
 @@ -0,0 +1,899 @@
 +/*
@@ -11098,11 +11111,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.2
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/pkcs11.h
 diff -u /dev/null openssl/crypto/engine/pkcs11.h:1.1.1.1
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:46 2009
 +++ openssl/crypto/engine/pkcs11.h	Wed Oct 24 23:27:09 2007
 @@ -0,0 +1,299 @@
 +/* pkcs11.h include file for PKCS #11. */
-+/* Revision: 1.1 */
++/* Revision: 1.2 */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
@@ -11402,11 +11415,11 @@ diff -u /dev/null openssl/crypto/engine/pkcs11.h:1.1.1.1
 +#endif
 Index: openssl/crypto/engine/pkcs11f.h
 diff -u /dev/null openssl/crypto/engine/pkcs11f.h:1.1.1.1
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:46 2009
 +++ openssl/crypto/engine/pkcs11f.h	Wed Oct 24 23:27:09 2007
 @@ -0,0 +1,912 @@
 +/* pkcs11f.h include file for PKCS #11. */
-+/* Revision: 1.1 */
++/* Revision: 1.2 */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
@@ -12319,11 +12332,11 @@ diff -u /dev/null openssl/crypto/engine/pkcs11f.h:1.1.1.1
 +#endif
 Index: openssl/crypto/engine/pkcs11t.h
 diff -u /dev/null openssl/crypto/engine/pkcs11t.h:1.2
---- /dev/null	Mon Oct  5 13:17:24 2009
+--- /dev/null	Thu Dec 24 13:00:46 2009
 +++ openssl/crypto/engine/pkcs11t.h	Sat Aug 30 11:58:07 2008
 @@ -0,0 +1,1885 @@
 +/* pkcs11t.h include file for PKCS #11. */
-+/* Revision: 1.1 */
++/* Revision: 1.2 */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface

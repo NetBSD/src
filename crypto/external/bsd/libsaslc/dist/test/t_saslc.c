@@ -1,4 +1,4 @@
-/* $Id: t_saslc.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
+/* $NetBSD: t_saslc.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,27 +34,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_saslc.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $");
 
 #include <atf-c.h>
-#include <stdio.h>
 #include <saslc.h>
+#include <stdio.h>
+
 
 ATF_TC(t_session_init);
 ATF_TC_HEAD(t_session_init, tc)
 {
-		atf_tc_set_md_var(tc, "descr", "saslc_init() tests");
+
+	atf_tc_set_md_var(tc, "descr", "saslc_init() tests");
 }
 ATF_TC_BODY(t_session_init, tc)
 {
-		saslc_t *ctx;
-		ATF_REQUIRE(ctx = saslc_alloc());
-		ATF_REQUIRE_EQ(saslc_init(ctx, NULL), 0);
-		ATF_REQUIRE_EQ(saslc_end(ctx, true), 0);
+
+	saslc_t *ctx;
+	ATF_REQUIRE(ctx = saslc_alloc());
+	ATF_REQUIRE_EQ(saslc_init(ctx, NULL, NULL), 0);
+	ATF_REQUIRE_EQ(saslc_end(ctx), 0);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
+
 	/* context initialization */
-		ATF_TP_ADD_TC(tp, t_session_init);
+	ATF_TP_ADD_TC(tp, t_session_init);
 	return atf_no_error();
 }

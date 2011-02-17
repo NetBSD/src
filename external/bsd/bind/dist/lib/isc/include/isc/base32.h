@@ -1,4 +1,4 @@
-/*	$NetBSD: base32.h,v 1.1.1.1 2009/03/22 15:02:11 christos Exp $	*/
+/*	$NetBSD: base32.h,v 1.1.1.1.4.1 2011/02/17 11:58:58 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: base32.h,v 1.3 2008/09/25 04:02:39 tbox Exp */
+/* Id: base32.h,v 1.3 2008-09-25 04:02:39 tbox Exp */
 
 #ifndef ISC_BASE32_H
 #define ISC_BASE32_H 1

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: run.sh,v 1.42.558.2 2010/06/08 23:49:11 tbox Exp
+# Id: run.sh,v 1.45 2010-12-20 21:35:45 each Exp
 
 #
 # Run a system test.
@@ -58,14 +58,14 @@ $PERL testsock.pl || {
 
 
 # Check for test-specific prerequisites.
-if
-    test ! -f $test/prereq.sh ||
-    ( cd $test && sh prereq.sh "$@" )
-then
+test ! -f $test/prereq.sh || ( cd $test && sh prereq.sh "$@" )
+result=$?
+
+if [ $result -eq 0 ]; then
     : prereqs ok
 else
     echo "I:Prerequisites for $test missing, skipping test." >&2
-    echo "R:UNTESTED" >&2
+    [ $result -eq 255 ] && echo "R:SKIPPED" || echo "R:UNTESTED"
     echo "E:$test:`date`" >&2
     exit 0
 fi

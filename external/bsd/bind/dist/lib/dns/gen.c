@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.1.1.2 2009/12/26 22:24:34 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.1.1.2.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gen.c,v 1.85 2009/12/04 22:06:37 tbox Exp */
+/* Id: gen.c,v 1.85 2009-12-04 22:06:37 tbox Exp */
 
 /*! \file */
 
@@ -705,7 +705,7 @@ main(int argc, char **argv) {
 		fprintf(stdout, "\t\t\t*(_tp) = _d; \\\n");
 		fprintf(stdout, "\t\t\treturn (ISC_R_SUCCESS); \\\n");
 		fprintf(stdout, "\t\t} \\\n");
-		fprintf(stdout, "\t} while (0)\n\n");
+		fprintf(stdout, "\t} while (/*CONSTCOND*/0)\n\n");
 
 		fprintf(stdout, "#define RDATATYPE_FROMTEXT_SW(_hash,"
 				"_typename,_length,_typep) \\\n");
@@ -841,7 +841,7 @@ main(int argc, char **argv) {
 		       classnum != 255 ? "," : ""); \
 		fprintf(stdout, "#define dns_rdataclass_%s\t" \
 		       "((dns_rdataclass_t)dns_rdataclass_%s)\n", s, s); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 		for (cc = classes; cc != NULL; cc = cc->next) {
 			if (cc->rdclass == 3)

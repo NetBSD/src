@@ -1,7 +1,7 @@
-/*	$NetBSD: name.h,v 1.4 2010/08/06 10:58:12 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.4.2.1 2011/02/17 11:58:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.h,v 1.132.104.3 2010/07/09 23:46:27 tbox Exp */
+/* Id: name.h,v 1.137 2011-01-13 04:59:26 tbox Exp */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -758,7 +758,7 @@ dns_name_towire(const dns_name_t *name, dns_compress_t *cctx,
 
 isc_result_t
 dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
-		  dns_name_t *origin, unsigned int options,
+		  const dns_name_t *origin, unsigned int options,
 		  isc_buffer_t *target);
 /*%<
  * Convert the textual representation of a DNS name at source
@@ -1170,10 +1170,17 @@ dns_name_tostring(dns_name_t *source, char **target, isc_mem_t *mctx);
 isc_result_t
 dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
 		    isc_mem_t *mctx);
+isc_result_t
+dns_name_fromstring2(dns_name_t *target, const char *src,
+		     const dns_name_t *origin, unsigned int options,
+		     isc_mem_t *mctx);
 /*%<
  * Convert a string to a name and place it in target, allocating memory
  * as necessary.  'options' has the same semantics as that of
  * dns_name_fromtext().
+ *
+ * If 'target' has a buffer then the name will be copied into it rather than
+ * memory being allocated.
  *
  * Requires:
  *

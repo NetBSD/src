@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.384 2010/12/27 03:38:52 christos Exp $
+#	$NetBSD: Makefile,v 1.384.2.1 2011/02/17 11:57:24 bouyer Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -173,7 +173,8 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 
 
 CLEANFILES+=	MAKEDEV
-MAKEDEV: .EXEC
+MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
+    ${.CURDIR}/etc.${MACHINE}/MAKEDEV.conf
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
@@ -338,8 +339,10 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 		games games		664	/var/games/snake.log \
 		games games		664	/var/games/tetris.scores
 	${_MKMSG_INSTALL} ${DESTDIR}${file}
-	${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
-	    	/dev/null ${DESTDIR}${file}
+	if [ ! -e ${DESTDIR}${file} -o -s ${DESTDIR}${file} ]; then \
+		${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
+    			/dev/null ${DESTDIR}${file}; \
+	else true; fi
 .endfor
 .for subdir in . defaults bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
 	${MAKEDIRTARGET} ${subdir} configinstall
@@ -375,6 +378,7 @@ OBSOLETE.files+=	tests
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif
 
+# XXX make "makeobsolete" set wise; then generate files respectively
 install-obsolete-lists: .PHONY .MAKE
 	mkdir -p ${OBSOLETE.dir}
 .if ${MKX11} != "no"
@@ -386,8 +390,11 @@ install-obsolete-lists: .PHONY .MAKE
 .endif
 .for file in ${OBSOLETE.files}
 	${_MKMSG_INSTALL} ${DESTDIR}/var/db/obsolete/${file}
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete
+	if [ ! -e ${DESTDIR}/var/db/obsolete/${file} ] || \
+	    ! cmp -s ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete/${file}; then \
+		${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+		    ${OBSOLETE.dir}/${file} ${DESTDIR}/var/db/obsolete; \
+	else true; fi
 .endfor
 
 

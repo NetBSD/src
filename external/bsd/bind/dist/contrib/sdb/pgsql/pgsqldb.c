@@ -1,4 +1,4 @@
-/*	$NetBSD: pgsqldb.c,v 1.1.1.1 2009/03/22 14:58:12 christos Exp $	*/
+/*	$NetBSD: pgsqldb.c,v 1.1.1.1.4.1 2011/02/17 11:58:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: pgsqldb.c,v 1.15 2007/06/19 23:47:07 tbox Exp */
+/* Id: pgsqldb.c,v 1.15 2007-06-19 23:47:07 tbox Exp */
 
 #include <config.h>
 
@@ -266,7 +266,7 @@ pgsqldb_create(const char *zone, int argc, char **argv,
 			result = ISC_R_NOMEMORY;		\
 			goto cleanup;				\
 		}						\
-	} while (0);
+	} while (/*CONSTCOND*/0);
 
 	STRDUP_OR_FAIL(dbi->database, argv[0]);
 	STRDUP_OR_FAIL(dbi->table, argv[1]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.32.4.1 2011/02/08 16:19:57 bouyer Exp $ */
+/*	$NetBSD: genfb.c,v 1.32.4.2 2011/02/17 12:00:16 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.32.4.1 2011/02/08 16:19:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.32.4.2 2011/02/17 12:00:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	memcpy(&sc->sc_ops, ops, sizeof(struct genfb_ops));
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-	if (sc->sc_modecb->gmc_setmode)
+	if (sc->sc_modecb != NULL)
 		sc->sc_modecb->gmc_setmode(sc, sc->sc_mode);
 
 #ifdef GENFB_SHADOWFB
@@ -386,7 +386,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 			if (new_mode != sc->sc_mode) {
 				sc->sc_mode = new_mode;
-				if (sc->sc_modecb->gmc_setmode)
+				if (sc->sc_modecb != NULL)
 					sc->sc_modecb->gmc_setmode(sc,
 					    sc->sc_mode);
 				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
@@ -684,4 +684,21 @@ genfb_brightness_down(device_t dev)
 	struct genfb_softc *sc = device_private(dev);
 
 	genfb_set_backlight(sc, sc->sc_backlight_level - 8);
+}
+
+void
+genfb_enable_polling(device_t dev)
+{
+	struct genfb_softc *sc = device_private(dev);
+
+	SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
+	vcons_enable_polling(&sc->vd);
+}
+
+void
+genfb_disable_polling(device_t dev)
+{
+	struct genfb_softc *sc = device_private(dev);
+
+	vcons_disable_polling(&sc->vd);
 }

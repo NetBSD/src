@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.18.4.1 2011/02/08 16:19:57 bouyer Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.18.4.2 2011/02/17 12:00:16 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.18.4.1 2011/02/08 16:19:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.18.4.2 2011/02/17 12:00:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ static void vcons_kthread(void *);
 #endif
 #ifdef VCONS_DRAW_INTR
 static void vcons_intr(void *);
-static void vcons_intr_work(struct work *, void *);
+static void vcons_softintr(void *);
 static void vcons_intr_enable(device_t);
 #endif
 
@@ -173,10 +173,11 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	    &vd->drawing_thread, "vcons_draw");
 #endif
 #ifdef VCONS_DRAW_INTR
-	workqueue_create(&vd->intr_wq, "vcons_draw",
-	    vcons_intr_work, vd, PRI_KTHREAD, IPL_TTY, WQ_MPSAFE);
+	vd->intr_softint = softint_establish(SOFTINT_SERIAL,
+	    vcons_softintr, vd);
 	callout_init(&vd->intr, 0);
 	callout_setfunc(&vd->intr, vcons_intr, vd);
+	vd->intr_valid = 1;
 
 	/* XXX assume that the 'dev' arg is never dereferenced */
 	config_interrupts((device_t)vd, vcons_intr_enable);
@@ -582,7 +583,7 @@ vcons_copycols_buffer(void *cookie, int row, int srccol, int dstcol, int ncols)
 #endif
 
 #ifdef VCONS_DRAW_INTR
-	scr->scr_dirty++;
+	atomic_inc_uint(&scr->scr_dirty);
 #endif
 }
 
@@ -659,7 +660,7 @@ vcons_erasecols_buffer(void *cookie, int row, int startcol, int ncols, long fill
 #endif
 
 #ifdef VCONS_DRAW_INTR
-	scr->scr_dirty++;
+	atomic_inc_uint(&scr->scr_dirty);
 #endif
 }
 
@@ -727,7 +728,7 @@ vcons_copyrows_buffer(void *cookie, int srcrow, int dstrow, int nrows)
 	    len * sizeof(uint16_t));
 
 #ifdef VCONS_DRAW_INTR
-	scr->scr_dirty++;
+	atomic_inc_uint(&scr->scr_dirty);
 #endif
 }
 
@@ -806,7 +807,7 @@ vcons_eraserows_buffer(void *cookie, int row, int nrows, long fillattr)
 	}
 
 #ifdef VCONS_DRAW_INTR
-	scr->scr_dirty++;
+	atomic_inc_uint(&scr->scr_dirty);
 #endif
 }
 
@@ -863,7 +864,7 @@ vcons_putchar_buffer(void *cookie, int row, int col, u_int c, long attr)
 #endif
 
 #ifdef VCONS_DRAW_INTR
-	scr->scr_dirty++;
+	atomic_inc_uint(&scr->scr_dirty);
 #endif
 }
 
@@ -906,7 +907,7 @@ vcons_cursor(void *cookie, int on, int row, int col)
 		if (scr->scr_ri.ri_crow != row || scr->scr_ri.ri_ccol != col) {
 			scr->scr_ri.ri_crow = row;
 			scr->scr_ri.ri_ccol = col;
-			scr->scr_dirty++;
+			atomic_inc_uint(&scr->scr_dirty);
 		}
 		vcons_unlock(scr);
 		return;
@@ -1416,20 +1417,23 @@ vcons_intr(void *cookie)
 {
 	struct vcons_data *vd = cookie;
 
-	workqueue_enqueue(vd->intr_wq, &vd->wk, NULL);
+	softint_schedule(vd->intr_softint);
 }
 
 static void
-vcons_intr_work(struct work *wk, void *cookie)
+vcons_softintr(void *cookie)
 {
 	struct vcons_data *vd = cookie;
 	struct vcons_screen *scr = vd->active;
+	unsigned int dirty;
 
-	if (scr) {
-		if (!SCREEN_IS_BUSY(scr) && scr->scr_dirty > 0) {
-			if ((scr->scr_flags & VCONS_NO_REDRAW) == 0)
-				vcons_redraw_screen(scr);
-			scr->scr_dirty = 0;
+	if (scr && vd->use_intr == 1) {
+		if (!SCREEN_IS_BUSY(scr)) {
+			dirty = atomic_swap_uint(&scr->scr_dirty, 0);
+			if (dirty > 0) {
+				if ((scr->scr_flags & VCONS_NO_REDRAW) == 0)
+					vcons_redraw_screen(scr);
+			}
 		}
 	}
 
@@ -1445,3 +1449,33 @@ vcons_intr_enable(device_t dev)
 	callout_schedule(&vd->intr, mstohz(33));
 }
 #endif /* VCONS_DRAW_INTR */
+
+void
+vcons_enable_polling(struct vcons_data *vd)
+{
+	struct vcons_screen *scr = vd->active;
+
+#ifdef VCONS_DRAW_INTR
+	vd->use_intr = 0;
+#endif
+
+	if (scr && !SCREEN_IS_BUSY(scr)) {
+		if ((scr->scr_flags & VCONS_NO_REDRAW) == 0)
+			vcons_redraw_screen(scr);
+	}
+}
+
+void
+vcons_disable_polling(struct vcons_data *vd)
+{
+#ifdef VCONS_DRAW_INTR
+	struct vcons_screen *scr = vd->active;
+
+	if (!vd->intr_valid)
+		return;
+
+	vd->use_intr = 1;
+	if (scr)
+		atomic_inc_uint(&scr->scr_dirty);
+#endif
+}

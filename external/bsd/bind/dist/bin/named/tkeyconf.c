@@ -1,7 +1,7 @@
-/*	$NetBSD: tkeyconf.c,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.1.1.2.2.1 2011/02/17 11:57:32 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkeyconf.c,v 1.31 2009/09/02 23:48:01 tbox Exp */
+/* Id: tkeyconf.c,v 1.33 2010-12-20 23:47:20 tbox Exp */
 
 /*! \file */
 
@@ -42,7 +42,7 @@
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #include<named/log.h>
 #define LOG(msg) \
@@ -115,6 +115,18 @@ ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 		RETERR(dns_name_fromtext(name, &b, dns_rootname, 0, NULL));
 		RETERR(dst_gssapi_acquirecred(name, ISC_FALSE, &tctx->gsscred));
 	}
+
+	obj = NULL;
+	result = cfg_map_get(options, "tkey-gssapi-keytab", &obj);
+	if (result == ISC_R_SUCCESS) {
+		s = cfg_obj_asstring(obj);
+		tctx->gssapi_keytab = isc_mem_strdup(mctx, s);
+		if (tctx->gssapi_keytab == NULL) {
+			result = ISC_R_NOMEMORY;
+			goto failure;
+		}
+	}
+
 
 	*tctxp = tctx;
 	return (ISC_R_SUCCESS);

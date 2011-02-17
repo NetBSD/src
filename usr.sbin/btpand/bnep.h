@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.h,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: bnep.h,v 1.1.20.1 2011/02/17 12:00:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -35,6 +35,9 @@
 #define BNEP_EXT		0x80
 #define	BNEP_TYPE(x)		((x) & 0x7f)
 #define BNEP_TYPE_EXT(x)	(((x) & BNEP_EXT) == BNEP_EXT)
+
+#define BNEP_MAX_NET_TYPE_FILTERS	421
+#define BNEP_MAX_MULTI_ADDR_FILTERS	120
 
 /* BNEP packet types */
 #define	BNEP_GENERAL_ETHERNET			0x00

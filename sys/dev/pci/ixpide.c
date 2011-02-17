@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.17 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.17.4.1 2011/02/17 12:00:13 bouyer Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.17 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.17.4.1 2011/02/17 12:00:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ static void	ixp_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	ixp_setup_channel(struct ata_channel *);
 
 CFATTACH_DECL_NEW(ixpide, sizeof(struct pciide_softc),
-    ixpide_match, ixpide_attach, NULL, NULL);
+    ixpide_match, ixpide_attach, pciide_detach, NULL);
 
 static const char ixpdesc[] = "ATI Technologies IXP IDE Controller";
 

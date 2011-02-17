@@ -1,7 +1,8 @@
-.\"	$NetBSD: enic.4,v 1.1.2.2 2011/02/08 18:15:41 bouyer Exp $
+.\"	$NetBSD: enic.4,v 1.1.2.3 2011/02/17 11:59:26 bouyer Exp $
 .\"
-.\" Copyright (c) 2010 Microsoft Corp.
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2010 The NetBSD Foundation, Inc.
+.\"
+.\" This file is derived from work contributed by Microsoft Corporation.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -23,7 +24,6 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
 .\"
 .Dd July 27, 2010
 .Dt ENIC 4
@@ -61,9 +61,9 @@ The
 interface is present on the BEE3 and Xilinx XUP boards. The interface speed is wired at 1Gbps.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "le%d: enic_put: no mem?"
+.It "enic%d: enic_put: no mem?"
 The driver could not allocate a transmit buffer, packet was not sent.
-.It "le%d: internal error"
+.It "enic%d: internal error"
 This and other messages are indicative of bad hardware or software driver coding errors.
 .El
 .Sh SEE ALSO

@@ -1,7 +1,7 @@
-/*	$NetBSD: tsec.h,v 1.1.1.1 2009/10/25 00:02:39 christos Exp $	*/
+/*	$NetBSD: tsec.h,v 1.1.1.1.2.1 2011/02/17 11:58:45 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsec.h,v 1.3 2009/09/02 23:48:02 tbox Exp */
+/* Id: tsec.h,v 1.6 2010-12-09 00:54:34 marka Exp */
 
 #ifndef DNS_TSEC_H
 #define DNS_TSEC_H 1

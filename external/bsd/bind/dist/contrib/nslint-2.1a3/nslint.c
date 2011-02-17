@@ -1,4 +1,4 @@
-/*	$NetBSD: nslint.c,v 1.1.1.1 2009/03/22 14:57:58 christos Exp $	*/
+/*	$NetBSD: nslint.c,v 1.1.1.1.4.1 2011/02/17 11:58:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
@@ -25,7 +25,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) Id: nslint.c,v 1.1 2001/12/21 04:12:04 marka Exp (LBL)";
+    "@(#) Id: nslint.c,v 1.1 2001-12-21 04:12:04 marka Exp (LBL)";
 #endif
 /*
  * nslint - perform consistency checks on dns files

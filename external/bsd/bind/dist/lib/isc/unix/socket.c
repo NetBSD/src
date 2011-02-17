@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.4 2010/08/06 10:58:12 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.4.2.1 2011/02/17 11:59:03 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.326.20.4 2010/03/12 03:25:20 marka Exp */
+/* Id: socket.c,v 1.333.14.1 2011-02-03 05:50:07 marka Exp */
 
 /*! \file */
 
@@ -69,7 +69,11 @@
 #include <sys/epoll.h>
 #endif
 #ifdef ISC_PLATFORM_HAVEDEVPOLL
+#if defined(HAVE_SYS_DEVPOLL_H)
 #include <sys/devpoll.h>
+#elif defined(HAVE_DEVPOLL_H)
+#include <devpoll.h>
+#endif
 #endif
 
 #include "errno2result.h"
@@ -85,6 +89,7 @@
 
 #ifndef USE_WATCHER_THREAD
 #include "socket_p.h"
+#include "../task_p.h"
 #endif /* USE_WATCHER_THREAD */
 
 #if defined(SO_BSDCOMPAT) && defined(__linux__)
@@ -4260,38 +4265,32 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 	REQUIRE(VALID_MANAGER(manager));
 
 #ifdef USE_SHARED_MANAGER
-	if (manager->refs > 1) {
-		manager->refs--;
+	manager->refs--;
+	if (manager->refs > 0) {
 		*managerp = NULL;
 		return;
 	}
+	socketmgr = NULL;
 #endif /* USE_SHARED_MANAGER */
 
 	LOCK(&manager->lock);
 
-#ifdef USE_WATCHER_THREAD
 	/*
 	 * Wait for all sockets to be destroyed.
 	 */
 	while (!ISC_LIST_EMPTY(manager->socklist)) {
+#ifdef USE_WATCHER_THREAD
 		manager_log(manager, CREATION, "%s",
 			    isc_msgcat_get(isc_msgcat, ISC_MSGSET_SOCKET,
 					   ISC_MSG_SOCKETSREMAIN,
 					   "sockets exist"));
 		WAIT(&manager->shutdown_ok, &manager->lock);
-	}
 #else /* USE_WATCHER_THREAD */
-	/*
-	 * Hope all sockets have been destroyed.
-	 */
-	if (!ISC_LIST_EMPTY(manager->socklist)) {
-		manager_log(manager, CREATION, "%s",
-			    isc_msgcat_get(isc_msgcat, ISC_MSGSET_SOCKET,
-					   ISC_MSG_SOCKETSREMAIN,
-					   "sockets exist"));
-		INSIST(0);
-	}
+		UNLOCK(&manager->lock);
+		isc__taskmgr_dispatch(NULL);
+		LOCK(&manager->lock);
 #endif /* USE_WATCHER_THREAD */
+	}
 
 	UNLOCK(&manager->lock);
 
@@ -4993,10 +4992,17 @@ isc__socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
 	return (ISC_R_SUCCESS);
 }
 
+/*
+ * Enable this only for specific OS versions, and only when they have repaired
+ * their problems with it.  Until then, this is is broken and needs to be
+ * diabled by default.  See RT22589 for details.
+ */
+#undef ENABLE_ACCEPTFILTER
+
 ISC_SOCKETFUNC_SCOPE isc_result_t
 isc__socket_filter(isc_socket_t *sock0, const char *filter) {
 	isc__socket_t *sock = (isc__socket_t *)sock0;
-#ifdef SO_ACCEPTFILTER
+#if defined(SO_ACCEPTFILTER) && defined(ENABLE_ACCEPTFILTER)
 	char strbuf[ISC_STRERRORSIZE];
 	struct accept_filter_arg afa;
 #else
@@ -5006,7 +5012,7 @@ isc__socket_filter(isc_socket_t *sock0, const char *filter) {
 
 	REQUIRE(VALID_SOCKET(sock));
 
-#ifdef SO_ACCEPTFILTER
+#if defined(SO_ACCEPTFILTER) && defined(ENABLE_ACCEPTFILTER)
 	bzero(&afa, sizeof(afa));
 	strncpy(afa.af_name, filter, sizeof(afa.af_name));
 	if (setsockopt(sock->fd, SOL_SOCKET, SO_ACCEPTFILTER,
@@ -5113,6 +5119,12 @@ isc__socket_accept(isc_socket_t *sock0,
 	 * Attach to socket and to task.
 	 */
 	isc_task_attach(task, &ntask);
+	if (isc_task_exiting(ntask)) {
+		isc_task_detach(&ntask);
+		isc_event_free(ISC_EVENT_PTR(&dev));
+		UNLOCK(&sock->lock);
+		return (ISC_R_SHUTTINGDOWN);
+	}
 	nsock->references++;
 	nsock->statsindex = sock->statsindex;
 

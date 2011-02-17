@@ -1,4 +1,4 @@
-/* $Id: mech_crammd5.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
+/* $NetBSD: mech_crammd5.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,26 +34,29 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mech_crammd5.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $");
+
+#include <sys/param.h>
 
 #include <saslc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "saslc_private.h"
-#include "mech.h"
-#include "crypto.h"
 
-/* local headers */
+#include "crypto.h"
+#include "mech.h"
+#include "saslc_private.h"
+
+
+/* See RFC 2195. */
 
 /* properties */
-#define SASLC_CRAM_MD5_AUTHID		"AUTHID"
-#define SASLC_CRAM_MD5_PASSWORD		"PASSWD"
-
-static int saslc__mech_crammd5_cont(saslc_sess_t *, const void *, size_t,
-    void **, size_t *);
+#define SASLC_CRAMMD5_AUTHCID		SASLC_PROP_AUTHCID
+#define SASLC_CRAMMD5_PASSWD		SASLC_PROP_PASSWD
 
 /**
- * @brief doing one step of the sasl authentication
+ * @brief do one step of the sasl authentication
  * @param sess sasl session
  * @param in input data
  * @param inlen input data length
@@ -63,66 +66,59 @@ static int saslc__mech_crammd5_cont(saslc_sess_t *, const void *, size_t,
  * MECH_STEP - more steps are needed,
  * MECH_ERROR - error
  */
-
 static int
 saslc__mech_crammd5_cont(saslc_sess_t *sess, const void *in, size_t inlen,
     void **out, size_t *outlen)
 {
-	const char *authid, *passwd;
-	char *digest;
-        int len;
+	const char *authcid, *passwd;
+	char *digest, *name;
+	int len, rv;
 
-        authid = saslc_sess_getprop(sess, SASLC_CRAM_MD5_AUTHID);
-	if (authid == NULL) {
-		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "authid is required for an authentication");
-		return MECH_ERROR;
-	}
-
-        passwd = saslc_sess_getprop(sess, SASLC_CRAM_MD5_PASSWORD);
-	if (passwd == NULL) {
-		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "passwd is required for an authentication");
-		return MECH_ERROR;
-	}
-
-	/* server is doing first step, but some clients may call this function
-	 * before getting data from server */
+	/* in case we are called before getting challenge from server */
 	if (inlen == 0) {
 		*out = NULL;
 		*outlen = 0;
 		return MECH_STEP;
 	}
- 
-	digest = saslc__crypto_hmac_md5((const unsigned char *)passwd,
-	    strlen(passwd), in, inlen);
-
-        if (digest == NULL) {
-                saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
-                return MECH_ERROR;
-        }
-
-	len = asprintf((char **)out, "%s %s", authid, digest);
-
-        /* no longer need to keep the digest */
-        free(digest);
-
-        if (len == -1) {
+	if ((authcid = saslc_sess_getprop(sess, SASLC_CRAMMD5_AUTHCID))
+	    == NULL) {
+		saslc__error_set(ERR(sess), ERROR_MECH,
+		    "authcid is required for an authentication");
+		return MECH_ERROR;
+	}
+	if ((passwd = saslc_sess_getprop(sess, SASLC_CRAMMD5_PASSWD))
+	    == NULL) {
+		saslc__error_set(ERR(sess), ERROR_MECH,
+		    "passwd is required for an authentication");
+		return MECH_ERROR;
+	}
+	digest = saslc__crypto_hmac_md5_hex((const unsigned char *)passwd,
+					    strlen(passwd), in, inlen);
+	if (digest == NULL) {
 		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 		return MECH_ERROR;
 	}
-
-        *outlen = (size_t)len + 1;
-
-	return MECH_OK;
+	if ((len = asprintf(&name, "%s %s", authcid, digest)) == -1) {
+		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+		rv = MECH_ERROR;
+	}
+	else {
+		*out = name;
+		*outlen = len;	/* don't count the '\0' byte */
+		rv = MECH_OK;
+	}
+	memset(digest, 0, HMAC_MD5_DIGEST_LENGTH);
+	free(digest);
+	return rv;
 }
 
 /* mechanism definition */
 const saslc__mech_t saslc__mech_crammd5 = {
-	"CRAM-MD5", /* name */
-	saslc__mech_generic_create, /* create */
-	saslc__mech_crammd5_cont, /* step */
-	saslc__mech_generic_encode, /* encode */
-	saslc__mech_generic_decode, /* decode */
-	saslc__mech_generic_destroy /* destroy */
+	.name	 = "CRAM-MD5",
+	.flags	 = FLAG_DICTIONARY,
+	.create	 = saslc__mech_generic_create,
+	.cont	 = saslc__mech_crammd5_cont,
+	.encode	 = NULL,
+	.decode	 = NULL,
+	.destroy = saslc__mech_generic_destroy
 };

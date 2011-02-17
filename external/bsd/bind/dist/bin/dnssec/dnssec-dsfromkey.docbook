@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-dsfromkey.docbook,v 1.10 2009/08/26 21:56:05 jreed Exp -->
+<!-- Id: dnssec-dsfromkey.docbook,v 1.12 2010-12-23 23:47:08 tbox Exp -->
 <refentry id="man.dnssec-dsfromkey">
   <refentryinfo>
     <date>August 26, 2009</date>
@@ -38,6 +38,7 @@
     <copyright>
       <year>2008</year>
       <year>2009</year>
+      <year>2010</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -105,8 +106,8 @@
         <listitem>
           <para>
             Select the digest algorithm. The value of
-            <option>algorithm</option> must be one of SHA-1 (SHA1) or
-            SHA-256 (SHA256). These values are case insensitive.
+            <option>algorithm</option> must be one of SHA-1 (SHA1),
+            SHA-256 (SHA256) or GOST. These values are case insensitive.
           </para>
         </listitem>
       </varlistentry>

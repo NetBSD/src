@@ -1,4 +1,4 @@
-/*	$NetBSD: DirBrowse.h,v 1.1.1.1 2009/03/22 14:57:04 christos Exp $	*/
+/*	$NetBSD: DirBrowse.h,v 1.1.1.1.4.1 2011/02/17 11:58:20 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: DirBrowse.h,v 1.6 2007/06/19 23:47:07 tbox Exp */
+/* Id: DirBrowse.h,v 1.6 2007-06-19 23:47:07 tbox Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

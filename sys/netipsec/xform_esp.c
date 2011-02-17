@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.22 2009/03/20 05:30:27 cegger Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.22.8.1 2011/02/17 12:00:50 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22 2009/03/20 05:30:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22.8.1 2011/02/17 12:00:50 bouyer Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22 2009/03/20 05:30:27 cegger Exp $"
 #include <sys/kernel.h>
 /*#include <sys/random.h>*/
 #include <sys/sysctl.h>
+#include <sys/socketvar.h> /* for softnet_lock */
 
 #include <net/if.h>
 
@@ -498,6 +499,7 @@ esp_input_cb(struct cryptop *crp)
 #endif
 
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
@@ -526,6 +528,7 @@ esp_input_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
+			mutex_exit(softnet_lock);
 			splx(s);
 			return crypto_dispatch(crp);
 		}
@@ -664,11 +667,13 @@ DPRINTF(("esp_input_cb: %x %x\n", lastthree[0], lastthree[1]));
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag);
 
 	KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	if (m != NULL)
 		m_freem(m);
@@ -769,7 +774,7 @@ esp_output(
 	}
 
 	/* Update the counters. */
-	ESP_STATADD(ESP_STAT_OUTPUT, m->m_pkthdr.len - skip);
+	ESP_STATADD(ESP_STAT_OBYTES, m->m_pkthdr.len - skip);
 
 	m = m_clone(m);
 	if (m == NULL) {
@@ -935,6 +940,7 @@ esp_output_cb(struct cryptop *crp)
 	m = (struct mbuf *) crp->crp_buf;
 
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
@@ -957,6 +963,7 @@ esp_output_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
+			mutex_exit(softnet_lock);
 			splx(s);
 			return crypto_dispatch(crp);
 		}
@@ -976,7 +983,7 @@ esp_output_cb(struct cryptop *crp)
 	}
 	ESP_STATINC(ESP_STAT_HIST + sav->alg_enc);
 	if (sav->tdb_authalgxform != NULL)
-		AH_STATINC(sav->alg_auth + sav->alg_auth);
+		AH_STATINC(AH_STAT_HIST + sav->alg_auth);
 
 	/* Release crypto descriptors. */
 	free(tc, M_XDATA);
@@ -1003,11 +1010,13 @@ esp_output_cb(struct cryptop *crp)
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr);
 	KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	if (m)
 		m_freem(m);

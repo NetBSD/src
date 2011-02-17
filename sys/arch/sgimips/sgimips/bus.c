@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.60 2010/07/06 20:50:35 cegger Exp $	*/
+/*	$NetBSD: bus.c,v 1.60.4.1 2011/02/17 11:59:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.60 2010/07/06 20:50:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.60.4.1 2011/02/17 11:59:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1194,7 +1194,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		return (-1);
 	
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-	return (mips_btop(rv | PMAP_NOCACHE));
+	return (mips_btop(rv | PGC_NOCACHE));
 #else
 	return (mips_btop(rv));
 #endif
@@ -1211,7 +1211,7 @@ bus_space_mmap(bus_space_tag_t space, bus_addr_t addr, off_t off,
 	} else
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 		return mips_btop((MIPS_KSEG1_TO_PHYS(addr) + off)
-		    | PMAP_NOCACHE);
+		    | PGC_NOCACHE);
 #else
 		return mips_btop((MIPS_KSEG1_TO_PHYS(addr) + off));
 #endif

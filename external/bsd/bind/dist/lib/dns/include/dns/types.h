@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.4 2010/08/05 20:13:52 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.4.2.1 2011/02/17 11:58:45 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.138.16.4 2010/06/22 04:02:45 marka Exp */
+/* Id: types.h,v 1.143 2010-12-08 02:46:16 marka Exp */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
@@ -69,6 +69,8 @@ typedef struct dns_dispatchevent		dns_dispatchevent_t;
 typedef struct dns_dispatchlist			dns_dispatchlist_t;
 typedef struct dns_dispatchmgr			dns_dispatchmgr_t;
 typedef struct dns_dispentry			dns_dispentry_t;
+typedef struct dns_dns64			dns_dns64_t;
+typedef ISC_LIST(dns_dns64_t)			dns_dns64list_t;
 typedef struct dns_dnsseckey			dns_dnsseckey_t;
 typedef ISC_LIST(dns_dnsseckey_t)		dns_dnsseckeylist_t;
 typedef struct dns_dumpctx			dns_dumpctx_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.26.8.1 2011/02/17 12:00:50 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.26.8.1 2011/02/17 12:00:50 bouyer Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $"
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/socketvar.h> /* for softnet_lock */
 
 #include <net/if.h>
 
@@ -717,7 +718,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		 * Save the authenticator, the skipped portion of the packet,
 		 * and the AH header.
 		 */
-		m_copydata(m, 0, skip + rplen + authsize, (char *)(tc+1));
+		m_copydata(m, 0, skip + rplen + authsize, (tc + 1));
 
 		{
 			u_int8_t *pppp = ((char *)(tc+1))+skip+rplen;
@@ -829,6 +830,7 @@ ah_input_cb(struct cryptop *crp)
 #endif
 
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
@@ -851,8 +853,11 @@ ah_input_cb(struct cryptop *crp)
 		if (sav->tdb_cryptoid != 0)
 			sav->tdb_cryptoid = crp->crp_sid;
 
-		if (crp->crp_etype == EAGAIN)
+		if (crp->crp_etype == EAGAIN) {
+			mutex_exit(softnet_lock);
+			splx(s);
 			return crypto_dispatch(crp);
+		}
 
 		AH_STATINC(AH_STAT_NOXFORM);
 		DPRINTF(("ah_input_cb: crypto error %d\n", crp->crp_etype));
@@ -959,11 +964,13 @@ ah_input_cb(struct cryptop *crp)
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag);
 
 	KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	if (m != NULL)
 		m_freem(m);
@@ -1076,7 +1083,7 @@ ah_output(
 	ah = (struct newah *)(mtod(mi, char *) + roff);
 
 	/* Initialize the AH header. */
-	m_copydata(m, protoff, sizeof(u_int8_t), (char *) &ah->ah_nxt);
+	m_copydata(m, protoff, sizeof(u_int8_t), &ah->ah_nxt);
 	ah->ah_len = (rplen + authsize - sizeof(struct ah)) / sizeof(u_int32_t);
 	ah->ah_reserve = 0;
 	ah->ah_spi = sav->spi;
@@ -1229,6 +1236,7 @@ ah_output_cb(struct cryptop *crp)
 	m = (struct mbuf *) crp->crp_buf;
 
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
@@ -1247,6 +1255,7 @@ ah_output_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
+			mutex_exit(softnet_lock);
 			splx(s);
 			return crypto_dispatch(crp);
 		}
@@ -1293,11 +1302,13 @@ ah_output_cb(struct cryptop *crp)
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr);
 	KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	if (m)
 		m_freem(m);

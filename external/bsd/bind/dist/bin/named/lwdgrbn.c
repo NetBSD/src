@@ -1,4 +1,4 @@
-/*	$NetBSD: lwdgrbn.c,v 1.1.1.2 2009/10/25 00:01:32 christos Exp $	*/
+/*	$NetBSD: lwdgrbn.c,v 1.1.1.2.2.1 2011/02/17 11:57:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwdgrbn.c,v 1.22 2009/09/02 23:48:01 tbox Exp */
+/* Id: lwdgrbn.c,v 1.22 2009-09-02 23:48:01 tbox Exp */
 
 /*! \file */
 

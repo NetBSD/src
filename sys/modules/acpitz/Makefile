@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2010/10/26 04:37:33 jruoho Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2011/02/17 12:00:46 bouyer Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/acpi
 
 KMOD=	acpitz
-IOCONF=	ACPITZ.ioconf
+IOCONF=	acpitz.ioconf
 SRCS=	acpi_tz.c
 
 WARNS=	4

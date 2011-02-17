@@ -1,7 +1,7 @@
-#	$NetBSD: list.ramdisk,v 1.16 2011/01/14 10:26:33 tsutsui Exp $
+#	$NetBSD: list.ramdisk,v 1.16.2.1 2011/02/17 11:57:16 bouyer Exp $
 
 SRCDIRS	usr.bin/less
-SRCDIRS	bin sbin usr.bin usr.sbin
+SRCDIRS	bin sbin usr.bin usr.sbin libexec
 
 # Programs for a minimal ramdisk image
 
@@ -75,10 +75,10 @@ COPY	${DISTRIBDIR}/common/services		etc/services
 COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 COPY	${DESTDIR}/usr/mdec/bootxx_ffsv1	usr/mdec/bootxx_ffsv1
 COPY	${DESTDIR}/usr/mdec/bootxx_ffsv2	usr/mdec/bootxx_ffsv2
+COPY	${DESTDIR}/usr/mdec/bootxx_lfsv2	usr/mdec/bootxx_lfsv2
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
 COPY	${DESTDIR}/usr/mdec/mbr_ext		usr/mdec/mbr_ext
 COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
 
 # and the boot script
-CMD	sed -e "s/@BOOTMODEL@/${BOOTMODEL}/" < ${CURDIR}/../common/dot.profile > .profile
-MTREE	./.profile	type=file uname=root gname=wheel mode=0444
+COPY	${CURDIR}/../common/dot.profile		.profile

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.219.4.1 2011/02/08 16:20:04 bouyer Exp $	*/
+/*	$NetBSD: rump.c,v 1.219.4.2 2011/02/17 12:00:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.219.4.1 2011/02/08 16:20:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.219.4.2 2011/02/17 12:00:51 bouyer Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -102,6 +102,7 @@ int rump_threads = 1;
 static int rump_proxy_syscall(int, void *, register_t *);
 static int rump_proxy_rfork(void *, int, const char *);
 static void rump_proxy_procexit(void);
+static void rump_proxy_execnotify(const char *);
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -214,6 +215,7 @@ static const struct rumpuser_sp_ops spops = {
 	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
 	.spop_procexit		= rump_proxy_procexit,
 	.spop_syscall		= rump_proxy_syscall,
+	.spop_execnotify	= rump_proxy_execnotify,
 	.spop_getpid		= spgetpid,
 };
 
@@ -768,7 +770,7 @@ rump_proxy_rfork(void *priv, int flags, const char *comm)
 	 * Refcount will eternally be 1.
 	 */
 	p = curproc;
-	newspace = kmem_alloc(sizeof(*newspace), KM_SLEEP);
+	newspace = kmem_zalloc(sizeof(*newspace), KM_SLEEP);
 	newspace->vm_refcnt = 1;
 	newspace->vm_map.pmap = priv;
 	KASSERT(p->p_vmspace == vmspace_kernel());
@@ -777,6 +779,15 @@ rump_proxy_rfork(void *priv, int flags, const char *comm)
 		strlcpy(p->p_comm, comm, sizeof(p->p_comm));
 
 	return 0;
+}
+
+static void
+rump_proxy_execnotify(const char *comm)
+{
+	struct proc *p = curproc;
+
+	fd_closeexec();
+	strlcpy(p->p_comm, comm, sizeof(p->p_comm));
 }
 
 static void

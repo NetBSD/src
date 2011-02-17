@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.3 2010/08/05 20:12:39 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.3.2.1 2011/02/17 11:58:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataslab.c,v 1.50.186.2 2010/02/25 05:25:52 tbox Exp */
+/* Id: rdataslab.c,v 1.52.148.1 2011-02-03 07:39:03 marka Exp */
 
 /*! \file */
 
@@ -146,21 +146,25 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 
 	nalloc = dns_rdataset_count(rdataset);
 	nitems = nalloc;
-	if (nitems == 0)
+	if (nitems == 0 && rdataset->type != 0)
 		return (ISC_R_FAILURE);
 
 	if (nalloc > 0xffff)
 		return (ISC_R_NOSPACE);
 
-	x = isc_mem_get(mctx, nalloc * sizeof(struct xrdata));
-	if (x == NULL)
-		return (ISC_R_NOMEMORY);
+	
+	if (nalloc != 0) {
+		x = isc_mem_get(mctx, nalloc * sizeof(struct xrdata));
+		if (x == NULL)
+			return (ISC_R_NOMEMORY);
+	} else
+		x = NULL;
 
 	/*
 	 * Save all of the rdata members into an array.
 	 */
 	result = dns_rdataset_first(rdataset);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS && result != ISC_R_NOMORE)
 		goto free_rdatas;
 	for (i = 0; i < nalloc && result == ISC_R_SUCCESS; i++) {
 		INSIST(result == ISC_R_SUCCESS);
@@ -225,11 +229,14 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	/*
 	 * Don't forget the last item!
 	 */
+	if (nalloc != 0) {
 #if DNS_RDATASET_FIXED
-	buflen += (8 + x[i-1].rdata.length);
+		buflen += (8 + x[i-1].rdata.length);
 #else
-	buflen += (2 + x[i-1].rdata.length);
+		buflen += (2 + x[i-1].rdata.length);
 #endif
+	}
+
 	/*
 	 * Provide space to store the per RR meta data.
 	 */
@@ -318,7 +325,8 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	result = ISC_R_SUCCESS;
 
  free_rdatas:
-	isc_mem_put(mctx, x, nalloc * sizeof(struct xrdata));
+	if (x != NULL)
+		isc_mem_put(mctx, x, nalloc * sizeof(struct xrdata));
 	return (result);
 }
 

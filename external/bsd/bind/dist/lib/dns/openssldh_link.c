@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldh_link.c,v 1.1.1.3 2009/12/26 22:24:43 christos Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.1.1.3.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssldh_link.c,v 1.18 2009/10/30 05:08:23 marka Exp
+ * Id: openssldh_link.c,v 1.20 2011-01-11 23:47:13 tbox Exp
  */
 
 #ifdef OPENSSL
@@ -642,6 +642,8 @@ static dst_func_t openssldh_functions = {
 	openssldh_parse,
 	openssldh_cleanup,
 	NULL, /*%< fromlabel */
+	NULL, /*%< dump */
+	NULL, /*%< restore */
 };
 
 isc_result_t

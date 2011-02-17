@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.2 2009/04/12 03:46:09 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.2.4.1 2011/02/17 11:59:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: list.h,v 1.14 2007/06/19 23:47:23 tbox Exp */
+/* Id: list.h,v 1.14 2007-06-19 23:47:23 tbox Exp */
 
 #ifndef LWRES_LIST_H
 #define LWRES_LIST_H 1

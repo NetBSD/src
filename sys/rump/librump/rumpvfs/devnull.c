@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.2 2010/07/07 10:47:39 pooka Exp $	*/
+/*	$NetBSD: devnull.c,v 1.2.4.1 2011/02/17 12:00:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.2 2010/07/07 10:47:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.2.4.1 2011/02/17 12:00:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -67,14 +67,38 @@ static int
 rump_devnullopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
-	return 0;
+	if (minor(dev) == DEV_ZERO || minor(dev) == DEV_NULL)
+		return 0;
+	return ENXIO;
 }
 
 static int
 rump_devnullrw(dev_t dev, struct uio *uio, int flags)
 {
+	char zeros[512];
+	int error;
 
-	if (uio->uio_rw == UIO_WRITE)
-		uio->uio_resid = 0;
+	switch (minor(dev)) {
+	case DEV_NULL:
+		if (uio->uio_rw == UIO_WRITE)
+			uio->uio_resid = 0;
+		break;
+	case DEV_ZERO:
+		if (uio->uio_rw == UIO_WRITE) {
+			uio->uio_resid = 0;
+			break;
+		}
+		memset(zeros, 0, sizeof(zeros));
+		while (uio->uio_resid > 0) {
+			error = uiomove(zeros,
+			    min(sizeof(zeros), uio->uio_resid), uio);
+			if (error)
+				return error;
+		}
+		break;
+	default:
+		return ENXIO; /* how? */
+	}
+
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.3 2010/08/06 10:58:12 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.3.2.1 2011/02/17 11:58:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.h,v 1.30.558.1 2010/01/13 19:31:53 each Exp */
+/* Id: util.h,v 1.32 2010-01-11 23:48:37 tbox Exp */
 
 #ifndef ISC_UTIL_H
 #define ISC_UTIL_H 1
@@ -48,7 +48,7 @@
  * }
  * \endcode
  */
-#define UNUSED(x)      (void)(x)
+#define UNUSED(x)      (void)&(x)
 
 #define ISC_MAX(a, b)  ((a) > (b) ? (a) : (b))
 #define ISC_MIN(a, b)  ((a) < (b) ? (a) : (b))

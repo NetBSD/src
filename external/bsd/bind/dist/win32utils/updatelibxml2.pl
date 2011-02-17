@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: updatelibxml2.pl,v 1.3.126.2 2010/08/17 23:46:28 tbox Exp
+# Id: updatelibxml2.pl,v 1.5 2010-08-13 23:47:04 tbox Exp
 
 # updatelibxml2.pl
 # This script locates the latest version of libxml2 in the grandparent

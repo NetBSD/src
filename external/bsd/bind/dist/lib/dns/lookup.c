@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.2 2010/12/25 18:23:39 christos Exp $	*/
+/*	$NetBSD: lookup.c,v 1.2.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lookup.c,v 1.21 2007/06/18 23:47:40 tbox Exp */
+/* Id: lookup.c,v 1.21 2007-06-18 23:47:40 tbox Exp */
 
 /*! \file */
 

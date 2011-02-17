@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/06/03 19:17:22 plunky Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2011/02/17 11:59:16 bouyer Exp $
 
 WARNS?=	2
 
@@ -14,8 +14,10 @@ PROG=	pcc
 SRCS=	cc.c
 MAN=	pcc.1
 
+CPPFLAGS+=	-DTARGMACH=${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIST}/mip
 CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
+CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}
 
 pcc.1:	cc.1
 	${TOOL_SED} -e "s,Nm cc,Nm pcc,"	\

@@ -1,7 +1,7 @@
-/*	$NetBSD: db.h,v 1.1.1.3 2009/12/26 22:25:13 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.1.1.3.2.1 2011/02/17 11:58:44 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.h,v 1.102 2009/11/25 23:49:22 tbox Exp */
+/* Id: db.h,v 1.104 2011-01-13 04:59:25 tbox Exp */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -65,6 +65,7 @@
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
+#include <dns/rpz.h>
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -172,6 +173,13 @@ typedef struct dns_dbmethods {
 					   dns_dbversion_t *version);
 	isc_boolean_t	(*isdnssec)(dns_db_t *db);
 	dns_stats_t	*(*getrrsetstats)(dns_db_t *db);
+	void		(*rpz_enabled)(dns_db_t *db, dns_rpz_st_t *st);
+	isc_result_t	(*rpz_findips)(dns_rpz_zone_t *rpz,
+				       dns_rpz_type_t rpz_type,
+				       dns_zone_t *zone, dns_db_t *db,
+				       dns_dbversion_t *version,
+				       dns_rdataset_t *ardataset,
+				       dns_rpz_st_t *st);
 } dns_dbmethods_t;
 
 typedef isc_result_t
@@ -1487,6 +1495,31 @@ dns_db_getrrsetstats(dns_db_t *db);
  * Returns:
  * \li	when available, a pointer to a statistics object created by
  *	dns_rdatasetstats_create(); otherwise NULL.
+ */
+
+void
+dns_db_rpz_enabled(dns_db_t *db, dns_rpz_st_t *st);
+/*%<
+ * See if a policy database has DNS_RPZ_TYPE_IP, DNS_RPZ_TYPE_NSIP, or
+ * DNS_RPZ_TYPE_NSDNAME records.
+ */
+
+isc_result_t
+dns_db_rpz_findips(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
+		   dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version,
+		   dns_rdataset_t *ardataset, dns_rpz_st_t *st);
+/*%<
+ * Search the CDIR block tree of a response policy tree of trees for the best
+ * match to any of the IP addresses in an A or AAAA rdataset.
+ *
+ * Requires:
+ * \li	search in policy zone 'rpz' for a match of 'rpz_type' either
+ *	    DNS_RPZ_TYPE_IP or DNS_RPZ_TYPE_NSIP
+ * \li	'zone' and 'db' are the database corresponding to 'rpz'
+ * \li	'version' is the required version of the database
+ * \li	'ardataset' is an A or AAAA rdataset of addresses to check
+ * \li	'found' specifies the previous best match if any or
+ *	    or NULL, an empty name, 0, DNS_RPZ_POLICY_MISS, and 0
  */
 
 ISC_LANG_ENDDECLS

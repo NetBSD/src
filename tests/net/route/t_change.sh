@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.1.2.2 2011/02/08 19:01:37 bouyer Exp $
+#	$NetBSD: t_change.sh,v 1.1.2.3 2011/02/17 12:00:54 bouyer Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,7 +47,6 @@ reject2blackhole_body()
 	    "rump.route -n show -inet | grep ^207.46"
 	atf_check -s exit:0 -o ignore \
 	    rump.route change 207.46.197.32 127.0.0.1 -blackhole
-	atf_expect_fail "PR kern/40455"
 	atf_check -s exit:0 -o match:' UGHBS ' -e ignore \
 	    sh -c "rump.netstat -rn -f inet | grep ^207.46| grep ^207.46"
 }

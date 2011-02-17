@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.26 2010/08/02 19:59:35 jakllsch Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.26.4.1 2011/02/17 12:00:50 bouyer Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.26 2010/08/02 19:59:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.26.4.1 2011/02/17 12:00:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ int32_t swcr_id = -1;
 	(x) == CRYPTO_BUF_MBUF ? m_copydata((struct mbuf *)a,b,c,d) \
 	: cuio_copydata((struct uio *)a,b,c,d)
 
-static	int swcr_encdec(struct cryptodesc *, struct swcr_data *, void *, int);
-static	int swcr_compdec(struct cryptodesc *, struct swcr_data *, void *, int);
+static	int swcr_encdec(struct cryptodesc *, const struct swcr_data *, void *, int);
+static	int swcr_compdec(struct cryptodesc *, const struct swcr_data *, void *, int, int *);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
@@ -70,7 +70,7 @@ static	int swcr_freesession(void *, u_int64_t);
  * Apply a symmetric encryption/decryption algorithm.
  */
 static int
-swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
+swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
     int outtype)
 {
 	char *buf = bufv;
@@ -418,7 +418,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
  */
 int
 swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
-    struct swcr_data *sw, void *buf, int outtype)
+    const struct swcr_data *sw, void *buf, int outtype)
 {
 	unsigned char aalg[AALG_MAX_RESULT_LEN];
 	const struct swcr_auth_hash *axf;
@@ -512,8 +512,8 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
  * Apply a compression/decompression algorithm
  */
 static int
-swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
-    void *buf, int outtype)
+swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
+    void *buf, int outtype, int *res_size)
 {
 	u_int8_t *data, *out;
 	const struct swcr_comp_algo *cxf;
@@ -544,7 +544,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	/* Copy back the (de)compressed data. m_copyback is
 	 * extending the mbuf as necessary.
 	 */
-	sw->sw_size = result;
+	*res_size = (int)result;
 	/* Check the compressed size when doing compression */
 	if (crd->crd_flags & CRD_F_COMP) {
 		if (result > crd->crd_len) {
@@ -986,10 +986,8 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 		case CRYPTO_GZIP_COMP:
 			DPRINTF(("swcr_process: compdec for %d\n", sw->sw_alg));
 			if ((crp->crp_etype = swcr_compdec(crd, sw,
-			    crp->crp_buf, type)) != 0)
+			    crp->crp_buf, type, &crp->crp_olen)) != 0)
 				goto done;
-			else
-				crp->crp_olen = (int)sw->sw_size;
 			break;
 
 		default:

@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.93 2010/10/04 22:31:11 christos Exp $
+#	$NetBSD: services,v 1.93.2.1 2011/02/17 11:57:24 bouyer Exp $
 # See also: services(5), http://www.sethwklein.net/projects/iana-etc/
 #
 # PORT NUMBERS
@@ -16525,7 +16525,6 @@ kpop		1109/tcp		# Kerberos POP server
 supfiledbg	1127/tcp		# SUP debugging
 radacct		1813/tcp
 radacct		1813/udp
-sieve		2000/tcp		# RFC3028
 lmtp		2003/tcp		# Local Mail Transfer Protocol
 nfsd		2049/udp		# Sun NFS
 nfsd		2049/tcp		# Sun NFS

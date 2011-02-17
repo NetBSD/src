@@ -1,4 +1,4 @@
-/* $Id: mech_plain.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
+/* $NetBSD: mech_plain.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,26 +34,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mech_plain.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $");
 
 #include <saslc.h>
 #include <stdio.h>
 #include <string.h>
-#include "saslc_private.h"
-#include "mech.h"
-#include "error.h"
 
-/* local headers */
+#include "error.h"
+#include "mech.h"
+#include "msg.h"
+#include "saslc_private.h"
+
+
+/* See RFC 2595. */
 
 /* properties */
-#define SASLC_PLAIN_AUTHZID	"AUTHZID"
-#define SASLC_PLAIN_AUTHCID	"AUTHCID"
-#define SASLC_PLAIN_PASSWORD	"PASSWD"
+#define SASLC_PLAIN_AUTHCID	SASLC_PROP_AUTHCID	/* username key */
+#define SASLC_PLAIN_AUTHZID	SASLC_PROP_AUTHZID	/* authorization id */
+#define SASLC_PLAIN_PASSWD	SASLC_PROP_PASSWD	/* password key */
 
 #define NUL_DELIM	'\x00'
 #define CRED_MAX_LEN	255
-
-static int saslc__mech_plain_cont(saslc_sess_t *, const void *, size_t,
-    void **, size_t *);
 
 /**
  * @brief doing one step of the sasl authentication
@@ -66,11 +68,10 @@ static int saslc__mech_plain_cont(saslc_sess_t *, const void *, size_t,
  * MECH_STEP - more steps are needed,
  * MECH_ERROR - error
  */
-
 /*ARGSUSED*/
 static int
-saslc__mech_plain_cont(saslc_sess_t *sess, const void *in, size_t inlen,
-    void **out, size_t *outlen)
+saslc__mech_plain_cont(saslc_sess_t *sess, const void *in __unused,
+    size_t inlen __unused, void **out, size_t *outlen)
 {
 	const char *authzid, *authcid, *passwd;
 	char *outstr;
@@ -79,11 +80,11 @@ saslc__mech_plain_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 	authzid = saslc_sess_getprop(sess, SASLC_PLAIN_AUTHZID);
 	if (authzid != NULL && strlen(authzid) > CRED_MAX_LEN) {
 		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "authzid should be shorter than 256 characters"); 
+		    "authzid should be shorter than 256 characters");
 		return MECH_ERROR;
 	}
 
-	if ((authcid = saslc_sess_getprop(sess, SASLC_PLAIN_AUTHCID)) 
+	if ((authcid = saslc_sess_getprop(sess, SASLC_PLAIN_AUTHCID))
 	    == NULL) {
 		saslc__error_set(ERR(sess), ERROR_MECH,
 			"authcid is required for an authentication");
@@ -91,11 +92,11 @@ saslc__mech_plain_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 	}
 	if (strlen(authcid) > CRED_MAX_LEN) {
 		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "authcid should be shorter than 256 characters"); 
+		    "authcid should be shorter than 256 characters");
 		return MECH_ERROR;
 	}
 
-	if ((passwd = saslc_sess_getprop(sess, SASLC_PLAIN_PASSWORD)) 
+	if ((passwd = saslc_sess_getprop(sess, SASLC_PLAIN_PASSWD))
 	    == NULL) {
 		saslc__error_set(ERR(sess), ERROR_MECH,
 			"passwd is required for an authentication");
@@ -103,29 +104,33 @@ saslc__mech_plain_cont(saslc_sess_t *sess, const void *in, size_t inlen,
 	}
 	if (strlen(passwd) > CRED_MAX_LEN) {
 		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "passwd should be shorter than 256 characters"); 
+		    "passwd should be shorter than 256 characters");
 		return MECH_ERROR;
 	}
 
-	len = asprintf(&outstr, "%s%c%s%c%s", authzid != NULL ? 
-	    authzid : "", NUL_DELIM, authcid, NUL_DELIM, passwd);
+	len = asprintf(&outstr, "%s%c%s%c%s", authzid != NULL ? authzid : "",
+	    NUL_DELIM, authcid, NUL_DELIM, passwd);
 	if (len == -1) {
-                saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 		return MECH_ERROR;
-        }
+	}
 	*out = outstr;
-	*outlen = (size_t)len + 1;
+	*outlen = len;
+
+	saslc__msg_dbg("saslc__mech_plain_cont: "
+	    "authzid='%s' authcid='%s' passwd='%s'\n",
+	    authzid != NULL ? authzid : "", authcid, passwd);
 
 	return MECH_OK;
 }
 
-
 /* mechanism definition */
 const saslc__mech_t saslc__mech_plain = {
-	"PLAIN", /* name */
-	saslc__mech_generic_create, /* create */
-	saslc__mech_plain_cont, /* step */
-	saslc__mech_generic_encode, /* encode */
-	saslc__mech_generic_decode, /* decode */
-	saslc__mech_generic_destroy /* destroy */
+	.name	 = "PLAIN",
+	.flags	 = FLAG_PLAINTEXT,
+	.create	 = saslc__mech_generic_create,
+	.cont	 = saslc__mech_plain_cont,
+	.encode	 = NULL,
+	.decode	 = NULL,
+	.destroy = saslc__mech_generic_destroy
 };

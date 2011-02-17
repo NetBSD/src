@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.46 2011/01/16 01:22:29 matt Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.46.2.1 2011/02/17 11:59:24 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.46 2011/01/16 01:22:29 matt Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.46.2.1 2011/02/17 11:59:24 bouyer Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -82,6 +82,9 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 	if (obj->gotptr != NULL) {
 		obj->gotptr[1] = (Elf_Addr) _rtld_bind_secureplt_start;
 		obj->gotptr[2] = (Elf_Addr) obj;
+		dbg(("obj %s secure-plt gotptr=%p start=%p obj=%p",
+		    obj->path, obj->gotptr,
+		    (void *) obj->gotptr[1], (void *) obj->gotptr[2]));
 	} else {
 		Elf_Word *pltcall, *pltresolve;
 		Elf_Word *jmptab;
@@ -90,6 +93,10 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 		/* Entries beyond 8192 take twice as much space. */
 		if (N > 8192)
 			N += N-8192;
+
+		dbg(("obj %s bss-plt pltgot=%p jmptab=%u start=%p obj=%p",
+		    obj->path, obj->pltgot, 18 + N * 2,
+		    _rtld_bind_bssplt_start, obj));
 
 		pltcall = obj->pltgot;
 		jmptab = pltcall + 18 + N * 2;
@@ -343,7 +350,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, int reloff
 caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
-	const Elf_Rela *rela = (const void *)((const char *)obj->pltrela + reloff);
+	const Elf_Rela *rela = obj->pltrela + reloff;
 	Elf_Addr new_value;
 	int err;
 

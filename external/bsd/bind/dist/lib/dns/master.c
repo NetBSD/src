@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.3 2009/10/25 00:14:33 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.3.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.c,v 1.178 2009/09/01 00:22:26 jinmei Exp */
+/* Id: master.c,v 1.178 2009-09-01 00:22:26 jinmei Exp */
 
 /*! \file */
 
@@ -234,7 +234,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 			} else \
 				goto log_and_cleanup; \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define COMMITALL \
 	do { \
@@ -255,7 +255,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 		isc_buffer_init(&target, target_mem, target_size); \
 		rdcount_save = rdcount; \
 		rdlcount_save = rdlcount; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define WARNUNEXPECTEDEOF(lexer) \
 	do { \
@@ -263,7 +263,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 			(*callbacks->warn)(callbacks, \
 				"%s: file does not end with newline", \
 				source); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define EXPECTEOL \
 	do { \
@@ -275,11 +275,10 @@ loadctx_destroy(dns_loadctx_t *lctx);
 				SETRESULT(lctx, result); \
 				LOGIT(result); \
 				read_till_eol = ISC_TRUE; \
-				/* continue; */ \
 			} else if (result != ISC_R_SUCCESS) \
 				goto log_and_cleanup; \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define MANYERRS(lctx, result) \
 		((result != ISC_R_SUCCESS) && \
@@ -290,7 +289,7 @@ loadctx_destroy(dns_loadctx_t *lctx);
 		do { \
 			if ((lctx)->result == ISC_R_SUCCESS) \
 				(lctx)->result = r; \
-		} while (0)
+		} while (/*CONSTCOND*/0)
 
 #define LOGITFILE(result, filename) \
 	if (result == ISC_R_INVALIDFILE || result == ISC_R_FILENOTFOUND || \

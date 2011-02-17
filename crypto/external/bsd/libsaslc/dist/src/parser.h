@@ -1,4 +1,4 @@
-/* $Id: parser.h,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
+/* $NetBSD: parser.h,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,13 +38,9 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
-#define SASLC__CONFIG_PATH "/etc/saslc.d"
-#define SASLC__CONFIG_MAIN_FILE "saslc"
-#define SASLC__CONFIG_MECH_DIRECTORY "mech"
-#define SASLC__CONFIG_SUFFIX ".conf"
-#define SASLC__DEFAULT_APPNAME "saslc"
-#define SASLC__ENV_PATH "SASLC_CONFIG"
+#include <saslc.h>
 
 int saslc__parser_config(saslc_t *);
+bool saslc__parser_is_true(const char *);
 
 #endif /* ! _PARSER_H_ */

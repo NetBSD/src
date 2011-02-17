@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.41.4.2 2011/02/08 19:29:34 bouyer Exp $
+# $NetBSD: INSTALL,v 1.41.4.3 2011/02/17 11:59:38 bouyer Exp $
 #
 # INSTALL machine description file
 #
@@ -136,6 +136,7 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
+#sgc0		at mainbus0	# SGC bus
 
 # Real-time clock (not optional)
 rtc*		at intio?
@@ -183,6 +184,9 @@ wsdisplay*	at topcat?
 # TurboVRX framebuffer
 tvrx*		at dio? scode ?
 wsdisplay*	at tvrx?
+
+gendiofb*	at dio? scode ?
+wsdisplay*	at gendiofb?
 
 com*		at dio0 scode 9		# DCA serial interfaces
 com*		at dio? scode ?

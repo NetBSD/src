@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1007.2.2 2011/02/08 19:29:35 bouyer Exp $
+# $NetBSD: GENERIC,v 1.1007.2.3 2011/02/17 11:59:44 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1007.2.2 $"
+#ident 		"GENERIC-$Revision: 1.1007.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -172,12 +172,12 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
+file-system	FFS		# UFS
+file-system	NFS		# Network File System client
 # File systems, built as module(7)s by default
-#file-system	FFS		# UFS
 #file-system	EXT2FS		# second extended file system (linux)
 #file-system	LFS		# log-structured file system
 #file-system	MFS		# memory file system
-#file-system	NFS		# Network File System client
 #file-system	NTFS		# Windows/NT file system (experimental)
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	MSDOSFS		# MS-DOS file system
@@ -186,6 +186,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #file-system	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
 #file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
@@ -391,6 +392,7 @@ vald*		at acpi?		# Toshiba Libretto hotkeys
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
 wmidell*	at acpiwmibus?		# Dell WMI mappings
+wmieeepc*	at acpiwmibus?		# Asus Eee PC WMI mappings
 #wmihp*		at acpiwmibus?		# HP WMI mappings
 wmimsi*		at acpiwmibus?		# MSI WMI mappings
 wss*		at acpi?		# NeoMagic 256AV in wss mode
@@ -565,15 +567,15 @@ pcppi0		at isa?
 sysbeep0	at pcppi?
 
 # DRI driver
-i915drm*	at vga?		# Intel i915, i945 DRM driver
-mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
-mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
-r128drm*	at vga?		# ATI Rage 128 DRM driver
-radeondrm*	at vga?		# ATI Radeon DRM driver
-savagedrm*	at vga?		# S3 Savage DRM driver
-sisdrm*		at vga?		# SiS DRM driver
-tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
-viadrm*		at vga?		# VIA DRM driver
+i915drm*	at drm?		# Intel i915, i945 DRM driver
+mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
+mgadrm*		at drm?		# Matrox G[24]00, G[45]50 DRM driver
+r128drm*	at drm?		# ATI Rage 128 DRM driver
+radeondrm*	at drm?		# ATI Radeon DRM driver
+savagedrm*	at drm?		# S3 Savage DRM driver
+sisdrm*		at drm?		# SiS DRM driver
+tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
+viadrm*		at drm?		# VIA DRM driver
 
 # Serial Devices
 
@@ -677,6 +679,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e
 #wbsio*	at isa? port 0x4e
+
+# IBM Hawk Integrated Systems Management Processor
+#ibmhawk0	at iic?	addr 0x37
 
 # LM7[89] and compatible hardware monitors
 # Use flags to select temp sensor type (see lm(4) man page for details)
@@ -1331,7 +1336,7 @@ auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
-azalia* at pci? dev ? function ?	# High Definition Audio
+#azalia* at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738

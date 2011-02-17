@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.78.40.1 2011/02/08 16:19:20 bouyer Exp $
+#	$NetBSD: files.hp300,v 1.78.40.2 2011/02/17 11:59:38 bouyer Exp $
 #
 # hp300-specific configuration info
 
@@ -43,6 +43,14 @@ attach	dio at mainbus
 file	arch/hp300/dev/dio.c		dio
 
 #
+# SGC bus
+#
+
+device	sgc { scode = -1 }
+attach	sgc at mainbus
+file	arch/hp300/dev/sgc.c		sgc
+
+#
 # Devices in Internal i/o space
 #
 
@@ -72,10 +80,10 @@ attach	com at frodo with com_frodo
 file	arch/hp300/dev/com_frodo.c	com_frodo needs-flag
 
 # Apollo Keyboard and mouse
-#device	dnkbd: wskbddev, wsmousedev
-#attach	dnkbd at frodo
-#file	arch/hp300/dev/dnkbd.c			dnkbd	needs-flag
-#file	arch/hp300/dev/dnkbdmap.c		dnkbd
+device	dnkbd: wskbddev, wsmousedev
+attach	dnkbd at frodo
+file	arch/hp300/dev/dnkbd.c			dnkbd	needs-flag
+file	arch/hp300/dev/dnkbdmap.c		dnkbd
 
 #
 # Frame buffer devices on Internal I/O and the DIO bus
@@ -112,6 +120,10 @@ file	arch/hp300/dev/topcat.c			topcat	needs-flag
 device	tvrx: wsemuldisplaydev, diofb_mono, rasops1
 attach	tvrx at dio
 file	arch/hp300/dev/tvrx.c			tvrx	needs-flag
+
+device	gendiofb: wsemuldisplaydev, diofb, rasops8
+attach	gendiofb at dio
+file	arch/hp300/dev/gendiofb.c		gendiofb	needs-flag
 
 #
 # Devices on the DIO bus

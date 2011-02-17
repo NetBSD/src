@@ -1,4 +1,4 @@
-/*	$NetBSD: secproto.h,v 1.1.1.1 2009/03/22 15:01:48 christos Exp $	*/
+/*	$NetBSD: secproto.h,v 1.1.1.1.4.1 2011/02/17 11:58:45 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: secproto.h,v 1.16 2007/06/19 23:47:17 tbox Exp */
+/* Id: secproto.h,v 1.16 2007-06-19 23:47:17 tbox Exp */
 
 #ifndef DNS_SECPROTO_H
 #define DNS_SECPROTO_H 1

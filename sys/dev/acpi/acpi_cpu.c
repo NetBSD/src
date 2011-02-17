@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.25 2011/01/13 04:18:19 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.25.4.1 2011/02/17 12:00:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.25 2011/01/13 04:18:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.25.4.1 2011/02/17 12:00:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -628,78 +628,38 @@ acpicpu_resume(device_t self, const pmf_qual_t *qual)
 	return true;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpicpu, NULL);
-CFDRIVER_DECL(acpicpu, DV_DULL, NULL);
 
-static int acpicpuloc[] = { -1 };
-extern struct cfattach acpicpu_ca;
-
-static struct cfparent acpiparent = {
-	"acpinodebus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata acpicpu_cfdata[] = {
-	{
-		.cf_name = "acpicpu",
-		.cf_atname = "acpicpu",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = acpicpuloc,
-		.cf_flags = 0,
-		.cf_pspec = &acpiparent,
-	},
-
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
-acpicpu_modcmd(modcmd_t cmd, void *context)
+acpicpu_modcmd(modcmd_t cmd, void *aux)
 {
-	int err;
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
 
-		err = config_cfdriver_attach(&acpicpu_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("acpicpu", &acpicpu_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&acpicpu_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(acpicpu_cfdata, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("acpicpu", &acpicpu_ca);
-			config_cfdriver_detach(&acpicpu_cd);
-			return err;
-		}
-
-		return 0;
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpicpu,
+		    cfattach_ioconf_acpicpu, cfdata_ioconf_acpicpu);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(acpicpu_cfdata);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("acpicpu", &acpicpu_ca);
-		config_cfdriver_detach(&acpicpu_cd);
-
-		return 0;
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpicpu,
+		    cfattach_ioconf_acpicpu, cfdata_ioconf_acpicpu);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

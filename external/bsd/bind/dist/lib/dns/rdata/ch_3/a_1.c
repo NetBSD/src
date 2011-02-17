@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.1.1.2 2009/12/26 22:25:23 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.1.1.2.2.1 2011/02/17 11:58:47 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: a_1.c,v 1.8 2009/12/04 22:06:37 tbox Exp */
+/* Id: a_1.c,v 1.8 2009-12-04 22:06:37 tbox Exp */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */

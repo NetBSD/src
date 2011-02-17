@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.1.1.4 2010/08/05 19:52:39 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.1.1.4.2.1 2011/02/17 11:57:30 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.c,v 1.233.62.3 2010/05/13 00:42:26 marka Exp */
+/* Id: dig.c,v 1.237 2010-05-13 00:40:46 marka Exp */
 
 /*! \file */
 
@@ -70,7 +70,8 @@ static char domainopt[DNS_NAME_MAXTEXT];
 
 static isc_boolean_t short_form = ISC_FALSE, printcmd = ISC_TRUE,
 	ip6_int = ISC_FALSE, plusquest = ISC_FALSE, pluscomm = ISC_FALSE,
-	multiline = ISC_FALSE, nottl = ISC_FALSE, noclass = ISC_FALSE;
+	multiline = ISC_FALSE, nottl = ISC_FALSE, noclass = ISC_FALSE,
+	onesoa = ISC_FALSE;
 
 /*% opcode text */
 static const char * const opcodetext[] = {
@@ -227,6 +228,7 @@ help(void) {
 #endif
 #endif
 "                 +[no]multiline      (Print records in an expanded format)\n"
+"                 +[no]onesoa         (AXFR prints only one soa record)\n"
 "        global d-opts and servers (before host name) affect all queries.\n"
 "        local d-opts and servers (after host name) affect only that lookup.\n"
 "        -h                           (print help and exit)\n"
@@ -473,6 +475,9 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		flags |= DNS_MESSAGETEXTFLAG_NOHEADERS;
 		flags |= DNS_MESSAGETEXTFLAG_NOCOMMENTS;
 	}
+	if (onesoa && query->lookup->rdtype == dns_rdatatype_axfr)
+		flags |= (query->msg_count == 0) ? DNS_MESSAGETEXTFLAG_ONESOA :
+						   DNS_MESSAGETEXTFLAG_OMITSOA;
 	if (!query->lookup->comments)
 		flags |= DNS_MESSAGETEXTFLAG_NOCOMMENTS;
 
@@ -717,14 +722,14 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 		size_t _l = strlen(cmd); \
 		if (_l >= sizeof(A) || strncasecmp(cmd, A, _l) != 0) \
 			goto invalid_option; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define FULLCHECK2(A, B) \
 	do { \
 		size_t _l = strlen(cmd); \
 		if ((_l >= sizeof(A) || strncasecmp(cmd, A, _l) != 0) && \
 		    (_l >= sizeof(B) || strncasecmp(cmd, B, _l) != 0)) \
 			goto invalid_option; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	switch (cmd[0]) {
 	case 'a':
@@ -928,6 +933,10 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 		default:
 			goto invalid_option;
 		}
+		break;
+	case 'o':
+		FULLCHECK("onesoa");
+		onesoa = state;
 		break;
 	case 'q':
 		switch (cmd[1]) {

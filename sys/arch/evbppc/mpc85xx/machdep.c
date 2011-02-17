@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2.2.1 2011/02/08 16:19:19 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.2.2 2011/02/17 11:59:37 bouyer Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -250,15 +250,15 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 	{ "pcie", PCIE1_BASE, PCI_SIZE, 0,
 		1, { ISOURCE_PCIEX },
 		1 + ilog2(DEVDISR_PCIE),
-		{ SVR_MPC8538v1 >> 16 }, },
+		{ SVR_MPC8548v1 >> 16 }, },
 	{ "pci", PCIX1_MPC8548_BASE, PCI_SIZE, 1,
 		1, { ISOURCE_PCI1 },
 		1 + ilog2(DEVDISR_PCI1),
-		{ SVR_MPC8538v1 >> 16 }, },
+		{ SVR_MPC8548v1 >> 16 }, },
 	{ "pci", PCIX2_MPC8548_BASE, PCI_SIZE, 2,
 		1, { ISOURCE_PCI2 },
 		1 + ilog2(DEVDISR_PCI2),
-		{ SVR_MPC8538v1 >> 16 }, },
+		{ SVR_MPC8548v1 >> 16 }, },
 #endif
 #if defined(MPC8572) || defined(P2020)
 	{ "pcie", PCIE1_BASE, PCI_SIZE, 1,

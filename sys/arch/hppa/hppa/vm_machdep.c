@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45.4.1 2011/02/08 16:19:25 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45.4.2 2011/02/17 11:59:43 bouyer Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45.4.1 2011/02/08 16:19:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45.4.2 2011/02/17 11:59:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ cpu_lwp_free2(struct lwp *l)
 /*
  * Map an IO request into kernel virtual address space.
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t uva, kva;
@@ -274,6 +274,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		kva += PAGE_SIZE;
 	}
 	pmap_update(kpmap);
+
+	return 0;
 }
 
 /*

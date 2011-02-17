@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.1 2009/03/22 15:02:23 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.1.4.1 2011/02/17 11:59:04 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.56 2008/02/15 23:46:51 tbox Exp */
+/* Id: time.c,v 1.56 2008-02-15 23:46:51 tbox Exp */
 
 /*! \file */
 

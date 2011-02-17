@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.109.2.1 2011/02/08 16:18:35 bouyer Exp $
+# $NetBSD: md.amd64,v 1.109.2.2 2011/02/17 11:57:18 bouyer Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -61,7 +61,7 @@
 ./usr/lib/i386/libbfd.so.11			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libbind9.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libbind9.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -80,8 +80,12 @@
 ./usr/lib/i386/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libdevmapper.so.1		base-compat-shlib	compat,pic,lvm
+./usr/lib/i386/libdevmapper.so.1.0		base-compat-shlib	compat,pic,lvm
+./usr/lib/i386/libdm.so.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libdns.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libdns.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/i386/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/i386/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -115,11 +119,11 @@
 ./usr/lib/i386/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisc.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libisc.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisccc.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libisccc.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisccfg.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libisccfg.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/i386/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/i386/libisns.so.0			base-compat-shlib	compat,pic
@@ -144,7 +148,9 @@
 ./usr/lib/i386/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/liblwres.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/i386/liblwres.so.5.3			base-compat-shlib	compat,pic
+./usr/lib/i386/liblzf.so.0			base-compat-shlib	compat,pic
+./usr/lib/i386/liblzf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzma.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0			base-compat-shlib	compat,pic
@@ -211,6 +217,8 @@
 ./usr/lib/i386/librumphijack.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpvfs.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpvfs.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/i386/libsaslc.so.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/i386/libsaslc.so.0.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/i386/libskey.so.2			base-compat-shlib	compat,pic,skey
 ./usr/lib/i386/libskey.so.2.0			base-compat-shlib	compat,pic,skey
 ./usr/lib/i386/libsl.so.4			base-compat-shlib	compat,pic,kerberos

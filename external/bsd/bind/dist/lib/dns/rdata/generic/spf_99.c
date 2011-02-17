@@ -1,4 +1,4 @@
-/*	$NetBSD: spf_99.c,v 1.1.1.2 2009/12/26 22:25:28 christos Exp $	*/
+/*	$NetBSD: spf_99.c,v 1.1.1.2.2.1 2011/02/17 11:58:49 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: spf_99.c,v 1.6 2009/12/04 22:06:37 tbox Exp */
+/* Id: spf_99.c,v 1.6 2009-12-04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 

@@ -1,0 +1,4 @@
+# $NetBSD: md.hp300,v 1.2.24.1 2011/02/17 11:57:21 bouyer Exp $
+./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg

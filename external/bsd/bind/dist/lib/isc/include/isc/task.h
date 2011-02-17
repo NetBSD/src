@@ -1,7 +1,7 @@
-/*	$NetBSD: task.h,v 1.1.1.2 2009/10/25 00:02:45 christos Exp $	*/
+/*	$NetBSD: task.h,v 1.1.1.2.2.1 2011/02/17 11:58:59 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: task.h,v 1.65 2009/09/02 18:38:40 jinmei Exp */
+/* Id: task.h,v 1.69.14.1 2011-02-03 05:50:07 marka Exp */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -127,6 +127,8 @@ typedef struct isc_taskmethods {
 	unsigned int (*purgerange)(isc_task_t *task, void *sender,
 				   isc_eventtype_t first, isc_eventtype_t last,
 				   void *tag);
+	isc_result_t (*beginexclusive)(isc_task_t *task);
+	void (*endexclusive)(isc_task_t *task);
 } isc_taskmethods_t;
 
 /*%
@@ -601,6 +603,16 @@ isc_task_getcurrenttime(isc_task_t *task, isc_stdtime_t *t);
  *\li	'*t' has the "current time".
  */
 
+isc_boolean_t
+isc_task_exiting(isc_task_t *t);
+/*%<
+ * Returns ISC_TRUE if the task is in the process of shutting down,
+ * ISC_FALSE otherwise.
+ *
+ * Requires:
+ *\li	'task' is a valid task.
+ */
+
 /*****
  ***** Task Manager.
  *****/
@@ -647,8 +659,10 @@ isc_taskmgr_create(isc_mem_t *mctx, unsigned int workers,
  *
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOMEMORY
- *\li	#ISC_R_NOTHREADS			No threads could be created.
+ *\li	#ISC_R_NOTHREADS		No threads could be created.
  *\li	#ISC_R_UNEXPECTED		An unexpected error occurred.
+ *\li	#ISC_R_SHUTTINGDOWN      	The non-threaded, shared, task
+ *					manager shutting down.
  */
 
 void

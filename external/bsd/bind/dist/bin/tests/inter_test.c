@@ -1,4 +1,4 @@
-/*	$NetBSD: inter_test.c,v 1.1.1.1 2009/03/22 14:56:22 christos Exp $	*/
+/*	$NetBSD: inter_test.c,v 1.1.1.1.4.1 2011/02/17 11:57:36 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: inter_test.c,v 1.16 2008/03/20 23:47:00 tbox Exp */
+/* Id: inter_test.c,v 1.16 2008-03-20 23:47:00 tbox Exp */
 
 /*! \file */
 #include <config.h>

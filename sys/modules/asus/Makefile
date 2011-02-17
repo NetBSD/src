@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2010/10/26 05:36:49 jruoho Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2011/02/17 12:00:47 bouyer Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/acpi
 
 KMOD=	asus
-IOCONF=	ASUS.ioconf
+IOCONF=	asus.ioconf
 SRCS=	asus_acpi.c
 
 WARNS=	4

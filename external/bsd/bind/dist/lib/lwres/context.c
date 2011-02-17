@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.2.2.1 2011/02/17 11:59:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: context.c,v 1.55 2009/09/02 23:48:03 tbox Exp */
+/* Id: context.c,v 1.55 2009-09-02 23:48:03 tbox Exp */
 
 /*! \file context.c
    lwres_context_create() creates a #lwres_context_t structure for use in
@@ -127,7 +127,7 @@ do { \
 		retval |= O_NONBLOCK; \
 		retval = fcntl(sd, F_SETFL, retval); \
 	} \
-} while (0)
+} while (/*CONSTCOND*/0)
 #endif
 
 LIBLWRES_EXTERNAL_DATA lwres_uint16_t lwres_udp_port = LWRES_UDP_PORT;

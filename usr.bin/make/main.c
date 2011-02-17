@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.194 2010/12/25 20:34:08 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.194.2.1 2011/02/17 12:00:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.194 2010/12/25 20:34:08 dholland Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.194.2.1 2011/02/17 12:00:56 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.194 2010/12/25 20:34:08 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.194.2.1 2011/02/17 12:00:56 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -706,7 +706,7 @@ str2Lst_Append(Lst lp, char *str, const char *sep)
 #ifdef SIGINFO
 /*ARGSUSED*/
 static void
-siginfo(int signo)
+siginfo(int signo __unused)
 {
 	char dir[MAXPATHLEN];
 	char str[2 * MAXPATHLEN];

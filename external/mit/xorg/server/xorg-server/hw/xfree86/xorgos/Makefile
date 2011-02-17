@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2010/11/29 09:34:41 skrll Exp $
+#	$NetBSD: Makefile,v 1.26.2.1 2011/02/17 11:59:20 bouyer Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -54,7 +54,8 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
-.if ${MACHINE} == "hpcmips" || \
+.if ${MACHINE} == "ews4800mips" || \
+    ${MACHINE} == "hpcmips" || \
     ${MACHINE} == "sgimips"
 SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
@@ -78,6 +79,13 @@ CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT
 
 .if ${MACHINE} == "dreamcast" || \
     ${MACHINE} == "hpcsh"
+SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
+.endif
+
+.if ${MACHINE} == "hp300"
 SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC

@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.807.2.1 2011/02/08 16:18:48 bouyer Exp $
+#	$NetBSD: 3RDPARTY,v 1.807.2.2 2011/02/17 11:57:21 bouyer Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -26,7 +26,7 @@
 
 Package:	acpica
 Version:	20100528
-Current Vers:	20110112
+Current Vers:	20110211
 Maintainer:	INTEL
 Archive Site:	http://www.acpica.org/downloads/unix_source_code.php
 Home Page:	http://www.acpica.org/
@@ -91,8 +91,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.7.2-P3
-Current Vers:	9.7.2-P3
+Version:	9.8.0rc1
+Current Vers:	9.8.0rc1
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/

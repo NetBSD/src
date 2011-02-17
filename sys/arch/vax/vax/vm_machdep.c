@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.113 2010/12/14 23:44:50 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.113.4.1 2011/02/17 12:00:03 bouyer Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113 2010/12/14 23:44:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113.4.1 2011/02/17 12:00:03 bouyer Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -261,7 +261,7 @@ iounaccess(vaddr_t vaddr, size_t npgs)
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 #if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
@@ -273,7 +273,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	    && vax_boardtype != VAX_BTYP_48
 	    && vax_boardtype != VAX_BTYP_49
 	    && vax_boardtype != VAX_BTYP_53)
-		return;
+		return 0;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	p = bp->b_proc;
@@ -295,6 +295,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	}
 	pmap_update(vm_map_pmap(phys_map));
 #endif
+
+	return 0;
 }
 
 /*

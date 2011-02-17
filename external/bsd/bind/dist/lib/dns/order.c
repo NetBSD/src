@@ -1,4 +1,4 @@
-/*	$NetBSD: order.c,v 1.1.1.1 2009/03/22 15:01:13 christos Exp $	*/
+/*	$NetBSD: order.c,v 1.1.1.1.4.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: order.c,v 1.10 2007/06/19 23:47:16 tbox Exp */
+/* Id: order.c,v 1.10 2007-06-19 23:47:16 tbox Exp */
 
 /*! \file */
 

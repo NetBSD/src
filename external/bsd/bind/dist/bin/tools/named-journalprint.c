@@ -1,4 +1,4 @@
-/*	$NetBSD: named-journalprint.c,v 1.1.1.1 2009/12/26 22:20:28 christos Exp $	*/
+/*	$NetBSD: named-journalprint.c,v 1.1.1.1.2.1 2011/02/17 11:58:20 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-journalprint.c,v 1.2 2009/12/04 21:59:23 marka Exp */
+/* Id: named-journalprint.c,v 1.2 2009-12-04 21:59:23 marka Exp */
 
 /*! \file */
 #include <config.h>

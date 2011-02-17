@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.1.1.4 2010/08/05 19:53:47 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.1.1.4.2.1 2011/02/17 11:57:32 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: statschannel.c,v 1.24.40.2 2010/02/04 23:48:30 tbox Exp */
+/* Id: statschannel.c,v 1.26 2010-02-04 23:49:13 tbox Exp */
 
 /*! \file */
 
@@ -148,7 +148,7 @@ init_desc(void) {
 			 dns_nsstatscounter_max, \
 			 desc, nsstats_desc, xmldesc, nsstats_xmldesc); \
 		nsstats_index[i++] = dns_nsstatscounter_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_NSSTATDESC(requestv4, "IPv4 requests received", "Requestv4");
@@ -216,7 +216,7 @@ init_desc(void) {
 			 dns_resstatscounter_max, \
 			 desc, resstats_desc, xmldesc, resstats_xmldesc); \
 		resstats_index[i++] = dns_resstatscounter_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_RESSTATDESC(queryv4, "IPv4 queries sent", "Queryv4");
@@ -286,7 +286,7 @@ init_desc(void) {
 			 dns_zonestatscounter_max, \
 			 desc, zonestats_desc, xmldesc, zonestats_xmldesc); \
 		zonestats_index[i++] = dns_zonestatscounter_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_ZONESTATDESC(notifyoutv4, "IPv4 notifies sent", "NotifyOutv4");
@@ -318,7 +318,7 @@ init_desc(void) {
 			 isc_sockstatscounter_max, \
 			 desc, sockstats_desc, xmldesc, sockstats_xmldesc); \
 		sockstats_index[i++] = isc_sockstatscounter_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_SOCKSTATDESC(udp4open, "UDP/IPv4 sockets opened", "UDP4Open");

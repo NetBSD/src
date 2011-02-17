@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.110.4.1 2011/02/08 16:20:06 bouyer Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.110.4.2 2011/02/17 12:00:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -27,6 +27,7 @@
  *
  * from: Id: uvm_aobj.c,v 1.1.2.5 1998/02/06 05:14:38 chs Exp
  */
+
 /*
  * uvm_aobj.c: anonymous memory uvm_object pager
  *
@@ -37,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.110.4.1 2011/02/08 16:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.110.4.2 2011/02/17 12:00:52 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -131,12 +132,10 @@ struct uao_swhash_elt {
 LIST_HEAD(uao_swhash, uao_swhash_elt);
 
 /*
- * uao_swhash_elt_pool: pool of uao_swhash_elt structures
- * NOTE: Pages for this pool must not come from a pageable kernel map!
+ * uao_swhash_elt_pool: pool of uao_swhash_elt structures.
+ * Note: pages for this pool must not come from a pageable kernel map.
  */
 static struct pool uao_swhash_elt_pool;
-
-static struct pool_cache uvm_aobj_cache;
 
 /*
  * uvm_aobj: the actual anon-backed uvm_object
@@ -417,7 +416,7 @@ uao_free(struct uvm_aobj *aobj)
 	 */
 
 	UVM_OBJ_DESTROY(&aobj->u_obj);
-	pool_cache_put(&uvm_aobj_cache, aobj);
+	kmem_free(aobj, sizeof(struct uvm_aobj));
 }
 
 /*
@@ -459,7 +458,7 @@ uao_create(vsize_t size, int flags)
 		kobj_alloced = UAO_FLAG_KERNSWAP;
 		refs = 0xdeadbeaf; /* XXX: gcc */
 	} else {
-		aobj = pool_cache_get(&uvm_aobj_cache, PR_WAITOK);
+		aobj = kmem_alloc(sizeof(struct uvm_aobj), KM_SLEEP);
 		aobj->u_pages = pages;
 		aobj->u_flags = 0;
 		refs = 1;
@@ -531,8 +530,6 @@ uao_init(void)
 	uao_initialized = true;
 	LIST_INIT(&uao_list);
 	mutex_init(&uao_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	pool_cache_bootstrap(&uvm_aobj_cache, sizeof(struct uvm_aobj), 0, 0,
-	    0, "aobj", NULL, IPL_NONE, NULL, NULL, NULL);
 	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
 	    0, 0, 0, "uaoeltpl", NULL, IPL_VM);
 }

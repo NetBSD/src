@@ -1,4 +1,4 @@
-/*	$NetBSD: notify.c,v 1.1.1.1 2009/03/22 14:56:03 christos Exp $	*/
+/*	$NetBSD: notify.c,v 1.1.1.1.4.1 2011/02/17 11:57:32 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: notify.c,v 1.37 2007/06/19 23:46:59 tbox Exp */
+/* Id: notify.c,v 1.37 2007-06-19 23:46:59 tbox Exp */
 
 #include <config.h>
 

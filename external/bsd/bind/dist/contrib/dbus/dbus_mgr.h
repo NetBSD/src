@@ -1,4 +1,4 @@
-/*	$NetBSD: dbus_mgr.h,v 1.1.1.1 2009/03/22 14:57:06 christos Exp $	*/
+/*	$NetBSD: dbus_mgr.h,v 1.1.1.1.4.1 2011/02/17 11:58:20 bouyer Exp $	*/
 
 /* dbus_mgr.h
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.6 2010/12/02 14:52:17 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.6.2.1 2011/02/17 11:57:30 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dighost.c,v 1.328.22.4 2010/08/10 08:43:40 marka Exp */
+/* Id: dighost.c,v 1.336 2010-12-09 00:54:33 marka Exp */
 
 /*! \file
  *  \note
@@ -254,7 +254,7 @@ isc_result_t	  opentmpkey(isc_mem_t *mctx, const char *file,
 			     char **tempp, FILE **fp);
 isc_result_t	  removetmpkey(isc_mem_t *mctx, const char *file);
 void		  clean_trustedkey(void);
-void		  insert_trustedkey(dst_key_t  * key);
+void		  insert_trustedkey(dst_key_t **key);
 #if DIG_SIGCHASE_BU
 isc_result_t	  getneededrr(dns_message_t *msg);
 void		  sigchase_bottom_up(dns_message_t *msg);
@@ -1144,7 +1144,6 @@ setup_file_key(void) {
 		       keynametext, isc_result_totext(result));
 		goto failure;
 	}
-	dstkey = NULL;
  failure:
 	if (dstkey != NULL)
 		dst_key_free(&dstkey);
@@ -4055,14 +4054,15 @@ sigchase_scanname(dns_rdatatype_t type, dns_rdatatype_t covers,
 }
 
 void
-insert_trustedkey(dst_key_t * key)
+insert_trustedkey(dst_key_t **keyp)
 {
-	if (key == NULL)
+	if (*keyp == NULL)
 		return;
 	if (tk_list.nb_tk >= MAX_TRUSTED_KEY)
 		return;
 
-	tk_list.key[tk_list.nb_tk++] = key;
+	tk_list.key[tk_list.nb_tk++] = *keyp;
+	*keyp = NULL;
 	return;
 }
 
@@ -4236,11 +4236,12 @@ get_trusted_key(isc_mem_t *mctx)
 			fclose(fp);
 			return (ISC_R_FAILURE);
 		}
-		insert_trustedkey(key);
 #if 0
 		dst_key_tofile(key, DST_TYPE_PUBLIC,"/tmp");
 #endif
-		key = NULL;
+		insert_trustedkey(&key);
+		if (key != NULL)
+			dst_key_free(&key);
 	}
 	return (ISC_R_SUCCESS);
 }

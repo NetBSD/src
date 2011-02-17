@@ -1,4 +1,4 @@
-/*	$NetBSD: raidctl_hostops.c,v 1.1 2010/12/15 18:37:55 pooka Exp $	*/
+/*	$NetBSD: raidctl_hostops.c,v 1.1.2.1 2011/02/17 11:59:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: raidctl_hostops.c,v 1.1 2010/12/15 18:37:55 pooka Exp $");
+__RCSID("$NetBSD: raidctl_hostops.c,v 1.1.2.1 2011/02/17 11:59:25 bouyer Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -42,5 +42,6 @@ __RCSID("$NetBSD: raidctl_hostops.c,v 1.1 2010/12/15 18:37:55 pooka Exp $");
 const struct prog_ops prog_ops = {
 	.op_open = open,
 	.op_ioctl = ioctl,
+	.op_fstat = fstat,
 	.op_close = close,
 };

@@ -1,7 +1,7 @@
-/*	$NetBSD: netaddr.c,v 1.1.1.1 2009/03/22 15:02:06 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.1.1.1.4.1 2011/02/17 11:58:56 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netaddr.c,v 1.38 2007/06/18 23:47:44 tbox Exp */
+/* Id: netaddr.c,v 1.41 2010-11-17 23:47:08 tbox Exp */
 
 /*! \file */
 
@@ -305,18 +305,18 @@ isc_netaddr_fromin6(isc_netaddr_t *netaddr, const struct in6_addr *ina6) {
 isc_result_t
 isc_netaddr_frompath(isc_netaddr_t *netaddr, const char *path) {
 #ifdef ISC_PLATFORM_HAVESYSUNH
-        if (strlen(path) > sizeof(netaddr->type.un) - 1)
-                return (ISC_R_NOSPACE);
+	if (strlen(path) > sizeof(netaddr->type.un) - 1)
+		return (ISC_R_NOSPACE);
 
-        memset(netaddr, 0, sizeof(*netaddr));
-        netaddr->family = AF_UNIX;
-        strcpy(netaddr->type.un, path);
-        netaddr->zone = 0;
-        return (ISC_R_SUCCESS);
-#else 
+	memset(netaddr, 0, sizeof(*netaddr));
+	netaddr->family = AF_UNIX;
+	strcpy(netaddr->type.un, path);
+	netaddr->zone = 0;
+	return (ISC_R_SUCCESS);
+#else
 	UNUSED(netaddr);
 	UNUSED(path);
-        return (ISC_R_NOTIMPLEMENTED);
+	return (ISC_R_NOTIMPLEMENTED);
 #endif
 }
 

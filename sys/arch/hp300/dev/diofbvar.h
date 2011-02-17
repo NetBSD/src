@@ -1,4 +1,4 @@
-/*	$NetBSD: diofbvar.h,v 1.1.2.2 2011/02/08 16:19:21 bouyer Exp $	*/
+/*	$NetBSD: diofbvar.h,v 1.1.2.3 2011/02/17 11:59:38 bouyer Exp $	*/
 /*	$OpenBSD: diofbvar.h,v 1.10 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
 #ifdef	_KERNEL
 
 struct diocmap {
-	u_int8_t r[256], g[256], b[256];
+	uint8_t r[256], g[256], b[256];
 };
 
 /*
@@ -103,8 +103,8 @@ struct diofb {
 	u_int	mapmode;
 
 	/* blockmove routine */
-	int	(*bmv)(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
-		    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
+	int	(*bmv)(struct diofb *, uint16_t, uint16_t, uint16_t,
+		    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 };
 
 /* Replacement Rules (rops) */
@@ -130,8 +130,8 @@ paddr_t	diofb_mmap(void *, void *, off_t, int);
 int	diofb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
-int	diofb_mono_windowmove(struct diofb *, u_int16_t, u_int16_t, u_int16_t,
-	    u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
+int	diofb_mono_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
+	    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 
 /* Console support */
 int	dvboxcnattach(bus_space_tag_t, bus_addr_t, int);
@@ -140,6 +140,7 @@ int	hypercnattach(bus_space_tag_t, bus_addr_t, int);
 int	rboxcnattach(bus_space_tag_t, bus_addr_t, int);
 int	topcatcnattach(bus_space_tag_t, bus_addr_t, int);
 int	tvrxcnattach(bus_space_tag_t, bus_addr_t, int);
+int	gendiofbcnattach(bus_space_tag_t, bus_addr_t, int);
 extern	struct diofb diofb_cn;		/* struct diofb for console device */
 
 #endif

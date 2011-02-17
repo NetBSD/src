@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.h,v 1.2 2009/12/22 08:44:03 cegger Exp $ */
+/* $NetBSD: acpidump.h,v 1.2.2.1 2011/02/17 12:00:57 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -81,7 +81,9 @@ ACPI_TABLE_HEADER *dsdt_from_fadt(ACPI_TABLE_FADT *);
 int	 acpi_checksum(void *, size_t);
 
 /* Command line flags */
+extern int	cflag;
 extern int	dflag;
+extern int	sflag;
 extern int	tflag;
 extern int	vflag;
 

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.5.658.2 2010/09/15 12:38:21 tbox Exp
+# Id: clean.sh,v 1.7 2010-09-15 12:38:35 tbox Exp
 
 rm -f dig.out.*
 rm -f */named.memstats

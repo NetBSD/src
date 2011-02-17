@@ -1,4 +1,4 @@
-/* $NetBSD: kern.ldscript,v 1.2.2.1 2011/02/08 16:19:34 bouyer Exp $ */
+/* $NetBSD: kern.ldscript,v 1.2.2.2 2011/02/17 11:59:55 bouyer Exp $ */
 
 /*  ldscript for NetBSD/powerpc kernels and LKMs */
 OUTPUT_ARCH(powerpc)
@@ -18,6 +18,9 @@ SECTIONS
     __stub_start = .;
     *(.stub)
     __stub_end = .;
+    __stub_pmap_start = .;
+    *(.stub.pmap)
+    __stub_pmap_end = .;
     *(.gnu.warning)
   } =0
   _etext = .;

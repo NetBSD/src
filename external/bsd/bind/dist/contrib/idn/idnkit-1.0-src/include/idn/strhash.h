@@ -1,6 +1,6 @@
-/*	$NetBSD: strhash.h,v 1.1.1.1 2009/03/22 14:57:22 christos Exp $	*/
+/*	$NetBSD: strhash.h,v 1.1.1.1.4.1 2011/02/17 11:58:23 bouyer Exp $	*/
 
-/* Id: strhash.h,v 1.1.1.1 2003/06/04 00:25:42 marka Exp */
+/* Id: strhash.h,v 1.1.1.1 2003-06-04 00:25:42 marka Exp */
 /*
  * Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
  *  

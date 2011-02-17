@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sigcode.s,v 1.3 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: linux_sigcode.s,v 1.3.30.1 2011/02/17 11:59:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -63,12 +63,13 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.s,v 1.3 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.s,v 1.3.30.1 2011/02/17 11:59:29 bouyer Exp $");
 
 #include "assym.h"
 
 .stabs	__FILE__,132,0,0,kernel_text
 
+	.text
 /*
  * Linux signal trampoline code.  Almost identical to the normal one.
  */

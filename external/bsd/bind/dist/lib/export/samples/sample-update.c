@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-update.c,v 1.1.1.1 2009/10/25 00:02:42 christos Exp $	*/
+/*	$NetBSD: sample-update.c,v 1.1.1.1.2.1 2011/02/17 11:58:55 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sample-update.c,v 1.5 2009/09/29 15:06:07 fdupont Exp */
+/* Id: sample-update.c,v 1.10 2010-12-09 00:54:34 marka Exp */
 
 #include <config.h>
 
@@ -748,6 +748,7 @@ setup_tsec(char *keyfile, isc_mem_t *mctx) {
 		tsectype = dns_tsectype_sig0;
 
 	result = dns_tsec_create(mctx, tsectype, dstkey, &tsec);
+	dst_key_free(&dstkey);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "could not create tsec: %s\n",
 			isc_result_totext(result));

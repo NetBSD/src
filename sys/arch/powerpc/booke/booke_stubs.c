@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.2.2.1 2011/02/17 11:59:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -270,5 +270,5 @@ booke_fixup_stubs(void)
 	extern uint32_t _ftext[];
 	extern uint32_t _etext[];
 
-	powerpc_fixup_stubs(_ftext, _etext);
+	powerpc_fixup_stubs(_ftext, _etext, NULL, NULL);
 }

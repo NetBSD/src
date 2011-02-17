@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_filesystem_driver.c,v 1.1.1.1 2009/03/22 14:57:08 christos Exp $	*/
+/*	$NetBSD: dlz_filesystem_driver.c,v 1.1.1.1.4.1 2011/02/17 11:58:21 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -262,7 +262,7 @@ create_path(const char *zone, const char *host, const char *client,
 	if ((host != NULL) && (is_safe(host) != ISC_TRUE) )
 		return (ISC_R_FAILURE);
 
-	/* if host was passed, verify that it is safe */
+	/* if client was passed, verify that it is safe */
 	if ((client != NULL) && (is_safe(client) != ISC_TRUE) )
 		return (ISC_R_FAILURE);
 
@@ -998,7 +998,14 @@ static dns_sdlzmethods_t dlz_fs_methods = {
 	fs_lookup,
 	NULL,
 	fs_allnodes,
-	fs_allowzonexfr
+	fs_allowzonexfr,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*%

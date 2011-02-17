@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.h,v 1.1.14.1 2011/02/09 11:00:07 bouyer Exp $ */
+/* $NetBSD: genfb_machdep.h,v 1.1.14.2 2011/02/17 12:00:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,5 +31,7 @@
 
 int	x86_genfb_cnattach(void);
 void	x86_genfb_mtrr_init(uint64_t, uint32_t);
+void	x86_genfb_set_console_dev(device_t);
+void	x86_genfb_ddb_trap_callback(int);
 
 #endif /* !_X86_GENFB_MACHDEP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.74 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.74.2.1 2011/02/17 11:59:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -136,6 +136,7 @@ struct cpu_info {
 	struct evcnt ci_ev_isi;		/* user ISI traps */
 	struct evcnt ci_ev_isi_fatal;	/* user ISI trap failures */
 	struct evcnt ci_ev_pgm;		/* user PGM traps */
+	struct evcnt ci_ev_debug;	/* user debug traps */
 	struct evcnt ci_ev_fpu;		/* FPU traps */
 	struct evcnt ci_ev_fpusw;	/* FPU context switch */
 	struct evcnt ci_ev_ali;		/* Alignment traps */
@@ -323,7 +324,7 @@ cntlzw(uint32_t val)
 
 #define	CLKF_USERMODE(frame)	(((frame)->cf_srr1 & PSL_PR) != 0)
 #define	CLKF_PC(frame)		((frame)->cf_srr0)
-#define	CLKF_INTR(frame)	((frame)->cf_idepth >= 0)
+#define	CLKF_INTR(frame)	((frame)->cf_idepth > 0)
 
 #define	LWP_PC(l)		(trapframe(l)->tf_srr0)
 

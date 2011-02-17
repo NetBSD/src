@@ -1,6 +1,6 @@
-/*	$NetBSD: stub.h,v 1.1.1.1 2009/03/22 14:57:49 christos Exp $	*/
+/*	$NetBSD: stub.h,v 1.1.1.1.4.1 2011/02/17 11:58:26 bouyer Exp $	*/
 
-/* Id: stub.h,v 1.1.1.1 2003/06/04 00:27:13 marka Exp */
+/* Id: stub.h,v 1.1.1.1 2003-06-04 00:27:13 marka Exp */
 
 #ifndef STUB_H
 #define STUB_H

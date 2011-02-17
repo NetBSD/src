@@ -1,7 +1,7 @@
-/*	$NetBSD: keycreate.c,v 1.1.1.2 2009/10/25 00:01:37 christos Exp $	*/
+/*	$NetBSD: keycreate.c,v 1.1.1.2.2.1 2011/02/17 11:58:10 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keycreate.c,v 1.18 2009/09/01 00:22:25 jinmei Exp */
+/* Id: keycreate.c,v 1.20 2011-01-11 23:47:13 tbox Exp */
 
 #include <config.h>
 
@@ -278,6 +278,7 @@ main(int argc, char *argv[]) {
 	view = NULL;
 	RUNCHECK(dns_view_create(mctx, 0, "_test", &view));
 	dns_view_setkeyring(view, ring);
+	dns_tsigkeyring_detach(&ring);
 
 	sock = NULL;
 	RUNCHECK(isc_socket_create(socketmgr, PF_INET, isc_sockettype_udp,

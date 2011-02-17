@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.16.2.1 2011/02/08 16:19:04 bouyer Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.16.2.2 2011/02/17 11:59:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -68,10 +68,13 @@ ssize_t	(*host_read)(int, void *, size_t);
 ssize_t (*host_sendto)(int, const void *, size_t, int,
 		       const struct sockaddr *, socklen_t);
 int	(*host_setsockopt)(int, int, int, const void *, socklen_t);
+int	(*host_dup)(int);
 
 int	(*host_kqueue)(void);
 int	(*host_kevent)(int, const struct kevent *, size_t,
 		       struct kevent *, size_t, const struct timespec *);
+
+int	(*host_execve)(const char *, char *const[], char *const[]);
 
 #include "sp_common.c"
 
@@ -83,9 +86,13 @@ static int kq = -1;
 static sigset_t fullset;
 
 static int doconnect(bool);
-static int handshake_req(struct spclient *, uint32_t *, int, bool);
+static int handshake_req(struct spclient *, int, void *, int, bool);
 
-time_t retrytimo = RUMPCLIENT_RETRYCONN_ONCE;
+/*
+ * Default: don't retry.  Most clients can't handle it
+ * (consider e.g. fds suddenly going missing).
+ */
+static time_t retrytimo = 0;
 
 static int
 send_with_recon(struct spclient *spc, const void *data, size_t dlen)
@@ -99,8 +106,10 @@ send_with_recon(struct spclient *spc, const void *data, size_t dlen)
 		rv = dosend(spc, data, dlen);
 		if (__predict_false(rv == ENOTCONN || rv == EBADF)) {
 			/* no persistent connections */
-			if (retrytimo == 0)
+			if (retrytimo == 0) {
+				rv = ENOTCONN;
 				break;
+			}
 			if (retrytimo == RUMPCLIENT_RETRYCONN_DIE)
 				exit(1);
 
@@ -145,7 +154,8 @@ send_with_recon(struct spclient *spc, const void *data, size_t dlen)
 
 			if ((rv = doconnect(false)) != 0)
 				continue;
-			if ((rv = handshake_req(&clispc, NULL, 0, true)) != 0)
+			if ((rv = handshake_req(&clispc, HANDSHAKE_GUEST,
+			    NULL, 0, true)) != 0)
 				continue;
 
 			/*
@@ -196,6 +206,10 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 				case 0:
 					rv = host_kevent(kq, NULL, 0,
 					    kev, __arraycount(kev), NULL);
+
+					if (__predict_false(rv == -1)) {
+						goto cleanup;
+					}
 
 					/*
 					 * XXX: don't know how this can
@@ -300,7 +314,8 @@ syscall_req(struct spclient *spc, sigset_t *omask, int sysnum,
 }
 
 static int
-handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
+handshake_req(struct spclient *spc, int type, void *data,
+	int cancel, bool haslock)
 {
 	struct handshake_fork rf;
 	struct rsp_hdr rhdr;
@@ -309,7 +324,7 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 	size_t bonus;
 	int rv;
 
-	if (auth) {
+	if (type == HANDSHAKE_FORK) {
 		bonus = sizeof(rf);
 	} else {
 		bonus = strlen(getprogname())+1;
@@ -319,10 +334,7 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 	rhdr.rsp_len = sizeof(rhdr) + bonus;
 	rhdr.rsp_class = RUMPSP_REQ;
 	rhdr.rsp_type = RUMPSP_HANDSHAKE;
-	if (auth)
-		rhdr.rsp_handshake = HANDSHAKE_FORK;
-	else
-		rhdr.rsp_handshake = HANDSHAKE_GUEST;
+	rhdr.rsp_handshake = type;
 
 	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	if (haslock)
@@ -330,8 +342,8 @@ handshake_req(struct spclient *spc, uint32_t *auth, int cancel, bool haslock)
 	else
 		putwait(spc, &rw, &rhdr);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	if (auth) {
-		memcpy(rf.rf_auth, auth, AUTHLEN*sizeof(*auth));
+	if (type == HANDSHAKE_FORK) {
+		memcpy(rf.rf_auth, data, sizeof(rf.rf_auth)); /* uh, why? */
 		rf.rf_cancel = cancel;
 		rv = send_with_recon(spc, &rf, sizeof(rf));
 	} else {
@@ -543,6 +555,30 @@ handlereq(struct spclient *spc)
 static unsigned ptab_idx;
 static struct sockaddr *serv_sa;
 
+/* dup until we get a "good" fd which does not collide with stdio */
+static int
+dupgood(int myfd, int mustchange)
+{
+	int ofds[4];
+	int i;
+
+	for (i = 0; (myfd <= 2 || mustchange) && myfd != -1; i++) {
+		assert(i < __arraycount(ofds));
+		ofds[i] = myfd;
+		myfd = host_dup(myfd);
+		if (mustchange) {
+			i--; /* prevent closing old fd */
+			mustchange = 0;
+		}
+	}
+
+	for (i--; i >= 0; i--) {
+		host_close(ofds[i]);
+	}
+
+	return myfd;
+}
+
 static int
 doconnect(bool noisy)
 {
@@ -590,7 +626,7 @@ doconnect(bool noisy)
 	free(clispc.spc_buf);
 	clispc.spc_off = 0;
 
-	s = host_socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0);
+	s = dupgood(host_socket(parsetab[ptab_idx].domain, SOCK_STREAM, 0), 0);
 	if (s == -1)
 		return -1;
 
@@ -645,7 +681,7 @@ doconnect(bool noisy)
 	clispc.spc_reconnecting = 0;
 
 	/* setup kqueue, we want all signals and the fd */
-	if ((kq = host_kqueue()) == -1) {
+	if ((kq = dupgood(host_kqueue(), 0)) == -1) {
 		error = errno;
 		if (noisy)
 			fprintf(stderr, "rump_sp: cannot setup kqueue");
@@ -681,12 +717,19 @@ doinit(void)
 }
 
 void *(*rumpclient_dlsym)(void *, const char *);
+static int init_done = 0;
 
 int
 rumpclient_init()
 {
 	char *p;
 	int error;
+	int rv = -1;
+	int hstype;
+
+	if (init_done)
+		return 0;
+	init_done = 1;
 
 	sigfillset(&fullset);
 
@@ -711,7 +754,9 @@ rumpclient_init()
 	FINDSYM(read);
 	FINDSYM(sendto);
 	FINDSYM(setsockopt);
+	FINDSYM(dup);
 	FINDSYM(kqueue);
+	FINDSYM(execve);
 #if !__NetBSD_Prereq__(5,99,7)
 	FINDSYM(kevent);
 #else
@@ -720,36 +765,52 @@ rumpclient_init()
 #undef	FINDSYM
 #undef	FINDSY2
 
-	if ((p = getenv("RUMP_SERVER")) == NULL) {
-		errno = ENOENT;
-		return -1;
+	if ((p = getenv("RUMP__PARSEDSERVER")) == NULL) {
+		if ((p = getenv("RUMP_SERVER")) == NULL) {
+			errno = ENOENT;
+			goto out;
+		}
 	}
 
 	if ((error = parseurl(p, &serv_sa, &ptab_idx, 0)) != 0) {
 		errno = error;
-		return -1;
+		goto out;
 	}
 
 	if (doinit() == -1)
-		return -1;
-	if (doconnect(true) == -1)
-		return -1;
+		goto out;
 
-	error = handshake_req(&clispc, NULL, 0, false);
+	if ((p = getenv("RUMPCLIENT__EXECFD")) != NULL) {
+		sscanf(p, "%d,%d", &clispc.spc_fd, &kq);
+		unsetenv("RUMPCLIENT__EXECFD");
+		hstype = HANDSHAKE_EXEC;
+	} else {
+		if (doconnect(true) == -1)
+			goto out;
+		hstype = HANDSHAKE_GUEST;
+	}
+
+	error = handshake_req(&clispc, hstype, NULL, 0, false);
 	if (error) {
 		pthread_mutex_destroy(&clispc.spc_mtx);
 		pthread_cond_destroy(&clispc.spc_cv);
 		if (clispc.spc_fd != -1)
 			host_close(clispc.spc_fd);
 		errno = error;
-		return -1;
+		goto out;
 	}
+	rv = 0;
 
-	return 0;
+ out:
+	if (rv == -1)
+		init_done = 0;
+	return rv;
 }
 
 struct rumpclient_fork {
 	uint32_t fork_auth[AUTHLEN];
+	struct spclient fork_spc;
+	int fork_kq;
 };
 
 struct rumpclient_fork *
@@ -763,7 +824,7 @@ rumpclient_prefork(void)
 	pthread_sigmask(SIG_SETMASK, &fullset, &omask);
 	rpf = malloc(sizeof(*rpf));
 	if (rpf == NULL)
-		return NULL;
+		goto out;
 
 	if ((rv = prefork_req(&clispc, &omask, &resp)) != 0) {
 		free(rpf);
@@ -774,6 +835,9 @@ rumpclient_prefork(void)
 
 	memcpy(rpf->fork_auth, resp, sizeof(rpf->fork_auth));
 	free(resp);
+
+	rpf->fork_spc = clispc;
+	rpf->fork_kq = kq;
 
  out:
 	pthread_sigmask(SIG_SETMASK, &omask, NULL);
@@ -797,7 +861,8 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 	if (doconnect(false) == -1)
 		return -1;
 
-	error = handshake_req(&clispc, rpf->fork_auth, 0, false);
+	error = handshake_req(&clispc, HANDSHAKE_FORK, rpf->fork_auth,
+	    0, false);
 	if (error) {
 		pthread_mutex_destroy(&clispc.spc_mtx);
 		pthread_cond_destroy(&clispc.spc_cv);
@@ -809,6 +874,21 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 }
 
 void
+rumpclient_fork_cancel(struct rumpclient_fork *rpf)
+{
+
+	/* EUNIMPL */
+}
+
+void
+rumpclient_fork_vparent(struct rumpclient_fork *rpf)
+{
+
+	clispc = rpf->fork_spc;
+	kq = rpf->fork_kq;
+}
+
+void
 rumpclient_setconnretry(time_t timeout)
 {
 
@@ -816,4 +896,153 @@ rumpclient_setconnretry(time_t timeout)
 		return; /* gigo */
 
 	retrytimo = timeout;
+}
+
+int
+rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
+{
+	int fd = *fdp;
+	int untilfd, rv;
+	int newfd;
+
+	switch (variant) {
+	case RUMPCLIENT_CLOSE_FCLOSEM:
+		untilfd = MAX(clispc.spc_fd, kq);
+		for (; fd <= untilfd; fd++) {
+			if (fd == clispc.spc_fd || fd == kq)
+				continue;
+			rv = host_close(fd);
+			if (rv == -1)
+				return -1;
+		}
+		*fdp = fd;
+		break;
+
+	case RUMPCLIENT_CLOSE_CLOSE:
+	case RUMPCLIENT_CLOSE_DUP2:
+		if (fd == clispc.spc_fd) {
+			struct kevent kev[2];
+
+			newfd = dupgood(clispc.spc_fd, 1);
+			if (newfd == -1)
+				return -1;
+			/*
+			 * now, we have a new socket number, so change
+			 * the file descriptor that kqueue is
+			 * monitoring.  remove old and add new.
+			 */
+			EV_SET(&kev[0], clispc.spc_fd,
+			    EVFILT_READ, EV_DELETE, 0, 0, 0);
+			EV_SET(&kev[1], newfd,
+			    EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+			if (host_kevent(kq, kev, 2, NULL, 0, NULL) == -1) {
+				int sverrno = errno;
+				host_close(newfd);
+				errno = sverrno;
+				return -1;
+			}
+			clispc.spc_fd = newfd;
+		}
+		if (fd == kq) {
+			newfd = dupgood(kq, 1);
+			if (newfd == -1)
+				return -1;
+			kq = newfd;
+		}
+		break;
+	}
+
+	return 0;
+}
+
+pid_t
+rumpclient_fork()
+{
+
+	return rumpclient__dofork(fork);
+}
+
+/*
+ * Process is about to exec.  Save info about our existing connection
+ * in the env.  rumpclient will check for this info in init().
+ * This is mostly for the benefit of rumphijack, but regular applications
+ * may use it as well.
+ */
+int
+rumpclient_exec(const char *path, char *const argv[], char *const envp[])
+{
+	char buf[4096];
+	char **newenv;
+	char *envstr, *envstr2;
+	size_t nelem;
+	int rv, sverrno;
+
+	snprintf(buf, sizeof(buf), "RUMPCLIENT__EXECFD=%d,%d",
+	    clispc.spc_fd, kq);
+	envstr = malloc(strlen(buf)+1);
+	if (envstr == NULL) {
+		return ENOMEM;
+	}
+	strcpy(envstr, buf);
+
+	/* do we have a fully parsed url we want to forward in the env? */
+	if (*parsedurl != '\0') {
+		snprintf(buf, sizeof(buf),
+		    "RUMP__PARSEDSERVER=%s", parsedurl);
+		envstr2 = malloc(strlen(buf)+1);
+		if (envstr2 == NULL) {
+			free(envstr);
+			return ENOMEM;
+		}
+		strcpy(envstr2, buf);
+	} else {
+		envstr2 = NULL;
+	}
+
+	for (nelem = 0; envp && envp[nelem]; nelem++)
+		continue;
+
+	newenv = malloc(sizeof(*newenv) * nelem+3);
+	if (newenv == NULL) {
+		free(envstr2);
+		free(envstr);
+		return ENOMEM;
+	}
+	memcpy(&newenv[0], envp, nelem*sizeof(*envp));
+
+	newenv[nelem] = envstr;
+	newenv[nelem+1] = envstr2;
+	newenv[nelem+2] = NULL;
+
+	rv = host_execve(path, argv, newenv);
+
+	_DIAGASSERT(rv != 0);
+	sverrno = errno;
+	free(envstr2);
+	free(envstr);
+	free(newenv);
+	errno = sverrno;
+	return rv;
+}
+
+int
+rumpclient_daemon(int nochdir, int noclose)
+{
+	struct rumpclient_fork *rf;
+	int sverrno;
+
+	if ((rf = rumpclient_prefork()) == NULL)
+		return -1;
+
+	if (daemon(nochdir, noclose) == -1) {
+		sverrno = errno;
+		rumpclient_fork_cancel(rf);
+		errno = sverrno;
+		return -1;
+	}
+
+	if (rumpclient_fork_init(rf) == -1)
+		return -1;
+
+	return 0;
 }

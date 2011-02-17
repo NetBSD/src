@@ -1,7 +1,7 @@
-/*	$NetBSD: request.c,v 1.2 2010/12/25 18:23:39 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.2.2.1 2011/02/17 11:58:41 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.c,v 1.85 2009/09/01 00:22:26 jinmei Exp */
+/* Id: request.c,v 1.87 2010-03-04 23:50:34 tbox Exp */
 
 /*! \file */
 
@@ -1060,6 +1060,9 @@ req_render(dns_message_t *message, isc_buffer_t **bufferp,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	cleanup_cctx = ISC_TRUE;
+
+	if ((options & DNS_REQUESTOPT_CASE) != 0)
+		dns_compress_setsensitive(&cctx, ISC_TRUE);
 
 	/*
 	 * Render message.

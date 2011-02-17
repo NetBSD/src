@@ -1,4 +1,4 @@
-/* $Id: mech_anonymous.c,v 1.1.1.1.2.1 2011/02/08 16:18:31 bouyer Exp $ */
+/* $NetBSD: mech_anonymous.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,25 +34,25 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mech_anonymous.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $");
 
 #include <saslc.h>
 #include <stdio.h>
 #include <string.h>
-#include "error.h"
-#include "saslc_private.h"
-#include "mech.h"
 
-/* local headers */
+#include "error.h"
+#include "mech.h"
+#include "saslc_private.h"
+
+
+/* See RFC 2245. */
 
 /* properties */
-#define SASLC_ANONYMOUS_TOKEN	 "TOKEN"
-
-static int saslc__mech_anonymous_cont(saslc_sess_t *, const void *, size_t,
-    void **, size_t *);
+#define SASLC_ANONYMOUS_AUTHCID		 SASLC_PROP_AUTHCID
 
 /*
  * @brief doing one step of the sasl authentication
- *
  * @param sess sasl session
  * @param in input data
  * @param inlen input data length
@@ -63,22 +63,24 @@ static int saslc__mech_anonymous_cont(saslc_sess_t *, const void *, size_t,
  * MECH_STEP - more steps are needed,
  * MECH_ERROR - error
  */
-
 /*ARGSUSED*/
 static int
 saslc__mech_anonymous_cont(saslc_sess_t *sess, const void *in, size_t inlen,
     void **out, size_t *outlen)
 {
+
 	return saslc__mech_strdup(sess, (char **)out, outlen,
-	    SASLC_ANONYMOUS_TOKEN, "token is required for an authentication");
+	    SASLC_ANONYMOUS_AUTHCID,
+	    "authcid is required for an authentication");
 }
 
 /* mechanism definition */
 const saslc__mech_t saslc__mech_anonymous = {
-	"ANONYMOUS", /* name */
-	saslc__mech_generic_create, /* create */
-	saslc__mech_anonymous_cont, /* step */
-        saslc__mech_generic_encode, /* encode */
-	saslc__mech_generic_decode, /* decode */
-	saslc__mech_generic_destroy /* destroy */
+	.name	 = "ANONYMOUS",
+	.flags	 = FLAG_ANONYMOUS,
+	.create	 = saslc__mech_generic_create,
+	.cont	 = saslc__mech_anonymous_cont,
+	.encode	 = NULL,
+	.decode	 = NULL,
+	.destroy = saslc__mech_generic_destroy
 };

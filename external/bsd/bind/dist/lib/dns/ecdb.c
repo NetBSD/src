@@ -1,7 +1,7 @@
-/*	$NetBSD: ecdb.c,v 1.1.1.3 2010/08/05 20:11:53 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.1.1.3.2.1 2011/02/17 11:58:40 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ecdb.c,v 1.4.24.2 2010/02/25 05:25:51 tbox Exp */
+/* Id: ecdb.c,v 1.8 2011-01-14 00:51:43 tbox Exp */
 
 #include "config.h"
 
@@ -580,7 +580,9 @@ static dns_dbmethods_t ecdb_methods = {
 	NULL,			/* getsigningtime */
 	NULL,			/* resigned */
 	NULL,			/* isdnssec */
-	NULL			/* getrrsetstats */
+	NULL,			/* getrrsetstats */
+	NULL,			/* rpz_enabled */
+	NULL			/* rpz_findips */
 };
 
 static isc_result_t

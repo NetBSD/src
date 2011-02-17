@@ -48,6 +48,12 @@ Package=<4>
     Project_Dep_Name liblwres
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name dighost
     End Project Dependency
 }}}
@@ -85,6 +91,12 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name liblwres
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name dighost
@@ -194,6 +206,9 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libisccfg
     End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -250,6 +265,12 @@ Package=<4>
 {{{
     Begin Project Dependency
     Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
     End Project Dependency
 }}}
 
@@ -315,6 +336,12 @@ Package=<4>
     Project_Dep_Name libdns
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name checktool
     End Project Dependency
 }}}
@@ -334,6 +361,12 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name checktool
@@ -363,6 +396,12 @@ Package=<4>
     Project_Dep_Name liblwres
     End Project Dependency
     Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
+    End Project Dependency
+    Begin Project Dependency
     Project_Dep_Name dighost
     End Project Dependency
 }}}
@@ -385,6 +424,15 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblwres
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccfg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libisccc
     End Project Dependency
 }}}
 
@@ -409,6 +457,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libbind9
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name rndcutil

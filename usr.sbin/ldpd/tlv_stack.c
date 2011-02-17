@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.2.2.1 2011/02/17 12:00:58 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -109,6 +109,11 @@ map_label(struct ldp_peer * p, struct fec_tlv * f, struct label_tlv * l)
 			memcpy(&inatmp, &pref->prefix, ldp_ceil8(pref->prelen));
 			debugp("Prefix/Host add: %s/%d\n", inet_ntoa(inatmp),
 			    pref->prelen);
+
+			/* don't bother if we don't have a label/route */
+			if (label_get_by_prefix(&inatmp, pref->prelen) == NULL)
+				break;
+
 			ldp_peer_add_mapping(p, &inatmp, pref->prelen,
 			    ntohl(l->label));
 			mpls_add_label(p, NULL, &inatmp, pref->prelen,

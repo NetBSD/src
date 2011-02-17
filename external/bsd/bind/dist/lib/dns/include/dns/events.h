@@ -1,4 +1,4 @@
-/*	$NetBSD: events.h,v 1.1.1.4 2010/08/05 20:13:36 christos Exp $	*/
+/*	$NetBSD: events.h,v 1.1.1.4.2.1 2011/02/17 11:58:44 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: events.h,v 1.53.104.2 2010/05/10 23:49:42 tbox Exp */
+/* Id: events.h,v 1.56 2010-12-21 03:11:42 marka Exp */
 
 #ifndef DNS_EVENTS_H
 #define DNS_EVENTS_H 1
@@ -74,6 +74,8 @@
 #define DNS_EVENT_MANAGEKEYS			(ISC_EVENTCLASS_DNS + 42)
 #define DNS_EVENT_CLIENTRESDONE			(ISC_EVENTCLASS_DNS + 43)
 #define DNS_EVENT_CLIENTREQDONE			(ISC_EVENTCLASS_DNS + 44)
+#define DNS_EVENT_ADBGROWENTRIES		(ISC_EVENTCLASS_DNS + 45)
+#define DNS_EVENT_ADBGROWNAMES			(ISC_EVENTCLASS_DNS + 46)
 
 #define DNS_EVENT_FIRSTEVENT			(ISC_EVENTCLASS_DNS + 0)
 #define DNS_EVENT_LASTEVENT			(ISC_EVENTCLASS_DNS + 65535)

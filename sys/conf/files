@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.996.4.3 2011/02/09 20:32:49 bouyer Exp $
+#	$NetBSD: files,v 1.996.4.4 2011/02/17 12:00:08 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1102,11 +1102,17 @@ file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
 file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
 file	dev/ic/vga_subr.c	vga | vga_rasterconsole
 file	dev/ic/vga_common.c	vga | vga_rasterconsole
+
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
 device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
+
+device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
+file	dev/ic/ct65550.c		chipsfb
+defflag	opt_chipsfb.h	CHIPSFB_DEBUG
+defflag	opt_chipsfb.h	CHIPSFB_WAIT
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.3 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.3.8.1 2011/02/17 12:00:10 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.3 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.3.8.1 2011/02/17 12:00:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -142,11 +142,4 @@ AcpiOsWritable(void *Pointer, ACPI_SIZE Length)
 {
 
 	return acpi_md_OsWritable(Pointer, Length);
-}
-
-ACPI_STATUS
-AcpiOsValidateInterface(char *Interface)
-{
-
-	return AE_SUPPORT;
 }

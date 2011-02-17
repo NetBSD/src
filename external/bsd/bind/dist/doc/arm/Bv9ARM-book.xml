@@ -2,7 +2,7 @@
               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: Id: Bv9ARM-book.xml,v 1.450.4.14 2010/08/20 01:36:45 marka Exp -->
+<!-- File: Id: Bv9ARM-book.xml,v 1.478.8.2 2011-02-03 07:39:02 marka Exp -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -31,6 +31,7 @@
       <year>2008</year>
       <year>2009</year>
       <year>2010</year>
+      <year>2011</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -890,7 +891,7 @@ zone "eng.example.com" {
       </para>
       <para>
         For more detail on ordering responses, check the
-        <command>rrset-order</command> substatement in the
+        <command>rrset-order</command> sub-statement in the
         <command>options</command> statement, see
         <xref endterm="rrset_ordering_title" linkend="rrset_ordering"/>.
       </para>
@@ -1792,12 +1793,14 @@ controls {
       </para>
 
       <para>
-        The <command>tkey-gssapi-credential</command> and
-	<command>tkey-domain</command> clauses in the
-	<command>options</command> statement enable the
-	server to negotiate keys that can be matched against those
-	in <command>update-policy</command> or
-	<command>allow-update</command>.
+	Dynamic updates using Kerberos signed requests can be made
+	using the TKEY/GSS protocol by setting either the
+	<command>tkey-gssapi-keytab</command> option, or alternatively
+	by setting both the <command>tkey-gssapi-credential</command>
+	and <command>tkey-domain</command> options. Once enabled,
+	Kerberos signed requests will be matched against the update
+	policies for the zone, using the Kerberos principal as the
+	signer for the request.
       </para>
 
       <para>
@@ -2612,13 +2615,23 @@ allow-update { key host1-host2. ;};
 
 	<para>
 	  To enable <command>named</command> to validate answers from
-	  other servers, the <command>dnssec-enable</command> and
-	  <command>dnssec-validation</command> options must both be
-          set to yes (the default setting in <acronym>BIND</acronym> 9.5
-          and later), and at least one trust anchor must be configured
+	  other servers, the <command>dnssec-enable</command> option
+          must be set to <userinput>yes</userinput>, and the
+          <command>dnssec-validation</command> options must be set to 
+          <userinput>yes</userinput> or <userinput>auto</userinput>.
+        </para>
+	  
+	<para>
+          If <command>dnssec-validation</command> is set to
+          <userinput>auto</userinput>, then a default
+          trust anchor for the DNS root zone will be used.
+          If it is set to <userinput>yes</userinput>, however,
+          then at least one trust anchor must be configured
           with a <command>trusted-keys</command> or
           <command>managed-keys</command> statement in
-          <filename>named.conf</filename>.
+          <filename>named.conf</filename>, or DNSSEC validation
+          will not occur.  The default setting is
+          <userinput>yes</userinput>.
         </para>
 	  
 	<para>
@@ -4973,6 +4986,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> key-directory <replaceable>path_name</replaceable>; </optional>
     <optional> managed-keys-directory <replaceable>path_name</replaceable>; </optional>
     <optional> named-xfer <replaceable>path_name</replaceable>; </optional>
+    <optional> tkey-gssapi-keytab <replaceable>path_name</replaceable>; </optional>
     <optional> tkey-gssapi-credential <replaceable>principal</replaceable>; </optional>
     <optional> tkey-domain <replaceable>domainname</replaceable>; </optional>
     <optional> tkey-dhkey <replaceable>key_name</replaceable> <replaceable>key_tag</replaceable>; </optional>
@@ -5003,7 +5017,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> maintain-ixfr-base <replaceable>yes_or_no</replaceable>; </optional>
     <optional> ixfr-from-differences (<replaceable>yes_or_no</replaceable> | <constant>master</constant> | <constant>slave</constant>); </optional>
     <optional> dnssec-enable <replaceable>yes_or_no</replaceable>; </optional>
-    <optional> dnssec-validation <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> dnssec-validation (<replaceable>yes_or_no</replaceable> | <constant>auto</constant>); </optional>
     <optional> dnssec-lookaside ( <replaceable>auto</replaceable> | 
                         <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> ); </optional>
     <optional> dnssec-must-be-secure <replaceable>domain yes_or_no</replaceable>; </optional>
@@ -5120,6 +5134,16 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> match-mapped-addresses <replaceable>yes_or_no</replaceable>; </optional>
     <optional> filter-aaaa-on-v4 ( <replaceable>yes_or_no</replaceable> | <replaceable>break-dnssec</replaceable> ); </optional>
     <optional> filter-aaaa { <replaceable>address_match_list</replaceable> }; </optional>
+    <optional> dns64 <replaceable>IPv6-prefix</replaceable> {
+	<optional> clients { <replaceable>address_match_list</replaceable> }; </optional>
+	<optional> mapped { <replaceable>address_match_list</replaceable> }; </optional>
+        <optional> exclude { <replaceable>address_match_list</replaceable> }; </optional>
+	<optional> suffix IPv6-address; </optional>
+	<optional> recursive-only <replaceable>yes_or_no</replaceable>; </optional>
+	<optional> break-dnssec <replaceable>yes_or_no</replaceable>; </optional>
+    }; </optional>;
+    <optional> dns64-server <replaceable>name</replaceable> </optional>
+    <optional> dns64-contact <replaceable>name</replaceable> </optional>
     <optional> preferred-glue ( <replaceable>A</replaceable> | <replaceable>AAAA</replaceable> | <replaceable>NONE</replaceable> ); </optional>
     <optional> edns-udp-size <replaceable>number</replaceable>; </optional>
     <optional> max-udp-size <replaceable>number</replaceable>; </optional>
@@ -5139,8 +5163,10 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> disable-empty-zone <replaceable>zone_name</replaceable> ; </optional>
     <optional> zero-no-soa-ttl <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> zero-no-soa-ttl-cache <replaceable>yes_or_no</replaceable> ; </optional>
+    <optional> resolver-query-timeout <replaceable>number</replaceable> ; </optional>
     <optional> deny-answer-addresses { <replaceable>address_match_list</replaceable> } <optional> except-from { <replaceable>namelist</replaceable> } </optional>;</optional>
     <optional> deny-answer-aliases { <replaceable>namelist</replaceable> } <optional> except-from { <replaceable>namelist</replaceable> } </optional>;</optional>
+    <optional> response-policy { <replaceable>zone_name</replaceable> <optional> policy <replaceable>given</replaceable> | <replaceable>no-op</replaceable> | <replaceable>nxdomain</replaceable> | <replaceable>nodata</replaceable> | <replaceable>cname domain</replaceable> </optional> ; } ; </optional>
 };
 </programlisting>
 
@@ -5322,19 +5348,33 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	  </varlistentry>
 
 	  <varlistentry>
+	    <term><command>tkey-gssapi-keytab</command></term>
+	    <listitem>
+	      <para>
+		The KRB5 keytab file to use for GSS-TSIG updates. If
+		this option is set and tkey-gssapi-credential is not
+		set, then updates will be allowed with any key
+		matching a principal in the specified keytab.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+
+	  <varlistentry>
 	    <term><command>tkey-gssapi-credential</command></term>
 	    <listitem>
 	      <para>
 		The security credential with which the server should
 		authenticate keys requested by the GSS-TSIG protocol.
 		Currently only Kerberos 5 authentication is available
-		and the credential is a Kerberos principal which
-		the server can acquire through the default system
-		key file, normally <filename>/etc/krb5.keytab</filename>.
-		Normally this principal is of the form
-		"<userinput>DNS/</userinput><varname>server.domain</varname>".
-		To use GSS-TSIG, <command>tkey-domain</command>
-		must also be set.
+		and the credential is a Kerberos principal which the
+		server can acquire through the default system key
+		file, normally <filename>/etc/krb5.keytab</filename>.
+		The location keytab file can be overridden using the
+		tkey-gssapi-keytab option. Normally this principal is
+		of the form "<userinput>DNS/</userinput><varname>server.domain</varname>".
+		To use GSS-TSIG, <command>tkey-domain</command> must
+		also be set if a specific keytab is not set with
+		tkey-gssapi-keytab.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -5356,7 +5396,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 		should be the server's domain name, or an otherwise
 		non-existent subdomain like
 		"_tkey.<varname>domainname</varname>".  If you are
-		using GSS-TSIG, this variable must be defined.
+		using GSS-TSIG, this variable must be defined, unless
+		you specify a specific keytab using tkey-gssapi-keytab.
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -5461,7 +5502,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                 The pathname of a file to override the built-in trusted
 		keys provided by <command>named</command>.
 		See the discussion of <command>dnssec-lookaside</command>
-		for details.  If not specified, the default is
+                and <command>dnssec-validation</command> for details. 
+                If not specified, the default is
 		<filename>/etc/bind.keys</filename>.
               </para>
             </listitem>
@@ -5668,10 +5710,10 @@ options {
 	      </para>
               <para>
                 The default DLV key is stored in the file
-                <filename>bind.keys</filename>, which
-                <command>named</command> loads at startup if
-                <command>dnssec-lookaside</command> is set to
-                <constant>auto</constant>.  A copy of that file is
+                <filename>bind.keys</filename>;
+                <command>named</command> will load that key at
+                startup if <command>dnssec-lookaside</command> is set to
+                <constant>auto</constant>.  A copy of the file is
                 installed along with <acronym>BIND</acronym> 9, and is
                 current as of the release date.  If the DLV key expires, a
                 new copy of <filename>bind.keys</filename> can be downloaded
@@ -5685,10 +5727,10 @@ options {
                 to be recompiled with a new key when the DLV key expires.)
               </para>
               <para>
-                NOTE: Using <filename>bind.keys</filename> to store
-                locally-configured keys is possible, but not
-                recommended, as the file will be overwritten whenever
-                <acronym>BIND</acronym> 9 is re-installed or upgraded.
+                NOTE: <command>named</command> only loads certain specific
+                keys from <filename>bind.keys</filename>:  those for the
+                DLV zone and for the DNS root zone.  The file cannot be
+                used to store keys for other zones.
               </para>
             </listitem>
           </varlistentry>
@@ -5709,6 +5751,73 @@ options {
               </para>
             </listitem>
           </varlistentry>
+
+	  <varlistentry>
+	    <term><command>dns64</command></term>
+            <listitem>
+	      <para>
+		This directive instructs <command>named</command> to
+		return mapped IPv4 addresses to AAAA queries when
+		there are no AAAA records.  It is intended to be
+		used in conjunction with a NAT64.  Each
+		<command>dns64</command> defines one DNS64 prefix.
+		Multiple DNS64 prefixes can be defined.
+	      </para>
+	      <para>
+		Compatible IPv6 prefixes have lengths of 32, 40, 48, 56,
+		64 and 96 as per RFC 6052.
+	      </para>
+	      <para>
+		Additionally a reverse IP6.ARPA zone will be created for
+		the prefix to provide a mapping from the IP6.ARPA names
+		to the corresponding IN-ADDR.ARPA names using synthesized
+		CNAMEs.  <command>dns64-server</command> and
+		<command>dns64-contact</command> can be used to specify
+		the name of the server and contact for the zones. These
+		are settable at the view / options level.  These are
+		not settable on a per-prefix basis.
+	      </para>
+	      <para>
+		Each <command>dns64</command> supports an optional
+		<command>clients</command> ACL that determines which
+                clients are affected by this directive.  If not defined,
+                it defaults to <userinput>any;</userinput>.
+	      </para>
+	      <para>
+		Each <command>dns64</command> supports an optional
+		<command>mapped</command> ACL that selects which
+		IPv4 addresses are to be mapped in the corresponding	
+		A RRset.  If not defined it defaults to
+		<userinput>any;</userinput>.
+	      </para>
+	      <para>
+		Each <command>dns64</command> supports an optional
+		<command>exclude</command> ACL that selects which
+		IPv6 addresses will be ignored for the purposes
+		of determining whether dns64 is to be applied.
+                Any non-matching address will prevent further
+		DNS64 processing from occurring for this client.
+	      </para>
+	      <para>
+		A optional <command>suffix</command> can also
+		be defined to set the bits trailing the mapped
+		IPv4 address bits.  By default these bits are
+		set to <userinput>::</userinput>.  The bits
+		matching the prefix and mapped IPv4 address
+		must be zero.
+	      </para>
+<programlisting>
+	acl rfc1918 { 10/8; 192.168/16; 172.16/12; };
+
+        dns64 64:FF9B::/96 {
+                clients { any; };
+                mapped { !rfc1918; any; };
+                exclude { 64:FF9B::/96; ::ffff:0000:0000/96; };
+                suffix ::;
+        };
+</programlisting>
+            </listitem>
+	  </varlistentry>
 
         </variablelist>
 
@@ -6512,7 +6621,15 @@ options {
                   Enable DNSSEC validation in <command>named</command>.
 		  Note <command>dnssec-enable</command> also needs to be
 		  set to <userinput>yes</userinput> to be effective.
-                  The default is <userinput>yes</userinput>.
+                  If set to <userinput>no</userinput>, DNSSEC validation
+                  is disabled.  If set to <userinput>auto</userinput>,
+                  DNSSEC validation is enabled, and a default
+                  trust-anchor for the DNS root zone is used.  If set to
+                  <userinput>yes</userinput>, DNSSEC validation is enabled,
+                  but a trust anchor must be manually configured using
+                  a <command>trusted-keys</command> or
+                  <command>managed-keys</command> statement.  The default
+                  is <userinput>yes</userinput>.
                 </para>
               </listitem>
             </varlistentry>
@@ -6587,17 +6704,6 @@ options {
 	      </listitem>
 	    </varlistentry>
 
-	    <varlistentry>
-	      <term><command>check-mx</command></term>
-	      <listitem>
-		<para>
-		  Check whether the MX record appears to refer to a IP address.
-		  The default is to <command>warn</command>.  Other possible
-		  values are <command>fail</command> and
-		  <command>ignore</command>.
-		</para>
-	      </listitem>
-	    </varlistentry>
 	    <varlistentry>
 	      <term><command>check-mx</command></term>
 	      <listitem>
@@ -7112,6 +7218,18 @@ options {
               </listitem>
             </varlistentry>
 
+            <varlistentry>
+              <term><command>resolver-query-timeout</command></term>
+              <listitem>
+                <para>
+		  The amount of time the resolver will spend attempting
+		  to resolve a recursive query before failing.  The
+		  default is <literal>10</literal> and the maximum is
+		  <literal>30</literal>.  Setting it to <literal>0</literal>
+		  will result in the default being used.
+                </para>
+              </listitem>
+            </varlistentry>
           </variablelist>
 
         </sect3>
@@ -8535,7 +8653,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  buffer (<command>edns-udp-size</command>).
 		</para>
 		<para>
-		  Setting this to a low value will encourge additional
+		  Setting this to a low value will encourage additional
 		  TCP traffic to the nameserver.
 		</para>
 	      </listitem>
@@ -9079,6 +9197,143 @@ deny-answer-aliases { "example.net"; };
 	    spuriously can break such applications.
 	  </para>
 	</sect3>
+
+        <sect3>
+	  <title>Response Policy Zone (RPZ) Rewriting</title>
+	  <para>
+	    <acronym>BIND</acronym> 9 includes an intentionally limited
+            mechanism to modify DNS responses for recursive requests
+            similar to email anti-spam DNS blacklists.
+            All response policy zones are named in the
+            <command>response-policy</command> option for the view or among the
+            global options if there is no response-policy option for the view.
+          </para>
+
+          <para>
+            The rules encoded in a response policy zone (RPZ) are applied
+            only to responses to queries that ask for recursion (RD=1).
+            RPZs are normal DNS zones containing largely valid RRsets
+            that can be queried normal if allowed.
+            It is usually best to restrict those queries with something like
+            <command>allow-query {none; };</command> or
+            <command>allow-query { 127.0.0.1; };</command>.
+          </para>
+
+          <para>
+            There are four kinds of RPZ rewrite rules.  QNAME rules are
+            applied to query names in requests and to targets of CNAME
+            records resolved in the process of generating the response.
+            The owner name of a QNAME rule is the query name relativized
+            to the RPZ.
+          </para>
+
+          <para>
+            IP rules are triggered by addresses in A and AAAA records.
+            All IP addresses in A or AAAA RRsets are tested and the rule
+            longest prefix is applied.  Ties between rules with equal prefixes
+            are broken in favor of the first RPZ mentioned in the
+            response-policy option.
+            The rule matching the smallest IP address is chosen among equal
+            prefix rules from a single RPZ.
+            IP rules are expressed in RRsets with owner names that are
+            subdomains of rpz-ip and encoding an IP address block, reversed
+            as in IN-ARPA.
+            prefix.B.B.B.B with prefix between 1 and 32 and B between 1 and 255
+            encodes an IPv4 address.
+            IPv6 addresses are encoded by with prefix.W.W.W.W.W.W.W.W or
+            prefix.WORDS.zz.WORDS.  The words in the standard IPv6 text
+            representation are reversed, "::" is replaced with ".zz.",
+            and ":" becomes ".".
+          </para>
+
+          <para>
+            NSDNAME rules match names in NS RRsets for the response or a
+            parent.  They are encoded as subdomains of rpz-nsdomain relativized
+            to the RPZ origin name.
+          </para>
+
+          <para>
+            NSIP rules match IP addresses in A and AAAA RRsets for names of
+            responsible servers or the names that can be matched by NSDNAME
+            rules.  The are encoded like IP rules except as subdomains of
+            rpz-nsip.
+	  </para>
+
+	  <para>
+            Authority verification issues and variations in authority data in
+	    the current version of <acronym>BIND</acronym> 9 can cause
+	    inconsistent results from NSIP and NSDNAME.  So they are available
+	    only when <acronym>BIND</acronym> is built with the
+	    <userinput>--enable-rpz-nsip</userinput> or
+	    <userinput>--enable-rpz-nsdname</userinput> options
+            on the "configure" command line.
+          </para>
+
+          <para>
+            Four policies can be expressed.
+            The <command>NXDOMAIN</command> policy causes a NXDOMAIN response
+            and is expressed with an RRset consisting of a single CNAME
+            whose target is the root domain (.).
+            <command>NODATA</command> generates NODATA or ANCOUNT=1 regardless
+            of query type.
+            It is expressed with a CNAME whose target is the wildcard
+            top-level domain (*.).
+            The <command>NO-OP</command> policy does not change the response
+            and is used to "poke holes" in policies for larger CIDR blocks or in
+            zones named later in the <command>response-policy</command> option.
+            The NO-OP policy is expressed by a CNAME with a target consisting
+            of the variable part of the owner name, such as "example.com." for
+            a QNAME rule or "128.1.0.0.127." for an IP rule.
+            The <command>CNAME</command> policy is used to replace the RRsets
+            of response.
+            A and AAAA RRsets are most common and useful to capture
+            an evil domain in a walled garden, but any valid set of RRsets
+            is possible.
+          </para>
+
+          <para>
+            All of the policies in an RPZ can be overridden with a
+            <command>policy</command> clause.
+            <command>given</command> says "do not override."
+            <command>no-op</command> says "do nothing" regardless of the policy
+            in RPZ records.
+            <command>nxdomain</command> causes all RPZ rules to generate
+            NXDOMAIN results.
+            <command>nodata</command> gives nodata.
+            <command>cname domain</command> causes all RPZ rules to act as if
+            the consisted of a "cname domain" record.
+          </para>
+
+          <para>
+            For example, you might use this option statement
+          </para>
+<programlisting>response-policy { zone "bl"; };</programlisting>
+          <para>
+            and this zone statement
+          </para>
+<programlisting>zone "bl" {type master; file "example/bl"; allow-query {none;}; };</programlisting>
+          <para>
+            with this zone file
+          </para>
+<programlisting>$TTL 1H
+@                   SOA LOCALHOST. named-mgr.example.com (1 1h 15m 30d 2h)
+
+; QNAME rules
+nxdomain.domain.com         CNAME   .
+nodata.domain.com           CNAME   *.
+bad.domain.com              A       10.0.0.1
+                            AAAA    2001:2::1
+ok.domain.com               CNAME   ok.domain.com.
+
+; IP rules rewriting all answers for 127/8 except 127.0.0.1
+8.0.0.0.127.ip              CNAME   .
+32.1.0.0.127.ip             CNAME   32.1.0.0.127.
+
+; NSDNAME and NSIP rules
+ns.domain.com.rpz-nsdname   CNAME   .
+48.zz.2.2001.rpz-nsip       CNAME   .
+</programlisting>
+	</sect3>
       </sect2>
 
       <sect2 id="server_statement_grammar">
@@ -9522,7 +9777,7 @@ deny-answer-aliases { "example.net"; };
             to the master file as soon as possible afterward; in the case
             of the managed key database, this will usually occur within 30
             seconds.  So, whenever <command>named</command> is using
-            automatic key maintenace, those two files can be expected to
+            automatic key maintenance, those two files can be expected to
             exist in the working directory.  (For this reason among others,
             the working directory should be always be writable by
             <command>named</command>.)
@@ -9828,6 +10083,14 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
 };
 
 zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replaceable></optional> {
+    type static-stub;
+    <optional> allow-query { <replaceable>address_match_list</replaceable> }; </optional>
+    <optional> server-addresses { <optional> <replaceable>ip_addr</replaceable> ; ... </optional> }; </optional>
+    <optional> server-names { <optional> <replaceable>namelist</replaceable> </optional> }; </optional>  
+    <optional> zone-statistics <replaceable>yes_or_no</replaceable> ; </optional>
+};
+
+zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replaceable></optional> {
     type forward;
     <optional> forward (<constant>only</constant>|<constant>first</constant>) ; </optional>
     <optional> forwarders { <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
@@ -9969,6 +10232,55 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                         authoritative
                         servers for that domain.
                       </para>
+                    </entry>
+                  </row>
+                  <row rowsep="0">
+                    <entry colname="1">
+                      <para>
+                        <varname>static-stub</varname>
+                      </para>
+                    </entry>
+                    <entry colname="2">
+                      <para>
+			A static-stub zone is similar to a stub zone
+			with the following exceptions:
+			the zone data is statically configured, rather
+			than transferred from a master server;
+			when recursion is necessary for a query that
+			matches a static-stub zone, the locally
+			configured data (nameserver names and glue addresses)
+			is always used even if different authoritative
+			information is cached.
+                      </para>
+                      <para>
+			Zone data is configured via the
+			<command>server-addresses</command> and
+			<command>server-names</command> zone options.
+                      </para>
+		      <para>
+			The zone data is maintained in the form of NS
+			and (if necessary) glue A or AAAA RRs
+			internally, which can be seen by dumping zone
+			databases by <command>rndc dumpdb -all</command>.
+			The configured RRs are considered local configuration
+			parameters rather than public data.
+			Non recursive queries (i.e., those with the RD
+			bit off) to a static-stub zone are therefore
+			prohibited and will be responded with REFUSED.
+		      </para>
+		      <para>
+			Since the data is statically configured, no
+			zone maintenance action takes place for a static-stub
+			zone.
+			For example, there is no periodic refresh
+			attempt, and an incoming notify message
+			will be rejected with an rcode of NOTAUTH.
+		      </para>
+		      <para>
+			Each static-stub zone is configured with
+			internally generated NS and (if necessary)
+			glue A or AAAA RRs 
+		      </para>
                     </entry>
                   </row>
                   <row rowsep="0">
@@ -10498,6 +10810,84 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
               </varlistentry>
 
               <varlistentry>
+                <term><command>server-addresses</command></term>
+                <listitem>
+                  <para>
+                    Only meaningful for static-stub zones.
+		    This is a list of IP addresses to which queries
+		    should be sent in recursive resolution for the
+		    zone.
+		    A non empty list for this option will internally
+		    configure the apex NS RR with associated glue A or
+		    AAAA RRs.
+                  </para>
+		  <para>
+		    For example, if "example.com" is configured as a
+		    static-stub zone with 192.0.2.1 and 2001:db8::1234
+		    in a <command>server-addresses</command> option,
+		    the following RRs will be internally configured.
+		  </para>
+<programlisting>example.com. NS example.com.
+example.com. A 192.0.2.1
+example.com. AAAA 2001:db8::1234</programlisting>
+		  <para>
+		    These records are internally used to resolve
+		    names under the static-stub zone.
+		    For instance, if the server receives a query for
+		    "www.example.com" with the RD bit on, the server
+		    will initiate recursive resolution and send
+		    queries to 192.0.2.1 and/or 2001:db8::1234.
+		  </para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><command>server-names</command></term>
+                <listitem>
+                  <para>
+                    Only meaningful for static-stub zones.
+		    This is a list of domain names of nameservers that
+		    act as authoritative servers of the static-stub
+		    zone.
+		    These names will be resolved to IP addresses when
+		    <command>named</command> needs to send queries to
+		    these servers.
+		    To make this supplemental resolution successful,
+		    these names must not be a subdomain of the origin
+		    name of static-stub zone.
+		    That is, when "example.net" is the origin of a
+		    static-stub zone, "ns.example" and
+		    "master.example.com" can be specified in the
+		    <command>server-names</command> option, but
+		    "ns.example.net" cannot, and will be rejected by
+		    the configuration parser.
+		  </para>
+		  <para>
+		    A non empty list for this option will internally
+		    configure the apex NS RR with the specified names.
+		    For example, if "example.com" is configured as a
+		    static-stub zone with "ns1.example.net" and
+		    "ns2.example.net"
+		    in a <command>server-names</command> option,
+		    the following RRs will be internally configured.
+		  </para>
+<programlisting>example.com. NS ns1.example.net.
+example.com. NS ns2.example.net.
+</programlisting>
+		  <para>
+		    These records are internally used to resolve
+		    names under the static-stub zone.
+		    For instance, if the server receives a query for
+		    "www.example.com" with the RD bit on, the server
+		    initiate recursive resolution,
+		    resolve "ns1.example.net" and/or
+		    "ns2.example.net" to IP addresses, and then send
+		    queries to (one or more of) these addresses.
+		  </para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
                 <term><command>sig-validity-interval</command></term>
                 <listitem>
                   <para>
@@ -10649,7 +11039,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                 <listitem>
                   <para>
                     Zones configured for dynamic DNS may also use this
-                    option to allow varying levels of autonatic DNSSEC key
+                    option to allow varying levels of automatic DNSSEC key
                     management. There are four possible settings:
                   </para>
                   <para>
@@ -10662,7 +11052,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                     <command>auto-dnssec maintain;</command> includes the
                     above, but also automatically adjusts the zone's DNSSEC
                     keys on schedule, according to the keys' timing metadata
-                    (see <xref linkend="man.dnyssec-keygen"/> and
+                    (see <xref linkend="man.dnssec-keygen"/> and
                     <xref linkend="man.dnssec-settime"/>).  The command
                     <command>rndc sign
                     <replaceable>zonename</replaceable></command> causes
@@ -10838,7 +11228,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
 	      <varname>krb5-subdomain</varname>,
 	      <varname>ms-subdomain</varname>,
 	      <varname>tcp-self</varname>, <varname>6to4-self</varname>,
-	      and <varname>zonesub</varname>.
+	      <varname>zonesub</varname>, and <varname>external</varname>.
             </para>
             <informaltable>
               <tgroup cols="2" colsep="0" rowsep="0" tgroupstyle="4Level-table">
@@ -10996,14 +11386,56 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
 		      </note>
 		    </entry>
 		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para>
+			<varname>external</varname>
+		      </para>
+		    </entry> <entry colname="2">
+		      <para>
+			This rule allows <command>named</command>
+			to defer the decision of whether to allow a
+			given update to an external daemon.
+		      </para>
+		      <para>
+			The method of communicating with the daemon is
+			specified in the <replaceable>identity</replaceable>
+			field, the format of which is
+			"<constant>local:</constant><replaceable>path</replaceable>",
+			where <replaceable>path</replaceable> is the location
+                        of a UNIX-domain socket.  (Currently, "local" is the
+                        only supported mechanism.)
+		      </para>
+		      <para>
+			Requests to the external daemon are sent over the
+			UNIX-domain socket as datagrams with the following
+			format:
+		      </para>
+		      <programlisting>
+   Protocol version number (4 bytes, network byte order, currently 1)
+   Request length (4 bytes, network byte order)
+   Signer (null-terminated string)
+   Name (null-terminated string)
+   TCP source address (null-terminated string)
+   Rdata type (null-terminated string)
+   Key (null-terminated string)
+   TKEY token length (4 bytes, network byte order)
+   TKEY token (remainder of packet)</programlisting>
+		      <para>
+			The daemon replies with a four-byte value in
+			network byte order, containing either 0 or 1; 0
+			indicates that the specified update is not
+			permitted, and 1 indicates that it is.
+		      </para>
+		    </entry>
+		  </row>
                 </tbody>
               </tgroup>
             </informaltable>
 
             <para>
               In all cases, the <replaceable>name</replaceable>
-              field must
-              specify a fully-qualified domain name.
+              field must specify a fully-qualified domain name.
             </para>
 
 	    <para>

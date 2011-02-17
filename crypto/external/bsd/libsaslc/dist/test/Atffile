@@ -2,7 +2,6 @@ Content-Type: application/X-atf-atffile; version="1"
 
 prop: test-suite = saslc
 
-tp: t_mech
 tp: t_crypto
 tp: t_dict
 tp: t_error

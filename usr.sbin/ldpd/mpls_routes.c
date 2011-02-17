@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.3 2011/01/04 10:58:15 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.3.2.1 2011/02/17 12:00:58 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,14 +71,12 @@ extern struct sockaddr mplssockaddr;
 
 /* Many lines inspired or shamelessly stolen from sbin/route/route.c */
 
-#define ROUNDUP(a) \
-	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define NEXTADDR(u) \
-	do { l = ROUNDUP(u->sa.sa_len); memcpy(cp, u, l); cp += l; } while(0);
+	do { l = RT_ROUNDUP(u->sa.sa_len); memcpy(cp, u, l); cp += l; } while(0);
 #define NEXTADDR2(u) \
-	do { l = ROUNDUP(u.sa_len); memcpy(cp, &u, l); cp += l; } while(0);
+	do { l = RT_ROUNDUP(u.sa_len); memcpy(cp, &u, l); cp += l; } while(0);
 #define GETNEXT(sunion) \
-	(union sockunion *) ((char *) (sunion)  + ROUNDUP((sunion)->sa.sa_len))
+	(union sockunion *) ((char *) (sunion)  + RT_ROUNDUP((sunion)->sa.sa_len))
 
 int 
 read_route_socket(char *s, int max)
@@ -637,25 +635,23 @@ check_route(struct rt_msg * rg, uint rlen)
 		 */
 
 		/* First of all check if we already know this one */
-		lab = label_get(so_dest, so_pref);
-		if (!lab) {
+		if (label_get(so_dest, so_pref) == NULL) {
 			if (!(rg->m_rtm.rtm_flags & RTF_GATEWAY))
-				lab = label_add(so_dest, so_pref, NULL,
+				label_add(so_dest, so_pref, NULL,
 					MPLS_LABEL_IMPLNULL, NULL, 0);
 			else {
 				pm = ldp_test_mapping(&so_dest->sin.sin_addr,
 					 prefixlen, &so_gate->sin.sin_addr);
 				if (pm) {
-					lab = label_add(so_dest, so_pref,
+					label_add(so_dest, so_pref,
 						so_gate, 0, NULL, 0);
 					mpls_add_label(pm->peer, rg,
 					  &so_dest->sin.sin_addr, prefixlen,
 					  pm->lm->label, ROUTE_LOOKUP_LOOP);
 					free(pm);
 				} else
-					lab = label_add(so_dest, so_pref,
-						so_gate, MPLS_LABEL_IMPLNULL,
-						NULL, 0);
+					label_add(so_dest, so_pref, so_gate,
+					    MPLS_LABEL_IMPLNULL, NULL, 0);
 			}
 		} else	/* We already know about this prefix */
 			debugp("Binding already there for prefix %s/%d !\n",
@@ -730,7 +726,6 @@ bind_current_routes()
 	char           *buf, *next, *lim;
 	struct rt_msghdr *rtmes;
 	union sockunion *so_dst, *so_pref, *so_gate;
-	struct label	*lab;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -814,7 +809,7 @@ bind_current_routes()
 			continue;
 		}
 		if (so_gate->sa.sa_family == AF_INET)
-			lab = label_add(so_dst, so_pref, so_gate,
+			label_add(so_dst, so_pref, so_gate,
 			    MPLS_LABEL_IMPLNULL, NULL, 0);
 
 		if (rtmes->rtm_flags & RTF_HOST)

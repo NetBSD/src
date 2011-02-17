@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11.2.1 2011/02/08 16:19:45 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11.2.2 2011/02/17 12:00:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11.2.1 2011/02/08 16:19:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11.2.2 2011/02/17 12:00:06 bouyer Exp $");
 
 #include "opt_mtrr.h"
 
@@ -298,7 +298,7 @@ kvtop(void *addr)
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
@@ -333,6 +333,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
+
+	return 0;
 }
 
 /*

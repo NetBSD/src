@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.122.32.11 2010/08/16 05:14:58 marka Exp */
+/* Id: config.h.in,v 1.143.8.1 2011-02-03 05:52:35 marka Exp */
 
 /*! \file */
 
@@ -154,6 +154,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if threads need PTHREAD_SCOPE_SYSTEM */
 /* #undef NEED_PTHREAD_SCOPE_SYSTEM */
 
+/* Define if building universal (internal helper macro) */
+/* #undef AC_APPLE_UNIVERSAL_BUILD */
+
 /* Define to enable the "filter-aaaa-on-v4" option. */
 /* #undef ALLOW_FILTER_AAAA_ON_V4 */
 
@@ -166,6 +169,12 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to enable "rrset-order fixed" syntax. */
 #define DNS_RDATASET_FIXED 1
+
+/* Define to enable rpz-nsdname rules. */
+#define ENABLE_RPZ_NSDNAME 1
+
+/* Define to enable rpz-nsip rules. */
+#define ENABLE_RPZ_NSIP 1
 
 /* Solaris hack to get select_large_fdset. */
 /* #undef FD_SETSIZE */
@@ -182,8 +191,20 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `chroot' function. */
 #define HAVE_CHROOT 1
 
+/* Define to 1 if you have the <devpoll.h> header file. */
+/* #undef HAVE_DEVPOLL_H */
+
+/* Define to 1 if you have the `dlclose' function. */
+#define HAVE_DLCLOSE 1
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
+
+/* Define to 1 if you have the `dlopen' function. */
+#define HAVE_DLOPEN 1
+
+/* Define to 1 if you have the `dlsym' function. */
+#define HAVE_DLSYM 1
 
 /* Define to 1 if you have the `EVP_sha256' function. */
 #define HAVE_EVP_SHA256 1
@@ -197,8 +218,14 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
 #define HAVE_GSSAPI_GSSAPI_H 1
 
+/* Define to 1 if you have the <gssapi/gssapi_krb5.h> header file. */
+/* #undef HAVE_GSSAPI_GSSAPI_KRB5_H */
+
 /* Define to 1 if you have the <gssapi.h> header file. */
 #define HAVE_GSSAPI_H 1
+
+/* Define to 1 if you have the <gssapi_krb5.h> header file. */
+/* #undef HAVE_GSSAPI_KRB5_H */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -224,11 +251,14 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `c_r' library (-lc_r). */
 /* #undef HAVE_LIBC_R */
 
+/* Define to 1 if you have the `dl' library (-ldl). */
+/* #undef HAVE_LIBDL */
+
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 /* #undef HAVE_LIBNSL */
 
 /* Define to 1 if you have the `pthread' library (-lpthread). */
-/* #undef HAVE_LIBPTHREAD */
+#define HAVE_LIBPTHREAD 1
 
 /* Define to 1 if you have the `scf' library (-lscf). */
 /* #undef HAVE_LIBSCF */
@@ -240,7 +270,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_LIBTHR */
 
 /* Define if libxml2 was found */
-/* #undef HAVE_LIBXML2 */
+/* #undef HAVE_LIBXML2 */ 
 
 /* Define to 1 if you have the <linux/capability.h> header file. */
 /* #undef HAVE_LINUX_CAPABILITY_H */
@@ -256,6 +286,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
+
+/* Define if your OpenSSL version supports GOST. */
+/* #undef HAVE_OPENSSL_GOST */
 
 /* Define to 1 if you have the <regex.h> header file. */
 #define HAVE_REGEX_H 1
@@ -357,6 +390,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME ""
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
 #define PACKAGE_VERSION ""
 
@@ -378,10 +414,19 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef WITH_IDN */
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
-   significant byte first (like Motorola and SPARC, unlike Intel and VAX). */
+   significant byte first (like Motorola and SPARC, unlike Intel). */
 #include <sys/endian.h>
 #if _BYTE_ORDER == _BIG_ENDIAN
 #define WORDS_BIGENDIAN
+#endif
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
+# endif
 #endif
 
 /* Define to empty if `const' does not conform to ANSI C. */

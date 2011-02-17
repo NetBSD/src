@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.52.4.2 2011/02/08 19:29:40 bouyer Exp $
+# $NetBSD: GENERIC,v 1.52.4.3 2011/02/17 11:59:58 bouyer Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52.4.2 $"
+#ident 		"GENERIC-$Revision: 1.52.4.3 $"
 
 maxusers	32
 
@@ -210,6 +210,10 @@ uhub*	at uhub? port ?
 uhidev* at uhub? port ? configuration ? interface ?	# USB HID device
 uthum*	at uhidev? reportid ?				# TEMPerHUM sensors
 uhid*	at uhidev? reportid ?				# USB Generic HID
+
+# USB video
+uvideo* at uhub?			# USB Video Class capture devices
+video*	at videobus?
 
 # USB printer
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer

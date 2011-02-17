@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.1.1.1 2009/10/25 00:01:38 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.1.1.1.2.1 2011/02/17 11:58:20 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3hash.c,v 1.6 2009/10/06 21:20:44 each Exp */
+/* Id: nsec3hash.c,v 1.6 2009-10-06 21:20:44 each Exp */
 
 #include <config.h>
 

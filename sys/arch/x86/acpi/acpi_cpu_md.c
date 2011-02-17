@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.38 2011/01/13 03:40:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.38.4.1 2011/02/17 12:00:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.38 2011/01/13 03:40:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.38.4.1 2011/02/17 12:00:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -164,6 +164,10 @@ acpicpu_md_quirks(void)
 	if ((ci->ci_feat_val[1] & CPUID2_MONITOR) != 0)
 		val |= ACPICPU_FLAG_C_FFH;
 
+	/*
+	 * By default, assume that the local APIC timer
+	 * as well as TSC are stalled during C3 sleep.
+	 */
 	val |= ACPICPU_FLAG_C_APIC | ACPICPU_FLAG_C_TSC;
 
 	switch (cpu_vendor) {
@@ -180,8 +184,19 @@ acpicpu_md_quirks(void)
 
 	case CPUVENDOR_INTEL:
 
+		/*
+		 * Bus master control and arbitration should be
+		 * available on all supported Intel CPUs (to be
+		 * sure, this is double-checked later from the
+		 * firmware data). These flags imply that it is
+		 * not necessary to flush caches before C3 state.
+		 */
 		val |= ACPICPU_FLAG_C_BM | ACPICPU_FLAG_C_ARB;
 
+		/*
+		 * Check if we can use "native", MSR-based,
+		 * access. If not, we have to resort to I/O.
+		 */
 		if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
 			val |= ACPICPU_FLAG_P_FFH;
 
@@ -503,7 +518,7 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 	 * Fill the P-state structures with MSR addresses that are
 	 * known to be correct. If we do not know the addresses,
 	 * leave the values intact. If a vendor uses XPSS, we do
-	 * not necessary need to do anything to support new CPUs.
+	 * not necessarily need to do anything to support new CPUs.
 	 */
 	while (i < sc->sc_pstate_count) {
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.23.2.3 2011/02/09 10:51:03 bouyer Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.23.2.4 2011/02/17 11:57:24 bouyer Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -75,6 +75,7 @@
 ./usr/libdata/debug/usr/tests/lib/libprop
 ./usr/libdata/debug/usr/tests/lib/libpthread
 ./usr/libdata/debug/usr/tests/lib/librt
+./usr/libdata/debug/usr/tests/lib/librumpclient
 ./usr/libdata/debug/usr/tests/lib/librumphijack
 ./usr/libdata/debug/usr/tests/lib/libskey
 ./usr/libdata/debug/usr/tests/lib/libutil
@@ -187,6 +188,7 @@
 ./usr/tests/lib/libprop
 ./usr/tests/lib/libpthread
 ./usr/tests/lib/librt
+./usr/tests/lib/librumpclient
 ./usr/tests/lib/librumphijack
 ./usr/tests/lib/libskey
 ./usr/tests/lib/libutil
