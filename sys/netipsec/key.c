@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.64 2010/09/05 06:52:53 spz Exp $	*/
+/*	$NetBSD: key.c,v 1.65 2011/02/18 20:40:58 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.64 2010/09/05 06:52:53 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.65 2011/02/18 20:40:58 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -6001,7 +6001,7 @@ static struct mbuf *
 key_getcomb_esp(void)
 {
 	struct sadb_comb *comb;
-	struct enc_xform *algo;
+	const struct enc_xform *algo;
 	struct mbuf *result = NULL, *m, *n;
 	int encmin;
 	int i, off, o;
@@ -6102,7 +6102,7 @@ static struct mbuf *
 key_getcomb_ah(void)
 {
 	struct sadb_comb *comb;
-	struct auth_hash *algo;
+	const struct auth_hash *algo;
 	struct mbuf *m;
 	u_int16_t minkeysize, maxkeysize;
 	int i;
@@ -6157,7 +6157,7 @@ static struct mbuf *
 key_getcomb_ipcomp(void)
 {
 	struct sadb_comb *comb;
-	struct comp_algo *algo;
+	const struct comp_algo *algo;
 	struct mbuf *m;
 	int i;
 	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
@@ -6755,7 +6755,7 @@ key_register(struct socket *so, struct mbuf *m,
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
 		for (i = 1; i <= SADB_AALG_MAX; i++) {
-			struct auth_hash *aalgo;
+			const struct auth_hash *aalgo;
 			u_int16_t minkeysize, maxkeysize;
 
 			aalgo = ah_algorithm_lookup(i);
@@ -6779,7 +6779,7 @@ key_register(struct socket *so, struct mbuf *m,
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
 		for (i = 1; i <= SADB_EALG_MAX; i++) {
-			struct enc_xform *ealgo;
+			const struct enc_xform *ealgo;
 
 			ealgo = esp_algorithm_lookup(i);
 			if (!ealgo)

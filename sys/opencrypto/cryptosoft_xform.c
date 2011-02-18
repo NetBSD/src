@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.12 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.13 2011/02/18 19:56:02 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12 2009/03/25 01:26:13 darran Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.13 2011/02/18 19:56:02 drochner Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -55,14 +55,14 @@ __KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12 2009/03/25 01:26:13 darran
 #include <sys/sha1.h>
 
 struct swcr_auth_hash {
-	struct auth_hash *auth_hash;
+	const struct auth_hash *auth_hash;
 	void (*Init)(void *);
 	int  (*Update)(void *, const uint8_t *, uint16_t);
 	void (*Final)(uint8_t *, void *);
 };
 
 struct swcr_enc_xform {
-	struct enc_xform *enc_xform;
+	const struct enc_xform *enc_xform;
 	void (*encrypt)(void *, uint8_t *);
 	void (*decrypt)(void *, uint8_t *);
 	int  (*setkey)(uint8_t **, const uint8_t *, int len);
@@ -70,7 +70,7 @@ struct swcr_enc_xform {
 };
 
 struct swcr_comp_algo {
-	struct comp_algo *comp_algo;
+	const struct comp_algo *comp_algo;
 	uint32_t (*compress)(uint8_t *, uint32_t, uint8_t **);
 	uint32_t (*decompress)(uint8_t *, uint32_t, uint8_t **);
 };

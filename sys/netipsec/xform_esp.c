@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.27 2011/02/18 19:06:45 drochner Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.28 2011/02/18 20:40:58 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.27 2011/02/18 19:06:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.28 2011/02/18 20:40:58 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -110,7 +110,7 @@ static int esp_output_cb(struct cryptop *crp);
  * NB: this is public for use by the PF_KEY support.
  * NB: if you add support here; be sure to add code to esp_attach below!
  */
-struct enc_xform *
+const struct enc_xform *
 esp_algorithm_lookup(int alg)
 {
 	if (alg >= ESP_ALG_MAX)
@@ -135,7 +135,7 @@ esp_algorithm_lookup(int alg)
 }
 
 size_t
-esp_hdrsiz(struct secasvar *sav)
+esp_hdrsiz(const struct secasvar *sav)
 {
 	size_t size;
 
@@ -169,9 +169,9 @@ esp_hdrsiz(struct secasvar *sav)
  * esp_init() is called when an SPI is being set up.
  */
 static int
-esp_init(struct secasvar *sav, struct xformsw *xsp)
+esp_init(struct secasvar *sav, const struct xformsw *xsp)
 {
-	struct enc_xform *txform;
+	const struct enc_xform *txform;
 	struct cryptoini cria, crie;
 	int keylen;
 	int error;
@@ -278,8 +278,8 @@ esp_zeroize(struct secasvar *sav)
 static int
 esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
-	struct auth_hash *esph;
-	struct enc_xform *espx;
+	const struct auth_hash *esph;
+	const struct enc_xform *espx;
 	struct tdb_ident *tdbi;
 	struct tdb_crypto *tc;
 	int plen, alen, hlen;
@@ -467,8 +467,8 @@ esp_input_cb(struct cryptop *crp)
 	int s, hlen, skip, protoff, error;
 	struct mbuf *m;
 	struct cryptodesc *crd;
-	struct auth_hash *esph;
-	struct enc_xform *espx;
+	const struct auth_hash *esph;
+	const struct enc_xform *espx;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	struct secasvar *sav;
@@ -696,8 +696,8 @@ esp_output(
     int protoff
 )
 {
-	struct enc_xform *espx;
-	struct auth_hash *esph;
+	const struct enc_xform *espx;
+	const struct auth_hash *esph;
 	int hlen, rlen, plen, padding, blks, alen, i, roff;
 	struct mbuf *mo = (struct mbuf *) NULL;
 	struct tdb_crypto *tc;
