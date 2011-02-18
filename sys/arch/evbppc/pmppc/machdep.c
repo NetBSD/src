@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.18.1 2011/01/07 01:41:47 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.18.2 2011/02/18 23:13:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.18.1 2011/01/07 01:41:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.18.2 2011/02/18 23:13:48 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.18.1 2011/01/07 01:41:47 matt Exp $"
 #include <machine/pmppc.h>
 
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/cpufeat.h>
 #include <arch/powerpc/pic/picvar.h>
 
 #include <ddb/db_extern.h>
@@ -184,6 +185,8 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	extern unsigned char edata[], end[];
 
 	memset(&edata, 0, end - edata); /* clear BSS */
+
+	cpu_model_init();
 
 	pmppc_setup();
 
