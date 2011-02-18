@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.27 2011/02/09 14:34:42 pooka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.28 2011/02/18 13:08:41 pooka Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -20,6 +20,7 @@
 ./usr/libdata/debug/usr/tests/dev/sysmon
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/ffs
+./usr/libdata/debug/usr/tests/fs/hfs
 ./usr/libdata/debug/usr/tests/fs/kernfs
 ./usr/libdata/debug/usr/tests/fs/lfs
 ./usr/libdata/debug/usr/tests/fs/msdosfs
@@ -126,6 +127,7 @@
 ./usr/tests/dev/sysmon
 ./usr/tests/fs
 ./usr/tests/fs/ffs
+./usr/tests/fs/hfs
 ./usr/tests/fs/kernfs
 ./usr/tests/fs/lfs
 ./usr/tests/fs/msdosfs
