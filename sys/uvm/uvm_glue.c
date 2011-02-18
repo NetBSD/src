@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.148 2011/02/17 19:27:13 matt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.149 2011/02/18 10:43:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.148 2011/02/17 19:27:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.149 2011/02/18 10:43:52 drochner Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -341,11 +341,11 @@ uvm_uarea_init(void)
 
 	uvm_uarea_cache = pool_cache_init(USPACE, USPACE_ALIGN, 0, flags,
 	    "uarea", &uvm_uarea_allocator, IPL_NONE, NULL, NULL, NULL);
-	if (uvm_uarea_system_cache != uvm_uarea_cache) {
-		uvm_uarea_system_cache = pool_cache_init(USPACE, USPACE_ALIGN,
-		    0, flags, "uareasys", &uvm_uarea_system_allocator,
-		    IPL_NONE, NULL, NULL, NULL);
-	}
+#if defined(__HAVE_CPU_UAREA_ROUTINES)
+	uvm_uarea_system_cache = pool_cache_init(USPACE, USPACE_ALIGN,
+	    0, flags, "uareasys", &uvm_uarea_system_allocator,
+	    IPL_NONE, NULL, NULL, NULL);
+#endif
 }
 
 /*
