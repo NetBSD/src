@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.29 2011/02/16 18:39:33 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.30 2011/02/18 19:06:45 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.29 2011/02/16 18:39:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.30 2011/02/18 19:06:45 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -598,7 +598,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
  * passes authentication.
  */
 static int
-ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
 	struct auth_hash *ahx;
 	struct tdb_ident *tdbi;
@@ -993,7 +993,7 @@ ah_output(
     int protoff
 )
 {
-	struct secasvar *sav;
+	const struct secasvar *sav;
 	struct auth_hash *ahx;
 	struct cryptodesc *crda;
 	struct tdb_crypto *tc;
