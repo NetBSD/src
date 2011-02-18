@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.4.2 2011/02/15 16:45:57 bouyer Exp $
+#	$NetBSD: Makefile,v 1.12.4.3 2011/02/18 14:45:59 bouyer Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/ffs ${.CURDIR}/../../../../ufs/ufs
@@ -11,7 +11,7 @@ SRCS=	ffs_alloc.c ffs_appleufs.c ffs_balloc.c ffs_bswap.c ffs_inode.c	\
 
 SRCS+=	ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_ihash.c ufs_inode.c	\
 	ufs_lookup.c ufs_vfsops.c ufs_vnops.c ufs_wapbl.c \
-	ufs_quota.c ufs_quota2.c
+	ufs_quota.c ufs_quota2.c quota2_subr.c
 
 CPPFLAGS+=	-DFFS_EI -DUFS_DIRHASH -DWAPBL -DAPPLE_UFS -DUFS_EXTATTR \
 		-DQUOTA2
