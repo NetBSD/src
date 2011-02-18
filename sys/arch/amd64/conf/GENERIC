@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.307 2011/02/16 20:23:21 jym Exp $
+# $NetBSD: GENERIC,v 1.308 2011/02/18 23:38:58 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.307 $"
+#ident 		"GENERIC-$Revision: 1.308 $"
 
 maxusers	64		# estimated number of users
 
@@ -1131,6 +1131,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
+#pseudo-device	ifmpls			# MPLS pseudo-interface 
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
