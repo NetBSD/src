@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.23 2011/02/18 19:06:45 drochner Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.24 2011/02/18 20:40:58 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.23 2011/02/18 19:06:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.24 2011/02/18 20:40:58 drochner Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -89,7 +89,7 @@ SYSCTL_STRUCT(_net_inet_ipcomp, IPSECCTL_STATS,
 static int ipcomp_input_cb(struct cryptop *crp);
 static int ipcomp_output_cb(struct cryptop *crp);
 
-struct comp_algo *
+const struct comp_algo *
 ipcomp_algorithm_lookup(int alg)
 {
 	if (alg >= IPCOMP_ALG_MAX)
@@ -105,9 +105,9 @@ ipcomp_algorithm_lookup(int alg)
  * ipcomp_init() is called when an CPI is being set up.
  */
 static int
-ipcomp_init(struct secasvar *sav, struct xformsw *xsp)
+ipcomp_init(struct secasvar *sav, const struct xformsw *xsp)
 {
-	struct comp_algo *tcomp;
+	const struct comp_algo *tcomp;
 	struct cryptoini cric;
 	int ses;
 
@@ -372,7 +372,7 @@ ipcomp_output(
 )
 {
 	const struct secasvar *sav;
-	struct comp_algo *ipcompx;
+	const struct comp_algo *ipcompx;
 	int error, ralen, hlen, maxpacketsize;
 	struct cryptodesc *crdc;
 	struct cryptop *crp;

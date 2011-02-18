@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.7 2010/08/28 07:16:51 spz Exp $	*/
+/*	$NetBSD: keydb.h,v 1.8 2011/02/18 20:40:58 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -122,10 +122,10 @@ struct secasvar {
 	 *     to interface to the OpenBSD crypto support.  This was done
 	 *     to distinguish this code from the mainline KAME code.
 	 */
-	struct xformsw *tdb_xform;	/* transform */
-	struct enc_xform *tdb_encalgxform;	/* encoding algorithm */
-	struct auth_hash *tdb_authalgxform;	/* authentication algorithm */
-	struct comp_algo *tdb_compalgxform;	/* compression algorithm */
+	const struct xformsw *tdb_xform;	/* transform */
+	const struct enc_xform *tdb_encalgxform; /* encoding algorithm */
+	const struct auth_hash *tdb_authalgxform; /* authentication algorithm */
+	const struct comp_algo *tdb_compalgxform; /* compression algorithm */
 	u_int64_t tdb_cryptoid;		/* crypto session id */
 
 #ifdef IPSEC_NAT_T

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.30 2011/02/18 19:06:45 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.31 2011/02/18 20:40:58 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.30 2011/02/18 19:06:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.31 2011/02/18 20:40:58 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -123,7 +123,7 @@ static int ah_output_cb(struct cryptop*);
 /*
  * NB: this is public for use by the PF_KEY support.
  */
-struct auth_hash *
+const struct auth_hash *
 ah_algorithm_lookup(int alg)
 {
 	if (alg >= AH_ALG_MAX)
@@ -152,7 +152,7 @@ ah_algorithm_lookup(int alg)
 }
 
 size_t
-ah_hdrsiz(struct secasvar *sav)
+ah_hdrsiz(const struct secasvar *sav)
 {
 	size_t size;
 
@@ -174,9 +174,10 @@ ah_hdrsiz(struct secasvar *sav)
  * NB: public for use by esp_init.
  */
 int
-ah_init0(struct secasvar *sav, struct xformsw *xsp, struct cryptoini *cria)
+ah_init0(struct secasvar *sav, const struct xformsw *xsp,
+	 struct cryptoini *cria)
 {
-	struct auth_hash *thash;
+	const struct auth_hash *thash;
 	int keylen;
 
 	thash = ah_algorithm_lookup(sav->alg_auth);
@@ -227,7 +228,7 @@ ah_init0(struct secasvar *sav, struct xformsw *xsp, struct cryptoini *cria)
  * ah_init() is called when an SPI is being set up.
  */
 static int
-ah_init(struct secasvar *sav, struct xformsw *xsp)
+ah_init(struct secasvar *sav, const struct xformsw *xsp)
 {
 	struct cryptoini cria;
 	int error;
@@ -600,7 +601,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 static int
 ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
-	struct auth_hash *ahx;
+	const struct auth_hash *ahx;
 	struct tdb_ident *tdbi;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
@@ -796,7 +797,7 @@ ah_input_cb(struct cryptop *crp)
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m;
 	struct cryptodesc *crd;
-	struct auth_hash *ahx;
+	const struct auth_hash *ahx;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	struct secasvar *sav;
@@ -846,7 +847,7 @@ ah_input_cb(struct cryptop *crp)
 		("ah_input_cb: unexpected protocol family %u",
 		 saidx->dst.sa.sa_family));
 
-	ahx = (struct auth_hash *) sav->tdb_authalgxform;
+	ahx = sav->tdb_authalgxform;
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
@@ -994,7 +995,7 @@ ah_output(
 )
 {
 	const struct secasvar *sav;
-	struct auth_hash *ahx;
+	const struct auth_hash *ahx;
 	struct cryptodesc *crda;
 	struct tdb_crypto *tc;
 	struct mbuf *mi;
