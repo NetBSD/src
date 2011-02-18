@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.19 2011/01/30 08:55:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.20 2011/02/18 07:00:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.19 2011/01/30 08:55:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.20 2011/02/18 07:00:05 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -352,15 +352,6 @@ acpicpu_tstate_tss(struct acpicpu_softc *sc)
 	 */
 	if (sc->sc_tstate[0].ts_percent != 100) {
 		rv = AE_BAD_DECIMAL_CONSTANT;
-		goto out;
-	}
-
-	/*
-	 * The first entry with 100 % duty cycle
-	 * should have zero in the control field.
-	 */
-	if (sc->sc_tstate[0].ts_control != 0) {
-		rv = AE_AML_BAD_RESOURCE_VALUE;
 		goto out;
 	}
 
