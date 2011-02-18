@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.4 2007/03/04 06:03:30 christos Exp $	*/
+/*	$NetBSD: xform.h,v 1.5 2011/02/18 19:06:45 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -91,7 +91,7 @@ struct xformsw {
 	const char	*xf_name;		/* human-readable name */
 	int	(*xf_init)(struct secasvar*, struct xformsw*);	/* setup */
 	int	(*xf_zeroize)(struct secasvar*);		/* cleanup */
-	int	(*xf_input)(struct mbuf*, struct secasvar*,	/* input */
+	int	(*xf_input)(struct mbuf*, const struct secasvar*, /* input */
 			int, int);
 	int	(*xf_output)(struct mbuf*,	       		/* output */
 			struct ipsecrequest *, struct mbuf **, int, int);

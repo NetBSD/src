@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.22 2011/02/14 13:43:45 drochner Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.23 2011/02/18 19:06:45 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.22 2011/02/14 13:43:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.23 2011/02/18 19:06:45 drochner Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -151,7 +151,7 @@ ipcomp_zeroize(struct secasvar *sav)
  * ipcomp_input() gets called to uncompress an input packet
  */
 static int
-ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
 	struct tdb_crypto *tc;
 	struct cryptodesc *crdc;
@@ -371,7 +371,7 @@ ipcomp_output(
     int protoff
 )
 {
-	struct secasvar *sav;
+	const struct secasvar *sav;
 	struct comp_algo *ipcompx;
 	int error, ralen, hlen, maxpacketsize;
 	struct cryptodesc *crdc;

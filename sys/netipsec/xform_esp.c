@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.26 2011/02/14 18:49:31 drochner Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.27 2011/02/18 19:06:45 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.26 2011/02/14 18:49:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.27 2011/02/18 19:06:45 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -276,7 +276,7 @@ esp_zeroize(struct secasvar *sav)
  * ESP input processing, called (eventually) through the protocol switch.
  */
 static int
-esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
 	struct auth_hash *esph;
 	struct enc_xform *espx;
@@ -701,7 +701,7 @@ esp_output(
 	int hlen, rlen, plen, padding, blks, alen, i, roff;
 	struct mbuf *mo = (struct mbuf *) NULL;
 	struct tdb_crypto *tc;
-	struct secasvar *sav;
+	const struct secasvar *sav;
 	struct secasindex *saidx;
 	unsigned char *pad;
 	u_int8_t prot;
