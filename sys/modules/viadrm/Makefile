@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/02/18 02:00:36 jmcneill Exp $
+# $NetBSD: Makefile,v 1.3 2011/02/18 14:26:52 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -10,6 +10,7 @@ IOCONF=	viadrm.ioconf
 
 SRCS=	via_drv.c
 SRCS+=	via_dma.c
+SRCS+=	via_dmablit.c
 SRCS+=	via_ds.c
 SRCS+=	via_irq.c
 SRCS+=	via_map.c
