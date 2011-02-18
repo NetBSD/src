@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumphijack.3,v 1.3 2011/02/16 19:46:42 pooka Exp $
+.\"     $NetBSD: rumphijack.3,v 1.4 2011/02/18 12:22:46 pooka Exp $
 .\"
 .\" Copyright (c) 2011 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 16, 2011
+.Dd February 18, 2011
 .Dt RUMPHIJACK 3
 .Os
 .Sh NAME
@@ -46,7 +46,57 @@ of the host kernel.
 The behaviour of hijacked applications is affected by the following
 environment variables:
 .Bl -tag -width 12345
-.It Dv RUMPHIJACK_RETRYCONNECT
+.It Ev RUMPHIJACK
+If present, this variable specifies which system calls should be
+hijacked.
+The string is parsed as a comma-separated list of
+.Dq name=value
+tuples.
+The possible lefthandside names are:
+.Bl -tag -width xxsocketxx
+.It Dq path
+Pathname-based system calls are hijacked if the path the system
+call is directed to resides under
+.Ar value .
+In case of an absolute pathname argument, a direct comparison is made.
+In case of a relative pathname, the current working direct is
+examined.
+.It Dq socket
+The specifier
+.Ar value
+contains a colon-separated list of which protocol families should
+be hijacked.
+The special value
+.Dq all
+can be specified as the first element.
+It indicates that all protocol families should be hijacked.
+Some can then be disabled by prepending
+.Dq no
+to the name of the protocol family.
+.Pp
+For example,
+.Dq inet:inet6
+specifies that only
+.Dv PF_INET
+and
+.Dv PF_INET6
+sockets should be hijacked,
+while
+.Dq all:noinet
+specifies that all protocol families except
+.Dv PF_INET
+should be hijacked.
+.El
+.Pp
+If the environment variable is unset, the default value
+.Qq path=/rump,socket=all:nolocal
+is used.
+The rationale for this is to have networked X clients work
+out-of-the-box: X clients use local sockets to communicate with
+the server, so local sockets must be used as a host service.
+.Pp
+An empty string as a value means no calls are hijacked.
+.It Ev RUMPHIJACK_RETRYCONNECT
 Change how
 .Xr rumpclient 3
 attempts to reconnect to the server in case the connection is lost.
@@ -70,12 +120,6 @@ See
 .Xr rumpclient 3
 for more discussion.
 .El
-.Pp
-Currently
-.Nm
-supports only TCP/IP related system calls.
-The set of supported subsystems may change later along with the usage
-of the library.
 .Sh EXAMPLES
 Use an alternate TCP/IP stack for firefox with a persistent server
 connection:
