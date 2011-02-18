@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.53 2011/02/18 14:44:46 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.54 2011/02/18 19:27:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.53 2011/02/18 14:44:46 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.54 2011/02/18 19:27:06 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -121,6 +121,7 @@ enum dualcall {
 #define REALREAD _sys_read
 #define REALGETDENTS __getdents30
 #define REALMOUNT __mount50
+#define REALLSEEK _lseek
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -136,6 +137,7 @@ int REALUTIMES(const char *, const struct timeval [2]);
 int REALLUTIMES(const char *, const struct timeval [2]);
 int REALFUTIMES(int, const struct timeval [2]);
 int REALMOUNT(const char *, const char *, int, void *, size_t);
+off_t REALLSEEK(int, off_t, int);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -184,7 +186,7 @@ struct sysnames {
 	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
 	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
 	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
-	{ DUALCALL_LSEEK,	"lseek",	RSYS_NAME(LSEEK)	},
+	{ DUALCALL_LSEEK,	S(REALLSEEK),	RSYS_NAME(LSEEK)	},
 	{ DUALCALL_GETDENTS,	"__getdents30",	RSYS_NAME(GETDENTS)	},
 	{ DUALCALL_UNLINK,	"unlink",	RSYS_NAME(UNLINK)	},
 	{ DUALCALL_SYMLINK,	"symlink",	RSYS_NAME(SYMLINK)	},
@@ -1546,7 +1548,7 @@ FDCALL(int, fstatvfs1, DUALCALL_FSTATVFS1,				\
 	(int, struct statvfs *, int),					\
 	(fd, buf, flags))
 
-FDCALL(off_t, lseek, DUALCALL_LSEEK,					\
+FDCALL(off_t, REALLSEEK, DUALCALL_LSEEK,				\
 	(int fd, off_t offset, int whence),				\
 	(int, off_t, int),						\
 	(fd, offset, whence))
