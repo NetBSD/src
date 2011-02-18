@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2011/02/15 19:39:12 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.78 2011/02/18 16:40:50 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2011/02/15 19:39:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2011/02/18 16:40:50 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3520,16 +3520,3 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	}
 #endif
 }
-
-u_int
-powerpc_mmap_flags(paddr_t pa)
-{
-	u_int flags = PMAP_MD_NOCACHE;
-
-	if (pa & POWERPC_MMAP_FLAG_PREFETCHABLE)
-		flags |= PMAP_MD_PREFETCHABLE;
-	if (pa & POWERPC_MMAP_FLAG_CACHEABLE)
-		flags &= ~PMAP_MD_NOCACHE;
-	return flags;
-}
-
