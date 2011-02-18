@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.2 2011/02/08 02:03:13 matt Exp $ */
+/* $NetBSD: crt0-common.c,v 1.3 2011/02/18 23:37:36 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.2 2011/02/08 02:03:13 matt Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.3 2011/02/18 23:37:36 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/syscall.h>
@@ -57,7 +57,14 @@ extern void	_fini(void);
  * if we happen to be compiling without -static but with without any
  * shared libs present, things will still work.
  */
+
+#if __GNUC_PREREQ__(4,2)
+static int rtld_DYNAMIC __attribute__((__weakref__, __alias__("_DYNAMIC")));
+#define	DYNAMIC_SYM	rtld_DYNAMIC
+#else
 extern int _DYNAMIC __weak_reference(_DYNAMIC);
+#define	DYNAMIC_SYM	_DYNAMIC
+#endif
 
 #ifdef MCRT0
 extern void	monstartup(u_long, u_long);
@@ -104,7 +111,7 @@ ___start(int argc, char **argv, char **envp,
 	if (ps_strings != NULL)
 		__ps_strings = ps_strings;
 
-	if (&_DYNAMIC != NULL) {
+	if (&DYNAMIC_SYM != NULL) {
 		if (obj == NULL)
 			_FATAL("NULL Obj_Entry pointer in GOT\n");
 		if (obj->magic != RTLD_MAGIC)
