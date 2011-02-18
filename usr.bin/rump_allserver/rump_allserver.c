@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.18 2011/02/17 16:59:46 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.19 2011/02/18 09:54:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.18 2011/02/17 16:59:46 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.19 2011/02/18 09:54:03 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 						    "size already given\n");
 						usage();
 					}
-					if (strcmp(value, "e") == 0) {
+					if (strcmp(value, "host") == 0) {
 						if (foffset != 0) {
 							fprintf(stderr,
 							    "cannot specify "

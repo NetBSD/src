@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.14 2011/02/17 16:59:46 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.15 2011/02/18 09:54:03 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -90,11 +90,11 @@ Similar to
 .Xr dd 1 ,
 this argument accepts a suffix as the multiplier for the number.
 The special value
-.Dq e
+.Dq host
 indicates that the current size of
 .Ar hostpath
 will be used.
-It is assumed that
+In this case it is assumed that
 .Ar hostpath
 exists and is a regular file.
 .It OR
