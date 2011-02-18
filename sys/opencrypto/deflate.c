@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.16 2011/02/17 17:10:18 drochner Exp $ */
+/*	$NetBSD: deflate.c,v 1.17 2011/02/18 10:50:56 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.16 2011/02/17 17:10:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.17 2011/02/18 10:50:56 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -243,7 +243,7 @@ gzip_global(u_int8_t *data, u_int32_t size,
 	struct deflate_buf *buf, *tmp;
 	size_t nbufs;
 	u_int32_t crc;
-	u_int32_t isize;
+	u_int32_t isize, icrc;
 
 	DPRINTF(("gzip_global: decomp %d, size %d\n", decomp, size));
 
@@ -300,7 +300,10 @@ gzip_global(u_int8_t *data, u_int32_t size,
 			DPRINTF(("gzip_global.%d: gzip header ok\n",__LINE__));
 		}
 
-		isize = *((uint32_t *)&data[size-sizeof(uint32_t)]);
+		memcpy(&isize, &data[size-sizeof(uint32_t)], sizeof(uint32_t));
+		LE32TOH(isize);
+		memcpy(&icrc, &data[size-2*sizeof(uint32_t)], sizeof(uint32_t));
+		LE32TOH(icrc);
 
 		DPRINTF(("gzip_global: isize = %d (%02x %02x %02x %02x)\n",
 				isize,
@@ -399,7 +402,7 @@ end:
 	for (j = 0; j < i; j++) {
 		if (decomp) {
 			/* update crc for decompressed data */
-			crc = crc32(crc, buf[j].out, buf[j].size);
+			crc = crc32(crc, buf[j].out, MIN(count, buf[j].size));
 		}
 		if (count > buf[j].size) {
 			memcpy(output, buf[j].out, buf[j].size);
@@ -418,8 +421,10 @@ end:
 
 	if (!decomp) {
 		/* fill in CRC and ISIZE */
-		((uint32_t *)output)[0] = crc;
-		((uint32_t *)output)[1] = size;
+		HTOLE32(crc);
+		memcpy(output, &crc, sizeof(uint32_t));
+		HTOLE32(size);
+		memcpy(output + sizeof(uint32_t), &size, sizeof(uint32_t));
 
 		DPRINTF(("gzip_global: size = 0x%x (%02x %02x %02x %02x)\n",
 				size,
@@ -427,6 +432,12 @@ end:
 				output[3],
 				output[5],
 				output[4]));
+	} else {
+		if (crc != icrc || result != isize) {
+			free(*out, M_CRYPTO_DATA);
+			*out = NULL;
+			return 0;
+		}
 	}
 
 	return result;
