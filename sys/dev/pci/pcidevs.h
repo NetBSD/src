@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1054 2011/02/03 22:04:09 njoly Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1055 2011/02/18 22:53:38 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1057 2011/02/03 22:03:09 njoly Exp
+ *	NetBSD: pcidevs,v 1.1058 2011/02/18 22:52:53 jmcneill Exp
  */
 
 /*
@@ -862,6 +862,7 @@
 #define	PCI_PRODUCT_ADP2_ASR2200S_SUB2M	0x0287		/* ASR-2200S */
 #define	PCI_PRODUCT_ADP2_ASR2410SA	0x0290		/* ASR-2410SA */
 #define	PCI_PRODUCT_ADP2_AAR2810SA	0x0292		/* AAR-2810SA */
+#define	PCI_PRODUCT_ADP2_3405	0x02bb		/* RAID 3405 */
 #define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
 #define	PCI_PRODUCT_ADP2_ASR5400S	0x0365		/* ASR-5400S */
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
