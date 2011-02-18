@@ -1,4 +1,4 @@
-/*	$NetBSD: gbox.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: gbox.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
 /*	$OpenBSD: gbox.c,v 1.15 2007/01/07 15:13:52 miod Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ gbox_dio_attach(device_t parent, device_t self, void *aux)
 		}
 		fbr = bus_space_vaddr(da->da_bst, bsh);
 		if (gbox_reset(sc->sc_fb, sc->sc_scode, fbr) != 0) {
-			printf(": can't map framebuffer\n");
+			aprint_error(": can't reset framebuffer\n");
 			return;
 		}
 	}
