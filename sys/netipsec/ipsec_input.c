@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.25 2011/02/17 20:20:18 drochner Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.26 2011/02/18 16:10:11 drochner Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.25 2011/02/17 20:20:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.26 2011/02/18 16:10:11 drochner Exp $");
 
 /*
  * IPsec input processing.
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.25 2011/02/17 20:20:18 drochner Ex
 #ifdef INET6
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
+#include <netinet6/scope6_var.h>
 #endif
 #include <netinet/in_pcb.h>
 #ifdef INET6
@@ -204,6 +205,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
 		    sizeof(struct in6_addr),
 		    &dst_address.sin6.sin6_addr);
+		if (sa6_recoverscope(&dst_address.sin6)) {
+			m_freem(m);
+			return EINVAL;
+		}
 		break;
 #endif /* INET6 */
 	default:
