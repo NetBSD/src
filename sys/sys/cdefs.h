@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.69 2008/08/17 00:23:02 gmcgarry Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.69.14.1 2011/02/18 21:12:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -61,6 +61,12 @@
 #include <sys/cdefs_elf.h>
 #else
 #include <sys/cdefs_aout.h>
+#endif
+
+#if __GNUC_PREREQ__(3, 1)
+#define	__noprofile	__attribute__((__no_instrument_function__))
+#else
+#define	__noprofile	/* nothing */
 #endif
 
 #if defined(__cplusplus)
