@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/05/28 19:11:23 jklos Exp $
+#	$NetBSD: Makefile,v 1.10 2011/02/18 22:27:51 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ DIST=		${NETBSDSRCDIR}/gnu/dist/gdb6
 
 SRCS=		${G_LIBGDB_OBS:.o=.c}
 GCPPFLAGS=	${G_INTERNAL_CFLAGS}
+CPPFLAGS.bsd-kvm.c=	-D_KMEMUSER
 CPPFLAGS=	-I${.CURDIR} \
 		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-I${DIST}/gdb \
