@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.1.2.2 2011/02/18 21:12:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.1.2.3 2011/02/18 21:17:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -218,7 +218,7 @@ int splhigh(void) __stub;
  * This is called by softint_cleanup and can't be a stub but it can call
  * a stub.
  */
-int 
+int __noprofile
 splhigh(void)
 {
 	return splraise(IPL_HIGH);
