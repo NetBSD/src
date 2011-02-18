@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.186.4.1 2011/01/20 14:25:03 bouyer Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.186.4.2 2011/02/18 19:54:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.186.4.1 2011/01/20 14:25:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.186.4.2 2011/02/18 19:54:44 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -482,8 +482,8 @@ ufs_setattr(void *v)
 				goto out;
 			}
 			/* Snapshot flag cannot be set or cleared */
-			if ((vap->va_flags & SF_SNAPSHOT) !=
-			    (ip->i_flags & SF_SNAPSHOT)) {
+			if ((vap->va_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) !=
+			    (ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))) {
 				error = EPERM;
 				goto out;
 			}
