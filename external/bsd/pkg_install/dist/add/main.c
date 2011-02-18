@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.9 2010/06/26 00:14:26 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.10 2011/02/18 22:32:27 aymeric Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.9 2010/06/26 00:14:26 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.10 2011/02/18 22:32:27 aymeric Exp $");
 
 /*
  *
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.9 2010/06/26 00:14:26 joerg Exp $");
 #include "lib.h"
 #include "add.h"
 
-static char Options[] = "AC:IK:LP:RVW:fhm:np:t:Uuvw:";
+static char Options[] = "AC:DIK:LP:RVW:fhm:np:t:Uuvw:";
 
 char   *Destdir = NULL;
 char   *OverrideMachine = NULL;
@@ -51,6 +51,12 @@ Boolean NoInstall = FALSE;
 Boolean NoRecord = FALSE;
 Boolean Automatic = FALSE;
 Boolean ForceDepends = FALSE;
+/*
+ * Normally, updating fails if the dependencies of a depending package
+ * are not satisfied by the package to be updated.  ForceDepending
+ * turns that failure into a warning.
+ */
+Boolean ForceDepending = FALSE;
 
 int	LicenseCheck = 0;
 int     Replace = 0;
@@ -82,7 +88,12 @@ main(int argc, char **argv)
 
 		case 'C':
 			config_file = optarg;
+			break;
 
+		case 'D':
+			ForceDepending = TRUE;
+			break;
+			
 		case 'P':
 			Destdir = optarg;
 			break;
@@ -90,6 +101,7 @@ main(int argc, char **argv)
 		case 'f':
 			Force = TRUE;
 			ForceDepends = TRUE;
+			ForceDepending = TRUE;
 			break;
 
 		case 'I':
