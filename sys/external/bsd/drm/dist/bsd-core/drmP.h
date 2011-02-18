@@ -186,6 +186,7 @@ MALLOC_DECLARE(DRM_MEM_AGPLISTS);
 MALLOC_DECLARE(DRM_MEM_CTXBITMAP);
 MALLOC_DECLARE(DRM_MEM_SGLISTS);
 MALLOC_DECLARE(DRM_MEM_DRAWABLE);
+MALLOC_DECLARE(DRM_MEM_MM);
 
 #define DRM_MAX_CTXBITMAP (PAGE_SIZE * 8)
 
@@ -265,6 +266,10 @@ typedef int			irqreturn_t;
 #define IRQ_HANDLED		1
 #define IRQ_NONE		0
 #endif
+
+#define container_of(ptr, type, member) ({			\
+	__typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+	(type *)( (char *)__mptr - offsetof(type,member) );})
 
 enum {
 	DRM_IS_NOT_AGP,

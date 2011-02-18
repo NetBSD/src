@@ -48,8 +48,7 @@ via_configure(struct drm_device *dev)
 	dev->driver->buf_priv_size	= sizeof(drm_via_private_t);
 	dev->driver->load		= via_driver_load;
 	dev->driver->unload		= via_driver_unload;
-	dev->driver->context_ctor	= via_init_context;
-	dev->driver->context_dtor	= via_final_context;
+	dev->driver->lastclose		= via_lastclose;
 	dev->driver->get_vblank_counter	= via_get_vblank_counter;
 	dev->driver->enable_vblank	= via_enable_vblank;
 	dev->driver->disable_vblank	= via_disable_vblank;
@@ -64,10 +63,10 @@ via_configure(struct drm_device *dev)
 
 	dev->driver->name		= DRIVER_NAME;
 	dev->driver->desc		= DRIVER_DESC;
-	dev->driver->date		= VIA_DRM_DRIVER_DATE;
-	dev->driver->major		= VIA_DRM_DRIVER_MAJOR;
-	dev->driver->minor		= VIA_DRM_DRIVER_MINOR;
-	dev->driver->patchlevel		= VIA_DRM_DRIVER_PATCHLEVEL;
+	dev->driver->date		= DRIVER_DATE;
+	dev->driver->major		= DRIVER_MAJOR;
+	dev->driver->minor		= DRIVER_MINOR;
+	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
 }
 
 static int
