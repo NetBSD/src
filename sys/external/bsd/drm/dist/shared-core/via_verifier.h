@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 2004 The Unichrome Project. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,7 +20,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
- * Author: Thomas Hellström 2004.
+ * Author: Thomas HellstrÃ¶m 2004.
  */
 
 #ifndef _VIA_VERIFIER_H_
@@ -54,9 +54,9 @@ typedef struct {
 	const uint32_t *buf_start;
 } drm_via_state_t;
 
-extern int via_verify_command_stream(const uint32_t *buf, unsigned int size,
-				    struct drm_device *dev, int agp);
+extern int via_verify_command_stream(const uint32_t * buf, unsigned int size,
+				     struct drm_device * dev, int agp);
 extern int via_parse_command_stream(struct drm_device *dev, const uint32_t *buf,
-                                   unsigned int size);
+				    unsigned int size);
 
 #endif
