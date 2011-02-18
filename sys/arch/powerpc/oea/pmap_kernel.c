@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.3 2011/02/12 18:23:10 matt Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.4 2011/02/18 16:40:50 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.3 2011/02/12 18:23:10 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.4 2011/02/18 16:40:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap.h"
@@ -40,6 +40,18 @@ __KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.3 2011/02/12 18:23:10 matt Exp $")
 
 extern struct pmap kernel_pmap_;
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
+
+u_int
+powerpc_mmap_flags(paddr_t pa)
+{
+	u_int flags = PMAP_MD_NOCACHE;
+
+	if (pa & POWERPC_MMAP_FLAG_PREFETCHABLE)
+		flags |= PMAP_MD_PREFETCHABLE;
+	if (pa & POWERPC_MMAP_FLAG_CACHEABLE)
+		flags &= ~PMAP_MD_NOCACHE;
+	return flags;
+}
 
 #ifdef PMAP_NEEDS_FIXUP
 #include <powerpc/instr.h>
