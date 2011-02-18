@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/09/27 12:44:05 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2 2011/02/18 02:00:36 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -6,6 +6,7 @@
 .PATH:	${S}/external/bsd/drm/dist/shared-core
 
 KMOD=   viadrm
+IOCONF=	viadrm.ioconf
 
 SRCS=	via_drv.c
 SRCS+=	via_dma.c
