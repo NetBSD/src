@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.1.2.15 2011/02/12 21:48:09 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.1.2.16 2011/02/18 11:46:43 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.15 2011/02/12 21:48:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.16 2011/02/18 11:46:43 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.1.2.15 2011/02/12 21:48:09 bouyer E
  */
 
 static int quota2_bwrite(struct mount *, struct buf *);
-static int getinoquota2(struct inode *, int, struct buf **,
+static int getinoquota2(struct inode *, bool, bool, struct buf **,
     struct quota2_entry **);
 static int getq2h(struct ufsmount *, int, struct buf **,
     struct quota2_header **, int);
@@ -321,7 +321,7 @@ quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq,
 }
 
 static int
-getinoquota2(struct inode *ip, int alloc, struct buf **bpp,
+getinoquota2(struct inode *ip, bool alloc, bool modify, struct buf **bpp,
     struct quota2_entry **q2ep)
 {
 	int error;
@@ -365,7 +365,7 @@ getinoquota2(struct inode *ip, int alloc, struct buf **bpp,
 		}
 
 		if ((dq->dq2_lblkno | dq->dq2_blkoff) == 0) {
-			if (alloc == 0) {
+			if (!alloc) {
 				continue;
 			}
 			/* need to alloc a new on-disk quot */
@@ -377,7 +377,8 @@ getinoquota2(struct inode *ip, int alloc, struct buf **bpp,
 				return error;
 		} else {
 			error = getq2e(ump, i, dq->dq2_lblkno,
-			    dq->dq2_blkoff, &bpp[i], &q2ep[i], B_MODIFY);
+			    dq->dq2_blkoff, &bpp[i], &q2ep[i],
+			    modify ? B_MODIFY : 0);
 			if (error)
 				return error;
 		}
@@ -400,7 +401,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 	const int needswap = UFS_MPNEEDSWAP(ump);
 	int i;
 
-	if ((error = getinoquota2(ip, change > 0, bp, q2e)) != 0)
+	if ((error = getinoquota2(ip, change > 0, change != 0, bp, q2e)) != 0)
 		return error;
 	if (change == 0) {
 		for (i = 0; i < MAXQUOTAS; i++) {
