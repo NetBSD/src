@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.52 2011/02/18 14:33:11 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.53 2011/02/18 14:44:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.52 2011/02/18 14:33:11 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.53 2011/02/18 14:44:46 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -702,6 +702,9 @@ rename(const char *from, const char *to)
 		to = path_host2rump(to);
 		op_rename = GETSYSCALL(rump, RENAME);
 	} else {
+		if (path_isrump(to))
+			return EXDEV;
+
 		op_rename = GETSYSCALL(host, RENAME);
 	}
 
