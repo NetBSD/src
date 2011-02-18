@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.50 2011/02/18 13:04:52 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.51 2011/02/18 14:25:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.50 2011/02/18 13:04:52 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.51 2011/02/18 14:25:04 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -320,6 +320,7 @@ static struct {
 	int pf;
 	const char *name;
 } socketmap[] = {
+	{ PF_LOCAL, "local" },
 	{ PF_INET, "inet" },
 	{ PF_LINK, "link" },
 	{ PF_ROUTE, "route" },
