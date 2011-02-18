@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.82 2011/02/12 15:49:01 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.83 2011/02/18 16:06:20 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -46,7 +46,7 @@ file	arch/hp300/dev/dio.c		dio
 # SGC bus
 #
 
-device	sgc { scode = -1 }
+device	sgc { slot = -1 }
 attach	sgc at mainbus
 file	arch/hp300/dev/sgc.c		sgc
 
