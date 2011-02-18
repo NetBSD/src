@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.49 2011/02/18 11:41:32 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.50 2011/02/18 13:04:52 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.49 2011/02/18 11:41:32 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.50 2011/02/18 13:04:52 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -336,7 +336,7 @@ sockparser(char *buf)
 
 	/* if "all" is present, it must be specified first */
 	if (strncmp(buf, "all", strlen("all")) == 0) {
-		for (i = 0; i < __arraycount(rumpsockets); i++) {
+		for (i = 0; i < (int)__arraycount(rumpsockets); i++) {
 			rumpsockets[i] = true;
 		}
 		buf += strlen("all");
