@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.48 2011/02/17 17:18:08 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.49 2011/02/18 11:41:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.48 2011/02/17 17:18:08 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.49 2011/02/18 11:41:32 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -300,15 +300,124 @@ hijackdlsym(void *handle, const char *symbol)
 	return (void *)rv;
 }
 
-static int pwdinrump = 0;
+/*
+ * This tracks if our process is in a subdirectory of /rump.
+ * It's preserved over exec.
+ */
+static bool pwdinrump = false;
 
-/* low calorie sockets? */
-static bool hostlocalsockets = true;
+/*
+ * These variables are set from the RUMPHIJACK string and control
+ * which operations can product rump kernel file descriptors.
+ * This should be easily extendable for future needs.
+ */
+#define RUMPHIJACK_DEFAULT "path=/rump,socket=all:nolocal"
+static bool rumpsockets[PF_MAX];
+static const char *rumpprefix;
+static size_t rumpprefixlen;
+
+static struct {
+	int pf;
+	const char *name;
+} socketmap[] = {
+	{ PF_INET, "inet" },
+	{ PF_LINK, "link" },
+	{ PF_ROUTE, "route" },
+	{ PF_INET6, "inet6" },
+	{ -1, NULL }
+};
+
+static void
+sockparser(char *buf)
+{
+	char *p, *l;
+	bool value;
+	int i;
+
+	/* if "all" is present, it must be specified first */
+	if (strncmp(buf, "all", strlen("all")) == 0) {
+		for (i = 0; i < __arraycount(rumpsockets); i++) {
+			rumpsockets[i] = true;
+		}
+		buf += strlen("all");
+		if (*buf == ':')
+			buf++;
+	}
+
+	for (p = strtok_r(buf, ":", &l); p; p = strtok_r(NULL, ":", &l)) {
+		value = true;
+		if (strncmp(p, "no", strlen("no")) == 0) {
+			value = false;
+			p += strlen("no");
+		}
+
+		for (i = 0; socketmap[i].name; i++) {
+			if (strcmp(p, socketmap[i].name) == 0) {
+				rumpsockets[socketmap[i].pf] = value;
+				break;
+			}
+		}
+		if (socketmap[i].name == NULL) {
+			warnx("invalid socket specifier %s", p);
+		}
+	}
+}
+
+static void
+pathparser(char *buf)
+{
+
+	if (*buf != '/')
+		errx(1, "hijack path specifier must begin with ``/''");
+
+	if ((rumpprefix = strdup(buf)) == NULL)
+		err(1, "strdup");
+	rumpprefixlen = strlen(rumpprefix);
+}
+
+static struct {
+	void (*parsefn)(char *);
+	const char *name;
+} hijackparse[] = {
+	{ sockparser, "socket" },
+	{ pathparser, "path" },
+	{ NULL, NULL },
+};
+
+static void
+parsehijack(char *hijack)
+{
+	char *p, *p2, *l;
+	const char *hijackcopy;
+	int i;
+
+	if ((hijackcopy = strdup(hijack)) == NULL)
+		err(1, "strdup");
+
+	/* disable everything explicitly */
+	for (i = 0; i < PF_MAX; i++)
+		rumpsockets[i] = false;
+
+	for (p = strtok_r(hijack, ",", &l); p; p = strtok_r(NULL, ",", &l)) {
+		p2 = strchr(p, '=');
+		if (!p2)
+			errx(1, "invalid hijack specifier: %s", hijackcopy);
+
+		for (i = 0; hijackparse[i].parsefn; i++) {
+			if (strncmp(hijackparse[i].name, p,
+			    (size_t)(p2-p)) == 0) {
+				hijackparse[i].parsefn(p2+1);
+				break;
+			}
+		}
+	}
+
+}
 
 static void __attribute__((constructor))
 rcinit(void)
 {
-	char buf[64];
+	char buf[1024];
 	extern void *(*rumpclient_dlsym)(void *, const char *);
 	unsigned i, j;
 
@@ -349,6 +458,12 @@ rcinit(void)
 	if (rumpclient_init() == -1)
 		err(1, "rumpclient init");
 
+	/* check which syscalls we're supposed to hijack */
+	if (getenv_r("RUMPHIJACK", buf, sizeof(buf)) == -1) {
+		strcpy(buf, RUMPHIJACK_DEFAULT);
+	}
+	parsehijack(buf);
+
 	/* set client persistence level */
 	if (getenv_r("RUMPHIJACK_RETRYCONNECT", buf, sizeof(buf)) != -1) {
 		if (strcmp(buf, "die") == 0)
@@ -375,7 +490,7 @@ rcinit(void)
 		unsetenv("RUMPHIJACK__DUP2MASK");
 	}
 	if (getenv_r("RUMPHIJACK__PWDINRUMP", buf, sizeof(buf)) == 0) {
-		pwdinrump = strtoul(buf, NULL, 10);
+		pwdinrump = true;
 		unsetenv("RUMPHIJACK__PWDINRUMP");
 	}
 }
@@ -413,15 +528,17 @@ fd_isrump(int fd)
 
 #define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_FDOFF)
 
-#define RUMPPREFIX "/rump"
-static int
+static bool
 path_isrump(const char *path)
 {
 
+	if (rumpprefix == NULL)
+		return false;
+
 	if (*path == '/') {
-		if (strncmp(path, RUMPPREFIX, sizeof(RUMPPREFIX)-1) == 0)
-			return 1;
-		return 0;
+		if (strncmp(path, rumpprefix, rumpprefixlen) == 0)
+			return true;
+		return false;
 	} else {
 		return pwdinrump;
 	}
@@ -434,7 +551,7 @@ path_host2rump(const char *path)
 	const char *rv;
 
 	if (*path == '/') {
-		rv = path + (sizeof(RUMPPREFIX)-1);
+		rv = path + rumpprefixlen;
 		if (*rv == '\0')
 			rv = rootpath;
 	} else {
@@ -577,17 +694,17 @@ __socket30(int domain, int type, int protocol)
 {
 	int (*op_socket)(int, int, int);
 	int fd;
-	bool dohost;
+	bool isrump;
 
-	dohost = hostlocalsockets && (domain == AF_LOCAL);
+	isrump = domain < PF_MAX && rumpsockets[domain];
 
-	if (dohost)
-		op_socket = GETSYSCALL(host, SOCKET);
-	else
+	if (isrump)
 		op_socket = GETSYSCALL(rump, SOCKET);
+	else
+		op_socket = GETSYSCALL(host, SOCKET);
 	fd = op_socket(domain, type, protocol);
 
-	if (!dohost)
+	if (isrump)
 		fd = fd_rump2host(fd);
 	else
 		fd = fd_dupgood(fd);
@@ -874,7 +991,7 @@ execve(const char *path, char *const argv[], char *const envp[])
 {
 	char buf[128];
 	char *dup2str;
-	char *pwdinrumpstr;
+	const char *pwdinrumpstr;
 	char **newenv;
 	size_t nelem;
 	int rv, sverrno;
@@ -892,14 +1009,7 @@ execve(const char *path, char *const argv[], char *const envp[])
 	}
 
 	if (pwdinrump) {
-		snprintf(buf, sizeof(buf), "RUMPHIJACK__PWDINRUMP=%u",
-		    pwdinrump);
-		pwdinrumpstr = malloc(strlen(buf)+1);
-		if (pwdinrumpstr == NULL) {
-			free(dup2str);
-			return ENOMEM;
-		}
-		strcpy(pwdinrumpstr, buf);
+		pwdinrumpstr = "RUMPHIJACK__PWDINRUMP=true";
 		bonus++;
 	} else {
 		pwdinrumpstr = NULL;
@@ -910,7 +1020,6 @@ execve(const char *path, char *const argv[], char *const envp[])
 	newenv = malloc(sizeof(*newenv) * nelem+bonus);
 	if (newenv == NULL) {
 		free(dup2str);
-		free(pwdinrumpstr);
 		return ENOMEM;
 	}
 	memcpy(newenv, envp, nelem*sizeof(*newenv));
@@ -919,7 +1028,7 @@ execve(const char *path, char *const argv[], char *const envp[])
 		i++;
 	}
 	if (pwdinrumpstr) {
-		newenv[nelem+i] = pwdinrumpstr;
+		newenv[nelem+i] = __UNCONST(pwdinrumpstr);
 		i++;
 	}
 	newenv[nelem+i] = NULL;
