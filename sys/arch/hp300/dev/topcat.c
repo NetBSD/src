@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.3 2011/02/18 16:02:48 tsutsui Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -129,10 +129,10 @@ struct	topcat_softc {
 	int		sc_scode;
 };
 
-int	topcat_dio_match(device_t, cfdata_t, void *);
-void	topcat_dio_attach(device_t, device_t, void *);
-int	topcat_intio_match(device_t, cfdata_t, void *);
-void	topcat_intio_attach(device_t, device_t, void *);
+static int	topcat_dio_match(device_t, cfdata_t, void *);
+static void	topcat_dio_attach(device_t, device_t, void *);
+static int	topcat_intio_match(device_t, cfdata_t, void *);
+static void	topcat_intio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(topcat_dio, sizeof(struct topcat_softc),
     topcat_dio_match, topcat_dio_attach, NULL, NULL);
@@ -140,17 +140,17 @@ CFATTACH_DECL_NEW(topcat_dio, sizeof(struct topcat_softc),
 CFATTACH_DECL_NEW(topcat_intio, sizeof(struct topcat_softc),
     topcat_intio_match, topcat_intio_attach, NULL, NULL);
 
-void	topcat_end_attach(struct topcat_softc *, uint8_t);
-int	topcat_reset(struct diofb *, int, struct diofbreg *);
-void	topcat_restore(struct diofb *);
-int	topcat_setcmap(struct diofb *, struct wsdisplay_cmap *);
-void	topcat_setcolor(struct diofb *, u_int);
-int	topcat_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
-	    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
+static void	topcat_end_attach(struct topcat_softc *, uint8_t);
+static int	topcat_reset(struct diofb *, int, struct diofbreg *);
+static void	topcat_restore(struct diofb *);
+static int	topcat_setcmap(struct diofb *, struct wsdisplay_cmap *);
+static void	topcat_setcolor(struct diofb *, u_int);
+static int	topcat_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
+		    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 
-int	topcat_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	topcat_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
-struct	wsdisplay_accessops	topcat_accessops = {
+static struct wsdisplay_accessops topcat_accessops = {
 	topcat_ioctl,
 	diofb_mmap,
 	diofb_alloc_screen,
