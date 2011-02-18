@@ -1,4 +1,4 @@
-/*	$NetBSD: dvbox.c,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: dvbox.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
 /*	$OpenBSD: dvbox.c,v 1.13 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ dvbox_dio_attach(device_t parent, device_t self, void *aux)
 		}
 		fbr = bus_space_vaddr(da->da_bst, bsh);
 		if (dvbox_reset(sc->sc_fb, sc->sc_scode, fbr) != 0) {
-			printf(": can't map framebuffer\n");
+			aprint_error(": can't reset framebuffer\n");
 			return;
 		}
 	}
