@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.51 2011/02/18 14:25:04 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.52 2011/02/18 14:33:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.51 2011/02/18 14:25:04 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.52 2011/02/18 14:33:11 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -687,6 +687,25 @@ fchdir(int fd)
 	}
 
 	return rv;
+}
+
+int
+rename(const char *from, const char *to)
+{
+	int (*op_rename)(const char *, const char *);
+
+	if (path_isrump(from)) {
+		if (!path_isrump(to))
+			return EXDEV;
+
+		from = path_host2rump(from);
+		to = path_host2rump(to);
+		op_rename = GETSYSCALL(rump, RENAME);
+	} else {
+		op_rename = GETSYSCALL(host, RENAME);
+	}
+
+	return op_rename(from, to);
 }
 
 int __socket30(int, int, int);
@@ -1617,12 +1636,6 @@ PATHCALL(ssize_t, readlink, DUALCALL_READLINK,				\
 	(const char *path, char *buf, size_t bufsiz),			\
 	(const char *, char *, size_t),					\
 	(path, buf, bufsiz))
-
-/* XXX: cross-kernel renames need to be blocked */
-PATHCALL(int, rename, DUALCALL_RENAME,					\
-	(const char *path, const char *to),				\
-	(const char *, const char *),					\
-	(path, to))
 
 PATHCALL(int, mkdir, DUALCALL_MKDIR,					\
 	(const char *path, mode_t mode),				\
