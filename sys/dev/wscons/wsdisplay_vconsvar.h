@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.17 2011/02/09 13:19:19 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.18 2011/02/18 13:56:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -177,5 +177,6 @@ void	vcons_replay_msgbuf(struct vcons_screen *);
 
 void	vcons_enable_polling(struct vcons_data *);
 void	vcons_disable_polling(struct vcons_data *);
+void	vcons_hard_switch(struct vcons_screen *);
 
 #endif /* _WSDISPLAY_VCONS_H_ */
