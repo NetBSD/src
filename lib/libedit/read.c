@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.58 2011/02/18 20:53:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.57 2010/07/21 18:18:52 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.58 2011/02/18 20:53:05 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -469,7 +469,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 	int retval;
 	el_action_t cmdnum = 0;
 	int num;		/* how many chars we have read at NL */
-	Char ch;
+	Char ch, *cp;
 	int crlf = 0;
 	int nrb;
 #ifdef FIONREAD
@@ -481,9 +481,9 @@ FUN(el,gets)(EditLine *el, int *nread)
 	*nread = 0;
 
 	if (el->el_flags & NO_TTY) {
-		Char *cp = el->el_line.buffer;
 		size_t idx;
 
+		cp = el->el_line.buffer;
 		while ((num = (*el->el_read.read_char)(el, cp)) == 1) {
 			/* make sure there is space for next character */
 			if (cp + 1 >= el->el_line.limit) {
@@ -504,10 +504,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 			el->el_errno = errno;
 		}
 
-		el->el_line.cursor = el->el_line.lastchar = cp;
-		*cp = '\0';
-		*nread = (int)(el->el_line.cursor - el->el_line.buffer);
-		goto done;
+		goto noedit;
 	}
 
 
@@ -530,7 +527,6 @@ FUN(el,gets)(EditLine *el, int *nread)
 		read_prepare(el);
 
 	if (el->el_flags & EDIT_DISABLED) {
-		Char *cp;
 		size_t idx;
 
 		if ((el->el_flags & UNBUFFERED) == 0)
@@ -562,9 +558,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 			el->el_errno = errno;
 		}
 
-		el->el_line.cursor = el->el_line.lastchar = cp;
-		*cp = '\0';
-		goto done;
+		goto noedit;
 	}
 
 	for (num = OKCMD; num == OKCMD;) {	/* while still editing this
@@ -707,6 +701,11 @@ FUN(el,gets)(EditLine *el, int *nread)
 	} else {
 		*nread = (int)(el->el_line.lastchar - el->el_line.buffer);
 	}
+	goto done;
+noedit:
+	el->el_line.cursor = el->el_line.lastchar = cp;
+	*cp = '\0';
+	*nread = (int)(el->el_line.cursor - el->el_line.buffer);
 done:
 	if (*nread == 0) {
 		if (num == -1) {
