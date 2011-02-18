@@ -1156,8 +1156,7 @@ ACPI_THREAD_ID
 AcpiOsGetThreadId (
     void)
 {
-
-	return (uintptr_t)(ACPI_CAST_PTHREAD_T (pthread_self()));
+    return (ACPI_CAST_PTHREAD_T (pthread_self()));
 }
 
 
