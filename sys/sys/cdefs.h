@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.81 2010/12/25 22:30:52 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.82 2011/02/18 21:06:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -216,6 +216,12 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
+#endif
+
+#if __GNUC_PREREQ__(3, 1)
+#define	__noprofile	__attribute__((__no_instrument_function__))
+#else
+#define	__noprofile	/* nothing */
 #endif
 
 #if defined(__cplusplus)
