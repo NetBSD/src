@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.22 2010/08/31 05:12:35 enami Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.23 2011/02/18 16:10:09 pooka Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.22 2010/08/31 05:12:35 enami Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.23 2011/02/18 16:10:09 pooka Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -670,8 +670,10 @@ rmtaccess(const char *path, int amode)
 int
 isrmt(int fd)
 {
+	int unbias = fd - REM_BIAS;
 
-	return (fd >= REM_BIAS);
+	return (fd >= REM_BIAS) && unbias < MAXUNIT &&
+	    (WRITE(unbias) != -1 || READ(unbias) != -1);
 }
 
 
