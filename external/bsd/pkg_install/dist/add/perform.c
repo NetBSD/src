@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.17 2010/06/26 00:14:26 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.18 2011/02/18 22:32:28 aymeric Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,13 +6,14 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.17 2010/06/26 00:14:26 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.18 2011/02/18 22:32:28 aymeric Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
  * Copyright (c) 2005 Dieter Baron <dillo@NetBSD.org>
  * Copyright (c) 2007 Roland Illig <rillig@NetBSD.org>
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>
+ * Copyright (c) 2010 Thomas Klausner <wiz@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,6 +127,43 @@ static const struct pkg_meta_desc {
 };
 
 static int pkg_do(const char *, int, int);
+
+static int
+end_of_version(const char *opsys, const char *version_end)
+{
+    if (*version_end == '\0')
+	return 1;
+
+    if (strcmp(opsys, "NetBSD") == 0) {
+	if (strncmp(version_end, "_ALPHA", 6) == 0
+	    || strncmp(version_end, "_BETA", 5) == 0
+	    || strncmp(version_end, "_RC", 3) == 0
+	    || strncmp(version_end, "_STABLE", 7) == 0
+	    || strncmp(version_end, "_PATCH", 6) == 0)
+	    return 1;
+    }
+
+    return 0;
+}
+
+static int
+compatible_platform(const char *opsys, const char *host, const char *package)
+{
+    int i = 0;
+
+    /* returns 1 if host and package operating system match */
+    if (strcmp(host, package) == 0)
+	return 1;
+
+    /* find offset of first difference */
+    for (i=0; (host[i] != '\0') && (host[i] == package[i]);)
+	i++;
+
+    if (end_of_version(opsys, host+i) && end_of_version(opsys, package+i))
+	return 1;
+
+    return 0;
+}
 
 static int
 mkdir_p(const char *path)
@@ -458,7 +496,7 @@ check_other_installed(struct pkg_task *pkg)
 				continue; /* Both match, ok. */
 			warnx("Dependency of %s fulfilled by %s, but not by %s",
 			    iter, pkg->other_version, pkg->pkgname);
-			if (!Force)
+			if (!ForceDepending)
 				status = -1;
 			break;
 		}
@@ -869,7 +907,8 @@ check_platform(struct pkg_task *pkg)
 		fatal = 0;
 
 	if (fatal ||
-	    strcmp(host_uname.release, pkg->buildinfo[BI_OS_VERSION]) != 0) {
+	    compatible_platform(OPSYS_NAME, host_uname.release,
+				pkg->buildinfo[BI_OS_VERSION]) != 1) {
 		warnx("Warning: package `%s' was built for a platform:",
 		    pkg->pkgname);
 		warnx("%s/%s %s (pkg) vs. %s/%s %s (this host)",
