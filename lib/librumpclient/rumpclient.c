@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.32 2011/02/16 19:26:58 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.33 2011/02/18 16:22:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -1002,7 +1002,7 @@ rumpclient_exec(const char *path, char *const argv[], char *const envp[])
 	for (nelem = 0; envp && envp[nelem]; nelem++)
 		continue;
 
-	newenv = malloc(sizeof(*newenv) * nelem+3);
+	newenv = malloc(sizeof(*newenv) * (nelem+3));
 	if (newenv == NULL) {
 		free(envstr2);
 		free(envstr);
