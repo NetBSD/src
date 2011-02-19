@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_intio.c,v 1.1 2011/02/06 18:26:51 tsutsui Exp $	*/
+/*	$NetBSD: hil_intio.c,v 1.2 2011/02/19 05:34:59 tsutsui Exp $	*/
 /*	$OpenBSD: hil_intio.c,v 1.8 2007/01/06 20:10:57 miod Exp $	*/
 
 /*
@@ -44,8 +44,8 @@
 #include <machine/hil_machdep.h>
 #include <dev/hil/hilvar.h>
 
-int	hil_intio_match(device_t, cfdata_t, void *);
-void	hil_intio_attach(device_t, device_t, void *);
+static int	hil_intio_match(device_t, cfdata_t, void *);
+static void	hil_intio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(hil_intio, sizeof(struct hil_softc),
     hil_intio_match, hil_intio_attach, NULL, NULL);
@@ -61,12 +61,12 @@ hil_intio_match(device_t parent, cfdata_t cf, void *aux)
 
 	/* Allow only one instance. */
 	if (hil_matched != 0)
-		return (0);
+		return 0;
 
 	if (badaddr((void *)ia->ia_addr))	/* should not happen! */
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 int hil_is_console = -1;	/* undecided */
@@ -81,7 +81,7 @@ hil_intio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = ia->ia_bst;
 	if (bus_space_map(sc->sc_bst, ia->ia_iobase,
 	    HILMAPSIZE, 0, &sc->sc_bsh) != 0) {
-		printf(": couldn't map hil controller\n");
+		aprint_error(": couldn't map hil controller\n");
 		return;
 	}
 
