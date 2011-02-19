@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.38 2010/08/20 06:34:32 jruoho Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.39 2011/02/19 13:52:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -83,6 +83,11 @@ struct cpu_attach_args {
 	int cpu_number;
 	int cpu_role;
 	const struct cpu_functions *cpu_func;
+};
+
+struct cpufeature_attach_args {
+	struct cpu_info *ci;
+	const char *name;
 };
 
 #ifdef _KERNEL

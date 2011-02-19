@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2010/12/22 04:15:01 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2011/02/19 13:52:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -180,7 +180,7 @@ struct cpu_info {
 
 	struct evcnt ci_ipi_events[X86_NIPI];
 
-	struct via_padlock	ci_vp;	/* VIA PadLock private storage */
+	device_t	ci_padlock;	/* VIA PadLock private storage */
 
 	struct i386tss	ci_tss;		/* Per-cpu TSS; shared among LWPs */
 	char		ci_iomap[IOMAPSIZE]; /* I/O Bitmap */

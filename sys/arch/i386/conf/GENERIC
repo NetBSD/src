@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1017 2011/02/19 00:13:55 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1018 2011/02/19 13:52:27 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1017 $"
+#ident 		"GENERIC-$Revision: 1.1018 $"
 
 maxusers	64		# estimated number of users
 
@@ -48,7 +48,7 @@ options 	POWERNOW_K7
 options 	POWERNOW_K8
 
 # VIA PadLock
-#options 	VIA_PADLOCK
+#padlock0	at cpu0
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 #options 	INTEL_ONDEMAND_CLOCKMOD

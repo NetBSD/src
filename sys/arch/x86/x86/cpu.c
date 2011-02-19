@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.80 2011/02/02 12:26:42 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.81 2011/02/19 13:52:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.80 2011/02/02 12:26:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81 2011/02/19 13:52:28 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -119,6 +119,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.80 2011/02/02 12:26:42 bouyer Exp $");
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
+int	cpu_rescan(device_t, const char *, const int *);
+void	cpu_childdetached(device_t, device_t);
+
 
 static bool	cpu_suspend(device_t, const pmf_qual_t *);
 static bool	cpu_resume(device_t, const pmf_qual_t *);
@@ -136,8 +139,8 @@ const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
 
 
-CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(cpu, sizeof(struct cpu_softc),
+    cpu_match, cpu_attach, NULL, NULL, cpu_rescan, cpu_childdetached);
 
 /*
  * Statically-allocated CPU info for the primary CPU (or the only
@@ -445,6 +448,39 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 		);
 	}
+
+	cpu_rescan(self, NULL, NULL);
+}
+
+int
+cpu_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct cpufeature_attach_args cfaa;
+	struct cpu_softc *sc = device_private(self);
+	struct cpu_info *ci = sc->sc_info;
+
+	memset(&cfaa, 0, sizeof(cfaa));
+	cfaa.ci = ci;
+
+	if (ifattr_match(ifattr, "cpufeaturebus")) {
+		if (ci->ci_padlock == NULL) {
+			cfaa.name = "padlock";
+			ci->ci_padlock = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+	}
+
+	return 0;
+}
+
+void
+cpu_childdetached(device_t self, device_t child)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpu_info *ci = sc->sc_info;
+
+	if (ci->ci_padlock == child)
+		ci->ci_padlock = NULL;
 }
 
 /*
