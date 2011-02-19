@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.43 2011/02/19 02:22:27 matt Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.44 2011/02/19 04:10:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.43 2011/02/19 02:22:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.44 2011/02/19 04:10:47 christos Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -48,6 +48,7 @@ static const char rcsid[] =
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/kmem.h>
 #include <sys/endian.h>
 
 #define EXTRACT_SHORT(p)	be16dec(p)
@@ -466,7 +467,7 @@ __CTASSERT(BPF_MEMWORDS == sizeof(uint16_t) * NBBY);
 int
 bpf_validate(const struct bpf_insn *f, int signed_len)
 {
-	u_int i, from, len, ok = 0;
+	u_int i, from, len, ok = 0, size;
 	const struct bpf_insn *p;
 #if defined(KERNEL) || defined(_KERNEL)
 	uint16_t *mem, invalid;
@@ -483,7 +484,7 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 		return 0;
 
 #if defined(KERNEL) || defined(_KERNEL)
-	mem = malloc(sizeof(*mem) * len, M_TEMP, M_WAITOK|M_ZERO);
+	mem = kmem_zalloc(size = sizeof(*mem) * len, KM_SLEEP);
 	invalid = ~0;	/* All is invalid on startup */
 #endif
 
@@ -633,7 +634,7 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 	ok = 1;
 out:
 #if defined(KERNEL) || defined(_KERNEL)
-	free(mem, M_TEMP);
+	kmem_free(mem, size);
 #endif
 	return ok;
 }
