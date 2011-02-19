@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.22 2011/01/27 18:44:40 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.23 2011/02/19 13:52:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.22 2011/01/27 18:44:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23 2011/02/19 13:52:28 jmcneill Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -436,7 +436,7 @@ cpu_probe_c3(struct cpu_info *ci)
 		    if (lfunc & CPUID_VIA_HAS_RNG) {
 		    	if (!(lfunc & CPUID_VIA_DO_RNG)) {
 			    rng_enable++;
-			    ci->ci_feat_val[4] |= CPUID_VIA_HAS_RNG;
+			    ci->ci_feat_val[4] |= CPUID_VIA_DO_RNG;
 			}
 		    }
 		    /* Check for and enable ACE (AES-CBC) */
