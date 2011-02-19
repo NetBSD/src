@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.15 2011/02/07 09:09:47 pooka Exp $
+# $NetBSD: md.i386,v 1.16 2011/02/19 14:28:08 jmcneill Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -57,6 +57,8 @@
 ./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pad				base-kernel-modules	kmod
 ./@MODULEDIR@/pad/pad.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/padlock				base-kernel-modules	kmod
+./@MODULEDIR@/padlock/padlock.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad				base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad/thinkpad.kmod		base-kernel-modules	kmod
 #./@MODULEDIR@/tprof_amdpmi			base-kernel-modules	kmod
