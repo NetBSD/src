@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.236 2011/02/17 19:36:49 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.237 2011/02/19 09:52:32 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.236 2011/02/17 19:36:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.237 2011/02/19 09:52:32 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1389,6 +1389,7 @@ acpi_enter_sleep_state(int state)
 			(void)pmf_system_resume(PMF_Q_NONE);
 		}
 
+		acpi_wakedev_commit(sc, ACPI_STATE_S0);
 		break;
 
 	case ACPI_STATE_S5:
