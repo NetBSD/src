@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.2 2011/02/17 18:44:54 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.3 2011/02/19 20:19:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,13 +57,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.2 2011/02/17 18:44:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.3 2011/02/19 20:19:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/lwp.h>
 #include <sys/pcu.h>
 #include <sys/xcall.h>
+
+#if PCU_UNIT_COUNT > 0
 
 #define	PCU_SAVE		0x01	/* Save PCU state to the LWP. */
 #define	PCU_RELEASE		0x02	/* Release PCU state on the CPU. */
@@ -256,3 +258,5 @@ pcu_used(const pcu_ops_t *pcu, lwp_t *l)
 
 	return l->l_pcu_used & (1 << id);
 }
+
+#endif /* PCU_UNIT_COUNT > 0 */
