@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.45 2011/02/19 08:46:41 enami Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.46 2011/02/19 17:21:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.45 2011/02/19 08:46:41 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.46 2011/02/19 17:21:48 christos Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -149,8 +149,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 	A = 0;
 	X = 0;
 	--pc;
-	/* CONSTCOND */
-	while (1) {
+	for (;;) {
 		++pc;
 		switch (pc->code) {
 
@@ -159,6 +158,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 			return 0;
 #else
 			abort();
+			/*NOTREACHED*/
 #endif
 		case BPF_RET|BPF_K:
 			return (u_int)pc->k;
@@ -470,8 +470,8 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 	u_int i, from, len, ok = 0;
 	const struct bpf_insn *p;
 #if defined(KERNEL) || defined(_KERNEL)
-	u_int size;
 	uint16_t *mem, invalid;
+	size_t size;
 #endif
 
 	len = (u_int)signed_len;
