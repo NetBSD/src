@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_intio.c,v 1.2 2011/02/19 05:34:59 tsutsui Exp $	*/
+/*	$NetBSD: hil_intio.c,v 1.3 2011/02/19 05:36:49 tsutsui Exp $	*/
 /*	$OpenBSD: hil_intio.c,v 1.8 2007/01/06 20:10:57 miod Exp $	*/
 
 /*
@@ -88,7 +88,8 @@ hil_intio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Check that the configured console device is a wsdisplay.
 	 */
-	hil_is_console = 1;
+	if (major(cn_tab->cn_dev) != devsw_name2chr("wsdisplay", NULL, 0))
+		hil_is_console = 0;
 
 	hil_attach(sc, &hil_is_console);
 	intr_establish(hil_intr, sc, ia->ia_ipl, IPL_TTY);
