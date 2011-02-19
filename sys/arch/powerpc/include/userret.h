@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.18 2011/02/17 13:53:32 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.19 2011/02/19 19:18:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,7 +91,7 @@ userret(struct lwp *l, struct trapframe *tf)
 	 * CPU, we need to stop any data streams that are active (since
 	 * it will be a different address space).
 	 */
-	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {
+	if (ci->ci_veclwp != &lwp0 && ci->ci_veclwp != l) {
 		__asm volatile("dssall;sync");
 	}
 #endif
