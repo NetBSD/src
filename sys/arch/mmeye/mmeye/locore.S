@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2006/10/07 01:21:47 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2011/02/19 10:46:29 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,6 +93,9 @@
 
 NENTRY(start)
 ALTENTRY(kernel_text)
+	mov	r5, r6	/* args move to r5,6. */
+	mov	r4, r5	/* stand/boot calls here with BOOTINFO_MAGIC, btinfo */
+
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
 

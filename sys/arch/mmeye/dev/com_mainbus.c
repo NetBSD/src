@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.10 2011/02/02 04:46:25 kiyohara Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.11 2011/02/19 10:46:28 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10 2011/02/02 04:46:25 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.11 2011/02/19 10:46:28 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,11 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args *ma = aux;
 	struct com_mainbus_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
+#if defined(SH7750R)
+	const bus_space_tag_t iot = SH3_BUS_SPACE_PCMCIA_IO8;
+#else
 	const bus_space_tag_t iot = 0;
+#endif
 	bus_space_handle_t ioh;
 
 	if (!com_is_console(iot, ma->ma_addr1, &ioh))
@@ -121,7 +125,11 @@ comcnprobe(struct consdev *cp)
 void
 comcninit(struct consdev *cp)
 {
+#if defined(SH7750R)
+	const bus_space_tag_t iot = SH3_BUS_SPACE_PCMCIA_IO8;
+#else
 	const bus_space_tag_t iot = 0;
+#endif
 
 	comcnattach(iot, CONADDR, COMCN_SPEED, COM_FREQ, COM_TYPE_NORMAL,
 	    CONMODE);

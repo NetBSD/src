@@ -1,6 +1,6 @@
-# $NetBSD: GENERIC,v 1.104 2011/02/19 10:46:27 kiyohara Exp $
+# $NetBSD: MMEYE_WLF,v 1.1 2011/02/19 10:46:27 kiyohara Exp $
 #
-# GENERIC machine description file
+# MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
@@ -20,24 +20,23 @@
 
 include 	"arch/mmeye/conf/std.mmeye"
 
-options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104 $"
+#ident 		"GENERIC-$Revision: 1.1 $"
 
 maxusers	16		# estimated number of users
 
 # CPU support
-options		SH3
-options 	SH7708R		# 100MHz
+options		SH4
+options 	SH7750R
 options 	MMEYE
-options 	MMEYE_NEW_INT=0xb000000e
-#options 	MMEYE_NO_CACHE
-options 	PCLOCK=33330000		# 33.33MHz
-options 	INITTODR_ALWAYS_USE_RTC
+options 	MMEYE_NEW_INT=0xb2000000
+options 	MMEYE_EPC_WDT
+options 	PCLOCK=60000000		# 60.00MHz
 
-options 	IOM_RAM_SIZE=0x01000000	# 16MB
-options 	IOM_RAM_BEGIN=0x0c000000
-makeoptions	DEFTEXTADDR="0x8c010000"
+options 	IOM_RAM_SIZE=0x04000000		# 64MB
+options 	IOM_RAM_BEGIN=0x08000000	# Area2
+makeoptions	DEFTEXTADDR="0x88010000"
 
 # Standard system options
 #options 	INSECURE	# disable kernel security levels
@@ -51,6 +50,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
+options 	MODULAR		# new style module(7) framework
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -76,19 +76,20 @@ options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_MMEYE_OLDLABEL_BROKEN	# Also checksum broken support
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables
 
 # File systems
 file-system 	FFS		# UFS
-file-system 	EXT2FS		# second extended file system (linux)
-file-system 	LFS		# log-structured file system
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
+#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
@@ -152,7 +153,7 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -163,29 +164,48 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
+cpu*	at mainbus?
 shb*	at mainbus?
+options SCIFCONSOLE
+options SCIFCN_SPEED=19200
+scif0	at shb?
+sci0	at shb?
 
-rtc*	at shb?
+rtciic0	at mainbus? addr1 0xb100000e
+iic* at rtciic?
+rs5c372rtc* at iic? addr 0x32
 
-com0	at mainbus? addr1 0xa4000000 irq1 11
-com1	at mainbus? addr1 0xa4000008 irq1 12
+#ac97x	at mainbus? addr1 0xb3000000-0xb300000f irq1 1	# AD1881A
+audio* at audiobus?
+
+# SH4 Area5/6 PCMCIA space devices
+ne0	at mainbus? addr1 0x14000000 irq1 13
+com0	at mainbus? addr1 0x15000000 irq1 5
+com1	at mainbus? addr1 0x15000008 irq1 4
+wdc0	at mainbus? addr1 0x16000000 irq1 12
+wdc1	at mainbus? addr1 0x17000000 irq1 14
 
 # SH PCMCIA controllers
-mmeyepcmcia0 at mainbus? addr1 0xb000000a addr2 0xb8000000 irq1 3 irq2 10
-mmeyepcmcia1 at mainbus? addr1 0xb000000c addr2 0xb9000000 irq1 4 irq2 9
+mmeyepcmcia0 at mainbus? addr1 0xb0000002 addr2 0x18000000 irq2 3
+#mmeyepcmcia0 at mainbus? addr1 0xb0000002 addr2 0x19000000 irq2 2
+#mmeyepcmcia0 at mainbus? addr1 0xb0000002 addr2 0x1a000000 irq2 10
 
 # PCMCIA bus support
 pcmcia*	at mmeyepcmcia? controller ? socket ?
 
 com*	at pcmcia? function ?		# Modems and serial cards
 wdc*	at pcmcia? function ?
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE (802.11)
+
 atabus* at ata?
 wd*	at atabus? drive ?			# the drives themselves
 
-ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-mbe*	at pcmcia? function ?		# MB8696x based Ethernet
-ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-sm*	at pcmcia? function ?		# Megahertz Ethernet
+# Bluetooth Device Hub
+bthub* at bcsp?
+bthub* at btuart?
+
+# Bluetooth Audio support
+btsco* at bthub?
 
 # Pseudo-Devices
 
@@ -236,6 +256,8 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	putter			# for puffs and pud
+pseudo-device	bcsp			# BlueCore Serial Protocol
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # Enable the hooks used for initializing the root memory-disk.
 #options 	MEMORY_DISK_HOOKS
