@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.250 2011/02/18 13:10:04 pooka Exp $
+# $NetBSD: mi,v 1.251 2011/02/19 13:21:05 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -477,6 +477,7 @@
 ./usr/libdata/debug/usr/tests/lib/librumpclient/t_fd.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumphijack					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librumphijack/h_client.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/librumphijack/h_cwd.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumphijack/h_netget.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey
@@ -1914,10 +1915,12 @@
 ./usr/tests/lib/librumphijack			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/h_client			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/h_cwd			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/h_netget			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/index.html			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/netstat.expout			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_asyncio			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/t_cwd			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_tcpip			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/ssh_config.in			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/ssh_host_key			tests-lib-tests		atf
