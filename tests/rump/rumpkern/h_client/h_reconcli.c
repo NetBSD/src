@@ -1,4 +1,4 @@
-/*	$NetBSD: h_reconcli.c,v 1.1 2011/01/24 17:51:29 pooka Exp $	*/
+/*	$NetBSD: h_reconcli.c,v 1.2 2011/02/19 09:56:45 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -93,6 +93,7 @@ main(int argc, char *argv[])
 
 	srandom(time(NULL));
 
+	rumpclient_setconnretry(RUMPCLIENT_RETRYCONN_INFTIME);
 	if (rumpclient_init() == -1)
 		err(1, "init");
 
