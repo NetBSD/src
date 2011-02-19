@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.147 2011/02/19 00:22:50 jakllsch Exp $	*/
+/*	$NetBSD: lwp.h,v 1.148 2011/02/19 20:19:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -125,8 +125,10 @@ struct lwp {
 	callout_t	l_timeout_ch;	/* !: callout for tsleep */
 	u_int		l_emap_gen;	/* !: emap generation number */
 
+#if PCU_UNIT_COUNT > 0
 	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
 	uint32_t	l_pcu_used;
+#endif
 
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
