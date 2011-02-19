@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.h,v 1.5 2011/02/17 19:36:49 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.h,v 1.6 2011/02/19 09:52:32 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,8 +33,8 @@ struct acpi_wakedev {
 	ACPI_HANDLE	aw_power[8];	/* Power resources */
 	ACPI_HANDLE	aw_handle;	/* Wake GPE handle */
 	ACPI_INTEGER	aw_number;	/* Wake GPE number */
-	ACPI_INTEGER	aw_sleep;	/* Highest sleep state for wake */
-	bool		aw_enable;	/* Wake enabled? */
+	ACPI_INTEGER	aw_state;	/* Highest sleep state for wake */
+	bool		aw_enable;	/* Wake enabled (sysctl)? */
 };
 
 void	 acpi_wakedev_init(struct acpi_devnode *);
