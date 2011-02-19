@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.69 2011/02/17 10:49:29 jruoho Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.70 2011/02/19 19:39:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.69 2011/02/17 10:49:29 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.70 2011/02/19 19:39:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -853,7 +853,7 @@ acpiec_gpe_handler(ACPI_HANDLE hdl, uint32_t gpebit, void *arg)
 	acpiec_gpe_state_machine(dv);
 	mutex_exit(&sc->sc_mtx);
 
-	return 0;
+	return ACPI_INTERRUPT_HANDLED | ACPI_REENABLE_GPE;
 }
 
 ACPI_STATUS
