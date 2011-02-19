@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.56 2011/02/19 13:09:40 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.57 2011/02/19 13:10:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.56 2011/02/19 13:09:40 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.57 2011/02/19 13:10:35 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -87,6 +87,7 @@ enum dualcall {
 	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
 	DUALCALL_FSYNC, DUALCALL_FSYNC_RANGE,
 	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
+	DUALCALL___GETCWD,
 	DUALCALL__NUM
 };
 
@@ -138,6 +139,7 @@ int REALLUTIMES(const char *, const struct timeval [2]);
 int REALFUTIMES(int, const struct timeval [2]);
 int REALMOUNT(const char *, const char *, int, void *, size_t);
 off_t REALLSEEK(int, off_t, int);
+int __getcwd(char *, size_t);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -200,6 +202,7 @@ struct sysnames {
 	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
 	{ DUALCALL_MOUNT,	S(REALMOUNT),	RSYS_NAME(MOUNT)	},
 	{ DUALCALL_UNMOUNT,	"unmount",	RSYS_NAME(UNMOUNT)	},
+	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
 };
 #undef S
 
@@ -376,8 +379,15 @@ static void
 pathparser(char *buf)
 {
 
+	/* sanity-check */
 	if (*buf != '/')
 		errx(1, "hijack path specifier must begin with ``/''");
+	rumpprefixlen = strlen(buf);
+	if (rumpprefixlen < 2)
+		errx(1, "invalid hijack prefix: %s", buf);
+	if (buf[rumpprefixlen-1] == '/' && strspn(buf, "/") != rumpprefixlen)
+		errx(1, "hijack prefix may end in slash only if pure "
+		    "slash, gave %s", buf);
 
 	if ((rumpprefix = strdup(buf)) == NULL)
 		err(1, "strdup");
@@ -695,6 +705,52 @@ fchdir(int fd)
 	}
 
 	return rv;
+}
+
+int
+__getcwd(char *bufp, size_t len)
+{
+	int (*op___getcwd)(char *, size_t);
+	int rv;
+
+	if (pwdinrump) {
+		size_t prefixgap;
+		bool iamslash;
+
+		if (rumpprefix[rumpprefixlen-1] == '/')
+			iamslash = true;
+		else
+			iamslash = false;
+
+		if (iamslash)
+			prefixgap = rumpprefixlen - 1; /* ``//+path'' */
+		else
+			prefixgap = rumpprefixlen; /* ``/pfx+/path'' */
+		if (len <= prefixgap) {
+			return ERANGE;
+		}
+
+		op___getcwd = GETSYSCALL(rump, __GETCWD);
+		rv = op___getcwd(bufp + prefixgap, len - prefixgap);
+		if (rv == -1)
+			return rv;
+
+		/* augment the "/" part only for a non-root path */
+		memcpy(bufp, rumpprefix, rumpprefixlen);
+
+		/* append / only to non-root cwd */
+		if (rv != 2)
+			bufp[prefixgap] = '/';
+
+		/* don't append extra slash in the purely-slash case */
+		if (rv == 2 && !iamslash)
+			bufp[rumpprefixlen] = '\0';
+
+		return rv;
+	} else {
+		op___getcwd = GETSYSCALL(host, __GETCWD);
+		return op___getcwd(bufp, len);
+	}
 }
 
 int
