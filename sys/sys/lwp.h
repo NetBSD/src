@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.146 2011/02/17 21:02:26 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.147 2011/02/19 00:22:50 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -277,6 +277,15 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LSONPROC	7	/* Process is currently on a CPU. */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+static inline void *
+lwp_getpcb(struct lwp *l)
+{
+
+	return l->l_addr;
+}
+#endif /* _KERNEL || _KMEMUSER */
+
 #ifdef _KERNEL
 #define	LWP_CACHE_CREDS(l, p)						\
 do {									\
@@ -284,13 +293,6 @@ do {									\
 	if (__predict_false((l)->l_prflag & LPR_CRMOD))			\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
-
-static __inline void *
-lwp_getpcb(struct lwp *l)
-{
-
-	return l->l_addr;
-}
 
 void	lwpinit(void);
 void	lwp0_init(void);
