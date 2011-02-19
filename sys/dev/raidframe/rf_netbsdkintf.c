@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.281 2011/02/08 20:20:27 rmind Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.282 2011/02/19 07:11:09 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.281 2011/02/08 20:20:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.282 2011/02/19 07:11:09 enami Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1299,8 +1299,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				ci_label->serial_number = 
 				    raidPtr->serial_number;
 				ci_label->row = 0; /* we dont' pretend to support more */
-				ci_label->partitionSize =
-				    diskPtr->partitionSize;
+				rf_component_label_set_partitionsize(ci_label,
+				    diskPtr->partitionSize);
 				ci_label->column = column;
 				raidflush_component_label(raidPtr, column);
 			}
@@ -2949,7 +2949,7 @@ oomem:
 	if (!raidread_component_label(secsize, dev, vp, clabel)) {
 		/* Got the label.  Does it look reasonable? */
 		if (rf_reasonable_label(clabel) && 
-		    (clabel->partitionSize <= size)) {
+		    (rf_component_label_partitionsize(clabel) <= size)) {
 			rf_fix_old_label_size(clabel, numsecs);
 #ifdef DEBUG
 			printf("Component on: %s: %llu\n",
@@ -3151,7 +3151,12 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
 	    clabel->row < clabel->num_rows &&
 	    clabel->column < clabel->num_columns &&
 	    clabel->blockSize > 0 &&
-	    clabel->numBlocks > 0) {
+	    /*
+	     * numBlocksHi may contain garbage, but it is ok since
+	     * the type is unsigned.  If it is really garbage,
+	     * rf_fix_old_label_size() will fix it.
+	     */
+	    rf_component_label_numblocks(clabel) > 0) {
 		/* label looks reasonable enough... */
 		return(1);
 	}
@@ -3181,9 +3186,9 @@ rf_fix_old_label_size(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 void
 rf_print_component_label(RF_ComponentLabel_t *clabel)
 {
-	uint64_t numBlocks = clabel->numBlocks;
+	uint64_t numBlocks;
 
-	numBlocks |= (uint64_t)clabel->numBlocksHi << 32;
+	numBlocks = rf_component_label_numblocks(clabel);
 
 	printf("   Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
 	       clabel->row, clabel->column,
@@ -3316,8 +3321,8 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	    (clabel1->parityConfig == clabel2->parityConfig) &&
 	    (clabel1->maxOutstanding == clabel2->maxOutstanding) &&
 	    (clabel1->blockSize == clabel2->blockSize) &&
-	    (clabel1->numBlocks == clabel2->numBlocks) &&
-	    (clabel1->numBlocksHi == clabel2->numBlocksHi) &&
+	    rf_component_label_numblocks(clabel1) ==
+	    rf_component_label_numblocks(clabel2) &&
 	    (clabel1->autoconfigure == clabel2->autoconfigure) &&
 	    (clabel1->root_partition == clabel2->root_partition) &&
 	    (clabel1->last_unit == clabel2->last_unit) &&
@@ -3581,8 +3586,7 @@ raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 	clabel->SUsPerRU = raidPtr->Layout.SUsPerRU;
 
 	clabel->blockSize = raidPtr->bytesPerSector;
-	clabel->numBlocks = raidPtr->sectorsPerDisk;
-	clabel->numBlocksHi = raidPtr->sectorsPerDisk >> 32;
+	rf_component_label_set_numblocks(clabel, raidPtr->sectorsPerDisk);
 
 	/* XXX not portable */
 	clabel->parityConfig = raidPtr->Layout.map->parityConfig;
