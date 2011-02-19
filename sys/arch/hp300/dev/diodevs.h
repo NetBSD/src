@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs.h,v 1.16 2011/02/06 04:06:58 tsutsui Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.17 2011/02/19 05:41:38 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.13 2011/02/06 04:06:11 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.14 2011/02/19 05:40:58 tsutsui Exp 
  */
 
 /*-
@@ -114,8 +114,17 @@
 #define	DIO_DEVICE_SECID_XXXCATSEYE	0x09
 #define	DIO_DEVICE_DESC_XXXCATSEYE	"catseye display"
 
+#define	DIO_DEVICE_SECID_TIGERSHARK	0x0c
+#define	DIO_DEVICE_DESC_TIGERSHARK	"TurboVRX (\"tigershark\") display"
+
 #define	DIO_DEVICE_SECID_HYPERION	0x0e
 #define	DIO_DEVICE_DESC_HYPERION	"A1096A (\"hyperion\") display"
+
+#define	DIO_DEVICE_SECID_A1474MID	0x10
+#define	DIO_DEVICE_DESC_A1474MID	"A1474-69511 on-board mid-res graphics"
+
+#define	DIO_DEVICE_SECID_A147xVGA	0x11
+#define	DIO_DEVICE_DESC_A147xVGA	"A147x-69510 on-board VGA graphics"
 
 /* Unsupported framebuffers. */
 
@@ -123,17 +132,8 @@
 #define	DIO_DEVICE_SECID_XGENESIS	0x0b
 #define	DIO_DEVICE_DESC_XGENESIS	"x-genesis display"
 
-#define	DIO_DEVICE_SECID_TIGERSHARK	0x0c
-#define	DIO_DEVICE_DESC_TIGERSHARK	"TurboVRX (\"tigershark\") display"
-
 #define	DIO_DEVICE_SECID_YGENESIS	0x0d
 #define	DIO_DEVICE_DESC_YGENESIS	"y-genesis display"
-
-#define	DIO_DEVICE_SECID_A1474MID	0x10
-#define	DIO_DEVICE_DESC_A1474MID	"A1474-69511 on-board mid-res graphics"
-
-#define	DIO_DEVICE_SECID_A147xVGA	0x11
-#define	DIO_DEVICE_DESC_A147xVGA	"A147x-69510 on-board VGA graphics"
 /* No ID info about A1474-69515 on-board high-res graphics */
 
 /* Devices not yet supported.  Descriptions are lacking. */
