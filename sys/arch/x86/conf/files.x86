@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.57 2011/02/05 14:00:34 yamt Exp $
+#	$NetBSD: files.x86,v 1.58 2011/02/19 13:52:28 jmcneill Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -29,23 +29,24 @@ defflag opt_powernow_k8.h	POWERNOW_K8
 # VIA C7 Temperature sensor
 defflag	opt_via_c7temp.h	VIA_C7TEMP: sysmon_envsys
 
-# VIA PadLock support
-defflag	opt_viapadlock.h	VIA_PADLOCK:	opencrypto
-file	arch/x86/x86/via_padlock.c	via_padlock
-
 # To be able to test for NetBSD/xen in shared files
 defflag	opt_xen.h		DO_NOT_DEFINE
 
 define  cpubus { [apid = -1] }
+define	cpufeaturebus {}
 define  ioapicbus { [apid = -1] }
 define  ipmibus {}
 
 #
 # CPUs
 #
-device	cpu
+device	cpu: cpufeaturebus
 attach	cpu at cpubus
 file 	arch/x86/x86/cpu.c 		cpu
+
+device	padlock: opencrypto
+attach	padlock at cpufeaturebus
+file	arch/x86/x86/via_padlock.c	padlock
 
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
