@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.41 2010/12/05 22:40:56 mrg Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.42 2011/02/19 01:12:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.41 2010/12/05 22:40:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.42 2011/02/19 01:12:39 christos Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -461,11 +461,16 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
  * The kernel needs to be able to verify an application's filter code.
  * Otherwise, a bogus program could easily crash the system.
  */
+CTASSERT(BPF_MEMWORDS == sizeof(uint16_t) * NBBY);
+
 int
 bpf_validate(const struct bpf_insn *f, int signed_len)
 {
-	u_int i, from, len;
+	u_int i, from, len, ok = 0;
 	const struct bpf_insn *p;
+#if defined(KERNEL) || defined(_KERNEL)
+	uint16_t *mem, invalid;
+#endif
 
 	len = (u_int)signed_len;
 	if (len < 1)
@@ -474,8 +479,19 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 	if (len > BPF_MAXINSNS)
 		return 0;
 #endif
+	if (BPF_CLASS(f[len - 1].code) != BPF_RET)
+		return 0;
+
+#if defined(KERNEL) || defined(_KERNEL)
+	mem = malloc(sizeof(*mem) * len, M_TEMP, M_WAITOK|M_ZERO);
+	invalid = ~0;	/* All is invalid on startup */
+#endif
 
 	for (i = 0; i < len; ++i) {
+#if defined(KERNEL) || defined(_KERNEL)
+		/* blend in any invalid bits for current pc */
+		invalid |= mem[i];
+#endif
 		p = &f[i];
 		switch (BPF_CLASS(p->code)) {
 		/*
@@ -496,7 +512,10 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 				 * is done runtime.
 				 */
 				if (p->k >= BPF_MEMWORDS)
-					return 0;
+					goto out;
+				/* check for current memory invalid */
+				if (invalid & (1 << p->k))
+					goto out;
 #endif
 				break;
 			case BPF_ABS:
@@ -506,13 +525,17 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 			case BPF_LEN:
 				break;
 			default:
-				return 0;
+				goto out;
 			}
 			break;
 		case BPF_ST:
 		case BPF_STX:
 			if (p->k >= BPF_MEMWORDS)
-				return 0;
+				goto out;
+#if defined(KERNEL) || defined(_KERNEL)
+			/* validate the memory word */
+			invalid &= ~(1 << p->k);
+#endif
 			break;
 		case BPF_ALU:
 			switch (BPF_OP(p->code)) {
@@ -530,10 +553,10 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 				 * Check for constant division by 0.
 				 */
 				if (BPF_SRC(p->code) == BPF_K && p->k == 0)
-					return 0;
+					goto out;
 				break;
 			default:
-				return 0;
+				goto out;
 			}
 			break;
 		case BPF_JMP:
@@ -566,22 +589,37 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 			from = i + 1;
 			switch (BPF_OP(p->code)) {
 			case BPF_JA:
-#if defined(KERNEL) || defined(_KERNEL)
-				if (from + p->k < from || from + p->k >= len)
-#else
 				if (from + p->k >= len)
+					goto out;
+#if defined(KERNEL) || defined(_KERNEL)
+				if (from + p->k < from)
+					goto out;
+				/*
+				 * mark the currently invalid bits for the
+				 * destination
+				 */
+				mem[from + p->k] |= invalid;
+				invalid = 0;
 #endif
-					return 0;
 				break;
 			case BPF_JEQ:
 			case BPF_JGT:
 			case BPF_JGE:
 			case BPF_JSET:
 				if (from + p->jt >= len || from + p->jf >= len)
-					return 0;
+					goto out;
+#if defined(KERNEL) || defined(_KERNEL)
+				/*
+				 * mark the currently invalid bits for both
+				 * possible jump destinations
+				 */
+				mem[from + p->jt] |= invalid;
+				mem[from + p->jf] |= invalid;
+				invalid = 0;
+#endif
 				break;
 			default:
-				return 0;
+				goto out;
 			}
 			break;
 		case BPF_RET:
@@ -589,9 +627,13 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 		case BPF_MISC:
 			break;
 		default:
-			return 0;
+			goto out;
 		}
 	}
-
-	return BPF_CLASS(f[len - 1].code) == BPF_RET;
+	ok = 1;
+out:
+#if defined(KERNEL) || defined(_KERNEL)
+	free(mem, M_TEMP);
+#endif
+	return ok;
 }
