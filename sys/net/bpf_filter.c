@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.42 2011/02/19 01:12:39 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.43 2011/02/19 02:22:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.42 2011/02/19 01:12:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.43 2011/02/19 02:22:27 matt Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -461,7 +461,7 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
  * The kernel needs to be able to verify an application's filter code.
  * Otherwise, a bogus program could easily crash the system.
  */
-CTASSERT(BPF_MEMWORDS == sizeof(uint16_t) * NBBY);
+__CTASSERT(BPF_MEMWORDS == sizeof(uint16_t) * NBBY);
 
 int
 bpf_validate(const struct bpf_insn *f, int signed_len)
