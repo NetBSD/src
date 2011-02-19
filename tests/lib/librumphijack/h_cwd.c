@@ -1,4 +1,4 @@
-/*      $NetBSD: h_cwd.c,v 1.1 2011/02/19 13:19:52 pooka Exp $	*/
+/*      $NetBSD: h_cwd.c,v 1.2 2011/02/19 19:57:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,59 +32,136 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 
-int
-main(void)
-{
-	char pwd[1024];
+static const char *prefix;
+static size_t prefixlen;
+static char buf[1024];
+static char pwd[1024];
 
-	if (chdir("/rump") == -1)
-		err(1, "chdir1");
+static const char *
+makepath(const char *tail)
+{
+
+	strcpy(buf, prefix);
+	if (prefix[prefixlen-1] != '/')
+		strcat(buf, "/");
+	strcat(buf, tail);
+
+	return buf;
+}
+
+static void
+dochdir(const char *path, const char *errmsg)
+{
+
+	if (chdir(path) == -1)
+		err(1, "%s", errmsg);
+}
+
+static void
+dofchdir(const char *path, const char *errmsg)
+{
+	int fd;
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		err(1, "open %s", errmsg);
+	if (fchdir(fd) == -1)
+		err(1, "fchdir %s", errmsg);
+	close(fd);
+}
+static void (*thechdir)(const char *, const char *);
+
+static void
+simple(void)
+{
+
+	thechdir(prefix, "chdir1");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		err(1, "getcwd1");
-	if (strcmp(pwd, "/rump") != 0)
+	if (strcmp(pwd, prefix) != 0)
 		errx(1, "strcmp1");
 
 	if (mkdir("dir", 0777) == -1)
 		err(1, "mkdir2");
-	if (chdir("dir") == -1)
-		err(1, "chdir2");
+	thechdir("dir", "chdir2");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		err(1, "getcwd2");
-	if (strcmp(pwd, "/rump/dir") != 0)
+	if (strcmp(pwd, makepath("dir")) != 0)
 		errx(1, "strcmp2");
 
 	if (mkdir("dir", 0777) == -1)
 		err(1, "mkdir3");
-	if (chdir("dir") == -1)
-		err(1, "chdir3");
+	thechdir("dir", "chdir3");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		err(1, "getcwd3");
-	if (strcmp(pwd, "/rump/dir/dir") != 0)
+	if (strcmp(pwd, makepath("dir/dir")) != 0)
 		errx(1, "strcmp3");
 
-	if (chdir("..") == -1)
-		err(1, "chdir4");
+	thechdir("..", "chdir4");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		err(1, "getcwd4");
-	if (strcmp(pwd, "/rump/dir") != 0)
+	if (strcmp(pwd, makepath("dir")) != 0)
 		errx(1, "strcmp4");
 
-	if (chdir("../../../../../../..") == -1)
-		err(1, "chdir5");
+
+	thechdir("../../../../../../..", "chdir5");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		err(1, "getcwd5");
-	if (strcmp(pwd, "/rump") != 0)
+	if (strcmp(pwd, prefix) != 0)
 		errx(1, "strcmp5");
 
-	if (chdir("/") == -1)
-		err(1, "chdir6");
+	thechdir("/", "chdir6");
 	if (getcwd(pwd, sizeof(pwd)) == NULL)
 		err(1, "getcwd6");
 	if (strcmp(pwd, "/") != 0)
 		errx(1, "strcmp6");
+}
+
+static void
+symlinktest(void)
+{
+
+	thechdir(prefix, "chdir1");
+	if (mkdir("adir", 0777) == -1)
+		err(1, "mkdir1");
+	if (mkdir("anotherdir", 0777) == -1)
+		err(1, "mkdir2");
+
+	if (symlink("/adir", "anotherdir/lincthesink") == -1)
+		err(1, "symlink");
+
+	thechdir("anotherdir/lincthesink", "chdir2");
+	if (getcwd(pwd, sizeof(pwd)) == NULL)
+		err(1, "getcwd");
+	if (strcmp(pwd, makepath("adir")) != 0)
+		errx(1, "strcmp");
+}
+
+int
+main(int argc, char *argv[])
+{
+
+	if (argc != 4)
+		errx(1, "usage");
+
+	prefix = argv[1];
+	prefixlen = strlen(argv[1]);
+
+	if (strcmp(argv[3], "chdir") == 0)
+		thechdir = dochdir;
+	else if (strcmp(argv[3], "fchdir") == 0)
+		thechdir = dofchdir;
+	else
+		errx(1, "invalid chdir type");
+
+	if (strcmp(argv[2], "simple") == 0)
+		simple();
+	if (strcmp(argv[2], "symlink") == 0)
+		symlinktest();
 
 	return 0;
 }
