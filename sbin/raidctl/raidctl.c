@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.51 2011/02/09 11:22:49 pooka Exp $   */
+/*      $NetBSD: raidctl.c,v 1.52 2011/02/19 07:11:10 enami Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.51 2011/02/09 11:22:49 pooka Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.52 2011/02/19 07:11:10 enami Exp $");
 #endif
 
 
@@ -743,9 +743,9 @@ get_component_label(int fd, char *component)
 	printf("   sectPerSU: %d, SUsPerPU: %d, SUsPerRU: %d\n",
 	       component_label.sectPerSU, component_label.SUsPerPU, 
 	       component_label.SUsPerRU);
-	printf("   Queue size: %d, blocksize: %d, numBlocks: %u\n",
+	printf("   Queue size: %d, blocksize: %d, numBlocks: %"PRIu64"\n",
 	       component_label.maxOutstanding, component_label.blockSize,
-	       component_label.numBlocks);
+	       rf_component_label_numblocks(&component_label));
 	printf("   RAID Level: %c\n", (char) component_label.parityConfig);
 	printf("   Autoconfig: %s\n", 
 	       component_label.autoconfigure ? "Yes" : "No" );
