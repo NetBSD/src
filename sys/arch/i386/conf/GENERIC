@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1016 2011/02/16 07:30:27 jruoho Exp $
+# $NetBSD: GENERIC,v 1.1017 2011/02/19 00:13:55 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1016 $"
+#ident 		"GENERIC-$Revision: 1.1017 $"
 
 maxusers	64		# estimated number of users
 
@@ -549,6 +549,7 @@ vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 genfb*		at pci? dev ? function ?
+options 	VCONS_DRAW_INTR
 #machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
