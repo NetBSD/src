@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2011/02/05 22:40:49 christos Exp $
+#	$NetBSD: Makefile,v 1.62 2011/02/19 14:28:07 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -139,6 +139,7 @@ SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
+SUBDIR+=	padlock
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
