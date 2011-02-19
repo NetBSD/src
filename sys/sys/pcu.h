@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.3 2011/02/17 19:58:34 rmind Exp $	*/
+/*	$NetBSD: pcu.h,v 1.4 2011/02/19 20:19:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 #define _SYS_PCU_H_
 
 /*
- * Default: one PCU for MD.
+ * Default: no PCU for MD.
  */
 #ifndef	PCU_UNIT_COUNT
-#define	PCU_UNIT_COUNT		1
+#define	PCU_UNIT_COUNT		0
 #endif
 
 #if defined(_KERNEL)
