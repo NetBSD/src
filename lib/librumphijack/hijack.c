@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.57 2011/02/19 13:10:35 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.58 2011/02/19 19:17:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.57 2011/02/19 13:10:35 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.58 2011/02/19 19:17:33 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -1695,9 +1695,9 @@ PATHCALL(int, unlink, DUALCALL_UNLINK,					\
 	(path))
 
 PATHCALL(int, symlink, DUALCALL_SYMLINK,				\
-	(const char *path, const char *target),				\
+	(const char *target, const char *path),				\
 	(const char *, const char *),					\
-	(path, target))
+	(target, path))
 
 PATHCALL(ssize_t, readlink, DUALCALL_READLINK,				\
 	(const char *path, char *buf, size_t bufsiz),			\
