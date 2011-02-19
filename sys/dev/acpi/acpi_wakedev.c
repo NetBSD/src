@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.23 2011/02/18 13:56:03 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.24 2011/02/19 09:52:32 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.23 2011/02/18 13:56:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.24 2011/02/19 09:52:32 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,8 +54,8 @@ static const char * const acpi_wakedev_default[] = {
 static int32_t	acpi_wakedev_acpinode = CTL_EOL;
 static int32_t	acpi_wakedev_wakenode = CTL_EOL;
 
-static void	acpi_wakedev_power(struct acpi_devnode *, ACPI_OBJECT *);
-static void	acpi_wakedev_set(struct acpi_devnode *, int);
+static void	acpi_wakedev_power_add(struct acpi_devnode *, ACPI_OBJECT *);
+static void	acpi_wakedev_power_set(struct acpi_devnode *, bool);
 static void	acpi_wakedev_method(struct acpi_devnode *, int);
 
 void
@@ -143,13 +143,13 @@ acpi_wakedev_init(struct acpi_devnode *ad)
 	elm = &obj->Package.Elements[1];
 
 	if (elm->Type == ACPI_TYPE_INTEGER)
-		ad->ad_wakedev->aw_sleep = elm->Integer.Value;
+		ad->ad_wakedev->aw_state = elm->Integer.Value;
 
 	/*
 	 * The rest of the elements are reference
 	 * handles to power resources. Store these.
 	 */
-	acpi_wakedev_power(ad, obj);
+	acpi_wakedev_power_add(ad, obj);
 
 	/*
 	 * Last but not least, mark the GPE for wake.
@@ -166,7 +166,7 @@ out:
 }
 
 static void
-acpi_wakedev_power(struct acpi_devnode *ad, ACPI_OBJECT *obj)
+acpi_wakedev_power_add(struct acpi_devnode *ad, ACPI_OBJECT *obj)
 {
 	struct acpi_wakedev *aw = ad->ad_wakedev;
 	uint32_t i, j, n;
@@ -191,6 +191,21 @@ acpi_wakedev_power(struct acpi_devnode *ad, ACPI_OBJECT *obj)
 			continue;
 
 		ad->ad_wakedev->aw_power[j] = hdl;
+	}
+}
+
+static void
+acpi_wakedev_power_set(struct acpi_devnode *ad, bool enable)
+{
+	struct acpi_wakedev *aw = ad->ad_wakedev;
+	uint8_t i;
+
+	for (i = 0; i < __arraycount(aw->aw_power); i++) {
+
+		if (aw->aw_power[i] == NULL)
+			continue;
+
+		(void)acpi_power_res(aw->aw_power[i], ad->ad_handle, enable);
 	}
 }
 
@@ -277,77 +292,39 @@ void
 acpi_wakedev_commit(struct acpi_softc *sc, int state)
 {
 	struct acpi_devnode *ad;
+	ACPI_INTEGER val;
+	ACPI_HANDLE hdl;
 
 	/*
 	 * To prepare a device for wakeup:
 	 *
-	 *  1.	Set appropriate GPEs.
+	 *  1.	Set the wake GPE.
 	 *
-	 *  2.	Enable all power resources in _PRW.
+	 *  2.	Turn on power resources.
 	 *
-	 *  3.	If present, execute _DSW/_PSW method.
+	 *  3.	Execute _DSW or _PSW method.
 	 */
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		if (ad->ad_wakedev == NULL)
 			continue;
 
-		acpi_wakedev_set(ad, state);
+		if (state > ad->ad_wakedev->aw_state)
+			continue;
+
+		hdl = ad->ad_wakedev->aw_handle;
+		val = ad->ad_wakedev->aw_number;
+
+		if (state == ACPI_STATE_S0) {
+			(void)AcpiSetGpeWakeMask(hdl, val, ACPI_GPE_DISABLE);
+			continue;
+		}
+
+		(void)AcpiSetGpeWakeMask(hdl, val, ACPI_GPE_ENABLE);
+
+		acpi_wakedev_power_set(ad, true);
 		acpi_wakedev_method(ad, state);
 	}
-}
-
-static void
-acpi_wakedev_set(struct acpi_devnode *ad, int state)
-{
-	struct acpi_wakedev *aw = ad->ad_wakedev;
-	ACPI_INTEGER val = aw->aw_number;
-	ACPI_HANDLE hdl = aw->aw_handle;
-	ACPI_STATUS rv;
-	uint8_t i;
-
-	/*
-	 * Enable or disable wake GPEs.
-	 */
-	if (aw->aw_enable != true)
-		rv = AcpiSetGpeWakeMask(hdl, val, ACPI_GPE_DISABLE);
-	else {
-		rv = AcpiSetGpeWakeMask(hdl, val, ACPI_GPE_ENABLE);
-
-		if (ACPI_FAILURE(rv))
-			goto out;
-
-		rv = AcpiEnableGpe(hdl, val);
-
-		if (ACPI_FAILURE(rv))
-			goto out;
-
-		/*
-		 * Turn power resources on.
-		 *
-		 * XXX: We should also turn these off for devices
-		 *	that are not allowed to wake the system.
-		 *	However, as these are not yet integrated
-		 *	with pmf(9), we can not risk devices to
-		 *	possibly resume in a power-off state.
-		 */
-		for (i = 0; i < __arraycount(aw->aw_power); i++) {
-
-			if (aw->aw_power[i] == NULL)
-				continue;
-
-			(void)acpi_power_res(aw->aw_power[i], hdl, true);
-		}
-	}
-
-out:
-	if (state > aw->aw_sleep)
-		aprint_error_dev(ad->ad_root, "sleep state S%d "
-		    "loses wake for %s\n", state, ad->ad_name);
-
-	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
-		aprint_error_dev(ad->ad_root, "failed to set wake GPE "
-		    "for %s: %s\n", ad->ad_name, AcpiFormatException(rv));
 }
 
 static void
