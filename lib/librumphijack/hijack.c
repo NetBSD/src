@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.55 2011/02/19 13:07:53 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.56 2011/02/19 13:09:40 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.55 2011/02/19 13:07:53 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.56 2011/02/19 13:09:40 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -326,8 +326,8 @@ static struct {
 	{ PF_INET, "inet" },
 	{ PF_LINK, "link" },
 #ifdef PF_OROUTE
-	{ PF_OROUTE, "oroute" },                                 
-#endif          
+	{ PF_OROUTE, "oroute" },
+#endif
 	{ PF_ROUTE, "route" },
 	{ PF_INET6, "inet6" },
 #ifdef PF_MPLS 
