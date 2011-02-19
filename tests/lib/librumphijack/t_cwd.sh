@@ -1,4 +1,4 @@
-#       $NetBSD: t_cwd.sh,v 1.1 2011/02/19 13:19:52 pooka Exp $
+#       $NetBSD: t_cwd.sh,v 1.2 2011/02/19 19:57:28 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,26 +28,45 @@
 rumpsrv='rump_server -lrumpvfs'
 export RUMP_SERVER=unix://csock
 
-atf_test_case basic cleanup
-basic_head()
+test_case()
 {
-        atf_set "descr" "basic cwd test"
+	local name="${1}"; shift
+
+	atf_test_case "${name}" cleanup
+	eval "${name}_head() {  }"
+	eval "${name}_body() { \
+		export RUMPHIJACK="path=${1}" ; \
+		atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER} ; \
+		testbody " "${@}" "; \
+	}"
+	eval "${name}_cleanup() { \
+		rump.halt
+	}"
 }
 
-basic_body()
-{
+test_case basic_chdir /rump simple chdir
+test_case basic_fchdir /rump simple fchdir
+test_case slash_chdir // simple chdir
+test_case slash_fchdir // simple fchdir
+test_case symlink_chdir /rump symlink chdir
+test_case symlink_fchdir /rump symlink fchdir
+test_case symlink_slash_chdir // symlink chdir
+test_case symlink_slash_fchdir // symlink fchdir
 
-	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
+testbody()
+{
 	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    $(atf_get_srcdir)/h_cwd
-}
-
-basic_cleanup()
-{
-	rump.halt
+	    $(atf_get_srcdir)/h_cwd $*
 }
 
 atf_init_test_cases()
 {
-	atf_add_test_case basic
+	atf_add_test_case basic_chdir
+	atf_add_test_case basic_fchdir
+	atf_add_test_case slash_chdir
+	atf_add_test_case slash_fchdir
+	atf_add_test_case symlink_chdir
+	atf_add_test_case symlink_fchdir
+	atf_add_test_case symlink_slash_chdir
+	atf_add_test_case symlink_slash_fchdir
 }
