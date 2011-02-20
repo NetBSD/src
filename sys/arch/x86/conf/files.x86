@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.58 2011/02/19 13:52:28 jmcneill Exp $
+#	$NetBSD: files.x86,v 1.59 2011/02/20 13:42:45 jruoho Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -16,9 +16,6 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 # Intel Enhanced Speedstep
 defflag 			ENHANCED_SPEEDSTEP
 defflag	opt_est.h		EST_FREQ_USERWRITE
-
-# Intel On Die Temperature sensor
-defflag	opt_intel_coretemp.h	INTEL_CORETEMP:	sysmon_envsys
 
 # Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
 defflag opt_intel_odcm.h 	INTEL_ONDEMAND_CLOCKMOD
@@ -43,6 +40,10 @@ define  ipmibus {}
 device	cpu: cpufeaturebus
 attach	cpu at cpubus
 file 	arch/x86/x86/cpu.c 		cpu
+
+device	coretemp: sysmon_envsys
+attach	coretemp at cpufeaturebus
+file	arch/x86/x86/coretemp.c		coretemp
 
 device	padlock: opencrypto
 attach	padlock at cpufeaturebus
@@ -106,9 +107,6 @@ file	arch/x86/x86/iclockmod.c	intel_ondemand_clockmod
 # Intel Enhanced Speedstep
 file	arch/x86/x86/est.c		enhanced_speedstep
 file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
-
-# Intel On-Die Temperature sensor
-file	arch/x86/x86/coretemp.c 	intel_coretemp
 
 # VIA C7 Temperature sensor
 file	arch/x86/x86/viac7temp.c	via_c7temp

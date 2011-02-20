@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.23 2011/02/19 13:52:28 jmcneill Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.24 2011/02/20 13:42:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.23 2011/02/19 13:52:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.24 2011/02/20 13:42:46 jruoho Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
-#include "opt_intel_coretemp.h"
 #include "opt_via_c7temp.h"
 #include "opt_powernow_k8.h"
 #include "opt_xen.h"
@@ -809,11 +808,6 @@ cpu_identify(struct cpu_info *ci)
 			est_init(cpu_vendor);
 	}
 #endif /* ENHANCED_SPEEDSTEP */
-
-#ifdef INTEL_CORETEMP
-	if (cpu_vendor == CPUVENDOR_INTEL && cpuid_level >= 0x06)
-		coretemp_register(ci);
-#endif
 
 #ifdef VIA_C7TEMP
 	if (cpu_vendor == CPUVENDOR_IDT &&

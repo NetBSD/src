@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1018 2011/02/19 13:52:27 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1019 2011/02/20 13:42:45 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1018 $"
+#ident 		"GENERIC-$Revision: 1.1019 $"
 
 maxusers	64		# estimated number of users
 
@@ -46,6 +46,9 @@ options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# Intel Core's on-die Thermal sensor
+coretemp*	at cpu?
 
 # VIA PadLock
 #padlock0	at cpu0
@@ -642,9 +645,6 @@ iic*	at amdpm?
 # Acer Labs M7101 SMBus controller
 alipm*	at pci? dev ? function ?
 iic*	at alipm?
-
-# Intel Core's on-die Thermal sensor
-options 	INTEL_CORETEMP
 
 # VIA C7 Temperature sensor
 options 	VIA_C7TEMP

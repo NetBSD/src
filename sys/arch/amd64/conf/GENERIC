@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.309 2011/02/19 00:13:55 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.310 2011/02/20 13:42:45 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.309 $"
+#ident 		"GENERIC-$Revision: 1.310 $"
 
 maxusers	64		# estimated number of users
 
@@ -85,6 +85,9 @@ options 	ENHANCED_SPEEDSTEP
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# Intel Core's on-die Thermal sensor
+coretemp*	at cpu?
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 # options       INTEL_ONDEMAND_CLOCKMOD
@@ -464,9 +467,6 @@ iic*	at nfsmb?
 # Intel PIIX4 power management controllers
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
-
-# Intel Core's on-die Thermal sensor
-options 	INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?

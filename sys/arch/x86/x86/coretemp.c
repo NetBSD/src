@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.16 2010/08/25 05:07:43 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.17 2011/02/20 13:42:46 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,80 +36,169 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.16 2010/08/25 05:07:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.17 2011/02/20 13:42:46 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
-#include <sys/xcall.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
+#include <sys/xcall.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
 #include <machine/cpuvar.h>
-#include <machine/specialreg.h>
 #include <machine/cpufunc.h>
+#include <machine/cputypes.h>
+#include <machine/specialreg.h>
 
-struct coretemp_softc {
-	struct cpu_info		*sc_ci;
-	struct sysmon_envsys 	*sc_sme;
-	envsys_data_t 		sc_sensor;
-	char			sc_dvname[32];
-	int 			sc_tjmax;
-};
-
+static int	coretemp_match(device_t, cfdata_t, void *);
+static void	coretemp_attach(device_t, device_t, void *);
+static int	coretemp_detach(device_t, int);
+static int	coretemp_quirks(struct cpu_info *);
+static void	coretemp_ext_config(device_t);
 static void	coretemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	coretemp_refresh_xcall(void *, void *);
 
-void
-coretemp_register(struct cpu_info *ci)
+struct coretemp_softc {
+	device_t		 sc_dev;
+	struct cpu_info		*sc_ci;
+	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		 sc_sensor;
+	int			 sc_tjmax;
+};
+
+CFATTACH_DECL_NEW(coretemp, sizeof(struct coretemp_softc),
+    coretemp_match, coretemp_attach, coretemp_detach, NULL);
+
+static int
+coretemp_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct coretemp_softc *sc;
+	struct cpufeature_attach_args *cfaa = aux;
+	struct cpu_info *ci = cfaa->ci;
 	uint32_t regs[4];
-	uint64_t msr;
-	int cpumodel, cpuextmodel, cpumask;
+
+	if (strcmp(cfaa->name, "coretemp") != 0)
+		return 0;
+
+	if (cpu_vendor != CPUVENDOR_INTEL || cpuid_level < 0x06)
+		return 0;
 
 	/*
-	 * Don't attach on anything but the first SMT ID.
-	 */
-	if (ci->ci_smt_id != 0)
-		return;
-
-	/*
-	 * CPUID 0x06 returns 1 if the processor has on-die thermal
-	 * sensors. EBX[0:3] contains the number of sensors.
+	 * CPUID 0x06 returns 1 if the processor
+	 * has on-die thermal sensors. EBX[0:3]
+	 * contains the number of sensors.
 	 */
 	x86_cpuid(0x06, regs);
+
 	if ((regs[0] & CPUID_DSPM_DTS) == 0)
-		return;
+		return 0;
 
-	sc = kmem_zalloc(sizeof(struct coretemp_softc), KM_NOSLEEP);
-	if (!sc)
-		return;
+	return coretemp_quirks(ci);
+}
 
-	(void)snprintf(sc->sc_dvname, sizeof(sc->sc_dvname), "coretemp%d",
-	    (int)device_unit(ci->ci_dev));
-	cpumodel = CPUID2MODEL(ci->ci_signature);
-	/* extended model */
-	cpuextmodel = CPUID2EXTMODEL(ci->ci_signature);
-	cpumask = ci->ci_signature & 15;
+static void
+coretemp_attach(device_t parent, device_t self, void *aux)
+{
+	struct coretemp_softc *sc = device_private(self);
+	struct cpufeature_attach_args *cfaa = aux;
+	struct cpu_info *ci = cfaa->ci;
+
+	sc->sc_ci = ci;
+	sc->sc_dev = self;
+
+	aprint_naive("\n");
+	aprint_normal(": Intel on-die thermal sensor\n");
+
+	sc->sc_sensor.units = ENVSYS_STEMP;
+	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
+
+	(void)pmf_device_register(self, NULL, NULL);
+	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),
+	    "%s temperature", device_xname(ci->ci_dev));
+
+	sc->sc_sme = sysmon_envsys_create();
+
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor) != 0)
+		goto fail;
+
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_name = device_xname(self);
+	sc->sc_sme->sme_refresh = coretemp_refresh;
+
+	if (sysmon_envsys_register(sc->sc_sme) != 0)
+		goto fail;
+
+	coretemp_ext_config(self);
+
+	return;
+
+fail:
+	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
+}
+
+static int
+coretemp_detach(device_t self, int flags)
+{
+	struct coretemp_softc *sc = device_private(self);
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+
+	return 0;
+}
+
+static int
+coretemp_quirks(struct cpu_info *ci)
+{
+	uint32_t mask, model;
+	uint64_t msr;
+
+	mask = ci->ci_signature & 0x0F;
+	model = CPUID2MODEL(ci->ci_signature);
 
 	/*
-	 * Check for errata AE18.
-	 * "Processor Digital Thermal Sensor (DTS) Readout stops
-	 *  updating upon returning from C3/C4 state."
+	 * Check if the MSR contains thermal
+	 * reading valid bit, this avoid false
+	 * positives on systems that fake up
+	 * a compatible CPU that doesn't have
+	 * access to these MSRs; such as VMWare.
+	 */
+	msr = rdmsr(MSR_THERM_STATUS);
+
+	if ((msr & __BIT(31)) == 0)
+		return 0;
+
+	/*
+	 * Check for errata AE18, "Processor Digital
+	 * Thermal Sensor (DTS) Readout stops updating
+	 * upon returning from C3/C4 state".
 	 *
 	 * Adapted from the Linux coretemp driver.
 	 */
-	if (cpumodel == 0xe && cpumask < 0xc) {
+	if (model == 0x0E && mask < 0x0C) {
+
 		msr = rdmsr(MSR_BIOS_SIGN);
 		msr = msr >> 32;
-		if (msr < 0x39) {
-			aprint_debug("%s: not supported (Intel errata AE18), "
-			    "try updating your BIOS\n", sc->sc_dvname);
-			goto bad;
-		}
+
+		if (msr < 0x39)
+			return 0;
 	}
+
+	return 1;
+}
+
+void
+coretemp_ext_config(device_t self)
+{
+	struct coretemp_softc *sc = device_private(self);
+	struct cpu_info *ci = sc->sc_ci;
+	uint32_t emodel, mask, model;
+	uint64_t msr;
+
+	mask = ci->ci_signature & 0x0F;
+	model = CPUID2MODEL(ci->ci_signature);
+	emodel = CPUID2EXTMODEL(ci->ci_signature);
 
 	/*
 	 * On some Core 2 CPUs, there's an undocumented MSR that
@@ -121,73 +210,31 @@ coretemp_register(struct cpu_info *ci)
 	 * MSR_IA32_EXT_CONFIG is NOT safe on all CPUs
 	 */
 	sc->sc_tjmax = 100;
-	if ((cpumodel == 0xf && cpumask >= 2) ||
-	    (cpumodel == 0xe && cpuextmodel != 1)) {
+
+	if ((model == 0x0F && mask >= 2) || (model == 0x0E && emodel != 1)) {
+
 		msr = rdmsr(MSR_IA32_EXT_CONFIG);
+
 		if (msr & (1 << 30))
 			sc->sc_tjmax = 85;
 	}
-
-	/* 
-	 * Check if the MSR contains thermal reading valid bit, this
-	 * avoid false positives on systems that fake up a compatible
-	 * CPU that doesn't have access to these MSRs; such as VMWare.
-	 */
-	msr = rdmsr(MSR_THERM_STATUS);
-	if ((msr & __BIT(31)) == 0)
-		goto bad;
-
-	sc->sc_ci = ci;
-
-	/*
-	 * Only a temperature sensor and monitor for a critical state.
-	 */
-	sc->sc_sensor.units = ENVSYS_STEMP;
-	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
-	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),
-	    "%s temperature", device_xname(ci->ci_dev));
-
-	sc->sc_sme = sysmon_envsys_create();
-	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
-		sysmon_envsys_destroy(sc->sc_sme);
-		goto bad;
-	}
-
-	/*
-	 * Hook into the system monitor.
-	 */
-	sc->sc_sme->sme_name = sc->sc_dvname;
-	sc->sc_sme->sme_cookie = sc;
-	sc->sc_sme->sme_refresh = coretemp_refresh;
-
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dvname);
-		sysmon_envsys_destroy(sc->sc_sme);
-		goto bad;
-	}
-
-	return;
-
-bad:
-	kmem_free(sc, sizeof(struct coretemp_softc));
 }
 
 static void
 coretemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct coretemp_softc *sc = sme->sme_cookie;
-	uint64_t where;
+	uint64_t xc;
 
-	where = xc_unicast(0, coretemp_refresh_xcall, sc, edata, sc->sc_ci);
-	xc_wait(where);
+	xc = xc_unicast(0, coretemp_refresh_xcall, sc, edata, sc->sc_ci);
+	xc_wait(xc);
 }
 
 static void
 coretemp_refresh_xcall(void *arg0, void *arg1)
 {
-	struct coretemp_softc *sc = (struct coretemp_softc *)arg0;
-	envsys_data_t *edata = (envsys_data_t *)arg1;
+        struct coretemp_softc *sc = arg0;
+	envsys_data_t *edata = arg1;
 	uint64_t msr;
 
 	/*
@@ -205,17 +252,17 @@ coretemp_refresh_xcall(void *arg0, void *arg1)
 	/*
 	 * Check for Thermal Status and Thermal Status Log.
 	 */
-	if ((msr & 0x3) == 0x3)
-		aprint_debug("%s: PROCHOT asserted\n", sc->sc_dvname);
+	if ((msr & 0x03) == 0x03)
+		aprint_debug_dev(sc->sc_dev, "PROCHOT asserted\n");
 
 	/*
-	 * Bit 31 contains "Reading valid"
+	 * Bit 31 contains "Reading valid".
 	 */
-	if (((msr >> 31) & 0x1) == 1) {
+	if (((msr >> 31) & 0x01) == 1) {
 		/*
 		 * Starting on bit 16 and ending on bit 22.
 		 */
-		edata->value_cur = sc->sc_tjmax - ((msr >> 16) & 0x7f);
+		edata->value_cur = sc->sc_tjmax - ((msr >> 16) & 0x7F);
 		/*
 		 * Convert to mK.
 		 */
@@ -236,6 +283,35 @@ coretemp_refresh_xcall(void *arg0, void *arg1)
 	 * If we reach a critical level, send a critical event to
 	 * powerd(8) (if running).
 	 */
-	if (((msr >> 4) & 0x3) == 0x3)
+	if (((msr >> 4) & 0x03) == 0x03)
 		edata->state = ENVSYS_SCRITICAL;
+}
+
+MODULE(MODULE_CLASS_DRIVER, coretemp, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+coretemp_modcmd(modcmd_t cmd, void *aux)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_coretemp,
+		    cfattach_ioconf_coretemp, cfdata_ioconf_coretemp);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_coretemp,
+		    cfattach_ioconf_coretemp, cfdata_ioconf_coretemp);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }

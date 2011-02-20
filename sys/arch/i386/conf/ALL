@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.289 2011/02/19 13:52:27 jmcneill Exp $
+# $NetBSD: ALL,v 1.290 2011/02/20 13:42:45 jruoho Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.289 $"
+#ident 		"ALL-$Revision: 1.290 $"
 
 maxusers	64		# estimated number of users
 
@@ -41,6 +41,9 @@ options 	POWERNOW_K8
 
 # VIA PadLock
 padlock0	at cpu0
+
+# Intel Core's on-die Thermal sensor
+coretemp*	at cpu?
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 options 	INTEL_ONDEMAND_CLOCKMOD
@@ -684,9 +687,6 @@ iic*	at amdpm?			# sensors below are on this bus
 # Acer Labs M7101 SMBus controller
 alipm*	at pci? dev ? function ?
 iic*	at alipm?
-
-# Intel Core's on-die Thermal sensor
-options 	INTEL_CORETEMP
 
 # VIA C7 Temperature sensor
 options 	VIA_C7TEMP
