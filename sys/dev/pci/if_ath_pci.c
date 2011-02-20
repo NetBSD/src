@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.39 2011/01/26 00:08:30 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.40 2011/02/20 03:56:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.39 2011/01/26 00:08:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.40 2011/02/20 03:56:45 jmcneill Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.39 2011/01/26 00:08:30 dyoung Exp $
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <external/isc/atheros_hal/dist/ah.h>
 
@@ -273,4 +274,33 @@ ath_pci_setup(struct ath_pci_softc *sc)
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BHLC_REG, bhlc);
 	}
 	return true;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_ath_pci, "ath");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_ath_pci_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_if_ath_pci,
+		    cfattach_ioconf_if_ath_pci, cfdata_ioconf_if_ath_pci);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_if_ath_pci,
+		    cfattach_ioconf_if_ath_pci, cfdata_ioconf_if_ath_pci);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
