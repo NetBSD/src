@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.15 2011/02/16 10:13:00 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.16 2011/02/20 20:16:01 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -16,6 +16,7 @@ _TESTS:=	${TESTS_SUBDIRS:N.WAIT}
 _TESTS+=	${TESTS_C}
 PROGS+=		${TESTS_C}
 LDADD+=		-latf-c
+DPADD+=		${LIBATF_C}
 .  for _T in ${TESTS_C}
 BINDIR.${_T}=	${TESTSDIR}
 MAN.${_T}?=	# empty
@@ -26,6 +27,7 @@ MAN.${_T}?=	# empty
 _TESTS+=	${TESTS_CXX}
 PROGS_CXX+=	${TESTS_CXX}
 LDADD+=		-latf-c++ -latf-c
+DPADD+=		${LIBATF_CXX} ${LIBATF_C}
 .  for _T in ${TESTS_CXX}
 BINDIR.${_T}=	${TESTSDIR}
 MAN.${_T}?=	# empty
