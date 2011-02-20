@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.26 2011/02/08 20:20:19 rmind Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.27 2011/02/20 07:45:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,6 +38,8 @@
  *	from: @(#)pte.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_MIPS3_PTE_H_
+#define _MIPS_MIPS3_PTE_H_
 /*
  * R4000 hardware page table entry
  */
@@ -60,17 +62,6 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 		pg_pfnum:24,		/* HW: core page frame number or 0 */
 		pg_prot:2;		/* SW: access control */
 #endif
-};
-
-/*
- * Structure defining an tlb entry data set.
- */
-
-struct tlb {
-	int	tlb_mask;
-	int	tlb_hi;		/* XXX should be 64 bits */
-	int	tlb_lo0;	/* XXX maybe 64 bits (only 32 really used) */
-	int	tlb_lo1;	/* XXX maybe 64 bits (only 32 really used) */
 };
 #endif /* _LOCORE */
 
@@ -103,7 +94,7 @@ struct tlb {
 #define	MIPS3_PG_CACHED		MIPS3_PG_UNCACHED	/* XXX: brain damaged!!! */
 #else /* HPCMIPS_L1CACHE_DISABLE */
 #define	MIPS3_DEFAULT_XKPHYS_CACHED	MIPS_PHYS_TO_XKPHYS(3, 0)
-#define	MIPS3_PG_CACHED		mips3_pg_cached
+#define	MIPS3_PG_CACHED		mips_options.mips3_pg_cached
 #define	MIPS3_DEFAULT_PG_CACHED	MIPS3_CCA_TO_PG(3)
 #endif /* ! HPCMIPS_L1CACHE_DISABLE */
 #define	MIPS3_PG_CACHEMODE	MIPS3_CCA_TO_PG(7)
@@ -132,7 +123,7 @@ struct tlb {
 
 /* NEC Vr4100 CPUs have different PFN layout to support 1kbytes/page */
 #if defined(MIPS3_4100)
-#define MIPS3_PG_SHIFT	mips3_pg_shift
+#define MIPS3_PG_SHIFT	mips_options.mips3_pg_shift
 #else
 #define MIPS3_PG_SHIFT	MIPS3_DEFAULT_PG_SHIFT
 #endif
@@ -149,7 +140,7 @@ struct tlb {
 
 #define MIPS3_PTE_TO_PADDR(pte) (mips3_tlbpfn_to_paddr(pte))
 #define MIPS3_PAGE_IS_RDONLY(pte,va) \
-    (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(va), (pte)))
+    (pmap_is_page_ro_p(pmap_kernel(), mips_trunc_page(va), (pte)))
 
 
 #define	MIPS3_PG_SIZE_4K	0x00000000
@@ -181,3 +172,4 @@ struct tlb {
 #define	MIPS4100_PG_SIZE_TO_MASK(pg_size)		\
     ((((pg_size) * 2) - 1) & ~0x000007ff)
 
+#endif /* !_MIPS_MIPS3_PTE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.67 2010/07/07 01:22:12 chs Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.68 2011/02/20 07:45:47 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67 2010/07/07 01:22:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2011/02/20 07:45:47 matt Exp $");
 
+#include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -38,9 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67 2010/07/07 01:22:12 chs Exp $"
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/asm.h>
+#include <mips/regnum.h>
 #include <mips/cache.h>
 #include <mips/pte.h>
 #include <mips/cpu.h>
@@ -58,23 +63,56 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67 2010/07/07 01:22:12 chs Exp $"
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_lex.h>
+#include <ddb/db_run.h>	/* for db_continue_cmd() proto */
 #endif
+
+#define NOCPU   ~0
+u_int ddb_cpu = NOCPU;
 
 int		db_active = 0;
 db_regs_t	ddb_regs;
-label_t		kdbaux; /* XXX struct switchframe: better inside curpcb? XXX */
+
+#ifdef MIPS_DDB_WATCH
+struct db_mach_watch {
+	register_t	addr;
+	register_t	mask;
+	uint32_t	asid;
+	uint32_t	mode;
+};
+/* mode bits */
+#define DB_WATCH_WRITE	__BIT(0)
+#define DB_WATCH_READ	__BIT(1)
+#define DB_WATCH_EXEC	__BIT(2)
+#define DB_WATCH_MASK	__BIT(3)
+#define DB_WATCH_ASID	__BIT(4)
+#define DB_WATCH_RWX	(DB_WATCH_EXEC|DB_WATCH_READ|DB_WATCH_WRITE)
+
+#define DBNWATCH	1
+static volatile struct db_mach_watch db_mach_watch_tab[DBNWATCH];
+
+static void db_mach_watch_set(int, register_t, register_t, uint32_t, uint32_t,
+	bool);
+static void db_watch_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void db_unwatch_cmd(db_expr_t, bool, db_expr_t, const char *);
+#endif	/* MIPS_DDB_WATCH */
+
+#ifdef MULTIPROCESSOR
+static void db_mach_cpu(db_expr_t, bool, db_expr_t, const char *);
+#endif
 
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
-#ifdef MIPS64
+#ifdef MIPS64_XLS
 void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 
-vaddr_t		MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
+bool db_running_on_this_cpu_p(void);
 
 paddr_t kvtophys(vaddr_t);
+
+CTASSERT(sizeof(ddb_regs) == sizeof(struct reg));
 
 #ifdef DDB_TRACE
 int
@@ -89,73 +127,65 @@ kdbpeek(vaddr_t addr)
 
 #ifndef KGDB
 int
-kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
+kdb_trap(int type, struct reg *regs)
 {
+	int s;
 
-	struct frame *f = (struct frame *)&ddb_regs;
-
-#ifdef notyet
 	switch (type) {
+	case T_WATCH:		/* watchpoint */
 	case T_BREAK:		/* breakpoint */
+		printf("kernel: %s trap\n", trap_names[type & 0x1f]);
+		break;
 	case -1:		/* keyboard interrupt */
+		printf("kernel: kdbint trap\n");
 		break;
 	default:
-		printf("kernel: %s trap", trap_type[type & 0xff]);
+		printf("kernel: %s trap\n", trap_names[type & 0x1f]);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
 		}
 		break;
 	}
-#endif
-	/* Should switch to kdb`s own stack here. */
-	db_set_ddb_regs(type, tfp);
 
+#ifdef MULTIPROCESSOR
+	bool first_in_ddb = false;
+	const u_int cpu_me = cpu_number();
+	const u_int old_ddb_cpu = atomic_cas_uint(&ddb_cpu, NOCPU, cpu_me);
+	if (old_ddb_cpu == NOCPU) {
+		first_in_ddb = true;
+		cpu_pause_others();
+	} else {
+		if (old_ddb_cpu != cpu_me) {
+			cpu_pause(regs);
+			return 1;
+		}
+	}
+#endif
+
+	/* Should switch to kdb`s own stack here. */
+	ddb_regs = *regs;
+
+	s = splhigh();
 	db_active++;
 	cnpollc(1);
 	db_trap(type & ~T_USER, 0 /*code*/);
 	cnpollc(0);
 	db_active--;
+	splx(s);
 
-	if (type & T_USER)
-		*curlwp->l_md.md_regs = *f;
-	else {
-		/* Synthetic full scale register context when trap happens */
-		tfp[TF_AST] = f->f_regs[_R_AST];
-		tfp[TF_V0] = f->f_regs[_R_V0];
-		tfp[TF_V1] = f->f_regs[_R_V1];
-		tfp[TF_A0] = f->f_regs[_R_A0];
-		tfp[TF_A1] = f->f_regs[_R_A1];
-		tfp[TF_A2] = f->f_regs[_R_A2];
-		tfp[TF_A3] = f->f_regs[_R_A3];
-		tfp[TF_T0] = f->f_regs[_R_T0];
-		tfp[TF_T1] = f->f_regs[_R_T1];
-		tfp[TF_T2] = f->f_regs[_R_T2];
-		tfp[TF_T3] = f->f_regs[_R_T3];
-		tfp[TF_TA0] = f->f_regs[_R_TA0];
-		tfp[TF_TA1] = f->f_regs[_R_TA1];
-		tfp[TF_TA2] = f->f_regs[_R_TA2];
-		tfp[TF_TA3] = f->f_regs[_R_TA3];
-		tfp[TF_T8] = f->f_regs[_R_T8];
-		tfp[TF_T9] = f->f_regs[_R_T9];
-		tfp[TF_RA] = f->f_regs[_R_RA];
-		tfp[TF_SR] = f->f_regs[_R_SR];
-		tfp[TF_MULLO] = f->f_regs[_R_MULLO];
-		tfp[TF_MULHI] = f->f_regs[_R_MULHI];
-		tfp[TF_EPC] = f->f_regs[_R_PC];
-		kdbaux.val[_L_S0] = f->f_regs[_R_S0];
-		kdbaux.val[_L_S1] = f->f_regs[_R_S1];
-		kdbaux.val[_L_S2] = f->f_regs[_R_S2];
-		kdbaux.val[_L_S3] = f->f_regs[_R_S3];
-		kdbaux.val[_L_S4] = f->f_regs[_R_S4];
-		kdbaux.val[_L_S5] = f->f_regs[_R_S5];
-		kdbaux.val[_L_S6] = f->f_regs[_R_S6];
-		kdbaux.val[_L_S7] = f->f_regs[_R_S7];
-		kdbaux.val[_L_GP] = f->f_regs[_R_GP];
-		kdbaux.val[_L_SP] = f->f_regs[_R_SP];
-		kdbaux.val[_L_S8] = f->f_regs[_R_S8];
-		kdbaux.val[_L_SR] = f->f_regs[_R_SR];
+#ifdef MULTIPROCESSOR
+	if (ddb_cpu == cpu_me) {
+		ddb_cpu = NOCPU;
+		cpu_resume_others();
+	} else {
+		cpu_resume(ddb_cpu);
+		if (first_in_ddb)
+			cpu_pause(regs);
 	}
+#endif
+
+	*regs = ddb_regs;
 
 	return (1);
 }
@@ -167,53 +197,6 @@ cpu_Debugger(void)
 	__asm("break");
 }
 #endif	/* !KGDB */
-
-void
-db_set_ddb_regs(int type, mips_reg_t *tfp)
-{
-	struct frame *f = (struct frame *)&ddb_regs;
-	
-	/* Should switch to kdb`s own stack here. */
-
-	if (type & T_USER)
-		*f = *curlwp->l_md.md_regs;
-	else {
-		/* Synthetic full scale register context when trap happens */
-		f->f_regs[_R_AST] = tfp[TF_AST];
-		f->f_regs[_R_V0] = tfp[TF_V0];
-		f->f_regs[_R_V1] = tfp[TF_V1];
-		f->f_regs[_R_A0] = tfp[TF_A0];
-		f->f_regs[_R_A1] = tfp[TF_A1];
-		f->f_regs[_R_A2] = tfp[TF_A2];
-		f->f_regs[_R_A3] = tfp[TF_A3];
-		f->f_regs[_R_T0] = tfp[TF_T0];
-		f->f_regs[_R_T1] = tfp[TF_T1];
-		f->f_regs[_R_T2] = tfp[TF_T2];
-		f->f_regs[_R_T3] = tfp[TF_T3];
-		f->f_regs[_R_TA0] = tfp[TF_TA0];
-		f->f_regs[_R_TA1] = tfp[TF_TA1];
-		f->f_regs[_R_TA2] = tfp[TF_TA2];
-		f->f_regs[_R_TA3] = tfp[TF_TA3];
-		f->f_regs[_R_T8] = tfp[TF_T8];
-		f->f_regs[_R_T9] = tfp[TF_T9];
-		f->f_regs[_R_RA] = tfp[TF_RA];
-		f->f_regs[_R_SR] = tfp[TF_SR];
-		f->f_regs[_R_MULLO] = tfp[TF_MULLO];
-		f->f_regs[_R_MULHI] = tfp[TF_MULHI];
-		f->f_regs[_R_PC] = tfp[TF_EPC];
-		f->f_regs[_R_S0] = kdbaux.val[_L_S0];
-		f->f_regs[_R_S1] = kdbaux.val[_L_S1];
-		f->f_regs[_R_S2] = kdbaux.val[_L_S2];
-		f->f_regs[_R_S3] = kdbaux.val[_L_S3];
-		f->f_regs[_R_S4] = kdbaux.val[_L_S4];
-		f->f_regs[_R_S5] = kdbaux.val[_L_S5];
-		f->f_regs[_R_S6] = kdbaux.val[_L_S6];
-		f->f_regs[_R_S7] = kdbaux.val[_L_S7];
-		f->f_regs[_R_GP] = kdbaux.val[_L_GP];
-		f->f_regs[_R_SP] = kdbaux.val[_L_SP];
-		f->f_regs[_R_S8] = kdbaux.val[_L_S8];
-	}
-}
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -248,47 +231,32 @@ void
 db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
+	struct tlbmask tlb;
 
 #ifdef MIPS1
 	if (!MIPS_HAS_R4K_MMU) {
-		struct mips1_tlb {
-			u_int32_t tlb_hi;
-			u_int32_t tlb_lo;
-		} tlb;
 		int i;
-		void mips1_TLBRead(int, struct mips1_tlb *);
 
-		for (i = 0; i < mips_num_tlb_entries; i++) {
-			mips1_TLBRead(i, &tlb);
+		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
+			tlb_read_indexed(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08x Lo 0x%08x",
-				(tlb.tlb_lo & MIPS1_PG_V) ? ' ' : '*',
+				(tlb.tlb_lo1 & MIPS1_PG_V) ? ' ' : '*',
 				i, tlb.tlb_hi,
-				tlb.tlb_lo & MIPS1_PG_FRAME);
+				tlb.tlb_lo1 & MIPS1_PG_FRAME);
 			db_printf(" %c%c%c\n",
-				(tlb.tlb_lo & MIPS1_PG_D) ? 'D' : ' ',
-				(tlb.tlb_lo & MIPS1_PG_G) ? 'G' : ' ',
-				(tlb.tlb_lo & MIPS1_PG_N) ? 'N' : ' ');
+				(tlb.tlb_lo1 & MIPS1_PG_D) ? 'D' : ' ',
+				(tlb.tlb_lo1 & MIPS1_PG_G) ? 'G' : ' ',
+				(tlb.tlb_lo1 & MIPS1_PG_N) ? 'N' : ' ');
 		}
 	}
 #endif
 #ifdef MIPS3_PLUS
 	if (MIPS_HAS_R4K_MMU) {
-		struct tlb tlb;
 		int i;
 
-		for (i = 0; i < mips_num_tlb_entries; i++) {
-#if defined(MIPS3)
-#if defined(MIPS3_5900)
-			mips5900_TLBRead(i, &tlb);
-#else
-			mips3_TLBRead(i, &tlb);
-#endif
-#elif defined(MIPS32)
-			mips32_TLBRead(i, &tlb);
-#elif defined(MIPS64)
-			mips64_TLBRead(i, &tlb);
-#endif
-			db_printf("TLB%c%2d Hi 0x%08x ",
+		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
+			tlb_read_indexed(i, &tlb);
+			db_printf("TLB%c%2d Hi 0x%08"PRIxVADDR" ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
 			db_printf("Lo0=0x%09" PRIx64 " %c%c attr %x ",
@@ -335,63 +303,88 @@ do {									\
 	    "", __val);							\
 } while (0)
 
-/* XXX not 64-bit ABI safe! */
-#define	SHOW64(reg, name)						\
-do {									\
-	uint64_t __val;							\
-									\
-	__asm volatile(						\
-		".set push 			\n\t"			\
-		".set mips3			\n\t"			\
-		".set noat			\n\t"			\
-		"dmfc0 %0,$" ___STRING(reg) "	\n\t"			\
-		"dsll %L0,%0,32			\n\t"			\
-		"dsrl %L0,%L0,32		\n\t"			\
-		"dsrl %M0,%0,32			\n\t"			\
-		".set pop"						\
-	    : "=r"(__val));						\
-	printf("  %s:%*s %#"PRIx64"\n", name, FLDWIDTH - (int) strlen(name), \
-	    "", __val);							\
-} while (0)
+#define SHOW64(reg, name)	MIPS64_SHOW64(reg, 0, name)
 
-#define	MIPS64_SHOW32(num, sel, name)						\
+#define	MIPS64_SHOW32(num, sel, name)					\
 do {									\
 	uint32_t __val;							\
 									\
+	KASSERT (CPUIS64BITS);						\
 	__asm volatile(							\
 		".set push			\n\t"			\
 		".set mips64			\n\t"			\
-		"mfc0 %0,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
+		"mfc0 %0,$%1,%2			\n\t"			\
 		".set pop			\n\t"			\
-	    : "=r"(__val));						\
+	    : "=r"(__val) : "n"(num), "n"(sel));			\
 	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
 	    "", __val);							\
 } while (0)
 
 /* XXX not 64-bit ABI safe! */
-#define	MIPS64_SHOW64(num, sel, name)						\
+#define	MIPS64_SHOW64(num, sel, name)					\
 do {									\
 	uint64_t __val;							\
 									\
+	KASSERT (CPUIS64BITS);						\
 	__asm volatile(							\
 		".set push 			\n\t"			\
 		".set mips64			\n\t"			\
 		".set noat			\n\t"			\
-		"dmfc0 %0,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
-		"dsll %L0,%0,32			\n\t"			\
-		"dsrl %L0,%L0,32		\n\t"			\
-		"dsrl %M0,%0,32			\n\t"			\
+		"dmfc0 %0,$%1,%2		\n\t"			\
 		".set pop"						\
-	    : "=r"(__val));						\
+	    : "=r"(__val) : "n"(num), "n"(sel));			\
 	printf("  %s:%*s %#"PRIx64"\n", name, FLDWIDTH - (int) strlen(name), \
 	    "", __val);							\
+} while (0)
+
+#define	SET32(reg, name, val)						\
+do {									\
+									\
+	__asm volatile("mtc0 %0,$" ___STRING(reg) :: "r"(val));		\
+	if (name != NULL)						\
+		printf("  %s =%*s %#x\n", name,				\
+		    FLDWIDTH - (int) strlen(name), "", val);		\
+} while (0)
+
+#define SET64(reg, name)	MIPS64_SET64(reg, 0, name)
+
+#define	MIPS64_SET32(num, sel, name, val)				\
+do {									\
+									\
+	KASSERT (CPUIS64BITS);						\
+	__asm volatile(							\
+		".set push			\n\t"			\
+		".set mips64			\n\t"			\
+		"mtc0 %0,$%1,%2			\n\t"			\
+		".set pop			\n\t"			\
+	    :: "r"(val), "n"(num), "n"(sel));				\
+	if (name != NULL)						\
+		printf("  %s =%*s %#x\n", name,				\
+		    FLDWIDTH - (int) strlen(name), "", val);		\
+} while (0)
+
+/* XXX not 64-bit ABI safe! */
+#define	MIPS64_SET64(num, sel, name, val)				\
+do {									\
+									\
+	KASSERT (CPUIS64BITS);						\
+	__asm volatile(							\
+		".set push 			\n\t"			\
+		".set mips64			\n\t"			\
+		".set noat			\n\t"			\
+		"dmtc0 %0,$%1,%2		\n\t"			\
+		".set pop"						\
+	    :: "r"(val), "n"(num), "n"(sel));				\
+	if (name != NULL)						\
+		printf("  %s =%*s %#"PRIx64"\n", name,			\
+		    FLDWIDTH - (int) strlen(name), "", (uint64_t)val);	\
 } while (0)
 
 void
 db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
-	u_int cp0flags = mycpu->cpu_cp0flags;
+	u_int cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 
 	SHOW32(MIPS_COP_0_TLB_INDEX, "index");
 	SHOW32(MIPS_COP_0_TLB_RANDOM, "random");
@@ -425,7 +418,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		SHOW32(MIPS_COP_0_BAD_VADDR, "badvaddr");
 	}
 
-	if (cpu_arch >= CPU_ARCH_MIPS3) {
+	if (mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3) {
 		SHOW32(MIPS_COP_0_COUNT, "count");
 	}
 
@@ -440,7 +433,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		SHOW32(MIPS_COP_0_TLB_HI, "entryhi");
 	}
 
-	if (cpu_arch >= CPU_ARCH_MIPS3) {
+	if (mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3) {
 		SHOW32(MIPS_COP_0_COMPARE, "compare");
 	}
 
@@ -490,16 +483,17 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (MIPS_HAS_LLSC) {
 		if (MIPS_HAS_LLADDR) {
-			if (CPUIS64BITS) {
+			if (CPUIS64BITS)
 				SHOW64(MIPS_COP_0_LLADDR, "lladdr");
-				SHOW64(MIPS_COP_0_WATCH_LO, "watchlo");
-			} else {
+			else
 				SHOW32(MIPS_COP_0_LLADDR, "lladdr");
-				SHOW32(MIPS_COP_0_WATCH_LO, "watchlo");
-			}
 		}
 
 		SHOW32(MIPS_COP_0_WATCH_HI, "watchhi");
+		if (CPUIS64BITS)
+			SHOW64(MIPS_COP_0_WATCH_LO, "watchlo");
+		else
+			SHOW32(MIPS_COP_0_WATCH_LO, "watchlo");
 
 		if (CPUIS64BITS) {
 			SHOW64(MIPS_COP_0_TLB_XCONTEXT, "xcontext");
@@ -532,14 +526,216 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 }
 
-#ifdef MIPS64
+#ifdef MIPS_DDB_WATCH
+void
+db_mach_watch_set_all(void)
+{
+	volatile struct db_mach_watch *wp;
+	int i;
+
+	for (i=0; i < DBNWATCH; i++) {
+		wp = &db_mach_watch_tab[i];
+		db_mach_watch_set(i, wp->addr, wp->mask, wp->asid, wp->mode,
+			true);
+	}
+}
+
+/*
+ * db_mach_watch_set - write the COP0 registers
+ */
+static void
+db_mach_watch_set(int wnum, register_t addr, register_t mask, uint32_t asid,
+	uint32_t mode, bool quiet)
+{
+	uint32_t watchhi;
+	register_t watchlo;
+	const char *strhi = (quiet) ? NULL : "watchhi";
+	const char *strlo = (quiet) ? NULL : "watchlo";
+
+	KASSERT(wnum == 0);	/* TBD */
+
+	watchlo = addr;
+	if (mode & DB_WATCH_WRITE)
+		watchlo |= __BIT(0);
+	if (mode & DB_WATCH_READ)
+		watchlo |= __BIT(1);
+	if (mode & DB_WATCH_EXEC)
+		watchlo |= __BIT(2);
+
+	if (mode & DB_WATCH_ASID)
+		watchhi = asid << 16;	/* addr qualified by asid */
+	else
+		watchhi = __BIT(30);	/* addr not qualified by asid (Global)*/
+	if (mode & DB_WATCH_MASK)
+		watchhi |= mask;	/* set "dont care" addr match bits */
+
+	SET32(MIPS_COP_0_WATCH_HI, strhi, watchhi);
+
+	if (CPUIS64BITS) {
+		MIPS64_SET64(MIPS_COP_0_WATCH_LO, 0, strlo, watchlo);
+	} else {
+		SET32(MIPS_COP_0_WATCH_LO, strlo, (uint32_t)watchlo);
+	}
+}
+
+static void
+db_watch_cmd(db_expr_t address, bool have_addr, db_expr_t count,
+		 const char *modif)
+{
+	volatile struct db_mach_watch *wp;
+	register_t mask=0;
+	uint32_t asid;
+	uint32_t mode;
+	db_expr_t value;
+	int wnum;
+	char str[6];
+
+	if (!have_addr) {
+		db_printf("%-3s %-5s %-16s %4s %4s\n",
+			"#", "MODE", "ADDR", "MASK", "ASID");
+		for (int i=0; i < DBNWATCH; i++) {
+			wp = &db_mach_watch_tab[i];
+			mode = wp->mode;
+			if ((mode & DB_WATCH_RWX) == 0)
+				continue;	/* empty/disabled/invalid */
+			str[0] = (mode & DB_WATCH_READ)  ?  'r' : '-';
+			str[1] = (mode & DB_WATCH_WRITE) ?  'w' : '-';
+			str[2] = (mode & DB_WATCH_EXEC)  ?  'x' : '-';
+			str[3] = (mode & DB_WATCH_MASK)  ?  'm' : '-';
+			str[4] = (mode & DB_WATCH_ASID)  ?  'a' : 'g';
+			str[5] = '\0';
+			db_printf("%2d: %s %16" PRIxREGISTER
+				  " %4" PRIxREGISTER " %4x\n",
+					i, str, wp->addr, wp->mask, wp->asid);
+		}
+		db_flush_lex();
+		return;
+	}
+
+	/*
+	 * find an empty slot
+	 * no lock for the table since only 1 CPU active in ddb at a time
+	 * (other CPUs are paused)
+	 */
+	for (int i=0; i < DBNWATCH; i++) {
+		wp = &db_mach_watch_tab[i];	/* empty/disabled/invalid */
+		if ((wp->mode & DB_WATCH_RWX) == 0) {
+			wnum = i;
+			goto found;
+		}
+	}
+	db_printf("no watchpoint available\n");
+	db_flush_lex();
+	return;
+ found:
+	/*
+	 * parse modif to define mode
+	 */
+	KASSERT(modif != NULL);
+	mode = 0;
+	for (int i=0; modif[i] != '\0'; i++) {
+		switch(modif[i]) {
+		case 'w':
+			mode |= DB_WATCH_WRITE;
+			break;
+		case 'm':
+			mode |= DB_WATCH_MASK;
+			break;
+		case 'r':
+			mode |= DB_WATCH_READ;
+			break;
+		case 'x':
+			mode |= DB_WATCH_EXEC;
+			break;
+		case 'a':
+			mode |= DB_WATCH_ASID;
+			break;
+		}
+	}
+	if (mode == 0) {
+		db_printf("mode modifier(s) missing\n");
+		db_flush_lex();
+		return;
+	}
+
+	/*
+	 * if mask mode is requested get the mask,
+	 */
+	if (mode & DB_WATCH_MASK) {
+		if (! db_expression(&value)) {
+			db_printf("mask missing\n");
+			db_flush_lex();
+			return;
+		}
+		mask = (register_t)(value & __BITS(11, 3));
+	}
+
+	/*
+	 * if asid mode is requested, get the asid;
+	 * otherwise use global mode (and set asid=0)
+	 */
+	if (mode & DB_WATCH_ASID) {
+		if (! db_expression(&value)) {
+			db_printf("asid missing\n");
+			db_flush_lex();
+			return;
+		}
+		asid = (uint32_t)(value & __BITS(7,0));
+	} else {
+		asid = 0;
+	}
+
+	if (mode & (DB_WATCH_MASK|DB_WATCH_ASID))
+		db_skip_to_eol();
+	else
+		db_flush_lex();
+
+	/*
+	 * store to the (volatile) table entry
+	 * other CPUs can see this and load when resuming from pause
+	 */
+	wp->addr = (register_t)address;
+	wp->mask = (register_t)mask;
+	wp->asid = asid;
+	wp->mode = mode;
+
+	db_mach_watch_set(wnum, (register_t)address, mask, asid, mode, false);
+}
+
+static void
+db_unwatch_cmd(db_expr_t address, bool have_addr, db_expr_t count,
+		 const char *modif)
+{
+	volatile struct db_mach_watch *wp;
+	int i, n;
+	bool unwatch_all = !have_addr;
+
+	n = 0;
+	for (i=0; i < DBNWATCH; i++) {
+		wp = &db_mach_watch_tab[i];
+		if (unwatch_all || (wp->addr == (register_t)address)) {
+			n++;
+			wp->mode = 0;
+			wp->asid = 0;
+			wp->addr = 0;
+			db_mach_watch_set(i, 0, 0, 0, 0, false);
+		}
+	}
+	if (n == 0)
+		db_printf("no watch found on address %#" PRIxREGISTER "\n",
+			(register_t)address);
+
+}
+#endif	/* MIPS_DDB_WATCH */
+
+#ifdef MIPS64_XLS
 void
 db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *modif)
 {
 	uint64_t value;
 
-	if ((mycpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
+	if ((mips_options.mips_cpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
 		db_printf("mfcr not implemented on this CPU\n");
 		return;
 	}
@@ -567,12 +763,12 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 {
 	db_expr_t value;
 
-	if ((mycpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
+	if ((mips_options.mips_cpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
 		db_printf("mtcr not implemented on this CPU\n");
 		return;
 	}
 
-	if ((!have_addr) || (db_expression(&value) == 0)) {
+	if ((!have_addr) || (! db_expression(&value))) {
 		db_printf("Address missing\n");
 		db_flush_lex();
 		return;
@@ -584,18 +780,30 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set push 			\n\t"			\
 		".set mips64			\n\t"			\
 		".set noat			\n\t"			\
-		"mfcr %0,%1			\n\t"			\
+		"mtcr %0,%1			\n\t"			\
 		".set pop 			\n\t"			\
 	    :: "r"(value), "r"(addr));
 
 	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
 }
-#endif /* MIPS64 */
+#endif /* MIPS64_XLS */
 
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,		0,
+#ifdef MULTIPROCESSOR
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu,		0,
+	  "switch to another cpu", "cpu#", NULL) },
+#endif
+	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,	0,
 		"Dump CP0 registers.",
 		NULL, NULL) },
+#ifdef MIPS_DDB_WATCH
+	{ DDB_ADD_CMD("watch",	db_watch_cmd,		CS_MORE,
+		"set cp0 watchpoint",
+		"address <mask> <asid> </rwxma>", NULL) },
+	{ DDB_ADD_CMD("unwatch",db_unwatch_cmd,		0,
+		"delete cp0 watchpoint",
+		"address", NULL) },
+#endif	/* MIPS_DDB_WATCH */
 	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
 		"Print the physical address for a given kernel virtual address",
 		"address", 
@@ -603,7 +811,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
 		"Print out TLB entries. (only works with options DEBUG)",
 		NULL, NULL) },
-#ifdef MIPS64
+#ifdef MIPS64_XLS
 	{ DDB_ADD_CMD("mfcr", 	db_mfcr_cmd,		CS_NOREPEAT,
 		"Dump processor control register",
 		NULL, NULL) },
@@ -716,64 +924,50 @@ inst_unconditional_flow_transfer(int inst)
 bool
 inst_load(int inst)
 {
-	InstFmt i;
+	InstFmt i = { .word = inst, };
 
-	i.word = inst;
+	/*
+	 * All loads are opcodes 04x or 06x.
+	 */
+	if ((i.JType.op & 050) != 040)
+		return false;
 
-	switch (i.JType.op) {
-	case OP_LWC1:
-	case OP_LB:
-	case OP_LH:
-	case OP_LW:
-	case OP_LD:
-	case OP_LBU:
-	case OP_LHU:
-	case OP_LWU:
-	case OP_LDL:
-	case OP_LDR:
-	case OP_LWL:
-	case OP_LWR:
-	case OP_LL:
-		return 1;
-	default:
-		return 0;
-	}
+	/*
+	 * Except these this opcode is not a load.
+	 */
+	return i.JType.op != OP_PREF;
 }
 
 bool
 inst_store(int inst)
 {
-	InstFmt i;
+	InstFmt i = { .word = inst, };
 
-	i.word = inst;
+	/*
+	 * All stores are opcodes 05x or 07x.
+	 */
+	if ((i.JType.op & 050) != 050)
+		return false;
 
-	switch (i.JType.op) {
-	case OP_SWC1:
-	case OP_SB:
-	case OP_SH:
-	case OP_SW:
-	case OP_SD:
-	case OP_SDL:
-	case OP_SDR:
-	case OP_SWL:
-	case OP_SWR:
-	case OP_SCD:
-		return 1;
-	default:
-		return 0;
-	}
+	/*
+	 * Except these two opcodes are not stores.
+	 */
+	return i.JType.op != OP_RSVD073 && i.JType.op != OP_CACHE;
 }
 
 /*
  * Return the next pc if the given branch is taken.
- * MachEmulateBranch() runs analysis for branch delay slot.
+ * mips_emul_branch() runs analysis for branch delay slot.
  */
 db_addr_t
 branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 {
 	struct pcb * const pcb = lwp_getpcb(curlwp);
+	const uint32_t fpucsr = PCB_FSR(pcb);
+	vaddr_t ra;
 
-	return MachEmulateBranch((struct frame *)regs, pc, PCB_FSR(pcb), 0);
+	ra = mips_emul_branch((struct trapframe *)regs, pc, fpucsr, false);
+	return ra;
 }
 
 /*
@@ -788,7 +982,7 @@ next_instr_address(db_addr_t pc, bool bd)
 		return (pc + 4);
 	
 	if (pc < MIPS_KSEG0_START)
-		ins = fuiword((void *)pc);
+		ins = ufetch_uint32((void *)pc);
 	else
 		ins = *(unsigned *)pc;
 
@@ -797,3 +991,56 @@ next_instr_address(db_addr_t pc, bool bd)
 
 	return (pc);
 }
+
+#ifdef MULTIPROCESSOR
+
+bool 
+ddb_running_on_this_cpu(void)
+{               
+	return ddb_cpu == cpu_index(curcpu());
+}
+
+bool 
+ddb_running_on_any_cpu(void)
+{               
+	return ddb_cpu != NOCPU;
+}
+
+void
+db_resume_others(void)
+{
+	int cpu_me = cpu_index(curcpu());
+
+	if (atomic_cas_32(&ddb_cpu, cpu_me, NOCPU) == cpu_me)
+		cpu_resume_others();
+}
+
+static void
+db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	
+	if (!have_addr) {
+		cpu_debug_dump();
+		return;
+	}
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (cpu_index(ci) == addr)
+			break;
+	}
+	if (ci == NULL) {
+		db_printf("CPU %ld not configured\n", (long)addr);
+		return;
+	}
+	if (ci != curcpu()) {
+		if (!cpu_is_paused(cpu_index(ci))) {
+			db_printf("CPU %ld not paused\n", (long)addr);
+			return;
+		}
+		/* no locking needed - all other cpus are paused */
+		ddb_cpu = cpu_index(ci);
+		db_continue_cmd(0, false, 0, "");
+	}
+}
+#endif	/* MULTIPROCESSOR */
