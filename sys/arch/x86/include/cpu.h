@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2011/02/19 13:52:28 jmcneill Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2011/02/20 12:47:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
 #include <machine/intrdefs.h>
 
 #include <x86/cacheinfo.h>
-#include <x86/via_padlock.h>
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
