@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.238 2011/02/20 06:45:32 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.239 2011/02/20 16:24:54 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.238 2011/02/20 06:45:32 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.239 2011/02/20 16:24:54 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.238 2011/02/20 06:45:32 jruoho Exp $");
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
@@ -123,20 +124,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.238 2011/02/20 06:45:32 jruoho Exp $");
 #include <dev/acpi/acpi_timer.h>
 #include <dev/acpi/acpi_wakedev.h>
 
+#include <machine/acpi_machdep.h>
+
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi")
-
-#if defined(ACPI_PCI_FIXUP)
-#error The option ACPI_PCI_FIXUP has been obsoleted by PCI_INTR_FIXUP_DISABLED.  Please adjust your kernel configuration file.
-#endif
-
-#ifdef PCI_INTR_FIXUP_DISABLED
-#include <dev/pci/pcidevs.h>
-#endif
-
-MALLOC_DECLARE(M_ACPI);
-
-#include <machine/acpi_machdep.h>
 
 /*
  * The acpi_active variable is set when the ACPI subsystem is active.
@@ -548,9 +539,6 @@ acpi_detach(device_t self, int flags)
 	return 0;
 }
 
-/*
- * XXX: Need to reclaim any resources? Yes.
- */
 static void
 acpi_childdet(device_t self, device_t child)
 {
@@ -559,7 +547,8 @@ acpi_childdet(device_t self, device_t child)
 
 	if (sc->sc_apmbus == child)
 		sc->sc_apmbus = NULL;
-	if (sc->sc_wdrt == child)	
+
+	if (sc->sc_wdrt == child)
 		sc->sc_wdrt = NULL;
 
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
@@ -670,7 +659,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 	case ACPI_TYPE_THERMAL:
 	case ACPI_TYPE_POWER:
 
-		ad = malloc(sizeof(*ad), M_ACPI, M_NOWAIT | M_ZERO);
+		ad = kmem_zalloc(sizeof(*ad), KM_NOSLEEP);
 
 		if (ad == NULL)
 			return AE_NO_MEMORY;
@@ -1725,6 +1714,8 @@ acpi_print_dev_stub(const char *pnpstr)
 	if (acpi_verbose_loaded != 0)
 		acpi_print_dev(pnpstr);
 }
+
+MALLOC_DECLARE(M_ACPI); /* XXX: ACPI_ACTIVATE_DEV should use kmem(9). */
 
 /*
  * ACPI_ACTIVATE_DEV.
