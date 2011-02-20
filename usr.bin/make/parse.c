@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.174 2011/02/20 20:15:36 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.175 2011/02/20 20:17:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.174 2011/02/20 20:15:36 dholland Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.175 2011/02/20 20:17:35 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.174 2011/02/20 20:15:36 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.175 2011/02/20 20:17:35 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2933,7 +2933,7 @@ Parse_File(const char *name, int fd)
     if (fatals) {
 	(void)fflush(stdout);
 	(void)fprintf(stderr,
-	    "%s: Fatal errors encountered -- cannot continue\n",
+	    "%s: Fatal errors encountered -- cannot continue",
 	    progname);
 	PrintOnError(NULL, NULL);
 	exit(1);
