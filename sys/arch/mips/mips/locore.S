@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.176 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.177 2011/02/20 16:58:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -610,7 +610,7 @@ XNESTED(mips_fpu_trap)
 	COP0_HAZARD_FPUENABLE
 
 	REG_PROLOGUE
-	REG_L		t3, TF_REG_CAUSE(a1)
+	REG_L		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
 	cfc1		t0, MIPS_FPU_CSR	# stall til FP done
@@ -629,13 +629,11 @@ XNESTED(mips_fpu_trap)
  *
  * fetch the instruction and emulate the instruction.
  */
-	bgez		t3, 1f			# Check the branch delay bit.
+	bgez		a2, 1f			# Check the branch delay bit.
 	 nop
 /*
  * The instruction is in the branch delay slot.
  */
-	move		a2, a0			# 3rd arg is opcode address
-
 	b		2f
 	 INT_L		a0, 4(a0)		# a0 = coproc instruction
 /*
