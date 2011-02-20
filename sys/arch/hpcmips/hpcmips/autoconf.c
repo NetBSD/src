@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 2011/02/20 07:58:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2011/02/08 20:20:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2011/02/20 07:58:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ cpu_configure(void)
 		panic("no mainbus found");
 
 	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
+	spl0();		/* enable all source forcing SOFT_INTs cleared */
 }
 
 void
