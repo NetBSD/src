@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2011/01/23 13:18:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/02/20 07:59:52 matt Exp $
 
 PROG=	ip30boot
 NOMAN=	# defined
 
-SRCS=	start64.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
-	getopt.c disk.c
+SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
+	getopt.c disk.c arcbios_calls.S
+
 
 CLEANFILES+=	boot.map
 
@@ -19,6 +20,7 @@ BINMODE?=	444
 realall: ${PROG}
 
 .PATH:		${.CURDIR}/../common
+.PATH.S:	${S}/dev/arcbios
 AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls -mabi=64 -D_LP64
 CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
@@ -28,6 +30,10 @@ NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CPPFLAGS+=	-Dsgimips
+
+MACHINE_ARCH=	mips64eb
+
+.include "${S}/dev/arcbios/Makefile.inc"
 
 # We load the kernel at 420K in from the start of RAM to give the boot
 # loader plenty of breathing room.  Load the boot loader starting at
@@ -70,8 +76,10 @@ LIBSA=		${SALIB}
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 ip30boot: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} -m elf64btsmip -Map boot.map -x -Ttext ${LOAD_ADDRESS_IP30} \
 		${LDBUG} -e start -o ${.TARGET} ${OBJS} ${LIBS}
+	${SIZE} ${.TARGET}
 
 cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
