@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212.h,v 1.1.1.1 2008/12/11 04:46:38 alc Exp $
+ * $Id: ar5212.h,v 1.2 2011/02/20 11:21:03 jmcneill Exp $
  */
 #ifndef _ATH_AR5212_H_
 #define _ATH_AR5212_H_
@@ -356,8 +356,6 @@ struct ath_hal_5212 {
 #define IS_2417(ah) \
 	((AH_PRIVATE(ah)->ah_macVersion) == AR_SREV_2417)
 #define IS_HB63(ah)		(AH5212(ah)->ah_isHb63 == AH_TRUE)
-
-#define IS_PCIE(ah) (IS_5424(ah) || IS_2425(ah))
 
 #define	AH_RADIO_MAJOR(ah) \
 	(AH_PRIVATE(ah)->ah_analog5GhzRev & AR_RADIO_SREV_MAJOR)
