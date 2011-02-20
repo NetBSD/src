@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/02/20 02:12:31 christos Exp $
+# $NetBSD: Makefile,v 1.2 2011/02/20 02:14:42 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ CFG_MECH+= LOGIN.conf
 CFG_MECH+= PLAIN.conf
 
 install:
-	${INSTALL_FILE} -d -o root -g wheel -m 444 \
+	${INSTALL_FILE} -o root -g wheel -m 444 \
 	    ${CFG_FILE} ${DESTDIR}${CFG_DIR}
-	${INSTALL_FILE} -d -o root -g wheel -m 444 \
+	${INSTALL_FILE} -o root -g wheel -m 444 \
 	    ${CFG_MECH} ${DESTDIR}${CFG_DIR}/mech
