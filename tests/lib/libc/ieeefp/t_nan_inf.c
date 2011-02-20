@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nan_inf.c,v 1.1 2011/01/02 03:51:21 pgoyette Exp $	*/
+/*	$NetBSD: t_nan_inf.c,v 1.2 2011/02/20 20:57:46 jmmv Exp $	*/
 
 /*
  * This file is in the Public Domain.
@@ -54,7 +54,7 @@ ATF_TP_ADD_TCS(tp)
 {
 	const char *arch;
 
-	arch = atf_config_get("atf_machine");
+	arch = atf_config_get("atf_arch");
 	if (strcmp("vax", arch) == 0 || strcmp("m68000", arch) == 0)
 		atf_tc_skip("Test not applicable on %s", arch);
 	else {
