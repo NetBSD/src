@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.17 2011/02/20 13:42:46 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.18 2011/02/20 19:24:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.17 2011/02/20 13:42:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.18 2011/02/20 19:24:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,6 +50,30 @@ __KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.17 2011/02/20 13:42:46 jruoho Exp $")
 #include <machine/cpufunc.h>
 #include <machine/cputypes.h>
 #include <machine/specialreg.h>
+
+#define MSR_THERM_STATUS_STA		__BIT(0)
+#define MSR_THERM_STATUS_LOG		__BIT(1)
+#define MSR_THERM_STATUS_PROCHOT_EVT	__BIT(2)
+#define MSR_THERM_STATUS_PROCHOT_LOG	__BIT(3)
+#define MSR_THERM_STATUS_CRIT_STA	__BIT(4)
+#define MSR_THERM_STATUS_CRIT_LOG	__BIT(5)
+#define MSR_THERM_STATUS_TRIP1_STA	__BIT(6)
+#define MSR_THERM_STATUS_TRIP1_LOG	__BIT(7)
+#define MSR_THERM_STATUS_TRIP2_STA	__BIT(8)
+#define MSR_THERM_STATUS_TRIP2_LOG	__BIT(9)
+#define MSR_THERM_STATUS_READOUT	__BITS(16, 22)
+#define MSR_THERM_STATUS_RESOLUTION	__BITS(27, 30)
+#define MSR_THERM_STATUS_VALID		__BIT(31)
+
+#define MSR_THERM_INTR_HITEMP		__BIT(0)
+#define MSR_THERM_INTR_LOTEMPT		__BIT(1)
+#define MSR_THERM_INTR_PROCHOT		__BIT(2)
+#define MSR_THERM_INTR_FORCPR		__BIT(3)
+#define MSR_THERM_INTR_OVERHEAT		__BIT(4)
+#define MSR_THERM_INTR_TRIP1_VAL	__BITS(8, 14)
+#define MSR_THERM_INTR_TRIP1		__BIT(15)
+#define MSR_THERM_INTR_TRIP2_VAL	__BIT(16, 22)
+#define MSR_THERM_INTR_TRIP2		__BIT(23)
 
 static int	coretemp_match(device_t, cfdata_t, void *);
 static void	coretemp_attach(device_t, device_t, void *);
@@ -102,12 +126,16 @@ coretemp_attach(device_t parent, device_t self, void *aux)
 	struct coretemp_softc *sc = device_private(self);
 	struct cpufeature_attach_args *cfaa = aux;
 	struct cpu_info *ci = cfaa->ci;
+	uint64_t msr;
 
 	sc->sc_ci = ci;
 	sc->sc_dev = self;
 
+	msr = rdmsr(MSR_THERM_STATUS);
+	msr = __SHIFTOUT(msr, MSR_THERM_STATUS_RESOLUTION);
+
 	aprint_naive("\n");
-	aprint_normal(": Intel on-die thermal sensor\n");
+	aprint_normal(": thermal sensor, %u C resolution\n", (uint32_t)msr);
 
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
@@ -237,53 +265,27 @@ coretemp_refresh_xcall(void *arg0, void *arg1)
 	envsys_data_t *edata = arg1;
 	uint64_t msr;
 
-	/*
-	 * The digital temperature reading is located at bit 16
-	 * of MSR_THERM_STATUS.
-	 *
-	 * There is a bit on that MSR that indicates whether the
-	 * temperature is valid or not.
-	 *
-	 * The temperature is computed by subtracting the temperature
-	 * reading by Tj(max).
-	 */
 	msr = rdmsr(MSR_THERM_STATUS);
 
-	/*
-	 * Check for Thermal Status and Thermal Status Log.
-	 */
-	if ((msr & 0x03) == 0x03)
-		aprint_debug_dev(sc->sc_dev, "PROCHOT asserted\n");
-
-	/*
-	 * Bit 31 contains "Reading valid".
-	 */
-	if (((msr >> 31) & 0x01) == 1) {
+	if ((msr & MSR_THERM_STATUS_VALID) == 0)
+		edata->state = ENVSYS_SINVALID;
+	else {
 		/*
-		 * Starting on bit 16 and ending on bit 22.
+		 * The temperature is computed by
+		 * subtracting the reading by Tj(max).
 		 */
-		edata->value_cur = sc->sc_tjmax - ((msr >> 16) & 0x7F);
+		edata->value_cur = sc->sc_tjmax;
+		edata->value_cur -= __SHIFTOUT(msr, MSR_THERM_STATUS_READOUT);
+
 		/*
 		 * Convert to mK.
 		 */
 		edata->value_cur *= 1000000;
 		edata->value_cur += 273150000;
 		edata->state = ENVSYS_SVALID;
-	} else
-		edata->state = ENVSYS_SINVALID;
+	}
 
-	/*
-	 * Check for Critical Temperature Status and Critical
-	 * Temperature Log.
-	 * It doesn't really matter if the current temperature is
-	 * invalid because the "Critical Temperature Log" bit will
-	 * tell us if the Critical Temperature has been reached in
-	 * past. It's not directly related to the current temperature.
-	 *
-	 * If we reach a critical level, send a critical event to
-	 * powerd(8) (if running).
-	 */
-	if (((msr >> 4) & 0x03) == 0x03)
+	if ((msr & MSR_THERM_STATUS_CRIT_STA) != 0)
 		edata->state = ENVSYS_SCRITICAL;
 }
 
