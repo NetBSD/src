@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2002/11/09 06:20:37 cgd Exp $
+# $NetBSD: Makefile,v 1.2 2011/02/20 07:47:39 matt Exp $
 
-SUBDIR=		boot bootxx_cd9660 bootxx_ffs bootxx_lfs netboot
+SUBDIR=		bootxx_cd9660 bootxx_ffs bootxx_lfs netboot
+SUBDIR+=	boot netboot
 #SUBDIR+=	installboot
-
 
 .include <bsd.subdir.mk>
