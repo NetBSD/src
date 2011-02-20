@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1289 2011/02/16 07:30:27 jruoho Exp $
+# $NetBSD: mi,v 1.1290 2011/02/20 08:31:46 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -974,7 +974,7 @@
 ./usr/share/man/cat4/fta.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fujbp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fujhk.0			man-sys-catman		.cat
-./usr/share/man/cat4/fujitsu.0			man-sys-catman		.cat
+./usr/share/man/cat4/fujitsu.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fwhrng.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fwip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fwiso.0			man-obsolete		obsolete
@@ -3736,7 +3736,7 @@
 ./usr/share/man/html4/fta.html			man-sys-htmlman		html
 ./usr/share/man/html4/fujbp.html		man-sys-htmlman		html
 ./usr/share/man/html4/fujhk.html		man-sys-htmlman		html
-./usr/share/man/html4/fujitsu.html		man-sys-htmlman		html
+./usr/share/man/html4/fujitsu.html		man-obsolete		obsolete
 ./usr/share/man/html4/fwhrng.html		man-obsolete		obsolete
 ./usr/share/man/html4/fwip.html			man-sys-htmlman		html
 ./usr/share/man/html4/fwohci.html		man-sys-htmlman		html
@@ -6273,7 +6273,7 @@
 ./usr/share/man/man4/fta.4			man-sys-man		.man
 ./usr/share/man/man4/fujbp.4			man-sys-man		.man
 ./usr/share/man/man4/fujhk.4			man-sys-man		.man
-./usr/share/man/man4/fujitsu.4			man-sys-man		.man
+./usr/share/man/man4/fujitsu.4			man-obsolete		obsolete
 ./usr/share/man/man4/fwhrng.4			man-obsolete		obsolete
 ./usr/share/man/man4/fwip.4			man-sys-man		.man
 ./usr/share/man/man4/fwiso.4			man-obsolete		obsolete

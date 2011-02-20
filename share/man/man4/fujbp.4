@@ -1,6 +1,6 @@
-.\" $NetBSD: fujitsu.4,v 1.4 2010/11/05 14:43:56 gsutre Exp $
+.\" $NetBSD: fujbp.4,v 1.1 2011/02/20 08:31:46 jruoho Exp $
 .\"
-.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,11 +24,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 5, 2010
-.Dt FUJITSU 4
+.Dd February 20, 2011
+.Dt FUJBP 4
 .Os
 .Sh NAME
-.Nm fujitsu
+.Nm fujbp ,
+.Nm fujhk
 .Nd Fujitsu Brightness, Pointer, and Hotkeys
 .Sh SYNOPSIS
 .Cd "fujbp* at acpi?"
@@ -39,9 +40,11 @@ Some Fujitsu laptops come with vendor-specific
 devices to manage the laptop hotkeys (such as the
 .Sq Eco
 button), and to control various built-in components (such as the display,
-the touchpad and the speakers).
+the touchpad, and the speakers).
 The
 .Nm
+and
+.Ic fujhk
 drivers provide support, through these
 .Tn ACPI
 devices, for hotkeys, backlight on/off switch, brightness level control, and
@@ -59,9 +62,7 @@ Pointer switch state (boolean).
 Backlight switch state (boolean).
 .El
 .Pp
-Please note, however, that future versions of the
-.Nm
-drivers may remove these
+Please note, however, that future versions of the drivers may remove these
 .Xr sysctl 8
 variables without prior notice.
 .Sh SEE ALSO
@@ -73,6 +74,8 @@ variables without prior notice.
 .Sh HISTORY
 The
 .Nm
+and
+.Ic fujhk
 drivers appeared in
 .Nx 6.0 .
 .Sh AUTHORS
