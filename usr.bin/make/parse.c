@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.175 2011/02/20 20:17:35 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.176 2011/02/20 23:12:09 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.175 2011/02/20 20:17:35 dholland Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.176 2011/02/20 23:12:09 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.175 2011/02/20 20:17:35 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.176 2011/02/20 23:12:09 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2208,7 +2208,7 @@ ParseSetParseFile(const char *filename)
 
     slash = strrchr(filename, '/');
     if (slash == NULL) {
-	Var_Set(".PARSEDIR", ".", VAR_GLOBAL, 0);
+	Var_Set(".PARSEDIR", curdir, VAR_GLOBAL, 0);
 	Var_Set(".PARSEFILE", filename, VAR_GLOBAL, 0);
     } else {
 	len = slash - filename;
