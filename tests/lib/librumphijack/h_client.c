@@ -1,4 +1,4 @@
-/*	$NetBSD: h_client.c,v 1.2 2011/02/12 10:28:08 pooka Exp $	*/
+/*	$NetBSD: h_client.c,v 1.3 2011/02/20 23:45:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -28,10 +28,12 @@
  */
 
 #include <sys/types.h>
+#include <sys/poll.h>
 #include <sys/select.h>
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,6 +88,26 @@ main(int argc, char *argv[])
 			err(1, "select2");
 		if (rv != 0)
 			errx(1, "select2 succesful");
+
+		exit(0);
+	} else if (strcmp(argv[1], "invafd") == 0) {
+		struct pollfd pfd[2];
+		int fd;
+
+		fd = open("/rump/dev/null", O_RDWR);
+		if (fd == -1)
+			err(1, "open");
+		close(fd);
+
+		pfd[0].fd = STDIN_FILENO;
+		pfd[0].events = POLLIN;
+		pfd[1].fd = fd;
+		pfd[1].events = POLLIN;
+
+		if (poll(pfd, 2, INFTIM) != 1)
+			errx(1, "poll unexpected rv");
+		if (pfd[1].revents != POLLNVAL || pfd[0].revents != 0)
+			errx(1, "poll unexpected revents");
 
 		exit(0);
 	} else {
