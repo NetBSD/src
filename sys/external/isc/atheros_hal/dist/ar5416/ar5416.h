@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416.h,v 1.1.1.1 2008/12/11 04:46:46 alc Exp $
+ * $Id: ar5416.h,v 1.2 2011/02/20 11:21:03 jmcneill Exp $
  */
 #ifndef _ATH_AR5416_H_
 #define _ATH_AR5416_H_
@@ -45,6 +45,8 @@ typedef struct {
 #define	AR5416_CCA_MAX_HIGH_VALUE	-62
 #define	AR5416_CCA_MIN_BAD_VALUE	-140
 
+#define AR5416_SPUR_RSSI_THRESH		40
+
 struct ath_hal_5416 {
 	struct ath_hal_5212 ah_5212;
 
@@ -57,6 +59,12 @@ struct ath_hal_5416 {
 	HAL_INI_ARRAY	ah_ini_bank6;
 	HAL_INI_ARRAY	ah_ini_bank7;
 	HAL_INI_ARRAY	ah_ini_addac;
+	HAL_INI_ARRAY	ah_ini_pcieserdes;
+
+	void		(*ah_writeIni)(struct ath_hal *,
+			    HAL_CHANNEL_INTERNAL *);
+	void		(*ah_spurMitigate)(struct ath_hal *,
+			    HAL_CHANNEL_INTERNAL *);
 
 	u_int       	ah_globaltxtimeout;	/* global tx timeout */
 	int		ah_hangs;		/* h/w hangs state */
@@ -89,6 +97,7 @@ extern	void ar5416InitState(struct ath_hal_5416 *, uint16_t devid,
 		HAL_SOFTC sc, HAL_BUS_TAG st, HAL_BUS_HANDLE sh,
 		HAL_STATUS *status);
 extern	void ar5416Detach(struct ath_hal *ah);
+extern	void ar5416AttachPCIE(struct ath_hal *ah);
 extern	HAL_BOOL ar5416FillCapabilityInfo(struct ath_hal *ah);
 
 #define	IS_5GHZ_FAST_CLOCK_EN(_ah, _c) \
