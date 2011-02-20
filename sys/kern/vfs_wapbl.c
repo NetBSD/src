@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.42 2011/02/18 13:24:40 hannken Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.43 2011/02/20 11:21:34 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.42 2011/02/18 13:24:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.43 2011/02/20 11:21:34 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1406,7 +1406,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	if (wapbl_verbose_commit) {
 		struct timespec ts;
 		getnanotime(&ts);
-		printf("%s: %lld.%06ld this transaction = %zu bytes\n",
+		printf("%s: %lld.%09ld this transaction = %zu bytes\n",
 		    __func__, (long long)ts.tv_sec,
 		    (long)ts.tv_nsec, flushsize);
 	}
