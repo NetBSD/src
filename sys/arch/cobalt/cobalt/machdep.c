@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2011/02/20 07:54:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2011/02/20 15:47:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2011/02/20 07:54:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2011/02/20 15:47:28 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -281,7 +281,7 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 #endif
 	KASSERT(&lwp0 == curlwp);
 #ifdef DDB
-//	if (boothowto & RB_KDB)
+	if (boothowto & RB_KDB)
 		Debugger();
 #endif
 #ifdef KGDB
