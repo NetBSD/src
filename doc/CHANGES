@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1509 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1510 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -860,3 +860,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[christos 20110215]
 	acpi(4): Updated ACPICA to 20110211. [jruoho 20110217]
 	ath(4): Add support for AR9280 devices. [jmcneill 20110220]
+	mips: Second merge of matt-nb5-mips64 branch.  Added SMP support for
+		MIPS architecture.  Rewritten interrupt handling to be much
+		more efficient, added "fast" software interrupts and kernel
+		preemption.  Added support for RMI (NetLogic) XLS/XLR models.
+		Major clean up for MIPS port. [matt 20110220]
