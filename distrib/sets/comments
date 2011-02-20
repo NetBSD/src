@@ -264,6 +264,8 @@ etc-games-scores empty score files for games
 etc-ipf-rc startup scripts for IP filter
 etc-isdn-rc startup script for ISDN (Integrated Services Digital Network) network connectivity utilities
 etc-krb5-rc startup script for the Kerberos V authentication service
+etc-libsaslc-etc configuration file for the SASL C library
+etc-libsaslc-postfix configuration file for postfix SASL
 etc-lpr-etc configuration file for printing services
 etc-lpr-log empty log file for printing services
 etc-lpr-rc startup script for printing services

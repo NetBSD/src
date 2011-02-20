@@ -287,6 +287,8 @@ etc-games-scores base-games-root
 etc-ipf-rc base-sys-root
 etc-isdn-rc base-sys-root
 etc-krb5-rc base-sys-root
+etc-libsaslc-etc base-sys-root
+etc-libsaslc-postfix base-sys-root
 etc-lpr-etc base-sys-root
 etc-lpr-log base-sys-root
 etc-lpr-rc base-sys-root
