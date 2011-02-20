@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.26 2008/07/30 17:24:27 tsutsui Exp $ */
+/* $NetBSD: crmfb.c,v 1.27 2011/02/20 07:59:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.26 2008/07/30 17:24:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.27 2011/02/20 07:59:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	crmfb_fill_rect(sc, 0, 0, sc->sc_width, sc->sc_height,
 	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
 
-	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
+	consdev = arcbios_GetEnvironmentVariable("ConsoleOut");
 	if (consdev != NULL && strcmp(consdev, "video()") == 0) {
 		wsdisplay_cnattach(&crmfb_defaultscreen, ri, 0, 0, defattr);
 		aa.console = 1;
@@ -898,7 +898,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 
 	/* turn off sync-on-green */
 
-	wantsync = ARCBIOS->GetEnvironmentVariable("SyncOnGreen");
+	wantsync = arcbios_GetEnvironmentVariable("SyncOnGreen");
 	if ( (wantsync != NULL) && (wantsync[0] == 'n') ) {
 		d = ( 1 << CRMFB_VT_FLAGS_SYNC_LOW_LSB) & 
 		    CRMFB_REG_MASK(CRMFB_VT_FLAGS_SYNC_LOW_MSB, 

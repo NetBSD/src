@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 2011/02/08 20:20:23 rmind Exp $	*/
+/*	$NetBSD: clock.c,v 1.24 2011/02/20 07:59:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,12 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2011/02/08 20:20:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 2011/02/20 07:59:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <machine/sysconf.h>
 
 #include <mips/locore.h>
@@ -56,10 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 2011/02/08 20:20:23 rmind Exp $");
 #include <machine/machtype.h>
 #include <sgimips/sgimips/clockvar.h>
 
-u_int32_t next_clk_intr;
-u_int32_t missed_clk_intrs;
+uint32_t next_clk_intr;
+uint32_t missed_clk_intrs;
 
-void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void mips3_clock_intr(vaddr_t, uint32_t, uint32_t);
 
 /*
  * Machine-dependent clock routines.
@@ -91,7 +92,7 @@ cpu_initclocks(void)
 	case MACH_SGI_IP12:
 		/* int(4) will take care of our clocks */
 		/* enable hardware interrupts including hardclock(9) */
-		_splnone();
+		spl0();
 		break;
 #endif /* MIPS1 */
 #if defined(MIPS3)
@@ -110,13 +111,13 @@ cpu_initclocks(void)
 
 #if defined(MIPS3)
 void
-mips3_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
-		 u_int32_t ipending)
+mips3_clock_intr(vaddr_t pc, uint32_t status, uint32_t pending)
 {
 	struct clockframe cf;
 
 	cf.pc = pc;
 	cf.sr = status;
+	cf.intr = (curcpu()->ci_idepth > 1);
 	mips3_clockintr(&cf);
 }
 
