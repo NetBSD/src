@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.8 2011/01/22 19:19:22 joerg Exp $
+# $NetBSD: Makefile.bootprogs,v 1.9 2011/02/20 07:47:39 matt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -21,7 +21,7 @@ STRIP?=	strip
 CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
 .PHONY: machine-links
-beforedepend: machine-links
+beforedepend: machine-links .WAIT
 # ${MACHINE} then ${MACHINE_ARCH}
 machine-links:
 	-rm -f machine && \
@@ -32,10 +32,11 @@ CLEANFILES+=machine mips
 
 realall: machine-links ${PROG}
 
-AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls
+AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls -mips64
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
 CFLAGS=		-Os -g -ffreestanding -mno-abicalls -msoft-float -G 0
+CFLAGS+=	-mips64
 CFLAGS+=	-Werror ${CWARNFLAGS}
 
 NETBSD_VERS!=${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
@@ -105,7 +106,7 @@ SECONDARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 STANDPROG_LOAD_ADDRESS=	0xfffffc0000300000
 
 
-FILE_FORMAT_CPPFLAGS=	-DBOOT_ECOFF -DBOOT_ELF
+FILE_FORMAT_CPPFLAGS=	-DBOOT_ELF
 
 UNIFIED_CPPFLAGS=	-DUNIFIED_BOOTBLOCK \
 			-DHEAP_LIMIT="${UNIFIED_HEAP_LIMIT}" \
@@ -141,7 +142,6 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-
 /usr/lib/crt0.o:
 	true
 
@@ -151,6 +151,6 @@ LIBSA=		${SALIB}
 /usr/lib/crtend.o:
 	true
 
-cleandir: cleandirlocal
+cleandir: .WAIT cleandirlocal
 cleandirlocal:
 	-rm -rf lib
