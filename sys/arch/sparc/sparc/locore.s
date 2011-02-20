@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.263 2011/02/20 10:02:01 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.264 2011/02/20 10:26:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5919,7 +5919,6 @@ Lfp_null_fpstate:
 	sethi	%hi(Lpanic_savefpstate), %o0
 	call	_C_LABEL(panic)
 	 or	%o0, %lo(Lpanic_savefpstate), %o0
-1:
 
 /*
  * Store the (now known nonempty) FP queue.
