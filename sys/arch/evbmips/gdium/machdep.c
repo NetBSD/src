@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2011/02/08 20:20:12 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2011/02/20 07:48:34 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2011/02/08 20:20:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2011/02/20 07:48:34 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -139,12 +139,6 @@ int mem_cluster_cnt;
 
 void	configure(void);
 void	mach_init(int, char **, char **, void *);
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS1_PSL_LOWIPL;
 
 /*
  * For some reason, PMON doesn't assign a real address to the Ralink's BAR.
@@ -231,7 +225,7 @@ mach_init(int argc, char **argv, char **envp, void *callvec)
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, bool);
 
 	/* set the VM page size */
 	uvm_setpagesize();

@@ -1,11 +1,10 @@
-/*	$NetBSD: rmixl_pcie_mem_space.c,v 1.2 2009/12/14 00:46:08 matt Exp $	*/
-
+/*	$NetBSD: rmixl_cpuvar.h,v 1.2 2011/02/20 07:48:37 matt Exp $	*/
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Cliff Neighbors.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,35 +28,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Little Endian bus_space(9) support for PCI MEM access
- * on RMI {XLP,XLR,XLS} chips
- */
+#ifndef _ARCH_MIPS_RMI_RMIXL_CPUVAR_H_
+#define _ARCH_MIPS_RMI_RMIXL_CPUVAR_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie_mem_space.c,v 1.2 2009/12/14 00:46:08 matt Exp $");
+struct rmixl_cpu_trampoline_args {
+	uint64_t	ta_sp;
+	uint64_t	ta_lwp;
+	uint64_t	ta_cpuinfo;
+};
 
-#include <sys/types.h>
-#include <sys/param.h>
+struct rmixl_cpu_softc {
+	device_t sc_dev;
+	struct cpu_info *sc_ci;
+	struct evcnt sc_vec_evcnts[64];
+};
 
-#include <machine/bus.h>
-#include <mips/rmi/rmixl_obiovar.h>
-#include <mips/rmi/rmixlreg.h>
-#include <mips/rmi/rmixlvar.h>
-
-#define	CHIP			rmixl_pcie
-#define	CHIP_MEM		/* defined */
-#define	CHIP_ACCESS_SIZE	1
-#define CHIP_LITTLE_ENDIAN
-
-#define CHIP_EX_MALLOC_SAFE(v)	(((struct rmixl_config *)(v))->rc_mallocsafe)
-#define CHIP_EXTENT(v)		(((struct rmixl_config *)(v))->rc_pcie_mem_ex)
-
-/* MEM region 1 */
-#define	CHIP_W1_BUS_START(v)	(((struct rmixl_config *)(v))->rc_pci_mem_pbase)
-#define	CHIP_W1_BUS_END(v)	(CHIP_W1_SYS_START(v) + \
-					(((struct rmixl_config *)(v))->rc_pci_mem_size) - 1)
-#define CHIP_W1_SYS_START(v)	CHIP_W1_BUS_START(v)
-#define CHIP_W1_SYS_END(v)	CHIP_W1_BUS_END(v)
-
-#include <mips/mips/bus_space_alignstride_chipdep.c>
+#endif	/* _ARCH_MIPS_RMI_RMIXL_CPUVAR_H_ */

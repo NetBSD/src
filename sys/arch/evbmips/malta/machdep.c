@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2011/02/08 20:20:12 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2011/02/20 07:48:34 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2011/02/08 20:20:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2011/02/20 07:48:34 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2011/02/08 20:20:12 rmind Exp $");
 #include <machine/psl.h>
 #include <machine/yamon.h>
 
+#include <mips/locore.h>
+
 #include <evbmips/malta/autoconf.h>
 #include <evbmips/malta/maltareg.h>
 #include <evbmips/malta/maltavar.h>
@@ -127,9 +129,6 @@ struct malta_config malta_configuration;
 /* For sysctl_hw. */
 extern char cpu_model[];
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
 
@@ -146,23 +145,16 @@ void	configure(void);
 void	mach_init(int, char **, yamon_env_var *, u_long);
 
 /*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS1_PSL_LOWIPL;
-
-/*
  * Do all the stuff that locore normally does before calling main().
  */
 void
 mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
 	struct malta_config *mcp = &malta_configuration;
+	uint8_t * const brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 	bus_space_handle_t sh;
 	void *kernend;
-	u_long first, last;
 	int freqok;
-	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 
 	extern char edata[], end[];
 
@@ -192,7 +184,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	/* set the VM page size */
 	uvm_setpagesize();
@@ -268,10 +260,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -292,6 +282,13 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * We can never be running on more than one processor but we can dream.
+	 */
+	mips_fixup_exceptions(mips_fixup_zero_relative);
+#endif
 }
 
 void
@@ -310,37 +307,16 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
 	/*
-	 * Good {morning,afternoon,evening,night}.
+	 * Do the common startup items.
 	 */
-	printf("%s%s", copyright, version);
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	/*
 	 * Virtual memory is bootstrapped -- notify the bus spaces
 	 * that memory allocation is now safe.
 	 */
 	malta_configuration.mc_mallocsafe = 1;
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio.
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	/*
-	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.)
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;
@@ -350,8 +326,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;
