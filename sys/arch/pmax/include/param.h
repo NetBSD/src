@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.42 2011/02/08 20:20:22 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.43 2011/02/20 07:50:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@
 
 void	delay(int n);
 extern	int cpuspeed;
-static __inline void __attribute__((__unused__))
+static __inline void __unused
 DELAY(int n)
 {
 	register int __N = cpuspeed * n;
