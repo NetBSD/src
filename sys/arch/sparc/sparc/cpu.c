@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.230 2011/02/15 09:05:14 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.231 2011/02/20 10:02:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.230 2011/02/15 09:05:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.231 2011/02/20 10:02:01 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -342,14 +342,9 @@ cpu_init_evcnt(struct cpu_info *cpi)
 
 	/*
 	 * Setup the per-cpu counters.
-	 *
-	 * The "savefp null" counter should go away when the NULL
-	 * struct fpstate * bug is fixed.
 	 */
 	evcnt_attach_dynamic(&cpi->ci_savefpstate, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "savefp ipi");
-	evcnt_attach_dynamic(&cpi->ci_savefpstate_null, EVCNT_TYPE_MISC,
-			     NULL, cpu_name(cpi), "savefp null ipi");
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "IPI mutex_trylock fail");
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail_call, EVCNT_TYPE_MISC,
