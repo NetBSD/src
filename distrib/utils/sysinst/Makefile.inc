@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.51 2010/02/03 15:34:38 roy Exp $
+#	$NetBSD: Makefile.inc,v 1.52 2011/02/20 08:26:09 matt Exp $
 #
 # Makefile for sysinst
 
@@ -39,7 +39,8 @@ UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
-		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\"
+		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
+		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH}
 
 .if defined(SMALLPROG_INET6) && (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
