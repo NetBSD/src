@@ -1,4 +1,4 @@
-/* $NetBSD: mech_gssapi.c,v 1.5 2011/02/12 23:21:32 christos Exp $ */
+/* $NetBSD: mech_gssapi.c,v 1.6 2011/02/20 01:59:46 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_gssapi.c,v 1.5 2011/02/12 23:21:32 christos Exp $");
+__RCSID("$NetBSD: mech_gssapi.c,v 1.6 2011/02/20 01:59:46 christos Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: mech_gssapi.c,v 1.5 2011/02/12 23:21:32 christos Exp $");
 #include "mech.h"
 #include "msg.h"
 #include "saslc_private.h"
-
 
 /* See RFC 2222 section 7.2.1. */
 
@@ -643,7 +642,10 @@ choose_qop(saslc_sess_t *sess, uint32_t qop_flags)
 	qop_flags &= DEFAULT_QOP_MASK;
 	user_qop = saslc_sess_getprop(sess, SASLC_GSSAPI_QOPMASK);
 	if (user_qop != NULL) {
-		list = saslc__list_parse(user_qop);
+		if (saslc__list_parse(&list, user_qop) == -1) {
+			saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+			return -1;
+		}
 		qop_flags &= saslc__mech_qop_list_flags(list);
 		saslc__list_free(list);
 	}
