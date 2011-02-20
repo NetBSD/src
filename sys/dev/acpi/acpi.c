@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.237 2011/02/19 09:52:32 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.238 2011/02/20 06:45:32 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.237 2011/02/19 09:52:32 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.238 2011/02/20 06:45:32 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -138,16 +138,6 @@ MALLOC_DECLARE(M_ACPI);
 
 #include <machine/acpi_machdep.h>
 
-#ifdef ACPI_DEBUGGER
-#define	ACPI_DBGR_INIT		0x01
-#define	ACPI_DBGR_TABLES	0x02
-#define	ACPI_DBGR_ENABLE	0x04
-#define	ACPI_DBGR_PROBE		0x08
-#define	ACPI_DBGR_RUNNING	0x10
-
-static int acpi_dbgr = 0x00;
-#endif
-
 /*
  * The acpi_active variable is set when the ACPI subsystem is active.
  * Machine-dependent code may wish to skip other steps (such as attaching
@@ -159,7 +149,7 @@ int		acpi_suspended = 0;
 int		acpi_force_load = 0;
 int		acpi_verbose_loaded = 0;
 
-struct acpi_softc	*acpi_softc;
+struct acpi_softc	*acpi_softc = NULL;
 static uint64_t		 acpi_root_pointer;
 extern kmutex_t		 acpi_interrupt_list_mtx;
 extern struct		 cfdriver acpi_cd;
@@ -260,42 +250,25 @@ int
 acpi_probe(void)
 {
 	ACPI_TABLE_HEADER *rsdt;
-	const char *func;
-	static int once;
-	bool initialized;
 	ACPI_STATUS rv;
+	int quirks;
 
-	if (once != 0)
+	if (acpi_softc != NULL)
 		panic("%s: already probed", __func__);
-
-	once = 1;
-	func = NULL;
-	acpi_softc = NULL;
-	initialized = false;
 
 	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * Start up ACPICA.
 	 */
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_INIT)
-		acpi_osd_debugger();
-#endif
-
-	CTASSERT(TRUE == true);
-	CTASSERT(FALSE == false);
-
 	AcpiGbl_AllMethodsSerialized = false;
 	AcpiGbl_EnableInterpreterSlack = true;
 
 	rv = AcpiInitializeSubsystem();
 
-	if (ACPI_SUCCESS(rv))
-		initialized = true;
-	else {
-		func = "AcpiInitializeSubsystem()";
-		goto fail;
+	if (ACPI_FAILURE(rv)) {
+		aprint_error("%s: failed to initialize subsystem\n", __func__);
+		return 0;
 	}
 
 	/*
@@ -305,49 +278,47 @@ acpi_probe(void)
 	rv = AcpiInitializeTables(NULL, 2, true);
 
 	if (ACPI_FAILURE(rv)) {
-		func = "AcpiInitializeTables()";
+		aprint_error("%s: failed to initialize tables\n", __func__);
 		goto fail;
 	}
-
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_TABLES)
-		acpi_osd_debugger();
-#endif
 
 	rv = AcpiLoadTables();
 
 	if (ACPI_FAILURE(rv)) {
-		func = "AcpiLoadTables()";
+		aprint_error("%s: failed to load tables\n", __func__);
 		goto fail;
 	}
 
 	rsdt = acpi_map_rsdt();
 
 	if (rsdt == NULL) {
-		func = "acpi_map_rsdt()";
-		rv = AE_ERROR;
+		aprint_error("%s: failed to map RSDT\n", __func__);
 		goto fail;
 	}
 
-	if (acpi_force_load == 0 && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
+	quirks = acpi_find_quirks();
+
+	if (acpi_force_load == 0 && (quirks & ACPI_QUIRK_BROKEN) != 0) {
+
 		aprint_normal("ACPI: BIOS is listed as broken:\n");
 		aprint_normal("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
-		       "AslId <%4.4s,%08x>\n",
-			rsdt->OemId, rsdt->OemTableId,
-		        rsdt->OemRevision,
-			rsdt->AslCompilerId,
+		       "AslId <%4.4s,%08x>\n", rsdt->OemId, rsdt->OemTableId,
+		        rsdt->OemRevision, rsdt->AslCompilerId,
 		        rsdt->AslCompilerRevision);
 		aprint_normal("ACPI: Not used. Set acpi_force_load to use.\n");
+
 		acpi_unmap_rsdt(rsdt);
-		AcpiTerminate();
-		return 0;
+		goto fail;
 	}
-	if (acpi_force_load == 0 && (acpi_find_quirks() & ACPI_QUIRK_OLDBIOS)) {
-		aprint_normal("ACPI: BIOS is too old (%s). Set acpi_force_load to use.\n",
+
+	if (acpi_force_load == 0 && (quirks & ACPI_QUIRK_OLDBIOS) != 0) {
+
+		aprint_normal("ACPI: BIOS is too old (%s). "
+		    "Set acpi_force_load to use.\n",
 		    pmf_get_platform("firmware-date"));
+
 		acpi_unmap_rsdt(rsdt);
-		AcpiTerminate();
-		return 0;
+		goto fail;
 	}
 
 	acpi_unmap_rsdt(rsdt);
@@ -355,24 +326,14 @@ acpi_probe(void)
 	rv = AcpiEnableSubsystem(~(ACPI_NO_HARDWARE_INIT|ACPI_NO_ACPI_ENABLE));
 
 	if (ACPI_FAILURE(rv)) {
-		func = "AcpiEnableSubsystem()";
+		aprint_error("%s: failed to enable subsystem\n", __func__);
 		goto fail;
 	}
 
-	/*
-	 * Looks like we have ACPI!
-	 */
 	return 1;
 
 fail:
-	KASSERT(rv != AE_OK);
-	KASSERT(func != NULL);
-
-	aprint_error("%s: failed to probe ACPI: %s\n",
-	    func, AcpiFormatException(rv));
-
-	if (initialized != false)
-		(void)AcpiTerminate();
+	(void)AcpiTerminate();
 
 	return 0;
 }
@@ -468,13 +429,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
-	 * Bring ACPI on-line.
+	 * Bring ACPICA on-line.
 	 */
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_ENABLE)
-		acpi_osd_debugger();
-#endif
-
 #define ACPI_ENABLE_PHASE1 \
     (ACPI_NO_HANDLER_INIT | ACPI_NO_EVENT_INIT)
 #define ACPI_ENABLE_PHASE2 \
@@ -532,21 +488,11 @@ acpi_attach(device_t parent, device_t self, void *aux)
 
 	acpitimer_init(sc);
 
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_PROBE)
-		acpi_osd_debugger();
-#endif
-
 	/*
 	 * Scan the namespace and build our device tree.
 	 */
 	acpi_build_tree(sc);
 	acpi_sleep_init(sc);
-
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_RUNNING)
-		acpi_osd_debugger();
-#endif
 
 #ifdef ACPI_DEBUG
 	acpi_debug_init();
@@ -1659,6 +1605,9 @@ acpi_map_rsdt(void)
 	return AcpiOsMapMemory(paddr, sizeof(ACPI_TABLE_HEADER));
 }
 
+/*
+ * XXX: Refactor to be a generic function that unmaps tables.
+ */
 static void
 acpi_unmap_rsdt(ACPI_TABLE_HEADER *rsdt)
 {
