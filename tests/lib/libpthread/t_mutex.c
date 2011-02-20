@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.2 2010/07/16 18:16:43 njoly Exp $ */
+/* $NetBSD: t_mutex.c,v 1.3 2011/02/20 14:37:44 jmmv Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.2 2010/07/16 18:16:43 njoly Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.3 2011/02/20 14:37:44 jmmv Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_mutex.c,v 1.2 2010/07/16 18:16:43 njoly Exp $");
 #include "h_common.h"
 
 static pthread_mutex_t mutex;
+static pthread_mutex_t static_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int global_x;
 
 static void *
@@ -158,9 +159,9 @@ mutex3_threadfunc(void *arg)
 	printf("2: Second thread (%p). Count is %ld\n", pthread_self(), count);
 
 	while (count--) {
-		PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+		PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 		global_x++;
-		PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
+		PTHREAD_REQUIRE(pthread_mutex_unlock(&static_mutex));
 	}
 
 	return (void *)count;
@@ -169,7 +170,8 @@ mutex3_threadfunc(void *arg)
 ATF_TC(mutex3);
 ATF_TC_HEAD(mutex3, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks mutexes");
+	atf_tc_set_md_var(tc, "descr", "Checks mutexes using a static "
+	    "initializer");
 }
 ATF_TC_BODY(mutex3, tc)
 {
@@ -179,26 +181,25 @@ ATF_TC_BODY(mutex3, tc)
 
 	printf("1: Mutex-test 3\n");
 
-	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
-
 	global_x = 0;
 	count = count2 = 10000000;
 
-	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+	PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 	PTHREAD_REQUIRE(pthread_create(&new, NULL, mutex3_threadfunc, &count2));
 
 	printf("1: Thread %p\n", pthread_self());
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
+
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&static_mutex));
 
 	while (count--) {
-		PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+		PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 		global_x++;
-		PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
+		PTHREAD_REQUIRE(pthread_mutex_unlock(&static_mutex));
 	}
 
 	PTHREAD_REQUIRE(pthread_join(new, &joinval));
 
-	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+	PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 	printf("1: Thread joined. X was %d. Return value (long) was %ld\n",
 		global_x, (long)joinval);
 	ATF_REQUIRE_EQ(global_x, 20000000);
