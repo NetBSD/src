@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.231 2011/02/20 10:02:01 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.232 2011/02/20 11:41:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.231 2011/02/20 10:02:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.232 2011/02/20 11:41:20 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -742,6 +742,30 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	if (i < 0)
 		printf_nolog("%s\n", errbuf);
 	mutex_spin_exit(&xpmsg_mutex);
+
+#if 0
+	if (!timeout)
+		return;
+
+	/*
+	 * Let's make this a hard panic for now, and figure out why it happens.
+	 *
+	 * We call mp_pause_cpus() so we can capture their state *now* as opposed
+	 * to after we've written all the below to the console.
+	 */
+#ifdef DDB
+	mp_pause_cpus_ddb();
+#else
+	mp_pause_cpus();
+#endif
+	printf_nolog("xcall(cpu%d,%p) from %p: couldn't ping cpus:",
+	    cpu_number(), fasttrap ? trap : func, __builtin_return_address(0));
+	for (CPU_INFO_FOREACH(n, cpi))
+		if ((failed_cpuset & (1 << n)) == 0)
+			printf_nolog(" cpu%d", cpi->ci_cpuid);
+	printf_nolog("%s\n", i == 10000000 ? " [hard 10M timeout]" : "");
+	panic("failed to ping cpus");
+#endif
 }
 
 /*
