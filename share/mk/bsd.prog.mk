@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.259 2011/02/13 00:42:45 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.260 2011/02/20 20:16:01 jmmv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -113,6 +113,11 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
+# atf-c and atf-c++ are special cases because we cannot use [-+] as part of
+# make(1) variable names.  Just define them here.
+LIBATF_C=	${DESTDIR}/usr/lib/libatf-c.a
+LIBATF_CXX=	${DESTDIR}/usr/lib/libatf-c++.a
+.MADE:		${LIBATF_C} ${LIBATF_CXX}
 
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")
