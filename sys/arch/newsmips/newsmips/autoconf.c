@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2011/02/08 20:20:21 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 2011/02/20 07:56:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,8 +46,10 @@
  * and the drivers are initialized.
  */
 
+#define __INTR_PRIVATE
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2011/02/08 20:20:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34 2011/02/20 07:56:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,12 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2011/02/08 20:20:21 rmind Exp $");
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <machine/cpu.h>
 #include <machine/adrsmap.h>
 #include <machine/romcall.h>
 
@@ -91,7 +94,7 @@ cpu_configure(void)
 	/*
 	 * Kick off autoconfiguration
 	 */
-	_splnone();	/* enable all interrupts */
+	spl0();		/* enable all interrupts */
 	splhigh();	/* ...then disable device interrupts */
 
 	if (systype == NEWS3400) {
@@ -106,7 +109,7 @@ cpu_configure(void)
 	enable_intr();
 
 	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
+	spl0();		/* enable all source forcing SOFT_INTs cleared */
 }
 
 void
