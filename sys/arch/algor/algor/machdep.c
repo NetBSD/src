@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2011/02/08 20:20:07 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2011/02/20 07:51:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/02/08 20:20:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/02/20 07:51:21 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/02/08 20:20:07 rmind Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+
+#include <mips/locore.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -170,14 +172,10 @@ mach_init(int argc, char *argv[], char *envp[])
 {
 	extern char kernel_text[], edata[], end[];
 	vaddr_t kernstart, kernend;
-	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	vsize_t size;
 	const char *cp;
 	char *cp0;
 	size_t i;
-
-	/* Disable interrupts. */
-	(void) splhigh();
 
 	/*
 	 * First, find the start and end of the kernel and clear
@@ -190,13 +188,20 @@ mach_init(int argc, char *argv[], char *envp[])
 	memset(edata, 0, kernend - (vaddr_t)edata);
 
 	/*
+	 * Copy the exception-dispatch code down to the exception vector.
+	 * Initialize the locore function vector.  Clear out the I- and
+	 * D-caches.
+	 *
+	 * We can no longer call into PMON after this.
+	 */
+	led_display('v', 'e', 'c', 'i');
+	mips_vector_init(NULL, false);
+
+	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	led_display('p', 'g', 's', 'z');
 	uvm_setpagesize();
-
-	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS(kernstart));
-	kernendpfn   = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
 	/*
 	 * Initialize bus space tags and bring up the console.
@@ -450,71 +455,23 @@ mach_init(int argc, char *argv[], char *envp[])
 	mem_cluster_cnt++;
 
 	/*
-	 * Copy the exception-dispatch code down to the exception vector.
-	 * Initialize the locore function vector.  Clear out the I- and
-	 * D-caches.
-	 *
-	 * We can no longer call into PMON after this.
-	 */
-	led_display('v', 'e', 'c', 'i');
-	mips_vector_init();
-
-	/*
 	 * Load the physical memory clusters into the VM system.
 	 */
 	led_display('v', 'm', 'p', 'g');
 	for (i = 0; i < mem_cluster_cnt; i++) {
 		physmem += atop(mem_clusters[i].size);
-		pfn0 = atop(mem_clusters[i].start);
-		pfn1 = pfn0 + atop(mem_clusters[i].size);
-		if (pfn0 <= kernstartpfn && kernendpfn <= pfn1) {
-			/*
-			 * Must compute the location of the kernel
-			 * within the segment.
-			 */
-#if 1
-			printf("Cluster %zu contains kernel\n", i);
-#endif
-			if (pfn0 < kernstartpfn) {
-				/*
-				 * There is a chunk before the kernel.
-				 */
-#if 1
-				printf("Loading chunk before kernel: "
-				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
-				    pfn0, kernstartpfn);
-#endif
-				uvm_page_physload(pfn0, kernstartpfn,
-				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
-			}
-			if (kernendpfn < pfn1) {
-				/*
-				 * There is a chunk after the kernel.
-				 */
-#if 1
-				printf("Loading chunk after kernel: "
-				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
-				    kernendpfn, pfn1);
-#endif
-				uvm_page_physload(kernendpfn, pfn1,
-				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
-			}
-		} else {
-			/*
-			 * Just load this cluster as one chunk.
-			 */
-#if 1
-			printf("Loading cluster %zu: %#"PRIxPADDR
-			    " / %#"PRIxPADDR"\n", i, pfn0, pfn1);
-#endif
-			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
-			    VM_FREELIST_DEFAULT);
-		}
 	}
-
 	if (physmem == 0)
 		panic("can't happen: system seems to have no memory!");
 	maxmem = physmem;
+
+	static const struct mips_vmfreelist isadma = {
+		.fl_start = 8*1024*1024,
+		.fl_end = 16*1024*1024,
+		.fl_freelist = VM_FREELIST_ISADMA,
+	};
+	mips_page_physload(kernstart, kernend,
+	    mem_clusters, mem_cluster_cnt, &isadma, 1);
 
 	/*
 	 * Initialize message buffer (at end of core).
@@ -628,8 +585,7 @@ cpu_reboot(int howto, char *bootstr)
 	int tmp;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)
