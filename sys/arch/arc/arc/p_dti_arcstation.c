@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.15 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.16 2011/02/20 07:52:42 matt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,12 +39,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.15 2011/02/08 20:20:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.16 2011/02/20 07:52:42 matt Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <uvm/uvm.h>
+#include <sys/intr.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -100,28 +103,16 @@ struct platform platform_desktech_arcstation_i = {
  * given interrupt priority level.
  */
 /* XXX see comments in p_dti_arcstation_init() */
-static const uint32_t dti_arcstation_ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0|
-	    MIPS_INT_MASK_1|
-	    MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_3|
-	    MIPS_INT_MASK_4|
-	    MIPS_INT_MASK_5,
-	[IPL_SCHED] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0|
-	    MIPS_INT_MASK_1|
-	    MIPS_INT_MASK_2|
-	    MIPS_INT_MASK_3|
-	    MIPS_INT_MASK_4|
-	    MIPS_INT_MASK_5,
+static const struct ipl_sr_map dti_arcstation_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_INT_MASK,	/* XXX */
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+     },
 };
 
 #if NPC_ISA > 0 || NOPMS_ISA > 0
@@ -211,7 +202,7 @@ p_dti_arcstation_init(void)
 	 * or
 	 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
 	 */
-	ipl_sr_bits = dti_arcstation_ipl_sr_bits;
+	ipl_sr_map = dti_arcstation_ipl_sr_map;
 
 	/*
 	 * XXX - should be enabled, if tested.

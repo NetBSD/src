@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.4 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: start.S,v 1.5 2011/02/20 07:52:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+
+#include "assym.h"
 
 	.globl	start
 start:
