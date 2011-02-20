@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.27 2010/02/08 19:02:30 joerg Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.28 2011/02/20 07:45:47 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -48,9 +48,14 @@
 #else
 #error ENABLE_MIPS_xKB_PAGE not defined
 #endif
+#define	USPACE_ALIGN	USPACE		/* make sure it starts on a even VA */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
+
+#ifndef COHERENCY_UNIT
+#define COHERENCY_UNIT	32	/* MIPS cachelines are usually 32 bytes */
 #endif
 
 /*
@@ -80,7 +85,14 @@
 
 #define NBSEG		(NBPG*NPTEPG)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	(2*PGSHIFT-2)	/* LOG2(NBSEG) */
+#define	SEGSHIFT	(PGSHIFT+(PGSHIFT-2))	/* LOG2(NBSEG) */
+
+#ifdef _LP64
+#define	NSEGPG		(NBPG/8)
+#define NBXSEG		(NSEGPG*NBSEG)	/* bytes/xsegment */
+#define	XSEGOFSET	(NBSEG-1)	/* byte offset into segment */
+#define	XSEGSHIFT	(SEGSHIFT+(PGSHIFT-3))	/* LOG2(NBXSEG) */
+#endif
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
