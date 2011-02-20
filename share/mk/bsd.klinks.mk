@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.klinks.mk,v 1.7 2010/03/13 22:05:49 christos Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.8 2011/02/20 04:05:14 jmcneill Exp $
 #
 
 .include <bsd.own.mk>
@@ -22,7 +22,7 @@ CLEANFILES+=	sparc
 .elif ${MACHINE} == "i386"
 CLEANFILES+=	x86
 .elif ${MACHINE} == "amd64"
-CLEANFILES+=	x86
+CLEANFILES+=	x86 i386
 .endif
 
 .if defined(XEN_BUILD) || ${MACHINE} == "xen"
