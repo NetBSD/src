@@ -257,9 +257,6 @@ ACPI_EXPORT_SYMBOL (AcpiReallocateRootTable)
  *
  * DESCRIPTION: Finds an ACPI table header.
  *
- * NOTE:        Caller is responsible in unmapping the header with
- *              AcpiOsUnmapMemory
- *
  ******************************************************************************/
 
 ACPI_STATUS
