@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu_subr.c,v 1.3 2011/02/20 16:38:13 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.2 2011/02/20 07:45:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
