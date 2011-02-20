@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.27 2010/12/20 00:25:34 matt Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.28 2011/02/20 07:58:14 matt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.27 2010/12/20 00:25:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.28 2011/02/20 07:58:14 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -305,7 +305,7 @@ tx39icu_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+TX_INTR(u_int32_t status, u_int32_t cause, vaddr_t pc, u_int32_t ipending)
 {
 	struct tx39icu_softc *sc;
 	tx_chipset_tag_t tc;
@@ -417,8 +417,10 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 #endif
 	ci->ci_idepth--;
 #ifdef __HAVE_FAST_SOFTINTS
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-	softintr(ipending);
+	ipending &= MIPS_SOFT_INT_MASK;
+	if (ipending == 0)
+		return;
+	softint_process(ipending);
 #endif
 }
 
