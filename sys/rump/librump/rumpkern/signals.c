@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.7 2011/01/14 13:11:08 pooka Exp $	*/
+/*	$NetBSD: signals.c,v 1.8 2011/02/20 13:09:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.7 2011/01/14 13:11:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.8 2011/02/20 13:09:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -119,7 +119,7 @@ rumpsig_record(struct proc *p, int signo)
 
 typedef void (*rumpsig_fn)(struct proc *, int);
 
-static rumpsig_fn rumpsig = rumpsig_panic;
+static rumpsig_fn rumpsig = rumpsig_raise;
 
 /*
  * Set signal delivery model.  It would be nice if we could
