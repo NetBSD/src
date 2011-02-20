@@ -1,4 +1,4 @@
-#       $NetBSD: t_asyncio.sh,v 1.2 2011/02/12 10:28:08 pooka Exp $
+#       $NetBSD: t_asyncio.sh,v 1.3 2011/02/20 23:45:46 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,8 +66,29 @@ select_allunset_cleanup()
 	rump.halt
 }
 
+atf_test_case invafd cleanup
+invafd_head()
+{
+        atf_set "descr" "poll on invalid rump fd"
+	atf_set "timeout" "4"
+}
+
+invafd_body()
+{
+
+	atf_check -s exit:0 rump_server -lrumpvfs ${RUMP_SERVER}
+	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
+	    $(atf_get_srcdir)/h_client invafd
+}
+
+invafd_cleanup()
+{
+	rump.halt
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case select_timeout
 	atf_add_test_case select_allunset
+	atf_add_test_case invafd
 }
