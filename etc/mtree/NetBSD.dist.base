@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.76 2011/02/20 16:23:59 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.77 2011/02/20 19:23:19 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -52,7 +52,8 @@
 ./etc/rc.conf.d
 ./etc/rc.d
 ./etc/saslc.d
-./etc/saslc.d/mech
+./etc/saslc.d/saslc
+./etc/saslc.d/saslc/mech
 ./etc/saslc.d/postfix
 ./etc/saslc.d/postfix/mech
 ./etc/skel
