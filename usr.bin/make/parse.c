@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.174 2011/02/20 20:15:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.174 2011/02/20 20:15:36 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.174 2011/02/20 20:15:36 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2665,7 +2665,7 @@ ParseReadLine(void)
 		line = ParseGetLine(PARSE_RAW, &lineLength);
 		if (line == NULL) {
 		    Parse_Error(PARSE_FATAL,
-			     "Unexpected end of file in for loop.\n");
+			     "Unexpected end of file in for loop.");
 		    break;
 		}
 	    } while (For_Accum(line));
