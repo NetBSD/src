@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.51 2011/02/08 20:20:22 rmind Exp $ */
+/* $NetBSD: dec_3max.c,v 1.52 2011/02/20 07:50:25 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -67,16 +67,21 @@
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
+#define	__INTR_PRIVATE
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.51 2011/02/08 20:20:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.52 2011/02/20 07:50:25 matt Exp $");
+
+#include "dzkbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/locore.h>
 #include <machine/sysconf.h>
 
@@ -99,20 +104,23 @@ static void	dec_3max_bus_reset(void);
 
 static void	dec_3max_cons_init(void);
 static void	dec_3max_errintr(void);
-static void	dec_3max_intr(unsigned, unsigned, unsigned, unsigned);
-static void	dec_3max_intr_establish(struct device *, void *,
+static void	dec_3max_intr(uint32_t, vaddr_t, uint32_t);
+static void	dec_3max_intr_establish(device_t, void *,
 		    int, int (*)(void *), void *);
 
 
-#define	kn02_wbflush()	mips1_wbflush()	/* XXX to be corrected XXX */
+#define	kn02_wbflush()	wbflush()	/* XXX to be corrected XXX */
 
-static const int dec_3max_ipl2spl_table[] = {
+static const struct ipl_sr_map dec_3max_ipl_sr_map = {
+    .sr_bits = {
 	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
-	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK,
 	[IPL_VM] = MIPS_SPL0,
-	[IPL_SCHED] = MIPS_SPL_0_1,
-	[IPL_HIGH] = MIPS_SPL_0_1,
+	[IPL_SCHED] = MIPS_SPLHIGH,
+	[IPL_DDB] = MIPS_SPLHIGH,
+	[IPL_HIGH] = MIPS_SPLHIGH,
+    },
 };
 
 void
@@ -132,7 +140,7 @@ dec_3max_init(void)
 	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
-	ipl2spl_table = dec_3max_ipl2spl_table;
+	ipl_sr_map = dec_3max_ipl_sr_map;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK), MIPS_INT_MASK_1);
@@ -217,21 +225,20 @@ dec_3max_intr_establish(struct device *dev, void *cookie, int level,
 	int i;
 	uint32_t csr;
 
-	for (i = 0; i < sizeof(kn02intrs)/sizeof(kn02intrs[0]); i++) {
-		if (kn02intrs[i].cookie == (int)cookie)
+	for (i = 0; i < __arraycount(kn02intrs); i++) {
+		if (kn02intrs[i].cookie == (intptr_t)cookie)
 			goto found;
 	}
-	panic("intr_establish: invalid cookie %d", (int)cookie);
+	panic("intr_establish: invalid cookie %p", cookie);
 
 found:
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(intptr_t)cookie].ih_func = handler;
+	intrtab[(intptr_t)cookie].ih_arg = arg;
 
 	csr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) &
 	    0x00ffff00;
 	csr |= (kn02intrs[i].intrbit << 16);
 	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
-	kn02_wbflush();
 }
 
 
@@ -242,9 +249,9 @@ found:
 	} while (/*CONSTCOND*/0)
 
 static void
-dec_3max_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+dec_3max_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
-	static int warned = 0;
+	static bool warned = false;
 	uint32_t csr;
 
 	/* handle clock interrupts ASAP */
@@ -253,10 +260,10 @@ dec_3max_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 		csr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		if ((csr & KN02_CSR_PSWARN) && !warned) {
-			warned = 1;
+			warned = true;
 			printf("WARNING: power supply is overheating!\n");
 		} else if (warned && !(csr & KN02_CSR_PSWARN)) {
-			warned = 0;
+			warned = false;
 			printf("WARNING: power supply is OK again\n");
 		}
 
@@ -268,11 +275,7 @@ dec_3max_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		pmax_clock_evcnt.ev_count++;
 
 		/* keep clock interrupts enabled when we return */
-		cause &= ~MIPS_INT_MASK_1;
 	}
-
-	/* If clock interrupts were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (ipending & MIPS_INT_MASK_0) {
 		csr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
@@ -298,8 +301,6 @@ dec_3max_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		dec_3max_errintr();
 		pmax_memerr_evcnt.ev_count++;
 	}
-
-	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 
@@ -311,7 +312,8 @@ dec_3max_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 static void
 dec_3max_errintr(void)
 {
-	uint32_t erradr, errsyn, csr;
+	uint32_t erradr, csr;
+	vaddr_t errsyn;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);

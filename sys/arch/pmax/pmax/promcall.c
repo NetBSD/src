@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.19 2011/02/08 20:20:22 rmind Exp $	*/
+/*	$NetBSD: promcall.c,v 1.20 2011/02/20 07:50:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.19 2011/02/08 20:20:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.20 2011/02/20 07:50:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,7 +81,7 @@ romgetc(dev_t dev)
 	int chr, s;
 
 	s  = splhigh();
-	chr = (*callv->_getchar)();
+	chr = promcall(callv->_getchar);
 	splx(s);
 	return chr;
 }
@@ -95,7 +95,7 @@ romputc(dev_t dev, int c)
 	int s;
 
 	s = splhigh();
-	(*callv->_printf)("%c", c);
+	promcall(callv->_printf, "%c", c);
 	splx(s);
 }
 
@@ -157,7 +157,7 @@ char *
 prom_getenv(const char *name)
 {
 
-	return (*callv->_getenv)(name);
+	return (void *)promcall(callv->_getenv, name);
 }
 
 /*
@@ -170,12 +170,16 @@ prom_getenv(const char *name)
 int
 prom_systype(void)
 {
+#ifndef _LP64
 	char *cp;
 
 	if (callv != &callvec)
-		return (*callv->_getsysid)();
+#endif
+		return promcall(callv->_getsysid);
+#ifndef _LP64
 	cp = prom_getenv("systype");
 	return (cp != NULL) ? strtoul(cp, NULL, 0) : 0;
+#endif
 }
 
 /*
@@ -185,7 +189,7 @@ void
 prom_haltbutton(void)
 {
 
-	(*callv->_halt)((int *)0, 0);
+	promcall(callv->_halt, (int *)0, 0);
 }
 
 /*
@@ -196,7 +200,7 @@ prom_halt(int howto, char *bootstr)
 {
 
 	if (callv != &callvec)
-		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
+		promcall(callv->_rex, (howto & RB_HALT) ? 'h' : 'b');
 	else {
 		void __dead (*f)(void);
 
@@ -234,7 +238,8 @@ prom_getbitmap(struct memmap *map)
 	int len;
 
 	if (callv->_getbitmap != NULL)
-		return callv->_getbitmap(map);
+		return promcall(callv->_getbitmap, map);
+
 	/*
 	 * See if we can get the bitmap from the environment variables
 	 */

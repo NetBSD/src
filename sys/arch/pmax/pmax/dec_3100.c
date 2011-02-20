@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.50 2011/02/08 20:20:22 rmind Exp $ */
+/* $NetBSD: dec_3100.c,v 1.51 2011/02/20 07:50:25 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -67,18 +67,21 @@
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
+#define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.50 2011/02/08 20:20:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.51 2011/02/20 07:50:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/lwp.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
+//#include <mips/locore.h>
 
 #include <dev/tc/tcvar.h>		/* tc_addr_t */
 
@@ -99,19 +102,22 @@ static void	dec_3100_bus_reset(void);
 
 static void	dec_3100_cons_init(void);
 static void	dec_3100_errintr(void);
-static void	dec_3100_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_3100_intr(uint32_t, vaddr_t, uint32_t);
 static void	dec_3100_intr_establish(struct device *, void *,
 		    int, int (*)(void *), void *);
 
-#define	kn01_wbflush()	mips1_wbflush() /* XXX to be corrected XXX */
+#define	kn01_wbflush()	wbflush() /* XXX to be corrected XXX */
 
-static const int dec_3100_ipl2spl_table[] = {
+static const struct ipl_sr_map dec_3100_ipl_sr_map = {
+    .sr_bits = {
 	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
-	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTSERIAL] = MIPS_SOFT_INT_MASK,
 	[IPL_VM] = MIPS_SPL_0_1_2,
-	[IPL_SCHED] = MIPS_SPL_0_1_2_3,
-	[IPL_HIGH] = MIPS_SPL_0_1_2_3,
+	[IPL_SCHED] = MIPS_SPLHIGH,
+	[IPL_DDB] = MIPS_SPLHIGH,
+	[IPL_HIGH] = MIPS_SPLHIGH,
+    }
 };
 
 void
@@ -127,12 +133,12 @@ dec_3100_init(void)
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
-	ipl2spl_table = dec_3100_ipl2spl_table;
+	ipl_sr_map = dec_3100_ipl_sr_map;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);
 
-	if (cpu_mhz < 15)
+	if (mips_options.mips_cpu_mhz < 15)
 		submodel = "2100 (PMIN)";
 	else
 		submodel = "3100 (PMAX)";
@@ -189,7 +195,7 @@ dec_3100_cons_init(void)
     } while (/*CONSTCOND*/0)
 
 static void
-dec_3100_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+dec_3100_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 
 	/* handle clock interrupts ASAP */
@@ -200,15 +206,10 @@ dec_3100_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			"r"(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;
+		cf.intr = (curcpu()->ci_idepth > 1);
 		hardclock(&cf);
 		pmax_clock_evcnt.ev_count++;
-
-		/* keep clock interrupts enabled when we return */
-		cause &= ~MIPS_INT_MASK_3;
 	}
-
-	/* If clock interrupts were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_3));
 
 	CALLINTR(SYS_DEV_SCSI, MIPS_INT_MASK_0);
 	CALLINTR(SYS_DEV_LANCE, MIPS_INT_MASK_1);
@@ -218,17 +219,15 @@ dec_3100_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		dec_3100_errintr();
 		pmax_memerr_evcnt.ev_count++;
 	}
-	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
-
 
 static void
 dec_3100_intr_establish(struct device *dev, void *cookie, int level,
     int (*handler)(void *), void *arg)
 {
 
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(intptr_t)cookie].ih_func = handler;
+	intrtab[(intptr_t)cookie].ih_arg = arg;
 }
 
 
