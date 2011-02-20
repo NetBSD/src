@@ -1,4 +1,4 @@
-/*	$NetBSD: p_sni_rm200pci.c,v 1.14 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: p_sni_rm200pci.c,v 1.15 2011/02/20 07:52:42 matt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -38,16 +38,19 @@
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
+#define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.14 2011/02/08 20:20:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.15 2011/02/20 07:52:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <uvm/uvm.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
 #include <machine/wired_map.h>
@@ -84,28 +87,16 @@ struct platform platform_sni_rm200pci = {
  * given interrupt priority level.
  */
 /* XXX lack of hardware info for sni_rm200pci */
-static const uint32_t sni_rm200pci_ipl_sr_bits[_IPL_N] = {
+static const struct ipl_sr_map sni_rm200pci_ipl_sr_map = {
+    .sr_bits = {
 	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
-	[IPL_SCHED] =	/* XXX */
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_INT_MASK, 	/* XXX */
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 /*
@@ -122,7 +113,7 @@ p_sni_rm200pci_init(void)
 	/*
 	 * Initialize interrupt priority
 	 */
-	ipl_sr_bits = sni_rm200pci_ipl_sr_bits;
+	ipl_sr_map = sni_rm200pci_ipl_sr_map;
 
 	/*
 	 * XXX - should be enabled, if tested.
