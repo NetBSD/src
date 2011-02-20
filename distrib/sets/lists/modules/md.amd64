@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.14 2011/02/05 23:22:16 christos Exp $
+# $NetBSD: md.amd64,v 1.15 2011/02/20 08:37:50 jruoho Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -47,6 +47,10 @@
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf64			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf64/exec_elf64.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/fujbp				base-kernel-modules	kmod
+./@MODULEDIR@/fujbp/fujbp.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/fujhk				base-kernel-modules	kmod
+./@MODULEDIR@/fujhk/fujhk.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/hpqlb				base-kernel-modules	kmod
 ./@MODULEDIR@/hpqlb/hpqlb.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/i915drm				base-kernel-modules	kmod
