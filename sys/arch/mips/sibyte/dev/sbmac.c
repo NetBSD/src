@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.39 2011/02/01 06:13:08 matt Exp $ */
+/* $NetBSD: sbmac.c,v 1.40 2011/02/20 07:47:39 matt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.39 2011/02/01 06:13:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.40 2011/02/20 07:47:39 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -2273,7 +2273,7 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 
 	/* Determine controller base address */
 
-	sc->sbm_base = sa->sa_locs.sa_addr;
+	sc->sbm_base = sa->sa_base + sa->sa_locs.sa_offset;
 
 	eaddr = sc->sbm_hwaddr;
 
