@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.54 2011/01/26 00:57:47 dyoung Exp $	*/
+/*	$NetBSD: if_media.h,v 1.55 2011/02/20 13:51:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -244,6 +244,7 @@ void		ifmedia_removeall(struct ifmedia *);
 #define	IFM_IEEE80211_TURBO	0x00000800	/* Operate in Turbo mode */
 #define	IFM_IEEE80211_IBSS	0x00001000	/* Operate in IBSS mode */
 #define	IFM_IEEE80211_WDS 	0x00002000	/* Operate as an WDS master */
+#define	IFM_IEEE80211_MBSS	0x00004000	/* Operate in MBSS mode */
 
 /* operating mode for multi-mode devices */
 #define	IFM_IEEE80211_11A	0x00010000	/* 5 GHz, OFDM mode */
@@ -535,6 +536,7 @@ struct ifmedia_description {
 	{ IFM_IEEE80211 | IFM_IEEE80211_TURBO,	"turbo" },		\
 	{ IFM_IEEE80211 | IFM_IEEE80211_IBSS,	"ibss" },		\
 	{ IFM_IEEE80211 | IFM_IEEE80211_WDS, 	"wds" },		\
+	{ IFM_IEEE80211 | IFM_IEEE80211_MBSS,	"mesh" },		\
 									\
 	{ 0, NULL },							\
 }
