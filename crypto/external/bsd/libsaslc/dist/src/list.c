@@ -1,4 +1,4 @@
-/* $NetBSD: list.c,v 1.2 2011/02/12 23:21:32 christos Exp $ */
+/* $NetBSD: list.c,v 1.3 2011/02/20 01:59:46 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: list.c,v 1.2 2011/02/12 23:21:32 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.3 2011/02/20 01:59:46 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -164,11 +164,14 @@ saslc__list_free(list_t *l)
 /**
  * @brief Parse a list of the following format:
  *   ( *LWS element *( *LWS "," *LWS element ))
+ * @param lp pointer to list_t type for returned list.  Cannot be NULL.
  * @param p string to parse
- * @return allocated list.
+ * @return 0 on success, -1 on error (no memory).
+ *
+ * Note: the list is allocated.  Use saslc__list_free() to free it.
  */
-list_t *
-saslc__list_parse(const char *p)
+int
+saslc__list_parse(list_t **lp, const char *p)
 {
 	const char *e, *n;
 	list_t *l, *t, **tp;
@@ -189,7 +192,7 @@ saslc__list_parse(const char *p)
 		t = alloc_list(p, (size_t)(e - p));
 		if (t == NULL) {
 			saslc__list_free(l);
-			return NULL;
+			return -1;
 		}
 		if (tp != NULL)
 			*tp = t;
@@ -197,7 +200,8 @@ saslc__list_parse(const char *p)
 			l = t;
 		tp = &t->next;
 	}
-	return l;
+	*lp = l;
+	return 0;
 }
 
 /**
