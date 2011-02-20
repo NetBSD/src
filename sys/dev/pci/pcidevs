@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1058 2011/02/18 22:52:53 jmcneill Exp $
+$NetBSD: pcidevs,v 1.1059 2011/02/20 22:16:18 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3349,8 +3349,11 @@ product NETMOS NM9820	0x9820	Single UART
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer Port
 product NETMOS NM9845	0x9845	Quad UART and 1284 Printer Port
 product NETMOS NM9855	0x9855	9855 Quad UART and 1284 Printer Port
+product NETMOS NM9865	0x9865	9865 Quad UART and 1284 Printer Port
 product NETMOS MCS9990	0x9990	MCS9990 Quad USB 2.0 Port
 product NETMOS NM9901	0x9901	Dual PCI-E UART
+product NETMOS NM9904	0x9904	Quad PCI-E UART
+product NETMOS NM9922	0x9922	Dual PCI-E UART
 
 /* Network Security Technologies */
 product NETSEC 7751		0x7751	7751
