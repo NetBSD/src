@@ -1,4 +1,4 @@
-.\" $NetBSD: coretemp.4,v 1.5 2010/04/25 18:01:08 jruoho Exp $
+.\" $NetBSD: coretemp.4,v 1.6 2011/02/20 14:36:38 jruoho Exp $
 .\"-
 .\" Copyright (c) 2007 Juan Romero Pardines.
 .\" Copyright (c) 2007 Dag-Erling Coïdan Smørgrav
@@ -27,14 +27,14 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/coretemp.4,v 1.4 2007/10/15 20:00:19 netchild Exp $
 .\"
-.Dd April 25, 2010
+.Dd February 20, 2010
 .Dt CORETEMP 4
 .Os
 .Sh NAME
 .Nm coretemp
 .Nd Intel Core on-die digital thermal sensor
 .Sh SYNOPSIS
-.Cd "options INTEL_CORETEMP"
+.Cd "coretemp*       at cpu?"
 .Sh DESCRIPTION
 The
 .Nm
