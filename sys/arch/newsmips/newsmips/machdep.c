@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2011/02/08 20:20:21 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2011/02/20 07:56:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,13 +39,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2011/02/08 20:20:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2011/02/20 07:56:31 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_modular.h"
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,13 +68,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2011/02/08 20:20:21 rmind Exp $");
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -116,7 +118,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 struct idrom idrom;
-void (*hardware_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
+void (*hardware_intr)(int, vaddr_t, uint32_t);
 void (*enable_intr)(void);
 void (*disable_intr)(void);
 void (*enable_timer)(void);
@@ -137,32 +139,24 @@ extern void stacktrace(void); /*XXX*/
 #endif
 
 /*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.  Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
- * disables mips1 FPU interrupts.
- */
-int safepri = MIPS3_PSL_LOWIPL;		/* XXX */
-
-/*
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-const uint32_t ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1,
-	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2,
+const struct ipl_sr_map newsmips_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1
+				| MIPS_INT_MASK_2,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 extern u_long bootdev;
@@ -290,7 +284,8 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	ipl_sr_map = newsmips_ipl_sr_map;
+	mips_vector_init(NULL, false);
 
 	/*
 	 * We know the CPU type now.  Initialize our DMA tags (might
@@ -389,7 +384,7 @@ mips_machdep_cache_config(void)
 {
 	/* All r4k news boxen have a 1MB L2 cache. */
 	if (CPUISMIPS3)
-		mips_sdcache_size = 1024 * 1024;
+		mips_cache_info.mci_sdcache_size = 1024 * 1024;
 }
 
 /*
@@ -487,8 +482,7 @@ cpu_reboot(volatile int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)
@@ -557,24 +551,10 @@ delay(int n)
 }
 
 void
-cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct cpu_info *ci;
-
-	ci = curcpu();
-	ci->ci_data.cpu_nintr++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	/* device interrupts */
-	ci->ci_idepth++;
-	(*hardware_intr)(status, cause, pc, ipending);
-	ci->ci_idepth--;
-
-#ifdef __HAVE_FAST_SOFTINTS
-	/* software interrupts */
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
-#endif
+	(*hardware_intr)(ppl, pc, status);
 }
