@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.50 2011/02/15 10:11:25 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.51 2011/02/20 21:09:32 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -357,6 +357,7 @@
 #define MSR_THERM_STATUS	0x19c
 #define MSR_THERM2_CTL		0x19d	/* Pentium M */
 #define MSR_MISC_ENABLE		0x1a0
+#define MSR_TEMPERATURE_TARGET	0x1a2
 #define MSR_DEBUGCTLMSR		0x1d9
 #define MSR_LASTBRANCHFROMIP	0x1db
 #define MSR_LASTBRANCHTOIP	0x1dc
