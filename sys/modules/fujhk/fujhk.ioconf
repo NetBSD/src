@@ -1,0 +1,10 @@
+# $NetBSD: fujhk.ioconf,v 1.1 2011/02/20 08:37:51 jruoho Exp $
+
+ioconf fujhk
+
+include "conf/files"
+include "dev/acpi/files.acpi"
+
+pseudo-root acpi*
+
+fujhk* at acpi?

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2011/02/19 14:28:07 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.63 2011/02/20 08:37:50 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -111,6 +111,8 @@ SUBDIR+=	acpivga
 SUBDIR+=	acpiwmi
 SUBDIR+=	aibs
 SUBDIR+=	asus
+SUBDIR+=	fujbp
+SUBDIR+=	fujhk
 SUBDIR+=	hpqlb
 SUBDIR+=	thinkpad
 SUBDIR+=	wmidell
@@ -140,6 +142,7 @@ SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
 SUBDIR+=	padlock
+SUBDIR+=	wmieeepc
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
