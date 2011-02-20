@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.40 2011/02/16 08:35:51 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.41 2011/02/20 06:59:53 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.40 2011/02/16 08:35:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.41 2011/02/20 06:59:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.40 2011/02/16 08:35:51 jruoho Exp 
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_wakedev.h>
 
 #define _COMPONENT		 ACPI_BUTTON_COMPONENT
 ACPI_MODULE_NAME		 ("acpi_button")
@@ -111,6 +112,7 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpibut_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
+	struct acpi_wakedev *aw;
 	const char *desc;
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
@@ -128,6 +130,13 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI %s Button\n", desc);
 
 	sc->sc_node = aa->aa_node;
+	aw = sc->sc_node->ad_wakedev;
+
+	/*
+	 * This GPE should always be enabled.
+	 */
+	if (aw != NULL)
+		(void)AcpiEnableGpe(aw->aw_handle, aw->aw_number);
 
 	(void)pmf_device_register(self, NULL, NULL);
 	(void)sysmon_pswitch_register(&sc->sc_smpsw);
