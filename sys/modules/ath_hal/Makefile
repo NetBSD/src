@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/20 03:58:33 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2011/02/20 11:26:33 jmcneill Exp $
 
 .include "../Makefile.inc"
 
@@ -17,6 +17,7 @@ SRCS=	ah.c \
 	ah_eeprom_v1.c \
 	ah_eeprom_v3.c \
 	ah_eeprom_v14.c \
+	ah_eeprom_v4k.c \
 	ah_regdomain.c
 SRCS+=	ah_osdep.c
 SRCS+=	ar5210_attach.c \
@@ -86,7 +87,9 @@ SRCS+=	ar2133.c \
 	ar5416_recv.c \
 	ar5416_reset.c \
 	ar5416_xmit.c \
-	ar9160_attach.c
+	ar9160_attach.c \
+	ar9280.c \
+	ar9280_attach.c
 
 WARNS=		3
 
