@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_internal.h,v 1.4 2011/01/26 00:55:42 dyoung Exp $
+ * $Id: ah_internal.h,v 1.5 2011/02/20 11:21:02 jmcneill Exp $
  */
 #ifndef _ATH_AH_INTERAL_H_
 #define _ATH_AH_INTERAL_H_
@@ -264,6 +264,7 @@ struct ath_hal_private {
 	uint16_t	ah_phyRev;		/* PHY revision */
 	uint16_t	ah_analog5GhzRev;	/* 2GHz radio revision */
 	uint16_t	ah_analog2GhzRev;	/* 5GHz radio revision */
+	uint8_t		ah_ispcie;		/* PCIE, special treatment */
 
 
 	HAL_OPMODE	ah_opmode;		/* operating mode from reset */
@@ -323,6 +324,10 @@ struct ath_hal_private {
 	AH_PRIVATE(_ah)->ah_getNfAdjust(_ah, _c)
 #define	ath_hal_getNoiseFloor(_ah, _nfArray) \
 	AH_PRIVATE(_ah)->ah_getNoiseFloor(_ah, _nfArray)
+#define	ath_hal_configPCIE(_ah, _reset) \
+	(_ah)->ah_configPCIE(_ah, _reset)
+#define	ath_hal_disablePCIE(_ah) \
+	(_ah)->ah_disablePCIE(_ah)
 
 #define	ath_hal_eepromDetach(_ah)			\
 do {							\
@@ -587,6 +592,17 @@ extern	void ath_hal_assert_failed(const char* filename,
 #else
 #define	HALASSERT(_x)
 #endif /* AH_ASSERT */
+
+/*
+ * Return the h/w frequency for a channel. This may be
+ * different from ic_freq if this is a GSM device that
+ * takes 2.4GHz frequencies and down-converts them.
+ */
+static OS_INLINE uint16_t
+ath_hal_gethwchannel(struct ath_hal *ah, const HAL_CHANNEL_INTERNAL *c)
+{
+	return ath_hal_checkchannel(ah, (const HAL_CHANNEL *)c)->channel;
+}
 
 /*
  * Convert between microseconds and core system clocks.
