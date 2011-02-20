@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumphijack.3,v 1.4 2011/02/18 12:22:46 pooka Exp $
+.\"     $NetBSD: rumphijack.3,v 1.5 2011/02/20 14:21:04 pooka Exp $
 .\"
 .\" Copyright (c) 2011 Antti Kantee.  All rights reserved.
 .\"
@@ -58,9 +58,12 @@ The possible lefthandside names are:
 Pathname-based system calls are hijacked if the path the system
 call is directed to resides under
 .Ar value .
-In case of an absolute pathname argument, a direct comparison is made.
+In case of an absolute pathname argument, a literal prefix comparison is made.
 In case of a relative pathname, the current working direct is
 examined.
+This also implies that neither
+.Dq ..
+nor symbolic links will cause the namespace to be switched.
 .It Dq socket
 The specifier
 .Ar value
