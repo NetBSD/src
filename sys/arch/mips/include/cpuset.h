@@ -1,11 +1,8 @@
-/*	$NetBSD: softintr.h,v 1.4 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: cpuset.h,v 1.2 2011/02/20 07:45:47 matt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,11 +26,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MIPS_SOFTINTR_H_
-#define _MIPS_SOFTINTR_H_
+#ifndef _MIPS_CPUSET_H_
+#define	_MIPS_CPUSET_H_
 
-#ifndef _LOCORE
-extern const u_int32_t mips_ipl_si_to_sr[2];
-#endif /* !_LOCORE */
+#include <sys/atomic.h>
 
-#endif /* _MIPS_SOFTINTR_H_ */
+#define	CPUSET_SINGLE(cpu)		((__cpuset_t)1 << (cpu))
+
+#define	CPUSET_ADD(set, cpu)		atomic_or_64(&(set), CPUSET_SINGLE(cpu))
+#define	CPUSET_DEL(set, cpu)		atomic_and_64(&(set), ~CPUSET_SINGLE(cpu))
+#define	CPUSET_SUB(set1, set2)		atomic_and_64(&(set1), ~(set2))
+
+#define	CPUSET_EXCEPT(set, cpu)		((set) & ~CPUSET_SINGLE(cpu))
+
+#define	CPUSET_HAS_P(set, cpu)		((set) & CPUSET_SINGLE(cpu))
+#define	CPUSET_NEXT(set)		(ffs(set) - 1)
+
+#define	CPUSET_EMPTY_P(set)		((set) == (__cpuset_t)0)
+#define	CPUSET_EQUAL_P(set1, set2)	((set1) == (set2))
+#define	CPUSET_CLEAR(set)		((set) = (__cpuset_t)0)
+#define	CPUSET_ASSIGN(set1, set2)	((set1) = (set2))
+
+#endif /* _MIPS_CPUSET_H_ */

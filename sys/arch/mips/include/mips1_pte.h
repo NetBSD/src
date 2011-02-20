@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.18 2011/02/08 20:20:19 rmind Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.19 2011/02/20 07:45:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,6 +38,8 @@
  *	@(#)pte.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_MIPS1_PTE_H_
+#define _MIPS_MIPS1_PTE_H_
 /*
  * R2000 hardware page table entry
  */
@@ -94,3 +96,5 @@ unsigned int	pg_prot:2,		/* SW: access control */
 
 #define	MIPS1_PTE_TO_PADDR(pte) ((unsigned)(pte) & MIPS1_PG_FRAME)
 #define MIPS1_PAGE_IS_RDONLY(pte,va) ((int)(pte) & MIPS1_PG_RO)
+
+#endif /* !_MIPS_MIPS1_PTE_H_ */

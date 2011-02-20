@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.4 2011/01/14 02:06:28 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.5 2011/02/20 07:45:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2011/01/14 02:06:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2011/02/20 07:45:48 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2011/01/14 02:06:28 rmind E
 
 #include <uvm/uvm_extern.h>
 
-char machine32[] = MACHINE;
-char machine_arch32[] = MACHINE32_ARCH;
+const char machine32[] = MACHINE;
+const char machine_arch32[] = MACHINE32_ARCH;
 
 #if 0
 cpu_coredump32
@@ -168,7 +168,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo32 *sfp = getframe(l, sig, &onstack);
 	struct sigframe_siginfo32 sf;
-	struct frame * const tf = l->l_md.md_regs;
+	struct trapframe * const tf = l->l_md.md_utf;
 	size_t sfsz;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
@@ -219,14 +219,14 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * handler.  The return address will be set up to point
 	 * to the signal trampoline to bounce us back.
 	 */
-	tf->f_regs[_R_A0] = sig;
-	tf->f_regs[_R_A1] = (intptr_t)&sfp->sf_si;
-	tf->f_regs[_R_A2] = (intptr_t)&sfp->sf_uc;
+	tf->tf_regs[_R_A0] = sig;
+	tf->tf_regs[_R_A1] = (intptr_t)&sfp->sf_si;
+	tf->tf_regs[_R_A2] = (intptr_t)&sfp->sf_uc;
 
-	tf->f_regs[_R_PC] = (intptr_t)catcher;
-	tf->f_regs[_R_T9] = (intptr_t)catcher;
-	tf->f_regs[_R_SP] = (intptr_t)sfp;
-	tf->f_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
+	tf->tf_regs[_R_PC] = (intptr_t)catcher;
+	tf->tf_regs[_R_T9] = (intptr_t)catcher;
+	tf->tf_regs[_R_SP] = (intptr_t)sfp;
+	tf->tf_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -257,7 +257,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mc32, unsigned int *flagsp)
 	}
 
 	cpu_getmcontext(l, &mc, flagsp);
-	for (i = 0; i < __arraycount(mc.__gregs); i++)
+	for (i = 1; i < __arraycount(mc.__gregs); i++)
 		mco32->__gregs[i] = mc.__gregs[i];
 	if (*flagsp & _UC_FPU)
 		memcpy(&mco32->__fpregs, &mc.__fpregs,
@@ -292,7 +292,7 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 	int error;
 	struct coreseg cseg;
 	struct cpustate {
-		struct frame frame;
+		struct trapframe frame;
 		struct fpreg fpregs;
 	} cpustate;
 
@@ -305,11 +305,10 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 		return 0;
 	}
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		savefpregs(l);
+	fpu_save_lwp(l);
 
 	struct pcb * const pcb = lwp_getpcb(l);
-	cpustate.frame = *l->l_md.md_regs;
+	cpustate.frame = *l->l_md.md_utf;
 	cpustate.fpregs = pcb->pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2009/12/14 00:46:04 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12 2011/02/20 07:45:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ typedef struct {
 	__fpregset_t	__fpregs;
 } mcontext_t;
 
-#if defined(_KERNEL) && defined(_LP64)
+#if defined(_KERNEL) && !defined(__mips_o32)
 typedef	__int32_t	__greg32_t;
 typedef __greg32_t	__gregset32_t[_NGREG];
 
