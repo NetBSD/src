@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fd.c,v 1.1 2011/02/09 14:32:45 pooka Exp $	*/
+/*	$NetBSD: t_fd.c,v 1.2 2011/02/20 13:27:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,9 +29,14 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <atf-c.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <rump/rumpclient.h>
@@ -45,8 +50,17 @@ ATF_TC_HEAD(bigenough, tc)
 	atf_tc_set_md_var(tc, "descr", "Check that rumpclient uses "
 	    "fd > 2");
 }
+ATF_TC_WITH_CLEANUP(sigio);
+ATF_TC_HEAD(sigio, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Check that rump client receives "
+	    "SIGIO");
+}
 
 #define RUMPSERV "unix://sucket"
+
+ATF_TC_CLEANUP(bigenough, tc){system("env RUMP_SERVER=" RUMPSERV " rump.halt");}
+ATF_TC_CLEANUP(sigio, tc) { system("env RUMP_SERVER=" RUMPSERV " rump.halt"); }
 
 ATF_TC_BODY(bigenough, tc)
 {
@@ -78,15 +92,52 @@ ATF_TC_BODY(bigenough, tc)
 	dup2(12, 2);
 }
 
-ATF_TC_CLEANUP(bigenough, tc)
+static volatile sig_atomic_t sigcnt;
+static void
+gotsig(int sig)
 {
 
-	system("env RUMP_SERVER=" RUMPSERV " rump.halt");
+	sigcnt++;
+}
+
+ATF_TC_BODY(sigio, tc)
+{
+	struct sockaddr_in sin;
+	int ls;
+	int cs;
+	int fl;
+
+	signal(SIGIO, gotsig);
+	RZ(system("rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet "
+	    RUMPSERV));
+	RL(setenv("RUMP_SERVER", RUMPSERV, 1));
+
+	RL(rumpclient_init());
+	RL(ls = rump_sys_socket(PF_INET, SOCK_STREAM, 0));
+
+	RL(rump_sys_fcntl(ls, F_SETOWN, rump_sys_getpid()));
+	RL(fl = rump_sys_fcntl(ls, F_GETFL));
+	RL(rump_sys_fcntl(ls, F_SETFL, fl | O_ASYNC));
+
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(12345);
+	RL(rump_sys_bind(ls, (struct sockaddr *)&sin, sizeof(sin)));
+	RL(rump_sys_listen(ls, 5));
+
+	RL(cs = rump_sys_socket(PF_INET, SOCK_STREAM, 0));
+	sin.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	ATF_REQUIRE_EQ(sigcnt, 0);
+	RL(rump_sys_connect(cs, (struct sockaddr *)&sin, sizeof(sin)));
+	ATF_REQUIRE_EQ(sigcnt, 1);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, bigenough);
+	ATF_TP_ADD_TC(tp, sigio);
 
 	return atf_no_error();
 }
