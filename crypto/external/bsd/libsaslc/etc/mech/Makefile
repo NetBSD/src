@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/02/20 05:17:47 christos Exp $
+# $NetBSD: Makefile,v 1.2 2011/02/20 05:42:34 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,4 +16,4 @@ FILES+= GSSAPI.conf
 FILES+= LOGIN.conf
 FILES+= PLAIN.conf
 
-.include <bsd.files.mk>
+.include <bsd.prog.mk>
