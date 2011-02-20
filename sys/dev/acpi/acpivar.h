@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.68 2011/02/17 19:36:49 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.69 2011/02/20 06:45:32 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -343,12 +343,12 @@ void			acpi_madt_walk(ACPI_STATUS (*)(ACPI_SUBTABLE_HEADER *,
  * Quirk handling.
  */
 struct acpi_quirk {
-	const char *aq_tabletype; /* what type of table (FADT, DSDT, etc) */
-	const char *aq_oemid;	/* compared against the table OemId */
-	int aq_oemrev;		/* compared against the table OemRev */
-	int aq_cmpop;		/* how to compare the oemrev number */
-	const char *aq_tabid;	/* compared against the table TableId */
-	int aq_quirks;		/* the actual quirks */
+	const char	*aq_tabletype;		/* Type of table */
+	const char	*aq_oemid;		/* "OemId" field */
+	int		 aq_oemrev;		/* "OemRev" field */
+	int		 aq_cmpop;		/* "OemRev" comparison */
+	const char	*aq_tabid;		/* "TableId */
+	int		 aq_quirks;		/* The actual quirk */
 };
 
 #define ACPI_QUIRK_BROKEN	0x00000001	/* totally broken */
@@ -357,10 +357,12 @@ struct acpi_quirk {
 #define ACPI_QUIRK_IRQ0		0x00000008	/* bad 0->2 irq override */
 #define ACPI_QUIRK_OLDBIOS	0x00000010	/* BIOS date blacklisted */
 
-int acpi_find_quirks(void);
+int	acpi_find_quirks(void);
+int	acpi_quirks_osi_add(const char *);
+int	acpi_quirks_osi_del(const char *);
 
 #ifdef ACPI_DEBUG
-void acpi_debug_init(void);
+void	acpi_debug_init(void);
 #endif
 
 /*
