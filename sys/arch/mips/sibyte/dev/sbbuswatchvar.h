@@ -1,11 +1,9 @@
-/* $NetBSD: intr.h,v 1.10 2011/02/20 07:47:38 matt Exp $ */
-
-/*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
- * All rights reserved.
+/*	$NetBSD: sbbuswatchvar.h,v 1.2 2011/02/20 07:47:39 matt Exp $	*/
+/*
+ * Copyright (c) 2010, The NetBSD Foundation, Inc.  All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas <matt@3am-software.com>.
+ * by Cliff Neighbors.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SBMIPS_INTR_H_
-#define	_SBMIPS_INTR_H_
+#ifndef _ARCH_SIBYTE_DEV_SBBUSWATCHVAR_H
+#define	_ARCH_SIBYTE_DEV_SBBUSWATCHVAR_H
 
-#include <mips/intr.h>
-#include <machine/systemsw.h>
+extern void sibyte_bus_watch_init(void);
+extern int  sibyte_bus_watch_check(unsigned int);
 
-#endif /* _SBMIPS_INTR_H_ */
+#endif	/* _ARCH_SIBYTE_DEV_SBBUSWATCHVAR_H */
