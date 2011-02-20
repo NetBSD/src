@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.58 2011/02/19 19:17:33 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.59 2011/02/20 23:47:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.58 2011/02/19 19:17:33 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.59 2011/02/20 23:47:04 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -1353,32 +1353,51 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 			goto out;
 		}
 
-		/* split vectors */
+		/*
+		 * then, open two pipes, one for notifications
+		 * to each kernel.
+		 */
+		if ((rv = rump_sys_pipe(rpipe)) == -1) {
+			sverrno = errno;
+		}
+		if (rv == 0 && (rv = pipe(hpipe)) == -1) {
+			sverrno = errno;
+		}
+
+		/* split vectors (or signal errors) */
 		for (i = 0; i < nfds; i++) {
+			int fd;
+
+			fds[i].revents = 0;
 			if (fds[i].fd == -1) {
 				pfd_host[i].fd = -1;
 				pfd_rump[i].fd = -1;
 			} else if (fd_isrump(fds[i].fd)) {
 				pfd_host[i].fd = -1;
-				pfd_rump[i].fd = fd_host2rump(fds[i].fd);
+				fd = fd_host2rump(fds[i].fd);
+				if (fd == rpipe[0] || fd == rpipe[1]) {
+					fds[i].revents = POLLNVAL;
+					if (rv != -1)
+						rv++;
+				}
+				pfd_rump[i].fd = fd;
 				pfd_rump[i].events = fds[i].events;
 			} else {
 				pfd_rump[i].fd = -1;
-				pfd_host[i].fd = fds[i].fd;
+				fd = fds[i].fd;
+				if (fd == hpipe[0] || fd == hpipe[1]) {
+					fds[i].revents = POLLNVAL;
+					if (rv != -1)
+						rv++;
+				}
+				pfd_host[i].fd = fd;
 				pfd_host[i].events = fds[i].events;
 			}
 			pfd_rump[i].revents = pfd_host[i].revents = 0;
-			fds[i].revents = 0;
 		}
-
-		/*
-		 * then, open two pipes, one for notifications
-		 * to each kernel.
-		 */
-		if (rump_sys_pipe(rpipe) == -1)
+		if (rv) {
 			goto out;
-		if (pipe(hpipe) == -1)
-			goto out;
+		}
 
 		pfd_host[nfds].fd = hpipe[0];
 		pfd_host[nfds].events = POLLIN;
