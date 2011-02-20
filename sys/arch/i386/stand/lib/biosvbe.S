@@ -1,4 +1,4 @@
-/* $NetBSD: biosvbe.S,v 1.2 2011/02/09 04:37:54 jmcneill Exp $ */
+/* $NetBSD: biosvbe.S,v 1.3 2011/02/20 22:03:13 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -273,13 +273,17 @@ ENTRY(biosvbe_ddc_caps)
 	call	_C_LABEL(prot_to_real)
 	.code16
 
+	pushw	%es
+
+	xorw	%di, %di
+	movw	%di, %es	/* es:di == 0:0 */
+
 	movw	$0x4f15, %ax	/* display identification extensions */
 	mov	$0x00, %bx	/* report DDC capabilities */
-
-	movl	$0x0000, %esi	/* ES:DI == 0:0 */
-	movl	$0x0000, %edi
 	mov	$0x00, %cx	/* controller unit number (00h = primary) */
 	int	$0x10
+
+	popw	%es
 
 	calll	_C_LABEL(real_to_prot)
 	.code32
