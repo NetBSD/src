@@ -1,3 +1,5 @@
+/*	$NetBSD: mips_softint.c,v 1.3 2011/02/20 16:38:13 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,9 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.2 2011/02/20 07:45:48 matt Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
