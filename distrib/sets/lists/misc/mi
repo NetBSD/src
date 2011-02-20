@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.171 2011/02/20 02:26:40 christos Exp $
+# $NetBSD: mi,v 1.172 2011/02/20 16:24:53 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -732,6 +732,7 @@
 ./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-isdn-examples	share
 ./usr/share/examples/isdn/isdnd.rc.sample	misc-isdn-examples	share
 ./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples	kerberos,share
+./usr/share/examples/libsaslc			misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech		misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share
