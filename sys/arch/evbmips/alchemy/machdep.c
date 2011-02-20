@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.48 2011/02/08 20:20:12 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.49 2011/02/20 07:48:33 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/02/08 20:20:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/02/20 07:48:33 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -125,12 +125,10 @@ int	aucomcnrate = 0;
 
 #include "ohci.h"
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
 
+int physmem;			/* # pages of physical memory */
 int maxmem;			/* max memory per process */
 
 int mem_cluster_cnt;
@@ -147,7 +145,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	bus_space_handle_t sh;
 	void *kernend;
 	const char *cp;
-	u_long first, last;
 	int freqok, howto, i;
 	const struct alchemy_board *board;
 
@@ -178,7 +175,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * functions called during startup.
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	/*
 	 * Set the VM page size.
@@ -304,10 +301,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-	    VM_FREELIST_DEFAULT);
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend, 
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize message buffer (at end of core).
@@ -391,8 +386,7 @@ cpu_reboot(int howto, char *bootstr)
 	const struct alchemy_board *board;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	board = board_info();
 	KASSERT(board != NULL);
