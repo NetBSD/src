@@ -1,4 +1,4 @@
-/* $NetBSD: list.h,v 1.1 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: list.h,v 1.2 2011/02/20 01:59:46 christos Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,6 +49,6 @@ int      saslc__list_append(list_t **l, const char *);
 uint32_t saslc__list_flags(list_t *, const named_flag_t *);
 void     saslc__list_free(list_t *);
 void     saslc__list_log(list_t *, const char *);
-list_t * saslc__list_parse(const char *);
+int      saslc__list_parse(list_t **, const char *);
 
 #endif /* ! _LIST_H_ */
