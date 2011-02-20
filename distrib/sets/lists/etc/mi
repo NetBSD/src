@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.220 2011/02/20 15:59:22 christos Exp $
+# $NetBSD: mi,v 1.221 2011/02/20 19:24:53 christos Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -299,7 +299,9 @@
 ./etc/rmt					etc-sysutil-etc
 ./etc/rpc					etc-net-etc
 ./etc/saslc.d					etc-libsaslc-etc
-./etc/saslc.d/mech				etc-libsaslc-etc
+./etc/saslc.d/mech				obsolete		obsolete
+./etc/saslc.d/saslc				etc-libsaslc-etc
+./etc/saslc.d/saslc/mech			etc-libsaslc-etc
 ./etc/saslc.d/postfix				etc-libsaslc-postfix
 ./etc/saslc.d/postfix/mech			etc-libsaslc-postfix
 ./etc/security					etc-sys-etc
