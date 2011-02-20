@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.3 2011/01/03 20:51:26 pgoyette Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.4 2011/02/20 20:57:46 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -182,11 +182,11 @@ run_test(struct ldexp_test *table)
 	}								\
 	ATF_TC_BODY(name, tc)						\
 	{								\
-		const char *arch;					\
+		const char *machine;					\
 									\
-		arch = atf_config_get("atf_arch");			\
-		if (strcmp("vax", arch) == 0)				\
-			atf_tc_skip("Test not valid for %s", arch);	\
+		machine = atf_config_get("atf_machine");		\
+		if (strcmp("vax", machine) == 0)			\
+			atf_tc_skip("Test not valid for %s", machine);	\
 		run_test(name);						\
 	}
 
