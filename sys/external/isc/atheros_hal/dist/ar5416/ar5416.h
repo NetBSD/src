@@ -14,13 +14,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416.h,v 1.2 2011/02/20 11:21:03 jmcneill Exp $
+ * $Id: ar5416.h,v 1.3 2011/02/21 11:06:38 cegger Exp $
  */
 #ifndef _ATH_AR5416_H_
 #define _ATH_AR5416_H_
 
 #include "ar5212/ar5212.h"
 #include "ar5416_cal.h"
+#include "ah_eeprom_v14.h"	/* for CAL_TARGET_POWER_* */
 
 #define	AR5416_MAGIC	0x20065416
 
@@ -91,6 +92,7 @@ extern	HAL_BOOL ar2133RfAttach(struct ath_hal *, HAL_STATUS *);
 
 struct ath_hal;
 
+extern	uint32_t ar5416GetRadioRev(struct ath_hal *ah);
 extern	struct ath_hal * ar5416Attach(uint16_t devid, HAL_SOFTC sc,
 		HAL_BUS_TAG st, HAL_BUS_HANDLE sh, HAL_STATUS *status);
 extern	void ar5416InitState(struct ath_hal_5416 *, uint16_t devid,
@@ -175,11 +177,25 @@ extern	HAL_RFGAIN ar5416GetRfgain(struct ath_hal *ah);
 extern	HAL_BOOL ar5416Disable(struct ath_hal *ah);
 extern	HAL_BOOL ar5416ChipReset(struct ath_hal *ah, HAL_CHANNEL *);
 extern	HAL_BOOL ar5416SetResetReg(struct ath_hal *, uint32_t type);
+extern	HAL_BOOL ar5416SetBoardValues(struct ath_hal *, HAL_CHANNEL *);
 extern	HAL_BOOL ar5416SetTxPowerLimit(struct ath_hal *ah, uint32_t limit);
+extern	HAL_BOOL ar5416SetTransmitPower(struct ath_hal *,
+		HAL_CHANNEL *, uint16_t *);
 extern	HAL_BOOL ar5416GetChipPowerLimits(struct ath_hal *ah,
 		HAL_CHANNEL *chans, uint32_t nchans);
 extern	void ar5416GetChannelCenters(struct ath_hal *,
 		HAL_CHANNEL_INTERNAL *chan, CHAN_CENTERS *centers);
+extern  void ar5416GetTargetPowers(struct ath_hal *ah, 
+		HAL_CHANNEL_INTERNAL *chan,
+		CAL_TARGET_POWER_HT *powInfo,
+		uint16_t numChannels, CAL_TARGET_POWER_HT *pNewPower,
+		uint16_t numRates, HAL_BOOL isHt40Target);
+extern  void ar5416GetTargetPowersLeg(struct ath_hal *ah, 
+		HAL_CHANNEL_INTERNAL *chan,
+		CAL_TARGET_POWER_LEG *powInfo,
+		uint16_t numChannels, CAL_TARGET_POWER_LEG *pNewPower,
+		uint16_t numRates, HAL_BOOL isExtTarget);
+
 
 extern	HAL_BOOL ar5416StopTxDma(struct ath_hal *ah, u_int q);
 extern	HAL_BOOL ar5416SetupTxDesc(struct ath_hal *ah, struct ath_desc *ds,
