@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.155 2011/02/17 18:50:02 matt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.156 2011/02/21 20:23:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.155 2011/02/17 18:50:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.156 2011/02/21 20:23:28 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -695,6 +695,15 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_flag = 0;
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
+
+	/*
+	 * For vfork, borrow parent's lwpctl context if it exists.
+	 * This also causes us to return via lwp_userret.
+	 */
+	if (flags & LWP_VFORK && l1->l_lwpctl) {
+		l2->l_lwpctl = l1->l_lwpctl;
+		l2->l_flag |= LW_LWPCTL;
+	}
 
 	/*
 	 * If not the first LWP in the process, grab a reference to the
@@ -1377,6 +1386,16 @@ lwp_userret(struct lwp *l)
 			KASSERT(0);
 			/* NOTREACHED */
 		}
+
+		/* update lwpctl processor (for vfork child_return) */
+		if (l->l_flag & LW_LWPCTL) {
+			lwp_lock(l);
+			KASSERT(kpreempt_disabled());
+			l->l_lwpctl->lc_curcpu = (int)cpu_index(l->l_cpu);
+			l->l_lwpctl->lc_pctr++;
+			l->l_flag &= ~LW_LWPCTL;
+			lwp_unlock(l);
+		}
 	}
 
 #ifdef KERN_SA
@@ -1530,6 +1549,10 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	l = curlwp;
 	p = l->l_proc;
 
+	/* don't allow a vforked process to create lwp ctls */
+	if (p->p_lflag & PL_PPWAIT)
+		return EBUSY;
+
 	if (l->l_lcpage != NULL) {
 		lcp = l->l_lcpage;
 		*uaddr = lcp->lcp_uaddr + (vaddr_t)l->l_lwpctl - lcp->lcp_kaddr;
@@ -1654,11 +1677,18 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 void
 lwp_ctl_free(lwp_t *l)
 {
+	struct proc *p = l->l_proc;
 	lcproc_t *lp;
 	lcpage_t *lcp;
 	u_int map, offset;
 
-	lp = l->l_proc->p_lwpctl;
+	/* don't free a lwp context we borrowed for vfork */
+	if (p->p_lflag & PL_PPWAIT) {
+		l->l_lwpctl = NULL;
+		return;
+	}
+
+	lp = p->p_lwpctl;
 	KASSERT(lp != NULL);
 
 	lcp = l->l_lcpage;
