@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2011/02/09 13:37:48 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.28 2011/02/21 04:42:17 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -37,6 +37,9 @@ SRCS.bsd+=	ppc_video.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
+.if ${MACHINE} == "ofppc"
+CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT
+.endif
 .endif
 
 .if ${MACHINE_ARCH} == "alpha"
