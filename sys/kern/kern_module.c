@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.75 2011/01/14 10:18:21 martin Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.76 2011/02/21 09:53:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.75 2011/01/14 10:18:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.76 2011/02/21 09:53:06 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1129,6 +1129,15 @@ module_do_unload(const char *name, bool load_requires_force)
 		module_print("module `%s' busy", name);
 		return EBUSY;
 	}
+
+	/*
+	 * Builtin secmodels are there to stay.
+	 */
+	if (mod->mod_source == MODULE_SOURCE_KERNEL &&
+	    mod->mod_info->mi_class == MODULE_CLASS_SECMODEL) {
+		return EPERM;
+	}
+
 	prev_active = module_active;
 	module_active = mod;
 	error = (*mod->mod_info->mi_modcmd)(MODULE_CMD_FINI, NULL);
