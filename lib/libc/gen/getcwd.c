@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.49 2011/02/16 20:20:25 tron Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.50 2011/02/21 00:40:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.49 2011/02/16 20:20:25 tron Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.50 2011/02/21 00:40:07 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,22 +50,14 @@ __RCSID("$NetBSD: getcwd.c,v 1.49 2011/02/16 20:20:25 tron Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ssp/ssp.h>
 
 #include "extern.h"
 
 #ifdef __weak_alias
-__weak_alias(getcwd,_sys_getcwd)
-__weak_alias(_getcwd,_sys_getcwd)
+__weak_alias(getcwd,_getcwd)
+__weak_alias(_sys_getcwd,_getcwd)
 __weak_alias(realpath,_realpath)
-
-#if !defined(lint)
-#undef getcwd
-#define getcwd _sys_getcwd
-#if !defined(_FORTIFY_SOURCE)
-char *_sys_getcwd(char *, size_t);
-#endif
-
-#endif
 #endif
 
 /*
@@ -216,7 +208,7 @@ loop:
 }
 
 char *
-getcwd(char *pt, size_t size)
+__ssp_real(getcwd)(char *pt, size_t size)
 {
 	char *npt;
 
