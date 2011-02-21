@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1055 2011/02/20 22:16:50 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1056 2011/02/21 13:38:56 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1059 2011/02/20 22:16:18 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1060 2011/02/21 13:38:18 njoly Exp
  */
 
 /*
@@ -4403,7 +4403,11 @@ static const uint16_t pci_products[] = {
 	    17853, 692, 1716, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_HB, 
 	    17861, 6632, 6242, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_EXP, 
+	    17861, 615, 4337, 6242, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_IGD, 
+	    17861, 692, 1716, 2443, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_IGD_1, 
 	    17861, 692, 1716, 2443, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G45_HB, 
 	    17867, 6632, 6242, 0,
@@ -7732,7 +7736,7 @@ static const char pci_words[] = { "."
 	    "TMC\0" /* 1 refs @ 601 */
 	    "Miro\0" /* 1 refs @ 605 */
 	    "(2nd\0" /* 14 refs @ 610 */
-	    "PCI\0" /* 303 refs @ 615 */
+	    "PCI\0" /* 304 refs @ 615 */
 	    "Vendor\0" /* 15 refs @ 619 */
 	    "ID)\0" /* 18 refs @ 626 */
 	    "NEC\0" /* 2 refs @ 630 */
@@ -7746,7 +7750,7 @@ static const char pci_words[] = { "."
 	    "Hitach\0" /* 1 refs @ 673 */
 	    "AMP\0" /* 1 refs @ 680 */
 	    "Silicon\0" /* 4 refs @ 684 */
-	    "Integrated\0" /* 66 refs @ 692 */
+	    "Integrated\0" /* 67 refs @ 692 */
 	    "Seiko\0" /* 1 refs @ 703 */
 	    "Tatung\0" /* 1 refs @ 709 */
 	    "Hewlett-Packard\0" /* 1 refs @ 716 */
@@ -7880,7 +7884,7 @@ static const char pci_words[] = { "."
 	    "Industrial\0" /* 2 refs @ 1688 */
 	    "Benchmarq\0" /* 1 refs @ 1699 */
 	    "Sierra\0" /* 2 refs @ 1709 */
-	    "Graphics\0" /* 64 refs @ 1716 */
+	    "Graphics\0" /* 65 refs @ 1716 */
 	    "ACC\0" /* 1 refs @ 1725 */
 	    "Digicom\0" /* 1 refs @ 1729 */
 	    "Honeywell\0" /* 1 refs @ 1737 */
@@ -7977,7 +7981,7 @@ static const char pci_words[] = { "."
 	    "F.\0" /* 1 refs @ 2420 */
 	    "Mikroelektronik\0" /* 1 refs @ 2423 */
 	    "I-O\0" /* 1 refs @ 2439 */
-	    "Device\0" /* 51 refs @ 2443 */
+	    "Device\0" /* 52 refs @ 2443 */
 	    "Soyo\0" /* 1 refs @ 2450 */
 	    "Fast\0" /* 19 refs @ 2455 */
 	    "NCube\0" /* 1 refs @ 2460 */
@@ -8229,7 +8233,7 @@ static const char pci_words[] = { "."
 	    "Transmeta\0" /* 1 refs @ 4310 */
 	    "Rockwell\0" /* 1 refs @ 4320 */
 	    "Davicom\0" /* 1 refs @ 4329 */
-	    "Express\0" /* 95 refs @ 4337 */
+	    "Express\0" /* 96 refs @ 4337 */
 	    "TriTech\0" /* 1 refs @ 4345 */
 	    "Kofax\0" /* 1 refs @ 4353 */
 	    "Image\0" /* 1 refs @ 4359 */
@@ -8480,7 +8484,7 @@ static const char pci_words[] = { "."
 	    "ACCM\0" /* 1 refs @ 6225 */
 	    "2188\0" /* 1 refs @ 6230 */
 	    "VL-PCI\0" /* 3 refs @ 6235 */
-	    "Bridge\0" /* 530 refs @ 6242 */
+	    "Bridge\0" /* 531 refs @ 6242 */
 	    "2051\0" /* 2 refs @ 6249 */
 	    "Single\0" /* 5 refs @ 6254 */
 	    "Solution\0" /* 2 refs @ 6261 */
@@ -10095,7 +10099,7 @@ static const char pci_words[] = { "."
 	    "82965GME\0" /* 2 refs @ 17837 */
 	    "82GM45\0" /* 3 refs @ 17846 */
 	    "82IGD_E\0" /* 2 refs @ 17853 */
-	    "82Q45\0" /* 2 refs @ 17861 */
+	    "82Q45\0" /* 4 refs @ 17861 */
 	    "82G45\0" /* 2 refs @ 17867 */
 	    "82G41\0" /* 2 refs @ 17873 */
 	    "82B43\0" /* 2 refs @ 17879 */
