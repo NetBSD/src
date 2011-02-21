@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.310 2011/02/20 13:42:45 jruoho Exp $
+# $NetBSD: GENERIC,v 1.311 2011/02/21 16:24:29 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,11 +22,10 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.310 $"
+#ident 		"GENERIC-$Revision: 1.311 $"
 
 maxusers	64		# estimated number of users
 
-no options 	COREDUMP	# coredump support, built as module(7)
 # Common binary formats are statically compiled in by default.
 options 	EXEC_ELF32	# exec ELF 32-bits binaries
 #no options 	EXEC_ELF64	# exec ELF 64-bits binaries
