@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1511 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1512 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -866,3 +866,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		preemption.  Added support for RMI (NetLogic) XLS/XLR models.
 		Major clean up for MIPS port. [matt 20110220]
 	ath(4): Add support for AR9285 devices. [cegger 20110221]
+	libsaslc)(3): Complete integration of libsaslc written for SoC 2010
+		by Mateusz Kocielski, improved and integrated with Postfix
+		by Anon Ymous. Supported mechs are: ANONYMOUS, CRAM-MD5,
+		DIGEST-MD5, EXTERNAL, GSSAPI, LOGIN, PLAIN [christos 20110221]
