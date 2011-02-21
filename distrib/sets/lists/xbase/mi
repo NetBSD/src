@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.104 2010/11/29 12:18:45 wiz Exp $
+# $NetBSD: mi,v 1.105 2011/02/21 04:53:52 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1842,8 +1842,8 @@
 ./usr/X11R7/lib/X11/xedit/lisp/xedit.lsp		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb					base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/README				-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/README.config			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/README.enhancing		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/README.config			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/README.enhancing		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/compat				base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/compat.dir			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/README			-unknown-	xorg
