@@ -1,4 +1,4 @@
-/*	$NetBSD: hilkbd.c,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
+/*	$NetBSD: hilkbd.c,v 1.3 2011/02/21 12:33:05 he Exp $	*/
 /*	$OpenBSD: hilkbd.c,v 1.14 2009/01/21 21:53:59 grange Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -122,7 +122,9 @@ static void	hilkbd_callback(struct hildev_softc *, u_int, uint8_t *);
 static void	hilkbd_decode(struct hilkbd_softc *, uint8_t, u_int *, int *,
 		    int);
 static int	hilkbd_is_console(int);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 static void	hilkbd_rawrepeat(void *);
+#endif
 
 static int	seen_hilkbd_console;
 
