@@ -1,10 +1,10 @@
 /*
  *	declarations of tiny printf/err functions
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: xprintf.h,v 1.2 2009/03/14 14:46:07 dsl Exp $
+ *	$NetBSD: xprintf.h,v 1.3 2011/02/21 02:31:58 itohy Exp $
  */
 
 #include <sys/cdefs.h>

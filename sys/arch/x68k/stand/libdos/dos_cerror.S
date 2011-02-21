@@ -1,10 +1,10 @@
 |	Writes Human68k DOS error number to  dos_errno.
 |	Called on errors of DOS calls.
 |
-|	written by Yasha (ITOH Yasufumi)
+|	written by ITOH Yasufumi
 |	public domain
 |
-|	$NetBSD: dos_cerror.S,v 1.1 1999/11/11 08:14:43 itohy Exp $
+|	$NetBSD: dos_cerror.S,v 1.2 2011/02/21 02:31:59 itohy Exp $
 
 #include "dos_asm.h"
 #include "dos_errno.h"
