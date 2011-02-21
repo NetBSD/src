@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.19 2011/02/18 09:54:03 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.20 2011/02/21 18:50:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.19 2011/02/18 09:54:03 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.20 2011/02/21 18:50:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "c:d:l:m:s")) != -1) {
+	while ((ch = getopt(argc, argv, "c:d:l:m:r:sv")) != -1) {
 		switch (ch) {
 		case 'c':
 			ncpu = atoi(optarg);
@@ -299,8 +299,14 @@ main(int argc, char *argv[])
 			}
 			modarray[curmod++] = optarg;
 			break;
+		case 'r':
+			setenv("RUMP_MEMLIMIT", optarg, 1);
+			break;
 		case 's':
 			sflag = 1;
+			break;
+		case 'v':
+			setenv("RUMP_VERBOSE", "1", 1);
 			break;
 		default:
 			usage();
