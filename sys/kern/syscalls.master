@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.243 2011/01/31 00:05:29 christos Exp $
+	$NetBSD: syscalls.master,v 1.244 2011/02/21 12:49:06 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -547,10 +547,10 @@
 287	STD 		{ pid_t|sys||__clone(int flags, void *stack); }
 288	STD 		{ int|sys||fktrace(int fd, int ops, \
 			    int facs, pid_t pid); }
-289	STD 		{ ssize_t|sys||preadv(int fd, \
+289	STD 	RUMP	{ ssize_t|sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int PAD, off_t offset); }
-290	STD 		{ ssize_t|sys||pwritev(int fd, \
+290	STD 	RUMP	{ ssize_t|sys||pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int PAD, off_t offset); }
 291	COMPAT_16 MODULAR { int|sys|14|sigaction(int signum, \
