@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.307 2011/02/15 16:49:54 pooka Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.308 2011/02/21 20:23:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.307 2011/02/15 16:49:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.308 2011/02/21 20:23:29 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -978,6 +978,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	if ((p->p_lflag & PL_PPWAIT) != 0) {
 		mutex_enter(proc_lock);
+		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(proc_lock);

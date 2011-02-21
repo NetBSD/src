@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.148 2011/02/19 20:19:54 matt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.149 2011/02/21 20:23:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -215,6 +215,7 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
+#define	LW_LWPCTL	0x00000002 /* Adjust lwpctl in userret */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
@@ -259,7 +260,7 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
  * user.
  */
 #define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
-		    LW_SA_BLOCKING|LW_SA_UPCALL)
+		    LW_SA_BLOCKING|LW_SA_UPCALL|LW_LWPCTL)
 
 /*
  * Status values.
