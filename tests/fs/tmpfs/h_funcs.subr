@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: h_funcs.subr,v 1.3 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: h_funcs.subr,v 1.4 2011/02/21 10:14:29 pooka Exp $
 #
 # Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,11 +42,21 @@ test_mount() {
 	Mount_Point=$(pwd)/mntpt
 	atf_check -s eq:0 -o empty -e empty mkdir ${Mount_Point}
 	if [ $# -gt 0 ]; then
-		atf_check -s eq:0 -o empty -e empty \
-		    mount -t tmpfs $* tmpfs ${Mount_Point}
-	else
-		atf_check -s eq:0 -o empty -e empty \
-		    mount -t tmpfs tmpfs ${Mount_Point}
+		mount -t tmpfs $* tmpfs ${Mount_Point} 2> mounterr
+		if [ $? -ne 0 ]; then
+			if grep 'Operation not supp' mounterr > /dev/null ; then
+				atf_skip "tmpfs not supported"
+			fi 
+			atf_fail "mount tmpfs"
+		fi
+        else
+		mount -t tmpfs tmpfs ${Mount_Point} 2> mounterr
+		if [ $? -ne 0 ]; then
+			if grep 'Operation not supp' mounterr > /dev/null ; then
+				atf_skip "tmpfs not supported"
+			fi 
+			atf_fail "mount tmpfs"
+		fi
 	fi
 	cd ${Mount_Point}
 }
