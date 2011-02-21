@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.61 2011/02/21 12:55:21 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.62 2011/02/21 13:19:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.61 2011/02/21 12:55:21 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.62 2011/02/21 13:19:35 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -34,6 +34,7 @@ __RCSID("$NetBSD: hijack.c,v 1.61 2011/02/21 12:55:21 pooka Exp $");
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
@@ -225,6 +226,7 @@ struct bothsys {
 pid_t	(*host_fork)(void);
 int	(*host_daemon)(int, int);
 int	(*host_execve)(const char *, char *const[], char *const[]);
+void *	(*host_mmap)(void *, size_t, int, int, int, off_t);
 
 /* ok, we need *two* bits per dup2'd fd to track fd+HIJACKOFF aliases */
 static uint32_t dup2mask;
@@ -454,6 +456,7 @@ rcinit(void)
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_daemon = dlsym(RTLD_NEXT, "daemon");
 	host_execve = dlsym(RTLD_NEXT, "execve");
+	host_mmap = dlsym(RTLD_NEXT, "mmap");
 
 	/*
 	 * In theory cannot print anything during lookups because
@@ -1524,6 +1527,20 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 
 	op_kevent = GETSYSCALL(host, KEVENT);
 	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
+}
+
+/*
+ * mmapping from a rump kernel is not supported, so disallow it.
+ */
+void *
+mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+{
+
+	if (flags & MAP_FILE && fd_isrump(fd)) {
+		errno = ENOSYS;
+		return MAP_FAILED;
+	}
+	return host_mmap(addr, len, prot, flags, fd, offset);
 }
 
 /*
