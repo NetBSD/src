@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.62 2011/02/21 11:32:26 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.63 2011/02/21 11:33:36 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.62 2011/02/21 11:32:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.63 2011/02/21 11:33:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstypes.h>
@@ -78,9 +78,9 @@ rump___sysimpl_read(int fd, void * buf, size_t nbyte)
 	SPARG(&callarg, nbyte) = nbyte;
 
 	error = rsys_syscall(SYS_read, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -99,9 +99,9 @@ rump___sysimpl_write(int fd, const void * buf, size_t nbyte)
 	SPARG(&callarg, nbyte) = nbyte;
 
 	error = rsys_syscall(SYS_write, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -120,9 +120,9 @@ rump___sysimpl_open(const char * path, int flags, mode_t mode)
 	SPARG(&callarg, mode) = mode;
 
 	error = rsys_syscall(SYS_open, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -139,9 +139,9 @@ rump___sysimpl_close(int fd)
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_close, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -159,9 +159,9 @@ rump___sysimpl_link(const char * path, const char * link)
 	SPARG(&callarg, link) = link;
 
 	error = rsys_syscall(SYS_link, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -178,9 +178,9 @@ rump___sysimpl_unlink(const char * path)
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_unlink, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -197,9 +197,9 @@ rump___sysimpl_chdir(const char * path)
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_chdir, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -216,9 +216,9 @@ rump___sysimpl_fchdir(int fd)
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_fchdir, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -237,9 +237,9 @@ rump___sysimpl_mknod(const char * path, mode_t mode, uint32_t dev)
 	SPARG(&callarg, dev) = dev;
 
 	error = rsys_syscall(SYS_compat_50_mknod, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -257,9 +257,9 @@ rump___sysimpl_chmod(const char * path, mode_t mode)
 	SPARG(&callarg, mode) = mode;
 
 	error = rsys_syscall(SYS_chmod, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -278,9 +278,9 @@ rump___sysimpl_chown(const char * path, uid_t uid, gid_t gid)
 	SPARG(&callarg, gid) = gid;
 
 	error = rsys_syscall(SYS_chown, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -294,9 +294,9 @@ rump___sysimpl_getpid(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_getpid, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -314,9 +314,9 @@ rump___sysimpl_unmount(const char * path, int flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_unmount, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -333,9 +333,9 @@ rump___sysimpl_setuid(uid_t uid)
 	SPARG(&callarg, uid) = uid;
 
 	error = rsys_syscall(SYS_setuid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -349,9 +349,9 @@ rump___sysimpl_getuid(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_getuid, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -365,9 +365,9 @@ rump___sysimpl_geteuid(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_geteuid, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -386,9 +386,9 @@ rump___sysimpl_recvmsg(int s, struct msghdr * msg, int flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_recvmsg, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -407,9 +407,9 @@ rump___sysimpl_sendmsg(int s, const struct msghdr * msg, int flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_sendmsg, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -431,9 +431,9 @@ rump___sysimpl_recvfrom(int s, void * buf, size_t len, int flags, struct sockadd
 	SPARG(&callarg, fromlenaddr) = fromlenaddr;
 
 	error = rsys_syscall(SYS_recvfrom, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -452,9 +452,9 @@ rump___sysimpl_accept(int s, struct sockaddr * name, unsigned int * anamelen)
 	SPARG(&callarg, anamelen) = anamelen;
 
 	error = rsys_syscall(SYS_accept, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -473,9 +473,9 @@ rump___sysimpl_getpeername(int fdes, struct sockaddr * asa, unsigned int * alen)
 	SPARG(&callarg, alen) = alen;
 
 	error = rsys_syscall(SYS_getpeername, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -494,9 +494,9 @@ rump___sysimpl_getsockname(int fdes, struct sockaddr * asa, unsigned int * alen)
 	SPARG(&callarg, alen) = alen;
 
 	error = rsys_syscall(SYS_getsockname, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -514,9 +514,9 @@ rump___sysimpl_access(const char * path, int flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_access, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -534,9 +534,9 @@ rump___sysimpl_chflags(const char * path, u_long flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_chflags, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -554,9 +554,9 @@ rump___sysimpl_fchflags(int fd, u_long flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_fchflags, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -570,6 +570,7 @@ rump___sysimpl_sync(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_sync, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
 	}
@@ -584,9 +585,9 @@ rump___sysimpl_getppid(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_getppid, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -603,9 +604,9 @@ rump___sysimpl_dup(int fd)
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_dup, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -619,9 +620,9 @@ rump___sysimpl_getegid(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_getegid, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -635,9 +636,9 @@ rump___sysimpl_getgid(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_getgid, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -655,9 +656,9 @@ rump___sysimpl___getlogin(char * namebuf, size_t namelen)
 	SPARG(&callarg, namelen) = namelen;
 
 	error = rsys_syscall(SYS___getlogin, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -674,9 +675,9 @@ rump___sysimpl___setlogin(const char * namebuf)
 	SPARG(&callarg, namebuf) = namebuf;
 
 	error = rsys_syscall(SYS___setlogin, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -695,9 +696,9 @@ rump___sysimpl_ioctl(int fd, u_long com, void * data)
 	SPARG(&callarg, data) = data;
 
 	error = rsys_syscall(SYS_ioctl, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -714,9 +715,9 @@ rump___sysimpl_revoke(const char * path)
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_revoke, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -734,9 +735,9 @@ rump___sysimpl_symlink(const char * path, const char * link)
 	SPARG(&callarg, link) = link;
 
 	error = rsys_syscall(SYS_symlink, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -755,9 +756,9 @@ rump___sysimpl_readlink(const char * path, char * buf, size_t count)
 	SPARG(&callarg, count) = count;
 
 	error = rsys_syscall(SYS_readlink, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -774,9 +775,9 @@ rump___sysimpl_umask(mode_t newmask)
 	SPARG(&callarg, newmask) = newmask;
 
 	error = rsys_syscall(SYS_umask, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -793,9 +794,9 @@ rump___sysimpl_chroot(const char * path)
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_chroot, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -813,9 +814,9 @@ rump___sysimpl_getgroups(int gidsetsize, gid_t * gidset)
 	SPARG(&callarg, gidset) = gidset;
 
 	error = rsys_syscall(SYS_getgroups, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -833,9 +834,9 @@ rump___sysimpl_setgroups(int gidsetsize, const gid_t * gidset)
 	SPARG(&callarg, gidset) = gidset;
 
 	error = rsys_syscall(SYS_setgroups, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -849,9 +850,9 @@ rump___sysimpl_getpgrp(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_getpgrp, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -869,9 +870,9 @@ rump___sysimpl_setpgid(pid_t pid, pid_t pgid)
 	SPARG(&callarg, pgid) = pgid;
 
 	error = rsys_syscall(SYS_setpgid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -889,9 +890,9 @@ rump___sysimpl_dup2(int from, int to)
 	SPARG(&callarg, to) = to;
 
 	error = rsys_syscall(SYS_dup2, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -910,9 +911,9 @@ rump___sysimpl_fcntl(int fd, int cmd, void * arg)
 	SPARG(&callarg, arg) = arg;
 
 	error = rsys_syscall(SYS_fcntl, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -933,9 +934,9 @@ rump___sysimpl_select(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct time
 	SPARG(&callarg, tv) = (struct timeval50 *)tv;
 
 	error = rsys_syscall(SYS_compat_50_select, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -952,9 +953,9 @@ rump___sysimpl_fsync(int fd)
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_fsync, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -973,9 +974,9 @@ rump___sysimpl_connect(int s, const struct sockaddr * name, unsigned int namelen
 	SPARG(&callarg, namelen) = namelen;
 
 	error = rsys_syscall(SYS_connect, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -994,9 +995,9 @@ rump___sysimpl_bind(int s, const struct sockaddr * name, unsigned int namelen)
 	SPARG(&callarg, namelen) = namelen;
 
 	error = rsys_syscall(SYS_bind, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1017,9 +1018,9 @@ rump___sysimpl_setsockopt(int s, int level, int name, const void * val, unsigned
 	SPARG(&callarg, valsize) = valsize;
 
 	error = rsys_syscall(SYS_setsockopt, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1037,9 +1038,9 @@ rump___sysimpl_listen(int s, int backlog)
 	SPARG(&callarg, backlog) = backlog;
 
 	error = rsys_syscall(SYS_listen, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1060,9 +1061,9 @@ rump___sysimpl_getsockopt(int s, int level, int name, void * val, unsigned int *
 	SPARG(&callarg, avalsize) = avalsize;
 
 	error = rsys_syscall(SYS_getsockopt, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1081,9 +1082,9 @@ rump___sysimpl_readv(int fd, const struct iovec * iovp, int iovcnt)
 	SPARG(&callarg, iovcnt) = iovcnt;
 
 	error = rsys_syscall(SYS_readv, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1102,9 +1103,9 @@ rump___sysimpl_writev(int fd, const struct iovec * iovp, int iovcnt)
 	SPARG(&callarg, iovcnt) = iovcnt;
 
 	error = rsys_syscall(SYS_writev, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1123,9 +1124,9 @@ rump___sysimpl_fchown(int fd, uid_t uid, gid_t gid)
 	SPARG(&callarg, gid) = gid;
 
 	error = rsys_syscall(SYS_fchown, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1143,9 +1144,9 @@ rump___sysimpl_fchmod(int fd, mode_t mode)
 	SPARG(&callarg, mode) = mode;
 
 	error = rsys_syscall(SYS_fchmod, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1163,9 +1164,9 @@ rump___sysimpl_setreuid(uid_t ruid, uid_t euid)
 	SPARG(&callarg, euid) = euid;
 
 	error = rsys_syscall(SYS_setreuid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1183,9 +1184,9 @@ rump___sysimpl_setregid(gid_t rgid, gid_t egid)
 	SPARG(&callarg, egid) = egid;
 
 	error = rsys_syscall(SYS_setregid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1203,9 +1204,9 @@ rump___sysimpl_rename(const char * from, const char * to)
 	SPARG(&callarg, to) = to;
 
 	error = rsys_syscall(SYS_rename, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1223,9 +1224,9 @@ rump___sysimpl_flock(int fd, int how)
 	SPARG(&callarg, how) = how;
 
 	error = rsys_syscall(SYS_flock, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1243,9 +1244,9 @@ rump___sysimpl_mkfifo(const char * path, mode_t mode)
 	SPARG(&callarg, mode) = mode;
 
 	error = rsys_syscall(SYS_mkfifo, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1267,9 +1268,9 @@ rump___sysimpl_sendto(int s, const void * buf, size_t len, int flags, const stru
 	SPARG(&callarg, tolen) = tolen;
 
 	error = rsys_syscall(SYS_sendto, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1287,9 +1288,9 @@ rump___sysimpl_shutdown(int s, int how)
 	SPARG(&callarg, how) = how;
 
 	error = rsys_syscall(SYS_shutdown, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1309,9 +1310,9 @@ rump___sysimpl_socketpair(int domain, int type, int protocol, int * rsv)
 	SPARG(&callarg, rsv) = rsv;
 
 	error = rsys_syscall(SYS_socketpair, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1329,9 +1330,9 @@ rump___sysimpl_mkdir(const char * path, mode_t mode)
 	SPARG(&callarg, mode) = mode;
 
 	error = rsys_syscall(SYS_mkdir, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1348,9 +1349,9 @@ rump___sysimpl_rmdir(const char * path)
 	SPARG(&callarg, path) = path;
 
 	error = rsys_syscall(SYS_rmdir, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1368,9 +1369,9 @@ rump___sysimpl_utimes(const char * path, const struct timeval * tptr)
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
 	error = rsys_syscall(SYS_compat_50_utimes, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1384,9 +1385,9 @@ rump___sysimpl_setsid(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_setsid, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1404,9 +1405,9 @@ rump___sysimpl_nfssvc(int flag, void * argp)
 	SPARG(&callarg, argp) = argp;
 
 	error = rsys_syscall(SYS_nfssvc, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1427,9 +1428,9 @@ rump___sysimpl_pread(int fd, void * buf, size_t nbyte, off_t offset)
 	SPARG(&callarg, offset) = offset;
 
 	error = rsys_syscall(SYS_pread, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1450,9 +1451,9 @@ rump___sysimpl_pwrite(int fd, const void * buf, size_t nbyte, off_t offset)
 	SPARG(&callarg, offset) = offset;
 
 	error = rsys_syscall(SYS_pwrite, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1469,9 +1470,9 @@ rump___sysimpl_setgid(gid_t gid)
 	SPARG(&callarg, gid) = gid;
 
 	error = rsys_syscall(SYS_setgid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1488,9 +1489,9 @@ rump___sysimpl_setegid(gid_t egid)
 	SPARG(&callarg, egid) = egid;
 
 	error = rsys_syscall(SYS_setegid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1507,9 +1508,9 @@ rump___sysimpl_seteuid(uid_t euid)
 	SPARG(&callarg, euid) = euid;
 
 	error = rsys_syscall(SYS_seteuid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1527,9 +1528,9 @@ rump___sysimpl_pathconf(const char * path, int name)
 	SPARG(&callarg, name) = name;
 
 	error = rsys_syscall(SYS_pathconf, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1547,9 +1548,9 @@ rump___sysimpl_fpathconf(int fd, int name)
 	SPARG(&callarg, name) = name;
 
 	error = rsys_syscall(SYS_fpathconf, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1567,9 +1568,9 @@ rump___sysimpl_getrlimit(int which, struct rlimit * rlp)
 	SPARG(&callarg, rlp) = rlp;
 
 	error = rsys_syscall(SYS_getrlimit, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1587,9 +1588,9 @@ rump___sysimpl_setrlimit(int which, const struct rlimit * rlp)
 	SPARG(&callarg, rlp) = rlp;
 
 	error = rsys_syscall(SYS_setrlimit, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1609,9 +1610,9 @@ rump___sysimpl_lseek(int fd, off_t offset, int whence)
 	SPARG(&callarg, whence) = whence;
 
 	error = rsys_syscall(SYS_lseek, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1630,9 +1631,9 @@ rump___sysimpl_truncate(const char * path, off_t length)
 	SPARG(&callarg, length) = length;
 
 	error = rsys_syscall(SYS_truncate, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1651,9 +1652,9 @@ rump___sysimpl_ftruncate(int fd, off_t length)
 	SPARG(&callarg, length) = length;
 
 	error = rsys_syscall(SYS_ftruncate, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1675,9 +1676,9 @@ rump___sysimpl___sysctl(const int * name, u_int namelen, void * old, size_t * ol
 	SPARG(&callarg, newlen) = newlen;
 
 	error = rsys_syscall(SYS___sysctl, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1695,9 +1696,9 @@ rump___sysimpl_futimes(int fd, const struct timeval * tptr)
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
 	error = rsys_syscall(SYS_compat_50_futimes, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1714,9 +1715,9 @@ rump___sysimpl_getpgid(pid_t pid)
 	SPARG(&callarg, pid) = pid;
 
 	error = rsys_syscall(SYS_getpgid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1734,9 +1735,9 @@ rump___sysimpl_reboot(int opt, char * bootstr)
 	SPARG(&callarg, bootstr) = bootstr;
 
 	error = rsys_syscall(SYS_reboot, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1755,9 +1756,9 @@ rump___sysimpl_poll(struct pollfd * fds, u_int nfds, int timeout)
 	SPARG(&callarg, timeout) = timeout;
 
 	error = rsys_syscall(SYS_poll, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1774,9 +1775,9 @@ rump___sysimpl_fdatasync(int fd)
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_fdatasync, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1794,9 +1795,9 @@ rump___sysimpl_modctl(int cmd, void * arg)
 	SPARG(&callarg, arg) = arg;
 
 	error = rsys_syscall(SYS_modctl, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1814,9 +1815,9 @@ rump___sysimpl__ksem_init(unsigned int value, intptr_t * idp)
 	SPARG(&callarg, idp) = idp;
 
 	error = rsys_syscall(SYS__ksem_init, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1837,9 +1838,9 @@ rump___sysimpl__ksem_open(const char * name, int oflag, mode_t mode, unsigned in
 	SPARG(&callarg, idp) = idp;
 
 	error = rsys_syscall(SYS__ksem_open, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1856,9 +1857,9 @@ rump___sysimpl__ksem_unlink(const char * name)
 	SPARG(&callarg, name) = name;
 
 	error = rsys_syscall(SYS__ksem_unlink, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1875,9 +1876,9 @@ rump___sysimpl__ksem_close(intptr_t id)
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_close, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1894,9 +1895,9 @@ rump___sysimpl__ksem_post(intptr_t id)
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_post, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1913,9 +1914,9 @@ rump___sysimpl__ksem_wait(intptr_t id)
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_wait, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1932,9 +1933,9 @@ rump___sysimpl__ksem_trywait(intptr_t id)
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_trywait, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1952,9 +1953,9 @@ rump___sysimpl__ksem_getvalue(intptr_t id, unsigned int * value)
 	SPARG(&callarg, value) = value;
 
 	error = rsys_syscall(SYS__ksem_getvalue, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1971,9 +1972,9 @@ rump___sysimpl__ksem_destroy(intptr_t id)
 	SPARG(&callarg, id) = id;
 
 	error = rsys_syscall(SYS__ksem_destroy, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -1991,9 +1992,9 @@ rump___sysimpl_lchmod(const char * path, mode_t mode)
 	SPARG(&callarg, mode) = mode;
 
 	error = rsys_syscall(SYS_lchmod, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2012,9 +2013,9 @@ rump___sysimpl_lchown(const char * path, uid_t uid, gid_t gid)
 	SPARG(&callarg, gid) = gid;
 
 	error = rsys_syscall(SYS_lchown, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2032,9 +2033,9 @@ rump___sysimpl_lutimes(const char * path, const struct timeval * tptr)
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
 	error = rsys_syscall(SYS_compat_50_lutimes, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2051,9 +2052,9 @@ rump___sysimpl_getsid(pid_t pid)
 	SPARG(&callarg, pid) = pid;
 
 	error = rsys_syscall(SYS_getsid, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2071,9 +2072,9 @@ rump___sysimpl___getcwd(char * bufp, size_t length)
 	SPARG(&callarg, length) = length;
 
 	error = rsys_syscall(SYS___getcwd, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2090,9 +2091,9 @@ rump___sysimpl_fchroot(int fd)
 	SPARG(&callarg, fd) = fd;
 
 	error = rsys_syscall(SYS_fchroot, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2110,9 +2111,9 @@ rump___sysimpl_lchflags(const char * path, u_long flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_lchflags, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2126,9 +2127,9 @@ rump___sysimpl_issetugid(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_issetugid, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2142,9 +2143,9 @@ rump___sysimpl_kqueue(void )
 	int error = 0;
 
 	error = rsys_syscall(SYS_kqueue, NULL, 0, rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2166,9 +2167,9 @@ rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges,
 	SPARG(&callarg, timeout) = (const struct timespec50 *)timeout;
 
 	error = rsys_syscall(SYS_compat_50_kevent, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2188,9 +2189,9 @@ rump___sysimpl_fsync_range(int fd, int flags, off_t start, off_t length)
 	SPARG(&callarg, length) = length;
 
 	error = rsys_syscall(SYS_fsync_range, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2209,9 +2210,9 @@ rump___sysimpl_getvfsstat(struct statvfs * buf, size_t bufsize, int flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_getvfsstat, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2230,9 +2231,9 @@ rump___sysimpl_statvfs1(const char * path, struct statvfs * buf, int flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_statvfs1, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2251,9 +2252,9 @@ rump___sysimpl_fstatvfs1(int fd, struct statvfs * buf, int flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_fstatvfs1, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2274,9 +2275,9 @@ rump___sysimpl_extattrctl(const char * path, int cmd, const char * filename, int
 	SPARG(&callarg, attrname) = attrname;
 
 	error = rsys_syscall(SYS_extattrctl, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2297,9 +2298,9 @@ rump___sysimpl_extattr_set_file(const char * path, int attrnamespace, const char
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_set_file, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2320,9 +2321,9 @@ rump___sysimpl_extattr_get_file(const char * path, int attrnamespace, const char
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_get_file, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2341,9 +2342,9 @@ rump___sysimpl_extattr_delete_file(const char * path, int attrnamespace, const c
 	SPARG(&callarg, attrname) = attrname;
 
 	error = rsys_syscall(SYS_extattr_delete_file, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2364,9 +2365,9 @@ rump___sysimpl_extattr_set_fd(int fd, int attrnamespace, const char * attrname, 
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_set_fd, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2387,9 +2388,9 @@ rump___sysimpl_extattr_get_fd(int fd, int attrnamespace, const char * attrname, 
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_get_fd, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2408,9 +2409,9 @@ rump___sysimpl_extattr_delete_fd(int fd, int attrnamespace, const char * attrnam
 	SPARG(&callarg, attrname) = attrname;
 
 	error = rsys_syscall(SYS_extattr_delete_fd, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2431,9 +2432,9 @@ rump___sysimpl_extattr_set_link(const char * path, int attrnamespace, const char
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_set_link, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2454,9 +2455,9 @@ rump___sysimpl_extattr_get_link(const char * path, int attrnamespace, const char
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_get_link, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2475,9 +2476,9 @@ rump___sysimpl_extattr_delete_link(const char * path, int attrnamespace, const c
 	SPARG(&callarg, attrname) = attrname;
 
 	error = rsys_syscall(SYS_extattr_delete_link, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2497,9 +2498,9 @@ rump___sysimpl_extattr_list_fd(int fd, int attrnamespace, void * data, size_t nb
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_list_fd, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2519,9 +2520,9 @@ rump___sysimpl_extattr_list_file(const char * path, int attrnamespace, void * da
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_list_file, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2541,9 +2542,9 @@ rump___sysimpl_extattr_list_link(const char * path, int attrnamespace, void * da
 	SPARG(&callarg, nbytes) = nbytes;
 
 	error = rsys_syscall(SYS_extattr_list_link, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2565,9 +2566,9 @@ rump___sysimpl_pselect(int nd, fd_set * in, fd_set * ou, fd_set * ex, const stru
 	SPARG(&callarg, mask) = mask;
 
 	error = rsys_syscall(SYS_compat_50_pselect, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2587,9 +2588,9 @@ rump___sysimpl_pollts(struct pollfd * fds, u_int nfds, const struct timespec * t
 	SPARG(&callarg, mask) = mask;
 
 	error = rsys_syscall(SYS_compat_50_pollts, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2610,9 +2611,9 @@ rump___sysimpl_setxattr(const char * path, const char * name, void * value, size
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_setxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2633,9 +2634,9 @@ rump___sysimpl_lsetxattr(const char * path, const char * name, void * value, siz
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_lsetxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2656,9 +2657,9 @@ rump___sysimpl_fsetxattr(int fd, const char * name, void * value, size_t size, i
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS_fsetxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2678,9 +2679,9 @@ rump___sysimpl_getxattr(const char * path, const char * name, void * value, size
 	SPARG(&callarg, size) = size;
 
 	error = rsys_syscall(SYS_getxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2700,9 +2701,9 @@ rump___sysimpl_lgetxattr(const char * path, const char * name, void * value, siz
 	SPARG(&callarg, size) = size;
 
 	error = rsys_syscall(SYS_lgetxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2722,9 +2723,9 @@ rump___sysimpl_fgetxattr(int fd, const char * name, void * value, size_t size)
 	SPARG(&callarg, size) = size;
 
 	error = rsys_syscall(SYS_fgetxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2743,9 +2744,9 @@ rump___sysimpl_listxattr(const char * path, char * list, size_t size)
 	SPARG(&callarg, size) = size;
 
 	error = rsys_syscall(SYS_listxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2764,9 +2765,9 @@ rump___sysimpl_llistxattr(const char * path, char * list, size_t size)
 	SPARG(&callarg, size) = size;
 
 	error = rsys_syscall(SYS_llistxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2785,9 +2786,9 @@ rump___sysimpl_flistxattr(int fd, char * list, size_t size)
 	SPARG(&callarg, size) = size;
 
 	error = rsys_syscall(SYS_flistxattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2805,9 +2806,9 @@ rump___sysimpl_removexattr(const char * path, const char * name)
 	SPARG(&callarg, name) = name;
 
 	error = rsys_syscall(SYS_removexattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2825,9 +2826,9 @@ rump___sysimpl_lremovexattr(const char * path, const char * name)
 	SPARG(&callarg, name) = name;
 
 	error = rsys_syscall(SYS_lremovexattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2845,9 +2846,9 @@ rump___sysimpl_fremovexattr(int fd, const char * name)
 	SPARG(&callarg, name) = name;
 
 	error = rsys_syscall(SYS_fremovexattr, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2865,9 +2866,9 @@ rump___sysimpl_stat30(const char * path, struct stat * ub)
 	SPARG(&callarg, ub) = (struct stat30 *)ub;
 
 	error = rsys_syscall(SYS_compat_50___stat30, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2885,9 +2886,9 @@ rump___sysimpl_fstat30(int fd, struct stat * sb)
 	SPARG(&callarg, sb) = (struct stat30 *)sb;
 
 	error = rsys_syscall(SYS_compat_50___fstat30, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2905,9 +2906,9 @@ rump___sysimpl_lstat30(const char * path, struct stat * ub)
 	SPARG(&callarg, ub) = (struct stat30 *)ub;
 
 	error = rsys_syscall(SYS_compat_50___lstat30, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2926,9 +2927,9 @@ rump___sysimpl_getdents30(int fd, char * buf, size_t count)
 	SPARG(&callarg, count) = count;
 
 	error = rsys_syscall(SYS___getdents30, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2947,9 +2948,9 @@ rump___sysimpl_socket30(int domain, int type, int protocol)
 	SPARG(&callarg, protocol) = protocol;
 
 	error = rsys_syscall(SYS___socket30, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2968,9 +2969,9 @@ rump___sysimpl_getfh30(const char * fname, void * fhp, size_t * fh_size)
 	SPARG(&callarg, fh_size) = fh_size;
 
 	error = rsys_syscall(SYS___getfh30, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -2989,9 +2990,9 @@ rump___sysimpl_fhopen40(const void * fhp, size_t fh_size, int flags)
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS___fhopen40, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3011,9 +3012,9 @@ rump___sysimpl_fhstatvfs140(const void * fhp, size_t fh_size, struct statvfs * b
 	SPARG(&callarg, flags) = flags;
 
 	error = rsys_syscall(SYS___fhstatvfs140, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3032,9 +3033,9 @@ rump___sysimpl_fhstat40(const void * fhp, size_t fh_size, struct stat * sb)
 	SPARG(&callarg, sb) = (struct stat30 *)sb;
 
 	error = rsys_syscall(SYS_compat_50___fhstat40, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3055,9 +3056,9 @@ rump___sysimpl_mount50(const char * type, const char * path, int flags, void * d
 	SPARG(&callarg, data_len) = data_len;
 
 	error = rsys_syscall(SYS___mount50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3078,9 +3079,9 @@ rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
 	SPARG(&callarg, advice) = advice;
 
 	error = rsys_syscall(SYS___posix_fadvise50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3101,9 +3102,9 @@ rump___sysimpl_select50(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct ti
 	SPARG(&callarg, tv) = tv;
 
 	error = rsys_syscall(SYS___select50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3121,9 +3122,9 @@ rump___sysimpl_utimes50(const char * path, const struct timeval * tptr)
 	SPARG(&callarg, tptr) = tptr;
 
 	error = rsys_syscall(SYS___utimes50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3141,9 +3142,9 @@ rump___sysimpl_futimes50(int fd, const struct timeval * tptr)
 	SPARG(&callarg, tptr) = tptr;
 
 	error = rsys_syscall(SYS___futimes50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3161,9 +3162,9 @@ rump___sysimpl_lutimes50(const char * path, const struct timeval * tptr)
 	SPARG(&callarg, tptr) = tptr;
 
 	error = rsys_syscall(SYS___lutimes50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3185,9 +3186,9 @@ rump___sysimpl_kevent50(int fd, const struct kevent * changelist, size_t nchange
 	SPARG(&callarg, timeout) = timeout;
 
 	error = rsys_syscall(SYS___kevent50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3209,9 +3210,9 @@ rump___sysimpl_pselect50(int nd, fd_set * in, fd_set * ou, fd_set * ex, const st
 	SPARG(&callarg, mask) = mask;
 
 	error = rsys_syscall(SYS___pselect50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3231,9 +3232,9 @@ rump___sysimpl_pollts50(struct pollfd * fds, u_int nfds, const struct timespec *
 	SPARG(&callarg, mask) = mask;
 
 	error = rsys_syscall(SYS___pollts50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3251,9 +3252,9 @@ rump___sysimpl_stat50(const char * path, struct stat * ub)
 	SPARG(&callarg, ub) = ub;
 
 	error = rsys_syscall(SYS___stat50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3271,9 +3272,9 @@ rump___sysimpl_fstat50(int fd, struct stat * sb)
 	SPARG(&callarg, sb) = sb;
 
 	error = rsys_syscall(SYS___fstat50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3291,9 +3292,9 @@ rump___sysimpl_lstat50(const char * path, struct stat * ub)
 	SPARG(&callarg, ub) = ub;
 
 	error = rsys_syscall(SYS___lstat50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3312,9 +3313,9 @@ rump___sysimpl_mknod50(const char * path, mode_t mode, dev_t dev)
 	SPARG(&callarg, dev) = dev;
 
 	error = rsys_syscall(SYS___mknod50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
@@ -3333,9 +3334,9 @@ rump___sysimpl_fhstat50(const void * fhp, size_t fh_size, struct stat * sb)
 	SPARG(&callarg, sb) = sb;
 
 	error = rsys_syscall(SYS___fhstat50, &callarg, sizeof(callarg), rval);
+	rsys_seterrno(error);
 	if (error) {
 		rval[0] = -1;
-		rsys_seterrno(error);
 	}
 	return rval[0];
 }
