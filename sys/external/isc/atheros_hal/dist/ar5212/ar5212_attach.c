@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_attach.c,v 1.2 2011/02/20 11:21:03 jmcneill Exp $
+ * $Id: ar5212_attach.c,v 1.3 2011/02/21 11:06:38 cegger Exp $
  */
 #include "opt_ah.h"
 
@@ -255,6 +255,9 @@ ar5212InitState(struct ath_hal_5212 *ahp, uint16_t devid, HAL_SOFTC sc,
 	ahp->ah_acktimeout = (u_int) -1;
 	ahp->ah_ctstimeout = (u_int) -1;
 	ahp->ah_sifstime = (u_int) -1;
+	ahp->ah_txTrigLev = INIT_TX_FIFO_THRESHOLD;
+	ahp->ah_maxTxTrigLev = MAX_TX_FIFO_THRESHOLD;
+
 	OS_MEMCPY(&ahp->ah_bssidmask, defbssidmask, IEEE80211_ADDR_LEN);
 #undef N
 }
