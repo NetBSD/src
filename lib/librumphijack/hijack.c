@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.62 2011/02/21 13:19:35 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.63 2011/02/21 20:11:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.62 2011/02/21 13:19:35 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.63 2011/02/21 20:11:56 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -604,6 +604,8 @@ dodup(int oldd, int minfd)
 	if (fd_isrump(oldd)) {
 		op_fcntl = GETSYSCALL(rump, FCNTL);
 		oldd = fd_host2rump(oldd);
+		if (minfd >= HIJACK_FDOFF)
+			minfd -= HIJACK_FDOFF;
 		isrump = 1;
 	} else {
 		op_fcntl = GETSYSCALL(host, FCNTL);
