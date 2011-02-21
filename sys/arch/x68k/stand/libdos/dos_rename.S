@@ -1,10 +1,10 @@
 |	XC compatible RENAME() function
 |	int DOS_RENAME __P((const char *path, const char *newname));
 |
-|	written by Yasha (ITOH Yasufumi)
+|	written by ITOH Yasufumi
 |	public domain
 |
-|	$NetBSD: dos_rename.S,v 1.2 2001/07/05 08:38:26 toshii Exp $
+|	$NetBSD: dos_rename.S,v 1.3 2011/02/21 02:31:59 itohy Exp $
 
 #include "dos_asm.h"
 
