@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.304 2011/01/20 11:46:19 bouyer Exp $
+#	$NetBSD: BRANCHES,v 1.305 2011/02/21 02:35:55 itohy Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -319,7 +319,7 @@ Notes:		Modify SA11x0 interrupt code to match PXA2x0 equivalent.
 
 Branch:		itohy-usb1
 Description:	USB stack overhaul, mostly DMA related
-Status:		Active
+Status:		Terminated
 Start Date:	22 May 2007
 End Date:
 Base Tag:	itohy-usb1-base
