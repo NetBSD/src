@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.8 2007/07/07 18:38:23 degroote Exp $	*/
+/*	$NetBSD: key.h,v 1.9 2011/02/21 22:28:19 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -50,9 +50,9 @@ struct secasindex;
 union sockaddr_union;
 
 int key_havesp(u_int dir);
-struct secpolicy *key_allocsp(struct secpolicyindex *, u_int,
+struct secpolicy *key_allocsp(const struct secpolicyindex *, u_int,
 	const char*, int);
-struct secpolicy *key_allocsp2(u_int32_t spi, union sockaddr_union *dst,
+struct secpolicy *key_allocsp2(u_int32_t spi, const union sockaddr_union *dst,
 	u_int8_t proto, u_int dir, const char*, int);
 struct secpolicy *key_newsp(const char*, int);
 struct secpolicy *key_gettunnel(const struct sockaddr *,
@@ -93,11 +93,11 @@ int key_checktunnelsanity (struct secasvar *, u_int, void *, void *);
 int key_checkrequest (struct ipsecrequest *isr, const struct secasindex *);
 
 struct secpolicy *key_msg2sp (struct sadb_x_policy *, size_t, int *);
-struct mbuf *key_sp2msg (struct secpolicy *);
-int key_ismyaddr (struct sockaddr *);
-int key_cmpspidx_exactly (struct secpolicyindex *, struct secpolicyindex *);
-int key_cmpspidx_withmask (struct secpolicyindex *, struct secpolicyindex *);
-int key_spdacquire (struct secpolicy *);
+struct mbuf *key_sp2msg (const struct secpolicy *);
+int key_ismyaddr (const struct sockaddr *);
+int key_cmpspidx_exactly (const struct secpolicyindex *, const struct secpolicyindex *);
+int key_cmpspidx_withmask (const struct secpolicyindex *, const struct secpolicyindex *);
+int key_spdacquire (const struct secpolicy *);
 void key_timehandler (void*);
 u_long key_random (void);
 void key_randomfill (void *, size_t);
