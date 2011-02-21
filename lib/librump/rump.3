@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump.3,v 1.7 2011/02/16 23:51:50 pooka Exp $
+.\"     $NetBSD: rump.3,v 1.8 2011/02/21 08:50:45 pooka Exp $
 .\"
 .\" Copyright (c) 2008-2010 Antti Kantee.  All rights reserved.
 .\"
@@ -148,6 +148,7 @@ kernel.
 Generally speaking, dynamically loadable components must follow
 kernel module boundaries.
 .Sh SEE ALSO
+.Xr rump_server 1 ,
 .Xr p2k 3 ,
 .Xr rump_etfs 3 ,
 .Xr rump_lwproc 3 ,
@@ -199,5 +200,4 @@ It underwent a huge number of changes for
 .An Antti Kantee Aq pooka@iki.fi
 .Sh NOTE
 .Nm
-is highly experimental and may change in header location, library
-name, API and/or ABI without warning.
+is still somewhat experimental.
