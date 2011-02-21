@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.59 2011/02/20 23:47:04 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.60 2011/02/21 12:51:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.59 2011/02/20 23:47:04 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.60 2011/02/21 12:51:06 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: hijack.c,v 1.59 2011/02/20 23:47:04 pooka Exp $");
 #include <unistd.h>
 
 enum dualcall {
-	DUALCALL_WRITE, DUALCALL_WRITEV,
+	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
 	DUALCALL_IOCTL, DUALCALL_FCNTL,
 	DUALCALL_SOCKET, DUALCALL_ACCEPT, DUALCALL_BIND, DUALCALL_CONNECT,
 	DUALCALL_GETPEERNAME, DUALCALL_GETSOCKNAME, DUALCALL_LISTEN,
@@ -67,7 +67,7 @@ enum dualcall {
 	DUALCALL_SENDTO, DUALCALL_SENDMSG,
 	DUALCALL_GETSOCKOPT, DUALCALL_SETSOCKOPT,
 	DUALCALL_SHUTDOWN,
-	DUALCALL_READ, DUALCALL_READV,
+	DUALCALL_READ, DUALCALL_READV, DUALCALL_PREAD, DUALCALL_PREADV,
 	DUALCALL_DUP2,
 	DUALCALL_CLOSE,
 	DUALCALL_POLLTS,
@@ -88,6 +88,7 @@ enum dualcall {
 	DUALCALL_FSYNC, DUALCALL_FSYNC_RANGE,
 	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
 	DUALCALL___GETCWD,
+	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
 	DUALCALL__NUM
 };
 
@@ -120,6 +121,8 @@ enum dualcall {
 #define REALFUTIMES __futimes50
 #endif
 #define REALREAD _sys_read
+#define REALPREAD _sys_pread
+#define REALPWRITE _sys_pwrite
 #define REALGETDENTS __getdents30
 #define REALMOUNT __mount50
 #define REALLSEEK _lseek
@@ -130,6 +133,8 @@ int REALPOLLTS(struct pollfd *, nfds_t,
 int REALKEVENT(int, const struct kevent *, size_t, struct kevent *, size_t,
 	       const struct timespec *);
 ssize_t REALREAD(int, void *, size_t);
+ssize_t REALPREAD(int, void *, size_t, off_t);
+ssize_t REALPWRITE(int, const void *, size_t, off_t);
 int REALSTAT(const char *, struct stat *);
 int REALLSTAT(const char *, struct stat *);
 int REALFSTAT(int, struct stat *);
@@ -163,8 +168,12 @@ struct sysnames {
 	{ DUALCALL_SHUTDOWN,	"shutdown",	RSYS_NAME(SHUTDOWN)	},
 	{ DUALCALL_READ,	S(REALREAD),	RSYS_NAME(READ)		},
 	{ DUALCALL_READV,	"readv",	RSYS_NAME(READV)	},
+	{ DUALCALL_PREAD,	S(REALPREAD),	RSYS_NAME(PREAD)	},
+	{ DUALCALL_PREADV,	"preadv",	RSYS_NAME(PREADV)	},
 	{ DUALCALL_WRITE,	"write",	RSYS_NAME(WRITE)	},
 	{ DUALCALL_WRITEV,	"writev",	RSYS_NAME(WRITEV)	},
+	{ DUALCALL_PWRITE,	S(REALPWRITE),	RSYS_NAME(PWRITE)	},
+	{ DUALCALL_PWRITEV,	"pwritev",	RSYS_NAME(PWRITEV)	},
 	{ DUALCALL_IOCTL,	"ioctl",	RSYS_NAME(IOCTL)	},
 	{ DUALCALL_FCNTL,	"fcntl",	RSYS_NAME(FCNTL)	},
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
@@ -203,6 +212,9 @@ struct sysnames {
 	{ DUALCALL_MOUNT,	S(REALMOUNT),	RSYS_NAME(MOUNT)	},
 	{ DUALCALL_UNMOUNT,	"unmount",	RSYS_NAME(UNMOUNT)	},
 	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
+	{ DUALCALL_CHFLAGS,	"chflags",	RSYS_NAME(CHFLAGS)	},
+	{ DUALCALL_LCHFLAGS,	"lchflags",	RSYS_NAME(LCHFLAGS)	},
+	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
 };
 #undef S
 
@@ -1614,10 +1626,30 @@ FDCALL(ssize_t, readv, DUALCALL_READV, 					\
 	(int, const struct iovec *, int),				\
 	(fd, iov, iovcnt))
 
+FDCALL(ssize_t, REALPREAD, DUALCALL_PREAD,				\
+	(int fd, void *buf, size_t nbytes, off_t offset),		\
+	(int, void *, size_t, off_t),					\
+	(fd, buf, nbytes, offset))
+
+FDCALL(ssize_t, preadv, DUALCALL_PREADV, 				\
+	(int fd, const struct iovec *iov, int iovcnt, off_t offset),	\
+	(int, const struct iovec *, int, off_t),			\
+	(fd, iov, iovcnt, offset))
+
 FDCALL(ssize_t, writev, DUALCALL_WRITEV, 				\
 	(int fd, const struct iovec *iov, int iovcnt),			\
 	(int, const struct iovec *, int),				\
 	(fd, iov, iovcnt))
+
+FDCALL(ssize_t, REALPWRITE, DUALCALL_PWRITE,				\
+	(int fd, const void *buf, size_t nbytes, off_t offset),		\
+	(int, const void *, size_t, off_t),				\
+	(fd, buf, nbytes, offset))
+
+FDCALL(ssize_t, pwritev, DUALCALL_PWRITEV, 				\
+	(int fd, const struct iovec *iov, int iovcnt, off_t offset),	\
+	(int, const struct iovec *, int, off_t),			\
+	(fd, iov, iovcnt, offset))
 
 FDCALL(int, REALFSTAT, DUALCALL_FSTAT,					\
 	(int fd, struct stat *sb),					\
@@ -1668,6 +1700,11 @@ FDCALL(int, futimes, DUALCALL_FUTIMES,					\
 	(int fd, const struct timeval *tv),				\
 	(int, const struct timeval *),					\
 	(fd, tv))
+
+FDCALL(int, fchflags, DUALCALL_FCHFLAGS,				\
+	(int fd, u_long flags),						\
+	(int, u_long),							\
+	(fd, flags))
 
 /*
  * path-based selectors
@@ -1742,6 +1779,16 @@ PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
 	(const char *path, const struct timeval *tv),			\
 	(const char *, const struct timeval *),				\
 	(path, tv))
+
+PATHCALL(int, chflags, DUALCALL_CHFLAGS,				\
+	(const char *path, u_long flags),				\
+	(const char *, u_long),						\
+	(path, flags))
+
+PATHCALL(int, lchflags, DUALCALL_LCHFLAGS,				\
+	(const char *path, u_long flags),				\
+	(const char *, u_long),						\
+	(path, flags))
 
 PATHCALL(int, truncate, DUALCALL_TRUNCATE,				\
 	(const char *path, off_t length),				\
