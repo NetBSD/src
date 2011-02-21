@@ -1,4 +1,34 @@
-/* $NetBSD: coretemp.c,v 1.19 2011/02/21 05:26:08 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.20 2011/02/21 12:56:52 jruoho Exp $ */
+
+/*-
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jukka Ruohonen.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,13 +60,8 @@
  *
  */
 
-/*
- * Device driver for Intel's On Die thermal sensor via MSR.
- * First introduced in Intel's Core line of processors.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.19 2011/02/21 05:26:08 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.20 2011/02/21 12:56:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,11 +100,13 @@ __KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.19 2011/02/21 05:26:08 jruoho Exp $")
 #define MSR_THERM_INTR_TRIP2_VAL	__BITS(16, 22)
 #define MSR_THERM_INTR_TRIP2		__BIT(23)
 
+#define MSR_TEMP_TARGET_READOUT		__BITS(16, 23)
+
 static int	coretemp_match(device_t, cfdata_t, void *);
 static void	coretemp_attach(device_t, device_t, void *);
 static int	coretemp_detach(device_t, int);
 static int	coretemp_quirks(struct cpu_info *);
-static void	coretemp_ext_config(device_t);
+static void	coretemp_tjmax(device_t);
 static void	coretemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	coretemp_refresh_xcall(void *, void *);
 
@@ -156,8 +183,7 @@ coretemp_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_envsys_register(sc->sc_sme) != 0)
 		goto fail;
 
-	coretemp_ext_config(self);
-
+	coretemp_tjmax(self);
 	return;
 
 fail:
@@ -179,11 +205,11 @@ coretemp_detach(device_t self, int flags)
 static int
 coretemp_quirks(struct cpu_info *ci)
 {
-	uint32_t mask, model;
+	uint32_t model, stepping;
 	uint64_t msr;
 
-	mask = ci->ci_signature & 0x0F;
 	model = CPUID2MODEL(ci->ci_signature);
+	stepping = CPUID2STEPPING(ci->ci_signature);
 
 	/*
 	 * Check if the MSR contains thermal
@@ -204,7 +230,7 @@ coretemp_quirks(struct cpu_info *ci)
 	 *
 	 * Adapted from the Linux coretemp driver.
 	 */
-	if (model == 0x0E && mask < 0x0C) {
+	if (model == 0x0E && stepping < 0x0C) {
 
 		msr = rdmsr(MSR_BIOS_SIGN);
 		msr = msr >> 32;
@@ -217,34 +243,57 @@ coretemp_quirks(struct cpu_info *ci)
 }
 
 void
-coretemp_ext_config(device_t self)
+coretemp_tjmax(device_t self)
 {
 	struct coretemp_softc *sc = device_private(self);
 	struct cpu_info *ci = sc->sc_ci;
-	uint32_t emodel, mask, model;
+	uint32_t extmodel, model, stepping;
 	uint64_t msr;
 
-	mask = ci->ci_signature & 0x0F;
 	model = CPUID2MODEL(ci->ci_signature);
-	emodel = CPUID2EXTMODEL(ci->ci_signature);
+	extmodel = CPUID2EXTMODEL(ci->ci_signature);
+	stepping = CPUID2STEPPING(ci->ci_signature);
 
-	/*
-	 * On some Core 2 CPUs, there's an undocumented MSR that
-	 * can tell us if Tj(max) is 100 or 85.
-	 *
-	 * The if-clause for CPUs having the MSR_IA32_EXT_CONFIG was adapted
-	 * from the Linux coretemp driver.
-	 *
-	 * MSR_IA32_EXT_CONFIG is NOT safe on all CPUs
-	 */
 	sc->sc_tjmax = 100;
 
-	if ((model == 0x0F && mask >= 2) || (model == 0x0E && emodel != 1)) {
+	/*
+	 * The mobile Penryn family.
+	 */
+	if (model == 0x17 && stepping == 0x06) {
+		sc->sc_tjmax = 105;
+		return;
+	}
+
+	/*
+	 * On some Core 2 CPUs, there is an undocumented
+	 * MSR that tells if Tj(max) is 100 or 85. Note
+	 * that MSR_IA32_EXT_CONFIG is not safe on all CPUs.
+	 */
+	if ((model == 0x0F && stepping >= 2) ||
+	    (model == 0x0E && extmodel != 1)) {
 
 		msr = rdmsr(MSR_IA32_EXT_CONFIG);
 
-		if ((msr & __BIT(30)) != 0)
+		if ((msr & __BIT(30)) != 0) {
 			sc->sc_tjmax = 85;
+			return;
+		}
+	}
+
+	/*
+	 * Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET,
+	 * but only consider the interval [70, 100] C as valid.
+	 * It is not fully known which CPU models have the MSR.
+	 */
+	if (model == 0x0E) {
+
+		msr = rdmsr(MSR_TEMPERATURE_TARGET);
+		msr = __SHIFTOUT(msr, MSR_TEMP_TARGET_READOUT);
+
+		if (msr >= 70 && msr <= 100) {
+			sc->sc_tjmax = msr;
+			return;
+		}
 	}
 }
 
