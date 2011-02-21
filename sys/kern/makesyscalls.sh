@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.111 2011/02/21 23:20:19 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.112 2011/02/21 23:30:12 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -778,7 +778,7 @@ function putent(type, compatwrap) {
 	printf("%s %s)\n", uncompattype(argtype[argc]), argname[argc]) \
 	    > rumpcalls
 	printf("{\n\tregister_t rval[2] = {0, 0};\n") > rumpcalls
-	if (returntype != "void")
+	if (returntype != "void" && type != "NOERR")
 		printf("\tint error = 0;\n") > rumpcalls
 
 	argarg = "NULL"
@@ -808,7 +808,7 @@ function putent(type, compatwrap) {
 		printf("\n") > rumpcalls
 	}
 	printf("\t") > rumpcalls
-	if (returntype != "void")
+	if (returntype != "void" && type != "NOERR")
 		printf("error = ") > rumpcalls
 	printf("rsys_syscall(%s%s%s, " \
 	    "%s, %s, rval);\n", constprefix, compatwrap_, funcalias, \
@@ -816,12 +816,9 @@ function putent(type, compatwrap) {
 	if (type != "NOERR") {
 		printf("\trsys_seterrno(error);\n") > rumpcalls
 		printf("\tif (error) {\n\t\trval[0] = -1;\n\t}\n") > rumpcalls
-		rvariable = "rval[0]";
-	} else {
-		rvariable = "error";
 	}
 	if (returntype != "void") {
-		printf("\treturn %s;\n", rvariable) > rumpcalls
+		printf("\treturn rval[0];\n") > rumpcalls
 	}
 	printf("}\n") > rumpcalls
 	printf("rsys_alias(%s%s,rump_enosys)\n", \
