@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/11/28 07:55:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/02/21 05:10:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,8 +19,8 @@ FILES=	ad af al altwin am ara at az \
 	ma mao me mk ml mm mn mt mv \
 	nbsp ng nl no np \
 	olpc \
-	pc pk pl pt \
-	ro rs ru \
+	pc ph pk pl pt \
+	ro rs ru rupeesign \
 	se shift si sk sn srvr_ctrl sy \
 	terminate th tj tm tr typo tz \
 	ua us uz \
