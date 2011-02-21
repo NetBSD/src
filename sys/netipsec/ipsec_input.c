@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.26 2011/02/18 16:10:11 drochner Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.27 2011/02/21 22:54:45 drochner Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.26 2011/02/18 16:10:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.27 2011/02/21 22:54:45 drochner Exp $");
 
 /*
  * IPsec input processing.
@@ -477,7 +477,7 @@ int
 ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 {
 	int l = 0;
-	int protoff;
+	int protoff, nxt;
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
@@ -491,17 +491,20 @@ ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 	} else {
 		/* Chase down the header chain... */
 		protoff = sizeof(struct ip6_hdr);
+		nxt = (mtod(*mp, struct ip6_hdr *))->ip6_nxt;
 
 		do {
 			protoff += l;
 			m_copydata(*mp, protoff, sizeof(ip6e), &ip6e);
 
-			if (ip6e.ip6e_nxt == IPPROTO_AH)
+			if (nxt == IPPROTO_AH)
 				l = (ip6e.ip6e_len + 2) << 2;
 			else
 				l = (ip6e.ip6e_len + 1) << 3;
 			IPSEC_ASSERT(l > 0,
 			  ("ipsec6_common_input: l went zero or negative"));
+
+			nxt = ip6e.ip6e_nxt;
 		} while (protoff + l < *offp);
 
 		/* Malformed packet check */
