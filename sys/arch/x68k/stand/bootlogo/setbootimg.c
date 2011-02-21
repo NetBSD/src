@@ -1,4 +1,4 @@
-/*	$NetBSD: setbootimg.c,v 1.3 2009/03/14 21:04:17 dsl Exp $	*/
+/*	$NetBSD: setbootimg.c,v 1.4 2011/02/21 02:31:58 itohy Exp $	*/
 
 /*
  *	set boot title image (converted by xpm2bootimg)
@@ -6,7 +6,7 @@
  *
  *	use with care, not to destroy the existent boot or the disklabel
  *
- *	written by Yasha (ITOH Yasufumi), public domain
+ *	written by ITOH Yasufumi, public domain
  */
 
 #include <sys/types.h>

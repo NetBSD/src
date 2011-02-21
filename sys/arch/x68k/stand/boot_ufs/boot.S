@@ -1,8 +1,8 @@
 | file: boot.S
 | author: chapuni(webmaster@chapuni.com)
-|         Yasha(itohy@NetBSD.org)
+|         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.8 2007/03/04 06:01:07 christos Exp $
+| $NetBSD: boot.S,v 1.9 2011/02/21 02:31:58 itohy Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"

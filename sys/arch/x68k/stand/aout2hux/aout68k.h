@@ -1,10 +1,10 @@
 /*
  *	m68k a.out / ELF file structure definitions
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: aout68k.h,v 1.3 1999/11/19 03:54:08 itohy Exp $
+ *	$NetBSD: aout68k.h,v 1.4 2011/02/21 02:31:58 itohy Exp $
  */
 /*
  * NetBSD/m68k a.out format (OMAGIC, NMAGIC)

@@ -1,10 +1,10 @@
 /*
  *	minimal printf for Human68k DOS
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: xprintf.c,v 1.4 2009/03/14 21:04:17 dsl Exp $
+ *	$NetBSD: xprintf.c,v 1.5 2011/02/21 02:31:58 itohy Exp $
  */
 
 #include <sys/types.h>

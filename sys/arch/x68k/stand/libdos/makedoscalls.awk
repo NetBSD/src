@@ -2,10 +2,10 @@
 #
 #	create DOS call interface from dos.h
 #
-#	written by Yasha (ITOH Yasufumi)
+#	written by ITOH Yasufumi
 #	public domain
 #
-#	$NetBSD: makedoscalls.awk,v 1.3 2000/06/19 03:43:12 itohy Exp $
+#	$NetBSD: makedoscalls.awk,v 1.4 2011/02/21 02:31:59 itohy Exp $
 
 BEGIN {
 	errno_nomem = 8		# errno for "Cannot allocate memory"

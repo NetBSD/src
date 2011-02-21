@@ -1,10 +1,10 @@
 /*
  *	definitions for exec_kernel()
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: execkern.h,v 1.4 2009/03/14 14:46:07 dsl Exp $
+ *	$NetBSD: execkern.h,v 1.5 2011/02/21 02:31:58 itohy Exp $
  */
 
 #ifndef X68K_BOOT_EXECKERN_H
