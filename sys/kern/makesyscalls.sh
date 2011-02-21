@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.110 2011/02/21 11:29:53 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.111 2011/02/21 23:20:19 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -717,7 +717,8 @@ function putent(type, compatwrap) {
 	    > sysnamesbottom
 
 	# output syscall number of header, if appropriate
-	if (type == "STD" || type == "NOARGS" || type == "INDIR") {
+	if (type == "STD" || type == "NOARGS" || type == "INDIR" || \
+	    type == "NOERR") {
 		# output a prototype, to be used to generate lint stubs in
 		# libc.
 		printproto("")
@@ -776,8 +777,9 @@ function putent(type, compatwrap) {
 	}
 	printf("%s %s)\n", uncompattype(argtype[argc]), argname[argc]) \
 	    > rumpcalls
-	printf("{\n\tregister_t rval[2] = {0, 0};\n\tint error = 0;\n") \
-	    > rumpcalls
+	printf("{\n\tregister_t rval[2] = {0, 0};\n") > rumpcalls
+	if (returntype != "void")
+		printf("\tint error = 0;\n") > rumpcalls
 
 	argarg = "NULL"
 	argsize = 0;
@@ -805,20 +807,29 @@ function putent(type, compatwrap) {
 	} else {
 		printf("\n") > rumpcalls
 	}
-	printf("\terror = rsys_syscall(%s%s%s, " \
+	printf("\t") > rumpcalls
+	if (returntype != "void")
+		printf("error = ") > rumpcalls
+	printf("rsys_syscall(%s%s%s, " \
 	    "%s, %s, rval);\n", constprefix, compatwrap_, funcalias, \
 	    argarg, argsize) > rumpcalls
-	printf("\trsys_seterrno(error);\n") > rumpcalls
-	printf("\tif (error) {\n\t\trval[0] = -1;\n\t}\n") > rumpcalls
+	if (type != "NOERR") {
+		printf("\trsys_seterrno(error);\n") > rumpcalls
+		printf("\tif (error) {\n\t\trval[0] = -1;\n\t}\n") > rumpcalls
+		rvariable = "rval[0]";
+	} else {
+		rvariable = "error";
+	}
 	if (returntype != "void") {
-		printf("\treturn rval[0];\n") > rumpcalls
+		printf("\treturn %s;\n", rvariable) > rumpcalls
 	}
 	printf("}\n") > rumpcalls
 	printf("rsys_alias(%s%s,rump_enosys)\n", \
 	    compatwrap_, funcname) > rumpcalls
 
 }
-$2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
+$2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" \
+    || $2 == "NOERR" {
 	parseline()
 	putent($2, "")
 	syscall++
