@@ -119,7 +119,7 @@ ar9285SetTransmitPower(struct ath_hal *ah,
     twiceMaxRegulatoryPower = AH_MIN(MAX_RATE_POWER, AH_PRIVATE(ah)->ah_powerLimit); 
     pModal = &pEepData->modalHeader;
     HALDEBUG(ah, HAL_DEBUG_RESET, "%s Channel=%u CfgCtl=%u\n",
-	__func__,chan->ic_freq, cfgCtl );      
+	__func__,chan->channel, cfgCtl );      
   
     if (IS_EEP_MINOR_V2(ah)) {
         ht40PowerIncForPdadc = pModal->ht40PowerIncForPdadc;
