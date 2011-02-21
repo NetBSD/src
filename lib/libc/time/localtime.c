@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.55 2011/02/13 23:58:40 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.56 2011/02/21 22:07:44 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.9";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.55 2011/02/13 23:58:40 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.56 2011/02/21 22:07:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -28,14 +28,7 @@ __RCSID("$NetBSD: localtime.c,v 1.55 2011/02/13 23:58:40 christos Exp $");
 #include "reentrant.h"
 
 #if defined(__weak_alias)
-__weak_alias(ctime_r,_ctime_r)
-__weak_alias(ctime_rz,_ctime_rz)
 __weak_alias(daylight,_daylight)
-__weak_alias(mktime_z,_mktime_z)
-__weak_alias(localtime_r,_localtime_r)
-__weak_alias(localtime_rz,_localtime_rz)
-__weak_alias(posix2time,_posix2time)
-__weak_alias(posix2time_z,_posix2time_z)
 __weak_alias(tzname,_tzname)
 #endif
 
