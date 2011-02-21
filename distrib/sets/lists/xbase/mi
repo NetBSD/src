@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.105 2011/02/21 04:53:52 mrg Exp $
+# $NetBSD: mi,v 1.106 2011/02/21 05:10:46 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1897,6 +1897,7 @@
 ./usr/X11R7/lib/X11/xkb/geometry/nokia			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/northgate		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/pc			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/geometry/sanwa			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/sgi			-obsolete-	obsolete
 ./usr/X11R7/lib/X11/xkb/geometry/sgi/O2			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/geometry/sgi/indigo		-unknown-	obsolete
@@ -2309,6 +2310,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/pc/uz			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/pc/vn			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/pc104			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/ph			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/pk			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/pl			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/pl2			-unknown-	obsolete
@@ -2318,6 +2320,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/ro2			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/rs			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ru			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/rupeesign		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sapmi			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/se			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/se_FI			-unknown-	obsolete
