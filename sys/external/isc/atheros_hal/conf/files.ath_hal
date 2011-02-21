@@ -1,4 +1,4 @@
-#	$NetBSD: files.ath_hal,v 1.2 2011/02/20 11:21:02 jmcneill Exp $
+#	$NetBSD: files.ath_hal,v 1.3 2011/02/21 11:06:37 cegger Exp $
 
 defflag opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
 defflag opt_athhal.h	ATHHAL_WRITE_EEPROM ATHHAL_WRITE_REGDOMAIN
@@ -135,6 +135,9 @@ file	external/isc/atheros_hal/dist/ar5416/ar5416_xmit.c	ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar9160_attach.c	ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar9280.c		ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar9280_attach.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9285.c		ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9285_attach.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9285_reset.c	ath & athhal_ar5416
 
 #
 #

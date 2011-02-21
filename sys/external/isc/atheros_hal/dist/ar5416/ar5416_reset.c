@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_reset.c,v 1.3 2011/02/20 11:21:04 jmcneill Exp $
+ * $Id: ar5416_reset.c,v 1.4 2011/02/21 11:06:38 cegger Exp $
  */
 #include "opt_ah.h"
 
@@ -45,7 +45,7 @@ static void ar5416InitIMR(struct ath_hal *ah, HAL_OPMODE opmode);
 static void ar5416InitQoS(struct ath_hal *ah);
 static void ar5416InitUserSettings(struct ath_hal *ah);
 
-static HAL_BOOL ar5416SetTransmitPower(struct ath_hal *ah, 
+static HAL_BOOL _ar5416SetTransmitPower(struct ath_hal *ah,
 	HAL_CHANNEL_INTERNAL *chan, uint16_t *rfXpdGain);
 
 #if 0
@@ -56,7 +56,6 @@ static void ar5416SetDeltaSlope(struct ath_hal *, HAL_CHANNEL_INTERNAL *);
 static HAL_BOOL ar5416SetResetPowerOn(struct ath_hal *ah);
 static HAL_BOOL ar5416SetReset(struct ath_hal *ah, int type);
 static void ar5416InitPLL(struct ath_hal *ah, HAL_CHANNEL *chan);
-static HAL_BOOL ar5416SetBoardValues(struct ath_hal *, HAL_CHANNEL_INTERNAL *);
 static HAL_BOOL ar5416SetPowerPerRateTable(struct ath_hal *ah,
 	struct ar5416eeprom *pEepData, 
 	HAL_CHANNEL_INTERNAL *chan, int16_t *ratesArray,
@@ -69,14 +68,6 @@ static HAL_BOOL ar5416SetPowerCalTable(struct ath_hal *ah,
 	int16_t *pTxPowerIndexOffset);
 static uint16_t ar5416GetMaxEdgePower(uint16_t freq,
 	CAL_CTL_EDGES *pRdEdgesPower, HAL_BOOL is2GHz);
-static void ar5416GetTargetPowers(struct ath_hal *ah, 
-	HAL_CHANNEL_INTERNAL *chan, CAL_TARGET_POWER_HT *powInfo,
-	uint16_t numChannels, CAL_TARGET_POWER_HT *pNewPower,
-	uint16_t numRates, HAL_BOOL isHt40Target);
-static void ar5416GetTargetPowersLeg(struct ath_hal *ah, 
-	HAL_CHANNEL_INTERNAL *chan, CAL_TARGET_POWER_LEG *powInfo,
-	uint16_t numChannels, CAL_TARGET_POWER_LEG *pNewPower,
-	uint16_t numRates, HAL_BOOL isExtTarget);
 
 static int16_t interpolate(uint16_t target, uint16_t srcLeft,
 	uint16_t srcRight, int16_t targetLeft, int16_t targetRight);
@@ -247,7 +238,7 @@ ar5416Reset(struct ath_hal *ah, HAL_OPMODE opmode,
 	OS_REG_WRITE(ah, AR_SELFGEN_MASK, AH5416(ah)->ah_tx_chainmask);
 
 	/* Setup the transmit power values. */
-	if (!ar5416SetTransmitPower(ah, ichan, rfXpdGain)) {
+	if (!ah->ah_setTxPower(ah, chan, rfXpdGain)) {
 		HALDEBUG(ah, HAL_DEBUG_ANY,
 		    "%s: error init'ing transmit power\n", __func__);
 		FAIL(HAL_EIO);
@@ -268,7 +259,7 @@ ar5416Reset(struct ath_hal *ah, HAL_OPMODE opmode,
 	AH5416(ah)->ah_spurMitigate(ah, (HAL_CHANNEL_INTERNAL *)chan);
 
 	/* Setup board specific options for EEPROM version 3 */
-	if (!ar5416SetBoardValues(ah, ichan)) {
+	if (!ah->ah_setBoardValues(ah, chan)) {
 		HALDEBUG(ah, HAL_DEBUG_ANY,
 		    "%s: error setting board options\n", __func__);
 		FAIL(HAL_EIO);
@@ -435,7 +426,7 @@ ar5416ChannelChange(struct ath_hal *ah, HAL_CHANNEL *chan)
 		return AH_FALSE;
 
 	/* Setup the transmit power values. */
-	if (!ar5416SetTransmitPower(ah, ichan, rfXpdGain)) {
+	if (!_ar5416SetTransmitPower(ah, ichan, rfXpdGain)) {
 		HALDEBUG(ah, HAL_DEBUG_ANY,
 		    "%s: error init'ing transmit power\n", __func__);
 		return AH_FALSE;
@@ -487,6 +478,7 @@ ar5416ChannelChange(struct ath_hal *ah, HAL_CHANNEL *chan)
 static void
 ar5416InitDMA(struct ath_hal *ah)
 {
+	struct ath_hal_5212 *ahp = AH5212(ah);
 
 	/*
 	 * set AHB_MODE not to do cacheline prefetches
@@ -505,7 +497,12 @@ ar5416InitDMA(struct ath_hal *ah)
 	OS_REG_WRITE(ah, AR_RXCFG, 
 		(OS_REG_READ(ah, AR_RXCFG) & ~AR_RXCFG_DMASZ_MASK) | AR_RXCFG_DMASZ_128B);
 
-	/* XXX restore TX trigger level */
+	/*
+	 * restore TX trigger level
+	 */
+	OS_REG_WRITE(ah, AR_TXCFG,
+		(OS_REG_READ(ah, AR_TXCFG) &~ AR_FTRIG) |
+		    SM(ahp->ah_txTrigLev, AR_FTRIG));
 
 	/*
 	 * Setup receive FIFO threshold to hold off TX activities
@@ -782,7 +779,7 @@ ar5416SetTxPowerLimit(struct ath_hal *ah, uint32_t limit)
 	uint16_t dummyXpdGains[2];
 
 	AH_PRIVATE(ah)->ah_powerLimit = AH_MIN(limit, MAX_RATE_POWER);
-	return ar5416SetTransmitPower(ah, AH_PRIVATE(ah)->ah_curchan,
+	return _ar5416SetTransmitPower(ah, AH_PRIVATE(ah)->ah_curchan,
 			dummyXpdGains);
 }
 
@@ -842,7 +839,7 @@ typedef enum Ar5416_Rates {
  * operating channel and mode.
  */
 static HAL_BOOL
-ar5416SetTransmitPower(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan, uint16_t *rfXpdGain)
+_ar5416SetTransmitPower(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan, uint16_t *rfXpdGain)
 {
 #define POW_SM(_r, _s)     (((_r) & 0x3f) << (_s))
 #define N(a)            (sizeof (a) / sizeof (a[0]))
@@ -1001,6 +998,14 @@ ar5416SetTransmitPower(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan, uint16_t 
     return AH_TRUE;
 #undef POW_SM
 #undef N
+}
+
+HAL_BOOL
+ar5416SetTransmitPower(struct ath_hal *ah, HAL_CHANNEL *chan,
+	uint16_t *rfXpdGain)
+{
+	return _ar5416SetTransmitPower(ah, ath_hal_checkchannel(ah, chan),
+	    rfXpdGain);
 }
 
 /*
@@ -1242,9 +1247,10 @@ ar5416InitPLL(struct ath_hal *ah, HAL_CHANNEL *chan)
  * Read EEPROM header info and program the device for correct operation
  * given the channel value.
  */
-static HAL_BOOL
-ar5416SetBoardValues(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan)
+HAL_BOOL
+ar5416SetBoardValues(struct ath_hal *ah, HAL_CHANNEL *_chan)
 {
+    HAL_CHANNEL_INTERNAL *chan;
     const HAL_EEPROM_v14 *ee = AH_PRIVATE(ah)->ah_eeprom;
     const struct ar5416eeprom *eep = &ee->ee_base;
     const MODAL_EEP_HEADER *pModal;
@@ -1252,6 +1258,8 @@ ar5416SetBoardValues(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan)
     uint8_t		txRxAttenLocal;    /* workaround for eeprom versions <= 14.2 */
 
     HALASSERT(AH_PRIVATE(ah)->ah_eeversion >= AR_EEPROM_VER14_1);
+
+    chan = ath_hal_checkchannel(ah, _chan);
     pModal = &(eep->modalHeader[IS_CHAN_2GHZ(chan)]);
 
     txRxAttenLocal = IS_CHAN_2GHZ(chan) ? 23 : 44;    /* workaround for eeprom versions <= 14.2 */
@@ -1678,7 +1686,7 @@ ar5416GetMaxEdgePower(uint16_t freq, CAL_CTL_EDGES *pRdEdgesPower, HAL_BOOL is2G
  * Return the rates of target power for the given target power table
  * channel, and number of channels
  */
-static void
+void
 ar5416GetTargetPowers(struct ath_hal *ah,  HAL_CHANNEL_INTERNAL *chan,
                       CAL_TARGET_POWER_HT *powInfo, uint16_t numChannels,
                       CAL_TARGET_POWER_HT *pNewPower, uint16_t numRates,
@@ -1737,7 +1745,7 @@ ar5416GetTargetPowers(struct ath_hal *ah,  HAL_CHANNEL_INTERNAL *chan,
  * Return the four rates of target power for the given target power table
  * channel, and number of channels
  */
-static void
+void
 ar5416GetTargetPowersLeg(struct ath_hal *ah, 
                          HAL_CHANNEL_INTERNAL *chan,
                          CAL_TARGET_POWER_LEG *powInfo, uint16_t numChannels,

@@ -64,29 +64,12 @@ static void ar9280ConfigPCIE(struct ath_hal *ah, HAL_BOOL restore);
 static HAL_BOOL ar9280FillCapabilityInfo(struct ath_hal *ah);
 static void ar9280WriteIni(struct ath_hal *ah,
 	HAL_CHANNEL_INTERNAL *chan);
-static void ar9280SpurMitigate(struct ath_hal *ah,
-	HAL_CHANNEL_INTERNAL *chan);
 
 static void
 ar9280AniSetup(struct ath_hal *ah)
 {
 	/* NB: disable ANI for reliable RIFS rx */
 	ar5212AniAttach(ah, AH_NULL, AH_NULL, AH_FALSE);
-}
-
-static uint32_t
-ar5416GetRadioRev(struct ath_hal *ah)
-{
-	uint32_t val;
-	int i;
-
-	/* Read Radio Chip Rev Extract */
-	OS_REG_WRITE(ah, AR_PHY(0x36), 0x00007058);
-	for (i = 0; i < 8; i++)
-		OS_REG_WRITE(ah, AR_PHY(0x20), 0x00010000);
-	val = (OS_REG_READ(ah, AR_PHY(256)) >> 24) & 0xff;
-	val = ((val & 0xf0) >> 4) | ((val & 0x0f) << 4);
-	return ath_hal_reverseBits(val, 8);
 }
 
 /*
@@ -375,7 +358,7 @@ ar9280WriteIni(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan)
 #define	AR_SPUR_FEEQ_BOUND_HT40	19
 #define	AR_SPUR_FEEQ_BOUND_HT20	10
 
-static void
+void
 ar9280SpurMitigate(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan)
 {
     static const int pilot_mask_reg[4] = { AR_PHY_TIMING7, AR_PHY_TIMING8,

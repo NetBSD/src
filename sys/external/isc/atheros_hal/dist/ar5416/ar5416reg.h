@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416reg.h,v 1.2 2011/02/20 11:21:04 jmcneill Exp $
+ * $Id: ar5416reg.h,v 1.3 2011/02/21 11:06:38 cegger Exp $
  */
 #ifndef _DEV_ATH_AR5416REG_H
 #define	_DEV_ATH_AR5416REG_H
@@ -63,8 +63,20 @@
 #define	AR_AN_RF5G1_CH1         0x783C
 #define	AR_AN_TOP2		0x7894
 #define	AR_AN_SYNTH9            0x7868
+#define	AR9285_AN_RF2G1		0x7820
+#define	AR9285_AN_RF2G2		0x7824
 #define	AR9285_AN_RF2G3         0x7828
+#define	AR9285_AN_RF2G4		0x782c
+#define	AR9285_AN_RF2G6		0x7834
+#define	AR9285_AN_RF2G7		0x7838
+#define	AR9285_AN_RF2G8		0x783c
+#define	AR9285_AN_RF2G9		0x7840
+#define	AR9285_AN_RXTXBB1	0x7854
+#define	AR9285_AN_TOP2		0x7868
 #define	AR9285_AN_TOP3		0x786c
+#define	AR9285_AN_TOP4		0x7870
+#define	AR9285_AN_TOP4_DEFAULT	0x10142c00
+
 #define	AR_RESET_TSF		0x8020
 #define	AR_RXFIFO_CFG		0x8114
 #define	AR_PHY_ERR_1		0x812c
@@ -108,6 +120,7 @@
 #define	AR_EXTRCCNT		0x8328	/* extension channel rx clear count */
 #define	AR_SELFGEN_MASK		0x832c	/* rx and cal chain masks */
 #define	AR_PCU_TXBUF_CTRL	0x8340
+#define	AR_PCU_MISC_MODE2	0x8344
 
 /* DMA & PCI Registers in PCI space (usable during sleep)*/
 #define	AR_RC_AHB		0x00000001	/* AHB reset */
@@ -354,7 +367,6 @@
 #define	AR9285_AN_RF2G3_DB1_1_S    3
 #define	AR9285_AN_RF2G3_DB1_2    0x00000007
 #define	AR9285_AN_RF2G3_DB1_2_S    0
-#define	AR9285_AN_RF2G4         0x782C
 #define	AR9285_AN_RF2G4_DB1_3    0xE0000000
 #define	AR9285_AN_RF2G4_DB1_3_S    29
 #define	AR9285_AN_RF2G4_DB1_4    0x1C000000
@@ -420,6 +432,8 @@
 #define	AR_PCU_CLEAR_VMF		0x01000000 /* clear vmf mode (fast cc)*/
 #define	AR_PCU_CLEAR_BA_VALID		0x04000000 /* clear ba state */
 
+#define	AR_PCU_MISC_MODE2_HWWAR1	0x00100000
+
 /* GPIO Interrupt */
 #define	AR_INTR_GPIO		0x3FF00000	/* gpio interrupted */
 #define	AR_INTR_GPIO_S		20
@@ -484,6 +498,8 @@
 #define	AR_XSREV_REVISION_MERLIN_21	2	/* Merlin 2.1 */
 #define	AR_XSREV_VERSION_KITE		0xC0	/* Kite Version */
 #define	AR_XSREV_REVISION_KITE_10	0	/* Kite 1.0 */
+#define	AR_XSREV_REVISION_KITE_11	1	/* Kite 1.1 */
+#define	AR_XSREV_REVISION_KITE_12	2	/* Kite 1.2 */
 
 #define	AR_SREV_OWL_20_OR_LATER(_ah) \
 	(AH_PRIVATE((_ah))->ah_macVersion >= AR_XSREV_VERSION_SOWL || \
@@ -515,4 +531,16 @@
 	(AH_PRIVATE((_ah))->ah_macVersion == AR_XSREV_VERSION_KITE)
 #define	AR_SREV_KITE_10_OR_LATER(_ah) \
 	(AH_PRIVATE((_ah))->ah_macVersion >= AR_XSREV_VERSION_KITE)
+#define AR_SREV_KITE_11(_ah) \
+	(AR_SREV_KITE(ah) && \
+	 AH_PRIVATE((_ah))->ah_macRev == AR_XSREV_REVISION_KITE_11)
+#define AR_SREV_KITE_11_OR_LATER(_ah) \
+	(AR_SREV_KITE_11(_ah) || \
+	 AH_PRIVATE((_ah))->ah_macRev >= AR_XSREV_REVISION_KITE_11)
+#define AR_SREV_KITE_12(_ah) \
+	(AR_SREV_KITE(ah) && \
+	 AH_PRIVATE((_ah))->ah_macRev == AR_XSREV_REVISION_KITE_12)
+#define AR_SREV_KITE_12_OR_LATER(_ah) \
+	(AR_SREV_KITE_12(_ah) || \
+	 AH_PRIVATE((_ah))->ah_macRev >= AR_XSREV_REVISION_KITE_12)
 #endif /* _DEV_ATH_AR5416REG_H */

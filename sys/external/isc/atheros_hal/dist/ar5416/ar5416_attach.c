@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_attach.c,v 1.2 2011/02/20 11:21:04 jmcneill Exp $
+ * $Id: ar5416_attach.c,v 1.3 2011/02/21 11:06:38 cegger Exp $
  */
 #include "opt_ah.h"
 
@@ -89,6 +89,8 @@ ar5416InitState(struct ath_hal_5416 *ahp5416, uint16_t devid, HAL_SOFTC sc,
 	ah->ah_perCalibrationN		= ar5416PerCalibrationN,
 	ah->ah_resetCalValid		= ar5416ResetCalValid,
 	ah->ah_setTxPowerLimit		= ar5416SetTxPowerLimit;
+	ah->ah_setTxPower		= ar5416SetTransmitPower;
+	ah->ah_setBoardValues		= ar5416SetBoardValues;
 
 	/* Transmit functions */
 	ah->ah_stopTxDma		= ar5416StopTxDma;
@@ -170,6 +172,21 @@ ar5416InitState(struct ath_hal_5416 *ahp5416, uint16_t devid, HAL_SOFTC sc,
 	 */
 	AH5416(ah)->ah_rx_chainmask = AR5416_DEFAULT_RXCHAINMASK;
 	AH5416(ah)->ah_tx_chainmask = AR5416_DEFAULT_TXCHAINMASK;
+}
+
+uint32_t
+ar5416GetRadioRev(struct ath_hal *ah)
+{
+	uint32_t val;
+	int i;
+
+	/* Read Radio Chip Rev Extract */
+	OS_REG_WRITE(ah, AR_PHY(0x36), 0x00007058);
+	for (i = 0; i < 8; i++)
+		OS_REG_WRITE(ah, AR_PHY(0x20), 0x00010000);
+	val = (OS_REG_READ(ah, AR_PHY(256)) >> 24) & 0xff;
+	val = ((val & 0xf0) >> 4) | ((val & 0x0f) << 4);
+	return ath_hal_reverseBits(val, 8);
 }
 
 /*
