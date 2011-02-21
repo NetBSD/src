@@ -618,9 +618,20 @@ main(int argc, char **argv)
 					*argv, i);
 		}
 	}
-	if (iscsi_initiator_getvar(&ini, "user") == NULL) {
-		iscsi_err(__FILE__, __LINE__, "user must be specified with -u\n");
+	if (!strcmp(iscsi_initiator_getvar(&ini, "auth type"), "chap") &&
+	    iscsi_initiator_getvar(&ini, "user") == NULL) {
+		iscsi_err(__FILE__, __LINE__, "user must be specified with "
+		    "-u if using CHAP authentication\n");
 		exit(EXIT_FAILURE);
+	}
+
+	if (strcmp(iscsi_initiator_getvar(&ini, "auth type"), "none") &&
+	    iscsi_initiator_getvar(&ini, "user") != NULL) {
+		/* 
+		 * For backwards compatibility, default to using CHAP
+		 * if username given
+		 */
+		iscsi_initiator_setvar(&ini, "auth type", "chap");
 	}
 
 	if (iscsi_initiator_start(&ini) == -1) {

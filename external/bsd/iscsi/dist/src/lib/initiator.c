@@ -211,10 +211,10 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
 	}
 	s = *sess;
 	user = NULL;
-        if (s->sess_params.cred.user) {
+        auth_type = s->sess_params.auth_type;
+        if (s->sess_params.cred.user && auth_type != AuthNone) {
                 user = s->sess_params.cred.user;
         }
-        auth_type = s->sess_params.auth_type;
         mutual_auth = s->sess_params.mutual_auth;
 	(void) memset(s, 0x0, sizeof(*s));
 	s->state = INITIATOR_SESSION_STATE_INITIALIZING;
@@ -468,7 +468,11 @@ params_out(initiator_session_t * sess, char *text, int *len, int textsize, int s
 	if (security == IS_SECURITY) {
 		PARAM_TEXT_ADD(sess->params, "InitiatorName", "iqn.1994-04.org.NetBSD.iscsi-initiator:agc", text, len, textsize, 1, return -1);
 		PARAM_TEXT_ADD(sess->params, "InitiatorAlias", "NetBSD", text, len, textsize, 1, return -1);
-		PARAM_TEXT_ADD(sess->params, "AuthMethod", "CHAP,None", text, len, textsize, 1, return -1);
+		if (sess->sess_params.auth_type != AuthNone) {
+			PARAM_TEXT_ADD(sess->params, "AuthMethod", "CHAP,None", text, len, textsize, 1, return -1);
+		} else {
+			PARAM_TEXT_ADD(sess->params, "AuthMethod", "None", text, len, textsize, 1, return -1);
+		}
 	} else {
 		PARAM_TEXT_ADD(sess->params, "HeaderDigest", "None", text, len, textsize, 1, return -1);
 		PARAM_TEXT_ADD(sess->params, "DataDigest", "None", text, len, textsize, 1, return -1);
@@ -890,11 +894,13 @@ iscsi_initiator_start(iscsi_initiator_t *ini)
 			INIT_CLEANUP;
 			return -1;
 		}
-		sess->sess_params.cred.user =
-				strdup(iscsi_initiator_getvar(ini, "user"));
 		cp = iscsi_initiator_getvar(ini, "auth type");
 		if (strcmp(cp, "none") == 0) {
 			sess->sess_params.auth_type = AuthNone;
+			sess->sess_params.cred.user = NULL;
+		} else {
+			sess->sess_params.cred.user =
+				strdup(iscsi_initiator_getvar(ini, "user"));	
 		}
 		cp = iscsi_initiator_getvar(ini, "mutual auth");
 		if (strcmp(cp, "none") == 0) {
@@ -3678,7 +3684,11 @@ ii_initiator_init(const char *hostname, int port, int address_family, const char
 		INIT_CLEANUP;
 		return -1;
 	}
-	sess->sess_params.cred.user = strdup(user);
+	if (user)
+		sess->sess_params.cred.user = strdup(user);
+	else
+		sess->sess_params.cred.user = NULL;
+	
 	sess->sess_params.auth_type = auth_type;
 	sess->sess_params.mutual_auth = mutual_auth;
 	sess->sess_params.digest_wanted = digest_type;
