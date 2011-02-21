@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.18 2011/02/20 19:24:07 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.19 2011/02/21 05:26:08 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.18 2011/02/20 19:24:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.19 2011/02/21 05:26:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.18 2011/02/20 19:24:07 jruoho Exp $")
 #define MSR_THERM_INTR_OVERHEAT		__BIT(4)
 #define MSR_THERM_INTR_TRIP1_VAL	__BITS(8, 14)
 #define MSR_THERM_INTR_TRIP1		__BIT(15)
-#define MSR_THERM_INTR_TRIP2_VAL	__BIT(16, 22)
+#define MSR_THERM_INTR_TRIP2_VAL	__BITS(16, 22)
 #define MSR_THERM_INTR_TRIP2		__BIT(23)
 
 static int	coretemp_match(device_t, cfdata_t, void *);
@@ -194,13 +194,13 @@ coretemp_quirks(struct cpu_info *ci)
 	 */
 	msr = rdmsr(MSR_THERM_STATUS);
 
-	if ((msr & __BIT(31)) == 0)
+	if ((msr & MSR_THERM_STATUS_VALID) == 0)
 		return 0;
 
 	/*
 	 * Check for errata AE18, "Processor Digital
-	 * Thermal Sensor (DTS) Readout stops updating
-	 * upon returning from C3/C4 state".
+	 * Thermal Sensor (DTS) Readout Stops Updating
+	 * upon Returning from C3/C4 State".
 	 *
 	 * Adapted from the Linux coretemp driver.
 	 */
@@ -243,7 +243,7 @@ coretemp_ext_config(device_t self)
 
 		msr = rdmsr(MSR_IA32_EXT_CONFIG);
 
-		if (msr & (1 << 30))
+		if ((msr & __BIT(30)) != 0)
 			sc->sc_tjmax = 85;
 	}
 }
