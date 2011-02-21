@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.40 2011/02/20 03:56:45 jmcneill Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.41 2011/02/21 14:43:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.40 2011/02/20 03:56:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.41 2011/02/21 14:43:58 jmcneill Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -128,6 +128,7 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const char *intrstr = NULL;
+	const char *devname;
 	pcireg_t mem_type;
 
 	sc->sc_dev = self;
@@ -135,7 +136,8 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pc = pc;
 	psc->sc_tag = pa->pa_tag;
 
-	aprint_normal("\n");
+	devname = ath_hal_probe(PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
+	aprint_normal(": %s\n", devname);
 
 	if (!ath_pci_setup(psc))
 		goto bad;
