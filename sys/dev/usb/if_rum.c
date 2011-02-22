@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.35 2011/02/21 23:50:42 jmcneill Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.36 2011/02/22 00:58:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.35 2011/02/21 23:50:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.36 2011/02/22 00:58:08 jmcneill Exp $");
 
 
 #include <sys/param.h>
@@ -1356,6 +1356,9 @@ rum_watchdog(struct ifnet *ifp)
 static int
 rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+#define IS_RUNNING(ifp) \
+	(((ifp)->if_flags & IFF_UP) && ((ifp)->if_flags & IFF_RUNNING))
+
 	struct rum_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int s, error = 0;
@@ -1366,7 +1369,6 @@ rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		/* XXX re-use ether_ioctl() */
 		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
 		case IFF_UP|IFF_RUNNING:
 			rum_update_promisc(sc);
@@ -1382,13 +1384,20 @@ rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+			error = 0;
+		}
+		break;
+
 	default:
 		error = ieee80211_ioctl(ic, cmd, data);
 	}
 
 	if (error == ENETRESET) {
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
+		if (IS_RUNNING(ifp) &&
+			(ic->ic_roaming != IEEE80211_ROAMING_MANUAL))
 			rum_init(ifp);
 		error = 0;
 	}
@@ -1396,6 +1405,7 @@ rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	splx(s);
 
 	return error;
+#undef IS_RUNNING
 }
 
 static void
