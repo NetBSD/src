@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsi-initiator.8,v 1.4 2011/02/21 17:24:19 sborrill Exp $
+.\" $NetBSD: iscsi-initiator.8,v 1.5 2011/02/22 10:34:12 sborrill Exp $
 .\"
 .\" Copyright © 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 21, 2011
+.Dd February 22, 2011
 .Dt ISCSI-INITIATOR 8
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Nd refuse-based iSCSI initiator
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46bcfVv
+.Op Fl 46bcDfVv
 .Op Fl a Ar authentication-type
 .Op Fl d Ar digest-type
 .Op Fl h Ar target-hostname
@@ -70,6 +70,8 @@ Show the storage as a character device.
 Use the specified digest type when communicating with the target.
 The possible values are header, data, both, all or none.
 The default value is none.
+.It Fl D
+List the LUNs on the specified target and exit (i.e. do discovery only)
 .It Fl f
 Show the storage as a regular file.
 .It Fl h Ar hostname
@@ -141,7 +143,7 @@ lrw-r--r--  1 agc  agc          4 May 11 22:24 version -\*[Gt] 0
 The
 .Nm
 utility first appeared in
-.Nx 5.0 .
+.Nx 6.0 .
 .Sh AUTHORS
 The
 .Nm
