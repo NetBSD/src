@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.111 2011/02/10 14:46:45 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.112 2011/02/22 18:43:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.111 2011/02/10 14:46:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.112 2011/02/22 18:43:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -69,10 +69,13 @@ kmutex_t uvm_pageqlock;
 kmutex_t uvm_swap_data_lock;
 
 struct uvmexp uvmexp;
-int *uvmexp_pagesize;
-int *uvmexp_pagemask;
-int *uvmexp_pageshift;
 struct uvm uvm;
+
+#ifdef __uvmexp_pagesize
+int *uvmexp_pagesize = &uvmexp.pagesize;
+int *uvmexp_pagemask = &uvmexp.pagemask;
+int *uvmexp_pageshift = &uvmexp.pageshift;
+#endif
 
 struct vm_map rump_vmmap;
 static struct vm_map_kernel kmem_map_store;
@@ -302,6 +305,18 @@ uvm_init(void)
 	TAILQ_INIT(&vmpage_lruqueue);
 
 	uvmexp.free = 1024*1024; /* XXX: arbitrary & not updated */
+
+#ifndef __uvmexp_pagesize
+	uvmexp.pagesize = PAGE_SIZE;
+	uvmexp.pagemask = PAGE_MASK;
+	uvmexp.pageshift = PAGE_SHIFT;
+#else
+#define FAKE_PAGE_SHIFT 12
+	uvmexp.pageshift = FAKE_PAGE_SHIFT;
+	uvmexp.pagesize = 1<<FAKE_PAGE_SHIFT;
+	uvmexp.pagemask = (1<<FAKE_PAGE_SHIFT)-1;
+#undef FAKE_PAGE_SHIFT
+#endif
 
 	mutex_init(&pagermtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
