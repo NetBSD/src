@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2011/02/08 20:20:11 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2011/02/22 08:20:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2011/02/08 20:20:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2011/02/22 08:20:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ cpu_configure(void)
 	(*platform.bus_reset)();
 
 	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
+	spl0();		/* enable all source forcing SOFT_INTs cleared */
 }
 
 /*
