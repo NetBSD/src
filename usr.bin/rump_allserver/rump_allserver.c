@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.20 2011/02/21 18:50:21 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.21 2011/02/22 15:51:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.20 2011/02/21 18:50:21 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.21 2011/02/22 15:51:59 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -180,7 +180,7 @@ main(int argc, char *argv[])
 							fprintf(stderr,
 							    "cannot specify "
 							    "offset with "
-							    "size=e\n");
+							    "size=host\n");
 							usage();
 						}
 						flen = DSIZE_E;
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 					if (flen == DSIZE_E) {
 						fprintf(stderr, "cannot "
 						    "specify offset with "
-						    "size=e\n");
+						    "size=host\n");
 						usage();
 					}
 					/* XXX: off_t max? */
@@ -383,8 +383,9 @@ main(int argc, char *argv[])
 		if (fstat(fd, &sb) == -1)
 			die(sflag, errno, "fstat etfs hostpath");
 		if (flen == DSIZE_E) {
-			if (!S_ISREG(sb.st_mode))
-				die(sflag, EINVAL, "size=e requires reg file");
+			if (sb.st_size == 0)
+				die(sflag, EINVAL, "size=host, but cannot "
+				    "query non-zero size");
 			flen = sb.st_size;
 		}
 		fendoff = foffset + flen;
