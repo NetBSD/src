@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ro.c,v 1.4 2011/01/31 18:53:29 njoly Exp $	*/
+/*	$NetBSD: t_ro.c,v 1.5 2011/02/22 21:23:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
 #include "../../h_macros.h"
 
 #define AFILE "testfile"
+#define ADIR "testdir"
+#define AFIFO "testfifo"
+#define ASYMLINK "testsymlink"
+#define ALINK "testlink"
 #define FUNTEXT "this is some non-humppa text"
 #define FUNSIZE (sizeof(FUNTEXT)-1)
 
@@ -138,10 +142,50 @@ attrs(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+createdir(const atf_tc_t *tc, const char *mp)
+{
+
+	FSTEST_ENTER();
+	ATF_REQUIRE_ERRNO(EROFS, rump_sys_mkdir(ADIR, 0775) == -1);
+	FSTEST_EXIT();
+}
+
+static void
+createfifo(const atf_tc_t *tc, const char *mp)
+{
+
+	FSTEST_ENTER();
+	ATF_REQUIRE_ERRNO(EROFS, rump_sys_mkfifo(AFIFO, 0775) == -1);
+	FSTEST_EXIT();
+}
+
+static void
+createsymlink(const atf_tc_t *tc, const char *mp)
+{
+
+	FSTEST_ENTER();
+	ATF_REQUIRE_ERRNO(EROFS, rump_sys_symlink("hoge", ASYMLINK) == -1);
+	FSTEST_EXIT();
+}
+
+static void
+createlink(const atf_tc_t *tc, const char *mp)
+{
+
+	FSTEST_ENTER();
+	ATF_REQUIRE_ERRNO(EROFS, rump_sys_link(AFILE, ALINK) == -1);
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY_RO(create, "create file on r/o mount", nullgen);
 ATF_TC_FSAPPLY_RO(rmfile, "remove file from r/o mount", filegen);
 ATF_TC_FSAPPLY_RO(fileio, "can read a file but not write it", filegen);
 ATF_TC_FSAPPLY_RO(attrs, "can query but not change attributes", filegen);
+ATF_TC_FSAPPLY_RO(createdir, "create directory on r/o mount", nullgen);
+ATF_TC_FSAPPLY_RO(createfifo, "create fifo on r/o mount", nullgen);
+ATF_TC_FSAPPLY_RO(createsymlink, "create symlink on r/o mount", nullgen);
+ATF_TC_FSAPPLY_RO(createlink, "create hardlink on r/o mount", filegen);
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -150,6 +194,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY_RO(rmfile);
 	ATF_TP_FSAPPLY_RO(fileio);
 	ATF_TP_FSAPPLY_RO(attrs);
+	ATF_TP_FSAPPLY_RO(createdir);
+	ATF_TP_FSAPPLY_RO(createfifo);
+	ATF_TP_FSAPPLY_RO(createsymlink);
+	ATF_TP_FSAPPLY_RO(createlink);
 
 	return atf_no_error();
 }
