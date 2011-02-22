@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2011/02/22 14:02:54 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2011/02/22 17:32:49 tron Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
-NOLINT= 	# syscalls are evil
 
 LIB=		rumpclient
 USE_SHLIBDIR=	yes
