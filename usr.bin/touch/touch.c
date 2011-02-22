@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.28 2009/04/28 02:47:12 yamt Exp $	*/
+/*	$NetBSD: touch.c,v 1.29 2011/02/22 15:03:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.28 2009/04/28 02:47:12 yamt Exp $");
+__RCSID("$NetBSD: touch.c,v 1.29 2011/02/22 15:03:30 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,14 +71,14 @@ main(argc, argv)
 {
 	struct stat sb;
 	struct timeval tv[2];
-	int aflag, cflag, fflag, hflag, mflag, ch, fd, len, rval, timeset;
+	int aflag, cflag, hflag, mflag, ch, fd, len, rval, timeset;
 	char *p;
 	int (*change_file_times) __P((const char *, const struct timeval *));
 	int (*get_file_status) __P((const char *, struct stat *));
 
 	setlocale(LC_ALL, "");
 
-	aflag = cflag = fflag = hflag = mflag = timeset = 0;
+	aflag = cflag = hflag = mflag = timeset = 0;
 	if (gettimeofday(&tv[0], NULL))
 		err(1, "gettimeofday");
 
@@ -91,7 +91,6 @@ main(argc, argv)
 			cflag = 1;
 			break;
 		case 'f':
-			fflag = 1;
 			break;
 		case 'h':
 			hflag = 1;
