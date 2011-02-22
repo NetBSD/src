@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.38 2011/02/20 07:45:48 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.39 2011/02/22 08:19:47 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2442,7 +2442,6 @@ MIPSX(resume):
 	nop
 END(MIPSX(cpu_switch_resume))
 
-#if defined(ENABLE_MIPS3_WIRED_MAP)
 /*--------------------------------------------------------------------------
  *
  * mipsN_tlb_write_indexed --
@@ -2502,7 +2501,6 @@ LEAF(MIPSX(tlb_write_indexed))
 	j       ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(MIPSX(tlb_write_indexed))
-#endif /* ENABLE_MIPS3_WIRED_MAP */
 
 #if defined(MIPS3)
 /*----------------------------------------------------------------------------
@@ -2635,9 +2633,7 @@ _C_LABEL(MIPSX(locore_vec)):
 	PTR_WORD _C_LABEL(MIPSX(tlb_update))
 	PTR_WORD _C_LABEL(MIPSX(tlb_enter))
 	PTR_WORD _C_LABEL(MIPSX(tlb_read_indexed))
-#if defined(ENABLE_MIPS3_WIRED_MAP)
 	PTR_WORD _C_LABEL(MIPSX(tlb_write_indexed))
-#else
 	PTR_WORD _C_LABEL(nullop)
 #endif
 
