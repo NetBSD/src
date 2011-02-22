@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.115 2011/02/22 14:05:20 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.116 2011/02/22 14:08:58 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -833,8 +833,7 @@ function putent(type, compatwrap) {
 		printf("%s\trv = *(%s *)retval;\n", \
 		    indent, returntype) > rumpcalls
 		printf("%selse\n", indent, indent) > rumpcalls
-		printf("%s\trv = (%s)*retval;\n", \
-		    indent, returntype) > rumpcalls
+		printf("%s\trv = *retval;\n", indent, returntype) > rumpcalls
 		printf("%s", ending) > rumpcalls
 		printf("\treturn rv;\n") > rumpcalls
 	}
