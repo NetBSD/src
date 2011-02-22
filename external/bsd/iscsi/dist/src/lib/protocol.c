@@ -1457,7 +1457,7 @@ iscsi_read_data_decap(uint8_t *header, iscsi_read_data_t * cmd)
 		errmsg = "Byte 4";
 	} else if (memcmp(header + 8, zeros, 8) != 0) {
 		errmsg = "Bytes 8-15";
-	} else if (memcmp(header + 44, zeros, 4) != 0) {
+	} else if (!cmd->underflow && memcmp(header + 44, zeros, 4) != 0) {
 		errmsg = "Bytes 44-47";
 	}
 	if (errmsg) {
