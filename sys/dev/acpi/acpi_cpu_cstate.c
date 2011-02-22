@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.38 2011/02/22 09:34:13 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.39 2011/02/22 09:39:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.38 2011/02/22 09:34:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.39 2011/02/22 09:39:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -538,8 +538,10 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	/*
 	 * All x86 processors should support C1 (a.k.a. HALT).
 	 */
-	if ((AcpiGbl_FADT.Flags & ACPI_FADT_C1_SUPPORTED) != 0)
-		cs[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
+	cs[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
+
+	if ((AcpiGbl_FADT.Flags & ACPI_FADT_C1_SUPPORTED) == 0)
+		aprint_debug_dev(sc->sc_dev, "HALT not supported?\n");
 
 	if (sc->sc_object.ao_pblkaddr == 0)
 		return;
