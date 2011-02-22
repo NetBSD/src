@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2011/02/16 23:45:40 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2011/02/22 14:02:54 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
+NOLINT= 	# syscalls are evil
 
 LIB=		rumpclient
 USE_SHLIBDIR=	yes
@@ -15,5 +16,7 @@ INCSDIR=	/usr/include/rump
 CPPFLAGS+=	-DRUMP_CLIENT -I${.CURDIR} -I${.CURDIR}/../librumpuser
 SRCS=		rumpclient.c
 SRCS+=		rump_syscalls.c
+
+COPTS.rump_syscalls.c+= -fno-strict-aliasing
 
 .include <bsd.lib.mk>
