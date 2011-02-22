@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.35 2011/02/17 21:06:26 joerg Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.36 2011/02/22 05:45:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -65,9 +65,15 @@
     __asm(".weak " _C_LABEL_STRING(#sym));
 
 #if __GNUC_PREREQ__(4, 0)
-#define	__weak_reference(sym)	__attribute__((__weakref__))
+#define	__weak_reference(sym)	__attribute__((__weakref__(#sym)))
 #else
 #define	__weak_reference(sym)	; __asm(".weak " _C_LABEL_STRING(#sym))
+#endif
+
+#if __GNUC_PREREQ__(4, 2)
+#define	__weakref_visible	static
+#else
+#define	__weakref_visible	extern
 #endif
 
 #define	__warn_references(sym,msg)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.35 2011/02/18 23:41:57 joerg Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.36 2011/02/22 05:45:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.35 2011/02/18 23:41:57 joerg Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.36 2011/02/22 05:45:08 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -174,12 +174,9 @@ static mutex_t _ns_drec_lock = MUTEX_INITIALIZER;
  */
 #ifndef __ELF__
 #define	is_dynamic()		(0)	/* don't bother - switch to ELF! */
-#elif __GNUC_PREREQ__(4,2)
-static int rtld_DYNAMIC __attribute__((__weakref__, __alias__("_DYNAMIC")));
-#define	is_dynamic()		(&rtld_DYNAMIC != NULL)
 #else
-extern int _DYNAMIC __weak_reference(_DYNAMIC);
-#define	is_dynamic()		(&_DYNAMIC != NULL)
+__weakref_visible int rtld_DYNAMIC __weak_reference(_DYNAMIC);
+#define	is_dynamic()		(&rtld_DYNAMIC != NULL)
 #endif
 
 

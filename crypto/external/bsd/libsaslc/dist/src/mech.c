@@ -1,4 +1,4 @@
-/* $NetBSD: mech.c,v 1.6 2011/02/14 12:45:31 christos Exp $ */
+/* $NetBSD: mech.c,v 1.7 2011/02/22 05:45:05 joerg Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech.c,v 1.6 2011/02/14 12:45:31 christos Exp $");
+__RCSID("$NetBSD: mech.c,v 1.7 2011/02/22 05:45:05 joerg Exp $");
 
 #include <sys/queue.h>
 
@@ -51,29 +51,29 @@ __RCSID("$NetBSD: mech.c,v 1.6 2011/02/14 12:45:31 christos Exp $");
 #include "saslc_private.h"
 
 /* mechanisms */
-extern const saslc__mech_t saslc__mech_anonymous
+__weakref_visible const saslc__mech_t weak_saslc__mech_anonymous
     __weak_reference(saslc__mech_anonymous);
-extern const saslc__mech_t saslc__mech_crammd5
+__weakref_visible const saslc__mech_t weak_saslc__mech_crammd5
     __weak_reference(saslc__mech_crammd5);
-extern const saslc__mech_t saslc__mech_digestmd5
+__weakref_visible const saslc__mech_t weak_saslc__mech_digestmd5
     __weak_reference(saslc__mech_digestmd5);
-extern const saslc__mech_t saslc__mech_external
+__weakref_visible const saslc__mech_t weak_saslc__mech_external
     __weak_reference(saslc__mech_external);
-extern const saslc__mech_t saslc__mech_gssapi
+__weakref_visible const saslc__mech_t weak_saslc__mech_gssapi
     __weak_reference(saslc__mech_gssapi);
-extern const saslc__mech_t saslc__mech_login
+__weakref_visible const saslc__mech_t weak_saslc__mech_login
     __weak_reference(saslc__mech_login);
-extern const saslc__mech_t saslc__mech_plain
+__weakref_visible const saslc__mech_t weak_saslc__mech_plain
     __weak_reference(saslc__mech_plain);
 
 static const saslc__mech_t *saslc__mechanisms[] = {
-	&saslc__mech_anonymous,
-	&saslc__mech_crammd5,
-	&saslc__mech_digestmd5,
-	&saslc__mech_external,
-	&saslc__mech_gssapi,
-	&saslc__mech_login,
-	&saslc__mech_plain,
+	&weak_saslc__mech_anonymous,
+	&weak_saslc__mech_crammd5,
+	&weak_saslc__mech_digestmd5,
+	&weak_saslc__mech_external,
+	&weak_saslc__mech_gssapi,
+	&weak_saslc__mech_login,
+	&weak_saslc__mech_plain,
 };
 
 /*

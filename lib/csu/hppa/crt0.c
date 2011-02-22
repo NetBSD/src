@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.7 2004/08/26 21:07:14 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.8 2011/02/22 05:45:06 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 Matt Fredette
@@ -110,7 +110,7 @@ ___start(struct ps_strings *ps_strings,
 	 * For now, we take the easy way out and compare &_DYNAMIC 
 	 * to %dp, as well as to NULL.
 	 */
-	if (&_DYNAMIC != NULL && (int)&_DYNAMIC != dp)
+	if (&rtld_DYNAMIC != NULL && (int)&rtld_DYNAMIC != dp)
 		_rtld_setup(cleanup, obj);
 #endif
 
@@ -152,7 +152,7 @@ ___start(struct ps_strings *ps_strings,
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.7 2004/08/26 21:07:14 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.8 2011/02/22 05:45:06 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
