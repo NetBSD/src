@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.68 2011/02/22 14:06:29 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.69 2011/02/22 14:09:35 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.68 2011/02/22 14:06:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.69 2011/02/22 14:09:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstypes.h>
@@ -84,7 +84,7 @@ rump___sysimpl_read(int fd, void * buf, size_t nbyte)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -109,7 +109,7 @@ rump___sysimpl_write(int fd, const void * buf, size_t nbyte)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -134,7 +134,7 @@ rump___sysimpl_open(const char * path, int flags, mode_t mode)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -157,7 +157,7 @@ rump___sysimpl_close(int fd)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -181,7 +181,7 @@ rump___sysimpl_link(const char * path, const char * link)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -204,7 +204,7 @@ rump___sysimpl_unlink(const char * path)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -227,7 +227,7 @@ rump___sysimpl_chdir(const char * path)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -250,7 +250,7 @@ rump___sysimpl_fchdir(int fd)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -275,7 +275,7 @@ rump___sysimpl_mknod(const char * path, mode_t mode, uint32_t dev)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -299,7 +299,7 @@ rump___sysimpl_chmod(const char * path, mode_t mode)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -324,7 +324,7 @@ rump___sysimpl_chown(const char * path, uid_t uid, gid_t gid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -341,7 +341,7 @@ rump___sysimpl_getpid(void )
 	if (sizeof(pid_t) > sizeof(register_t))
 		rv = *(pid_t *)retval;
 	else
-		rv = (pid_t)*retval;
+		rv = *retval;
 	return rv;
 }
 rsys_alias(sys_getpid_with_ppid,rump_enosys)
@@ -364,7 +364,7 @@ rump___sysimpl_unmount(const char * path, int flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -387,7 +387,7 @@ rump___sysimpl_setuid(uid_t uid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -404,7 +404,7 @@ rump___sysimpl_getuid(void )
 	if (sizeof(uid_t) > sizeof(register_t))
 		rv = *(uid_t *)retval;
 	else
-		rv = (uid_t)*retval;
+		rv = *retval;
 	return rv;
 }
 rsys_alias(sys_getuid_with_euid,rump_enosys)
@@ -420,7 +420,7 @@ rump___sysimpl_geteuid(void )
 	if (sizeof(uid_t) > sizeof(register_t))
 		rv = *(uid_t *)retval;
 	else
-		rv = (uid_t)*retval;
+		rv = *retval;
 	return rv;
 }
 rsys_alias(sys_geteuid,rump_enosys)
@@ -444,7 +444,7 @@ rump___sysimpl_recvmsg(int s, struct msghdr * msg, int flags)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -469,7 +469,7 @@ rump___sysimpl_sendmsg(int s, const struct msghdr * msg, int flags)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -497,7 +497,7 @@ rump___sysimpl_recvfrom(int s, void * buf, size_t len, int flags, struct sockadd
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -522,7 +522,7 @@ rump___sysimpl_accept(int s, struct sockaddr * name, unsigned int * anamelen)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -547,7 +547,7 @@ rump___sysimpl_getpeername(int fdes, struct sockaddr * asa, unsigned int * alen)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -572,7 +572,7 @@ rump___sysimpl_getsockname(int fdes, struct sockaddr * asa, unsigned int * alen)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -596,7 +596,7 @@ rump___sysimpl_access(const char * path, int flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -620,7 +620,7 @@ rump___sysimpl_chflags(const char * path, u_long flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -644,7 +644,7 @@ rump___sysimpl_fchflags(int fd, u_long flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -671,7 +671,7 @@ rump___sysimpl_getppid(void )
 	if (sizeof(pid_t) > sizeof(register_t))
 		rv = *(pid_t *)retval;
 	else
-		rv = (pid_t)*retval;
+		rv = *retval;
 	return rv;
 }
 rsys_alias(sys_getppid,rump_enosys)
@@ -693,7 +693,7 @@ rump___sysimpl_dup(int fd)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -710,7 +710,7 @@ rump___sysimpl_getegid(void )
 	if (sizeof(gid_t) > sizeof(register_t))
 		rv = *(gid_t *)retval;
 	else
-		rv = (gid_t)*retval;
+		rv = *retval;
 	return rv;
 }
 rsys_alias(sys_getegid,rump_enosys)
@@ -726,7 +726,7 @@ rump___sysimpl_getgid(void )
 	if (sizeof(gid_t) > sizeof(register_t))
 		rv = *(gid_t *)retval;
 	else
-		rv = (gid_t)*retval;
+		rv = *retval;
 	return rv;
 }
 rsys_alias(sys_getgid_with_egid,rump_enosys)
@@ -749,7 +749,7 @@ rump___sysimpl___getlogin(char * namebuf, size_t namelen)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -772,7 +772,7 @@ rump___sysimpl___setlogin(const char * namebuf)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -797,7 +797,7 @@ rump___sysimpl_ioctl(int fd, u_long com, void * data)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -820,7 +820,7 @@ rump___sysimpl_revoke(const char * path)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -844,7 +844,7 @@ rump___sysimpl_symlink(const char * path, const char * link)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -869,7 +869,7 @@ rump___sysimpl_readlink(const char * path, char * buf, size_t count)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -892,7 +892,7 @@ rump___sysimpl_umask(mode_t newmask)
 		if (sizeof(mode_t) > sizeof(register_t))
 			rv = *(mode_t *)retval;
 		else
-			rv = (mode_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -915,7 +915,7 @@ rump___sysimpl_chroot(const char * path)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -939,7 +939,7 @@ rump___sysimpl_getgroups(int gidsetsize, gid_t * gidset)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -963,7 +963,7 @@ rump___sysimpl_setgroups(int gidsetsize, const gid_t * gidset)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -983,7 +983,7 @@ rump___sysimpl_getpgrp(void )
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1007,7 +1007,7 @@ rump___sysimpl_setpgid(pid_t pid, pid_t pgid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1031,7 +1031,7 @@ rump___sysimpl_dup2(int from, int to)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1056,7 +1056,7 @@ rump___sysimpl_fcntl(int fd, int cmd, void * arg)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1083,7 +1083,7 @@ rump___sysimpl_select(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct time
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1106,7 +1106,7 @@ rump___sysimpl_fsync(int fd)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1131,7 +1131,7 @@ rump___sysimpl_connect(int s, const struct sockaddr * name, unsigned int namelen
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1156,7 +1156,7 @@ rump___sysimpl_bind(int s, const struct sockaddr * name, unsigned int namelen)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1183,7 +1183,7 @@ rump___sysimpl_setsockopt(int s, int level, int name, const void * val, unsigned
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1207,7 +1207,7 @@ rump___sysimpl_listen(int s, int backlog)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1234,7 +1234,7 @@ rump___sysimpl_getsockopt(int s, int level, int name, void * val, unsigned int *
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1259,7 +1259,7 @@ rump___sysimpl_readv(int fd, const struct iovec * iovp, int iovcnt)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1284,7 +1284,7 @@ rump___sysimpl_writev(int fd, const struct iovec * iovp, int iovcnt)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1309,7 +1309,7 @@ rump___sysimpl_fchown(int fd, uid_t uid, gid_t gid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1333,7 +1333,7 @@ rump___sysimpl_fchmod(int fd, mode_t mode)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1357,7 +1357,7 @@ rump___sysimpl_setreuid(uid_t ruid, uid_t euid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1381,7 +1381,7 @@ rump___sysimpl_setregid(gid_t rgid, gid_t egid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1405,7 +1405,7 @@ rump___sysimpl_rename(const char * from, const char * to)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1429,7 +1429,7 @@ rump___sysimpl_flock(int fd, int how)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1453,7 +1453,7 @@ rump___sysimpl_mkfifo(const char * path, mode_t mode)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1481,7 +1481,7 @@ rump___sysimpl_sendto(int s, const void * buf, size_t len, int flags, const stru
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1505,7 +1505,7 @@ rump___sysimpl_shutdown(int s, int how)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1531,7 +1531,7 @@ rump___sysimpl_socketpair(int domain, int type, int protocol, int * rsv)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1555,7 +1555,7 @@ rump___sysimpl_mkdir(const char * path, mode_t mode)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1578,7 +1578,7 @@ rump___sysimpl_rmdir(const char * path)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1602,7 +1602,7 @@ rump___sysimpl_utimes(const char * path, const struct timeval * tptr)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1622,7 +1622,7 @@ rump___sysimpl_setsid(void )
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1646,7 +1646,7 @@ rump___sysimpl_nfssvc(int flag, void * argp)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1673,7 +1673,7 @@ rump___sysimpl_pread(int fd, void * buf, size_t nbyte, off_t offset)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1700,7 +1700,7 @@ rump___sysimpl_pwrite(int fd, const void * buf, size_t nbyte, off_t offset)
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1723,7 +1723,7 @@ rump___sysimpl_setgid(gid_t gid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1746,7 +1746,7 @@ rump___sysimpl_setegid(gid_t egid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1769,7 +1769,7 @@ rump___sysimpl_seteuid(uid_t euid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1793,7 +1793,7 @@ rump___sysimpl_pathconf(const char * path, int name)
 		if (sizeof(long) > sizeof(register_t))
 			rv = *(long *)retval;
 		else
-			rv = (long)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1817,7 +1817,7 @@ rump___sysimpl_fpathconf(int fd, int name)
 		if (sizeof(long) > sizeof(register_t))
 			rv = *(long *)retval;
 		else
-			rv = (long)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1841,7 +1841,7 @@ rump___sysimpl_getrlimit(int which, struct rlimit * rlp)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1865,7 +1865,7 @@ rump___sysimpl_setrlimit(int which, const struct rlimit * rlp)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1891,7 +1891,7 @@ rump___sysimpl_lseek(int fd, off_t offset, int whence)
 		if (sizeof(off_t) > sizeof(register_t))
 			rv = *(off_t *)retval;
 		else
-			rv = (off_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1916,7 +1916,7 @@ rump___sysimpl_truncate(const char * path, off_t length)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1941,7 +1941,7 @@ rump___sysimpl_ftruncate(int fd, off_t length)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1969,7 +1969,7 @@ rump___sysimpl___sysctl(const int * name, u_int namelen, void * old, size_t * ol
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -1993,7 +1993,7 @@ rump___sysimpl_futimes(int fd, const struct timeval * tptr)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2016,7 +2016,7 @@ rump___sysimpl_getpgid(pid_t pid)
 		if (sizeof(pid_t) > sizeof(register_t))
 			rv = *(pid_t *)retval;
 		else
-			rv = (pid_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2040,7 +2040,7 @@ rump___sysimpl_reboot(int opt, char * bootstr)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2065,7 +2065,7 @@ rump___sysimpl_poll(struct pollfd * fds, u_int nfds, int timeout)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2088,7 +2088,7 @@ rump___sysimpl_fdatasync(int fd)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2112,7 +2112,7 @@ rump___sysimpl_modctl(int cmd, void * arg)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2136,7 +2136,7 @@ rump___sysimpl__ksem_init(unsigned int value, intptr_t * idp)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2163,7 +2163,7 @@ rump___sysimpl__ksem_open(const char * name, int oflag, mode_t mode, unsigned in
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2186,7 +2186,7 @@ rump___sysimpl__ksem_unlink(const char * name)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2209,7 +2209,7 @@ rump___sysimpl__ksem_close(intptr_t id)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2232,7 +2232,7 @@ rump___sysimpl__ksem_post(intptr_t id)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2255,7 +2255,7 @@ rump___sysimpl__ksem_wait(intptr_t id)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2278,7 +2278,7 @@ rump___sysimpl__ksem_trywait(intptr_t id)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2302,7 +2302,7 @@ rump___sysimpl__ksem_getvalue(intptr_t id, unsigned int * value)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2325,7 +2325,7 @@ rump___sysimpl__ksem_destroy(intptr_t id)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2349,7 +2349,7 @@ rump___sysimpl_lchmod(const char * path, mode_t mode)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2374,7 +2374,7 @@ rump___sysimpl_lchown(const char * path, uid_t uid, gid_t gid)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2398,7 +2398,7 @@ rump___sysimpl_lutimes(const char * path, const struct timeval * tptr)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2421,7 +2421,7 @@ rump___sysimpl_getsid(pid_t pid)
 		if (sizeof(pid_t) > sizeof(register_t))
 			rv = *(pid_t *)retval;
 		else
-			rv = (pid_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2448,7 +2448,7 @@ rump___sysimpl_preadv(int fd, const struct iovec * iovp, int iovcnt, off_t offse
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2475,7 +2475,7 @@ rump___sysimpl_pwritev(int fd, const struct iovec * iovp, int iovcnt, off_t offs
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2499,7 +2499,7 @@ rump___sysimpl___getcwd(char * bufp, size_t length)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2522,7 +2522,7 @@ rump___sysimpl_fchroot(int fd)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2546,7 +2546,7 @@ rump___sysimpl_lchflags(const char * path, u_long flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2563,7 +2563,7 @@ rump___sysimpl_issetugid(void )
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
-		rv = (int)*retval;
+		rv = *retval;
 	return rv;
 }
 rsys_alias(sys_issetugid,rump_enosys)
@@ -2582,7 +2582,7 @@ rump___sysimpl_kqueue(void )
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2610,7 +2610,7 @@ rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges,
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2636,7 +2636,7 @@ rump___sysimpl_fsync_range(int fd, int flags, off_t start, off_t length)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2661,7 +2661,7 @@ rump___sysimpl_getvfsstat(struct statvfs * buf, size_t bufsize, int flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2686,7 +2686,7 @@ rump___sysimpl_statvfs1(const char * path, struct statvfs * buf, int flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2711,7 +2711,7 @@ rump___sysimpl_fstatvfs1(int fd, struct statvfs * buf, int flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2738,7 +2738,7 @@ rump___sysimpl_extattrctl(const char * path, int cmd, const char * filename, int
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2765,7 +2765,7 @@ rump___sysimpl_extattr_set_file(const char * path, int attrnamespace, const char
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2792,7 +2792,7 @@ rump___sysimpl_extattr_get_file(const char * path, int attrnamespace, const char
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2817,7 +2817,7 @@ rump___sysimpl_extattr_delete_file(const char * path, int attrnamespace, const c
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2844,7 +2844,7 @@ rump___sysimpl_extattr_set_fd(int fd, int attrnamespace, const char * attrname, 
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2871,7 +2871,7 @@ rump___sysimpl_extattr_get_fd(int fd, int attrnamespace, const char * attrname, 
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2896,7 +2896,7 @@ rump___sysimpl_extattr_delete_fd(int fd, int attrnamespace, const char * attrnam
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2923,7 +2923,7 @@ rump___sysimpl_extattr_set_link(const char * path, int attrnamespace, const char
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2950,7 +2950,7 @@ rump___sysimpl_extattr_get_link(const char * path, int attrnamespace, const char
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -2975,7 +2975,7 @@ rump___sysimpl_extattr_delete_link(const char * path, int attrnamespace, const c
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3001,7 +3001,7 @@ rump___sysimpl_extattr_list_fd(int fd, int attrnamespace, void * data, size_t nb
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3027,7 +3027,7 @@ rump___sysimpl_extattr_list_file(const char * path, int attrnamespace, void * da
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3053,7 +3053,7 @@ rump___sysimpl_extattr_list_link(const char * path, int attrnamespace, void * da
 		if (sizeof(ssize_t) > sizeof(register_t))
 			rv = *(ssize_t *)retval;
 		else
-			rv = (ssize_t)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3081,7 +3081,7 @@ rump___sysimpl_pselect(int nd, fd_set * in, fd_set * ou, fd_set * ex, const stru
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3107,7 +3107,7 @@ rump___sysimpl_pollts(struct pollfd * fds, u_int nfds, const struct timespec * t
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3134,7 +3134,7 @@ rump___sysimpl_setxattr(const char * path, const char * name, void * value, size
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3161,7 +3161,7 @@ rump___sysimpl_lsetxattr(const char * path, const char * name, void * value, siz
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3188,7 +3188,7 @@ rump___sysimpl_fsetxattr(int fd, const char * name, void * value, size_t size, i
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3214,7 +3214,7 @@ rump___sysimpl_getxattr(const char * path, const char * name, void * value, size
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3240,7 +3240,7 @@ rump___sysimpl_lgetxattr(const char * path, const char * name, void * value, siz
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3266,7 +3266,7 @@ rump___sysimpl_fgetxattr(int fd, const char * name, void * value, size_t size)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3291,7 +3291,7 @@ rump___sysimpl_listxattr(const char * path, char * list, size_t size)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3316,7 +3316,7 @@ rump___sysimpl_llistxattr(const char * path, char * list, size_t size)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3341,7 +3341,7 @@ rump___sysimpl_flistxattr(int fd, char * list, size_t size)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3365,7 +3365,7 @@ rump___sysimpl_removexattr(const char * path, const char * name)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3389,7 +3389,7 @@ rump___sysimpl_lremovexattr(const char * path, const char * name)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3413,7 +3413,7 @@ rump___sysimpl_fremovexattr(int fd, const char * name)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3437,7 +3437,7 @@ rump___sysimpl_stat30(const char * path, struct stat * ub)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3461,7 +3461,7 @@ rump___sysimpl_fstat30(int fd, struct stat * sb)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3485,7 +3485,7 @@ rump___sysimpl_lstat30(const char * path, struct stat * ub)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3510,7 +3510,7 @@ rump___sysimpl_getdents30(int fd, char * buf, size_t count)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3535,7 +3535,7 @@ rump___sysimpl_socket30(int domain, int type, int protocol)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3560,7 +3560,7 @@ rump___sysimpl_getfh30(const char * fname, void * fhp, size_t * fh_size)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3585,7 +3585,7 @@ rump___sysimpl_fhopen40(const void * fhp, size_t fh_size, int flags)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3611,7 +3611,7 @@ rump___sysimpl_fhstatvfs140(const void * fhp, size_t fh_size, struct statvfs * b
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3636,7 +3636,7 @@ rump___sysimpl_fhstat40(const void * fhp, size_t fh_size, struct stat * sb)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3663,7 +3663,7 @@ rump___sysimpl_mount50(const char * type, const char * path, int flags, void * d
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3687,7 +3687,7 @@ rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
-		rv = (int)*retval;
+		rv = *retval;
 	return rv;
 }
 rsys_alias(sys___posix_fadvise50,rump_enosys)
@@ -3713,7 +3713,7 @@ rump___sysimpl_select50(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct ti
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3737,7 +3737,7 @@ rump___sysimpl_utimes50(const char * path, const struct timeval * tptr)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3761,7 +3761,7 @@ rump___sysimpl_futimes50(int fd, const struct timeval * tptr)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3785,7 +3785,7 @@ rump___sysimpl_lutimes50(const char * path, const struct timeval * tptr)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3813,7 +3813,7 @@ rump___sysimpl_kevent50(int fd, const struct kevent * changelist, size_t nchange
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3841,7 +3841,7 @@ rump___sysimpl_pselect50(int nd, fd_set * in, fd_set * ou, fd_set * ex, const st
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3867,7 +3867,7 @@ rump___sysimpl_pollts50(struct pollfd * fds, u_int nfds, const struct timespec *
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3891,7 +3891,7 @@ rump___sysimpl_stat50(const char * path, struct stat * ub)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3915,7 +3915,7 @@ rump___sysimpl_fstat50(int fd, struct stat * sb)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3939,7 +3939,7 @@ rump___sysimpl_lstat50(const char * path, struct stat * ub)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3964,7 +3964,7 @@ rump___sysimpl_mknod50(const char * path, mode_t mode, dev_t dev)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
@@ -3989,7 +3989,7 @@ rump___sysimpl_fhstat50(const void * fhp, size_t fh_size, struct stat * sb)
 		if (sizeof(int) > sizeof(register_t))
 			rv = *(int *)retval;
 		else
-			rv = (int)*retval;
+			rv = *retval;
 	}
 	return rv;
 }
