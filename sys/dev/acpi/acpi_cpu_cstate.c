@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.40 2011/02/22 16:05:30 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.41 2011/02/22 16:39:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.40 2011/02/22 16:05:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.41 2011/02/22 16:39:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -326,7 +326,6 @@ out:
 static ACPI_STATUS
 acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 {
-	const struct acpicpu_object *ao = &sc->sc_object;
 	struct acpicpu_cstate *cs = sc->sc_cstate;
 	struct acpicpu_cstate state;
 	struct acpicpu_reg *reg;
