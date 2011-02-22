@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.96 2011/02/19 13:52:28 jmcneill Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.97 2011/02/22 06:37:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.96 2011/02/19 13:52:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97 2011/02/22 06:37:24 dholland Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.96 2011/02/19 13:52:28 jmcneill Exp $
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
