@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.41 2011/02/22 16:39:05 jmcneill Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.42 2011/02/22 17:16:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.41 2011/02/22 16:39:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.42 2011/02/22 17:16:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -331,6 +331,7 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 	struct acpicpu_reg *reg;
 	ACPI_STATUS rv = AE_OK;
 	ACPI_OBJECT *obj;
+	static int i = 1;
 	uint32_t type;
 
 	(void)memset(&state, 0, sizeof(*cs));
@@ -469,16 +470,18 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		goto out;
 	}
 
-	cs[type].cs_addr = state.cs_addr;
-	cs[type].cs_power = state.cs_power;
-	cs[type].cs_flags = state.cs_flags;
-	cs[type].cs_method = state.cs_method;
-	cs[type].cs_latency = state.cs_latency;
+	cs[i].cs_addr = state.cs_addr;
+	cs[i].cs_power = state.cs_power;
+	cs[i].cs_flags = state.cs_flags;
+	cs[i].cs_method = state.cs_method;
+	cs[i].cs_latency = state.cs_latency;
 
 out:
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(sc->sc_dev, "failed to add "
 		    "C-state: %s\n", AcpiFormatException(rv));
+
+	i++;
 
 	return rv;
 }
