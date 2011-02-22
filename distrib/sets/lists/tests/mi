@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.251 2011/02/19 13:21:05 pooka Exp $
+# $NetBSD: mi,v 1.252 2011/02/22 10:37:05 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -536,6 +536,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_server			tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_server/h_simpleserver.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs				tests-syscall-debug
+./usr/libdata/debug/usr/tests/rump/rumpvfs/t_basic.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/sbin					tests-sbin-tests
@@ -2003,6 +2004,7 @@
 ./usr/tests/rump/rumpkern/h_server/h_simpleserver		tests-rump-tests atf
 ./usr/tests/rump/rumpvfs			tests-rump-tests
 ./usr/tests/rump/rumpvfs/Atffile		tests-rump-tests	atf
+./usr/tests/rump/rumpvfs/t_basic		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_etfs		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_p2kifs		tests-rump-tests	atf
 ./usr/tests/sbin				tests-sbin-tests
