@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.112 2011/02/22 18:43:20 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.113 2011/02/22 20:17:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.112 2011/02/22 18:43:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.113 2011/02/22 20:17:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -923,14 +923,27 @@ void
 uvm_pageout_start(int npages)
 {
 
-	/* we don't have the heuristics */
+	mutex_enter(&pdaemonmtx);
+	uvmexp.paging += npages;
+	mutex_exit(&pdaemonmtx);
 }
 
 void
 uvm_pageout_done(int npages)
 {
 
-	/* could wakeup waiters, but just let the pagedaemon do it */
+	if (!npages)
+		return;
+
+	mutex_enter(&pdaemonmtx);
+	KASSERT(uvmexp.paging >= npages);
+	uvmexp.paging -= npages;
+
+	if (pdaemon_waiters) {
+		pdaemon_waiters = 0;
+		cv_broadcast(&oomwait);
+	}
+	mutex_exit(&pdaemonmtx);
 }
 
 static bool
@@ -969,6 +982,8 @@ processpage(struct vm_page *pg, bool *lockrunning)
 
 /*
  * The Diabolical pageDaemon Director (DDD).
+ *
+ * This routine can always use better heuristics.
  */
 void
 uvm_pageout(void *arg)
@@ -976,35 +991,30 @@ uvm_pageout(void *arg)
 	struct vm_page *pg;
 	struct pool *pp, *pp_first;
 	uint64_t where;
-	int timo = 0;
 	int cleaned, skip, skipped;
-	bool succ = false;
+	int waspaging;
+	bool succ;
 	bool lockrunning;
 
 	mutex_enter(&pdaemonmtx);
 	for (;;) {
-		if (succ) {
+		if (!NEED_PAGEDAEMON()) {
 			kernel_map->flags &= ~VM_MAP_WANTVA;
 			kmem_map->flags &= ~VM_MAP_WANTVA;
-			timo = 0;
-			if (pdaemon_waiters) {
-				pdaemon_waiters = 0;
-				cv_broadcast(&oomwait);
-			}
 		}
-		succ = false;
 
-		if (pdaemon_waiters == 0) {
-			cv_timedwait(&pdaemoncv, &pdaemonmtx, timo);
-			uvmexp.pdwoke++;
+		if (pdaemon_waiters) {
+			pdaemon_waiters = 0;
+			cv_broadcast(&oomwait);
 		}
+
+		cv_wait(&pdaemoncv, &pdaemonmtx);
+		uvmexp.pdwoke++;
+		waspaging = uvmexp.paging;
 
 		/* tell the world that we are hungry */
 		kernel_map->flags |= VM_MAP_WANTVA;
 		kmem_map->flags |= VM_MAP_WANTVA;
-
-		if (pdaemon_waiters == 0 && !NEED_PAGEDAEMON())
-			continue;
 		mutex_exit(&pdaemonmtx);
 
 		/*
@@ -1014,7 +1024,6 @@ uvm_pageout(void *arg)
 		 */
 		pool_cache_reclaim(&pagecache);
 		if (!NEED_PAGEDAEMON()) {
-			succ = true;
 			mutex_enter(&pdaemonmtx);
 			continue;
 		}
@@ -1081,7 +1090,6 @@ uvm_pageout(void *arg)
 		 */
 		pool_cache_reclaim(&pagecache);
 		if (!NEED_PAGEDAEMON()) {
-			succ = true;
 			mutex_enter(&pdaemonmtx);
 			continue;
 		}
@@ -1118,13 +1126,14 @@ uvm_pageout(void *arg)
 		 * Unfortunately, the wife just borrowed it.
 		 */
 
-		if (!succ && cleaned == 0) {
+		mutex_enter(&pdaemonmtx);
+		if (!succ && cleaned == 0 && pdaemon_waiters &&
+		    uvmexp.paging == 0) {
 			rumpuser_dprintf("pagedaemoness: failed to reclaim "
 			    "memory ... sleeping (deadlock?)\n");
-			timo = hz;
+			cv_timedwait(&pdaemoncv, &pdaemonmtx, hz);
+			mutex_enter(&pdaemonmtx);
 		}
-
-		mutex_enter(&pdaemonmtx);
 	}
 
 	panic("you can swap out any time you like, but you can never leave");
