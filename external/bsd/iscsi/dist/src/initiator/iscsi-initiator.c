@@ -701,8 +701,22 @@ main(int argc, char **argv)
 		}
 
 		/* stuff size into st.st_size */
-		(void) read_capacity(u, 0, &lbac, &blocksize);
-		sti.st.st_size = ((uint64_t)lbac + 1) * blocksize;
+		{
+			int retry = 5;
+			while (retry > 0) {
+				if (read_capacity(u, 0, &lbac, &blocksize) == 0)
+					break;
+				retry--;
+				iscsi_warn(__FILE__, __LINE__,
+				    "read_capacity failed - retrying %d\n", retry);
+				sleep(1);
+			}
+			if (retry == 0) {
+				iscsi_err(__FILE__, __LINE__, "read_capacity failed - giving up\n");
+				break;
+			}
+		}
+		sti.st.st_size = (off_t)(((uint64_t)lbac + 1) * blocksize);
 		sti.target = u;
 
 		tv.v[tv.c].host = strdup(tinfo.name);
