@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.39 2011/02/22 09:39:48 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.40 2011/02/22 16:05:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.39 2011/02/22 09:39:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.40 2011/02/22 16:05:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -421,21 +421,6 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		if (reg->reg_bitwidth != 8) {
 			rv = AE_AML_BAD_RESOURCE_LENGTH;
 			goto out;
-		}
-
-		/*
-		 * Check only that the address is in the mapped space.
-		 * Systems are allowed to change it when operating
-		 * with _CST (see ACPI 4.0, pp. 94-95). For instance,
-		 * the offset of P_LVL3 may change depending on whether
-		 * acpiacad(4) is connected or disconnected.
-		 */
-		if (ao->ao_pblkaddr != 0) {
-
-			if (reg->reg_addr > ao->ao_pblkaddr + ao->ao_pblklen) {
-				rv = AE_BAD_ADDRESS;
-				goto out;
-			}
 		}
 
 		state.cs_addr = reg->reg_addr;
