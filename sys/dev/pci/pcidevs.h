@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1057 2011/02/21 13:38:55 njoly Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1058 2011/02/22 23:20:52 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1060 2011/02/21 13:38:18 njoly Exp
+ *	NetBSD: pcidevs,v 1.1061 2011/02/22 23:20:15 jmcneill Exp
  */
 
 /*
@@ -1108,8 +1108,13 @@
 /* Attansic Technology Corp. */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_L1E	0x1026		/* L1E Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA	0x1048		/* L1 Gigabit Ethernet Adapter */
-#define	PCI_PRODUCT_ATTANSIC_AR8131	0x1063		/* Atheros AR8131 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8132	0x1062		/* AR8132 Fast Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8131	0x1063		/* AR8131 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8151	0x1073		/* AR8151 v1.0 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8151_V2	0x1083		/* AR8151 v2.0 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8152_B	0x2060		/* AR8152 v1.1 Fast Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8152_B2	0x2062		/* AR8152 v2.0 Fast Ethernet Adapter */
 
 /* ATI products */
 /* See http://www.x.org/wiki/Radeon%20ASICs */
