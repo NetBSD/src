@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.37 2011/02/18 13:56:58 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.38 2011/02/22 01:26:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.37 2011/02/18 13:56:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.38 2011/02/22 01:26:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -691,9 +691,11 @@ genfb_enable_polling(device_t dev)
 {
 	struct genfb_softc *sc = device_private(dev);
 
-	SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
-	vcons_hard_switch(&sc->sc_console_screen);
-	vcons_enable_polling(&sc->vd);
+	if (sc->sc_console_screen.scr_vd) {
+		SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
+		vcons_hard_switch(&sc->sc_console_screen);
+		vcons_enable_polling(&sc->vd);
+	}
 }
 
 void
@@ -701,5 +703,7 @@ genfb_disable_polling(device_t dev)
 {
 	struct genfb_softc *sc = device_private(dev);
 
-	vcons_disable_polling(&sc->vd);
+	if (sc->sc_console_screen.scr_vd) {
+		vcons_disable_polling(&sc->vd);
+	}
 }
