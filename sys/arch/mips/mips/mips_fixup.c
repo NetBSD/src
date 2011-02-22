@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.3 2011/02/20 16:38:13 rmind Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.4 2011/02/22 08:18:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.4 2011/02/22 08:18:47 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_mips3_wired.h"
@@ -350,9 +350,8 @@ u_int	tlb_record_asids(u_long *, uint32_t)		__stub;
 int	tlb_update(vaddr_t, uint32_t)			__stub;
 void	tlb_enter(size_t, vaddr_t, uint32_t)		__stub;
 void	tlb_read_indexed(size_t, struct tlbmask *)	__stub;
-#if defined(ENABLE_MIPS3_WIRED_MAP)
 void	tlb_write_indexed(size_t, const struct tlbmask *) __stub;
-#endif
+
 /*
  * wbflush isn't a stub since it gets overridden quite late
  * (after mips_vector_init returns).
@@ -419,13 +418,11 @@ tlb_read_indexed(size_t tlbno, struct tlbmask *tlb)
         (*mips_locore_jumpvec.ljv_tlb_read_indexed)(tlbno, tlb);
 }
 
-#if defined(ENABLE_MIPS3_WIRED_MAP)
 void
 tlb_write_indexed(size_t tlbno, const struct tlbmask *tlb)
 {
         (*mips_locore_jumpvec.ljv_tlb_write_indexed)(tlbno, tlb);
 }
-#endif
 
 void
 wbflush(void)
