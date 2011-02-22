@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs_disklabel.c,v 1.2 2009/12/03 14:23:49 pooka Exp $	*/
+/*	$NetBSD: ukfs_disklabel.c,v 1.3 2011/02/22 15:42:15 pooka Exp $	*/
 
 /*
  * Local copies of libutil disklabel routines.  This uncouples libukfs
@@ -50,27 +50,42 @@
 #define SCAN_INCR	4
 
 int
-ukfs__disklabel_scan(struct ukfs__disklabel *lp, char *buf, size_t buflen)
+ukfs__disklabel_scan(struct ukfs__disklabel *lp, int *isswapped,
+	char *buf, size_t buflen)
 {
-	size_t	i;
+	size_t i;
+	int imswapped;
+	uint16_t npart;
 
 	/* scan for the correct magic numbers. */
 
 	for (i=0; i <= buflen - sizeof(*lp); i += SCAN_INCR) {
 		memcpy(lp, buf + i, sizeof(*lp));
 		if (lp->d_magic == UKFS_DISKMAGIC &&
-		    lp->d_magic2 == UKFS_DISKMAGIC)
+		    lp->d_magic2 == UKFS_DISKMAGIC) {
+			imswapped = 0;
 			goto sanity;
+		}
+		if (lp->d_magic == bswap32(UKFS_DISKMAGIC) &&
+		    lp->d_magic2 == bswap32(UKFS_DISKMAGIC)) {
+			imswapped = 1;
+			goto sanity;
+		}
 	}
 
 	return 1;
 
 sanity:
+	if (imswapped)
+		npart = bswap16(lp->d_npartitions);
+	else
+		npart = lp->d_npartitions;
 	/* we've found something, let's sanity check it */
-	if (lp->d_npartitions > UKFS_MAXPARTITIONS
-	    || ukfs__disklabel_dkcksum(lp))
+	if (npart > UKFS_MAXPARTITIONS
+	    || ukfs__disklabel_dkcksum(lp, imswapped))
 		return 1;
 
+	*isswapped = imswapped;
 	return 0;
 }
 
@@ -110,15 +125,26 @@ sanity:
  */
 
 uint16_t
-ukfs__disklabel_dkcksum(struct ukfs__disklabel *lp)
+ukfs__disklabel_dkcksum(struct ukfs__disklabel *lp, int imswapped)
 {
 	uint16_t *start, *end;
 	uint16_t sum;
+	uint16_t npart;
+
+	if (imswapped)
+		npart = bswap16(lp->d_npartitions);
+	else
+		npart = lp->d_npartitions;
 
 	sum = 0;
 	start = (uint16_t *)(void *)lp;
-	end = (uint16_t *)(void *)&lp->d_partitions[lp->d_npartitions];
-	while (start < end)
-		sum ^= *start++;
+	end = (uint16_t *)(void *)&lp->d_partitions[npart];
+	while (start < end) {
+		if (imswapped)
+			sum ^= bswap16(*start);
+		else
+			sum ^= *start;
+		start++;
+	}
 	return (sum);
 }
