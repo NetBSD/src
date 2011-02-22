@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.106 2011/02/21 09:29:21 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.107 2011/02/22 20:25:54 he Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.106 2011/02/21 09:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.107 2011/02/22 20:25:54 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -115,7 +115,9 @@ static int snapblkaddr(struct vnode *, daddr_t, daddr_t *);
 static int rwfsblk(struct vnode *, int, void *, daddr_t);
 static int syncsnap(struct vnode *);
 static int wrsnapblk(struct vnode *, void *, daddr_t);
+#if !defined(FFS_NO_SNAPSHOT)
 static int blocks_in_journal(struct fs *);
+#endif
 
 static inline bool is_active_snapshot(struct snap_info *, struct inode *);
 static inline daddr_t db_get(struct inode *, int);
@@ -1282,6 +1284,33 @@ mapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 	UFS_WAPBL_END(mp);
 	return (0);
 }
+
+/*
+ * Number of blocks that fit into the journal or zero if not logging.
+ */
+static int
+blocks_in_journal(struct fs *fs)
+{
+	off_t bpj;
+
+	if ((fs->fs_flags & FS_DOWAPBL) == 0)
+		return 0;
+	bpj = 1;
+	if (fs->fs_journal_version == UFS_WAPBL_VERSION) {
+		switch (fs->fs_journal_location) {
+		case UFS_WAPBL_JOURNALLOC_END_PARTITION:
+			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_EPART_BLKSZ]*
+			    fs->fs_journallocs[UFS_WAPBL_EPART_COUNT];
+			break;
+		case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
+			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ]*
+			    fs->fs_journallocs[UFS_WAPBL_INFS_COUNT];
+			break;
+		}
+	}
+	bpj /= fs->fs_bsize;
+	return (bpj > 0 ? bpj : 1);
+}
 #endif /* defined(FFS_NO_SNAPSHOT) */
 
 /*
@@ -2169,33 +2198,6 @@ is_active_snapshot(struct snap_info *si, struct inode *ip)
 		if (xp == ip)
 			return true;
 	return false;
-}
-
-/*
- * Number of blocks that fit into the journal or zero if not logging.
- */
-static int
-blocks_in_journal(struct fs *fs)
-{
-	off_t bpj;
-
-	if ((fs->fs_flags & FS_DOWAPBL) == 0)
-		return 0;
-	bpj = 1;
-	if (fs->fs_journal_version == UFS_WAPBL_VERSION) {
-		switch (fs->fs_journal_location) {
-		case UFS_WAPBL_JOURNALLOC_END_PARTITION:
-			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_EPART_BLKSZ]*
-			    fs->fs_journallocs[UFS_WAPBL_EPART_COUNT];
-			break;
-		case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
-			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ]*
-			    fs->fs_journallocs[UFS_WAPBL_INFS_COUNT];
-			break;
-		}
-	}
-	bpj /= fs->fs_bsize;
-	return (bpj > 0 ? bpj : 1);
 }
 
 /*
