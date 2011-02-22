@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.24 2003/07/26 19:24:25 salo Exp $ */
+/* $NetBSD: crt0.c,v 1.25 2011/02/22 05:45:05 joerg Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -65,7 +65,7 @@ __start(sp, cleanup, obj, ps_strings)
 		__ps_strings = ps_strings;
 
 #ifdef DYNAMIC
-	if (&_DYNAMIC != NULL)
+	if (&rtld_DYNAMIC != NULL)
 		_rtld_setup(cleanup, obj);
 #endif
 
@@ -84,7 +84,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.24 2003/07/26 19:24:25 salo Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.25 2011/02/22 05:45:05 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

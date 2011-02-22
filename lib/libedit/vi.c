@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
+/*	$NetBSD: vi.c,v 1.34 2011/02/22 05:45:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $");
+__RCSID("$NetBSD: vi.c,v 1.34 2011/02/22 05:45:08 joerg Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -919,12 +919,8 @@ vi_comment_out(EditLine *el, Int c)
  * this is against historical precedent...
  */
 #ifdef __weak_reference
-#if __GNUC_PREREQ__(4,2)
-extern char *get_alias_text(const char *) __attribute__((__weak__));
-static char *my_get_alias_text(const char *) __attribute__((__weakref__, __alias__("get_alias_text")));
-#else
-extern char *get_alias_text(const char *) __weak_reference(get_alias_text);
-#endif
+__weakref_visible char *my_get_alias_text(const char *)
+    __weak_reference(get_alias_text);
 #endif
 protected el_action_t
 /*ARGSUSED*/
@@ -934,22 +930,16 @@ vi_alias(EditLine *el, Int c)
 	char alias_name[3];
 	char *alias_text;
 
-#if __GNUC_PREREQ__(4,2)
 	if (my_get_alias_text == 0) {
 		return CC_ERROR;
 	}
-#else
-	if (get_alias_text == 0) {
-		return CC_ERROR;
-	}
-#endif
 
 	alias_name[0] = '_';
 	alias_name[2] = 0;
 	if (el_getc(el, &alias_name[1]) != 1)
 		return CC_ERROR;
 
-	alias_text = get_alias_text(alias_name);
+	alias_text = my_get_alias_text(alias_name);
 	if (alias_text != NULL)
 		FUN(el,push)(el, ct_decode_string(alias_text, &el->el_scratch));
 	return CC_NORM;
