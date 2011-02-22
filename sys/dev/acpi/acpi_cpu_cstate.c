@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.37 2011/01/30 08:55:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.38 2011/02/22 09:34:13 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.37 2011/01/30 08:55:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.38 2011/02/22 09:34:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -430,9 +430,12 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		 * the offset of P_LVL3 may change depending on whether
 		 * acpiacad(4) is connected or disconnected.
 		 */
-		if (reg->reg_addr > ao->ao_pblkaddr + ao->ao_pblklen) {
-			rv = AE_BAD_ADDRESS;
-			goto out;
+		if (ao->ao_pblkaddr != 0) {
+
+			if (reg->reg_addr > ao->ao_pblkaddr + ao->ao_pblklen) {
+				rv = AE_BAD_ADDRESS;
+				goto out;
+			}
 		}
 
 		state.cs_addr = reg->reg_addr;
