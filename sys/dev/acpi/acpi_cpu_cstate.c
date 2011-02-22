@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.42 2011/02/22 17:16:04 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.43 2011/02/22 17:19:58 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.42 2011/02/22 17:16:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.43 2011/02/22 17:19:58 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -465,7 +465,7 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		goto out;
 	}
 
-	if (cs[type].cs_method != 0) {
+	if (cs[i].cs_method != 0) {
 		rv = AE_ALREADY_EXISTS;
 		goto out;
 	}
