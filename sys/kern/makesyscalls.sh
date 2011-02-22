@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.113 2011/02/22 10:33:12 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.114 2011/02/22 13:04:22 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -815,12 +815,10 @@ function putent(type, compatwrap) {
 	    argarg, argsize) > rumpcalls
 	if (type != "NOERR") {
 		printf("\trsys_seterrno(error);\n") > rumpcalls
-		printf("\tif (error) {\n") > rumpcalls
-		printf("\t\t*(%s *)rval = (%s)-1;\n\t}\n", \
-		    returntype, returntype) > rumpcalls
+		printf("\tif (error) {\n\t\trval[0] = -1;\n\t}\n") > rumpcalls
 	}
 	if (returntype != "void") {
-		printf("\treturn *(%s *)rval;\n", returntype) > rumpcalls
+		printf("\treturn rval[0];\n") > rumpcalls
 	}
 	printf("}\n") > rumpcalls
 	printf("rsys_alias(%s%s,rump_enosys)\n", \
