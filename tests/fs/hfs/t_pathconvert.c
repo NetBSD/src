@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pathconvert.c,v 1.1 2011/02/18 13:07:54 pooka Exp $	*/
+/*	$NetBSD: t_pathconvert.c,v 1.2 2011/02/22 18:41:04 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -24,7 +24,7 @@ ATF_TC(colonslash);
 ATF_TC_HEAD(colonslash, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "HFS+ colons/slashes (PR kern/44523)");
-	atf_tc_set_md_var(tc, "timeout", "2");
+	atf_tc_set_md_var(tc, "timeout", "20");
 }
 
 #define IMGNAME "colon.hfs"
