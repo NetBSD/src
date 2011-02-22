@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.1 2011/02/22 10:36:13 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.2 2011/02/22 13:25:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@ ATF_TC_BODY(lseekrv, tc)
 
 	RZ(rump_init());
 	RL(fd = rump_sys_open(TESTFILE, O_RDWR | O_CREAT, 0777));
+
+	rv = rump_sys_lseek(37, FIVE_MEGS, SEEK_SET);
+	ATF_REQUIRE_ERRNO(EBADF, rv == -1);
 
 	rv = rump_sys_lseek(fd, FIVE_MEGS, SEEK_SET);
 	ATF_REQUIRE_EQ(rv, FIVE_MEGS);
