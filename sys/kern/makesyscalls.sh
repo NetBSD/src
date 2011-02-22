@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.114 2011/02/22 13:04:22 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.115 2011/02/22 14:05:20 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -777,9 +777,14 @@ function putent(type, compatwrap) {
 	}
 	printf("%s %s)\n", uncompattype(argtype[argc]), argname[argc]) \
 	    > rumpcalls
-	printf("{\n\tregister_t rval[2] = {0, 0};\n") > rumpcalls
-	if (returntype != "void" && type != "NOERR")
-		printf("\tint error = 0;\n") > rumpcalls
+	printf("{\n\tregister_t retval[2] = {0, 0};\n") > rumpcalls
+	if (returntype != "void") {
+		if (type != "NOERR") {
+			printf("\tint error = 0;\n") > rumpcalls
+		}
+		# assume rumpcalls return only integral types
+		printf("\t%s rv = -1;\n", returntype) > rumpcalls
+	}
 
 	argarg = "NULL"
 	argsize = 0;
@@ -811,14 +816,27 @@ function putent(type, compatwrap) {
 	if (returntype != "void" && type != "NOERR")
 		printf("error = ") > rumpcalls
 	printf("rsys_syscall(%s%s%s, " \
-	    "%s, %s, rval);\n", constprefix, compatwrap_, funcalias, \
+	    "%s, %s, retval);\n", constprefix, compatwrap_, funcalias, \
 	    argarg, argsize) > rumpcalls
 	if (type != "NOERR") {
 		printf("\trsys_seterrno(error);\n") > rumpcalls
-		printf("\tif (error) {\n\t\trval[0] = -1;\n\t}\n") > rumpcalls
+		printf("\tif (error == 0) {\n") > rumpcalls
+		indent="\t\t"
+		ending="\t}\n"
+	} else {
+		indent="\t"
+		ending=""
 	}
 	if (returntype != "void") {
-		printf("\treturn rval[0];\n") > rumpcalls
+		printf("%sif (sizeof(%s) > sizeof(register_t))\n", \
+		    indent, returntype) > rumpcalls
+		printf("%s\trv = *(%s *)retval;\n", \
+		    indent, returntype) > rumpcalls
+		printf("%selse\n", indent, indent) > rumpcalls
+		printf("%s\trv = (%s)*retval;\n", \
+		    indent, returntype) > rumpcalls
+		printf("%s", ending) > rumpcalls
+		printf("\treturn rv;\n") > rumpcalls
 	}
 	printf("}\n") > rumpcalls
 	printf("rsys_alias(%s%s,rump_enosys)\n", \
@@ -873,19 +891,19 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	exit 1
 }
 END {
-	# output pipe() syscall with its special rval[2] handling
+	# output pipe() syscall with its special retval[2] handling
 	if (rumphaspipe) {
 		printf("int rump_sys_pipe(int *);\n") > rumpprotos
 		printf("\nint rump_sys_pipe(int *);\n") > rumpcalls
 		printf("int\nrump_sys_pipe(int *fd)\n{\n") > rumpcalls
-		printf("\tregister_t rval[2] = {0, 0};\n") > rumpcalls
+		printf("\tregister_t retval[2] = {0, 0};\n") > rumpcalls
 		printf("\tint error = 0;\n") > rumpcalls
 		printf("\n\terror = rsys_syscall(SYS_pipe, ") > rumpcalls
-		printf("NULL, 0, rval);\n") > rumpcalls
+		printf("NULL, 0, retval);\n") > rumpcalls
 		printf("\tif (error) {\n") > rumpcalls
 		printf("\t\trsys_seterrno(error);\n") > rumpcalls
-		printf("\t} else {\n\t\tfd[0] = rval[0];\n") > rumpcalls
-		printf("\t\tfd[1] = rval[1];\n\t}\n") > rumpcalls
+		printf("\t} else {\n\t\tfd[0] = retval[0];\n") > rumpcalls
+		printf("\t\tfd[1] = retval[1];\n\t}\n") > rumpcalls
 		printf("\treturn error ? -1 : 0;\n}\n") > rumpcalls
 	}
 
