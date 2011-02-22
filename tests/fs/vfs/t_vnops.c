@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.13 2011/01/31 10:01:26 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.14 2011/02/22 21:23:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -409,6 +409,26 @@ create_nametoolong(const atf_tc_t *tc, const char *mp)
 }
 
 static void
+create_exist(const atf_tc_t *tc, const char *mp)
+{
+	const char *name = "hoge";
+	int fd;
+
+	RL(rump_sys_chdir(mp));
+	RL(fd = rump_sys_open(name, O_RDWR|O_CREAT|O_EXCL, 0666));
+	RL(rump_sys_close(fd));
+	RL(rump_sys_unlink(name));
+	RL(fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666));
+	RL(rump_sys_close(fd));
+	RL(fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666));
+	RL(rump_sys_close(fd));
+	ATF_REQUIRE_ERRNO(EEXIST,
+	    (fd = rump_sys_open(name, O_RDWR|O_CREAT|O_EXCL, 0666)));
+	RL(rump_sys_unlink(name));
+	RL(rump_sys_chdir("/"));
+}
+
+static void
 rename_nametoolong(const atf_tc_t *tc, const char *mp)
 {
 	char *name;
@@ -693,6 +713,7 @@ ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops");
 ATF_TC_FSAPPLY(rename_dotdot, "rename dir ..");
 ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
 ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
+ATF_TC_FSAPPLY(create_exist, "create with O_EXCL");
 ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
 ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
 ATF_TC_FSAPPLY(attrs, "check setting attributes works");
@@ -710,6 +731,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(rename_dotdot);
 	ATF_TP_FSAPPLY(rename_reg_nodir);
 	ATF_TP_FSAPPLY(create_nametoolong);
+	ATF_TP_FSAPPLY(create_exist);
 	ATF_TP_FSAPPLY(rename_nametoolong);
 	ATF_TP_FSAPPLY(symlink_zerolen);
 	ATF_TP_FSAPPLY(attrs);
