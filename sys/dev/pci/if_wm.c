@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.219 2011/02/06 16:23:00 bouyer Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.220 2011/02/22 21:19:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.219 2011/02/06 16:23:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.220 2011/02/22 21:19:30 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -2797,7 +2797,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 			break;
 		}
-		/* Fall through for rest */
+		/*FALLTHROUGH*/
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
