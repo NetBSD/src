@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.82 2011/02/20 13:42:46 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.83 2011/02/23 11:43:23 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2011/02/20 13:42:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2011/02/23 11:43:23 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -455,14 +455,20 @@ cpu_attach(device_t parent, device_t self, void *aux)
 int
 cpu_rescan(device_t self, const char *ifattr, const int *locators)
 {
-	struct cpufeature_attach_args cfaa;
 	struct cpu_softc *sc = device_private(self);
+	struct cpufeature_attach_args cfaa;
 	struct cpu_info *ci = sc->sc_info;
 
 	memset(&cfaa, 0, sizeof(cfaa));
 	cfaa.ci = ci;
 
 	if (ifattr_match(ifattr, "cpufeaturebus")) {
+
+		if (ci->ci_frequency == NULL) {
+			cfaa.name = "est";
+			ci->ci_frequency = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
 
 		if (ci->ci_padlock == NULL) {
 			cfaa.name = "padlock";
@@ -486,11 +492,14 @@ cpu_childdetached(device_t self, device_t child)
 	struct cpu_softc *sc = device_private(self);
 	struct cpu_info *ci = sc->sc_info;
 
-	if (ci->ci_tempsensor == child)
-		ci->ci_tempsensor = NULL;
+	if (ci->ci_frequency == child)
+		ci->ci_frequency = NULL;
 
 	if (ci->ci_padlock == child)
 		ci->ci_padlock = NULL;
+
+	if (ci->ci_tempsensor == child)
+		ci->ci_tempsensor = NULL;
 }
 
 /*
