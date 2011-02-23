@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.311 2011/02/21 16:24:29 pooka Exp $
+# $NetBSD: GENERIC,v 1.312 2011/02/23 00:46:29 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.311 $"
+#ident 		"GENERIC-$Revision: 1.312 $"
 
 maxusers	64		# estimated number of users
 
@@ -659,6 +659,7 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
+alc*	at pci? dev ? function ?	# Attansic/Atheros L1C/L2C Ethernet
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
