@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.110 2010/12/02 23:12:30 bouyer Exp $
+#	$NetBSD: files.xen,v 1.111 2011/02/23 11:43:23 jruoho Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -32,12 +32,6 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
 
 defparam		PCI_CONF_MODE
-
-# Intel Enhanced Speedstep
-defflag					ENHANCED_SPEEDSTEP
-defflag	opt_est.h			EST_FREQ_USERWRITE
-file	arch/x86/x86/est.c		enhanced_speedstep
-file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
 
 # AMD Powernow/Cool`n'Quiet Technology
 defflag opt_powernow_k8.h	POWERNOW_K8
