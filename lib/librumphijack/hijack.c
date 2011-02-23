@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.64 2011/02/23 15:23:15 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.65 2011/02/23 15:29:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.64 2011/02/23 15:23:15 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.65 2011/02/23 15:29:21 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -92,6 +92,7 @@ enum dualcall {
 	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
 	DUALCALL___GETCWD,
 	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
+	DUALCALL_ACCESS,
 	DUALCALL__NUM
 };
 
@@ -216,6 +217,7 @@ struct sysnames {
 	{ DUALCALL_CHFLAGS,	"chflags",	RSYS_NAME(CHFLAGS)	},
 	{ DUALCALL_LCHFLAGS,	"lchflags",	RSYS_NAME(LCHFLAGS)	},
 	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
+	{ DUALCALL_ACCESS,	"access",	RSYS_NAME(ACCESS)	},
 };
 #undef S
 
@@ -1790,6 +1792,11 @@ PATHCALL(int, truncate, DUALCALL_TRUNCATE,				\
 	(const char *path, off_t length),				\
 	(const char *, off_t),						\
 	(path, length))
+
+PATHCALL(int, access, DUALCALL_ACCESS,					\
+	(const char *path, int mode),					\
+	(const char *, int),						\
+	(path, mode))
 
 /*
  * Note: with mount the decisive parameter is the mount
