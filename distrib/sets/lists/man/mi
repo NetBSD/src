@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1290 2011/02/20 08:31:46 jruoho Exp $
+# $NetBSD: mi,v 1.1291 2011/02/23 02:47:45 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -677,6 +677,7 @@
 ./usr/share/man/cat4/aibs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/akbd.0			man-sys-catman		.cat
+./usr/share/man/cat4/alc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ale.0			man-sys-catman		.cat
 ./usr/share/man/cat4/alipm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/apecs.0		man-sys-catman		.cat
@@ -3478,6 +3479,7 @@
 ./usr/share/man/html4/aibs.html			man-sys-htmlman		html
 ./usr/share/man/html4/aic.html			man-sys-htmlman		html
 ./usr/share/man/html4/akbd.html			man-sys-htmlman		html
+./usr/share/man/html4/alc.html			man-sys-htmlman		html
 ./usr/share/man/html4/ale.html			man-sys-htmlman		html
 ./usr/share/man/html4/alipm.html			man-sys-htmlman		html
 ./usr/share/man/html4/alpha/apecs.html		man-sys-htmlman		html
@@ -5976,6 +5978,7 @@
 ./usr/share/man/man4/aibs.4			man-sys-man		.man
 ./usr/share/man/man4/aic.4			man-sys-man		.man
 ./usr/share/man/man4/akbd.4			man-sys-man		.man
+./usr/share/man/man4/alc.4			man-sys-man		.man
 ./usr/share/man/man4/ale.4			man-sys-man		.man
 ./usr/share/man/man4/alipm.4			man-sys-man		.man
 ./usr/share/man/man4/alpha/apecs.4		man-sys-man		.man
