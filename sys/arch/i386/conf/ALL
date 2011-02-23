@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.293 2011/02/23 00:45:56 jmcneill Exp $
+# $NetBSD: ALL,v 1.294 2011/02/23 11:43:22 jruoho Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.293 $"
+#ident 		"ALL-$Revision: 1.294 $"
 
 maxusers	64		# estimated number of users
 
@@ -29,21 +29,16 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 options 	X86EMU		# 386 Real Mode emulator
 options 	PAE		# PAE mode (36 bits physical addressing)
 
-# Enhanced SpeedStep Technology in the Pentium M
-options 	ENHANCED_SPEEDSTEP
-options 	EST_FREQ_USERWRITE	# any user can set frequency
-
 # AMD PowerNow! K7
 options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
 
-# VIA PadLock
-padlock0	at cpu0
-
-# Intel Core's on-die Thermal sensor
-coretemp*	at cpu?
+# CPU features
+coretemp*	at cpu?		# Intel on-die thermal sensor
+est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+padlock0	at cpu0		# VIA PadLock
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 options 	INTEL_ONDEMAND_CLOCKMOD
