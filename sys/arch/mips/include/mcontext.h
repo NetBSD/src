@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.12 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.13 2011/02/23 07:47:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -161,5 +161,20 @@ typedef struct {
 #define _UC_MACHINE32_INTRV(uc)	_UC_MACHINE_INTRV(uc)
 
 #define	_UC_MACHINE32_SET_PC(uc, pc)	_UC_MACHINE_PC((uc), (pc))
+
+#define	__UCONTEXT_SIZE_O32	(40 + 288 +  64)	/* 392 */
+#define	__UCONTEXT_SIZE_N32	(40 + 560 +  64)	/* 664 */
+#define	__UCONTEXT_SIZE_N64	(56 + 560 + 128)	/* 774 */
+
+#ifdef __mips_o32
+#define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_O32
+#elif __mips_n32
+#define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_N32
+#elif __mips_n64
+#define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_N64
+#define	__UCONTEXT32_SIZE	__UCONTEXT_SIZE_N32
+#elif
+#error O64 is not supported
+#endif
 
 #endif	/* _MIPS_MCONTEXT_H_ */
