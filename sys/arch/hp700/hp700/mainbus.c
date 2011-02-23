@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.78 2011/02/03 20:37:09 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.79 2011/02/23 08:27:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.78 2011/02/03 20:37:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79 2011/02/23 08:27:17 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1182,7 +1182,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 			size -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (0);
 }
 
