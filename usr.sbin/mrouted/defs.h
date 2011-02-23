@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.14 2007/02/21 21:01:10 hubertf Exp $	*/
+/*	$NetBSD: defs.h,v 1.15 2011/02/23 01:23:03 dyoung Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -255,19 +255,19 @@ extern void		accept_mtrace(u_int32_t src, u_int32_t dst,
 extern int		find_src_grp(u_int32_t, u_int32_t, u_int32_t);
 
 /* kern.c */
-extern void		k_set_rcvbuf(int bufsize);
-extern void		k_hdr_include(int bool);
-extern void		k_set_ttl(int t);
-extern void		k_set_loop(int l);
-extern void		k_set_if(u_int32_t ifa);
-extern void		k_join(u_int32_t grp, u_int32_t ifa);
-extern void		k_leave(u_int32_t grp, u_int32_t ifa);
+extern void		k_set_rcvbuf(int);
+extern void		k_hdr_include(int);
+extern void		k_set_ttl(int);
+extern void		k_set_loop(int);
+extern void		k_set_if(u_int32_t);
+extern void		k_join(u_int32_t, u_int32_t);
+extern void		k_leave(u_int32_t, u_int32_t);
 extern void		k_init_dvmrp(void);
 extern void		k_stop_dvmrp(void);
-extern void		k_add_vif(vifi_t vifi, struct uvif *v);
-extern void		k_del_vif(vifi_t vifi);
-extern void		k_add_rg(u_int32_t origin, struct gtable *g);
-extern int		k_del_rg(u_int32_t origin, struct gtable *g);
+extern void		k_add_vif(vifi_t, struct uvif *);
+extern void		k_del_vif(vifi_t);
+extern void		k_add_rg(u_int32_t, struct gtable *);
+extern int		k_del_rg(u_int32_t, struct gtable *);
 extern int		k_get_version(void);
 
 #ifdef SNMP
