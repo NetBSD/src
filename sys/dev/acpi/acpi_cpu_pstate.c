@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.37 2011/01/30 08:55:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.38 2011/02/23 06:17:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.37 2011/01/30 08:55:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.38 2011/02/23 06:17:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -480,12 +480,8 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
 		return AE_BAD_DECIMAL_CONSTANT;
 
-	/*
-	 * The latency is typically around 10 usec
-	 * on Intel CPUs. Use that as the minimum.
-	 */
-	if (ps->ps_latency < 10)
-		ps->ps_latency = 10;
+	if (ps->ps_latency == 0 || ps->ps_latency > 1000)
+		ps->ps_latency = 1;
 
 	return AE_OK;
 }
@@ -595,17 +591,13 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	if (ps->ps_status_mask == 0)
 		ps->ps_status_mask = ACPI_GET64(elm[7].Buffer.Pointer);
 
-	/*
-	 * The latency is often defined to be
-	 * zero on AMD systems. Raise that to 1.
-	 */
-	if (ps->ps_latency == 0)
-		ps->ps_latency = 1;
-
 	ps->ps_flags |= ACPICPU_FLAG_P_XPSS;
 
-	if (ps->ps_freq > 9999)
+	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
 		return AE_BAD_DECIMAL_CONSTANT;
+
+	if (ps->ps_latency == 0 || ps->ps_latency > 1000)
+		ps->ps_latency = 1;
 
 	return AE_OK;
 }
