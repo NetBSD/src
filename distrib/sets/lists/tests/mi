@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.252 2011/02/22 10:37:05 pooka Exp $
+# $NetBSD: mi,v 1.253 2011/02/23 13:03:32 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1923,6 +1923,7 @@
 ./usr/tests/lib/librumphijack/t_asyncio			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_cwd			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_tcpip			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/t_vfs			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/ssh_config.in			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/ssh_host_key			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/ssh_host_key.pub			tests-lib-tests		atf
