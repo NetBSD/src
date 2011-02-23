@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.63 2011/02/21 20:11:56 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.64 2011/02/23 15:23:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.63 2011/02/21 20:11:56 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.64 2011/02/23 15:23:15 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -58,6 +58,8 @@ __RCSID("$NetBSD: hijack.c,v 1.63 2011/02/21 20:11:56 pooka Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "hijack.h"
 
 enum dualcall {
 	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
@@ -294,30 +296,6 @@ type name args								\
 }
 
 /*
- * This is called from librumpclient in case of LD_PRELOAD.
- * It ensures correct RTLD_NEXT.
- *
- * ... except, it's apparently extremely difficult to force
- * at least gcc to generate an actual stack frame here.  So
- * sprinkle some volatile foobar and baz to throw the optimizer
- * off the scent and generate a variable assignment with the
- * return value.  The posterboy for this meltdown is amd64
- * with -O2.  At least with gcc 4.1.3 i386 works regardless of
- * optimization.
- */
-volatile int rumphijack_unrope; /* there, unhang yourself */
-static void *
-hijackdlsym(void *handle, const char *symbol)
-{
-	void *rv;
-
-	rv = dlsym(handle, symbol);
-	rumphijack_unrope = *(volatile int *)rv;
-
-	return (void *)rv;
-}
-
-/*
  * This tracks if our process is in a subdirectory of /rump.
  * It's preserved over exec.
  */
@@ -452,7 +430,7 @@ rcinit(void)
 	extern void *(*rumpclient_dlsym)(void *, const char *);
 	unsigned i, j;
 
-	rumpclient_dlsym = hijackdlsym;
+	rumpclient_dlsym = rumphijack_dlsym;
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_daemon = dlsym(RTLD_NEXT, "daemon");
 	host_execve = dlsym(RTLD_NEXT, "execve");
