@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1061 2011/02/22 23:20:15 jmcneill Exp $
+$NetBSD: pcidevs,v 1.1062 2011/02/23 12:22:20 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3909,6 +3909,7 @@ product REALTEK RT8139		0x8139	8139 10/100 Ethernet
 product REALTEK RT8169SC	0x8167	8169SC/8110SC 10/100/1000 Ethernet
 product REALTEK RT8168		0x8168	8168/8111 10/100/1000 Ethernet
 product REALTEK RT8169		0x8169	8169/8110 10/100/1000 Ethernet
+product REALTEK RTL8188CE	0x8176	RTL8188CE Wireless LAN 802.11n PCI-E NIC
 product REALTEK RT8180		0x8180	8180 802.11b
 product REALTEK RT8185		0x8185	8185 802.11a/b/g
 
