@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.122 2011/01/19 18:29:28 jakllsch Exp $
+#	 $NetBSD: mi,v 1.123 2011/02/23 07:53:29 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5334,6 +5334,7 @@
 ./usr/X11R7/include/X11/Xfuncs.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xlcint.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xlib.h				-unknown-	xorg
+./usr/X11R7/include/X11/Xlib-xcb.h			-unknown-	xorg
 ./usr/X11R7/include/X11/XlibConf.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xlibint.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xlocale.h			-unknown-	xorg
@@ -6154,6 +6155,9 @@
 ./usr/X11R7/lib/libX11.a				-unknown-	xorg
 ./usr/X11R7/lib/libX11_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libX11_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libX11-xcb.a				-unknown-	xorg
+./usr/X11R7/lib/libX11-xcb_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libX11-xcb_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXRes.a				-unknown-	xorg
 ./usr/X11R7/lib/libXRes_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXRes_p.a				-unknown-	profile,xorg

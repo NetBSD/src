@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/02/23 07:53:29 mrg Exp $
 
 NOLINT=		1
 NOPROFILE=	1
@@ -18,9 +18,10 @@ CPPFLAGS.CrGlCur.c=	$(XCURSOR_DEFINES)
 CPPFLAGS.CrPixmap.c=	$(XCURSOR_DEFINES)
 CPPFLAGS.PutImage.c=	$(XCURSOR_DEFINES)
 
-LIBDPLIBS= \
+LIBDPLIBS+= \
+	xcb ${.CURDIR}/../../libxcb/libxcb \
 	Xdmcp ${.CURDIR}/../../libXdmcp \
-	Xau ${.CURDIR}/../../libXau \
+	Xau ${.CURDIR}/../../libXau
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
