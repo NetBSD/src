@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1291 2011/02/23 02:47:45 jmcneill Exp $
+# $NetBSD: mi,v 1.1292 2011/02/23 08:52:16 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -875,7 +875,7 @@
 ./usr/share/man/cat4/cobalt/gt.0		man-sys-catman		.cat
 ./usr/share/man/cat4/cobalt/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/com.0			man-sys-catman		.cat
-./usr/share/man/cat4/coretemp.0			man-sys-catman		.cat
+./usr/share/man/cat4/coretemp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/crypto.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cs80bus.0			man-sys-catman		.cat
@@ -1785,6 +1785,7 @@
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/amdpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/balloon.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/coretemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/fwhrng.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/hpet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ichlpcib.0		man-sys-catman		.cat
@@ -3638,7 +3639,7 @@
 ./usr/share/man/html4/cobalt/gt.html		man-sys-htmlman		html
 ./usr/share/man/html4/cobalt/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/com.html			man-sys-htmlman		html
-./usr/share/man/html4/coretemp.html		man-sys-htmlman		html
+./usr/share/man/html4/coretemp.html		man-obsolete		obsolete
 ./usr/share/man/html4/crypto.html		man-sys-htmlman		html
 ./usr/share/man/html4/cs.html			man-sys-htmlman		html
 ./usr/share/man/html4/cs80bus.html		man-sys-htmlman		html
@@ -4468,6 +4469,7 @@
 ./usr/share/man/html4/x68k/vs.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/amdpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/balloon.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/coretemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/fwhrng.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/hpet.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ichlpcib.html		man-sys-htmlman		html
@@ -6176,7 +6178,7 @@
 ./usr/share/man/man4/cobalt/gt.4		man-sys-man		.man
 ./usr/share/man/man4/cobalt/intro.4		man-sys-man		.man
 ./usr/share/man/man4/com.4			man-sys-man		.man
-./usr/share/man/man4/coretemp.4			man-sys-man		.man
+./usr/share/man/man4/coretemp.4			man-obsolete		obsolete
 ./usr/share/man/man4/crypto.4			man-sys-man		.man
 ./usr/share/man/man4/cs.4			man-sys-man		.man
 ./usr/share/man/man4/cs80bus.4			man-sys-man		.man
@@ -7086,6 +7088,7 @@
 ./usr/share/man/man4/x68k/vs.4			man-sys-man		.man
 ./usr/share/man/man4/x86/amdpcib.4		man-sys-man		.man
 ./usr/share/man/man4/x86/balloon.4		man-sys-man		.man
+./usr/share/man/man4/x86/coretemp.4		man-sys-man		.man
 ./usr/share/man/man4/x86/fwhrng.4		man-sys-man		.man
 ./usr/share/man/man4/x86/hpet.4			man-sys-man		.man
 ./usr/share/man/man4/x86/ichlpcib.4		man-sys-man		.man
