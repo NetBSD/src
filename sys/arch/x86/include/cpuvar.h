@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.40 2011/02/20 13:42:45 jruoho Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.41 2011/02/23 11:43:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@ struct cpufeature_attach_args {
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#include "opt_enhanced_speedstep.h"
 #ifndef XEN
 #include "opt_intel_odcm.h"
 #include "opt_via_c7temp.h"
@@ -130,14 +129,6 @@ void viac7temp_register(struct cpu_info *);
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 void clockmod_init(void);
-#endif
-
-#ifdef ENHANCED_SPEEDSTEP
-void	est_init(int);
-int	via_get_bus_clock(struct cpu_info *);
-int	viac7_get_bus_clock(struct cpu_info *);
-int	p3_get_bus_clock(struct cpu_info *);
-int	p4_get_bus_clock(struct cpu_info *);
 #endif
 
 void	cpu_get_tsc_freq(struct cpu_info *);
