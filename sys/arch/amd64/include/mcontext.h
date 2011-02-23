@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12 2011/02/23 02:58:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ typedef struct {
 #define _UC_SETSTACK	0x00010000
 #define _UC_CLRSTACK	0x00020000
 
+#define	__UCONTEXT_SIZE	784
 
 #ifdef _KERNEL
 
@@ -116,14 +117,31 @@ typedef __greg32_t	__gregset32_t[_NGREG32];
 /*
  * Floating point register state
  */
-typedef struct fxsave64 __fpregset32_t;
+typedef struct {
+	union {
+		struct {
+			int	__fp_state[27];	/* Environment and registers */
+			int	__fp_status;	/* Software status word */
+		} __fpchip_state;
+		struct {
+			char	__fp_emul[246];
+			char	__fp_epad[2];
+		} __fp_emul_space;
+		struct {
+			char	__fp_xmm[512];
+		} __fp_xmm_state;
+		int	__fp_fpregs[128];
+	} __fp_reg_set;
+	int	__fp_wregs[33];			/* Weitek? */
+} __fpregset32_t;
 
 typedef struct {
 	__gregset32_t	__gregs;
 	__fpregset32_t	__fpregs;
 } mcontext32_t;
 
-#define _UC_MACHINE_PAD32	5
+#define _UC_MACHINE32_PAD	5
+#define	__UCONTEXT32_SIZE	776
 
 struct trapframe;
 struct lwp;
