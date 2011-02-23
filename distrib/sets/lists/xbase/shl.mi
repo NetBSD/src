@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.41 2011/01/19 16:31:23 jmcneill Exp $
+# $NetBSD: shl.mi,v 1.42 2011/02/23 07:53:28 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -189,6 +189,9 @@
 ./usr/X11R7/lib/libX11.so			-unknown-		xorg
 ./usr/X11R7/lib/libX11.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libX11.so.7.0			-unknown-		xorg
+./usr/X11R7/lib/libX11-xcb.so			-unknown-		xorg
+./usr/X11R7/lib/libX11-xcb.so.1			-unknown-		xorg
+./usr/X11R7/lib/libX11-xcb.so.1.0		-unknown-		xorg
 ./usr/X11R7/lib/libXRes.so			-unknown-		xorg
 ./usr/X11R7/lib/libXRes.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libXRes.so.2.0			-unknown-		xorg
