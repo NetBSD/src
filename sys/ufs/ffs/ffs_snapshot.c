@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.107 2011/02/22 20:25:54 he Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.108 2011/02/23 08:53:21 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.107 2011/02/22 20:25:54 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.108 2011/02/23 08:53:21 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1825,6 +1825,8 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 	daddr_t lbn, blkno, *snapblklist;
 	uint32_t gen;
 	int lower, upper, mid, snapshot_locked = 0, error = 0;
+
+	blkno = 0; /* XXX: GCC */
 
 	/*
 	 * Check for valid snapshots.
