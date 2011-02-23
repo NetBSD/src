@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.59 2011/02/20 13:42:45 jruoho Exp $
+#	$NetBSD: files.x86,v 1.60 2011/02/23 11:43:22 jruoho Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -12,10 +12,6 @@ defflag opt_intrdebug.h	INTRDEBUG
 # PCI fixup options
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
-
-# Intel Enhanced Speedstep
-defflag 			ENHANCED_SPEEDSTEP
-defflag	opt_est.h		EST_FREQ_USERWRITE
 
 # Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
 defflag opt_intel_odcm.h 	INTEL_ONDEMAND_CLOCKMOD
@@ -35,11 +31,16 @@ define  ioapicbus { [apid = -1] }
 define  ipmibus {}
 
 #
-# CPUs
+# CPU features
 #
 device	cpu: cpufeaturebus
 attach	cpu at cpubus
 file 	arch/x86/x86/cpu.c 		cpu
+
+device	est
+attach	est at cpufeaturebus
+file	arch/x86/x86/est.c		est
+file	arch/x86/x86/intel_busclock.c	est
 
 device	coretemp: sysmon_envsys
 attach	coretemp at cpufeaturebus
@@ -103,10 +104,6 @@ file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
 
 # Intel On Demand Clock Modulation
 file	arch/x86/x86/iclockmod.c	intel_ondemand_clockmod
-
-# Intel Enhanced Speedstep
-file	arch/x86/x86/est.c		enhanced_speedstep
-file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
 
 # VIA C7 Temperature sensor
 file	arch/x86/x86/viac7temp.c	via_c7temp
