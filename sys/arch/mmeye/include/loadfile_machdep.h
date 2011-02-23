@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.5 2011/02/19 10:46:28 kiyohara Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.6 2011/02/23 09:06:48 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,3 +45,6 @@
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)
+
+void *alloc(size_t);
+void dealloc(void *, size_t);
