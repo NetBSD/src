@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1513 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1514 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -117,9 +117,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	rump: Implement a virtual block device driver.  [pooka 20090113]
 	rump: Support __RENAME in syscall interfaces and expose the
 		non-compat symbol name in the header.  [pooka 20090113]
-	age(4):	Add a driver for Attensic/Atheros L1 Gigabit Ethernet.
+	age(4):	Add a driver for Attansic/Atheros L1 Gigabit Ethernet.
 		From FreeBSD via OpenBSD. [cegger 20090116]
-	atphy(4): Add a driver for Attensic/Atheros F1 PHY.
+	atphy(4): Add a driver for Attansic/Atheros F1 PHY.
 		From FreeBSD via OpenBSD. [cegger 20090116]
 	atf(7): Import 0.6.  [jmmv 20090119]
 	msdosfs: The default behavior when mounting empty file systems has
@@ -250,7 +250,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		From FreeBSD and OpenBSD.  [msaitoh 20090419]
 	queue(3): Add SLIST_FOREACH_SAFE, STAILQ_FOREACH_SAFE, STAILQ_LAST,
 		SIMPLEQ_CONCAT, and SIMPLEQ_LAST. [mschuett 20090420]
-	ale(4):	Add a driver for Attensic/Atheros L1E Gigabit Ethernet.
+	ale(4):	Add a driver for Attansic/Atheros L1E Gigabit Ethernet.
 		From OpenBSD and improvements from Kevin Lahey.
 		[cegger 20090420]
 	sdmmc(4): Add a driver for SD/MMC from OpenBSD. [nonaka 20090421]
@@ -870,3 +870,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		by Mateusz Kocielski, improved and integrated with Postfix
 		by Anon Ymous. Supported mechs are: ANONYMOUS, CRAM-MD5,
 		DIGEST-MD5, EXTERNAL, GSSAPI, LOGIN, PLAIN [christos 20110221]
+	alc(4):	Add a driver for Atheros AR813x/AR815x Ethernet.
+		[jmcneill 20110222]
