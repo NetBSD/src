@@ -1,4 +1,4 @@
-#       $NetBSD: t_vfs.sh,v 1.1 2011/02/23 13:01:57 pooka Exp $
+#       $NetBSD: t_vfs.sh,v 1.2 2011/02/23 16:38:08 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 #
 
 img=ffs.img
-rumpsrv=\
+rumpsrv_ffs=\
 "rump_server -lrumpvfs -lrumpfs_ffs -d key=/img,hostpath=${img},size=host"
 export RUMP_SERVER=unix://csock
 
@@ -38,17 +38,33 @@ domount()
 	atf_check -s exit:0 -e ignore mount_ffs /img ${mntdir}
 }
 
-unmount()
+dounmount()
 {
 
-	atf_check -s exit:0 umount -R ${1}
+	atf_check -s exit:0 umount -R ${mntdir}
 }
 
 remount()
 {
 
-	unmount /rump/mnt
+	dounmount
 	domount /rump/mnt2
+}
+
+simpletest()
+{
+	local name="${1}"; shift
+
+	atf_test_case "${name}" cleanup
+	eval "${name}_head() {  }"
+	eval "${name}_body() { \
+		atf_check -s exit:0 rump_server -lrumpvfs ${RUMP_SERVER} ; \
+		export LD_PRELOAD=/usr/lib/librumphijack.so ; \
+		${name} " "${@}" "; \
+	}"
+	eval "${name}_cleanup() { \
+		rump.halt
+	}"
 }
 
 test_case()
@@ -59,12 +75,12 @@ test_case()
 	eval "${name}_head() {  }"
 	eval "${name}_body() { \
 		atf_check -s exit:0 -o ignore newfs -F -s 20000 ${img} ; \
-		atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER} ; \
+		atf_check -s exit:0 ${rumpsrv_ffs} ${RUMP_SERVER} ; \
 		export LD_PRELOAD=/usr/lib/librumphijack.so ; \
 		mkdir /rump/mnt /rump/mnt2 ; \
 		domount ; \
 		${name} " "${@}" "; \
-		unmount /rump/mnt2 ;\
+		dounmount ${mntdir}
 	}"
 	eval "${name}_cleanup() { \
 		rump.halt
@@ -73,6 +89,7 @@ test_case()
 
 test_case paxcopy
 test_case cpcopy
+test_case mv_nox
 
 #
 # use rumphijack to cp/pax stuff onto an image, unmount it, remount it
@@ -99,9 +116,44 @@ cpcopy()
 	atf_check -s exit:0 diff -ru ${thedir} /rump/mnt2/${thedir}
 }
 
+#
+# non-crosskernel mv (non-simple test since this uses rename(2)
+# which is not supported by rumpfs)
+#
+
+# stat default format sans changetime and filename
+statstr='%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%SB\" %k %b %#Xf'
+mv_nox()
+{
+
+	atf_check -s exit:0 touch /rump/mnt/filename
+	atf_check -s exit:0 -o save:stat.out \
+	    stat -f "${statstr}" /rump/mnt/filename
+	atf_check -s exit:0 mkdir /rump/mnt/dir
+	atf_check -s exit:0 mv /rump/mnt/filename /rump/mnt/dir/same
+	atf_check -s exit:0 -o file:stat.out \
+	    stat -f "${statstr}" /rump/mnt/dir/same
+}
+
+simpletest mv_x
+
+#
+# do a cross-kernel mv
+#
+mv_x()
+{
+	thedir=$(basename $(atf_get_srcdir))
+	atf_check -s exit:0 cp -Rp $(atf_get_srcdir) .
+	atf_check -s exit:0 cp -Rp ${thedir} ${thedir}.2
+	atf_check -s exit:0 mv ${thedir} /rump
+	atf_check -s exit:0 diff -ru ${thedir}.2 /rump/${thedir}
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case paxcopy
 	atf_add_test_case cpcopy
+	atf_add_test_case mv_x
+	atf_add_test_case mv_nox
 }
