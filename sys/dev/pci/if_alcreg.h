@@ -33,6 +33,9 @@
 
 #define ALC_PCIR_BAR			0x10
 
+#define ATHEROS_AR8152_B_V10		0xC0
+#define ATHEROS_AR8152_B_V11		0xC1
+
 /* 0x0000 - 0x02FF : PCIe configuration space */
 
 #define	ALC_PEX_UNC_ERR_SEV		0x10C
@@ -55,6 +58,12 @@
 
 #define	ALC_PCIE_PHYMISC		0x1000
 #define	PCIE_PHYMISC_FORCE_RCV_DET	0x00000004
+
+#define	ALC_PCIE_PHYMISC2		0x1004
+#define	PCIE_PHYMISC2_SERDES_CDR_MASK	0x00030000
+#define	PCIE_PHYMISC2_SERDES_TH_MASK	0x000C0000
+#define	PCIE_PHYMISC2_SERDES_CDR_SHIFT	16
+#define	PCIE_PHYMISC2_SERDES_TH_SHIFT	18
 
 #define	ALC_TWSI_DEBUG			0x1108
 #define	TWSI_DEBUG_DEV_EXIST		0x20000000
@@ -88,7 +97,9 @@
 #define	PM_CFG_PCIE_RECV		0x00008000
 #define	PM_CFG_L1_ENTRY_TIMER_MASK	0x000F0000
 #define	PM_CFG_PM_REQ_TIMER_MASK	0x00F00000
-#define	PM_CFG_LCKDET_TIMER_MASK	0x3F000000
+#define	PM_CFG_LCKDET_TIMER_MASK	0x0F000000
+#define	PM_CFG_EN_BUFS_RX_L0S		0x10000000
+#define	PM_CFG_SA_DLY_ENB		0x20000000
 #define	PM_CFG_MAC_ASPM_CHK		0x40000000
 #define	PM_CFG_HOTRST			0x80000000
 #define	PM_CFG_L0S_ENTRY_TIMER_SHIFT	8
@@ -96,10 +107,20 @@
 #define	PM_CFG_PM_REQ_TIMER_SHIFT	20
 #define	PM_CFG_LCKDET_TIMER_SHIFT	24
 
+#define PM_CFG_L0S_ENTRY_TIMER_DEFAULT	6
+#define	PM_CFG_L1_ENTRY_TIMER_DEFAULT	1
+#define	PM_CFG_LCKDET_TIMER_DEFAULT	12
+#define	PM_CFG_PM_REQ_TIMER_DEFAULT	12
+
+#define	ALC_LTSSM_ID_CFG		0x12FC
+#define	LTSSM_ID_WRO_ENB		0x00001000
+
 #define	ALC_MASTER_CFG			0x1400
 #define	MASTER_RESET			0x00000001
+#define	MASTER_TEST_MODE_MASK		0x0000000C
 #define	MASTER_BERT_START		0x00000010
-#define	MASTER_TEST_MODE_MASK		0x000000C0
+#define	MASTER_OOB_DIS_OFF		0x00000040
+#define	MASTER_SA_TIMER_ENB		0x00000080
 #define	MASTER_MTIMER_ENB		0x00000100
 #define	MASTER_MANUAL_INTR_ENB		0x00000200
 #define	MASTER_IM_TX_TIMER_ENB		0x00000400
@@ -114,7 +135,7 @@
 #define	MASTER_CHIP_REV_SHIFT		16
 #define	MASTER_CHIP_ID_SHIFT		24
 
-/* Number of ticks per usec for AR8131/AR8132. */
+/* Number of ticks per usec for AR813x/AR815x. */
 #define	ALC_TICK_USECS			2
 #define	ALC_USECS(x)			((x) / ALC_TICK_USECS)
 
@@ -212,6 +233,8 @@
 #define	ALC_SERDES_LOCK			0x1424
 #define	SERDES_LOCK_DET			0x00000001
 #define	SERDES_LOCK_DET_ENB		0x00000002
+#define	SERDES_MAC_CLK_SLOWDOWN		0x00020000
+#define	SERDES_PHY_CLK_SLOWDOWN		0x00040000
 
 #define	ALC_MAC_CFG			0x1480
 #define	MAC_CFG_TX_ENB			0x00000001
@@ -241,6 +264,8 @@
 #define	MAC_CFG_BCAST			0x04000000
 #define	MAC_CFG_DBG			0x08000000
 #define	MAC_CFG_SINGLE_PAUSE_ENB	0x10000000
+#define	MAC_CFG_HASH_ALG_CRC32		0x20000000
+#define	MAC_CFG_SPEED_MODE_SW		0x40000000
 #define	MAC_CFG_PREAMBLE_SHIFT		10
 #define	MAC_CFG_PREAMBLE_DEFAULT	7
 
@@ -683,10 +708,18 @@
 #define	HDS_CFG_BACKFILLSIZE_SHIFT	8
 #define	HDS_CFG_MAX_HDRSIZE_SHIFT	20
 
-/* AR8131/AR8132 registers for MAC statistics */
+/* AR813x/AR815x registers for MAC statistics */
 #define	ALC_RX_MIB_BASE			0x1700
 
 #define	ALC_TX_MIB_BASE			0x1760
+
+#define	ALC_CLK_GATING_CFG		0x1814
+#define	CLK_GATING_DMAW_ENB		0x0001
+#define	CLK_GATING_DMAR_ENB		0x0002
+#define	CLK_GATING_TXQ_ENB		0x0004
+#define	CLK_GATING_RXQ_ENB		0x0008
+#define	CLK_GATING_TXMAC_ENB		0x0010
+#define	CLK_GATING_RXMAC_ENB		0x0020
 
 #define	ALC_DEBUG_DATA0			0x1900
 
@@ -974,13 +1007,8 @@ struct tx_desc {
 #define	ALC_PROC_MAX		(ALC_RX_RING_CNT - 1)
 #define	ALC_PROC_DEFAULT	(ALC_RX_RING_CNT / 4)
 
-#define	ALC_JUMBO_FRAMELEN	(9 * 1024)
-#define	ALC_JUMBO_MTU		\
-	(ALC_JUMBO_FRAMELEN - sizeof(struct ether_vlan_header) - ETHER_CRC_LEN)
-#define	ALC_MAX_FRAMELEN	(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN)
-
 /*
- * The number of bits reserved for MSS in AR8121/AR8132 controllers
+ * The number of bits reserved for MSS in AR813x/AR815x controllers
  * are 13 bits. This limits the maximum interface MTU size in TSO
  * case(8191 + sizeof(struct ip) + sizeof(struct tcphdr)) as upper
  * stack should not generate TCP segments with MSS greater than the
@@ -1099,6 +1127,13 @@ struct alc_hw_stats {
 	uint64_t tx_mcast_bytes;
 };
 
+struct alc_ident {
+	uint16_t	vendorid;
+	uint16_t	deviceid;
+	uint32_t	max_framelen;
+	const char	*name;
+};
+
 /*
  * Software state per device.
  */
@@ -1114,9 +1149,10 @@ struct alc_softc {
 	pcitag_t		sc_pcitag;
 
 	void			*sc_irq_handle;
-
+	struct alc_ident	*alc_ident;
 	struct mii_data		sc_miibus;
 	int			alc_rev;
+	int			alc_expcap;
 	int			alc_chip_rev;
 	int			alc_phyaddr;
 	uint8_t			alc_eaddr[ETHER_ADDR_LEN];
@@ -1133,7 +1169,9 @@ struct alc_softc {
 #define	ALC_FLAG_ASPM_MON	0x0080
 #define	ALC_FLAG_CMB_BUG	0x0100
 #define	ALC_FLAG_SMB_BUG	0x0200
-#define	ALC_FLAG_DETACH		0x4000
+#define	ALC_FLAG_L0S		0x0400
+#define	ALC_FLAG_L1S		0x0800
+#define	ALC_FLAG_APS		0x1000
 #define	ALC_FLAG_LINK		0x8000
 
 	callout_t		sc_tick_ch;
