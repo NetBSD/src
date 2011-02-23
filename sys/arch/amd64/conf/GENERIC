@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.312 2011/02/23 00:46:29 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.313 2011/02/23 11:43:21 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.312 $"
+#ident 		"GENERIC-$Revision: 1.313 $"
 
 maxusers	64		# estimated number of users
 
@@ -78,15 +78,12 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Intel Enhanced Speedstep for EM64T CPUs
-options 	ENHANCED_SPEEDSTEP
-#options 	EST_FREQ_USERWRITE	# any user can set frequency
-
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
 
-# Intel Core's on-die Thermal sensor
-coretemp*	at cpu?
+# CPU features
+coretemp*	at cpu?		# Intel on-die thermal sensor
+est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 # options       INTEL_ONDEMAND_CLOCKMOD
