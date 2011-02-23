@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.7 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8 2011/02/23 02:58:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,5 +122,7 @@ typedef struct {
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_EAX])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+#define	__UCONTEXT_SIZE	776
 
 #endif	/* !_I386_MCONTEXT_H_ */
