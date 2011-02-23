@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/02/17 18:35:35 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2011/02/23 03:09:04 joerg Exp $
 
 SUBDIR=	\
 	libLLVMAnalysis \
@@ -26,7 +26,8 @@ SUBDIR+= \
 	libLLVMX86AsmParser \
 	libLLVMX86AsmPrinter \
 	libLLVMX86Disassembler \
-	libLLVMX86TargetInfo
+	libLLVMX86TargetInfo \
+	libLLVMX86Utils
 
 .if ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
