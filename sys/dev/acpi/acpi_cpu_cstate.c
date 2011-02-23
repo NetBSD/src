@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.43 2011/02/22 17:19:58 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.44 2011/02/23 06:02:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.43 2011/02/22 17:19:58 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.44 2011/02/23 06:02:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -53,7 +53,7 @@ static void		 acpicpu_cstate_attach_evcnt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst_add(struct acpicpu_softc *,
-						ACPI_OBJECT *);
+						ACPI_OBJECT *, int );
 static void		 acpicpu_cstate_cst_bios(void);
 static void		 acpicpu_cstate_memset(struct acpicpu_softc *);
 static void		 acpicpu_cstate_fadt(struct acpicpu_softc *);
@@ -308,7 +308,7 @@ acpicpu_cstate_cst(struct acpicpu_softc *sc)
 	for (count = 0, i = 1; i <= n; i++) {
 
 		elm = &obj->Package.Elements[i];
-		rv = acpicpu_cstate_cst_add(sc, elm);
+		rv = acpicpu_cstate_cst_add(sc, elm, i);
 
 		if (ACPI_SUCCESS(rv))
 			count++;
@@ -324,14 +324,13 @@ out:
 }
 
 static ACPI_STATUS
-acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
+acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm, int i)
 {
 	struct acpicpu_cstate *cs = sc->sc_cstate;
 	struct acpicpu_cstate state;
 	struct acpicpu_reg *reg;
 	ACPI_STATUS rv = AE_OK;
 	ACPI_OBJECT *obj;
-	static int i = 1;
 	uint32_t type;
 
 	(void)memset(&state, 0, sizeof(*cs));
@@ -465,10 +464,24 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		goto out;
 	}
 
-	if (cs[i].cs_method != 0) {
-		rv = AE_ALREADY_EXISTS;
-		goto out;
+	/*
+	 * As some systems define the type arbitrarily,
+	 * we use a sequential counter instead of the
+	 * BIOS data. For instance, AMD family 14h is
+	 * instructed to only use the value 2; see
+	 *
+	 *	Advanced Micro Devices: BIOS and Kernel
+	 *	Developer's Guide (BKDG) for AMD Family
+	 *	14h Models 00h-0Fh Processors. Revision
+	 *	3.00, January 4, 2011.
+	 */
+	if (i != (int)type) {
+
+		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
+			"C%d != C%u from BIOS", i, type));
 	}
+
+	KASSERT(cs[i].cs_method == 0);
 
 	cs[i].cs_addr = state.cs_addr;
 	cs[i].cs_power = state.cs_power;
