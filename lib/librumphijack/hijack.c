@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.65 2011/02/23 15:29:21 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.66 2011/02/23 15:44:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.65 2011/02/23 15:29:21 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.66 2011/02/23 15:44:38 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -722,7 +722,8 @@ __getcwd(char *bufp, size_t len)
 		else
 			prefixgap = rumpprefixlen; /* ``/pfx+/path'' */
 		if (len <= prefixgap) {
-			return ERANGE;
+			errno = ERANGE;
+			return -1;
 		}
 
 		op___getcwd = GETSYSCALL(rump, __GETCWD);
@@ -754,15 +755,19 @@ rename(const char *from, const char *to)
 	int (*op_rename)(const char *, const char *);
 
 	if (path_isrump(from)) {
-		if (!path_isrump(to))
-			return EXDEV;
+		if (!path_isrump(to)) {
+			errno = EXDEV;
+			return -1;
+		}
 
 		from = path_host2rump(from);
 		to = path_host2rump(to);
 		op_rename = GETSYSCALL(rump, RENAME);
 	} else {
-		if (path_isrump(to))
-			return EXDEV;
+		if (path_isrump(to)) {
+			errno = EXDEV;
+			return -1;
+		}
 
 		op_rename = GETSYSCALL(host, RENAME);
 	}
@@ -1008,8 +1013,10 @@ dup2(int oldd, int newd)
 	DPRINTF(("dup2 -> %d (o) -> %d (n)\n", oldd, newd));
 
 	if (fd_isrump(oldd)) {
-		if (!(newd >= 0 && newd <= 2))
-			return EBADF;
+		if (!(newd >= 0 && newd <= 2)) {
+			errno = EBADF;
+			return -1;
+		}
 		oldd = fd_host2rump(oldd);
 		if (oldd == newd) {
 			SETDUP2(newd);
@@ -1082,8 +1089,10 @@ execve(const char *path, char *const argv[], char *const envp[])
 	if (dup2mask) {
 		snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%u", dup2mask);
 		dup2str = malloc(strlen(buf)+1);
-		if (dup2str == NULL)
-			return ENOMEM;
+		if (dup2str == NULL) {
+			errno = ENOMEM;
+			return -1;
+		}
 		strcpy(dup2str, buf);
 		bonus++;
 	} else {
@@ -1102,7 +1111,8 @@ execve(const char *path, char *const argv[], char *const envp[])
 	newenv = malloc(sizeof(*newenv) * nelem+bonus);
 	if (newenv == NULL) {
 		free(dup2str);
-		return ENOMEM;
+		errno = ENOMEM;
+		return -1;
 	}
 	memcpy(newenv, envp, nelem*sizeof(*newenv));
 	if (dup2str) {
@@ -1502,8 +1512,10 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 		ev = &changelist[i];
 		if (ev->filter == EVFILT_READ || ev->filter == EVFILT_WRITE ||
 		    ev->filter == EVFILT_VNODE) {
-			if (fd_isrump((int)ev->ident))
-				return ENOTSUP;
+			if (fd_isrump((int)ev->ident)) {
+				errno = ENOTSUP;
+				return -1;
+			}
 		}
 	}
 
