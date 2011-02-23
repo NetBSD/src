@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.8 2011/02/22 05:45:06 joerg Exp $	*/
+/*	$NetBSD: crt0.c,v 1.9 2011/02/23 10:26:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Matt Fredette
@@ -89,28 +89,7 @@ ___start(struct ps_strings *ps_strings,
 		__ps_strings = ps_strings;
 
 #ifdef DYNAMIC
-	/*
-	 * XXX fredette - when not compiling PIC, you currently 
-	 * can't detect an undefined weak symbol by seeing if 
-	 * its address is NULL.  The compiler emits code to find 
-	 * _DYNAMIC relative to %dp, the assembler notes the 
-	 * needed relocations, but when the linker sees that the 
-	 * (weak) symbol isn't defined it drops the ball - the 
-	 * relocations are never filled, and the binary ends up 
-	 * with code that sees an address of %dp plus zero, 
-	 * which != NULL.
-	 *
-	 * Arguably the linker could/should distinguish between
-	 * code that is after a weak undefined symbol's contents 
-	 * from code that is after its address.  In the first case, 
-	 * it would warn and/or bail.  In the second case, it 
-	 * would fix up instructions to give a symbol address
-	 * of NULL.
-	 *
-	 * For now, we take the easy way out and compare &_DYNAMIC 
-	 * to %dp, as well as to NULL.
-	 */
-	if (&rtld_DYNAMIC != NULL && (int)&rtld_DYNAMIC != dp)
+	if (&rtld_DYNAMIC != NULL)
 		_rtld_setup(cleanup, obj);
 #endif
 
@@ -152,7 +131,7 @@ ___start(struct ps_strings *ps_strings,
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.8 2011/02/22 05:45:06 joerg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.9 2011/02/23 10:26:09 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
