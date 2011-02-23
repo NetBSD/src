@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.71 2011/02/23 02:58:38 joerg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.72 2011/02/23 03:31:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.71 2011/02/23 02:58:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.72 2011/02/23 03:31:49 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -870,7 +870,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 			fpusave_lwp(l, false);
 		}
 		memcpy(&pcb->pcb_savefpu.fp_fxsave, &mcp->__fpregs,
-+		    sizeof (pcb->pcb_savefpu.fp_fxsave));
+		    sizeof (pcb->pcb_savefpu.fp_fxsave));
 		/* If not set already. */
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
