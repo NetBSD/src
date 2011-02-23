@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.39 2011/02/22 08:19:47 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.40 2011/02/23 07:03:50 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2634,8 +2634,6 @@ _C_LABEL(MIPSX(locore_vec)):
 	PTR_WORD _C_LABEL(MIPSX(tlb_enter))
 	PTR_WORD _C_LABEL(MIPSX(tlb_read_indexed))
 	PTR_WORD _C_LABEL(MIPSX(tlb_write_indexed))
-	PTR_WORD _C_LABEL(nullop)
-#endif
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
