@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.108 2011/02/23 08:53:21 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.109 2011/02/23 17:05:33 dyoung Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.108 2011/02/23 08:53:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.109 2011/02/23 17:05:33 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1826,8 +1826,6 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 	uint32_t gen;
 	int lower, upper, mid, snapshot_locked = 0, error = 0;
 
-	blkno = 0; /* XXX: GCC */
-
 	/*
 	 * Check for valid snapshots.
 	 */
@@ -1898,6 +1896,7 @@ retry:
 			blkno = db_get(ip, lbn);
 		} else {
 			mutex_exit(&si->si_lock);
+			blkno = 0; /* XXX: GCC */
 			if ((error = snapblkaddr(vp, lbn, &blkno)) != 0) {
 				mutex_enter(&si->si_lock);
 				break;
