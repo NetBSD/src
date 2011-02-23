@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1058 2011/02/22 23:20:52 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1059 2011/02/23 12:22:42 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1061 2011/02/22 23:20:15 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.1062 2011/02/23 12:22:20 jmcneill Exp
  */
 
 /*
@@ -3916,6 +3916,7 @@
 #define	PCI_PRODUCT_REALTEK_RT8169SC	0x8167		/* 8169SC/8110SC 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8168	0x8168		/* 8168/8111 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169/8110 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RTL8188CE	0x8176		/* RTL8188CE Wireless LAN 802.11n PCI-E NIC */
 #define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
 #define	PCI_PRODUCT_REALTEK_RT8185	0x8185		/* 8185 802.11a/b/g */
 
