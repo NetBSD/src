@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.815 2011/02/23 01:09:18 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.816 2011/02/23 10:11:13 jruoho Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -31,7 +31,7 @@ Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/unix2_source_code.php
 Home Page:	http://www.acpica.org/
 Mailing List:	devel@acpica.org
-License:	BSD
+License:	BSD-like
 Responsible:	jmcneill, jruoho
 Notes:
 The sources were integrated into src/sys/dev/acpi/acpica/Subsystem.
