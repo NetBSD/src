@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/02/17 18:35:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/02/23 03:09:04 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -24,6 +24,7 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	CheckSizeofPointer.cpp \
 	ChrootChecker.cpp \
 	DeadStoresChecker.cpp \
+	DebugCheckers.cpp \
 	DereferenceChecker.cpp \
 	DivZeroChecker.cpp \
 	ExperimentalChecks.cpp \
