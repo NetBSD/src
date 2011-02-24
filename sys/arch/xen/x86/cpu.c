@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.52 2010/11/14 13:43:04 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.53 2011/02/24 04:42:55 jruoho Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2010/11/14 13:43:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2011/02/24 04:42:55 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -115,11 +115,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2010/11/14 13:43:04 bouyer Exp $");
 #error cpu_info contains 32bit bitmasks
 #endif
 
-int     cpu_match(device_t, cfdata_t, void *);
-void    cpu_attach(device_t, device_t, void *);
-int     vcpu_match(device_t, cfdata_t, void *);
-void    vcpu_attach(device_t, device_t, void *);
-void    cpu_attach_common(device_t, device_t, void *);
+int	cpu_match(device_t, cfdata_t, void *);
+void	cpu_attach(device_t, device_t, void *);
+int	cpu_rescan(device_t, const char *, const int *);
+void	cpu_childdetached(device_t, device_t);
+int	vcpu_match(device_t, cfdata_t, void *);
+void	vcpu_attach(device_t, device_t, void *);
+void	cpu_attach_common(device_t, device_t, void *);
 void	cpu_offline_md(void);
 
 struct cpu_softc {
@@ -133,8 +135,9 @@ void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
 
-CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(cpu, sizeof(struct cpu_softc),
+    cpu_match, cpu_attach, NULL, NULL, cpu_rescan, cpu_childdetached);
+
 CFATTACH_DECL_NEW(vcpu, sizeof(struct cpu_softc),
     vcpu_match, vcpu_attach, NULL, NULL);
 
@@ -268,6 +271,38 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
+}
+
+int
+cpu_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpufeature_attach_args cfaa;
+	struct cpu_info *ci = sc->sc_info;
+
+	memset(&cfaa, 0, sizeof(cfaa));
+	cfaa.ci = ci;
+
+	if (ifattr_match(ifattr, "cpufeaturebus")) {
+
+		if (ci->ci_frequency == NULL) {
+			cfaa.name = "est";
+			ci->ci_frequency = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+	}
+
+	return 0;
+}
+
+void
+cpu_childdetached(device_t self, device_t child)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpu_info *ci = sc->sc_info;
+
+	if (ci->ci_frequency == child)
+		ci->ci_frequency = NULL;
 }
 
 int
