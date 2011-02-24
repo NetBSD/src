@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.180 2011/02/24 15:52:23 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.181 2011/02/24 16:21:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -635,11 +635,10 @@ XNESTED(mips_fpu_trap)
 	b		2f
 	 INT_L		a0, 4(a0)		# a0 = coproc instruction
 /*
- * This is not in the branch delay slot so calculate the resulting
- * PC (epc + 4) into v0 and continue to MachEmulateFP().
+ * This is not in the branch delay slot.
  */
 1:
-	INT_L		a0, 4(a0)		# a0 = coproc instruction
+	INT_L		a0, 0(a0)		# a0 = coproc instruction
 2:
 
 /*
