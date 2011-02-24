@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.63 2011/02/24 04:42:54 jruoho Exp $
+# $NetBSD: XEN3_DOM0,v 1.64 2011/02/24 10:56:00 jruoho Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -20,11 +20,9 @@ options 	MSGBUFSIZE=24576
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
-# AMD PowerNow! and Cool`n'Quiet technology
-options		POWERNOW_K8
-
 # CPU features
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 
 #options 	MTRR		# memory-type range register syscall support
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.25 2011/02/23 11:43:23 jruoho Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.26 2011/02/24 10:56:02 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,15 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.25 2011/02/23 11:43:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.26 2011/02/24 10:56:02 jruoho Exp $");
 
 #include "opt_intel_odcm.h"
 #include "opt_via_c7temp.h"
-#include "opt_powernow_k8.h"
 #include "opt_xen.h"
-#ifdef i386	/* XXX */
-#include "opt_powernow_k7.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.25 2011/02/23 11:43:23 jruoho Exp $")
 #include <x86/cacheinfo.h>
 #include <x86/cpuvar.h>
 #include <x86/cpu_msr.h>
-#include <x86/powernow.h>
 
 static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
@@ -812,25 +807,6 @@ cpu_identify(struct cpu_info *ci)
 			viac7temp_register(ci);
 	}
 #endif
-
-#if defined(POWERNOW_K7) || defined(POWERNOW_K8)
-	if (cpu_vendor == CPUVENDOR_AMD && powernow_probe(ci)) {
-		switch (CPUID2FAMILY(ci->ci_signature)) {
-#ifdef POWERNOW_K7
-		case 6:
-			k7_powernow_init();
-			break;
-#endif
-#ifdef POWERNOW_K8
-		case 15:
-			k8_powernow_init();
-			break;
-#endif
-		default:
-			break;
-		}
-	}
-#endif /* POWERNOW_K7 || POWERNOW_K8 */
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	if (cpuid_level >= 1) {
