@@ -254,6 +254,7 @@ typedef struct drm_i915_flip {
 	 * out there check for HAVE_I915_FLIP and so might pick up this
 	 * version.
 	 */
+	/* XXXMRG: make this unsigned? */
 	int pipes;
 } drm_i915_flip_t;
 
