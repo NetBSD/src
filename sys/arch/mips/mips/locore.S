@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.178 2011/02/24 15:25:07 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.179 2011/02/24 15:27:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -625,7 +625,7 @@ XNESTED(mips_fpu_trap)
  * fetch the instruction and emulate the instruction.
  *
  * We check whether it's an unimplemented FP instruction here rather
- * than invoking MachEmulateInst(), since it is faster.
+ * than invoking mips_emul_inst(), since it is faster.
  */
 	bgez		a2, 1f			# Check the branch delay bit.
 	 nop
