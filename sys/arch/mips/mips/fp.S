@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.38 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.39 2011/02/24 16:49:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2593,6 +2593,8 @@ inexact_nobias_d:
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
+#else
+	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
 	b	done
 
