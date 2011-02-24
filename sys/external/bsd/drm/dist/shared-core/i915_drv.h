@@ -440,10 +440,10 @@ extern int i915_vblank_swap(struct drm_device *dev, void *data,
 			    struct drm_file *file_priv);
 
 void
-i915_enable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask);
+i915_enable_pipestat(drm_i915_private_t *dev_priv, unsigned int pipe, u32 mask);
 
 void
-i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask);
+i915_disable_pipestat(drm_i915_private_t *dev_priv, unsigned int pipe, u32 mask);
 
 
 /* i915_mem.c */
