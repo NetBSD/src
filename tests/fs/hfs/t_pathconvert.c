@@ -1,9 +1,10 @@
-/*	$NetBSD: t_pathconvert.c,v 1.2 2011/02/22 18:41:04 pooka Exp $	*/
+/*	$NetBSD: t_pathconvert.c,v 1.3 2011/02/24 17:26:46 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
 
 #include <atf-c.h>
+#include <atf-c/config.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -39,6 +40,9 @@ ATF_TC_BODY(colonslash, tc)
 	struct dirent *dirent;
 	int offset, nbytes;
 	bool ok = false;
+
+	if (strcmp(atf_config_get("atf_arch"), "sparc64") == 0)
+		atf_tc_expect_signal(-1, "PR kern/44631");
 
 	snprintf(thecmd, sizeof(thecmd), "uudecode %s/colon.hfs.bz2.uue",
 	    atf_tc_get_config_var(tc, "srcdir"));
