@@ -75,7 +75,7 @@ i915_disable_irq(drm_i915_private_t *dev_priv, u32 mask)
 }
 
 static inline u32
-i915_pipestat(int pipe)
+i915_pipestat(unsigned int pipe)
 {
 	if (pipe == 0)
 	    return PIPEASTAT;
@@ -85,7 +85,7 @@ i915_pipestat(int pipe)
 }
 
 void
-i915_enable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask)
+i915_enable_pipestat(drm_i915_private_t *dev_priv, unsigned int pipe, u32 mask)
 {
 	if ((dev_priv->pipestat[pipe] & mask) != mask) {
 		u32 reg = i915_pipestat(pipe);
@@ -98,7 +98,7 @@ i915_enable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask)
 }
 
 void
-i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask)
+i915_disable_pipestat(drm_i915_private_t *dev_priv, unsigned int pipe, u32 mask)
 {
 	if ((dev_priv->pipestat[pipe] & mask) != 0) {
 		u32 reg = i915_pipestat(pipe);
@@ -119,7 +119,7 @@ i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask)
  * before reading such registers if unsure.
  */
 static int
-i915_pipe_enabled(struct drm_device *dev, int pipe)
+i915_pipe_enabled(struct drm_device *dev, unsigned int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	unsigned long pipeconf = pipe ? PIPEBCONF : PIPEACONF;
