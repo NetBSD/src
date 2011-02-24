@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.20 2011/02/23 11:43:23 jruoho Exp $	*/
+/*	$NetBSD: est.c,v 1.21 2011/02/24 05:14:58 jruoho Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -76,7 +76,7 @@
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.20 2011/02/23 11:43:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.21 2011/02/24 05:14:58 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1016,6 +1016,10 @@ est_match(device_t parent, cfdata_t cf, void *aux)
 	struct cpu_info *ci = cfaa->ci;
 
 	if (strcmp(cfaa->name, "est") != 0)
+		return 0;
+
+	if (cpu_vendor != CPUVENDOR_IDT &&
+	    cpu_vendor != CPUVENDOR_INTEL)
 		return 0;
 
 	if ((ci->ci_feat_val[1] & CPUID2_EST) == 0)
