@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.18 2011/01/25 19:12:05 christos Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.19 2011/02/24 04:28:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,25 +75,9 @@ pthread__sp(void)
 	} while (/*CONSTCOND*/0);
 
 #define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
-/*	#define	PTHREAD__HAVE_THREADREG	*/
 
 /* Don't need additional memory barriers. */
 #define	PTHREAD__ATOMIC_IS_MEMBAR
-
-static inline pthread_t
-#ifdef __GNUC__
-__attribute__ ((__const__))
-#endif
-pthread__threadreg_get(void)
-{
-	pthread_t self;
-
-	__asm volatile("movl %%gs:0, %0"
-		: "=r" (self)
-		:);
-
-	return self;
-}
 
 static inline void *
 _atomic_cas_ptr(volatile void *ptr, void *old, void *new)

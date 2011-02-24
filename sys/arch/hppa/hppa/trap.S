@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.53 2011/01/23 09:44:59 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.54 2011/02/24 04:28:45 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -366,6 +366,9 @@ syscall_entry:
 	stw	%arg3, TF_CR13-TRAPFRAME_SIZEOF(%sr1, %t3)
 #endif
 
+	mfctl	CR_TLS, %arg0
+	stw	%arg0, TF_CR27-TRAPFRAME_SIZEOF(%sr1, %t3)
+
 #if defined(DDB) || defined(KGDB)
 	/*
 	 * Save v2p translation table pointer
@@ -507,6 +510,9 @@ syscall_return:
 	mtctl	%t1, %pidr3
 	mtctl	%t2, %pidr4
 #endif
+	ldw	TF_CR27(%sr3, %t3), %t1
+	mtctl	%t1, CR_TLS
+
 	ldw	TF_CR0(%sr3, %t3), %t1
 	mtctl	%t1, %rctr
 
@@ -2087,6 +2093,9 @@ trapnowvirt:
 	mfctl	%pidr2, %t2
 	stw	%t1, TF_SR7(%sr3, %t3)
 	stw	%t2, TF_CR9(%sr3, %t3)
+
+	mfctl	CR_TLS, %t1
+	stw	%t1, TF_CR27(%sr3, %t3)
 
 	mtsp	%r0, %sr0
 	mtsp	%r0, %sr1

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.14 2011/02/24 00:40:09 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.15 2011/02/24 04:28:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -125,6 +125,10 @@ typedef struct __fpregset_oabi __fpregset_t;
 typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
+	__greg_t	_mc_tlsbase;
+#if !__mips_n32
+	__greg_t	__mc_unused;
+#endif
 } mcontext_t;
 
 #if defined(_KERNEL) && !defined(__mips_o32)
@@ -134,22 +138,25 @@ typedef __greg32_t	__gregset32_t[_NGREG];
 typedef struct {
 	__gregset32_t		__gregs;
 	struct __fpregset_oabi	__fpregs;
+	__greg32_t		_mc_tlsbase;
+	__greg32_t		__mc_unused;
 } mcontext_o32_t;
 
 typedef struct {
 	__gregset_t		__gregs;
 	struct __fpregset_nabi	__fpregs;
+	__greg_t		_mc_tlsbase;
 } mcontext32_t;
 
 #endif /* _KERNEL && _LP64 */
 
 #endif /* !__ASSEMBLER__ */
 
-#define _UC_MACHINE_PAD		16	/* Padding appended to ucontext_t */
-#define _UC_MACHINE32_PAD	16	/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD		14	/* Padding appended to ucontext_t */
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
+#define	_UC_TLSBASE	0x00040000
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_EPC])
@@ -160,12 +167,13 @@ typedef struct {
 #define _UC_MACHINE32_SP(uc)	_UC_MACHINE_SP(uc)
 #define _UC_MACHINE32_PC(uc)	_UC_MACHINE_PC(uc)
 #define _UC_MACHINE32_INTRV(uc)	_UC_MACHINE_INTRV(uc)
+#define _UC_MACHINE32_PAD	14	/* Padding appended to ucontext32_t */
 
 #define	_UC_MACHINE32_SET_PC(uc, pc)	_UC_MACHINE_PC((uc), (pc))
 
-#define	__UCONTEXT_SIZE_O32	(40 + 288 +  64)	/* 392 */
-#define	__UCONTEXT_SIZE_N32	(40 + 560 +  64)	/* 664 */
-#define	__UCONTEXT_SIZE_N64	(56 + 560 + 128)	/* 774 */
+#define	__UCONTEXT_SIZE_O32	(40 + 296 +  56)	/* 392 */
+#define	__UCONTEXT_SIZE_N32	(40 + 568 +  56)	/* 664 */
+#define	__UCONTEXT_SIZE_N64	(56 + 576 + 112)	/* 774 */
 
 #ifdef __mips_o32
 #define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_O32
@@ -176,6 +184,18 @@ typedef struct {
 #define	__UCONTEXT32_SIZE	__UCONTEXT_SIZE_N32
 #elif
 #error O64 is not supported
+#endif
+
+#ifndef __ASSEMBLER__
+static inline void *
+__lwp_getprivate_fast(void)
+{
+	register void *__tcb;
+
+	__asm volatile(".set push; .set mips32r2; "
+		"rdhwr %0, $29; .set pop" : "=v"(__tcb));
+	return __tcb;
+}
 #endif
 
 #endif	/* _MIPS_MCONTEXT_H_ */

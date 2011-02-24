@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.17 2009/12/11 05:52:03 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.18 2011/02/24 04:28:45 joerg Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -92,5 +92,10 @@ typedef int			register_t;
 
 #define	RAS_DECL(name)							\
 extern const char __CONCAT(name,_ras_start[]), __CONCAT(name,_ras_end[])
+
+#define	__HAVE_CPU_LWP_SETPRIVATE
+#if 0
+#define	__HAVE___LWP_GETPRIVATE_FAST
+#endif
 
 #endif	/* _HPPA_TYPES_H_ */

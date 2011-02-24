@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.5 2011/02/20 07:45:48 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.6 2011/02/24 04:28:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2011/02/20 07:45:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.6 2011/02/24 04:28:47 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -262,6 +262,8 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mc32, unsigned int *flagsp)
 	if (*flagsp & _UC_FPU)
 		memcpy(&mco32->__fpregs, &mc.__fpregs,
 		    sizeof(struct fpreg_oabi));
+	mco32->_mc_tlsbase = mc._mc_tlsbase;
+	*flagsp |= _UC_TLSBASE;
 }
 
 int
@@ -279,6 +281,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mc32, unsigned int flags)
 	if (flags & _UC_FPU)
 		memcpy(&mc.__fpregs, &mco32->__fpregs,
 		    sizeof(struct fpreg_oabi));
+	mc._mc_tlsbase = mco32->_mc_tlsbase;
 	return cpu_setmcontext(l, &mc, flags);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.699 2011/01/11 21:10:17 jruoho Exp $	*/
+/*	$NetBSD: machdep.c,v 1.700 2011/02/24 04:28:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.699 2011/01/11 21:10:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.700 2011/02/24 04:28:46 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1755,6 +1755,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -1844,6 +1847,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_esp    = gr[_REG_UESP];
 		tf->tf_ss     = gr[_REG_SS];
 	}
+
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 #if NNPX > 0
 	/*

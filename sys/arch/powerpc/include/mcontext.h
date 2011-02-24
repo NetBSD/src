@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2011/02/01 01:21:29 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11 2011/02/24 04:28:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -121,5 +121,14 @@ typedef struct {
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R3])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+static inline void *
+__lwp_getprivate_fast(void)
+{
+	register void *__tcb;
+	__asm("mr %r2, %%0" : "=r"(__tcb));
+
+	return __tcb;
+}
 
 #endif	/* !_POWERPC_MCONTEXT_H_ */

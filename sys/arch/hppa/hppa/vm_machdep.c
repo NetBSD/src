@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 2011/02/10 14:46:46 pooka Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 2011/02/24 04:28:45 joerg Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 2011/02/10 14:46:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49 2011/02/24 04:28:45 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 2011/02/10 14:46:46 pooka Exp $"
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/pool.h>
+#include <sys/cpu.h>
 
 #include <machine/cpufunc.h>
 #include <machine/pmap.h>
@@ -301,4 +302,14 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	uvm_km_free(phys_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+
+	l->l_md.md_regs->tf_cr27 = (u_int)addr;
+	if (l == curlwp)
+		mtctl(addr, CR_TLS);
+	return 0;
 }

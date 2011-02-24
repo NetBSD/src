@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.72 2011/02/23 03:31:49 joerg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.73 2011/02/24 04:28:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.72 2011/02/23 03:31:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.73 2011/02/24 04:28:44 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -157,7 +157,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
 	cpu_fsgs_zero(l);
-	cpu_fsgs_reload(l, tf->tf_ds, tf->tf_ds);
+	cpu_fsgs_reload(l, tf->tf_ds, tf->tf_es);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -859,6 +859,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		tf->tf_ss     = gr[_REG32_SS];
 	}
 
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
+
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -919,6 +922,9 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uint32_t)(uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -927,7 +933,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 			fpusave_lwp(l, true);
 		}
 		memcpy(&mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
-		    sizeof (mcp->__fpregs));
+		    sizeof (pcb->pcb_savefpu.fp_fxsave));
 		*flags |= _UC_FPU;
 	}
 }

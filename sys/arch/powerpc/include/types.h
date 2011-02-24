@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.36 2010/12/22 01:03:03 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.37 2011/02/24 04:28:47 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -77,6 +77,9 @@ typedef volatile int __cpu_simple_lock_t;
 #define	__HAVE_CPU_DATA_FIRST
 #ifdef _LP64
 #define	__HAVE_ATOMIC64_OPS
+#endif
+#if 0
+#define	__HAVE___LWP_GETPRIVATE_FAST
 #endif
 
 #endif	/* _MACHTYPES_H_ */
