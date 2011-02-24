@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/11/21 06:01:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/02/24 08:18:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,22 @@ LIB=	Xext
 .PATH:	${X11SRCDIR.${LIB}}/man
 .PATH:	${X11SRCDIR.${LIB}}/include/X11/extensions/
 
-SRCS=	DPMS.c MITMisc.c XAppgroup.c XEVI.c XLbx.c XMultibuf.c XSecurity.c \
-	XShape.c XShm.c XSync.c XTestExt1.c Xcup.c Xdbe.c extutil.c globals.c
+SRCS=	DPMS.c \
+	MITMisc.c \
+	XAppgroup.c \
+	XEVI.c \
+	XLbx.c \
+	XMultibuf.c \
+	XSecurity.c \
+	XShape.c \
+	XShm.c \
+	XSync.c \
+	XTestExt1.c \
+	Xcup.c \
+	Xdbe.c \
+	Xge.c \
+	extutil.c \
+	globals.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
