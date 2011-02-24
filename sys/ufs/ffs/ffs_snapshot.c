@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.109 2011/02/23 17:05:33 dyoung Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.110 2011/02/24 09:38:57 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.109 2011/02/23 17:05:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.110 2011/02/24 09:38:57 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -275,7 +275,8 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * Record snapshot inode. Since this is the newest snapshot,
 	 * it must be placed at the end of the list.
 	 */
-	fs->fs_snapinum[snaploc] = ip->i_number;
+	if (ip->i_nlink > 0)
+		fs->fs_snapinum[snaploc] = ip->i_number;
 
 	mutex_enter(&si->si_lock);
 	if (is_active_snapshot(si, ip))
@@ -389,7 +390,7 @@ out:
 			(void) ffs_truncate(vp, (off_t)0, 0, NOCRED);
 			UFS_WAPBL_END(mp);
 		}
-	} else
+	} else if (ip->i_nlink > 0)
 		vref(vp);
 	return (error);
 }
@@ -721,11 +722,11 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 	struct snap_info *si = VFSTOUFS(mp)->um_snapinfo;
 
 	TAILQ_FOREACH(xp, &si->si_snapshots, i_nextsnap) {
-		if (xp == ip)
-			break;
-		error = expunge(vp, xp, fs, snapacct, BLK_SNAP);
-		if (error)
-			break;
+		if (xp != ip) {
+			error = expunge(vp, xp, fs, snapacct, BLK_SNAP);
+			if (error)
+				break;
+		}
 		if (xp->i_nlink != 0)
 			continue;
 		error = UFS_WAPBL_BEGIN(mp);
