@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.179 2011/02/24 15:27:00 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.180 2011/02/24 15:52:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -653,11 +653,11 @@ XNESTED(mips_fpu_trap)
 /*
  * Send a floating point exception signal to the current LWP.
  */
-	srl		t0, 8
-	sll		t0, 8
-	ori		t3, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
+	srl		a2, 8
+	sll		a2, 8
+	ori		a2, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
 	REG_PROLOGUE
-	REG_S		t3, TF_REG_CAUSE(a3)
+	REG_S		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
 	move		a1, a0				# code = instruction
@@ -673,7 +673,7 @@ XNESTED(mips_fpu_trap)
  */
 3:
 	REG_PROLOGUE
-	REG_S		t3, TF_REG_CAUSE(a3)
+	REG_S		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
 	and		a0, t0, ~MIPS_FPU_EXCEPTION_BITS
