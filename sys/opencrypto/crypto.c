@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.37 2011/01/26 19:52:16 christos Exp $ */
+/*	$NetBSD: crypto.c,v 1.38 2011/02/24 19:35:46 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.37 2011/01/26 19:52:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.38 2011/02/24 19:35:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -76,7 +76,7 @@ kmutex_t crypto_mtx;
 /* below are kludges for residual code wrtitten to FreeBSD interfaces */
   #define SWI_CRYPTO 17
   #define register_swi(lvl, fn)  \
-  softint_establish(SOFTINT_NET, (void (*)(void *))fn, NULL)
+  softint_establish(SOFTINT_NET|SOFTINT_MPSAFE, (void (*)(void *))fn, NULL)
   #define unregister_swi(lvl, fn)  softint_disestablish(softintr_cookie)
   #define setsoftcrypto(x) softint_schedule(x)
 
