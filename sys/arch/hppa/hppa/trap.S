@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.54 2011/02/24 04:28:45 joerg Exp $	*/
+/*	$NetBSD: trap.S,v 1.55 2011/02/24 08:57:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -382,9 +382,6 @@ syscall_entry:
 	mfctl	%cr28, %arg1
 	stw	%arg0, TF_CR24-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg1, TF_CR28-TRAPFRAME_SIZEOF(%sr1, %t3)
-
-	mfctl	CR_TLS, %arg0
-	stw	%arg0, TF_CR27-TRAPFRAME_SIZEOF(%sr1, %t3)
 #endif
 
 	/* setup kernel context */
