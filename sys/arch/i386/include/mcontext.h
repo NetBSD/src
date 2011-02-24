@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2011/02/23 02:58:39 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9 2011/02/24 04:28:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #define _UC_SETSTACK	0x00010000
 #define _UC_CLRSTACK	0x00020000
 #define _UC_VM		0x00040000
+#define	_UC_TLSBASE	0x00080000
 
 /*
  * Layout of mcontext_t according to the System V Application Binary Interface,
@@ -96,11 +97,12 @@ typedef struct {
 typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
+	__greg_t	_mc_tlsbase;
 } mcontext_t;
 
 #define _UC_FXSAVE	0x20	/* FP state is in FXSAVE format in XMM space */
 
-#define _UC_MACHINE_PAD	5	/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD	4	/* Padding appended to ucontext_t */
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
@@ -124,5 +126,15 @@ typedef struct {
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #define	__UCONTEXT_SIZE	776
+
+static inline void *
+__lwp_getprivate_fast(void)
+{
+	void *__tmp;
+
+	__asm volatile("movl %%gs:0, %0" : "=r" (__tmp));
+
+	return __tmp;
+}
 
 #endif	/* !_I386_MCONTEXT_H_ */

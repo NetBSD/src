@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.158 2011/01/11 21:10:17 jruoho Exp $	*/
+/*	$NetBSD: machdep.c,v 1.159 2011/02/24 04:28:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2011/01/11 21:10:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2011/02/24 04:28:44 joerg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1607,6 +1607,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;;
+	*flags |= _UC_TLSBASE;
+
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
 
@@ -1673,6 +1676,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		    sizeof (mcp->__fpregs));
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
+
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)

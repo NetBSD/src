@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2008/10/26 06:58:02 mrg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11 2011/02/24 04:28:48 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -159,5 +159,15 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_PC] = (pc);			\
 	(uc)->uc_mcontext.__gregs[_REG_nPC] = (pc) + 4;			\
 } while (/*CONSTCOND*/0)
+
+static inline void *
+__lwp_getprivate_fast(void)
+{
+	register void *__tmp;
+
+	__asm volatile("mov %%g7, %0" : "=r" (__tmp));
+
+	return __tmp;
+}
 
 #endif	/* !_SPARC_MCONTEXT_H_ */
