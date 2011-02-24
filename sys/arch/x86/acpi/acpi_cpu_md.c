@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.39 2011/02/15 17:50:46 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.40 2011/02/24 13:19:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.39 2011/02/15 17:50:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.40 2011/02/24 13:19:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.39 2011/02/15 17:50:46 jruoho Exp 
 #define MSR_CMPHALT_BMSTS	__BIT(29)
 
 /*
- * AMD families 10h and 11h.
+ * AMD families 10h, 11h, and 14h
  */
 #define MSR_10H_LIMIT		0xc0010061
 #define MSR_10H_CONTROL		0xc0010062
@@ -271,6 +271,10 @@ acpicpu_md_quirks(void)
 
 		case 0x10:
 		case 0x11:
+			val |= ACPICPU_FLAG_C_C1E;
+			/* FALLTHROUGH */
+
+		case 0x14: /* AMD Fusion */
 
 			if ((regs[3] & CPUID_APM_TSC) != 0)
 				val &= ~ACPICPU_FLAG_C_TSC;
@@ -281,7 +285,6 @@ acpicpu_md_quirks(void)
 			if ((regs[3] & CPUID_APM_CPB) != 0)
 				val |= ACPICPU_FLAG_P_TURBO;
 
-			val |= ACPICPU_FLAG_C_C1E;
 			break;
 		}
 
@@ -495,6 +498,7 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 		case 0x10:
 		case 0x11:
+		case 0x14: /* AMD Fusion */
 			msr.ps_control_addr = MSR_10H_CONTROL;
 			msr.ps_control_mask = __BITS(0, 2);
 
