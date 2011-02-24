@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.65 2011/01/06 08:18:42 dholland Exp $	*/
+/*	$NetBSD: function.c,v 1.66 2011/02/24 02:55:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.65 2011/01/06 08:18:42 dholland Exp $");
+__RCSID("$NetBSD: function.c,v 1.66 2011/02/24 02:55:18 jmcneill Exp $");
 #endif
 #endif /* not lint */
 
@@ -453,7 +453,7 @@ f_empty(PLAN *plan, FTSENT *entry)
 		empty = 1;
 		dir = opendir(entry->fts_accpath);
 		if (dir == NULL)
-			err(1, "%s", entry->fts_accpath);
+			return (0);
 		for (dp = readdir(dir); dp; dp = readdir(dir))
 			if (dp->d_name[0] != '.' ||
 			    (dp->d_name[1] != '\0' &&
