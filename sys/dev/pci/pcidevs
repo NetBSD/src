@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1063 2011/02/24 00:33:17 matt Exp $
+$NetBSD: pcidevs,v 1.1064 2011/02/24 20:00:59 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2674,6 +2674,7 @@ product INTEL 82945GME_HB	0x27ac	82945GME Host Bridge
 product INTEL 82945GME_IGD	0x27ae	82945GME Integrated Graphics Device
 product INTEL 82801G_LPC	0x27b8	82801GB/GR LPC Interface Bridge
 product INTEL 82801GBM_LPC	0x27b9	82801GBM LPC Interface Bridge
+product INTEL NM10_LPC		0x27bc	NM10 Family LPC Interface Bridge
 product INTEL 82801GHM_LPC	0x27bd	82801GHM LPC Interface Bridge
 product INTEL 82801G_SATA	0x27c0	82801GB/GR SATA Controller
 product INTEL 82801G_SATA_AHCI	0x27c1	82801GB/GR AHCI SATA Controller
@@ -3891,7 +3892,7 @@ product	RALINK	RT2560		0x0201	RT2560 802.11b/g
 product	RALINK	RT2561S		0x0301	RT2561S 802.11b/g
 product	RALINK	RT2561		0x0302	RT2561 802.11b/g
 product	RALINK	RT2661		0x0401	RT2661 802.11b/g/n
-product	RALINK	RT3090		0x3090	RT3090 802.11b/g/n w/ BlueTooth
+product	RALINK	RT3090		0x3090	RT3090 802.11b/g/n
 
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
