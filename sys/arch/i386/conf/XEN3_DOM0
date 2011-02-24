@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.43 2011/02/17 22:00:36 jym Exp $
+#	$NetBSD: XEN3_DOM0,v 1.44 2011/02/24 04:42:54 jruoho Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -39,6 +39,9 @@ options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# CPU features
+est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 
 #options 	MTRR		# memory-type range register syscall support
 
