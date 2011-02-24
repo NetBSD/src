@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.13 2011/02/23 07:47:09 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14 2011/02/24 00:40:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -145,7 +145,8 @@ typedef struct {
 
 #endif /* !__ASSEMBLER__ */
 
-#define _UC_MACHINE_PAD	16	/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD		16	/* Padding appended to ucontext_t */
+#define _UC_MACHINE32_PAD	16	/* Padding appended to ucontext_t */
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
