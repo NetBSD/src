@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.132 2011/02/10 12:37:58 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.133 2011/02/24 03:37:02 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.132 2011/02/10 12:37:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.133 2011/02/24 03:37:02 macallan Exp $");
 
 #include "opt_pci.h"
 
@@ -315,6 +315,26 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			if (pci_mapreg_info(pc, tag, bar, type,
 			    &r->r_offset, &r->r_size, &r->r_flags) != 0)
 				break;
+			if ((PCI_VENDOR(id) == PCI_VENDOR_ATI) && (bar == 0x10)
+			    && (r->r_size = 0x1000000)) {
+				struct pci_range *nr;
+				/*
+				 * this has to be a mach64
+				 * split things up so each half-aperture can
+				 * be mapped PREFETCHABLE except the last page
+				 * which may contain registers
+				 */
+				r->r_size = 0x7ff000;
+				r->r_flags = BUS_SPACE_MAP_LINEAR |
+					     BUS_SPACE_MAP_PREFETCHABLE;
+				nr = &sc->PCI_SC_DEVICESC(device,
+				    function).c_range[i++];
+				nr->r_offset = r->r_offset + 0x800000;
+				nr->r_size = 0x7ff000;
+				nr->r_flags = BUS_SPACE_MAP_LINEAR |
+					      BUS_SPACE_MAP_PREFETCHABLE;
+			}
+			
 		}
 	}
 
