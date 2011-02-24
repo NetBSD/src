@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.44 2011/02/24 04:42:54 jruoho Exp $
+#	$NetBSD: XEN3_DOM0,v 1.45 2011/02/24 07:51:16 jruoho Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -29,10 +29,6 @@ makeoptions 	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
-
-# Enhanced SpeedStep Technology in the Pentium M
-options 	ENHANCED_SPEEDSTEP
-#options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 # AMD PowerNow! K7
 options 	POWERNOW_K7
