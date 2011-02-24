@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.45 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.46 2011/02/24 04:28:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.45 2011/02/08 20:20:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.46 2011/02/24 04:28:46 joerg Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -261,6 +261,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save exception frame information. */
 	mcp->__mc_pad.__mc_frame.__mcf_format = format;
 	if (format >= FMT4) {
@@ -420,6 +423,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 		if (l == curlwp)
 			m68881_restore(fpf);
 	}
+
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 	mutex_enter(l->l_proc->p_lock);
 	if (flags & _UC_SETSTACK)
