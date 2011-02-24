@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.41 2011/02/23 11:43:22 jruoho Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.42 2011/02/24 15:42:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@ struct cpufeature_attach_args {
 #include "opt_multiprocessor.h"
 #ifndef XEN
 #include "opt_intel_odcm.h"
-#include "opt_via_c7temp.h"
 #endif
 #endif /* defined(_KERNEL_OPT) */
 

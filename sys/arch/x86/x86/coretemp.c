@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.21 2011/02/21 15:10:54 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.22 2011/02/24 15:42:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.21 2011/02/21 15:10:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.22 2011/02/24 15:42:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -128,7 +128,7 @@ coretemp_match(device_t parent, cfdata_t cf, void *aux)
 	struct cpu_info *ci = cfaa->ci;
 	uint32_t regs[4];
 
-	if (strcmp(cfaa->name, "coretemp") != 0)
+	if (strcmp(cfaa->name, "temperature") != 0)
 		return 0;
 
 	if (cpu_vendor != CPUVENDOR_INTEL || cpuid_level < 0x06)
