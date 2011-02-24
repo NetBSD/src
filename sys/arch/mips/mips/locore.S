@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.177 2011/02/20 16:58:33 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.178 2011/02/24 15:25:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -621,13 +621,11 @@ XNESTED(mips_fpu_trap)
 	 nop
 
 /*
- * We got an unimplemented operation trap so
- * We received an unimplemented operation trap.
+ * We received an unimplemented operation trap so
+ * fetch the instruction and emulate the instruction.
  *
  * We check whether it's an unimplemented FP instruction here rather
  * than invoking MachEmulateInst(), since it is faster.
- *
- * fetch the instruction and emulate the instruction.
  */
 	bgez		a2, 1f			# Check the branch delay bit.
 	 nop
