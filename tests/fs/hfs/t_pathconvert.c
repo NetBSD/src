@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pathconvert.c,v 1.3 2011/02/24 17:26:46 pooka Exp $	*/
+/*	$NetBSD: t_pathconvert.c,v 1.4 2011/02/24 17:29:48 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -41,9 +41,6 @@ ATF_TC_BODY(colonslash, tc)
 	int offset, nbytes;
 	bool ok = false;
 
-	if (strcmp(atf_config_get("atf_arch"), "sparc64") == 0)
-		atf_tc_expect_signal(-1, "PR kern/44631");
-
 	snprintf(thecmd, sizeof(thecmd), "uudecode %s/colon.hfs.bz2.uue",
 	    atf_tc_get_config_var(tc, "srcdir"));
 	RZ(system(thecmd));
@@ -57,6 +54,9 @@ ATF_TC_BODY(colonslash, tc)
 
 	RL(rump_sys_mkdir("/mp", 0777));
 	RZ(rump_pub_etfs_register(FAKEBLK, IMGNAME, RUMP_ETFS_BLK));
+
+	if (strcmp(atf_config_get("atf_arch"), "sparc64") == 0)
+		atf_tc_expect_signal(-1, "PR kern/44631");
 	RL(rump_sys_mount(MOUNT_HFS, "/mp", 0, &args, sizeof args));
 
 	RL(dirfd = rump_sys_open("/mp", O_RDONLY));
