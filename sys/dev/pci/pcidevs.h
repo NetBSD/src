@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1059 2011/02/23 12:22:42 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1060 2011/02/24 00:33:44 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1062 2011/02/23 12:22:20 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.1063 2011/02/24 00:33:17 matt Exp
  */
 
 /*
@@ -3898,6 +3898,7 @@
 #define	PCI_PRODUCT_RALINK_RT2561S	0x0301		/* RT2561S 802.11b/g */
 #define	PCI_PRODUCT_RALINK_RT2561	0x0302		/* RT2561 802.11b/g */
 #define	PCI_PRODUCT_RALINK_RT2661	0x0401		/* RT2661 802.11b/g/n */
+#define	PCI_PRODUCT_RALINK_RT3090	0x3090		/* RT3090 802.11b/g/n w/ BlueTooth */
 
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
