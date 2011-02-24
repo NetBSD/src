@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.45 2011/02/24 07:51:16 jruoho Exp $
+#	$NetBSD: XEN3_DOM0,v 1.46 2011/02/24 10:56:01 jruoho Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -30,14 +30,9 @@ makeoptions 	CPUFLAGS="-march=i686"
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
-# AMD PowerNow! K7
-options 	POWERNOW_K7
-
-# AMD PowerNow! and Cool`n'Quiet technology
-options 	POWERNOW_K8
-
 # CPU features
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 
 #options 	MTRR		# memory-type range register syscall support
 

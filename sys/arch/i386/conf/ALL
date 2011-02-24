@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.294 2011/02/23 11:43:22 jruoho Exp $
+# $NetBSD: ALL,v 1.295 2011/02/24 10:56:01 jruoho Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.294 $"
+#ident 		"ALL-$Revision: 1.295 $"
 
 maxusers	64		# estimated number of users
 
@@ -29,16 +29,11 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 options 	X86EMU		# 386 Real Mode emulator
 options 	PAE		# PAE mode (36 bits physical addressing)
 
-# AMD PowerNow! K7
-options 	POWERNOW_K7
-
-# AMD PowerNow! and Cool`n'Quiet technology
-options 	POWERNOW_K8
-
 # CPU features
 coretemp*	at cpu?		# Intel on-die thermal sensor
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 padlock0	at cpu0		# VIA PadLock
+powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 options 	INTEL_ONDEMAND_CLOCKMOD

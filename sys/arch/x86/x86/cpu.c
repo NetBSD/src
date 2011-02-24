@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.83 2011/02/23 11:43:23 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.84 2011/02/24 10:56:02 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2011/02/23 11:43:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2011/02/24 10:56:02 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -466,6 +466,12 @@ cpu_rescan(device_t self, const char *ifattr, const int *locators)
 
 		if (ci->ci_frequency == NULL) {
 			cfaa.name = "est";
+			ci->ci_frequency = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+
+		if (ci->ci_frequency == NULL) {
+			cfaa.name = "powernow";
 			ci->ci_frequency = config_found_ia(self,
 			    "cpufeaturebus", &cfaa, NULL);
 		}
