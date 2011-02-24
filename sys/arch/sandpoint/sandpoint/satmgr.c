@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.3 2011/02/10 13:54:45 nisimura Exp $ */
+/* $NetBSD: satmgr.c,v 1.4 2011/02/24 19:32:34 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,10 +71,12 @@ struct satmgr_softc {
 	uint32_t		sc_ierror, sc_overr;
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_rdcv, sc_wrcv;
-	char sc_rd_buf[16], *sc_rd_lim, *sc_rd_cur, *sc_rd_ptr;
-	char sc_wr_buf[16], *sc_wr_lim, *sc_wr_cur, *sc_wr_ptr;
-	int sc_rd_cnt, sc_wr_cnt;
-	int sc_btnstate;
+	char			sc_rd_buf[16];
+	char			*sc_rd_lim, *sc_rd_cur, *sc_rd_ptr;
+	char			sc_wr_buf[16];
+	char			*sc_wr_lim, *sc_wr_cur, *sc_wr_ptr;
+	int			sc_rd_cnt, sc_wr_cnt;
+	int			sc_btnstate;
 	struct satops		*sc_ops;
 };
 
@@ -155,10 +157,10 @@ satmgr_match(device_t parent, cfdata_t match, void *aux)
 	int unit = eaa->eumb_unit;
 
 	if (unit == EUMBCF_UNIT_DEFAULT && found == 0)
-		return (1);
+		return 1;
 	if (unit == 0 || unit == 1)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 static void
@@ -208,6 +210,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
 	intr_establish(epicirq + 16, IST_LEVEL, IPL_SERIAL, hwintr, sc);
+	aprint_normal_dev(self, "interrupting at irq %d\n", epicirq + 16);
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, swintr, sc);
 
 	CSR_WRITE(sc, IER, 0x7f); /* all but MSR */
@@ -289,8 +292,7 @@ satmgr_sysctl_wdogenable(SYSCTLFN_ARGS)
 		callout_setfunc(&sc->sc_ch_wdog, wdog_tickle, sc);
 		callout_schedule(&sc->sc_ch_wdog, 90 * hz);
 		send_sat(sc, "JJ");
-	}
-	else {
+	} else {
 		callout_stop(&sc->sc_ch_wdog);
 		send_sat(sc, "KK");
 	}
@@ -466,8 +468,9 @@ filt_read(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops read_filtops =
-	{ 1, NULL, filt_rdetach, filt_read };			
+static const struct filterops read_filtops = {
+	1, NULL, filt_rdetach, filt_read
+};			
 
 static int
 satkqfilter(dev_t dev, struct knote *kn)
@@ -482,7 +485,7 @@ satkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
@@ -491,7 +494,7 @@ satkqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	mutex_exit(&sc->sc_lock);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -595,7 +598,7 @@ swintr(void *arg)
 		sc->sc_rd_cnt = 0;
 		sc->sc_rd_ptr = ptr;
 		mutex_spin_exit(&sc->sc_lock);
-		return; /* drop characters down to floor */
+		return;		/* drop characters down to the floor */
 	}
 	cv_signal(&sc->sc_rdcv);
 	selnotify(&sc->sc_rsel, 0, 0);
