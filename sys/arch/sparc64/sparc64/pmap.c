@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.269 2010/11/12 07:59:27 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.270 2011/02/24 08:42:30 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2010/11/12 07:59:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2011/02/24 08:42:30 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1975,11 +1975,7 @@ pmap_remove_all(struct pmap *pm)
 	 * XXXMRG: couldn't we do something less severe here, and
 	 * only flush the right context on each CPU?
 	 */
-#ifdef MULTIPROCESSOR
-	smp_blast_dcache(pmap_cpus_active);
-#else
-	sp_blast_dcache(dcache_size, dcache_line_size);
-#endif
+	blast_dcache();
 }
 
 /*
