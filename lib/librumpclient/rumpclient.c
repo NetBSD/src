@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.35 2011/02/24 12:25:44 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.36 2011/02/24 14:22:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -750,9 +750,9 @@ rumpclient_init()
 #define FINDSYM2(_name_,_syscall_)					\
 	if ((host_##_name_ = rumphijack_dlsym(RTLD_NEXT,		\
 	    #_syscall_)) == NULL) {					\
-		if (rumphijack_dlsym == dlsym)				\
+		if (rumphijack_dlsym == rumpclient__dlsym)		\
 			host_##_name_ = _name_; /* static fallback */	\
-		else							\
+		if (host_##_name_ == NULL)				\
 			errx(1, "cannot find %s: %s", #_syscall_,	\
 			    dlerror());					\
 	}
