@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.17 2011/02/24 14:33:23 christos Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.18 2011/02/24 18:33:06 plunky Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -910,7 +910,7 @@ int	blen;
 			" Forward: Pkts in %" PRId64 " Bytes in %" PRId64
 			" Pkts out %" PRId64 " Bytes out %" PRId64
 			" Backward: Pkts in %" PRId64 " Bytes in %" PRId64
-			" Pkts out %" PRId64 " Bytes out %" PRId64,
+			" Pkts out %" PRId64 " Bytes out %" PRId64;
 #else
 			" Forward: Pkts in %qd Bytes in %qd Pkts out %qd Bytes out %qd Backward: Pkts in %qd Bytes in %qd Pkts out %qd Bytes out %qd";
 #endif /* PRId64 */
