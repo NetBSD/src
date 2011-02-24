@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.111 2011/02/23 11:43:23 jruoho Exp $
+#	$NetBSD: files.xen,v 1.112 2011/02/24 04:42:54 jruoho Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -161,6 +161,7 @@ endif
 
 # xen specific mainbus attributes
 define cpubus { [apid = -1] }
+define cpufeaturebus {}
 define ioapicbus { [apid = -1] }
 define apmbus {}
 define pnpbiosbus {}
@@ -284,15 +285,22 @@ device ipmi : sysmon_envsys, sysmon_wdog
 attach ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
-# CPUS
-
-device cpu
+# CPUs
+#
+device cpu: cpufeaturebus
 attach cpu at cpubus
 
 device vcpu
 attach vcpu at xendevbus
 
 file	arch/xen/x86/cpu.c		cpu | vcpu
+
+# CPU features
+#
+device	est
+attach	est at cpufeaturebus
+file	arch/x86/x86/est.c		est
+file	arch/x86/x86/intel_busclock.c	est
 
 #
 # Compatibility modules
