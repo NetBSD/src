@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.34 2011/02/24 09:52:34 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.35 2011/02/24 12:25:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -717,7 +717,16 @@ doinit(void)
 	return 0;
 }
 
-void *(*rumpclient_dlsym)(void *, const char *);
+void *rumpclient__dlsym(void *, const char *);
+void *rumphijack_dlsym(void *, const char *);
+void *
+rumpclient__dlsym(void *handle, const char *symbol)
+{
+
+	return dlsym(handle, symbol);
+}
+__weak_alias(rumphijack_dlsym,rumpclient__dlsym);
+
 static int init_done = 0;
 
 int
@@ -734,18 +743,14 @@ rumpclient_init()
 
 	sigfillset(&fullset);
 
-	/* dlsym overrided by rumphijack? */
-	if (!rumpclient_dlsym)
-		rumpclient_dlsym = dlsym;
-
 	/*
 	 * sag mir, wo die symbol sind.  zogen fort, der krieg beginnt.
 	 * wann wird man je verstehen?  wann wird man je verstehen?
 	 */
 #define FINDSYM2(_name_,_syscall_)					\
-	if ((host_##_name_ = rumpclient_dlsym(RTLD_NEXT,		\
+	if ((host_##_name_ = rumphijack_dlsym(RTLD_NEXT,		\
 	    #_syscall_)) == NULL) {					\
-		if (rumpclient_dlsym == dlsym)				\
+		if (rumphijack_dlsym == dlsym)				\
 			host_##_name_ = _name_; /* static fallback */	\
 		else							\
 			errx(1, "cannot find %s: %s", #_syscall_,	\

@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.66 2011/02/23 15:44:38 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.67 2011/02/24 12:25:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.66 2011/02/23 15:44:38 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.67 2011/02/24 12:25:44 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -429,10 +429,8 @@ static void __attribute__((constructor))
 rcinit(void)
 {
 	char buf[1024];
-	extern void *(*rumpclient_dlsym)(void *, const char *);
 	unsigned i, j;
 
-	rumpclient_dlsym = rumphijack_dlsym;
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_daemon = dlsym(RTLD_NEXT, "daemon");
 	host_execve = dlsym(RTLD_NEXT, "execve");
