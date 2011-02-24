@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.26 2011/02/24 10:56:02 jruoho Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.27 2011/02/24 13:58:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.26 2011/02/24 10:56:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.27 2011/02/24 13:58:39 jruoho Exp $");
 
 #include "opt_intel_odcm.h"
-#include "opt_via_c7temp.h"
 #include "opt_xen.h"
 
 #include <sys/param.h>
@@ -795,18 +794,6 @@ cpu_identify(struct cpu_info *ci)
 	} else
 		i386_use_fxsave = 0;
 #endif	/* i386 */
-
-#ifdef VIA_C7TEMP
-	if (cpu_vendor == CPUVENDOR_IDT &&
-	    CPUID2FAMILY(ci->ci_signature) == 6 &&
-	    CPUID2MODEL(ci->ci_signature) >= 0x9) {
-		uint32_t descs[4];
-
-		x86_cpuid(0xc0000000, descs);
-		if (descs[0] >= 0xc0000002)	/* has temp sensor */
-			viac7temp_register(ci);
-	}
-#endif
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	if (cpuid_level >= 1) {
