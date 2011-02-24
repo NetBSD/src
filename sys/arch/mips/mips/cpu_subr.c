@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.3 2011/02/20 16:38:13 rmind Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.4 2011/02/24 04:28:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.4 2011/02/24 04:28:47 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -367,6 +367,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save floating point register context, if any. */
 	if (fpu_used_p(l)) {
 		size_t fplen;
@@ -449,6 +452,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		struct pcb * const pcb = lwp_getpcb(l);
 		memcpy(&pcb->pcb_fpregs, &mcp->__fpregs, fplen);
 	}
+
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.94 2011/02/24 04:28:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.94 2011/02/24 04:28:48 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1227,6 +1227,8 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		tf->tf_out[6]    = (uint64_t)gr[_REG32_O6];
 		tf->tf_out[7]    = (uint64_t)gr[_REG32_O7];
 		/* %asi restored above; %fprs not yet supported. */
+
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_G7]);
 
 		/* XXX mcp->__gwins */
 	}

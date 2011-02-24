@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.48 2011/02/20 16:03:49 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.49 2011/02/24 04:28:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -148,6 +148,9 @@ typedef	volatile unsigned int	__cpu_simple_lock_t;
 #define	__HAVE_CPU_COUNTER
 #endif
 #define __HAVE_CPU_UAREA_ROUTINES
+#if 0
+#define	__HAVE___LWP_GETPRIVATE_FAST
+#endif
 
 #if !defined(__mips_o32)
 #define	__HAVE_ATOMIC64_OPS

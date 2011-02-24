@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.90 2011/01/28 21:06:08 uwe Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.91 2011/02/24 04:28:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.90 2011/01/28 21:06:08 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.91 2011/02/24 04:28:47 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.90 2011/01/28 21:06:08 uwe Exp $")
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ucontext.h>
+#include <sys/cpu.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -514,6 +515,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_r1     = gr[_REG_R1];
 		tf->tf_r0     = gr[_REG_R0];
 		tf->tf_r15    = gr[_REG_R15];
+
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_GBR]);
 	}
 
 #if 0
@@ -585,4 +588,12 @@ cpu_reset(void)
 	goto *(void *)0xa0000000;
 #endif
 	/* NOTREACHED */
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+
+	l->l_md.md_regs->tf_gbr = (int)addr;
+	return 0;
 }
