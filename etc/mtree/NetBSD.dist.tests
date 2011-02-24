@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.28 2011/02/18 13:08:41 pooka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.29 2011/02/24 10:29:04 pooka Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -217,6 +217,8 @@
 ./usr/tests/sys
 ./usr/tests/sys/rc
 ./usr/tests/syscall
+./usr/tests/toolchain
+./usr/tests/toolchain/cc
 ./usr/tests/usr.bin
 ./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.sbin
