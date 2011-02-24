@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2011/02/24 11:22:34 jruoho Exp $
+#	$NetBSD: Makefile,v 1.67 2011/02/24 14:08:51 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -145,6 +145,7 @@ SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
 SUBDIR+=	padlock
+SUBDIR+=	viac7temp
 SUBDIR+=	wmieeepc
 .endif
 
