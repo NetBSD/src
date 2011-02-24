@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.54 2011/02/24 10:56:03 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.55 2011/02/24 19:00:58 jruoho Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2011/02/24 10:56:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2011/02/24 19:00:58 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -286,13 +286,7 @@ cpu_rescan(device_t self, const char *ifattr, const int *locators)
 	if (ifattr_match(ifattr, "cpufeaturebus")) {
 
 		if (ci->ci_frequency == NULL) {
-			cfaa.name = "est";
-			ci->ci_frequency = config_found_ia(self,
-			    "cpufeaturebus", &cfaa, NULL);
-		}
-
-		if (ci->ci_frequency == NULL) {
-			cfaa.name = "powernow";
+			cfaa.name = "frequency";
 			ci->ci_frequency = config_found_ia(self,
 			    "cpufeaturebus", &cfaa, NULL);
 		}
