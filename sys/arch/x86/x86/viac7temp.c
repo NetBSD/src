@@ -1,4 +1,4 @@
-/* $NetBSD: viac7temp.c,v 1.4 2011/02/24 13:58:39 jruoho Exp $ */
+/* $NetBSD: viac7temp.c,v 1.5 2011/02/24 15:42:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.4 2011/02/24 13:58:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.5 2011/02/24 15:42:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ viac7temp_match(device_t parent, cfdata_t cf, void *aux)
 	uint32_t family, model;
 	uint32_t descs[4];
 
-	if (strcmp(cfaa->name, "viac7temp") != 0)
+	if (strcmp(cfaa->name, "temperature") != 0)
 		return 0;
 
 	if (cpu_vendor != CPUVENDOR_IDT)

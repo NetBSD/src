@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.1 2011/02/24 10:56:02 jruoho Exp $ */
+/*	$NetBSD: powernow.c,v 1.2 2011/02/24 15:42:17 jruoho Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.1 2011/02/24 10:56:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.2 2011/02/24 15:42:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,7 +147,7 @@ powernow_match(device_t parent, cfdata_t cf, void *aux)
 	struct cpu_info *ci = cfaa->ci;
 	uint32_t family, regs[4];
 
-	if (strcmp(cfaa->name, "powernow") != 0)
+	if (strcmp(cfaa->name, "frequency") != 0)
 		return 0;
 
 	if (cpu_vendor != CPUVENDOR_AMD)
