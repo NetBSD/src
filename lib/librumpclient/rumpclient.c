@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.33 2011/02/18 16:22:10 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.34 2011/02/24 09:52:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -43,6 +43,7 @@ __RCSID("$NetBSD");
 
 #include <assert.h>
 #include <dlfcn.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <link.h>
@@ -743,24 +744,29 @@ rumpclient_init()
 	 */
 #define FINDSYM2(_name_,_syscall_)					\
 	if ((host_##_name_ = rumpclient_dlsym(RTLD_NEXT,		\
-	    #_syscall_)) == NULL)					\
-		/* host_##_name_ = _syscall_ */;
+	    #_syscall_)) == NULL) {					\
+		if (rumpclient_dlsym == dlsym)				\
+			host_##_name_ = _name_; /* static fallback */	\
+		else							\
+			errx(1, "cannot find %s: %s", #_syscall_,	\
+			    dlerror());					\
+	}
 #define FINDSYM(_name_) FINDSYM2(_name_,_name_)
-	FINDSYM2(socket,__socket30);
-	FINDSYM(close);
-	FINDSYM(connect);
-	FINDSYM(fcntl);
-	FINDSYM(poll);
-	FINDSYM(read);
-	FINDSYM(sendto);
-	FINDSYM(setsockopt);
-	FINDSYM(dup);
-	FINDSYM(kqueue);
-	FINDSYM(execve);
+	FINDSYM2(socket,__socket30)
+	FINDSYM(close)
+	FINDSYM(connect)
+	FINDSYM(fcntl)
+	FINDSYM(poll)
+	FINDSYM(read)
+	FINDSYM(sendto)
+	FINDSYM(setsockopt)
+	FINDSYM(dup)
+	FINDSYM(kqueue)
+	FINDSYM(execve)
 #if !__NetBSD_Prereq__(5,99,7)
-	FINDSYM(kevent);
+	FINDSYM(kevent)
 #else
-	FINDSYM2(kevent,_sys___kevent50);
+	FINDSYM2(kevent,_sys___kevent50)
 #endif
 #undef	FINDSYM
 #undef	FINDSY2
