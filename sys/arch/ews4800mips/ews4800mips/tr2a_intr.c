@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.13 2011/02/20 07:55:20 matt Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.14 2011/02/24 14:40:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.13 2011/02/20 07:55:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.14 2011/02/24 14:40:43 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -287,6 +287,7 @@ tr2a_intr(int ppl, vaddr_t pc, uint32_t status)
 			*INTC_CLEAR_REG = 0x14;
 			*INTC_STATUS_REG;
 		}
+		intc_cause = *INTC_STATUS_REG & *INTC_MASK_REG;
 	}
 }
 
