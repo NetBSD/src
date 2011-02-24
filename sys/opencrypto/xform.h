@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.10 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: xform.h,v 1.11 2011/02/24 20:03:41 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -85,6 +85,7 @@ extern struct auth_hash auth_hash_hmac_sha2_384;
 extern struct auth_hash auth_hash_hmac_sha2_512;
 
 extern struct comp_algo comp_algo_deflate;
+extern struct comp_algo comp_algo_deflate_nogrow;
 extern struct comp_algo comp_algo_gzip;
 
 #ifdef _KERNEL

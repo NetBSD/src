@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.24 2011/02/18 20:40:58 drochner Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.25 2011/02/24 20:03:41 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.24 2011/02/18 20:40:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.25 2011/02/24 20:03:41 drochner Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -96,7 +96,7 @@ ipcomp_algorithm_lookup(int alg)
 		return NULL;
 	switch (alg) {
 	case SADB_X_CALG_DEFLATE:
-		return &comp_algo_deflate;
+		return &comp_algo_deflate_nogrow;
 	}
 	return NULL;
 }
@@ -190,6 +190,7 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len - (skip + hlen);
+	crp->crp_olen = MCLBYTES; /* hint to decompression code */
 	crp->crp_flags = CRYPTO_F_IMBUF;
 	crp->crp_buf = m;
 	crp->crp_callback = ipcomp_input_cb;

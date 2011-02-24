@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.18 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: xform.c,v 1.19 2011/02/24 20:03:41 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.18 2009/03/25 01:26:13 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.19 2011/02/24 20:03:41 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -188,6 +188,11 @@ struct auth_hash auth_hash_hmac_sha2_512 = {
 /* Compression instance */
 struct comp_algo comp_algo_deflate = {
 	CRYPTO_DEFLATE_COMP, "Deflate",
+	90
+};
+
+struct comp_algo comp_algo_deflate_nogrow = {
+	CRYPTO_DEFLATE_COMP_NOGROW, "Deflate",
 	90
 };
 

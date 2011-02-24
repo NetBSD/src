@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.18 2011/02/18 22:02:09 drochner Exp $ */
+/*	$NetBSD: deflate.c,v 1.19 2011/02/24 20:03:41 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.18 2011/02/18 22:02:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.19 2011/02/24 20:03:41 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -71,7 +71,8 @@ ocf_zfree(void *nil, void *ptr)
 }
 
 u_int32_t
-deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
+deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out,
+	       int size_hint)
 {
 	/* decomp indicates whether we compress (0) or decompress (1) */
 
@@ -100,7 +101,7 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 	 	 * updated while the decompression is going on
 	 	 */
 
-		buf[0].size = size * 4;
+		buf[0].size = MAX(size * 4, size_hint);
 	}
 	buf[0].out = malloc(buf[0].size, M_CRYPTO_DATA, M_NOWAIT);
 	if (buf[0].out == NULL)
@@ -218,7 +219,7 @@ static const char gzip_header[10] = {
 
 u_int32_t
 gzip_global(u_int8_t *data, u_int32_t size,
-	int decomp, u_int8_t **out)
+	int decomp, u_int8_t **out, int size_hint)
 {
 	/* decomp indicates whether we compress (0) or decompress (1) */
 	z_stream zbuf;
