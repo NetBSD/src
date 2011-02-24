@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.27 2011/02/10 21:00:42 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.28 2011/02/24 20:03:41 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.27 2011/02/10 21:00:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.28 2011/02/24 20:03:41 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,7 +535,8 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 	if (crd->crd_flags & CRD_F_COMP)
 		result = cxf->compress(data, crd->crd_len, &out);
 	else
-		result = cxf->decompress(data, crd->crd_len, &out);
+		result = cxf->decompress(data, crd->crd_len, &out,
+					 *res_size);
 
 	free(data, M_CRYPTO_DATA);
 	if (result == 0)
@@ -546,12 +547,12 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 	 */
 	*res_size = (int)result;
 	/* Check the compressed size when doing compression */
-	if (crd->crd_flags & CRD_F_COMP) {
-		if (result > crd->crd_len) {
+	if (crd->crd_flags & CRD_F_COMP &&
+	    sw->sw_alg == CRYPTO_DEFLATE_COMP_NOGROW &&
+	    result >= crd->crd_len) {
 			/* Compression was useless, we lost time */
 			free(out, M_CRYPTO_DATA);
 			return 0;
-		}
 	}
 
 	COPYBACK(outtype, buf, crd->crd_skip, result, out);
@@ -788,6 +789,11 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_cxf = cxf;
 			break;
 
+		case CRYPTO_DEFLATE_COMP_NOGROW:
+			cxf = &swcr_comp_algo_deflate_nogrow;
+			(*swd)->sw_cxf = cxf;
+			break;
+
 		case CRYPTO_GZIP_COMP:
 			cxf = &swcr_comp_algo_gzip;
 			(*swd)->sw_cxf = cxf;
@@ -884,6 +890,7 @@ swcr_freesession(void *arg, u_int64_t tid)
 			break;
 
 		case CRYPTO_DEFLATE_COMP:
+		case CRYPTO_DEFLATE_COMP_NOGROW:
 		case CRYPTO_GZIP_COMP:
 			cxf = swd->sw_cxf;
 			break;
@@ -983,6 +990,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 			break;
 
 		case CRYPTO_DEFLATE_COMP:
+		case CRYPTO_DEFLATE_COMP_NOGROW:
 		case CRYPTO_GZIP_COMP:
 			DPRINTF(("swcr_process: compdec for %d\n", sw->sw_alg));
 			if ((crp->crp_etype = swcr_compdec(crd, sw,
@@ -1036,6 +1044,7 @@ swcr_init(void)
 	REGISTER(CRYPTO_SHA1);
 	REGISTER(CRYPTO_RIJNDAEL128_CBC);
 	REGISTER(CRYPTO_DEFLATE_COMP);
+	REGISTER(CRYPTO_DEFLATE_COMP_NOGROW);
 	REGISTER(CRYPTO_GZIP_COMP);
 #undef REGISTER
 }
