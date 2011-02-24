@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253 2011/02/23 13:03:32 pooka Exp $
+# $NetBSD: mi,v 1.254 2011/02/24 10:30:03 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2030,6 +2030,11 @@
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
+./usr/tests/toolchain	tests-syscall-tests	atf
+./usr/tests/toolchain/Atffile	tests-syscall-tests	atf
+./usr/tests/toolchain/cc	tests-syscall-tests	atf
+./usr/tests/toolchain/cc/Atffile	tests-syscall-tests	atf
+./usr/tests/toolchain/cc/t_hello	tests-syscall-tests	atf
 ./usr/tests/usr.bin				tests-util-tests
 ./usr/tests/usr.bin/Atffile			tests-sbin-tests	atf
 ./usr/tests/usr.bin/rump_server			tests-util-tests
