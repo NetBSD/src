@@ -728,9 +728,9 @@ struct drm_driver_info {
 	int	(*irq_postinstall)(struct drm_device *dev);
 	void	(*irq_uninstall)(struct drm_device *dev);
 	irqreturn_t	(*irq_handler)(DRM_IRQ_ARGS);
-	u32	(*get_vblank_counter)(struct drm_device *dev, int crtc);
-	int	(*enable_vblank)(struct drm_device *dev, int crtc);
-	void	(*disable_vblank)(struct drm_device *dev, int crtc);
+	u32	(*get_vblank_counter)(struct drm_device *dev, unsigned int crtc);
+	int	(*enable_vblank)(struct drm_device *dev, unsigned int crtc);
+	void	(*disable_vblank)(struct drm_device *dev, unsigned int crtc);
 
 	drm_pci_id_list_t *id_entry;	/* PCI ID, name, and chipset private */
 
@@ -1075,14 +1075,14 @@ irqreturn_t drm_irq_handler(DRM_IRQ_ARGS);
 void	drm_driver_irq_preinstall(struct drm_device *dev);
 void	drm_driver_irq_postinstall(struct drm_device *dev);
 void	drm_driver_irq_uninstall(struct drm_device *dev);
-void	drm_handle_vblank(struct drm_device *dev, int crtc);
-u32	drm_vblank_count(struct drm_device *dev, int crtc);
-int	drm_vblank_get(struct drm_device *dev, int crtc);
-void	drm_vblank_put(struct drm_device *dev, int crtc);
+void	drm_handle_vblank(struct drm_device *dev, unsigned int crtc);
+u32	drm_vblank_count(struct drm_device *dev, unsigned int crtc);
+int	drm_vblank_get(struct drm_device *dev, unsigned int crtc);
+void	drm_vblank_put(struct drm_device *dev, unsigned int crtc);
 void	drm_vblank_cleanup(struct drm_device *dev);
 int	drm_vblank_wait(struct drm_device *dev, unsigned int *vbl_seq);
 int	drm_vblank_init(struct drm_device *dev, int num_crtcs);
-void	drm_vbl_send_signals(struct drm_device *dev, int crtc);
+void	drm_vbl_send_signals(struct drm_device *dev, unsigned int crtc);
 int 	drm_modeset_ctl(struct drm_device *dev, void *data,
 			struct drm_file *file_priv);
 

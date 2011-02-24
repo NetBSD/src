@@ -68,7 +68,7 @@ irqreturn_t mach64_driver_irq_handler(DRM_IRQ_ARGS)
 	return IRQ_NONE;
 }
 
-u32 mach64_get_vblank_counter(struct drm_device * dev, int crtc)
+u32 mach64_get_vblank_counter(struct drm_device * dev, unsigned int crtc)
 {
 	const drm_mach64_private_t *const dev_priv = dev->dev_private;
 
@@ -78,7 +78,7 @@ u32 mach64_get_vblank_counter(struct drm_device * dev, int crtc)
 	return atomic_read(&dev_priv->vbl_received);
 }
 
-int mach64_enable_vblank(struct drm_device * dev, int crtc)
+int mach64_enable_vblank(struct drm_device * dev, unsigned int crtc)
 {
 	drm_mach64_private_t *dev_priv = dev->dev_private;
 	u32 status = MACH64_READ(MACH64_CRTC_INT_CNTL);
@@ -98,7 +98,7 @@ int mach64_enable_vblank(struct drm_device * dev, int crtc)
 	return 0;
 }
 
-void mach64_disable_vblank(struct drm_device * dev, int crtc)
+void mach64_disable_vblank(struct drm_device * dev, unsigned int crtc)
 {
 	if (crtc != 0) {
 		DRM_ERROR("tried to disable vblank on non-existent crtc %d\n",
@@ -112,7 +112,7 @@ void mach64_disable_vblank(struct drm_device * dev, int crtc)
 	 */
 }
 
-static void mach64_disable_vblank_local(struct drm_device * dev, int crtc)
+static void mach64_disable_vblank_local(struct drm_device * dev, unsigned int crtc)
 {
 	drm_mach64_private_t *dev_priv = dev->dev_private;
 	u32 status = MACH64_READ(MACH64_CRTC_INT_CNTL);

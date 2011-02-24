@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.3 2011/02/18 14:26:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.4 2011/02/24 07:59:44 mrg Exp $");
 
 #include "drmP.h"
 #include "drm.h"
@@ -99,7 +99,7 @@ static unsigned time_diff(struct timeval *now, struct timeval *then)
 		1000000 - (then->tv_usec - now->tv_usec);
 }
 
-uint32_t via_get_vblank_counter(struct drm_device *dev, int crtc)
+uint32_t via_get_vblank_counter(struct drm_device *dev, unsigned int crtc)
 {
 	drm_via_private_t *dev_priv = dev->dev_private;
 	if (crtc != 0)
@@ -175,7 +175,7 @@ static __inline__ void viadrv_acknowledge_irqs(drm_via_private_t * dev_priv)
 	}
 }
 
-int via_enable_vblank(struct drm_device *dev, int crtc)
+int via_enable_vblank(struct drm_device *dev, unsigned int crtc)
 {
 	drm_via_private_t *dev_priv = dev->dev_private;
 	uint32_t status;
@@ -194,7 +194,7 @@ int via_enable_vblank(struct drm_device *dev, int crtc)
 	return 0;
 }
 
-void via_disable_vblank(struct drm_device *dev, int crtc)
+void via_disable_vblank(struct drm_device *dev, unsigned int crtc)
 {
 	drm_via_private_t *dev_priv = dev->dev_private;
 

@@ -133,7 +133,7 @@ i915_pipe_enabled(struct drm_device *dev, int pipe)
 /* Called from drm generic code, passed a 'crtc', which
  * we use as a pipe index
  */
-u32 i915_get_vblank_counter(struct drm_device *dev, int pipe)
+u32 i915_get_vblank_counter(struct drm_device *dev, unsigned int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	unsigned long high_frame;
@@ -167,7 +167,7 @@ u32 i915_get_vblank_counter(struct drm_device *dev, int pipe)
 	return count;
 }
 
-u32 gm45_get_vblank_counter(struct drm_device *dev, int pipe)
+u32 gm45_get_vblank_counter(struct drm_device *dev, unsigned int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int reg = pipe ? PIPEB_FRMCOUNT_GM45 : PIPEA_FRMCOUNT_GM45;
@@ -376,7 +376,7 @@ int i915_irq_wait(struct drm_device *dev, void *data,
 /* Called from drm generic code, passed 'crtc' which
  * we use as a pipe index
  */
-int i915_enable_vblank(struct drm_device *dev, int pipe)
+int i915_enable_vblank(struct drm_device *dev, unsigned int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	unsigned long irqflags;
@@ -400,7 +400,7 @@ int i915_enable_vblank(struct drm_device *dev, int pipe)
 /* Called from drm generic code, passed 'crtc' which
  * we use as a pipe index
  */
-void i915_disable_vblank(struct drm_device *dev, int pipe)
+void i915_disable_vblank(struct drm_device *dev, unsigned int pipe)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	unsigned long irqflags;
