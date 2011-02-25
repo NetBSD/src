@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.44 2011/02/25 16:54:36 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.45 2011/02/25 17:07:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.44 2011/02/25 16:54:36 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.45 2011/02/25 17:07:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -274,6 +274,10 @@ acpicpu_md_flags(void)
 
 		case 0x0f:
 
+			/*
+			 * Evaluate support for the "FID/VID
+			 * algorithm" also used by powernow(4).
+			 */
 			if ((regs[3] & CPUID_APM_FID) == 0)
 				break;
 
@@ -370,6 +374,9 @@ acpicpu_md_cstate_start(struct acpicpu_softc *sc)
 	bool ipi = false;
 	int i;
 
+	/*
+	 * Save the cpu_idle(9) loop used by default.
+	 */
 	x86_cpu_idle_get(&native_idle, native_idle_text, size);
 
 	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
