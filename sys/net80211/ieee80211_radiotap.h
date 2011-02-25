@@ -1,6 +1,5 @@
-/* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.11 2007/12/13 01:23:40 sa
-m Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.22 2011/02/25 08:01:49 cegger Exp $ */
+/* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.11 2007/12/13 01:23:40 sam Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.23 2011/02/25 08:04:18 cegger Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
