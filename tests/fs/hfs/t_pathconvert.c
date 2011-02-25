@@ -1,10 +1,9 @@
-/*	$NetBSD: t_pathconvert.c,v 1.4 2011/02/24 17:29:48 pooka Exp $	*/
+/*	$NetBSD: t_pathconvert.c,v 1.5 2011/02/25 20:54:18 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
 
 #include <atf-c.h>
-#include <atf-c/config.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -54,9 +53,6 @@ ATF_TC_BODY(colonslash, tc)
 
 	RL(rump_sys_mkdir("/mp", 0777));
 	RZ(rump_pub_etfs_register(FAKEBLK, IMGNAME, RUMP_ETFS_BLK));
-
-	if (strcmp(atf_config_get("atf_arch"), "sparc64") == 0)
-		atf_tc_expect_signal(-1, "PR kern/44631");
 	RL(rump_sys_mount(MOUNT_HFS, "/mp", 0, &args, sizeof args));
 
 	RL(dirfd = rump_sys_open("/mp", O_RDONLY));
