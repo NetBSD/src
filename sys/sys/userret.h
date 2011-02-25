@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.21 2011/02/17 19:29:41 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.22 2011/02/25 22:37:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,9 @@ mi_userret(struct lwp *l)
 #endif
 
 	KASSERT(l->l_blcnt == 0);
+#ifndef __HAVE_PREEMPTION
 	KASSERT(curcpu()->ci_biglock_count == 0);
+#endif
 
 	/*
 	 * Handle "exceptional" events: pending signals, stop/exit actions,
