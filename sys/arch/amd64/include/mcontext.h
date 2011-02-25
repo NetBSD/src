@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.13 2011/02/24 04:28:44 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14 2011/02/25 14:07:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ typedef struct {
 
 #define	__UCONTEXT_SIZE	784
 
-static inline void *
+static __inline void *
 __lwp_getprivate_fast(void)
 {
 	void *__tmp;
