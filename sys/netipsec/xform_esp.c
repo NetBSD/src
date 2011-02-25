@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.29 2011/02/19 18:26:50 degroote Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.30 2011/02/25 20:13:10 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.29 2011/02/19 18:26:50 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.30 2011/02/25 20:13:10 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -310,7 +310,7 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	else
 		hlen = sizeof (struct newesp) + sav->ivlen;
 	/* Authenticator hash size */
-	alen = esph ? AH_HMAC_HASHLEN : 0;
+	alen = esph ? esph->authsize : 0;
 
 	/*
 	 * Verify payload length is multiple of encryption algorithm
@@ -463,7 +463,7 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 static int
 esp_input_cb(struct cryptop *crp)
 {
-	u_int8_t lastthree[3], aalg[AH_HMAC_HASHLEN];
+	u_int8_t lastthree[3], aalg[AH_ALEN_MAX];
 	int s, hlen, skip, protoff, error;
 	struct mbuf *m;
 	struct cryptodesc *crd;
@@ -735,7 +735,7 @@ esp_output(
 	plen = rlen + padding;		/* Padded payload length. */
 
 	if (esph)
-		alen = AH_HMAC_HASHLEN;
+		alen = esph->authsize;
 	else
 		alen = 0;
 
@@ -992,7 +992,7 @@ esp_output_cb(struct cryptop *crp)
 #ifdef IPSEC_DEBUG
 	/* Emulate man-in-the-middle attack when ipsec_integrity is TRUE. */
 	if (ipsec_integrity) {
-		static unsigned char ipseczeroes[AH_HMAC_HASHLEN];
+		static unsigned char ipseczeroes[AH_ALEN_MAX];
 		const struct auth_hash *esph;
 
 		/*
@@ -1001,8 +1001,8 @@ esp_output_cb(struct cryptop *crp)
 		 */
 		esph = sav->tdb_authalgxform;
 		if (esph !=  NULL) {
-			m_copyback(m, m->m_pkthdr.len - AH_HMAC_HASHLEN,
-			    AH_HMAC_HASHLEN, ipseczeroes);
+			m_copyback(m, m->m_pkthdr.len - esph->authlen,
+			    esph->authlen, ipseczeroes);
 		}
 	}
 #endif
