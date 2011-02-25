@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.21 2010/04/20 08:37:22 jruoho Exp $
+.\"	$NetBSD: crypto.4,v 1.22 2011/02/25 20:13:10 drochner Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -207,7 +207,9 @@ keyed one-way hash algorithms may be available:
 .It CRYPTO_SHA1_KPDK
 .It CRYPTO_MD5_HMAC
 .It CRYPTO_SHA1_HMAC
-.It CRYPTO_SHA2_HMAC
+.It CRYPTO_SHA2_256_HMAC
+.It CRYPTO_SHA2_384_HMAC
+.It CRYPTO_SHA2_512_HMAC
 .It CRYPTO_MD5
 .It CRYPTO_SHA1
 .El

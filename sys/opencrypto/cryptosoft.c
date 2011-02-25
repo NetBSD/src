@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.28 2011/02/24 20:03:41 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.29 2011/02/25 20:13:10 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.28 2011/02/24 20:03:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.29 2011/02/25 20:13:10 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,9 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	case CRYPTO_MD5_HMAC_96:
 	case CRYPTO_SHA1_HMAC:
 	case CRYPTO_SHA1_HMAC_96:
-	case CRYPTO_SHA2_HMAC:
+	case CRYPTO_SHA2_256_HMAC:
+	case CRYPTO_SHA2_384_HMAC:
+	case CRYPTO_SHA2_512_HMAC:
 	case CRYPTO_RIPEMD160_HMAC:
 	case CRYPTO_RIPEMD160_HMAC_96:
 		if (sw->sw_octx == NULL)
@@ -676,17 +678,14 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_SHA1_HMAC_96:
 			axf = &swcr_auth_hash_hmac_sha1_96;
 			goto authcommon;
-		case CRYPTO_SHA2_HMAC:
-			if (cri->cri_klen == 256)
-				axf = &swcr_auth_hash_hmac_sha2_256;
-			else if (cri->cri_klen == 384)
-				axf = &swcr_auth_hash_hmac_sha2_384;
-			else if (cri->cri_klen == 512)
-				axf = &swcr_auth_hash_hmac_sha2_512;
-			else {
-				swcr_freesession(NULL, i);
-				return EINVAL;
-			}
+		case CRYPTO_SHA2_256_HMAC:
+			axf = &swcr_auth_hash_hmac_sha2_256;
+			goto authcommon;
+		case CRYPTO_SHA2_384_HMAC:
+			axf = &swcr_auth_hash_hmac_sha2_384;
+			goto authcommon;
+		case CRYPTO_SHA2_512_HMAC:
+			axf = &swcr_auth_hash_hmac_sha2_512;
 			goto authcommon;
 		case CRYPTO_NULL_HMAC:
 			axf = &swcr_auth_hash_null;
@@ -719,7 +718,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			axf->Update((*swd)->sw_ictx, cri->cri_key,
 			    cri->cri_klen / 8);
 			axf->Update((*swd)->sw_ictx, hmac_ipad_buffer,
-			    HMAC_BLOCK_LEN - (cri->cri_klen / 8));
+			    axf->auth_hash->blocksize - (cri->cri_klen / 8));
 
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
@@ -728,7 +727,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			axf->Update((*swd)->sw_octx, cri->cri_key,
 			    cri->cri_klen / 8);
 			axf->Update((*swd)->sw_octx, hmac_opad_buffer,
-			    HMAC_BLOCK_LEN - (cri->cri_klen / 8));
+			    axf->auth_hash->blocksize - (cri->cri_klen / 8));
 
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= HMAC_OPAD_VAL;
@@ -851,7 +850,9 @@ swcr_freesession(void *arg, u_int64_t tid)
 		case CRYPTO_MD5_HMAC_96:
 		case CRYPTO_SHA1_HMAC:
 		case CRYPTO_SHA1_HMAC_96:
-		case CRYPTO_SHA2_HMAC:
+		case CRYPTO_SHA2_256_HMAC:
+		case CRYPTO_SHA2_384_HMAC:
+		case CRYPTO_SHA2_512_HMAC:
 		case CRYPTO_RIPEMD160_HMAC:
 		case CRYPTO_RIPEMD160_HMAC_96:
 		case CRYPTO_NULL_HMAC:
@@ -976,7 +977,9 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 		case CRYPTO_MD5_HMAC_96:
 		case CRYPTO_SHA1_HMAC:
 		case CRYPTO_SHA1_HMAC_96:
-		case CRYPTO_SHA2_HMAC:
+		case CRYPTO_SHA2_256_HMAC:
+		case CRYPTO_SHA2_384_HMAC:
+		case CRYPTO_SHA2_512_HMAC:
 		case CRYPTO_RIPEMD160_HMAC:
 		case CRYPTO_RIPEMD160_HMAC_96:
 		case CRYPTO_NULL_HMAC:
@@ -1034,7 +1037,9 @@ swcr_init(void)
 	REGISTER(CRYPTO_MD5_HMAC_96);
 	REGISTER(CRYPTO_SHA1_HMAC);
 	REGISTER(CRYPTO_SHA1_HMAC_96);
-	REGISTER(CRYPTO_SHA2_HMAC);
+	REGISTER(CRYPTO_SHA2_256_HMAC);
+	REGISTER(CRYPTO_SHA2_384_HMAC);
+	REGISTER(CRYPTO_SHA2_512_HMAC);
 	REGISTER(CRYPTO_RIPEMD160_HMAC);
 	REGISTER(CRYPTO_RIPEMD160_HMAC_96);
 	REGISTER(CRYPTO_NULL_HMAC);
