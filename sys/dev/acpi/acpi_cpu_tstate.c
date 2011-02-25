@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.21 2011/02/23 06:17:55 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.22 2011/02/25 05:07:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.21 2011/02/23 06:17:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.22 2011/02/25 05:07:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -518,8 +518,14 @@ acpicpu_tstate_fadt(struct acpicpu_softc *sc)
 		return AE_AML_ILLEGAL_ADDRESS;
 
 	/*
-	 * A zero DUTY_WIDTH is used announce that
-	 * T-states are not available via FADT.
+	 * A zero DUTY_WIDTH may be used announce
+	 * that T-states are not available via FADT
+	 * (ACPI 4.0, p. 121). See also (section 9.3):
+	 *
+	 *	Advanced Micro Devices: BIOS and Kernel
+	 *	Developer's Guide for AMD Athlon 64 and
+	 *	AMD Opteron Processors. Revision 3.30,
+	 *	February 2006.
 	 */
 	if (width == 0 || width + offset > 4)
 		return AE_AML_BAD_RESOURCE_VALUE;
