@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.31 2011/02/25 12:08:35 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.32 2011/02/25 19:55:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -63,6 +63,13 @@
 #define ACPICPU_T_NOTIFY	 0x82		/* _TPC */
 
 /*
+ * Dependency coordination.
+ */
+#define ACPICPU_DEP_SW_ALL	 0xFC
+#define ACPICPU_DEP_SW_ANY	 0xFD
+#define ACPICPU_DEP_HW_ALL	 0xFE
+
+/*
  * C-states.
  */
 #define ACPICPU_C_C2_LATENCY_MAX 100		/* us */
@@ -97,21 +104,24 @@
 
 #define ACPICPU_FLAG_C_FFH	 __BIT(4)	/* Native C-states           */
 #define ACPICPU_FLAG_C_FADT	 __BIT(5)	/* C-states with FADT        */
-#define ACPICPU_FLAG_C_BM	 __BIT(6)	/* Bus master control        */
-#define ACPICPU_FLAG_C_BM_STS	 __BIT(7)	/* Bus master check required */
-#define ACPICPU_FLAG_C_ARB	 __BIT(8)	/* Bus master arbitration    */
-#define ACPICPU_FLAG_C_TSC	 __BIT(9)	/* TSC broken, > C1, Px, Tx  */
-#define ACPICPU_FLAG_C_APIC	 __BIT(10)	/* APIC timer broken, > C1   */
-#define ACPICPU_FLAG_C_C1E	 __BIT(11)	/* AMD C1E detected	     */
+#define ACPICPU_FLAG_C_DEP	 __BIT(6)	/* C-state CPU coordination  */
+#define ACPICPU_FLAG_C_BM	 __BIT(7)	/* Bus master control        */
+#define ACPICPU_FLAG_C_BM_STS	 __BIT(8)	/* Bus master check required */
+#define ACPICPU_FLAG_C_ARB	 __BIT(9)	/* Bus master arbitration    */
+#define ACPICPU_FLAG_C_TSC	 __BIT(10)	/* TSC broken, > C1, Px, Tx  */
+#define ACPICPU_FLAG_C_APIC	 __BIT(11)	/* APIC timer broken, > C1   */
+#define ACPICPU_FLAG_C_C1E	 __BIT(12)	/* AMD C1E detected	     */
 
-#define ACPICPU_FLAG_P_FFH	 __BIT(12)	/* Native P-states           */
-#define ACPICPU_FLAG_P_HW	 __BIT(13)	/* HW coordination supported */
-#define ACPICPU_FLAG_P_XPSS	 __BIT(14)	/* Microsoft XPSS in use     */
-#define ACPICPU_FLAG_P_TURBO	 __BIT(15)	/* Turbo Boost / Turbo Core  */
-#define ACPICPU_FLAG_P_FIDVID	 __BIT(16)	/* AMD "FID/VID algorithm"   */
+#define ACPICPU_FLAG_P_FFH	 __BIT(13)	/* Native P-states           */
+#define ACPICPU_FLAG_P_DEP	 __BIT(14)	/* P-state CPU coordination  */
+#define ACPICPU_FLAG_P_HW	 __BIT(15)	/* HW coordination supported */
+#define ACPICPU_FLAG_P_XPSS	 __BIT(16)	/* Microsoft XPSS in use     */
+#define ACPICPU_FLAG_P_TURBO	 __BIT(17)	/* Turbo Boost / Turbo Core  */
+#define ACPICPU_FLAG_P_FIDVID	 __BIT(18)	/* AMD "FID/VID algorithm"   */
 
-#define ACPICPU_FLAG_T_FFH	 __BIT(17)	/* Native throttling         */
-#define ACPICPU_FLAG_T_FADT	 __BIT(18)	/* Throttling with FADT      */
+#define ACPICPU_FLAG_T_FFH	 __BIT(19)	/* Native throttling         */
+#define ACPICPU_FLAG_T_FADT	 __BIT(20)	/* Throttling with FADT      */
+#define ACPICPU_FLAG_T_DEP	 __BIT(21)	/* T-state CPU coordination  */
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,
@@ -126,6 +136,13 @@ struct acpicpu_reg {
 	uint8_t			 reg_accesssize;
 	uint64_t		 reg_addr;
 } __packed;
+
+struct acpicpu_dep {
+	uint32_t		 dep_domain;
+	uint32_t		 dep_type;
+	uint32_t		 dep_ncpus;
+	uint32_t		 dep_index;
+};
 
 struct acpicpu_cstate {
 	struct evcnt		 cs_evcnt;
@@ -183,9 +200,11 @@ struct acpicpu_softc {
 	struct acpicpu_object	 sc_object;
 
 	struct acpicpu_cstate	 sc_cstate[ACPI_C_STATE_COUNT];
+	struct acpicpu_dep	 sc_cstate_dep;
 	uint32_t		 sc_cstate_sleep;
 
 	struct acpicpu_pstate	*sc_pstate;
+	struct acpicpu_dep	 sc_pstate_dep;
 	struct acpicpu_reg	 sc_pstate_control;
 	struct acpicpu_reg	 sc_pstate_status;
 	uint64_t		 sc_pstate_aperf;	/* ACPICPU_FLAG_P_HW */
@@ -196,6 +215,7 @@ struct acpicpu_softc {
 	uint32_t		 sc_pstate_min;
 
 	struct acpicpu_tstate	*sc_tstate;
+	struct acpicpu_dep	 sc_tstate_dep;
 	struct acpicpu_reg	 sc_tstate_control;
 	struct acpicpu_reg	 sc_tstate_status;
 	uint32_t		 sc_tstate_current;
@@ -205,6 +225,7 @@ struct acpicpu_softc {
 
 	kmutex_t		 sc_mtx;
 	uint32_t		 sc_cap;
+	uint32_t		 sc_ncpus;
 	uint32_t		 sc_flags;
 	bool			 sc_cold;
 };
