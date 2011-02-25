@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.11 2007/12/13 01:23:40 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.23 2011/02/25 08:04:18 cegger Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.24 2011/02/25 10:45:57 tron Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -210,22 +210,6 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_XCHANNEL = 18,
 	IEEE80211_RADIOTAP_EXT = 31
 };
-
-#ifndef _KERNEL
-/* Channel flags. */
-#define IEEE80211_CHAN_TURBO	0x00000010 /* Turbo channel */
-#define IEEE80211_CHAN_CCK	0x00000020 /* CCK channel */
-#define IEEE80211_CHAN_OFDM	0x00000040 /* OFDM channel */
-#define IEEE80211_CHAN_2GHZ	0x00000080 /* 2 GHz spectrum channel. */
-#define IEEE80211_CHAN_5GHZ	0x00000100 /* 5 GHz spectrum channel */
-#define IEEE80211_CHAN_PASSIVE	0x00000200 /* Only passive scan allowed */
-#define IEEE80211_CHAN_DYN	0x00000400 /* Dynamic CCK-OFDM channel */
-#define IEEE80211_CHAN_GFSK	0x00000800 /* GFSK channel (FHSS PHY) */
-#define IEEE80211_CHAN_GSM	0x00001000 /* 900 MHz spectrum channel */
-#define IEEE80211_CHAN_STURBO	0x00002000 /* 11a static turbo channel only */
-#define IEEE80211_CHAN_HALF	0x00004000 /* Half rate channel */
-#define IEEE80211_CHAN_QUARTER	0x00008000 /* Quarter rate channel */
-#endif /* !_KERNEL */
 
 /* For IEEE80211_RADIOTAP_FLAGS */
 #define	IEEE80211_RADIOTAP_F_CFP	0x01	/* sent/received
