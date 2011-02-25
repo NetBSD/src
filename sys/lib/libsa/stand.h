@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.70 2010/12/24 23:12:28 christos Exp $	*/
+/*	$NetBSD: stand.h,v 1.71 2011/02/25 00:17:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -285,7 +285,6 @@ ssize_t	oread(int, void *, size_t);
 off_t	olseek(int, off_t, int);
 #endif
 
-extern const char HEXDIGITS[];
 extern const char hexdigits[];
 
 /* XXX: These should be removed eventually. */
