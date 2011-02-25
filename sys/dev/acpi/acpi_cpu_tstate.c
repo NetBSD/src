@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.22 2011/02/25 05:07:43 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.23 2011/02/25 19:55:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.22 2011/02/25 05:07:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.23 2011/02/25 19:55:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -47,6 +47,7 @@ static ACPI_STATUS	 acpicpu_tstate_tss(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_tss_add(struct acpicpu_tstate *,
 						ACPI_OBJECT *);
 static ACPI_STATUS	 acpicpu_tstate_ptc(struct acpicpu_softc *);
+static ACPI_STATUS	 acpicpu_tstate_dep(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_fadt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_change(struct acpicpu_softc *);
 static void		 acpicpu_tstate_reset(struct acpicpu_softc *);
@@ -78,6 +79,14 @@ acpicpu_tstate_attach(device_t self)
 		str = "_PTC";
 		goto out;
 	}
+
+	/*
+	 * Query the optional _TSD.
+	 */
+	rv = acpicpu_tstate_dep(sc);
+
+	if (ACPI_SUCCESS(rv))
+		sc->sc_flags |= ACPICPU_FLAG_T_DEP;
 
 	/*
 	 * Comparable to P-states, the _TPC object may
@@ -500,6 +509,95 @@ acpicpu_tstate_ptc(struct acpicpu_softc *sc)
 	(void)memcpy(&sc->sc_tstate_status,  reg[1], size);
 
 out:
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
+
+	return rv;
+}
+
+static ACPI_STATUS
+acpicpu_tstate_dep(struct acpicpu_softc *sc)
+{
+	ACPI_OBJECT *elm, *obj;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	uint32_t val;
+	uint8_t i, n;
+
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_TSD", &buf);
+
+	if (ACPI_FAILURE(rv))
+		goto out;
+
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (obj->Package.Count != 1) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = &obj->Package.Elements[0];
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	n = elm->Package.Count;
+
+	if (n != 5) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = elm->Package.Elements;
+
+	for (i = 0; i < n; i++) {
+
+		if (elm[i].Type != ACPI_TYPE_INTEGER) {
+			rv = AE_TYPE;
+			goto out;
+		}
+
+		if (elm[i].Integer.Value > UINT32_MAX) {
+			rv = AE_AML_NUMERIC_OVERFLOW;
+			goto out;
+		}
+	}
+
+	val = elm[1].Integer.Value;
+
+	if (val != 0)
+		aprint_debug_dev(sc->sc_dev, "invalid revision in _TSD\n");
+
+	val = elm[3].Integer.Value;
+
+	if (val < ACPICPU_DEP_SW_ALL || val > ACPICPU_DEP_HW_ALL) {
+		rv = AE_AML_BAD_RESOURCE_VALUE;
+		goto out;
+	}
+
+	val = elm[4].Integer.Value;
+
+	if (val > sc->sc_ncpus) {
+		rv = AE_BAD_VALUE;
+		goto out;
+	}
+
+	sc->sc_tstate_dep.dep_domain = elm[2].Integer.Value;
+	sc->sc_tstate_dep.dep_type   = elm[3].Integer.Value;
+	sc->sc_tstate_dep.dep_ncpus  = elm[4].Integer.Value;
+
+out:
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		aprint_debug_dev(sc->sc_dev, "failed to evaluate "
+		    "_TSD: %s\n", AcpiFormatException(rv));
+
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 

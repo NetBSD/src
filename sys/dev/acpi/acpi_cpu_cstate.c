@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.45 2011/02/25 12:08:35 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.46 2011/02/25 19:55:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.45 2011/02/25 12:08:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.46 2011/02/25 19:55:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -56,6 +56,7 @@ static ACPI_STATUS	 acpicpu_cstate_cst_add(struct acpicpu_softc *,
 						ACPI_OBJECT *, int );
 static void		 acpicpu_cstate_cst_bios(void);
 static void		 acpicpu_cstate_memset(struct acpicpu_softc *);
+static ACPI_STATUS	 acpicpu_cstate_dep(struct acpicpu_softc *);
 static void		 acpicpu_cstate_fadt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_quirks(struct acpicpu_softc *);
 static int		 acpicpu_cstate_latency(struct acpicpu_softc *);
@@ -98,6 +99,14 @@ acpicpu_cstate_attach(device_t self)
 		acpicpu_cstate_fadt(sc);
 		break;
 	}
+
+	/*
+	 * Query the optional _CSD.
+	 */
+	rv = acpicpu_cstate_dep(sc);
+
+	if (ACPI_SUCCESS(rv))
+		sc->sc_flags |= ACPICPU_FLAG_C_DEP;
 
 	sc->sc_flags |= ACPICPU_FLAG_C;
 
@@ -528,6 +537,96 @@ acpicpu_cstate_memset(struct acpicpu_softc *sc)
 	}
 }
 
+static ACPI_STATUS
+acpicpu_cstate_dep(struct acpicpu_softc *sc)
+{
+	ACPI_OBJECT *elm, *obj;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	uint32_t val;
+	uint8_t i, n;
+
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_CSD", &buf);
+
+	if (ACPI_FAILURE(rv))
+		goto out;
+
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (obj->Package.Count != 1) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = &obj->Package.Elements[0];
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	n = elm->Package.Count;
+
+	if (n != 6) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = elm->Package.Elements;
+
+	for (i = 0; i < n; i++) {
+
+		if (elm[i].Type != ACPI_TYPE_INTEGER) {
+			rv = AE_TYPE;
+			goto out;
+		}
+
+		if (elm[i].Integer.Value > UINT32_MAX) {
+			rv = AE_AML_NUMERIC_OVERFLOW;
+			goto out;
+		}
+	}
+
+	val = elm[1].Integer.Value;
+
+	if (val != 0)
+		aprint_debug_dev(sc->sc_dev, "invalid revision in _CSD\n");
+
+	val = elm[3].Integer.Value;
+
+	if (val < ACPICPU_DEP_SW_ALL || val > ACPICPU_DEP_HW_ALL) {
+		rv = AE_AML_BAD_RESOURCE_VALUE;
+		goto out;
+	}
+
+	val = elm[4].Integer.Value;
+
+	if (val > sc->sc_ncpus) {
+		rv = AE_BAD_VALUE;
+		goto out;
+	}
+
+	sc->sc_cstate_dep.dep_domain = elm[2].Integer.Value;
+	sc->sc_cstate_dep.dep_type   = elm[3].Integer.Value;
+	sc->sc_cstate_dep.dep_ncpus  = elm[4].Integer.Value;
+	sc->sc_cstate_dep.dep_index  = elm[5].Integer.Value;
+
+out:
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		aprint_debug_dev(sc->sc_dev, "failed to evaluate "
+		    "_CSD: %s\n", AcpiFormatException(rv));
+
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
+
+	return rv;
+}
+
 static void
 acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 {
@@ -546,7 +645,7 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	if (sc->sc_object.ao_pblkaddr == 0)
 		return;
 
-	if (acpi_md_ncpus() > 1) {
+	if (sc->sc_ncpus > 1) {
 
 		if ((AcpiGbl_FADT.Flags & ACPI_FADT_C2_MP_SUPPORTED) == 0)
 			return;

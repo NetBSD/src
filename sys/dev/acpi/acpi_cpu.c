@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.28 2011/02/25 12:08:35 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.29 2011/02/25 19:55:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.28 2011/02/25 12:08:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.29 2011/02/25 19:55:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -54,6 +54,8 @@ static int		  acpicpu_once_attach(void);
 static int		  acpicpu_once_detach(void);
 static void		  acpicpu_prestart(device_t);
 static void		  acpicpu_start(device_t);
+static void		  acpicpu_debug_print(struct acpicpu_softc *);
+static const char	 *acpicpu_debug_print_dep(uint32_t);
 static void		  acpicpu_sysctl(device_t);
 
 static int		  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
@@ -145,6 +147,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	acpicpu_sc[id] = sc;
 
 	sc->sc_cap = acpicpu_cap(sc);
+	sc->sc_ncpus = acpi_md_ncpus();
 	sc->sc_flags |= acpicpu_md_flags();
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -156,6 +159,8 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	(void)config_defer(self, acpicpu_prestart);
 	(void)acpi_register_notify(sc->sc_node, acpicpu_notify);
 	(void)pmf_device_register(self, acpicpu_suspend, acpicpu_resume);
+
+	acpicpu_debug_print(sc);
 }
 
 static int
@@ -630,6 +635,59 @@ acpicpu_resume(device_t self, const pmf_qual_t *qual)
 		(void)acpicpu_tstate_resume(self);
 
 	return true;
+}
+
+static void
+acpicpu_debug_print(struct acpicpu_softc *sc)
+{
+	struct acpicpu_dep *dep;
+
+	if ((sc->sc_flags & ACPICPU_FLAG_C_DEP) != 0) {
+
+		dep = &sc->sc_cstate_dep;
+
+		aprint_debug_dev(sc->sc_dev, "C-state coordination: "
+		    "%u CPUs, domain %u, type %s\n", dep->dep_ncpus,
+		    dep->dep_domain, acpicpu_debug_print_dep(dep->dep_type));
+	}
+
+	if ((sc->sc_flags & ACPICPU_FLAG_P_DEP) != 0) {
+
+		dep = &sc->sc_pstate_dep;
+
+		aprint_debug_dev(sc->sc_dev, "P-state coordination: "
+		    "%u CPUs, domain %u, type %s\n", dep->dep_ncpus,
+		    dep->dep_domain, acpicpu_debug_print_dep(dep->dep_type));
+	}
+
+	if ((sc->sc_flags & ACPICPU_FLAG_T_DEP) != 0) {
+
+		dep = &sc->sc_tstate_dep;
+
+		aprint_debug_dev(sc->sc_dev, "T-state coordination: "
+		    "%u CPUs, domain %u, type %s\n", dep->dep_ncpus,
+		    dep->dep_domain, acpicpu_debug_print_dep(dep->dep_type));
+	}
+}
+
+static const char *
+acpicpu_debug_print_dep(uint32_t val)
+{
+
+	switch (val) {
+
+	case ACPICPU_DEP_SW_ALL:
+		return "SW_ALL";
+
+	case ACPICPU_DEP_SW_ANY:
+		return "SW_ANY";
+
+	case ACPICPU_DEP_HW_ALL:
+		return "HW_ALL";
+
+	default:
+		return "unknown";
+	}
 }
 
 MODULE(MODULE_CLASS_DRIVER, acpicpu, NULL);
