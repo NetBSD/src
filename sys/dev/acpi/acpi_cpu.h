@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.32 2011/02/25 19:55:06 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.33 2011/02/25 20:59:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -65,9 +65,9 @@
 /*
  * Dependency coordination.
  */
-#define ACPICPU_DEP_SW_ALL	 0xFC
-#define ACPICPU_DEP_SW_ANY	 0xFD
-#define ACPICPU_DEP_HW_ALL	 0xFE
+#define ACPICPU_DEP_SW_ALL	 0xFC		/* All CPUs must set a state */
+#define ACPICPU_DEP_SW_ANY	 0xFD		/* Any CPU can set a state   */
+#define ACPICPU_DEP_HW_ALL	 0xFE		/* HW does the coordination  */
 
 /*
  * C-states.
