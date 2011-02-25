@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.74 2011/02/24 04:28:43 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.75 2011/02/25 14:32:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 	} while (/*CONSTCOND*/0)
 
 
-#ifdef __HAVE___LWP_GETPRIVATE_FAST
+#if 0 && defined(__HAVE___LWP_GETPRIVATE_FAST)
 static inline pthread_t __constfunc
 pthread__self(void)
 {
