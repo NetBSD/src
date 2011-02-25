@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2011/02/24 04:28:48 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12 2011/02/25 14:07:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_nPC] = (pc) + 4;			\
 } while (/*CONSTCOND*/0)
 
-static inline void *
+static __inline void *
 __lwp_getprivate_fast(void)
 {
 	register void *__tmp;

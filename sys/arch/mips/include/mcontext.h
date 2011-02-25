@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.15 2011/02/24 04:28:47 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.16 2011/02/25 14:07:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ typedef struct {
 #endif
 
 #ifndef __ASSEMBLER__
-static inline void *
+static __inline void *
 __lwp_getprivate_fast(void)
 {
 	register void *__tcb;
