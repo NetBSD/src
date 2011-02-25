@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.36 2011/02/24 14:22:04 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.37 2011/02/25 15:12:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: rumpclient.c,v 1.37 2011/02/25 15:12:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
