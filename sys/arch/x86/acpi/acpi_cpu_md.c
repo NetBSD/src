@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.41 2011/02/25 09:16:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.42 2011/02/25 10:59:32 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.41 2011/02/25 09:16:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.42 2011/02/25 10:59:32 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -278,6 +278,11 @@ acpicpu_md_quirks(void)
 
 		case 0x14: /* AMD Fusion */
 
+			/*
+			 * Like with Intel, detect invariant TSC,
+			 * MSR-based P-states, and AMD's "turbo"
+			 * (Core Performance Boost), respectively.
+			 */
 			if ((regs[3] & CPUID_APM_TSC) != 0)
 				val &= ~ACPICPU_FLAG_C_TSC;
 
@@ -286,6 +291,18 @@ acpicpu_md_quirks(void)
 
 			if ((regs[3] & CPUID_APM_CPB) != 0)
 				val |= ACPICPU_FLAG_P_TURBO;
+
+			/*
+			 * Also check for APERF and MPERF,
+			 * first available in the family 10h.
+			 */
+			if (cpuid_level >= 0x06) {
+
+				x86_cpuid(0x00000006, regs);
+
+				if ((regs[2] & __BIT(0)) != 0)
+					val |= ACPICPU_FLAG_P_HW;
+			}
 
 			break;
 		}
@@ -438,13 +455,13 @@ acpicpu_md_pstate_start(struct acpicpu_softc *sc)
 			if ((val & est) == 0)
 				return ENOTTY;
 		}
-
-		/*
-		 * Reset the APERF and MPERF counters.
-		 */
-		if ((sc->sc_flags & ACPICPU_FLAG_P_HW) != 0)
-			acpicpu_md_pstate_percent_reset(sc);
 	}
+
+	/*
+	 * Reset the APERF and MPERF counters.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P_HW) != 0)
+		acpicpu_md_pstate_percent_reset(sc);
 
 	return acpicpu_md_pstate_sysctl_init();
 }
@@ -594,6 +611,10 @@ acpicpu_md_pstate_percent(struct acpicpu_softc *sc)
 	 *	Intel Corporation: Intel 64 and IA-32 Architectures
 	 *	Software Developer's Manual. Section 13.2, Volume 3A:
 	 *	System Programming Guide, Part 1. July, 2008.
+	 *
+	 *	Advanced Micro Devices: BIOS and Kernel Developer's
+	 *	Guide (BKDG) for AMD Family 10h Processors. Section
+	 *	2.4.5, Revision 3.48, April 2010.
 	 */
 	x86_disable_intr();
 
