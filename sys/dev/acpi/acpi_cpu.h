@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_cpu.h,v 1.29 2011/02/25 06:18:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.30 2011/02/25 09:16:00 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -188,6 +188,8 @@ struct acpicpu_softc {
 	struct acpicpu_pstate	*sc_pstate;
 	struct acpicpu_reg	 sc_pstate_control;
 	struct acpicpu_reg	 sc_pstate_status;
+	uint64_t		 sc_pstate_aperf;	/* ACPICPU_FLAG_P_HW */
+	uint64_t		 sc_pstate_mperf;	/* ACPICPU_FLAG_P_HW*/
 	uint32_t		 sc_pstate_current;
 	uint32_t		 sc_pstate_count;
 	uint32_t		 sc_pstate_max;
@@ -239,9 +241,10 @@ void		acpicpu_md_quirks_c1e(void);
 int		acpicpu_md_idle_start(struct acpicpu_softc *);
 int		acpicpu_md_idle_stop(void);
 void		acpicpu_md_idle_enter(int, int);
-int		acpicpu_md_pstate_start(void);
+int		acpicpu_md_pstate_start(struct acpicpu_softc *);
 int		acpicpu_md_pstate_stop(void);
 int		acpicpu_md_pstate_pss(struct acpicpu_softc *);
+uint8_t		acpicpu_md_pstate_percent(struct acpicpu_softc *);
 int		acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
 int		acpicpu_md_pstate_set(struct acpicpu_pstate *);
 int		acpicpu_md_tstate_get(struct acpicpu_softc *, uint32_t *);
