@@ -1,4 +1,4 @@
-# $NetBSD: t_ssp.sh,v 1.2 2010/12/27 05:27:34 pgoyette Exp $
+# $NetBSD: t_ssp.sh,v 1.3 2011/02/25 18:11:53 pgoyette Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,8 +46,9 @@ raw_body()
 {
 	prog="$(atf_get_srcdir)/h_raw"
 
-	h_pass "$prog 9"
-	h_fail "$prog 10"
+	atk_skip "Bogus test case"
+#	h_pass "$prog 9"
+#	h_fail "$prog 10"
 }
 
 atf_test_case sprintf
