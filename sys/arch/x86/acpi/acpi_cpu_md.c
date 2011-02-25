@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.45 2011/02/25 17:07:30 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.46 2011/02/25 17:23:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.45 2011/02/25 17:07:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.46 2011/02/25 17:23:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -666,12 +666,25 @@ acpicpu_md_pstate_percent_status(void *arg1, void *arg2)
 static void
 acpicpu_md_pstate_percent_reset(struct acpicpu_softc *sc)
 {
+	struct msr_rw_info msr;
+	uint64_t xc;
 
 	KASSERT((sc->sc_flags & ACPICPU_FLAG_P) != 0);
 	KASSERT((sc->sc_flags & ACPICPU_FLAG_P_HW) != 0);
 
-	wrmsr(MSR_APERF, 0);
-	wrmsr(MSR_MPERF, 0);
+	msr.msr_value = 0;
+	msr.msr_read = false;
+	msr.msr_type = MSR_APERF;
+
+	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
+	xc_wait(xc);
+
+	msr.msr_value = 0;
+	msr.msr_read = false;
+	msr.msr_type = MSR_MPERF;
+
+	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
+	xc_wait(xc);
 
 	sc->sc_pstate_aperf = 0;
 	sc->sc_pstate_mperf = 0;
