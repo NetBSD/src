@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.26 2011/02/16 08:35:51 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.27 2011/02/25 06:18:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.26 2011/02/16 08:35:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.27 2011/02/25 06:18:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -57,7 +57,7 @@ static void		  acpicpu_start(device_t);
 static void		  acpicpu_sysctl(device_t);
 
 static int		  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
-static cpuid_t		  acpicpu_id(uint32_t);
+static struct cpu_info	 *acpicpu_ci(uint32_t);
 static uint32_t		  acpicpu_cap(struct acpicpu_softc *);
 static ACPI_STATUS	  acpicpu_cap_pdc(struct acpicpu_softc *, uint32_t);
 static ACPI_STATUS	  acpicpu_cap_osc(struct acpicpu_softc *,
@@ -95,7 +95,7 @@ acpicpu_match(device_t parent, cfdata_t match, void *aux)
 
 	rv = acpicpu_object(aa->aa_node->ad_handle, &ao);
 
-	if (rv != 0 || acpicpu_id(ao.ao_procid) == 0xFFFFFF)
+	if (rv != 0 || acpicpu_ci(ao.ao_procid) == NULL)
 		return 0;
 
 	return 1;
@@ -107,6 +107,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	struct acpicpu_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	static ONCE_DECL(once_attach);
+	cpuid_t id;
 	int rv;
 
 	rv = acpicpu_object(aa->aa_node->ad_handle, &sc->sc_object);
@@ -122,14 +123,17 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_cold = true;
 	sc->sc_node = aa->aa_node;
-	sc->sc_cpuid = acpicpu_id(sc->sc_object.ao_procid);
 
-	if (sc->sc_cpuid == 0xFFFFFF) {
-		aprint_error(": invalid CPU ID\n");
+	sc->sc_ci = acpicpu_ci(sc->sc_object.ao_procid);
+
+	if (sc->sc_ci == NULL) {
+		aprint_error(": invalid CPU\n");
 		return;
 	}
 
-	if (acpicpu_sc[sc->sc_cpuid] != NULL) {
+	id = sc->sc_ci->ci_acpiid;
+
+	if (acpicpu_sc[id] != NULL) {
 		aprint_error(": already attached\n");
 		return;
 	}
@@ -138,7 +142,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI CPU\n");
 
 	acpi_cpus++;
-	acpicpu_sc[sc->sc_cpuid] = sc;
+	acpicpu_sc[id] = sc;
 
 	sc->sc_cap = acpicpu_cap(sc);
 	sc->sc_flags |= acpicpu_md_quirks();
@@ -356,8 +360,8 @@ out:
 	return ACPI_FAILURE(rv) ? 1 : 0;
 }
 
-static cpuid_t
-acpicpu_id(uint32_t id)
+static struct cpu_info *
+acpicpu_ci(uint32_t id)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
@@ -365,10 +369,10 @@ acpicpu_id(uint32_t id)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 
 		if (id == ci->ci_acpiid)
-			return id;
+			return ci;
 	}
 
-	return 0xFFFFFF;
+	return NULL;
 }
 
 static uint32_t

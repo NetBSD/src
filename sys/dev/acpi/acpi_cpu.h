@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.28 2011/01/13 03:40:51 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.29 2011/02/25 06:18:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -178,6 +178,7 @@ struct acpicpu_object {
 
 struct acpicpu_softc {
 	device_t		 sc_dev;
+	struct cpu_info		*sc_ci;
 	struct acpi_devnode	*sc_node;
 	struct acpicpu_object	 sc_object;
 
@@ -203,7 +204,6 @@ struct acpicpu_softc {
 	kmutex_t		 sc_mtx;
 	uint32_t		 sc_cap;
 	uint32_t		 sc_flags;
-	cpuid_t			 sc_cpuid;
 	bool			 sc_cold;
 };
 
