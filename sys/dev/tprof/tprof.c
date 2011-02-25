@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.8 2011/02/05 14:04:40 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.9 2011/02/25 22:35:38 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.8 2011/02/05 14:04:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.9 2011/02/25 22:35:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,8 @@ tprof_start(const struct tprof_param *param)
 
 	error = tb->tb_ops->tbo_start(NULL);
 	if (error != 0) {
+		KASSERT(tb->tb_usecount > 0);
+		tb->tb_usecount--;
 		tprof_stop1();
 		goto done;
 	}
