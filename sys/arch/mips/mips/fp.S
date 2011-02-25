@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.39 2011/02/24 16:49:15 tsutsui Exp $	*/
+/*	$NetBSD: fp.S,v 1.40 2011/02/25 11:44:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1827,6 +1827,8 @@ cvt_d_s:
 	beq	t2, zero, result_fs_d		# is FS zero?
 	jal	_C_LABEL(renorm_fs_s)
 	move	t9, zero
+	sll	t3, t2, 32 - 3			# convert S fraction to D
+	srl	t2, t2, 3
 	b	norm_d
 2:
 	addu	t1, t1, DEXP_BIAS - SEXP_BIAS	# bias exponent correctly
