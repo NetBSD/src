@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_cpu.c,v 1.27 2011/02/25 06:18:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.28 2011/02/25 12:08:35 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.27 2011/02/25 06:18:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.28 2011/02/25 12:08:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -145,7 +145,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	acpicpu_sc[id] = sc;
 
 	sc->sc_cap = acpicpu_cap(sc);
-	sc->sc_flags |= acpicpu_md_quirks();
+	sc->sc_flags |= acpicpu_md_flags();
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
