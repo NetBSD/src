@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1064 2011/02/24 20:00:59 matt Exp $
+$NetBSD: pcidevs,v 1.1065 2011/02/25 01:33:34 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -925,6 +925,15 @@ product AMD AMD64_F11_ADDR	0x1301	AMD64 Family11h Address Map Configuration
 product AMD AMD64_F11_DRAM	0x1302	AMD64 Family11h DRAM Configuration
 product AMD AMD64_F11_MISC	0x1303	AMD64 Family11h Miscellaneous Configuration
 product AMD AMD64_F11_LINK	0x1304	AMD64 Family11h Link Configuration
+product AMD F14_RC	0x1510	Family14h Root Complex
+product AMD F14_HT	0x1700	Family14h HyperTransport Configuration
+product AMD F14_ADDR	0x1701	Family14h Address Map Configuration
+product AMD F14_DRAM	0x1702	Family14h DRAM Configuration
+product AMD F14_NB	0x1703	Family14h North Bridge Configuration
+product AMD F14_CSTATE	0x1704	Family14h CPU C-state Configuration
+product AMD F14_MISC	0x1716	Family14h Misc. Configuration
+product AMD F14_HB18	0x1718	Family14h Host Bridge
+product AMD F14_HB19	0x1719	Family14h Host Bridge
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD AM_1771_MBW	0x2003	Alchemy AM 1771 MBW
