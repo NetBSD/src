@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2011/02/24 04:28:47 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9 2011/02/25 14:07:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ typedef struct {
 #define	_UC_SETSTACK		0x10000
 #define	_UC_CLRSTACK		0x20000
 
-static inline void *
+static __inline void *
 __lwp_getprivate_fast(void)
 {
 	register void *__gbr;

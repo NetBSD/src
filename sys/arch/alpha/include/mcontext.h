@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2011/02/24 04:28:44 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.7 2011/02/25 14:07:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
-static inline void *
+static __inline void *
 __lwp_getprivate_fast(void)
 {
 	register void *__tmp __asm("$0");
