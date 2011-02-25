@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/02/23 15:23:15 pooka Exp $
+#	$NetBSD: Makefile,v 1.8 2011/02/25 16:01:41 pooka Exp $
 #
 
 LIB=		rumphijack
@@ -14,8 +14,8 @@ CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT
 
 WARNS=		4
 
-#DBG=-g
-#NOGCCERROR=1
-COPTS.hijackdlsym.c+=	-fno-optimize-sibling-calls
+# make sure the compiler doesn't get clever, since we need
+# a stack frame
+COPTS.hijackdlsym.c+=	-O0
 
 .include <bsd.lib.mk>
