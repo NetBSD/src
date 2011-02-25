@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.43 2011/02/25 12:08:35 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.44 2011/02/25 16:54:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.43 2011/02/25 12:08:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.44 2011/02/25 16:54:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,6 +122,7 @@ uint32_t
 acpicpu_md_cap(void)
 {
 	struct cpu_info *ci = curcpu();
+	uint32_t regs[4];
 	uint32_t val = 0;
 
 	if (cpu_vendor != CPUVENDOR_IDT &&
@@ -148,6 +149,17 @@ acpicpu_md_cap(void)
 
 	if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
 		val |= ACPICPU_PDC_T_FFH;
+
+	/*
+	 * Declare support for APERF and MPERF.
+	 */
+	if (cpuid_level >= 0x06) {
+
+		x86_cpuid(0x00000006, regs);
+
+		if ((regs[2] & CPUID_DSPM_HWF) != 0)
+			val |= ACPICPU_PDC_P_HW;
+	}
 
 	return val;
 }
@@ -212,7 +224,7 @@ acpicpu_md_flags(void)
 		 */
 		if (cpuid_level >= 0x06) {
 
-			x86_cpuid(0x06, regs);
+			x86_cpuid(0x00000006, regs);
 
 			if ((regs[2] & CPUID_DSPM_HWF) != 0)
 				val |= ACPICPU_FLAG_P_HW;
@@ -300,7 +312,7 @@ acpicpu_md_flags(void)
 
 				x86_cpuid(0x00000006, regs);
 
-				if ((regs[2] & __BIT(0)) != 0)
+				if ((regs[2] & CPUID_DSPM_HWF) != 0)
 					val |= ACPICPU_FLAG_P_HW;
 			}
 
