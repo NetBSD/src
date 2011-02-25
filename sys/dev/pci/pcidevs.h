@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1062 2011/02/25 01:33:59 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1063 2011/02/25 01:36:37 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1065 2011/02/25 01:33:34 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.1066 2011/02/25 01:36:18 jmcneill Exp
  */
 
 /*
@@ -1421,10 +1421,11 @@
 #define	PCI_PRODUCT_ATI_RS690_PPB_7915	0x7915		/* RS690 PCI to PCI-Express Port 1 Bridge */
 #define	PCI_PRODUCT_ATI_RS690_PPB_7916	0x7916		/* RS690 PCI to PCI-Express Port 2 Bridge */
 #define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI to PCI-Express Port 3 Bridge */
+#define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95C5		/* Radeon HD4250 GPU (RV610) Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250	0x9715		/* Radeon HD4250 GPU (RS880) */
-#define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6310	0x9802		/* Radeon HD6310 Graphics */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HD	0xaa08		/* Radeon HD2600 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_HDMI	0xaa60		/* Redwood HDMI Audio */
 
