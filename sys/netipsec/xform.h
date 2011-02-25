@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.6 2011/02/18 20:40:58 drochner Exp $	*/
+/*	$NetBSD: xform.h,v 1.7 2011/02/25 20:13:10 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -46,7 +46,6 @@
 #include <netinet/in.h>
 #include <opencrypto/xform.h>
 
-#define	AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
 #define	AH_HMAC_INITIAL_RPL	1	/* replay counter initial value */
 
 /*
