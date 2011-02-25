@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.68 2011/02/25 18:29:00 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.69 2011/02/25 18:36:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.68 2011/02/25 18:29:00 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.69 2011/02/25 18:36:36 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -124,6 +124,7 @@ enum dualcall {
 #define REALFSTAT __fstat50
 #define REALUTIMES __utimes50
 #define REALLUTIMES __lutimes50
+#define REALFUTIMES __futimes50
 #define REALMKNOD __mknod50
 #endif
 #define REALREAD _sys_read
