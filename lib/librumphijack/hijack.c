@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.67 2011/02/24 12:25:44 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.68 2011/02/25 18:29:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.67 2011/02/24 12:25:44 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.68 2011/02/25 18:29:00 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -93,6 +93,7 @@ enum dualcall {
 	DUALCALL___GETCWD,
 	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
 	DUALCALL_ACCESS,
+	DUALCALL_MKNOD,
 	DUALCALL__NUM
 };
 
@@ -113,6 +114,7 @@ enum dualcall {
 #define REALUTIMES utimes
 #define REALLUTIMES lutimes
 #define REALFUTIMES futimes
+#define REALMKNOD mknod
 #else
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
@@ -122,7 +124,7 @@ enum dualcall {
 #define REALFSTAT __fstat50
 #define REALUTIMES __utimes50
 #define REALLUTIMES __lutimes50
-#define REALFUTIMES __futimes50
+#define REALMKNOD __mknod50
 #endif
 #define REALREAD _sys_read
 #define REALPREAD _sys_pread
@@ -147,6 +149,7 @@ int REALLUTIMES(const char *, const struct timeval [2]);
 int REALFUTIMES(int, const struct timeval [2]);
 int REALMOUNT(const char *, const char *, int, void *, size_t);
 int __getcwd(char *, size_t);
+int REALMKNOD(const char *, mode_t, dev_t);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -218,6 +221,7 @@ struct sysnames {
 	{ DUALCALL_LCHFLAGS,	"lchflags",	RSYS_NAME(LCHFLAGS)	},
 	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
 	{ DUALCALL_ACCESS,	"access",	RSYS_NAME(ACCESS)	},
+	{ DUALCALL_MKNOD,	S(REALMKNOD),	RSYS_NAME(MKNOD)	},
 };
 #undef S
 
@@ -1807,6 +1811,11 @@ PATHCALL(int, access, DUALCALL_ACCESS,					\
 	(const char *path, int mode),					\
 	(const char *, int),						\
 	(path, mode))
+
+PATHCALL(int, REALMKNOD, DUALCALL_MKNOD,				\
+	(const char *path, mode_t mode, dev_t dev),			\
+	(const char *, mode_t, dev_t),					\
+	(path, mode, dev))
 
 /*
  * Note: with mount the decisive parameter is the mount
