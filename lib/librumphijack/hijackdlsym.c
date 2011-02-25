@@ -1,4 +1,4 @@
-/*      $NetBSD: hijackdlsym.c,v 1.1 2011/02/23 15:23:15 pooka Exp $	*/
+/*      $NetBSD: hijackdlsym.c,v 1.2 2011/02/25 16:01:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijackdlsym.c,v 1.1 2011/02/23 15:23:15 pooka Exp $");
+__RCSID("$NetBSD: hijackdlsym.c,v 1.2 2011/02/25 16:01:41 pooka Exp $");
 
 #include <dlfcn.h>
 
@@ -36,12 +36,22 @@ __RCSID("$NetBSD: hijackdlsym.c,v 1.1 2011/02/23 15:23:15 pooka Exp $");
  * This is called from librumpclient in case of LD_PRELOAD.
  * It ensures correct RTLD_NEXT.
  *
- * (note, this module is compiled with -fno-optimize-sibling-calls
- * to make sure this function is not treated as a tailcall)
+ * (note, this module is compiled with -O0 to make sure this
+ * function is not treated as a tailcall or other optimizations
+ * applied)
  */
+
+/* why is this indirection required for powerpc ???? */
+static void * __noinline
+bouncer(void *handle, const char *symbol)
+{
+
+	return dlsym(handle, symbol);
+}
+
 void *
 rumphijack_dlsym(void *handle, const char *symbol)
 {
 
-	return dlsym(handle, symbol);
+	return bouncer(handle, symbol);
 }
