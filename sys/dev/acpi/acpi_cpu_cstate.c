@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.44 2011/02/23 06:02:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.45 2011/02/25 12:08:35 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.44 2011/02/23 06:02:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.45 2011/02/25 12:08:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -187,7 +187,7 @@ acpicpu_cstate_detach(device_t self)
 	static ONCE_DECL(once_detach);
 	int rv;
 
-	rv = RUN_ONCE(&once_detach, acpicpu_md_idle_stop);
+	rv = RUN_ONCE(&once_detach, acpicpu_md_cstate_stop);
 
 	if (rv != 0)
 		return rv;
@@ -218,7 +218,7 @@ acpicpu_cstate_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 
-	(void)acpicpu_md_idle_start(sc);
+	(void)acpicpu_md_cstate_start(sc);
 }
 
 bool
@@ -692,7 +692,7 @@ acpicpu_cstate_idle(void)
 	 * Apply AMD C1E quirk.
 	 */
 	if ((sc->sc_flags & ACPICPU_FLAG_C_C1E) != 0)
-		acpicpu_md_quirks_c1e();
+		acpicpu_md_quirk_c1e();
 
 	/*
 	 * Check for bus master activity. Note that particularly usb(4)
@@ -767,7 +767,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 
 	case ACPICPU_C_STATE_FFH:
 	case ACPICPU_C_STATE_HALT:
-		acpicpu_md_idle_enter(cs->cs_method, state);
+		acpicpu_md_cstate_enter(cs->cs_method, state);
 		break;
 
 	case ACPICPU_C_STATE_SYSIO:

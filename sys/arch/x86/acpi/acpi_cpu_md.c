@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.42 2011/02/25 10:59:32 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.43 2011/02/25 12:08:35 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.42 2011/02/25 10:59:32 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.43 2011/02/25 12:08:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.42 2011/02/25 10:59:32 jruoho Exp 
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
 
-static int	 acpicpu_md_quirks_piix4(struct pci_attach_args *);
+static int	 acpicpu_md_quirk_piix4(struct pci_attach_args *);
 static void	 acpicpu_md_pstate_percent_reset(struct acpicpu_softc *);
 static void	 acpicpu_md_pstate_percent_status(void *, void *);
 static void	 acpicpu_md_pstate_status(void *, void *);
@@ -153,7 +153,7 @@ acpicpu_md_cap(void)
 }
 
 uint32_t
-acpicpu_md_quirks(void)
+acpicpu_md_flags(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct pci_attach_args pa;
@@ -313,14 +313,14 @@ acpicpu_md_quirks(void)
 	/*
 	 * There are several erratums for PIIX4.
 	 */
-	if (pci_find_device(&pa, acpicpu_md_quirks_piix4) != 0)
+	if (pci_find_device(&pa, acpicpu_md_quirk_piix4) != 0)
 		val |= ACPICPU_FLAG_PIIX4;
 
 	return val;
 }
 
 static int
-acpicpu_md_quirks_piix4(struct pci_attach_args *pa)
+acpicpu_md_quirk_piix4(struct pci_attach_args *pa)
 {
 
 	/*
@@ -339,7 +339,7 @@ acpicpu_md_quirks_piix4(struct pci_attach_args *pa)
 }
 
 void
-acpicpu_md_quirks_c1e(void)
+acpicpu_md_quirk_c1e(void)
 {
 	const uint64_t c1e = MSR_CMPHALT_SMI | MSR_CMPHALT_C1E;
 	uint64_t val;
@@ -351,7 +351,7 @@ acpicpu_md_quirks_c1e(void)
 }
 
 int
-acpicpu_md_idle_start(struct acpicpu_softc *sc)
+acpicpu_md_cstate_start(struct acpicpu_softc *sc)
 {
 	const size_t size = sizeof(native_idle_text);
 	struct acpicpu_cstate *cs;
@@ -376,7 +376,7 @@ acpicpu_md_idle_start(struct acpicpu_softc *sc)
 }
 
 int
-acpicpu_md_idle_stop(void)
+acpicpu_md_cstate_stop(void)
 {
 	uint64_t xc;
 	bool ipi;
@@ -399,7 +399,7 @@ acpicpu_md_idle_stop(void)
  * Caller should enable interrupts after return.
  */
 void
-acpicpu_md_idle_enter(int method, int state)
+acpicpu_md_cstate_enter(int method, int state)
 {
 	struct cpu_info *ci = curcpu();
 
