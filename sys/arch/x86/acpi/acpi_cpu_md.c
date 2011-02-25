@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.40 2011/02/24 13:19:36 jmcneill Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.41 2011/02/25 09:16:00 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.40 2011/02/24 13:19:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.41 2011/02/25 09:16:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,6 +99,8 @@ static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
 
 static int	 acpicpu_md_quirks_piix4(struct pci_attach_args *);
+static void	 acpicpu_md_pstate_percent_reset(struct acpicpu_softc *);
+static void	 acpicpu_md_pstate_percent_status(void *, void *);
 static void	 acpicpu_md_pstate_status(void *, void *);
 static int	 acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *,
                                               uint32_t *);
@@ -408,16 +410,22 @@ acpicpu_md_idle_enter(int method, int state)
 }
 
 int
-acpicpu_md_pstate_start(void)
+acpicpu_md_pstate_start(struct acpicpu_softc *sc)
 {
 	const uint64_t est = __BIT(16);
 	uint64_t val;
+
+	if ((sc->sc_flags & ACPICPU_FLAG_P) == 0)
+		return ENODEV;
 
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_IDT:
 	case CPUVENDOR_INTEL:
 
+		/*
+		 * Make sure EST is enabled.
+		 */
 		val = rdmsr(MSR_MISC_ENABLE);
 
 		if ((val & est) == 0) {
@@ -430,6 +438,12 @@ acpicpu_md_pstate_start(void)
 			if ((val & est) == 0)
 				return ENOTTY;
 		}
+
+		/*
+		 * Reset the APERF and MPERF counters.
+		 */
+		if ((sc->sc_flags & ACPICPU_FLAG_P_HW) != 0)
+			acpicpu_md_pstate_percent_reset(sc);
 	}
 
 	return acpicpu_md_pstate_sysctl_init();
@@ -547,6 +561,80 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 	}
 
 	return 0;
+}
+
+/*
+ * Returns the percentage of the actual frequency in
+ * terms of the maximum frequency of the calling CPU
+ * since the last call. A value zero implies an error.
+ */
+uint8_t
+acpicpu_md_pstate_percent(struct acpicpu_softc *sc)
+{
+	struct cpu_info *ci = sc->sc_ci;
+	uint64_t aperf, mperf;
+	uint64_t xc, rv = 0;
+
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P) == 0))
+		return 0;
+
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P_HW) == 0))
+		return 0;
+
+	/*
+	 * Read the IA32_APERF and IA32_MPERF counters. The first
+	 * increments at the rate of the fixed maximum frequency
+	 * configured during the boot, whereas APERF counts at the
+	 * rate of the actual frequency. Note that the MSRs must be
+	 * read without delay, and that only the ratio between
+	 * IA32_APERF and IA32_MPERF is architecturally defined.
+	 *
+	 * For further details, refer to:
+	 *
+	 *	Intel Corporation: Intel 64 and IA-32 Architectures
+	 *	Software Developer's Manual. Section 13.2, Volume 3A:
+	 *	System Programming Guide, Part 1. July, 2008.
+	 */
+	x86_disable_intr();
+
+	aperf = sc->sc_pstate_aperf;
+	mperf = sc->sc_pstate_mperf;
+
+	xc = xc_unicast(0, acpicpu_md_pstate_percent_status, sc, NULL, ci);
+	xc_wait(xc);
+
+	x86_enable_intr();
+
+	aperf = sc->sc_pstate_aperf - aperf;
+	mperf = sc->sc_pstate_mperf - mperf;
+
+	if (__predict_true(mperf != 0))
+		rv = (aperf * 100) / mperf;
+
+	return rv;
+}
+
+static void
+acpicpu_md_pstate_percent_status(void *arg1, void *arg2)
+{
+	struct acpicpu_softc *sc = arg1;
+
+	sc->sc_pstate_aperf = rdmsr(MSR_APERF);
+	sc->sc_pstate_mperf = rdmsr(MSR_MPERF);
+}
+
+static void
+acpicpu_md_pstate_percent_reset(struct acpicpu_softc *sc)
+{
+
+	KASSERT((sc->sc_flags & ACPICPU_FLAG_P) != 0);
+	KASSERT((sc->sc_flags & ACPICPU_FLAG_P_HW) != 0);
+
+	wrmsr(MSR_APERF, 0);
+	wrmsr(MSR_MPERF, 0);
+
+	sc->sc_pstate_aperf = 0;
+	sc->sc_pstate_mperf = 0;
 }
 
 int

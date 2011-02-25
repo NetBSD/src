@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.38 2011/02/23 06:17:55 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.39 2011/02/25 09:16:00 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.38 2011/02/23 06:17:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.39 2011/02/25 09:16:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -249,7 +249,7 @@ acpicpu_pstate_start(device_t self)
 	uint32_t i;
 	int rv;
 
-	rv = acpicpu_md_pstate_start();
+	rv = acpicpu_md_pstate_start(sc);
 
 	if (rv != 0)
 		goto fail;
