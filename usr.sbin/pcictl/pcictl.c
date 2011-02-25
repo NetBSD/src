@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.16 2009/07/04 20:34:23 cegger Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.17 2011/02/25 21:40:48 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -159,7 +159,7 @@ cmd_list(int argc, char *argv[])
 	int bus, dev, func;
 	int ch;
 
-	bus = pci_businfo.busno;
+	bus = -1;
 	dev = func = -1;
 
 	while ((ch = getopt(argc, argv, "nb:d:f:")) != -1) {
