@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/02/20 07:59:52 matt Exp $
+#	$NetBSD: Makefile,v 1.11 2011/02/25 23:37:32 matt Exp $
 
 PROG=	ip30boot
 NOMAN=	# defined
@@ -31,7 +31,8 @@ CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CPPFLAGS+=	-Dsgimips
 
-MACHINE_ARCH=	mips64eb
+LDFLAGS+=       -m elf64btsmip
+LINKFORMAT+=    -m elf64btsmip
 
 .include "${S}/dev/arcbios/Makefile.inc"
 
