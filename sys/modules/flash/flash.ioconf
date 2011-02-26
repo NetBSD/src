@@ -1,0 +1,9 @@
+# $NetBSD: flash.ioconf,v 1.1 2011/02/26 18:07:31 ahoka Exp $
+
+ioconf flash
+
+include "conf/files"
+
+pseudo-root flashbus*
+
+flash* at flashbus?

@@ -1,0 +1,16 @@
+# $NetBSD: files.nand,v 1.1 2011/02/26 18:07:31 ahoka Exp $
+
+define	nandbus	{ }
+
+device	nand: flashbus
+attach	nand at nandbus
+file	dev/nand/nand.c		nand
+file	dev/nand/nand_io.c	nand
+file	dev/nand/hamming.c	nand
+file	dev/nand/nand_bbt.c	nand
+file	dev/nand/nand_crc.c	nand
+
+defpseudodev	nandemulator: nandbus
+file	dev/nand/nandemulator.c	nandemulator
+
+defflag opt_nand.h		NAND_BBT

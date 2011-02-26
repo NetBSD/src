@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1514 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1515 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -872,3 +872,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		DIGEST-MD5, EXTERNAL, GSSAPI, LOGIN, PLAIN [christos 20110221]
 	alc(4):	Add a driver for Atheros AR813x/AR815x Ethernet.
 		[jmcneill 20110222]
+	flash(9): Add subsystem to handle Flash devices. [ahoka 20110226]
+	nand(9): Add subsystem to handle NAND controllers. [ahoka 20110226]
+	evbarm: Add driver for OMAP NAND controllers. [ahoka 20110226]

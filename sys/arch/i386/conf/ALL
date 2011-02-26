@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.297 2011/02/24 17:42:16 macallan Exp $
+# $NetBSD: ALL,v 1.298 2011/02/26 18:07:30 ahoka Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.297 $"
+#ident 		"ALL-$Revision: 1.298 $"
 
 maxusers	64		# estimated number of users
 
@@ -1584,6 +1584,12 @@ satlink0 at isa? port 0x300 drq 1
 # devices (watchdog timer, etc.)
 weasel* at pci?
 
+# Flash subsystem
+flash* at flashbus?
+
+# NAND subsystem
+nand* at nandbus?
+
 # Pull in optional local configuration
 #include 	"arch/i386/conf/ALL.local"
 
@@ -1702,6 +1708,8 @@ pseudo-device	pud
 
 # Hardware-assisted data mover interface
 pseudo-device	dmoverio
+
+pseudo-device	nandemulator
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 
