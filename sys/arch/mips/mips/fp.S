@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.42 2011/02/26 15:01:31 tsutsui Exp $	*/
+/*	$NetBSD: fp.S,v 1.43 2011/02/26 15:41:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2833,6 +2833,7 @@ fpe_trap:
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #endif
+	move	a3, a2				# fpustat
 	REG_L	a1, CALLFRAME_FRAME(sp)		# frame
 	REG_L	a2, CALLFRAME_CAUSE(sp)		# cause
 	REG_L	ra, CALLFRAME_RA(sp)
@@ -4572,10 +4573,9 @@ STATIC_LEAF(fpemul_sigfpe)
 	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
+	move	a1, a3				# fpustat
 	move	a0, MIPS_CURLWP			# get current lwp
-	li	a1, SIGFPE
-	j	_C_LABEL(fpemul_trapsignal)
+	j	_C_LABEL(mips_fpuexcept)
 END(fpemul_sigfpe)
 
 #ifdef FPEMUL
@@ -4587,9 +4587,8 @@ STATIC_LEAF(mips_emul_sigfpe)
 	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
+	move	a1, a3				# fpustat
 	move	a0, MIPS_CURLWP			# get current lwp
-	li	a1, SIGFPE
-	j	_C_LABEL(fpemul_trapsignal)
+	j	_C_LABEL(mips_fpuexcept)
 END(mips_emul_sigfpe)
 #endif
