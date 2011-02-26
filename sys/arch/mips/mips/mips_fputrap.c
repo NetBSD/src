@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.8 2011/02/26 10:56:56 tsutsui Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.9 2011/02/26 11:05:54 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -38,7 +38,7 @@
 
 #if defined(FPEMUL) || !defined(NOFPU)
 void mips_fpuexcept(struct lwp *, uint32_t);
-void mips_fpuillinst(struct lwp *, uint32_t, vaddr_t);
+void mips_fpuillinst(struct lwp *, uint32_t);
 static int fpustat2sicode(uint32_t);
 
 void
@@ -59,7 +59,7 @@ mips_fpuexcept(struct lwp *l, uint32_t fpustat)
 }
 
 void
-mips_fpuillinst(struct lwp *l, uint32_t opcode, vaddr_t vaddr)
+mips_fpuillinst(struct lwp *l, uint32_t opcode)
 {
 	ksiginfo_t ksi;
 
@@ -72,7 +72,7 @@ mips_fpuillinst(struct lwp *l, uint32_t opcode, vaddr_t vaddr)
 	ksi.ksi_signo = SIGILL;
 	ksi.ksi_code = ILL_ILLOPC;
 	ksi.ksi_trap = opcode;
-	ksi.ksi_addr = (void *)vaddr;
+	ksi.ksi_addr = (void *)(uintptr_t)l->l_md.md_utf->tf_regs[_R_PC];
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 }
 
