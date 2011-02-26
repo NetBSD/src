@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2011/02/10 13:38:08 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.7 2011/02/26 20:11:24 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ void module_add(char *);
 void module_load(char *);
 int module_open(struct boot_module *);
 
-void main(int, char **);
+void main(int, char **, char *, char *);
 extern char bootprog_name[], bootprog_rev[];
 
 struct pcidev lata[2];
@@ -100,13 +100,18 @@ int brdtype;
 uint32_t busclock, cpuclock;
 
 static int check_bootname(char *);
+static int parse_cmdline(char **, int, char *, char *);
+static int is_space(char);
+
 #define	BNAME_DEFAULT "nfs:"
+#define MAX_ARGS 10
 
 void
-main(int argc, char *argv[])
+main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 {
 	struct brdprop *brdprop;
 	unsigned long marks[MARK_MAX];
+	char *new_argv[MAX_ARGS];
 	int n, i, fd, howto;
 	char *bname;
 
@@ -165,6 +170,18 @@ main(int argc, char *argv[])
 
 	if (netif_init(&lnif[0]) == 0)
 		printf("no NET device driver was found\n");
+
+	/*
+	 * When argc is too big then it is probably a pointer, which could
+	 * indicate that we were launched as a Linux kernel module using
+	 * "bootm".
+	 */
+	if (argc > MAX_ARGS) {
+		/* parse Linux bootargs */
+		argv = new_argv;
+		argc = parse_cmdline(argv, MAX_ARGS, bootargs_start,
+		    bootargs_end);
+	}
 
 	howto = RB_AUTOBOOT;		/* default is autoboot = 0 */
 
@@ -489,4 +506,30 @@ check_bootname(char *s)
 		return *s == ':';
 	}
 	return 0;
+}
+
+static int
+parse_cmdline(char **argv, int maxargc, char *p, char *end)
+{
+	int argc;
+
+	argv[0] = "";
+	for (argc = 1; argc < maxargc && p < end; argc++) {
+		while (is_space(*p))
+			p++;
+		if (p >= end)
+			break;
+		argv[argc] = p;
+		while (!is_space(*p) && p < end)
+			p++;
+		*p++ = '\0';
+	}
+
+	return argc;
+}
+
+static int
+is_space(char c)
+{
+	return c > '\0' && c <= ' ';
 }

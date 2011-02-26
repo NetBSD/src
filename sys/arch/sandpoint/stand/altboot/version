@@ -5,3 +5,4 @@
 	maintainance more confortable
 1.4:	load kernels from local disk
 1.5:	altboot is the new name as this is capable of handling net & dsk.
+1.6:	build altboot.img to fake a Linux kernel module, supports bootargs

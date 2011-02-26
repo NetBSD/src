@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: entry.S,v 1.2 2011/02/26 20:11:24 phx Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
@@ -9,8 +9,41 @@
 	.text
 	.globl _start
 _start:
+	/*
+	 * Save possible argc and argv values from the firmware, usually
+	 * passed in r3 and r4.
+	 * When started with "bootm", as a Linux kernel module, r6 and r7
+	 * point to the start and end address of the bootargs.
+	 */
 	mr	30,3
 	mr	31,4
+	mr	28,6
+	mr	29,7
+
+	/*
+	 * U-Boot/PPCBoot forgets to flush the cache when using the "bootm"
+	 * command, so we have to do that now.
+	 */
+	lis	3,_start@ha
+	addi	3,3,_start@l
+	andi.	3,3,~31@l
+	lis	4,(_edata+31)@ha
+	addi	4,4,(_edata+31)@l
+	mr	5,3
+10:
+	dcbst	0,5
+	addi	5,5,32
+	cmplw	5,4
+	ble	10b
+	sync
+11:
+	icbi	0,3
+	addi	3,3,32
+	cmplw	3,4
+	ble	11b
+	sync
+	isync
+
 	mfspr	11,SPR_HID0
 	andi.	0,11,HID0_DCE
 	ori	11,11,HID0_ICE
@@ -93,6 +126,8 @@ _start:
 	bl	brdsetup
 	mr	3,30
 	mr	4,31
+	mr	5,28
+	mr	6,29
 	bl	main
 
 hang:	b	hang
