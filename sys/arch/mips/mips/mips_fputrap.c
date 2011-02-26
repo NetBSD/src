@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.9 2011/02/26 11:05:54 tsutsui Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.10 2011/02/26 15:41:32 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -99,22 +99,3 @@ fpustat2sicode(uint32_t fpustat)
 	return FPE_FLTINV;
 }
 #endif /* FPEMUL || !NOFPU */
-
-void fpemul_trapsignal(struct lwp *, unsigned int, unsigned int);
-
-void
-fpemul_trapsignal(struct lwp *l, unsigned int sig, unsigned int code)
-{
-	ksiginfo_t ksi;
-
-#ifdef FPEMUL_DEBUG
-	printf("%s(%x,%x,%#"PRIxREGISTER")\n",
-	   __func__, sig, code, l->l_md.md_utf->tf_regs[_R_PC]);
-#endif
-
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = sig;
-	ksi.ksi_code = 1; /* XXX */
-	ksi.ksi_trap = code;
-	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
-}
