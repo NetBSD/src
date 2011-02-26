@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.123 2011/02/23 07:53:29 mrg Exp $
+#	 $NetBSD: mi,v 1.124 2011/02/26 09:27:20 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6438,6 +6438,7 @@
 ./usr/X11R7/lib/pkgconfig/trapproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/videoproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/x11.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/x11-xcb.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xau.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xaw6.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xaw7.pc			-unknown-	xorg
