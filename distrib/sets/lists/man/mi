@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1295 2011/02/24 14:20:28 jruoho Exp $
+# $NetBSD: mi,v 1.1296 2011/02/26 18:07:15 ahoka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -967,6 +967,7 @@
 ./usr/share/man/cat4/fd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fea.0			man-sys-catman		.cat
 ./usr/share/man/cat4/finsio.0			man-sys-catman		.cat
+./usr/share/man/cat4/flash.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fmv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fpa.0			man-sys-catman		.cat
@@ -3734,6 +3735,7 @@
 ./usr/share/man/html4/fd.html			man-sys-htmlman		html
 ./usr/share/man/html4/fea.html			man-sys-htmlman		html
 ./usr/share/man/html4/finsio.html		man-sys-htmlman		html
+./usr/share/man/html4/flash.html		man-sys-htmlman		html
 ./usr/share/man/html4/fms.html			man-sys-htmlman		html
 ./usr/share/man/html4/fmv.html			man-sys-htmlman		html
 ./usr/share/man/html4/fpa.html			man-sys-htmlman		html
@@ -6276,6 +6278,7 @@
 ./usr/share/man/man4/fd.4			man-sys-man		.man
 ./usr/share/man/man4/fea.4			man-sys-man		.man
 ./usr/share/man/man4/finsio.4			man-sys-man		.man
+./usr/share/man/man4/flash.4			man-sys-man		.man
 ./usr/share/man/man4/fms.4			man-sys-man		.man
 ./usr/share/man/man4/fmv.4			man-sys-man		.man
 ./usr/share/man/man4/fpa.4			man-sys-man		.man

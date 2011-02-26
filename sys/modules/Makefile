@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2011/02/24 14:08:51 jruoho Exp $
+#	$NetBSD: Makefile,v 1.68 2011/02/26 18:07:31 ahoka Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ SUBDIR+=	exec_script
 SUBDIR+=	fdesc
 SUBDIR+=	ffs
 SUBDIR+=	filecore
+SUBDIR+=	flash
 SUBDIR+=	fss
 SUBDIR+=	hfs
 SUBDIR+=	kernfs
@@ -32,6 +33,8 @@ SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
 SUBDIR+=	mqueue
 SUBDIR+=	msdos
+SUBDIR+=	nand
+SUBDIR+=	nandemulator
 SUBDIR+=	nfs
 SUBDIR+=	nfsserver
 SUBDIR+=	nilfs
