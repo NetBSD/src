@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.28 2009/04/13 11:54:58 he Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.29 2011/02/26 05:25:27 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.28 2009/04/13 11:54:58 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.29 2011/02/26 05:25:27 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/signal.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
@@ -92,7 +94,7 @@ darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		    l->l_sigstk.ss_size);
 		stack_size = l->l_sigstk.ss_size;
 	} else {
-		sfp = (struct darwin_sigframe *)tf->fixreg[1];
+		sfp = (struct darwin_sigframe *)tf->tf_fixreg[1];
 		stack_size = 0;
 	}
 	/* 16 bytes alignement */
@@ -100,17 +102,17 @@ darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Prepare the signal frame */
 	memset(&sf, 0, sizeof(sf));
-	sf.dmc.es.dar = tf->dar;
-	sf.dmc.es.dsisr = tf->dsisr;
-	sf.dmc.es.exception = tf->exc;
+	sf.dmc.es.dar = tf->tf_dar;
+	sf.dmc.es.dsisr = tf->tf_dsisr;
+	sf.dmc.es.exception = tf->tf_exc;
 
-	sf.dmc.ss.srr0 = tf->srr0;
-	sf.dmc.ss.srr1 = tf->srr1 & PSL_USERSRR1;
-	memcpy(&sf.dmc.ss.gpreg[0], &tf->fixreg[0], sizeof(sf.dmc.ss.gpreg));
-	sf.dmc.ss.cr = tf->cr;
-	sf.dmc.ss.xer = tf->xer;
-	sf.dmc.ss.lr = tf->lr;
-	sf.dmc.ss.ctr = tf->ctr;
+	sf.dmc.ss.srr0 = tf->tf_srr0;
+	sf.dmc.ss.srr1 = tf->tf_srr1 & PSL_USERSRR1;
+	memcpy(&sf.dmc.ss.gpreg[0], &tf->tf_fixreg[0], sizeof(sf.dmc.ss.gpreg));
+	sf.dmc.ss.cr = tf->tf_cr;
+	sf.dmc.ss.xer = tf->tf_xer;
+	sf.dmc.ss.lr = tf->tf_lr;
+	sf.dmc.ss.ctr = tf->tf_ctr;
 	sf.dmc.ss.mq = 0; /* XXX */
 
 	/* XXX What should we do with th FP regs? */
@@ -154,18 +156,18 @@ darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	/* Prepare registers */
-	tf->fixreg[1] = (u_long)sfp;
-	tf->fixreg[3] = (u_long)catcher;
+	tf->tf_fixreg[1] = (u_long)sfp;
+	tf->tf_fixreg[3] = (u_long)catcher;
 	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
-		tf->fixreg[4] = 2; /* with siginfo */
+		tf->tf_fixreg[4] = 2; /* with siginfo */
 	else
-		tf->fixreg[4] = 1; /* without siginfo */
-	tf->fixreg[5] = (u_long)sig;
-	tf->fixreg[6] = (u_long)&sfp->duc.si;
-	tf->fixreg[7] = (u_long)&sfp->duc.uctx;
-	tf->lr = (u_long)tf->srr0;
-	tf->srr0 = (u_long)ps->sa_sigdesc[sig].sd_tramp;
-	tf->srr1 = (PSL_EE | PSL_ME | PSL_IR | PSL_DR | PSL_PR);
+		tf->tf_fixreg[4] = 1; /* without siginfo */
+	tf->tf_fixreg[5] = (u_long)sig;
+	tf->tf_fixreg[6] = (u_long)&sfp->duc.si;
+	tf->tf_fixreg[7] = (u_long)&sfp->duc.uctx;
+	tf->tf_lr = (u_long)tf->tf_srr0;
+	tf->tf_srr0 = (u_long)ps->sa_sigdesc[sig].sd_tramp;
+	tf->tf_srr1 = (PSL_EE | PSL_ME | PSL_IR | PSL_DR | PSL_PR);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -214,22 +216,22 @@ darwin_sys_sigreturn_x2(struct lwp *l, const struct darwin_sys_sigreturn_x2_args
 	tf = trapframe(l);
 	if (!PSL_USEROK_P(mctx.ss.srr1)) {
 		DPRINTF(("uctx.ss.srr1 = 0x%08x, rf->srr1 = 0x%08lx\n",
-		    mctx.ss.srr1, tf->srr1));
+		    mctx.ss.srr1, tf->tf_srr1));
 		return (EINVAL);
 	}
 
 	/* Restore the context */
-	tf->dar = mctx.es.dar;
-	tf->dsisr = mctx.es.dsisr;
-	tf->exc = mctx.es.exception;
+	tf->tf_dar = mctx.es.dar;
+	tf->tf_dsisr = mctx.es.dsisr;
+	tf->tf_exc = mctx.es.exception;
 
-	tf->srr0 = mctx.ss.srr0;
-	tf->srr1 = mctx.ss.srr1;
-	memcpy(&tf->fixreg[0], &mctx.ss.gpreg[0], sizeof(mctx.ss.gpreg));
-	tf->cr = mctx.ss.cr;
-	tf->xer = mctx.ss.xer;
-	tf->lr = mctx.ss.lr;
-	tf->ctr = mctx.ss.ctr;
+	tf->tf_srr0 = mctx.ss.srr0;
+	tf->tf_srr1 = mctx.ss.srr1;
+	memcpy(&tf->tf_fixreg[0], &mctx.ss.gpreg[0], sizeof(mctx.ss.gpreg));
+	tf->tf_cr = mctx.ss.cr;
+	tf->tf_xer = mctx.ss.xer;
+	tf->tf_lr = mctx.ss.lr;
+	tf->tf_ctr = mctx.ss.ctr;
 
 	/* Restore signal stack */
 	if (uctx.uc_onstack & SS_ONSTACK)
@@ -286,8 +288,8 @@ darwin_fork_child_return(void *arg)
 
 	child_return(arg);
 
-	tf->fixreg[FIRSTARG] = p->p_pid;
-	tf->srr0 +=4;
+	tf->tf_fixreg[FIRSTARG] = p->p_pid;
+	tf->tf_srr0 +=4;
 
 	return;
 }
