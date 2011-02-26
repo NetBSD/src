@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.181 2011/02/24 16:21:50 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.182 2011/02/26 09:47:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -687,7 +687,7 @@ XNESTED(mips_fpu_trap)
 
 /*
  * Finally, we can call
- * mips_emul(uint32_t insn, struct trapframe *tf, vaddr_t pc).
+ * mips_emul_fp(uint32_t instr, struct trapframe *tf, uint32_t cause).
  */
 4:
 	jal		_C_LABEL(mips_emul_fp)
