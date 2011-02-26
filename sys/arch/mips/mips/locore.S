@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.182 2011/02/26 09:47:24 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.183 2011/02/26 13:58:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -645,12 +645,12 @@ XNESTED(mips_fpu_trap)
  * Check to see if the instruction to be emulated is a floating-point
  * instruction.
  */
-	srl		t0, a0, MIPS_OPCODE_SHIFT
-	beq		t0, MIPS_OPCODE_C1, 4f
+	srl		t2, a0, MIPS_OPCODE_SHIFT
+	beq		t2, MIPS_OPCODE_C1, 4f
 	 nop
 
 /*
- * Send a floating point exception signal to the current LWP.
+ * Send an ILL signal to the current LWP if the instruction can't be emulated.
  */
 	srl		a2, 8
 	sll		a2, 8
@@ -658,6 +658,9 @@ XNESTED(mips_fpu_trap)
 	REG_PROLOGUE
 	REG_S		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
+
+	and		t2, t0, ~MIPS_FPU_EXCEPTION_BITS
+	ctc1		t2, MIPS_FPU_CSR
 
 	move		a1, a0				# code = instruction
 	jal		_C_LABEL(mips_fpuillinst)
