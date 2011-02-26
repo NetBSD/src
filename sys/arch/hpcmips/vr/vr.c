@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.59 2011/02/20 07:58:14 matt Exp $	*/
+/*	$NetBSD: vr.c,v 1.60 2011/02/26 12:07:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.59 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.60 2011/02/26 12:07:46 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.59 2011/02/20 07:58:14 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/cache.h>
+#include <mips/locore.h>
+
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
 #include <machine/bus_space_hpcmips.h>
@@ -65,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.59 2011/02/20 07:58:14 matt Exp $");
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
-
-#include <mips/cache.h>
 
 #include "vrip_common.h"
 #if NVRIP_COMMON > 0
