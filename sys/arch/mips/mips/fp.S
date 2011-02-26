@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.40 2011/02/25 11:44:56 tsutsui Exp $	*/
+/*	$NetBSD: fp.S,v 1.41 2011/02/26 12:02:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -4559,10 +4559,9 @@ STATIC_LEAF(fpemul_sigill)
 	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
+	move	a1, a0				# code = instruction
 	move	a0, MIPS_CURLWP			# get current lwp
-	li	a1, SIGILL
-	j	_C_LABEL(fpemul_trapsignal)
+	j	_C_LABEL(mips_fpuillinst)
 END(fpemul_sigill)
 
 STATIC_LEAF(fpemul_sigfpe)
