@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.10 2010/05/11 21:50:35 pooka Exp $
+#	$NetBSD: Makefile.libkern,v 1.11 2011/02/26 16:28:10 matt Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -43,8 +43,8 @@ CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 .endif
 
 .if (${MACHINE_ARCH} != "alpha") && \
-    (${MACHINE_ARCH} != "mips64eb") && \
-    (${MACHINE_ARCH} != "mips64el") && \
+    (${MACHINE_ARCH} != "mips64eb" || !empty(CFLAGS:M-mabi=32)) && \
+    (${MACHINE_ARCH} != "mips64el" || !empty(CFLAGS:M-mabi=32)) && \
     (${MACHINE_ARCH} != "powerpc64") && \
     (${MACHINE_ARCH} != "sparc64") && \
     (${MACHINE_ARCH} != "x86_64")
