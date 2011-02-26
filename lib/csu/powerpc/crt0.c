@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.27 2011/02/22 05:45:07 joerg Exp $ */
+/* $NetBSD: crt0.c,v 1.28 2011/02/26 17:11:23 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -63,11 +63,17 @@ _start(int argc, char **argv, char **envp,
 	 * Initialize the Small Data Area registers.
 	 * _SDA_BASE is defined in the SVR4 ABI for PPC.
 	 * _SDA2_BASE is defined in the E[mbedded] ABI for PPC.
+	 *
+	 * Do the initialization in a PIC manner.
 	 */
-	__asm(  "lis %r13,rtld_SDA_BASE_@ha;"
-		"addi %r13,%r13,rtld_SDA_BASE_@l;"
-		"lis %r2,rtld_SDA2_BASE_@ha;"
-		"addi %r2,%r2,rtld_SDA2_BASE_@l" );
+	__asm(
+		"bcl 20,31,1f;"
+		"1: mflr 11;"
+		"addis 13,11,rtld_SDA_BASE_-1b@ha;"
+		"addi 13,13,rtld_SDA_BASE_-1b@l;"
+		"addis 2,11,rtld_SDA2_BASE_-1b@ha;"
+		"addi 2,2,rtld_SDA2_BASE_-1b@l"
+	    ::: "lr" );
 
 	if ((namep = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
 		if ((__progname = _strrchr(namep, '/')) == NULL)
@@ -101,7 +107,7 @@ _start(int argc, char **argv, char **envp,
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.27 2011/02/22 05:45:07 joerg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.28 2011/02/26 17:11:23 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
