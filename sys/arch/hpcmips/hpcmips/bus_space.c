@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.29 2011/02/20 07:58:14 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.30 2011/02/26 12:07:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.29 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.30 2011/02/26 12:07:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.29 2011/02/20 07:58:14 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#include <mips/locore.h>
 #include <mips/pte.h>
 #include <machine/bus.h>
 #include <machine/bus_space_hpcmips.h>
