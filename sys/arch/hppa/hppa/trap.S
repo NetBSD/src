@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.57 2011/02/26 07:53:47 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.58 2011/02/26 07:54:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -514,7 +514,6 @@ syscall_return:
 
 	ldw	TF_CR0(%sr3, %t3), %t1
 	mtctl	%t1, %rctr
-
 
 	GET_CURCPU_SPACE(%sr3, %t3)
 
