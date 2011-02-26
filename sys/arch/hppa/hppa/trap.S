@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.55 2011/02/24 08:57:39 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.56 2011/02/26 07:52:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -508,13 +508,13 @@ syscall_return:
 	mtctl	%t2, %pidr4
 #endif
 	ldw	TF_CR27(%sr3, %t3), %t1
+	ldw	TF_CR30(%sr3, %t3), %t2
 	mtctl	%t1, CR_TLS
+	mtctl	%t2, CR_FPPADDR
 
 	ldw	TF_CR0(%sr3, %t3), %t1
 	mtctl	%t1, %rctr
 
-	ldw	TF_CR30(%sr3, %t3), %t1
-	mtctl	%t1, CR_FPPADDR
 
 	GET_CURCPU_SPACE(%sr3, %t3)
 
@@ -2091,9 +2091,6 @@ trapnowvirt:
 	stw	%t1, TF_SR7(%sr3, %t3)
 	stw	%t2, TF_CR9(%sr3, %t3)
 
-	mfctl	CR_TLS, %t1
-	stw	%t1, TF_CR27(%sr3, %t3)
-
 	mtsp	%r0, %sr0
 	mtsp	%r0, %sr1
 	mtsp	%r0, %sr2
@@ -2201,10 +2198,10 @@ trapnowvirt:
 	stw	%t1, TF_CR24(%t3)
 	stw	%t2, TF_CR28(%t3)
 
-	mfctl	CR_TLS, %t1
-	stw	%t1, TF_CR27(%t3)
 #endif
+	mfctl	CR_TLS, %t1
 	mfctl	CR_FPPADDR, %t2
+	stw	%t1, TF_CR27(%t3)
 	stw	%t2, TF_CR30(%t3)
 
 	/*
