@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.255 2011/02/26 02:41:56 pgoyette Exp $
+# $NetBSD: mi,v 1.256 2011/02/26 05:38:44 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -372,6 +372,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memcpy.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memmove.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memset.debug		tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_raw.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_read.debug			tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_readlink.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_snprintf.debug		tests-lib-debug		debug,atf,ssp
@@ -1775,6 +1776,7 @@
 ./usr/tests/lib/libc/ssp/h_memcpy		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_memmove		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_memset		tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_raw			tests-obsolete		obsolete
 ./usr/tests/lib/libc/ssp/h_read			tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_readlink		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_snprintf		tests-lib-tests		atf,ssp
