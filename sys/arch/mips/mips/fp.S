@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.41 2011/02/26 12:02:01 tsutsui Exp $	*/
+/*	$NetBSD: fp.S,v 1.42 2011/02/26 15:01:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2833,8 +2833,8 @@ fpe_trap:
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #endif
-	REG_L	a1, CALLFRAME_SIZ + 1*SZREG(sp)	# frame
-	REG_L	a2, CALLFRAME_SIZ + 2*SZREG(sp)	# cause
+	REG_L	a1, CALLFRAME_FRAME(sp)		# frame
+	REG_L	a2, CALLFRAME_CAUSE(sp)		# cause
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, CALLFRAME_SIZ
 	j	_C_LABEL(fpemul_sigfpe)
