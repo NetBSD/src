@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/12/04 23:08:33 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2011/02/26 19:17:37 plunky Exp $
 
 #NOGCCERROR=yes
 
@@ -86,7 +86,10 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
 .PATH: ${DIST}
 
 ntpd.8: ntpd.1
-	@cp $? $@
+	${_MKTARGET_BUILD}
+	${TOOL_SED} -e "s,NTPD 1,NTPD 8," $? > $@
+
+CLEANFILES+=ntpd.8
 
 .include <bsd.prog.mk>
 
