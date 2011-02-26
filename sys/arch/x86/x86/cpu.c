@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.86 2011/02/24 15:42:17 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.87 2011/02/26 14:43:18 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86 2011/02/24 15:42:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87 2011/02/26 14:43:18 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -117,12 +117,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86 2011/02/24 15:42:17 jruoho Exp $");
 #error cpu_info contains 32bit bitmasks
 #endif
 
-int     cpu_match(device_t, cfdata_t, void *);
-void    cpu_attach(device_t, device_t, void *);
-int	cpu_rescan(device_t, const char *, const int *);
-void	cpu_childdetached(device_t, device_t);
-
-
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
+static void	cpu_defer(device_t);
+static int	cpu_rescan(device_t, const char *, const int *);
+static void	cpu_childdetached(device_t, device_t);
 static bool	cpu_suspend(device_t, const pmf_qual_t *);
 static bool	cpu_resume(device_t, const pmf_qual_t *);
 static bool	cpu_shutdown(device_t, int);
@@ -214,7 +213,7 @@ cpu_init_first(void)
 	pmap_update(pmap_kernel());
 }
 
-int
+static int
 cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
@@ -274,7 +273,7 @@ cpu_vm_init(struct cpu_info *ci)
 }
 
 
-void
+static void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_softc *sc = device_private(self);
@@ -449,10 +448,16 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		);
 	}
 
+	(void)config_defer(self, cpu_defer);
+}
+
+static void
+cpu_defer(device_t self)
+{
 	cpu_rescan(self, NULL, NULL);
 }
 
-int
+static int
 cpu_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct cpu_softc *sc = device_private(self);
@@ -486,7 +491,7 @@ cpu_rescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
-void
+static void
 cpu_childdetached(device_t self, device_t child)
 {
 	struct cpu_softc *sc = device_private(self);
