@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.5 2011/01/31 03:37:28 matt Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.6 2011/02/26 20:03:09 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.5 2011/01/31 03:37:28 matt Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.6 2011/02/26 20:03:09 phx Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -53,12 +53,36 @@ __RCSID("$NetBSD: mkubootimage.c,v 1.5 2011/01/31 03:37:28 matt Exp $");
 
 extern uint32_t crc32(const void *, size_t);
 
+static enum uboot_image_os image_os = IH_OS_NETBSD;
 static enum uboot_image_arch image_arch = IH_ARCH_UNKNOWN;
 static enum uboot_image_type image_type = IH_TYPE_UNKNOWN;
 static enum uboot_image_comp image_comp = IH_COMP_NONE;
 static uint32_t image_loadaddr = 0;
 static uint32_t image_entrypoint = 0;
 static char *image_name;
+
+struct uboot_os {
+	enum uboot_image_os os;
+	const char *name;
+} uboot_os[] = {
+	{ IH_OS_OPENBSD,	"openbsd" },
+	{ IH_OS_NETBSD,		"netbsd" },
+	{ IH_OS_FREEBSD,	"freebsd" },
+	{ IH_OS_LINUX,		"linux" },
+};
+
+static enum uboot_image_os
+get_os(const char *name)
+{
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(uboot_os); i++) {
+		if (strcmp(uboot_os[i].name, name) == 0)
+			return uboot_os[i].os;
+	}
+
+	return IH_OS_UNKNOWN;
+}
 
 struct uboot_arch {
 	enum uboot_image_arch arch;
@@ -87,6 +111,7 @@ struct uboot_type {
 	enum uboot_image_type type;
 	const char *name;
 } uboot_type[] = {
+	{ IH_TYPE_STANDALONE,	"standalone" },
 	{ IH_TYPE_KERNEL,	"kernel" },
 	{ IH_TYPE_RAMDISK,	"ramdisk" },
 	{ IH_TYPE_FILESYSTEM,	"fs" },
@@ -131,8 +156,9 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: mkubootimage -A <arm|mips|mips64|powerpc>");
-	fprintf(stderr, " -T <kernel|ramdisk|fs>");
 	fprintf(stderr, " -C <none|gz|bz2>");
+	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
+	fprintf(stderr, " -T <standalone|kernel|ramdisk|fs>");
 	fprintf(stderr, " -a <addr> [-e <ep>] -n <name>");
 	fprintf(stderr, " <srcfile> <dstfile>\n");
 
@@ -192,7 +218,7 @@ generate_header(struct uboot_image_header *hdr, int kernel_fd)
 	hdr->ih_load = htonl(image_loadaddr);
 	hdr->ih_ep = htonl(image_entrypoint);
 	hdr->ih_dcrc = htonl(crc);
-	hdr->ih_os = IH_OS_NETBSD;
+	hdr->ih_os = image_os;
 	hdr->ih_arch = image_arch;
 	hdr->ih_type = image_type;
 	hdr->ih_comp = image_comp;
@@ -238,13 +264,16 @@ main(int argc, char *argv[])
 	int ch;
 	unsigned long num;
 
-	while ((ch = getopt(argc, argv, "A:C:T:a:e:hn:")) != -1) {
+	while ((ch = getopt(argc, argv, "A:C:O:T:a:e:hn:")) != -1) {
 		switch (ch) {
 		case 'A':	/* arch */
 			image_arch = get_arch(optarg);
 			break;
 		case 'C':	/* comp */
 			image_comp = get_comp(optarg);
+			break;
+		case 'O':	/* os */
+			image_os = get_os(optarg);
 			break;
 		case 'T':	/* type */
 			image_type = get_type(optarg);
