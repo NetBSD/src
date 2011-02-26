@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1589 2011/02/17 19:58:34 rmind Exp $
+#	$NetBSD: mi,v 1.1590 2011/02/26 18:07:14 ahoka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2055,6 +2055,7 @@
 ./usr/include/sys/file.h			comp-c-include
 ./usr/include/sys/filedesc.h			comp-c-include
 ./usr/include/sys/filio.h			comp-c-include
+./usr/include/sys/flashio.h			comp-c-include
 ./usr/include/sys/float_ieee.h			comp-obsolete		obsolete
 ./usr/include/sys/float_ieee754.h		comp-c-include
 ./usr/include/sys/fnv_hash.h			comp-obsolete		obsolete
@@ -9369,6 +9370,7 @@
 ./usr/share/man/cat9/firmware_malloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/firmware_open.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/firmware_read.0		comp-sys-catman		.cat
+./usr/share/man/cat9/flash.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fork1.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/format_bytes.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fownsignal.0		comp-sys-catman		.cat
@@ -15303,6 +15305,7 @@
 ./usr/share/man/html9/firmware_malloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/firmware_open.html	comp-sys-htmlman	html
 ./usr/share/man/html9/firmware_read.html	comp-sys-htmlman	html
+./usr/share/man/html9/flash.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fork1.html		comp-sys-htmlman	html
 ./usr/share/man/html9/format_bytes.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fownsignal.html		comp-sys-htmlman	html
@@ -21388,6 +21391,7 @@
 ./usr/share/man/man9/firmware_malloc.9		comp-sys-man		.man
 ./usr/share/man/man9/firmware_open.9		comp-sys-man		.man
 ./usr/share/man/man9/firmware_read.9		comp-sys-man		.man
+./usr/share/man/man9/flash.9			comp-sys-man		.man
 ./usr/share/man/man9/fork1.9			comp-sys-man		.man
 ./usr/share/man/man9/format_bytes.9		comp-sys-man		.man
 ./usr/share/man/man9/fownsignal.9		comp-sys-man		.man
