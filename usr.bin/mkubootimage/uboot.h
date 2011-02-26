@@ -1,4 +1,4 @@
-/* $NetBSD: uboot.h,v 1.2 2011/01/31 03:37:28 matt Exp $ */
+/* $NetBSD: uboot.h,v 1.3 2011/02/26 20:03:09 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,13 @@
 #ifndef _HAVE_UBOOT_H
 #define _HAVE_UBOOT_H
 
-#define	IH_OS_NETBSD	2
+enum uboot_image_os {
+	IH_OS_UNKNOWN = 0,
+	IH_OS_OPENBSD = 1,
+	IH_OS_NETBSD = 2,
+	IH_OS_FREEBSD = 3,
+	IH_OS_LINUX = 5
+};
 
 enum uboot_image_arch {
 	IH_ARCH_UNKNOWN = 0,
@@ -40,6 +46,7 @@ enum uboot_image_arch {
 
 enum uboot_image_type {
 	IH_TYPE_UNKNOWN = 0,
+	IH_TYPE_STANDALONE = 1,
 	IH_TYPE_KERNEL = 2,
 	IH_TYPE_RAMDISK = 3,
 	IH_TYPE_FILESYSTEM = 7,
