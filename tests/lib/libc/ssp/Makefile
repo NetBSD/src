@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/12/27 02:04:19 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2011/02/26 02:41:33 pgoyette Exp $
 
 NOMAN=		# defined
 
@@ -32,7 +32,6 @@ PROGS+=		h_getcwd
 PROGS+=		h_memcpy
 PROGS+=		h_memmove
 PROGS+=		h_memset
-PROGS+=		h_raw
 PROGS+=		h_read
 PROGS+=		h_readlink
 PROGS+=		h_snprintf
