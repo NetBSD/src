@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.56 2011/02/26 07:52:32 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.57 2011/02/26 07:53:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -2233,6 +2233,7 @@ trapnowvirt:
 	bb,>=,n	%arg0, TFF_LAST_POS, L$trap_return
 	nop
 
+	/* load curlwp's trapframe pointer */
 	GET_CURLWP(%t2)
 	ldw	L_MD(%t2), %t3
 
