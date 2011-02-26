@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1590 2011/02/26 18:07:14 ahoka Exp $
+#	$NetBSD: mi,v 1.1591 2011/02/26 23:24:09 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3660,6 +3660,7 @@
 ./usr/libdata/debug/usr/sbin/extattrctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/faithd.debug	comp-router-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/fixmount.debug	comp-nfsclient-debug	debug
+./usr/libdata/debug/usr/sbin/flashctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fsinfo.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fssconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ftp-proxy.debug	comp-pf-debug		pf,debug
