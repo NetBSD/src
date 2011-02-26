@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.42 2011/02/20 07:58:14 matt Exp $ */
+/*	$NetBSD: tx39.c,v 1.43 2011/02/26 12:07:45 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.42 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.43 2011/02/26 12:07:45 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.42 2011/02/20 07:58:14 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#include <mips/locore.h>
 
 #include <machine/bootinfo.h> /* bootinfo */
 #include <machine/sysconf.h>  /* platform */
