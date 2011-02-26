@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.7 2011/02/20 07:45:48 matt Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.8 2011/02/26 10:56:56 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -46,6 +46,11 @@ mips_fpuexcept(struct lwp *l, uint32_t fpustat)
 {
 	ksiginfo_t ksi;
 
+#ifdef FPEMUL_DEBUG
+	printf("%s(%x,%#"PRIxREGISTER")\n",
+	   __func__, fpustat, l->l_md.md_utf->tf_regs[_R_PC]);
+#endif
+
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_code = fpustat2sicode(fpustat);
@@ -57,6 +62,11 @@ void
 mips_fpuillinst(struct lwp *l, uint32_t opcode, vaddr_t vaddr)
 {
 	ksiginfo_t ksi;
+
+#ifdef FPEMUL_DEBUG
+	printf("%s(%x,%#"PRIxREGISTER")\n",
+	   __func__, opcode, l->l_md.md_utf->tf_regs[_R_PC]);
+#endif
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGILL;
@@ -97,9 +107,9 @@ fpemul_trapsignal(struct lwp *l, unsigned int sig, unsigned int code)
 {
 	ksiginfo_t ksi;
 
-#if DEBUG
-	printf("fpemul_trapsignal(%x,%x,%#"PRIxREGISTER")\n",
-	   sig, code, l->l_md.md_utf->tf_regs[_R_PC]);
+#ifdef FPEMUL_DEBUG
+	printf("%s(%x,%x,%#"PRIxREGISTER")\n",
+	   __func__, sig, code, l->l_md.md_utf->tf_regs[_R_PC]);
 #endif
 
 	KSI_INIT_TRAP(&ksi);
