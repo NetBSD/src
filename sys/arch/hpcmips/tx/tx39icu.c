@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.28 2011/02/20 07:58:14 matt Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.29 2011/02/26 12:09:34 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.28 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.29 2011/02/26 12:09:34 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.28 2011/02/20 07:58:14 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <mips/cpuregs.h>
+#include <mips/locore.h>
 #include <machine/bus.h>
 
 #include <hpcmips/tx/tx39var.h>
