@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2011/02/20 07:59:51 matt Exp $
+#	$NetBSD: Makefile,v 1.19 2011/02/26 16:26:58 matt Exp $
 
 
 # Don't strip the ECOFF'ed version on install -- strip gets confused by that,
@@ -31,14 +31,14 @@ CLEANFILES+=	ip2xboot.map ip3xboot.map
 ip3xboot: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
 	${LD} -Map ${.TARGET}.map -N -x -Ttext ${LOAD_ADDRESS_IP32} ${LDBUG} \
-	    -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
+	    -m elf32btsmip -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
 	@${STRIP} -s ${.TARGET}.elf -o ${.TARGET}
 	@${SIZE} ${.TARGET}
 
 ip2xboot: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
 	${LD} -Map ${.TARGET}.map -N -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
-	    -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
+	    -m elf32btsmip -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
 	@${STRIP} -s ${.TARGET}.elf -o ${.TARGET}
 	@${SIZE} ${.TARGET}
 
