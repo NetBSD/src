@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.14 2011/01/04 11:38:58 matt Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.15 2011/02/26 18:07:18 ahoka Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -182,6 +182,19 @@ obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6e000000
+
+# NAND controller
+omapnand0	at gpmc? addr 0x30000000
+
+# NAND layer
+nand0		at nandbus?
+
+# Define flash partitions for board
+flash0		at nand0 offset 0x0 size 0x80000 readonly 1
+flash1		at nand0 offset 0x80000 size 0x80000 readonly 1
+flash2		at nand0 offset 0x260000 size 0x20000
+flash3		at nand0 offset 0x280000 size 0x400000
+flash4		at nand0 offset 0x680000 size 0x0
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
