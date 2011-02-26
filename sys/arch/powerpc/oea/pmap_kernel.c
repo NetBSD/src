@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.5 2011/02/18 21:08:18 matt Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.6 2011/02/26 22:33:45 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.5 2011/02/18 21:08:18 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.6 2011/02/26 22:33:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap.h"
@@ -286,7 +286,7 @@ pmap_pteg_dist(void)
 void
 pmap_pvo_verify(void)
 {
-	(*pmapops->pmapop_pvo_verify)(void)
+	(*pmapops->pmapop_pvo_verify)()
 }
 #endif
 
