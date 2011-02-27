@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2011/02/26 18:07:32 ahoka Exp $
+# $NetBSD: Makefile,v 1.2 2011/02/27 17:51:45 ahoka Exp $
 
 SRCS=		flashctl.c
 
 PROG=		flashctl
-MAN=		# not yet
+MAN=		flashctl.8
 
 WARNS=		4
 
