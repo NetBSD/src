@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.69 2011/02/25 18:36:36 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.70 2011/02/27 11:32:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.69 2011/02/25 18:36:36 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.70 2011/02/27 11:32:12 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -460,13 +460,13 @@ rcinit(void)
 		syscalls[i].bs_host = dlsym(RTLD_NEXT,
 		    syscnames[j].scm_hostname);
 		if (syscalls[i].bs_host == NULL)
-			errx(1, "hostcall %s not found missing",
+			errx(1, "hostcall %s not found!",
 			    syscnames[j].scm_hostname);
 
 		syscalls[i].bs_rump = dlsym(RTLD_NEXT,
 		    syscnames[j].scm_rumpname);
 		if (syscalls[i].bs_rump == NULL)
-			errx(1, "rumpcall %s not found missing",
+			errx(1, "rumpcall %s not found!",
 			    syscnames[j].scm_rumpname);
 	}
 
