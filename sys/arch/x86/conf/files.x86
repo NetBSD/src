@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.62 2011/02/24 13:58:39 jruoho Exp $
+#	$NetBSD: files.x86,v 1.63 2011/02/27 17:10:33 jruoho Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -30,6 +30,14 @@ define  ipmibus {}
 device	cpu: cpufeaturebus
 attach	cpu at cpubus
 file 	arch/x86/x86/cpu.c 		cpu
+
+device	acpicpu
+attach	acpicpu at cpufeaturebus
+file	dev/acpi/acpi_cpu.c		acpi & acpicpu
+file	dev/acpi/acpi_cpu_cstate.c	acpi & acpicpu
+file	dev/acpi/acpi_cpu_pstate.c	acpi & acpicpu
+file	dev/acpi/acpi_cpu_tstate.c	acpi & acpicpu
+file	arch/x86/acpi/acpi_cpu_md.c	acpi & acpicpu
 
 device	coretemp: sysmon_envsys
 attach	coretemp at cpufeaturebus
@@ -96,7 +104,6 @@ file 	arch/x86/x86/mpacpi.c		acpi
 file	arch/x86/x86/acpi_machdep.c	acpi
 
 file	arch/x86/acpi/acpi_wakeup.c	acpi
-file	arch/x86/acpi/acpi_cpu_md.c	acpi & acpicpu
 
 file	arch/x86/isa/isa_machdep.c	isa
 
