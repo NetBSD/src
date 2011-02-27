@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.46 2011/02/25 17:23:34 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.47 2011/02/27 17:27:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.46 2011/02/25 17:23:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.47 2011/02/27 17:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,9 +130,14 @@ acpicpu_md_cap(void)
 		return val;
 
 	/*
-	 * Basic SMP C-states (required for _CST).
+	 * Basic SMP C-states (required for e.g. _CST).
 	 */
 	val |= ACPICPU_PDC_C_C1PT | ACPICPU_PDC_C_C2C3;
+
+	/*
+	 * Claim to support dependency coordination.
+	 */
+	val |= ACPICPU_PDC_P_SW | ACPICPU_PDC_C_SW | ACPICPU_PDC_T_SW;
 
         /*
 	 * If MONITOR/MWAIT is available, announce
