@@ -1,4 +1,4 @@
-.\"	$NetBSD: flashctl.8,v 1.1 2011/02/27 17:51:45 ahoka Exp $
+.\"	$NetBSD: flashctl.8,v 1.2 2011/02/27 23:28:12 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Department of Software Engineering,
 .\"		       University of Szeged, Hungary
@@ -51,24 +51,23 @@ the command to perform, and any arguments the command may require.
 .Sh DEVICE COMMANDS
 The following commands may be used on flash devices:
 .Bl -tag -width erase_offset_size
-.It Cm identify
-Identify the specified device, displaying the device's vendor, product
-strings, and the device's capabilities.
+.It Cm badblocks
+List the bad blocks on the device.
 .It Cm erase Ar offset Ar size
 Erase
 .Ar size
-ammount of flash memory from
+amount of flash memory from
 .Ar offset .
 Size could be
 .Ar all ,
 which means the rest of the flash after
 .Ar offset
-will be
-erased.
-.It Cm badblocks
-List the bad blocks on the device.
+will be erased.
+.It Cm identify
+Identify the specified device, displaying the device's vendor, product
+strings, and the device's capabilities.
 .It Cm markbad Ar offset
-Mark the block given by it's
+Mark the block given by its
 .Ar offset
 as bad.
 .El
@@ -82,4 +81,5 @@ command first appeared in
 .Sh AUTHORS
 The
 .Nm
-command was written by Adam Hoka.
+command was written by
+.An Adam Hoka .
