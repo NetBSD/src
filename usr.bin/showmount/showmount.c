@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.17 2009/04/13 07:30:49 lukem Exp $	*/
+/*	$NetBSD: showmount.c,v 1.18 2011/02/27 10:11:27 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.17 2009/04/13 07:30:49 lukem Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.18 2011/02/27 10:11:27 mbalmer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -241,14 +241,14 @@ int
 xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 {
 	struct mountlist *mp, **otp, *tp;
-	int bool, val, val2;
+	int bool_int, val, val2;
 	char *strp;
 
 	otp = NULL;
 	*mlp = (struct mountlist *)0;
-	if (!xdr_bool(xdrsp, &bool))
+	if (!xdr_bool(xdrsp, &bool_int))
 		return (0);
-	while (bool) {
+	while (bool_int) {
 		mp = (struct mountlist *)malloc(sizeof(struct mountlist));
 		if (mp == NULL)
 			return (0);
@@ -306,7 +306,7 @@ xdr_mntdump(XDR *xdrsp, struct mountlist **mlp)
 			*otp = mp;
 		}
 next:
-		if (!xdr_bool(xdrsp, &bool))
+		if (!xdr_bool(xdrsp, &bool_int))
 			return (0);
 	}
 	return (1);
@@ -320,13 +320,13 @@ xdr_exports(XDR *xdrsp, struct exportslist **exp)
 {
 	struct exportslist *ep;
 	struct grouplist *gp;
-	int bool, grpbool;
+	int bool_int, grpbool;
 	char *strp;
 
 	*exp = (struct exportslist *)0;
-	if (!xdr_bool(xdrsp, &bool))
+	if (!xdr_bool(xdrsp, &bool_int))
 		return (0);
-	while (bool) {
+	while (bool_int) {
 		ep = (struct exportslist *)malloc(sizeof(struct exportslist));
 		if (ep == NULL)
 			return (0);
@@ -350,7 +350,7 @@ xdr_exports(XDR *xdrsp, struct exportslist **exp)
 		}
 		ep->ex_next = *exp;
 		*exp = ep;
-		if (!xdr_bool(xdrsp, &bool))
+		if (!xdr_bool(xdrsp, &bool_int))
 			return (0);
 	}
 	return (1);
