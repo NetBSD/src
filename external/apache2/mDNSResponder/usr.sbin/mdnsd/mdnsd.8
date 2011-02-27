@@ -1,3 +1,5 @@
+.\"	$NetBSD: mdnsd.8,v 1.2 2011/02/27 13:05:38 plunky Exp $
+.\" 
 .\" -*- tab-width: 4 -*-
 .\" 
 .\" Copyright (c) 2003-2004 Apple Computer, Inc. All Rights Reserved.
@@ -47,12 +49,12 @@
 .\"
 .\"
 .\"
-.Dd April 2004              \" Date
-.Dt mDNSResponder 8         \" Document Title
+.Dd February 27, 2011       \" Date
+.Dt mdnsd 8                 \" Document Title
 .Os Darwin                  \" Operating System
 .\"
 .Sh NAME
-.Nm mDNSResponder
+.Nm mdnsd
 .Nd Multicast and Unicast DNS daemon    \" Name Description for whatis database
 .\" 
 .Sh SYNOPSIS
@@ -61,7 +63,7 @@
 .Sh DESCRIPTION
 .Nm
 (also known as
-.Nm mdnsd
+.Nm mDNSResponder
 on some systems)
 is a daemon invoked at boot time to implement Multicast DNS and DNS Service Discovery. On
 Mac OS X 10.6 (Snow Leopard), 
@@ -85,7 +87,8 @@ manually.
 .Pp
 .Ss LOGGING
 There are several methods with which to examine 
-.Nm Ns 's internal state for debugging and diagnostic purposes. The syslog(1)
+.Nm Ns 's internal state for debugging and diagnostic purposes. The
+.Xr syslogd 8
 logging levels map as follows:
 .Pp
 .Dl Error - Error messages
@@ -98,26 +101,23 @@ By default, only log level Error is logged.
 A SIGUSR1 signal toggles additional logging, with Warning and Notice
 enabled by default:
 .Pp
-.Dl % sudo killall -USR1 mDNSResponder
-.Pp
-Once this logging is enabled, users can additionally use syslog(1)
-to change the log filter for the process. For example, to enable log levels Emergency - Debug:
-.Pp
-.Dl % sudo syslog -c mDNSResponder -d
+.Dl # pkill -USR1 mdnsd
 .Pp
 A SIGUSR2 signal toggles packet logging:
 .Pp
-.Dl % sudo killall -USR2 mDNSResponder
+.Dl # pkill -USR2 mdnsd
 .Pp
 A SIGINFO signal will dump a snapshot summary of the internal state to 
 .Pa /var/log/system.log Ns :
 .Pp
-.Dl % sudo killall -INFO mDNSResponder
+.Dl # pkill -INFO mdnsd
 .Sh FILES
-.Pa /usr/sbin/mDNSResponder \" Pathname
+.Pa /usr/sbin/mdnsd \" Pathname
 .\"
 .Sh SEE ALSO
-.Xr mDNS 1
+.Xr dns-sd 1 ,
+.Xr pkill 1 ,
+.Xr syslogd 8
 .Pp
 For information on Multicast DNS, see
 .Pa http://www.multicastdns.org/
