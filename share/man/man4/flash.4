@@ -1,4 +1,4 @@
-.\"	$NetBSD: flash.4,v 1.2 2011/02/26 18:07:17 ahoka Exp $
+.\"	$NetBSD: flash.4,v 1.3 2011/02/27 06:24:27 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Department of Software Engineering,
 .\"		      University of Szeged, Hungary
@@ -47,23 +47,23 @@ The following
 operations are supported on
 .Pa /dev/flash :
 .Bl -tag -width indent
-.It Dv FLASH_ERASE_BLOCK (struct flash_erase_params)
-This command erases one or more blocks.
-.It Dv FLASH_DUMP (struct flash_dump_params)
-This command dumps a block.
-.It Dv FLASH_GET_INFO (struct flash_info_params)
-This command aquires information aboout the flash device.
 .It Dv FLASH_BLOCK_ISBAD (struct flash_badblock_params)
 This command checks if a block is marked as bad.
 .It Dv FLASH_BLOCK_MARKBAD (struct flash_badblock_params)
 This command marks a block as bad.
+.It Dv FLASH_DUMP (struct flash_dump_params)
+This command dumps a block.
+.It Dv FLASH_ERASE_BLOCK (struct flash_erase_params)
+This command erases one or more blocks.
+.It Dv FLASH_GET_INFO (struct flash_info_params)
+This command aquires information aboout the flash device.
 .El
 .Sh FILES
 .Bl -tag -width /dev/flash -compact
 .It Pa /dev/flash
 .El
 .Sh SEE ALSO
-.Xr flash 9
+.Xr flash 9 ,
 .Xr nand 9
 .Sh AUTHORS
 .An Adam Hoka Aq ahoka@NetBSD.org
