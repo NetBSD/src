@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.133 2011/02/24 03:37:02 macallan Exp $	*/
+/*	$NetBSD: pci.c,v 1.134 2011/02/27 18:10:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.133 2011/02/24 03:37:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.134 2011/02/27 18:10:25 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -302,10 +302,13 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	    sizeof(sc->PCI_SC_DEVICESC(device, function).c_range));
 	i = 0;
 	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += width) {
-		int type = pci_mapreg_type(pc, tag, bar);
 		struct pci_range *r;
+		pcireg_t type;
 
 		width = 4;
+		if (pci_mapreg_probe(pc, tag, bar, &type) == 0)
+			continue;
+
 		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM) {
 			if (PCI_MAPREG_MEM_TYPE(type) ==
 			    PCI_MAPREG_MEM_TYPE_64BIT)
