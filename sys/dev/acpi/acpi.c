@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.239 2011/02/20 16:24:54 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.240 2011/02/27 17:10:33 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.239 2011/02/20 16:24:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.240 2011/02/27 17:10:33 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -134,7 +134,6 @@ ACPI_MODULE_NAME	("acpi")
  * Machine-dependent code may wish to skip other steps (such as attaching
  * subsystems that ACPI supercedes) when ACPI is active.
  */
-uint32_t	acpi_cpus = 0;
 int		acpi_active = 0;
 int		acpi_suspended = 0;
 int		acpi_force_load = 0;
@@ -161,6 +160,7 @@ struct acpi_walkcontext {
  */
 static const char * const acpi_ignored_ids[] = {
 #if defined(i386) || defined(x86_64)
+	"ACPI0007",	/* ACPI CPUs do not attach to acpi(4) */
 	"PNP0000",	/* AT interrupt controller is handled internally */
 	"PNP0200",	/* AT DMA controller is handled internally */
 	"PNP0A??",	/* PCI Busses are handled internally */
@@ -804,7 +804,6 @@ acpi_rescan_early(struct acpi_softc *sc)
 static void
 acpi_rescan_nodes(struct acpi_softc *sc)
 {
-	const uint32_t ncpus = acpi_md_ncpus();
 	struct acpi_attach_args aa;
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *di;
@@ -841,7 +840,7 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		if (di->Type == ACPI_TYPE_POWER)
 			continue;
 
-		if (di->Type == ACPI_TYPE_PROCESSOR && acpi_cpus >= ncpus)
+		if (di->Type == ACPI_TYPE_PROCESSOR)
 			continue;
 
 		if (acpi_match_hid(di, acpi_early_ids) != 0)
