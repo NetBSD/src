@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.7 2011/02/02 14:42:15 pooka Exp $	*/
+/*	$NetBSD: t_io.c,v 1.8 2011/02/27 15:16:31 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -158,6 +158,19 @@ overwrite_trunc(const atf_tc_t *tc, const char *mp)
 	overwritebody(tc, 1<<16, true);
 }
 
+static void
+shrinkfile(const atf_tc_t *tc, const char *mp)
+{
+	int fd;
+
+	FSTEST_ENTER();
+	RL(fd = rump_sys_open("file", O_RDWR|O_CREAT|O_TRUNC, 0666));
+	RL(rump_sys_ftruncate(fd, 2));
+	RL(rump_sys_ftruncate(fd, 1));
+	rump_sys_close(fd);
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(holywrite, "create a sparse file and fill hole");
 ATF_TC_FSAPPLY(extendfile, "check that extending a file works");
 ATF_TC_FSAPPLY(extendfile_append, "check that extending a file works "
@@ -165,6 +178,7 @@ ATF_TC_FSAPPLY(extendfile_append, "check that extending a file works "
 ATF_TC_FSAPPLY(overwrite512, "write a 512 byte file twice");
 ATF_TC_FSAPPLY(overwrite64k, "write a 64k byte file twice");
 ATF_TC_FSAPPLY(overwrite_trunc, "write 64k + truncate + rewrite");
+ATF_TC_FSAPPLY(shrinkfile, "shrink file");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -175,6 +189,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(overwrite512);
 	ATF_TP_FSAPPLY(overwrite64k);
 	ATF_TP_FSAPPLY(overwrite_trunc);
+	ATF_TP_FSAPPLY(shrinkfile);
 
 	return atf_no_error();
 }
