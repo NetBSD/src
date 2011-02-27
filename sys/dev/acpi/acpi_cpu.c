@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.30 2011/02/27 17:10:33 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.31 2011/02/27 18:32:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.30 2011/02/27 17:10:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.31 2011/02/27 18:32:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -85,25 +85,31 @@ CFATTACH_DECL_NEW(acpicpu, sizeof(struct acpicpu_softc),
 static int
 acpicpu_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct cpufeature_attach_args *cfaa = aux;
+	struct cpu_info *ci;
 
 	if (acpi_softc == NULL)
 		return 0;
 
-	if (strcmp(cfaa->name, "frequency") != 0)
+	ci = acpicpu_md_match(parent, match, aux);
+
+	if (ci == NULL)
 		return 0;
 
-	return acpicpu_find(cfaa->ci, NULL);
+	return acpicpu_find(ci, NULL);
 }
 
 static void
 acpicpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	struct cpufeature_attach_args *cfaa = aux;
-	struct cpu_info *ci = cfaa->ci;
+	struct cpu_info *ci;
 	cpuid_t id;
 	int rv;
+
+	ci = acpicpu_md_attach(parent, self, aux);
+
+	if (ci == NULL)
+		return;
 
 	sc->sc_ci = ci;
 	sc->sc_dev = self;
@@ -409,7 +415,7 @@ out:
 	if (ptr != NULL)
 		*ptr = ad;
 
-	return 10;		/* Beat est(4) and powernow(4). */
+	return 10;
 }
 
 static uint32_t

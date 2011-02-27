@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.33 2011/02/25 20:59:37 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.34 2011/02/27 18:32:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -230,45 +230,48 @@ struct acpicpu_softc {
 	bool			 sc_cold;
 };
 
-void		acpicpu_cstate_attach(device_t);
-int		acpicpu_cstate_detach(device_t);
-void		acpicpu_cstate_start(device_t);
-bool		acpicpu_cstate_suspend(device_t);
-bool		acpicpu_cstate_resume(device_t);
-void		acpicpu_cstate_callback(void *);
-void		acpicpu_cstate_idle(void);
+void		 acpicpu_cstate_attach(device_t);
+int		 acpicpu_cstate_detach(device_t);
+void		 acpicpu_cstate_start(device_t);
+bool		 acpicpu_cstate_suspend(device_t);
+bool		 acpicpu_cstate_resume(device_t);
+void		 acpicpu_cstate_callback(void *);
+void		 acpicpu_cstate_idle(void);
 
-void		acpicpu_pstate_attach(device_t);
-int		acpicpu_pstate_detach(device_t);
-void		acpicpu_pstate_start(device_t);
-bool		acpicpu_pstate_suspend(device_t);
-bool		acpicpu_pstate_resume(device_t);
-void		acpicpu_pstate_callback(void *);
-int		acpicpu_pstate_get(struct acpicpu_softc *, uint32_t *);
-int		acpicpu_pstate_set(struct acpicpu_softc *, uint32_t);
+void		 acpicpu_pstate_attach(device_t);
+int		 acpicpu_pstate_detach(device_t);
+void		 acpicpu_pstate_start(device_t);
+bool		 acpicpu_pstate_suspend(device_t);
+bool		 acpicpu_pstate_resume(device_t);
+void		 acpicpu_pstate_callback(void *);
+int		 acpicpu_pstate_get(struct acpicpu_softc *, uint32_t *);
+int		 acpicpu_pstate_set(struct acpicpu_softc *, uint32_t);
 
-void		acpicpu_tstate_attach(device_t);
-int		acpicpu_tstate_detach(device_t);
-void		acpicpu_tstate_start(device_t);
-bool		acpicpu_tstate_suspend(device_t);
-bool		acpicpu_tstate_resume(device_t);
-void		acpicpu_tstate_callback(void *);
-int		acpicpu_tstate_get(struct acpicpu_softc *, uint32_t *);
-int		acpicpu_tstate_set(struct acpicpu_softc *, uint32_t);
+void		 acpicpu_tstate_attach(device_t);
+int		 acpicpu_tstate_detach(device_t);
+void		 acpicpu_tstate_start(device_t);
+bool		 acpicpu_tstate_suspend(device_t);
+bool		 acpicpu_tstate_resume(device_t);
+void		 acpicpu_tstate_callback(void *);
+int		 acpicpu_tstate_get(struct acpicpu_softc *, uint32_t *);
+int		 acpicpu_tstate_set(struct acpicpu_softc *, uint32_t);
 
-uint32_t	acpicpu_md_cap(void);
-uint32_t	acpicpu_md_flags(void);
-void		acpicpu_md_quirk_c1e(void);
-int		acpicpu_md_cstate_start(struct acpicpu_softc *);
-int		acpicpu_md_cstate_stop(void);
-void		acpicpu_md_cstate_enter(int, int);
-int		acpicpu_md_pstate_start(struct acpicpu_softc *);
-int		acpicpu_md_pstate_stop(void);
-int		acpicpu_md_pstate_pss(struct acpicpu_softc *);
-uint8_t		acpicpu_md_pstate_percent(struct acpicpu_softc *);
-int		acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
-int		acpicpu_md_pstate_set(struct acpicpu_pstate *);
-int		acpicpu_md_tstate_get(struct acpicpu_softc *, uint32_t *);
-int		acpicpu_md_tstate_set(struct acpicpu_tstate *);
+struct cpu_info *acpicpu_md_match(device_t, cfdata_t, void *);
+struct cpu_info *acpicpu_md_attach(device_t, device_t, void *);
+
+uint32_t	 acpicpu_md_cap(void);
+uint32_t	 acpicpu_md_flags(void);
+void		 acpicpu_md_quirk_c1e(void);
+int		 acpicpu_md_cstate_start(struct acpicpu_softc *);
+int		 acpicpu_md_cstate_stop(void);
+void		 acpicpu_md_cstate_enter(int, int);
+int		 acpicpu_md_pstate_start(struct acpicpu_softc *);
+int		 acpicpu_md_pstate_stop(void);
+int		 acpicpu_md_pstate_pss(struct acpicpu_softc *);
+uint8_t		 acpicpu_md_pstate_percent(struct acpicpu_softc *);
+int		 acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
+int		 acpicpu_md_pstate_set(struct acpicpu_pstate *);
+int		 acpicpu_md_tstate_get(struct acpicpu_softc *, uint32_t *);
+int		 acpicpu_md_tstate_set(struct acpicpu_tstate *);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_CPU_H */

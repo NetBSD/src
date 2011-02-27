@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.47 2011/02/27 17:27:28 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.48 2011/02/27 18:32:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,10 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.47 2011/02/27 17:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.48 2011/02/27 18:32:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/kcore.h>
 #include <sys/sysctl.h>
 #include <sys/xcall.h>
@@ -117,6 +118,25 @@ static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
 extern struct acpicpu_softc **acpicpu_sc;
 static bool acpicpu_pstate_status = false;
 static struct sysctllog *acpicpu_log = NULL;
+
+struct cpu_info *
+acpicpu_md_match(device_t parent, cfdata_t match, void *aux)
+{
+	struct cpufeature_attach_args *cfaa = aux;
+
+	if (strcmp(cfaa->name, "frequency") != 0)
+		return NULL;
+
+	return cfaa->ci;
+}
+
+struct cpu_info *
+acpicpu_md_attach(device_t parent, device_t self, void *aux)
+{
+	struct cpufeature_attach_args *cfaa = aux;
+
+	return cfaa->ci;
+}
 
 uint32_t
 acpicpu_md_cap(void)
