@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.298 2011/02/26 18:07:30 ahoka Exp $
+# $NetBSD: ALL,v 1.299 2011/02/27 17:10:33 jruoho Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.298 $"
+#ident 		"ALL-$Revision: 1.299 $"
 
 maxusers	64		# estimated number of users
 
@@ -30,6 +30,7 @@ options 	X86EMU		# 386 Real Mode emulator
 options 	PAE		# PAE mode (36 bits physical addressing)
 
 # CPU features
+acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
 coretemp*	at cpu?		# Intel on-die thermal sensor
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 padlock0	at cpu0		# VIA PadLock
@@ -356,7 +357,6 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpicpu*	at acpi?		# ACPI CPU
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early)

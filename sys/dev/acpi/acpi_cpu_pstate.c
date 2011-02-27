@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.40 2011/02/25 19:55:06 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.41 2011/02/27 17:10:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.40 2011/02/25 19:55:06 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.41 2011/02/27 17:10:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -271,7 +271,6 @@ acpicpu_pstate_start(device_t self)
 		ps = &sc->sc_pstate[i];
 
 		if (ps->ps_freq != 0) {
-			sc->sc_cold = false;
 			rv = acpicpu_pstate_set(sc, ps->ps_freq);
 			break;
 		}

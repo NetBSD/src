@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.314 2011/02/24 10:56:00 jruoho Exp $
+# $NetBSD: GENERIC,v 1.315 2011/02/27 17:10:33 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.314 $"
+#ident 		"GENERIC-$Revision: 1.315 $"
 
 maxusers	64		# estimated number of users
 
@@ -79,6 +79,7 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # CPU features
+#acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
 coretemp*	at cpu?		# Intel on-die thermal sensor
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
@@ -279,7 +280,6 @@ options 	VGA_POST		# in-kernel support for VGA POST
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-#acpicpu*	at acpi?		# ACPI CPU
 acpidalb*	at acpi?		# Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early)
