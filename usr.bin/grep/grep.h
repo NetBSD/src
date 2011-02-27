@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.h,v 1.4 2011/02/16 01:31:33 joerg Exp $	*/
+/*	$NetBSD: grep.h,v 1.5 2011/02/27 17:33:37 joerg Exp $	*/
 /*	$OpenBSD: grep.h,v 1.15 2010/04/05 03:03:55 tedu Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/grep.h 211496 2010-08-19 09:28:59Z des $	*/
 
@@ -103,6 +103,7 @@ typedef struct {
 	bool		 bol;
 	bool		 eol;
 	bool		 reversed;
+	bool		 word;
 } fastgrep_t;
 
 /* Flags passed to regcomp() and regexec() */

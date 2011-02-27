@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 2011/02/16 18:35:39 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.9 2011/02/27 17:33:37 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.8 2011/02/16 18:35:39 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.9 2011/02/27 17:33:37 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -323,7 +323,8 @@ procline(struct str *l, int nottext)
 					    (size_t)pmatch.rm_eo != l->len)
 						r = REG_NOMATCH;
 				/* Check for whole word match */
-				if (r == 0 && wflag && pmatch.rm_so != 0) {
+				if (r == 0 && fg_pattern[i].word &&
+				    pmatch.rm_so != 0) {
 					wint_t wbegin, wend;
 
 					wbegin = wend = L' ';

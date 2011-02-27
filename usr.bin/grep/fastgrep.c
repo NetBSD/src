@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fastgrep.c,v 1.3 2011/02/17 22:03:25 joerg Exp $");
+__RCSID("$NetBSD: fastgrep.c,v 1.4 2011/02/27 17:33:37 joerg Exp $");
 
 #include <limits.h>
 #include <stdbool.h>
@@ -88,6 +88,7 @@ fastcomp(fastgrep_t *fg, const char *pat)
 	fg->bol = false;
 	fg->eol = false;
 	fg->reversed = false;
+	fg->word = wflag;
 
 	/* Remove end-of-line character ('$'). */
 	if (fg->len > 0 && pat[fg->len - 1] == '$') {
@@ -108,7 +109,7 @@ fastcomp(fastgrep_t *fg, const char *pat)
 		fg->len -= 14;
 		pat += 7;
 		/* Word boundary is handled separately in util.c */
-		wflag = true;
+		fg->word = true;
 	}
 
 	/*
