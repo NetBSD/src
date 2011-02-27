@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/02/26 19:17:38 plunky Exp $
+#	$NetBSD: Makefile,v 1.5 2011/02/27 12:42:44 gdt Exp $
 
 # NOGCCERROR=yes
 
@@ -24,7 +24,6 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
 .PATH: ${DIST}
 
 ntpq.8:	ntpq.1
-	@cp $? $@
 	${_MKTARGET_BUILD}
 	${TOOL_SED} -e "s,NTPQ 1,NTPQ 8," $? > $@
 
