@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.37 2011/02/25 15:12:06 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.38 2011/02/27 12:58:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.37 2011/02/25 15:12:06 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.38 2011/02/27 12:58:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -727,7 +727,7 @@ rumpclient__dlsym(void *handle, const char *symbol)
 }
 __weak_alias(rumphijack_dlsym,rumpclient__dlsym);
 
-static int init_done = 0;
+static pid_t init_done = 0;
 
 int
 rumpclient_init()
@@ -736,10 +736,22 @@ rumpclient_init()
 	int error;
 	int rv = -1;
 	int hstype;
+	pid_t mypid;
 
-	if (init_done)
+	/*
+	 * Make sure we're not riding the context of a previous
+	 * host fork.  Note: it's *possible* that after n>1 forks
+	 * we have the same pid as one of our exited parents, but
+	 * I'm pretty sure there are 0 practical implications, since
+	 * it means generations would have to skip rumpclient init.
+	 */
+	if (init_done == (mypid = getpid()))
 		return 0;
-	init_done = 1;
+
+	/* kq does not traverse fork() */
+	if (init_done != 0)
+		kq = -1;
+	init_done = mypid;
 
 	sigfillset(&fullset);
 
