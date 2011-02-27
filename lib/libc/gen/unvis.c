@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.32 2010/11/27 21:22:11 christos Exp $	*/
+/*	$NetBSD: unvis.c,v 1.33 2011/02/27 01:53:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.32 2010/11/27 21:22:11 christos Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.33 2011/02/27 01:53:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: unvis.c,v 1.32 2010/11/27 21:22:11 christos Exp $");
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <vis.h>
 
