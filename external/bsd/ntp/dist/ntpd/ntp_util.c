@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.1.1.1 2009/12/13 16:55:42 kardel Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.2 2011/02/27 12:10:18 plunky Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -358,6 +358,11 @@ stats_config(
 	int	len;
 	char	tbuf[80];
 	char	str1[20], str2[20];
+#ifndef VMS
+	const char temp_ext[] = ".TEMP";
+#else
+	const char temp_ext[] = "-TEMP";
+#endif
 
 	/*
 	 * Expand environment strings under Windows NT, since the
@@ -412,14 +417,10 @@ stats_config(
 		stats_temp_file = erealloc(stats_temp_file, 
 					   len + sizeof(".TEMP"));
 
-		memmove(stats_drift_file, value, (unsigned)(len+1));
-		memmove(stats_temp_file, value, (unsigned)len);
-		memmove(stats_temp_file + len,
-#if !defined(VMS)
-			".TEMP", sizeof(".TEMP"));
-#else
-			"-TEMP", sizeof("-TEMP"));
-#endif /* VMS */
+		memcpy(stats_drift_file, value, (unsigned)(len+1));
+		memcpy(stats_temp_file, value, (unsigned)len);
+		memcpy(stats_temp_file + len, temp_ext,
+		       sizeof(temp_ext));
 
 		/*
 		 * Open drift file and read frequency. If the file is
