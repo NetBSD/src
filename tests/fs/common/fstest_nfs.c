@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.8 2011/02/28 21:08:13 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.9 2011/02/28 21:08:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -153,7 +153,6 @@ donewfs(const atf_tc_t *tc, void **argp,
 	strcpy(args->ta_ethername, ethername);
 
 	*argp = args;
-	theargs = args;
 
 	return 0;
 }
