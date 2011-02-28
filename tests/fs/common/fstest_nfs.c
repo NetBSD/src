@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.6 2011/02/10 16:35:01 njoly Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.7 2011/02/28 21:03:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ donewfs(const atf_tc_t *tc, void **argp,
 	const char *image, off_t size, void *fspriv)
 {
 	const char *srcdir;
-	char *nfsdargv[7];
+	char *nfsdargv[16];
 	char nfsdpath[MAXPATHLEN];
 	char imagepath[MAXPATHLEN];
 	char ethername[MAXPATHLEN], ethername_ro[MAXPATHLEN];
