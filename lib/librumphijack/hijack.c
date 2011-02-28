@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.71 2011/02/28 19:57:36 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.72 2011/02/28 20:39:07 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.71 2011/02/28 19:57:36 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.72 2011/02/28 20:39:07 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -271,7 +271,8 @@ unmapdup2(int rumpfd)
 	int i;
 
 	for (i = 0; i <= DUP2HIGH; i++) {
-		if (dup2vec[i] & DUP2BIT && (dup2vec[i] & DUP2FDMASK) == rumpfd)
+		if (dup2vec[i] & DUP2BIT &&
+		    (dup2vec[i] & DUP2FDMASK) == (unsigned)rumpfd)
 			return i;
 	}
 	return -1;
@@ -1002,8 +1003,12 @@ fcntl(int fd, int cmd, ...)
 		 */
 
 		for (i = 0, maxdup2 = 0; i <= DUP2HIGH; i++) {
-			if (dup2vec[i] & DUP2BIT)
-				maxdup2 = MAX(dup2vec[i] & DUP2FDMASK, maxdup2);
+			if (dup2vec[i] & DUP2BIT) {
+				int val;
+
+				val = dup2vec[i] & DUP2FDMASK;
+				maxdup2 = MAX(val, maxdup2);
+			}
 		}
 		
 		if (fd >= HIJACK_FDOFF)
