@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.58 2010/12/23 14:22:03 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.59 2011/02/28 18:28:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.58 2010/12/23 14:22:03 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.59 2011/02/28 18:28:20 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -993,7 +993,6 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	if (sc == NULL)
 		return (ENODEV);
-
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
@@ -1073,6 +1072,11 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
 
+	if (sc == NULL)
+		return (ENODEV);
+	if (sc->sc_state != DKW_STATE_RUNNING)
+		return (ENXIO);
+
 	KASSERT(sc->sc_dk.dk_openmask != 0);
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
@@ -1107,6 +1111,10 @@ dkstrategy(struct buf *bp)
 	uint64_t p_size, p_offset;
 	int s;
 
+	if (sc == NULL) {
+		bp->b_error = ENODEV;
+		goto done;
+	}
 	if (sc->sc_state != DKW_STATE_RUNNING) {
 		bp->b_error = ENXIO;
 		goto done;
@@ -1281,6 +1289,8 @@ dkread(dev_t dev, struct uio *uio, int flags)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
+	if (sc == NULL)
+		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
@@ -1297,6 +1307,8 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
+	if (sc == NULL)
+		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
@@ -1314,6 +1326,8 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
 
+	if (sc == NULL)
+		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
@@ -1373,7 +1387,6 @@ dksize(dev_t dev)
 
 	if (sc == NULL)
 		return (-1);
-	
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (-1);
 
@@ -1409,8 +1422,7 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int rv = 0;
 
 	if (sc == NULL)
-		return (ENXIO);
-	
+		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
