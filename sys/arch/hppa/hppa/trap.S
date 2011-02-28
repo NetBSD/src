@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.58 2011/02/26 07:54:48 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.59 2011/02/28 21:20:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1914,7 +1914,6 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	 *  - tr7:	old r1
 	 */
 
-	/* do not overwrite %tr4(%cr28) it contains the contents of r24 */
 	mtctl	%t3, %tr2
 
 	GET_CURCPU(%t3)
