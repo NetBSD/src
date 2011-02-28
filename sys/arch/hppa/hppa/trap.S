@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.59 2011/02/28 21:20:50 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.60 2011/02/28 21:22:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -955,7 +955,7 @@ ALTENTRY(hppa_fpu_nop0)
 	 * to use.  hppa_fpu_swap deliberately uses only these registers and %r1
 	 * and %arg0.
 	 */
-	mtctl	%arg1, %tr3
+	mtctl	%arg1, %tr4
 	mtctl	%rp, %tr5
 
 	/* Call hppa_fpu_swap. */
@@ -968,7 +968,7 @@ ALTENTRY(hppa_fpu_nop0)
 	
 	/* Restore registers and rfi. */
 	mfctl	%tr5, %rp
-	mfctl	%tr3, %arg1
+	mfctl	%tr4, %arg1
 	mfctl	%tr2, %arg0
 	mfctl	%tr7, %r1
 	rfi
