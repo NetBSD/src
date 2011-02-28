@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.62 2011/02/11 23:47:49 christos Exp $
+.\" $NetBSD: mdoc.local,v 1.63 2011/02/28 23:23:08 haad Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,6 +84,7 @@
 .\" Local libraries not in groff
 .ds doc-str-Lb-libarchive	Reading and Writing Streaming Archives Library (libarchive, \-larchive)
 .ds doc-str-Lb-libbluetooth	Bluetooth Library (libbluetooth, \-lbluetooth)
+.ds doc-str-Lb-libdm		Device-mapper Library (libdm, \-ldm)
 .ds doc-str-Lb-libfetch		File Transfer Library for URLs (libfetch, \-lfetch)
 .ds doc-str-Lb-libiscsi		iSCSI protocol library (libiscsi, \-liscsi)
 .ds doc-str-Lb-libisns		Internet Storage Name Service Library (libisns, \-lisns)
