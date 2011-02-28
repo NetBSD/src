@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.14 2011/02/22 21:23:19 yamt Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.15 2011/02/28 03:40:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -705,6 +705,30 @@ fcntl_getlock_pids(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+access_simple(const atf_tc_t *tc, const char *mp)
+{
+	int fd;
+	int tmode;
+
+	FSTEST_ENTER();
+	RL(fd = rump_sys_open("tfile", O_CREAT | O_RDWR, 0777));
+	RL(rump_sys_close(fd));
+
+#define ALLACC (F_OK | X_OK | W_OK | R_OK)
+	if (FSTYPE_SYSVBFS(tc) || FSTYPE_MSDOS(tc))
+		tmode = F_OK;
+	else
+		tmode = ALLACC;
+
+	RL(rump_sys_access("tfile", tmode));
+
+	/* PR kern/44648 */
+	ATF_REQUIRE_ERRNO(EINVAL, rump_sys_access("tfile", ALLACC+1) == -1);
+#undef ALLACC
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -719,6 +743,7 @@ ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
 ATF_TC_FSAPPLY(attrs, "check setting attributes works");
 ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
 ATF_TC_FSAPPLY(fcntl_getlock_pids,"fcntl F_GETLK w/ many procs, PR kern/44494");
+ATF_TC_FSAPPLY(access_simple, "access(2)");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -737,6 +762,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(attrs);
 	ATF_TP_FSAPPLY(fcntl_lock);
 	ATF_TP_FSAPPLY(fcntl_getlock_pids);
+	ATF_TP_FSAPPLY(access_simple);
 
 	return atf_no_error();
 }
