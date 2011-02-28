@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlock.2,v 1.19 2011/02/28 04:03:00 dholland Exp $
+.\"	$NetBSD: mlock.2,v 1.20 2011/02/28 07:17:02 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mlock.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd June 2, 1993
+.Dd February 28, 2011
 .Dt MLOCK 2
 .Os
 .Sh NAME
@@ -112,14 +112,12 @@ is set to indicate the error.
 .Fn mlock
 will fail if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-The length is negative.
-.It Bq Er EINVAL
-The address or length given is not page aligned and the implementation
-does not round.
 .It Bq Er EAGAIN
 Locking the indicated range would exceed either the system or per-process
 limit for locked memory.
+.It Bq Er EINVAL
+The length is negative; or the address or length given is not page
+aligned and the implementation does not round.
 .It Bq Er ENOMEM
 Some portion of the indicated address range is not allocated.
 There was an error faulting/mapping a page.
@@ -133,10 +131,8 @@ is not implemented.
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The length is negative.
-.It Bq Er EINVAL
-The address or length given is not page aligned and the implementation
-does not round.
+The length is negative; or the address or length given is not page
+aligned and the implementation does not round.
 .It Bq Er ENOMEM
 Some portion of the indicated address range is not allocated.
 Some portion of the indicated address range is not locked.
