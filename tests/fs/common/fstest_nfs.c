@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.7 2011/02/28 21:03:15 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.8 2011/02/28 21:08:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -65,9 +65,6 @@ childfail(int status)
 
 	atf_tc_fail("child died");
 }
-
-struct nfstestargs *theargs;
-
 
 /* fork rump nfsd, configure interface */
 static int
