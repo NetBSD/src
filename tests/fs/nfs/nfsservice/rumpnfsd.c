@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpnfsd.c,v 1.6 2010/12/31 18:11:27 pooka Exp $	*/
+/*	$NetBSD: rumpnfsd.c,v 1.7 2011/02/28 21:21:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -63,6 +63,9 @@ main(int argc, char *argv[])
 	void *fsarg;
 	pthread_t t;
 	int rv;
+
+	/* for netcfg */
+	noatf = 1;
 
 	/* use defaults? */
 	if (argc == 1) {
