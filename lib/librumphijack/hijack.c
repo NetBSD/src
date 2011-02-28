@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.70 2011/02/27 11:32:12 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.71 2011/02/28 19:57:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.70 2011/02/27 11:32:12 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.71 2011/02/28 19:57:36 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -232,23 +232,89 @@ struct bothsys {
 } syscalls[DUALCALL__NUM];
 #define GETSYSCALL(which, name) syscalls[DUALCALL_##name].bs_##which
 
-pid_t	(*host_fork)(void);
-int	(*host_daemon)(int, int);
-int	(*host_execve)(const char *, char *const[], char *const[]);
-void *	(*host_mmap)(void *, size_t, int, int, int, off_t);
+static pid_t	(*host_fork)(void);
+static int	(*host_daemon)(int, int);
+static int	(*host_execve)(const char *, char *const[], char *const[]);
+static void *	(*host_mmap)(void *, size_t, int, int, int, off_t);
 
-/* ok, we need *two* bits per dup2'd fd to track fd+HIJACKOFF aliases */
-static uint32_t dup2mask;
-#define ISDUP2D(fd) (((fd) < 16) && (1<<(fd) & dup2mask))
-#define SETDUP2(fd) \
-    do { if ((fd) < 16) dup2mask |= (1<<(fd)); } while (/*CONSTCOND*/0)
-#define CLRDUP2(fd) \
-    do { if ((fd) < 16) dup2mask &= ~(1<<(fd)); } while (/*CONSTCOND*/0)
-#define ISDUP2ALIAS(fd) (((fd) < 16) && (1<<((fd)+16) & dup2mask))
-#define SETDUP2ALIAS(fd) \
-    do { if ((fd) < 16) dup2mask |= (1<<((fd)+16)); } while (/*CONSTCOND*/0)
-#define CLRDUP2ALIAS(fd) \
-    do { if ((fd) < 16) dup2mask &= ~(1<<((fd)+16)); } while (/*CONSTCOND*/0)
+static bool	fd_isrump(int);
+static bool	path_isrump(const char *);
+
+/*
+ * Maintain a mapping table for the usual dup2 suspects.
+ */
+/* note: you cannot change this without editing the env-passing code */
+#define DUP2HIGH 2
+static uint32_t dup2vec[DUP2HIGH+1];
+#define DUP2BIT (1<<31)
+#define DUP2ALIAS (1<<30)
+#define DUP2FDMASK ((1<<30)-1)
+
+static bool
+isdup2d(int fd)
+{
+
+	return fd <= DUP2HIGH && fd >= 0 && dup2vec[fd] & DUP2BIT;
+}
+
+static int
+mapdup2(int hostfd)
+{
+
+	_DIAGASSERT(isdup2d(hostfd));
+	return dup2vec[hostfd] & DUP2FDMASK;
+}
+
+static int
+unmapdup2(int rumpfd)
+{
+	int i;
+
+	for (i = 0; i <= DUP2HIGH; i++) {
+		if (dup2vec[i] & DUP2BIT && (dup2vec[i] & DUP2FDMASK) == rumpfd)
+			return i;
+	}
+	return -1;
+}
+
+static void
+setdup2(int hostfd, int rumpfd)
+{
+
+	if (hostfd > DUP2HIGH) {
+		_DIAGASSERT(0);
+		return;
+	}
+
+	dup2vec[hostfd] = DUP2BIT | DUP2ALIAS | rumpfd;
+}
+
+static void
+clrdup2(int hostfd)
+{
+
+	if (hostfd > DUP2HIGH) {
+		_DIAGASSERT(0);
+		return;
+	}
+
+	dup2vec[hostfd] = 0;
+}
+
+static bool
+killdup2alias(int rumpfd)
+{
+	int hostfd;
+
+	if ((hostfd = unmapdup2(rumpfd)) == -1)
+		return false;
+
+	if (dup2vec[hostfd] & DUP2ALIAS) {
+		dup2vec[hostfd] &= ~DUP2ALIAS;
+		return true;
+	}
+	return false;
+}
 
 //#define DEBUGJACK
 #ifdef DEBUGJACK
@@ -258,12 +324,34 @@ mydprintf(const char *fmt, ...)
 {
 	va_list ap;
 
-	if (ISDUP2D(STDERR_FILENO))
+	if (isdup2d(STDERR_FILENO))
 		return;
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+}
+
+static const char *
+whichfd(int fd)
+{
+
+	if (fd == -1)
+		return "-1";
+	else if (fd_isrump(fd))
+		return "rump";
+	else
+		return "host";
+}
+
+static const char *
+whichpath(const char *path)
+{
+
+	if (path_isrump(path))
+		return "rump";
+	else
+		return "host";
 }
 
 #else
@@ -275,7 +363,7 @@ type name args								\
 {									\
 	type (*fun) proto;						\
 									\
-	DPRINTF(("%s -> %d\n", __STRING(name), fd));			\
+	DPRINTF(("%s -> %d (%s)\n", __STRING(name), fd,	whichfd(fd)));	\
 	if (fd_isrump(fd)) {						\
 		fun = syscalls[rcname].bs_rump;				\
 		fd = fd_host2rump(fd);					\
@@ -291,7 +379,8 @@ type name args								\
 {									\
 	type (*fun) proto;						\
 									\
-	DPRINTF(("%s -> %s\n", __STRING(name), path));			\
+	DPRINTF(("%s -> %s (%s)\n", __STRING(name), path,		\
+	    whichpath(path)));						\
 	if (path_isrump(path)) {					\
 		fun = syscalls[rcname].bs_rump;				\
 		path = path_host2rump(path);				\
@@ -500,9 +589,13 @@ rcinit(void)
 		}
 	}
 
-	if (getenv_r("RUMPHIJACK__DUP2MASK", buf, sizeof(buf)) == 0) {
-		dup2mask = strtoul(buf, NULL, 10);
-		unsetenv("RUMPHIJACK__DUP2MASK");
+	if (getenv_r("RUMPHIJACK__DUP2INFO", buf, sizeof(buf)) == 0) {
+		if (sscanf(buf, "%u,%u,%u",
+		    &dup2vec[0], &dup2vec[1], &dup2vec[2]) != 3) {
+			warnx("invalid dup2mask: %s", buf);
+			memset(dup2vec, 0, sizeof(dup2vec));
+		}
+		unsetenv("RUMPHIJACK__DUP2INFO");
 	}
 	if (getenv_r("RUMPHIJACK__PWDINRUMP", buf, sizeof(buf)) == 0) {
 		pwdinrump = true;
@@ -510,35 +603,47 @@ rcinit(void)
 	}
 }
 
-/* XXX: need runtime selection.  low for now due to FD_SETSIZE */
+/* Need runtime selection.  low for now due to FD_SETSIZE */
 #define HIJACK_FDOFF 128
+
 static int
 fd_rump2host(int fd)
 {
 
 	if (fd == -1)
 		return fd;
+	return fd + HIJACK_FDOFF;
+}
 
-	if (!ISDUP2D(fd))
-		fd += HIJACK_FDOFF;
+static int
+fd_rump2host_withdup(int fd)
+{
+	int hfd;
 
-	return fd;
+	_DIAGASSERT(fd != -1);
+	hfd = unmapdup2(fd);
+	if (hfd != -1) {
+		_DIAGASSERT(hfd <= DUP2HIGH);
+		return hfd;
+	}
+	return fd_rump2host(fd);
 }
 
 static int
 fd_host2rump(int fd)
 {
 
-	if (!ISDUP2D(fd))
-		fd -= HIJACK_FDOFF;
-	return fd;
+	if (!isdup2d(fd))
+		return fd - HIJACK_FDOFF;
+	else
+		return mapdup2(fd);
 }
 
 static bool
 fd_isrump(int fd)
 {
 
-	return ISDUP2D(fd) || fd >= HIJACK_FDOFF;
+	return isdup2d(fd) || fd >= HIJACK_FDOFF;
 }
 
 #define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_FDOFF)
@@ -614,7 +719,7 @@ fd_dupgood(int fd)
 	int (*op_close)(int) = GETSYSCALL(host, CLOSE);
 	int ofd, i;
 
-	for (i = 1; ISDUP2D(fd); i++) {
+	for (i = 1; isdup2d(fd); i++) {
 		ofd = fd;
 		fd = op_fcntl(ofd, F_DUPFD, i);
 		op_close(ofd);
@@ -630,6 +735,8 @@ open(const char *path, int flags, ...)
 	bool isrump;
 	va_list ap;
 	int fd;
+
+	DPRINTF(("open -> %s (%s)\n", path, whichpath(path)));
 
 	if (path_isrump(path)) {
 		path = path_host2rump(path);
@@ -648,6 +755,8 @@ open(const char *path, int flags, ...)
 		fd = fd_rump2host(fd);
 	else
 		fd = fd_dupgood(fd);
+
+	DPRINTF(("open <- %d (%s)\n", fd, whichfd(fd)));
 	return fd;
 }
 
@@ -854,13 +963,12 @@ ioctl(int fd, unsigned long cmd, ...)
 	return rv;
 }
 
-#include <syslog.h>
 int
 fcntl(int fd, int cmd, ...)
 {
 	int (*op_fcntl)(int, int, ...);
 	va_list ap;
-	int rv, minfd, i;
+	int rv, minfd, i, maxdup2;
 
 	DPRINTF(("fcntl -> %d (cmd %d)\n", fd, cmd));
 
@@ -890,23 +998,21 @@ fcntl(int fd, int cmd, ...)
 
 		/*
 		 * Additionally, we want to do a rump closem, but only
-		 * for the file descriptors not within the dup2mask.
+		 * for the file descriptors not dup2'd.
 		 */
 
-		/* why don't we offer fls()? */
-		for (i = 15; i >= 0; i--) {
-			if (ISDUP2D(i))
-				break;
+		for (i = 0, maxdup2 = 0; i <= DUP2HIGH; i++) {
+			if (dup2vec[i] & DUP2BIT)
+				maxdup2 = MAX(dup2vec[i] & DUP2FDMASK, maxdup2);
 		}
 		
 		if (fd >= HIJACK_FDOFF)
 			fd -= HIJACK_FDOFF;
 		else
 			fd = 0;
-		fd = MAX(i+1, fd);
+		fd = MAX(maxdup2+1, fd);
 
 		/* hmm, maybe we should close rump fd's not within dup2mask? */
-
 		return rump_sys_fcntl(fd, F_CLOSEM);
 
 	case F_MAXFD:
@@ -957,21 +1063,23 @@ close(int fd)
 
 	DPRINTF(("close -> %d\n", fd));
 	if (fd_isrump(fd)) {
-		int undup2 = 0;
+		bool undup2 = false;
+		int ofd;
+
+		if (isdup2d(ofd = fd)) {
+			undup2 = true;
+		}
 
 		fd = fd_host2rump(fd);
-		if (ISDUP2ALIAS(fd)) {
-			_DIAGASSERT(ISDUP2D(fd));
-			CLRDUP2ALIAS(fd);
+		if (!undup2 && killdup2alias(fd)) {
 			return 0;
 		}
 
-		if (ISDUP2D(fd))
-			undup2 = 1;
 		op_close = GETSYSCALL(rump, CLOSE);
 		rv = op_close(fd);
-		if (rv == 0 && undup2)
-			CLRDUP2(fd);
+		if (rv == 0 && undup2) {
+			clrdup2(ofd);
+		}
 	} else {
 		if (rumpclient__closenotify(&fd, RUMPCLIENT_CLOSE_CLOSE) == -1)
 			return -1;
@@ -1016,19 +1124,28 @@ dup2(int oldd, int newd)
 	DPRINTF(("dup2 -> %d (o) -> %d (n)\n", oldd, newd));
 
 	if (fd_isrump(oldd)) {
-		if (!(newd >= 0 && newd <= 2)) {
+		int (*op_close)(int) = GETSYSCALL(host, CLOSE);
+
+		/* only allow fd 0-2 for cross-kernel dup */
+		if (!(newd >= 0 && newd <= 2 && !fd_isrump(newd))) {
 			errno = EBADF;
 			return -1;
 		}
-		oldd = fd_host2rump(oldd);
-		if (oldd == newd) {
-			SETDUP2(newd);
-			SETDUP2ALIAS(newd);
-			return newd;
+
+		/* regular dup2? */
+		if (fd_isrump(newd)) {
+			newd = fd_host2rump(newd);
+			rv = rump_sys_dup2(oldd, newd);
+			return fd_rump2host(rv);
 		}
-		rv = rump_sys_dup2(oldd, newd);
-		if (rv != -1)
-			SETDUP2(newd);
+
+		/*
+		 * dup2 rump => host?  just establish an
+		 * entry in the mapping table.
+		 */
+		op_close(newd);
+		setdup2(newd, fd_host2rump(oldd));
+		rv = 0;
 	} else {
 		host_dup2 = syscalls[DUALCALL_DUP2].bs_host;
 		if (rumpclient__closenotify(&newd, RUMPCLIENT_CLOSE_DUP2) == -1)
@@ -1087,19 +1204,14 @@ execve(const char *path, char *const argv[], char *const envp[])
 	char **newenv;
 	size_t nelem;
 	int rv, sverrno;
-	int bonus = 1, i = 0;
+	int bonus = 2, i = 0;
 
-	if (dup2mask) {
-		snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%u", dup2mask);
-		dup2str = malloc(strlen(buf)+1);
-		if (dup2str == NULL) {
-			errno = ENOMEM;
-			return -1;
-		}
-		strcpy(dup2str, buf);
-		bonus++;
-	} else {
-		dup2str = NULL;
+	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2INFO=%u,%u,%u",
+	    dup2vec[0], dup2vec[1], dup2vec[2]);
+	dup2str = strdup(buf);
+	if (dup2str == NULL) {
+		errno = ENOMEM;
+		return -1;
 	}
 
 	if (pwdinrump) {
@@ -1111,17 +1223,16 @@ execve(const char *path, char *const argv[], char *const envp[])
 
 	for (nelem = 0; envp && envp[nelem]; nelem++)
 		continue;
-	newenv = malloc(sizeof(*newenv) * nelem+bonus);
+	newenv = malloc(sizeof(*newenv) * (nelem+bonus));
 	if (newenv == NULL) {
 		free(dup2str);
 		errno = ENOMEM;
 		return -1;
 	}
 	memcpy(newenv, envp, nelem*sizeof(*newenv));
-	if (dup2str) {
-		newenv[nelem+i] = dup2str;
-		i++;
-	}
+	newenv[nelem+i] = dup2str;
+	i++;
+
 	if (pwdinrumpstr) {
 		newenv[nelem+i] = __UNCONST(pwdinrumpstr);
 		i++;
@@ -1473,7 +1584,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 
 		rv = op_pollts(fds, nfds, ts, sigmask);
 		if (rumpcall)
-			adjustpoll(fds, nfds, fd_rump2host);
+			adjustpoll(fds, nfds, fd_rump2host_withdup);
 	}
 
 	return rv;
