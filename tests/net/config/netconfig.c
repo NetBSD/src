@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.c,v 1.6 2010/08/17 12:04:34 pooka Exp $	*/
+/*	$NetBSD: netconfig.c,v 1.7 2011/02/28 21:21:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netconfig.c,v 1.6 2010/08/17 12:04:34 pooka Exp $");
+__RCSID("$NetBSD: netconfig.c,v 1.7 2011/02/28 21:21:14 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: netconfig.c,v 1.6 2010/08/17 12:04:34 pooka Exp $");
 #include <netinet/ip_icmp.h>
 
 #include <atf-c.h>
+#include <err.h>
 #include <errno.h>
 #include <string.h>
 
@@ -54,13 +55,18 @@ __RCSID("$NetBSD: netconfig.c,v 1.6 2010/08/17 12:04:34 pooka Exp $");
 
 #include "../../h_macros.h"
 
+int noatf;
+
 static void __unused
 netcfg_rump_makeshmif(const char *busname, char *ifname)
 {
 	int rv, ifnum;
 
 	if ((rv = rump_pub_shmif_create(busname, &ifnum)) != 0) {
-		atf_tc_fail("makeshmif: rump_pub_shmif_create %d", rv);
+		if (noatf)
+			err(1, "makeshmif: rump_pub_shmif_create %d", rv);
+		else
+			atf_tc_fail("makeshmif: rump_pub_shmif_create %d", rv);
 	}
 	sprintf(ifname, "shmif%d", ifnum);
 }
@@ -71,7 +77,10 @@ netcfg_rump_makevirtif(int ifnum, char *ifname)
 	int rv;
 
 	if ((rv = rump_pub_virtif_create(ifnum)) != 0) {
-		atf_tc_fail("makeshmif: rump_pub_virtif_create %d", rv);
+		if (noatf)
+			err(1, "makeshmif: rump_pub_virtif_create %d", rv);
+		else
+			atf_tc_fail("makeshmif: rump_pub_virtif_create %d", rv);
 	}
 	sprintf(ifname, "virt%d", ifnum);
 }
@@ -86,7 +95,10 @@ netcfg_rump_if(const char *ifname, const char *addr, const char *mask)
 
 	s = -1;
 	if ((s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
-		atf_tc_fail_errno("if config socket");
+		if (noatf)
+			err(1, "if config socket");
+		else
+			atf_tc_fail_errno("if config socket");
 	}
 
 	inaddr = inet_addr(addr);
@@ -113,8 +125,11 @@ netcfg_rump_if(const char *ifname, const char *addr, const char *mask)
 	sin->sin_addr.s_addr = inaddr | ~inmask;
 
 	rv = rump_sys_ioctl(s, SIOCAIFADDR, &ia);
-	if (rv) {
-		atf_tc_fail_errno("SIOCAIFADDR");
+	if (rv == -1) {
+		if (noatf)
+			err(1, "SIOCAIFADDR");
+		else
+			atf_tc_fail_errno("SIOCAIFADDR");
 	}
 	rump_sys_close(s);
 }
@@ -134,7 +149,10 @@ netcfg_rump_route(const char *dst, const char *mask, const char *gw)
 
 	s = rump_sys_socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s == -1) {
-		atf_tc_fail_errno("routing socket");
+		if (noatf)
+			err(1, "routing socket");
+		else
+			atf_tc_fail_errno("routing socket");
 	}
 
 	memset(&m_rtmsg, 0, sizeof(m_rtmsg));
@@ -173,7 +191,10 @@ netcfg_rump_route(const char *dst, const char *mask, const char *gw)
 
 	rv = rump_sys_write(s, &m_rtmsg, len);
 	if (rv != (int)len) {
-		atf_tc_fail_errno("write routing message");
+		if (noatf)
+			err(1, "write routing message");
+		else
+			atf_tc_fail_errno("write routing message");
 	}
 	rump_sys_close(s);
 }
