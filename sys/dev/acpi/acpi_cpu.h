@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.34 2011/02/27 18:32:53 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.35 2011/03/01 04:35:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -244,8 +244,8 @@ void		 acpicpu_pstate_start(device_t);
 bool		 acpicpu_pstate_suspend(device_t);
 bool		 acpicpu_pstate_resume(device_t);
 void		 acpicpu_pstate_callback(void *);
-int		 acpicpu_pstate_get(struct acpicpu_softc *, uint32_t *);
-int		 acpicpu_pstate_set(struct acpicpu_softc *, uint32_t);
+int		 acpicpu_pstate_get(struct cpu_info *, uint32_t *);
+void		 acpicpu_pstate_set(struct cpu_info *, uint32_t);
 
 void		 acpicpu_tstate_attach(device_t);
 int		 acpicpu_tstate_detach(device_t);
@@ -253,8 +253,8 @@ void		 acpicpu_tstate_start(device_t);
 bool		 acpicpu_tstate_suspend(device_t);
 bool		 acpicpu_tstate_resume(device_t);
 void		 acpicpu_tstate_callback(void *);
-int		 acpicpu_tstate_get(struct acpicpu_softc *, uint32_t *);
-int		 acpicpu_tstate_set(struct acpicpu_softc *, uint32_t);
+int		 acpicpu_tstate_get(struct cpu_info *, uint32_t *);
+void		 acpicpu_tstate_set(struct cpu_info *, uint32_t);
 
 struct cpu_info *acpicpu_md_match(device_t, cfdata_t, void *);
 struct cpu_info *acpicpu_md_attach(device_t, device_t, void *);
