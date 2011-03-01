@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.48 2011/03/01 05:37:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.49 2011/03/01 05:57:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,12 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.48 2011/03/01 05:37:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.49 2011/03/01 05:57:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/evcnt.h>
 #include <sys/kernel.h>
 #include <sys/once.h>
 #include <sys/mutex.h>
@@ -48,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.48 2011/03/01 05:37:02 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_cstate")
 
-static void		 acpicpu_cstate_attach_evcnt(struct acpicpu_softc *);
-static void		 acpicpu_cstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst_add(struct acpicpu_softc *,
 						ACPI_OBJECT *, int );
@@ -110,37 +107,6 @@ acpicpu_cstate_attach(device_t self)
 	sc->sc_flags |= ACPICPU_FLAG_C;
 
 	acpicpu_cstate_quirks(sc);
-	acpicpu_cstate_attach_evcnt(sc);
-}
-
-static void
-acpicpu_cstate_attach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_cstate *cs;
-	const char *str;
-	uint8_t i;
-
-	for (i = 0; i < __arraycount(sc->sc_cstate); i++) {
-
-		cs = &sc->sc_cstate[i];
-
-		if (cs->cs_method == 0)
-			continue;
-
-		str = "HALT";
-
-		if (cs->cs_method == ACPICPU_C_STATE_FFH)
-			str = "MWAIT";
-
-		if (cs->cs_method == ACPICPU_C_STATE_SYSIO)
-			str = "I/O";
-
-		(void)snprintf(cs->cs_name, sizeof(cs->cs_name),
-		    "C%d (%s)", i, str);
-
-		evcnt_attach_dynamic(&cs->cs_evcnt, EVCNT_TYPE_MISC,
-		    NULL, device_xname(sc->sc_dev), cs->cs_name);
-	}
 }
 
 int
@@ -156,24 +122,8 @@ acpicpu_cstate_detach(device_t self)
 		return rv;
 
 	sc->sc_flags &= ~ACPICPU_FLAG_C;
-	acpicpu_cstate_detach_evcnt(sc);
 
 	return 0;
-}
-
-static void
-acpicpu_cstate_detach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_cstate *cs;
-	uint8_t i;
-
-	for (i = 0; i < __arraycount(sc->sc_cstate); i++) {
-
-		cs = &sc->sc_cstate[i];
-
-		if (cs->cs_method != 0)
-			evcnt_detach(&cs->cs_evcnt);
-	}
 }
 
 void
