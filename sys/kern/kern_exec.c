@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.308 2011/02/21 20:23:29 pooka Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.309 2011/03/01 18:53:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.308 2011/02/21 20:23:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.309 2011/03/01 18:53:10 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -1074,6 +1074,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (vaddr_t)stack);
 	if (pack.ep_esch->es_setregs)
 		(*pack.ep_esch->es_setregs)(l, &pack, (vaddr_t)stack);
+
+	/* Provide a consistent LWP private setting */
+	(void)lwp_setprivate(l, NULL);
 
 	/* map the process's signal trampoline code */
 	if ((error = exec_sigcode_map(p, pack.ep_esch->es_emul)) != 0) {
