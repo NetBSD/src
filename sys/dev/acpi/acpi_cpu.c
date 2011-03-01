@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.33 2011/03/01 05:57:04 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.34 2011/03/01 13:38:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.33 2011/03/01 05:57:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.34 2011/03/01 13:38:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -183,6 +183,8 @@ acpicpu_detach(device_t self, int flags)
 	int rv = 0;
 
 	sc->sc_cold = true;
+
+	acpicpu_evcnt_detach(self);
 	acpi_deregister_notify(sc->sc_node);
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
@@ -204,7 +206,6 @@ acpicpu_detach(device_t self, int flags)
 		return rv;
 
 	mutex_destroy(&sc->sc_mtx);
-	acpicpu_evcnt_detach(self);
 
 	sc->sc_node->ad_device = NULL;
 
