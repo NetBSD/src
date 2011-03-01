@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.38 2010/06/22 09:41:33 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.39 2011/03/01 14:14:50 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2617,6 +2617,7 @@ cfparse()
 {
 	int error;
 
+	yyerrorcount = 0;
 	yycf_init_buffer();
 
 	if (yycf_switch_buffer(lcconf->racoon_conf) != 0) {
