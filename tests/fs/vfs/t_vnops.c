@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.19 2011/03/01 15:33:35 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.20 2011/03/01 20:16:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -298,6 +298,9 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_TMPFS(tc))
 		atf_tc_expect_signal(-1, "PR kern/44288");
 	RL(rump_sys_rmdir(pb1));
+
+	if (FSTYPE_MSDOS(tc))
+		atf_tc_expect_fail("PR kern/44661");
 }
 
 static void
