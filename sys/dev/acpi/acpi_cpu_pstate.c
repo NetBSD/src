@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.41 2011/02/27 17:10:33 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.42 2011/03/01 04:35:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,12 +27,13 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.41 2011/02/27 17:10:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.42 2011/03/01 04:35:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/kmem.h>
 #include <sys/once.h>
+#include <sys/xcall.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -57,8 +58,10 @@ static int		 acpicpu_pstate_min(struct acpicpu_softc *);
 static void		 acpicpu_pstate_change(struct acpicpu_softc *);
 static void		 acpicpu_pstate_reset(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
+static void		 acpicpu_pstate_set_xcall(void *, void *);
 
-static uint32_t		 acpicpu_pstate_saved = 0;
+static uint32_t acpicpu_pstate_saved = 0;
+extern struct acpicpu_softc **acpicpu_sc;
 
 void
 acpicpu_pstate_attach(device_t self)
@@ -264,30 +267,20 @@ acpicpu_pstate_start(device_t self)
 		goto fail;
 
 	/*
-	 * Initialize the state to P0.
+	 * Initialize the states to P0.
 	 */
 	for (i = 0, rv = ENXIO; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
 
 		if (ps->ps_freq != 0) {
-			rv = acpicpu_pstate_set(sc, ps->ps_freq);
-			break;
+			acpicpu_pstate_set(sc->sc_ci, ps->ps_freq);
+			return;
 		}
 	}
 
-	if (rv != 0)
-		goto fail;
-
-	return;
-
 fail:
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
-
-	if (rv == EEXIST) {
-		aprint_error_dev(self, "driver conflicts with existing one\n");
-		return;
-	}
 
 	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
@@ -332,7 +325,7 @@ acpicpu_pstate_suspend(device_t self)
 	if (acpicpu_pstate_saved == ps->ps_freq)
 		return true;
 
-	(void)acpicpu_pstate_set(sc, ps->ps_freq);
+	acpicpu_pstate_set(sc->sc_ci, ps->ps_freq);
 
 	return true;
 }
@@ -343,7 +336,7 @@ acpicpu_pstate_resume(device_t self)
 	struct acpicpu_softc *sc = device_private(self);
 
 	if (acpicpu_pstate_saved != 0) {
-		(void)acpicpu_pstate_set(sc, acpicpu_pstate_saved);
+		acpicpu_pstate_set(sc->sc_ci, acpicpu_pstate_saved);
 		acpicpu_pstate_saved = 0;
 	}
 
@@ -377,7 +370,7 @@ acpicpu_pstate_callback(void *aux)
 		old, sc->sc_pstate[old].ps_freq, new,
 		sc->sc_pstate[sc->sc_pstate_max].ps_freq));
 
-	(void)acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
+	acpicpu_pstate_set(sc->sc_ci, sc->sc_pstate[new].ps_freq);
 }
 
 ACPI_STATUS
@@ -947,14 +940,21 @@ acpicpu_pstate_bios(void)
 }
 
 int
-acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
+acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
 {
-	const uint8_t method = sc->sc_pstate_control.reg_spaceid;
 	struct acpicpu_pstate *ps = NULL;
+	struct acpicpu_softc *sc;
 	uint32_t i, val = 0;
 	uint64_t addr;
 	uint8_t width;
 	int rv;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL)) {
+		rv = ENXIO;
+		goto fail;
+	}
 
 	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
@@ -979,7 +979,7 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 	mutex_exit(&sc->sc_mtx);
 
-	switch (method) {
+	switch (sc->sc_pstate_status.reg_spaceid) {
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
@@ -1043,15 +1043,33 @@ fail:
 	return rv;
 }
 
-int
-acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
+void
+acpicpu_pstate_set(struct cpu_info *ci, uint32_t freq)
 {
-	const uint8_t method = sc->sc_pstate_control.reg_spaceid;
+	uint64_t xc;
+
+	xc = xc_broadcast(0, acpicpu_pstate_set_xcall, &freq, NULL);
+	xc_wait(xc);
+}
+
+static void
+acpicpu_pstate_set_xcall(void *arg1, void *arg2)
+{
 	struct acpicpu_pstate *ps = NULL;
-	uint32_t i, val;
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc;
+	uint32_t freq, i, val;
 	uint64_t addr;
 	uint8_t width;
 	int rv;
+
+	freq = *(uint32_t *)arg1;
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL)) {
+		rv = ENXIO;
+		goto fail;
+	}
 
 	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
@@ -1067,7 +1085,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 
 	if (sc->sc_pstate_current == freq) {
 		mutex_exit(&sc->sc_mtx);
-		return 0;
+		return;
 	}
 
 	/*
@@ -1094,7 +1112,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 		goto fail;
 	}
 
-	switch (method) {
+	switch (sc->sc_pstate_control.reg_spaceid) {
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
@@ -1146,7 +1164,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 	sc->sc_pstate_current = freq;
 	mutex_exit(&sc->sc_mtx);
 
-	return 0;
+	return;
 
 fail:
 	aprint_error_dev(sc->sc_dev, "failed to set "
@@ -1155,6 +1173,4 @@ fail:
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_pstate_current = ACPICPU_P_STATE_UNKNOWN;
 	mutex_exit(&sc->sc_mtx);
-
-	return rv;
 }
