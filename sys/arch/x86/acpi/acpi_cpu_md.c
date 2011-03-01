@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.49 2011/03/01 04:35:48 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.50 2011/03/01 05:02:16 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.49 2011/03/01 04:35:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.50 2011/03/01 05:02:16 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,7 +101,6 @@ void		(*native_idle)(void) = NULL;
 
 static int	 acpicpu_md_quirk_piix4(struct pci_attach_args *);
 static void	 acpicpu_md_pstate_percent_reset(struct acpicpu_softc *);
-static void	 acpicpu_md_pstate_percent_status(void *, void *);
 static int	 acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *,
                                               uint32_t *);
 static int	 acpicpu_md_pstate_fidvid_set(struct acpicpu_pstate *);
@@ -621,23 +620,11 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 	return 0;
 }
 
-/*
- * Returns the percentage of the actual frequency in
- * terms of the maximum frequency of the calling CPU
- * since the last call. A value zero implies an error.
- */
 uint8_t
 acpicpu_md_pstate_percent(struct acpicpu_softc *sc)
 {
-	struct cpu_info *ci = sc->sc_ci;
 	uint64_t aperf, mperf;
-	uint64_t xc, rv = 0;
-
-	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P) == 0))
-		return 0;
-
-	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P_HW) == 0))
-		return 0;
+	uint64_t rv = 0;
 
 	/*
 	 * Read the IA32_APERF and IA32_MPERF counters. The first
@@ -646,6 +633,10 @@ acpicpu_md_pstate_percent(struct acpicpu_softc *sc)
 	 * rate of the actual frequency. Note that the MSRs must be
 	 * read without delay, and that only the ratio between
 	 * IA32_APERF and IA32_MPERF is architecturally defined.
+	 *
+	 * The function thus returns the percentage of the actual
+	 * frequency in terms of the maximum frequency of the calling
+	 * CPU since the last call. A value zero implies an error.
 	 *
 	 * For further details, refer to:
 	 *
@@ -657,13 +648,19 @@ acpicpu_md_pstate_percent(struct acpicpu_softc *sc)
 	 *	Guide (BKDG) for AMD Family 10h Processors. Section
 	 *	2.4.5, Revision 3.48, April 2010.
 	 */
-	x86_disable_intr();
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P) == 0))
+		return 0;
+
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P_HW) == 0))
+		return 0;
 
 	aperf = sc->sc_pstate_aperf;
 	mperf = sc->sc_pstate_mperf;
 
-	xc = xc_unicast(0, acpicpu_md_pstate_percent_status, sc, NULL, ci);
-	xc_wait(xc);
+	x86_disable_intr();
+
+	sc->sc_pstate_aperf = rdmsr(MSR_APERF);
+	sc->sc_pstate_mperf = rdmsr(MSR_MPERF);
 
 	x86_enable_intr();
 
@@ -674,15 +671,6 @@ acpicpu_md_pstate_percent(struct acpicpu_softc *sc)
 		rv = (aperf * 100) / mperf;
 
 	return rv;
-}
-
-static void
-acpicpu_md_pstate_percent_status(void *arg1, void *arg2)
-{
-	struct acpicpu_softc *sc = arg1;
-
-	sc->sc_pstate_aperf = rdmsr(MSR_APERF);
-	sc->sc_pstate_mperf = rdmsr(MSR_MPERF);
 }
 
 static void
