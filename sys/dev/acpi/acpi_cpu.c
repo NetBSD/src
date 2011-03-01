@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.31 2011/02/27 18:32:53 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.32 2011/03/01 05:32:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.31 2011/02/27 18:32:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.32 2011/03/01 05:32:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -54,6 +54,7 @@ static int		  acpicpu_once_attach(void);
 static int		  acpicpu_once_detach(void);
 static void		  acpicpu_start(device_t);
 static void		  acpicpu_debug_print(device_t);
+static const char	 *acpicpu_debug_print_method(uint8_t);
 static const char	 *acpicpu_debug_print_dep(uint32_t);
 static void		  acpicpu_sysctl(device_t);
 
@@ -680,7 +681,61 @@ acpicpu_debug_print(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	struct cpu_info *ci = sc->sc_ci;
+	struct acpicpu_cstate *cs;
+	struct acpicpu_pstate *ps;
+	struct acpicpu_tstate *ts;
+	static bool once = false;
 	struct acpicpu_dep *dep;
+	uint32_t i, method;
+
+	if (once != true) {
+
+		for (i = 0; i < __arraycount(sc->sc_cstate); i++) {
+
+			cs = &sc->sc_cstate[i];
+
+			if (cs->cs_method == 0)
+				continue;
+
+			aprint_verbose_dev(sc->sc_dev, "C%d: %3s, "
+			    "lat %3u us, pow %5u mW, %s\n", i,
+			    acpicpu_debug_print_method(cs->cs_method),
+			    cs->cs_latency, cs->cs_power,
+			    (cs->cs_flags != 0) ? "bus master check" : "");
+		}
+
+		method = sc->sc_pstate_control.reg_spaceid;
+
+		for (i = 0; i < sc->sc_pstate_count; i++) {
+
+			ps = &sc->sc_pstate[i];
+
+			if (ps->ps_freq == 0)
+				continue;
+
+			aprint_verbose_dev(sc->sc_dev, "P%d: %3s, "
+			    "lat %3u us, pow %5u mW, %4u MHz\n", i,
+			    acpicpu_debug_print_method(method),
+			    ps->ps_latency, ps->ps_power, ps->ps_freq);
+		}
+
+		method = sc->sc_tstate_control.reg_spaceid;
+
+		for (i = 0; i < sc->sc_tstate_count; i++) {
+
+			ts = &sc->sc_tstate[i];
+
+			if (ts->ts_percent == 0)
+				continue;
+
+			aprint_verbose_dev(sc->sc_dev, "T%u: %3s, "
+			    "lat %3u us, pow %5u mW, %3u %%\n", i,
+			    acpicpu_debug_print_method(method),
+			    ts->ts_latency, ts->ts_power, ts->ts_percent);
+		}
+
+		once = true;
+	}
 
 	aprint_debug_dev(sc->sc_dev, "id %u, lapic id %u, "
 	    "cap 0x%04x, flags 0x%08x\n", ci->ci_acpiid,
@@ -711,6 +766,27 @@ acpicpu_debug_print(device_t self)
 		aprint_debug_dev(sc->sc_dev, "T-state coordination: "
 		    "%u CPUs, domain %u, type %s\n", dep->dep_ncpus,
 		    dep->dep_domain, acpicpu_debug_print_dep(dep->dep_type));
+	}
+}
+
+static const char *
+acpicpu_debug_print_method(uint8_t val)
+{
+
+	switch (val) {
+
+	case ACPICPU_C_STATE_HALT:
+		return "HLT";
+
+	case ACPICPU_C_STATE_FFH:
+	case ACPI_ADR_SPACE_FIXED_HARDWARE:
+		return "FFH";
+
+	case ACPICPU_C_STATE_SYSIO:		/* ACPI_ADR_SPACE_SYSTEM_IO */
+		return "I/O";
+
+	default:
+		return "???";
 	}
 }
 
