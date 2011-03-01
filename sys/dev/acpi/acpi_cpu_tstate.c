@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.23 2011/02/25 19:55:07 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.24 2011/03/01 04:35:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,11 +27,12 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.23 2011/02/25 19:55:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.24 2011/03/01 04:35:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/kmem.h>
+#include <sys/xcall.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -51,6 +52,9 @@ static ACPI_STATUS	 acpicpu_tstate_dep(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_fadt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_change(struct acpicpu_softc *);
 static void		 acpicpu_tstate_reset(struct acpicpu_softc *);
+static void		 acpicpu_tstate_set_xcall(void *, void *);
+
+extern struct acpicpu_softc **acpicpu_sc;
 
 void
 acpicpu_tstate_attach(device_t self)
@@ -721,14 +725,21 @@ acpicpu_tstate_reset(struct acpicpu_softc *sc)
 }
 
 int
-acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
+acpicpu_tstate_get(struct cpu_info *ci, uint32_t *percent)
 {
-	const uint8_t method = sc->sc_tstate_control.reg_spaceid;
 	struct acpicpu_tstate *ts = NULL;
+	struct acpicpu_softc *sc;
 	uint32_t i, val = 0;
 	uint8_t offset;
 	uint64_t addr;
 	int rv;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL)) {
+		rv = ENXIO;
+		goto fail;
+	}
 
 	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
@@ -750,7 +761,7 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 
 	mutex_exit(&sc->sc_mtx);
 
-	switch (method) {
+	switch (sc->sc_tstate_status.reg_spaceid) {
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
@@ -811,15 +822,33 @@ fail:
 	return rv;
 }
 
-int
-acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
+void
+acpicpu_tstate_set(struct cpu_info *ci, uint32_t percent)
 {
-	const uint8_t method = sc->sc_tstate_control.reg_spaceid;
+	uint64_t xc;
+
+	xc = xc_broadcast(0, acpicpu_tstate_set_xcall, &percent, NULL);
+	xc_wait(xc);
+}
+
+static void
+acpicpu_tstate_set_xcall(void *arg1, void *arg2)
+{
 	struct acpicpu_tstate *ts = NULL;
-	uint32_t i, val;
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc;
+	uint32_t i, percent, val;
 	uint8_t offset;
 	uint64_t addr;
 	int rv;
+
+	percent = *(uint32_t *)arg1;
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL)) {
+		rv = ENXIO;
+		goto fail;
+	}
 
 	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
@@ -835,7 +864,7 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 
 	if (sc->sc_tstate_current == percent) {
 		mutex_exit(&sc->sc_mtx);
-		return 0;
+		return;
 	}
 
 	for (i = sc->sc_tstate_max; i <= sc->sc_tstate_min; i++) {
@@ -856,7 +885,7 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 		goto fail;
 	}
 
-	switch (method) {
+	switch (sc->sc_tstate_control.reg_spaceid) {
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
@@ -921,7 +950,7 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 	sc->sc_tstate_current = percent;
 	mutex_exit(&sc->sc_mtx);
 
-	return 0;
+	return;
 
 fail:
 	aprint_error_dev(sc->sc_dev, "failed to "
@@ -930,6 +959,4 @@ fail:
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_tstate_current = ACPICPU_T_STATE_UNKNOWN;
 	mutex_exit(&sc->sc_mtx);
-
-	return rv;
 }

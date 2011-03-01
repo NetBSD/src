@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.48 2011/02/27 18:32:54 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.49 2011/03/01 04:35:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.48 2011/02/27 18:32:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.49 2011/03/01 04:35:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,21 +102,18 @@ void		(*native_idle)(void) = NULL;
 static int	 acpicpu_md_quirk_piix4(struct pci_attach_args *);
 static void	 acpicpu_md_pstate_percent_reset(struct acpicpu_softc *);
 static void	 acpicpu_md_pstate_percent_status(void *, void *);
-static void	 acpicpu_md_pstate_status(void *, void *);
 static int	 acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *,
                                               uint32_t *);
 static int	 acpicpu_md_pstate_fidvid_set(struct acpicpu_pstate *);
 static int	 acpicpu_md_pstate_fidvid_read(uint32_t *, uint32_t *);
 static void	 acpicpu_md_pstate_fidvid_write(uint32_t, uint32_t,
 					        uint32_t, uint32_t);
-static void	 acpicpu_md_tstate_status(void *, void *);
 static int	 acpicpu_md_pstate_sysctl_init(void);
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
 
 extern struct acpicpu_softc **acpicpu_sc;
-static bool acpicpu_pstate_status = false;
 static struct sysctllog *acpicpu_log = NULL;
 
 struct cpu_info *
@@ -725,6 +722,9 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	if ((sc->sc_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 		return acpicpu_md_pstate_fidvid_get(sc, freq);
 
+	/*
+	 * Pick any P-state for the status address.
+	*/
 	for (i = 0; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
@@ -744,6 +744,9 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	if (__predict_true(ps->ps_status_mask != 0))
 		val = val & ps->ps_status_mask;
 
+	/*
+	 * Search for the value from known P-states.
+	 */
 	for (i = 0; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
@@ -763,9 +766,7 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 int
 acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 {
-	struct msr_rw_info msr;
-	uint64_t xc;
-	int rv = 0;
+	uint64_t val;
 
 	if (__predict_false(ps->ps_control_addr == 0))
 		return EINVAL;
@@ -773,54 +774,15 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	if ((ps->ps_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 		return acpicpu_md_pstate_fidvid_set(ps);
 
-	msr.msr_read  = false;
-	msr.msr_type  = ps->ps_control_addr;
-	msr.msr_value = ps->ps_control;
+	val = ps->ps_control;
 
-	if (__predict_true(ps->ps_control_mask != 0)) {
-		msr.msr_mask = ps->ps_control_mask;
-		msr.msr_read = true;
-	}
+	if (__predict_true(ps->ps_control_mask != 0))
+		val = val & ps->ps_control_mask;
 
-	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
-	xc_wait(xc);
+	wrmsr(ps->ps_control_addr, val);
+	DELAY(ps->ps_latency);
 
-	/*
-	 * Due several problems, we bypass the
-	 * relatively expensive status check.
-	 */
-	if (acpicpu_pstate_status != true) {
-		DELAY(ps->ps_latency);
-		return 0;
-	}
-
-	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_pstate_status, ps, &rv);
-	xc_wait(xc);
-
-	return rv;
-}
-
-static void
-acpicpu_md_pstate_status(void *arg1, void *arg2)
-{
-	struct acpicpu_pstate *ps = arg1;
-	uint64_t val;
-	int i;
-
-	for (i = val = 0; i < ACPICPU_P_STATE_RETRY; i++) {
-
-		val = rdmsr(ps->ps_status_addr);
-
-		if (__predict_true(ps->ps_status_mask != 0))
-			val = val & ps->ps_status_mask;
-
-		if (val == ps->ps_status)
-			return;
-
-		DELAY(ps->ps_latency);
-	}
-
-	*(uintptr_t *)arg2 = EAGAIN;
+	return 0;
 }
 
 static int
@@ -988,21 +950,14 @@ static void
 acpicpu_md_pstate_fidvid_write(uint32_t fid,
     uint32_t vid, uint32_t cnt, uint32_t tmo)
 {
-	struct msr_rw_info msr;
-	uint64_t xc;
+	uint64_t val = 0;
 
-	msr.msr_read  = false;
-	msr.msr_type  = MSR_0FH_CONTROL;
-	msr.msr_value = 0;
+	val |= __SHIFTIN(fid, MSR_0FH_CONTROL_FID);
+	val |= __SHIFTIN(vid, MSR_0FH_CONTROL_VID);
+	val |= __SHIFTIN(cnt, MSR_0FH_CONTROL_CNT);
+	val |= __SHIFTIN(0x1, MSR_0FH_CONTROL_CHG);
 
-	msr.msr_value |= __SHIFTIN(fid, MSR_0FH_CONTROL_FID);
-	msr.msr_value |= __SHIFTIN(vid, MSR_0FH_CONTROL_VID);
-	msr.msr_value |= __SHIFTIN(cnt, MSR_0FH_CONTROL_CNT);
-	msr.msr_value |= __SHIFTIN(0x1, MSR_0FH_CONTROL_CHG);
-
-	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
-	xc_wait(xc);
-
+	wrmsr(MSR_0FH_CONTROL, val);
 	DELAY(tmo);
 }
 
@@ -1034,47 +989,30 @@ acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 int
 acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 {
-	struct msr_rw_info msr;
-	uint64_t xc;
-	int rv = 0;
+	uint64_t val;
+	uint8_t i;
 
-	msr.msr_read  = true;
-	msr.msr_type  = MSR_THERM_CONTROL;
-	msr.msr_value = ts->ts_control;
-	msr.msr_mask = __BITS(1, 4);
+	val = ts->ts_control;
+	val = val & __BITS(1, 4);
 
-	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
-	xc_wait(xc);
+	wrmsr(MSR_THERM_CONTROL, val);
 
 	if (ts->ts_status == 0) {
 		DELAY(ts->ts_latency);
 		return 0;
 	}
 
-	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_tstate_status, ts, &rv);
-	xc_wait(xc);
-
-	return rv;
-}
-
-static void
-acpicpu_md_tstate_status(void *arg1, void *arg2)
-{
-	struct acpicpu_tstate *ts = arg1;
-	uint64_t val;
-	int i;
-
 	for (i = val = 0; i < ACPICPU_T_STATE_RETRY; i++) {
 
 		val = rdmsr(MSR_THERM_CONTROL);
 
 		if (val == ts->ts_status)
-			return;
+			return 0;
 
 		DELAY(ts->ts_latency);
 	}
 
-	*(uintptr_t *)arg2 = EAGAIN;
+	return EAGAIN;
 }
 
 /*
@@ -1160,17 +1098,11 @@ static int
 acpicpu_md_pstate_sysctl_get(SYSCTLFN_ARGS)
 {
 	struct cpu_info *ci = curcpu();
-	struct acpicpu_softc *sc;
 	struct sysctlnode node;
 	uint32_t freq;
 	int err;
 
-	sc = acpicpu_sc[ci->ci_acpiid];
-
-	if (sc == NULL)
-		return ENXIO;
-
-	err = acpicpu_pstate_get(sc, &freq);
+	err = acpicpu_pstate_get(ci, &freq);
 
 	if (err != 0)
 		return err;
@@ -1190,17 +1122,11 @@ static int
 acpicpu_md_pstate_sysctl_set(SYSCTLFN_ARGS)
 {
 	struct cpu_info *ci = curcpu();
-	struct acpicpu_softc *sc;
 	struct sysctlnode node;
 	uint32_t freq;
 	int err;
 
-	sc = acpicpu_sc[ci->ci_acpiid];
-
-	if (sc == NULL)
-		return ENXIO;
-
-	err = acpicpu_pstate_get(sc, &freq);
+	err = acpicpu_pstate_get(ci, &freq);
 
 	if (err != 0)
 		return err;
@@ -1213,10 +1139,7 @@ acpicpu_md_pstate_sysctl_set(SYSCTLFN_ARGS)
 	if (err != 0 || newp == NULL)
 		return err;
 
-	err = acpicpu_pstate_set(sc, freq);
-
-	if (err != 0)
-		return err;
+	acpicpu_pstate_set(ci, freq);
 
 	return 0;
 }
