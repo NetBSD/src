@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.7 2010/07/21 06:58:25 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.8 2011/03/01 15:19:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -51,6 +51,9 @@ dtfs_node_lookup(struct puffs_usermount *pu, void *opc,
 
 	/* parent dir? */
 	if (PCNISDOTDOT(pcn)) {
+		if (df->df_dotdot == NULL)
+			return ENOENT;
+
 		assert(df->df_dotdot->pn_va.va_type == VDIR);
 		puffs_newinfo_setcookie(pni, df->df_dotdot);
 		puffs_newinfo_setvtype(pni, df->df_dotdot->pn_va.va_type);
