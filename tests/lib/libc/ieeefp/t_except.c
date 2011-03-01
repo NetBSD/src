@@ -1,4 +1,4 @@
-/*	$NetBSD: t_except.c,v 1.6 2011/01/04 22:30:41 pgoyette Exp $	*/
+/*	$NetBSD: t_except.c,v 1.7 2011/03/01 12:47:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -295,6 +295,11 @@ sigfpe(int s, siginfo_t *si, void *c)
 									\
 		if (system("cpuctl identify 0 | grep -q QEMU") == 0)	\
 			atf_tc_skip("Test not applicable on QEMU");	\
+		if (system("cpuctl identify 0 | grep -q			\
+		  'cpu0: Intel Pentium II (Klamath) (686-class), id 0x633'")\
+		    == 0)						\
+			atf_tc_skip("Test not applicable on QEMU "	\
+			    "(heuristic match)");			\
 		m(t##_ops);						\
 	}
 
