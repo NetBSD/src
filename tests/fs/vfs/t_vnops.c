@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.15 2011/02/28 03:40:45 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.16 2011/03/01 14:21:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ static void
 rename_dir(const atf_tc_t *tc, const char *mp)
 {
 	char pb1[MAXPATHLEN], pb2[MAXPATHLEN], pb3[MAXPATHLEN];
-	struct stat ref;
+	struct stat ref, sb;
 
 	if (FSTYPE_MSDOS(tc))
 		atf_tc_skip("test fails in some setups, reason unknown");
@@ -247,11 +247,27 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	md(pb1, mp, "dir2/../dir3");
 	checkfile(pb1, &ref);
 
-	/* finally, atomic cross-directory rename */
+	/* atomic cross-directory rename */
 	md(pb3, mp, "dir2/subdir");
 	if (rump_sys_rename(pb1, pb3) == -1)
 		atf_tc_fail_errno("rename 9");
 	checkfile(pb3, &ref);
+
+	/* rename directory over an empty directory */
+	md(pb1, mp, "parent");
+	md(pb2, mp, "parent/dir1");
+	md(pb3, mp, "parent/dir2");
+	RL(rump_sys_mkdir(pb1, 0777));
+	RL(rump_sys_mkdir(pb2, 0777));
+	RL(rump_sys_mkdir(pb3, 0777));
+	RL(rump_sys_rename(pb2, pb3));
+
+	RL(rump_sys_stat(pb1, &sb));
+	ATF_CHECK_EQ(sb.st_nlink, 3);
+	RL(rump_sys_rmdir(pb3));
+	if (FSTYPE_TMPFS(tc))
+		atf_tc_expect_signal(-1, "PR kern/44288");
+	RL(rump_sys_rmdir(pb1));
 }
 
 static void
