@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.8 2011/01/03 20:51:26 pgoyette Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.9 2011/03/01 12:47:43 pooka Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -298,6 +298,10 @@ ATF_TC_BODY(sigfpe_flt, tc)
 
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_skip("Test does not run correctly under qemu");
+	if (system("cpuctl identify 0 | grep -q "
+	    "'cpu0: Intel Pentium II (Klamath) (686-class), id 0x633'") == 0)
+		atf_tc_skip("Test does not run correctly under qemu "
+		    "(heuristic match)");
 	if (sigsetjmp(sigfpe_flt_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
 		sa.sa_sigaction = sigfpe_flt_action;
