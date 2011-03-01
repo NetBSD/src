@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.26 2011/02/27 13:37:39 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.27 2011/03/01 10:02:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.26 2011/02/27 13:37:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.27 2011/03/01 10:02:11 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -173,6 +173,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	int npages = len2npages(uio->uio_offset, todo);
 	size_t pgalloc;
 	int i, rv, pagerflags;
+	vm_prot_t prot;
 
 	pgalloc = npages * sizeof(pgs);
 	pgs = kmem_alloc(pgalloc, KM_SLEEP);
@@ -183,13 +184,16 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	if (flags & UBC_FAULTBUSY)
 		pagerflags |= PGO_OVERWRITE;
 
+	prot = VM_PROT_READ;
+	if (flags & UBC_WRITE)
+		prot |= VM_PROT_WRITE;
+
 	mutex_enter(&uobj->vmobjlock);
 	do {
 		npages = len2npages(uio->uio_offset, todo);
 		memset(pgs, 0, pgalloc);
 		rv = uobj->pgops->pgo_get(uobj, trunc_page(uio->uio_offset),
-		    pgs, &npages, 0, VM_PROT_READ | VM_PROT_WRITE, 0,
-		    pagerflags);
+		    pgs, &npages, 0, prot, 0, pagerflags);
 		if (rv)
 			goto out;
 
