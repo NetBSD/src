@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.25 2011/03/01 05:32:03 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.26 2011/03/01 05:57:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,10 +27,9 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.25 2011/03/01 05:32:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.26 2011/03/01 05:57:04 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/evcnt.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
 
@@ -41,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.25 2011/03/01 05:32:03 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_tstate")
 
-static void		 acpicpu_tstate_attach_evcnt(struct acpicpu_softc *);
-static void		 acpicpu_tstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_tss(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_tss_add(struct acpicpu_tstate *,
 						ACPI_OBJECT *);
@@ -121,28 +118,6 @@ out:
 	sc->sc_flags |= ACPICPU_FLAG_T;
 
 	acpicpu_tstate_reset(sc);
-	acpicpu_tstate_attach_evcnt(sc);
-}
-
-static void
-acpicpu_tstate_attach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_tstate *ts;
-	uint32_t i;
-
-	for (i = 0; i < sc->sc_tstate_count; i++) {
-
-		ts = &sc->sc_tstate[i];
-
-		if (ts->ts_percent == 0)
-			continue;
-
-		(void)snprintf(ts->ts_name, sizeof(ts->ts_name),
-		    "T%u (%u %%)", i, ts->ts_percent);
-
-		evcnt_attach_dynamic(&ts->ts_evcnt, EVCNT_TYPE_MISC,
-		    NULL, device_xname(sc->sc_dev), ts->ts_name);
-	}
 }
 
 int
@@ -160,24 +135,8 @@ acpicpu_tstate_detach(device_t self)
 		kmem_free(sc->sc_tstate, size);
 
 	sc->sc_flags &= ~ACPICPU_FLAG_T;
-	acpicpu_tstate_detach_evcnt(sc);
 
 	return 0;
-}
-
-static void
-acpicpu_tstate_detach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_tstate *ts;
-	uint32_t i;
-
-	for (i = 0; i < sc->sc_tstate_count; i++) {
-
-		ts = &sc->sc_tstate[i];
-
-		if (ts->ts_percent != 0)
-			evcnt_detach(&ts->ts_evcnt);
-	}
 }
 
 void
