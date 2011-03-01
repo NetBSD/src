@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.42 2011/03/01 04:35:48 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.43 2011/03/01 05:32:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.42 2011/03/01 04:35:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.43 2011/03/01 05:32:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.42 2011/03/01 04:35:48 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_pstate")
 
-static void		 acpicpu_pstate_attach_print(struct acpicpu_softc *);
 static void		 acpicpu_pstate_attach_evcnt(struct acpicpu_softc *);
 static void		 acpicpu_pstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_pstate_pss(struct acpicpu_softc *);
@@ -141,7 +140,6 @@ acpicpu_pstate_attach(device_t self)
 	acpicpu_pstate_bios();
 	acpicpu_pstate_reset(sc);
 	acpicpu_pstate_attach_evcnt(sc);
-	acpicpu_pstate_attach_print(sc);
 
 	return;
 
@@ -159,35 +157,6 @@ fail:
 		aprint_error_dev(self, "failed to evaluate "
 		    "%s: %s\n", str, AcpiFormatException(rv));
 	}
-}
-
-static void
-acpicpu_pstate_attach_print(struct acpicpu_softc *sc)
-{
-	const uint8_t method = sc->sc_pstate_control.reg_spaceid;
-	struct acpicpu_pstate *ps;
-	static bool once = false;
-	const char *str;
-	uint32_t i;
-
-	if (once != false)
-		return;
-
-	str = (method != ACPI_ADR_SPACE_SYSTEM_IO) ? "FFH" : "I/O";
-
-	for (i = 0; i < sc->sc_pstate_count; i++) {
-
-		ps = &sc->sc_pstate[i];
-
-		if (ps->ps_freq == 0)
-			continue;
-
-		aprint_verbose_dev(sc->sc_dev, "P%d: %3s, "
-		    "lat %3u us, pow %5u mW, %4u MHz\n", i, str,
-		    ps->ps_latency, ps->ps_power, ps->ps_freq);
-	}
-
-	once = true;
 }
 
 static void

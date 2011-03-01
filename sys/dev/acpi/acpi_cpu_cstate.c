@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.46 2011/02/25 19:55:06 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.47 2011/03/01 05:32:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.46 2011/02/25 19:55:06 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.47 2011/03/01 05:32:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.46 2011/02/25 19:55:06 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_cstate")
 
-static void		 acpicpu_cstate_attach_print(struct acpicpu_softc *);
 static void		 acpicpu_cstate_attach_evcnt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst(struct acpicpu_softc *);
@@ -112,51 +111,6 @@ acpicpu_cstate_attach(device_t self)
 
 	acpicpu_cstate_quirks(sc);
 	acpicpu_cstate_attach_evcnt(sc);
-	acpicpu_cstate_attach_print(sc);
-}
-
-void
-acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
-{
-	struct acpicpu_cstate *cs;
-	static bool once = false;
-	const char *str;
-	int i;
-
-	if (once != false)
-		return;
-
-	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
-
-		cs = &sc->sc_cstate[i];
-
-		if (cs->cs_method == 0)
-			continue;
-
-		switch (cs->cs_method) {
-
-		case ACPICPU_C_STATE_HALT:
-			str = "HLT";
-			break;
-
-		case ACPICPU_C_STATE_FFH:
-			str = "FFH";
-			break;
-
-		case ACPICPU_C_STATE_SYSIO:
-			str = "I/O";
-			break;
-
-		default:
-			panic("NOTREACHED");
-		}
-
-		aprint_verbose_dev(sc->sc_dev, "C%d: %3s, "
-		    "lat %3u us, pow %5u mW, flags 0x%02x\n", i, str,
-		    cs->cs_latency, cs->cs_power, cs->cs_flags);
-	}
-
-	once = true;
 }
 
 static void
