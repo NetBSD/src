@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.72 2011/02/28 20:39:07 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.73 2011/03/01 10:47:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.72 2011/02/28 20:39:07 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.73 2011/03/01 10:47:29 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -1480,6 +1480,11 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		/*
 		 * then, open two pipes, one for notifications
 		 * to each kernel.
+		 *
+		 * At least the rump pipe should probably be
+		 * cached, along with the helper threads.  This
+		 * should give a microbenchmark improvement (haven't
+		 * experienced a macro-level problem yet, though).
 		 */
 		if ((rv = rump_sys_pipe(rpipe)) == -1) {
 			sverrno = errno;
