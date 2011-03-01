@@ -1,4 +1,4 @@
-#	$NetBSD: t_raid.sh,v 1.6 2011/02/04 19:44:00 pooka Exp $
+#	$NetBSD: t_raid.sh,v 1.7 2011/03/01 22:52:54 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,7 +61,6 @@ smalldisk_body()
 	    -d key=/disk1,hostpath=disk1.img,size=1m		\
 	    ${RUMP_SERVER}
 
-	atf_expect_fail "PR kern/44239" # ADJUST CLEANUP WHEN THIS IS FIXED!
 	atf_check -s exit:0 rump.raidctl -C raid.conf raid0
 }
 
@@ -69,7 +68,6 @@ smalldisk_cleanup()
 {
 	export RUMP_SERVER=unix://sock
 	rump.halt
-	: server dumps currently, so reset error.  remove this line when fixed
 }
 
 
