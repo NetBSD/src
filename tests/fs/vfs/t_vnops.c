@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.16 2011/03/01 14:21:46 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.17 2011/03/01 14:27:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -172,8 +172,8 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	char pb1[MAXPATHLEN], pb2[MAXPATHLEN], pb3[MAXPATHLEN];
 	struct stat ref, sb;
 
-	if (FSTYPE_MSDOS(tc))
-		atf_tc_skip("test fails in some setups, reason unknown");
+	//if (FSTYPE_MSDOS(tc))
+		//atf_tc_skip("test fails in some setups, reason unknown");
 
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by fs");
