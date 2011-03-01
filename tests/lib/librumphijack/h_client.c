@@ -1,4 +1,4 @@
-/*	$NetBSD: h_client.c,v 1.3 2011/02/20 23:45:46 pooka Exp $	*/
+/*	$NetBSD: h_client.c,v 1.4 2011/03/01 08:54:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -50,21 +50,24 @@ main(int argc, char *argv[])
 	if (strcmp(argv[1], "select_timeout") == 0) {
 		fd_set rfds;
 		struct timeval tv;
+		int pipefd[2];
 		int rv;
 
 		tv.tv_sec = 0;
 		tv.tv_usec = 1;
 
+		if (pipe(pipefd) == -1)
+			err(1, "pipe");
 		FD_ZERO(&rfds);
-		FD_SET(STDIN_FILENO, &rfds);
+		FD_SET(pipefd[0], &rfds);
 
-		rv = select(STDIN_FILENO+1, &rfds, NULL, NULL, &tv);
+		rv = select(pipefd[0]+1, &rfds, NULL, NULL, &tv);
 		if (rv == -1)
 			err(1, "select");
 		if (rv != 0)
 			errx(1, "select succesful");
 
-		if (FD_ISSET(STDIN_FILENO, &rfds))
+		if (FD_ISSET(pipefd[0], &rfds))
 			errx(1, "stdin fileno is still set");
 		exit(0);
 	} else if (strcmp(argv[1], "select_allunset") == 0) {
