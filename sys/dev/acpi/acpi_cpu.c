@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.32 2011/03/01 05:32:03 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.33 2011/03/01 05:57:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,10 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.32 2011/03/01 05:32:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.33 2011/03/01 05:57:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
@@ -53,9 +54,6 @@ static int		  acpicpu_detach(device_t, int);
 static int		  acpicpu_once_attach(void);
 static int		  acpicpu_once_detach(void);
 static void		  acpicpu_start(device_t);
-static void		  acpicpu_debug_print(device_t);
-static const char	 *acpicpu_debug_print_method(uint8_t);
-static const char	 *acpicpu_debug_print_dep(uint32_t);
 static void		  acpicpu_sysctl(device_t);
 
 static ACPI_STATUS	  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
@@ -68,6 +66,11 @@ static ACPI_STATUS	  acpicpu_cap_osc(struct acpicpu_softc *,
 static void		  acpicpu_notify(ACPI_HANDLE, uint32_t, void *);
 static bool		  acpicpu_suspend(device_t, const pmf_qual_t *);
 static bool		  acpicpu_resume(device_t, const pmf_qual_t *);
+static void		  acpicpu_evcnt_attach(device_t);
+static void		  acpicpu_evcnt_detach(device_t);
+static void		  acpicpu_debug_print(device_t);
+static const char	 *acpicpu_debug_print_method(uint8_t);
+static const char	 *acpicpu_debug_print_dep(uint32_t);
 
 static uint32_t		  acpicpu_count = 0;
 struct acpicpu_softc	**acpicpu_sc = NULL;
@@ -166,6 +169,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	acpicpu_tstate_attach(self);
 
 	acpicpu_debug_print(self);
+	acpicpu_evcnt_attach(self);
 
 	(void)config_interrupts(self, acpicpu_start);
 	(void)acpi_register_notify(sc->sc_node, acpicpu_notify);
@@ -200,6 +204,8 @@ acpicpu_detach(device_t self, int flags)
 		return rv;
 
 	mutex_destroy(&sc->sc_mtx);
+	acpicpu_evcnt_detach(self);
+
 	sc->sc_node->ad_device = NULL;
 
 	acpicpu_count--;
@@ -674,6 +680,101 @@ acpicpu_resume(device_t self, const pmf_qual_t *qual)
 		(void)acpicpu_tstate_resume(self);
 
 	return true;
+}
+
+static void
+acpicpu_evcnt_attach(device_t self)
+{
+	struct acpicpu_softc *sc = device_private(self);
+	struct acpicpu_cstate *cs;
+	struct acpicpu_pstate *ps;
+	struct acpicpu_tstate *ts;
+	const char *str;
+	uint32_t i;
+
+	for (i = 0; i < __arraycount(sc->sc_cstate); i++) {
+
+		cs = &sc->sc_cstate[i];
+
+		if (cs->cs_method == 0)
+			continue;
+
+		str = "HALT";
+
+		if (cs->cs_method == ACPICPU_C_STATE_FFH)
+			str = "MWAIT";
+
+		if (cs->cs_method == ACPICPU_C_STATE_SYSIO)
+			str = "I/O";
+
+		(void)snprintf(cs->cs_name, sizeof(cs->cs_name),
+		    "C%d (%s)", i, str);
+
+		evcnt_attach_dynamic(&cs->cs_evcnt, EVCNT_TYPE_MISC,
+		    NULL, device_xname(sc->sc_dev), cs->cs_name);
+	}
+
+	for (i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq == 0)
+			continue;
+
+		(void)snprintf(ps->ps_name, sizeof(ps->ps_name),
+		    "P%u (%u MHz)", i, ps->ps_freq);
+
+		evcnt_attach_dynamic(&ps->ps_evcnt, EVCNT_TYPE_MISC,
+		    NULL, device_xname(sc->sc_dev), ps->ps_name);
+	}
+
+	for (i = 0; i < sc->sc_tstate_count; i++) {
+
+		ts = &sc->sc_tstate[i];
+
+		if (ts->ts_percent == 0)
+			continue;
+
+		(void)snprintf(ts->ts_name, sizeof(ts->ts_name),
+		    "T%u (%u %%)", i, ts->ts_percent);
+
+		evcnt_attach_dynamic(&ts->ts_evcnt, EVCNT_TYPE_MISC,
+		    NULL, device_xname(sc->sc_dev), ts->ts_name);
+	}
+}
+
+static void
+acpicpu_evcnt_detach(device_t self)
+{
+	struct acpicpu_softc *sc = device_private(self);
+	struct acpicpu_cstate *cs;
+	struct acpicpu_pstate *ps;
+	struct acpicpu_tstate *ts;
+	uint32_t i;
+
+	for (i = 0; i < __arraycount(sc->sc_cstate); i++) {
+
+		cs = &sc->sc_cstate[i];
+
+		if (cs->cs_method != 0)
+			evcnt_detach(&cs->cs_evcnt);
+	}
+
+	for (i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq != 0)
+			evcnt_detach(&ps->ps_evcnt);
+	}
+
+	for (i = 0; i < sc->sc_tstate_count; i++) {
+
+		ts = &sc->sc_tstate[i];
+
+		if (ts->ts_percent != 0)
+			evcnt_detach(&ts->ts_evcnt);
+	}
 }
 
 static void
