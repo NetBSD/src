@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.18 2011/03/01 15:04:47 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.19 2011/03/01 15:33:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -175,6 +175,8 @@ dir_rmdirdotdot(const atf_tc_t *tc, const char *mp)
 		xerrno = ESTALE;
 	else
 		xerrno = ENOENT;
+	if (FSTYPE_TMPFS(tc))
+		atf_tc_expect_signal(-1, "PR kern/44657");
 	ATF_REQUIRE_ERRNO(xerrno, rump_sys_chdir("..") == -1);
 	FSTEST_EXIT();
 }
