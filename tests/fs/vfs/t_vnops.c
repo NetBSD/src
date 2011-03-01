@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.17 2011/03/01 14:27:32 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.18 2011/03/01 15:04:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -149,6 +149,34 @@ dir_notempty(const atf_tc_t *tc, const char *mountpath)
 
 	if (rump_sys_rmdir(pb) == -1)
 		atf_tc_fail_errno("remove directory");
+}
+
+static void
+dir_rmdirdotdot(const atf_tc_t *tc, const char *mp)
+{
+	char pb[MAXPATHLEN];
+	int xerrno;
+
+	USES_DIRS;
+
+	FSTEST_ENTER();
+	RL(rump_sys_mkdir("test", 0777));
+	RL(rump_sys_chdir("test"));
+
+	RL(rump_sys_mkdir("subtest", 0777));
+	RL(rump_sys_chdir("subtest"));
+
+	md(pb, mp, "test/subtest");
+	RL(rump_sys_rmdir(pb));
+	md(pb, mp, "test");
+	RL(rump_sys_rmdir(pb));
+
+	if (FSTYPE_NFS(tc))
+		xerrno = ESTALE;
+	else
+		xerrno = ENOENT;
+	ATF_REQUIRE_ERRNO(xerrno, rump_sys_chdir("..") == -1);
+	FSTEST_EXIT();
 }
 
 static void
@@ -749,6 +777,7 @@ ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
 ATF_TC_FSAPPLY(dir_notempty, "non-empty directories cannot be removed");
+ATF_TC_FSAPPLY(dir_rmdirdotdot, "remove .. and try to cd out");
 ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops");
 ATF_TC_FSAPPLY(rename_dotdot, "rename dir ..");
 ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
@@ -768,6 +797,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(lookup_complex);
 	ATF_TP_FSAPPLY(dir_simple);
 	ATF_TP_FSAPPLY(dir_notempty);
+	ATF_TP_FSAPPLY(dir_rmdirdotdot);
 	ATF_TP_FSAPPLY(rename_dir);
 	ATF_TP_FSAPPLY(rename_dotdot);
 	ATF_TP_FSAPPLY(rename_reg_nodir);
