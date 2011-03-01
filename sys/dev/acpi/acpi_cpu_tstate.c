@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.24 2011/03/01 04:35:48 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.25 2011/03/01 05:32:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.24 2011/03/01 04:35:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.25 2011/03/01 05:32:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.24 2011/03/01 04:35:48 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_tstate")
 
-static void		 acpicpu_tstate_attach_print(struct acpicpu_softc *);
 static void		 acpicpu_tstate_attach_evcnt(struct acpicpu_softc *);
 static void		 acpicpu_tstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_tss(struct acpicpu_softc *);
@@ -123,36 +122,6 @@ out:
 
 	acpicpu_tstate_reset(sc);
 	acpicpu_tstate_attach_evcnt(sc);
-	acpicpu_tstate_attach_print(sc);
-}
-
-static void
-acpicpu_tstate_attach_print(struct acpicpu_softc *sc)
-{
-	const uint8_t method = sc->sc_tstate_control.reg_spaceid;
-	struct acpicpu_tstate *ts;
-	static bool once = false;
-	const char *str;
-	uint32_t i;
-
-	if (once != false)
-		return;
-
-	str = (method != ACPI_ADR_SPACE_FIXED_HARDWARE) ? "I/O" : "FFH";
-
-	for (i = 0; i < sc->sc_tstate_count; i++) {
-
-		ts = &sc->sc_tstate[i];
-
-		if (ts->ts_percent == 0)
-			continue;
-
-		aprint_verbose_dev(sc->sc_dev, "T%u: %3s, "
-		    "lat %3u us, pow %5u mW, %3u %%\n", i, str,
-		    ts->ts_latency, ts->ts_power, ts->ts_percent);
-	}
-
-	once = true;
 }
 
 static void
