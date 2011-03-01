@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.47 2011/03/01 05:32:03 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.48 2011/03/01 05:37:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.47 2011/03/01 05:32:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.48 2011/03/01 05:37:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -118,9 +118,9 @@ acpicpu_cstate_attach_evcnt(struct acpicpu_softc *sc)
 {
 	struct acpicpu_cstate *cs;
 	const char *str;
-	int i;
+	uint8_t i;
 
-	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
+	for (i = 0; i < __arraycount(sc->sc_cstate); i++) {
 
 		cs = &sc->sc_cstate[i];
 
@@ -165,9 +165,9 @@ static void
 acpicpu_cstate_detach_evcnt(struct acpicpu_softc *sc)
 {
 	struct acpicpu_cstate *cs;
-	int i;
+	uint8_t i;
 
-	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
+	for (i = 0; i < __arraycount(sc->sc_cstate); i++) {
 
 		cs = &sc->sc_cstate[i];
 
@@ -477,9 +477,9 @@ acpicpu_cstate_cst_bios(void)
 static void
 acpicpu_cstate_memset(struct acpicpu_softc *sc)
 {
-	int i = 0;
+	uint8_t i = 0;
 
-	while (i < ACPI_C_STATE_COUNT) {
+	while (i < __arraycount(sc->sc_cstate)) {
 
 		sc->sc_cstate[i].cs_addr = 0;
 		sc->sc_cstate[i].cs_power = 0;
