@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.73 2011/03/01 10:47:29 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.74 2011/03/01 10:54:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.73 2011/03/01 10:47:29 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.74 2011/03/01 10:54:06 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -242,6 +242,8 @@ static bool	path_isrump(const char *);
 
 /*
  * Maintain a mapping table for the usual dup2 suspects.
+ * Could use atomic ops to operate on dup2vec, but an application
+ * racing there is not well-defined, so don't bother.
  */
 /* note: you cannot change this without editing the env-passing code */
 #define DUP2HIGH 2
