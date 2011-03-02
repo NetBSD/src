@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1591 2011/02/26 23:24:09 njoly Exp $
+#	$NetBSD: mi,v 1.1592 2011/03/02 22:25:53 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3567,6 +3567,7 @@
 ./usr/libdata/debug/usr/libexec/postfix/bounce.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/cleanup.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/discard.debug	comp-postfix-debug	postfix,debug
+./usr/libdata/debug/usr/libexec/postfix/dnsblog.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/error.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/flush.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/local.debug	comp-postfix-debug	postfix,debug
@@ -3574,6 +3575,7 @@
 ./usr/libdata/debug/usr/libexec/postfix/oqmgr.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/pickup.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/pipe.debug	comp-postfix-debug	postfix,debug
+./usr/libdata/debug/usr/libexec/postfix/postscreen.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/proxymap.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/qmgr.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/scache.debug	comp-postfix-debug	postfix,debug
@@ -3583,6 +3585,7 @@
 ./usr/libdata/debug/usr/libexec/postfix/smtpd.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/spawn.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/tlsmgr.debug	comp-postfix-debug	postfix,crypto,debug
+./usr/libdata/debug/usr/libexec/postfix/tlsproxy.debug	comp-postfix-debug	postfix,crypto,debug
 ./usr/libdata/debug/usr/libexec/postfix/trivial-rewrite.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/verify.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/virtual.debug	comp-postfix-debug	postfix,debug

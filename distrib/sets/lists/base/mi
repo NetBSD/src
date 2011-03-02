@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.922 2011/02/26 18:07:13 ahoka Exp $
+# $NetBSD: mi,v 1.923 2011/03/02 22:25:52 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1007,6 +1007,7 @@
 ./usr/libexec/postfix/bounce			base-postfix-bin	postfix
 ./usr/libexec/postfix/cleanup			base-postfix-bin	postfix
 ./usr/libexec/postfix/discard			base-postfix-bin	postfix
+./usr/libexec/postfix/dnsblog			base-postfix-bin	postfix
 ./usr/libexec/postfix/error			base-postfix-bin	postfix
 ./usr/libexec/postfix/flush			base-postfix-bin	postfix
 ./usr/libexec/postfix/lmtp			base-postfix-bin	postfix
@@ -1021,6 +1022,7 @@
 ./usr/libexec/postfix/postfix-script		base-postfix-bin	postfix
 ./usr/libexec/postfix/postfix-wrapper		base-postfix-bin	postfix
 ./usr/libexec/postfix/postmulti-script		base-postfix-bin	postfix
+./usr/libexec/postfix/postscreen		base-postfix-bin	postfix
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmqpd			base-obsolete		obsolete
@@ -1031,6 +1033,7 @@
 ./usr/libexec/postfix/smtpd			base-postfix-bin	postfix
 ./usr/libexec/postfix/spawn			base-postfix-bin	postfix
 ./usr/libexec/postfix/tlsmgr			base-postfix-bin	postfix,crypto
+./usr/libexec/postfix/tlsproxy			base-postfix-bin	postfix,crypto
 ./usr/libexec/postfix/trivial-rewrite		base-postfix-bin	postfix
 ./usr/libexec/postfix/verify			base-postfix-bin	postfix
 ./usr/libexec/postfix/virtual			base-postfix-bin	postfix
