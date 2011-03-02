@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.2 2010/06/17 18:06:56 tron Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.3 2011/03/02 19:32:23 tron Exp $	*/
 
 /*++
 /* NAME
@@ -255,7 +255,16 @@
 /*	limit > 1, a destination is a domain, otherwise it is a recipient.
 /* .IP "\fItransport\fB_destination_rate_delay $default_destination_rate_delay
 /*	Idem, for delivery via the named message \fItransport\fR.
-/* .SH MISCELLANEOUS CONTROLS
+/* SAFETY CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBqmgr_daemon_timeout (1000s)\fR"
+/*	How much time a Postfix queue manager process may take to handle
+/*	a request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBqmgr_ipc_timeout (60s)\fR"
+/*	The time limit for the queue manager to send or receive information
+/*	over an internal communication channel.
+/* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
@@ -270,9 +279,6 @@
 /* .IP "\fBhelpful_warnings (yes)\fR"
 /*	Log warnings about problematic configuration settings, and provide
 /*	helpful suggestions.
-/* .IP "\fBipc_timeout (3600s)\fR"
-/*	The time limit for sending or receiving information over an internal
-/*	communication channel.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -378,6 +384,8 @@ int     var_conc_cohort_limit;
 int     var_conc_feedback_debug;
 int     var_dest_rate_delay;
 char   *var_def_filter_nexthop;
+int     var_qmgr_daemon_timeout;
+int     var_qmgr_ipc_timeout;
 
 static QMGR_SCAN *qmgr_scans[2];
 
@@ -586,8 +594,11 @@ static void qmgr_post_init(char *unused_name, char **unused_argv)
      * Left-over active queue entries are moved to the incoming queue because
      * the incoming queue has priority; moving left-overs to the deferred
      * queue could cause anomalous delays when "postfix reload/start" are
-     * issued often.
+     * issued often. Override the IPC timeout (default 3600s) so that the
+     * queue manager can reset a broken IPC channel before the watchdog timer
+     * goes off.
      */
+    var_ipc_timeout = var_qmgr_ipc_timeout;
     var_use_limit = 0;
     var_idle_limit = 0;
     qmgr_move(MAIL_QUEUE_ACTIVE, MAIL_QUEUE_INCOMING, event_time());
@@ -619,6 +630,8 @@ int     main(int argc, char **argv)
 	VAR_XPORT_RETRY_TIME, DEF_XPORT_RETRY_TIME, &var_transport_retry_time, 1, 0,
 	VAR_QMGR_CLOG_WARN_TIME, DEF_QMGR_CLOG_WARN_TIME, &var_qmgr_clog_warn_time, 0, 0,
 	VAR_DEST_RATE_DELAY, DEF_DEST_RATE_DELAY, &var_dest_rate_delay, 0, 0,
+	VAR_QMGR_DAEMON_TIMEOUT, DEF_QMGR_DAEMON_TIMEOUT, &var_qmgr_daemon_timeout, 1, 0,
+	VAR_QMGR_IPC_TIMEOUT, DEF_QMGR_IPC_TIMEOUT, &var_qmgr_ipc_timeout, 1, 0,
 	0,
     };
     static const CONFIG_INT_TABLE int_table[] = {
@@ -660,5 +673,6 @@ int     main(int argc, char **argv)
 			MAIL_SERVER_LOOP, qmgr_loop,
 			MAIL_SERVER_PRE_ACCEPT, pre_accept,
 			MAIL_SERVER_SOLITARY,
+			MAIL_SERVER_WATCHDOG, &var_qmgr_daemon_timeout,
 			0);
 }

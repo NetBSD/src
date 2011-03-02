@@ -48,14 +48,8 @@
 #	written in main.cf, which is normally world-readable.  Support
 #	for this form will be removed in a future Postfix version.
 #
-#	Postfix 2.2 has enhanced query interfaces for MySQL and PostgreSQL.
-#	These include features that were previously available only in the
-#	Postfix LDAP client. This work also created an opportunity for
-#	improvements in the LDAP interface. The primary compatibility
-#	issue is that \fBresult_filter\fR (a name that has caused some
-#	confusion as to its meaning in the past) has been renamed to
-#	\fBresult_format\fR.  For backwards compatibility with the pre
-#	2.2 LDAP client, \fBresult_filter\fR can for now be used instead
+#	For backwards compatibility with the pre
+#	2.2 LDAP clients, \fBresult_filter\fR can for now be used instead
 #	of \fBresult_format\fR, when the latter parameter is not also set.
 #	The new name better reflects the function of the parameter. This
 #	compatibility interface may be removed in a future release.
@@ -320,10 +314,19 @@
 # .nf
 #	    result_attribute = mailbox, maildrop
 # .fi
+#
+#	Don't rely on the default value ("maildrop"). Set the
+#	result_attribute explicitly in all ldap table configuration
+#	files. This is particularly relevant when no result_attribute
+#	is applicable, e.g. cases in which leaf_result_attribute and/or
+#	terminal_result_attribute are used instead. The default value
+#	is harmless if "maildrop" is also listed as a leaf or terminal
+#	result attribute, but it is best to not leave this to chance.
 # .IP "\fBspecial_result_attribute (default: empty)\fR"
 #	The attribute(s) of directory entries that can contain DNs
-#	or URLs. If found, a recursive subsequent search is done
-#	using their values.
+#	or RFC 2255 LDAP URLs. If found, a recursive search
+#	is performed to retrieve the entry referenced by the DN, or
+#	the entries matched by the URL query.
 #
 # .nf
 #	    special_result_attribute = memberdn
@@ -331,11 +334,27 @@
 #
 #	DN recursion retrieves the same result_attributes as the
 #	main query, including the special attributes for further
-#	recursion. URI processing retrieves only those attributes
-#	that are included in the URI definition and are *also*
-#	listed in "result_attribute". If the URI lists any of the
-#	map's special result attributes, these are also retrieved
-#	and used recursively.
+#	recursion.
+#
+#	URL processing retrieves only those attributes that are included
+#	in both the URL definition and as result attributes (ordinary,
+#	special, leaf or terminal) in the Postfix table definition.
+#	If the URL lists any of the table's special result attributes,
+#	these are retrieved and used recursively. A URL that does not
+#	specify any attribute selection, is equivalent (RFC 2255) to a
+#	URL that selects all attributes, in which case the selected
+#	attributes will be the full set of result attributes in the
+#	Postfix table.
+#
+#	If an LDAP URL attribute-descriptor or the corresponding Postfix
+#	LDAP table result attribute (but not both) uses RFC 2255 sub-type
+#	options ("attr;option"), the attribute requested from the LDAP server
+#	will include the sub-type option. In all other cases, the URL
+#	attribute and the table attribute must match exactly. Attributes
+#	with options in both the URL and the Postfix table are requested
+#	only when the options are identical. LDAP attribute-descriptor
+#	options are very rarely used, most LDAP users will not
+#	need to concern themselves with this level of nuanced detail.
 # .IP "\fBterminal_result_attribute (default: empty)\fR"
 #	When one or more terminal result attributes are found in an LDAP
 #	entry, all other result attributes are ignored and only the terminal
@@ -346,8 +365,14 @@
 #	other special processing.
 #
 # .nf
+#	    result_attribute =
 #	    terminal_result_attribute = maildrop
 # .fi
+#
+#	When using terminal and/or leaf result attributes, the
+#	result_attribute is best set to an empty value when it is not
+#	used, or else explicitly set to the desired value, even if it is
+#	the default value "maildrop".
 #
 #	This feature is available with Postfix 2.4 or later.
 # .IP "\fBleaf_result_attribute (default: empty)\fR"
@@ -374,19 +399,37 @@
 #	    leaf_result_attribute = mail
 # .fi
 #
+#	When using terminal and/or leaf result attributes, the
+#	result_attribute is best set to an empty value when it is not
+#	used, or else explicitly set to the desired value, even if it is
+#	the default value "maildrop".
+#
 #	This feature is available with Postfix 2.4 or later.
 # .IP "\fBscope (default: sub)\fR"
 #	The LDAP search scope: \fBsub\fR, \fBbase\fR, or \fBone\fR.
 #	These translate into LDAP_SCOPE_SUBTREE, LDAP_SCOPE_BASE,
 #	and LDAP_SCOPE_ONELEVEL.
 # .IP "\fBbind (default: yes)\fR"
-#	Whether or not to bind to the LDAP server. Newer LDAP
+#	Whether or how to bind to the LDAP server. Newer LDAP
 #	implementations don't require clients to bind, which saves
 #	time. Example:
 #
 # .nf
+#	    # Don't bind
 #	    bind = no
+#	    # Use SIMPLE bind
+#	    bind = yes
+#	    # Use SASL bind
+#	    bind = sasl
 # .fi
+#
+#	Postfix versions prior to 2.8 only support "bind = no" which
+#	means don't bind, and "bind = yes" which means do a SIMPLE bind.
+#	Postfix 2.8 and later also supports "bind = SASL" when compiled
+#	with LDAP SASL support as described in LDAP_README, it also adds
+#	the synonyms "bind = none" and "bind = simple" for "bind = no"
+#	and "bind = yes" respectively. See the SASL section below for
+#	additional parameters available with "bind = sasl".
 #
 #	If you do need to bind, you might consider configuring
 #	Postfix to connect to the local machine on a port that's
@@ -401,6 +444,8 @@
 # .nf
 #	    bind_dn = uid=postfix, dc=your, dc=com
 # .fi
+#	With "bind = sasl" (see above) the DN may be optional for some SASL
+#	mechanisms, don't specify a DN if not needed.
 # .IP "\fBbind_pw (default: empty)\fR"
 #	The password for the distinguished name above. If you have
 #	to use this, you probably want to make the map configuration
@@ -414,6 +459,8 @@
 # .nf
 #	    bind_pw = postfixpw
 # .fi
+#	With "bind = sasl" (see above) the password may be optional
+#	for some SASL mechanisms, don't specify a password if not needed.
 # .IP "\fBcache (IGNORED with a warning)\fR"
 # .IP "\fBcache_expiry (IGNORED with a warning)\fR"
 # .IP "\fBcache_size (IGNORED with a warning)\fR"
@@ -470,6 +517,45 @@
 #	Specifies the LDAP protocol version to use.
 # .IP "\fBdebuglevel (default: 0)\fR"
 #	What level to set for debugging in the OpenLDAP libraries.
+# LDAP SASL PARAMETERS
+# .ad
+# .fi
+#	If you're using the OpenLDAP libraries compiled with SASL
+#	support, Postfix 2.8 and later built with LDAP SASL support
+#	as described in LDAP_README can authenticate to LDAP servers
+#	via SASL.
+#
+#	This enables authentication to the LDAP server via mechanisms
+#	other than a simple password. The added flexibility has a cost:
+#	it is no longer practical to set an explicit timeout on the duration
+#	of an LDAP bind operation. Under adverse conditions, whether a SASL
+#	bind times out, or if it does, the duration of the timeout is
+#	determined by the LDAP and SASL libraries.
+#
+# 	It is best to use tables that use SASL binds via proxymap(8), this
+#	way the requesting process can time-out the proxymap request. This
+#	also lets you tailer the process environment by overriding the
+#	proxymap(8) import_environment setting in master.cf(5). Special
+#	environment settings may be needed to configure GSSAPI credential
+#	caches or other SASL mechanism specific options. The GSSAPI
+#	credentials used for LDAP lookups may need to be different than
+#	say those used for the Postfix SMTP client to authenticate to remote
+#	servers.
+#
+#	Using SASL mechanisms requires LDAP protocol version 3, the default
+#	protocol version is 2 for backwards compatibility. You must set
+#	"version = 3" in addition to "bind = sasl".
+#
+#	The following parameters are relevant to using LDAP with SASL
+# .IP "\fBsasl_mechs (default: empty)\fR"
+#	Space separated list of SASL mechanism(s) to try. 
+# .IP "\fBsasl_realm (default: empty)\fR"
+#	SASL Realm to use, if applicable.
+# .IP "\fBsasl_authz_id (default: empty)\fR"
+#	The SASL authorization identity to assert, if applicable.
+# .IP "\fBsasl_minssf (default: 0)\fR"
+#	The minimum required sasl security factor required to establish a
+#	connection.
 # LDAP SSL AND STARTTLS PARAMETERS
 # .ad
 # .fi

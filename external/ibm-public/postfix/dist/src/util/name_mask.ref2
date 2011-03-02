@@ -1,0 +1,12 @@
+zero -> 0x1 -> zero
+one -> 0x2 -> one
+two -> 0x4 -> two
+three -> 0x8 -> three
+unknown: warning: unknown name value "four" in "four"
+four -> 0x0 -> 
+unknown: warning: unknown name value "four" in "zero one two three four"
+zero one two three four -> 0x0 -> 
+0xff -> 0xff -> zero one two three 0xf0
+0xffffffff -> 0xffffffff -> zero one two three 0xfffffff0
+unknown: warning: unknown name value "0xffffffffffffffff" in "0xffffffffffffffff"
+0xffffffffffffffff -> 0x0 -> 

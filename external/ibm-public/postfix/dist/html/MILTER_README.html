@@ -466,7 +466,8 @@ version, the libmilter library will log an error message like this:
 number.  See, however, the <a href="#limitations">limitations</a>
 section below for features that aren't supported by Postfix. </p>
 
-<p> If the Postfix <a href="postconf.5.html#milter_protocol">milter_protocol</a> setting specifies a too high
+<p> With Postfix 2.7 and earlier, if the Postfix <a href="postconf.5.html#milter_protocol">milter_protocol</a>
+setting specifies a too high
 version, the libmilter library simply hangs up without logging a
 warning, and you see a Postfix warning message like one of the
 following: </p>
@@ -480,7 +481,9 @@ warning: milter inet:<i>host</i>:<i>port</i>: can't read SMFIC_DATA reply packet
 </blockquote>
 
 <p> The remedy is to lower the Postfix <a href="postconf.5.html#milter_protocol">milter_protocol</a> version
-number. </p>
+number. Postfix 2.8 and later will automatically turn off protocol
+features that the application's libmilter library does not expect.
+</p>
 
 <h3><a name="timeouts">Milter protocol timeouts</a></h3>
 

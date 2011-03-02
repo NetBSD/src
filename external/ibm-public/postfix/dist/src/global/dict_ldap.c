@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.2 2010/06/17 18:06:47 tron Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.1.1.3 2011/03/02 19:32:14 tron Exp $	*/
 
 /*++
 /* NAME
@@ -105,6 +105,14 @@
 /* .IP version
 /*	Specifies the LDAP protocol version to use.  Default is version
 /*	\fI2\fR.
+/* .IP "\fBsasl_mechs (empty)\fR"
+/*	Specifies a space-separated list of LDAP SASL Mechanisms.
+/* .IP "\fBsasl_realm (empty)\fR"
+/*	The realm to use for SASL binds.
+/* .IP "\fBsasl_authz_id (empty)\fR"
+/*	The SASL Authorization Identity to assert.
+/* .IP "\fBsasl_minssf (0)\fR"
+/*	The minimum SASL SSF to allow.
 /* .IP start_tls
 /*	Whether or not to issue STARTTLS upon connection to the server.
 /*	At this time, STARTTLS and LDAP SSL are only available if the
@@ -210,15 +218,43 @@
 #include <dict.h>
 #include <stringops.h>
 #include <binhash.h>
+#include <name_code.h>
 
 /* Global library. */
 
 #include "cfg_parser.h"
 #include "db_common.h"
+#include "mail_conf.h"
+
+#if defined(USE_LDAP_SASL) && defined(LDAP_API_FEATURE_X_OPENLDAP)
+ /*
+  * SASL headers, for sasl_interact_t. Either SASL v1 or v2 should be fine.
+  */
+#include <sasl.h>
+#endif
 
 /* Application-specific. */
 
 #include "dict_ldap.h"
+
+#define DICT_LDAP_BIND_NONE	0
+#define DICT_LDAP_BIND_SIMPLE	1
+#define DICT_LDAP_BIND_SASL	2
+#define DICT_LDAP_DO_BIND(d)	((d)->bind != DICT_LDAP_BIND_NONE)
+#define DICT_LDAP_DO_SASL(d)	((d)->bind == DICT_LDAP_BIND_SASL)
+
+static const NAME_CODE bindopt_table[] = {
+    CONFIG_BOOL_NO,	DICT_LDAP_BIND_NONE,
+    "none",		DICT_LDAP_BIND_NONE,
+    CONFIG_BOOL_YES,	DICT_LDAP_BIND_SIMPLE,
+    "simple",		DICT_LDAP_BIND_SIMPLE,
+#ifdef LDAP_API_FEATURE_X_OPENLDAP
+#if defined(USE_LDAP_SASL)
+    "sasl", 		DICT_LDAP_BIND_SASL,
+#endif
+#endif
+    0, -1,
+};
 
 typedef struct {
     LDAP   *conn_ld;
@@ -256,6 +292,13 @@ typedef struct {
     int     debuglevel;
     int     version;
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
+#if defined(USE_LDAP_SASL)
+    int     sasl;
+    char    *sasl_mechs;
+    char    *sasl_realm;
+    char    *sasl_authz;
+    int     sasl_minssf;
+#endif
     int     ldap_ssl;
     int     start_tls;
     int     tls_require_cert;
@@ -409,6 +452,49 @@ static int dict_ldap_set_errno(LDAP *ld, int rc)
     return rc;
 }
 
+#if defined(USE_LDAP_SASL) && defined(LDAP_API_FEATURE_X_OPENLDAP)
+ /*
+  * Context structure for SASL property callback.
+  */
+typedef struct bind_props {
+    char *authcid;
+    char *passwd;
+    char *realm;
+    char *authzid;
+} bind_props;
+
+static int
+ldap_b2_interact(LDAP *ld, unsigned flags, void *props, void *inter)
+{
+
+    sasl_interact_t *in;
+    bind_props *ctx = (bind_props *)props;
+
+    for (in = inter; in->id != SASL_CB_LIST_END; in++)
+    {
+	in->result = NULL;
+	switch(in->id)
+	{
+	case SASL_CB_GETREALM:
+	    in->result = ctx->realm;
+	    break;
+	case SASL_CB_AUTHNAME:
+	    in->result = ctx->authcid;
+	    break;
+	case SASL_CB_USER:
+	    in->result = ctx->authzid;
+	    break;
+	case SASL_CB_PASS:
+	    in->result = ctx->passwd;
+	    break;
+	}
+	if (in->result)
+	    in->len = strlen(in->result);
+    }
+    return LDAP_SUCCESS;
+}
+#endif
+
 /* dict_ldap_result - Read and parse LDAP result */
 
 static int dict_ldap_result(LDAP *ld, int msgid, int timeout, LDAPMessage **res)
@@ -428,6 +514,40 @@ static int dict_ldap_result(LDAP *ld, int msgid, int timeout, LDAPMessage **res)
     }
     return LDAP_SUCCESS;
 }
+
+#if defined(USE_LDAP_SASL) && defined(LDAP_API_FEATURE_X_OPENLDAP)
+
+/* Asynchronous SASL auth if SASL is enabled */
+
+static int dict_ldap_bind_sasl(DICT_LDAP *dict_ldap)
+{
+    int     rc;
+    bind_props props;
+    static VSTRING *minssf = 0;
+
+    if (minssf == 0)
+	minssf = vstring_alloc(12);
+
+    vstring_sprintf(minssf, "minssf=%d", dict_ldap->sasl_minssf);
+
+    if ((rc = ldap_set_option(dict_ldap->ld, LDAP_OPT_X_SASL_SECPROPS,
+			       (char *) minssf)) != LDAP_OPT_SUCCESS)
+	return (rc);
+
+    props.authcid = dict_ldap->bind_dn;
+    props.passwd = dict_ldap->bind_pw;
+    props.realm = dict_ldap->sasl_realm;
+    props.authzid = dict_ldap->sasl_authz;
+
+    if ((rc = ldap_sasl_interactive_bind_s(dict_ldap->ld, NULL,
+					    dict_ldap->sasl_mechs, NULL, NULL,
+					    LDAP_SASL_QUIET, ldap_b2_interact,
+					    &props)) != LDAP_SUCCESS)
+	return (rc);
+
+    return (LDAP_SUCCESS);
+}
+#endif
 
 /* dict_ldap_bind_st - Synchronous simple auth with timeout */
 
@@ -748,26 +868,36 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
     }
 #endif
 
+#define DN_LOG_VAL(dict_ldap) \
+	((dict_ldap)->bind_dn[0] ? (dict_ldap)->bind_dn : "empty or implicit")
     /*
      * If this server requires a bind, do so. Thanks to Sam Tardieu for
      * noticing that the original bind call was broken.
      */
-    if (dict_ldap->bind) {
+    if (DICT_LDAP_DO_BIND(dict_ldap)) {
 	if (msg_verbose)
-	    msg_info("%s: Binding to server %s as dn %s",
-		     myname, dict_ldap->server_host, dict_ldap->bind_dn);
+	    msg_info("%s: Binding to server %s with dn %s",
+		     myname, dict_ldap->server_host, DN_LOG_VAL(dict_ldap));
 
+#if defined(USE_LDAP_SASL) && defined(LDAP_API_FEATURE_X_OPENLDAP)
+	if (DICT_LDAP_DO_SASL(dict_ldap)) {
+	    rc = dict_ldap_bind_sasl(dict_ldap);
+	} else {
+	    rc = dict_ldap_bind_st(dict_ldap);
+	}
+#else
 	rc = dict_ldap_bind_st(dict_ldap);
+#endif
 
 	if (rc != LDAP_SUCCESS) {
-	    msg_warn("%s: Unable to bind to server %s as %s: %d (%s)",
-		     myname, dict_ldap->server_host, dict_ldap->bind_dn,
+	    msg_warn("%s: Unable to bind to server %s with dn %s: %d (%s)",
+		     myname, dict_ldap->server_host, DN_LOG_VAL(dict_ldap),
 		     rc, ldap_err2string(rc));
 	    DICT_LDAP_UNBIND_RETURN(dict_ldap->ld, DICT_ERR_RETRY, -1);
 	}
 	if (msg_verbose)
-	    msg_info("%s: Successful bind to server %s as %s ",
-		     myname, dict_ldap->server_host, dict_ldap->bind_dn);
+	    msg_info("%s: Successful bind to server %s with dn %s",
+		     myname, dict_ldap->server_host, DN_LOG_VAL(dict_ldap));
     }
     /* Save connection handle in shared container */
     DICT_LDAP_CONN(dict_ldap)->conn_ld = dict_ldap->ld;
@@ -800,13 +930,19 @@ static void dict_ldap_conn_find(DICT_LDAP *dict_ldap)
     ADDSTR(keybuf, dict_ldap->server_host);
     ADDINT(keybuf, dict_ldap->server_port);
     ADDINT(keybuf, dict_ldap->bind);
-    ADDSTR(keybuf, dict_ldap->bind ? dict_ldap->bind_dn : "");
-    ADDSTR(keybuf, dict_ldap->bind ? dict_ldap->bind_pw : "");
+    ADDSTR(keybuf, DICT_LDAP_DO_BIND(dict_ldap) ? dict_ldap->bind_dn : "");
+    ADDSTR(keybuf, DICT_LDAP_DO_BIND(dict_ldap) ? dict_ldap->bind_pw : "");
     ADDINT(keybuf, dict_ldap->dereference);
     ADDINT(keybuf, dict_ldap->chase_referrals);
     ADDINT(keybuf, dict_ldap->debuglevel);
     ADDINT(keybuf, dict_ldap->version);
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
+#if defined(USE_LDAP_SASL)
+    ADDSTR(keybuf, DICT_LDAP_DO_SASL(dict_ldap) ? dict_ldap->sasl_mechs : "");
+    ADDSTR(keybuf, DICT_LDAP_DO_SASL(dict_ldap) ? dict_ldap->sasl_realm : "");
+    ADDSTR(keybuf, DICT_LDAP_DO_SASL(dict_ldap) ? dict_ldap->sasl_authz : "");
+    ADDINT(keybuf, DICT_LDAP_DO_SASL(dict_ldap) ? dict_ldap->sasl_minssf : 0);
+#endif
     ADDINT(keybuf, dict_ldap->ldap_ssl);
     ADDINT(keybuf, dict_ldap->start_tls);
     ADDINT(keybuf, sslon ? dict_ldap->tls_require_cert : 0);
@@ -835,6 +971,91 @@ static void dict_ldap_conn_find(DICT_LDAP *dict_ldap)
     vstring_free(keybuf);
 }
 
+/* attr_sub_type - Is one of two attributes a sub-type of another */
+
+static int attrdesc_subtype(const char *a1, const char *a2)
+{
+
+    /*
+     * RFC 2251 section 4.1.4: LDAP attribute names are case insensitive
+     */
+    while (*a1 && TOLOWER(*a1) == TOLOWER(*a2))
+	++a1, ++a2;
+
+    /*
+     * Names equal to end of a1, is a2 equal or a subtype?
+     */
+    if (*a1 == 0 && (*a2 == 0 || *a2 == ';'))
+	return (1);
+
+    /*
+     * Names equal to end of a2, is a1 a subtype?
+     */
+    if (*a2 == 0 && *a1 == ';')
+	return (-1);
+
+    /*
+     * Distinct attributes
+     */
+    return (0);
+}
+
+/* url_attrs - attributes we want from LDAP URL */
+
+static char **url_attrs(DICT_LDAP *dict_ldap, LDAPURLDesc * url)
+{
+    static ARGV *attrs;
+    char  **a1;
+    char  **a2;
+    int     arel;
+
+    /*
+     * If the LDAP URI specified no attributes, all entry attributes are
+     * returned, leading to unnecessarily large LDAP results, particularly
+     * since dynamic groups are most useful for large groups.
+     * 
+     * Since we only make use of the various mumble_results attributes, we ask
+     * only for these, thus making large queries much faster.
+     * 
+     * In one test case, a query returning 75K users took 16 minutes when all
+     * attributes are returned, and just under 3 minutes with only the
+     * desired result attribute.
+     */
+    if (url->lud_attrs == 0 || *url->lud_attrs == 0)
+	return (dict_ldap->result_attributes->argv);
+
+    /*
+     * When the LDAP URI explicitly specifies a set of attributes, we use the
+     * interection of the URI attributes and our result attributes. This way
+     * LDAP URIs can hide certain attributes that should not be part of the
+     * query. There is no point in retrieving attributes not listed in our
+     * result set, we won't make any use of those.
+     */
+    if (attrs)
+	argv_truncate(attrs, 0);
+    else
+	attrs = argv_alloc(2);
+
+    /*
+     * Retrieve only those attributes that are of interest to us.
+     * 
+     * If the URL attribute and the attribute we want differ only in the
+     * "options" part of the attribute descriptor, select the more specific
+     * attribute descriptor.
+     */
+    for (a1 = url->lud_attrs; *a1; ++a1) {
+	for (a2 = dict_ldap->result_attributes->argv; *a2; ++a2) {
+	    arel = attrdesc_subtype(*a1, *a2);
+	    if (arel > 0)
+		argv_add(attrs, *a2, ARGV_END);
+	    else if (arel < 0)
+		argv_add(attrs, *a1, ARGV_END);
+	}
+    }
+
+    return ((attrs->argc > 0) ? attrs->argv : 0);
+}
+
 /*
  * dict_ldap_get_values: for each entry returned by a search, get the values
  * of all its attributes. Recurses to resolve any DN or URL values found.
@@ -854,6 +1075,7 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
     LDAPMessage *entry = 0;
     BerElement *ber;
     char   *attr;
+    char  **attrs;
     struct berval **vals;
     int     valcount;
     LDAPURLDesc *url;
@@ -948,7 +1170,7 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 
 	    /*
 	     * The "result_attributes" list enumerates all the requested
-	     * attributes, first the ordinary result attribtutes and then the
+	     * attributes, first the ordinary result attributes and then the
 	     * special result attributes that hold DN or LDAP URL values.
 	     * 
 	     * The number of ordinary attributes is "num_attributes".
@@ -957,8 +1179,8 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 	     * index on the "result_attributes" list.
 	     */
 	    for (i = 0; dict_ldap->result_attributes->argv[i]; i++)
-		if (strcasecmp(dict_ldap->result_attributes->argv[i],
-			       attr) == 0)
+		if (attrdesc_subtype(dict_ldap->result_attributes->argv[i],
+				     attr) > 0)
 		    break;
 
 	    /*
@@ -970,8 +1192,8 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 		    || (!is_leaf &&
 			i < dict_ldap->num_terminal + dict_ldap->num_leaf)) {
 		    if (msg_verbose)
-			msg_info("%s[%d]: skipping %ld value(s) of %s "
-				 "attribute %s", myname, recursion, i,
+			msg_info("%s[%d]: skipping %d value(s) of %s "
+				 "attribute %s", myname, recursion, valcount,
 				 is_terminal ? "non-terminal" : "leaf-only",
 				 attr);
 		} else {
@@ -993,25 +1215,42 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 		    if (dict_errno != 0)
 			continue;
 		    if (msg_verbose)
-			msg_info("%s[%d]: search returned %ld value(s) for"
+			msg_info("%s[%d]: search returned %d value(s) for"
 				 " requested result attribute %s",
-				 myname, recursion, i, attr);
+				 myname, recursion, valcount, attr);
 		}
 	    } else if (recursion < dict_ldap->recursion_limit
 		       && dict_ldap->result_attributes->argv[i]) {
 		/* Special result attribute */
 		for (i = 0; i < valcount; i++) {
 		    if (ldap_is_ldap_url(vals[i]->bv_val)) {
-			if (msg_verbose)
-			    msg_info("%s[%d]: looking up URL %s", myname,
-				     recursion, vals[i]->bv_val);
 			rc = ldap_url_parse(vals[i]->bv_val, &url);
 			if (rc == 0) {
-			    rc = search_st(dict_ldap->ld, url->lud_dn,
-					   url->lud_scope, url->lud_filter,
-					 url->lud_attrs, dict_ldap->timeout,
-					   &resloop);
+			    if ((attrs = url_attrs(dict_ldap, url)) != 0) {
+				if (msg_verbose)
+				    msg_info("%s[%d]: looking up URL %s",
+					     myname, recursion,
+					     vals[i]->bv_val);
+				rc = search_st(dict_ldap->ld, url->lud_dn,
+					       url->lud_scope,
+					       url->lud_filter,
+					       attrs, dict_ldap->timeout,
+					       &resloop);
+			    }
 			    ldap_free_urldesc(url);
+			    if (attrs == 0) {
+				if (msg_verbose)
+				    msg_info("%s[%d]: skipping URL %s: no "
+					     "pertinent attributes", myname,
+					     recursion, vals[i]->bv_val);
+				continue;
+			    }
+			} else {
+			    msg_warn("%s[%d]: malformed URL %s: %s(%d)",
+				     myname, recursion, vals[i]->bv_val,
+				     ldap_err2string(rc), rc);
+			    dict_errno = DICT_ERR_RETRY;
+			    break;
 			}
 		    } else {
 			if (msg_verbose)
@@ -1048,12 +1287,10 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 		    if (dict_errno != 0)
 			break;
 		}
-		if (dict_errno != 0)
-		    continue;
-		if (msg_verbose)
-		    msg_info("%s[%d]: search returned %ld value(s) for"
+		if (msg_verbose && dict_errno == 0)
+		    msg_info("%s[%d]: search returned %d value(s) for"
 			     " special result attribute %s",
-			     myname, recursion, i, attr);
+			     myname, recursion, valcount, attr);
 	    } else if (recursion >= dict_ldap->recursion_limit
 		       && dict_ldap->result_attributes->argv[i]) {
 		msg_warn("%s[%d]: %s: Recursion limit exceeded"
@@ -1084,20 +1321,21 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
     static VSTRING *result;
     int     rc = 0;
     int     sizelimit;
-    const char *cp;
 
     dict_errno = 0;
 
     if (msg_verbose)
 	msg_info("%s: In dict_ldap_lookup", myname);
 
-    for (cp = name; *cp; ++cp)
-    	if (!ISASCII(*cp)) {
-	    if (msg_verbose)
-		msg_info("%s: %s: Skipping lookup of non-ASCII key '%s'",
-			 myname, dict_ldap->parser->name, name);
-	    return (0);
-	}
+    /*
+     * Don't frustrate future attempts to make Postfix UTF-8 transparent.
+     */
+    if (!valid_utf_8(name, strlen(name))) {
+	if (msg_verbose)
+	    msg_info("%s: %s: Skipping lookup of non-UTF-8 key '%s'",
+		     myname, dict_ldap->parser->name, name);
+	return (0);
+    }
 
     /*
      * Optionally fold the key.
@@ -1337,6 +1575,13 @@ static void dict_ldap_close(DICT *dict)
     if (dict_ldap->ctx)
 	db_common_free_ctx(dict_ldap->ctx);
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
+#if defined(USE_LDAP_SASL)
+    if (DICT_LDAP_DO_SASL(dict_ldap)) {
+	myfree(dict_ldap->sasl_mechs);
+	myfree(dict_ldap->sasl_realm);
+	myfree(dict_ldap->sasl_authz);
+    }
+#endif
     myfree(dict_ldap->tls_ca_cert_file);
     myfree(dict_ldap->tls_ca_cert_dir);
     myfree(dict_ldap->tls_cert);
@@ -1361,6 +1606,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
     char   *server_host;
     char   *scope;
     char   *attr;
+    char   *bindopt;
     int     tmp;
     int     vendor_version = dict_ldap_vendor_version();
 
@@ -1566,9 +1812,14 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
     myfree(attr);
 
     /*
-     * get configured value of "bind"; default to true
+     * get configured value of "bind"; default to simple bind
      */
-    dict_ldap->bind = cfg_get_bool(dict_ldap->parser, "bind", 1);
+    bindopt = cfg_get_str(dict_ldap->parser, "bind", CONFIG_BOOL_YES, 1, 0);
+    dict_ldap->bind = name_code(bindopt_table, NAME_CODE_FLAG_NONE, bindopt);
+    if (dict_ldap->bind < 0)
+	msg_fatal("%s: unsupported parameter value: %s = %s",
+		  dict_ldap->parser->name, "bind", bindopt);
+    myfree(bindopt);
 
     /*
      * get configured value of "bind_dn"; default to ""
@@ -1623,6 +1874,25 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
 					      "chase_referrals", 0);
 
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
+#if defined(USE_LDAP_SASL)
+    /*
+     * SASL options
+     */
+    if (DICT_LDAP_DO_SASL(dict_ldap)) {
+	dict_ldap->sasl_mechs =
+	    cfg_get_str(dict_ldap->parser, "sasl_mechs", "", 0, 0);
+	dict_ldap->sasl_realm =
+	    cfg_get_str(dict_ldap->parser, "sasl_realm", "", 0, 0);
+	dict_ldap->sasl_authz =
+	    cfg_get_str(dict_ldap->parser, "sasl_authz_id", "", 0, 0);
+	dict_ldap->sasl_minssf =
+	    cfg_get_int(dict_ldap->parser, "sasl_minssf", 0, 0, 4096);
+    } else {
+	dict_ldap->sasl_mechs = 0;
+	dict_ldap->sasl_realm = 0;
+	dict_ldap->sasl_authz = 0;
+    }
+#endif
 
     /*
      * TLS options

@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.5,v 1.1.1.3 2010/06/17 18:06:25 tron Exp $
+.\"	$NetBSD: access.5,v 1.1.1.4 2011/03/02 19:31:50 tron Exp $
 .\"
 .TH ACCESS 5 
 .ad
@@ -79,10 +79,11 @@ Matches \fIdomain.tld\fR as the domain part of an email address.
 .sp
 The pattern \fIdomain.tld\fR also matches subdomains, but only
 when the string \fBsmtpd_access_maps\fR is listed in the Postfix
-\fBparent_domain_matches_subdomains\fR configuration setting
-(note that this is the default for some versions of Postfix).
-Otherwise, specify \fI.domain.tld\fR (note the initial dot) in
-order to match subdomains.
+\fBparent_domain_matches_subdomains\fR configuration setting.
+.IP \fI.domain.tld\fR
+Matches subdomains of \fIdomain.tld\fR, but only when the
+string \fBsmtpd_access_maps\fR is not listed in the Postfix
+\fBparent_domain_matches_subdomains\fR configuration setting.
 .IP \fIuser\fR@
 Matches all mail addresses with the specified user part.
 .PP
@@ -114,8 +115,10 @@ Matches \fIdomain.tld\fR.
 The pattern \fIdomain.tld\fR also matches subdomains, but only
 when the string \fBsmtpd_access_maps\fR is listed in the Postfix
 \fBparent_domain_matches_subdomains\fR configuration setting.
-Otherwise, specify \fI.domain.tld\fR (note the initial dot) in
-order to match subdomains.
+.IP \fI.domain.tld\fR
+Matches subdomains of \fIdomain.tld\fR, but only when the
+string \fBsmtpd_access_maps\fR is not listed in the Postfix
+\fBparent_domain_matches_subdomains\fR configuration setting.
 .IP \fInet.work.addr.ess\fR
 .IP \fInet.work.addr\fR
 .IP \fInet.work\fR

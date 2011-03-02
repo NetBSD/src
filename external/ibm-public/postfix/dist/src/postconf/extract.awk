@@ -66,6 +66,14 @@
 	}
     }
 }
+/^(static| )*(const +)?CONFIG_NBOOL_TABLE .*\{/,/\};/ { 
+    if ($1 ~ /^VAR/) {
+	nbool_vars["int " substr($3,2,length($3)-2) ";"] = 1
+	if (++btab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
+	    nbool_table[$0] = 1
+	}
+    }
+}
 
 END { 
     # Print parameter declarations without busting old AWK's file limit.
@@ -99,6 +107,11 @@ END {
 	print key
     print "EOF"
 
+    print "cat >nbool_vars.h <<'EOF'"
+    for (key in nbool_vars)
+	print key
+    print "EOF"
+
     # Print parameter initializations without busting old AWK's file limit.
     print "sed 's/[ 	][ 	]*/ /g' >int_table.h <<'EOF'"
     for (key in int_table)
@@ -127,6 +140,11 @@ END {
 
     print "sed 's/[ 	][ 	]*/ /g' >nint_table.h <<'EOF'"
     for (key in nint_table)
+	print key
+    print "EOF"
+
+    print "sed 's/[ 	][ 	]*/ /g' >nbool_table.h <<'EOF'"
+    for (key in nbool_table)
 	print key
     print "EOF"
 

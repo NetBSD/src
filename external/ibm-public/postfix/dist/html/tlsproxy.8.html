@@ -1,0 +1,245 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - tlsproxy(8) </title>
+</head> <body> <pre>
+TLSPROXY(8)                                                        TLSPROXY(8)
+
+<b>NAME</b>
+       tlsproxy - Postfix TLS proxy
+
+<b>SYNOPSIS</b>
+       <b>tlsproxy</b> [generic Postfix daemon options]
+
+<b>DESCRIPTION</b>
+       The <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server implements a server-side TLS proxy.
+       It is used by <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  to  talk  SMTP-over-TLS  with
+       remote  SMTP  clients  whose whitelist status has expired,
+       but it should also work for non-SMTP protocols.
+
+       Although one <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> process can serve  multiple  ses-
+       sions  at  the  same  time, it is a good idea to allow the
+       number of processes to increase with  load,  so  that  the
+       service remains responsive.
+
+<b>PROTOCOL EXAMPLE</b>
+       The  example  below  concerns  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>. However, the
+       <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server is agnostic of the  application  proto-
+       col,  and  the example is easily adapted to other applica-
+       tions.
+
+       The <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server sends the remote SMTP client end-
+       point   string,  the  requested  role  (server),  and  the
+       requested  timeout  to  <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>.   <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  then
+       receives  a  "TLS  available" indication from <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>.
+       If the TLS service is available, <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  sends  the
+       remote  SMTP  client  file  descriptor to <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>, and
+       sends the  plaintext  220  greeting  to  the  remote  SMTP
+       client.  This triggers TLS negotiations between the remote
+       SMTP client and <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>.  Upon completion of the  TLS-
+       level  handshake, <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> translates between plaintext
+       from/to <a href="postscreen.8.html"><b>postscreen</b>(8)</a> and ciphertext  to/from  the  remote
+       SMTP client.
+
+<b>SECURITY</b>
+       The  <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  server is moderately security-sensitive.
+       It talks to untrusted clients on the network. The  process
+       can be run chrooted at fixed low privilege.
+
+<b>DIAGNOSTICS</b>
+       Problems and transactions are logged to <b>syslogd</b>(8).
+
+<b>CONFIGURATION PARAMETERS</b>
+       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are  not picked up automatically, as
+       <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> processes may run for a long time depending on
+       mail  server  load.   Use  the command "<b>postfix reload</b>" to
+       speed up a change.
+
+       The text below provides  only  a  parameter  summary.  See
+       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+
+<b>STARTTLS SUPPORT CONTROLS</b>
+       <b><a href="postconf.5.html#tlsproxy_tls_CAfile">tlsproxy_tls_CAfile</a> ($<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a>)</b>
+              A  file  containing (PEM format) CA certificates of
+              root CAs trusted to sign either remote SMTP  client
+              certificates or intermediate CA certificates.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_CApath">tlsproxy_tls_CApath</a> ($<a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a>)</b>
+              A directory containing (PEM format) CA certificates
+              of root CAs trusted  to  sign  either  remote  SMTP
+              client  certificates  or  intermediate  CA certifi-
+              cates.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_always_issue_session_ids">tlsproxy_tls_always_issue_session_ids</a></b>
+       <b>($<a href="postconf.5.html#smtpd_tls_always_issue_session_ids">smtpd_tls_always_issue_session_ids</a>)</b>
+              Force the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server to issue a TLS
+              session id, even when TLS session caching is turned
+              off.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_ask_ccert">tlsproxy_tls_ask_ccert</a> ($<a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a>)</b>
+              Ask a remote SMTP client for a client  certificate.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_ccert_verifydepth">tlsproxy_tls_ccert_verifydepth</a>   ($<a href="postconf.5.html#smtpd_tls_ccert_verifydepth">smtpd_tls_ccert_verify</a>-</b>
+       <b><a href="postconf.5.html#smtpd_tls_ccert_verifydepth">depth</a>)</b>
+              The  verification depth for remote SMTP client cer-
+              tificates.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_cert_file">tlsproxy_tls_cert_file</a> ($<a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a>)</b>
+              File with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server  RSA  cer-
+              tificate in PEM format.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_ciphers">tlsproxy_tls_ciphers</a> ($<a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a>)</b>
+              The  minimum  TLS  cipher  grade  that  the Postfix
+              <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server will use with opportunistic  TLS
+              encryption.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_dcert_file">tlsproxy_tls_dcert_file</a> ($<a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a>)</b>
+              File  with  the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server DSA cer-
+              tificate in PEM format.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_dh1024_param_file">tlsproxy_tls_dh1024_param_file</a></b>
+       <b>($<a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a>)</b>
+              File  with   DH   parameters   that   the   Postfix
+              <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server should use with EDH ciphers.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_dh512_param_file">tlsproxy_tls_dh512_param_file</a></b>
+       <b>($<a href="postconf.5.html#smtpd_tls_dh512_param_file">smtpd_tls_dh512_param_file</a>)</b>
+              File   with   DH   parameters   that   the  Postfix
+              <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server should use with EDH ciphers.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_dkey_file">tlsproxy_tls_dkey_file</a> ($<a href="postconf.5.html#smtpd_tls_dkey_file">smtpd_tls_dkey_file</a>)</b>
+              File with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server  DSA  pri-
+              vate key in PEM format.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_eccert_file">tlsproxy_tls_eccert_file</a> ($<a href="postconf.5.html#smtpd_tls_eccert_file">smtpd_tls_eccert_file</a>)</b>
+              File with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server ECDSA cer-
+              tificate in PEM format.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_eckey_file">tlsproxy_tls_eckey_file</a> ($<a href="postconf.5.html#smtpd_tls_eckey_file">smtpd_tls_eckey_file</a>)</b>
+              File with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server ECDSA pri-
+              vate key in PEM format.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_eecdh_grade">tlsproxy_tls_eecdh_grade</a> ($<a href="postconf.5.html#smtpd_tls_eecdh_grade">smtpd_tls_eecdh_grade</a>)</b>
+              The  Postfix  <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server security grade for
+              ephemeral elliptic-curve Diffie-Hellman (EECDH) key
+              exchange.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_exclude_ciphers">tlsproxy_tls_exclude_ciphers</a> ($<a href="postconf.5.html#smtpd_tls_exclude_ciphers">smtpd_tls_exclude_ciphers</a>)</b>
+              List of ciphers or cipher types to exclude from the
+              <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server cipher list at all TLS  security
+              levels.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_fingerprint_digest">tlsproxy_tls_fingerprint_digest</a>        ($<a href="postconf.5.html#smtpd_tls_fingerprint_digest">smtpd_tls_finger</a>-</b>
+       <b><a href="postconf.5.html#smtpd_tls_fingerprint_digest">print_digest</a>)</b>
+              The  message  digest  algorithm  used  to construct
+              client-certificate fingerprints.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_key_file">tlsproxy_tls_key_file</a> ($<a href="postconf.5.html#smtpd_tls_key_file">smtpd_tls_key_file</a>)</b>
+              File with the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server  RSA  pri-
+              vate key in PEM format.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_loglevel">tlsproxy_tls_loglevel</a> ($<a href="postconf.5.html#smtpd_tls_loglevel">smtpd_tls_loglevel</a>)</b>
+              Enable  additional  Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server log-
+              ging of TLS activity.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_mandatory_ciphers">tlsproxy_tls_mandatory_ciphers</a>          ($<a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_manda</a>-</b>
+       <b><a href="postconf.5.html#smtpd_tls_mandatory_ciphers">tory_ciphers</a>)</b>
+              The minimum  TLS  cipher  grade  that  the  Postfix
+              <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  server  will  use  with  mandatory TLS
+              encryption.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_mandatory_exclude_ciphers">tlsproxy_tls_mandatory_exclude_ciphers</a>  ($<a href="postconf.5.html#smtpd_tls_mandatory_exclude_ciphers">smtpd_tls_manda</a>-</b>
+       <b><a href="postconf.5.html#smtpd_tls_mandatory_exclude_ciphers">tory_exclude_ciphers</a>)</b>
+              Additional list  of  ciphers  or  cipher  types  to
+              exclude  from the <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server cipher list at
+              mandatory TLS security levels.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_mandatory_protocols">tlsproxy_tls_mandatory_protocols</a>        ($<a href="postconf.5.html#smtpd_tls_mandatory_protocols">smtpd_tls_manda</a>-</b>
+       <b><a href="postconf.5.html#smtpd_tls_mandatory_protocols">tory_protocols</a>)</b>
+              The  SSL/TLS  protocols  accepted  by  the  Postfix
+              <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server with mandatory TLS encryption.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_protocols">tlsproxy_tls_protocols</a> ($<a href="postconf.5.html#smtpd_tls_protocols">smtpd_tls_protocols</a>)</b>
+              List  of TLS protocols that the Postfix <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>
+              server will exclude or include  with  opportunistic
+              TLS encryption.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_req_ccert">tlsproxy_tls_req_ccert</a> ($<a href="postconf.5.html#smtpd_tls_req_ccert">smtpd_tls_req_ccert</a>)</b>
+              With  mandatory  TLS  encryption, require a trusted
+              remote SMTP client certificate in  order  to  allow
+              TLS connections to proceed.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_security_level">tlsproxy_tls_security_level</a> ($<a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a>)</b>
+              The   SMTP  TLS  security  level  for  the  Postfix
+              <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a> server; when a non-empty value is spec-
+              ified,   this  overrides  the  obsolete  parameters
+              <a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a> and <a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a>.
+
+       <b><a href="postconf.5.html#tlsproxy_tls_session_cache_timeout">tlsproxy_tls_session_cache_timeout</a>        ($<a href="postconf.5.html#smtpd_tls_session_cache_timeout">smtpd_tls_ses</a>-</b>
+       <b><a href="postconf.5.html#smtpd_tls_session_cache_timeout">sion_cache_timeout</a>)</b>
+              The expiration time of Postfix  <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  server
+              TLS session cache information.
+
+<b>OBSOLETE STARTTLS SUPPORT CONTROLS</b>
+       These  parameters  are  supported  for  compatibility with
+       <a href="smtpd.8.html"><b>smtpd</b>(8)</a> legacy parameters.
+
+       <b><a href="postconf.5.html#tlsproxy_use_tls">tlsproxy_use_tls</a> ($<a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a>)</b>
+              Opportunistic TLS:  announce  STARTTLS  support  to
+              SMTP  clients,  but do not require that clients use
+              TLS encryption.
+
+       <b><a href="postconf.5.html#tlsproxy_enforce_tls">tlsproxy_enforce_tls</a> ($<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a>)</b>
+              Mandatory TLS: announce STARTTLS  support  to  SMTP
+              clients,  and  require that clients use TLS encryp-
+              tion.
+
+<b>RESOURCE CONTROLS</b>
+       <b><a href="postconf.5.html#tlsproxy_watchdog_timeout">tlsproxy_watchdog_timeout</a> (10s)</b>
+              How much time a <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  process  may  take  to
+              process local or remote I/O before it is terminated
+              by a built-in watchdog timer.
+
+<b>MISCELLANEOUS CONTROLS</b>
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
+
+       <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
+              The  process  ID  of  a  Postfix  command or daemon
+              process.
+
+       <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
+              The process name of a  Postfix  command  or  daemon
+              process.
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
+              becomes, for example, "postfix/smtpd".
+
+<b>SEE ALSO</b>
+       <a href="postscreen.8.html">postscreen(8)</a>, Postfix zombie blocker
+       <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       syslogd(5), system logging
+
+<b>LICENSE</b>
+       The  Secure  Mailer  license must be distributed with this
+       software.
+
+<b>HISTORY</b>
+       This service was introduced with Postfix version 2.8.
+
+<b>AUTHOR(S)</b>
+       Wietse Venema
+       IBM T.J. Watson Research
+       P.O. Box 704
+       Yorktown Heights, NY 10598, USA
+
+                                                                   TLSPROXY(8)
+</pre> </body> </html>

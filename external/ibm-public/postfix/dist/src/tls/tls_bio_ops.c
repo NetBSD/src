@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_bio_ops.c,v 1.1.1.2 2010/06/17 18:07:08 tron Exp $	*/
+/*	$NetBSD: tls_bio_ops.c,v 1.1.1.3 2011/03/02 19:32:27 tron Exp $	*/
 
 /*++
 /* NAME
 /*	tls_bio_ops 3
 /* SUMMARY
-/*	TLS network BIO management
+/*	TLS network basic I/O management
 /* SYNOPSIS
 /*	#define TLS_INTERNAL
 /*	#include <tls.h>
@@ -38,76 +38,31 @@
 /*	int	timeout;
 /*	TLS_SESS_STATE *context;
 /* DESCRIPTION
-/*	This layer synchronizes the TLS network buffers with the network
-/*	while performing TLS handshake or input/output operations.
+/*	This module enforces timeouts on non-blocking I/O while
+/*	performing TLS handshake or input/output operations.
 /*
-/*	When the TLS layer is active, it converts plain-text
-/*	data from Postfix into encrypted network data and vice versa.
-/*	However, to handle network timeout conditions, Postfix
-/*	needs to maintain control over network input/output. This
-/*	rules out the usual approach of placing the TLS layer
-/*	between the application and the network socket.
+/*	The Postfix VSTREAM read/write routines invoke the
+/*	tls_bio_read/write routines to send and receive plain-text
+/*	data.  In addition, this module provides tls_bio_connect/accept
+/*	routines that trigger the initial TLS handshake.  The
+/*	tls_bio_xxx routines invoke the corresponding SSL routines
+/*	that translate the requests into TLS protocol messages.
 /*
-/*	As shown below, Postfix reads/writes plain-text data from/to
-/*	the TLS layer. The TLS layer informs Postfix when it needs
-/*	to read/write encrypted data from/to the network; Postfix
-/*	then reads/writes encrypted data from/to the TLS layer and
-/*	takes care of the network socket I/O.
+/*	Whenever an SSL operation indicates that network input (or
+/*	output) needs to happen, the tls_bio_xxx routines wait for
+/*	the network to become readable (or writable) within the
+/*	timeout limit, then retry the SSL operation. This works
+/*	because the network socket is in non-blocking mode.
 /*
-/*	The TLS layer to network interface is realized with a BIO pair:
+/*	tls_bio_connect() performs the SSL_connect() operation.
 /*
-/*	Postfix SMTP layer   |   TLS layer
-/*	                     |
-/*	smtp/smtpd           |
-/*	 /\    ||            |
-/*	 ||    \/            |
-/*	vstream read/write <===> TLS read/write/etc
-/*	                     |     /\    ||
-/*	                     |     ||    \/
-/*	                     |   BIO pair (internal_bio)
-/*	                     |   BIO pair (network_bio)
-/*	Postfix socket layer |     /\    ||
-/*	                     |     ||    \/
-/*	socket read/write  <===> BIO read/write
-/*	 /\    ||            |
-/*	 ||    \/            |
-/*	 network             |
+/*	tls_bio_accept() performs the SSL_accept() operation.
 /*
-/*	The Postfix VSTREAM read/write operations invoke the SSL
-/*	read/write operations to send and retrieve plain-text data. Inside
-/*	the TLS layer the data are converted to/from TLS protocol.
+/*	tls_bio_shutdown() performs the SSL_shutdown() operation.
 /*
-/*	Whenever an SSL operation reports success, or whenever it
-/*	indicates that network input/output needs to happen, Postfix
-/*	uses the BIO read/write routines to synchronize the
-/*	network_bio buffer with the network.  Writing data to the
-/*	network has precedence over reading from the network. This
-/*	is necessary to avoid deadlock.
+/*	tls_bio_read() performs the SSL_read() operation.
 /*
-/*	The BIO pair buffer size is set to 8192 bytes. This is much
-/*	larger than the typical Path MTU, and avoids sending tiny TCP
-/*	segments.  It is also larger than the default VSTREAM_BUFSIZE
-/*	(4096, see vstream.h), so that large write operations can
-/*	be handled within one request.  The internal buffer in the
-/*	network/network_bio handling layer is set to the same
-/*	value, since this seems to be reasonable. The code is
-/*	however able to handle arbitrary values smaller or larger
-/*	than the buffer size in the BIO pair.
-/*
-/*	tls_bio_connect() performs the SSL_connect() operation while
-/*	synchronizing the network_bio buffer with the network.
-/*
-/*	tls_bio_accept() performs the SSL_accept() operation while
-/*	synchronizing the network_bio buffer with the network.
-/*
-/*	tls_bio_shutdown() performs the SSL_shutdown() operation while
-/*	synchronizing the network_bio buffer with the network.
-/*
-/*	tls_bio_read() performs the SSL_read() operation while
-/*	synchronizing the network_bio buffer with the network.
-/*
-/*	tls_bio_write() performs the SSL_write() operation while
-/*	synchronizing the network_bio buffer with the network.
+/*	tls_bio_write() performs the SSL_write() operation.
 /*
 /*	Arguments:
 /* .IP fd
@@ -163,87 +118,6 @@
 #define TLS_INTERNAL
 #include <tls.h>
 
-/* Application-specific. */
-
-#define NETLAYER_BUFFERSIZE 8192
-
-/* network_biopair_interop - synchronize network with BIO pair */
-
-static int network_biopair_interop(int fd, int timeout, BIO *network_bio)
-{
-    const char *myname = "network_biopair_interop";
-    int     want_write;
-    int     num_write;
-    int     write_pos;
-    int     from_bio;
-    int     want_read;
-    int     num_read;
-    int     to_bio;
-    char    buffer[NETLAYER_BUFFERSIZE];
-
-    /*
-     * To avoid deadlock, write all pending data to the network before
-     * attempting to read from the network.
-     */
-    while ((want_write = BIO_ctrl_pending(network_bio)) > 0) {
-	if (want_write > sizeof(buffer))
-	    want_write = sizeof(buffer);
-	from_bio = BIO_read(network_bio, buffer, want_write);
-
-	/*
-	 * Write the complete buffer contents to the network.
-	 */
-	for (write_pos = 0; write_pos < from_bio; /* see below */ ) {
-	    if (timeout > 0 && write_wait(fd, timeout) < 0)
-		return (-1);
-	    num_write = write(fd, buffer + write_pos, from_bio - write_pos);
-	    if (num_write <= 0) {
-		if ((num_write < 0) && (timeout > 0) && (errno == EAGAIN)) {
-		    msg_warn("write() returns EAGAIN on a writable file descriptor!");
-		    msg_warn("pausing to avoid going into a tight select/write loop!");
-		    sleep(1);
-		} else {
-		    msg_warn("%s: error writing %d bytes to the network: %m",
-			     myname, from_bio - write_pos);
-		    return (-1);
-		}
-	    } else {
-		write_pos += num_write;
-	    }
-	}
-    }
-
-    /*
-     * Read data from the network into the BIO pair.
-     */
-    while ((want_read = BIO_ctrl_get_read_request(network_bio)) > 0) {
-	if (want_read > sizeof(buffer))
-	    want_read = sizeof(buffer);
-	if (timeout > 0 && read_wait(fd, timeout) < 0)
-	    return (-1);
-	num_read = read(fd, buffer, want_read);
-	if (num_read == 0)
-	    /* FIX 200412 Cannot return a zero read count. */
-	    return (-1);
-	if (num_read < 0) {
-	    if ((num_read < 0) && (timeout > 0) && (errno == EAGAIN)) {
-		msg_warn("read() returns EAGAIN on a readable file descriptor!");
-		msg_warn("pausing to avoid going into a tight select/write loop!");
-		sleep(1);
-	    } else {
-		msg_warn("%s: error reading %d bytes from the network: %m",
-			 myname, want_read);
-		return (-1);
-	    }
-	} else {
-	    to_bio = BIO_write(network_bio, buffer, num_read);
-	    if (to_bio != num_read)
-		msg_panic("%s: BIO_write error: to_bio != num_read", myname);
-	}
-    }
-    return (0);
-}
-
 /* tls_bio - perform SSL input/output operation with extreme prejudice */
 
 int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
@@ -256,7 +130,6 @@ int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
     int     status;
     int     err;
     int     retval = 0;
-    int     biop_retval;
     int     done;
 
     /*
@@ -321,13 +194,14 @@ int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
 	case SSL_ERROR_NONE:			/* success */
 	    retval = status;
 	    done = 1;
-	    /* FALLTHROUGH */
-	case SSL_ERROR_WANT_WRITE:		/* flush/update buffers */
+	    break;
+	case SSL_ERROR_WANT_WRITE:
+	    if (write_wait(fd, timeout) < 0)
+		return (-1);			/* timeout error */
+	    break;
 	case SSL_ERROR_WANT_READ:
-	    biop_retval =
-		network_biopair_interop(fd, timeout, TLScontext->network_bio);
-	    if (biop_retval < 0)
-		return (-1);			/* network read/write error */
+	    if (read_wait(fd, timeout) < 0)
+		return (-1);			/* timeout error */
 	    break;
 
 	    /*

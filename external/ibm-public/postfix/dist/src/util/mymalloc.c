@@ -1,4 +1,4 @@
-/*	$NetBSD: mymalloc.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: mymalloc.c,v 1.1.1.2 2011/03/02 19:32:44 tron Exp $	*/
 
 /*++
 /* NAME
@@ -156,6 +156,9 @@ char   *mymalloc(ssize_t len)
      */
     if (len < 1)
 	msg_panic("mymalloc: requested length %ld", (long) len);
+#ifdef MYMALLOC_FUZZ
+    len += MYMALLOC_FUZZ;
+#endif
     if ((real_ptr = (MBLOCK *) malloc(SPACE_FOR(len))) == 0)
 	msg_fatal("mymalloc: insufficient memory: %m");
     CHECK_OUT_PTR(ptr, real_ptr, len);
@@ -182,6 +185,9 @@ char   *myrealloc(char *ptr, ssize_t len)
      */
     if (len < 1)
 	msg_panic("myrealloc: requested length %ld", (long) len);
+#ifdef MYMALLOC_FUZZ
+    len += MYMALLOC_FUZZ;
+#endif
     CHECK_IN_PTR(ptr, real_ptr, old_len, "myrealloc");
     if ((real_ptr = (MBLOCK *) realloc((char *) real_ptr, SPACE_FOR(len))) == 0)
 	msg_fatal("myrealloc: insufficient memory: %m");

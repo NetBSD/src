@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.2 2010/06/17 18:06:58 tron Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.3 2011/03/02 19:32:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -75,8 +75,11 @@
 /*	to a temporary file then renamed into place. Parameters and
 /*	values are specified on the command line. Use quotes in order
 /*	to protect shell metacharacters and whitespace.
+/*
+/*	With Postfix version 2.8 and later, the \fB-e\fR is no
+/*	longer needed.
 /* .IP \fB-h\fR
-/*	Show parameter values only, not the ``name = '' label
+/*	Show parameter values only, not the "\fIname = " label
 /*	that normally precedes the value.
 /* .IP \fB-l\fR
 /*	List the names of all supported mailbox locking methods.
@@ -148,6 +151,9 @@
 /* .IP \fBsdbm\fR
 /*	An indexed file type based on hashing.
 /*	This is available on systems with support for SDBM databases.
+/* .IP "\fBsqlite\fR (read-only)"
+/*	Perform lookups from SQLite database files. This is described
+/*	in \fBsqlite_table\fR(5).
 /* .IP "\fBstatic\fR (read-only)"
 /*	A table that always returns its name as lookup result. For example,
 /*	\fBstatic:foobar\fR always returns the string \fBfoobar\fR as lookup
@@ -155,7 +161,10 @@
 /* .IP "\fBtcp\fR (read-only)"
 /*	Perform lookups using a simple request-reply protocol that is
 /*	described in \fBtcp_table\fR(5).
-/*	This feature is not included with the stable Postfix release.
+/* .IP "\fBtexthash\fR (read-only)"
+/*	Produces similar results as hash: files, except that you don't
+/*	need to run the postmap(1) command before you can use the file,
+/*	and that it does not detect changes after the file is read.
 /* .IP "\fBunix\fR (read-only)"
 /*	A limited way to query the UNIX authentication database. The
 /*	following tables are implemented:
@@ -322,6 +331,7 @@ DICT   *text_table;
 #include "str_vars.h"
 #include "raw_vars.h"
 #include "nint_vars.h"
+#include "nbool_vars.h"
 
  /*
   * Manually extracted.
@@ -364,6 +374,11 @@ static const CONFIG_NINT_TABLE nint_table[] = {
     0,
 };
 
+static const CONFIG_NBOOL_TABLE nbool_table[] = {
+#include "nbool_table.h"
+    0,
+};
+
  /*
   * Parameters with default values obtained via function calls.
   */
@@ -388,7 +403,8 @@ static const CONFIG_STR_FN_TABLE str_fn_table_2[] = {
  /*
   * XXX Global so that call-backs can see it.
   */
-static int cmd_mode = SHOW_NAME;
+#define DEF_MODE	SHOW_NAME
+static int cmd_mode = DEF_MODE;
 
 /* check_myhostname - lookup hostname and validate */
 
@@ -683,6 +699,7 @@ static void hash_parameters(void)
     const CONFIG_STR_FN_TABLE *csft;
     const CONFIG_RAW_TABLE *rst;
     const CONFIG_NINT_TABLE *nst;
+    const CONFIG_NBOOL_TABLE *bst;
 
     param_table = htable_create(100);
 
@@ -702,6 +719,8 @@ static void hash_parameters(void)
 	htable_enter(param_table, rst->name, (char *) rst);
     for (nst = nint_table; nst->name; nst++)
 	htable_enter(param_table, nst->name, (char *) nst);
+    for (bst = nbool_table; bst->name; bst++)
+	htable_enter(param_table, bst->name, (char *) bst);
 }
 
 /* show_strval - show string-valued parameter */
@@ -921,6 +940,33 @@ static void print_nint(int mode, CONFIG_NINT_TABLE * rst)
     }
 }
 
+/* print_nbool - print new boolean parameter */
+
+static void print_nbool(int mode, CONFIG_NBOOL_TABLE * bst)
+{
+    const char *value;
+
+    if (mode & SHOW_EVAL)
+	msg_warn("parameter %s expands at run-time", bst->name);
+    mode &= ~SHOW_EVAL;
+
+    if (mode & SHOW_DEFS) {
+	show_strval(mode, bst->name, bst->defval);
+    } else {
+	value = dict_lookup(CONFIG_DICT, bst->name);
+	if ((mode & SHOW_NONDEF) == 0) {
+	    if (value == 0) {
+		show_strval(mode, bst->name, bst->defval);
+	    } else {
+		show_strval(mode, bst->name, value);
+	    }
+	} else {
+	    if (value != 0)
+		show_strval(mode, bst->name, value);
+	}
+    }
+}
+
 /* print_parameter - show specific parameter */
 
 static void print_parameter(int mode, char *ptr)
@@ -947,6 +993,8 @@ static void print_parameter(int mode, char *ptr)
 	print_raw(mode, (CONFIG_RAW_TABLE *) ptr);
     if (INSIDE(ptr, nint_table))
 	print_nint(mode, (CONFIG_NINT_TABLE *) ptr);
+    if (INSIDE(ptr, nbool_table))
+	print_nbool(mode, (CONFIG_NBOOL_TABLE *) ptr);
     if (msg_verbose)
 	vstream_fflush(VSTREAM_OUT);
 }
@@ -1201,6 +1249,9 @@ int     main(int argc, char **argv)
      */
     else if (cmd_mode & (EDIT_MAIN | COMMENT_OUT)) {
 	edit_parameters(cmd_mode, argc - optind, argv + optind);
+    } else if (cmd_mode == DEF_MODE
+	       && argv[optind] && strchr(argv[optind], '=')) {
+	edit_parameters(cmd_mode | EDIT_MAIN, argc - optind, argv + optind);
     }
 
     /*

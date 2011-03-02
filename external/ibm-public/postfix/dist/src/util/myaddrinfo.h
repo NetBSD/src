@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: myaddrinfo.h,v 1.1.1.2 2011/03/02 19:32:44 tron Exp $	*/
 
 #ifndef _MYADDRINFO_H_INCLUDED_
 #define _MYADDRINFO_H_INCLUDED_
@@ -156,8 +156,8 @@ typedef struct {
     char    buf[MAI_SERVPORT_STRSIZE];
 } MAI_SERVPORT_STR;
 
-extern int hostname_to_sockaddr(const char *, const char *, int,
-				        struct addrinfo **);
+extern int hostname_to_sockaddr_pf(const char *, int, const char *, int,
+				           struct addrinfo **);
 extern int hostaddr_to_sockaddr(const char *, const char *, int,
 				        struct addrinfo **);
 extern int sockaddr_to_hostaddr(const struct sockaddr *, SOCKADDR_SIZE,
@@ -170,17 +170,23 @@ extern void myaddrinfo_control(int,...);
 
 #define MAI_STRERROR(e) ((e) == EAI_SYSTEM ? strerror(errno) : gai_strerror(e))
 
+#define hostname_to_sockaddr(host, serv, sock, res) \
+	hostname_to_sockaddr_pf((host), PF_UNSPEC, (serv), (sock), (res))
+
  /*
   * Macros for the case where we really don't want to be bothered with things
   * that may fail.
   */
-#define HOSTNAME_TO_SOCKADDR(host, serv, sock, res) \
+#define HOSTNAME_TO_SOCKADDR_PF(host, pf, serv, sock, res) \
     do { \
 	int _aierr; \
-	_aierr = hostname_to_sockaddr((host), (serv), (sock), (res)); \
+	_aierr = hostname_to_sockaddr_pf((host), (pf), (serv), (sock), (res)); \
 	if (_aierr) \
-	    msg_fatal("hostname_to_sockaddr: %s", MAI_STRERROR(_aierr)); \
+	    msg_fatal("hostname_to_sockaddr_pf: %s", MAI_STRERROR(_aierr)); \
     } while (0)
+
+#define HOSTNAME_TO_SOCKADDR(host, serv, sock, res) \
+	HOSTNAME_TO_SOCKADDR_PF((host), PF_UNSPEC, (serv), (sock), (res))
 
 #define HOSTADDR_TO_SOCKADDR(host, serv, sock, res) \
     do { \

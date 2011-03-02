@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.1.1.2 2010/06/17 18:06:57 tron Exp $	*/
+/*	$NetBSD: pipe.c,v 1.1.1.3 2011/03/02 19:32:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -532,7 +532,7 @@
   * Tunable parameters. Values are taken from the config file, after
   * prepending the service name to _name, and so on.
   */
-int     var_command_maxtime;		/* system-wide */
+int     var_command_maxtime;		/* You can now leave this here. */
 
  /*
   * For convenience. Instead of passing around lists of parameters, bundle

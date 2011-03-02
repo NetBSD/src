@@ -9,6 +9,13 @@
 #        nested_header_checks = pcre:/etc/postfix/nested_header_checks
 #        body_checks = pcre:/etc/postfix/body_checks
 # 
+#        milter_header_checks = pcre:/etc/postfix/milter_header_checks
+# 
+#        smtp_header_checks = pcre:/etc/postfix/smtp_header_checks
+#        smtp_mime_header_checks = pcre:/etc/postfix/smtp_mime_header_checks
+#        smtp_nested_header_checks = pcre:/etc/postfix/smtp_nested_header_checks
+#        smtp_body_checks = pcre:/etc/postfix/smtp_body_checks
+# 
 #        postmap -q "string" pcre:/etc/postfix/filename
 #        postmap -q - pcre:/etc/postfix/filename <inputfile
 # 
@@ -25,6 +32,10 @@
 #        is repeated for the next message header  or  message  body
 #        line.
 # 
+#        Note: message headers are examined one logical header at a
+#        time, even when a message  header  spans  multiple  lines.
+#        Body lines are always examined one line at a time.
+# 
 #        For  examples, see the EXAMPLES section at the end of this
 #        manual page.
 # 
@@ -34,9 +45,11 @@
 #        referenced  below  in the README FILES section if you need
 #        more sophisticated content analysis.
 # 
-#        Postfix supports four built-in content inspection classes:
+# FILTERS WHILE RECEIVING MAIL
+#        Postfix implements the  following  four  built-in  content
+#        inspection classes while receiving mail:
 # 
-#        header_checks
+#        header_checks (default: empty)
 #               These   are  applied  to  initial  message  headers
 #               (except for the headers  that  are  processed  with
 #               mime_header_checks).
@@ -62,79 +75,99 @@
 #               the initial message headers is treated as body con-
 #               tent.
 # 
-#        Note: message headers are examined one logical header at a
-#        time, even when a message  header  spans  multiple  lines.
-#        Body lines are always examined one line at a time.
+# FILTERS AFTER RECEIVING MAIL
+#        Postfix  supports a subset of the built-in content inspec-
+#        tion classes after the message is received:
+# 
+#        milter_header_checks (default: empty)
+#               These are applied to headers that  are  added  with
+#               Milter applications.
+# 
+#               This feature is available in Postfix 2.7 and later.
+# 
+# FILTERS WHILE DELIVERING MAIL
+#        Postfix supports all four content inspection classes while
+#        delivering mail via SMTP.
+# 
+#        smtp_header_checks (default: empty)
+# 
+#        smtp_mime_header_checks (default: empty)
+# 
+#        smtp_nested_header_checks (default: empty)
+# 
+#        smtp_body_checks (default: empty)
+#               These  features  are  available  in Postfix 2.5 and
+#               later.
 # 
 # COMPATIBILITY
 #        With Postfix version 2.2 and earlier specify "postmap -fq"
 #        to query a table that contains case sensitive patterns. By
-#        default,  regexp: and pcre: patterns are case insensitive.
+#        default, regexp: and pcre: patterns are case  insensitive.
 # 
 # TABLE FORMAT
-#        This document assumes that header  and  body_checks  rules
-#        are  specified  in  the form of Postfix regular expression
-#        lookup tables. Usually the best  performance  is  obtained
+#        This  document  assumes  that header and body_checks rules
+#        are specified in the form of  Postfix  regular  expression
+#        lookup  tables.  Usually  the best performance is obtained
 #        with pcre (Perl Compatible Regular Expression) tables, but
-#        the slower regexp (POSIX regular expressions)  support  is
-#        more  widely  available.  Use the command "postconf -m" to
-#        find out what lookup table types your Postfix system  sup-
+#        the  slower  regexp (POSIX regular expressions) support is
+#        more widely available.  Use the command "postconf  -m"  to
+#        find  out what lookup table types your Postfix system sup-
 #        ports.
 # 
 #        The general format of Postfix regular expression tables is
-#        given below.  For a  discussion  of  specific  pattern  or
-#        flags   syntax,   see  pcre_table(5)  or  regexp_table(5),
+#        given  below.   For  a  discussion  of specific pattern or
+#        flags  syntax,  see  pcre_table(5)   or   regexp_table(5),
 #        respectively.
 # 
 #        /pattern/flags action
-#               When /pattern/ matches the  input  string,  execute
-#               the  corresponding  action. See below for a list of
+#               When  /pattern/  matches  the input string, execute
+#               the corresponding action. See below for a  list  of
 #               possible actions.
 # 
 #        !/pattern/flags action
-#               When /pattern/ does not  match  the  input  string,
+#               When  /pattern/  does  not  match the input string,
 #               execute the corresponding action.
 # 
 #        if /pattern/flags
 # 
 #        endif  Match the input string against the patterns between
-#               if and endif, if and only if the same input  string
+#               if  and endif, if and only if the same input string
 #               also matches /pattern/. The if..endif can nest.
 # 
-#               Note:  do not prepend whitespace to patterns inside
+#               Note: do not prepend whitespace to patterns  inside
 #               if..endif.
 # 
 #        if !/pattern/flags
 # 
 #        endif  Match the input string against the patterns between
-#               if  and endif, if and only if the same input string
+#               if and endif, if and only if the same input  string
 #               does not match /pattern/. The if..endif can nest.
 # 
 #        blank lines and comments
-#               Empty lines and whitespace-only lines are  ignored,
-#               as  are  lines whose first non-whitespace character
+#               Empty  lines and whitespace-only lines are ignored,
+#               as are lines whose first  non-whitespace  character
 #               is a `#'.
 # 
 #        multi-line text
-#               A pattern/action line  starts  with  non-whitespace
-#               text.  A line that starts with whitespace continues
+#               A  pattern/action  line  starts with non-whitespace
+#               text. A line that starts with whitespace  continues
 #               a logical line.
 # 
 # TABLE SEARCH ORDER
-#        For each line of message input, the patterns  are  applied
-#        in  the order as specified in the table. When a pattern is
-#        found that  matches  the  input  line,  the  corresponding
-#        action  is  executed  and  then  the  next  input  line is
+#        For  each  line of message input, the patterns are applied
+#        in the order as specified in the table. When a pattern  is
+#        found  that  matches  the  input  line,  the corresponding
+#        action is  executed  and  then  the  next  input  line  is
 #        inspected.
 # 
 # TEXT SUBSTITUTION
-#        Substitution of substrings  from  the  matched  expression
-#        into  the action string is possible using the conventional
-#        Perl syntax ($1, $2, etc.).   The  macros  in  the  result
-#        string  may  need  to  be  written as ${n} or $(n) if they
+#        Substitution  of  substrings  from  the matched expression
+#        into the action string is possible using the  conventional
+#        Perl  syntax  ($1,  $2,  etc.).   The macros in the result
+#        string may need to be written as  ${n}  or  $(n)  if  they
 #        aren't followed by whitespace.
 # 
-#        Note: since negated patterns (those preceded by !)  return
+#        Note:  since negated patterns (those preceded by !) return
 #        a result when the expression does not match, substitutions
 #        are not available for negated patterns.
 # 
@@ -143,18 +176,21 @@
 #        case for consistency with other Postfix documentation.
 # 
 #        DISCARD optional text...
-#               Claim  successful delivery and silently discard the
-#               message.  Log the optional text if specified,  oth-
+#               Claim successful delivery and silently discard  the
+#               message.   Log the optional text if specified, oth-
 #               erwise log a generic message.
 # 
-#               Note:   this  action  disables  further  header  or
-#               body_checks inspection of the current  message  and
+#               Note:  this  action  disables  further  header   or
+#               body_checks  inspection  of the current message and
 #               affects all recipients.  To discard only one recip-
 #               ient without discarding the entire message, use the
 #               transport(5) table to direct mail to the discard(8)
 #               service.
 # 
 #               This feature is available in Postfix 2.0 and later.
+# 
+#               This feature is not supported with smtp header/body
+#               checks.
 # 
 #        DUNNO  Pretend  that the input line did not match any pat-
 #               tern, and inspect the next input line. This  action
@@ -198,30 +234,44 @@
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 
+#               This feature is not supported with smtp header/body
+#               checks.
+# 
 #        HOLD optional text...
-#               Arrange for the message to be placed  on  the  hold
-#               queue,  and  inspect the next input line.  The mes-
-#               sage remains on hold until someone  either  deletes
-#               it  or  releases it for delivery.  Log the optional
+#               Arrange  for  the  message to be placed on the hold
+#               queue, and inspect the next input line.   The  mes-
+#               sage  remains  on hold until someone either deletes
+#               it or releases it for delivery.  Log  the  optional
 #               text if specified, otherwise log a generic message.
 # 
-#               Mail  that  is  placed on hold can be examined with
-#               the postcat(1) command, and  can  be  destroyed  or
+#               Mail that is placed on hold can  be  examined  with
+#               the  postcat(1)  command,  and  can be destroyed or
 #               released with the postsuper(1) command.
 # 
-#               Note:  use  "postsuper -r" to release mail that was
-#               kept on hold for a significant fraction  of  $maxi-
+#               Note: use "postsuper -r" to release mail  that  was
+#               kept  on  hold for a significant fraction of $maxi-
 #               mal_queue_lifetime  or  $bounce_queue_lifetime,  or
-#               longer. Use "postsuper -H" only for mail that  will
+#               longer.  Use "postsuper -H" only for mail that will
 #               not expire within a few delivery attempts.
 # 
-#               Note:  this  action  affects  all recipients of the
+#               Note: this action affects  all  recipients  of  the
 #               message.
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 
+#               This feature is not supported with smtp header/body
+#               checks.
+# 
 #        IGNORE Delete the current line from the input, and inspect
 #               the next input line.
+# 
+#        INFO optional text...
+#               Log an "info:" record with the optional text... (or
+#               log  a  generic  text),  and inspect the next input
+#               line. This action is useful for routine logging  or
+#               for debugging.
+# 
+#               This feature is available in Postfix 2.8 and later.
 # 
 #        PREPEND text...
 #               Prepend one  line  with  the  specified  text,  and
@@ -248,18 +298,24 @@
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
+#               This   feature   is   not   supported   with   mil-
+#               ter_header_checks.
+# 
 #        REDIRECT user@domain
-#               Write  a  message  redirection request to the queue
-#               file, and inspect the next input  line.  After  the
+#               Write a message redirection request  to  the  queue
+#               file,  and  inspect  the next input line. After the
 #               message is queued, it will be sent to the specified
 #               address instead of the intended recipient(s).
 # 
-#               Note: this action overrides the FILTER action,  and
-#               affects  all recipients of the message. If multiple
-#               REDIRECT actions fire, only the last  one  is  exe-
+#               Note:  this action overrides the FILTER action, and
+#               affects all recipients of the message. If  multiple
+#               REDIRECT  actions  fire,  only the last one is exe-
 #               cuted.
 # 
 #               This feature is available in Postfix 2.1 and later.
+# 
+#               This feature is not supported with smtp header/body
+#               checks.
 # 
 #        REPLACE text...
 #               Replace the current line with the  specified  text,
@@ -296,11 +352,15 @@
 #               ning of optional text..., Postfix inserts a default
 #               enhanced status code of "5.7.1".
 # 
+#               This feature is not supported with smtp header/body
+#               checks.
+# 
 #        WARN optional text...
-#               Log  a  warning with the optional text... (or log a
-#               generic message), and inspect the next input  line.
-#               This action is useful for debugging and for testing
-#               a pattern before applying more drastic actions.
+#               Log a "warning:" record with the  optional  text...
+#               (or log a generic text), and inspect the next input
+#               line. This action is useful for debugging  and  for
+#               testing  a  pattern  before  applying  more drastic
+#               actions.
 # 
 # BUGS
 #        Empty lines never match, because some map types mis-behave

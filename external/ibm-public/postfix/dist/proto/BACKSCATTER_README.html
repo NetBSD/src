@@ -76,7 +76,8 @@ to=&lt;yyyyyy@your.domain.here&gt; proto=ESMTP helo=&lt;zzzzzz&gt;
 </blockquote>
 
 <p> What you see are lots of "user unknown" errors with "from=&lt;&gt;".
-These are error reports from MAILER-DAEMONs elsewhere on the Internet.
+These are error reports from MAILER-DAEMONs elsewhere on the Internet,
+about email that was sent with a false sender address in your domain.
 </p>
 
 <h2><a name="random">How do I block backscatter mail to random
@@ -183,6 +184,7 @@ patterns like this: </p>
     body_checks = pcre:/etc/postfix/body_checks
 
 /etc/postfix/header_checks:
+    # Do not indent the text between "if" and "endif".
     if /^Received:/
     /^Received: +from +(porcupine\.org) +/
         reject forged client name in Received: header: $1
@@ -196,6 +198,7 @@ patterns like this: </p>
 	reject forged domain name in Message-ID: header: $1
 
 /etc/postfix/body_checks:
+    # Do not indent the text between "if" and "endif".
     if /^[&gt; ]*Received:/
     /^[&gt; ]*Received: +from +(porcupine\.org) /
         reject forged client name in Received: header: $1

@@ -1,13 +1,15 @@
 SHELL	= /bin/sh
 SRCS	= smtpd.c smtpd_token.c smtpd_check.c smtpd_chat.c smtpd_state.c \
 	smtpd_peer.c smtpd_sasl_proto.c smtpd_sasl_glue.c smtpd_proxy.c \
-	smtpd_xforward.c smtpd_dsn_fix.c smtpd_milter.c smtpd_resolve.c
+	smtpd_xforward.c smtpd_dsn_fix.c smtpd_milter.c smtpd_resolve.c \
+	smtpd_expand.c
 OBJS	= smtpd.o smtpd_token.o smtpd_check.o smtpd_chat.o smtpd_state.o \
 	smtpd_peer.o smtpd_sasl_proto.o smtpd_sasl_glue.o smtpd_proxy.o \
-	smtpd_xforward.o smtpd_dsn_fix.o smtpd_milter.o smtpd_resolve.o
+	smtpd_xforward.o smtpd_dsn_fix.o smtpd_milter.o smtpd_resolve.o \
+	smtpd_expand.o
 HDRS	= smtpd_token.h smtpd_check.h smtpd_chat.h smtpd_sasl_proto.h \
 	smtpd_sasl_glue.h smtpd_proxy.h smtpd_dsn_fix.h smtpd_milter.h \
-	smtpd_resolve.h
+	smtpd_resolve.h smtpd_expand.h
 TESTSRC	= smtpd_token_test.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -66,7 +68,7 @@ tidy:	clean
 
 tests: smtpd_check_test smtpd_check_test2 smtpd_acl_test smtpd_exp_test \
 	smtpd_token_test smtpd_check_test4 smtpd_check_dsn_test \
-	smtpd_check_backup_test
+	smtpd_check_backup_test smtpd_dnswl_test
 
 root_tests:
 
@@ -124,6 +126,13 @@ smtpd_token_test: smtpd_token smtpd_token.in smtpd_token.ref
 	diff smtpd_token.ref smtpd_token.tmp
 	rm -f smtpd_token.tmp
 
+# This requires that the DNS server can query porcupine.org and rfc-ignorant.org
+
+smtpd_dnswl_test: smtpd_check smtpd_dnswl.in smtpd_dnswl.ref
+	./smtpd_check <smtpd_dnswl.in >smtpd_dnswl.tmp 2>&1
+	diff smtpd_dnswl.ref smtpd_dnswl.tmp
+	rm -f smtpd_dnswl.tmp
+
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
@@ -149,6 +158,8 @@ smtpd.o: ../../include/input_transp.h
 smtpd.o: ../../include/iostuff.h
 smtpd.o: ../../include/is_header.h
 smtpd.o: ../../include/lex_822.h
+smtpd.o: ../../include/mac_expand.h
+smtpd.o: ../../include/mac_parse.h
 smtpd.o: ../../include/mail_conf.h
 smtpd.o: ../../include/mail_date.h
 smtpd.o: ../../include/mail_error.h
@@ -181,6 +192,7 @@ smtpd.o: ../../include/string_list.h
 smtpd.o: ../../include/stringops.h
 smtpd.o: ../../include/sys_defs.h
 smtpd.o: ../../include/tls.h
+smtpd.o: ../../include/tls_proxy.h
 smtpd.o: ../../include/tok822.h
 smtpd.o: ../../include/valid_hostname.h
 smtpd.o: ../../include/valid_mailhost_addr.h
@@ -195,6 +207,7 @@ smtpd.o: smtpd.c
 smtpd.o: smtpd.h
 smtpd.o: smtpd_chat.h
 smtpd.o: smtpd_check.h
+smtpd.o: smtpd_expand.h
 smtpd.o: smtpd_milter.h
 smtpd.o: smtpd_proxy.h
 smtpd.o: smtpd_sasl_glue.h
@@ -206,6 +219,8 @@ smtpd_chat.o: ../../include/cleanup_user.h
 smtpd_chat.o: ../../include/int_filt.h
 smtpd_chat.o: ../../include/iostuff.h
 smtpd_chat.o: ../../include/line_wrap.h
+smtpd_chat.o: ../../include/mac_expand.h
+smtpd_chat.o: ../../include/mac_parse.h
 smtpd_chat.o: ../../include/mail_addr.h
 smtpd_chat.o: ../../include/mail_error.h
 smtpd_chat.o: ../../include/mail_params.h
@@ -220,6 +235,7 @@ smtpd_chat.o: ../../include/name_mask.h
 smtpd_chat.o: ../../include/post_mail.h
 smtpd_chat.o: ../../include/rec_type.h
 smtpd_chat.o: ../../include/record.h
+smtpd_chat.o: ../../include/smtp_reply_footer.h
 smtpd_chat.o: ../../include/smtp_stream.h
 smtpd_chat.o: ../../include/stringops.h
 smtpd_chat.o: ../../include/sys_defs.h
@@ -230,6 +246,7 @@ smtpd_chat.o: ../../include/vstring.h
 smtpd_chat.o: smtpd.h
 smtpd_chat.o: smtpd_chat.c
 smtpd_chat.o: smtpd_chat.h
+smtpd_chat.o: smtpd_expand.h
 smtpd_check.o: ../../include/argv.h
 smtpd_check.o: ../../include/attr.h
 smtpd_check.o: ../../include/attr_clnt.h
@@ -248,6 +265,7 @@ smtpd_check.o: ../../include/inet_addr_list.h
 smtpd_check.o: ../../include/inet_proto.h
 smtpd_check.o: ../../include/input_transp.h
 smtpd_check.o: ../../include/iostuff.h
+smtpd_check.o: ../../include/ip_match.h
 smtpd_check.o: ../../include/is_header.h
 smtpd_check.o: ../../include/mac_expand.h
 smtpd_check.o: ../../include/mac_parse.h
@@ -295,12 +313,35 @@ smtpd_check.o: smtpd.h
 smtpd_check.o: smtpd_check.c
 smtpd_check.o: smtpd_check.h
 smtpd_check.o: smtpd_dsn_fix.h
+smtpd_check.o: smtpd_expand.h
 smtpd_check.o: smtpd_resolve.h
 smtpd_check.o: smtpd_sasl_glue.h
 smtpd_dsn_fix.o: ../../include/msg.h
 smtpd_dsn_fix.o: ../../include/sys_defs.h
 smtpd_dsn_fix.o: smtpd_dsn_fix.c
 smtpd_dsn_fix.o: smtpd_dsn_fix.h
+smtpd_expand.o: ../../include/argv.h
+smtpd_expand.o: ../../include/attr.h
+smtpd_expand.o: ../../include/iostuff.h
+smtpd_expand.o: ../../include/mac_expand.h
+smtpd_expand.o: ../../include/mac_parse.h
+smtpd_expand.o: ../../include/mail_params.h
+smtpd_expand.o: ../../include/mail_proto.h
+smtpd_expand.o: ../../include/mail_stream.h
+smtpd_expand.o: ../../include/milter.h
+smtpd_expand.o: ../../include/msg.h
+smtpd_expand.o: ../../include/myaddrinfo.h
+smtpd_expand.o: ../../include/name_code.h
+smtpd_expand.o: ../../include/name_mask.h
+smtpd_expand.o: ../../include/stringops.h
+smtpd_expand.o: ../../include/sys_defs.h
+smtpd_expand.o: ../../include/tls.h
+smtpd_expand.o: ../../include/vbuf.h
+smtpd_expand.o: ../../include/vstream.h
+smtpd_expand.o: ../../include/vstring.h
+smtpd_expand.o: smtpd.h
+smtpd_expand.o: smtpd_expand.c
+smtpd_expand.o: smtpd_expand.h
 smtpd_milter.o: ../../include/argv.h
 smtpd_milter.o: ../../include/attr.h
 smtpd_milter.o: ../../include/mail_params.h
@@ -337,6 +378,7 @@ smtpd_peer.o: ../../include/mymalloc.h
 smtpd_peer.o: ../../include/name_code.h
 smtpd_peer.o: ../../include/name_mask.h
 smtpd_peer.o: ../../include/sock_addr.h
+smtpd_peer.o: ../../include/split_at.h
 smtpd_peer.o: ../../include/stringops.h
 smtpd_peer.o: ../../include/sys_defs.h
 smtpd_peer.o: ../../include/tls.h
