@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.40 2011/03/02 14:49:21 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.41 2011/03/02 14:58:27 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -145,6 +145,7 @@ static int oldloglevel = LLV_BASE;
 
 static struct secprotospec *newspspec __P((void));
 static void insspspec __P((struct remoteconf *, struct secprotospec *));
+void flushspspec __P((struct remoteconf *));
 static void adminsock_conf __P((vchar_t *, vchar_t *, vchar_t *, int));
 
 static int set_isakmp_proposal __P((struct remoteconf *));
@@ -2412,6 +2413,25 @@ insspspec(rmconf, spspec)
 		rmconf->spspec->prev = spspec;
 	spspec->next = rmconf->spspec;
 	rmconf->spspec = spspec;
+}
+
+/*
+ * delete the whole list
+ */
+void
+flushspspec(rmconf)
+	struct remoteconf *rmconf;
+{
+	struct secprotospec *p;
+
+	while(rmconf->spspec != NULL) {
+		p = rmconf->spspec;
+		rmconf->spspec = p->next;
+		if (p->next != NULL)
+			p->next->prev = NULL; /* not necessary but clean */
+
+		racoon_free(p);		  
+	}
 }
 
 /* set final acceptable proposal */
