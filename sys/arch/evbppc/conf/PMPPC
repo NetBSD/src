@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.18 2011/01/18 01:07:06 matt Exp $
+#	$NetBSD: PMPPC,v 1.19 2011/03/02 08:25:08 ahoka Exp $
 #
 #	PMPPC
 #
@@ -143,7 +143,7 @@ rtc0	at mainbus0 addr 0x7ff00000
 cs0	at mainbus0 addr 0x7fe00000
 
 # flash driver not implemented
-#flash0	at mainbus0 addr 0x70000000
+#pmflash0	at mainbus0 addr 0x70000000
 
 # UARTs
 com0	at cpc0 addr 0xff600300
