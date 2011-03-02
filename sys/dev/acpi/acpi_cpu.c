@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.34 2011/03/01 13:38:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.35 2011/03/02 06:17:08 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.34 2011/03/01 13:38:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.35 2011/03/02 06:17:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -800,10 +800,10 @@ acpicpu_debug_print(device_t self)
 				continue;
 
 			aprint_verbose_dev(sc->sc_dev, "C%d: %3s, "
-			    "lat %3u us, pow %5u mW, %s\n", i,
+			    "lat %3u us, pow %5u mW%s\n", i,
 			    acpicpu_debug_print_method(cs->cs_method),
 			    cs->cs_latency, cs->cs_power,
-			    (cs->cs_flags != 0) ? "bus master check" : "");
+			    (cs->cs_flags != 0) ? ", bus master check" : "");
 		}
 
 		method = sc->sc_pstate_control.reg_spaceid;
@@ -816,9 +816,11 @@ acpicpu_debug_print(device_t self)
 				continue;
 
 			aprint_verbose_dev(sc->sc_dev, "P%d: %3s, "
-			    "lat %3u us, pow %5u mW, %4u MHz\n", i,
+			    "lat %3u us, pow %5u mW, %4u MHz%s\n", i,
 			    acpicpu_debug_print_method(method),
-			    ps->ps_latency, ps->ps_power, ps->ps_freq);
+			    ps->ps_latency, ps->ps_power, ps->ps_freq,
+			    (ps->ps_flags & ACPICPU_FLAG_P_TURBO) != 0 ?
+			    ", turbo boost" : "");
 		}
 
 		method = sc->sc_tstate_control.reg_spaceid;
