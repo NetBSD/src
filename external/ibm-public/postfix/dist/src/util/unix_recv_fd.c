@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_recv_fd.c,v 1.3 2010/06/17 18:18:16 tron Exp $	*/
+/*	$NetBSD: unix_recv_fd.c,v 1.4 2011/03/02 19:56:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -16,7 +16,7 @@
 /*
 /*	Arguments:
 /* .IP fd
-/*	File descriptor.
+/*	File descriptor that connects the sending and receiving processes.
 /* DIAGNOSTICS
 /*	unix_recv_fd() returns -1 upon failure.
 /* LICENSE
