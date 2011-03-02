@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.134 2011/02/27 18:10:25 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.135 2011/03/02 21:57:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.134 2011/02/27 18:10:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.135 2011/03/02 21:57:40 matt Exp $");
 
 #include "opt_pci.h"
 
@@ -272,7 +272,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
-	pcireg_t id, csr, class, intr, bhlcr, bar;
+	pcireg_t id, csr, class, intr, bhlcr, bar, endbar;
 	int ret, pin, bus, device, function, i, width;
 	int locs[PCICF_NLOCS];
 
@@ -301,7 +301,12 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	memset(sc->PCI_SC_DEVICESC(device, function).c_range, 0,
 	    sizeof(sc->PCI_SC_DEVICESC(device, function).c_range));
 	i = 0;
-	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += width) {
+	switch (PCI_HDRTYPE_TYPE(bhlcr)) {
+	case PCI_HDRTYPE_PPB: endbar = PCI_MAPREG_PPB_END; break;
+	case PCI_HDRTYPE_PCB: endbar = PCI_MAPREG_PCB_END; break;
+	default: endbar = PCI_MAPREG_END; break;
+	}
+	for (bar = PCI_MAPREG_START; bar < endbar; bar += width) {
 		struct pci_range *r;
 		pcireg_t type;
 
