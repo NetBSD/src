@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.8 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.9 2011/03/02 10:51:04 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2011/03/02 10:51:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,8 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 			 * effect, clears the timer interrupt request.
 			 */
 			mips3_cp0_compare_write(0);
-		}
 #endif
+		}
 
 		/*
 		 * If there is an independent timer interrupt handler,
