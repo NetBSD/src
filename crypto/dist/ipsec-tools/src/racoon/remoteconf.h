@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.14 2011/02/02 15:21:34 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.15 2011/03/02 14:58:27 vanhu Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -208,6 +208,7 @@ extern struct etypes * dupetypes __P((struct etypes *));
 extern void insrmconf __P((struct remoteconf *));
 extern void remrmconf __P((struct remoteconf *));
 extern void flushrmconf __P((void));
+extern void flushspspec __P((struct remoteconf *));
 extern void initrmconf __P((void));
 extern void rmconf_start_reload __P((void));
 extern void rmconf_finish_reload __P((void));

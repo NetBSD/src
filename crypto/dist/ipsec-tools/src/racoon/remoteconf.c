@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.23 2011/03/02 14:52:32 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.24 2011/03/02 14:58:27 vanhu Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -654,6 +654,7 @@ delrmconf(rmconf)
 		racoon_free(rmconf->name);
 	if (rmconf->remote)
 		racoon_free(rmconf->remote);
+	flushspspec(rmconf);
 	racoon_free(rmconf);
 }
 
