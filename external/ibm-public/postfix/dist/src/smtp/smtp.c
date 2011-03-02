@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.3 2010/06/17 18:18:15 tron Exp $	*/
+/*	$NetBSD: smtp.c,v 1.4 2011/03/02 19:56:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -232,6 +232,10 @@
 /*	Available in Postfix version 2.6 and later:
 /* .IP "\fBtcp_windowsize (0)\fR"
 /*	An optional workaround for routers that break TCP window scaling.
+/* .PP
+/*	Available in Postfix version 2.8 and later:
+/* .IP "\fBsmtp_dns_resolver_options (empty)\fR"
+/*	DNS Resolver options for the Postfix SMTP client.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -411,6 +415,10 @@
 /*	Try to detect a mail hijacking attack based on a TLS protocol
 /*	vulnerability (CVE-2009-3555), where an attacker prepends malicious
 /*	HELO, MAIL, RCPT, DATA commands to a Postfix SMTP client TLS session.
+/* .PP
+/*	Available in Postfix version 2.8 and later:
+/* .IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
+/*	List or bit-mask of OpenSSL bug work-arounds to disable.
 /* OBSOLETE STARTTLS CONTROLS
 /* .ad
 /* .fi
@@ -572,6 +580,10 @@
 /* .IP "\fBproxy_interfaces (empty)\fR"
 /*	The network interface addresses that this mail system receives mail
 /*	on by way of a proxy or network address translation unit.
+/* .IP "\fBsmtp_address_preference (ipv6)\fR"
+/*	The address type ("ipv6", "ipv4" or "any") that the Postfix
+/*	SMTP client will try first, when a destination has IPv6 and IPv4
+/*	addresses with equal MX preference.
 /* .IP "\fBsmtp_bind_address (empty)\fR"
 /*	An optional numerical network address that the Postfix SMTP client
 /*	should bind to when making an IPv4 connection.
@@ -688,6 +700,10 @@
 #include <maps.h>
 #include <ext_prop.h>
 
+/* DNS library. */
+
+#include <dns.h>
+
 /* Single server skeleton. */
 
 #include <mail_server.h>
@@ -743,10 +759,11 @@ int     var_smtp_mxsess_limit;
 int     var_smtp_cache_conn;
 int     var_smtp_reuse_time;
 char   *var_smtp_cache_dest;
-char   *var_scache_service;
+char   *var_scache_service;		/* You can now leave this here. */
 bool    var_smtp_cache_demand;
 char   *var_smtp_ehlo_dis_words;
 char   *var_smtp_ehlo_dis_maps;
+char   *var_smtp_addr_pref;
 
 char   *var_smtp_tls_level;
 bool    var_smtp_use_tls;
@@ -799,6 +816,7 @@ char   *var_smtp_nest_chks;
 char   *var_smtp_body_chks;
 char   *var_smtp_resp_filter;
 bool    var_lmtp_assume_final;
+char   *var_smtp_dns_res_opt;
 
  /* Special handling of 535 AUTH errors. */
 char   *var_smtp_sasl_auth_cache_name;
@@ -814,6 +832,7 @@ SCACHE *smtp_scache;
 MAPS   *smtp_ehlo_dis_maps;
 MAPS   *smtp_generic_maps;
 int     smtp_ext_prop_mask;
+unsigned smtp_dns_res_opt;
 MAPS   *smtp_pix_bug_maps;
 HBC_CHECKS *smtp_header_checks;		/* limited header checks */
 HBC_CHECKS *smtp_body_checks;		/* limited body checks */
@@ -826,6 +845,11 @@ HBC_CHECKS *smtp_body_checks;		/* limited body checks */
 TLS_APPL_STATE *smtp_tls_ctx;
 
 #endif
+
+ /*
+  * IPv6 preference.
+  */
+static int smtp_addr_pref;
 
 /* deliver_message - deliver message with extreme prejudice */
 
@@ -856,6 +880,7 @@ static int deliver_message(const char *service, DELIVER_REQUEST *request)
     state->request = request;
     state->src = request->fp;
     state->service = service;
+    state->misc_flags |= smtp_addr_pref;
     SMTP_RCPT_INIT(state);
 
     /*
@@ -910,6 +935,11 @@ static void post_init(char *unused_name, char **unused_argv)
 	SMTP_HOST_LOOKUP_NATIVE, SMTP_HOST_FLAG_NATIVE,
 	0,
     };
+    static const NAME_MASK dns_res_opt_masks[] = {
+	SMTP_DNS_RES_OPT_DEFNAMES, RES_DEFNAMES,
+	SMTP_DNS_RES_OPT_DNSRCH, RES_DNSRCH,
+	0,
+    };
 
     /*
      * Select hostname lookup mechanisms.
@@ -936,6 +966,12 @@ static void post_init(char *unused_name, char **unused_argv)
 					 var_ipc_idle_limit,
 					 var_ipc_ttl_limit);
 #endif
+
+    /*
+     * Select DNS query flags.
+     */
+    smtp_dns_res_opt = name_mask(VAR_SMTP_DNS_RES_OPT, dns_res_opt_masks,
+				 var_smtp_dns_res_opt);
 }
 
 /* pre_init - pre-jail initialization */
@@ -943,6 +979,12 @@ static void post_init(char *unused_name, char **unused_argv)
 static void pre_init(char *unused_name, char **unused_argv)
 {
     int     use_tls;
+    static const NAME_CODE addr_pref_map[] = {
+	INET_PROTO_NAME_IPV6, SMTP_MISC_FLAG_PREF_IPV6,
+	INET_PROTO_NAME_IPV4, SMTP_MISC_FLAG_PREF_IPV4,
+	INET_PROTO_NAME_ANY, 0,
+	0, -1,
+    };
 
     /*
      * Turn on per-peer debugging.
@@ -1076,6 +1118,16 @@ static void pre_init(char *unused_name, char **unused_argv)
 	smtp_chat_resp_filter =
 	    dict_open(var_smtp_resp_filter, O_RDONLY,
 		      DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
+
+    /*
+     * Address family preference.
+     */
+    if (*var_smtp_addr_pref) {
+	smtp_addr_pref = name_code(addr_pref_map, NAME_CODE_FLAG_NONE,
+				   var_smtp_addr_pref);
+	if (smtp_addr_pref < 0)
+	    msg_fatal("bad %s value: %s", VAR_SMTP_ADDR_PREF, var_smtp_addr_pref);
+    }
 }
 
 /* pre_accept - see if tables have changed */
