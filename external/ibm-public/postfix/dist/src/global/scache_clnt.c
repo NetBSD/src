@@ -1,4 +1,4 @@
-/*	$NetBSD: scache_clnt.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: scache_clnt.c,v 1.1.1.2 2011/03/02 19:32:18 tron Exp $	*/
 
 /*++
 /* NAME
@@ -416,7 +416,7 @@ SCACHE *scache_clnt_create(const char *server, int timeout,
     sp->scache->size = scache_clnt_size;
     sp->scache->free = scache_clnt_free;
 
-    service = concatenate("local:private/", var_scache_service, (char *) 0);
+    service = concatenate("local:private/", server, (char *) 0);
     sp->auto_clnt = auto_clnt_create(service, timeout, idle_limit, ttl_limit);
     myfree(service);
 

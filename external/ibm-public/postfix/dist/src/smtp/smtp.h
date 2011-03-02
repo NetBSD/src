@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.1.1.2 2010/06/17 18:07:03 tron Exp $	*/
+/*	$NetBSD: smtp.h,v 1.1.1.3 2011/03/02 19:32:31 tron Exp $	*/
 
 /*++
 /* NAME
@@ -123,6 +123,7 @@ typedef struct SMTP_STATE {
 #define SMTP_FEATURE_PIX_DELAY_DOTCRLF	(1<<17)	/* PIX smtp fixup mode */
 #define SMTP_FEATURE_XFORWARD_PORT	(1<<18)
 #define SMTP_FEATURE_EARLY_TLS_MAIL_REPLY (1<<19)	/* CVE-2009-3555 */
+#define SMTP_FEATURE_XFORWARD_IDENT	(1<<20)
 
  /*
   * Features that passivate under the endpoint.
@@ -148,6 +149,8 @@ typedef struct SMTP_STATE {
 #define SMTP_MISC_FLAG_CONN_LOAD	(1<<6)
 #define SMTP_MISC_FLAG_CONN_STORE	(1<<7)
 #define SMTP_MISC_FLAG_COMPLETE_SESSION	(1<<8)
+#define SMTP_MISC_FLAG_PREF_IPV6	(1<<9)
+#define SMTP_MISC_FLAG_PREF_IPV4	(1<<10)
 
 #define SMTP_MISC_FLAG_CONN_CACHE_MASK \
 	(SMTP_MISC_FLAG_CONN_LOAD | SMTP_MISC_FLAG_CONN_STORE)
@@ -178,6 +181,7 @@ extern MAPS *smtp_pix_bug_maps;		/* PIX workarounds */
 
 extern MAPS *smtp_generic_maps;		/* make internal address valid */
 extern int smtp_ext_prop_mask;		/* address externsion propagation */
+extern unsigned smtp_dns_res_opt;	/* DNS query flags */
 
 #ifdef USE_TLS
 
