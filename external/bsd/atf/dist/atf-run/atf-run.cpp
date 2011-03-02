@@ -380,14 +380,43 @@ atf_run::run_test_program(const atf::fs::path& tp,
                 std::pair< std::string, const atf::process::status > s =
                     impl::run_test_case(tp, tcname, "body", tcmd, config,
                                             resfile, workdir.get_path(), w);
-                if (has_cleanup)
-                    (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
-                            config, resfile, workdir.get_path(), w);
 
                 // TODO: Force deletion of workdir.
 
                 impl::test_case_result tcr = get_test_case_result(s.first,
                     s.second, resfile);
+
+		/* if we have a core, scope out stacktrace */
+		size_t slashpos = tp.str().rfind("/");
+		std::string corename = workdir.get_path().str()
+		    + std::string("/") + tp.str().substr(slashpos+1)
+		    + std::string(".core");
+		if (s.second.signaled() && s.second.coredump() &&
+		    access(corename.c_str(), F_OK) == 0) {
+			std::string gdbcmd;
+			char buf[256];
+			char *p;
+
+			gdbcmd = std::string("gdb -batch -q -ex bt ") +
+			    tp.str() + std::string(" ") + corename +
+			    std::string(" 2> /dev/null");
+			FILE *gdbstrm = popen(gdbcmd.c_str(), "r");
+			if (gdbstrm) {
+				w.stderr_tc(std::string("test program crashed, "
+				    "autolisting stacktrace:"));
+				while (fgets(buf, sizeof(buf), gdbstrm)) {
+					if ((p = strchr(buf, '\n')) != NULL)
+						*p = '\0';
+					w.stderr_tc(std::string(buf));
+				}
+				pclose(gdbstrm);
+				w.stderr_tc(std::string("stacktrace complete"));
+			}
+		}
+
+                if (has_cleanup)
+                    (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
+                            config, resfile, workdir.get_path(), w);
 
                 w.end_tc(tcr.state(), tcr.reason());
                 if (tcr.state() == "failed")
