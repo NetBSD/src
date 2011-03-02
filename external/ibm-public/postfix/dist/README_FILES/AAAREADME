@@ -38,6 +38,7 @@ SSMMTTPP RReellaayy aanndd aacccceessss ccoonnttrrooll
   * SMTPD_POLICY_README: Access policy delegation
   * ADDRESS_VERIFICATION_README: Address verification
   * RESTRICTION_CLASS_README: Per-client/user/etc. access
+  * POSTSCREEN_README: SMTP connection triage
   * ETRN_README: ETRN Support
   * UUCP_README: LAN connected via UUCP
 
@@ -50,6 +51,7 @@ LLooookkuupp ttaabblleess ((ddaattaabbaasseess))
   * MYSQL_README: MySQL Howto
   * PCRE_README: PCRE Howto
   * PGSQL_README: PostgreSQL Howto
+  * SQLITE_README: SQLite Howto
 
 MMaaiilliinngg lliisstt ssuuppppoorrtt
 

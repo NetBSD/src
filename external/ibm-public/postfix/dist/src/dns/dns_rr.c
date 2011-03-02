@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: dns_rr.c,v 1.1.1.2 2011/03/02 19:32:10 tron Exp $	*/
 
 /*++
 /* NAME
@@ -33,7 +33,15 @@
 /*	DNS_RR	*list
 /*	int	(*compar)(DNS_RR *, DNS_RR *);
 /*
-/*	int	dns_rr_compare_pref(DNS_RR *a, DNS_RR *b)
+/*	int	dns_rr_compare_pref_ipv6(DNS_RR *a, DNS_RR *b)
+/*	DNS_RR	*list
+/*	DNS_RR	*list
+/*
+/*	int	dns_rr_compare_pref_ipv4(DNS_RR *a, DNS_RR *b)
+/*	DNS_RR	*list
+/*	DNS_RR	*list
+/*
+/*	int	dns_rr_compare_pref_any(DNS_RR *a, DNS_RR *b)
 /*	DNS_RR	*list
 /*	DNS_RR	*list
 /*
@@ -67,8 +75,8 @@
 /*	order according to a user-specified criterion. The result is the
 /*	sorted list.
 /*
-/*	dns_rr_compare_pref() is a dns_rr_sort() helper to sort records
-/*	by their MX preference.
+/*	dns_rr_compare_pref_XXX() are dns_rr_sort() helpers to sort
+/*	records by their MX preference and by their address family.
 /*
 /*	dns_rr_shuffle() randomly permutes a list of resource records.
 /*
@@ -168,9 +176,9 @@ DNS_RR *dns_rr_append(DNS_RR *list, DNS_RR *rr)
     return (list);
 }
 
-/* dns_rr_compare_pref - compare resource records by preference */
+/* dns_rr_compare_pref_ipv6 - compare records by preference, ipv6 preferred */
 
-int     dns_rr_compare_pref(DNS_RR *a, DNS_RR *b)
+int     dns_rr_compare_pref_ipv6(DNS_RR *a, DNS_RR *b)
 {
     if (a->pref != b->pref)
 	return (a->pref - b->pref);
@@ -183,6 +191,39 @@ int     dns_rr_compare_pref(DNS_RR *a, DNS_RR *b)
 	return (+1);
 #endif
     return 0;
+}
+
+/* dns_rr_compare_pref_ipv4 - compare records by preference, ipv4 preferred */
+
+int     dns_rr_compare_pref_ipv4(DNS_RR *a, DNS_RR *b)
+{
+    if (a->pref != b->pref)
+	return (a->pref - b->pref);
+#ifdef HAS_IPV6
+    if (a->type == b->type)
+	return 0;
+    if (a->type == T_AAAA)
+	return (+1);
+    if (b->type == T_AAAA)
+	return (-1);
+#endif
+    return 0;
+}
+
+/* dns_rr_compare_pref_any - compare records by preference, protocol-neutral */
+
+int     dns_rr_compare_pref_any(DNS_RR *a, DNS_RR *b)
+{
+    if (a->pref != b->pref)
+	return (a->pref - b->pref);
+    return 0;
+}
+
+/* dns_rr_compare_pref - binary compatibility helper after name change */
+
+int     dns_rr_compare_pref(DNS_RR *a, DNS_RR *b)
+{
+    return (dns_rr_compare_pref_ipv6(a, b));
 }
 
 /* dns_rr_sort_callback - glue function */

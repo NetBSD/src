@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_dict.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_dict.c,v 1.1.1.2 2011/03/02 19:32:15 tron Exp $	*/
 
 /*++
 /* NAME
@@ -38,6 +38,7 @@
 #include <dict_ldap.h>
 #include <dict_mysql.h>
 #include <dict_pgsql.h>
+#include <dict_sqlite.h>
 #include <mail_dict.h>
 
 typedef struct {
@@ -55,6 +56,9 @@ static const DICT_OPEN_INFO dict_open_info[] = {
 #endif
 #ifdef HAS_PGSQL
     DICT_TYPE_PGSQL, dict_pgsql_open,
+#endif
+#ifdef HAS_SQLITE
+    DICT_TYPE_SQLITE, dict_sqlite_open,
 #endif
     0,
 };

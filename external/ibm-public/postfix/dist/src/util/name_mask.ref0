@@ -1,0 +1,9 @@
+zero -> 0x1 -> zero
+one -> 0x2 -> one
+two -> 0x4 -> two
+three -> 0x8 -> three
+four -> 0x0 -> 
+zero one two three four -> 0xf -> zero one two three
+0xff -> 0x0 -> 
+0xffffffff -> 0x0 -> 
+0xffffffffffffffff -> 0x0 -> 

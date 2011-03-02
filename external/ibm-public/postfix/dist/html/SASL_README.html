@@ -42,8 +42,8 @@ SMTP server.  Once a client is authenticated, a server can give it
 
 <p> Postfix does not implement SASL itself, but instead uses existing
 implementations as building blocks.  This means that some SASL-related
-configuration will involve files that belong to Postfix, while other
-configuration will involve files that belong to the specific SASL
+configuration files will belong to Postfix, while other
+configuration files belong to the specific SASL
 implementation that Postfix will use. This document covers both the
 Postfix and non-Postfix configuration.  </p>
 
@@ -587,13 +587,13 @@ SASL sources provide three authentication plugins. </p>
 
 <tr> <th>Plugin </th> <th>Description </th> </tr>
 
-<tr> <td><a href="#auxprop_sasldb">sasldb</a></dt> <td> Accounts
+<tr> <td><a href="#auxprop_sasldb">sasldb</a></td> <td> Accounts
 are stored stored in a Cyrus SASL Berkeley DB database </td> </tr>
 
-<tr> <td><a href="#auxprop_sql">sql</a></dt> <td> Accounts are
+<tr> <td><a href="#auxprop_sql">sql</a></td> <td> Accounts are
 stored in a SQL database </td> </tr>
 
-<tr> <td><a href="#auxprop_ldapdb">ldapdb</a></dt> <td> Accounts
+<tr> <td><a href="#auxprop_ldapdb">ldapdb</a></td> <td> Accounts
 are stored stored in an LDAP database </td> </tr>
 
 </table>
@@ -1184,6 +1184,7 @@ clients: </p>
 <pre>
 % <strong>telnet server.example.com 25</strong>
 ...
+220 server.example.com ESMTP Postfix
 <strong>EHLO client.example.com</strong>
 250-server.example.com
 250-PIPELINING
@@ -1439,7 +1440,8 @@ version 2.3 and later): </p>
 <p> To test the server side, connect (for example, with
 <code>telnet</code>) to the Postfix SMTP server port and you should
 be able to have a conversation as shown below. Information sent by
-the client (that is, you) is shown in bold font. </p>
+the client (that is, you) is shown in <strong>bold</strong> font.
+</p>
 
 <blockquote>
 <pre>
@@ -1455,6 +1457,19 @@ the client (that is, you) is shown in bold font. </p>
 250 8BITMIME
 <strong>AUTH PLAIN AHRlc3QAdGVzdHBhc3M=</strong>
 235 Authentication successful
+</pre>
+</blockquote>
+
+<p> To test this over a connection that is encrypted with TLS, use
+<code>openssl s_client</code> instead of <code>telnet</code>:
+
+<blockquote>
+<pre>
+% <strong>openssl s_client -connect server.example.com:25 -starttls smtp</strong>
+...
+220 server.example.com ESMTP Postfix
+<strong>EHLO client.example.com</strong>
+...see above example for more...
 </pre>
 </blockquote>
 
@@ -1796,7 +1811,7 @@ not installed in the <code>/usr/lib/sasl2</code> directory. </p>
 
 </blockquote>
 
-<p> The less secure approach is to lower the security standards and
+<p> The insecure approach is to lower the security standards and
 permit plaintext authentication mechanisms: </p>
 
 <blockquote>
@@ -1806,15 +1821,38 @@ permit plaintext authentication mechanisms: </p>
 </pre>
 </blockquote>
 
-<p> If the remote server supports TLS, you can protect the plaintext
-username and password by turning on TLS in the Postfix SMTP client
-(see: <a href="TLS_README.html">TLS_README</a>), and configuring the client as discussed next.
+<p> The more secure approach is to protect the plaintext username
+and password with TLS session encryption. To find out if the remote
+SMTP server supports TLS, connect to the server and see if it
+announces STARTTLS support as shown in the example.  Information
+sent by the client (that is, you) is shown in <strong>bold</strong>
+font.  </p>
+
+<blockquote>
+<pre>
+% <strong>telnet server.example.com 25</strong>
+...
+220 server.example.com ESMTP Postfix
+<strong>EHLO client.example.com</strong>
+250-server.example.com
+250-PIPELINING
+250-SIZE 10240000
+250-STARTTLS
+...
+</pre>
+</blockquote>
+
+<p> Instead of port 25 (smtp), specify port 587 (submission) where
+appriopriate. </p>
 
 <h4>Encrypted SMTP session (TLS)</h4>
 
-<p> A separate parameter controls Postfix SASL mechanism policy
-during a TLS-encrypted SMTP session. The default is to copy the
-settings from the unencrypted session: </p>
+<p> To turn on TLS in the Postfix SMTP client, see <a href="TLS_README.html">TLS_README</a> for
+configuration details. </p>
+
+<p> The <a href="postconf.5.html#smtp_sasl_tls_security_options">smtp_sasl_tls_security_options</a> parameter controls Postfix
+SASL mechanism policy during a TLS-encrypted SMTP session. The
+default is to copy the settings from the unencrypted session: </p>
 
 <blockquote>
 <pre>
@@ -1829,19 +1867,19 @@ only over a TLS-encrypted connection: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtpd_sasl_security_options">smtpd_sasl_security_options</a> = noanonymous, noplaintext
-    <a href="postconf.5.html#smtpd_sasl_tls_security_options">smtpd_sasl_tls_security_options</a> = noanonymous
+    <a href="postconf.5.html#smtp_sasl_security_options">smtp_sasl_security_options</a> = noanonymous, noplaintext
+    <a href="postconf.5.html#smtp_sasl_tls_security_options">smtp_sasl_tls_security_options</a> = noanonymous
 </pre>
 </blockquote>
 
 <h3><a name="client_sasl_filter">Postfix SMTP/LMTP client policy -
 SASL mechanism <em>names</em></a></h3>
 
-<p> Unfortunately, Postfix needs a second client policy for SASL
-mechanism selection.  Reason: the Cyrus SASL library will choose
-the most secure authentication mechanism that both the SMTP client
-and server implement - even if one of the parties was not configured
-for that mechanism. </p>
+<p> Given the SASL security options of the previous section, the
+Cyrus SASL library will choose the most secure authentication
+mechanism that both the SMTP client and server implement.  Unfortunately,
+that authentication mechanism may fail because the client or server
+is not configured to use that mechanism.</p>
 
 <p> To prevent this, the Postfix SMTP client can filter the names
 of the authentication mechanisms from the remote SMTP server.  Used

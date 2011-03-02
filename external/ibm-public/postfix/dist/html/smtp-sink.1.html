@@ -54,6 +54,16 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               attempt to block the client before  it  sends  ".".
               Specify a zero delay value to abort immediately.
 
+       <b>-b</b> <i>soft-bounce-reply</i>
+              Use  <i>soft-bounce-reply</i>  for  soft reject responses.
+              The default reply  is  "450  4.3.0  Error:  command
+              failed".
+
+       <b>-B</b> <i>hard-bounce-reply</i>
+              Use  <i>hard-bounce-reply</i>  for  hard reject responses.
+              The default reply  is  "500  5.3.0  Error:  command
+              failed".
+
        <b>-c</b>     Display  running counters that are updated whenever
               an SMTP session ends, a QUIT command  is  executed,
               or when "." is received.

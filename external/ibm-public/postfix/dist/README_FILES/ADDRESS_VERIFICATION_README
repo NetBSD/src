@@ -121,7 +121,7 @@ LLiimmiittaattiioonnss ooff aaddddrreessss vveerriiffi
     You can change the probe sender address into the null address
     ("address_verify_sender ="). This is UNSAFE because address probes will
     fail with mis-configured sites that reject MAIL FROM: <>, while probes from
-    "postmaster@$myorigin" would succeed.
+    "double-bounce@$myorigin" would succeed.
 
 RReecciippiieenntt aaddddrreessss vveerriiffiiccaattiioonn
 

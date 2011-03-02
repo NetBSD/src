@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_params.c,v 1.1.1.2 2010/06/17 18:07:02 tron Exp $	*/
+/*	$NetBSD: lmtp_params.c,v 1.1.1.3 2011/03/02 19:32:31 tron Exp $	*/
 
     static const CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -54,6 +54,8 @@
 	VAR_LMTP_NEST_CHKS, DEF_LMTP_NEST_CHKS, &var_smtp_nest_chks, 0, 0,
 	VAR_LMTP_BODY_CHKS, DEF_LMTP_BODY_CHKS, &var_smtp_body_chks, 0, 0,
 	VAR_LMTP_RESP_FILTER, DEF_LMTP_RESP_FILTER, &var_smtp_resp_filter, 0, 0,
+	VAR_LMTP_ADDR_PREF, DEF_LMTP_ADDR_PREF, &var_smtp_addr_pref, 1, 0,
+	VAR_LMTP_DNS_RES_OPT, DEF_LMTP_DNS_RES_OPT, &var_smtp_dns_res_opt, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE lmtp_time_table[] = {

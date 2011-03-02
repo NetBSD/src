@@ -7,7 +7,8 @@ DAEMONS	= man8/bounce.8 man8/defer.8 man8/cleanup.8 man8/error.8 man8/local.8 \
 	man8/showq.8 man8/smtp.8 man8/smtpd.8 man8/trivial-rewrite.8 \
 	man8/oqmgr.8 man8/spawn.8 man8/flush.8 man8/virtual.8 man8/qmqpd.8 \
 	man8/verify.8 man8/trace.8 man8/proxymap.8 man8/anvil.8 \
-	man8/scache.8 man8/discard.8 man8/tlsmgr.8
+	man8/scache.8 man8/discard.8 man8/tlsmgr.8 man8/postscreen.8 \
+	man8/dnsblog.8 man8/tlsproxy.8
 COMMANDS= man1/postalias.1 man1/postcat.1 man1/postconf.1 man1/postfix.1 \
 	man1/postkick.1 man1/postlock.1 man1/postlog.1 man1/postdrop.1 \
 	man1/postmap.1 man1/postmulti.1 man1/postqueue.1 man1/postsuper.1 \
@@ -17,7 +18,8 @@ CONFIG	= man5/access.5 man5/aliases.5 man5/canonical.5 man5/relocated.5 \
 	man5/cidr_table.5 man5/tcp_table.5 man5/header_checks.5 \
 	man5/body_checks.5 man5/ldap_table.5 man5/mysql_table.5 \
 	man5/pgsql_table.5 man5/master.5 man5/nisplus_table.5 \
-	man5/generic.5 man5/bounce.5 man5/postfix-wrapper.5
+	man5/generic.5 man5/bounce.5 man5/postfix-wrapper.5 \
+	man5/sqlite_table.5
 TOOLS	= man1/smtp-sink.1 man1/smtp-source.1 man1/qmqp-sink.1 \
 	man1/qmqp-source.1 man1/qshape.1
 
@@ -141,6 +143,11 @@ man8/smtp.8: ../src/smtp/smtp.c
 	../mantools/srctoman $? >$@
 
 man8/smtpd.8: ../src/smtpd/smtpd.c
+	../mantools/fixman ../proto/postconf.proto $? >junk && \
+	    (cmp -s junk $? || mv junk $?) && rm -f junk
+	../mantools/srctoman $? >$@
+
+man8/tlsproxy.8: ../src/tlsproxy/tlsproxy.c
 	../mantools/fixman ../proto/postconf.proto $? >junk && \
 	    (cmp -s junk $? || mv junk $?) && rm -f junk
 	../mantools/srctoman $? >$@
@@ -270,6 +277,9 @@ man5/master.5: ../proto/master
 	../mantools/srctoman - $? >$@
 
 man5/mysql_table.5: ../proto/mysql_table
+	../mantools/srctoman - $? >$@
+
+man5/sqlite_table.5: ../proto/sqlite_table
 	../mantools/srctoman - $? >$@
 
 man5/nisplus_table.5: ../proto/nisplus_table
