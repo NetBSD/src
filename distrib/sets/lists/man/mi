@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1297 2011/02/27 17:51:45 ahoka Exp $
+# $NetBSD: mi,v 1.1298 2011/03/02 22:25:54 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2177,6 +2177,7 @@
 ./usr/share/man/cat8/dmctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dmsetup.0			man-lvm-catman		lvm,.cat
+./usr/share/man/cat8/dnsblog.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/dnssec-dsfromkey.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-keyfromlabel.0	man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-keygen.0		man-bind-catman		.cat
@@ -2577,6 +2578,7 @@
 ./usr/share/man/cat8/pmppc/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/portmap.0			man-obsolete		obsolete
 ./usr/share/man/cat8/postinstall.0		man-sys-catman		.cat
+./usr/share/man/cat8/postscreen.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/powerd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/poweroff.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pppd.0			man-ppp-catman		.cat
@@ -2783,6 +2785,7 @@
 ./usr/share/man/cat8/timed.0			man-timed-catman	.cat
 ./usr/share/man/cat8/timedc.0			man-timed-catman	.cat
 ./usr/share/man/cat8/tlsmgr.0			man-postfix-catman	postfix,crypto,.cat
+./usr/share/man/cat8/tlsproxy.0			man-postfix-catman	postfix,crypto,.cat
 ./usr/share/man/cat8/tpctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/trace.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/traceroute.0		man-netutil-catman	.cat
@@ -4805,6 +4808,7 @@
 ./usr/share/man/html8/dmctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dmesg.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dmsetup.html		man-lvm-htmlman		lvm,html
+./usr/share/man/html8/dnsblog.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/dnssec-dsfromkey.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-keyfromlabel.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-keygen.html	man-bind-htmlman	html
@@ -5100,6 +5104,7 @@
 ./usr/share/man/html8/pipe.html			man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/pmax/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/postinstall.html		man-sys-htmlman		html
+./usr/share/man/html8/postscreen.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/powerd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/poweroff.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/pppd.html			man-ppp-htmlman		html
@@ -5267,6 +5272,7 @@
 ./usr/share/man/html8/timed.html		man-timed-htmlman	html
 ./usr/share/man/html8/timedc.html		man-timed-htmlman	html
 ./usr/share/man/html8/tlsmgr.html		man-postfix-htmlman	postfix,crypto,html
+./usr/share/man/html8/tlsproxy.html		man-postfix-htmlman	postfix,crypto,html
 ./usr/share/man/html8/tpctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/trace.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/traceroute.html		man-netutil-htmlman	html
@@ -7489,6 +7495,7 @@
 ./usr/share/man/man8/dmctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man		.man
 ./usr/share/man/man8/dmsetup.8			man-lvm-man		lvm,.man
+./usr/share/man/man8/dnsblog.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dnssec-dsfromkey.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-keyfromlabel.8	man-bind-man		.man
 ./usr/share/man/man8/dnssec-keygen.8		man-bind-man		.man
@@ -7890,6 +7897,7 @@
 ./usr/share/man/man8/pmppc/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/portmap.8			man-obsolete		obsolete
 ./usr/share/man/man8/postinstall.8		man-sys-man		.man
+./usr/share/man/man8/postscreen.8		man-postfix-man		postfix,.man
 ./usr/share/man/man8/powerd.8			man-sysutil-man		.man
 ./usr/share/man/man8/poweroff.8			man-sysutil-man		.man
 ./usr/share/man/man8/pppd.8			man-ppp-man		.man
@@ -8096,6 +8104,7 @@
 ./usr/share/man/man8/timed.8			man-timed-man		.man
 ./usr/share/man/man8/timedc.8			man-timed-man		.man
 ./usr/share/man/man8/tlsmgr.8			man-postfix-man		postfix,crypto,.man
+./usr/share/man/man8/tlsproxy.8			man-postfix-man		postfix,crypto,.man
 ./usr/share/man/man8/tpctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/trace.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/traceroute.8		man-netutil-man		.man
