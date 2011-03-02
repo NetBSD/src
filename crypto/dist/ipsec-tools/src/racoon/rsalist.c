@@ -1,4 +1,4 @@
-/*	$NetBSD: rsalist.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: rsalist.c,v 1.5 2011/03/02 15:04:01 vanhu Exp $	*/
 
 /* Id: rsalist.c,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -86,6 +86,23 @@ rsa_key_insert(struct genlist *list, struct netaddr *src,
 	genlist_append(list, rsa_key);
 
 	return 0;
+}
+
+void
+rsa_key_free(void *data)
+{
+	struct rsa_key *rsa_key;
+
+	
+	rsa_key = (struct rsa_key *)data;
+	if (rsa_key->src)
+		free(rsa_key->src);
+	if (rsa_key->dst)
+		free(rsa_key->dst);
+	if (rsa_key->rsa)
+		RSA_free(rsa_key->rsa);
+
+	free(rsa_key);
 }
 
 static void *
