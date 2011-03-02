@@ -515,6 +515,7 @@ cleanup.o: ../../include/attr.h
 cleanup.o: ../../include/been_here.h
 cleanup.o: ../../include/cleanup_user.h
 cleanup.o: ../../include/dict.h
+cleanup.o: ../../include/dsn_mask.h
 cleanup.o: ../../include/header_body_checks.h
 cleanup.o: ../../include/header_opts.h
 cleanup.o: ../../include/htable.h
@@ -590,6 +591,7 @@ cleanup_api.o: ../../include/deliver_request.h
 cleanup_api.o: ../../include/dict.h
 cleanup_api.o: ../../include/dsn.h
 cleanup_api.o: ../../include/dsn_buf.h
+cleanup_api.o: ../../include/dsn_mask.h
 cleanup_api.o: ../../include/header_body_checks.h
 cleanup_api.o: ../../include/header_opts.h
 cleanup_api.o: ../../include/htable.h
@@ -625,6 +627,7 @@ cleanup_body_edit.o: ../../include/attr.h
 cleanup_body_edit.o: ../../include/been_here.h
 cleanup_body_edit.o: ../../include/cleanup_user.h
 cleanup_body_edit.o: ../../include/dict.h
+cleanup_body_edit.o: ../../include/dsn_mask.h
 cleanup_body_edit.o: ../../include/header_body_checks.h
 cleanup_body_edit.o: ../../include/header_opts.h
 cleanup_body_edit.o: ../../include/htable.h
@@ -771,6 +774,7 @@ cleanup_final.o: ../../include/attr.h
 cleanup_final.o: ../../include/been_here.h
 cleanup_final.o: ../../include/cleanup_user.h
 cleanup_final.o: ../../include/dict.h
+cleanup_final.o: ../../include/dsn_mask.h
 cleanup_final.o: ../../include/header_body_checks.h
 cleanup_final.o: ../../include/header_opts.h
 cleanup_final.o: ../../include/htable.h
@@ -799,6 +803,7 @@ cleanup_init.o: ../../include/attr.h
 cleanup_init.o: ../../include/been_here.h
 cleanup_init.o: ../../include/cleanup_user.h
 cleanup_init.o: ../../include/dict.h
+cleanup_init.o: ../../include/dsn_mask.h
 cleanup_init.o: ../../include/ext_prop.h
 cleanup_init.o: ../../include/flush_clnt.h
 cleanup_init.o: ../../include/header_body_checks.h
@@ -834,6 +839,7 @@ cleanup_map11.o: ../../include/attr.h
 cleanup_map11.o: ../../include/been_here.h
 cleanup_map11.o: ../../include/cleanup_user.h
 cleanup_map11.o: ../../include/dict.h
+cleanup_map11.o: ../../include/dsn_mask.h
 cleanup_map11.o: ../../include/header_body_checks.h
 cleanup_map11.o: ../../include/header_opts.h
 cleanup_map11.o: ../../include/htable.h
@@ -864,6 +870,7 @@ cleanup_map1n.o: ../../include/attr.h
 cleanup_map1n.o: ../../include/been_here.h
 cleanup_map1n.o: ../../include/cleanup_user.h
 cleanup_map1n.o: ../../include/dict.h
+cleanup_map1n.o: ../../include/dsn_mask.h
 cleanup_map1n.o: ../../include/header_body_checks.h
 cleanup_map1n.o: ../../include/header_opts.h
 cleanup_map1n.o: ../../include/htable.h
@@ -895,6 +902,7 @@ cleanup_masquerade.o: ../../include/attr.h
 cleanup_masquerade.o: ../../include/been_here.h
 cleanup_masquerade.o: ../../include/cleanup_user.h
 cleanup_masquerade.o: ../../include/dict.h
+cleanup_masquerade.o: ../../include/dsn_mask.h
 cleanup_masquerade.o: ../../include/header_body_checks.h
 cleanup_masquerade.o: ../../include/header_opts.h
 cleanup_masquerade.o: ../../include/htable.h
@@ -927,6 +935,7 @@ cleanup_message.o: ../../include/been_here.h
 cleanup_message.o: ../../include/cleanup_user.h
 cleanup_message.o: ../../include/conv_time.h
 cleanup_message.o: ../../include/dict.h
+cleanup_message.o: ../../include/dsn_mask.h
 cleanup_message.o: ../../include/dsn_util.h
 cleanup_message.o: ../../include/ext_prop.h
 cleanup_message.o: ../../include/header_body_checks.h
@@ -1010,6 +1019,7 @@ cleanup_out.o: ../../include/attr.h
 cleanup_out.o: ../../include/been_here.h
 cleanup_out.o: ../../include/cleanup_user.h
 cleanup_out.o: ../../include/dict.h
+cleanup_out.o: ../../include/dsn_mask.h
 cleanup_out.o: ../../include/header_body_checks.h
 cleanup_out.o: ../../include/header_opts.h
 cleanup_out.o: ../../include/htable.h
@@ -1083,6 +1093,7 @@ cleanup_region.o: ../../include/attr.h
 cleanup_region.o: ../../include/been_here.h
 cleanup_region.o: ../../include/cleanup_user.h
 cleanup_region.o: ../../include/dict.h
+cleanup_region.o: ../../include/dsn_mask.h
 cleanup_region.o: ../../include/header_body_checks.h
 cleanup_region.o: ../../include/header_opts.h
 cleanup_region.o: ../../include/htable.h
@@ -1110,6 +1121,7 @@ cleanup_rewrite.o: ../../include/attr.h
 cleanup_rewrite.o: ../../include/been_here.h
 cleanup_rewrite.o: ../../include/cleanup_user.h
 cleanup_rewrite.o: ../../include/dict.h
+cleanup_rewrite.o: ../../include/dsn_mask.h
 cleanup_rewrite.o: ../../include/header_body_checks.h
 cleanup_rewrite.o: ../../include/header_opts.h
 cleanup_rewrite.o: ../../include/htable.h
@@ -1142,6 +1154,7 @@ cleanup_state.o: ../../include/attr.h
 cleanup_state.o: ../../include/been_here.h
 cleanup_state.o: ../../include/cleanup_user.h
 cleanup_state.o: ../../include/dict.h
+cleanup_state.o: ../../include/dsn_mask.h
 cleanup_state.o: ../../include/header_body_checks.h
 cleanup_state.o: ../../include/header_opts.h
 cleanup_state.o: ../../include/htable.h

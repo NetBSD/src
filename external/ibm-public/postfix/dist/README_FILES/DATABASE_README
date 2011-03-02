@@ -73,10 +73,10 @@ files have few surprises, and are easy to debug with the postmap(1) command:
     % ppoossttmmaapp --qq iinnffoo@@eexxaammppllee..ccoomm hhaasshh:://eettcc//ppoossttffiixx//vviirrttuuaall
 
 Once you have local files working properly you can follow the instructions in
-ldap_table(5), mysql_table(5) or pgsql_table(5) and replace local file lookups
-with LDAP or SQL lookups. When you do this, you should use the postmap(1)
-command again, to verify that database lookups still produce the exact same
-results as local file lookup:
+ldap_table(5), mysql_table(5), pgsql_table(5) or sqlite_table(5) and replace
+local file lookups with LDAP or SQL lookups. When you do this, you should use
+the postmap(1) command again, to verify that database lookups still produce the
+exact same results as local file lookup:
 
     % ppoossttmmaapp --qq iinnffoo@@eexxaammppllee..ccoomm llddaapp:://eettcc//ppoossttffiixx//vviirrttuuaall..ccff
 
@@ -240,6 +240,9 @@ To find out what database types your Postfix system supports, use the "ppooss
         with the postmap(1) or postalias(1) command. The lookup table name as
         used in "sdbm:table" is the database file name without the ".dir" or
         ".pag" suffix.
+    ssqqlliittee (read-only)
+        Perform SQLite database lookups. Configuration details are given in
+        sqlite_table(5).
     ssttaattiicc (read-only)
         Always returns its lookup table name as lookup result. For example, the
         lookup table "static:foobar" always returns the string "foobar" as
@@ -249,6 +252,12 @@ To find out what database types your Postfix system supports, use the "ppooss
         in tcp_table(5). The lookup table name is "tcp:host:port" where "host"
         specifies a symbolic hostname or a numeric IP address, and "port"
         specifies a symbolic service name or a numeric port number.
+    tteexxtthhaasshh (read-only)
+        This produces similar results as hash: files, except that you don't
+        have to run the postmap(1) command before you can use the file, and
+        that texthash: does not detect changes after the file is read. The
+        lookup table name is "texthash:filename", where the file name is taken
+        literally; no suffix is appended.
     uunniixx (read-only)
         A limited way to query the UNIX authentication database. The following
         tables are implemented:

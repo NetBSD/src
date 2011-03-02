@@ -38,7 +38,7 @@ the following problem: </p>
 
 </ul>
 
-<p> This extension is implemented as a separate EMSTP command, and
+<p> This extension is implemented as a separate ESMTP command, and
 can be used to transmit client or message attributes incrementally.
 It is not implemented by passing additional parameters via the MAIL
 FROM command, because doing so would require extending the MAIL
@@ -72,7 +72,7 @@ names are shown in upper case, they are in fact case insensitive.
     xforward-command = XFORWARD 1*( SP attribute-name"="attribute-value )
 </p>
 <p>
-    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | SOURCE )
+    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | IDENT | SOURCE )
 </p>
 <p>
     attribute-value = xtext
@@ -107,6 +107,12 @@ names are shown in upper case, they are in fact case insensitive.
     up-stream host announced itself with (not necessarily via the
     SMTP HELO command), or [UNAVAILABLE] when the information is
     unavailable. The hostname may be a non-DNS hostname. </p>
+
+    <li> <p> The IDENT attribute specifies a local message identifier
+    on the up-stream host, or [UNAVAILABLE] when the information
+    is unavailable. The down-stream MTA may log this information
+    together with its own local message identifier to facilitate
+    message tracking across MTAs. </p>
 
     <li> <p> The SOURCE attribute specifies LOCAL when the message
     was received from a source that is local with respect to the
