@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.172 2011/02/20 16:24:53 christos Exp $
+# $NetBSD: mi,v 1.173 2011/03/02 22:25:54 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -309,6 +309,7 @@
 ./usr/share/doc/html/postfix/PACKAGE_README.html	misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/PCRE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/PGSQL_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/POSTSCREEN_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/QMQP_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/QSHAPE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/RESTRICTION_CLASS_README.html	misc-postfix-htmldoc	postfix,doc
@@ -317,6 +318,9 @@
 ./usr/share/doc/html/postfix/SMTPD_ACCESS_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_POLICY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_PROXY_README.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/SMTPD_PROXY_README.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/SOHO_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/SQLITE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/STANDARD_CONFIGURATION_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/TLS_LEGACY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/TLS_README.html		misc-postfix-htmldoc	postfix,doc
@@ -343,6 +347,7 @@
 ./usr/share/doc/html/postfix/defer.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/delivering.html	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/discard.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/dnsblog.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/error.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/faq.html		misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/flush.8.html	misc-postfix-htmldoc	postfix,doc
@@ -383,6 +388,7 @@
 ./usr/share/doc/html/postfix/postmap.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postmulti.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postqueue.1.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/postscreen.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postsuper.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/proxymap.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc	postfix,doc
@@ -405,7 +411,9 @@
 ./usr/share/doc/html/postfix/smtp.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/smtpd.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/spawn.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/sqlite_table.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/tlsmgr.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/tlsproxy.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/trace.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/transport.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/trivial-rewrite.8.html	misc-postfix-htmldoc	postfix,doc
@@ -800,6 +808,7 @@
 ./usr/share/examples/postfix/OVERVIEW		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/PCRE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/PGSQL_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/POSTSCREEN_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/QMQP_README	misc-obsolete	obsolete
 ./usr/share/examples/postfix/QSHAPE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/RELEASE_NOTES	misc-postfix-examples	postfix,doc
@@ -809,6 +818,8 @@
 ./usr/share/examples/postfix/SMTPD_ACCESS_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/SMTPD_POLICY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/SMTPD_PROXY_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/SOHO_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/SQLITE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/STANDARD_CONFIGURATION_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/TLS_LEGACY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/TLS_LICENSE	misc-postfix-examples	postfix,share
