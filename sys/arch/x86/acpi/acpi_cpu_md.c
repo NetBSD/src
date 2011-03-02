@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.50 2011/03/01 05:02:16 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.51 2011/03/02 06:17:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.50 2011/03/01 05:02:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.51 2011/03/02 06:17:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -533,6 +533,7 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 		/*
 		 * If the so-called Turbo Boost is present,
 		 * the P0-state is always the "turbo state".
+		 * It is shown as the P1 frequency + 1 MHz.
 		 *
 		 * For discussion, see:
 		 *
@@ -540,8 +541,13 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 		 *	in Intel Core(tm) Microarchitectures (Nehalem)
 		 *	Based Processors. White Paper, November 2008.
 		 */
-		if ((sc->sc_flags & ACPICPU_FLAG_P_TURBO) != 0)
-			sc->sc_pstate[0].ps_flags |= ACPICPU_FLAG_P_TURBO;
+		if ((sc->sc_flags & ACPICPU_FLAG_P_TURBO) != 0) {
+
+			ps = &sc->sc_pstate[0];
+
+			if (ps->ps_freq == sc->sc_pstate[1].ps_freq + 1)
+				ps->ps_flags |= ACPICPU_FLAG_P_TURBO;
+		}
 
 		msr.ps_control_addr = MSR_PERF_CTL;
 		msr.ps_control_mask = __BITS(0, 15);
