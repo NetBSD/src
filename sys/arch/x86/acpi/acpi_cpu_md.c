@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.51 2011/03/02 06:17:09 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.52 2011/03/02 06:23:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.51 2011/03/02 06:17:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.52 2011/03/02 06:23:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -541,7 +541,8 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 		 *	in Intel Core(tm) Microarchitectures (Nehalem)
 		 *	Based Processors. White Paper, November 2008.
 		 */
-		if ((sc->sc_flags & ACPICPU_FLAG_P_TURBO) != 0) {
+		if (sc->sc_pstate_count > 2 &&
+		   (sc->sc_flags & ACPICPU_FLAG_P_TURBO) != 0) {
 
 			ps = &sc->sc_pstate[0];
 
