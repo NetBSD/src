@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196 2011/02/25 19:32:51 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.197 2011/03/02 13:26:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2011/02/25 19:32:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2011/03/02 13:26:41 tsutsui Exp $");
 
 /*
  *	Manages physical address maps.
@@ -581,9 +581,9 @@ pmap_bootstrap(void)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
 #ifdef PMAP_POOLPAGE_DEBUG
-	mips_virtual_end -= poolpage.limit;
+	mips_virtual_end -= poolpage.size;
 	poolpage.base = mips_virtual_end;
-	poolpage.sysmap += Sysmap + atop(poolpage.size);
+	poolpage.sysmap = Sysmap + atop(poolpage.size);
 #endif
 	/*
 	 * Initialize the pools.
@@ -2598,7 +2598,7 @@ mips_pmap_map_poolpage(paddr_t pa)
 	KASSERT(!mips_pg_v(pte->pt_entry));
 	va = poolpage.base + va_offset;
 	poolpage.hint = roundup2(va_offset + 1, va_inc);
-	pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PORT_WRITE);
+	pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, 0);
 #else
 #ifdef _LP64
 	KASSERT(mips_options.mips3_xkphys_cached);
@@ -2635,7 +2635,7 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 {
 	paddr_t pa;
 #ifdef PMAP_POOLPAGE_DEBUG
-	KASSERT(poolpage.start <= va && va < poolpage.start + poolpage.size);
+	KASSERT(poolpage.base <= va && va < poolpage.base + poolpage.size);
 	pa = mips_tlbpfn_to_paddr(kvtopte(va)->pt_entry);
 #elif defined(_LP64)
 	KASSERT(MIPS_XKPHYS_P(va));
