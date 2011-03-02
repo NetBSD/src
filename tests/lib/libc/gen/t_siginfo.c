@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.9 2011/03/01 12:47:43 pooka Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.10 2011/03/02 03:42:56 riz Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,6 +27,7 @@
  */
 
 #include <atf-c.h>
+#include <atf-c/config.h>
 
 #include <sys/inttypes.h>
 #include <sys/resource.h>
@@ -38,6 +39,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <setjmp.h>
 
@@ -302,6 +304,8 @@ ATF_TC_BODY(sigfpe_flt, tc)
 	    "'cpu0: Intel Pentium II (Klamath) (686-class), id 0x633'") == 0)
 		atf_tc_skip("Test does not run correctly under qemu "
 		    "(heuristic match)");
+	if (strcmp(atf_config_get("atf_arch"),"powerpc") == 0)
+		atf_tc_skip("Test not valid on powerpc");
 	if (sigsetjmp(sigfpe_flt_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
 		sa.sa_sigaction = sigfpe_flt_action;
@@ -351,6 +355,8 @@ ATF_TC_BODY(sigfpe_int, tc)
 	struct sigaction sa;
 	long l = strtol("0", NULL, 10);
 
+	if (strcmp(atf_config_get("atf_arch"),"powerpc") == 0)
+		atf_tc_skip("Test not valid on powerpc");
 	if (sigsetjmp(sigfpe_int_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
 		sa.sa_sigaction = sigfpe_int_action;
