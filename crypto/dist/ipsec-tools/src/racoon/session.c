@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.31 2011/03/02 14:52:32 vanhu Exp $	*/
+/*	$NetBSD: session.c,v 1.32 2011/03/02 15:09:16 vanhu Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -344,6 +344,7 @@ close_session()
 	flushph2();
 	flushph1();
 	flushrmconf();
+	flushsainfo();
 	close_sockets();
 	backupsa_clean();
 
