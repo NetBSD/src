@@ -673,7 +673,7 @@ document.  The verify(8) service is available with Postfix version
 
 </tr>
 
-<tr> </tr>
+<tr> <td> </td> </tr>
 
 <tr>
 
@@ -714,7 +714,7 @@ document.  The verify(8) service is available with Postfix version
 
 </tr>
 
-<tr> </tr>
+<tr> <td> </td> </tr>
 
 <tr> <td colspan="4"> &nbsp; </td> </tr>
 
@@ -732,14 +732,17 @@ document.  The verify(8) service is available with Postfix version
 smtpd(8) processes. Its purpose is to accept connections from the
 network and to decide what SMTP clients are allowed to talk to
 Postfix.  According to the 2008 MessageLabs annual report, 81% of
-all email was spam, and 90% of that was sent by botnets.  While
-postscreen(8) keeps the zombies away, more smtpd(8) processes remain
-available for legitimate clients.  </p>
+all email was spam, and 90% of that was sent by botnets; by 2010,
+those numbers were 92% and 95%, respectively.  While postscreen(8)
+keeps the zombies away, more smtpd(8) processes remain available
+for legitimate clients.  </p>
 
-<p> The postscreen(8) server is still evolving, and is likely to
-undergo changes that break compatibility with earlier versions.
-For this reason the postscreen(8) server is not installed with the
-stable Postfix release. </p>
+<p> The postscreen(8) server is available with Postfix 2.8 and
+later. To keep the implementation simple, postscreen(8) delegates
+DNS white/backlist lookups to dnsblog(8) server processes, and
+delegates TLS encryption/decryption to tlsproxy(8) server processes.
+This delegation is invisible to the remote SMTP client, and is not
+shown in the diagram below.  </p>
 
 <table>
 

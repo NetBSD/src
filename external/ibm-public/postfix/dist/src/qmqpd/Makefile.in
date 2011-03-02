@@ -83,6 +83,7 @@ qmqpd.o: ../../include/netstring.h
 qmqpd.o: ../../include/quote_822_local.h
 qmqpd.o: ../../include/quote_flags.h
 qmqpd.o: ../../include/rec_type.h
+qmqpd.o: ../../include/recipient_list.h
 qmqpd.o: ../../include/record.h
 qmqpd.o: ../../include/sys_defs.h
 qmqpd.o: ../../include/vbuf.h
@@ -101,6 +102,7 @@ qmqpd_peer.o: ../../include/msg.h
 qmqpd_peer.o: ../../include/myaddrinfo.h
 qmqpd_peer.o: ../../include/mymalloc.h
 qmqpd_peer.o: ../../include/sock_addr.h
+qmqpd_peer.o: ../../include/split_at.h
 qmqpd_peer.o: ../../include/stringops.h
 qmqpd_peer.o: ../../include/sys_defs.h
 qmqpd_peer.o: ../../include/valid_hostname.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_int.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_conf_int.c,v 1.1.1.2 2011/03/02 19:32:15 tron Exp $	*/
 
 /*++
 /* NAME
@@ -81,7 +81,8 @@
 
 #include <sys_defs.h>
 #include <stdlib.h>
-#include <stdio.h>			/* sscanf() */
+#include <stdio.h>			/* BUFSIZ */
+#include <errno.h>
 
 /* Utility library. */
 
@@ -99,10 +100,13 @@
 static int convert_mail_conf_int(const char *name, int *intval)
 {
     const char *strval;
-    char    junk;
+    char   *end;
+    long    longval;
 
     if ((strval = mail_conf_lookup_eval(name)) != 0) {
-	if (sscanf(strval, "%d%c", intval, &junk) != 1)
+	errno = 0;
+	*intval = longval = strtol(strval, &end, 10);
+	if (*strval == 0 || *end != 0 || errno == ERANGE || longval != *intval)
 	    msg_fatal("bad numerical configuration: %s = %s", name, strval);
 	return (1);
     }
@@ -134,7 +138,7 @@ int     get_mail_conf_int(const char *name, int defval, int min, int max)
 /* get_mail_conf_int2 - evaluate integer-valued configuration variable */
 
 int     get_mail_conf_int2(const char *name1, const char *name2, int defval,
-			        int min, int max)
+			           int min, int max)
 {
     int     intval;
     char   *name;
@@ -152,7 +156,7 @@ int     get_mail_conf_int2(const char *name1, const char *name2, int defval,
 typedef int (*stupid_indent_int) (void);
 
 int     get_mail_conf_int_fn(const char *name, stupid_indent_int defval,
-			          int min, int max)
+			             int min, int max)
 {
     int     intval;
 
@@ -178,7 +182,7 @@ void    get_mail_conf_int_table(const CONFIG_INT_TABLE *table)
 {
     while (table->name) {
 	table->target[0] = get_mail_conf_int(table->name, table->defval,
-					  table->min, table->max);
+					     table->min, table->max);
 	table++;
     }
 }
@@ -189,7 +193,7 @@ void    get_mail_conf_int_fn_table(const CONFIG_INT_FN_TABLE *table)
 {
     while (table->name) {
 	table->target[0] = get_mail_conf_int_fn(table->name, table->defval,
-					     table->min, table->max);
+						table->min, table->max);
 	table++;
     }
 }
