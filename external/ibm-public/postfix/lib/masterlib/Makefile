@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/25 18:21:52 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/02 22:24:55 tron Exp $
 
 LIBISPRIVATE=	yes
 
@@ -10,6 +10,6 @@ DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/src/${LIB}
 .PATH:	${DIST}
 
 SRCS=	single_server.c multi_server.c trigger_server.c master_proto.c \
-	mail_flow.c
+	mail_flow.c event_server.c
 
 .include <bsd.lib.mk>
