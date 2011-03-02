@@ -81,6 +81,11 @@ AUXLIBS line to point to libldap10.so or libldapssl30.so or whatever you have,
 and you may need to use the appropriate linker option (e.g. '-R') so the
 executables can find it at runtime.
 
+If you are using OpenLDAP, and the libraries were built with SASL support, you
+can add -DUSE_LDAP_SASL to the CCARGS to enable SASL support. For example:
+
+         CCARGS="-I/usr/local/include -DHAS_LDAP -DUSE_LDAP_SASL"
+
 CCoonnffiigguurriinngg LLDDAAPP llooookkuuppss
 
 In order to use LDAP lookups, define an LDAP source as a table lookup in
@@ -89,8 +94,8 @@ main.cf, for example:
     alias_maps = hash:/etc/aliases, ldap:/etc/postfix/ldap-aliases.cf
 
 The file /etc/postfix/ldap-aliases.cf can specify a great number of parameters,
-including parameters that enable LDAP SSL and STARTTLS. For a complete
-description, see the ldap_table(5) manual page.
+including parameters that enable LDAP SSL or STARTTLS, and LDAP SASL. For a
+complete description, see the ldap_table(5) manual page.
 
 EExxaammppllee:: llooccaall((88)) aalliiaasseess
 
@@ -232,8 +237,8 @@ settings, timeouts, ...) we have:
             search_base = dc=example, dc=com
             query_filter = mail=%s
             result_attribute = memberaddr
-        $ postmap -q agroup@example.com ldap:simple.cf
-        auser@example.org,buser@example.org
+        $ postmap -q agroup@example.com ldap:/etc/postfix/simple.cf \
+            auser@example.org,buser@example.org
 
 We search "dc=example, dc=com". The "mail" attribute is used in the
 query_filter to locate the right group, the "result_attribute" setting
@@ -261,8 +266,8 @@ example data.
             query_filter = mail=%s
             result_attribute = maildrop
             special_result_attribute = memberdn
-        $ postmap -q agroup@example.com ldap:special.cf
-        auser@mailhub.example.com,buser@mailhub.example.com
+        $ postmap -q agroup@example.com ldap:/etc/postfix/special.cf \
+            auser@mailhub.example.com,buser@mailhub.example.com
 
 Note: if the desired member object result attribute is always also present in
 the group, you get surprising results: the expansion also returns the address
@@ -288,12 +293,15 @@ expanded.
             query_filter = mail=%s
             result_attribute = maildrop
             special_result_attribute = memberdn
-        $ postmap -q auser@example.com ldap:no_expand.cf ldap:expand.cf
-        auser@mailhub.example.com
-        $ postmap -q agroup@example.com ldap:no_expand.cf ldap:expand.cf
-        auser@mailhub.example.com,buser@mailhub.example.com
-        $ postmap -q bgroup@example.com ldap:no_expand.cf ldap:expand.cf
-        bgroup@mlm.example.com
+        $ postmap -q auser@example.com \
+            ldap:/etc/postfix/no_expand.cf ldap:/etc/postfix/expand.cf \
+            auser@mailhub.example.com
+        $ postmap -q agroup@example.com \
+            ldap:/etc/postfix/no_expand.cf ldap:/etc/postfix/expand.cf \
+            auser@mailhub.example.com,buser@mailhub.example.com
+        $ postmap -q bgroup@example.com \
+            ldap:/etc/postfix/no_expand.cf ldap:/etc/postfix/expand.cf \
+            bgroup@mlm.example.com
 
 Non-group objects and groups with delayed expansion (those that have a maildrop
 attribute) are rewritten to a single maildrop value. Groups that don't have a
@@ -312,15 +320,15 @@ assume that forwarded groups are never nested inside expanded groups.
             special_result_attribute = memberdn
             terminal_result_attribute = maildrop
             leaf_result_attribute = mail
-        $ postmap -q auser@example.com ldap:fancy.cf
-        auser@mailhub.example.com
-        $ postmap -q cuser@example.com ldap:fancy.cf
-        cuser@example.com
-        $ postmap -q agroup@example.com ldap:fancy.cf
+        $ postmap -q auser@example.com ldap:/etc/postfix/fancy.cf \
+            auser@mailhub.example.com
+        $ postmap -q cuser@example.com ldap:/etc/postfix/fancy.cf \
+            cuser@example.com
+        $ postmap -q agroup@example.com ldap:/etc/postfix/fancy.cf \
 
     auser@mailhub.example.com,buser@mailhub.example.com,auser@example.org,buser@example.org
-        $ postmap -q bgroup@example.com ldap:fancy.cf
-        bgroup@mlm.example.com
+        $ postmap -q bgroup@example.com ldap:/etc/postfix/fancy.cf \
+            bgroup@mlm.example.com
 
 Above, delayed expansion is enabled via "terminal_result_attribute", which, if
 present, is used as the sole result and all other expansion is suppressed.
@@ -437,6 +445,8 @@ CCrreeddiittss
   * Gunnar Wrobel provided a first implementation of a feature to limit LDAP
     search results to leaf nodes only. Victor generalized this into the Postfix
     2.4 "leaf_result_attribute" feature.
+  * Quanah Gibson-Mount contributed support for advanced LDAP SASL mechanisms,
+    beyond the password-based LDAP "simple" bind.
 
 And of course Wietse.
 

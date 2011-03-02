@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.3 2010/04/17 10:24:38 tron Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.4 2011/03/02 19:32:22 tron Exp $	*/
 
 /*++
 /* NAME
@@ -211,7 +211,7 @@ static const NAME_CODE smfir_table[] = {
 #define SMFIP_NOUNKNOWN 	(1L<<8)	/* filter does not want unknown cmd */
 #define SMFIP_NODATA		(1L<<9)	/* filter does not want DATA */
  /* Introduced with Sendmail 8.14. */
-#define SMFIP_SKIP		(1L<<10)/* MTA supports SMFIS_SKIP */
+#define SMFIP_SKIP		(1L<<10)/* MTA supports SMFIR_SKIP */
 #define SMFIP_RCPT_REJ		(1L<<11)/* filter wants rejected RCPTs */
 #define SMFIP_NR_CONN		(1L<<12)/* filter won't reply for connect */
 #define SMFIP_NR_HELO		(1L<<13)/* filter won't reply for HELO */
@@ -446,12 +446,15 @@ typedef struct {
   * 
   * XXX Is this still needed? Sendmail 8.14 provides a proper way to negotiate
   * what replies the mail filter will send.
+  * 
+  * XXX Keep this table in reverse numerical order. This is needed by the code
+  * that implements compatibility with older Milter protocol versions.
   */
 static const NAME_CODE milter8_event_masks[] = {
-    "2", MILTER8_V2_PROTO_MASK,
-    "3", MILTER8_V3_PROTO_MASK,
-    "4", MILTER8_V4_PROTO_MASK,
     "6", MILTER8_V6_PROTO_MASK,
+    "4", MILTER8_V4_PROTO_MASK,
+    "3", MILTER8_V3_PROTO_MASK,
+    "2", MILTER8_V2_PROTO_MASK,
     "no_header_reply", SMFIP_NOHREPL,
     0, -1,
 };
@@ -1776,6 +1779,41 @@ static void milter8_connect(MILTER8 *milter)
     }
     if (milter->ev_mask & SMFIP_RCPT_REJ)
 	milter->m.flags |= MILTER_FLAG_WANT_RCPT_REJ;
+
+    /*
+     * Allow the remote application to run an older protocol version, but
+     * don't them send events that their protocol version doesn't support.
+     * Based on a suggestion by Kouhei Sutou.
+     * 
+     * XXX When the Milter sends a protocol version that we don't have
+     * information for, use the information for the next-lower protocol
+     * version instead. This code assumes that the milter8_event_masks table
+     * is organized in reverse numerical order.
+     */
+    if (milter->version < my_version) {
+	const NAME_CODE *np;
+	int     version;
+
+	for (np = milter8_event_masks; /* see below */ ; np++) {
+	    if (np->name == 0) {
+		msg_warn("milter %s: unexpected protocol version %d",
+			 milter->m.name, milter->version);
+		break;
+	    }
+	    if ((version = atoi(np->name)) > 0 && version <= milter->version) {
+		milter->np_mask |= (SMFIP_NOSEND_MASK & ~np->code);
+		if (msg_verbose)
+		    msg_info("%s: non-protocol events for milter %s"
+			     " protocol version %d: %s",
+			     myname, milter->m.name, milter->version,
+			     str_name_mask_opt(milter->buf,
+					       "non-protocol event mask",
+					       smfip_table, milter->np_mask,
+					       NAME_MASK_NUMBER));
+		break;
+	    }
+	}
+    }
 
     /*
      * Initial negotiations completed.
