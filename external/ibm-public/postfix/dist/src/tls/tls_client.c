@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.3 2010/06/17 18:18:16 tron Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.4 2011/03/02 19:56:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -141,6 +141,7 @@
 #include <vstream.h>
 #include <stringops.h>
 #include <msg.h>
+#include <iostuff.h>			/* non-blocking */
 
 /* Global library. */
 
@@ -820,21 +821,6 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
 	       | ((protomask & TLS_PROTOCOL_SSLv2) ? SSL_OP_NO_SSLv2 : 0L));
 
     /*
-     * The TLS connection is realized by a BIO_pair, so obtain the pair.
-     * 
-     * XXX There is no need to make internal_bio a member of the TLScontext
-     * structure. It will be attached to TLScontext->con, and destroyed along
-     * with it. The network_bio, however, needs to be freed explicitly.
-     */
-    if (!BIO_new_bio_pair(&TLScontext->internal_bio, TLS_BIO_BUFSIZE,
-			  &TLScontext->network_bio, TLS_BIO_BUFSIZE)) {
-	msg_warn("Could not obtain BIO_pair");
-	tls_print_errors();
-	tls_free_context(TLScontext);
-	return (0);
-    }
-
-    /*
      * XXX To avoid memory leaks we must always call SSL_SESSION_free() after
      * calling SSL_set_session(), regardless of whether or not the session
      * will be reused.
@@ -878,11 +864,21 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
     SSL_set_connect_state(TLScontext->con);
 
     /*
-     * Connect the SSL connection with the Postfix side of the BIO-pair for
-     * reading and writing.
+     * Connect the SSL connection with the network socket.
      */
-    SSL_set_bio(TLScontext->con, TLScontext->internal_bio,
-		TLScontext->internal_bio);
+    if (SSL_set_fd(TLScontext->con, vstream_fileno(props->stream)) != 1) {
+	msg_info("SSL_set_fd error to %s", props->namaddr);
+	tls_print_errors();
+	uncache_session(app_ctx->ssl_ctx, TLScontext);
+	tls_free_context(TLScontext);
+	return (0);
+    }
+
+    /*
+     * Turn on non-blocking I/O so that we can enforce timeouts on network
+     * I/O.
+     */
+    non_blocking(vstream_fileno(props->stream), NON_BLOCKING);
 
     /*
      * If the debug level selected is high enough, all of the data is dumped:

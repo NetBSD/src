@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.6 2010/11/27 10:41:17 tron Exp $
+.\"	$NetBSD: postconf.5,v 1.7 2011/03/02 19:56:38 tron Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -159,13 +159,13 @@ be refreshed.
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 .PP
 This feature is available in Postfix 2.1 and later.
-.SH address_verify_poll_count (default: ${stress?1}${stress:3})
+.SH address_verify_poll_count (default: normal: 3, overload: 1)
 How many times to query the \fBverify\fR(8) service for the completion
 of an address verification request in progress.
 .PP
 By default, the Postfix SMTP server polls the \fBverify\fR(8) service
 up to three times under non-overload conditions, and only once when
-under overload.  With Postfix version 2.6 and earlier, the SMTP
+under overload.  With Postfix version 2.5 and earlier, the SMTP
 server always polls the \fBverify\fR(8) service up to three times by
 default.
 .PP
@@ -424,8 +424,8 @@ the sender.
 .PP
 Note: automatic BCC recipients are produced only for new mail.
 To avoid mailer loops, automatic BCC recipients are not generated
-for mail that Postfix forwards internally, nor for mail that Postfix
-generates itself.
+after Postfix forwards mail internally, or after Postfix generates
+mail itself.
 .SH anvil_rate_time_unit (default: 60s)
 The time unit over which client connection rates and other rates
 are calculated.
@@ -1152,6 +1152,11 @@ Use \fItransport\fR_destination_rate_delay to specify a
 transport-specific override, where \fItransport\fR is the master.cf
 name of the message delivery transport.
 .PP
+NOTE: with a non-zero _destination_rate_delay, specify a
+\fItransport\fR_destination_concurrency_failed_cohort_limit of 10
+or more to prevent Postfix from deferring all mail for the same
+destination after only one connection or handshake error.
+.PP
 This feature is available in Postfix 2.5 and later.
 .SH default_destination_recipient_limit (default: 50)
 The default maximal number of recipients per message delivery.
@@ -1463,6 +1468,15 @@ disable_vrfy_command = no
 .fi
 .ad
 .ft R
+.SH dnsblog_reply_delay (default: 0s)
+A debugging aid to artifically delay DNS responses.
+.PP
+This feature is available in Postfix 2.8.
+.SH dnsblog_service_name (default: dnsblog)
+The name of the \fBdnsblog\fR(8) service entry in master.cf. This
+service performs DNS white/blacklist lookups.
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH dont_remove (default: 0)
 Don't remove queue files and save them to the "saved" mail queue.
 This is a debugging aid.  To inspect the envelope information and
@@ -1976,6 +1990,11 @@ This feature is available in Postfix 2.1 and later.
 .SH line_length_limit (default: 2048)
 Upon input, long lines are chopped up into pieces of at most
 this length; upon delivery, long lines are reconstructed.
+.SH lmtp_address_preference (default: ipv6)
+The LMTP-specific version of the smtp_address_preference
+configuration parameter.  See there for details.
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH lmtp_assume_final (default: no)
 When an LMTP server announces no DSN support, assume that the
 server performs final delivery, and send "delivered" delivery status
@@ -2135,6 +2154,11 @@ this action from being logged.
 .IP \(bu
 Use the lmtp_discard_lhlo_keyword_address_maps feature to
 discard LHLO keywords selectively.
+.SH lmtp_dns_resolver_options (default: empty)
+The LMTP-specific version of the smtp_dns_resolver_options
+configuration parameter.  See there for details.
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH lmtp_enforce_tls (default: no)
 The LMTP-specific version of the smtp_enforce_tls configuration
 parameter.  See there for details.
@@ -2537,8 +2561,8 @@ This feature is available in Postfix 2.1 and later.
 .SH local_command_shell (default: empty)
 Optional shell program for \fBlocal\fR(8) delivery to non-Postfix command.
 By default, non-Postfix commands are executed directly; commands
-are given to given to /bin/sh only when they contain shell meta
-characters or shell built-in commands.
+are given to given to the default shell (typically, /bin/sh) only
+when they contain shell meta characters or shell built-in commands.
 .PP
 "sendmail's restricted shell" (smrsh) is what most people will
 use in order to restrict what programs can be run from e.g. .forward
@@ -2554,6 +2578,7 @@ Example:
 .na
 .ft C
 local_command_shell = /some/where/smrsh -c
+local_command_shell = /bin/bash -c
 .fi
 .ad
 .ft R
@@ -2960,7 +2985,8 @@ Obsolete feature: use the reject_rbl_client feature instead.
 .SH maps_rbl_reject_code (default: 554)
 The numerical Postfix SMTP server response code when a remote SMTP
 client request is blocked by the reject_rbl_client, reject_rhsbl_client,
-reject_rhsbl_sender or reject_rhsbl_recipient restriction.
+reject_rhsbl_reverse_client, reject_rhsbl_sender or
+reject_rhsbl_recipient restriction.
 .PP
 Do not change this unless you have a complete understanding of RFC 2821.
 .SH masquerade_classes (default: envelope_sender, header_sender, header_recipient)
@@ -3468,7 +3494,8 @@ mydestination = $myhostname, localhost.$mydomain www.$mydomain, ftp.$mydomain
 .ft R
 .SH mydomain (default: see "postconf -d" output)
 The internet domain name of this mail system.  The default is to
-use $myhostname minus the first component.  $mydomain is used as
+use $myhostname minus the first component, or "localdomain" (Postfix
+2.3 and later).  $mydomain is used as
 a default value for many other configuration parameters.
 .PP
 Example:
@@ -3482,8 +3509,10 @@ mydomain = domain.tld
 .ft R
 .SH myhostname (default: see "postconf -d" output)
 The internet hostname of this mail system. The default is to use
-the fully-qualified domain name from gethostname(). $myhostname is
-used as a default value for many other configuration parameters.
+the fully-qualified domain name (FQDN) from gethostname(), or to
+use the non-FQDN result from gethostname() and append ".$mydomain".
+$myhostname is used as a default value for many other configuration
+parameters.
 .PP
 Example:
 .PP
@@ -3701,6 +3730,532 @@ as "stop" commands. For these commands, disabled instances are skipped,
 and enabled instances are processed in reverse order.
 .PP
 This feature is available in Postfix 2.6 and later.
+.SH postscreen_access_list (default: permit_mynetworks)
+Permanent white/blacklist for remote SMTP client IP addresses.
+\fBpostscreen\fR(8) searches this list immediately after a remote SMTP
+client connects.  Specify a comma- or whitespace-separated list of
+commands (in upper or lower case) or lookup tables. The search stops
+upon the first command that fires for the client IP address.
+.IP "\fB permit_mynetworks \fR"
+Whitelist the client and
+terminate the search if the client IP address matches $mynetworks.
+Do not subject the client to any before/after 220 greeting tests.
+Pass the connection immediately to a Postfix SMTP server process.
+.IP "\fB type:table \fR"
+Query the specified lookup
+table. Each table lookup result is an access list, except that
+access lists inside a table cannot specify type:table entries.
+.br
+To discourage the use of hash, btree, etc. tables, there is no
+support for substring matching like \fBsmtpd\fR(8). Use CIDR tables
+instead.
+.IP "\fB permit \fR"
+Whitelist the client and terminate
+the search. Do not subject the client to any before/after 220
+greeting tests. Pass the connection immediately to a Postfix SMTP
+server process.
+.IP "\fB reject \fR"
+Blacklist the client and terminate
+the search. Subject the client to the action configured with the
+postscreen_blacklist_action configuration parameter.
+.IP "\fB dunno \fR"
+All \fBpostscreen\fR(8) access lists
+implicitly have this command at the end.
+.br
+When \fB dunno \fR
+is executed inside a lookup table, return from the lookup table and
+evaluate the next command.
+.br
+When \fB dunno \fR is executed
+outside a lookup table, terminate the search, and subject the client
+to the configured before/after 220 greeting tests.
+.PP
+Example:
+.PP
+.nf
+.na
+.ft C
+/etc/postfix/main.cf:
+    postscreen_access_list = permit_mynetworks,
+		cidr:/etc/postfix/postscreen_access.cidr
+.fi
+.ad
+.ft R
+.PP
+.nf
+.na
+.ft C
+/etc/postfix/postscreen_access.cidr:
+    # Rules are evaluated in the order as specified.
+    # Blacklist 192.168.* except 192.168.0.1.
+    192.168.0.1         dunno
+    192.168.0.0/16      reject
+.fi
+.ad
+.ft R
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_bare_newline_action (default: ignore)
+The action that \fBpostscreen\fR(8) takes when an SMTP client sends
+a bare newline character, that is, a newline not preceded by carriage
+return.  Specify one of the following:
+.IP "\fBignore\fR"
+Ignore the failure of this test. Allow other tests to complete.
+Do \fInot\fR repeat this test before some the result from some
+other test expires.
+This option is useful for testing and collecting statistics
+without blocking mail permanently.
+.IP "\fBenforce\fR"
+Allow other tests to complete. Reject attempts to deliver mail
+with a 550 SMTP reply, and log the helo/sender/recipient information.
+Repeat this test the next time the client connects.
+.IP "\fBdrop\fR"
+Drop the connection immediately with a 521 SMTP reply. Repeat
+this test the next time the client connects.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_bare_newline_enable (default: no)
+Enable "bare newline" SMTP protocol tests in the \fBpostscreen\fR(8)
+server. These tests are expensive: a client must disconnect after
+it passes the test, before it can talk to a real Postfix SMTP server.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_bare_newline_ttl (default: 30d)
+The amount of time that \fBpostscreen\fR(8) will use the result from
+a successful "bare newline" SMTP protocol test. During this
+time, the client IP address is excluded from this test. The default
+is long because a client must disconnect after it passes the test,
+before it can talk to a real Postfix SMTP server.
+.PP
+Specify a non-zero time value (an integral value plus an optional
+one-letter suffix that specifies the time unit).  Time units: s
+(seconds), m (minutes), h (hours), d (days), w (weeks).
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_blacklist_action (default: ignore)
+The action that \fBpostscreen\fR(8) takes when an SMTP client is
+permanently blacklisted with the postscreen_access_list parameter.
+Specify one of the following:
+.IP "\fBignore\fR (default)"
+Ignore  this result. Allow other tests to complete.  Repeat
+this test the next time the client connects.
+This option is useful for testing and collecting statistics
+without blocking mail.
+.IP "\fBenforce\fR"
+Allow other tests to complete. Reject attempts to deliver mail
+with a 550 SMTP reply, and log the helo/sender/recipient information.
+Repeat this test the next time the client connects.
+.IP "\fBdrop\fR"
+Drop the connection immediately with a 521 SMTP reply. Repeat
+this test the next time the client connects.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_cache_cleanup_interval (default: 12h)
+The amount of time between \fBpostscreen\fR(8) cache cleanup runs.
+Cache cleanup increases the load on the cache database and should
+therefore not be run frequently. This feature requires that the
+cache database supports the "delete" and "sequence" operators.
+Specify a zero interval to disable cache cleanup.
+.PP
+After each cache cleanup run, the \fBpostscreen\fR(8) daemon logs the
+number of entries that were retained and dropped. A cleanup run is
+logged as "partial" when the daemon terminates early after "\fBpostfix
+reload\fR", "\fBpostfix stop\fR", or no requests for $max_idle
+seconds.
+.PP
+Time units: s (seconds), m (minutes), h (hours), d (days), w
+(weeks).
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_cache_map (default: btree:$data_directory/postscreen_cache)
+Persistent storage for the \fBpostscreen\fR(8) server decisions.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_cache_retention_time (default: 7d)
+The amount of time that \fBpostscreen\fR(8) will cache an expired
+temporary whitelist entry before it is removed. This prevents clients
+from being logged as "NEW" just because their cache entry expired
+an hour ago. It also prevents the cache from filling up with clients
+that passed some deep protocol test once and never came back.
+.PP
+Time units: s (seconds), m (minutes), h (hours), d (days), w
+(weeks).
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_client_connection_count_limit (default: $smtpd_client_connection_count_limit)
+How many simultaneous connections any client is allowed to have
+with the \fBpostscreen\fR(8) daemon. By default, this limit is the same
+as with the Postfix SMTP server. Note that the triage process can
+take several seconds, with the time spent in postscreen_greet_wait
+delay, and with the time spent talking to the \fBpostscreen\fR(8) built-in
+dummy SMTP protocol engine.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_command_count_limit (default: 20)
+The limit on the total number of commands per SMTP session for
+\fBpostscreen\fR(8)'s built-in SMTP protocol engine.  This SMTP engine
+defers or rejects all attempts to deliver mail, therefore there is
+no need to enforce separate limits on the number of junk commands
+and error commands.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_command_filter (default: $smtpd_command_filter)
+A mechanism to transform commands from remote SMTP clients.
+See smtpd_command_filter for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH postscreen_command_time_limit (default: ${stress?10}${stress:300}s)
+The time limit to read an entire command line with \fBpostscreen\fR(8)'s
+built-in SMTP protocol engine.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_disable_vrfy_command (default: $disable_vrfy_command)
+Disable the SMTP VRFY command in the \fBpostscreen\fR(8) daemon.  See
+disable_vrfy_command for details.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_discard_ehlo_keyword_address_maps (default: $smtpd_discard_ehlo_keyword_address_maps)
+Lookup tables, indexed by the remote SMTP client address, with
+case insensitive lists of EHLO keywords (pipelining, starttls, auth,
+etc.) that the \fBpostscreen\fR(8) server will not send in the EHLO response
+to a remote SMTP client. See smtpd_discard_ehlo_keywords for details.
+The table is not searched by hostname for robustness reasons.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH postscreen_discard_ehlo_keywords (default: $smtpd_discard_ehlo_keywords)
+A case insensitive list of EHLO keywords (pipelining, starttls,
+auth, etc.) that the \fBpostscreen\fR(8) server will not send in the EHLO
+response to a remote SMTP client. See smtpd_discard_ehlo_keywords
+for details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH postscreen_dnsbl_action (default: ignore)
+The action that \fBpostscreen\fR(8) takes when an SMTP client's combined
+DNSBL score is equal to or greater than a threshold (as defined
+with the postscreen_dnsbl_sites and postscreen_dnsbl_threshold
+parameters).  Specify one of the following:
+.IP "\fBignore\fR (default)"
+Ignore the failure of this test. Allow other tests to complete.
+Repeat this test the next time the client connects.
+This option is useful for testing and collecting statistics
+without blocking mail.
+.IP "\fBenforce\fR"
+Allow other tests to complete. Reject attempts to deliver mail
+with a 550 SMTP reply, and log the helo/sender/recipient information.
+Repeat this test the next time the client connects.
+.IP "\fBdrop\fR"
+Drop the connection immediately with a 521 SMTP reply. Repeat
+this test the next time the client connects.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_dnsbl_reply_map (default: empty)
+A mapping from actual DNSBL domain name which includes a secret
+password, to the DNSBL domain name that postscreen will reply with
+when it rejects mail.  When no mapping is found, the actual DNSBL
+domain will be used.
+.PP
+For maximal stability it is best to use a file that is read
+into memory such as pcre:, regexp: or texthash: (texthash: is similar
+to hash:, except a) there is no need to run \fBpostmap\fR(1) before the
+file can be used, and b) texthash: does not detect changes after
+the file is read).
+.PP
+Example:
+.PP
+.nf
+.na
+.ft C
+/etc/postfix/main.cf:
+    postscreen_dnsbl_reply_map = texthash:/etc/postfix/dnsbl_reply
+.fi
+.ad
+.ft R
+.PP
+.nf
+.na
+.ft C
+/etc/postfix/dnsbl_reply:
+   secret.zen.spamhaus.org	zen.spamhaus.org
+.fi
+.ad
+.ft R
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_dnsbl_sites (default: empty)
+Optional list of DNS white/blacklist domains, filters and weight
+factors. When the list is non-empty, the \fBdnsblog\fR(8) daemon will
+query these domains with the IP addresses of remote SMTP clients,
+and \fBpostscreen\fR(8) will update an SMTP client's DNSBL score with
+each non-error reply.
+.PP
+Caution: when postscreen rejects mail, it replies with the DNSBL
+domain name. Use the postscreen_dnsbl_reply_map feature to hide
+"password" information in DNSBL domain names.
+.PP
+When a client's score is equal to or greater than the threshold
+specified with postscreen_dnsbl_threshold, \fBpostscreen\fR(8) can drop
+the connection with the SMTP client.
+.PP
+Specify a list of domain=filter*weight entries, separated by
+comma or whitespace.
+.IP \(bu
+When no "=filter" is specified, \fBpostscreen\fR(8) will use any
+non-error DNSBL reply.  Otherwise, \fBpostscreen\fR(8) uses only DNSBL
+replies that match the filter. The filter has the form d.d.d.d,
+where each d is a number, or a pattern inside [] that contains one
+or more ";"-separated numbers or number..number ranges.
+.IP \(bu
+When no "*weight" is specified, \fBpostscreen\fR(8) increments
+the SMTP client's DNSBL score by 1.  Otherwise, the weight must be
+an integral number, and \fBpostscreen\fR(8) adds the specified weight to
+the SMTP client's DNSBL score.  Specify a negative number for
+whitelisting.
+.IP \(bu
+When one postscreen_dnsbl_sites entry produces multiple
+DNSBL responses, \fBpostscreen\fR(8) applies the weight at most once.
+.PP
+Examples:
+.PP
+To use example.com as a high-confidence blocklist, and to
+block mail with example.net and example.org only when both agree:
+.PP
+.nf
+.na
+.ft C
+postscreen_dnsbl_threshold = 2
+postscreen_dnsbl_sites = example.com*2, example.net, example.org
+.fi
+.ad
+.ft R
+.PP
+To filter only DNSBL replies containing 127.0.0.4:
+.PP
+.nf
+.na
+.ft C
+postscreen_dnsbl_sites = example.com=127.0.0.4
+.fi
+.ad
+.ft R
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_dnsbl_threshold (default: 1)
+The inclusive lower bound for blocking an SMTP client, based on
+its combined DNSBL score as defined with the postscreen_dnsbl_sites
+parameter.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_dnsbl_ttl (default: 1h)
+The amount of time that \fBpostscreen\fR(8) will use the result from
+a successful DNS blocklist test. During this time, the client IP address
+is excluded from this test. The default is relatively short, because a
+good client can immediately talk to a real Postfix SMTP server.
+.PP
+Specify a non-zero time value (an integral value plus an optional
+one-letter suffix that specifies the time unit).  Time units: s
+(seconds), m (minutes), h (hours), d (days), w (weeks).
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_enforce_tls (default: $smtpd_enforce_tls)
+Mandatory TLS: announce STARTTLS support to SMTP clients, and
+require that clients use TLS encryption.  See smtpd_postscreen_enforce_tls
+for details.
+.PP
+This feature is available in Postfix 2.8 and later.
+Preferably, use postscreen_tls_security_level instead.
+.SH postscreen_expansion_filter (default: see "postconf -d" output)
+List of characters that are permitted in postscreen_reject_footer
+attribute expansions.  See smtpd_expansion_filter for further
+details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH postscreen_forbidden_commands (default: $smtpd_forbidden_commands)
+List of commands that the \fBpostscreen\fR(8) server considers in
+violation of the SMTP protocol. See smtpd_forbidden_commands for
+syntax, and postscreen_non_smtp_command_action for possible actions.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_greet_action (default: ignore)
+The action that \fBpostscreen\fR(8) takes when an SMTP client speaks
+before its turn within the time specified with the postscreen_greet_wait
+parameter.  Specify one of the following:
+.IP "\fBignore\fR (default)"
+Ignore the failure of this test. Allow other tests to complete.
+Repeat this test the next time the client connects.
+This option is useful for testing and collecting statistics
+without blocking mail.
+.IP "\fBenforce\fR"
+Allow other tests to complete. Reject attempts to deliver mail
+with a 550 SMTP reply, and log the helo/sender/recipient information.
+Repeat this test the next time the client connects.
+.IP "\fBdrop\fR"
+Drop the connection immediately with a 521 SMTP reply. Repeat
+this test the next time the client connects.
+.PP
+In either case, \fBpostscreen\fR(8) will not whitelist the SMTP client
+IP address.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_greet_banner (default: $smtpd_banner)
+The \fItext\fR in the optional "220-\fItext\fR..." server
+response that
+\fBpostscreen\fR(8) sends ahead of the real Postfix SMTP server's "220
+text..." response, in an attempt to confuse bad SMTP clients so
+that they speak before their turn (pre-greet).  Specify an empty
+value to disable this feature.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_greet_ttl (default: 1d)
+The amount of time that \fBpostscreen\fR(8) will use the result from
+a successful PREGREET test. During this time, the client IP address
+is excluded from this test. The default is relatively short, because
+a good client can immediately talk to a real Postfix SMTP server.
+.PP
+Specify a non-zero time value (an integral value plus an optional
+one-letter suffix that specifies the time unit).  Time units: s
+(seconds), m (minutes), h (hours), d (days), w (weeks).
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_greet_wait (default: ${stress?2}${stress:6}s)
+The amount of time that \fBpostscreen\fR(8) will wait for an SMTP
+client to send a command before its turn, and for DNS blocklist
+lookup results to arrive (default: up to 2 seconds under stress,
+up to 6 seconds otherwise).
+.PP
+Specify a non-zero time value (an integral value plus an optional
+one-letter suffix that specifies the time unit).
+.PP
+Time units: s (seconds), m (minutes), h (hours), d (days), w
+(weeks).
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_helo_required (default: $smtpd_helo_required)
+Require that a remote SMTP client sends HELO or EHLO before
+commencing a MAIL transaction.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_non_smtp_command_action (default: drop)
+The action that \fBpostscreen\fR(8) takes when an SMTP client sends
+non-SMTP commands as specified with the postscreen_forbidden_commands
+parameter.  Specify one of the following:
+.IP "\fBignore\fR"
+Ignore the failure of this test. Allow other tests to complete.
+Do \fInot\fR repeat this test before some the result from some
+other test expires.
+This option is useful for testing and collecting statistics
+without blocking mail permanently.
+.IP "\fBenforce\fR"
+Allow other tests to complete. Reject attempts to deliver mail
+with a 550 SMTP reply, and log the helo/sender/recipient information.
+Repeat this test the next time the client connects.
+.IP "\fBdrop\fR"
+Drop the connection immediately with a 521 SMTP reply. Repeat
+this test the next time the client connects. This action is the
+same as with the Postfix SMTP server's smtpd_forbidden_commands
+feature.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_non_smtp_command_enable (default: no)
+Enable "non-SMTP command" tests in the \fBpostscreen\fR(8) server. These
+tests are expensive: a client must disconnect after it passes the
+test, before it can talk to a real Postfix SMTP server.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_non_smtp_command_ttl (default: 30d)
+The amount of time that \fBpostscreen\fR(8) will use the result from
+a successful "non_smtp_command" SMTP protocol test. During this
+time, the client IP address is excluded from this test. The default
+is long because a client must disconnect after it passes the test,
+before it can talk to a real Postfix SMTP server.
+.PP
+Specify a non-zero time value (an integral value plus an optional
+one-letter suffix that specifies the time unit).  Time units: s
+(seconds), m (minutes), h (hours), d (days), w (weeks).
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_pipelining_action (default: enforce)
+The action that \fBpostscreen\fR(8) takes when an SMTP client sends
+multiple commands instead of sending one command and waiting for
+the server to respond.  Specify one of the following:
+.IP "\fBignore\fR"
+Ignore the failure of this test. Allow other tests to complete.
+Do \fInot\fR repeat this test before some the result from some
+other test expires.
+This option is useful for testing and collecting statistics
+without blocking mail permanently.
+.IP "\fBenforce\fR"
+Allow other tests to complete. Reject attempts to deliver mail
+with a 550 SMTP reply, and log the helo/sender/recipient information.
+Repeat this test the next time the client connects.
+.IP "\fBdrop\fR"
+Drop the connection immediately with a 521 SMTP reply. Repeat
+this test the next time the client connects.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_pipelining_enable (default: no)
+Enable "pipelining" SMTP protocol tests in the \fBpostscreen\fR(8)
+server. These tests are expensive: a good client must disconnect
+after it passes the test, before it can talk to a real Postfix SMTP
+server.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_pipelining_ttl (default: 30d)
+The amount of time that \fBpostscreen\fR(8) will use the result from
+a successful "pipelining" SMTP protocol test. During this time, the
+client IP address is excluded from this test. The default is
+long because a good client must disconnect after it passes the test,
+before it can talk to a real Postfix SMTP server.
+.PP
+Specify a non-zero time value (an integral value plus an optional
+one-letter suffix that specifies the time unit).  Time units: s
+(seconds), m (minutes), h (hours), d (days), w (weeks).
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_post_queue_limit (default: $default_process_limit)
+The number of clients that can be waiting for service from a
+real SMTP server process. When this queue is full, all clients will
+receive a 421 reponse.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_pre_queue_limit (default: $default_process_limit)
+The number of non-whitelisted clients that can be waiting for
+a decision whether they will receive service from a real SMTP server
+process. When this queue is full, all non-whitelisted clients will
+receive a 421 reponse.
+.PP
+This feature is available in Postfix 2.8.
+.SH postscreen_reject_footer (default: $smtpd_reject_footer)
+Optional information that is appended after a 4XX or 5XX server
+response. See smtpd_reject_footer for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH postscreen_tls_security_level (default: $smtpd_tls_security_level)
+The SMTP TLS security level for the \fBpostscreen\fR(8) server; when
+a non-empty value is specified, this overrides the obsolete parameters
+postscreen_use_tls and postscreen_enforce_tls. See smtpd_tls_security_level
+for details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH postscreen_use_tls (default: $smtpd_use_tls)
+Opportunistic TLS: announce STARTTLS support to SMTP clients,
+but do not require that clients use TLS encryption.
+.PP
+This feature is available in Postfix 2.8 and later.
+Preferably, use postscreen_tls_security_level instead.
+.SH postscreen_watchdog_timeout (default: 10s)
+How much time a \fBpostscreen\fR(8) process may take to respond to
+an SMTP client command or to perform a cache operation before it
+is terminated by a built-in watchdog timer.  This is a safety
+mechanism that prevents \fBpostscreen\fR(8) from becoming non-responsive
+due to a bug in Postfix itself or in system software.  To avoid
+false alarms and unnecessary cache corruption this limit cannot be
+set under 10s.
+.PP
+Specify a non-zero time value (an integral value plus an optional
+one-letter suffix that specifies the time unit).  Time units: s
+(seconds), m (minutes), h (hours), d (days), w (weeks).
+.PP
+This feature is available in Postfix 2.8.
 .SH prepend_delivered_header (default: command, file, forward)
 The message delivery contexts where the Postfix \fBlocal\fR(8) delivery
 agent prepends a Delivered-To:  message header with the address
@@ -3810,6 +4365,12 @@ clogging up the Postfix active queue. Specify 0 to disable.
 This feature is enabled with the helpful_warnings parameter.
 .PP
 This feature is available in Postfix 2.0 and later.
+.SH qmgr_daemon_timeout (default: 1000s)
+How much time a Postfix queue manager process may take to handle
+a request before it is terminated by a built-in watchdog timer.
+.PP
+Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+The default time unit is s (seconds).
 .SH qmgr_fudge_factor (default: 100)
 Obsolete feature: the percentage of delivery resources that a busy
 mail system will use up for delivery of a large mailing  list
@@ -3817,6 +4378,14 @@ message.
 .PP
 This feature exists only in the \fBoqmgr\fR(8) old queue manager. The
 current queue manager solves the problem in a better way.
+.SH qmgr_ipc_timeout (default: 60s)
+The time limit for the queue manager to send or receive information
+over an internal communication channel.  The purpose is to break
+out of deadlock situations. If the time limit is exceeded the
+software either retries or aborts the operation.
+.PP
+Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
+The default time unit is s (seconds).
 .SH qmgr_message_active_limit (default: 20000)
 The maximal number of messages in the active queue.
 .SH qmgr_message_recipient_limit (default: 20000)
@@ -3997,8 +4566,8 @@ the sender.
 .PP
 Note: automatic BCC recipients are produced only for new mail.
 To avoid mailer loops, automatic BCC recipients are not generated
-for mail that Postfix forwards internally, nor for mail that Postfix
-generates itself.
+after Postfix forwards mail internally, or after Postfix generates
+mail itself.
 .PP
 Example:
 .PP
@@ -4279,6 +4848,52 @@ Require that a \fBlocal\fR(8) recipient's home directory exists
 before mail delivery is attempted. By default this test is disabled.
 It can be useful for environments that import home directories to
 the mail server (IMPORTING HOME DIRECTORIES IS NOT RECOMMENDED).
+.SH reset_owner_alias (default: no)
+Reset the \fBlocal\fR(8) delivery agent's idea of the owner-alias
+attribute, when delivering mail to a child alias that does not have
+its own owner alias.
+.PP
+This feature is available in Postfix 2.8 and later. With older
+Postfix releases, the behavior is as if this parameter is set to
+"yes".
+.PP
+As documented in \fBaliases\fR(5), when an alias \fIname\fR has a
+companion alias named owner-\fIname\fR, delivery errors will be
+reported to the owner alias instead of the sender. This configuration
+is recommended for mailing lists.
+.PP
+A less known property of the owner alias is that it also forces
+the \fBlocal\fR(8) delivery agent to write local and remote addresses
+from alias expansion to a new queue file, instead of attempting to
+deliver mail to local addresses as soon as they come out of alias
+expansion.
+.PP
+Writing local addresses from alias expansion to a new queue
+file allows for robust handling of temporary delivery errors: errors
+with one local member have no effect on deliveries to other members
+of the list.  On the other hand, delivery to local addresses as
+soon as they come out of alias expansion is fragile: a temporary
+error with one local address from alias expansion will cause the
+entire alias to be expanded repeatedly until the error goes away,
+or until the message expires in the queue.  In that case, a problem
+with one list member results in multiple message deliveries to other
+list members.
+.PP
+The default behavior of Postfix 2.8 and later is to keep the
+owner-alias attribute of the parent alias, when delivering mail to
+a child alias that does not have its own owner alias. Then, local
+addresses from that child alias will be written to a new queue file,
+and a temporary error with one local address will not affect delivery
+to other mailing list members.
+.PP
+Unfortunately, older Postfix releases reset the owner-alias
+attribute when delivering mail to a child alias that does not have
+its own owner alias.  The \fBlocal\fR(8) delivery agent then attempts to
+deliver local addresses as soon as they come out of child alias
+expansion.  If delivery to any address from child alias expansion
+fails with a temporary error condition, the entire mailing list may
+be expanded repeatedly until the mail expires in the queue, resulting
+in multiple deliveries of the same message to mailing list members.
 .SH resolve_dequoted_address (default: yes)
 Resolve a recipient address safely instead of correctly, by
 looking inside quotes.
@@ -4367,8 +4982,8 @@ the sender.
 .PP
 Note: automatic BCC recipients are produced only for new mail.
 To avoid mailer loops, automatic BCC recipients are not generated
-for mail that Postfix forwards internally, nor for mail that Postfix
-generates itself.
+after Postfix forwards mail internally, or after Postfix generates
+mail itself.
 .PP
 Example:
 .PP
@@ -4463,6 +5078,13 @@ The name of the \fBshowq\fR(8) service. This service produces mail queue
 status reports.
 .PP
 This feature is available in Postfix 2.0 and later.
+.SH smtp_address_preference (default: ipv6)
+The address type ("ipv6", "ipv4" or "any") that the Postfix
+SMTP client will try first, when a destination has IPv6 and IPv4
+addresses with equal MX preference. This feature has no effect
+unless the inet_protocols setting enables both IPv4 and IPv6.
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH smtp_always_send_ehlo (default: yes)
 Always send EHLO at the start of an SMTP session.
 .PP
@@ -4720,6 +5342,21 @@ this action from being logged.
 .IP \(bu
 Use the smtp_discard_ehlo_keyword_address_maps feature to
 discard EHLO keywords selectively.
+.SH smtp_dns_resolver_options (default: empty)
+DNS Resolver options for the Postfix SMTP client.  Specify zero
+or more of the following options, separated by comma or whitespace.
+Option names are case-sensitive. Some options refer to domain names
+that are specified in the file /etc/resolv.conf or equivalent.
+.IP "\fBres_defnames\fR"
+Append the current domain name to single-component names (those
+that do not contain a "." character). This can produce incorrect
+results, and is the hard-coded behavior prior to Postfix 2.8.
+.IP "\fBres_dnsrch\fR"
+Search for host names in the current domain and in parent
+domains. This can produce incorrect results and is therefore not
+recommended.
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH smtp_enforce_tls (default: no)
 Enforcement mode: require that remote SMTP servers use TLS
 encryption, and never send mail in the clear.  This also requires
@@ -6463,8 +7100,8 @@ smtpd_client_connection_rate_limit = 1000
 .ad
 .ft R
 .SH smtpd_client_event_limit_exceptions (default: $mynetworks)
-Clients that are excluded from connection count, connection rate,
-or SMTP request rate restrictions. See the mynetworks parameter
+Clients that are excluded from smtpd_client_*_count/rate_limit
+restrictions. See the mynetworks parameter
 description for the parameter value syntax.
 .PP
 By default, clients in trusted networks are excluded. Specify a
@@ -6647,23 +7284,71 @@ Postfix version 2.5).  This feature is available with Postfix version
 .IP "\fBreject_rbl_client \fIrbl_domain=d.d.d.d\fR\fR"
 Reject the request when the reversed client network address is
 listed with the A record "\fId.d.d.d\fR" under \fIrbl_domain\fR
-(Postfix version 2.1 and later only).  If no "\fI=d.d.d.d\fR" is
-specified, reject the request when the reversed client network
-address is listed with any A record under \fIrbl_domain\fR.
+(Postfix version 2.1 and later only).  Each "\fId\fR" is a number,
+or a pattern inside "[]" that contains one or more ";"-separated
+numbers or number..number ranges (Postfix version 2.8 and later).
+If no "\fI=d.d.d.d\fR" is specified, reject the request when the
+reversed client network address is listed with any A record under
+\fIrbl_domain\fR.
 .br
 The maps_rbl_reject_code parameter specifies the response code for
 rejected requests (default:  554), the default_rbl_reply  parameter
 specifies the default server reply, and the rbl_reply_maps  parameter
 specifies tables with server replies indexed by \fIrbl_domain\fR.
 This feature is available in Postfix 2.0 and later.
+.IP "\fBpermit_dnswl_client \fIdnswl_domain=d.d.d.d\fR\fR"
+Accept the request when the reversed client network address is
+listed with the A record "\fId.d.d.d\fR" under \fIdnswl_domain\fR.
+Each "\fId\fR" is a number, or a pattern inside "[]" that contains
+one or more ";"-separated numbers or number..number ranges.
+If no "\fI=d.d.d.d\fR" is specified, accept the request when the
+reversed client network address is listed with any A record under
+\fIdnswl_domain\fR.
+.br
+For safety, permit_dnswl_client is silently
+ignored when it would override reject_unauth_destination.  The
+result is DEFER_IF_REJECT when whitelist lookup fails.  This feature
+is available in Postfix 2.8 and later.
 .IP "\fBreject_rhsbl_client \fIrbl_domain=d.d.d.d\fR\fR"
 Reject the request when the client hostname is listed with the
 A record "\fId.d.d.d\fR" under \fIrbl_domain\fR (Postfix version
-2.1 and later only).  If no "\fI=d.d.d.d\fR" is specified, reject
-the request when the client hostname is listed with
+2.1 and later only).  Each "\fId\fR" is a number, or a pattern
+inside "[]" that contains one or more ";"-separated numbers or
+number..number ranges (Postfix version 2.8 and later).  If no
+"\fI=d.d.d.d\fR" is specified, reject the request when the client
+hostname is listed with
 any A record under \fIrbl_domain\fR. See the reject_rbl_client
 description above for additional RBL related configuration parameters.
-This feature is available in Postfix 2.0 and later.
+This feature is available in Postfix 2.0 and later; with Postfix
+version 2.8 and later, reject_rhsbl_reverse_client will usually
+produce better results.
+.IP "\fBpermit_rhswl_client \fIrhswl_domain=d.d.d.d\fR\fR"
+Accept the request when the client hostname is listed with the
+A record "\fId.d.d.d\fR" under \fIrhswl_domain\fR.  Each "\fId\fR"
+is a number, or a pattern inside "[]" that contains one or more
+";"-separated numbers or number..number ranges. If no
+"\fI=d.d.d.d\fR" is specified, accept the request when the client
+hostname is listed with any A record under \fIrhswl_domain\fR.
+.br
+Caution: client name whitelisting is fragile, since the client
+name lookup can fail due to temporary outages.  Client name
+whitelisting should be used only to reduce false positives in e.g.
+DNS-based blocklists, and not for making access rule exceptions.
+.br
+For safety, permit_rhswl_client is silently ignored when it
+would override reject_unauth_destination.  The result is DEFER_IF_REJECT
+when whitelist lookup fails.  This feature is available in Postfix
+2.8 and later.
+.IP "\fBreject_rhsbl_reverse_client \fIrbl_domain=d.d.d.d\fR\fR"
+Reject the request when the unverified reverse client hostname
+is listed with the A record "\fId.d.d.d\fR" under \fIrbl_domain\fR.
+Each "\fId\fR" is a number, or a pattern inside "[]" that contains
+one or more ";"-separated numbers or number..number ranges.
+If no "\fI=d.d.d.d\fR" is specified, reject the request when the
+unverified reverse client hostname is listed with any A record under
+\fIrbl_domain\fR. See the reject_rbl_client description above for
+additional RBL related configuration parameters.  This feature is
+available in Postfix 2.8 and later.
 .IP "\fBreject_unknown_client_hostname\fR (with Postfix < 2.3: reject_unknown_client)"
 Reject the request when 1) the client IP address->name mapping
 fails, 2) the name->address mapping fails, or 3) the name->address
@@ -6821,20 +7506,22 @@ except that initial whitespace and the trailing <CR><LF>
 are removed.  The result value is executed by the Postfix SMTP
 server.
 .PP
-Postfix already implements a number of workarounds for malformed
-client commands.
+There is no need to use smtpd_command_filter for the following
+cases:
 .IP \(bu
 Use "resolve_numeric_domain = yes" to accept
 "\fIuser@ipaddress\fR".
 .IP \(bu
 Postfix already accepts the correct form
-"\fIuser@[ipaddress]\fR".
+"\fIuser@[ipaddress]\fR". Use virtual_alias_maps or canonical_maps
+to translate these into domain names if necessary.
 .IP \(bu
-Use "strict_rfc821_envelopes = no" to accept "\fIUser Name
-<user@example.com>\fR". Postfix will ignore the "User Name"
-part before delivering the mail.
+Use "strict_rfc821_envelopes = no" to accept "RCPT TO:<\fIUser
+Name <user@example.com>>\fR". Postfix will ignore the "\fIUser
+Name\fR" part and deliver to the \fI<user@example.com>\fR address.
 .PP
-Examples:
+Examples of problems that can be solved with the smtpd_command_filter
+feature:
 .PP
 .nf
 .na
@@ -6874,6 +7561,17 @@ Examples:
 .ad
 .ft R
 .PP
+.nf
+.na
+.ft C
+    # Bounce-never mail sink. Use notify_classes=bounce,resource,software
+    # to send bounced mail to the postmaster (with message body removed).
+    /^(RCPT\es+TO:.*?)\ebNOTIFY=\eS+\eb(.*)/ $1 NOTIFY=NEVER $2
+    /^(RCPT\es+TO:.*)/                    $1 NOTIFY=NEVER
+.fi
+.ad
+.ft R
+.PP
 This feature is available in Postfix 2.7.
 .SH smtpd_data_restrictions (default: empty)
 Optional access restrictions that the Postfix SMTP server applies
@@ -6896,6 +7594,12 @@ in any SMTP command context, described under smtpd_client_restrictions.
 SMTP command specific restrictions described under
 smtpd_client_restrictions, smtpd_helo_restrictions,
 smtpd_sender_restrictions or smtpd_recipient_restrictions.
+.IP \(bu
+However, no recipient information is available in the case of
+multi-recipient mail. Acting on only one recipient would be misleading,
+because any decision will affect all recipients equally. Acting on
+all recipients would require a possibly very large amount of memory,
+and would also be misleading for the reasons mentioned before.
 .PP
 Examples:
 .PP
@@ -6963,7 +7667,7 @@ restriction lists" for a discussion of evaluation context and time.
 .PP
 This feature is available in Postfix 2.2 and later.
 .PP
-See smtpd_data_restrictions for syntax details.
+See smtpd_data_restrictions for details and limitations.
 .SH smtpd_enforce_tls (default: no)
 Mandatory TLS: announce STARTTLS support to SMTP clients,
 and require that clients use TLS encryption.  According to RFC 2487
@@ -7035,18 +7739,19 @@ This parameter is not subjected to $parameter expansion.
 .PP
 This feature is available in Postfix 2.0 and later.
 .SH smtpd_forbidden_commands (default: CONNECT, GET, POST)
-List of commands that causes the Postfix SMTP server to immediately
+List of commands that cause the Postfix SMTP server to immediately
 terminate the session with a 221 code. This can be used to disconnect
 clients that obviously attempt to abuse the system. In addition to the
 commands listed in this parameter, commands that follow the "Label:"
 format of message headers will also cause a disconnect.
 .PP
 This feature is available in Postfix 2.2 and later.
-.SH smtpd_hard_error_limit (default: normal: 20, stress: 1)
+.SH smtpd_hard_error_limit (default: normal: 20, overload: 1)
 The maximal number of errors a remote SMTP client is allowed to
 make without delivering mail. The Postfix SMTP server disconnects
 when the limit is exceeded. Normally the default limit is 20, but
-it changes under overload to just 1 with Postfix 2.6 and later.
+it changes under overload to just 1. With Postfix 2.5 and earlier,
+the SMTP server always allows up to 20 errors by default.
 .SH smtpd_helo_required (default: no)
 Require that a remote SMTP client introduces itself with the HELO
 or EHLO command before sending the MAIL command or other commands
@@ -7069,6 +7774,10 @@ restriction lists" for a discussion of evaluation context and time.
 .PP
 The default is to permit everything.
 .PP
+Note: specify "smtpd_helo_required = yes" to fully enforce this
+restriction (without "smtpd_helo_required = yes", a client can
+simply skip smtpd_helo_restrictions by not sending HELO or EHLO).
+.PP
 Specify a list of restrictions, separated by commas and/or whitespace.
 Continue long lines by starting the next line with whitespace.
 Restrictions are applied in the order as specified; the first
@@ -7079,39 +7788,59 @@ received with the HELO or EHLO command.
 .IP "\fBcheck_helo_access \fItype:table\fR\fR"
 Search the specified \fBaccess\fR(5) database for the HELO or EHLO
 hostname or parent domains, and execute the corresponding action.
+Note: specify "smtpd_helo_required = yes" to fully enforce this
+restriction (without "smtpd_helo_required = yes", a client can
+simply skip check_helo_access by not sending HELO or EHLO).
 .IP "\fBcheck_helo_mx_access \fItype:table\fR\fR"
 Search the specified \fBaccess\fR(5) database for the MX hosts for
 the HELO or EHLO hostname, and execute the corresponding action.
-Note: a result of "OK" is not allowed for safety reasons. Instead,
-use DUNNO in order to exclude specific hosts from blacklists.  This
+Note 1: a result of "OK" is not allowed for safety reasons. Instead,
+use DUNNO in order to exclude specific hosts from blacklists.  Note
+2: specify "smtpd_helo_required = yes" to fully enforce this
+restriction (without "smtpd_helo_required = yes", a client can
+simply skip check_helo_mx_access by not sending HELO or EHLO).  This
 feature is available in Postfix 2.1 and later.
 .IP "\fBcheck_helo_ns_access \fItype:table\fR\fR"
 Search the specified \fBaccess\fR(5) database for the DNS servers
 for the HELO or EHLO hostname, and execute the corresponding action.
-Note: a result of "OK" is not allowed for safety reasons. Instead,
-use DUNNO in order to exclude specific hosts from blacklists.  This
+Note 1: a result of "OK" is not allowed for safety reasons. Instead,
+use DUNNO in order to exclude specific hosts from blacklists.  Note
+2: specify "smtpd_helo_required = yes" to fully enforce this
+restriction (without "smtpd_helo_required = yes", a client can
+simply skip check_helo_ns_access by not sending HELO or EHLO). This
 feature is available in Postfix 2.1 and later.
 .IP "\fBreject_invalid_helo_hostname\fR (with Postfix < 2.3: reject_invalid_hostname)"
 Reject the request when the HELO or EHLO hostname syntax is
-invalid.
+invalid. Note: specify "smtpd_helo_required = yes" to fully enforce
+this restriction (without "smtpd_helo_required = yes", a client can simply
+skip reject_invalid_helo_hostname by not sending HELO or EHLO).
 .br
-The invalid_hostname_reject_code specifies the response
-code for rejected requests (default: 501).
+The invalid_hostname_reject_code specifies the response code
+for rejected requests (default: 501).
 .IP "\fBreject_non_fqdn_helo_hostname\fR (with Postfix < 2.3: reject_non_fqdn_hostname)"
 Reject the request when the HELO or EHLO hostname is not in
-fully-qualified domain form, as required by the RFC.
+fully-qualified domain form, as required by the RFC. Note: specify
+"smtpd_helo_required = yes" to fully enforce this restriction
+(without "smtpd_helo_required = yes", a client can simply skip
+reject_non_fqdn_helo_hostname by not sending HELO or EHLO).
 .br
-The
-non_fqdn_reject_code parameter specifies the response code for
+The non_fqdn_reject_code parameter specifies the response code for
 rejected requests (default: 504).
 .IP "\fBreject_rhsbl_helo \fIrbl_domain=d.d.d.d\fR\fR"
 Reject the request when the HELO or EHLO hostname hostname is
 listed with the A record "\fId.d.d.d\fR" under \fIrbl_domain\fR
-(Postfix version 2.1 and later only).  If no "\fI=d.d.d.d\fR" is
+(Postfix version 2.1 and later only).  Each "\fId\fR" is a number,
+or a pattern inside "[]" that contains one or more ";"-separated
+numbers or number..number ranges (Postfix version 2.8 and later).
+If no "\fI=d.d.d.d\fR" is
 specified, reject the request when the HELO or EHLO hostname is
 listed with any A record under \fIrbl_domain\fR. See the
 reject_rbl_client description for additional RBL related configuration
-parameters.  This feature is available in Postfix 2.0 and later.
+parameters.  Note: specify "smtpd_helo_required = yes" to fully
+enforce this restriction (without "smtpd_helo_required = yes", a
+client can simply skip reject_rhsbl_helo by not sending HELO or
+EHLO). This feature is available in Postfix 2.0
+and later.
 .IP "\fBreject_unknown_helo_hostname\fR (with Postfix < 2.3: reject_unknown_hostname)"
 Reject the request when the HELO or EHLO hostname has no DNS A
 or MX record.
@@ -7122,7 +7851,10 @@ specifies the numerical response code for rejected requests (default:
 .br
 The unknown_helo_hostname_tempfail_action parameter
 specifies the action after a temporary DNS error (default:
-defer_if_permit).
+defer_if_permit). Note: specify "smtpd_helo_required = yes" to fully
+enforce this restriction (without "smtpd_helo_required = yes", a
+client can simply skip reject_unknown_helo_hostname by not sending
+HELO or EHLO).
 .PP
 Other restrictions that are valid in this context:
 .IP \(bu
@@ -7152,14 +7884,15 @@ smtpd_helo_restrictions = permit_mynetworks, reject_unknown_helo_hostname
 .SH smtpd_history_flush_threshold (default: 100)
 The maximal number of lines in the Postfix SMTP server command history
 before it is flushed upon receipt of EHLO, RSET, or end of DATA.
-.SH smtpd_junk_command_limit (default: normal: 100, stress: 1)
+.SH smtpd_junk_command_limit (default: normal: 100, overload: 1)
 The number of junk commands (NOOP, VRFY, ETRN or RSET) that a remote
 SMTP client can send before the Postfix SMTP server starts to
 increment the error counter with each junk command.  The junk
 command count is reset after mail is delivered.  See also the
 smtpd_error_sleep_time and smtpd_soft_error_limit configuration
 parameters.  Normally the default limit is 100, but it changes under
-overload to just 1 with Postfix 2.6 and later.
+overload to just 1. With Postfix 2.5 and earlier, the SMTP server
+always allows up to 100 junk commands by default.
 .SH smtpd_milters (default: empty)
 A list of Milter (mail filter) applications for new mail that
 arrives via the Postfix \fBsmtpd\fR(8) server.  See the MILTER_README
@@ -7348,7 +8081,10 @@ rejected requests (default: 504).
 .IP "\fBreject_rhsbl_recipient \fIrbl_domain=d.d.d.d\fR\fR"
 Reject the request when the RCPT TO domain is listed with the
 A record "\fId.d.d.d\fR" under \fIrbl_domain\fR (Postfix version
-2.1 and later only).  If no "\fI=d.d.d.d\fR" is specified, reject
+2.1 and later only).  Each "\fId\fR" is a number, or a pattern
+inside "[]" that contains one or more ";"-separated numbers or
+number..number ranges (Postfix version 2.8 and later). If no
+"\fI=d.d.d.d\fR" is specified, reject
 the request when the RCPT TO domain is listed with
 any A record under \fIrbl_domain\fR.
 .br
@@ -7431,6 +8167,78 @@ smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
 .fi
 .ad
 .ft R
+.SH smtpd_reject_footer (default: empty)
+Optional information that is appended after each SMTP server
+4XX or 5XX response.
+.PP
+Example:
+.PP
+.nf
+.na
+.ft C
+/etc/postfix/main.cf:
+    smtpd_reject_footer = For assistance, call 800-555-0101.
+     Please provide the following information in your problem report:
+     time ($localtime), client ($client_address) and server
+     ($server_name).
+.fi
+.ad
+.ft R
+.PP
+Server response:
+.PP
+.nf
+.na
+.ft C
+    550-5.5.1 <user@example> Recipient address rejected: User unknown
+    550 5.5.1 For assistance, call 800-555-0101. Please provide the
+    following information in your problem report: time (Jan 4 15:42:00),
+    client (192.168.1.248) and server (mail1.example.com).
+.fi
+.ad
+.ft R
+.PP
+Note: the above text is meant to make it easier to find the
+Postfix logfile records for a failed SMTP session. The text itself
+is not logged to the Postfix SMTP server's maillog file.
+.PP
+Be sure to keep the text as short as possible. Long text may
+be truncated before it is logged to the remote SMTP client's maillog
+file, or before it is returned to the sender in a delivery status
+notification.
+.PP
+This feature supports a limited number of $name attributes in
+the footer text. These are replaced by their current value for the
+SMTP session:
+.IP "\fBclient_address\fR"
+The Client IP address that
+is logged in the maillog file.
+.IP "\fBclient_port\fR"
+The client TCP port that is
+logged in the maillog file.
+.IP "\fBlocaltime\fR"
+The server local time (Mmm dd
+hh:mm:ss) that is logged in the maillog file.
+.IP "\fBserver_name\fR"
+The server's myhostname value.
+This attribute is made available for sites with multiple MTAs
+(perhaps behind a load-balancer), where the server name can help
+the server support team to quickly find the right log files.
+.PP
+Notes:
+.IP \(bu
+NOT SUPPORTED are other attributes such as sender, recipient,
+or main.cf parameters.
+.IP \(bu
+For safety reasons, text that does not match
+$smtpd_expansion_filter is censored.
+.PP
+This feature supports the two-character sequence \en as a request
+for a line break in the footer text. Postfix automatically inserts
+after each line break the three-digit SMTP reply code (and optional
+enhanced status code) from the original Postfix reject message.
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH smtpd_reject_unlisted_recipient (default: yes)
 Request that the Postfix SMTP server rejects mail for unknown
 recipient addresses, even when no explicit reject_unlisted_recipient
@@ -7718,7 +8526,10 @@ rejected requests (default: 504).
 .IP "\fBreject_rhsbl_sender \fIrbl_domain=d.d.d.d\fR\fR"
 Reject the request when the MAIL FROM domain is listed with
 the A record "\fId.d.d.d\fR" under \fIrbl_domain\fR (Postfix
-version 2.1 and later only).  If no "\fI=d.d.d.d\fR" is specified,
+version 2.1 and later only).  Each "\fId\fR" is a number, or a
+pattern inside "[]" that contains one or more ";"-separated numbers
+or number..number ranges (Postfix version 2.8 and later). If no
+"\fI=d.d.d.d\fR" is specified,
 reject the request when the MAIL FROM domain is
 listed with any A record under \fIrbl_domain\fR.
 .br
@@ -7804,6 +8615,12 @@ smtpd_sender_restrictions = reject_unknown_sender_domain,
 .fi
 .ad
 .ft R
+.SH smtpd_service_name (default: smtpd)
+The internal service that \fBpostscreen\fR(8) forwards allowed
+connections to. In a future version there may be different
+classes of SMTP service.
+.PP
+This feature is available in Postfix 2.8.
 .SH smtpd_soft_error_limit (default: 10)
 The number of errors a remote SMTP client is allowed to make without
 delivering mail before the Postfix SMTP server slows down all its
@@ -7814,16 +8631,19 @@ delays all responses by $smtpd_error_sleep_time seconds.
 .IP \(bu
 With Postfix versions 2.0 and earlier, the Postfix SMTP
 server delays all responses by (number of errors) seconds.
-.SH smtpd_starttls_timeout (default: 300s)
+.SH smtpd_starttls_timeout (default: see "postconf -d" output)
 The time limit for Postfix SMTP server write and read operations
-during TLS startup and shutdown handshake procedures.
+during TLS startup and shutdown handshake procedures. The current
+default value is stress-dependent. Before Postfix version 2.8, it
+was fixed at 300s.
 .PP
 This feature is available in Postfix 2.2 and later.
-.SH smtpd_timeout (default: normal: 300s, stress: 10s)
+.SH smtpd_timeout (default: normal: 300s, overload: 10s)
 The time limit for sending a Postfix SMTP server response and for
 receiving a remote SMTP client request. Normally the default limit
-is 300s, but it changes under overload to just 10s with Postfix 2.6
-and later.
+is 300s, but it changes under overload to just 10s. With Postfix
+2.5 and earlier, the SMTP server always uses a time limit of 300s
+by default.
 .PP
 Note: if you set SMTP time limits to very large values you may have
 to update the global ipc_timeout parameter.
@@ -8170,14 +8990,13 @@ Diffie-Hellman (EECDH) key exchange.
 The available choices are:
 .IP "\fBnone\fR"
 Don't use EECDH. Ciphers based on EECDH key
-exchange will be disabled. This is the default in official Postfix
-releases (mail_version = major.minor.patchlevel).
+exchange will be disabled. This is the default in Postfix versions
+2.6 and 2.7.
 .IP "\fBstrong\fR"
 Use EECDH with approximately 128
 bits of security at a reasonable computational cost. This is the
 current best-practice trade-off between security and computational
-efficiency. This is the default in Postfix snapshot releases
-(mail_version = major.minor-releasedate).
+efficiency. This is the default in Postfix version 2.8 and later.
 .IP "\fBultra\fR"
 Use EECDH with approximately 192 bits of
 security at computational cost that is approximately twice as high
@@ -8751,6 +9570,78 @@ bytes (equivalent to 256 bits) is sufficient to generate a 128bit
 (or 168bit) session key.
 .PP
 This feature is available in Postfix 2.2 and later.
+.SH tls_disable_workarounds (default: see "postconf -d" output)
+List or bit-mask of OpenSSL bug work-arounds to disable.
+.PP
+The OpenSSL toolkit includes a set of work-arounds for buggy SSL/TLS
+implementations. Applications, such as Postfix, that want to maximize
+interoperability ask the OpenSSL library to enable the full set of
+recommended work-arounds.
+.PP
+From time to time, it is discovered that a work-around creates a
+security issue, and should no longer be used. If upgrading OpenSSL
+to a fixed version is not an option or an upgrade is not available
+in a timely manner, or in closed environments where no buggy clients
+or servers exist, it may be appropriate to disable some or all of the
+OpenSSL interoperability work-arounds. This parameter specifies which
+bug work-arounds to disable.
+.PP
+If the value of the parameter is a hexadecimal long integer starting
+with "0x", the bug work-arounds corresponding to the bits specified in
+its value are removed from the \fBSSL_OP_ALL\fR work-around bit-mask
+(see openssl/ssl.h and SSL_CTX_\fBset_options\fR(3)). You can specify more
+bits than are present in SSL_OP_ALL, excess bits are ignored. Specifying
+0xFFFFFFFF disables all bug-workarounds on a 32-bit system. This should
+also be sufficient on 64-bit systems, until OpenSSL abandons support
+for 32-bit systems and starts using the high 32 bits of a 64-bit
+bug-workaround mask.
+.PP
+Otherwise, the parameter is a white-space or comma separated list
+of specific named bug work-arounds chosen from the list below. It
+is possible that your OpenSSL version includes new bug work-arounds
+added after your Postfix source code was last updated, in that case
+you can only disable one of these via the hexadecimal syntax above.
+.IP "\fBMICROSOFT_SESS_ID_BUG\fR"
+See SSL_CTX_\fBset_options\fR(3)
+.IP "\fBNETSCAPE_CHALLENGE_BUG\fR"
+See SSL_CTX_\fBset_options\fR(3)
+.IP "\fBLEGACY_SERVER_CONNECT\fR"
+See SSL_CTX_\fBset_options\fR(3)
+.IP "\fBNETSCAPE_REUSE_CIPHER_CHANGE_BUG\fR"
+also aliased
+as \fBCVE-2010-4180\fR. Postfix 2.8 disables this work-around by
+default with OpenSSL versions that may predate the fix. Fixed in
+OpenSSL 0.9.8q and OpenSSL 1.0.0c.
+.IP "\fBSSLREF2_REUSE_CERT_TYPE_BUG\fR"
+See
+SSL_CTX_\fBset_options\fR(3)
+.IP "\fBMICROSOFT_BIG_SSLV3_BUFFER\fR"
+See
+SSL_CTX_\fBset_options\fR(3)
+.IP "\fBMSIE_SSLV2_RSA_PADDING\fR"
+also aliased as
+\fBCVE-2005-2969\fR. Postfix 2.8 disables this work-around by
+default with OpenSSL versions that may predate the fix. Fixed in
+OpenSSL 0.9.7h and OpenSSL 0.9.8a.
+.IP "\fBSSLEAY_080_CLIENT_DH_BUG\fR"
+See
+SSL_CTX_\fBset_options\fR(3)
+.IP "\fBTLS_D5_BUG\fR"
+See SSL_CTX_\fBset_options\fR(3)
+.IP "\fBTLS_BLOCK_PADDING_BUG\fR"
+See SSL_CTX_\fBset_options\fR(3)
+.IP "\fBTLS_ROLLBACK_BUG\fR"
+See SSL_CTX_\fBset_options\fR(3).
+This is disabled in OpenSSL 0.9.7 and later. Nobody should still
+be using 0.9.6!
+.IP "\fBDONT_INSERT_EMPTY_FRAGMENTS\fR"
+See
+SSL_CTX_\fBset_options\fR(3)
+.IP "\fBCRYPTOPRO_TLSEXT_BUG\fR"
+New with GOST support in
+OpenSSL 1.0.0.
+.PP
+This feature is available in Postfix 2.8 and later.
 .SH tls_eecdh_strong_curve (default: prime256v1)
 The elliptic curve used by the SMTP server for sensibly strong
 ephemeral ECDH key exchange. This curve is used by the Postfix SMTP
@@ -8846,6 +9737,25 @@ lmtp_tls_mandatory_ciphers.  You are strongly encouraged to not
 change this setting.
 .PP
 This feature is available in Postfix 2.3 and later.
+.SH tls_preempt_cipherlist (default: no)
+With SSLv3 and later, use the server's cipher preference order
+instead of the client's cipher preference order.
+.PP
+By default, the OpenSSL server selects the client's most preferred
+cipher that the server supports. With SSLv3 and later, the server may
+choose its own most preferred cipher that is supported (offered) by
+the client. Setting "tls_preempt_cipherlist = yes" enables server cipher
+preferences.
+.PP
+While server cipher selection may in some cases lead to a more secure
+or performant cipher choice, there is some risk of interoperability
+issues. In the past, some SSL clients have listed lower priority ciphers
+that they did not implement correctly. If the server chooses a cipher
+that the client prefers less, it may select a cipher whose client
+implementation is flawed.
+.PP
+This feature is available in Postfix 2.8 and later, in combination
+with OpenSSL 0.9.7 and later.
 .SH tls_random_bytes (default: 32)
 The number of bytes that \fBtlsmgr\fR(8) reads from $tls_random_source
 when (re)seeding the in-memory pseudo random number generator (PRNG)
@@ -8892,6 +9802,192 @@ Note: on OpenBSD systems specify /dev/arandom when /dev/urandom
 gives timeout errors.
 .PP
 This feature is available in Postfix 2.2 and later.
+.SH tlsproxy_enforce_tls (default: $smtpd_enforce_tls)
+Mandatory TLS: announce STARTTLS support to SMTP clients, and
+require that clients use TLS encryption. See smtpd_enforce_tls for
+further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_service_name (default: tlsproxy)
+The name of the \fBtlsproxy\fR(8) service entry in master.cf. This
+service performs plaintext <=> TLS ciphertext conversion.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_CAfile (default: $smtpd_tls_CAfile)
+A file containing (PEM format) CA certificates of root CAs
+trusted to sign either remote SMTP client certificates or intermediate
+CA certificates.  See smtpd_tls_CAfile for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_CApath (default: $smtpd_tls_CApath)
+A directory containing (PEM format) CA certificates of root CAs
+trusted to sign either remote SMTP client certificates or intermediate
+CA certificates. See smtpd_tls_CApath for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_always_issue_session_ids (default: $smtpd_tls_always_issue_session_ids)
+Force the Postfix \fBtlsproxy\fR(8) server to issue a TLS session id,
+even when TLS session caching is turned off. See
+smtpd_tls_always_issue_session_ids for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_ask_ccert (default: $smtpd_tls_ask_ccert)
+Ask a remote SMTP client for a client certificate. See
+smtpd_tls_ask_ccert for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_ccert_verifydepth (default: $smtpd_tls_ccert_verifydepth)
+The verification depth for remote SMTP client certificates. A
+depth of 1 is sufficient if the issuing CA is listed in a local CA
+file. See smtpd_tls_ccert_verifydepth for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_cert_file (default: $smtpd_tls_cert_file)
+File with the Postfix \fBtlsproxy\fR(8) server RSA certificate in PEM
+format.  This file may also contain the Postfix \fBtlsproxy\fR(8) server
+private RSA key.  See smtpd_tls_cert_file for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_ciphers (default: $smtpd_tls_ciphers)
+The minimum TLS cipher grade that the Postfix \fBtlsproxy\fR(8) server
+will use with opportunistic TLS encryption. See smtpd_tls_ciphers
+for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_dcert_file (default: $smtpd_tls_dcert_file)
+File with the Postfix \fBtlsproxy\fR(8) server DSA certificate in PEM
+format.  This file may also contain the Postfix \fBtlsproxy\fR(8) server
+private DSA key.  See smtpd_tls_dcert_file for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_dh1024_param_file (default: $smtpd_tls_dh1024_param_file)
+File with DH parameters that the Postfix \fBtlsproxy\fR(8) server
+should use with EDH ciphers. See smtpd_tls_dh1024_param_file for
+further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_dh512_param_file (default: $smtpd_tls_dh512_param_file)
+File with DH parameters that the Postfix \fBtlsproxy\fR(8) server
+should use with EDH ciphers. See smtpd_tls_dh512_param_file for
+further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_dkey_file (default: $smtpd_tls_dkey_file)
+File with the Postfix \fBtlsproxy\fR(8) server DSA private key in PEM
+format.  This file may be combined with the Postfix \fBtlsproxy\fR(8)
+server DSA certificate file specified with $smtpd_tls_dcert_file.
+See smtpd_tls_dkey_file for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_eccert_file (default: $smtpd_tls_eccert_file)
+File with the Postfix \fBtlsproxy\fR(8) server ECDSA certificate in
+PEM format.  This file may also contain the Postfix \fBtlsproxy\fR(8)
+server private ECDSA key.  See smtpd_tls_eccert_file for further
+details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_eckey_file (default: $smtpd_tls_eckey_file)
+File with the Postfix \fBtlsproxy\fR(8) server ECDSA private key in
+PEM format.  This file may be combined with the Postfix \fBtlsproxy\fR(8)
+server ECDSA certificate file specified with $smtpd_tls_eccert_file.
+See smtpd_tls_eckey_file for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_eecdh_grade (default: $smtpd_tls_eecdh_grade)
+The Postfix \fBtlsproxy\fR(8) server security grade for ephemeral
+elliptic-curve Diffie-Hellman (EECDH) key exchange. See
+smtpd_tls_eecdh_grade for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_exclude_ciphers (default: $smtpd_tls_exclude_ciphers)
+List of ciphers or cipher types to exclude from the \fBtlsproxy\fR(8)
+server cipher list at all TLS security levels. See
+smtpd_tls_exclude_ciphers for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_fingerprint_digest (default: $smtpd_tls_fingerprint_digest)
+The message digest algorithm used to construct client-certificate
+fingerprints. See smtpd_tls_fingerprint_digest for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_key_file (default: $smtpd_tls_key_file)
+File with the Postfix \fBtlsproxy\fR(8) server RSA private key in PEM
+format.  This file may be combined with the Postfix \fBtlsproxy\fR(8)
+server RSA certificate file specified with $smtpd_tls_cert_file.
+See smtpd_tls_key_file for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_loglevel (default: $smtpd_tls_loglevel)
+Enable additional Postfix \fBtlsproxy\fR(8) server logging of TLS
+activity.  Each logging level also includes the information that
+is logged at a lower logging level. See smtpd_tls_loglevel for
+further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_mandatory_ciphers (default: $smtpd_tls_mandatory_ciphers)
+The minimum TLS cipher grade that the Postfix \fBtlsproxy\fR(8) server
+will use with mandatory TLS encryption. See smtpd_tls_mandatory_ciphers
+for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_mandatory_exclude_ciphers (default: $smtpd_tls_mandatory_exclude_ciphers)
+Additional list of ciphers or cipher types to exclude from the
+\fBtlsproxy\fR(8) server cipher list at mandatory TLS security levels.
+See smtpd_tls_mandatory_exclude_ciphers for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_mandatory_protocols (default: $smtpd_tls_mandatory_protocols)
+The SSL/TLS protocols accepted by the Postfix \fBtlsproxy\fR(8) server
+with mandatory TLS encryption. If the list is empty, the server
+supports all available SSL/TLS protocol versions.  See
+smtpd_tls_mandatory_protocols for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_protocols (default: $smtpd_tls_protocols)
+List of TLS protocols that the Postfix \fBtlsproxy\fR(8) server will
+exclude or include with opportunistic TLS encryption. See
+smtpd_tls_protocols for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_req_ccert (default: $smtpd_tls_req_ccert)
+With mandatory TLS encryption, require a trusted remote SMTP
+client certificate in order to allow TLS connections to proceed.
+See smtpd_tls_req_ccert for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_security_level (default: $smtpd_tls_security_level)
+The SMTP TLS security level for the Postfix \fBtlsproxy\fR(8) server;
+when a non-empty value is specified, this overrides the obsolete
+parameters smtpd_use_tls and smtpd_enforce_tls. See
+smtpd_tls_security_level for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_tls_session_cache_timeout (default: $smtpd_tls_session_cache_timeout)
+The expiration time of Postfix \fBtlsproxy\fR(8) server TLS session
+cache information. A cache cleanup is performed periodically every
+$smtpd_tls_session_cache_timeout seconds. See
+smtpd_tls_session_cache_timeout for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_use_tls (default: $smtpd_use_tls)
+Opportunistic TLS: announce STARTTLS support to SMTP clients,
+but do not require that clients use TLS encryption. See smtpd_use_tls
+for further details.
+.PP
+This feature is available in Postfix 2.8 and later.
+.SH tlsproxy_watchdog_timeout (default: 10s)
+How much time a \fBtlsproxy\fR(8) process may take to process local
+or remote I/O before it is terminated by a built-in watchdog timer.
+This is a safety mechanism that prevents \fBtlsproxy\fR(8) from becoming
+non-responsive due to a bug in Postfix itself or in system software.
+To avoid false alarms and unnecessary cache corruption this limit
+cannot be set under 10s.
+.PP
+Specify a non-zero time value (an integral value plus an optional
+one-letter suffix that specifies the time unit).  Time units: s
+(seconds), m (minutes), h (hours), d (days), w (weeks).
+.PP
+This feature is available in Postfix 2.8.
 .SH trace_service_name (default: trace)
 The name of the trace service. This service is implemented by the
 \fBbounce\fR(8) daemon and maintains a record
@@ -9018,10 +10114,23 @@ load.
 .PP
 Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 The default time unit is s (seconds).
-.SH undisclosed_recipients_header (default: To: undisclosed-recipients:;)
+.SH undisclosed_recipients_header (default: see "postconf -d" output)
 Message header that the Postfix \fBcleanup\fR(8) server inserts when a
-message contains no To: or Cc: message header. With Postfix 2.4
-and later, specify an empty value to disable this feature.
+message contains no To: or Cc: message header. With Postfix 2.8
+and later, the default value is empty. With Postfix 2.4-2.7,
+specify an empty value to disable this feature.
+.PP
+Example:
+.PP
+.nf
+.na
+.ft C
+# Default value before Postfix 2.8.
+# Note: the ":" and ";" are both required.
+undisclosed_recipients_header = To: undisclosed-recipients:;
+.fi
+.ad
+.ft R
 .SH unknown_address_reject_code (default: 450)
 The numerical Postfix SMTP server response code when a sender or
 recipient address is rejected by the reject_unknown_sender_domain
