@@ -1,4 +1,4 @@
-/*	$NetBSD: cproj.c,v 1.3 2010/09/20 17:51:38 christos Exp $	*/
+/*	$NetBSD: cproj.c,v 1.4 2011/03/02 13:24:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cproj.c,v 1.3 2010/09/20 17:51:38 christos Exp $");
+__RCSID("$NetBSD: cproj.c,v 1.4 2011/03/02 13:24:43 christos Exp $");
 
 #include <complex.h>
 #include <math.h>
@@ -50,7 +50,7 @@ cproj(double complex z)
 {
 	double_complex w = { .z = z };
 
-	if (isinf(creal(z) || isinf(cimag(z)))) {
+	if (isinf(creal(z)) || isinf(cimag(z))) {
 #ifdef __INFINITY
 		REAL_PART(w) = __INFINITY;
 #else
