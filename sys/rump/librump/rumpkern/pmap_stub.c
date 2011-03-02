@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.24 2010/06/16 11:45:21 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.25 2011/03/02 13:11:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.24 2010/06/16 11:45:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.25 2011/03/02 13:11:52 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -88,5 +88,5 @@ bool
 pmap_clear_modify(struct vm_page *pg)
 {
 
-	return true;
+	return false;
 }
