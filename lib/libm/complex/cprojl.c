@@ -1,4 +1,4 @@
-/*	$NetBSD: cprojl.c,v 1.4 2010/09/20 17:51:38 christos Exp $	*/
+/*	$NetBSD: cprojl.c,v 1.5 2011/03/02 13:24:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cprojl.c,v 1.4 2010/09/20 17:51:38 christos Exp $");
+__RCSID("$NetBSD: cprojl.c,v 1.5 2011/03/02 13:24:43 christos Exp $");
 
 #include <complex.h>
 #include <math.h>
@@ -50,7 +50,7 @@ cprojl(long double complex z)
 {
 	long_double_complex w = { .z = z };
 
-	if (isinf(creall(z) || isinf(cimagl(z)))) {
+	if (isinf(creall(z)) || isinf(cimagl(z))) {
 #ifdef __INFINITY
 		REAL_PART(w) = __INFINITY;
 #else
