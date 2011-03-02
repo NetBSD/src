@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.1.1.2 2011/03/02 19:32:13 tron Exp $	*/
 
 /*++
 /* NAME
@@ -122,6 +122,7 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 	     ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, request->sasl_username,
 	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, request->sasl_sender,
     /* XXX Ditto if we want to pass TLS certificate info. */
+	       ATTR_TYPE_STR, MAIL_ATTR_LOG_IDENT, request->log_ident,
 	     ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, request->rewrite_context,
 	       ATTR_TYPE_INT, MAIL_ATTR_RCPT_COUNT, 1,
 	       ATTR_TYPE_END);

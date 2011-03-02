@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_request.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: deliver_request.h,v 1.1.1.2 2011/03/02 19:32:13 tron Exp $	*/
 
 #ifndef _DELIVER_REQUEST_H_INCLUDED_
 #define _DELIVER_REQUEST_H_INCLUDED_
@@ -50,6 +50,7 @@ typedef struct DELIVER_REQUEST {
     char   *sasl_method;		/* SASL method */
     char   *sasl_username;		/* SASL user name */
     char   *sasl_sender;		/* SASL sender */
+    char   *log_ident;			/* original queue ID */
     char   *rewrite_context;		/* address rewrite context */
     char   *dsn_envid;			/* DSN envelope ID */
     int     dsn_ret;			/* DSN full/header notification */
