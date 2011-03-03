@@ -1,0 +1,8 @@
+$NetBSD: version,v 1.1 2011/03/03 05:59:37 kiyohara Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+0.1:	Initial revision, only booting from the internal-CF/HDD is supported
+	only SH4 machine.
