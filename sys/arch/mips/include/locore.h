@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.83 2011/02/20 07:45:47 matt Exp $ */
+/* $NetBSD: locore.h,v 1.84 2011/03/03 18:44:58 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -544,7 +544,15 @@ struct pridtab {
 #define  MIPS_CP0FL_EIMR	__BIT(4)
 #define  MIPS_CP0FL_EBASE	__BIT(5)
 #define  MIPS_CP0FL_CONFIG	__BIT(6)
-#define  MIPS_CP0FL_CONFIGn(n)	(__BIT(7) << ((n) & 7))
+#define  MIPS_CP0FL_CONFIG1	__BIT(7)
+#define  MIPS_CP0FL_CONFIG2	__BIT(8)
+#define  MIPS_CP0FL_CONFIG3	__BIT(9)
+#define  MIPS_CP0FL_CONFIG4	__BIT(10)
+#define  MIPS_CP0FL_CONFIG5	__BIT(11)
+#define  MIPS_CP0FL_CONFIG6	__BIT(12)
+#define  MIPS_CP0FL_CONFIG7	__BIT(13)
+#define  MIPS_CP0FL_USERLOCAL	__BIT(14)
+#define  MIPS_CP0FL_HWRENA	__BIT(15)
 
 /*
  * cpu_cidflags defines, by company
@@ -552,10 +560,10 @@ struct pridtab {
 /*
  * RMI company-specific cpu_cidflags
  */
-#define MIPS_CIDFL_RMI_TYPE     	__BITS(2,0)
-# define  CIDFL_RMI_TYPE_XLR     	0
-# define  CIDFL_RMI_TYPE_XLS     	1
-# define  CIDFL_RMI_TYPE_XLP     	2
+#define MIPS_CIDFL_RMI_TYPE		__BITS(2,0)
+# define  CIDFL_RMI_TYPE_XLR		0
+# define  CIDFL_RMI_TYPE_XLS		1
+# define  CIDFL_RMI_TYPE_XLP		2
 #define MIPS_CIDFL_RMI_THREADS_MASK	__BITS(6,3)
 # define MIPS_CIDFL_RMI_THREADS_SHIFT	3
 #define MIPS_CIDFL_RMI_CORES_MASK	__BITS(10,7)
