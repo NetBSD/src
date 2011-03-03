@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.176 2011/02/20 23:12:09 joerg Exp $	*/
+/*	$NetBSD: parse.c,v 1.177 2011/03/03 14:53:02 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.176 2011/02/20 23:12:09 joerg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.177 2011/03/03 14:53:02 nakayama Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.176 2011/02/20 23:12:09 joerg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.177 2011/03/03 14:53:02 nakayama Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -133,6 +133,9 @@ __RCSID("$NetBSD: parse.c,v 1.176 2011/02/20 23:12:09 joerg Exp $");
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifndef MAP_FILE
+#define MAP_FILE 0
+#endif
 #ifndef MAP_COPY
 #define MAP_COPY MAP_PRIVATE
 #endif
