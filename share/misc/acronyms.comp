@@ -1,24 +1,33 @@
-$NetBSD: acronyms.comp,v 1.120 2011/02/19 18:02:32 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.121 2011/03/03 18:40:23 jruoho Exp $
 
 3WHS	three-way handshake
 AA	anti-aliasing
 AAT	average access time
 ABI	application binary interface
+ABR	available bit rate
 AC	alternating current
 ACID	atomicity, consistency, isolation, durability
 ACK	acknowledgement
 ACK	Amsterdam compiler kit
 ACL	access control list
 ACL	active current loop
+ACP	auxillary control {program, process}
 ACPI	advanced configuration and power interface
+ACS	access control set
+ACU	automatic calling unit
 ADB	Apple desktop bus
 ADC	analog [to] digital converter
+ADP	automatic data processing
 ADT	abstract data type
+ADO	active data objects
+ADP	automatic data processing
 ADPCM	adaptive differential pulse code modulation
 ADSL	asymmetric digital subscriber line
 AES	Advanced Encryption Standard
 AFS	Andrew File System
+AGC	automatic gain control
 AGP	accelerated graphics port
+AI	analog input
 AI	artificial intelligence
 AL	access list
 AL	active link
@@ -28,8 +37,11 @@ AM	access method
 AM	amplitude modulation
 AMI	alternate mark inversion
 AMT	active management technology
+AN	Arabic number
 ANSI	American National Standards Institute
+AO	analog output
 AOL	alert on LAN
+AOS	add or subtract
 AP	access point
 AP	application processor
 API	application programming interface
@@ -40,11 +52,14 @@ ARM	Advanced RISC Machines
 ARP	address resolution protocol
 ARPA	Advanced Research Projects Agency
 ARQ	automatic repeat request
+ARU	audio response unit
 AS	autonomous system
 ASCII	American standard code for information interchange
 ASIC	application-specific integrated circuit
+ASK	amplitude shif keying
 ASLR	address space layout randomization
 ASN	autonomous system number
+ASR	address space register
 AST	abstract syntax tree
 AST	asynchronous trap
 AT	access time
@@ -58,7 +73,9 @@ AWK	Aho, Werner, and Kernighan
 BAL	basic assembly language
 BAR	base address register
 BBS	bulletin board system
+BCC	blind carbon copy
 BCD	binary coded decimal
+BCR	byte counte register
 BCS	base configuration space
 BD	baud
 BEDO	burst extended data output
@@ -67,29 +84,43 @@ BER	bit error rate
 BFD	binary {file, format} descriptor
 BFKL	big fscking kernel lock
 BFS	breadth-first search
+BFT	binary file transfer
 BGA	ball grid array
 BGP	border gateway protocol
 BIND	Berkeley Internet Name Daemon
 BIOS	basic input/output system
 BIST	built-in self-test
+BIU	bus interface unit
 BKDG	BIOS and kernel developer's guide
 BLAS	basic linear algebra subprograms
 BLOB	binary large object
+BM	bus master
 BMC	baseboard management controller
+BMIC	bus master interface controller
+BN	boundary neutral
+BNF	Backus-Naur form
+BO	binary output
+BOF	beginning of file
+BOM	byte order mark
+BOM	beginning of message
 BP	base pointer
 BP	boot processor
 BPF	Berkeley packet filter
+BPI	bits per inch
 BPS	bits per second
 BQS	Berkeley quality software
 BSD	Berkeley software distribution
+BSF	bit scan forward
 BSOD	blue screen of death
 BSP	binary space partition
 BSP	boot strap processor
+BSR	bit scan reverse
 BSS	block started by symbol
 BT	Bluetooth
 BT	BitTorrent
 BTS	bits per second
 BW	bandwidth
+BWM	block-write mode
 CAD	computer-aided design
 CAM	computer assisted manufacturing
 CAM	content addressable memory
@@ -97,8 +128,12 @@ CARP	common address redundancy protocol
 CAS	(atomic) compare and swap
 CAS	computer algebra system
 CAS	column address strobe
+CAU	control access unit
 CAV	constant angular velocity (as opposed to CLV)
+CBC	cipher block chaining
+CBR	constant bit rate
 CCD	charge coupled device
+CC	carbon coby
 CD	compact disc
 CDDA	compact disc digital audio
 CDRAM	cache dynamic random access memory
@@ -111,6 +146,7 @@ CGA	color graphics {array,adapter}
 CGI	common gateway interface
 CHAP	challenge-handshake authentication protocol
 CHS	cylinder/head/sector
+CI	{common, component} interface
 CIDR	classless inter-domain routing
 CIFS	common internet file system
 CIL	common intermediate language
@@ -123,6 +159,7 @@ CLV	constant linear velocity (as opposed to CAV)
 CMI	control management interface
 CMI	control method interface
 CMOS	complementary metal-oxide-semiconductor
+CMP	chip multi-processing
 CMS	content management system
 CMYK	cyan magenta yellow black
 CN	{common, canonical} name
@@ -131,8 +168,11 @@ COF	current operating frequency
 COFF	common object file format
 COMA	cache-only memory architecture
 COW	copy-on-write
+CPB	core performance boost
+CPG	clock pulse generator
 CPL	current privilege level
 CPS	characters per second
+CPT	command pass through
 CPU	central processing unit
 CR	carriage return
 CRC	cyclic redundancy check
@@ -156,26 +196,37 @@ DAC	digital [to] analog converter
 DAO	disk at once
 DAP	directory access protocol
 DAT	digital audio tape
+DAT	dynamic acceleration technology
 DB	database
 DBMS	database management system
+DBS	database server
 DC	direct current
 DCC	direct client [to] client
+DCC	direct cable connect
+DCD	data carrier detect
 DCE	data control equipment
 DCE	distributed computing environment
+DCS	data collection systems
 DCT	discrete cosine transform
+DCU	data cache unit
 DDC	display data channel
 DDE	dynamic data exchange
+DDK	device driver kit
 DDR	double data rate
+DDS	direct digital sound
 DDWG	digital display working group
 DE	desktop environment
 DE	debugging extensions
+DEK	data encryption key
 DEP	data execution prevention
 DER	distinguished encoding rules
 DES	Data Encryption Standard
 DFA	deterministic finite automaton
+DFC	data flow control
 DFS	depth first search
 DFS	distributed file system
 DFT	discrete Fourier transform
+DFT	diagnostic function test
 DHCP	dynamic host configuration protocol
 DIFS	distributed inter-frame space
 DIMM	dual inline memory module
@@ -187,6 +238,7 @@ DMA	direct memory access
 DMI	desktop management interface
 DNARD	Digital network appliance reference design
 DNS	domain name system
+DOF	data over fibre
 DOM	document object model
 DOS	denial of service
 DOS	disk operating system
@@ -218,19 +270,27 @@ DVR	digital video recorder
 DVI	digital visual interface
 E-XER	extended XML encoding rules
 EAP	extensible authentication protocol
+ECC	error correction code
 ECL	emitter-coupled logic
 ECN	explicit congestion notification
 ECP	enhanced capability port
+ECS	enhanced chip set
+ECS	extended configuration space
+EDAT	enhanced dynamic acceleration technology
 EDID	extended display identification data
 EDO	extended data out
+EDS	electronical data sheet
 EEPROM	electrically erasable programmable read only memory
 EFI	extensible firmware interface
+EFL	emitter follower logic
 EFM	eight to fourteen modulation
 EGA	enhanced graphics {array,adapter}
 EGP	exterior gateway protocol
 EIDE	enchanced IDE
 EISA	extended industry standard architecture
 ELF	executable and linking format
+ELS	entry level system
+EMP	electro-magnetic pulse
 EOF	end of file
 EOL	end of line
 EOL	end of life
@@ -239,12 +299,16 @@ EPIC	explicitly parallel instruction computing
 EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
+ERD	emergency recovery disk
 ESDRAM	enhanced synchronous dynamic random access memory
+ESS	electronic switching system
 EST	enhanced speedstep
 ETL	extract, transform, load
+EU	execution unit
 EULA	end user license agreement
 FAT	file allocation table
 FBRAM	frame buffer random access memory
+FCL	fiber channel loop
 FCS	frame check sequence
 FDC	floppy disk controller
 FDD	floppy disk drive
@@ -258,7 +322,8 @@ FFT	fast Fourier transform
 FG	floating gate
 FHSS	frequency hop spread spectrum
 FID	frequency identifier
-FIFO	first in first out
+FIFO	first in, first out
+FILO	first in, last out
 FIR	fast infrared
 FLOPS	floating [point] operations per second
 FM	frequency modulation
@@ -310,8 +375,10 @@ HDCP	high-bandwidth digital content protection
 HF	high frequency
 HFM	highest frequency mode
 HID	human interface device
+HLL	high-level language
 HMA	high memory area
 HMI	human-machine interface
+HP	Hewlett-Packard
 HPC	high performance computing
 HPET	high precision event timer
 HT	hyper-threading
@@ -323,7 +390,9 @@ HTTPS	hyper-text transfer protocol, secure
 HZ	Hertz
 I2O	intelligent input/output
 IANA	Internet assigned number authority
+IBM	International Business Machines
 IBS	instruction based sampling
+ICA	independent computer architecture
 IC	integrated circuit
 ICB	Internet citizen's band
 ICE	in-circuit emulator
@@ -331,6 +400,7 @@ ICH	I/O controller hub
 ICE	internal compiler error
 ICE	in-circuit emulator
 ICMP	Internet control message protocol
+IDA	Intel dynamic acceleration
 IDE	integrated drive electronics
 IDE	integrated development environment
 IDRP	inter-domain routing protocol
@@ -346,6 +416,7 @@ IGMP	Internet group management protocol
 IGP	interior gateway protocol
 IHV	independent hardware vendor
 IKE	Internet key exchange
+ILM	internal loopback mode
 ILP	instruction level parallelism
 IM	instant messaging
 IMC	integrated memory controller
@@ -380,6 +451,7 @@ ISP	Internet service provider
 ISR	interrupt service routine
 IST	interrupt stack table
 ISV	independent software vendor
+ITB	Intel turbo boost
 IVT	interrupt vector table
 JBOD	just a bunch of disks
 JIT	just in time
@@ -406,13 +478,15 @@ LDAP	lightweight directory access protocol
 LDT	local descriptor table
 LE	logical extent
 LED	light emitting diode
+LER	label edge router
 LF	line feed
 LF	low frequency
 LFM	lowest frequency mode
+LFN	long file names
 LFS	log-structured file system
 LFU	least frequently used
-LIFO	last in first out
-LILO	last in last out
+LIFO	last in, first out
+LILO	last in, last out
 LILO	Linux loader
 LINT	local interrupt
 LIR	local Internet registry
@@ -420,14 +494,20 @@ LKM	{Linux, loadable} kernel module
 LKML	Linux kernel mailing list
 LL/SC	load linked / store conditional
 LLC	logical link control
+LLF	low level format
 LLVM	Low Level Virtual Machine
+LMM	link management mode
+LNO	loop nest optimization
 LOC	lines of code
 LPC	low pin count
 LRC	longitudinal redundancy check
+LRM	left-to-right mark
+LRO	left-to-right override
 LRU	least recently used
 LSB	least significant bit [or: byte]
 LSB	Linux standards base
 LSI	large scale integration
+LSR	label switch router
 LTR	left to right
 LTR	load task register
 LUN	logical unit number
@@ -448,11 +528,14 @@ MCE	machine check exception
 MCGA	multicolor graphics adapter
 MCH	memory controller hub
 MCQ	memory controlled queue
+MD	machine-dependent
 MDA	mail delivery agent
 MDA	monochrome display adapter
 MDRAM	multibank dynamic random access memory
+MESI	modified, exclusive, shared, invalid
 MFC	merge from current
 MFM	modified frequency modulation
+MI	machine-independent
 MIB	management information base
 MID	mobile internet device
 MIDI	musical instrument digital interface
@@ -474,6 +557,9 @@ MMU	memory management unit
 MMX	multimedia extension
 MMX	multiple math extension
 MMX	matrix math extension
+MOESI	modified, owned, exclusive, shared, invalid
+MOF	maximum operating frequency
+MOSI	modified, owned, shared, invalid
 MP	multiprocessor
 MP	multiprocessing
 MP	multi-platform
@@ -484,11 +570,13 @@ MPLS	multiprotocol label switching
 MPP	massively parallel processor
 MPS	multiprocessor specification
 MPS	memory pool system
+MR	modem ready
 MRU	most recently used
 MS	Microsoft
 MSB	most significant bit [or: byte]
 MSF	minutes seconds frames
 MSI	message signaled interrupt
+MSI	modified, shared, invalid
 MSR	machine state register
 MSS	maximum segment size
 MT	machine translation
@@ -498,6 +586,7 @@ MTRR	memory type range register
 MTTF	mean time to failure
 MTU	maximum transmission unit
 MUA	mail user agent
+MUD	multi-user domain
 MVCC	multiversion concurrency control
 MWE	module width encoding
 MX	mail exchange
@@ -511,7 +600,9 @@ NCP	network control protocol
 NCQ	native command queuing
 NFA	nondeterministic finite automaton
 NFS	network file system
+NIA	next instruction address
 NIC	network interface card
+NIP	network interface protocol
 NIS	network information service
 NLS	native language support
 NMI	non-maskable interrupt
@@ -531,6 +622,7 @@ OBOE	off by one error
 OCL	object constraint language
 OCR	optical character recognition
 ODCM	on-demand clock modulation
+ODT	on-die termination
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
 ONFI	open nand flash interface
@@ -541,6 +633,8 @@ OOE	out of order execution
 OOM	out of memory
 OOP	object oriented programming
 OOSE	object oriented software engineering
+OPS	operations per second
+OPM	operations per minute
 OQL	object query language
 ORM	object-relational mapping
 OS	operating system
@@ -549,6 +643,7 @@ OSF	open software foundation
 OSI	open systems interconnection
 OSI	open-source initiative
 OSPF	open shortest path first
+OSPM	OS power management
 OSS	open source software
 OSS	open sound system
 OSVW	operating system visible workarounds
@@ -580,36 +675,45 @@ PDA	pushdown automaton
 PDF	portable document format
 PDN	pull-down network
 PDP	page descriptor page
+PDS	product data sheet
 PDU	protocol data unit
 PER	packed encoding rules
 PERL	practical extraction [and] report language
 PFS	perfect forward secrecy
+PGAS	partitioned global address space
 PGP	pretty good privacy
 PHB	PCI host bridge
 PIC	programmable interrupt controller
 PIC	position independent code
 PID	process id
 PIE	position independent executable
+PIM	personal information manager
 PIN	personal identification number
 PIO	programmed input/output
+PIPT	physically indexed, physically tagged
 PKI	public key infrastructure
 PKCS	public-key cryptography standards
 PLC	programmable logic controller
 PLL	phase locked loop
+PLRU	pseudo LRU
+PM	power management
 PME	power management event
 PMI	platform management interrupt
 PMIO	port-mapped input/output
 PMT	photo-multiplier tube
+PMU	power management unit
 PNG	portable network graphics
 PNP	plug and play
 POE	power over ethernet
 POP	post office protocol
+POP	power on password
 POSIX	portable operating system interface [for] Unix
 POST	power on self test
 POTS	plain old telephone system
 PPC	PowerPC
 PPB	PCI [to] PCI bridge
 PPI	pixels per inch
+PPM	pages per minute
 PPP	point-to-point protocol
 PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
@@ -626,12 +730,15 @@ PTE	page table entry
 PTLA	pseudo top level aggregator
 PTP	page table page
 PU	processing unit
+PUN	physical unit number
 PV	physical volume
 PVG	physical volume group
 PWM	pulse width modulation
 PXE	preboot execution environment
 QA	quality assurance
 QAM	quadrature amplitude modulation
+QBE	query by example
+QC	quality control
 QOS	quality of service
 RAD	rapid application development
 RAID	redundant array of inexpensive disks
@@ -647,7 +754,10 @@ RDF	resource description format
 RDM	relational data model
 RDMA	remote direct memory access
 REST	representational state transfer
+RF	radio frequency
+RFO	request for ownership
 RGB	red green blue
+RH	read hit
 RHL	Red Hat Linux
 RIFF	Resource Interchange File Format
 RIP	routing information protocol
@@ -656,11 +766,14 @@ RISC	reduced instruction set computing
 RKM	ROM Kernel Manual
 RLE	run length encoding
 RLL	run length limited
+RLO	right-to-left override
+RM	read miss
 RNG	random number generator
 ROM	read only memory
 RPC	remote procedure call
 RPL	requested privilege level
 RPM	revolutions per minute
+RR	random replacement
 RSA	Rivest, Shamir and Adleman
 RSS	really simple syndication
 RSS	residual sum of squares
@@ -673,12 +786,14 @@ RTOS	real time operating system
 RTS	{ready, request} to send
 RTT	round time trip
 RUP	rational unified process
+RWM	read-write memory
 RX	receive, receiver
 S/PDIF	Sony/Phillips digital interface
 SAAS	software as a service
 SACD	super audio compact disc
 SAD	security association database
 SAM	serial access memory
+SAM	sum addressed memory
 SAN	storage area network
 SAPIC	streamlined advanced programmable interrupt controller
 SASI	shugart associates system interface (predecessor to SCSI)
@@ -711,14 +826,18 @@ SLDRAM	synchronous-link dynamic random access memory
 SLI	scalable link interface
 SLI	scan-line interleave
 SLOC	source lines of code
+SLRU	segmented LRU
+SMAF	system management action field
 SMART	self-monitoring analysis and reporting technology
 SMBIOS	system management BIOS
+SMC	system management controller
 SMI	system management interrupt
 SMI	structure of management information
 SMM	system management mode
 SMP	symmetric multiprocessing
 SMT	simultaneous multithreading
 SMTP	simple mail transfer protocol
+SMU	system management unit
 SNMP	simple network management protocol
 SOA	service oriented architecture
 SOAP	simple object access protocol
@@ -734,8 +853,10 @@ SPI	serial peripheral interface
 SPI	stateful packet inspection
 SPMD	single process, multiple data
 SPR	special purpose register
+SPT	sectors per track
 SQL	structured query language
 SRAM	static random access memory
+SRC	sample rate conversion
 SS	stack segment
 SSD	solid state drive
 SSE	streaming SIMD extensions
@@ -754,13 +875,15 @@ SVM	support vector machine
 SWF	Shockwave Flash
 TAS	test and set
 TAO	track at once
+TAOCP	The Art of Computer Programming
+TCB	trace capture buffer
 TCB	trusted computing base
 TCC	thermal control circuit
 TCL	tool command language
 TCP	transmission control protocol
 TCQ	tagged command queueing
 TDD	test driven development
-TDP	thermal design power
+TDP	thermal design {point, power}
 TECO	Text Editor and Corrector
 TFT	thin film transistor
 TFTP	trivial file transfer protocol
@@ -775,10 +898,12 @@ TLS	thread local storage
 TM	Turing machine
 TMDS	transition minimized differential signaling
 TMO	timeout
+TOD	time of day
 TOS	terms of service
 TOS	type of service
 TP	transaction processing
 TPM	trusted platform module
+TPM	transactions per minute
 TPR	task priority register
 TR	token ring
 TR	task register
@@ -830,6 +955,7 @@ UUOC	useless use of cat
 VA	virtual address
 VA	vertical alignment
 VAX	virtual address extension
+VB	Visual Basic
 VCC	common collector voltage
 VCM	virtual channel memory
 VESA	video electronics standards association
@@ -837,30 +963,37 @@ VG	volume group
 VGA	video graphics {array,adapter}
 VHDCI	very high density cable interconnect
 VID	voltage level identifier
+VIPT	virtually indexed, physically tagged
+VIVT	virtually indexed, virtually tagged
 VLAN	virtual local area network
 VLIW	very long instruction word
 VLSI	very large scale integration
 VLSM	variable length subnet mask
+VOD	video on demand
 VM	virtual {machine,memory}
 VMX	virtual machine extensions
 VMX	vector multimedia extensions
 VPN	virtual private network
 VR	virtual reality
 VRAM	video random access memory
+VRM	voltage regulator module
 VRRP	virtual router redundancy protocol
 W3C	World Wide Web Consortium
 WAN	wide area network
 WAP	wireless application protocol
 WEP	wired equivalent privacy
 WFI	wait for interrupt
+WH	write hit
 WIFI    wireless fidelity
 WLAN	wireless local area network
 WDT	watchdog timer
+WM	write miss
 WOL	wake on LAN
 WOR	wake on ring
 WORM	write once read many
 WPA	wi-fi protected access
 WRAM	window random access memory
+WTC	write through caching
 WWAN	wireless wide area network
 WWW	world wide web
 WYSIWYG	what you see is what you get
@@ -878,6 +1011,7 @@ XUL	XML user interface language
 YACC	yet another compiler compiler
 YAWPFAPR you are welcome; please file a problem report
 YP	yellow pages (aka NIS)
+YTD	year to date
 ZFOD	zero-filled on demand
 ZIF	zero insertion force
 ZIFS	zero insertion force socket
