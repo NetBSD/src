@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.19 2011/03/03 10:57:30 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.20 2011/03/03 11:01:27 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -112,6 +112,9 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	 */
 	if (FSTYPE_LFS(tc))
 		abort();
+
+	if (FSTYPE_MSDOS(tc))
+		atf_tc_expect_fail("PR kern/44661");
 }
 
 static void
