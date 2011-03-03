@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.71 2011/01/02 05:09:30 dholland Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.72 2011/03/03 08:10:45 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.71 2011/01/02 05:09:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.72 2011/03/03 08:10:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -819,7 +819,7 @@ msdosfs_rename(void *v)
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	struct denode *ip, *xp, *dp, *zp;
-	u_char toname[11], oldname[11];
+	u_char toname[12], oldname[12];
 	u_long from_diroffset, to_diroffset;
 	u_char to_count;
 	int doingdirectory = 0, newparent = 0;
