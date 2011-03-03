@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.59 2011/02/28 18:28:20 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.60 2011/03/03 03:39:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.59 2011/02/28 18:28:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.60 2011/03/03 03:39:08 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1115,7 +1115,9 @@ dkstrategy(struct buf *bp)
 		bp->b_error = ENODEV;
 		goto done;
 	}
-	if (sc->sc_state != DKW_STATE_RUNNING) {
+
+	if (sc->sc_state != DKW_STATE_RUNNING ||
+	    sc->sc_parent->dk_rawvp == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -1329,6 +1331,8 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (sc == NULL)
 		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
+		return (ENXIO);
+	if (sc->sc_parent->dk_rawvp == NULL)
 		return (ENXIO);
 
 	error = disk_ioctl(&sc->sc_dk, cmd, data, flag, l);
