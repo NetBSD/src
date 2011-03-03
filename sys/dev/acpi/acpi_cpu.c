@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.35 2011/03/02 06:17:08 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.36 2011/03/03 19:24:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.35 2011/03/02 06:17:08 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.36 2011/03/03 19:24:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -78,6 +78,14 @@ static struct sysctllog	 *acpicpu_log = NULL;
 static bool		  acpicpu_dynamic = true;
 static bool		  acpicpu_passive = true;
 
+static const struct {
+	const char	 *manu;
+	const char	 *prod;
+	const char	 *vers;
+} acpicpu_quirks[] = {
+	{ "Supermicro", "PDSMi-LN4", "0123456789" },
+};
+
 static const char * const acpicpu_hid[] = {
 	"ACPI0007",
 	NULL
@@ -89,10 +97,27 @@ CFATTACH_DECL_NEW(acpicpu, sizeof(struct acpicpu_softc),
 static int
 acpicpu_match(device_t parent, cfdata_t match, void *aux)
 {
+	const char *manu, *prod, *vers;
 	struct cpu_info *ci;
+	size_t i;
 
 	if (acpi_softc == NULL)
 		return 0;
+
+	manu = pmf_get_platform("system-manufacturer");
+	prod = pmf_get_platform("system-product-name");
+	vers = pmf_get_platform("system-version");
+
+	if (manu != NULL && prod != NULL && vers != NULL) {
+
+		for (i = 0; i < __arraycount(acpicpu_quirks); i++) {
+
+			if (strcasecmp(acpicpu_quirks[i].manu, manu) == 0 &&
+			    strcasecmp(acpicpu_quirks[i].prod, prod) == 0 &&
+			    strcasecmp(acpicpu_quirks[i].vers, vers) == 0)
+				return 0;
+		}
+	}
 
 	ci = acpicpu_md_match(parent, match, aux);
 
