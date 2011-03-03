@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.68 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.69 2011/03/03 18:44:58 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2011/02/20 07:45:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.69 2011/03/03 18:44:58 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -294,25 +294,17 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 #define	FLDWIDTH	10
-#define	SHOW32(reg, name)						\
-do {									\
-	uint32_t __val;							\
-									\
-	__asm volatile("mfc0 %0,$" ___STRING(reg) : "=r"(__val));	\
-	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
-	    "", __val);							\
-} while (0)
 
+#define	SHOW32(reg, name)	SHOW32SEL(reg, 0, name)
 #define SHOW64(reg, name)	MIPS64_SHOW64(reg, 0, name)
 
-#define	MIPS64_SHOW32(num, sel, name)					\
+#define	SHOW32SEL(num, sel, name)					\
 do {									\
 	uint32_t __val;							\
 									\
-	KASSERT (CPUIS64BITS);						\
 	__asm volatile(							\
 		".set push			\n\t"			\
-		".set mips64			\n\t"			\
+		".set mips32			\n\t"			\
 		"mfc0 %0,$%1,%2			\n\t"			\
 		".set pop			\n\t"			\
 	    : "=r"(__val) : "n"(num), "n"(sel));			\
@@ -450,28 +442,30 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if ((cp0flags & MIPS_CP0FL_USE) != 0) {
 		if ((cp0flags & MIPS_CP0FL_EBASE) != 0)
-			MIPS64_SHOW32(15, 1, "ebase");
+			SHOW32SEL(15, 1, "ebase");
 		if ((cp0flags & MIPS_CP0FL_CONFIG) != 0)
 			SHOW32(MIPS_COP_0_CONFIG, "config");
-		if ((cp0flags & MIPS_CP0FL_CONFIGn(0)) != 0)
-			MIPS64_SHOW32(16, 0, "config0");
-		if ((cp0flags & MIPS_CP0FL_CONFIGn(1)) != 0)
-			MIPS64_SHOW32(16, 1, "config1");
-		if ((cp0flags & MIPS_CP0FL_CONFIGn(2)) != 0)
-			MIPS64_SHOW32(16, 2, "config2");
-		if ((cp0flags & MIPS_CP0FL_CONFIGn(3)) != 0)
-			MIPS64_SHOW32(16, 3, "config3");
-		if ((cp0flags & MIPS_CP0FL_CONFIGn(4)) != 0)
-			MIPS64_SHOW32(16, 4, "config4");
-		if ((cp0flags & MIPS_CP0FL_CONFIGn(5)) != 0)
-			MIPS64_SHOW32(16, 5, "config5");
-		if ((cp0flags & MIPS_CP0FL_CONFIGn(6)) != 0)
-			MIPS64_SHOW32(16, 6, "config6");
-		if ((cp0flags & MIPS_CP0FL_CONFIGn(7)) != 0)
-			MIPS64_SHOW32(16, 7, "config7");
+		if ((cp0flags & MIPS_CP0FL_CONFIG1) != 0)
+			SHOW32SEL(16, 1, "config1");
+		if ((cp0flags & MIPS_CP0FL_CONFIG2) != 0)
+			SHOW32SEL(16, 2, "config2");
+		if ((cp0flags & MIPS_CP0FL_CONFIG3) != 0)
+			SHOW32SEL(16, 3, "config3");
+		if ((cp0flags & MIPS_CP0FL_CONFIG4) != 0)
+			SHOW32SEL(16, 4, "config4");
+		if ((cp0flags & MIPS_CP0FL_CONFIG5) != 0)
+			SHOW32SEL(16, 5, "config5");
+		if ((cp0flags & MIPS_CP0FL_CONFIG6) != 0)
+			SHOW32SEL(16, 6, "config6");
+		if ((cp0flags & MIPS_CP0FL_CONFIG7) != 0)
+			SHOW32SEL(16, 7, "config7");
+		if ((cp0flags & MIPS_CP0FL_HWRENA) != 0)
+			SHOW32(7, "hwrena");
+		if ((cp0flags & MIPS_CP0FL_USERLOCAL) != 0)
+			SHOW32SEL(4, 2, "userlocal");
 	} else {
 		SHOW32(MIPS_COP_0_CONFIG, "config");
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 		if (CPUISMIPSNN) {
 			uint32_t val;
 
@@ -500,7 +494,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 
 		if (CPUISMIPSNN) {
-			if (CPUISMIPS64) {
+			if (CPUIS64BITS) {
 				SHOW64(MIPS_COP_0_PERFCNT, "perfcnt");
 			} else {
 				SHOW32(MIPS_COP_0_PERFCNT, "perfcnt");
