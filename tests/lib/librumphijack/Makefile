@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/02/23 13:01:57 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2011/03/03 11:54:11 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -7,6 +7,7 @@ TESTSDIR=	${TESTSBASE}/lib/librumphijack
 
 TESTS_SH=	t_asyncio
 TESTS_SH+=	t_cwd
+TESTS_SH+=	t_sh
 TESTS_SH+=	t_tcpip
 TESTS_SH+=	t_vfs
 TESTS_C=	h_client
