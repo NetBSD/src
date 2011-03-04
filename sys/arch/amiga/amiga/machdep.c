@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.231 2011/03/04 22:25:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2011/02/08 20:20:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2011/03/04 22:25:24 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
+	frame->f_regs[A2] = l->l_proc->p_psstrp;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

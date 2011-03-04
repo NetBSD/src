@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.171 2011/01/28 20:31:10 pooka Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.172 2011/03/04 22:25:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.171 2011/01/28 20:31:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.172 2011/03/04 22:25:31 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1833,6 +1833,44 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	return error;
 }
 
+int
+copyin_psstrings(struct proc *p, struct ps_strings *arginfo)
+{
+	int error;
+
+#ifdef COMPAT_NETBSD32
+	if (p->p_flag & PK_32) {
+		struct ps_strings32 arginfo32;
+
+		error = copyin_proc(p, (void *)p->p_psstrp, &arginfo32,
+		    sizeof(arginfo32));
+		if (error)
+			return error;
+		arginfo->ps_argvstr = (void *)(uintptr_t)arginfo32.ps_argvstr;
+		arginfo->ps_nargvstr = arginfo32.ps_nargvstr;
+		arginfo->ps_envstr = (void *)(uintptr_t)arginfo32.ps_envstr;
+		arginfo->ps_nenvstr = arginfo32.ps_nenvstr;
+	} else
+#endif
+	{
+		error = copyin_proc(p, (void *)p->p_psstrp, arginfo,
+		    sizeof(*arginfo));
+		if (error)
+			return error;
+	}
+	return 0;
+}
+
+static int
+copy_procargs_sysctl_cb(void *cookie_, const void *src, size_t off, size_t len)
+{
+	void **cookie = cookie_;
+	struct lwp *l = cookie[0];
+	char *dst = cookie[1];
+
+	return sysctl_copyout(l, src, dst + off, len);
+}
+
 /*
  * sysctl helper routine for kern.proc_args pseudo-subtree.
  */
@@ -1841,18 +1879,9 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 {
 	struct ps_strings pss;
 	struct proc *p;
-	size_t len, i;
-	struct uio auio;
-	struct iovec aiov;
 	pid_t pid;
-	int nargv, type, error, argvlen;
-	char *arg;
-	char **argv = NULL;
-	char *tmp;
-	struct vmspace *vmspace;
-	vaddr_t psstr_addr;
-	vaddr_t offsetn;
-	vaddr_t offsetv;
+	int type, error;
+	void *cookie[2];
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -1861,8 +1890,6 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		return (EINVAL);
 	pid = name[0];
 	type = name[1];
-	argv = NULL;
-	argvlen = 0;
 
 	switch (type) {
 	case KERN_PROC_ARGV:
@@ -1919,103 +1946,132 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 
-	/*
-	 * Lock the process down in memory.
-	 */
-	psstr_addr = (vaddr_t)p->p_psstr;
-	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV) {
-		offsetn = p->p_psnargv;
-		offsetv = p->p_psargv;
-	} else {
-		offsetn = p->p_psnenv;
-		offsetv = p->p_psenv;
-	}
-	vmspace = p->p_vmspace;
-	uvmspace_addref(vmspace);
+	rw_enter(&p->p_reflock, RW_READER);
 	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
 
+	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
+		int value;
+		if ((error = copyin_psstrings(p, &pss)) == 0) {
+			if (type == KERN_PROC_NARGV)
+				value = pss.ps_nargvstr;
+			else
+				value = pss.ps_nenvstr;
+			error = sysctl_copyout(l, &value, oldp, sizeof(value));
+			*oldlenp = sizeof(value);
+		}
+	} else {
+		cookie[0] = l;
+		cookie[1] = oldp;
+		error = copy_procargs(p, type, oldlenp,
+		    copy_procargs_sysctl_cb, cookie);
+	}
+	rw_exit(&p->p_reflock);
+	sysctl_relock();
+	return error;
+
+out_locked:
+	mutex_exit(proc_lock);
+	sysctl_relock();
+	return error;
+}
+
+int
+copy_procargs(struct proc *p, int oid, size_t *limit,
+    int (*cb)(void *, const void *, size_t, size_t), void *cookie)
+{
+	struct ps_strings pss;
+	size_t len, i, loaded, entry_len;
+	struct uio auio;
+	struct iovec aiov;
+	int error, argvlen;
+	char *arg;
+	char **argv;
+	vaddr_t user_argv;
+	struct vmspace *vmspace;
+
 	/*
-	 * Allocate a temporary buffer to hold the arguments.
+	 * Allocate a temporary buffer to hold the argument vector and
+	 * the arguments themselve.
 	 */
 	arg = kmem_alloc(PAGE_SIZE, KM_SLEEP);
+	argv = kmem_alloc(PAGE_SIZE, KM_SLEEP);
+
+	/*
+	 * Lock the process down in memory.
+	 */
+	vmspace = p->p_vmspace;
+	uvmspace_addref(vmspace);
 
 	/*
 	 * Read in the ps_strings structure.
 	 */
-	aiov.iov_base = &pss;
-	aiov.iov_len = sizeof(pss);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_offset = psstr_addr;
-	auio.uio_resid = sizeof(pss);
-	auio.uio_rw = UIO_READ;
-	UIO_SETUP_SYSSPACE(&auio);
-	error = uvm_io(&vmspace->vm_map, &auio);
-	if (error)
+	if ((error = copyin_psstrings(p, &pss)) != 0)
 		goto done;
 
-	memcpy(&nargv, (char *)&pss + offsetn, sizeof(nargv));
-	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
-		error = sysctl_copyout(l, &nargv, oldp, sizeof(nargv));
-		*oldlenp = sizeof(nargv);
-		goto done;
-	}
 	/*
 	 * Now read the address of the argument vector.
 	 */
-	switch (type) {
+	switch (oid) {
 	case KERN_PROC_ARGV:
-		/* FALLTHROUGH */
+		user_argv = (uintptr_t)pss.ps_argvstr;
+		argvlen = pss.ps_nargvstr;
+		break;
 	case KERN_PROC_ENV:
-		memcpy(&tmp, (char *)&pss + offsetv, sizeof(tmp));
+		user_argv = (uintptr_t)pss.ps_envstr;
+		argvlen = pss.ps_nenvstr;
 		break;
 	default:
 		error = EINVAL;
 		goto done;
 	}
 
+	if (argvlen < 0) {
+		error = EIO;
+		goto done;
+	}
+
 #ifdef COMPAT_NETBSD32
 	if (p->p_flag & PK_32)
-		len = sizeof(netbsd32_charp) * nargv;
+		entry_len = sizeof(netbsd32_charp);
 	else
 #endif
-		len = sizeof(char *) * nargv;
-
-	if ((argvlen = len) != 0)
-		argv = kmem_alloc(len, KM_SLEEP);
-
-	aiov.iov_base = argv;
-	aiov.iov_len = len;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_offset = (off_t)(unsigned long)tmp;
-	auio.uio_resid = len;
-	auio.uio_rw = UIO_READ;
-	UIO_SETUP_SYSSPACE(&auio);
-	error = uvm_io(&vmspace->vm_map, &auio);
-	if (error)
-		goto done;
+		entry_len = sizeof(char *);
 
 	/*
 	 * Now copy each string.
 	 */
 	len = 0; /* bytes written to user buffer */
-	for (i = 0; i < nargv; i++) {
+	loaded = 0; /* bytes from argv already processed */
+	i = 0; /* To make compiler happy */
+
+	for (; argvlen; --argvlen) {
 		int finished = 0;
 		vaddr_t base;
 		size_t xlen;
 		int j;
+
+		if (loaded == 0) {
+			size_t rem = entry_len * argvlen;
+			loaded = MIN(rem, PAGE_SIZE);
+			error = copyin_vmspace(vmspace,
+			    (const void *)user_argv, argv, loaded);
+			if (error)
+				break;
+			user_argv += loaded;
+			i = 0;
+		}
 
 #ifdef COMPAT_NETBSD32
 		if (p->p_flag & PK_32) {
 			netbsd32_charp *argv32;
 
 			argv32 = (netbsd32_charp *)argv;
-			base = (vaddr_t)NETBSD32PTR64(argv32[i]);
+			base = (vaddr_t)NETBSD32PTR64(argv32[i++]);
 		} else
 #endif
-			base = (vaddr_t)argv[i];
+			base = (vaddr_t)argv[i++];
+		loaded -= entry_len;
 
 		/*
 		 * The program has messed around with its arguments,
@@ -2051,16 +2107,16 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 			}
 
 			/* Check for user buffer overflow */
-			if (len + xlen > *oldlenp) {
+			if (len + xlen > *limit) {
 				finished = 1;
-				if (len > *oldlenp)
+				if (len > *limit)
 					xlen = 0;
 				else
-					xlen = *oldlenp - len;
+					xlen = *limit - len;
 			}
 
 			/* Copyout the page */
-			error = sysctl_copyout(l, arg, (char*)oldp + len, xlen);
+			error = (*cb)(cookie, arg, len, xlen);
 			if (error)
 				goto done;
 
@@ -2068,19 +2124,12 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 			base += xlen;
 		}
 	}
-	*oldlenp = len;
+	*limit = len;
 
 done:
-	if (argvlen != 0)
-		kmem_free(argv, argvlen);
-	uvmspace_free(vmspace);
+	kmem_free(argv, PAGE_SIZE);
 	kmem_free(arg, PAGE_SIZE);
-	sysctl_relock();
-	return error;
-
-out_locked:
-	mutex_exit(proc_lock);
-	sysctl_relock();
+	uvmspace_free(vmspace);
 	return error;
 }
 
