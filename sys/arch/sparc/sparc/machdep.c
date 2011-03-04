@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.306 2011/02/24 04:28:48 joerg Exp $ */
+/*	$NetBSD: machdep.c,v 1.307 2011/03/04 22:25:28 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.306 2011/02/24 04:28:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2011/03/04 22:25:28 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -356,7 +356,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%psr: (retain CWP and PSR_S bits)
-	 *	%g1: address of p->p_psstr (used by crt0)
+	 *	%g1: p->p_psstrp (used by crt0)
 	 *	%pc,%npc: entry point of program
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
@@ -388,7 +388,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	}
 	memset((void *)tf, 0, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_global[1] = (int)l->l_proc->p_psstr;
+	tf->tf_global[1] = l->l_proc->p_psstrp;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
