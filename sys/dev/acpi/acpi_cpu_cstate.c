@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.49 2011/03/01 05:57:04 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.50 2011/03/04 09:28:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.49 2011/03/01 05:57:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.50 2011/03/04 09:28:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -406,8 +406,6 @@ out:
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(sc->sc_dev, "failed to add "
 		    "C-state: %s\n", AcpiFormatException(rv));
-
-	i++;
 
 	return rv;
 }
