@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.18 2011/03/04 09:10:33 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.19 2011/03/04 09:13:23 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -130,7 +130,7 @@ Note: the contents of block devices are cached in the rump kernel's
 buffer cache.
 To avoid cache incoherency, it is advisable not to access a file
 through the host namespace while it is mapped as a block device in
-a running rump kernel.
+a rump kernel.
 .El
 .Pp
 In case
