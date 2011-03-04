@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.42 2011/02/24 15:42:17 jruoho Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.43 2011/03/04 04:48:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -94,9 +94,6 @@ struct cpufeature_attach_args {
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#ifndef XEN
-#include "opt_intel_odcm.h"
-#endif
 #endif /* defined(_KERNEL_OPT) */
 
 #ifdef MULTIPROCESSOR
@@ -120,14 +117,6 @@ void x86_cpu_idle_halt(void);
 void x86_cpu_idle_mwait(void);
 #ifdef XEN
 void x86_cpu_idle_xen(void);
-#endif
-
-#ifdef VIA_C7TEMP
-void viac7temp_register(struct cpu_info *);
-#endif
-
-#ifdef INTEL_ONDEMAND_CLOCKMOD
-void clockmod_init(void);
 #endif
 
 void	cpu_get_tsc_freq(struct cpu_info *);
