@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.35 2011/03/01 04:35:48 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.36 2011/03/04 12:10:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -50,7 +50,7 @@
 #define ACPICPU_PDC_T_SW          __BIT(7)	/* SMP Tx (different)        */
 #define ACPICPU_PDC_C_C1_FFH      __BIT(8)	/* SMP C1 native beyond halt */
 #define ACPICPU_PDC_C_C2C3_FFH    __BIT(9)	/* SMP C2 and C2 native      */
-#define ACPICPU_PDC_P_HW          __BIT(11)	/* Px hardware coordination  */
+#define ACPICPU_PDC_P_HWF         __BIT(11)	/* Px hardware feedback      */
 
 #define ACPICPU_PDC_GAS_HW	  __BIT(0)	/* HW-coordinated state      */
 #define ACPICPU_PDC_GAS_BM	  __BIT(1)	/* Bus master check required */
@@ -114,7 +114,7 @@
 
 #define ACPICPU_FLAG_P_FFH	 __BIT(13)	/* Native P-states           */
 #define ACPICPU_FLAG_P_DEP	 __BIT(14)	/* P-state CPU coordination  */
-#define ACPICPU_FLAG_P_HW	 __BIT(15)	/* HW coordination supported */
+#define ACPICPU_FLAG_P_HWF	 __BIT(15)	/* HW feedback supported     */
 #define ACPICPU_FLAG_P_XPSS	 __BIT(16)	/* Microsoft XPSS in use     */
 #define ACPICPU_FLAG_P_TURBO	 __BIT(17)	/* Turbo Boost / Turbo Core  */
 #define ACPICPU_FLAG_P_FIDVID	 __BIT(18)	/* AMD "FID/VID algorithm"   */
