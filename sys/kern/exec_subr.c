@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.67 2011/01/17 07:13:31 uebayasi Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.68 2011/03/04 04:25:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.67 2011/01/17 07:13:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.68 2011/03/04 04:25:58 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -63,6 +63,12 @@ EVCNT_ATTACH_STATIC(vmcmd_ev_##name)
 VMCMD_EVCNT_DECL(calls);
 VMCMD_EVCNT_DECL(extends);
 VMCMD_EVCNT_DECL(kills);
+
+#ifdef DEBUG_STACK
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 /*
  * new_vmcmd():
@@ -382,14 +388,22 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 #ifndef	USRSTACK32
 #define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
 #endif
+#ifndef MAXSSIZ32
+#define MAXSSIZ32	(MAXSSIZ >> 2)
+#endif
 
 	if (epp->ep_flags & EXEC_32) {
 		epp->ep_minsaddr = USRSTACK32;
-		max_stack_size = MAXSSIZ;
+		max_stack_size = MAXSSIZ32;
 	} else {
 		epp->ep_minsaddr = USRSTACK;
 		max_stack_size = MAXSSIZ;
 	}
+
+	DPRINTF(("ep_minsaddr=%llx max_stack_size=%llx\n",
+	    (unsigned long long)epp->ep_minsaddr,
+	    (unsigned long long)max_stack_size));
+
 	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 #ifdef PAX_ASLR
@@ -400,6 +414,10 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	
 	epp->ep_maxsaddr = (vaddr_t)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
+
+	DPRINTF(("ep_ssize=%llx ep_maxsaddr=%llx\n", 
+	    (unsigned long long)epp->ep_ssize,
+	    (unsigned long long)epp->ep_maxsaddr));
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
@@ -414,6 +432,14 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	noaccess_size = max_stack_size - access_size;
 	noaccess_linear_min = (vaddr_t)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
+
+	DPRINTF(("access_size=%llx, access_linear_min=%llx, "
+	    "noaccess_size=%llx, noaccess_linear_min=%llx\n",
+	    (unsigned long long)access_size,
+	    (unsigned long long)access_linear_min,
+	    (unsigned long long)noaccess_size,
+	    (unsigned long long)noaccess_linear_min));
+
 	if (noaccess_size > 0 && noaccess_size <= MAXSSIZ) {
 		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
 		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);
