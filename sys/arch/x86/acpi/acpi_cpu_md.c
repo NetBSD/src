@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.52 2011/03/02 06:23:17 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.53 2011/03/04 12:10:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.52 2011/03/02 06:23:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.53 2011/03/04 12:10:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -179,7 +179,7 @@ acpicpu_md_cap(void)
 		x86_cpuid(0x00000006, regs);
 
 		if ((regs[2] & CPUID_DSPM_HWF) != 0)
-			val |= ACPICPU_PDC_P_HW;
+			val |= ACPICPU_PDC_P_HWF;
 	}
 
 	return val;
@@ -248,7 +248,7 @@ acpicpu_md_flags(void)
 			x86_cpuid(0x00000006, regs);
 
 			if ((regs[2] & CPUID_DSPM_HWF) != 0)
-				val |= ACPICPU_FLAG_P_HW;
+				val |= ACPICPU_FLAG_P_HWF;
 
 			if ((regs[0] & CPUID_DSPM_IDA) != 0)
 				val |= ACPICPU_FLAG_P_TURBO;
@@ -338,7 +338,7 @@ acpicpu_md_flags(void)
 				x86_cpuid(0x00000006, regs);
 
 				if ((regs[2] & CPUID_DSPM_HWF) != 0)
-					val |= ACPICPU_FLAG_P_HW;
+					val |= ACPICPU_FLAG_P_HWF;
 			}
 
 			break;
@@ -500,7 +500,7 @@ acpicpu_md_pstate_start(struct acpicpu_softc *sc)
 	/*
 	 * Reset the APERF and MPERF counters.
 	 */
-	if ((sc->sc_flags & ACPICPU_FLAG_P_HW) != 0)
+	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0)
 		acpicpu_md_pstate_percent_reset(sc);
 
 	return acpicpu_md_pstate_sysctl_init();
@@ -658,7 +658,7 @@ acpicpu_md_pstate_percent(struct acpicpu_softc *sc)
 	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P) == 0))
 		return 0;
 
-	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P_HW) == 0))
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P_HWF) == 0))
 		return 0;
 
 	aperf = sc->sc_pstate_aperf;
@@ -687,7 +687,7 @@ acpicpu_md_pstate_percent_reset(struct acpicpu_softc *sc)
 	uint64_t xc;
 
 	KASSERT((sc->sc_flags & ACPICPU_FLAG_P) != 0);
-	KASSERT((sc->sc_flags & ACPICPU_FLAG_P_HW) != 0);
+	KASSERT((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0);
 
 	msr.msr_value = 0;
 	msr.msr_read = false;
