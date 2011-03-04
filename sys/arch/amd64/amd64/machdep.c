@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 2011/02/24 04:28:44 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160 2011/03/04 22:25:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2011/02/24 04:28:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2011/03/04 22:25:24 joerg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1034,7 +1034,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (uint64_t)l->l_proc->p_psstr;
+	tf->tf_rbx = l->l_proc->p_psstrp;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
