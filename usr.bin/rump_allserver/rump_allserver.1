@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.17 2011/02/23 19:59:18 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.18 2011/03/04 09:10:33 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -125,6 +125,12 @@ and
 .Dq reg
 for block device, character device and regular file, respectively.
 The default is a block device.
+.Pp
+Note: the contents of block devices are cached in the rump kernel's
+buffer cache.
+To avoid cache incoherency, it is advisable not to access a file
+through the host namespace while it is mapped as a block device in
+a running rump kernel.
 .El
 .Pp
 In case
