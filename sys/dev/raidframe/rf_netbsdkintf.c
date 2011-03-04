@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.282 2011/02/19 07:11:09 enami Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.283 2011/03/04 17:45:17 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.282 2011/02/19 07:11:09 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.283 2011/03/04 17:45:17 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2996,8 +2996,6 @@ rf_find_raid_components(void)
 	RF_AutoConfig_t *ac_list;
 	uint64_t numsecs;
 	unsigned secsize;
-
-	RF_ASSERT(raidPtr->bytesPerSector < rf_component_info_offset());
 
 	/* initialize the AutoConfig list */
 	ac_list = NULL;
