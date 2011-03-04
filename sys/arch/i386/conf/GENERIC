@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1024 2011/02/27 17:10:34 jruoho Exp $
+# $NetBSD: GENERIC,v 1.1025 2011/03/04 04:48:40 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1024 $"
+#ident 		"GENERIC-$Revision: 1.1025 $"
 
 maxusers	64		# estimated number of users
 
@@ -41,12 +41,10 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
 coretemp*	at cpu?		# Intel on-die thermal sensor
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+#odcm0		at cpu0		# On-demand clock modulation
 #padlock0	at cpu0		# VIA PadLock
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 viac7temp*	at cpu?		# VIA C7 temperature sensor
-
-# Intel(R) On Demand Clock Modulation (aka ODCM)
-#options 	INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
