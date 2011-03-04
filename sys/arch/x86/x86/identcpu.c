@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.27 2011/02/24 13:58:39 jruoho Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.28 2011/03/04 04:48:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.27 2011/02/24 13:58:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.28 2011/03/04 04:48:39 jruoho Exp $");
 
-#include "opt_intel_odcm.h"
 #include "opt_xen.h"
 
 #include <sys/param.h>
@@ -794,10 +793,4 @@ cpu_identify(struct cpu_info *ci)
 	} else
 		i386_use_fxsave = 0;
 #endif	/* i386 */
-
-#ifdef INTEL_ONDEMAND_CLOCKMOD
-	if (cpuid_level >= 1) {
-		clockmod_init();
-	}
-#endif
 }
