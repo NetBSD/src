@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.2 2011/02/24 15:42:17 jruoho Exp $ */
+/*	$NetBSD: powernow.c,v 1.3 2011/03/04 04:53:28 jruoho Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.2 2011/02/24 15:42:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.3 2011/03/04 04:53:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -164,9 +164,12 @@ powernow_match(device_t parent, cfdata_t cf, void *aux)
 			return 0;
 
 		x86_cpuid(0x80000007, regs);
+
+		if ((regs[3] & AMD_PN_FID_VID) == AMD_PN_FID_VID)
+			return 5;
 	}
 
-	return (regs[3] & AMD_PN_FID_VID) == AMD_PN_FID_VID;
+	return 0;
 }
 
 static void
