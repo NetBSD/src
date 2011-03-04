@@ -399,7 +399,8 @@ atf_run::run_test_program(const atf::fs::path& tp,
 
 			gdbcmd = std::string("gdb -batch -q -ex bt ") +
 			    tp.str() + std::string(" ") + corename +
-			    std::string(" 2> /dev/null");
+			    std::string(" 2> /dev/null | grep -v ") +
+			    std::string("'(no debugging symbols found)'");
 			FILE *gdbstrm = popen(gdbcmd.c_str(), "r");
 			if (gdbstrm) {
 				w.stderr_tc(std::string("test program crashed, "
