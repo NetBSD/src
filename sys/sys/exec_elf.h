@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.109 2011/02/16 23:22:30 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.110 2011/03/04 22:25:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1065,6 +1065,8 @@ struct elf_args {
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
 #endif
+
+struct ps_strings;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.91 2011/02/24 04:28:47 joerg Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.92 2011/03/04 22:25:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.91 2011/02/24 04:28:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.92 2011/03/04 22:25:28 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -565,7 +565,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
-	tf->tf_r9 = (int)l->l_proc->p_psstr;
+	tf->tf_r9 = l->l_proc->p_psstrp;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;
 	tf->tf_r12 = 0;

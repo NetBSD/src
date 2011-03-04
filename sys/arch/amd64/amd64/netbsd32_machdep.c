@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.73 2011/02/24 04:28:44 joerg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.74 2011/03/04 22:25:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.73 2011/02/24 04:28:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.74 2011/03/04 22:25:24 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -161,7 +161,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (uint64_t)p->p_psstr;
+	tf->tf_rbx = (uint32_t)p->p_psstrp;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;

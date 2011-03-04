@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.700 2011/02/24 04:28:46 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.701 2011/03/04 22:25:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.700 2011/02/24 04:28:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.701 2011/03/04 22:25:26 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1034,7 +1034,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)l->l_proc->p_psstr;
+	tf->tf_ebx = l->l_proc->p_psstrp;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;

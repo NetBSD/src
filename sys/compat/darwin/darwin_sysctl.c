@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.63 2010/07/01 02:38:28 rmind Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.64 2011/03/04 22:25:30 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.63 2010/07/01 02:38:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.64 2011/03/04 22:25:30 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -969,25 +969,17 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	/*
 	 * Read in the ps_strings structure.
 	 */
-	aiov.iov_base = &pss;
-	aiov.iov_len = sizeof(pss);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_offset = (vaddr_t)p->p_psstr;
-	auio.uio_resid = sizeof(pss);
-	auio.uio_rw = UIO_READ;
-	UIO_SETUP_SYSSPACE(&auio);
-	if ((error = uvm_io(&p->p_vmspace->vm_map, &auio)) != 0)
+	if ((error = copyin_psstrings(p, &pss)) != 0)
 		goto done;
 
 	/*
 	 * Get argument vector address and length. Since we want to
 	 * copy argv and env at the same time, we add their lengths.
 	 */
-	memcpy(&nargv, (char *)&pss + p->p_psnargv, sizeof(nargv));
-	memcpy(&nenv, (char *)&pss + p->p_psnenv, sizeof(nargv));
+	nargv = pss.ps_nargvstr;
+	nenv = pss.ps_nenvvstr;
+	tmp = pss.ps_argvstr;
 	nstr = nargv + nenv;
-	memcpy(&tmp, (char *)&pss + p->p_psargv, sizeof(tmp));
 
 	auio.uio_offset = (off_t)(long)tmp;
 	aiov.iov_base = &argv;
