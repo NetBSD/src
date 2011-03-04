@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.63 2011/02/27 17:10:33 jruoho Exp $
+#	$NetBSD: files.x86,v 1.64 2011/03/04 04:48:40 jruoho Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -12,9 +12,6 @@ defflag opt_intrdebug.h	INTRDEBUG
 # PCI fixup options
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
-
-# Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
-defflag opt_intel_odcm.h 	INTEL_ONDEMAND_CLOCKMOD
 
 # To be able to test for NetBSD/xen in shared files
 defflag	opt_xen.h		DO_NOT_DEFINE
@@ -47,6 +44,10 @@ device	est
 attach	est at cpufeaturebus
 file	arch/x86/x86/est.c		est
 file	arch/x86/x86/intel_busclock.c	est
+
+device	odcm
+attach	odcm at cpufeaturebus
+file	arch/x86/x86/odcm.c		odcm
 
 device	padlock: opencrypto
 attach	padlock at cpufeaturebus
