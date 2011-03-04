@@ -14,8 +14,6 @@ setupvars()
 	else
 		BYTESWAP=le
 	fi
-	rumpsrv="rump_server -lrumpvfs -lrumpfs_ffs -d key=/img,hostpath=${IMG},size=host"
-	export RUMP_SERVER=unix://sock
 }
 
 # test_case() taken from the tests/ipf/h_common.sh
@@ -27,13 +25,14 @@ test_case()
 
 	atf_test_case "${name}" cleanup
 	eval "${name}_head() { \
-		atf_set "descr" "resize_ffs test" ; \
+		atf_set "require.user" "root" ; \
 	}"
 	eval "${name}_body() { \
 		${check_function} " "${@}" "; \
 	}"
 	eval "${name}_cleanup() { \
-		rump.halt
+		umount -f mnt  ; \
+		: reset error ; \
 	}"
 }
 
@@ -58,7 +57,7 @@ test_case_xfail()
 # copy_data requires the mount already done;  makes one copy of the test data
 copy_data ()
 {
-	uudecode -p ${TDBASE64} | tar xzf - -C /rump/mnt -s/testdata/TD$1/
+	uudecode -p ${TDBASE64} | (cd mnt; tar xzf - -s/testdata/TD$1/)
 }
 
 copy_multiple ()
@@ -73,7 +72,7 @@ copy_multiple ()
 # is to ensure data exists near the end of the fs under test.
 remove_data ()
 {
-	rm -rf /rump/mnt/TD$1
+	rm -rf mnt/TD$1
 }
 
 remove_multiple ()
@@ -88,8 +87,8 @@ remove_multiple ()
 # generated md5 file doesn't need explicit cleanup thanks to ATF
 check_data ()
 {
-	atf_check -x -o file:${GOODMD5} \
-	    "md5 /rump/mnt/TD$1/* | sed s,/rump/mnt/TD$1/,,"
+	(cd mnt/TD$1 && md5 *) > TD$1.md5
+	atf_check diff -u ${GOODMD5} TD$1.md5
 }
 
 # supply begin and end arguments
@@ -101,15 +100,6 @@ check_data_range ()
 	done
 }
 
-domount ()
-{
-	atf_check -s exit:0 -e ignore mount_ffs /img /rump/mnt
-}
-
-dounmount ()
-{
-	atf_check -s exit:0 umount -R /rump/mnt
-}
 
 resize_ffs()
 {
@@ -121,6 +111,7 @@ resize_ffs()
 	local fslevel=$5
 	local numdata=$6
 	local swap=$7
+	mkdir -p mnt
 	echo "bs is ${bs} numdata is ${numdata}"
 	echo "****resizing fs with blocksize ${bs}"
 
@@ -139,12 +130,7 @@ resize_ffs()
 	fi
 
 	# we're specifying relative paths, so rump_ffs warns - ignore.
-	echo RUMP_SERVER is ${RUMP_SERVER}
-	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	mkdir /rump/mnt
-	domount
-
+	atf_check -s exit:0 -e ignore rump_ffs ${IMG} mnt
 	copy_multiple ${numdata}
 
 	if [ ${nsize} -lt ${osize} ]; then
@@ -155,20 +141,15 @@ resize_ffs()
 	    remove_multiple ${remove}
 	fi
 
-	dounmount
-	rump.halt
-	unset LD_PRELOAD
+	umount mnt
 	atf_check -s exit:0 -o ignore resize_ffs -y -s ${nsize} ${IMG}
 	atf_check -s exit:0 -o ignore fsck_ffs -f -n -F ${IMG}
-	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
-	export LD_PRELOAD=/usr/lib/librumphijack.so
-	mkdir /rump/mnt
-	domount
+	atf_check -s exit:0 -e ignore rump_ffs ${IMG} mnt
 	if [ ${nsize} -lt ${osize} ]; then
 	    check_data_range $((remove + 1)) ${numdata}
 	else
 	    # checking everything because we don't delete on grow
 	    check_data_range 1 ${numdata}
 	fi
-	dounmount
+	umount mnt
 }
