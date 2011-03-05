@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.172 2011/03/04 22:25:31 joerg Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.173 2011/03/05 01:52:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.172 2011/03/04 22:25:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.173 2011/03/05 01:52:18 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1836,13 +1836,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 int
 copyin_psstrings(struct proc *p, struct ps_strings *arginfo)
 {
-	int error;
 
 #ifdef COMPAT_NETBSD32
 	if (p->p_flag & PK_32) {
 		struct ps_strings32 arginfo32;
 
-		error = copyin_proc(p, (void *)p->p_psstrp, &arginfo32,
+		int error = copyin_proc(p, (void *)p->p_psstrp, &arginfo32,
 		    sizeof(arginfo32));
 		if (error)
 			return error;
@@ -1850,15 +1849,10 @@ copyin_psstrings(struct proc *p, struct ps_strings *arginfo)
 		arginfo->ps_nargvstr = arginfo32.ps_nargvstr;
 		arginfo->ps_envstr = (void *)(uintptr_t)arginfo32.ps_envstr;
 		arginfo->ps_nenvstr = arginfo32.ps_nenvstr;
-	} else
-#endif
-	{
-		error = copyin_proc(p, (void *)p->p_psstrp, arginfo,
-		    sizeof(*arginfo));
-		if (error)
-			return error;
+		return 0;
 	}
-	return 0;
+#endif
+	return copyin_proc(p, (void *)p->p_psstrp, arginfo, sizeof(*arginfo));
 }
 
 static int
