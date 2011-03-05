@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.36 2011/03/03 19:24:43 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.37 2011/03/05 09:47:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.36 2011/03/03 19:24:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.37 2011/03/05 09:47:19 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -187,6 +187,8 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	KASSERT(sc->sc_node->ad_device == NULL);
 
 	sc->sc_node->ad_device = self;
+
+	__cpu_simple_lock_init(&sc->sc_lock);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	acpicpu_cstate_attach(self);
