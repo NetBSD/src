@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.19 2011/03/05 14:32:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,10 @@
 #endif
 #ifndef	MID_MACHINE
 #define	MID_MACHINE	MID_M68K
+#endif
+#ifndef _KERNEL
+#undef MACHINE
+#define MACHINE "m68k"
 #endif
 
 /*
