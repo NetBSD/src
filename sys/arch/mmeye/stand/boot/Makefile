@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/03/03 05:59:37 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/05 01:58:01 joerg Exp $
 
 NOMAN=		# defined
 
@@ -82,8 +82,8 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 .if ${MMEYE_CPU} == "SH4"
 	${OBJCOPY} -S -O binary ${.TARGET} ${.TARGET}.bin
-	env TOOL_AWK=${TOOL_AWK} TOOL_HEXDUMP=${TOOL_HEXDUMP} \
-	    ./deflate.sh ${.TARGET}.bin
+	TOOL_AWK=${TOOL_AWK} TOOL_HEXDUMP=${TOOL_HEXDUMP} \
+	    ${HOST_SH} $(.CURDIR)/deflate.sh ${.TARGET}.bin
 .endif
 
 cleandir distclean: .WAIT cleanlibdir
