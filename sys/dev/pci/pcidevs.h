@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1052.4.1 2011/02/08 16:19:51 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1052.4.2 2011/03/05 15:10:24 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1057 2011/02/03 22:03:09 njoly Exp
+ *	NetBSD: pcidevs,v 1.1066 2011/02/25 01:36:18 jmcneill Exp
  */
 
 /*
@@ -862,6 +862,7 @@
 #define	PCI_PRODUCT_ADP2_ASR2200S_SUB2M	0x0287		/* ASR-2200S */
 #define	PCI_PRODUCT_ADP2_ASR2410SA	0x0290		/* ASR-2410SA */
 #define	PCI_PRODUCT_ADP2_AAR2810SA	0x0292		/* AAR-2810SA */
+#define	PCI_PRODUCT_ADP2_3405	0x02bb		/* RAID 3405 */
 #define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
 #define	PCI_PRODUCT_ADP2_ASR5400S	0x0365		/* ASR-5400S */
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
@@ -931,6 +932,15 @@
 #define	PCI_PRODUCT_AMD_AMD64_F11_DRAM	0x1302		/* AMD64 Family11h DRAM Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_MISC	0x1303		/* AMD64 Family11h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_LINK	0x1304		/* AMD64 Family11h Link Configuration */
+#define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
+#define	PCI_PRODUCT_AMD_F14_HT	0x1700		/* Family14h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F14_ADDR	0x1701		/* Family14h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F14_DRAM	0x1702		/* Family14h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F14_NB	0x1703		/* Family14h North Bridge Configuration */
+#define	PCI_PRODUCT_AMD_F14_CSTATE	0x1704		/* Family14h CPU C-state Configuration */
+#define	PCI_PRODUCT_AMD_F14_MISC	0x1716		/* Family14h Misc. Configuration */
+#define	PCI_PRODUCT_AMD_F14_HB18	0x1718		/* Family14h Host Bridge */
+#define	PCI_PRODUCT_AMD_F14_HB19	0x1719		/* Family14h Host Bridge */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_AM_1771_MBW	0x2003		/* Alchemy AM 1771 MBW */
@@ -1107,8 +1117,13 @@
 /* Attansic Technology Corp. */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_L1E	0x1026		/* L1E Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA	0x1048		/* L1 Gigabit Ethernet Adapter */
-#define	PCI_PRODUCT_ATTANSIC_AR8131	0x1063		/* Atheros AR8131 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8132	0x1062		/* AR8132 Fast Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8131	0x1063		/* AR8131 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8151	0x1073		/* AR8151 v1.0 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8151_V2	0x1083		/* AR8151 v2.0 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8152_B	0x2060		/* AR8152 v1.1 Fast Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8152_B2	0x2062		/* AR8152 v2.0 Fast Ethernet Adapter */
 
 /* ATI products */
 /* See http://www.x.org/wiki/Radeon%20ASICs */
@@ -1406,10 +1421,11 @@
 #define	PCI_PRODUCT_ATI_RS690_PPB_7915	0x7915		/* RS690 PCI to PCI-Express Port 1 Bridge */
 #define	PCI_PRODUCT_ATI_RS690_PPB_7916	0x7916		/* RS690 PCI to PCI-Express Port 2 Bridge */
 #define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI to PCI-Express Port 3 Bridge */
+#define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95C5		/* Radeon HD4250 GPU (RV610) Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250	0x9715		/* Radeon HD4250 GPU (RS880) */
-#define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
+#define	PCI_PRODUCT_ATI_RADEON_HD6310	0x9802		/* Radeon HD6310 Graphics */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HD	0xaa08		/* Radeon HD2600 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_HDMI	0xaa60		/* Redwood HDMI Audio */
 
@@ -2675,6 +2691,7 @@
 #define	PCI_PRODUCT_INTEL_82945GME_IGD	0x27ae		/* 82945GME Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82801G_LPC	0x27b8		/* 82801GB/GR LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801GBM_LPC	0x27b9		/* 82801GBM LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_NM10_LPC	0x27bc		/* NM10 Family LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801GHM_LPC	0x27bd		/* 82801GHM LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801G_SATA	0x27c0		/* 82801GB/GR SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801G_SATA_AHCI	0x27c1		/* 82801GB/GR AHCI SATA Controller */
@@ -2803,7 +2820,9 @@
 #define	PCI_PRODUCT_INTEL_82IGD_E_HB	0x2e00		/* 82IGD_E Host Bridge */
 #define	PCI_PRODUCT_INTEL_82IGD_E_IGD	0x2e02		/* 82IGD_E Integrated Graphics */
 #define	PCI_PRODUCT_INTEL_82Q45_HB	0x2e10		/* 82Q45 Host Bridge */
+#define	PCI_PRODUCT_INTEL_82Q45_EXP	0x2e11		/* 82Q45 PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82Q45_IGD	0x2e12		/* 82Q45 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82Q45_IGD_1	0x2e13		/* 82Q45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82G45_HB	0x2e20		/* 82G45 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82G45_IGD	0x2e22		/* 82G45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82G41_HB	0x2e30		/* 82G41 Host Bridge */
@@ -3355,8 +3374,11 @@
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer Port */
 #define	PCI_PRODUCT_NETMOS_NM9845	0x9845		/* Quad UART and 1284 Printer Port */
 #define	PCI_PRODUCT_NETMOS_NM9855	0x9855		/* 9855 Quad UART and 1284 Printer Port */
+#define	PCI_PRODUCT_NETMOS_NM9865	0x9865		/* 9865 Quad UART and 1284 Printer Port */
 #define	PCI_PRODUCT_NETMOS_MCS9990	0x9990		/* MCS9990 Quad USB 2.0 Port */
 #define	PCI_PRODUCT_NETMOS_NM9901	0x9901		/* Dual PCI-E UART */
+#define	PCI_PRODUCT_NETMOS_NM9904	0x9904		/* Quad PCI-E UART */
+#define	PCI_PRODUCT_NETMOS_NM9922	0x9922		/* Dual PCI-E UART */
 
 /* Network Security Technologies */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
@@ -3887,6 +3909,7 @@
 #define	PCI_PRODUCT_RALINK_RT2561S	0x0301		/* RT2561S 802.11b/g */
 #define	PCI_PRODUCT_RALINK_RT2561	0x0302		/* RT2561 802.11b/g */
 #define	PCI_PRODUCT_RALINK_RT2661	0x0401		/* RT2661 802.11b/g/n */
+#define	PCI_PRODUCT_RALINK_RT3090	0x3090		/* RT3090 802.11b/g/n */
 
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
@@ -3905,6 +3928,7 @@
 #define	PCI_PRODUCT_REALTEK_RT8169SC	0x8167		/* 8169SC/8110SC 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8168	0x8168		/* 8168/8111 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169/8110 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RTL8188CE	0x8176		/* RTL8188CE Wireless LAN 802.11n PCI-E NIC */
 #define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
 #define	PCI_PRODUCT_REALTEK_RT8185	0x8185		/* 8185 802.11a/b/g */
 

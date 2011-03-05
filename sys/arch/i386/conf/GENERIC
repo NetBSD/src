@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1007.2.3 2011/02/17 11:59:44 bouyer Exp $
+# $NetBSD: GENERIC,v 1.1007.2.4 2011/03/05 15:09:43 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1007.2.3 $"
+#ident 		"GENERIC-$Revision: 1.1007.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -37,21 +37,14 @@ options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	PAE		# PAE mode (36 bits physical addressing)
 
-# Enhanced SpeedStep Technology in the Pentium M
-options 	ENHANCED_SPEEDSTEP
-#options 	EST_FREQ_USERWRITE	# any user can set frequency
-
-# AMD PowerNow! K7
-options 	POWERNOW_K7
-
-# AMD PowerNow! and Cool`n'Quiet technology
-options 	POWERNOW_K8
-
-# VIA PadLock
-#options 	VIA_PADLOCK
-
-# Intel(R) On Demand Clock Modulation (aka ODCM)
-#options 	INTEL_ONDEMAND_CLOCKMOD
+# CPU features
+#acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
+coretemp*	at cpu?		# Intel on-die thermal sensor
+est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+#odcm0		at cpu0		# On-demand clock modulation
+#padlock0	at cpu0		# VIA PadLock
+powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
+viac7temp*	at cpu?		# VIA C7 temperature sensor
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -355,7 +348,6 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad*	at acpi?		# ACPI AC Adapter
 acpibat*	at acpi?		# ACPI Battery
 acpibut*	at acpi?		# ACPI Button
-#acpicpu*	at acpi?		# ACPI CPU
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt*	at acpi?		# ACPI Embedded Controller (early)
@@ -550,6 +542,7 @@ vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 genfb*		at pci? dev ? function ?
+options 	VCONS_DRAW_INTR
 #machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
@@ -642,12 +635,6 @@ iic*	at amdpm?
 # Acer Labs M7101 SMBus controller
 alipm*	at pci? dev ? function ?
 iic*	at alipm?
-
-# Intel Core's on-die Thermal sensor
-options 	INTEL_CORETEMP
-
-# VIA C7 Temperature sensor
-options 	VIA_C7TEMP
 
 # Intel ICH SMBus controller
 ichsmb* at pci? dev ? function ?
@@ -947,6 +934,7 @@ ed*	at edc?
 # PCI network interfaces
 age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+alc*	at pci? dev ? function ?	# Attansic/Atheros L1C/L2C Ethernet
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)

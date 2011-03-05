@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.2.2.1 2011/02/17 11:59:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.2.2.2 2011/03/05 15:09:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.2.2.1 2011/02/17 11:59:55 bouyer E
 #include <powerpc/instr.h>
 #include <powerpc/booke/cpuvar.h>
 
-#define	__stub	__section(".stub")
+#define	__stub	__section(".stub") __noprofile
 
 void tlb_set_asid(uint32_t) __stub;
 

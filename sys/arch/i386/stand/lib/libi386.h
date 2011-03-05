@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.33.4.1 2011/02/08 16:19:26 bouyer Exp $	*/
+/*	$NetBSD: libi386.h,v 1.33.4.2 2011/03/05 15:09:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -121,7 +121,7 @@ int getmementry(int *, int *);
 int biosdisk_int13ext(int);
 int biosdisk_getinfo(int);
 struct biosdisk_extinfo;
-void biosdisk_getextinfo(int, struct biosdisk_extinfo *);
+int biosdisk_getextinfo(int, struct biosdisk_extinfo *);
 int get_harddrives(void);
 void biosdisk_probe(void);
 

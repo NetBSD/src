@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168.4.1 2011/02/17 11:59:33 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168.4.2 2011/03/05 15:09:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.4.1 2011/02/17 11:59:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.4.2 2011/03/05 15:09:33 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -252,7 +252,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
+	frame->f_regs[A2] = l->l_proc->p_psstrp;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;

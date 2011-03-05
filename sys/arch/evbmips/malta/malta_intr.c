@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.19 2008/05/26 15:59:29 tsutsui Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.19.28.1 2011/03/05 15:09:38 bouyer Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19 2008/05/26 15:59:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.28.1 2011/03/05 15:09:38 bouyer Exp $");
+
+#define	__INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,33 +65,17 @@ __KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19 2008/05/26 15:59:29 tsutsui Exp 
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
  */
-const uint32_t ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0,
-	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
-};
-
-/*
- * This is a mask of bits to clear in the SR when we go to a
- * given software interrupt priority level.
- * Hardware ipls are port/board specific.
- */
-const uint32_t mips_ipl_si_to_sr[2] = {
-	MIPS_SOFT_INT_MASK_0,
-	MIPS_SOFT_INT_MASK_1, /* XXX is this right with the new softints? */
+static const struct ipl_sr_map malta_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
+				    | MIPS_INT_MASK_5,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 struct malta_cpuintr {
@@ -99,7 +85,7 @@ struct malta_cpuintr {
 #define	NINTRS		5	/* MIPS INT0 - INT4 */
 
 struct malta_cpuintr malta_cpuintrs[NINTRS];
-const char *malta_cpuintrnames[NINTRS] = {
+const char * const malta_cpuintrnames[NINTRS] = {
 	"int 0 (piix4)",
 	"int 1 (smi)",
 	"int 2 (uart)",
@@ -122,10 +108,11 @@ static void	*malta_pciide_compat_intr_establish(void *, struct device *,
 void
 evbmips_intr_init(void)
 {
-	struct malta_config *mcp = &malta_configuration;
-	int i;
+	struct malta_config * const mcp = &malta_configuration;
 
-	for (i = 0; i < NINTRS; i++) {
+	ipl_sr_map = malta_ipl_sr_map;
+
+	for (size_t i = 0; i < NINTRS; i++) {
 		LIST_INIT(&malta_cpuintrs[i].cintr_list);
 		evcnt_attach_dynamic(&malta_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", malta_cpuintrnames[i]);
@@ -145,6 +132,7 @@ evbmips_intr_init(void)
 void
 malta_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 {
+	struct cpu_info * const ci = curcpu();
 	uint32_t ctrdiff[4], startctr, endctr;
 	uint8_t regc;
 	int i;
@@ -188,25 +176,25 @@ malta_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	}
 
 	/* Compute the number of cycles per second. */
-	curcpu()->ci_cpu_freq = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16/*Hz*/;
+	ci->ci_cpu_freq = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16/*Hz*/;
 
 	/* Compute the number of ticks for hz. */
-	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	ci->ci_cycles_per_hz = (ci->ci_cpu_freq + hz / 2) / hz;
 
 	/* Compute the delay divisor. */
-	curcpu()->ci_divisor_delay =
-	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
+	ci->ci_divisor_delay = ((ci->ci_cpu_freq + 500000) / 1000000);
 
 	/*
 	 * Get correct cpu frequency if the CPU runs at twice the
 	 * external/cp0-count frequency.
 	 */
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
-		curcpu()->ci_cpu_freq *= 2;
+	ci->ci_cctr_freq = ci->ci_cpu_freq;
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		ci->ci_cpu_freq *= 2;
 
 #ifdef DEBUG
 	printf("Timer calibration: %lu cycles/sec [(%u, %u) * 16]\n",
-	    curcpu()->ci_cpu_freq, ctrdiff[2], ctrdiff[3]);
+	    ci->ci_cpu_freq, ctrdiff[2], ctrdiff[3]);
 #endif
 }
 
@@ -258,9 +246,8 @@ evbmips_intr_disestablish(void *arg)
 }
 
 void
-evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
-	struct evbmips_intrhand *ih;
 	
 	/* Check for error interrupts (SMI, GT64120) */
 	if (ipending & (MIPS_INT_MASK_1 | MIPS_INT_MASK_3)) {
@@ -276,15 +263,12 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	 * priority.
 	 */
 	if (ipending & MIPS_INT_MASK_0) {
+		struct evbmips_intrhand *ih;
 		/* All interrupts are gated through MIPS HW interrupt 0 */
 		malta_cpuintrs[0].cintr_count.ev_count++;
 		LIST_FOREACH(ih, &malta_cpuintrs[0].cintr_list, ih_q)
 			(*ih->ih_func)(ih->ih_arg);
-		cause &= ~MIPS_INT_MASK_0;
 	}
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 /*

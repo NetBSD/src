@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: myaddrinfo.c,v 1.1.1.1.6.1 2011/03/05 15:09:05 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -20,6 +20,13 @@
 /*
 /*	int	hostname_to_sockaddr(hostname, service, socktype, result)
 /*	const char *hostname;
+/*	const char *service;
+/*	int	socktype;
+/*	struct addrinfo **result;
+/*
+/*	int	hostname_to_sockaddr_pf(hostname, pf, service, socktype, result)
+/*	const char *hostname;
+/*	int	pf;
 /*	const char *service;
 /*	int	socktype;
 /*	struct addrinfo **result;
@@ -60,6 +67,9 @@
 /*	the specified symbolic hostname or numeric address.  The
 /*	result should be destroyed with freeaddrinfo(). A null host
 /*	pointer converts to the null host address.
+/*
+/*	hostname_to_sockaddr_pf() is an extended interface that
+/*	provides a protocol family override.
 /*
 /*	hostaddr_to_sockaddr() converts a printable network address
 /*	into the corresponding binary form.  The result should be
@@ -102,6 +112,10 @@
 /*	hostname, or a null pointer (meaning the wild-card listen
 /*	address).  On output from sockaddr_to_hostname(), storage
 /*	for the result hostname, or a null pointer.
+/* .IP pf
+/*	Protocol type: PF_UNSPEC (meaning: use any protocol that is
+/*	available), PF_INET, or PF_INET6.  This argument is ignored
+/*	in EMULATE_IPV4_ADDRINFO mode.
 /* .IP hostaddr
 /*	On input to hostaddr_to_sockaddr(), a numeric hostname,
 /*	or a null pointer (meaning the wild-card listen address).
@@ -276,10 +290,11 @@ static int find_service(const char *service, int socktype)
 
 #endif
 
-/* hostname_to_sockaddr - hostname to binary address form */
+/* hostname_to_sockaddr_pf - hostname to binary address form */
 
-int     hostname_to_sockaddr(const char *hostname, const char *service,
-			             int socktype, struct addrinfo ** res)
+int     hostname_to_sockaddr_pf(const char *hostname, int pf,
+			             const char *service, int socktype,
+			             struct addrinfo ** res)
 {
 #ifdef EMULATE_IPV4_ADDRINFO
 
@@ -410,7 +425,7 @@ int     hostname_to_sockaddr(const char *hostname, const char *service,
     int     err;
 
     memset((char *) &hints, 0, sizeof(hints));
-    hints.ai_family = inet_proto_info()->ai_family;
+    hints.ai_family = (pf != PF_UNSPEC) ? pf : inet_proto_info()->ai_family;
     hints.ai_socktype = service ? socktype : MAI_SOCKTYPE;
     if (!hostname) {
 	hints.ai_flags = AI_PASSIVE;

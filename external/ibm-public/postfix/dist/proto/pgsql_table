@@ -40,18 +40,14 @@
 #	Support for this form will be removed in a future Postfix
 #	version.
 #
-#	Postfix 2.2 has enhanced query interfaces for MySQL and PostgreSQL,
-#	these include features previously available only in the Postfix
-#	LDAP client. In the new interface the SQL query is specified via
-#	a single \fBquery\fR parameter (described in more detail below).
-#	In Postfix 2.1 the parameter precedence was, from highest to lowest,
-#	\fBselect_function\fR, \fBquery\fR and finally \fBselect_field\fR, ...
-#
-#	With Postfix 2.2 the \fBquery\fR parameter has highest precedence,
-#	and is used in preference to the still supported, but slated to be
-#	phased out, \fBselect_function\fR, \fBselect_field\fR, \fBtable\fR,
-#	\fBwhere_field\fR and \fBadditional_conditions\fR parameters. To
-#	migrate to the new interface set:
+#	Normally, the SQL query is specified via a single \fBquery\fR
+#	parameter (described in more detail below).  When this
+#	parameter is not specified in the map definition, Postfix
+#	reverts to an older interface, with the  SQL  query
+#	constructed  from the \fBselect_function\fR, \fBselect_field\fR,
+#	\fBtable\fR, \fBwhere_field\fR and \fBadditional_conditions\fR
+#	parameters.  The old interface will be gradually phased
+#	out. To migrate to the new interface set:
 #
 # .nf
 #	    \fBquery\fR = SELECT \fIselect_function\fR('%s')
@@ -318,6 +314,7 @@
 #	postconf(5), configuration parameters
 #	ldap_table(5), LDAP lookup tables
 #	mysql_table(5), MySQL lookup tables
+#	sqlite_table(5), SQLite lookup tables
 # README FILES
 # .ad
 # .fi

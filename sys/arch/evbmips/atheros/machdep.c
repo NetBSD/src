@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.23.4.1 2011/02/17 11:59:36 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.23.4.2 2011/03/05 15:09:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.4.1 2011/02/17 11:59:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.4.2 2011/03/05 15:09:36 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -146,12 +146,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.4.1 2011/02/17 11:59:36 bouyer Exp 
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
 
+int physmem;			/* # pages of physical memory */
 int maxmem;			/* max memory per process */
 
 int mem_cluster_cnt;
@@ -167,9 +165,10 @@ cal_timer(void)
 	cntfreq = curcpu()->ci_cpu_freq = ar531x_cpu_freq();
 	
 	/* MIPS 4Kc CP0 counts every other clock */
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		cntfreq /= 2;
 
+	curcpu()->ci_cctr_freq = cntfreq;
 	curcpu()->ci_cycles_per_hz = (cntfreq + hz / 2) / hz;
 
 	/* Compute number of cycles per 1us (1/MHz). 0.5MHz is for roundup. */
@@ -180,7 +179,6 @@ void
 mach_init(void)
 {
 	void *kernend;
-	u_long first, last;
 	uint32_t memsize;
 
 	extern char edata[], end[];	/* XXX */
@@ -205,7 +203,7 @@ mach_init(void)
 	 * functions called during startup.
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	/*
 	 * Calibrate timers.
@@ -248,12 +246,10 @@ mach_init(void)
 	mem_cluster_cnt++;
 
 	/*
-	 * Load the rest of the available pages into the VM system.
+	 * Load the available pages into the VM system.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-	    VM_FREELIST_DEFAULT);
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize message buffer (at end of core).
@@ -286,9 +282,9 @@ mach_init(void)
 	 * PROM.  VxWorks bootloader seems to leave one set.
 	 */ 
 	__asm volatile (
-		"mtc0	$0, $" ___STRING(MIPS_COP_0_WATCH_LO) " \n\t"
+		"mtc0	$0, $%0\n\t"
 		"nop\n\t"
-		"nop\n\t");
+		"nop\n\t" :: "n"(MIPS_COP_0_WATCH_LO));
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -356,8 +352,7 @@ cpu_reboot(int howto, char *bootstr)
 	static int waittime = -1;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)

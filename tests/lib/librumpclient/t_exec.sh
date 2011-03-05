@@ -1,4 +1,4 @@
-#       $NetBSD: t_exec.sh,v 1.6.2.2 2011/02/17 12:00:54 bouyer Exp $
+#       $NetBSD: t_exec.sh,v 1.6.2.3 2011/03/05 15:10:56 bouyer Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@ noexec_body()
 
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
 	atf_check -s exit:0 env $(atf_get_srcdir)/h_exec
-	atf_check -s exit:0 -o save:sstat.out rump.sockstat
+	atf_check -s exit:0 -o save:sstat.out rump.sockstat -n
 	atf_check -s exit:0 -o match:'^root.*h_exec.*tcp.*\*\.1234' \
 	    sed -n 2p sstat.out
 	atf_check -s exit:0 -o match:'^root.*h_exec.*tcp.*\*\.2345' \
@@ -63,7 +63,7 @@ exec_body()
 
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
 	atf_check -s exit:0 $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_exec
-	atf_check -s exit:0 -o save:sstat.out rump.sockstat
+	atf_check -s exit:0 -o save:sstat.out rump.sockstat -n
 	atf_check -s exit:0 -o match:'^root.*h_ution.*tcp.*\*\.1234' \
 	    sed -n 2p sstat.out
 	atf_check -s exit:0 -o match:'^root.*h_ution.*tcp.*\*\.2345' \
@@ -87,7 +87,7 @@ cloexec_body()
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
 	atf_check -s exit:0  \
 	    $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_exec cloexec1
-	atf_check -s exit:0 -o save:sstat.out rump.sockstat
+	atf_check -s exit:0 -o save:sstat.out rump.sockstat -n
 	atf_check -s exit:0 -o inline:'2\n' sed -n '$=' sstat.out
 	atf_check -s exit:0 -o match:'^root.*h_ution.*tcp.*\*\.2345' \
 	    sed -n 2p sstat.out
@@ -110,7 +110,7 @@ vfork_body()
 	atf_check -s exit:0 ${rumpsrv} ${RUMP_SERVER}
 	atf_check -s exit:0  \
 	    $(atf_get_srcdir)/h_exec $(atf_get_srcdir)/h_exec vfork_please
-	atf_check -s exit:0 -o save:sstat.out rump.sockstat
+	atf_check -s exit:0 -o save:sstat.out rump.sockstat -n
 	atf_check -s exit:0 -o inline:'5\n' sed -n '$=' sstat.out
 	atf_check -s exit:0 -o match:'^root.*h_ution.*tcp.*\*\.1234' \
 	    cat sstat.out

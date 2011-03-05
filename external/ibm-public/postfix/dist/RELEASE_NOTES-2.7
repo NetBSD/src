@@ -1,0 +1,175 @@
+The stable Postfix release is called postfix-2.7.x where 2=major
+release number, 7=minor release number, x=patchlevel.  The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-2.8-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day).  Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+If you upgrade from Postfix 2.5 or earlier, read RELEASE_NOTES-2.6
+before proceeding.
+
+Major changes - performance
+---------------------------
+
+[Feature 20100101] Periodic cache cleanup for the verify(8) cache
+database. The time between cache cleanup runs is controlled with
+the address_verify_cache_cleanup_interval (default: 12h) parameter.
+Cache cleanup increases the database access latency, so this should
+not be run more often than necessary.
+
+[Feature 20091109] Improved before-queue filter performance.  With
+"smtpd_proxy_options = speed_adjust", the Postfix SMTP server
+receives the entire message before it connects to a before-queue
+content filter. This means you can run more SMTP server processes
+with the same number of running content filter processes, and thus,
+handle more mail. This feature is off by default until it is proven
+to create no new problems.
+
+This addresses a concern of people in Europe who want to reject all
+bad mail with a before-queue filter. The alternative, an after-queue
+filter, means they would have to discard bad mail (which is illegal)
+or bounce bad mail (which violates good network citizenship).
+
+NOTE 1: When this feature is turned on, a filter cannot selectively
+reject recipients of a multi-recipient message.  It is OK to reject
+all recipients of the same multi-recipient message, as is deferring
+or accepting all recipients of the same multi-recipient message.
+
+NOTE 2: This feature increases the minimum amount of free queue
+space by $message_size_limit. The extra space is needed to save the
+message to a temporary file.
+
+To keep the performance overhead low, the same temporary file is
+reused with successive mail transactions (the file is of course
+truncated before reuse, so there is no information leakage).
+
+Major changes - sender reputation
+---------------------------------
+
+[Feature 20100117] The FILTER action in access maps or header/body_checks
+now supports sender reputation schemes that dynamically choose the
+SMTP source IP address. Typically, mail is split into classes, and
+all mail in class X is sent out from an SMTP client IP address that
+is reserved for class X.
+
+This is implemented by specifying FILTER actions with empty next-hop
+destinations in access maps or header/body_checks, and by configuring
+in master.cf one Postfix SMTP client for each SMTP source IP address,
+where each client has its own "-o myhostname" and "-o smtp_bind_address"
+settings.
+
+[Feature 20091209] sender_dependent_default_transport_maps, a
+per-sender override for default_transport. The original motivation
+is to use different output channels (with different source IP
+addresses) for different sender addresses, in order to keep their
+IP-based reputations separate from each other.
+
+The result value syntax is that of default_transport, not transport_maps.
+Thus, sender_dependent_default_transport_maps does not support the
+special transport_maps result value syntax for null transport, null
+nexthop, or null email address.
+
+This feature makes sender_dependent_relayhost_maps pretty much
+redundant (though sender_dependent_relayhost_maps will often be
+easier to use because that is the only thing people want to override).
+
+Major changes - address verification
+------------------------------------
+
+[Incompat 20100101] The verify(8) service now uses a persistent
+cache by default (address_verify_map = btree:$data_directory/verify_cache).
+To disable, specify "address_verify_map =" in main.cf.
+
+When periodic cache cleanup is enabled (the default), the verify(8)
+server now requires that the cache database supports the "delete"
+and "sequence" operations.  To disable periodic cache cleanup specify
+a zero address_verify_cache_cleanup_interval value.
+
+[Feature 20100101] Periodic cache cleanup for the verify(8) cache
+database. The time between cache cleanup runs is controlled with
+the address_verify_cache_cleanup_interval (default: 12h) parameter.
+Cache cleanup increases the database access latency, so this should
+not be run more often than necessary.
+
+Major changes - content filter
+------------------------------
+
+[Incompat 20100117] The meaning of an empty filter next-hop destination
+has changed (for example, "content_filter = foo:" or "FILTER foo:").
+Postfix now uses the recipient domain, instead of using $myhostname
+as in Postfix 2.6 and earlier.  To restore the old behavior specify
+"default_filter_nexthop = $myhostname", or specify a non-empty
+next-hop content filter destination.
+
+This compatibility option is not needed with SMTP-based content
+filters, because these always have an explicit next-hop destination.
+
+With pipe-based filters that specify no next-hop destination, the
+compatibility option restores the FIFO order of deliveries. Without
+the compatibility option, the delivery order for filters without
+next-hop destination changes to round-robin domain selection.
+
+[Feature 20100117] The FILTER action in access maps or header/body_checks
+now supports sender reputation schemes that dynamically choose the
+SMTP source IP address. Typically, mail is split into classes, and
+all mail in class X is sent out from an SMTP client IP address that
+is reserved for class X.
+
+This is implemented by specifying FILTER actions with empty next-hop
+destinations in access maps or header/body_checks, and by configuring
+in master.cf one Postfix SMTP client for each SMTP source IP address,
+where each client has its own "-o myhostname" and "-o smtp_bind_address"
+settings.
+
+[Feature 20091109] Improved before-queue filter performance.  With
+"smtpd_proxy_options = speed_adjust", the Postfix SMTP server
+receives the entire message before it connects to a before-queue
+content filter. This means you can run more SMTP server processes
+with the same number of running content filter processes, and thus,
+handle more mail. This feature is off by default until it is proven
+to create no new problems.
+
+This addresses a concern of people in Europe who want to reject all
+bad mail with a before-queue filter. The alternative, an after-queue
+filter, means they would have to discard bad mail (which is illegal)
+or bounce bad mail (which violates good network citizenship).
+
+NOTE 1: When this feature is turned on, a filter cannot selectively
+reject recipients of a multi-recipient message.  It is OK to reject
+all recipients of the same multi-recipient message, as is deferring
+or accepting all recipients of the same multi-recipient message.
+
+NOTE 2: This feature increases the minimum amount of free queue
+space by $message_size_limit. The extra space is needed to save the
+message to a temporary file.
+
+To keep the performance overhead low, the same temporary file is
+reused with successive mail transactions (the file is of course
+truncated before reuse, so there is no information leakage).
+
+Major changes - milter
+----------------------
+
+[Feature 20090606] Support for header checks on Milter-generated
+message headers.  This can be used, for example, to control mail
+flow with Milter-generated headers that carry indicators for badness
+or goodness. For details, see the postconf(5) section for
+"milter_header_checks". Currently, all header_checks features are
+implemented except PREPEND.  
+
+Major changes - multi-instance support
+--------------------------------------
+
+[Incompat 20090606] The "postmulti -e destroy" command no longer
+attempts to remove files that are created AFTER "postmulti -e
+create".  It still works as expected immediately after creating an
+instance by mistake.  Trying to automatically remove other files
+is too risky because Postfix-owned directories are by design not
+trusted.
+

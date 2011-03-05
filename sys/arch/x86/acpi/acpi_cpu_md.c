@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.38.4.1 2011/02/17 12:00:05 bouyer Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.38.4.2 2011/03/05 15:10:09 bouyer Exp $ */
 
 /*-
- * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.38.4.1 2011/02/17 12:00:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.38.4.2 2011/03/05 15:10:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/kcore.h>
 #include <sys/sysctl.h>
 #include <sys/xcall.h>
@@ -51,6 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.38.4.1 2011/02/17 12:00:05 bouyer 
 #include <machine/acpi_machdep.h>
 
 /*
+ * Intel IA32_MISC_ENABLE.
+ */
+#define MSR_MISC_ENABLE_EST	__BIT(16)
+#define MSR_MISC_ENABLE_TURBO	__BIT(38)
+
+/*
  * AMD C1E.
  */
 #define MSR_CMPHALT		0xc0010055
@@ -60,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.38.4.1 2011/02/17 12:00:05 bouyer 
 #define MSR_CMPHALT_BMSTS	__BIT(29)
 
 /*
- * AMD families 10h and 11h.
+ * AMD families 10h, 11h, and 14h
  */
 #define MSR_10H_LIMIT		0xc0010061
 #define MSR_10H_CONTROL		0xc0010062
@@ -98,28 +105,66 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.38.4.1 2011/02/17 12:00:05 bouyer 
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
 
-static int	 acpicpu_md_quirks_piix4(struct pci_attach_args *);
-static void	 acpicpu_md_pstate_status(void *, void *);
+static u_long	 acpicpu_md_lock(struct acpicpu_softc *);
+static void	 acpicpu_md_unlock(struct acpicpu_softc *, u_long);
+static int	 acpicpu_md_quirk_piix4(struct pci_attach_args *);
+static void	 acpicpu_md_pstate_percent_reset(struct cpu_info *);
 static int	 acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *,
                                               uint32_t *);
 static int	 acpicpu_md_pstate_fidvid_set(struct acpicpu_pstate *);
 static int	 acpicpu_md_pstate_fidvid_read(uint32_t *, uint32_t *);
 static void	 acpicpu_md_pstate_fidvid_write(uint32_t, uint32_t,
 					        uint32_t, uint32_t);
-static void	 acpicpu_md_tstate_status(void *, void *);
 static int	 acpicpu_md_pstate_sysctl_init(void);
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
 
 extern struct acpicpu_softc **acpicpu_sc;
-static bool acpicpu_pstate_status = false;
 static struct sysctllog *acpicpu_log = NULL;
+
+struct cpu_info *
+acpicpu_md_match(device_t parent, cfdata_t match, void *aux)
+{
+	struct cpufeature_attach_args *cfaa = aux;
+
+	if (strcmp(cfaa->name, "frequency") != 0)
+		return NULL;
+
+	return cfaa->ci;
+}
+
+struct cpu_info *
+acpicpu_md_attach(device_t parent, device_t self, void *aux)
+{
+	struct cpufeature_attach_args *cfaa = aux;
+
+	return cfaa->ci;
+}
+
+static u_long
+acpicpu_md_lock(struct acpicpu_softc *sc)
+{
+	const u_long flags = x86_read_psl();
+
+	x86_disable_intr();
+	__cpu_simple_lock(&sc->sc_lock);
+
+	return flags;
+}
+
+static void
+acpicpu_md_unlock(struct acpicpu_softc *sc, u_long flags)
+{
+	__cpu_simple_unlock(&sc->sc_lock);
+	x86_write_psl(flags);
+}
 
 uint32_t
 acpicpu_md_cap(void)
 {
 	struct cpu_info *ci = curcpu();
+	uint32_t regs[4];
 	uint32_t val = 0;
 
 	if (cpu_vendor != CPUVENDOR_IDT &&
@@ -127,9 +172,14 @@ acpicpu_md_cap(void)
 		return val;
 
 	/*
-	 * Basic SMP C-states (required for _CST).
+	 * Basic SMP C-states (required for e.g. _CST).
 	 */
 	val |= ACPICPU_PDC_C_C1PT | ACPICPU_PDC_C_C2C3;
+
+	/*
+	 * Claim to support dependency coordination.
+	 */
+	val |= ACPICPU_PDC_P_SW | ACPICPU_PDC_C_SW | ACPICPU_PDC_T_SW;
 
         /*
 	 * If MONITOR/MWAIT is available, announce
@@ -147,11 +197,22 @@ acpicpu_md_cap(void)
 	if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
 		val |= ACPICPU_PDC_T_FFH;
 
+	/*
+	 * Declare support for APERF and MPERF.
+	 */
+	if (cpuid_level >= 0x06) {
+
+		x86_cpuid(0x00000006, regs);
+
+		if ((regs[2] & CPUID_DSPM_HWF) != 0)
+			val |= ACPICPU_PDC_P_HWF;
+	}
+
 	return val;
 }
 
 uint32_t
-acpicpu_md_quirks(void)
+acpicpu_md_flags(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct pci_attach_args pa;
@@ -210,10 +271,10 @@ acpicpu_md_quirks(void)
 		 */
 		if (cpuid_level >= 0x06) {
 
-			x86_cpuid(0x06, regs);
+			x86_cpuid(0x00000006, regs);
 
 			if ((regs[2] & CPUID_DSPM_HWF) != 0)
-				val |= ACPICPU_FLAG_P_HW;
+				val |= ACPICPU_FLAG_P_HWF;
 
 			if ((regs[0] & CPUID_DSPM_IDA) != 0)
 				val |= ACPICPU_FLAG_P_TURBO;
@@ -260,6 +321,10 @@ acpicpu_md_quirks(void)
 
 		case 0x0f:
 
+			/*
+			 * Evaluate support for the "FID/VID
+			 * algorithm" also used by powernow(4).
+			 */
 			if ((regs[3] & CPUID_APM_FID) == 0)
 				break;
 
@@ -271,7 +336,16 @@ acpicpu_md_quirks(void)
 
 		case 0x10:
 		case 0x11:
+			val |= ACPICPU_FLAG_C_C1E;
+			/* FALLTHROUGH */
 
+		case 0x14: /* AMD Fusion */
+
+			/*
+			 * Like with Intel, detect invariant TSC,
+			 * MSR-based P-states, and AMD's "turbo"
+			 * (Core Performance Boost), respectively.
+			 */
 			if ((regs[3] & CPUID_APM_TSC) != 0)
 				val &= ~ACPICPU_FLAG_C_TSC;
 
@@ -281,7 +355,18 @@ acpicpu_md_quirks(void)
 			if ((regs[3] & CPUID_APM_CPB) != 0)
 				val |= ACPICPU_FLAG_P_TURBO;
 
-			val |= ACPICPU_FLAG_C_C1E;
+			/*
+			 * Also check for APERF and MPERF,
+			 * first available in the family 10h.
+			 */
+			if (cpuid_level >= 0x06) {
+
+				x86_cpuid(0x00000006, regs);
+
+				if ((regs[2] & CPUID_DSPM_HWF) != 0)
+					val |= ACPICPU_FLAG_P_HWF;
+			}
+
 			break;
 		}
 
@@ -291,14 +376,14 @@ acpicpu_md_quirks(void)
 	/*
 	 * There are several erratums for PIIX4.
 	 */
-	if (pci_find_device(&pa, acpicpu_md_quirks_piix4) != 0)
+	if (pci_find_device(&pa, acpicpu_md_quirk_piix4) != 0)
 		val |= ACPICPU_FLAG_PIIX4;
 
 	return val;
 }
 
 static int
-acpicpu_md_quirks_piix4(struct pci_attach_args *pa)
+acpicpu_md_quirk_piix4(struct pci_attach_args *pa)
 {
 
 	/*
@@ -317,7 +402,7 @@ acpicpu_md_quirks_piix4(struct pci_attach_args *pa)
 }
 
 void
-acpicpu_md_quirks_c1e(void)
+acpicpu_md_quirk_c1e(void)
 {
 	const uint64_t c1e = MSR_CMPHALT_SMI | MSR_CMPHALT_C1E;
 	uint64_t val;
@@ -329,13 +414,16 @@ acpicpu_md_quirks_c1e(void)
 }
 
 int
-acpicpu_md_idle_start(struct acpicpu_softc *sc)
+acpicpu_md_cstate_start(struct acpicpu_softc *sc)
 {
 	const size_t size = sizeof(native_idle_text);
 	struct acpicpu_cstate *cs;
 	bool ipi = false;
 	int i;
 
+	/*
+	 * Save the cpu_idle(9) loop used by default.
+	 */
 	x86_cpu_idle_get(&native_idle, native_idle_text, size);
 
 	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
@@ -354,7 +442,7 @@ acpicpu_md_idle_start(struct acpicpu_softc *sc)
 }
 
 int
-acpicpu_md_idle_stop(void)
+acpicpu_md_cstate_stop(void)
 {
 	uint64_t xc;
 	bool ipi;
@@ -377,7 +465,7 @@ acpicpu_md_idle_stop(void)
  * Caller should enable interrupts after return.
  */
 void
-acpicpu_md_idle_enter(int method, int state)
+acpicpu_md_cstate_enter(int method, int state)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -405,37 +493,14 @@ acpicpu_md_idle_enter(int method, int state)
 }
 
 int
-acpicpu_md_pstate_start(void)
+acpicpu_md_pstate_start(struct acpicpu_softc *sc)
 {
-	const uint64_t est = __BIT(16);
-	uint64_t val;
-
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_IDT:
-	case CPUVENDOR_INTEL:
-
-		val = rdmsr(MSR_MISC_ENABLE);
-
-		if ((val & est) == 0) {
-
-			val |= est;
-
-			wrmsr(MSR_MISC_ENABLE, val);
-			val = rdmsr(MSR_MISC_ENABLE);
-
-			if ((val & est) == 0)
-				return ENOTTY;
-		}
-	}
-
 	return acpicpu_md_pstate_sysctl_init();
 }
 
 int
 acpicpu_md_pstate_stop(void)
 {
-
 	if (acpicpu_log != NULL)
 		sysctl_teardown(&acpicpu_log);
 
@@ -443,11 +508,12 @@ acpicpu_md_pstate_stop(void)
 }
 
 int
-acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
+acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 {
 	struct acpicpu_pstate *ps, msr;
 	struct cpu_info *ci = curcpu();
 	uint32_t family, i = 0;
+	uint64_t val;
 
 	(void)memset(&msr, 0, sizeof(struct acpicpu_pstate));
 
@@ -457,8 +523,27 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 	case CPUVENDOR_INTEL:
 
 		/*
+		 * Make sure EST is enabled.
+		 */
+		if ((sc->sc_flags & ACPICPU_FLAG_P_FFH) != 0) {
+
+			val = rdmsr(MSR_MISC_ENABLE);
+
+			if ((val & MSR_MISC_ENABLE_EST) == 0) {
+
+				val |= MSR_MISC_ENABLE_EST;
+				wrmsr(MSR_MISC_ENABLE, val);
+				val = rdmsr(MSR_MISC_ENABLE);
+
+				if ((val & MSR_MISC_ENABLE_EST) == 0)
+					return ENOTTY;
+			}
+		}
+
+		/*
 		 * If the so-called Turbo Boost is present,
 		 * the P0-state is always the "turbo state".
+		 * It is shown as the P1 frequency + 1 MHz.
 		 *
 		 * For discussion, see:
 		 *
@@ -466,8 +551,14 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 		 *	in Intel Core(tm) Microarchitectures (Nehalem)
 		 *	Based Processors. White Paper, November 2008.
 		 */
-		if ((sc->sc_flags & ACPICPU_FLAG_P_TURBO) != 0)
-			sc->sc_pstate[0].ps_flags |= ACPICPU_FLAG_P_TURBO;
+		if (sc->sc_pstate_count >= 2 &&
+		   (sc->sc_flags & ACPICPU_FLAG_P_TURBO) != 0) {
+
+			ps = &sc->sc_pstate[0];
+
+			if (ps->ps_freq == sc->sc_pstate[1].ps_freq + 1)
+				ps->ps_flags |= ACPICPU_FLAG_P_TURBO;
+		}
 
 		msr.ps_control_addr = MSR_PERF_CTL;
 		msr.ps_control_mask = __BITS(0, 15);
@@ -495,6 +586,7 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 		case 0x10:
 		case 0x11:
+		case 0x14: /* AMD Fusion */
 			msr.ps_control_addr = MSR_10H_CONTROL;
 			msr.ps_control_mask = __BITS(0, 2);
 
@@ -504,6 +596,9 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 		default:
 
+			/*
+			 * If we have an unknown AMD CPU, rely on XPSS.
+			 */
 			if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) == 0)
 				return EOPNOTSUPP;
 		}
@@ -542,7 +637,94 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 		i++;
 	}
 
+	/*
+	 * Reset the APERF and MPERF counters.
+	 *
+	 * XXX: Should be with xc_unicast(9).
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0)
+		acpicpu_md_pstate_percent_reset(sc->sc_ci);
+
 	return 0;
+}
+
+/*
+ * Read the IA32_APERF and IA32_MPERF counters. The first
+ * increments at the rate of the fixed maximum frequency
+ * configured during the boot, whereas APERF counts at the
+ * rate of the actual frequency. Note that the MSRs must be
+ * read without delay, and that only the ratio between
+ * IA32_APERF and IA32_MPERF is architecturally defined.
+ *
+ * The function thus returns the percentage of the actual
+ * frequency in terms of the maximum frequency of the calling
+ * CPU since the last call. A value zero implies an error.
+ *
+ * For further details, refer to:
+ *
+ *	Intel Corporation: Intel 64 and IA-32 Architectures
+ *	Software Developer's Manual. Section 13.2, Volume 3A:
+ *	System Programming Guide, Part 1. July, 2008.
+ *
+ *	Advanced Micro Devices: BIOS and Kernel Developer's
+ *	Guide (BKDG) for AMD Family 10h Processors. Section
+ *	2.4.5, Revision 3.48, April 2010.
+ */
+uint8_t
+acpicpu_md_pstate_percent(struct cpu_info *ci)
+{
+	struct acpicpu_softc *sc;
+	uint64_t aperf, mperf;
+	uint8_t rv = 0;
+	u_long flags;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL))
+		return 0;
+
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P_HWF) == 0))
+		return 0;
+
+	flags = acpicpu_md_lock(sc);
+
+	aperf = sc->sc_pstate_aperf;
+	mperf = sc->sc_pstate_mperf;
+
+	sc->sc_pstate_aperf = rdmsr(MSR_APERF);
+	sc->sc_pstate_mperf = rdmsr(MSR_MPERF);
+
+	aperf = sc->sc_pstate_aperf - aperf;
+	mperf = sc->sc_pstate_mperf - mperf;
+
+	if (__predict_true(mperf != 0))
+		rv = (aperf * 100) / mperf;
+
+	acpicpu_md_unlock(sc, flags);
+
+	return rv;
+}
+
+static void
+acpicpu_md_pstate_percent_reset(struct cpu_info *ci)
+{
+	struct acpicpu_softc *sc;
+	u_long flags;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL))
+		return;
+
+	flags = acpicpu_md_lock(sc);
+
+	wrmsr(MSR_APERF, 0);
+	wrmsr(MSR_MPERF, 0);
+
+	sc->sc_pstate_aperf = 0;
+	sc->sc_pstate_mperf = 0;
+
+	acpicpu_md_unlock(sc, flags);
 }
 
 int
@@ -555,6 +737,9 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	if ((sc->sc_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 		return acpicpu_md_pstate_fidvid_get(sc, freq);
 
+	/*
+	 * Pick any P-state for the status address.
+	*/
 	for (i = 0; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
@@ -574,6 +759,9 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	if (__predict_true(ps->ps_status_mask != 0))
 		val = val & ps->ps_status_mask;
 
+	/*
+	 * Search for the value from known P-states.
+	 */
 	for (i = 0; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
@@ -593,9 +781,7 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 int
 acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 {
-	struct msr_rw_info msr;
-	uint64_t xc;
-	int rv = 0;
+	uint64_t val = 0;
 
 	if (__predict_false(ps->ps_control_addr == 0))
 		return EINVAL;
@@ -603,54 +789,20 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	if ((ps->ps_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 		return acpicpu_md_pstate_fidvid_set(ps);
 
-	msr.msr_read  = false;
-	msr.msr_type  = ps->ps_control_addr;
-	msr.msr_value = ps->ps_control;
-
-	if (__predict_true(ps->ps_control_mask != 0)) {
-		msr.msr_mask = ps->ps_control_mask;
-		msr.msr_read = true;
-	}
-
-	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
-	xc_wait(xc);
-
 	/*
-	 * Due several problems, we bypass the
-	 * relatively expensive status check.
+	 * If the mask is set, do a read-modify-write.
 	 */
-	if (acpicpu_pstate_status != true) {
-		DELAY(ps->ps_latency);
-		return 0;
+	if (__predict_true(ps->ps_control_mask != 0)) {
+		val = rdmsr(ps->ps_control_addr);
+		val &= ~ps->ps_control_mask;
 	}
 
-	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_pstate_status, ps, &rv);
-	xc_wait(xc);
+	val |= ps->ps_control;
 
-	return rv;
-}
+	wrmsr(ps->ps_control_addr, val);
+	DELAY(ps->ps_latency);
 
-static void
-acpicpu_md_pstate_status(void *arg1, void *arg2)
-{
-	struct acpicpu_pstate *ps = arg1;
-	uint64_t val;
-	int i;
-
-	for (i = val = 0; i < ACPICPU_P_STATE_RETRY; i++) {
-
-		val = rdmsr(ps->ps_status_addr);
-
-		if (__predict_true(ps->ps_status_mask != 0))
-			val = val & ps->ps_status_mask;
-
-		if (val == ps->ps_status)
-			return;
-
-		DELAY(ps->ps_latency);
-	}
-
-	*(uintptr_t *)arg2 = EAGAIN;
+	return 0;
 }
 
 static int
@@ -818,21 +970,14 @@ static void
 acpicpu_md_pstate_fidvid_write(uint32_t fid,
     uint32_t vid, uint32_t cnt, uint32_t tmo)
 {
-	struct msr_rw_info msr;
-	uint64_t xc;
+	uint64_t val = 0;
 
-	msr.msr_read  = false;
-	msr.msr_type  = MSR_0FH_CONTROL;
-	msr.msr_value = 0;
+	val |= __SHIFTIN(fid, MSR_0FH_CONTROL_FID);
+	val |= __SHIFTIN(vid, MSR_0FH_CONTROL_VID);
+	val |= __SHIFTIN(cnt, MSR_0FH_CONTROL_CNT);
+	val |= __SHIFTIN(0x1, MSR_0FH_CONTROL_CHG);
 
-	msr.msr_value |= __SHIFTIN(fid, MSR_0FH_CONTROL_FID);
-	msr.msr_value |= __SHIFTIN(vid, MSR_0FH_CONTROL_VID);
-	msr.msr_value |= __SHIFTIN(cnt, MSR_0FH_CONTROL_CNT);
-	msr.msr_value |= __SHIFTIN(0x1, MSR_0FH_CONTROL_CHG);
-
-	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
-	xc_wait(xc);
-
+	wrmsr(MSR_0FH_CONTROL, val);
 	DELAY(tmo);
 }
 
@@ -864,47 +1009,30 @@ acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 int
 acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 {
-	struct msr_rw_info msr;
-	uint64_t xc;
-	int rv = 0;
+	uint64_t val;
+	uint8_t i;
 
-	msr.msr_read  = true;
-	msr.msr_type  = MSR_THERM_CONTROL;
-	msr.msr_value = ts->ts_control;
-	msr.msr_mask = __BITS(1, 4);
+	val = ts->ts_control;
+	val = val & __BITS(1, 4);
 
-	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
-	xc_wait(xc);
+	wrmsr(MSR_THERM_CONTROL, val);
 
 	if (ts->ts_status == 0) {
 		DELAY(ts->ts_latency);
 		return 0;
 	}
 
-	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_tstate_status, ts, &rv);
-	xc_wait(xc);
-
-	return rv;
-}
-
-static void
-acpicpu_md_tstate_status(void *arg1, void *arg2)
-{
-	struct acpicpu_tstate *ts = arg1;
-	uint64_t val;
-	int i;
-
 	for (i = val = 0; i < ACPICPU_T_STATE_RETRY; i++) {
 
 		val = rdmsr(MSR_THERM_CONTROL);
 
 		if (val == ts->ts_status)
-			return;
+			return 0;
 
 		DELAY(ts->ts_latency);
 	}
 
-	*(uintptr_t *)arg2 = EAGAIN;
+	return EAGAIN;
 }
 
 /*
@@ -990,17 +1118,11 @@ static int
 acpicpu_md_pstate_sysctl_get(SYSCTLFN_ARGS)
 {
 	struct cpu_info *ci = curcpu();
-	struct acpicpu_softc *sc;
 	struct sysctlnode node;
 	uint32_t freq;
 	int err;
 
-	sc = acpicpu_sc[ci->ci_acpiid];
-
-	if (sc == NULL)
-		return ENXIO;
-
-	err = acpicpu_pstate_get(sc, &freq);
+	err = acpicpu_pstate_get(ci, &freq);
 
 	if (err != 0)
 		return err;
@@ -1020,17 +1142,11 @@ static int
 acpicpu_md_pstate_sysctl_set(SYSCTLFN_ARGS)
 {
 	struct cpu_info *ci = curcpu();
-	struct acpicpu_softc *sc;
 	struct sysctlnode node;
 	uint32_t freq;
 	int err;
 
-	sc = acpicpu_sc[ci->ci_acpiid];
-
-	if (sc == NULL)
-		return ENXIO;
-
-	err = acpicpu_pstate_get(sc, &freq);
+	err = acpicpu_pstate_get(ci, &freq);
 
 	if (err != 0)
 		return err;
@@ -1043,10 +1159,7 @@ acpicpu_md_pstate_sysctl_set(SYSCTLFN_ARGS)
 	if (err != 0 || newp == NULL)
 		return err;
 
-	err = acpicpu_pstate_set(sc, freq);
-
-	if (err != 0)
-		return err;
+	acpicpu_pstate_set(ci, freq);
 
 	return 0;
 }

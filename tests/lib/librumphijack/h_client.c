@@ -1,4 +1,4 @@
-/*	$NetBSD: h_client.c,v 1.2.2.2 2011/02/17 12:00:54 bouyer Exp $	*/
+/*	$NetBSD: h_client.c,v 1.2.2.3 2011/03/05 15:10:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -28,10 +28,12 @@
  */
 
 #include <sys/types.h>
+#include <sys/poll.h>
 #include <sys/select.h>
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,21 +50,24 @@ main(int argc, char *argv[])
 	if (strcmp(argv[1], "select_timeout") == 0) {
 		fd_set rfds;
 		struct timeval tv;
+		int pipefd[2];
 		int rv;
 
 		tv.tv_sec = 0;
 		tv.tv_usec = 1;
 
+		if (pipe(pipefd) == -1)
+			err(1, "pipe");
 		FD_ZERO(&rfds);
-		FD_SET(STDIN_FILENO, &rfds);
+		FD_SET(pipefd[0], &rfds);
 
-		rv = select(STDIN_FILENO+1, &rfds, NULL, NULL, &tv);
+		rv = select(pipefd[0]+1, &rfds, NULL, NULL, &tv);
 		if (rv == -1)
 			err(1, "select");
 		if (rv != 0)
 			errx(1, "select succesful");
 
-		if (FD_ISSET(STDIN_FILENO, &rfds))
+		if (FD_ISSET(pipefd[0], &rfds))
 			errx(1, "stdin fileno is still set");
 		exit(0);
 	} else if (strcmp(argv[1], "select_allunset") == 0) {
@@ -86,6 +91,26 @@ main(int argc, char *argv[])
 			err(1, "select2");
 		if (rv != 0)
 			errx(1, "select2 succesful");
+
+		exit(0);
+	} else if (strcmp(argv[1], "invafd") == 0) {
+		struct pollfd pfd[2];
+		int fd;
+
+		fd = open("/rump/dev/null", O_RDWR);
+		if (fd == -1)
+			err(1, "open");
+		close(fd);
+
+		pfd[0].fd = STDIN_FILENO;
+		pfd[0].events = POLLIN;
+		pfd[1].fd = fd;
+		pfd[1].events = POLLIN;
+
+		if (poll(pfd, 2, INFTIM) != 1)
+			errx(1, "poll unexpected rv");
+		if (pfd[1].revents != POLLNVAL || pfd[0].revents != 0)
+			errx(1, "poll unexpected revents");
 
 		exit(0);
 	} else {

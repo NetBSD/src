@@ -673,7 +673,7 @@ document.  The <a href="verify.8.html">verify(8)</a> service is available with P
 
 </tr>
 
-<tr> </tr>
+<tr> <td> </td> </tr>
 
 <tr>
 
@@ -714,7 +714,7 @@ document.  The <a href="verify.8.html">verify(8)</a> service is available with P
 
 </tr>
 
-<tr> </tr>
+<tr> <td> </td> </tr>
 
 <tr> <td colspan="4"> &nbsp; </td> </tr>
 
@@ -732,14 +732,17 @@ document.  The <a href="verify.8.html">verify(8)</a> service is available with P
 <a href="smtpd.8.html">smtpd(8)</a> processes. Its purpose is to accept connections from the
 network and to decide what SMTP clients are allowed to talk to
 Postfix.  According to the 2008 MessageLabs annual report, 81% of
-all email was spam, and 90% of that was sent by botnets.  While
-<a href="postscreen.8.html">postscreen(8)</a> keeps the zombies away, more <a href="smtpd.8.html">smtpd(8)</a> processes remain
-available for legitimate clients.  </p>
+all email was spam, and 90% of that was sent by botnets; by 2010,
+those numbers were 92% and 95%, respectively.  While <a href="postscreen.8.html">postscreen(8)</a>
+keeps the zombies away, more <a href="smtpd.8.html">smtpd(8)</a> processes remain available
+for legitimate clients.  </p>
 
-<p> The <a href="postscreen.8.html">postscreen(8)</a> server is still evolving, and is likely to
-undergo changes that break compatibility with earlier versions.
-For this reason the <a href="postscreen.8.html">postscreen(8)</a> server is not installed with the
-stable Postfix release. </p>
+<p> The <a href="postscreen.8.html">postscreen(8)</a> server is available with Postfix 2.8 and
+later. To keep the implementation simple, <a href="postscreen.8.html">postscreen(8)</a> delegates
+DNS white/backlist lookups to <a href="dnsblog.8.html">dnsblog(8)</a> server processes, and
+delegates TLS encryption/decryption to <a href="tlsproxy.8.html">tlsproxy(8)</a> server processes.
+This delegation is invisible to the remote SMTP client, and is not
+shown in the diagram below.  </p>
 
 <table>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.130.4.2 2011/02/17 12:00:13 bouyer Exp $	*/
+/*	$NetBSD: pci.c,v 1.130.4.3 2011/03/05 15:10:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.130.4.2 2011/02/17 12:00:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.130.4.3 2011/03/05 15:10:24 bouyer Exp $");
 
 #include "opt_pci.h"
 
@@ -272,7 +272,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
-	pcireg_t id, csr, class, intr, bhlcr, bar;
+	pcireg_t id, csr, class, intr, bhlcr, bar, endbar;
 	int ret, pin, bus, device, function, i, width;
 	int locs[PCICF_NLOCS];
 
@@ -301,11 +301,19 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	memset(sc->PCI_SC_DEVICESC(device, function).c_range, 0,
 	    sizeof(sc->PCI_SC_DEVICESC(device, function).c_range));
 	i = 0;
-	for (bar = PCI_MAPREG_START; bar < PCI_MAPREG_END; bar += width) {
-		int type = pci_mapreg_type(pc, tag, bar);
+	switch (PCI_HDRTYPE_TYPE(bhlcr)) {
+	case PCI_HDRTYPE_PPB: endbar = PCI_MAPREG_PPB_END; break;
+	case PCI_HDRTYPE_PCB: endbar = PCI_MAPREG_PCB_END; break;
+	default: endbar = PCI_MAPREG_END; break;
+	}
+	for (bar = PCI_MAPREG_START; bar < endbar; bar += width) {
 		struct pci_range *r;
+		pcireg_t type;
 
 		width = 4;
+		if (pci_mapreg_probe(pc, tag, bar, &type) == 0)
+			continue;
+
 		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM) {
 			if (PCI_MAPREG_MEM_TYPE(type) ==
 			    PCI_MAPREG_MEM_TYPE_64BIT)
@@ -315,6 +323,26 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			if (pci_mapreg_info(pc, tag, bar, type,
 			    &r->r_offset, &r->r_size, &r->r_flags) != 0)
 				break;
+			if ((PCI_VENDOR(id) == PCI_VENDOR_ATI) && (bar == 0x10)
+			    && (r->r_size = 0x1000000)) {
+				struct pci_range *nr;
+				/*
+				 * this has to be a mach64
+				 * split things up so each half-aperture can
+				 * be mapped PREFETCHABLE except the last page
+				 * which may contain registers
+				 */
+				r->r_size = 0x7ff000;
+				r->r_flags = BUS_SPACE_MAP_LINEAR |
+					     BUS_SPACE_MAP_PREFETCHABLE;
+				nr = &sc->PCI_SC_DEVICESC(device,
+				    function).c_range[i++];
+				nr->r_offset = r->r_offset + 0x800000;
+				nr->r_size = 0x7ff000;
+				nr->r_flags = BUS_SPACE_MAP_LINEAR |
+					      BUS_SPACE_MAP_PREFETCHABLE;
+			}
+			
 		}
 	}
 

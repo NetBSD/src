@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.h,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_conf.h,v 1.1.1.1.6.1 2011/03/05 15:08:59 bouyer Exp $	*/
 
 #ifndef _MAIL_CONF_H_INCLUDED_
 #define _MAIL_CONF_H_INCLUDED_
@@ -42,6 +42,7 @@ extern void mail_conf_flush(void);
 extern void mail_conf_update(const char *, const char *);
 extern const char *mail_conf_lookup(const char *);
 extern const char *mail_conf_eval(const char *);
+extern const char *mail_conf_eval_once(const char *);
 extern const char *mail_conf_lookup_eval(const char *);
 
  /*
@@ -54,6 +55,7 @@ extern int get_mail_conf_bool(const char *, int);
 extern int get_mail_conf_time(const char *, const char *, int, int);
 extern int get_mail_conf_nint(const char *, const char *, int, int);
 extern char *get_mail_conf_raw(const char *, const char *, int, int);
+extern int get_mail_conf_nbool(const char *, const char *);
 
 extern char *get_mail_conf_str2(const char *, const char *, const char *, int, int);
 extern int get_mail_conf_int2(const char *, const char *, int, int, int);
@@ -71,6 +73,7 @@ extern int get_mail_conf_bool_fn(const char *, int (*) (void));
 extern int get_mail_conf_time_fn(const char *, const char *(*) (void), int, int, int);
 extern int get_mail_conf_nint_fn(const char *, const char *(*) (void), int, int);
 extern char *get_mail_conf_raw_fn(const char *, const char *(*) (void), int, int);
+extern int get_mail_conf_nbool_fn(const char *, const char *(*) (void));
 
  /*
   * Update dictionary.
@@ -83,6 +86,10 @@ extern void set_mail_conf_time(const char *, const char *);
 extern void set_mail_conf_time_int(const char *, int);
 extern void set_mail_conf_nint(const char *, const char *);
 extern void set_mail_conf_nint_int(const char *, int);
+extern void set_mail_conf_nbool(const char *, const char *);
+
+#define set_mail_conf_nbool_int(name, value) \
+    set_mail_conf_nbool((name), (value) ? CONFIG_BOOL_YES : CONFIG_BOOL_NO)
 
  /*
   * Tables that allow us to selectively copy values from the global
@@ -142,6 +149,12 @@ typedef struct {
     int     max;			/* upper bound or zero */
 } CONFIG_NINT_TABLE;
 
+typedef struct {
+    const char *name;			/* config variable name */
+    const char *defval;			/* default value */
+    int    *target;			/* pointer to global variable */
+} CONFIG_NBOOL_TABLE;
+
 extern void get_mail_conf_str_table(const CONFIG_STR_TABLE *);
 extern void get_mail_conf_int_table(const CONFIG_INT_TABLE *);
 extern void get_mail_conf_long_table(const CONFIG_LONG_TABLE *);
@@ -149,6 +162,7 @@ extern void get_mail_conf_bool_table(const CONFIG_BOOL_TABLE *);
 extern void get_mail_conf_time_table(const CONFIG_TIME_TABLE *);
 extern void get_mail_conf_nint_table(const CONFIG_NINT_TABLE *);
 extern void get_mail_conf_raw_table(const CONFIG_RAW_TABLE *);
+extern void get_mail_conf_nbool_table(const CONFIG_NBOOL_TABLE *);
 
  /*
   * Tables to initialize parameters from the global configuration file or
@@ -200,12 +214,19 @@ typedef struct {
     int     max;			/* upper bound or zero */
 } CONFIG_NINT_FN_TABLE;
 
+typedef struct {
+    const char *name;			/* config variable name */
+    const char *(*defval) (void);	/* default value provider */
+    int    *target;			/* pointer to global variable */
+} CONFIG_NBOOL_FN_TABLE;
+
 extern void get_mail_conf_str_fn_table(const CONFIG_STR_FN_TABLE *);
 extern void get_mail_conf_int_fn_table(const CONFIG_INT_FN_TABLE *);
 extern void get_mail_conf_long_fn_table(const CONFIG_LONG_FN_TABLE *);
 extern void get_mail_conf_bool_fn_table(const CONFIG_BOOL_FN_TABLE *);
 extern void get_mail_conf_raw_fn_table(const CONFIG_RAW_FN_TABLE *);
 extern void get_mail_conf_nint_fn_table(const CONFIG_NINT_FN_TABLE *);
+extern void get_mail_conf_nbool_fn_table(const CONFIG_NBOOL_FN_TABLE *);
 
 /* LICENSE
 /* .ad

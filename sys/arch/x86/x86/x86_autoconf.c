@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.53.4.2 2011/02/17 12:00:06 bouyer Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.53.4.3 2011/03/05 15:10:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.53.4.2 2011/02/17 12:00:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.53.4.3 2011/03/05 15:10:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.53.4.2 2011/02/17 12:00:06 bouyer
 static struct genfb_colormap_callback gfb_cb;
 static struct genfb_pmf_callback pmf_cb;
 static struct genfb_mode_callback mode_cb;
-#endif
 #ifdef VGA_POST
 static struct vga_post *vga_posth = NULL;
+#endif
 #endif
 #if NGENFB > 0 && NACPICA > 0 && defined(VGA_POST)
 extern int acpi_md_vbios_reset;

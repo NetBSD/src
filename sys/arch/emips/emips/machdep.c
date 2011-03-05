@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.3 2011/02/17 11:59:35 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.4 2011/03/05 15:09:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.3 2011/02/17 11:59:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.4 2011/03/05 15:09:35 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,28 +110,12 @@ intptr_t	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
-/*      
- * During autoconfiguration or after a panic, a sleep will simply
- * lower the priority briefly to allow interrupts, then return.
- * The priority to be used (safepri) is machine-dependent, thus this
- * value is initialized and maintained in the machine-dependent layers.
- * This priority will typically be 0, or the lowest priority
- * that is safe for use on the interrupt stack; it can be made
- * higher to block network software interrupts after panics.
- */
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- * Used as an argument to splx().
- */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-
 void	mach_init (int, char *[], int, intptr_t, u_int, char *); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
-static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
+static void	unimpl_iointr(uint32_t, vaddr_t, uint32_t);
 static void	unimpl_intr_establish(struct device *, void *, int,
 		    int (*)(void *, void *), void *);
 static int	unimpl_memsize(void *);
@@ -254,7 +238,7 @@ mach_init(int argc, char *argv[], int code, intptr_t cv, u_int bim, char *bip)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	/*
 	 * We know the CPU type now.  Initialize our DMA tags (might
@@ -732,7 +716,7 @@ unimpl_cons_init(void)
 }
 
 static void
-unimpl_iointr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
+unimpl_iointr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 
 	panic("sysconf.init didn't set intr");

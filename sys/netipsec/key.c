@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.64 2010/09/05 06:52:53 spz Exp $	*/
+/*	$NetBSD: key.c,v 1.64.4.1 2011/03/05 15:10:48 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.64 2010/09/05 06:52:53 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.64.4.1 2011/03/05 15:10:48 bouyer Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -152,18 +152,18 @@ static LIST_HEAD(_acqtree, secacq) acqtree;		/* acquiring list */
 static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 
 /* search order for SAs */
-static u_int saorder_state_valid[] = {
+static const u_int saorder_state_valid[] = {
 	SADB_SASTATE_DYING, SADB_SASTATE_MATURE,
 	/*
 	 * This order is important because we must select the oldest SA
 	 * for outbound processing.  For inbound, This is not important.
 	 */
 };
-static u_int saorder_state_alive[] = {
+static const u_int saorder_state_alive[] = {
 	/* except DEAD */
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING, SADB_SASTATE_LARVAL
 };
-static u_int saorder_state_any[] = {
+static const u_int saorder_state_any[] = {
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING,
 	SADB_SASTATE_LARVAL, SADB_SASTATE_DEAD
 };
@@ -379,7 +379,7 @@ static struct secasvar *key_allocsa_policy (const struct secasindex *);
 static void key_freesp_so (struct secpolicy **);
 static struct secasvar *key_do_allocsa_policy (struct secashead *, u_int);
 static void key_delsp (struct secpolicy *);
-static struct secpolicy *key_getsp (struct secpolicyindex *);
+static struct secpolicy *key_getsp (const struct secpolicyindex *);
 static struct secpolicy *key_getspbyid (u_int32_t);
 static u_int16_t key_newreqid (void);
 static struct mbuf *key_gather_mbuf (struct mbuf *,
@@ -405,9 +405,9 @@ static int key_nat_map (struct socket *, struct mbuf *,
 #endif
 static struct mbuf *key_setdumpsp (struct secpolicy *,
 	u_int8_t, u_int32_t, pid_t);
-static u_int key_getspreqmsglen (struct secpolicy *);
+static u_int key_getspreqmsglen (const struct secpolicy *);
 static int key_spdexpire (struct secpolicy *);
-static struct secashead *key_newsah (struct secasindex *);
+static struct secashead *key_newsah (const struct secasindex *);
 static void key_delsah (struct secashead *);
 static struct secasvar *key_newsav (struct mbuf *,
 	const struct sadb_msghdr *, struct secashead *, int *,
@@ -415,8 +415,8 @@ static struct secasvar *key_newsav (struct mbuf *,
 #define	KEY_NEWSAV(m, sadb, sah, e)				\
 	key_newsav(m, sadb, sah, e, __FILE__, __LINE__)
 static void key_delsav (struct secasvar *);
-static struct secashead *key_getsah (struct secasindex *);
-static struct secasvar *key_checkspidup (struct secasindex *, u_int32_t);
+static struct secashead *key_getsah (const struct secasindex *);
+static struct secasvar *key_checkspidup (const struct secasindex *, u_int32_t);
 static struct secasvar *key_getsavbyspi (struct secashead *, u_int32_t);
 static int key_setsaval (struct secasvar *, struct mbuf *,
 	const struct sadb_msghdr *);
@@ -443,7 +443,7 @@ static struct mbuf *key_setsadbxpolicy (u_int16_t, u_int8_t,
 	u_int32_t);
 static void *key_newbuf (const void *, u_int);
 #ifdef INET6
-static int key_ismyaddr6 (struct sockaddr_in6 *);
+static int key_ismyaddr6 (const struct sockaddr_in6 *);
 #endif
 
 /* flags for key_cmpsaidx() */
@@ -462,8 +462,8 @@ static u_int8_t key_proto2satype (u_int16_t);
 
 static int key_getspi (struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-static u_int32_t key_do_getnewspi (struct sadb_spirange *,
-					struct secasindex *);
+static u_int32_t key_do_getnewspi (const struct sadb_spirange *,
+					const struct secasindex *);
 #ifdef IPSEC_NAT_T
 static int key_handle_natt_info (struct secasvar *, 
 				     const struct sadb_msghdr *);
@@ -499,8 +499,8 @@ static struct secacq *key_newacq (const struct secasindex *);
 static struct secacq *key_getacq (const struct secasindex *);
 static struct secacq *key_getacqbyseq (u_int32_t);
 #endif
-static struct secspacq *key_newspacq (struct secpolicyindex *);
-static struct secspacq *key_getspacq (struct secpolicyindex *);
+static struct secspacq *key_newspacq (const struct secpolicyindex *);
+static struct secspacq *key_getspacq (const struct secpolicyindex *);
 static int key_acquire2 (struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static int key_register (struct socket *, struct mbuf *,
@@ -592,7 +592,7 @@ key_havesp(u_int dir)
  *	others:	found and return the pointer.
  */
 struct secpolicy *
-key_allocsp(struct secpolicyindex *spidx, u_int dir, const char* where, int tag)
+key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, int tag)
 {
 	struct secpolicy *sp;
 	int s;
@@ -646,7 +646,7 @@ found:
  */
 struct secpolicy *
 key_allocsp2(u_int32_t spi,
-	     union sockaddr_union *dst,
+	     const union sockaddr_union *dst,
 	     u_int8_t proto,
 	     u_int dir,
 	     const char* where, int tag)
@@ -1328,7 +1328,7 @@ key_delsp(struct secpolicy *sp)
  *	others	: found, pointer to a SP.
  */
 static struct secpolicy *
-key_getsp(struct secpolicyindex *spidx)
+key_getsp(const struct secpolicyindex *spidx)
 {
 	struct secpolicy *sp;
 
@@ -1631,7 +1631,7 @@ key_newreqid(void)
  * copy secpolicy struct to sadb_x_policy structure indicated.
  */
 struct mbuf *
-key_sp2msg(struct secpolicy *sp)
+key_sp2msg(const struct secpolicy *sp)
 {
 	struct sadb_x_policy *xpl;
 	int tlen;
@@ -2311,7 +2311,7 @@ key_spdget(struct socket *so, struct mbuf *m,
  *    others: error number
  */
 int
-key_spdacquire(struct secpolicy *sp)
+key_spdacquire(const struct secpolicy *sp)
 {
 	struct mbuf *result = NULL, *m;
 	struct secspacq *newspacq;
@@ -2691,7 +2691,7 @@ fail:
  * get PFKEY message length for security policy and request.
  */
 static u_int
-key_getspreqmsglen(struct secpolicy *sp)
+key_getspreqmsglen(const struct secpolicy *sp)
 {
 	u_int tlen;
 
@@ -2703,7 +2703,7 @@ key_getspreqmsglen(struct secpolicy *sp)
 
 	/* get length of ipsec requests */
     {
-	struct ipsecrequest *isr;
+	const struct ipsecrequest *isr;
 	int len;
 
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
@@ -2841,7 +2841,7 @@ key_spdexpire(struct secpolicy *sp)
  *	others	: pointer to new SA head.
  */
 static struct secashead *
-key_newsah(struct secasindex *saidx)
+key_newsah(const struct secasindex *saidx)
 {
 	struct secashead *newsah;
 
@@ -3084,7 +3084,7 @@ key_delsav(struct secasvar *sav)
  *	others	: found, pointer to a SA.
  */
 static struct secashead *
-key_getsah(struct secasindex *saidx)
+key_getsah(const struct secasindex *saidx)
 {
 	struct secashead *sah;
 
@@ -3106,7 +3106,7 @@ key_getsah(struct secasindex *saidx)
  *	others	: found, pointer to a SA.
  */
 static struct secasvar *
-key_checkspidup(struct secasindex *saidx, u_int32_t spi)
+key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 {
 	struct secashead *sah;
 	struct secasvar *sav;
@@ -4081,11 +4081,11 @@ key_newbuf(const void *src, u_int len)
  *	0: false
  */
 int
-key_ismyaddr(struct sockaddr *sa)
+key_ismyaddr(const struct sockaddr *sa)
 {
 #ifdef INET
-	struct sockaddr_in *sin;
-	struct in_ifaddr *ia;
+	const struct sockaddr_in *sin;
+	const struct in_ifaddr *ia;
 #endif
 
 	/* sanity check */
@@ -4095,7 +4095,7 @@ key_ismyaddr(struct sockaddr *sa)
 	switch (sa->sa_family) {
 #ifdef INET
 	case AF_INET:
-		sin = (struct sockaddr_in *)sa;
+		sin = (const struct sockaddr_in *)sa;
 		for (ia = in_ifaddrhead.tqh_first; ia;
 		     ia = ia->ia_link.tqe_next)
 		{
@@ -4110,7 +4110,7 @@ key_ismyaddr(struct sockaddr *sa)
 #endif
 #ifdef INET6
 	case AF_INET6:
-		return key_ismyaddr6((struct sockaddr_in6 *)sa);
+		return key_ismyaddr6((const struct sockaddr_in6 *)sa);
 #endif
 	}
 
@@ -4127,14 +4127,14 @@ key_ismyaddr(struct sockaddr *sa)
 #include <netinet6/in6_var.h>
 
 static int
-key_ismyaddr6(struct sockaddr_in6 *sin6)
+key_ismyaddr6(const struct sockaddr_in6 *sin6)
 {
-	struct in6_ifaddr *ia;
-	struct in6_multi *in6m;
+	const struct in6_ifaddr *ia;
+	const struct in6_multi *in6m;
 
 	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
-		if (key_sockaddrcmp((struct sockaddr *)&sin6,
-		    (struct sockaddr *)&ia->ia_addr, 0) == 0)
+		if (key_sockaddrcmp((const struct sockaddr *)&sin6,
+		    (const struct sockaddr *)&ia->ia_addr, 0) == 0)
 			return 1;
 
 		/*
@@ -4265,8 +4265,8 @@ key_cmpsaidx(
  */
 int
 key_cmpspidx_exactly(
-	struct secpolicyindex *spidx0,
-	struct secpolicyindex *spidx1)
+	const struct secpolicyindex *spidx0,
+	const struct secpolicyindex *spidx1)
 {
 	/* sanity */
 	if (spidx0 == NULL && spidx1 == NULL)
@@ -4295,8 +4295,8 @@ key_cmpspidx_exactly(
  */
 int
 key_cmpspidx_withmask(
-	struct secpolicyindex *spidx0,
-	struct secpolicyindex *spidx1)
+	const struct secpolicyindex *spidx0,
+	const struct secpolicyindex *spidx1)
 {
 	/* sanity */
 	if (spidx0 == NULL && spidx1 == NULL)
@@ -5052,8 +5052,8 @@ key_getspi(struct socket *so, struct mbuf *m,
  *	others: success.
  */
 static u_int32_t
-key_do_getnewspi(struct sadb_spirange *spirange,
-		 struct secasindex *saidx)
+key_do_getnewspi(const struct sadb_spirange *spirange,
+		 const struct secasindex *saidx)
 {
 	u_int32_t newspi;
 	u_int32_t spmin, spmax;
@@ -6001,7 +6001,7 @@ static struct mbuf *
 key_getcomb_esp(void)
 {
 	struct sadb_comb *comb;
-	struct enc_xform *algo;
+	const struct enc_xform *algo;
 	struct mbuf *result = NULL, *m, *n;
 	int encmin;
 	int i, off, o;
@@ -6102,7 +6102,7 @@ static struct mbuf *
 key_getcomb_ah(void)
 {
 	struct sadb_comb *comb;
-	struct auth_hash *algo;
+	const struct auth_hash *algo;
 	struct mbuf *m;
 	u_int16_t minkeysize, maxkeysize;
 	int i;
@@ -6157,7 +6157,7 @@ static struct mbuf *
 key_getcomb_ipcomp(void)
 {
 	struct sadb_comb *comb;
-	struct comp_algo *algo;
+	const struct comp_algo *algo;
 	struct mbuf *m;
 	int i;
 	const int l = PFKEY_ALIGN8(sizeof(struct sadb_comb));
@@ -6488,7 +6488,7 @@ key_getacqbyseq(u_int32_t seq)
 #endif
 
 static struct secspacq *
-key_newspacq(struct secpolicyindex *spidx)
+key_newspacq(const struct secpolicyindex *spidx)
 {
 	struct secspacq *acq;
 
@@ -6509,7 +6509,7 @@ key_newspacq(struct secpolicyindex *spidx)
 }
 
 static struct secspacq *
-key_getspacq(struct secpolicyindex *spidx)
+key_getspacq(const struct secpolicyindex *spidx)
 {
 	struct secspacq *acq;
 
@@ -6755,7 +6755,7 @@ key_register(struct socket *so, struct mbuf *m,
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
 		for (i = 1; i <= SADB_AALG_MAX; i++) {
-			struct auth_hash *aalgo;
+			const struct auth_hash *aalgo;
 			u_int16_t minkeysize, maxkeysize;
 
 			aalgo = ah_algorithm_lookup(i);
@@ -6779,7 +6779,7 @@ key_register(struct socket *so, struct mbuf *m,
 		off += PFKEY_ALIGN8(sizeof(*sup));
 
 		for (i = 1; i <= SADB_EALG_MAX; i++) {
-			struct enc_xform *ealgo;
+			const struct enc_xform *ealgo;
 
 			ealgo = esp_algorithm_lookup(i);
 			if (!ealgo)

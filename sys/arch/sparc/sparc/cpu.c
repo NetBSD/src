@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.224.4.2 2011/02/17 12:00:00 bouyer Exp $ */
+/*	$NetBSD: cpu.c,v 1.224.4.3 2011/03/05 15:10:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224.4.2 2011/02/17 12:00:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224.4.3 2011/03/05 15:10:05 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -342,14 +342,9 @@ cpu_init_evcnt(struct cpu_info *cpi)
 
 	/*
 	 * Setup the per-cpu counters.
-	 *
-	 * The "savefp null" counter should go away when the NULL
-	 * struct fpstate * bug is fixed.
 	 */
 	evcnt_attach_dynamic(&cpi->ci_savefpstate, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "savefp ipi");
-	evcnt_attach_dynamic(&cpi->ci_savefpstate_null, EVCNT_TYPE_MISC,
-			     NULL, cpu_name(cpi), "savefp null ipi");
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "IPI mutex_trylock fail");
 	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail_call, EVCNT_TYPE_MISC,
@@ -747,6 +742,30 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	if (i < 0)
 		printf_nolog("%s\n", errbuf);
 	mutex_spin_exit(&xpmsg_mutex);
+
+#if 0
+	if (!timeout)
+		return;
+
+	/*
+	 * Let's make this a hard panic for now, and figure out why it happens.
+	 *
+	 * We call mp_pause_cpus() so we can capture their state *now* as opposed
+	 * to after we've written all the below to the console.
+	 */
+#ifdef DDB
+	mp_pause_cpus_ddb();
+#else
+	mp_pause_cpus();
+#endif
+	printf_nolog("xcall(cpu%d,%p) from %p: couldn't ping cpus:",
+	    cpu_number(), fasttrap ? trap : func, __builtin_return_address(0));
+	for (CPU_INFO_FOREACH(n, cpi))
+		if ((failed_cpuset & (1 << n)) == 0)
+			printf_nolog(" cpu%d", cpi->ci_cpuid);
+	printf_nolog("%s\n", i == 10000000 ? " [hard 10M timeout]" : "");
+	panic("failed to ping cpus");
+#endif
 }
 
 /*

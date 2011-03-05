@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.240.2.5 2011/02/17 11:57:21 bouyer Exp $
+# $NetBSD: mi,v 1.240.2.6 2011/03/05 15:08:38 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -231,6 +231,8 @@
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot_log.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot_v2.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/hfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/hfs/t_pathconvert.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/lfs					tests-fs-debug
@@ -370,7 +372,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memcpy.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memmove.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_memset.debug		tests-lib-debug		debug,atf,ssp
-./usr/libdata/debug/usr/tests/lib/libc/ssp/h_raw.debug			tests-lib-debug		debug,atf,ssp
+./usr/libdata/debug/usr/tests/lib/libc/ssp/h_raw.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_read.debug			tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_readlink.debug		tests-lib-debug		debug,atf,ssp
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_snprintf.debug		tests-lib-debug		debug,atf,ssp
@@ -475,6 +477,7 @@
 ./usr/libdata/debug/usr/tests/lib/librumpclient/t_fd.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumphijack					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librumphijack/h_client.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/librumphijack/h_cwd.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumphijack/h_netget.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey
@@ -533,6 +536,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_server			tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_server/h_simpleserver.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs				tests-syscall-debug
+./usr/libdata/debug/usr/tests/rump/rumpvfs/t_basic.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/sbin					tests-sbin-tests
@@ -1195,6 +1199,10 @@
 ./usr/tests/fs/ffs/t_quotalimit			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_setquota			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_miscquota			tests-fs-tests		atf
+./usr/tests/fs/hfs				tests-fs-tests
+./usr/tests/fs/hfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/hfs/colon.hfs.bz2.uue			tests-fs-tests		atf
+./usr/tests/fs/hfs/t_pathconvert			tests-fs-tests		atf
 ./usr/tests/fs/kernfs				tests-fs-tests
 ./usr/tests/fs/kernfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/kernfs/t_basic			tests-fs-tests		atf
@@ -1781,7 +1789,7 @@
 ./usr/tests/lib/libc/ssp/h_memcpy		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_memmove		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_memset		tests-lib-tests		atf,ssp
-./usr/tests/lib/libc/ssp/h_raw			tests-lib-tests		atf,ssp
+./usr/tests/lib/libc/ssp/h_raw			tests-obsolete		obsolete
 ./usr/tests/lib/libc/ssp/h_read			tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_readlink		tests-lib-tests		atf,ssp
 ./usr/tests/lib/libc/ssp/h_snprintf		tests-lib-tests		atf,ssp
@@ -1921,11 +1929,15 @@
 ./usr/tests/lib/librumphijack			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/h_client			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/h_cwd			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/h_netget			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/index.html			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/netstat.expout			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_asyncio			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/t_cwd			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/t_sh			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_tcpip			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/t_vfs			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/ssh_config.in			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/ssh_host_key			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/ssh_host_key.pub			tests-lib-tests		atf
@@ -2007,6 +2019,7 @@
 ./usr/tests/rump/rumpkern/h_server/h_simpleserver		tests-rump-tests atf
 ./usr/tests/rump/rumpvfs			tests-rump-tests
 ./usr/tests/rump/rumpvfs/Atffile		tests-rump-tests	atf
+./usr/tests/rump/rumpvfs/t_basic		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_etfs		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_p2kifs		tests-rump-tests	atf
 ./usr/tests/sbin				tests-sbin-tests
@@ -2038,6 +2051,11 @@
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
+./usr/tests/toolchain	tests-syscall-tests	atf
+./usr/tests/toolchain/Atffile	tests-syscall-tests	atf
+./usr/tests/toolchain/cc	tests-syscall-tests	atf
+./usr/tests/toolchain/cc/Atffile	tests-syscall-tests	atf
+./usr/tests/toolchain/cc/t_hello	tests-syscall-tests	atf
 ./usr/tests/usr.bin				tests-util-tests
 ./usr/tests/usr.bin/Atffile			tests-sbin-tests	atf
 ./usr/tests/usr.bin/rump_server			tests-util-tests

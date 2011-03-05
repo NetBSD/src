@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/09/01 16:26:11 he Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2011/03/05 15:08:49 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,9 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
 .PATH: ${DIST}
 
 ntpdc.8:	ntpdc.1
-	@cp $? $@
+	${_MKTARGET_BUILD}
+	${TOOL_SED} -e "s,NTPDC 1,NTPDC 8," $? > $@
+
+CLEANFILES+=ntpdc.8
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.199 2011/01/17 14:36:33 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.199.2.1 2011/03/05 15:10:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2011/01/17 14:36:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199.2.1 2011/03/05 15:10:06 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -305,7 +305,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_regs[D7] = 0;
 	tf->tf_regs[A0] = 0;
 	tf->tf_regs[A1] = 0;
-	tf->tf_regs[A2] = (int)l->l_proc->p_psstr;
+	tf->tf_regs[A2] = l->l_proc->p_psstrp;
 	tf->tf_regs[A3] = 0;
 	tf->tf_regs[A4] = 0;
 	tf->tf_regs[A5] = 0;

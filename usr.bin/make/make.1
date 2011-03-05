@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.182 2010/09/14 11:57:03 wiz Exp $
+.\"	$NetBSD: make.1,v 1.182.2.1 2011/03/05 15:10:59 bouyer Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 13, 2010
+.Dd February 25, 2011
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1173,7 +1173,7 @@ A common error is trying to use expressions like
 .Dl ${NUMBERS:M42:?match:no}
 which actually tests defined(NUMBERS),
 to determine is any words match "42" you need to use something like:
-.Dl ${${NUMBERS:M42} != "":?match:no} .
+.Dl ${"${NUMBERS:M42}" != \&"\&":?match:no} .
 .It Ar :old_string=new_string
 This is the
 .At V

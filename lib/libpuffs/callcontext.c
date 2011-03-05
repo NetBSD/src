@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.24 2011/01/10 23:20:45 yamt Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.24.2.1 2011/03/05 15:09:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.24 2011/01/10 23:20:45 yamt Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.24.2.1 2011/03/05 15:09:22 bouyer Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -291,6 +291,7 @@ puffs__cc_destroy(struct puffs_cc *pcc, int nonuke)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 
+	pcc->pcc_flags &= ~PCC_HASCALLER;
 	assert(pcc->pcc_flags == 0);
 	assert(!puffs_fakecc);
 

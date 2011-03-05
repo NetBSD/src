@@ -1,4 +1,4 @@
-#	$NetBSD: files.emips,v 1.1.2.2 2011/02/08 18:05:05 bouyer Exp $
+#	$NetBSD: files.emips,v 1.1.2.3 2011/03/05 15:09:35 bouyer Exp $
 # eMIPS-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -97,8 +97,6 @@ file	arch/emips/emips/sysconf.c
 file	dev/cons.c
 
 file	common/bus_dma/bus_dmamem_common.c
-
-file	arch/mips/mips/softintr.c
 
 #
 # Workstation console devices

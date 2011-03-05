@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.sgimips.inc,v 1.11 2006/12/22 21:07:52 rumble Exp $
+#	$NetBSD: Makefile.sgimips.inc,v 1.11.78.1 2011/03/05 15:10:01 bouyer Exp $
 
 WANT_ECOFF?=no
+
+GENASSYM_EXTRAS+=	${S}/dev/arcbios/genassym.cf
 
 .if ${WANT_ECOFF} == "yes"
 SYSTEM_LD_TAIL_EXTRA=; \

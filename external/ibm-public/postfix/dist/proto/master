@@ -96,9 +96,9 @@
 #	queue directory (pathname controlled with the \fBqueue_directory\fR
 #	configuration parameter in main.cf).
 # .IP \fBpass\fR
-#	The service listens on a UNIX-domain socket, receives one
-#	open connection (file descriptor passing) per connection
-#	request, and is accessible to local clients only.
+#	The service listens on a UNIX-domain socket, and is accessible
+#	to local clients only. It receives one open connection (file
+#	descriptor passing) per connection request.
 #
 #	The service name is a pathname relative to the Postfix
 #	queue directory (pathname controlled with the \fBqueue_directory\fR

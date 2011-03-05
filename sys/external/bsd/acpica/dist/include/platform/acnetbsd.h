@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.4.2.2 $
+ *       $Revision: 1.4.2.3 $
  *
  *****************************************************************************/
 
@@ -51,6 +51,7 @@
 
 #define ACPI_UINTPTR_T		uintptr_t
 #define ACPI_USE_LOCAL_CACHE
+#define ACPI_CAST_PTHREAD_T(x)    ((ACPI_THREAD_ID) ACPI_TO_INTEGER (x))
 
 #ifdef _LP64
 #define ACPI_MACHINE_WIDTH      64

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.29 2010/12/30 22:27:43 jakllsch Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.29.4.1 2011/03/05 15:09:44 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -128,7 +128,8 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_extinfo *ed)
 		d->flags |= BIOSDISK_INT13EXT;
 		if (ed != NULL) {
 			ed->size = sizeof(*ed);
-			biosdisk_getextinfo(d->dev, ed);
+			if (biosdisk_getextinfo(d->dev, ed) != 0)
+				return -1;
 		}
 	}
 

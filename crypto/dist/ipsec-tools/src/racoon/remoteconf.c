@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.21.2.1 2011/02/08 16:18:30 bouyer Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.21.2.2 2011/03/05 15:08:32 bouyer Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -78,6 +78,7 @@
 #include "isakmp_frag.h"
 #include "handler.h"
 #include "genlist.h"
+#include "rsalist.h"
 
 typedef TAILQ_HEAD(_rmtree, remoteconf) remoteconf_tailq_head_t;
 static remoteconf_tailq_head_t rmtree, rmtree_save;
@@ -650,8 +651,15 @@ delrmconf(rmconf)
 		vfree(rmconf->cacert);
 	if (rmconf->cacertfile)
 		racoon_free(rmconf->cacertfile);
+	if (rmconf->rsa_private)
+		genlist_free(rmconf->rsa_private, rsa_key_free);
+	if (rmconf->rsa_public)
+		genlist_free(rmconf->rsa_public, rsa_key_free);
 	if (rmconf->name)
 		racoon_free(rmconf->name);
+	if (rmconf->remote)
+		racoon_free(rmconf->remote);
+	flushspspec(rmconf);
 	racoon_free(rmconf);
 }
 

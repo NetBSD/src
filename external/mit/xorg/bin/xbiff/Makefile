@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.20.1 2011/03/05 15:09:09 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,10 @@ LDADD+=	-lXext -lXaw -lXmu -lXt -lX11 -lSM -lICE -lXau
 DPADD+=	${LIBXEXT} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBX11} ${LIBSM} ${LIBICE} \
 	${LIBXAU}
 
-#cc  -O2 -I/usr/pkg/include  -L/usr/pkg/lib -Wl,-R/usr/pkg/lib -o xbiff  xbiff-Mailbox.o xbiff-xbiff.o -Wl,-R/usr/pkg/lib -L/usr/pkg/lib -lXext   -Wl,-R/usr/pkg/lib -L/usr/pkg/lib -lXaw8 -lXmu -lXt -lX11 -lSM -lICE -lXau
+CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include
 
 .PATH:	${X11SRCDIR.${PROG}}
+.PATH:	${X11SRCDIR.${PROG}}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

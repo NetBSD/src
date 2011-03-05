@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.14 2009/01/19 09:56:06 lukem Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.14.4.1 2011/03/05 15:09:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -282,6 +282,7 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 	if (!args || !args->argv || !args->argc || !proc)
 		return 0;
 
+	foo.data = data;
 	if (args->argc == 1)
 		return proc(foo.data, *args->argv, FUSE_OPT_KEY_OPT, args);
 

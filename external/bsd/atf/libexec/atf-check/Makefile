@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/10/20 09:20:10 jmmv Exp $
+# $NetBSD: Makefile,v 1.1.2.1 2011/03/05 15:08:45 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ SRCS=		atf-check.cpp
 MAN=		atf-check.1
 
 LDADD+=		-latf-c++ -latf-c
+DPADD+=		${LIBATF_CXX} ${LIBATF_C}
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${SRCDIR}

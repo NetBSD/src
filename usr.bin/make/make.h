@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.84 2010/11/25 21:31:09 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.84.2.1 2011/03/05 15:10:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -394,6 +394,7 @@ extern Boolean	oldVars;    	/* Do old-style variable substitution */
 extern Lst	sysIncPath;	/* The system include path. */
 extern Lst	defIncPath;	/* The default include path. */
 
+extern char	curdir[];	/* Startup directory */
 extern char	*progname;	/* The program name */
 extern char	*makeDependfile; /* .depend */
 

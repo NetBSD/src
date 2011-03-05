@@ -211,10 +211,10 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
 	}
 	s = *sess;
 	user = NULL;
-        if (s->sess_params.cred.user) {
+        auth_type = s->sess_params.auth_type;
+        if (s->sess_params.cred.user && auth_type != AuthNone) {
                 user = s->sess_params.cred.user;
         }
-        auth_type = s->sess_params.auth_type;
         mutual_auth = s->sess_params.mutual_auth;
 	(void) memset(s, 0x0, sizeof(*s));
 	s->state = INITIATOR_SESSION_STATE_INITIALIZING;
@@ -468,7 +468,11 @@ params_out(initiator_session_t * sess, char *text, int *len, int textsize, int s
 	if (security == IS_SECURITY) {
 		PARAM_TEXT_ADD(sess->params, "InitiatorName", "iqn.1994-04.org.NetBSD.iscsi-initiator:agc", text, len, textsize, 1, return -1);
 		PARAM_TEXT_ADD(sess->params, "InitiatorAlias", "NetBSD", text, len, textsize, 1, return -1);
-		PARAM_TEXT_ADD(sess->params, "AuthMethod", "CHAP,None", text, len, textsize, 1, return -1);
+		if (sess->sess_params.auth_type != AuthNone) {
+			PARAM_TEXT_ADD(sess->params, "AuthMethod", "CHAP,None", text, len, textsize, 1, return -1);
+		} else {
+			PARAM_TEXT_ADD(sess->params, "AuthMethod", "None", text, len, textsize, 1, return -1);
+		}
 	} else {
 		PARAM_TEXT_ADD(sess->params, "HeaderDigest", "None", text, len, textsize, 1, return -1);
 		PARAM_TEXT_ADD(sess->params, "DataDigest", "None", text, len, textsize, 1, return -1);
@@ -626,6 +630,7 @@ iscsi_initiator_get_targets(int target, strv_t *svp)
         iscsi_parameter_t	*ip;
         char			*text = NULL;
         int			 text_len = 0;
+        int			 pos = 0;
 
         if ((text = iscsi_malloc_atomic(DISCOVERY_PHASE_TEXT_LEN)) == NULL) {
                 iscsi_err(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
@@ -647,13 +652,23 @@ iscsi_initiator_get_targets(int target, strv_t *svp)
         }       
         for (ip = sess->params ; ip ; ip = ip->next) {
                 if (strcmp(ip->key, "TargetName") == 0) {
-                        for (vp = ip->value_l ; vp ; vp = vp->next) {
+                	pos = 0;
+                        for (vp = ip->value_l ; vp ; vp = vp->next, pos++) {
+                        	/*
+                        	 * Skip items which have no name,
+                        	 * these have been blocked by the target
+                        	 */
+                        	if (!strlen(vp->value))
+                        		continue;
+				
                                 ALLOC(char *, svp->v, svp->size, svp->c, 10,
 						10, "igt", return -1);
                                 svp->v[svp->c++] = strdup(vp->value);
                                 ALLOC(char *, svp->v, svp->size, svp->c, 10,
 						10, "igt2", return -1);
-                                svp->v[svp->c++] = strdup(param_val(sess->params, "TargetAddress"));
+                                svp->v[svp->c++] =
+                                     strdup(param_val_which(sess->params,
+                                     "TargetAddress", pos));
                         }
                 }
         }
@@ -890,11 +905,13 @@ iscsi_initiator_start(iscsi_initiator_t *ini)
 			INIT_CLEANUP;
 			return -1;
 		}
-		sess->sess_params.cred.user =
-				strdup(iscsi_initiator_getvar(ini, "user"));
 		cp = iscsi_initiator_getvar(ini, "auth type");
 		if (strcmp(cp, "none") == 0) {
 			sess->sess_params.auth_type = AuthNone;
+			sess->sess_params.cred.user = NULL;
+		} else {
+			sess->sess_params.cred.user =
+				strdup(iscsi_initiator_getvar(ini, "user"));	
 		}
 		cp = iscsi_initiator_getvar(ini, "mutual auth");
 		if (strcmp(cp, "none") == 0) {
@@ -2460,7 +2477,8 @@ nop_out_i(initiator_cmd_t * cmd)
 	/* Encapsulate and send NOP */
 
 	nop_out->ExpStatSN = sess->ExpStatSN;
-	/* nop_out->CmdSN = sess->CmdSN++; */
+	nop_out->immediate = 1;
+	nop_out->CmdSN = sess->CmdSN;
 	nop_out->transfer_tag = 0xffffffff;
 	if (iscsi_nop_out_encap(header, nop_out) != 0) {
 		iscsi_err(__FILE__, __LINE__, "iscsi_nop_out_encap() failed\n");
@@ -2894,6 +2912,16 @@ nop_in_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *header)
 	if (iscsi_nop_in_decap(header, &nop_in) != 0) {
 		iscsi_err(__FILE__, __LINE__, "iscsi_nop_in() failed\n");
 		return -1;
+	}
+	if (nop_in.transfer_tag == 0xffffffff) {
+		if (nop_in.length != 0) {
+			iscsi_err(__FILE__, __LINE__,
+				"nop_in.length %u not 0\n",
+				nop_in.length);
+			NO_CLEANUP;
+			return -1;
+		}
+		return 0;
 	}
 	if (cmd) {
 #if 0
@@ -3394,12 +3422,14 @@ scsi_read_data_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 	errmsg = NULL;
 	if (data.overflow != 0) {
 		errmsg = "Overflow bit";
-	} else if (data.underflow != 0) {
-		errmsg = "Underflow bit";
 	} else if (data.task_tag != scsi_cmd->tag) {
 		errmsg = "Tag";
-	} else if (data.task_tag != scsi_cmd->tag) {
-		errmsg = "Residual Count";
+	} else if (!data.underflow) {
+		if (data.res_count != 0) {
+			errmsg = "Residual Count";
+		}
+	} else {
+		iscsi_warn(__FILE__, __LINE__, "Underflow %s\n", data.res_count);
 	}
 	if (errmsg) {
 		iscsi_err(__FILE__, __LINE__, errmsg);
@@ -3678,7 +3708,11 @@ ii_initiator_init(const char *hostname, int port, int address_family, const char
 		INIT_CLEANUP;
 		return -1;
 	}
-	sess->sess_params.cred.user = strdup(user);
+	if (user)
+		sess->sess_params.cred.user = strdup(user);
+	else
+		sess->sess_params.cred.user = NULL;
+	
 	sess->sess_params.auth_type = auth_type;
 	sess->sess_params.mutual_auth = mutual_auth;
 	sess->sess_params.digest_wanted = digest_type;

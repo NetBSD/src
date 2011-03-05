@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.60 2010/12/25 18:56:45 joerg Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.60.2.1 2011/03/05 15:09:27 bouyer Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -8,6 +8,8 @@
 clean:		cleanprog
 
 ##### Default values
+LIBATF_C?=	/usr/lib/libatf-c.a
+LIBATF_CXX?=	/usr/lib/libatf-c++.a
 LIBBLUETOOTH?=	/usr/lib/libbluetooth.a
 LIBBZ2?=	/usr/lib/libbz2.a
 LIBC?=		/usr/lib/libc.a

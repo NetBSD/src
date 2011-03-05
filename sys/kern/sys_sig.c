@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.30.4.1 2011/02/08 16:19:59 bouyer Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.30.4.2 2011/03/05 15:10:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.30.4.1 2011/02/08 16:19:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.30.4.2 2011/03/05 15:10:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -223,20 +223,22 @@ kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 	if ((u_int)ksi->ksi_signo >= NSIG)
 		return EINVAL;
 
-	if (ksi->ksi_pid != l->l_proc->p_pid)
-		return EPERM;
+	if (pid != l->l_proc->p_pid) {
+		if (ksi->ksi_pid != l->l_proc->p_pid)
+			return EPERM;
 
-	if (ksi->ksi_uid != kauth_cred_geteuid(l->l_cred))
-		return EPERM;
+		if (ksi->ksi_uid != kauth_cred_geteuid(l->l_cred))
+			return EPERM;
 
-	switch (ksi->ksi_code) {
-	case SI_USER:
-	case SI_QUEUE:
-		break;
-	default:
-		return EPERM;
+		switch (ksi->ksi_code) {
+		case SI_USER:
+		case SI_QUEUE:
+			break;
+		default:
+			return EPERM;
+		}
 	}
-		
+
 	if (pid > 0) {
 		/* kill single process */
 		mutex_enter(proc_lock);

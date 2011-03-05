@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.37.4.1 2011/02/08 16:19:38 bouyer Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.37.4.2 2011/03/05 15:10:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.37.4.1 2011/02/08 16:19:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.37.4.2 2011/03/05 15:10:02 bouyer Exp $");
 
 
 #include <sys/param.h>
@@ -274,7 +274,7 @@ sq_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_enaddr[0] != SGI_OUI_0 ||
 	    sc->sc_enaddr[1] != SGI_OUI_1 ||
 	    sc->sc_enaddr[2] != SGI_OUI_2) {
-		macaddr = ARCBIOS->GetEnvironmentVariable("eaddr");
+		macaddr = arcbios_GetEnvironmentVariable("eaddr");
 		if (macaddr == NULL) {
 			printf(": unable to get MAC address!\n");
 			goto fail_6;

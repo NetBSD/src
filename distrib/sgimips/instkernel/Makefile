@@ -1,26 +1,35 @@
-#	$NetBSD: Makefile,v 1.7 2010/08/16 13:24:54 he Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2011/03/05 15:08:40 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
+.if ${MACHINE_ARCH} == "mipseb"
+NX=		32
+SFX=		# none
+LISTS=		${.CURDIR}/list
+.else
+NX=		64
+SFX=		.elf32
+LISTS=		${.CURDIR}/list64
+.endif
+
 IMAGE=		diskimage
 IMAGESIZE=	3600k
-LISTS=		${.CURDIR}/list
 MTREECONF=	${DISTRIBDIR}/common/mtree.dot
 IMAGEENDIAN=	be
-IMAGEDEPENDS=	netbsd-INSTALL32_IP2x.gz netbsd-INSTALL32_IP3x.gz 
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-MDSETTARGETS=		INSTALL32_IP2x ${RAMDISK} netbsd-INSTALL32_IP2x	\
-			INSTALL32_IP3x ${RAMDISK} netbsd-INSTALL32_IP3x
+IMAGEDEPENDS=	netbsd-INSTALL${NX}_IP2x.gz netbsd-INSTALL${NX}_IP3x.gz 
+MDSETTARGETS=	INSTALL${NX}_IP2x ${RAMDISK} netbsd-INSTALL${NX}_IP2x${SFX} \
+		INSTALL${NX}_IP3x ${RAMDISK} netbsd-INSTALL${NX}_IP3x${SFX}
 
 MDSET_RELEASEDIR=	binary/kernel
 
-MDSET_SUFFIXES.netbsd-INSTALL32_IP2x=ecoff create-ecoff
+MDSET_SUFFIXES.netbsd-INSTALL${NX}_IP2x=ecoff create-ecoff
 create-ecoff=	${OBJCOPY} --impure -O ecoff-bigmips \
 		-R .pdr -R .mdebug.abi32 -R .comment -R .ident \
 		${.TARGET:R} ${.TARGET}

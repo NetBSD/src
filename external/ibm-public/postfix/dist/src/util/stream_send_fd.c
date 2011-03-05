@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_send_fd.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: stream_send_fd.c,v 1.1.1.1.6.1 2011/03/05 15:09:06 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -17,9 +17,9 @@
 /*
 /*	Arguments:
 /* .IP fd
-/*	File descriptor.
+/*	File descriptor that connects the sending and receiving processes.
 /* .IP sendfd
-/*	Another file descriptor.
+/*	The file descriptor to be sent.
 /* DIAGNOSTICS
 /*	stream_send_fd() returns -1 upon failure.
 /* LICENSE

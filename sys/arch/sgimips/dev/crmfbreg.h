@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.10 2009/03/26 04:11:58 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.10.8.1 2011/03/05 15:10:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -254,6 +254,12 @@
 #define DE_PRIM_BT		0x00000000	/* bottom to top */
 #define DE_PRIM_TB		0x00020000	/* top to bottom */
 #define DE_PRIM_LINE_WIDTH_MASK	0x0000ffff	/* in half pixels */
+
+/* CRIME_DE_STIPPLE_MODE */
+#define DE_STIP_MAXREP_SHIFT	0	/* max. repeats 8 bit */
+#define DE_STIP_REPCNT_SHIFT	8	/* repeat count, 8 bit */
+#define DE_STIP_MAXIDX_SHIFT	16	/* max. index, 5 bit */
+#define DE_STIP_STRTIDX_SHIFT	24	/* start index, 5 bit */
 
 /* alpha function register */
 #define DE_ALPHA_ADD		0x00000000

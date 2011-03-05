@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.2 2010/07/16 18:16:43 njoly Exp $ */
+/* $NetBSD: t_mutex.c,v 1.2.2.1 2011/03/05 15:10:55 bouyer Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,17 +29,20 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.2 2010/07/16 18:16:43 njoly Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.2.2.1 2011/03/05 15:10:55 bouyer Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <atf-c.h>
+#include <atf-c/config.h>
 
 #include "h_common.h"
 
 static pthread_mutex_t mutex;
+static pthread_mutex_t static_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int global_x;
 
 static void *
@@ -115,17 +118,24 @@ ATF_TC(mutex2);
 ATF_TC_HEAD(mutex2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes");
+	atf_tc_set_md_var(tc, "timeout", "40");
 }
 ATF_TC_BODY(mutex2, tc)
 {
+	const char *m_arch;
 	int count, count2;
 	pthread_t new;
 	void *joinval;
 
 	printf("1: Mutex-test 2\n");
 
-	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
+	m_arch = atf_config_get("atf_arch");
+	if (strcmp(m_arch, "powerpc") == 0) {
+		atf_tc_expect_timeout("PR port-powerpc/44387");
+	}
 
+	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
+	
 	global_x = 0;
 	count = count2 = 10000000;
 
@@ -148,6 +158,14 @@ ATF_TC_BODY(mutex2, tc)
 	printf("1: Thread joined. X was %d. Return value (long) was %ld\n",
 		global_x, (long)joinval);
 	ATF_REQUIRE_EQ(global_x, 20000000);
+
+	/* XXX force a timeout in ppc case since an un-triggered race
+	   otherwise looks like a "failure" */
+	if (strcmp(m_arch, "powerpc") == 0) {
+		/* We sleep for longer than the timeout to make ATF not
+		   complain about unexpected success */
+		sleep(41);
+	}
 }
 
 static void *
@@ -158,9 +176,9 @@ mutex3_threadfunc(void *arg)
 	printf("2: Second thread (%p). Count is %ld\n", pthread_self(), count);
 
 	while (count--) {
-		PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+		PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 		global_x++;
-		PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
+		PTHREAD_REQUIRE(pthread_mutex_unlock(&static_mutex));
 	}
 
 	return (void *)count;
@@ -169,39 +187,54 @@ mutex3_threadfunc(void *arg)
 ATF_TC(mutex3);
 ATF_TC_HEAD(mutex3, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks mutexes");
+	atf_tc_set_md_var(tc, "descr", "Checks mutexes using a static "
+	    "initializer");
+	atf_tc_set_md_var(tc, "timeout", "40");
 }
 ATF_TC_BODY(mutex3, tc)
 {
+	const char *m_arch;
 	int count, count2;
 	pthread_t new;
 	void *joinval;
 
 	printf("1: Mutex-test 3\n");
 
-	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
+	m_arch = atf_config_get("atf_arch");
+	if (strcmp(m_arch, "powerpc") == 0) {
+		atf_tc_expect_timeout("PR port-powerpc/44387");
+	}
 
 	global_x = 0;
 	count = count2 = 10000000;
 
-	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+	PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 	PTHREAD_REQUIRE(pthread_create(&new, NULL, mutex3_threadfunc, &count2));
 
 	printf("1: Thread %p\n", pthread_self());
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
+
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&static_mutex));
 
 	while (count--) {
-		PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+		PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 		global_x++;
-		PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
+		PTHREAD_REQUIRE(pthread_mutex_unlock(&static_mutex));
 	}
 
 	PTHREAD_REQUIRE(pthread_join(new, &joinval));
 
-	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
+	PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 	printf("1: Thread joined. X was %d. Return value (long) was %ld\n",
 		global_x, (long)joinval);
 	ATF_REQUIRE_EQ(global_x, 20000000);
+
+	/* XXX force a timeout in ppc case since an un-triggered race
+	   otherwise looks like a "failure" */
+	if (strcmp(m_arch, "powerpc") == 0) {
+		/* We sleep for longer than the timeout to make ATF not
+		   complain about unexpected success */
+		sleep(41);
+	}
 }
 
 static void *

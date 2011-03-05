@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28.2.1 2011/02/08 16:20:08 bouyer Exp $
+# $NetBSD: Makefile,v 1.28.2.2 2011/03/05 15:10:53 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ TESTSDIR=	${TESTSBASE}
 ATFFILE=	yes
 
 SUBDIR=		crypto dev fs games include ipf kernel lib libexec net
-SUBDIR+=	rump sbin sys syscall usr.bin usr.sbin util
+SUBDIR+=	rump sbin sys syscall toolchain usr.bin usr.sbin util
 
 . if ${MACHINE} != "evbppc" && ${MKKMOD} != "no"
 SUBDIR+= modules

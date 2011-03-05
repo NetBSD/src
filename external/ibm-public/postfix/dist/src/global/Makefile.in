@@ -4,7 +4,7 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	clnt_stream.c conv_time.c db_common.c debug_peer.c debug_process.c \
 	defer.c deliver_completed.c deliver_flock.c deliver_pass.c \
 	deliver_request.c dict_ldap.c dict_mysql.c dict_pgsql.c \
-	dict_proxy.c domain_list.c dot_lockfile.c dot_lockfile_as.c \
+	dict_proxy.c dict_sqlite.c domain_list.c dot_lockfile.c dot_lockfile_as.c \
 	dsb_scan.c dsn.c dsn_buf.c dsn_mask.c dsn_print.c dsn_util.c \
 	ehlo_mask.c ext_prop.c file_id.c flush_clnt.c header_opts.c \
 	header_token.c input_transp.c int_filt.c is_header.c log_adhoc.c \
@@ -29,13 +29,14 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	user_acl.c valid_mailhost_addr.c verify.c verify_clnt.c \
 	verp_sender.c wildcard_inet_addr.c xtext.c delivered_hdr.c \
 	fold_addr.c header_body_checks.c mkmap_proxy.c data_redirect.c \
-	match_service.c mail_conf_nint.c addr_match_list.c
+	match_service.c mail_conf_nint.c addr_match_list.c mail_conf_nbool.c \
+	smtp_reply_footer.c
 OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
 	clnt_stream.o conv_time.o db_common.o debug_peer.o debug_process.o \
 	defer.o deliver_completed.o deliver_flock.o deliver_pass.o \
 	deliver_request.o dict_ldap.o dict_mysql.o dict_pgsql.o \
-	dict_proxy.o domain_list.o dot_lockfile.o dot_lockfile_as.o \
+	dict_proxy.o dict_sqlite.o domain_list.o dot_lockfile.o dot_lockfile_as.o \
 	dsb_scan.o dsn.o dsn_buf.o dsn_mask.o dsn_print.o dsn_util.o \
 	ehlo_mask.o ext_prop.o file_id.o flush_clnt.o header_opts.o \
 	header_token.o input_transp.o int_filt.o is_header.o log_adhoc.o \
@@ -60,12 +61,13 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	user_acl.o valid_mailhost_addr.o verify.o verify_clnt.o \
 	verp_sender.o wildcard_inet_addr.o xtext.o delivered_hdr.o \
 	fold_addr.o header_body_checks.o mkmap_proxy.o data_redirect.o \
-	match_service.o mail_conf_nint.o addr_match_list.o
+	match_service.o mail_conf_nint.o addr_match_list.o mail_conf_nbool.o \
+	smtp_reply_footer.o
 HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	canon_addr.h cfg_parser.h cleanup_user.h clnt_stream.h config.h \
 	conv_time.h db_common.h debug_peer.h debug_process.h defer.h \
 	deliver_completed.h deliver_flock.h deliver_pass.h deliver_request.h \
-	dict_ldap.h dict_mysql.h dict_pgsql.h dict_proxy.h domain_list.h \
+	dict_ldap.h dict_mysql.h dict_pgsql.h dict_proxy.h dict_sqlite.h domain_list.h \
 	dot_lockfile.h dot_lockfile_as.h dsb_scan.h dsn.h dsn_buf.h \
 	dsn_mask.h dsn_print.h dsn_util.h ehlo_mask.h ext_prop.h \
 	file_id.h flush_clnt.h header_opts.h header_token.h input_transp.h \
@@ -85,7 +87,7 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	trace.h user_acl.h valid_mailhost_addr.h verify.h verify_clnt.h \
 	verp_sender.h wildcard_inet_addr.h xtext.h delivered_hdr.h \
 	fold_addr.h header_body_checks.h data_redirect.h match_service.h \
-	addr_match_list.h
+	addr_match_list.h smtp_reply_footer.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -279,6 +281,9 @@ header_body_checks: header_body_checks.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 data_redirect: data_redirect.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+addr_match_list: addr_match_list.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 tests: tok822_test mime_tests strip_addr_test tok822_limit_test \
@@ -802,6 +807,7 @@ dict_ldap.o: ../../include/match_list.h
 dict_ldap.o: ../../include/match_ops.h
 dict_ldap.o: ../../include/msg.h
 dict_ldap.o: ../../include/mymalloc.h
+dict_ldap.o: ../../include/name_code.h
 dict_ldap.o: ../../include/stringops.h
 dict_ldap.o: ../../include/sys_defs.h
 dict_ldap.o: ../../include/vbuf.h
@@ -811,6 +817,7 @@ dict_ldap.o: cfg_parser.h
 dict_ldap.o: db_common.h
 dict_ldap.o: dict_ldap.c
 dict_ldap.o: dict_ldap.h
+dict_ldap.o: mail_conf.h
 dict_ldap.o: string_list.h
 dict_mysql.o: ../../include/argv.h
 dict_mysql.o: ../../include/dict.h
@@ -868,6 +875,22 @@ dict_proxy.o: dict_proxy.c
 dict_proxy.o: dict_proxy.h
 dict_proxy.o: mail_params.h
 dict_proxy.o: mail_proto.h
+dict_sqlite.o: ../../include/argv.h
+dict_sqlite.o: ../../include/dict.h
+dict_sqlite.o: ../../include/match_list.h
+dict_sqlite.o: ../../include/match_ops.h
+dict_sqlite.o: ../../include/msg.h
+dict_sqlite.o: ../../include/mymalloc.h
+dict_sqlite.o: ../../include/stringops.h
+dict_sqlite.o: ../../include/sys_defs.h
+dict_sqlite.o: ../../include/vbuf.h
+dict_sqlite.o: ../../include/vstream.h
+dict_sqlite.o: ../../include/vstring.h
+dict_sqlite.o: cfg_parser.h
+dict_sqlite.o: db_common.h
+dict_sqlite.o: dict_sqlite.c
+dict_sqlite.o: dict_sqlite.h
+dict_sqlite.o: string_list.h
 domain_list.o: ../../include/match_list.h
 domain_list.o: ../../include/match_ops.h
 domain_list.o: ../../include/sys_defs.h
@@ -1149,6 +1172,15 @@ mail_conf_long.o: ../../include/vstream.h
 mail_conf_long.o: ../../include/vstring.h
 mail_conf_long.o: mail_conf.h
 mail_conf_long.o: mail_conf_long.c
+mail_conf_nbool.o: ../../include/argv.h
+mail_conf_nbool.o: ../../include/dict.h
+mail_conf_nbool.o: ../../include/msg.h
+mail_conf_nbool.o: ../../include/sys_defs.h
+mail_conf_nbool.o: ../../include/vbuf.h
+mail_conf_nbool.o: ../../include/vstream.h
+mail_conf_nbool.o: ../../include/vstring.h
+mail_conf_nbool.o: mail_conf.h
+mail_conf_nbool.o: mail_conf_nbool.c
 mail_conf_nint.o: ../../include/argv.h
 mail_conf_nint.o: ../../include/dict.h
 mail_conf_nint.o: ../../include/msg.h
@@ -1239,6 +1271,7 @@ mail_dict.o: dict_ldap.h
 mail_dict.o: dict_mysql.h
 mail_dict.o: dict_pgsql.h
 mail_dict.o: dict_proxy.h
+mail_dict.o: dict_sqlite.h
 mail_dict.o: mail_dict.c
 mail_dict.o: mail_dict.h
 mail_error.o: ../../include/name_mask.h
@@ -1452,15 +1485,7 @@ mime_state.o: mail_params.h
 mime_state.o: mime_state.c
 mime_state.o: mime_state.h
 mime_state.o: rec_type.h
-mkmap_cdb.o: ../../include/argv.h
-mkmap_cdb.o: ../../include/dict.h
-mkmap_cdb.o: ../../include/dict_cdb.h
-mkmap_cdb.o: ../../include/mymalloc.h
 mkmap_cdb.o: ../../include/sys_defs.h
-mkmap_cdb.o: ../../include/vbuf.h
-mkmap_cdb.o: ../../include/vstream.h
-mkmap_cdb.o: ../../include/vstring.h
-mkmap_cdb.o: mkmap.h
 mkmap_cdb.o: mkmap_cdb.c
 mkmap_db.o: ../../include/argv.h
 mkmap_db.o: ../../include/dict.h
@@ -1837,6 +1862,15 @@ sent.o: sent.c
 sent.o: sent.h
 sent.o: trace.h
 sent.o: verify.h
+smtp_reply_footer.o: ../../include/mac_expand.h
+smtp_reply_footer.o: ../../include/mac_parse.h
+smtp_reply_footer.o: ../../include/msg.h
+smtp_reply_footer.o: ../../include/sys_defs.h
+smtp_reply_footer.o: ../../include/vbuf.h
+smtp_reply_footer.o: ../../include/vstring.h
+smtp_reply_footer.o: dsn_util.h
+smtp_reply_footer.o: smtp_reply_footer.c
+smtp_reply_footer.o: smtp_reply_footer.h
 smtp_stream.o: ../../include/iostuff.h
 smtp_stream.o: ../../include/msg.h
 smtp_stream.o: ../../include/sys_defs.h

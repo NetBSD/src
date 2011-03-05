@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.1 2011/02/17 11:59:43 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.4.2 2011/03/05 15:09:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.4.1 2011/02/17 11:59:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.4.2 2011/03/05 15:09:41 bouyer Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.4.1 2011/02/17 11:59:43 bouyer Exp
 #include <ufs/mfs/mfs_extern.h>	/* mfs_initminiroot() */
 #include <dev/cons.h>		/* cntab access (cpu_reboot) */
 
+#include <machine/locore.h>
 #include <machine/psl.h>
 #include <machine/sysconf.h>
 #include <machine/platid.h>
@@ -183,15 +184,6 @@ struct vm_map *phys_map;
 int	physmem;		/* max supported memory, changes to actual */
 int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- * Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
- * disables mips1 FPU interrupts.
- */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
 void mach_init(int, char *[], struct bootinfo *);
 
@@ -326,7 +318,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 	intr_init();
 
 #ifdef DEBUG
@@ -448,22 +440,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		physmem += atop(mem_clusters[i].size);
 	}
 
-	/* Cluster 0 is always the kernel, which doesn't get loaded. */
-	for (i = 1; i < mem_cluster_cnt; i++) {
-		paddr_t start;
-		psize_t size;
-
-		start = (paddr_t)mem_clusters[i].start;
-		size = (psize_t)mem_clusters[i].size;
-
-		printf("loading %#"PRIxPADDR",%#"PRIxPSIZE"\n", start, size);
-
-		memset((void *)MIPS_PHYS_TO_KSEG1(start), 0, size);
-
-		uvm_page_physload(atop(start), atop(start + size),
-		    atop(start), atop(start + size),
-		    VM_FREELIST_DEFAULT);
-	}
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -544,7 +522,6 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
 		savectx(curpcb);
 
 #ifdef DEBUG

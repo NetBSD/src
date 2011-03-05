@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbdmap.h,v 1.1.2.2 2011/02/17 11:59:38 bouyer Exp $	*/
+/*	$NetBSD: dnkbdmap.h,v 1.1.2.3 2011/03/05 15:09:40 bouyer Exp $	*/
 /*	$OpenBSD: dnkbdmap.h,v 1.1 2005/04/22 11:59:11 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -26,4 +26,4 @@
  */
 
 extern const struct wscons_keydesc dnkbd_keydesctab[];
-extern const u_int8_t dnkbd_raw[0x80];
+extern const uint8_t dnkbd_raw[0x80];

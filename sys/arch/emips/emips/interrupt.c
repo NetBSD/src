@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1.2.2 2011/02/08 18:05:06 bouyer Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1.2.3 2011/03/05 15:09:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.2.2 2011/02/08 18:05:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.2.3 2011/03/05 15:09:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.2.2 2011/02/08 18:05:06 bouyer Exp
 
 #include <mips/psl.h>
 
+#include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 #include <machine/intr.h>
@@ -54,8 +55,6 @@ struct evcnt emips_fpu_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "fpu", "intr");
 struct evcnt emips_memerr_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "memerr", "intr");
-
-extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
 
 static const char * const intrnames[MAX_DEV_NCOOKIES] = {
 	"int-0", "int-1", "int-2", "int-3", "int-4",
@@ -73,29 +72,27 @@ intr_init(int phase)
 	int i;
 
 	if (phase == 0) {
-		for (i = 0; i < MAX_DEV_NCOOKIES; i++)
+		for (i = 0; i < MAX_DEV_NCOOKIES; i++) {
 			evcnt_attach_dynamic(&intrtab[i].ih_count,
 			    EVCNT_TYPE_INTR, NULL, "emips", intrnames[i]);
+		}
 		return;
 	}
 
 	if (phase == 1) {
 		/* I am trying to make this standard so its here. Bah. */
-		struct mips1_tlb {
-			u_int32_t tlb_hi;
-			u_int32_t tlb_lo;
-		} tlb;
-		void mips1_TLBWrite(int, struct mips1_tlb *);
+		struct tlbmask tlb;
 
     /* This is ugly but efficient. Sigh. */
 #define TheAic ((struct _Aic *)INTERRUPT_CONTROLLER_DEFAULT_ADDRESS)
 
 		tlb.tlb_hi = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS;
-		tlb.tlb_lo = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS | 0xf02;
-		mips1_TLBWrite(4, &tlb);
+		tlb.tlb_lo0 = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS | 0xf02;
+		tlb_write_indexed(4, &tlb);
+
 		tlb.tlb_hi = TIMER_DEFAULT_ADDRESS;
-		tlb.tlb_lo = TIMER_DEFAULT_ADDRESS | 0xf02;
-		mips1_TLBWrite(5, &tlb);
+		tlb.tlb_lo0 = TIMER_DEFAULT_ADDRESS | 0xf02;
+		tlb_write_indexed(5, &tlb);
 	}
 }
 
@@ -103,49 +100,29 @@ intr_init(int phase)
  * emips uses one line for all I/O interrupts (0x8000).
  */
 void
-cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr(int ppl, uint32_t status, vaddr_t pc)
 {
+	uint32_t ipending;
+	int ipl;
 
 	curcpu()->ci_data.cpu_nintr++;
 
-	/* device interrupts */
-	if (ipending & MIPS_INT_MASK_5) {
-		(*platform.iointr)(status, cause, pc, ipending);
+	while (ppl < (ipl = splintr(&ipending))) {
+		splx(ipl);
+		/* device interrupts */
+		if (ipending & MIPS_INT_MASK_5) {
+			(*platform.iointr)(status, pc, ipending);
+		}
+		(void)splhigh();
 	}
-
-#ifdef notyet
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-
-	_clrsoftintr(ipending);
-	mips_softint_dispatch(ipending);
-#endif
-}
-
-/* Rightmost 1. BUGBUG optimize in assembly
- */
-static int __inline Rightmost1(uint32_t Val);
-
-static int __inline Rightmost1(uint32_t Val)
-{
-    uint32_t Mask;
-
-    Mask = Val & -Val;
-    return ((Mask & 0xFFFF0000)!=0) << 4
-         | ((Mask & 0xFF00FF00)!=0) << 3
-         | ((Mask & 0xF0F0F0F0)!=0) << 2
-         | ((Mask & 0xCCCCCCCC)!=0) << 1
-         | ((Mask & 0xAAAAAAAA)!=0);
 }
 
 /*
  * Interrupt dispatcher for standard AIC-style interrupt controller
  */
 void
-emips_aic_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
+emips_aic_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
-	int index;
 	struct clockframe cf;
 
 	cf.pc = pc;
@@ -155,15 +132,12 @@ emips_aic_intr(unsigned status, unsigned cause, unsigned pc, unsigned ipending)
 
 	while (ipending) {
 		/* Take one (most likely, the only one) */
-		index = Rightmost1(ipending);
-		ipending = ipending & ~(1 << index);
+		int index = ffs(ipending) - 1;
+		ipending &= ~(1 << index);
 
 		intrtab[index].ih_count.ev_count++;
 		(*intrtab[index].ih_func)(intrtab[index].ih_arg, &cf);
 	}
-
-	/* Not so sure about this. Why dont we just return and reload status? */
-	_splset(MIPS_SR_INT_IE | (status & ~(cause & MIPS_HARD_INT_MASK)));
 }
 
 
@@ -185,13 +159,4 @@ emips_intr_establish(struct device *dev, void *cookie, int level,
 
 	/* Third, enable and done.  */
 	TheAic->IrqEnable = 1 << index;
-}
-
-const int *ipl2spl_table;
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

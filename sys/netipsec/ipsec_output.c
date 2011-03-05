@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.29.8.1 2011/02/17 12:00:50 bouyer Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.29.8.2 2011/03/05 15:10:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.29.8.1 2011/02/17 12:00:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.29.8.2 2011/03/05 15:10:47 bouyer Exp $");
 
 /*
  * IPsec output processing.
@@ -262,6 +262,8 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		error = ENXIO;
 		goto bad;
 	}
+
+	key_sa_recordxfer(sav, m);
 
 	/*
 	 * If there's another (bundled) SA to apply, do so.

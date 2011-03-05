@@ -124,6 +124,13 @@
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_STRICT_ALIGN)
 
+/*
+ * We know we have the right binutils for this (we shouldn't need to do this
+ * but until the cross build does the right thing...)
+ */
+#undef TARGET_SECURE_PLT
+#define TARGET_SECURE_PLT       secure_plt
+
 #undef TARGET_E500
 #undef TARGET_E500_SINGLE
 #undef TARGET_E500_DOUBLE

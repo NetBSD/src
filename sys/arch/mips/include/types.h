@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.46 2010/12/22 01:03:02 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.46.4.1 2011/03/05 15:09:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -78,6 +78,7 @@ typedef __uint32_t	vsize_t;
 #endif
 #endif
 
+typedef int		mips_prid_t;
 /* Make sure this is signed; we need pointers to be sign-extended. */
 #if defined(__mips_o64) || defined(__mips_o32)
 typedef	__uint32_t	fpregister_t;
@@ -116,24 +117,39 @@ typedef struct label_t {
 #define	_L_S5		5
 #define	_L_S6		6
 #define	_L_S7		7
-#define	_L_GP		8
-#define	_L_SP		9
-#define	_L_S8		10
-#define	_L_RA		11
-#define	_L_SR		12
+#define	_L_T8		8
+#define	_L_GP		9
+#define	_L_SP		10
+#define	_L_S8		11
+#define	_L_RA		12
+#define	_L_SR		13
 #endif
 
-typedef	volatile int		__cpu_simple_lock_t;
+#if defined(_KERNEL) || defined(_KMEMUSER)
+#define	PCU_FPU		0
+#define	PCU_UNIT_COUNT	1
+#endif
+
+typedef __uint64_t		__cpuset_t;
+#define	__CPUSET_MAXNUMCPU	64
+
+typedef	volatile unsigned int	__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
+#define	__HAVE_FAST_SOFTINTS
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_PROCESS_XFPREGS
 #define	__HAVE_CPU_DATA_FIRST
+#define __HAVE_MD_CPU_OFFLINE
 #ifdef MIPS3_PLUS	/* XXX bogus! */
 #define	__HAVE_CPU_COUNTER
+#endif
+#define __HAVE_CPU_UAREA_ROUTINES
+#if 0
+#define	__HAVE___LWP_GETPRIVATE_FAST
 #endif
 
 #if !defined(__mips_o32)
@@ -142,6 +158,9 @@ typedef	volatile int		__cpu_simple_lock_t;
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS
+#if defined(_LP64)
+#define __HAVE_CPU_VMSPACE_EXEC
 #endif
+#endif /* _KERNEL */
 
 #endif	/* _MACHTYPES_H_ */

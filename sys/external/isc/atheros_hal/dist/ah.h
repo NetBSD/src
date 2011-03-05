@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah.h,v 1.1.1.1 2008/12/11 04:46:23 alc Exp $
+ * $Id: ah.h,v 1.1.1.1.20.1 2011/03/05 15:10:35 bouyer Exp $
  */
 
 #ifndef _ATH_AH_H_
@@ -669,13 +669,19 @@ struct ath_hal {
 				HAL_STATUS *status);
 	HAL_BOOL  __ahdecl(*ah_phyDisable)(struct ath_hal *);
 	HAL_BOOL  __ahdecl(*ah_disable)(struct ath_hal *);
+	void	  __ahdecl(*ah_configPCIE)(struct ath_hal *, HAL_BOOL restore);
+	void	  __ahdecl(*ah_disablePCIE)(struct ath_hal *);
 	void	  __ahdecl(*ah_setPCUConfig)(struct ath_hal *);
 	HAL_BOOL  __ahdecl(*ah_perCalibration)(struct ath_hal*, HAL_CHANNEL *,
 			HAL_BOOL *);
 	HAL_BOOL  __ahdecl(*ah_perCalibrationN)(struct ath_hal *, HAL_CHANNEL *,
 			u_int chainMask, HAL_BOOL longCal, HAL_BOOL *isCalDone);
 	HAL_BOOL  __ahdecl(*ah_resetCalValid)(struct ath_hal *, HAL_CHANNEL *);
+	HAL_BOOL  __ahdecl(*ah_setTxPower)(struct ath_hal *,
+			HAL_CHANNEL *, uint16_t *);
 	HAL_BOOL  __ahdecl(*ah_setTxPowerLimit)(struct ath_hal *, uint32_t);
+	HAL_BOOL  __ahdecl(*ah_setBoardValues)(struct ath_hal *,
+			HAL_CHANNEL *);
 
 	/* Transmit functions */
 	HAL_BOOL  __ahdecl(*ah_updateTxTrigLevel)(struct ath_hal*,

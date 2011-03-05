@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.4.2.2 2011/02/17 11:59:38 bouyer Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.4.2.3 2011/03/05 15:09:40 bouyer Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ dnkbd_attach(device_t parent, device_t self, void *aux)
 	struct dnkbd_softc *sc = device_private(self);
 	struct frodo_attach_args *fa = aux;
 
-	printf(": ");
+	aprint_normal(": ");
 
 	sc->sc_dev = self;
 	sc->sc_bst = fa->fa_bst;
@@ -275,7 +275,7 @@ dnkbd_attach(device_t parent, device_t self, void *aux)
 
 	/* probe for keyboard */
 	if (dnkbd_probe(sc) != 0) {
-		printf("no keyboard\n");
+		aprint_normal("no keyboard\n");
 		return;
 	}
 
@@ -425,8 +425,8 @@ dnkbd_probe(struct dnkbd_softc *sc)
 	}
 
 	if (i > sizeof(rspbuf) || i == 0) {
-		printf("%s: unexpected identify string length %d\n",
-		    device_xname(sc->sc_dev), i);
+		aprint_error_dev(sc->sc_dev,
+		    "unexpected identify string length %d\n", i);
 		rc = ENXIO;
 		goto out;
 	}
@@ -448,15 +448,15 @@ dnkbd_probe(struct dnkbd_softc *sc)
 		memcpy(sc->sc_ident, rspbuf, i);
 
 		if (cold == 0)
-			printf("%s: ", device_xname(sc->sc_dev));
-		printf("model ");
+			aprint_normal_dev(sc->sc_dev, "");
+		aprint_normal("model ");
 		word = rspbuf;
 		for (i = 0; i < 3; i++) {
 			end = strchr(word, '\r');
 			if (end == NULL)
 				break;
 			*end++ = '\0';
-			printf("<%s> ", word);
+			aprint_normal("<%s> ", word);
 			/*
 			 * Parse the layout code if applicable
 			 */
@@ -495,7 +495,7 @@ dnkbd_probe(struct dnkbd_softc *sc)
 			}
 			word = end;
 		}
-		printf("\n");
+		aprint_normal("\n");
 	}
 
 	/*

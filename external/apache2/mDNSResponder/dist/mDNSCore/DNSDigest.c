@@ -529,7 +529,7 @@ void md5_block_data_order (MD5_CTX *c, const void *p,int num);
 				asm (			\
 				"roll %1,%0"		\
 				: "=r"(ret)		\
-				: "I"(n), "0"(a)	\
+				: "I"(n), "0"((unsigned int)a)	\
 				: "cc");		\
 			   ret;				\
 			})

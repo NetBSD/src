@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.16.2.2 2011/02/17 11:59:23 bouyer Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.16.2.3 2011/03/05 15:09:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: rumpclient.c,v 1.16.2.3 2011/03/05 15:09:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD");
 
 #include <assert.h>
 #include <dlfcn.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <link.h>
@@ -716,8 +717,17 @@ doinit(void)
 	return 0;
 }
 
-void *(*rumpclient_dlsym)(void *, const char *);
-static int init_done = 0;
+void *rumpclient__dlsym(void *, const char *);
+void *rumphijack_dlsym(void *, const char *);
+void *
+rumpclient__dlsym(void *handle, const char *symbol)
+{
+
+	return dlsym(handle, symbol);
+}
+__weak_alias(rumphijack_dlsym,rumpclient__dlsym);
+
+static pid_t init_done = 0;
 
 int
 rumpclient_init()
@@ -726,41 +736,54 @@ rumpclient_init()
 	int error;
 	int rv = -1;
 	int hstype;
+	pid_t mypid;
 
-	if (init_done)
+	/*
+	 * Make sure we're not riding the context of a previous
+	 * host fork.  Note: it's *possible* that after n>1 forks
+	 * we have the same pid as one of our exited parents, but
+	 * I'm pretty sure there are 0 practical implications, since
+	 * it means generations would have to skip rumpclient init.
+	 */
+	if (init_done == (mypid = getpid()))
 		return 0;
-	init_done = 1;
+
+	/* kq does not traverse fork() */
+	if (init_done != 0)
+		kq = -1;
+	init_done = mypid;
 
 	sigfillset(&fullset);
-
-	/* dlsym overrided by rumphijack? */
-	if (!rumpclient_dlsym)
-		rumpclient_dlsym = dlsym;
 
 	/*
 	 * sag mir, wo die symbol sind.  zogen fort, der krieg beginnt.
 	 * wann wird man je verstehen?  wann wird man je verstehen?
 	 */
 #define FINDSYM2(_name_,_syscall_)					\
-	if ((host_##_name_ = rumpclient_dlsym(RTLD_NEXT,		\
-	    #_syscall_)) == NULL)					\
-		/* host_##_name_ = _syscall_ */;
+	if ((host_##_name_ = rumphijack_dlsym(RTLD_NEXT,		\
+	    #_syscall_)) == NULL) {					\
+		if (rumphijack_dlsym == rumpclient__dlsym)		\
+			host_##_name_ = _name_; /* static fallback */	\
+		if (host_##_name_ == NULL)				\
+			errx(1, "cannot find %s: %s", #_syscall_,	\
+			    dlerror());					\
+	}
 #define FINDSYM(_name_) FINDSYM2(_name_,_name_)
-	FINDSYM2(socket,__socket30);
-	FINDSYM(close);
-	FINDSYM(connect);
-	FINDSYM(fcntl);
-	FINDSYM(poll);
-	FINDSYM(read);
-	FINDSYM(sendto);
-	FINDSYM(setsockopt);
-	FINDSYM(dup);
-	FINDSYM(kqueue);
-	FINDSYM(execve);
+	FINDSYM2(socket,__socket30)
+	FINDSYM(close)
+	FINDSYM(connect)
+	FINDSYM(fcntl)
+	FINDSYM(poll)
+	FINDSYM(read)
+	FINDSYM(sendto)
+	FINDSYM(setsockopt)
+	FINDSYM(dup)
+	FINDSYM(kqueue)
+	FINDSYM(execve)
 #if !__NetBSD_Prereq__(5,99,7)
-	FINDSYM(kevent);
+	FINDSYM(kevent)
 #else
-	FINDSYM2(kevent,_sys___kevent50);
+	FINDSYM2(kevent,_sys___kevent50)
 #endif
 #undef	FINDSYM
 #undef	FINDSY2
@@ -1002,7 +1025,7 @@ rumpclient_exec(const char *path, char *const argv[], char *const envp[])
 	for (nelem = 0; envp && envp[nelem]; nelem++)
 		continue;
 
-	newenv = malloc(sizeof(*newenv) * nelem+3);
+	newenv = malloc(sizeof(*newenv) * (nelem+3));
 	if (newenv == NULL) {
 		free(envstr2);
 		free(envstr);

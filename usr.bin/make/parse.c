@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $	*/
+/*	$NetBSD: parse.c,v 1.173.2.1 2011/03/05 15:10:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.173.2.1 2011/03/05 15:10:59 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $");
+__RCSID("$NetBSD: parse.c,v 1.173.2.1 2011/03/05 15:10:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -133,6 +133,9 @@ __RCSID("$NetBSD: parse.c,v 1.173 2010/12/25 21:39:11 dholland Exp $");
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifndef MAP_FILE
+#define MAP_FILE 0
+#endif
 #ifndef MAP_COPY
 #define MAP_COPY MAP_PRIVATE
 #endif
@@ -2208,7 +2211,7 @@ ParseSetParseFile(const char *filename)
 
     slash = strrchr(filename, '/');
     if (slash == NULL) {
-	Var_Set(".PARSEDIR", ".", VAR_GLOBAL, 0);
+	Var_Set(".PARSEDIR", curdir, VAR_GLOBAL, 0);
 	Var_Set(".PARSEFILE", filename, VAR_GLOBAL, 0);
     } else {
 	len = slash - filename;
@@ -2665,7 +2668,7 @@ ParseReadLine(void)
 		line = ParseGetLine(PARSE_RAW, &lineLength);
 		if (line == NULL) {
 		    Parse_Error(PARSE_FATAL,
-			     "Unexpected end of file in for loop.\n");
+			     "Unexpected end of file in for loop.");
 		    break;
 		}
 	    } while (For_Accum(line));
@@ -2933,7 +2936,7 @@ Parse_File(const char *name, int fd)
     if (fatals) {
 	(void)fflush(stdout);
 	(void)fprintf(stderr,
-	    "%s: Fatal errors encountered -- cannot continue\n",
+	    "%s: Fatal errors encountered -- cannot continue",
 	    progname);
 	PrintOnError(NULL, NULL);
 	exit(1);

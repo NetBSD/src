@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.19.34.1 2011/02/17 11:59:31 bouyer Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.19.34.2 2011/03/05 15:09:30 bouyer Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -43,11 +43,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.19.34.1 2011/02/17 11:59:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.19.34.2 2011/03/05 15:09:30 bouyer Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/intr.h>
 #include <sys/device.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
@@ -83,26 +86,20 @@ struct timer_jazzio_config timer_magnum_conf = {
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-static const uint32_t magnum_ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] = 
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3,
-	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
+static const struct ipl_sr_map magnum_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1
+				| MIPS_INT_MASK_2
+				| MIPS_INT_MASK_3,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 uint32_t
@@ -193,7 +190,7 @@ c_magnum_init(void)
 	/*
 	 * Initialize interrupt priority
 	 */
-	ipl_sr_bits = magnum_ipl_sr_bits;
+	ipl_sr_map = magnum_ipl_sr_map;
 
 	/*
 	 * Initialize I/O address offset

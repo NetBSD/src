@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ah.h,v 1.1 2008/12/11 05:37:40 alc Exp $ */
+/* $NetBSD: opt_ah.h,v 1.1.20.1 2011/03/05 15:10:37 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,9 @@
 #ifndef OPT_AH_H
 #define OPT_AH_H
 
+#ifdef _KERNEL_OPT
 #include "opt_athhal.h"
+#endif
 
 #ifdef ATHHAL_ASSERT
 #define AH_ASSERT		1

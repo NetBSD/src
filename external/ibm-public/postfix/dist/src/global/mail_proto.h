@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.1.1.1.6.1 2011/03/05 15:08:59 bouyer Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -34,8 +34,8 @@
 #define MAIL_PROTO_QMQP		"QMQP"
 
  /*
-  * Names of services: these are the names if INET ports, UNIX-domain sockets
-  * or FIFOs that a service listens on.
+  * Names of services: these are the names of the UNIX-domain socket or or
+  * FIFO that a service listens on.
   */
 #define MAIL_SERVICE_BOUNCE	"bounce"
 #define MAIL_SERVICE_CLEANUP	"cleanup"
@@ -60,6 +60,8 @@
 #define MAIL_SERVICE_PROXYMAP	"proxymap"
 #define MAIL_SERVICE_PROXYWRITE	"proxywrite"
 #define MAIL_SERVICE_SCACHE	"scache"
+#define MAIL_SERVICE_DNSBLOG	"dnsblog"
+#define MAIL_SERVICE_TLSPROXY	"tlsproxy"
 
  /*
   * Well-known socket or FIFO directories. The main difference is in file
@@ -113,6 +115,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_ERRTO		"errors-to"
 #define MAIL_ATTR_RRCPT		"return-receipt"
 #define MAIL_ATTR_TIME		"time"
+#define MAIL_ATTR_LOCALTIME	"localtime"
 #define MAIL_ATTR_CREATE_TIME	"create_time"
 #define MAIL_ATTR_RULE		"rule"
 #define MAIL_ATTR_ADDR		"address"
@@ -131,6 +134,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_ETRN_DOMAIN	"etrn_domain"
 #define MAIL_ATTR_DUMMY		"dummy"
 #define MAIL_ATTR_STRESS	"stress"
+#define MAIL_ATTR_LOG_IDENT	"log_ident"
 #define MAIL_ATTR_RWR_CONTEXT	"rewrite_context"
 
 #define MAIL_ATTR_RWR_LOCAL	"local"
@@ -161,6 +165,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_RBL_TXT	"rbl_txt"	/* LaMont compatibility */
 #define MAIL_ATTR_RBL_CLASS	"rbl_class"
 #define MAIL_ATTR_RBL_CODE	"rbl_code"
+#define MAIL_ATTR_RBL_ADDR	"rbl_addr"
 
  /*
   * The following attribute names are stored in queue files. Changing this
@@ -235,6 +240,28 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_DSN_RET	"ret_flags"	/* dsn full/headers */
 #define MAIL_ATTR_DSN_NOTIFY	"notify_flags"	/* dsn notify flags */
 #define MAIL_ATTR_DSN_ORCPT	"dsn_orig_rcpt"	/* dsn original recipient */
+
+ /*
+  * TLSPROXY support.
+  */
+#define MAIL_ATTR_REMOTE_ENDPT	"remote_endpoint"	/* name[addr]:port */
+#define MAIL_ATTR_ROLE		"role"	/* requested role */
+#define MAIL_ATTR_ROLE_SERVER	"server"
+#define MAIL_ATTR_ROLE_CLIENT	"client"
+#define MAIL_ATTR_TIMEOUT	"timeout"
+#define MAIL_ATTR_PEER_CN	"peer_CN"
+#define MAIL_ATTR_ISSUER_CN	"issuer_CN"
+#define MAIL_ATTR_PEER_FPT	"peer_fingerprint"
+#define MAIL_ATTR_PEER_STATUS	"peer_status"
+#define MAIL_ATTR_CIPHER_PROTOCOL "cipher_protocol"
+#define MAIL_ATTR_CIPHER_NAME	"cipher_name"
+#define MAIL_ATTR_CIPHER_USEBITS "cipher_usebits"
+#define MAIL_ATTR_CIPHER_ALGBITS "cipher_algbits"
+
+ /*
+  * SMTP reply footer support.
+  */
+#define MAIL_ATTR_SERVER_NAME	"server_name"
 
 /* LICENSE
 /* .ad

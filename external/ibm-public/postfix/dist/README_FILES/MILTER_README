@@ -277,16 +277,18 @@ The remedy is to increase the Postfix milter_protocol version number. See,
 however, the limitations section below for features that aren't supported by
 Postfix.
 
-If the Postfix milter_protocol setting specifies a too high version, the
-libmilter library simply hangs up without logging a warning, and you see a
-Postfix warning message like one of the following:
+With Postfix 2.7 and earlier, if the Postfix milter_protocol setting specifies
+a too high version, the libmilter library simply hangs up without logging a
+warning, and you see a Postfix warning message like one of the following:
 
     warning: milter inet:host:port: can't read packet header: Unknown error : 0
     warning: milter inet:host:port: can't read packet header: Success
     warning: milter inet:host:port: can't read SMFIC_DATA reply packet header:
     No such file or directory
 
-The remedy is to lower the Postfix milter_protocol version number.
+The remedy is to lower the Postfix milter_protocol version number. Postfix 2.8
+and later will automatically turn off protocol features that the application's
+libmilter library does not expect.
 
 MMiilltteerr pprroottooccooll ttiimmeeoouuttss
 

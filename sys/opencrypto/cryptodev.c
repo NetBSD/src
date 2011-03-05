@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.53 2010/08/02 19:59:35 jakllsch Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.53.4.1 2011/03/05 15:10:48 bouyer Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.53 2010/08/02 19:59:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.53.4.1 2011/03/05 15:10:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,9 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.53 2010/08/02 19:59:35 jakllsch Exp 
 #include <sys/stat.h>
 
 #include "opt_ocf.h"
+#include "opt_compat_netbsd.h"
 #include <opencrypto/cryptodev.h>
-#include <opencrypto/ocryptodev.h>
+#include <opencrypto/cryptodev_internal.h>
 #include <opencrypto/xform.h>
 
 struct csession {
@@ -97,11 +98,11 @@ struct csession {
 	u_int32_t	ses;
 
 	u_int32_t	cipher;		/* note: shares name space in crd_alg */
-	struct enc_xform *txform;
+	const struct enc_xform *txform;
 	u_int32_t	mac;		/* note: shares name space in crd_alg */
-	struct auth_hash *thash;
+	const struct auth_hash *thash;
 	u_int32_t	comp_alg;	/* note: shares name space in crd_alg */
-	struct comp_algo *tcomp;
+	const struct comp_algo *tcomp;
 
 	void *		key;
 	int		keylen;
@@ -166,7 +167,8 @@ static int	csedelete(struct fcrypt *, struct csession *);
 static struct	csession *cseadd(struct fcrypt *, struct csession *);
 static struct	csession *csecreate(struct fcrypt *, u_int64_t, void *,
     u_int64_t, void *, u_int64_t, u_int32_t, u_int32_t, u_int32_t,
-    struct enc_xform *, struct auth_hash *, struct comp_algo *);
+    const struct enc_xform *, const struct auth_hash *,
+    const struct comp_algo *);
 static int	csefree(struct csession *);
 
 static int	cryptodev_key(struct crypt_kop *);
@@ -183,7 +185,9 @@ static int 	cryptodev_getmstatus(struct fcrypt *, struct crypt_result *,
     int);
 static int	cryptodev_getstatus(struct fcrypt *, struct crypt_result *);
 
+#ifdef COMPAT_50
 extern int	ocryptof_ioctl(struct file *, u_long, void *);
+#endif
 
 /*
  * sysctl-able control variables for /dev/crypto now defined in crypto.c:
@@ -398,8 +402,12 @@ reterr:
 		error = cryptodev_getstatus(fcr, (struct crypt_result *)data); 
 		break;
 	default:
+#ifdef COMPAT_50
 		/* Check for backward compatible commands */
 		error = ocryptof_ioctl(fp, cmd, data);
+#else
+		return EINVAL;
+#endif
 	}
 	return error;
 }
@@ -977,8 +985,8 @@ cseadd(struct fcrypt *fcr, struct csession *cse)
 static struct csession *
 csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
     void *mackey, u_int64_t mackeylen, u_int32_t cipher, u_int32_t mac,
-    u_int32_t comp_alg, struct enc_xform *txform, struct auth_hash *thash,
-    struct comp_algo *tcomp)
+    u_int32_t comp_alg, const struct enc_xform *txform,
+    const struct auth_hash *thash, const struct comp_algo *tcomp)
 {
 	struct csession *cse;
 
@@ -1475,9 +1483,9 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 	struct cryptoini cria, crie;
 	struct cryptoini cric;		/* compressor */
 	struct cryptoini *crihead = NULL;
-	struct enc_xform *txform = NULL;
-	struct auth_hash *thash = NULL;
-	struct comp_algo *tcomp = NULL;
+	const struct enc_xform *txform = NULL;
+	const struct auth_hash *thash = NULL;
+	const struct comp_algo *tcomp = NULL;
 	struct csession *cse;
 	u_int64_t sid;
 	int error = 0;

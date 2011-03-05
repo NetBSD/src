@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1055.4.1 2011/02/08 16:19:51 bouyer Exp $
+$NetBSD: pcidevs,v 1.1055.4.2 2011/03/05 15:10:24 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -855,6 +855,7 @@ product ADP2 ASR2120S		0x0286	ASR-2120S
 product ADP2 ASR2200S_SUB2M	0x0287	ASR-2200S
 product ADP2 ASR2410SA		0x0290	ASR-2410SA
 product ADP2 AAR2810SA		0x0292	AAR-2810SA
+product ADP2 3405		0x02bb	RAID 3405
 product ADP2 AAC364		0x0364	AAC-364
 product ADP2 ASR5400S		0x0365	ASR-5400S
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
@@ -924,6 +925,15 @@ product AMD AMD64_F11_ADDR	0x1301	AMD64 Family11h Address Map Configuration
 product AMD AMD64_F11_DRAM	0x1302	AMD64 Family11h DRAM Configuration
 product AMD AMD64_F11_MISC	0x1303	AMD64 Family11h Miscellaneous Configuration
 product AMD AMD64_F11_LINK	0x1304	AMD64 Family11h Link Configuration
+product AMD F14_RC	0x1510	Family14h Root Complex
+product AMD F14_HT	0x1700	Family14h HyperTransport Configuration
+product AMD F14_ADDR	0x1701	Family14h Address Map Configuration
+product AMD F14_DRAM	0x1702	Family14h DRAM Configuration
+product AMD F14_NB	0x1703	Family14h North Bridge Configuration
+product AMD F14_CSTATE	0x1704	Family14h CPU C-state Configuration
+product AMD F14_MISC	0x1716	Family14h Misc. Configuration
+product AMD F14_HB18	0x1718	Family14h Host Bridge
+product AMD F14_HB19	0x1719	Family14h Host Bridge
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD AM_1771_MBW	0x2003	Alchemy AM 1771 MBW
@@ -1100,8 +1110,13 @@ product ASUSTEK HFCPCI		0x0675	ISDN
 /* Attansic Technology Corp. */
 product ATTANSIC ETHERNET_L1E	0x1026	L1E Gigabit Ethernet Adapter
 product ATTANSIC ETHERNET_GIGA	0x1048	L1 Gigabit Ethernet Adapter
-product ATTANSIC AR8131		0x1063	Atheros AR8131 Gigabit Ethernet Adapter
+product ATTANSIC AR8132		0x1062	AR8132 Fast Ethernet Adapter
+product ATTANSIC AR8131		0x1063	AR8131 Gigabit Ethernet Adapter
+product ATTANSIC AR8151		0x1073	AR8151 v1.0 Gigabit Ethernet Adapter
+product ATTANSIC AR8151_V2	0x1083	AR8151 v2.0 Gigabit Ethernet Adapter
 product ATTANSIC ETHERNET_100	0x2048	L2 100 Mbit Ethernet Adapter
+product ATTANSIC AR8152_B	0x2060	AR8152 v1.1 Fast Ethernet Adapter
+product ATTANSIC AR8152_B2	0x2062	AR8152 v2.0 Fast Ethernet Adapter
 
 /* ATI products */
 /* See http://www.x.org/wiki/Radeon%20ASICs */
@@ -1399,10 +1414,11 @@ product ATI RS690_PPB_7913	0x7913	RS690 PCI to PCI-Express Port 0 Bridge
 product ATI RS690_PPB_7915	0x7915	RS690 PCI to PCI-Express Port 1 Bridge
 product ATI RS690_PPB_7916	0x7916	RS690 PCI to PCI-Express Port 2 Bridge
 product ATI RS690_PPB_7917	0x7917	RS690 PCI to PCI-Express Port 3 Bridge
+product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
 product ATI RADEON_HD4250_S	0x95C5	Radeon HD4250 GPU (RV610) Secondary
 product ATI RADEON_HD4200	0x9712	Radeon HD4200 Mobility
 product ATI RADEON_HD4250	0x9715	Radeon HD4250 GPU (RS880)
-product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
+product ATI RADEON_HD6310	0x9802	Radeon HD6310 Graphics
 product ATI RADEON_HD2600_HD	0xaa08	Radeon HD2600 HD Audio Controller
 product ATI RADEON_HD5600_HDMI	0xaa60	Redwood HDMI Audio
 
@@ -2668,6 +2684,7 @@ product INTEL 82945GME_HB	0x27ac	82945GME Host Bridge
 product INTEL 82945GME_IGD	0x27ae	82945GME Integrated Graphics Device
 product INTEL 82801G_LPC	0x27b8	82801GB/GR LPC Interface Bridge
 product INTEL 82801GBM_LPC	0x27b9	82801GBM LPC Interface Bridge
+product INTEL NM10_LPC		0x27bc	NM10 Family LPC Interface Bridge
 product INTEL 82801GHM_LPC	0x27bd	82801GHM LPC Interface Bridge
 product INTEL 82801G_SATA	0x27c0	82801GB/GR SATA Controller
 product INTEL 82801G_SATA_AHCI	0x27c1	82801GB/GR AHCI SATA Controller
@@ -2796,7 +2813,9 @@ product INTEL 82GM45_IGD_1	0x2a43	82GM45 Integrated Graphics Device
 product INTEL 82IGD_E_HB	0x2e00	82IGD_E Host Bridge
 product INTEL 82IGD_E_IGD	0x2e02	82IGD_E Integrated Graphics
 product INTEL 82Q45_HB		0x2e10	82Q45 Host Bridge
+product INTEL 82Q45_EXP		0x2e11	82Q45 PCI Express Bridge
 product INTEL 82Q45_IGD		0x2e12	82Q45 Integrated Graphics Device
+product INTEL 82Q45_IGD_1	0x2e13	82Q45 Integrated Graphics Device
 product INTEL 82G45_HB		0x2e20	82G45 Host Bridge
 product INTEL 82G45_IGD		0x2e22	82G45 Integrated Graphics Device
 product INTEL 82G41_HB		0x2e30	82G41 Host Bridge
@@ -3348,8 +3367,11 @@ product NETMOS NM9820	0x9820	Single UART
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer Port
 product NETMOS NM9845	0x9845	Quad UART and 1284 Printer Port
 product NETMOS NM9855	0x9855	9855 Quad UART and 1284 Printer Port
+product NETMOS NM9865	0x9865	9865 Quad UART and 1284 Printer Port
 product NETMOS MCS9990	0x9990	MCS9990 Quad USB 2.0 Port
 product NETMOS NM9901	0x9901	Dual PCI-E UART
+product NETMOS NM9904	0x9904	Quad PCI-E UART
+product NETMOS NM9922	0x9922	Dual PCI-E UART
 
 /* Network Security Technologies */
 product NETSEC 7751		0x7751	7751
@@ -3880,6 +3902,7 @@ product	RALINK	RT2560		0x0201	RT2560 802.11b/g
 product	RALINK	RT2561S		0x0301	RT2561S 802.11b/g
 product	RALINK	RT2561		0x0302	RT2561 802.11b/g
 product	RALINK	RT2661		0x0401	RT2661 802.11b/g/n
+product	RALINK	RT3090		0x3090	RT3090 802.11b/g/n
 
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
@@ -3898,6 +3921,7 @@ product REALTEK RT8139		0x8139	8139 10/100 Ethernet
 product REALTEK RT8169SC	0x8167	8169SC/8110SC 10/100/1000 Ethernet
 product REALTEK RT8168		0x8168	8168/8111 10/100/1000 Ethernet
 product REALTEK RT8169		0x8169	8169/8110 10/100/1000 Ethernet
+product REALTEK RTL8188CE	0x8176	RTL8188CE Wireless LAN 802.11n PCI-E NIC
 product REALTEK RT8180		0x8180	8180 802.11b
 product REALTEK RT8185		0x8185	8185 802.11a/b/g
 

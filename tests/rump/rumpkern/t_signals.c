@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signals.c,v 1.1 2011/01/14 13:08:00 pooka Exp $	*/
+/*	$NetBSD: t_signals.c,v 1.1.2.1 2011/03/05 15:10:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@ ATF_TC_BODY(sigignore, tc)
 ATF_TC_BODY(sigpanic, tc)
 {
 	int status;
+
+	rump_boot_setsigmodel(RUMP_SIGMODEL_PANIC);
 
 	switch (fork()) {
 	case 0:

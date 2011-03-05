@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2011/01/14 02:06:32 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.255.4.1 2011/03/05 15:10:06 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.4.1 2011/03/05 15:10:06 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -240,7 +240,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%tstate: (retain icc and xcc and cwp bits)
-	 *	%g1: address of p->p_psstr (used by crt0)
+	 *	%g1: p->p_psstrp (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
 #ifdef __arch64__
@@ -275,7 +275,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	}
 	memset(tf, 0, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (vaddr_t)l->l_proc->p_psstr;
+	tf->tf_global[1] = l->l_proc->p_psstrp;
 	/* %g4 needs to point to the start of the data segment */
 	tf->tf_global[4] = 0; 
 	tf->tf_pc = pack->ep_entry & ~3;

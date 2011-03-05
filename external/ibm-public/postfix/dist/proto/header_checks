@@ -10,6 +10,13 @@
 #	\fBnested_header_checks = pcre:/etc/postfix/nested_header_checks\fR
 #	\fBbody_checks = pcre:/etc/postfix/body_checks\fR
 # .sp
+#	\fBmilter_header_checks = pcre:/etc/postfix/milter_header_checks\fR
+# .sp
+#	\fBsmtp_header_checks = pcre:/etc/postfix/smtp_header_checks\fR
+#	\fBsmtp_mime_header_checks = pcre:/etc/postfix/smtp_mime_header_checks\fR
+#	\fBsmtp_nested_header_checks = pcre:/etc/postfix/smtp_nested_header_checks\fR
+#	\fBsmtp_body_checks = pcre:/etc/postfix/smtp_body_checks\fR
+# .sp
 #	\fBpostmap -q "\fIstring\fB" pcre:/etc/postfix/\fIfilename\fR
 #	\fBpostmap -q - pcre:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
 # .fi
@@ -26,6 +33,10 @@
 #	the matching process is repeated for the next message header or
 #	message body line.
 #
+#	Note: message headers are examined one logical header at a time,
+#	even when a message header spans multiple lines. Body lines are
+#	always examined one line at a time.
+#
 #	For examples, see the EXAMPLES section at the end of this
 #	manual page.
 #
@@ -33,9 +44,12 @@
 #	from worms or viruses; they do not decode attachments, and they do
 #	not unzip archives. See the documents referenced below in the README
 #	FILES section if you need more sophisticated content analysis.
-#
-#	Postfix supports four built-in content inspection classes:
-# .IP \fBheader_checks\fR
+# FILTERS WHILE RECEIVING MAIL
+# .ad
+# .fi
+#	Postfix implements the following four built-in content
+#	inspection classes while receiving mail:
+# .IP "\fBheader_checks\fR (default: empty)"
 #	These are applied to initial message headers (except for
 #	the headers that are processed with \fBmime_header_checks\fR).
 # .IP "\fBmime_header_checks\fR (default: \fB$header_checks\fR)"
@@ -54,10 +68,26 @@
 # .sp
 #	With Postfix versions before 2.0, all content after the initial
 #	message headers is treated as body content.
-# .PP
-#	Note: message headers are examined one logical header at a time,
-#	even when a message header spans multiple lines. Body lines are
-#	always examined one line at a time.
+# FILTERS AFTER RECEIVING MAIL
+# .ad
+# .fi
+#	Postfix supports a subset of the built-in content inspection
+#	classes after the message is received:
+# .IP "\fBmilter_header_checks\fR (default: empty)"
+#	These are applied to headers that are added with Milter
+#	applications.
+# .sp
+#	This feature is available in Postfix 2.7 and later.
+# FILTERS WHILE DELIVERING MAIL
+# .ad
+# .fi
+#	Postfix supports all four content inspection classes while
+#	delivering mail via SMTP.
+# .IP "\fBsmtp_header_checks\fR (default: empty)"
+# .IP "\fBsmtp_mime_header_checks\fR (default: empty)"
+# .IP "\fBsmtp_nested_header_checks\fR (default: empty)"
+# .IP "\fBsmtp_body_checks\fR (default: empty)"
+#	These features are available in Postfix 2.5 and later.
 # COMPATIBILITY
 # .ad
 # .fi
@@ -170,6 +200,8 @@
 #	use the transport(5) table to direct mail to the discard(8) service.
 # .sp
 #	This feature is available in Postfix 2.0 and later.
+# .sp
+#	This feature is not supported with smtp header/body checks.
 # .IP \fBDUNNO\fR
 #	Pretend that the input line did not match any pattern, and inspect the
 #	next input line. This action can be used to shorten the table search.
@@ -209,6 +241,8 @@
 #	features.
 # .sp
 #	This feature is available in Postfix 2.0 and later.
+# .sp
+#	This feature is not supported with smtp header/body checks.
 # .IP "\fBHOLD \fIoptional text...\fR"
 #	Arrange for the message to be placed on the \fBhold\fR queue,
 #	and inspect the next input line.  The message remains on \fBhold\fR
@@ -228,9 +262,17 @@
 #	Note: this action affects all recipients of the message.
 # .sp
 #	This feature is available in Postfix 2.0 and later.
+# .sp
+#	This feature is not supported with smtp header/body checks.
 # .IP \fBIGNORE\fR
 #	Delete the current line from the input, and inspect
 #	the next input line.
+# .IP "\fBINFO \fIoptional text...\fR
+#	Log an "info:" record with the \fIoptional text...\fR (or
+#	log a generic text), and inspect the next input line. This
+#	action is useful for routine logging or for debugging.
+# .sp
+#	This feature is available in Postfix 2.8 and later.
 # .IP "\fBPREPEND \fItext...\fR"
 #	Prepend one line with the specified text, and inspect the next
 #	input line.
@@ -253,6 +295,8 @@
 # .RE
 # .IP
 #	This feature is available in Postfix 2.1 and later.
+# .sp
+#	This feature is not supported with milter_header_checks.
 # .IP "\fBREDIRECT \fIuser@domain\fR"
 #	Write a message redirection request to the queue file, and
 #	inspect the next input line. After the message is queued,
@@ -264,6 +308,8 @@
 #	fire, only the last one is executed.
 # .sp
 #	This feature is available in Postfix 2.1 and later.
+# .sp
+#	This feature is not supported with smtp header/body checks.
 # .IP "\fBREPLACE \fItext...\fR"
 #	Replace the current line with the specified text, and inspect the next
 #	input line.
@@ -294,9 +340,11 @@
 #	When no code is specified at the beginning of \fIoptional
 #	text...\fR, Postfix inserts a default enhanced status code of
 #	"5.7.1".
+# .sp
+#	This feature is not supported with smtp header/body checks.
 # .IP "\fBWARN \fIoptional text...\fR
-#	Log a warning with the \fIoptional text...\fR (or log a
-#	generic message), and inspect the next input line. This
+#	Log a "warning:" record with the \fIoptional text...\fR (or
+#	log a generic text), and inspect the next input line. This
 #	action is useful for debugging and for testing a pattern
 #	before applying more drastic actions.
 # BUGS

@@ -35,7 +35,8 @@ goes on and on like this:
     to=<yyyyyy@your.domain.here> proto=ESMTP helo=<zzzzzz>
 
 What you see are lots of "user unknown" errors with "from=<>". These are error
-reports from MAILER-DAEMONs elsewhere on the Internet.
+reports from MAILER-DAEMONs elsewhere on the Internet, about email that was
+sent with a false sender address in your domain.
 
 HHooww ddoo II bblloocckk bbaacckkssccaatttteerr mmaaiill ttoo rraannddoomm rreecciippiieenntt aaddddrreesssseess??
 
@@ -106,6 +107,7 @@ this:
         body_checks = pcre:/etc/postfix/body_checks
 
     /etc/postfix/header_checks:
+        # Do not indent the text between "if" and "endif".
         if /^Received:/
         /^Received: +from +(porcupine\.org) +/
             reject forged client name in Received: header: $1
@@ -120,6 +122,7 @@ this:
     	reject forged domain name in Message-ID: header: $1
 
     /etc/postfix/body_checks:
+        # Do not indent the text between "if" and "endif".
         if /^[> ]*Received:/
         /^[> ]*Received: +from +(porcupine\.org) /
             reject forged client name in Received: header: $1

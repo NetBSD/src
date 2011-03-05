@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.42.4.1 2011/02/08 19:29:35 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.42.4.2 2011/03/05 15:09:43 bouyer Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -30,15 +30,9 @@ makeoptions 	CPUFLAGS="-march=i686"
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
-# Enhanced SpeedStep Technology in the Pentium M
-options 	ENHANCED_SPEEDSTEP
-#options 	EST_FREQ_USERWRITE	# any user can set frequency
-
-# AMD PowerNow! K7
-options 	POWERNOW_K7
-
-# AMD PowerNow! and Cool`n'Quiet technology
-options 	POWERNOW_K8
+# CPU features
+est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 
 #options 	MTRR		# memory-type range register syscall support
 
@@ -76,6 +70,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
 #makeoptions 	DEBUG="-g"	# compile full symbol table
+options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI

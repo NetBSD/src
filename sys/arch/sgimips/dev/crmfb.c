@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.26 2008/07/30 17:24:27 tsutsui Exp $ */
+/* $NetBSD: crmfb.c,v 1.26.24.1 2011/03/05 15:10:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.26 2008/07/30 17:24:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.26.24.1 2011/03/05 15:10:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,9 +138,6 @@ struct crmfb_softc {
 	int			sc_mte_direction;
 	uint8_t			*sc_scratch;
 	paddr_t			sc_linear;
-	struct rasops_info	sc_rasops;
-	int 			sc_cells;
-	int			sc_current_cell;
 	int			sc_wsmode;
 
 	/* cursor stuff */
@@ -313,8 +310,6 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	    sc->sc_dev.dv_xname,
 	    sc->sc_fbsize, KERNADDR(sc->sc_dmai), KERNADDR(sc->sc_dma));
 
-	sc->sc_current_cell = 0;
-
 	crmfb_setup_video(sc, 8);
 	ri = &crmfb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
@@ -334,9 +329,10 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	crmfb_fill_rect(sc, 0, 0, sc->sc_width, sc->sc_height,
 	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
 
-	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
+	consdev = arcbios_GetEnvironmentVariable("ConsoleOut");
 	if (consdev != NULL && strcmp(consdev, "video()") == 0) {
 		wsdisplay_cnattach(&crmfb_defaultscreen, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&crmfb_console_screen);
 		aa.console = 1;
 	} else
 		aa.console = 0;
@@ -548,16 +544,6 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);
 	ri->ri_hw = scr;
-
-	/* now make a fake rasops_info for drawing into the scratch tile */
-	memcpy(&sc->sc_rasops, ri, sizeof(struct rasops_info));
-	sc->sc_rasops.ri_width = 512;	/* assume we're always in 8bit here */
-	sc->sc_rasops.ri_stride = 512;
-	sc->sc_rasops.ri_height = 128;
-	sc->sc_rasops.ri_xorigin = 0;
-	sc->sc_rasops.ri_yorigin = 0;
-	sc->sc_rasops.ri_bits = sc->sc_scratch;
-	sc->sc_cells = 512 / ri->ri_font->fontwidth;
 
 	ri->ri_ops.cursor    = crmfb_cursor;
 	ri->ri_ops.copyrows  = crmfb_copyrows;
@@ -898,7 +884,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 
 	/* turn off sync-on-green */
 
-	wantsync = ARCBIOS->GetEnvironmentVariable("SyncOnGreen");
+	wantsync = arcbios_GetEnvironmentVariable("SyncOnGreen");
 	if ( (wantsync != NULL) && (wantsync[0] == 'n') ) {
 		d = ( 1 << CRMFB_VT_FLAGS_SYNC_LOW_LSB) & 
 		    CRMFB_REG_MASK(CRMFB_VT_FLAGS_SYNC_LOW_MSB, 
@@ -1375,32 +1361,76 @@ crmfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct crmfb_softc *sc = scr->scr_cookie;
-	struct rasops_info *fri = &sc->sc_rasops;
-	int bg;
-	int x, y, wi, he, xs;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	uint32_t bg, fg;
+	int x, y, wi, he, i, uc;
+	uint8_t *fd8;
+	uint16_t *fd16;
+	void *fd;
 
-	wi = ri->ri_font->fontwidth;
-	he = ri->ri_font->fontheight;
+	wi = font->fontwidth;
+	he = font->fontheight;
 
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0xff];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xff];
+	uc = c - font->firstchar;
+	fd = (uint8_t *)font->data + uc * ri->ri_fontscale;
 	if (c == 0x20) {
 		crmfb_fill_rect(sc, x, y, wi, he, bg);
 	} else {
-		/*
-		 * we rotate over all available character cells in the scratch
-		 * tile. The idea is to have more cells than there's room for
-		 * drawing commands in the engine's pipeline so we don't have
-		 * to wait for the engine until we're done drawing the 
-		 * character and ready to blit it into place
-		 */
-		fri->ri_ops.putchar(fri, 0, sc->sc_current_cell, c, attr);
-		xs = sc->sc_current_cell * wi;
-		sc->sc_current_cell++;
-		if (sc->sc_current_cell >= sc->sc_cells)
-			sc->sc_current_cell = 0;
-		crmfb_bitblt(sc, xs, 2048-128, x, y, wi, he, 3);
+		crmfb_wait_idle(sc);
+		/* setup */
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_ROP, 3);
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_FG, fg);
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_BG, bg);
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_DRAWMODE,
+		    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK |
+		    DE_DRAWMODE_ROP | 
+		    DE_DRAWMODE_OPAQUE_STIP | DE_DRAWMODE_POLY_STIP);
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_PRIMITIVE,
+		    DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_STIPPLE_MODE,
+		    0x001f0000);
+		/* now let's feed the engine */
+		if (font->stride == 1) {
+			/* shovel in 8 bit quantities */
+			fd8 = fd;
+			for (i = 0; i < he; i++) {
+				/*
+				 * the pipeline should be long enough to
+				 * draw any character without having to wait
+				 */
+				bus_space_write_4(sc->sc_iot, sc->sc_reh, 
+				    CRIME_DE_STIPPLE_PAT, *fd8 << 24);
+				bus_space_write_4(sc->sc_iot, sc->sc_reh,
+				    CRIME_DE_X_VERTEX_0, (x << 16) | y);
+				bus_space_write_4(sc->sc_iot, sc->sc_reh,
+				    CRIME_DE_X_VERTEX_1 | CRIME_DE_START,
+				    ((x + wi) << 16) | y);
+				y++;
+				fd8++;
+			}
+		} else if (font->stride == 2) {
+			/* shovel in 16 bit quantities */
+			fd16 = fd;
+			for (i = 0; i < he; i++) {
+				/*
+				 * the pipeline should be long enough to
+				 * draw any character without having to wait
+				 */
+				bus_space_write_4(sc->sc_iot, sc->sc_reh, 
+				    CRIME_DE_STIPPLE_PAT, *fd16 << 16);
+				bus_space_write_4(sc->sc_iot, sc->sc_reh,
+				    CRIME_DE_X_VERTEX_0, (x << 16) | y);
+				bus_space_write_4(sc->sc_iot, sc->sc_reh,
+				    CRIME_DE_X_VERTEX_1 | CRIME_DE_START,
+				    ((x + wi) << 16) | y);
+				y++;
+				fd16++;
+			}
+		}
 	}
 }

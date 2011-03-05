@@ -3,13 +3,15 @@ SRCS	= tls_prng_dev.c tls_prng_egd.c tls_prng_file.c \
 	tls_prng_exch.c tls_stream.c tls_bio_ops.c tls_misc.c tls_dh.c \
 	tls_rsa.c tls_verify.c tls_certkey.c tls_session.c \
 	tls_client.c tls_server.c tls_scache.c tls_mgr.c tls_seed.c \
-	tls_level.c
+	tls_level.c \
+	tls_proxy_clnt.c tls_proxy_print.c tls_proxy_scan.c
 OBJS	= tls_prng_dev.o tls_prng_egd.o tls_prng_file.o \
 	tls_prng_exch.o tls_stream.o tls_bio_ops.o tls_misc.o tls_dh.o \
 	tls_rsa.o tls_verify.o tls_certkey.o tls_session.o \
 	tls_client.o tls_server.o tls_scache.o tls_mgr.o tls_seed.o \
-	tls_level.o
-HDRS	= tls.h tls_prng.h tls_scache.h tls_mgr.h
+	tls_level.o \
+	tls_proxy_clnt.o tls_proxy_print.o tls_proxy_scan.o
+HDRS	= tls.h tls_prng.h tls_scache.h tls_mgr.h tls_proxy.h
 TESTSRC	= 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -112,6 +114,7 @@ tls_certkey.o: ../../include/vstring.h
 tls_certkey.o: tls.h
 tls_certkey.o: tls_certkey.c
 tls_client.o: ../../include/argv.h
+tls_client.o: ../../include/iostuff.h
 tls_client.o: ../../include/mail_params.h
 tls_client.o: ../../include/msg.h
 tls_client.o: ../../include/mymalloc.h
@@ -199,6 +202,50 @@ tls_prng_file.o: ../../include/mymalloc.h
 tls_prng_file.o: ../../include/sys_defs.h
 tls_prng_file.o: tls_prng.h
 tls_prng_file.o: tls_prng_file.c
+tls_proxy_clnt.o: ../../include/argv.h
+tls_proxy_clnt.o: ../../include/attr.h
+tls_proxy_clnt.o: ../../include/connect.h
+tls_proxy_clnt.o: ../../include/iostuff.h
+tls_proxy_clnt.o: ../../include/mail_params.h
+tls_proxy_clnt.o: ../../include/mail_proto.h
+tls_proxy_clnt.o: ../../include/msg.h
+tls_proxy_clnt.o: ../../include/mymalloc.h
+tls_proxy_clnt.o: ../../include/name_code.h
+tls_proxy_clnt.o: ../../include/name_mask.h
+tls_proxy_clnt.o: ../../include/stringops.h
+tls_proxy_clnt.o: ../../include/sys_defs.h
+tls_proxy_clnt.o: ../../include/vbuf.h
+tls_proxy_clnt.o: ../../include/vstream.h
+tls_proxy_clnt.o: ../../include/vstring.h
+tls_proxy_clnt.o: tls.h
+tls_proxy_clnt.o: tls_proxy.h
+tls_proxy_clnt.o: tls_proxy_clnt.c
+tls_proxy_print.o: ../../include/argv.h
+tls_proxy_print.o: ../../include/attr.h
+tls_proxy_print.o: ../../include/iostuff.h
+tls_proxy_print.o: ../../include/mail_proto.h
+tls_proxy_print.o: ../../include/name_code.h
+tls_proxy_print.o: ../../include/name_mask.h
+tls_proxy_print.o: ../../include/sys_defs.h
+tls_proxy_print.o: ../../include/vbuf.h
+tls_proxy_print.o: ../../include/vstream.h
+tls_proxy_print.o: ../../include/vstring.h
+tls_proxy_print.o: tls.h
+tls_proxy_print.o: tls_proxy.h
+tls_proxy_print.o: tls_proxy_print.c
+tls_proxy_scan.o: ../../include/argv.h
+tls_proxy_scan.o: ../../include/attr.h
+tls_proxy_scan.o: ../../include/iostuff.h
+tls_proxy_scan.o: ../../include/mail_proto.h
+tls_proxy_scan.o: ../../include/name_code.h
+tls_proxy_scan.o: ../../include/name_mask.h
+tls_proxy_scan.o: ../../include/sys_defs.h
+tls_proxy_scan.o: ../../include/vbuf.h
+tls_proxy_scan.o: ../../include/vstream.h
+tls_proxy_scan.o: ../../include/vstring.h
+tls_proxy_scan.o: tls.h
+tls_proxy_scan.o: tls_proxy.h
+tls_proxy_scan.o: tls_proxy_scan.c
 tls_rsa.o: ../../include/argv.h
 tls_rsa.o: ../../include/name_code.h
 tls_rsa.o: ../../include/name_mask.h
@@ -235,6 +282,7 @@ tls_seed.o: tls_seed.c
 tls_server.o: ../../include/argv.h
 tls_server.o: ../../include/dict.h
 tls_server.o: ../../include/hex_code.h
+tls_server.o: ../../include/iostuff.h
 tls_server.o: ../../include/mail_params.h
 tls_server.o: ../../include/msg.h
 tls_server.o: ../../include/mymalloc.h

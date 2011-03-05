@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2000/03/20 21:24:54 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.2.164.1 2011/03/05 15:09:54 bouyer Exp $
 
-SUBDIR= bootelf bootcoff
+SUBDIR= bootelf bootcoff boot
 
 .include <bsd.subdir.mk>

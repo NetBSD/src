@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_expand.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: mac_expand.h,v 1.1.1.1.6.1 2011/03/05 15:09:05 bouyer Exp $	*/
 
 #ifndef _MAC_EXPAND_H_INCLUDED_
 #define _MAC_EXPAND_H_INCLUDED_
@@ -24,6 +24,7 @@
   */
 #define MAC_EXP_FLAG_NONE	(0)
 #define MAC_EXP_FLAG_RECURSE	(1<<0)
+#define MAC_EXP_FLAG_APPEND	(1<<1)
 
  /*
   * Real lookup or just a test?
