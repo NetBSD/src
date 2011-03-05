@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.31.4.1 2010/07/03 01:19:10 rmind Exp $ */
+/* $NetBSD: db_interface.c,v 1.31.4.2 2011/03/05 20:49:09 rmind Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,14 +52,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.31.4.1 2010/07/03 01:19:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.31.4.2 2011/03/05 20:49:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

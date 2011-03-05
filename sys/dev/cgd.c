@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.70.2.1 2010/03/16 15:38:05 rmind Exp $ */
+/* $NetBSD: cgd.c,v 1.70.2.2 2011/03/05 20:52:59 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.70.2.1 2010/03/16 15:38:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.70.2.2 2011/03/05 20:52:59 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.70.2.1 2010/03/16 15:38:05 rmind Exp $");
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
+#include <sys/namei.h> /* for pathbuf */
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
@@ -579,11 +580,20 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	size_t	 i;
 	size_t	 keybytes;			/* key length in bytes */
 	const char *cp;
+	struct pathbuf *pb;
 	char	 *inbuf;
 
 	cp = ci->ci_disk;
-	if ((ret = dk_lookup(cp, l, &vp, UIO_USERSPACE)) != 0)
+
+	ret = pathbuf_copyin(ci->ci_disk, &pb);
+	if (ret != 0) {
 		return ret;
+	}
+	ret = dk_lookup(pb, l, &vp);
+	pathbuf_destroy(pb);
+	if (ret != 0) {
+		return ret;
+	}
 
 	inbuf = malloc(MAX_KEYSIZE, M_TEMP, M_WAITOK);
 

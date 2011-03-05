@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.105.2.4 2010/07/02 02:09:54 rmind Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.105.2.5 2011/03/05 20:56:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -17,12 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and
- *      its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -127,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105.2.4 2010/07/02 02:09:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105.2.5 2011/03/05 20:56:36 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -588,7 +583,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	loopva = kva;
 	loopsize = size;
 
-	pgaflags = 0;
+	pgaflags = UVM_FLAG_COLORMATCH;
 	if (flags & UVM_KMF_NOWAIT)
 		pgaflags |= UVM_PGA_USERESERVE;
 	if (flags & UVM_KMF_ZERO)
@@ -599,7 +594,13 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	while (loopsize) {
 		KASSERT(!pmap_extract(pmap_kernel(), loopva, NULL));
 
-		pg = uvm_pagealloc(NULL, offset, NULL, pgaflags);
+		pg = uvm_pagealloc_strat(NULL, offset, NULL, pgaflags,
+#ifdef UVM_KM_VMFREELIST
+		   UVM_PGA_STRAT_ONLY, UVM_KM_VMFREELIST
+#else
+		   UVM_PGA_STRAT_NORMAL, 0
+#endif
+		   );
 
 		/*
 		 * out of memory?
@@ -736,8 +737,13 @@ uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 	struct vm_page *pg;
 	vaddr_t va;
 
+
  again:
+#ifdef PMAP_ALLOC_POOLPAGE
+	pg = PMAP_ALLOC_POOLPAGE(waitok ? 0 : UVM_PGA_USERESERVE);
+#else
 	pg = uvm_pagealloc(NULL, 0, NULL, waitok ? 0 : UVM_PGA_USERESERVE);
+#endif
 	if (__predict_false(pg == NULL)) {
 		if (waitok) {
 			uvm_wait("plpg");

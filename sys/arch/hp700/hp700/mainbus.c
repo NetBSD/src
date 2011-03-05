@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.62.2.2 2010/07/03 01:19:18 rmind Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.62.2.3 2011/03/05 20:50:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.62.2.2 2010/07/03 01:19:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.62.2.3 2011/03/05 20:50:28 rmind Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.62.2.2 2010/07/03 01:19:18 rmind Exp $
 #include <sys/reboot.h>
 #include <sys/extent.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_page.h>
 #include <uvm/uvm.h>
@@ -82,10 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.62.2.2 2010/07/03 01:19:18 rmind Exp $
 #include <hp700/hp700/intr.h>
 #include <hp700/dev/cpudevs.h>
 
-static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 #if NLCD > 0
-static struct pdc_chassis_info pdc_chassis_info PDC_ALIGNMENT;
-static struct pdc_chassis_lcd pdc_chassis_lcd PDC_ALIGNMENT;
+static struct pdc_chassis_info pdc_chassis_info;
 #endif
 
 #ifdef MBUSDEBUG
@@ -1183,7 +1182,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 			size -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (0);
 }
 
@@ -1334,22 +1333,24 @@ mbmatch(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static void
+static device_t
 mb_module_callback(device_t self, struct confargs *ca)
 {
 	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
-		return;
-	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+		return NULL;
+
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }
 
-static void
+static device_t
 mb_cpu_mem_callback(device_t self, struct confargs *ca)
 {
-	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
-	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY))
-		config_found_sm_loc(self, "gedoens", NULL, ca, mbprint,
-		    mbsubmatch);
+	if ((ca->ca_type.iodc_type != HPPA_TYPE_NPROC &&
+	     ca->ca_type.iodc_type != HPPA_TYPE_MEMORY))
+		return NULL;
+
+	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }
 
 void
@@ -1358,15 +1359,10 @@ mbattach(device_t parent, device_t self, void *aux)
 	struct mainbus_softc *sc = device_private(self);
 	struct confargs nca;
 	bus_space_handle_t ioh;
-	hppa_hpa_t hpabase;
+	int err;
 
 	sc->sc_dv = self;
-
 	mb_attached = 1;
-
-	/* fetch the "default" cpu hpa */
-	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)
-		panic("mbattach: PDC_HPA failed");
 
 	/*
 	 * Map all of Fixed Physical, Local Broadcast, and Global Broadcast
@@ -1374,20 +1370,24 @@ mbattach(device_t parent, device_t self, void *aux)
 	 * end of the address space.
 	 */
 	/*
-	 * XXX fredette - this may be a copout, or it may
- 	 * be a great idea.  I'm not sure which yet.
+	 * XXX fredette - this may be a copout, or it may be a great idea.  I'm
+	 * not sure which yet.
 	 */
-	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa, 0 - pdc_hpa.hpa, 0, &ioh))
-		panic("mbattach: can't map mainbus IO space");
+
+	/* map all the way till the end of the memory */
+	if (bus_space_map(&hppa_bustag, hppa_mcpuhpa, (~0LU - hppa_mcpuhpa + 1),
+	    0, &ioh))
+		panic("%s: cannot map mainbus IO space", __func__);
 
 	/*
 	 * Local-Broadcast the HPA to all modules on the bus
 	 */
-	((struct iomod *)(pdc_hpa.hpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
-		(void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
+	((struct iomod *)(hppa_mcpuhpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
+		(void *)((hppa_mcpuhpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
-	sc->sc_hpa = pdc_hpa.hpa;
-	aprint_normal(" [flex %lx]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
+	sc->sc_hpa = hppa_mcpuhpa;
+
+	aprint_normal(" [flex %lx]\n", hppa_mcpuhpa & HPPA_FLEX_MASK);
 
 	/* PDC first */
 	memset(&nca, 0, sizeof(nca));
@@ -1401,66 +1401,34 @@ mbattach(device_t parent, device_t self, void *aux)
 	/* get some power */
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "power";
-	nca.ca_irq = -1;
+	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
 	config_found(self, &nca, mbprint);
 #endif
 
 #if NLCD > 0
-	if (!pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_INFO,
-	    &pdc_chassis_info, &pdc_chassis_lcd, sizeof(pdc_chassis_lcd)) &&
-	    pdc_chassis_lcd.enabled) {
-		memset(&nca, 0, sizeof(nca));
+	memset(&nca, 0, sizeof(nca));
+	err = pdcproc_chassis_info(&pdc_chassis_info, &nca.ca_pcl);
+	if (!err && nca.ca_pcl.enabled) {
 		nca.ca_name = "lcd";
 		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
 		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 		nca.ca_dp.dp_mod = -1;
-		nca.ca_irq = -1;
+		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_iot = &hppa_bustag;
-		nca.ca_hpa = pdc_chassis_lcd.cmd_addr;
-		nca.ca_pdc_iodc_read = (void *)&pdc_chassis_lcd;
+		nca.ca_hpa = nca.ca_pcl.cmd_addr;
 
 		config_found(self, &nca, mbprint);
 	}
 #endif	
 
-	switch (cpu_hvers) {
-	case HPPA_BOARD_HP809:
-	case HPPA_BOARD_HP819:
-	case HPPA_BOARD_HP829:
-	case HPPA_BOARD_HP839:
-	case HPPA_BOARD_HP849:
-	case HPPA_BOARD_HP859:
-	case HPPA_BOARD_HP869:
-#if 0
-	case HPPA_BOARD_HP770_J200:
-	case HPPA_BOARD_HP770_J210:
-	case HPPA_BOARD_HP770_J210XC:
-	case HPPA_BOARD_HP780_J282:
-	case HPPA_BOARD_HP782_J2240:
-#endif
-	case HPPA_BOARD_HP780_C160:
-	case HPPA_BOARD_HP780_C180P:
-	case HPPA_BOARD_HP780_C180XP:
-	case HPPA_BOARD_HP780_C200:
-	case HPPA_BOARD_HP780_C230:
-	case HPPA_BOARD_HP780_C240:
-	case HPPA_BOARD_HP785_C360:
-
-	case HPPA_BOARD_HP800D:
-	case HPPA_BOARD_HP821:
-		hpabase = HPPA_FPA;
-		break;
-	default:
-		hpabase = 0;
-		break;
-	}
+	hppa_modules_scan();
 
 	/* Search and attach all CPUs and memory controllers. */
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
-	nca.ca_hpabase = hpabase;
+	nca.ca_hpabase = HPPA_FPA;	/* Central bus */
 	nca.ca_nmodules = MAXMODBUS;
 	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
@@ -1474,7 +1442,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
-	nca.ca_hpabase = hpabase;
+	nca.ca_hpabase = 0;		/* Central bus already walked above */
 	nca.ca_nmodules = MAXMODBUS;
 	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
@@ -1483,6 +1451,8 @@ mbattach(device_t parent, device_t self, void *aux)
 	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 	nca.ca_dp.dp_mod = -1;
 	pdc_scanbus(self, &nca, mb_module_callback);
+
+	hppa_modules_done();
 }
 
 /*

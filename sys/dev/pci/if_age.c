@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.37.2.1 2010/05/30 05:17:32 rmind Exp $ */
+/*	$NetBSD: if_age.c,v 1.37.2.2 2011/03/05 20:53:37 rmind Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.37.2.1 2010/05/30 05:17:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.37.2.2 2011/03/05 20:53:37 rmind Exp $");
 
 #include "vlan.h"
 
@@ -2235,7 +2235,7 @@ age_rxvlan(struct age_softc *sc)
 
 	reg = CSR_READ_4(sc, AGE_MAC_CFG);
 	reg &= ~MAC_CFG_VLAN_TAG_STRIP;
-	if (sc->sc_ec.ec_capabilities & ETHERCAP_VLAN_HWTAGGING)
+	if (sc->sc_ec.ec_capenable & ETHERCAP_VLAN_HWTAGGING)
 		reg |= MAC_CFG_VLAN_TAG_STRIP;
 	CSR_WRITE_4(sc, AGE_MAC_CFG, reg);
 }

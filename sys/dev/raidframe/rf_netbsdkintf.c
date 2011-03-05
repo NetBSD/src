@@ -1,4 +1,5 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.273 2010/03/14 21:11:41 jld Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.273.2.1 2011/03/05 20:54:03 rmind Exp $	*/
+
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,6 +30,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *      The Regents of the University of California.  All rights reserved.
  *
@@ -45,46 +47,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: cd.c 1.6 90/11/28$
- *
- *      @(#)cd.c        8.2 (Berkeley) 11/16/93
- */
-
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -139,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.273 2010/03/14 21:11:41 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.273.2.1 2011/03/05 20:54:03 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -227,10 +189,10 @@ static int raidread_component_area(dev_t, struct vnode *, void *, size_t,
 static int raidwrite_component_area(dev_t, struct vnode *, void *, size_t,
     daddr_t, daddr_t, int);
 
-static int raidwrite_component_label(dev_t, struct vnode *,
-    RF_ComponentLabel_t *);
-static int raidread_component_label(dev_t, struct vnode *,
-    RF_ComponentLabel_t *);
+static int raidwrite_component_label(unsigned,
+    dev_t, struct vnode *, RF_ComponentLabel_t *);
+static int raidread_component_label(unsigned,
+    dev_t, struct vnode *, RF_ComponentLabel_t *);
 
 
 dev_type_open(raidopen);
@@ -341,6 +303,7 @@ void rf_release_all_vps(RF_ConfigSet_t *);
 void rf_cleanup_config_set(RF_ConfigSet_t *);
 int rf_have_enough_components(RF_ConfigSet_t *);
 int rf_auto_config_set(RF_ConfigSet_t *, int *);
+static void rf_fix_old_label_size(RF_ComponentLabel_t *, uint64_t);
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  allow autoconfig to take place.
@@ -385,7 +348,7 @@ raidattach(int num)
 		raidPtrs[i] = NULL;
 	rc = rf_BootRaidframe();
 	if (rc == 0)
-		aprint_normal("Kernelized RAIDframe activated\n");
+		aprint_verbose("Kernelized RAIDframe activated\n");
 	else
 		panic("Serious error booting RAID!!");
 
@@ -992,6 +955,7 @@ raid_detach_unlocked(struct raid_softc *rs)
 		rs->sc_flags &= ~(RAIDF_INITED|RAIDF_SHUTDOWN);
 
 	/* Detach the disk. */
+	dkwedge_delall(&rs->sc_dkdev);
 	disk_detach(&rs->sc_dkdev);
 	disk_destroy(&rs->sc_dkdev);
 
@@ -1033,8 +997,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	rs = &raid_softc[unit];
 	raidPtr = raidPtrs[unit];
 
-	db1_printf(("raidioctl: %d %d %d %d\n", (int) dev,
-		(int) DISKPART(dev), (int) unit, (int) cmd));
+	db1_printf(("raidioctl: %d %d %d %lu\n", (int) dev,
+		(int) DISKPART(dev), (int) unit, cmd));
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
@@ -1186,7 +1150,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 *  there is no stale data left in the case of a
 		 *  reconfiguration
 		 */
-		memset((char *) raidPtr, 0, sizeof(RF_Raid_t));
+		memset(raidPtr, 0, sizeof(*raidPtr));
 		raidPtr->raidid = unit;
 
 		retcode = rf_Configure(raidPtr, k_cfg, NULL);
@@ -1252,11 +1216,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		RF_Malloc(clabel, sizeof(*clabel), (RF_ComponentLabel_t *));
 
-		retcode = copyin( *clabel_ptr, clabel,
-				  sizeof(RF_ComponentLabel_t));
+		retcode = copyin(*clabel_ptr, clabel, sizeof(*clabel));
 
 		if (retcode) {
-			return(retcode);
+			RF_Free(clabel, sizeof(*clabel));
+			return retcode;
 		}
 
 		clabel->row = 0; /* Don't allow looking at anything else.*/
@@ -1264,19 +1228,16 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		column = clabel->column;
 
 		if ((column < 0) || (column >= raidPtr->numCol +
-				     raidPtr->numSpare)) {
-			return(EINVAL);
+		    raidPtr->numSpare)) {
+			RF_Free(clabel, sizeof(*clabel));
+			return EINVAL;
 		}
 
 		RF_Free(clabel, sizeof(*clabel));
 
 		clabel = raidget_component_label(raidPtr, column);
 
-		if (retcode == 0) {
-			retcode = copyout(clabel, *clabel_ptr,
-					  sizeof(RF_ComponentLabel_t));
-		}
-		return (retcode);
+		return copyout(clabel, *clabel_ptr, sizeof(**clabel_ptr));
 
 #if 0
 	case RAIDFRAME_SET_COMPONENT_LABEL:
@@ -1338,8 +1299,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				ci_label->serial_number = 
 				    raidPtr->serial_number;
 				ci_label->row = 0; /* we dont' pretend to support more */
-				ci_label->partitionSize =
-				    diskPtr->partitionSize;
+				rf_component_label_set_partitionsize(ci_label,
+				    diskPtr->partitionSize);
 				ci_label->column = column;
 				raidflush_component_label(raidPtr, column);
 			}
@@ -1936,6 +1897,7 @@ raidinit(RF_Raid_t *raidPtr)
 
 	disk_init(&rs->sc_dkdev, rs->sc_xname, &rf_dkdriver);
 	disk_attach(&rs->sc_dkdev);
+	disk_blocksize(&rs->sc_dkdev, raidPtr->bytesPerSector);
 
 	/* XXX There may be a weird interaction here between this, and
 	 * protectedSectors, as used in RAIDframe.  */
@@ -2031,7 +1993,7 @@ raidstart(RF_Raid_t *raidPtr)
 		 * partition.. Need to make it absolute to the underlying
 		 * device.. */
 
-		blocknum = bp->b_blkno;
+		blocknum = bp->b_blkno << DEV_BSHIFT >> raidPtr->logBytesPerSector;
 		if (DISKPART(bp->b_dev) != RAW_PART) {
 			pp = &rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
 			blocknum += pp->p_offset;
@@ -2283,7 +2245,7 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	bp->b_error = 0;
 	bp->b_dev = dev;
 	bp->b_data = bf;
-	bp->b_blkno = startSect;
+	bp->b_blkno = startSect << logBytesPerSector >> DEV_BSHIFT;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
 	if (bp->b_bcount == 0) {
 		panic("bp->b_bcount is zero in InitBP!!");
@@ -2440,9 +2402,56 @@ raidunlock(struct raid_softc *rs)
 
 #define RF_COMPONENT_INFO_OFFSET  16384 /* bytes */
 #define RF_COMPONENT_INFO_SIZE     1024 /* bytes */
-#define RF_PARITY_MAP_OFFSET \
-	(RF_COMPONENT_INFO_OFFSET + RF_COMPONENT_INFO_SIZE)
 #define RF_PARITY_MAP_SIZE   RF_PARITYMAP_NBYTE
+
+static daddr_t
+rf_component_info_offset(void)
+{
+
+	return RF_COMPONENT_INFO_OFFSET;
+}
+
+static daddr_t
+rf_component_info_size(unsigned secsize)
+{
+	daddr_t info_size;
+
+	KASSERT(secsize);
+	if (secsize > RF_COMPONENT_INFO_SIZE)
+		info_size = secsize;
+	else
+		info_size = RF_COMPONENT_INFO_SIZE;
+
+	return info_size;
+}
+
+static daddr_t
+rf_parity_map_offset(RF_Raid_t *raidPtr)
+{
+	daddr_t map_offset;
+
+	KASSERT(raidPtr->bytesPerSector);
+	if (raidPtr->bytesPerSector > RF_COMPONENT_INFO_SIZE)
+		map_offset = raidPtr->bytesPerSector;
+	else
+		map_offset = RF_COMPONENT_INFO_SIZE;
+	map_offset += rf_component_info_offset();
+
+	return map_offset;
+}
+
+static daddr_t
+rf_parity_map_size(RF_Raid_t *raidPtr)
+{
+	daddr_t map_size;
+
+	if (raidPtr->bytesPerSector > RF_PARITY_MAP_SIZE)
+		map_size = raidPtr->bytesPerSector;
+	else
+		map_size = RF_PARITY_MAP_SIZE;
+
+	return map_size;
+}
 
 int
 raidmarkclean(RF_Raid_t *raidPtr, RF_RowCol_t col)
@@ -2470,7 +2479,9 @@ raidmarkdirty(RF_Raid_t *raidPtr, RF_RowCol_t col)
 int
 raidfetch_component_label(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
-	return raidread_component_label(raidPtr->Disks[col].dev,
+	KASSERT(raidPtr->bytesPerSector);
+	return raidread_component_label(raidPtr->bytesPerSector,
+	    raidPtr->Disks[col].dev,
 	    raidPtr->raid_cinfo[col].ci_vp, 
 	    &raidPtr->raid_cinfo[col].ci_label);
 }
@@ -2491,18 +2502,20 @@ raidflush_component_label(RF_Raid_t *raidPtr, RF_RowCol_t col)
 #ifndef RF_NO_PARITY_MAP
 	label->parity_map_modcount = label->mod_counter;
 #endif
-	return raidwrite_component_label(raidPtr->Disks[col].dev,
+	return raidwrite_component_label(raidPtr->bytesPerSector,
+	    raidPtr->Disks[col].dev,
 	    raidPtr->raid_cinfo[col].ci_vp, label);
 }
 
 
 static int
-raidread_component_label(dev_t dev, struct vnode *b_vp,
+raidread_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
     RF_ComponentLabel_t *clabel)
 {
 	return raidread_component_area(dev, b_vp, clabel, 
 	    sizeof(RF_ComponentLabel_t),
-	    RF_COMPONENT_INFO_OFFSET, RF_COMPONENT_INFO_SIZE);
+	    rf_component_info_offset(),
+	    rf_component_info_size(secsize));
 }
 
 /* ARGSUSED */
@@ -2550,12 +2563,13 @@ raidread_component_area(dev_t dev, struct vnode *b_vp, void *data,
 
 
 static int
-raidwrite_component_label(dev_t dev, struct vnode *b_vp,
-	RF_ComponentLabel_t *clabel)
+raidwrite_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
+    RF_ComponentLabel_t *clabel)
 {
 	return raidwrite_component_area(dev, b_vp, clabel,
 	    sizeof(RF_ComponentLabel_t),
-	    RF_COMPONENT_INFO_OFFSET, RF_COMPONENT_INFO_SIZE, 0);
+	    rf_component_info_offset(),
+	    rf_component_info_size(secsize), 0);
 }
 
 /* ARGSUSED */
@@ -2610,7 +2624,8 @@ rf_paritymap_kern_write(RF_Raid_t *raidPtr, struct rf_paritymap_ondisk *map)
 		raidwrite_component_area(raidPtr->Disks[c].dev,
 		    raidPtr->raid_cinfo[c].ci_vp, map,
 		    RF_PARITYMAP_NBYTE,
-		    RF_PARITY_MAP_OFFSET, RF_PARITY_MAP_SIZE, 0);
+		    rf_parity_map_offset(raidPtr),
+		    rf_parity_map_size(raidPtr), 0);
 	}
 }
 
@@ -2628,7 +2643,8 @@ rf_paritymap_kern_read(RF_Raid_t *raidPtr, struct rf_paritymap_ondisk *map)
 		raidread_component_area(raidPtr->Disks[c].dev,
 		    raidPtr->raid_cinfo[c].ci_vp, &tmp,
 		    RF_PARITYMAP_NBYTE,
-		    RF_PARITY_MAP_OFFSET, RF_PARITY_MAP_SIZE);
+		    rf_parity_map_offset(raidPtr),
+		    rf_parity_map_size(raidPtr));
 		if (first) {
 			memcpy(map, &tmp, sizeof(*map));
 			first = 0;
@@ -2853,7 +2869,8 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 	retcode = rf_RewriteParity(raidPtr);
 	splx(s);
 	if (retcode) {
-		printf("raid%d: Error re-writing parity!\n",raidPtr->raidid);
+		printf("raid%d: Error re-writing parity (%d)!\n",
+		    raidPtr->raidid, retcode);
 	} else {
 		/* set the clean bit!  If we shutdown correctly,
 		   the clean bit on each component label will get
@@ -2908,7 +2925,8 @@ rf_ReconstructInPlaceThread(struct rf_recon_req *req)
 
 static RF_AutoConfig_t *
 rf_get_component(RF_AutoConfig_t *ac_list, dev_t dev, struct vnode *vp,
-    const char *cname, RF_SectorCount_t size)
+    const char *cname, RF_SectorCount_t size, uint64_t numsecs,
+    unsigned secsize)
 {
 	int good_one = 0;
 	RF_ComponentLabel_t *clabel; 
@@ -2928,30 +2946,31 @@ oomem:
 		    return NULL; /* XXX probably should panic? */
 	}
 
-	if (!raidread_component_label(dev, vp, clabel)) {
-		    /* Got the label.  Does it look reasonable? */
-		    if (rf_reasonable_label(clabel) && 
-			(clabel->partitionSize <= size)) {
+	if (!raidread_component_label(secsize, dev, vp, clabel)) {
+		/* Got the label.  Does it look reasonable? */
+		if (rf_reasonable_label(clabel) && 
+		    (rf_component_label_partitionsize(clabel) <= size)) {
+			rf_fix_old_label_size(clabel, numsecs);
 #ifdef DEBUG
-			    printf("Component on: %s: %llu\n",
+			printf("Component on: %s: %llu\n",
 				cname, (unsigned long long)size);
-			    rf_print_component_label(clabel);
+			rf_print_component_label(clabel);
 #endif
-			    /* if it's reasonable, add it, else ignore it. */
-			    ac = malloc(sizeof(RF_AutoConfig_t), M_RAIDFRAME,
+			/* if it's reasonable, add it, else ignore it. */
+			ac = malloc(sizeof(RF_AutoConfig_t), M_RAIDFRAME,
 				M_NOWAIT);
-			    if (ac == NULL) {
-				    free(clabel, M_RAIDFRAME);
-				    goto oomem;
-			    }
-			    strlcpy(ac->devname, cname, sizeof(ac->devname));
-			    ac->dev = dev;
-			    ac->vp = vp;
-			    ac->clabel = clabel;
-			    ac->next = ac_list;
-			    ac_list = ac;
-			    good_one = 1;
-		    }
+			if (ac == NULL) {
+				free(clabel, M_RAIDFRAME);
+				goto oomem;
+			}
+			strlcpy(ac->devname, cname, sizeof(ac->devname));
+			ac->dev = dev;
+			ac->vp = vp;
+			ac->clabel = clabel;
+			ac->next = ac_list;
+			ac_list = ac;
+			good_one = 1;
+		}
 	}
 	if (!good_one) {
 		/* cleanup */
@@ -2975,7 +2994,8 @@ rf_find_raid_components(void)
 	int error;
 	int i;
 	RF_AutoConfig_t *ac_list;
-
+	uint64_t numsecs;
+	unsigned secsize;
 
 	/* initialize the AutoConfig list */
 	ac_list = NULL;
@@ -3035,6 +3055,11 @@ rf_find_raid_components(void)
 			continue;
 		}
 
+		error = getdisksize(vp, &numsecs, &secsize);
+		if (error) {
+			vput(vp);
+			continue;
+		}
 		if (wedge) {
 			struct dkwedge_info dkw;
 			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
@@ -3056,7 +3081,7 @@ rf_find_raid_components(void)
 			}
 				
 			ac_list = rf_get_component(ac_list, dev, vp,
-			    device_xname(dv), dkw.dkw_size);
+			    device_xname(dv), dkw.dkw_size, numsecs, secsize);
 			continue;
 		}
 
@@ -3101,7 +3126,7 @@ rf_find_raid_components(void)
 			snprintf(cname, sizeof(cname), "%s%c",
 			    device_xname(dv), 'a' + i);
 			ac_list = rf_get_component(ac_list, dev, vp, cname,
-				label.d_partitions[i].p_size);
+				label.d_partitions[i].p_size, numsecs, secsize);
 		}
 	}
 	deviter_release(&di);
@@ -3124,7 +3149,12 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
 	    clabel->row < clabel->num_rows &&
 	    clabel->column < clabel->num_columns &&
 	    clabel->blockSize > 0 &&
-	    clabel->numBlocks > 0) {
+	    /*
+	     * numBlocksHi may contain garbage, but it is ok since
+	     * the type is unsigned.  If it is really garbage,
+	     * rf_fix_old_label_size() will fix it.
+	     */
+	    rf_component_label_numblocks(clabel) > 0) {
 		/* label looks reasonable enough... */
 		return(1);
 	}
@@ -3132,10 +3162,32 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
 }
 
 
+/*
+ * For reasons yet unknown, some old component labels have garbage in
+ * the newer numBlocksHi region, and this causes lossage.  Since those
+ * disks will also have numsecs set to less than 32 bits of sectors,
+ * we can determine when this corruption has occured, and fix it.
+ */
+static void
+rf_fix_old_label_size(RF_ComponentLabel_t *clabel, uint64_t numsecs)
+{
+
+	if (clabel->numBlocksHi && numsecs < ((uint64_t)1 << 32)) {
+		printf("WARNING: total sectors < 32 bits, yet numBlocksHi set\n"
+		       "WARNING: resetting numBlocksHi to zero.\n");
+		clabel->numBlocksHi = 0;
+	}
+}
+
+
 #ifdef DEBUG
 void
 rf_print_component_label(RF_ComponentLabel_t *clabel)
 {
+	uint64_t numBlocks;
+
+	numBlocks = rf_component_label_numblocks(clabel);
+
 	printf("   Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
 	       clabel->row, clabel->column,
 	       clabel->num_rows, clabel->num_columns);
@@ -3146,9 +3198,8 @@ rf_print_component_label(RF_ComponentLabel_t *clabel)
 	       clabel->clean ? "Yes" : "No", clabel->status);
 	printf("   sectPerSU: %d SUsPerPU: %d SUsPerRU: %d\n",
 	       clabel->sectPerSU, clabel->SUsPerPU, clabel->SUsPerRU);
-	printf("   RAID Level: %c  blocksize: %d numBlocks: %d\n",
-	       (char) clabel->parityConfig, clabel->blockSize,
-	       clabel->numBlocks);
+	printf("   RAID Level: %c  blocksize: %d numBlocks: %"PRIu64"\n",
+	       (char) clabel->parityConfig, clabel->blockSize, numBlocks);
 	printf("   Autoconfig: %s\n", clabel->autoconfigure ? "Yes" : "No");
 	printf("   Contains root partition: %s\n",
 	       clabel->root_partition ? "Yes" : "No");
@@ -3268,7 +3319,8 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	    (clabel1->parityConfig == clabel2->parityConfig) &&
 	    (clabel1->maxOutstanding == clabel2->maxOutstanding) &&
 	    (clabel1->blockSize == clabel2->blockSize) &&
-	    (clabel1->numBlocks == clabel2->numBlocks) &&
+	    rf_component_label_numblocks(clabel1) ==
+	    rf_component_label_numblocks(clabel2) &&
 	    (clabel1->autoconfigure == clabel2->autoconfigure) &&
 	    (clabel1->root_partition == clabel2->root_partition) &&
 	    (clabel1->last_unit == clabel2->last_unit) &&
@@ -3532,7 +3584,7 @@ raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 	clabel->SUsPerRU = raidPtr->Layout.SUsPerRU;
 
 	clabel->blockSize = raidPtr->bytesPerSector;
-	clabel->numBlocks = raidPtr->sectorsPerDisk;
+	rf_component_label_set_numblocks(clabel, raidPtr->sectorsPerDisk);
 
 	/* XXX not portable */
 	clabel->parityConfig = raidPtr->Layout.map->parityConfig;
@@ -3691,23 +3743,15 @@ rf_buf_queue_check(int raidid)
 int
 rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 {
-	struct partinfo dpart;
-	struct dkwedge_info dkw;
+	uint64_t numsecs;
+	unsigned secsize;
 	int error;
 
-	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred);
+	error = getdisksize(vp, &numsecs, &secsize);
 	if (error == 0) {
-		diskPtr->blockSize = dpart.disklab->d_secsize;
-		diskPtr->numBlocks = dpart.part->p_size - rf_protectedSectors;
-		diskPtr->partitionSize = dpart.part->p_size;
-		return 0;
-	}
-
-	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, l->l_cred);
-	if (error == 0) {
-		diskPtr->blockSize = 512;	/* XXX */
-		diskPtr->numBlocks = dkw.dkw_size - rf_protectedSectors;
-		diskPtr->partitionSize = dkw.dkw_size;
+		diskPtr->blockSize = secsize;
+		diskPtr->numBlocks = numsecs - rf_protectedSectors;
+		diskPtr->partitionSize = numsecs;
 		return 0;
 	}
 	return error;

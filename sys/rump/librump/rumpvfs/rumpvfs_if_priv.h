@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_priv.h,v 1.3.6.1 2010/05/30 05:18:07 rmind Exp $	*/
+/*	$NetBSD: rumpvfs_if_priv.h,v 1.3.6.2 2011/03/05 20:56:16 rmind Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.4 2010/05/26 21:50:56 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.7 2010/11/30 15:41:35 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
 void rump_getvninfo(struct vnode *, enum vtype *, off_t *, dev_t *);
@@ -22,7 +22,6 @@ int rump_etfs_register(const char *, const char *, enum rump_etfs_type);
 int rump_etfs_register_withsize(const char *, const char *, enum rump_etfs_type, uint64_t, uint64_t);
 int rump_etfs_remove(const char *);
 void rump_freecn(struct componentname *, int);
-int rump_checksavecn(struct componentname *);
 int rump_namei(uint32_t, uint32_t, const char *, struct vnode **, struct vnode **, struct componentname **);
 struct componentname * rump_makecn(u_long, u_long, const char *, size_t, struct kauth_cred *, struct lwp *);
 int rump_vfs_unmount(struct mount *, int);
@@ -35,10 +34,6 @@ int rump_vfs_extattrctl(struct mount *, int, struct vnode *, int, const char *);
 void rump_vfs_syncwait(struct mount *);
 int rump_vfs_getmp(const char *, struct mount **);
 void rump_vfs_mount_print(const char *, int);
-void rump_rcvp_set(struct vnode *, struct vnode *);
-struct vnode * rump_cdir_get(void);
 int rump_syspuffs_glueinit(int, int *);
-int rump_sys___stat30(const char *, struct stat *);
-int rump_sys___lstat30(const char *, struct stat *);
 void rump_vattr50_to_vattr(const struct vattr *, struct vattr *);
 void rump_vattr_to_vattr50(const struct vattr *, struct vattr *);

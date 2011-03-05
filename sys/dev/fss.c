@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.65.4.3 2010/07/03 01:19:33 rmind Exp $	*/
+/*	$NetBSD: fss.c,v 1.65.4.4 2011/03/05 20:52:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.65.4.3 2010/07/03 01:19:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.65.4.4 2011/03/05 20:52:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.65.4.3 2010/07/03 01:19:33 rmind Exp $");
 #include <sys/kthread.h>
 #include <sys/fstrans.h>
 #include <sys/simplelock.h>
+#include <sys/vfs_syscalls.h>		/* For do_sys_unlink(). */
 
 #include <miscfs/specfs/specdev.h>
 
@@ -303,6 +304,9 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct fss_get *fsg = (struct fss_get *)data;
 
 	switch (cmd) {
+	case FSSIOCSET50:
+		fss->fss_flags = 0;
+		/* Fall through */
 	case FSSIOCSET:
 		mutex_enter(&sc->sc_lock);
 		if ((flag & FWRITE) == 0)
@@ -311,6 +315,8 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EBUSY;
 		else
 			error = fss_create_snapshot(sc, fss, l);
+		if (error == 0)
+			sc->sc_uflags = fss->fss_flags;
 		mutex_exit(&sc->sc_lock);
 		break;
 
@@ -582,6 +588,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	struct timespec ts;
 	struct partinfo dpart;
 	/* nd -> nd2 to reduce mistakes while updating only some namei calls */
+	struct pathbuf *pb2;
 	struct nameidata nd2;
 	struct vnode *vp;
 
@@ -612,11 +619,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 				NSM_FOLLOW_NOEMULROOT, &vp);
 	if (error != 0)
 		return error;
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0) {
-		vrele(vp);
-		return error;
-	}
 
 	if (vp->v_type == VREG && vp->v_mount == sc->sc_mount) {
 		sc->sc_flags |= FSS_PERSISTENT;
@@ -628,14 +630,20 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		    sc->sc_bs_bshift++)
 			if (FSS_FSBSIZE(sc) == fsbsize)
 				break;
-		if (sc->sc_bs_bshift >= bits) {
-			VOP_UNLOCK(sc->sc_bs_vp);
+		if (sc->sc_bs_bshift >= bits)
 			return EINVAL;
-		}
 
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
 		sc->sc_clshift = 0;
 
+		if ((fss->fss_flags & FSS_UNLINK_ON_CREATE) != 0) {
+			error = do_sys_unlink(fss->fss_bstore, UIO_USERSPACE);
+			if (error)
+				return error;
+		}
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error != 0)
+			return error;
 		error = VFS_SNAPSHOT(sc->sc_mount, sc->sc_bs_vp, &ts);
 		TIMESPEC_TO_TIMEVAL(&sc->sc_time, &ts);
 
@@ -643,7 +651,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 
 		return error;
 	}
-	vput(vp);
+	vrele(vp);
 
 	/*
 	 * Get the block device it is mounted on.
@@ -676,16 +684,30 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the backing store
 	 */
 
-	NDINIT(&nd2, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
-	if ((error = vn_open(&nd2, FREAD|FWRITE, 0)) != 0)
+	error = pathbuf_copyin(fss->fss_bstore, &pb2);
+	if (error) {
+ 		return error;
+	}
+	NDINIT(&nd2, LOOKUP, FOLLOW, pb2);
+	if ((error = vn_open(&nd2, FREAD|FWRITE, 0)) != 0) {
+		pathbuf_destroy(pb2);
 		return error;
+	}
 	VOP_UNLOCK(nd2.ni_vp);
 
 	sc->sc_bs_vp = nd2.ni_vp;
 
-	if (nd2.ni_vp->v_type != VREG && nd2.ni_vp->v_type != VCHR)
+	if (nd2.ni_vp->v_type != VREG && nd2.ni_vp->v_type != VCHR) {
+		pathbuf_destroy(pb2);
 		return EINVAL;
+	}
+	pathbuf_destroy(pb2);
 
+	if ((fss->fss_flags & FSS_UNLINK_ON_CREATE) != 0) {
+		error = do_sys_unlink(fss->fss_bstore, UIO_USERSPACE);
+		if (error)
+			return error;
+	}
 	if (sc->sc_bs_vp->v_type == VREG) {
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
 		if (fsbsize & (fsbsize-1))	/* No power of two */
@@ -786,9 +808,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 
 	microtime(&sc->sc_time);
 
-	if (error == 0)
-		error = fscow_establish(sc->sc_mount,
-		    fss_copy_on_write, sc);
+	error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
 	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
 
@@ -809,7 +829,7 @@ bad:
 	fss_softc_free(sc);
 	if (sc->sc_bs_vp != NULL) {
 		if (sc->sc_flags & FSS_PERSISTENT)
-			vn_close(sc->sc_bs_vp, FREAD, l->l_cred);
+			vrele(sc->sc_bs_vp);
 		else
 			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
 	}
@@ -836,7 +856,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
-		vn_close(sc->sc_bs_vp, FREAD, l->l_cred);
+		vrele(sc->sc_bs_vp);
 	else
 		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
 	sc->sc_bs_vp = NULL;

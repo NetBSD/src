@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.76.4.1 2010/05/30 05:18:08 rmind Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.76.4.2 2011/03/05 20:56:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -31,7 +31,7 @@
  *	@(#)signalvar.h	8.6 (Berkeley) 2/19/95
  */
 
-#ifndef	_SYS_SIGNALVAR_H_		/* tmp for user.h */
+#ifndef	_SYS_SIGNALVAR_H_
 #define	_SYS_SIGNALVAR_H_
 
 #include <sys/siginfo.h>

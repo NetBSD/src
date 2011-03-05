@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.87.2.3 2010/07/03 01:19:51 rmind Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.87.2.4 2011/03/05 20:55:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.87.2.3 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.87.2.4 2011/03/05 20:55:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -77,6 +77,16 @@ static struct putter_ops puffs_putter = {
 	.pop_dispatch	= puffs_msgif_dispatch,
 	.pop_close	= puffs_msgif_close,
 };
+
+/*
+ * Try to ensure data structures used by the puffs protocol
+ * do not unexpectedly change.
+ */
+#ifdef __i386__
+CTASSERT(sizeof(struct puffs_kargs) == 3928);
+CTASSERT(sizeof(struct vattr) == 136);
+CTASSERT(sizeof(struct puffs_req) == 44);
+#endif
 
 int
 puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
@@ -127,6 +137,15 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 		printf("puffs_mount: invalid FHFLAGs 0x%x\n", args->pa_fhflags);
 		error = EINVAL;
 		goto out;
+	}
+
+	for (i = 0; i < __arraycount(args->pa_spare); i++) {
+		if (args->pa_spare[i] != 0) {
+			printf("puffs_mount: pa_spare[%d] = 0x%x\n",
+			    i, args->pa_spare[i]);
+			error = EINVAL;
+			goto out;
+		}
 	}
 
 	/* use dummy value for passthrough */
@@ -204,6 +223,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	if (error)
 		goto out;
 	mp->mnt_stat.f_iosize = DEV_BSIZE;
+	mp->mnt_stat.f_namemax = args->pa_svfsb.f_namemax;
 
 	/*
 	 * We can't handle the VFS_STATVFS() mount_domount() does
@@ -273,6 +293,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_root_vtype = args->pa_root_vtype;
 	pmp->pmp_root_vsize = args->pa_root_vsize;
 	pmp->pmp_root_rdev = args->pa_root_rdev;
+	pmp->pmp_docompat = args->pa_time32;
 
 	mutex_init(&pmp->pmp_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pmp->pmp_sopmtx, MUTEX_DEFAULT, IPL_NONE);
@@ -537,7 +558,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 		 * vnodes through other routes in any case.  So there,
 		 * sync() doesn't actually sync.  Happy now?
 		 */
-		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (rv) {
 			mutex_enter(&mntvnode_lock);
 			if (rv == ENOENT) {

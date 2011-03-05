@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.27 2009/01/13 13:35:53 yamt Exp $ */
+/*	$NetBSD: ts.c,v 1.27.6.1 2011/03/05 20:54:02 rmind Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.27 2009/01/13 13:35:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.27.6.1 2011/03/05 20:54:02 rmind Exp $");
 
 #undef	TSDEBUG
 
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.27 2009/01/13 13:35:53 yamt Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/file.h>
 #include <sys/syslog.h>

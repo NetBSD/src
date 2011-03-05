@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3.6.1 2010/05/30 05:18:07 rmind Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3.6.2 2011/03/05 20:56:16 rmind Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.4 2010/05/26 21:50:56 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.7 2010/11/30 15:41:35 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -189,18 +189,6 @@ rump_pub_freecn(struct componentname *arg1, int arg2)
 }
 
 int
-rump_pub_checksavecn(struct componentname *arg1)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_checksavecn(arg1);
-	rump_unschedule();
-
-	return rv;
-}
-
-int
 rump_pub_namei(uint32_t arg1, uint32_t arg2, const char *arg3, struct vnode **arg4, struct vnode **arg5, struct componentname **arg6)
 {
 	int rv;
@@ -338,27 +326,6 @@ rump_pub_vfs_mount_print(const char *arg1, int arg2)
 	rump_unschedule();
 }
 
-void
-rump_pub_rcvp_set(struct vnode *arg1, struct vnode *arg2)
-{
-
-	rump_schedule();
-	rump_rcvp_set(arg1, arg2);
-	rump_unschedule();
-}
-
-struct vnode *
-rump_pub_cdir_get(void)
-{
-	struct vnode * rv;
-
-	rump_schedule();
-	rv = rump_cdir_get();
-	rump_unschedule();
-
-	return rv;
-}
-
 int
 rump_pub_syspuffs_glueinit(int arg1, int *arg2)
 {
@@ -371,30 +338,6 @@ rump_pub_syspuffs_glueinit(int arg1, int *arg2)
 	return rv;
 }
 __weak_alias(rump_syspuffs_glueinit,rump_vfs_unavailable);
-
-int
-rump_pub_sys___stat30(const char *arg1, struct stat *arg2)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_sys___stat30(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
-
-int
-rump_pub_sys___lstat30(const char *arg1, struct stat *arg2)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_sys___lstat30(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
 
 void
 rump_pub_vattr50_to_vattr(const struct vattr *arg1, struct vattr *arg2)

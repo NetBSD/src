@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.114.2.1 2010/05/30 05:17:25 rmind Exp $ */
+/* $NetBSD: rtw.c,v 1.114.2.2 2011/03/05 20:53:20 rmind Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.114.2.1 2010/05/30 05:17:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.114.2.2 2011/03/05 20:53:20 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -45,12 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.114.2.1 2010/05/30 05:17:25 rmind Exp $");
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/sockio.h>
 
 #include <machine/endian.h>
 #include <sys/bus.h>
 #include <sys/intr.h>	/* splnet */
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

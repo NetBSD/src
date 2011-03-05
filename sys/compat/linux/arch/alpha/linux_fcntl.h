@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.2 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.2.22.1 2011/03/05 20:52:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,18 +39,17 @@
 /* read/write mode for open(2) defined in common/linux_fcntl.h */
 
 /* flags used in open(2) */
-#define LINUX_O_CREAT		0x0200
-#define LINUX_O_TRUNC		0x0400
-#define LINUX_O_EXCL		0x0800
-
-#define LINUX_O_NOCTTY		0x8000
-
-#define LINUX_O_NONBLOCK	0x0004
-#define LINUX_O_APPEND		0x0008
+#define LINUX_O_NONBLOCK	0x000004
+#define LINUX_O_APPEND		0x000008
+#define LINUX_O_CREAT		0x000200
+#define LINUX_O_TRUNC		0x000400
+#define LINUX_O_EXCL		0x000800
 #define LINUX_O_NDELAY		LINUX_O_NONBLOCK
-#define LINUX_O_SYNC		0x4000
-
-#define LINUX_FASYNC		0x2000
+#define LINUX_FASYNC		0x002000
+#define LINUX_O_SYNC		0x004000
+#define LINUX_O_NOCTTY		0x008000
+#define LINUX_O_DIRECTORY	0x040000
+#define LINUX_O_CLOEXEC		0x200000
 
 /* fcntl(2) operations */
 #define LINUX_F_DUPFD		0

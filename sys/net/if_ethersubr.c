@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.176.4.2 2010/07/03 01:19:59 rmind Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.176.4.3 2011/03/05 20:55:51 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.176.4.2 2010/07/03 01:19:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.176.4.3 2011/03/05 20:55:51 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -454,13 +454,13 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	}
 
 #ifdef MPLS
-		if (rt0 != NULL && rt_gettag(rt0) != NULL &&
-		    rt_gettag(rt0)->sa_family == AF_MPLS) {
-			union mpls_shim msh;
-			msh.s_addr = MPLS_GETSADDR(rt0);
-			if (msh.shim.label != MPLS_LABEL_IMPLNULL)
-				etype = htons(ETHERTYPE_MPLS);
-		}
+	if (rt0 != NULL && rt_gettag(rt0) != NULL &&
+	    rt_gettag(rt0)->sa_family == AF_MPLS) {
+		union mpls_shim msh;
+		msh.s_addr = MPLS_GETSADDR(rt0);
+		if (msh.shim.label != MPLS_LABEL_IMPLNULL)
+			etype = htons(ETHERTYPE_MPLS);
+	}
 #endif
 
 	if (mcopy)
@@ -1250,7 +1250,7 @@ ether_aton_r(u_char *dest, size_t len, const char *str)
         const u_char *cp = (const void *)str;
 	u_char *ep;
 
-#define atox(c)	(((c) < '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
 
 	if (len < ETHER_ADDR_LEN)
 		return ENOSPC;

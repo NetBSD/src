@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.58.2.1 2010/05/30 05:17:36 rmind Exp $	*/
+/*	$NetBSD: machfb.c,v 1.58.2.2 2011/03/05 20:53:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.58.2.1 2010/05/30 05:17:36 rmind Exp $");
+	"$NetBSD: machfb.c,v 1.58.2.2 2011/03/05 20:53:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0,
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
@@ -528,7 +529,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, 
 	    PCI_REVISION(pa->pa_class));
 	aprint_naive(": Graphics processor\n");
-#ifdef DEBUG
+#ifdef MACHFB_DEBUG
 	printf(prop_dictionary_externalize(device_properties(self)));
 #endif
 	
@@ -584,7 +585,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_get_uint32(device_properties(self), "width", &width);
 	prop_dictionary_get_uint32(device_properties(self), "height", &height);
 
-	if ((edid_data = prop_dictionary_get(device_properties(self), "EDIDDD"))
+	if ((edid_data = prop_dictionary_get(device_properties(self), "EDID"))
 	    != NULL) {
 	    	struct edid_info ei;
 
@@ -595,7 +596,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 		edid_parse(sc->sc_edid_data, &ei);
 
-#ifdef DEBUG
+#ifdef MACHFB_DEBUG
 		edid_print(&ei);
 #endif
 		if (ei.edid_have_range) {
@@ -908,7 +909,7 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 	mode->vsync_start = (crtc.v_sync_strt_wid & 0xffff) + 1;
 	mode->vsync_end = (crtc.v_sync_strt_wid >> 16) + mode->vsync_start;
 
-#ifdef DEBUG_MACHFB
+#ifdef MACHFB_DEBUG
 	printf("mach64_get_mode: %d %d %d %d %d %d %d %d\n",
 	    mode->hdisplay, mode->hsync_start, mode->hsync_end, mode->htotal,
 	    mode->vdisplay, mode->vsync_start, mode->vsync_end, mode->vtotal);
@@ -1679,58 +1680,59 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_screen *ms = vd->active;
 	
 	switch (cmd) {
-		case WSDISPLAYIO_GTYPE:
-			/* XXX is this the right type to return? */
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;	
-			return 0;
+	case WSDISPLAYIO_GTYPE:
+		/* XXX is this the right type to return? */
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;	
+		return 0;
 
-		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = sc->virt_x * sc->bits_per_pixel / 8;
-			return 0;
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->virt_x * sc->bits_per_pixel / 8;
+		return 0;
 
-		case WSDISPLAYIO_GINFO:
-			wdf = (void *)data;
-			wdf->height = sc->virt_y;
-			wdf->width = sc->virt_x;
-			wdf->depth = sc->bits_per_pixel;
-			wdf->cmsize = 256;
-			return 0;
-			
-		case WSDISPLAYIO_GETCMAP:
-			return mach64_getcmap(sc, 
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_GINFO:
+		wdf = (void *)data;
+		wdf->height = sc->virt_y;
+		wdf->width = sc->virt_x;
+		wdf->depth = sc->bits_per_pixel;
+		wdf->cmsize = 256;
+		return 0;
+		
+	case WSDISPLAYIO_GETCMAP:
+		return mach64_getcmap(sc, 
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_PUTCMAP:
-			return mach64_putcmap(sc, 
-			    (struct wsdisplay_cmap *)data);
-			    
-		/* PCI config read/write passthrough. */
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, l));
-			    
-		case WSDISPLAYIO_SMODE:
+	case WSDISPLAYIO_PUTCMAP:
+		return mach64_putcmap(sc, 
+		    (struct wsdisplay_cmap *)data);
+		    
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
+
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
+			if ((new_mode == WSDISPLAYIO_MODE_EMUL)
+			    && (ms != NULL))
 			{
-				int new_mode = *(int*)data;
-
-				if (new_mode != sc->sc_mode)
-				{
-					sc->sc_mode = new_mode;
-					if ((new_mode == WSDISPLAYIO_MODE_EMUL)
-					    && (ms != NULL))
-					{
-						/* restore initial video mode */
-						mach64_init(sc);
-						mach64_init_engine(sc);
-						mach64_init_lut(sc);
-						mach64_modeswitch(sc, sc->sc_my_mode);
-						vcons_redraw_screen(ms);
-					}
-				}
+				/* restore initial video mode */
+				mach64_init(sc);
+				mach64_init_engine(sc);
+				mach64_init_lut(sc);
+				mach64_modeswitch(sc, sc->sc_my_mode);
+				vcons_redraw_screen(ms);
 			}
-			return 0;
-			
+		}
+		}
+		return 0;
+		
 	}
 	return EPASSTHROUGH;
 }
@@ -1934,90 +1936,93 @@ machfb_fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	printf("machfb_fbioctl(%d, %lx)\n", minor(dev), cmd);
 #endif
 	switch (cmd) {
-		case FBIOGTYPE:
-			*(struct fbtype *)data = sc->sc_fb.fb_type;
-			break;
+	case FBIOGTYPE:
+		*(struct fbtype *)data = sc->sc_fb.fb_type;
+		break;
 
-		case FBIOGATTR:
+	case FBIOGATTR:
 #define fba ((struct fbgattr *)data)
-			fba->real_type = sc->sc_fb.fb_type.fb_type;
-			fba->owner = 0;		/* XXX ??? */
-			fba->fbtype = sc->sc_fb.fb_type;
-			fba->sattr.flags = 0;
-			fba->sattr.emu_type = sc->sc_fb.fb_type.fb_type;
-			fba->sattr.dev_specific[0] = sc->sc_nbus;
-			fba->sattr.dev_specific[1] = sc->sc_ndev;
-			fba->sattr.dev_specific[2] = sc->sc_nfunc;
-			fba->sattr.dev_specific[3] = -1;			
-			fba->emu_types[0] = sc->sc_fb.fb_type.fb_type;
-			fba->emu_types[1] = -1;
+		fba->real_type = sc->sc_fb.fb_type.fb_type;
+		fba->owner = 0;		/* XXX ??? */
+		fba->fbtype = sc->sc_fb.fb_type;
+		fba->sattr.flags = 0;
+		fba->sattr.emu_type = sc->sc_fb.fb_type.fb_type;
+		fba->sattr.dev_specific[0] = sc->sc_nbus;
+		fba->sattr.dev_specific[1] = sc->sc_ndev;
+		fba->sattr.dev_specific[2] = sc->sc_nfunc;
+		fba->sattr.dev_specific[3] = -1;			
+		fba->emu_types[0] = sc->sc_fb.fb_type.fb_type;
+		fba->emu_types[1] = -1;
 #undef fba
-			break;
-		
-#if 0
-		case FBIOGETCMAP:
-#define	p ((struct fbcmap *)data)
-			return (bt_getcmap(p, &sc->sc_cmap, 256, 1));
-
-		case FBIOPUTCMAP:
-			/* copy to software map */
-			error = bt_putcmap(p, &sc->sc_cmap, 256, 1);
-			if (error)
-				return error;
-			/* now blast them into the chip */
-			/* XXX should use retrace interrupt */
-			cg6_loadcmap(sc, p->index, p->count);
-#undef p
-			break;
-#endif
-		case FBIOGVIDEO:
-			*(int *)data = sc->sc_blanked;
-			break;
-
-		case FBIOSVIDEO:
-			machfb_blank(sc, *(int *)data);
-			break;
-
-#if 0
-		case FBIOGCURSOR:
-			break;
+		break;
 	
-		case FBIOSCURSOR:
-			break;
+#if 0
+	case FBIOGETCMAP:
+#define	p ((struct fbcmap *)data)
+		return bt_getcmap(p, &sc->sc_cmap, 256, 1);
 
-		case FBIOGCURPOS:
-			*(struct fbcurpos *)data = sc->sc_cursor.cc_pos;
-			break;
-
-		case FBIOSCURPOS:
-			sc->sc_cursor.cc_pos = *(struct fbcurpos *)data;
-			break;
-
-		case FBIOGCURMAX:
-			/* max cursor size is 32x32 */
-			((struct fbcurpos *)data)->x = 32;
-			((struct fbcurpos *)data)->y = 32;
-			break;
+	case FBIOPUTCMAP:
+		/* copy to software map */
+		error = bt_putcmap(p, &sc->sc_cmap, 256, 1);
+		if (error)
+			return error;
+		/* now blast them into the chip */
+		/* XXX should use retrace interrupt */
+		cg6_loadcmap(sc, p->index, p->count);
+#undef p
+		break;
 #endif
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-		{
-			int ret;
-			
-			ret = pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flags, l);
-			
+	case FBIOGVIDEO:
+		*(int *)data = sc->sc_blanked;
+		break;
+
+	case FBIOSVIDEO:
+		machfb_blank(sc, *(int *)data);
+		break;
+
+#if 0
+	case FBIOGCURSOR:
+		break;
+
+	case FBIOSCURSOR:
+		break;
+
+	case FBIOGCURPOS:
+		*(struct fbcurpos *)data = sc->sc_cursor.cc_pos;
+		break;
+
+	case FBIOSCURPOS:
+		sc->sc_cursor.cc_pos = *(struct fbcurpos *)data;
+		break;
+
+	case FBIOGCURMAX:
+		/* max cursor size is 32x32 */
+		((struct fbcurpos *)data)->x = 32;
+		((struct fbcurpos *)data)->y = 32;
+		break;
+#endif
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE: {
+		int ret;
+		ret = pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flags, l);
+		
 #ifdef MACHFB_DEBUG
-			printf("pci_devioctl: %d\n", ret);
+		printf("pci_devioctl: %d\n", ret);
 #endif
-			return ret;
+		return ret;
 		}
-		default:
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
+
+	default:
 #ifdef MACHFB_DEBUG
-			log(LOG_NOTICE, "machfb_fbioctl(0x%lx) (%s[%d])\n", cmd,
-			    p->p_comm, p->p_pid);
+		log(LOG_NOTICE, "machfb_fbioctl(0x%lx) (%s[%d])\n", cmd,
+		    p->p_comm, p->p_pid);
 #endif
-			return ENOTTY;
+		return ENOTTY;
 	}
 #ifdef MACHFB_DEBUG
 	printf("machfb_fbioctl done\n");

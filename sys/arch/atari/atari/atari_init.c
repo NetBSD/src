@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.92.4.2 2010/07/03 01:19:15 rmind Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.92.4.3 2011/03/05 20:49:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.92.4.2 2010/07/03 01:19:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.92.4.3 2011/03/05 20:49:40 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -374,9 +374,9 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 
 #if defined(M68040) || defined(M68060)
 	/*
-	 * Map the kernel segment table cache invalidated for 
-	 * these machines (for the 68040 not strictly necessary, but
-	 * recommended by Motorola; for the 68060 mandatory)
+	 * Map the kernel segment table cache invalidated for 68040/68060.
+	 * (for the 68040 not strictly necessary, but recommended by Motorola;
+	 *  for the 68060 mandatory)
 	 */
 	if (mmutype == MMU_68040) {
 

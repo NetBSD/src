@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.4.1 2010/05/30 05:17:07 rmind Exp $
+#	$NetBSD: Makefile,v 1.22.4.2 2011/03/05 20:52:05 rmind Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -11,8 +11,8 @@ WARNS=		0
 
 PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
-SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c
-.PATH:		${S}/arch/sparc64/sparc64
+SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c isfloppy.c
+.PATH:		${S}/arch/sparc64/sparc64 ${S}/arch/sparc/stand/common
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
@@ -92,8 +92,11 @@ cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
+.include <bsd.own.mk>
+
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
 
 CLEANFILES+= vers.c
 
@@ -117,10 +120,10 @@ AFLAGS+=		-Wa,-Av8plusa
 .endif
 
 .if CROSS
-AFLAGS+=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__
+AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__
 CEXTRAFLAGS?=		-D_LP64
 .else
-AFLAGS+=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
+AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
 .endif
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<

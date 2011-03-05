@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.73 2010/03/01 21:10:26 jld Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.73.2.1 2011/03/05 20:54:03 rmind Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.73 2010/03/01 21:10:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.73.2.1 2011/03/05 20:54:03 rmind Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.73 2010/03/01 21:10:26 jld Exp $");
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/namei.h> /* for pathbuf */
 #include <sys/kauth.h>
 
 static int rf_AllocDiskStructures(RF_Raid_t *, RF_Config_t *);
@@ -454,7 +455,8 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 		if (ac!=NULL) {
 			/* Found it.  Configure it.. */
 			diskPtr->blockSize = ac->clabel->blockSize;
-			diskPtr->numBlocks = ac->clabel->numBlocks;
+			diskPtr->numBlocks =
+			    rf_component_label_numblocks(ac->clabel);
 			/* Note: rf_protectedSectors is already
 			   factored into numBlocks here */
 			raidPtr->raid_cinfo[c].ci_vp = ac->vp;
@@ -567,6 +569,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		 RF_RowCol_t col)
 {
 	char   *p;
+	struct pathbuf *pb;
 	struct vnode *vp;
 	struct vattr va;
 	int     error;
@@ -591,21 +594,38 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		return (0);
 	}
 
-	error = dk_lookup(diskPtr->devname, curlwp, &vp, UIO_SYSSPACE);
+	pb = pathbuf_create(diskPtr->devname);
+	if (pb == NULL) {
+		printf("pathbuf_create for device: %s failed!\n",
+		       diskPtr->devname);
+		return ENOMEM;
+	}
+	error = dk_lookup(pb, curlwp, &vp);
+	pathbuf_destroy(pb);
 	if (error) {
 		printf("dk_lookup on device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {
 			/* the component isn't there... must be dead :-( */
 			diskPtr->status = rf_ds_failed;
+			return 0;
 		} else {
 			return (error);
 		}
 	}
-	if (diskPtr->status == rf_ds_optimal) {
 
+	if ((error = rf_getdisksize(vp, curlwp, diskPtr)) != 0)
+		return (error);
+
+	/*
+	 * If this raidPtr's bytesPerSector is zero, fill it in with this
+	 * components blockSize.  This will give us something to work with
+	 * initially, and if it is wrong, we'll get errors later.
+	 */
+	if (raidPtr->bytesPerSector == 0)
+		raidPtr->bytesPerSector = diskPtr->blockSize;
+
+	if (diskPtr->status == rf_ds_optimal) {
 		if ((error = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0) 
-			return (error);
-		if ((error = rf_getdisksize(vp, curlwp, diskPtr)) != 0)
 			return (error);
 
 		raidPtr->raid_cinfo[col].ci_vp = vp;

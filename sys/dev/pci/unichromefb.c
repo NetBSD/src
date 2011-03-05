@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.16 2009/05/06 10:34:33 cegger Exp $ */
+/* $NetBSD: unichromefb.c,v 1.16.4.1 2011/03/05 20:53:58 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.16 2009/05/06 10:34:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.16.4.1 2011/03/05 20:53:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.16 2009/05/06 10:34:33 cegger Exp 
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/pci/unichromereg.h>
 #include <dev/pci/unichromemode.h>
@@ -452,21 +453,20 @@ unichromefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_stride;
 		return 0;
-	case WSDISPLAYIO_SMODE:
-		{
-			int new_mode = *(int *)data;
-			if (new_mode != sc->sc_wsmode) {
-				sc->sc_wsmode = new_mode;
-				switch (new_mode) {
-				case WSDISPLAYIO_MODE_EMUL:
-					unichromefb_drm_map(sc);
-					vcons_redraw_screen(vd->active);
-					break;
-				default:
-					unichromefb_drm_unmap(sc);
-					break;
-				}
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int *)data;
+		if (new_mode != sc->sc_wsmode) {
+			sc->sc_wsmode = new_mode;
+			switch (new_mode) {
+			case WSDISPLAYIO_MODE_EMUL:
+				unichromefb_drm_map(sc);
+				vcons_redraw_screen(vd->active);
+				break;
+			default:
+				unichromefb_drm_unmap(sc);
+				break;
 			}
+		}
 		}
 		return 0;
 	case WSDISPLAYIO_SSPLASH:
@@ -479,6 +479,11 @@ unichromefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case PCI_IOC_CFGWRITE:
 		return (pci_devioctl(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag,
 		    cmd, data, flag, l));
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev,
+		    sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, data);
+
 	}
 
 	return EPASSTHROUGH;

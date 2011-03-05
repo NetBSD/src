@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.62.2.2 2010/07/03 01:19:34 rmind Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.62.2.3 2011/03/05 20:53:03 rmind Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.62.2.2 2010/07/03 01:19:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.62.2.3 2011/03/05 20:53:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
+#include <sys/module.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
@@ -132,6 +133,8 @@ static int		acpitz_get_fanspeed(device_t, uint32_t *,
 #ifdef notyet
 static ACPI_STATUS	acpitz_set_fanspeed(device_t, uint32_t);
 #endif
+static void		acpitz_print_processor_list(device_t);
+static struct cpu_info *acpitz_find_processor(uint32_t);
 
 CFATTACH_DECL_NEW(acpitz, sizeof(struct acpitz_softc),
     acpitz_match, acpitz_attach, acpitz_detach, NULL);
@@ -161,13 +164,14 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
-	aprint_naive("\n");
-	aprint_normal(": ACPI Thermal Zone\n");
-
 	sc->sc_first = true;
 	sc->sc_have_fan = false;
 	sc->sc_node = aa->aa_node;
 	sc->sc_zone.tzp = ATZ_TZP_RATE;
+
+	aprint_naive("\n");
+	acpitz_print_processor_list(self);
+	aprint_normal("\n");
 
 	/*
 	 * The _TZP (ACPI 4.0, p. 430) defines the recommended
@@ -179,7 +183,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	if (ACPI_SUCCESS(rv) && val != 0)
 		sc->sc_zone.tzp = val;
 
-	aprint_debug_dev(self, "sample rate %d.%ds\n",
+	aprint_debug_dev(self, "polling interval %d.%d seconds\n",
 	    sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
@@ -197,6 +201,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	acpitz_get_status(self);
 
 	(void)pmf_device_register(self, NULL, NULL);
+	(void)acpi_power_register(sc->sc_node->ad_handle);
 	(void)acpi_register_notify(sc->sc_node, acpitz_notify_handler);
 
 	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
@@ -262,8 +267,8 @@ acpitz_get_status(void *opaque)
 {
 	device_t dv = opaque;
 	struct acpitz_softc *sc = device_private(dv);
-	uint32_t tmp, active, fmin, fmax, fcurrent;
-	int changed, flags, i;
+	uint32_t tmp, fmin, fmax, fcurrent;
+	int active, changed, flags, i;
 
 	sc->sc_zone_expire--;
 
@@ -361,7 +366,7 @@ acpitz_get_status(void *opaque)
 			acpitz_power_zone(sc, sc->sc_active, 0);
 
 		ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: active cooling "
-			"level %u\n", device_xname(dv), active));
+			"level %d\n", device_xname(dv), active));
 
 		if (active != ATZ_ACTIVE_NONE)
 			acpitz_power_zone(sc, active, 1);
@@ -539,7 +544,7 @@ acpitz_get_zone(void *opaque, int verbose)
 	if (verbose != 0) {
 		comma = 0;
 
-		aprint_verbose_dev(dv, "");
+		aprint_verbose_dev(dv, "levels: ");
 
 		if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
 			aprint_verbose("critical %s C",
@@ -699,6 +704,65 @@ acpitz_set_fanspeed(device_t dv, uint32_t fanspeed)
 #endif
 
 static void
+acpitz_print_processor_list(device_t dv)
+{
+	struct acpitz_softc *sc = device_private(dv);
+	ACPI_HANDLE handle = sc->sc_node->ad_handle;
+	ACPI_HANDLE prhandle;
+	ACPI_BUFFER buf, prbuf;
+	ACPI_OBJECT *obj, *pref, *pr;
+	ACPI_STATUS rv;
+	struct cpu_info *ci;
+	unsigned int i, cnt;
+
+	rv = acpi_eval_struct(handle, "_PSL", &buf);
+	if (ACPI_FAILURE(rv) || buf.Pointer == NULL)
+		return;
+	obj = buf.Pointer;
+	if (obj->Type != ACPI_TYPE_PACKAGE || obj->Package.Count == 0)
+		goto done;
+
+	for (i = 0, cnt = 0; i < obj->Package.Count; i++) {
+		pref = &obj->Package.Elements[i];
+		rv = acpi_eval_reference_handle(pref, &prhandle);
+		if (ACPI_FAILURE(rv))
+			continue;
+		rv = acpi_eval_struct(prhandle, NULL, &prbuf);
+		if (ACPI_FAILURE(rv) || prbuf.Pointer == NULL)
+			continue;
+		pr = prbuf.Pointer;
+		if (pr->Type != ACPI_TYPE_PROCESSOR)
+			goto next;
+
+		ci = acpitz_find_processor(pr->Processor.ProcId);
+		if (ci) {
+			if (cnt == 0)
+				aprint_normal(":");
+			aprint_normal(" %s", device_xname(ci->ci_dev));
+			++cnt;
+		}
+next:
+		ACPI_FREE(prbuf.Pointer);
+	}
+
+done:
+	ACPI_FREE(buf.Pointer);
+}
+
+static struct cpu_info *
+acpitz_find_processor(uint32_t id)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	for (CPU_INFO_FOREACH(cii, ci))
+		if (ci->ci_acpiid == id)
+			return ci;
+
+	return NULL;
+}
+
+static void
 acpitz_tick(void *opaque)
 {
 	device_t dv = opaque;
@@ -795,4 +859,40 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		}
 		break;
 	}
+}
+
+MODULE(MODULE_CLASS_DRIVER, acpitz, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+acpitz_modcmd(modcmd_t cmd, void *aux)
+{
+	int rv = 0;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpitz,
+		    cfattach_ioconf_acpitz, cfdata_ioconf_acpitz);
+#endif
+		break;
+
+	case MODULE_CMD_FINI:
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpitz,
+		    cfattach_ioconf_acpitz, cfdata_ioconf_acpitz);
+#endif
+		break;
+
+	default:
+		rv = ENOTTY;
+	}
+
+	return rv;
 }

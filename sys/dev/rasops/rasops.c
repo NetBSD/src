@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.61.4.2 2010/07/03 01:19:40 rmind Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.61.4.3 2011/03/05 20:54:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.61.4.2 2010/07/03 01:19:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.61.4.3 2011/03/05 20:54:03 rmind Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -180,7 +180,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 
 		wsfont_init();
 
-		/* Want 8 pixel wide, don't care about aestethics */
+		/* Want 8 pixel wide, don't care about aesthetics */
 		cookie = wsfont_find(NULL, 8, 0, 0, WSDISPLAY_FONTORDER_L2R,
 		    WSDISPLAY_FONTORDER_L2R);
 		if (cookie <= 0)

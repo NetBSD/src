@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122.4.1 2010/05/30 05:17:11 rmind Exp $     */
+/*	$NetBSD: trap.c,v 1.122.4.2 2011/03/05 20:52:20 rmind Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,31 +33,24 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122.4.1 2010/05/30 05:17:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122.4.2 2011/03/05 20:52:20 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/syscall.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
+#include <sys/kauth.h>
+#include <sys/proc.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/kmem.h>
-#include <sys/kauth.h>
+#include <sys/signalvar.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/mtpr.h>
-#include <machine/pte.h>
-#include <machine/pcb.h>
 #include <machine/trap.h>
-#include <machine/pmap.h>
-#include <machine/cpu.h>
 #include <machine/userret.h>
 
 #ifdef DDB
@@ -121,7 +114,7 @@ trap(struct trapframe *frame)
 	onfault = pcb->pcb_onfault;
 	p = l->l_proc;
 	KASSERT(p != NULL);
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	if (usermode) {
 		type |= T_USER;
 		oticks = p->p_sticks;
@@ -179,6 +172,25 @@ fram:
 		}
 
 	case T_PTELEN:
+#ifndef MULTIPROCESSOR
+		/*
+		 * If we referred to an address beyond the end of the system
+		 * page table, it may be due to a failed CAS
+		 * restartable-atomic-sequence.  If it is, restart it at the
+		 * beginning and restart.
+		 */
+		{
+			extern const uint8_t cas32_ras_start[], cas32_ras_end[];
+			if (frame->code == CASMAGIC
+			    && frame->pc >= (uintptr_t) cas32_ras_start
+			    && frame->pc < (uintptr_t) cas32_ras_end) {
+				frame->pc = (uintptr_t) cas32_ras_start;
+				trapsig = false;
+				break;
+			}
+		}
+		/* FALLTHROUGH */
+#endif
 	case T_ACCFLT:
 #ifdef TRAPDEBUG
 if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
@@ -365,7 +377,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	exptr->r6 = stack;				/* for ELF */
 	exptr->r7 = 0;					/* for ELF */
 	exptr->r8 = 0;					/* for ELF */
-	exptr->r9 = (u_long) l->l_proc->p_psstr;	/* for ELF */
+	exptr->r9 = l->l_proc->p_psstrp;		/* for ELF */
 }
 
 

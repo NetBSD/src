@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.33.22.1 2010/05/30 05:17:10 rmind Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.33.22.2 2011/03/05 20:52:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
-#define	USRSTACK	KERNBASE
+#define	USRSTACK	kernbase	/* for modules */
+#define	USRSTACK3	KERNBASE3	/* for asm not in modules */
+#define	USRSTACK3X	KERNBASE3X
 
 #ifdef	_SUN3_
 #include <machine/vmparam3.h>
@@ -51,9 +53,14 @@
 #include <machine/vmparam3.h>
 #endif
 
-/* XXX: this makes modules *compile* */
-#ifdef _MODULE
-extern char KERNBASE[];
+/*
+ * PTEs for mapping user space into the kernel for phyio operations.
+ * The actual limitation for physio requests will be the DVMA space,
+ * and that is fixed by hardware design at 1MB.  We could make the
+ * physio map larger than that, but it would not buy us much.
+ */
+#ifndef USRIOSIZE
+#define USRIOSIZE	128		/* 1 MB */
 #endif
 
 /* This is needed by some LKMs. */
@@ -65,16 +72,15 @@ extern char KERNBASE[];
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)KERNBASE)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERN_END)
+#define VM_MAX_ADDRESS		kernbase
+#define VM_MAXUSER_ADDRESS	kernbase
+#define VM_MIN_KERNEL_ADDRESS	kernbase
+#define VM_MAX_KERNEL_ADDRESS	kern_end
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0

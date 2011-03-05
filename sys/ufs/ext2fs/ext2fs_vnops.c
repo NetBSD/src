@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.91.4.2 2010/07/03 01:20:04 rmind Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.91.4.3 2011/03/05 20:56:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.91.4.2 2010/07/03 01:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.91.4.3 2011/03/05 20:56:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,10 +568,6 @@ ext2fs_link(void *v)
 	struct inode *ip;
 	int error;
 
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ext2fs_link: no name");
-#endif
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
 		error = EISDIR;
@@ -606,7 +602,6 @@ ext2fs_link(void *v)
 		ip->i_e2fs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
 		VOP_UNLOCK(vp);
@@ -664,11 +659,6 @@ ext2fs_rename(void *v)
 	int error = 0;
 	u_char namlen;
 
-#ifdef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("ext2fs_rename: no name");
-#endif
 	/*
 	 * Check for cross-device rename.
 	 */
@@ -710,11 +700,11 @@ abortit:
 
 		/* Delete source. */
 		vrele(fvp);
-		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+		fcnp->cn_flags &= ~(MODMASK);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp))) {
+		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			return (error);
 		}
@@ -809,9 +799,8 @@ abortit:
 			vrele(tdvp);
 			goto out;
 		}
-		tcnp->cn_flags &= ~SAVESTART;
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0) {
+		if ((error = relookup(tdvp, &tvp, tcnp, 0)) != 0) {
 			vput(tdvp);
 			goto out;
 		}
@@ -941,10 +930,10 @@ abortit:
 	/*
 	 * 3) Unlink the source.
 	 */
-	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+	fcnp->cn_flags &= ~(MODMASK);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = relookup(fdvp, &fvp, fcnp))) {
+	if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 		vput(fdvp);
 		vrele(ap->a_fvp);
 		return (error);
@@ -1061,10 +1050,6 @@ ext2fs_mkdir(void *v)
 	struct ext2fs_dirtemplate dirtemplate;
 	int			error, dmode;
 
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ext2fs_mkdir: no name");
-#endif
 	if ((nlink_t)dp->i_e2fs_nlink >= LINK_MAX) {
 		error = EMLINK;
 		goto out;
@@ -1165,7 +1150,6 @@ bad:
 		*ap->a_vpp = tvp;
 	}
 out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -1427,16 +1411,11 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	int error, ismember = 0;
 
 	pdir = VTOI(dvp);
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ext2fs_makeinode: no name");
-#endif
 	*vpp = NULL;
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
 
 	if ((error = ext2fs_valloc(dvp, mode, cnp->cn_cred, &tvp)) != 0) {
-		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -1469,8 +1448,6 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	error = ext2fs_direnter(ip, dvp, cnp);
 	if (error != 0)
 		goto bad;
-	if ((cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	*vpp = tvp;
 	return (0);
@@ -1484,7 +1461,6 @@ bad:
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	vput(tvp);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -1502,6 +1478,13 @@ ext2fs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	int error;
 
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_omode == 1 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
 	if ((error = ufs_reclaim(vp)) != 0)
 		return (error);
 	if (ip->i_din.e2fs_din != NULL)

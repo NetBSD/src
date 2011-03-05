@@ -1,0 +1,10 @@
+#	$NetBSD: pseye.ioconf,v 1.1.6.2 2011/03/05 20:55:47 rmind Exp $
+
+ioconf pseye
+
+include "conf/files"
+include "dev/usb/files.usb"
+
+pseudo-root uhub*
+
+pseye* at uhub?

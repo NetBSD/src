@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.3.2.2 2010/05/30 05:17:08 rmind Exp $	*/
+/*	$NetBSD: copy.S,v 1.3.2.3 2011/03/05 20:52:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -652,6 +652,11 @@ ENTRY(ucas_32)
  * int	ucas_64(volatile int64_t *uptr, int64_t old, int64_t new, int64_t *ret);
  */
 ENTRY(ucas_64)
+#ifndef _LP64
+	COMBINE(%o1, %o2, %o1)
+	COMBINE(%o3, %o4, %o2)
+	mov	%o5, %o3
+#endif
 	sethi	%hi(CPCB), %o4
 	wr	%g0, ASI_AIUS, %asi
 	LDPTR	[%o4 + %lo(CPCB)], %o4

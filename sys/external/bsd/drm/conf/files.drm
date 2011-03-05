@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm,v 1.2.6.1 2010/05/30 05:17:47 rmind Exp $
+#	$NetBSD: files.drm,v 1.2.6.2 2011/03/05 20:54:43 rmind Exp $
 
 # direct rendering modules
 define	drmbase
@@ -16,12 +16,15 @@ file	external/bsd/drm/dist/bsd-core/drm_dma.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_drawable.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_drv.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_fops.c		drmbase
+file	external/bsd/drm/dist/bsd-core/drm_hashtab.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_ioctl.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_irq.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_lock.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_memory.c		drmbase
+file	external/bsd/drm/dist/bsd-core/drm_mm.c			drmbase
 file	external/bsd/drm/dist/bsd-core/drm_pci.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_scatter.c		drmbase
+file	external/bsd/drm/dist/bsd-core/drm_sman.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_sysctl.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_vm.c			drmbase
 
@@ -79,7 +82,7 @@ file	external/bsd/drm/dist/shared-core/mga_warp.c		mgadrm
 #file	external/bsd/drm/dist/shared-core/nv04_instmem.c	nouveaudrm
 #file	external/bsd/drm/dist/shared-core/nv50_instmem.c	nouveaudrm
 
-device	r128drm: drmbase, drmpci
+device	r128drm: drmbase, drmpci, firmload
 attach	r128drm at drm
 file	external/bsd/drm/dist/bsd-core/ati_pcigart.c		(r128drm | radeondrm)
 file	external/bsd/drm/dist/bsd-core/r128_drv.c		r128drm
@@ -87,7 +90,7 @@ file	external/bsd/drm/dist/shared-core/r128_cce.c		r128drm
 file	external/bsd/drm/dist/shared-core/r128_irq.c		r128drm
 file	external/bsd/drm/dist/shared-core/r128_state.c		r128drm
 
-device	radeondrm: drmbase, drmpci
+device	radeondrm: drmbase, drmpci, firmload
 attach	radeondrm at drm
 file	external/bsd/drm/dist/bsd-core/radeon_drv.c		radeondrm
 file	external/bsd/drm/dist/shared-core/r300_cmdbuf.c		radeondrm
@@ -118,6 +121,7 @@ file	external/bsd/drm/dist/bsd-core/tdfx_drv.c		tdfxdrm
 device	viadrm: drmbase, drmpci
 attach	viadrm at drm
 file	external/bsd/drm/dist/bsd-core/via_drv.c		viadrm
+file	external/bsd/drm/dist/bsd-core/via_dmablit.c		viadrm
 file	external/bsd/drm/dist/shared-core/via_dma.c		viadrm
 file	external/bsd/drm/dist/shared-core/via_ds.c		viadrm
 file	external/bsd/drm/dist/shared-core/via_irq.c		viadrm

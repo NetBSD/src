@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.23 2007/10/17 19:53:15 garbled Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.23.42.1 2011/03/05 20:49:21 rmind Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.23 2007/10/17 19:53:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.23.42.1 2011/03/05 20:49:21 rmind Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -102,7 +102,7 @@ static int
 pccard_probe(struct device *dev, struct cfdata *cfd, void *aux)
 {
 
-	return (/*is_a600() || */is_a1200()) && matchname(aux, "pccard");
+	return (is_a600() || is_a1200()) && matchname(aux, "pccard");
 }
 
 static void

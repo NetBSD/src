@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.50.4.1 2010/05/30 05:18:10 rmind Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.50.4.2 2011/03/05 20:56:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -15,12 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor,
- *      Washington University, and the University of California, Berkeley
- *      and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,15 +36,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.50.4.1 2010/05/30 05:18:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.50.4.2 2011/03/05 20:56:36 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
 
 /*
@@ -98,6 +94,8 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 	struct uvmexp_sysctl u;
 	int active, inactive;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 
 	uvm_estimatepageable(&active, &inactive);
 
@@ -125,12 +123,14 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.swpginuse = uvmexp.swpginuse;
 	u.swpgonly = uvmexp.swpgonly;
 	u.nswget = uvmexp.nswget;
-	u.faults = uvmexp.faults;
-	u.traps = uvmexp.traps;
-	u.intrs = uvmexp.intrs;
-	u.swtch = uvmexp.swtch;
-	u.softs = uvmexp.softs;
-	u.syscalls = uvmexp.syscalls;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		u.faults += ci->ci_data.cpu_nfault;
+		u.traps += ci->ci_data.cpu_ntrap;
+		u.intrs += ci->ci_data.cpu_nintr;
+		u.swtch += ci->ci_data.cpu_nswtch;
+		u.softs += ci->ci_data.cpu_nsoft;
+		u.syscalls += ci->ci_data.cpu_nsyscall;
+	}
 	u.pageins = uvmexp.pageins;
 	u.pgswapin = uvmexp.pgswapin;
 	u.pgswapout = uvmexp.pgswapout;
@@ -310,7 +310,7 @@ uvm_total(struct vmtotal *totalp)
 
 		case LSSLEEP:
 		case LSSTOP:
-			if (lwp_eprio(l) <= PZERO) {
+			if ((l->l_flag & LW_SINTR) == 0) {
 				totalp->t_dw++;
 			} else if (l->l_slptime < maxslp) {
 				totalp->t_sl++;

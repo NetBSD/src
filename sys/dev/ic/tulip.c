@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.174.4.1 2010/05/30 05:17:26 rmind Exp $	*/
+/*	$NetBSD: tulip.c,v 1.174.4.2 2011/03/05 20:53:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.174.4.1 2010/05/30 05:17:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.174.4.2 2011/03/05 20:53:22 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.174.4.1 2010/05/30 05:17:26 rmind Exp $"
 #include <sys/device.h>
 
 #include <machine/endian.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.80 2010/02/21 18:50:10 bouyer Exp $	*/
+/*	$NetBSD: iop.c,v 1.80.2.1 2011/03/05 20:53:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.80 2010/02/21 18:50:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.80.2.1 2011/03/05 20:53:11 rmind Exp $");
 
 #include "iop.h"
 
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.80 2010/02/21 18:50:10 bouyer Exp $");
 #include <sys/kthread.h>
 #include <sys/kauth.h>
 #include <sys/bus.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/i2o/i2o.h>
 #include <dev/i2o/iopio.h>

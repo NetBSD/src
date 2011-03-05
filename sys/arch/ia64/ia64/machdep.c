@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.2 2010/07/03 01:19:20 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.3 2011/03/05 20:50:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -115,7 +115,7 @@
 #include <machine/atomic.h>
 #include <machine/pte.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -181,14 +181,14 @@ cpu_startup(void)
 
 		printf("Physical memory chunk(s):\n");
 		for (lcv = 0;
-		    lcv < vm_nphysseg || vm_physmem[lcv].avail_end != 0;
+		    lcv < vm_nphysseg || VM_PHYSMEM_PTR(lcv)->avail_end != 0;
 		    lcv++) {
-			sizetmp = vm_physmem[lcv].avail_end -
-			    vm_physmem[lcv].avail_start;
+			sizetmp = VM_PHYSMEM_PTR(lcv)->avail_end -
+			    VM_PHYSMEM_PTR(lcv)->avail_start;
 
 			printf("0x%016lx - 0x%016lx, %ld bytes (%d pages)\n",
-			    ptoa(vm_physmem[lcv].avail_start),
-				ptoa(vm_physmem[lcv].avail_end) - 1,
+			    ptoa(VM_PHYSMEM_PTR(lcv)->avail_start),
+				ptoa(VM_PHYSMEM_PTR(lcv)->avail_end) - 1,
 				    ptoa(sizetmp), sizetmp);
 		}
 		printf("Total number of segments: vm_nphysseg = %d \n",
@@ -724,7 +724,7 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		kst = ksttop - 1;
 		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
 			*kst-- = 0;
-		*kst-- = (uint64_t)l->l_proc->p_psstr;	/* in3 = ps_strings */
+		*kst-- = l->l_proc->p_psstrp;	/* in3 = ps_strings */
 		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
 			*kst-- = 0;
 		*kst-- = 0;				/* in2 = *obj */
@@ -756,7 +756,7 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 		/* in3 = ps_strings */
 		suword((char *)tf->tf_special.bspstore - 8,
-		    (uint64_t)l->l_proc->p_psstr);
+		    l->l_proc->p_psstrp);
 
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.17 2009/12/12 14:44:09 tsutsui Exp $ */
+/*	$NetBSD: pmu.c,v 1.17.4.1 2011/03/05 20:50:59 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.17 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.17.4.1 2011/03/05 20:50:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.17 2009/12/12 14:44:09 tsutsui Exp $");
 #include <machine/autoconf.h>
 #include <dev/clock_subr.h>
 #include <dev/i2c/i2cvar.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/pmuvar.h>
@@ -75,6 +77,7 @@ struct pmu_softc {
 	struct adb_bus_accessops sc_adbops;
 	struct i2c_controller sc_i2c;
 	struct pmu_ops sc_pmu_ops;
+	struct sysmon_pswitch sc_lidswitch;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	uint32_t sc_flags;
@@ -86,6 +89,7 @@ struct pmu_softc {
 	int sc_pending_eject;
 	int sc_brightness, sc_brightness_wanted;
 	int sc_volume, sc_volume_wanted;
+	int sc_lid_closed;
 	/* deferred processing */
 	lwp_t *sc_thread;
 	/* signalling the event thread */
@@ -279,6 +283,7 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_volume = sc->sc_volume_wanted = 0x80;
 	sc->sc_flags = 0;
 	sc->sc_callback = NULL;
+	sc->sc_lid_closed = 0;
 
 	if (bus_space_map(sc->sc_memt, ca->ca_reg[0] + ca->ca_baseaddr,
 	    ca->ca_reg[1], 0, &sc->sc_memh) != 0) {
@@ -401,6 +406,12 @@ bat_done:
 	    "%s", "pmu") != 0) {
 		printf("pmu: unable to create event kthread");
 	}
+
+	sc->sc_lidswitch.smpsw_name = "Lid switch";
+	sc->sc_lidswitch.smpsw_type = PSWITCH_TYPE_LID;
+	if (sysmon_pswitch_register(&sc->sc_lidswitch) != 0)
+		printf("%s: unable to register lid switch with sysmon\n",
+		    device_xname(dev));
 }
 
 static void
@@ -640,6 +651,7 @@ pmu_intr(void *arg)
 		goto done;
 	}
 	if (resp[1] & PMU_INT_ENVIRONMENT) {
+		int closed;
 #ifdef PMU_VERBOSE
 		/* deal with environment messages */
 		printf("environment:");
@@ -647,6 +659,13 @@ pmu_intr(void *arg)
 			printf(" %02x", resp[i]);
 		printf("\n");
 #endif
+		closed = (resp[2] & PMU_ENV_LID_CLOSED) != 0;
+		if (closed != sc->sc_lid_closed) {
+			sc->sc_lid_closed = closed;
+			sysmon_pswitch_event(&sc->sc_lidswitch, 
+	    		    closed ? PSWITCH_EVENT_PRESSED : 
+			    PSWITCH_EVENT_RELEASED);
+		}
 		goto done;
 	}
 	if (resp[1] & PMU_INT_TICK) {
@@ -737,6 +756,20 @@ pmu_restart(void)
 	sc = pmu0;
 	if (pmu_send(sc, PMU_RESET_CPU, 0, NULL, 16, resp) >= 0)
 		while (1);
+}
+
+void
+pmu_modem(int on)
+{
+	struct pmu_softc *sc;
+	uint8_t resp[16], cmd[2] = {0, 0};
+
+	if (pmu0 == NULL)
+		return;
+
+	sc = pmu0;
+	cmd[0] = PMU_POW0_MODEM | (on ? PMU_POW0_ON : 0);
+	pmu_send(sc, PMU_POWER_CTRL0, 1, cmd, 16, resp);
 }
 
 static void

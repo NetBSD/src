@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.20.4.2 2010/07/03 01:19:56 rmind Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.20.4.3 2011/03/05 20:55:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.20.4.2 2010/07/03 01:19:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.20.4.3 2011/03/05 20:55:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,7 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 		syscallarg(const char *) attrname;
 	} */
 	struct vnode *path_vp, *file_vp;
+	struct pathbuf *file_pb;
 	struct nameidata file_nd;
 	char attrname[EXTATTR_MAXNAMELEN];
 	int error;
@@ -169,14 +170,20 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 
 	file_vp = NULL;
 	if (SCARG(uap, filename) != NULL) {
-		NDINIT(&file_nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-		    SCARG(uap, filename));
-		error = namei(&file_nd);
+		error = pathbuf_copyin(SCARG(uap, filename), &file_pb);
 		if (error) {
 			vrele(path_vp);
 			return (error);
 		}
+		NDINIT(&file_nd, LOOKUP, FOLLOW | LOCKLEAF, file_pb);
+		error = namei(&file_nd);
+		if (error) {
+			pathbuf_destroy(file_pb);
+			vrele(path_vp);
+			return (error);
+		}
 		file_vp = file_nd.ni_vp;
+		pathbuf_destroy(file_pb);
 	}
 
 	error = VFS_EXTATTRCTL(path_vp->v_mount, SCARG(uap, cmd), file_vp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.27.4.1 2010/05/30 05:16:37 rmind Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.27.4.2 2011/03/05 20:49:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.27.4.1 2010/05/30 05:16:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.27.4.2 2011/03/05 20:49:28 rmind Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -155,7 +155,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf = pcb->pcb_tf;
 
 	memset(tf, 0, sizeof(*tf));
-	tf->tf_r0 = (u_int)l->l_proc->p_psstr;
+	tf->tf_r0 = l->l_proc->p_psstrp;
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
 	tf->tf_usr_sp = stack;
 	tf->tf_usr_lr = pack->ep_entry;
@@ -276,4 +276,16 @@ bool
 cpu_intr_p(void)
 {
 	return curcpu()->ci_intr_depth != 0;
+}
+
+void
+ucas_ras_check(trapframe_t *tf)
+{
+	extern char ucas_32_ras_start[];
+	extern char ucas_32_ras_end[];
+
+	if (tf->tf_pc > (vaddr_t)ucas_32_ras_start &&
+	    tf->tf_pc < (vaddr_t)ucas_32_ras_end) {
+		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
+	}
 }

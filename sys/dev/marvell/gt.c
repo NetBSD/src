@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.22.2.2 2010/07/03 01:19:35 rmind Exp $	*/
+/*	$NetBSD: gt.c,v 1.22.2.3 2011/03/05 20:53:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.22.2.2 2010/07/03 01:19:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.22.2.3 2011/03/05 20:53:26 rmind Exp $");
 
 #include "opt_marvell.h"
 #include "gtmpsc.h"
@@ -110,8 +110,8 @@ static int gt_watchdog_state = 0;
 #endif
 
 
-#define OFFSET_DEFAULT	GTCF_OFFSET_DEFAULT
-#define IRQ_DEFAULT	GTCF_IRQ_DEFAULT
+#define OFFSET_DEFAULT	MVA_OFFSET_DEFAULT
+#define IRQ_DEFAULT	MVA_IRQ_DEFAULT
 static const struct gt_dev {
 	int model;
 	const char *name;
@@ -147,6 +147,32 @@ static const struct gt_dev {
 	{ MARVELL_DISCOVERY_III,"gtpci",   1,	OFFSET_DEFAULT,	IRQ_DEFAULT },
 	{ MARVELL_DISCOVERY_III,"gttwsi",  0,	0xc000,		37 },
 	{ MARVELL_DISCOVERY_III,"mvgbec",  0,	0x0000,		IRQ_DEFAULT },
+
+#if 0	/* XXXXXX: from www.marvell.com */
+	/* Discovery LT (Discovery Light) MV644[23]0 */
+	{ MARVELL_DISCOVERY_LT,	"gtidmac", 0,	0x?000,		? /*...? */ },
+	{ MARVELL_DISCOVERY_LT,	"gtmpsc",  0,	0x?000,		? },
+	{ MARVELL_DISCOVERY_LT,	"gtmpsc",  1,	0x?000,		? },
+	{ MARVELL_DISCOVERY_LT,	"gtpci",   0,	OFFSET_DEFAULT,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_LT,	"gtpci",   1,	OFFSET_DEFAULT,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_LT,	"gttwsi",  0,	0x?000,		? },
+	{ MARVELL_DISCOVERY_LT,	"mvgbec",  0,	0x?000,		IRQ_DEFAULT },
+
+	/* Discovery V MV64560 */
+	{ MARVELL_DISCOVERY_V,	"com",     ?,	0x?0000,	? },
+	{ MARVELL_DISCOVERY_V,	"ehci",    0,	0x?0000,	? },
+	{ MARVELL_DISCOVERY_V,	"ehci",    1,	0x?0000,	? },
+	{ MARVELL_DISCOVERY_V,	"gtidmac", 0,	0x?0000,	? /*...? */ },
+	{ MARVELL_DISCOVERY_V,	"gtpci",   0,	0x?0000,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_V,	"gttwsi",  0,	0x?0000,	? },
+	{ MARVELL_DISCOVERY_V,	"mvgbec",  0,	0x?0000,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_V,	"mvpex or gtpci?", 0, 0x?0000,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_V,	"obio",    0,	OFFSET_DEFAULT,	IRQ_DEFAULT },
+
+	/* Discovery VI MV64660 */
+	/* MV64560 + SATA? */
+	{ MARVELL_DISCOVERY_VI, "mvsata",  0,	0x?0000,	? },
+#endif
 };
 
 
@@ -159,15 +185,15 @@ gt_cfprint(void *aux, const char *pnp)
 		aprint_normal("%s at %s unit %d",
 		    mva->mva_name, pnp, mva->mva_unit);
 	else {
-		if (mva->mva_unit != GTCF_UNIT_DEFAULT)
+		if (mva->mva_unit != MVA_UNIT_DEFAULT)
 			aprint_normal(" unit %d", mva->mva_unit);
-		if (mva->mva_offset != GTCF_OFFSET_DEFAULT) {
+		if (mva->mva_offset != MVA_OFFSET_DEFAULT) {
 			aprint_normal(" offset 0x%04x", mva->mva_offset);
 			if (mva->mva_size > 0)
 				aprint_normal("-0x%04x",
 				    mva->mva_offset + mva->mva_size - 1);
 		}
-		if (mva->mva_irq != GTCF_IRQ_DEFAULT)
+		if (mva->mva_irq != MVA_IRQ_DEFAULT)
 			aprint_normal(" irq %d", mva->mva_irq);
 	}
 
@@ -181,7 +207,7 @@ gt_cfsearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 
-	if (cf->cf_loc[GTCF_IRQ] != GTCF_IRQ_DEFAULT)
+	if (cf->cf_loc[GTCF_IRQ] != MVA_IRQ_DEFAULT)
 		mva->mva_irq = cf->cf_loc[GTCF_IRQ];
 
 	return config_match(parent, cf, aux);

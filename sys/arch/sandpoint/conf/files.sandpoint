@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.25.26.1 2010/05/30 05:17:05 rmind Exp $
+#	$NetBSD: files.sandpoint,v 1.25.26.2 2011/03/05 20:51:45 rmind Exp $
 #
 # Motorola's "SandPoint" evaluation board and multiplied descendents.
 #
@@ -48,7 +48,7 @@ attach eumb at mainbus
 file	arch/sandpoint/sandpoint/eumb.c		eumb
 attach com at eumb with com_eumb
 file	arch/sandpoint/sandpoint/com_eumb.c	com_eumb needs-flag
-device	ociic: i2cbus, i2cexec
+device	ociic: motoi2c, i2cbus
 attach ociic at eumb with iic_eumb
 file	arch/sandpoint/sandpoint/iic_eumb.c	iic_eumb
 
@@ -109,5 +109,3 @@ attach	satmgr at eumb
 file	arch/sandpoint/sandpoint/satmgr.c	satmgr
 
 include "arch/powerpc/conf/majors.powerpc"
-
-device-major	satmgr		char 100	satmgr

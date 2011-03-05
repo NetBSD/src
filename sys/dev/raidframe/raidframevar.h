@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.13 2009/11/17 18:54:26 jld Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.13.4.1 2011/03/05 20:54:03 rmind Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -444,9 +444,9 @@ typedef struct RF_ComponentLabel_s {
 	int maxOutstanding;   /* maxOutstanding disk requests */
 	int blockSize;        /* size of component block.
 				 (disklabel->d_secsize) */
-	u_int numBlocks;      /* number of blocks on this component.  May
+	u_int __numBlocks;    /* number of blocks on this component.  May
 			         be smaller than the partition size. */
-	u_int partitionSize;  /* number of blocks on this *partition*.
+	u_int __partitionSize;/* number of blocks on this *partition*.
 				 Must exactly match the partition size
 				 from the disklabel. */
 	/* Parity map stuff. */
@@ -471,8 +471,47 @@ typedef struct RF_ComponentLabel_s {
 				 done first, (and would become raid0).
 				 This may be in conflict with last_unit!!?! */
 	                      /* Not currently used. */
-	int future_use2[44];  /* More future expansion */
+	u_int numBlocksHi;    /* The top 32-bits of the numBlocks member. */
+	u_int partitionSizeHi;/* The top 32-bits of the partitionSize member. */
+	int future_use2[42];  /* More future expansion */
 } RF_ComponentLabel_t;
+
+/*
+ * Following four functions are access macros for the number of blocks
+ * and partition size in component label.
+ */
+static inline RF_SectorCount_t
+rf_component_label_numblocks(const RF_ComponentLabel_t *cl)
+{
+
+	return ((RF_SectorCount_t)cl->numBlocksHi << 32) |
+	    cl->__numBlocks;
+}
+
+static inline void
+rf_component_label_set_numblocks(RF_ComponentLabel_t *cl, RF_SectorCount_t siz)
+{
+
+	cl->numBlocksHi = siz >> 32;
+	cl->__numBlocks = siz;
+}
+
+static inline RF_SectorCount_t
+rf_component_label_partitionsize(const RF_ComponentLabel_t *cl)
+{
+
+	return ((RF_SectorCount_t)cl->partitionSizeHi << 32) |
+	    cl->__partitionSize;
+}
+
+static inline void
+rf_component_label_set_partitionsize(RF_ComponentLabel_t *cl,
+    RF_SectorCount_t siz)
+{
+
+	cl->partitionSizeHi = siz >> 32;
+	cl->__partitionSize = siz;
+}
 
 typedef struct RF_SingleComponent_s {
 	int row;

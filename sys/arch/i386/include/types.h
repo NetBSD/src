@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.67.4.1 2010/03/18 04:36:49 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.67.4.2 2011/03/05 20:50:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,27 +47,43 @@ typedef struct label_t {
 } label_t;
 #endif
 
-/* NB: This should probably be if defined(_KERNEL) */
 #if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL)
+
+/*
+ * XXX JYM for now, in kernel paddr_t can be 32 or 64 bits, depending
+ * on PAE. Revisit when paddr_t becomes 64 bits for !PAE systems.
+ */
 #ifdef PAE
-typedef unsigned long long paddr_t;
-typedef unsigned long long psize_t;
+typedef __uint64_t	paddr_t;
+typedef __uint64_t	psize_t;
 #define	PRIxPADDR	"llx"
 #define	PRIxPSIZE	"llx"
 #define	PRIuPSIZE	"llu"
-#else
+#else /* PAE */
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 #define	PRIxPADDR	"lx"
 #define	PRIxPSIZE	"lx"
 #define	PRIuPSIZE	"lu"
 #endif /* PAE */
+
+#else /* _KERNEL */
+/* paddr_t is always 64 bits for userland */
+typedef __uint64_t	paddr_t;
+typedef __uint64_t	psize_t;
+#define	PRIxPADDR	"llx"
+#define	PRIxPSIZE	"llx"
+#define	PRIuPSIZE	"llu"
+
+#endif /* _KERNEL */
+
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
-#endif
+#endif /* _NETBSD_SOURCE */
 
 typedef int		pmc_evid_t;
 typedef __uint64_t	pmc_ctr_t;
@@ -86,18 +102,20 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__NO_STRICT_ALIGNMENT
 
 #define	__HAVE_DEVICE_REGISTER
+#define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_MD_CPU_OFFLINE
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
+#define __HAVE_ATOMIC64_OPS
 #define	__HAVE_ATOMIC_AS_MEMBAR
 #define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_INTR_CONTROL
 #define	__HAVE_MM_MD_OPEN
+#define	__HAVE___LWP_GETPRIVATE_FAST
 
 #if defined(_KERNEL)
-#define	__HAVE_ATOMIC64_OPS		/* not true for i486 in userspace */
 #define	__HAVE_RAS
 #endif
 

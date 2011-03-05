@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.327.2.1 2010/05/30 05:17:09 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.327.2.2 2011/03/05 20:52:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -2129,8 +2129,8 @@ datafault:
 
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 Ldatafault_internal:
-	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1,%o2) should not fault
-!	ldx	[%sp + CC64FSZ + STKB + TF_FAULT], %g1		! DEBUG make sure this has not changed
+	INCR64(CPUINFO_VA+CI_NFAULT)			! cnt.v_faults++ (clobbers %o0,%o1)
+!	ldx	[%sp + CC64FSZ + STKB + TF_FAULT], %g1	! DEBUG make sure this has not changed
 	mov	%g1, %o0				! Move these to the out regs so we can save the globals
 	mov	%g2, %o4
 	mov	%g3, %o5
@@ -2373,7 +2373,7 @@ textfault:
 	stxa	%g0, [SFSR] %asi			! Clear out old info
 
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
-	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1,%o2)
+	INCR64(CPUINFO_VA+CI_NFAULT)			! cnt.v_faults++ (clobbers %o0,%o1)
 
 	mov	%g3, %o3
 
@@ -3318,7 +3318,7 @@ ENTRY_NOPROFILE(sparc_interrupt)
 
 	flushw			! Do not remove this insn -- causes interrupt loss
 	rd	%y, %l6
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1,%o2)
+	INCR64(CPUINFO_VA+CI_NINTR)	! cnt.v_ints++ (clobbers %o0,%o1)
 	rdpr	%tt, %l5		! Find out our current IPL
 	rdpr	%tstate, %l0
 	rdpr	%tpc, %l1
@@ -5483,13 +5483,9 @@ ENTRY(pseg_get_real)
  */
 ENTRY(pseg_set_real)
 #ifndef _LP64
-	sllx	%o4, 32, %o4				! Put args into 64-bit format
-	sllx	%o2, 32, %o2				! Shift to high 32-bits
-	clruw	%o3					! Zero extend
-	clruw	%o5
-	clruw	%o1
-	or	%o2, %o3, %o2
-	or	%o4, %o5, %o3
+	clruw	%o1					! Zero extend
+	COMBINE(%o2, %o3, %o2)
+	COMBINE(%o4, %o5, %o3)
 #endif
 	!!
 	!! However we managed to get here we now have:

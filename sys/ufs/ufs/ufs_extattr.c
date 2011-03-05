@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.26.4.2 2010/07/03 01:20:05 rmind Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.26.4.3 2011/03/05 20:56:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.26.4.2 2010/07/03 01:20:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.26.4.3 2011/03/05 20:56:33 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -258,23 +258,24 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	struct vop_lookup_args vargs;
 	struct componentname cnp;
 	struct vnode *target_vp;
+	char *pnbuf;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(start_dvp) == LK_EXCLUSIVE);
+
+	pnbuf = PNBUF_GET();
 
 	memset(&cnp, 0, sizeof(cnp));
 	cnp.cn_nameiop = LOOKUP;
 	cnp.cn_flags = ISLASTCN | lockparent;
 	cnp.cn_cred = l->l_cred;
-	cnp.cn_pnbuf = PNBUF_GET();
-	cnp.cn_nameptr = cnp.cn_pnbuf;
-	error = copystr(dirname, cnp.cn_pnbuf, MAXPATHLEN,
-	    (size_t *) &cnp.cn_namelen);
+	cnp.cn_nameptr = pnbuf;
+	error = copystr(dirname, pnbuf, MAXPATHLEN, &cnp.cn_namelen);
 	if (error) {
 		if (lockparent == 0) {
 			VOP_UNLOCK(start_dvp);
 		}
-		PNBUF_PUT(cnp.cn_pnbuf);
+		PNBUF_PUT(pnbuf);
 		printf("ufs_extattr_lookup: copystr failed\n");
 		return (error);
 	}
@@ -284,7 +285,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	vargs.a_vpp = &target_vp;
 	vargs.a_cnp = &cnp;
 	error = ufs_lookup(&vargs);
-	PNBUF_PUT(cnp.cn_pnbuf);
+	PNBUF_PUT(pnbuf);
 	if (error) {
 		VOP_UNLOCK(start_dvp);
 		return (error);

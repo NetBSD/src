@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2010/02/25 23:33:44 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31.2.1 2011/03/05 20:50:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2010/02/25 23:33:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31.2.1 2011/03/05 20:50:15 rmind Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2010/02/25 23:33:44 matt Exp $");
 #include <machine/bus.h>
 #include <machine/powerpc.h>
 #include <machine/tlb.h>
+#include <machine/pcb.h>
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>

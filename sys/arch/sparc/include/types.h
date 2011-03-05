@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.52.4.2 2010/03/24 06:02:48 mrg Exp $ */
+/*	$NetBSD: types.h,v 1.52.4.3 2011/03/05 20:52:01 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,6 +116,7 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+#define __HAVE_CPU_DATA_FIRST
 
 #ifdef SUN4U
 #define	__HAVE_DEVICE_REGISTER_POSTCONFIG
@@ -128,5 +129,9 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_MM_MD_READWRITE
 #endif
 
+#define	__HAVE_CPU_LWP_SETPRIVATE
+#if 0
+#define	__HAVE___LWP_GETPRIVATE_FAST
+#endif
 
 #endif	/* _MACHTYPES_H_ */

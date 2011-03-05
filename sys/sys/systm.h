@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.239 2010/01/31 02:04:43 pooka Exp $	*/
+/*	$NetBSD: systm.h,v 1.239.4.1 2011/03/05 20:56:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -50,8 +50,9 @@
 #include <sys/types.h>
 #endif
 
+#include <sys/device_if.h>
+
 struct clockframe;
-struct device;
 struct lwp;
 struct proc;
 struct timeval;
@@ -89,7 +90,7 @@ extern const char *dumpspec;	/* how dump device was specified */
 
 extern dev_t rootdev;		/* root device */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
-extern struct device *root_device; /* device equivalent to above */
+extern device_t root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
 
 extern int ncpu;		/* number of CPUs configured */
@@ -98,8 +99,8 @@ extern int ncpuonline;		/* number of CPUs online */
 extern bool mp_online;		/* secondary processors are started */
 #endif /* defined(_KERNEL) */
 
-extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf2.c */
-extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf2.c */
+extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
+extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
 
 /*
  * These represent the swap pseudo-device (`sw').  This device
@@ -139,6 +140,7 @@ extern int nsysent;
 #define SYCALL_ARG5_64  0x0400000
 #define SYCALL_ARG6_64  0x0800000
 #define SYCALL_ARG7_64  0x1000000
+#define SYCALL_NOSYS    0x2000000 /* permanent nosys in sysent[] */
 #define SYCALL_RET_64_P(sy)	((sy)->sy_flags & SYCALL_RET_64)
 #define SYCALL_ARG_64_P(sy, n)	((sy)->sy_flags & (SYCALL_ARG0_64 << (n)))
 #define	SYCALL_ARG_64_MASK(sy)	(((sy)->sy_flags >> 17) & 0xff)
@@ -186,17 +188,18 @@ void	aprint_verbose(const char *, ...)
 void	aprint_debug(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-struct device;
+void device_printf(device_t, const char *fmt, ...)
+    __attribute__((__format__(__printf__,2,3)));
 
-void	aprint_normal_dev(struct device *, const char *, ...)
+void	aprint_normal_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	aprint_error_dev(struct device *, const char *, ...)
+void	aprint_error_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	aprint_naive_dev(struct device *, const char *, ...)
+void	aprint_naive_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	aprint_verbose_dev(struct device *, const char *, ...)
+void	aprint_verbose_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	aprint_debug_dev(struct device *, const char *, ...)
+void	aprint_debug_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
 struct ifnet;
@@ -301,6 +304,7 @@ void	statclock(struct clockframe *);
 #ifdef NTP
 void	ntp_init(void);
 #ifdef PPS_SYNC
+struct timespec;
 void	hardpps(struct timespec *, long);
 #endif /* PPS_SYNC */
 #else
@@ -319,6 +323,14 @@ void	startprofclock(struct proc *);
 void	stopprofclock(struct proc *);
 void	proftick(struct clockframe *);
 void	setstatclockrate(int);
+
+/*
+ * Critical polling hooks.  Functions to be run while the kernel stays
+ * elevated IPL for a "long" time.  (watchdogs).
+ */
+void	*critpollhook_establish(void (*)(void *), void *);
+void	critpollhook_disestablish(void *);
+void	docritpollhooks(void);
 
 /*
  * Shutdown hooks.  Functions to be run with all interrupts disabled
@@ -357,10 +369,10 @@ void	dopowerhooks(int);
 #define	ROOT_FSTYPE_ANY	"?"
 
 extern const char *rootfstype;
-void	*mountroothook_establish(void (*)(struct device *), struct device *);
+void	*mountroothook_establish(void (*)(device_t), device_t);
 void	mountroothook_disestablish(void *);
 void	mountroothook_destroy(void);
-void	domountroothook(struct device *);
+void	domountroothook(device_t);
 
 /*
  * Exec hooks. Subsystems may want to do cleanup when a process
@@ -491,6 +503,13 @@ void scdebug_ret(register_t, int, const register_t[]);
 void	kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(int, int *);
+
+#ifdef _KERNEL
+void	kernconfig_lock_init(void);
+void	kernconfig_lock(void);
+void	kernconfig_unlock(void);
+bool	kernconfig_is_held(void);
+#endif
 
 #if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define	KERNEL_LOCK(count, lwp)			\

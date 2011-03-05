@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1.4.2 2010/05/30 05:17:03 rmind Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.1.4.3 2011/03/05 20:51:39 rmind Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1.4.2 2010/05/30 05:17:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1.4.3 2011/03/05 20:51:39 rmind Exp $");
 
 #include "gtpci.h"
 #include "pci.h"
@@ -56,7 +56,7 @@ extern int gtpci_md_conf_hook(void *, int, int, int, pcireg_t);
 struct genppc_pci_chipset genppc_gtpci0_chipset = {
 	NULL,				/* pc_conf_v */
 	gtpci_attach_hook,
-	(int (*)(pci_chipset_tag_t, int))gtpci_bus_maxdevs,
+	gtpci_bus_maxdevs,
 	gtpci_make_tag,
 	gtpci_conf_read,
 	gtpci_conf_write,
@@ -75,7 +75,7 @@ struct genppc_pci_chipset genppc_gtpci0_chipset = {
 struct genppc_pci_chipset genppc_gtpci1_chipset = {
 	NULL,				/* pc_conf_v */
 	gtpci_attach_hook,
-	(int (*)(pci_chipset_tag_t, int))gtpci_bus_maxdevs,
+	gtpci_bus_maxdevs,
 	gtpci_make_tag,
 	gtpci_conf_read,
 	gtpci_conf_write,

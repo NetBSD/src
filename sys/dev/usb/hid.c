@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.28.22.1 2010/05/30 05:17:44 rmind Exp $	*/
+/*	$NetBSD: hid.c,v 1.28.22.2 2011/03/05 20:54:10 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.28.22.1 2010/05/30 05:17:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.28.22.2 2011/03/05 20:54:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.28.22.1 2010/05/30 05:17:44 rmind Exp $");
 #include <dev/usb/hid.h>
 
 #ifdef UHIDEV_DEBUG
-#define DPRINTF(x)	if (uhidevdebug) logprintf x
-#define DPRINTFN(n,x)	if (uhidevdebug>(n)) logprintf x
+#define DPRINTF(x)	if (uhidevdebug) printf x
+#define DPRINTFN(n,x)	if (uhidevdebug>(n)) printf x
 extern int uhidevdebug;
 #else
 #define DPRINTF(x)

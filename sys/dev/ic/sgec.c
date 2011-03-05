@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.37.4.1 2010/05/30 05:17:25 rmind Exp $ */
+/*      $NetBSD: sgec.c,v 1.37.4.2 2011/03/05 20:53:20 rmind Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.37.4.1 2010/05/30 05:17:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.37.4.2 2011/03/05 20:53:20 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -55,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.37.4.1 2010/05/30 05:17:25 rmind Exp $");
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

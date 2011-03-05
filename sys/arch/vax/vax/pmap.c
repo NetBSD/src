@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175.4.1 2010/07/03 01:19:28 rmind Exp $	   */
+/*	$NetBSD: pmap.c,v 1.175.4.2 2011/03/05 20:52:19 rmind Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.4.1 2010/07/03 01:19:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.4.2 2011/03/05 20:52:19 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -39,30 +39,23 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.4.1 2010/07/03 01:19:28 rmind Exp $")
 #include "opt_lockdebug.h"
 #include "opt_pipe.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
-#include <sys/extent.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #ifdef PMAPDEBUG
 #include <dev/cons.h>
 #endif
 
-#include <uvm/uvm.h>
-
-#include <machine/pte.h>
-#include <machine/pcb.h>
-#include <machine/mtpr.h>
 #include <machine/macros.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
 #include <machine/scb.h>
 #include <machine/rpb.h>
 
@@ -467,9 +460,9 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	 * A vax only have one segment of memory.
 	 */
 
-	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
-	vm_physmem[0].avail_start += npgs;
-	vm_physmem[0].start += npgs;
+	v = (VM_PHYSMEM_PTR(0)->avail_start << PGSHIFT) | KERNBASE;
+	VM_PHYSMEM_PTR(0)->avail_start += npgs;
+	VM_PHYSMEM_PTR(0)->start += npgs;
 	memset((void *)v, 0, size);
 	return v;
 }

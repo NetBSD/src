@@ -55,6 +55,7 @@ struct drm_sysctl_info {
 	const struct sysctlnode *dri, *dri_card, *dri_debug;
 	const struct sysctlnode *dri_rest[DRM_SYSCTL_ENTRIES];
 	char		       name[7];
+	struct sysctllog       *log;
 #endif
 };
 
@@ -112,17 +113,17 @@ int drm_sysctl_init(struct drm_device *dev)
 	    CTLFLAG_RW, &drm_debug_flag, sizeof(drm_debug_flag),
 	    "Enable debugging output");
 #elif   defined(__NetBSD__)
-	sysctl_createv(NULL, 0, NULL, &info->dri,
+	sysctl_createv(&info->log, 0, NULL, &info->dri,
 			CTLFLAG_READWRITE, CTLTYPE_NODE,
 			"dri", SYSCTL_DESCR("DRI Graphics"), NULL, 0, NULL, 0,
 			CTL_HW, CTL_CREATE);
 	snprintf(info->name, 7, "card%d", minor(dev->kdev));
-	sysctl_createv(NULL, 0, NULL, &info->dri_card,
+	sysctl_createv(&info->log, 0, NULL, &info->dri_card,
 			CTLFLAG_READWRITE, CTLTYPE_NODE,
 			info->name, NULL, NULL, 0, NULL, 0,
 			CTL_HW, info->dri->sysctl_num, CTL_CREATE);
 	for (i = 0; i < DRM_SYSCTL_ENTRIES; i++)
-		sysctl_createv(NULL, 0, NULL, &(info->dri_rest[i]),
+		sysctl_createv(&info->log, 0, NULL, &(info->dri_rest[i]),
 				CTLFLAG_READONLY, CTLTYPE_STRING,
 				drm_sysctl_list[i].name, NULL,
 				drm_sysctl_list[i].f, 0, dev,
@@ -130,7 +131,7 @@ int drm_sysctl_init(struct drm_device *dev)
 				CTL_HW,
 				info->dri->sysctl_num,
 				info->dri_card->sysctl_num, CTL_CREATE);
-	sysctl_createv(NULL, 0, NULL, &info->dri_debug,
+	sysctl_createv(&info->log, 0, NULL, &info->dri_debug,
 			CTLFLAG_READWRITE, CTLTYPE_INT,
 			"debug", SYSCTL_DESCR("Enable debugging output"),
 			NULL, 0,
@@ -152,20 +153,7 @@ int drm_sysctl_cleanup(struct drm_device *dev)
 
 	return error;
 #elif   defined(__NetBSD__)
-	int i;
-
-	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num,
-	                              dev->sysctl->dri_debug->sysctl_num,
-	                              CTL_DESTROY);
-	for (i = 0; i < DRM_SYSCTL_ENTRIES; i++)
-		sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num,
-	       	                              dev->sysctl->dri_card->sysctl_num,
-	       	                           dev->sysctl->dri_rest[i]->sysctl_num,
-		                              CTL_DESTROY);
-	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num,
-	                              dev->sysctl->dri_card->sysctl_num,
-	                              CTL_DESTROY);
-	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num, CTL_DESTROY);
+	sysctl_teardown(&dev->sysctl->log);
 
 	free(dev->sysctl, DRM_MEM_DRIVER);
 	dev->sysctl = NULL;

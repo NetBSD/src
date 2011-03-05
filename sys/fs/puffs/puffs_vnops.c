@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.142.4.3 2010/07/03 01:19:51 rmind Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.142.4.4 2011/03/05 20:55:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.142.4.3 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.142.4.4 2011/03/05 20:55:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/lockf.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -124,7 +125,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_getpages_desc, puffs_vnop_checkop },	/* getpages */
         { &vop_putpages_desc, genfs_putpages },		/* REAL putpages */
         { &vop_pathconf_desc, puffs_vnop_checkop },	/* pathconf */
-        { &vop_advlock_desc, puffs_vnop_checkop },	/* advlock */
+        { &vop_advlock_desc, puffs_vnop_advlock },	/* REAL advlock */
         { &vop_strategy_desc, puffs_vnop_strategy },	/* REAL strategy */
         { &vop_revoke_desc, genfs_revoke },		/* REAL revoke */
         { &vop_abortop_desc, puffs_vnop_abortop },	/* REAL abortop */
@@ -291,7 +292,6 @@ const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
         { &vop_print_desc, puffs_vnop_print },		/* print */
         { &vop_islocked_desc, puffs_vnop_islocked },	/* islocked */
         { &vop_pathconf_desc, puffs_vnop_pathconf },	/* pathconf */
-        { &vop_advlock_desc, puffs_vnop_advlock },	/* advlock */
         { &vop_getpages_desc, puffs_vnop_getpages },	/* getpages */
 	{ NULL, NULL }
 };
@@ -375,7 +375,6 @@ puffs_vnop_checkop(void *v)
 			CHECKOP_NOTSUPP(READLINK);
 			CHECKOP_NOTSUPP(PRINT);
 			CHECKOP_NOTSUPP(PATHCONF);
-			CHECKOP_NOTSUPP(ADVLOCK);
 			CHECKOP_NOTSUPP(GETEXTATTR);
 			CHECKOP_NOTSUPP(SETEXTATTR);
 			CHECKOP_NOTSUPP(LISTEXTATTR);
@@ -500,6 +499,10 @@ puffs_vnop_lookup(void *v)
 	}
 
 	if (isdot) {
+		/* deal with rename lookup semantics */
+		if (cnp->cn_nameiop == RENAME && (cnp->cn_flags & ISLASTCN))
+			return EISDIR;
+
 		vp = ap->a_dvp;
 		vref(vp);
 		*ap->a_vpp = vp;
@@ -537,7 +540,6 @@ puffs_vnop_lookup(void *v)
 			} else if ((cnp->cn_flags & ISLASTCN)
 			    && (cnp->cn_nameiop == CREATE
 			      || cnp->cn_nameiop == RENAME)) {
-				cnp->cn_flags |= SAVENAME;
 				error = EJUSTRETURN;
 
 			/* save negative cache entry */
@@ -590,13 +592,6 @@ puffs_vnop_lookup(void *v)
 	if (lookup_msg->pvnr_cn.pkcn_consume)
 		cnp->cn_consume = MIN(lookup_msg->pvnr_cn.pkcn_consume,
 		    strlen(cnp->cn_nameptr) - cnp->cn_namelen);
-
-	/*
-	 * We need the name in remove and rmdir (well, rename too, but
-	 * SAVESTART takes care of that)
-	 */
-	if (cnp->cn_nameiop == DELETE)
-		cnp->cn_flags |= SAVENAME;
 
  out:
 	if (cnp->cn_flags & ISDOTDOT)
@@ -669,8 +664,6 @@ puffs_vnop_create(void *v)
 
  out:
 	vput(dvp);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 
 	DPRINTF(("puffs_create: return %d\n", error));
 	PUFFS_MSG_RELEASE(create);
@@ -718,8 +711,6 @@ puffs_vnop_mknod(void *v)
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(mknod);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	return error;
 }
 
@@ -1480,8 +1471,6 @@ puffs_vnop_remove(void *v)
 	RELEPN_AND_VP(vp, pn);
 
 	error = checkerr(pmp, error, __func__);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	return error;
 }
 
@@ -1525,8 +1514,6 @@ puffs_vnop_mkdir(void *v)
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(mkdir);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	return error;
 }
 
@@ -1585,9 +1572,6 @@ puffs_vnop_rmdir(void *v)
 	RELEPN_AND_VP(dvp, dpn);
 	RELEPN_AND_VP(vp, pn);
 
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
-
 	return error;
 }
 
@@ -1632,7 +1616,6 @@ puffs_vnop_link(void *v)
 	if (error == 0)
 		puffs_updatenode(pn, PUFFS_UPDATECTIME, 0);
 
-	PNBUF_PUT(cnp->cn_pnbuf);
 	RELEPN_AND_VP(dvp, dpn);
 	puffs_releasenode(pn);
 
@@ -1684,8 +1667,6 @@ puffs_vnop_symlink(void *v)
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(symlink);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }
@@ -2127,27 +2108,10 @@ puffs_vnop_advlock(void *v)
 		struct flock *a_fl;
 		int a_flags;
 	} */ *ap = v;
-	PUFFS_MSG_VARS(vn, advlock);
 	struct vnode *vp = ap->a_vp;
-	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
-	int error;
+	struct puffs_node *pn = VPTOPP(vp);
 
-	PUFFS_MSG_ALLOC(vn, advlock);
-	error = copyin(ap->a_fl, &advlock_msg->pvnr_fl, sizeof(struct flock));
-	if (error)
-		goto out;
-	advlock_msg->pvnr_id = ap->a_id;
-	advlock_msg->pvnr_op = ap->a_op;
-	advlock_msg->pvnr_flags = ap->a_flags;
-	puffs_msg_setinfo(park_advlock, PUFFSOP_VN,
-	    PUFFS_VN_ADVLOCK, VPTOPNC(vp));
-
-	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_advlock, vp->v_data, NULL, error);
-	error = checkerr(pmp, error, __func__);
-
- out:
-	PUFFS_MSG_RELEASE(advlock);
-	return error;
+	return lf_advlock(ap, &pn->pn_lockf, vp->v_size);
 }
 
 int

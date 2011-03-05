@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.c,v 1.2 2008/12/07 08:24:26 tsutsui Exp $	*/
+/*	$NetBSD: memory.c,v 1.2.10.1 2011/03/05 20:50:59 rmind Exp $	*/
 /*	$OpenBSD: mem.c,v 1.15 2007/10/14 17:29:04 kettenis Exp $	*/
 
 /*-
@@ -46,12 +46,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.2 2008/12/07 08:24:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.2.10.1 2011/03/05 20:50:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
 

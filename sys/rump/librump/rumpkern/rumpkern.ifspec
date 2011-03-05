@@ -1,4 +1,4 @@
-;	$NetBSD: rumpkern.ifspec,v 1.4.4.1 2010/05/30 05:18:06 rmind Exp $
+;	$NetBSD: rumpkern.ifspec,v 1.4.4.2 2011/03/05 20:56:15 rmind Exp $
 
 NAME|kern
 PUBHDR|include/rump/rumpkern_if_pub.h
@@ -8,7 +8,6 @@ WRAPPERS|librump/rumpkern/rumpkern_if_wrappers.c
 ; type		| name		| args
 ;
 
-void		|reboot		|int
 int		|getversion	|void
 
 int		|module_init	|const struct modinfo * const *, size_t
@@ -21,17 +20,13 @@ off_t		|uio_getoff	|struct uio *
 size_t		|uio_free	|struct uio *
 
 struct kauth_cred*|cred_create	|uid_t, gid_t, size_t, gid_t *
-struct kauth_cred*|cred_suserget|void
 void		  |cred_put	|struct kauth_cred *
 
-; lwp interfaces.  these need much love
-struct lwp *	|newproc_switch		|void
-struct lwp *	|lwp_alloc		|pid_t, lwpid_t
-struct lwp *	|lwp_alloc_and_switch	|pid_t, lwpid_t
-struct lwp *	|lwp_curlwp		|void
-void		|lwp_switch		|struct lwp *
-void		|lwp_release		|struct lwp *
+; lwp and proc creation / switching interfaces
+int		|lwproc_rfork		|int
+int		|lwproc_newlwp		|pid_t
+void		|lwproc_switch		|struct lwp *
+void		|lwproc_releaselwp	|void
+struct lwp *	|lwproc_curlwp		|void
 
-int		|sysproxy_set			|rump_sysproxy_t, void *
-int		|sysproxy_socket_setup_client	|int
-int		|sysproxy_socket_setup_server	|int
+void		|allbetsareoff_setid	|pid_t, int

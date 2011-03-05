@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.32.2.1 2010/05/30 05:17:33 rmind Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.32.2.2 2011/03/05 20:53:39 rmind Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.32.2.1 2010/05/30 05:17:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.32.2.2 2011/03/05 20:53:39 rmind Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.32.2.1 2010/05/30 05:17:33 rmind Exp $"
  *   BCM5708C B1, B2
  *   BCM5708S B1, B2
  *   BCM5709C A1, C0
+ *   BCM5709S A1, C0
  *   BCM5716  C0
  *
  * The following controllers are not supported by this driver:
@@ -53,13 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.32.2.1 2010/05/30 05:17:33 rmind Exp $"
  *   BCM5708C A0, B0
  *   BCM5708S A0, B0
  *   BCM5709C A0  B0, B1, B2 (pre-production)
- *   BCM5709S A0, A1, B0, B1, B2, C0 (pre-production)
+ *   BCM5709S A0, B0, B1, B2 (pre-production)
  */
 
 #include <sys/callout.h>
 #include <sys/mutex.h>
 
 #include <dev/pci/if_bnxreg.h>
+#include <dev/pci/if_bnxvar.h>
+
 #include <dev/microcode/bnx/bnxfw.h>
 
 /****************************************************************************/
@@ -343,6 +346,7 @@ int	bnx_nvram_write(struct bnx_softc *, u_int32_t, u_int8_t *, int);
 /*                                                                          */
 /****************************************************************************/
 void	bnx_get_media(struct bnx_softc *);
+void	bnx_init_media(struct bnx_softc *);
 int	bnx_dma_alloc(struct bnx_softc *);
 void	bnx_dma_free(struct bnx_softc *);
 void	bnx_release_resources(struct bnx_softc *);
@@ -456,6 +460,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 {
 	const struct bnx_product *bp;
 	struct bnx_softc	*sc = device_private(self);
+	prop_dictionary_t	dict;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
@@ -705,9 +710,17 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	sc->bnx_mii.mii_writereg = bnx_miibus_write_reg;
 	sc->bnx_mii.mii_statchg = bnx_miibus_statchg;
 
+	/* Handle any special PHY initialization for SerDes PHYs. */
+	bnx_init_media(sc);
+
 	sc->bnx_ec.ec_mii = &sc->bnx_mii;
 	ifmedia_init(&sc->bnx_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
+
+	/* set phyflags before mii_attach() */
+	dict = device_properties(self);
+	prop_dictionary_set_uint32(dict, "phyflags", sc->bnx_phy_flags);
+
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(self, &sc->bnx_mii, 0xffffffff,
@@ -917,6 +930,16 @@ bnx_miibus_read_reg(device_t dev, int phy, int reg)
 		return(0);
 	}
 
+	/*
+	 * The BCM5709S PHY is an IEEE Clause 45 PHY
+	 * with special mappings to work with IEEE
+	 * Clause 22 register accesses.
+	 */
+	if ((sc->bnx_phy_flags & BNX_PHY_IEEE_CLAUSE_45_FLAG) != 0) {
+		if (reg >= MII_BMCR && reg <= MII_ANLPRNP)
+			reg += 0x10;
+	}
+
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
 		val = REG_RD(sc, BNX_EMAC_MDIO_MODE);
 		val &= ~BNX_EMAC_MDIO_MODE_AUTO_POLL;
@@ -995,6 +1018,16 @@ bnx_miibus_write_reg(device_t dev, int phy, int reg, int val)
 	DBPRINT(sc, BNX_EXCESSIVE, "%s(): phy = %d, reg = 0x%04X, "
 	    "val = 0x%04X\n", __func__,
 	    phy, (u_int16_t) reg & 0xffff, (u_int16_t) val & 0xffff);
+
+	/*
+	 * The BCM5709S PHY is an IEEE Clause 45 PHY
+	 * with special mappings to work with IEEE
+	 * Clause 22 register accesses.
+	 */
+	if ((sc->bnx_phy_flags & BNX_PHY_IEEE_CLAUSE_45_FLAG) != 0) {
+		if (reg >= MII_BMCR && reg <= MII_ANLPRNP)
+			reg += 0x10;
+	}
 
 	if (sc->bnx_phy_flags & BNX_PHY_INT_MODE_AUTO_POLLING_FLAG) {
 		val1 = REG_RD(sc, BNX_EMAC_MDIO_MODE);
@@ -1975,6 +2008,7 @@ bnx_get_media(struct bnx_softc *sc)
 				DBPRINT(sc, BNX_INFO_LOAD, 
 					"BCM5709 s/w configured for SerDes.\n");
 				sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
+				break;
 			default:
 				DBPRINT(sc, BNX_INFO_LOAD, 
 					"BCM5709 s/w configured for Copper.\n");
@@ -1987,6 +2021,7 @@ bnx_get_media(struct bnx_softc *sc)
 				DBPRINT(sc, BNX_INFO_LOAD, 
 					"BCM5709 s/w configured for SerDes.\n");
 				sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
+				break;
 			default:
 				DBPRINT(sc, BNX_INFO_LOAD, 
 					"BCM5709 s/w configured for Copper.\n");
@@ -1996,10 +2031,18 @@ bnx_get_media(struct bnx_softc *sc)
 	} else if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT)
 		sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
 
-	if (sc->bnx_phy_flags && BNX_PHY_SERDES_FLAG) {
+	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG) {
 		u_int32_t val;
  
 		sc->bnx_flags |= BNX_NO_WOL_FLAG;
+
+		if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709)
+			sc->bnx_phy_flags |= BNX_PHY_IEEE_CLAUSE_45_FLAG;
+
+		/*
+		 * The BCM5708S, BCM5709S, and BCM5716S controllers use a
+		 * separate PHY for SerDes.
+		 */
 		if (BNX_CHIP_NUM(sc) != BNX_CHIP_NUM_5706) {
 			sc->bnx_phy_addr = 2;
 			val = REG_RD_IND(sc, sc->bnx_shmem_base +
@@ -2017,6 +2060,36 @@ bnx_get_media(struct bnx_softc *sc)
 bnx_get_media_exit:
 	DBPRINT(sc, (BNX_INFO_LOAD), 
 		"Using PHY address %d.\n", sc->bnx_phy_addr);
+}
+
+/****************************************************************************/
+/* Performs PHY initialization required before MII drivers access the       */
+/* device.                                                                  */
+/*                                                                          */
+/* Returns:                                                                 */
+/*   Nothing.                                                               */
+/****************************************************************************/
+void
+bnx_init_media(struct bnx_softc *sc)
+{
+	if (sc->bnx_phy_flags & BNX_PHY_IEEE_CLAUSE_45_FLAG) {
+		/*
+		 * Configure the BCM5709S / BCM5716S PHYs to use traditional
+		 * IEEE Clause 22 method. Otherwise we have no way to attach
+		 * the PHY to the mii(4) layer. PHY specific configuration
+		 * is done by the mii(4) layer.
+		 */
+
+		/* Select auto-negotiation MMD of the PHY. */
+		bnx_miibus_write_reg(sc->bnx_dev, sc->bnx_phy_addr,
+		    BRGPHY_BLOCK_ADDR, BRGPHY_BLOCK_ADDR_ADDR_EXT);
+
+		bnx_miibus_write_reg(sc->bnx_dev, sc->bnx_phy_addr,
+		    BRGPHY_ADDR_EXT, BRGPHY_ADDR_EXT_AN_MMD);
+
+		bnx_miibus_write_reg(sc->bnx_dev, sc->bnx_phy_addr,
+		    BRGPHY_BLOCK_ADDR, BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
+	}
 }
 
 /****************************************************************************/
@@ -3101,12 +3174,12 @@ bnx_init_context(struct bnx_softc *sc)
 		vcid_addr = GET_CID_ADDR(96);
 		while (vcid_addr) {
 
-			vcid_addr -= PHY_CTX_SIZE;
+			vcid_addr -= BNX_PHY_CTX_SIZE;
 
 			REG_WR(sc, BNX_CTX_VIRT_ADDR, 0);
 			REG_WR(sc, BNX_CTX_PAGE_TBL, vcid_addr);
 
-			for(offset = 0; offset < PHY_CTX_SIZE; offset += 4) {
+			for(offset = 0; offset < BNX_PHY_CTX_SIZE; offset += 4) {
 				CTX_WR(sc, 0x00, offset, 0);
 			}
 
@@ -3407,7 +3480,7 @@ bnx_chipinit(struct bnx_softc *sc)
 
 	REG_WR(sc, BNX_MQ_CONFIG, val);
 
-	val = 0x10000 + (MAX_CID_CNT * MB_KERNEL_CTX_SIZE);
+	val = 0x10000 + (MAX_CID_CNT * BNX_MB_KERNEL_CTX_SIZE);
 	REG_WR(sc, BNX_MQ_KNL_BYP_WIND_START, val);
 	REG_WR(sc, BNX_MQ_KNL_WIND_END, val);
 
@@ -3605,12 +3678,12 @@ bnx_add_buf(struct bnx_softc *sc, struct mbuf *m_new, u_int16_t *prod,
 	 */
 	rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
-	addr = (u_int32_t)(map->dm_segs[0].ds_addr);
-	rxbd->rx_bd_haddr_lo = htole32(addr);
+	addr = (u_int32_t)map->dm_segs[0].ds_addr;
+	rxbd->rx_bd_haddr_lo = addr;
 	addr = (u_int32_t)((u_int64_t)map->dm_segs[0].ds_addr >> 32);
-	rxbd->rx_bd_haddr_hi = htole32(addr);
-	rxbd->rx_bd_len = htole32(map->dm_segs[0].ds_len);
-	rxbd->rx_bd_flags = htole32(RX_BD_FLAGS_START);
+	rxbd->rx_bd_haddr_hi = addr;
+	rxbd->rx_bd_len = map->dm_segs[0].ds_len;
+	rxbd->rx_bd_flags = RX_BD_FLAGS_START;
 	*prod_bseq += map->dm_segs[0].ds_len;
 	bus_dmamap_sync(sc->bnx_dmatag,
 	    sc->rx_bd_chain_map[RX_PAGE(*chain_prod)],
@@ -3624,11 +3697,11 @@ bnx_add_buf(struct bnx_softc *sc, struct mbuf *m_new, u_int16_t *prod,
 		rxbd =
 		    &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
-		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
-		rxbd->rx_bd_haddr_lo = htole32(addr);
+		addr = (u_int32_t)map->dm_segs[i].ds_addr;
+		rxbd->rx_bd_haddr_lo = addr;
 		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
-		rxbd->rx_bd_haddr_hi = htole32(addr);
-		rxbd->rx_bd_len = htole32(map->dm_segs[i].ds_len);
+		rxbd->rx_bd_haddr_hi = addr;
+		rxbd->rx_bd_len = map->dm_segs[i].ds_len;
 		rxbd->rx_bd_flags = 0;
 		*prod_bseq += map->dm_segs[i].ds_len;
 		bus_dmamap_sync(sc->bnx_dmatag,
@@ -3637,7 +3710,7 @@ bnx_add_buf(struct bnx_softc *sc, struct mbuf *m_new, u_int16_t *prod,
 		    sizeof(struct rx_bd), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
-	rxbd->rx_bd_flags |= htole32(RX_BD_FLAGS_END);
+	rxbd->rx_bd_flags |= RX_BD_FLAGS_END;
 	bus_dmamap_sync(sc->bnx_dmatag,
 	    sc->rx_bd_chain_map[RX_PAGE(*chain_prod)],
 	    sizeof(struct rx_bd) * RX_IDX(*chain_prod),
@@ -3892,10 +3965,10 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 		else
 			j = i + 1;
 
-		addr = (u_int32_t)(sc->tx_bd_chain_paddr[j]);
-		txbd->tx_bd_haddr_lo = htole32(addr);
+		addr = (u_int32_t)sc->tx_bd_chain_paddr[j];
+		txbd->tx_bd_haddr_lo = addr;
 		addr = (u_int32_t)((u_int64_t)sc->tx_bd_chain_paddr[j] >> 32);
-		txbd->tx_bd_haddr_hi = htole32(addr);
+		txbd->tx_bd_haddr_hi = addr;
 		bus_dmamap_sync(sc->bnx_dmatag, sc->tx_bd_chain_map[i], 0,
 		    BNX_TX_CHAIN_PAGE_SZ, BUS_DMASYNC_PREWRITE);
 	}
@@ -4060,9 +4133,9 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 
 		/* Setup the chain page pointers. */
 		addr = (u_int32_t)((u_int64_t)sc->rx_bd_chain_paddr[j] >> 32);
-		rxbd->rx_bd_haddr_hi = htole32(addr);
-		addr = (u_int32_t)(sc->rx_bd_chain_paddr[j]);
-		rxbd->rx_bd_haddr_lo = htole32(addr);
+		rxbd->rx_bd_haddr_hi = addr;
+		addr = (u_int32_t)sc->rx_bd_chain_paddr[j];
+		rxbd->rx_bd_haddr_lo = addr;
 		bus_dmamap_sync(sc->bnx_dmatag, sc->rx_bd_chain_map[i],
 		    0, BNX_RX_CHAIN_PAGE_SZ,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -4841,20 +4914,20 @@ again:
 		chain_prod = TX_CHAIN_IDX(prod);
 		txbd = &sc->tx_bd_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
  
-		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
-		txbd->tx_bd_haddr_lo = htole32(addr);
+		addr = (u_int32_t)map->dm_segs[i].ds_addr;
+		txbd->tx_bd_haddr_lo = addr;
 		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
-		txbd->tx_bd_haddr_hi = htole32(addr);
-		txbd->tx_bd_mss_nbytes = htole16(map->dm_segs[i].ds_len);
-		txbd->tx_bd_vlan_tag = htole16(vlan_tag);
-		txbd->tx_bd_flags = htole16(flags);
+		txbd->tx_bd_haddr_hi = addr;
+		txbd->tx_bd_mss_nbytes = map->dm_segs[i].ds_len;
+		txbd->tx_bd_vlan_tag = vlan_tag;
+		txbd->tx_bd_flags = flags;
 		prod_bseq += map->dm_segs[i].ds_len;
 		if (i == 0)
-			txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_START);
+			txbd->tx_bd_flags |= TX_BD_FLAGS_START;
 		prod = NEXT_TX_BD(prod);
 	}
 	/* Set the END flag on the last TX buffer descriptor. */
-	txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_END);
+	txbd->tx_bd_flags |= TX_BD_FLAGS_END;
  
 	DBRUN(BNX_INFO_SEND, bnx_dump_tx_chain(sc, debug_prod, map->dm_nsegs));
  
@@ -5088,10 +5161,12 @@ bnx_intr(void *xsc)
 	const struct status_block *sblk;
 
 	sc = xsc;
-	if (!device_is_active(sc->bnx_dev))
-		return 0;
 
 	ifp = &sc->bnx_ec.ec_if;
+
+	if (!device_is_active(sc->bnx_dev) ||
+	    (ifp->if_flags & IFF_RUNNING) == 0)
+		return 0;
 
 	DBRUNIF(1, sc->interrupts_generated++);
 

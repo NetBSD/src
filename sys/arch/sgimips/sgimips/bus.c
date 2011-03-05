@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.59 2009/12/17 03:59:31 macallan Exp $	*/
+/*	$NetBSD: bus.c,v 1.59.4.1 2011/03/05 20:51:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.59 2009/12/17 03:59:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.59.4.1 2011/03/05 20:51:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -883,7 +883,7 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * NOTE: Even though this is `wbinv_all', since the cache is
 	 * write-through, it just invalidates it.
 	 */
-	if (len >= mips_pdcache_size) {
+	if (len >= mips_cache_info.mci_pdcache_size) {
 		mips_dcache_wbinv_all();
 		return;
 	}
@@ -1046,22 +1046,24 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			mips_dcache_wbinv_range(start, minlen);
 			break;
 
-		case BUS_DMASYNC_PREREAD:
+		case BUS_DMASYNC_PREREAD: {
+			struct mips_cache_info * const mci = &mips_cache_info;
 			end = start + minlen;
-			preboundary = start & ~mips_dcache_align_mask;
-			firstboundary = (start + mips_dcache_align_mask)
-			    & ~mips_dcache_align_mask;
-			lastboundary = end & ~mips_dcache_align_mask;
+			preboundary = start & ~mci->mci_dcache_align_mask;
+			firstboundary = (start + mci->mci_dcache_align_mask)
+			    & ~mci->mci_dcache_align_mask;
+			lastboundary = end & ~mci->mci_dcache_align_mask;
 			if (preboundary < start && preboundary < lastboundary)
 				mips_dcache_wbinv_range(preboundary,
-				    mips_dcache_align);
+				    mci->mci_dcache_align);
 			if (firstboundary < lastboundary)
 				mips_dcache_inv_range(firstboundary,
 				    lastboundary - firstboundary);
 			if (lastboundary < end)
 				mips_dcache_wbinv_range(lastboundary,
-				    mips_dcache_align);
+				    mci->mci_dcache_align);
 			break;
+		}
 
 		case BUS_DMASYNC_PREWRITE:
 			mips_dcache_wb_range(start, minlen);
@@ -1084,12 +1086,9 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 		  bus_size_t boundary, bus_dma_segment_t *segs,
 		  int nsegs, int *rsegs, int flags)
 {
-	extern paddr_t avail_start, avail_end;
-
 	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,
-					       segs, nsegs, rsegs, flags,
-					       avail_start /*low*/,
-					       avail_end - PAGE_SIZE /*high*/));
+	    segs, nsegs, rsegs, flags,
+	    mips_avail_start /*low*/, mips_avail_end - PAGE_SIZE /*high*/));
 }
 
 /*
@@ -1116,6 +1115,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int curseg;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
+	u_int pmapflags;
 
 	/*
 	 * If we're only mapping 1 segment, use KSEG0 or KSEG1, to avoid
@@ -1139,21 +1139,19 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	*kvap = (void *)va;
 
+	pmapflags = VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED;
+	if (flags & BUS_DMA_COHERENT)
+		pmapflags |= PMAP_NOCACHE;
+
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, 
-#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-			    (flags & BUS_DMA_COHERENT) ?
-			      addr | PMAP_NOCACHE : addr,
-#else
-			    addr,
-#endif
+			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    pmapflags);
 		}
 	}
 	pmap_update(pmap_kernel());
@@ -1195,7 +1193,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		return (-1);
 	
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-	return (mips_btop(rv | PMAP_NOCACHE));
+	return (mips_btop(rv | PGC_NOCACHE));
 #else
 	return (mips_btop(rv));
 #endif
@@ -1212,7 +1210,7 @@ bus_space_mmap(bus_space_tag_t space, bus_addr_t addr, off_t off,
 	} else
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 		return mips_btop((MIPS_KSEG1_TO_PHYS(addr) + off)
-		    | PMAP_NOCACHE);
+		    | PGC_NOCACHE);
 #else
 		return mips_btop((MIPS_KSEG1_TO_PHYS(addr) + off));
 #endif

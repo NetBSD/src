@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2009/12/13 05:01:33 nakayama Exp $
+#	$NetBSD: Makefile,v 1.36.4.1 2011/03/05 20:52:04 rmind Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -33,7 +33,8 @@ realall: ${FILES}
 
 .PHONY: vers.c
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "sparc" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "sparc" ${NEWVERSWHAT}
 
 .for RELOC in ${RELOCS}
 boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}

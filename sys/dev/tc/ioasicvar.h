@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.20 2009/05/12 14:47:04 cegger Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.20.4.1 2011/03/05 20:54:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,6 +29,8 @@
 
 #ifndef _DEV_TC_IOASICVAR_H_
 #define _DEV_TC_IOASICVAR_H_
+
+#include <sys/device.h>
 
 struct ioasic_dev {
 	const char	*iad_modname;

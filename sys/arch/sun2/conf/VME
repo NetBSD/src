@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.35.4.1 2010/05/30 05:17:09 rmind Exp $
+# $NetBSD: VME,v 1.35.4.2 2011/03/05 20:52:10 rmind Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.35.4.1 $"
+#ident 		"VME-$Revision: 1.35.4.2 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -190,7 +190,7 @@ xyc1	at vme0 addr 0xee48 irq 2 vect 0x49
 xy*	at xyc? drive ?
 
 ## Memory-disk device.
-pseudo-device	md		2
+pseudo-device	md		
 
 #### Network interfaces.
 

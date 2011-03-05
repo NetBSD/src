@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.17 2009/11/30 21:37:16 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.17.4.1 2011/03/05 20:50:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -40,11 +40,11 @@
  * The job of this code is to read in the phase 1 bootstrap.
  *
  * Makefile supplies:
- * PRIMARY_LOAD_ADDRESS:	Address we load code to (0x600).
+ * PRIMARY_LOAD_ADDRESS:	Address we load code to (0x1000).
  * BOOTXX_SECTORS:		Number of sectors we load (15).
  * X86_BOOT_MAGIC_1:		A random magic number.
  *
- * Although this code is executing at 0x7c00, it is linked to address 0x600.
+ * Although this code is executing at 0x7c00, it is linked to address 0x1000.
  * All data references MUST be fixed up using R().
  */
 
@@ -91,12 +91,14 @@
  * (for a floppy) or the mbr boot code.  Since the boot program will
  * be loaded to address 1000:0, we don't need to relocate ourselves
  * and can load the subsequent blocks (that load boot) to an address
- * of our choosing. 0:600 is a not unreasonable choice.
+ * of our choosing. 0:1000 is a not unreasonable choice.
  *
  * On entry the BIOS drive number is in %dl and %esi may contain the
  * sector we were loaded from (if we were loaded by NetBSD mbr code).
  * In any case we have to re-read sector zero of the disk and hunt
  * through the BIOS partition table for the NetBSD partition.
+ * However, if there's a magic number in %eax, then %ecx:%ebx
+ * contains the sector we were loaded from.
  */
 
 	.text
@@ -119,11 +121,19 @@ ENTRY(start)
 
 	. = start + MBR_AFTERBPB	/* skip BPB */
 start0:
+#ifndef BOOT_FROM_FAT
+	movl	%eax, %edi		/* move %eax magic out of the way */
+#endif
 	xor	%ax, %ax		/* don't trust values of ds, es or ss */
 	mov	%ax, %ds
 	mov	%ax, %es
 	mov	%ax, %ss
 	mov	$0xfffc, %sp
+
+#ifndef BOOT_FROM_FAT
+	cmpl	$X86_MBR_GPT_MAGIC, %edi /* did mbr_gpt leave us a LBA? */
+	je	boot_gpt
+#endif
 
 	/* A 'reset disk system' request is traditional here... */
 	push	%dx			/* some BIOS zap %dl here :-( */
@@ -332,6 +342,7 @@ pbr_read_ok:
 	jnz	error
 
 	movl	%ebp, %esi			/* %esi ptn base, %dl disk id */
+	movl	lba_sector + 4, %edi		/* %edi ptn base high */
 	jmp	$0, $bootxx			/* our %cs may not be zero */
 
 /* Read disk using int13-extension parameter block */
@@ -355,17 +366,26 @@ chs_read:
 	movw	$0x200 + BOOTXX_SECTORS, %ax	/* command 2, xx sectors */
 	jmp	do_read
 
+#ifndef BOOT_FROM_FAT
+boot_gpt:
+	/* 64-bit LBA in %ecx:%ebx */
+	movl	%ebx, lba_sector
+	movl	%ecx, lba_sector + 4
+	movl	%ebx, %ebp
+	jmp	boot_lba
+#endif
+
 _errtxt: .ascii	"Error "			/* runs into newline... */
 _errcod: .byte	0				/* ... if errcod set */
 _newline:
 	.asciz	"\r\n"
 
 #ifndef TERSE_ERROR
-ERR_READ:	.asciz	"Disk read"
-ERR_NO_BOOTXX:	.asciz	"Not a bootxx image"
-ERR_PTN:	.asciz	"No NetBSD partition"
+ERR_READ:	.asciz	"read"
+ERR_NO_BOOTXX:	.asciz	"no magic"
+ERR_PTN:	.asciz	"no slice"
 #ifndef NO_LBA_CHECK
-ERR_NO_LBA:	.asciz	"Invalid CHS read"
+ERR_NO_LBA:	.asciz	"need LBA"
 #endif
 #endif
 
@@ -387,8 +407,7 @@ _lba_info:
 	.word	BOOTADDR			/* offset in segment */
 	.word	0				/* segment */
 _lba_sector:
-	.long	0x0000				/* sector # goes here... */
-	.long	0x0000
+	.quad	0				/* sector # goes here... */
 
 /* Drive Serial Number */
 	. = _C_LABEL(start) + MBR_DSN_OFFSET

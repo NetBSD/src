@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_50.c,v 1.2 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: sysv_msg_50.c,v 1.2.10.1 2011/03/05 20:52:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_50.c,v 1.2 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_50.c,v 1.2.10.1 2011/03/05 20:52:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
-#include <sys/mount.h>
 #include <sys/msg.h>
 
 #include <compat/sys/msg.h>

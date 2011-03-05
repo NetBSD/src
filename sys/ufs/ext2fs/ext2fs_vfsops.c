@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.156.2.2 2010/07/03 01:20:04 rmind Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.156.2.3 2011/03/05 20:56:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.156.2.2 2010/07/03 01:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.156.2.3 2011/03/05 20:56:27 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -617,7 +617,7 @@ loop:
 		 */
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			mutex_enter(&mntvnode_lock);
 			(void)vunmark(mvp);
 			goto loop;
@@ -682,7 +682,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	ump = NULL;
 
 #ifdef DEBUG_EXT2
-	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
+	printf("ext2 sb size: %zu\n", sizeof(struct ext2fs));
 #endif
 	error = bread(devvp, SBLOCK, SBSIZE, cred, 0, &bp);
 	if (error)
@@ -704,7 +704,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	m_fs->e2fs_ronly = ronly;
 
 #ifdef DEBUG_EXT2
-	printf("ext2 ino size %d\n", EXT2_DINODE_SIZE(m_fs));
+	printf("ext2 ino size %zu\n", EXT2_DINODE_SIZE(m_fs));
 #endif
 	if (ronly == 0) {
 		if (m_fs->e2fs.e2fs_state == E2FS_ISCLEAN)
@@ -943,7 +943,7 @@ loop:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT) {

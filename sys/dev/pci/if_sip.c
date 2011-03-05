@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.147.2.1 2010/05/30 05:17:34 rmind Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.147.2.2 2011/03/05 20:53:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.147.2.1 2010/05/30 05:17:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.147.2.2 2011/03/05 20:53:43 rmind Exp $");
 
 #include "rnd.h"
 
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.147.2.1 2010/05/30 05:17:34 rmind Exp $
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #if NRND > 0
 #include <sys/rnd.h>

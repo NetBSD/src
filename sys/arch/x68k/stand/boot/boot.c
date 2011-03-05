@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2009/01/31 14:22:21 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.14.6.1 2011/03/05 20:52:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -111,7 +111,7 @@ doboot(const char *file, int flags)
 
 	loadflag = LOAD_KERNEL;
 	if (file[0] == 'f')
-		loadflag &= ~LOAD_NOTE;
+		loadflag &= ~LOAD_BACKWARDS;
 		
 	marks[MARK_START] = 0x100000;
 	if ((fd = loadfile(file, marks, loadflag)) == -1) {
@@ -275,8 +275,6 @@ bootmenu(void)
 
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
-extern const char bootprog_date[];
-extern const char bootprog_maker[];
 
 /*
  * Arguments from the boot block:
@@ -321,8 +319,6 @@ bootmain(int bootdev)
 	default:
 		printf("Warning: unknown boot device: %x\n", bootdev);
 	}
-	print_title("%s, Revision %s\n\t(%s, %s)",
-		    bootprog_name, bootprog_rev,
-		    bootprog_maker, bootprog_date);
+	print_title("%s, Revision %s\n", bootprog_name, bootprog_rev);
 	bootmenu();
 }

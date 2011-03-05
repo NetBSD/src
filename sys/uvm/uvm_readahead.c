@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.6.4.1 2010/03/16 15:38:18 rmind Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.6.4.2 2011/03/05 20:56:38 rmind Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.6.4.1 2010/03/16 15:38:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.6.4.2 2011/03/05 20:56:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -66,8 +66,8 @@ struct uvm_ractx {
 	off_t ra_next;		/* next offset to read-ahead */
 };
 
-#if defined(sun2) || (defined(sun3) && defined(_SUN3_))
-/* XXX: on sun2 and sun3 (but not sun3x) MAXPHYS is 0xe000 */
+#if defined(sun2) || defined(sun3)
+/* XXX: on sun2 and sun3 MAXPHYS is 0xe000 */
 #undef MAXPHYS	
 #define MAXPHYS		0x8000	/* XXX */
 #endif

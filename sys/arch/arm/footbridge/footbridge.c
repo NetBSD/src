@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.21 2009/07/21 07:35:55 skrll Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.21.4.1 2011/03/05 20:49:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.21 2009/07/21 07:35:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.21.4.1 2011/03/05 20:49:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,8 +175,6 @@ footbridge_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IRQ_ENABLE_CLEAR, 0xffffffff);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FIQ_ENABLE_CLEAR, 0xffffffff);
 
-/*	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x18, 0x40000000);*/
-
 	/* Install a generic handler to catch a load of system interrupts */
 	sc->sc_serr_ih = footbridge_intr_claim(IRQ_SERR, IPL_HIGH,
 	    "serr", footbridge_intr, sc);
@@ -200,7 +198,8 @@ footbridge_attach(device_t parent, device_t self, void *aux)
 	/* calibrate the delay loop */
 	calibrate_delay();
 
-	/* it seems that the default of the memory being visible from 0 upwards
+	/*
+	 * It seems that the default of the memory being visible from 0 upwards
 	 * on the PCI bus causes issues when DMAing from traditional PC VGA
 	 * address.  This breaks dumping core on cats, as DMAing pages in the
 	 * range 0xb800-0xc000 cause the system to hang.  This suggests that

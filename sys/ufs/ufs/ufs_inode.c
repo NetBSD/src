@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.80.2.2 2010/07/03 01:20:05 rmind Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.80.2.3 2011/03/05 20:56:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.80.2.2 2010/07/03 01:20:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.80.2.3 2011/03/05 20:56:34 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -143,12 +143,12 @@ ufs_inactive(void *v)
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
+		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		mutex_enter(vp->v_interlock);
-		vp->v_iflag |= VI_FREEING;
-		mutex_exit(vp->v_interlock);
-		UFS_VFREE(vp, ip->i_number, mode);
+		/*
+		 * Defer final inode free and update to ufs_reclaim().
+		 */
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
@@ -264,11 +264,11 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	off -= delta;
 	len += delta;
 
- retry:
+	genfs_node_wrlock(vp);
 	mutex_enter(uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
-	    VM_PROT_WRITE, 0,
-	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
+	    VM_PROT_WRITE, 0, PGO_SYNCIO | PGO_PASTEOF | PGO_NOBLOCKALLOC |
+	    PGO_NOTIMESTAMP | PGO_GLOCKHELD);
 	if (error) {
 		goto out;
 	}
@@ -286,25 +286,6 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	/*
 	 * now allocate the range.
 	 */
-
-	/*
-	 * XXX: Hack around deadlock with pagebusy and genfs node lock.
-	 *      This should be properly fixed.  PR kern/40389
-	 */
-	{
-	struct genfs_node *gp = VTOG(vp); /* XXX */
-
-	if (!rw_tryenter(&gp->g_glock, RW_WRITER)) {
-		mutex_enter(uobj->vmobjlock);
-		for (i = 0; i < npages; i++)
-			pgs[i]->flags |= PG_RELEASED | PG_CLEAN;
-		mutex_enter(&uvm_pageqlock);
-		uvm_page_unbusy(pgs, npages);
-		mutex_exit(&uvm_pageqlock);
-		mutex_exit(uobj->vmobjlock);
-		kpause("uballo", false, 1, NULL);
-		goto retry;
-	}}
 
 	error = GOP_ALLOC(vp, off, len, flags, cred);
 	genfs_node_unlock(vp);

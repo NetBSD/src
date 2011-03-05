@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.26.4.1 2010/05/30 05:17:12 rmind Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.26.4.2 2011/03/05 20:52:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.4.1 2010/05/30 05:17:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.4.2 2011/03/05 20:52:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.4.1 2010/05/30 05:17:12 rmind Exp
 #define	BUS_SPACE_ADDRESS_SANITY(p, t, d)				\
 ({									\
 	if (BUS_SPACE_ALIGNED_ADDRESS((p), t) == 0) {			\
-		printf("%s 0x%lx not aligned to %d bytes %s:%d\n",	\
+		printf("%s 0x%lx not aligned to %zu bytes %s:%d\n",	\
 		    d, (u_long)(p), sizeof(t), __FILE__, __LINE__);	\
 	}								\
 	(void) 0;							\
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.4.1 2010/05/30 05:17:12 rmind Exp
  * routines need access to them for bus address space allocation.
  */
 static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
@@ -199,8 +199,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size,
-		(flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
+	error = x86_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -232,8 +231,7 @@ _x86_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	return (x86_mem_add_mapping(bpa, size,
-	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp));
+	return x86_mem_add_mapping(bpa, size, flags, bshp);
 }
 
 int
@@ -286,8 +284,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size,
-	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
+	error = x86_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -304,17 +301,20 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 
 int
 x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
-		int cacheable, bus_space_handle_t *bshp)
+		int flags, bus_space_handle_t *bshp)
 {
 	paddr_t pa, endpa;
 	vaddr_t va, sva;
-	u_int pmapflags = 0;
+	u_int pmapflags;
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
 
-	if (!cacheable)
-		pmapflags |= PMAP_NOCACHE;
+	pmapflags = PMAP_NOCACHE;
+	if ((flags & BUS_SPACE_MAP_CACHEABLE) != 0)
+		pmapflags = 0;
+	else if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pmapflags = PMAP_WRITE_COMBINE;
 
 #ifdef DIAGNOSTIC
 	if (endpa != 0 && endpa <= pa)
@@ -484,6 +484,7 @@ paddr_t
 bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
     int flags)
 {
+	paddr_t pflags = 0;
 
 	/* Can't mmap I/O space. */
 	if (x86_bus_space_is_io(t))
@@ -496,7 +497,10 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
 	 * Note we are called for each "page" in the device that
 	 * the upper layers want to map.
 	 */
-	return (x86_btop(addr + off));
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pflags |= X86_MMAP_FLAG_PREFETCH;
+
+	return x86_btop(addr + off) | (pflags << X86_MMAP_FLAG_SHIFT);
 }
 
 void

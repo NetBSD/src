@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.129.4.1 2010/05/30 05:18:08 rmind Exp $	*/
+/*	$NetBSD: exec.h,v 1.129.4.2 2011/03/05 20:56:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -97,6 +97,9 @@
 #ifndef _SYS_EXEC_H_
 #define _SYS_EXEC_H_
 
+struct pathbuf; /* from namei.h */
+
+
 /*
  * The following structure is found at the top of the user stack of each
  * user process. The ps program uses it to locate argv and environment
@@ -111,6 +114,15 @@ struct ps_strings {
 	char	**ps_envstr;	/* first of 0 or more environment strings */
 	int	ps_nenvstr;	/* the number of environment strings */
 };
+
+#ifdef _KERNEL
+struct ps_strings32 {
+	uint32_t	ps_argvstr;	/* first of 0 or more argument strings */
+	int32_t		ps_nargvstr;	/* the number of argument strings */
+	uint32_t	ps_envstr;	/* first of 0 or more environment strings */
+	int32_t		ps_nenvstr;	/* the number of environment strings */
+};
+#endif
 
 /*
  * the following structures allow execve() to put together processes
@@ -209,6 +221,7 @@ struct exec_package {
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
+#define	EXEC_FORCEAUX	0x0040		/* always use ELF AUX vector */
 
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);
@@ -241,11 +254,14 @@ int	vmcmd_readvn		(struct lwp *, struct exec_vmcmd *);
 int	vmcmd_map_zero		(struct lwp *, struct exec_vmcmd *);
 int	copyargs		(struct lwp *, struct exec_package *,
 				    struct ps_strings *, char **, void *);
+int	copyin_psstrings	(struct proc *, struct ps_strings *);
+int	copy_procargs		(struct proc *, int, size_t *,
+    int (*)(void *, const void *, size_t, size_t), void *);
 void	setregs			(struct lwp *, struct exec_package *, vaddr_t);
 int	check_veriexec		(struct lwp *, struct vnode *,
 				     struct exec_package *, int);
 int	check_exec		(struct lwp *, struct exec_package *,
-				     const char *kpath);
+				     struct pathbuf *);
 int	exec_init		(int);
 int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);

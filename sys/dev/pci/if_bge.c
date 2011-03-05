@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180.4.2 2010/07/03 01:19:36 rmind Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180.4.3 2011/03/05 20:53:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.2 2010/07/03 01:19:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.3 2011/03/05 20:53:38 rmind Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -132,7 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.2 2010/07/03 01:19:36 rmind Exp $
 #include <dev/pci/if_bgereg.h>
 #include <dev/pci/if_bgevar.h>
 
-#include <uvm/uvm_extern.h>
 #include <prop/proplib.h>
 
 #define ETHER_MIN_NOPAD (ETHER_MIN_LEN - ETHER_CRC_LEN) /* i.e., 60 */
@@ -208,6 +207,7 @@ static int bge_encap(struct bge_softc *, struct mbuf *, uint32_t *);
 
 static int bge_intr(void *);
 static void bge_start(struct ifnet *);
+static int bge_ifflags_cb(struct ethercom *);
 static int bge_ioctl(struct ifnet *, u_long, void *);
 static int bge_init(struct ifnet *);
 static void bge_stop(struct ifnet *, int);
@@ -261,6 +261,8 @@ static void bge_sig_pre_reset(struct bge_softc *, int);
 static void bge_stop_fw(struct bge_softc *);
 static int bge_reset(struct bge_softc *);
 static void bge_link_upd(struct bge_softc *);
+static void sysctl_bge_init(struct bge_softc *);
+static int sysctl_bge_verify(SYSCTLFN_PROTO);
 
 #ifdef BGE_DEBUG
 #define DPRINTF(x)	if (bgedebug) printf x
@@ -748,16 +750,14 @@ bge_writemem_ind(struct bge_softc *sc, int off, int val)
 static void
 bge_set_max_readrq(struct bge_softc *sc)
 {
-	device_t dev;
 	pcireg_t val;
-
-	dev = sc->bge_dev;
 
 	val = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
 	    + PCI_PCIE_DCSR);
 	if ((val & PCI_PCIE_DCSR_MAX_READ_REQ) !=
 	    BGE_PCIE_DEVCTL_MAX_READRQ_4096) {
-		aprint_verbose("adjust device control 0x%04x ", val);
+		aprint_verbose_dev(sc->bge_dev,
+		    "adjust device control 0x%04x ", val);
 		val &= ~PCI_PCIE_DCSR_MAX_READ_REQ;
 		val |= BGE_PCIE_DEVCTL_MAX_READRQ_4096;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
@@ -3014,6 +3014,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	DPRINTFN(5, ("ether_ifattach\n"));
 	ether_ifattach(ifp, eaddr);
+	ether_set_ifflags_cb(&sc->ethercom, bge_ifflags_cb);
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->bge_dev),
 		RND_TYPE_NET, 0);
@@ -3044,6 +3045,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	sysctl_bge_init(sc);
 
 #ifdef BGE_DEBUG
 	bge_debug_info(sc);
@@ -4371,6 +4374,7 @@ bge_init(struct ifnet *ifp)
 	callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
 
 out:
+	sc->bge_if_flags = ifp->if_flags;
 	splx(s);
 
 	return error;
@@ -4481,6 +4485,29 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static int
+bge_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct bge_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->bge_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) == 0)
+		return 0;
+
+	if ((ifp->if_flags & IFF_PROMISC) == 0)
+		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+	else
+		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+
+	bge_setmulti(sc);
+
+	sc->bge_if_flags = ifp->if_flags;
+	return 0;
+}
+
+static int
 bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct bge_softc *sc = ifp->if_softc;
@@ -4491,37 +4518,6 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch (command) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, command, data)) != 0)
-			break;
-		if (ifp->if_flags & IFF_UP) {
-			/*
-			 * If only the state of the PROMISC flag changed,
-			 * then just use the 'set promisc mode' command
-			 * instead of reinitializing the entire NIC. Doing
-			 * a full re-init means reloading the firmware and
-			 * waiting for it to start up, which may take a
-			 * second or two.
-			 */
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->bge_if_flags & IFF_PROMISC)) {
-				BGE_SETBIT(sc, BGE_RX_MODE,
-				    BGE_RXMODE_RX_PROMISC);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->bge_if_flags & IFF_PROMISC) {
-				BGE_CLRBIT(sc, BGE_RX_MODE,
-				    BGE_RXMODE_RX_PROMISC);
-			} else if (!(sc->bge_if_flags & IFF_UP))
-				bge_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				bge_stop(ifp, 1);
-		}
-		sc->bge_if_flags = ifp->if_flags;
-		error = 0;
-		break;
 	case SIOCSIFMEDIA:
 		/* XXX Flow control is not supported for 1000BASE-SX */
 		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
@@ -4835,22 +4831,21 @@ sysctl_bge_verify(SYSCTLFN_ARGS)
 
 /*
  * Set up sysctl(3) MIB, hw.bge.*.
- *
- * TBD condition SYSCTL_PERMANENT on being an LKM or not
  */
-SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
+static void
+sysctl_bge_init(struct bge_softc *sc)
 {
 	int rc, bge_root_num;
 	const struct sysctlnode *node;
 
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
 	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
 		goto err;
 	}
 
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "bge",
+	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, &node,
+	    0, CTLTYPE_NODE, "bge",
 	    SYSCTL_DESCR("BGE interface controls"),
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
 		goto err;
@@ -4859,8 +4854,8 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 	bge_root_num = node->sysctl_num;
 
 	/* BGE Rx interrupt mitigation level */
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	if ((rc = sysctl_createv(&sc->bge_log, 0, NULL, &node,
+	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rx_lvl",
 	    SYSCTL_DESCR("BGE receive interrupt mitigation level"),
 	    sysctl_bge_verify, 0,

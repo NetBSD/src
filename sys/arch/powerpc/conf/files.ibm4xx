@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.10.90.1 2010/05/30 05:17:02 rmind Exp $
+#	$NetBSD: files.ibm4xx,v 1.10.90.2 2011/03/05 20:51:35 rmind Exp $
 #
 # IBM 4xx specific configuration info
 
@@ -69,3 +69,8 @@ file	arch/powerpc/ibm4xx/dev/ibm405gp.c	pchb | pci
 device	gpiic: i2cbus, i2c_bitbang
 attach	gpiic at opb
 file	arch/powerpc/ibm4xx/dev/gpiic_opb.c	gpiic
+
+# External bus
+#device exb {[addr = -1]}
+#attach exb at plb
+#file	arch/powerpc/ibm4xx/dev/exb.c		exb

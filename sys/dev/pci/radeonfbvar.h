@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.7 2009/07/28 00:10:51 macallan Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.7.4.1 2011/03/05 20:53:57 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -190,7 +190,7 @@ struct radeonfb_display {
 	struct wsscreen_descr	*rd_wsscreens;
 	struct vcons_screen	rd_vscreen;
 	struct vcons_data	rd_vd;
-
+	void (*rd_putchar)(void *, int, int, u_int, long);
 
 #if 0
 	uint8_t			rd_cmap_red[256];
@@ -200,10 +200,6 @@ struct radeonfb_display {
 
 #ifdef SPLASHSCREEN
 	struct splash_info	rd_splash;
-#endif
-
-#ifdef SPLASHSCREEN_PROGRESS
-	struct splash_progress	rd_progress;
 #endif
 };
 
@@ -273,6 +269,7 @@ struct radeonfb_softc {
 
 	uint8_t			*sc_bios;
 	bus_size_t		sc_biossz;
+	uint32_t		sc_fp_gen_cntl;
 
 	char			sc_modebuf[64];
 	const char		*sc_defaultmode;
@@ -362,9 +359,7 @@ uint32_t radeonfb_getpll(struct radeonfb_softc *, uint32_t);
 void radeonfb_putpll(struct radeonfb_softc *, uint32_t, uint32_t);
 void radeonfb_maskpll(struct radeonfb_softc *, uint32_t, uint32_t, uint32_t);
 
-#ifdef	RADEON_BIOS_INIT
 int	radeonfb_bios_init(struct radeonfb_softc *);
-#endif
 
 void	radeonfb_i2c_init(struct radeonfb_softc *);
 int	radeonfb_i2c_read_edid(struct radeonfb_softc *, int, uint8_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.154.4.1 2010/05/30 05:18:03 rmind Exp $	*/
+/*	$NetBSD: in6.c,v 1.154.4.2 2011/03/05 20:55:58 rmind Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.154.4.1 2010/05/30 05:18:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.154.4.2 2011/03/05 20:55:58 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -965,7 +965,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    M_NOWAIT);
 		if (ia == NULL)
 			return ENOBUFS;
-		memset((void *)ia, 0, sizeof(*ia));
+		memset(ia, 0, sizeof(*ia));
 		LIST_INIT(&ia->ia6_memberships);
 		/* Initialize the address and masks, and put time stamp */
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
@@ -1607,7 +1607,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 		ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 		ifra.ifra_flags = iflr->flags & ~IFLR_PREFIX;
-		return in6_control(so, SIOCAIFADDR_IN6, (void *)&ifra, ifp, l);
+		return in6_control(so, SIOCAIFADDR_IN6, &ifra, ifp, l);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -1718,8 +1718,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			    ia->ia_prefixmask.sin6_len);
 
 			ifra.ifra_flags = ia->ia6_flags;
-			return in6_control(so, SIOCDIFADDR_IN6, (void *)&ifra,
-			    ifp, l);
+			return in6_control(so, SIOCDIFADDR_IN6, &ifra, ifp, l);
 		}
 	    }
 	}

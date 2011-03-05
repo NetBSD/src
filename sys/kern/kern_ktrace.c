@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.151.2.1 2010/07/03 01:19:53 rmind Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.151.2.2 2011/03/05 20:55:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.151.2.1 2010/07/03 01:19:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.151.2.2 2011/03/05 20:55:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,6 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	struct proc *p = l->l_proc;
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
-	struct timespec ts;
 	void *buf;
 
 	if (ktrenter(l))
@@ -550,27 +549,8 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	kth->ktr_pid = p->p_pid;
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
 	kth->ktr_version = KTRFAC_VERSION(p->p_traceflag);
-
-        nanotime(&ts);
-        switch (KTRFAC_VERSION(p->p_traceflag)) {
-        case 0:
-                /* This is the original format */
-                kth->ktr_otv.tv_sec = ts.tv_sec;
-                kth->ktr_otv.tv_usec = ts.tv_nsec / 1000;
-                break;
-        case 1: 
-		kth->ktr_olid = l->l_lid;
-                kth->ktr_ots.tv_sec = ts.tv_sec;
-                kth->ktr_ots.tv_nsec = ts.tv_nsec;       
-                break; 
-        case 2:
-		kth->ktr_lid = l->l_lid;
-                kth->ktr_ts.tv_sec = ts.tv_sec;
-                kth->ktr_ts.tv_nsec = ts.tv_nsec;       
-                break; 
-        default:
-                break; 
-        }
+	kth->ktr_lid = l->l_lid;
+	nanotime(&kth->ktr_ts);
 
 	*ktep = kte;
 	*bufp = buf;
@@ -861,13 +841,11 @@ ktr_csw(int out, int user)
 	 * from that is difficult to do. 
 	 */
 	if (out) {
-		struct timespec ts;
 		if (ktrenter(l))
 			return;
 
 		nanotime(&l->l_ktrcsw);
 		l->l_pflag |= LP_KTRCSW;
-		nanotime(&ts);
 		if (user)
 			l->l_pflag |= LP_KTRCSWUSER;
 		else
@@ -1278,6 +1256,7 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 	} */
 	struct vnode *vp = NULL;
 	file_t *fp = NULL;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int error = 0;
 	int fd;
@@ -1289,12 +1268,19 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 		/*
 		 * an operation which requires a file argument.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname));
+		error = pathbuf_copyin(SCARG(uap, fname), &pb);
+		if (error) {
+			ktrexit(l);
+			return (error);
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW, pb);
 		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
+			pathbuf_destroy(pb);
 			ktrexit(l);
 			return (error);
 		}
 		vp = nd.ni_vp;
+		pathbuf_destroy(pb);
 		VOP_UNLOCK(vp);
 		if (vp->v_type != VREG) {
 			vn_close(vp, FREAD|FWRITE, l->l_cred);

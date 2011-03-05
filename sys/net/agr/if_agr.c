@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.26.2.1 2010/05/30 05:18:02 rmind Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.26.2.2 2011/03/05 20:55:54 rmind Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.26.2.1 2010/05/30 05:18:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.26.2.2 2011/03/05 20:55:54 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -326,7 +326,7 @@ agr_clone_create(struct if_clone *ifc, int unit)
 	TAILQ_INIT(&sc->sc_ports);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_entry_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sc->sc_insc_cv, "agr_softc");
+	cv_init(&sc->sc_insc_cv, "agrsoftc");
 	cv_init(&sc->sc_ports_cv, "agrports");
 	agrtimer_init(sc);
 	ifp = &sc->sc_if;

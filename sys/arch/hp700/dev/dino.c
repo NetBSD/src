@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.25 2010/03/06 16:57:00 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.25.2.1 2011/03/05 20:50:27 rmind Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.25 2010/03/06 16:57:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.25.2.1 2011/03/05 20:50:27 rmind Exp $");
 
 /* #include "cardbus.h" */
 
@@ -118,7 +118,7 @@ struct dino_softc {
 
 	int sc_ver;
 	void *sc_ih;
-	struct hp700_int_reg sc_int_reg;
+	struct hp700_interrupt_register sc_ir;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 	bus_dma_tag_t sc_dmat;
@@ -135,11 +135,10 @@ struct dino_softc {
 
 int	dinomatch(device_t, struct cfdata *, void *);
 void	dinoattach(device_t, device_t, void *);
-static void	dino_callback(device_t, struct confargs *);
+static device_t	dino_callback(device_t, struct confargs *);
 
 CFATTACH_DECL_NEW(dino, sizeof(struct dino_softc), dinomatch, dinoattach, NULL,
     NULL);
-
 
 void dino_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
@@ -407,8 +406,7 @@ dino_intr_establish(void *v, pci_intr_handle_t ih,
 {
 	struct dino_softc *sc = v;
 
-	return hp700_intr_establish(sc->sc_dv, pri, handler, arg,
-	    &sc->sc_int_reg, ih);
+	return hp700_intr_establish(pri, handler, arg, &sc->sc_ir, ih);
 }
 
 void
@@ -955,7 +953,6 @@ dino_rrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 			p++;
 	}
 
-	c /= 2;
 	while (c--)
 		*a++ = *p;
 }
@@ -977,7 +974,6 @@ dino_rrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 		p = (volatile uint32_t *)&r->pci_io_data;
 	}
 
-	c /= 4;
 	while (c--)
 		*a++ = *p;
 }
@@ -1008,7 +1004,6 @@ dino_wrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 			p++;
 	}
 
-	c /= 2;
 	while (c--)
 		*p = *a++;
 }
@@ -1030,7 +1025,6 @@ dino_wrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 		p = (volatile uint32_t *)&r->pci_io_data;
 	}
 
-	c /= 4;
 	while (c--)
 		*p = *a++;
 }
@@ -1206,7 +1200,6 @@ dino_rrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint16_t *p;
 
-	c /= 2;
 	h += o;
 	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
@@ -1232,7 +1225,6 @@ dino_rrr_4(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint32_t *p;
 
-	c /= 4;
 	h += o;
 	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
@@ -1262,7 +1254,6 @@ dino_wrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint16_t *p;
 
-	c /= 2;
 	h += o;
 	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
@@ -1605,7 +1596,7 @@ dinomatch(device_t parent, cfdata_t cfdata, void *aux)
 
 	/* Make sure we have an IRQ. */
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
-		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
+		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
 
 	return 1;
 }
@@ -1667,14 +1658,16 @@ dinoattach(device_t parent, device_t self, void *aux)
 	r->iar0 = cpu_gethpa(0) | (31 - ca->ca_irq);
 	splx(s);
 	/* Establish the interrupt register. */
-	hp700_intr_reg_establish(&sc->sc_int_reg);
-	sc->sc_int_reg.int_reg_mask = &r->imr;
-	sc->sc_int_reg.int_reg_req = &r->irr0;
-	sc->sc_int_reg.int_reg_level = &r->ilr;
+	hp700_interrupt_register_establish(&sc->sc_ir);
+	sc->sc_ir.ir_name = device_xname(self);
+	sc->sc_ir.ir_mask = &r->imr;
+	sc->sc_ir.ir_req = &r->irr0;
+	sc->sc_ir.ir_level = &r->ilr;
 	/* Add the I/O interrupt register. */
-	sc->sc_int_reg.int_reg_dev = device_xname(self);
-	sc->sc_ih = hp700_intr_establish(sc->sc_dv, IPL_NONE,
-	    NULL, &sc->sc_int_reg, &int_reg_cpu, ca->ca_irq);
+
+	sc->sc_ih = hp700_intr_establish(IPL_NONE, NULL, &sc->sc_ir,
+	    &ir_cpu, ca->ca_irq);
+
 
 	/* TODO establish the bus error interrupt */
 
@@ -1741,9 +1734,9 @@ dinoattach(device_t parent, device_t self, void *aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-static void
+static device_t
 dino_callback(device_t self, struct confargs *ca)
 {
 
-	config_found_sm_loc(self, "dino", NULL, ca, mbprint, mbsubmatch);
+	return config_found_sm_loc(self, "dino", NULL, ca, mbprint, mbsubmatch);
 }

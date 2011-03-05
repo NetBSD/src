@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.101 2009/11/21 04:16:52 rmind Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.101.4.1 2011/03/05 20:52:03 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101.4.1 2011/03/05 20:52:03 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,11 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2009/11/21 04:16:52 rmind Exp $
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/simplelock.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 #include <machine/trap.h>
 
 #include <sparc/sparc/cpuvar.h>
@@ -76,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2009/11/21 04:16:52 rmind Exp $
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap, *kpmap;
@@ -120,6 +122,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	} while (len);
 	pmap_update(kpmap);
+
+	return 0;
 }
 
 /*
@@ -228,7 +232,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 				savefpstate(l1->l_md.md_fpstate);
 #if defined(MULTIPROCESSOR)
 			else
-				XCALL1(savefpstate, l1->l_md.md_fpstate,
+				XCALL1(ipi_savefpstate, l1->l_md.md_fpstate,
 					1 << cpi->ci_cpuid);
 #endif
 		}
@@ -306,7 +310,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 				savefpstate(fs);
 #if defined(MULTIPROCESSOR)
 			else
-				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+				XCALL1(ipi_savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 			cpi->fplwp = NULL;
 		}
@@ -340,4 +344,14 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_sp = (int)rp;
 	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
 	pcb->pcb_wim = 1;		/* Fence at window #1 */
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+	struct trapframe *tf = l->l_md.md_tf;
+
+	tf->tf_global[7] = (uintptr_t)addr;
+
+	return 0;
 }

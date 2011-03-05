@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.3.4.1 2010/05/30 05:17:24 rmind Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.3.4.2 2011/03/05 20:53:18 rmind Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.3.4.1 2010/05/30 05:17:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.3.4.2 2011/03/05 20:53:18 rmind Exp $");
 
 #include "opt_mvsata.h"
 
@@ -199,10 +199,8 @@ static void mvsata_print_crqb(struct mvsata_port *, int);
 static void mvsata_print_crpb(struct mvsata_port *, int);
 static void mvsata_print_eprd(struct mvsata_port *, int);
 #endif
-#endif
 
 
-#ifndef MVSATA_WITHOUTDMA
 struct ata_bustype mvsata_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
 	mvsata_bio,
@@ -226,39 +224,9 @@ static const struct scsipi_bustype mvsata_atapi_bustype = {
 #endif /* NATAPIBUS */
 #endif
 
-struct mvsata_product {
-	int model;
-	int hc;
-	int port;
-	int generation;
-	int flags;
-} mvsata_products[] = {
-	{ PCI_PRODUCT_MARVELL_88SX5040,		1, 4, gen1, 0 },
-	{ PCI_PRODUCT_MARVELL_88SX5041,		1, 4, gen1, 0 },
-	{ PCI_PRODUCT_MARVELL_88SX5080,		2, 4, gen1, 0 },
-	{ PCI_PRODUCT_MARVELL_88SX5081,		2, 4, gen1, 0 },
-	{ PCI_PRODUCT_MARVELL_88SX6040,		1, 4, gen2, 0 },
-	{ PCI_PRODUCT_MARVELL_88SX6041,		1, 4, gen2, 0 },
-	{ PCI_PRODUCT_MARVELL_88SX6042,		1, 4, gen2e, 0 },
-	{ PCI_PRODUCT_MARVELL_88SX6080,		2, 4, gen2, MVSATA_FLAGS_PCIE },
-	{ PCI_PRODUCT_MARVELL_88SX6081,		2, 4, gen2, MVSATA_FLAGS_PCIE },
-	{ PCI_PRODUCT_ADP2_1420SA,		2, 4, gen2, MVSATA_FLAGS_PCIE },
-	{ PCI_PRODUCT_MARVELL_88SX7042,		1, 4, gen2e, 0 },
-	{ PCI_PRODUCT_ADP2_1430SA,		1, 4, gen2e, 0 },
-	{ PCI_PRODUCT_TRIONES_ROCKETRAID_2310,	1, 4, gen2e, 0 },
-	{ PCI_PRODUCT_MARVELL_88F5082,		1, 1, gen2e, 0 }, /* Orion */
-	{ PCI_PRODUCT_MARVELL_88F5182,		1, 2, gen2e, 0 }, /* Orion */
-	{ PCI_PRODUCT_MARVELL_88F6082,		1, 1, gen2e, 0 }, /* Orion */
-#if 0	/* Marvell MV64660 Disco5: Product is 0x6490 ?? */
-	{ PCI_PRODUCT_MARVELL_88F6490,		1, 1, gen2e, 0 }, /* Discover?*/
-#endif
-
-	{ -1,					0, 0, gen_unknown, 0 }
-};
-
 
 int
-mvsata_attach(struct mvsata_softc *sc,
+mvsata_attach(struct mvsata_softc *sc, struct mvsata_product *product,
 	      int (*mvsata_sreset)(struct mvsata_softc *),
 	      int (*mvsata_misc_reset)(struct mvsata_softc *),
 	      int read_pre_amps)
@@ -271,18 +239,8 @@ mvsata_attach(struct mvsata_softc *sc,
 	void (*edma_setup_crqb)
 	    (struct mvsata_port *, int, int, struct ata_bio *) = NULL;
 #endif
-	struct mvsata_product *product;
-	int hc, port, channel, i;
+	int hc, port, channel;
 
-	for (i = 0; mvsata_products[i].model != -1; i++)
-		if (sc->sc_model == mvsata_products[i].model)
-			break;
-	if (mvsata_products[i].model == -1) {
-		aprint_error_dev(MVSATA_DEV(sc), "unknown product 0x%04x\n",
-		    sc->sc_model);
-		return EINVAL;
-	}
-	product = &mvsata_products[i];
 	aprint_normal_dev(MVSATA_DEV(sc), "Gen%s, %dhc, %dport/hc\n",
 	    (product->generation == gen1) ? "I" :
 	    ((product->generation == gen2) ? "II" : "IIe"),
@@ -317,10 +275,10 @@ mvsata_attach(struct mvsata_softc *sc,
 		break;
 	}
 
-	sc->sc_gen = mvsata_products[i].generation;
-	sc->sc_hc = mvsata_products[i].hc;
-	sc->sc_port = mvsata_products[i].port;
-	sc->sc_flags = mvsata_products[i].flags;
+	sc->sc_gen = product->generation;
+	sc->sc_hc = product->hc;
+	sc->sc_port = product->port;
+	sc->sc_flags = product->flags;
 
 #ifdef MVSATA_WITHOUTDMA
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
@@ -330,7 +288,7 @@ mvsata_attach(struct mvsata_softc *sc,
 	    (ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA);
 #endif
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
-#ifndef MVSATA_WITHOUTDMA
+#ifdef MVSATA_WITHOUTDMA
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 0;
 	sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
 #else
@@ -534,9 +492,9 @@ mvsata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_xfer *xfer;
 
-	DPRINTFN(1, ("%s:%d: mvsata_bio: drive=%d, blkno=%lld, bcount=%ld\n",
-	    device_xname(atac->atac_dev), chp->ch_channel, drvp->drive,
-	    ata_bio->blkno, ata_bio->bcount));
+	DPRINTFN(1, ("%s:%d: mvsata_bio: drive=%d, blkno=%" PRId64
+	    ", bcount=%ld\n", device_xname(atac->atac_dev), chp->ch_channel,
+	    drvp->drive, ata_bio->blkno, ata_bio->bcount));
 
 	xfer = ata_get_xfer(ATAXF_NOSLEEP);
 	if (xfer == NULL)
@@ -2372,7 +2330,7 @@ mvsata_edma_inqueue(struct mvsata_port *mvport, struct ata_bio *ata_bio,
 	int quetag, erqqip, erqqop, next, rv, i;
 
 	DPRINTFN(2, ("%s:%d:%d: mvsata_edma_inqueue:"
-	    " blkno=0x%llx, nbytes=%d, flags=0x%x\n",
+	    " blkno=0x%" PRIx64 ", nbytes=%d, flags=0x%x\n",
 	    device_xname(MVSATA_DEV2(mvport)), mvport->port_hc->hc,
 	    mvport->port, ata_bio->blkno, ata_bio->nbytes, ata_bio->flags));
 

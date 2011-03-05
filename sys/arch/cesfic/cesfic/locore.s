@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22.2.1 2010/07/03 01:19:15 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.22.2.2 2011/03/05 20:49:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -799,12 +799,11 @@ Lbrkpt2:
  * we don't do anything else with them.
  */
 
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
-
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
@@ -1078,7 +1077,7 @@ Lspldone:
 /*
  * _delay(u_int N)
  *
- * Delay for at least (N/256) microsecends.
+ * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
  */

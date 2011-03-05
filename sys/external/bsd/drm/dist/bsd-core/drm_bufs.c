@@ -1146,6 +1146,9 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
  done:
 	request->count = dma->buf_count;
+#if defined(__NetBSD__)
+	vrele(vn);
+#endif
 
 	DRM_DEBUG("%d buffers, retcode = %d\n", request->count, retcode);
 

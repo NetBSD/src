@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.3 2010/01/31 09:27:40 martin Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.3.6.1 2011/03/05 20:55:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.3 2010/01/31 09:27:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.3.6.1 2011/03/05 20:55:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -276,6 +276,33 @@ doforkhooks(struct proc *p2, struct proc *p1)
 	LIST_FOREACH(hd, &forkhook_list, hk_list) {
 		((void (*)(struct proc *, struct proc *))*hd->hk_fn)
 		    (p2, p1);
+	}
+}
+
+static hook_list_t critpollhook_list = LIST_HEAD_INITIALIZER(critpollhook_list);
+
+void *
+critpollhook_establish(void (*fn)(void *), void *arg)
+{
+	return hook_establish(&critpollhook_list, fn, arg);
+}
+
+void
+critpollhook_disestablish(void *vhook)
+{
+	hook_disestablish(&critpollhook_list, vhook);
+}
+
+/*
+ * Run critical polling hooks.
+ */
+void
+docritpollhooks(void)
+{
+	struct hook_desc *hd;
+
+	LIST_FOREACH(hd, &critpollhook_list, hk_list) {
+		(*hd->hk_fn)(hd->hk_arg);
 	}
 }
 

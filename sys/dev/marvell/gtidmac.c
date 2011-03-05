@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.1.4.3 2010/07/03 01:19:35 rmind Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.1.4.4 2011/03/05 20:53:26 rmind Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.1.4.3 2010/07/03 01:19:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.1.4.4 2011/03/05 20:53:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -285,12 +285,8 @@ gtidmac_match(device_t parent, struct cfdata *match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-
-	if (mva->mva_model == MARVELL_ORION_1_88F6082)
-		return 0;
-
-	if (mva->mva_offset == GTCF_OFFSET_DEFAULT ||
-	    mva->mva_irq == GTCF_IRQ_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
+	    mva->mva_irq == MVA_IRQ_DEFAULT)
 		return 0;
 
 	mva->mva_size = GTIDMAC_SIZE;
@@ -316,15 +312,8 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	case MARVELL_DISCOVERY:
 	case MARVELL_DISCOVERY_II:
 	case MARVELL_DISCOVERY_III:
-#if 0
-	case MARVELL_DISCOVERY_V:	????
-#endif
 		break;
 
-#if 0
-	case MARVELL_DISCOVERY_LT:	????
-	case MARVELL_DISCOVERY_VI:	????
-#endif
 	case MARVELL_ORION_1_88F1181:
 	case MARVELL_ORION_1_88F5082:
 	case MARVELL_ORION_1_88F5180N:
@@ -335,6 +324,11 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 		idmac_nchan = 4;
 		break;
 
+#if 0
+	case MARVELL_DISCOVERY_LT:
+	case MARVELL_DISCOVERY_V:
+	case MARVELL_DISCOVERY_VI:	????
+#endif
 	case MARVELL_ORION_1_88F5182:
 		idmac_nchan = 4;
 		xore_nchan = 2;

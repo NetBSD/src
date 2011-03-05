@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.94.4.2 2010/07/03 01:19:14 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.94.4.3 2011/03/05 20:49:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -273,12 +273,16 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 	(((pg)->mdpage.pvh_attrs & PVF_MOD) != 0)
 #define	pmap_is_referenced(pg)	\
 	(((pg)->mdpage.pvh_attrs & PVF_REF) != 0)
-#define	pmap_is_page_colored_p(pg)	\
-	(((pg)->mdpage.pvh_attrs & PVF_COLORED) != 0)
+#define	pmap_is_page_colored_p(md)	\
+	(((md)->pvh_attrs & PVF_COLORED) != 0)
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
 #define pmap_phys_address(ppn)		(arm_ptob((ppn)))
+u_int arm32_mmap_flags(paddr_t);
+#define ARM32_MMAP_WRITECOMBINE	0x40000000
+#define ARM32_MMAP_CACHEABLE		0x20000000
+#define pmap_mmap_flags(ppn)			arm32_mmap_flags(ppn)
 
 /*
  * Functions that we need to export
@@ -500,6 +504,10 @@ extern pt_entry_t		pte_l2_s_cache_mask;
 extern pt_entry_t		pte_l1_s_cache_mode_pt;
 extern pt_entry_t		pte_l2_l_cache_mode_pt;
 extern pt_entry_t		pte_l2_s_cache_mode_pt;
+
+extern pt_entry_t		pte_l1_s_wc_mode;
+extern pt_entry_t		pte_l2_l_wc_mode;
+extern pt_entry_t		pte_l2_s_wc_mode;
 
 extern pt_entry_t		pte_l1_s_prot_u;
 extern pt_entry_t		pte_l1_s_prot_w;
@@ -762,6 +770,50 @@ extern void (*pmap_zero_page_func)(paddr_t);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+
+#ifndef _LOCORE
+
+/*
+ * pmap-specific data store in the vm_page structure.
+ */
+#define	__HAVE_VM_PAGE_MD
+struct vm_page_md {
+	SLIST_HEAD(,pv_entry) pvh_list;		/* pv_entry list */
+	struct simplelock pvh_slock;		/* lock on this head */
+	int pvh_attrs;				/* page attributes */
+	u_int uro_mappings;
+	u_int urw_mappings;
+	union {
+		u_short s_mappings[2];	/* Assume kernel count <= 65535 */
+		u_int i_mappings;
+	} k_u;
+#define	kro_mappings	k_u.s_mappings[0]
+#define	krw_mappings	k_u.s_mappings[1]
+#define	k_mappings	k_u.i_mappings
+};
+
+/*
+ * Set the default color of each page.
+ */
+#if ARM_MMU_V6 > 0
+#define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
+	(pg)->mdpage.pvh_attrs = (pg)->phys_addr & arm_cache_prefer_mask
+#else
+#define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
+	(pg)->mdpage.pvh_attrs = 0
+#endif
+ 
+#define	VM_MDPAGE_INIT(pg)						\
+do {									\
+	SLIST_INIT(&(pg)->mdpage.pvh_list);				\
+	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
+	VM_MDPAGE_PVH_ATTRS_INIT(pg);					\
+	(pg)->mdpage.uro_mappings = 0;					\
+	(pg)->mdpage.urw_mappings = 0;					\
+	(pg)->mdpage.k_mappings = 0;					\
+} while (/*CONSTCOND*/0)
+
+#endif /* !_LOCORE */
 
 #endif /* _KERNEL */
 

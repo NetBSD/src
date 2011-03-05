@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.74.4.1 2010/07/03 01:19:51 rmind Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.74.4.2 2011/03/05 20:55:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.74.4.1 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.74.4.2 2011/03/05 20:55:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,9 +554,7 @@ smbfs_write(void *v)
 /*
  * smbfs_create call
  * Create a regular file. On entry the directory to contain the file being
- * created is locked.  We must release before we return. We must also free
- * the pathname buffer pointed at by cnp->cn_pnbuf, always on error, or
- * only if the SAVESTART bit in cn_flags is clear on success.
+ * created is locked.  We must release before we return.
  */
 int
 smbfs_create(void *v)
@@ -598,8 +596,6 @@ smbfs_create(void *v)
 		cache_enter(dvp, *ap->a_vpp, cnp);
 
   out:
-	if (error || ((cnp->cn_flags & SAVESTART) == 0))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
 	return (error);
@@ -799,8 +795,6 @@ smbfs_mkdir(void *v)
 	*ap->a_vpp = vp;
 
  out:
-	if (error || ((cnp->cn_flags & SAVESTART) == 0))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	vput(dvp);
 
@@ -1243,9 +1237,6 @@ smbfs_lookup(void *v)
 			&& vattr.va_ctime.tv_sec == VTOSMB(newvp)->n_ctime)
 		{
 			/* nfsstats.lookupcache_hits++; */
-			if (cnp->cn_nameiop != LOOKUP && islastcn)
-				cnp->cn_flags |= SAVENAME;
-
 			return (0);
 		}
 
@@ -1298,7 +1289,6 @@ smbfs_lookup(void *v)
 			if (error)
 				return (error);
 
-			cnp->cn_flags |= SAVENAME;
 			return (EJUSTRETURN);
 		}
 
@@ -1328,7 +1318,6 @@ smbfs_lookup(void *v)
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return (error);
-		cnp->cn_flags |= SAVENAME;
 		return (0);
 	}
 
@@ -1358,9 +1347,6 @@ smbfs_lookup(void *v)
 		if (error)
 			return error;
 	}
-
-	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-		cnp->cn_flags |= SAVENAME;
 
 	if ((cnp->cn_flags & MAKEENTRY)) {
 		KASSERT(error == 0);

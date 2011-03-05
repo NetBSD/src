@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe.h,v 1.5 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: armfpe.h,v 1.5.4.1 2011/03/05 20:49:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Neil A Carson.
@@ -105,7 +105,7 @@ typedef struct {
 
 /* macro to return the FP context for a process */
 
-#define FP_CONTEXT(p) ((u_int)(((u_char *)(p)->p_addr) + sizeof(struct user)))
+#define FP_CONTEXT(p) ((u_int)(((u_char *)(p)->p_addr) + sizeof(struct pcb)))
 
 /* Prototypes */
 

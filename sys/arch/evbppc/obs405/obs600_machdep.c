@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.1.4.2 2010/05/30 05:16:44 rmind Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.1.4.3 2011/03/05 20:50:17 rmind Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.1.4.2 2010/05/30 05:16:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.1.4.3 2011/03/05 20:50:17 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.1.4.2 2010/05/30 05:16:44 rmind
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
@@ -291,6 +290,8 @@ cpu_startup(void)
 	 * no fake mapiodev
 	 */
 	fake_mapiodev = 0;
+
+	splraise(-1);
 }
 
 /*

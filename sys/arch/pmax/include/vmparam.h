@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2009/12/14 00:46:10 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15.4.1 2011/03/05 20:51:30 rmind Exp $	*/
 
 #ifndef _PMAX_VMPARAM_H_
 #define _PMAX_VMPARAM_H_
@@ -11,8 +11,9 @@
  * to DMA into this region, and we want them to have a fighting chance of
  * allocating their DMA memory during autoconfiguration.
  */
+#define	VM_PHYSSEG_MAX		16
+#undef VM_NFREELIST
+#define	VM_NFREELIST		2
 #define	VM_FREELIST_FIRST8	1
-
-#define	VM_PHYSSEG_MAX		16	/* 15 + 1 free lists */
 
 #endif	/* !_PMAX_VMPARAM_H_ */

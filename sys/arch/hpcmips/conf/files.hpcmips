@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.103 2009/08/21 03:56:58 thorpej Exp $
+#	$NetBSD: files.hpcmips,v 1.103.4.1 2011/03/05 20:50:32 rmind Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -445,8 +445,8 @@ attach vr4181aiu at vripif
 file arch/hpcmips/vr/vr4181aiu.c	vr4181aiu	needs-flag
 
 # Flash memory on L-card+	XXX should not be here
-device flash
-attach flash at vripif with flash_vrip
+device vrflash
+attach vrflash at vripif with flash_vrip
 file arch/hpcmips/vr/flash_vrip.c	flash_vrip	needs-flag
 
 # OptPoint on Telios HC-AJ2

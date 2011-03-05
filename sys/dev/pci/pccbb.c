@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.196.2.1 2010/05/30 05:17:36 rmind Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.196.2.2 2011/03/05 20:53:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.196.2.1 2010/05/30 05:17:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.196.2.2 2011/03/05 20:53:47 rmind Exp $");
 
 /*
 #define CBB_DEBUG
@@ -277,6 +277,8 @@ const struct yenta_chipinfo {
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451), CB_TI12XX,
+	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1510), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1520), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -836,14 +838,16 @@ pccbb_chipinit(struct pccbb_softc *sc)
 		 * The TI125X parts have a different register.
 		 */
 		mfunc = pci_conf_read(pc, tag, PCI12XX_MFUNC);
-		if (mfunc == 0) {
-			mfunc &= ~PCI12XX_MFUNC_PIN0;
+		if ((mfunc & (PCI12XX_MFUNC_PIN0 | PCI12XX_MFUNC_PIN1)) == 0) {
+			/* Enable PCI interrupt /INTA */
 			mfunc |= PCI12XX_MFUNC_PIN0_INTA;
+
+			/* XXX this is TI1520 only */
 			if ((pci_conf_read(pc, tag, PCI_SYSCTRL) &
-			     PCI12XX_SYSCTRL_INTRTIE) == 0) {
-				mfunc &= ~PCI12XX_MFUNC_PIN1;
+			     PCI12XX_SYSCTRL_INTRTIE) == 0)
+				/* Enable PCI interrupt /INTB */
 				mfunc |= PCI12XX_MFUNC_PIN1_INTB;
-			}
+
 			pci_conf_write(pc, tag, PCI12XX_MFUNC, mfunc);
 		}
 		/* fallthrough */
@@ -1030,8 +1034,8 @@ pccbbintr(void *arg)
 	Pcic_read(sc, PCIC_CSC);
 
 	if (sockevent != 0) {
-		aprint_debug("%s: enter sockevent %" PRIx32 "\n", __func__,
-		    sockevent);
+		DPRINTF(("%s: enter sockevent %" PRIx32 "\n",
+			__func__, sockevent));
 	}
 
 	/* XXX sockevent == CB_SOCKET_EVENT_CSTS|CB_SOCKET_EVENT_POWER

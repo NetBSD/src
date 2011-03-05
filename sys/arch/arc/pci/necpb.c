@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.32 2008/07/05 08:46:25 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.32.18.1 2011/03/05 20:49:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.32 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.32.18.1 2011/03/05 20:49:27 rmind Exp $");
 
 #include "opt_pci.h"
 
@@ -246,7 +246,7 @@ necpbattach(device_t parent, device_t self, void *aux)
 	pc->pc_memext = extent_create("necpbmem", 0x08000000, 0x3fffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
-	    mips_dcache_align);
+	    mips_cache_info.mci_dcache_align);
 #endif
 
 	out32(RD94_SYS_PCI_INTMASK, 0xf);
@@ -339,7 +339,6 @@ necpb_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
 	int pin = pa->pa_intrpin;
-	int swiz = pa->pa_intrswiz % 4;
 	int bus, dev;
 
 	if (pin == 0) {
@@ -363,13 +362,13 @@ necpb_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	switch (dev) {
 	case 3:
-		*ihp = (pin - swiz + 2) % 4;
+		*ihp = 3;
 		break;
 	case 4:
-		*ihp = (pin - swiz + 1) % 4;
+		*ihp = 2;
 		break;
 	case 5:
-		*ihp = (pin - swiz + 0) % 4;
+		*ihp = 1;
 		break;
 	default:
 		*ihp = -1;

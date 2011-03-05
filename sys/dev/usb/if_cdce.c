@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.27.4.1 2010/05/30 05:17:44 rmind Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.27.4.2 2011/03/05 20:54:11 rmind Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.27.4.1 2010/05/30 05:17:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.27.4.2 2011/03/05 20:54:11 rmind Exp $");
 #ifdef	__NetBSD__
 #include "opt_inet.h"
 #endif
@@ -102,6 +102,8 @@ Static const struct cdce_type cdce_devs[] = {
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5600 }, CDCE_ZAURUS | CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C700 }, CDCE_ZAURUS | CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C750 }, CDCE_ZAURUS | CDCE_NO_UNION },
+  {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_ZAURUS | CDCE_NO_UNION },
+  {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_ZAURUS | CDCE_NO_UNION },
 };
 #define cdce_lookup(v, p) ((const struct cdce_type *)usb_lookup(cdce_devs, v, p))
 
@@ -292,6 +294,9 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cdce_udev,
 	    sc->cdce_dev);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -301,6 +306,9 @@ cdce_detach(device_t self, int flags)
 	struct cdce_softc *sc = device_private(self);
 	struct ifnet	*ifp = GET_IFP(sc);
 	int		 s;
+
+	if (device_pmf_is_registered(self))
+		pmf_device_deregister(self);
 
 	s = splusb();
 

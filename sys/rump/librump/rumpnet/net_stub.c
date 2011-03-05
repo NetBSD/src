@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.8 2009/01/23 21:57:35 pooka Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.8.8.1 2011/03/05 20:56:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.8 2009/01/23 21:57:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.8.8.1 2011/03/05 20:56:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -43,18 +43,32 @@ int
 __rumpnet_stub(void)
 {
 
-	panic("rumpnet stubs only, linking against librumpnet_net required");
+	panic("component not available");
 }
 __weak_alias(rtioctl,__rumpnet_stub);
 __weak_alias(rt_walktree,__rumpnet_stub);
-__weak_alias(rtrequest,__rumpnet_stub);
 __weak_alias(rtrequest,__rumpnet_stub);
 __weak_alias(ifioctl,__rumpnet_stub);
 __weak_alias(ifunit,__rumpnet_stub);
 __weak_alias(ifreq_setaddr,__rumpnet_stub);
 __weak_alias(rt_msg1,__rumpnet_stub);
 __weak_alias(route_enqueue,__rumpnet_stub);
-__weak_alias(route_cb,__rumpnet_stub);
+__weak_alias(route_info,__rumpnet_stub);
+
+/*
+ * Weak symbols so that we can optionally leave components out.
+ * (would be better to fix sys/net* to be more modular, though)
+ */
+
+/* bridge */
+__weak_alias(bridge_ifdetach,__rumpnet_stub);
+__weak_alias(bridge_output,__rumpnet_stub);
+__weak_alias(bridge_input,__rumpnet_stub);
+
+/* agr */
+__weak_alias(agr_input,__rumpnet_stub);
+__weak_alias(ieee8023ad_lacp_input,__rumpnet_stub);
+__weak_alias(ieee8023ad_marker_input,__rumpnet_stub);
 
 struct ifnet_head ifnet;
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.7.4.2 2010/07/03 01:19:16 rmind Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.7.4.3 2011/03/05 20:50:02 rmind Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -135,7 +135,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -145,6 +145,7 @@ options 	SYMTAB_SPACE=300000
 
 ## USB Debugging options
 options USB_DEBUG
+options EHCI_DEBUG
 options OHCI_DEBUG 
 options UHUB_DEBUG 
 
@@ -168,7 +169,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=128
+options		MEMSIZE=256
 
 # L3 Interconnect
 L3i0		at mainbus?
@@ -181,6 +182,19 @@ obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6e000000
+
+# NAND controller
+omapnand0	at gpmc? addr 0x30000000
+
+# NAND layer
+nand0		at nandbus?
+
+# Define flash partitions for board
+flash0		at nand0 offset 0x0 size 0x80000 readonly 1
+flash1		at nand0 offset 0x80000 size 0x80000 readonly 1
+flash2		at nand0 offset 0x260000 size 0x20000
+flash3		at nand0 offset 0x280000 size 0x400000
+flash4		at nand0 offset 0x680000 size 0x0
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
@@ -204,7 +218,7 @@ gpio*		at omapgpio?
 
 # On-board 16550 UARTs
 com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
-#options 	CONSADDR=0x49020000, CONSPEED=57600
+#options 	CONSADDR=0x49020000, CONSPEED=38400
 options 	CONSADDR=0x49020000, CONSPEED=115200
 
 # Operating System Timer
@@ -220,13 +234,47 @@ omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 #omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
 #omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
 
+# onboard video
+omapfb*		at obio0 addr 0x48050000 size 0x10000
+
+# make sure the console display is always wsdisplay0
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_VT100		# sun terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options		WS_KERNEL_FG=WSCOL_GREEN
+options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options		FONT_QVSS8x15
+#options 	FONT_GALLANT12x22	# the console font
+
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# Power, Reset and Clock Management
+prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
+
 # On-board USB
 #ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 #ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
 #usb*		at ohci?
+#usb*		at ehci?
 #uhub*		at usb?
-##umass*		at uhub? port ? configuration ? interface ?
-##wd*		at umass?
+#uhub*		at uhub? port ?
+#umass*		at uhub? port ? configuration ? interface ?
+#wd*		at umass?
+#uhidev*		at uhub?
+#ukbd*		at uhidev?
+#ums*		at uhidev?
+#wskbd*		at ukbd?
+#wsmouse*	at ums?
+
 #axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management
@@ -238,7 +286,7 @@ options		OMAP_CK_REF_SPEED=12000000
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 

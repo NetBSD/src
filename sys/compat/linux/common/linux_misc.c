@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.214.2.1 2010/07/03 01:19:31 rmind Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.214.2.2 2011/03/05 20:52:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.214.2.1 2010/07/03 01:19:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.214.2.2 2011/03/05 20:52:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.214.2.1 2010/07/03 01:19:31 rmind E
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
 
-#include <compat/linux/linux_syscallargs.h>
-
 #include <compat/linux/common/linux_fcntl.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_dirent.h>
@@ -121,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.214.2.1 2010/07/03 01:19:31 rmind E
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_reboot.h>
 #include <compat/linux/common/linux_emuldata.h>
+
+#include <compat/linux/linux_syscallargs.h>
 
 #ifndef COMPAT_LINUX32
 const int linux_ptrace_request_map[] = {
@@ -270,8 +270,7 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 }
 
 /*
- * Linux brk(2). The check if the new address is >= the old one is
- * done in the kernel in Linux. NetBSD does it in the library.
+ * Linux brk(2).  Like native, but always return the new break value.
  */
 int
 linux_sys_brk(struct lwp *l, const struct linux_sys_brk_args *uap, register_t *retval)
@@ -280,20 +279,13 @@ linux_sys_brk(struct lwp *l, const struct linux_sys_brk_args *uap, register_t *r
 		syscallarg(char *) nsize;
 	} */
 	struct proc *p = l->l_proc;
-	char *nbrk = SCARG(uap, nsize);
-	struct sys_obreak_args oba;
 	struct vmspace *vm = p->p_vmspace;
-	struct linux_emuldata *ed = (struct linux_emuldata*)p->p_emuldata;
+	struct sys_obreak_args oba;
 
-	SCARG(&oba, nsize) = nbrk;
+	SCARG(&oba, nsize) = SCARG(uap, nsize);
 
-	if ((void *) nbrk > vm->vm_daddr && sys_obreak(l, &oba, retval) == 0)
-		ed->s->p_break = (char*)nbrk;
-	else
-		nbrk = ed->s->p_break;
-
-	retval[0] = (register_t)nbrk;
-
+	(void) sys_obreak(l, &oba, retval);
+	retval[0] = (register_t)((char *)vm->vm_daddr + ptoa(vm->vm_dsize));
 	return 0;
 }
 
@@ -787,6 +779,7 @@ again:
 			idb.d_reclen = (u_short)linux_reclen;
 		}
 		strcpy(idb.d_name, bdp->d_name);
+		idb.d_name[strlen(idb.d_name) + 1] = bdp->d_type;
 		if ((error = copyout((void *)&idb, outp, linux_reclen)))
 			goto out;
 		/* advance past this real entry */
@@ -936,16 +929,27 @@ linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *ua
 	/* {
 		syscallarg(unsigned long) per;
 	} */
+	struct linux_emuldata *led;
+	int per;
 
-	switch (SCARG(uap, per)) {
+	per = SCARG(uap, per);
+	led = l->l_emuldata;
+	if (per == LINUX_PER_QUERY) {
+		retval[0] = led->led_personality;
+		return 0;
+	}
+	 
+	switch (per & LINUX_PER_MASK) {
 	case LINUX_PER_LINUX:
-	case LINUX_PER_QUERY:
+	case LINUX_PER_LINUX32:
+		led->led_personality = per;
 		break;
+
 	default:
 		return EINVAL;
 	}
 
-	retval[0] = LINUX_PER_LINUX;
+	retval[0] = per;
 	return 0;
 }
 
@@ -1333,5 +1337,4 @@ linux_sys_getpriority(struct lwp *l, const struct linux_sys_getpriority_args *ua
 
         return 0;
 }
-
 #endif /* !COMPAT_LINUX32 */

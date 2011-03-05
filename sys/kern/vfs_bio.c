@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.223.2.1 2010/03/16 15:38:09 rmind Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.223.2.2 2011/03/05 20:55:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.223.2.1 2010/03/16 15:38:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.223.2.2 2011/03/05 20:55:25 rmind Exp $");
 
 #include "opt_bufcache.h"
 
@@ -143,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.223.2.1 2010/03/16 15:38:09 rmind Exp 
 #include <sys/cpu.h>
 #include <sys/wapbl.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm.h>	/* extern struct uvm uvm */
 
 #include <miscfs/specfs/specdev.h>
 
@@ -983,6 +983,14 @@ brelsel(buf_t *bp, int set)
 	if (ISSET(bp->b_cflags, BC_WANTED))
 		CLR(bp->b_cflags, BC_WANTED|BC_AGE);
 
+	/* If it's clean clear the copy-on-write flag. */
+	if (ISSET(bp->b_flags, B_COWDONE)) {
+		mutex_enter(bp->b_objlock);
+		if (!ISSET(bp->b_oflags, BO_DELWRI))
+			CLR(bp->b_flags, B_COWDONE);
+		mutex_exit(bp->b_objlock);
+	}
+
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
 	 */
@@ -1611,7 +1619,7 @@ buf_syncwait(void)
 		if (nbusy_prev == 0)
 			nbusy_prev = nbusy;
 		printf("%d ", nbusy);
-		kpause("bflush", false, (iter == 0) ? 1 : hz / 25 * iter, NULL);
+		kpause("bflush", false, MAX(1, hz / 25 * iter), NULL);
 		if (nbusy >= nbusy_prev) /* we didn't flush anything */
 			iter++;
 		else
@@ -1992,6 +2000,8 @@ nestiobuf_done(buf_t *mbp, int donebytes, int error)
 	if (error)
 		mbp->b_error = error;
 	if (mbp->b_resid == 0) {
+		if (mbp->b_error)
+			mbp->b_resid = mbp->b_bcount;
 		mutex_exit(mbp->b_objlock);
 		biodone(mbp);
 	} else

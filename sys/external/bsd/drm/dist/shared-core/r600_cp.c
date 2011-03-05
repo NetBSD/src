@@ -33,8 +33,12 @@
 #include "radeon_drv.h"
 #include "r300_reg.h"
 
-#include "r600_microcode.h"
-#include "radeonhd_microcode.h"
+#define PFP_UCODE_SIZE 576
+#define PM4_UCODE_SIZE 1792
+#define R700_PFP_UCODE_SIZE 848
+#define R700_PM4_UCODE_SIZE 1360
+#define EVERGREEN_PFP_UCODE_SIZE 1120
+#define EVERGREEN_PM4_UCODE_SIZE 1376
 
 # define ATI_PCIGART_PAGE_SIZE		4096	/**< PCI GART page size */
 # define ATI_PCIGART_PAGE_MASK		(~(ATI_PCIGART_PAGE_SIZE-1))
@@ -285,48 +289,45 @@ static void r600_vm_init(struct drm_device *dev)
 /* load r600 microcode */
 static void r600_cp_load_microcode(drm_radeon_private_t * dev_priv)
 {
-	const u32 (*cp)[3];
-	const u32 *pfp;
-	int i;
+	const char *chip_name;
+	u32 (*me)[3];
+	u32 *pfp;
+	size_t pfp_size, me_size;
+	int i, error;
 
 	switch (dev_priv->flags & RADEON_FAMILY_MASK) {
 	case CHIP_R600:
-		DRM_INFO("Loading R600 Microcode\n");
-		cp  = R600_cp_microcode;
-		pfp = R600_pfp_microcode;
+		chip_name = "R600";
 		break;
 	case CHIP_RV610:
-		DRM_INFO("Loading RV610 Microcode\n");
-		cp  = RV610_cp_microcode;
-		pfp = RV610_pfp_microcode;
+		chip_name = "RV610";
 		break;
 	case CHIP_RV630:
-		DRM_INFO("Loading RV630 Microcode\n");
-		cp  = RV630_cp_microcode;
-		pfp = RV630_pfp_microcode;
+		chip_name = "RV630";
 		break;
 	case CHIP_RV620:
-		DRM_INFO("Loading RV620 Microcode\n");
-		cp  = RV620_cp_microcode;
-		pfp = RV620_pfp_microcode;
+		chip_name = "RV620";
 		break;
 	case CHIP_RV635:
-		DRM_INFO("Loading RV635 Microcode\n");
-		cp  = RV635_cp_microcode;
-		pfp = RV635_pfp_microcode;
+		chip_name = "RV635";
 		break;
 	case CHIP_RV670:
-		DRM_INFO("Loading RV670 Microcode\n");
-		cp  = RV670_cp_microcode;
-		pfp = RV670_pfp_microcode;
+		chip_name = "RV670";
 		break;
 	case CHIP_RS780:
 	case CHIP_RS880:
-		DRM_INFO("Loading RS780/RS880 Microcode\n");
-		cp  = RS780_cp_microcode;
-		pfp = RS780_pfp_microcode;
+		chip_name = "RS780";
 		break;
 	default:
+		return;
+	}
+
+	DRM_INFO("Loading %s Microcode\n", chip_name);
+
+	if ((error = radeon_load_a_microcode("%s_pfp.bin", chip_name, (void **)&pfp, &pfp_size)) != 0)
+		return;
+	if ((error = radeon_load_a_microcode("%s_me.bin", chip_name, (void **)&me, &me_size)) != 0) {
+		radeon_free_a_microcode(pfp, pfp_size);
 		return;
 	}
 
@@ -345,19 +346,21 @@ static void r600_cp_load_microcode(drm_radeon_private_t * dev_priv)
 	RADEON_WRITE(R600_CP_ME_RAM_WADDR, 0);
 
 	for (i = 0; i < PM4_UCODE_SIZE; i++) {
-		RADEON_WRITE(R600_CP_ME_RAM_DATA, cp[i][0]);
-		RADEON_WRITE(R600_CP_ME_RAM_DATA, cp[i][1]);
-		RADEON_WRITE(R600_CP_ME_RAM_DATA, cp[i][2]);
+		RADEON_WRITE(R600_CP_ME_RAM_DATA, be32toh(me[i][0]));
+		RADEON_WRITE(R600_CP_ME_RAM_DATA, be32toh(me[i][1]));
+		RADEON_WRITE(R600_CP_ME_RAM_DATA, be32toh(me[i][2]));
 	}
 
 	RADEON_WRITE(R600_CP_PFP_UCODE_ADDR, 0);
 	for (i = 0; i < PFP_UCODE_SIZE; i++)
-		RADEON_WRITE(R600_CP_PFP_UCODE_DATA, pfp[i]);
+		RADEON_WRITE(R600_CP_PFP_UCODE_DATA, be32toh(pfp[i]));
 
 	RADEON_WRITE(R600_CP_PFP_UCODE_ADDR, 0);
 	RADEON_WRITE(R600_CP_ME_RAM_WADDR, 0);
 	RADEON_WRITE(R600_CP_ME_RAM_RADDR, 0);
 
+	radeon_free_a_microcode(pfp, pfp_size);
+	radeon_free_a_microcode(me, me_size);
 }
 
 static void r700_vm_init(struct drm_device *dev)
@@ -417,50 +420,46 @@ static void r700_vm_init(struct drm_device *dev)
 static void r700_cp_load_microcode(drm_radeon_private_t * dev_priv)
 {
 	size_t pfp_req_size, me_req_size;
-
-	const u32 *pfp;
-	const u32 *cp;
-	int i;
+	const char *chip_name;
+	u32 *pfp;
+	u32 *me;
+	size_t pfp_size, me_size;
+	int i, error;
 
 	switch (dev_priv->flags & RADEON_FAMILY_MASK) {
 	case CHIP_RV770:
-		DRM_INFO("Loading RV770/RV790 Microcode\n");
-		pfp = RV770_pfp_microcode;
-		cp  = RV770_cp_microcode;
+		chip_name = "RV770";
 		break;
 	case CHIP_RV730:
 	case CHIP_RV740:
-		DRM_INFO("Loading RV730/RV740 Microcode\n");
-		pfp = RV730_pfp_microcode;
-		cp  = RV730_cp_microcode;
+		chip_name = "RV730";
 		break;
 	case CHIP_RV710:
-		DRM_INFO("Loading RV710 Microcode\n");
-		pfp = RV710_pfp_microcode;
-		cp  = RV710_cp_microcode;
+		chip_name = "RV710";
 		break;
 	case CHIP_CEDAR:
-		DRM_INFO("Loading CEDAR Microcode\n");
-		pfp = CEDAR_pfp_microcode;
-		cp  = CEDAR_me_microcode;
+		chip_name = "CEDAR";
 		break;
 	case CHIP_REDWOOD:
-		DRM_INFO("Loading REDWOOD Microcode\n");
-		pfp = REDWOOD_pfp_microcode;
-		cp  = REDWOOD_me_microcode;
+		chip_name = "REDWOOD";
 		break;
 	case CHIP_JUNIPER:
-		DRM_INFO("Loading JUNIPER Microcode\n");
-		pfp = JUNIPER_pfp_microcode;
-		cp  = JUNIPER_me_microcode;
+		chip_name = "JUNIPER";
 		break;
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
-		DRM_INFO("Loading CYPRESS Microcode\n");
-		pfp = CYPRESS_pfp_microcode;
-		cp  = CYPRESS_me_microcode;
+		chip_name = "CYPRESS";
 		break;
 	default:
+		return;
+	}
+
+	DRM_INFO("Loading %s Microcode\n", chip_name);
+
+	if ((error = radeon_load_a_microcode("%s_pfp.bin", chip_name, (void **)&pfp, &pfp_size)) != 0)
+		return;
+	if ((error = radeon_load_a_microcode("%s_me.bin", chip_name, (void **)&me, &me_size)) != 0) {
+		radeon_free_a_microcode(pfp, pfp_size);
 		return;
 	}
 
@@ -470,6 +469,20 @@ static void r700_cp_load_microcode(drm_radeon_private_t * dev_priv)
 	} else {
 		pfp_req_size = R700_PFP_UCODE_SIZE * 4;
 		me_req_size = R700_PM4_UCODE_SIZE * 4;
+	}
+
+	if (pfp_req_size != pfp_size) {
+		DRM_ERROR("Wrong size for %s_pfp.bin (got %zu want %zu)\n", chip_name, pfp_size, pfp_req_size);
+		radeon_free_a_microcode(pfp, pfp_size);
+		radeon_free_a_microcode(me, me_size);
+		return;
+	}
+
+	if (me_req_size != me_size) {
+		DRM_ERROR("Wrong size for %s_me.bin (got %zu want %zu)\n", chip_name, me_size, me_req_size);
+		radeon_free_a_microcode(pfp, pfp_size);
+		radeon_free_a_microcode(me, me_size);
+		return;
 	}
 
 	r600_do_cp_stop(dev_priv);
@@ -485,19 +498,21 @@ static void r700_cp_load_microcode(drm_radeon_private_t * dev_priv)
 	RADEON_WRITE(R600_GRBM_SOFT_RESET, 0);
 
 	RADEON_WRITE(R600_CP_PFP_UCODE_ADDR, 0);
-	for (i = 0; i < pfp_req_size; i++)
-		RADEON_WRITE(R600_CP_PFP_UCODE_DATA, pfp[i]);
+	for (i = 0; i < pfp_req_size / 4; i++)
+		RADEON_WRITE(R600_CP_PFP_UCODE_DATA, be32toh(pfp[i]));
 	RADEON_WRITE(R600_CP_PFP_UCODE_ADDR, 0);
 
 	RADEON_WRITE(R600_CP_ME_RAM_WADDR, 0);
-	for (i = 0; i < me_req_size; i++)
-		RADEON_WRITE(R600_CP_ME_RAM_DATA, cp[i]);
+	for (i = 0; i < me_req_size / 4; i++)
+		RADEON_WRITE(R600_CP_ME_RAM_DATA, be32toh(me[i]));
 	RADEON_WRITE(R600_CP_ME_RAM_WADDR, 0);
 
 	RADEON_WRITE(R600_CP_PFP_UCODE_ADDR, 0);
 	RADEON_WRITE(R600_CP_ME_RAM_WADDR, 0);
 	RADEON_WRITE(R600_CP_ME_RAM_RADDR, 0);
 
+	radeon_free_a_microcode(pfp, pfp_size);
+	radeon_free_a_microcode(me, me_size);
 }
 
 static void r600_test_writeback(drm_radeon_private_t * dev_priv)

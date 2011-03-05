@@ -1,6 +1,7 @@
-/*	$NetBSD: locore.s,v 1.149.4.1 2010/07/03 01:19:12 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.149.4.2 2011/03/05 20:49:19 rmind Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1980, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -17,50 +18,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: locore.s 1.58 91/04/22$
- *
- *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *
- * Original (hp300) Author: unknown, maybe Mike Hibler?
- * Amiga author: Markus Wild
- * Other contributors: Bryan Ford (kernel reload stuff)
- */
-
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -389,13 +346,13 @@ Lfptnull:
  */
 
 ENTRY_NOPROFILE(badtrap)
-	moveml	%d0/%d1/%a0/%a1,%sp@-	| save scratch regs
+	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		| push exception vector info
 	clrw	%sp@-
 	movl	%sp@(22),%sp@-		| and PC
 	jbsr	_C_LABEL(straytrap)	| report
 	addql	#8,%sp			| pop args
-	moveml	%sp@+,%d0/%d1/%a0/%a1	| restore regs
+	INTERRUPT_RESTOREREG		| restore regs
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(trap0)
@@ -486,17 +443,18 @@ ENTRY_NOPROFILE(trace)
 /* Provide a generic interrupt dispatcher, only handle hardclock (int6)
  * and serial RBF (int5) specially, to improve performance
  */
-
 ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(interrupt_depth)
 	addql	#1,_C_LABEL(intrcnt)+0
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(lev5intr)
 	addql	#1,_C_LABEL(interrupt_depth)
-	moveml	%d0/%d1/%a0/%a1,%sp@-
+	INTERRUPT_SAVEREG
 #include "ser.h"
 #if NSER > 0
 	jsr	_C_LABEL(ser_fastint)
@@ -504,16 +462,16 @@ ENTRY_NOPROFILE(lev5intr)
 	INTREQWADDR(%a0)
 	movew	#INTF_RBF,%a0@		| clear RBF interrupt in intreq
 #endif
-	moveml	%sp@+,%d0/%d1/%a0/%a1
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	addql	#1,_C_LABEL(intrcnt)+20
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 
 #ifdef DRACO
 ENTRY_NOPROFILE(DraCoLev2intr)
 	addql	#1,_C_LABEL(interrupt_depth)
-	moveml	%d0/%d1/%a0/%a1,%sp@-
+	INTERRUPT_SAVEREG
 
 	CIAAADDR(%a0)
 	movb	%a0@(CIAICR),%d0	| read irc register (clears ints!)
@@ -534,15 +492,15 @@ ENTRY_NOPROFILE(DraCoLev2intr)
 	addql	#1,_C_LABEL(intrcnt)+32	| add another system clock interrupt
 
 Ldraciaend:
-	moveml	%sp@+,%d0/%d1/%a0/%a1
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 
 /* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
 ENTRY_NOPROFILE(DraCoLev1intr)
 	addql	#1,_C_LABEL(interrupt_depth)
-	moveml	%d0/%d1/%a0/%a1,%sp@-
+	INTERRUPT_SAVEREG
 	movl	_C_LABEL(draco_ioct),%a0
 	btst	#5,%a0@(7)
 	jeq	Ldrintrcommon
@@ -568,15 +526,15 @@ Ldrclockretry:
 
 	clrb	%a0@(9)		| reset timer irq
 
-	moveml	%sp@+,%d0/%d1/%a0/%a1
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)	| XXXX: shouldn't we call the normal lev1?
 
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
 ENTRY_NOPROFILE(DraCoIntr)
 	addql	#1,_C_LABEL(interrupt_depth)
-	moveml  %d0/%d1/%a0/%a1,%sp@-
+	INTERRUPT_SAVEREG
 Ldrintrcommon:
 	lea	_ASM_LABEL(Drintrcnt)-4,%a0
 	movw	%sp@(22),%d0		| use vector offset
@@ -586,8 +544,8 @@ Ldrintrcommon:
 	clrw	%sp@-			|    padded to longword
 	jbsr	_C_LABEL(intrhand)	| handle interrupt
 	addql	#4,%sp			| pop SR
-	moveml	%sp@+,%d0/%d1/%a0/%a1
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 #endif
@@ -600,7 +558,7 @@ ENTRY_NOPROFILE(lev3intr)
 ENTRY_NOPROFILE(lev4intr)
 #endif
 	addql	#1,_C_LABEL(interrupt_depth)
-	moveml	%d0/%d1/%a0/%a1,%sp@-
+	INTERRUPT_SAVEREG
 Lintrcommon:
 	lea	_C_LABEL(intrcnt),%a0
 	movw	%sp@(22),%d0		| use vector offset
@@ -610,8 +568,8 @@ Lintrcommon:
 	clrw	%sp@-			|    padded to longword
 	jbsr	_C_LABEL(intrhand)	| handle interrupt
 	addql	#4,%sp			| pop SR
-	moveml	%sp@+,%d0/%d1/%a0/%a1
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)
 
@@ -648,7 +606,7 @@ ENTRY_NOPROFILE(lev4intr)
 ENTRY_NOPROFILE(fake_lev6intr)
 #endif
 	addql	#1,_C_LABEL(interrupt_depth)
-	moveml	%d0/%d1/%a0/%a1,%sp@-
+	INTERRUPT_SAVEREG
 #ifdef LEV6_DEFER
 	/*
 	 * check for fake level 6
@@ -689,8 +647,8 @@ Lskipciab:
 #endif
 | other ciab interrupts?
 Llev6done:
-	moveml	%sp@+,%d0/%d1/%a0/%a1	| restore scratch regs
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	subql	#1,_C_LABEL(interrupt_depth)
 	jra	_ASM_LABEL(rei)		| all done [can we do rte here?]
 Lchkexter:

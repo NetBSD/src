@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.4 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.4.22.1 2011/03/05 20:50:59 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,15 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.4 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.4.22.1 2011/03/05 20:50:59 rmind Exp $");
 
 #include "opt_interrupt.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
 

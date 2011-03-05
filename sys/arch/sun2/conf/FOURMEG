@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.44.8.1 2010/05/30 05:17:09 rmind Exp $
+# $NetBSD: FOURMEG,v 1.44.8.2 2011/03/05 20:52:09 rmind Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.44.8.1 $"
+#ident 		"FOURMEG-$Revision: 1.44.8.2 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -188,7 +188,7 @@ xyc1	at vme0 addr 0xee48 irq 2 vect 0x49
 xy*	at xyc? drive ?
 
 ## Memory-disk device.
-pseudo-device	md		2
+pseudo-device	md		
 
 #### Network interfaces.
 

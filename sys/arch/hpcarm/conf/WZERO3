@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.4.2.3 2010/07/03 01:19:18 rmind Exp $
+#	$NetBSD: WZERO3,v 1.4.2.4 2011/03/05 20:50:31 rmind Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4.2.3 $"
+#ident 		"GENERIC-$Revision: 1.4.2.4 $"
 
 # estimated number of users
 maxusers	32
@@ -83,7 +83,7 @@ options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
-#options 	COMPAT_16	# NetBSD 1.6 compatibility.
+options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_15	# NetBSD 1.5 compatibility.
 #options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_13	# NetBSD 1.3 compatibility.
@@ -99,7 +99,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-
+options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -131,6 +131,8 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""
 #options 	WS_KERNEL_MONOATTR=""
+
+options 	FONT_VT220L8x16
 
 # Development and Debugging options
 
@@ -174,6 +176,7 @@ saost*	at pxaip? addr 0x40a00000 size 0x20
 
 # Physical console
 lcd* at pxaip?
+options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
 
 # for touchpad, keypad
@@ -226,6 +229,10 @@ uhid* at uhidev? reportid ?
 umass* at uhub? port ? configuration ? interface ?
 wd* at umass?
 
+# USB audio
+uaudio* at uhub? port ? configuration ?
+audio*	at audiobus?
+
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
@@ -235,6 +242,7 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?	 	# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
+acphy*	at mii? phy ?		# Altima AC101 and AMD Am79c874 PHYs
 rlphy*	at mii? phy ?		# Realtek 8139/8201L PHYs
 ukphy*  at mii? phy ?		# generic unknown PHYs
 urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
@@ -243,7 +251,18 @@ urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 #ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+upgt*	at uhub? port ?		# Intersil PrismGT
 zyd*	at uhub? port ?		# Zydas ZD1211
+
+# ATAPI bus support
+atapibus* at atapi?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # SCSI bus support
 scsibus* at scsi?
@@ -283,7 +302,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 pseudo-device	biconsdev 1		# build-in console device
 
-pseudo-device	md	1		# Ramdisk driver
+pseudo-device	md			# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

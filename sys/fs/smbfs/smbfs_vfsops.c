@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.90.4.2 2010/07/03 01:19:51 rmind Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.90.4.3 2011/03/05 20:55:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.90.4.2 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.90.4.3 2011/03/05 20:55:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,9 +322,10 @@ int
 smbfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
+	int error;
 
 	if (__predict_false(!smp->sm_root)) {
-		int error = smbfs_setroot(mp);
+		error = smbfs_setroot(mp);
 		if (error)
 			return (error);
 		/* fallthrough */
@@ -332,7 +333,11 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
 
 	KASSERT(smp->sm_root != NULL && SMBTOV(smp->sm_root) != NULL);
 	*vpp = SMBTOV(smp->sm_root);
-	return vget(*vpp, LK_EXCLUSIVE | LK_RETRY);
+	vref(*vpp);
+	error = vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+	if (error)
+		vrele(*vpp);
+	return error;
 }
 
 /*
@@ -441,7 +446,7 @@ loop:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.1 2010/07/03 01:20:01 rmind Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 2011/03/05 20:56:11 rmind Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../fs/puffs
@@ -6,6 +6,7 @@
 LIB=	rumpfs_syspuffs
 
 SRCS=	puffs_msgif.c puffs_node.c puffs_subr.c puffs_vfsops.c puffs_vnops.c
+SRCS+=	puffs_compat.c
 
 SRCS+=	puffs_rumpglue.c
 SRCS+=	component.c

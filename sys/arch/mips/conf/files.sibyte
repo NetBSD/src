@@ -3,12 +3,12 @@
 ###
 
 # System Control/Debug
-device	sbscd {[addr = -1], [intr[2] = {-1,-1}]}
+device	sbscd {[offset = -1], [intr[2] = {-1,-1}]}
 attach	sbscd at zbbus
 file	arch/mips/sibyte/dev/sbscd.c		sbscd
 
 # On-board I/O (slow I/O bridge)
-device	sbobio {[addr = -1], [intr[2] = {-1,-1}]}
+device	sbobio {[offset = -1], [intr[2] = {-1,-1}]}
 attach	sbobio at zbbus
 file	arch/mips/sibyte/dev/sbobio.c		sbobio
 
@@ -22,16 +22,9 @@ device	sbbrz: pcibus
 attach	sbbrz at zbbus
 file	arch/mips/sibyte/pci/sbbrz.c		sbbrz
 file	arch/mips/sibyte/pci/sbbrz_pci.c	sbbrz
+file	arch/mips/sibyte/pci/sbbrz_bus_io.c	sbbrz
+file	arch/mips/sibyte/pci/sbbrz_bus_mem.c	sbbrz
 
-# Instantiated SB-1250 PCI Host bridge
-device	sbpcihb
-attach	sbpcihb at pci
-file	arch/mips/sibyte/pci/sbpcihb.c		sbpcihb
-
-# SB-1250 LDT Host bridge (acts like ppb)
-device	sbldthb: pcibus
-attach	sbldthb at pci
-file	arch/mips/sibyte/pci/sbldthb.c		sbldthb
 
 # sbscd children
 
@@ -74,3 +67,5 @@ device	m41t81rtc
 attach	m41t81rtc at smbus
 
 file	arch/sbmips/sbmips/rtc.c		xirtc | m41t81rtc
+
+file	arch/mips/sibyte/dev/sbbuswatch.c

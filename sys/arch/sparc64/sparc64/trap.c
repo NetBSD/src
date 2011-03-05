@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.160.4.1 2010/05/30 05:17:09 rmind Exp $ */
+/*	$NetBSD: trap.c,v 1.160.4.2 2011/03/05 20:52:09 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160.4.1 2010/05/30 05:17:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160.4.2 2011/03/05 20:52:09 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160.4.1 2010/05/30 05:17:09 rmind Exp $")
 #include <machine/ctlreg.h>
 #include <machine/trap.h>
 #include <machine/instr.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/userret.h>
 
@@ -250,7 +251,8 @@ const char *trap_type[] = {
 	T, T, T,		/* 69..6b -- trap continues */
 	"+fast data access protection",/* 6c */
 	T, T, T,		/* 6d..6f -- trap continues */
-	T, T, T, T, T, T, T, T, /* 70..77 */
+	"+fast ECC error",	/* 70 */
+	T, T, T, T, T, T, T,	/* 71..77 */
 	T, T, T, T, T, T, T, T, /* 78..7f */
 	"spill 0 normal",	/* 80 */
 	T, T, T,		/* 81..83 -- trap continues */
@@ -476,7 +478,7 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 	}
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
@@ -1000,9 +1002,6 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	vaddr_t onfault;
 	u_quad_t sticks;
 	ksiginfo_t ksi;
-#ifdef DEBUG
-	static int lastdouble;
-#endif
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
@@ -1040,7 +1039,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	}
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);
@@ -1051,22 +1050,6 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 	/* Find the faulting va to give to uvm_fault */
 	va = trunc_page(addr);
-
-#ifdef DEBUG
-	if (lastdouble) {
-		printf("cpu%d: stacked data fault @ %lx (pc %lx);",
-		       cpu_number(), addr, pc);
-		lastdouble = 0;
-		if (curproc == NULL)
-			printf("NULL proc\n");
-		else
-			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			       l->l_proc->p_pid, l->l_proc->p_comm,
-				/* XXX */
-			       l->l_sigmask.__bits[0], 
-			       l->l_proc->p_sigctx.ps_sigcatch.__bits[0]);
-	}
-#endif
 
 	/* 
 	 * Now munch on protections.
@@ -1263,9 +1246,6 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	vaddr_t onfault;
 	u_quad_t sticks;
 	ksiginfo_t ksi;
-#ifdef DEBUG
-	static int lastdouble;
-#endif
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
@@ -1305,7 +1285,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	}
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	pcb = lwp_getpcb(l);
 	LWP_CACHE_CREDS(l, l->l_proc);
@@ -1321,22 +1301,6 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 		printf("data_access_error: no fault\n");
 		goto out;	/* No fault. Why were we called? */
 	}
-
-#ifdef DEBUG
-	if (lastdouble) {
-		printf("stacked data error @ %lx (pc %lx); sfsr %lx",
-		       sfva, pc, sfsr);
-		lastdouble = 0;
-		if (curproc == NULL)
-			printf("NULL proc\n");
-		else
-			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			       curproc->p_pid, curproc->p_comm,
-				/* XXX */
-			       curlwp->l_sigmask.__bits[0], 
-			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
-	}
-#endif
 
 	if (tstate & TSTATE_PRIV) {
 		onfault = (vaddr_t)pcb->pcb_onfault;
@@ -1452,7 +1416,7 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	}
 #endif
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
@@ -1539,9 +1503,6 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	vm_prot_t access_type;
 	u_quad_t sticks;
 	ksiginfo_t ksi;
-#ifdef DEBUG
-	static int lastdouble;
-#endif
 	char buf[768];
 	
 #ifdef DEBUG
@@ -1574,7 +1535,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		Debugger();
 	}
 #endif
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
@@ -1608,19 +1569,6 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 	va = trunc_page(pc);
 
-#ifdef DEBUG
-	if (lastdouble) {
-		printf("stacked text error @ pc %lx; sfsr %lx", pc, sfsr);
-		lastdouble = 0;
-		if (curproc == NULL)
-			printf("NULL proc\n");
-		else
-			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			       curproc->p_pid, curproc->p_comm,
-			       curlwp->l_sigmask.__bits[0], 
-			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
-	}
-#endif
 	/* Now munch on protections... */
 
 	access_type = VM_PROT_EXECUTE;

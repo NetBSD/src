@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.7.4.2 2010/07/03 01:19:36 rmind Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.7.4.3 2011/03/05 20:53:40 rmind Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,9 +44,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.7.4.2 2010/07/03 01:19:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.7.4.3 2011/03/05 20:53:40 rmind Exp $");
 
+#ifndef _MODULE
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,10 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.7.4.2 2010/07/03 01:19:36 rmind Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <machine/endian.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -187,6 +188,11 @@ static const u_int8_t cas_promdat[] = {
 	PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
 	PCI_PRODUCT_SUN_CASSINI & 0xff, PCI_PRODUCT_SUN_CASSINI >> 8
 };
+static const u_int8_t cas_promdat_ns[] = {
+	'P', 'C', 'I', 'R',
+	PCI_VENDOR_NS & 0xff, PCI_VENDOR_NS >> 8,
+	PCI_PRODUCT_NS_SATURN & 0xff, PCI_PRODUCT_NS_SATURN >> 8
+};
 
 static const u_int8_t cas_promdat2[] = {
 	0x18, 0x00,			/* structure length */
@@ -227,7 +233,8 @@ cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa,
 		goto fail;
 
 	bus_space_read_region_1(romt, romh, dataoff, buf, sizeof(buf));
-	if (bcmp(buf, cas_promdat, sizeof(cas_promdat)) ||
+	if ((bcmp(buf, cas_promdat, sizeof(cas_promdat)) &&
+	     bcmp(buf, cas_promdat_ns, sizeof(cas_promdat_ns))) ||
 	    bcmp(buf + PROMDATA_DATA2, cas_promdat2, sizeof(cas_promdat2)))
 		goto fail;
 
@@ -335,8 +342,10 @@ cas_attach(device_t parent, device_t self, void *aux)
 	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "mac-address")) != NULL)
 		memcpy(enaddr, prop_data_data_nocopy(data), ETHER_ADDR_LEN);
-	else if (cas_pci_enaddr(sc, pa, enaddr) != 0)
+	else if (cas_pci_enaddr(sc, pa, enaddr) != 0) {
 		aprint_error_dev(sc->sc_dev, "no Ethernet address found\n");
+		memset(enaddr, 0, sizeof(enaddr));
+	}
 
 	sc->sc_burst = 16;	/* XXX */
 
@@ -2057,4 +2066,33 @@ cas_start(struct ifnet *ifp)
 	}
 
 	sc->sc_tx_prod = bix;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_cas, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_cas_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_cas,
+		    cfattach_ioconf_cas, cfdata_ioconf_cas);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_cas,
+		    cfattach_ioconf_cas, cfdata_ioconf_cas);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }

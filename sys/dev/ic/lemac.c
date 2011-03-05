@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.37.4.1 2010/05/30 05:17:23 rmind Exp $ */
+/* $NetBSD: lemac.c,v 1.37.4.2 2011/03/05 20:53:17 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.37.4.1 2010/05/30 05:17:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.37.4.2 2011/03/05 20:53:17 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.37.4.1 2010/05/30 05:17:23 rmind Exp $")
 #if 0
 #include <i386/isa/decether.h>
 #endif
-
-#include <uvm/uvm_extern.h>
 
 #include <net/bpf.h>
 

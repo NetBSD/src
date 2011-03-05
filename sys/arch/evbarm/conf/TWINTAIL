@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.34.2.1 2010/05/30 05:16:42 rmind Exp $
+#	$NetBSD: TWINTAIL,v 1.34.2.2 2011/03/05 20:50:04 rmind Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -140,7 +140,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	KGDB
 #options  	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=370000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -377,7 +377,7 @@ ld* at sdmmc?				# MMC/SD card
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	putter			# for puffs and pud

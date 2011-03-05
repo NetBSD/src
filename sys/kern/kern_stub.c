@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.22.2.2 2010/07/03 01:19:54 rmind Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.22.2.3 2011/03/05 20:55:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.22.2.2 2010/07/03 01:19:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.22.2.3 2011/03/05 20:55:16 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -122,6 +122,8 @@ __weak_alias(ktruser,enosys);
 __weak_alias(ktr_point,nullop);
 #endif	/* KTRACE */
 
+__weak_alias(device_register, voidop);
+__weak_alias(device_register_post_config, voidop);
 __weak_alias(spldebug_start, voidop);
 __weak_alias(spldebug_stop, voidop);
 __weak_alias(machdep_init,nullop);

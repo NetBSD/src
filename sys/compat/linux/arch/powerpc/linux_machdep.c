@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.41 2010/02/02 15:02:07 wiz Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.41.4.1 2011/03/05 20:52:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2010/02/02 15:02:07 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41.4.1 2011/03/05 20:52:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2010/02/02 15:02:07 wiz Exp $
 #include <sys/cpu.h>
 #include <machine/fpu.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/vmparam.h>
 
 /*
@@ -85,11 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2010/02/02 15:02:07 wiz Exp $
 
 /*
  * Set set up registers on exec.
- * XXX not used at the moment since in sys/kern/exec_conf, LINUX_COMPAT
- * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+linux_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	setregs(l, pack, stack);
 }
@@ -142,7 +140,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		    ((char *)l->l_sigstk.ss_sp +
 		    l->l_sigstk.ss_size);
 	} else {
-		fp = tf->fixreg[1];
+		fp = tf->tf_fixreg[1];
 	}
 #ifdef DEBUG_LINUX
 	printf("fp at start of linux_sendsig = %x\n", fp);
@@ -166,24 +164,24 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Save register context.
 	 */
 	for (i = 0; i < 32; i++)
-		linux_regs.lgpr[i] = tf->fixreg[i];
-	linux_regs.lnip = tf->srr0;
-	linux_regs.lmsr = tf->srr1 & PSL_USERSRR1;
-	linux_regs.lorig_gpr3 = tf->fixreg[3]; /* XXX Is that right? */
-	linux_regs.lctr = tf->ctr;
-	linux_regs.llink = tf->lr;
-	linux_regs.lxer = tf->xer;
-	linux_regs.lccr = tf->cr;
+		linux_regs.lgpr[i] = tf->tf_fixreg[i];
+	linux_regs.lnip = tf->tf_srr0;
+	linux_regs.lmsr = tf->tf_srr1 & PSL_USERSRR1;
+	linux_regs.lorig_gpr3 = tf->tf_fixreg[3]; /* XXX Is that right? */
+	linux_regs.lctr = tf->tf_ctr;
+	linux_regs.llink = tf->tf_lr;
+	linux_regs.lxer = tf->tf_xer;
+	linux_regs.lccr = tf->tf_cr;
 	linux_regs.lmq = 0;  			/* Unused, 601 only */
-	linux_regs.ltrap = tf->exc;
-	linux_regs.ldar = tf->dar;
-	linux_regs.ldsisr = tf->dsisr;
+	linux_regs.ltrap = tf->tf_exc;
+	linux_regs.ldar = tf->tf_dar;
+	linux_regs.ldsisr = tf->tf_dsisr;
 	linux_regs.lresult = 0;
 
 	memset(&frame, 0, sizeof(frame));
 	memcpy(&frame.lgp_regs, &linux_regs, sizeof(linux_regs));
 
-	save_fpu_lwp(curlwp, FPU_SAVE);
+	fpu_save_lwp(curlwp, FPU_SAVE);
 	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpreg, sizeof(frame.lfp_regs));
 
 	/*
@@ -234,11 +232,11 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Set the registers according to how the Linux process expects them.
 	 * "Mind the gap" Linux expects a gap here.
 	 */
-	tf->fixreg[1] = fp - LINUX__SIGNAL_FRAMESIZE;
-	tf->lr = (int)catcher;
-	tf->fixreg[3] = (int)native_to_linux_signo[sig];
-	tf->fixreg[4] = fp;
-	tf->srr0 = (int)p->p_sigctx.ps_sigcode;
+	tf->tf_fixreg[1] = fp - LINUX__SIGNAL_FRAMESIZE;
+	tf->tf_lr = (int)catcher;
+	tf->tf_fixreg[3] = (int)native_to_linux_signo[sig];
+	tf->tf_fixreg[4] = fp;
+	tf->tf_srr0 = (int)p->p_sigctx.ps_sigcode;
 
 #ifdef DEBUG_LINUX
 	printf("fp at end of linux_sendsig = %x\n", fp);
@@ -310,18 +308,18 @@ linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *
 		return (EINVAL);
 
 	for (i = 0; i < 32; i++)
-		tf->fixreg[i] = lregs->lgpr[i];
-	tf->lr = lregs->llink;
-	tf->cr = lregs->lccr;
-	tf->xer = lregs->lxer;
-	tf->ctr = lregs->lctr;
-	tf->srr0 = lregs->lnip;
-	tf->srr1 = lregs->lmsr;
+		tf->tf_fixreg[i] = lregs->lgpr[i];
+	tf->tf_lr = lregs->llink;
+	tf->tf_cr = lregs->lccr;
+	tf->tf_xer = lregs->lxer;
+	tf->tf_ctr = lregs->lctr;
+	tf->tf_srr0 = lregs->lnip;
+	tf->tf_srr1 = lregs->lmsr;
 
 	/*
 	 * Make sure the fpu state is discarded
 	 */
-	save_fpu_lwp(curlwp, FPU_DISCARD);
+	fpu_save_lwp(curlwp, FPU_DISCARD);
 
 	memcpy(curpcb->pcb_fpu.fpreg, (void *)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
@@ -400,18 +398,18 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 		return (EINVAL);
 
 	for (i = 0; i < 32; i++)
-		tf->fixreg[i] = lregs->lgpr[i];
-	tf->lr = lregs->llink;
-	tf->cr = lregs->lccr;
-	tf->xer = lregs->lxer;
-	tf->ctr = lregs->lctr;
-	tf->srr0 = lregs->lnip;
-	tf->srr1 = lregs->lmsr;
+		tf->tf_fixreg[i] = lregs->lgpr[i];
+	tf->tf_lr = lregs->llink;
+	tf->tf_cr = lregs->lccr;
+	tf->tf_xer = lregs->lxer;
+	tf->tf_ctr = lregs->lctr;
+	tf->tf_srr0 = lregs->lnip;
+	tf->tf_srr1 = lregs->lmsr;
 
 	/*
 	 * Make sure the fpu state is discarded
 	 */
-	save_fpu_lwp(curlwp, FPU_DISCARD);
+	fpu_save_lwp(curlwp, FPU_DISCARD);
 
 	memcpy(curpcb->pcb_fpu.fpreg, (void *)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
@@ -440,22 +438,6 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 
 	return (EJUSTRETURN);
 }
-
-
-#if 0
-int
-linux_sys_modify_ldt(struct proc *p, void *v, register_t *retval)
-{
-	/*
-	 * This syscall is not implemented in Linux/PowerPC: we should not
-	 * be here
-	 */
-#ifdef DEBUG_LINUX
-	printf("linux_sys_modify_ldt: should not be here.\n");
-#endif
-  return 0;
-}
-#endif
 
 /*
  * major device numbers remapping
@@ -493,40 +475,6 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	SCARG(&bia, com) = com;
 	/* XXX NJWLWP */
 	return sys_ioctl(curlwp, &bia, retval);
-}
-#if 0
-/*
- * Set I/O permissions for a process. Just set the maximum level
- * right away (ignoring the argument), otherwise we would have
- * to rely on I/O permission maps, which are not implemented.
- */
-int
-linux_sys_iopl(struct lwp *l, const void *v, register_t *retval)
-{
-	/*
-	 * This syscall is not implemented in Linux/PowerPC: we should not be here
-	 */
-#ifdef DEBUG_LINUX
-	printf("linux_sys_iopl: should not be here.\n");
-#endif
-	return 0;
-}
-#endif
-
-/*
- * See above. If a root process tries to set access to an I/O port,
- * just let it have the whole range.
- */
-int
-linux_sys_ioperm(struct lwp *l, const struct linux_sys_ioperm_args *uap, register_t *retval)
-{
-	/*
-	 * This syscall is not implemented in Linux/PowerPC: we should not be here
-	 */
-#ifdef DEBUG_LINUX
-	printf("linux_sys_ioperm: should not be here.\n");
-#endif
-	return 0;
 }
 
 /*

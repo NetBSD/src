@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.30 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: asm.h,v 1.30.70.1 2011/03/05 20:49:11 rmind Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -628,11 +628,15 @@ label:	ASCIZ msg;						\
  * WARN_REFERENCES: create a warning if the specified symbol is referenced.
  */
 #ifdef __STDC__
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
 #endif /* __STDC__ */
 
 /*
@@ -642,7 +646,7 @@ label:	ASCIZ msg;						\
 #ifdef _KERNEL
 
 #define	__KERNEL_SECTIONSTRING(_sec, _str)				\
-	.section _sec ; .asciz _str ; .text
+	.pushsection _sec ; .asciz _str ; .popsection
 
 #define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
 #define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)

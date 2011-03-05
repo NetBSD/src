@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21.4.1 2010/05/30 05:17:08 rmind Exp $	*/
+/*	$NetBSD: boot.c,v 1.21.4.2 2011/03/05 20:52:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -55,6 +55,7 @@
 #include <machine/cpu.h>
 #include <machine/promlib.h>
 #include <machine/bootinfo.h>
+#include <sparc/stand/common/isfloppy.h>
 
 #include "boot.h"
 #include "ofdev.h"
@@ -94,6 +95,7 @@ static bool bootinfo_pass_bootdev = false;
 
 int debug  = 0;
 int compatmode = 0;
+extern char twiddle_toggle;
 
 #if 0
 static void
@@ -189,6 +191,7 @@ bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 		kernel[end2 - start2] = '\0';
 	}
 
+	twiddle_toggle = 1;
 	strcpy(options, ap);
 	while (*ap != '\0' && *ap != ' ' && *ap != '\t' && *ap != '\n') {
 		BOOT_FLAG(*ap, v);
@@ -198,6 +201,9 @@ bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 			break;
 		case 'C':
 			compatmode = 1;
+			break;
+		case 'T':
+			twiddle_toggle = 1 - twiddle_toggle;
 			break;
 		default:
 			break;
@@ -350,10 +356,13 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 }
 
 static void
-start_kernel(char *kernel, char *bootline, void *ofw)
+start_kernel(char *kernel, char *bootline, void *ofw, int isfloppy)
 {
 	int fd;
 	u_long marks[MARK_MAX];
+	int flags = LOAD_ALL;
+	if (isfloppy)
+		flags &= ~LOAD_BACKWARDS;
 
 	/*
 	 * First, load headers using default allocator and check whether kernel
@@ -371,7 +380,7 @@ start_kernel(char *kernel, char *bootline, void *ofw)
 		}
 		(void)printf("Loading %s: ", kernel);
 
-		if (fdloadfile(fd, marks, LOAD_ALL) != -1) {
+		if (fdloadfile(fd, marks, flags) != -1) {
 			close(fd);
 			jump_to_kernel(marks, kernel, bootline, ofw);
 		}
@@ -488,7 +497,7 @@ check_boot_config(void)
 void
 main(void *ofw)
 {
-	int boothowto, i = 0;
+	int boothowto, i = 0, isfloppy;
 
 	char kernel[PROM_MAX_PATH];
 	char bootline[PROM_MAX_PATH];
@@ -498,11 +507,11 @@ main(void *ofw)
 	prom_init();
 
 	printf("\r>> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	DPRINTF((">> (%s, %s)\n", bootprog_maker, bootprog_date));
 
 	/* Figure boot arguments */
 	strncpy(bootdev, prom_getbootpath(), sizeof(bootdev) - 1);
 	boothowto = bootoptions(prom_getbootargs(), bootdev, kernel, bootline);
+	isfloppy = bootdev_isfloppy(bootdev);
 
 	for (;; *kernel = '\0') {
 		if (boothowto & RB_ASKNAME) {
@@ -541,7 +550,7 @@ main(void *ofw)
 		}
 
 		check_boot_config();
-		start_kernel(kernel, bootline, ofw);
+		start_kernel(kernel, bootline, ofw, isfloppy);
 
 		/*
 		 * Try next name from kernel name list if not in askname mode,

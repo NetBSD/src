@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.33.4.1 2010/05/30 05:17:15 rmind Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.33.4.2 2011/03/05 20:52:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.33.4.1 2010/05/30 05:17:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.33.4.2 2011/03/05 20:52:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,6 +360,8 @@ netbsd32_getcontext(struct lwp *l, const struct netbsd32_getcontext_args *uap, r
 	} */
 	struct proc *p = l->l_proc;
 	ucontext32_t uc;
+
+	memset(&uc, 0, sizeof(uc));
 
 	mutex_enter(p->p_lock);
 	getucontext32(l, &uc);

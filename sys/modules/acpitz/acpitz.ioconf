@@ -1,0 +1,10 @@
+# $NetBSD: acpitz.ioconf,v 1.1.4.2 2011/03/05 20:55:36 rmind Exp $
+
+ioconf acpitz
+
+include "conf/files"
+include "dev/acpi/files.acpi"
+
+pseudo-root acpi*
+
+acpitz* at acpi?

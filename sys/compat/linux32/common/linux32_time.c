@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.29.4.1 2010/05/30 05:17:15 rmind Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.29.4.2 2011/03/05 20:52:53 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.29.4.1 2010/05/30 05:17:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.29.4.2 2011/03/05 20:52:53 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,10 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.29.4.1 2010/05/30 05:17:15 rmind 
 
 extern struct timezone linux_sys_tz;
 
-static __inline void
-native_to_linux32_timespec(struct linux32_timespec *, struct timespec *);
-static __inline void
-linux32_to_native_timespec(struct timespec *, struct linux32_timespec *);
+void native_to_linux32_timespec(struct linux32_timespec *, struct timespec *);
+void linux32_to_native_timespec(struct timespec *, struct linux32_timespec *);
 
 int
 linux32_sys_gettimeofday(struct lwp *l, const struct linux32_sys_gettimeofday_args *uap, register_t *retval)
@@ -235,14 +233,14 @@ linux32_sys_utime(struct lwp *l, const struct linux32_sys_utime_args *uap, regis
 			    tvp, UIO_SYSSPACE);
 }
 
-static __inline void
+void
 native_to_linux32_timespec(struct linux32_timespec *ltp, struct timespec *ntp)
 {
 	ltp->tv_sec = ntp->tv_sec;
 	ltp->tv_nsec = ntp->tv_nsec;
 }
 
-static __inline void
+void
 linux32_to_native_timespec(struct timespec *ntp, struct linux32_timespec *ltp)
 {
 	ntp->tv_sec = ltp->tv_sec;
@@ -362,11 +360,14 @@ linux32_sys_clock_nanosleep(struct lwp *l,
 	struct linux32_timespec lrqts, lrmts;
 	struct timespec rqts, rmts;
 	int error, error1;
+	clockid_t id;
 
 	if (SCARG(uap, flags) != 0)
 		return EINVAL;          /* XXX deal with TIMER_ABSTIME */
-	if (SCARG(uap, which) != LINUX_CLOCK_REALTIME)
-		return EINVAL;
+
+	error = linux_to_native_clockid(&id, SCARG(uap, which));
+	if (error != 0)
+		return error;
 
 	error = copyin(SCARG_P32(uap, rqtp), &lrqts, sizeof lrqts);
 	if (error != 0)

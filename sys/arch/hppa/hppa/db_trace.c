@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.8.2.1 2010/07/03 01:19:19 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8.2.2 2011/03/05 20:50:36 rmind Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8.2.1 2010/07/03 01:19:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8.2.2 2011/03/05 20:50:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			tf = (struct trapframe *)((char *)scargs - sizeof(*tf));
 
 			if (tf->tf_flags & TFF_SYS)
-				pr("-- syscall #%d(%x, %x, %x, %x, ...)\n",
+				pr("-- syscall #%d(%x, %x, %x, %x, ...) (%p)\n",
 				    tf->tf_t1, scargs[1], scargs[2],
-				    scargs[3], scargs[4]);
+				    scargs[3], scargs[4], tf);
 			else
 				pr("-- trap #%d (%p) %s\n", tf->tf_flags & 0x3f,
 				    tf, (tf->tf_flags & T_USER)? " from user" :

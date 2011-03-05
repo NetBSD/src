@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.12 2010/01/19 15:28:52 tsutsui Exp $	*/
+/*	$NetBSD: wd.c,v 1.12.4.1 2011/03/05 20:49:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stdint.h>
 

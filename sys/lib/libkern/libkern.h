@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.93.4.2 2010/05/30 05:17:59 rmind Exp $	*/
+/*	$NetBSD: libkern.h,v 1.93.4.3 2011/03/05 20:55:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -192,9 +192,7 @@ tolower(int ch)
 #endif
 #endif
 
-#define	CTASSERT(x)		_CTASSERT(x, __LINE__)
-#define	_CTASSERT(x, y)		__CTASSERT(x, y)
-#define	__CTASSERT(x, y)	typedef char __ctassert ## y[(x) ? 1 : -1];
+#define	CTASSERT(x)		__CTASSERT(x)
 
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
@@ -222,11 +220,17 @@ tolower(int ch)
 
 #ifndef DEBUG
 #ifdef lint
-#define	KDASSERT(e)	/* NOTHING */
+#define	KDASSERTMSG(e,msg)	/* NOTHING */
+#define	KDASSERT(e)		/* NOTHING */
 #else /* lint */
-#define	KDASSERT(e)	((void)0)
+#define	KDASSERTMSG(e,msg)	((void)0)
+#define	KDASSERT(e)		((void)0)
 #endif /* lint */
 #else
+#define	KDASSERTMSG(e, msg) do {	\
+	if (__predict_false(!(e)))	\
+		panic msg;		\
+	} while (/*CONSTCOND*/ 0)
 #ifdef __STDC__
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    kern_assert("debugging ", __FILE__, __LINE__, #e))

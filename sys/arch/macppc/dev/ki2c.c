@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.15 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.15.4.1 2011/03/05 20:50:58 rmind Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -33,7 +33,6 @@
 #include <sys/mutex.h>
 
 #include <dev/ofw/openfirm.h>
-#include <uvm/uvm_extern.h>
 #include <machine/autoconf.h>
 
 #include <macppc/dev/ki2cvar.h>

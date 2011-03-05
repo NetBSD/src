@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.96.2.1 2010/05/30 05:17:30 rmind Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.96.2.2 2011/03/05 20:53:32 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.95 2010/05/02 12:38:06 pgoyette Exp
+ *	NetBSD: miidevs,v 1.99 2011/01/26 18:39:04 bouyer Exp
  */
 
 /*-
@@ -75,6 +75,7 @@
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
+#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
 #define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
@@ -132,6 +133,8 @@
 #define	MII_STR_ATTANSIC_L1	"L1 10/100/1000 PHY"
 #define	MII_MODEL_ATTANSIC_L2	0x0002
 #define	MII_STR_ATTANSIC_L2	"L2 10/100 PHY"
+#define	MII_MODEL_ATTANSIC_AR8021	0x0004
+#define	MII_STR_ATTANSIC_AR8021	"Atheros AR8021 10/100/1000 PHY"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
@@ -228,7 +231,7 @@
 #define	MII_MODEL_BROADCOM2_BCM5761	0x003d
 #define	MII_STR_BROADCOM2_BCM5761	"BCM5761 10/100/1000baseT PHY"
 #define	MII_MODEL_BROADCOM2_BCM5709S	0x003f
-#define	MII_STR_BROADCOM2_BCM5709S	"BCM5761 10/100/1000baseT PHY"
+#define	MII_STR_BROADCOM2_BCM5709S	"BCM5709S 1000/2500baseSX PHY"
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
 #define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
  
@@ -286,6 +289,8 @@
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82566	0x0039
 #define	MII_STR_yyINTEL_I82566	"i82566 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_I82577	0x0005
+#define	MII_STR_INTEL_I82577	"i82577 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
 
@@ -327,6 +332,8 @@
 #define	MII_STR_xxMARVELL_E1149	"Marvell 88E1149 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1111	0x000c
 #define	MII_STR_xxMARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1145	0x000d
+#define	MII_STR_xxMARVELL_E1145	"Marvell 88E1145 Quad Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116	0x0021
 #define	MII_STR_xxMARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116R	0x0024
@@ -368,6 +375,9 @@
 #define	MII_MODEL_xxQUALSEMI_QS6612	0x0000
 #define	MII_STR_xxQUALSEMI_QS6612	"QS6612 10/100 media interface"
 
+/* RDC Semiconductor PHYs */
+#define	MII_MODEL_RDC_R6040	0x0003
+#define	MII_STR_RDC_R6040	"R6040 10/100 media interface"
 /* RealTek PHYs */
 #define	MII_MODEL_yyREALTEK_RTL8201L	0x0020
 #define	MII_STR_yyREALTEK_RTL8201L	"RTL8201L 10/100 media interface"

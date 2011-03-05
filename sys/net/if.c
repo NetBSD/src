@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.242.4.1 2010/07/03 01:19:59 rmind Exp $	*/
+/*	$NetBSD: if.c,v 1.242.4.2 2011/03/05 20:55:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.242.4.1 2010/07/03 01:19:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.242.4.2 2011/03/05 20:55:51 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -981,7 +981,7 @@ if_clone_lookup(const char *name, int *unitp)
 
 	unit = 0;
 	while (cp - name < IFNAMSIZ && *cp) {
-		if (*cp < '0' || *cp > '9' || unit > INT_MAX / 10) {
+		if (*cp < '0' || *cp > '9' || unit >= INT_MAX / 10) {
 			/* Bogus unit number. */
 			return NULL;
 		}
@@ -1477,6 +1477,13 @@ ifunit(const char *name)
 	return NULL;
 }
 
+ifnet_t *
+if_byindex(u_int idx)
+{
+
+	return (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
+}
+
 /* common */
 int
 ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
@@ -1688,8 +1695,6 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
-	struct ifcapreq *ifcr;
-	struct ifdatareq *ifdr;
 	int error = 0;
 #if defined(COMPAT_OSOCK) || defined(COMPAT_OIFREQ)
 	u_long ocmd = cmd;
@@ -1726,8 +1731,6 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	} else
 #endif
 		ifr = data;
-	ifcr = data;
-	ifdr = data;
 
 	ifp = ifunit(ifr->ifr_name);
 
@@ -1779,6 +1782,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCS80211POWER:
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
+	case SIOCSLINKSTR:
 		if (l != NULL) {
 			error = kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
@@ -1817,7 +1821,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 #ifdef COMPAT_OIFREQ
 	if (cmd != ocmd)
-		ifreqn2o(ifr, oifr);
+		ifreqn2o(oifr, ifr);
 #endif
 
 	return error;
@@ -1916,19 +1920,33 @@ ifconf(u_long cmd, void *data)
 }
 
 int
-ifreq_setaddr(const u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
+ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 {
 	uint8_t len;
-	u_long ncmd;
-
-	if ((ncmd = compat_cvtcmd(cmd)) != cmd)
-		len = sizeof(ifr->ifr_addr);
-	else
+#ifdef COMPAT_OIFREQ
+	struct ifreq ifrb;
+	struct oifreq *oifr = NULL;
+	u_long ocmd = cmd;
+	cmd = compat_cvtcmd(cmd);
+	if (cmd != ocmd) {
+		oifr = (struct oifreq *)(void *)ifr;
+		ifr = &ifrb;
+		ifreqo2n(oifr, ifr);
+		len = sizeof(oifr->ifr_addr);
+	} else
+#endif
 		len = sizeof(ifr->ifr_ifru.ifru_space);
+
 	if (len < sa->sa_len)
 		return EFBIG;
+
 	memset(&ifr->ifr_addr, 0, len);
 	sockaddr_copy(&ifr->ifr_addr, len, sa);
+
+#ifdef COMPAT_OIFREQ
+	if (cmd != ocmd)
+		ifreqn2o(oifr, ifr);
+#endif
 	return 0;
 }
 

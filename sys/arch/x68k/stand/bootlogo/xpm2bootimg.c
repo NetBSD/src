@@ -1,9 +1,9 @@
-/*	$NetBSD: xpm2bootimg.c,v 1.4 2009/03/18 10:22:38 cegger Exp $	*/
+/*	$NetBSD: xpm2bootimg.c,v 1.4.4.1 2011/03/05 20:52:24 rmind Exp $	*/
 
 /*
  *	convert XPM format image to boot title format
  *
- *	written by Yasha (ITOH Yasufumi), public domain
+ *	written by ITOH Yasufumi, public domain
  */
 
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: imx31reg.h,v 1.3 2008/04/28 20:23:14 martin Exp $ */
+/* $NetBSD: imx31reg.h,v 1.3.22.1 2011/03/05 20:49:34 rmind Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,21 +56,19 @@
 #define	GPIO1_BASE	0x53fcc000
 #define	GPIO2_BASE	0x53fd0000
 #define	GPIO3_BASE	0x53fa4000
+/* register definitions in imxgpiore.h */
 
-#define	GPIO_SIZE	0x0100	/* Size of GPIO registers */
+#define	GPIO_NPINS		32
+#define	GPIO_NGROUPS		3
 
-#define	GPIO_DR		0x0000	/* GPIO Data (RW) */
-#define	GPIO_DIR	0x0004	/* GPIO Direction (RW), 1=Output */
-#define	GPIO_PSR	0x0008	/* GPIO Pad Status (R) */
-#define	GPIO_ICR1	0x000c	/* GPIO Interrupt Configuration 1 (RW) */
-#define	GPIO_ICR2	0x0010	/* GPIO Interrupt Configuration 2 (RW) */
-#define	GPIO_IMR	0x0014	/* GPIO Interrupt Mask (RW) */
-#define	GPIO_ISR	0x0018	/* GPIO Interrupt Status (RW, W1C) */
+#define	GPIO_NO_SCLK0		GPIO_NO(3, 2)
 
-#define	GPIO_ICR_LEVEL_LOW	0
-#define	GPIO_ICR_LEVEL_HIGH	1
-#define	GPIO_ICR_EDGE_RISING	2
-#define	GPIO_ICR_EDGE_FALLING	3
+
+/* EPIT */
+
+#define	EPIT1_BASE	0x53f94000
+#define	EPIT2_BASE	0x53f98000
+
 
 #define	INTC_BASE		0x68000000
 #define	INTC_SIZE		0x0400

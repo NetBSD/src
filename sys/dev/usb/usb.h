@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.84.2.2 2010/07/03 01:19:42 rmind Exp $	*/
+/*	$NetBSD: usb.h,v 1.84.2.3 2011/03/05 20:54:16 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -93,10 +93,6 @@ MALLOC_DECLARE(M_USBHC);
 #else
 #define Static static
 #endif
-
-#if defined(_KERNEL)
-#include <dev/usb/usb_port.h>
-#endif /* _KERNEL */
 
 #define USB_STACK_VERSION 2
 
@@ -199,6 +195,7 @@ typedef struct {
 #define  UDESC_INTERFACE_POWER	0x08
 #define  UDESC_OTG		0x09
 #define  UDESC_DEBUG		0x0a
+#define  UDESC_INTERFACE_ASSOC	0x0b
 #define  UDESC_CS_DEVICE	0x21	/* class specific */
 #define  UDESC_CS_CONFIG	0x22
 #define  UDESC_CS_STRING	0x23
@@ -276,6 +273,18 @@ typedef struct {
 	uByte		iInterface;
 } UPACKED usb_interface_descriptor_t;
 #define USB_INTERFACE_DESCRIPTOR_SIZE 9
+
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bFirstInterface;
+	uByte		bInterfaceCount;
+	uByte		bFunctionClass;
+	uByte		bFunctionSubClass;
+	uByte		bFunctionProtocol;
+	uByte		iFunction;
+} UPACKED usb_interface_assoc_descriptor_t;
+#define USB_INTERFACE_ASSOC_DESCRIPTOR_SIZE 8
 
 typedef struct {
 	uByte		bLength;
@@ -427,6 +436,7 @@ typedef struct {
 #define UPS_OVERCURRENT_INDICATOR	0x0008
 #define UPS_RESET			0x0010
 #define UPS_PORT_POWER			0x0100
+#define UPS_FULL_SPEED			0x0000	/* for completeness */
 #define UPS_LOW_SPEED			0x0200
 #define UPS_HIGH_SPEED			0x0400
 #define UPS_PORT_TEST			0x0800
@@ -479,6 +489,7 @@ typedef struct {
 #define UICLASS_HID		0x03
 #define  UISUBCLASS_BOOT	1
 #define  UIPROTO_BOOT_KEYBOARD	1
+#define  UIPROTO_MOUSE		2
 
 #define UICLASS_PHYSICAL	0x05
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2009/03/15 14:21:48 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.4.1 2011/03/05 20:49:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2009/03/15 14:21:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.4.1 2011/03/05 20:49:14 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2009/03/15 14:21:48 cegger Exp $")
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <machine/pte.h>
 #include <machine/cpufunc.h>

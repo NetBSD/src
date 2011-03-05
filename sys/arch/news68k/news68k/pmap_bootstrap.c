@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.31.4.1 2010/07/03 01:19:23 rmind Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.31.4.2 2011/03/05 20:51:23 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,17 +38,17 @@
  *	news68k/pmap_bootstrap.c - from hp300 and mvme68k
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.31.4.2 2011/03/05 20:51:23 rmind Exp $");
+
 #include "opt_m68k_arch.h"
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.31.4.1 2010/07/03 01:19:23 rmind Exp $");
-
 #include <sys/param.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
-
-#include <uvm/uvm_extern.h>
+#include <machine/vmparam.h>
 
 #define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
 
@@ -58,11 +58,6 @@ extern char *cache_ctl, *cache_clr;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
-#if 0
-extern int pmap_aliasmask;
-#endif
-
-void pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -75,6 +70,8 @@ void pmap_bootstrap(paddr_t, paddr_t);
 void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
+
+void pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -90,7 +87,7 @@ void *msgbufaddr;
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, lwp0upa;
+	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
@@ -102,7 +99,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Calculate important physical addresses:
 	 *
-	 *	lwp0upa		lwp 0 u-area		UPAGES pages
+	 *	lwp0upa		lwp0 u-area		UPAGES pages
 	 *
 	 *	kstpa		kernel segment table	1 page (!040)
 	 *						N pages (040)
@@ -112,7 +109,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *	kptpa		statically allocated
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
-	 * [ Sysptsize is the number of pages of PT, IIOMAPSIZE and
+	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE and
 	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
@@ -134,10 +131,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	if (RELOC(mmutype, int) == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
-		kstsize = 1;
-#else
-	kstsize = 1;
 #endif
+		kstsize = 1;
 	kstpa = nextpa;
 	nextpa += kstsize * PAGE_SIZE;
 	kptmpa = nextpa;
@@ -150,10 +145,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Clear all PTEs to zero
 	 */
-#if 1
 	for (pte = (pt_entry_t *)kstpa; pte < (pt_entry_t *)nextpa; pte++)
 		*pte = 0;
-#endif
 
 	/*
 	 * Initialize segment table and kernel page table map.
@@ -315,9 +308,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 */
 		ste = (st_entry_t *)kstpa;
 		ste = &ste[SYSMAP_VA >> SEGSHIFT];
-		*ste = kptmpa | SG_RW | SG_V;
 		pte = (pt_entry_t *)kptmpa;
 		pte = &pte[SYSMAP_VA >> SEGSHIFT];
+		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	}
 
@@ -329,7 +322,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	epte = &pte[nptpages * NPTEPG];
 	while (pte < epte)
 		*pte++ = PG_NV;
-
 	/*
 	 * Validate PTEs for kernel text (RO).
 	 */
@@ -343,11 +335,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (nextpa - firstpa bytes), and pages for lwp0
+	 * by us so far (kstpa - firstpa bytes), and pages for lwp0
 	 * u-area and page table allocated below (RW).
 	 */
 	epte = (pt_entry_t *)kptpa;
-	epte = &epte[m68k_btop(nextpa - firstpa)];
+	epte = &epte[m68k_btop(kstpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -360,6 +352,25 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
 	}
+	/*
+	 * Map the kernel segment table cache invalidated for 68040/68060.
+	 * (for the 68040 not strictly necessary, but recommended by Motorola;
+	 *  for the 68060 mandatory)
+	 */
+	epte = (pt_entry_t *)kptpa;
+	epte = &epte[m68k_btop(nextpa - firstpa)];
+	protopte = (protopte & ~PG_PROT) | PG_RW;
+#ifdef M68040
+	if (RELOC(mmutype, int) == MMU_68040) {
+		protopte &= ~PG_CCB;
+		protopte |= PG_CIN;
+	}
+#endif
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += PAGE_SIZE;
+	}
+
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
 	 */
@@ -415,21 +426,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	RELOC(avail_start, paddr_t) = nextpa;
 	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
-	    (m68k_round_page(MSGBUFSIZE));
+	    m68k_round_page(MSGBUFSIZE);
 	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
 
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
-#if 0
-	/*
-	 * Determine VA aliasing distance if any
-	 *
-	 * XXX Are there any models which have VAC?
-	 */
-	if (RELOC(ectype, int) == EC_VIRT) {
-		RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
-	}
-#endif
 #ifdef news1700
 	if (RELOC(systype, int) == NEWS1700) {
 		RELOC(cache_ctl, uint8_t *) = 0xe1300000 - INTIOBASE1700 +

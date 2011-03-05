@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 2010/03/02 20:40:15 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.1.4.1 2011/03/05 20:50:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1 2010/03/02 20:40:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1.4.1 2011/03/05 20:50:36 rmind Exp $");
 
 #include <sys/param.h>
+#include <sys/lwp.h>
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_command.h>
@@ -120,7 +122,9 @@ db_dump_trap(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("rctr:   %08x\n", tf->tf_rctr);	/* cr0 */
 	db_printf("ccr:    %08x\n", tf->tf_ccr);	/* cr10 */
 	db_printf("eirr:   %08x\n", tf->tf_eirr);	/* cr23 - DDB */
+	db_printf("cr24:   %08x\n", tf->tf_cr24);	/* cr24 - DDB */
 	db_printf("vtop:   %08x\n", tf->tf_vtop);	/* cr25 - DDB */
+	db_printf("cr27:   %08x\n", tf->tf_cr27);	/*      - DDB */
 	db_printf("cr28:   %08x\n", tf->tf_cr28);	/*      - DDB */
 	db_printf("cr30:   %08x\n", tf->tf_cr30);	/* uaddr */
 }

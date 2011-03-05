@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.7.4.1 2010/05/30 05:16:35 rmind Exp $ */
+/* $NetBSD: tsvar.h,v 1.7.4.2 2011/03/05 20:49:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -77,3 +77,9 @@ void	tsp_bus_io_init(bus_space_tag_t, void *);
 void	tsp_bus_mem_init(bus_space_tag_t, void *);
 
 void	tsp_bus_mem_init2(bus_space_tag_t, void *);
+
+void	tsp_print_error(unsigned int, unsigned long);
+void	tsc_print_misc(unsigned int, unsigned long);
+void	tsc_print_dir(unsigned int, unsigned long);
+
+#define IPRINTF(i, f, ...)	printf("%*s" f, i * 4, "", ##__VA_ARGS__)

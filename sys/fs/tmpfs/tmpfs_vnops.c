@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.66.4.3 2010/07/03 01:19:51 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.66.4.4 2011/03/05 20:55:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.66.4.3 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.66.4.4 2011/03/05 20:55:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -106,6 +106,9 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc,		tmpfs_bwrite },
 	{ &vop_getpages_desc,		tmpfs_getpages },
 	{ &vop_putpages_desc,		tmpfs_putpages },
+#if TMPFS_WHITEOUT
+	{ &vop_whiteout_desc,		tmpfs_whiteout },
+#endif
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc tmpfs_vnodeop_opv_desc =
@@ -179,6 +182,11 @@ tmpfs_lookup(void *v)
 		goto done;
 
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
+		if ((cnp->cn_flags & ISLASTCN) &&
+		    (cnp->cn_nameiop == RENAME)) {
+			error = EISDIR;
+			goto out;
+		}
 		vref(dvp);
 		*vpp = dvp;
 		error = 0;
@@ -186,7 +194,7 @@ tmpfs_lookup(void *v)
 	}
 
 	de = tmpfs_dir_lookup(dnode, cnp);
-	if (de == NULL) {
+	if (de == NULL || de->td_node == TMPFS_NODE_WHITEOUT) {
 		/*
 		 * The entry was not found in the directory.  This is valid
 		 * if we are creating or renaming an entry and are working
@@ -198,11 +206,13 @@ tmpfs_lookup(void *v)
 			if (error) {
 				goto out;
 			}
-			/* Keep the component name for future uses. */
-			cnp->cn_flags |= SAVENAME;
 			error = EJUSTRETURN;
 		} else {
 			error = ENOENT;
+		}
+		if (de) {
+			KASSERT(de->td_node == TMPFS_NODE_WHITEOUT);
+			cnp->cn_flags |= ISWHITEOUT;
 		}
 	} else {
 		struct tmpfs_node *tnode = de->td_node;
@@ -247,7 +257,6 @@ tmpfs_lookup(void *v)
 			if (error) {
 				goto out;
 			}
-			cnp->cn_flags |= SAVENAME;
 		}
 		/* Allocate a new vnode on the matching entry. */
 		error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
@@ -265,6 +274,7 @@ done:
 out:
 	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
 	KASSERT(VOP_ISLOCKED(dvp));
+
 	return error;
 }
 
@@ -723,10 +733,6 @@ out:
 		vrele(dvp);
 	else
 		vput(dvp);
-	if (cnp->cn_flags & HASBUF) {
-		PNBUF_PUT(cnp->cn_pnbuf);
-		cnp->cn_flags &= ~HASBUF;
-	}
 
 	return error;
 }
@@ -746,7 +752,6 @@ tmpfs_link(void *v)
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(cnp->cn_flags & HASBUF);
 	KASSERT(dvp != vp); /* XXX When can this be false? */
 
 	dnode = VP_TO_TMPFS_DIR(dvp);
@@ -801,7 +806,6 @@ tmpfs_link(void *v)
 
 out:
 	VOP_UNLOCK(vp);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 
 	return error;
@@ -841,8 +845,6 @@ tmpfs_rename(void *v)
 
 	KASSERT(VOP_ISLOCKED(tdvp));
 	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
-	KASSERT(fcnp->cn_flags & HASBUF);
-	KASSERT(tcnp->cn_flags & HASBUF);
 
 	newname = NULL;
 	namelen = 0;
@@ -1116,7 +1118,6 @@ tmpfs_rmdir(void *v)
 	/* Release the nodes. */
 	vput(dvp);
 	vput(vp);
-	PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }
@@ -1517,3 +1518,40 @@ tmpfs_putpages(void *v)
 
 	return error;
 }
+
+/* --------------------------------------------------------------------- */
+
+#ifdef TMPFS_WHITEOUT
+int
+tmpfs_whiteout(void *v)
+{
+	struct vnode *dvp = ((struct vop_whiteout_args *)v)->a_dvp;
+	struct componentname *cnp = ((struct vop_whiteout_args *)v)->a_cnp;
+	int flags = ((struct vop_whiteout_args *)v)->a_flags;
+	struct tmpfs_mount *tmp = VFS_TO_TMPFS(dvp->v_mount);
+	struct tmpfs_dirent *de;
+	int error;
+
+	switch (flags) {
+	case LOOKUP:
+		break;
+	case CREATE:
+		error = tmpfs_alloc_dirent(tmp, TMPFS_NODE_WHITEOUT,
+		    cnp->cn_nameptr, cnp->cn_namelen, &de);
+		if (error)
+			return error;
+		tmpfs_dir_attach(dvp, de);
+		break;
+	case DELETE:
+		cnp->cn_flags &= ~DOWHITEOUT; /* when in doubt, cargo cult */
+		de = tmpfs_dir_lookup(VP_TO_TMPFS_DIR(dvp), cnp);
+		if (de == NULL)
+			return ENOENT;
+		tmpfs_dir_detach(dvp, de);
+		tmpfs_free_dirent(tmp, de, true);
+		break;
+	}
+
+	return 0;
+}
+#endif

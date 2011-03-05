@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.19 2010/02/10 20:32:34 skrll Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.19.2.1 2011/03/05 20:50:27 rmind Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.19 2010/02/10 20:32:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.19.2.1 2011/03/05 20:50:27 rmind Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -709,6 +709,6 @@ mgattach(device_t parent, device_t self, void *aux)
 #undef	R
 
 	/* attach interrupt */
-	sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_NONE, mg_intr, sc,
-	    &int_reg_cpu, ca->ca_irq);
+	sc->sc_ih = hp700_intr_establish(IPL_NONE, mg_intr, sc, &ir_cpu,
+	    ca->ca_irq);
 }

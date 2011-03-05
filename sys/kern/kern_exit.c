@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.227.2.2 2010/07/03 01:19:53 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.227.2.3 2011/03/05 20:55:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.227.2.2 2010/07/03 01:19:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.227.2.3 2011/03/05 20:55:14 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -244,7 +244,9 @@ exit1(struct lwp *l, int rv)
 		lwp_lock(l);
 		p->p_nrlwps--;
 		l->l_stat = LSSTOP;
+		lwp_unlock(l);
 		mutex_exit(p->p_lock);
+		lwp_lock(l);
 		mi_switch(l);
 		KERNEL_LOCK(l->l_biglocks, l);
 		mutex_enter(p->p_lock);
@@ -339,6 +341,7 @@ exit1(struct lwp *l, int rv)
 	 */
 	mutex_enter(proc_lock);
 	if (p->p_lflag & PL_PPWAIT) {
+		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 	}
@@ -932,7 +935,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	/*
 	 * Let pid be reallocated.
 	 */
-	proc_free_pid(p);
+	proc_free_pid(p->p_pid);
 
 	/*
 	 * Unlink process from its process group.

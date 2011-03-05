@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.13 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.13.4.1 2011/03/05 20:50:29 rmind Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -33,14 +33,23 @@
 #include <machine/bus.h>
 #include <machine/pdc.h>
 
+/* 16 should be enough for anyone */
+#define	HP700_MAXIOADDRS	16
+
 struct confargs {
-	struct iodc_data ca_type PDC_ALIGNMENT;	/* iodc-specific type descrition */
+	struct iodc_data ca_type;	/* iodc-specific type descrition */
 	struct device_path ca_dp;	/* device_path as found by pdc_scan */
-	struct pdc_iodc_read *ca_pdc_iodc_read;
+	union {
+		struct pdc_iodc_read uca_pir;
+		struct pdc_chassis_lcd uca_pcl;
+	} ca_u;
+#define	ca_pir ca_u.uca_pir
+#define	ca_pcl ca_u.uca_pcl
+
 	struct {
 		hppa_hpa_t addr;
 		u_int   size;
-	}		ca_addrs[16];	/* 16 is ought to be enough */
+	}		ca_addrs[HP700_MAXIOADDRS];
 	const char	*ca_name;	/* device name/description */
 	bus_space_tag_t	ca_iot;		/* io tag */
 	int		ca_mod;		/* module number on the bus */
@@ -49,16 +58,16 @@ struct confargs {
 	bus_dma_tag_t	ca_dmatag;	/* DMA tag */
 	int		ca_irq;		/* module IRQ */
 	int		ca_naddrs;	/* number of valid addr ents */
-	hppa_hpa_t	ca_hpabase;	/* HPA base to use or 0 for PDC */
+	hppa_hpa_t	ca_hpabase;	/* HPA base to use */
 	int		ca_nmodules;	/* check for modules 0 to nmodules - 1 */
 };
 
 #define	HP700CF_IRQ_UNDEF	(-1)
 #define	hp700cf_irq	cf_loc[GEDOENSCF_IRQ]
 
-/* this is used for hppa_knownmodules table
- * describing known to this port modules,
- * system boards, cpus, fpus and busses
+/*
+ * This is used for hppa_knownmodules table describing known to this port
+ * modules, system boards, cpus, fpus and busses.
  */
 struct hppa_mod_info {
 	int	mi_type;
@@ -73,12 +82,13 @@ extern void (*cold_hook)(int);
 
 const char *hppa_mod_info(int, int);
 
-void	pdc_scanbus(device_t, struct confargs *,
-    void (*)(device_t, struct confargs *));
+void	hppa_modules_scan(void);
+void	hppa_modules_done(void);
+
+void pdc_scanbus(device_t, struct confargs *,
+    device_t (*)(device_t, struct confargs *));
 
 int	mbprint(void *, const char *);
-int	mbsubmatch(device_t, struct cfdata *,
-			const int *, void *);
-int	clock_intr(void *);
+int	mbsubmatch(device_t, struct cfdata *, const int *, void *);
 
 void	dumpconf(void);

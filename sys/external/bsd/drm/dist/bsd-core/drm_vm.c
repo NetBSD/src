@@ -45,6 +45,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 #elif   defined(__NetBSD__)
 	paddr_t phys;
 	unsigned long map_offs;
+	int flags = 0;
 #endif
 
 #if defined(__FreeBSD__)
@@ -135,8 +136,11 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	case _DRM_REGISTERS:
 	case _DRM_AGP:
 #if	defined(__NetBSD__)
+		flags = BUS_SPACE_MAP_LINEAR;
+		if (type == _DRM_FRAME_BUFFER || type == _DRM_AGP)
+			flags |= BUS_SPACE_MAP_PREFETCHABLE;
 		phys = bus_space_mmap(dev->pa.pa_memt, map->offset,
-				offset - map->offset, prot, BUS_SPACE_MAP_LINEAR);
+				offset - map->offset, prot, flags);
 		if (phys == -1) {
 			DRM_ERROR("bus_space_mmap for %" PRIx64 " failed\n", offset);
 			return -1;	

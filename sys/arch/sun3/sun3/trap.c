@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.137.4.1 2010/05/30 05:17:10 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.137.4.2 2011/03/05 20:52:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137.4.1 2010/05/30 05:17:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137.4.2 2011/03/05 20:52:13 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137.4.1 2010/05/30 05:17:10 rmind Exp $")
 
 #include <machine/cpu.h>
 #include <machine/endian.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/reg.h>
@@ -261,7 +262,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 	u_quad_t sticks;
 	void *onfault;
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);
@@ -571,6 +572,9 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 
 			if ((type & T_USER) != 0)
 				l->l_pflag &= ~LP_SA_PAGEFAULT;
+			else if (ucas_ras_check(tf)) {
+				return;
+			}
 			goto finish;
 		}
 		if (rv == EACCES) {

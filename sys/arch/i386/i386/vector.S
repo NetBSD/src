@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.53.2.2 2010/04/26 17:06:21 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.53.2.3 2011/03/05 20:50:41 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.53.2.2 2010/04/26 17:06:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.53.2.3 2011/03/05 20:50:41 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -109,8 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.53.2.2 2010/04/26 17:06:21 rmind Exp $"
  * segment registers.
  *
  */
-
-#define MY_COUNT _C_LABEL(uvmexp)
 
 /*
  * Store address of TSS in %eax, given a selector in %eax.
@@ -343,22 +341,22 @@ IDTVEC_END(intr_lapic_ltimer)
  */
 
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_/**/name/**/num)						;\
+IDTVEC(recurse_ ## name ## num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
 	subl	$4,%esp							;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-IDTVEC_END(recurse_/**/name/**/num)					;\
-IDTVEC(resume_/**/name/**/num)						\
+IDTVEC_END(recurse_ ## name ## num)					;\
+IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	movl	%ebx,%esi						;\
 	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
 	movl	IS_MAXLEVEL(%ebp),%ebx					;\
 	jmp	1f							;\
-IDTVEC_END(resume_/**/name/**/num)					;\
-IDTVEC(intr_/**/name/**/num)						;\
+IDTVEC_END(resume_ ## name ## num)					;\
+IDTVEC(intr_ ## name ## num)						;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
@@ -371,7 +369,8 @@ IDTVEC(intr_/**/name/**/num)						;\
 	movl	CPUVAR(ILEVEL),%esi					;\
 	cmpl	%ebx,%esi						;\
 	jae	10f			/* currently masked; hold it */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	addl	$1,CPUVAR(NINTR)	/* statistical info */		;\
+	adcl	$0,CPUVAR(NINTR)+4					;\
 	addl	$1,IS_EVCNTLO(%ebp)	/* inc event counter */		;\
 	adcl	$0,IS_EVCNTHI(%ebp)					;\
 1:									\
@@ -413,7 +412,7 @@ IDTVEC(intr_/**/name/**/num)						;\
 	late_ack(num)							;\
 	addl	$4,%esp							;\
 	INTRFASTEXIT							;\
-IDTVEC_END(intr_/**/name/**/num)
+IDTVEC_END(intr_ ## name ## num)
 
 #define ICUADDR IO_ICU1
 
@@ -697,7 +696,7 @@ _C_LABEL(ioapic_level_stubs):
 #define voidop(num)
 
 #define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_/**/name/**/num)						;\
+IDTVEC(recurse_ ## name ## num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
@@ -705,7 +704,7 @@ IDTVEC(recurse_/**/name/**/num)						;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
 	movl	$_C_LABEL(Xdoreti), %esi; /* we now have a trap frame, so loop using doreti instead */ ;\
-IDTVEC(resume_/**/name/**/num)						\
+IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
 	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
@@ -835,7 +834,10 @@ IDTVEC(trap00)
 IDTVEC(trap01)
 	BPTTRAP(T_TRCTRAP)
 IDTVEC(trap02)
-	ZTRAP(T_NMI)
+	pushl $0
+	pushl $(T_NMI)
+	INTRENTRY
+	jmp _C_LABEL(calltrap)
 IDTVEC(trap03)
 	BPTTRAP(T_BPTFLT)
 IDTVEC(trap04)
@@ -966,7 +968,8 @@ IDTVEC(trap10)
 	pushl	%ebx
 	pushl	%esp
 	pushl	$0			# dummy arg
-	incl	_C_LABEL(uvmexp)+V_TRAP
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	call	_C_LABEL(npxintr)
 	addl	$12,%esp
 	jmp	_C_LABEL(trapreturn)
@@ -1052,7 +1055,8 @@ calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
-	incl	CPUVAR(NTRAP)
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
@@ -1073,7 +1077,8 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 5:	CLEAR_ASTPENDING(%eax)
 	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
-	incl	CPUVAR(NTRAP)
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp

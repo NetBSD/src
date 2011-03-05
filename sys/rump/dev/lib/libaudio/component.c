@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1.2.2 2010/05/30 05:18:04 rmind Exp $	*/
+/*	$NetBSD: component.c,v 1.1.2.3 2011/03/05 20:56:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.2 2010/05/30 05:18:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.3 2011/03/05 20:56:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/stat.h>
+
+#include <dev/audio_if.h>
 
 #include "ioconf.c"
 
@@ -53,6 +55,15 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	    &audio_cdevsw, &cmaj)) != 0)
 		panic("audio devsw attach failed: %d", error);
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/audio", '0',
-	    cmaj, 0, 4)) !=0)
+	    cmaj, AUDIO_DEVICE, 4)) !=0)
 		panic("cannot create audio device nodes: %d", error);
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/sound", '0',
+	    cmaj, SOUND_DEVICE, 4)) !=0)
+		panic("cannot create sound device nodes: %d", error);
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/audioctl", '0',
+	    cmaj, AUDIOCTL_DEVICE, 4)) !=0)
+		panic("cannot create audioctl device nodes: %d", error);
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/mixer", '0',
+	    cmaj, MIXER_DEVICE, 4)) !=0)
+		panic("cannot create mixer device nodes: %d", error);
 }

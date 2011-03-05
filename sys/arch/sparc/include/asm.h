@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.16 2006/01/20 22:02:40 christos Exp $ */
+/*	$NetBSD: asm.h,v 1.16.98.1 2011/03/05 20:52:01 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -185,11 +185,15 @@
  */
 #ifdef __ELF__
 #ifdef __STDC__
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#define	WARN_REFERENCES(sym,msg)					\
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
 #endif /* __STDC__ */
 #else
 #ifdef __STDC__
@@ -204,5 +208,22 @@
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
 #endif /* __ELF__ */
+
+#ifdef __arch64__
+#define INCR64X(what,r0,r1)						\
+	sethi	%hi(what), r0;						\
+	ldx	[r0 + %lo(what)], r1;					\
+	inc	r1;							\
+	stx	r1, [r0 + %lo(what)]
+#define INCR64(what)		INCR64X(what,%o0,%o1)
+#else
+#define INCR64X(what,r0,r1,r2)						\
+	sethi	%hi(what), r2;						\
+	ldd	[r2 + %lo(what)], r0;					\
+	inccc	r1;							\
+	addx	r0, 0, r0;						\
+	std	r0, [r2 + %lo(what)]
+#define INCR64(what)		INCR64X(what,%o0,%o1,%l7)
+#endif
 
 #endif /* _ASM_H_ */

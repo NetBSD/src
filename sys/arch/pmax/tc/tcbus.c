@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.25 2009/03/16 23:11:14 dsl Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.25.4.1 2011/03/05 20:51:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.25 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.25.4.1 2011/03/05 20:51:33 rmind Exp $");
 
 /*
  * Which system models were configured?
@@ -220,15 +220,16 @@ tcfb_cnattach(int slotno)
 	char tcname[TC_ROM_LLEN];
 	int i;
 
-	tcaddr = (*callv->_slot_address)(slotno);
+	tcaddr = promcall(callv->_slot_address, slotno);
 	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
 		panic("TC console designated by PROM does not exist!?");
 
-	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)
+	for (i = 0; i < __arraycount(cnboards); i++) {
 		if (strncmp(tcname, cnboards[i].cb_tcname, TC_ROM_LLEN) == 0)
 			break;
+	}
 
-	if (i == sizeof(cnboards) / sizeof(cnboards[0]))
+	if (i == __arraycount(cnboards))
 		return (0);
 
 	(cnboards[i].cb_cnattach)((tc_addr_t)TC_PHYS_TO_UNCACHED(tcaddr));

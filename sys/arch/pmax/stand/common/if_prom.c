@@ -1,4 +1,4 @@
-/*      $NetBSD: if_prom.c,v 1.7 2009/03/14 15:36:12 dsl Exp $ */
+/*      $NetBSD: if_prom.c,v 1.7.4.1 2011/03/05 20:51:33 rmind Exp $ */
 
 /* Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,6 +44,12 @@
 
 #include <machine/dec_prom.h>
 #include <stand/common/common.h>
+
+#ifdef NET_DEBUG
+#define DPRINTF(x)	printf(x)
+#else
+#define DPRINTF(x)
+#endif
 
 #ifdef NET_DEBUG
 void dump_packet_info(void *, int);
@@ -100,10 +106,8 @@ int
 prom_match(struct netif *nif, void *machdep_hint)
 {
 
-#ifdef NET_DEBUG
-	printf("prom_match: called\n");
-#endif
-	return (1);
+	DPRINTF(("prom_match: called\n"));
+	return 1;
 }
 
 
@@ -111,9 +115,7 @@ int
 prom_probe(struct netif *nif, void *machdep_hint)
 {
 
-#ifdef NET_DEBUG
-	printf("prom_probe: called\n");
-#endif
+	DPRINTF(("prom_probe: called\n"));
 	return 0;
 }
 
@@ -121,44 +123,54 @@ prom_probe(struct netif *nif, void *machdep_hint)
 void
 prom_init(struct iodesc *desc, void *machdep_hint)
 {
-	char *device =
-		((struct netif *)desc->io_netif)->nif_driver->netif_bname;
-	char *c, *enet;
-	int i, j, num;
+	struct netif *nif;
+	char *device, *enet;
+	uint8_t *cp, *dest;
+	int i;
 
-#ifdef NET_DEBUG
-	printf("prom_init: called\n");
-#endif
+	DPRINTF(("prom_init: called\n"));
 
 	try_bootp = 1;
 
 	/*
 	 * Get our hardware address (this prom call is one of the rare ones
-         * which is the same for new and old proms)
-         */
+	 * which is the same for new and old proms)
+	 */
 	enet = (*callv->_getenv)("enet");
+
+	if (enet == NULL) {
+		printf("No `enet' environment variable found.\n"
+		    "Set MAC address to `enet' manually by setenv command.\n");
+		prom_restart();
+		/* NOTREACHED */
+	}
 
 #ifdef NET_DEBUG
 	if (debug)
 		printf("enet=%s\n", enet);
 #endif
 
-	i=0;
-	c = enet;
-	for (i=0; i<6; i++) {
-		j = *c - '0';
-		num = (j<10?j:j-39);
-		num <<= 4;
-		c++;
-		j = *c - '0';
-		num += (j<10?j:j-39);
-		desc->myea[i] = num;
-		c++;
-		c++; /* skip '-' */
+#define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
+
+	cp = (uint8_t *)enet;
+	dest = desc->myea;
+	for (i = 0; i < 6; i++) {
+		if (isxdigit(*cp)) {
+			*dest = atox(*cp);
+			cp++;
+			if (isxdigit(*cp)) {
+				*dest = (*dest << 4) | atox(*cp);
+				cp++;
+			}
+		}
+		dest++;
+		cp++;	/* skip '-' or ':' etc. */
 	}
 
 	desc->xid = 0x66d30000;
 
+	nif = desc->io_netif;
+	device = nif->nif_driver->netif_bname;
 	if (callv == &callvec)
 		sc_fd = prom_open(device, 0);
 	else
@@ -174,9 +186,7 @@ prom_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	int s;
 
-#ifdef NET_DEBUG
-	printf("prom_put: called\n");
-#endif
+	DPRINTF(("prom_put: called\n"));
 
 #ifdef NET_DEBUG
 	if (debug)
@@ -190,7 +200,7 @@ prom_put(struct iodesc *desc, void *pkt, size_t len)
 		(*callv->_wbflush)(); /* didn't really make a difference */
 	}
 	if (s < 0)
-		return (EIO);
+		return EIO;
 	return s;
 }
 
@@ -201,9 +211,7 @@ prom_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 	int s;
 	satime_t t;
 
-#ifdef NET_DEBUG
-	printf("prom_get: called\n");
-#endif
+	DPRINTF(("prom_get: called\n"));
 
 	t = getsecs();
 	s = 0;
@@ -220,7 +228,6 @@ prom_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 #endif
 
 	return s;
-
 }
 
 
@@ -228,9 +235,7 @@ void
 prom_end(struct netif *nif)
 {
 
-#ifdef NET_DEBUG
-	printf("prom_end: called\n");
-#endif
+	DPRINTF(("prom_end: called\n"));
 
 	if (callv == &callvec)
 		prom_close(sc_fd);
@@ -238,9 +243,8 @@ prom_end(struct netif *nif)
 
 
 #ifdef FILL_ARPCACHE
-void fill_arpcache (pkt, len)
-	void *pkt;
-	int len;
+void
+fill_arpcache(void *pkt, int len)
 {
 	int i;
 	struct arp_list *al;
@@ -261,21 +265,19 @@ void fill_arpcache (pkt, len)
 				return;
 			}
 		}
-        	if (arp_num > 7)
-               		arp_num = 1;    /* recycle */
+		if (arp_num > 7)
+			arp_num = 1;	/* recycle */
 		al->addr.s_addr = ih->ip_src.s_addr;
-		for (i=0; i<6; i++)
+		for (i = 0; i < 6; i++)
 			al->ea[i] = eh->ether_shost[i];
 		++arp_num;
 	}
-
 }
 #endif
 
 #ifdef NET_DEBUG
-void dump_packet_info(pkt, len)
-	void *pkt;
-	int len;
+void
+dump_packet_info(void *pkt, int len)
 {
 	struct ether_header *eh = (struct ether_header *)pkt;
 	struct ip *ih = (struct ip *)(eh + 1);
@@ -288,8 +290,6 @@ void dump_packet_info(pkt, len)
 		printf("ip packet version %d\n", ih->ip_v);
 		printf("source ip: 0x%x\n", ih->ip_src.s_addr);
 		printf("dest ip: 0x%x\n", ih->ip_dst.s_addr);
-
 	}
-
 }
 #endif

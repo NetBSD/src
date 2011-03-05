@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.31.2.1 2010/05/30 05:17:32 rmind Exp $	 */
+/* $NetBSD: if_bce.c,v 1.31.2.2 2011/03/05 20:53:38 rmind Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.31.2.1 2010/05/30 05:17:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.31.2.2 2011/03/05 20:53:38 rmind Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -70,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.31.2.1 2010/05/30 05:17:32 rmind Exp $"
 #include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/if_bcereg.h>
-
-#include <uvm/uvm_extern.h>
 
 /* transmit buffer max frags allowed */
 #define BCE_NTXFRAGS	16

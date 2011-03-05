@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.9 2009/04/13 11:56:35 he Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.9.4.1 2011/03/05 20:51:40 rmind Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include <compat/mach/mach_syscall.h>

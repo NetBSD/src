@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.26.4.2 2010/07/03 01:19:51 rmind Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.26.4.3 2011/03/05 20:55:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.26.4.2 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.26.4.3 2011/03/05 20:55:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,7 +78,6 @@ sysvbfs_lookup(void *arg)
 	const char *name = cnp->cn_nameptr;
 	int namelen = cnp->cn_namelen;
 	int error;
-	bool islastcn = cnp->cn_flags & ISLASTCN;
 
 	DPRINTF("%s: %s op=%d %d\n", __func__, name, nameiop,
 	    cnp->cn_flags);
@@ -86,9 +85,15 @@ sysvbfs_lookup(void *arg)
 	*a->a_vpp = NULL;
 
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
+
 	if ((error = VOP_ACCESS(a->a_dvp, VEXEC, cnp->cn_cred)) != 0) {
-		return error;	/* directory permittion. */
+		return error;	/* directory permission. */
 	}
+
+	/* Deny last component write operation on a read-only mount */
+	if ((cnp->cn_flags & ISLASTCN) && (v->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return EROFS;
 
 	if (namelen == 1 && name[0] == '.') {	/* "." */
 		vref(v);
@@ -103,7 +108,6 @@ sysvbfs_lookup(void *arg)
 			}
 			if ((error = VOP_ACCESS(v, VWRITE, cnp->cn_cred)) != 0)
 				return error;
-			cnp->cn_flags |= SAVENAME;
 			return EJUSTRETURN;
 		}
 
@@ -114,9 +118,6 @@ sysvbfs_lookup(void *arg)
 		}
 		*a->a_vpp = vpp;
 	}
-
-	if (cnp->cn_nameiop != LOOKUP && islastcn)
-		cnp->cn_flags |= SAVENAME;
 
 	return 0;
 }
@@ -167,9 +168,6 @@ sysvbfs_create(void *arg)
  unlock_exit:
 	/* unlock parent directory */
 	vput(a->a_dvp);	/* locked at sysvbfs_lookup(); */
-
-	if (err || (a->a_cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(a->a_cnp->cn_pnbuf);
 
 	return err;
 }
@@ -485,9 +483,6 @@ sysvbfs_remove(void *arg)
 		bnode->removed = 1;
 	}
 
-	if (err || (ap->a_cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
-
 	return err;
 }
 
@@ -574,7 +569,7 @@ sysvbfs_readdir(void *v)
 	struct bfs_dirent *file;
 	int i, n, error;
 
-	DPRINTF("%s: offset=%lld residue=%d\n", __func__,
+	DPRINTF("%s: offset=%" PRId64 " residue=%zu\n", __func__,
 	    uio->uio_offset, uio->uio_resid);
 
 	KDASSERT(vp->v_type == VDIR);
@@ -682,7 +677,8 @@ sysvbfs_bmap(void *arg)
 
 	*a->a_vpp = bmp->devvp;
 	*a->a_runp = 0;
-	DPRINTF("%s: %d + %lld\n", __func__, inode->start_sector, a->a_bn);
+	DPRINTF("%s: %d + %" PRId64 "\n", __func__, inode->start_sector,
+	    a->a_bn);
 
 	*a->a_bnp = blk;
 

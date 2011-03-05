@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.12.4.2 2010/07/03 01:19:36 rmind Exp $	*/
+/*	$NetBSD: obio.c,v 1.12.4.3 2011/03/05 20:53:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.12.4.2 2010/07/03 01:19:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.12.4.3 2011/03/05 20:53:26 rmind Exp $");
 
 #include "opt_marvell.h"
 
@@ -89,7 +89,7 @@ obio_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 #define NUM_OBIO	5
-	if (mva->mva_unit == GTCF_UNIT_DEFAULT ||
+	if (mva->mva_unit == MVA_UNIT_DEFAULT ||
 	    mva->mva_unit > NUM_OBIO)
 		return 0;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.88.2.2 2010/07/03 01:19:26 rmind Exp $
+#	$NetBSD: GENERIC,v 1.88.2.3 2011/03/05 20:51:58 rmind Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.88.2.2 $"
+#ident		"GENERIC-$Revision: 1.88.2.3 $"
 
 # estimated number of users
 maxusers	32
@@ -151,7 +151,7 @@ options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MODULAR		# new style module framework
+options 	MODULAR		# new style module(7) framework
 
 # Development and Debugging options
 
@@ -304,7 +304,7 @@ pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd	4		# cryptographic disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
-#pseudo-device	md	1		# Ramdisk driver
+#pseudo-device	md			# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
 pseudo-device	openfirm		# /dev/openfirm

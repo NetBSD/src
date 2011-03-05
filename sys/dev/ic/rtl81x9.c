@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.88.4.1 2010/05/30 05:17:24 rmind Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.88.4.2 2011/03/05 20:53:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.88.4.1 2010/05/30 05:17:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.88.4.2 2011/03/05 20:53:19 rmind Exp $");
 
 #include "rnd.h"
 
@@ -99,8 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.88.4.1 2010/05/30 05:17:24 rmind Exp $
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -848,6 +846,9 @@ rtk_detach(struct rtk_softc *sc)
 	bus_dmamem_unmap(sc->sc_dmat, sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
+
+	/* we don't want to run again */
+	sc->sc_flags &= ~RTK_ATTACHED;
 
 	return 0;
 }

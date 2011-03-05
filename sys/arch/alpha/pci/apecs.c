@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.49.4.1 2010/05/30 05:16:35 rmind Exp $ */
+/* $NetBSD: apecs.c,v 1.49.4.2 2011/03/05 20:49:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,15 +63,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.49.4.1 2010/05/30 05:16:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.49.4.2 2011/03/05 20:49:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
