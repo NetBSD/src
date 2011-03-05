@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.1 2011/02/26 18:07:31 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.2 2011/03/05 06:28:29 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -453,9 +453,11 @@ extern const struct nand_manufacturer nand_mfrs[];
 static inline void
 nand_dump_data(const char *name, void *data, size_t len)
 {
-	printf("dumping %s\n--------------\n", name);
 	uint8_t *dump = data;
-	for (int i = 0; i < len; i++) {
+	int i;
+
+	printf("dumping %s\n--------------\n", name);
+	for (i = 0; i < len; i++) {
 		printf("0x%.2hhx ", *dump);
 		dump++;
 	}
