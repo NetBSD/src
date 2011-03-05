@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.817 2011/03/02 22:42:01 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.818 2011/03/05 19:56:05 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1130,7 +1130,7 @@ Responsible:	christos
 License:	None
 Notes:
 1. Download the latest converter from:
-	http://www.sethwklein.net/projects/iana-etc/
+	http://www.sethwklein.net/iana-etc.html
 2. Unpack it and edit the Makefile to reflect the latest location of the files
 3. Run
 	gmake get
