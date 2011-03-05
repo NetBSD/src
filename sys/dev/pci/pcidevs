@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1066 2011/02/25 01:36:18 jmcneill Exp $
+$NetBSD: pcidevs,v 1.1067 2011/03/05 15:36:27 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1443,6 +1443,8 @@ product ATHEROS AR5311		0x0011 AR5211 Wireless LAN
 product ATHEROS AR5211		0x0012 AR5211 Wireless LAN
 product ATHEROS AR5212		0x0013 AR5212 Wireless LAN
 product ATHEROS AR9285		0x002b AR9285 Wireless LAN
+product ATHEROS AR2427		0x002c AR2427 Wireless LAN
+product ATHEROS AR9287		0x002e AR9287 Wireless LAN
 product ATHEROS AR5201_AP	0x0207 AR5201 Wireless LAN Reference Card (Early AP11)
 product ATHEROS AR5201_DEFAULT	0x1107 AR5201 Wireless LAN (no eeprom)
 product ATHEROS AR5212_DEFAULT	0x1113 AR5212 Wireless LAN (no eeprom)
