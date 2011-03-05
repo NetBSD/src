@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.27.4.1 2011/02/08 16:19:46 bouyer Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.27.4.2 2011/03/05 15:10:14 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.27.4.1 2011/02/08 16:19:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.27.4.2 2011/03/05 15:10:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -296,7 +296,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	tf = l->l_md.md_regs;
 	tf->tf_rax = 0;
-	tf->tf_rbx = (u_int64_t)p->p_psstr & 0xffffffff;
+	tf->tf_rbx = (u_int32_t)p->p_psstrp;
 	tf->tf_rcx = pack->ep_entry & 0xffffffff;
 	tf->tf_rdx = 0;
 	tf->tf_rsi = 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.27 2011/01/12 18:09:03 phx Exp $
+#	$NetBSD: files.sandpoint,v 1.27.4.1 2011/03/05 15:09:59 bouyer Exp $
 #
 # Motorola's "SandPoint" evaluation board and multiplied descendents.
 #
@@ -109,5 +109,3 @@ attach	satmgr at eumb
 file	arch/sandpoint/sandpoint/satmgr.c	satmgr
 
 include "arch/powerpc/conf/majors.powerpc"
-
-device-major	satmgr		char 100	satmgr

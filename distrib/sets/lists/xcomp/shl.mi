@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.27 2011/01/19 16:31:23 jmcneill Exp $
+#	$NetBSD: shl.mi,v 1.27.2.1 2011/03/05 15:08:39 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -55,6 +55,7 @@
 ./usr/X11R7/lib/libOSMesa_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libSM_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libX11_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libX11-xcb_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libXRes_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXTrap_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXau_pic.a				-unknown-	xorg
@@ -196,6 +197,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libOSMesa.so.7.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libSM.so.7.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libX11.so.7.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libX11-xcb.so.1.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXRes.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXTrap.so.7.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXau.so.7.0.debug	-unknown-		xorg,debug
@@ -206,7 +208,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libXdamage.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXdmcp.so.7.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXevie.so.2.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/libXext.so.7.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libXext.so.7.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXfixes.so.4.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXfont.so.3.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libXfontcache.so.2.0.debug	-unknown-		xorg,debug

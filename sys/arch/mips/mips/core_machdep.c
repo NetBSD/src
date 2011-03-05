@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.3.4.1 2011/02/17 11:59:49 bouyer Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.3.4.2 2011/03/05 15:09:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3.4.1 2011/02/17 11:59:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3.4.2 2011/03/05 15:09:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	struct pcb *pcb;
 	struct coreseg cseg;
 	struct cpustate {
-		struct frame frame;
+		struct trapframe tf;
 		struct fpreg fpregs;
 	} cpustate;
 
@@ -83,10 +83,9 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 		return 0;
 	}
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		savefpregs(l);
+	fpu_save();
 	pcb = lwp_getpcb(l);
-	cpustate.frame = *(struct frame *)l->l_md.md_regs;
+	cpustate.tf = *l->l_md.md_utf;
 	cpustate.fpregs = pcb->pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);

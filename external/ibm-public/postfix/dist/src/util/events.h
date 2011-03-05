@@ -1,4 +1,4 @@
-/*	$NetBSD: events.h,v 1.1.1.2 2010/06/17 18:07:13 tron Exp $	*/
+/*	$NetBSD: events.h,v 1.1.1.2.2.1 2011/03/05 15:09:04 bouyer Exp $	*/
 
 #ifndef _EVENTS_H_INCLUDED_
 #define _EVENTS_H_INCLUDED_
@@ -21,15 +21,17 @@
  /*
   * External interface.
   */
-typedef void (*EVENT_NOTIFY_RDWR) (int, char *);
-typedef void (*EVENT_NOTIFY_TIME) (int, char *);
+typedef void (*EVENT_NOTIFY_FN) (int, char *);
+
+#define EVENT_NOTIFY_TIME_FN EVENT_NOTIFY_FN	/* legacy */
+#define EVENT_NOTIFY_RDWR_FN EVENT_NOTIFY_FN	/* legacy */
 
 extern time_t event_time(void);
-extern void event_enable_read(int, EVENT_NOTIFY_RDWR, char *);
-extern void event_enable_write(int, EVENT_NOTIFY_RDWR, char *);
+extern void event_enable_read(int, EVENT_NOTIFY_RDWR_FN, char *);
+extern void event_enable_write(int, EVENT_NOTIFY_RDWR_FN, char *);
 extern void event_disable_readwrite(int);
-extern time_t event_request_timer(EVENT_NOTIFY_TIME, char *, int);
-extern int event_cancel_timer(EVENT_NOTIFY_TIME, char *);
+extern time_t event_request_timer(EVENT_NOTIFY_TIME_FN, char *, int);
+extern int event_cancel_timer(EVENT_NOTIFY_TIME_FN, char *);
 extern void event_loop(int);
 extern void event_drain(int);
 extern void event_fork(void);
@@ -47,8 +49,9 @@ extern void event_fork(void);
  /*
   * Dummies.
   */
-#define EVENT_NULL_TYPE	0
+#define EVENT_NULL_TYPE		(0)
 #define EVENT_NULL_CONTEXT	((char *) 0)
+#define EVENT_NULL_DELAY	(0)
 
 /* LICENSE
 /* .ad

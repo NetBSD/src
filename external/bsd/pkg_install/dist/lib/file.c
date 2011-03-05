@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.5 2009/10/07 13:19:43 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.5.2.1 2011/03/05 15:08:50 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
 #endif
-__RCSID("$NetBSD: file.c,v 1.1.1.5 2009/10/07 13:19:43 joerg Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.5.2.1 2011/03/05 15:08:50 bouyer Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -181,9 +181,12 @@ typedef struct url_t {
 
 /* A table of valid leading strings for URLs */
 static const url_t urls[] = {
-	{"file://", 7},
-	{"ftp://", 6},
-	{"http://", 7},
+#define	STR_AND_SIZE(str)	{ str, sizeof(str) - 1 }
+	STR_AND_SIZE("file://"),
+	STR_AND_SIZE("ftp://"),
+	STR_AND_SIZE("http://"),
+	STR_AND_SIZE("https://"),
+#undef STR_AND_SIZE
 	{NULL, 0}
 };
 

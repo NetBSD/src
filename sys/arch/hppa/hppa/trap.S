@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.50.4.1 2011/02/08 16:19:25 bouyer Exp $	*/
+/*	$NetBSD: trap.S,v 1.50.4.2 2011/03/05 15:09:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -366,6 +366,9 @@ syscall_entry:
 	stw	%arg3, TF_CR13-TRAPFRAME_SIZEOF(%sr1, %t3)
 #endif
 
+	mfctl	CR_TLS, %arg0
+	stw	%arg0, TF_CR27-TRAPFRAME_SIZEOF(%sr1, %t3)
+
 #if defined(DDB) || defined(KGDB)
 	/*
 	 * Save v2p translation table pointer
@@ -379,9 +382,6 @@ syscall_entry:
 	mfctl	%cr28, %arg1
 	stw	%arg0, TF_CR24-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg1, TF_CR28-TRAPFRAME_SIZEOF(%sr1, %t3)
-
-	mfctl	CR_TLS, %arg0
-	stw	%arg0, TF_CR27-TRAPFRAME_SIZEOF(%sr1, %t3)
 #endif
 
 	/* setup kernel context */
@@ -507,11 +507,13 @@ syscall_return:
 	mtctl	%t1, %pidr3
 	mtctl	%t2, %pidr4
 #endif
+	ldw	TF_CR27(%sr3, %t3), %t1
+	ldw	TF_CR30(%sr3, %t3), %t2
+	mtctl	%t1, CR_TLS
+	mtctl	%t2, CR_FPPADDR
+
 	ldw	TF_CR0(%sr3, %t3), %t1
 	mtctl	%t1, %rctr
-
-	ldw	TF_CR30(%sr3, %t3), %t1
-	mtctl	%t1, CR_FPPADDR
 
 	GET_CURCPU_SPACE(%sr3, %t3)
 
@@ -953,7 +955,7 @@ ALTENTRY(hppa_fpu_nop0)
 	 * to use.  hppa_fpu_swap deliberately uses only these registers and %r1
 	 * and %arg0.
 	 */
-	mtctl	%arg1, %tr3
+	mtctl	%arg1, %tr4
 	mtctl	%rp, %tr5
 
 	/* Call hppa_fpu_swap. */
@@ -966,7 +968,7 @@ ALTENTRY(hppa_fpu_nop0)
 	
 	/* Restore registers and rfi. */
 	mfctl	%tr5, %rp
-	mfctl	%tr3, %arg1
+	mfctl	%tr4, %arg1
 	mfctl	%tr2, %arg0
 	mfctl	%tr7, %r1
 	rfi
@@ -1912,7 +1914,6 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	 *  - tr7:	old r1
 	 */
 
-	/* do not overwrite %tr4(%cr28) it contains the contents of r24 */
 	mtctl	%t3, %tr2
 
 	GET_CURCPU(%t3)
@@ -2195,10 +2196,10 @@ trapnowvirt:
 	stw	%t1, TF_CR24(%t3)
 	stw	%t2, TF_CR28(%t3)
 
-	mfctl	CR_TLS, %t1
-	stw	%t1, TF_CR27(%t3)
 #endif
+	mfctl	CR_TLS, %t1
 	mfctl	CR_FPPADDR, %t2
+	stw	%t1, TF_CR27(%t3)
 	stw	%t2, TF_CR30(%t3)
 
 	/*
@@ -2230,6 +2231,7 @@ trapnowvirt:
 	bb,>=,n	%arg0, TFF_LAST_POS, L$trap_return
 	nop
 
+	/* load curlwp's trapframe pointer */
 	GET_CURLWP(%t2)
 	ldw	L_MD(%t2), %t3
 

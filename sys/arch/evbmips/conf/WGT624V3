@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.9.4.1 2011/02/08 19:29:33 bouyer Exp $
+#	$NetBSD: WGT624V3,v 1.9.4.2 2011/03/05 15:09:36 bouyer Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.9.4.1 $"
+#ident 		"WGT624V3-$Revision: 1.9.4.2 $"
 
 maxusers	32
 
@@ -13,7 +13,7 @@ makeoptions	ATH_MACHINE_HAL=ap51
 
 options 	MIPS32
 options 	NOFPU		# No FPU
-options 	SOFTFLOAT	# emulate FPU insn
+options 	FPEMUL		# emulate FPU insn
 options		WISOC_AR5315	# WiSoC select
 options		COM_ARBUS_BAUD=9600
 
@@ -46,7 +46,7 @@ options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=150000	# size for embedded symbol table
+options 	SYMTAB_SPACE=300000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries

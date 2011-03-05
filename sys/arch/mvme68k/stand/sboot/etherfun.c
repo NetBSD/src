@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.9.40.1 2011/02/08 16:19:31 bouyer Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.9.40.2 2011/03/05 15:09:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -90,6 +90,7 @@ rev_arp(void)
 
 /* Send a tftp read request or acknowledgement 
    mesgtype 0 is a read request, 1 is an aknowledgement */
+static const char HEXDIGITS[16] = "0123456789ABCDEF";
 
 void 
 do_send_tftp(int mesgtype) 

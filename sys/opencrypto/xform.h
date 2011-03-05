@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.10 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: xform.h,v 1.10.8.1 2011/03/05 15:10:48 bouyer Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -38,11 +38,12 @@ struct auth_hash {
 	u_int16_t keysize;
 	u_int16_t hashsize;
 	u_int16_t authsize;
+	u_int16_t blocksize;
 	u_int16_t ctxsize;
 };
 
 /* Provide array-limit for clients (e.g., netipsec) */
-#define	AH_ALEN_MAX	20	/* max authenticator hash length */
+#define	AH_ALEN_MAX	32	/* max authenticator hash length */
 
 struct enc_xform {
 	int type;
@@ -57,8 +58,8 @@ struct comp_algo {
 	size_t minlen;
 };
 
-extern const u_int8_t hmac_ipad_buffer[64];
-extern const u_int8_t hmac_opad_buffer[64];
+extern const u_int8_t hmac_ipad_buffer[128];
+extern const u_int8_t hmac_opad_buffer[128];
 
 extern struct enc_xform enc_xform_null;
 extern struct enc_xform enc_xform_des;
@@ -85,6 +86,7 @@ extern struct auth_hash auth_hash_hmac_sha2_384;
 extern struct auth_hash auth_hash_hmac_sha2_512;
 
 extern struct comp_algo comp_algo_deflate;
+extern struct comp_algo comp_algo_deflate_nogrow;
 extern struct comp_algo comp_algo_gzip;
 
 #ifdef _KERNEL

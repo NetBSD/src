@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.328 2010/11/10 09:27:21 uebayasi Exp $ */
+/* $NetBSD: machdep.c,v 1.328.4.1 2011/03/05 15:09:28 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.328 2010/11/10 09:27:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.328.4.1 2011/03/05 15:09:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1619,7 +1619,7 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tfp->tf_regs[FRAME_A0] = stack;			/* a0 = sp */
 	tfp->tf_regs[FRAME_A1] = 0;			/* a1 = rtld cleanup */
 	tfp->tf_regs[FRAME_A2] = 0;			/* a2 = rtld object */
-	tfp->tf_regs[FRAME_A3] = (u_int64_t)l->l_proc->p_psstr;	/* a3 = ps_strings */
+	tfp->tf_regs[FRAME_A3] = l->l_proc->p_psstrp;	/* a3 = ps_strings */
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	l->l_md.md_flags &= ~MDP_FPUSED;
@@ -1928,12 +1928,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		frame->tf_regs[FRAME_PC] = gr[_REG_PC];
 		frame->tf_regs[FRAME_PS] = gr[_REG_PS];
 	}
-	if (flags & _UC_UNIQUE) {
-		if (l == curlwp)
-			alpha_pal_wrunique(gr[_REG_UNIQUE]);
-		else
-			pcb->pcb_hw.apcb_unique = gr[_REG_UNIQUE];
-	}
+	if (flags & _UC_UNIQUE)
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_UNIQUE]);
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
 		/* If we have an FP register context, get rid of it. */

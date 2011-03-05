@@ -120,7 +120,8 @@ and are easy to debug with the <a href="postmap.1.html">postmap(1)</a> command: 
 </blockquote>
 
 <p> Once you have local files working properly you can follow the
-instructions in <a href="ldap_table.5.html">ldap_table(5)</a>, <a href="mysql_table.5.html">mysql_table(5)</a> or <a href="pgsql_table.5.html">pgsql_table(5)</a>
+instructions in <a href="ldap_table.5.html">ldap_table(5)</a>, <a href="mysql_table.5.html">mysql_table(5)</a>, <a href="pgsql_table.5.html">pgsql_table(5)</a>
+or <a href="sqlite_table.5.html">sqlite_table(5)</a>
 and replace local file lookups with LDAP or SQL lookups.  When you
 do this, you should use the <a href="postmap.1.html">postmap(1)</a> command again, to verify
 that database lookups still produce the exact same results as local
@@ -358,6 +359,11 @@ created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1
 table name as used in "sdbm:table" is the database file name without
 the ".dir" or ".pag" suffix.  </dd>
 
+<dt> <b>sqlite</b> (read-only) </dt>
+
+<dd> Perform SQLite database lookups. Configuration details are given
+in <a href="sqlite_table.5.html">sqlite_table(5)</a>. </dd>
+
 <dt> <b>static</b> (read-only) </dt>
 
 <dd> Always returns its lookup table name as lookup result.  For
@@ -372,6 +378,14 @@ where "host" specifies a symbolic hostname or a numeric IP address,
 and "port" specifies a symbolic service name or a numeric port
 number.
 </dd>
+
+<dt> <b>texthash</b> (read-only) </dt>
+
+<dd> This produces similar results as hash: files, except that you
+don't have to run the <a href="postmap.1.html">postmap(1)</a> command before you can use the
+file, and that texthash: does not detect changes after the file is
+read.  The lookup table name is "texthash:filename", where the file
+name is taken literally; no suffix is appended. </dd>
 
 <dt> <b>unix</b> (read-only) </dt>
 

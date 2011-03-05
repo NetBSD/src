@@ -27,6 +27,11 @@ code.  Assuming that OpenSSL is written as carefully as Wietse's
 own code, every 1000 lines introduce one additional bug into
 Postfix.  </p>
 
+<p> At this time, you should no longer be using OpenSSL releases prior
+to the most recent 0.9.8 release unless all relevant security fixes have
+been backported to the earlier release by you or your O/S vendor. OpenSSL
+0.9.7 and earlier are no longer maintained by the OpenSSL team. </p>
+
 <h2> What Postfix TLS support does for you </h2>
 
 <p> Transport Layer Security (TLS, formerly called SSL) provides
@@ -852,6 +857,25 @@ secure for most situations. </p>
 </pre>
 </blockquote>
 
+<p> Postfix 2.8 and later, in combination with OpenSSL 0.9.7 and later
+allows TLS servers to preempt the TLS client's cipher preference list.
+This is only possible with SSLv3, as in SSLv2 the client chooses the
+cipher from a list supplied by the server. </p>
+
+<p> By default, the OpenSSL server selects the client's most preferred
+cipher that the server supports. With SSLv3 and later, the server
+may choose its own most preferred cipher that is supported (offered)
+by the client. Setting "tls_preempt_cipherlist = yes" enables server
+cipher preferences. The default OpenSSL behaviour applies with
+"tls_preempt_cipherlist = no". </p>
+
+<p> While server cipher selection may in some cases lead to a more secure
+or performant cipher choice, there is some risk of interoperability
+issues. In the past, some SSL clients have listed lower priority ciphers
+that they did not implement correctly. If the server chooses a cipher
+that the client prefers less, it may select a cipher whose client
+implementation is flawed. </p>
+
 <h3><a name="server_misc"> Miscellaneous server controls</a> </h3>
 
 <p> The smtpd_starttls_timeout parameter limits the time of Postfix
@@ -866,6 +890,30 @@ handshake procedures.  </p>
     smtpd_starttls_timeout = 300s
 </pre>
 </blockquote>
+
+<p> With Postfix 2.8 and later, the tls_disable_workarounds parameter
+specifies a list or bit-mask of OpenSSL bug work-arounds to disable. This
+may be necessary if one of the work-arounds enabled by default in
+OpenSSL proves to pose a security risk, or introduces an unexpected
+interoperability issue. Some bug work-arounds known to be problematic
+are disabled in the default value of the parameter when linked with
+an OpenSSL library that could be vulnerable. </p>
+
+<p> Example: </p>
+ 
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    tls_disable_workarounds = 0xFFFFFFFF
+    tls_disable_workarounds = CVE-2010-4180, LEGACY_SERVER_CONNECT
+</pre>
+</blockquote>
+
+<p> Note: Disabling LEGACY_SERVER_CONNECT is not wise at this
+time, lots of servers are still unpatched and Postfix is <a
+href="http://www.postfix.org/wip.html#tls-renegotiation">not
+significantly vulnerable</a> to the renegotiation issue in the TLS
+protocol. </p>
 
 <h2> <a name="client_tls">SMTP Client specific settings</a> </h2>
 

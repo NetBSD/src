@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74.8.1 2011/02/17 11:59:53 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.74.8.2 2011/03/05 15:09:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74.8.1 2011/02/17 11:59:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74.8.2 2011/03/05 15:09:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,6 @@ cpu_configure(void)
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
 
-	evcnt_attach_static(&pmax_clock_evcnt);
-	evcnt_attach_static(&pmax_fpu_evcnt);
-	evcnt_attach_static(&pmax_memerr_evcnt);
-
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
@@ -88,7 +84,7 @@ cpu_configure(void)
 	(*platform.bus_reset)();
 
 	/* Configuration is finished, turn on interrupts. */
-	_splnone();	/* enable all source forcing SOFT_INTs cleared */
+	spl0();	/* enable all source forcing SOFT_INTs cleared */
 }
 
 /*

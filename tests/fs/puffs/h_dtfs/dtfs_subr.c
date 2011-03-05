@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.2 2010/07/14 13:09:52 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.2.2.1 2011/03/05 15:10:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -314,8 +314,12 @@ dtfs_removedent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 
 	assert(pn_dir->pn_va.va_type == VDIR);
 	LIST_REMOVE(dent, dfd_entries);
-	if (pn_file->pn_va.va_type == VDIR)
+	if (pn_file->pn_va.va_type == VDIR) {
+		struct dtfs_file *df = DTFS_PTOF(pn_file);
+
 		pn_dir->pn_va.va_nlink--;
+		df->df_dotdot = NULL;
+	}
 	pn_file->pn_va.va_nlink--;
 	assert(pn_dir->pn_va.va_nlink >= 2);
 

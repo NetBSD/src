@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2011/02/17 12:00:54 bouyer Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2011/03/05 15:10:56 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,9 +6,13 @@
 TESTSDIR=	${TESTSBASE}/lib/librumphijack
 
 TESTS_SH=	t_asyncio
+TESTS_SH+=	t_cwd
+TESTS_SH+=	t_sh
 TESTS_SH+=	t_tcpip
+TESTS_SH+=	t_vfs
 TESTS_C=	h_client
 TESTS_C+=	h_netget
+TESTS_C+=	h_cwd
 
 FILES=		netstat.expout index.html
 FILESDIR=	${TESTSDIR}

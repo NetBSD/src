@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.17.8.1 2011/02/08 16:19:39 bouyer Exp $
+# $NetBSD: Makefile.booters,v 1.17.8.2 2011/03/05 15:10:03 bouyer Exp $
 
 # PROG set by parent.
 NOMAN=		# defined
@@ -20,13 +20,14 @@ LIBCRTEND=
 realall: ${PROG}
 
 .PATH:		${.CURDIR}/../common
+.PATH.S:	${S}/dev/arcbios
 AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls
 CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 CFLAGS=		-ffreestanding -Os -Wall -Werror -mno-abicalls -msoft-float -G 1024
 .if ${MACHINE_ARCH} == "mips64eb"
-CPUFLAGS+=	-mabi=n32
-LDFLAGS+=	-mabi=n32
+AFLAGS+=	-mips3 -mabi=32
+CFLAGS+=	-mips3 -mabi=32
 .endif
 CWARNFLAGS+=	-Wall -Werror
 CWARNFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
@@ -36,6 +37,8 @@ NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CPPFLAGS+=	-Dsgimips
+
+.include "${S}/dev/arcbios/Makefile.inc"
 
 # We load the kernel at 420K in from the start of RAM to give the boot
 # loader plenty of breathing room.  Load the boot loader starting at

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59.4.1 2011/02/08 16:20:00 bouyer Exp $
+#	$NetBSD: Makefile,v 1.59.4.2 2011/03/05 15:10:42 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ SUBDIR+=	exec_script
 SUBDIR+=	fdesc
 SUBDIR+=	ffs
 SUBDIR+=	filecore
+SUBDIR+=	flash
 SUBDIR+=	fss
 SUBDIR+=	hfs
 SUBDIR+=	kernfs
@@ -32,6 +33,8 @@ SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
 SUBDIR+=	mqueue
 SUBDIR+=	msdos
+SUBDIR+=	nand
+SUBDIR+=	nandemulator
 SUBDIR+=	nfs
 SUBDIR+=	nfsserver
 SUBDIR+=	nilfs
@@ -86,6 +89,10 @@ SUBDIR+=	exec_elf64
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	coretemp
+SUBDIR+=	est
+SUBDIR+=	odcm
+SUBDIR+=	powernow
 SUBDIR+=	tprof_pmi
 #SUBDIR+=	tprof_amdpmi
 .endif
@@ -111,6 +118,8 @@ SUBDIR+=	acpivga
 SUBDIR+=	acpiwmi
 SUBDIR+=	aibs
 SUBDIR+=	asus
+SUBDIR+=	fujbp
+SUBDIR+=	fujhk
 SUBDIR+=	hpqlb
 SUBDIR+=	thinkpad
 SUBDIR+=	wmidell
@@ -139,6 +148,9 @@ SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
+SUBDIR+=	padlock
+SUBDIR+=	viac7temp
+SUBDIR+=	wmieeepc
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \

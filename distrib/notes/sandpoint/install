@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6.2.1 2011/02/08 16:18:35 bouyer Exp $
+.\"	$NetBSD: install,v 1.6.2.2 2011/03/05 15:08:35 bouyer Exp $
 .
 .Ss2 Prepare the NFS or TFTP server
 .
@@ -26,6 +26,12 @@ Serial line upload
 .It
 Flash ROM
 .bullet)
+.Pp
+When your firmware is restricted to
+.Pa bootm
+as the only command to run a program you should use
+.Pa altboot.img
+, which fakes a Linux kernel module.
 .
 .Ss2 Booting the installer
 Depending on whether the serial console is attached to the first or the
@@ -58,6 +64,20 @@ for TFTP, or with
 .Dl > Ic "go 0x1000000 nfs:"
 .Pp
 when the kernel resides on NFS.
+.Pp
+Note, that when using
+.Pa altboot.img
+with
+.Pa bootm
+instead of
+.Pa altboot.bin
+you have to pass arguments like
+.Pa tftp:
+or
+.Pa nfs:
+in the
+.Pa bootargs
+enviroment variable.
 .Pp
 The installation kernel will run
 .Pa sysinst

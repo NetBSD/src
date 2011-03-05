@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/10/18 17:43:11 tron Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2011/03/05 15:08:43 bouyer Exp $
 
 PROG=	mdnsd
 
@@ -16,9 +16,4 @@ COPTS.uds_daemon.c += -Wno-stack-protector
 
 MAN=	mdnsd.8
 
-mdnsd.8: mDNSResponder.8
-	${TOOL_CAT} < $? > $@
-
-CLEANFILES+=	mdnsd.8
-                               
 .include <bsd.prog.mk>

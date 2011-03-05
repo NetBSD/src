@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs_int_disklabel.h,v 1.2 2009/12/03 14:23:49 pooka Exp $	*/
+/*	$NetBSD: ukfs_int_disklabel.h,v 1.2.2.1 2011/03/05 15:09:24 bouyer Exp $	*/
 
 /*
  * Modified copy of disklabel.h so that ukfs doesn't have to depend
@@ -151,7 +151,8 @@ struct ukfs__disklabel {
 	} d_partitions[UKFS_MAXPARTITIONS];	/* actually may be more */
 };
 
-uint16_t        ukfs__disklabel_dkcksum(struct ukfs__disklabel *);
-int             ukfs__disklabel_scan(struct ukfs__disklabel *, char *, size_t);
+uint16_t        ukfs__disklabel_dkcksum(struct ukfs__disklabel *, int);
+int             ukfs__disklabel_scan(struct ukfs__disklabel *, int *,
+				     char *, size_t);
 
 #endif /* !LIB_UKFS_DISKLABEL_H_ */

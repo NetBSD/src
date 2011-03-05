@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbdmap.c,v 1.2.2.2 2011/02/17 11:59:38 bouyer Exp $	*/
+/*	$NetBSD: dnkbdmap.c,v 1.2.2.3 2011/03/05 15:09:40 bouyer Exp $	*/
 /*	$OpenBSD: dnkbdmap.c,v 1.2 2005/05/06 22:22:53 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -40,7 +40,7 @@
  * Translate Domain keycodes to US keyboard XT scancodes, for proper
  * X11-over-wsmux operation.
  */
-const u_int8_t dnkbd_raw[0x80] = {
+const uint8_t dnkbd_raw[0x80] = {
     0x00, 0x00, 0x00, 0x00, 0x44, 0x3b, 0x3c, 0x3d,
     0x3e, 0x3f, 0x40, 0x41, 0x42, 0x43, 0x00, 0x00,
     0x00, 0x00, 0x46, 0x00, 0x00, 0x00, 0x01, 0x01,

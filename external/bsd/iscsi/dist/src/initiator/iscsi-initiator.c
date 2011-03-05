@@ -618,9 +618,20 @@ main(int argc, char **argv)
 					*argv, i);
 		}
 	}
-	if (iscsi_initiator_getvar(&ini, "user") == NULL) {
-		iscsi_err(__FILE__, __LINE__, "user must be specified with -u\n");
+	if (!strcmp(iscsi_initiator_getvar(&ini, "auth type"), "chap") &&
+	    iscsi_initiator_getvar(&ini, "user") == NULL) {
+		iscsi_err(__FILE__, __LINE__, "user must be specified with "
+		    "-u if using CHAP authentication\n");
 		exit(EXIT_FAILURE);
+	}
+
+	if (strcmp(iscsi_initiator_getvar(&ini, "auth type"), "none") &&
+	    iscsi_initiator_getvar(&ini, "user") != NULL) {
+		/* 
+		 * For backwards compatibility, default to using CHAP
+		 * if username given
+		 */
+		iscsi_initiator_setvar(&ini, "auth type", "chap");
 	}
 
 	if (iscsi_initiator_start(&ini) == -1) {
@@ -690,8 +701,22 @@ main(int argc, char **argv)
 		}
 
 		/* stuff size into st.st_size */
-		(void) read_capacity(u, 0, &lbac, &blocksize);
-		sti.st.st_size = ((uint64_t)lbac + 1) * blocksize;
+		{
+			int retry = 5;
+			while (retry > 0) {
+				if (read_capacity(u, 0, &lbac, &blocksize) == 0)
+					break;
+				retry--;
+				iscsi_warn(__FILE__, __LINE__,
+				    "read_capacity failed - retrying %d\n", retry);
+				sleep(1);
+			}
+			if (retry == 0) {
+				iscsi_err(__FILE__, __LINE__, "read_capacity failed - giving up\n");
+				break;
+			}
+		}
+		sti.st.st_size = (off_t)(((uint64_t)lbac + 1) * blocksize);
 		sti.target = u;
 
 		tv.v[tv.c].host = strdup(tinfo.name);
@@ -718,36 +743,31 @@ main(int argc, char **argv)
 		tv.v[tv.c].serial = strdup((char *)&data[4]);
 
 		/* create the tree using virtdir routines */
-		cc = snprintf(name, sizeof(name), "/%s/%s", host, colon);
+		cc = snprintf(name, sizeof(name), "/%s", colon);
 		virtdir_add(&iscsi, name, cc, 'd', name, cc);
-		cc = snprintf(name, sizeof(name), "/%s/%s/storage", host,
-				colon);
+		cc = snprintf(name, sizeof(name), "/%s/storage", colon);
 		virtdir_add(&iscsi, name, cc, devtype, (void *)&sti,
 				sizeof(sti));
-		cc = snprintf(name, sizeof(name), "/%s/%s/hostname", host,
-				colon);
+		cc = snprintf(name, sizeof(name), "/%s/hostname", colon);
 		virtdir_add(&iscsi, name, cc, 'l', tinfo.name,
 				strlen(tinfo.name));
-		cc = snprintf(name, sizeof(name), "/%s/%s/ip", host, colon);
+		cc = snprintf(name, sizeof(name), "/%s/ip", colon);
 		virtdir_add(&iscsi, name, cc, 'l', tinfo.ip, strlen(tinfo.ip));
-		cc = snprintf(name, sizeof(name), "/%s/%s/targetname", host,
-				colon);
+		cc = snprintf(name, sizeof(name), "/%s/targetname", colon);
 		virtdir_add(&iscsi, name, cc, 'l', tinfo.TargetName,
 				strlen(tinfo.TargetName));
-		cc = snprintf(name, sizeof(name), "/%s/%s/vendor", host, colon);
+		cc = snprintf(name, sizeof(name), "/%s/vendor", colon);
 		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].vendor,
 				strlen(tv.v[tv.c].vendor));
-		cc = snprintf(name, sizeof(name), "/%s/%s/product", host,
-				colon);
+		cc = snprintf(name, sizeof(name), "/%s/product", colon);
 		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].product,
 				strlen(tv.v[tv.c].product));
-		cc = snprintf(name, sizeof(name), "/%s/%s/version", host,
-				colon);
+		cc = snprintf(name, sizeof(name), "/%s/version", colon);
 		virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].version,
 				strlen(tv.v[tv.c].version));
 		if (tv.v[tv.c].serial[0] && tv.v[tv.c].serial[0] != ' ') {
-			cc = snprintf(name, sizeof(name), "/%s/%s/serial",
-				host, colon);
+			cc = snprintf(name, sizeof(name), "/%s/serial",
+				colon);
 			virtdir_add(&iscsi, name, cc, 'l', tv.v[tv.c].serial,
 				strlen(tv.v[tv.c].serial));
 		}

@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fastgrep.c,v 1.2.2.2 2011/02/17 12:00:55 bouyer Exp $");
+__RCSID("$NetBSD: fastgrep.c,v 1.2.2.3 2011/03/05 15:10:59 bouyer Exp $");
 
 #include <limits.h>
 #include <stdbool.h>
@@ -82,45 +82,44 @@ fastcomp(fastgrep_t *fg, const char *pat)
 	int hasDot = 0;
 	int lastHalfDot = 0;
 	int shiftPatternLen;
-	bool bol = false;
-	bool eol = false;
 
 	/* Initialize. */
 	fg->len = strlen(pat);
 	fg->bol = false;
 	fg->eol = false;
 	fg->reversed = false;
+	fg->word = wflag;
 
 	/* Remove end-of-line character ('$'). */
 	if (fg->len > 0 && pat[fg->len - 1] == '$') {
-		eol = true;
 		fg->eol = true;
 		fg->len--;
 	}
 
 	/* Remove beginning-of-line character ('^'). */
 	if (pat[0] == '^') {
-		bol = true;
 		fg->bol = true;
 		fg->len--;
+		pat++;
 	}
 
 	if (fg->len >= 14 &&
-	    strncmp(pat + (fg->bol ? 1 : 0), "[[:<:]]", 7) == 0 &&
-	    strncmp(pat + (fg->bol ? 1 : 0) + fg->len - 7, "[[:>:]]", 7) == 0) {
+	    memcmp(pat, "[[:<:]]", 7) == 0 &&
+	    memcmp(pat + fg->len - 7, "[[:>:]]", 7) == 0) {
 		fg->len -= 14;
+		pat += 7;
 		/* Word boundary is handled separately in util.c */
-		wflag = true;
+		fg->word = true;
 	}
 
 	/*
-	 * Copy pattern minus '^' and '$' characters as well as word
-	 * match character classes at the beginning and ending of the
-	 * string respectively.
+	 * pat has been adjusted earlier to not include '^', '$' or
+	 * the word match character classes at the beginning and ending
+	 * of the string respectively.
 	 */
 	fg->pattern = grep_malloc(fg->len + 1);
-	strlcpy((char *)fg->pattern, pat + (bol ? 1 : 0) + wflag,
-	    fg->len + 1);
+	memcpy(fg->pattern, pat, fg->len);
+	fg->pattern[fg->len] = '\0';
 
 	/* Look for ways to cheat...er...avoid the full regex engine. */
 	for (i = 0; i < fg->len; i++) {
@@ -149,7 +148,7 @@ fastcomp(fastgrep_t *fg, const char *pat)
 	 * Determine if a reverse search would be faster based on the placement
 	 * of the dots.
 	 */
-	if ((!(lflag || cflag)) && ((!(bol || eol)) &&
+	if ((!(lflag || cflag)) && ((!(fg->bol || fg->eol)) &&
 	    ((lastHalfDot) && ((firstHalfDot < 0) ||
 	    ((fg->len - (lastHalfDot + 1)) < (size_t)firstHalfDot)))) &&
 	    !oflag && !color) {

@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_xmit.c,v 1.1.1.1 2008/12/11 04:46:43 alc Exp $
+ * $Id: ar5212_xmit.c,v 1.1.1.1.20.1 2011/03/05 15:10:36 bouyer Exp $
  */
 #include "opt_ah.h"
 
@@ -48,6 +48,9 @@ ar5212UpdateTxTrigLevel(struct ath_hal *ah, HAL_BOOL bIncTrigLevel)
 	uint32_t txcfg, curLevel, newLevel;
 	HAL_INT omask;
 
+	if (ahp->ah_txTrigLev >= ahp->ah_maxTxTrigLev)
+		return AH_FALSE;
+
 	/*
 	 * Disable interrupts while futzing with the fifo level.
 	 */
@@ -57,7 +60,7 @@ ar5212UpdateTxTrigLevel(struct ath_hal *ah, HAL_BOOL bIncTrigLevel)
 	curLevel = MS(txcfg, AR_FTRIG);
 	newLevel = curLevel;
 	if (bIncTrigLevel) {		/* increase the trigger level */
-		if (curLevel < MAX_TX_FIFO_THRESHOLD)
+		if (curLevel < ahp->ah_maxTxTrigLev)
 			newLevel++;
 	} else if (curLevel > MIN_TX_FIFO_THRESHOLD)
 		newLevel--;
@@ -65,6 +68,8 @@ ar5212UpdateTxTrigLevel(struct ath_hal *ah, HAL_BOOL bIncTrigLevel)
 		/* Update the trigger level */
 		OS_REG_WRITE(ah, AR_TXCFG,
 			(txcfg &~ AR_FTRIG) | SM(newLevel, AR_FTRIG));
+
+	ahp->ah_txTrigLev = newLevel;
 
 	/* re-enable chip interrupts */
 	ar5212SetInterrupts(ah, omask);

@@ -132,6 +132,7 @@ xsasl_dovecot_server.o: ../../include/connect.h
 xsasl_dovecot_server.o: ../../include/iostuff.h
 xsasl_dovecot_server.o: ../../include/mail_params.h
 xsasl_dovecot_server.o: ../../include/msg.h
+xsasl_dovecot_server.o: ../../include/myaddrinfo.h
 xsasl_dovecot_server.o: ../../include/mymalloc.h
 xsasl_dovecot_server.o: ../../include/name_mask.h
 xsasl_dovecot_server.o: ../../include/split_at.h

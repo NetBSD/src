@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master.h,v 1.1.1.1.6.1 2011/03/05 15:09:00 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -68,6 +68,7 @@ typedef struct MASTER_SERV {
 #define MASTER_FLAG_LOCAL_ONLY	(1<<4)	/* no remote clients */
 
 #define MASTER_THROTTLED(f)	((f)->flags & MASTER_FLAG_THROTTLE)
+#define MASTER_MARKED_FOR_DELETION(f) ((f)->flags & MASTER_FLAG_MARK)
 
 #define MASTER_LIMIT_OK(limit, count) ((limit) == 0 || ((count) < (limit)))
 

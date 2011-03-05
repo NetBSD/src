@@ -1,4 +1,4 @@
-#	$NetBSD: t_disk.sh,v 1.2.2.2 2011/02/08 19:01:38 bouyer Exp $
+#	$NetBSD: t_disk.sh,v 1.2.2.3 2011/03/05 15:10:57 bouyer Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,6 +86,34 @@ data()
 	    dd if=the.img iseek=16k bs=1 count=512
 }
 
+test_case type_chr -d key=/img,hostpath=the.img,size=32k,type=chr
+type_chr()
+{
+	atf_check -s exit:0 -o inline:'Character Device\n' \
+	    env LD_PRELOAD=/usr/lib/librumphijack.so stat -f %HT /rump/img
+}
+
+test_case type_reg -d key=/img,hostpath=the.img,size=32k,type=reg
+type_reg()
+{
+	atf_check -s exit:0 -o inline:'Regular File\n' \
+	    env LD_PRELOAD=/usr/lib/librumphijack.so stat -f %HT /rump/img
+}
+
+test_case type_blk -d key=/img,hostpath=the.img,size=32k,type=blk
+type_blk()
+{
+	atf_check -s exit:0 -o inline:'Block Device\n' \
+	    env LD_PRELOAD=/usr/lib/librumphijack.so stat -f %HT /rump/img
+}
+
+test_case type_blk_default -d key=/img,hostpath=the.img,size=32k
+type_blk_default()
+{
+	atf_check -s exit:0 -o inline:'Block Device\n' \
+	    env LD_PRELOAD=/usr/lib/librumphijack.so stat -f %HT /rump/img
+}
+
 atf_init_test_cases()
 {
 
@@ -93,4 +121,8 @@ atf_init_test_cases()
 	atf_add_test_case offset
 	atf_add_test_case notrunc
 	atf_add_test_case data
+	atf_add_test_case type_chr
+	atf_add_test_case type_reg
+	atf_add_test_case type_blk
+	atf_add_test_case type_blk_default
 }

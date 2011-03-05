@@ -43,6 +43,7 @@ base-krb5-bin base-sys-usr
 base-krb5-examples base-sys-share
 base-krb5-root base-sys-root
 base-krb5-shlib base-sys-usr
+base-libsaslc-examples base-sys-share
 base-locale-Pig base-locale-share
 base-locale-bg base-locale-share
 base-locale-bin base-sys-usr
@@ -286,6 +287,8 @@ etc-games-scores base-games-root
 etc-ipf-rc base-sys-root
 etc-isdn-rc base-sys-root
 etc-krb5-rc base-sys-root
+etc-libsaslc-etc base-sys-root
+etc-libsaslc-postfix base-sys-root
 etc-lpr-etc base-sys-root
 etc-lpr-log base-sys-root
 etc-lpr-rc base-sys-root
@@ -466,6 +469,7 @@ misc-dhcpd-examples base-dhcpd-examples
 misc-fstab-examples base-fstab-examples
 misc-isdn-examples base-isdn-examples
 misc-krb5-examples base-krb5-examples
+misc-libsaslc-examples base-libsaslc-examples
 misc-netutil-examples base-netutil-examples
 misc-ntp-htmldoc base-man-share
 misc-postfix-examples base-postfix-examples

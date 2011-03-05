@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.12.2.1 2011/02/08 16:20:09 bouyer Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.12.2.2 2011/03/05 15:10:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -152,6 +152,36 @@ dir_notempty(const atf_tc_t *tc, const char *mountpath)
 }
 
 static void
+dir_rmdirdotdot(const atf_tc_t *tc, const char *mp)
+{
+	char pb[MAXPATHLEN];
+	int xerrno;
+
+	USES_DIRS;
+
+	FSTEST_ENTER();
+	RL(rump_sys_mkdir("test", 0777));
+	RL(rump_sys_chdir("test"));
+
+	RL(rump_sys_mkdir("subtest", 0777));
+	RL(rump_sys_chdir("subtest"));
+
+	md(pb, mp, "test/subtest");
+	RL(rump_sys_rmdir(pb));
+	md(pb, mp, "test");
+	RL(rump_sys_rmdir(pb));
+
+	if (FSTYPE_NFS(tc))
+		xerrno = ESTALE;
+	else
+		xerrno = ENOENT;
+	if (FSTYPE_TMPFS(tc))
+		atf_tc_expect_signal(-1, "PR kern/44657");
+	ATF_REQUIRE_ERRNO(xerrno, rump_sys_chdir("..") == -1);
+	FSTEST_EXIT();
+}
+
+static void
 checkfile(const char *path, struct stat *refp)
 {
 	char buf[MAXPATHLEN];
@@ -170,10 +200,7 @@ static void
 rename_dir(const atf_tc_t *tc, const char *mp)
 {
 	char pb1[MAXPATHLEN], pb2[MAXPATHLEN], pb3[MAXPATHLEN];
-	struct stat ref;
-
-	if (FSTYPE_MSDOS(tc))
-		atf_tc_skip("test fails in some setups, reason unknown");
+	struct stat ref, sb;
 
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by fs");
@@ -247,11 +274,30 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	md(pb1, mp, "dir2/../dir3");
 	checkfile(pb1, &ref);
 
-	/* finally, atomic cross-directory rename */
+	/* atomic cross-directory rename */
 	md(pb3, mp, "dir2/subdir");
 	if (rump_sys_rename(pb1, pb3) == -1)
 		atf_tc_fail_errno("rename 9");
 	checkfile(pb3, &ref);
+
+	/* rename directory over an empty directory */
+	md(pb1, mp, "parent");
+	md(pb2, mp, "parent/dir1");
+	md(pb3, mp, "parent/dir2");
+	RL(rump_sys_mkdir(pb1, 0777));
+	RL(rump_sys_mkdir(pb2, 0777));
+	RL(rump_sys_mkdir(pb3, 0777));
+	RL(rump_sys_rename(pb2, pb3));
+
+	RL(rump_sys_stat(pb1, &sb));
+	ATF_CHECK_EQ(sb.st_nlink, 3);
+	RL(rump_sys_rmdir(pb3));
+	if (FSTYPE_TMPFS(tc))
+		atf_tc_expect_signal(-1, "PR kern/44288");
+	RL(rump_sys_rmdir(pb1));
+
+	if (FSTYPE_MSDOS(tc))
+		atf_tc_expect_fail("PR kern/44661");
 }
 
 static void
@@ -296,9 +342,6 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by fs");
-
-	if (FSTYPE_MSDOS(tc))
-		atf_tc_skip("test fails in some setups, reason unknown");
 
 	if (rump_sys_chdir(mp) == -1)
 		atf_tc_fail_errno("chdir mountpoint");
@@ -406,6 +449,26 @@ create_nametoolong(const atf_tc_t *tc, const char *mp)
 	free(name);
 
 	rump_sys_chdir("/");
+}
+
+static void
+create_exist(const atf_tc_t *tc, const char *mp)
+{
+	const char *name = "hoge";
+	int fd;
+
+	RL(rump_sys_chdir(mp));
+	RL(fd = rump_sys_open(name, O_RDWR|O_CREAT|O_EXCL, 0666));
+	RL(rump_sys_close(fd));
+	RL(rump_sys_unlink(name));
+	RL(fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666));
+	RL(rump_sys_close(fd));
+	RL(fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666));
+	RL(rump_sys_close(fd));
+	ATF_REQUIRE_ERRNO(EEXIST,
+	    (fd = rump_sys_open(name, O_RDWR|O_CREAT|O_EXCL, 0666)));
+	RL(rump_sys_unlink(name));
+	RL(rump_sys_chdir("/"));
 }
 
 static void
@@ -685,19 +748,46 @@ fcntl_getlock_pids(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+access_simple(const atf_tc_t *tc, const char *mp)
+{
+	int fd;
+	int tmode;
+
+	FSTEST_ENTER();
+	RL(fd = rump_sys_open("tfile", O_CREAT | O_RDWR, 0777));
+	RL(rump_sys_close(fd));
+
+#define ALLACC (F_OK | X_OK | W_OK | R_OK)
+	if (FSTYPE_SYSVBFS(tc) || FSTYPE_MSDOS(tc))
+		tmode = F_OK;
+	else
+		tmode = ALLACC;
+
+	RL(rump_sys_access("tfile", tmode));
+
+	/* PR kern/44648 */
+	ATF_REQUIRE_ERRNO(EINVAL, rump_sys_access("tfile", ALLACC+1) == -1);
+#undef ALLACC
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
 ATF_TC_FSAPPLY(dir_notempty, "non-empty directories cannot be removed");
+ATF_TC_FSAPPLY(dir_rmdirdotdot, "remove .. and try to cd out");
 ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops");
 ATF_TC_FSAPPLY(rename_dotdot, "rename dir ..");
 ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
 ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
+ATF_TC_FSAPPLY(create_exist, "create with O_EXCL");
 ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
 ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
 ATF_TC_FSAPPLY(attrs, "check setting attributes works");
 ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
 ATF_TC_FSAPPLY(fcntl_getlock_pids,"fcntl F_GETLK w/ many procs, PR kern/44494");
+ATF_TC_FSAPPLY(access_simple, "access(2)");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -706,15 +796,18 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(lookup_complex);
 	ATF_TP_FSAPPLY(dir_simple);
 	ATF_TP_FSAPPLY(dir_notempty);
+	ATF_TP_FSAPPLY(dir_rmdirdotdot);
 	ATF_TP_FSAPPLY(rename_dir);
 	ATF_TP_FSAPPLY(rename_dotdot);
 	ATF_TP_FSAPPLY(rename_reg_nodir);
 	ATF_TP_FSAPPLY(create_nametoolong);
+	ATF_TP_FSAPPLY(create_exist);
 	ATF_TP_FSAPPLY(rename_nametoolong);
 	ATF_TP_FSAPPLY(symlink_zerolen);
 	ATF_TP_FSAPPLY(attrs);
 	ATF_TP_FSAPPLY(fcntl_lock);
 	ATF_TP_FSAPPLY(fcntl_getlock_pids);
+	ATF_TP_FSAPPLY(access_simple);
 
 	return atf_no_error();
 }

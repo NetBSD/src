@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.1.1.7 2009/08/06 16:55:25 joerg Exp $	*/
+/*	$NetBSD: show.c,v 1.1.1.7.2.1 2011/03/05 15:08:50 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: show.c,v 1.1.1.7 2009/08/06 16:55:25 joerg Exp $");
+__RCSID("$NetBSD: show.c,v 1.1.1.7.2.1 2011/03/05 15:08:50 bouyer Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -194,7 +194,8 @@ show_plist(const char *title, package_t *plist, pl_ent_t type)
 			case PLIST_PKGCFL:
 			case PLIST_BLDDEP:
 			case PLIST_PKGDIR:
-				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose, p->name);
+				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose,
+					(p->name) ? p->name : "(null)");
 				break;
 			default:
 				warnx("unknown command type %d (%s)", p->type, p->name);
@@ -360,7 +361,8 @@ show_summary(struct pkg_meta *meta, package_t *plist, const char *binpkgfile)
 	}
 
 	print_string_as_var("COMMENT", meta->meta_comment);
-	print_string_as_var("SIZE_PKG", meta->meta_size_pkg);
+	if (meta->meta_size_pkg)
+		print_string_as_var("SIZE_PKG", meta->meta_size_pkg);
 
 	if (meta->meta_build_info)
 		var_copy_list(meta->meta_build_info, bi_vars);

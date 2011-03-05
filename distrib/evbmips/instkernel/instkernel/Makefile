@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/12/14 01:12:05 matt Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2011/03/05 15:08:34 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,6 +14,8 @@ MDSETTARGETS+=		INSTALL_MALTA		${RAMDISK}	-
 .elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 MDSETTARGETS=		INSTALL_MALTA32		${RAMDISK}	-
 MDSETTARGETS+=		INSTALL_MALTA64		${RAMDISK}	-
+MDSETTARGETS+=		INSTALL_XLSATX32	${RAMDISK}	-
+MDSETTARGETS+=		INSTALL_XLSATX64	${RAMDISK}	-
 
 .else
 # Big endian platforms.

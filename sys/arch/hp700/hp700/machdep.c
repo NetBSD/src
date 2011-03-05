@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96.4.1 2011/02/08 16:19:24 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96.4.2 2011/03/05 15:09:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.4.1 2011/02/08 16:19:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.4.2 2011/03/05 15:09:41 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1884,7 +1884,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
-	tf->tf_arg0 = (u_long)p->p_psstr;
+	tf->tf_arg0 = p->p_psstrp;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	tf->tf_sr7 = HPPA_SID_KERNEL;

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: mkdist,v 1.1 2010/04/15 18:21:29 sborrill Exp $
+# $NetBSD: mkdist,v 1.1.2.1 2011/03/05 15:08:46 bouyer Exp $
 
 case "$#" in
 0)
@@ -22,6 +22,6 @@ mv dist netbsd-iscsi-$t
 tar --exclude CVS --exclude .libs \
     --exclude autom4te.cache --exclude \*.lo \
     --exclude \*.o --exclude \*.la \
-    --exclude \*~ \
+    --exclude \*~ --exclude \*.orig \
     -cvzf netbsd-iscsi-$t.tar.gz netbsd-iscsi-$t
 mv netbsd-iscsi-$t dist

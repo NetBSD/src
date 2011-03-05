@@ -1,4 +1,4 @@
-#	$NetBSD: std.hpcmips,v 1.19 2005/12/11 12:17:33 christos Exp $
+#	$NetBSD: std.hpcmips,v 1.19.108.1 2011/03/05 15:09:41 bouyer Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
@@ -6,7 +6,7 @@ include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipsel"
 
 options 	NOFPU			# No FPU
-options 	SOFTFLOAT		# emulate FPU insn
+options 	FPEMUL			# emulate FPU insn
 
 mainbus0 at root
 cpu* at mainbus0

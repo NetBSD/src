@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.28.2.1 2011/02/08 16:18:30 bouyer Exp $	*/
+/*	$NetBSD: session.c,v 1.28.2.2 2011/03/05 15:08:33 bouyer Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -343,6 +343,8 @@ close_session()
 	pfkey_send_flush(lcconf->sock_pfkey, SADB_SATYPE_UNSPEC);
 	flushph2();
 	flushph1();
+	flushrmconf();
+	flushsainfo();
 	close_sockets();
 	backupsa_clean();
 

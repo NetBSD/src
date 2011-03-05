@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.1.1.2 2010/06/17 18:06:29 tron Exp $
+.\"	$NetBSD: smtp.8,v 1.1.1.2.2.1 2011/03/05 15:08:56 bouyer Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -254,6 +254,10 @@ Restricted \fBbody_checks\fR(5) tables for the Postfix SMTP client.
 Available in Postfix version 2.6 and later:
 .IP "\fBtcp_windowsize (0)\fR"
 An optional workaround for routers that break TCP window scaling.
+.PP
+Available in Postfix version 2.8 and later:
+.IP "\fBsmtp_dns_resolver_options (empty)\fR"
+DNS Resolver options for the Postfix SMTP client.
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf
@@ -441,6 +445,10 @@ Available in Postfix version 2.7 and later:
 Try to detect a mail hijacking attack based on a TLS protocol
 vulnerability (CVE-2009-3555), where an attacker prepends malicious
 HELO, MAIL, RCPT, DATA commands to a Postfix SMTP client TLS session.
+.PP
+Available in Postfix version 2.8 and later:
+.IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
+List or bit-mask of OpenSSL bug work-arounds to disable.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -610,6 +618,10 @@ The process name of a Postfix command or daemon process.
 .IP "\fBproxy_interfaces (empty)\fR"
 The network interface addresses that this mail system receives mail
 on by way of a proxy or network address translation unit.
+.IP "\fBsmtp_address_preference (ipv6)\fR"
+The address type ("ipv6", "ipv4" or "any") that the Postfix
+SMTP client will try first, when a destination has IPv6 and IPv4
+addresses with equal MX preference.
 .IP "\fBsmtp_bind_address (empty)\fR"
 An optional numerical network address that the Postfix SMTP client
 should bind to when making an IPv4 connection.

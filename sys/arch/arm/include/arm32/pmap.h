@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97.4.1 2011/03/05 15:09:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -278,6 +278,10 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
 #define pmap_phys_address(ppn)		(arm_ptob((ppn)))
+u_int arm32_mmap_flags(paddr_t);
+#define ARM32_MMAP_WRITECOMBINE	0x40000000
+#define ARM32_MMAP_CACHEABLE		0x20000000
+#define pmap_mmap_flags(ppn)			arm32_mmap_flags(ppn)
 
 /*
  * Functions that we need to export
@@ -499,6 +503,10 @@ extern pt_entry_t		pte_l2_s_cache_mask;
 extern pt_entry_t		pte_l1_s_cache_mode_pt;
 extern pt_entry_t		pte_l2_l_cache_mode_pt;
 extern pt_entry_t		pte_l2_s_cache_mode_pt;
+
+extern pt_entry_t		pte_l1_s_wc_mode;
+extern pt_entry_t		pte_l2_l_wc_mode;
+extern pt_entry_t		pte_l2_s_wc_mode;
 
 extern pt_entry_t		pte_l1_s_prot_u;
 extern pt_entry_t		pte_l1_s_prot_w;

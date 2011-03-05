@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.15.8.1 2011/02/08 16:19:29 bouyer Exp $ */
+/* $NetBSD: sbtimer.c,v 1.15.8.2 2011/03/05 15:09:51 bouyer Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.15.8.1 2011/02/08 16:19:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.15.8.2 2011/03/05 15:09:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,12 +93,12 @@ sbtimer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	sc->sc_flags = device_cfdata(sc->sc_dev)->cf_flags;
-	sc->sc_addr_icnt = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr +
-	    R_SCD_TIMER_INIT);
-	sc->sc_addr_cnt = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr +
-	    R_SCD_TIMER_CNT);
-	sc->sc_addr_cfg = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr +
-	    R_SCD_TIMER_CFG);
+	sc->sc_addr_icnt = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_base +
+	    sa->sa_locs.sa_offset + R_SCD_TIMER_INIT);
+	sc->sc_addr_cnt = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_base +
+	    sa->sa_locs.sa_offset + R_SCD_TIMER_CNT);
+	sc->sc_addr_cfg = (uint64_t *)MIPS_PHYS_TO_KSEG1(sa->sa_base +
+	    sa->sa_locs.sa_offset + R_SCD_TIMER_CFG);
 
 	aprint_normal(": ");
 	if ((sc->sc_flags & SBTIMER_CLOCK) != 0) {

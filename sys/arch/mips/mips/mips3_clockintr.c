@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.9.8.1 2011/02/17 11:59:49 bouyer Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.9.8.2 2011/03/05 15:09:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.9.8.1 2011/02/17 11:59:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.9.8.2 2011/03/05 15:09:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,13 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.9.8.1 2011/02/17 11:59:49 bouy
 
 #include <machine/locore.h>
 
-struct evcnt mips_int5_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
-struct evcnt mips_int5_missed_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "missed int 5");
-
-uint32_t next_cp0_clk_intr;	/* used to schedule hard clock interrupts */
-
 /*
  * Handling to be done upon receipt of a MIPS 3 clock interrupt.  This
  * routine is to be called from the master interrupt routine
@@ -68,10 +61,14 @@ uint32_t next_cp0_clk_intr;	/* used to schedule hard clock interrupts */
 void
 mips3_clockintr(struct clockframe *cfp)
 {
+	struct cpu_info * const ci = curcpu();
 	uint32_t new_cnt;
 
-	next_cp0_clk_intr += curcpu()->ci_cycles_per_hz;
-	mips3_cp0_compare_write(next_cp0_clk_intr);
+	ci->ci_ev_count_compare.ev_count++;
+
+	KASSERT((ci->ci_cycles_per_hz & ~(0xffffffff)) == 0);
+	ci->ci_next_cp0_clk_intr += (uint32_t)(ci->ci_cycles_per_hz & 0xffffffff);
+	mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
 
 	/* Check for lost clock interrupts */
 	new_cnt = mips3_cp0_count_read();
@@ -80,16 +77,18 @@ mips3_clockintr(struct clockframe *cfp)
 	 * Missed one or more clock interrupts, so let's start 
 	 * counting again from the current value.
 	 */
-	if ((next_cp0_clk_intr - new_cnt) & 0x80000000) {
+	if ((ci->ci_next_cp0_clk_intr - new_cnt) & 0x80000000) {
 
-		next_cp0_clk_intr = new_cnt + curcpu()->ci_cycles_per_hz;
-		mips3_cp0_compare_write(next_cp0_clk_intr);
-		mips_int5_missed_evcnt.ev_count++;
+		ci->ci_next_cp0_clk_intr = new_cnt + curcpu()->ci_cycles_per_hz;
+		mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
+		curcpu()->ci_ev_count_compare_missed.ev_count++;
 	}
 
-	hardclock(cfp);
+	/*
+	 * Since hardclock is at the end, we can invoke it by a tailcall.
+	 */
 
-	mips_int5_evcnt.ev_count++;
+	hardclock(cfp);
 
 	/* caller should renable clock interrupts */
 }
@@ -101,11 +100,10 @@ mips3_clockintr(struct clockframe *cfp)
 void
 mips3_initclocks(void)
 {
-	evcnt_attach_static(&mips_int5_evcnt);
-	evcnt_attach_static(&mips_int5_missed_evcnt);
+	struct cpu_info * const ci = curcpu();
 
-	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
-	mips3_cp0_compare_write(next_cp0_clk_intr);
+	ci->ci_next_cp0_clk_intr = mips3_cp0_count_read() + ci->ci_cycles_per_hz;
+	mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
 
 	mips3_init_tc();
 
@@ -113,7 +111,7 @@ mips3_initclocks(void)
 	 * Now we can enable all interrupts including hardclock(9)
 	 * by CPU INT5.
 	 */
-	_splnone();
+	spl0();
 }
 
 /*

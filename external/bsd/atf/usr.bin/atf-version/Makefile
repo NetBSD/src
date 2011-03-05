@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2010/10/20 09:20:13 jmmv Exp $
+# $NetBSD: Makefile,v 1.6.2.1 2011/03/05 15:08:46 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ CPPFLAGS+=	-I${SRCDIR}
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf-c
 CPPFLAGS+=	-I${.CURDIR}
 LDADD+=		-latf-c++ -latf-c
+DPADD+=		${LIBATF_CXX} ${LIBATF_C}
 
 WARNS?=		2
 

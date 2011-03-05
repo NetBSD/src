@@ -93,6 +93,7 @@ smtp.o: ../../include/attr.h
 smtp.o: ../../include/debug_peer.h
 smtp.o: ../../include/deliver_request.h
 smtp.o: ../../include/dict.h
+smtp.o: ../../include/dns.h
 smtp.o: ../../include/dsn.h
 smtp.o: ../../include/dsn_buf.h
 smtp.o: ../../include/ext_prop.h
@@ -110,12 +111,14 @@ smtp.o: ../../include/match_ops.h
 smtp.o: ../../include/mime_state.h
 smtp.o: ../../include/msg.h
 smtp.o: ../../include/msg_stats.h
+smtp.o: ../../include/myaddrinfo.h
 smtp.o: ../../include/mymalloc.h
 smtp.o: ../../include/name_code.h
 smtp.o: ../../include/name_mask.h
 smtp.o: ../../include/recipient_list.h
 smtp.o: ../../include/resolve_clnt.h
 smtp.o: ../../include/scache.h
+smtp.o: ../../include/sock_addr.h
 smtp.o: ../../include/string_list.h
 smtp.o: ../../include/stringops.h
 smtp.o: ../../include/sys_defs.h

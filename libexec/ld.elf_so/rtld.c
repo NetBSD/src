@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.137 2010/12/24 12:41:43 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.137.2.1 2011/03/05 15:09:24 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.137 2010/12/24 12:41:43 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.137.2.1 2011/03/05 15:09:24 bouyer Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -325,8 +325,10 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	const Obj_Entry **real___mainprog_obj;
 	char ***real_environ;
 #ifdef DEBUG
-	int i = 0;
 	const char     *ld_debug;
+#endif
+#ifdef RTLD_DEBUG
+	int i = 0;
 #endif
 
 	/*

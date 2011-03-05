@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.7 2009/03/14 15:36:04 dsl Exp $	*/
+/*	$NetBSD: tgets.c,v 1.7.8.1 2011/03/05 15:09:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -50,7 +50,7 @@ tgets(char *buf)
 			goto next;
 		delay(SCANWAIT);
 	}
-	return (-1);
+	return -1;
 next:
 #else
 	c = getchar();
@@ -71,7 +71,7 @@ next:
 				putchar('\b');
 			}
 			break;
-		case 'r'&037: {
+		case 'r' & 037: {
 			register char *p;
 
 			putchar('\n');
@@ -79,8 +79,8 @@ next:
 				putchar(*p);
 			break;
 		}
-		case 'u'&037:
-		case 'w'&037:
+		case 'u' & 037:
+		case 'w' & 037:
 			lp = buf;
 			putchar('\n');
 			break;

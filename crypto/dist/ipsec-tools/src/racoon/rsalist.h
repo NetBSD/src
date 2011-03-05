@@ -1,4 +1,4 @@
-/*	$NetBSD: rsalist.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: rsalist.h,v 1.4.38.1 2011/03/05 15:08:33 bouyer Exp $	*/
 
 /* Id: rsalist.h,v 1.2 2004/07/12 20:43:51 ludvigm Exp */
 /*
@@ -53,6 +53,7 @@ struct rsa_key {
 };
 
 int rsa_key_insert(struct genlist *list, struct netaddr *src, struct netaddr *dst, RSA *rsa);
+void rsa_key_free(void *data);
 void rsa_key_dump(struct genlist *list);
 
 struct genlist *rsa_lookup_keys(struct ph1handle *iph1, int my);

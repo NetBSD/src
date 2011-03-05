@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.46.4.1 2011/02/17 11:59:49 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.46.4.2 2011/03/05 15:09:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,10 @@
 #ifndef _MIPS_VMPARAM_H_
 #define	_MIPS_VMPARAM_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
 /*
  * Machine dependent VM constants for MIPS.
  */
@@ -64,10 +68,11 @@
  *
  * USRSTACK needs to start a little below 0x8000000 because the R8000
  * and some QED CPUs perform some virtual address checks before the
- * offset is calculated.
+ * offset is calculated.  We use 0x8000 since that's the max displacement
+ * in an instruction.
  */
-#define	USRSTACK	(VM_MAXUSER_ADDRESS-PAGE_SIZE) /* Start of user stack */
-#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-PAGE_SIZE)
+#define	USRSTACK	(VM_MAXUSER_ADDRESS-0x8000) /* Start of user stack */
+#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-0x8000)
 
 /* alignment requirement for u-area space in bytes */
 #define	USPACE_ALIGN	USPACE
@@ -75,6 +80,7 @@
 /*
  * Virtual memory related constants, all in bytes
  */
+#if defined(__mips_o32)
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #endif
@@ -90,6 +96,26 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
+#else
+/*
+ * 64-bit ABIs need more space.
+ */
+#ifndef MAXTSIZ
+#define	MAXTSIZ		(128*1024*1024)		/* max text size */
+#endif
+#ifndef DFLDSIZ
+#define	DFLDSIZ		(256*1024*1024)		/* initial data size limit */
+#endif
+#ifndef MAXDSIZ
+#define	MAXDSIZ		(1536*1024*1024)	/* max data size */
+#endif
+#ifndef	DFLSSIZ
+#define	DFLSSIZ		(16*1024*1024)		/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ
+#define	MAXSSIZ		(120*1024*1024)		/* max stack size */
+#endif
+#endif /* !__mips_o32 */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -128,11 +154,8 @@
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
 #ifdef _LP64
-#if 1
-#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 31)	/* 0x0000000080000000 */
-#else
-#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 62)	/* 0x4000000000000000 */
-#endif
+#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << (4*PGSHIFT-8))
+							/* 0x0000010000000000 */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
@@ -162,14 +185,17 @@
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
 #ifndef VM_NFREELIST
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */
 #define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_FIRST16M	1	/* ISA DMA range */
-#define VM_FREELIST_FIRST512M	2	/* KSEG0/1 */
-#define VM_FREELIST_FIRST4G	3	/* 32bit addrs */
-#define VM_FREELIST_MAX		4
+#define VM_FREELIST_MAX		1
+#endif
+
+#ifdef _KERNEL
+#define	UVM_KM_VMFREELIST	mips_poolpage_vmfreelist
+extern int mips_poolpage_vmfreelist;
 #endif
 
 #endif /* ! _MIPS_VMPARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.1.1.2 2010/06/17 18:07:13 tron Exp $	*/
+/*	$NetBSD: events.c,v 1.1.1.2.2.1 2011/03/05 15:09:04 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -63,7 +63,8 @@
 /*	event_request_timer() causes the specified callback function to
 /*	be called with the specified context argument after \fIdelay\fR
 /*	seconds, or as soon as possible thereafter. The delay should
-/*	not be negative.
+/*	not be negative (the manifest EVENT_NULL_DELAY provides for
+/*	convenient zero-delay notification).
 /*	The event argument is equal to EVENT_TIME.
 /*	Only one timer request can be active per (callback, context) pair.
 /*	Calling event_request_timer() with an existing (callback, context)
@@ -235,7 +236,7 @@ typedef struct {
 typedef struct EVENT_FDTABLE EVENT_FDTABLE;
 
 struct EVENT_FDTABLE {
-    EVENT_NOTIFY_RDWR callback;
+    EVENT_NOTIFY_RDWR_FN callback;
     char   *context;
 };
 static EVENT_MASK event_rmask;		/* enabled read events */
@@ -509,7 +510,7 @@ typedef struct EVENT_TIMER EVENT_TIMER;
 
 struct EVENT_TIMER {
     time_t  when;			/* when event is wanted */
-    EVENT_NOTIFY_TIME callback;		/* callback function */
+    EVENT_NOTIFY_TIME_FN callback;		/* callback function */
     char   *context;			/* callback context */
     long    loop_instance;		/* event_loop() call instance */
     RING    ring;			/* linkage */
@@ -721,7 +722,7 @@ void    event_fork(void)
 
 /* event_enable_read - enable read events */
 
-void    event_enable_read(int fd, EVENT_NOTIFY_RDWR callback, char *context)
+void    event_enable_read(int fd, EVENT_NOTIFY_RDWR_FN callback, char *context)
 {
     const char *myname = "event_enable_read";
     EVENT_FDTABLE *fdp;
@@ -776,7 +777,7 @@ void    event_enable_read(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 
 /* event_enable_write - enable write events */
 
-void    event_enable_write(int fd, EVENT_NOTIFY_RDWR callback, char *context)
+void    event_enable_write(int fd, EVENT_NOTIFY_RDWR_FN callback, char *context)
 {
     const char *myname = "event_enable_write";
     EVENT_FDTABLE *fdp;
@@ -886,7 +887,7 @@ void    event_disable_readwrite(int fd)
 
 /* event_request_timer - (re)set timer */
 
-time_t  event_request_timer(EVENT_NOTIFY_TIME callback, char *context, int delay)
+time_t  event_request_timer(EVENT_NOTIFY_TIME_FN callback, char *context, int delay)
 {
     const char *myname = "event_request_timer";
     RING   *ring;
@@ -957,7 +958,7 @@ time_t  event_request_timer(EVENT_NOTIFY_TIME callback, char *context, int delay
 
 /* event_cancel_timer - cancel timer */
 
-int     event_cancel_timer(EVENT_NOTIFY_TIME callback, char *context)
+int     event_cancel_timer(EVENT_NOTIFY_TIME_FN callback, char *context)
 {
     const char *myname = "event_cancel_timer";
     RING   *ring;

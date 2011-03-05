@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.94.2.1 2011/02/17 12:00:02 bouyer Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.94.2.2 2011/03/05 15:10:06 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94.2.1 2011/02/17 12:00:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94.2.2 2011/03/05 15:10:06 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94.2.1 2011/02/17 12:00:02 bouyer E
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -353,4 +354,14 @@ cpu_lwp_free2(struct lwp *l)
 
 	if ((fs = l->l_md.md_fpstate) != NULL)
 		pool_cache_put(fpstate_cache, fs);
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+	struct trapframe *tf = l->l_md.md_tf;
+
+	tf->tf_global[7] = (uintptr_t)addr;
+
+	return 0;
 }

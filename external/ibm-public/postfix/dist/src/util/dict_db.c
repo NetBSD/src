@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_db.c,v 1.1.1.2 2010/06/17 18:07:12 tron Exp $	*/
+/*	$NetBSD: dict_db.c,v 1.1.1.2.2.1 2011/03/05 15:09:04 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -549,7 +549,8 @@ static void dict_db_close(DICT *dict)
      * ignore, I'm going to report the bogus error as a non-error.
      */
     if (DICT_DB_CLOSE(dict_db->db) < 0)
-	msg_info("close database %s: %m", dict_db->dict.name);
+	msg_info("close database %s: %m (possible Berkeley DB bug)",
+		 dict_db->dict.name);
     if (dict_db->key_buf)
 	vstring_free(dict_db->key_buf);
     if (dict_db->val_buf)

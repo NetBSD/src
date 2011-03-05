@@ -1,4 +1,4 @@
-/* $NetBSD: xilinx_ml40x.c,v 1.1.2.2 2011/02/08 18:05:06 bouyer Exp $ */
+/* $NetBSD: xilinx_ml40x.c,v 1.1.2.3 2011/03/05 15:09:35 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,15 +31,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xilinx_ml40x.c,v 1.1.2.2 2011/02/08 18:05:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xilinx_ml40x.c,v 1.1.2.3 2011/03/05 15:09:35 bouyer Exp $");
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
+#include <machine/locore.h>
 
 #include <emips/emips/machdep.h>
 #include <emips/emips/cons.h>
@@ -53,7 +58,7 @@ static void	xilinx_ml40x_cons_init (void);
 #if 0
 #define NOINTS (MIPS_INT_MASK_5|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #else
-#define NOINTS MIPS_SPLHIGH
+#define NOINTS MIPS_INT_MASK
 #endif
 
 /* BUGBUG Rewrite this to go off to the interrupt controller masks */
@@ -66,13 +71,18 @@ static void	xilinx_ml40x_cons_init (void);
 	splvec.splstatclock = MIPS_SPL_0_1_2_3; //0x3f00
 #endif
 
-static const int xilinx_ml40x_ipl2spl_table[] = {
+static const struct ipl_sr_map xilinx_ml40x_ipl_sr_map = {
+    .sr_bits = {
 	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = NOINTS,
-	[IPL_SOFTSERIAL] = NOINTS,
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL] = MIPS_SOFT_INT_MASK,
 	[IPL_VM] = NOINTS,
 	[IPL_SCHED] = NOINTS,
+	[IPL_DDB] = NOINTS,
 	[IPL_HIGH] = NOINTS,
+    },
 };
 
 void
@@ -92,7 +102,7 @@ xilinx_ml40x_init(void)
 
 	sprintf(cpu_model, "Xilinx ML%s (eMIPS)", (systype == XS_ML40x) ? "40x" : "50x");
 
-	ipl2spl_table = xilinx_ml40x_ipl2spl_table;
+	ipl_sr_map = xilinx_ml40x_ipl_sr_map;
 }
 
 static void
@@ -106,17 +116,12 @@ xilinx_ml40x_cons_init(void)
 	pmap_kenter_pa(USART_DEFAULT_ADDRESS,
 	    USART_DEFAULT_ADDRESS,VM_PROT_WRITE|VM_PROT_READ);
 #else
-	struct mips1_tlb {
-		u_int32_t tlb_hi;
-		u_int32_t tlb_lo;
-	} tlb;
-	void mips1_TLBWrite(int, struct mips1_tlb *);
+	struct tlbmask tlb;
 
 	tlb.tlb_hi = USART_DEFAULT_ADDRESS;
-	tlb.tlb_lo = USART_DEFAULT_ADDRESS | 0xf02;
-	mips1_TLBWrite(3, &tlb);
+	tlb.tlb_lo0 = USART_DEFAULT_ADDRESS | 0xf02;
+	tlb_write_indexed(3, &tlb);
 #endif
 
 	dz_ebus_cnsetup(USART_DEFAULT_ADDRESS);
 }
-

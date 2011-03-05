@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.136.2.1 2011/02/08 16:18:49 bouyer Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.136.2.2 2011/03/05 15:08:41 bouyer Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1040,6 +1040,13 @@ fd*)
 ld*)
 	name=ld; unit=${i#ld}; blk=%ld_blk%; chr=%ld_chr%
 	%MKDISK% $name $unit $blk $chr
+	;;
+
+flash*)
+	unit=${i#flash}
+	flash=flash$unit
+	mkdev flash$unit b %flash_blk% $unit
+	mkdev rflash$unit c %flash_chr% $unit
 	;;
 
 altmem*)

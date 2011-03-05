@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.37.8.1 2011/02/17 11:59:49 bouyer Exp $	*/
+/*	$NetBSD: mem.c,v 1.37.8.2 2011/03/05 15:09:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37.8.1 2011/02/17 11:59:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37.8.2 2011/03/05 15:09:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37.8.1 2011/02/17 11:59:49 bouyer Exp $");
 
 #include <uvm/uvm_extern.h>
 
-extern paddr_t avail_end;
 void *zeropage;
 
 dev_type_read(mmrw);
@@ -117,7 +116,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 #endif
 			error = uiomove((void *)v, c, uio);
 #if defined(MIPS3_PLUS)
-			if (mips_cache_virtual_alias)
+			if (MIPS_CACHE_VIRTUAL_ALIAS)
 				mips_dcache_wbinv_range(v, c);
 #endif
 			continue;
@@ -125,18 +124,34 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (v < MIPS_KSEG0_START)
+#ifdef _LP64
+			if (v < MIPS_XKPHYS_START) {
+				return (EFAULT);
+			} else if (MIPS_XKPHYS_P(v)
+			    && v > MIPS_PHYS_TO_XKPHYS_CACHED(mips_avail_end +
+					mips_round_page(MSGBUFSIZE) - c)) {
+				return (EFAULT);
+			} else if (MIPS_XKSEG_P(v)
+			    && v < MIPS_KSEG0_START
+			    && !uvm_kernacc((void *)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) {
+				return (EFAULT);
+			} else if (MIPS_KSEG1_P(v) || MIPS_KSEG2_P(v)) {
+				return (EFAULT);
+			}
+#else
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
-			if (v > MIPS_PHYS_TO_KSEG0(avail_end +
+			if (v > MIPS_PHYS_TO_KSEG0(mips_avail_end +
 					mips_round_page(MSGBUFSIZE) - c) &&
 			    (v < MIPS_KSEG2_START ||
 			    !uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
 				return (EFAULT);
+#endif
 			error = uiomove((void *)v, c, uio);
 #if defined(MIPS3_PLUS)
-			if (mips_cache_virtual_alias)
+			if (MIPS_CACHE_VIRTUAL_ALIAS)
 				mips_dcache_wbinv_range(v, c);
 #endif
 			continue;

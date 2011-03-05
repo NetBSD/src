@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.3 2010/06/17 18:07:16 tron Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.3.2.1 2011/03/05 15:09:06 bouyer Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -417,6 +417,10 @@ extern int opterr;
 #define LOCAL_TRIGGER	stream_trigger
 #define LOCAL_SEND_FD	stream_send_fd
 #define LOCAL_RECV_FD	stream_recv_fd
+#define PASS_CONNECT	stream_pass_connect
+#define PASS_LISTEN	stream_pass_listen
+#define PASS_ACCEPT	stream_pass_accept
+#define PASS_TRIGGER	stream_pass_trigger
 #define HAS_VOLATILE_LOCKS
 #define BROKEN_READ_SELECT_ON_TCP_SOCKET
 #define CANT_WRITE_BEFORE_SENDING_FD
@@ -573,6 +577,7 @@ extern int opterr;
 #define BROKEN_AI_PASSIVE_NULL_HOST
 #define BROKEN_AI_NULL_SERVICE
 #define USE_SYSV_POLL
+#define MYMALLOC_FUZZ	1
 #endif
 
 #ifdef AIX4
@@ -1279,6 +1284,17 @@ extern int inet_pton(int, const char *, void *);
 #endif
 
  /*
+  * Workaround: after a watchdog alarm signal, wake up from select/poll/etc.
+  * by writing to a pipe. Solaris needs this, and HP-UX apparently, too. The
+  * run-time cost is negligible so we just turn it on for all systems. As a
+  * side benefit, making this code system-independent will simplify the
+  * detection of bit-rot problems.
+  */
+#ifndef NO_WATCHDOG_PIPE
+#define USE_WATCHDOG_PIPE
+#endif
+
+ /*
   * Defaults for systems without kqueue, /dev/poll or epoll support.
   * master/multi-server.c and *qmgr/qmgr_transport.c depend on this.
   */
@@ -1326,9 +1342,10 @@ extern int inet_pton(int, const char *, void *);
 #endif
 
 #ifndef PASS_LISTEN
-#define PASS_LISTEN	upass_listen
-#define PASS_ACCEPT	upass_accept
-#define PASS_TRIGGER	upass_trigger
+#define PASS_CONNECT	unix_pass_connect
+#define PASS_LISTEN	unix_pass_listen
+#define PASS_ACCEPT	unix_pass_accept
+#define PASS_TRIGGER	unix_pass_trigger
 #endif
 
 #if !defined (HAVE_SYS_NDIR_H) && !defined (HAVE_SYS_DIR_H) \
@@ -1502,6 +1519,20 @@ typedef int pid_t;
 #define PRINTFPTRLIKE(x,y) PRINTFLIKE(x,y)
 #else
 #define PRINTFPTRLIKE(x,y)
+#endif
+#endif
+
+ /*
+  * Compiler optimization hint. This makes sense only for code in a
+  * performance-critical loop.
+  */
+#ifndef EXPECTED
+#if defined(__GNUC__) && (__GNUC__ > 2)
+#define EXPECTED(x)	__builtin_expect(!!(x), 1)
+#define UNEXPECTED(x)	__builtin_expect(!!(x), 0)
+#else
+#define EXPECTED(x)	(x)
+#define UNEXPECTED(x)	(x)
 #endif
 #endif
 

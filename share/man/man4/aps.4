@@ -1,4 +1,4 @@
-.\"	$NetBSD: aps.4,v 1.3 2010/06/09 13:44:24 jruoho Exp $
+.\"	$NetBSD: aps.4,v 1.3.2.1 2011/03/05 15:09:25 bouyer Exp $
 .\"	$OpenBSD: aps.4,v 1.7 2007/05/31 19:19:49 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd June 9, 2010
+.Dd February 20, 2010
 .Dt APS 4
 .Os
 .Sh NAME
@@ -31,17 +31,17 @@ driver provides support for several sensors found in some ThinkPad laptops.
 The sensors currently exposed via the
 .Xr envsys 4
 interface are:
-.Bl -column "Sensor          " "Units" "Typical" -offset indent
-.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
-.It Li "X_ACCEL" Ta "Integer" Ta "X Acceleration"
-.It Li "Y_ACCEL" Ta "Integer" Ta "Y Acceleration"
-.It Li "X_VAR" Ta "Integer" Ta "Weighted X Acceleration?"
-.It Li "Y_VAR" Ta "Integer" Ta "Weighted Y Acceleration?"
-.It Li "Temp1" Ta "uK" Ta "Unknown"
-.It Li "Temp2" Ta "uK" Ta "Unknown"
-.It Li "Keyboard Active" Ta "Boolean" Ta "Keyboard activity"
-.It Li "Mouse Active" Ta "Boolean" Ta "Mouse activity"
-.It Li "Lid Open" Ta "Boolean" Ta "Lid state"
+.Bl -column "Sensor        " "Units    " "Typical" -offset indent
+.It Sy "Sensor        " Ta Sy "Units    " Ta Sy "Typical Use"
+.It Li "x-acceleration" Ta "integer" Ta "X-axis acceleration"
+.It Li "y-acceleration" Ta "integer" Ta "Y-axis acceleration"
+.It Li "x-variable" Ta "integer" Ta "Weighted X acceleration?"
+.It Li "y-variable" Ta "integer" Ta "Weighted Y acceleration?"
+.It Li "temperature 1" Ta "degC" Ta "Unknown temperature"
+.It Li "temperature 2" Ta "degC" Ta "Unknown temperature"
+.It Li "keyboard active" Ta "boolean" Ta "Keyboard activity"
+.It Li "mouse active" Ta "boolean" Ta "Mouse activity"
+.It Li "lid open" Ta "boolean" Ta "Lid state"
 .El
 .Sh SEE ALSO
 .Xr envsys 4 ,

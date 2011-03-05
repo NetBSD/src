@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1573.2.3 2011/02/17 11:57:19 bouyer Exp $
+#	$NetBSD: mi,v 1.1573.2.4 2011/03/05 15:08:36 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2055,6 +2055,7 @@
 ./usr/include/sys/file.h			comp-c-include
 ./usr/include/sys/filedesc.h			comp-c-include
 ./usr/include/sys/filio.h			comp-c-include
+./usr/include/sys/flashio.h			comp-c-include
 ./usr/include/sys/float_ieee.h			comp-obsolete		obsolete
 ./usr/include/sys/float_ieee754.h		comp-c-include
 ./usr/include/sys/fnv_hash.h			comp-obsolete		obsolete
@@ -2104,6 +2105,7 @@
 ./usr/include/sys/null.h			comp-c-include
 ./usr/include/sys/optstr.h			comp-obsolete		obsolete
 ./usr/include/sys/param.h			comp-c-include
+./usr/include/sys/pcu.h				comp-c-include
 ./usr/include/sys/pipe.h			comp-c-include
 ./usr/include/sys/pmc.h				comp-c-include
 ./usr/include/sys/pmf.h				comp-obsolete		obsolete
@@ -3568,6 +3570,7 @@
 ./usr/libdata/debug/usr/libexec/postfix/bounce.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/cleanup.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/discard.debug	comp-postfix-debug	postfix,debug
+./usr/libdata/debug/usr/libexec/postfix/dnsblog.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/error.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/flush.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/local.debug	comp-postfix-debug	postfix,debug
@@ -3575,6 +3578,7 @@
 ./usr/libdata/debug/usr/libexec/postfix/oqmgr.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/pickup.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/pipe.debug	comp-postfix-debug	postfix,debug
+./usr/libdata/debug/usr/libexec/postfix/postscreen.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/proxymap.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/qmgr.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/scache.debug	comp-postfix-debug	postfix,debug
@@ -3584,6 +3588,7 @@
 ./usr/libdata/debug/usr/libexec/postfix/smtpd.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/spawn.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/tlsmgr.debug	comp-postfix-debug	postfix,crypto,debug
+./usr/libdata/debug/usr/libexec/postfix/tlsproxy.debug	comp-postfix-debug	postfix,crypto,debug
 ./usr/libdata/debug/usr/libexec/postfix/trivial-rewrite.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/verify.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/virtual.debug	comp-postfix-debug	postfix,debug
@@ -3661,6 +3666,7 @@
 ./usr/libdata/debug/usr/sbin/extattrctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/faithd.debug	comp-router-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/fixmount.debug	comp-nfsclient-debug	debug
+./usr/libdata/debug/usr/sbin/flashctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fsinfo.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fssconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ftp-proxy.debug	comp-pf-debug		pf,debug
@@ -9371,6 +9377,7 @@
 ./usr/share/man/cat9/firmware_malloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/firmware_open.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/firmware_read.0		comp-sys-catman		.cat
+./usr/share/man/cat9/flash.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fork1.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/format_bytes.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fownsignal.0		comp-sys-catman		.cat
@@ -15305,6 +15312,7 @@
 ./usr/share/man/html9/firmware_malloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/firmware_open.html	comp-sys-htmlman	html
 ./usr/share/man/html9/firmware_read.html	comp-sys-htmlman	html
+./usr/share/man/html9/flash.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fork1.html		comp-sys-htmlman	html
 ./usr/share/man/html9/format_bytes.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fownsignal.html		comp-sys-htmlman	html
@@ -21390,6 +21398,7 @@
 ./usr/share/man/man9/firmware_malloc.9		comp-sys-man		.man
 ./usr/share/man/man9/firmware_open.9		comp-sys-man		.man
 ./usr/share/man/man9/firmware_read.9		comp-sys-man		.man
+./usr/share/man/man9/flash.9			comp-sys-man		.man
 ./usr/share/man/man9/fork1.9			comp-sys-man		.man
 ./usr/share/man/man9/format_bytes.9		comp-sys-man		.man
 ./usr/share/man/man9/fownsignal.9		comp-sys-man		.man
