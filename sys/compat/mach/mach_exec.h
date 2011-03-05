@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.34 2010/07/07 01:30:36 chs Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.35 2011/03/05 23:51:47 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ struct mach_lwp_emuldata {
 	struct mach_port *mle_kernel;	/* Thread's kernel port */
 };
 
+struct ps_strings;
 int exec_mach_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 int exec_mach_probe(const char **);
