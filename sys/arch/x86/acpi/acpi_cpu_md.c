@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.53 2011/03/04 12:10:49 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.54 2011/03/05 06:39:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.53 2011/03/04 12:10:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.54 2011/03/05 06:39:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -761,7 +761,7 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 int
 acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 {
-	uint64_t val;
+	uint64_t val = 0;
 
 	if (__predict_false(ps->ps_control_addr == 0))
 		return EINVAL;
@@ -769,10 +769,15 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	if ((ps->ps_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 		return acpicpu_md_pstate_fidvid_set(ps);
 
-	val = ps->ps_control;
+	/*
+	 * If the mask is set, do a read-modify-write.
+	 */
+	if (__predict_true(ps->ps_control_mask != 0)) {
+		val = rdmsr(ps->ps_control_addr);
+		val &= ~ps->ps_control_mask;
+	}
 
-	if (__predict_true(ps->ps_control_mask != 0))
-		val = val & ps->ps_control_mask;
+	val |= ps->ps_control;
 
 	wrmsr(ps->ps_control_addr, val);
 	DELAY(ps->ps_latency);
