@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.62 2010/11/27 05:02:35 sjg Exp $	*/
+/*	$NetBSD: dir.c,v 1.63 2011/03/05 23:57:05 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.62 2010/11/27 05:02:35 sjg Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.63 2011/03/05 23:57:05 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.62 2010/11/27 05:02:35 sjg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.63 2011/03/05 23:57:05 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1061,6 +1061,7 @@ Dir_FindFile(const char *name, Lst path)
     Boolean	  hasSlash;		/* true if 'name' contains a / */
     struct stat	  stb;			/* Buffer for stat, if necessary */
     Hash_Entry	  *entry;		/* Entry for mtimes table */
+    const char   *trailing_dot = ".";
 
     /*
      * Find the final component of the name and note whether it has a
@@ -1163,6 +1164,11 @@ Dir_FindFile(const char *name, Lst path)
 	}
 	misses += 1;
 	return NULL;
+    }
+
+    if (*cp == '\0') {
+	/* we were given a trailing "/" */
+	cp = trailing_dot;
     }
 
     if (name[0] != '/') {
@@ -1272,6 +1278,10 @@ Dir_FindFile(const char *name, Lst path)
      * b/c we added it here. This is not good...
      */
 #ifdef notdef
+    if (cp == traling_dot) {
+	cp = strrchr(name, '/');
+	cp += 1;
+    }
     cp[-1] = '\0';
     (void)Dir_AddDir(path, name);
     cp[-1] = '/';
