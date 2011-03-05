@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.257 2011/03/03 11:54:57 pooka Exp $
+# $NetBSD: mi,v 1.258 2011/03/05 18:14:55 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -284,6 +284,8 @@
 ./usr/libdata/debug/usr/tests/include/t_stdint.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
+./usr/libdata/debug/usr/tests/kernel/h_ps_strings1.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/h_ps_strings2.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read			tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read/t_fifo.debug		tests-kernel-tests	debug,atf
@@ -1605,6 +1607,8 @@
 ./usr/tests/ipf/t_pools				tests-ipf-tests			atf
 ./usr/tests/kernel				tests-kernel-tests
 ./usr/tests/kernel/Atffile			tests-kernel-tests		atf
+./usr/tests/kernel/h_ps_strings1		tests-kernel-tests		atf
+./usr/tests/kernel/h_ps_strings2		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue			tests-kernel-tests
 ./usr/tests/kernel/kqueue/Atffile		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/read			tests-kernel-tests
@@ -1632,6 +1636,7 @@
 ./usr/tests/kernel/t_pipe			tests-kernel-tests		atf
 ./usr/tests/kernel/t_poll3w			tests-kernel-tests		atf
 ./usr/tests/kernel/t_posix_fadvise		tests-kernel-tests		atf
+./usr/tests/kernel/t_ps_strings			tests-kernel-tests		atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf
 ./usr/tests/kernel/t_sigaction			tests-kernel-tests		atf
 ./usr/tests/kernel/t_time			tests-kernel-tests		atf
