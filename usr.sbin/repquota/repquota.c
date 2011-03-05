@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25.2.9 2011/03/05 18:10:44 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.10 2011/03/05 18:53:00 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ int	xflag = 0;		/* export */
 struct fileusage *addid(u_long, int, const char *);
 int	hasquota(struct fstab *, int, char **);
 struct fileusage *lookup(u_long, int);
+struct fileusage *qremove(u_long, int);
 int	main(int, char **);
 int	oneof(const char *, char **, int);
 int	repquota(const struct statvfs *, int);
@@ -110,8 +111,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	struct passwd *pw;
-	struct group *gr;
 	int gflag = 0, uflag = 0, errs = 0;
 	long i, argnum, done = 0;
 	int ch;
@@ -147,7 +146,7 @@ main(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
-	if (xflag && argc != 1)
+	if (xflag && (argc != 1 || aflag))
 		usage();
 	if (argc == 0 && !aflag)
 		usage();
@@ -155,18 +154,6 @@ main(argc, argv)
 		if (aflag)
 			gflag++;
 		uflag++;
-	}
-	if (gflag) {
-		setgrent();
-		while ((gr = getgrent()) != 0)
-			(void) addid((u_long)gr->gr_gid, GRPQUOTA, gr->gr_name);
-		endgrent();
-	}
-	if (uflag) {
-		setpwent();
-		while ((pw = getpwent()) != 0)
-			(void) addid((u_long)pw->pw_uid, USRQUOTA, pw->pw_name);
-		endpwent();
 	}
 
 	nfst = getmntinfo(&fst, MNT_WAIT);
@@ -410,6 +397,22 @@ printquotas(int type, const struct statvfs *vfs, int version)
 	char overchar[N_QL];
 	static time_t now;
 
+	if (type == GRPQUOTA) {
+		struct group *gr;
+		setgrent();
+		while ((gr = getgrent()) != 0)
+			(void) addid((u_long)gr->gr_gid, GRPQUOTA, gr->gr_name);
+		endgrent();
+	} else if (type == USRQUOTA) {
+		struct passwd *pw;
+		setpwent();
+		while ((pw = getpwent()) != 0)
+			(void) addid((u_long)pw->pw_uid, USRQUOTA, pw->pw_name);
+		endpwent();
+	} else {
+		errx(1, "unknown quota type %d\n", type);
+	}
+
 	if (now == 0)
 		time(&now);
 
@@ -424,7 +427,7 @@ printquotas(int type, const struct statvfs *vfs, int version)
 	printf(type == USRQUOTA ? "User " : "Group");
 	printf("            used     soft     hard  grace      used    soft    hard  grace\n");
 	for (id = 0; id <= highid[type]; id++) {
-		fup = lookup(id, type);
+		fup = qremove(id, type);
 		if (fup == 0)
 			continue;
 		for (i = 0; i < N_QL; i++) {
@@ -472,7 +475,7 @@ printquotas(int type, const struct statvfs *vfs, int version)
 			intprt(fup->fu_q2e.q2e_val[QL_FILE].q2v_hardlimit,
 				0, hflag, 8),
 			timemsg[QL_FILE]);
-		memset(&fup->fu_q2e, 0, sizeof(fup->fu_q2e));
+		free(fup);
 	}
 }
 
@@ -506,7 +509,7 @@ exportquotas()
 			err(1, "prop_array_add(data)");
 
 		for (id = 0; id <= highid[type]; id++) {
-			fup = lookup(id, type);
+			fup = qremove(id, type);
 			if (fup == 0)
 				continue;
 			fup->fu_q2e.q2e_uid = id;
@@ -515,6 +518,7 @@ exportquotas()
 				err(1, "q2etoprop(default)");
 			if (!prop_array_add_and_rel(datas, data))
 				err(1, "prop_array_add(data)");
+			free(fup);
 		}
 
 		if (!quota2_prop_add_command(cmds, "set",
@@ -602,6 +606,26 @@ lookup(id, type)
 			return (fup);
 	return ((struct fileusage *)0);
 }
+/*
+ * Lookup and remove an id of a specific type.
+ */
+struct fileusage *
+qremove(id, type)
+	u_long id;
+	int type;
+{
+	struct fileusage *fup, **fupp;
+
+	for (fupp = &fuhead[type][id & (FUHASH-1)]; *fupp != 0;) {
+		fup = *fupp;
+		if (fup->fu_id == id) {
+			*fupp = fup->fu_next;
+			return (fup);
+		}
+		fupp = &fup->fu_next;
+	}
+	return ((struct fileusage *)0);
+}
 
 /*
  * Add a new file usage id if it does not already exist.
@@ -636,5 +660,6 @@ addid(id, type, name)
 	} else {
 		sprintf(fup->fu_name, "%lu", (u_long)id);
 	}
+	fup->fu_q2e = defaultq2e[type];
 	return (fup);
 }
