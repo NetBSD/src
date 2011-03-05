@@ -1,4 +1,4 @@
-# $NetBSD: t_getquota.sh,v 1.1.2.8 2011/02/11 16:54:03 bouyer Exp $ 
+# $NetBSD: t_getquota.sh,v 1.1.2.9 2011/03/05 18:54:47 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -69,6 +69,7 @@ get_quota()
 		    $(atf_get_srcdir)/rump_quota -${q} -v
 		atf_check -s exit:0 \
 -o "match:--        0        -        -                1       -       -" \
+-o "not-match:\+\+"							  \
 		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
 	done
 
