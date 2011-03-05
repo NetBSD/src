@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33.2.9 2011/02/14 20:38:56 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.33.2.10 2011/03/05 18:10:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33.2.9 2011/02/14 20:38:56 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.33.2.10 2011/03/05 18:10:44 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -507,9 +507,7 @@ getprivs(id, quotatype)
 			version = 0;
 			if (getnfsquota(&fst[i], NULL, qup, id, quotatype) == 0)
 				continue;
-		} else if (strncmp(fst[i].f_fstypename, "ffs",
-		    sizeof(fst[i].f_fstypename)) == 0 &&
-		    (fst[i].f_flag & ST_QUOTA) != 0) {
+		} else if ((fst[i].f_flag & ST_QUOTA) != 0) {
 			if (getvfsquota(fst[i].f_mntonname, &qup->q2e, &version,
 			    id, quotatype, dflag, Dflag) == 0)
 				continue;

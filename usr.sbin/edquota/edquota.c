@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.29.16.11 2011/02/09 17:48:45 bouyer Exp $ */
+/*      $NetBSD: edquota.c,v 1.29.16.12 2011/03/05 18:10:44 bouyer Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.29.16.11 2011/02/09 17:48:45 bouyer Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.29.16.12 2011/03/05 18:10:44 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -386,8 +386,7 @@ getprivs(long id, int quotatype, const char *filesys, int defaultq)
 		errx(2, "no filesystems mounted!");
 
 	for (i = 0; i < nfst; i++) {
-		if (strcmp(fst[i].f_fstypename, "ffs") != 0 ||
-		    (fst[i].f_flag & ST_QUOTA) == 0)
+		if ((fst[i].f_flag & ST_QUOTA) == 0)
 			continue;
 		if (filesys && strcmp(fst[i].f_mntonname, filesys) != 0 &&
 		    strcmp(fst[i].f_mntfromname, filesys) != 0)
@@ -1123,8 +1122,7 @@ clearpriv(int argc, char **argv, const char *filesys, int quotatype)
 		errx(2, "no filesystems mounted!");
 
 	for (i = 0; i < nfst; i++) {
-		if (strcmp(fst[i].f_fstypename, "ffs") != 0 ||
-		    (fst[i].f_flag & ST_QUOTA) == 0)
+		if ((fst[i].f_flag & ST_QUOTA) == 0)
 			continue;
 		if (filesys && strcmp(fst[i].f_mntonname, filesys) != 0 &&
 		    strcmp(fst[i].f_mntfromname, filesys) != 0)

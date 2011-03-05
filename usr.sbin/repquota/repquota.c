@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25.2.8 2011/02/14 20:55:36 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.9 2011/03/05 18:10:44 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,9 +173,7 @@ main(argc, argv)
 	if (nfst == 0)
 		errx(2, "no filesystems mounted!");
 	for (i = 0; i < nfst; i++) {
-		if (strncmp(fst[i].f_fstypename, "ffs",
-		    sizeof(fst[i].f_fstypename)) != 0 ||
-		    (fst[i].f_flag & ST_QUOTA) == 0)
+		if ((fst[i].f_flag & ST_QUOTA) == 0)
 			continue;
 		if (aflag) {
 			if (gflag)
