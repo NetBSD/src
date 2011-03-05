@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.64 2011/03/04 22:25:30 joerg Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.65 2011/03/05 23:51:47 joerg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.64 2011/03/04 22:25:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.65 2011/03/05 23:51:47 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -977,8 +977,8 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	 * copy argv and env at the same time, we add their lengths.
 	 */
 	nargv = pss.ps_nargvstr;
-	nenv = pss.ps_nenvvstr;
-	tmp = pss.ps_argvstr;
+	nenv = pss.ps_nenvstr;
+	tmp = (char *)pss.ps_argvstr;
 	nstr = nargv + nenv;
 
 	auio.uio_offset = (off_t)(long)tmp;
