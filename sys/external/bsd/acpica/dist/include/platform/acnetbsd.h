@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.5 $
+ *       $Revision: 1.6 $
  *
  *****************************************************************************/
 
@@ -65,7 +65,7 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 #ifdef _KERNEL_OPT
 #include "opt_acpi.h"           /* collect build-time options here */
-#endif /* _KERNEL */
+#endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
 #include <sys/systm.h>
