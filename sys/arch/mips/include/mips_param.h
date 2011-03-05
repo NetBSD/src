@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.28 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.29 2011/03/05 14:26:01 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -29,6 +29,15 @@
 #endif
 #else
 #error neither __MIPSEL__ nor __MIPSEB__ are defined.
+#endif
+
+/*
+ * Userland code should be using uname/sysctl to get MACHINE so simply
+ * export a generic MACHINE of "mips"
+ */
+#ifndef _KERNEL
+#undef MACHINE
+#define MACHINE "mips"
 #endif
 
 /*
