@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.13 2009/10/31 23:25:04 joerg Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.14 2011/03/05 16:38:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,6 +35,21 @@
  */
 
 /*
- * Definitions of diversion files.
+ * Definitions of diversion files.  If the name of the file is changed,
+ * adjust UNIQUE to point to the wildcard (*) character in the filename.
  */
+
+#ifdef msdos
+#define _PATH_DIVNAME	"\\M4*XXXXXX"		/* msdos diversion files */
+#define	UNIQUE		3			/* unique char location */
+#endif
+
+#if defined(unix) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define _PATH_DIVNAME	"/tmp/m4.0XXXXXXXXXX"	/* unix diversion files */
+#define UNIQUE		8			/* unique char location */
+#endif
+
+#ifdef vms
+#define _PATH_DIVNAME	"sys$login:m4*XXXXXX"	/* vms diversion files */
+#define UNIQUE		12			/* unique char location */
+#endif
