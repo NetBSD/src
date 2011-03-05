@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.27 2011/03/04 06:01:25 jruoho Exp $
+.\" $NetBSD: acpicpu.4,v 1.28 2011/03/05 07:47:54 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 4, 2011
+.Dd March 5, 2011
 .Dt ACPICPU 4
 .Os
 .Sh NAME
@@ -316,6 +316,16 @@ All other C-states are disabled by default.
 Processor thermal control (see
 .Xr acpitz 4 )
 is not yet supported.
+.It
+Depending on the processor, changes in C-, P-,
+and T-states may all skew timers and counters such as
+.Tn TSC .
+This is neither handled by
+.Nm
+nor by
+.Xr est 4
+and
+.Xr powernow 4 .
 .It
 There is currently neither a well-defined, machine-independent
 .Tn API
