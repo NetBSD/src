@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2010/11/11 17:36:57 pooka Exp $
+# $NetBSD: Makefile,v 1.10 2011/03/05 18:14:33 pgoyette Exp $
 
 NOMAN=		# defined
 
@@ -23,6 +23,11 @@ TESTS_C+=	t_sigaction
 TESTS_C+=	t_filedesc
 
 TESTS_SH=	t_umount
+TESTS_SH+=	t_ps_strings
+
+BINDIR=		${TESTSDIR}
+PROGS=		h_ps_strings1
+PROGS+=		h_ps_strings2
 
 LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser -lpthread
 LDADD.t_filedesc+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser -lpthread
