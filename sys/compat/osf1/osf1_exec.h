@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.h,v 1.12 2008/11/19 18:36:05 ad Exp $ */
+/* $NetBSD: osf1_exec.h,v 1.13 2011/03/05 19:08:40 joerg Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD foundation, Inc.
@@ -38,6 +38,7 @@
 extern struct emul emul_osf1;
 
 int osf1_exec_ecoff_probe(struct lwp *, struct exec_package *);
+struct ps_strings;
 int osf1_copyargs(struct lwp *, struct exec_package *, struct ps_strings *, char **,
     void *);
 
