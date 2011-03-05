@@ -228,6 +228,8 @@ int drm_irq_install(struct drm_device *dev)
 	dev->irqh = pci_intr_establish(dev->pa.pa_pc, ih, IPL_TTY,
 	    drm_irq_handler_wrap, dev);
 	if (!dev->irqh) {
+		aprint_error_dev(dev->device,
+		    "couldn't establish interrupt at %s\n", istr);
 		retcode = ENOENT;
 		goto err;
 	}
