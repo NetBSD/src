@@ -1,4 +1,4 @@
-# $NetBSD: t_create.sh,v 1.7 2010/11/09 13:01:33 jmmv Exp $
+# $NetBSD: t_create.sh,v 1.8 2011/03/05 07:41:11 pooka Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,8 +52,9 @@ attrs_head() {
 	atf_set "require.user" "root"
 }
 attrs_body() {
+	user=$(atf_config_get unprivileged-user)
 	# Allow the unprivileged user to access the work directory.
-	chmod 711 .
+	chown ${user} .
 
 	test_mount
 
@@ -69,8 +70,6 @@ attrs_body() {
 	test ${st_uid} -eq $(id -u) || atf_fail "Incorrect uid"
 	test ${st_gid} -eq ${dst_gid} || atf_fail "Incorrect gid"
 	test ${st_mode} = 0100644 || atf_fail "Incorrect mode"
-
-	user=$(atf_config_get unprivileged-user)
 
 	atf_check -s eq:0 -o empty -e empty mkdir b c
 
