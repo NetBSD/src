@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.25.2.10 2011/03/05 18:53:00 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.25.2.11 2011/03/05 19:05:29 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -397,19 +397,26 @@ printquotas(int type, const struct statvfs *vfs, int version)
 	char overchar[N_QL];
 	static time_t now;
 
-	if (type == GRPQUOTA) {
+	switch(type) {
+	case  GRPQUOTA:
+		{
 		struct group *gr;
 		setgrent();
 		while ((gr = getgrent()) != 0)
 			(void) addid((u_long)gr->gr_gid, GRPQUOTA, gr->gr_name);
 		endgrent();
-	} else if (type == USRQUOTA) {
+		break;
+		}
+	case USRQUOTA:
+		{
 		struct passwd *pw;
 		setpwent();
 		while ((pw = getpwent()) != 0)
 			(void) addid((u_long)pw->pw_uid, USRQUOTA, pw->pw_name);
 		endpwent();
-	} else {
+		break;
+		}
+	default:
 		errx(1, "unknown quota type %d\n", type);
 	}
 
@@ -637,10 +644,31 @@ addid(id, type, name)
 	const char *name;
 {
 	struct fileusage *fup, **fhp;
+	struct group *gr = NULL;
+	struct passwd *pw = NULL;
 	int len;
 
-	if ((fup = lookup(id, type)) != NULL)
+	if ((fup = lookup(id, type)) != NULL) {
 		return (fup);
+	}
+	if (name == NULL) {
+		switch(type) {
+		case  GRPQUOTA:
+			gr = getgrgid(id);
+			
+			if (gr != NULL)
+				name = gr->gr_name;
+			break;
+		case USRQUOTA:
+			pw = getpwuid(id);
+			if (pw)
+				name = pw->pw_name;
+			break;
+		default:
+			errx(1, "unknown quota type %d\n", type);
+		}
+	}
+
 	if (name)
 		len = strlen(name);
 	else
