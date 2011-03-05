@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.807.2.2 2011/02/17 11:57:21 bouyer Exp $
+#	$NetBSD: 3RDPARTY,v 1.807.2.3 2011/03/05 15:08:40 bouyer Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -25,14 +25,14 @@
 #     remaining lines until the end of the record are notes.
 
 Package:	acpica
-Version:	20100528
+Version:	20110211
 Current Vers:	20110211
-Maintainer:	INTEL
-Archive Site:	http://www.acpica.org/downloads/unix_source_code.php
+Maintainer:	Intel
+Archive Site:	http://www.acpica.org/downloads/unix2_source_code.php
 Home Page:	http://www.acpica.org/
 Mailing List:	devel@acpica.org
-License:	http://developer.intel.com/technology/iapc/acpi/license2.htm
-Responsible:	jmcneill
+License:	BSD-like
+Responsible:	jmcneill, jruoho
 Notes:
 The sources were integrated into src/sys/dev/acpi/acpica/Subsystem.
 Please read src/sys/dev/acpi/acpica/README before any modification.
@@ -869,8 +869,8 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20081002
-Current Vers.:	20081002
+Version:	20110215
+Current Vers.:	20110215
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org
 Mailing List:	tech-pkg@NetBSD.org
@@ -895,8 +895,8 @@ formatting in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	postfix
-Version:	2.7.2
-Current Vers:	2.8.0
+Version:	2.8.1
+Current Vers:	2.8.1
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/

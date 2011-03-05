@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.5.2.1 2011/02/17 12:00:53 bouyer Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.5.2.2 2011/03/05 15:10:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,16 +66,13 @@ childfail(int status)
 	atf_tc_fail("child died");
 }
 
-struct nfstestargs *theargs;
-
-
 /* fork rump nfsd, configure interface */
 static int
 donewfs(const atf_tc_t *tc, void **argp,
 	const char *image, off_t size, void *fspriv)
 {
 	const char *srcdir;
-	char *nfsdargv[7];
+	char *nfsdargv[16];
 	char nfsdpath[MAXPATHLEN];
 	char imagepath[MAXPATHLEN];
 	char ethername[MAXPATHLEN], ethername_ro[MAXPATHLEN];
@@ -156,7 +153,6 @@ donewfs(const atf_tc_t *tc, void **argp,
 	strcpy(args->ta_ethername, ethername);
 
 	*argp = args;
-	theargs = args;
 
 	return 0;
 }

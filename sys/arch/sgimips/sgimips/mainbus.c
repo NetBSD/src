@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18.108.1 2011/02/08 16:19:38 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.108.2 2011/03/05 15:10:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.108.1 2011/02/08 16:19:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.108.2 2011/03/05 15:10:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,11 +68,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args ma;
 
-	printf(": %s [%s, %s], %d processor%s", arcbios_system_identifier,
+	aprint_normal(": %s [%s, %s], %d processor%s\n",
+	    arcbios_system_identifier,
 	    arcbios_sysid_vendor, arcbios_sysid_product,
 	    ncpus, ncpus == 1 ? "" : "s");
-
-	printf("\n");
 
 	config_search_ia(mainbus_search, self, "mainbus", &ma);
 }

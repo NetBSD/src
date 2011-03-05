@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.16 2008/05/26 15:59:29 tsutsui Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.16.28.1 2011/03/05 15:09:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16 2008/05/26 15:59:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.28.1 2011/03/05 15:09:27 bouyer Exp $");
 
 #include "opt_ddb.h"
+#define	__INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -182,7 +183,7 @@ void	*algor_p6032_pci_intr_establish(void *, pci_intr_handle_t, int,
 void	algor_p6032_pci_intr_disestablish(void *, void *);
 void	algor_p6032_pci_conf_interrupt(void *, int, int, int, int, int *);
 
-void	algor_p6032_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	algor_p6032_iointr(int, vaddr_t, uint32_t);
 
 void
 algor_p6032_intr_init(struct p6032_config *acp)
@@ -196,7 +197,6 @@ algor_p6032_intr_init(struct p6032_config *acp)
 		evcnt_attach_dynamic(&p6032_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", p6032_cpuintrnames[i]);
 	}
-	evcnt_attach_static(&mips_int5_evcnt);
 
 	for (i = 0; i <= NIRQMAPS; i++) {
 		irqmap = &p6032_irqmap[i];
@@ -240,7 +240,7 @@ void
 algor_p6032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 {
 	u_long ctrdiff[4], startctr, endctr, cps;
-	u_int8_t regc;
+	uint8_t regc;
 	int i;
 
 	/* Disable interrupts first. */
@@ -371,13 +371,12 @@ algor_p6032_intr_disestablish(void *cookie)
 }
 
 void
-algor_p6032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
-    u_int32_t ipending)
+algor_p6032_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	const struct p6032_irqmap *irqmap;
 	struct algor_intrhand *ih;
 	int level;
-	u_int32_t isr;
+	uint32_t isr;
 
 	/* Check for DEBUG interrupts. */
 	if (ipending & MIPS_INT_MASK_3) {
@@ -390,8 +389,6 @@ algor_p6032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		printf("Debug switch ignored -- "
 		    "no debugger configured\n");
 #endif
-
-		cause &= ~MIPS_INT_MASK_3;
 	}
 
 	/*
@@ -414,11 +411,7 @@ algor_p6032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 				(*ih->ih_func)(ih->ih_arg);
 			}
 		}
-		cause &= ~(MIPS_INT_MASK_0 << level);
 	}
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 /*****************************************************************************

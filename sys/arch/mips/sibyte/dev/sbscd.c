@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.15.8.1 2011/02/08 16:19:29 bouyer Exp $ */
+/* $NetBSD: sbscd.c,v 1.15.8.2 2011/03/05 15:09:51 bouyer Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.15.8.1 2011/02/08 16:19:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.15.8.2 2011/03/05 15:09:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,7 +111,7 @@ sbscd_attach(device_t parent, device_t self, void *aux)
 		memset(&sa, 0, sizeof sa);
 		sa.sa_locs = sb1250_sbscd_devs[i];
 
-		locs[SBSCDCF_ADDR] = sb1250_sbscd_devs[i].sa_addr;
+		locs[SBSCDCF_OFFSET] = sb1250_sbscd_devs[i].sa_offset;
 		locs[SBSCDCF_INTR + 0] =
 			sb1250_sbscd_devs[i].sa_intr[0];
 		locs[SBSCDCF_INTR + 1] =
@@ -132,7 +132,7 @@ sbscd_print(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s",
 		    sbscd_device_type_name(sap->sa_locs.sa_type), pnp);
-	aprint_normal(" addr 0x%x", sap->sa_locs.sa_addr);
+	aprint_normal(" offset 0x%lx", sap->sa_locs.sa_offset);
 	for (i = 0; i < 2; i++) {
 		if (sap->sa_locs.sa_intr[i] != -1)
 			aprint_normal("%s%d", i == 0 ? " intr " : ",",

@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.20.2.1 2011/02/08 16:18:56 bouyer Exp $ */
+/* $NetBSD: crt0.c,v 1.20.2.2 2011/03/05 15:09:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -142,7 +142,7 @@ __start(uintptr_t sp,
 		 * XXX If we were loaded by that loader, just abort
 		 * XXX the rtld setup.
 		 */
-		if (&_DYNAMIC != NULL && cleanup != NULL && obj != NULL)
+		if (&rtld_DYNAMIC != NULL && cleanup != NULL && obj != NULL)
 			_rtld_setup(cleanup, obj);
 #endif
 	}
@@ -163,7 +163,7 @@ __start(uintptr_t sp,
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.20.2.1 2011/02/08 16:18:56 bouyer Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.20.2.2 2011/03/05 15:09:15 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

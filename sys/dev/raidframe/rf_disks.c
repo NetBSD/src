@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.76.4.1 2011/02/17 12:00:15 bouyer Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.76.4.2 2011/03/05 15:10:29 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.76.4.1 2011/02/17 12:00:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.76.4.2 2011/03/05 15:10:29 bouyer Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -455,9 +455,8 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 		if (ac!=NULL) {
 			/* Found it.  Configure it.. */
 			diskPtr->blockSize = ac->clabel->blockSize;
-			diskPtr->numBlocks = ac->clabel->numBlocks;
-			diskPtr->numBlocks |=
-			    (uint64_t)ac->clabel->numBlocksHi << 32;
+			diskPtr->numBlocks =
+			    rf_component_label_numblocks(ac->clabel);
 			/* Note: rf_protectedSectors is already
 			   factored into numBlocks here */
 			raidPtr->raid_cinfo[c].ci_vp = ac->vp;

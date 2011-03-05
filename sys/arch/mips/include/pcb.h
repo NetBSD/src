@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.21.8.1 2011/02/17 11:59:49 bouyer Exp $	*/
+/*	$NetBSD: pcb.h,v 1.21.8.2 2011/03/05 15:09:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,14 +44,23 @@
 #include <mips/types.h>
 #include <mips/reg.h>
 
+struct pcb_faultinfo {
+	void *pfi_faultpte;
+	vaddr_t pfi_faultaddr;
+	u_int pfi_repeats;
+	pid_t pfi_lastpid;
+	uint8_t pfi_faulttype;
+};
+
 /*
  * MIPS process control block
  */
 struct pcb {
-	struct fpreg pcb_fpregs;	/* saved floating point registers */
 	label_t pcb_context;		/* kernel context for resume */
 	void *	pcb_onfault;		/* for copyin/copyout faults */
 	uint32_t pcb_ppl;		/* previous priority level */
+	struct fpreg pcb_fpregs;	/* saved floating point registers */
+	struct pcb_faultinfo pcb_faultinfo;
 };
 
 /*

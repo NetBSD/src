@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.23 2010/12/15 17:09:07 cegger Exp $	*/
+/*	$NetBSD: i386.c,v 1.23.2.1 2011/03/05 15:11:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.23 2010/12/15 17:09:07 cegger Exp $");
+__RCSID("$NetBSD: i386.c,v 1.23.2.1 2011/03/05 15:11:01 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -742,7 +742,7 @@ via_cpu_probe(struct cpu_info *ci)
 		ci->ci_feat_val[2] |= descs[3];
 	}
 
-	if (model < 0x9)
+	if (model < 0x9 || (model == 0x9 && stepping < 3))
 		return;
 
 	/* Nehemiah or Esther */
@@ -753,11 +753,7 @@ via_cpu_probe(struct cpu_info *ci)
 
 	x86_cpuid(0xc0000001, descs);
 	lfunc = descs[3];
-	if (model > 0x9 || stepping >= 8) {	/* ACE */
-		if (lfunc & CPUID_VIA_HAS_ACE) {
-			ci->ci_feat_val[4] = lfunc;
-		}
-	}
+	ci->ci_feat_val[4] = lfunc;
 }
 
 static const char *
@@ -1414,9 +1410,9 @@ identifycpu(const char *cpuname)
 		feature_str[2] = CPUID_INTEL_EXT_FLAGS;
 		feature_str[3] = CPUID_INTEL_FLAGS4;
 		break;
-	case CPUVENDOR_CYRIX:
+	case CPUVENDOR_IDT:
 		feature_str[4] = CPUID_FLAGS_PADLOCK;
-		/* FALLTHRU */
+		break;
 	default:
 		break;
 	}

@@ -15,6 +15,13 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        <b><a href="postconf.5.html#nested_header_checks">nested_header_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/nested_header_checks</b>
        <b><a href="postconf.5.html#body_checks">body_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/body_checks</b>
 
+       <b><a href="postconf.5.html#milter_header_checks">milter_header_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/<a href="postconf.5.html#milter_header_checks">milter_header_checks</a></b>
+
+       <b><a href="postconf.5.html#smtp_header_checks">smtp_header_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/smtp_header_checks</b>
+       <b><a href="postconf.5.html#smtp_mime_header_checks">smtp_mime_header_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/smtp_mime_header_checks</b>
+       <b><a href="postconf.5.html#smtp_nested_header_checks">smtp_nested_header_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/smtp_nested_header_checks</b>
+       <b><a href="postconf.5.html#smtp_body_checks">smtp_body_checks</a> = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/smtp_body_checks</b>
+
        <b>postmap -q "</b><i>string</i><b>" <a href="pcre_table.5.html">pcre</a>:/etc/postfix/</b><i>filename</i>
        <b>postmap -q - <a href="pcre_table.5.html">pcre</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
@@ -31,6 +38,10 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        is repeated for the next message header  or  message  body
        line.
 
+       Note: message headers are examined one logical header at a
+       time, even when a message  header  spans  multiple  lines.
+       Body lines are always examined one line at a time.
+
        For  examples, see the EXAMPLES section at the end of this
        manual page.
 
@@ -40,9 +51,11 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        referenced  below  in the README FILES section if you need
        more sophisticated content analysis.
 
-       Postfix supports four built-in content inspection classes:
+<b>FILTERS WHILE RECEIVING MAIL</b>
+       Postfix implements the  following  four  built-in  content
+       inspection classes while receiving mail:
 
-       <b><a href="postconf.5.html#header_checks">header_checks</a></b>
+       <b><a href="postconf.5.html#header_checks">header_checks</a></b> (default: empty)
               These   are  applied  to  initial  message  headers
               (except for the headers  that  are  processed  with
               <b><a href="postconf.5.html#mime_header_checks">mime_header_checks</a></b>).
@@ -68,79 +81,99 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
               the initial message headers is treated as body con-
               tent.
 
-       Note: message headers are examined one logical header at a
-       time, even when a message  header  spans  multiple  lines.
-       Body lines are always examined one line at a time.
+<b>FILTERS AFTER RECEIVING MAIL</b>
+       Postfix  supports a subset of the built-in content inspec-
+       tion classes after the message is received:
+
+       <b><a href="postconf.5.html#milter_header_checks">milter_header_checks</a></b> (default: empty)
+              These are applied to headers that  are  added  with
+              Milter applications.
+
+              This feature is available in Postfix 2.7 and later.
+
+<b>FILTERS WHILE DELIVERING MAIL</b>
+       Postfix supports all four content inspection classes while
+       delivering mail via SMTP.
+
+       <b><a href="postconf.5.html#smtp_header_checks">smtp_header_checks</a></b> (default: empty)
+
+       <b><a href="postconf.5.html#smtp_mime_header_checks">smtp_mime_header_checks</a></b> (default: empty)
+
+       <b><a href="postconf.5.html#smtp_nested_header_checks">smtp_nested_header_checks</a></b> (default: empty)
+
+       <b><a href="postconf.5.html#smtp_body_checks">smtp_body_checks</a></b> (default: empty)
+              These  features  are  available  in Postfix 2.5 and
+              later.
 
 <b>COMPATIBILITY</b>
        With Postfix version 2.2 and earlier specify "<b>postmap -fq</b>"
        to query a table that contains case sensitive patterns. By
-       default,  <a href="regexp_table.5.html">regexp</a>: and <a href="pcre_table.5.html">pcre</a>: patterns are case insensitive.
+       default, <a href="regexp_table.5.html">regexp</a>: and <a href="pcre_table.5.html">pcre</a>: patterns are case  insensitive.
 
 <b>TABLE FORMAT</b>
-       This document assumes that header  and  <a href="postconf.5.html#body_checks">body_checks</a>  rules
-       are  specified  in  the form of Postfix regular expression
-       lookup tables. Usually the best  performance  is  obtained
+       This  document  assumes  that header and <a href="postconf.5.html#body_checks">body_checks</a> rules
+       are specified in the form of  Postfix  regular  expression
+       lookup  tables.  Usually  the best performance is obtained
        with <b>pcre</b> (Perl Compatible Regular Expression) tables, but
-       the slower <b>regexp</b> (POSIX regular expressions)  support  is
-       more  widely  available.  Use the command "<b>postconf -m</b>" to
-       find out what lookup table types your Postfix system  sup-
+       the  slower  <b>regexp</b> (POSIX regular expressions) support is
+       more widely available.  Use the command "<b>postconf  -m</b>"  to
+       find  out what lookup table types your Postfix system sup-
        ports.
 
        The general format of Postfix regular expression tables is
-       given below.  For a  discussion  of  specific  pattern  or
-       flags   syntax,   see  <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>  or  <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a>,
+       given  below.   For  a  discussion  of specific pattern or
+       flags  syntax,  see  <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>   or   <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a>,
        respectively.
 
        <b>/</b><i>pattern</i><b>/</b><i>flags action</i>
-              When /<i>pattern</i>/ matches the  input  string,  execute
-              the  corresponding  <i>action</i>. See below for a list of
+              When  /<i>pattern</i>/  matches  the input string, execute
+              the corresponding <i>action</i>. See below for a  list  of
               possible actions.
 
        <b>!/</b><i>pattern</i><b>/</b><i>flags action</i>
-              When /<i>pattern</i>/ does <b>not</b>  match  the  input  string,
+              When  /<i>pattern</i>/  does  <b>not</b>  match the input string,
               execute the corresponding <i>action</i>.
 
        <b>if /</b><i>pattern</i><b>/</b><i>flags</i>
 
        <b>endif</b>  Match the input string against the patterns between
-              <b>if</b> and <b>endif</b>, if and only if the same input  string
+              <b>if</b>  and <b>endif</b>, if and only if the same input string
               also matches /<i>pattern</i>/. The <b>if</b>..<b>endif</b> can nest.
 
-              Note:  do not prepend whitespace to patterns inside
+              Note: do not prepend whitespace to patterns  inside
               <b>if</b>..<b>endif</b>.
 
        <b>if !/</b><i>pattern</i><b>/</b><i>flags</i>
 
        <b>endif</b>  Match the input string against the patterns between
-              <b>if</b>  and <b>endif</b>, if and only if the same input string
+              <b>if</b> and <b>endif</b>, if and only if the same input  string
               does <b>not</b> match /<i>pattern</i>/. The <b>if</b>..<b>endif</b> can nest.
 
        blank lines and comments
-              Empty lines and whitespace-only lines are  ignored,
-              as  are  lines whose first non-whitespace character
+              Empty  lines and whitespace-only lines are ignored,
+              as are lines whose first  non-whitespace  character
               is a `#'.
 
        multi-line text
-              A pattern/action line  starts  with  non-whitespace
-              text.  A line that starts with whitespace continues
+              A  pattern/action  line  starts with non-whitespace
+              text. A line that starts with whitespace  continues
               a logical line.
 
 <b>TABLE SEARCH ORDER</b>
-       For each line of message input, the patterns  are  applied
-       in  the order as specified in the table. When a pattern is
-       found that  matches  the  input  line,  the  corresponding
-       action  is  executed  and  then  the  next  input  line is
+       For  each  line of message input, the patterns are applied
+       in the order as specified in the table. When a pattern  is
+       found  that  matches  the  input  line,  the corresponding
+       action is  executed  and  then  the  next  input  line  is
        inspected.
 
 <b>TEXT SUBSTITUTION</b>
-       Substitution of substrings  from  the  matched  expression
-       into  the <i>action</i> string is possible using the conventional
-       Perl syntax (<b>$1</b>, <b>$2</b>, etc.).   The  macros  in  the  result
-       string  may  need  to  be  written as <b>${n}</b> or <b>$(n)</b> if they
+       Substitution  of  substrings  from  the matched expression
+       into the <i>action</i> string is possible using the  conventional
+       Perl  syntax  (<b>$1</b>,  <b>$2</b>,  etc.).   The macros in the result
+       string may need to be written as  <b>${n}</b>  or  <b>$(n)</b>  if  they
        aren't followed by whitespace.
 
-       Note: since negated patterns (those preceded by <b>!</b>)  return
+       Note:  since negated patterns (those preceded by <b>!</b>) return
        a result when the expression does not match, substitutions
        are not available for negated patterns.
 
@@ -149,18 +182,21 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        case for consistency with other Postfix documentation.
 
        <b>DISCARD</b> <i>optional text...</i>
-              Claim  successful delivery and silently discard the
-              message.  Log the optional text if specified,  oth-
+              Claim successful delivery and silently discard  the
+              message.   Log the optional text if specified, oth-
               erwise log a generic message.
 
-              Note:   this  action  disables  further  header  or
-              <a href="postconf.5.html#body_checks">body_checks</a> inspection of the current  message  and
+              Note:  this  action  disables  further  header   or
+              <a href="postconf.5.html#body_checks">body_checks</a>  inspection  of the current message and
               affects all recipients.  To discard only one recip-
               ient without discarding the entire message, use the
               <a href="transport.5.html">transport(5)</a> table to direct mail to the <a href="discard.8.html">discard(8)</a>
               service.
 
               This feature is available in Postfix 2.0 and later.
+
+              This feature is not supported with smtp header/body
+              checks.
 
        <b>DUNNO</b>  Pretend  that the input line did not match any pat-
               tern, and inspect the next input line. This  action
@@ -204,30 +240,44 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
 
               This feature is available in Postfix 2.0 and later.
 
+              This feature is not supported with smtp header/body
+              checks.
+
        <b>HOLD</b> <i>optional text...</i>
-              Arrange for the message to be placed  on  the  <b>hold</b>
-              queue,  and  inspect the next input line.  The mes-
-              sage remains on <b>hold</b> until someone  either  deletes
-              it  or  releases it for delivery.  Log the optional
+              Arrange  for  the  message to be placed on the <b>hold</b>
+              queue, and inspect the next input line.   The  mes-
+              sage  remains  on <b>hold</b> until someone either deletes
+              it or releases it for delivery.  Log  the  optional
               text if specified, otherwise log a generic message.
 
-              Mail  that  is  placed on hold can be examined with
-              the <a href="postcat.1.html"><b>postcat</b>(1)</a> command, and  can  be  destroyed  or
+              Mail that is placed on hold can  be  examined  with
+              the  <a href="postcat.1.html"><b>postcat</b>(1)</a>  command,  and  can be destroyed or
               released with the <a href="postsuper.1.html"><b>postsuper</b>(1)</a> command.
 
-              Note:  use  "<b>postsuper -r</b>" to release mail that was
-              kept on hold for a significant fraction  of  <b>$<a href="postconf.5.html#maximal_queue_lifetime">maxi</a>-</b>
+              Note: use "<b>postsuper -r</b>" to release mail  that  was
+              kept  on  hold for a significant fraction of <b>$<a href="postconf.5.html#maximal_queue_lifetime">maxi</a>-</b>
               <b><a href="postconf.5.html#maximal_queue_lifetime">mal_queue_lifetime</a></b>  or  <b>$<a href="postconf.5.html#bounce_queue_lifetime">bounce_queue_lifetime</a></b>,  or
-              longer. Use "<b>postsuper -H</b>" only for mail that  will
+              longer.  Use "<b>postsuper -H</b>" only for mail that will
               not expire within a few delivery attempts.
 
-              Note:  this  action  affects  all recipients of the
+              Note: this action affects  all  recipients  of  the
               message.
 
               This feature is available in Postfix 2.0 and later.
 
+              This feature is not supported with smtp header/body
+              checks.
+
        <b>IGNORE</b> Delete the current line from the input, and inspect
               the next input line.
+
+       <b>INFO</b> <i>optional text...</i>
+              Log an "info:" record with the <i>optional text...</i> (or
+              log  a  generic  text),  and inspect the next input
+              line. This action is useful for routine logging  or
+              for debugging.
+
+              This feature is available in Postfix 2.8 and later.
 
        <b>PREPEND</b> <i>text...</i>
               Prepend one  line  with  the  specified  text,  and
@@ -254,18 +304,24 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
 
               This feature is available in Postfix 2.1 and later.
 
+              This   feature   is   not   supported   with   mil-
+              ter_header_checks.
+
        <b>REDIRECT</b> <i>user@domain</i>
-              Write  a  message  redirection request to the queue
-              file, and inspect the next input  line.  After  the
+              Write a message redirection request  to  the  queue
+              file,  and  inspect  the next input line. After the
               message is queued, it will be sent to the specified
               address instead of the intended recipient(s).
 
-              Note: this action overrides the <b>FILTER</b> action,  and
-              affects  all recipients of the message. If multiple
-              <b>REDIRECT</b> actions fire, only the last  one  is  exe-
+              Note:  this action overrides the <b>FILTER</b> action, and
+              affects all recipients of the message. If  multiple
+              <b>REDIRECT</b>  actions  fire,  only the last one is exe-
               cuted.
 
               This feature is available in Postfix 2.1 and later.
+
+              This feature is not supported with smtp header/body
+              checks.
 
        <b>REPLACE</b> <i>text...</i>
               Replace the current line with the  specified  text,
@@ -302,11 +358,15 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
               ning of <i>optional text...</i>, Postfix inserts a default
               enhanced status code of "5.7.1".
 
+              This feature is not supported with smtp header/body
+              checks.
+
        <b>WARN</b> <i>optional text...</i>
-              Log  a  warning with the <i>optional text...</i> (or log a
-              generic message), and inspect the next input  line.
-              This action is useful for debugging and for testing
-              a pattern before applying more drastic actions.
+              Log a "warning:" record with the  <i>optional  text...</i>
+              (or log a generic text), and inspect the next input
+              line. This action is useful for debugging  and  for
+              testing  a  pattern  before  applying  more drastic
+              actions.
 
 <b>BUGS</b>
        Empty lines never match, because some map types mis-behave

@@ -1,4 +1,4 @@
-# $NetBSD: t_ssp.sh,v 1.2 2010/12/27 05:27:34 pgoyette Exp $
+# $NetBSD: t_ssp.sh,v 1.2.2.1 2011/03/05 15:10:55 bouyer Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,19 +35,6 @@ h_fail()
 {
 	echo "Executing command [ $2$1 ]"
 	eval $2 atf_check -s signal:6 -o ignore -e ignore $1
-}
-
-atf_test_case raw
-raw_head()
-{
-	atf_set "descr" "Checks basic stack protection"
-}
-raw_body()
-{
-	prog="$(atf_get_srcdir)/h_raw"
-
-	h_pass "$prog 9"
-	h_fail "$prog 10"
 }
 
 atf_test_case sprintf
@@ -260,7 +247,6 @@ getcwd_body()
 
 atf_init_test_cases()
 {
-	atf_add_test_case raw
 	atf_add_test_case sprintf
 	atf_add_test_case vsprintf
 	atf_add_test_case snprintf

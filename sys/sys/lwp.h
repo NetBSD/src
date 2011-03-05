@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.141.2.1 2011/02/08 16:20:05 bouyer Exp $	*/
+/*	$NetBSD: lwp.h,v 1.141.2.2 2011/03/05 15:10:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -44,6 +44,7 @@
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
 #include <sys/resource.h>
+#include <sys/pcu.h>
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
@@ -66,6 +67,7 @@
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
+#if defined(_KERNEL) || defined(_KMEMUSER)
 struct lockdebug;
 struct sadata_vp;
 struct sysent;
@@ -122,6 +124,11 @@ struct lwp {
 	u_int		l_slptime;	/* l: time since last blocked */
 	callout_t	l_timeout_ch;	/* !: callout for tsleep */
 	u_int		l_emap_gen;	/* !: emap generation number */
+
+#if PCU_UNIT_COUNT > 0
+	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
+	uint32_t	l_pcu_used;
+#endif
 
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
@@ -189,6 +196,7 @@ struct lwp {
 
 	struct kdtrace_thread *l_dtrace; /* (: DTrace-specific data. */
 };
+#endif /* _KERNEL || _KMEMUSER */
 
 /*
  * UAREA_PCB_OFFSET: an offset of PCB structure in the uarea.  MD code may
@@ -197,13 +205,6 @@ struct lwp {
 #ifndef UAREA_PCB_OFFSET
 #define	UAREA_PCB_OFFSET	0
 #endif
-
-static __inline void *
-lwp_getpcb(struct lwp *l)
-{
-
-	return l->l_addr;
-}
 
 LIST_HEAD(lwplist, lwp);		/* A list of LWPs. */
 
@@ -214,6 +215,7 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
+#define	LW_LWPCTL	0x00000002 /* Adjust lwpctl in userret */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
@@ -258,7 +260,7 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
  * user.
  */
 #define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
-		    LW_SA_BLOCKING|LW_SA_UPCALL)
+		    LW_SA_BLOCKING|LW_SA_UPCALL|LW_LWPCTL)
 
 /*
  * Status values.
@@ -277,6 +279,15 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LSDEAD		6	/* Process is almost a zombie. */
 #define	LSONPROC	7	/* Process is currently on a CPU. */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+static inline void *
+lwp_getpcb(struct lwp *l)
+{
+
+	return l->l_addr;
+}
+#endif /* _KERNEL || _KMEMUSER */
 
 #ifdef _KERNEL
 #define	LWP_CACHE_CREDS(l, p)						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_mask.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dsn_mask.c,v 1.1.1.1.6.1 2011/03/05 15:08:59 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -31,7 +31,7 @@
 /*	NOTIFY option to internal form.
 /*
 /*	dsn_notify_str() converts internal form to the representation
-/*	used in the MAIL FROM .. NOTIFY command. The result is in
+/*	used in the RCPT TO .. NOTIFY command. The result is in
 /*	volatile memory and is clobbered whenever str_name_mask()
 /*	is called.
 /*

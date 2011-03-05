@@ -321,7 +321,10 @@ queue</a></h2>
 Users list.  Congestion was reported with the active and incoming
 queues large and not shrinking despite very large delivery agent
 process limits.  The thread is archived at:
-<a href="http://groups.google.com/groups?th=636626c645f5bbde">http://groups.google.com/groups?th=636626c645f5bbde</a> </p>
+<a href="http://groups.google.com/groups?threadm=c0b7js$2r65$1@FreeBSD.csie.NCTU.edu.tw">http://groups.google.com/groups?threadm=c0b7js$2r65$1@FreeBSD.csie.NCTU.edu.tw</a>
+and
+<a href="http://archives.neohapsis.com/archives/postfix/2004-02/thread.html#1371">http://archives.neohapsis.com/archives/postfix/2004-02/thread.html#1371</a>
+</p>
 
 <p> Using an older version of <a href="qshape.1.html">qshape(1)</a> it was quickly determined
 that all the messages were for just a few destinations: </p>
@@ -507,6 +510,7 @@ the same destination.  </p>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
     slow_destination_rate_delay = 1
+    slow_destination_concurrency_failed_cohort_limit = 100
 
 /etc/postfix/transport:
     example.com  slow:
@@ -523,6 +527,12 @@ the same destination.  </p>
 <p> This solution forces the Postfix <a href="smtp.8.html">smtp(8)</a> client to wait for
 $slow_destination_rate_delay seconds between deliveries to the same
 destination.  </p>
+
+<p> IMPORTANT!! The large slow_destination_concurrency_failed_cohort_limit
+value is needed. This prevents Postfix from deferring all mail for
+the same destination after only one connection or handshake error
+(the reason for this is that non-zero slow_destination_rate_delay
+forces a per-destination concurrency of 1).  </p>
 
 <li> <p> Earlier Postfix versions: </p>
 

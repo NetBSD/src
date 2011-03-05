@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.13.8.1 2011/02/17 12:00:50 bouyer Exp $ */
+/*	$NetBSD: deflate.c,v 1.13.8.2 2011/03/05 15:10:48 bouyer Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.13.8.1 2011/02/17 12:00:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.13.8.2 2011/03/05 15:10:48 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -71,7 +71,8 @@ ocf_zfree(void *nil, void *ptr)
 }
 
 u_int32_t
-deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
+deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out,
+	       int size_hint)
 {
 	/* decomp indicates whether we compress (0) or decompress (1) */
 
@@ -79,15 +80,9 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 	u_int8_t *output;
 	u_int32_t count, result, tocopy;
 	int error, i, j;
-	struct deflate_buf *buf, *tmp;
-	size_t len;
+	struct deflate_buf buf[ZBUF];
 
 	DPRINTF(("deflate_global: size %d\n", size));
-
-	len = ZBUF;
-	buf = malloc(len*sizeof(struct deflate_buf), M_CRYPTO_DATA, M_NOWAIT);
-	if (buf == NULL)
-		return 0;
 
 	memset(&zbuf, 0, sizeof(z_stream));
 	zbuf.next_in = data;	/* data that is going to be processed */
@@ -106,11 +101,11 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 	 	 * updated while the decompression is going on
 	 	 */
 
-		buf[0].size = size * 4;
+		buf[0].size = MAX(size * 4, size_hint);
 	}
 	buf[0].out = malloc(buf[0].size, M_CRYPTO_DATA, M_NOWAIT);
 	if (buf[0].out == NULL)
-		goto bad3;
+		return 0;
 	i = 1;
 
 	zbuf.next_out = buf[0].out;
@@ -125,32 +120,36 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 	for (;;) {
 		error = decomp ? inflate(&zbuf, Z_SYNC_FLUSH) :
 				 deflate(&zbuf, Z_FINISH);
-		if (error != Z_OK && error != Z_STREAM_END)
+		if (error == Z_STREAM_END) /* success */
+			break;
+		/*
+		 * XXX compensate for two problems:
+		 * -Former versions of this code didn't set Z_FINISH
+		 *  on compression, so the compressed data are not correctly
+		 *  terminated and the decompressor doesn't get Z_STREAM_END.
+		 *  Accept such packets for interoperability.
+		 * -sys/net/zlib.c has a bug which makes that Z_BUF_ERROR is
+		 *  set after successful decompression under rare conditions.
+		 */
+		else if (decomp && (error == Z_OK || error == Z_BUF_ERROR)
+			 && zbuf.avail_in == 0 && zbuf.avail_out != 0)
+				break;
+		else if (error != Z_OK)
 			goto bad;
-		else if (zbuf.avail_in == 0 && zbuf.avail_out != 0)
-			goto end;
 		else if (zbuf.avail_out == 0) {
-			if (i == len) {
-				len += ZBUF;
-				tmp = realloc(buf,len*sizeof(struct deflate_buf),
-							  M_CRYPTO_DATA, M_NOWAIT);
-				if (tmp == NULL)
-					goto bad;
-				buf = tmp;
-			}
 			/* we need more output space, allocate size */
-			buf[i].out = malloc(size, M_CRYPTO_DATA, M_NOWAIT);
+			int nextsize = buf[i-1].size * 2;
+			if (i == ZBUF || nextsize > 1000000)
+				goto bad;
+			buf[i].out = malloc(nextsize, M_CRYPTO_DATA, M_NOWAIT);
 			if (buf[i].out == NULL)
 				goto bad;
 			zbuf.next_out = buf[i].out;
-			buf[i].size = size;
-			zbuf.avail_out = buf[i].size;
+			zbuf.avail_out = buf[i].size = nextsize;
 			i++;
-		} else
-			goto bad;
+		}
 	}
 
-end:
 	result = count = zbuf.total_out;
 
 	if (i != 1) { /* copy everything into one buffer */
@@ -171,7 +170,6 @@ end:
 	} else {
 		*out = buf[0].out;
 	}
-	free(buf, M_CRYPTO_DATA);
 	if (decomp)
 		inflateEnd(&zbuf);
 	else
@@ -186,8 +184,6 @@ bad:
 bad2:
 	for (j = 0; j < i; j++)
 		free(buf[j].out, M_CRYPTO_DATA);
-bad3:
-	free(buf, M_CRYPTO_DATA);
 	return 0;
 }
 
@@ -223,7 +219,7 @@ static const char gzip_header[10] = {
 
 u_int32_t
 gzip_global(u_int8_t *data, u_int32_t size,
-	int decomp, u_int8_t **out)
+	int decomp, u_int8_t **out, int size_hint)
 {
 	/* decomp indicates whether we compress (0) or decompress (1) */
 	z_stream zbuf;
@@ -233,7 +229,7 @@ gzip_global(u_int8_t *data, u_int32_t size,
 	struct deflate_buf *buf, *tmp;
 	size_t nbufs;
 	u_int32_t crc;
-	u_int32_t isize;
+	u_int32_t isize, icrc;
 
 	DPRINTF(("gzip_global: decomp %d, size %d\n", decomp, size));
 
@@ -290,7 +286,10 @@ gzip_global(u_int8_t *data, u_int32_t size,
 			DPRINTF(("gzip_global.%d: gzip header ok\n",__LINE__));
 		}
 
-		isize = *((uint32_t *)&data[size-sizeof(uint32_t)]);
+		memcpy(&isize, &data[size-sizeof(uint32_t)], sizeof(uint32_t));
+		LE32TOH(isize);
+		memcpy(&icrc, &data[size-2*sizeof(uint32_t)], sizeof(uint32_t));
+		LE32TOH(icrc);
 
 		DPRINTF(("gzip_global: isize = %d (%02x %02x %02x %02x)\n",
 				isize,
@@ -389,7 +388,7 @@ end:
 	for (j = 0; j < i; j++) {
 		if (decomp) {
 			/* update crc for decompressed data */
-			crc = crc32(crc, buf[j].out, buf[j].size);
+			crc = crc32(crc, buf[j].out, MIN(count, buf[j].size));
 		}
 		if (count > buf[j].size) {
 			memcpy(output, buf[j].out, buf[j].size);
@@ -408,8 +407,10 @@ end:
 
 	if (!decomp) {
 		/* fill in CRC and ISIZE */
-		((uint32_t *)output)[0] = crc;
-		((uint32_t *)output)[1] = size;
+		HTOLE32(crc);
+		memcpy(output, &crc, sizeof(uint32_t));
+		HTOLE32(size);
+		memcpy(output + sizeof(uint32_t), &size, sizeof(uint32_t));
 
 		DPRINTF(("gzip_global: size = 0x%x (%02x %02x %02x %02x)\n",
 				size,
@@ -417,6 +418,12 @@ end:
 				output[3],
 				output[5],
 				output[4]));
+	} else {
+		if (crc != icrc || result != isize) {
+			free(*out, M_CRYPTO_DATA);
+			*out = NULL;
+			return 0;
+		}
 	}
 
 	return result;

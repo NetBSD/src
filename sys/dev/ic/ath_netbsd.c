@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.17.8.1 2011/02/08 16:19:48 bouyer Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.17.8.2 2011/03/05 15:10:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17.8.1 2011/02/08 16:19:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17.8.2 2011/03/05 15:10:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17.8.1 2011/02/08 16:19:48 bouyer E
 #include <machine/stdarg.h>
 #include <sys/endian.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -520,4 +521,18 @@ ath_sysctlattach(struct ath_softc *sc)
 	return;
 err:
 	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+}
+
+MODULE(MODULE_CLASS_MISC, ath, "ath_hal");
+
+static int
+ath_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

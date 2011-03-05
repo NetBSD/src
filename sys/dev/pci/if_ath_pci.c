@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.38.4.1 2011/02/08 16:19:50 bouyer Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.38.4.2 2011/03/05 15:10:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.38.4.1 2011/02/08 16:19:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.38.4.2 2011/03/05 15:10:23 bouyer Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.38.4.1 2011/02/08 16:19:50 bouyer E
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <external/isc/atheros_hal/dist/ah.h>
 
@@ -127,6 +128,7 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const char *intrstr = NULL;
+	const char *devname;
 	pcireg_t mem_type;
 
 	sc->sc_dev = self;
@@ -134,7 +136,8 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pc = pc;
 	psc->sc_tag = pa->pa_tag;
 
-	aprint_normal("\n");
+	devname = ath_hal_probe(PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
+	aprint_normal(": %s\n", devname);
 
 	if (!ath_pci_setup(psc))
 		goto bad;
@@ -273,4 +276,33 @@ ath_pci_setup(struct ath_pci_softc *sc)
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BHLC_REG, bhlc);
 	}
 	return true;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_ath_pci, "ath");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_ath_pci_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_if_ath_pci,
+		    cfattach_ioconf_if_ath_pci, cfdata_ioconf_if_ath_pci);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_if_ath_pci,
+		    cfattach_ioconf_if_ath_pci, cfdata_ioconf_if_ath_pci);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }

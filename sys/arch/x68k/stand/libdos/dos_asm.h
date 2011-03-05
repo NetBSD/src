@@ -1,10 +1,10 @@
 /*
  *	local definitions for libdos
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: dos_asm.h,v 1.2 2000/06/19 03:42:31 itohy Exp $
+ *	$NetBSD: dos_asm.h,v 1.2.164.1 2011/03/05 15:10:08 bouyer Exp $
  */
 
 #include <machine/asm.h>

@@ -1,0 +1,10 @@
+# $NetBSD: fujbp.ioconf,v 1.1.2.2 2011/03/05 15:10:44 bouyer Exp $
+
+ioconf fujbp
+
+include "conf/files"
+include "dev/acpi/files.acpi"
+
+pseudo-root acpi*
+
+fujbp* at acpi?

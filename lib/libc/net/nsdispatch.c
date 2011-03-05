@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.34 2009/02/05 13:21:11 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.34.4.1 2011/03/05 15:09:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.34 2009/02/05 13:21:11 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.34.4.1 2011/03/05 15:09:19 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -172,12 +172,12 @@ static mutex_t _ns_drec_lock = MUTEX_INITIALIZER;
 /*
  * Runtime determination of whether we are dynamically linked or not.
  */
-#ifdef __ELF__
-extern	int			_DYNAMIC __weak_reference(_DYNAMIC);
-#define	is_dynamic()		(&_DYNAMIC != NULL)
-#else
+#ifndef __ELF__
 #define	is_dynamic()		(0)	/* don't bother - switch to ELF! */
-#endif /* __ELF__ */
+#else
+__weakref_visible int rtld_DYNAMIC __weak_reference(_DYNAMIC);
+#define	is_dynamic()		(&rtld_DYNAMIC != NULL)
+#endif
 
 
 /*

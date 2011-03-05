@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/07/18 09:49:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2011/03/05 15:09:11 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ CPPFLAGS+=	-I${X11SRCDIR.${LIB}}/../include
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xcb
 
 LIBDPLIBS=\
-	Xaw7	${.CURDIR}/../../libXaw \
+	Xau	${.CURDIR}/../../libXau \
 	Xdmcp	${.CURDIR}/../../libXdmcp
 
 NOMAN=	# defined

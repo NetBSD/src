@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_server.h,v 1.1.1.2 2010/06/17 18:06:54 tron Exp $	*/
+/*	$NetBSD: mail_server.h,v 1.1.1.2.2.1 2011/03/05 15:09:00 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -24,6 +24,7 @@
 #define MAIL_SERVER_TIME_TABLE	4
 #define MAIL_SERVER_RAW_TABLE	5
 #define MAIL_SERVER_NINT_TABLE	6
+#define MAIL_SERVER_NBOOL_TABLE	7
 
 #define	MAIL_SERVER_PRE_INIT	10
 #define MAIL_SERVER_POST_INIT	11

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.14.2.1 2011/02/17 11:59:24 bouyer Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.14.2.2 2011/03/05 15:09:24 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -94,8 +94,8 @@ ENTRY_NOPROFILE(_rtld_bind_secureplt_start)
 	 * where inv(n) = (0x100000000 + n - 1) / n
 	 */
 	mr	%r0,%r11
-	lis	%r11,0x10000000b/12@h	# load multiplicative inverse of 12
-	ori	%r11,%r11,0x10000000b/12@l
+	lis	%r11,0x15555556@h	# load multiplicative inverse of 12
+	ori	%r11,%r11,0x15555556@l
 	mulhwu	%r11,%r11,%r0		# get high half of multiplication
 
 	b	1f

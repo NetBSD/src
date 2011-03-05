@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.242.2.2 2011/02/08 16:19:59 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.242.2.3 2011/03/05 15:10:40 bouyer Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -13,7 +13,7 @@
 ; Optional fields are specified after the type field
 ; (NOTE! they *must* be specified in this order):
 ;	MODULAR:attempt to autoload system call if not present
-;	RUMP:	the system call can be called directly from rumps
+;	RUMP:	generate rump syscall entry point
 ;
 ; types:
 ;	STD	always included
@@ -25,6 +25,7 @@
 ;	NOARGS	included, but don't define the syscall args structure
 ;	INDIR	included, but don't define the syscall args structure,
 ;		and allow it to be "really" varargs.
+;	NOERR	included, syscall does not set errno
 ;
 ; arguments:
 ;	PAD	argument not part of the C interface, used only for padding
@@ -90,13 +91,13 @@
 			    long bufsize, int flags); }
 19	COMPAT_43 MODULAR { long|sys||lseek(int fd, long offset, int whence); }\
 			    olseek
-20	STD 	RUMP	{ pid_t|sys||getpid_with_ppid(void); } getpid
+20	NOERR 	RUMP	{ pid_t|sys||getpid_with_ppid(void); } getpid
 21	COMPAT_40 MODULAR { int|sys||mount(const char *type, const char *path, \
 			    int flags, void *data); }
 22	STD 	 RUMP	{ int|sys||unmount(const char *path, int flags); }
 23	STD 	RUMP	{ int|sys||setuid(uid_t uid); }
-24	STD 	RUMP	{ uid_t|sys||getuid_with_euid(void); } getuid
-25	STD 	RUMP	{ uid_t|sys||geteuid(void); }
+24	NOERR 	RUMP	{ uid_t|sys||getuid_with_euid(void); } getuid
+25	NOERR 	RUMP	{ uid_t|sys||geteuid(void); }
 26	STD 		{ int|sys||ptrace(int req, pid_t pid, void *addr, \
 			    int data); }
 27	STD 	RUMP	{ ssize_t|sys||recvmsg(int s, struct msghdr *msg, \
@@ -115,16 +116,16 @@
 33	STD 	RUMP	{ int|sys||access(const char *path, int flags); }
 34	STD 	 RUMP	{ int|sys||chflags(const char *path, u_long flags); }
 35	STD 	RUMP	{ int|sys||fchflags(int fd, u_long flags); }
-36	STD 	 RUMP	{ void|sys||sync(void); }
+36	NOERR 	 RUMP	{ void|sys||sync(void); }
 37	STD 		{ int|sys||kill(pid_t pid, int signum); }
 38	COMPAT_43 MODULAR { int|sys||stat(const char *path, struct stat43 *ub); } \
 			    stat43
-39	STD 	RUMP	{ pid_t|sys||getppid(void); }
+39	NOERR 	RUMP	{ pid_t|sys||getppid(void); }
 40	COMPAT_43 MODULAR { int|sys||lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	STD 	RUMP	{ int|sys||dup(int fd); }
 42	STD 	RUMP	{ int|sys||pipe(void); }
-43	STD 	RUMP	{ gid_t|sys||getegid(void); }
+43	NOERR 	RUMP	{ gid_t|sys||getegid(void); }
 44	STD 		{ int|sys||profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
 45	STD 		{ int|sys||ktrace(const char *fname, int ops, \
@@ -132,7 +133,7 @@
 46	COMPAT_13 MODULAR { int|sys||sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
-47	STD 	RUMP	{ gid_t|sys||getgid_with_egid(void); } getgid
+47	NOERR 	RUMP	{ gid_t|sys||getgid_with_egid(void); } getgid
 48	COMPAT_13 MODULAR { int|sys||sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	STD 	RUMP	{ int|sys||__getlogin(char *namebuf, size_t namelen); }
@@ -547,10 +548,10 @@
 287	STD 		{ pid_t|sys||__clone(int flags, void *stack); }
 288	STD 		{ int|sys||fktrace(int fd, int ops, \
 			    int facs, pid_t pid); }
-289	STD 		{ ssize_t|sys||preadv(int fd, \
+289	STD 	RUMP	{ ssize_t|sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int PAD, off_t offset); }
-290	STD 		{ ssize_t|sys||pwritev(int fd, \
+290	STD 	RUMP	{ ssize_t|sys||pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int PAD, off_t offset); }
 291	COMPAT_16 MODULAR { int|sys|14|sigaction(int signum, \
@@ -588,7 +589,7 @@
 303	EXCL		__shmctl13
 #endif
 304	STD 	 RUMP	{ int|sys||lchflags(const char *path, u_long flags); }
-305	STD 	RUMP	{ int|sys||issetugid(void); }
+305	NOERR 	RUMP	{ int|sys||issetugid(void); }
 306	STD 		{ int|sys||utrace(const char *label, void *addr, \
 				size_t len); }
 307	STD 		{ int|sys||getcontext(struct __ucontext *ucp); }
@@ -789,7 +790,7 @@
 			    psetid_t *opsid); }
 415	STD 		{ int|sys||_pset_bind(idtype_t idtype, id_t first_id, \
 			    id_t second_id, psetid_t psid, psetid_t *opsid); }
-416	STD  RUMP	{ int|sys|50|posix_fadvise(int fd, int PAD, \
+416	NOERR RUMP	{ int|sys|50|posix_fadvise(int fd, int PAD, \
 			    off_t offset, off_t len, int advice); }
 417	STD  RUMP	{ int|sys|50|select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }

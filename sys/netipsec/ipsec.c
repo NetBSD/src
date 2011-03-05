@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.48.4.1 2011/02/17 12:00:49 bouyer Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.48.4.2 2011/03/05 15:10:47 bouyer Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.48.4.1 2011/02/17 12:00:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.48.4.2 2011/03/05 15:10:47 bouyer Exp $");
 
 /*
  * IPsec controller part.
@@ -1937,7 +1937,7 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
  * based on RFC 2401.
  */
 int
-ipsec_chkreplay(u_int32_t seq, struct secasvar *sav)
+ipsec_chkreplay(u_int32_t seq, const struct secasvar *sav)
 {
 	const struct secreplay *replay;
 	u_int32_t diff;
@@ -1995,7 +1995,7 @@ ipsec_chkreplay(u_int32_t seq, struct secasvar *sav)
  *	1:	NG
  */
 int
-ipsec_updatereplay(u_int32_t seq, struct secasvar *sav)
+ipsec_updatereplay(u_int32_t seq, const struct secasvar *sav)
 {
 	struct secreplay *replay;
 	u_int32_t diff;
@@ -2127,7 +2127,7 @@ inet_ntoa4(struct in_addr ina)
 
 /* Return a printable string for the address. */
 const char *
-ipsec_address(union sockaddr_union* sa)
+ipsec_address(const union sockaddr_union* sa)
 {
 	switch (sa->sa.sa_family) {
 #if INET
@@ -2146,11 +2146,11 @@ ipsec_address(union sockaddr_union* sa)
 }
 
 const char *
-ipsec_logsastr(struct secasvar *sav)
+ipsec_logsastr(const struct secasvar *sav)
 {
 	static char buf[256];
 	char *p;
-	struct secasindex *saidx = &sav->sah->saidx;
+	const struct secasindex *saidx = &sav->sah->saidx;
 
 	IPSEC_ASSERT(saidx->src.sa.sa_family == saidx->dst.sa.sa_family,
 		("ipsec_logsastr: address family mismatch"));

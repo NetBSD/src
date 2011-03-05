@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.61.4.1 2011/02/08 19:29:30 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.61.4.2 2011/03/05 15:09:29 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -20,12 +20,9 @@ options 	MSGBUFSIZE=24576
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
-# Enhanced SpeedStep Technology in the Pentium M
-options		ENHANCED_SPEEDSTEP
-#options	EST_FREQ_USERWRITE	# any user can set frequency
-
-# AMD PowerNow! and Cool`n'Quiet technology
-options		POWERNOW_K8
+# CPU features
+est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 
 #options 	MTRR		# memory-type range register syscall support
 

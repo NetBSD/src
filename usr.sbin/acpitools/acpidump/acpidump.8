@@ -1,4 +1,4 @@
-.\" $NetBSD: acpidump.8,v 1.3.2.1 2011/02/17 12:00:57 bouyer Exp $
+.\" $NetBSD: acpidump.8,v 1.3.2.2 2011/03/05 15:11:01 bouyer Exp $
 .\" ACPI (ACPI Package)
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
@@ -38,12 +38,7 @@
 .Nd dump ACPI tables and ASL
 .Sh SYNOPSIS
 .Nm
-.Op Fl c
-.Op Fl d
-.Op Fl s
-.Op Fl t
-.Op Fl h
-.Op Fl v
+.Op Fl cdhstv
 .Op Fl f Ar dsdt_input
 .Op Fl o Ar dsdt_output
 .Sh DESCRIPTION
@@ -148,21 +143,21 @@ Dump unknown table data as characters instead of hex.
 Disassemble the DSDT into ASL using
 .Xr iasl 8
 and print the results to stdout.
-.It Fl s
-Skip tables with bad checksums.
-.It Fl t
-Dump the contents of the various fixed tables listed above.
-.It Fl h
-Displays usage and exit.
-.It Fl v
-Enable verbose messages.
 .It Fl f Ar dsdt_input
 Load the DSDT from the specified file instead of physical memory.
 Since only the DSDT is stored in the file, the
 .Fl t
 flag may not be used with this option.
+.It Fl h
+Displays usage and exit.
 .It Fl o Ar dsdt_output
 Store the DSDT data block from physical memory into the specified file.
+.It Fl s
+Skip tables with bad checksums.
+.It Fl t
+Dump the contents of the various fixed tables listed above.
+.It Fl v
+Enable verbose messages.
 .El
 .Sh FILES
 .Bl -tag -width /dev/mem

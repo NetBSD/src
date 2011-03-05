@@ -45,6 +45,7 @@ base-krb5-bin	commands and utilities for the Kerberos V network authentication s
 base-krb5-examples	example configuration files for the Kerberos V network authentication system
 base-krb5-root	root file system support for the Kerberos V network authentication system
 base-krb5-shlib	root file system support for the Kerberos V network authentication system
+base-libsaslc-examples	example configuration files for the SASL C library
 base-locale-Pig	igPey atinLey ocaleley upportsey
 base-locale-af	Afghan language locale support
 base-locale-be	Belgian language locale support
@@ -516,6 +517,8 @@ etc-iscsi-etc	configuration files for the NetBSD iSCSI target
 etc-iscsi-rc	startup script for the NetBSD iSCSI target
 etc-isdn-rc	startup script for ISDN (Integrated Services Digital Network) network connectivity utilities
 etc-krb5-rc	startup script for the Kerberos V authentication service 
+etc-libsaslc-etc	configuration file for SASL C library
+etc-libsaslc-postfix	configuration file for postfix SASL
 etc-lpr-etc	configuration file for printing services
 etc-lpr-log	empty log file for printing services
 etc-lpr-rc	startup script for printing services
@@ -701,6 +704,7 @@ misc-fstab-examples	example configuration files for file system tables
 misc-ipf-examples	example configuration files for IPfilter
 misc-isdn-examples	example configuration files for isdn
 misc-krb5-examples	example configuration files for Kerberos5
+misc-libsaslc-examples	example configuration files for libsaslc 
 misc-netutil-examples	example configuration files for network software 
 misc-ntp-htmldoc	HTML documentation for ntp(8) software
 misc-pf-examples	example configuration files for the PF packet filter

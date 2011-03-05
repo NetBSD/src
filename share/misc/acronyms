@@ -1,11 +1,13 @@
-$NetBSD: acronyms,v 1.200.2.1 2011/02/17 11:59:27 bouyer Exp $
+$NetBSD: acronyms,v 1.200.2.2 2011/03/05 15:09:27 bouyer Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
 224	today, tomorrow, forever
 31337	elite ("eleet")
 4TW	for the win
+AAMOF	as a matter of fact
 AC	audible chuckle
+ADN	any day now
 AEAP	as early as possible
 AFAIAC	as far as I am concerned
 AFAIC	as far as I'm concerned
@@ -31,9 +33,11 @@ ATEOTD	at the end of the day
 ATM	at the moment
 ATM	automatic teller machine
 ATW	around the world
+AWK	Aho Weinberger Kernighan
 AWOL	absent without official leave
 AYBABTU	all your base are belong to us
 AYF	all your fault
+AYOR	at your own risk
 AYT	are you there
 B/C	because
 B/S	bullshit
@@ -42,6 +46,7 @@ B/W	between
 BAK	back at keyboard
 BBIAB	be back in a bit
 BBL	[I'll] be back later
+BBR	burnt beyond repair
 BBS	be back soon
 BBT	be back tomorrow
 BCNU	be seeing you
@@ -63,47 +68,59 @@ BOC	but of course
 BOFH	bastard operator from hell
 BOGAHICA	bend over, grab ankles, here it comes again
 BOHICA	bend over here it comes again
+BOT	back on topic
 BRB	[I'll] be right back
 BS	bullshit
 BTDT	been there, done that
 BTFT	been there, fixed that
 BTTH	boot to the head
 BTW	by the way
+CC	credit card
 CFV	call for votes
+CFY	calling for you
 CG	center of gravity
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
 COTS	commercial off-the-shelf
 CPC	cost per click
+CTN	can't talk now
 CU	see you
 CYA	see you around
+CYE	check your email
 D/L	download
 DBEYR	don't believe everything you read
 DGAS	don't give a shit
 DIAFYO	did I ask for your opinion?
 DIY	do it yourself
 DKDC	don't know, don't care
+DMZ	demilitarized zone
 DND	do not disturb
 DOA	dead on arrival
 DRY	don't repeat yourself
 DSTM	don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
+DYK	do you know?
 DWIM	do what I mean
 EDS	eternal downward spiral
 EG	evil grin
+EIE	enough is enough
 EMSG	email message
 EOB	end of business [day]
-EOD	end of discussion
+EOD	end of {day, discussion}
 EOL	end of life
 EOM	end of message
+EOS	end of story
 ETA	estimated time of arrival
 ETA	edited to add
 ETLA	extended three letter acronym
+ETR	early to rise
 EWAG	experienced wild-ass guess
 F9	fine
 FAQ	frequently asked question
+FBOW	for better or worse
+FCOL	for crying out loud
 FCFS	first come first served
 FFS	for fuck's sake
 FFS	free for shipping
@@ -116,6 +133,7 @@ FML	fuck my life
 FNO	from now on
 FNO	for nerds only
 FOAD	{fuck off,fall over} and die
+FOC	free of charge
 FOS	full of shit
 FPS	first person shooter
 FSCK	fuck
@@ -129,6 +147,7 @@ FTHOI	for the {heck,hell} of it
 FTL	for the loss
 FTMFW	for the motherfucking win
 FTS	fuck that shit
+FTTT	from time to time
 FTW	for the win
 FUBAR	fucked up beyond all recognition
 FUD	fear, uncertainty and doubt
@@ -155,11 +174,14 @@ GL	good luck
 GLHF	good luck, have fun
 GLWT	good luck with that
 GMTA	great minds think alike
+GOK	god only knows
+GOWI	get on with it
 GPS	global positioning system
 GR8	great
 GTFO	get the fuck out
 GTG	got to go
 GTH	go to hell
+GTSY	{good, glad} to see you
 GWS	get well soon
 H8	hate
 HAND	have a nice day
@@ -170,19 +192,28 @@ HHIS	hanging head in shame
 HHOS	ha ha, only serious
 HICA	here it comes again
 HNY	happy new year
+HOAS	hold on a second
 HSIW	HOLY SHIT IT WORKS
 HTH	hope this helps
 IAC	in any case
 IAE	in any event
 IANAL	I am not a lawyer
+IAW	in another window
 IAWTC	I agree with this comment
+IAY	I adore you
+IB	I'm back
 IC	I see
-ICBW	I could be wrong
+ICBW	I could be {wrong, worse}
 ICCL	I couldn't care less
 ICUR	I see you are
+IDC	I don't care
+IDGI	I don't get it
+IDGW	in a good way
+IDI	I doubt it
 IDK	I don't know
 IDRC	I don't really care
 IDTS	I don't think so
+IDTT	I drink to that
 IHAFC	I haven't a fucking clue
 IHBW	I have been wrong
 IHNFC	I have no fucking clue
@@ -200,26 +231,40 @@ IMNSHO	in my not so humble opinion
 IMO	in my opinion
 INPO	in no particular order
 IOW	in other words
+IQ	intelligence quotient
 IPML	I pissed myself laughing
 IRL	in real life
+IRT	in real time
+IRT	in regards to
 ISAGN	I see a great need
+ISBN	international standard book number
 ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
 IUD	insert usual disclaimers
+IUSS	if you say so
+IW	it's worse
 IWBNI	it would be nice if
+IYD	in your dreams
 IYKWIM	if you know what I mean
 IYSS	if you say so
 IYSWIM	if you see what I mean
 J/K	just kidding
+JAM	just a minute
+JAS	just a second
+JFK	John Fitzgerald Kennedy
 JFTR	just for the record
 JFW	just fucking works
+JGI	just got it
+JGI	just Google it
 JHD	just hit ``delete''
 JIC	just in case
+JJA	just joking around
 JK	just kidding
 JMO	just my opinion
 JSYK	just so you know
 JTLYK	just to let you know
+JW	just wondering
 KISS	keep it simple, stupid
 KITA	kick in the ass
 KK	okay, okay
@@ -238,8 +283,10 @@ LGTM	looks good to me
 LJBF	let's just be friends
 LMAO	laughing my ass off
 LMB	lick my balls
+LMC	let me check
 LMFAO	laughing my fucking ass off
 LMHO	laughing my head off
+LMK	let me know
 LMNO	laughing my nuts off
 LMSO	laughing my socks off
 LOL	laughing out loud
@@ -248,6 +295,8 @@ LWYL	laugh with you later
 M8	mate
 MAD	mutually assured destruction
 MIA	missing in action
+MMB	message me back
+MO	modus operandi
 MOTAS	member of the appropriate sex
 MOTOS	member of the opposite sex
 MOTSS	member of the same sex
@@ -264,8 +313,10 @@ NFW	no fucking way
 NIFOC	naked in front of computer
 NIH	not invented here
 NIMBY	not in my backyard
+NM	never mind
 NMF	not my fault
 NMP	not my problem
+NOM	no offence meant
 NOOB	newbie
 NOYB	none of your business
 NOYFB	none of your fucking business
@@ -274,8 +325,10 @@ NRFPT	not ready for prime time
 NRN	not right now
 NRN	no reply necessary
 NSFW	not suitable for work
+NTN	no thanks needed
 NUNP	no users, no problems
 NVM	never mind
+NW	no way
 NXT	next
 O2W	off to work
 OH	other half
@@ -285,6 +338,7 @@ OMG	oh, my god
 OMW	on my way
 ONNA	oh no, not again
 ONNTA	oh no, not this again
+OAO	over and out
 OOB	out of bounds
 OOC	out of curiosity
 OOI	out of interest
@@ -297,6 +351,7 @@ OTT	over the top
 OTTOMH	off the top of my head
 OWTTE	or words to that effect
 PDQ	pretty darn quick
+PDS	please don't shout
 PEBKAC	problem exists between keyboard and chair
 PFI	pay for inclusion
 PFO	please fuck off
@@ -305,6 +360,9 @@ PHB	pointy haired boss
 PIN	personal identification number
 PITA	pain in the ass
 PKSP	pound keys and spew profanity
+PM	post meridiem
+PMFI	problem magically fixed itself
+PMFJI	pardon me for jumping in
 PMSL	pissing myself laughing
 PNG	persona non grata
 PNP	plug and pray
@@ -317,6 +375,7 @@ POV	point of view
 PPL	people
 PPL	pretty please
 PPP	petty pet peeve
+PR	public relations
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
@@ -326,11 +385,13 @@ RFE	request for enhancements
 RIP	rest in peace
 RL	real life
 RLC	rod length check
+RMS	Richard Matthew Stallman
 ROFL	rolling on floor laughing
 ROFLMAO	rolling on floor laughing my ass off
 ROTFL	rolling on the floor laughing
 ROI	return on investment
 RP	responsible person
+RSI	repetitive strain injury
 RSN	real soon now
 RSVP	repondez s'il vous plait (please reply)
 RTFB	read the fine/fucking book
@@ -342,6 +403,7 @@ RTFS	read the fine/fucking source
 SAR	some assembly required
 SCNR	sorry, could not resist
 SEP	someone else's problem
+SERP	search engine results page
 SFA	sweet fuck all
 SFAICT	so far as I can tell
 SHID	slaps head in disgust
@@ -363,6 +425,7 @@ SSTO	single stage to orbit
 STFA	search the fucking archives
 STFU	shut the fuck up
 STFW	search the fucking web
+STW	search the web
 SUS	stupid user syndrome
 SUX	sucks
 SUX2BU	sucks to be you
@@ -370,6 +433,7 @@ SWAG	silly, wild-assed guess
 SWAHBI	silly, wild-assed hare-brained idea
 SWFG	search with fucking google
 SWMBO	she who must be obeyed
+SYS	see you soon
 TANSTAAFL	there ain't no such thing as a free lunch
 TBA	to be announced
 TBC	to be continued
@@ -377,6 +441,7 @@ TBD	to be {decided,determined,done}
 TBH	to be honest
 TBOMK	the best of my knowledge
 TCB	taking care of business
+TCO	taken care of
 THNX	thanks
 THX	thanks
 TIA	thanks in advance
@@ -385,6 +450,7 @@ TIC	tonque in cheek
 TIL	today I learned
 TINC	there is no cabal
 TINWIS	this is not what I said
+TJM	that's just me
 TLA	three letter acronym
 TLC	tender loving care
 TLDR	too long, didn't read
@@ -397,13 +463,16 @@ TMJ	temporomandibular joint
 TMK	to my knowledge
 TMTOWTDI	there's more than one way to do it
 TNF	The NetBSD Foundation
+TOC	table of contents
 TOCTOU	time of check to time of use
 TOEFL	test of english as a foreign language
+TOH	to other half
 TPTB	the powers that be
 TRT	the right thing
 TTBOMK	to the best of my knowledge
 TTFN	ta ta for now
 TTM	to the moderator
+TTT	thought that too
 TTYL	talk to you later
 TTYS	talk to you soon
 TWAIN	thing without an interesting name
@@ -414,6 +483,7 @@ TYVM	thank you very much
 U/L	upload
 UTSL	use the source, Luke
 VEG	very evil grin
+VIP	very important person
 W/	with
 W/O	without
 W8	wait

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.13.2.1 2011/02/08 16:20:12 bouyer Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.13.2.2 2011/03/05 15:11:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.13.2.1 2011/02/08 16:20:12 bouyer Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.13.2.2 2011/03/05 15:11:00 bouyer Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -82,11 +82,14 @@ static const char *const disktokens[] = {
 #define DFILE 1
 	"hostpath",
 #define DSIZE 2
+#define DSIZE_E -1
 	"size",
 #define DOFFSET 3
 	"offset",
 #define DLABEL 4
 	"disklabel",
+#define DTYPE 5
+	"type",
 	NULL
 };
 
@@ -97,6 +100,15 @@ struct etfsreg {
 	off_t foffset;
 	char partition;
 	enum rump_etfs_type type;
+};
+
+struct etfstype {
+	const char *name;
+	enum rump_etfs_type type;
+} etfstypes[] = {
+	{ "blk", RUMP_ETFS_BLK },
+	{ "chr", RUMP_ETFS_CHR },
+	{ "reg", RUMP_ETFS_REG },
 };
 
 int
@@ -114,7 +126,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "c:d:l:m:s")) != -1) {
+	while ((ch = getopt(argc, argv, "c:d:l:m:r:sv")) != -1) {
 		switch (ch) {
 		case 'c':
 			ncpu = atoi(optarg);
@@ -129,10 +141,12 @@ main(int argc, char *argv[])
 			char *key, *hostpath;
 			long long flen, foffset;
 			char partition;
+			int ftype;
 
 			flen = foffset = 0;
 			partition = 0;
 			key = hostpath = NULL;
+			ftype = -1;
 			options = optarg;
 			while (*options) {
 				switch (getsubopt(&options,
@@ -161,14 +175,31 @@ main(int argc, char *argv[])
 						    "size already given\n");
 						usage();
 					}
-					/* XXX: off_t max? */
-					flen = strsuftoll("-d size", value,
-					    0, LLONG_MAX);
+					if (strcmp(value, "host") == 0) {
+						if (foffset != 0) {
+							fprintf(stderr,
+							    "cannot specify "
+							    "offset with "
+							    "size=host\n");
+							usage();
+						}
+						flen = DSIZE_E;
+					} else {
+						/* XXX: off_t max? */
+						flen = strsuftoll("-d size",
+						    value, 0, LLONG_MAX);
+					}
 					break;
 				case DOFFSET:
 					if (foffset != 0) {
 						fprintf(stderr,
 						    "offset already given\n");
+						usage();
+					}
+					if (flen == DSIZE_E) {
+						fprintf(stderr, "cannot "
+						    "specify offset with "
+						    "size=host\n");
 						usage();
 					}
 					/* XXX: off_t max? */
@@ -192,6 +223,28 @@ main(int argc, char *argv[])
 					partition = *value;
 					break;
 
+				case DTYPE:
+					if (ftype != -1) {
+						fprintf(stderr,
+						    "type already specified\n");
+						usage();
+					}
+
+					for (i = 0;
+					    i < __arraycount(etfstypes);
+					    i++) {
+						if (strcmp(etfstypes[i].name,
+						    value) == 0)
+							break;
+					}
+					if (i == __arraycount(etfstypes)) {
+						fprintf(stderr,
+						    "invalid type %s\n", value);
+						usage();
+					}
+					ftype = etfstypes[i].type;
+					break;
+
 				default:
 					fprintf(stderr, "invalid dtoken\n");
 					usage();
@@ -204,6 +257,8 @@ main(int argc, char *argv[])
 				fprintf(stderr, "incomplete drivespec\n");
 				usage();
 			}
+			if (ftype == -1)
+				ftype = RUMP_ETFS_BLK;
 
 			if (netfs - curetfs == 0) {
 				etfs = realloc(etfs, (netfs+16)*sizeof(*etfs));
@@ -217,7 +272,7 @@ main(int argc, char *argv[])
 			etfs[curetfs].flen = flen;
 			etfs[curetfs].foffset = foffset;
 			etfs[curetfs].partition = partition;
-			etfs[curetfs].type = RUMP_ETFS_BLK;
+			etfs[curetfs].type = ftype;
 			curetfs++;
 
 			break;
@@ -244,8 +299,14 @@ main(int argc, char *argv[])
 			}
 			modarray[curmod++] = optarg;
 			break;
+		case 'r':
+			setenv("RUMP_MEMLIMIT", optarg, 1);
+			break;
 		case 's':
 			sflag = 1;
+			break;
+		case 'v':
+			setenv("RUMP_VERBOSE", "1", 1);
 			break;
 		default:
 			usage();
@@ -293,11 +354,12 @@ main(int argc, char *argv[])
 		struct disklabel dl;
 		struct stat sb;
 		off_t foffset, flen, fendoff;
-		int fd;
+		int fd, oflags;
 
-		fd = open(etfs[i].hostpath, O_RDWR | O_CREAT, 0644);
+		oflags = etfs[i].flen == DSIZE_E ? 0 : O_CREAT;
+		fd = open(etfs[i].hostpath, O_RDWR | oflags, 0644);
 		if (fd == -1)
-			die(sflag, errno, "etfs hostpath create");
+			die(sflag, errno, "etfs hostpath open");
 
 		if (etfs[i].partition) {
 			int partition = etfs[i].partition - 'a';
@@ -317,10 +379,16 @@ main(int argc, char *argv[])
 			foffset = etfs[i].foffset;
 			flen = etfs[i].flen;
 		}
-		fendoff = foffset + flen;
 
 		if (fstat(fd, &sb) == -1)
 			die(sflag, errno, "fstat etfs hostpath");
+		if (flen == DSIZE_E) {
+			if (sb.st_size == 0)
+				die(sflag, EINVAL, "size=host, but cannot "
+				    "query non-zero size");
+			flen = sb.st_size;
+		}
+		fendoff = foffset + flen;
 		if (S_ISREG(sb.st_mode) && sb.st_size < fendoff) {
 			if (ftruncate(fd, fendoff) == -1)
 				die(sflag, errno, "truncate");

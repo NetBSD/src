@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.18 2011/01/11 09:32:50 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.18.2.1 2011/03/05 15:10:55 bouyer Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -84,9 +84,6 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_LFS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43582");
 
-	if (FSTYPE_MSDOS(tc))
-		atf_tc_skip("test fails in some setups, reason unknown");
-
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by fs");
 
@@ -115,6 +112,9 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	 */
 	if (FSTYPE_LFS(tc))
 		abort();
+
+	if (FSTYPE_MSDOS(tc))
+		atf_tc_expect_fail("PR kern/44661");
 }
 
 static void

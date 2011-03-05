@@ -1,4 +1,4 @@
-/*	$NetBSD: sgc.c,v 1.1.2.2 2011/02/17 11:59:39 bouyer Exp $	*/
+/*	$NetBSD: sgc.c,v 1.1.2.3 2011/03/05 15:09:40 bouyer Exp $	*/
 /*	$OpenBSD: sgc.c,v 1.6 2010/04/15 20:35:21 miod Exp $	*/
 
 /*
@@ -55,9 +55,9 @@ struct sgc_softc {
 	struct bus_space_tag sc_tag;
 };
 
-int	sgcmatch(device_t, cfdata_t, void *);
-void	sgcattach(device_t, device_t, void *);
-int	sgcprint(void *, const char *);
+static int	sgcmatch(device_t, cfdata_t, void *);
+static void	sgcattach(device_t, device_t, void *);
+static int	sgcprint(void *, const char *);
 
 CFATTACH_DECL_NEW(sgc, sizeof(struct sgc_softc),
     sgcmatch, sgcattach, NULL, NULL);

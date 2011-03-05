@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.45 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.45.2.1 2011/03/05 15:09:59 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.45 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.45.2.1 2011/03/05 15:09:59 bouyer Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -81,7 +81,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	 * XXX Machine-independent code has already copied arguments and
 	 * XXX environment to userland.  Get them back here.
 	 */
-	(void)copyin((char *)p->p_psstr, &arginfo, sizeof (arginfo));
+	(void)copyin_psstrings(p, &arginfo);
 
 	/*
 	 * Set up arguments for _start():
@@ -102,7 +102,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_fixreg[5] = (register_t)arginfo.ps_envstr;
 	tf->tf_fixreg[6] = 0;			/* auxillary vector */
 	tf->tf_fixreg[7] = 0;			/* termination vector */
-	tf->tf_fixreg[8] = (register_t)p->p_psstr;	/* NetBSD extension */
+	tf->tf_fixreg[8] = p->p_psstrp;	/* NetBSD extension */
 
 	tf->tf_srr0 = pack->ep_entry;
 	tf->tf_srr1 = PSL_MBO | PSL_USERSET;

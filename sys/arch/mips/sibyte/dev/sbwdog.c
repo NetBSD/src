@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.9.8.1 2011/02/08 16:19:29 bouyer Exp $ */
+/* $NetBSD: sbwdog.c,v 1.9.8.2 2011/03/05 15:09:51 bouyer Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.9.8.1 2011/02/08 16:19:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.9.8.2 2011/03/05 15:09:51 bouyer Exp $");
 
 #include "locators.h"
 
@@ -71,6 +71,7 @@ static int sbwdog_match(device_t, cfdata_t, void *);
 static void sbwdog_attach(device_t, device_t, void *);
 static int sbwdog_tickle(struct sysmon_wdog *);
 static int sbwdog_setmode(struct sysmon_wdog *);
+static void sbwdog_intr(void *, uint32_t, vaddr_t);
 
 CFATTACH_DECL_NEW(sbwdog, sizeof(struct sbwdog_softc),
     sbwdog_match, sbwdog_attach, NULL, NULL);
@@ -97,7 +98,7 @@ sbwdog_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_wdog_period = SBWDOG_DEFAULT_PERIOD;
-	sc->sc_addr = MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr);
+	sc->sc_addr = MIPS_PHYS_TO_KSEG1(sa->sa_base + sa->sa_locs.sa_offset);
 
 	aprint_normal(": %d second period\n", sc->sc_wdog_period);
 
@@ -109,6 +110,10 @@ sbwdog_attach(device_t parent, device_t self, void *aux)
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
 		aprint_error_dev(self, "unable to register with sysmon\n");
+
+	if (sa->sa_locs.sa_intr[0] != SBOBIOCF_INTR_DEFAULT)
+		cpu_intr_establish(sa->sa_locs.sa_intr[0], IPL_HIGH,
+		    sbwdog_intr, sc);
 }
 
 static int
@@ -119,6 +124,19 @@ sbwdog_tickle(struct sysmon_wdog *smw)
 	WRITE_REG(sc->sc_addr + R_SCD_WDOG_CFG, M_SCD_WDOG_ENABLE);
 	return (0);
 }
+
+static void
+sbwdog_intr(void *v, uint32_t cause, vaddr_t pc)
+{
+	struct sbwdog_softc *sc = v;
+
+	WRITE_REG(sc->sc_addr + R_SCD_WDOG_CFG, M_SCD_WDOG_ENABLE);
+	WRITE_REG(sc->sc_addr + R_SCD_WDOG_CFG, 0);
+	WRITE_REG(sc->sc_addr + R_SCD_WDOG_INIT,
+	    sc->sc_wdog_period * V_SCD_WDOG_FREQ);
+	WRITE_REG(sc->sc_addr + R_SCD_WDOG_CFG, M_SCD_WDOG_ENABLE);
+}
+
 
 static int
 sbwdog_setmode(struct sysmon_wdog *smw)

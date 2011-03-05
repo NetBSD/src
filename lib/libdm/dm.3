@@ -1,4 +1,4 @@
-.\"     $NetBSD: dm.3,v 1.2.2.2 2011/02/08 19:01:36 bouyer Exp $
+.\"     $NetBSD: dm.3,v 1.2.2.3 2011/03/05 15:09:21 bouyer Exp $
 .\"
 .\" Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Dt DM 3
 .Os
 .Sh NAME
-.Nm libdm
+.Nm dm
 .Nd device-mapper access manipulation library
 .Sh LIBRARY
 .Lb libdm
@@ -107,9 +107,9 @@
 .Ft char *
 .Fn libdm_table_get_target "libdm_table_t libdm_table"
 .Ft int
-.Fn libdm_table_set_params "const char *params" "libdm_table_t  libdm_table"
+.Fn libdm_table_set_params "const char *params" "libdm_table_t libdm_table"
 .Ft char *
-.Fn libdm_table_get_params "libdm_table_t  libdm_table"
+.Fn libdm_table_get_params "libdm_table_t libdm_table"
 .Ft int32_t
 .Fn libdm_table_get_status "libdm_table_t libdm_table"
 .Ft void
@@ -218,12 +218,10 @@ and
 Set/fetch device status flags from the task dictionary.
 .Pp
 .Fn libdm_task_get_open_num
-Fetch number of opened devices from the kernel and return them as
-.Rt count .
+Fetch number of opened devices from the kernel and return them as count.
 .Pp
 .Fn libdm_task_get_target_num
-Fetch number of opened devices from the kernel and return them as
-.Rt count .
+Fetch number of opened devices from the kernel and return them as count.
 .Pp
 .Fn libdm_task_get_cmd_version
 Get the version of the dm driver in the kernel as array
@@ -279,7 +277,7 @@ Therefore cmd iterators are needed for
 they can be created by the
 .Fn libdm_cmd_iter_create
 function.
-.SS LIBDM CMD TABLE
+.Ss LIBDM CMD TABLE
 A device table describes the logical mapping between the dm device and
 physical devices.
 Every table has the logical block start, the table length (in disk

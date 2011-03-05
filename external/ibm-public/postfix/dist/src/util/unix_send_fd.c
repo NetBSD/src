@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_send_fd.c,v 1.3 2010/06/17 18:18:16 tron Exp $	*/
+/*	$NetBSD: unix_send_fd.c,v 1.3.2.1 2011/03/05 15:09:06 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -17,9 +17,9 @@
 /*
 /*	Arguments:
 /* .IP fd
-/*	File descriptor.
+/*	File descriptor that connects the sending and receiving processes.
 /* .IP sendfd
-/*	Another file descriptor.
+/*	The file descriptor to be sent.
 /* DIAGNOSTICS
 /*	unix_send_fd() returns -1 upon failure.
 /* LICENSE

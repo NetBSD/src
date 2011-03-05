@@ -1,4 +1,4 @@
-/* $NetBSD: xsess.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $ */
+/* $NetBSD: xsess.c,v 1.1.1.1.2.3 2011/03/05 15:08:33 bouyer Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xsess.c,v 1.1.1.1.2.2 2011/02/17 11:57:13 bouyer Exp $");
+__RCSID("$NetBSD: xsess.c,v 1.1.1.1.2.3 2011/03/05 15:08:33 bouyer Exp $");
 
 #include <assert.h>
 #include <saslc.h>
@@ -95,6 +95,11 @@ normalize_list_string(char *opts)
 	}
 }
 
+/**
+ * @brief get the security flags from a comma delimited string.
+ * @param sec_opt the security option comman delimited string.
+ * @return the flags on success, or -1 on error (no memory).
+ */
 static int
 get_security_flags(const char *sec_opts)
 {
@@ -109,6 +114,7 @@ get_security_flags(const char *sec_opts)
 	list_t *list;
 	char *opts;
 	uint32_t flags;
+	int rv;
 
 	if (sec_opts == NULL)
 		return 0;
@@ -117,11 +123,10 @@ get_security_flags(const char *sec_opts)
 		return -1;
 
 	normalize_list_string(opts);
-	list = saslc__list_parse(opts);
+	rv = saslc__list_parse(&list, opts);
 	free(opts);
-	if (list == NULL)
+	if (rv == -1)
 		return -1;
-
 	flags = saslc__list_flags(list, flag_tbl);
 	saslc__list_free(list);
 	return flags;
@@ -176,32 +181,27 @@ saslc__sess_choose_mech(saslc_t *ctx, const char *mechs, const char *sec_opts)
 	int rv;
 
 	rv = get_security_flags(sec_opts);
-	if (rv == -1) {
-		saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
-		return NULL;
-	}
+	if (rv == -1)
+		goto nomem;
 	flags = rv;
 
 	sec_opts = saslc__dict_get(ctx->prop, SASLC_PROP_SECURITY);
 	if (sec_opts != NULL) {
 		rv = get_security_flags(sec_opts);
-		if (rv == -1) {
-			saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
-			return NULL;
-		}
+		if (rv == -1)
+			goto nomem;
 		flags |= rv;
 	}
-	if ((tmpstr = strdup(mechs)) == NULL) {
-		saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
-		return NULL;
-	}
+	if ((tmpstr = strdup(mechs)) == NULL)
+		goto nomem;
+
 	normalize_list_string(tmpstr);
-	list = saslc__list_parse(tmpstr);
+	rv = saslc__list_parse(&list, tmpstr);
 	free(tmpstr);
-	if (list == NULL) {
-		saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
-		return NULL;
-	}
+	if (rv == -1)
+		goto nomem;
+
+	m = NULL;
 	for (l = list; l != NULL; l = l->next) {
 		m = saslc__mech_list_get(ctx->mechanisms, l->value);
 		if (mechanism_flags_OK(m, flags))
@@ -209,7 +209,15 @@ saslc__sess_choose_mech(saslc_t *ctx, const char *mechs, const char *sec_opts)
 	}
 	saslc__list_free(list);
 
-	return m != NULL ? m->mech : NULL;
+	if (m == NULL) {
+		saslc__error_set(ERR(ctx), ERROR_MECH,
+		    "mechanism not supported");
+		return NULL;
+	}
+	return m->mech;
+ nomem:
+	saslc__error_set_errno(ERR(ctx), ERROR_NOMEM);
+	return NULL;
 }
 
 /**
@@ -234,11 +242,8 @@ saslc_sess_init(saslc_t *ctx, const char *mechs, const char *sec_opts)
 
 	/* mechanism initialization */
 	if ((sess->mech = saslc__sess_choose_mech(ctx, mechs, sec_opts))
-	    == NULL) {
-		saslc__error_set(ERR(ctx), ERROR_MECH,
-		    "mechanism is not supported");
+	    == NULL)
 		goto error;
-	}
 
 	/* XXX: special early check of mechanism dictionary for debug flag */
 	m = saslc__mech_list_get(ctx->mechanisms, sess->mech->name);
@@ -264,8 +269,7 @@ saslc_sess_init(saslc_t *ctx, const char *mechs, const char *sec_opts)
 	saslc__msg_dbg("mechanism: %s\n", saslc_sess_getmech(sess));
 
 	return sess;
-
-error:
+ error:
 	free(sess);
 	return NULL;
 }

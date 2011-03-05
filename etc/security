@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.109 2010/12/27 03:38:52 christos Exp $
+#	$NetBSD: security,v 1.109.2.1 2011/03/05 15:08:41 bouyer Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -408,8 +408,8 @@ end-of-csh
 			unset PATH
 			/bin/sh << end-of-sh > /dev/null 2>&1
 				. $i
-				list=\$\(echo \$PATH | /usr/bin/sed -e \
-				    's/^:/.:/;s/:$/:./;s/::/:.:/g;s/:/ /g'\)
+				list=\$(echo \$PATH | /usr/bin/sed -e \
+				    's/^:/.:/;s/:$/:./;s/::/:.:/g;s/:/ /g')
 				/bin/ls -ldgT \$list > $TMP1
 end-of-sh
 			export PATH=$SAVE_PATH

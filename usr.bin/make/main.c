@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.194.2.1 2011/02/17 12:00:56 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.194.2.2 2011/03/05 15:10:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.194.2.1 2011/02/17 12:00:56 bouyer Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.194.2.2 2011/03/05 15:10:59 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.194.2.1 2011/02/17 12:00:56 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.194.2.2 2011/03/05 15:10:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -181,8 +181,8 @@ static int		ReadMakefile(const void *, const void *);
 static void		usage(void);
 
 static Boolean		ignorePWD;	/* if we use -C, PWD is meaningless */
-static char curdir[MAXPATHLEN + 1];	/* startup directory */
 static char objdir[MAXPATHLEN + 1];	/* where we chdir'ed to */
+char curdir[MAXPATHLEN + 1];		/* Startup directory */
 char *progname;				/* the program name */
 char *makeDependfile;
 pid_t myPid;

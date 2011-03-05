@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.1.2.3 2011/02/17 11:59:39 bouyer Exp $	*/
+/*	$NetBSD: topcat.c,v 1.1.2.4 2011/03/05 15:09:40 bouyer Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -129,10 +129,10 @@ struct	topcat_softc {
 	int		sc_scode;
 };
 
-int	topcat_dio_match(device_t, cfdata_t, void *);
-void	topcat_dio_attach(device_t, device_t, void *);
-int	topcat_intio_match(device_t, cfdata_t, void *);
-void	topcat_intio_attach(device_t, device_t, void *);
+static int	topcat_dio_match(device_t, cfdata_t, void *);
+static void	topcat_dio_attach(device_t, device_t, void *);
+static int	topcat_intio_match(device_t, cfdata_t, void *);
+static void	topcat_intio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(topcat_dio, sizeof(struct topcat_softc),
     topcat_dio_match, topcat_dio_attach, NULL, NULL);
@@ -140,17 +140,17 @@ CFATTACH_DECL_NEW(topcat_dio, sizeof(struct topcat_softc),
 CFATTACH_DECL_NEW(topcat_intio, sizeof(struct topcat_softc),
     topcat_intio_match, topcat_intio_attach, NULL, NULL);
 
-void	topcat_end_attach(struct topcat_softc *, uint8_t);
-int	topcat_reset(struct diofb *, int, struct diofbreg *);
-void	topcat_restore(struct diofb *);
-int	topcat_setcmap(struct diofb *, struct wsdisplay_cmap *);
-void	topcat_setcolor(struct diofb *, u_int);
-int	topcat_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
-	    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
+static void	topcat_end_attach(struct topcat_softc *, uint8_t);
+static int	topcat_reset(struct diofb *, int, struct diofbreg *);
+static void	topcat_restore(struct diofb *);
+static int	topcat_setcmap(struct diofb *, struct wsdisplay_cmap *);
+static void	topcat_setcolor(struct diofb *, u_int);
+static int	topcat_windowmove(struct diofb *, uint16_t, uint16_t, uint16_t,
+		    uint16_t, uint16_t, uint16_t, int16_t, int16_t);
 
-int	topcat_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	topcat_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
-struct	wsdisplay_accessops	topcat_accessops = {
+static struct wsdisplay_accessops topcat_accessops = {
 	topcat_ioctl,
 	diofb_mmap,
 	diofb_alloc_screen,
@@ -257,7 +257,7 @@ topcat_dio_attach(device_t parent, device_t self, void *aux)
 		}
 		fbr = bus_space_vaddr(da->da_bst, bsh);
 		if (topcat_reset(sc->sc_fb, sc->sc_scode, fbr) != 0) {
-			printf(": can't map framebuffer\n");
+			aprint_error(": can't reset framebuffer\n");
 			return;
 		}
 	}

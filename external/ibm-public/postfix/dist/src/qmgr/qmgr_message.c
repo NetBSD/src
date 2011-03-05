@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.2 2010/06/17 18:07:01 tron Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.1.1.2.2.1 2011/03/05 15:09:02 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -198,6 +198,7 @@ static QMGR_MESSAGE *qmgr_message_create(const char *queue_name,
     message->sasl_method = 0;
     message->sasl_username = 0;
     message->sasl_sender = 0;
+    message->log_ident = 0;
     message->rewrite_context = 0;
     recipient_list_init(&message->rcpt_list, RCPT_LIST_INIT_QUEUE);
     message->rcpt_count = 0;
@@ -729,6 +730,12 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		else
 		    msg_warn("%s: ignoring multiple %s attribute: %s",
 			   message->queue_id, MAIL_ATTR_SASL_SENDER, value);
+	    } else if (strcmp(name, MAIL_ATTR_LOG_IDENT) == 0) {
+		if (message->log_ident == 0)
+		    message->log_ident = mystrdup(value);
+		else
+		    msg_warn("%s: ignoring multiple %s attribute: %s",
+			     message->queue_id, MAIL_ATTR_LOG_IDENT, value);
 	    } else if (strcmp(name, MAIL_ATTR_RWR_CONTEXT) == 0) {
 		if (message->rewrite_context == 0)
 		    message->rewrite_context = mystrdup(value);
@@ -767,6 +774,9 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		    msg_warn("%s: ignoring bad VERP request: \"%.100s\"",
 			     message->queue_id, start);
 		} else {
+		    if (msg_verbose)
+			msg_info("%s: enabling VERP for sender \"%.100s\"",
+				 message->queue_id, message->sender);
 		    message->single_rcpt = 1;
 		    message->verp_delims = mystrdup(start);
 		}
@@ -823,6 +833,8 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	message->sasl_username = mystrdup("");
     if (message->sasl_sender == 0)
 	message->sasl_sender = mystrdup("");
+    if (message->log_ident == 0)
+	message->log_ident = mystrdup("");
     if (message->rewrite_context == 0)
 	message->rewrite_context = mystrdup(MAIL_ATTR_RWR_LOCAL);
     /* Postfix < 2.3 compatibility. */
@@ -1407,6 +1419,8 @@ void    qmgr_message_free(QMGR_MESSAGE *message)
 	myfree(message->sasl_username);
     if (message->sasl_sender)
 	myfree(message->sasl_sender);
+    if (message->log_ident)
+	myfree(message->log_ident);
     if (message->rewrite_context)
 	myfree(message->rewrite_context);
     recipient_list_free(&message->rcpt_list);

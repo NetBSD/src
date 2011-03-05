@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.54.4.1 2011/02/08 16:19:10 bouyer Exp $
+#	$NetBSD: P4032,v 1.54.4.2 2011/03/05 15:09:28 bouyer Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.54.4.1 $"
+#ident 		"P4032-$Revision: 1.54.4.2 $"
 
 maxusers 32
 
@@ -30,7 +30,7 @@ options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
 makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=400000
 
 # File systems
 file-system	FFS		# Fast file system

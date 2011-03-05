@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.88.4.1 2011/02/08 16:19:40 bouyer Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.88.4.2 2011/03/05 15:10:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.88.4.1 2011/02/08 16:19:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.88.4.2 2011/03/05 15:10:04 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.88.4.1 2011/02/08 16:19:40 bouyer 
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ucontext.h>
+#include <sys/cpu.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -514,6 +515,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_r1     = gr[_REG_R1];
 		tf->tf_r0     = gr[_REG_R0];
 		tf->tf_r15    = gr[_REG_R15];
+
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_GBR]);
 	}
 
 #if 0
@@ -562,7 +565,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
-	tf->tf_r9 = (int)l->l_proc->p_psstr;
+	tf->tf_r9 = l->l_proc->p_psstrp;
 	tf->tf_r10 = 0;
 	tf->tf_r11 = 0;
 	tf->tf_r12 = 0;
@@ -585,4 +588,12 @@ cpu_reset(void)
 	goto *(void *)0xa0000000;
 #endif
 	/* NOTREACHED */
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+
+	l->l_md.md_regs->tf_gbr = (int)addr;
+	return 0;
 }

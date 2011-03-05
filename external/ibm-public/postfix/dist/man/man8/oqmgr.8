@@ -1,4 +1,4 @@
-.\"	$NetBSD: oqmgr.8,v 1.1.1.2 2010/06/17 18:06:28 tron Exp $
+.\"	$NetBSD: oqmgr.8,v 1.1.1.2.2.1 2011/03/05 15:08:56 bouyer Exp $
 .\"
 .TH OQMGR 8 
 .ad
@@ -289,7 +289,20 @@ deliveries to the same destination; with per-destination recipient
 limit > 1, a destination is a domain, otherwise it is a recipient.
 .IP "\fItransport\fB_destination_rate_delay $default_destination_rate_delay
 Idem, for delivery via the named message \fItransport\fR.
-.SH MISCELLANEOUS CONTROLS
+.SH "SAFETY CONTROLS"
+.na
+.nf
+.ad
+.fi
+.IP "\fBqmgr_daemon_timeout (1000s)\fR"
+How much time a Postfix queue manager process may take to handle
+a request before it is terminated by a built-in watchdog timer.
+.IP "\fBqmgr_ipc_timeout (60s)\fR"
+The time limit for the queue manager to send or receive information
+over an internal communication channel.
+.SH "MISCELLANEOUS CONTROLS"
+.na
+.nf
 .ad
 .fi
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
@@ -304,9 +317,6 @@ sub-second delay values.
 .IP "\fBhelpful_warnings (yes)\fR"
 Log warnings about problematic configuration settings, and provide
 helpful suggestions.
-.IP "\fBipc_timeout (3600s)\fR"
-The time limit for sending or receiving information over an internal
-communication channel.
 .IP "\fBprocess_id (read-only)\fR"
 The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read-only)\fR"

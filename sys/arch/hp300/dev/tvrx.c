@@ -1,4 +1,4 @@
-/*	$NetBSD: tvrx.c,v 1.1.2.3 2011/02/17 11:59:39 bouyer Exp $	*/
+/*	$NetBSD: tvrx.c,v 1.1.2.4 2011/03/05 15:09:40 bouyer Exp $	*/
 /*	$OpenBSD: tvrx.c,v 1.1 2006/04/14 21:05:43 miod Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ tvrx_attach(device_t parent, device_t self, void *aux)
 		}
 		fbr = bus_space_vaddr(da->da_bst, bsh);
 		if (tvrx_reset(sc->sc_fb, sc->sc_scode, fbr) != 0) {
-			printf(": can't map framebuffer\n");
+			aprint_error(": can't reset framebuffer\n");
 			return;
 		}
 	}

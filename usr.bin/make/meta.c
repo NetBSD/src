@@ -386,10 +386,8 @@ meta_create(BuildMon *pbm, GNode *gn)
     extern char **environ;
     meta_file_t mf;
     char buf[MAXPATHLEN];
-    char curdir[MAXPATHLEN];
     char objdir[MAXPATHLEN];
     char **ptr;
-    const char *cname;
     const char *dname;
     const char *tname;
     char *fname;
@@ -415,7 +413,6 @@ meta_create(BuildMon *pbm, GNode *gn)
     i = 0;
     
     dname = Var_Value(".OBJDIR", gn, &p[i++]);
-    cname = Var_Value(".CURDIR", gn, &p[i++]);
     tname = Var_Value(TARGET, gn, &p[i++]);
     
     /* The object directory may not exist. Check it.. */
@@ -436,11 +433,9 @@ meta_create(BuildMon *pbm, GNode *gn)
     /* make sure these are canonical */
     if (realpath(dname, objdir))
 	dname = objdir;
-    if (realpath(cname, curdir))
-	cname = curdir;
 
     /* If we aren't in the object directory, don't create a meta file. */
-    if (strcmp(cname, dname) == 0) {
+    if (strcmp(curdir, dname) == 0) {
 	if (DEBUG(META))
 	    fprintf(debug_file, "Skipping meta for %s: .OBJDIR == .CURDIR\n",
 		    gn->name);
@@ -1096,8 +1091,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    ln = Lst_Succ(ln);
 		}
 	    } else if (strcmp(buf, "CWD") == 0) {
-		char curdir[MAXPATHLEN];
-		if (strcmp(p, getcwd(curdir, sizeof(curdir))) != 0) {
+		    if (strcmp(p, curdir) != 0) {
 		    if (DEBUG(META))
 			fprintf(debug_file, "%s: %d: the current working directory has changed from '%s' to '%s'\n", fname, lineno, p, curdir);
 		    oodate = TRUE;

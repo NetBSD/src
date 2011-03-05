@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.3 2010/06/17 18:18:14 tron Exp $
+#	$NetBSD: master.cf,v 1.3.2.1 2011/03/05 15:08:52 bouyer Exp $
 #
 #
 # Postfix master process configuration file.  For details on the format
@@ -11,6 +11,10 @@
 #               (yes)   (yes)   (yes)   (never) (100)
 # ==========================================================================
 #smtp      inet  n       -       n       -       -       smtpd
+#smtp      inet  n       -       n       -       1       postscreen
+#smtpd     pass  -       -       n       -       -       smtpd
+#dnsblog   unix  -       -       n       -       0       dnsblog
+#tlsproxy  unix  -       -       n       -       0       tlsproxy
 #submission inet n       -       n       -       -       smtpd
 #  -o smtpd_tls_security_level=encrypt
 #  -o smtpd_sasl_auth_enable=yes

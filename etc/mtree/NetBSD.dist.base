@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.72.2.1 2011/02/08 16:18:50 bouyer Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.72.2.2 2011/03/05 15:08:43 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -51,6 +51,11 @@
 ./etc/racoon
 ./etc/rc.conf.d
 ./etc/rc.d
+./etc/saslc.d
+./etc/saslc.d/saslc
+./etc/saslc.d/saslc/mech
+./etc/saslc.d/postfix
+./etc/saslc.d/postfix/mech
 ./etc/skel
 ./etc/sliphome
 ./etc/ssh
@@ -320,6 +325,8 @@
 ./usr/share/examples/ipf
 ./usr/share/examples/isdn
 ./usr/share/examples/kerberos
+./usr/share/examples/libsaslc
+./usr/share/examples/libsaslc/mech
 ./usr/share/examples/mount_portal
 ./usr/share/examples/openssl
 ./usr/share/examples/pf

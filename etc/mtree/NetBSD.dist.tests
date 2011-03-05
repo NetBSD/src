@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.23.2.4 2011/02/17 11:57:24 bouyer Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.23.2.5 2011/03/05 15:08:43 bouyer Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -20,6 +20,7 @@
 ./usr/libdata/debug/usr/tests/dev/sysmon
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/ffs
+./usr/libdata/debug/usr/tests/fs/hfs
 ./usr/libdata/debug/usr/tests/fs/kernfs
 ./usr/libdata/debug/usr/tests/fs/lfs
 ./usr/libdata/debug/usr/tests/fs/msdosfs
@@ -126,6 +127,7 @@
 ./usr/tests/dev/sysmon
 ./usr/tests/fs
 ./usr/tests/fs/ffs
+./usr/tests/fs/hfs
 ./usr/tests/fs/kernfs
 ./usr/tests/fs/lfs
 ./usr/tests/fs/msdosfs
@@ -217,6 +219,8 @@
 ./usr/tests/sys
 ./usr/tests/sys/rc
 ./usr/tests/syscall
+./usr/tests/toolchain
+./usr/tests/toolchain/cc
 ./usr/tests/usr.bin
 ./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.sbin

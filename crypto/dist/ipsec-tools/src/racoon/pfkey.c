@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.54 2010/11/12 10:36:37 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.54.2.1 2011/03/05 15:08:32 bouyer Exp $	*/
 
-/* $Id: pfkey.c,v 1.54 2010/11/12 10:36:37 tteras Exp $ */
+/* $Id: pfkey.c,v 1.54.2.1 2011/03/05 15:08:32 bouyer Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -231,7 +231,7 @@ pfkey_handler(ctx, fd)
 		}
 	}
 
-	plog(LLV_DEBUG, LOCATION, NULL, "get pfkey %s message\n",
+	plog(LLV_DEBUG, LOCATION, NULL, "got pfkey %s message\n",
 		s_pfkey_type(msg->sadb_msg_type));
 	plogdump(LLV_DEBUG2, msg, msg->sadb_msg_len << 3);
 
@@ -2344,8 +2344,8 @@ pk_recvspdupdate(mhp)
 
 	sp = getsp(&spidx);
 	if (sp == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"such policy does not already exist: \"%s\"\n",
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"this policy did not exist for removal: \"%s\"\n",
 			spidx2str(&spidx));
 	} else {
 		/* preserve hints before deleting the SP */
@@ -3611,8 +3611,8 @@ pk_checkalg(class, calg, keylen)
 		break;
 	case IPSECDOI_PROTO_IPCOMP:
 		plog(LLV_DEBUG, LOCATION, NULL,
-			"compression algorithm can not be checked "
-			"because sadb message doesn't support it.\n");
+			"no check of compression algorithm; "
+			"not supported in sadb message.\n");
 		return 0;
 	default:
 		plog(LLV_ERROR, LOCATION, NULL,

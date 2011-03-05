@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.414.4.3 2011/02/15 16:45:56 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.414.4.4 2011/03/05 15:10:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414.4.3 2011/02/15 16:45:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414.4.4 2011/03/05 15:10:41 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2494,6 +2494,12 @@ sys_access(struct lwp *l, const struct sys_access_args *uap, register_t *retval)
 	int error, flags;
 	struct pathbuf *pb;
 	struct nameidata nd;
+
+	CTASSERT(F_OK == 0);
+	if ((SCARG(uap, flags) & ~(R_OK | W_OK | X_OK)) != 0) {
+		/* nonsense flags */
+		return EINVAL;
+	}
 
 	error = pathbuf_copyin(SCARG(uap, path), &pb);
 	if (error) {

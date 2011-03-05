@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121.6.1 2011/02/17 11:59:31 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.6.2 2011/03/05 15:09:30 bouyer Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.6.1 2011/02/17 11:59:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.6.2 2011/03/05 15:09:30 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -162,16 +162,6 @@ void mach_init(int, char *[], u_int, void *);
 
 const char *firmware_getenv(const char *env);
 void arc_sysreset(bus_addr_t, bus_size_t);
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- * Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock.
- */
-int	safepri = MIPS3_PSL_LOWIPL;
-
-const uint32_t *ipl_sr_bits;
 
 extern char kernel_text[], edata[], end[];
 
@@ -334,7 +324,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	 *
 	 * This may clobber PTEs needed by the BIOS.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	/*
 	 * Map critical I/O spaces (e.g. for console printf(9)) on KSEG2.
@@ -352,9 +342,11 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 	curcpu()->ci_divisor_delay =
 	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+	curcpu()->ci_cctr_freq = curcpu()->ci_cpu_freq;
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
 		curcpu()->ci_cycles_per_hz /= 2;
 		curcpu()->ci_divisor_delay /= 2;
+		curcpu()->ci_cctr_freq /= 2;
 	}
 	sprintf(cpu_model, "%s %s%s",
 	    platform->vendor, platform->model, platform->variant);
@@ -445,14 +437,13 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	 * Allocate uarea page for lwp0 and set it.
 	 */
 	mips_init_lwp0_uarea();
-
 }
 
 void
 mips_machdep_cache_config(void)
 {
 
-	mips_sdcache_size = arc_cpu_l2cache_size;
+	mips_cache_info.mci_sdcache_size = arc_cpu_l2cache_size;
 }
 
 /*
@@ -574,8 +565,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)

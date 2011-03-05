@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.63.4.1 2011/02/08 16:19:41 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.63.4.2 2011/03/05 15:10:05 bouyer Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -171,7 +171,6 @@ define	CPUINFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPUINFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPUINFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPUINFO_SAVEFPSTATE	offsetof(struct cpu_info, ci_savefpstate)
-define	CPUINFO_SAVEFPSTATE_NULL offsetof(struct cpu_info, ci_savefpstate_null)
 
 # PTE bits and related information
 define	PG_W		PG_W

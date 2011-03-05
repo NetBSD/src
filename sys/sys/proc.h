@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.299.4.1 2011/02/08 16:20:05 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.299.4.2 2011/03/05 15:10:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -123,7 +123,6 @@ struct pgrp {
  * One structure allocated per emulation.
  */
 struct exec_package;
-struct ps_strings;
 struct ras;
 struct kauth_cred;
 
@@ -308,11 +307,7 @@ struct proc {
 					/* p: basename of last exec file */
 	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
 
-	struct ps_strings *p_psstr;	/* :: address of process's ps_strings */
-	size_t 		p_psargv;	/* :: offset of ps_argvstr in above */
-	size_t 		p_psnargv;	/* :: offset of ps_nargvstr in above */
-	size_t 		p_psenv;	/* :: offset of ps_envstr in above */
-	size_t 		p_psnenv;	/* :: offset of ps_nenvstr in above */
+	vaddr_t		p_psstrp;	/* :: address of process's ps_strings */
 	u_int		p_pax;		/* :: PAX flags */
 
 /*

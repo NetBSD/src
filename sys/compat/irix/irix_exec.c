@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.58 2010/07/07 01:30:33 chs Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.58.4.1 2011/03/05 15:10:12 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.58 2010/07/07 01:30:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.58.4.1 2011/03/05 15:10:12 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -44,7 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.58 2010/07/07 01:30:33 chs Exp $");
 #include <sys/types.h>
 #include <sys/malloc.h>
 
-#include <machine/regnum.h>
+#include <mips/locore.h>
+#include <mips/regnum.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <compat/irix/irix_syscall.h>
@@ -123,12 +125,12 @@ struct emul emul_irix = {
 void
 irix_n32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
-	struct frame *f = l->l_md.md_regs;
+	struct trapframe *tf = l->l_md.md_utf;
 
 	/* Enable 64 bit instructions (eg: sd) */
-	f->f_regs[_R_SR] |= MIPS3_SR_UX | MIPS3_SR_FR;
+	tf->tf_regs[_R_SR] |= MIPS3_SR_UX | MIPS3_SR_FR;
 #ifdef _LP64
-	f->f_regs[_R_SR] |= MIPS3_SR_KX;
+	tf->tf_regs[_R_SR] |= MIPS3_SR_KX;
 #endif
 }
 

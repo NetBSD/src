@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/11/29 09:34:41 skrll Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2011/03/05 15:09:12 bouyer Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -51,7 +51,7 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
 
-.if ${MACHINE} == "cats"
+.if ${MACHINE} == "cats" || ${MACHINE} == "ofppc"
 CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
 

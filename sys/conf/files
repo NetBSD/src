@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.996.4.4 2011/02/17 12:00:08 bouyer Exp $
+#	$NetBSD: files,v 1.996.4.5 2011/03/05 15:10:14 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1069,6 +1069,7 @@ file	dev/ic/lan9118.c		smsh
 # DRM - Direct Rendering Infrastructure: dev/drm
 define drm {}
 include "external/bsd/drm/conf/files.drm"
+include "dev/drm/files.drm"
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -1533,6 +1534,7 @@ file	kern/subr_log.c
 file	kern/subr_lwp_specificdata.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
+file	kern/subr_pcu.c
 file	kern/subr_percpu.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
@@ -1703,3 +1705,14 @@ include	"dev/tprof/files.tprof"
 # alternate memory device
 #
 include "dev/altmem/files.altmem"
+
+#
+# Flash subsystem
+#
+include "dev/flash/files.flash"
+
+#
+# NAND subsytem
+#
+include "dev/nand/files.nand"
+

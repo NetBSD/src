@@ -432,18 +432,18 @@ extern int i915_vblank_pipe_set(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
 extern int i915_vblank_pipe_get(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
-extern int i915_enable_vblank(struct drm_device *dev, int crtc);
-extern void i915_disable_vblank(struct drm_device *dev, int crtc);
-extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
-extern u32 gm45_get_vblank_counter(struct drm_device *dev, int crtc);
+extern int i915_enable_vblank(struct drm_device *dev, unsigned int crtc);
+extern void i915_disable_vblank(struct drm_device *dev, unsigned int crtc);
+extern u32 i915_get_vblank_counter(struct drm_device *dev, unsigned int crtc);
+extern u32 gm45_get_vblank_counter(struct drm_device *dev, unsigned int crtc);
 extern int i915_vblank_swap(struct drm_device *dev, void *data,
 			    struct drm_file *file_priv);
 
 void
-i915_enable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask);
+i915_enable_pipestat(drm_i915_private_t *dev_priv, unsigned int pipe, u32 mask);
 
 void
-i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask);
+i915_disable_pipestat(drm_i915_private_t *dev_priv, unsigned int pipe, u32 mask);
 
 
 /* i915_mem.c */

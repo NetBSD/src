@@ -1,4 +1,4 @@
-/*	$NetBSD: prsa_par.y,v 1.4.38.1 2011/02/17 11:57:10 bouyer Exp $	*/
+/*	$NetBSD: prsa_par.y,v 1.4.38.2 2011/03/05 15:08:32 bouyer Exp $	*/
 
 /* Id: prsa_par.y,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -211,6 +211,7 @@ rsa_statement:
 			YYABORT;
 		}
 		$$ = base64_pubkey2rsa($2);
+		free($2);
 	}
 	| TAG_PUB HEX
 	{
@@ -256,6 +257,7 @@ addr4:
 		}
 		memcpy(sap, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
+		free($1);
 	}
 	;
 
@@ -284,6 +286,7 @@ addr6:
 		}
 		memcpy(sap, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
+		free($1);
 	}
 	;
 

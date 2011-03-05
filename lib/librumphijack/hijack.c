@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.16.2.3 2011/02/17 11:59:23 bouyer Exp $	*/
+/*      $NetBSD: hijack.c,v 1.16.2.4 2011/03/05 15:09:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.16.2.3 2011/02/17 11:59:23 bouyer Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.16.2.4 2011/03/05 15:09:23 bouyer Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -34,8 +34,11 @@ __RCSID("$NetBSD: hijack.c,v 1.16.2.3 2011/02/17 11:59:23 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
+#include <sys/mman.h>
+#include <sys/mount.h>
 #include <sys/poll.h>
+#include <sys/socket.h>
+#include <sys/statvfs.h>
 
 #include <rump/rumpclient.h>
 #include <rump/rump_syscalls.h>
@@ -56,8 +59,10 @@ __RCSID("$NetBSD: hijack.c,v 1.16.2.3 2011/02/17 11:59:23 bouyer Exp $");
 #include <time.h>
 #include <unistd.h>
 
+#include "hijack.h"
+
 enum dualcall {
-	DUALCALL_WRITE, DUALCALL_WRITEV,
+	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
 	DUALCALL_IOCTL, DUALCALL_FCNTL,
 	DUALCALL_SOCKET, DUALCALL_ACCEPT, DUALCALL_BIND, DUALCALL_CONNECT,
 	DUALCALL_GETPEERNAME, DUALCALL_GETSOCKNAME, DUALCALL_LISTEN,
@@ -65,11 +70,30 @@ enum dualcall {
 	DUALCALL_SENDTO, DUALCALL_SENDMSG,
 	DUALCALL_GETSOCKOPT, DUALCALL_SETSOCKOPT,
 	DUALCALL_SHUTDOWN,
-	DUALCALL_READ, DUALCALL_READV,
+	DUALCALL_READ, DUALCALL_READV, DUALCALL_PREAD, DUALCALL_PREADV,
 	DUALCALL_DUP2,
 	DUALCALL_CLOSE,
 	DUALCALL_POLLTS,
 	DUALCALL_KEVENT,
+	DUALCALL_STAT, DUALCALL_LSTAT, DUALCALL_FSTAT,
+	DUALCALL_CHMOD, DUALCALL_LCHMOD, DUALCALL_FCHMOD,
+	DUALCALL_CHOWN, DUALCALL_LCHOWN, DUALCALL_FCHOWN,
+	DUALCALL_OPEN,
+	DUALCALL_STATVFS1, DUALCALL_FSTATVFS1,
+	DUALCALL_CHDIR, DUALCALL_FCHDIR,
+	DUALCALL_LSEEK,
+	DUALCALL_GETDENTS,
+	DUALCALL_UNLINK, DUALCALL_SYMLINK, DUALCALL_READLINK,
+	DUALCALL_RENAME,
+	DUALCALL_MKDIR, DUALCALL_RMDIR,
+	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
+	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
+	DUALCALL_FSYNC, DUALCALL_FSYNC_RANGE,
+	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
+	DUALCALL___GETCWD,
+	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
+	DUALCALL_ACCESS,
+	DUALCALL_MKNOD,
 	DUALCALL__NUM
 };
 
@@ -84,12 +108,30 @@ enum dualcall {
 #define REALSELECT select
 #define REALPOLLTS pollts
 #define REALKEVENT kevent
+#define REALSTAT __stat30
+#define REALLSTAT __lstat30
+#define REALFSTAT __fstat30
+#define REALUTIMES utimes
+#define REALLUTIMES lutimes
+#define REALFUTIMES futimes
+#define REALMKNOD mknod
 #else
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
 #define REALKEVENT _sys___kevent50
+#define REALSTAT __stat50
+#define REALLSTAT __lstat50
+#define REALFSTAT __fstat50
+#define REALUTIMES __utimes50
+#define REALLUTIMES __lutimes50
+#define REALFUTIMES __futimes50
+#define REALMKNOD __mknod50
 #endif
 #define REALREAD _sys_read
+#define REALPREAD _sys_pread
+#define REALPWRITE _sys_pwrite
+#define REALGETDENTS __getdents30
+#define REALMOUNT __mount50
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -97,6 +139,18 @@ int REALPOLLTS(struct pollfd *, nfds_t,
 int REALKEVENT(int, const struct kevent *, size_t, struct kevent *, size_t,
 	       const struct timespec *);
 ssize_t REALREAD(int, void *, size_t);
+ssize_t REALPREAD(int, void *, size_t, off_t);
+ssize_t REALPWRITE(int, const void *, size_t, off_t);
+int REALSTAT(const char *, struct stat *);
+int REALLSTAT(const char *, struct stat *);
+int REALFSTAT(int, struct stat *);
+int REALGETDENTS(int, char *, size_t);
+int REALUTIMES(const char *, const struct timeval [2]);
+int REALLUTIMES(const char *, const struct timeval [2]);
+int REALFUTIMES(int, const struct timeval [2]);
+int REALMOUNT(const char *, const char *, int, void *, size_t);
+int __getcwd(char *, size_t);
+int REALMKNOD(const char *, mode_t, dev_t);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -120,14 +174,55 @@ struct sysnames {
 	{ DUALCALL_SHUTDOWN,	"shutdown",	RSYS_NAME(SHUTDOWN)	},
 	{ DUALCALL_READ,	S(REALREAD),	RSYS_NAME(READ)		},
 	{ DUALCALL_READV,	"readv",	RSYS_NAME(READV)	},
+	{ DUALCALL_PREAD,	S(REALPREAD),	RSYS_NAME(PREAD)	},
+	{ DUALCALL_PREADV,	"preadv",	RSYS_NAME(PREADV)	},
 	{ DUALCALL_WRITE,	"write",	RSYS_NAME(WRITE)	},
 	{ DUALCALL_WRITEV,	"writev",	RSYS_NAME(WRITEV)	},
+	{ DUALCALL_PWRITE,	S(REALPWRITE),	RSYS_NAME(PWRITE)	},
+	{ DUALCALL_PWRITEV,	"pwritev",	RSYS_NAME(PWRITEV)	},
 	{ DUALCALL_IOCTL,	"ioctl",	RSYS_NAME(IOCTL)	},
 	{ DUALCALL_FCNTL,	"fcntl",	RSYS_NAME(FCNTL)	},
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
 	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
 	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
+	{ DUALCALL_STAT,	S(REALSTAT),	RSYS_NAME(STAT)		},
+	{ DUALCALL_LSTAT,	S(REALLSTAT),	RSYS_NAME(LSTAT)	},
+	{ DUALCALL_FSTAT,	S(REALFSTAT),	RSYS_NAME(FSTAT)	},
+	{ DUALCALL_CHOWN,	"chown",	RSYS_NAME(CHOWN)	},
+	{ DUALCALL_LCHOWN,	"lchown",	RSYS_NAME(LCHOWN)	},
+	{ DUALCALL_FCHOWN,	"fchown",	RSYS_NAME(FCHOWN)	},
+	{ DUALCALL_CHMOD,	"chmod",	RSYS_NAME(CHMOD)	},
+	{ DUALCALL_LCHMOD,	"lchmod",	RSYS_NAME(LCHMOD)	},
+	{ DUALCALL_FCHMOD,	"fchmod",	RSYS_NAME(FCHMOD)	},
+	{ DUALCALL_UTIMES,	S(REALUTIMES),	RSYS_NAME(UTIMES)	},
+	{ DUALCALL_LUTIMES,	S(REALLUTIMES),	RSYS_NAME(LUTIMES)	},
+	{ DUALCALL_FUTIMES,	S(REALFUTIMES),	RSYS_NAME(FUTIMES)	},
+	{ DUALCALL_OPEN,	"open",		RSYS_NAME(OPEN)		},
+	{ DUALCALL_STATVFS1,	"statvfs1",	RSYS_NAME(STATVFS1)	},
+	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
+	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
+	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
+	{ DUALCALL_LSEEK,	"lseek",	RSYS_NAME(LSEEK)	},
+	{ DUALCALL_GETDENTS,	"__getdents30",	RSYS_NAME(GETDENTS)	},
+	{ DUALCALL_UNLINK,	"unlink",	RSYS_NAME(UNLINK)	},
+	{ DUALCALL_SYMLINK,	"symlink",	RSYS_NAME(SYMLINK)	},
+	{ DUALCALL_READLINK,	"readlink",	RSYS_NAME(READLINK)	},
+	{ DUALCALL_RENAME,	"rename",	RSYS_NAME(RENAME)	},
+	{ DUALCALL_MKDIR,	"mkdir",	RSYS_NAME(MKDIR)	},
+	{ DUALCALL_RMDIR,	"rmdir",	RSYS_NAME(RMDIR)	},
+	{ DUALCALL_TRUNCATE,	"truncate",	RSYS_NAME(TRUNCATE)	},
+	{ DUALCALL_FTRUNCATE,	"ftruncate",	RSYS_NAME(FTRUNCATE)	},
+	{ DUALCALL_FSYNC,	"fsync",	RSYS_NAME(FSYNC)	},
+	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
+	{ DUALCALL_MOUNT,	S(REALMOUNT),	RSYS_NAME(MOUNT)	},
+	{ DUALCALL_UNMOUNT,	"unmount",	RSYS_NAME(UNMOUNT)	},
+	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
+	{ DUALCALL_CHFLAGS,	"chflags",	RSYS_NAME(CHFLAGS)	},
+	{ DUALCALL_LCHFLAGS,	"lchflags",	RSYS_NAME(LCHFLAGS)	},
+	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
+	{ DUALCALL_ACCESS,	"access",	RSYS_NAME(ACCESS)	},
+	{ DUALCALL_MKNOD,	S(REALMKNOD),	RSYS_NAME(MKNOD)	},
 };
 #undef S
 
@@ -137,16 +232,92 @@ struct bothsys {
 } syscalls[DUALCALL__NUM];
 #define GETSYSCALL(which, name) syscalls[DUALCALL_##name].bs_##which
 
-pid_t	(*host_fork)(void);
-int	(*host_daemon)(int, int);
-int	(*host_execve)(const char *, char *const[], char *const[]);
+static pid_t	(*host_fork)(void);
+static int	(*host_daemon)(int, int);
+static int	(*host_execve)(const char *, char *const[], char *const[]);
+static void *	(*host_mmap)(void *, size_t, int, int, int, off_t);
 
-static uint32_t dup2mask;
-#define ISDUP2D(fd) (((fd) < 32) && (1<<(fd) & dup2mask))
-#define SETDUP2(fd) \
-    do { if ((fd) < 32) dup2mask |= (1<<(fd)); } while (/*CONSTCOND*/0)
-#define CLRDUP2(fd) \
-    do { if ((fd) < 32) dup2mask &= ~(1<<(fd)); } while (/*CONSTCOND*/0)
+static bool	fd_isrump(int);
+static bool	path_isrump(const char *);
+
+/*
+ * Maintain a mapping table for the usual dup2 suspects.
+ * Could use atomic ops to operate on dup2vec, but an application
+ * racing there is not well-defined, so don't bother.
+ */
+/* note: you cannot change this without editing the env-passing code */
+#define DUP2HIGH 2
+static uint32_t dup2vec[DUP2HIGH+1];
+#define DUP2BIT (1<<31)
+#define DUP2ALIAS (1<<30)
+#define DUP2FDMASK ((1<<30)-1)
+
+static bool
+isdup2d(int fd)
+{
+
+	return fd <= DUP2HIGH && fd >= 0 && dup2vec[fd] & DUP2BIT;
+}
+
+static int
+mapdup2(int hostfd)
+{
+
+	_DIAGASSERT(isdup2d(hostfd));
+	return dup2vec[hostfd] & DUP2FDMASK;
+}
+
+static int
+unmapdup2(int rumpfd)
+{
+	int i;
+
+	for (i = 0; i <= DUP2HIGH; i++) {
+		if (dup2vec[i] & DUP2BIT &&
+		    (dup2vec[i] & DUP2FDMASK) == (unsigned)rumpfd)
+			return i;
+	}
+	return -1;
+}
+
+static void
+setdup2(int hostfd, int rumpfd)
+{
+
+	if (hostfd > DUP2HIGH) {
+		_DIAGASSERT(0);
+		return;
+	}
+
+	dup2vec[hostfd] = DUP2BIT | DUP2ALIAS | rumpfd;
+}
+
+static void
+clrdup2(int hostfd)
+{
+
+	if (hostfd > DUP2HIGH) {
+		_DIAGASSERT(0);
+		return;
+	}
+
+	dup2vec[hostfd] = 0;
+}
+
+static bool
+killdup2alias(int rumpfd)
+{
+	int hostfd;
+
+	if ((hostfd = unmapdup2(rumpfd)) == -1)
+		return false;
+
+	if (dup2vec[hostfd] & DUP2ALIAS) {
+		dup2vec[hostfd] &= ~DUP2ALIAS;
+		return true;
+	}
+	return false;
+}
 
 //#define DEBUGJACK
 #ifdef DEBUGJACK
@@ -156,12 +327,34 @@ mydprintf(const char *fmt, ...)
 {
 	va_list ap;
 
-	if (ISDUP2D(STDERR_FILENO))
+	if (isdup2d(STDERR_FILENO))
 		return;
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+}
+
+static const char *
+whichfd(int fd)
+{
+
+	if (fd == -1)
+		return "-1";
+	else if (fd_isrump(fd))
+		return "rump";
+	else
+		return "host";
+}
+
+static const char *
+whichpath(const char *path)
+{
+
+	if (path_isrump(path))
+		return "rump";
+	else
+		return "host";
 }
 
 #else
@@ -173,7 +366,7 @@ type name args								\
 {									\
 	type (*fun) proto;						\
 									\
-	DPRINTF(("%s -> %d\n", __STRING(name), fd));			\
+	DPRINTF(("%s -> %d (%s)\n", __STRING(name), fd,	whichfd(fd)));	\
 	if (fd_isrump(fd)) {						\
 		fun = syscalls[rcname].bs_rump;				\
 		fd = fd_host2rump(fd);					\
@@ -184,44 +377,161 @@ type name args								\
 	return fun vars;						\
 }
 
-/*
- * This is called from librumpclient in case of LD_PRELOAD.
- * It ensures correct RTLD_NEXT.
- *
- * ... except, it's apparently extremely difficult to force
- * at least gcc to generate an actual stack frame here.  So
- * sprinkle some volatile foobar and baz to throw the optimizer
- * off the scent and generate a variable assignment with the
- * return value.  The posterboy for this meltdown is amd64
- * with -O2.  At least with gcc 4.1.3 i386 works regardless of
- * optimization.
- */
-volatile int rumphijack_unrope; /* there, unhang yourself */
-static void *
-hijackdlsym(void *handle, const char *symbol)
-{
-	void *rv;
-
-	rv = dlsym(handle, symbol);
-	rumphijack_unrope = *(volatile int *)rv;
-
-	return (void *)rv;
+#define PATHCALL(type, name, rcname, args, proto, vars)			\
+type name args								\
+{									\
+	type (*fun) proto;						\
+									\
+	DPRINTF(("%s -> %s (%s)\n", __STRING(name), path,		\
+	    whichpath(path)));						\
+	if (path_isrump(path)) {					\
+		fun = syscalls[rcname].bs_rump;				\
+		path = path_host2rump(path);				\
+	} else {							\
+		fun = syscalls[rcname].bs_host;				\
+	}								\
+									\
+	return fun vars;						\
 }
 
-/* low calorie sockets? */
-static bool hostlocalsockets = true;
+/*
+ * This tracks if our process is in a subdirectory of /rump.
+ * It's preserved over exec.
+ */
+static bool pwdinrump = false;
+
+/*
+ * These variables are set from the RUMPHIJACK string and control
+ * which operations can product rump kernel file descriptors.
+ * This should be easily extendable for future needs.
+ */
+#define RUMPHIJACK_DEFAULT "path=/rump,socket=all:nolocal"
+static bool rumpsockets[PF_MAX];
+static const char *rumpprefix;
+static size_t rumpprefixlen;
+
+static struct {
+	int pf;
+	const char *name;
+} socketmap[] = {
+	{ PF_LOCAL, "local" },
+	{ PF_INET, "inet" },
+	{ PF_LINK, "link" },
+#ifdef PF_OROUTE
+	{ PF_OROUTE, "oroute" },
+#endif
+	{ PF_ROUTE, "route" },
+	{ PF_INET6, "inet6" },
+#ifdef PF_MPLS 
+	{ PF_MPLS, "mpls" },
+#endif
+	{ -1, NULL }
+};
+
+static void
+sockparser(char *buf)
+{
+	char *p, *l;
+	bool value;
+	int i;
+
+	/* if "all" is present, it must be specified first */
+	if (strncmp(buf, "all", strlen("all")) == 0) {
+		for (i = 0; i < (int)__arraycount(rumpsockets); i++) {
+			rumpsockets[i] = true;
+		}
+		buf += strlen("all");
+		if (*buf == ':')
+			buf++;
+	}
+
+	for (p = strtok_r(buf, ":", &l); p; p = strtok_r(NULL, ":", &l)) {
+		value = true;
+		if (strncmp(p, "no", strlen("no")) == 0) {
+			value = false;
+			p += strlen("no");
+		}
+
+		for (i = 0; socketmap[i].name; i++) {
+			if (strcmp(p, socketmap[i].name) == 0) {
+				rumpsockets[socketmap[i].pf] = value;
+				break;
+			}
+		}
+		if (socketmap[i].name == NULL) {
+			warnx("invalid socket specifier %s", p);
+		}
+	}
+}
+
+static void
+pathparser(char *buf)
+{
+
+	/* sanity-check */
+	if (*buf != '/')
+		errx(1, "hijack path specifier must begin with ``/''");
+	rumpprefixlen = strlen(buf);
+	if (rumpprefixlen < 2)
+		errx(1, "invalid hijack prefix: %s", buf);
+	if (buf[rumpprefixlen-1] == '/' && strspn(buf, "/") != rumpprefixlen)
+		errx(1, "hijack prefix may end in slash only if pure "
+		    "slash, gave %s", buf);
+
+	if ((rumpprefix = strdup(buf)) == NULL)
+		err(1, "strdup");
+	rumpprefixlen = strlen(rumpprefix);
+}
+
+static struct {
+	void (*parsefn)(char *);
+	const char *name;
+} hijackparse[] = {
+	{ sockparser, "socket" },
+	{ pathparser, "path" },
+	{ NULL, NULL },
+};
+
+static void
+parsehijack(char *hijack)
+{
+	char *p, *p2, *l;
+	const char *hijackcopy;
+	int i;
+
+	if ((hijackcopy = strdup(hijack)) == NULL)
+		err(1, "strdup");
+
+	/* disable everything explicitly */
+	for (i = 0; i < PF_MAX; i++)
+		rumpsockets[i] = false;
+
+	for (p = strtok_r(hijack, ",", &l); p; p = strtok_r(NULL, ",", &l)) {
+		p2 = strchr(p, '=');
+		if (!p2)
+			errx(1, "invalid hijack specifier: %s", hijackcopy);
+
+		for (i = 0; hijackparse[i].parsefn; i++) {
+			if (strncmp(hijackparse[i].name, p,
+			    (size_t)(p2-p)) == 0) {
+				hijackparse[i].parsefn(p2+1);
+				break;
+			}
+		}
+	}
+
+}
 
 static void __attribute__((constructor))
 rcinit(void)
 {
-	char buf[64];
-	extern void *(*rumpclient_dlsym)(void *, const char *);
+	char buf[1024];
 	unsigned i, j;
 
-	rumpclient_dlsym = hijackdlsym;
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_daemon = dlsym(RTLD_NEXT, "daemon");
 	host_execve = dlsym(RTLD_NEXT, "execve");
+	host_mmap = dlsym(RTLD_NEXT, "mmap");
 
 	/*
 	 * In theory cannot print anything during lookups because
@@ -242,18 +552,24 @@ rcinit(void)
 		syscalls[i].bs_host = dlsym(RTLD_NEXT,
 		    syscnames[j].scm_hostname);
 		if (syscalls[i].bs_host == NULL)
-			errx(1, "hostcall %s not found missing",
+			errx(1, "hostcall %s not found!",
 			    syscnames[j].scm_hostname);
 
 		syscalls[i].bs_rump = dlsym(RTLD_NEXT,
 		    syscnames[j].scm_rumpname);
 		if (syscalls[i].bs_rump == NULL)
-			errx(1, "rumpcall %s not found missing",
+			errx(1, "rumpcall %s not found!",
 			    syscnames[j].scm_rumpname);
 	}
 
 	if (rumpclient_init() == -1)
 		err(1, "rumpclient init");
+
+	/* check which syscalls we're supposed to hijack */
+	if (getenv_r("RUMPHIJACK", buf, sizeof(buf)) == -1) {
+		strcpy(buf, RUMPHIJACK_DEFAULT);
+	}
+	parsehijack(buf);
 
 	/* set client persistence level */
 	if (getenv_r("RUMPHIJACK_RETRYCONNECT", buf, sizeof(buf)) != -1) {
@@ -276,43 +592,97 @@ rcinit(void)
 		}
 	}
 
-	if (getenv_r("RUMPHIJACK__DUP2MASK", buf, sizeof(buf)) == 0) {
-		dup2mask = strtoul(buf, NULL, 10);
+	if (getenv_r("RUMPHIJACK__DUP2INFO", buf, sizeof(buf)) == 0) {
+		if (sscanf(buf, "%u,%u,%u",
+		    &dup2vec[0], &dup2vec[1], &dup2vec[2]) != 3) {
+			warnx("invalid dup2mask: %s", buf);
+			memset(dup2vec, 0, sizeof(dup2vec));
+		}
+		unsetenv("RUMPHIJACK__DUP2INFO");
+	}
+	if (getenv_r("RUMPHIJACK__PWDINRUMP", buf, sizeof(buf)) == 0) {
+		pwdinrump = true;
+		unsetenv("RUMPHIJACK__PWDINRUMP");
 	}
 }
 
-/* XXX: need runtime selection.  low for now due to FD_SETSIZE */
+/* Need runtime selection.  low for now due to FD_SETSIZE */
 #define HIJACK_FDOFF 128
+
 static int
 fd_rump2host(int fd)
 {
 
 	if (fd == -1)
 		return fd;
+	return fd + HIJACK_FDOFF;
+}
 
-	if (!ISDUP2D(fd))
-		fd += HIJACK_FDOFF;
+static int
+fd_rump2host_withdup(int fd)
+{
+	int hfd;
 
-	return fd;
+	_DIAGASSERT(fd != -1);
+	hfd = unmapdup2(fd);
+	if (hfd != -1) {
+		_DIAGASSERT(hfd <= DUP2HIGH);
+		return hfd;
+	}
+	return fd_rump2host(fd);
 }
 
 static int
 fd_host2rump(int fd)
 {
 
-	if (!ISDUP2D(fd))
-		fd -= HIJACK_FDOFF;
-	return fd;
+	if (!isdup2d(fd))
+		return fd - HIJACK_FDOFF;
+	else
+		return mapdup2(fd);
 }
 
 static bool
 fd_isrump(int fd)
 {
 
-	return ISDUP2D(fd) || fd >= HIJACK_FDOFF;
+	return isdup2d(fd) || fd >= HIJACK_FDOFF;
 }
 
 #define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_FDOFF)
+
+static bool
+path_isrump(const char *path)
+{
+
+	if (rumpprefix == NULL)
+		return false;
+
+	if (*path == '/') {
+		if (strncmp(path, rumpprefix, rumpprefixlen) == 0)
+			return true;
+		return false;
+	} else {
+		return pwdinrump;
+	}
+}
+
+static const char *rootpath = "/";
+static const char *
+path_host2rump(const char *path)
+{
+	const char *rv;
+
+	if (*path == '/') {
+		rv = path + rumpprefixlen;
+		if (*rv == '\0')
+			rv = rootpath;
+	} else {
+		rv = path;
+	}
+
+	return rv;
+}
 
 static int
 dodup(int oldd, int minfd)
@@ -325,6 +695,8 @@ dodup(int oldd, int minfd)
 	if (fd_isrump(oldd)) {
 		op_fcntl = GETSYSCALL(rump, FCNTL);
 		oldd = fd_host2rump(oldd);
+		if (minfd >= HIJACK_FDOFF)
+			minfd -= HIJACK_FDOFF;
 		isrump = 1;
 	} else {
 		op_fcntl = GETSYSCALL(host, FCNTL);
@@ -340,24 +712,204 @@ dodup(int oldd, int minfd)
 	return newd;
 }
 
+/*
+ * dup a host file descriptor so that it doesn't collide with the dup2mask
+ */
+static int
+fd_dupgood(int fd)
+{
+	int (*op_fcntl)(int, int, ...) = GETSYSCALL(host, FCNTL);
+	int (*op_close)(int) = GETSYSCALL(host, CLOSE);
+	int ofd, i;
+
+	for (i = 1; isdup2d(fd); i++) {
+		ofd = fd;
+		fd = op_fcntl(ofd, F_DUPFD, i);
+		op_close(ofd);
+	}
+
+	return fd;
+}
+
+int
+open(const char *path, int flags, ...)
+{
+	int (*op_open)(const char *, int, ...);
+	bool isrump;
+	va_list ap;
+	int fd;
+
+	DPRINTF(("open -> %s (%s)\n", path, whichpath(path)));
+
+	if (path_isrump(path)) {
+		path = path_host2rump(path);
+		op_open = GETSYSCALL(rump, OPEN);
+		isrump = true;
+	} else {
+		op_open = GETSYSCALL(host, OPEN);
+		isrump = false;
+	}
+
+	va_start(ap, flags);
+	fd = op_open(path, flags, va_arg(ap, mode_t));
+	va_end(ap);
+
+	if (isrump)
+		fd = fd_rump2host(fd);
+	else
+		fd = fd_dupgood(fd);
+
+	DPRINTF(("open <- %d (%s)\n", fd, whichfd(fd)));
+	return fd;
+}
+
+int
+chdir(const char *path)
+{
+	int (*op_chdir)(const char *);
+	bool isrump;
+	int rv;
+
+	if (path_isrump(path)) {
+		op_chdir = GETSYSCALL(rump, CHDIR);
+		isrump = true;
+		path = path_host2rump(path);
+	} else {
+		op_chdir = GETSYSCALL(host, CHDIR);
+		isrump = false;
+	}
+
+	rv = op_chdir(path);
+	if (rv == 0) {
+		if (isrump)
+			pwdinrump = true;
+		else
+			pwdinrump = false;
+	}
+
+	return rv;
+}
+
+int
+fchdir(int fd)
+{
+	int (*op_fchdir)(int);
+	bool isrump;
+	int rv;
+
+	if (fd_isrump(fd)) {
+		op_fchdir = GETSYSCALL(rump, FCHDIR);
+		isrump = true;
+		fd = fd_host2rump(fd);
+	} else {
+		op_fchdir = GETSYSCALL(host, FCHDIR);
+		isrump = false;
+	}
+
+	rv = op_fchdir(fd);
+	if (rv == 0) {
+		if (isrump)
+			pwdinrump = true;
+		else
+			pwdinrump = false;
+	}
+
+	return rv;
+}
+
+int
+__getcwd(char *bufp, size_t len)
+{
+	int (*op___getcwd)(char *, size_t);
+	int rv;
+
+	if (pwdinrump) {
+		size_t prefixgap;
+		bool iamslash;
+
+		if (rumpprefix[rumpprefixlen-1] == '/')
+			iamslash = true;
+		else
+			iamslash = false;
+
+		if (iamslash)
+			prefixgap = rumpprefixlen - 1; /* ``//+path'' */
+		else
+			prefixgap = rumpprefixlen; /* ``/pfx+/path'' */
+		if (len <= prefixgap) {
+			errno = ERANGE;
+			return -1;
+		}
+
+		op___getcwd = GETSYSCALL(rump, __GETCWD);
+		rv = op___getcwd(bufp + prefixgap, len - prefixgap);
+		if (rv == -1)
+			return rv;
+
+		/* augment the "/" part only for a non-root path */
+		memcpy(bufp, rumpprefix, rumpprefixlen);
+
+		/* append / only to non-root cwd */
+		if (rv != 2)
+			bufp[prefixgap] = '/';
+
+		/* don't append extra slash in the purely-slash case */
+		if (rv == 2 && !iamslash)
+			bufp[rumpprefixlen] = '\0';
+
+		return rv;
+	} else {
+		op___getcwd = GETSYSCALL(host, __GETCWD);
+		return op___getcwd(bufp, len);
+	}
+}
+
+int
+rename(const char *from, const char *to)
+{
+	int (*op_rename)(const char *, const char *);
+
+	if (path_isrump(from)) {
+		if (!path_isrump(to)) {
+			errno = EXDEV;
+			return -1;
+		}
+
+		from = path_host2rump(from);
+		to = path_host2rump(to);
+		op_rename = GETSYSCALL(rump, RENAME);
+	} else {
+		if (path_isrump(to)) {
+			errno = EXDEV;
+			return -1;
+		}
+
+		op_rename = GETSYSCALL(host, RENAME);
+	}
+
+	return op_rename(from, to);
+}
+
 int __socket30(int, int, int);
 int
 __socket30(int domain, int type, int protocol)
 {
 	int (*op_socket)(int, int, int);
 	int fd;
-	bool dohost;
+	bool isrump;
 
-	dohost = hostlocalsockets && (domain == AF_LOCAL);
+	isrump = domain < PF_MAX && rumpsockets[domain];
 
-	if (dohost)
-		op_socket = GETSYSCALL(host, SOCKET);
-	else
+	if (isrump)
 		op_socket = GETSYSCALL(rump, SOCKET);
+	else
+		op_socket = GETSYSCALL(host, SOCKET);
 	fd = op_socket(domain, type, protocol);
 
-	if (!dohost)
+	if (isrump)
 		fd = fd_rump2host(fd);
+	else
+		fd = fd_dupgood(fd);
 	DPRINTF(("socket <- %d\n", fd));
 
 	return fd;
@@ -382,6 +934,8 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	fd = op_accept(s, addr, addrlen);
 	if (fd != -1 && isrump)
 		fd = fd_rump2host(fd);
+	else
+		fd = fd_dupgood(fd);
 
 	DPRINTF((" <- %d\n", fd));
 
@@ -412,13 +966,12 @@ ioctl(int fd, unsigned long cmd, ...)
 	return rv;
 }
 
-#include <syslog.h>
 int
 fcntl(int fd, int cmd, ...)
 {
 	int (*op_fcntl)(int, int, ...);
 	va_list ap;
-	int rv, minfd, i;
+	int rv, minfd, i, maxdup2;
 
 	DPRINTF(("fcntl -> %d (cmd %d)\n", fd, cmd));
 
@@ -448,23 +1001,25 @@ fcntl(int fd, int cmd, ...)
 
 		/*
 		 * Additionally, we want to do a rump closem, but only
-		 * for the file descriptors not within the dup2mask.
+		 * for the file descriptors not dup2'd.
 		 */
 
-		/* why don't we offer fls()? */
-		for (i = 31; i >= 0; i--) {
-			if (dup2mask & 1<<i)
-				break;
+		for (i = 0, maxdup2 = 0; i <= DUP2HIGH; i++) {
+			if (dup2vec[i] & DUP2BIT) {
+				int val;
+
+				val = dup2vec[i] & DUP2FDMASK;
+				maxdup2 = MAX(val, maxdup2);
+			}
 		}
 		
 		if (fd >= HIJACK_FDOFF)
 			fd -= HIJACK_FDOFF;
 		else
 			fd = 0;
-		fd = MAX(i+1, fd);
+		fd = MAX(maxdup2+1, fd);
 
 		/* hmm, maybe we should close rump fd's not within dup2mask? */
-
 		return rump_sys_fcntl(fd, F_CLOSEM);
 
 	case F_MAXFD:
@@ -515,15 +1070,23 @@ close(int fd)
 
 	DPRINTF(("close -> %d\n", fd));
 	if (fd_isrump(fd)) {
-		int undup2 = 0;
+		bool undup2 = false;
+		int ofd;
 
-		if (ISDUP2D(fd))
-			undup2 = 1;
+		if (isdup2d(ofd = fd)) {
+			undup2 = true;
+		}
+
 		fd = fd_host2rump(fd);
+		if (!undup2 && killdup2alias(fd)) {
+			return 0;
+		}
+
 		op_close = GETSYSCALL(rump, CLOSE);
 		rv = op_close(fd);
-		if (rv == 0 && undup2)
-			CLRDUP2(fd);
+		if (rv == 0 && undup2) {
+			clrdup2(ofd);
+		}
 	} else {
 		if (rumpclient__closenotify(&fd, RUMPCLIENT_CLOSE_CLOSE) == -1)
 			return -1;
@@ -568,12 +1131,28 @@ dup2(int oldd, int newd)
 	DPRINTF(("dup2 -> %d (o) -> %d (n)\n", oldd, newd));
 
 	if (fd_isrump(oldd)) {
-		if (!(newd >= 0 && newd <= 2))
-			return EBADF;
-		oldd = fd_host2rump(oldd);
-		rv = rump_sys_dup2(oldd, newd);
-		if (rv != -1)
-			SETDUP2(newd);
+		int (*op_close)(int) = GETSYSCALL(host, CLOSE);
+
+		/* only allow fd 0-2 for cross-kernel dup */
+		if (!(newd >= 0 && newd <= 2 && !fd_isrump(newd))) {
+			errno = EBADF;
+			return -1;
+		}
+
+		/* regular dup2? */
+		if (fd_isrump(newd)) {
+			newd = fd_host2rump(newd);
+			rv = rump_sys_dup2(oldd, newd);
+			return fd_rump2host(rv);
+		}
+
+		/*
+		 * dup2 rump => host?  just establish an
+		 * entry in the mapping table.
+		 */
+		op_close(newd);
+		setdup2(newd, fd_host2rump(oldd));
+		rv = 0;
 	} else {
 		host_dup2 = syscalls[DUALCALL_DUP2].bs_host;
 		if (rumpclient__closenotify(&newd, RUMPCLIENT_CLOSE_DUP2) == -1)
@@ -628,26 +1207,45 @@ execve(const char *path, char *const argv[], char *const envp[])
 {
 	char buf[128];
 	char *dup2str;
+	const char *pwdinrumpstr;
 	char **newenv;
 	size_t nelem;
 	int rv, sverrno;
+	int bonus = 2, i = 0;
 
-	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2MASK=%u", dup2mask);
-	dup2str = malloc(strlen(buf)+1);
-	if (dup2str == NULL)
-		return ENOMEM;
-	strcpy(dup2str, buf);
+	snprintf(buf, sizeof(buf), "RUMPHIJACK__DUP2INFO=%u,%u,%u",
+	    dup2vec[0], dup2vec[1], dup2vec[2]);
+	dup2str = strdup(buf);
+	if (dup2str == NULL) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	if (pwdinrump) {
+		pwdinrumpstr = "RUMPHIJACK__PWDINRUMP=true";
+		bonus++;
+	} else {
+		pwdinrumpstr = NULL;
+	}
 
 	for (nelem = 0; envp && envp[nelem]; nelem++)
 		continue;
-	newenv = malloc(sizeof(*newenv) * nelem+2);
+	newenv = malloc(sizeof(*newenv) * (nelem+bonus));
 	if (newenv == NULL) {
 		free(dup2str);
-		return ENOMEM;
+		errno = ENOMEM;
+		return -1;
 	}
 	memcpy(newenv, envp, nelem*sizeof(*newenv));
-	newenv[nelem] = dup2str;
-	newenv[nelem+1] = NULL;
+	newenv[nelem+i] = dup2str;
+	i++;
+
+	if (pwdinrumpstr) {
+		newenv[nelem+i] = __UNCONST(pwdinrumpstr);
+		i++;
+	}
+	newenv[nelem+i] = NULL;
+	_DIAGASSERT(i < bonus);
 
 	rv = rumpclient_exec(path, argv, newenv);
 
@@ -881,32 +1479,56 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 			goto out;
 		}
 
-		/* split vectors */
+		/*
+		 * then, open two pipes, one for notifications
+		 * to each kernel.
+		 *
+		 * At least the rump pipe should probably be
+		 * cached, along with the helper threads.  This
+		 * should give a microbenchmark improvement (haven't
+		 * experienced a macro-level problem yet, though).
+		 */
+		if ((rv = rump_sys_pipe(rpipe)) == -1) {
+			sverrno = errno;
+		}
+		if (rv == 0 && (rv = pipe(hpipe)) == -1) {
+			sverrno = errno;
+		}
+
+		/* split vectors (or signal errors) */
 		for (i = 0; i < nfds; i++) {
+			int fd;
+
+			fds[i].revents = 0;
 			if (fds[i].fd == -1) {
 				pfd_host[i].fd = -1;
 				pfd_rump[i].fd = -1;
 			} else if (fd_isrump(fds[i].fd)) {
 				pfd_host[i].fd = -1;
-				pfd_rump[i].fd = fd_host2rump(fds[i].fd);
+				fd = fd_host2rump(fds[i].fd);
+				if (fd == rpipe[0] || fd == rpipe[1]) {
+					fds[i].revents = POLLNVAL;
+					if (rv != -1)
+						rv++;
+				}
+				pfd_rump[i].fd = fd;
 				pfd_rump[i].events = fds[i].events;
 			} else {
 				pfd_rump[i].fd = -1;
-				pfd_host[i].fd = fds[i].fd;
+				fd = fds[i].fd;
+				if (fd == hpipe[0] || fd == hpipe[1]) {
+					fds[i].revents = POLLNVAL;
+					if (rv != -1)
+						rv++;
+				}
+				pfd_host[i].fd = fd;
 				pfd_host[i].events = fds[i].events;
 			}
 			pfd_rump[i].revents = pfd_host[i].revents = 0;
-			fds[i].revents = 0;
 		}
-
-		/*
-		 * then, open two pipes, one for notifications
-		 * to each kernel.
-		 */
-		if (rump_sys_pipe(rpipe) == -1)
+		if (rv) {
 			goto out;
-		if (pipe(hpipe) == -1)
-			goto out;
+		}
 
 		pfd_host[nfds].fd = hpipe[0];
 		pfd_host[nfds].events = POLLIN;
@@ -974,7 +1596,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 
 		rv = op_pollts(fds, nfds, ts, sigmask);
 		if (rumpcall)
-			adjustpoll(fds, nfds, fd_rump2host);
+			adjustpoll(fds, nfds, fd_rump2host_withdup);
 	}
 
 	return rv;
@@ -1016,13 +1638,29 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 		ev = &changelist[i];
 		if (ev->filter == EVFILT_READ || ev->filter == EVFILT_WRITE ||
 		    ev->filter == EVFILT_VNODE) {
-			if (fd_isrump((int)ev->ident))
-				return ENOTSUP;
+			if (fd_isrump((int)ev->ident)) {
+				errno = ENOTSUP;
+				return -1;
+			}
 		}
 	}
 
 	op_kevent = GETSYSCALL(host, KEVENT);
 	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
+}
+
+/*
+ * mmapping from a rump kernel is not supported, so disallow it.
+ */
+void *
+mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
+{
+
+	if (flags & MAP_FILE && fd_isrump(fd)) {
+		errno = ENOSYS;
+		return MAP_FAILED;
+	}
+	return host_mmap(addr, len, prot, flags, fd, offset);
 }
 
 /*
@@ -1123,7 +1761,199 @@ FDCALL(ssize_t, readv, DUALCALL_READV, 					\
 	(int, const struct iovec *, int),				\
 	(fd, iov, iovcnt))
 
+FDCALL(ssize_t, REALPREAD, DUALCALL_PREAD,				\
+	(int fd, void *buf, size_t nbytes, off_t offset),		\
+	(int, void *, size_t, off_t),					\
+	(fd, buf, nbytes, offset))
+
+FDCALL(ssize_t, preadv, DUALCALL_PREADV, 				\
+	(int fd, const struct iovec *iov, int iovcnt, off_t offset),	\
+	(int, const struct iovec *, int, off_t),			\
+	(fd, iov, iovcnt, offset))
+
 FDCALL(ssize_t, writev, DUALCALL_WRITEV, 				\
 	(int fd, const struct iovec *iov, int iovcnt),			\
 	(int, const struct iovec *, int),				\
 	(fd, iov, iovcnt))
+
+FDCALL(ssize_t, REALPWRITE, DUALCALL_PWRITE,				\
+	(int fd, const void *buf, size_t nbytes, off_t offset),		\
+	(int, const void *, size_t, off_t),				\
+	(fd, buf, nbytes, offset))
+
+FDCALL(ssize_t, pwritev, DUALCALL_PWRITEV, 				\
+	(int fd, const struct iovec *iov, int iovcnt, off_t offset),	\
+	(int, const struct iovec *, int, off_t),			\
+	(fd, iov, iovcnt, offset))
+
+FDCALL(int, REALFSTAT, DUALCALL_FSTAT,					\
+	(int fd, struct stat *sb),					\
+	(int, struct stat *),						\
+	(fd, sb))
+
+FDCALL(int, fstatvfs1, DUALCALL_FSTATVFS1,				\
+	(int fd, struct statvfs *buf, int flags),			\
+	(int, struct statvfs *, int),					\
+	(fd, buf, flags))
+
+FDCALL(off_t, lseek, DUALCALL_LSEEK,					\
+	(int fd, off_t offset, int whence),				\
+	(int, off_t, int),						\
+	(fd, offset, whence))
+__strong_alias(_lseek,lseek);
+
+FDCALL(int, REALGETDENTS, DUALCALL_GETDENTS,				\
+	(int fd, char *buf, size_t nbytes),				\
+	(int, char *, size_t),						\
+	(fd, buf, nbytes))
+
+FDCALL(int, fchown, DUALCALL_FCHOWN,					\
+	(int fd, uid_t owner, gid_t group),				\
+	(int, uid_t, gid_t),						\
+	(fd, owner, group))
+
+FDCALL(int, fchmod, DUALCALL_FCHMOD,					\
+	(int fd, mode_t mode),						\
+	(int, mode_t),							\
+	(fd, mode))
+
+FDCALL(int, ftruncate, DUALCALL_FTRUNCATE,				\
+	(int fd, off_t length),						\
+	(int, off_t),							\
+	(fd, length))
+
+FDCALL(int, fsync, DUALCALL_FSYNC,					\
+	(int fd),							\
+	(int),								\
+	(fd))
+
+FDCALL(int, fsync_range, DUALCALL_FSYNC_RANGE,				\
+	(int fd, int how, off_t start, off_t length),			\
+	(int, int, off_t, off_t),					\
+	(fd, how, start, length))
+
+FDCALL(int, futimes, DUALCALL_FUTIMES,					\
+	(int fd, const struct timeval *tv),				\
+	(int, const struct timeval *),					\
+	(fd, tv))
+
+FDCALL(int, fchflags, DUALCALL_FCHFLAGS,				\
+	(int fd, u_long flags),						\
+	(int, u_long),							\
+	(fd, flags))
+
+/*
+ * path-based selectors
+ */
+
+PATHCALL(int, REALSTAT, DUALCALL_STAT,					\
+	(const char *path, struct stat *sb),				\
+	(const char *, struct stat *),					\
+	(path, sb))
+
+PATHCALL(int, REALLSTAT, DUALCALL_LSTAT,				\
+	(const char *path, struct stat *sb),				\
+	(const char *, struct stat *),					\
+	(path, sb))
+
+PATHCALL(int, chown, DUALCALL_CHOWN,					\
+	(const char *path, uid_t owner, gid_t group),			\
+	(const char *, uid_t, gid_t),					\
+	(path, owner, group))
+
+PATHCALL(int, lchown, DUALCALL_LCHOWN,					\
+	(const char *path, uid_t owner, gid_t group),			\
+	(const char *, uid_t, gid_t),					\
+	(path, owner, group))
+
+PATHCALL(int, chmod, DUALCALL_CHMOD,					\
+	(const char *path, mode_t mode),				\
+	(const char *, mode_t),						\
+	(path, mode))
+
+PATHCALL(int, lchmod, DUALCALL_LCHMOD,					\
+	(const char *path, mode_t mode),				\
+	(const char *, mode_t),						\
+	(path, mode))
+
+PATHCALL(int, statvfs1, DUALCALL_STATVFS1,				\
+	(const char *path, struct statvfs *buf, int flags),		\
+	(const char *, struct statvfs *, int),				\
+	(path, buf, flags))
+
+PATHCALL(int, unlink, DUALCALL_UNLINK,					\
+	(const char *path),						\
+	(const char *),							\
+	(path))
+
+PATHCALL(int, symlink, DUALCALL_SYMLINK,				\
+	(const char *target, const char *path),				\
+	(const char *, const char *),					\
+	(target, path))
+
+PATHCALL(ssize_t, readlink, DUALCALL_READLINK,				\
+	(const char *path, char *buf, size_t bufsiz),			\
+	(const char *, char *, size_t),					\
+	(path, buf, bufsiz))
+
+PATHCALL(int, mkdir, DUALCALL_MKDIR,					\
+	(const char *path, mode_t mode),				\
+	(const char *, mode_t),						\
+	(path, mode))
+
+PATHCALL(int, rmdir, DUALCALL_RMDIR,					\
+	(const char *path),						\
+	(const char *),							\
+	(path))
+
+PATHCALL(int, utimes, DUALCALL_UTIMES,					\
+	(const char *path, const struct timeval *tv),			\
+	(const char *, const struct timeval *),				\
+	(path, tv))
+
+PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
+	(const char *path, const struct timeval *tv),			\
+	(const char *, const struct timeval *),				\
+	(path, tv))
+
+PATHCALL(int, chflags, DUALCALL_CHFLAGS,				\
+	(const char *path, u_long flags),				\
+	(const char *, u_long),						\
+	(path, flags))
+
+PATHCALL(int, lchflags, DUALCALL_LCHFLAGS,				\
+	(const char *path, u_long flags),				\
+	(const char *, u_long),						\
+	(path, flags))
+
+PATHCALL(int, truncate, DUALCALL_TRUNCATE,				\
+	(const char *path, off_t length),				\
+	(const char *, off_t),						\
+	(path, length))
+
+PATHCALL(int, access, DUALCALL_ACCESS,					\
+	(const char *path, int mode),					\
+	(const char *, int),						\
+	(path, mode))
+
+PATHCALL(int, REALMKNOD, DUALCALL_MKNOD,				\
+	(const char *path, mode_t mode, dev_t dev),			\
+	(const char *, mode_t, dev_t),					\
+	(path, mode, dev))
+
+/*
+ * Note: with mount the decisive parameter is the mount
+ * destination directory.  This is because we don't really know
+ * about the "source" directory in a generic call (and besides,
+ * it might not even exist, cf. nfs).
+ */
+PATHCALL(int, REALMOUNT, DUALCALL_MOUNT,				\
+	(const char *type, const char *path, int flags,			\
+	    void *data, size_t dlen),					\
+	(const char *, const char *, int, void *, size_t),		\
+	(type, path, flags, data, dlen))
+
+PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
+	(const char *path, int flags),					\
+	(const char *, int),						\
+	(path, flags))

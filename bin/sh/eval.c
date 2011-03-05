@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.100 2010/06/03 16:14:13 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.100.2.1 2011/03/05 15:08:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.100 2010/06/03 16:14:13 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.100.2.1 2011/03/05 15:08:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -520,14 +520,14 @@ evalpipe(union node *n)
 			INTON;
 			if (prevfd > 0) {
 				close(0);
-				copyfd(prevfd, 0);
+				copyfd(prevfd, 0, 1);
 				close(prevfd);
 			}
 			if (pip[1] >= 0) {
 				close(pip[0]);
 				if (pip[1] != 1) {
 					close(1);
-					copyfd(pip[1], 1);
+					copyfd(pip[1], 1, 1);
 					close(pip[1]);
 				}
 			}
@@ -591,7 +591,7 @@ evalbackcmd(union node *n, struct backcmd *result)
 			close(pip[0]);
 			if (pip[1] != 1) {
 				close(1);
-				copyfd(pip[1], 1);
+				copyfd(pip[1], 1, 1);
 				close(pip[1]);
 			}
 			eflag = 0;
@@ -905,7 +905,7 @@ normal_fork:
 			close(pip[0]);
 			if (pip[1] != 1) {
 				close(1);
-				copyfd(pip[1], 1);
+				copyfd(pip[1], 1, 1);
 				close(pip[1]);
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mime_state.c,v 1.1.1.1.6.1 2011/03/05 15:08:59 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -51,7 +51,7 @@
 /*
 /*	In order to fend off denial of service attacks, message headers
 /*	are truncated at or above var_header_limit bytes, message boundary
-/*	strings are truncated at var_boundary_len bytes, and the multipart
+/*	strings are truncated at var_mime_bound_len bytes, and the multipart
 /*	nesting level is limited to var_mime_maxdepth levels.
 /*
 /*	mime_state_alloc() creates a MIME state machine. The machine

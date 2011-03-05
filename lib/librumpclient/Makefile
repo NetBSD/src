@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.1 2011/02/17 11:59:23 bouyer Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2011/03/05 15:09:23 bouyer Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
@@ -15,5 +15,7 @@ INCSDIR=	/usr/include/rump
 CPPFLAGS+=	-DRUMP_CLIENT -I${.CURDIR} -I${.CURDIR}/../librumpuser
 SRCS=		rumpclient.c
 SRCS+=		rump_syscalls.c
+
+COPTS.rump_syscalls.c+= -fno-strict-aliasing
 
 .include <bsd.lib.mk>

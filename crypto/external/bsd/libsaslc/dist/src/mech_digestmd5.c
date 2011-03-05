@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.2.2.2 2011/02/17 11:57:13 bouyer Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.2.2.3 2011/03/05 15:08:33 bouyer Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.2.2.2 2011/02/17 11:57:13 bouyer Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.2.2.3 2011/03/05 15:08:33 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -651,22 +651,23 @@ saslc__mech_digestmd5_response(saslc__mech_digestmd5_sess_t *ms,
  * @param hqlist a comma delimited list with entries of the form
  * "[hostname:]string".
  * @param hostname the hostname to use in the selection.
- * @return the best matching string or NULL if none found.
+ * @param rval pointer to location for returned string.  Set to NULL
+ * if none found, otherwise set to strdup(3) of the string found.
+ * @return 0 on success, -1 on failure (no memory).
  *
- * NOTE: hqlist must not be NULL.
+ * NOTE: hqlist and rval must not be NULL.
  * NOTE: this allocates memory for its output and the caller is
  * responsible for freeing it.
  */
-static char *
-choose_from_hqlist(const char *hqlist, const char *hostname)
+static int
+choose_from_hqlist(const char *hqlist, const char *hostname, char **rval)
 {
 	list_t *l, *list;
 	size_t len;
 	char *p;
 
-	list = saslc__list_parse(hqlist);
-	if (list == NULL)
-		return NULL;
+	if (saslc__list_parse(&list, hqlist) == -1)
+		return -1;	/* no memory */
 
 	/*
 	 * If the user provided a list and the caller provided a
@@ -677,14 +678,14 @@ choose_from_hqlist(const char *hqlist, const char *hostname)
 		len = strlen(hostname);
 		for (l = list; l != NULL; l = l->next) {
 			p = l->value + len;
-			if (strncasecmp(l->value, hostname, len) != 0 ||
-			    *p != ':')
+			if (*p != ':' ||
+			    strncasecmp(l->value, hostname, len) != 0)
 				continue;
 
 			if (*(++p) != '\0' && isalnum((unsigned char)*p)) {
-				p = strdup(p);
-				saslc__list_free(list);
-				return p;
+				if ((p = strdup(p)) == NULL)
+					goto nomem;
+				goto done;
 			}
 		}
 	}
@@ -695,12 +696,18 @@ choose_from_hqlist(const char *hqlist, const char *hostname)
 	p = NULL;
 	for (l = list; l != NULL; l = l->next) {
 		if (strchr(l->value, ':') == NULL) {
-			p = strdup(l->value);
-			break;
+			if ((p = strdup(l->value)) == NULL)
+				goto nomem;
+			goto done;
 		}
 	}
+ done:
 	saslc__list_free(list);
-	return p;
+	*rval = p;
+	return 0;
+ nomem:
+	saslc__list_free(list);
+	return -1;
 }
 
 /**
@@ -714,14 +721,11 @@ choose_from_hqlist(const char *hqlist, const char *hostname)
 static char *
 saslc__mech_digestmd5_digesturi(saslc_sess_t *sess, const char *serv_host)
 {
-	saslc__mech_digestmd5_sess_t *ms;
 	const char *serv_list;
 	char *serv_name;
 	const char *serv_type;
 	char *r;
 	int rv;
-
-	ms = sess->mech_sess;
 
 	serv_type = saslc_sess_getprop(sess, SASLC_DIGESTMD5_SERVICE);
 	if (serv_type == NULL) {
@@ -730,10 +734,13 @@ saslc__mech_digestmd5_digesturi(saslc_sess_t *sess, const char *serv_host)
 		return NULL;
 	}
 	serv_list = saslc_sess_getprop(sess, SASLC_DIGESTMD5_SERVNAME);
-	serv_name = serv_list != NULL
-	    ? choose_from_hqlist(serv_list, serv_host) : NULL;
+	if (serv_list == NULL)
+		serv_name = NULL;
+	else if (choose_from_hqlist(serv_list, serv_host, &serv_name) == -1)
+		goto nomem;
 
-	saslc__msg_dbg("%s: serv_name='%s'", __func__, serv_name);
+	saslc__msg_dbg("%s: serv_name='%s'", __func__,
+	    serv_name ? serv_name : "<null>");
 
 	/****************************************************************/
 	/* digest-uri       = "digest-uri" "=" <"> digest-uri-value <">	*/
@@ -753,12 +760,14 @@ saslc__mech_digestmd5_digesturi(saslc_sess_t *sess, const char *serv_host)
 	    : asprintf(&r, "%s/%s/%s", serv_type, serv_host, serv_name);
 	if (serv_name != NULL)
 		free(serv_name);
-	if (rv == -1) {
-		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
-		return NULL;
-	}
+	if (rv == -1)
+		goto nomem;
+
 	saslc__msg_dbg("%s: digest-uri='%s'", __func__, r);
 	return r;
+ nomem:
+	saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+	return NULL;
 }
 
 /**
@@ -871,15 +880,21 @@ choose_realm(saslc_sess_t *sess, const char *hostname, list_t *realms)
 	 */
 	if (realms == NULL) {
 		/*
-		 * No realm was supplied.  Figure out a plausable
-		 * default.
+		 * No realm was supplied in challenge.  Figure out a
+		 * plausable default.
 		 */
-		if (user_realms != NULL) {
-			p = choose_from_hqlist(user_realms, hostname);
-			if (p != NULL)
-				return p;
+		if (user_realms == NULL) {
+			saslc__error_set(ERR(sess), ERROR_MECH,
+			    "cannot determine the realm");
+			return NULL;
 		}
-		return NULL;
+		if (choose_from_hqlist(user_realms, hostname, &p) == -1)
+			goto nomem;
+
+		if (p == NULL)
+			saslc__error_set(ERR(sess), ERROR_MECH,
+			    "cannot choose a realm");
+		return p;
 	}
 
 	/************************************************************/
@@ -892,9 +907,14 @@ choose_realm(saslc_sess_t *sess, const char *hostname, list_t *realms)
 	 * one from the user provided list, just take the first realm
 	 * from the challenge.
 	 */
-	if (user_realms == NULL ||
-	    (p = choose_from_hqlist(user_realms, hostname)) == NULL)
-		return strdup(realms->value);
+	if (user_realms == NULL)
+		goto use_1st_realm;
+
+	if (choose_from_hqlist(user_realms, hostname, &p) == -1)
+		goto nomem;
+
+	if (p == NULL)
+		goto use_1st_realm;
 
 	/*
 	 * If we found a matching user provide realm, make sure it is
@@ -905,7 +925,13 @@ choose_realm(saslc_sess_t *sess, const char *hostname, list_t *realms)
 		if (strcasecmp(p, l->value) == 0)
 			return p;
 	}
-	return strdup(realms->value);
+ use_1st_realm:
+	if ((p = strdup(realms->value)) == NULL)
+		goto nomem;
+	return p;
+ nomem:
+	saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+	return NULL;
 }
 
 /**
@@ -1445,7 +1471,10 @@ choose_qop(saslc_sess_t *sess, uint32_t qop_flags)
 	qop_flags &= DEFAULT_QOP_MASK;
 	user_qop = saslc_sess_getprop(sess, SASLC_DIGESTMD5_QOPMASK);
 	if (user_qop != NULL) {
-		list = saslc__list_parse(user_qop);
+		if (saslc__list_parse(&list, user_qop) == -1) {
+			saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+			return -1;
+		}
 		qop_flags &= saslc__mech_qop_list_flags(list);
 		saslc__list_free(list);
 	}
@@ -1481,13 +1510,18 @@ choose_cipher(saslc_sess_t *sess, unsigned int cipher_flags)
 	unsigned int cipher_mask;
 	const char *user_cipher;
 
-	if (cipher_flags == 0)	/* no cipher spec in challenge */
+	if (cipher_flags == 0) {
+		saslc__error_set(ERR(sess), ERROR_MECH,
+		    "no cipher spec in challenge");
 		return -1;
-
+	}
 	cipher_mask = DEFAULT_CIPHER_MASK;
 	user_cipher = saslc_sess_getprop(sess, SASLC_DIGESTMD5_CIPHERMASK);
 	if (user_cipher != NULL) {
-		list = saslc__list_parse(user_cipher);
+		if (saslc__list_parse(&list, user_cipher) == -1) {
+			saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+			return -1;
+		}
 		cipher_mask = cipher_list_flags(list);
 		saslc__list_free(list);
 	}
@@ -1510,6 +1544,8 @@ choose_cipher(saslc_sess_t *sess, unsigned int cipher_flags)
 	if ((cipher_flags & F_CIPHER_RC4_40) != 0)
 		return CIPHER_RC4_40;
 
+	saslc__error_set(ERR(sess), ERROR_MECH,
+	    "qop \"auth-conf\" requires a cipher");
 	return -1;
 }
 
@@ -1555,7 +1591,7 @@ static int
 saslc__mech_digestmd5_parse_challenge(saslc_sess_t *sess, const char *challenge)
 {
 	saslc__mech_digestmd5_sess_t *ms;
-	list_t *l, *n;
+	list_t *list, *n;
 	list_t *tmp_list;
 	cdata_t *cdata;
 	size_t maxbuf;
@@ -1575,9 +1611,12 @@ saslc__mech_digestmd5_parse_challenge(saslc_sess_t *sess, const char *challenge)
 
 	rv = -1;
 	memset(cdata, 0, sizeof(*cdata));
-	l = saslc__list_parse(challenge);
-	saslc__list_log(l, "parse list:\n");
-	for (n = l; n != NULL; n = n->next) {
+	if (saslc__list_parse(&list, challenge) == -1) {
+		saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
+		return -1;
+	}
+	saslc__list_log(list, "parse list:\n");
+	for (n = list; n != NULL; n = n->next) {
 		char *key;
 		char *val;
 
@@ -1641,7 +1680,8 @@ saslc__mech_digestmd5_parse_challenge(saslc_sess_t *sess, const char *challenge)
 			/* no option, it should abort the authentication  */
 			/* exchange.                                      */
 			/**************************************************/
-			tmp_list = saslc__list_parse(val);
+			if (saslc__list_parse(&tmp_list, val) == -1)
+				goto no_mem;
 			saslc__list_log(tmp_list, "qop list:\n");
 			tmp_flags = saslc__mech_qop_list_flags(tmp_list);
 			saslc__list_free(tmp_list);
@@ -1752,7 +1792,8 @@ saslc__mech_digestmd5_parse_challenge(saslc_sess_t *sess, const char *challenge)
 			/* no option, it should abort the authentication  */
 			/* exchange.                                      */
 			/**************************************************/
-			tmp_list = saslc__list_parse(val);
+			if (saslc__list_parse(&tmp_list, val) == -1)
+				goto no_mem;
 			saslc__list_log(tmp_list, "cipher list:\n");
 			tmp_flags = cipher_list_flags(tmp_list);
 			saslc__list_free(tmp_list);
@@ -1812,7 +1853,7 @@ saslc__mech_digestmd5_parse_challenge(saslc_sess_t *sess, const char *challenge)
 
 	rv = 0;
  out:
-	saslc__list_free(l);
+	saslc__list_free(list);
 	return rv;
  no_mem:
 	saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
@@ -1922,17 +1963,12 @@ saslc__mech_digestmd5_response_data(saslc_sess_t *sess)
 	rdata = &ms->rdata;
 
 	if ((rv = choose_qop(sess, cdata->qop_flags)) == -1)
-		return -1;
-
+		return -1;	/* error message already set */
 	ms->mech_sess.qop = rv;
 
 	if (ms->mech_sess.qop == QOP_CONF) {
-		rv = choose_cipher(sess, cdata->cipher_flags);
-		if (rv == -1) {
-			saslc__error_set(ERR(sess), ERROR_MECH,
-			    "qop \"auth-conf\" requires a cipher");
-			return -1;
-		}
+		if ((rv = choose_cipher(sess, cdata->cipher_flags)) == -1)
+			return -1;	/* error message already set */
 		rdata->cipher = rv;
 	}
 
@@ -1944,11 +1980,8 @@ saslc__mech_digestmd5_response_data(saslc_sess_t *sess)
 	}
 
 	rdata->realm = choose_realm(sess, hostname, cdata->realm);
-	if (rdata->realm == NULL) {
-		saslc__error_set(ERR(sess), ERROR_MECH,
-		    "cannot determine the realm");
-		return -1;
-	}
+	if (rdata->realm == NULL)
+		return -1;	/* error message already set */
 
 	rdata->digesturi = saslc__mech_digestmd5_digesturi(sess, hostname);
 	if (rdata->digesturi == NULL)
@@ -1991,8 +2024,11 @@ saslc__mech_digestmd5_response_data(saslc_sess_t *sess)
 	{
 		const char *cnonce;
 		cnonce = saslc_sess_getprop(sess, SASLC_DIGESTMD5_CNONCE);
-		if (cnonce != NULL)
+		if (cnonce != NULL) {
 			rdata->cnonce = strdup(cnonce);
+			if (rdata->cnonce == NULL)
+				goto no_mem;
+		}
 	}
 #endif
 	if (ms->mech_sess.qop != QOP_NONE) {
@@ -2012,7 +2048,6 @@ saslc__mech_digestmd5_response_data(saslc_sess_t *sess)
  no_mem:
 	saslc__error_set_errno(ERR(sess), ERROR_NOMEM);
 	return -1;
-
 }
 
 /**

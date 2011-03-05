@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.29 2011/01/18 01:02:55 matt Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.29.2.1 2011/03/05 15:09:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.29 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.29.2.1 2011/03/05 15:09:59 bouyer Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -125,8 +125,8 @@ mach_create_thread_child(void *arg)
 	tf->tf_lr = regs->lr;
 	tf->tf_ctr = regs->ctr;
 #ifdef PPC_OEA
-	tf->tf_tf_mq = regs->mq;
-	tf->tf_tf_vrsave = regs->vrsave;
+	tf->tf_mq = regs->mq;
+	tf->tf_vrsave = regs->vrsave;
 #endif
 
 	/* Wakeup the parent */

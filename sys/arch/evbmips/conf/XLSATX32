@@ -1,0 +1,8 @@
+# $NetBSD: XLSATX32,v 1.1.10.1 2011/03/05 15:09:37 bouyer Exp $
+#
+
+include "arch/evbmips/conf/XLSATX"
+
+#ident 		"XLSATX32-$Revision: 1.1.10.1 $"
+
+makeoptions	LP64="no"

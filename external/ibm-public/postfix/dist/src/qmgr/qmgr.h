@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.h,v 1.1.1.1 2009/06/23 10:08:52 tron Exp $	*/
+/*	$NetBSD: qmgr.h,v 1.1.1.1.6.1 2011/03/05 15:09:02 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -360,6 +360,7 @@ struct QMGR_MESSAGE {
     char   *sasl_method;		/* SASL method */
     char   *sasl_username;		/* SASL user name */
     char   *sasl_sender;		/* SASL sender */
+    char   *log_ident;			/* up-stream queue ID */
     char   *rewrite_context;		/* address qualification */
     RECIPIENT_LIST rcpt_list;		/* complete addresses */
     int     rcpt_count;			/* used recipient slots */

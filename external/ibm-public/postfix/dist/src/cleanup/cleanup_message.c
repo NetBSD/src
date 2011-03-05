@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.1.1.1.6.1 2011/03/05 15:08:58 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -326,6 +326,10 @@ static const char *cleanup_act(CLEANUP_STATE *state, char *context,
     }
     if (STREQUAL(value, "WARN", command_len)) {
 	cleanup_act_log(state, "warning", context, buf, optional_text);
+	return (buf);
+    }
+    if (STREQUAL(value, "INFO", command_len)) {
+	cleanup_act_log(state, "info", context, buf, optional_text);
 	return (buf);
     }
     if (STREQUAL(value, "FILTER", command_len)) {

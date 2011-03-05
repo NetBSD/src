@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.48.4.1 2011/02/08 16:19:26 bouyer Exp $
+# $NetBSD: Makefile.boot,v 1.48.4.2 2011/03/05 15:09:44 bouyer Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -81,6 +81,7 @@ CPPFLAGS+= -DEPIA_HACK
 # loaded at physical address 0x10000.
 # XXX The heap values should be determined from _end.
 SAMISCCPPFLAGS+= -DHEAP_START=0x40000 -DHEAP_LIMIT=0x70000
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 

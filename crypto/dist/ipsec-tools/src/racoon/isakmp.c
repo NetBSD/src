@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.66.2.1 2011/02/08 16:18:30 bouyer Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.66.2.2 2011/03/05 15:08:32 bouyer Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -3422,7 +3422,7 @@ delete_spd(iph2, created)
 	dst = iph2->dst;
 
 	plog(LLV_INFO, LOCATION, NULL,
-		 "generated policy, deleting it.\n");
+		 "deleting a generated policy.\n");
 
 	memset(&spidx, 0, sizeof(spidx));
 	iph2->spidx_gen = (caddr_t )&spidx;

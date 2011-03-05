@@ -33,9 +33,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _PMAP_PRIVATE
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.2.2.1 2011/03/05 15:09:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.164.2.2 2011/02/17 11:57:17 bouyer Exp $
+.\"	$NetBSD: contents,v 1.164.2.3 2011/03/05 15:08:35 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -371,6 +371,8 @@ Tape boot programs, and a RAMDISK kernel; see below.
 \*M bootloader in ELF format; see below
 .		It Pa altboot.bin
 \*M bootloader in binary format; see below
+.		It Pa altboot.img
+\*M bootloader as an U-Boot/PPCBoot image, suitable for bootm; see below
 .\}
 .
 .if \n[sgimips] \{\

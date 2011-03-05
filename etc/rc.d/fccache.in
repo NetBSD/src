@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# $NetBSD: fccache.in,v 1.1.2.2 2011/03/05 15:08:43 bouyer Exp $
+#
+
+# PROVIDE: fccache 
+# REQUIRE: mountcritremote
+# BEFORE:  DAEMON
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="fccache"
+rcvar=${name}
+command="@X11ROOTDIR@/bin/fc-cache"
+start_cmd="fccache_start"
+stop_cmd=":"
+
+fccache_start()
+{
+	if [ -x "${command}" ]; then
+		echo -n "Updating fontconfig cache:"
+		${command} -q
+		echo " done"
+	fi
+}
+
+load_rc_config $name
+run_rc_command "$1"

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22.8.1 2011/02/17 11:59:50 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.8.2 2011/03/05 15:09:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,8 +46,9 @@
  * and the drivers are initialized.
  */
 
+#define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.8.1 2011/02/17 11:59:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.8.2 2011/03/05 15:09:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.23.2.1 2011/02/08 16:19:05 bouyer Exp $	*/
+/*	$NetBSD: dir.c,v 1.23.2.2 2011/03/05 15:09:25 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.23.2.1 2011/02/08 16:19:05 bouyer Exp $");
+__RCSID("$NetBSD: dir.c,v 1.23.2.2 2011/03/05 15:09:25 bouyer Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -560,7 +560,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 					vallfn = p;
 					valcl = cl;
 				} else if (shortSum != p[13]
-				   || lidx != lrnomask || lrnomask != 0) {
+				   || lidx != lrnomask) {
 					if (!invlfn) {
 						invlfn = vallfn;
 						invcl = valcl;

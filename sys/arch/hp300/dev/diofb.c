@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb.c,v 1.1.2.3 2011/02/17 11:59:38 bouyer Exp $	*/
+/*	$NetBSD: diofb.c,v 1.1.2.4 2011/03/05 15:09:40 bouyer Exp $	*/
 /*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
@@ -305,16 +305,16 @@ diofb_end_attach(device_t self, struct wsdisplay_accessops *accessops,
 {
 	struct wsemuldisplaydev_attach_args waa;
 
-	printf(": %dx%d", fb->dwidth, fb->dheight);
+	aprint_normal(": %dx%d", fb->dwidth, fb->dheight);
 
 	if (fb->planes == 1)
-		printf(" monochrome");
+		aprint_normal(" monochrome");
 	else
-		printf("x%d", fb->planes);
+		aprint_normal("x%d", fb->planes);
 
 	if (descr != NULL)
-		printf(" %s", descr);
-	printf(" frame buffer\n");
+		aprint_normal(" %s", descr);
+	aprint_normal(" frame buffer\n");
 
 	fb->scrlist[0] = &fb->wsd;
 	fb->wsl.nscreens = 1;

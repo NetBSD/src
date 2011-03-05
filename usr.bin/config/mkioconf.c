@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.18 2010/03/26 15:51:17 pooka Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.18.2.1 2011/03/05 15:10:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,7 +143,7 @@ emithdr(FILE *ofp)
 	autogen_comment(ofp, "ioconf.c");
 
 	(void)snprintf(ifnbuf, sizeof(ifnbuf), "arch/%s/conf/ioconf.incl.%s",
-	    machine, machine);
+	    machine ? machine : "(null)", machine ? machine : "(null)");
 	ifn = sourcepath(ifnbuf);
 	if ((ifp = fopen(ifn, "r")) != NULL) {
 		while ((n = fread(buf, 1, sizeof(buf), ifp)) > 0)

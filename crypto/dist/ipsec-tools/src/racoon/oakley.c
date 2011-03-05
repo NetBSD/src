@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.18 2010/12/16 16:59:05 gdt Exp $	*/
+/*	$NetBSD: oakley.c,v 1.18.2.1 2011/03/05 15:08:32 bouyer Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1524,6 +1524,8 @@ oakley_validate_auth(iph1)
 			iph1->rsa_p = rsa_try_check_rsasign(my_hash,
 					iph1->sig_p, iph1->rsa_candidates);
 			error = iph1->rsa_p ? 0 : -1;
+			genlist_free(iph1->rsa_candidates, NULL);
+			iph1->rsa_candidates = NULL;
 			break;
 		default:
 			plog(LLV_ERROR, LOCATION, NULL,

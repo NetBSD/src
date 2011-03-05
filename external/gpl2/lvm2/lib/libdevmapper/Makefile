@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2011/02/17 11:59:17 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2011/03/05 15:08:51 bouyer Exp $
 
 USE_SHLIBDIR=	yes
 USE_FORT?=	no
@@ -8,10 +8,14 @@ NOLINT=		#defined
 
 LIB=		devmapper
 
-CPPFLAGS+=	-I${LIBDM_DISTDIR} -I${LIBDM_DISTDIR}/misc -I${LIBDM_DISTDIR}/mm \
-		-I${LIBDM_DISTDIR}/datastruct -I${LIBDM_DISTDIR}/ioctl \
-		-I${LVM2_DISTDIR}/include -I${LIBDM_SRCDIR} -D__NetBSD__
-
+CPPFLAGS+=	-I${LIBDEVMAPPER_DISTDIR} \
+		-I${LIBDEVMAPPER_DISTDIR}/misc \
+		-I${LIBDEVMAPPER_DISTDIR}/mm \
+		-I${LIBDEVMAPPER_DISTDIR}/datastruct \
+		-I${LIBDEVMAPPER_DISTDIR}/ioctl \
+		-I${LVM2_DISTDIR}/include \
+		-I${LIBDEVMAPPER_SRCDIR} \
+		-D__NetBSD__
 
 CPPFLAGS+=	-D__LIB_DEVMAPPER__ 
 
@@ -29,10 +33,10 @@ LDADD+=         -lrumpvfs -lrump -lrumpuser -lpthread
 DBG=            -g
 .endif
 
-.PATH: ${LIBDM_DISTDIR}/
-.PATH: ${LIBDM_DISTDIR}/datastruct
-.PATH: ${LIBDM_DISTDIR}/mm
-.PATH: ${LIBDM_DISTDIR}/regex
-.PATH: ${LIBDM_DISTDIR}/ioctl
+.PATH: ${LIBDEVMAPPER_DISTDIR}/
+.PATH: ${LIBDEVMAPPER_DISTDIR}/datastruct
+.PATH: ${LIBDEVMAPPER_DISTDIR}/mm
+.PATH: ${LIBDEVMAPPER_DISTDIR}/regex
+.PATH: ${LIBDEVMAPPER_DISTDIR}/ioctl
 
 .include <bsd.lib.mk>

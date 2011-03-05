@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6.30.1 2011/02/08 16:19:12 bouyer Exp $	*/
+/*	$NetBSD: boot.c,v 1.6.30.2 2011/03/05 15:09:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,8 +113,6 @@ struct btinfo_bootpath bi_bpath;
 
 static char bootinfo[BOOTINFO_SIZE];
 
-extern const struct arcbios_fv *ARCBIOS;
-
 int main(int, char **);
 static char *firmware_getenv(char *);
 
@@ -168,7 +166,7 @@ main(int argc, char **argv)
 	bootpath = firmware_getenv("OSLoadPartition");
 	if (bootpath == NULL)
 		bootpath =
-		    (*ARCBIOS->GetEnvironmentVariable)("OSLoadPartition");
+		    arcbios_GetEnvironmentVariable("OSLoadPartition");
 
 	if (bootpath == NULL) {
 		/* XXX need to actually do the fixup */
@@ -183,7 +181,7 @@ main(int argc, char **argv)
 
 	kernel = firmware_getenv("OSLoadFilename");
 	if (kernel == NULL)
-		kernel = (*ARCBIOS->GetEnvironmentVariable)("OSLoadFilename");
+		kernel = arcbios_GetEnvironmentVariable("OSLoadFilename");
 
 	DPRINTF("kernel = %s\n", kernel ? kernel : "<null>");
 
@@ -276,5 +274,5 @@ void
 _rtt(void)
 {
 
-	(*ARCBIOS->Halt)();
+	arcbios_Halt();
 }

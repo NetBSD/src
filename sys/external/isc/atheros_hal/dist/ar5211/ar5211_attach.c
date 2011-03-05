@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5211_attach.c,v 1.1.1.1 2008/12/11 04:46:31 alc Exp $
+ * $Id: ar5211_attach.c,v 1.1.1.1.20.1 2011/03/05 15:10:35 bouyer Exp $
  */
 #include "opt_ah.h"
 
@@ -33,6 +33,9 @@ static HAL_BOOL ar5211GetChannelEdges(struct ath_hal *ah,
 static HAL_BOOL ar5211GetChipPowerLimits(struct ath_hal *ah,
 		HAL_CHANNEL *chans, uint32_t nchans);
 
+static void ar5211ConfigPCIE(struct ath_hal *ah, HAL_BOOL restore);
+static void ar5211DisablePCIE(struct ath_hal *ah);
+
 static const struct ath_hal_private ar5211hal = {{
 	.ah_magic			= AR5211_MAGIC,
 	.ah_abi				= HAL_ABI_VERSION,
@@ -45,6 +48,8 @@ static const struct ath_hal_private ar5211hal = {{
 	.ah_reset			= ar5211Reset,
 	.ah_phyDisable			= ar5211PhyDisable,
 	.ah_disable			= ar5211Disable,
+	.ah_configPCIE			= ar5211ConfigPCIE,
+	.ah_disablePCIE			= ar5211DisablePCIE,
 	.ah_setPCUConfig		= ar5211SetPCUConfig,
 	.ah_perCalibration		= ar5211PerCalibration,
 	.ah_perCalibrationN		= ar5211PerCalibrationN,
@@ -449,6 +454,16 @@ ar5211GetChipPowerLimits(struct ath_hal *ah, HAL_CHANNEL *chans, uint32_t nchans
 		chan->minTxPower = 0;
 	}
 	return AH_TRUE;
+}
+
+static void
+ar5211ConfigPCIE(struct ath_hal *ah, HAL_BOOL restore)
+{
+}
+
+static void
+ar5211DisablePCIE(struct ath_hal *ah)
+{
 }
 
 /*

@@ -1,10 +1,10 @@
 /*
  *	type and other definitions
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: type_local.h,v 1.2 2009/11/15 18:27:40 dholland Exp $
+ *	$NetBSD: type_local.h,v 1.2.8.1 2011/03/05 15:10:07 bouyer Exp $
  */
 
 #ifndef __STDC__

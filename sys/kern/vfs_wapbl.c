@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.39.4.1 2011/02/17 12:00:44 bouyer Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.39.4.2 2011/03/05 15:10:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.39.4.1 2011/02/17 12:00:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.39.4.2 2011/03/05 15:10:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -852,8 +852,7 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 		  ((wl->wl_bufcount + (lockcount * 10)) >
 		   wl->wl_bufcount_max / 2) ||
 		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2) ||
-		  (wl->wl_dealloccnt >=
-		   (wl->wl_dealloclim - (wl->wl_dealloclim >> 8)));
+		  (wl->wl_dealloccnt >= (wl->wl_dealloclim / 2));
 	mutex_exit(&wl->wl_mtx);
 
 	if (doflush) {
@@ -1407,7 +1406,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	if (wapbl_verbose_commit) {
 		struct timespec ts;
 		getnanotime(&ts);
-		printf("%s: %lld.%06ld this transaction = %zu bytes\n",
+		printf("%s: %lld.%09ld this transaction = %zu bytes\n",
 		    __func__, (long long)ts.tv_sec,
 		    (long)ts.tv_nsec, flushsize);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: mtx-1.c,v 1.3 2006/02/23 04:52:49 gdamore Exp $ */
+/* $NetBSD: mtx-1.c,v 1.3.110.1 2011/03/05 15:09:36 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.3 2006/02/23 04:52:49 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.3.110.1 2011/03/05 15:09:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -80,7 +80,7 @@ void
 mtx1_init(void)
 {
 
-	if (MIPS_PRID_COPTS(cpu_id) != MIPS_AU1500)
+	if (MIPS_PRID_COPTS(mips_options.mips_cpu_id) != MIPS_AU1500)
 		panic("mtx-1: CPU not an AU1500!");
 
 	/*

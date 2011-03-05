@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.20.4.1 2011/02/17 12:00:50 bouyer Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.20.4.2 2011/03/05 15:10:48 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.20.4.1 2011/02/17 12:00:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.20.4.2 2011/03/05 15:10:48 bouyer Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -89,14 +89,14 @@ SYSCTL_STRUCT(_net_inet_ipcomp, IPSECCTL_STATS,
 static int ipcomp_input_cb(struct cryptop *crp);
 static int ipcomp_output_cb(struct cryptop *crp);
 
-struct comp_algo *
+const struct comp_algo *
 ipcomp_algorithm_lookup(int alg)
 {
 	if (alg >= IPCOMP_ALG_MAX)
 		return NULL;
 	switch (alg) {
 	case SADB_X_CALG_DEFLATE:
-		return &comp_algo_deflate;
+		return &comp_algo_deflate_nogrow;
 	}
 	return NULL;
 }
@@ -105,9 +105,9 @@ ipcomp_algorithm_lookup(int alg)
  * ipcomp_init() is called when an CPI is being set up.
  */
 static int
-ipcomp_init(struct secasvar *sav, struct xformsw *xsp)
+ipcomp_init(struct secasvar *sav, const struct xformsw *xsp)
 {
-	struct comp_algo *tcomp;
+	const struct comp_algo *tcomp;
 	struct cryptoini cric;
 	int ses;
 
@@ -151,7 +151,7 @@ ipcomp_zeroize(struct secasvar *sav)
  * ipcomp_input() gets called to uncompress an input packet
  */
 static int
-ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
 	struct tdb_crypto *tc;
 	struct cryptodesc *crdc;
@@ -190,6 +190,7 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len - (skip + hlen);
+	crp->crp_olen = MCLBYTES; /* hint to decompression code */
 	crp->crp_flags = CRYPTO_F_IMBUF;
 	crp->crp_buf = m;
 	crp->crp_callback = ipcomp_input_cb;
@@ -371,8 +372,8 @@ ipcomp_output(
     int protoff
 )
 {
-	struct secasvar *sav;
-	struct comp_algo *ipcompx;
+	const struct secasvar *sav;
+	const struct comp_algo *ipcompx;
 	int error, ralen, hlen, maxpacketsize;
 	struct cryptodesc *crdc;
 	struct cryptop *crp;

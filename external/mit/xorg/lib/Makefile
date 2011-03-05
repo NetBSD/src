@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.1 2011/02/08 16:18:53 bouyer Exp $
+#	$NetBSD: Makefile,v 1.22.2.2 2011/03/05 15:09:10 bouyer Exp $
 
 # build libraries for xorg
 
@@ -7,7 +7,7 @@ SUBDIR=	expat libfontenc freetype libFS libICE libOSMesa \
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=libdrm_intel
 .endif
-SUBDIR+=libdrm_radeon pixman xkeyboard-config \
+SUBDIR+=libdrm_radeon pixman xkeyboard-config libxcb \
 	.WAIT \
 	dri fontconfig libSM libX11 \
 	.WAIT \
@@ -31,6 +31,6 @@ SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
 	libXrandr \
 	.WAIT \
 	libXft libglut \
-	libxcb .WAIT xcb-util
+	xcb-util
 	
 .include <bsd.subdir.mk>

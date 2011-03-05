@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.25 2010/07/15 21:53:10 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.25.2.1 2011/03/05 15:09:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.25 2010/07/15 21:53:10 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.25.2.1 2011/03/05 15:09:22 bouyer Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -282,7 +282,7 @@ puffs_stat2vattr(struct vattr *va, const struct stat *sb)
 	va->va_gen = sb->st_gen;
 	va->va_flags = sb->st_flags;
 	va->va_rdev = sb->st_rdev;
-	va->va_bytes = sb->st_blocks * sb->st_blksize;
+	va->va_bytes = sb->st_blocks << DEV_BSHIFT;
 	va->va_filerev = 0;
 	va->va_vaflags = 0;
 }
@@ -297,6 +297,21 @@ puffs_addvtype2mode(mode_t mode, enum vtype type)
 		break;
 	case VBLK:
 		mode |= S_IFBLK;
+		break;
+	case VSOCK:
+		mode |= S_IFSOCK;
+		break;
+	case VFIFO:
+		mode |= S_IFIFO;
+		break;
+	case VREG:
+		mode |= S_IFREG;
+		break;
+	case VLNK:
+		mode |= S_IFLNK;
+		break;
+	case VDIR:
+		mode |= S_IFDIR;
 		break;
 	default:
 		break;

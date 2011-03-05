@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2011/02/08 16:18:52 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2011/03/05 15:08:51 bouyer Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -15,18 +15,23 @@ BINDIR=		/sbin
 
 #CFLAGS+= -g -O0
 
-CPPFLAGS+=      -I${LIBDM_DISTDIR}/ -I${LIBDM_DISTDIR}/misc \
-		-I. -I${LIBDM_DISTDIR}/ioctl -I${LVM2_DISTDIR}/include
+CPPFLAGS+=      -I${LIBDEVMAPPER_DISTDIR}/ -I${LIBDEVMAPPER_DISTDIR}/misc \
+		-I. -I${LIBDEVMAPPER_DISTDIR}/ioctl -I${LVM2_DISTDIR}/include
 
 CPPFLAGS+=	-D__LIB_DEVMAPPER__
 
+LIBDEVMAPPER_OBJDIR!=	cd ${LIBDEVMAPPER_SRCDIR} && ${PRINTOBJDIR}
+LDADD+=		-L${LIBDEVMAPPER_OBJDIR} -ldevmapper
+DPADD+=		${LIBDEVMAPPER_OBJDIR}/libdevmapper.a
+
 LIBDM_OBJDIR!=	cd ${LIBDM_SRCDIR} && ${PRINTOBJDIR}
-LDADD+=		-L${LIBDM_OBJDIR} -ldevmapper
-DPADD+=		${LIBDM_OBJDIR}/libdevmapper.a
+#LDADD+=		-L${LIBDM_OBJDIR} -ldm
+LDADD+=		${LIBDM_OBJDIR}/libdm.a
+DPADD+=		${LIBDM_OBJDIR}/libdm.a
 
-LDADD+=		-ldm -lprop
+LDADD+=		-lprop
 
-LDSTATIC= -static
+#LDSTATIC= -static
 .PATH:	${LVM2_DISTDIR}/tools
 
 .include <bsd.prog.mk>

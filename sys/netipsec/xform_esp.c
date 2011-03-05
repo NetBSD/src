@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.22.8.1 2011/02/17 12:00:50 bouyer Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.22.8.2 2011/03/05 15:10:48 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22.8.1 2011/02/17 12:00:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22.8.2 2011/03/05 15:10:48 bouyer Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -110,7 +110,7 @@ static int esp_output_cb(struct cryptop *crp);
  * NB: this is public for use by the PF_KEY support.
  * NB: if you add support here; be sure to add code to esp_attach below!
  */
-struct enc_xform *
+const struct enc_xform *
 esp_algorithm_lookup(int alg)
 {
 	if (alg >= ESP_ALG_MAX)
@@ -135,7 +135,7 @@ esp_algorithm_lookup(int alg)
 }
 
 size_t
-esp_hdrsiz(struct secasvar *sav)
+esp_hdrsiz(const struct secasvar *sav)
 {
 	size_t size;
 
@@ -169,9 +169,9 @@ esp_hdrsiz(struct secasvar *sav)
  * esp_init() is called when an SPI is being set up.
  */
 static int
-esp_init(struct secasvar *sav, struct xformsw *xsp)
+esp_init(struct secasvar *sav, const struct xformsw *xsp)
 {
-	struct enc_xform *txform;
+	const struct enc_xform *txform;
 	struct cryptoini cria, crie;
 	int keylen;
 	int error;
@@ -276,10 +276,10 @@ esp_zeroize(struct secasvar *sav)
  * ESP input processing, called (eventually) through the protocol switch.
  */
 static int
-esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
-	struct auth_hash *esph;
-	struct enc_xform *espx;
+	const struct auth_hash *esph;
+	const struct enc_xform *espx;
 	struct tdb_ident *tdbi;
 	struct tdb_crypto *tc;
 	int plen, alen, hlen;
@@ -310,7 +310,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	else
 		hlen = sizeof (struct newesp) + sav->ivlen;
 	/* Authenticator hash size */
-	alen = esph ? AH_HMAC_HASHLEN : 0;
+	alen = esph ? esph->authsize : 0;
 
 	/*
 	 * Verify payload length is multiple of encryption algorithm
@@ -463,12 +463,12 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 static int
 esp_input_cb(struct cryptop *crp)
 {
-	u_int8_t lastthree[3], aalg[AH_HMAC_HASHLEN];
+	u_int8_t lastthree[3], aalg[AH_ALEN_MAX];
 	int s, hlen, skip, protoff, error;
 	struct mbuf *m;
 	struct cryptodesc *crd;
-	struct auth_hash *esph;
-	struct enc_xform *espx;
+	const struct auth_hash *esph;
+	const struct enc_xform *espx;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	struct secasvar *sav;
@@ -696,12 +696,12 @@ esp_output(
     int protoff
 )
 {
-	struct enc_xform *espx;
-	struct auth_hash *esph;
+	const struct enc_xform *espx;
+	const struct auth_hash *esph;
 	int hlen, rlen, plen, padding, blks, alen, i, roff;
 	struct mbuf *mo = (struct mbuf *) NULL;
 	struct tdb_crypto *tc;
-	struct secasvar *sav;
+	const struct secasvar *sav;
 	struct secasindex *saidx;
 	unsigned char *pad;
 	u_int8_t prot;
@@ -735,7 +735,7 @@ esp_output(
 	plen = rlen + padding;		/* Padded payload length. */
 
 	if (esph)
-		alen = AH_HMAC_HASHLEN;
+		alen = esph->authsize;
 	else
 		alen = 0;
 
@@ -992,8 +992,8 @@ esp_output_cb(struct cryptop *crp)
 #ifdef IPSEC_DEBUG
 	/* Emulate man-in-the-middle attack when ipsec_integrity is TRUE. */
 	if (ipsec_integrity) {
-		static unsigned char ipseczeroes[AH_HMAC_HASHLEN];
-		struct auth_hash *esph;
+		static unsigned char ipseczeroes[AH_ALEN_MAX];
+		const struct auth_hash *esph;
 
 		/*
 		 * Corrupt HMAC if we want to test integrity verification of
@@ -1001,8 +1001,8 @@ esp_output_cb(struct cryptop *crp)
 		 */
 		esph = sav->tdb_authalgxform;
 		if (esph !=  NULL) {
-			m_copyback(m, m->m_pkthdr.len - AH_HMAC_HASHLEN,
-			    AH_HMAC_HASHLEN, ipseczeroes);
+			m_copyback(m, m->m_pkthdr.len - esph->authlen,
+			    esph->authlen, ipseczeroes);
 		}
 	}
 #endif

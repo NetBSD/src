@@ -1,13 +1,14 @@
-#	$NetBSD: Makefile,v 1.10 2010/11/28 07:47:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2011/03/05 15:09:10 bouyer Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		dynamic static \
+SUBDIR=		dynamic .WAIT libX11-xcb static \
 		ximcp xlcDef xlcUTF8Load xlibi18n xlocale xomGeneric
 
-INCS=		ImUtil.h XKBlib.h Xcms.h Xlib.h XlibConf.h Xlibint.h \
-		Xlocale.h Xregion.h Xresource.h Xutil.h cursorfont.h \
-		Xcmsint.h Xlcint.h
+INCS=		ImUtil.h XKBlib.h Xcms.h Xlib-xcb.h Xlib.h XlibConf.h \
+		Xlibint.h Xlocale.h Xregion.h Xresource.h Xutil.h \
+		Xcmsint.h Xlcint.h \
+		cursorfont.h
 INCSDIR=	${X11INCDIR}/X11
 
 MAN=		AllPlanes.3 BlackPixelOfScreen.3 DisplayOfCCC.3 \
@@ -95,8 +96,8 @@ FILESDIR=	${X11LIBDIR}
 
 XlibConf.h: XlibConf.h.in
 	${_MKTARGET_CREATE}
-	${TOOL_SED} 's/#undef XTHREADS/#define XTHREADS/; \
-		    s/#undef XUSE_MTSAFE_API/#define XUSE_MTSAFE_API/ ' \
+	${TOOL_SED} 's/#undef XTHREADS/#define XTHREADS 1/; \
+		    s/#undef XUSE_MTSAFE_API/#define XUSE_MTSAFE_API 1/ ' \
 		< ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	XlibConf.h

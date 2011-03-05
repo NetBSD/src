@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.2 2009/06/23 11:41:06 tron Exp $
+#	$NetBSD: postfix-files,v 1.2.6.1 2011/03/05 15:08:52 bouyer Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -70,6 +70,7 @@ $daemon_directory/anvil:f:root:-:755
 $daemon_directory/bounce:f:root:-:755
 $daemon_directory/cleanup:f:root:-:755
 $daemon_directory/discard:f:root:-:755
+$daemon_directory/dnsblog:f:root:-:755
 $daemon_directory/error:f:root:-:755
 $daemon_directory/flush:f:root:-:755
 #$daemon_directory/lmtp:f:root:-:755
@@ -85,6 +86,7 @@ $daemon_directory/postfix-files:f:root:-:644
 $daemon_directory/postfix-script:f:root:-:755
 $daemon_directory/postfix-wrapper:f:root:-:755
 $daemon_directory/postmulti-script:f:root:-:755
+$daemon_directory/postscreen:f:root:-:755
 $daemon_directory/proxymap:f:root:-:755
 $daemon_directory/qmgr:f:root:-:755
 #$daemon_directory/qmqpd:f:root:-:755
@@ -93,6 +95,7 @@ $daemon_directory/showq:f:root:-:755
 $daemon_directory/smtp:f:root:-:755
 $daemon_directory/smtpd:f:root:-:755
 $daemon_directory/spawn:f:root:-:755
+$daemon_directory/tlsproxy:f:root:-:755
 $daemon_directory/tlsmgr:f:root:-:755
 $daemon_directory/trivial-rewrite:f:root:-:755
 $daemon_directory/verify:f:root:-:755
@@ -167,6 +170,7 @@ $manpage_directory/man5/header_checks.5:f:root:-:644
 #$manpage_directory/man5/ldap_table.5:f:root:-:644
 $manpage_directory/man5/master.5:f:root:-:644
 #$manpage_directory/man5/mysql_table.5:f:root:-:644
+#$manpage_directory/man5/sqlite_table.5:f:root:-:644
 $manpage_directory/man5/nisplus_table.5:f:root:-:644
 $manpage_directory/man5/pcre_table.5:f:root:-:644
 #$manpage_directory/man5/pgsql_table.5:f:root:-:644
@@ -182,6 +186,7 @@ $manpage_directory/man8/cleanup.8:f:root:-:644
 $manpage_directory/man8/anvil.8:f:root:-:644
 $manpage_directory/man8/defer.8:f:root:-:644
 $manpage_directory/man8/discard.8:f:root:-:644
+$manpage_directory/man8/dnsblog.8:f:root:-:644
 $manpage_directory/man8/error.8:f:root:-:644
 $manpage_directory/man8/flush.8:f:root:-:644
 $manpage_directory/man8/lmtp.8:f:root:-:644
@@ -191,6 +196,7 @@ $manpage_directory/man8/nqmgr.8:f:root:-:644:o
 $manpage_directory/man8/oqmgr.8:f:root:-:644:
 $manpage_directory/man8/pickup.8:f:root:-:644
 $manpage_directory/man8/pipe.8:f:root:-:644
+$manpage_directory/man8/postscreen.8:f:root:-:644
 $manpage_directory/man8/proxymap.8:f:root:-:644
 $manpage_directory/man8/qmgr.8:f:root:-:644
 #$manpage_directory/man8/qmqpd.8:f:root:-:644
@@ -199,6 +205,7 @@ $manpage_directory/man8/showq.8:f:root:-:644
 $manpage_directory/man8/smtp.8:f:root:-:644
 $manpage_directory/man8/smtpd.8:f:root:-:644
 $manpage_directory/man8/spawn.8:f:root:-:644
+$manpage_directory/man8/tlsproxy.8:f:root:-:644
 $manpage_directory/man8/tlsmgr.8:f:root:-:644
 $manpage_directory/man8/trace.8:f:root:-:644
 $manpage_directory/man8/trivial-rewrite.8:f:root:-:644
@@ -263,11 +270,13 @@ $readme_directory/MAILDROP_README:f:root:-:644
 $readme_directory/MILTER_README:f:root:-:644
 $readme_directory/MULTI_INSTANCE_README:f:root:-:644
 $readme_directory/MYSQL_README:f:root:-:644
+$readme_directory/SQLITE_README:f:root:-:644
 $readme_directory/NFS_README:f:root:-:644
 $readme_directory/OVERVIEW:f:root:-:644
 #$readme_directory/PACKAGE_README:f:root:-:644
 $readme_directory/PCRE_README:f:root:-:644
 $readme_directory/PGSQL_README:f:root:-:644
+$readme_directory/POSTSCREEN_README:f:root:-:644
 $readme_directory/QMQP_README:f:root:-:644:o
 $readme_directory/QSHAPE_README:f:root:-:644
 $readme_directory/RELEASE_NOTES:f:root:-:644
@@ -277,6 +286,7 @@ $readme_directory/SCHEDULER_README:f:root:-:644
 $readme_directory/SMTPD_ACCESS_README:f:root:-:644
 $readme_directory/SMTPD_POLICY_README:f:root:-:644
 $readme_directory/SMTPD_PROXY_README:f:root:-:644
+$readme_directory/SOHO_README:f:root:-:644
 $readme_directory/STANDARD_CONFIGURATION_README:f:root:-:644
 $readme_directory/STRESS_README:f:root:-:644
 $readme_directory/TLS_LEGACY_README:f:root:-:644
@@ -313,11 +323,13 @@ $html_directory/MAILDROP_README.html:f:root:-:644
 $html_directory/MILTER_README.html:f:root:-:644
 $html_directory/MULTI_INSTANCE_README.html:f:root:-:644
 $html_directory/MYSQL_README.html:f:root:-:644
+$html_directory/SQLITE_README.html:f:root:-:644
 $html_directory/NFS_README.html:f:root:-:644
 $html_directory/OVERVIEW.html:f:root:-:644
 $html_directory/PACKAGE_README.html:f:root:-:644
 $html_directory/PCRE_README.html:f:root:-:644
 $html_directory/PGSQL_README.html:f:root:-:644
+$html_directory/POSTSCREEN_README.html:f:root:-:644
 $html_directory/QMQP_README.html:f:root:-:644:o
 $html_directory/QSHAPE_README.html:f:root:-:644
 $html_directory/RESTRICTION_CLASS_README.html:f:root:-:644
@@ -326,6 +338,7 @@ $html_directory/SCHEDULER_README.html:f:root:-:644
 $html_directory/SMTPD_ACCESS_README.html:f:root:-:644
 $html_directory/SMTPD_POLICY_README.html:f:root:-:644
 $html_directory/SMTPD_PROXY_README.html:f:root:-:644
+$html_directory/SOHO_README.html:f:root:-:644
 $html_directory/STANDARD_CONFIGURATION_README.html:f:root:-:644
 $html_directory/STRESS_README.html:f:root:-:644
 $html_directory/TLS_LEGACY_README.html:f:root:-:644
@@ -346,6 +359,7 @@ $html_directory/cidr_table.5.html:f:root:-:644
 $html_directory/cleanup.8.html:f:root:-:644
 $html_directory/defer.8.html:h:$html_directory/bounce.8.html:-:644
 $html_directory/discard.8.html:f:root:-:644
+$html_directory/dnsblog.8.html:f:root:-:644
 $html_directory/error.8.html:f:root:-:644
 $html_directory/flush.8.html:f:root:-:644
 $html_directory/generics.5.html:f:root:-:644:o
@@ -358,7 +372,8 @@ $html_directory/local.8.html:f:root:-:644
 $html_directory/mailq.1.html:f:root:-:644
 $html_directory/master.5.html:f:root:-:644
 $html_directory/master.8.html:f:root:-:644
-$html_directory/mysql_table.5.html:f:root:-:644
+#$html_directory/mysql_table.5.html:f:root:-:644
+#$html_directory/sqlite_table.5.html:f:root:-:644
 $html_directory/nisplus_table.5.html:f:root:-:644
 $html_directory/newaliases.1.html:h:$html_directory/mailq.1.html:-:644
 $html_directory/oqmgr.8.html:f:root:-:644
@@ -381,6 +396,7 @@ $html_directory/postlog.1.html:f:root:-:644
 $html_directory/postmap.1.html:f:root:-:644
 $html_directory/postmulti.1.html:f:root:-:644
 $html_directory/postqueue.1.html:f:root:-:644
+$html_directory/postscreen.8.html:f:root:-:644
 $html_directory/postsuper.1.html:f:root:-:644
 $html_directory/qshape.1.html:f:root:-:644
 $html_directory/proxymap.8.html:f:root:-:644
@@ -397,6 +413,7 @@ $html_directory/smtp-source.1.html:f:root:-:644
 $html_directory/smtp.8.html:h:$html_directory/lmtp.8.html:-:644
 $html_directory/smtpd.8.html:f:root:-:644
 $html_directory/spawn.8.html:f:root:-:644
+$html_directory/tlsproxy.8.html:f:root:-:644
 #$html_directory/tcp_table.5.html:f:root:-:644
 $html_directory/trace.8.html:h:$html_directory/bounce.8.html:-:644
 $html_directory/transport.5.html:f:root:-:644

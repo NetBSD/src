@@ -77,6 +77,7 @@ MALLOC_DEFINE(DRM_MEM_CTXBITMAP, "drm_ctxbitmap",
     "DRM CTXBITMAP Data Structures");
 MALLOC_DEFINE(DRM_MEM_SGLISTS, "drm_sglists", "DRM SGLISTS Data Structures");
 MALLOC_DEFINE(DRM_MEM_DRAWABLE, "drm_drawable", "DRM DRAWABLE Data Structures");
+MALLOC_DEFINE(DRM_MEM_MM, "drm_mm", "DRM MM Data Structures");
 
 void drm_mem_init(void)
 {

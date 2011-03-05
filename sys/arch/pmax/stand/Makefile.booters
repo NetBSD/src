@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.52.4.1 2011/02/08 16:19:33 bouyer Exp $
+# $NetBSD: Makefile.booters,v 1.52.4.2 2011/03/05 15:09:58 bouyer Exp $
 
 NOMAN=		# defined
 
@@ -26,6 +26,13 @@ CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -G 128
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CFLAGS+=	-Werror
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
+
+.if ${MACHINE_ARCH} == "mips64el"
+AFLAGS+=	-mips3 -mabi=32
+CFLAGS+=	-mips3 -mabi=32
+LDBUG+=		-m elf32ltsmip
+MACHINE_ARCH=	mipsel
+.endif
 
 NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'

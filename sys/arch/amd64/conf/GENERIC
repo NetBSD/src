@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.299.2.3 2011/02/17 11:59:29 bouyer Exp $
+# $NetBSD: GENERIC,v 1.299.2.4 2011/03/05 15:09:29 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,11 +22,10 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.299.2.3 $"
+#ident 		"GENERIC-$Revision: 1.299.2.4 $"
 
 maxusers	64		# estimated number of users
 
-no options 	COREDUMP	# coredump support, built as module(7)
 # Common binary formats are statically compiled in by default.
 options 	EXEC_ELF32	# exec ELF 32-bits binaries
 #no options 	EXEC_ELF64	# exec ELF 64-bits binaries
@@ -79,15 +78,12 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Intel Enhanced Speedstep for EM64T CPUs
-options 	ENHANCED_SPEEDSTEP
-#options 	EST_FREQ_USERWRITE	# any user can set frequency
-
-# AMD PowerNow! and Cool`n'Quiet technology
-options 	POWERNOW_K8
-
-# Intel(R) On Demand Clock Modulation (aka ODCM)
-# options       INTEL_ONDEMAND_CLOCKMOD
+# CPU features
+#acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
+coretemp*	at cpu?		# Intel on-die thermal sensor
+est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+#odcm0		at cpu0		# On-demand clock modulation
+powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
@@ -283,7 +279,6 @@ options 	VGA_POST		# in-kernel support for VGA POST
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-#acpicpu*	at acpi?		# ACPI CPU
 acpidalb*	at acpi?		# Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early)
@@ -374,6 +369,7 @@ options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga*		at pci? dev ? function ?
 genfb*		at pci? dev ? function ?
+options 	VCONS_DRAW_INTR
 wsdisplay*	at vga? console ?
 wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
@@ -464,9 +460,6 @@ iic*	at nfsmb?
 # Intel PIIX4 power management controllers
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
-
-# Intel Core's on-die Thermal sensor
-options 	INTEL_CORETEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
@@ -660,6 +653,7 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
+alc*	at pci? dev ? function ?	# Attansic/Atheros L1C/L2C Ethernet
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
@@ -1132,6 +1126,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
+#pseudo-device	ifmpls			# MPLS pseudo-interface 
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP

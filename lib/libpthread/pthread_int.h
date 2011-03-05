@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.73 2010/12/18 15:54:27 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.73.2.1 2011/03/05 15:09:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -250,8 +250,12 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 	} while (/*CONSTCOND*/0)
 
 
-#ifdef PTHREAD__HAVE_THREADREG
-#define	pthread__self()		pthread__threadreg_get()
+#if 0 && defined(__HAVE___LWP_GETPRIVATE_FAST)
+static inline pthread_t __constfunc
+pthread__self(void)
+{
+	return (pthread_t)__lwp_getprivate_fast();
+}
 #else
 /* Stack location of pointer to a particular thread */
 extern vaddr_t	pthread__mainbase;

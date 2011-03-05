@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls.h,v 1.1.1.1.6.1 2011/03/05 15:09:03 bouyer Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -94,14 +94,15 @@ typedef struct {
     int     cipher_algbits;
     /* Private. */
     SSL    *con;
-    BIO    *internal_bio;		/* postfix/TLS side of pair */
-    BIO    *network_bio;		/* network side of pair */
     char   *cache_type;			/* tlsmgr(8) cache type if enabled */
     char   *serverid;			/* unique server identifier */
     char   *namaddr;			/* nam[addr] for logging */
     int     log_level;			/* TLS library logging level */
     int     session_reused;		/* this session was reused */
     int     am_server;			/* Are we an SSL server or client? */
+    /* Built-in vs external SSL_accept/read/write/shutdown support. */
+    char   *fpt_dgst;			/* Certificate fingerprint digest */
+    VSTREAM *stream;			/* Blocking-mode SMTP session */
 } TLS_SESS_STATE;
 
  /*
@@ -269,6 +270,7 @@ typedef struct {
 typedef struct {
     TLS_APPL_STATE *ctx;		/* TLS application context */
     VSTREAM *stream;			/* Client stream */
+    int     fd;				/* Event-driven file descriptor */
     int     log_level;			/* TLS log level */
     int     timeout;			/* TLS handshake timeout */
     int     requirecert;		/* Insist on client cert? */
@@ -281,6 +283,7 @@ typedef struct {
 
 extern TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *);
 extern TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props);
+extern TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *);
 
 #define tls_server_stop(ctx, stream, timeout, failure, TLScontext) \
 	tls_session_stop(ctx, (stream), (timeout), (failure), (TLScontext))
@@ -293,10 +296,10 @@ extern TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props);
     ((props)->a12), ((props)->a13), ((props)->a14), ((props)->a15), \
     ((props)->a16), ((props)->a17), ((props)->a18), ((props)->a19), (props)))
 
-#define TLS_SERVER_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) \
+#define TLS_SERVER_START(props, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) \
     tls_server_start((((props)->a1), ((props)->a2), ((props)->a3), \
     ((props)->a4), ((props)->a5), ((props)->a6), ((props)->a7), \
-    ((props)->a8), ((props)->a9), ((props)->a10), (props)))
+    ((props)->a8), ((props)->a9), ((props)->a10), ((props)->a11), (props)))
 
  /*
   * tls_session.c

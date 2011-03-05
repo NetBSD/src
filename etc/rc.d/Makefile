@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.81.2.1 2011/02/08 16:18:50 bouyer Exp $
+# $NetBSD: Makefile,v 1.81.2.2 2011/03/05 15:08:43 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -42,9 +42,10 @@ FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
 
 .if ${MKX11} != "no"
-CONFIGFILES+=	xdm xfs
+CONFIGFILES+=	xdm xfs fccache
 FILESBUILD_xdm=	yes
 FILESBUILD_xfs=	yes
+FILESBUILD_fccache= yes
 
 .SUFFIXES: .in
 .in:

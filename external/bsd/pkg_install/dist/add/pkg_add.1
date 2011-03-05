@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.11 2010/06/26 00:14:27 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.11.2.1 2011/03/05 15:08:49 bouyer Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -130,6 +130,11 @@ will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
 This flag also overrides the fatal error when the operating system or
 architecture the package was built on differ from that of the host.
+.It Fl D
+Force updating even if the dependencies of depending packages are not
+satisfied by the new package.
+This is used by "make replace", after which one would typically
+replace the depending packages.
 .It Fl I
 If an installation script exists for a given package, do not execute it.
 .It Fl K Ar pkg_dbdir

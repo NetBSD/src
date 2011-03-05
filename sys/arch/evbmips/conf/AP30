@@ -1,10 +1,10 @@
-#	$NetBSD: AP30,v 1.16.4.1 2011/02/08 19:29:33 bouyer Exp $
+#	$NetBSD: AP30,v 1.16.4.2 2011/03/05 15:09:36 bouyer Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.16.4.1 $"
+#ident 		"AP30-$Revision: 1.16.4.2 $"
 
 maxusers	32
 
@@ -13,7 +13,7 @@ makeoptions	ATH_MACHINE_HAL=ap30
 
 options 	MIPS32
 options 	NOFPU		# No FPU
-options 	SOFTFLOAT	# emulate FPU insn
+options 	FPEMUL		# emulate FPU insn
 options		WISOC_AR5312	# WiSoC select
 
 # Options for necessary to use MD

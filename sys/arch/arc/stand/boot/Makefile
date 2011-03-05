@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9.4.1 2011/02/08 16:19:12 bouyer Exp $
+# $NetBSD: Makefile,v 1.9.4.2 2011/03/05 15:09:31 bouyer Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -12,8 +12,12 @@ BINMODE= 444
 
 NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 
-SRCS=	start.S
+.PATH:		${S}/dev/arcbios
+
+SRCS=	start.S arcbios_calls.S
 SRCS+=	boot.c bootinfo.c conf.c devopen.c disk.c getchar.c getopt.c putchar.c
+
+.include "${S}/dev/arcbios/Makefile.inc"
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
@@ -24,7 +28,7 @@ LIBCRTEND=
 AFLAGS=    -x assembler-with-cpp -mno-abicalls -mips2
 AFLAGS+=   -D_LOCORE -D_KERNEL
 CFLAGS=    -Os -mmemcpy -G 1024
-CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2
+CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2 -mabi=32
 CFLAGS+=   -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CPPFLAGS+= -nostdinc -I. -I${S}
 CPPFLAGS+= -D_STANDALONE -DNO_ABICALLS -D${MACHINE}

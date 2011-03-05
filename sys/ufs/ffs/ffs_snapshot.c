@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.102.4.7 2011/02/18 19:54:44 bouyer Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.102.4.8 2011/03/05 15:10:52 bouyer Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102.4.7 2011/02/18 19:54:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102.4.8 2011/03/05 15:10:52 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.102.4.7 2011/02/18 19:54:44 bouye
 struct snap_info {
 	kmutex_t si_lock;			/* Lock this snapinfo */
 	kmutex_t si_snaplock;			/* Snapshot vnode common lock */
+	lwp_t *si_owner;			/* Sanplock owner */
 	TAILQ_HEAD(inodelst, inode) si_snapshots; /* List of active snapshots */
 	daddr_t *si_snapblklist;		/* Snapshot block hints list */
 	uint32_t si_gen;			/* Incremented on change */
@@ -115,7 +116,9 @@ static int snapblkaddr(struct vnode *, daddr_t, daddr_t *);
 static int rwfsblk(struct vnode *, int, void *, daddr_t);
 static int syncsnap(struct vnode *);
 static int wrsnapblk(struct vnode *, void *, daddr_t);
+#if !defined(FFS_NO_SNAPSHOT)
 static int blocks_in_journal(struct fs *);
+#endif
 
 static inline bool is_active_snapshot(struct snap_info *, struct inode *);
 static inline daddr_t db_get(struct inode *, int);
@@ -141,6 +144,7 @@ ffs_snapshot_init(struct ufsmount *ump)
 	TAILQ_INIT(&si->si_snapshots);
 	mutex_init(&si->si_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&si->si_snaplock, MUTEX_DEFAULT, IPL_NONE);
+	si->si_owner = NULL;
 	si->si_gen = 0;
 	si->si_snapblklist = NULL;
 
@@ -174,7 +178,6 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 }
 #else /* defined(FFS_NO_SNAPSHOT) */
 	bool suspended = false;
-	bool snapshot_locked = false;
 	int error, redo = 0, snaploc;
 	void *sbbuf = NULL;
 	daddr_t *snaplist = NULL, snaplistsize = 0;
@@ -273,15 +276,11 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	if (error)
 		goto out;
 	/*
-	 * Acquire the snapshot lock.
-	 */
-	mutex_enter(&si->si_snaplock);
-	snapshot_locked = true;
-	/*
 	 * Record snapshot inode. Since this is the newest snapshot,
 	 * it must be placed at the end of the list.
 	 */
-	fs->fs_snapinum[snaploc] = ip->i_number;
+	if (ip->i_nlink > 0)
+		fs->fs_snapinum[snaploc] = ip->i_number;
 
 	mutex_enter(&si->si_lock);
 	if (is_active_snapshot(si, ip))
@@ -380,8 +379,6 @@ out:
 	si->si_gen++;
 	mutex_exit(&si->si_lock);
 
-	if (snapshot_locked)
-		mutex_exit(&si->si_snaplock);
 	if (suspended) {
 		vfs_resume(vp->v_mount);
 #ifdef DEBUG
@@ -397,7 +394,7 @@ out:
 			(void) ffs_truncate(vp, (off_t)0, 0, NOCRED);
 			UFS_WAPBL_END(mp);
 		}
-	} else
+	} else if (ip->i_nlink > 0)
 		vref(vp);
 	return (error);
 }
@@ -746,11 +743,11 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 	struct snap_info *si = VFSTOUFS(mp)->um_snapinfo;
 
 	TAILQ_FOREACH(xp, &si->si_snapshots, i_nextsnap) {
-		if (xp == ip)
-			break;
-		error = expunge(vp, xp, fs, snapacct, BLK_SNAP);
-		if (error)
-			break;
+		if (xp != ip) {
+			error = expunge(vp, xp, fs, snapacct, BLK_SNAP);
+			if (error)
+				break;
+		}
 		if (xp->i_nlink != 0)
 			continue;
 		error = UFS_WAPBL_BEGIN(mp);
@@ -1315,6 +1312,33 @@ mapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 	UFS_WAPBL_END(mp);
 	return (0);
 }
+
+/*
+ * Number of blocks that fit into the journal or zero if not logging.
+ */
+static int
+blocks_in_journal(struct fs *fs)
+{
+	off_t bpj;
+
+	if ((fs->fs_flags & FS_DOWAPBL) == 0)
+		return 0;
+	bpj = 1;
+	if (fs->fs_journal_version == UFS_WAPBL_VERSION) {
+		switch (fs->fs_journal_location) {
+		case UFS_WAPBL_JOURNALLOC_END_PARTITION:
+			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_EPART_BLKSZ]*
+			    fs->fs_journallocs[UFS_WAPBL_EPART_COUNT];
+			break;
+		case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
+			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ]*
+			    fs->fs_journallocs[UFS_WAPBL_INFS_COUNT];
+			break;
+		}
+	}
+	bpj /= fs->fs_bsize;
+	return (bpj > 0 ? bpj : 1);
+}
 #endif /* defined(FFS_NO_SNAPSHOT) */
 
 /*
@@ -1381,8 +1405,7 @@ ffs_snapremove(struct vnode *vp)
 	struct snap_info *si;
 	struct lwp *l = curlwp;
 	daddr_t numblks, blkno, dblk;
-	int error, loc, last, n;
-	const int wbreak = blocks_in_journal(fs)/8;
+	int error, loc, last;
 
 	si = VFSTOUFS(mp)->um_snapinfo;
 	/*
@@ -1392,6 +1415,7 @@ ffs_snapremove(struct vnode *vp)
 	 *
 	 * Clear copy-on-write flag if last snapshot.
 	 */
+	mutex_enter(&si->si_snaplock);
 	mutex_enter(&si->si_lock);
 	if (is_active_snapshot(si, ip)) {
 		TAILQ_REMOVE(&si->si_snapshots, ip, i_nextsnap);
@@ -1401,18 +1425,22 @@ ffs_snapremove(struct vnode *vp)
 			si->si_snapblklist = xp->i_snapblklist;
 			si->si_gen++;
 			mutex_exit(&si->si_lock);
+			mutex_exit(&si->si_snaplock);
 		} else {
 			si->si_snapblklist = 0;
 			si->si_gen++;
 			mutex_exit(&si->si_lock);
+			mutex_exit(&si->si_snaplock);
 			fscow_disestablish(mp, ffs_copyonwrite, devvp);
 		}
 		if (ip->i_snapblklist != NULL) {
 			free(ip->i_snapblklist, M_UFSMNT);
 			ip->i_snapblklist = NULL;
 		}
-	} else
+	} else {
 		mutex_exit(&si->si_lock);
+		mutex_exit(&si->si_snaplock);
+	}
 	/*
 	 * Clear all BLK_NOCOPY fields. Pass any block claims to other
 	 * snapshots that want them (see ffs_snapblkfree below).
@@ -1429,7 +1457,7 @@ ffs_snapremove(struct vnode *vp)
 		}
 	}
 	numblks = howmany(ip->i_size, fs->fs_bsize);
-	for (blkno = NDADDR, n = 0; blkno < numblks; blkno += NINDIR(fs)) {
+	for (blkno = NDADDR; blkno < numblks; blkno += NINDIR(fs)) {
 		error = ffs_balloc(vp, lblktosize(fs, (off_t)blkno),
 		    fs->fs_bsize, l->l_cred, B_METAONLY, &ibp);
 		if (error)
@@ -1439,12 +1467,6 @@ ffs_snapremove(struct vnode *vp)
 		else
 			last = fs->fs_size - blkno;
 		for (loc = 0; loc < last; loc++) {
-			if (wbreak > 0 && (++n % wbreak) == 0) {
-				UFS_WAPBL_END(mp);
-				error = UFS_WAPBL_BEGIN(mp);
-				if (error)
-					panic("UFS_WAPBL_BEGIN failed");
-			}
 			dblk = idb_get(ip, ibp->b_data, loc);
 			if (dblk == BLK_NOCOPY || dblk == BLK_SNAP)
 				idb_assign(ip, ibp->b_data, loc, 0);
@@ -1456,6 +1478,9 @@ ffs_snapremove(struct vnode *vp)
 			}
 		}
 		bawrite(ibp);
+		UFS_WAPBL_END(mp);
+		error = UFS_WAPBL_BEGIN(mp);
+		KASSERT(error == 0);
 	}
 	/*
 	 * Clear snapshot flag and drop reference.
@@ -1500,25 +1525,18 @@ ffs_snapblkfree(struct fs *fs, struct vnode *devvp, daddr_t bno,
 	daddr_t lbn;
 	daddr_t blkno;
 	uint32_t gen;
-	int indiroff = 0, snapshot_locked = 0, error = 0, claimedblk = 0;
+	int indiroff = 0, error = 0, claimedblk = 0;
 
 	si = VFSTOUFS(mp)->um_snapinfo;
 	lbn = fragstoblks(fs, bno);
+	mutex_enter(&si->si_snaplock);
 	mutex_enter(&si->si_lock);
+	si->si_owner = curlwp;
+		
 retry:
 	gen = si->si_gen;
 	TAILQ_FOREACH(ip, &si->si_snapshots, i_nextsnap) {
 		vp = ITOV(ip);
-		if (snapshot_locked == 0) {
-			if (!mutex_tryenter(&si->si_snaplock)) {
-				mutex_exit(&si->si_lock);
-				mutex_enter(&si->si_snaplock);
-				mutex_enter(&si->si_lock);
-			}
-			snapshot_locked = 1;
-			if (gen != si->si_gen)
-				goto retry;
-		}
 		/*
 		 * Lookup block being written.
 		 */
@@ -1615,6 +1633,9 @@ retry:
 				error = syncsnap(vp);
 			else
 				error = 0;
+			mutex_enter(&si->si_lock);
+			si->si_owner = NULL;
+			mutex_exit(&si->si_lock);
 			mutex_exit(&si->si_snaplock);
 			return (error == 0);
 		}
@@ -1654,7 +1675,9 @@ retry:
 		if (gen != si->si_gen)
 			goto retry;
 	}
+	si->si_owner = NULL;
 	mutex_exit(&si->si_lock);
+	mutex_exit(&si->si_snaplock);
 	if (saved_data)
 		free(saved_data, M_UFSMNT);
 	/*
@@ -1663,8 +1686,6 @@ retry:
 	 * not be freed. Although space will be lost, the snapshot
 	 * will stay consistent.
 	 */
-	if (snapshot_locked)
-		mutex_exit(&si->si_snaplock);
 	return (error);
 }
 
@@ -1878,6 +1899,15 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 	/*
 	 * Not in the precomputed list, so check the snapshots.
 	 */
+	 if (si->si_owner != curlwp) {
+		if (!mutex_tryenter(&si->si_snaplock)) {
+			mutex_exit(&si->si_lock);
+			mutex_enter(&si->si_snaplock);
+			mutex_enter(&si->si_lock);
+		}
+		si->si_owner = curlwp;
+		snapshot_locked = 1;
+	 }
 	 if (data_valid && bp->b_bcount == fs->fs_bsize)
 		saved_data = bp->b_data;
 retry:
@@ -1899,6 +1929,7 @@ retry:
 			blkno = db_get(ip, lbn);
 		} else {
 			mutex_exit(&si->si_lock);
+			blkno = 0; /* XXX: GCC */
 			if ((error = snapblkaddr(vp, lbn, &blkno)) != 0) {
 				mutex_enter(&si->si_lock);
 				break;
@@ -1918,34 +1949,8 @@ retry:
 			error = ENOMEM;
 			break;
 		}
-
-		if (snapshot_locked == 0) {
-			if (!mutex_tryenter(&si->si_snaplock)) {
-				mutex_exit(&si->si_lock);
-				mutex_enter(&si->si_snaplock);
-				mutex_enter(&si->si_lock);
-			}
-			snapshot_locked = 1;
-			if (gen != si->si_gen)
-				goto retry;
-
-			/* Check again if block still needs to be copied */
-			if (lbn < NDADDR) {
-				blkno = db_get(ip, lbn);
-			} else {
-				mutex_exit(&si->si_lock);
-				if ((error = snapblkaddr(vp, lbn, &blkno)) != 0) {
-					mutex_enter(&si->si_lock);
-					break;
-				}
-				mutex_enter(&si->si_lock);
-				if (gen != si->si_gen)
-					goto retry;
-			}
-
-			if (blkno != 0)
-				continue;
-		}
+		/* Only one level of recursion allowed. */
+		KASSERT(snapshot_locked);
 		/*
 		 * Allocate the block into which to do the copy. Since
 		 * multiple processes may all try to copy the same block,
@@ -2000,11 +2005,14 @@ retry:
 	 * have not been unlinked, and hence will be visible after
 	 * a crash, to ensure their integrity.
 	 */
-	mutex_exit(&si->si_lock);
+	if (snapshot_locked) {
+		si->si_owner = NULL;
+		mutex_exit(&si->si_lock);
+		mutex_exit(&si->si_snaplock);
+	} else
+		mutex_exit(&si->si_lock);
 	if (saved_data && saved_data != bp->b_data)
 		free(saved_data, M_UFSMNT);
-	if (snapshot_locked)
-		mutex_exit(&si->si_snaplock);
 	return error;
 }
 
@@ -2224,33 +2232,6 @@ is_active_snapshot(struct snap_info *si, struct inode *ip)
 		if (xp == ip)
 			return true;
 	return false;
-}
-
-/*
- * Number of blocks that fit into the journal or zero if not logging.
- */
-static int
-blocks_in_journal(struct fs *fs)
-{
-	off_t bpj;
-
-	if ((fs->fs_flags & FS_DOWAPBL) == 0)
-		return 0;
-	bpj = 1;
-	if (fs->fs_journal_version == UFS_WAPBL_VERSION) {
-		switch (fs->fs_journal_location) {
-		case UFS_WAPBL_JOURNALLOC_END_PARTITION:
-			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_EPART_BLKSZ]*
-			    fs->fs_journallocs[UFS_WAPBL_EPART_COUNT];
-			break;
-		case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
-			bpj = (off_t)fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ]*
-			    fs->fs_journallocs[UFS_WAPBL_INFS_COUNT];
-			break;
-		}
-	}
-	bpj /= fs->fs_bsize;
-	return (bpj > 0 ? bpj : 1);
 }
 
 /*

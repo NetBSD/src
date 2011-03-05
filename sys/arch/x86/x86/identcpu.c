@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.21.2.1 2011/02/08 16:19:45 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.21.2.2 2011/03/05 15:10:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,17 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.21.2.1 2011/02/08 16:19:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.21.2.2 2011/03/05 15:10:10 bouyer Exp $");
 
-#include "opt_enhanced_speedstep.h"
-#include "opt_intel_odcm.h"
-#include "opt_intel_coretemp.h"
-#include "opt_via_c7temp.h"
-#include "opt_powernow_k8.h"
 #include "opt_xen.h"
-#ifdef i386	/* XXX */
-#include "opt_powernow_k7.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.21.2.1 2011/02/08 16:19:45 bouyer Exp
 #include <x86/cacheinfo.h>
 #include <x86/cpuvar.h>
 #include <x86/cpu_msr.h>
-#include <x86/powernow.h>
 
 static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
@@ -436,7 +427,7 @@ cpu_probe_c3(struct cpu_info *ci)
 		    if (lfunc & CPUID_VIA_HAS_RNG) {
 		    	if (!(lfunc & CPUID_VIA_DO_RNG)) {
 			    rng_enable++;
-			    ci->ci_feat_val[4] |= CPUID_VIA_HAS_RNG;
+			    ci->ci_feat_val[4] |= CPUID_VIA_DO_RNG;
 			}
 		    }
 		    /* Check for and enable ACE (AES-CBC) */
@@ -802,53 +793,4 @@ cpu_identify(struct cpu_info *ci)
 	} else
 		i386_use_fxsave = 0;
 #endif	/* i386 */
-
-#ifdef ENHANCED_SPEEDSTEP
-	if (cpu_feature[1] & CPUID2_EST) {
-		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(cpu_vendor);
-	}
-#endif /* ENHANCED_SPEEDSTEP */
-
-#ifdef INTEL_CORETEMP
-	if (cpu_vendor == CPUVENDOR_INTEL && cpuid_level >= 0x06)
-		coretemp_register(ci);
-#endif
-
-#ifdef VIA_C7TEMP
-	if (cpu_vendor == CPUVENDOR_IDT &&
-	    CPUID2FAMILY(ci->ci_signature) == 6 &&
-	    CPUID2MODEL(ci->ci_signature) >= 0x9) {
-		uint32_t descs[4];
-
-		x86_cpuid(0xc0000000, descs);
-		if (descs[0] >= 0xc0000002)	/* has temp sensor */
-			viac7temp_register(ci);
-	}
-#endif
-
-#if defined(POWERNOW_K7) || defined(POWERNOW_K8)
-	if (cpu_vendor == CPUVENDOR_AMD && powernow_probe(ci)) {
-		switch (CPUID2FAMILY(ci->ci_signature)) {
-#ifdef POWERNOW_K7
-		case 6:
-			k7_powernow_init();
-			break;
-#endif
-#ifdef POWERNOW_K8
-		case 15:
-			k8_powernow_init();
-			break;
-#endif
-		default:
-			break;
-		}
-	}
-#endif /* POWERNOW_K7 || POWERNOW_K8 */
-
-#ifdef INTEL_ONDEMAND_CLOCKMOD
-	if (cpuid_level >= 1) {
-		clockmod_init();
-	}
-#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.56 2011/01/02 13:01:45 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.56.2.1 2011/03/05 15:09:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -246,9 +246,11 @@ ukfs_part_probe(char *devpath, struct ukfs_part **partp)
 		    *(MAGICADJ_DISKLABEL(p,0)) < 'a' + UKFS_MAXPARTITIONS) {
 			struct ukfs__disklabel dl;
 			struct ukfs__partition *pp;
+			int imswapped;
 			char buf[65536];
 			char labelchar = *(MAGICADJ_DISKLABEL(p,0));
 			int partition = labelchar - 'a';
+			uint32_t poffset, psize;
 
 			*p = '\0';
 			devfd = open(devpath, O_RDONLY);
@@ -263,7 +265,8 @@ ukfs_part_probe(char *devpath, struct ukfs_part **partp)
 				goto out;
 			}
 
-			if (ukfs__disklabel_scan(&dl, buf, sizeof(buf)) != 0) {
+			if (ukfs__disklabel_scan(&dl, &imswapped,
+			    buf, sizeof(buf)) != 0) {
 				error = ENOENT;
 				goto out;
 			}
@@ -276,8 +279,15 @@ ukfs_part_probe(char *devpath, struct ukfs_part **partp)
 			pp = &dl.d_partitions[partition];
 			part->part_type = UKFS_PART_DISKLABEL;
 			part->part_labelchar = labelchar;
-			part->part_devoff = pp->p_offset << DEV_BSHIFT;
-			part->part_devsize = pp->p_size << DEV_BSHIFT;
+			if (imswapped) {
+				poffset = bswap32(pp->p_offset);
+				psize = bswap32(pp->p_size);
+			} else {
+				poffset = pp->p_offset;
+				psize = pp->p_size;
+			}
+			part->part_devoff = poffset << DEV_BSHIFT;
+			part->part_devsize = psize << DEV_BSHIFT;
 		} else {
 			error = EINVAL;
 		}

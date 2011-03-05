@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2010/01/14 13:47:42 wiz Exp $
+# $NetBSD: mi,v 1.17.2.1 2011/03/05 15:08:40 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -106,3 +106,5 @@
 ./etc/rc.d/xdm						etc-x11-rc	xorg
 ./etc/rc.d/xfs						etc-x11-rc	x11
 ./etc/rc.d/xfs						etc-x11-rc	xorg
+./etc/rc.d/fccache					etc-x11-rc	x11
+./etc/rc.d/fccache					etc-x11-rc	xorg

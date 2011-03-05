@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.18 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.18.2.1 2011/03/05 15:10:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.18 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.18.2.1 2011/03/05 15:10:11 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -453,8 +453,10 @@ static int
 tscopyin(const void *u, void *s, size_t len)
 {
 	struct timespec50 ts50;
-	KASSERT(len == sizeof(ts50));
-	int error = copyin(u, &ts50, len);
+	int error;
+
+	KASSERT(len == sizeof(struct timespec));
+	error = copyin(u, &ts50, sizeof(ts50));
 	if (error)
 		return error;
 	timespec50_to_timespec(&ts50, s);
@@ -465,12 +467,10 @@ static int
 tscopyout(const void *s, void *u, size_t len)
 {
 	struct timespec50 ts50;
-	KASSERT(len == sizeof(ts50));
+
+	KASSERT(len == sizeof(struct timespec));
 	timespec_to_timespec50(s, &ts50);
-	int error = copyout(&ts50, u, len);
-	if (error)
-		return error;
-	return 0;
+	return copyout(&ts50, u, sizeof(ts50));
 }
 
 int

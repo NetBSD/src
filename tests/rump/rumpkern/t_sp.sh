@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.9.2.1 2011/02/08 16:20:09 bouyer Exp $
+#	$NetBSD: t_sp.sh,v 1.9.2.2 2011/03/05 15:10:56 bouyer Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,7 +99,7 @@ reconnect()
 
 	export RUMP_SERVER=unix://commsock
 	atf_check -s exit:0 rump_server ${RUMP_SERVER}
-	atf_check -s exit:0 $(atf_get_srcdir)/h_client/h_reconcli 2
+	atf_check -s exit:0 -e ignore $(atf_get_srcdir)/h_client/h_reconcli 2
 }
 
 atf_init_test_cases()

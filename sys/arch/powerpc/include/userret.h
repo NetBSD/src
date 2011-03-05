@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.17 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.17.2.1 2011/03/05 15:09:58 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,11 +31,17 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ppcarch.h"
 #include "opt_altivec.h"
 
 #include <sys/userret.h>
 
 #include <powerpc/fpu.h>
+
+#ifdef PPC_BOOKE
+#include <powerpc/spr.h>
+#include <powerpc/booke/spr.h>
+#endif
 
 /*
  * Define the code needed before returning to user mode, for
@@ -85,8 +91,20 @@ userret(struct lwp *l, struct trapframe *tf)
 	 * CPU, we need to stop any data streams that are active (since
 	 * it will be a different address space).
 	 */
-	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {
+	if (ci->ci_veclwp != &lwp0 && ci->ci_veclwp != l) {
 		__asm volatile("dssall;sync");
+	}
+#endif
+#ifdef PPC_BOOKE
+	/*
+	 * BookE doesn't PSL_SE but it does have a debug instruction completion
+	 * exception but it needs PSL_DE to fire.  Since we don't want it to
+	 * happen in the kernel, we must disable PSL_DE and let it get
+	 * restored by rfi/rfci.
+	 */
+	if (__predict_false(tf->tf_srr1 & PSL_SE)) {
+		extern void booke_sstep(struct trapframe *); /* ugly */
+		booke_sstep(tf);
 	}
 #endif
 #ifdef PPC_HAVE_SPE

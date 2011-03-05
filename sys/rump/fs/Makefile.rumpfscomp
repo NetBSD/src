@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile.rumpfscomp,v 1.2 2011/01/18 22:21:23 haad Exp $
+#	$NetBSD: Makefile.rumpfscomp,v 1.2.2.1 2011/03/05 15:10:49 bouyer Exp $
 #
+
+.include <bsd.own.mk>
 
 RUMPFSCOMP=	cd9660 efs ext2fs fdesc ffs hfs kernfs lfs mfs msdos	\
 		nfs nilfs ntfs null ptyfs smbfs syspuffs sysvbfs	\
 		tmpfs udf umap union
 
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
+.if ${MKZFS} != "no"
 RUMPFSCOMP+=	zfs
 .endif
 

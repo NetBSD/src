@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.18.4.2 2011/02/17 12:00:16 bouyer Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.18.4.3 2011/03/05 15:10:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.18.4.2 2011/02/17 12:00:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.18.4.3 2011/03/05 15:10:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1478,4 +1478,22 @@ vcons_disable_polling(struct vcons_data *vd)
 	if (scr)
 		atomic_inc_uint(&scr->scr_dirty);
 #endif
+}
+
+void
+vcons_hard_switch(struct vcons_screen *scr)
+{
+	struct vcons_data *vd = scr->scr_vd;
+	struct vcons_screen *oldscr = vd->active;
+
+	if (oldscr) {
+		SCREEN_INVISIBLE(oldscr);
+		oldscr->scr_ri.ri_flg &= ~RI_CURSOR;
+	}
+	SCREEN_VISIBLE(scr);
+	vd->active = scr;
+	vd->wanted = NULL;
+
+	if (vd->show_screen_cb != NULL)
+		vd->show_screen_cb(scr);
 }

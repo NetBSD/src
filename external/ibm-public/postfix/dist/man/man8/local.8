@@ -1,4 +1,4 @@
-.\"	$NetBSD: local.8,v 1.1.1.1 2009/06/23 10:08:34 tron Exp $
+.\"	$NetBSD: local.8,v 1.1.1.1.6.1 2011/03/05 15:08:56 bouyer Exp $
 .\"
 .TH LOCAL 8 
 .ad
@@ -417,6 +417,10 @@ expanding aliases or .forward files.
 Available in Postfix version 2.5.3 and later:
 .IP "\fBstrict_mailbox_ownership (yes)\fR"
 Defer delivery when a mailbox file is not owned by its recipient.
+.IP "\fBreset_owner_alias (no)\fR"
+Reset the \fBlocal\fR(8) delivery agent's idea of the owner-alias
+attribute, when delivering mail to a child alias that does not have
+its own owner alias.
 .SH "DELIVERY METHOD CONTROLS"
 .na
 .nf
@@ -575,7 +579,7 @@ The location of the Postfix top-level queue directory.
 .IP "\fBrecipient_delimiter (empty)\fR"
 The separator between user names and address extensions (user+foo).
 .IP "\fBrequire_home_directory (no)\fR"
-Whether or not a \fBlocal\fR(8) recipient's home directory must exist
+Require that a \fBlocal\fR(8) recipient's home directory exists
 before mail delivery is attempted.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.

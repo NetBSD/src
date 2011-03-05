@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.18 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: xform.c,v 1.18.8.1 2011/03/05 15:10:48 bouyer Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.18 2009/03/25 01:26:13 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.18.8.1 2011/03/05 15:10:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -50,7 +50,15 @@ __KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.18 2009/03/25 01:26:13 darran Exp $");
 
 MALLOC_DEFINE(M_XDATA, "xform", "xform data buffers");
 
-const u_int8_t hmac_ipad_buffer[64] = {
+const u_int8_t hmac_ipad_buffer[128] = {
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
@@ -61,7 +69,15 @@ const u_int8_t hmac_ipad_buffer[64] = {
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
 };
 
-const u_int8_t hmac_opad_buffer[64] = {
+const u_int8_t hmac_opad_buffer[128] = {
+	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
+	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
 	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
 	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
 	0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
@@ -117,77 +133,82 @@ struct enc_xform enc_xform_arc4 = {
 /* Authentication instances */
 struct auth_hash auth_hash_null = {
 	CRYPTO_NULL_HMAC, "NULL-HMAC",
-	0, 0, 12, sizeof(int)			/* NB: context isn't used */
+	0, 0, 12, 64, sizeof(int)		/* NB: context isn't used */
 };
 
 struct auth_hash auth_hash_hmac_md5 = {
 	CRYPTO_MD5_HMAC, "HMAC-MD5",
-	16, 16, 16, sizeof(MD5_CTX)
+	16, 16, 16, 64, sizeof(MD5_CTX)
 };
 
 struct auth_hash auth_hash_hmac_sha1 = {
 	CRYPTO_SHA1_HMAC, "HMAC-SHA1",
-	20, 20, 20, sizeof(SHA1_CTX)
+	20, 20, 20, 64, sizeof(SHA1_CTX)
 };
 
 struct auth_hash auth_hash_hmac_ripemd_160 = {
 	CRYPTO_RIPEMD160_HMAC, "HMAC-RIPEMD-160",
-	20, 20, 20, sizeof(RMD160_CTX)
+	20, 20, 20, 64, sizeof(RMD160_CTX)
 };
 
 struct auth_hash auth_hash_hmac_md5_96 = {
 	CRYPTO_MD5_HMAC_96, "HMAC-MD5-96",
-	16, 16, 12, sizeof(MD5_CTX)
+	16, 16, 12, 64, sizeof(MD5_CTX)
 };
 
 struct auth_hash auth_hash_hmac_sha1_96 = {
 	CRYPTO_SHA1_HMAC_96, "HMAC-SHA1-96",
-	20, 20, 12, sizeof(SHA1_CTX)
+	20, 20, 12, 64, sizeof(SHA1_CTX)
 };
 
 struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 	CRYPTO_RIPEMD160_HMAC_96, "HMAC-RIPEMD-160",
-	20, 20, 12, sizeof(RMD160_CTX)
+	20, 20, 12, 64, sizeof(RMD160_CTX)
 };
 
 struct auth_hash auth_hash_key_md5 = {
 	CRYPTO_MD5_KPDK, "Keyed MD5",
-	0, 16, 16, sizeof(MD5_CTX)
+	0, 16, 16, 0, sizeof(MD5_CTX)
 };
 
 struct auth_hash auth_hash_key_sha1 = {
 	CRYPTO_SHA1_KPDK, "Keyed SHA1",
-	0, 20, 20, sizeof(SHA1_CTX)
+	0, 20, 20, 0, sizeof(SHA1_CTX)
 };
 
 struct auth_hash auth_hash_md5 = {
 	CRYPTO_MD5, "MD5",
-	0, 16, 16, sizeof(MD5_CTX)
+	0, 16, 16, 0, sizeof(MD5_CTX)
 };
 
 struct auth_hash auth_hash_sha1 = {
 	CRYPTO_SHA1, "SHA1",
-	0, 20, 20, sizeof(SHA1_CTX)
+	0, 20, 20, 0, sizeof(SHA1_CTX)
 };
 
 struct auth_hash auth_hash_hmac_sha2_256 = {
-	CRYPTO_SHA2_HMAC, "HMAC-SHA2",
-	32, 32, 12, sizeof(SHA256_CTX)
+	CRYPTO_SHA2_256_HMAC, "HMAC-SHA2",
+	32, 32, 16, 64, sizeof(SHA256_CTX)
 };
 
 struct auth_hash auth_hash_hmac_sha2_384 = {
-	CRYPTO_SHA2_HMAC, "HMAC-SHA2-384",
-	48, 48, 12, sizeof(SHA384_CTX)
+	CRYPTO_SHA2_384_HMAC, "HMAC-SHA2-384",
+	48, 48, 24, 128, sizeof(SHA384_CTX)
 };
 
 struct auth_hash auth_hash_hmac_sha2_512 = {
-	CRYPTO_SHA2_HMAC, "HMAC-SHA2-512",
-	64, 64, 12, sizeof(SHA512_CTX)
+	CRYPTO_SHA2_512_HMAC, "HMAC-SHA2-512",
+	64, 64, 32, 128, sizeof(SHA512_CTX)
 };
 
 /* Compression instance */
 struct comp_algo comp_algo_deflate = {
 	CRYPTO_DEFLATE_COMP, "Deflate",
+	90
+};
+
+struct comp_algo comp_algo_deflate_nogrow = {
+	CRYPTO_DEFLATE_COMP_NOGROW, "Deflate",
 	90
 };
 

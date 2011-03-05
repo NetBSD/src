@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.2 2010/07/11 05:37:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2011/03/05 15:09:07 bouyer Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	anvil bounce cleanup discard error flush local master oqmgr pickup \
-	pipe postfix-script proxymap qmgr scache sendmail showq smtp smtpd \
-	spawn trivial-rewrite verify virtual
+SUBDIR=	anvil bounce cleanup discard dnsblog error flush local master oqmgr \
+	pickup pipe postfix-script postscreen proxymap qmgr scache sendmail \
+	showq smtp smtpd spawn trivial-rewrite verify virtual
 
 .if ${MKCRYPTO} != "no"
-SUBDIR+=	tlsmgr
+SUBDIR+=	tlsmgr tlsproxy
 .endif
 
 # Not built: fsstone (unneeded), smtpstone (unneeded), qmqpd (unneeded)

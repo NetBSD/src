@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.2.18.1 2011/02/17 11:59:57 bouyer Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.2.18.2 2011/03/05 15:09:59 bouyer Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.2.18.1 2011/02/17 11:59:57 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.2.18.2 2011/03/05 15:09:59 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap.h"
@@ -40,6 +40,18 @@ __KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.2.18.1 2011/02/17 11:59:57 bouyer 
 
 extern struct pmap kernel_pmap_;
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
+
+u_int
+powerpc_mmap_flags(paddr_t pa)
+{
+	u_int flags = PMAP_MD_NOCACHE;
+
+	if (pa & POWERPC_MMAP_FLAG_PREFETCHABLE)
+		flags |= PMAP_MD_PREFETCHABLE;
+	if (pa & POWERPC_MMAP_FLAG_CACHEABLE)
+		flags &= ~PMAP_MD_NOCACHE;
+	return flags;
+}
 
 #ifdef PMAP_NEEDS_FIXUP
 #include <powerpc/instr.h>
@@ -57,7 +69,7 @@ pmap_fixup_stubs(const struct pmap_ops *ops)
 	powerpc_fixup_stubs(_ftext, _etext, __stub_pmap_start, __stub_pmap_end);
 }
 
-#define	__stub	__section(".stub.pmap")
+#define	__stub	__section(".stub.pmap") __noprofile
 
 int	pmap_pte_spill(struct pmap *, vaddr_t, bool)		__stub;
 void	pmap_real_memory(paddr_t *, psize_t *)			__stub;
@@ -274,7 +286,7 @@ pmap_pteg_dist(void)
 void
 pmap_pvo_verify(void)
 {
-	(*pmapops->pmapop_pvo_verify)(void)
+	(*pmapops->pmapop_pvo_verify)();
 }
 #endif
 

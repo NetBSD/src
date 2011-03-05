@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.67 2011/01/17 15:49:13 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.67.2.1 2011/03/05 15:10:16 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -108,6 +108,7 @@ struct acpi_pci_info {
  *	ad_root		never NULL
  *	ad_parent	only NULL if root of the tree ("\")
  *	ad_pciinfo	NULL if not a PCI device
+ *	ad_wakedev	NULL if no wakeup capabilities
  *	ad_notify	NULL if there is no notify handler
  *	ad_devinfo	never NULL
  *	ad_handle	never NULL
@@ -120,6 +121,7 @@ struct acpi_devnode {
 	device_t		 ad_root;	/* Backpointer to acpi_softc */
 	struct acpi_devnode	*ad_parent;	/* Backpointer to parent */
 	struct acpi_pci_info	*ad_pciinfo;	/* PCI info */
+	struct acpi_wakedev	*ad_wakedev;	/* Device wake */
 	ACPI_NOTIFY_HANDLER	 ad_notify;	/* Device notify */
 	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
 	ACPI_HANDLE		 ad_handle;	/* Device handle */
@@ -127,7 +129,6 @@ struct acpi_devnode {
 	uint32_t		 ad_flags;	/* Device flags */
 	uint32_t		 ad_type;	/* Device type */
 	int			 ad_state;	/* Device power state */
-	int			 ad_wake;	/* Device wakeup */
 
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_list;
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
@@ -342,12 +343,12 @@ void			acpi_madt_walk(ACPI_STATUS (*)(ACPI_SUBTABLE_HEADER *,
  * Quirk handling.
  */
 struct acpi_quirk {
-	const char *aq_tabletype; /* what type of table (FADT, DSDT, etc) */
-	const char *aq_oemid;	/* compared against the table OemId */
-	int aq_oemrev;		/* compared against the table OemRev */
-	int aq_cmpop;		/* how to compare the oemrev number */
-	const char *aq_tabid;	/* compared against the table TableId */
-	int aq_quirks;		/* the actual quirks */
+	const char	*aq_tabletype;		/* Type of table */
+	const char	*aq_oemid;		/* "OemId" field */
+	int		 aq_oemrev;		/* "OemRev" field */
+	int		 aq_cmpop;		/* "OemRev" comparison */
+	const char	*aq_tabid;		/* "TableId */
+	int		 aq_quirks;		/* The actual quirk */
 };
 
 #define ACPI_QUIRK_BROKEN	0x00000001	/* totally broken */
@@ -356,10 +357,12 @@ struct acpi_quirk {
 #define ACPI_QUIRK_IRQ0		0x00000008	/* bad 0->2 irq override */
 #define ACPI_QUIRK_OLDBIOS	0x00000010	/* BIOS date blacklisted */
 
-int acpi_find_quirks(void);
+int	acpi_find_quirks(void);
+int	acpi_quirks_osi_add(const char *);
+int	acpi_quirks_osi_del(const char *);
 
 #ifdef ACPI_DEBUG
-void acpi_debug_init(void);
+void	acpi_debug_init(void);
 #endif
 
 /*

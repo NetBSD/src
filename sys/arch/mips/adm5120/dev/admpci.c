@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.3 2010/12/20 00:25:38 matt Exp $ */
+/* $NetBSD: admpci.c,v 1.3.4.1 2011/03/05 15:09:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.3 2010/12/20 00:25:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.3.4.1 2011/03/05 15:09:46 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -203,8 +203,7 @@ admpciattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(": ADM5120 Host-PCI Bridge, data %"PRIxBUSADDR
-	    " addr %"PRIxBUSADDR", sc %p\n",
+	printf(": ADM5120 Host-PCI Bridge, data %"PRIxBSH" addr %"PRIxBSH", sc %p\n",
 	    sc->sc_datah, sc->sc_addrh, (void *)sc);
 
 #if NPCI > 0
@@ -250,7 +249,7 @@ admpciattach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(&sc->sc_pc,
-	    io_ex, mem_ex, NULL, 0, mips_dcache_align);
+	    io_ex, mem_ex, NULL, 0, mips_cache_info.mci_dcache_align);
 	extent_destroy(mem_ex);
 	extent_destroy(io_ex);
 #endif

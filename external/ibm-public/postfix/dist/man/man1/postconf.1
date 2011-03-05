@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.1,v 1.1.1.2 2010/06/17 18:06:24 tron Exp $
+.\"	$NetBSD: postconf.1,v 1.1.1.2.2.1 2011/03/05 15:08:55 bouyer Exp $
 .\"
 .TH POSTCONF 1 
 .ad
@@ -81,8 +81,11 @@ Edit the \fBmain.cf\fR configuration file. The file is copied
 to a temporary file then renamed into place. Parameters and
 values are specified on the command line. Use quotes in order
 to protect shell metacharacters and whitespace.
+
+With Postfix version 2.8 and later, the \fB-e\fR is no
+longer needed.
 .IP \fB-h\fR
-Show parameter values only, not the ``name = '' label
+Show parameter values only, not the "\fIname = " label
 that normally precedes the value.
 .IP \fB-l\fR
 List the names of all supported mailbox locking methods.
@@ -154,6 +157,9 @@ described in \fBregexp_table\fR(5).
 .IP \fBsdbm\fR
 An indexed file type based on hashing.
 This is available on systems with support for SDBM databases.
+.IP "\fBsqlite\fR (read-only)"
+Perform lookups from SQLite database files. This is described
+in \fBsqlite_table\fR(5).
 .IP "\fBstatic\fR (read-only)"
 A table that always returns its name as lookup result. For example,
 \fBstatic:foobar\fR always returns the string \fBfoobar\fR as lookup
@@ -161,7 +167,10 @@ result.
 .IP "\fBtcp\fR (read-only)"
 Perform lookups using a simple request-reply protocol that is
 described in \fBtcp_table\fR(5).
-This feature is not included with the stable Postfix release.
+.IP "\fBtexthash\fR (read-only)"
+Produces similar results as hash: files, except that you don't
+need to run the postmap(1) command before you can use the file,
+and that it does not detect changes after the file is read.
 .IP "\fBunix\fR (read-only)"
 A limited way to query the UNIX authentication database. The
 following tables are implemented:

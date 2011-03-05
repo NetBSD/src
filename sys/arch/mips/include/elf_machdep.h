@@ -1,33 +1,26 @@
-/*	$NetBSD: elf_machdep.h,v 1.13 2009/12/14 03:20:27 mrg Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.13.8.1 2011/03/05 15:09:48 bouyer Exp $	*/
 
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define  _MIPS_ELF_MACHDEP_H_
 
-#if defined(ELFSIZE)
+#ifdef _LP64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+#else
+#define ARCH_ELFSIZE		32	/* MD native binary size */
+#endif
+
 #if ELFSIZE == 32
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
 
 #define	ELF32_MACHDEP_ID	EM_MIPS
-#endif /* ELFSIZE == 32 */
-#if ELFSIZE == 64
-#ifdef _LP64
+#elif ELFSIZE == 64
 #define	ELF64_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
-#else
-#define	ELF64_MACHDEP_ID_CASES		/* xxx */
-#endif /* _LP64 */
 
 #define	ELF64_MACHDEP_ID	EM_MIPS
-#endif /* ELFSIZE == 64 */
-#endif /* defined(ELFSIZE) */
-
-#ifdef _LP64
-#define ARCH_ELFSIZE		64	/* MD native binary size */
-#else
-#define ARCH_ELFSIZE		32	/* MD native binary size */
 #endif
 
 /* mips relocs.  */

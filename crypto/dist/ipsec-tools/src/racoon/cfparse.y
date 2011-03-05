@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.38 2010/06/22 09:41:33 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.38.2.1 2011/03/05 15:08:32 bouyer Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -145,6 +145,7 @@ static int oldloglevel = LLV_BASE;
 
 static struct secprotospec *newspspec __P((void));
 static void insspspec __P((struct remoteconf *, struct secprotospec *));
+void flushspspec __P((struct remoteconf *));
 static void adminsock_conf __P((vchar_t *, vchar_t *, vchar_t *, int));
 
 static int set_isakmp_proposal __P((struct remoteconf *));
@@ -423,13 +424,16 @@ listen_stmt
 	:	X_ISAKMP ike_addrinfo_port
 		{
 			myaddr_listen($2, FALSE);
+			racoon_free($2);
 		}
 		EOS
 	|	X_ISAKMP_NATT ike_addrinfo_port
 		{
 #ifdef ENABLE_NATT
 			myaddr_listen($2, TRUE);
+			racoon_free($2);
 #else
+			racoon_free($2);
 			yyerror("NAT-T support not compiled in.");
 #endif
 		}
@@ -2411,6 +2415,25 @@ insspspec(rmconf, spspec)
 	rmconf->spspec = spspec;
 }
 
+/*
+ * delete the whole list
+ */
+void
+flushspspec(rmconf)
+	struct remoteconf *rmconf;
+{
+	struct secprotospec *p;
+
+	while(rmconf->spspec != NULL) {
+		p = rmconf->spspec;
+		rmconf->spspec = p->next;
+		if (p->next != NULL)
+			p->next->prev = NULL; /* not necessary but clean */
+
+		racoon_free(p);		  
+	}
+}
+
 /* set final acceptable proposal */
 static int
 set_isakmp_proposal(rmconf)
@@ -2617,6 +2640,7 @@ cfparse()
 {
 	int error;
 
+	yyerrorcount = 0;
 	yycf_init_buffer();
 
 	if (yycf_switch_buffer(lcconf->racoon_conf) != 0) {

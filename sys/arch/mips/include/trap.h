@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.15.108.1 2011/02/17 11:59:49 bouyer Exp $	*/
+/*	$NetBSD: trap.h,v 1.15.108.2 2011/03/05 15:09:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  * Trap codes
  * also known in trap.c for name strings
  */
+#ifndef _MIPS_TRAP_H_
+#define _MIPS_TRAP_H_
 
 #define T_INT			0	/* Interrupt pending */
 #define T_TLB_MOD		1	/* TLB modified fault */
@@ -67,3 +69,9 @@
 #define T_VCED			31	/* Virtual coherency data */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+extern const char * const trap_names[];
+#endif
+
+#endif /* _MIPS_TRAP_H_ */

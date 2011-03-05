@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.4.1 2011/02/08 16:19:14 bouyer Exp $
+#	$NetBSD: Makefile,v 1.21.4.2 2011/03/05 15:09:35 bouyer Exp $
 
 NOMAN= # defined
 
@@ -53,7 +53,13 @@ CPPFLAGS+=	-DSUPPORT_DHCP -DSUPPORT_BOOTP
 #CPPFLAGS+=	-DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 
 # compiler flags for smallest code size
-CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+CFLAGS=		-O2 -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+.if ${MACHINE_ARCH} == "mips64el"
+AFLAGS+=	-mips3 -mabi=32
+CFLAGS+=	-mips3 -mabi=32
+LINKFORMAT=	-m elf32ltsmip
+MACHINE_ARCH=	mipsel
+.endif
 
 CFLAGS+=	-Wall -Werror
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
@@ -101,7 +107,7 @@ vers.c: ${.CURDIR}/version
 	    ${.CURDIR}/version "cobalt"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
-	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
+	${LD} ${LINKFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    -T ${LDSCRIPT} -e start -o ${PROG} ${OBJS} ${LIBS}
 	gzip -c9 ${PROG} > ${PROG}.gz
 	@${SIZE} ${PROG}

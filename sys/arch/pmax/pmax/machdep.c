@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.240.6.1 2011/02/17 11:59:54 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.240.6.2 2011/03/05 15:09:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240.6.1 2011/02/17 11:59:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240.6.2 2011/03/05 15:09:57 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -89,9 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240.6.1 2011/02/17 11:59:54 bouyer Exp
 
 unsigned int ssir;			/* simulated interrupt register */
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /* maps for VM objects */
 struct vm_map *phys_map = NULL;
 
@@ -103,31 +100,13 @@ intptr_t	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
-/*      
- * During autoconfiguration or after a panic, a sleep will simply
- * lower the priority briefly to allow interrupts, then return.
- * The priority to be used (safepri) is machine-dependent, thus this
- * value is initialized and maintained in the machine-dependent layers.
- * This priority will typically be 0, or the lowest priority
- * that is safe for use on the interrupt stack; it can be made
- * higher to block network software interrupts after panics.
- */
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- * Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
- * disables mips1 FPU interrupts.
- */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-
 void	mach_init(int, int32_t *, int, intptr_t, u_int, char *); /* XXX */
 
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
-static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
-static void	unimpl_intr_establish(struct device *, void *, int,
+static void	unimpl_iointr(uint32_t, vaddr_t, uint32_t);
+static void	unimpl_intr_establish(device_t, void *, int,
 		    int (*)(void *), void *);
 static int	unimpl_memsize(void *);
 static unsigned	nullwork(void);
@@ -157,7 +136,6 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 {
 	char *cp;
 	const char *bootinfo_msg;
-	u_long first, last;
 	int i;
 	char *kernend;
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -231,7 +209,6 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	} else {
 		callv = &callvec;
 	}
-	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
 
 	/* Use PROM console output until we initialize a console driver. */
 	cn_tab = &promcd;
@@ -250,7 +227,7 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	/*
 	 * We know the CPU type now.  Initialize our DMA tags (might
@@ -314,6 +291,13 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 #endif
 
 	/*
+	 * We need to do this early for badaddr().
+	 */
+	lwp0.l_addr = (struct user *)kernend;
+	kernend += USPACE;
+	mips_init_lwp0_uarea();
+
+	/*
 	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
 	 * Adjust later in model-specific code if necessary.
 	 */
@@ -345,21 +329,17 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	 * allocating their DMA memory during autoconfiguration.
 	 */
 	for (i = 0, physmem = 0; i < mem_cluster_cnt; ++i) {
-		first = mem_clusters[i].start;
-		if (first == 0)
-			first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-		last = mem_clusters[i].start + mem_clusters[i].size;
 		physmem += atop(mem_clusters[i].size);
-		if (i != 0 || last <= (8 * 1024 * 1024)) {
-			uvm_page_physload(atop(first), atop(last), atop(first),
-			    atop(last), VM_FREELIST_DEFAULT);
-		} else {
-			uvm_page_physload(atop(first), atop(8 * 1024 * 1024),
-			    atop(first), atop(8 * 1024 * 1024), VM_FREELIST_FIRST8);
-			uvm_page_physload(atop(8 * 1024 * 1024), atop(last),
-			    atop(8 * 1024 * 1024), atop(last), VM_FREELIST_DEFAULT);
-		}
 	}
+
+	static const struct mips_vmfreelist first8 = {
+		.fl_start = 0,
+		.fl_end = 8 * 1024 * 1024,
+		.fl_freelist = VM_FREELIST_FIRST8
+	};
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, &first8, 1);
+		
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -370,11 +350,6 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
-
-	/*
-	 * Initialize lwp0's uarea.
-	 */
-	mips_init_lwp0_uarea();
 }
 
 void
@@ -382,7 +357,7 @@ mips_machdep_cache_config(void)
 {
 	/* All r4k pmaxen have a 1MB L2 cache. */
 	if (CPUISMIPS3)
-		mips_sdcache_size = 1024 * 1024;
+		mips_cache_info.mci_sdcache_size = 1024 * 1024;
 }
 
 void
@@ -462,13 +437,11 @@ lookup_bootinfo(int type)
 }
 
 void
-cpu_reboot(volatile int howto, char *bootstr)
-	/* howto:	 XXX volatile to keep gcc happy */
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)
@@ -627,14 +600,15 @@ unimpl_cons_init(void)
 }
 
 static void
-unimpl_iointr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
+unimpl_iointr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 
 	panic("sysconf.init didn't set intr");
 }
 
 static void
-unimpl_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
+unimpl_intr_establish(device_t dev, void *cookie, int level,
+    int (*handler)(void *), void *arg)
 {
 	panic("sysconf.init didn't set intr_establish");
 }

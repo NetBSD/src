@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.218.2.1 2011/02/08 16:18:38 bouyer Exp $
+# $NetBSD: mi,v 1.218.2.2 2011/03/05 15:08:37 bouyer Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -298,6 +298,12 @@
 ./etc/remote					etc-sys-etc
 ./etc/rmt					etc-sysutil-etc
 ./etc/rpc					etc-net-etc
+./etc/saslc.d					etc-libsaslc-etc
+./etc/saslc.d/mech				obsolete		obsolete
+./etc/saslc.d/saslc				etc-libsaslc-etc
+./etc/saslc.d/saslc/mech			etc-libsaslc-etc
+./etc/saslc.d/postfix				etc-libsaslc-postfix
+./etc/saslc.d/postfix/mech			etc-libsaslc-postfix
 ./etc/security					etc-sys-etc
 ./etc/security.conf				etc-sys-etc
 ./etc/services					etc-net-etc

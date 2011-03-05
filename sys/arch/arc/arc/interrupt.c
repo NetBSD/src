@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6.4.1 2011/02/17 11:59:31 bouyer Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.6.4.2 2011/03/05 15:09:30 bouyer Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6.4.1 2011/02/17 11:59:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6.4.2 2011/03/05 15:09:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,74 +95,58 @@ arc_set_intr(uint32_t mask, uint32_t (*int_hand)(uint32_t, struct clockframe *),
 
 /*
  * Handle an interrupt.
- * N.B., curlwp might be NULL.
  */
 void
-cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct clockframe cf;
 	struct cpu_inttab *inttab;
-	struct cpu_info *ci;
-	uint32_t handled;
+	struct clockframe cf;
+	uint32_t ipending;
 	u_int i;
+	int ipl;
 
-	handled = 0;
-	ci = curcpu();
-	ci->ci_data.cpu_nintr++;
-	ci->ci_idepth++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	cf.pc = pc;
 	cf.sr = status;
+	cf.intr = (curcpu()->ci_idepth > 1);
 
-	/* check MIPS3 internal clock interrupt */
-	if (ipending & MIPS_INT_MASK_5) {
+	while (ppl < (ipl = splintr(&ipending))) {
+		/* check MIPS3 internal clock interrupt */
+		if (ipending & MIPS_INT_MASK_5) {
 #ifdef ENABLE_INT5_STATCLOCK
-		/* call statclock(9) handler */
-		statclockintr(&cf);
-		statclock_ev.ev_count++;
+			/* call statclock(9) handler */
+			statclockintr(&cf);
+			statclock_ev.ev_count++;
 #else
-		/*
-		 *  Writing a value to the Compare register,
-		 *  as a side effect, clears the timer interrupt request.
-		 */
-		mips3_cp0_compare_write(0);
+			/*
+			 * Writing a value to the Compare register, as a side
+			 * effect, clears the timer interrupt request.
+			 */
+			mips3_cp0_compare_write(0);
 #endif
-		handled |= MIPS_INT_MASK_5;
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
-
-	/*
-	 *  If there is an independent timer interrupt handler, call it first.
-	 *  Called interrupt routine returns mask of interrupts to be reenabled.
-	 */
-	inttab = &cpu_int_tab[ARC_INTPRI_TIMER_INT];
-	if (inttab->int_mask & ipending) {
-		handled |= (*inttab->int_hand)(ipending, &cf);
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
-
-	inttab++;
-
-	/*
-	 *  Check off all other enabled interrupts.
-	 *  Called handlers return mask of interrupts to be reenabled.
-	 */
-	for (i = ARC_INTPRI_TIMER_INT + 1; i < ARC_NINTPRI; i++) {
-		if (inttab->int_mask & ipending) {
-			handled |= (*inttab->int_hand)(ipending, &cf);
 		}
-		inttab++;
-	}
-	cause &= ~handled;
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-	ci->ci_idepth--;
 
-#ifdef __HAVE_FAST_SOFTINTS
-	/* software interrupts */
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
-#endif
+		/*
+		 * If there is an independent timer interrupt handler,
+		 * call it first.
+		 */
+		inttab = &cpu_int_tab[ARC_INTPRI_TIMER_INT];
+		if (inttab->int_mask & ipending) {
+			(*inttab->int_hand)(ipending, &cf);
+		}
+
+		/*
+		 *  Check off all other enabled interrupts.
+		 *  Called handlers return mask of interrupts to be reenabled.
+		 */
+		for (inttab++, i = ARC_INTPRI_TIMER_INT + 1;
+		     i < ARC_NINTPRI;
+		     inttab++, i++) {
+			if (inttab->int_mask & ipending) {
+				(*inttab->int_hand)(ipending, &cf);
+			}
+		}
+		(void)splhigh();
+	}
 }

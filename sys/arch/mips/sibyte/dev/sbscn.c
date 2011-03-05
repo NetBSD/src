@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.31.8.1 2011/02/08 16:19:29 bouyer Exp $ */
+/* $NetBSD: sbscn.c,v 1.31.8.2 2011/03/05 15:09:51 bouyer Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.31.8.1 2011/02/08 16:19:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.31.8.2 2011/03/05 15:09:51 bouyer Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -275,7 +275,7 @@ sbscn_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	sc->sc_dev = self;
-	sc->sc_addr = sa->sa_locs.sa_addr;
+	sc->sc_addr = sa->sa_base + sa->sa_locs.sa_offset;
 
 	aprint_normal("\n");
 	for (i = 0; i < 2; i++)

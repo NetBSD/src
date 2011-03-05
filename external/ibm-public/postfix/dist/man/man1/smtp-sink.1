@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp-sink.1,v 1.1.1.1 2009/06/23 10:08:33 tron Exp $
+.\"	$NetBSD: smtp-sink.1,v 1.1.1.1.6.1 2011/03/05 15:08:56 bouyer Exp $
 .\"
 .TH SMTP-SINK 1 
 .ad
@@ -53,6 +53,12 @@ abort prematurely with a 550 reply status.  Do not read
 further input from the client; this is an attempt to block
 the client before it sends ".".  Specify a zero delay value
 to abort immediately.
+.IP "\fB-b \fIsoft-bounce-reply\fR"
+Use \fIsoft-bounce-reply\fR for soft reject responses.  The
+default reply is "450 4.3.0 Error: command failed".
+.IP "\fB-B \fIhard-bounce-reply\fR"
+Use \fIhard-bounce-reply\fR for hard reject responses.  The
+default reply is "500 5.3.0 Error: command failed".
 .IP \fB-c\fR
 Display running counters that are updated whenever an SMTP
 session ends, a QUIT command is executed, or when "." is

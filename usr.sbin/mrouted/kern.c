@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.c,v 1.10 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: kern.c,v 1.10.38.1 2011/03/05 15:11:02 bouyer Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -21,12 +21,12 @@ void k_set_rcvbuf(int bufsize)
 }
 
 
-void k_hdr_include(int bool)
+void k_hdr_include(int onoff)
 {
 #ifdef IP_HDRINCL
     if (setsockopt(igmp_socket, IPPROTO_IP, IP_HDRINCL,
-		   (char *)&bool, sizeof(bool)) < 0)
-	logit(LOG_ERR, errno, "setsockopt IP_HDRINCL %u", bool);
+		   (char *)&onoff, sizeof(onoff)) < 0)
+	logit(LOG_ERR, errno, "setsockopt IP_HDRINCL %u", onoff);
 #endif
 }
 

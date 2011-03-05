@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.2.2.2 2011/02/17 11:59:56 bouyer Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.2.2.3 2011/03/05 15:09:59 bouyer Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -156,6 +156,11 @@ wrtee(register_t msr)
 	}
 	return old_msr;
 }
+
+uint32_t ufetch_32(const void *);
+
+struct trapframe;
+void	booke_sstep(struct trapframe *);
 
 void	booke_fixup_stubs(void);
 void	booke_cpu_startup(const char *);	/* model name */
