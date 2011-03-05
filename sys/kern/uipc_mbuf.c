@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.134.2.1 2010/05/30 05:17:58 rmind Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.134.2.2 2011/03/05 20:55:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.134.2.1 2010/05/30 05:17:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.134.2.2 2011/03/05 20:55:24 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.134.2.1 2010/05/30 05:17:58 rmind Ex
 
 #include <net/if.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 pool_cache_t mb_cache;	/* mbuf cache */
 pool_cache_t mcl_cache;	/* mbuf cluster cache */
@@ -1346,7 +1346,7 @@ extend:
 			 * if we're going to write into the middle of
 			 * a mbuf, split it first.
 			 */
-			if (off > 0 && len < mlen) {
+			if (off > 0) {
 				n = m_split0(m, off, how, 0);
 				if (n == NULL)
 					goto enobufs;
@@ -1390,19 +1390,6 @@ extend:
 			else
 				datap = NULL;
 			eatlen = n->m_len;
-			KDASSERT(off == 0 || eatlen >= mlen);
-			if (off > 0) {
-				KDASSERT(len >= mlen);
-				m->m_len = off;
-				m->m_next = n;
-				if (datap) {
-					m_copydata(m, off, mlen, datap);
-					datap += mlen;
-				}
-				eatlen -= mlen;
-				mp = &m->m_next;
-				m = m->m_next;
-			}
 			while (m != NULL && M_READONLY(m) &&
 			    n->m_type == m->m_type && eatlen > 0) {
 				mlen = min(eatlen, m->m_len);
@@ -1613,7 +1600,7 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 nextchain:
 	(*pr)("MBUF %p\n", m);
 	snprintb(buf, sizeof(buf), M_FLAGS_BITS, (u_int)m->m_flags);
-	(*pr)("  data=%p, len=%d, type=%d, flags=0x%s\n",
+	(*pr)("  data=%p, len=%d, type=%d, flags=%s\n",
 	    m->m_data, m->m_len, m->m_type, buf);
 	(*pr)("  owner=%p, next=%p, nextpkt=%p\n", m->m_owner, m->m_next,
 	    m->m_nextpkt);

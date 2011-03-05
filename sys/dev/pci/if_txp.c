@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.36.4.1 2010/05/30 05:17:35 rmind Exp $ */
+/* $NetBSD: if_txp.c,v 1.36.4.2 2011/03/05 20:53:44 rmind Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.36.4.1 2010/05/30 05:17:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.36.4.2 2011/03/05 20:53:44 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.36.4.1 2010/05/30 05:17:35 rmind Exp $"
 
 #include <net/bpf.h>
 
-#include <uvm/uvm_extern.h>              /* for PAGE_SIZE */
 #include <sys/bus.h>
 
 #include <dev/mii/mii.h>

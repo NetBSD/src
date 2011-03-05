@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.60 2010/01/03 11:44:58 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.60.4.1 2011/03/05 20:52:02 rmind Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ include <sys/mutex.h>
 
 include <uvm/uvm.h>
 
+include <machine/pcb.h>
 include <machine/cpu.h>
 include <machine/oldmon.h>
 include <machine/bsd_openprom.h>
@@ -124,9 +125,12 @@ define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
 define	PMAP_CPUSET	offsetof(struct pmap, pm_cpuset)
 
 # interrupt/fault metering
-define	V_INTR		offsetof(struct uvmexp, intrs)
-define	V_SOFT		offsetof(struct uvmexp, softs)
-define	V_FAULTS	offsetof(struct uvmexp, faults)
+define	CPUINFO_NINTR	offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CPUINFO_NSOFT	offsetof(struct cpu_info, ci_data.cpu_nsoft)
+define	CPUINFO_NFAULT	offsetof(struct cpu_info, ci_data.cpu_nfault)
+define	CPUINFO_LEV14	offsetof(struct cpu_info, ci_sintrcnt[14])
+define	CPUINFO_INTRCNT	offsetof(struct cpu_info, ci_intrcnt)
+define	CPUINFO_SINTRCNT	offsetof(struct cpu_info, ci_sintrcnt)
 define	EV_COUNT	offsetof(struct evcnt, ev_count)
 define	EV_STRUCTSIZE	sizeof(struct evcnt)
 
@@ -166,6 +170,7 @@ define	CPUINFO_IDLESPIN	offsetof(struct cpu_info, idlespin)
 define	CPUINFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPUINFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPUINFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
+define	CPUINFO_SAVEFPSTATE	offsetof(struct cpu_info, ci_savefpstate)
 
 # PTE bits and related information
 define	PG_W		PG_W

@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.26 2009/12/14 03:11:22 uebayasi Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.26.4.1 2011/03/05 20:53:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -46,46 +47,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: fdioctl.h 1.1 90/07/09$
- *
- *	@(#)vnioctl.h	8.1 (Berkeley) 6/10/93
- */
-
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -193,14 +154,6 @@ struct vnd_comp_header
 /*
  * A simple structure for describing which vnd units are in use.
  */
-#ifdef COMPAT_30
-struct vnd_ouser {
-	int		vnu_unit;	/* which vnd unit */
-	dev_t		vnu_dev;	/* file is on this device... */
-	uint32_t	vnu_ino;	/* ...at this inode */
-};
-#define VNDIOOCGET	_IOWR('F', 2, struct vnd_ouser)	/* get list */
-#endif
 
 struct vnd_user {
 	int		vnu_unit;	/* which vnd unit */
@@ -218,10 +171,37 @@ struct vnd_user {
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
 #define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get list */
 
-/* These only have the 32bit vnd_osize field */
-#define VNDIOOCSET	_IOC(IOC_INOUT, 'F', 0, \
-				offsetof(struct vnd_ioctl, vnd_size))
-#define VNDIOOCCLR	_IOC(IOC_IN, 'F', 1, \
-				offsetof(struct vnd_ioctl, vnd_size))
+#ifdef _KERNEL
+/*
+ * Everything else is kernel-private, mostly exported for compat/netbsd32.
+ *
+ * NetBSD 3.0 had a 32-bit value for vnu_ino.
+ *
+ * NetBSD 5.0 had a 32-bit value for vnu_dev, and vnd_size.
+ */
+struct vnd_user30 {
+	int		vnu_unit;	/* which vnd unit */
+	uint32_t	vnu_dev;	/* file is on this device... */
+	uint32_t	vnu_ino;	/* ...at this inode */
+};
+#define VNDIOCGET30	_IOWR('F', 2, struct vnd_user30)	/* get list */
+
+struct vnd_user50 {
+	int		vnu_unit;	/* which vnd unit */
+	uint32_t	vnu_dev;	/* file is on this device... */
+	ino_t		vnu_ino;	/* ...at this inode */
+};
+#define VNDIOCGET50	_IOWR('F', 3, struct vnd_user50)	/* get list */
+
+struct vnd_ioctl50 {
+	char		*vnd_file;	/* pathname of file to mount */
+	int		vnd_flags;	/* flags; see below */
+	struct vndgeom	vnd_geom;	/* geometry to emulate */
+	unsigned int	vnd_size;	/* (returned) size of disk */
+};
+#define VNDIOCSET50	_IOWR('F', 0, struct vnd_ioctl50)
+#define VNDIOCCLR50	_IOW('F', 1, struct vnd_ioctl50)
+
+#endif /* _KERNEL */
 
 #endif /* _SYS_DEV_VNDVAR_H_ */

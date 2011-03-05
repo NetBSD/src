@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 2010/02/25 23:31:47 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62.2.1 2011/03/05 20:51:36 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2010/02/25 23:31:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62.2.1 2011/03/05 20:51:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -126,6 +126,10 @@ struct evcnt tlbflush_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbflush");
 struct evcnt tlbenter_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbenter");
+EVCNT_ATTACH_STATIC(tlbmiss_ev);
+EVCNT_ATTACH_STATIC(tlbhit_ev);
+EVCNT_ATTACH_STATIC(tlbflush_ev);
+EVCNT_ATTACH_STATIC(tlbenter_ev);
 
 struct pmap kernel_pmap_;
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
@@ -195,7 +199,7 @@ pa_to_pv(paddr_t pa)
 	bank = vm_physseg_find(atop(pa), &pg);
 	if (bank == -1)
 		return NULL;
-	return &vm_physmem[bank].pmseg.pvent[pg];
+	return &VM_PHYSMEM_PTR(bank)->pmseg.pvent[pg];
 }
 
 static inline char *
@@ -206,7 +210,7 @@ pa_to_attr(paddr_t pa)
 	bank = vm_physseg_find(atop(pa), &pg);
 	if (bank == -1)
 		return NULL;
-	return &vm_physmem[bank].pmseg.attrs[pg];
+	return &VM_PHYSMEM_PTR(bank)->pmseg.attrs[pg];
 }
 
 /*
@@ -412,11 +416,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	pmap_kernel()->pm_ctx = KERNEL_PID;
 	nextavail = avail->start;
 
-	evcnt_attach_static(&tlbmiss_ev);
-	evcnt_attach_static(&tlbhit_ev);
-	evcnt_attach_static(&tlbflush_ev);
-	evcnt_attach_static(&tlbenter_ev);
-
 	pmap_bootstrap_done = 1;
 }
 
@@ -472,9 +471,9 @@ pmap_init(void)
 	pv = pv_table;
 	attr = pmap_attrib;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		sz = vm_physmem[bank].end - vm_physmem[bank].start;
-		vm_physmem[bank].pmseg.pvent = pv;
-		vm_physmem[bank].pmseg.attrs = attr;
+		sz = VM_PHYSMEM_PTR(bank)->end - VM_PHYSMEM_PTR(bank)->start;
+		VM_PHYSMEM_PTR(bank)->pmseg.pvent = pv;
+		VM_PHYSMEM_PTR(bank)->pmseg.attrs = attr;
 		pv += sz;
 		attr += sz;
 	}
@@ -1126,7 +1125,7 @@ void
 pmap_activate(struct lwp *l)
 {
 #if 0
-	struct pcb *pcb = &l->l_proc->p_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	/*
@@ -1475,7 +1474,8 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 	 * to not clobber 0 upto ${physmem} with device mappings in machdep
 	 * code.
 	 */
-	if (ctx != KERNEL_PID || va >= VM_MIN_KERNEL_ADDRESS) {
+	if (ctx != KERNEL_PID ||
+	    (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS)) {
 		pte = pte_find((struct pmap *)__UNVOLATILE(ctxbusy[ctx]), va);
 		if (pte == NULL) {
 			/* Map unmanaged addresses directly for kernel access */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.h,v 1.5 2007/12/25 18:33:34 perry Exp $	*/
+/*	$NetBSD: pxe.h,v 1.5.32.1 2011/03/05 20:50:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Alfred Perlstein <alfred@freebsd.org>
@@ -49,13 +49,13 @@
 typedef struct {
 	uint16_t		offset;
 	uint16_t		segment;
-} SEGOFF16_t __packed;
+} __packed SEGOFF16_t;
 
 typedef struct {
 	uint16_t		Seg_Addr;
 	uint32_t		Phy_Addr;
 	uint16_t		Seg_Size;
-} SEGDESC_t __packed;
+} __packed SEGDESC_t;
 
 typedef	uint16_t		SEGSEL_t;
 typedef	uint16_t		PXENV_STATUS_t;

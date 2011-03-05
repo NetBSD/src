@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs_private.h,v 1.10.4.2 2010/07/03 01:20:03 rmind Exp $	*/
+/*	$NetBSD: rump_vfs_private.h,v 1.10.4.3 2011/03/05 20:56:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,8 @@ int     rump_vfs_makeonedevnode(dev_t, const char *, devmajor_t, devminor_t);
 int     rump_vfs_makedevnodes(dev_t, const char *, char,
 			      devmajor_t, devminor_t, int);
 void	rump_vfs_builddevs(struct devsw_conv *, size_t numelem);
+
+void	rump_vfs_drainbufs(int);
 
 #include <sys/mount.h>
 #include <sys/vnode.h>

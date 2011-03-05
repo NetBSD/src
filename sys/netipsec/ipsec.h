@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.24 2009/05/10 02:13:07 elad Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.24.4.1 2011/03/05 20:55:59 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -299,8 +299,8 @@ int ipsec4_in_reject (struct mbuf *, struct inpcb *);
 
 struct secas;
 struct tcpcb;
-int ipsec_chkreplay (u_int32_t, struct secasvar *);
-int ipsec_updatereplay (u_int32_t, struct secasvar *);
+int ipsec_chkreplay (u_int32_t, const struct secasvar *);
+int ipsec_updatereplay (u_int32_t, const struct secasvar *);
 
 size_t ipsec4_hdrsiz (struct mbuf *, u_int, struct inpcb *);
 #ifdef __FreeBSD__
@@ -311,8 +311,8 @@ size_t ipsec4_hdrsiz_tcp (struct tcpcb *);
 #endif
 
 union sockaddr_union;
-const char *ipsec_address(union sockaddr_union* sa);
-const char *ipsec_logsastr (struct secasvar *);
+const char *ipsec_address(const union sockaddr_union* sa);
+const char *ipsec_logsastr (const struct secasvar *);
 
 void ipsec_dumpmbuf (struct mbuf *);
 

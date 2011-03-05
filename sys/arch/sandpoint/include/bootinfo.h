@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.4.42.1 2010/05/30 05:17:05 rmind Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.4.42.2 2011/03/05 20:51:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -44,6 +44,7 @@ struct btinfo_common {
 #define BTINFO_ROOTDEVICE	6
 #define BTINFO_NET		7
 #define BTINFO_PRODFAMILY	8
+#define BTINFO_MODULELIST	9
 
 struct btinfo_magic {
 	struct btinfo_common common;
@@ -88,6 +89,22 @@ struct btinfo_net {
 struct btinfo_prodfamily {
 	struct btinfo_common common;
 	char name[24];
+};
+
+struct btinfo_modulelist {
+	struct btinfo_common common;
+	int num;
+	uint32_t endpa;
+	/* bi_modulelist_entry follows as an array */
+};
+
+struct bi_modulelist_entry {
+	char kmod[80];
+	int type;
+#define BI_MODULE_NONE		0x00
+#define BI_MODULE_ELF		0x01
+	int len;
+	uint32_t base;
 };
 
 #define BOOTINFO_MAXSIZE 4096

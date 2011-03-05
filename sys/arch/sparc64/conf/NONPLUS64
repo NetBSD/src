@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.30.4.1 2010/05/30 05:17:08 rmind Exp $
+# 	$NetBSD: NONPLUS64,v 1.30.4.2 2011/03/05 20:52:05 rmind Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.30.4.1 $"
+#ident		"NONPLUS64-$Revision: 1.30.4.2 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -316,7 +316,7 @@ pseudo-device	ccd	4
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	1
+#pseudo-device	md	
 
 
 #### Network interfaces

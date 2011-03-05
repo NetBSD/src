@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.22 2007/02/28 04:21:53 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.22.66.1 2011/03/05 20:51:03 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -38,29 +38,30 @@
 #include <mips/trap.h>			/* T_BREAK */
 #include <mips/reg.h>			/* register state */
 #include <mips/regnum.h>		/* symbolic register indices */
-#include <mips/proc.h>			/* register state */
+#include <mips/proc.h>
+#include <mips/pcb.h>
 
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
-typedef struct frame db_regs_t;
+typedef struct reg db_regs_t;
 
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((regs)->f_regs[_R_PC])
+#define	PC_REGS(regs)	((regs)->r_regs[_R_PC])
 
 #define PC_ADVANCE(regs) do {						\
-	if ((db_get_value((regs)->f_regs[_R_PC], sizeof(int), false) &\
+	if ((db_get_value((regs)->r_regs[_R_PC], sizeof(int), false) &\
 	     0xfc00003f) == 0xd)					\
-		(regs)->f_regs[_R_PC] += BKPT_SIZE;			\
+		(regs)->r_regs[_R_PC] += BKPT_SIZE;			\
 } while(0)
 
 /* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
 #define PC_BREAK_ADVANCE(regs) do {					 \
-	if (db_get_value((regs)->f_regs[_R_PC], sizeof(int), false) == 0xd) \
-		(regs)->f_regs[_R_PC] += BKPT_SIZE;			 \
+	if (db_get_value((regs)->r_regs[_R_PC], sizeof(int), false) == 0xd) \
+		(regs)->r_regs[_R_PC] += BKPT_SIZE;			 \
 } while(0)
 
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
@@ -81,8 +82,13 @@ db_addr_t	db_disasm_insn(int insn, db_addr_t loc, bool altfmt);
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
  */
 void 	kdb_kbd_trap(db_regs_t *);
-void 	db_set_ddb_regs(int type, mips_reg_t *);
-int 	kdb_trap(int type, mips_reg_t *);
+int 	kdb_trap(int type, struct reg *);
+
+static inline void
+db_set_ddb_regs(int type, struct reg *regs)
+{
+	ddb_regs = *regs;
+}
 
 
 /*
@@ -107,6 +113,13 @@ bool	inst_store(int inst);
 bool	inst_unconditional_flow_transfer(int inst);
 db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 db_addr_t next_instr_address(db_addr_t pc, bool bd);
+
+bool ddb_running_on_this_cpu(void);
+bool ddb_running_on_any_cpu(void);
+void db_resume_others(void);
+#ifdef MIPS_DDB_WATCH
+void db_mach_watch_set_all(void);
+#endif
 
 /*
  * We have machine-dependent commands.

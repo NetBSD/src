@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.280.2.1 2010/05/30 05:17:57 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.280.2.2 2011/03/05 20:55:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.280.2.1 2010/05/30 05:17:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.280.2.2 2011/03/05 20:55:16 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -255,6 +255,8 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	kmutex_t *mp;
 	sleepq_t *sq;
 	int error;
+
+	KASSERT(!(timo == 0 && intr == false));
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(NULL, 0);
@@ -652,9 +654,13 @@ mi_switch(lwp_t *l)
 			l->l_stat = LSRUN;
 			lwp_setlock(l, spc->spc_mutex);
 			sched_enqueue(l, true);
-			/* Handle migration case */
-			KASSERT(spc->spc_migrating == NULL);
-			if (l->l_target_cpu !=  NULL) {
+			/*
+			 * Handle migration.  Note that "migrating LWP" may
+			 * be reset here, if interrupt/preemption happens
+			 * early in idle LWP.
+			 */
+			if (l->l_target_cpu != NULL) {
+				KASSERT((l->l_pflag & LP_INTR) == 0);
 				spc->spc_migrating = l;
 			}
 		} else
@@ -972,8 +978,7 @@ setrunnable(struct lwp *l)
 #endif /* KERN_SA */
 
 	/*
-	 * If the LWP was sleeping interruptably, then it's OK to start it
-	 * again.  If not, mark it as still sleeping.
+	 * If the LWP was sleeping, start it again.
 	 */
 	if (l->l_wchan != NULL) {
 		l->l_stat = LSSLEEP;

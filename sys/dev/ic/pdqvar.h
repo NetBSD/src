@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.43.4.1 2010/05/30 05:17:24 rmind Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.43.4.2 2011/03/05 20:53:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -84,8 +84,6 @@ typedef enum _pdq_state_t pdq_state_t;
 #include <sys/mbuf.h>
 #endif /* M_CAST */
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #define	PDQ_USE_MBUFS
 #if defined(__NetBSD__)

@@ -1,30 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.154.2.3 2010/05/30 05:18:10 rmind Exp $	*/
-
-/*
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: uvm_page.c,v 1.154.2.4 2011/03/05 20:56:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -43,12 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and
- *      its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -97,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.154.2.3 2010/05/30 05:18:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.154.2.4 2011/03/05 20:56:37 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -127,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.154.2.3 2010/05/30 05:18:10 rmind Exp
 
 struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
 int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
+#define	vm_nphysmem	vm_nphysseg
 
 /*
  * Some supported CPUs in a given architecture don't support all
@@ -186,37 +156,39 @@ static void uvm_pageremove(struct uvm_object *, struct vm_page *);
  */
 
 static signed int
-uvm_page_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
+uvm_page_compare_nodes(void *ctx, const void *n1, const void *n2)
 {
-	const struct vm_page *pg1 = (const void *)n1;
-	const struct vm_page *pg2 = (const void *)n2;
+	const struct vm_page *pg1 = n1;
+	const struct vm_page *pg2 = n2;
 	const voff_t a = pg1->offset;
 	const voff_t b = pg2->offset;
 
 	if (a < b)
-		return 1;
-	if (a > b)
 		return -1;
+	if (a > b)
+		return 1;
 	return 0;
 }
 
 static signed int
-uvm_page_compare_key(const struct rb_node *n, const void *key)
+uvm_page_compare_key(void *ctx, const void *n, const void *key)
 {
-	const struct vm_page *pg = (const void *)n;
+	const struct vm_page *pg = n;
 	const voff_t a = pg->offset;
 	const voff_t b = *(const voff_t *)key;
 
 	if (a < b)
-		return 1;
-	if (a > b)
 		return -1;
+	if (a > b)
+		return 1;
 	return 0;
 }
 
-const struct rb_tree_ops uvm_page_tree_ops = {
+const rb_tree_ops_t uvm_page_tree_ops = {
 	.rbto_compare_nodes = uvm_page_compare_nodes,
 	.rbto_compare_key = uvm_page_compare_key,
+	.rbto_node_offset = offsetof(struct vm_page, rb_node),
+	.rbto_context = NULL
 };
 
 /*
@@ -270,11 +242,11 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 static inline void
 uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
-	bool success;
+	struct vm_page *ret;
 
 	KASSERT(uobj == pg->uobject);
-	success = rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
-	KASSERT(success);
+	ret = rb_tree_insert_node(&uobj->rb_tree, pg);
+	KASSERT(ret == pg);
 }
 
 static inline void
@@ -328,7 +300,7 @@ uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
 
 	KASSERT(uobj == pg->uobject);
-	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
+	rb_tree_remove_node(&uobj->rb_tree, pg);
 }
 
 static inline void
@@ -364,6 +336,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	static struct uvm_cpu boot_cpu;
 	psize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray, *cpuarray;
+	struct vm_physseg *seg;
 	struct vm_page *pagearray;
 	int lcv;
 	u_int i;
@@ -396,7 +369,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * now is to allocate vm_page structures for this memory.
 	 */
 
-	if (vm_nphysseg == 0)
+	if (vm_nphysmem == 0)
 		panic("uvm_page_bootstrap: no memory pre-allocated");
 
 	/*
@@ -408,8 +381,10 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	freepages = 0;
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
-		freepages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
+	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
+		seg = VM_PHYSMEM_PTR(lcv);
+		freepages += (seg->end - seg->start);
+	}
 
 	/*
 	 * Let MD code initialize the number of colors, or default
@@ -453,27 +428,28 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * init the vm_page structures and put them in the correct place.
 	 */
 
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
-		n = vm_physmem[lcv].end - vm_physmem[lcv].start;
+	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
+		seg = VM_PHYSMEM_PTR(lcv);
+		n = seg->end - seg->start;
 
 		/* set up page array pointers */
-		vm_physmem[lcv].pgs = pagearray;
+		seg->pgs = pagearray;
 		pagearray += n;
 		pagecount -= n;
-		vm_physmem[lcv].lastpg = vm_physmem[lcv].pgs + (n - 1);
+		seg->lastpg = seg->pgs + n;
 
 		/* init and free vm_pages (we've already zeroed them) */
-		paddr = ctob(vm_physmem[lcv].start);
+		paddr = ctob(seg->start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
-			vm_physmem[lcv].pgs[i].phys_addr = paddr;
+			seg->pgs[i].phys_addr = paddr;
 #ifdef __HAVE_VM_PAGE_MD
-			VM_MDPAGE_INIT(&vm_physmem[lcv].pgs[i]);
+			VM_MDPAGE_INIT(&seg->pgs[i]);
 #endif
-			if (atop(paddr) >= vm_physmem[lcv].avail_start &&
-			    atop(paddr) <= vm_physmem[lcv].avail_end) {
+			if (atop(paddr) >= seg->avail_start &&
+			    atop(paddr) <= seg->avail_end) {
 				uvmexp.npages++;
 				/* add page to free pool */
-				uvm_pagefree(&vm_physmem[lcv].pgs[i]);
+				uvm_pagefree(&seg->pgs[i]);
 			}
 		}
 	}
@@ -535,7 +511,8 @@ uvm_setpagesize(void)
 	}
 	uvmexp.pagemask = uvmexp.pagesize - 1;
 	if ((uvmexp.pagemask & uvmexp.pagesize) != 0)
-		panic("uvm_setpagesize: page size not a power of two");
+		panic("uvm_setpagesize: page size %u (%#x) not a power of two",
+		    uvmexp.pagesize, uvmexp.pagesize);
 	for (uvmexp.pageshift = 0; ; uvmexp.pageshift++)
 		if ((1 << uvmexp.pageshift) == uvmexp.pagesize)
 			break;
@@ -647,56 +624,56 @@ static bool uvm_page_physget_freelist(paddr_t *, int);
 static bool
 uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
+	struct vm_physseg *seg;
 	int lcv, x;
 
 	/* pass 1: try allocating from a matching end */
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-	for (lcv = vm_nphysseg - 1 ; lcv >= 0 ; lcv--)
+	for (lcv = vm_nphysmem - 1 ; lcv >= 0 ; lcv--)
 #else
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
+	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 #endif
 	{
+		seg = VM_PHYSMEM_PTR(lcv);
 
 		if (uvm.page_init_done == true)
 			panic("uvm_page_physget: called _after_ bootstrap");
 
-		if (vm_physmem[lcv].free_list != freelist)
+		if (seg->free_list != freelist)
 			continue;
 
 		/* try from front */
-		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].start &&
-		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ctob(vm_physmem[lcv].avail_start);
-			vm_physmem[lcv].avail_start++;
-			vm_physmem[lcv].start++;
+		if (seg->avail_start == seg->start &&
+		    seg->avail_start < seg->avail_end) {
+			*paddrp = ctob(seg->avail_start);
+			seg->avail_start++;
+			seg->start++;
 			/* nothing left?   nuke it */
-			if (vm_physmem[lcv].avail_start ==
-			    vm_physmem[lcv].end) {
-				if (vm_nphysseg == 1)
+			if (seg->avail_start == seg->end) {
+				if (vm_nphysmem == 1)
 				    panic("uvm_page_physget: out of memory!");
-				vm_nphysseg--;
-				for (x = lcv ; x < vm_nphysseg ; x++)
+				vm_nphysmem--;
+				for (x = lcv ; x < vm_nphysmem ; x++)
 					/* structure copy */
-					vm_physmem[x] = vm_physmem[x+1];
+					VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 			return (true);
 		}
 
 		/* try from rear */
-		if (vm_physmem[lcv].avail_end == vm_physmem[lcv].end &&
-		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ctob(vm_physmem[lcv].avail_end - 1);
-			vm_physmem[lcv].avail_end--;
-			vm_physmem[lcv].end--;
+		if (seg->avail_end == seg->end &&
+		    seg->avail_start < seg->avail_end) {
+			*paddrp = ctob(seg->avail_end - 1);
+			seg->avail_end--;
+			seg->end--;
 			/* nothing left?   nuke it */
-			if (vm_physmem[lcv].avail_end ==
-			    vm_physmem[lcv].start) {
-				if (vm_nphysseg == 1)
+			if (seg->avail_end == seg->start) {
+				if (vm_nphysmem == 1)
 				    panic("uvm_page_physget: out of memory!");
-				vm_nphysseg--;
-				for (x = lcv ; x < vm_nphysseg ; x++)
+				vm_nphysmem--;
+				for (x = lcv ; x < vm_nphysmem ; x++)
 					/* structure copy */
-					vm_physmem[x] = vm_physmem[x+1];
+					VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 			return (true);
 		}
@@ -704,29 +681,30 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 
 	/* pass2: forget about matching ends, just allocate something */
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-	for (lcv = vm_nphysseg - 1 ; lcv >= 0 ; lcv--)
+	for (lcv = vm_nphysmem - 1 ; lcv >= 0 ; lcv--)
 #else
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
+	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 #endif
 	{
+		seg = VM_PHYSMEM_PTR(lcv);
 
 		/* any room in this bank? */
-		if (vm_physmem[lcv].avail_start >= vm_physmem[lcv].avail_end)
+		if (seg->avail_start >= seg->avail_end)
 			continue;  /* nope */
 
-		*paddrp = ctob(vm_physmem[lcv].avail_start);
-		vm_physmem[lcv].avail_start++;
+		*paddrp = ctob(seg->avail_start);
+		seg->avail_start++;
 		/* truncate! */
-		vm_physmem[lcv].start = vm_physmem[lcv].avail_start;
+		seg->start = seg->avail_start;
 
 		/* nothing left?   nuke it */
-		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].end) {
-			if (vm_nphysseg == 1)
+		if (seg->avail_start == seg->end) {
+			if (vm_nphysmem == 1)
 				panic("uvm_page_physget: out of memory!");
-			vm_nphysseg--;
-			for (x = lcv ; x < vm_nphysseg ; x++)
+			vm_nphysmem--;
+			for (x = lcv ; x < vm_nphysmem ; x++)
 				/* structure copy */
-				vm_physmem[x] = vm_physmem[x+1];
+				VM_PHYSMEM_PTR_SWAP(x, x + 1);
 		}
 		return (true);
 	}
@@ -776,7 +754,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	 * do we have room?
 	 */
 
-	if (vm_nphysseg == VM_PHYSSEG_MAX) {
+	if (vm_nphysmem == VM_PHYSSEG_MAX) {
 		printf("uvm_page_physload: unable to load physical memory "
 		    "segment\n");
 		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
@@ -786,48 +764,22 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	}
 
 	/*
-	 * check to see if this is a "preload" (i.e. uvm_mem_init hasn't been
+	 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
 	 * called yet, so malloc is not available).
 	 */
 
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
-		if (vm_physmem[lcv].pgs)
+	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
+		if (VM_PHYSMEM_PTR(lcv)->pgs)
 			break;
 	}
-	preload = (lcv == vm_nphysseg);
+	preload = (lcv == vm_nphysmem);
 
 	/*
 	 * if VM is already running, attempt to malloc() vm_page structures
 	 */
 
 	if (!preload) {
-#if defined(VM_PHYSSEG_NOADD)
 		panic("uvm_page_physload: tried to add RAM after vm_mem_init");
-#else
-		/* XXXCDC: need some sort of lockout for this case */
-		paddr_t paddr;
-		npages = end - start;  /* # of pages */
-		pgs = malloc(sizeof(struct vm_page) * npages,
-		    M_VMPAGE, M_NOWAIT);
-		if (pgs == NULL) {
-			printf("uvm_page_physload: can not malloc vm_page "
-			    "structs for segment\n");
-			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
-			return;
-		}
-		/* zero data, init phys_addr and free_list, and free pages */
-		memset(pgs, 0, sizeof(struct vm_page) * npages);
-		for (lcv = 0, paddr = ctob(start) ;
-				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
-			pgs[lcv].phys_addr = paddr;
-			pgs[lcv].free_list = free_list;
-			if (atop(paddr) >= avail_start &&
-			    atop(paddr) <= avail_end)
-				uvm_pagefree(&pgs[lcv]);
-		}
-		/* XXXCDC: incomplete: need to update uvmexp.free, what else? */
-		/* XXXCDC: need hook to tell pmap to rebuild pv_list, etc... */
-#endif
 	} else {
 		pgs = NULL;
 		npages = 0;
@@ -839,33 +791,33 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_RANDOM)
 	/* random: put it at the end (easy!) */
-	ps = &vm_physmem[vm_nphysseg];
+	ps = VM_PHYSMEM_PTR(vm_nphysmem);
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	{
 		int x;
 		/* sort by address for binary search */
-		for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
-			if (start < vm_physmem[lcv].start)
+		for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
+			if (start < VM_PHYSMEM_PTR(lcv)->start)
 				break;
-		ps = &vm_physmem[lcv];
+		ps = VM_PHYSMEM_PTR(lcv);
 		/* move back other entries, if necessary ... */
-		for (x = vm_nphysseg ; x > lcv ; x--)
+		for (x = vm_nphysmem ; x > lcv ; x--)
 			/* structure copy */
-			vm_physmem[x] = vm_physmem[x - 1];
+			VM_PHYSMEM_PTR_SWAP(x, x - 1);
 	}
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
 	{
 		int x;
 		/* sort by largest segment first */
-		for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
+		for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 			if ((end - start) >
-			    (vm_physmem[lcv].end - vm_physmem[lcv].start))
+			    (VM_PHYSMEM_PTR(lcv)->end - VM_PHYSMEM_PTR(lcv)->start))
 				break;
-		ps = &vm_physmem[lcv];
+		ps = VM_PHYSMEM_PTR(lcv);
 		/* move back other entries, if necessary ... */
-		for (x = vm_nphysseg ; x > lcv ; x--)
+		for (x = vm_nphysmem ; x > lcv ; x--)
 			/* structure copy */
-			vm_physmem[x] = vm_physmem[x - 1];
+			VM_PHYSMEM_PTR_SWAP(x, x - 1);
 	}
 #else
 	panic("uvm_page_physload: unknown physseg strategy selected!");
@@ -879,14 +831,144 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		ps->pgs = NULL;
 	} else {
 		ps->pgs = pgs;
-		ps->lastpg = pgs + npages - 1;
+		ps->lastpg = pgs + npages;
 	}
 	ps->free_list = free_list;
-	vm_nphysseg++;
+	vm_nphysmem++;
 
 	if (!preload) {
 		uvmpdpol_reinit();
 	}
+}
+
+/*
+ * when VM_PHYSSEG_MAX is 1, we can simplify these functions
+ */
+
+#if VM_PHYSSEG_MAX == 1
+static inline int vm_physseg_find_contig(struct vm_physseg *, int, paddr_t, int *);
+#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+static inline int vm_physseg_find_bsearch(struct vm_physseg *, int, paddr_t, int *);
+#else
+static inline int vm_physseg_find_linear(struct vm_physseg *, int, paddr_t, int *);
+#endif
+
+/*
+ * vm_physseg_find: find vm_physseg structure that belongs to a PA
+ */
+int
+vm_physseg_find(paddr_t pframe, int *offp)
+{
+
+#if VM_PHYSSEG_MAX == 1
+	return vm_physseg_find_contig(vm_physmem, vm_nphysseg, pframe, offp);
+#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+	return vm_physseg_find_bsearch(vm_physmem, vm_nphysseg, pframe, offp);
+#else
+	return vm_physseg_find_linear(vm_physmem, vm_nphysseg, pframe, offp);
+#endif
+}
+
+#if VM_PHYSSEG_MAX == 1
+static inline int
+vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+{
+
+	/* 'contig' case */
+	if (pframe >= segs[0].start && pframe < segs[0].end) {
+		if (offp)
+			*offp = pframe - segs[0].start;
+		return(0);
+	}
+	return(-1);
+}
+
+#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+
+static inline int
+vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+{
+	/* binary search for it */
+	u_int	start, len, try;
+
+	/*
+	 * if try is too large (thus target is less than try) we reduce
+	 * the length to trunc(len/2) [i.e. everything smaller than "try"]
+	 *
+	 * if the try is too small (thus target is greater than try) then
+	 * we set the new start to be (try + 1).   this means we need to
+	 * reduce the length to (round(len/2) - 1).
+	 *
+	 * note "adjust" below which takes advantage of the fact that
+	 *  (round(len/2) - 1) == trunc((len - 1) / 2)
+	 * for any value of len we may have
+	 */
+
+	for (start = 0, len = nsegs ; len != 0 ; len = len / 2) {
+		try = start + (len / 2);	/* try in the middle */
+
+		/* start past our try? */
+		if (pframe >= segs[try].start) {
+			/* was try correct? */
+			if (pframe < segs[try].end) {
+				if (offp)
+					*offp = pframe - segs[try].start;
+				return(try);            /* got it */
+			}
+			start = try + 1;	/* next time, start here */
+			len--;			/* "adjust" */
+		} else {
+			/*
+			 * pframe before try, just reduce length of
+			 * region, done in "for" loop
+			 */
+		}
+	}
+	return(-1);
+}
+
+#else
+
+static inline int
+vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+{
+	/* linear search for it */
+	int	lcv;
+
+	for (lcv = 0; lcv < nsegs; lcv++) {
+		if (pframe >= segs[lcv].start &&
+		    pframe < segs[lcv].end) {
+			if (offp)
+				*offp = pframe - segs[lcv].start;
+			return(lcv);		   /* got it */
+		}
+	}
+	return(-1);
+}
+#endif
+
+/*
+ * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
+ * back from an I/O mapping (ugh!).   used in some MD code as well.
+ */
+struct vm_page *
+uvm_phys_to_vm_page(paddr_t pa)
+{
+	paddr_t pf = atop(pa);
+	int	off;
+	int	psi;
+
+	psi = vm_physseg_find(pf, &off);
+	if (psi != -1)
+		return(&VM_PHYSMEM_PTR(psi)->pgs[off]);
+	return(NULL);
+}
+
+paddr_t
+uvm_vm_page_to_phys(const struct vm_page *pg)
+{
+
+	return pg->phys_addr;
 }
 
 /*
@@ -1107,7 +1189,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	lwp_t *l;
 
 	KASSERT(obj == NULL || anon == NULL);
-	KASSERT(anon == NULL || off == 0);
+	KASSERT(anon == NULL || (flags & UVM_FLAG_COLORMATCH) || off == 0);
 	KASSERT(off == trunc_page(off));
 	KASSERT(obj == NULL || mutex_owned(obj->vmobjlock));
 	KASSERT(anon == NULL || mutex_owned(anon->an_lock));
@@ -1117,12 +1199,14 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	/*
 	 * This implements a global round-robin page coloring
 	 * algorithm.
-	 *
-	 * XXXJRT: What about virtually-indexed caches?
 	 */
 
 	ucpu = curcpu()->ci_data.cpu_uvm;
-	color = ucpu->page_free_nextcolor;
+	if (flags & UVM_FLAG_COLORMATCH) {
+		color = atop(off) & uvmexp.colormask;
+	} else {
+		color = ucpu->page_free_nextcolor;
+	}
 
 	/*
 	 * check to see if we need to generate some free pages waking
@@ -1726,12 +1810,12 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 
 	KASSERT(mutex_owned(obj->vmobjlock));
 
-	pg = (struct vm_page *)rb_tree_find_node(&obj->rb_tree, &off);
+	pg = rb_tree_find_node(&obj->rb_tree, &off);
 
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		(pg->flags & PG_BUSY) != 0);
-	return(pg);
+	return pg;
 }
 
 /*
@@ -1900,7 +1984,7 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 	KASSERT(lcv != -1);
-	return (vm_physmem[lcv].free_list);
+	return (VM_PHYSMEM_PTR(lcv)->free_list);
 }
 
 /*
@@ -2024,8 +2108,8 @@ uvm_page_printall(void (*pr)(const char *, ...))
 	    " OWNER"
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
-	for (i = 0; i < vm_nphysseg; i++) {
-		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
+	for (i = 0; i < vm_nphysmem; i++) {
+		for (pg = VM_PHYSMEM_PTR(i)->pgs; pg < VM_PHYSMEM_PTR(i)->lastpg; pg++) {
 			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);

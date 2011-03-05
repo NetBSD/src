@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.118.4.1 2010/05/30 05:17:44 rmind Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.118.4.2 2011/03/05 20:54:10 rmind Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118.4.1 2010/05/30 05:17:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118.4.2 2011/03/05 20:54:10 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -124,8 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118.4.1 2010/05/30 05:17:44 rmind Exp $
 #include <dev/usb/if_auereg.h>
 
 #ifdef AUE_DEBUG
-#define DPRINTF(x)	if (auedebug) logprintf x
-#define DPRINTFN(n,x)	if (auedebug >= (n)) logprintf x
+#define DPRINTF(x)	if (auedebug) printf x
+#define DPRINTFN(n,x)	if (auedebug >= (n)) printf x
 int	auedebug = 0;
 #else
 #define DPRINTF(x)
@@ -188,6 +188,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_HP,		USB_PRODUCT_HP_HN210E},		  PII },
  {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX},	  0 },
  {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTXS},	  PII },
+ {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETXUS2},	  PII },
  {{ USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX},   0 },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX1},	  LSYS|PII },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10T},	  LSYS },
@@ -885,7 +886,7 @@ aue_detach(device_t self, int flags)
 		return (0);
 	}
 
-	callout_stop(&(sc->aue_stat_ch));
+	callout_stop(&sc->aue_stat_ch);
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
 	 * in the same thread as detach.
@@ -1650,7 +1651,7 @@ aue_stop(struct aue_softc *sc)
 	aue_csr_write_1(sc, AUE_CTL0, 0);
 	aue_csr_write_1(sc, AUE_CTL1, 0);
 	aue_reset(sc);
-	callout_stop(&(sc->aue_stat_ch));
+	callout_stop(&sc->aue_stat_ch);
 
 	/* Stop transfers. */
 	if (sc->aue_ep[AUE_ENDPT_RX] != NULL) {

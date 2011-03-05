@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_nhash.c,v 1.9.16.2 2010/07/03 01:19:50 rmind Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.9.16.3 2011/03/05 20:55:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.9.16.2 2010/07/03 01:19:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.9.16.3 2011/03/05 20:55:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ loop:
 			} else {
 				mutex_enter(vp->v_interlock);
 				mutex_exit(&hfs_nhash_lock);
-				if (vget(vp, flags | LK_INTERLOCK))
+				if (vget(vp, flags))
 					goto loop;
 			}
 			return vp;

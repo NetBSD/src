@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.300.4.1 2010/05/30 05:18:02 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.300.4.2 2011/03/05 20:55:58 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.300.4.1 2010/05/30 05:18:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.300.4.2 2011/03/05 20:55:58 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4274,7 +4274,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		return (ENOBUFS);
 #endif
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m && tlen > MHLEN) {
+	if (m && (max_linkhdr + tlen) > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);

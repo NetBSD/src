@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.220.2.1 2010/05/30 05:17:07 rmind Exp $
+# $NetBSD: GENERIC,v 1.220.2.2 2011/03/05 20:52:00 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.220.2.1 $"
+#ident 		"GENERIC-$Revision: 1.220.2.2 $"
 
 maxusers	32
 
@@ -143,6 +143,8 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
 #options 	DEBUG
+#options 	LOCKDEBUG
+#options 	SYSCALL_DEBUG
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
@@ -517,7 +519,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	1
+#pseudo-device	md	
 
 
 #### Network interfaces

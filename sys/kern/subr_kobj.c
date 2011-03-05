@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.40.4.1 2010/05/30 05:17:58 rmind Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.40.4.2 2011/03/05 20:55:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.40.4.1 2010/05/30 05:17:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.40.4.2 2011/03/05 20:55:18 rmind Exp $");
 
 #include "opt_modular.h"
 
@@ -200,8 +200,10 @@ kobj_load(kobj_t ko)
 	switch (hdr->e_machine) {
 #if ELFSIZE == 32
 	ELF32_MACHDEP_ID_CASES
-#else
+#elif ELFSIZE == 64
 	ELF64_MACHDEP_ID_CASES
+#else
+#error not defined
 #endif
 	default:
 		kobj_error("unsupported machine");

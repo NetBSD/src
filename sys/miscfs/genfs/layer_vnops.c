@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.39.4.2 2010/07/03 01:19:57 rmind Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.39.4.3 2011/03/05 20:55:30 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.39.4.2 2010/07/03 01:19:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.39.4.3 2011/03/05 20:55:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,11 +557,9 @@ layer_inactive(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	/*
-	 * ..., but don't cache the device node. Also, if we did a
-	 * remove, don't cache the node.
+	 * If we did a remove, don't cache the node.
 	 */
-	*ap->a_recycle = (vp->v_type == VBLK || vp->v_type == VCHR
-	    || (VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED));
+	*ap->a_recycle = ((VTOLAYER(vp)->layer_flags & LAYERFS_REMOVED) != 0);
 
 	/*
 	 * Do nothing (and _don't_ bypass).
@@ -647,6 +645,29 @@ layer_rmdir(void *v)
 		VTOLAYER(vp)->layer_flags |= LAYERFS_REMOVED;
 	}
 	vrele(vp);
+
+	return error;
+}
+
+int
+layer_revoke(void *v)
+{
+        struct vop_revoke_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *lvp = LAYERVPTOLOWERVP(vp);
+	int error;
+
+	/*
+	 * We will most likely end up in vclean which uses the v_usecount
+	 * to determine if a vnode is active.  Take an extra reference on
+	 * the lower vnode so it will always close and inactivate.
+	 */
+	vref(lvp);
+	error = LAYERFS_DO_BYPASS(vp, ap);
+	vrele(lvp);
 
 	return error;
 }

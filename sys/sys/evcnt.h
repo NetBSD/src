@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.6 2009/03/21 13:06:39 ad Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.6.4.1 2011/03/05 20:56:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -96,9 +96,10 @@ struct evcnt {
 TAILQ_HEAD(evcntlist, evcnt);
 
 /* maximum group/name lengths, including trailing NUL */
-#define	EVCNT_STRING_MAX	256
+#define	EVCNT_STRING_MAX	255
 
 /* ev_type values */
+#define	EVCNT_TYPE_ANY		-1	/* for sysctl */
 #define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
 #define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
 #define	EVCNT_TYPE_TRAP		2	/* processor trap/execption */
@@ -129,6 +130,8 @@ extern struct evcntlist allevents;	/* list of all event counters */
 
 void	evcnt_init(void);
 void	evcnt_attach_static(struct evcnt *);
+void	evcnt_attach_dynamic_nozero(struct evcnt *, int, const struct evcnt *,
+	    const char *, const char *);
 void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
 	    const char *, const char *);
 void	evcnt_detach(struct evcnt *);

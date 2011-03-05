@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.21.2.1 2010/07/03 01:19:30 rmind Exp $ */
+/*	$NetBSD: pchb.c,v 1.21.2.2 2011/03/05 20:52:29 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.21.2.1 2010/07/03 01:19:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.21.2.2 2011/03/05 20:52:29 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -394,6 +394,8 @@ pchbattach(device_t parent, device_t self, void *aux)
 		case PCI_PRODUCT_INTEL_IRONLAKE_M_HB:
 		case PCI_PRODUCT_INTEL_IRONLAKE_MA_HB:
 		case PCI_PRODUCT_INTEL_IRONLAKE_MC2_HB:
+		case PCI_PRODUCT_INTEL_PINEVIEW_HB:
+		case PCI_PRODUCT_INTEL_PINEVIEW_M_HB:
 			/*
 			 * The host bridge is either in GFX mode (internal
 			 * graphics) or in AGP mode. In GFX mode, we pretend
@@ -408,13 +410,6 @@ pchbattach(device_t parent, device_t self, void *aux)
 		}
 		break;
 	}
-
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_attach_rnd(sc, pa);
-#endif
 
 	if (!pmf_device_register(self, pchb_suspend, pchb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -450,21 +445,12 @@ int
 pchbdetach(device_t self, int flags)
 {
 	int rc;
-#if NRND > 0
-	struct pchb_softc *sc = device_private(self);
-#endif
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
 
 	pmf_device_deregister(self);
 
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_detach_rnd(sc);
-#endif
 	return 0;
 }
 

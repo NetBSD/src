@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.149.2.1 2010/07/03 01:19:33 rmind Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.149.2.2 2011/03/05 20:52:56 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.149.2.1 2010/07/03 01:19:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.149.2.2 2011/03/05 20:52:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1318,23 +1318,29 @@ svr4_sys_nice(struct lwp *l, const struct svr4_sys_nice_args *uap, register_t *r
 int
 svr4_sys_resolvepath(struct lwp *l, const struct svr4_sys_resolvepath_args *uap, register_t *retval)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int error;
 	size_t len;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
+	error = pathbuf_copyin(SCARG(uap, path), &pb);
+	if (error) {
+		return ENOMEM;
+	}
 
-	if ((error = namei(&nd)) != 0)
+	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, pb);
+	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
 		return error;
+	}
 
-	if ((error = copyoutstr(nd.ni_cnd.cn_pnbuf, SCARG(uap, buf),
+	if ((error = copyoutstr(nd.ni_pnbuf, SCARG(uap, buf),
 	    SCARG(uap, bufsiz), &len)) != 0)
 		goto bad;
 
 	*retval = len;
 bad:
 	vrele(nd.ni_vp);
-	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
+	pathbuf_destroy(pb);
 	return error;
 }

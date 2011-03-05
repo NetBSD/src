@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.304.2.2 2010/07/03 01:19:54 rmind Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.304.2.3 2011/03/05 20:55:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.304.2.2 2010/07/03 01:19:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.304.2.3 2011/03/05 20:55:15 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.304.2.2 2010/07/03 01:19:54 rmind Exp
 #include <sys/pax.h>
 #endif /* PAX_SEGVGUARD */
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 #include <uvm/uvm_extern.h>
 
 static void	ksiginfo_exechook(struct proc *, void *);

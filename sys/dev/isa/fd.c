@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.95.2.1 2010/05/30 05:17:28 rmind Exp $	*/
+/*	$NetBSD: fd.c,v 1.95.2.2 2011/03/05 20:53:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.95.2.1 2010/05/30 05:17:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.95.2.2 2011/03/05 20:53:24 rmind Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -121,8 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.95.2.1 2010/05/30 05:17:28 rmind Exp $");
 #endif
 
 #include <prop/proplib.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -355,7 +353,7 @@ void
 fdcattach(struct fdc_softc *fdc)
 {
 	mutex_init(&fdc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&fdc->sc_cv, "fdcwakeup");
+	cv_init(&fdc->sc_cv, "fdcwake");
 	callout_init(&fdc->sc_timo_ch, 0);
 	callout_init(&fdc->sc_intr_ch, 0);
 
@@ -1625,7 +1623,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
 	bp->b_data = (void *)finfo;
 
-#ifdef DEBUG
+#ifdef FD_DEBUG
 	printf("fdformat: blkno %" PRIx64 " count %x\n",
 	    bp->b_blkno, bp->b_bcount);
 #endif

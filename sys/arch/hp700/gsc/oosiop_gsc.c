@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop_gsc.c,v 1.8 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: oosiop_gsc.c,v 1.8.4.1 2011/03/05 20:50:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.8 2009/11/03 05:07:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.8.4.1 2011/03/05 20:50:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,13 +146,17 @@ oosiop_gsc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = ga->ga_iot;
 	sc->sc_dmat = ga->ga_dmatag;
 	if (bus_space_map(sc->sc_bst, ga->ga_hpa,
-	    OOSIOP_GSC_OFFSET + OOSIOP_NREGS, 0, &ioh))
-		panic("%s: couldn't map I/O ports", __func__);
+	    OOSIOP_GSC_OFFSET + OOSIOP_NREGS, 0, &ioh)) {
+		aprint_error(": couldn't map I/O ports\n");
+		return;
+	}
 	if (bus_space_subregion(sc->sc_bst, ioh,
-	    OOSIOP_GSC_OFFSET, OOSIOP_NREGS, &sc->sc_bsh))
-		panic("%s: couldn't get chip ports", __func__);
+	    OOSIOP_GSC_OFFSET, OOSIOP_NREGS, &sc->sc_bsh)) {
+		aprint_error(": couldn't get chip ports\n");
+		return;
+	}
 
-	sc->sc_freq = ga->ga_ca.ca_pdc_iodc_read->filler2[14];
+	sc->sc_freq = ga->ga_ca.ca_pir.filler2[14];
 	if (sc->sc_freq == 0)
 		sc->sc_freq = 50000000;
 
@@ -170,8 +174,8 @@ oosiop_gsc_attach(device_t parent, device_t self, void *aux)
 	 */
 	oosiop_attach(sc);
 
-	(void)hp700_intr_establish(self, IPL_BIO,
-	    oosiop_gsc_intr, sc, ga->ga_int_reg, ga->ga_irq);
+	(void)hp700_intr_establish(IPL_BIO, oosiop_gsc_intr, sc,
+	    ga->ga_ir, ga->ga_irq);
 }
 
 /*

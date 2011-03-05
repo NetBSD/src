@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.8.2.1 2010/05/30 05:17:01 rmind Exp $
+# $NetBSD: GENERIC.MP,v 1.8.2.2 2011/03/05 20:51:28 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8.2.1 $"
+#ident 		"GENERIC-$Revision: 1.8.2.2 $"
 
 maxusers	32
 
@@ -53,6 +53,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+options 	RDB_PART	# Rigid Disk Block partition support
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -215,6 +216,9 @@ wsdisplay*      at wsemuldisplaydev?
 attimer0	at isa?			# AT Timer
 pcppi0		at isa?			# PC prog. periph. interface
 # FIX ISABEEP LATER
+
+# VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
+viaenv* 	at pci? dev ? function ?
 
 # Serial Devices
 # ISA serial interfaces
@@ -400,7 +404,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol

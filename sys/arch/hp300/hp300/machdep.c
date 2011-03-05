@@ -1,6 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.211.2.3 2010/04/25 20:20:57 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.2.4 2011/03/05 20:50:23 rmind Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,54 +37,14 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: machdep.c 1.74 92/12/20$
- *
- *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.3 2010/04/25 20:20:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.4 2011/03/05 20:50:23 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
-#include "hil.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.3 2010/04/25 20:20:57 rmind Exp 
 #include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -125,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.3 2010/04/25 20:20:57 rmind Exp 
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 
@@ -140,9 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.3 2010/04/25 20:20:57 rmind Exp 
 
 #include "opt_useleds.h"
 
-#include <hp300/dev/hilreg.h>
-#include <hp300/dev/hilioctl.h>
-#include <hp300/dev/hilvar.h>
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
@@ -221,6 +181,22 @@ hp300_init(void)
 
 	extern paddr_t avail_start, avail_end;
 
+#ifdef CACHE_HAVE_VAC
+	/*
+	 * Determine VA aliasing distance if any
+	 */
+	switch (machineid) {
+	case HP_320:
+		pmap_aliasmask = 0x3fff;	/* 16KB */
+		break;
+	case HP_350:
+		pmap_aliasmask = 0x7fff;	/* 32KB */
+		break;
+	default:
+		break;
+	}
+#endif
+
 	/*
 	 * Tell the VM system about available physical memory.  The
 	 * hp300 only has one segment.
@@ -249,6 +225,8 @@ hp300_init(void)
 	 * exists by searching for the MAGIC record.  If it's not
 	 * there, disable bootinfo.
 	 */
+	bootinfo_va = virtual_avail;
+	virtual_avail += PAGE_SIZE;
 	pmap_enter(pmap_kernel(), bootinfo_va, bootinfo_pa,
 	    VM_PROT_READ|VM_PROT_WRITE,
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
@@ -260,6 +238,7 @@ hp300_init(void)
 		pmap_remove(pmap_kernel(), bootinfo_va,
 		    bootinfo_va + PAGE_SIZE);
 		pmap_update(pmap_kernel());
+		virtual_avail -= PAGE_SIZE;
 		bootinfo_va = 0;
 	}
 }
@@ -287,7 +266,9 @@ consinit(void)
 	/*
 	 * Issue a warning if the boot loader didn't provide bootinfo.
 	 */
-	if (bootinfo_va == 0)
+	if (bootinfo_va != 0)
+		printf("bootinfo found at 0x%08lx\n", bootinfo_pa);
+	else
 		printf("WARNING: boot loader did not provide bootinfo\n");
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -381,7 +362,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
+	frame->f_regs[A2] = l->l_proc->p_psstrp;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -1042,7 +1023,8 @@ candbtimer(void *arg)
 static int innmihand;	/* simple mutex */
 
 /*
- * Level 7 interrupts can be caused by the keyboard or parity errors.
+ * Level 7 interrupts can be caused by HIL keyboards (in cooked mode only,
+ * but we run them in raw mode) or parity errors.
  */
 void
 nmihand(struct frame frame)
@@ -1053,57 +1035,12 @@ nmihand(struct frame frame)
 		return;
 	innmihand = 1;
 
-#if NHIL > 0
-	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
-	if (kbdnmi()) {
-		printf("Got a keyboard NMI");
-
-		/*
-		 * We can:
-		 *
-		 *	- enter DDB
-		 *
-		 *	- Start the crashandburn sequence
-		 *
-		 *	- Ignore it.
-		 */
-#ifdef DDB
-		printf(": entering debugger\n");
-		Debugger();
-#else
-#ifdef PANICBUTTON
-		if (panicbutton) {
-			/* XXX */
-			callout_init(&candbtimer_ch, 0);
-			if (crashandburn) {
-				crashandburn = 0;
-				printf(": CRASH AND BURN!\n");
-				panic("forced crash");
-			} else {
-				/* Start the crashandburn sequence */
-				printf("\n");
-				crashandburn = 1;
-				callout_reset(&candbtimer_ch, hz / candbdiv,
-				    candbtimer, NULL);
-			}
-		} else
-#endif /* PANICBUTTON */
-			printf(": ignoring\n");
-#endif /* DDB */
-
-		goto nmihand_out;	/* no more work to do */
-	}
-#endif
-
 	if (parityerror(&frame))
 		return;
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 
-#if NHIL > 0
-nmihand_out:
 	innmihand = 0;
-#endif
 }
 
 /*
@@ -1299,3 +1236,13 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	    (uint8_t *)ptr < extiobase + (EIOMAPSIZE * PAGE_SIZE)))
 	    ? EFAULT : 0;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif

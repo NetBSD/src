@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.55.2.1 2010/07/03 01:19:24 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.55.2.2 2011/03/05 20:51:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -950,12 +950,11 @@ Lbrkpt3:
  * intrhand_vectored is the entry point for vectored interrupts.
  */
 
-#define INTERRUPT_SAVEREG	moveml  #0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml  %sp@+,#0x0303
-
 ENTRY_NOPROFILE(spurintr)	/* Level 0 */
 	addql	#1,_C_LABEL(intrcnt)+0
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	INTERRUPT_SAVEREG
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
@@ -1249,7 +1248,7 @@ ENTRY(getsr)
 /*
  * _delay(u_int N)
  *
- * Delay for at least (N/256) microsecends.
+ * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
  */

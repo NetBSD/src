@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.36 2010/02/24 22:38:09 dyoung Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.36.2.1 2011/03/05 20:54:10 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ typedef struct ehci_softc {
 	u_int sc_offs;			/* offset to operational regs */
 	int sc_flags;			/* misc flags */
 #define EHCIF_DROPPED_INTR_WORKAROUND	0x01
+#define EHCIF_ETTF			0x02 /* Emb. Transaction Translater func. */
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
@@ -167,6 +168,9 @@ typedef struct ehci_softc {
 	device_t sc_child; /* /dev/usb# device */
 	char sc_dying;
 	struct usb_dma_reserve sc_dma_reserve;
+
+	void (*sc_vendor_init)(struct ehci_softc *);
+	int (*sc_vendor_port_status)(struct ehci_softc *, uint32_t, int);
 } ehci_softc_t;
 
 #define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))

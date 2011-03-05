@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.24 2009/05/16 06:44:05 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.24.4.1 2011/03/05 20:53:12 rmind Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -67,8 +67,6 @@
 #include <dev/scsipi/scsipi_debug.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_iu.h>
-
-#include <uvm/uvm_extern.h>
 
 #ifdef CAM_NEW_TRAN_CODE
 #define AHC_NEW_TRAN_SETTINGS

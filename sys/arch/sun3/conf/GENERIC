@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148.6.1 2010/05/30 05:17:10 rmind Exp $
+# $NetBSD: GENERIC,v 1.148.6.2 2011/03/05 20:52:11 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.148.6.1 $"
+#ident		"GENERIC-$Revision: 1.148.6.2 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -42,6 +42,9 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
+
+#options 	MODULAR		# new style module(7) framework
+
 #options 	INSECURE	# disable kernel security level
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -60,7 +63,7 @@ options 	DDB
 #options 	KGDB_DEV=0x0C01	# ttya=0C00 ttyb=0C01
 
 # Other debugging options
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DEBUG		# kernel debugging code
 #options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
@@ -258,7 +261,7 @@ pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
 # Memory-disk drivers
-pseudo-device	md		1
+pseudo-device	md		
 
 # Misc.
 pseudo-device	loop		1	# network loopback

@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.22 2010/02/06 14:09:25 tnn Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.22.4.1 2011/03/05 20:53:37 rmind Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.22 2010/02/06 14:09:25 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.22.4.1 2011/03/05 20:53:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,8 +104,8 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_82801G_SMB:
 		case PCI_PRODUCT_INTEL_82801H_SMB:
 		case PCI_PRODUCT_INTEL_82801I_SMB:
-		case PCI_PRODUCT_INTEL_ICH10_SMB1:
-		case PCI_PRODUCT_INTEL_ICH10_SMB2:
+		case PCI_PRODUCT_INTEL_82801JD_SMB:
+		case PCI_PRODUCT_INTEL_82801JI_SMB:
 		case PCI_PRODUCT_INTEL_3400_SMB:
 			return 1;
 		}
@@ -238,7 +238,8 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
 
-	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
+	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
+	    (cmdlen == 0 && len > 1))
 		return (1);
 
 	/* Setup transfer */
@@ -261,7 +262,10 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_WRITE_P(op)) {
 		/* Write data */
 		b = buf;
-		if (len > 0)
+		if (cmdlen == 0 && len == 1)
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    LPCIB_SMB_HCMD, b[0]);
+		else if (len > 0)
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			    LPCIB_SMB_HD0, b[0]);
 		if (len > 1)
@@ -270,8 +274,8 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	/* Set SMBus command */
-	if (len == 0) {
-		if (cmdlen == 0)
+	if (cmdlen == 0) {
+		if (len == 0)
 			ctl = LPCIB_SMB_HC_CMD_QUICK;
 		else
 			ctl = LPCIB_SMB_HC_CMD_BYTE;

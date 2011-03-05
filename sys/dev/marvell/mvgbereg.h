@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.1.2.2 2010/07/03 01:19:36 rmind Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.1.2.3 2011/03/05 20:53:26 rmind Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -76,10 +76,11 @@
 #define MVGBE_MACAH		0x018	/* MAC Address High */
 #define MVGBE_SDC		0x01c	/* SDMA Configuration */
 #define MVGBE_DSCP(n)		(0x020 + ((n) << 2))
-#define MVGBE_PSC		0x03c
+#define MVGBE_PSC		0x03c	/* Port Serial Control0 */
 #define MVGBE_VPT2P		0x040	/* VLAN Priority Tag to Priority */
 #define MVGBE_PS		0x044	/* Ethernet Port Status */
 #define MVGBE_TQC		0x048	/* Transmit Queue Command */
+#define MVGBE_PSC1		0x04c	/* Port Serial Control1 */
 #define MVGBE_MTU		0x058	/* Max Transmit Unit */
 #define MVGBE_IC		0x060	/* Port Interrupt Cause */
 #define MVGBE_ICE		0x064	/* Port Interrupt Cause Extend */
@@ -91,6 +92,7 @@
 #define MVGBE_PXDFC		0x084	/* Port Rx Discard Frame Counter */
 #define MVGBE_POFC		0x088	/* Port Overrun Frame Counter */
 #define MVGBE_PIAE		0x094	/* Port Internal Address Error */
+#define MVGBE_TQFPC		0x0dc	/* Transmit Queue Fixed Priority Cfg */
 #define MVGBE_CRDP(n)		(0x20c + ((n) << 4))
 			/* Ethernet Current Receive Descriptor Pointers */
 #define MVGBE_RQC		0x280	/* Receive Queue Command */
@@ -234,8 +236,8 @@
 #define MVGBE_SDC_BLMR			(1 << 4)
 #define MVGBE_SDC_BLMT			(1 << 5)
 #define MVGBE_SDC_SWAPMODE		(1 << 6)
-#define MVGBE_SDC_IPGINTRX(n)		((n) << 8)
-#define MVGBE_SDC_IPGINTRX_MASK		MVGBE_SDC_IPGINTRX(0x3fff)
+#define MVGBE_SDC_IPGINTRX_MASK		__BITS(21, 8)
+#define MVGBE_SDC_IPGINTRX(x)		__SHIFTIN(x, MVGBE_SDC_IPGINTRX_MASK)
 #define MVGBE_SDC_TXBSZ(x)		((x) << 22)
 #define MVGBE_SDC_TXBSZ_MASK		MVGBE_SDC_TXBSZ(7)
 #define MVGBE_SDC_TXBSZ_1_64BITWORDS	MVGBE_SDC_TXBSZ(0)
@@ -282,6 +284,11 @@
 #define MVGBE_TQC_ENQ			(1 << 0)	/* Enable Q */
 #define MVGBE_TQC_DISQ			(1 << 8)	/* Disable Q */
 
+/* Port Serial Control 1 (MVGBE_PSC1) */
+#define MVGBE_PSC1_PCSLB		(1 << 1)
+#define MVGBE_PSC1_RGMIIEN		(1 << 3)	/* RGMII */
+#define MVGBE_PSC1_PRST			(1 << 4)	/* Port Reset */
+
 /* Port Interrupt Cause (MVGBE_IC) */
 #define MVGBE_IC_RXBUF			(1 << 0)
 #define MVGBE_IC_EXTEND			(1 << 1)
@@ -303,9 +310,16 @@
 #define MVGBE_ICE_INTADDRERR		(1 << 23)
 #define MVGBE_ICE_ETHERINTSUM		(1 << 31)
 
+/* Port Tx FIFO Urgent Threshold (MVGBE_PTFUT) */
+#define MVGBE_PTFUT_IPGINTTX_MASK	__BITS(17, 4)
+#define MVGBE_PTFUT_IPGINTTX(x)		__SHIFTIN(x, MVGBE_PTFUT_IPGINTTX_MASK)
+
 /* Port Rx Minimal Frame Size (MVGBE_PMFS) */
 #define MVGBE_PMFS_RXMFS(rxmfs)		(((rxmfs) - 40) & 0x7c)
 					/* RxMFS = 40,44,48,52,56,60,64 bytes */
+
+/* Transmit Queue Fixed Priority Configuration */
+#define MVGBE_TQFPC_EN(q)		(1 << (q))
 
 /* Receive Queue Command (MVGBE_RQC) */
 #define MVGBE_RQC_ENQ_MASK		(0xff << 0)	/* Enable Q */
@@ -321,16 +335,22 @@
 #define MVGBE_DF_QUEUE_MASK		((7) << 1)
 
 
-#define MVGBE_MRU		9700	/* The Maximal Receive Packet Size */
+/*
+ * Set the chip's packet size limit to 9022.
+ * (ETHER_MAX_LEN_JUMBO + ETHER_VLAN_ENCAP_LEN)
+ */
+#define MVGBE_MRU		9022
 
-#define MVGBE_BUF_ALIGN		8
-#define MVGBE_BUF_MASK		(MVGBE_BUF_ALIGN - 1)
+#define MVGBE_RXBUF_ALIGN	8
+#define MVGBE_RXBUF_MASK	(MVGBE_RXBUF_ALIGN - 1)
 #define MVGBE_HWHEADER_SIZE	2
 
 
 /*
  * DMA descriptors
- *    It is 32byte alignment.
+ *    Despite the documentation saying these descriptors only need to be
+ *    aligned to 16-byte bondaries, 32-byte alignment seems to be required
+ *    by the hardware.  We'll just pad them out to that to make it easier.
  */
 struct mvgbe_tx_desc {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -346,10 +366,7 @@ struct mvgbe_tx_desc {
 	uint32_t bufptr;		/* Descriptor buffer pointer */
 	uint32_t nextdescptr;		/* Next descriptor pointer */
 #endif
-	u_long returninfo;		/* User resource return information */
-	uint8_t *alignbufptr;		/* Pointer to 8 byte aligned buffer */
-
-	uint32_t padding[2];		/* XXXX: required */
+	uint32_t _padding[4];
 } __packed;
 
 struct mvgbe_rx_desc {
@@ -366,9 +383,7 @@ struct mvgbe_rx_desc {
 	uint32_t bufptr;		/* Descriptor buffer pointer */
 	uint32_t nextdescptr;		/* Next descriptor pointer */
 #endif
-	u_long returninfo;		/* User resource return information */
-
-	uint32_t padding[3];		/* XXXX: required */
+	uint32_t _padding[4];
 } __packed;
 
 #define MVGBE_ERROR_SUMMARY		(1 << 0)

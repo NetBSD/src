@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.90 2009/05/12 08:23:01 cegger Exp $	*/
+/*	$NetBSD: twe.c,v 1.90.4.1 2011/03/05 20:53:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.90 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.90.4.1 2011/03/05 20:53:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.90 2009/05/12 08:23:01 cegger Exp $");
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bswap.h>
 #include <sys/bus.h>
@@ -317,8 +315,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	int s, size, i, rv, rseg;
 	size_t max_segs, max_xfer;
 	bus_dma_segment_t seg;
-        struct ctlname ctlnames[] = CTL_NAMES;
-        const struct sysctlnode *node;
+	const struct sysctlnode *node;
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 
@@ -366,7 +363,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Allocate and initialise the command blocks and CCBs.
 	 */
-        size = sizeof(struct twe_cmd) * TWE_MAX_QUEUECNT;
+	size = sizeof(struct twe_cmd) * TWE_MAX_QUEUECNT;
 
 	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
@@ -464,26 +461,26 @@ twe_attach(device_t parent, device_t self, void *aux)
 				NULL, NULL, 0, NULL, 0,
 				CTL_HW, CTL_EOL) != 0) {
 		aprint_error_dev(&sc->sc_dv, "could not create %s sysctl node\n",
-			ctlnames[CTL_HW].ctl_name);
+			"hw");
 		return;
 	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
-        			0, CTLTYPE_NODE, device_xname(&sc->sc_dv),
-        			SYSCTL_DESCR("twe driver information"),
-        			NULL, 0, NULL, 0,
+				0, CTLTYPE_NODE, device_xname(&sc->sc_dv),
+				SYSCTL_DESCR("twe driver information"),
+				NULL, 0, NULL, 0,
 				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
-                aprint_error_dev(&sc->sc_dv, "could not create %s.%s sysctl node\n",
-			ctlnames[CTL_HW].ctl_name, device_xname(&sc->sc_dv));
+		aprint_error_dev(&sc->sc_dv, "could not create %s.%s sysctl node\n",
+			"hw", device_xname(&sc->sc_dv));
 		return;
 	}
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
-        			0, CTLTYPE_STRING, "driver_version",
-        			SYSCTL_DESCR("twe0 driver version"),
-        			NULL, 0, &twever, 0,
+				0, CTLTYPE_STRING, "driver_version",
+				SYSCTL_DESCR("twe0 driver version"),
+				NULL, 0, &twever, 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
-                aprint_error_dev(&sc->sc_dv, "could not create %s.%s.driver_version sysctl\n",
-			ctlnames[CTL_HW].ctl_name, device_xname(&sc->sc_dv));
+		aprint_error_dev(&sc->sc_dv, "could not create %s.%s.driver_version sysctl\n",
+			"hw", device_xname(&sc->sc_dv));
 		return;
 	}
 }
@@ -1762,7 +1759,7 @@ tweioctl(dev_t dev, u_long cmd, void *data, int flag,
 			 */
 			if (tu->tu_size > TWE_SECTOR_SIZE) {
 #ifdef TWE_DEBUG
-				printf("%s: TWEIO_COMMAND: tu_size = %d\n",
+				printf("%s: TWEIO_COMMAND: tu_size = %zu\n",
 				    device_xname(&twe->sc_dv), tu->tu_size);
 #endif
 				return EINVAL;

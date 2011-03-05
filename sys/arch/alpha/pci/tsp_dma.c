@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.9 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.9.4.1 2011/03/05 20:49:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -62,15 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.9 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.9.4.1 2011/03/05 20:49:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #define _ALPHA_BUS_DMA_PRIVATE

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.42.4.1 2010/05/30 05:16:55 rmind Exp $
+# $NetBSD: Makefile.boot,v 1.42.4.2 2011/03/05 20:50:43 rmind Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -32,7 +32,6 @@ BINMODE=444
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
 LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
-# CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 #CPPFLAGS+= -DDEBUG_MEMSIZE
@@ -72,7 +71,7 @@ CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
 CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -DSUPPORT_USTARFS
 CPPFLAGS+= -DSUPPORT_DOSFS
-#CPPFLAGS+= -DSUPPORT_EXT2FS
+CPPFLAGS+= -DSUPPORT_EXT2FS
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
@@ -81,7 +80,8 @@ CPPFLAGS+= -DEPIA_HACK
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
 # XXX The heap values should be determined from _end.
-SAMISCCPPFLAGS+= -DHEAP_START=0x30000 -DHEAP_LIMIT=0x50000
+SAMISCCPPFLAGS+= -DHEAP_START=0x40000 -DHEAP_LIMIT=0x70000
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
@@ -138,7 +138,7 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.syms vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
-	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${VERSIONFILE} x86 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.258.2.2 2010/07/03 01:20:04 rmind Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.258.2.3 2011/03/05 20:56:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.258.2.2 2010/07/03 01:20:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.258.2.3 2011/03/05 20:56:30 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -774,7 +774,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 */
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			(void)vunmark(mvp);
 			goto loop;
 		}
@@ -828,6 +828,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	int32_t *lp;
 	kauth_cred_t cred;
 	u_int32_t sbsize = 8192;	/* keep gcc happy*/
+	int32_t fsbsize;
 
 	dev = devvp->v_rdev;
 	cred = l ? l->l_cred : NOCRED;
@@ -886,21 +887,25 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (fs->fs_magic == FS_UFS1_MAGIC) {
 			sbsize = fs->fs_sbsize;
 			fstype = UFS1;
+			fsbsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == bswap32(FS_UFS1_MAGIC)) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS1;
+			fsbsize = bswap32(fs->fs_bsize);
 			needswap = 1;
 #endif
 		} else if (fs->fs_magic == FS_UFS2_MAGIC) {
 			sbsize = fs->fs_sbsize;
 			fstype = UFS2;
+			fsbsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == bswap32(FS_UFS2_MAGIC)) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS2;
+			fsbsize = bswap32(fs->fs_bsize);
 			needswap = 1;
 #endif
 		} else
@@ -932,6 +937,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		/* Validate size of superblock */
 		if (sbsize > MAXBSIZE || sbsize < sizeof(struct fs))
 			continue;
+
+		/* Check that we can handle the file system blocksize */
+		if (fsbsize > MAXBSIZE) {
+			printf("ffs_mountfs: block size (%d) > MAXBSIZE (%d)\n",
+			    fsbsize, MAXBSIZE);
+			continue;
+		}
 
 		/* Ok seems to be a good superblock */
 		break;
@@ -1535,7 +1547,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
-	int lk_flags, error, allerror = 0;
+	int error, allerror = 0;
 	bool is_suspending;
 
 	fs = ump->um_fs;
@@ -1550,14 +1562,6 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 
 	fstrans_start(mp, FSTRANS_SHARED);
 	is_suspending = (fstrans_getstate(mp) == FSTRANS_SUSPENDING);
-	/*
-	 * We can't lock vnodes while the file system is suspending because
-	 * threads waiting on fstrans may have locked vnodes.
-	 */
-	if (is_suspending)
-		lk_flags = LK_INTERLOCK;
-	else
-		lk_flags = LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK;
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1620,7 +1624,7 @@ loop:
 		}
 		vmark(mvp, vp);
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, lk_flags);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			nvp = vunmark(mvp);
@@ -1642,10 +1646,7 @@ loop:
 		}
 		if (error)
 			allerror = error;
-		if (is_suspending)
-			vrele(vp);
-		else
-			vput(vp);
+		vput(vp);
 		mutex_enter(&mntvnode_lock);
 		nvp = vunmark(mvp);
 	}

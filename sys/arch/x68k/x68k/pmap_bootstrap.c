@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.50.4.1 2010/07/03 01:19:29 rmind Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.50.4.2 2011/03/05 20:52:26 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,17 +36,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.50.4.1 2010/07/03 01:19:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.50.4.2 2011/03/05 20:52:26 rmind Exp $");
 
 #include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
+
+#include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
-#include <machine/cpu.h>
 #include <arch/x68k/x68k/iodevice.h>
-
 
 #define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
 
@@ -54,8 +54,6 @@ extern char *etext;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
-
-void	pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -68,6 +66,8 @@ void	pmap_bootstrap(paddr_t, paddr_t);
 void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
+
+void pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -83,7 +83,7 @@ void *msgbufaddr;
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, lwp0upa;
+	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
@@ -94,7 +94,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Calculate important physical addresses:
 	 *
-	 *	lwp0upa		lwp 0 u-area		UPAGES pages
+	 *	lwp0upa		lwp0 u-area		UPAGES pages
 	 *
 	 *	kstpa		kernel segment table	1 page (!040)
 	 *						N pages (040)
@@ -146,6 +146,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * each mapping 256kb.  Note that there may be additional "segment
 	 * table" pages depending on how large MAXKL2SIZE is.
 	 *
+	 * Portions of the last segment of KVA space (0xFFC00000 -
+	 * 0xFFFFFFFF) are mapped for the kernel page tables.
+	 *
 	 * XXX cramming two levels of mapping into the single "segment"
 	 * table on the 68040 is intended as a temporary hack to get things
 	 * working.  The 224mb of address space that this allows will most
@@ -188,7 +191,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		nl1desc = howmany(nl2desc, SG4_LEV2SIZE);
 		ste = (st_entry_t *)kstpa;
 		este = &ste[nl1desc];
-		protoste = (paddr_t)este[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
+		protoste = (paddr_t)&ste[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
 		while (ste < este) {
 			*ste++ = protoste;
 			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
@@ -202,7 +205,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*ste = protoste;
 		/*
 		 * Now initialize the final portion of that block of
-		 * descriptors to map kptmpa.
+		 * descriptors to map Sysmap.
 		 */
 		i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
 		ste = (st_entry_t *)kstpa;
@@ -289,9 +292,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 */
 		ste = (st_entry_t *)kstpa;
 		ste = &ste[SYSMAP_VA >> SEGSHIFT];
-		*ste = kptmpa | SG_RW | SG_V;
 		pte = (pt_entry_t *)kptmpa;
 		pte = &pte[SYSMAP_VA >> SEGSHIFT];
+		*ste = kptmpa | SG_RW | SG_V;
 		*pte = kptmpa | PG_RW | PG_CI | PG_V;
 	}
 
@@ -304,11 +307,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	while (pte < epte)
 		*pte++ = PG_NV;
 	/*
-	 * Validate PTEs for kernel text (RO)
+	 * Validate PTEs for kernel text (RO).
 	 */
 	pte = (pt_entry_t *)kptpa;
 	pte = &pte[m68k_btop(KERNBASE)];
-	/* XXX why KERNBASE relative? */
 	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
 	protopte = firstpa | PG_RO | PG_V;
 	while (pte < epte) {
@@ -333,9 +335,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		protopte += PAGE_SIZE;
 	}
 	/*
-	 * map the kernel segment table cache invalidated for
-	 * these machines (for the 68040 not strictly necessary, but
-	 * recommended by Motorola; for the 68060 mandatory)
+	 * Map the kernel segment table cache invalidated for 68040/68060.
+	 * (for the 68040 not strictly necessary, but recommended by Motorola;
+	 *  for the 68060 mandatory)
 	 */
 	epte = (pt_entry_t *)kptpa;
 	epte = &epte[m68k_btop(nextpa - firstpa)];
@@ -359,7 +361,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	epte = &pte[IIOMAPSIZE];
 	RELOC(intiobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
 	RELOC(IODEVbase, uint8_t *) = RELOC(intiobase, uint8_t *); /* XXX */
-	RELOC(intiolimit, char *) = (char *)PTE2VA(epte);
+	RELOC(intiolimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -397,12 +399,13 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
+	 *
+	 * Note about avail_end: msgbuf is initialized just after
+	 * avail_end in machdep.c.
 	 */
 	RELOC(avail_start, paddr_t) = nextpa;
-	RELOC(avail_end, paddr_t) =
-		m68k_ptob(RELOC(maxmem, int))
-			/* XXX allow for msgbuf */
-			- m68k_round_page(MSGBUFSIZE);
+	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
+	    m68k_round_page(MSGBUFSIZE);
 	RELOC(mem_size, psize_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 

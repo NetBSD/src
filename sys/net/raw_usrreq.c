@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.35 2008/05/29 17:26:56 dyoung Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.35.20.1 2011/03/05 20:55:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.35 2008/05/29 17:26:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.35.20.1 2011/03/05 20:55:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -276,7 +276,8 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*
 		 * stat: don't bother with a blocksize.
 		 */
-		return (0);
+		error = 0;
+		break;
 
 	/*
 	 * Not supported.

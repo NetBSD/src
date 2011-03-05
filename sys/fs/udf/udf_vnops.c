@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.57.4.2 2010/07/03 01:19:51 rmind Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.57.4.3 2011/03/05 20:55:10 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57.4.2 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57.4.3 2011/03/05 20:55:10 rmind Exp $");
 #endif /* not lint */
 
 
@@ -762,8 +762,6 @@ udf_lookup(void *v)
 			if (!error) {
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (!error) {
-					/* keep the component name */
-					cnp->cn_flags |= SAVENAME;
 					error = EJUSTRETURN;
 				}
 			}
@@ -1421,8 +1419,6 @@ udf_create(void *v)
 	DPRINTF(CALL, ("udf_create called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	if (error || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return error;
 }
@@ -1447,8 +1443,6 @@ udf_mknod(void *v)
 	DPRINTF(CALL, ("udf_mknod called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	if (error || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return error;
 }
@@ -1473,8 +1467,6 @@ udf_mkdir(void *v)
 	DPRINTF(CALL, ("udf_mkdir called\n"));
 	error = udf_create_node(dvp, vpp, vap, cnp);
 
-	if (error || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return error;
 }
@@ -1699,8 +1691,6 @@ udf_symlink(void *v)
 			udf_dir_detach(udf_node->ump, dir_node, udf_node, cnp);
 		}
 	}
-	if (error || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return error;
 }
@@ -2052,8 +2042,7 @@ udf_rename(void *v)
 		 * re-lookup tvp since the parent has been unlocked, so could
 		 * have changed/removed in the meantime.
 		 */
-		tcnp->cn_flags &= ~SAVESTART;
-		error = relookup(tdvp, &tvp, tcnp);
+		error = relookup(tdvp, &tvp, tcnp, 0);
 		if (error) {
 			vput(tdvp);
 			goto out;

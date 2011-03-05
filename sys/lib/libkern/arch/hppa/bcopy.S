@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.10.4.1 2010/05/30 05:17:59 rmind Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.10.4.2 2011/03/05 20:55:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,12 +36,20 @@
 #undef _LOCORE
 #define _LOCORE	/* XXX fredette - unfortunate */
 
+#if defined(SPCOPY) && !defined(_STANDALONE)
+
+#include "opt_multiprocessor.h"
+
+#include <machine/cpu.h>
+
+#endif
+
 #include <machine/asm.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.10.4.1 2010/05/30 05:17:59 rmind Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.10.4.2 2011/03/05 20:55:28 rmind Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -484,6 +492,7 @@ RCSID("$NetBSD: bcopy.S,v 1.10.4.1 2010/05/30 05:17:59 rmind Exp $")
 #endif
 
 #if defined(SPCOPY) && !defined(_STANDALONE)
+
 #include <sys/errno.h>
 #include "assym.h"
 
@@ -498,7 +507,7 @@ LEAF_ENTRY(spcopy)
         /*
 	 * Setup the fault handler, which will fill in %ret0 if triggered.
 	 */
-	mfctl	CR_CURLWP, %r31
+	GET_CURLWP(%r31)
 #ifdef	DIAGNOSTIC
 	comb,<>,n %r0, %r31, Lspcopy_curlwp_ok
 	ldil	L%panic, %r1

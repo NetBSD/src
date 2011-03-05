@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.20 2010/03/14 18:06:28 pgoyette Exp $	*/
+/*	$NetBSD: ciss.c,v 1.20.2.1 2011/03/05 20:53:13 rmind Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.20 2010/03/14 18:06:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.20.2.1 2011/03/05 20:53:13 rmind Exp $");
 
 #include "bio.h"
 
@@ -34,13 +34,12 @@ __KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.20 2010/03/14 18:06:28 pgoyette Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <sys/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsipi_all.h>
 
 #include <dev/ic/cissreg.h>
 #include <dev/ic/cissvar.h>
@@ -363,7 +362,7 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_channel.chan_channel = 0;
 	sc->sc_channel.chan_ntargets = sc->maxunits;
 	sc->sc_channel.chan_nluns = 1;	/* ciss doesn't really have SCSI luns */
-	sc->sc_channel.chan_openings = sc->maxcmd / (sc->maxunits? sc->maxunits : 1);
+	sc->sc_channel.chan_openings = sc->maxcmd;
 #if NBIO > 0
 	/* XXX Reserve some ccb's for sensor and bioctl. */
 	if (sc->sc_channel.chan_openings > 2)
@@ -374,7 +373,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->sc_adapter.adapt_dev = (device_t) sc;
 	sc->sc_adapter.adapt_openings = sc->sc_channel.chan_openings;
-	sc->sc_adapter.adapt_max_periph = sc->maxunits;
+	sc->sc_adapter.adapt_max_periph = sc->sc_channel.chan_openings;
 	sc->sc_adapter.adapt_request = ciss_scsi_cmd;
 	sc->sc_adapter.adapt_minphys = cissminphys;
 	sc->sc_adapter.adapt_ioctl = ciss_scsi_ioctl;
@@ -469,9 +468,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 		cmd->sgin = dmap->dm_nsegs;
 
 		sgd = dmap->dm_segs;
-		CISS_DPRINTF(CISS_D_DMA, ("data=%p/%u<0x%lx/%lu",
-		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr,
-		    (u_long)sgd->ds_len));
+		CISS_DPRINTF(CISS_D_DMA, ("data=%p/%zu<%#" PRIxPADDR "/%zu",
+		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr, sgd->ds_len));
 
 		for (i = 0; i < dmap->dm_nsegs; sgd++, i++) {
 			cmd->sgl[i].addr_lo = htole32(sgd->ds_addr);
@@ -481,8 +479,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			cmd->sgl[i].flags = htole32(0);
 			if (i) {
 				CISS_DPRINTF(CISS_D_DMA,
-				    (",0x%lx/%lu", sgd->ds_addr,
-				    (u_long)sgd->ds_len));
+				    (",%#" PRIxPADDR "/%zu", sgd->ds_addr,
+				    sgd->ds_len));
 			}
 		}
 
@@ -618,6 +616,14 @@ ciss_done(struct ciss_ccb *ccb)
 	if (xs) {
 		xs->resid = 0;
 		CISS_DPRINTF(CISS_D_CMD, ("scsipi_done(%p) ", xs));
+		if (xs->cmd->opcode == INQUIRY) {
+			struct scsipi_inquiry_data *inq;
+			inq = (struct scsipi_inquiry_data *)xs->data;
+			if ((inq->version & SID_ANSII) == 0 &&
+			    (inq->flags3 & SID_CmdQue) != 0) {
+				inq->version |= 2;
+			}
+		}
 		scsipi_done(xs);
 	}
 
@@ -637,9 +643,11 @@ ciss_error(struct ciss_ccb *ccb)
 		break;
 
 	case CISS_ERR_INVCMD:
-		printf("%s: invalid cmd 0x%x: 0x%x is not valid @ 0x%x[%d]\n",
-		    device_xname(&sc->sc_dev), ccb->ccb_cmd.id,
-		    err->err_info, err->err_type[3], err->err_type[2]);
+		if (xs == NULL ||
+		    xs->cmd->opcode != SCSI_SYNCHRONIZE_CACHE_10)
+			printf("%s: invalid cmd 0x%x: 0x%x is not valid @ 0x%x[%d]\n",
+			    device_xname(&sc->sc_dev), ccb->ccb_cmd.id,
+			    err->err_info, err->err_type[3], err->err_type[2]);
 		if (xs) {
 			memset(&xs->sense, 0, sizeof(xs->sense));
 			xs->sense.scsi_sense.response_code =
@@ -1003,7 +1011,8 @@ static void
 ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	void *arg)
 {
-	struct scsipi_xfer *xs = (struct scsipi_xfer *) arg;
+	struct scsipi_xfer *xs;
+	struct scsipi_xfer_mode *xm;
 	struct ciss_softc *sc =
 		(struct ciss_softc *) chan->chan_adapter->adapt_dev;
 	u_int8_t target;
@@ -1016,6 +1025,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	switch (req)
 	{
 	case ADAPTER_REQ_RUN_XFER:
+		xs = (struct scsipi_xfer *) arg;
 		target = xs->xs_periph->periph_target;
 		CISS_DPRINTF(CISS_D_CMD, ("targ=%d ", target));
 		if (xs->cmdlen > CISS_MAX_CDB) {
@@ -1073,7 +1083,9 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		 * We can't change the transfer mode, but at least let
 		 * scsipi know what the adapter has negociated.
 		 */
-		/* FIXME: get xfer mode and write it into arg */
+		xm = (struct scsipi_xfer_mode *)arg;
+		xm->xm_mode |= PERIPH_CAP_TQING;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
 		break;
 	}
 }

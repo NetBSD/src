@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.9 2010/05/31 01:12:14 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.10 2011/03/05 20:52:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -82,12 +82,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -151,7 +145,7 @@
 
 /*
  * pmap.c: i386 pmap module rewrite
- * Chuck Cranor <chuck@ccrc.wustl.edu>
+ * Chuck Cranor <chuck@netbsd>
  * 11-Aug-97
  *
  * history of this pmap module: in addition to my own input, i used
@@ -177,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.9 2010/05/31 01:12:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.10 2011/03/05 20:52:31 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -360,6 +354,19 @@ struct evcnt pmap_iobmp_evcnt;
 struct evcnt pmap_ldt_evcnt;
 
 /*
+ * PAT
+ */
+#define	PATENTRY(n, type)	(type << ((n) * 8))
+#define	PAT_UC		0x0ULL
+#define	PAT_WC		0x1ULL
+#define	PAT_WT		0x4ULL
+#define	PAT_WP		0x5ULL
+#define	PAT_WB		0x6ULL
+#define	PAT_UCMINUS	0x7ULL
+
+static bool cpu_pat_enabled = false;
+
+/*
  * global data structures
  */
 
@@ -393,8 +400,6 @@ paddr_t avail_end;	/* PA of last available physical page */
 #ifdef __x86_64__
 /* Dummy PGD for user cr3, used between pmap_deactivate() and pmap_activate() */
 static paddr_t xen_dummy_user_pgd;
-/* Currently active user PGD (can't use rcr3()) */
-static paddr_t xen_current_user_pgd = 0;
 #endif /* __x86_64__ */
 paddr_t pmap_pa_start; /* PA of first physical page for this domain */
 paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
@@ -774,7 +779,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		ci->ci_tlbstate = TLBSTATE_VALID;
 		atomic_or_32(&pmap->pm_cpus, cpumask);
 		atomic_or_32(&pmap->pm_kernel_cpus, cpumask);
-		lcr3(pmap->pm_pdirpa);
+		lcr3(pmap_pdirpa(pmap, 0));
 	}
 	pmap->pm_ncsw = l->l_ncsw;
 	*pmap2 = curpmap;
@@ -899,6 +904,57 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 }
 #endif /* !defined(__x86_64__) */
 
+void
+pat_init(struct cpu_info *ci)
+{
+	uint64_t pat;
+
+	if (!(ci->ci_feat_val[0] & CPUID_PAT))
+		return;
+
+	/* We change WT to WC. Leave all other entries the default values. */
+	pat = PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WC) |
+	      PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
+	      PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WC) |
+	      PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
+
+	wrmsr(MSR_CR_PAT, pat);
+	cpu_pat_enabled = true;
+	aprint_debug_dev(ci->ci_dev, "PAT enabled\n");
+}
+
+static pt_entry_t
+pmap_pat_flags(u_int flags)
+{
+	u_int cacheflags = (flags & PMAP_CACHE_MASK);
+
+	if (!cpu_pat_enabled) {
+		switch (cacheflags) {
+		case PMAP_NOCACHE:
+		case PMAP_NOCACHE_OVR:
+			/* results in PGC_UCMINUS on cpus which have
+			 * the cpuid PAT but PAT "disabled"
+			 */
+			return PG_N;
+		default:
+			return 0;
+		}
+	}
+
+	switch (cacheflags) {
+	case PMAP_NOCACHE:
+		return PGC_UC;
+	case PMAP_WRITE_COMBINE:
+		return PGC_WC;
+	case PMAP_WRITE_BACK:
+		return PGC_WB;
+	case PMAP_NOCACHE_OVR:
+		return PGC_UCMINUS;
+	}
+
+	return 0;
+}
+
 /*
  * p m a p   k e n t e r   f u n c t i o n s
  *
@@ -936,8 +992,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif /* DOM0OPS */
 		npte = pmap_pa2pte(pa);
 	npte |= protection_codes[prot] | PG_k | PG_V | pmap_pg_g;
-	if (flags & PMAP_NOCACHE)
-		npte |= PG_N;
+	npte |= pmap_pat_flags(flags);
 	opte = pmap_pte_testset(pte, npte); /* zap! */
 #if defined(DIAGNOSTIC)
 	/* XXX For now... */
@@ -1111,7 +1166,6 @@ pmap_bootstrap(vaddr_t kva_start)
 {
 	struct pmap *kpm;
 	pt_entry_t *pte;
-	struct pcb *pcb;
 	int i;
 	vaddr_t kva;
 #ifndef XEN
@@ -1162,14 +1216,11 @@ pmap_bootstrap(vaddr_t kva_start)
 		kpm->pm_ptphint[i] = NULL;
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
-	pcb = lwp_getpcb(&lwp0);
-	kpm->pm_pdir = (pd_entry_t *)(pcb->pcb_cr3 + KERNBASE);
-#ifdef PAE
+
+	kpm->pm_pdir = (pd_entry_t *)(PDPpaddr + KERNBASE);
 	for (i = 0; i < PDP_SIZE; i++)
-		kpm->pm_pdirpa[i] = (paddr_t)pcb->pcb_cr3 + PAGE_SIZE * i;
-#else
-	kpm->pm_pdirpa = (paddr_t)pcb->pcb_cr3;
-#endif
+		kpm->pm_pdirpa[i] = PDPpaddr + PAGE_SIZE * i;
+
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		x86_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
@@ -1333,7 +1384,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
-	xpq_queue_pin_table(xpmap_ptom_masked(xen_dummy_user_pgd));
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 #endif /* __x86_64__ */
 	idt_vaddr = virtual_avail;                      /* don't need pte */
 	idt_paddr = avail_start;                        /* steal a page */
@@ -1434,7 +1485,7 @@ pmap_prealloc_lowmem_ptps(void)
 	paddr_t newp;
 	paddr_t pdes_pa;
 
-	pdes_pa = pmap_kernel()->pm_pdirpa;
+	pdes_pa = pmap_pdirpa(pmap_kernel(), 0);
 	level = PTP_LEVELS;
 	for (;;) {
 		newp = avail_start;
@@ -1504,12 +1555,53 @@ pmap_init(void)
 	evcnt_attach_dynamic(&pmap_ldt_evcnt, EVCNT_TYPE_MISC,
 	    NULL, "x86", "ldt sync");
 
-	
 	/*
 	 * done: pmap module is up (and ready for business)
 	 */
 
 	pmap_initialized = true;
+}
+
+/*
+ * pmap_cpu_init_late: perform late per-CPU initialization.
+ */
+
+void
+pmap_cpu_init_late(struct cpu_info *ci)
+{
+#ifdef PAE
+	int ret;
+	struct pglist pg;
+	struct vm_page *vmap;
+
+	/* The BP has already its own L3 page allocated in locore.S. */
+	if (ci == &cpu_info_primary)
+		return;
+
+	/*
+	 * Allocate a page for the per-CPU L3 PD. cr3 being 32 bits, PA musts
+	 * resides below the 4GB boundary.
+	 */
+	ret = uvm_pglistalloc(PAGE_SIZE, 0, 0x100000000ULL, 32, 0, &pg, 1, 0);
+	vmap = TAILQ_FIRST(&pg);
+
+	if (ret != 0 || vmap == NULL)
+		panic("%s: failed to allocate L3 pglist for CPU %d (ret %d)\n",
+			__func__, cpu_index(ci), ret);
+
+	ci->ci_pae_l3_pdirpa = vmap->phys_addr;
+
+	ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	if (ci->ci_pae_l3_pdir == NULL)
+		panic("%s: failed to allocate L3 PD for CPU %d\n",
+			__func__, cpu_index(ci));
+
+	pmap_kenter_pa((vaddr_t)ci->ci_pae_l3_pdir, ci->ci_pae_l3_pdirpa,
+		VM_PROT_READ | VM_PROT_WRITE, 0);
+
+	pmap_update(pmap_kernel());
+#endif
 }
 
 /*
@@ -1673,6 +1765,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 static inline void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
+	lwp_t *l;
 	int lidx;
 	struct uvm_object *obj;
 
@@ -1688,8 +1781,10 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
 	ptp->wire_count = 0;
 	uvm_pagerealloc(ptp, NULL, 0);
-	VM_PAGE_TO_PP(ptp)->pp_link = curlwp->l_md.md_gc_ptp;
-	curlwp->l_md.md_gc_ptp = ptp;
+	l = curlwp;
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+	VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
+	l->l_md.md_gc_ptp = ptp;
 	if (lidx != 0)
 		mutex_exit(obj->vmobjlock);
 }
@@ -1723,7 +1818,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		 * If ptp is a L3 currently mapped in kernel space,
 		 * clear it before freeing
 		 */
-		if (pmap->pm_pdirpa == xen_current_user_pgd
+		if (pmap_pdirpa(pmap, 0) == curcpu()->ci_xen_current_user_pgd
 		    && level == PTP_LEVELS - 1)
 			pmap_pte_set(&pmap_kernel()->pm_pdir[index], 0);
 #  endif /*__x86_64__ */
@@ -1956,12 +2051,17 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		if (i == l2tol3(PDIR_SLOT_PTE))
 			continue;
 #endif
-		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+
+#ifdef __x86_64__
+		xpq_queue_pin_l4_table(xpmap_ptom_masked(pdirpa));
+#else
+		xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
+#endif
 	}
 #ifdef PAE
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
-	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+	xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
 #endif
 	splx(s);
 #endif /* XEN */
@@ -2073,13 +2173,9 @@ pmap_create(void)
 		goto try_again;
 	}
 
-#ifdef PAE
 	for (i = 0; i < PDP_SIZE; i++)
 		pmap->pm_pdirpa[i] =
 		    pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE + i]);
-#else
-	pmap->pm_pdirpa = pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE]);
-#endif
 
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 
@@ -2393,8 +2489,6 @@ pmap_activate(struct lwp *l)
 	ci = curcpu();
 
 	if (l == ci->ci_curlwp) {
-		struct pcb *pcb;
-
 		KASSERT(ci->ci_want_pmapload == 0);
 		KASSERT(ci->ci_tlbstate != TLBSTATE_VALID);
 #ifdef KSTACK_CHECK_DR0
@@ -2417,15 +2511,7 @@ pmap_activate(struct lwp *l)
 			return;
 		}
 
-		pcb = lwp_getpcb(l);
 		ci->ci_want_pmapload = 1;
-
-#if defined(__x86_64__)
-		if (pcb->pcb_flags & PCB_GS64)
-			wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
-		if (pcb->pcb_flags & PCB_FS64)
-			wrmsr(MSR_FSBASE, pcb->pcb_fs);
-#endif /* defined(__x86_64__) */
 	}
 }
 
@@ -2448,11 +2534,11 @@ pmap_reactivate(struct pmap *pmap)
 
 	KASSERT(kpreempt_disabled());
 #if defined(XEN) && defined(__x86_64__)
-	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
+	KASSERT(pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd);
 #elif defined(PAE)
-	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
+	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]));
 #elif !defined(XEN) 
-	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
+	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()));
 #endif
 
 	/*
@@ -2554,12 +2640,12 @@ pmap_load(void)
 	atomic_and_32(&oldpmap->pm_kernel_cpus, ~cpumask);
 
 #if defined(XEN) && defined(__x86_64__)
-	KASSERT(oldpmap->pm_pdirpa == xen_current_user_pgd ||
+	KASSERT(pmap_pdirpa(oldpmap, 0) == ci->ci_xen_current_user_pgd ||
 	    oldpmap == pmap_kernel());
 #elif defined(PAE)
-	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
+	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]));
 #elif !defined(XEN)
-	KASSERT(oldpmap->pm_pdirpa == pmap_pte2pa(rcr3()));
+	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
 	KASSERT((pmap->pm_kernel_cpus & cpumask) == 0);
@@ -2581,36 +2667,13 @@ pmap_load(void)
 	 * from other CPUs, we're good to load the page tables.
 	 */
 #ifdef PAE
-	pcb->pcb_cr3 = pmap_l3paddr;
+	pcb->pcb_cr3 = ci->ci_pae_l3_pdirpa;
 #else
-	pcb->pcb_cr3 = pmap->pm_pdirpa;
+	pcb->pcb_cr3 = pmap_pdirpa(pmap, 0);
 #endif
-#if defined(XEN) && defined(__x86_64__)
-	/* kernel pmap always in cr3 and should never go in user cr3 */
-	if (pmap_pdirpa(pmap, 0) != pmap_pdirpa(pmap_kernel(), 0)) {
-		/*
-		 * Map user space address in kernel space and load
-		 * user cr3
-		 */
-		int i, s;
-		pd_entry_t *old_pgd, *new_pgd;
-		paddr_t addr;
-		s = splvm();
-		new_pgd  = pmap->pm_pdir;
-		old_pgd = pmap_kernel()->pm_pdir;
-		addr = xpmap_ptom(pmap_pdirpa(pmap_kernel(), 0));
-		for (i = 0; i < PDIR_SLOT_PTE;
-		    i++, addr += sizeof(pd_entry_t)) {
-			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
-				xpq_queue_pte_update(addr, new_pgd[i]);
-		}
-		tlbflush();
-		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
-		xen_current_user_pgd = pmap_pdirpa(pmap, 0);
-		splx(s);
-	}
-#else /* XEN && x86_64 */
-#if defined(XEN)
+
+#ifdef i386
+#ifdef XEN
 	/*
 	 * clear APDP slot, in case it points to a page table that has 
 	 * been freed
@@ -2619,34 +2682,19 @@ pmap_load(void)
 		pmap_unmap_apdp();
 	}
 	/* lldt() does pmap_pte_flush() */
-#else /* XEN */
-#if defined(i386)
+#endif /* XEN */
+
+#ifndef XEN
 	ci->ci_tss.tss_ldt = pmap->pm_ldt_sel;
 	ci->ci_tss.tss_cr3 = pcb->pcb_cr3;
-#endif
-#endif /* XEN */
+#endif /* !XEN */
+#endif /* i386 */
+
 	lldt(pmap->pm_ldt_sel);
-#ifdef PAE
-	{
-	paddr_t l3_pd = xpmap_ptom_masked(pmap_l3paddr);
-	int i;
-	int s = splvm();
-	/* don't update the kernel L3 slot */
-	for (i = 0 ; i < PDP_SIZE - 1; i++, l3_pd += sizeof(pd_entry_t)) {
-		xpq_queue_pte_update(l3_pd,
-		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
-	}
-	tlbflush();
-	splx(s);
-	}
-#else /* PAE */
-	{
+
 	u_int gen = uvm_emap_gen_return();
-	lcr3(pcb->pcb_cr3);
+	cpu_load_pmap(pmap);
 	uvm_emap_update(gen);
-	}
-#endif /* PAE */
-#endif /* XEN && x86_64 */
 
 	ci->ci_want_pmapload = 0;
 
@@ -2713,11 +2761,11 @@ pmap_deactivate(struct lwp *l)
 	}
 
 #if defined(XEN) && defined(__x86_64__)
-	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
+	KASSERT(pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd);
 #elif defined(PAE)
-	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(pmap_l3pd[0]));
+	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]));
 #elif !defined(XEN) 
-	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
+	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
 
@@ -3247,6 +3295,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	pd_entry_t * const *pdes;
 	struct pv_entry *pv_tofree = NULL;
 	bool result;
+	int i;
 	paddr_t ptppa;
 	vaddr_t blkendva, va = sva;
 	struct vm_page *ptp;
@@ -3312,9 +3361,11 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		 * be VM_MAX_ADDRESS.
 		 */
 
-		if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE)
-			/* XXXCDC: ugly hack to avoid freeing PDP here */
-			continue;
+		/* XXXCDC: ugly hack to avoid freeing PDP here */
+		for (i = 0; i < PDP_SIZE; i++) {
+			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
+				continue;
+		}
 
 		lvl = pmap_pdes_invalid(va, pdes, &pde);
 		if (lvl != 0) {
@@ -3668,6 +3719,7 @@ startover:
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+	int i;
 	pt_entry_t *ptes, *epte;
 	pt_entry_t *spte;
 	pd_entry_t * const *pdes;
@@ -3700,8 +3752,10 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 */
 
 		/* XXXCDC: ugly hack to avoid freeing PDP here */
-		if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE)
-			continue;
+		for (i = 0; i < PDP_SIZE; i++) {
+			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
+				continue;
+		}
 
 		/* empty block? */
 		if (!pmap_pdes_valid(va, pdes, NULL))
@@ -3855,10 +3909,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 #endif /* XEN */
 
 	npte = ma | protection_codes[prot] | PG_V;
+	npte |= pmap_pat_flags(flags);
 	if (wired)
 	        npte |= PG_W;
-	if (flags & PMAP_NOCACHE)
-		npte |= PG_N;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
@@ -4118,7 +4171,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			}
 #endif
 #else /* XEN */
-			pdep[i] = pa | PG_RW | PG_V;
+			pdep[i] = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #endif /* XEN */
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
@@ -4321,7 +4374,8 @@ pmap_update(struct pmap *pmap)
 	 * but not from interrupt context.
 	 */
 	if (l->l_md.md_gc_ptp != NULL) {
-		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
+		KASSERT((l->l_pflag & LP_INTR) == 0);
+		if (cpu_intr_p()) {
 			return;
 		}
 		empty_ptps = l->l_md.md_gc_ptp;
@@ -4377,6 +4431,21 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 	tmp_pml = (void *)x86_tmp_pml_vaddr[PTP_LEVELS - 1];
 	memcpy(tmp_pml, kernel_pml, PAGE_SIZE);
 
+#ifdef PAE
+	/*
+	 * Use the last 4 entries of the L2 page as L3 PD entries. These
+	 * last entries are unlikely to be used for temporary mappings.
+	 * 508: maps 0->1GB (userland)
+	 * 509: unused
+	 * 510: unused
+	 * 511: maps 3->4GB (kernel)
+	 */
+	tmp_pml[508] = x86_tmp_pml_paddr[PTP_LEVELS - 1] | PG_V;
+	tmp_pml[509] = 0;
+	tmp_pml[510] = 0;
+	tmp_pml[511] = pmap_pdirpa(pmap_kernel(),PDIR_SLOT_KERN) | PG_V;
+#endif
+
 	for (level = PTP_LEVELS - 1; level > 0; --level) {
 		tmp_pml = (void *)x86_tmp_pml_vaddr[level];
 
@@ -4387,5 +4456,22 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 	tmp_pml = (void *)x86_tmp_pml_vaddr[0];
 	tmp_pml[pl_i(pg, 1)] = (pg & PG_FRAME) | PG_RW | PG_V;
 
+#ifdef PAE
+	/* Return the PA of the L3 page (entry 508 of the L2 page) */
+	return x86_tmp_pml_paddr[PTP_LEVELS - 1] + 508 * sizeof(pd_entry_t);
+#endif
+
 	return x86_tmp_pml_paddr[PTP_LEVELS - 1];
+}
+
+u_int
+x86_mmap_flags(paddr_t mdpgno)
+{
+	u_int nflag = (mdpgno >> X86_MMAP_FLAG_SHIFT) & X86_MMAP_FLAG_MASK;
+	u_int pflag = 0;
+
+	if (nflag & X86_MMAP_FLAG_PREFETCH)
+		pflag |= PMAP_WRITE_COMBINE;
+
+	return pflag;
 }

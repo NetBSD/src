@@ -61,7 +61,7 @@ static void r500_vbl_irq_set_state(struct drm_device *dev, u32 mask, int state)
 		RADEON_WRITE(R500_DxMODE_INT_MASK, dev_priv->r500_disp_irq_reg);
 }
 
-int radeon_enable_vblank(struct drm_device *dev, int crtc)
+int radeon_enable_vblank(struct drm_device *dev, unsigned int crtc)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
@@ -99,7 +99,7 @@ int radeon_enable_vblank(struct drm_device *dev, int crtc)
 	return 0;
 }
 
-void radeon_disable_vblank(struct drm_device *dev, int crtc)
+void radeon_disable_vblank(struct drm_device *dev, unsigned int crtc)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
@@ -287,7 +287,7 @@ static int radeon_wait_irq(struct drm_device * dev, int swi_nr)
 	return ret;
 }
 
-u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc)
+u32 radeon_get_vblank_counter(struct drm_device *dev, unsigned int crtc)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
@@ -298,7 +298,7 @@ u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc)
 	if (!dev_priv->mmio)
 		return 0;
 
-	if (crtc < 0 || crtc > 1) {
+	if (crtc > 1) {
 		DRM_ERROR("Invalid crtc %d\n", crtc);
 		return -EINVAL;
 	}

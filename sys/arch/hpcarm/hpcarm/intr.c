@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16.8.1 2010/05/30 05:16:51 rmind Exp $	*/
+/*	$NetBSD: intr.c,v 1.16.8.2 2011/03/05 20:50:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16.8.1 2010/05/30 05:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16.8.2 2011/03/05 20:50:32 rmind Exp $");
 
 #include "opt_irqstats.h"
 #include "opt_cputypes.h"
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16.8.1 2010/05/30 05:16:51 rmind Exp $");
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/atomic.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/cpu.h>
@@ -63,8 +61,6 @@ extern u_int sintrcnt[];
 #else
 #define INC_SINTRCNT(x)
 #endif	/* IRQSTATS */
-
-#define	COUNT	uvmexp.softs;
 
 /* Prototypes */
 

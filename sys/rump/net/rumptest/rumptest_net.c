@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.19.4.2 2010/07/03 01:20:03 rmind Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.19.4.3 2011/03/05 20:56:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -98,10 +98,10 @@ configure_interface(void)
 	ssize_t len;
 	struct {
 		struct rt_msghdr m_rtm;
-		uint8_t m_space;
+		uint8_t m_space[512];
 	} m_rtmsg;
 #define rtm m_rtmsg.m_rtm
-	uint8_t *bp = &m_rtmsg.m_space;
+	uint8_t *bp = m_rtmsg.m_space;
 	int s, rv;
 
 	if ((rv = rump_pub_virtif_create(0)) != 0) {

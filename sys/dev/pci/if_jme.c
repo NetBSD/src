@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.13.4.1 2010/05/30 05:17:34 rmind Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.13.4.2 2011/03/05 20:53:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.13.4.1 2010/05/30 05:17:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.13.4.2 2011/03/05 20:53:42 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.13.4.1 2010/05/30 05:17:34 rmind Exp $"
 #include <netinet/tcp.h>
 
 #include <net/if_ether.h>
-#include <uvm/uvm_extern.h>
 #if defined(INET)
 #include <netinet/if_inarp.h>
 #endif
@@ -216,6 +215,7 @@ void jme_statchg(device_t);
 
 static int jme_eeprom_read_byte(struct jme_softc *, uint8_t, uint8_t *);
 static int jme_eeprom_macaddr(struct jme_softc *);
+static int jme_reg_macaddr(struct jme_softc *);
 
 #define JME_TIMEOUT		1000
 #define JME_PHY_TIMEOUT		1000
@@ -385,7 +385,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	jme_reset(sc);
 
 	/* read mac addr */
-	if (jme_eeprom_macaddr(sc)) {
+	if (jme_eeprom_macaddr(sc) && jme_reg_macaddr(sc)) {
 		aprint_error_dev(self, "error reading Ethernet address\n");
 		/* return; */
 	}
@@ -1999,6 +1999,28 @@ jme_eeprom_macaddr(struct jme_softc *sc)
 	}
 
 	return (ENOENT);
+}
+
+static int
+jme_reg_macaddr(struct jme_softc *sc)
+{
+	uint32_t par0, par1;
+
+	par0 = bus_space_read_4(sc->jme_bt_mac, sc->jme_bh_mac, JME_PAR0);
+	par1 = bus_space_read_4(sc->jme_bt_mac, sc->jme_bh_mac, JME_PAR1);
+	par1 &= 0xffff;
+	if ((par0 == 0 && par1 == 0) ||
+	    (par0 == 0xffffffff && par1 == 0xffff)) {
+		return (ENOENT);
+	} else {
+		sc->jme_enaddr[0] = (par0 >> 0) & 0xff;
+		sc->jme_enaddr[1] = (par0 >> 8) & 0xff;
+		sc->jme_enaddr[2] = (par0 >> 16) & 0xff;
+		sc->jme_enaddr[3] = (par0 >> 24) & 0xff;
+		sc->jme_enaddr[4] = (par1 >> 0) & 0xff;
+		sc->jme_enaddr[5] = (par1 >> 8) & 0xff;
+	}
+	return (0);
 }
 
 /*

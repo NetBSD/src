@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.55.4.2 2010/07/03 01:19:35 rmind Exp $	*/
+/*	$NetBSD: dk.c,v 1.55.4.3 2011/03/05 20:53:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.55.4.2 2010/07/03 01:19:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.55.4.3 2011/03/05 20:53:07 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -235,10 +235,11 @@ dkgetproperties(struct disk *disk, struct dkwedge_info *dkw)
 
 	geom = prop_dictionary_create();
 
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", dkw->dkw_size);
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    dkw->dkw_size >> disk->dk_blkshift);
 
 	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE /* XXX 512? */);
+	    DEV_BSIZE << disk->dk_blkshift);
 
 	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
 
@@ -432,6 +433,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 */
 
 	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
+	disk_blocksize(&sc->sc_dk, DEV_BSIZE << pdk->dk_blkshift);
 	dkgetproperties(&sc->sc_dk, dkw);
 	disk_attach(&sc->sc_dk);
 
@@ -511,14 +513,14 @@ dkwedge_begindetach(struct dkwedge_softc *sc, int flags)
 
 	rc = 0;
 	mutex_enter(&dk->dk_openlock);
-	mutex_enter(&sc->sc_parent->dk_rawlock);
 	if (dk->dk_openmask == 0)
 		;	/* nothing to do */
 	else if ((flags & DETACH_FORCE) == 0)
 		rc = EBUSY;
-	else
-		rc = dklastclose(sc);
-	mutex_exit(&sc->sc_parent->dk_rawlock);
+	else {
+		mutex_enter(&sc->sc_parent->dk_rawlock);
+		rc = dklastclose(sc); /* releases dk_rawlock */
+	}
 	mutex_exit(&dk->dk_openlock);
 
 	return rc;
@@ -577,17 +579,18 @@ dkwedge_detach(device_t self, int flags)
 
 	/* Clean up the parent. */
 	mutex_enter(&sc->sc_dk.dk_openlock);
-	mutex_enter(&sc->sc_parent->dk_rawlock);
 	if (sc->sc_dk.dk_openmask) {
+		mutex_enter(&sc->sc_parent->dk_rawlock);
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
+			mutex_exit(&sc->sc_parent->dk_rawlock);
 			(void) vn_close(sc->sc_parent->dk_rawvp, FREAD | FWRITE,
 			    NOCRED);
 			sc->sc_parent->dk_rawvp = NULL;
-		}
+		} else
+			mutex_exit(&sc->sc_parent->dk_rawlock);
 		sc->sc_dk.dk_openmask = 0;
 	}
-	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	/* Announce our departure. */
@@ -990,7 +993,6 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	if (sc == NULL)
 		return (ENODEV);
-
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
@@ -1050,10 +1052,12 @@ dklastclose(struct dkwedge_softc *sc)
 
 	if (sc->sc_parent->dk_rawopens-- == 1) {
 		KASSERT(sc->sc_parent->dk_rawvp != NULL);
+		mutex_exit(&sc->sc_parent->dk_rawlock);
 		error = vn_close(sc->sc_parent->dk_rawvp,
 		    FREAD | FWRITE, NOCRED);
 		sc->sc_parent->dk_rawvp = NULL;
-	}
+	} else
+		mutex_exit(&sc->sc_parent->dk_rawlock);
 	return error;
 }
 
@@ -1068,6 +1072,11 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
 
+	if (sc == NULL)
+		return (ENODEV);
+	if (sc->sc_state != DKW_STATE_RUNNING)
+		return (ENXIO);
+
 	KASSERT(sc->sc_dk.dk_openmask != 0);
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
@@ -1081,9 +1090,10 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	if (sc->sc_dk.dk_openmask == 0)
-		error = dklastclose(sc);
+		error = dklastclose(sc); /* releases dk_rawlock */
+	else 
+		mutex_exit(&sc->sc_parent->dk_rawlock);
 
-	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return (error);
@@ -1101,7 +1111,13 @@ dkstrategy(struct buf *bp)
 	uint64_t p_size, p_offset;
 	int s;
 
-	if (sc->sc_state != DKW_STATE_RUNNING) {
+	if (sc == NULL) {
+		bp->b_error = ENODEV;
+		goto done;
+	}
+
+	if (sc->sc_state != DKW_STATE_RUNNING ||
+	    sc->sc_parent->dk_rawvp == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -1275,6 +1291,8 @@ dkread(dev_t dev, struct uio *uio, int flags)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
+	if (sc == NULL)
+		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
@@ -1291,6 +1309,8 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
+	if (sc == NULL)
+		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
@@ -1308,7 +1328,11 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
 
+	if (sc == NULL)
+		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
+		return (ENXIO);
+	if (sc->sc_parent->dk_rawvp == NULL)
 		return (ENXIO);
 
 	error = disk_ioctl(&sc->sc_dk, cmd, data, flag, l);
@@ -1367,7 +1391,6 @@ dksize(dev_t dev)
 
 	if (sc == NULL)
 		return (-1);
-	
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (-1);
 
@@ -1403,8 +1426,7 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int rv = 0;
 
 	if (sc == NULL)
-		return (ENXIO);
-	
+		return (ENODEV);
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 

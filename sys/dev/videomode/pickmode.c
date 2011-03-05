@@ -1,4 +1,4 @@
-/* $NetBSD: pickmode.c,v 1.1.2.2 2010/05/30 05:17:46 rmind Exp $ */
+/* $NetBSD: pickmode.c,v 1.1.2.3 2011/03/05 20:54:19 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation
@@ -29,7 +29,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pickmode.c,v 1.1.2.2 2010/05/30 05:17:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pickmode.c,v 1.1.2.3 2011/03/05 20:54:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <dev/videomode/videomode.h>
@@ -81,9 +81,9 @@ pick_mode_by_ref(int width, int height, int refresh)
 		this = &videomode_list[i];
 		mref = this->dot_clock * 1000 / (this->htotal * this->vtotal);
 		diff = abs(mref - refresh);
-		if ((this->hdisplay != width) || (this->vdisplay != height) ||
-		    (diff > closest))
+		if ((this->hdisplay != width) || (this->vdisplay != height))
 			continue;
+		DPRINTF("%s in %d hz, diff %d\n", this->name, mref, diff);
 		if (best != NULL) {
 
 			if (diff < closest) {
@@ -91,11 +91,13 @@ pick_mode_by_ref(int width, int height, int refresh)
 				best = this;
 				closest = diff;
 			}
-		} else
+		} else {
 			best = this;
+			closest = diff;
+		}
 	}
 	if (best!= NULL)
-		DPRINTF("found %s\n", best->name);
+		DPRINTF("found %s %d\n", best->name, best->dot_clock);
 
 	return best;
 }

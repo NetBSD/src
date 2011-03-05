@@ -1,4 +1,4 @@
-/*	$NetBSD: lcd.c,v 1.1.2.2 2010/07/03 01:19:17 rmind Exp $	*/
+/*	$NetBSD: lcd.c,v 1.1.2.3 2011/03/05 20:50:27 rmind Exp $	*/
 /*	OpenBSD: lcd.c,v 1.2 2007/07/20 22:13:45 kettenis Exp 	*/
 
 /*
@@ -72,21 +72,20 @@ lcd_attach(device_t parent, device_t self, void *aux)
 {
 	struct lcd_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	struct pdc_chassis_lcd *pdc_lcd = (void *)ca->ca_pdc_iodc_read;
+	struct pdc_chassis_lcd *pdc_lcd = &ca->ca_pcl;
 	int i;
 
 	sc->sc_dv = self;
 	sc->sc_iot = ca->ca_iot;
 
-	if (bus_space_map(sc->sc_iot, pdc_lcd->cmd_addr,
-		1, 0, &sc->sc_cmdh)) {
-		aprint_error(": cannot map cmd register\n");
+	if (bus_space_map(sc->sc_iot, pdc_lcd->cmd_addr, 1, 0, &sc->sc_cmdh)) {
+		aprint_error(": can't map cmd register\n");
 		return;
 	}
 
-	if (bus_space_map(sc->sc_iot, pdc_lcd->data_addr,
-		1, 0, &sc->sc_datah)) {
-		aprint_error(": cannot map data register\n");
+	if (bus_space_map(sc->sc_iot, pdc_lcd->data_addr, 1, 0,
+	    &sc->sc_datah)) {
+		aprint_error(": can't map data register\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_cmdh, 1);
 		return;
 	}

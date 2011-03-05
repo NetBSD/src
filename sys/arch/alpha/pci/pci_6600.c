@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.19 2009/03/16 23:11:09 dsl Exp $ */
+/* $NetBSD: pci_6600.c,v 1.19.4.1 2011/03/05 20:49:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,15 +33,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.19 2009/03/16 23:11:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.19.4.1 2011/03/05 20:49:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #define _ALPHA_BUS_DMA_PRIVATE

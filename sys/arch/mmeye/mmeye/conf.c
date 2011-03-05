@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 2005/12/11 12:18:16 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.13.100.1 2011/03/05 20:51:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -30,20 +30,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.13 2005/12/11 12:18:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.13.100.1 2011/03/05 20:51:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 
+#include "scif.h"
+#include "sci.h"
 #include "com.h"
 
 #include <dev/cons.h>
 
+#define scifcnpollc	nullcnpollc
 #define scicnpollc	nullcnpollc
+cons_decl(scif);
 cons_decl(sci);
 cons_decl(com);
 
 struct consdev constab[] = {
+#if NSCIF > 0
+	cons_init(scif),
+#endif
 #if NSCI > 0
 	cons_init(sci),
 #endif

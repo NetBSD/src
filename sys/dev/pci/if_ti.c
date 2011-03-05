@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.88.4.1 2010/05/30 05:17:35 rmind Exp $ */
+/* $NetBSD: if_ti.c,v 1.88.4.2 2011/03/05 20:53:44 rmind Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.88.4.1 2010/05/30 05:17:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.88.4.2 2011/03/05 20:53:44 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.88.4.1 2010/05/30 05:17:35 rmind Exp $")
 #include <sys/queue.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>

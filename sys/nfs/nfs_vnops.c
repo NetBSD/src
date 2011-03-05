@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.282.4.3 2010/07/03 01:20:00 rmind Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.282.4.4 2011/03/05 20:56:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.282.4.3 2010/07/03 01:20:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.282.4.4 2011/03/05 20:56:04 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -800,8 +800,6 @@ nfs_lookup(void *v)
 			return EISDIR;
 		vref(dvp);
 		*vpp = dvp;
-		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-			cnp->cn_flags |= SAVENAME;
 		return 0;
 	}
 
@@ -872,8 +870,6 @@ nfs_lookup(void *v)
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred)
 		    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
 			nfsstats.lookupcache_hits++;
-			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-				cnp->cn_flags |= SAVENAME;
 			KASSERT(newvp->v_type != VNON);
 			return (0);
 		}
@@ -894,7 +890,6 @@ dorpc:
 	if (v3 && cnp->cn_nameiop == CREATE &&
 	    (flags & (ISLASTCN|ISDOTDOT)) == ISLASTCN &&
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		cnp->cn_flags |= SAVENAME;
 		return (EJUSTRETURN);
 	}
 #endif /* 0 */
@@ -939,7 +934,6 @@ dorpc:
 			nfsm_loadattr(newvp, (struct vattr *)0, 0);
 		*vpp = newvp;
 		m_freem(mrep);
-		cnp->cn_flags |= SAVENAME;
 		goto validate;
 	}
 
@@ -1001,8 +995,6 @@ dorpc:
 #endif
 			nfsm_loadattr(newvp, (struct vattr *)0, 0);
 	}
-	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-		cnp->cn_flags |= SAVENAME;
 	if ((cnp->cn_flags & MAKEENTRY) &&
 	    (cnp->cn_nameiop != DELETE || !(flags & ISLASTCN))) {
 		nfs_cache_enter(dvp, newvp, cnp);
@@ -1034,7 +1026,6 @@ noentry:
 				error = EROFS;
 			} else {
 				error = EJUSTRETURN;
-				cnp->cn_flags |= SAVENAME;
 			}
 		}
 		*vpp = NULL;
@@ -1287,10 +1278,6 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, bool pageprotected
 	int rlen, commit;
 #endif
 
-	mutex_init(&ctx.nwc_lock, MUTEX_DRIVER, IPL_VM);
-	cv_init(&ctx.nwc_cv, "nfsmblk");
-	ctx.nwc_mbufcount = 1;
-
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		panic("writerpc readonly vp %p", vp);
 	}
@@ -1301,7 +1288,12 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, bool pageprotected
 #endif
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
-		return (EFBIG);
+		return EFBIG;
+
+	mutex_init(&ctx.nwc_lock, MUTEX_DRIVER, IPL_VM);
+	cv_init(&ctx.nwc_cv, "nfsmblk");
+	ctx.nwc_mbufcount = 1;
+
 retry:
 	origresid = uiop->uio_resid;
 	KASSERT(origresid == uiop->uio_iov->iov_len);
@@ -1560,7 +1552,6 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, s
 			nfs_cache_enter(dvp, newvp, cnp);
 		*vpp = newvp;
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
@@ -1724,7 +1715,6 @@ again:
 		if (error == EEXIST)
 			cache_purge1(dvp, cnp, 0);
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
@@ -1761,8 +1751,6 @@ nfs_remove(void *v)
 	struct vattr vattr;
 
 #ifndef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("nfs_remove: no name");
 	if (vp->v_usecount < 1)
 		panic("nfs_remove: bad v_usecount");
 #endif
@@ -1790,7 +1778,6 @@ nfs_remove(void *v)
 				cnp->cn_namelen, cnp->cn_cred, curlwp);
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp, false);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	if (!error && nfs_getattrcache(vp, &vattr) == 0 &&
 	    vattr.va_nlink == 1) {
 		np->n_flag |= NREMOVED;
@@ -1884,11 +1871,6 @@ nfs_rename(void *v)
 	struct componentname *fcnp = ap->a_fcnp;
 	int error;
 
-#ifndef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("nfs_rename: no name");
-#endif
 	/* Check for cross-device rename */
 	if ((fvp->v_mount != tdvp->v_mount) ||
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
@@ -2094,7 +2076,6 @@ nfs_link(void *v)
 
 	if (error == 0)
 		cache_purge1(dvp, cnp, 0);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	if (dvp != vp)
 		VOP_UNLOCK(vp);
 	VN_KNOTE(vp, NOTE_LINK);
@@ -2185,7 +2166,6 @@ nfs_symlink(void *v)
 	} else {
 		*ap->a_vpp = newvp;
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
@@ -2282,7 +2262,6 @@ nfs_mkdir(void *v)
 			nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -2318,7 +2297,6 @@ nfs_rmdir(void *v)
 	if (dvp == vp) {
 		vrele(dvp);
 		vput(dvp);
-		PNBUF_PUT(cnp->cn_pnbuf);
 		return (EINVAL);
 	}
 	nfsstats.rpccnt[NFSPROC_RMDIR]++;
@@ -2333,7 +2311,6 @@ nfs_rmdir(void *v)
 		nfsm_wcc_data(dvp, wccflag, 0, !error);
 #endif
 	nfsm_reqdone;
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));

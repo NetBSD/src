@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.30.4.1 2010/05/30 05:17:21 rmind Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.30.4.2 2011/03/05 20:53:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.30.4.1 2010/05/30 05:17:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.30.4.2 2011/03/05 20:53:14 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -241,8 +241,6 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.30.4.1 2010/05/30 05:17:21 rmind Exp $"
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

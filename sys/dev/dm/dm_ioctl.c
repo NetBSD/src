@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.21.2.1 2010/05/30 05:17:19 rmind Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.21.2.2 2011/03/05 20:53:07 rmind Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -93,9 +93,9 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
-static uint64_t sc_minor_num;
+static uint32_t sc_minor_num;
 extern const struct dkdriver dmdkdriver;
-uint64_t dm_dev_counter;
+uint32_t dm_dev_counter;
 
 /* Generic cf_data for device-mapper driver */
 static struct cfdata dm_cfdata = {
@@ -236,7 +236,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	if (name)
 		strlcpy(dmv->name, name, DM_NAME_LEN);
 
-	dmv->minor = atomic_inc_64_nv(&sc_minor_num);
+	dmv->minor = (uint64_t)atomic_inc_32_nv(&sc_minor_num);
 	dmv->flags = 0;		/* device flags are set when needed */
 	dmv->ref_cnt = 0;
 	dmv->event_nr = 0;
@@ -266,7 +266,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	DM_REMOVE_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
 
 	/* Increment device counter After creating device */
-	atomic_inc_64(&dm_dev_counter);
+	atomic_inc_32(&dm_dev_counter);
 
 	return r;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.234.4.2 2010/07/03 01:19:55 rmind Exp $	*/
+/*	$NetBSD: tty.c,v 1.234.4.3 2011/03/05 20:55:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234.4.2 2010/07/03 01:19:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234.4.3 2011/03/05 20:55:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234.4.2 2010/07/03 01:19:55 rmind Exp $");
 #undef	TTYDEFCHARS
 #include <sys/file.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/dkstat.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -834,6 +835,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	struct proc *p = l ? l->l_proc : NULL;
 	struct linesw	*lp;
 	int		s, error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	char		infobuf[200];
 
@@ -935,12 +937,18 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 			    (TS_CARR_ON | TS_ISOPEN))
 				return EBUSY;
 
-			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
-			    "/dev/console");
-			if ((error = namei(&nd)) != 0)
+			pb = pathbuf_create("/dev/console");
+			if (pb == NULL) {
+				return ENOMEM;
+			}
+			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, pb);
+			if ((error = namei(&nd)) != 0) {
+				pathbuf_destroy(pb);
 				return error;
+			}
 			error = VOP_ACCESS(nd.ni_vp, VREAD, l->l_cred);
 			vput(nd.ni_vp);
+			pathbuf_destroy(pb);
 			if (error)
 				return error;
 
@@ -1264,13 +1272,10 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 				break;
 			}
 			rw_exit(&ttcompat_lock);
-			mutex_enter(&module_lock);
 			(void)module_autoload("compat", MODULE_CLASS_ANY);
 			if (ttcompatvec == NULL) {
-				mutex_exit(&module_lock);
 				return EPASSTHROUGH;
 			}
-			mutex_exit(&module_lock);
 		}
 		error = (*ttcompatvec)(tp, cmd, data, flag, l);
 		rw_exit(&ttcompat_lock);
@@ -2424,15 +2429,36 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 
 	mutex_enter(pick->p_lock);
 	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
+		const char *lp;
 		lwp_lock(l);
-		snprintf(lmsg, sizeof(lmsg), "%s%s",
-		    l->l_stat == LSONPROC ? "running" :
-		    l->l_stat == LSRUN ? "runnable" :
-		    l->l_wchan ? l->l_wmesg : "iowait",
-		    (LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
-		lwp_unlock(l);
-		strlcat(buf, lmsg, bufsz);
+#ifdef LWP_PC
+#define FMT_RUN "%#"PRIxVADDR
+#define VAL_RUNNING (vaddr_t)LWP_PC(l)
+#define VAL_RUNABLE (vaddr_t)LWP_PC(l)
+#else
+#define FMT_RUN "%s"
+#define VAL_RUNNING "running"
+#define VAL_RUNABLE "runnable"
+#endif
+		switch (l->l_stat) {
+		case LSONPROC:
+			snprintf(lmsg, sizeof(lmsg), FMT_RUN"/%d", VAL_RUNNING,
+			    cpu_index(l->l_cpu));
+			lp = lmsg;
+			break;
+		case LSRUN:
+			snprintf(lmsg, sizeof(lmsg), FMT_RUN, VAL_RUNABLE);
+			lp = lmsg;
+			break;
+		default:
+			lp = l->l_wchan ? l->l_wmesg : "iowait";
+			break;
+		} 
+		strlcat(buf, lp, bufsz);
+		strlcat(buf, LIST_NEXT(l, l_sibling) != NULL ? " " : "] ",
+		    bufsz);
 		pctcpu += l->l_pctcpu;
+		lwp_unlock(l);
 	}
 	pctcpu += pick->p_pctcpu;
 	calcru(pick, &utime, &stime, NULL, NULL);

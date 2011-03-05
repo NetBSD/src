@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.8 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.8.22.1 2011/03/05 20:51:39 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.8 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.8.22.1 2011/03/05 20:51:39 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 };
 
 int
-genppc_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+genppc_pci_bus_maxdevs(void *v, int busno)
 {
 	return 32;
 }

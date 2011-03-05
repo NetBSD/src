@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.47 2010/02/24 22:38:09 dyoung Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.47.2.1 2011/03/05 20:54:12 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ typedef struct ohci_softc {
 
 	usbd_xfer_handle sc_intrxfer;
 
-	char sc_vendor[16];
+	char sc_vendor[32];
 	int sc_id_vendor;
 
 	u_int32_t sc_control;		/* Preserved during suspend/standby */
@@ -130,14 +130,10 @@ typedef struct ohci_softc {
 	u_int sc_overrun_cnt;
 	struct timeval sc_overrun_ntc;
 
-	usb_callout_t sc_tmo_rhsc;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	device_ptr_t sc_child;
-#endif
+	struct callout sc_tmo_rhsc;
+	device_t sc_child;
 	char sc_dying;
-#ifdef __NetBSD__
 	struct usb_dma_reserve sc_dma_reserve;
-#endif
 } ohci_softc_t;
 
 struct ohci_xfer {
@@ -147,11 +143,9 @@ struct ohci_xfer {
 
 usbd_status	ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int		ohci_detach(ohci_softc_t *, int);
 bool		ohci_shutdown(device_t, int);
 void		ohci_childdet(device_t, device_t);
 int		ohci_activate(device_t, enum devact);
-#endif
 bool		ohci_resume(device_t, const pmf_qual_t *);
 bool		ohci_suspend(device_t, const pmf_qual_t *);

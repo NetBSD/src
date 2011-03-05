@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.4.2.1 2010/05/30 05:16:38 rmind Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.4.2.2 2011/03/05 20:49:40 rmind Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.4.2.1 2010/05/30 05:16:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.4.2.2 2011/03/05 20:49:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,6 +101,7 @@ static int	pxamci_write_protect(sdmmc_chipset_handle_t);
 static int	pxamci_bus_power(sdmmc_chipset_handle_t, uint32_t);
 static int	pxamci_bus_clock(sdmmc_chipset_handle_t, int);
 static int	pxamci_bus_width(sdmmc_chipset_handle_t, int);
+static int	pxamci_bus_rod(sdmmc_chipset_handle_t, int);
 static void	pxamci_exec_command(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
 static void	pxamci_card_enable_intr(sdmmc_chipset_handle_t, int);
@@ -124,6 +125,7 @@ static struct sdmmc_chip_functions pxamci_chip_functions = {
 	.bus_power		= pxamci_bus_power,
 	.bus_clock		= pxamci_bus_clock,
 	.bus_width		= pxamci_bus_width,
+	.bus_rod		= pxamci_bus_rod,
 
 	/* command execution */
 	.exec_command		= pxamci_exec_command,
@@ -305,7 +307,7 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 	saa.saa_clkmax = sc->sc_clkmax;
 	saa.saa_caps = 0;
 	if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA))
-		SET(saa.saa_caps, SMC_CAPS_DMA);
+		SET(saa.saa_caps, SMC_CAPS_DMA | SMC_CAPS_MULTI_SEG_DMA);
 	if (CPU_IS_PXA270 && ISSET(sc->sc_caps, PMC_CAPS_4BIT))
 		SET(saa.saa_caps, SMC_CAPS_4BIT_MODE);
 
@@ -546,6 +548,14 @@ pxamci_bus_width(sdmmc_chipset_handle_t sch, int width)
 	splx(s);
 
 	return rv;
+}
+
+static int
+pxamci_bus_rod(sdmmc_chipset_handle_t sch, int on)
+{
+
+	/* not support */
+	return -1;
 }
 
 static void
@@ -802,9 +812,6 @@ pxamci_intr(void *arg)
 		DPRINTF(9, ("%s: handling MMC_I_DAT_ERR\n",
 		    device_xname(sc->sc_dev)));
 		sc->sc_cmd->c_error = EIO;
-		pxamci_intr_done(sc);
-		pxamci_disable_intr(sc, MMC_I_DAT_ERR);
-		CLR(status, MMC_I_DAT_ERR);
 		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)
 		 && DMA_ALIGNED(sc->sc_cmd->c_data)) {
 			if (ISSET(sc->sc_cmd->c_flags, SCF_CMD_READ)) {
@@ -813,6 +820,9 @@ pxamci_intr(void *arg)
 				pxa2x0_dmac_abort_xfer(sc->sc_txdx);
 			}
 		}
+		pxamci_intr_done(sc);
+		pxamci_disable_intr(sc, MMC_I_DAT_ERR);
+		CLR(status, MMC_I_DAT_ERR);
 		/* ignore transmission done condition */
 		if (ISSET(status, MMC_I_DATA_TRAN_DONE)) {
 			pxamci_disable_intr(sc, MMC_I_DATA_TRAN_DONE);

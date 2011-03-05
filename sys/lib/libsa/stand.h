@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.69 2009/03/19 10:20:54 tsutsui Exp $	*/
+/*	$NetBSD: stand.h,v 1.69.4.1 2011/03/05 20:55:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -238,7 +238,8 @@ void	gets(char *);
 int	getfile(char *prompt, int mode);
 char	*strerror(int);
 __dead void	exit(int);
-__dead void	panic(const char *, ...);
+__dead void	panic(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 __dead void	_rtt(void);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);
@@ -284,7 +285,6 @@ ssize_t	oread(int, void *, size_t);
 off_t	olseek(int, off_t, int);
 #endif
 
-extern const char HEXDIGITS[];
 extern const char hexdigits[];
 
 /* XXX: These should be removed eventually. */

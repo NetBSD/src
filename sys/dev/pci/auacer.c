@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.27 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: auacer.c,v 1.27.2.1 2011/03/05 20:53:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.27 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.27.2.1 2011/03/05 20:53:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.27 2010/02/24 22:37:59 dyoung Exp $");
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

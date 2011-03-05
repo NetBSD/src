@@ -2,7 +2,7 @@ S=	${.CURDIR}/../../../../..
 
 VERSIONFILE= ${.CURDIR}/version
 
-.include <../Makefile.booters>
+.include "../Makefile.booters"
 
 PROG=		skiload
 MAN=#
@@ -36,7 +36,8 @@ CLEANFILES+=	vers.c skiload ${OBJS}
 NEWVERSWHAT=	"ia64 SKI boot" ${MACHINE_ARCH}
 
 vers.c: ${VERSIONFILE} ${SOURCES}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 DPADD=		${LIBLIST}
 

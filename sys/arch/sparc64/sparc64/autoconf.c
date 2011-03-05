@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.173.2.1 2010/05/30 05:17:08 rmind Exp $ */
+/*	$NetBSD: autoconf.c,v 1.173.2.2 2011/03/05 20:52:07 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173.2.1 2010/05/30 05:17:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173.2.2 2011/03/05 20:52:07 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1150,7 +1150,8 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 			fboffset = (uint32_t)(fbpa - mem_base);
 		prop_dictionary_set_uint32(dict, "address", fboffset);
 	}
-	of_to_dataprop(dict, console_node, "EDID", "EDID");
+	if (!of_to_dataprop(dict, console_node, "EDID", "EDID"))
+		of_to_dataprop(dict, console_node, "edid", "EDID");
 
 	temp = 0;
 	if (OF_getprop(console_node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {

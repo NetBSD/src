@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.35.4.1 2010/05/30 05:17:42 rmind Exp $	*/
+/*	$NetBSD: zx.c,v 1.35.4.2 2011/03/05 20:54:04 rmind Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.35.4.1 2010/05/30 05:17:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.35.4.2 2011/03/05 20:54:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.35.4.1 2010/05/30 05:17:42 rmind Exp $");
 #include <sys/conf.h>
 #include <sys/syslog.h>
 #include <sys/buf.h>
+#ifdef DEBUG
+/* for log(9) in zxioctl() */
+#include <sys/lwp.h>
+#include <sys/proc.h>
+#endif
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>

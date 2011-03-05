@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.14 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.14.4.1 2011/03/05 20:51:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -39,7 +39,6 @@
  * Machine-dependent part of the proc structure for sh3.
  */
 
-#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/param.h>
 
 /* Kernel stack PTE */
@@ -59,6 +58,7 @@ struct mdlwp {
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
+#define	MDP_SSTEP	0x0002	/* single-stepped with PT_STEP */
 
 struct lwp;
 

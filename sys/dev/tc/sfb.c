@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.80.4.1 2010/05/30 05:17:43 rmind Exp $ */
+/* $NetBSD: sfb.c,v 1.80.4.2 2011/03/05 20:54:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.80.4.1 2010/05/30 05:17:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.80.4.2 2011/03/05 20:54:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.80.4.1 2010/05/30 05:17:43 rmind Exp $");
 #include <dev/tc/tcvar.h>
 #include <dev/ic/bt459reg.h>
 #include <dev/tc/sfbreg.h>
-
-#include <uvm/uvm_extern.h>
 
 #if defined(pmax)
 #define	machine_btop(x) mips_btop(MIPS_KSEG1_TO_PHYS(x))

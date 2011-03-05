@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.96.2.1 2010/05/30 05:16:51 rmind Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.96.2.2 2011/03/05 20:50:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,11 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.96.2.1 2010/05/30 05:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.96.2.2 2011/03/05 20:50:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/pmf.h>
 
 #include <uvm/uvm.h>
 

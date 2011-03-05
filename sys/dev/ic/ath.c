@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.108.4.1 2010/05/30 05:17:20 rmind Exp $	*/
+/*	$NetBSD: ath.c,v 1.108.4.2 2011/03/05 20:53:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.108.4.1 2010/05/30 05:17:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.108.4.2 2011/03/05 20:53:12 rmind Exp $");
 #endif
 
 /*
@@ -51,7 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.108.4.1 2010/05/30 05:17:20 rmind Exp $");
  * is greatly appreciated.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/reboot.h>

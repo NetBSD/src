@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.111.4.1 2010/05/30 05:17:11 rmind Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.111.4.2 2011/03/05 20:52:20 rmind Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,41 +31,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.111.4.1 2010/05/30 05:17:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.111.4.2 2011/03/05 20:52:20 rmind Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
+#include "opt_cputype.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/core.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
-#include <sys/vnode.h>
-#include <sys/core.h>
-#include <sys/mount.h>
-#include <sys/device.h>
-#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/vmparam.h>
-#include <machine/mtpr.h>
-#include <machine/pmap.h>
-#include <machine/pte.h>
 #include <machine/macros.h>
-#include <machine/trap.h>
-#include <machine/pcb.h>
 #include <machine/frame.h>
-#include <machine/cpu.h>
 #include <machine/sid.h>
-
-#include <sys/syscallargs.h>
-
-#include "opt_cputype.h"
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -272,7 +261,7 @@ iounaccess(vaddr_t vaddr, size_t npgs)
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 #if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
@@ -284,7 +273,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	    && vax_boardtype != VAX_BTYP_48
 	    && vax_boardtype != VAX_BTYP_49
 	    && vax_boardtype != VAX_BTYP_53)
-		return;
+		return 0;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	p = bp->b_proc;
@@ -306,6 +295,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	}
 	pmap_update(vm_map_pmap(phys_map));
 #endif
+
+	return 0;
 }
 
 /*

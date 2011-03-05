@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2009/03/06 20:31:52 joerg Exp $ */
+/*	$NetBSD: vmparam.h,v 1.30.4.1 2011/03/05 20:52:07 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,37 +165,8 @@
 
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD                /* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-#ifdef _KERNEL
-
-#define	__HAVE_VM_PAGE_MD
-
-/*
- * For each struct vm_page, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t.
- */
-struct pmap;
-typedef struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t		pv_va;		/* virtual address for mapping */
-} *pv_entry_t;
-/* PV flags encoded in the low bits of the VA of the first pv_entry */
-
-struct vm_page_md {
-	struct pv_entry mdpg_pvh;
-};
-#define	VM_MDPAGE_INIT(pg)						\
-do {									\
-	(pg)->mdpage.mdpg_pvh.pv_next = NULL;				\
-	(pg)->mdpage.mdpg_pvh.pv_pmap = NULL;				\
-	(pg)->mdpage.mdpg_pvh.pv_va = 0;				\
-} while (/*CONSTCOND*/0)
-
-#endif	/* _KERNEL */
 
 #endif

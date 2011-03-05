@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.85.2.1 2010/05/30 05:17:43 rmind Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.85.2.2 2011/03/05 20:54:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.85.2.1 2010/05/30 05:17:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.85.2.2 2011/03/05 20:54:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -151,29 +151,28 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		    __func__, sme->sme_name, edata->desc, crittype));
 
 		see = osee;
-		if (props & (PROP_CRITMAX | PROP_BATTMAX)) {
+		if (props & edata->upropset & (PROP_CRITMAX | PROP_BATTMAX)) {
 			if (lims->sel_critmax == edata->limits.sel_critmax) {
-				DPRINTF(("%s: type=%d (critmax exists)\n",
-				    __func__, crittype));
+				DPRINTF(("%s: critmax exists\n", __func__));
 				error = EEXIST;
 				props &= ~(PROP_CRITMAX | PROP_BATTMAX);
 			}
 		}
-		if (props & (PROP_WARNMAX | PROP_BATTHIGH)) {
+		if (props & edata->upropset & (PROP_WARNMAX | PROP_BATTHIGH)) {
 			if (lims->sel_warnmax == edata->limits.sel_warnmax) {
 				DPRINTF(("%s: warnmax exists\n", __func__));
 				error = EEXIST;
 				props &= ~(PROP_WARNMAX | PROP_BATTHIGH);
 			}
 		}
-		if (props & (PROP_WARNMIN | PROP_BATTWARN)) {
+		if (props & edata->upropset & (PROP_WARNMIN | PROP_BATTWARN)) {
 			if (lims->sel_warnmin == edata->limits.sel_warnmin) {
 				DPRINTF(("%s: warnmin exists\n", __func__));
 				error = EEXIST;
 				props &= ~(PROP_WARNMIN | PROP_BATTWARN);
 			}
 		}
-		if (props & (PROP_CRITMIN | PROP_BATTCAP)) {
+		if (props & edata->upropset & (PROP_CRITMIN | PROP_BATTCAP)) {
 			if (lims->sel_critmin == edata->limits.sel_critmin) {
 				DPRINTF(("%s: critmin exists\n", __func__));
 				error = EEXIST;
@@ -487,15 +486,9 @@ int
 sme_events_init(struct sysmon_envsys *sme)
 {
 	int error = 0;
-	uint64_t timo;
 
 	KASSERT(sme != NULL);
 	KASSERT(mutex_owned(&sme->sme_mtx));
-
-	if (sme->sme_events_timeout)
-		timo = sme->sme_events_timeout * hz;
-	else
-		timo = SME_EVTIMO;
 
 	error = workqueue_create(&sme->sme_wq, sme->sme_name,
 	    sme_events_worker, sme, PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE);
@@ -505,12 +498,36 @@ sme_events_init(struct sysmon_envsys *sme)
 	mutex_init(&sme->sme_callout_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sme->sme_callout, sme_events_check, sme);
-	callout_schedule(&sme->sme_callout, timo);
 	sme->sme_flags |= SME_CALLOUT_INITIALIZED;
+	sme_schedule_callout(sme);
 	DPRINTF(("%s: events framework initialized for '%s'\n",
 	    __func__, sme->sme_name));
 
 	return error;
+}
+
+/*
+ * sme_schedule_callout
+ *
+ *	(Re)-schedule the device's callout timer
+ */
+void
+sme_schedule_callout(struct sysmon_envsys *sme)
+{
+	uint64_t timo;
+
+	KASSERT(sme != NULL);
+
+	if ((sme->sme_flags & SME_CALLOUT_INITIALIZED) == 0)
+		return;
+
+	if (sme->sme_events_timeout)
+		timo = sme->sme_events_timeout * hz;
+	else
+		timo = SME_EVTIMO;
+
+	callout_stop(&sme->sme_callout);
+	callout_schedule(&sme->sme_callout, timo);
 }
 
 /*
@@ -546,12 +563,12 @@ sysmon_envsys_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	int err;
 
+	sysmon_envsys_acquire(sme, false);
 	if (sme->sme_get_limits == NULL ||
 	    (edata->flags & ENVSYS_FMONLIMITS) == 0)
-		return EINVAL;
-
-	sysmon_envsys_acquire(sme, false);
-	err = sme_update_limits(sme, edata);
+		err = EINVAL;
+	else
+		err = sme_update_limits(sme, edata);
 	sysmon_envsys_release(sme, false);
 
 	return err;
@@ -595,8 +612,9 @@ sme_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (see == NULL)
 		return EINVAL;
 
-	/* Get new limit values */
-	(*sme->sme_get_limits)(sme, edata, &lims, &props);
+	/* Update limit values from driver if possible */
+	if (sme->sme_get_limits != NULL)
+		(*sme->sme_get_limits)(sme, edata, &lims, &props);
 
 	/* Update event and dictionary */
 	sme_event_register(sdict, edata, sme, &lims, props,
@@ -630,7 +648,7 @@ sme_events_check(void *arg)
 	else
 		timo = SME_EVTIMO;
 	if (!sysmon_low_power)
-		callout_schedule(&sme->sme_callout, timo);
+		sme_schedule_callout(sme);
 	mutex_exit(&sme->sme_callout_mtx);
 }
 
@@ -751,7 +769,7 @@ void
 sme_deliver_event(sme_event_t *see)
 {
 	envsys_data_t *edata = see->see_edata;
-	const struct sme_description_table *sdt = NULL;
+	const struct sme_descr_entry *sdt = NULL;
 	const struct sme_sensor_event *sse = sme_sensor_event;
 	int i, state = 0;
 
@@ -779,8 +797,8 @@ sme_deliver_event(sme_event_t *see)
 
 		see->see_evsent = edata->state;
 		DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d state=%d send_ev=%d\n",
-		    __func__, sme->sme_name, edata->desc, edata->sensor,
-		    edata->state,
+		    __func__, see->see_sme->sme_name, edata->desc,
+		    edata->sensor, edata->state,
 		    (edata->state == ENVSYS_SVALID) ? PENVSYS_EVENT_NORMAL :
 			sse[i].event));
 
@@ -819,12 +837,13 @@ sme_deliver_event(sme_event_t *see)
 
 		switch (edata->units) {
 		case ENVSYS_DRIVE:
-			sdt = sme_get_description_table(SME_DESC_DRIVE_STATES);
+			sdt = sme_find_table_entry(SME_DESC_DRIVE_STATES,
+			    edata->value_cur);
 			state = ENVSYS_DRIVE_ONLINE;
 			break;
 		case ENVSYS_BATTERY_CAPACITY:
-			sdt = sme_get_description_table(
-			    SME_DESC_BATTERY_CAPACITY);
+			sdt = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
+			    edata->value_cur);
 			state = ENVSYS_BATTERY_CAPACITY_NORMAL;
 			break;
 		default:
@@ -832,17 +851,13 @@ sme_deliver_event(sme_event_t *see)
 			    __func__);
 		}
 
-		for (i = 0; sdt[i].type != -1; i++)
-			if (sdt[i].type == edata->value_cur)
-				break;
-
-		if (sdt[i].type == -1)
+		if (sdt->type == -1)
 			break;
 
 		/* 
 		 * copy current state description.
 		 */
-		(void)strlcpy(see->see_pes.pes_statedesc, sdt[i].desc,
+		(void)strlcpy(see->see_pes.pes_statedesc, sdt->desc,
 		    sizeof(see->see_pes.pes_statedesc));
 
 		if (edata->value_cur == state)

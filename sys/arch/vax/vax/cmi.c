@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.11.26.1 2010/07/03 01:19:28 rmind Exp $ */
+/*	$NetBSD: cmi.c,v 1.11.26.2 2011/03/05 20:52:17 rmind Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,15 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.11.26.1 2010/07/03 01:19:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.11.26.2 2011/03/05 20:52:17 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 
-#include <machine/bus.h>
 #include <machine/nexus.h>
-#include <machine/cpu.h>
 #include <machine/sid.h>
 #include <machine/ka750.h>
 #include <machine/mainbus.h>

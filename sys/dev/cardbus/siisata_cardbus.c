@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.11.2.1 2010/05/30 05:17:19 rmind Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.11.2.2 2011/03/05 20:53:06 rmind Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,15 +52,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.11.2.1 2010/05/30 05:17:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.11.2.2 2011/03/05 20:53:06 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>

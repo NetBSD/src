@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.17.4.1 2010/05/30 05:17:19 rmind Exp $      */
+/*        $NetBSD: dm.h,v 1.17.4.2 2011/03/05 20:53:07 rmind Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/queue.h>
 
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 
 #include <prop/proplib.h>
@@ -108,6 +109,8 @@ typedef struct dm_pdev {
 	char name[MAX_DEV_NAME];
 
 	struct vnode *pdev_vnode;
+	uint64_t pdev_numsec;
+	unsigned pdev_secsize;
 	int ref_cnt; /* reference counter for users ofthis pdev */
 
 	SLIST_ENTRY(dm_pdev) next_pdev;
@@ -124,7 +127,7 @@ typedef struct dm_dev {
 	char uuid[DM_UUID_LEN];
 
 	device_t devt; /* pointer to autoconf device_t structure */
-	uint64_t minor;
+	uint64_t minor; /* Device minor number */
 	uint32_t flags; /* store communication protocol flags */
 
 	kmutex_t dev_mtx; /* mutex for generall device lock */
@@ -170,12 +173,23 @@ typedef struct dm_dev {
 typedef struct target_linear_config {
 	dm_pdev_t *pdev;
 	uint64_t offset;
+	TAILQ_ENTRY(target_linear_config) entries;
 } dm_target_linear_config_t;
+
+/*
+ * Striping devices are stored in a linked list, this might be inefficient
+ * for more than 8 striping devices and can be changed to something more
+ * scalable.
+ * TODO: look for other options than linked list.
+ */
+TAILQ_HEAD(target_linear_devs, target_linear_config);
+
+typedef struct target_linear_devs dm_target_linear_devs_t;
 
 /* for stripe : */
 typedef struct target_stripe_config {
-#define MAX_STRIPES 2
-	struct target_linear_config stripe_devs[MAX_STRIPES];
+#define DM_STRIPE_DEV_OFFSET 2
+	struct target_linear_devs stripe_devs;
 	uint8_t stripe_num;
 	uint64_t stripe_chunksize;
 	size_t params_len;
@@ -230,6 +244,7 @@ typedef struct dm_target {
 	int (*strategy)(dm_table_entry_t *, struct buf *);
 	int (*sync)(dm_table_entry_t *);
 	int (*upcall)(dm_table_entry_t *, struct buf *);
+	int (*secsize)(dm_table_entry_t *, unsigned *);
 	
 	uint32_t version[3];
 	int ref_cnt;
@@ -243,11 +258,13 @@ typedef struct dm_target {
  * This structure is used to translate command sent to kernel driver in
  * <key>command</key>
  * <value></value>
- * to function which I can call.
+ * to function which I can call, and if the command is allowed for
+ * non-superusers.
  */
 struct cmd_function {
 	const char *cmd;
 	int  (*fn)(prop_dictionary_t);
+	int  allowed;
 };
 
 /* device-mapper */
@@ -295,6 +312,7 @@ int dm_target_linear_sync(dm_table_entry_t *);
 int dm_target_linear_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_linear_destroy(dm_table_entry_t *);
 int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
+int dm_target_linear_secsize(dm_table_entry_t *, unsigned *);
 
 /* Generic function used to convert char to string */
 uint64_t atoi(const char *); 
@@ -307,6 +325,7 @@ int dm_target_stripe_sync(dm_table_entry_t *);
 int dm_target_stripe_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_stripe_destroy(dm_table_entry_t *);
 int dm_target_stripe_upcall(dm_table_entry_t *, struct buf *);
+int dm_target_stripe_secsize(dm_table_entry_t *, unsigned *);
 
 /* dm_table.c  */
 #define DM_TABLE_ACTIVE 0
@@ -314,6 +333,7 @@ int dm_target_stripe_upcall(dm_table_entry_t *, struct buf *);
 
 int dm_table_destroy(dm_table_head_t *, uint8_t);
 uint64_t dm_table_size(dm_table_head_t *);
+void dm_table_disksize(dm_table_head_t *, uint64_t *, unsigned *);
 dm_table_t * dm_table_get_entry(dm_table_head_t *, uint8_t);
 int dm_table_get_target_count(dm_table_head_t *, uint8_t);
 void dm_table_release(dm_table_head_t *, uint8_t s);

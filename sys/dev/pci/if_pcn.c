@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.49.4.1 2010/05/30 05:17:34 rmind Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.49.4.2 2011/03/05 20:53:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49.4.1 2010/05/30 05:17:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49.4.2 2011/03/05 20:53:43 rmind Exp $");
 
 #include "rnd.h"
 
@@ -84,8 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49.4.1 2010/05/30 05:17:34 rmind Exp $"
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.16 2009/10/01 09:13:54 skrll Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.16.4.1 2011/03/05 20:49:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
@@ -426,7 +427,7 @@ ENTRY(fxrstor)
 
 ENTRY(fldummy)
 	ffree	%st(7)
-	fld	(%rdi)
+	flds	(%rdi)
 	ret
 
 ENTRY(x86_ldmxcsr)
@@ -512,4 +513,16 @@ ENTRY(outsl)
 	movl	%edi, %edx
 	rep
 	outsl
+	ret
+
+ENTRY(setfs)
+	movw	%di, %fs
+	ret
+
+ENTRY(setusergs)
+	CLI(ax)
+	swapgs
+	movw	%di, %gs
+	swapgs
+	STI(ax)
 	ret

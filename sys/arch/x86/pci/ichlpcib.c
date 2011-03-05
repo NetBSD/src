@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.24 2010/02/24 22:37:55 dyoung Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.24.2.1 2011/03/05 20:52:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.24 2010/02/24 22:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.24.2.1 2011/03/05 20:52:28 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.24 2010/02/24 22:37:55 dyoung Exp $")
 #include "hpet.h"
 #include "pcibvar.h"
 #include "gpio.h"
+#include "fwhrng.h"
 
 #define LPCIB_GPIO_NPINS 64
 
@@ -100,6 +101,10 @@ struct lpcib_softc {
 	bus_size_t		sc_gpio_ios;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[LPCIB_GPIO_NPINS];
+#endif
+
+#if NFWHRNG > 0
+	device_t		sc_fwhbus;
 #endif
 
 	/* Speedstep */
@@ -156,6 +161,11 @@ static void lpcib_gpio_pin_write(void *, int, int);
 static void lpcib_gpio_pin_ctl(void *, int, int);
 #endif
 
+#if NFWHRNG > 0
+static void lpcib_fwh_configure(device_t);
+static int lpcib_fwh_unconfigure(device_t, int);
+#endif
+
 struct lpcib_softc *speedstep_cookie;	/* XXX */
 
 CFATTACH_DECL2_NEW(ichlpcib, sizeof(struct lpcib_softc),
@@ -167,6 +177,7 @@ static struct lpcib_device {
 	int has_ich5_hpet;
 } lpcib_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC, 0, 0 },
@@ -291,6 +302,10 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	lpcib_gpio_configure(self);
 #endif
 
+#if NFWHRNG > 0
+	lpcib_fwh_configure(self);
+#endif
+
 	/* Install power handler */
 	if (!pmf_device_register1(self, lpcib_suspend, lpcib_resume,
 	    lpcib_shutdown))
@@ -303,6 +318,12 @@ lpcibchilddet(device_t self, device_t child)
 	struct lpcib_softc *sc = device_private(self);
 	uint32_t val;
 
+#if NFWHRNG > 0
+	if (sc->sc_fwhbus == child) {
+		sc->sc_fwhbus = NULL;
+		return;
+	}
+#endif
 #if NGPIO > 0
 	if (sc->sc_gpiobus == child) {
 		sc->sc_gpiobus = NULL;
@@ -350,8 +371,13 @@ lpcibchilddet(device_t self, device_t child)
 static int
 lpcibrescan(device_t self, const char *ifattr, const int *locators)
 {
-#if NHPET > 0 || NGPIO > 0
+#if NHPET > 0 || NGPIO > 0 || NFWHRNG > 0
 	struct lpcib_softc *sc = device_private(self);
+#endif
+
+#if NFWHRNG > 0
+	if (ifattr_match(ifattr, "fwhichbus") && sc->sc_fwhbus == NULL)
+		lpcib_fwh_configure(self);
 #endif
 
 #if NHPET > 0
@@ -374,6 +400,11 @@ lpcibdetach(device_t self, int flags)
 	int rc;
 
 	pmf_device_deregister(self);
+
+#if NFWHRNG > 0
+	if ((rc = lpcib_fwh_unconfigure(self, flags)) != 0)
+		return rc;
+#endif
 
 #if NHPET > 0
 	if ((rc = lpcib_hpet_unconfigure(self, flags)) != 0)
@@ -1204,5 +1235,49 @@ lpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 	}
 
 	mutex_exit(&sc->sc_gpio_mtx);
+}
+#endif
+
+#if NFWHRNG > 0
+static void
+lpcib_fwh_configure(device_t self)
+{
+	struct lpcib_softc *sc;
+	pcireg_t pr;
+
+	sc = device_private(self);
+
+	if (sc->sc_has_rcba) {
+		/*
+		 * Very unlikely to find a 82802 on a ICH6 or newer.
+		 * Also the write enable register moved at that point.
+		 */
+		return;
+	} else {
+		/* Enable FWH write to identify FWH. */
+		pr = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
+		    LPCIB_PCI_BIOS_CNTL);
+		pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
+		    LPCIB_PCI_BIOS_CNTL, pr|LPCIB_PCI_BIOS_CNTL_BWE);
+	}
+
+	sc->sc_fwhbus = config_found_ia(self, "fwhichbus", NULL, NULL);
+
+	/* restore previous write enable setting */
+	pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
+	    LPCIB_PCI_BIOS_CNTL, pr);
+}
+
+static int
+lpcib_fwh_unconfigure(device_t self, int flags)
+{
+	struct lpcib_softc *sc = device_private(self);
+	int rc;
+
+	if (sc->sc_fwhbus != NULL &&
+	    (rc = config_detach(sc->sc_fwhbus, flags)) != 0)
+		return rc;
+
+	return 0;
 }
 #endif

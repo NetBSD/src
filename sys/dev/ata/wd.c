@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.384 2010/02/24 22:37:57 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.384.2.1 2011/03/05 20:53:06 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.384 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.384.2.1 2011/03/05 20:53:06 rmind Exp $");
 
 #include "opt_ata.h"
 
@@ -281,10 +281,11 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->drvp->drv_softc = wd->sc_dev;
 
 	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* read our drive info */
 	if (wd_get_params(wd, AT_WAIT, &wd->sc_params) != 0) {
-		aprint_error("\n%s: IDENTIFY failed\n", device_xname(self));
+		aprint_error_dev(self, "IDENTIFY failed\n");
 		return;
 	}
 
@@ -304,7 +305,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	}
 	*q++ = '\0';
 
-	aprint_normal(": <%s>\n", tbuf);
+	aprint_normal_dev(self, "<%s>\n", tbuf);
 
 	wdq = wd_lookup_quirks(tbuf);
 	if (wdq != NULL)
@@ -489,9 +490,10 @@ wdstrategy(struct buf *bp)
 	}
 
 	/* If device invalidated (e.g. media change, door open,
-	 * device suspension), then error.
+	 * device detachment), then error.
 	 */
-	if ((wd->sc_flags & WDF_LOADED) == 0 || !device_is_active(wd->sc_dev)) {
+	if ((wd->sc_flags & WDF_LOADED) == 0 ||
+	    !device_is_enabled(wd->sc_dev)) {
 		bp->b_error = EIO;
 		goto done;
 	}
@@ -573,6 +575,10 @@ wdstart(void *arg)
 
 	ATADEBUG_PRINT(("wdstart %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
+
+	if (!device_is_active(wd->sc_dev))
+		return;
+
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */

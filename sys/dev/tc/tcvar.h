@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.24 2009/05/12 14:47:04 cegger Exp $ */
+/* $NetBSD: tcvar.h,v 1.24.4.1 2011/03/05 20:54:09 rmind Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/bus.h>
+#include <sys/device.h>
 #include <dev/tc/tcreg.h>
 
 /*

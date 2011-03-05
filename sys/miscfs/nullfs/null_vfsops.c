@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.79.4.2 2010/07/03 01:19:58 rmind Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.79.4.3 2011/03/05 20:55:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.79.4.2 2010/07/03 01:19:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.79.4.3 2011/03/05 20:55:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct null_args *args = data;
 	struct null_mount *nmp;
 	struct layer_mount *lmp;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int error;
 
@@ -123,11 +124,17 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return EOPNOTSUPP;
 
 	/* Find the lower vnode and lock it. */
-	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE, args->la.target);
+	error = pathbuf_copyin(args->la.target, &pb);
+	if (error) {
+		return error;
+	}
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, pb);
 	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
 		return error;
 	}
 	lowerrootvp = nd.ni_vp;
+	pathbuf_destroy(pb);
 
 	/* Create the mount point. */
 	nmp = malloc(sizeof(struct null_mount), M_UFSMNT, M_WAITOK | M_ZERO);

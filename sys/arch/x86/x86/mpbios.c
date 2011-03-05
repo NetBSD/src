@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.56.4.1 2010/05/30 05:17:13 rmind Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.56.4.2 2011/03/05 20:52:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.56.4.1 2010/05/30 05:17:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.56.4.2 2011/03/05 20:52:31 rmind Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -717,6 +717,7 @@ mpbios_cpu(const uint8_t *ent, device_t self)
 	else
 		caa.cpu_role = CPU_ROLE_AP;
 
+	caa.cpu_id = entry->apic_id;
 	caa.cpu_number = entry->apic_id;
 	caa.cpu_func = &mp_cpu_funcs;
 	locs[CPUBUSCF_APID] = caa.cpu_number;

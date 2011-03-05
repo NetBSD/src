@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.4 2008/12/30 05:43:14 matt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.4.6.1 2011/03/05 20:49:39 rmind Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,6 +56,8 @@ void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
 void	intr_disestablish(void *);
 
 #ifdef _INTR_PRIVATE
+
+#include <sys/evcnt.h>
 
 #ifndef PIC_MAXPICS
 #define PIC_MAXPICS	32

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.29 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.29.4.1 2011/03/05 20:53:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.29 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.29.4.1 2011/03/05 20:53:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ static int  cmdide_match(device_t, cfdata_t, void *);
 static void cmdide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(cmdide, sizeof(struct pciide_softc),
-    cmdide_match, cmdide_attach, NULL, NULL);
+    cmdide_match, cmdide_attach, pciide_detach, NULL);
 
 static void cmd_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void cmd0643_9_chip_map(struct pciide_softc*, struct pci_attach_args*);
@@ -124,7 +124,6 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
     int channel)
 {
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
-	bus_size_t cmdsize, ctlsize;
 	u_int8_t ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CTRL);
 	int interface, one_channel;
 
@@ -194,7 +193,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 		return;
 	}
 
-	pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize, cmd_pci_intr);
+	pciide_mapchan(pa, cp, interface, cmd_pci_intr);
 }
 
 static int
@@ -499,7 +498,6 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
     int channel)
 {
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
-	bus_size_t cmdsize, ctlsize;
 	int interface, i, reg;
 	static const u_int8_t init_val[] =
 	    {             0x8a, 0x32, 0x8a, 0x32, 0x8a, 0x32,
@@ -541,7 +539,7 @@ cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	    (interface & PCIIDE_INTERFACE_PCI(channel)) ?
 	    "native-PCI" : "compatibility");
 
-	pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize, pciide_pci_intr);
+	pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.6.100.1 2010/07/03 01:19:19 rmind Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.6.100.2 2011/03/05 20:50:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.6.100.1 2010/07/03 01:19:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.6.100.2 2011/03/05 20:50:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>
@@ -209,7 +209,7 @@ kgdb_signal(int type)
 	KGDB_MOVEREG(57, tf_hptm);	/* cr24 - DDB */	\
 	KGDB_MOVEREG(58, tf_vtop);	/* cr25 - DDB */	\
 	/* 59 should be cr26, which we don't have available */	\
-	/* 60 should be cr27, which we don't have available */	\
+	KGDB_MOVEREG(60, tf_cr27);	/*      - DDB */	\
 	KGDB_MOVEREG(61, tf_cr28);	/*      - DDB */	\
 	/* 62 should be cr29, which we don't have available */	\
 	KGDB_MOVEREG(63, tf_cr30)	/* uaddr */

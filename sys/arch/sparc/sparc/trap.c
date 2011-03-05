@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.181.4.1 2010/05/30 05:17:07 rmind Exp $ */
+/*	$NetBSD: trap.c,v 1.181.4.2 2011/03/05 20:52:03 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.181.4.1 2010/05/30 05:17:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.181.4.2 2011/03/05 20:52:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.181.4.1 2010/05/30 05:17:07 rmind Exp $")
 #include <machine/ctlreg.h>
 #include <machine/trap.h>
 #include <machine/instr.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/userret.h>
 
@@ -229,7 +230,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
-	uvmexp.traps++;	/* XXXSMP */
+	curcpu()->ci_data.cpu_ntrap++;
 	/*
 	 * Generally, kernel traps cause a panic.  Any exceptions are
 	 * handled early here.
@@ -477,7 +478,7 @@ badtrap:
 					panic("FPU(%d): state for %p",
 							cpi->ci_cpuid, l);
 #if defined(MULTIPROCESSOR)
-				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+				XCALL1(ipi_savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 				cpi->fplwp = NULL;
 			}
@@ -786,7 +787,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	char bits[64];
 	ksiginfo_t ksi;
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	p = l->l_proc;
 	pcb = lwp_getpcb(l);
@@ -1005,7 +1006,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	char bits[64];
 	ksiginfo_t ksi;
 
-	uvmexp.traps++;	/* XXXSMP */
+	curcpu()->ci_data.cpu_ntrap++;
 
 	l = curlwp;
 	p = l->l_proc;

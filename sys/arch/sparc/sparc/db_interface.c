@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.86 2010/01/10 08:24:32 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.86.4.1 2011/03/05 20:52:02 rmind Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.86 2010/01/10 08:24:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.86.4.1 2011/03/05 20:52:02 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.86 2010/01/10 08:24:32 mrg Exp $"
 
 #include <dev/cons.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/db_machdep.h>
 
@@ -201,6 +201,7 @@ void db_dump_pcb(db_expr_t, bool, db_expr_t, const char *);
 void db_uvmhistdump(db_expr_t, bool, db_expr_t, const char *);
 #ifdef MULTIPROCESSOR
 void db_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_xcall_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 void db_page_cmd(db_expr_t, bool, db_expr_t, const char *);
 
@@ -447,7 +448,6 @@ db_page_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 }
 
 #if defined(MULTIPROCESSOR)
-extern void cpu_debug_dump(void); /* XXX */
 
 void
 db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
@@ -482,6 +482,12 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	ddb_cpuinfo = ci;
 }
 
+void
+db_xcall_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	cpu_xcall_dump();
+}
+
 #endif /* MULTIPROCESSOR */
 
 const struct db_command db_machine_command_table[] = {
@@ -500,6 +506,8 @@ const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
 	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,
 	  "switch to another cpu's registers", "cpu-no", NULL) },
+	{ DDB_ADD_CMD("xcall",	db_xcall_cmd,	0,
+	  "show xcall information on all cpus", NULL, NULL) },
 #endif
 	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
 };

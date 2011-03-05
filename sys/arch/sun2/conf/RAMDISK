@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.44.6.1 2010/05/30 05:17:09 rmind Exp $
+# $NetBSD: RAMDISK,v 1.44.6.2 2011/03/05 20:52:10 rmind Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -195,7 +195,7 @@ xyc1	at vme0 addr 0xee48 irq 2 vect 0x49
 xy*	at xyc? drive ?
 
 ## Memory-disk device.
-pseudo-device	md		1
+pseudo-device	md		
 
 #### Network interfaces.
 

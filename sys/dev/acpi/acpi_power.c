@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.12.2.3 2010/07/03 01:19:34 rmind Exp $ */
+/* $NetBSD: acpi_power.c,v 1.12.2.4 2011/03/05 20:53:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12.2.3 2010/07/03 01:19:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12.2.4 2011/03/05 20:53:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12.2.3 2010/07/03 01:19:34 rmind Ex
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_power.h>
 
 #define _COMPONENT			ACPI_BUS_COMPONENT
@@ -99,7 +100,8 @@ struct acpi_power_res {
 static TAILQ_HEAD(, acpi_power_res) res_head =
 	TAILQ_HEAD_INITIALIZER(res_head);
 
-static const struct sysctlnode	*anode = NULL;
+static int32_t acpi_power_acpinode = CTL_EOL;
+static int32_t acpi_power_powernode = CTL_EOL;
 
 static struct acpi_power_res	*acpi_power_res_init(ACPI_HANDLE);
 static struct acpi_power_res	*acpi_power_res_get(ACPI_HANDLE);
@@ -115,7 +117,7 @@ static ACPI_STATUS	 acpi_power_res_deref(struct acpi_power_res *,
 static ACPI_STATUS	 acpi_power_res_sta(ACPI_OBJECT *, void *);
 
 static ACPI_OBJECT	*acpi_power_pkg_get(ACPI_HANDLE, int);
-static int		 acpi_power_sysctl(SYSCTLFN_ARGS);
+static int		 acpi_power_sysctl(SYSCTLFN_PROTO);
 static const char	*acpi_xname(ACPI_HANDLE);
 
 static struct acpi_power_res *
@@ -200,14 +202,6 @@ acpi_power_res_get(ACPI_HANDLE hdl)
 bool
 acpi_power_register(ACPI_HANDLE hdl)
 {
-	struct acpi_devnode *ad = acpi_get_node(hdl);
-
-	if (ad == NULL)
-		return false;
-
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0)
-		return false;
-
 	return true;
 }
 
@@ -218,9 +212,6 @@ acpi_power_deregister(ACPI_HANDLE hdl)
 	struct acpi_power_res *res;
 
 	if (ad == NULL)
-		return;
-
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0)
 		return;
 
 	/*
@@ -242,16 +233,10 @@ acpi_power_get(ACPI_HANDLE hdl, int *state)
 	if (ad == NULL)
 		return false;
 
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
-		rv = AE_SUPPORT;
-		goto fail;
-	}
-
 	/*
-	 * Because the _PSC control method, like _STA,
-	 * is known to be implemented incorrectly in
-	 * some systems, we first try to retrieve the
-	 * power state indirectly via power resources.
+	 * As _PSC may be broken, first try to
+	 * retrieve the power state indirectly
+	 * via power resources.
 	 */
 	rv = acpi_power_get_indirect(ad);
 
@@ -279,8 +264,8 @@ fail:
 	if (state != NULL)
 		*state = ad->ad_state;
 
-	aprint_error_dev(ad->ad_root, "failed to get power state "
-	    "for %s: %s\n", ad->ad_name, AcpiFormatException(rv));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "failed to get power state "
+		"for %s: %s\n", ad->ad_name, AcpiFormatException(rv)));
 
 	return false;
 }
@@ -362,11 +347,6 @@ acpi_power_set(ACPI_HANDLE hdl, int state)
 
 	if (ad == NULL)
 		return false;
-
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
-		rv = AE_SUPPORT;
-		goto fail;
-	}
 
 	if (state < ACPI_STATE_D0 || state > ACPI_STATE_D3) {
 		rv = AE_BAD_PARAMETER;
@@ -691,6 +671,7 @@ fail:
 
 SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 {
+	const struct sysctlnode *anode;
 	int err;
 
 	err = sysctl_createv(NULL, 0, NULL, &anode,
@@ -699,7 +680,7 @@ SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 	    CTL_HW, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
 
 	err = sysctl_createv(NULL, 0, &anode, &anode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
@@ -707,7 +688,9 @@ SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
+
+	acpi_power_acpinode = anode->sysctl_num;
 
 	err = sysctl_createv(NULL, 0, &anode, &anode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
@@ -716,38 +699,46 @@ SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
 
-	return;
-
-fail:
-	anode = NULL;
+	acpi_power_powernode = anode->sysctl_num;
 }
 
 void
 acpi_power_add(struct acpi_devnode *ad)
 {
+	const char *str = NULL;
+	device_t dev;
 	int err;
 
 	KASSERT(ad != NULL && ad->ad_root != NULL);
 	KASSERT((ad->ad_flags & ACPI_DEVICE_POWER) != 0);
 
-	if (anode == NULL)
+	if (acpi_power_acpinode == CTL_EOL ||
+	    acpi_power_powernode == CTL_EOL)
 		return;
 
-	/*
-	 * Make this read-only: because a single power resource
-	 * may power multiple devices, it is unclear whether
-	 * power resources should be controllable by an user.
-	 */
-	err = sysctl_createv(NULL, 0, &anode, NULL,
-	    CTLFLAG_READONLY, CTLTYPE_STRING, ad->ad_name,
-	    NULL, acpi_power_sysctl, 0, ad, 0,
+	if (ad->ad_device != NULL)
+		str = device_xname(ad->ad_device);
+	else {
+		dev = acpi_pcidev_find_dev(ad);
+
+		if (dev != NULL)
+			str = device_xname(dev);
+	}
+
+	if (str == NULL)
+		return;
+
+	err = sysctl_createv(NULL, 0, NULL, NULL,
+	    CTLFLAG_READONLY, CTLTYPE_STRING, str,
+	    NULL, acpi_power_sysctl, 0, ad, 0, CTL_HW,
+	    acpi_power_acpinode, acpi_power_powernode,
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		aprint_error_dev(ad->ad_root, "sysctl_createv"
-		    "(hw.acpi.power.%s) failed (err %d)\n", ad->ad_name, err);
+		    "(hw.acpi.power.%s) failed (err %d)\n", str, err);
 }
 
 static int

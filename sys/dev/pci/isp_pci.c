@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.110.4.1 2010/05/30 05:17:36 rmind Exp $ */
+/* $NetBSD: isp_pci.c,v 1.110.4.2 2011/03/05 20:53:46 rmind Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.110.4.1 2010/05/30 05:17:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.110.4.2 2011/03/05 20:53:46 rmind Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#include <uvm/uvm_extern.h>
 #include <sys/reboot.h>
 
 static uint32_t isp_pci_rd_reg(struct ispsoftc *, int);
@@ -131,6 +130,8 @@ static int isp_pci_intr(void *);
 #define	ISP_2400_RISC_CODE	NULL
 #define	ISP_2500_RISC_CODE	NULL
 #else
+#define	ISP_2500
+#define	ISP_2400
 #define	ISP_2400_RISC_CODE	(const uint32_t *) isp_2400_risc_code
 #define	ISP_2500_RISC_CODE	(const uint32_t *) isp_2500_risc_code
 #include <dev/microcode/isp/asm_2400.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.9.2.1 2010/05/30 05:16:43 rmind Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.9.2.2 2011/03/05 20:50:15 rmind Exp $
 #
 # VIRTEX_DFC
 #
@@ -145,8 +145,6 @@ options 	WSDISPLAY_COMPAT_USL 	# VT handling
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_VT220L8x16
 #options 	SPLASHSCREEN
-#options 	SPLASHSCREEN_PROGRESS
-#options 	SPLASHSCREEN_IMAGE="\"dev/splash/images/netbsd-small.h\""
 
 # Kernel root file system and dump configuration.
 #config		netbsd	root on ? type ?
@@ -176,7 +174,7 @@ wsmouse* 	at pms? mux 0
 makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

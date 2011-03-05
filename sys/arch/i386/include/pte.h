@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.21.2.1 2010/05/30 05:16:54 rmind Exp $	*/
+/*	$NetBSD: pte.h,v 1.21.2.2 2011/03/05 20:50:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,6 @@
  */
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -48,12 +47,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -218,7 +211,9 @@ typedef uint32_t pt_entry_t;		/* PTE */
 /* macros to get real L2 and L3 index, from our "extended" L2 index */
 #define l2tol3(idx)	((idx) >> (L3_SHIFT - L2_SHIFT))
 #define l2tol2(idx)	((idx) & (L2_REALMASK >>  L2_SHIFT))
+
 #else /* PAE */
+
 #define	L1_SHIFT	12
 #define	L2_SHIFT	22
 #define	NBPD_L1		(1UL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
@@ -245,14 +240,17 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define	PG_RW		0x00000002	/* read-write page */
 #define	PG_u		0x00000004	/* user accessible page */
 #define	PG_PROT		0x00000806	/* all protection bits */
-#define	PG_N		0x00000018	/* non-cacheable */
+#define PG_WT		0x00000008	/* write through */
+#define	PG_N		0x00000010	/* non-cacheable */
 #define	PG_U		0x00000020	/* has been used */
 #define	PG_M		0x00000040	/* has been modified */
-#define PG_PS		0x00000080	/* 4MB page size */
+#define PG_PAT		0x00000080	/* PAT (on pte) */
+#define PG_PS		0x00000080	/* 4MB page size (2MB for PAE) */
 #define PG_G		0x00000100	/* global, don't TLB flush */
 #define PG_AVAIL1	0x00000200	/* ignored by hardware */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
+#define PG_LGPAT	0x00001000	/* PAT on large pages */
 
 /*
  * various short-hand protection codes
@@ -262,18 +260,11 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define	PG_KW		0x00000002	/* kernel read-write */
 
 #ifdef PAE
-#define	PG_NX		0x8000000000000000 /* No-execute */
+#define	PG_NX		0x8000000000000000ULL /* No-execute */
 #else
 #define	PG_NX		0		/* dummy */
 #endif
 
-/*
- * page protection exception bits
- */
-
-#define PGEX_P		0x01	/* protection violation (vs. no mapping) */
-#define PGEX_W		0x02	/* exception during a write cycle */
-#define PGEX_U		0x04	/* exception while in user mode (upl) */
-#define PGEX_X		0x10	/* exception during instruction fetch */
+#include <x86/pte.h>
 
 #endif /* _I386_PTE_H_ */

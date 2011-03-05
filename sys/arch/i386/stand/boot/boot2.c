@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.48 2010/02/08 21:25:32 hubertf Exp $	*/
+/*	$NetBSD: boot2.c,v 1.48.2.1 2011/03/05 20:50:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 int errno;
 
 int boot_biosdev;
-u_int boot_biossector;
+daddr_t boot_biossector;
 
 static const char * const names[][2] = {
 	{ "netbsd", "netbsd.gz" },
@@ -112,7 +112,7 @@ static const char *default_filename;
 char *sprint_bootsel(const char *);
 void bootit(const char *, int, int);
 void print_banner(void);
-void boot2(int, u_int);
+void boot2(int, uint64_t);
 
 void	command_help(char *);
 void	command_ls(char *);
@@ -135,6 +135,7 @@ const struct bootblk_command commands[] = {
 	{ "load",	module_add },
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
+	{ "splash",	splash_add },
 	{ NULL,		NULL },
 };
 
@@ -276,7 +277,7 @@ print_banner(void)
  * biossector: Sector number of the NetBSD partition
  */
 void
-boot2(int biosdev, u_int biossector)
+boot2(int biosdev, uint64_t biossector)
 {
 	extern char twiddle_toggle;
 	int currname;
@@ -386,8 +387,8 @@ command_help(char *arg)
 	       "ls [path]\n"
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
-	       "vesa {enabled|disabled|list|modenum}\n"
-	       "modules {enabled|disabled}\n"
+	       "vesa {modenum|on|off|enabled|disabled|list}\n"
+	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "help|?\n"
@@ -414,7 +415,6 @@ command_quit(char *arg)
 	reboot();
 	/* Note: we shouldn't get to this point! */
 	panic("Could not reboot!");
-	exit(0);
 }
 
 void

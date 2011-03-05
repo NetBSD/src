@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.684.2.2 2010/05/30 05:16:53 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.684.2.3 2011/03/05 20:50:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.2 2010/05/30 05:16:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.3 2011/03/05 20:50:40 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.2 2010/05/30 05:16:53 rmind Exp 
 #include <dev/cons.h>
 #include <dev/mm.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>
@@ -252,6 +252,7 @@ int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
 
 int	i386_use_fxsave;
+int	i386_use_pae = 0;
 int	i386_has_sse;
 int	i386_has_sse2;
 
@@ -322,7 +323,7 @@ int	biosmem_implicit;
  * boot loader.  Only be used by native_loader(). */
 struct bootinfo_source {
 	uint32_t bs_naddrs;
-	paddr_t bs_addrs[1]; /* Actually longer. */
+	void *bs_addrs[1]; /* Actually longer. */
 };
 
 /* Only called by locore.h; no need to be in a header file. */
@@ -386,10 +387,10 @@ native_loader(int bl_boothowto, int bl_bootdev,
 		for (i = 0; i < bl_bootinfo->bs_naddrs; i++) {
 			struct btinfo_common *bc;
 
-			bc = (struct btinfo_common *)(bl_bootinfo->bs_addrs[i]);
+			bc = bl_bootinfo->bs_addrs[i];
 
-			if ((paddr_t)(data + bc->len) >
-			    (paddr_t)(&bidest->bi_data[0] + BOOTINFO_MAXSIZE))
+			if ((data + bc->len) >
+			    (&bidest->bi_data[0] + BOOTINFO_MAXSIZE))
 				break;
 
 			memcpy(data, bc, bc->len);
@@ -505,6 +506,8 @@ cpu_startup(void)
 	cpu_init_tss(&cpu_info_primary);
 	ltr(cpu_info_primary.ci_tss_sel);
 #endif
+
+	x86_startup();
 }
 
 /*
@@ -692,6 +695,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_QUAD, "tsc_freq", NULL,
 		       NULL, 0, &tsc_freq, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "pae", 
+		       SYSCTL_DESCR("Whether the kernel uses PAE"),
+		       NULL, 0, &i386_use_pae, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void *
@@ -857,7 +866,9 @@ cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
 	struct lwp *l;
+	int s;
 
+	s = IPL_NONE;
 	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
 	if (cold) {
@@ -901,7 +912,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	pmf_system_shutdown(boothowto);
 
-	splhigh();
+	s = splhigh();
 haltsys:
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -916,10 +927,10 @@ haltsys:
 		}
 #endif
 #if NACPICA > 0
-		if (acpi_softc != NULL) {
-			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
-			printf("WARNING: ACPI powerdown failed!\n");
-		}
+		if (s != IPL_NONE)
+			splx(s);
+
+		acpi_enter_sleep_state(ACPI_STATE_S5);
 #endif
 #if NAPMBIOS > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
@@ -944,7 +955,7 @@ haltsys:
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0
-		AcpiDisable();
+		acpi_disable();
 #endif
 
 		printf("\n");
@@ -1025,7 +1036,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)l->l_proc->p_psstr;
+	tf->tf_ebx = l->l_proc->p_psstrp;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;
@@ -1185,7 +1196,7 @@ init386_msgbuf(void)
  search_again:
 	vps = NULL;
 	for (x = 0; x < vm_nphysseg; ++x) {
-		vps = &vm_physmem[x];
+		vps = VM_PHYSMEM_PTR(x);
 		if (ctob(vps->avail_end) == avail_end) {
 			break;
 		}
@@ -1205,13 +1216,13 @@ init386_msgbuf(void)
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
 		for (--vm_nphysseg; x < vm_nphysseg; x++)
-			vm_physmem[x] = vm_physmem[x + 1];
+			VM_PHYSMEM_PTR_SWAP(x, x + 1);
 	}
 
 	/* Now find where the new avail_end is. */
 	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-		if (vm_physmem[x].avail_end > avail_end)
-			avail_end = vm_physmem[x].avail_end;
+		if (VM_PHYSMEM_PTR(x)->avail_end > avail_end)
+			avail_end = VM_PHYSMEM_PTR(x)->avail_end;
 	avail_end = ctob(avail_end);
 
 	if (sz == reqsz)
@@ -1238,7 +1249,7 @@ init386_pte0(void)
 
 	paddr = 4 * PAGE_SIZE;
 	vaddr = (vaddr_t)vtopte(0);
-	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE, 0);
+	pmap_kenter_pa(vaddr, paddr, VM_PROT_ALL, 0);
 	pmap_update(pmap_kernel());
 	/* make sure it is clean before using */
 	memset((void *)vaddr, 0, PAGE_SIZE);
@@ -1304,16 +1315,28 @@ init386(paddr_t first_avail)
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
+#ifdef PAE
+	i386_use_pae = 1;
+#endif
+
 #ifdef XEN
-	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
+	pcb->pcb_cr3 = PDPpaddr;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
-	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
+	    PDPpaddr, xpmap_ptom(PDPpaddr)));
 	XENPRINTK(("lwp0uarea %p first_avail %p\n",
 	    lwp0uarea, (void *)(long)first_avail));
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 	    (void *)atdevbase));
 #endif
 
+#if defined(PAE) && !defined(XEN)
+	/*
+	 * Save VA and PA of L3 PD of boot processor (for Xen, this is done
+	 * in xen_pmap_bootstrap())
+	 */
+	cpu_info_primary.ci_pae_l3_pdirpa = rcr3();
+	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
+#endif /* PAE && !XEN */
 
 #ifdef XBOX
 	/*
@@ -1348,7 +1371,7 @@ init386(paddr_t first_avail)
 #endif
 
 	/*
-	 * Initailize PAGE_SIZE-dependent variables.
+	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	uvm_setpagesize();
 
@@ -1459,6 +1482,9 @@ init386(paddr_t first_avail)
 		       VM_PROT_ALL, 0);		/* protection */
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
+
+	/* Needed early, for bioscall() and kvm86_call() */
+	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
 #endif /* !XEN */
 
@@ -1731,6 +1757,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -1820,6 +1849,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_esp    = gr[_REG_UESP];
 		tf->tf_ss     = gr[_REG_SS];
 	}
+
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 #if NNPX > 0
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.16.4.1 2010/05/30 05:18:07 rmind Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.16.4.2 2011/03/05 20:56:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,11 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.16.4.1 2010/05/30 05:18:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.16.4.2 2011/03/05 20:56:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
 #include <sys/fcntl.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
@@ -68,35 +69,19 @@ static void	virtif_stop(struct ifnet *, int);
 struct virtif_sc {
 	struct ethercom sc_ec;
 	int sc_tapfd;
-	kmutex_t sc_sendmtx;
-	kcondvar_t sc_sendcv;
+	bool sc_dying;
+	struct lwp *sc_l_snd, *sc_l_rcv;
+	kmutex_t sc_mtx;
+	kcondvar_t sc_cv;
 };
 
-static void virtif_worker(void *);
+static void virtif_receiver(void *);
 static void virtif_sender(void *);
+static int  virtif_clone(struct if_clone *, int);
+static int  virtif_unclone(struct ifnet *);
 
-#if 0
-/*
- * Create a socket and call ifioctl() to configure the interface.
- * This trickles down to virtif_ioctl().
- */
-static int
-configaddr(struct ifnet *ifp, struct ifaliasreq *ia)
-{
-	struct socket *so;
-	int error;
-
-	strcpy(ia->ifra_name, ifp->if_xname);
-	error = socreate(ia->ifra_addr.sa_family, &so, SOCK_DGRAM,
-	    0, curlwp, NULL);
-	if (error)
-		return error;
-	error = ifioctl(so, SIOCAIFADDR, ia, curlwp);
-	soclose(so);
-
-	return error;
-}
-#endif
+struct if_clone virtif_cloner =
+    IF_CLONE_INITIALIZER(VIRTIF_BASE, virtif_clone, virtif_unclone);
 
 int
 rump_virtif_create(int num)
@@ -105,35 +90,103 @@ rump_virtif_create(int num)
 	struct ifnet *ifp;
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
 	char tapdev[16];
-	int fd, error;
+	int fd, error = 0;
+
+	if (num >= 0x100)
+		return E2BIG;
 
 	snprintf(tapdev, sizeof(tapdev), "/dev/tap%d", num);
 	fd = rumpuser_open(tapdev, O_RDWR, &error);
 	if (fd == -1) {
-		printf("virtif_create: can't open /dev/tap %d\n", error);
+		printf("virtif_create: can't open /dev/tap%d: %d\n",
+		    num, error);
 		return error;
 	}
-	KASSERT(num < 0x100);
 	enaddr[2] = arc4random() & 0xff;
 	enaddr[5] = num;
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
+	sc->sc_dying = false;
 	sc->sc_tapfd = fd;
 
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_cv, "virtsnd");
 	ifp = &sc->sc_ec.ec_if;
 	sprintf(ifp->if_xname, "%s%d", VIRTIF_BASE, num);
 	ifp->if_softc = sc;
+
+	if (rump_threads) {
+		if ((error = kthread_create(PRI_NONE, KTHREAD_JOINABLE, NULL,
+		    virtif_receiver, ifp, &sc->sc_l_rcv, "virtifr")) != 0)
+			goto out;
+
+		if ((error = kthread_create(PRI_NONE,
+		    KTHREAD_JOINABLE | KTHREAD_MPSAFE, NULL,
+		    virtif_sender, ifp, &sc->sc_l_snd, "virtifs")) != 0)
+			goto out;
+	} else {
+		printf("WARNING: threads not enabled, receive NOT working\n");
+	}
+
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = virtif_init;
 	ifp->if_ioctl = virtif_ioctl;
 	ifp->if_start = virtif_start;
 	ifp->if_stop = virtif_stop;
-
-	mutex_init(&sc->sc_sendmtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sc->sc_sendcv, "virtsnd");
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+
+ out:
+	if (error) {
+		virtif_unclone(ifp);
+	}
+
+	return error;
+}
+
+static int
+virtif_clone(struct if_clone *ifc, int unit)
+{
+
+	return rump_virtif_create(unit);
+}
+
+static int
+virtif_unclone(struct ifnet *ifp)
+{
+	struct virtif_sc *sc = ifp->if_softc;
+
+	mutex_enter(&sc->sc_mtx);
+	if (sc->sc_dying) {
+		mutex_exit(&sc->sc_mtx);
+		return EINPROGRESS;
+	}
+	sc->sc_dying = true;
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_mtx);
+
+	virtif_stop(ifp, 1);
+	if_down(ifp);
+
+	if (sc->sc_l_snd) {
+		kthread_join(sc->sc_l_snd);
+		sc->sc_l_snd = NULL;
+	}
+	if (sc->sc_l_rcv) {
+		kthread_join(sc->sc_l_rcv);
+		sc->sc_l_rcv = NULL;
+	}
+
+	rumpuser_close(sc->sc_tapfd, NULL);
+
+	mutex_destroy(&sc->sc_mtx);
+	cv_destroy(&sc->sc_cv);
+	kmem_free(sc, sizeof(*sc));
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
 
 	return 0;
 }
@@ -141,24 +194,13 @@ rump_virtif_create(int num)
 static int
 virtif_init(struct ifnet *ifp)
 {
-	int rv;
+	struct virtif_sc *sc = ifp->if_softc;
 
-	if (rump_threads) {
-		rv = kthread_create(PRI_NONE, 0, NULL, virtif_worker, ifp,
-		    NULL, "virtifi");
-		/* XXX: should do proper cleanup */
-		if (rv) {
-			panic("if_virt: can't create worker");
-		}
-		rv = kthread_create(PRI_NONE, 0, NULL, virtif_sender, ifp,
-		    NULL, "virtifs");
-		if (rv) {
-			panic("if_virt: can't create sender");
-		}
-	} else {
-		printf("WARNING: threads not enabled, receive NOT working\n");
-	}
 	ifp->if_flags |= IFF_RUNNING;
+
+	mutex_enter(&sc->sc_mtx);
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_mtx);
 	
 	return 0;
 }
@@ -183,60 +225,84 @@ virtif_start(struct ifnet *ifp)
 {
 	struct virtif_sc *sc = ifp->if_softc;
 
-	mutex_enter(&sc->sc_sendmtx);
-	cv_signal(&sc->sc_sendcv);
-	mutex_exit(&sc->sc_sendmtx);
+	mutex_enter(&sc->sc_mtx);
+	ifp->if_flags |= IFF_OACTIVE;
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_mtx);
 }
 
 static void
 virtif_stop(struct ifnet *ifp, int disable)
 {
+	struct virtif_sc *sc = ifp->if_softc;
 
-	panic("%s: unimpl", __func__);
+	ifp->if_flags &= ~IFF_RUNNING;
+
+	mutex_enter(&sc->sc_mtx);
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_mtx);
 }
 
+#define POLLTIMO_MS 1
 static void
-virtif_worker(void *arg)
+virtif_receiver(void *arg)
 {
 	struct ifnet *ifp = arg;
 	struct virtif_sc *sc = ifp->if_softc;
 	struct mbuf *m;
 	size_t plen = ETHER_MAX_LEN_JUMBO+1;
+	struct pollfd pfd;
 	ssize_t n;
-	int error;
+	int error, rv;
+
+	pfd.fd = sc->sc_tapfd;
+	pfd.events = POLLIN;
 
 	for (;;) {
 		m = m_gethdr(M_WAIT, MT_DATA);
 		MEXTMALLOC(m, plen, M_WAIT);
 
  again:
-		n = rumpuser_read(sc->sc_tapfd, mtod(m, void *), plen, &error);
-		KASSERT(n < ETHER_MAX_LEN_JUMBO);
-		if (n <= 0) {
-			/*
-			 * work around tap bug: /dev/tap is opened in
-			 * non-blocking mode if it previously was
-			 * non-blocking.
-			 */
-			if (n == -1 && error == EAGAIN) {
-				struct pollfd pfd;
-
-				pfd.fd = sc->sc_tapfd;
-				pfd.events = POLLIN;
-
-				rumpuser_poll(&pfd, 1, INFTIM, &error);
-				goto again;
-			}
+		/* poll, but periodically check if we should die */
+		rv = rumpuser_poll(&pfd, 1, POLLTIMO_MS, &error);
+		if (sc->sc_dying) {
 			m_freem(m);
 			break;
 		}
+		if (rv == 0)
+			goto again;
+
+		n = rumpuser_read(sc->sc_tapfd, mtod(m, void *), plen, &error);
+		KASSERT(n < ETHER_MAX_LEN_JUMBO);
+		if (__predict_false(n < 0)) {
+			if (n == -1 && error == EAGAIN) {
+				goto again;
+			}
+
+			printf("%s: read from /dev/tap failed. host if down?\n",
+			    ifp->if_xname);
+			mutex_enter(&sc->sc_mtx);
+			/* could check if need go, done soon anyway */
+			cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz);
+			mutex_exit(&sc->sc_mtx);
+			goto again;
+		}
+
+		/* tap sometimes returns EOF.  don't sweat it and plow on */
+		if (__predict_false(n == 0))
+			goto again;
+
+		/* discard if we're not up */
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			goto again;
+
 		m->m_len = m->m_pkthdr.len = n;
 		m->m_pkthdr.rcvif = ifp;
 		bpf_mtap(ifp, m);
 		ether_input(ifp, m);
 	}
 
-	panic("virtif_workin is a lazy boy %d\n", error);
+	kthread_exit(0);
 }
 
 /* lazy bum stetson-harrison magic value */
@@ -250,14 +316,20 @@ virtif_sender(void *arg)
 	struct rumpuser_iovec io[LB_SH];
 	int i, error;
 
-	mutex_enter(&sc->sc_sendmtx);
-	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m0);
-		if (!m0) {
-			cv_wait(&sc->sc_sendcv, &sc->sc_sendmtx);
+	mutex_enter(&sc->sc_mtx);
+	KERNEL_LOCK(1, NULL);
+	while (!sc->sc_dying) {
+		if (!ifp->if_flags & IFF_RUNNING) {
+			cv_wait(&sc->sc_cv, &sc->sc_mtx);
 			continue;
 		}
-		mutex_exit(&sc->sc_sendmtx);
+		IF_DEQUEUE(&ifp->if_snd, m0);
+		if (!m0) {
+			ifp->if_flags &= ~IFF_OACTIVE;
+			cv_wait(&sc->sc_cv, &sc->sc_mtx);
+			continue;
+		}
+		mutex_exit(&sc->sc_mtx);
 
 		m = m0;
 		for (i = 0; i < LB_SH && m; i++) {
@@ -268,12 +340,19 @@ virtif_sender(void *arg)
 		if (i == LB_SH)
 			panic("lazy bum");
 		bpf_mtap(ifp, m0);
-		rumpuser_writev(sc->sc_tapfd, io, i, &error);
-		m_freem(m0);
-		mutex_enter(&sc->sc_sendmtx);
-	}
+		KERNEL_UNLOCK_LAST(curlwp);
 
-	mutex_exit(softnet_lock);
+		rumpuser_writev(sc->sc_tapfd, io, i, &error);
+
+		KERNEL_LOCK(1, NULL);
+		m_freem(m0);
+		mutex_enter(&sc->sc_mtx);
+	}
+	KERNEL_UNLOCK_LAST(curlwp);
+
+	mutex_exit(&sc->sc_mtx);
+
+	kthread_exit(0);
 }
 
 /*

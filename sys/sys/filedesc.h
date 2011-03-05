@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.57 2009/10/27 02:58:28 rmind Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.57.4.1 2011/03/05 20:56:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -211,6 +211,7 @@ struct cwdinfo *cwdinit(void);
 void	cwdshare(proc_t *);
 void	cwdunshare(proc_t *);
 void	cwdfree(struct cwdinfo *);
+void	cwdexec(struct proc *);
 
 #define GETCWD_CHECK_ACCESS 0x0001
 int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,

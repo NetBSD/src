@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.8 2009/11/28 22:11:42 dsl Exp $	*/
+/*	$NetBSD: sockio.h,v 1.8.4.1 2011/03/05 20:52:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -37,6 +37,8 @@
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 
+#include <sys/ioccom.h>
+
 #if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
     defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
     defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
@@ -51,11 +53,6 @@
     defined(MODULAR)
 #define COMPAT_OIFDATA
 #endif
-
-#else /* !_KERNEL_OPT */
-
-#undef COMPAT_OIFREQ
-#undef COMPAT_OIFDATA
 
 #endif /* _KERNEL_OPT */
 

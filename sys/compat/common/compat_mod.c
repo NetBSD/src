@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.11 2010/03/05 16:55:56 pooka Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.11.2.1 2011/03/05 20:52:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.11 2010/03/05 16:55:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.11.2.1 2011/03/05 20:52:38 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.11 2010/03/05 16:55:56 pooka Exp $"
 #include <sys/rwlock.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
-#include <sys/sched.h>	/* for cpuset_t */
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>

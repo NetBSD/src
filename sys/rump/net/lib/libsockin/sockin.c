@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.21.4.1 2010/05/30 05:18:07 rmind Exp $	*/
+/*	$NetBSD: sockin.c,v 1.21.4.2 2011/03/05 20:56:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.21.4.1 2010/05/30 05:18:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.21.4.2 2011/03/05 20:56:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -489,6 +489,10 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			nam->m_len = slen;
 		break;
 	}
+
+	case PRU_CONTROL:
+		error = ENOTTY;
+		break;
 
 	default:
 		panic("sockin_usrreq: IMPLEMENT ME, req %d not supported", req);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.15.4.1 2010/03/16 15:38:18 rmind Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.15.4.2 2011/03/05 20:56:37 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.15.4.1 2010/03/16 15:38:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.15.4.2 2011/03/05 20:56:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -287,8 +287,7 @@ sys_mremap(struct lwp *l, const struct sys_mremap_args *uap, register_t *retval)
 
 	p = l->l_proc;
 	map = &p->p_vmspace->vm_map;
-	error = uvm_mremap(map, oldva, oldsize, map, &newva, newsize, p,
-	    flags);
+	error = uvm_mremap(map, oldva, oldsize, map, &newva, newsize, p, flags);
 
 done:
 	*retval = (error != 0) ? 0 : (register_t)newva;

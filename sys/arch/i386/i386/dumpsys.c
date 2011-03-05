@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.9 2010/02/26 19:25:07 jym Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.9.2.1 2011/03/05 20:50:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.9 2010/02/26 19:25:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.9.2.1 2011/03/05 20:50:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.9 2010/02/26 19:25:07 jym Exp $");
 #include <machine/kcore.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_page.h>
 
 /*
  * Exports, needed by savecore, the debugger or elsewhere in the kernel.
@@ -609,7 +608,6 @@ cpu_dump_mempagecnt(void)
 static int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, void *, size_t);
 	kcore_seg_t seg;
 	cpu_kcore_hdr_t cpuhdr;
 	const struct bdevsw *bdev;
@@ -617,7 +615,6 @@ cpu_dump(void)
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
-	dump = bdev->d_dump;
 
 	/*
 	 * Generate a segment header.
@@ -630,6 +627,8 @@ cpu_dump(void)
 	 * Add the machine-dependent header info.
 	 */
 	cpuhdr.pdppaddr = PDPpaddr;
+	if (i386_use_pae == 1)
+		cpuhdr.pdppaddr |= I386_KCORE_PAE;
 	cpuhdr.nmemsegs = dump_nmemsegs;
 	(void)dump_header_addbytes(&cpuhdr, ALIGN(sizeof(cpuhdr)));
 

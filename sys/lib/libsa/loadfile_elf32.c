@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.25 2010/03/12 21:43:11 darran Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.25.2.1 2011/03/05 20:55:29 rmind Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -263,8 +263,9 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	int i, j;
 	ssize_t sz;
 	int first;
-	paddr_t minp = ~0, maxp = 0, pos = 0;
-	paddr_t offset = marks[MARK_START], shpp, elfp = 0;
+	Elf_Addr shpp;
+	Elf_Addr minp = ~0, maxp = 0, pos = 0, elfp = 0;
+	u_long offset = marks[MARK_START];
 	ssize_t nr;
 	struct __packed {
 		Elf_Nhdr	nh;
@@ -272,10 +273,10 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		uint8_t		desc[ELF_NOTE_NETBSD_DESCSZ];
 	} note;
 	char *shstr = NULL;
-	int boot_load_ctf=1;
+	int boot_load_ctf = 1;
 
 	/* some ports dont use the offset */
-	offset = offset;
+	(void)&offset;
 
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
 
@@ -411,36 +412,40 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 * First load the section names section.
 		 */
 		if (boot_load_ctf && (elf->e_shstrndx != 0)) {
-		    if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
-			SEEK_SET) == -1) {
-			    WARN(("lseek symbols"));
-			    goto freeshp;
-		    }
-		    nr = READ(fd, maxp, shp[elf->e_shstrndx].sh_size);
-		    if (nr == -1) {
-			    WARN(("read symbols"));
-			    goto freeshp;
-		    }
-		    if (nr != (ssize_t)shp[elf->e_shstrndx].sh_size) {
-			    errno = EIO;
-			    WARN(("read symbols"));
-			    goto freeshp;
-		    }
+			if (flags & LOAD_SYM) {
+				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
+				    SEEK_SET) == -1) {
+					WARN(("lseek symbols"));
+					goto freeshp;
+				}
+				nr = READ(fd, maxp,
+				    shp[elf->e_shstrndx].sh_size);
+				if (nr == -1) {
+					WARN(("read symbols"));
+					goto freeshp;
+				}
+				if (nr !=
+				    (ssize_t)shp[elf->e_shstrndx].sh_size) {
+					errno = EIO;
+					WARN(("read symbols"));
+					goto freeshp;
+				}
 
-		    shstr = ALLOC(shp[elf->e_shstrndx].sh_size);
-		    if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
-			SEEK_SET) == -1) {
-			    WARN(("lseek symbols"));
-			    goto freeshp;
-		    }
-		    nr = read(fd, shstr, shp[elf->e_shstrndx].sh_size);
-		    if (nr == -1) {
-			    WARN(("read symbols"));
-			    goto freeshp;
-		    }
-
-		    shp[elf->e_shstrndx].sh_offset = maxp - elfp;
-		    maxp += roundup(shp[elf->e_shstrndx].sh_size, ELFROUND);
+				shstr = ALLOC(shp[elf->e_shstrndx].sh_size);
+				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
+				    SEEK_SET) == -1) {
+					WARN(("lseek symbols"));
+					goto freeshp;
+				}
+				nr = read(fd, shstr,
+				    shp[elf->e_shstrndx].sh_size);
+				if (nr == -1) {
+					WARN(("read symbols"));
+					goto freeshp;
+				}
+			}
+			shp[elf->e_shstrndx].sh_offset = maxp - elfp;
+			maxp += roundup(shp[elf->e_shstrndx].sh_size, ELFROUND);
 		}
 
 		/*

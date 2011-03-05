@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.42.2.3 2010/07/03 01:19:30 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.42.2.4 2011/03/05 20:52:34 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42.2.3 2010/07/03 01:19:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42.2.4 2011/03/05 20:52:34 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42.2.3 2010/07/03 01:19:30 rmind Exp $");
 #include <sys/atomic.h>
 #include <sys/reboot.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -115,12 +115,15 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42.2.3 2010/07/03 01:19:30 rmind Exp $");
 #error cpu_info contains 32bit bitmasks
 #endif
 
-int     cpu_match(device_t, cfdata_t, void *);
-void    cpu_attach(device_t, device_t, void *);
-int     vcpu_match(device_t, cfdata_t, void *);
-void    vcpu_attach(device_t, device_t, void *);
-void    cpu_attach_common(device_t, device_t, void *);
-void	cpu_offline_md(void);
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
+static void	cpu_defer(device_t);
+static int	cpu_rescan(device_t, const char *, const int *);
+static void	cpu_childdetached(device_t, device_t);
+static int	vcpu_match(device_t, cfdata_t, void *);
+static void	vcpu_attach(device_t, device_t, void *);
+static void	cpu_attach_common(device_t, device_t, void *);
+void		cpu_offline_md(void);
 
 struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
@@ -133,8 +136,9 @@ void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
 
-CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(cpu, sizeof(struct cpu_softc),
+    cpu_match, cpu_attach, NULL, NULL, cpu_rescan, cpu_childdetached);
+
 CFATTACH_DECL_NEW(vcpu, sizeof(struct cpu_softc),
     vcpu_match, vcpu_attach, NULL, NULL);
 
@@ -206,21 +210,21 @@ cpu_init_first(void)
 }
 #endif	/* MULTIPROCESSOR */
 
-int
+static int
 cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
-void
+static void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	uintptr_t ptr;
-	static bool again = false;
+	static int nphycpu = 0;
 
 	sc->sc_dev = self;
 
@@ -231,24 +235,24 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
-	 * structure, otherwise use the primary's.
+	 * If we're the first attached CPU use the primary cpu_info,
+	 * otherwise allocate a new one
 	 */
-	if (caa->cpu_role == CPU_ROLE_AP) {
-		if ((boothowto & RB_MD1) != 0) {
-			aprint_error(": multiprocessor boot disabled\n");
-			if (!pmf_device_register(self, NULL, NULL))
-				aprint_error_dev(self,
-				   "couldn't establish power handler\n");
-			return;
-		}
-		aprint_naive(": Application Processor\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
+	if (nphycpu > 0) {
+		struct cpu_info *tmp;
 		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		ci->ci_curldt = -1;
+
+		tmp = phycpu_info_list;
+		while (tmp->ci_next)
+			tmp = tmp->ci_next;
+
+		tmp->ci_next = ci;
 	} else {
-		aprint_naive(": %s Processor\n",
-		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &phycpu_info_primary;
 	}
 
@@ -256,57 +260,59 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
+	ci->ci_acpiid = caa->cpu_id;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
-
-	/*
-	 * Boot processor may not be attached first, but the below
-	 * must be done to allow booting other processors.
-	 */
-	if (!again) {
-		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_PRIMARY);
-		/* Basic init */
-		again = true;
-	}
-
-	printf(": ");
-	switch (caa->cpu_role) {
-	case CPU_ROLE_SP:
-		printf("(uniprocessor)\n");
-		atomic_or_32(&ci->ci_flags, CPUF_SP);
-		break;
-
-	case CPU_ROLE_BP:
-		printf("(boot processor)\n");
-		atomic_or_32(&ci->ci_flags, CPUF_BSP);
-		break;
-
-	case CPU_ROLE_AP:
-		/*
-		 * report on an AP
-		 */
-		printf("(application processor)\n");
-		if (ci->ci_flags & CPUF_PRESENT) {
-			struct cpu_info *tmp;
-
-			tmp = phycpu_info_list;
-			while (tmp->ci_next)
-				tmp = tmp->ci_next;
-
-			tmp->ci_next = ci;
-		}
-		break;
-
-	default:
-		panic("unknown processor type??\n");
-	}
+	ci->ci_index = nphycpu++;
+	ci->ci_cpumask = (1 << cpu_index(ci));
 
 	atomic_or_32(&phycpus_attached, ci->ci_cpumask);
 
-	return;
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	(void)config_defer(self, cpu_defer);
 }
 
-int
+static void
+cpu_defer(device_t self)
+{
+	cpu_rescan(self, NULL, NULL);
+}
+
+static int
+cpu_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpufeature_attach_args cfaa;
+	struct cpu_info *ci = sc->sc_info;
+
+	memset(&cfaa, 0, sizeof(cfaa));
+	cfaa.ci = ci;
+
+	if (ifattr_match(ifattr, "cpufeaturebus")) {
+
+		if (ci->ci_frequency == NULL) {
+			cfaa.name = "frequency";
+			ci->ci_frequency = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+	}
+
+	return 0;
+}
+
+static void
+cpu_childdetached(device_t self, device_t child)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpu_info *ci = sc->sc_info;
+
+	if (ci->ci_frequency == child)
+		ci->ci_frequency = NULL;
+}
+
+static int
 vcpu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct vcpu_attach_args *vcaa = aux;
@@ -316,7 +322,7 @@ vcpu_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-void
+static void
 vcpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct vcpu_attach_args *vcaa = aux;
@@ -359,7 +365,7 @@ cpu_vm_init(struct cpu_info *ci)
 	uvm_page_recolor(ncolors);
 }
 
-void
+static void
 cpu_attach_common(device_t parent, device_t self, void *aux)
 {
 	struct cpu_softc *sc = device_private(self);
@@ -514,6 +520,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 
+	pat_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 #if 0
@@ -577,6 +584,11 @@ cpu_init(struct cpu_info *ci)
 		if (cpu_feature[0] & (CPUID_SSE|CPUID_SSE2))
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
+
+#ifdef __x86_64__
+	/* No user PGD mapped for this CPU yet */
+	ci->ci_xen_current_user_pgd = 0;
+#endif
 
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
@@ -1106,4 +1118,60 @@ x86_cpu_idle_xen(void)
 	} else {
 		x86_enable_intr();
 	}
+}
+
+/*
+ * Loads pmap for the current CPU.
+ */
+void
+cpu_load_pmap(struct pmap *pmap)
+{
+#ifdef i386
+#ifdef PAE
+	int i, s;
+	struct cpu_info *ci;
+
+	s = splvm(); /* just to be safe */
+	ci = curcpu();
+	paddr_t l3_pd = xpmap_ptom_masked(ci->ci_pae_l3_pdirpa);
+	/* don't update the kernel L3 slot */
+	for (i = 0 ; i < PDP_SIZE - 1; i++) {
+		xpq_queue_pte_update(l3_pd + i * sizeof(pd_entry_t),
+		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
+	}
+	splx(s);
+	tlbflush();
+#else /* PAE */
+	lcr3(pmap_pdirpa(pmap, 0));
+#endif /* PAE */
+#endif /* i386 */
+
+#ifdef __x86_64__
+	int i, s;
+	pd_entry_t *old_pgd, *new_pgd;
+	paddr_t addr;
+	struct cpu_info *ci;
+
+	/* kernel pmap always in cr3 and should never go in user cr3 */
+	if (pmap_pdirpa(pmap, 0) != pmap_pdirpa(pmap_kernel(), 0)) {
+		ci = curcpu();
+		/*
+		 * Map user space address in kernel space and load
+		 * user cr3
+		 */
+		s = splvm();
+		new_pgd = pmap->pm_pdir;
+		old_pgd = pmap_kernel()->pm_pdir;
+		addr = xpmap_ptom(pmap_pdirpa(pmap_kernel(), 0));
+		for (i = 0; i < PDIR_SLOT_PTE;
+		    i++, addr += sizeof(pd_entry_t)) {
+			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
+				xpq_queue_pte_update(addr, new_pgd[i]);
+		}
+		tlbflush();
+		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
+		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
+		splx(s);
+	}
+#endif /* __x86_64__ */
 }

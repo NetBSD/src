@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.66.4.4 2010/05/30 05:17:07 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.66.4.5 2011/03/05 20:51:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66.4.4 2010/05/30 05:17:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66.4.5 2011/03/05 20:51:58 rmind Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -104,13 +104,12 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66.4.4 2010/05/30 05:17:07 rmind Ex
 
 #include <sh3/locore.h>
 #include <sh3/cpu.h>
-#include <sh3/reg.h>
+#include <sh3/pcb.h>
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
 #include <sh3/userret.h>
 
 extern void lwp_trampoline(void);
-extern void lwp_setfunc_trampoline(void);
 
 static void sh3_setup_uarea(struct lwp *);
 
@@ -136,6 +135,7 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
     size_t stacksize, void (*func)(void *), void *arg)
 {
+	struct pcb *pcb;
 	struct switchframe *sf;
 
 #if 0 /* FIXME: probably wrong for yamt-idlelwp */
@@ -153,7 +153,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 		l2->l_md.md_regs->tf_r15 = (u_int)stack + stacksize;
 
 	/* When l2 is switched to, jump to the trampoline */
-	sf = &l2->l_md.md_pcb->pcb_sf;
+	pcb = lwp_getpcb(l2);
+	sf = &pcb->pcb_sf;
 	sf->sf_pr  = (int)lwp_trampoline;
 	sf->sf_r10 = (int)l2;	/* "new" lwp for lwp_startup() */
 	sf->sf_r11 = (int)arg;	/* hook function/argument */
@@ -168,15 +169,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct switchframe *sf;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct switchframe *sf = &pcb->pcb_sf;
 
 	sh3_setup_uarea(l);
 
 	l->l_md.md_regs->tf_ssr = PSL_USERSET;
 
 	/* When lwp is switched to, jump to the trampoline */
-	sf = &l->l_md.md_pcb->pcb_sf;
-	sf->sf_pr  = (int)lwp_setfunc_trampoline;
+	sf->sf_pr  = (int)lwp_trampoline;
+	sf->sf_r10 = (int)l;	/* "new" lwp for lwp_startup() */
 	sf->sf_r11 = (int)arg;	/* hook function/argument */
 	sf->sf_r12 = (int)func;
 }
@@ -313,7 +315,7 @@ cpu_lwp_free2(struct lwp *l)
  * one of five catagories:
  *
  *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
+ *			Address is relative to start of u-area.
  *	B_PHYS|B_PAGET:	User page table swap.
  *			Address is a kernel VA in usrpt (Usrptmap).
  *	B_PHYS|B_DIRTY:	Dirty page push.
@@ -327,7 +329,7 @@ cpu_lwp_free2(struct lwp *l)
  * (a name with only slightly more meaning than "kernel_map")
  */
 
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
@@ -365,6 +367,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	}
 	pmap_update(kpmap);
+
+	return 0;
 }
 
 /*

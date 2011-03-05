@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.6.20.1 2010/05/30 05:16:57 rmind Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.6.20.2 2011/03/05 20:51:00 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,15 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.6.20.1 2010/05/30 05:16:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.6.20.2 2011/03/05 20:51:00 rmind Exp $");
 
 #include "opt_interrupt.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
 

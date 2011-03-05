@@ -1,4 +1,4 @@
-/*	$NetBSD: iomod.h,v 1.7.4.1 2010/05/30 05:16:49 rmind Exp $	*/
+/*	$NetBSD: iomod.h,v 1.7.4.2 2011/03/05 20:50:29 rmind Exp $	*/
 
 /*	$OpenBSD: iomod.h,v 1.18 2007/10/20 16:41:45 miod Exp $	*/
 
@@ -356,6 +356,10 @@ struct iomod {
 
 	u_int	hvrs[512];	/* HVRSes (HVERSION-dependent Register Sets) */
 };
+
+#define IOMOD_IO_IO_LOW(mod)	(((struct iomod *)(mod))->io_io_low)
+#define IOMOD_IO_IO_HIGH(mod)	(((struct iomod *)(mod))->io_io_high)
+
 #endif	/* !_LOCORE */
 
 /* primarily for a "reboot" and "_rtt" routines */

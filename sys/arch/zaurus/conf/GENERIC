@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.29.4.1 2010/05/30 05:17:14 rmind Exp $
+#	$NetBSD: GENERIC,v 1.29.4.2 2011/03/05 20:52:35 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -204,6 +204,7 @@ wskbd* at zrc? mux 1
 
 # LCD
 lcd0 at pxaip?
+options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
 
 # Audio
@@ -215,6 +216,7 @@ audio* at audiobus?
 
 # integrated 16550 UARTs
 options 	COM_PXA2X0
+#options 	FFUARTCONSOLE
 com0 at pxaip?  addr 0x40100000 intr 22	# Full Function UART
 com1 at pxaip?  addr 0x40200000 intr 21	# Bluetooth UART
 com2 at pxaip?  addr 0x40700000 intr 20	# Standard UART (for IrDA)
@@ -336,7 +338,7 @@ ld* at sdmmc?				# MMC/SD/SDHC card
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.56.4.2 2010/07/03 01:19:51 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.56.4.3 2011/03/05 20:55:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.2 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.3 2011/03/05 20:55:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -279,9 +279,11 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
 	memcpy(nde->td_name, name, len);
 	nde->td_node = node;
 
-	node->tn_links++;
-	if (node->tn_links > 1 && node->tn_vnode != NULL)
-		VN_KNOTE(node->tn_vnode, NOTE_LINK);
+	if (node != TMPFS_NODE_WHITEOUT) {
+		node->tn_links++;
+		if (node->tn_links > 1 && node->tn_vnode != NULL)
+			VN_KNOTE(node->tn_vnode, NOTE_LINK);
+	}
 	*de = nde;
 
 	return 0;
@@ -306,7 +308,7 @@ void
 tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
     bool node_exists)
 {
-	if (node_exists) {
+	if (node_exists && de->td_node != TMPFS_NODE_WHITEOUT) {
 		struct tmpfs_node *node;
 
 		node = de->td_node;
@@ -346,7 +348,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		if ((vp = node->tn_vnode) != NULL) {
 			mutex_enter(vp->v_interlock);
 			mutex_exit(&node->tn_vlock);
-			error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+			error = vget(vp, LK_EXCLUSIVE);
 			if (error == ENOENT) {
 				/* vnode was reclaimed. */
 				continue;
@@ -457,7 +459,6 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	struct tmpfs_node *parent;
 
 	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(cnp->cn_flags & HASBUF);
 
 	tmp = VFS_TO_TMPFS(dvp->v_mount);
 	dnode = VP_TO_TMPFS_DIR(dvp);
@@ -512,8 +513,6 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	}
 
 out:
-	if (error != 0 || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 
 	KASSERT(IFF(error == 0, *vpp != NULL));
@@ -772,38 +771,43 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 	do {
 		/* Create a dirent structure representing the current
 		 * tmpfs_node and fill it. */
-		dentp->d_fileno = de->td_node->tn_id;
-		switch (de->td_node->tn_type) {
-		case VBLK:
-			dentp->d_type = DT_BLK;
+		if (de->td_node == TMPFS_NODE_WHITEOUT) {
+			dentp->d_fileno = 1;
+			dentp->d_type = DT_WHT;
+		} else {
+			dentp->d_fileno = de->td_node->tn_id;
+			switch (de->td_node->tn_type) {
+			case VBLK:
+				dentp->d_type = DT_BLK;
 			break;
 
-		case VCHR:
-			dentp->d_type = DT_CHR;
+			case VCHR:
+				dentp->d_type = DT_CHR;
+				break;
+
+			case VDIR:
+				dentp->d_type = DT_DIR;
+				break;
+
+			case VFIFO:
+				dentp->d_type = DT_FIFO;
+				break;
+
+			case VLNK:
+				dentp->d_type = DT_LNK;
+				break;
+
+			case VREG:
+				dentp->d_type = DT_REG;
+				break;
+
+			case VSOCK:
+				dentp->d_type = DT_SOCK;
 			break;
 
-		case VDIR:
-			dentp->d_type = DT_DIR;
-			break;
-
-		case VFIFO:
-			dentp->d_type = DT_FIFO;
-			break;
-
-		case VLNK:
-			dentp->d_type = DT_LNK;
-			break;
-
-		case VREG:
-			dentp->d_type = DT_REG;
-			break;
-
-		case VSOCK:
-			dentp->d_type = DT_SOCK;
-			break;
-
-		default:
-			KASSERT(0);
+			default:
+				KASSERT(0);
+			}
 		}
 		dentp->d_namlen = de->td_namelen;
 		KASSERT(de->td_namelen < sizeof(dentp->d_name));

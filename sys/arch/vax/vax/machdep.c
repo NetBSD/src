@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.179.2.3 2010/04/25 19:39:00 rmind Exp $	 */
+/* $NetBSD: machdep.c,v 1.179.2.4 2011/03/05 20:52:19 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.3 2010/04/25 19:39:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.4 2011/03/05 20:52:19 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -95,44 +95,38 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.3 2010/04/25 19:39:00 rmind Exp 
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
-#include <sys/proc.h>
-#include <sys/time.h>
-#include <sys/signal.h>
-#include <sys/kernel.h>
-#include <sys/msgbuf.h>
 #include <sys/buf.h>
-#include <sys/mbuf.h>
-#include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/exec.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/ptrace.h>
+#include <sys/extent.h>
+#include <sys/kernel.h>
 #include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/mbuf.h>
+#include <sys/proc.h>
+#include <sys/ptrace.h>
+#include <sys/reboot.h>
 #include <sys/kauth.h>
+#include <sys/savar.h>	/* for cpu_upcall */
+#include <sys/sysctl.h>
+#include <sys/time.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
 
 #include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
-#include <sys/savar.h>	/* for cpu_upcall */
 
 #include <machine/sid.h>
-#include <machine/pte.h>
-#include <machine/mtpr.h>
-#include <machine/cpu.h>
 #include <machine/macros.h>
 #include <machine/nexus.h>
-#include <machine/trap.h>
 #include <machine/reg.h>
-#include <machine/db_machdep.h>
 #include <machine/scb.h>
 #include <vax/vax/gencons.h>
 
 #ifdef DDB
+#include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif

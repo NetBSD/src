@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.53 2008/05/30 16:03:01 kiyohara Exp $
+#	$NetBSD: files.bebox,v 1.53.20.1 2011/03/05 20:49:45 rmind Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -7,8 +7,6 @@ maxpartitions 8
 maxusers 2 8 64
 
 include "arch/powerpc/pic/files.pic"
-
-defflag	XSERVER
 
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/machdep.c
@@ -93,10 +91,6 @@ file    arch/powerpc/isa/isadma_machdep.c       isa
 device	mcclock: mc146818
 attach	mcclock at isa with mcclock_isa
 file	arch/bebox/isa/mcclock_isa.c		mcclock_isa
-
-# attribute used to represent the "keyboard controller"
-# XXX should be a real device
-define pckbcport { [irq = -1], [port = -1] }
 
 include "dev/pckbport/files.pckbport"
 

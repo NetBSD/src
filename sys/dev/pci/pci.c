@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.127.2.2 2010/07/03 01:19:37 rmind Exp $	*/
+/*	$NetBSD: pci.c,v 1.127.2.3 2011/03/05 20:53:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.127.2.2 2010/07/03 01:19:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.127.2.3 2011/03/05 20:53:47 rmind Exp $");
 
 #include "opt_pci.h"
 
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.127.2.2 2010/07/03 01:19:37 rmind Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 
@@ -274,8 +272,8 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
-	pcireg_t id, csr, class, intr, bhlcr;
-	int ret, pin, bus, device, function;
+	pcireg_t id, csr, class, intr, bhlcr, bar, endbar;
+	int ret, pin, bus, device, function, i, width;
 	int locs[PCICF_NLOCS];
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
@@ -298,6 +296,55 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	/* XXX Not invalid, but we've done this ~forever. */
 	if (PCI_VENDOR(id) == 0)
 		return 0;
+
+	/* Collect memory range info */
+	memset(sc->PCI_SC_DEVICESC(device, function).c_range, 0,
+	    sizeof(sc->PCI_SC_DEVICESC(device, function).c_range));
+	i = 0;
+	switch (PCI_HDRTYPE_TYPE(bhlcr)) {
+	case PCI_HDRTYPE_PPB: endbar = PCI_MAPREG_PPB_END; break;
+	case PCI_HDRTYPE_PCB: endbar = PCI_MAPREG_PCB_END; break;
+	default: endbar = PCI_MAPREG_END; break;
+	}
+	for (bar = PCI_MAPREG_START; bar < endbar; bar += width) {
+		struct pci_range *r;
+		pcireg_t type;
+
+		width = 4;
+		if (pci_mapreg_probe(pc, tag, bar, &type) == 0)
+			continue;
+
+		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_MEM) {
+			if (PCI_MAPREG_MEM_TYPE(type) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT)
+				width = 8;
+
+			r = &sc->PCI_SC_DEVICESC(device, function).c_range[i++];
+			if (pci_mapreg_info(pc, tag, bar, type,
+			    &r->r_offset, &r->r_size, &r->r_flags) != 0)
+				break;
+			if ((PCI_VENDOR(id) == PCI_VENDOR_ATI) && (bar == 0x10)
+			    && (r->r_size = 0x1000000)) {
+				struct pci_range *nr;
+				/*
+				 * this has to be a mach64
+				 * split things up so each half-aperture can
+				 * be mapped PREFETCHABLE except the last page
+				 * which may contain registers
+				 */
+				r->r_size = 0x7ff000;
+				r->r_flags = BUS_SPACE_MAP_LINEAR |
+					     BUS_SPACE_MAP_PREFETCHABLE;
+				nr = &sc->PCI_SC_DEVICESC(device,
+				    function).c_range[i++];
+				nr->r_offset = r->r_offset + 0x800000;
+				nr->r_size = 0x7ff000;
+				nr->r_flags = BUS_SPACE_MAP_LINEAR |
+					      BUS_SPACE_MAP_PREFETCHABLE;
+			}
+			
+		}
+	}
 
 	pa.pa_iot = sc->sc_iot;
 	pa.pa_memt = sc->sc_memt;
@@ -821,6 +868,7 @@ struct pci_child_power {
 	int p_pm_offset;
 	pcireg_t p_pm_cap;
 	pcireg_t p_class;
+	pcireg_t p_csr;
 };
 
 static bool
@@ -874,9 +922,10 @@ pci_child_shutdown(device_t dv, int how)
 	struct pci_child_power *priv = device_pmf_bus_private(dv);
 	pcireg_t csr;
 
-	/* disable busmastering */
+	/* restore original bus-mastering state */
 	csr = pci_conf_read(priv->p_pc, priv->p_tag, PCI_COMMAND_STATUS_REG);
 	csr &= ~PCI_COMMAND_MASTER_ENABLE;
+	csr |= priv->p_csr & PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(priv->p_pc, priv->p_tag, PCI_COMMAND_STATUS_REG, csr);
 	return true;
 }
@@ -907,6 +956,8 @@ pci_child_register(device_t child)
 	priv->p_tag = pci_make_tag(priv->p_pc, sc->sc_bus, device,
 	    function);
 	priv->p_class = pci_conf_read(priv->p_pc, priv->p_tag, PCI_CLASS_REG);
+	priv->p_csr = pci_conf_read(priv->p_pc, priv->p_tag,
+	    PCI_COMMAND_STATUS_REG);
 
 	if (pci_get_capability(priv->p_pc, priv->p_tag,
 			       PCI_CAP_PWRMGMT, &off, &reg)) {

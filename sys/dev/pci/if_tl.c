@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.94.4.1 2010/05/30 05:17:35 rmind Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.94.4.2 2011/03/05 20:53:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.94.4.1 2010/05/30 05:17:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.94.4.2 2011/03/05 20:53:44 rmind Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.94.4.1 2010/05/30 05:17:35 rmind Exp $")
 
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
-#include <uvm/uvm_extern.h>
 #if defined(INET)
 #include <netinet/if_inarp.h>
 #endif

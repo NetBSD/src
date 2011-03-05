@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.60 2009/12/10 05:10:01 rmind Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.60.4.1 2011/03/05 20:49:30 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -84,13 +84,12 @@
 #include "opt_lockdebug.h"
 
 #include "assym.h"
-#include <arm/arm32/pte.h>
 #include <machine/param.h>
 #include <machine/frame.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.60 2009/12/10 05:10:01 rmind Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.60.4.1 2011/03/05 20:49:30 rmind Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -296,8 +295,8 @@ ENTRY(cpu_switchto)
 	bl	_C_LABEL(vfp_loadcontext)
 #endif
 #ifdef ARMFPE
-	add	r0, r7, #(USER_SIZE) & 0x00ff
-	add	r0, r0, #(USER_SIZE) & 0xff00 
+	add	r0, r7, #(PCB_SIZE) & 0x00ff
+	add	r0, r0, #(PCB_SIZE) & 0xff00 
 	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
 

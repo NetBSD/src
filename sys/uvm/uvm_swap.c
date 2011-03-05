@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.150.2.2 2010/07/03 01:20:07 rmind Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.150.2.3 2011/03/05 20:56:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.150.2.2 2010/07/03 01:20:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.150.2.3 2011/03/05 20:56:38 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -552,7 +552,9 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 */
 	if (SCARG(uap, arg) == NULL) {
 		vp = rootvp;		/* miniroot */
-		if (vget(vp, LK_EXCLUSIVE)) {
+		vref(vp);
+		if (vn_lock(vp, LK_EXCLUSIVE)) {
+			vrele(vp);
 			error = EBUSY;
 			goto out;
 		}
@@ -560,24 +562,33 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 		    copystr("miniroot", userpath, SWAP_PATH_MAX, &len))
 			panic("swapctl: miniroot copy failed");
 	} else {
-		int	space;
-		char	*where;
+		struct pathbuf *pb;
 
-		if (SCARG(uap, cmd) == SWAP_ON) {
-			if ((error = copyinstr(SCARG(uap, arg), userpath,
-			    SWAP_PATH_MAX, &len)))
-				goto out;
-			space = UIO_SYSSPACE;
-			where = userpath;
-		} else {
-			space = UIO_USERSPACE;
-			where = (char *)SCARG(uap, arg);
-		}
-		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT,
-		    space, where);
-		if ((error = namei(&nd)))
+		/*
+		 * This used to allow copying in one extra byte
+		 * (SWAP_PATH_MAX instead of PATH_MAX) for SWAP_ON.
+		 * This was completely pointless because if anyone
+		 * used that extra byte namei would fail with
+		 * ENAMETOOLONG anyway, so I've removed the excess
+		 * logic. - dholland 20100215
+		 */
+
+		error = pathbuf_copyin(SCARG(uap, arg), &pb);
+		if (error) {
 			goto out;
+		}
+		if (SCARG(uap, cmd) == SWAP_ON) {
+			/* get a copy of the string */
+			pathbuf_copystring(pb, userpath, SWAP_PATH_MAX);
+			len = strlen(userpath) + 1;
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
+		if ((error = namei(&nd))) {
+			pathbuf_destroy(pb);
+			goto out;
+		}
 		vp = nd.ni_vp;
+		pathbuf_destroy(pb);
 	}
 	/* note: "vp" is referenced and locked */
 

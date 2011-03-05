@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.37.2.1 2010/05/30 05:18:06 rmind Exp $	*/
+/*	$NetBSD: rump.h,v 1.37.2.2 2011/03/05 20:56:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -64,18 +64,21 @@ typedef struct prop_dictionary *prop_dictionary_t;
 
 /* rumpkern */
 enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
-typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 
 enum rump_sigmodel {
 	RUMP_SIGMODEL_PANIC,
 	RUMP_SIGMODEL_IGNORE,
 	RUMP_SIGMODEL_HOST,
-	RUMP_SIGMODEL_RAISE
+	RUMP_SIGMODEL_RAISE,
+	RUMP_SIGMODEL_RECORD
 };
+
+/* flags to rump_lwproc_rfork */
+#define RUMP_RFFDG	0x01
+#define RUMP_RFCFDG	0x02
 
 /* rumpvfs */
 #define RUMPCN_FREECRED  0x02
-#define RUMPCN_FORCEFREE 0x04
 #define RUMP_ETFS_SIZE_ENDOFF ((uint64_t)-1)
 enum rump_etfs_type {
 	RUMP_ETFS_REG,
@@ -89,8 +92,8 @@ enum rump_etfs_type {
  * Something like rump capabilities would be nicer, but let's
  * do this for a start.
  */
-#define RUMP_VERSION	01
-#define rump_init()	rump__init(RUMP_VERSION)
+#define RUMP_VERSION			01
+#define rump_init()			rump__init(RUMP_VERSION)
 
 /* um, what's the point ?-) */
 #ifdef _BEGIN_DECLS
@@ -106,7 +109,11 @@ void	rump_unschedule(void);
 
 void	rump_printevcnts(void);
 
+int	rump_daemonize_begin(void);
 int	rump__init(int);
+int	rump_init_server(const char *);
+int	rump_daemonize_done(int);
+#define RUMP_DAEMONIZE_SUCCESS 0
 
 #ifndef _KERNEL
 #include <rump/rumpkern_if_pub.h>
@@ -141,6 +148,7 @@ _END_DECLS
 
 #ifdef RUMP_SYS_IOCTL
 #define ioctl(...) rump_sys_ioctl(__VA_ARGS__)
+#define fnctl(...) rump_sys_fcntl(__VA_ARGS__)
 #endif /* RUMP_SYS_IOCTL */
 
 #ifdef RUMP_SYS_CLOSE
@@ -169,6 +177,29 @@ _END_DECLS
 #define symlink(a,b) rump_sys_symlink(a,b)
 #define unlink(a) rump_sys_unlink(a)
 #define readlink(a,b,c) rump_sys_readlink(a,b,c)
+#define chdir(a) rump_sys_chdir(a)
+#define fsync(a) rump_sys_fsync(a)
+#define sync() rump_sys_sync()
+#define chown(a,b,c) rump_sys_chown(a,b,c)
+#define fchown(a,b,c) rump_sys_fchown(a,b,c)
+#define lchown(a,b,c) rump_sys_lchown(a,b,c)
+#define lseek(a,b,c) rump_sys_lseek(a,b,c)
+#define mknod(a,b,c) rump_sys_mknod(a,b,c)
+#define rename(a,b) rump_sys_rename(a,b)
+#define truncate(a,b) rump_sys_truncate(a,b)
+#define ftruncate(a,b) rump_sys_ftruncate(a,b)
+#define umask(a) rump_sys_umask(a)
+#define getdents(a,b,c) rump_sys_getdents(a,b,c)
 #endif /* RUMP_SYS_FILEOPS */
+
+#ifdef RUMP_SYS_STAT
+#define stat(a,b) rump_sys_stat(a,b)
+#define fstat(a,b) rump_sys_fstat(a,b)
+#define lstat(a,b) rump_sys_lstat(a,b)
+#endif /* RUMP_SYS_STAT */
+
+#ifdef RUMP_SYS_PROCOPS
+#define getpid() rump_sys_getpid()
+#endif /* RUMP_SYS_PROCOPS */
 
 #endif /* _RUMP_RUMP_H_ */

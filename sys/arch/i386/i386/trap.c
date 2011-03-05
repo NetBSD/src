@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.255.2.1 2010/05/30 05:16:54 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.255.2.2 2011/03/05 20:50:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.255.2.1 2010/05/30 05:16:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.255.2.2 2011/03/05 20:50:40 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -442,6 +442,7 @@ copyfault:
 		 * returning from a trap, syscall, or interrupt.
 		 */
 
+kernelfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = SEGV_ACCERR;
@@ -570,7 +571,7 @@ copyfault:
 
 	case T_ASTFLT|T_USER:
 		/* Allow process switch. */
-		uvmexp.softs++;
+		//curcpu()->ci_data.cpu_nast++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
@@ -603,14 +604,16 @@ copyfault:
 			ksi.ksi_code = xmm_si_code(l);
 			break;
 		case T_BOUND|T_USER:
+			ksi.ksi_code = FPE_FLTSUB;
+			break;
 		case T_OFLOW|T_USER:
-			ksi.ksi_code = FPE_FLTOVF;
+			ksi.ksi_code = FPE_INTOVF;
 			break;
 		case T_DIVIDE|T_USER:
-			ksi.ksi_code = FPE_FLTDIV;
+			ksi.ksi_code = FPE_INTDIV;
 			break;
 		case T_ARITHTRAP|T_USER:
-			ksi.ksi_code = FPE_INTOVF;
+			ksi.ksi_code = npxtrap(l);
 			break;
 		default:
 			ksi.ksi_code = 0;
@@ -757,7 +760,7 @@ faultcommon:
 				goto copyfault;
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
-			goto we_re_toast;
+			goto kernelfault;
 		}
 		if (error == ENOMEM) {
 			ksi.ksi_signo = SIGKILL;

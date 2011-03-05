@@ -1,4 +1,4 @@
-/* $NetBSD: au_chipdep.c,v 1.1 2006/02/06 23:26:11 gdamore Exp $ */
+/* $NetBSD: au_chipdep.c,v 1.1.102.1 2011/03/05 20:51:01 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_chipdep.c,v 1.1 2006/02/06 23:26:11 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_chipdep.c,v 1.1.102.1 2011/03/05 20:51:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -64,7 +64,7 @@ au_chipdep(void)
 #endif
 	    (au_chip == NULL)) {
 		panic("Alchemy SOC %x either not configured or not supported!",
-		    cpu_id);
+		    mips_options.mips_cpu_id);
 	}
 	return (au_chip);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.294.2.2 2010/07/03 01:19:53 rmind Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.294.2.3 2011/03/05 20:55:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.294.2.2 2010/07/03 01:19:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.294.2.3 2011/03/05 20:55:14 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -112,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.294.2.2 2010/07/03 01:19:53 rmind Ex
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
 #ifdef DEBUG_EXEC
-#define DPRINTF(a) uprintf a
+#define DPRINTF(a) printf a
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_EXEC */
@@ -278,29 +278,26 @@ static struct pool_allocator exec_palloc = {
  */
 int
 /*ARGSUSED*/
-check_exec(struct lwp *l, struct exec_package *epp, const char *kpath)
+check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 {
 	int		error, i;
 	struct vnode	*vp;
 	struct nameidata nd;
 	size_t		resid;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | TRYEMULROOT,
-	       UIO_SYSSPACE, kpath);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0)
 		return error;
 	epp->ep_vp = vp = nd.ni_vp;
 	/* this cannot overflow as both are size PATH_MAX */
-	strcpy(epp->ep_resolvedname, nd.ni_cnd.cn_pnbuf);
+	strcpy(epp->ep_resolvedname, nd.ni_pnbuf);
 
-	/* dump this right away */
 #ifdef DIAGNOSTIC
 	/* paranoia (take this out once namei stuff stabilizes) */
-	memset(nd.ni_cnd.cn_pnbuf, '~', PATH_MAX);
+	memset(nd.ni_pnbuf, '~', PATH_MAX);
 #endif
-	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 
 	/* check access and type */
 	if (vp->v_type != VREG) {
@@ -500,17 +497,13 @@ exec_autoload(void)
 	char const * const *list;
 	int i;
 
-	mutex_enter(&module_lock);
 	list = (nexecs == 0 ? native : compat);
 	for (i = 0; list[i] != NULL; i++) {
 		if (module_autoload(list[i], MODULE_CLASS_MISC) != 0) {
 		    	continue;
 		}
-		mutex_exit(&module_lock);
 	   	yield();
-		mutex_enter(&module_lock);
 	}
-	mutex_exit(&module_lock);
 #endif
 }
 
@@ -520,6 +513,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 {
 	int			error;
 	struct exec_package	pack;
+	struct pathbuf		*pb;
 	struct vattr		attr;
 	struct proc		*p;
 	char			*argp;
@@ -528,7 +522,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	size_t			i, len;
 	char			*stack;
 	struct ps_strings	arginfo;
-	struct ps_strings	*aip = &arginfo;
+	struct ps_strings32	arginfo32;
+	void			*aip;
 	struct vmspace		*vm;
 	struct exec_fakearg	*tmpfap;
 	int			szsigcode;
@@ -536,10 +531,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	int			oldlwpflags;
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
-	char			*pathbuf;
+	const char		*pathstring;
 	char			*resolvedpathbuf;
 	const char		*commandname;
 	u_int			modgen;
+	size_t			ps_strings_sz;
 
 	p = l->l_proc;
  	modgen = 0;
@@ -590,12 +586,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	pathbuf = PNBUF_GET();
-	error = copyinstr(path, pathbuf, MAXPATHLEN, NULL);
+	error = pathbuf_copyin(path, &pb);
 	if (error) {
-		DPRINTF(("execve: copyinstr path %d", error));
+		DPRINTF(("execve: pathbuf_copyin path @%p %d\n", path, error));
 		goto clrflg;
 	}
+	pathstring = pathbuf_stringcopy_get(pb);
 	resolvedpathbuf = PNBUF_GET();
 #ifdef DIAGNOSTIC
 	strcpy(resolvedpathbuf, "/wrong");
@@ -605,7 +601,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = path;
-	pack.ep_kname = pathbuf;
+	pack.ep_kname = pathstring;
 	pack.ep_resolvedname = resolvedpathbuf;
 	pack.ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	pack.ep_hdrlen = exec_maxhdrsz;
@@ -623,7 +619,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	rw_enter(&exec_lock, RW_READER);
 
 	/* see if we can run it. */
-	if ((error = check_exec(l, &pack, pathbuf)) != 0) {
+	if ((error = check_exec(l, &pack, pb)) != 0) {
 		if (error != ENOENT) {
 			DPRINTF(("execve: check exec failed %d\n", error));
 		}
@@ -726,16 +722,21 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 	/* Now check if args & environ fit into new stack */
-	if (pack.ep_flags & EXEC_32)
+	if (pack.ep_flags & EXEC_32) {
+		aip = &arginfo32;
+		ps_strings_sz = sizeof(struct ps_strings32);
 		len = ((argc + envc + 2 + pack.ep_esch->es_arglen) *
 		    sizeof(int) + sizeof(int) + dp + RTLD_GAP +
-		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
+		    szsigcode + ps_strings_sz + STACK_PTHREADSPACE)
 		    - argp;
-	else
+	} else {
+		aip = &arginfo;
+		ps_strings_sz = sizeof(struct ps_strings);
 		len = ((argc + envc + 2 + pack.ep_esch->es_arglen) *
 		    sizeof(char *) + sizeof(int) + dp + RTLD_GAP +
-		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
+		    szsigcode + ps_strings_sz + STACK_PTHREADSPACE)
 		    - argp;
+	}
 
 #ifdef PAX_ASLR
 	if (pax_aslr_active(l))
@@ -765,10 +766,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* Destroy any lwpctl info. */
 	if (p->p_lwpctl != NULL)
 		lwp_ctl_exit();
-
-	/* This is now LWP 1 */
-	l->l_lid = 1;
-	p->p_nlwpid = 1;
 
 #ifdef KERN_SA
 	/* Release any SA state. */
@@ -833,10 +830,19 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		if (error) {
 			size_t j;
 			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
+			uprintf("vmcmds %zu/%u, error %d\n", i, 
+			    pack.ep_vmcmds.evs_used, error);
 			for (j = 0; j <= i; j++)
-				uprintf(
-			"vmcmd[%zu] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
-				    j, vp[j].ev_addr, vp[j].ev_len,
+				uprintf("vmcmd[%zu] = vmcmd_map_%s %#"
+				    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
+				    PRIxVSIZE" prot=0%o flags=%d\n", j,
+				    vp[j].ev_proc == vmcmd_map_pagedvn ?
+				    "pagedvn" :
+				    vp[j].ev_proc == vmcmd_map_readvn ?
+				    "readvn" :
+				    vp[j].ev_proc == vmcmd_map_zero ?
+				    "zero" : "*unknown*",
+				    vp[j].ev_addr, vp[j].ev_len,
 				    vp[j].ev_offset, vp[j].ev_prot,
 				    vp[j].ev_flags);
 		}
@@ -879,8 +885,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * This handles the majority of the cases.
 	 * In the future perhaps we could canonicalize it?
 	 */
-	if (pathbuf[0] == '/')
-		(void)strlcpy(pack.ep_path = dp, pathbuf, MAXPATHLEN);
+	if (pathstring[0] == '/')
+		(void)strlcpy(pack.ep_path = dp, pathstring, MAXPATHLEN);
 #ifdef notyet
 	/*
 	 * Although this works most of the time [since the entry was just
@@ -902,8 +908,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
-		STACK_PTHREADSPACE + sizeof(struct ps_strings) + szsigcode),
-		len - (sizeof(struct ps_strings) + szsigcode));
+		STACK_PTHREADSPACE + ps_strings_sz + szsigcode),
+		len - (ps_strings_sz + szsigcode));
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/*
@@ -945,22 +951,24 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	stack = (char *)STACK_GROW(vm->vm_minsaddr, len);
 
 	/* fill process ps_strings info */
-	p->p_psstr = (struct ps_strings *)
-	    STACK_ALLOC(STACK_GROW(vm->vm_minsaddr, STACK_PTHREADSPACE),
-	    sizeof(struct ps_strings));
-	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
-	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
-	p->p_psenv = offsetof(struct ps_strings, ps_envstr);
-	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
+	p->p_psstrp = (vaddr_t)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
+	    STACK_PTHREADSPACE), ps_strings_sz);
+
+	if (pack.ep_flags & EXEC_32) {
+		arginfo32.ps_argvstr = (vaddr_t)arginfo.ps_argvstr;
+		arginfo32.ps_nargvstr = arginfo.ps_nargvstr;
+		arginfo32.ps_envstr = (vaddr_t)arginfo.ps_envstr;
+		arginfo32.ps_nenvstr = arginfo.ps_nenvstr;
+	}
 
 	/* copy out the process's ps_strings structure */
-	if ((error = copyout(aip, (char *)p->p_psstr,
-	    sizeof(arginfo))) != 0) {
-		DPRINTF(("execve: ps_strings copyout %p->%p size %ld failed\n",
-		       aip, (char *)p->p_psstr, (long)sizeof(arginfo)));
+	if ((error = copyout(aip, (void *)p->p_psstrp, ps_strings_sz)) != 0) {
+		DPRINTF(("execve: ps_strings copyout %p->%p size %zu failed\n",
+		       aip, (void *)p->p_psstrp, ps_strings_sz));
 		goto exec_abort;
 	}
 
+	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 
@@ -987,6 +995,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	if ((p->p_lflag & PL_PPWAIT) != 0) {
 		mutex_enter(proc_lock);
+		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(proc_lock);
@@ -1083,8 +1092,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_esch->es_setregs)
 		(*pack.ep_esch->es_setregs)(l, &pack, (vaddr_t)stack);
 
+	/* Provide a consistent LWP private setting */
+	(void)lwp_setprivate(l, NULL);
+
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(p, pack.ep_esch->es_emul)) {
+	if ((error = exec_sigcode_map(p, pack.ep_esch->es_emul)) != 0) {
 		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
 	}
@@ -1124,6 +1136,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (p->p_emul && p->p_emul->e_proc_exit
 	    && p->p_emul != pack.ep_esch->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
+
+	/*
+	 * This is now LWP 1.
+	 */
+	mutex_enter(p->p_lock);
+	p->p_nlwpid = 1;
+	l->l_lid = 1;
+	mutex_exit(p->p_lock);
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
@@ -1167,8 +1187,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		l->l_stat = LSSTOP;
 		p->p_stat = SSTOP;
 		p->p_nrlwps--;
+		lwp_unlock(l);
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
+		lwp_lock(l);
 		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
 		KERNEL_LOCK(l->l_biglocks, l);
@@ -1176,7 +1198,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		mutex_exit(proc_lock);
 	}
 
-	PNBUF_PUT(pathbuf);
+	pathbuf_stringcopy_put(pb, pathstring);
+	pathbuf_destroy(pb);
 	PNBUF_PUT(resolvedpathbuf);
 	return (EJUSTRETURN);
 
@@ -1203,6 +1226,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	rw_exit(&exec_lock);
 
+	pathbuf_stringcopy_put(pb, pathstring);
+	pathbuf_destroy(pb);
 	PNBUF_PUT(resolvedpathbuf);
 
  clrflg:
@@ -1210,8 +1235,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	l->l_flag |= oldlwpflags;
 	lwp_unlock(l);
 	rw_exit(&p->p_reflock);
-
-	PNBUF_PUT(pathbuf);
 
 	if (modgen != module_gen && error == ENOEXEC) {
 		modgen = module_gen;
@@ -1227,7 +1250,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	rw_exit(&p->p_reflock);
 	rw_exit(&exec_lock);
 
-	PNBUF_PUT(pathbuf);
+	pathbuf_stringcopy_put(pb, pathstring);
+	pathbuf_destroy(pb);
 	PNBUF_PUT(resolvedpathbuf);
 
 	/*
@@ -1254,7 +1278,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	return 0;
 }
 
-
 int
 copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
     char **stackp, void *argp)
@@ -1269,8 +1292,10 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	nullp = NULL;
 	argc = arginfo->ps_nargvstr;
 	envc = arginfo->ps_nenvstr;
-	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
+	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(argc)));
 		return error;
+	}
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 	sp = argp;
@@ -1278,23 +1303,39 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	/* XXX don't copy them out, remap them! */
 	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
-	for (; --argc >= 0; sp += len, dp += len)
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	for (; --argc >= 0; sp += len, dp += len) {
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0) {
+			DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(dp)));
 			return error;
+		}
+		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
+			DPRINTF(("copyargs:%d copyoutstr @%p %u\n", __LINE__, dp, ARG_MAX));
+			return error;
+		}
+	}
 
-	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(nullp)));
 		return error;
+	}
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
-	for (; --envc >= 0; sp += len, dp += len)
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	for (; --envc >= 0; sp += len, dp += len) {
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0) {
+			DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(dp)));
 			return error;
+		}
+		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
+			DPRINTF(("copyargs:%d copyoutstr @%p %u\n", __LINE__, dp, ARG_MAX));
+			return error;
+		}
+	}
 
-	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(nullp)));
 		return error;
+	}
 
 	*stackp = (char *)cpp;
 	return 0;
@@ -1548,6 +1589,10 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 			UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX, UVM_INH_SHARE,
 				    UVM_ADV_RANDOM, 0));
 	if (error) {
+		DPRINTF(("exec_sigcode_map:%d map %p "
+		    "uvm_map %#"PRIxVSIZE"@%#"PRIxVADDR" failed %d\n",
+		    __LINE__, &p->p_vmspace->vm_map, round_page(sz), va,
+		    error));
 		(*uobj->pgops->pgo_detach)(uobj);
 		return (error);
 	}

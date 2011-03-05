@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.10.4.1 2010/05/30 05:17:27 rmind Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.10.4.2 2011/03/05 20:53:23 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -38,6 +38,7 @@
 #ifndef _FIREWIREREG_H_
 #define _FIREWIREREG_H_
 
+#include <sys/selinfo.h>
 #include <sys/uio.h>
 
 #define PROJECT_STR		"The NetBSD Project"
@@ -63,7 +64,7 @@ struct fw_device {
 #define FWDEVATTACHED	2
 #define FWDEVINVAL	3
 	STAILQ_ENTRY(fw_device) link;
-	device_t sbp;
+	device_t dev;
 };
 
 struct firewire_softc {

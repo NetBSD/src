@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.258.2.2 2010/07/03 01:19:33 rmind Exp $
+#	$NetBSD: DEVNAMES,v 1.258.2.3 2011/03/05 20:52:58 rmind Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -175,6 +175,8 @@ bmtphy			MI
 boca			MI
 bonito			algor
 bpp			MI
+bppcsc			amiga
+bppcsc			amigappc
 brgphy			MI
 bt3c			MI
 btbc			MI
@@ -299,6 +301,7 @@ cpu			sparc
 cpu			sparc64
 cpu			vax
 cpu			x68k
+cpunode			evbppc
 crime			sgimips
 crypto			MI		Attribute
 cs			MI
@@ -323,6 +326,7 @@ depca			MI
 dge			MI
 dh			vax
 dhu			MI
+diic			powerpc
 dio			hp300
 dl			MI
 dm			MI
@@ -347,9 +351,11 @@ drsupio			amigappc
 dsrtc			cats
 dsrtc			evbppc
 dtide			MI
+duart			powerpc
 dvbox			hp300
 dwlpx			alpha
 dz			MI
+e500wdog		powerpc
 ea			MI
 eap			MI
 eb			MI
@@ -401,7 +407,8 @@ esm			MI
 eso			MI
 esp			MI
 ess			MI
-et			atari
+et			MI
+et4k			atari
 ether			MI		Attribute
 event			amiga		Attribute
 event			amigappc	Attribute
@@ -477,6 +484,7 @@ fwip			MI
 fwohci			MI
 fxp			MI
 g2bus			dreamcast
+g740a			MI
 gapspci			dreamcast
 gayle			amiga		Attribute
 gayle			amigappc	Attribute
@@ -537,9 +545,10 @@ gt			cobalt
 gt			evbmips
 gt			MI
 gten			prep
-gtidma			evbppc
+gtidmac			MI
 gtmpsc			MI
 gtpci			MI
+gttwsi			MI
 gtsc			amiga
 gtsc			amigappc
 gus			MI
@@ -863,6 +872,7 @@ mmem			dreamcast
 mms			bebox
 mms			dreamcast
 mms			i386
+motoi2c			MI		Attribute
 moxa			MI
 mpt			MI
 mpu			MI
@@ -892,6 +902,7 @@ mtty			MI
 mu			vax
 mulaw			MI		Attribute
 mvgbe			MI
+mvpex			MI
 mvsata			MI
 nca			MI
 ncr5380sbc		MI		Attribute
@@ -995,6 +1006,7 @@ pcdisplay		MI
 pcdisplayops		MI		Attribute
 pceb			alpha
 pceb			i386
+pcf8563rtc		MI
 pchb			bebox
 pchb			cobalt
 pchb			evbmips
@@ -1016,8 +1028,10 @@ pcic			algor
 pcic			alpha
 pcic			hpcmips
 pcic			i386
+pcie			evbppc
 pciide			MI
 pcivga			arc
+pcix			evbppc
 pckbc			MI
 pckbcport		bebox		Attribute
 pckbcport		i386		Attribute
@@ -1136,6 +1150,7 @@ saip			hpcarm
 saost			hpcarm
 satalink		MI
 satlink			MI
+satmgr			sandpoint
 sb			MI
 sbc			mac68k
 sbdsp			MI		Attribute
@@ -1154,6 +1169,7 @@ sbus			MI
 sc			MI
 sc			newsmips
 sc			vax
+schide			MI
 sci			amiga		Attribute
 sci			amigappc	Attribute
 sci			evbsh3
@@ -1285,6 +1301,7 @@ trm			MI
 ts			MI
 tsc			alpha
 tscs			MI
+tsec			powerpc
 tslcd			evbarm
 tslot			sparc
 tsp			alpha
@@ -1416,6 +1433,7 @@ vs			x68k
 vsbus			vax
 vsms			alpha
 vt			i386
+vte			MI
 vtpbc			algor
 vz			vax
 wbsio			MI

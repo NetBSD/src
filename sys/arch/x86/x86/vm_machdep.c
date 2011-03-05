@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8.4.1 2010/05/30 05:17:13 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.4.2 2011/03/05 20:52:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8.4.1 2010/05/30 05:17:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8.4.2 2011/03/05 20:52:32 rmind Exp $");
 
 #include "opt_mtrr.h"
 
@@ -119,8 +119,6 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
-	if (p1->p_flag & PK_32)
-		p2->p_flag |= PK_32;
 }
 
 /*
@@ -179,23 +177,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * newly-created child process to go directly to user level with a
 	 * parent return value of 0 from fork(), while the parent process
 	 * returns normally.
-	 * 
-	 * Also, copy PCB %fs/%gs base from parent.
 	 */
 	uv = uvm_lwp_getuarea(l2);
 
 #ifdef __x86_64__
 	pcb2->pcb_rsp0 = (uv + KSTACK_SIZE - 16) & ~0xf;
 	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
-
-	pcb2->pcb_fs = pcb1->pcb_fs;
-	pcb2->pcb_gs = pcb1->pcb_gs;
 #else
 	pcb2->pcb_esp0 = (uv + KSTACK_SIZE - 16);
 	tf = (struct trapframe *)pcb2->pcb_esp0 - 1;
 
-	memcpy(&pcb2->pcb_fsd, &pcb1->pcb_fsd, sizeof(pcb2->pcb_fsd));
-	memcpy(&pcb2->pcb_gsd, &pcb1->pcb_gsd, sizeof(pcb2->pcb_gsd));
 	pcb2->pcb_iomap = NULL;
 #endif
 	l2->l_md.md_regs = tf;
@@ -284,7 +275,8 @@ void
 cpu_lwp_free2(struct lwp *l)
 {
 
-	/* nothing */
+	KASSERT(l->l_md.md_gc_ptp == NULL);
+	KASSERT(l->l_md.md_gc_pmap == NULL);
 }
 
 /*
@@ -306,7 +298,7 @@ kvtop(void *addr)
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
@@ -341,6 +333,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
+
+	return 0;
 }
 
 /*

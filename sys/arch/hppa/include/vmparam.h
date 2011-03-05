@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2010/02/16 16:56:30 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15.2.1 2011/03/05 20:50:37 rmind Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -95,31 +95,8 @@
 #define	VM_PHYSSEG_MAX	8	/* this many physmem segments */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
-#define	VM_PHYSSEG_NOADD	/* XXX until uvm code is fixed */
-
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-#define __HAVE_VM_PAGE_MD
-
-struct pv_entry;
-
-struct vm_page_md {
-	kmutex_t	pvh_lock;	/* locks every pv on this list */
-	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
-	u_int		pvh_attrs;	/* to preserve ref/mod */
-	int		pvh_aliases;	/* alias counting */
-};
-
-#define	VM_MDPAGE_INIT(pg) \
-do {									\
-	mutex_init(&(pg)->mdpage.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
-	(pg)->mdpage.pvh_list = NULL;					\
-	(pg)->mdpage.pvh_attrs = 0;					\
-	(pg)->mdpage.pvh_aliases = 0;					\
-} while (0)
-#endif
 
 #endif	/* _HPPA_VMPARAM_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LSR,v 1.3.2.2 2010/05/30 05:16:46 rmind Exp $
+#	$NetBSD: T_SH7706LSR,v 1.3.2.3 2011/03/05 20:50:18 rmind Exp $
 #
 #	TAC T-SH7706LSR Rev.1 config file
 #
@@ -96,7 +96,7 @@ ne0 at mainbus?				# AX88796BLF
 # MMC SPI
 ssumci0 at mainbus?
 sdmmc* at ssumci?
-#options 	SCIMCI_DEBUG
+#options 	SSUMCI_DEBUG
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 ld* at sdmmc?				# MMC card
@@ -104,7 +104,7 @@ ld* at sdmmc?				# MMC card
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)

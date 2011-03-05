@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.3 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.3.4.1 2011/03/05 20:50:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -40,6 +40,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/cardbus/rbus.h>
+
+#include <uvm/uvm_extern.h>
 
 #include "opt_pci.h"
 

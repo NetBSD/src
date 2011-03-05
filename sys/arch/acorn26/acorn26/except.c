@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.23.4.1 2010/05/30 05:16:34 rmind Exp $ */
+/* $NetBSD: except.c,v 1.23.4.2 2011/03/05 20:49:03 rmind Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.23.4.1 2010/05/30 05:16:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.23.4.2 2011/03/05 20:49:03 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.23.4.1 2010/05/30 05:16:34 rmind Exp $"
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -106,7 +108,7 @@ prefetch_abort_handler(struct trapframe *tf)
 	 * p15).
 	 */
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;
@@ -164,7 +166,7 @@ data_abort_handler(struct trapframe *tf)
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;
@@ -202,15 +204,17 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	int error;
 	struct pcb *pcb;
 	void *onfault;
+	bool user;
 
 	if (pmap_fault(map->pmap, va, atype))
 		return;
 
 	pcb = lwp_getpcb(l);
 	onfault = pcb->pcb_onfault;
+	user = (tf->tf_r15 & R15_MODE) == R15_MODE_USR;
 
 	if (cpu_intr_p()) {
-		KASSERT((tf->tf_r15 & R15_MODE) != R15_MODE_USR);
+		KASSERT(!user);
 		error = EFAULT;
 	} else {
 		pcb->pcb_onfault = NULL;
@@ -234,7 +238,7 @@ do_fault(struct trapframe *tf, struct lwp *l,
 			return;
 		}
 #endif
-		if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+		if (!user) {
 #ifdef DDB
 			db_printf("Unhandled data abort in kernel mode\n");
 			kdb_trap(T_FAULT, tf);
@@ -260,6 +264,8 @@ do_fault(struct trapframe *tf, struct lwp *l,
 		ksi.ksi_code = (error == EPERM) ? SEGV_ACCERR : SEGV_MAPERR;
 		ksi.ksi_addr = (void *) va;
 		trapsignal(l, &ksi);
+	} else if (!user) {
+		ucas_ras_check(tf);
 	}
 }
 
@@ -472,7 +478,7 @@ address_exception_handler(struct trapframe *tf)
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;

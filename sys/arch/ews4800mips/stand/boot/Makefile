@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.4.1 2010/05/30 05:16:48 rmind Exp $
+#	$NetBSD: Makefile,v 1.10.4.2 2011/03/05 20:50:20 rmind Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -52,7 +52,7 @@ SRCS		+= pdinfo.c vtoc.c
 .PHONY: vers.c
 vers.c: version
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version ${MACHINE}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c

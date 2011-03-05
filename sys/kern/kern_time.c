@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.163.4.1 2010/05/30 05:17:57 rmind Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.163.4.2 2011/03/05 20:55:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.163.4.1 2010/05/30 05:17:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.163.4.2 2011/03/05 20:55:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -974,7 +974,7 @@ timerupcall(struct lwp *l)
 void
 realtimerexpire(void *arg)
 {
-	uint64_t last_val, next_val, interval, now_ms;
+	uint64_t last_val, next_val, interval, now_ns;
 	struct timespec now, next;
 	struct ptimer *pt;
 	int backwards;
@@ -997,17 +997,17 @@ realtimerexpire(void *arg)
 	if (!backwards && timespeccmp(&next, &now, >)) {
 		pt->pt_time.it_value = next;
 	} else {
-		now_ms = timespec2ns(&now);
+		now_ns = timespec2ns(&now);
 		last_val = timespec2ns(&pt->pt_time.it_value);
 		interval = timespec2ns(&pt->pt_time.it_interval);
 
-		next_val = now_ms +
-		    (now_ms - last_val + interval - 1) % interval;
+		next_val = now_ns +
+		    (now_ns - last_val + interval - 1) % interval;
 
 		if (backwards)
 			next_val += interval;
 		else
-			pt->pt_overruns += (now_ms - last_val) / interval;
+			pt->pt_overruns += (now_ns - last_val) / interval;
 
 		pt->pt_time.it_value.tv_sec = next_val / 1000000000;
 		pt->pt_time.it_value.tv_nsec = next_val % 1000000000;

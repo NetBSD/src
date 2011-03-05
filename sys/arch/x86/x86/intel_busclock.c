@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.9.4.1 2010/05/30 05:17:12 rmind Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.9.4.2 2011/03/05 20:52:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.9.4.1 2010/05/30 05:17:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.9.4.2 2011/03/05 20:52:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,10 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.9.4.1 2010/05/30 05:17:12 rmind
 
 #include <machine/specialreg.h>
 #include <machine/pio.h>
-#include <machine/cpufunc.h>
 
 #include <x86/cpuvar.h>
 #include <x86/cpufunc.h>
+#include <x86/est.h>
 
 int
 via_get_bus_clock(struct cpu_info *ci)
@@ -97,7 +97,19 @@ p3_get_bus_clock(struct cpu_info *ci)
 	case 0x9: /* Pentium M (130 nm, Banias) */
 		bus_clock = 10000;
 		break;
-	case 0xc: /* Atom, model 1 */
+	case 0xc: /* Core i7, Atom, model 1 */
+		/*
+		 * XXX (See also case 0xe)
+		 * Some core i7 CPUs can report model 0xc.
+		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
+		 * In the long-term, use ACPI instead of all this.
+		 */
+		switch (CPUID2EXTMODEL(ci->ci_signature)) {
+		case 0x2:
+			aprint_debug("%s: unable to determine bus speed",
+			    device_xname(ci->ci_dev));
+			goto print_msr;
+		}
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
@@ -128,7 +140,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 		break;
 	case 0xe: /* Core Duo/Solo */
 		/*
-		 * XXX
+		 * XXX (See also case 0xc)
 		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
 		 * In the long-term, use ACPI instead of all this.
 		 */

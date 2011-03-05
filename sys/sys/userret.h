@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.20 2009/02/25 19:58:03 mhitch Exp $	*/
+/*	$NetBSD: userret.h,v 1.20.4.1 2011/03/05 20:56:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -78,6 +78,11 @@ mi_userret(struct lwp *l)
 	struct proc *p = l->l_proc;
 #ifndef __HAVE_PREEMPTION
 	struct cpu_info *ci;
+#endif
+
+	KASSERT(l->l_blcnt == 0);
+#ifndef __HAVE_PREEMPTION
+	KASSERT(curcpu()->ci_biglock_count == 0);
 #endif
 
 	/*

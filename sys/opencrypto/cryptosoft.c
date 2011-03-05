@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.25 2009/04/18 14:58:07 tsutsui Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.25.4.1 2011/03/05 20:56:05 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.25 2009/04/18 14:58:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.25.4.1 2011/03/05 20:56:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ int32_t swcr_id = -1;
 	(x) == CRYPTO_BUF_MBUF ? m_copydata((struct mbuf *)a,b,c,d) \
 	: cuio_copydata((struct uio *)a,b,c,d)
 
-static	int swcr_encdec(struct cryptodesc *, struct swcr_data *, void *, int);
-static	int swcr_compdec(struct cryptodesc *, struct swcr_data *, void *, int);
+static	int swcr_encdec(struct cryptodesc *, const struct swcr_data *, void *, int);
+static	int swcr_compdec(struct cryptodesc *, const struct swcr_data *, void *, int, int *);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
@@ -70,7 +70,7 @@ static	int swcr_freesession(void *, u_int64_t);
  * Apply a symmetric encryption/decryption algorithm.
  */
 static int
-swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
+swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
     int outtype)
 {
 	char *buf = bufv;
@@ -418,7 +418,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
  */
 int
 swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
-    struct swcr_data *sw, void *buf, int outtype)
+    const struct swcr_data *sw, void *buf, int outtype)
 {
 	unsigned char aalg[AALG_MAX_RESULT_LEN];
 	const struct swcr_auth_hash *axf;
@@ -461,7 +461,9 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	case CRYPTO_MD5_HMAC_96:
 	case CRYPTO_SHA1_HMAC:
 	case CRYPTO_SHA1_HMAC_96:
-	case CRYPTO_SHA2_HMAC:
+	case CRYPTO_SHA2_256_HMAC:
+	case CRYPTO_SHA2_384_HMAC:
+	case CRYPTO_SHA2_512_HMAC:
 	case CRYPTO_RIPEMD160_HMAC:
 	case CRYPTO_RIPEMD160_HMAC_96:
 		if (sw->sw_octx == NULL)
@@ -512,8 +514,8 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
  * Apply a compression/decompression algorithm
  */
 static int
-swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
-    void *buf, int outtype)
+swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
+    void *buf, int outtype, int *res_size)
 {
 	u_int8_t *data, *out;
 	const struct swcr_comp_algo *cxf;
@@ -535,7 +537,8 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	if (crd->crd_flags & CRD_F_COMP)
 		result = cxf->compress(data, crd->crd_len, &out);
 	else
-		result = cxf->decompress(data, crd->crd_len, &out);
+		result = cxf->decompress(data, crd->crd_len, &out,
+					 *res_size);
 
 	free(data, M_CRYPTO_DATA);
 	if (result == 0)
@@ -544,14 +547,14 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	/* Copy back the (de)compressed data. m_copyback is
 	 * extending the mbuf as necessary.
 	 */
-	sw->sw_size = result;
+	*res_size = (int)result;
 	/* Check the compressed size when doing compression */
-	if (crd->crd_flags & CRD_F_COMP) {
-		if (result > crd->crd_len) {
+	if (crd->crd_flags & CRD_F_COMP &&
+	    sw->sw_alg == CRYPTO_DEFLATE_COMP_NOGROW &&
+	    result >= crd->crd_len) {
 			/* Compression was useless, we lost time */
 			free(out, M_CRYPTO_DATA);
 			return 0;
-		}
 	}
 
 	COPYBACK(outtype, buf, crd->crd_skip, result, out);
@@ -675,17 +678,14 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_SHA1_HMAC_96:
 			axf = &swcr_auth_hash_hmac_sha1_96;
 			goto authcommon;
-		case CRYPTO_SHA2_HMAC:
-			if (cri->cri_klen == 256)
-				axf = &swcr_auth_hash_hmac_sha2_256;
-			else if (cri->cri_klen == 384)
-				axf = &swcr_auth_hash_hmac_sha2_384;
-			else if (cri->cri_klen == 512)
-				axf = &swcr_auth_hash_hmac_sha2_512;
-			else {
-				swcr_freesession(NULL, i);
-				return EINVAL;
-			}
+		case CRYPTO_SHA2_256_HMAC:
+			axf = &swcr_auth_hash_hmac_sha2_256;
+			goto authcommon;
+		case CRYPTO_SHA2_384_HMAC:
+			axf = &swcr_auth_hash_hmac_sha2_384;
+			goto authcommon;
+		case CRYPTO_SHA2_512_HMAC:
+			axf = &swcr_auth_hash_hmac_sha2_512;
 			goto authcommon;
 		case CRYPTO_NULL_HMAC:
 			axf = &swcr_auth_hash_null;
@@ -718,7 +718,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			axf->Update((*swd)->sw_ictx, cri->cri_key,
 			    cri->cri_klen / 8);
 			axf->Update((*swd)->sw_ictx, hmac_ipad_buffer,
-			    HMAC_BLOCK_LEN - (cri->cri_klen / 8));
+			    axf->auth_hash->blocksize - (cri->cri_klen / 8));
 
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
@@ -727,7 +727,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			axf->Update((*swd)->sw_octx, cri->cri_key,
 			    cri->cri_klen / 8);
 			axf->Update((*swd)->sw_octx, hmac_opad_buffer,
-			    HMAC_BLOCK_LEN - (cri->cri_klen / 8));
+			    axf->auth_hash->blocksize - (cri->cri_klen / 8));
 
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= HMAC_OPAD_VAL;
@@ -788,6 +788,11 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_cxf = cxf;
 			break;
 
+		case CRYPTO_DEFLATE_COMP_NOGROW:
+			cxf = &swcr_comp_algo_deflate_nogrow;
+			(*swd)->sw_cxf = cxf;
+			break;
+
 		case CRYPTO_GZIP_COMP:
 			cxf = &swcr_comp_algo_gzip;
 			(*swd)->sw_cxf = cxf;
@@ -845,7 +850,9 @@ swcr_freesession(void *arg, u_int64_t tid)
 		case CRYPTO_MD5_HMAC_96:
 		case CRYPTO_SHA1_HMAC:
 		case CRYPTO_SHA1_HMAC_96:
-		case CRYPTO_SHA2_HMAC:
+		case CRYPTO_SHA2_256_HMAC:
+		case CRYPTO_SHA2_384_HMAC:
+		case CRYPTO_SHA2_512_HMAC:
 		case CRYPTO_RIPEMD160_HMAC:
 		case CRYPTO_RIPEMD160_HMAC_96:
 		case CRYPTO_NULL_HMAC:
@@ -884,6 +891,7 @@ swcr_freesession(void *arg, u_int64_t tid)
 			break;
 
 		case CRYPTO_DEFLATE_COMP:
+		case CRYPTO_DEFLATE_COMP_NOGROW:
 		case CRYPTO_GZIP_COMP:
 			cxf = swd->sw_cxf;
 			break;
@@ -969,7 +977,9 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 		case CRYPTO_MD5_HMAC_96:
 		case CRYPTO_SHA1_HMAC:
 		case CRYPTO_SHA1_HMAC_96:
-		case CRYPTO_SHA2_HMAC:
+		case CRYPTO_SHA2_256_HMAC:
+		case CRYPTO_SHA2_384_HMAC:
+		case CRYPTO_SHA2_512_HMAC:
 		case CRYPTO_RIPEMD160_HMAC:
 		case CRYPTO_RIPEMD160_HMAC_96:
 		case CRYPTO_NULL_HMAC:
@@ -983,13 +993,12 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 			break;
 
 		case CRYPTO_DEFLATE_COMP:
+		case CRYPTO_DEFLATE_COMP_NOGROW:
 		case CRYPTO_GZIP_COMP:
 			DPRINTF(("swcr_process: compdec for %d\n", sw->sw_alg));
 			if ((crp->crp_etype = swcr_compdec(crd, sw,
-			    crp->crp_buf, type)) != 0)
+			    crp->crp_buf, type, &crp->crp_olen)) != 0)
 				goto done;
-			else
-				crp->crp_olen = (int)sw->sw_size;
 			break;
 
 		default:
@@ -1000,7 +1009,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 	}
 
 done:
-	DPRINTF(("request %08x done\n", (uint32_t)crp));
+	DPRINTF(("request %p done\n", crp));
 	crypto_done(crp);
 	return 0;
 }
@@ -1028,7 +1037,9 @@ swcr_init(void)
 	REGISTER(CRYPTO_MD5_HMAC_96);
 	REGISTER(CRYPTO_SHA1_HMAC);
 	REGISTER(CRYPTO_SHA1_HMAC_96);
-	REGISTER(CRYPTO_SHA2_HMAC);
+	REGISTER(CRYPTO_SHA2_256_HMAC);
+	REGISTER(CRYPTO_SHA2_384_HMAC);
+	REGISTER(CRYPTO_SHA2_512_HMAC);
 	REGISTER(CRYPTO_RIPEMD160_HMAC);
 	REGISTER(CRYPTO_RIPEMD160_HMAC_96);
 	REGISTER(CRYPTO_NULL_HMAC);
@@ -1038,6 +1049,7 @@ swcr_init(void)
 	REGISTER(CRYPTO_SHA1);
 	REGISTER(CRYPTO_RIJNDAEL128_CBC);
 	REGISTER(CRYPTO_DEFLATE_COMP);
+	REGISTER(CRYPTO_DEFLATE_COMP_NOGROW);
 	REGISTER(CRYPTO_GZIP_COMP);
 #undef REGISTER
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.h,v 1.3.94.1 2010/05/30 05:17:28 rmind Exp $	*/
+/*	$NetBSD: sbp.h,v 1.3.94.2 2011/03/05 20:53:24 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -147,7 +147,7 @@ struct sbp_status{
 /* 6: Busy retry limit exceeded: ack_busy_B */
 /* 7-A: Reserved for future standardization */
 /* B: Tardy retry limit exceeded */
-/* C: Confilict error */
+/* C: Conflict error */
 /* D: Data error */
 /* E: Type error */
 /* F: Address error */

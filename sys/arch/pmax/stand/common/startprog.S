@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.S,v 1.5 2009/12/14 00:46:11 matt Exp $	*/
+/*	$NetBSD: startprog.S,v 1.5.4.1 2011/03/05 20:51:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <mips/asm.h>
 
+	.set	noreorder
 LEAF(startprog)
         subu    sp,sp,CALLFRAME_SIZ
 	addu	t2,a1,-CALLFRAME_SIZ	# new stack value
@@ -46,10 +47,10 @@ LEAF(startprog)
 	move	a1,a3
 
 #ifdef __mips_o32
-	lw	a2,48(sp)		# load everything from old stack we need
-	lw	a3,52(sp)
-	lw	$8,56(sp)		# use a4/t0 in case N32/N64 kernel
-	lw	$9,60(sp)		# use a5/t1 in case N32/N64 kernel
+	lw	a2,CALLFRAME_SIZ+16(sp)	# load everything from old stack we need
+	lw	a3,CALLFRAME_SIZ+20(sp)
+	lw	$8,CALLFRAME_SIZ+24(sp)	# use a4/t0 in case N32/N64 kernel
+	lw	$9,CALLFRAME_SIZ+28(sp)	# use a5/t1 in case N32/N64 kernel
 #else
 	move	a2,a4
 	move	a3,a5
@@ -63,9 +64,9 @@ LEAF(startprog)
 	sw	$8,16(sp)		# save on stack for O32
 	sw	$9,20(sp)		# save on stack for O32
 	jal	ra,t9
-	nop				# BDslot
+	 nop				# BDslot
 
 	lw	ra,CALLFRAME_RA(sp)	# should not get back here!
 	j	ra
-	addu	sp,sp,CALLFRAME_SIZ
+	 addu	sp,sp,CALLFRAME_SIZ
 END(startprog)

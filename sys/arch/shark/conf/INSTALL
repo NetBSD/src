@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.43.2.1 2010/05/30 05:17:07 rmind Exp $
+#	$NetBSD: INSTALL,v 1.43.2.2 2011/03/05 20:51:58 rmind Exp $
 #
 #	Shark installation kernel
 #
@@ -257,7 +257,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
-pseudo-device	md	1		# Ramdisk driver
+pseudo-device	md			# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 #pseudo-device	sequencer 1		# MIDI sequencer
 pseudo-device	wsmux			# mouse & keyboard multiplexor

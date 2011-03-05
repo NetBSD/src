@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.9 2009/12/26 16:01:25 uebayasi Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.9.4.1 2011/03/05 20:50:09 rmind Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.9 2009/12/26 16:01:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.9.4.1 2011/03/05 20:50:09 rmind Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -134,7 +134,6 @@ __KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.9 2009/12/26 16:01:25 uebayasi
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_omap.h"
-#include "md.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

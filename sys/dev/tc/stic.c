@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.46 2009/08/22 17:38:06 tsutsui Exp $	*/
+/*	$NetBSD: stic.c,v 1.46.4.1 2011/03/05 20:54:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.46 2009/08/22 17:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.46.4.1 2011/03/05 20:54:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.46 2009/08/22 17:38:06 tsutsui Exp $");
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/event.h>
-
-#include <uvm/uvm_extern.h>
 
 #if defined(pmax)
 #include <mips/cpuregs.h>
@@ -740,7 +738,7 @@ stic_do_switch(void *cookie)
 
 	/*
 	 * XXX Since we don't yet receive vblank interrupts from the
-	 * PXG, we must flush immediatley.
+	 * PXG, we must flush immediately.
 	 */
 	if (si->si_disptype == WSDISPLAY_TYPE_PXG)
 		stic_flush(si);
@@ -1135,7 +1133,7 @@ stic_cursor(void *cookie, int on, int row, int col)
 
 		/*
 		 * XXX Since we don't yet receive vblank interrupts from the
-		 * PXG, we must flush immediatley.
+		 * PXG, we must flush immediately.
 		 */
 		if (si->si_disptype == WSDISPLAY_TYPE_PXG)
 			stic_flush(si);
@@ -1275,7 +1273,7 @@ stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 
 	/*
 	 * XXX Since we don't yet receive vblank interrupts from the PXG, we
-	 * must flush immediatley.
+	 * must flush immediately.
 	 */
 	if (si->si_disptype == WSDISPLAY_TYPE_PXG)
 		stic_flush(si);
@@ -1352,7 +1350,7 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 
 	/*
 	 * XXX Since we don't yet receive vblank interrupts from the PXG, we
-	 * must flush immediatley.
+	 * must flush immediately.
 	 */
 	if (si->si_disptype == WSDISPLAY_TYPE_PXG)
 		stic_flush(si);

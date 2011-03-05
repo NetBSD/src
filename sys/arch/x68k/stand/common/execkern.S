@@ -1,10 +1,10 @@
 |
 |	execute NetBSD kernel
 |
-|	written by Yasha (ITOH Yasufumi)
+|	written by ITOH Yasufumi
 |	public domain
 |
-|	$NetBSD: execkern.S,v 1.3 2002/05/18 13:54:38 isaki Exp $
+|	$NetBSD: execkern.S,v 1.3.136.1 2011/03/05 20:52:24 rmind Exp $
 
 #include <machine/asm.h>
 #include "execkern.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23.6.1 2010/05/30 05:16:58 rmind Exp $	*/
+/*	$NetBSD: boot.c,v 1.23.6.2 2011/03/05 20:51:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -208,8 +208,7 @@ _rtt(void)
 void
 main(void)
 {
-	extern char bootprog_name[], bootprog_rev[],
-		    bootprog_maker[], bootprog_date[];
+	extern char bootprog_name[], bootprog_rev[];
 	int chosen, options, openprom;
 	char bootline[512];		/* Should check size? */
 	char *cp;
@@ -219,7 +218,6 @@ main(void)
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/*
 	 * Figure out what version of Open Firmware...
@@ -288,7 +286,7 @@ main(void)
 
 			loadflag = LOAD_KERNEL;
 			if (floppyboot)
-				loadflag &= ~LOAD_NOTE;
+				loadflag &= ~LOAD_BACKWARDS;
 
 			marks[MARK_START] = 0;
 			if (loadfile(kernels[i], marks, loadflag) >= 0)

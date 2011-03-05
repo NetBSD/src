@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.124 2009/08/13 08:57:43 haad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.124.4.1 2011/03/05 20:55:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.124 2009/08/13 08:57:43 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.124.4.1 2011/03/05 20:55:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.124 2009/08/13 08:57:43 haad Exp $
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 #include <sys/atomic.h>
+#include <sys/disklabel.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -524,12 +525,14 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	struct filedesc	*fdp;
 	u_long		com;
 	int		error;
-	u_int		size;
+	size_t		size, alloc_size;
 	void 		*data, *memp;
 #define	STK_PARAMS	128
 	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
 	fdfile_t	*ff;
 
+	memp = NULL;
+	alloc_size = 0;
 	error = 0;
 	p = l->l_proc;
 	fdp = p->p_fd;
@@ -560,6 +563,28 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	 * copied to/from the user's address space.
 	 */
 	size = IOCPARM_LEN(com);
+	alloc_size = size;
+
+	/*
+	 * The disklabel is now padded to a multiple of 8 bytes however the old
+	 * disklabel on 32bit platforms wasn't.  This leaves a difference in
+	 * size of 4 bytes between the two but are otherwise identical.
+	 * To deal with this, we allocate enough space for the new disklabel
+	 * but only copyin/out the smaller amount.
+	 */
+	if (IOCGROUP(com) == 'd') {
+		u_long ncom = com ^ (DIOCGDINFO ^ DIOCGDINFO32);
+		switch (ncom) {
+		case DIOCGDINFO:
+		case DIOCWDINFO:
+		case DIOCSDINFO:
+		case DIOCGDEFLABEL:
+			com = ncom;
+			if (IOCPARM_LEN(DIOCGDINFO32) < IOCPARM_LEN(DIOCGDINFO))
+				alloc_size = IOCPARM_LEN(DIOCGDINFO);
+			break;
+		}
+	}
 	if (size > IOCPARM_MAX) {
 		error = ENOTTY;
 		goto out;
@@ -569,8 +594,8 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		/* UNIX-style ioctl. */
 		data = SCARG(uap, data);
 	} else {
-		if (size > sizeof(stkbuf)) {
-			memp = kmem_alloc(size, KM_SLEEP);
+		if (alloc_size > sizeof(stkbuf)) {
+			memp = kmem_alloc(alloc_size, KM_SLEEP);
 			data = memp;
 		} else {
 			data = (void *)stkbuf;
@@ -579,10 +604,16 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 			if (size) {
 				error = copyin(SCARG(uap, data), data, size);
 				if (error) {
-					if (memp) {
-						kmem_free(memp, size);
-					}
 					goto out;
+				}
+				/*
+				 * The data between size and alloc_size has
+				 * not been overwritten.  It shouldn't matter
+				 * but let's clear that anyway.
+				 */
+				if (__predict_false(size < alloc_size)) {
+					memset((char *)data+size, 0,
+					    alloc_size - size);
 				}
 				ktrgenio(SCARG(uap, fd), UIO_WRITE,
 				    SCARG(uap, data), size, 0);
@@ -633,9 +664,9 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		}
 		break;
 	}
-	if (memp)
-		kmem_free(memp, size);
  out:
+	if (memp)
+		kmem_free(memp, alloc_size);
 	fd_putfile(SCARG(uap, fd));
 	switch (error) {
 	case -1:

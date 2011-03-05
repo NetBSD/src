@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_debug.c,v 1.1.6.2 2010/07/03 01:19:34 rmind Exp $ */
+/* $NetBSD: acpi_debug.c,v 1.1.6.3 2011/03/05 20:53:02 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.1.6.2 2010/07/03 01:19:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.1.6.3 2011/03/05 20:53:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -183,6 +183,7 @@ acpi_debug_create(void)
 	ACPI_DEBUG_ADD(acpi_debug_layer_d, ACPI_LID_COMPONENT);
 	ACPI_DEBUG_ADD(acpi_debug_layer_d, ACPI_RESOURCE_COMPONENT);
 	ACPI_DEBUG_ADD(acpi_debug_layer_d, ACPI_TZ_COMPONENT);
+	ACPI_DEBUG_ADD(acpi_debug_layer_d, ACPI_DISPLAY_COMPONENT);
 	ACPI_DEBUG_ADD(acpi_debug_layer_d, ACPI_ALL_DRIVERS);
 
 	/*

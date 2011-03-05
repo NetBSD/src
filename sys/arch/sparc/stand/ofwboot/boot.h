@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.5 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: boot.h,v 1.5.22.1 2011/03/05 20:52:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,8 +42,6 @@
  */
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
-extern const char bootprog_date[];
-extern const char bootprog_maker[];
 
 /* bootinfo.c */
 extern u_long	bi_init(u_long);

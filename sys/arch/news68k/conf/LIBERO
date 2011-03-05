@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.51.6.1 2010/05/30 05:17:00 rmind Exp $
+# 	$NetBSD: LIBERO,v 1.51.6.2 2011/03/05 20:51:22 rmind Exp $
 
 #	NEWS1750 config file;
 #
@@ -156,7 +156,7 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 # Misc.
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver

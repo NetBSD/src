@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.9 2009/12/12 14:29:34 nonaka Exp $	*/
+/*	$NetBSD: zapm.c,v 1.9.4.1 2011/03/05 20:52:35 rmind Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,13 +18,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.9 2009/12/12 14:29:34 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.9.4.1 2011/03/05 20:52:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/callout.h>
 #include <sys/selinfo.h> /* XXX: for apm_softc that is exposed here */
+#include <sys/device.h>
 
 #include <dev/hpc/apm/apmvar.h>
 

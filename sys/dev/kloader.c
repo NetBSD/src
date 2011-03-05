@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.21.4.1 2010/07/03 01:19:33 rmind Exp $	*/
+/*	$NetBSD: kloader.c,v 1.21.4.2 2011/03/05 20:53:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.21.4.1 2010/07/03 01:19:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.21.4.2 2011/03/05 20:53:00 rmind Exp $");
 
 #include "debug_kloader.h"
 
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.21.4.1 2010/07/03 01:19:33 rmind Exp $
 #define	ELFSIZE	32
 #include <sys/exec_elf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/kloader.h>
 
@@ -585,23 +585,33 @@ kloader_load_segment(Elf_Phdr *p)
 struct vnode *
 kloader_open(const char *filename)
 {
+	struct pathbuf *pb;
 	struct nameidata nid;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
+	pb = pathbuf_create(filename);
+	if (pb == NULL) {
+		PRINTF("%s: pathbuf_create failed\n", filename);
+		return (NULL);
+	}
+
+	NDINIT(&nid, LOOKUP, FOLLOW, pb);
 
 	error = namei(&nid);
 	if (error != 0) {
 		PRINTF("%s: namei failed, errno=%d\n", filename, error);
+		pathbuf_destroy(pb);
 		return (NULL);
 	}
 
 	error = vn_open(&nid, FREAD, 0);
 	if (error != 0) {
 		PRINTF("%s: open failed, errno=%d\n", filename, error);
+		pathbuf_destroy(pb);
 		return (NULL);
 	}
 
+	pathbuf_destroy(pb);
 	return (nid.ni_vp);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.4.1 2010/05/30 05:17:11 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.44.4.2 2011/03/05 20:52:18 rmind Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -90,15 +90,15 @@ define	BADADDR		offsetof(struct cpu_dep, cpu_badaddr)
 
 define	KERNBASE	KERNBASE
 
-define	UVME_INTRS	offsetof(struct uvmexp, intrs)
-define	UVME_SOFTS	offsetof(struct uvmexp, softs)
-
 ifdef MULTIPROCESSOR
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 endif
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CI_SOFTLWPS	offsetof(struct cpu_info, ci_softlwps)
+define	CI_CAS_ADDR	offsetof(struct cpu_info, ci_cas_addr)
+define	CI_NINTR	offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CI_NSOFT	offsetof(struct cpu_info, ci_data.cpu_nsoft)
 
 # mtpr register numbers
 define	PR_KSP		PR_KSP
@@ -134,6 +134,8 @@ define	T_ARITHFLT	T_ARITHFLT
 define	T_SYSCALL	T_SYSCALL
 define	T_ASTFLT	T_ASTFLT
 define	T_KDBTRAP	T_KDBTRAP
+
+define	CASMAGIC	CASMAGIC
 
 define	USPACE		USPACE
 define	TRAPFRAMELEN	sizeof(struct trapframe)

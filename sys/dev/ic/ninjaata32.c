@@ -1,7 +1,7 @@
-/*	$NetBSD: ninjaata32.c,v 1.11 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.11.4.1 2011/03/05 20:53:19 rmind Exp $	*/
 
 /*
- * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
+ * Copyright (c) 2006 ITOH Yasufumi.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.11 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.11.4.1 2011/03/05 20:53:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -36,8 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.11 2009/03/14 15:36:17 dsl Exp $");
 
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.40.26.1 2010/05/30 05:17:11 rmind Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.40.26.2 2011/03/05 20:52:21 rmind Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,25 +31,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.40.26.1 2010/05/30 05:17:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.40.26.2 2011/03/05 20:52:21 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/file.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
 
 #include <dev/cons.h>
 
-#include <machine/mtpr.h>
 #include <machine/sid.h>
-#include <machine/uvax.h>
 #include <machine/vsbus.h>
-#include <machine/cpu.h>
 #include <machine/scb.h>
 
 #include <arch/vax/vax/gencons.h>

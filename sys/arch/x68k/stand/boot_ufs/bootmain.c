@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.12 2009/03/18 10:22:38 cegger Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.12.4.1 2011/03/05 20:52:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -195,6 +195,10 @@ get_scsi_host_adapter(void)
 		devstr[5] = '1';
 #endif
 	}
+
+#ifdef BOOT_DEBUG
+	B_PRINT("\r\n");
+#endif
 
 	return ha;
 }

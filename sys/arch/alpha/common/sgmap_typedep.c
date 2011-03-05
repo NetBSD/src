@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.35 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.35.22.1 2011/03/05 20:49:10 rmind Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.35 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.35.22.1 2011/03/05 20:49:10 rmind Exp $");
 
 #include "opt_ddb.h"
+
+#include <uvm/uvm_extern.h>
 
 #ifdef SGMAP_DEBUG
 int			__C(SGMAP_TYPE,_debug) = 0;
@@ -121,9 +123,12 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		}
 	}
 
-#if 0
-	printf("len 0x%lx -> 0x%lx, boundary 0x%lx -> 0x%lx -> ",
-	    (endva - va), sgvalen, map->_dm_boundary, boundary);
+#ifdef SGMAP_DEBUG
+	if (__C(SGMAP_TYPE,_debug)) {
+		printf("sgmap_load: va:endva = 0x%lx:0x%lx\n", va, endva);
+		printf("sgmap_load: sgvalen = 0x%lx, boundary = 0x%lx\n",
+		       sgvalen, boundary);
+	}
 #endif
 
 	s = splvm();
@@ -132,10 +137,6 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	splx(s);
 	if (error)
 		return (error);
-
-#if 0
-	printf("error %d sgva 0x%lx\n", error, sgva);
-#endif
 
 	pteidx = sgva >> SGMAP_ADDR_PTEIDX_SHIFT;
 	pte = &page_table[pteidx * SGMAP_PTE_SPACING];
@@ -153,8 +154,8 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 #ifdef SGMAP_DEBUG
 	if (__C(SGMAP_TYPE,_debug))
-		printf("sgmap_load: wbase = 0x%lx, vpage = 0x%x, "
-		    "DMA addr = 0x%lx\n", sgmap->aps_wbase, sgva,
+		printf("sgmap_load: wbase = 0x%lx, vpage = 0x%lx, "
+		    "DMA addr = 0x%lx\n", sgmap->aps_wbase, (uint64_t)sgva,
 		    map->dm_segs[seg].ds_addr);
 #endif
 
@@ -181,9 +182,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 #ifdef SGMAP_DEBUG
 		if (__C(SGMAP_TYPE,_debug)) {
 			printf("sgmap_load:     spill page, pte = %p, "
-			    "*pte = 0x%lx\n", pte, *pte);
-			printf("sgmap_load:     pte count = %d\n",
-			    map->_dm_ptecnt);
+			    "*pte = 0x%lx\n", pte, (uint64_t)*pte);
 		}
 #endif
 	}

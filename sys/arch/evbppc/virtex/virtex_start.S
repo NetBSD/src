@@ -1,4 +1,4 @@
-/*	$NetBSD: virtex_start.S,v 1.5.2.1 2010/05/30 05:16:44 rmind Exp $ */
+/*	$NetBSD: virtex_start.S,v 1.5.2.2 2011/03/05 20:50:17 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -32,8 +32,6 @@
 /*
  * This file is based on startup code of Walnut and Explora boards.
  */
-
-#define _NOREGNAMES
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"

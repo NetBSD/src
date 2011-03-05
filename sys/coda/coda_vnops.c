@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.71.4.2 2010/07/03 01:19:30 rmind Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.71.4.3 2011/03/05 20:52:37 rmind Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71.4.2 2010/07/03 01:19:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71.4.3 2011/03/05 20:52:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,7 +539,7 @@ coda_ioctl(void *v)
 	return(EINVAL);
     }
 
-    if (iap->vi.in_size > VC_MAXDATASIZE) {
+    if (iap->vi.in_size > VC_MAXDATASIZE || iap->vi.out_size > VC_MAXDATASIZE) {
 	vrele(tvp);
 	return(EINVAL);
     }
@@ -703,11 +703,11 @@ coda_abortop(void *v)
 	struct vnode *a_dvp;
 	struct componentname *a_cnp;
     } */ *ap = v;
+
+    (void)ap;
 /* upcall decl */
 /* locals */
 
-    if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-	PNBUF_PUT(ap->a_cnp->cn_pnbuf);
     return (0);
 }
 
@@ -997,21 +997,7 @@ coda_lookup(void *v)
 	&& (error == ENOENT))
     {
 	error = EJUSTRETURN;
-	cnp->cn_flags |= SAVENAME;
 	*ap->a_vpp = NULL;
-    }
-
-    /*
-     * If we are removing, and we are at the last element, and we
-     * found it, then we need to keep the name around so that the
-     * removal will go ahead as planned.
-     * XXX Check against new lookup rules.
-     */
-    if ((cnp->cn_nameiop == DELETE)
-	&& (cnp->cn_flags & ISLASTCN)
-	&& !error)
-    {
-	cnp->cn_flags |= SAVENAME;
     }
 
     /*
@@ -1137,10 +1123,6 @@ coda_create(void *v)
 	}
     }
 
-    /* Per vnodeops(9), free name except on success and SAVESTART. */
-    if (error || (cnp->cn_flags & SAVESTART) == 0) {
-	PNBUF_PUT(cnp->cn_pnbuf);
-    }
     return(error);
 }
 
@@ -1461,10 +1443,6 @@ coda_mkdir(void *v)
 	}
     }
 
-    /* Per vnodeops(9), free name except on success and SAVESTART. */
-    if (error || (cnp->cn_flags & SAVESTART) == 0) {
-	PNBUF_PUT(cnp->cn_pnbuf);
-    }
     return(error);
 }
 
@@ -1613,11 +1591,6 @@ coda_symlink(void *v)
  exit:
     /* unlock and deference parent */
     vput(dvp);
-
-    /* Per vnodeops(9), free name except on success and SAVESTART. */
-    if (error || (cnp->cn_flags & SAVESTART) == 0) {
-	PNBUF_PUT(cnp->cn_pnbuf);
-    }
 
     CODADEBUG(CODA_SYMLINK, myprintf(("in symlink result %d\n",error)); )
     return(error);

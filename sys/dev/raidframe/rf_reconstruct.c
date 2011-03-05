@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.108 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.108.4.1 2011/03/05 20:54:03 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.108 2009/11/17 18:54:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.108.4.1 2011/03/05 20:54:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.108 2009/11/17 18:54:26 jld Exp
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/namei.h> /* for pathbuf */
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_raid.h"
@@ -296,7 +297,8 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		c_label->column = col;
 		c_label->clean = RF_RAID_DIRTY;
 		c_label->status = rf_ds_optimal;
-		c_label->partitionSize = raidPtr->Disks[scol].partitionSize;
+		rf_component_label_set_partitionsize(c_label,
+		    raidPtr->Disks[scol].partitionSize);
 
 		/* We've just done a rebuild based on all the other
 		   disks, so at this point the parity is known to be
@@ -346,6 +348,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	RF_ComponentLabel_t *c_label;
 	int     numDisksDone = 0, rc;
 	struct partinfo dpart;
+	struct pathbuf *pb;
 	struct vnode *vp;
 	struct vattr va;
 	int retcode;
@@ -426,7 +429,13 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	       raidPtr->Disks[col].devname);
 #endif
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	retcode = dk_lookup(raidPtr->Disks[col].devname, curlwp, &vp, UIO_SYSSPACE);
+	pb = pathbuf_create(raidPtr->Disks[col].devname);
+	if (pb == NULL) {
+		retcode = ENOMEM;
+	} else {
+		retcode = dk_lookup(pb, curlwp, &vp);
+		pathbuf_destroy(pb);
+	}
 
 	if (retcode) {
 		printf("raid%d: rebuilding: dk_lookup on device: %s failed: %d!\n",raidPtr->raidid,

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.61.4.1 2010/05/30 05:16:36 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.61.4.2 2011/03/05 20:49:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.61.4.1 2010/05/30 05:16:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.61.4.2 2011/03/05 20:49:15 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -95,9 +95,8 @@ static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 #define x86_64_set_mtrr32(x, y, z)	ENOSYS
 #endif
 
-static int check_sigcontext32(const struct netbsd32_sigcontext *,
-    struct trapframe *);
-static int check_mcontext32(const mcontext32_t *, struct trapframe *);
+static int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
+static int check_mcontext32(struct lwp *, const mcontext32_t *);
 
 #ifdef EXEC_AOUT
 /*
@@ -128,10 +127,12 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 void
 netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
-	struct pcb *pcb = lwp_getpcb(l);
+	struct pcb *pcb;
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
 	void **retaddr;
+
+	pcb = lwp_getpcb(l);
 
 	/* If we were using the FPU, forget about it. */
 	if (pcb->pcb_fpcpu != NULL) {
@@ -145,23 +146,22 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	netbsd32_adjust_limits(p);
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
-	pcb->pcb_flags = 0;
+	pcb->pcb_flags = PCB_COMPAT32;
         pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
         pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;  
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
-
 
 	p->p_flag |= PK_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA32_SEL, SEL_UPL);
-	tf->tf_gs = LSEL(LUDATA32_SEL, SEL_UPL);
+	cpu_fsgs_zero(l);
+	cpu_fsgs_reload(l, tf->tf_ds, tf->tf_es);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (uint64_t)p->p_psstr;
+	tf->tf_rbx = (uint32_t)p->p_psstrp;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
@@ -402,20 +402,18 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 	if (copyin(scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
-	/* Restore register context. */
-	tf = l->l_md.md_regs;
 	/*
 	 * Check for security violations.
 	 */
-	error = check_sigcontext32(&context, tf);
+	error = check_sigcontext32(l, &context);
 	if (error != 0)
 		return error;
 
+	/* Restore register context. */
+	tf = l->l_md.md_regs;
 	tf->tf_ds = context.sc_ds;
 	tf->tf_es = context.sc_es;
-	tf->tf_fs = context.sc_fs;
-	tf->tf_gs = context.sc_gs;
-
+	cpu_fsgs_reload(l, context.sc_fs, context.sc_gs);
 	tf->tf_rflags = context.sc_eflags;
 	tf->tf_rdi = context.sc_edi;
 	tf->tf_rsi = context.sc_esi;
@@ -838,11 +836,11 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		/*
 		 * Check for security violations.
 		 */
-		error = check_mcontext32(mcp, tf);
+		error = check_mcontext32(l, mcp);
 		if (error != 0)
 			return error;
-		tf->tf_gs = gr[_REG32_GS];
-		tf->tf_fs = gr[_REG32_FS];
+
+		cpu_fsgs_reload(l, gr[_REG32_FS], gr[_REG32_GS]);
 		tf->tf_es = gr[_REG32_ES];
 		tf->tf_ds = gr[_REG32_DS];
 		/* Only change the user-alterable part of eflags */
@@ -861,6 +859,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		tf->tf_ss     = gr[_REG32_SS];
 	}
 
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
+
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -872,7 +873,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 			fpusave_lwp(l, false);
 		}
 		memcpy(&pcb->pcb_savefpu.fp_fxsave, &mcp->__fpregs,
-		    sizeof (mcp->__fpregs));
+		    sizeof (pcb->pcb_savefpu.fp_fxsave));
 		/* If not set already. */
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
@@ -921,6 +922,9 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uint32_t)(uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -929,7 +933,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 			fpusave_lwp(l, true);
 		}
 		memcpy(&mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
-		    sizeof (mcp->__fpregs));
+		    sizeof (pcb->pcb_savefpu.fp_fxsave));
 		*flags |= _UC_FPU;
 	}
 }
@@ -954,14 +958,24 @@ startlwp32(void *arg)
  * and rely on catching invalid user contexts on exit from the kernel.
  * These functions perform the needed checks.
  */
+
 static int
-check_sigcontext32(const struct netbsd32_sigcontext *scp, struct trapframe *tf)
+check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 {
-	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+	struct trapframe *tf;
+	struct pcb *pcb;
+
+	tf = l->l_md.md_regs;
+	pcb = lwp_getpcb(curlwp);
+
+	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !VALID_USER_CSEL32(scp->sc_cs))
 		return EINVAL;
-	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs))
+	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
+	    !(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
 		return EINVAL;
-	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs))
+	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
+	    !(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
 		return EINVAL;
 	if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
 		return EINVAL;
@@ -973,17 +987,24 @@ check_sigcontext32(const struct netbsd32_sigcontext *scp, struct trapframe *tf)
 }
 
 static int
-check_mcontext32(const mcontext32_t *mcp, struct trapframe *tf)
+check_mcontext32(struct lwp *l, const mcontext32_t *mcp)
 {
 	const __greg32_t *gr;
+	struct trapframe *tf;
+	struct pcb *pcb;
 
 	gr = mcp->__gregs;
+	tf = l->l_md.md_regs;
+	pcb = lwp_getpcb(l);
 
-	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !VALID_USER_CSEL32(gr[_REG32_CS]))
 		return EINVAL;
-	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]))
+	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
+	    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
 		return EINVAL;
-	if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]))
+	if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
+	    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
 		return EINVAL;
 	if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
 		return EINVAL;
@@ -1071,7 +1092,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	/*
 	 * Check for security violations.
 	 */
-	error = check_sigcontext32((const struct netbsd32_sigcontext *)&context, tf);
+	error = check_sigcontext32(l, (const struct netbsd32_sigcontext *)&context);
 	if (error != 0)
 		return error;
 

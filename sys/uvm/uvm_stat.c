@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_stat.c,v 1.32 2009/10/21 21:12:07 rmind Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.32.4.1 2011/03/05 20:56:38 rmind Exp $	 */
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.32 2009/10/21 21:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.32.4.1 2011/03/05 20:56:38 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -47,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.32 2009/10/21 21:12:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
@@ -205,16 +199,19 @@ uvmhist_print(void (*pr)(const char *, ...))
  * uvmexp_print: ddb hook to print interesting uvm counters
  */
 void
-uvmexp_print(void (*pr)(const char *, ...))
+uvmexp_print(void (*pr)(const char *, ...)
+    __attribute__((__format__(__printf__,1,2))))
 {
 	int active, inactive;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 
 	uvm_estimatepageable(&active, &inactive);
 
 	(*pr)("Current UVM status:\n");
-	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n",
+	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n, ncolors=%d",
 	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
-	    uvmexp.pageshift);
+	    uvmexp.pageshift, uvmexp.ncolors);
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
 	    uvmexp.npages, active, inactive, uvmexp.wired,
 	    uvmexp.free);
@@ -222,9 +219,16 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
 	(*pr)("  freemin=%d, free-target=%d, wired-max=%d\n",
 	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
-	(*pr)("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d\n",
-	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch);
-	(*pr)("  softint=%d, syscalls=%d\n", uvmexp.softs, uvmexp.syscalls);
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		(*pr)("  cpu%u:\n", cpu_index(ci));
+		(*pr)("    faults=%" PRIu64 ", traps=%" PRIu64 ", "
+		    "intrs=%" PRIu64 ", ctxswitch=%" PRIu64 "\n",
+		    ci->ci_data.cpu_nfault, ci->ci_data.cpu_ntrap,
+		    ci->ci_data.cpu_nintr, ci->ci_data.cpu_nswtch);
+		(*pr)("    softint=%" PRIu64 ", syscalls=%" PRIu64 "\n",
+		    ci->ci_data.cpu_nsoft, ci->ci_data.cpu_nsyscall);
+	}
 
 	(*pr)("  fault counts:\n");
 	(*pr)("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",

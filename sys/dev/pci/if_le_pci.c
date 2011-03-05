@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.49 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.49.22.1 2011/03/05 20:53:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.49 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.49.22.1 2011/03/05 20:53:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.49 2008/04/28 20:23:55 martin Exp $"
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

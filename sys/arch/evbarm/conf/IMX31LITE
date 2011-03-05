@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.9 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: IMX31LITE,v 1.9.4.1 2011/03/05 20:50:03 rmind Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -22,6 +22,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_ARM1136	# Support the SA110 core
 
 # Architecture options
+options        IMX31_IPGCLK_FREQ=66000000	# Fixme. bogus value
 
 # File systems
 
@@ -168,7 +169,7 @@ wd*		at atabus? drive ? flags 0x0000
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices

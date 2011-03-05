@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.27.4.1 2010/07/03 01:19:28 rmind Exp $	*/
+/*	$NetBSD: crl.c,v 1.27.4.2 2011/03/05 20:52:17 rmind Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -40,16 +40,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.27.4.1 2010/07/03 01:19:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.27.4.2 2011/03/05 20:52:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 
-#include <machine/cpu.h>
-#include <machine/mtpr.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
 

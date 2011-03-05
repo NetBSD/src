@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.42.4.1 2010/05/30 05:17:06 rmind Exp $ */
+/* $NetBSD: if_mec.c,v 1.42.4.2 2011/03/05 20:51:54 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.42.4.1 2010/05/30 05:17:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.42.4.2 2011/03/05 20:51:54 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "rnd.h"
@@ -397,8 +397,6 @@ static void	mec_mii_writereg(device_t, int, int, int);
 static int	mec_mii_wait(struct mec_softc *);
 static void	mec_statchg(device_t);
 
-static void	enaddr_aton(const char *, uint8_t *);
-
 static int	mec_init(struct ifnet * ifp);
 static void	mec_start(struct ifnet *);
 static void	mec_watchdog(struct ifnet *);
@@ -511,7 +509,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 
 	/* get Ethernet address from ARCBIOS */
-	if ((macaddr = ARCBIOS->GetEnvironmentVariable("eaddr")) == NULL) {
+	if ((macaddr = arcbios_GetEnvironmentVariable("eaddr")) == NULL) {
 		aprint_error(": unable to get MAC address!\n");
 		goto fail_4;
 	}
@@ -525,7 +523,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 	if (strcmp(macaddr, "ff:ff:ff:ff:ff:ff") == 0) {
 		uint32_t ui = 0;
 		const char * netaddr =
-			ARCBIOS->GetEnvironmentVariable("netaddr");
+			arcbios_GetEnvironmentVariable("netaddr");
 
 		/*
 		 * Create a MAC address by abusing the "netaddr" env var
@@ -551,7 +549,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 		memcpy(sc->sc_enaddr+3, ((uint8_t *)&ui)+1, 3);
 	}
 	if (!mac_is_fake)
-		enaddr_aton(macaddr, sc->sc_enaddr);
+		ether_aton_r(sc->sc_enaddr, sizeof(sc->sc_enaddr), macaddr);
 
 	/* set the Ethernet address */
 	address = 0;
@@ -852,36 +850,6 @@ mec_statchg(device_t self)
 	}
 
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
-}
-
-/*
- * XXX
- * maybe this function should be moved to common part
- * (sgimips/machdep.c or elsewhere) for all on-board network devices.
- */
-static void
-enaddr_aton(const char *str, uint8_t *eaddr)
-{
-	int i;
-	char c;
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		if (*str == ':')
-			str++;
-
-		c = *str++;
-		if (isdigit(c)) {
-			eaddr[i] = (c - '0');
-		} else if (isxdigit(c)) {
-			eaddr[i] = (toupper(c) + 10 - 'A');
-		}
-		c = *str++;
-		if (isdigit(c)) {
-			eaddr[i] = (eaddr[i] << 4) | (c - '0');
-		} else if (isxdigit(c)) {
-			eaddr[i] = (eaddr[i] << 4) | (toupper(c) + 10 - 'A');
-		}
-	}
 }
 
 static int

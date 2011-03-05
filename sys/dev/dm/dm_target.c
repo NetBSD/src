@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.12.4.1 2010/05/30 05:17:19 rmind Exp $      */
+/*        $NetBSD: dm_target.c,v 1.12.4.2 2011/03/05 20:53:07 rmind Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -83,9 +83,7 @@ dm_target_autoload(const char *dm_target_name)
 		gen = module_gen;
 
 		/* Try to autoload target module */
-		mutex_enter(&module_lock);
 		(void) module_autoload(name, MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
 	} while (gen != module_gen);
 
 	mutex_enter(&dm_target_mutex);
@@ -293,6 +291,7 @@ dm_target_init(void)
 	dmt->deps = &dm_target_linear_deps;
 	dmt->destroy = &dm_target_linear_destroy;
 	dmt->upcall = &dm_target_linear_upcall;
+	dmt->secsize = &dm_target_linear_secsize;
 
 	r = dm_target_insert(dmt);
 
@@ -307,6 +306,7 @@ dm_target_init(void)
 	dmt3->deps = &dm_target_stripe_deps;
 	dmt3->destroy = &dm_target_stripe_destroy;
 	dmt3->upcall = &dm_target_stripe_upcall;
+	dmt3->secsize = &dm_target_stripe_secsize;
 
 	r = dm_target_insert(dmt3);
 

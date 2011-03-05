@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24.4.1 2010/05/30 05:16:55 rmind Exp $	*/
+/*	$NetBSD: main.c,v 1.24.4.2 2011/03/05 20:50:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -194,9 +194,9 @@ command_help(char *arg)
 	       "boot [filename] [-adsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
-	       "vesa {enabled|disabled|list|modenum}\n"
+	       "vesa {modenum|on|off|enabled|disabled|list}\n"
 	       "multiboot [filename] [<args>]\n"
-	       "modules {enabled|disabled}\n"
+	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "help|?\n"
 	       "quit\n");
@@ -212,7 +212,6 @@ command_quit(char *arg)
 	reboot();
 	/* Note: we shouldn't get to this point! */
 	panic("Could not reboot!");
-	exit(0);
 }
 
 void

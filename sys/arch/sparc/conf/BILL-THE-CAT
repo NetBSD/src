@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.47.4.1 2010/05/30 05:17:07 rmind Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.47.4.2 2011/03/05 20:52:00 rmind Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -391,7 +391,7 @@ pseudo-device	vnd
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	1
+#pseudo-device	md	
 
 
 #### Network interfaces

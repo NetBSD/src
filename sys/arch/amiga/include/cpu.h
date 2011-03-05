@@ -1,6 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.75 2010/02/09 18:13:10 phx Exp $	*/
+/*	$NetBSD: cpu.h,v 1.75.2.1 2011/03/05 20:49:22 rmind Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -36,53 +37,9 @@
  *
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: cpu.h 1.16 91/03/25$
- *
- *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
- */
+
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
-
-#if defined(_KERNEL)
-
-/*
- * Exported definitions unique to amiga/68k cpu support.
- */
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
@@ -92,29 +49,12 @@
  * Get common m68k CPU definitions.
  */
 #include <m68k/cpu.h>
-#define	M68K_MMU_MOTOROLA
 
-#include <sys/cpu_data.h>
-struct cpu_info {
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	cpuid_t	ci_cpuid;
-	int	ci_mtx_count;
-        int	ci_mtx_oldspl;
-        int	ci_want_resched;
-};
-
-extern struct cpu_info cpu_info_store;
-
-#define	curcpu()	(&cpu_info_store)
-
+#if defined(_KERNEL)
 /*
- * definitions of cpu-dependent requirements
- * referenced in generic code
+ * Exported definitions unique to amiga/68k cpu support.
  */
-#define	cpu_number()			0
-
-void	cpu_proc_fork(struct proc *, struct proc *);
-
+#define	M68K_MMU_MOTOROLA
 
 extern volatile unsigned int interrupt_depth;
 /*
@@ -189,6 +129,7 @@ void	*alloc_z2mem(long);
 /*
  * Prototypes from autoconf.c
  */
+int	is_a600(void);
 int	is_a1200(void);
 int	is_a3000(void);
 int	is_a4000(void);

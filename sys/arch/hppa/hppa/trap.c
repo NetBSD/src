@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78.2.2 2010/07/03 01:19:19 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.78.2.3 2011/03/05 20:50:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.2.2 2010/07/03 01:19:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.2.3 2011/03/05 20:50:36 rmind Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -206,7 +206,7 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 
 	if (l->l_md.md_astpending) {
 		l->l_md.md_astpending = 0;
-		uvmexp.softs++;
+		//curcpu()->ci_data.cpu_nast++;
 
 		if (curcpu()->ci_want_resched)
 			preempt();
@@ -407,9 +407,11 @@ void
 frame_sanity_check(const char *func, int line, int type, struct trapframe *tf,
     struct lwp *l)
 {
+#if 0
 	extern int kernel_text;
 	extern int etext;
-	extern register_t kpsw;
+#endif
+	struct cpu_info *ci = curcpu();
 
 #define SANITY(e)					\
 do {							\
@@ -421,8 +423,8 @@ do {							\
 } while (/* CONSTCOND */ 0)
 
 	KASSERT(l != NULL);
-	SANITY((tf->tf_ipsw & kpsw) == kpsw);
-	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
+	SANITY((tf->tf_ipsw & ci->ci_psw) == ci->ci_psw);
+	SANITY((ci->ci_psw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
 		vaddr_t minsp, maxsp, uv;
 
@@ -445,11 +447,12 @@ do {							\
 		 */
 		if ((type & ~T_USER) == T_INTERRUPT)
 			goto out;
-
+#if 0
 		SANITY(tf->tf_iioq_head >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_head < (u_int) &etext);
 		SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_tail < (u_int) &etext);
+#endif
 
 		maxsp = uv + USPACE + PAGE_SIZE;
 		minsp = uv + PAGE_SIZE;
@@ -585,7 +588,7 @@ trap(int type, struct trapframe *frame)
 
 	/* If this is a trap, not an interrupt, reenable interrupts. */
 	if (trapnum != T_INTERRUPT) {
-		uvmexp.traps++;
+		curcpu()->ci_data.cpu_ntrap++;
 		mtctl(frame->tf_eiem, CR_EIEM);
 	}
 
@@ -917,6 +920,15 @@ do_onfault:
 				panic("trap: uvm_fault(%p, %lx, %d): %d",
 				    map, va, vftype, ret);
 			}
+		} else if ((type & T_USER) == 0) {
+			extern char ucas_ras_start[];
+			extern char ucas_ras_end[];
+
+			if (frame->tf_iioq_head > (u_int)ucas_ras_start &&
+			    frame->tf_iioq_head < (u_int)ucas_ras_end) {
+				frame->tf_iioq_head = (u_int)ucas_ras_start;
+				frame->tf_iioq_tail = (u_int)ucas_ras_start + 4;
+			}
 		}
 		break;
 
@@ -1112,7 +1124,7 @@ syscall(struct trapframe *frame, int *args)
 	int oldcpl = ci->ci_cpl;
 #endif
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, frame, curlwp);

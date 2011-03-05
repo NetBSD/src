@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.2.4.1 2010/05/30 05:17:39 rmind Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.2.4.2 2011/03/05 20:53:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2.4.1 2010/05/30 05:17:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2.4.2 2011/03/05 20:53:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2.4.1 2010/05/30 05:17:39 rmind Exp 
 #include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/videomode/videomode.h>
 
@@ -56,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2.4.1 2010/05/30 05:17:39 rmind Exp 
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -209,7 +208,7 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dataport = bus_space_vaddr(sc->sc_memt, sc->sc_regh);
 	sc->sc_dataport += SM502_DATAPORT;
 
-	reg = bus_space_read_8(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CRTL);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CRTL);
 	switch (reg & SM502_PDC_DEPTH_MASK) {
 		case SM502_PDC_8BIT:
 			sc->sc_depth = 8;
@@ -317,52 +316,53 @@ voyagerfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
 
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return 0;
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
 
-		/* PCI config read/write passthrough. */
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, l));
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
 
-		case WSDISPLAYIO_GINFO:
-			if (ms == NULL)
-				return ENODEV;
-			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_height;
-			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
-			wdf->cmsize = 256;
-			return 0;
+	case WSDISPLAYIO_GINFO:
+		if (ms == NULL)
+			return ENODEV;
+		wdf = (void *)data;
+		wdf->height = ms->scr_ri.ri_height;
+		wdf->width = ms->scr_ri.ri_width;
+		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->cmsize = 256;
+		return 0;
 
-		case WSDISPLAYIO_GETCMAP:
-			return voyagerfb_getcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_GETCMAP:
+		return voyagerfb_getcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_PUTCMAP:
-			return voyagerfb_putcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_PUTCMAP:
+		return voyagerfb_putcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = sc->sc_stride;
-			return 0;
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_stride;
+		return 0;
 
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
-
-				if (new_mode != sc->sc_mode) {
-					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-						voyagerfb_restore_palette(sc);
-						vcons_redraw_screen(ms);
-					}
-				}
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
+			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+				voyagerfb_restore_palette(sc);
+				vcons_redraw_screen(ms);
 			}
-			return 0;
+		}
+		}
+		return 0;
 	}
 	return EPASSTHROUGH;
 }

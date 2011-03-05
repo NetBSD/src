@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.65 2010/01/29 19:56:41 phx Exp $ */
+/*	$NetBSD: siop.c,v 1.65.4.1 2011/03/05 20:49:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.65 2010/01/29 19:56:41 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.65.4.1 2011/03/05 20:49:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.65 2010/01/29 19:56:41 phx Exp $");
 #include <sys/disklabel.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

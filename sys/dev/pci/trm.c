@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.30 2008/05/14 13:29:29 tsutsui Exp $	*/
+/*	$NetBSD: trm.c,v 1.30.20.1 2011/03/05 20:53:58 rmind Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.30 2008/05/14 13:29:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.30.20.1 2011/03/05 20:53:58 rmind Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -85,8 +85,6 @@ int trm_debug = 1;
 
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
@@ -574,7 +572,7 @@ trm_init(struct trm_softc *sc)
 
 	sc->sc_srb = malloc(sizeof(struct trm_srb) * TRM_MAX_SRB,
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	DPRINTF(("all SRB size=%x\n", sizeof(struct trm_srb) * TRM_MAX_SRB));
+	DPRINTF(("all SRB size=%zx\n", sizeof(struct trm_srb) * TRM_MAX_SRB));
 	if (sc->sc_srb == NULL) {
 		aprint_error(": can not allocate SRB\n");
 		return 1;

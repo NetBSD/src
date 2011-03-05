@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.42 2009/12/10 05:10:01 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.42.4.1 2011/03/05 20:49:30 rmind Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -47,6 +47,7 @@ include <uvm/uvm_extern.h>
 
 include <arm/fiq.h>
 
+include <arm/arm32/pte.h>
 include <machine/pmap.h>
 include <machine/frame.h>
 include <machine/vmparam.h>
@@ -73,6 +74,23 @@ define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
+define	DOMAIN_CLIENT		DOMAIN_CLIENT
+define	L1_S_PROTO_generic	L1_S_PROTO_generic
+define	L1_S_PROTO_armv7	L1_S_PROTO_armv7
+define	L1_S_PROTO_xscale	L1_S_PROTO_xscale
+if ARM_NMMUS == 1
+define	L1_S_PROTO		L1_S_PROTO
+endif
+define	L1_S_FRAME		L1_S_FRAME
+define	L1_S_SHIFT		L1_S_SHIFT
+define	L1_S_SIZE		L1_S_SIZE
+define	L1_S_B			L1_S_B
+define	L1_S_C			L1_S_C
+define	L1_S_AP_KRW		L1_S_AP(AP_KRW)
+define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
+define	L1_TABLE_SIZE		L1_TABLE_SIZE
+define	L1_TYPE_S		L1_TYPE_S
+define	L1_S_DOM_KERNEL		L1_S_DOM(PMAP_DOMAIN_KERNEL)
 
 ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
@@ -107,11 +125,7 @@ define	PCB_USER_PID_RO		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_ro)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 
-define	USER_SIZE		sizeof(struct user)
-
-define	V_TRAP			offsetof(struct uvmexp, traps)
-define	V_INTR			offsetof(struct uvmexp, intrs)
-define	V_SOFT			offsetof(struct uvmexp, softs)
+define	PCB_SIZE		sizeof(struct pcb)
 
 define	VM_MAP			offsetof(struct vmspace, vm_map)
 define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
@@ -156,6 +170,10 @@ endif
 ifdef __HAVE_FAST_SOFTINTS
 define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 endif
+define	CI_CC_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
+define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CI_CC_NSOFT		offsetof(struct cpu_info, ci_data.cpu_nsoft)
+
 
 # Constants required for in_cksum() and friends.
 define	M_LEN				offsetof(struct mbuf, m_len)

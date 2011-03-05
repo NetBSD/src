@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.15 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: asp.c,v 1.15.4.1 2011/03/05 20:50:27 rmind Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.15 2009/11/03 05:07:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.15.4.1 2011/03/05 20:50:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ const struct asp_spus_tag {
 struct asp_softc {
 	device_t sc_dev;
 
-	struct hp700_int_reg sc_int_reg;
+	struct hp700_interrupt_register sc_ir;
 
 	volatile struct asp_hwr *sc_hw;
 	volatile struct asp_trs *sc_trs;
@@ -174,7 +174,7 @@ aspmatch(device_t parent, cfdata_t cf, void *aux)
 
 	/* Make sure we have an IRQ. */
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
-		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
+		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
 
 	/*
 	 * Forcibly mask the HPA down to the start of the ASP
@@ -201,24 +201,30 @@ aspattach(device_t parent, device_t self, void *aux)
 	 * Map the ASP interrupt registers.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_INT,
-			  sizeof(struct asp_trs), 0, &ioh))
-		panic("aspattach: can't map interrupt registers.");
+			  sizeof(struct asp_trs), 0, &ioh)) {
+		aprint_error(": can't map interrupt registers.\n");
+		return;
+	}
 	sc->sc_trs = (struct asp_trs *)ioh;
 
 	/*
 	 * Map the ASP miscellaneous registers.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_MISC,
-			  sizeof(struct asp_hwr), 0, &ioh))
-		panic("aspattach: can't map miscellaneous registers.");
+			  sizeof(struct asp_hwr), 0, &ioh)) {
+		aprint_error(": can't map miscellaneous registers.\n");
+		return;
+	}
 	sc->sc_hw = (struct asp_hwr *)ioh;
 
 	/*
 	 * Map the Ethernet address and read it out.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_ETHER_ADDR,
-			  sizeof(ga.ga_ether_address), 0, &ioh))
-		panic("aspattach: can't map EEPROM.");
+			  sizeof(ga.ga_ether_address), 0, &ioh)) {
+		aprint_error(": can't map EEPROM.\n");
+		return;
+	}
 	bus_space_read_region_1(ca->ca_iot, ioh, 0,
 		ga.ga_ether_address, sizeof(ga.ga_ether_address));
 	bus_space_unmap(ca->ca_iot, ioh, sizeof(ga.ga_ether_address));
@@ -245,9 +251,10 @@ aspattach(device_t parent, device_t self, void *aux)
 	    sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
 
 	/* Establish the interrupt register. */
-	hp700_intr_reg_establish(&sc->sc_int_reg);
-	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->asp_imr;
-	sc->sc_int_reg.int_reg_req = &sc->sc_trs->asp_irr;
+	hp700_interrupt_register_establish(&sc->sc_ir);
+	sc->sc_ir.ir_name = device_xname(self);
+	sc->sc_ir.ir_mask = &sc->sc_trs->asp_imr;
+	sc->sc_ir.ir_req = &sc->sc_trs->asp_irr;
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
@@ -262,7 +269,7 @@ aspattach(device_t parent, device_t self, void *aux)
 	}
 
 	ga.ga_name = "gsc";
-	ga.ga_int_reg = &sc->sc_int_reg;
+	ga.ga_ir = &sc->sc_ir;
 	ga.ga_fix_args = asp_fix_args;
 	ga.ga_fix_args_cookie = sc;
 	ga.ga_scsi_target = sc->sc_trs->asp_scsi;

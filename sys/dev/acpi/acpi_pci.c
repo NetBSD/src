@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.4.4.2 2010/07/03 01:19:34 rmind Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.4.4.3 2011/03/05 20:53:03 rmind Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4.4.2 2010/07/03 01:19:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4.4.3 2011/03/05 20:53:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,12 +37,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4.4.2 2010/07/03 01:19:34 rmind Exp $
 #include <sys/systm.h>
 
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>
+
+#include "locators.h"
 
 #define _COMPONENT	  ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	  ("acpi_pci")
@@ -113,9 +116,10 @@ acpi_pcidev_pciroot_bus(ACPI_HANDLE handle, uint16_t *busp)
 	if (ACPI_FAILURE(rv))
 		return rv;
 
-	if (bus < 0 || bus > 0xFFFF)
+	if (bus == -1)
 		return AE_NOT_EXIST;
 
+	/* Here it holds that 0 <= bus <= 0xFFFF. */
 	*busp = (uint16_t)bus;
 
 	return rv;
@@ -142,7 +146,10 @@ acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *res, void *context)
 	if (*bus != -1)
 		return AE_ALREADY_EXISTS;
 
-	*bus = addr64.Minimum;
+	if (addr64.Minimum > 0xFFFF)
+		return AE_BAD_DATA;
+
+	*bus = (int32_t)addr64.Minimum;
 
 	return AE_OK;
 }
@@ -154,6 +161,10 @@ acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *res, void *context)
  *	PCI device if it has an ancestor that is a PCI root bridge and such
  *	that all intermediate nodes are PCI-to-PCI bridges.  Depth-first
  *	recursive implementation.
+ *
+ *	PCI root bridges do not necessarily contain an _ADR, since they already
+ *	contain an _HID (ACPI 4.0a, p. 197).  However we require an _ADR for
+ *	all non-root PCI devices.
  */
 ACPI_STATUS
 acpi_pcidev_scan(struct acpi_devnode *ad)
@@ -163,11 +174,19 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
-	if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
-	    !(ad->ad_devinfo->Valid & ACPI_VALID_ADR)) {
-		ad->ad_pciinfo = NULL;
+	ad->ad_pciinfo = NULL;
+
+	/*
+	 * We attach PCI information only to devices that are present,
+	 * enabled, and functioning properly.
+	 * Note: there is a possible race condition, because _STA may
+	 * have changed since ad->ad_devinfo->CurrentStatus was set.
+	 */
+	if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
 		goto rec;
-	}
+	if ((ad->ad_devinfo->Valid & ACPI_VALID_STA) != 0 &&
+	    (ad->ad_devinfo->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
+		goto rec;
 
 	if (ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) {
 
@@ -187,21 +206,43 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		if (ACPI_SUCCESS(rv))
 			ap->ap_segment = ACPI_LOWORD(val);
 
-		/* Try to get bus number using _CRS first. */
-		rv = acpi_pcidev_pciroot_bus(ad->ad_handle, &ap->ap_bus);
+		/* Try to get downstream bus number using _CRS first. */
+		rv = acpi_pcidev_pciroot_bus(ad->ad_handle, &ap->ap_downbus);
 
 		if (ACPI_FAILURE(rv)) {
 			rv = acpi_eval_integer(ad->ad_handle, "_BBN", &val);
 
 			if (ACPI_SUCCESS(rv))
-				ap->ap_bus = ACPI_LOWORD(val);
+				ap->ap_downbus = ACPI_LOWORD(val);
 		}
 
-		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
-		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
+		if (ap->ap_downbus > 255) {
+			aprint_error_dev(ad->ad_root,
+			    "invalid PCI downstream bus for %s\n", ad->ad_name);
+			kmem_free(ap, sizeof(*ap));
+			goto rec;
+		}
 
-		ap->ap_bridge = true;
-		ap->ap_downbus = ap->ap_bus;
+		ap->ap_flags |= ACPI_PCI_INFO_BRIDGE;
+
+		/*
+		 * This ACPI node denotes a PCI root bridge, but it may also
+		 * denote a PCI device on the bridge's downstream bus segment.
+		 */
+		if (ad->ad_devinfo->Valid & ACPI_VALID_ADR) {
+			ap->ap_bus = ap->ap_downbus;
+			ap->ap_device =
+			    ACPI_HILODWORD(ad->ad_devinfo->Address);
+			ap->ap_function =
+			    ACPI_LOLODWORD(ad->ad_devinfo->Address);
+
+			if (ap->ap_device > 31 ||
+			    (ap->ap_function > 7 && ap->ap_function != 0xFFFF))
+				aprint_error_dev(ad->ad_root,
+				    "invalid PCI address for %s\n", ad->ad_name);
+			else
+				ap->ap_flags |= ACPI_PCI_INFO_DEVICE;
+		}
 
 		ad->ad_pciinfo = ap;
 
@@ -210,7 +251,8 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 
 	if ((ad->ad_parent != NULL) &&
 	    (ad->ad_parent->ad_pciinfo != NULL) &&
-	    (ad->ad_parent->ad_pciinfo->ap_bridge)) {
+	    (ad->ad_parent->ad_pciinfo->ap_flags & ACPI_PCI_INFO_BRIDGE) &&
+	    (ad->ad_devinfo->Valid & ACPI_VALID_ADR)) {
 
 		/*
 		 * Our parent is a PCI root bridge or a PCI-to-PCI
@@ -228,14 +270,33 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
 		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
 
-		/*
-		 * Check whether this device is a PCI-to-PCI
-		 * bridge and get its secondary bus number.
-		 */
-		rv = acpi_pcidev_ppb_downbus(ap->ap_segment, ap->ap_bus,
-		    ap->ap_device, ap->ap_function, &ap->ap_downbus);
+		if (ap->ap_device > 31 ||
+		    (ap->ap_function > 7 && ap->ap_function != 0xFFFF)) {
+			aprint_error_dev(ad->ad_root,
+			    "invalid PCI address for %s\n", ad->ad_name);
+			kmem_free(ap, sizeof(*ap));
+			goto rec;
+		}
 
-		ap->ap_bridge = (rv != AE_OK) ? false : true;
+		ap->ap_flags |= ACPI_PCI_INFO_DEVICE;
+
+		if (ap->ap_function == 0xFFFF) {
+			/*
+			 * Assume that this device is not a PCI-to-PCI bridge.
+			 * XXX: Do we need to be smarter?
+			 */
+		} else {
+			/*
+			 * Check whether this device is a PCI-to-PCI
+			 * bridge and get its secondary bus number.
+			 */
+			rv = acpi_pcidev_ppb_downbus(ap->ap_segment, ap->ap_bus,
+			    ap->ap_device, ap->ap_function, &ap->ap_downbus);
+
+			if (ACPI_SUCCESS(rv))
+				ap->ap_flags |= ACPI_PCI_INFO_BRIDGE;
+		}
+
 		ad->ad_pciinfo = ap;
 
 		goto rec;
@@ -256,8 +317,8 @@ rec:
  * acpi_pcidev_ppb_downbus:
  *
  *	Retrieve the secondary bus number of the PCI-to-PCI bridge having the
- *	given PCI id.  If successful, return AE_OK and fill *busp.  Otherwise,
- *	return an exception code and leave *busp unchanged.
+ *	given PCI id.  If successful, return AE_OK and fill *downbus.
+ *	Otherwise, return an exception code and leave *downbus unchanged.
  *
  * XXX	Need to deal with PCI segment groups (see also acpica/OsdHardware.c).
  */
@@ -317,6 +378,7 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		if (ad->ad_pciinfo != NULL &&
+		    (ad->ad_pciinfo->ap_flags & ACPI_PCI_INFO_DEVICE) &&
 		    ad->ad_pciinfo->ap_segment == segment &&
 		    ad->ad_pciinfo->ap_bus == bus &&
 		    ad->ad_pciinfo->ap_device == device &&
@@ -325,4 +387,54 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
 	}
 
 	return NULL;
+}
+
+
+/*
+ * acpi_pcidev_find_dev:
+ *
+ *	Returns the device corresponding to the given PCI info, or NULL
+ *	if it doesn't exist.
+ */
+device_t
+acpi_pcidev_find_dev(struct acpi_devnode *ad)
+{
+	struct acpi_pci_info *ap;
+	struct pci_softc *pci;
+	device_t dv, pr;
+	deviter_t di;
+
+	if (ad == NULL)
+		return NULL;
+
+	if (ad->ad_pciinfo == NULL)
+		return NULL;
+
+	ap = ad->ad_pciinfo;
+
+	if (ap->ap_function == 0xFFFF)
+		return NULL;
+
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dv != NULL; dv = deviter_next(&di)) {
+
+		pr = device_parent(dv);
+
+		if (pr == NULL || device_is_a(pr, "pci") != true)
+			continue;
+
+		if (dv->dv_locators == NULL)	/* This should not happen. */
+			continue;
+
+		pci = device_private(pr);
+
+		if (pci->sc_bus == ap->ap_bus &&
+		    device_locator(dv, PCICF_DEV) == ap->ap_device &&
+		    device_locator(dv, PCICF_FUNCTION) == ap->ap_function)
+			break;
+	}
+
+	deviter_release(&di);
+
+	return dv;
 }

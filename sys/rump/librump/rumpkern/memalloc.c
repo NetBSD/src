@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.5.6.1 2010/07/03 01:20:02 rmind Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.5.6.2 2011/03/05 20:56:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.5.6.1 2010/07/03 01:20:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.5.6.2 2011/03/05 20:56:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -74,6 +74,10 @@ kern_malloc(unsigned long size, struct malloc_type *type, int flags)
 	void *rv;
 
 	rv = rumpuser_malloc(size, 0);
+
+	if (__predict_false(rv == NULL && (flags & (M_CANFAIL|M_NOWAIT)) == 0))
+		panic("malloc %lu bytes failed", size);
+
 	if (rv && flags & M_ZERO)
 		memset(rv, 0, size);
 
@@ -302,11 +306,12 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 	/* nada */
 }
 
-void
+bool
 pool_drain_end(struct pool *pp, uint64_t w)
 {
 
-	/* nada again */
+	/* can't reclaim anything in this model */
+	return false;
 }
 
 int

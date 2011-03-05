@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.211.2.3 2010/07/03 01:20:00 rmind Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.211.2.4 2011/03/05 20:56:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.211.2.3 2010/07/03 01:20:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.211.2.4 2011/03/05 20:56:04 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -864,22 +864,21 @@ nfs_unmount(struct mount *mp, int mntflags)
 	 */
 	/*
 	 * We need to decrement the ref. count on the nfsnode representing
-	 * the remote root.  See comment in mountnfs().  The VFS unmount()
-	 * has done vput on this vnode, otherwise we would get deadlock!
+	 * the remote root.  See comment in mountnfs().
 	 */
 	vp = nmp->nm_vnode;
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
 		return error;
 
-	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 2) {
-		vput(vp);
+	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 1) {
+		VOP_UNLOCK(vp);
 		return (EBUSY);
 	}
 
 	error = vflush(mp, vp, flags);
 	if (error) {
-		vput(vp);
+		VOP_UNLOCK(vp);
 		return (error);
 	}
 
@@ -898,10 +897,10 @@ nfs_unmount(struct mount *mp, int mntflags)
 	iostat_free(nmp->nm_stats);
 
 	/*
-	 * There are two reference counts to get rid of here
+	 * There is one reference count to get rid of here
 	 * (see comment in mountnfs()).
 	 */
-	vput(vp);
+	VOP_UNLOCK(vp);
 	vgone(vp);
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
@@ -929,9 +928,12 @@ nfs_root(struct mount *mp, struct vnode **vpp)
 
 	nmp = VFSTONFS(mp);
 	vp = nmp->nm_vnode;
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0)
+	vref(vp);
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0) {
+		vrele(vp);
 		return error;
+	}
 	*vpp = vp;
 	return (0);
 }
@@ -972,7 +974,7 @@ loop:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error != 0) {
 			if (error != ENOENT) {
 				mutex_enter(&mntvnode_lock);
@@ -1102,6 +1104,7 @@ nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 	error = VOP_GETATTR(*vpp, &va, kauth_cred_get());
 	if (error != 0) {
 		vput(*vpp);
+		*vpp = NULLVP;
 	}
 	return error;
 }

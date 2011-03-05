@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.43.2.3 2010/07/03 01:20:03 rmind Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.43.2.4 2011/03/05 20:56:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43.2.3 2010/07/03 01:20:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43.2.4 2011/03/05 20:56:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43.2.3 2010/07/03 01:20:03 rmind Exp 
 struct cwdinfo cwdi0;
 const char *rootfstype = ROOT_FSTYPE_ANY;
 
-static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
-
 static void
 pvfs_init(struct proc *p)
 {
@@ -84,9 +82,6 @@ rump_vfs_init(void)
 	char buf[64];
 	int error;
 	int rv, i;
-	extern int dovfsusermount; /* XXX */
-
-	dovfsusermount = 1; /* XXX */
 
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
@@ -100,6 +95,13 @@ rump_vfs_init(void)
 		struct cpu_info *ci = cpu_lookup(i);
 		cache_cpu_init(ci);
 	}
+
+	/* make number of bufpages 5% of total memory limit */
+	if (rump_physmemlimit != RUMPMEM_UNLIMITED) {
+		extern u_int bufpages;
+		bufpages = rump_physmemlimit / (20 * PAGE_SIZE);
+	}
+
 	vfsinit();
 	bufinit();
 	cwd_sys_init();
@@ -116,7 +118,6 @@ rump_vfs_init(void)
 	root_device = &rump_rootdev;
 
 	/* bootstrap cwdi (rest done in vfs_mountroot() */
-	rw_init(&cwdi0.cwdi_lock);
 	proc0.p_cwdi = &cwdi0;
 	proc0.p_cwdi = cwdinit();
 
@@ -172,21 +173,29 @@ rump_vfs_fini(void)
 	vfs_shutdown();
 }
 
+struct rumpcn {
+	struct componentname rcn_cn;
+	char *rcn_path;
+};
+
 struct componentname *
 rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	kauth_cred_t creds, struct lwp *l)
 {
+	struct rumpcn *rcn;
 	struct componentname *cnp;
 	const char *cp = NULL;
 
-	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
+	rcn = kmem_zalloc(sizeof(*rcn), KM_SLEEP);
+	cnp = &rcn->rcn_cn;
+
+	rcn->rcn_path = PNBUF_GET();
+	strlcpy(rcn->rcn_path, name, MAXPATHLEN);
+	cnp->cn_nameptr = rcn->rcn_path;
 
 	cnp->cn_nameiop = nameiop;
-	cnp->cn_flags = flags;
+	cnp->cn_flags = flags & (MODMASK | PARAMASK);
 
-	cnp->cn_pnbuf = PNBUF_GET();
-	strcpy(cnp->cn_pnbuf, name);
-	cnp->cn_nameptr = cnp->cn_pnbuf;
 	cnp->cn_namelen = namelen;
 	cnp->cn_hash = namei_hash(name, &cp);
 
@@ -198,25 +207,13 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 void
 rump_freecn(struct componentname *cnp, int flags)
 {
+	struct rumpcn *rcn = (void *)cnp;
 
 	if (flags & RUMPCN_FREECRED)
 		rump_cred_put(cnp->cn_cred);
 
-	if ((cnp->cn_flags & SAVENAME) == 0 || flags & RUMPCN_FORCEFREE)
-		PNBUF_PUT(cnp->cn_pnbuf);
-	kmem_free(cnp, sizeof(*cnp));
-}
-
-int
-rump_checksavecn(struct componentname *cnp)
-{
-
-	if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
-		return 0;
-	} else {
-		cnp->cn_flags |= HASBUF;
-		return 1;
-	}
+	PNBUF_PUT(rcn->rcn_path);
+	kmem_free(rcn, sizeof(*rcn));
 }
 
 /* hey baby, what's your namei? */
@@ -224,13 +221,20 @@ int
 rump_namei(uint32_t op, uint32_t flags, const char *namep,
 	struct vnode **dvpp, struct vnode **vpp, struct componentname **cnpp)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int rv;
 
-	NDINIT(&nd, op, flags, UIO_SYSSPACE, namep);
+	pb = pathbuf_create(namep);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
+	NDINIT(&nd, op, flags, pb);
 	rv = namei(&nd);
-	if (rv)
+	if (rv) {
+		pathbuf_destroy(pb);
 		return rv;
+	}
 
 	if (dvpp) {
 		KASSERT(flags & LOCKPARENT);
@@ -256,9 +260,8 @@ rump_namei(uint32_t op, uint32_t flags, const char *namep,
 		cnp = kmem_alloc(sizeof(*cnp), KM_SLEEP);
 		memcpy(cnp, &nd.ni_cnd, sizeof(*cnp));
 		*cnpp = cnp;
-	} else if (nd.ni_cnd.cn_flags & HASBUF) {
-		panic("%s: pathbuf mismatch", __func__);
 	}
+	pathbuf_destroy(pb);
 
 	return rv;
 }
@@ -485,43 +488,11 @@ rump_biodone(void *arg, size_t count, int error)
 	biodone(bp);
 }
 
-static void
-rump_rcvp_lwpset(struct vnode *rvp, struct vnode *cvp, struct lwp *l)
-{
-	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-
-	KASSERT(cvp);
-
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	if (cwdi->cwdi_rdir)
-		vrele(cwdi->cwdi_rdir);
-	if (rvp)
-		vref(rvp);
-	cwdi->cwdi_rdir = rvp;
-
-	vrele(cwdi->cwdi_cdir);
-	vref(cvp);
-	cwdi->cwdi_cdir = cvp;
-	rw_exit(&cwdi->cwdi_lock);
-}
-
 void
-rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
+rump_vfs_drainbufs(int npages)
 {
 
-	rump_rcvp_lwpset(rvp, cvp, curlwp);
-}
-
-struct vnode *
-rump_cdir_get(void)
-{
-	struct vnode *vp;
-	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;
-
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	vp = cwdi->cwdi_cdir;
-	rw_exit(&cwdi->cwdi_lock);
-	vref(vp);
-
-	return vp;
+	mutex_enter(&bufcache_lock);
+	buf_drain(npages);
+	mutex_exit(&bufcache_lock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2003/01/03 02:40:57 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.7.132.1 2011/03/05 20:49:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -50,5 +50,8 @@
 #endif
 
 #include <arm/arm32/param.h>
+
+/* at this offset we mmap() the PCI IO range in display drivers */
+#define PCI_MAGIC_IO_RANGE	0x7c000000
 
 #endif	/* _CATS_PARAM_H_ */

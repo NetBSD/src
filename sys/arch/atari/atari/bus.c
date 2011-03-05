@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.51.4.2 2010/07/03 01:19:15 rmind Exp $	*/
+/*	$NetBSD: bus.c,v 1.51.4.3 2011/03/05 20:49:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.51.4.2 2010/07/03 01:19:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.51.4.3 2011/03/05 20:49:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.51.4.2 2010/07/03 01:19:15 rmind Exp $");
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.12 2009/03/25 01:26:13 darran Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.12.4.1 2011/03/05 20:56:05 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12 2009/03/25 01:26:13 darran Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12.4.1 2011/03/05 20:56:05 rmind Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -55,14 +55,14 @@ __KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12 2009/03/25 01:26:13 darran
 #include <sys/sha1.h>
 
 struct swcr_auth_hash {
-	struct auth_hash *auth_hash;
+	const struct auth_hash *auth_hash;
 	void (*Init)(void *);
 	int  (*Update)(void *, const uint8_t *, uint16_t);
 	void (*Final)(uint8_t *, void *);
 };
 
 struct swcr_enc_xform {
-	struct enc_xform *enc_xform;
+	const struct enc_xform *enc_xform;
 	void (*encrypt)(void *, uint8_t *);
 	void (*decrypt)(void *, uint8_t *);
 	int  (*setkey)(uint8_t **, const uint8_t *, int len);
@@ -70,9 +70,9 @@ struct swcr_enc_xform {
 };
 
 struct swcr_comp_algo {
-	struct comp_algo *comp_algo;
+	const struct comp_algo *unused_comp_algo;
 	uint32_t (*compress)(uint8_t *, uint32_t, uint8_t **);
-	uint32_t (*decompress)(uint8_t *, uint32_t, uint8_t **);
+	uint32_t (*decompress)(uint8_t *, uint32_t, uint8_t **, int);
 };
 
 static void null_encrypt(void *, u_int8_t *);
@@ -124,9 +124,9 @@ static	int SHA384Update_int(void *, const u_int8_t *, u_int16_t);
 static	int SHA512Update_int(void *, const u_int8_t *, u_int16_t);
 
 static u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
-static u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
+static u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **, int);
 static u_int32_t gzip_compress(u_int8_t *, u_int32_t, u_int8_t **);
-static u_int32_t gzip_decompress(u_int8_t *, u_int32_t, u_int8_t **);
+static u_int32_t gzip_decompress(u_int8_t *, u_int32_t, u_int8_t **, int);
 
 /* Encryption instances */
 static const struct swcr_enc_xform swcr_enc_xform_null = {
@@ -276,6 +276,12 @@ static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_512 = {
 /* Compression instance */
 static const struct swcr_comp_algo swcr_comp_algo_deflate = {
 	&comp_algo_deflate,
+	deflate_compress,
+	deflate_decompress
+};
+
+static const struct swcr_comp_algo swcr_comp_algo_deflate_nogrow = {
+	&comp_algo_deflate_nogrow,
 	deflate_compress,
 	deflate_decompress
 };
@@ -638,23 +644,25 @@ SHA512Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
 static u_int32_t
 deflate_compress(u_int8_t *data, u_int32_t size, u_int8_t **out)
 {
-	return deflate_global(data, size, 0, out);
+	return deflate_global(data, size, 0, out, 0);
 }
 
 static u_int32_t
-deflate_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out)
+deflate_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out,
+		   int size_hint)
 {
-	return deflate_global(data, size, 1, out);
+	return deflate_global(data, size, 1, out, size_hint);
 }
 
 static u_int32_t
 gzip_compress(u_int8_t *data, u_int32_t size, u_int8_t **out)
 {
-	return gzip_global(data, size, 0, out);
+	return gzip_global(data, size, 0, out, 0);
 }
 
 static u_int32_t
-gzip_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out)
+gzip_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out,
+		int size_hint)
 {
-	return gzip_global(data, size, 1, out);
+	return gzip_global(data, size, 1, out, size_hint);
 }

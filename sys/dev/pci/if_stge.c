@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.49.4.1 2010/05/30 05:17:35 rmind Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.49.4.2 2011/03/05 20:53:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49.4.1 2010/05/30 05:17:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49.4.2 2011/03/05 20:53:44 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49.4.1 2010/05/30 05:17:35 rmind Exp $
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #include <net/if.h>
 #include <net/if_dl.h>

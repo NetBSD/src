@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.38.2.2 2010/07/03 01:20:01 rmind Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.38.2.3 2011/03/05 20:56:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,8 +36,11 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 1
+#define RUMPUSER_VERSION 13
 int rumpuser_getversion(void);
+
+int rumpuser_daemonize_begin(void);
+int rumpuser_daemonize_done(int);
 
 struct msghdr;
 struct pollfd;
@@ -123,13 +126,13 @@ int  rumpuser_thread_join(void *);
 struct rumpuser_mtx;
 
 void rumpuser_mutex_init(struct rumpuser_mtx **);
-void rumpuser_mutex_recursive_init(struct rumpuser_mtx **);
+void rumpuser_mutex_init_kmutex(struct rumpuser_mtx **);
 void rumpuser_mutex_enter(struct rumpuser_mtx *);
 void rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
 void rumpuser_mutex_destroy(struct rumpuser_mtx *);
-int  rumpuser_mutex_held(struct rumpuser_mtx *);
+struct lwp *rumpuser_mutex_owner(struct rumpuser_mtx *);
 
 struct rumpuser_rw;
 
@@ -201,5 +204,33 @@ typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
 typedef void (*rump_component_init_fn)(struct rump_component *, int);
 void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn);
 void rumpuser_dl_component_init(int, rump_component_init_fn);
+void *rumpuser_dl_globalsym(const char *);
+
+/* syscall proxy routines */
+
+struct rumpuser_sp_ops {
+	void (*spop_schedule)(void);
+	void (*spop_unschedule)(void);
+
+	void (*spop_lwproc_switch)(struct lwp *);
+	void (*spop_lwproc_release)(void);
+	int (*spop_lwproc_rfork)(void *, int, const char *);
+	int (*spop_lwproc_newlwp)(pid_t);
+	struct lwp * (*spop_lwproc_curlwp)(void);
+	int (*spop_syscall)(int, void *, register_t *);
+	void (*spop_procexit)(void);
+	void (*spop_execnotify)(const char *);
+	pid_t (*spop_getpid)(void);
+};
+
+int	rumpuser_sp_init(const char *, const struct rumpuser_sp_ops *,
+			 const char *, const char *, const char *);
+int	rumpuser_sp_copyin(void *, const void *, void *, size_t);
+int	rumpuser_sp_copyinstr(void *, const void *, void *, size_t *);
+int	rumpuser_sp_copyout(void *, const void *, void *, size_t);
+int	rumpuser_sp_copyoutstr(void *, const void *, void *, size_t *);
+int	rumpuser_sp_anonmmap(void *, size_t, void **);
+int	rumpuser_sp_raise(void *, int);
+void	rumpuser_sp_fini(void *);
 
 #endif /* _RUMP_RUMPUSER_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.86.2.2 2010/07/03 01:19:34 rmind Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.86.2.3 2011/03/05 20:53:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.86.2.2 2010/07/03 01:19:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.86.2.3 2011/03/05 20:53:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -148,6 +148,7 @@ enum {
 struct acpibat_softc {
 	struct acpi_devnode	*sc_node;
 	struct sysmon_envsys	*sc_sme;
+	struct timeval		 sc_last;
 	envsys_data_t		*sc_sensor;
 	char			 sc_serial[64];
 	kmutex_t		 sc_mutex;
@@ -179,7 +180,7 @@ static int	    acpibat_match(device_t, cfdata_t, void *);
 static void	    acpibat_attach(device_t, device_t, void *);
 static int	    acpibat_detach(device_t, int);
 static int          acpibat_get_sta(device_t);
-static ACPI_OBJECT *acpibat_get_object(ACPI_HANDLE, const char *, int);
+static ACPI_OBJECT *acpibat_get_object(ACPI_HANDLE, const char *, uint32_t);
 static void         acpibat_get_info(device_t);
 static void	    acpibat_print_info(device_t, ACPI_OBJECT *);
 static void         acpibat_get_status(device_t);
@@ -221,6 +222,8 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpibat_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
+	ACPI_HANDLE tmp;
+	ACPI_STATUS rv;
 
 	aprint_naive(": ACPI Battery\n");
 	aprint_normal(": ACPI Battery\n");
@@ -248,6 +251,14 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	acpibat_init_envsys(self);
+
+	/*
+	 * If this is ever seen, the driver should be extended.
+	 */
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "_BIX", &tmp);
+
+	if (ACPI_SUCCESS(rv))
+		aprint_verbose_dev(self, "ACPI 4.0 functionality present\n");
 }
 
 /*
@@ -311,7 +322,7 @@ acpibat_get_sta(device_t dv)
 }
 
 static ACPI_OBJECT *
-acpibat_get_object(ACPI_HANDLE hdl, const char *pth, int count)
+acpibat_get_object(ACPI_HANDLE hdl, const char *pth, uint32_t count)
 {
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
@@ -347,9 +358,10 @@ acpibat_get_info(device_t dv)
 {
 	struct acpibat_softc *sc = device_private(dv);
 	ACPI_HANDLE hdl = sc->sc_node->ad_handle;
-	int capunit, i, rateunit, val;
 	ACPI_OBJECT *elm, *obj;
 	ACPI_STATUS rv = AE_OK;
+	int capunit, i, rateunit;
+	uint64_t val;
 
 	obj = acpibat_get_object(hdl, "_BIF", ACPIBAT_BIF_COUNT);
 
@@ -505,9 +517,10 @@ acpibat_get_status(device_t dv)
 {
 	struct acpibat_softc *sc = device_private(dv);
 	ACPI_HANDLE hdl = sc->sc_node->ad_handle;
-	int i, rate, state, val;
 	ACPI_OBJECT *elm, *obj;
 	ACPI_STATUS rv = AE_OK;
+	int i, rate, state;
+	uint64_t val;
 
 	obj = acpibat_get_object(hdl, "_BST", ACPIBAT_BST_COUNT);
 
@@ -653,6 +666,7 @@ acpibat_update_status(void *arg)
 	}
 
 	sc->sc_present = rv;
+	microtime(&sc->sc_last);
 
 	cv_broadcast(&sc->sc_condvar);
 	mutex_exit(&sc->sc_mutex);
@@ -765,14 +779,26 @@ fail:
 static void
 acpibat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	device_t dv = sme->sme_cookie;
-	struct acpibat_softc *sc = device_private(dv);
+	device_t self = sme->sme_cookie;
+	struct acpibat_softc *sc;
+	struct timeval tv, tmp;
 	ACPI_STATUS rv;
+
+	sc = device_private(self);
+
+	tmp.tv_sec = 10;
+	tmp.tv_usec = 0;
+
+	microtime(&tv);
+	timersub(&tv, &tmp, &tv);
+
+	if (timercmp(&tv, &sc->sc_last, <) != 0)
+		return;
 
 	if (mutex_tryenter(&sc->sc_mutex) == 0)
 		return;
 
-	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_status, dv);
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_status, self);
 
 	if (ACPI_SUCCESS(rv))
 		cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz);
@@ -806,29 +832,38 @@ acpibat_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	*props |= PROP_BATTCAP | PROP_BATTWARN | PROP_DRIVER_LIMITS;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpibat, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-acpibat_modcmd(modcmd_t cmd, void *context)
+acpibat_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_acpibat,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpibat,
 		    cfattach_ioconf_acpibat, cfdata_ioconf_acpibat);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_acpibat,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpibat,
 		    cfattach_ioconf_acpibat, cfdata_ioconf_acpibat);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: g2busvar.h,v 1.4 2002/12/27 11:34:05 tsutsui Exp $	*/
+/*	$NetBSD: g2busvar.h,v 1.4.130.1 2011/03/05 20:49:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -57,7 +57,7 @@ struct g2busdev {
  * G2 master bus
  */
 struct g2bus_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	struct dreamcast_bus_space sc_memt;
 	TAILQ_HEAD(, g2busdev)
 		sc_subdevs;		/* list of all children */

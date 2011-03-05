@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.11.2.1 2010/05/30 05:16:44 rmind Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.11.2.2 2011/03/05 20:50:16 rmind Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.11.2.1 2010/05/30 05:16:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.11.2.2 2011/03/05 20:50:16 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.11.2.1 2010/05/30 05:16:44 rmin
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

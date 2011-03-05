@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2009/11/27 03:23:06 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.4.1 2011/03/05 20:49:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,13 +65,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2009/11/27 03:23:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.4.1 2011/03/05 20:49:52 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
 #include "scif.h"
 #include "opt_kloader.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2009/11/27 03:23:06 rmind Exp $");
 #include <sys/sysctl.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -269,6 +271,8 @@ intc_intr(int ssr, int spc, int ssp)
 	struct intc_intrhand *ih;
 	int s, evtcode;
 
+	curcpu()->ci_data.cpu_nintr++;
+
 	evtcode = _reg_read_4(SH4_INTEVT);
 
 	ih = EVTCODE_IH(evtcode);
@@ -289,3 +293,13 @@ intc_intr(int ssr, int spc, int ssp)
 		(*ih->ih_func)(ih->ih_arg);
 	}
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif

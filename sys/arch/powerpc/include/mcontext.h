@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.22.1 2011/03/05 20:51:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ typedef	__greg_t	__gregset_t[_NGREG];
 #define	_REG_PC		34		/* PC (copy of SRR0) */
 #define	_REG_MSR	35		/* MSR (copy of SRR1) */
 #define	_REG_CTR	36		/* Count Register */
-#define	_REG_XER	37		/* Integet Exception Reigster */
+#define	_REG_XER	37		/* Integer Exception Register */
 #define	_REG_MQ		38		/* MQ Register (POWER only) */
 
 typedef struct {
@@ -98,7 +98,10 @@ typedef struct {
 		unsigned char	__vr8[16];
 		unsigned short	__vr16[8];
 		unsigned int	__vr32[4];
-	} 		__vrs[_NVR] __attribute__((__aligned__(16)));
+		unsigned char	__spe8[8];
+		unsigned short	__spe16[4];
+		unsigned int	__spe32[2];
+	} 		__vrs[_NVR] __aligned(16);
 	unsigned int	__vscr;		/* VSCR */
 	unsigned int	__vrsave;	/* VRSAVE */
 } __vrf_t;
@@ -111,11 +114,21 @@ typedef struct {
 
 /* Machine-dependent uc_flags */
 #define	_UC_POWERPC_VEC	0x00010000	/* Vector Register File valid */
+#define	_UC_POWERPC_SPE	0x00020000	/* Vector Register File valid */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_R1])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R3])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	register void *__tcb;
+	__asm("mr %r2, %%0" : "=r"(__tcb));
+
+	return __tcb;
+}
 
 #endif	/* !_POWERPC_MCONTEXT_H_ */

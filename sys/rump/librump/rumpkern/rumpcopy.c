@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.2.6.1 2010/07/03 01:20:02 rmind Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.2.6.2 2011/03/05 20:56:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,80 +26,137 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.2.6.1 2010/07/03 01:20:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.2.6.2 2011/03/05 20:56:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 
-#include <rump/rump.h>
+#include <rump/rumpuser.h>
 
 #include "rump_private.h"
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
+	int error = 0;
 
-	if (curproc->p_vmspace == &vmspace0)
+	if (__predict_false(uaddr == NULL && len)) {
+		return EFAULT;
+	}
+
+	if (RUMP_LOCALPROC_P(curproc)) {
 		memcpy(kaddr, uaddr, len);
-	else
-		rump_sysproxy_copyin(uaddr, kaddr, len);
-	return 0;
+	} else if (len) {
+		error = rumpuser_sp_copyin(curproc->p_vmspace->vm_map.pmap,
+		    uaddr, kaddr, len);
+	}
+
+	return error;
 }
 
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
+	int error = 0;
 
-	if (curproc->p_vmspace == &vmspace0)
+	if (__predict_false(uaddr == NULL && len)) {
+		return EFAULT;
+	}
+
+	if (RUMP_LOCALPROC_P(curproc)) {
 		memcpy(uaddr, kaddr, len);
-	else
-		rump_sysproxy_copyout(kaddr, uaddr, len);
-	return 0;
+	} else if (len) {
+		error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
+		    kaddr, uaddr, len);
+	}
+	return error;
 }
 
 int
 subyte(void *uaddr, int byte)
 {
+	int error = 0;
 
-	if (curproc->p_vmspace == &vmspace0)
+	if (RUMP_LOCALPROC_P(curproc))
 		*(char *)uaddr = byte;
 	else
-		rump_sysproxy_copyout(&byte, uaddr, 1);
-	return 0;
+		error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
+		    &byte, uaddr, 1);
+
+	return error;
 }
 
 int
 copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 {
+	uint8_t *to = kdaddr;
+	const uint8_t *from = kfaddr;
+	size_t actlen = 0;
 
-	return copyinstr(kfaddr, kdaddr, len, done);
+	while (len-- > 0 && (*to++ = *from++) != 0)
+		actlen++;
+
+	if (len+1 == 0 && *(to-1) != 0)
+		return ENAMETOOLONG;
+
+	if (done)
+		*done = actlen+1; /* + '\0' */
+	return 0;
 }
 
 int
 copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
+	uint8_t *to;
+	int rv;
 
-	if (curproc->p_vmspace == &vmspace0)
-		strlcpy(kaddr, uaddr, len);
-	else
-		rump_sysproxy_copyin(uaddr, kaddr, len);
+	if (len == 0)
+		return 0;
+
+	if (RUMP_LOCALPROC_P(curproc))
+		return copystr(uaddr, kaddr, len, done);
+
+	if ((rv = rumpuser_sp_copyinstr(curproc->p_vmspace->vm_map.pmap,
+	    uaddr, kaddr, &len)) != 0)
+		return rv;
+
+	/* figure out if we got a terminated string or not */
+	to = (uint8_t *)kaddr + (len-1);
+	while (to >= (uint8_t *)kaddr) {
+		if (*to == 0)
+			goto found;
+		to--;
+	}
+	return ENAMETOOLONG;
+
+ found:
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
+
 	return 0;
 }
 
 int
 copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
+	size_t slen;
+	int error;
 
-	if (curproc->p_vmspace == &vmspace0)
-		strlcpy(uaddr, kaddr, len);
-	else
-		rump_sysproxy_copyout(kaddr, uaddr, len);
+	if (RUMP_LOCALPROC_P(curproc))
+		return copystr(kaddr, uaddr, len, done);
+
+	slen = strlen(kaddr)+1;
+	if (slen > len)
+		return ENAMETOOLONG;
+
+	error = rumpuser_sp_copyoutstr(curproc->p_vmspace->vm_map.pmap,
+	    kaddr, uaddr, &slen);
 	if (done)
-		*done = strlen(uaddr)+1; /* includes termination */
-	return 0;
+		*done = slen;
+
+	return error;
 }
 
 int
@@ -108,4 +165,60 @@ kcopy(const void *src, void *dst, size_t len)
 
 	memcpy(dst, src, len);
 	return 0;
+}
+
+/*
+ * Low-level I/O routine.  This is used only when "all else fails",
+ * i.e. the current thread does not have an appropriate vm context.
+ */
+int
+uvm_io(struct vm_map *vm, struct uio *uio)
+{
+	int error = 0;
+
+	/* loop over iovecs one-by-one and copyout */
+	for (; uio->uio_resid && uio->uio_iovcnt;
+	    uio->uio_iovcnt--, uio->uio_iov++) {
+		struct iovec *iov = uio->uio_iov;
+		size_t curlen = MIN(uio->uio_resid, iov->iov_len);
+
+		if (__predict_false(curlen == 0))
+			continue;
+
+		if (uio->uio_rw == UIO_READ) {
+			error = rumpuser_sp_copyin(vm->pmap,
+			    (void *)(vaddr_t)uio->uio_offset, iov->iov_base,
+			    curlen);
+		} else {
+			error = rumpuser_sp_copyout(vm->pmap,
+			    iov->iov_base, (void *)(vaddr_t)uio->uio_offset,
+			    curlen);
+		}
+		if (error)
+			break;
+
+		iov->iov_base = (uint8_t *)iov->iov_base + curlen;
+		iov->iov_len -= curlen;
+
+		uio->uio_resid -= curlen;
+		uio->uio_offset += curlen;
+	}
+
+	return error;
+}
+
+/*
+ * Copy one byte from userspace to kernel.
+ */
+int
+fubyte(const void *base)
+{
+	unsigned char val;
+	int error;
+
+	error = copyin(base, &val, sizeof(char));
+	if (error != 0)
+		return -1;
+
+	return (int)val;
 }

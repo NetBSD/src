@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39.2.2 2010/07/03 01:19:18 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39.2.3 2011/03/05 20:50:29 rmind Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -112,9 +112,8 @@ struct hppa_cpu_info {
 
 #ifdef _KERNEL
 extern const struct hppa_cpu_info *hppa_cpu_info;
-extern int cpu_hvers;
+extern int cpu_modelno;
 extern int cpu_revision;
-extern register_t kpsw;
 #endif
 #endif
 
@@ -187,12 +186,28 @@ extern register_t kpsw;
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
 
+#ifdef MULTIPROCESSOR
+
+#define	GET_CURCPU(r)		mfctl CR_CURCPU, r
+#define	GET_CURCPU_SPACE(s, r)	GET_CURCPU(r)
+#define	GET_CURLWP(r)		mfctl CR_CURCPU, r ! ldw CI_CURLWP(r), r
+#define	GET_CURLWP_SPACE(s, r)	mfctl CR_CURCPU, r ! ldw CI_CURLWP(s, r), r
+
+#define	SET_CURLWP(r,t)		mfctl CR_CURCPU, t ! stw r, CI_CURLWP(t)
+
+#else /*  MULTIPROCESSOR */
+
+#define	GET_CURCPU(r)		mfctl CR_CURLWP, r ! ldw L_CPU(r), r
+#define	GET_CURCPU_SPACE(s, r)	mfctl CR_CURLWP, r ! ldw L_CPU(s, r), r
+#define	GET_CURLWP(r)		mfctl CR_CURLWP, r
+#define	GET_CURLWP_SPACE(s, r)	GET_CURLWP(r)
+
+#define	SET_CURLWP(r,t) mtctl   r, CR_CURLWP
+
+#endif /*  MULTIPROCESSOR */
+
 #ifndef _LOCORE
 #ifdef _KERNEL
-
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
 
 /*
  * External definitions unique to PA-RISC cpu support.
@@ -216,8 +231,19 @@ struct clockframe {
 #define	CLKF_INTR(framep)	((framep)->cf_flags & TFF_INTR)
 #define	CLKF_USERMODE(framep)	((framep)->cf_flags & T_USER)
 
+int	clock_intr(void *);
+
+/*
+ * LWP_PC: the program counter for the given lwp.
+ */
+#define	LWP_PC(l)		((l)->l_md.md_regs->tf_iioq_head)
+
 #define	cpu_signotify(l)	(setsoftast(l))
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast(l))
+
+#endif /* _KERNEL */
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/cpu_data.h>
 
@@ -231,9 +257,7 @@ struct cpu_info {
 
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
-#ifdef MULTIPROCESSOR
-	struct	lwp	*ci_curlwp;	/* CPU owner */
-#endif
+#ifndef _KMEMUSER
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 	int		ci_mtx_count;
 	int		ci_mtx_oldspl;
@@ -242,8 +266,27 @@ struct cpu_info {
 	volatile int	ci_cpl;
 	volatile int	ci_ipending;	/* The pending interrupts. */
 	u_int		ci_intr_depth;	/* Nonzero iff running an interrupt. */
+
+	hppa_hpa_t	ci_hpa;
+	register_t	ci_psw;		/* Processor Status Word. */
+	paddr_t		ci_fpu_state;	/* LWP FPU state address, or zero. */
+	u_long		ci_itmr;
+
+#if defined(MULTIPROCESSOR)
+	struct	lwp	*ci_curlwp;	/* CPU owner */
+	paddr_t		ci_stack;	/* stack for spin up */
+	volatile int	ci_flags;	/* CPU status flags */
+#define	CPUF_PRIMARY	0x0001		/* ... is monarch/primary */
+#define	CPUF_RUNNING	0x0002 		/* ... is running. */
+
+#endif
+
+#endif /* !_KMEMUSER */
 } __aligned(64);
 
+#endif /* _KERNEL || _KMEMUSER */
+
+#if defined(_KERNEL)
 
 /*
  * definitions of cpu-dependent requirements
@@ -255,14 +298,14 @@ struct cpu_info {
 #ifdef MULTIPROCESSOR
 
 /* Number of CPUs in the system */
-extern int hppa_ncpus;
+extern int hppa_ncpu;
 
 #define	HPPA_MAXCPUS	4
 #define	cpu_number()			(curcpu()->ci_cpuid)
 
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_cpuid == 0)
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpus[0], cii < hppa_ncpus; cii++, ci++
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci =  &cpus[0]; cii < hppa_ncpu; cii++, ci++
 
 void	cpu_boot_secondary_processors(void);
 
@@ -333,12 +376,17 @@ void	trap(int, struct trapframe *);
 void	hppa_ras(struct lwp *);
 int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
 int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
-		 size_t *);
+    size_t *);
 int	copy_on_fault(void);
 void	lwp_trampoline(void);
-void	setfunc_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
+
+#ifdef MULTIPROCESSOR
+void	cpu_boot_secondary_processors(void);
+void	cpu_hw_init(void);
+void	cpu_hatch(void);
+#endif
 #endif	/* _KERNEL */
 
 /*
@@ -353,7 +401,7 @@ int	cpu_dump(void);
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
-#define CPU_LCD_BLINK           3	/* int: twiddle heartbeat LED/LCD */ 
+#define	CPU_LCD_BLINK           3	/* int: twiddle heartbeat LED/LCD */
 #define	CPU_MAXID		4	/* number of valid machdep ids */
 
 #ifdef _KERNEL

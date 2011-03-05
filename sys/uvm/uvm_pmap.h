@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.32 2009/11/07 07:27:50 cegger Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.32.4.1 2011/03/05 20:56:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -73,9 +73,6 @@ struct lwp;		/* for pmap_activate()/pmap_deactivate() proto */
 struct pmap;
 typedef struct pmap *pmap_t;
 
-extern struct pmap	*const kernel_pmap_ptr;
-#define pmap_kernel()	kernel_pmap_ptr
-
 /*
  * Each machine dependent implementation is expected to
  * keep certain statistics.  They may do this anyway they
@@ -89,7 +86,12 @@ struct pmap_statistics {
 typedef struct pmap_statistics	*pmap_statistics_t;
 
 #ifdef _KERNEL
+
+extern struct pmap	*const kernel_pmap_ptr;
+#define pmap_kernel()	kernel_pmap_ptr
+
 #include <machine/pmap.h>
+
 #endif
 
 /*
@@ -109,7 +111,28 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #define	PMAP_KMPAGE	0x00000000
 #endif /* PMAP_ENABLE_PMAP_KMPAGE */
 
-#define	PMAP_MD_MASK	0xff000000	/* Machine-dependent bits */
+#define	PMAP_MD_MASK	0xff000000	/* [BOTH] Machine-dependent bits */
+#define PMAP_PROT_MASK	0x0000000f	/* [BOTH] VM_PROT_* bit mask */
+
+/*
+ * Cache Type Encodings
+ */
+#define PMAP_CACHE_MASK		0x00000f00
+
+/* All accesses are uncacheable. No speculative accesses. */
+#define PMAP_NOCACHE		0x00000100	/* [BOTH] */
+
+/* All accesses are uncacheable. No speculative accesses.
+ * Writes are combined. */
+#define PMAP_WRITE_COMBINE	0x00000200	/* [BOTH] */
+
+/* On reads, cachelines become shared or exclusive if allocated on cache miss.
+ * On writes, cachelines become modified on a cache miss.  */
+#define PMAP_WRITE_BACK		0x00000300	/* [BOTH] */
+
+/* = PMAP_NOCACHE but overrideable (e.g. on x86 by MTRRs) */
+#define PMAP_NOCACHE_OVR	0x00000400	/* [BOTH] */
+
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
@@ -154,6 +177,9 @@ void		pmap_page_protect(struct vm_page *, vm_prot_t);
 
 #if !defined(pmap_phys_address)
 paddr_t		pmap_phys_address(paddr_t);
+#endif
+#if !defined(pmap_mmap_flags)
+#define pmap_mmap_flags(x)	0
 #endif
 void		pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 #if !defined(pmap_reference)

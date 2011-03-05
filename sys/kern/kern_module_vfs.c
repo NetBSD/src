@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.3.4.2 2010/07/03 01:19:53 rmind Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.3.4.3 2011/03/05 20:55:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.3.4.2 2010/07/03 01:19:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.3.4.3 2011/03/05 20:55:15 rmind Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -65,10 +65,13 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	char *path;
 	bool nochroot;
 	int error;
+	prop_bool_t noload;
+	prop_dictionary_t moduledict;
 
 	nochroot = false;
 	error = 0;
 	path = NULL;
+	moduledict = NULL;
 	if (filedictp)
 		*filedictp = NULL;
 	path = PNBUF_GET();
@@ -97,15 +100,29 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	}
 
 	/*
-	 * Load and process <module>.prop if it exists.
+	 * Load and process <module>.plist if it exists.
 	 */
-	if ((flags & MODCTL_NO_PROP) == 0 && filedictp) {
-		error = module_load_plist_vfs(path, nochroot, filedictp);
+	if (((flags & MODCTL_NO_PROP) == 0 && filedictp) || autoload) {
+		error = module_load_plist_vfs(path, nochroot, &moduledict);
 		if (error != 0) {
 			module_print("plist load returned error %d for `%s'",
 			    error, path);
 			if (error != ENOENT)
 				goto fail;
+		} else if (autoload) {
+			noload = prop_dictionary_get(moduledict, "noautoload");
+			if (noload != NULL && prop_bool_true(noload)) {
+				module_error("autoloading is disallowed for %s",
+				    path);
+				error = EPERM;
+				goto fail;
+			}
+		}
+		if (error == 0) {	/* can get here if error == ENOENT */
+			if ((flags & MODCTL_NO_PROP) == 0 && filedictp)
+				*filedictp = moduledict;
+			else 
+				prop_object_release(moduledict);
 		}
 	}
 
@@ -127,6 +144,7 @@ static int
 module_load_plist_vfs(const char *modpath, const bool nochroot,
 		       prop_dictionary_t *filedictp)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	struct stat sb;
 	void *base;
@@ -141,36 +159,42 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	proppath = PNBUF_GET();
 	strcpy(proppath, modpath);
 	pathlen = strlen(proppath);
-	if ((pathlen >= 5) && (strcmp(&proppath[pathlen - 5], ".kmod") == 0)) {
-		strcpy(&proppath[pathlen - 5], ".prop");
-	} else if (pathlen < MAXPATHLEN - 5) {
-			strcat(proppath, ".prop");
+	if ((pathlen >= 6) && (strcmp(&proppath[pathlen - 5], ".kmod") == 0)) {
+		strcpy(&proppath[pathlen - 5], ".plist");
+	} else if (pathlen < MAXPATHLEN - 6) {
+			strcat(proppath, ".plist");
 	} else {
 		error = ENOENT;
 		goto out1;
 	}
 
-	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
-	    UIO_SYSSPACE, proppath);
+	/* XXX this makes an unnecessary extra copy of the path */
+	pb = pathbuf_create(proppath);
+	if (pb == NULL) {
+		error = ENOMEM;
+		goto out1;
+	}
+	
+	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0), pb);
 
 	error = vn_open(&nd, FREAD, 0);
  	if (error != 0) {
-	 	goto out1;
+	 	goto out2;
 	}
 
 	error = vn_stat(nd.ni_vp, &sb);
 	if (error != 0) {
-		goto out;
+		goto out3;
 	}
 	if (sb.st_size >= (plistsize - 1)) {	/* leave space for term \0 */
 		error = EFBIG;
-		goto out;
+		goto out3;
 	}
 
 	base = kmem_alloc(plistsize, KM_SLEEP);
 	if (base == NULL) {
 		error = ENOMEM;
-		goto out;
+		goto out3;
 	}
 
 	error = vn_rdwr(UIO_READ, nd.ni_vp, base, sb.st_size, 0,
@@ -182,7 +206,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	if (error != 0) {
 		kmem_free(base, plistsize);
 		base = NULL;
-		goto out;
+		goto out3;
 	}
 
 	*filedictp = prop_dictionary_internalize(base);
@@ -193,9 +217,12 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	base = NULL;
 	KASSERT(error == 0);
 
-out:
+out3:
 	VOP_UNLOCK(nd.ni_vp);
 	vn_close(nd.ni_vp, FREAD, kauth_cred_get());
+
+out2:
+	pathbuf_destroy(pb);
 
 out1:
 	PNBUF_PUT(proppath);

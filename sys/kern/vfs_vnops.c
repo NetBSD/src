@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.169.4.3 2010/07/03 01:19:56 rmind Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.169.4.4 2011/03/05 20:55:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.4.3 2010/07/03 01:19:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.4.4 2011/03/05 20:55:27 rmind Exp $");
 
 #include "veriexec.h"
 
@@ -138,7 +138,10 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;
-	char *path;
+	const char *pathstring;
+
+	if ((fmode & (O_CREAT | O_DIRECTORY)) == (O_CREAT | O_DIRECTORY))
+		return EINVAL;
 
 	ndp->ni_cnd.cn_flags &= TRYEMULROOT | NOCHROOT;
 
@@ -155,7 +158,10 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	}
 
-	VERIEXEC_PATH_GET(ndp->ni_dirp, ndp->ni_segflg, ndp->ni_dirp, path);
+	pathstring = pathbuf_stringcopy_get(ndp->ni_pathbuf);
+	if (pathstring == NULL) {
+		return ENOMEM;
+	}
 
 	error = namei(ndp);
 	if (error)
@@ -164,7 +170,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	vp = ndp->ni_vp;
 
 #if NVERIEXEC > 0
-	error = veriexec_openchk(l, ndp->ni_vp, ndp->ni_dirp, fmode);
+	error = veriexec_openchk(l, ndp->ni_vp, pathstring, fmode);
 	if (error)
 		goto bad;
 #endif /* NVERIEXEC > 0 */
@@ -215,9 +221,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 
 	if (fmode & O_TRUNC) {
-		VOP_UNLOCK(vp);			/* XXX */
-
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		vattr_null(&va);
 		va.va_size = 0;
 		error = VOP_SETATTR(vp, &va, cred);
@@ -236,7 +239,7 @@ bad:
 	if (error)
 		vput(vp);
 out:
-	VERIEXEC_PATH_PUT(path);
+	pathbuf_stringcopy_put(ndp->ni_pathbuf, pathstring);
 	return (error);
 }
 
@@ -262,6 +265,9 @@ vn_openchk(struct vnode *vp, kauth_cred_t cred, int fflags)
 {
 	int permbits = 0;
 	int error;
+
+	if ((fflags & O_DIRECTORY) != 0 && vp->v_type != VDIR)
+		return ENOTDIR;
 
 	if ((fflags & FREAD) != 0) {
 		permbits = VREAD;
@@ -601,12 +607,14 @@ vn_stat(struct vnode *vp, struct stat *sb)
 	int error;
 	mode_t mode;
 
+	memset(&va, 0, sizeof(va));
 	error = VOP_GETATTR(vp, &va, kauth_cred_get());
 	if (error)
 		return (error);
 	/*
 	 * Copy from vattr table
 	 */
+	memset(sb, 0, sizeof(*sb));
 	sb->st_dev = va.va_fsid;
 	sb->st_ino = va.va_fileid;
 	mode = va.va_mode;
@@ -768,12 +776,10 @@ vn_lock(struct vnode *vp, int flags)
 	int error;
 
 #if 0
-	KASSERT(vp->v_usecount > 0 || (flags & LK_INTERLOCK) != 0
-	    || (vp->v_iflag & VI_ONWORKLST) != 0);
+	KASSERT(vp->v_usecount > 0 || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
-	KASSERT((flags &
-	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY))
-	    == 0);
+	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY)) == 0);
+	KASSERT(!mutex_owned(vp->v_interlock));
 
 #ifdef DIAGNOSTIC
 	if (wapbl_vphaswapbl(vp))
@@ -785,11 +791,8 @@ vn_lock(struct vnode *vp, int flags)
 		 * XXX PR 37706 forced unmount of file systems is unsafe.
 		 * Race between vclean() and this the remaining problem.
 		 */
+		mutex_enter(vp->v_interlock);
 		if (vp->v_iflag & VI_XLOCK) {
-			if ((flags & LK_INTERLOCK) == 0) {
-				mutex_enter(vp->v_interlock);
-			}
-			flags &= ~LK_INTERLOCK;
 			if (flags & LK_NOWAIT) {
 				mutex_exit(vp->v_interlock);
 				return EBUSY;
@@ -798,10 +801,7 @@ vn_lock(struct vnode *vp, int flags)
 			mutex_exit(vp->v_interlock);
 			error = ENOENT;
 		} else {
-			if ((flags & LK_INTERLOCK) != 0) {
-				mutex_exit(vp->v_interlock);
-			}
-			flags &= ~LK_INTERLOCK;
+			mutex_exit(vp->v_interlock);
 			error = VOP_LOCK(vp, (flags & ~LK_RETRY));
 			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);

@@ -1,7 +1,6 @@
-/*	$NetBSD: pmap.h,v 1.29.2.6 2010/05/31 01:12:13 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.7 2011/03/05 20:52:28 rmind Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -145,11 +138,7 @@ struct pmap {
 	kmutex_t pm_obj_lock[PTP_LEVELS-1];	/* locks for pm_objs, XXXrmind */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-#ifdef PAE
-	paddr_t pm_pdirpa[PDP_SIZE];
-#else
-	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
-#endif
+	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
@@ -169,25 +158,31 @@ struct pmap {
 	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
 };
 
-/* macro to access pm_pdirpa */
+/* macro to access pm_pdirpa slots */
 #ifdef PAE
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa[l2tol3(index)] + l2tol2(index) * sizeof(pd_entry_t))
 #else
 #define pmap_pdirpa(pmap, index) \
-	((pmap)->pm_pdirpa + (index) * sizeof(pd_entry_t))
+	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
 #endif
 
 /*
  * MD flags that we use for pmap_enter and pmap_kenter_pa:
  */
-#define PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
 /*
  * global kernel variables
  */
 
-/* PDPpaddr: is the physical address of the kernel's PDP */
+/*
+ * PDPpaddr is the physical address of the kernel's PDP.
+ * - i386 non-PAE and amd64: PDPpaddr corresponds directly to the %cr3
+ * value associated to the kernel process, proc0.
+ * - i386 PAE: it still represents the PA of the kernel's PDP (L2). Due to
+ * the L3 PD, it cannot be considered as the equivalent of a %cr3 any more.
+ * - Xen: it corresponds to the PFN of the kernel's PDP.
+ */
 extern u_long PDPpaddr;
 
 extern int pmap_pg_g;			/* do we support PG_G? */
@@ -206,9 +201,18 @@ extern long nkptp[PTP_LEVELS];
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)
-#define pmap_phys_address(ppn)		x86_ptob(ppn)
+#define pmap_phys_address(ppn)		(x86_ptob(ppn) & ~X86_MMAP_FLAG_MASK)
+#define pmap_mmap_flags(ppn)		x86_mmap_flags(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
+#if defined(__x86_64__) || defined(PAE)
+#define X86_MMAP_FLAG_SHIFT	(64 - PGSHIFT)
+#else
+#define X86_MMAP_FLAG_SHIFT	(32 - PGSHIFT)
+#endif
+
+#define X86_MMAP_FLAG_MASK	0xf
+#define X86_MMAP_FLAG_PREFETCH	0x1
 
 /*
  * prototypes
@@ -236,6 +240,8 @@ void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
 void		pmap_unmap_ptes(struct pmap *, struct pmap *);
 
 int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
+
+u_int		x86_mmap_flags(paddr_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -381,6 +387,7 @@ kvtopte(vaddr_t va)
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
+void	pmap_cpu_init_late(struct cpu_info *);
 bool	sse2_idlezero_page(void *);
 
 

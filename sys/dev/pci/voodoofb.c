@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.21.4.1 2010/05/30 05:17:39 rmind Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.21.4.2 2011/03/05 20:53:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.21.4.1 2010/05/30 05:17:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.21.4.2 2011/03/05 20:53:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,14 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.21.4.1 2010/05/30 05:17:39 rmind Exp 
 #include <sys/callout.h>
 #include <sys/kauth.h>
 
-#include <uvm/uvm_extern.h>
-
 #if defined(macppc) || defined (sparc64) || defined(ofppc)
 #define HAVE_OPENFIRMWARE
 #endif
-
-/* XXX should be configurable */
-#define VOODOOFB_VIDEOMODE 15
 
 #ifdef HAVE_OPENFIRMWARE
 #include <dev/ofw/openfirm.h>
@@ -69,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.21.4.1 2010/05/30 05:17:39 rmind Exp 
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include "opt_wsemul.h"
 
@@ -98,6 +94,7 @@ struct voodoofb_softc {
 
 	int bits_per_pixel;
 	int width, height, linebytes;
+	const struct videomode *sc_videomode;
 
 	int sc_mode;
 	uint32_t sc_bg;
@@ -162,10 +159,6 @@ static void	voodoofb_rectinvert(struct voodoofb_softc *, int, int, int,
 static void	voodoofb_setup_mono(struct voodoofb_softc *, int, int, int,
 			    int, uint32_t, uint32_t); 
 static void	voodoofb_feed_line(struct voodoofb_softc *, int, uint8_t *);
-
-#ifdef VOODOOFB_DEBUG
-static void	voodoofb_showpal(struct voodoofb_softc *);
-#endif
 
 static void	voodoofb_wait_idle(struct voodoofb_softc *);
 
@@ -386,7 +379,8 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* XXX this should at least be configurable via kernel config */
-	voodoofb_set_videomode(sc, &videomode_list[VOODOOFB_VIDEOMODE]);
+	if ((sc->sc_videomode = pick_mode_by_ref(1024, 768, 60)) != NULL)
+		voodoofb_set_videomode(sc, sc->sc_videomode);
 
 	vcons_init(&sc->vd, sc, &voodoofb_defaultscreen, &voodoofb_accessops);
 	sc->vd.init_screen = voodoofb_init_screen;
@@ -409,7 +403,7 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
-		voodoofb_set_videomode(sc, &videomode_list[0]);		 
+		voodoofb_set_videomode(sc, sc->sc_videomode);		 
 	}
 
 	printf("%s: %d MB aperture at 0x%08x, %d MB registers at 0x%08x\n",
@@ -508,7 +502,7 @@ voodoofb_drm_map(struct voodoofb_softc *sc)
 
 	voodoofb_init(sc);
 	/* XXX this should at least be configurable via kernel config */
-	voodoofb_set_videomode(sc, &videomode_list[VOODOOFB_VIDEOMODE]);
+	voodoofb_set_videomode(sc, sc->sc_videomode);
 
 	return 0;
 }
@@ -895,19 +889,6 @@ voodoofb_feed_line(struct voodoofb_softc *sc, int count, uint8_t *data)
 		voodoo3_write32(sc, LAUNCH_2D, latch);
 }	
 
-#ifdef VOODOOFB_DEBUG
-static void
-voodoofb_showpal(struct voodoofb_softc *sc) 
-{
-	int i, x = 0;
-	
-	for (i = 0; i < 16; i++) {
-		voodoofb_rectfill(sc, x, 0, 64, 64, i);
-		x += 64;
-	}
-}
-#endif
-
 #if 0
 static int
 voodoofb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
@@ -931,57 +912,58 @@ voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return 0;
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
 
-		case WSDISPLAYIO_GINFO:
-			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_height;
-			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
-			wdf->cmsize = 256;
-			return 0;
-			
-		case WSDISPLAYIO_GETCMAP:
-			return voodoofb_getcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_GINFO:
+		wdf = (void *)data;
+		wdf->height = ms->scr_ri.ri_height;
+		wdf->width = ms->scr_ri.ri_width;
+		wdf->depth = ms->scr_ri.ri_depth;
+		wdf->cmsize = 256;
+		return 0;
+		
+	case WSDISPLAYIO_GETCMAP:
+		return voodoofb_getcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_PUTCMAP:
-			return voodoofb_putcmap(sc,
-			    (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_PUTCMAP:
+		return voodoofb_putcmap(sc,
+		    (struct wsdisplay_cmap *)data);
 
-		/* PCI config read/write passthrough. */
-		case PCI_IOC_CFGREAD:
-		case PCI_IOC_CFGWRITE:
-			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-			    cmd, data, flag, l));
-			    
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
-				if (new_mode != sc->sc_mode)
-				{
-					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL)
-					{
-						voodoofb_drm_map(sc);
-						int i;
-						
-						/* restore the palette */
-						for (i = 0; i < 256; i++) {
-							voodoofb_putpalreg(sc, 
-							   i, 
-							   sc->sc_cmap_red[i], 
-							   sc->sc_cmap_green[i],
-							   sc->sc_cmap_blue[i]);
-						}
-						vcons_redraw_screen(ms);
-					} else
-						voodoofb_drm_unmap(sc);
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
+
+	case WSDISPLAYIO_SMODE: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_mode) {
+			sc->sc_mode = new_mode;
+			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+				voodoofb_drm_map(sc);
+				int i;
+				
+				/* restore the palette */
+				for (i = 0; i < 256; i++) {
+					voodoofb_putpalreg(sc, 
+					   i, 
+					   sc->sc_cmap_red[i], 
+					   sc->sc_cmap_green[i],
+					   sc->sc_cmap_blue[i]);
 				}
-			}
-			return 0;
+				vcons_redraw_screen(ms);
+			} else
+				voodoofb_drm_unmap(sc);
+		}
+		}
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
@@ -1245,6 +1227,21 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
 	mode->vr_crtc[22] = vertical_blanking_end + 1;
 	mode->vr_crtc[23] = 128;
 	mode->vr_crtc[24] = 255;
+
+	/* overflow registers */
+	mode->vr_crtc[CRTC_HDISP_EXT] =
+	    (horizontal_total&0x100) >> 8 |
+	    (horizontal_display_end & 0x100) >> 6 | 
+	    (horizontal_blanking_start & 0x100) >> 4 |
+	    (horizontal_blanking_end & 0x40) >> 1 |
+	    (horizontal_sync_start & 0x100) >> 2 |
+	    (horizontal_sync_end & 0x20) << 2;
+	    
+	mode->vr_crtc[CRTC_VDISP_EXT] =
+	    (vertical_total & 0x400) >> 10 |
+	    (vertical_display_enable_end & 0x400) >> 8 |
+	    (vertical_blanking_start & 0x400) >> 6 |
+	    (vertical_blanking_end & 0x400) >> 4;
     
 	/* attr regs start */
 	mode->vr_attr[0] = 0;
@@ -1284,7 +1281,7 @@ voodoofb_setup_monitor(struct voodoofb_softc *sc, const struct videomode *vm)
     
 	for(i = 0; i < 5; i++)
 		voodoo3_write_seq(sc, i, mode->vr_seq[i]);
-	for (i = 0; i < 0x19; i ++)
+	for (i = 0; i < CRTC_PCI_READBACK; i ++)
         	voodoo3_write_crtc(sc, i, mode->vr_crtc[i]);
 	for (i = 0; i < 0x14; i ++)
         	voodoo3_write_attr(sc, i, mode->vr_attr[i]);
@@ -1361,7 +1358,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	
 	voodoo3_make_room(sc, 5);
 	voodoo3_write32(sc, VIDSCREENSIZE, sc->width | (sc->height << 12));
-	voodoo3_write32(sc, VIDDESKSTART,  1024);
+	voodoo3_write32(sc, VIDDESKSTART,  0);
 
 	vidproc &= ~VIDCFG_HWCURSOR_ENABLE;
 	voodoo3_write32(sc, VIDPROCCFG, vidproc);

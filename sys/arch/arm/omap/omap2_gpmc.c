@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.5 2008/11/21 17:13:07 matt Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.5.8.1 2011/03/05 20:49:38 rmind Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.5 2008/11/21 17:13:07 matt Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.5.8.1 2011/03/05 20:49:38 rmind Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.5 2008/11/21 17:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.5.8.1 2011/03/05 20:49:38 rmind Exp $");
 
 #include "locators.h"
 
@@ -200,7 +200,7 @@ gpmc_attach(device_t parent, device_t self, void *aux)
 	rev = bus_space_read_4(sc->sc_iot, ioh, GPMC_REVISION);
 
 	aprint_normal(", rev %d.%d\n",
-		GPMC_REVISION_REV_MAJ(rev), 
+		GPMC_REVISION_REV_MAJ(rev),
 		GPMC_REVISION_REV_MIN(rev));
 
 	sc->sc_ioh = ioh;
@@ -222,7 +222,6 @@ gpmc_csconfig_init(struct gpmc_softc *sc)
 	gpmc_csconfig_t *cs;
 	uint32_t r;
 	int i;
-	
 
 	cs = &sc->sc_csconfig[0];
 	for (i=0; i < GPMC_NCS; i++) {
@@ -290,6 +289,7 @@ gpmc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			&&  ((aa.gpmc_addr + aa.gpmc_size)
 				>= (cs->cs_addr + cs->cs_size)))
 					continue;	/* NG */
+			aa.gpmc_cs = i;
 			if (config_match(parent, cf, &aa)) {
 				config_attach(parent, cf, &aa, gpmc_print);
 				return 0;		/* love it */
@@ -315,4 +315,16 @@ gpmc_print(void *aux, const char *name)
 		aprint_normal(" intr %d", sa->gpmc_intr);
 
 	return UNCONF;
+}
+
+uint32_t
+gpmc_register_read(struct gpmc_softc *sc, bus_size_t reg)
+{
+	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
+}
+
+void
+gpmc_register_write(struct gpmc_softc *sc, bus_size_t reg, const uint32_t data)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, data);
 }

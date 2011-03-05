@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2009/03/21 15:01:56 ad Exp $	 */
+/*	$NetBSD: main.c,v 1.29.4.1 2011/03/05 20:50:44 rmind Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -337,7 +337,7 @@ void
 command_quit(char *arg)
 {
 	printf("Exiting... goodbye...\n");
-	exit(0);
+	_rtt();
 }
 
 void

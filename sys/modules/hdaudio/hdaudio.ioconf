@@ -1,0 +1,10 @@
+#	$NetBSD: hdaudio.ioconf,v 1.1.6.2 2011/03/05 20:55:42 rmind Exp $
+
+ioconf hdaudio
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+hdaudio* at pci? dev ? function ?

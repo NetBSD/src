@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.49 2010/02/24 22:38:01 dyoung Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.49.2.1 2011/03/05 20:53:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.49 2010/02/24 22:38:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.49.2.1 2011/03/05 20:53:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.49 2010/02/24 22:38:01 dyoung Exp $");
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include "opt_vga.h"
 
@@ -108,6 +109,8 @@ static const struct {
 	int quirks;
 } vga_pci_quirks[] = {
 	{PCI_ID_CODE(PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM712),
+	 VGA_QUIRK_NOFASTSCROLL},
+	{PCI_ID_CODE(PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_VIDEO),
 	 VGA_QUIRK_NOFASTSCROLL},
 };
 
@@ -308,11 +311,15 @@ vga_pci_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	/* PCI config read/write passthrough. */
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
-		return (pci_devioctl(psc->sc_pc, psc->sc_pcitag,
-		    cmd, data, flag, l));
+		return pci_devioctl(psc->sc_pc, psc->sc_pcitag,
+		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(vc->softc->sc_dev,
+		    psc->sc_pc, psc->sc_pcitag, data);
 
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
 }
 
@@ -349,6 +356,16 @@ vga_pci_mmap(void *v, off_t offset, int prot)
 		return (bus_space_mmap(vc->hdl.vh_memt, IOM_BEGIN,
 		    (offset - IOM_BEGIN), prot, 0));
 
+#ifdef PCI_MAGIC_IO_RANGE
+	/* allow to map our IO space on non-x86 machines */
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		return bus_space_mmap(vc->hdl.vh_iot,
+		    offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, BUS_SPACE_MAP_LINEAR);	
+	}
+#endif
+	
 	/* Range not found. */
 	return (-1);
 }

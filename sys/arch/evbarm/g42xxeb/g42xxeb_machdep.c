@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.21 2009/12/28 03:22:20 uebayasi Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.21.4.1 2011/03/05 20:50:05 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -112,7 +112,6 @@
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"
-#include "md.h"
 #include "lcd.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.6.4.1 2011/03/05 20:56:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.6.4.1 2011/03/05 20:56:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $");
 #include <sys/queue.h>
 #include <sys/sleepq.h>
 #include <sys/syncobj.h>
+#include <sys/atomic.h>
 
 #include "rump_private.h"
 
@@ -72,6 +73,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob)
 	struct lwp *l = curlwp;
 
 	l->l_wchan = wc;
+	l->l_wmesg = wmsg;
 	l->l_sleepq = sq;
 	TAILQ_INSERT_TAIL(sq, l, l_sleepchain);
 }
@@ -85,9 +87,14 @@ sleepq_block(int timo, bool catch)
 	int biglocks = l->l_biglocks;
 
 	while (l->l_wchan) {
-		if ((error=cv_timedwait(&sq_cv, mp, timo)) == EWOULDBLOCK) {
-			TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
-			l->l_wchan = NULL;
+		l->l_mutex = mp; /* keep sleepq lock until woken up */
+		error = cv_timedwait(&sq_cv, mp, timo);
+		if (error == EWOULDBLOCK || error == EINTR) {
+			if (l->l_wchan) {
+				TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
+				l->l_wchan = NULL;
+				l->l_wmesg = NULL;
+			}
 		}
 	}
 	mutex_spin_exit(mp);
@@ -112,6 +119,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 		if (l->l_wchan == wchan) {
 			found = true;
 			l->l_wchan = NULL;
+			l->l_wmesg = NULL;
 			TAILQ_REMOVE(sq, l, l_sleepchain);
 		}
 	}
@@ -127,6 +135,7 @@ sleepq_unsleep(struct lwp *l, bool cleanup)
 {
 
 	l->l_wchan = NULL;
+	l->l_wmesg = NULL;
 	TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
 	cv_broadcast(&sq_cv);
 
@@ -158,18 +167,15 @@ syncobj_noowner(wchan_t wc)
 	return NULL;
 }
 
-/*
- * XXX: used only by callout, therefore here.  should try to use
- * one in kern_lwp directly.
- */
-kmutex_t *
-lwp_lock_retry(struct lwp *l, kmutex_t *old)
+void
+lwp_unlock_to(struct lwp *l, kmutex_t *new)
 {
+	kmutex_t *old;
 
-	while (l->l_mutex != old) {
-		mutex_spin_exit(old);
-		old = l->l_mutex;
-		mutex_spin_enter(old);
-	}
-	return old;
+	KASSERT(mutex_owned(l->l_mutex));
+
+	old = l->l_mutex;
+	membar_exit();
+	l->l_mutex = new;
+	mutex_spin_exit(old);
 }

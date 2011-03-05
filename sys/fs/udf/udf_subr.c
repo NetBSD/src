@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.104.2.2 2010/07/03 01:19:51 rmind Exp $ */
+/* $NetBSD: udf_subr.c,v 1.104.2.3 2011/03/05 20:55:10 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104.2.2 2010/07/03 01:19:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104.2.3 2011/03/05 20:55:10 rmind Exp $");
 #endif /* not lint */
 
 
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104.2.2 2010/07/03 01:19:51 rmind Exp
 #define UDF_SET_SYSTEMFILE(vp) \
 	/* XXXAD Is the vnode locked? */	\
 	(vp)->v_vflag |= VV_SYSTEM;		\
-	vref(vp);			\
-	vput(vp);			\
+	vref((vp));			\
+	vput((vp));			\
 
 extern int syncer_maxdelay;     /* maximum delay time */
 extern int (**udf_vnodeop_p)(void *);
@@ -445,7 +445,7 @@ udf_check_track_metadata_overlap(struct udf_mount *ump,
 
 	/* get our base partition extent */
 	KASSERT(ump->node_part == ump->fids_part);
-	part = ump->partitions[ump->node_part];
+	part = ump->partitions[ump->vtop[ump->node_part]];
 	phys_part_start = udf_rw32(part->start_loc);
 	phys_part_end   = phys_part_start + udf_rw32(part->part_len);
 
@@ -983,6 +983,28 @@ udf_get_record_vpart(struct udf_mount *ump, int udf_c_type)
 	return vpart_num;
 }
 
+
+/* 
+ * BUGALERT: some rogue implementations use random physical partition
+ * numbers to break other implementations so lookup the number.
+ */
+
+static uint16_t
+udf_find_raw_phys(struct udf_mount *ump, uint16_t raw_phys_part)
+{
+	struct part_desc *part;
+	uint16_t phys_part;
+
+	for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
+		part = ump->partitions[phys_part];
+		if (part == NULL)
+			break;
+		if (udf_rw16(part->part_num) == raw_phys_part)
+			break;
+	}
+	return phys_part;
+}
+
 /* --------------------------------------------------------------------- */
 
 /* we dont try to be smart; we just record the parts */
@@ -994,7 +1016,6 @@ udf_get_record_vpart(struct udf_mount *ump, int udf_c_type)
 static int
 udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 {
-	struct part_desc *part;
 	uint16_t phys_part, raw_phys_part;
 
 	DPRINTF(VOLUMES, ("\tprocessing VDS descr %d\n",
@@ -1026,13 +1047,8 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 		 * the number.
 		 */
 		raw_phys_part = udf_rw16(dscr->pd.part_num);
-		for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
-			part = ump->partitions[phys_part];
-			if (part == NULL)
-				break;
-			if (udf_rw16(part->part_num) == raw_phys_part)
-				break;
-		}
+		phys_part = udf_find_raw_phys(ump, raw_phys_part);
+
 		if (phys_part == UDF_PARTITIONS) {
 			free(dscr, M_UDFVOLD);
 			return EINVAL;
@@ -1444,7 +1460,6 @@ again:
 	logvol_integrity = udf_rw32(ump->logvol_integrity->integrity_type);
 	if (logvol_integrity == UDF_INTEGRITY_CLOSED) {
 		if ((space < 3) && (lvflag & UDF_APPENDONLY_LVINT)) {
-			/* don't allow this logvol to be opened */
 			/* TODO extent LVINT space if possible */
 			return EROFS;
 		}
@@ -1738,7 +1753,7 @@ udf_read_metadata_partition_spacetable(struct udf_mount *ump)
 			dscr,
 			inflen, 0,
 			UIO_SYSSPACE,
-			IO_SYNC | IO_NODELOCKED | IO_ALTSEMANTICS, FSCRED,
+			IO_SYNC | IO_ALTSEMANTICS, FSCRED,
 			NULL, NULL);
 	if (error) {
 		DPRINTF(VOLUMES, ("Error reading metadata space bitmap\n"));
@@ -1810,7 +1825,7 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 			dscr,
 			new_inflen, 0,
 			UIO_SYSSPACE,
-			IO_NODELOCKED | IO_ALTSEMANTICS, FSCRED,
+			IO_ALTSEMANTICS, FSCRED,
 			NULL, NULL);
 
 	bitmap_node->i_flags |= IN_MODIFIED;
@@ -1839,7 +1854,6 @@ udf_process_vds(struct udf_mount *ump) {
 	/* struct udf_args *args = &ump->mount_args; */
 	struct logvol_int_desc *lvint;
 	struct udf_logvol_info *lvinfo;
-	struct part_desc *part;
 	uint32_t n_pm, mt_l;
 	uint8_t *pmap_pos;
 	char *domain_name, *map_name;
@@ -1970,13 +1984,7 @@ udf_process_vds(struct udf_mount *ump) {
 		 * partition numbers to break other implementations so lookup
 		 * the number.
 		 */
-		for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
-			part = ump->partitions[phys_part];
-			if (part == NULL)
-				continue;
-			if (udf_rw16(part->part_num) == raw_phys_part)
-				break;
-		}
+		phys_part = udf_find_raw_phys(ump, raw_phys_part);
 
 		DPRINTF(VOLUMES, ("\t%d -> %d(%d) type %d\n", log_part,
 		    raw_phys_part, phys_part, pmap_type));
@@ -2047,7 +2055,9 @@ udf_process_vds(struct udf_mount *ump) {
 		ump->lvopen  = UDF_WRITE_LVINT;
 		ump->lvclose = UDF_WRITE_LVINT;
 		if ((ump->discinfo.mmc_cur & MMC_CAP_REWRITABLE) == 0)
-			ump->lvopen  |= UDF_APPENDONLY_LVINT;
+			ump->lvopen  |=  UDF_APPENDONLY_LVINT;
+		if ((ump->discinfo.mmc_cur & MMC_CAP_PSEUDOOVERWRITE))
+			ump->lvopen  &= ~UDF_APPENDONLY_LVINT;
 	}
 
 	/*
@@ -2815,7 +2825,7 @@ udf_writeout_vat(struct udf_mount *ump)
 	vat_length = ump->vat_table_len;
 	error = vn_rdwr(UIO_WRITE, vat_node->vnode,
 		ump->vat_table, ump->vat_table_len, 0,
-		UIO_SYSSPACE, IO_NODELOCKED, FSCRED, NULL, NULL);
+		UIO_SYSSPACE, 0, FSCRED, NULL, NULL);
 	if (error) {
 		printf("udf_writeout_vat: failed to write out VAT contents\n");
 		goto out;
@@ -3116,7 +3126,14 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	struct part_map_meta *pmm = &mapping->pmm;
 	struct long_ad	 icb_loc;
 	struct vnode *vp;
+	uint16_t raw_phys_part, phys_part;
 	int error;
+
+	/*
+	 * BUGALERT: some rogue implementations use random physical
+	 * partition numbers to break other implementations so lookup
+	 * the number.
+	 */
 
 	/* extract our allocation parameters set up on format */
 	ump->metadata_alloc_unit_size     = udf_rw32(mapping->pmm.alloc_unit_size);
@@ -3124,9 +3141,13 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	ump->metadata_flags = mapping->pmm.flags;
 
 	DPRINTF(VOLUMES, ("Reading in Metadata files\n"));
-	icb_loc.loc.part_num = pmm->part_num;
-	icb_loc.loc.lb_num   = pmm->meta_file_lbn;
+	raw_phys_part = udf_rw16(pmm->part_num);
+	phys_part = udf_find_raw_phys(ump, raw_phys_part);
+
+	icb_loc.loc.part_num = udf_rw16(phys_part);
+
 	DPRINTF(VOLUMES, ("Metadata file\n"));
+	icb_loc.loc.lb_num   = pmm->meta_file_lbn;
 	error = udf_get_node(ump, &icb_loc, &ump->metadata_node);
 	if (ump->metadata_node) {
 		vp = ump->metadata_node->vnode;
@@ -3396,34 +3417,37 @@ udf_compare_icb(const struct long_ad *a, const struct long_ad *b)
 
 
 static int
-udf_compare_rbnodes(const struct rb_node *a, const struct rb_node *b)
+udf_compare_rbnodes(void *ctx, const void *a, const void *b)
 {
-	struct udf_node *a_node = RBTOUDFNODE(a);
-	struct udf_node *b_node = RBTOUDFNODE(b);
+	const struct udf_node *a_node = a;
+	const struct udf_node *b_node = b;
 
 	return udf_compare_icb(&a_node->loc, &b_node->loc);
 }
 
 
 static int
-udf_compare_rbnode_icb(const struct rb_node *a, const void *key)
+udf_compare_rbnode_icb(void *ctx, const void *a, const void *key)
 {
-	struct udf_node *a_node = RBTOUDFNODE(a);
+	const struct udf_node *a_node = a;
 	const struct long_ad * const icb = key;
 
 	return udf_compare_icb(&a_node->loc, icb);
 }
 
 
-static const struct rb_tree_ops udf_node_rbtree_ops = {
+static const rb_tree_ops_t udf_node_rbtree_ops = {
 	.rbto_compare_nodes = udf_compare_rbnodes,
-	.rbto_compare_key   = udf_compare_rbnode_icb,
+	.rbto_compare_key = udf_compare_rbnode_icb,
+	.rbto_node_offset = offsetof(struct udf_node, rbnode),
+	.rbto_context = NULL
 };
 
 
 void
 udf_init_nodes_tree(struct udf_mount *ump)
 {
+
 	rb_tree_init(&ump->udf_node_tree, &udf_node_rbtree_ops);
 }
 
@@ -3431,21 +3455,19 @@ udf_init_nodes_tree(struct udf_mount *ump)
 static struct udf_node *
 udf_node_lookup(struct udf_mount *ump, struct long_ad *icbptr)
 {
-	struct rb_node  *rb_node;
 	struct udf_node *udf_node;
 	struct vnode *vp;
 
 loop:
 	mutex_enter(&ump->ihash_lock);
 
-	rb_node = rb_tree_find_node(&ump->udf_node_tree, icbptr);
-	if (rb_node) {
-		udf_node = RBTOUDFNODE(rb_node);
+	udf_node = rb_tree_find_node(&ump->udf_node_tree, icbptr);
+	if (udf_node) {
 		vp = udf_node->vnode;
 		assert(vp);
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&ump->ihash_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		return udf_node;
 	}
@@ -3462,7 +3484,7 @@ udf_register_node(struct udf_node *udf_node)
 
 	/* add node to the rb tree */
 	mutex_enter(&ump->ihash_lock);
-		rb_tree_insert_node(&ump->udf_node_tree, &udf_node->rbnode);
+	rb_tree_insert_node(&ump->udf_node_tree, udf_node);
 	mutex_exit(&ump->ihash_lock);
 }
 
@@ -3474,7 +3496,7 @@ udf_deregister_node(struct udf_node *udf_node)
 
 	/* remove node from the rb tree */
 	mutex_enter(&ump->ihash_lock);
-		rb_tree_remove_node(&ump->udf_node_tree, &udf_node->rbnode);
+	rb_tree_remove_node(&ump->udf_node_tree, udf_node);
 	mutex_exit(&ump->ihash_lock);
 }
 
@@ -4567,7 +4589,15 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 			dirent->d_namlen, dirent->d_namlen, dirent->d_name));
 
 		/* see if its our entry */
-		KASSERT(dirent->d_namlen == namelen);
+#ifdef DIAGNOSTIC
+		if (dirent->d_namlen != namelen) {
+			printf("WARNING: dirhash_lookup() returned wrong "
+				"d_namelen: %d and ought to be %d\n",
+				dirent->d_namlen, namelen);
+			printf("\tlooked for `%s' and got `%s'\n",
+				name, dirent->d_name);
+		}
+#endif
 		if (strncmp(dirent->d_name, name, namelen) == 0) {
 			*found = 1;
 			*icb_loc = fid->icb;
@@ -5226,8 +5256,10 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	}
 
 	/* append to the dirhash */
-	dirent.d_namlen = cnp->cn_namelen;
-	memcpy(dirent.d_name, cnp->cn_nameptr, cnp->cn_namelen);
+	/* NOTE do not use dirent anymore or it won't match later! */
+	udf_to_unix_name(dirent.d_name, MAXNAMLEN,
+		(char *) fid->data + udf_rw16(fid->l_iu), fid->l_fi, &osta_charspec);
+	dirent.d_namlen = strlen(dirent.d_name);
 	dirhash_enter(dirh, &dirent, chosen_fid_pos,
 		udf_fidsize(fid), 1);
 
@@ -5298,6 +5330,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	/* garbage check: translate udf_node_icb_loc to sectornr */
 	error = udf_translate_vtop(ump, node_icb_loc, &sector, &dummy);
 	if (error) {
+		DPRINTF(NODE, ("\tcan't translate icb address!\n"));
 		/* no use, this will fail anyway */
 		mutex_exit(&ump->get_node_lock);
 		return EINVAL;
@@ -6367,7 +6400,7 @@ derailed:
 	KASSERT(mutex_owned(&mntvnode_lock));
 
 	DPRINTF(SYNC, ("sync_pass %d\n", pass));
-	udf_node = RBTOUDFNODE(RB_TREE_MIN(&ump->udf_node_tree));
+	udf_node = RB_TREE_MIN(&ump->udf_node_tree);
 	for (;udf_node; udf_node = n_udf_node) {
 		DPRINTF(SYNC, ("."));
 
@@ -6375,9 +6408,8 @@ derailed:
 		vp = udf_node->vnode;
 
 		mutex_enter(vp->v_interlock);
-		n_udf_node = RBTOUDFNODE(rb_tree_iterate(
-			&ump->udf_node_tree, &udf_node->rbnode,
-			RB_DIR_RIGHT));
+		n_udf_node = rb_tree_iterate(&ump->udf_node_tree,
+		    udf_node, RB_DIR_RIGHT);
 
 		if (n_udf_node)
 			n_udf_node->i_flags |= IN_SYNCED;
@@ -6401,7 +6433,7 @@ derailed:
 		}
 
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT)

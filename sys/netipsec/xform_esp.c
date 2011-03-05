@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.22 2009/03/20 05:30:27 cegger Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.22.4.1 2011/03/05 20:56:00 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22 2009/03/20 05:30:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22.4.1 2011/03/05 20:56:00 rmind Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22 2009/03/20 05:30:27 cegger Exp $"
 #include <sys/kernel.h>
 /*#include <sys/random.h>*/
 #include <sys/sysctl.h>
+#include <sys/socketvar.h> /* for softnet_lock */
 
 #include <net/if.h>
 
@@ -109,7 +110,7 @@ static int esp_output_cb(struct cryptop *crp);
  * NB: this is public for use by the PF_KEY support.
  * NB: if you add support here; be sure to add code to esp_attach below!
  */
-struct enc_xform *
+const struct enc_xform *
 esp_algorithm_lookup(int alg)
 {
 	if (alg >= ESP_ALG_MAX)
@@ -134,7 +135,7 @@ esp_algorithm_lookup(int alg)
 }
 
 size_t
-esp_hdrsiz(struct secasvar *sav)
+esp_hdrsiz(const struct secasvar *sav)
 {
 	size_t size;
 
@@ -168,9 +169,9 @@ esp_hdrsiz(struct secasvar *sav)
  * esp_init() is called when an SPI is being set up.
  */
 static int
-esp_init(struct secasvar *sav, struct xformsw *xsp)
+esp_init(struct secasvar *sav, const struct xformsw *xsp)
 {
-	struct enc_xform *txform;
+	const struct enc_xform *txform;
 	struct cryptoini cria, crie;
 	int keylen;
 	int error;
@@ -275,10 +276,10 @@ esp_zeroize(struct secasvar *sav)
  * ESP input processing, called (eventually) through the protocol switch.
  */
 static int
-esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
-	struct auth_hash *esph;
-	struct enc_xform *espx;
+	const struct auth_hash *esph;
+	const struct enc_xform *espx;
 	struct tdb_ident *tdbi;
 	struct tdb_crypto *tc;
 	int plen, alen, hlen;
@@ -309,7 +310,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	else
 		hlen = sizeof (struct newesp) + sav->ivlen;
 	/* Authenticator hash size */
-	alen = esph ? AH_HMAC_HASHLEN : 0;
+	alen = esph ? esph->authsize : 0;
 
 	/*
 	 * Verify payload length is multiple of encryption algorithm
@@ -462,12 +463,12 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 static int
 esp_input_cb(struct cryptop *crp)
 {
-	u_int8_t lastthree[3], aalg[AH_HMAC_HASHLEN];
+	u_int8_t lastthree[3], aalg[AH_ALEN_MAX];
 	int s, hlen, skip, protoff, error;
 	struct mbuf *m;
 	struct cryptodesc *crd;
-	struct auth_hash *esph;
-	struct enc_xform *espx;
+	const struct auth_hash *esph;
+	const struct enc_xform *espx;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	struct secasvar *sav;
@@ -498,6 +499,7 @@ esp_input_cb(struct cryptop *crp)
 #endif
 
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
@@ -526,6 +528,7 @@ esp_input_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
+			mutex_exit(softnet_lock);
 			splx(s);
 			return crypto_dispatch(crp);
 		}
@@ -664,11 +667,13 @@ DPRINTF(("esp_input_cb: %x %x\n", lastthree[0], lastthree[1]));
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag);
 
 	KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	if (m != NULL)
 		m_freem(m);
@@ -691,12 +696,12 @@ esp_output(
     int protoff
 )
 {
-	struct enc_xform *espx;
-	struct auth_hash *esph;
+	const struct enc_xform *espx;
+	const struct auth_hash *esph;
 	int hlen, rlen, plen, padding, blks, alen, i, roff;
 	struct mbuf *mo = (struct mbuf *) NULL;
 	struct tdb_crypto *tc;
-	struct secasvar *sav;
+	const struct secasvar *sav;
 	struct secasindex *saidx;
 	unsigned char *pad;
 	u_int8_t prot;
@@ -730,7 +735,7 @@ esp_output(
 	plen = rlen + padding;		/* Padded payload length. */
 
 	if (esph)
-		alen = AH_HMAC_HASHLEN;
+		alen = esph->authsize;
 	else
 		alen = 0;
 
@@ -769,7 +774,7 @@ esp_output(
 	}
 
 	/* Update the counters. */
-	ESP_STATADD(ESP_STAT_OUTPUT, m->m_pkthdr.len - skip);
+	ESP_STATADD(ESP_STAT_OBYTES, m->m_pkthdr.len - skip);
 
 	m = m_clone(m);
 	if (m == NULL) {
@@ -935,6 +940,7 @@ esp_output_cb(struct cryptop *crp)
 	m = (struct mbuf *) crp->crp_buf;
 
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
@@ -957,6 +963,7 @@ esp_output_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
+			mutex_exit(softnet_lock);
 			splx(s);
 			return crypto_dispatch(crp);
 		}
@@ -976,7 +983,7 @@ esp_output_cb(struct cryptop *crp)
 	}
 	ESP_STATINC(ESP_STAT_HIST + sav->alg_enc);
 	if (sav->tdb_authalgxform != NULL)
-		AH_STATINC(sav->alg_auth + sav->alg_auth);
+		AH_STATINC(AH_STAT_HIST + sav->alg_auth);
 
 	/* Release crypto descriptors. */
 	free(tc, M_XDATA);
@@ -985,8 +992,8 @@ esp_output_cb(struct cryptop *crp)
 #ifdef IPSEC_DEBUG
 	/* Emulate man-in-the-middle attack when ipsec_integrity is TRUE. */
 	if (ipsec_integrity) {
-		static unsigned char ipseczeroes[AH_HMAC_HASHLEN];
-		struct auth_hash *esph;
+		static unsigned char ipseczeroes[AH_ALEN_MAX];
+		const struct auth_hash *esph;
 
 		/*
 		 * Corrupt HMAC if we want to test integrity verification of
@@ -994,8 +1001,8 @@ esp_output_cb(struct cryptop *crp)
 		 */
 		esph = sav->tdb_authalgxform;
 		if (esph !=  NULL) {
-			m_copyback(m, m->m_pkthdr.len - AH_HMAC_HASHLEN,
-			    AH_HMAC_HASHLEN, ipseczeroes);
+			m_copyback(m, m->m_pkthdr.len - esph->authlen,
+			    esph->authlen, ipseczeroes);
 		}
 	}
 #endif
@@ -1003,11 +1010,13 @@ esp_output_cb(struct cryptop *crp)
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr);
 	KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	if (m)
 		m_freem(m);

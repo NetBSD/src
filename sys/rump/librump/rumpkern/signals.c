@@ -1,7 +1,7 @@
-/*	$NetBSD: signals.c,v 1.2.4.3 2010/07/03 01:20:02 rmind Exp $	*/
+/*	$NetBSD: signals.c,v 1.2.4.4 2011/03/05 20:56:15 rmind Exp $	*/
 
-/*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+/*-
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.2.4.3 2010/07/03 01:20:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.2.4.4 2011/03/05 20:56:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -37,19 +37,38 @@ __KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.2.4.3 2010/07/03 01:20:02 rmind Exp $"
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
 
+#include "rump_private.h"
 #include "rumpkern_if_priv.h"
 
-const struct filterops sig_filtops;
+const struct filterops sig_filtops = {
+	.f_attach = (void *)eopnotsupp,
+};
+
 sigset_t sigcantmask;
+
+static void
+pgrp_apply(struct pgrp *pgrp, int signo, void (*apply)(struct proc *p, int))
+{
+	struct proc *p;
+
+	KASSERT(mutex_owned(proc_lock));
+
+	LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
+		mutex_enter(p->p_lock);
+		apply(p, signo);
+		mutex_exit(p->p_lock);
+	}
+}
 
 /* RUMP_SIGMODEL_PANIC */
 
 static void
-rumpsig_panic(pid_t target, int signo)
+rumpsig_panic(struct proc *p, int signo)
 {
 
 	switch (signo) {
 	case SIGSYS:
+	case SIGPIPE:
 		break;
 	default:
 		panic("unhandled signal %d", signo);
@@ -59,7 +78,7 @@ rumpsig_panic(pid_t target, int signo)
 /* RUMP_SIGMODEL_IGNORE */
 
 static void
-rumpsig_ignore(pid_t target, int signo)
+rumpsig_ignore(struct proc *p, int signo)
 {
 
 	return;
@@ -68,26 +87,39 @@ rumpsig_ignore(pid_t target, int signo)
 /* RUMP_SIGMODEL_HOST */
 
 static void
-rumpsig_host(pid_t target, int signo)
+rumpsig_host(struct proc *p, int signo)
 {
 	int error;
 
-	rumpuser_kill(target, signo, &error);
+	rumpuser_kill(p->p_pid, signo, &error);
 }
 
 /* RUMP_SIGMODEL_RAISE */
 
 static void
-rumpsig_raise(pid_t target, int signo)
+rumpsig_raise(struct proc *p, int signo)
 {
-	int error;
+	int error = 0;
 
-	rumpuser_kill(RUMPUSER_PID_SELF, signo, &error);
+	if (RUMP_LOCALPROC_P(p)) {
+		rumpuser_kill(RUMPUSER_PID_SELF, signo, &error);
+	} else {
+		rumpuser_sp_raise(p->p_vmspace->vm_map.pmap, signo);
+	}
 }
 
-typedef void (*rumpsig_fn)(pid_t pid, int sig);
+static void
+rumpsig_record(struct proc *p, int signo)
+{
 
-rumpsig_fn rumpsig = rumpsig_panic;
+	if (!sigismember(&p->p_sigctx.ps_sigignore, signo)) {
+		sigaddset(&p->p_sigpend.sp_set, signo);
+	}
+}
+
+typedef void (*rumpsig_fn)(struct proc *, int);
+
+static rumpsig_fn rumpsig = rumpsig_raise;
 
 /*
  * Set signal delivery model.  It would be nice if we could
@@ -104,16 +136,19 @@ rump_boot_setsigmodel(enum rump_sigmodel model)
 
 	switch (model) {
 	case RUMP_SIGMODEL_PANIC:
-		atomic_swap_ptr(&rumpsig, rumpsig_panic);
+		rumpsig = rumpsig_panic;
 		break;
 	case RUMP_SIGMODEL_IGNORE:
-		atomic_swap_ptr(&rumpsig, rumpsig_ignore);
+		rumpsig = rumpsig_ignore;
 		break;
 	case RUMP_SIGMODEL_HOST:
-		atomic_swap_ptr(&rumpsig, rumpsig_host);
+		rumpsig = rumpsig_host;
 		break;
 	case RUMP_SIGMODEL_RAISE:
-		atomic_swap_ptr(&rumpsig, rumpsig_raise);
+		rumpsig = rumpsig_raise;
+		break;
+	case RUMP_SIGMODEL_RECORD:
+		rumpsig = rumpsig_record;
 		break;
 	}
 }
@@ -122,56 +157,79 @@ void
 psignal(struct proc *p, int sig)
 {
 
-	rumpsig(p->p_pid, sig);
+	rumpsig(p, sig);
 }
 
 void
 pgsignal(struct pgrp *pgrp, int sig, int checktty)
 {
 
-	rumpsig(-pgrp->pg_id, sig);
+	pgrp_apply(pgrp, sig, rumpsig);
 }
 
 void
 kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 {
 
-	rumpsig(p->p_pid, ksi->ksi_signo);
+	rumpsig(p, ksi->ksi_signo);
 }
 
 void
 kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
 {
 
-	rumpsig(-pgrp->pg_id, ksi->ksi_signo);
+	pgrp_apply(pgrp, ksi->ksi_signo, rumpsig);
 }
 
 int
 sigispending(struct lwp *l, int signo)
 {
+	struct proc *p = l->l_proc;
+	sigset_t tset;
 
+	tset = p->p_sigpend.sp_set;
+
+	if (signo == 0) {
+		if (firstsig(&tset) != 0)
+			return EINTR;
+	} else if (sigismember(&tset, signo))
+		return EINTR;
 	return 0;
 }
 
 void
 sigpending1(struct lwp *l, sigset_t *ss)
 {
+	struct proc *p = l->l_proc;
 
-	sigemptyset(ss);
+	mutex_enter(p->p_lock);
+	*ss = l->l_proc->p_sigpend.sp_set;
+	mutex_exit(p->p_lock);
 }
 
 int
 sigismasked(struct lwp *l, int sig)
 {
 
-	return 0;
+	return sigismember(&l->l_proc->p_sigctx.ps_sigignore, sig);
+}
+
+void
+sigclear(sigpend_t *sp, const sigset_t *mask, ksiginfoq_t *kq)
+{
+
+	if (mask == NULL)
+		sigemptyset(&sp->sp_set);
+	else
+		sigminusset(mask, &sp->sp_set);
 }
 
 void
 sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
 {
 
-	/* nada */
+	/* don't assert proc lock, hence callable from user context */
+	sigclear(&p->p_sigpend, mask, kq);
 }
 
 void
@@ -182,9 +240,39 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
 		panic("how did that get there?");
 }
 
+int
+sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
+{
+	sigset_t *mask = &l->l_proc->p_sigctx.ps_sigignore;
+
+	KASSERT(mutex_owned(l->l_proc->p_lock));
+
+	if (oss)
+		*oss = *mask;
+
+	if (nss) {
+		switch (how) {
+		case SIG_BLOCK:
+			sigplusset(nss, mask);
+			break;
+		case SIG_UNBLOCK:
+			sigminusset(nss, mask);
+			break;
+		case SIG_SETMASK:
+			*mask = *nss;
+			break;
+		default:
+			return EINVAL;
+		}
+	}
+
+	return 0;
+}
+
 void
 siginit(struct proc *p)
 {
 
-	/* nada (?) */
+	sigemptyset(&p->p_sigctx.ps_sigignore);
+	sigemptyset(&p->p_sigpend.sp_set);
 }

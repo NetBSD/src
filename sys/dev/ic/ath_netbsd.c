@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.17 2009/10/19 23:19:39 rmind Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.17.4.1 2011/03/05 20:53:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17 2009/10/19 23:19:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17.4.1 2011/03/05 20:53:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17 2009/10/19 23:19:39 rmind Exp $"
 #include <machine/stdarg.h>
 #include <sys/endian.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -56,18 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17 2009/10/19 23:19:39 rmind Exp $"
 #include <net80211/ieee80211_var.h>
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-
-void
-device_printf(device_t dev, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	printf("%s: ", device_xname(dev));
-	vprintf(fmt, ap);
-	va_end(ap);
-	return;
-}
 
 /*
  * Setup sysctl(3) MIB, hw.ath.*.
@@ -532,4 +521,18 @@ ath_sysctlattach(struct ath_softc *sc)
 	return;
 err:
 	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+}
+
+MODULE(MODULE_CLASS_MISC, ath, "ath_hal");
+
+static int
+ath_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

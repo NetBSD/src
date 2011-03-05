@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.8 2009/01/12 11:32:45 tsutsui Exp $	*/
+/*	$NetBSD: udp.c,v 1.8.6.1 2011/03/05 20:55:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -127,7 +127,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
 	if (cc == -1)
 		return -1;
 	if ((size_t)cc != len)
-		panic("sendudp: bad write (%d != %d)", cc, len);
+		panic("sendudp: bad write (%zd != %zu)", cc, len);
 	return (cc - (sizeof(*ip) + sizeof(*uh)));
 }
 

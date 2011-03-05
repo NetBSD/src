@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.80.4.1 2010/07/03 01:19:50 rmind Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.80.4.2 2011/03/05 20:55:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.80.4.1 2010/07/03 01:19:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.80.4.2 2011/03/05 20:55:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -659,7 +659,7 @@ ntfs_fhtovp(
 	    (unsigned long long)ntfh.ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfh.ntfid_ino, ntfh.ntfid_attr, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
+			LK_EXCLUSIVE, 0, vpp);
 	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -726,6 +726,7 @@ ntfs_vgetex(
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
 
+loop:
 	/* Get ntnode */
 	error = ntfs_ntlookup(ntmp, ino, &ip);
 	if (error) {
@@ -778,22 +779,40 @@ ntfs_vgetex(
 	 * lock has to be acquired first.
 	 * ntfs_fget() bumped ntnode usecount, so ntnode won't be recycled
 	 * prematurely.
+	 * Take v_interlock before releasing ntnode lock to avoid races.
 	 */
+	vp = FTOV(fp);
+	if (vp) {
+		mutex_enter(vp->v_interlock);
+		ntfs_ntput(ip);
+		if (vget(vp, lkflags) != 0)
+			goto loop;
+		*vpp = vp;
+		return 0;
+	}
 	ntfs_ntput(ip);
 
-	if (FTOV(fp)) {
-		/* vget() returns error if the vnode has been recycled */
-		if (vget(FTOV(fp), lkflags) == 0) {
-			*vpp = FTOV(fp);
-			return (0);
-		}
-	}
-
 	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, ntfs_vnodeop_p, &vp);
+	ntfs_ntget(ip);
 	if(error) {
 		ntfs_frele(fp);
 		ntfs_ntput(ip);
 		return (error);
+	}
+	error = ntfs_fget(ntmp, ip, attrtype, attrname, &fp);
+	if (error) {
+		printf("ntfs_vget: ntfs_fget failed\n");
+		ntfs_ntput(ip);
+		return (error);
+	}
+	if (FTOV(fp)) {
+		/*
+		 * Another thread beat us, put back freshly allocated
+		 * vnode and retry.
+		 */
+		ntfs_ntput(ip);
+		ungetnewvnode(vp);
+		goto loop;
 	}
 	dprintf(("ntfs_vget: vnode: %p for ntnode: %llu\n", vp,
 	    (unsigned long long)ino));
@@ -806,6 +825,8 @@ ntfs_vgetex(
 
 	if (ino == NTFS_ROOTINO)
 		vp->v_vflag |= VV_ROOT;
+
+	ntfs_ntput(ip);
 
 	if (lkflags & (LK_EXCLUSIVE | LK_SHARED)) {
 		error = vn_lock(vp, lkflags);
@@ -827,8 +848,7 @@ ntfs_vget(
 	ino_t ino,
 	struct vnode **vpp)
 {
-	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
+	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL, LK_EXCLUSIVE, 0, vpp);
 }
 
 extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;

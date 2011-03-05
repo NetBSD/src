@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.42.4.1 2010/07/03 01:19:12 rmind Exp $ */
+/*	$NetBSD: flsc.c,v 1.42.4.2 2011/03/05 20:49:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -42,10 +42,12 @@
  */
 
 #include "opt_ddb.h"
+#ifdef __m68k__
 #include "opt_m68k_arch.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.42.4.1 2010/07/03 01:19:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.42.4.2 2011/03/05 20:49:21 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.42.4.1 2010/07/03 01:19:12 rmind Exp $");
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

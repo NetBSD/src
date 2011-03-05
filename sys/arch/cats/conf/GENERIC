@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.128.4.1 2010/05/30 05:16:41 rmind Exp $
+# $NetBSD: GENERIC,v 1.128.4.2 2011/03/05 20:49:46 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -550,7 +550,7 @@ pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	ccd		2	# concatenated/striped disk devices
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd		2	# cryptographic disk devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	putter			# for puffs and pud

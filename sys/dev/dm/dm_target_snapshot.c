@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.12.4.1 2010/05/30 05:17:20 rmind Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.12.4.2 2011/03/05 20:53:07 rmind Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -243,6 +243,7 @@ dm_target_snapshot_init(dm_dev_t * dmv, void **target_config, char *params)
 	*target_config = tsc;
 
 	dmv->dev_type = DM_SNAPSHOT_DEV;
+	dmv->sec_size = dmp_snap->dmp_secsize;
 
 	return 0;
 }

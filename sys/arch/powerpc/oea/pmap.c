@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2010/02/25 23:31:47 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71.2.1 2011/03/05 20:51:39 rmind Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2010/02/25 23:31:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71.2.1 2011/03/05 20:51:39 rmind Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -121,21 +121,6 @@ static u_int mem_cnt, avail_cnt;
 
 #if !defined(PMAP_OEA64) && !defined(PMAP_OEA64_BRIDGE)
 # define	PMAP_OEA 1
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
-#endif
-
-#if defined(PMAP_OEA64)
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA) && !defined(PPC_OEA64_BRIDGE)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
-#endif
-
-#if defined(PMAP_OEA64_BRIDGE)
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA) && !defined(PPC_OEA64)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
 #endif
 
 #if defined(PMAP_OEA)
@@ -147,7 +132,7 @@ static u_int mem_cnt, avail_cnt;
 #define	_PRIxva		"lx"
 #define	_PRIsr  	"lx"
 
-#if defined(PMAP_EXCLUDE_DECLS) && !defined(PMAPNAME)
+#ifdef PMAP_NEEDS_FIXUP
 #if defined(PMAP_OEA)
 #define	PMAPNAME(name)	pmap32_##name
 #elif defined(PMAP_OEA64)
@@ -157,9 +142,9 @@ static u_int mem_cnt, avail_cnt;
 #else
 #error unknown variant for pmap
 #endif
-#endif /* PMAP_EXLCUDE_DECLS && !PMAPNAME */
+#endif /* PMAP_NEEDS_FIXUP */
 
-#if defined(PMAPNAME)
+#ifdef PMAPNAME
 #define	STATIC			static
 #define pmap_pte_spill		PMAPNAME(pte_spill)
 #define pmap_real_memory	PMAPNAME(real_memory)
@@ -690,38 +675,48 @@ static inline struct pvo_head *
 pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 {
 	struct vm_page *pg;
+	struct vm_page_md *md;
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (pg_p != NULL)
 		*pg_p = pg;
 	if (pg == NULL)
 		return &pmap_pvo_unmanaged;
-	return &pg->mdpage.mdpg_pvoh;
+	md = VM_PAGE_TO_MD(pg);
+	return &md->mdpg_pvoh;
 }
 
 static inline struct pvo_head *
 vm_page_to_pvoh(struct vm_page *pg)
 {
-	return &pg->mdpage.mdpg_pvoh;
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	return &md->mdpg_pvoh;
 }
 
 
 static inline void
 pmap_attr_clear(struct vm_page *pg, int ptebit)
 {
-	pg->mdpage.mdpg_attrs &= ~ptebit;
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	md->mdpg_attrs &= ~ptebit;
 }
 
 static inline int
 pmap_attr_fetch(struct vm_page *pg)
 {
-	return pg->mdpage.mdpg_attrs;
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	return md->mdpg_attrs;
 }
 
 static inline void
 pmap_attr_save(struct vm_page *pg, int ptebit)
 {
-	pg->mdpage.mdpg_attrs |= ptebit;
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	md->mdpg_attrs |= ptebit;
 }
 
 static inline int
@@ -1932,14 +1927,20 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * it's in our available memory array.  If it is in the memory array,
 	 * asssume it's in memory coherent memory.
 	 */
-	pte_lo = PTE_IG;
-	if ((flags & PMAP_NC) == 0) {
+	if (flags & PMAP_MD_PREFETCHABLE) {
+		pte_lo = 0;
+	} else
+		pte_lo = PTE_G;
+
+	if ((flags & PMAP_MD_NOCACHE) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
 				pte_lo = PTE_M;
 				break;
 			}
 		}
+	} else {
+		pte_lo |= PTE_I;
 	}
 
 	if (prot & VM_PROT_WRITE)
@@ -2024,7 +2025,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * asssume it's in memory coherent memory.
 	 */
 	pte_lo = PTE_IG;
-	if ((prot & PMAP_NC) == 0) {
+	if ((flags & PMAP_MD_NOCACHE) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
 				pte_lo = PTE_M;
@@ -2913,7 +2914,8 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	 * PA 0 will never be among those given to UVM so we can use it
 	 * to indicate we couldn't steal any memory.
 	 */
-	for (ps = vm_physmem, bank = 0; bank < vm_nphysseg; bank++, ps++) {
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		ps = VM_PHYSMEM_PTR(bank);
 		if (ps->free_list == VM_FREELIST_FIRST256 && 
 		    ps->avail_end - ps->avail_start >= npgs) {
 			pa = ptoa(ps->avail_start);
@@ -2950,8 +2952,10 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 #ifdef DEBUG
 	if (pmapdebug && npgs > 1) {
 		u_int cnt = 0;
-		for (bank = 0, ps = vm_physmem; bank < vm_nphysseg; bank++, ps++)
+		for (bank = 0; bank < vm_nphysseg; bank++) {
+			ps = VM_PHYSMEM_PTR(bank);
 			cnt += ps->avail_end - ps->avail_start;
+		}
 		printf("pmap_steal_memory: stole %u (total %u) pages (%u left)\n",
 		    npgs, pmap_pages_stolen, cnt);
 	}
@@ -3428,12 +3432,12 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		int bank;
 		char pbuf[9];
 		for (cnt = 0, bank = 0; bank < vm_nphysseg; bank++) {
-			cnt += vm_physmem[bank].avail_end - vm_physmem[bank].avail_start;
+			cnt += VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start;
 			printf("pmap_bootstrap: vm_physmem[%d]=%#" _PRIxpa "-%#" _PRIxpa "/%#" _PRIxpa "\n",
 			    bank,
-			    ptoa(vm_physmem[bank].avail_start),
-			    ptoa(vm_physmem[bank].avail_end),
-			    ptoa(vm_physmem[bank].avail_end - vm_physmem[bank].avail_start));
+			    ptoa(VM_PHYSMEM_PTR(bank)->avail_start),
+			    ptoa(VM_PHYSMEM_PTR(bank)->avail_end),
+			    ptoa(VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start));
 		}
 		format_bytes(pbuf, sizeof(pbuf), ptoa((u_int64_t) cnt));
 		printf("pmap_bootstrap: UVM memory = %s (%u pages)\n",
@@ -3468,8 +3472,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		pm->pm_sr[0] = sr;
 
 		for (bank = 0; bank < vm_nphysseg; bank++) {
-			pa_end = ptoa(vm_physmem[bank].avail_end);
-			pa = ptoa(vm_physmem[bank].avail_start);
+			pa_end = ptoa(VM_PHYSMEM_PTR(bank)->avail_end);
+			pa = ptoa(VM_PHYSMEM_PTR(bank)->avail_start);
 			for (; pa < pa_end; pa += PAGE_SIZE) {
 				ptegidx = va_to_pteg(pm, pa);
 				pmap_pte_create(&pt, pm, pa, pa | PTE_M|PTE_BW);

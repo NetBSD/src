@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.61.4.1 2010/07/03 01:19:52 rmind Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.61.4.2 2011/03/05 20:55:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.61.4.1 2010/07/03 01:19:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.61.4.2 2011/03/05 20:55:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.61.4.1 2010/07/03 01:19:52 rmind 
 
 #include <fs/union/union.h>
 
-MODULE(MODULE_CLASS_VFS, union, "layerfs");
+MODULE(MODULE_CLASS_VFS, union, NULL);
 
 VFS_PROTOS(union);
 

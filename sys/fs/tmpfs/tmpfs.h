@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.37.16.1 2010/07/03 01:19:51 rmind Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.37.16.2 2011/03/05 20:55:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -262,6 +262,7 @@ struct tmpfs_node {
 		} tn_reg;
 	} tn_spec;
 };
+#define TMPFS_NODE_WHITEOUT ((struct tmpfs_node *)-1)
 
 #if defined(_KERNEL)
 LIST_HEAD(tmpfs_node_list, tmpfs_node);

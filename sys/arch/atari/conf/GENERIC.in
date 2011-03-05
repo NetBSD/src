@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.84.2.1 2010/05/30 05:16:39 rmind Exp $
+#	$NetBSD: GENERIC.in,v 1.84.2.2 2011/03/05 20:49:41 rmind Exp $
 #
 # Generic atari
 #
@@ -260,7 +260,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	md		3	# Boot memory disk
+pseudo-device	md			# Boot memory disk
 pseudo-device	putter			# for puffs and pud
 
 #if !defined(SMALL030_KERNEL)
@@ -357,7 +357,7 @@ vme0		at avmebus0
 le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
 le0		at vme0 irq 4	# Lance ethernet (BVME410).
 we0		at vme0 irq 4	# SMC Elite Ultra with SMC_TT VME-ISA bridge
-et0		at vme0		# Crazy Dots II
+et4k0		at vme0		# Crazy Dots II
 #endif /* TT030_KERNEL */
 #endif /* SMALL030_KERNEL */
 

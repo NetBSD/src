@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.20.2.1 2010/05/30 05:17:19 rmind Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.20.2.2 2011/03/05 20:53:07 rmind Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
+#include <sys/kauth.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -110,7 +111,7 @@ CFATTACH_DECL3_NEW(dm, 0,
 
 extern struct cfdriver dm_cd;
 
-extern uint64_t dm_dev_counter;
+extern uint32_t dm_dev_counter;
 
 /*
  * This array is used to translate cmd to function pointer.
@@ -121,23 +122,23 @@ extern uint64_t dm_dev_counter;
  * ioctl to kernel but will do another things in userspace.
  *
  */
-struct cmd_function cmd_fn[] = {
-		{ .cmd = "version", .fn = dm_get_version_ioctl},
-		{ .cmd = "targets", .fn = dm_list_versions_ioctl},
-		{ .cmd = "create",  .fn = dm_dev_create_ioctl},
-		{ .cmd = "info",    .fn = dm_dev_status_ioctl},
-		{ .cmd = "mknodes", .fn = dm_dev_status_ioctl},		
-		{ .cmd = "names",   .fn = dm_dev_list_ioctl},
-		{ .cmd = "suspend", .fn = dm_dev_suspend_ioctl},
-		{ .cmd = "remove",  .fn = dm_dev_remove_ioctl}, 
-		{ .cmd = "rename",  .fn = dm_dev_rename_ioctl},
-		{ .cmd = "resume",  .fn = dm_dev_resume_ioctl},
-		{ .cmd = "clear",   .fn = dm_table_clear_ioctl},
-		{ .cmd = "deps",    .fn = dm_table_deps_ioctl},
-		{ .cmd = "reload",  .fn = dm_table_load_ioctl},
-		{ .cmd = "status",  .fn = dm_table_status_ioctl},
-		{ .cmd = "table",   .fn = dm_table_status_ioctl},
-		{NULL, NULL}	
+static const struct cmd_function cmd_fn[] = {
+	{ .cmd = "version", .fn = dm_get_version_ioctl,	  .allowed = 1 },
+	{ .cmd = "targets", .fn = dm_list_versions_ioctl, .allowed = 1 },
+	{ .cmd = "create",  .fn = dm_dev_create_ioctl,    .allowed = 0 },
+	{ .cmd = "info",    .fn = dm_dev_status_ioctl,    .allowed = 1 },
+	{ .cmd = "mknodes", .fn = dm_dev_status_ioctl,    .allowed = 1 },
+	{ .cmd = "names",   .fn = dm_dev_list_ioctl,      .allowed = 1 },
+	{ .cmd = "suspend", .fn = dm_dev_suspend_ioctl,   .allowed = 0 },
+	{ .cmd = "remove",  .fn = dm_dev_remove_ioctl,    .allowed = 0 }, 
+	{ .cmd = "rename",  .fn = dm_dev_rename_ioctl,    .allowed = 0 },
+	{ .cmd = "resume",  .fn = dm_dev_resume_ioctl,    .allowed = 0 },
+	{ .cmd = "clear",   .fn = dm_table_clear_ioctl,   .allowed = 0 },
+	{ .cmd = "deps",    .fn = dm_table_deps_ioctl,    .allowed = 1 },
+	{ .cmd = "reload",  .fn = dm_table_load_ioctl,    .allowed = 0 },
+	{ .cmd = "status",  .fn = dm_table_status_ioctl,  .allowed = 1 },
+	{ .cmd = "table",   .fn = dm_table_status_ioctl,  .allowed = 1 },
+	{ .cmd = NULL, 	    .fn = NULL,			  .allowed = 0 }	
 };
 
 #ifdef _MODULE
@@ -174,6 +175,8 @@ dm_modcmd(modcmd_t cmd, void *arg)
 
 		error = devsw_attach(dm_cd.cd_name, &dm_bdevsw, &bmajor,
 		    &dm_cdevsw, &cmajor);
+		if (error == EEXIST)
+			error = 0;
 		if (error) {
 			config_cfattach_detach(dm_cd.cd_name, &dm_ca);
 			config_cfdriver_detach(&dm_cd);
@@ -275,7 +278,7 @@ dm_detach(device_t self, int flags)
 	(void)dm_dev_free(dmv);
 
 	/* Decrement device counter After removing device */
-	atomic_dec_64(&dm_dev_counter);
+	atomic_dec_32(&dm_dev_counter);
 
 	return 0;
 }
@@ -348,7 +351,6 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	r = 0;
 
 	aprint_debug("dmioctl called\n");
-	
 	KASSERT(data != NULL);
 	
 	if (( r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
@@ -381,7 +383,7 @@ cleanup_exit:
  * Translate command sent from libdevmapper to func.
  */
 static int
-dm_cmd_to_fun(prop_dictionary_t dm_dict){
+dm_cmd_to_fun(prop_dictionary_t dm_dict) {
 	int i, r;
 	prop_string_t command;
 	
@@ -393,6 +395,11 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 	for(i = 0; cmd_fn[i].cmd != NULL; i++)
 		if (prop_string_equals_cstring(command, cmd_fn[i].cmd))
 			break;
+
+	if (!cmd_fn[i].allowed && 
+	    (r = kauth_authorize_generic(kauth_cred_get(),
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		return r;
 
 	if (cmd_fn[i].cmd == NULL)
 		return EINVAL;
@@ -439,6 +446,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) data;
+		unsigned secsize;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
@@ -450,7 +458,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		strlcpy(dkw->dkw_parent, dmv->name, 16);
 
 		dkw->dkw_offset = 0;
-		dkw->dkw_size = dm_table_size(&dmv->table_head);
+		dm_table_disksize(&dmv->table_head, &dkw->dkw_size, &secsize);
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
 
 		dm_dev_unbusy(dmv);
@@ -666,19 +674,19 @@ void
 dmgetproperties(struct disk *disk, dm_table_head_t *head)
 {
 	prop_dictionary_t disk_info, odisk_info, geom;
-	int dmp_size;
+	uint64_t numsec;
+	unsigned secsize;
 
-	dmp_size = dm_table_size(head);
+	dm_table_disksize(head, &numsec, &secsize);
 	disk_info = prop_dictionary_create();
 	geom = prop_dictionary_create();
 
 	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
-	prop_dictionary_set_uint64(geom, "sectors-per-unit", dmp_size);
-	prop_dictionary_set_uint32(geom, "sector-size",
-	    DEV_BSIZE /* XXX 512? */);
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", numsec);
+	prop_dictionary_set_uint32(geom, "sector-size", secsize);
 	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
 	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
-	prop_dictionary_set_uint32(geom, "cylinders-per-unit", dmp_size / 2048);
+	prop_dictionary_set_uint32(geom, "cylinders-per-unit", numsec / 2048);
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
@@ -687,4 +695,6 @@ dmgetproperties(struct disk *disk, dm_table_head_t *head)
 
 	if (odisk_info != NULL)
 		prop_object_release(odisk_info);
-}	
+
+	disk_blocksize(disk, secsize);
+}

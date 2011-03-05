@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14.4.1 2010/05/30 05:16:52 rmind Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14.4.2 2011/03/05 20:50:36 rmind Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14.4.1 2010/05/30 05:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14.4.2 2011/03/05 20:50:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14.4.1 2010/05/30 05:16:52 rmi
 #include <machine/cpufunc.h>
 #include <machine/pmap.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 
 #include <hppa/hppa/machdep.h>
 
@@ -98,9 +99,9 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	regs->r_sr6 = tf->tf_sr6;
 	regs->r_sr7 = tf->tf_sr7;
 
+	regs->r_cr27 = tf->tf_cr27;
 #if 0
-	regs->r_cr26      = tf->tf_xxx;
-	regs->r_cr27      = tf->tf_xxx;
+	regs->r_cr26 = tf->tf_cr26;
 #endif
 
 	return 0;
@@ -166,6 +167,11 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	tf->tf_sr2 = regs->r_sr2;
 	tf->tf_sr3 = regs->r_sr3;
 	tf->tf_sr4 = regs->r_sr4;
+
+	tf->tf_cr27 = regs->r_cr27;
+#if 0
+	tf->tf_cr26 = regs->r_cr26;
+#endif
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.50.4.1 2010/07/03 01:19:31 rmind Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.50.4.2 2011/03/05 20:52:41 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.50.4.1 2010/07/03 01:19:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.50.4.2 2011/03/05 20:52:41 rmind Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.50.4.1 2010/07/03 01:19:31 rmind Ex
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
 
+#include <mips/locore.h>
 #include <machine/regnum.h>
 #include <machine/vmparam.h>
 
@@ -400,8 +401,8 @@ irix_sproc_child(struct irix_sproc_child_args *isc)
 	int inh = isc->isc_inh;
 	struct lwp *lparent = isc->isc_parent_lwp;
 	struct proc *parent = lparent->l_proc;
-	struct frame *tf = (struct frame *)l2->l_md.md_regs;
-	struct frame *ptf = (struct frame *)lparent->l_md.md_regs;
+	struct trapframe *tf = l2->l_md.md_utf;
+	struct trapframe *ptf = lparent->l_md.md_utf;
 	kauth_cred_t pc;
 	struct irix_emuldata *ied;
 	struct irix_emuldata *parent_ied;
@@ -477,21 +478,21 @@ irix_sproc_child(struct irix_sproc_child_args *isc)
 	/*
 	 * Setup PC to return to the child entry point
 	 */
-	tf->f_regs[_R_PC] = (unsigned long)isc->isc_entry;
-	tf->f_regs[_R_RA] = 0;
+	tf->tf_regs[_R_PC] = (unsigned long)isc->isc_entry;
+	tf->tf_regs[_R_RA] = 0;
 
 	/*
 	 * Setup child arguments
 	 */
-	tf->f_regs[_R_A0] = (unsigned long)isc->isc_arg;
-	tf->f_regs[_R_A1] = 0;
-	tf->f_regs[_R_A2] = 0;
-	tf->f_regs[_R_A3] = 0;
-	if (ptf->f_regs[_R_S3] == (unsigned long)isc->isc_len) {
-		tf->f_regs[_R_S0] = ptf->f_regs[_R_S0];
-		tf->f_regs[_R_S1] = ptf->f_regs[_R_S1];
-		tf->f_regs[_R_S2] = ptf->f_regs[_R_S2];
-		tf->f_regs[_R_S3] = ptf->f_regs[_R_S3];
+	tf->tf_regs[_R_A0] = (unsigned long)isc->isc_arg;
+	tf->tf_regs[_R_A1] = 0;
+	tf->tf_regs[_R_A2] = 0;
+	tf->tf_regs[_R_A3] = 0;
+	if (ptf->tf_regs[_R_S3] == (unsigned long)isc->isc_len) {
+		tf->tf_regs[_R_S0] = ptf->tf_regs[_R_S0];
+		tf->tf_regs[_R_S1] = ptf->tf_regs[_R_S1];
+		tf->tf_regs[_R_S2] = ptf->tf_regs[_R_S2];
+		tf->tf_regs[_R_S3] = ptf->tf_regs[_R_S3];
 	}
 
 	/*

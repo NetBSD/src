@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.6.4.1 2010/05/30 05:16:49 rmind Exp $	*/
+/*	$NetBSD: apic.c,v 1.6.4.2 2011/03/05 20:50:27 rmind Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -71,6 +71,7 @@ struct apic_iv {
 	void *arg;
 	struct apic_iv *next;
 	struct evcnt *cnt;
+	char aiv_name[32];
 };
 
 struct apic_iv *apic_intr_list[CPU_NINTS];
@@ -138,7 +139,7 @@ apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #endif
 	line = PCI_INTERRUPT_LINE(reg);
 	if (sc->sc_irq[line] == 0)
-		sc->sc_irq[line] = hp700_intr_allocate_bit(&int_reg_cpu);
+		sc->sc_irq[line] = hp700_intr_allocate_bit(&ir_cpu);
 	*ihp = (line << APIC_INT_LINE_SHIFT) | sc->sc_irq[line];
 	return (APIC_INT_IRQ(*ihp) == 0);
 }
@@ -189,8 +190,11 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 			return NULL;
 		}
 
+		snprintf(aiv->aiv_name, sizeof(aiv->aiv_name), "line %d irq %d",
+		    line, irq);
+
 		evcnt_attach_dynamic(cnt, EVCNT_TYPE_INTR, NULL,
-		    device_xname(sc->sc_dv), "irq" /* XXXNH */);
+		    device_xname(sc->sc_dv), aiv->aiv_name);
 		biv = apic_intr_list[irq];
 		while (biv->next)
 			biv = biv->next;
@@ -199,8 +203,8 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 		return arg;
 	}
 
-	if ((iv = hp700_intr_establish(sc->sc_dv, pri, apic_intr,
-	     aiv, &int_reg_cpu, irq))) {
+	iv = hp700_intr_establish(pri, apic_intr, aiv, &ir_cpu, irq);
+	if (iv) {
 		ent0 = (31 - irq) & APIC_ENT0_VEC;
 		ent0 |= apic_get_int_ent0(sc, line);
 #if 0
@@ -252,35 +256,24 @@ apic_intr(void *v)
 	return (claimed);
 }
 
-/* Maximum number of supported interrupt routing entries. */
-#define MAX_INT_TBL_SZ	16
-
 void
 apic_get_int_tbl(struct elroy_softc *sc)
 {
-	static struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
-	static struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
+	int nentries;
 	size_t size;
+	int err;
 
-	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL_SZ,
-	    &int_tbl_sz, 0, 0, 0, 0, 0))
+	err = pdcproc_pci_inttblsz(&nentries);
+	if (err)
 		return;
 
-	if (int_tbl_sz.num > MAX_INT_TBL_SZ)
-		panic("interrupt routing table too big (%d entries)",
-		    int_tbl_sz.num);
-
-	size = int_tbl_sz.num * sizeof(struct pdc_pat_pci_rt);
-	sc->sc_int_tbl_sz = int_tbl_sz.num;
+	size = nentries * sizeof(struct pdc_pat_pci_rt);
+	sc->sc_int_tbl_sz = nentries;
 	sc->sc_int_tbl = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_int_tbl == NULL)
 		return;
 
-	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL,
-	    &int_tbl_sz, 0, &int_tbl, 0, 0, 0))
-		return;
-
-	memcpy(sc->sc_int_tbl, int_tbl, size);
+	pdcproc_pci_gettable(nentries, size, sc->sc_int_tbl);
 }
 
 uint32_t
@@ -344,9 +337,9 @@ apic_dump(struct elroy_softc *sc)
 	for (i = 0; i < sc->sc_int_tbl_sz; i++) {
 		printf("type=%x ", sc->sc_int_tbl[i].type);
 		printf("len=%d ", sc->sc_int_tbl[i].len);
-		printf("itype=%d ", sc->sc_int_tbl[i].itype);			
-		printf("trigger=%x ", sc->sc_int_tbl[i].trigger);		
-		printf("pin=%x ", sc->sc_int_tbl[i].pin);		
+		printf("itype=%d ", sc->sc_int_tbl[i].itype);
+		printf("trigger=%x ", sc->sc_int_tbl[i].trigger);
+		printf("pin=%x ", sc->sc_int_tbl[i].pin);
 		printf("bus=%d ", sc->sc_int_tbl[i].bus);
 		printf("line=%d ", sc->sc_int_tbl[i].line);
 		printf("addr=%llx\n", sc->sc_int_tbl[i].addr);

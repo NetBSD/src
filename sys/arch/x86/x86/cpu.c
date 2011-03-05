@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.69.2.2 2010/05/30 05:17:12 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.69.2.3 2011/03/05 20:52:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.2 2010/05/30 05:17:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.3 2011/03/05 20:52:29 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.2 2010/05/30 05:17:12 rmind Exp $");
 #include <sys/atomic.h>
 #include <sys/reboot.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -117,11 +117,14 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.2 2010/05/30 05:17:12 rmind Exp $");
 #error cpu_info contains 32bit bitmasks
 #endif
 
-int     cpu_match(device_t, cfdata_t, void *);
-void    cpu_attach(device_t, device_t, void *);
-
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
+static void	cpu_defer(device_t);
+static int	cpu_rescan(device_t, const char *, const int *);
+static void	cpu_childdetached(device_t, device_t);
 static bool	cpu_suspend(device_t, const pmf_qual_t *);
 static bool	cpu_resume(device_t, const pmf_qual_t *);
+static bool	cpu_shutdown(device_t, int);
 
 struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
@@ -135,8 +138,8 @@ const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
 
 
-CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(cpu, sizeof(struct cpu_softc),
+    cpu_match, cpu_attach, NULL, NULL, cpu_rescan, cpu_childdetached);
 
 /*
  * Statically-allocated CPU info for the primary CPU (or the only
@@ -211,7 +214,7 @@ cpu_init_first(void)
 	pmap_update(pmap_kernel());
 }
 
-int
+static int
 cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
@@ -271,7 +274,7 @@ cpu_vm_init(struct cpu_info *ci)
 }
 
 
-void
+static void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_softc *sc = device_private(self);
@@ -301,10 +304,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		aprint_naive(": Application Processor\n");
-		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
-		memset(ci, 0, sizeof(*ci));
 		ci->ci_curldt = -1;
 #ifdef TRAPLOG
 		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
@@ -332,6 +334,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_self = ci;
 	sc->sc_info = ci;
 	ci->ci_dev = self;
+	ci->ci_acpiid = caa->cpu_id;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
 
@@ -370,6 +373,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_get_tsc_freq(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
 		if (caa->cpu_role != CPU_ROLE_SP) {
 			/* Enable lapic. */
 			lapic_enable();
@@ -405,6 +409,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
 			struct cpu_info *tmp;
@@ -423,9 +428,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 
+	pat_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
-	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
+	if (!pmf_device_register1(self, cpu_suspend, cpu_resume, cpu_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	if (mp_verbose) {
@@ -442,6 +448,64 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 		);
 	}
+
+	(void)config_defer(self, cpu_defer);
+}
+
+static void
+cpu_defer(device_t self)
+{
+	cpu_rescan(self, NULL, NULL);
+}
+
+static int
+cpu_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpufeature_attach_args cfaa;
+	struct cpu_info *ci = sc->sc_info;
+
+	memset(&cfaa, 0, sizeof(cfaa));
+	cfaa.ci = ci;
+
+	if (ifattr_match(ifattr, "cpufeaturebus")) {
+
+		if (ci->ci_frequency == NULL) {
+			cfaa.name = "frequency";
+			ci->ci_frequency = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+
+		if (ci->ci_padlock == NULL) {
+			cfaa.name = "padlock";
+			ci->ci_padlock = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+
+		if (ci->ci_temperature == NULL) {
+			cfaa.name = "temperature";
+			ci->ci_temperature = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+	}
+
+	return 0;
+}
+
+static void
+cpu_childdetached(device_t self, device_t child)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpu_info *ci = sc->sc_info;
+
+	if (ci->ci_frequency == child)
+		ci->ci_frequency = NULL;
+
+	if (ci->ci_padlock == child)
+		ci->ci_padlock = NULL;
+
+	if (ci->ci_temperature == child)
+		ci->ci_temperature = NULL;
 }
 
 /*
@@ -717,9 +781,18 @@ cpu_hatch(void *v)
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
-	lcr3(pmap_kernel()->pm_pdirpa);
+#ifdef PAE
+	pd_entry_t * l3_pd = ci->ci_pae_l3_pdir;
+	for (i = 0 ; i < PDP_SIZE; i++) {
+		l3_pd[i] = pmap_kernel()->pm_pdirpa[i] | PG_V;
+	}
+	lcr3(ci->ci_pae_l3_pdirpa);
+#else
+	lcr3(pmap_pdirpa(pmap_kernel(), 0));
+#endif
+
 	pcb = lwp_getpcb(curlwp);
-	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
+	pcb->pcb_cr3 = rcr3();
 	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	lcr0(pcb->pcb_cr0);
 
@@ -812,6 +885,8 @@ cpu_copy_trampoline(void)
 static void
 tss_init(struct i386tss *tss, void *stack, void *func)
 {
+	KASSERT(curcpu()->ci_pmap == pmap_kernel());
+
 	memset(tss, 0, sizeof *tss);
 	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
 	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
@@ -819,7 +894,8 @@ tss_init(struct i386tss *tss, void *stack, void *func)
 	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
 	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
 	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
-	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
+	/* %cr3 contains the value associated to pmap_kernel */
+	tss->tss_cr3 = rcr3();
 	tss->tss_esp = (int)((char *)stack + USPACE - 16);
 	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
 	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
@@ -1023,7 +1099,7 @@ cpu_suspend(device_t dv, const pmf_qual_t *qual)
 		mutex_enter(&cpu_lock);
 		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
-	
+
 		if (err)
 			return false;
 	}
@@ -1054,15 +1130,22 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 	return err == 0;
 }
 
+static bool
+cpu_shutdown(device_t dv, int how)
+{
+	return cpu_suspend(dv, NULL);
+}
+
 void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
 	uint64_t last_tsc;
 
 	if (cpu_hascounter()) {
-		last_tsc = rdmsr(MSR_TSC);
+		last_tsc = cpu_counter_serializing();
 		i8254_delay(100000);
-		ci->ci_data.cpu_cc_freq = (rdmsr(MSR_TSC) - last_tsc) * 10;
+		ci->ci_data.cpu_cc_freq =
+		    (cpu_counter_serializing() - last_tsc) * 10;
 	}
 }
 
@@ -1093,4 +1176,27 @@ x86_cpu_idle_halt(void)
 	} else {
 		x86_enable_intr();
 	}
+}
+
+/*
+ * Loads pmap for the current CPU.
+ */
+void
+cpu_load_pmap(struct pmap *pmap)
+{
+#ifdef PAE
+	int i, s;
+	struct cpu_info *ci;
+
+	s = splvm(); /* just to be safe */
+	ci = curcpu();
+	pd_entry_t *l3_pd = ci->ci_pae_l3_pdir;
+	for (i = 0 ; i < PDP_SIZE; i++) {
+		l3_pd[i] = pmap->pm_pdirpa[i] | PG_V;
+	}
+	splx(s);
+	tlbflush();
+#else /* PAE */
+	lcr3(pmap_pdirpa(pmap, 0));
+#endif /* PAE */
 }

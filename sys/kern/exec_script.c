@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.63.8.2 2010/07/03 01:19:52 rmind Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.63.8.3 2011/03/05 20:55:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.63.8.2 2010/07/03 01:19:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.63.8.3 2011/03/05 20:55:12 rmind Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -119,6 +119,7 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	size_t shellargp_len;
 	struct exec_fakearg *shellargp;
 	struct exec_fakearg *tmpsap;
+	struct pathbuf *shell_pathbuf;
 	struct vnode *scriptvp;
 #ifdef SETUIDSCRIPTS
 	/* Gcc needs those initialized for spurious uninitialized warning */
@@ -296,7 +297,13 @@ check_shell:
 	epp->ep_hdrvalid = 0;
 
 	/* try loading the interpreter */
-	error = check_exec(l, epp, shellname);
+	shell_pathbuf = pathbuf_create(shellname);
+	if (shell_pathbuf == NULL) {
+		error = ENOMEM;
+	} else {
+		error = check_exec(l, epp, shell_pathbuf);
+		pathbuf_destroy(shell_pathbuf);
+	}
 
 	/* note that we've clobbered the header */
 	epp->ep_flags |= EXEC_DESTR;

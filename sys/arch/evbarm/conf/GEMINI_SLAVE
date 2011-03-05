@@ -244,7 +244,7 @@ makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md	1		# memory disk
+pseudo-device	md			# memory disk
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 

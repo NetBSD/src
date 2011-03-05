@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.21.2.2 2010/07/03 01:20:03 rmind Exp $	*/
+/*	$NetBSD: module.h,v 1.21.2.3 2011/03/05 20:56:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,6 @@ __link_set_add_rodata(modules, name##_modinfo);
 TAILQ_HEAD(modlist, module);
 
 extern struct vm_map	*module_map;
-extern kmutex_t		module_lock;
 extern u_int		module_count;
 extern u_int		module_builtinlist;
 extern struct modlist	module_list;

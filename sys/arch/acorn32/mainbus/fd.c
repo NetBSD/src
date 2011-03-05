@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47 2010/02/24 23:03:00 dyoung Exp $	*/
+/*	$NetBSD: fd.c,v 1.47.2.1 2011/03/05 20:49:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2010/02/24 23:03:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.2.1 2011/03/05 20:49:06 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -1452,7 +1452,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	bp->b_data = (void *)finfo;
 
 #ifdef DEBUG
-	printf("fdformat: blkno %llx count %lx\n",
+	printf("fdformat: blkno %llx count %x\n",
 	    (unsigned long long)bp->b_blkno, bp->b_bcount);
 #endif
 
@@ -1478,9 +1478,6 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	putiobuf(bp);
 	return rv;
 }
-
-#include "md.h"
-#if NMD > 0
 
 #include <dev/md.h>
 
@@ -1559,5 +1556,3 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 	splx(s);
 	return(0);
 }
-
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.19.4.2 2010/07/03 01:19:19 rmind Exp $	*/
+/*	$NetBSD: fpu.c,v 1.19.4.3 2011/03/05 20:50:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19.4.2 2010/07/03 01:19:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19.4.3 2011/03/05 20:50:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19.4.2 2010/07/03 01:19:19 rmind Exp $");
 #include <machine/cpufunc.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 
 #include <hppa/hppa/machdep.h>
@@ -76,9 +77,6 @@ u_int fpu_version;
 
 /* The number of times we have had to switch the FPU context. */
 u_int fpu_csw;
-
-/* The U-space physical address of the proc in the FPU, or zero. */
-paddr_t fpu_cur_uspace;
 
 /* In locore.S, this swaps states in and out of the FPU. */
 void hppa_fpu_swapout(struct pcb *);
@@ -192,7 +190,7 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 		 * swapped in.
 		 */
 		fpu_csw = 0;
-		fpu_cur_uspace = 0;
+		curcpu()->ci_fpu_state = 0;
 		mtctl(ccr_enable & (CCR_MASK ^ HPPA_FPUS), CR_CCR);	
 	} 
 #ifdef FPEMUL
@@ -218,19 +216,23 @@ hppa_fpu_flush(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = lwp_getpcb(l);
+	struct cpu_info *ci = curcpu();
+
+	if (!fpu_present)
+		return;
 
 	/*
 	 * If we have a hardware FPU, and this process'
 	 * state is currently in it, swap it out.
 	 */
-
-	if (!fpu_present || fpu_cur_uspace == 0 ||
-	    fpu_cur_uspace != tf->tf_cr30) {
+	
+	if (ci->ci_fpu_state == 0 ||
+	    ci->ci_fpu_state != tf->tf_cr30) {
 		return;
 	}
 
 	hppa_fpu_swapout(pcb);
-	fpu_cur_uspace = 0;
+	ci->ci_fpu_state = 0;
 }
 
 #ifdef FPEMUL

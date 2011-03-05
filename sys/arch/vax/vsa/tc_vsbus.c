@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_vsbus.c,v 1.4 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: tc_vsbus.c,v 1.4.22.1 2011/03/05 20:52:21 rmind Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,10 +29,10 @@
  */
 
 #include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/scb.h>
 #include <machine/vsbus.h>

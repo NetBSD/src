@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.296.2.1 2010/07/03 01:20:04 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.296.2.2 2011/03/05 20:56:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -123,7 +123,6 @@ struct pgrp {
  * One structure allocated per emulation.
  */
 struct exec_package;
-struct ps_strings;
 struct ras;
 struct kauth_cred;
 
@@ -153,7 +152,7 @@ struct emul {
 
 					/* Per-process hooks */
 	void		(*e_proc_exec)(struct proc *, struct exec_package *);
-	void		(*e_proc_fork)(struct proc *, struct proc *, int);
+	void		(*e_proc_fork)(struct proc *, struct lwp *, int);
 	void		(*e_proc_exit)(struct proc *);
 	void		(*e_lwp_fork)(struct lwp *, struct lwp *);
 	void		(*e_lwp_exit)(struct lwp *);
@@ -281,14 +280,12 @@ struct proc {
 	void		*p_tracep;	/* k: Trace private data */
 	struct vnode 	*p_textvp;	/* :: Vnode of executable */
 
-	void	     (*p_userret)(void);/* p: return-to-user hook */
 	struct emul	*p_emul;	/* :: emulation information */
 	void		*p_emuldata;	/* :: per-proc emul data, or NULL */
 	const struct execsw *p_execsw;	/* :: exec package information */
 	struct klist	p_klist;	/* p: knotes attached to proc */
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
-	sigstore_t	p_sigstore;	/* p: process-wide signal state */
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
@@ -310,11 +307,7 @@ struct proc {
 					/* p: basename of last exec file */
 	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
 
-	struct ps_strings *p_psstr;	/* :: address of process's ps_strings */
-	size_t 		p_psargv;	/* :: offset of ps_argvstr in above */
-	size_t 		p_psnargv;	/* :: offset of ps_nargvstr in above */
-	size_t 		p_psenv;	/* :: offset of ps_envstr in above */
-	size_t 		p_psnenv;	/* :: offset of ps_nenvstr in above */
+	vaddr_t		p_psstrp;	/* :: address of process's ps_strings */
 	u_int		p_pax;		/* :: PAX flags */
 
 /*
@@ -465,6 +458,7 @@ proc_t *	proc_find(pid_t);		/* Find process by ID */
 struct pgrp *	pgrp_find(pid_t);		/* Find process group by ID */
 
 void	procinit(void);
+void	procinit_sysctl(void);
 int	proc_enterpgrp(struct proc *, pid_t, pid_t, bool);
 void	proc_leavepgrp(struct proc *);
 void	proc_sesshold(struct session *);
@@ -480,7 +474,8 @@ void	exit1(struct lwp *, int) __dead;
 int	do_sys_wait(int *, int *, int, struct rusage *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
-void	proc_free_pid(struct proc *);
+pid_t	proc_alloc_pid(struct proc *);
+void	proc_free_pid(pid_t);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
@@ -538,34 +533,29 @@ _proclist_skipmarker(struct proc *p0)
 #define	tsleep(chan, pri, wmesg, timo)					\
 	ltsleep(chan, pri, wmesg, timo, NULL)
 
+/*
+ * Kernel stack parameters.
+ *
+ * KSTACK_LOWEST_ADDR: return the lowest address of the LWP's kernel stack,
+ * excluding red-zone.
+ *
+ * KSTACK_SIZE: the size kernel stack for a LWP, excluding red-zone.
+ *
+ * if <machine/proc.h> provides the MD definition, it will be used.
+ */
+#ifndef KSTACK_LOWEST_ADDR
+#define	KSTACK_LOWEST_ADDR(l)	((void *)ALIGN((struct pcb *)((l)->l_addr) + 1))
+#endif
+#ifndef KSTACK_SIZE
+#define	KSTACK_SIZE		(USPACE - ALIGN(sizeof(struct pcb)))
+#endif
+
 #ifdef KSTACK_CHECK_MAGIC
 void	kstack_setup_magic(const struct lwp *);
 void	kstack_check_magic(const struct lwp *);
 #else
 #define	kstack_setup_magic(x)
 #define	kstack_check_magic(x)
-#endif
-
-/*
- * kernel stack paramaters
- * XXX require sizeof(struct user)
- */
-/*
- * KSTACK_LOWEST_ADDR: return the lowest address of the lwp's kernel stack,
- * excluding redzone etc.
- *
- * if <machine/proc.h> provides the MD definition, it will be used.
- */
-#ifndef KSTACK_LOWEST_ADDR
-#define	KSTACK_LOWEST_ADDR(l)	((void *)ALIGN((l)->l_addr + 1))
-#endif
-/*
- * KSTACK_SIZE: the size kernel stack for a lwp, excluding redzone etc.
- *
- * if <machine/proc.h> provides the MD definition, it will be used.
- */
-#ifndef KSTACK_SIZE
-#define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif
 
 extern struct emul emul_netbsd;

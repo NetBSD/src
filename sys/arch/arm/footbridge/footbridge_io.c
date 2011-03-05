@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.16 2009/12/15 21:38:20 skrll Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.16.4.1 2011/03/05 20:49:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.16 2009/12/15 21:38:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.16.4.1 2011/03/05 20:49:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ bs_protos(generic_armv4);
 bs_protos(bs_notimpl);
 bs_map_proto(footbridge_mem);
 bs_unmap_proto(footbridge_mem);
+bs_mmap_proto(footbridge_io);
 bs_mmap_proto(footbridge_mem);
 
 /* Declare the footbridge bus space tag */
@@ -143,6 +144,7 @@ void footbridge_create_io_bs_tag(t, cookie)
 {
 	*t = footbridge_bs_tag;
 	t->bs_cookie = cookie;
+	t->bs_mmap = footbridge_io_bs_mmap;
 }
 
 void footbridge_create_mem_bs_tag(t, cookie)
@@ -210,17 +212,16 @@ footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_s
 
 	/* Now map the pages */
 	/* The cookie is the physical base address for the I/O area */
-        for (pa = startpa; pa < endpa; pa+=PAGE_SIZE, va += PAGE_SIZE) 
-        {
-                pmap_enter(pmap_kernel(), va, (bus_addr_t)t + pa, VM_PROT_READ | VM_PROT_WRITE,
-                                VM_PROT_READ | VM_PROT_WRITE| PMAP_WIRED);
-                if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
-                        pt_entry_t *pte;	
-                        pte = vtopte(va);
-                        *pte &= ~L2_S_CACHE_MASK;
-                        PTE_SYNC(pte);
-                }
-        }
+	for (pa = startpa; pa < endpa; pa+=PAGE_SIZE, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, (bus_addr_t)t + pa, VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE| PMAP_WIRED);
+		if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
+			pt_entry_t *pte;	
+			pte = vtopte(va);
+			*pte &= ~L2_S_CACHE_MASK;
+			PTE_SYNC(pte);
+		}
+	}
 	pmap_update(pmap_kernel());
 
 /*	if (bpa >= DC21285_PCI_MEM_VSIZE && bpa != DC21285_ARMCSR_VBASE)
@@ -302,6 +303,25 @@ void
 footbridge_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 }	
+
+
+paddr_t
+footbridge_io_bs_mmap(void *t, bus_addr_t addr, off_t offset,
+		       int prot, int flags)
+{
+	paddr_t pa;
+
+	/* allow mapping of IO space */
+	if (addr >= DC21285_PCI_IO_SIZE ||
+	    addr >= DC21285_PCI_IO_SIZE - offset ||
+	    offset < 0 ||
+	    offset >= DC21285_PCI_IO_SIZE)
+		return -1;
+
+	pa = DC21285_PCI_IO_BASE + addr + offset;
+
+	return arm_btop(pa);
+}
 
 
 paddr_t

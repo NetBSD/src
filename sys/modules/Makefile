@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39.2.2 2010/07/03 01:19:58 rmind Exp $
+#	$NetBSD: Makefile,v 1.39.2.3 2011/03/05 20:55:34 rmind Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ SUBDIR+=	exec_script
 SUBDIR+=	fdesc
 SUBDIR+=	ffs
 SUBDIR+=	filecore
+SUBDIR+=	flash
 SUBDIR+=	fss
 SUBDIR+=	hfs
 SUBDIR+=	kernfs
@@ -32,6 +33,8 @@ SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
 SUBDIR+=	mqueue
 SUBDIR+=	msdos
+SUBDIR+=	nand
+SUBDIR+=	nandemulator
 SUBDIR+=	nfs
 SUBDIR+=	nfsserver
 SUBDIR+=	nilfs
@@ -53,6 +56,7 @@ SUBDIR+=	securelevel
 SUBDIR+=	smbfs
 SUBDIR+=	sysvbfs
 SUBDIR+=	suser
+SUBDIR+=	swsensor
 SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
@@ -68,6 +72,11 @@ SUBDIR+=	xldscripts
 .endif
 
 # Machine dependent section
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_CPU} == "m68k"
+SUBDIR+=	exec_aout
+.endif
+
 .if ${MACHINE_ARCH} != "alpha"
 SUBDIR+=	exec_elf32
 .endif
@@ -80,13 +89,42 @@ SUBDIR+=	exec_elf64
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	coretemp
+SUBDIR+=	est
+SUBDIR+=	odcm
+SUBDIR+=	powernow
 SUBDIR+=	tprof_pmi
+#SUBDIR+=	tprof_amdpmi
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	acpiverbose
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	acpiacad
+SUBDIR+=	acpibat
+SUBDIR+=	acpibut
+SUBDIR+=	acpicpu
+SUBDIR+=	acpidalb
+SUBDIR+=	acpifan
+SUBDIR+=	acpilid
+SUBDIR+=	acpipmtr
+SUBDIR+=	acpitz
+SUBDIR+=	acpivga
+SUBDIR+=	acpiwmi
+SUBDIR+=	aibs
+SUBDIR+=	asus
+SUBDIR+=	fujbp
+SUBDIR+=	fujhk
+SUBDIR+=	hpqlb
+SUBDIR+=	thinkpad
+SUBDIR+=	wmidell
+SUBDIR+=	wmihp
+SUBDIR+=	wmimsi
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
@@ -106,11 +144,28 @@ SUBDIR+=	compat_ibcs2
 SUBDIR+=	compat_linux
 SUBDIR+=	compat_svr4
 SUBDIR+=	drm
-SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
+SUBDIR+=	padlock
+SUBDIR+=	viac7temp
+SUBDIR+=	wmieeepc
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	aps
+SUBDIR+=	au8522
+SUBDIR+=	auvitek
+SUBDIR+=	xc5k
+.endif
+
+.if ${MACHINE_CPU} == "m68k"
+SUBDIR+=	compat_aoutm68k
+#SUBDIR+=	compat_linux
+#SUBDIR+=	compat_sunos
+#SUBDIR+=	compat_svr4
 .endif
 
 .include <bsd.own.mk>

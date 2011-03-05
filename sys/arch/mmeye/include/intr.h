@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.10.22.1 2011/03/05 20:51:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,8 +35,9 @@
  * Number of interrupt source 
  * TMU0, TMU1, TMU2
  * MMEYE(com * 2 + mmeyepcmcia(controller + card) * 2)
+ * SCIF * 4, SCI * 4
  */
-#define _INTR_N		9
+#define _INTR_N		17
 
 /* Interrupt priority levels */
 #define	IPL_VM		12

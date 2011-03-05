@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.30 2009/02/03 12:49:00 tsutsui Exp $ */
+/* $NetBSD: boot.c,v 1.30.6.1 2011/03/05 20:49:13 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,6 @@ main(long fd)
 	printf("\n");
 	printf("NetBSD/alpha " NETBSD_VERS " " BOOT_TYPE_NAME " Bootstrap, Revision %s\n",
 	    bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
 
 	/* set up the booted device descriptor */
@@ -122,8 +121,8 @@ main(long fd)
 		gets(boot_file);
 	}
 
-#ifdef NO_LOAD_NOTE
-	loadflag = LOAD_KERNEL & ~LOAD_NOTE;
+#ifdef NO_LOAD_BACKWARDS
+	loadflag = LOAD_KERNEL & ~LOAD_BACKWARDS;
 #else
 	loadflag = LOAD_KERNEL;
 #endif

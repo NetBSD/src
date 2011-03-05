@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.19 2010/02/26 19:25:07 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.19.2.1 2011/03/05 20:52:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.19 2010/02/26 19:25:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.19.2.1 2011/03/05 20:52:34 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -167,19 +167,22 @@ static int xpq_idx = 0;
 void
 xpq_flush_queue(void)
 {
-	int i, ok;
+	int i, ok, ret;
 
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
 		XENPRINTK2(("%d: 0x%08" PRIx64 " 0x%08" PRIx64 "\n", i,
 		    xpq_queue[i].ptr, xpq_queue[i].val));
-	if (xpq_idx != 0 &&
-	    HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok) < 0) {
-		printf("xpq_flush_queue: %d entries \n", xpq_idx);
+
+	ret = HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok);
+
+	if (xpq_idx != 0 && ret < 0) {
+		printf("xpq_flush_queue: %d entries (%d successful)\n",
+		    xpq_idx, ok);
 		for (i = 0; i < xpq_idx; i++)
 			printf("0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
 			   xpq_queue[i].ptr, xpq_queue[i].val);
-		panic("HYPERVISOR_mmu_update failed\n");
+		panic("HYPERVISOR_mmu_update failed, ret: %d\n", ret);
 	}
 	xpq_idx = 0;
 }
@@ -234,40 +237,20 @@ xpq_queue_pt_switch(paddr_t pa)
 }
 
 void
-xpq_queue_pin_table(paddr_t pa)
+xpq_queue_pin_table(paddr_t pa, int lvl)
 {
 	struct mmuext_op op;
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_pin_table: 0x%" PRIx64 " 0x%" PRIx64 "\n",
-	    (int64_t)pa, (int64_t)pa));
-	op.arg1.mfn = pa >> PAGE_SHIFT;
+	XENPRINTK2(("xpq_queue_pin_l%d_table: %#" PRIxPADDR "\n",
+	    lvl + 1, pa));
 
-#if defined(__x86_64__)
-	op.cmd = MMUEXT_PIN_L4_TABLE;
-#else
-	op.cmd = MMUEXT_PIN_L2_TABLE;
-#endif
+	op.arg1.mfn = pa >> PAGE_SHIFT;
+	op.cmd = lvl;
+
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic("xpq_queue_pin_table");
 }
-
-#ifdef PAE
-static void
-xpq_queue_pin_l3_table(paddr_t pa)
-{
-	struct mmuext_op op;
-	xpq_flush_queue();
-
-	XENPRINTK2(("xpq_queue_pin_l2_table: 0x%" PRIx64 " 0x%" PRIx64 "\n",
-	    (int64_t)pa, (int64_t)pa));
-	op.arg1.mfn = pa >> PAGE_SHIFT;
-
-	op.cmd = MMUEXT_PIN_L3_TABLE;
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_pin_table");
-}
-#endif
 
 void
 xpq_queue_unpin_table(paddr_t pa)
@@ -275,8 +258,7 @@ xpq_queue_unpin_table(paddr_t pa)
 	struct mmuext_op op;
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_unpin_table: 0x%" PRIx64 " 0x%" PRIx64 "\n",
-	    (int64_t)pa, (int64_t)pa));
+	XENPRINTK2(("xpq_queue_unpin_table: %#" PRIxPADDR "\n", pa));
 	op.arg1.mfn = pa >> PAGE_SHIFT;
 	op.cmd = MMUEXT_UNPIN_TABLE;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
@@ -778,18 +760,18 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 			continue;
 #if 0
 		__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", i, (int64_t)addr));
-		xpq_queue_pin_table(xpmap_ptom_masked(addr));
+		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 #endif
 	}
 	if (final) {
 		addr = (u_long)pde - KERNBASE + 3 * PAGE_SIZE;
 		__PRINTK(("pin L2 %d addr %#" PRIxPADDR "\n", 2, addr));
-		xpq_queue_pin_table(xpmap_ptom_masked(addr));
+		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 	}
 #if 0
 	addr = (u_long)pde - KERNBASE + 2 * PAGE_SIZE;
 	__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", 2, (int64_t)addr));
-	xpq_queue_pin_table(xpmap_ptom_masked(addr));
+	xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 #endif
 #else /* PAE */
 	/* recursive entry in higher-level PD */
@@ -809,27 +791,33 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #endif
 	/* Pin the PGD */
 	__PRINTK(("pin PGD\n"));
-#ifdef PAE
+#ifdef __x86_64__
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));
+#elif PAE
 	xpq_queue_pin_l3_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #else
-	xpq_queue_pin_table(xpmap_ptom_masked(new_pgd - KERNBASE));
+	xpq_queue_pin_l2_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #endif
-#ifdef __i386__
+
 	/* Save phys. addr of PDP, for libkvm. */
-	PDPpaddr = (long)pde;
 #ifdef PAE
-	/* also save the address of the L3 page */
-	pmap_l3pd = pdtpe;
-	pmap_l3paddr = (new_pgd - KERNBASE);
-#endif /* PAE */
-#endif /* i386 */
+	PDPpaddr = (u_long)pde - KERNBASE; /* PDP is the L2 with PAE */
+#else
+	PDPpaddr = (u_long)new_pgd - KERNBASE;
+#endif
+
 	/* Switch to new tables */
 	__PRINTK(("switch to PGD\n"));
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
 	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] now entry %#" PRIxPADDR "\n",
 	    bt_pgd[PDIR_SLOT_PTE]));
+
 #ifdef PAE
 	if (final) {
+		/* save the address of the L3 page */
+		cpu_info_primary.ci_pae_l3_pdir = pdtpe;
+		cpu_info_primary.ci_pae_l3_pdirpa = (new_pgd - KERNBASE);
+
 		/* now enter kernel's PTE mappings */
 		addr =  (u_long)pde - KERNBASE + PAGE_SIZE * 3;
 		xpq_queue_pte_update(
@@ -838,8 +826,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		xpq_flush_queue();
 	}
 #endif
-
-
 
 	/* Now we can safely reclaim space taken by old tables */
 	

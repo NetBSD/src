@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.46 2009/12/11 22:23:08 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.46.4.1 2011/03/05 20:50:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,34 +36,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.46 2009/12/11 22:23:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.46.4.1 2011/03/05 20:50:23 rmind Exp $");
 
 #include <sys/param.h>
+#include <uvm/uvm_extern.h>
 
-#include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
-#include <machine/vmparam.h>
 #include <machine/pte.h>
+#include <machine/vmparam.h>
 
 #include <hp300/hp300/clockreg.h>
-
-#include <uvm/uvm_extern.h>
 
 #define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
 
 extern char *etext;
 extern vaddr_t CLKbase, MMUbase;
-extern paddr_t bootinfo_pa;
-extern vaddr_t bootinfo_va;
 
 extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
-#ifdef M68K_MMU_HP
-extern int pmap_aliasmask;
-#endif
-
-void	pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -71,12 +62,13 @@ void	pmap_bootstrap(paddr_t, paddr_t);
  *
  *	CADDR1, CADDR2:	pmap zero/copy operations
  *	vmmap:		/dev/mem, crash dumps, parity error checking
- *	ledbase:	SPU LEDs
  *	msgbufaddr:	kernel message buffer
  */
-void *CADDR1, *CADDR2, *ledbase;
+void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
+
+void pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -92,7 +84,8 @@ void *msgbufaddr;
 void
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
-	paddr_t kstpa, kptpa, kptmpa, lkptpa, lwp0upa;
+	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
+	paddr_t lkptpa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
@@ -101,7 +94,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/*
 	 * Calculate important physical addresses:
 	 *
-	 *	lwp0upa		lwp 0 u-area		UPAGES pages
+	 *	lwp0upa		lwp0 u-area		UPAGES pages
 	 *
 	 *	kstpa		kernel segment table	1 page (!040)
 	 *						N pages (040)
@@ -113,7 +106,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *	kptpa		statically allocated
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
-	 * [ Sysptsize is the number of pages of PT, IIOMAPSIZE and
+	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE and
 	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
@@ -216,7 +209,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*ste = protoste;
 		/*
 		 * Now initialize the final portion of that block of
-		 * descriptors to map kptmpa and the "last PT page".
+		 * descriptors to map Sysmap and the "last PT page".
 		 */
 		i = SG4_LEV1SIZE + (nl1desc * SG4_LEV2SIZE);
 		ste = (st_entry_t *)kstpa;
@@ -270,7 +263,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 			*pte++ = PG_NV;
 		}
 		/*
-		 * Initialize the last ones to point to kptmpa and the page
+		 * Initialize the last ones to point to Sysptmap and the page
 		 * table page allocated earlier.
 		 */
 		pte = (pt_entry_t *)kptmpa;
@@ -299,7 +292,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * Invalidate all remaining entries in both.
 		 */
 		este = (st_entry_t *)kstpa;
-		este = &epte[TIA_SIZE];
+		este = &este[TIA_SIZE];
 		while (ste < este)
 			*ste++ = SG_NV;
 		epte = (pt_entry_t *)kptmpa;
@@ -307,7 +300,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		while (pte < epte)
 			*pte++ = PG_NV;
 		/*
-		 * Initialize the last ones to point to kptmpa and the page
+		 * Initialize the last ones to point to Sysptmap and the page
 		 * table page allocated earlier.
 		 */
 		ste = (st_entry_t *)kstpa;
@@ -323,6 +316,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*ste = lkptpa | SG_RW | SG_V;
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	}
+
 	/*
 	 * Invalidate all but the final entry in the last kernel PT page.
 	 * The final entry maps the last page of physical memory to
@@ -341,19 +335,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	epte = &pte[nptpages * NPTEPG];
 	while (pte < epte)
 		*pte++ = PG_NV;
-
 	/*
-	 * The page of kernel text is zero-filled in locore.s,
-	 * and not mapped (at VA 0).  The boot loader places the
-	 * bootinfo here after the kernel is loaded.  Remember
-	 * the physical address; we'll map it to a virtual address
-	 * later.
-	 */
-	RELOC(bootinfo_pa, paddr_t) = firstpa;
-
-	/*
-	 * Validate PTEs for kernel text (RO).  The first page
-	 * of kernel text remains invalid; see locore.s
+	 * Validate PTEs for kernel text (RO).
+	 * The first page of kernel text remains invalid; see locore.s
 	 */
 	pte = (pt_entry_t *)kptpa;
 	pte = &pte[m68k_btop(KERNBASE + PAGE_SIZE)];
@@ -365,11 +349,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (nextpa - firstpa bytes), and pages for lwp0
+	 * by us so far (kstpa - firstpa bytes), and pages for lwp0
 	 * u-area and page table allocated below (RW).
 	 */
 	epte = (pt_entry_t *)kptpa;
-	epte = &epte[m68k_btop(nextpa - firstpa)];
+	epte = &epte[m68k_btop(kstpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -380,6 +364,23 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
 	}
+	/*
+	 * Map the kernel segment table cache invalidated for 68040/68060.
+	 * (for the 68040 not strictly necessary, but recommended by Motorola;
+	 *  for the 68060 mandatory)
+	 */
+	epte = (pt_entry_t *)kptpa;
+	epte = &epte[m68k_btop(nextpa - firstpa)];
+	protopte = (protopte & ~PG_PROT) | PG_RW;
+	if (RELOC(mmutype, int) == MMU_68040) {
+		protopte &= ~PG_CCB;
+		protopte |= PG_CIN;
+	}
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += PAGE_SIZE;
+	}
+
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
 	 * We do this here since the 320/350 MMU registers (also
@@ -441,11 +442,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * the pmap module.
 	 *
 	 * Note about avail_end: msgbuf is initialized just after
-	 * avail_end in machdep.c.  Since the last page is used
-	 * for rebooting the system (code is copied there and
-	 * excution continues from copied code before the MMU
-	 * is disabled), the msgbuf will get trounced between
-	 * reboots if it's placed in the last physical page.
+	 * avail_end in machdep.c.
+	 * Since the last page is used for rebooting the system
+	 * (code is copied there and excution continues from copied code
+	 * before the MMU is disabled), the msgbuf will get trounced
+	 * between reboots if it's placed in the last physical page.
 	 * To work around this, we move avail_end back one more
 	 * page so the msgbuf can be preserved.
 	 */
@@ -453,19 +454,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
 	    (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
 	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
-	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
-#ifdef M68K_MMU_HP
-	/*
-	 * Determine VA aliasing distance if any
-	 */
-	if (RELOC(ectype, int) == EC_VIRT) {
-		if (RELOC(machineid, int) == HP_320)
-			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
-		else if (RELOC(machineid, int) == HP_350)
-			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
-	}
-#endif
+	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
 	/*
 	 * Allocate some fixed, special purpose kernel virtual addresses
@@ -473,15 +463,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	{
 		vaddr_t va = RELOC(virtual_avail, vaddr_t);
 
-		RELOC(bootinfo_va, vaddr_t) = (vaddr_t)va;
-		va += PAGE_SIZE;
 		RELOC(CADDR1, void *) = (void *)va;
 		va += PAGE_SIZE;
 		RELOC(CADDR2, void *) = (void *)va;
 		va += PAGE_SIZE;
 		RELOC(vmmap, void *) = (void *)va;
-		va += PAGE_SIZE;
-		RELOC(ledbase, void *) = (void *)va;
 		va += PAGE_SIZE;
 		RELOC(msgbufaddr, void *) = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);

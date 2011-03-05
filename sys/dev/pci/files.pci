@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.326.2.1 2010/05/30 05:17:32 rmind Exp $
+#	$NetBSD: files.pci,v 1.326.2.2 2011/03/05 20:53:37 rmind Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -27,6 +27,8 @@ file	dev/pci/pciconf.c		pci & pci_netbsd_configure
 file	dev/pci/pcibusprint.c		pcibus
 
 file	dev/pci/pci_verbose.c		pci & pciverbose
+
+file	dev/pci/wsdisplay_pci.c		wsdisplay & pci
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
@@ -75,7 +77,7 @@ attach	ld at amr with ld_amr
 file	dev/pci/ld_amr.c		ld_amr
 
 # Areca SATA RAID Controllers
-device	arcmsr: scsi
+device	arcmsr: scsi, sysmon_envsys
 attach	arcmsr at pci
 file	dev/pci/arcmsr.c		arcmsr
 
@@ -274,6 +276,11 @@ attach	jmide at pci
 attach	ahcisata at jmide_hl with jmahci
 file	dev/pci/jmide.c			jmide | jmahci needs-flag
 
+# National Semiconductor IDE controllers
+device	nside: ata, ata_dma, ata_udma, pciide_common, wdc_common
+attach	nside at pci
+file	dev/pci/nside.c			nside
+
 # Opti IDE controllers
 device	optiide: ata, ata_dma, pciide_common, wdc_common
 attach	optiide at pci
@@ -308,6 +315,11 @@ file	dev/pci/svwsata.c		svwsata
 device	satalink: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
 attach	satalink at pci
 file	dev/pci/satalink.c		satalink
+
+# Intel SCH IDE controllers
+device	schide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+attach	schide at pci
+file	dev/pci/schide.c		schide
 
 # SiS IDE controllers
 device	siside: ata, ata_dma, ata_udma, pciide_common, wdc_common
@@ -420,6 +432,10 @@ file	dev/pci/tga_conf.c		tga
 file	dev/ic/bt485.c			tga
 file	dev/ic/bt463.c			tga
 file	dev/ic/ibm561.c			tga
+
+# HP Visualize
+attach	sti at pci with sti_pci
+file	dev/pci/sti_pci.c		sti_pci			needs-flag
 
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 # device declaration in sys/conf/files
@@ -800,12 +816,15 @@ file	dev/pci/unichromefb.c		unichromefb needs-flag
 
 # ATI Radeon framebuffer console driver
 # (Note: to enable the BIOS parser, add options RADEON_BIOS_INIT to the config)
-device	radeonfb: wsemuldisplaydev, videomode, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid, drm
+device	radeonfb: wsemuldisplaydev, videomode, rasops8, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid, drm
 attach	radeonfb at pci
 file	dev/pci/radeonfb.c	radeonfb
 file	dev/pci/radeonfb_i2c.c	radeonfb
 file	dev/pci/radeonfb_bios.c	radeonfb
 defflag opt_radeonfb.h	RADEONFB_DEBUG
+defflag opt_radeonfb.h	RADEONFB_BIOS_INIT
+defflag opt_radeonfb.h	RADEONFB_BIOS_DEBUG
+defflag opt_radeonfb.h	RADEONFB_MMAP_BARS
 
 # Chelsio Terminator 3 (T3) 10 gigabit ethernet
 device	cxgbc { }
@@ -827,11 +846,8 @@ file	dev/pci/cxgb/cxgb_l2t.c		cxgbc | cxgb
 file	dev/pci/cxgb/cxgb_osdep.c	cxgbc | cxgb
 
 # Chips & Technologies 65550 framebuffer console driver
-device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
-attach	chipsfb at pci
-file	dev/pci/chipsfb.c		chipsfb
-defflag	opt_chipsfb.h	CHIPSFB_DEBUG
-defflag	opt_chipsfb.h	CHIPSFB_WAIT
+attach	chipsfb at pci with chipsfb_pci
+file	dev/pci/chipsfb.c		chipsfb_pci
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp
@@ -953,6 +969,11 @@ device	age: ether, ifnet, arp, mii, mii_phy
 attach	age at pci
 file	dev/pci/if_age.c		age
 
+# Attansic/Atheros L1C/L2C Gigabit Ethernet
+device	alc: ether, ifnet, arp, mii, mii_phy
+attach	alc at pci
+file	dev/pci/if_alc.c		alc
+
 # Attanisc/Atheros L1E Gigabit Ethernet
 device	ale: ether, ifnet, arp, mii, mii_phy
 attach	ale at pci
@@ -1011,3 +1032,13 @@ defflag		opt_wcfb.h	WCFB_DEBUG
 # Domex 536, 5380-compatible SCSI HBA
 attach	nca at pci with nca_pci
 file	dev/pci/nca_pci.c	nca_pci
+
+# Agere ET1310/1301 Ethernet
+device	et: ether, ifnet, arp, mii, mii_phy
+attach	et at pci
+file	dev/pci/if_et.c			et
+
+# RDC Semiconductor R6040 10/100 Ethernet
+device	vte: ether, ifnet, arp, mii, mii_phy
+attach	vte at pci
+file	dev/pci/if_vte.c		vte

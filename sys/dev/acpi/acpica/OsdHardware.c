@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.5 2009/09/15 19:41:30 drochner Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.5.4.1 2011/03/05 20:53:04 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,13 +44,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.5 2009/09/15 19:41:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.5.4.1 2011/03/05 20:53:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_pci.h>
 
 #include <machine/acpi_machdep.h>
 
@@ -198,7 +199,7 @@ AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
  *	Read a value from a PCI configuration register.
  */
 ACPI_STATUS
-AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
+AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, UINT64 *Value,
     UINT32 Width)
 {
 	pcitag_t tag;
@@ -274,74 +275,4 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 	pci_conf_write(acpi_softc->sc_pc, tag, Register & ~3, tmp);
 
 	return AE_OK;
-}
-
-/* get PCI bus# from root bridge recursively */
-static int
-get_bus_number(
-    ACPI_HANDLE        rhandle,
-    ACPI_HANDLE        chandle,
-    ACPI_PCI_ID        **PciId)
-{
-	ACPI_HANDLE handle;
-	ACPI_STATUS rv;
-	ACPI_OBJECT_TYPE type;
-	ACPI_PCI_ID *id;
-	ACPI_INTEGER v;
-	int bus;
-
-	id = *PciId;
-
-	rv = AcpiGetParent(chandle, &handle);
-	if (ACPI_FAILURE(rv))
-		return 0;
-
-	/*
-	 * When handle == rhandle, we have valid PciId->Bus
-	 * which was obtained from _BBN in evrgnini.c
-	 * so we don't have to reevaluate _BBN.
-	 */
-	if (handle != rhandle) {
-		bus = get_bus_number(rhandle, handle, PciId);
-
-		rv = AcpiGetType(handle, &type);
-		if (ACPI_FAILURE(rv) || type != ACPI_TYPE_DEVICE)
-			return bus;
-
-		rv = acpi_eval_integer(handle, METHOD_NAME__ADR, &v);
-
-		if (ACPI_FAILURE(rv))
-			return bus;
-
-		id->Bus = bus;
-		id->Device = ACPI_HIWORD((ACPI_INTEGER)v);
-		id->Function = ACPI_LOWORD((ACPI_INTEGER)v);
-
-		/* read HDR_TYPE register */
-		rv = AcpiOsReadPciConfiguration(id, 0x0e, &v, 8);
-		if (ACPI_SUCCESS(rv) &&
-			/* mask multifunction bit & check bridge type */
-			((v & 0x7f) == 1 || (v & 0x7f) == 2)) {
-			/* read SECONDARY_BUS register */
-			rv = AcpiOsReadPciConfiguration(id, 0x19, &v, 8);
-			if (ACPI_SUCCESS(rv))
-				id->Bus = v;
-		}
-	}
-
-	return id->Bus;
-}
-
-/*
- * AcpiOsDerivePciId:
- *
- * Derive correct PCI bus# by traversing bridges
- */
-void
-AcpiOsDerivePciId(
-    ACPI_HANDLE        rhandle,
-    ACPI_HANDLE        chandle,
-    ACPI_PCI_ID        **PciId)
-{
-	(*PciId)->Bus = get_bus_number(rhandle, chandle, PciId);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.19.22.1 2010/07/03 01:19:14 rmind Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.19.22.2 2011/03/05 20:49:36 rmind Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.19.22.1 2010/07/03 01:19:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.19.22.2 2011/03/05 20:49:36 rmind Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.19.22.1 2010/07/03 01:19:14 rmind
 #include <sys/malloc.h>
 #include <sys/simplelock.h>
 #include <sys/termios.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -412,7 +410,7 @@ ixp12x0_intr_dispatch(struct irqframe *frame)
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			ci->ci_cpl = ih->ih_ipl;
 			oldirqstate = enable_interrupts(I32_bit);
@@ -427,7 +425,7 @@ ixp12x0_intr_dispatch(struct irqframe *frame)
 
 		iq = &intrq[irq + SYS_NIRQ];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			ci->ci_cpl = ih->ih_ipl;
 			oldirqstate = enable_interrupts(I32_bit);

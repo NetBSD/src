@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.339.4.2 2010/05/30 05:17:07 rmind Exp $ */
+/*	$NetBSD: pmap.c,v 1.339.4.3 2011/03/05 20:52:03 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339.4.2 2010/05/30 05:17:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339.4.3 2011/03/05 20:52:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -817,7 +817,9 @@ inline void
 setpgt4m(int *ptep, int pte)
 {
 
+	kpreempt_disable();
 	swap(ptep, pte);
+	kpreempt_enable();
 }
 
 inline void
@@ -828,9 +830,11 @@ setpgt4m_va(vaddr_t va, int *ptep, int pte, int pageflush, int ctx,
 #if defined(MULTIPROCESSOR)
 	updatepte4m(va, ptep, 0xffffffff, pte, pageflush ? ctx : 0, cpuset);
 #else
+	kpreempt_disable();
 	if (__predict_true(pageflush))
 		tlb_flush_page(va, ctx, 0);
 	setpgt4m(ptep, pte);
+	kpreempt_enable();
 #endif /* MULTIPROCESSOR */
 }
 
@@ -6244,6 +6248,7 @@ pmap_enk4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 
+	kpreempt_disable();
 	s = splvm();		/* XXX way too conservative */
 	PMAP_LOCK();
 
@@ -6258,9 +6263,8 @@ pmap_enk4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 		if ((tpte & SRMMU_PPNMASK) == (pteproto & SRMMU_PPNMASK)) {
 			/* just changing protection and/or wiring */
 			pmap_changeprot4m(pm, va, prot, flags);
-			PMAP_UNLOCK();
-			splx(s);
-			return (0);
+			error = 0;
+			goto out;
 		}
 
 		if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
@@ -6306,6 +6310,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 out:
 	PMAP_UNLOCK();
 	splx(s);
+	kpreempt_enable();
 	return (error);
 }
 
@@ -6435,9 +6440,8 @@ pmap_enu4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 				/* just changing prot and/or wiring */
 				/* caller should call this directly: */
 				pmap_changeprot4m(pm, va, prot, flags);
-				PMAP_UNLOCK();
-				splx(s);
-				return (0);
+				error = 0;
+				goto out;
 			}
 			/*
 			 * Switcheroo: changing pa for this va.
@@ -6548,6 +6552,7 @@ pmap_kremove4m(vaddr_t va, vsize_t len)
 	 * The kernel pmap doesn't need to be locked, but the demap lock
 	 * in updatepte() requires interrupt protection.
 	 */
+	kpreempt_disable();
 	s = splvm();
 
 	endva = va + len;
@@ -6593,6 +6598,7 @@ pmap_kremove4m(vaddr_t va, vsize_t len)
 		}
 	}
 	splx(s);
+	kpreempt_enable();
 }
 
 /*
@@ -6613,6 +6619,7 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 	 * The kernel pmap doesn't need to be locked, but the demap lock
 	 * in updatepte() requires interrupt protection.
 	 */
+	kpreempt_disable();
 	s = splvm();
 
 	while (size > 0) {
@@ -6636,6 +6643,7 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 		size -= NBPG;
 	}
 	splx(s);
+	kpreempt_enable();
 }
 #endif /* SUN4M || SUN4D */
 
@@ -6651,6 +6659,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	struct segmap *sp;
 	bool owired;
 
+	kpreempt_disable();
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
@@ -6669,6 +6678,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	if (!owired) {
 		pmap_stats.ps_useless_changewire++;
 		return;
+		kpreempt_enable();
 	}
 
 	pm->pm_stats.wired_count--;
@@ -6683,6 +6693,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 			mmu_pmeg_unlock(sp->sg_pmeg);
 	}
 #endif /* SUN4 || SUN4C */
+	kpreempt_enable();
 }
 
 /*
@@ -7085,6 +7096,7 @@ pmap_zero_page4m(paddr_t pa)
 	void *va;
 	int pte;
 
+	kpreempt_disable();
 	if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
 		/*
 		 * The following VAC flush might not be necessary since the
@@ -7112,6 +7124,7 @@ pmap_zero_page4m(paddr_t pa)
 	 */
 	sp_tlb_flush((int)va, 0, ASI_SRMMUFP_L3);
 	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
+	kpreempt_enable();
 }
 
 /*
@@ -7124,6 +7137,7 @@ pmap_zero_page_viking_mxcc(paddr_t pa)
 	u_int stream_data_addr = MXCC_STREAM_DATA;
 	uint64_t v = (uint64_t)pa;
 
+	kpreempt_disable();
 	/* Load MXCC stream data register with 0 (bottom 32 bytes only) */
 	stda(stream_data_addr+0, ASI_CONTROL, 0);
 	stda(stream_data_addr+8, ASI_CONTROL, 0);
@@ -7135,6 +7149,7 @@ pmap_zero_page_viking_mxcc(paddr_t pa)
 	for (offset = 0; offset < NBPG; offset += MXCC_STREAM_BLKSZ) {
 		stda(MXCC_STREAM_DST, ASI_CONTROL, v | offset);
 	}
+	kpreempt_enable();
 }
 
 /*
@@ -7148,6 +7163,7 @@ pmap_zero_page_hypersparc(paddr_t pa)
 	int pte;
 	int offset;
 
+	kpreempt_disable();
 	/*
 	 * We still have to map the page, since ASI_BLOCKFILL
 	 * takes virtual addresses. This also means we have to
@@ -7174,6 +7190,7 @@ pmap_zero_page_hypersparc(paddr_t pa)
 	/* Remove temporary mapping */
 	sp_tlb_flush((int)va, 0, ASI_SRMMUFP_L3);
 	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
+	kpreempt_enable();
 }
 
 /*
@@ -7192,6 +7209,7 @@ pmap_copy_page4m(paddr_t src, paddr_t dst)
 	void *sva, *dva;
 	int spte, dpte;
 
+	kpreempt_disable();
 	if ((pg = PHYS_TO_VM_PAGE(src)) != NULL) {
 		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
 			pv_flushcache4m(pg);
@@ -7222,6 +7240,7 @@ pmap_copy_page4m(paddr_t src, paddr_t dst)
 	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
 	sp_tlb_flush((int)dva, 0, ASI_SRMMUFP_L3);
 	setpgt4m(cpuinfo.vpage_pte[1], SRMMU_TEINVALID);
+	kpreempt_enable();
 }
 
 /*
@@ -7234,6 +7253,7 @@ pmap_copy_page_viking_mxcc(paddr_t src, paddr_t dst)
 	uint64_t v1 = (uint64_t)src;
 	uint64_t v2 = (uint64_t)dst;
 
+	kpreempt_disable();
 	/* Enable cache-coherency */
 	v1 |= MXCC_STREAM_C;
 	v2 |= MXCC_STREAM_C;
@@ -7243,6 +7263,7 @@ pmap_copy_page_viking_mxcc(paddr_t src, paddr_t dst)
 		stda(MXCC_STREAM_SRC, ASI_CONTROL, v1 | offset);
 		stda(MXCC_STREAM_DST, ASI_CONTROL, v2 | offset);
 	}
+	kpreempt_enable();
 }
 
 /*
@@ -7256,6 +7277,7 @@ pmap_copy_page_hypersparc(paddr_t src, paddr_t dst)
 	int spte, dpte;
 	int offset;
 
+	kpreempt_disable();
 	/*
 	 * We still have to map the pages, since ASI_BLOCKCOPY
 	 * takes virtual addresses. This also means we have to
@@ -7294,6 +7316,7 @@ pmap_copy_page_hypersparc(paddr_t src, paddr_t dst)
 	setpgt4m(cpuinfo.vpage_pte[0], SRMMU_TEINVALID);
 	sp_tlb_flush((int)dva, 0, ASI_SRMMUFP_L3);
 	setpgt4m(cpuinfo.vpage_pte[1], SRMMU_TEINVALID);
+	kpreempt_enable();
 }
 #endif /* SUN4M || SUN4D */
 

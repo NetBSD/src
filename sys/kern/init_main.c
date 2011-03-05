@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.418.4.3 2010/07/03 01:19:52 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.418.4.4 2011/03/05 20:55:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.3 2010/07/03 01:19:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.4 2011/03/05 20:55:12 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -217,7 +217,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.3 2010/07/03 01:19:52 rmind Ex
 
 #include <sys/cpu.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm.h>	/* extern struct uvm uvm */
 
 #if NSYSMON_TASKQ > 0
 #include <dev/sysmon/sysmon_taskq.h>
@@ -303,6 +303,7 @@ main(void)
 	kernel_lock_init();
 	once_init();
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+	kernconfig_lock_init();
 
 	/* Initialize the device switch tables. */
 	devsw_init();
@@ -324,6 +325,9 @@ main(void)
 
 	/* Initialize the extent manager. */
 	extent_init();
+
+	/* Initialize event counters */
+	evcnt_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
@@ -367,7 +371,6 @@ main(void)
 	/*
 	 * The following things must be done before autoconfiguration.
 	 */
-	evcnt_init();		/* initialize event counters */
 #if NRND > 0
 	rnd_init();		/* initialize random number generator */
 #endif
@@ -501,13 +504,13 @@ main(void)
 
 	ssp_init();
 
-	configure2();
-	/* Now timer is working.  Enable preemption. */
-	kpreempt_enable();
-
 	ubc_init();		/* must be after autoconfig */
 
 	mm_init();
+
+	configure2();
+	/* Now timer is working.  Enable preemption. */
+	kpreempt_enable();
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
@@ -582,6 +585,8 @@ main(void)
 	uuid_init();
 
 	machdep_init();
+
+	procinit_sysctl();
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has

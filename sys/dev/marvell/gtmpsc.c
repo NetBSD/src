@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.37.4.1 2010/05/30 05:17:29 rmind Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.37.4.2 2011/03/05 20:53:26 rmind Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.37.4.1 2010/05/30 05:17:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.37.4.2 2011/03/05 20:53:26 rmind Exp $");
 
 #include "opt_kgdb.h"
 
@@ -49,9 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.37.4.1 2010/05/30 05:17:29 rmind Exp $"
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include <uvm/uvm.h>
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -216,21 +213,7 @@ gtmpscmatch(device_t parent, cfdata_t match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-
-	switch (mva->mva_model) {
-	case MARVELL_DISCOVERY:
-	case MARVELL_DISCOVERY_II:
-	case MARVELL_DISCOVERY_III:
-#if 0
-	case MARVELL_DISCOVERY_LT:
-#endif
-		break;
-
-	default:
-		return 0;
-	}
-	if (mva->mva_offset == GTCF_OFFSET_DEFAULT ||
-	    mva->mva_irq == GTCF_IRQ_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
 
 	mva->mva_size = GTMPSC_SIZE;
@@ -251,7 +234,7 @@ gtmpscattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Multi-Protocol Serial Controller\n");
 
-	if (mva->mva_unit != GTCF_UNIT_DEFAULT)
+	if (mva->mva_unit != MVA_UNIT_DEFAULT)
 		unit = mva->mva_unit;
 	else
 		unit = (mva->mva_offset == GTMPSC_BASE(0)) ? 0 : 1;

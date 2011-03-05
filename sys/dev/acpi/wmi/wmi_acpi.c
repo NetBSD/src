@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.4.4.3 2010/07/03 01:19:34 rmind Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.4.4.4 2011/03/05 20:53:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,16 +27,18 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.4.4.3 2010/07/03 01:19:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.4.4.4 2011/03/05 20:53:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_ecvar.h>
 #include <dev/acpi/wmi/wmi_acpivar.h>
 
 #define _COMPONENT          ACPI_RESOURCE_COMPONENT
@@ -51,31 +53,38 @@ ACPI_MODULE_NAME            ("wmi_acpi")
  * (Obtained on Thu Feb 12 18:21:44 EET 2009.)
  */
 
-static int         acpi_wmi_match(device_t, cfdata_t, void *);
-static void        acpi_wmi_attach(device_t, device_t, void *);
-static int         acpi_wmi_detach(device_t, int);
-static int         acpi_wmi_print(void *, const char *);
-static bool        acpi_wmi_init(struct acpi_wmi_softc *);
-static bool        acpi_wmi_add(struct acpi_wmi_softc *, ACPI_OBJECT *);
-static void        acpi_wmi_del(struct acpi_wmi_softc *);
-
-static ACPI_STATUS acpi_wmi_guid_get(struct acpi_wmi_softc *,
-                                     const char *, struct wmi_t **);
-static void	   acpi_wmi_event_add(struct acpi_wmi_softc *);
-static void	   acpi_wmi_event_del(struct acpi_wmi_softc *);
-static void        acpi_wmi_event_handler(ACPI_HANDLE, uint32_t, void *);
-static bool        acpi_wmi_suspend(device_t, const pmf_qual_t *);
-static bool        acpi_wmi_resume(device_t, const pmf_qual_t *);
-static ACPI_STATUS acpi_wmi_enable(ACPI_HANDLE, const char *, bool, bool);
-static bool        acpi_wmi_input(struct wmi_t *, uint8_t, uint8_t);
+static int		acpi_wmi_match(device_t, cfdata_t, void *);
+static void		acpi_wmi_attach(device_t, device_t, void *);
+static int		acpi_wmi_detach(device_t, int);
+static int		acpi_wmi_rescan(device_t, const char *, const int *);
+static void		acpi_wmi_childdet(device_t, device_t);
+static int		acpi_wmi_print(void *, const char *);
+static bool		acpi_wmi_init(struct acpi_wmi_softc *);
+static void		acpi_wmi_init_ec(struct acpi_wmi_softc *);
+static bool		acpi_wmi_add(struct acpi_wmi_softc *, ACPI_OBJECT *);
+static void		acpi_wmi_del(struct acpi_wmi_softc *);
+static void		acpi_wmi_dump(struct acpi_wmi_softc *);
+static ACPI_STATUS	acpi_wmi_guid_get(struct acpi_wmi_softc *,
+				const char *, struct wmi_t **);
+static void		acpi_wmi_event_add(struct acpi_wmi_softc *);
+static void		acpi_wmi_event_del(struct acpi_wmi_softc *);
+static void		acpi_wmi_event_handler(ACPI_HANDLE, uint32_t, void *);
+static ACPI_STATUS	acpi_wmi_ec_handler(uint32_t, ACPI_PHYSICAL_ADDRESS,
+				uint32_t, ACPI_INTEGER *, void *, void *);
+static bool		acpi_wmi_suspend(device_t, const pmf_qual_t *);
+static bool		acpi_wmi_resume(device_t, const pmf_qual_t *);
+static ACPI_STATUS	acpi_wmi_enable(ACPI_HANDLE, const char *, bool, bool);
+static bool		acpi_wmi_input(struct wmi_t *, uint8_t, uint8_t);
 
 const char * const acpi_wmi_ids[] = {
 	"PNP0C14",
+	"pnp0c14",
 	NULL
 };
 
-CFATTACH_DECL_NEW(acpiwmi, sizeof(struct acpi_wmi_softc),
-    acpi_wmi_match, acpi_wmi_attach, acpi_wmi_detach, NULL);
+CFATTACH_DECL2_NEW(acpiwmi, sizeof(struct acpi_wmi_softc),
+    acpi_wmi_match, acpi_wmi_attach, acpi_wmi_detach, NULL,
+    acpi_wmi_rescan, acpi_wmi_childdet);
 
 static int
 acpi_wmi_match(device_t parent, cfdata_t match, void *aux)
@@ -98,6 +107,7 @@ acpi_wmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	sc->sc_child = NULL;
+	sc->sc_ecdev = NULL;
 	sc->sc_handler = NULL;
 
 	aprint_naive("\n");
@@ -106,12 +116,10 @@ acpi_wmi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_wmi_init(sc) != true)
 		return;
 
-	acpi_wmidump(sc);
-
+	acpi_wmi_dump(sc);
+	acpi_wmi_init_ec(sc);
 	acpi_wmi_event_add(sc);
-
-	sc->sc_child = config_found_ia(self, "acpiwmibus",
-	    NULL, acpi_wmi_print);
+	acpi_wmi_rescan(self, NULL, NULL);
 
 	(void)pmf_device_register(self, acpi_wmi_suspend, acpi_wmi_resume);
 }
@@ -123,6 +131,12 @@ acpi_wmi_detach(device_t self, int flags)
 
 	acpi_wmi_event_del(sc);
 
+	if (sc->sc_ecdev != NULL) {
+
+		(void)AcpiRemoveAddressSpaceHandler(sc->sc_node->ad_handle,
+		    ACPI_ADR_SPACE_EC, acpi_wmi_ec_handler);
+	}
+
 	if (sc->sc_child != NULL)
 		(void)config_detach(sc->sc_child, flags);
 
@@ -130,6 +144,27 @@ acpi_wmi_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	return 0;
+}
+
+static int
+acpi_wmi_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct acpi_wmi_softc *sc = device_private(self);
+
+	if (ifattr_match(ifattr, "acpiwmibus") && sc->sc_child == NULL)
+		sc->sc_child = config_found_ia(self, "acpiwmibus",
+		    NULL, acpi_wmi_print);
+
+	return 0;
+}
+
+static void
+acpi_wmi_childdet(device_t self, device_t child)
+{
+	struct acpi_wmi_softc *sc = device_private(self);
+
+	if (sc->sc_child == child)
+		sc->sc_child = NULL;
 }
 
 static int
@@ -243,6 +278,59 @@ acpi_wmi_del(struct acpi_wmi_softc *sc)
 	}
 }
 
+static void
+acpi_wmi_dump(struct acpi_wmi_softc *sc)
+{
+	struct wmi_t *wmi;
+
+	KASSERT(SIMPLEQ_EMPTY(&sc->wmi_head) == 0);
+
+	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
+
+		aprint_debug_dev(sc->sc_dev, "{%08X-%04X-%04X-",
+		    wmi->guid.data1, wmi->guid.data2, wmi->guid.data3);
+
+		aprint_debug("%02X%02X-%02X%02X%02X%02X%02X%02X} ",
+		    wmi->guid.data4[0], wmi->guid.data4[1],
+		    wmi->guid.data4[2], wmi->guid.data4[3],
+		    wmi->guid.data4[4], wmi->guid.data4[5],
+		    wmi->guid.data4[6], wmi->guid.data4[7]);
+
+		aprint_debug("oid %04X count %02X flags %02X\n",
+		    UGET16(wmi->guid.oid), wmi->guid.count, wmi->guid.flags);
+	}
+}
+
+static void
+acpi_wmi_init_ec(struct acpi_wmi_softc *sc)
+{
+	ACPI_STATUS rv;
+	deviter_t i;
+	device_t d;
+
+	d = deviter_first(&i, DEVITER_F_ROOT_FIRST);
+
+	for (; d != NULL; d = deviter_next(&i)) {
+
+		if (device_is_a(d, "acpiec") != false ||
+		    device_is_a(d, "acpiecdt") != false) {
+			sc->sc_ecdev = d;
+			break;
+		}
+	}
+
+	deviter_release(&i);
+
+	if (sc->sc_ecdev == NULL)
+		return;
+
+	rv = AcpiInstallAddressSpaceHandler(sc->sc_node->ad_handle,
+	    ACPI_ADR_SPACE_EC, acpi_wmi_ec_handler, NULL, sc);
+
+	if (ACPI_FAILURE(rv))
+		sc->sc_ecdev = NULL;
+}
+
 static ACPI_STATUS
 acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
     const char *src, struct wmi_t **out)
@@ -322,7 +410,9 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 	if (acpi_register_notify(sc->sc_node, acpi_wmi_event_handler) != true)
 		return;
 
-	/* Enable possible expensive events. */
+	/*
+	 * Enable possible expensive events.
+	 */
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
 		if ((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) != 0 &&
@@ -336,7 +426,7 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 				continue;
 			}
 
-			aprint_error_dev(sc->sc_dev, "failed to enable "
+			aprint_debug_dev(sc->sc_dev, "failed to enable "
 			    "expensive WExx: %s\n", AcpiFormatException(rv));
 		}
 	}
@@ -369,7 +459,7 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 			continue;
 		}
 
-		aprint_error_dev(sc->sc_dev, "failed to disable "
+		aprint_debug_dev(sc->sc_dev, "failed to disable "
 		    "expensive WExx: %s\n", AcpiFormatException(rv));
 	}
 }
@@ -457,6 +547,38 @@ ACPI_STATUS
 acpi_wmi_event_deregister(device_t self)
 {
 	return acpi_wmi_event_register(self, NULL);
+}
+
+/*
+ * Handler for EC regions, which may be embedded in WMI.
+ */
+static ACPI_STATUS
+acpi_wmi_ec_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS addr,
+    uint32_t width, ACPI_INTEGER *val, void *setup, void *aux)
+{
+	struct acpi_wmi_softc *sc = aux;
+
+	if (aux == NULL || val == NULL)
+		return AE_BAD_PARAMETER;
+
+	if (addr > 0xFF || width % 8 != 0)
+		return AE_BAD_ADDRESS;
+
+	switch (func) {
+
+	case ACPI_READ:
+		(void)acpiec_bus_read(sc->sc_ecdev, addr, val, width);
+		break;
+
+	case ACPI_WRITE:
+		(void)acpiec_bus_write(sc->sc_ecdev, addr, *val, width);
+		break;
+
+	default:
+		return AE_BAD_PARAMETER;
+	}
+
+	return AE_OK;
 }
 
 /*
@@ -676,4 +798,40 @@ acpi_wmi_method(device_t self, const char *guid, uint8_t idx,
 	obuf->Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	return AcpiEvaluateObject(sc->sc_node->ad_handle, path, &arg, obuf);
+}
+
+MODULE(MODULE_CLASS_DRIVER, acpiwmi, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+acpiwmi_modcmd(modcmd_t cmd, void *aux)
+{
+	int rv = 0;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpiwmi,
+		    cfattach_ioconf_acpiwmi, cfdata_ioconf_acpiwmi);
+#endif
+		break;
+
+	case MODULE_CMD_FINI:
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpiwmi,
+		    cfattach_ioconf_acpiwmi, cfdata_ioconf_acpiwmi);
+#endif
+		break;
+
+	default:
+		rv = ENOTTY;
+	}
+
+	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 2007/03/04 06:00:47 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.24.66.1 2011/03/05 20:52:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,6 +42,7 @@
 
 #include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
+#include <sparc/stand/common/isfloppy.h>
 
 #include "bootinfo.h"
 
@@ -59,7 +60,7 @@ paddr_t bstart, bend;	/* physical start & end address of the boot program */
 int	compatmode = 0;		/* For loading older kernels */
 u_long	loadaddrmask = -1UL;
 
-extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
+extern char bootprog_name[], bootprog_rev[];
 
 int	main(void);
 typedef void (*entry_t)(void *, int, int, int, long, long);
@@ -170,6 +171,7 @@ loadk(char *kernel, u_long *marks)
 	vaddr_t va;
 	paddr_t pa;
 	u_long size;
+	int flags = LOAD_KERNEL;
 
 	if ((fd = open(kernel, 0)) < 0)
 		return (errno ? errno : ENOENT);
@@ -224,8 +226,11 @@ loadk(char *kernel, u_long *marks)
 		loadaddrmask = 0x07ffffffUL;
 	}
 
+	if (bootdev_isfloppy(prom_bootdevice))
+		flags &= ~LOAD_BACKWARDS;
+
 	marks[MARK_START] = 0;
-	error = fdloadfile(fd, marks, LOAD_KERNEL);
+	error = fdloadfile(fd, marks, flags);
 out:
 	close(fd);
 	return (error);
@@ -251,7 +256,6 @@ main(void)
 	mmu_init();
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/* massage machine prom */
 	prom_patch();

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.74.2.3 2010/07/03 01:19:21 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.74.2.4 2011/03/05 20:50:53 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.2.3 2010/07/03 01:19:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.2.4 2011/03/05 20:50:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.2.3 2010/07/03 01:19:21 rmind Exp $
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -74,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.2.3 2010/07/03 01:19:21 rmind Exp $
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
@@ -299,7 +301,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
+	frame->f_regs[A2] = l->l_proc->p_psstrp;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -779,6 +781,16 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #endif
 	return error;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif
 
 #if 1
 

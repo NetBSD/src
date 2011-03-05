@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148.2.1 2010/05/30 05:17:11 rmind Exp $
+# $NetBSD: GENERIC,v 1.148.2.2 2011/03/05 20:52:22 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.148.2.1 $"
+#ident 		"GENERIC-$Revision: 1.148.2.2 $"
 
 maxusers	8
 
@@ -79,6 +79,7 @@ options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 ## Loadable kernel module support
+#options 	MODULAR		# new style module(7) framework
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -99,7 +100,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 ## The DDB in-kernel debugger runs at panic (unless DDB_ONPANIC=0), or at
 ## serial console break or keyboard reset, where the PROM would normally
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
-#options 	DDB			# kernel dynamic debugger
+options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 #options 	PANICBUTTON		# interrupt switch invokes DDB
@@ -462,7 +463,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	1
+#pseudo-device	md	
 
 ## Loopback network interface; required
 pseudo-device	loop

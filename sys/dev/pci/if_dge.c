@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.29.4.1 2010/05/30 05:17:33 rmind Exp $ */
+/*	$NetBSD: if_dge.c,v 1.29.4.2 2011/03/05 20:53:40 rmind Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.29.4.1 2010/05/30 05:17:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.29.4.2 2011/03/05 20:53:40 rmind Exp $");
 
 #include "rnd.h"
 
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.29.4.1 2010/05/30 05:17:33 rmind Exp $"
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #if NRND > 0
 #include <sys/rnd.h>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93.2.2 2010/07/03 01:19:17 rmind Exp $
+# $NetBSD: GENERIC,v 1.93.2.3 2011/03/05 20:50:26 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.93.2.2 $"
+#ident 		"GENERIC-$Revision: 1.93.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -231,6 +231,8 @@ lcd0	at mainbus0		# LCD
 # STI graphics
 sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics
 sti*	at phantomas?		# [H]CRX-{8,24,48}[Z] and Visualize graphics
+#sti*	at uturn?
+sti*	at pci?			# EG-PCI, FX*
 
 # Basic Bus Support
 lasi*	at mainbus0		# LASI host adapter ( LSI PN??? )
@@ -294,9 +296,10 @@ eisa*	at mongoose?
 # Console Devices
 
 # Human Interface Loop
-#hil*		at gsc?
-#hkbd*		at hil? code 0	# keyboard
-#hms*		at hil? code 1	# mice & trackballs
+hil*		at gsc? irq 1	# Human Interface Loop, kbd and mouse
+hilkbd*		at hil?		# keyboard, knob and buttons
+hilms*		at hil?		# mouse and tablets
+hilid*		at hil?		# ID module
 
 # wscons
 gsckbc*		at gsc?			# pc keyboard controller
@@ -304,8 +307,8 @@ pckbd*		at gsckbc?		# PC keyboard
 pms*		at gsckbc?		# PS/2 mouse for wsmouse
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-#wskbd*		at hkbd? console ?
-#wsmouse*	at hms? mux 0
+wskbd*		at hilkbd? console ?
+wsmouse*	at hilms? mux 0
 wsdisplay*	at sti?
 
 # Serial Devices
@@ -414,6 +417,7 @@ cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+nside*  	at pci? dev ? function ?	# National Semiconductor IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
@@ -722,7 +726,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	putter			# for puffs and pud
@@ -770,6 +774,9 @@ pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
 
 # Veriexec
 #

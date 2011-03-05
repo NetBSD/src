@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_object.h,v 1.26.20.2 2010/04/26 02:20:59 rmind Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.26.20.3 2011/03/05 20:56:37 rmind Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -42,7 +35,8 @@
  */
 
 #include <sys/queue.h>
-#include <sys/rb.h>
+#include <sys/rbtree.h>
+#include <uvm/uvm_pglist.h>
 
 /*
  * uvm_object: all that is left of mach objects.
@@ -107,7 +101,7 @@ extern const struct uvm_pagerops aobj_pager;
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)
 
-extern const struct rb_tree_ops uvm_page_tree_ops;
+extern const rb_tree_ops_t uvm_page_tree_ops;
 
 #endif /* _KERNEL */
 

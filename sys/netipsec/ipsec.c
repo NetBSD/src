@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.47 2010/01/31 00:43:38 hubertf Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.47.4.1 2011/03/05 20:55:59 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.47 2010/01/31 00:43:38 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.47.4.1 2011/03/05 20:55:59 rmind Exp $");
 
 /*
  * IPsec controller part.
@@ -1437,6 +1437,10 @@ ipsec4_delete_pcbpolicy(struct inpcb *inp)
 	if (inp->inp_sp->sp_out != NULL)
 		KEY_FREESP(&inp->inp_sp->sp_out);
 
+#ifdef __NetBSD__
+	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
+#endif
+
 	ipsec_delpcbpolicy(inp->inp_sp);
 	inp->inp_sp = NULL;
 
@@ -1520,6 +1524,10 @@ ipsec6_delete_pcbpolicy(struct in6pcb *in6p)
 
 	if (in6p->in6p_sp->sp_out != NULL)
 		KEY_FREESP(&in6p->in6p_sp->sp_out);
+
+#ifdef __NetBSD
+	ipsec_invalpcbcache(in6p->in6p_sp, IPSEC_DIR_ANY);
+#endif
 
 	ipsec_delpcbpolicy(in6p->in6p_sp);
 	in6p->in6p_sp = NULL;
@@ -1929,7 +1937,7 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
  * based on RFC 2401.
  */
 int
-ipsec_chkreplay(u_int32_t seq, struct secasvar *sav)
+ipsec_chkreplay(u_int32_t seq, const struct secasvar *sav)
 {
 	const struct secreplay *replay;
 	u_int32_t diff;
@@ -1987,7 +1995,7 @@ ipsec_chkreplay(u_int32_t seq, struct secasvar *sav)
  *	1:	NG
  */
 int
-ipsec_updatereplay(u_int32_t seq, struct secasvar *sav)
+ipsec_updatereplay(u_int32_t seq, const struct secasvar *sav)
 {
 	struct secreplay *replay;
 	u_int32_t diff;
@@ -2119,7 +2127,7 @@ inet_ntoa4(struct in_addr ina)
 
 /* Return a printable string for the address. */
 const char *
-ipsec_address(union sockaddr_union* sa)
+ipsec_address(const union sockaddr_union* sa)
 {
 	switch (sa->sa.sa_family) {
 #if INET
@@ -2138,11 +2146,11 @@ ipsec_address(union sockaddr_union* sa)
 }
 
 const char *
-ipsec_logsastr(struct secasvar *sav)
+ipsec_logsastr(const struct secasvar *sav)
 {
 	static char buf[256];
 	char *p;
-	struct secasindex *saidx = &sav->sah->saidx;
+	const struct secasindex *saidx = &sav->sah->saidx;
 
 	IPSEC_ASSERT(saidx->src.sa.sa_family == saidx->dst.sa.sa_family,
 		("ipsec_logsastr: address family mismatch"));
@@ -2280,7 +2288,6 @@ ipsec_attach(void)
 
 	ipsecstat_percpu = percpu_alloc(sizeof(uint64_t) * IPSEC_NSTATS);
 
-	aprint_verbose("initializing IPsec...");
 	ah_attach();
 	esp_attach();
 	ipcomp_attach();
@@ -2288,6 +2295,5 @@ ipsec_attach(void)
 #ifdef TCP_SIGNATURE
 	tcpsignature_attach();
 #endif
-	aprint_verbose(" done\n");
 }
 #endif	/* __NetBSD__ */

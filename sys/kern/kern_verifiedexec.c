@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.121 2009/12/28 07:16:41 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.121.4.1 2011/03/05 20:55:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.121 2009/12/28 07:16:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.121.4.1 2011/03/05 20:55:17 rmind Exp $");
 
 #include "opt_veriexec.h"
 
@@ -145,39 +145,52 @@ static krwlock_t veriexec_op_lock;
  * Sysctl helper routine for Veriexec.
  */
 static int
-sysctl_kern_veriexec(SYSCTLFN_ARGS)
+sysctl_kern_veriexec_algorithms(SYSCTLFN_ARGS)
 {
-	int newval, error;
-	int *var = NULL, raise_only = 0;
+	size_t len;
+	int error;
+	const char *p;
+
+	if (newp != NULL)
+		return EPERM;
+
+	if (namelen != 0)
+		return EINVAL;
+
+	p = veriexec_fp_names == NULL ? "" : veriexec_fp_names;
+
+	len = strlen(p) + 1;
+
+	if (*oldlenp < len && oldp)
+		return ENOMEM;
+
+	if (oldp && (error = copyout(p, oldp, len)) != 0)
+		return error;
+
+	*oldlenp = len;
+	return 0;
+}
+
+static int
+sysctl_kern_veriexec_strict(SYSCTLFN_ARGS)
+{
 	struct sysctlnode node;
+	int error, newval;
 
 	node = *rnode;
-
-	if (strcmp(rnode->sysctl_name, "strict") == 0) {
-		raise_only = 1;
-		var = &veriexec_strict;
-	} else if (strcmp(rnode->sysctl_name, "algorithms") == 0) {
-		node.sysctl_data = veriexec_fp_names;
-		node.sysctl_size = strlen(veriexec_fp_names) + 1;
-		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-	} else {
-		return (EINVAL);
-	}
-
-	newval = *var;
-
 	node.sysctl_data = &newval;
+
+	newval = veriexec_strict;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL) {
-		return (error);
-	}
+	if (error || newp == NULL)
+		return error;
 
-	if (raise_only && (newval < *var))
-		return (EPERM);
+	if (newval < veriexec_strict)
+		return EPERM;
 
-	*var = newval;
+	veriexec_strict = newval;
 
-	return (error);
+	return 0;
 }
 
 SYSCTL_SETUP(sysctl_kern_veriexec_setup, "sysctl kern.veriexec setup")
@@ -207,14 +220,14 @@ SYSCTL_SETUP(sysctl_kern_veriexec_setup, "sysctl kern.veriexec setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "strict",
 		       SYSCTL_DESCR("Veriexec strict level"),
-		       sysctl_kern_veriexec, 0, NULL, 0,
+		       sysctl_kern_veriexec_strict, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "algorithms",
 		       SYSCTL_DESCR("Veriexec supported hashing "
 				    "algorithms"),
-		       sysctl_kern_veriexec, 0, NULL, 0,
+		       sysctl_kern_veriexec_algorithms, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &rnode, &veriexec_count_node,
 		       CTLFLAG_PERMANENT,
@@ -857,7 +870,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 }
 
 /*
- * Veriexe rename policy.
+ * Veriexec rename policy.
  *
  * XXX: Once there's a way to hook after a successful rename, it would be
  * XXX: nice to update vfe->filename to the new name if it's not NULL and

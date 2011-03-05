@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.13 2009/12/15 06:01:43 mrg Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.13.4.1 2011/03/05 20:50:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13 2009/12/15 06:01:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13.4.1 2011/03/05 20:50:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <mips/mips3_clock.h>
 #include <machine/locore.h>
@@ -50,39 +48,55 @@ intr_init(void)
 }
 
 void
-cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct clockframe cf;
-	struct cpu_info *ci;
-
-	ci = curcpu();
-	ci->ci_idepth++;
-	uvmexp.intrs++;
-
-	if (ipending & MIPS_INT_MASK_5) {
-		/* call the common MIPS3 clock interrupt handler */ 
-		cf.pc = pc;
-		cf.sr = status;
-		mips3_clockintr(&cf);
-
-		/* Re-enable clock interrupts. */
-		cause &= ~MIPS_INT_MASK_5;
-		_splset(MIPS_SR_INT_IE |
-		    ((status & ~cause) & MIPS_HARD_INT_MASK));
-	}
-
-	if (ipending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
-			MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
-		/* Process I/O and error interrupts. */
-		evbmips_iointr(status, cause, pc, ipending);
-	}
-	ci->ci_idepth--;
-
-#ifdef __HAVE_FAST_SOFTINTS
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
+	struct cpu_info * const ci = curcpu();
+	uint32_t pending;
+	int ipl;
+#ifdef DIAGNOSTIC
+	const int mtx_count = ci->ci_mtx_count;
+	const u_int biglock_count = ci->ci_biglock_count;
+	const u_int blcnt = curlwp->l_blcnt;
 #endif
+	KASSERT(ci->ci_cpl == IPL_HIGH);
+
+	ci->ci_data.cpu_nintr++;
+
+	while (ppl < (ipl = splintr(&pending))) {
+		splx(ipl);	/* lower to interrupt level */
+
+		KASSERTMSG(ci->ci_cpl == ipl,
+		    ("%s: cpl (%d) != ipl (%d)",
+		    __func__, ci->ci_cpl, ipl));
+		KASSERT(pending != 0);
+
+		if (pending & MIPS_INT_MASK_5) {
+			struct clockframe cf;
+			KASSERT(ipl == IPL_SCHED);
+			/* call the common MIPS3 clock interrupt handler */ 
+			cf.pc = pc;
+			cf.sr = status;
+			cf.intr = (ci->ci_idepth > 1);
+			mips3_clockintr(&cf);
+			pending ^= MIPS_INT_MASK_5;
+		}
+
+		if (pending != 0) {
+			/* Process I/O and error interrupts. */
+			evbmips_iointr(ipl, pc, pending);
+		}
+		KASSERT(biglock_count == ci->ci_biglock_count);
+		KASSERT(blcnt == curlwp->l_blcnt);
+		KASSERT(mtx_count == ci->ci_mtx_count);
+
+		/*
+		 * If even our spl is higher now (due to interrupting while
+		 * spin-lock is held and higher IPL spin-lock is locked, it
+		 * can no longer be locked so it's safe to lower IPL back
+		 * to ppl.
+		 */
+		(void) splhigh();	/* disable interrupts */
+	}
+
+	KASSERT(ci->ci_cpl == IPL_HIGH);
 }

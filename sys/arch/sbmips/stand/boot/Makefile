@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2002/11/09 06:20:37 cgd Exp $
+# $NetBSD: Makefile,v 1.1.136.1 2011/03/05 20:51:51 rmind Exp $
 
 PROG = boot
 
@@ -26,6 +26,7 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=yes
 .include "../Makefile.bootprogs"
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	${SIZE} ${PROG}.sym

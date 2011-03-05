@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.18.2.1 2010/05/30 05:17:17 rmind Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.18.2.2 2011/03/05 20:53:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.18.2.1 2010/05/30 05:17:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.18.2.2 2011/03/05 20:53:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
@@ -320,7 +321,7 @@ asus_sysctl_verify(SYSCTLFN_ARGS)
 		if (err || newp == NULL)
 			return err;
 
-		if (tmp < 0 || tmp >= sc->sc_cfvnum)
+		if (tmp < 0 || (uint64_t)tmp >= sc->sc_cfvnum)
 			return EINVAL;
 
 		rv = acpi_eval_set_integer(sc->sc_node->ad_handle,
@@ -409,4 +410,40 @@ asus_get_fan_speed(struct asus_softc *sc, uint32_t *speed)
 	if (speed)
 		*speed = (rpmh << 8) | rpml;
 	return true;
+}
+
+MODULE(MODULE_CLASS_DRIVER, asus, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+asus_modcmd(modcmd_t cmd, void *aux)
+{
+	int rv = 0;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_asus,
+		    cfattach_ioconf_asus, cfdata_ioconf_asus);
+#endif
+		break;
+
+	case MODULE_CMD_FINI:
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_asus,
+		    cfattach_ioconf_asus, cfdata_ioconf_asus);
+#endif
+		break;
+
+	default:
+		rv = ENOTTY;
+	}
+
+	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.128.2.2 2010/07/03 01:20:03 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.128.2.3 2011/03/05 20:56:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -44,6 +44,7 @@
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
 #include <sys/resource.h>
+#include <sys/pcu.h>
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
@@ -62,17 +63,17 @@
  * S:	l_selcluster->sc_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
- * ?:	undecided
  *
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
+#if defined(_KERNEL) || defined(_KMEMUSER)
 struct lockdebug;
 struct sadata_vp;
 struct sysent;
 
 struct lwp {
-	/* Scheduling and overall state */
+	/* Scheduling and overall state. */
 	TAILQ_ENTRY(lwp) l_runq;	/* s: run queue */
 	union {
 		void *	info;		/* s: scheduler-specific structure */
@@ -81,7 +82,7 @@ struct lwp {
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	int		l_ctxswtch;	/* l: performing a context switch */
-	struct user	*l_addr;	/* l: PCB address; use lwp_getpcb() */
+	void		*l_addr;	/* l: PCB address; use lwp_getpcb() */
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
@@ -112,7 +113,7 @@ struct lwp {
 	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
 	struct sadata_vp *l_savp;	/* p: SA "virtual processor" */
 
-	/* Synchronisation */
+	/* Synchronisation. */
 	struct turnstile *l_ts;		/* l: current turnstile */
 	struct syncobj	*l_syncobj;	/* l: sync object operations set */
 	TAILQ_ENTRY(lwp) l_sleepchain;	/* l: sleep queue */
@@ -124,6 +125,11 @@ struct lwp {
 	callout_t	l_timeout_ch;	/* !: callout for tsleep */
 	u_int		l_emap_gen;	/* !: emap generation number */
 
+#if PCU_UNIT_COUNT > 0
+	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
+	uint32_t	l_pcu_used;
+#endif
+
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
 	void		*l_ctxlink;	/* p: uc_link {get,set}context */
@@ -134,12 +140,18 @@ struct lwp {
 	int		l_prflag;	/* p: process level flags */
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
-	int		l_selflag;	/* S: select() flags */
-	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
-	struct selcluster *l_selcluster;/* !: associated select data */
 	char		*l_name;	/* (: name, optional */
 
-	/* Signals */
+	/* State of select() or poll(). */
+	int		l_selflag;	/* S: polling state flags */
+	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
+	int		l_selret;	/* S: return value of select/poll */
+	uintptr_t	l_selrec;	/* !: argument for selrecord() */
+	struct selcluster *l_selcluster;/* !: associated cluster data */
+	void *		l_selbits;	/* (: select() bit-field */
+	size_t		l_selni;	/* (: size of a single bit-field */
+
+	/* Signals. */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
 	sigset_t	l_sigwaitset;	/* p: signals being waited for */
 	kcondvar_t	l_sigcv;	/* p: for sigsuspend() */
@@ -151,7 +163,7 @@ struct lwp {
 	sigpend_t	l_sigpend;	/* p: signals to this LWP */
 	sigset_t	l_sigoldmask;	/* p: mask for sigpause */
 
-	/* Private data */
+	/* Private data. */
 	specificdata_reference
 		l_specdataref;		/* !: subsystem lwp-specific data */
 	struct timespec l_ktrcsw;	/* !: for ktrace CSW trace XXX */
@@ -178,45 +190,32 @@ struct lwp {
 	int		l_tcgen;	/* !: for timecounter removal */
 	int		l_unused2;	/* !: for future use */
 
-	/* These are only used by 'options SYSCALL_TIMES' */
-	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
-	uint64_t        *l_syscall_counter; /* !: counter for current process */
+	/* These are only used by 'options SYSCALL_TIMES'. */
+	uint32_t	l_syscall_time;	/* !: time epoch for current syscall */
+	uint64_t	*l_syscall_counter; /* !: counter for current process */
 
-	struct kdtrace_thread *l_dtrace; /* ?: DTrace-specific data. */
+	struct kdtrace_thread *l_dtrace; /* (: DTrace-specific data. */
 };
+#endif /* _KERNEL || _KMEMUSER */
 
 /*
- * USER_TO_UAREA/UAREA_TO_USER: macros to convert between
- * the lowest address of the uarea (UAREA) and lwp::l_addr (USER).
- *
- * the default is just a cast.  MD code can modify it by defining
- * either these macros or UAREA_USER_OFFSET in <machine/proc.h>.
+ * UAREA_PCB_OFFSET: an offset of PCB structure in the uarea.  MD code may
+ * define it in <machine/proc.h>, to indicate a different uarea layout.
  */
+#ifndef UAREA_PCB_OFFSET
+#define	UAREA_PCB_OFFSET	0
+#endif
 
-#if !defined(USER_TO_UAREA)
-#if !defined(UAREA_USER_OFFSET)
-#define	UAREA_USER_OFFSET	0
-#endif /* !defined(UAREA_USER_OFFSET) */
-#define	USER_TO_UAREA(user)	((vaddr_t)(user) - UAREA_USER_OFFSET)
-#define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
-#endif /* !defined(UAREA_TO_USER) */
-
-static __inline void *
-lwp_getpcb(struct lwp *l)
-{
-
-	return &l->l_addr->u_pcb;
-}
-
-LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
+LIST_HEAD(lwplist, lwp);		/* A list of LWPs. */
 
 #ifdef _KERNEL
-extern struct lwplist alllwp;		/* List of all LWPs. */
-extern lwp_t lwp0;			/* LWP for proc0 */
+extern struct lwplist	alllwp;		/* List of all LWPs. */
+extern lwp_t		lwp0;		/* LWP for proc0. */
 #endif
 
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
+#define	LW_LWPCTL	0x00000002 /* Adjust lwpctl in userret */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
@@ -230,16 +229,18 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_SA_BLOCKING	0x00800000 /* Blocking in tsleep() */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
-#define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_SA_YIELD	0x40000000 /* LWP on VP is yielding */
 #define	LW_SA_IDLE	0x80000000 /* VP is idle */
+#define	LW_RUMP_CLEAR	LW_SA_IDLE /* clear curlwp in rump scheduler */
+#define	LW_RUMP_DYING	LW_SA_YIELD/* lwp is part of a dying process */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
 #define	LP_KTRCSW	0x00000002 /* ktrace context switch marker */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
+#define	LP_PIDLID	0x00000008 /* free LID from PID space on exit */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
@@ -259,7 +260,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
  * user.
  */
 #define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
-		    LW_WUSERRET|LW_SA_BLOCKING|LW_SA_UPCALL)
+		    LW_SA_BLOCKING|LW_SA_UPCALL|LW_LWPCTL)
 
 /*
  * Status values.
@@ -279,6 +280,15 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LSONPROC	7	/* Process is currently on a CPU. */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+static inline void *
+lwp_getpcb(struct lwp *l)
+{
+
+	return l->l_addr;
+}
+#endif /* _KERNEL || _KMEMUSER */
+
 #ifdef _KERNEL
 #define	LWP_CACHE_CREDS(l, p)						\
 do {									\
@@ -287,13 +297,18 @@ do {									\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
 
+void	lwpinit(void);
+void	lwp0_init(void);
+void	lwp_sys_init(void);
+
 void	lwp_startup(lwp_t *, lwp_t *);
+void	startlwp(void *);
+void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
+void	upcallret(lwp_t *);
 
 int	lwp_locked(lwp_t *, kmutex_t *);
 void	lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
-kmutex_t *lwp_lock_retry(lwp_t *, kmutex_t *);
-void	lwp_relock(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
 void	lwp_delref(lwp_t *);
@@ -304,47 +319,41 @@ lwp_t	*lwp_find_first(proc_t *);
 
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
-void	lwpinit(void);
-void	lwp0_init(void);
-int 	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
+int	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(lwp_t *);
+void	lwp_unsleep(lwp_t *, bool);
 void	lwp_unstop(lwp_t *);
-void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
-void	startlwp(void *);
-void	upcallret(lwp_t *);
 void	lwp_exit(lwp_t *);
 void	lwp_exit_switchaway(lwp_t *) __dead;
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_update_creds(lwp_t *);
 void	lwp_migrate(lwp_t *, struct cpu_info *);
-lwp_t *lwp_find2(pid_t, lwpid_t);
-lwp_t *lwp_find(proc_t *, int);
+lwp_t *	lwp_find2(pid_t, lwpid_t);
+lwp_t *	lwp_find(proc_t *, int);
 void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
-void	lwp_sys_init(void);
-void	lwp_unsleep(lwp_t *, bool);
 uint64_t lwp_pctr(void);
+int	lwp_setprivate(lwp_t *, void *);
 
 void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
-void 	lwp_initspecific(lwp_t *);
-void 	lwp_finispecific(lwp_t *);
+void	lwp_initspecific(lwp_t *);
+void	lwp_finispecific(lwp_t *);
 void	*lwp_getspecific(specificdata_key_t);
 #if defined(_LWP_API_PRIVATE)
 void	*_lwp_getspecific_by_lwp(lwp_t *, specificdata_key_t);
 #endif
 void	lwp_setspecific(specificdata_key_t, void *);
 
-/* Syscalls */
+/* Syscalls. */
 int	lwp_park(struct timespec *, const void *);
 int	lwp_unpark(lwpid_t, const void *);
 
-/* ddb */
-void lwp_whatis(uintptr_t, void (*)(const char *, ...));
-
+/* DDB. */
+void	lwp_whatis(uintptr_t, void (*)(const char *, ...));
 
 /*
  * Lock an LWP. XXX _MODULE
@@ -352,16 +361,18 @@ void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 static inline void
 lwp_lock(lwp_t *l)
 {
-	kmutex_t *old;
-
-	mutex_spin_enter(old = l->l_mutex);
+	kmutex_t *old = l->l_mutex;
 
 	/*
-	 * mutex_enter() will have posted a read barrier.  Re-test
-	 * l->l_mutex.  If it has changed, we need to try again.
+	 * Note: mutex_spin_enter() will have posted a read barrier.
+	 * Re-test l->l_mutex.  If it has changed, we need to try again.
 	 */
-	if (__predict_false(l->l_mutex != old))
-		lwp_lock_retry(l, old);
+	mutex_spin_enter(old);
+	while (__predict_false(l->l_mutex != old)) {
+		mutex_spin_exit(old);
+		old = l->l_mutex;
+		mutex_spin_enter(old);
+	}
 }
 
 /*
@@ -496,8 +507,11 @@ KPREEMPT_ENABLE(lwp_t *l)
 #endif /* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
-#define LWP_DETACHED    0x00000040
-#define LWP_SUSPENDED   0x00000080
+#define	LWP_DETACHED	0x00000040
+#define	LWP_SUSPENDED	0x00000080
+
+/* Kernel-internal flags for LWP creation. */
+#define	LWP_PIDLID	0x40000000
 #define	LWP_VFORK	0x80000000
 
 #endif	/* !_SYS_LWP_H_ */

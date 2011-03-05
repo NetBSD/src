@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.26.4.1 2011/03/05 20:56:00 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.26.4.1 2011/03/05 20:56:00 rmind Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.26 2009/04/18 14:58:06 tsutsui Exp $"
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/socketvar.h> /* for softnet_lock */
 
 #include <net/if.h>
 
@@ -122,7 +123,7 @@ static int ah_output_cb(struct cryptop*);
 /*
  * NB: this is public for use by the PF_KEY support.
  */
-struct auth_hash *
+const struct auth_hash *
 ah_algorithm_lookup(int alg)
 {
 	if (alg >= AH_ALG_MAX)
@@ -151,7 +152,7 @@ ah_algorithm_lookup(int alg)
 }
 
 size_t
-ah_hdrsiz(struct secasvar *sav)
+ah_hdrsiz(const struct secasvar *sav)
 {
 	size_t size;
 
@@ -173,9 +174,10 @@ ah_hdrsiz(struct secasvar *sav)
  * NB: public for use by esp_init.
  */
 int
-ah_init0(struct secasvar *sav, struct xformsw *xsp, struct cryptoini *cria)
+ah_init0(struct secasvar *sav, const struct xformsw *xsp,
+	 struct cryptoini *cria)
 {
-	struct auth_hash *thash;
+	const struct auth_hash *thash;
 	int keylen;
 
 	thash = ah_algorithm_lookup(sav->alg_auth);
@@ -226,7 +228,7 @@ ah_init0(struct secasvar *sav, struct xformsw *xsp, struct cryptoini *cria)
  * ah_init() is called when an SPI is being set up.
  */
 static int
-ah_init(struct secasvar *sav, struct xformsw *xsp)
+ah_init(struct secasvar *sav, const struct xformsw *xsp)
 {
 	struct cryptoini cria;
 	int error;
@@ -597,9 +599,9 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
  * passes authentication.
  */
 static int
-ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
+ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
-	struct auth_hash *ahx;
+	const struct auth_hash *ahx;
 	struct tdb_ident *tdbi;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
@@ -717,7 +719,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		 * Save the authenticator, the skipped portion of the packet,
 		 * and the AH header.
 		 */
-		m_copydata(m, 0, skip + rplen + authsize, (char *)(tc+1));
+		m_copydata(m, 0, skip + rplen + authsize, (tc + 1));
 
 		{
 			u_int8_t *pppp = ((char *)(tc+1))+skip+rplen;
@@ -795,7 +797,7 @@ ah_input_cb(struct cryptop *crp)
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m;
 	struct cryptodesc *crd;
-	struct auth_hash *ahx;
+	const struct auth_hash *ahx;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	struct secasvar *sav;
@@ -829,6 +831,7 @@ ah_input_cb(struct cryptop *crp)
 #endif
 
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
@@ -844,15 +847,18 @@ ah_input_cb(struct cryptop *crp)
 		("ah_input_cb: unexpected protocol family %u",
 		 saidx->dst.sa.sa_family));
 
-	ahx = (struct auth_hash *) sav->tdb_authalgxform;
+	ahx = sav->tdb_authalgxform;
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
 		if (sav->tdb_cryptoid != 0)
 			sav->tdb_cryptoid = crp->crp_sid;
 
-		if (crp->crp_etype == EAGAIN)
+		if (crp->crp_etype == EAGAIN) {
+			mutex_exit(softnet_lock);
+			splx(s);
 			return crypto_dispatch(crp);
+		}
 
 		AH_STATINC(AH_STAT_NOXFORM);
 		DPRINTF(("ah_input_cb: crypto error %d\n", crp->crp_etype));
@@ -959,11 +965,13 @@ ah_input_cb(struct cryptop *crp)
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag);
 
 	KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	if (m != NULL)
 		m_freem(m);
@@ -986,8 +994,8 @@ ah_output(
     int protoff
 )
 {
-	struct secasvar *sav;
-	struct auth_hash *ahx;
+	const struct secasvar *sav;
+	const struct auth_hash *ahx;
 	struct cryptodesc *crda;
 	struct tdb_crypto *tc;
 	struct mbuf *mi;
@@ -1076,7 +1084,7 @@ ah_output(
 	ah = (struct newah *)(mtod(mi, char *) + roff);
 
 	/* Initialize the AH header. */
-	m_copydata(m, protoff, sizeof(u_int8_t), (char *) &ah->ah_nxt);
+	m_copydata(m, protoff, sizeof(u_int8_t), &ah->ah_nxt);
 	ah->ah_len = (rplen + authsize - sizeof(struct ah)) / sizeof(u_int32_t);
 	ah->ah_reserve = 0;
 	ah->ah_spi = sav->spi;
@@ -1229,6 +1237,7 @@ ah_output_cb(struct cryptop *crp)
 	m = (struct mbuf *) crp->crp_buf;
 
 	s = splsoftnet();
+	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
 	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
@@ -1247,6 +1256,7 @@ ah_output_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
+			mutex_exit(softnet_lock);
 			splx(s);
 			return crypto_dispatch(crp);
 		}
@@ -1293,11 +1303,13 @@ ah_output_cb(struct cryptop *crp)
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr);
 	KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	mutex_exit(softnet_lock);
 	splx(s);
 	if (m)
 		m_freem(m);

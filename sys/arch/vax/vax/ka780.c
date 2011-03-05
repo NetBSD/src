@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.28 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: ka780.c,v 1.28.26.1 2011/03/05 20:52:18 rmind Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,16 +35,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.28 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.28.26.1 2011/03/05 20:52:18 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 
-#include <machine/bus.h>
 #include <machine/nexus.h>
 #include <machine/sid.h>
-#include <machine/cpu.h>
 #include <machine/clock.h>
 
 #include "ioconf.h"

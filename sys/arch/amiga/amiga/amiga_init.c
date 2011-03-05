@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.118.4.2 2010/07/03 01:19:12 rmind Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.118.4.3 2011/03/05 20:49:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,11 +37,10 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.118.4.2 2010/07/03 01:19:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.118.4.3 2011/03/05 20:49:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <uvm/uvm_extern.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
@@ -53,7 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.118.4.2 2010/07/03 01:19:12 rmind E
 #include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
+
 #include <dev/mm.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cc.h>
@@ -206,12 +208,15 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	psize_t ptsize;
 	u_int ptextra, kstsize;
 	paddr_t Sysptmap_pa;
-	register st_entry_t sg_proto, *sg, *esg;
+	register st_entry_t sg_proto, *sg;
+#if defined(M68040) || defined(M68060)
+	register st_entry_t *esg;
+#endif
 	register pt_entry_t pg_proto, *pg, *epg;
 	vaddr_t end_loaded;
-	u_int ncd, i;
+	u_int ncd;
 #if defined(M68040) || defined(M68060)
-	u_int nl1desc, nl2desc;
+	u_int i, nl1desc, nl2desc;
 #endif
 	vaddr_t kva;
 	struct boot_memlist *ml;
@@ -546,9 +551,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 
 #if defined(M68040) || defined(M68060)
 	/*
-	 * map the kernel segment table cache invalidated for
-	 * these machines (for the 68040 not strictly necessary, but
-	 * recommended by Motorola; for the 68060 mandatory)
+	 * Map the kernel segment table cache invalidated for 68040/68060.
+	 * (for the 68040 not strictly necessary, but recommended by Motorola;
+	 *  for the 68060 mandatory)
 	 */
 	if (RELOC(mmutype, int) == MMU_68040) {
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.77.4.1 2010/05/30 05:17:39 rmind Exp $ */
+/* $NetBSD: tga.c,v 1.77.4.2 2011/03/05 20:53:58 rmind Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.77.4.1 2010/05/30 05:17:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.77.4.2 2011/03/05 20:53:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.77.4.1 2010/05/30 05:17:39 rmind Exp $");
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
-#include <uvm/uvm_extern.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 int	tgamatch(device_t, cfdata_t, void *);
 void	tgaattach(device_t, device_t, void *);
@@ -596,6 +596,10 @@ tga_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case PCI_IOC_CFGWRITE:
 		return pci_devioctl(dc->dc_pc, dc->dc_pcitag,
 		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, dc->dc_pc,
+		    dc->dc_pcitag, data);
 	}
 	return EPASSTHROUGH;
 }

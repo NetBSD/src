@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.32.6.1 2010/07/03 01:19:28 rmind Exp $	*/
+/*	$NetBSD: ka860.c,v 1.32.6.2 2011/03/05 20:52:18 rmind Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -41,15 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.32.6.1 2010/07/03 01:19:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.32.6.2 2011/03/05 20:52:18 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <machine/clock.h>
-#include <machine/mtpr.h>
 #include <machine/nexus.h>
 #include <machine/ioa.h>
 #include <machine/sid.h>

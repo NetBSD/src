@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2010/02/02 19:16:57 phx Exp $	*/
+/*	$NetBSD: intr.h,v 1.23.4.1 2011/03/05 20:49:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 
 #ifndef _LOCORE
 #include <machine/cpu.h>
-#include <sys/device.h>
 #endif /* _LOCORE */
 
 #endif /* !_AMIGAPPC_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.7 2009/12/12 14:44:09 tsutsui Exp $ */
+/*	$NetBSD: clock.h,v 1.7.4.1 2011/03/05 20:52:16 rmind Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,7 +37,7 @@
 /*
  * Time constants. These are unlikely to change.
  */
-#define IS_LEAPYEAR(y) (((y % 4) == 0) && (y % 100))
+#define IS_LEAPYEAR(y) ((((y % 4) == 0) && ((y % 100) != 0)) || ((y % 400) == 0))
 
 #define SEC_PER_MIN	(60)
 #define SEC_PER_HOUR	(SEC_PER_MIN * 60)

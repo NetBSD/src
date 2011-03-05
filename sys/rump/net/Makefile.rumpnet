@@ -1,9 +1,0 @@
-#	$NetBSD: Makefile.rumpnet,v 1.6.4.1 2010/05/30 05:18:07 rmind Exp $
-#
-
-RUMPNETLIST=	net net80211 netbt netinet local sockin shmif virtif
-
-.for var in ${RUMPNETLIST}
-RUMPNETLIBS+=lib${var}
-RUMPNETLDADD+=-lrumpnet_${var}
-.endfor

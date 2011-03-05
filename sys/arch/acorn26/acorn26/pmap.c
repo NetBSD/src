@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.30 2009/11/07 07:27:40 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.30.4.1 2011/03/05 20:49:03 rmind Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,14 +102,16 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2009/11/07 07:27:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.4.1 2011/03/05 20:49:03 rmind Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_stat.h>
 
 #include <arm/cpuconf.h>
@@ -299,11 +301,11 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	addr = 0;
 	size = round_page(size);
 	for (i = 0; i < vm_nphysseg; i++) {
-		if (vm_physmem[i].avail_start < vm_physmem[i].avail_end) {
+		if (VM_PHYSMEM_PTR(i)->avail_start < VM_PHYSMEM_PTR(i)->avail_end) {
 			addr = (vaddr_t)
 			    ((char*)MEMC_PHYS_BASE +
-				ptoa(vm_physmem[i].avail_start));
-			vm_physmem[i].avail_start++;
+				ptoa(VM_PHYSMEM_PTR(i)->avail_start));
+			VM_PHYSMEM_PTR(i)->avail_start++;
 			break;
 		}
 	}

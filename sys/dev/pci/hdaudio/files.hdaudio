@@ -1,4 +1,4 @@
-# $NetBSD: files.hdaudio,v 1.2 2009/09/08 09:50:56 jmcneill Exp $
+# $NetBSD: files.hdaudio,v 1.2.8.1 2011/03/05 20:54:00 rmind Exp $
 
 #
 # Intel High Definition Audio (Revision 1.0)
@@ -6,10 +6,12 @@
 define	hdaudiobus	{[nid = -1]}
 device	hdaudio: hdaudiobus
 file	dev/pci/hdaudio/hdaudio.c	hdaudio
+file	dev/pci/hdaudio/hdaudio_ids.c	hdaudio
 
 device	hdafg: audiobus, auconv, aurateconv, mulaw
 attach	hdafg at hdaudiobus
-file	dev/pci/hdaudio/hdaudio_afg.c	hdafg
+file	dev/pci/hdaudio/hdafg.c		hdafg
+file	dev/pci/hdaudio/hdafg_dd.c	hdafg
 
 #  hdaudio@pci
 attach	hdaudio at pci with hdaudio_pci

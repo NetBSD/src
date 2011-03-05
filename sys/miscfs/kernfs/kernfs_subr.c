@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.20.4.2 2010/07/03 01:19:57 rmind Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.20.4.3 2011/03/05 20:55:30 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.20.4.2 2010/07/03 01:19:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.20.4.3 2011/03/05 20:55:30 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -176,8 +176,10 @@ kernfs_allocvp(struct mount *mp, struct vnode **vpp, kfstype kfs_type, const str
 			return (ENOENT);
 		}
 		vp = fvp;
-		if (vget(fvp, LK_EXCLUSIVE))
+		if (vn_lock(fvp, LK_EXCLUSIVE)) {
+			vrele(fvp);
 			goto loop;
+		}
 		*vpp = vp;
 		mutex_exit(&kfs_hashlock);
 		return (0);
@@ -315,7 +317,7 @@ kernfs_hashget(kfstype type, struct mount *mp, const struct kern_target *kt, u_i
 		    pp->kfs_kt == kt && pp->kfs_value == value) {
 			mutex_enter(vp->v_interlock);
 			mutex_exit(&kfs_ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
 			return (vp);
 		}

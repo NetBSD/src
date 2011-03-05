@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.3.4.1 2010/05/30 05:17:08 rmind Exp $	*/
+/*	$NetBSD: locore.h,v 1.3.4.2 2011/03/05 20:52:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -129,6 +129,7 @@
  * values to LP64.
  */
 #define	COMBINE(r1, r2, d)	\
+	clruw	r2;		\
 	sllx	r1, 32, d;	\
 	or	d, r2, d
 

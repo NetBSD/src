@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.29.4.1 2010/05/30 05:17:11 rmind Exp $	   */
+/*	$NetBSD: subr.S,v 1.29.4.2 2011/03/05 20:52:20 rmind Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -232,7 +232,10 @@ _C_LABEL(cmn_idsptch):
 	beql	1f		# no ptr, skip increment
 	incl	EV_COUNT(%r1)	# increment low longword
 	adwc	$0,EV_COUNT+4(%r1) # add any carry to hi longword
-1:	incl	_C_LABEL(uvmexp)+UVME_INTRS	# increment uvmexp.intrs
+1:	mfpr	$PR_SSP, %r2	# get curlwp
+	movl	L_CPU(%r2), %r2 # get curcpu
+	incl	CI_NINTR(%r2)	# increment ci_data.cpu_nintr
+	adwc	$0,(CI_NINTR+4)(%r2)
 #if 0
 	pushl	%r0
 	movq	(%r0),-(%sp)

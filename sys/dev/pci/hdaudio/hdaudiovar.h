@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.5 2009/10/11 08:50:12 sborrill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.5.4.1 2011/03/05 20:54:00 rmind Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,6 +34,8 @@
 
 #include <dev/auconv.h>
 
+#include "hdaudio_config.h"
+
 #define	HDAUDIO_MAX_CODECS	15
 
 #define	hda_read1(sc, off)		\
@@ -54,8 +56,15 @@
 	aprint_normal(__VA_ARGS__)
 #define	hda_error(sc, ...)		\
 	aprint_error_dev((sc)->sc_dev, __VA_ARGS__)
+#ifdef HDAUDIO_DEBUG
 #define	hda_trace(sc, ...)		\
-	aprint_debug_dev((sc)->sc_dev, __VA_ARGS__)
+	aprint_normal_dev((sc)->sc_dev, __VA_ARGS__)
+#define	hda_trace1(sc, ...)		\
+	aprint_normal(__VA_ARGS__)
+#else
+#define hda_trace(sc, ...) do { } while (0)
+#define hda_trace1(sc, ...) do { } while (0)
+#endif
 #define	hda_delay(us)			\
 	delay((us))
 
@@ -74,6 +83,8 @@ struct hdaudio_function_group {
 	int				fg_nid;
 	uint16_t			fg_vendor;
 	uint16_t			fg_product;
+
+	int				(*fg_unsol)(device_t, uint8_t);
 };
 
 struct hdaudio_codec {
@@ -161,6 +172,9 @@ struct hdaudio_softc {
 int	hdaudio_attach(device_t, struct hdaudio_softc *);
 int	hdaudio_detach(struct hdaudio_softc *, int);
 bool	hdaudio_resume(struct hdaudio_softc *);
+int	hdaudio_rescan(struct hdaudio_softc *, const char *, const int *);
+void	hdaudio_childdet(struct hdaudio_softc *, device_t);
+
 uint32_t hdaudio_command(struct hdaudio_codec *, int, uint32_t, uint32_t);
 int	hdaudio_intr(struct hdaudio_softc *);
 
@@ -177,8 +191,5 @@ void	hdaudio_stream_stop(struct hdaudio_stream *);
 void	hdaudio_stream_reset(struct hdaudio_stream *);
 int	hdaudio_stream_tag(struct hdaudio_stream *);
 uint16_t hdaudio_stream_param(struct hdaudio_stream *, const audio_params_t *);
-
-int	hdaudio_afg_widget_info(void *, prop_dictionary_t, prop_dictionary_t);
-int	hdaudio_afg_codec_info(void *, prop_dictionary_t, prop_dictionary_t);
 
 #endif /* !_HDAUDIOVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.19.6.1 2010/07/03 01:19:15 rmind Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.19.6.2 2011/03/05 20:49:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.19.6.1 2010/07/03 01:19:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.19.6.2 2011/03/05 20:49:40 rmind Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -440,7 +440,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 #ifdef I80321_HPI_ENABLED
 		/*
 		 * Re-enable interrupts iff an HPI is not pending

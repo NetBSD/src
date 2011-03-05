@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.129.2.2 2010/07/03 01:19:55 rmind Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.129.2.3 2011/03/05 20:55:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.129.2.2 2010/07/03 01:19:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.129.2.3 2011/03/05 20:55:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -863,6 +863,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	struct vattr vattr;
 	size_t addrlen;
 	int error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	proc_t *p;
 
@@ -890,12 +891,18 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT | TRYEMULROOT, UIO_SYSSPACE,
-	    sun->sun_path);
+	pb = pathbuf_create(sun->sun_path);
+	if (pb == NULL) {
+		error = ENOMEM;
+		goto bad;
+	}
+	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT | TRYEMULROOT, pb);
 
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
-	if ((error = namei(&nd)) != 0)
+	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
 		goto bad;
+	}
 	vp = nd.ni_vp;
 	if (vp != NULL) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -904,6 +911,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 		else
 			vput(nd.ni_dvp);
 		vrele(vp);
+		pathbuf_destroy(pb);
 		error = EADDRINUSE;
 		goto bad;
 	}
@@ -911,8 +919,10 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-	if (error)
+	if (error) {
+		pathbuf_destroy(pb);
 		goto bad;
+	}
 	vp = nd.ni_vp;
 	solock(so);
 	vp->v_socket = unp->unp_socket;
@@ -925,6 +935,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp);
 	unp->unp_flags &= ~UNP_BUSY;
+	pathbuf_destroy(pb);
 	return (0);
 
  bad:
@@ -943,6 +954,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	struct unpcb *unp, *unp2, *unp3;
 	size_t addrlen;
 	int error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 
 	unp = sotounpcb(so);
@@ -967,16 +979,24 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_SYSSPACE,
-	    sun->sun_path);
-
-	if ((error = namei(&nd)) != 0)
+	pb = pathbuf_create(sun->sun_path);
+	if (pb == NULL) {
+		error = ENOMEM;
 		goto bad2;
+	}
+
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
+
+	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
+		goto bad2;
+	}
 	vp = nd.ni_vp;
 	if (vp->v_type != VSOCK) {
 		error = ENOTSOCK;
 		goto bad;
 	}
+	pathbuf_destroy(pb);
 	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred)) != 0)
 		goto bad;
 	/* Acquire v_interlock to protect against unp_detach(). */
@@ -1001,7 +1021,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		 * see SO_ACCEPTCONN set on the endpoint, then it must
 		 * be locked by the domain-wide uipc_lock.
 		 */
-		KASSERT((so->so_options & SO_ACCEPTCONN) == 0 ||
+		KASSERT((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    so2->so_lock == uipc_lock);
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    (so3 = sonewconn(so2, 0)) == NULL) {
@@ -1054,7 +1074,7 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 	 *
 	 * local endpoint (so)
 	 * remote endpoint (so2)
-	 * queue head (so->so_head, only if PR_CONNREQUIRED)
+	 * queue head (so2->so_head, only if PR_CONNREQUIRED)
 	 */
 	KASSERT(solocked2(so, so2));
 	KASSERT(so->so_head == NULL);

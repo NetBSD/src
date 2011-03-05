@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.14.100.1 2010/05/30 05:17:02 rmind Exp $ */
+/* $NetBSD: plb.c,v 1.14.100.2 2011/03/05 20:51:36 rmind Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.14.100.1 2010/05/30 05:17:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.14.100.2 2011/03/05 20:51:36 rmind Exp $");
 
 #include "locators.h"
 #include "emac.h"
@@ -100,6 +100,7 @@ const struct plb_dev plb_devs [] = {
 	{ IBM405GPR,	"ecc", },
 	{ IBM405GPR,	"opb", },
 	{ IBM405GPR,	"pchb", },
+	{ IBM405GPR,	"exb", },
 
 	/* AMCC 405EX / EXR */
 	{ AMCC405EX,	"cpu", },
@@ -179,7 +180,7 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	while (local_plb_devs && local_plb_devs->plb_name != NULL) {
-		if (plb_devs[i].plb_pvr != pvr)
+		if (local_plb_devs->plb_pvr != pvr)
 			continue;
 
 		paa.plb_name = local_plb_devs->plb_name;

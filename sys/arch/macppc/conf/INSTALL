@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.108.6.1 2010/05/30 05:16:57 rmind Exp $
+#	$NetBSD: INSTALL,v 1.108.6.2 2011/03/05 20:50:58 rmind Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=4224	# 2112 KiB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	USERCONF	# userconf(4) support
@@ -191,7 +191,7 @@ uhub*	at uhub? port ?
 uhidev* 	at uhub? port ? configuration ? interface ?
 ukbd* 	at uhidev? reportid ?
 
-pseudo-device	md		1	# memory disk
+pseudo-device	md			# memory disk
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)

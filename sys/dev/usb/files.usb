@@ -1,10 +1,11 @@
-#	$NetBSD: files.usb,v 1.97.2.1 2010/05/30 05:17:44 rmind Exp $
+#	$NetBSD: files.usb,v 1.97.2.2 2011/03/05 20:54:10 rmind Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
 
 defflag	USBVERBOSE
+defflag	opt_usb.h	USB_FRAG_DMA_WORKAROUND
 
 defflag	opt_uvideo.h	UVIDEO_DEBUG
 
@@ -146,6 +147,15 @@ device	uvideo: videobus
 attach	uvideo at usbifif
 file	dev/usb/uvideo.c		uvideo
 
+# Auvitek AU0828
+device	auvitek: videobus, i2cexec, usbifif, au8522, xc5k
+attach	auvitek at usbdevif
+file	dev/usb/auvitek.c		auvitek
+file	dev/usb/auvitek_audio.c		auvitek
+file	dev/usb/auvitek_board.c		auvitek
+file	dev/usb/auvitek_i2c.c		auvitek
+file	dev/usb/auvitek_video.c		auvitek
+
 #
 # Misc
 #
@@ -188,7 +198,7 @@ attach	udsbr at usbdevif
 file	dev/usb/udsbr.c			udsbr
 
 # TEMPerHUM HID
-device	uthum: hid
+device	uthum: hid, sysmon_envsys
 attach	uthum at uhidbus
 file	dev/usb/uthum.c			uthum
 
@@ -233,6 +243,10 @@ device	udav: arp, ether, ifnet, mii, mii_phy
 attach	udav at usbdevif
 file	dev/usb/if_udav.c		udav
 
+# Atheros AR9170
+device	otus: arp, ether, firmload, ifnet, wlan
+attach	otus at usbdevif
+file	dev/usb/if_otus.c		otus
 
 # Serial drivers
 # Modems
@@ -319,6 +333,11 @@ file	dev/usb/usscanner.c		usscanner
 device	atu: ether, ifnet, arp, wlan
 attach	atu at usbdevif
 file	dev/usb/if_atu.c		atu
+
+# Intersil PrismGT
+device	upgt: ether, ifnet, arp, wlan, firmload
+attach	upgt at usbdevif
+file	dev/usb/if_upgt.c		upgt
 
 # Ralink Technology RT2500USB
 attach	ral at usbdevif with ural

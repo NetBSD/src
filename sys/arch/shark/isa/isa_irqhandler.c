@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.24 2009/03/18 10:22:36 cegger Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.24.4.1 2011/03/05 20:51:59 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,14 +75,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.24 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.24.4.1 2011/03/05 20:51:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/irqhandler.h>

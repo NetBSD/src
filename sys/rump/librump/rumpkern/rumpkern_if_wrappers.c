@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.6.4.1 2010/05/30 05:18:06 rmind Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.6.4.2 2011/03/05 20:56:15 rmind Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.4 2010/03/05 18:41:46 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.10 2011/01/02 12:52:25 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -21,15 +21,6 @@ rump_kern_unavailable(void)
 {
 
 	panic("kern interface unavailable");
-}
-
-void
-rump_pub_reboot(int arg1)
-{
-
-	rump_schedule();
-	rump_reboot(arg1);
-	rump_unschedule();
 }
 
 int
@@ -140,18 +131,6 @@ rump_pub_cred_create(uid_t arg1, gid_t arg2, size_t arg3, gid_t *arg4)
 	return rv;
 }
 
-struct kauth_cred*
-rump_pub_cred_suserget(void)
-{
-	struct kauth_cred* rv;
-
-	rump_schedule();
-	rv = rump_cred_suserget();
-	rump_unschedule();
-
-	return rv;
-}
-
 void
 rump_pub_cred_put(struct kauth_cred *arg1)
 {
@@ -161,104 +140,65 @@ rump_pub_cred_put(struct kauth_cred *arg1)
 	rump_unschedule();
 }
 
-struct lwp *
-rump_pub_newproc_switch(void)
+int
+rump_pub_lwproc_rfork(int arg1)
 {
-	struct lwp * rv;
+	int rv;
 
 	rump_schedule();
-	rv = rump_newproc_switch();
+	rv = rump_lwproc_rfork(arg1);
 	rump_unschedule();
 
 	return rv;
 }
 
-struct lwp *
-rump_pub_lwp_alloc(pid_t arg1, lwpid_t arg2)
+int
+rump_pub_lwproc_newlwp(pid_t arg1)
 {
-	struct lwp * rv;
+	int rv;
 
 	rump_schedule();
-	rv = rump_lwp_alloc(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
-
-struct lwp *
-rump_pub_lwp_alloc_and_switch(pid_t arg1, lwpid_t arg2)
-{
-	struct lwp * rv;
-
-	rump_schedule();
-	rv = rump_lwp_alloc_and_switch(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
-
-struct lwp *
-rump_pub_lwp_curlwp(void)
-{
-	struct lwp * rv;
-
-	rump_schedule();
-	rv = rump_lwp_curlwp();
+	rv = rump_lwproc_newlwp(arg1);
 	rump_unschedule();
 
 	return rv;
 }
 
 void
-rump_pub_lwp_switch(struct lwp *arg1)
+rump_pub_lwproc_switch(struct lwp *arg1)
 {
 
 	rump_schedule();
-	rump_lwp_switch(arg1);
+	rump_lwproc_switch(arg1);
 	rump_unschedule();
 }
 
 void
-rump_pub_lwp_release(struct lwp *arg1)
+rump_pub_lwproc_releaselwp(void)
 {
 
 	rump_schedule();
-	rump_lwp_release(arg1);
+	rump_lwproc_releaselwp();
 	rump_unschedule();
 }
 
-int
-rump_pub_sysproxy_set(rump_sysproxy_t arg1, void *arg2)
+struct lwp *
+rump_pub_lwproc_curlwp(void)
 {
-	int rv;
+	struct lwp * rv;
 
 	rump_schedule();
-	rv = rump_sysproxy_set(arg1, arg2);
+	rv = rump_lwproc_curlwp();
 	rump_unschedule();
 
 	return rv;
 }
 
-int
-rump_pub_sysproxy_socket_setup_client(int arg1)
+void
+rump_pub_allbetsareoff_setid(pid_t arg1, int arg2)
 {
-	int rv;
 
 	rump_schedule();
-	rv = rump_sysproxy_socket_setup_client(arg1);
+	rump_allbetsareoff_setid(arg1, arg2);
 	rump_unschedule();
-
-	return rv;
-}
-
-int
-rump_pub_sysproxy_socket_setup_server(int arg1)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_sysproxy_socket_setup_server(arg1);
-	rump_unschedule();
-
-	return rv;
 }

@@ -1,7 +1,8 @@
+/*	$NetBSD: proc.h,v 1.5.2.1 2011/03/05 20:50:49 rmind Exp $	*/
+
 #ifndef _IA64_PROC_H_
 #define _IA64_PROC_H_
 
-#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
 
 /*

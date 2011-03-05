@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.89 2010/01/03 23:03:21 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.89.4.1 2011/03/05 20:52:01 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,6 +151,9 @@ extern int cpu_arch;
 /* Number of CPUs in the system */
 extern int sparc_ncpus;
 
+/* Provide %pc of a lwp */
+#define LWP_PC(l)       ((l)->l_md.md_tf->tf_pc)
+
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for
  * ``not me'' or 1 (``I took care of it'').  intr_establish() inserts a
@@ -193,6 +196,7 @@ void	schedintr(void *);
 
 /* locore.s */
 struct fpstate;
+void	ipi_savefpstate(struct fpstate *);
 void	savefpstate(struct fpstate *);
 void	loadfpstate(struct fpstate *);
 int	probeget(void *, int);

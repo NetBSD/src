@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.18 2008/04/28 20:23:12 martin Exp $ */
+/*	$NetBSD: drsupio.c,v 1.18.22.1 2011/03/05 20:49:21 rmind Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.18 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.18.22.1 2011/03/05 20:49:21 rmind Exp $");
 
 /*
  * DraCo multi-io chip bus space stuff
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.18 2008/04/28 20:23:12 martin Exp $");
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/param.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

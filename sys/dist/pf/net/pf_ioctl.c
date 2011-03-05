@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.37.4.1 2010/05/30 05:17:47 rmind Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.37.4.2 2011/03/05 20:54:21 rmind Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.37.4.1 2010/05/30 05:17:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.37.4.2 2011/03/05 20:54:21 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1496,6 +1496,7 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 			if (pf_tbladdr_setup(ruleset, &pa->addr))
 				error = EINVAL;
 
+		rule->overload_tbl = NULL;
 		if (rule->overload_tblname[0]) {
 			if ((rule->overload_tbl = pfr_attach_table(ruleset,
 			    rule->overload_tblname)) == NULL)
@@ -1747,6 +1748,7 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 				if (pf_tbladdr_setup(ruleset, &pa->addr))
 					error = EINVAL;
 
+			newrule->overload_tbl = NULL;
 			if (newrule->overload_tblname[0]) {
 				if ((newrule->overload_tbl = pfr_attach_table(
 				    ruleset, newrule->overload_tblname)) ==
