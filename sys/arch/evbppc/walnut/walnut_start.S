@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.18.2.1 2010/05/30 05:16:44 rmind Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.18.2.2 2011/03/05 20:50:18 rmind Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
  */
 
 #undef PPC_4XX_NOCACHE
-#define _NOREGNAMES
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -174,7 +173,7 @@ __start_cpu0:
 	addi	%r8,%r8,_C_LABEL(end)@l
 /* zero bss */
 	li	%r4,0
-2:	stwu	%r4,%r4(3)
+2:	stwu	%r4,%r4(%r3)
 	cmpw	%r3,%r8
 	bne+	2b
 
@@ -193,7 +192,7 @@ __start_cpu0:
 	mtpid	%r0
 	sync
 
-	INIT_CPUINFO(8,1,9,0)
+	INIT_CPUINFO(%r8,%r1,%r9,%r0)
 	mr	%r4,%r8
 
 	lis	%r3,__start@ha

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.2 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.2.12.1 2011/03/05 20:52:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.2 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.2.12.1 2011/03/05 20:52:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/msg.h>
 #include <sys/sysctl.h>
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>

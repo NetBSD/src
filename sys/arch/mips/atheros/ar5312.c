@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.6 2010/01/22 08:56:05 martin Exp $ */
+/* $NetBSD: ar5312.c,v 1.6.4.1 2011/03/05 20:51:02 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -52,6 +52,7 @@
 #include "opt_memsize.h"
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 

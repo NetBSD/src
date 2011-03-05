@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2 2010/03/01 13:12:21 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2.2.1 2011/03/05 20:56:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,14 +28,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2010/03/01 13:12:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2.2.1 2011/03/05 20:56:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/socketvar.h>
+
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/in_var.h>
 
 #include "rump_private.h"
 #include "rump_net_private.h"
+
+int carpattach(int);
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
@@ -44,4 +51,38 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	DOMAINADD(arpdomain);
 	DOMAINADD(inetdomain);
 	DOMAINADD(inet6domain);
+
+	carpattach(1);
+}
+
+RUMP_COMPONENT(RUMP_COMPONENT_NET_IFCFG)
+{
+	struct ifaliasreq ia;
+	struct sockaddr_in *sin;
+	struct socket *so;
+	int error;
+
+	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, curlwp, NULL)) != 0)
+		panic("lo0 config: cannot create socket");
+
+	/* configure 127.0.0.1 for lo0 */
+	memset(&ia, 0, sizeof(ia));
+	strcpy(ia.ifra_name, "lo0");
+	sin = (struct sockaddr_in *)&ia.ifra_addr;
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(struct sockaddr_in);
+	sin->sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	sin = (struct sockaddr_in *)&ia.ifra_mask;
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(struct sockaddr_in);
+	sin->sin_addr.s_addr = inet_addr("255.0.0.0");
+
+	sin = (struct sockaddr_in *)&ia.ifra_broadaddr;
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(struct sockaddr_in);
+	sin->sin_addr.s_addr = inet_addr("127.255.255.255");
+
+	in_control(so, SIOCAIFADDR, &ia, lo0ifp, curlwp);
+	soclose(so);
 }

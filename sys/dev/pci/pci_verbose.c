@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.c,v 1.5.2.3 2010/07/03 01:19:37 rmind Exp $	*/
+/*	$NetBSD: pci_verbose.c,v 1.5.2.4 2011/03/05 20:53:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.5.2.3 2010/07/03 01:19:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.5.2.4 2011/03/05 20:53:47 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -86,6 +86,7 @@ pciverbose_modcmd(modcmd_t cmd, void *arg)
 		pci_findvendor = pci_findvendor_real;
 		pci_findproduct = pci_findproduct_real;
 		pci_unmatched = "unmatched ";
+		pciverbose_loaded = 1;
 		return 0;
 	case MODULE_CMD_FINI:
 		pci_findvendor = saved_findvendor;

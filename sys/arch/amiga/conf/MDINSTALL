@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.27 2009/02/06 18:50:26 jym Exp $
+#	$NetBSD: MDINSTALL,v 1.27.6.1 2011/03/05 20:49:20 rmind Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -237,6 +237,8 @@ mgnsc0		at zbus0		# Magnum scsi
 scsibus*	at mgnsc0
 wesc0		at zbus0		# Warp Engine scsi
 scsibus*	at wesc0
+bppcsc0		at zbus0		# BlizzardPPC 603e+ scsi
+scsibus*	at bppcsc0
 afsc0		at zbus0		# A4091 scsi
 scsibus*	at afsc0
 aftsc0		at mainbus0		# A4000T scsi
@@ -296,4 +298,4 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=2048	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
-pseudo-device	md		1	# memory disk [ramdisk]
+pseudo-device	md			# memory disk [ramdisk]

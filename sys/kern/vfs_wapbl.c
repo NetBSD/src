@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.34.2.2 2010/05/30 05:17:58 rmind Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.34.2.3 2011/03/05 20:55:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.34.2.2 2010/05/30 05:17:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.34.2.3 2011/03/05 20:55:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.34.2.2 2010/05/30 05:17:58 rmind Exp
 #include <sys/param.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -72,6 +73,10 @@ MALLOC_JUSTDEFINE(M_WAPBL, "wapbl", "write-ahead physical block logging");
 #define	wapbl_free(a, s) free((a), M_WAPBL)
 #define	wapbl_calloc(n, s) malloc((n)*(s), M_WAPBL, M_WAITOK | M_ZERO)
 #endif
+
+static struct sysctllog *wapbl_sysctl;
+static int wapbl_flush_disk_cache = 1;
+static int wapbl_verbose_commit = 0;
 
 #else /* !_KERNEL */
 #include <assert.h>
@@ -104,6 +109,7 @@ MALLOC_JUSTDEFINE(M_WAPBL, "wapbl", "write-ahead physical block logging");
  *		r = read-only after init
  *		l = rwlock held
  *		m = mutex held
+ *		lm = rwlock held writing or mutex held
  *		u = unlocked access ok
  *		b = bufcache_lock held
  */
@@ -173,9 +179,9 @@ struct wapbl {
 	size_t wl_unsynced_bufbytes; /* Byte count of unsynced buffers */
 #endif
 
-	daddr_t *wl_deallocblks;/* l:	address of block */
-	int *wl_dealloclens;	/* l:	size of block */
-	int wl_dealloccnt;	/* l:	total count */
+	daddr_t *wl_deallocblks;/* lm:	address of block */
+	int *wl_dealloclens;	/* lm:	size of block */
+	int wl_dealloccnt;	/* lm:	total count */
 	int wl_dealloclim;	/* l:	max count */
 
 	/* hashtable of inode numbers for allocated but unlinked inodes */
@@ -257,6 +263,66 @@ struct wapbl_ops wapbl_ops = {
 	/* XXX: the following is only used to say "this is a wapbl buf" */
 	.wo_wapbl_biodone	= wapbl_biodone,
 };
+
+static int
+wapbl_sysctl_init(void)
+{
+	int rv;
+	const struct sysctlnode *rnode, *cnode;
+
+	wapbl_sysctl = NULL;
+
+	rv = sysctl_createv(&wapbl_sysctl, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	if (rv)
+		return rv;
+
+	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "wapbl",
+		       SYSCTL_DESCR("WAPBL journaling options"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	if (rv)
+		return rv;
+
+	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "flush_disk_cache",
+		       SYSCTL_DESCR("flush disk cache"),
+		       NULL, 0, &wapbl_flush_disk_cache, 0,
+		       CTL_CREATE, CTL_EOL);
+	if (rv)
+		return rv;
+
+	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "verbose_commit",
+		       SYSCTL_DESCR("show time and size of wapbl log commits"),
+		       NULL, 0, &wapbl_verbose_commit, 0,
+		       CTL_CREATE, CTL_EOL);
+	return rv;
+}
+
+static void
+wapbl_init(void)
+{
+	malloc_type_attach(M_WAPBL);
+	wapbl_sysctl_init();
+}
+
+#ifdef notyet
+static int
+wapbl_fini(bool interface)
+{
+	if (aio_sysctl != NULL)
+		 sysctl_teardown(&aio_sysctl);
+	return 0;
+}
+#endif
 
 static int
 wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
@@ -413,7 +479,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wl->wl_bufcount_max = (nbuf / 2) * 1024;
 
 	/* XXX tie this into resource estimation */
-	wl->wl_dealloclim = 2 * btodb(wl->wl_bufbytes_max);
+	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
 	
 	wl->wl_deallocblks = wapbl_malloc(sizeof(*wl->wl_deallocblks) *
 	    wl->wl_dealloclim);
@@ -786,8 +852,7 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 		  ((wl->wl_bufcount + (lockcount * 10)) >
 		   wl->wl_bufcount_max / 2) ||
 		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2) ||
-		  (wl->wl_dealloccnt >=
-		   (wl->wl_dealloclim - (wl->wl_dealloclim >> 8)));
+		  (wl->wl_dealloccnt >= (wl->wl_dealloclim / 2));
 	mutex_exit(&wl->wl_mtx);
 
 	if (doflush) {
@@ -833,6 +898,18 @@ wapbl_end(struct wapbl *wl)
 	      "bufbytes=%zu bcount=%zu\n",
 	      curproc->p_pid, curlwp->l_lid, wl->wl_bufcount,
 	      wl->wl_bufbytes, wl->wl_bcount));
+#endif
+
+#ifdef DIAGNOSTIC
+	size_t flushsize = wapbl_transaction_len(wl);
+	if (flushsize > (wl->wl_circ_size - wl->wl_reserved_bytes)) {
+		/*
+		 * XXX this could be handled more gracefully, perhaps place
+		 * only a partial transaction in the log and allow the
+		 * remaining to flush without the protection of the journal.
+		 */
+		panic("wapbl_end: current transaction too big to flush\n");
+	}
 #endif
 
 	mutex_enter(&wl->wl_mtx);
@@ -1326,6 +1403,13 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 
 	/* Calculate amount of space needed to flush */
 	flushsize = wapbl_transaction_len(wl);
+	if (wapbl_verbose_commit) {
+		struct timespec ts;
+		getnanotime(&ts);
+		printf("%s: %lld.%09ld this transaction = %zu bytes\n",
+		    __func__, (long long)ts.tv_sec,
+		    (long)ts.tv_nsec, flushsize);
+	}
 
 	if (flushsize > (wl->wl_circ_size - wl->wl_reserved_bytes)) {
 		/*
@@ -1672,6 +1756,7 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 
 	wapbl_jlock_assert(wl);
 
+	mutex_enter(&wl->wl_mtx);
 	/* XXX should eventually instead tie this into resource estimation */
 	/*
 	 * XXX this panic needs locking/mutex analysis and the
@@ -1686,6 +1771,7 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 	wl->wl_dealloccnt++;
 	WAPBL_PRINTF(WAPBL_PRINT_ALLOC,
 	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d\n", blk, len));
+	mutex_exit(&wl->wl_mtx);
 }
 
 /****************************************************************/
@@ -1788,7 +1874,7 @@ wapbl_transaction_inodes_len(struct wapbl *wl)
 
 	KASSERT(iph > 0);
 
-	return MAX(1, howmany(wl->wl_inohashcnt, iph))*blocklen;
+	return MAX(1, howmany(wl->wl_inohashcnt, iph)) * blocklen;
 }
 
 
@@ -1807,8 +1893,8 @@ wapbl_transaction_len(struct wapbl *wl)
 	KASSERT(bph > 0);
 
 	len = wl->wl_bcount;
-	len += howmany(wl->wl_bufcount, bph)*blocklen;
-	len += howmany(wl->wl_dealloccnt, bph)*blocklen;
+	len += howmany(wl->wl_bufcount, bph) * blocklen;
+	len += howmany(wl->wl_dealloccnt, bph) * blocklen;
 	len += wapbl_transaction_inodes_len(wl);
 
 	return len;
@@ -1831,12 +1917,15 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	int force = 1;
 	daddr_t pbn;
 
-	/* XXX Calc checksum here, instead we do this for now */
-	error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force, FWRITE, FSCRED);
-	if (error) {
-		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%"PRIx64
-		    " returned %d\n", wl->wl_devvp->v_rdev, error));
+	if (wapbl_flush_disk_cache) {
+		/* XXX Calc checksum here, instead we do this for now */
+		error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force,
+		    FWRITE, FSCRED);
+		if (error) {
+			WAPBL_PRINTF(WAPBL_PRINT_ERROR,
+			    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%x "
+			    "returned %d\n", wl->wl_devvp->v_rdev, error));
+		}
 	}
 
 	wc->wc_head = head;
@@ -1864,11 +1953,14 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	if (error)
 		return error;
 
-	error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force, FWRITE, FSCRED);
-	if (error) {
-		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%"PRIx64
-		    " returned %d\n", wl->wl_devvp->v_rdev, error));
+	if (wapbl_flush_disk_cache) {
+		error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force,
+		    FWRITE, FSCRED);
+		if (error) {
+			WAPBL_PRINTF(WAPBL_PRINT_ERROR,
+			    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%x "
+			    "returned %d\n", wl->wl_devvp->v_rdev, error));
+		}
 	}
 
 	/*
@@ -2095,7 +2187,7 @@ wapbl_blkhash_init(struct wapbl_replay *wr, u_int size)
 		for (hashsize = 1; hashsize < size; hashsize <<= 1)
 			continue;
 		wr->wr_blkhash = wapbl_malloc(hashsize * sizeof(*wr->wr_blkhash));
-		for (i = 0; i < wr->wr_blkhashmask; i++)
+		for (i = 0; i < hashsize; i++)
 			LIST_INIT(&wr->wr_blkhash[i]);
 		wr->wr_blkhashmask = hashsize - 1;
 	}
@@ -2648,7 +2740,7 @@ wapbl_replay_write(struct wapbl_replay *wr, struct vnode *fsdevvp)
 
 	scratch = wapbl_malloc(MAXBSIZE);
 
-	for (i = 0; i < wr->wr_blkhashmask; ++i) {
+	for (i = 0; i <= wr->wr_blkhashmask; ++i) {
 		LIST_FOREACH(wb, &wr->wr_blkhash[i], wb_hash) {
 			off = wb->wb_off;
 			error = wapbl_circ_read(wr, scratch, fsblklen, &off);
@@ -2720,9 +2812,12 @@ wapbl_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		malloc_type_attach(M_WAPBL);
+		wapbl_init();
 		return 0;
 	case MODULE_CMD_FINI:
+#ifdef notyet
+		return wapbl_fini(true);
+#endif
 		return EOPNOTSUPP;
 	default:
 		return ENOTTY;

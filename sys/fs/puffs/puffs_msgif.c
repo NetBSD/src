@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.80.4.1 2010/03/16 15:38:07 rmind Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.80.4.2 2011/03/05 20:55:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.80.4.1 2010/03/16 15:38:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.80.4.2 2011/03/05 20:55:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -64,6 +64,9 @@ struct puffs_msgpark {
 
 	size_t			park_copylen;	/* userspace copylength	*/
 	size_t			park_maxlen;	/* max size in comeback */
+
+	struct puffs_req	*park_creq;	/* non-compat preq	*/
+	size_t			park_creqlen;	/* non-compat preq len	*/
 
 	parkdone_fn		park_done;	/* "biodone" a'la puffs	*/
 	void			*park_donearg;
@@ -124,8 +127,6 @@ puffs_msgif_destroy(void)
 	pool_cache_destroy(parkpc);
 }
 
-static int alloced;
-
 static struct puffs_msgpark *
 puffs_msgpark_alloc(int waitok)
 {
@@ -136,7 +137,7 @@ puffs_msgpark_alloc(int waitok)
 		return park;
 
 	park->park_refcount = 1;
-	park->park_preq = NULL;
+	park->park_preq = park->park_creq = NULL;
 	park->park_flags = PARKFLAG_WANTREPLY;
 
 #ifdef PUFFSDEBUG
@@ -161,6 +162,7 @@ static void
 puffs_msgpark_release1(struct puffs_msgpark *park, int howmany)
 {
 	struct puffs_req *preq = park->park_preq;
+	struct puffs_req *creq = park->park_creq;
 	int refcnt;
 
 	KASSERT(mutex_owned(&park->park_mtx));
@@ -170,9 +172,12 @@ puffs_msgpark_release1(struct puffs_msgpark *park, int howmany)
 	KASSERT(refcnt >= 0);
 
 	if (refcnt == 0) {
-		alloced--;
 		if (preq)
 			kmem_free(preq, park->park_maxlen);
+#if 1
+		if (creq)
+			kmem_free(creq, park->park_creqlen);
+#endif
 		pool_cache_put(parkpc, park);
 
 #ifdef PUFFSDEBUG
@@ -324,10 +329,32 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 {
 	struct lwp *l = curlwp;
 	struct mount *mp;
-	struct puffs_req *preq;
+	struct puffs_req *preq, *creq;
+	ssize_t delta;
+
+	/*
+	 * Some clients reuse a park, so reset some flags.  We might
+	 * want to provide a caller-side interface for this and add
+	 * a few more invariant checks here, but this will do for now.
+	 */
+	park->park_flags &= ~(PARKFLAG_DONE | PARKFLAG_HASERROR);
+	KASSERT((park->park_flags & PARKFLAG_WAITERGONE) == 0);
 
 	mp = PMPTOMP(pmp);
 	preq = park->park_preq;
+
+#if 1
+	/* check if we do compat adjustments */
+	if (pmp->pmp_docompat && puffs_compat_outgoing(preq, &creq, &delta)) {
+		park->park_creq = park->park_preq;
+		park->park_creqlen = park->park_maxlen;
+
+		park->park_maxlen += delta;
+		park->park_copylen += delta;
+		park->park_preq = preq = creq;
+	}
+#endif
+
 	preq->preq_buflen = park->park_maxlen;
 	KASSERT(preq->preq_id == 0
 	    || (preq->preq_opclass & PUFFSOPFLAG_ISRESPONSE));
@@ -351,17 +378,30 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	if (__predict_false((park->park_flags & PARKFLAG_WANTREPLY)
 	   && (park->park_flags & PARKFLAG_CALL) == 0
 	   && (l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0))) {
-		park->park_flags |= PARKFLAG_HASERROR;
-		preq->preq_rv = EINTR;
-		if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN
-		    && (preq->preq_optype == PUFFS_VN_INACTIVE
-		     || preq->preq_optype == PUFFS_VN_RECLAIM)) {
-			park->park_preq->preq_opclass |= PUFFSOPFLAG_FAF;
-			park->park_flags &= ~PARKFLAG_WANTREPLY;
-			DPRINTF(("puffs_msg_enqueue: converted to FAF %p\n",
-			    park));
-		} else {
-			return;
+		sigset_t ss;
+
+		/*
+		 * see the comment about signals in puffs_msg_wait.
+		 */
+		sigpending1(l, &ss);
+		if (sigismember(&ss, SIGINT) ||
+		    sigismember(&ss, SIGTERM) ||
+		    sigismember(&ss, SIGKILL) ||
+		    sigismember(&ss, SIGHUP) ||
+		    sigismember(&ss, SIGQUIT)) {
+			park->park_flags |= PARKFLAG_HASERROR;
+			preq->preq_rv = EINTR;
+			if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN
+			    && (preq->preq_optype == PUFFS_VN_INACTIVE
+			     || preq->preq_optype == PUFFS_VN_RECLAIM)) {
+				park->park_preq->preq_opclass |=
+				    PUFFSOPFLAG_FAF;
+				park->park_flags &= ~PARKFLAG_WANTREPLY;
+				DPRINTF(("puffs_msg_enqueue: "
+				    "converted to FAF %p\n", park));
+			} else {
+				return;
+			}
 		}
 	}
 
@@ -399,27 +439,47 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 int
 puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 {
+	lwp_t *l = curlwp;
+	proc_t *p = l->l_proc;
 	struct puffs_req *preq = park->park_preq; /* XXX: hmmm */
+	sigset_t ss;
+	sigset_t oss;
 	int error = 0;
 	int rv;
+
+	/*
+	 * block unimportant signals.
+	 *
+	 * The set of "important" signals here was chosen to be same as
+	 * nfs interruptible mount.
+	 */
+	sigfillset(&ss);
+	sigdelset(&ss, SIGINT);
+	sigdelset(&ss, SIGTERM);
+	sigdelset(&ss, SIGKILL);
+	sigdelset(&ss, SIGHUP);
+	sigdelset(&ss, SIGQUIT);
+	mutex_enter(p->p_lock);
+	sigprocmask1(l, SIG_BLOCK, &ss, &oss);
+	mutex_exit(p->p_lock);
 
 	mutex_enter(&pmp->pmp_lock);
 	puffs_mp_reference(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
 	mutex_enter(&park->park_mtx);
-	if ((park->park_flags & PARKFLAG_WANTREPLY) == 0
-	    || (park->park_flags & PARKFLAG_CALL)) {
-		mutex_exit(&park->park_mtx);
-		rv = 0;
-		goto skipwait;
-	}
-
 	/* did the response beat us to the wait? */
 	if (__predict_false((park->park_flags & PARKFLAG_DONE)
 	    || (park->park_flags & PARKFLAG_HASERROR))) {
 		rv = park->park_preq->preq_rv;
 		mutex_exit(&park->park_mtx);
+		goto skipwait;
+	}
+
+	if ((park->park_flags & PARKFLAG_WANTREPLY) == 0
+	    || (park->park_flags & PARKFLAG_CALL)) {
+		mutex_exit(&park->park_mtx);
+		rv = 0;
 		goto skipwait;
 	}
 
@@ -475,6 +535,10 @@ puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	mutex_enter(&pmp->pmp_lock);
 	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
+
+	mutex_enter(p->p_lock);
+	sigprocmask1(l, SIG_SETMASK, &oss, NULL);
+	mutex_exit(p->p_lock);
 
 	return rv;
 }
@@ -732,13 +796,31 @@ puffsop_msg(void *this, struct puffs_req *preq)
 		DPRINTF(("puffsop_msg: bad service - waiter gone for "
 		    "park %p\n", park));
 	} else {
+#if 1
+		if (park->park_creq) {
+			struct puffs_req *creq;
+			size_t csize;
+
+			KASSERT(pmp->pmp_docompat);
+			puffs_compat_incoming(preq, park->park_creq);
+			creq = park->park_creq;
+			csize = park->park_creqlen;
+			park->park_creq = park->park_preq;
+			park->park_creqlen = park->park_maxlen;
+
+			park->park_preq = creq;
+			park->park_maxlen = csize;
+
+			memcpy(park->park_creq, preq, pth->pth_framelen);
+		} else {
+#endif
+			memcpy(park->park_preq, preq, pth->pth_framelen);
+		}
+
 		if (park->park_flags & PARKFLAG_CALL) {
 			DPRINTF(("puffsop_msg: call for %p, arg %p\n",
 			    park->park_preq, park->park_donearg));
 			park->park_done(pmp, preq, park->park_donearg);
-		} else {
-			/* XXX: yes, I know */
-			memcpy(park->park_preq, preq, pth->pth_framelen);
 		}
 	}
 

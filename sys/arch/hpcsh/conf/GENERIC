@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87.4.1 2010/05/30 05:16:52 rmind Exp $
+# $NetBSD: GENERIC,v 1.87.4.2 2011/03/05 20:50:35 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -68,12 +68,12 @@ options 	KLOADER
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-#options 	SYSVMSG		# System V-like message queues
-#options 	SYSVSEM		# System V-like semaphores
-#options 	SYSVSHM		# System V-like memory sharing
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-#options 	MODULAR		# new style module framework
+#options 	MODULAR		# new style module(7) framework
 
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

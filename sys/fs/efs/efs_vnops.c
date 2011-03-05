@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.20.4.2 2010/07/03 01:19:49 rmind Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.20.4.3 2011/03/05 20:55:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.20.4.2 2010/07/03 01:19:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.20.4.3 2011/03/05 20:55:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,6 @@ efs_lookup(void *v)
 				    cnp->cn_cred);
 				if (err)
 					return (err);
-				cnp->cn_flags |= SAVENAME;
 				return (EJUSTRETURN);
 			}
 			return (err);

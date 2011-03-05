@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.79.2.1 2010/07/03 01:19:41 rmind Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.79.2.2 2011/03/05 20:54:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.79.2.1 2010/07/03 01:19:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.79.2.2 2011/03/05 20:54:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,6 +268,24 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
+
+	/* Kingston USB pendrives don't like being told to lock the door */
+	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DTMINI10 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/* HP USB pendrives don't like being told to lock the door */
+	{ { USB_VENDOR_HP, USB_PRODUCT_HP_V125W },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
 };
 
 const struct umass_quirk *
@@ -286,7 +304,7 @@ umass_init_insystem(struct umass_softc *sc)
 	if (err) {
 		DPRINTF(UDMASS_USB,
 			("%s: could not switch to Alt Interface 1\n",
-			USBDEVNAME(sc->sc_dev)));
+			device_xname(sc->sc_dev)));
 		return (err);
 	}
 

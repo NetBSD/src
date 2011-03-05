@@ -179,7 +179,6 @@
 #define	VM_PHYSSEG_MAX		16
 #endif
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
-#define	VM_PHYSSEG_NOADD
 
 #ifndef VM_PHYS_SIZE
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
@@ -194,23 +193,5 @@
 #define	VM_FREELIST_FIRST256	1
 #define	VM_FREELIST_FIRST16	2
 #define	VM_FREELIST_MAX		3
-
-#ifndef _LOCORE
-
-LIST_HEAD(pvo_head, pvo_entry);
-
-#define	__HAVE_VM_PAGE_MD
-
-struct vm_page_md {
-	struct pvo_head mdpg_pvoh;
-	unsigned int mdpg_attrs; 
-};
-
-#define	VM_MDPAGE_INIT(pg) do {			\
-	LIST_INIT(&(pg)->mdpage.mdpg_pvoh);	\
-	(pg)->mdpage.mdpg_attrs = 0;		\
-} while (/*CONSTCOND*/0)
-
-#endif	/* _LOCORE */
 
 #endif /* _POWERPC_OEA_VMPARAM_H_ */

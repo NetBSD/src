@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.200 2009/12/30 22:12:12 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.200.4.1 2011/03/05 20:55:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.200 2009/12/30 22:12:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.200.4.1 2011/03/05 20:55:24 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -98,7 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.200 2009/12/30 22:12:12 elad Exp $
 #include <compat/sys/socket.h>
 #endif
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_loan.h>
+#include <uvm/uvm_page.h>
 
 MALLOC_DEFINE(M_SOOPTS, "soopts", "socket options");
 MALLOC_DEFINE(M_SONAME, "soname", "socket name");
@@ -461,9 +463,10 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 	case KAUTH_REQ_NETWORK_SOCKET_OPEN:
 		/* We allow "raw" routing/bluetooth sockets to anyone. */
-		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_BLUETOOTH)
+		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_OROUTE
+		    || (u_long)arg1 == PF_BLUETOOTH) {
 			result = KAUTH_RESULT_ALLOW;
-		else {
+		} else {
 			/* Privileged, let secmodel handle this. */
 			if ((u_long)arg2 == SOCK_RAW)
 				break;
@@ -1022,7 +1025,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				}
 				if (resid >= MINCLSIZE && space >= MCLBYTES) {
 					SOSEND_COUNTER_INCR(&sosend_copy_big);
-					m_clget(m, M_WAIT);
+					m_clget(m, M_DONTWAIT);
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
 					mlen = MCLBYTES;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.20.4.1 2010/05/30 05:16:49 rmind Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.20.4.2 2011/03/05 20:50:28 rmind Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.20.4.1 2010/05/30 05:16:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.20.4.2 2011/03/05 20:50:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -558,7 +558,6 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 		      "LASI/i82596CA" :
 		      "i82596DX",
 		      myaddr, ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
-	gsc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NET,
-					  i82586_intr, sc,
-					  ga->ga_int_reg, ga->ga_irq);
+	gsc->sc_ih = hp700_intr_establish(IPL_NET, i82586_intr, sc,
+	    ga->ga_ir, ga->ga_irq);
 }

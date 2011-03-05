@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.26.4.1 2010/05/30 05:17:20 rmind Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.26.4.2 2011/03/05 20:53:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.26.4.1 2010/05/30 05:17:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.26.4.2 2011/03/05 20:53:12 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.26.4.1 2010/05/30 05:17:20 rmind Exp $
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

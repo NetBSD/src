@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.302.2.3 2010/04/25 19:39:00 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.302.2.4 2011/03/05 20:52:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.3 2010/04/25 19:39:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.4 2011/03/05 20:52:03 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.3 2010/04/25 19:39:00 rmind Exp 
 #include <sys/proc.h>
 #include <sys/extent.h>
 #include <sys/savar.h>
+#include <sys/cpu.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
@@ -120,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.3 2010/04/25 19:39:00 rmind Exp 
 #include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>
@@ -357,7 +359,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%psr: (retain CWP and PSR_S bits)
-	 *	%g1: address of p->p_psstr (used by crt0)
+	 *	%g1: p->p_psstrp (used by crt0)
 	 *	%pc,%npc: entry point of program
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
@@ -378,7 +380,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 				savefpstate(fs);
 #if defined(MULTIPROCESSOR)
 			else
-				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+				XCALL1(ipi_savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 			cpi->fplwp = NULL;
 		}
@@ -389,7 +391,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	}
 	memset((void *)tf, 0, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_global[1] = (int)l->l_proc->p_psstr;
+	tf->tf_global[1] = l->l_proc->p_psstrp;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
@@ -778,6 +780,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_out[5] = r[_REG_O5];
 		tf->tf_out[6] = r[_REG_O6];
 		tf->tf_out[7] = r[_REG_O7];
+
+		lwp_setprivate(l, (void *)(uintptr_t)r[_REG_G7]);
 	}
 
 #ifdef FPU_CONTEXT
@@ -1120,18 +1124,17 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 void
 oldmon_w_trace(u_long va)
 {
+	struct cpu_info * const ci = curcpu();
 	u_long stop;
 	struct frame *fp;
 
-	if (curlwp)
-		printf("curlwp = %p, pid %d\n",
-			curlwp, curproc->p_pid);
-	else
-		printf("no curlwp\n");
+	printf("curlwp = %p, pid %d\n", curlwp, curproc->p_pid);
 
-	printf("uvm: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
-	    uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs,
-		uvmexp.softs, uvmexp.faults);
+	printf("uvm: cpu%u: swtch %"PRIu64", trap %"PRIu64", sys %"PRIu64", "
+	    "intr %"PRIu64", soft %"PRIu64", faults %"PRIu64"\n",
+	    cpu_index(ci), ci->ci_data.cpu_nswtch, ci->ci_data.cpu_ntrap,
+	    ci->ci_data.cpu_nsyscall, ci->ci_data.cpu_nintr,
+	    ci->ci_data.cpu_nsoft, ci->ci_data.cpu_nfault);
 	write_user_windows();
 
 #define round_up(x) (( (x) + (PAGE_SIZE-1) ) & (~(PAGE_SIZE-1)) )

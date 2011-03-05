@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.22 2009/11/27 03:23:05 rmind Exp $	*/
+/*	$NetBSD: gt.c,v 1.22.4.1 2011/03/05 20:49:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.22 2009/11/27 03:23:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.22.4.1 2011/03/05 20:49:49 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -131,7 +131,7 @@ gt_attach(device_t parent, device_t self, void *aux)
 	pc->pc_memext = extent_create("pcimem", 0x12000000, 0x13ffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
-	    mips_dcache_align);
+	    mips_cache_info.mci_dcache_align);
 #endif
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;

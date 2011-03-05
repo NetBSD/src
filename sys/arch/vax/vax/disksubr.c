@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.51 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.51.4.1 2011/03/05 20:52:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,11 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.51 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.51.4.1 2011/03/05 20:52:18 rmind Exp $");
+
+#include "opt_compat_ultrix.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -46,13 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.51 2009/11/21 04:45:39 rmind Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/macros.h>
-#include <machine/pte.h>
-#include <machine/pcb.h>
-#include <machine/cpu.h>
 
 #include <dev/mscp/mscp.h> /* For disk encoding scheme */
 
-#include "opt_compat_ultrix.h"
 #ifdef COMPAT_ULTRIX
 #include <dev/dec/dec_boot.h>
 #include <ufs/ufs/dinode.h>	/* XXX for fs.h */

@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.32.2.1 2010/05/30 05:17:43 rmind Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.32.2.2 2011/03/05 20:54:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -40,7 +40,7 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
 
-enum sme_description_types {
+enum sme_descr_type {
 	SME_DESC_UNITS = 1,
 	SME_DESC_STATES,
 	SME_DESC_DRIVE_STATES,
@@ -90,7 +90,7 @@ typedef struct sme_event_drv {
 	int			sed_powertype;
 } sme_event_drv_t;
 
-struct sme_description_table {
+struct sme_descr_entry {
 	int 		type;
 	int 		crittype;
 	const char 	*desc;
@@ -133,6 +133,7 @@ void	sme_events_check(void *);
 void	sme_events_worker(struct work *, void *);
 void	sme_deliver_event(sme_event_t *);
 int	sme_update_limits(struct sysmon_envsys *, envsys_data_t *);
+void	sme_schedule_callout(struct sysmon_envsys *);
 
 /* 
  * common functions to create/update objects in a dictionary.
@@ -142,6 +143,6 @@ int	sme_sensor_upint32(prop_dictionary_t, const char *, int32_t);
 int	sme_sensor_upuint32(prop_dictionary_t, const char *, uint32_t);
 int	sme_sensor_upstring(prop_dictionary_t, const char *, const char *);
 
-const struct	sme_description_table *sme_get_description_table(int);
+const struct sme_descr_entry *sme_find_table_entry(enum sme_descr_type, int);
 
 #endif /* _DEV_SYSMON_ENVSYSVAR_H_ */

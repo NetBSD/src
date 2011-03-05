@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.66.4.1 2010/07/03 01:19:12 rmind Exp $ */
+/*	$NetBSD: sbic.c,v 1.66.4.2 2011/03/05 20:49:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,10 +76,12 @@
  */
 
 #include "opt_ddb.h"
+#ifdef __m68k__
 #include "opt_m68k_arch.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.66.4.1 2010/07/03 01:19:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.66.4.2 2011/03/05 20:49:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.66.4.1 2010/07/03 01:19:12 rmind Exp $");
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>

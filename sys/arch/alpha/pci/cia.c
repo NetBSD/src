@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.69 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: cia.c,v 1.69.4.1 2011/03/05 20:49:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,15 +65,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.69 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.69.4.1 2011/03/05 20:49:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>

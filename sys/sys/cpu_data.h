@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.28.4.1 2010/05/30 05:18:08 rmind Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.28.4.2 2011/03/05 20:56:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ struct lwp;
 
 #include <sys/sched.h>	/* for schedstate_percpu */
 #include <sys/condvar.h>
+#include <sys/pcu.h>
 #include <sys/percpu_types.h>
 #include <sys/queue.h>
 
@@ -75,6 +76,8 @@ struct cpu_data {
 	cpuid_t		cpu_core_id;
 	cpuid_t		cpu_smt_id;
 
+	struct lwp * volatile cpu_pcu_curlwp[PCU_UNIT_COUNT];
+
 	/*
 	 * This section is mostly CPU-private.
 	 */
@@ -87,9 +90,12 @@ struct cpu_data {
 	u_int		cpu_spin_locks2;	/* # of spin locks held XXX */
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
 	u_int		cpu_softints;		/* pending (slow) softints */
-	u_int		cpu_nsyscall;		/* syscall counter */
-	u_int		cpu_ntrap;		/* trap counter */
-	u_int		cpu_nswtch;		/* context switch counter */
+	uint64_t	cpu_nsyscall;		/* syscall counter */
+	uint64_t	cpu_ntrap;		/* trap counter */
+	uint64_t	cpu_nswtch;		/* context switch counter */
+	uint64_t	cpu_nintr;		/* interrupt count */
+	uint64_t	cpu_nsoft;		/* soft interrupt count */
+	uint64_t	cpu_nfault;		/* pagefault counter */
 	void		*cpu_uvm;		/* uvm per-cpu data */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
@@ -113,6 +119,7 @@ struct cpu_data {
 #define	ci_lockstat		ci_data.cpu_lockstat
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
+#define	ci_pcu_curlwp		ci_data.cpu_pcu_curlwp
 
 #define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id

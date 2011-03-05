@@ -1,6 +1,7 @@
-/*	$NetBSD: leds.c,v 1.18 2007/03/04 05:59:49 christos Exp $	*/
+/*	$NetBSD: leds.c,v 1.18.66.1 2011/03/05 20:50:23 rmind Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,48 +37,9 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: machdep.c 1.74 92/12/20$
- *
- *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.18 2007/03/04 05:59:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.18.66.1 2011/03/05 20:50:23 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -85,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.18 2007/03/04 05:59:49 christos Exp $");
 
 #include <hp300/hp300/leds.h>
 
-extern void *	ledbase;	/* kva of LED page */
+static vaddr_t	ledbase;	/* kva of LED page */
 uint8_t		*ledaddr;	/* actual address of LEDs */
 static volatile uint8_t currentleds; /* current LED status */
 
@@ -96,10 +58,11 @@ void
 ledinit(void)
 {
 
-	pmap_enter(pmap_kernel(), (vaddr_t)ledbase, (paddr_t)LED_ADDR,
+	ledbase = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
+	pmap_enter(pmap_kernel(), ledbase, (paddr_t)LED_ADDR,
 	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	pmap_update(pmap_kernel());
-	ledaddr = (uint8_t *) ((long)ledbase | (LED_ADDR & PGOFSET));
+	ledaddr = (uint8_t *)(ledbase | (LED_ADDR & PGOFSET));
 }
 
 /*

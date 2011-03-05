@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.34 2009/04/18 14:58:07 tsutsui Exp $ */
+/*	$NetBSD: crypto.c,v 1.34.4.1 2011/03/05 20:56:04 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.34 2009/04/18 14:58:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.34.4.1 2011/03/05 20:56:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -76,11 +76,9 @@ kmutex_t crypto_mtx;
 /* below are kludges for residual code wrtitten to FreeBSD interfaces */
   #define SWI_CRYPTO 17
   #define register_swi(lvl, fn)  \
-  softint_establish(SOFTINT_NET, (void (*)(void*))fn, NULL)
+  softint_establish(SOFTINT_NET|SOFTINT_MPSAFE, (void (*)(void *))fn, NULL)
   #define unregister_swi(lvl, fn)  softint_disestablish(softintr_cookie)
   #define setsoftcrypto(x) softint_schedule(x)
-
-#define	SESID2HID(sid)	(((sid) >> 32) & 0xffffffff)
 
 int crypto_ret_q_check(struct cryptop *);
 
@@ -91,7 +89,7 @@ int crypto_ret_q_check(struct cryptop *);
  */
 static	struct cryptocap *crypto_drivers;
 static	int crypto_drivers_num;
-static	void* softintr_cookie;
+static	void *softintr_cookie;
 
 /*
  * There are two queues for crypto requests; one for symmetric (e.g.
@@ -250,7 +248,7 @@ crypto_init0(void)
 	int error;
 
 	mutex_init(&crypto_mtx, MUTEX_DEFAULT, IPL_NET);
-	cv_init(&cryptoret_cv, "crypto_wait");
+	cv_init(&cryptoret_cv, "crypto_w");
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
 		  0, "cryptop", NULL, IPL_NET); 
 	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
@@ -268,7 +266,7 @@ crypto_init0(void)
 
 	softintr_cookie = register_swi(SWI_CRYPTO, cryptointr);
 	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-	    (void (*)(void*))cryptoret, NULL, &cryptothread, "cryptoret");
+	    (void (*)(void *))cryptoret, NULL, &cryptothread, "cryptoret");
 	if (error) {
 		printf("crypto_init: cannot start cryptoret thread; error %d",
 			error);
@@ -389,7 +387,7 @@ crypto_freesession(u_int64_t sid)
 	}
 
 	/* Determine two IDs. */
-	hid = SESID2HID(sid);
+	hid = CRYPTO_SESID2HID(sid);
 
 	if (hid >= crypto_drivers_num) {
 		err = ENOENT;
@@ -490,7 +488,7 @@ crypto_checkdriver(u_int32_t hid)
  */
 int
 crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
-    int (*kprocess)(void*, struct cryptkop *, int),
+    int (*kprocess)(void *, struct cryptkop *, int),
     void *karg)
 {
 	struct cryptocap *cap;
@@ -536,9 +534,9 @@ crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
 int
 crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
     u_int32_t flags,
-    int (*newses)(void*, u_int32_t*, struct cryptoini*),
-    int (*freeses)(void*, u_int64_t),
-    int (*process)(void*, struct cryptop *, int),
+    int (*newses)(void *, u_int32_t*, struct cryptoini*),
+    int (*freeses)(void *, u_int64_t),
+    int (*process)(void *, struct cryptop *, int),
     void *arg)
 {
 	struct cryptocap *cap;
@@ -712,14 +710,12 @@ crypto_unblock(u_int32_t driverid, int what)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-	u_int32_t hid = SESID2HID(crp->crp_sid);
+	u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
 	int result;
 
 	mutex_spin_enter(&crypto_mtx);
-	DPRINTF(("crypto_dispatch: crp %08x, reqid 0x%x, alg %d\n",
-			(uint32_t)crp,
-			crp->crp_reqid,
-			crp->crp_desc->crd_alg));
+	DPRINTF(("crypto_dispatch: crp %p, reqid 0x%x, alg %d\n",
+		crp, crp->crp_reqid, crp->crp_desc->crd_alg));
 
 	cryptostats.cs_ops++;
 
@@ -843,6 +839,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 		return EINVAL;
 	}
 
+	mutex_spin_enter(&crypto_mtx);
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
 		    crypto_devallowsoft == 0)
@@ -855,10 +852,16 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 		break;
 	}
 	if (hid < crypto_drivers_num) {
+		int (*process)(void *, struct cryptkop *, int);
+		void *arg;
+
+		process = crypto_drivers[hid].cc_kprocess;
+		arg = crypto_drivers[hid].cc_karg;
+		mutex_spin_exit(&crypto_mtx);
 		krp->krp_hid = hid;
-		error = crypto_drivers[hid].cc_kprocess(
-				crypto_drivers[hid].cc_karg, krp, hint);
+		error = (*process)(arg, krp, hint);
 	} else {
+		mutex_spin_exit(&crypto_mtx);
 		error = ENODEV;
 	}
 
@@ -900,7 +903,6 @@ static int
 crypto_invoke(struct cryptop *crp, int hint)
 {
 	u_int32_t hid;
-	int (*process)(void*, struct cryptop *, int);
 
 #ifdef CRYPTO_TIMING
 	if (crypto_timing)
@@ -918,18 +920,25 @@ crypto_invoke(struct cryptop *crp, int hint)
 		return 0;
 	}
 
-	hid = SESID2HID(crp->crp_sid);
+	hid = CRYPTO_SESID2HID(crp->crp_sid);
+
+	mutex_spin_enter(&crypto_mtx);
 	if (hid < crypto_drivers_num) {
-		mutex_spin_enter(&crypto_mtx);
+		int (*process)(void *, struct cryptop *, int);
+		void *arg;
+
 		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
 			crypto_freesession(crp->crp_sid);
 		process = crypto_drivers[hid].cc_process;
+		arg = crypto_drivers[hid].cc_arg;
 		mutex_spin_exit(&crypto_mtx);
-	} else {
-		process = NULL;
-	}
 
-	if (process == NULL) {
+		/*
+		 * Invoke the driver to process the request.
+		 */
+		DPRINTF(("calling process for %p\n", crp));
+		return (*process)(arg, crp, hint);
+	} else {
 		struct cryptodesc *crd;
 		u_int64_t nid = 0;
 
@@ -937,7 +946,6 @@ crypto_invoke(struct cryptop *crp, int hint)
 		 * Driver has unregistered; migrate the session and return
 		 * an error to the caller so they'll resubmit the op.
 		 */
-		mutex_spin_enter(&crypto_mtx);
 		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
 
@@ -949,12 +957,6 @@ crypto_invoke(struct cryptop *crp, int hint)
 
 		crypto_done(crp);
 		return 0;
-	} else {
-		/*
-		 * Invoke the driver to process the request.
-		 */
-		DPRINTF(("calling process for %08x\n", (uint32_t)crp));
-		return (*process)(crypto_drivers[hid].cc_arg, crp, hint);
 	}
 }
 
@@ -968,8 +970,8 @@ crypto_freereq(struct cryptop *crp)
 
 	if (crp == NULL)
 		return;
-	DPRINTF(("crypto_freereq[%d]: crp %p\n",
-			(uint32_t)crp->crp_sid, crp));
+	DPRINTF(("crypto_freereq[%u]: crp %p\n",
+		CRYPTO_SESID2LID(crp->crp_sid), crp));
 
 	/* sanity check */
 	if (crp->crp_flags & CRYPTO_F_ONRETQ) {
@@ -1029,8 +1031,8 @@ crypto_done(struct cryptop *crp)
 	if (crypto_timing)
 		crypto_tstat(&cryptostats.cs_done, &crp->crp_tstamp);
 #endif
-	DPRINTF(("crypto_done[%d]: crp %08x\n",
-			(uint32_t)crp->crp_sid, (uint32_t)crp));
+	DPRINTF(("crypto_done[%u]: crp %p\n",
+		CRYPTO_SESID2LID(crp->crp_sid), crp));
 
 	/*
 	 * Normal case; queue the callback for the thread.
@@ -1077,18 +1079,18 @@ crypto_done(struct cryptop *crp)
 			 * This is an optimization to avoid
 			 * unecessary context switches.
 			 */
-			DPRINTF(("crypto_done[%d]: crp %08x CRYPTO_F_USER\n",
-				(uint32_t)crp->crp_sid, (uint32_t)crp));
+			DPRINTF(("crypto_done[%u]: crp %p CRYPTO_F_USER\n",
+				CRYPTO_SESID2LID(crp->crp_sid), crp));
 		} else {
 			wasempty = TAILQ_EMPTY(&crp_ret_q);
-			DPRINTF(("crypto_done[%d]: queueing %08x\n",
-					(uint32_t)crp->crp_sid, (uint32_t)crp));
+			DPRINTF(("crypto_done[%u]: queueing %p\n",
+				CRYPTO_SESID2LID(crp->crp_sid), crp));
 			crp->crp_flags |= CRYPTO_F_ONRETQ;
 			TAILQ_INSERT_TAIL(&crp_ret_q, crp, crp_next);
 			if (wasempty) {
-				DPRINTF(("crypto_done[%d]: waking cryptoret, crp %08x " \
-					"hit empty queue\n.",
-					(uint32_t)crp->crp_sid, (uint32_t)crp));
+				DPRINTF(("crypto_done[%u]: waking cryptoret, "
+					"crp %p hit empty queue\n.",
+					CRYPTO_SESID2LID(crp->crp_sid), crp));
 				cv_signal(&cryptoret_cv);
 			}
 		}
@@ -1178,7 +1180,7 @@ cryptointr(void)
 		submit = NULL;
 		hint = 0;
 		TAILQ_FOREACH_SAFE(crp, &crp_q, crp_next, cnext) {
-			u_int32_t hid = SESID2HID(crp->crp_sid);
+			u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
 			cap = crypto_checkdriver(hid);
 			if (cap == NULL || cap->cc_process == NULL) {
 				/* Op needs to be migrated, process it. */
@@ -1196,7 +1198,8 @@ cryptointr(void)
 					 * better to just use a per-driver
 					 * queue instead.
 					 */
-					if (SESID2HID(submit->crp_sid) == hid)
+					if (CRYPTO_SESID2HID(submit->crp_sid)
+					    == hid)
 						hint = CRYPTO_HINT_MORE;
 					break;
 				} else {
@@ -1225,7 +1228,7 @@ cryptointr(void)
 				 * it at the end does not work.
 				 */
 				/* XXX validate sid again? */
-				crypto_drivers[SESID2HID(submit->crp_sid)].cc_qblocked = 1;
+				crypto_drivers[CRYPTO_SESID2HID(submit->crp_sid)].cc_qblocked = 1;
 				TAILQ_INSERT_HEAD(&crp_q, submit, crp_next);
 				cryptostats.cs_blocks++;
 			}

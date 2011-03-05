@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2.4.1 2011/03/05 20:56:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2010/03/01 13:12:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2.4.1 2011/03/05 20:56:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,13 +40,22 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2010/03/01 13:12:20 pooka Exp $");
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
+#include "ioconf.c"
+
 void swwdogattach(int);
+void swsensorattach(int);
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct cdevsw sysmon_cdevsw;
 	devmajor_t bmaj, cmaj;
 	int error;
+
+	if ((error = config_init_component(cfdriver_ioconf_swwdog,
+	    cfattach_ioconf_swwdog, cfdata_ioconf_swwdog)) != 0) {
+		printf("cannot attach swwdog: %d\n", error);
+		return;
+	}
 
 	bmaj = cmaj = -1;
 	if ((error = devsw_attach("sysmon", NULL, &bmaj,

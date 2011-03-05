@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.30 2009/05/19 18:39:26 phx Exp $ */
+/*	$NetBSD: drsc.c,v 1.30.4.1 2011/03/05 20:49:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -59,14 +59,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.30 2009/05/19 18:39:26 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.30.4.1 2011/03/05 20:49:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

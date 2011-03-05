@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.8 2007/02/28 04:21:53 thorpej Exp $ */
+/* $NetBSD: aupci.c,v 1.8.66.1 2011/03/05 20:51:01 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.8 2007/02/28 04:21:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.8.66.1 2011/03/05 20:51:01 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -270,7 +270,7 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(&sc->sc_pc,
-	    io_ex, mem_ex, NULL, 0, mips_dcache_align);
+	    io_ex, mem_ex, NULL, 0, mips_cache_info.mci_dcache_align);
 	extent_destroy(mem_ex);
 	extent_destroy(io_ex);
 #endif

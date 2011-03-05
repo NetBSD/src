@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.15.2.1 2010/05/30 05:17:17 rmind Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.15.2.2 2011/03/05 20:53:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.15.2.1 2010/05/30 05:17:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.15.2.2 2011/03/05 20:53:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -327,7 +327,6 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 	struct sony_acpi_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 	ACPI_INTEGER arg;
-	int s;
 
 	if (notify == SONY_NOTIFY_FnKeyEvent) {
 		rv = sony_acpi_eval_set_integer(hdl, "SN07", 0x202, &arg);
@@ -337,7 +336,6 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 		notify = arg & 0xff;
 	}
 
-	s = spltty();
 	switch (notify) {
 	case SONY_NOTIFY_BrightnessDownPressed:
 		sony_acpi_brightness_down(dv);
@@ -373,11 +371,9 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 	case SONY_NOTIFY_ZoomReleased:
 		break;
 	default:
-		aprint_debug_dev(dv, "unknown notify event 0x%x\n",
-		    notify);
+		aprint_debug_dev(dv, "unknown notify event 0x%x\n", notify);
 		break;
 	}
-	splx(s);
 }
 
 static bool
@@ -448,7 +444,8 @@ sony_acpi_find_pic(ACPI_HANDLE hdl, uint32_t level,
 	if (ACPI_FAILURE(rv) || devinfo == NULL)
 		return AE_OK;	/* we don't want to stop searching */
 
-	if (devinfo->HardwareId.String &&
+	if ((devinfo->Valid & ACPI_VALID_HID) != 0 &&
+	    devinfo->HardwareId.String &&
 	    strncmp(devinfo->HardwareId.String, "SNY6001", 7) == 0)
 		sc->sc_has_pic = true;
 

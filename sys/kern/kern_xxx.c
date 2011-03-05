@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.70 2008/04/25 11:23:42 ad Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.70.24.1 2011/03/05 20:55:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,9 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.70 2008/04/25 11:23:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.70.24.1 2011/03/05 20:55:17 rmind Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

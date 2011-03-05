@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.982.2.2 2010/07/03 01:19:33 rmind Exp $
+#	$NetBSD: files,v 1.982.2.3 2011/03/05 20:52:58 rmind Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -140,7 +140,7 @@ defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX: COMPAT_16
-defflag				COMPAT_LINUX32
+defflag				COMPAT_LINUX32 : COMPAT_LINUX
 defflag				COMPAT_OSF1
 defflag				COMPAT_SUNOS: COMPAT_30
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
@@ -188,7 +188,6 @@ include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netbt/files.netbt"
 include "netinet/files.netinet"
-include "netinet/files.ipfilter"
 include "netinet6/files.netinet6"
 include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
@@ -196,6 +195,9 @@ include "netiso/files.netiso"
 include "netmpls/files.netmpls"
 include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
+
+include "net/npf/files.npf"
+include "netinet/files.ipfilter"
 include "net/files.pf"
 
 obsolete defflag		CCITT		# obsolete
@@ -359,6 +361,9 @@ define	rasops16
 define	rasops24
 define	rasops32
 define	rasops_rotation
+
+# image decoding support
+include "dev/stbi/files.stbi"
 
 # splash screen support
 include "dev/splash/files.splash"
@@ -1064,6 +1069,7 @@ file	dev/ic/lan9118.c		smsh
 # DRM - Direct Rendering Infrastructure: dev/drm
 define drm {}
 include "external/bsd/drm/conf/files.drm"
+include "dev/drm/files.drm"
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -1097,11 +1103,17 @@ file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
 file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
 file	dev/ic/vga_subr.c	vga | vga_rasterconsole
 file	dev/ic/vga_common.c	vga | vga_rasterconsole
+
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
 device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
+
+device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
+file	dev/ic/ct65550.c		chipsfb
+defflag	opt_chipsfb.h	CHIPSFB_DEBUG
+defflag	opt_chipsfb.h	CHIPSFB_WAIT
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
@@ -1244,6 +1256,11 @@ file	dev/ic/iavc.c			iavc
 # Broadcom AirForce / Apple Airport Extreme
 device	bwi: arp, ifnet, firmload, wlan
 file	dev/ic/bwi.c			bwi
+
+# DM9000 Ethernet controllers
+#
+device	dme: arp, ether, ifnet
+file	dev/ic/dm9000.c			dme
 
 # legitimate pseudo-devices
 #
@@ -1399,7 +1416,7 @@ file	dev/firmload.c			firmload
 file	dev/fss.c			fss
 file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
-file	dev/md.c			md			needs-count
+file	dev/md.c			md
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midictl.c			midisyn
 file	dev/midisyn.c			midisyn
@@ -1434,6 +1451,7 @@ file	kern/init_sysctl_base.c
 file	kern/init_sysent.c
 file	kern/kern_acct.c
 file	kern/kern_auth.c
+file	kern/kern_cfglock.c
 file	kern/kern_clock.c
 file	kern/kern_condvar.c
 file	kern/kern_core.c		coredump
@@ -1516,6 +1534,7 @@ file	kern/subr_log.c
 file	kern/subr_lwp_specificdata.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
+file	kern/subr_pcu.c
 file	kern/subr_percpu.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
@@ -1686,3 +1705,14 @@ include	"dev/tprof/files.tprof"
 # alternate memory device
 #
 include "dev/altmem/files.altmem"
+
+#
+# Flash subsystem
+#
+include "dev/flash/files.flash"
+
+#
+# NAND subsytem
+#
+include "dev/nand/files.nand"
+

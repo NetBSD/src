@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.42.2.1 2010/05/30 05:17:16 rmind Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.42.2.2 2011/03/05 20:53:01 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.42.2.1 2010/05/30 05:17:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.42.2.2 2011/03/05 20:53:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -189,7 +189,7 @@ acpiacad_get_status(void *arg)
 		goto fail;
 	}
 
-	if (sc->sc_status != status) {
+	if (sc->sc_status != (int)status) {
 
 		/*
 		 * If status has changed, send the event:
@@ -255,8 +255,11 @@ acpiacad_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 		(void)AcpiOsExecute(handler, acpiacad_get_status, dv);
 		break;
 
+	case ACPI_NOTIFY_DEVICE_WAKE:
+		break;
+
 	default:
-		aprint_error_dev(dv, "unknown notify 0x%02X\n", notify);
+		aprint_debug_dev(dv, "unknown notify 0x%02X\n", notify);
 	}
 }
 
@@ -292,78 +295,38 @@ fail:
 	sc->sc_sme = NULL;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpiacad, NULL);
-CFDRIVER_DECL(acpiacad, DV_DULL, NULL);
 
-static int acpiacadloc[] = { -1 };
-extern struct cfattach acpiacad_ca;
-
-static struct cfparent acpiparent = {
-	"acpinodebus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata acpiacad_cfdata[] = {
-	{
-		.cf_name = "acpiacad",
-		.cf_atname = "acpiacad",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = acpiacadloc,
-		.cf_flags = 0,
-		.cf_pspec = &acpiparent,
-	},
-
-	{ NULL }
-};
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
-acpiacad_modcmd(modcmd_t cmd, void *context)
+acpiacad_modcmd(modcmd_t cmd, void *aux)
 {
-	int err;
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
 
-		err = config_cfdriver_attach(&acpiacad_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("acpiacad", &acpiacad_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&acpiacad_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(acpiacad_cfdata, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("acpiacad", &acpiacad_ca);
-			config_cfdriver_detach(&acpiacad_cd);
-			return err;
-		}
-
-		return 0;
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpiacad,
+		    cfattach_ioconf_acpiacad, cfdata_ioconf_acpiacad);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(acpiacad_cfdata);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("acpiacad", &acpiacad_ca);
-		config_cfdriver_detach(&acpiacad_cd);
-
-		return 0;
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpiacad,
+		    cfattach_ioconf_acpiacad, cfdata_ioconf_acpiacad);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

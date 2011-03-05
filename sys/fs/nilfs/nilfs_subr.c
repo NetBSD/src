@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.4.6.2 2010/07/03 01:19:50 rmind Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.4.6.3 2011/03/05 20:55:05 rmind Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4.6.2 2010/07/03 01:19:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4.6.3 2011/03/05 20:55:05 rmind Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -784,7 +784,7 @@ loop:
 			assert(vp);
 			mutex_enter(vp->v_interlock);
 			mutex_exit(&ump->ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
 			return node;
 		}
@@ -841,7 +841,7 @@ nilfs_get_node_raw(struct nilfs_device *nilfsdev, struct nilfs_mount *ump,
 
 	/* needed? */
 	mutex_init(&node->node_mutex, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&node->node_lock, "nilfs_nlk");
+	cv_init(&node->node_lock, "nilfsnlk");
 
 	/* initialise genfs */
 	genfs_node_init(nvp, &nilfs_genfsops);

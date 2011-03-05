@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.12 2009/12/07 08:57:38 pooka Exp $
+# 	$NetBSD: RAMDISK,v 1.12.4.1 2011/03/05 20:50:19 rmind Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -40,6 +40,7 @@ no file-system	FDESC
 no file-system	KERNFS
 no file-system	NULLFS
 no file-system	OVERLAY
+no file-system	PUFFS
 no file-system	UMAPFS
 no file-system	UNION
 no file-system	PTYFS
@@ -61,6 +62,7 @@ no uk*	at scsibus?
 no pseudo-device	raid
 no pseudo-device	vnd
 no pseudo-device	fss
+no pseudo-device	putter
 no pseudo-device	ipfilter
 no pseudo-device	ppp
 no pseudo-device	pppoe
@@ -73,6 +75,8 @@ no pseudo-device	stf
 no pseudo-device	vlan
 no pseudo-device	bridge
 no pseudo-device	agr
+no pseudo-device	accf_data
+no pseudo-device	accf_http
 no pseudo-device	clockctl
 no pseudo-device	ksyms
 no pseudo-device	wsmux

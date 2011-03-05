@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.180.4.2 2010/07/03 01:20:06 rmind Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.180.4.3 2011/03/05 20:56:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.180.4.2 2010/07/03 01:20:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.180.4.3 2011/03/05 20:56:34 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -804,10 +804,7 @@ ufs_link(void *v)
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
 	cnp = ap->a_cnp;
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ufs_link: no name");
-#endif
+
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
@@ -855,7 +852,6 @@ ufs_link(void *v)
 		ip->i_flag |= IN_CHANGE;
 		UFS_WAPBL_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	UFS_WAPBL_END(vp->v_mount);
  out1:
 	if (dvp != vp)
@@ -897,8 +893,6 @@ ufs_whiteout(void *v)
 		/* create a new directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 #ifdef DIAGNOSTIC
-		if ((cnp->cn_flags & SAVENAME) == 0)
-			panic("ufs_whiteout: missing name");
 		if (ump->um_maxsymlinklen <= 0)
 			panic("ufs_whiteout: old format filesystem");
 #endif
@@ -928,10 +922,6 @@ ufs_whiteout(void *v)
 	default:
 		panic("ufs_whiteout: unknown op");
 		/* NOTREACHED */
-	}
-	if (cnp->cn_flags & HASBUF) {
-		PNBUF_PUT(cnp->cn_pnbuf);
-		cnp->cn_flags &= ~HASBUF;
 	}
 	fstrans_done(dvp->v_mount);
 	return (error);
@@ -993,11 +983,6 @@ ufs_rename(void *v)
 	fcnp = ap->a_fcnp;
 	doingdirectory = oldparent = newparent = error = 0;
 
-#ifdef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("ufs_rename: no name");
-#endif
 	/*
 	 * Check for cross-device rename.
 	 */
@@ -1039,11 +1024,11 @@ ufs_rename(void *v)
 
 		/* Delete source. */
 		vrele(fvp);
-		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+		fcnp->cn_flags &= ~(MODMASK);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp))) {
+		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			return (error);
 		}
@@ -1133,9 +1118,8 @@ ufs_rename(void *v)
 			vrele(tdvp);
 			goto out;
 		}
-		tcnp->cn_flags &= ~SAVESTART;
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		error = relookup(tdvp, &tvp, tcnp);
+		error = relookup(tdvp, &tvp, tcnp, 0);
 		if (error != 0) {
 			vput(tdvp);
 			goto out;
@@ -1268,10 +1252,10 @@ ufs_rename(void *v)
 	/*
 	 * 3) Unlink the source.
 	 */
-	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+	fcnp->cn_flags &= ~(MODMASK);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = relookup(fdvp, &fvp, fcnp))) {
+	if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 		vput(fdvp);
 		vrele(ap->a_fvp);
 		goto out2;
@@ -1371,10 +1355,6 @@ ufs_mkdir(void *v)
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ufs_mkdir: no name");
-#endif
 	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
 		error = EMLINK;
 		goto out;
@@ -1399,7 +1379,6 @@ ufs_mkdir(void *v)
 	DIP_ASSIGN(ip, gid, ip->i_gid);
 #ifdef QUOTA
 	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
-		PNBUF_PUT(cnp->cn_pnbuf);
 		UFS_VFREE(tvp, ip->i_number, dmode);
 		UFS_WAPBL_END(dvp->v_mount);
 		fstrans_done(dvp->v_mount);
@@ -1500,7 +1479,6 @@ ufs_mkdir(void *v)
 		vput(tvp);
 	}
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	fstrans_done(dvp->v_mount);
 	vput(dvp);
 	return (error);
@@ -2184,15 +2162,11 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	UFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
 
 	pdir = VTOI(dvp);
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ufs_makeinode: no name");
-#endif
+
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
 
 	if ((error = UFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
-		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -2210,7 +2184,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		 * the vnode dangling from the journal.
 		 */
 		vput(tvp);
-		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -2219,7 +2192,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		UFS_VFREE(tvp, ip->i_number, mode);
 		UFS_WAPBL_END1(dvp->v_mount, dvp);
 		vput(tvp);
-		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -2253,8 +2225,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	pool_cache_put(ufs_direct_cache, newdir);
 	if (error)
 		goto bad;
-	if ((cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	*vpp = tvp;
 	return (0);
@@ -2273,7 +2243,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	tvp->v_type = VNON;		/* explodes later if VBLK */
 	UFS_WAPBL_END1(dvp->v_mount, dvp);
 	vput(tvp);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }

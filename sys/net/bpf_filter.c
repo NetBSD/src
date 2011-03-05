@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.35.16.1 2010/05/30 05:18:01 rmind Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.35.16.2 2011/03/05 20:55:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.35.16.1 2010/05/30 05:18:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.35.16.2 2011/03/05 20:55:51 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -48,6 +48,7 @@ static const char rcsid[] =
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/kmem.h>
 #include <sys/endian.h>
 
 #define EXTRACT_SHORT(p)	be16dec(p)
@@ -67,11 +68,11 @@ static const char rcsid[] =
 	} 				\
 }
 
-static int m_xword (struct mbuf *, uint32_t, int *);
-static int m_xhalf (struct mbuf *, uint32_t, int *);
+static int m_xword (const struct mbuf *, uint32_t, int *);
+static int m_xhalf (const struct mbuf *, uint32_t, int *);
 
 static int
-m_xword(struct mbuf *m, uint32_t k, int *err)
+m_xword(const struct mbuf *m, uint32_t k, int *err)
 {
 	int len;
 	u_char *cp, *np;
@@ -103,7 +104,7 @@ m_xword(struct mbuf *m, uint32_t k, int *err)
 }
 
 static int
-m_xhalf(struct mbuf *m, uint32_t k, int *err)
+m_xhalf(const struct mbuf *m, uint32_t k, int *err)
 {
 	int len;
 	u_char *cp;
@@ -134,7 +135,8 @@ m_xhalf(struct mbuf *m, uint32_t k, int *err)
  * buflen is the amount of data present
  */
 u_int
-bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
+bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
+    u_int buflen)
 {
 	uint32_t A, X, k;
 	uint32_t mem[BPF_MEMWORDS];
@@ -147,8 +149,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 	A = 0;
 	X = 0;
 	--pc;
-	/* CONSTCOND */
-	while (1) {
+	for (;;) {
 		++pc;
 		switch (pc->code) {
 
@@ -157,6 +158,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			return 0;
 #else
 			abort();
+			/*NOTREACHED*/
 #endif
 		case BPF_RET|BPF_K:
 			return (u_int)pc->k;
@@ -172,7 +174,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xword((struct mbuf *)p, k, &merr);
+				A = m_xword((const struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -191,7 +193,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xhalf((struct mbuf *)p, k, &merr);
+				A = m_xhalf((const struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -206,12 +208,12 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = pc->k;
 			if (k >= buflen) {
 #ifdef _KERNEL
-				struct mbuf *m;
+				const struct mbuf *m;
 				int len;
 
 				if (buflen != 0)
 					return 0;
-				m = (struct mbuf *)p;
+				m = (const struct mbuf *)p;
 				MINDEX(len, m, k);
 				A = mtod(m, u_char *)[k];
 				continue;
@@ -238,7 +240,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xword((struct mbuf *)p, k, &merr);
+				A = m_xword((const struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -257,7 +259,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xhalf((struct mbuf *)p, k, &merr);
+				A = m_xhalf((const struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -272,12 +274,12 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = X + pc->k;
 			if (k >= buflen) {
 #ifdef _KERNEL
-				struct mbuf *m;
+				const struct mbuf *m;
 				int len;
 
 				if (buflen != 0)
 					return 0;
-				m = (struct mbuf *)p;
+				m = (const struct mbuf *)p;
 				MINDEX(len, m, k);
 				A = mtod(m, u_char *)[k];
 				continue;
@@ -292,12 +294,12 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = pc->k;
 			if (k >= buflen) {
 #ifdef _KERNEL
-				struct mbuf *m;
+				const struct mbuf *m;
 				int len;
 
 				if (buflen != 0)
 					return 0;
-				m = (struct mbuf *)p;
+				m = (const struct mbuf *)p;
 				MINDEX(len, m, k);
 				X = (mtod(m, char *)[k] & 0xf) << 2;
 				continue;
@@ -449,7 +451,6 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 	}
 }
 
-#ifdef _KERNEL
 /*
  * Return true if the 'fcode' is a valid filter program.
  * The constraints are that each jump be forward and to a valid
@@ -461,16 +462,38 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
  * The kernel needs to be able to verify an application's filter code.
  * Otherwise, a bogus program could easily crash the system.
  */
-int
-bpf_validate(struct bpf_insn *f, int len)
-{
-	u_int i, from;
-	struct bpf_insn *p;
+__CTASSERT(BPF_MEMWORDS == sizeof(uint16_t) * NBBY);
 
-	if (len < 1 || len > BPF_MAXINSNS)
+int
+bpf_validate(const struct bpf_insn *f, int signed_len)
+{
+	u_int i, from, len, ok = 0;
+	const struct bpf_insn *p;
+#if defined(KERNEL) || defined(_KERNEL)
+	uint16_t *mem, invalid;
+	size_t size;
+#endif
+
+	len = (u_int)signed_len;
+	if (len < 1)
+		return 0;
+#if defined(KERNEL) || defined(_KERNEL)
+	if (len > BPF_MAXINSNS)
+		return 0;
+#endif
+	if (BPF_CLASS(f[len - 1].code) != BPF_RET)
 		return 0;
 
+#if defined(KERNEL) || defined(_KERNEL)
+	mem = kmem_zalloc(size = sizeof(*mem) * len, KM_SLEEP);
+	invalid = ~0;	/* All is invalid on startup */
+#endif
+
 	for (i = 0; i < len; ++i) {
+#if defined(KERNEL) || defined(_KERNEL)
+		/* blend in any invalid bits for current pc */
+		invalid |= mem[i];
+#endif
 		p = &f[i];
 		switch (BPF_CLASS(p->code)) {
 		/*
@@ -480,8 +503,22 @@ bpf_validate(struct bpf_insn *f, int len)
 		case BPF_LDX:
 			switch (BPF_MODE(p->code)) {
 			case BPF_MEM:
+				/*
+				 * There's no maximum packet data size
+				 * in userland.  The runtime packet length
+				 * check suffices.
+				 */
+#if defined(KERNEL) || defined(_KERNEL)
+				/*
+				 * More strict check with actual packet length
+				 * is done runtime.
+				 */
 				if (p->k >= BPF_MEMWORDS)
-					return 0;
+					goto out;
+				/* check for current memory invalid */
+				if (invalid & (1 << p->k))
+					goto out;
+#endif
 				break;
 			case BPF_ABS:
 			case BPF_IND:
@@ -490,13 +527,17 @@ bpf_validate(struct bpf_insn *f, int len)
 			case BPF_LEN:
 				break;
 			default:
-				return 0;
+				goto out;
 			}
 			break;
 		case BPF_ST:
 		case BPF_STX:
 			if (p->k >= BPF_MEMWORDS)
-				return 0;
+				goto out;
+#if defined(KERNEL) || defined(_KERNEL)
+			/* validate the memory word */
+			invalid &= ~(1 << p->k);
+#endif
 			break;
 		case BPF_ALU:
 			switch (BPF_OP(p->code)) {
@@ -514,10 +555,10 @@ bpf_validate(struct bpf_insn *f, int len)
 				 * Check for constant division by 0.
 				 */
 				if (BPF_SRC(p->code) == BPF_K && p->k == 0)
-					return 0;
+					goto out;
 				break;
 			default:
-				return 0;
+				goto out;
 			}
 			break;
 		case BPF_JMP:
@@ -536,22 +577,51 @@ bpf_validate(struct bpf_insn *f, int len)
 			 * We know that len is <= BPF_MAXINSNS, and we
 			 * assume that BPF_MAXINSNS is < the maximum size
 			 * of a u_int, so that i + 1 doesn't overflow.
+			 *
+			 * For userland, we don't know that the from
+			 * or len are <= BPF_MAXINSNS, but we know that
+			 * from <= len, and, except on a 64-bit system,
+			 * it's unlikely that len, if it truly reflects
+			 * the size of the program we've been handed,
+			 * will be anywhere near the maximum size of
+			 * a u_int.  We also don't check for backward
+			 * branches, as we currently support them in
+			 * userland for the protochain operation.
 			 */
 			from = i + 1;
 			switch (BPF_OP(p->code)) {
 			case BPF_JA:
-				if (from + p->k < from || from + p->k >= len)
-					return 0;
+				if (from + p->k >= len)
+					goto out;
+#if defined(KERNEL) || defined(_KERNEL)
+				if (from + p->k < from)
+					goto out;
+				/*
+				 * mark the currently invalid bits for the
+				 * destination
+				 */
+				mem[from + p->k] |= invalid;
+				invalid = 0;
+#endif
 				break;
 			case BPF_JEQ:
 			case BPF_JGT:
 			case BPF_JGE:
 			case BPF_JSET:
-				if (from + p->jt >= len || from + p->jf >= len) 
-					return 0;
+				if (from + p->jt >= len || from + p->jf >= len)
+					goto out;
+#if defined(KERNEL) || defined(_KERNEL)
+				/*
+				 * mark the currently invalid bits for both
+				 * possible jump destinations
+				 */
+				mem[from + p->jt] |= invalid;
+				mem[from + p->jf] |= invalid;
+				invalid = 0;
+#endif
 				break;
 			default:
-				return 0;
+				goto out;
 			}
 			break;
 		case BPF_RET:
@@ -559,10 +629,13 @@ bpf_validate(struct bpf_insn *f, int len)
 		case BPF_MISC:
 			break;
 		default:
-			return 0;
+			goto out;
 		}
 	}
-
-	return BPF_CLASS(f[len - 1].code) == BPF_RET;
-}
+	ok = 1;
+out:
+#if defined(KERNEL) || defined(_KERNEL)
+	kmem_free(mem, size);
 #endif
+	return ok;
+}

@@ -1,4 +1,4 @@
-/* $NetBSD: pvrvar.h,v 1.3 2001/02/01 01:25:56 thorpej Exp $ */
+/* $NetBSD: pvrvar.h,v 1.3.154.1 2011/03/05 20:49:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -32,4 +32,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+void	pvrcnprobe(struct consdev *);
+void	pvrcninit(struct consdev *);
 int	pvr_cnattach(void);

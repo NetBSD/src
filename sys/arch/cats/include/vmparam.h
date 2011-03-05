@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 2007/10/25 13:03:03 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26.42.1 2011/03/05 20:49:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -74,13 +74,6 @@
  */
 
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-
-/*
- * this indicates that we can't add RAM to the VM system after the
- * vm system is init'd.
- */
-
-#define	VM_PHYSSEG_NOADD
 
 /*
  * we support 2 free lists:

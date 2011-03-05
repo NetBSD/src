@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.23.2.1 2010/05/30 05:17:31 rmind Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.23.2.2 2011/03/05 20:53:35 rmind Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23.2.1 2010/05/30 05:17:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23.2.2 2011/03/05 20:53:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23.2.1 2010/05/30 05:17:31 rmind Exp $"
 #include <dev/sysmon/sysmonvar.h>
 
 #include <sys/bus.h>
-
-#include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
 #include <dev/pci/arcmsrvar.h>
 

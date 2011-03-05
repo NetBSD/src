@@ -298,36 +298,38 @@ unionfs_create_uppervattr(struct unionfs_mount *ump,
 static int
 unionfs_relookup(struct vnode *dvp, struct vnode **vpp,
 		 struct componentname *cnp, struct componentname *cn,
+		 char **pnbuf_ret,
 		 const char *path, int pathlen, u_long nameiop)
 {
 	int	error;
+	char *pnbuf;
 
 	cn->cn_namelen = pathlen;
-	cn->cn_pnbuf = PNBUF_GET();
-	memcpy(cn->cn_pnbuf, path, pathlen);
-	cn->cn_pnbuf[pathlen] = '\0';
+	pnbuf = PNBUF_GET();
+	memcpy(pnbuf, path, pathlen);
+	pnbuf[pathlen] = '\0';
 
 	cn->cn_nameiop = nameiop;
-	cn->cn_flags = (LOCKPARENT | LOCKLEAF | HASBUF | SAVENAME | ISLASTCN);
+	cn->cn_flags = (LOCKPARENT | LOCKLEAF | ISLASTCN);
 	cn->cn_cred = cnp->cn_cred;
 
-	cn->cn_nameptr = cn->cn_pnbuf;
+	cn->cn_nameptr = pnbuf;
 	cn->cn_consume = cnp->cn_consume;
 
 	if (nameiop == DELETE)
-		cn->cn_flags |= (cnp->cn_flags & (DOWHITEOUT | SAVESTART));
-	else if (RENAME == nameiop)
-		cn->cn_flags |= (cnp->cn_flags & SAVESTART);
+		cn->cn_flags |= (cnp->cn_flags & DOWHITEOUT);
 
 	vref(dvp);
 	VOP_UNLOCK(dvp);
 
-	if ((error = relookup(dvp, vpp, cn))) {
-		PNBUF_PUT(cn->cn_pnbuf);
-		cn->cn_flags &= ~HASBUF;
+	if ((error = relookup(dvp, vpp, cn, 0))) {
+		PNBUF_PUT(pnbuf);
+		*pnbuf_ret = NULL;
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	} else
+	} else {
+		*pnbuf_ret = pnbuf;
 		vrele(dvp);
+	}
 
 	return (error);
 }
@@ -348,11 +350,13 @@ unionfs_relookup_for_create(struct vnode *dvp, struct componentname *cnp)
 	struct vnode *udvp;
 	struct vnode *vp;
 	struct componentname cn;
+	char *pnbuf;
 
 	udvp = UNIONFSVPTOUPPERVP(dvp);
 	vp = NULLVP;
 
-	error = unionfs_relookup(udvp, &vp, cnp, &cn, cnp->cn_nameptr,
+	error = unionfs_relookup(udvp, &vp, cnp, &cn, &pnbuf,
+	    cnp->cn_nameptr,
 	    strlen(cnp->cn_nameptr), CREATE);
 	if (error)
 		return (error);
@@ -366,13 +370,9 @@ unionfs_relookup_for_create(struct vnode *dvp, struct componentname *cnp)
 		error = EEXIST;
 	}
 
-	if (cn.cn_flags & HASBUF) {
-		PNBUF_PUT(cn.cn_pnbuf);
-		cn.cn_flags &= ~HASBUF;
-	}
+	PNBUF_PUT(pnbuf);
 
 	if (!error) {
-		cn.cn_flags |= (cnp->cn_flags & HASBUF);
 		cnp->cn_flags = cn.cn_flags;
 	}
 
@@ -391,11 +391,12 @@ unionfs_relookup_for_delete(struct vnode *dvp, struct componentname *cnp)
 	struct vnode *udvp;
 	struct vnode *vp;
 	struct componentname cn;
+	char *pnbuf;
 
 	udvp = UNIONFSVPTOUPPERVP(dvp);
 	vp = NULLVP;
 
-	error = unionfs_relookup(udvp, &vp, cnp, &cn, cnp->cn_nameptr,
+	error = unionfs_relookup(udvp, &vp, cnp, &cn, &pnbuf, cnp->cn_nameptr,
 	    strlen(cnp->cn_nameptr), DELETE);
 	if (error)
 		return (error);
@@ -409,13 +410,9 @@ unionfs_relookup_for_delete(struct vnode *dvp, struct componentname *cnp)
 			vput(vp);
 	}
 
-	if (cn.cn_flags & HASBUF) {
-		PNBUF_PUT(cn.cn_pnbuf);
-		cn.cn_flags &= ~HASBUF;
-	}
+	PNBUF_PUT(pnbuf);
 
 	if (!error) {
-		cn.cn_flags |= (cnp->cn_flags & HASBUF);
 		cnp->cn_flags = cn.cn_flags;
 	}
 
@@ -434,11 +431,12 @@ unionfs_relookup_for_rename(struct vnode *dvp, struct componentname *cnp)
 	struct vnode *udvp;
 	struct vnode *vp;
 	struct componentname cn;
+	char *pnbuf;
 
 	udvp = UNIONFSVPTOUPPERVP(dvp);
 	vp = NULLVP;
 
-	error = unionfs_relookup(udvp, &vp, cnp, &cn, cnp->cn_nameptr,
+	error = unionfs_relookup(udvp, &vp, cnp, &cn, &pnbuf, cnp->cn_nameptr,
 	    strlen(cnp->cn_nameptr), RENAME);
 	if (error)
 		return (error);
@@ -450,13 +448,9 @@ unionfs_relookup_for_rename(struct vnode *dvp, struct componentname *cnp)
 			vput(vp);
 	}
 
-	if (cn.cn_flags & HASBUF) {
-		PNBUF_PUT(cn.cn_pnbuf);
-		cn.cn_flags &= ~HASBUF;
-	}
+	PNBUF_PUT(pnbuf);
 
 	if (!error) {
-		cn.cn_flags |= (cnp->cn_flags & HASBUF);
 		cnp->cn_flags = cn.cn_flags;
 	}
 
@@ -505,6 +499,7 @@ unionfs_mkshadowdir(struct unionfs_mount *ump, struct vnode *udvp,
 	struct vattr	va;
 	struct vattr	lva;
 	struct componentname cn;
+	char *pnbuf;
 
 	if (unp->un_uppervp != NULLVP)
 		return (EEXIST);
@@ -517,7 +512,8 @@ unionfs_mkshadowdir(struct unionfs_mount *ump, struct vnode *udvp,
 	if ((error = VOP_GETATTR(lvp, &lva, cnp->cn_cred)))
 		goto unionfs_mkshadowdir_abort;
 
-	if ((error = unionfs_relookup(udvp, &uvp, cnp, &cn, cnp->cn_nameptr, cnp->cn_namelen, CREATE)))
+	if ((error = unionfs_relookup(udvp, &uvp, cnp, &cn, &pnbuf,
+			cnp->cn_nameptr, cnp->cn_namelen, CREATE)))
 		goto unionfs_mkshadowdir_abort;
 	if (uvp != NULLVP) {
 		if (udvp == uvp)
@@ -545,10 +541,7 @@ unionfs_mkshadowdir(struct unionfs_mount *ump, struct vnode *udvp,
 	}
 
 unionfs_mkshadowdir_free_out:
-	if (cn.cn_flags & HASBUF) {
-		PNBUF_PUT(cn.cn_pnbuf);
-		cn.cn_flags &= ~HASBUF;
-	}
+	PNBUF_PUT(pnbuf);
 
 unionfs_mkshadowdir_abort:
 
@@ -566,18 +559,17 @@ unionfs_mkwhiteout(struct vnode *dvp, struct componentname *cnp, const char *pat
 	int		error;
 	struct vnode   *wvp;
 	struct componentname cn;
+	char *pnbuf;
 
 	if (path == NULL)
 		path = cnp->cn_nameptr;
 
 	wvp = NULLVP;
-	if ((error = unionfs_relookup(dvp, &wvp, cnp, &cn, path, strlen(path), CREATE)))
+	if ((error = unionfs_relookup(dvp, &wvp, cnp, &cn, &pnbuf,
+			path, strlen(path), CREATE)))
 		return (error);
 	if (wvp != NULLVP) {
-		if (cn.cn_flags & HASBUF) {
-			PNBUF_PUT(cn.cn_pnbuf);
-			cn.cn_flags &= ~HASBUF;
-		}
+		PNBUF_PUT(pnbuf);
 		if (dvp == wvp)
 			vrele(wvp);
 		else
@@ -586,10 +578,7 @@ unionfs_mkwhiteout(struct vnode *dvp, struct componentname *cnp, const char *pat
 		return (EEXIST);
 	}
 
-	if (cn.cn_flags & HASBUF) {
-		PNBUF_PUT(cn.cn_pnbuf);
-		cn.cn_flags &= ~HASBUF;
-	}
+	PNBUF_PUT(pnbuf);
 
 	return (error);
 }
@@ -614,6 +603,7 @@ unionfs_vn_create_on_upper(struct vnode **vpp, struct vnode *udvp,
 	int		fmode;
 	int		error;
 	struct componentname cn;
+	char *pnbuf;
 
 	ump = MOUNTTOUNIONFSMOUNT(UNIONFSTOV(unp)->v_mount);
 	vp = NULLVP;
@@ -630,16 +620,16 @@ unionfs_vn_create_on_upper(struct vnode **vpp, struct vnode *udvp,
 		panic("unionfs: un_path is null");
 
 	cn.cn_namelen = strlen(unp->un_path);
-	cn.cn_pnbuf = PNBUF_GET();
-	memcpy(cn.cn_pnbuf, unp->un_path, cn.cn_namelen + 1);
+	pnbuf = PNBUF_GET();
+	memcpy(pnbuf, unp->un_path, cn.cn_namelen + 1);
 	cn.cn_nameiop = CREATE;
-	cn.cn_flags = (LOCKPARENT | LOCKLEAF | HASBUF | SAVENAME | ISLASTCN);
+	cn.cn_flags = (LOCKPARENT | LOCKLEAF | ISLASTCN);
 	cn.cn_cred = cred;
-	cn.cn_nameptr = cn.cn_pnbuf;
+	cn.cn_nameptr = pnbuf;
 	cn.cn_consume = 0;
 
 	vref(udvp);
-	if ((error = relookup(udvp, &vp, &cn)) != 0)
+	if ((error = relookup(udvp, &vp, &cn, 0)) != 0)
 		goto unionfs_vn_create_on_upper_free_out2;
 	vrele(udvp);
 
@@ -666,10 +656,7 @@ unionfs_vn_create_on_upper_free_out1:
 	VOP_UNLOCK(udvp);
 
 unionfs_vn_create_on_upper_free_out2:
-	if (cn.cn_flags & HASBUF) {
-		PNBUF_PUT(cn.cn_pnbuf);
-		cn.cn_flags &= ~HASBUF;
-	}
+	PNBUF_PUT(pnbuf);
 
 	return (error);
 }
@@ -869,10 +856,9 @@ unionfs_check_rmdir(struct vnode *vp, kauth_cred_t cred)
 				continue;
 
 			cn.cn_namelen = dp->d_namlen;
-			cn.cn_pnbuf = NULL;
 			cn.cn_nameptr = dp->d_name;
 			cn.cn_nameiop = LOOKUP;
-			cn.cn_flags = (LOCKPARENT | LOCKLEAF | SAVENAME | RDONLY | ISLASTCN);
+			cn.cn_flags = (LOCKPARENT | LOCKLEAF | RDONLY | ISLASTCN);
 			cn.cn_cred = cred;
 			cn.cn_consume = 0;
 
@@ -893,7 +879,7 @@ unionfs_check_rmdir(struct vnode *vp, kauth_cred_t cred)
 			 * If it has no exist/whiteout entry in upper,
 			 * directory is not empty.
 			 */
-			cn.cn_flags = (LOCKPARENT | LOCKLEAF | SAVENAME | RDONLY | ISLASTCN);
+			cn.cn_flags = (LOCKPARENT | LOCKLEAF | RDONLY | ISLASTCN);
 			lookuperr = VOP_LOOKUP(uvp, &tvp, &cn);
 
 			if (!lookuperr)

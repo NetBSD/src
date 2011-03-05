@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5.4.1 2011/03/05 20:50:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,34 +102,11 @@
 
 #define VM_PHYSSEG_MAX		16		/* XXX: */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
 
 #define	VM_NFREELIST		1 /* XXX: */
 #define	VM_FREELIST_DEFAULT	0 /* XXX: */
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
-
-#ifndef _LOCORE
-
-#include <sys/queue.h>
-#include <sys/mutex.h>
-/*
- * pmap-specific data store in the vm_page structure.
- */
-#define	__HAVE_VM_PAGE_MD
-struct vm_page_md {
-	TAILQ_HEAD(,pv_entry) pv_list;	/* pv_entry list */
-	int pv_list_count;
-	kmutex_t pv_mutex;		/* lock on this head */
-	int pvh_attrs;			/* page attributes */
-};
-
-#define	VM_MDPAGE_INIT(pg)						\
-do {									\
-	TAILQ_INIT(&(pg)->mdpage.pv_list);				\
-	mutex_init(&(pg)->mdpage.pv_mutex, MUTEX_DEFAULT, IPL_NONE);	\
-} while (/*CONSTCOND*/0)
-#endif /*_LOCORE*/
 
 #endif /* _VMPARAM_H_ */

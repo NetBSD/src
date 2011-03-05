@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.21 2008/08/31 23:23:42 mrg Exp $ */
+/*	$NetBSD: asm.h,v 1.21.16.1 2011/03/05 20:52:16 rmind Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
-# define _ALIGN_TEXT .align 4
+# define _ALIGN_TEXT .p2align 2
 #endif
 
 #define	_ENTRY(x, regs) \
@@ -76,6 +76,7 @@
 #define ENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs); _PROF_PROLOGUE
 #define NENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs)
 #define ASENTRY(x, regs)	_ENTRY(_ASM_LABEL(x), regs); _PROF_PROLOGUE
+#define END(x)			.size _C_LABEL(x),.-_C_LABEL(x)
 
 #define ALTENTRY(x)		.globl _C_LABEL(x); _C_LABEL(x):
 #define RCSID(name)		.pushsection ".ident"; .asciz name; .popsection
@@ -94,12 +95,14 @@
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_C_LABEL(sym)),1,0,0,0
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
 #endif /* __STDC__ */
 
 #endif /* !_VAX_ASM_H_ */

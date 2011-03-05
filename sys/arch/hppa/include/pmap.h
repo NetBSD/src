@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25.2.3 2010/07/03 01:19:19 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25.2.4 2011/03/05 20:50:37 rmind Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -193,10 +193,24 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	((((va) & 0xc0000000) != 0xc0000000) ? \
 	 (pmap)->pm_space : HPPA_SID_KERNEL)
 
-/*
- * MD flags that we use for pmap_kenter_pa:
- */
-#define	PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
+#define __HAVE_VM_PAGE_MD
+
+struct pv_entry;
+
+struct vm_page_md {
+	struct kmutex	pvh_lock;	/* locks every pv on this list */
+	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
+	u_int		pvh_attrs;	/* to preserve ref/mod */
+	int		pvh_aliases;	/* alias counting */
+};
+
+#define	VM_MDPAGE_INIT(pg) \
+do {									\
+	mutex_init(&(pg)->mdpage.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
+	(pg)->mdpage.pvh_list = NULL;					\
+	(pg)->mdpage.pvh_attrs = 0;					\
+	(pg)->mdpage.pvh_aliases = 0;					\
+} while (0)
 
 #endif /* _KERNEL */
 

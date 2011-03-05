@@ -1,11 +1,13 @@
-# $NetBSD: Makefile,v 1.1.4.1 2010/05/30 05:18:00 rmind Exp $
+# $NetBSD: Makefile,v 1.1.4.2 2011/03/05 20:55:34 rmind Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/acpi
 
 KMOD=	acpibat
-IOCONF=	ACPIBAT.ioconf
+IOCONF=	acpibat.ioconf
 SRCS=	acpi_bat.c
+
+WARNS=	4
 
 .include <bsd.kmodule.mk>

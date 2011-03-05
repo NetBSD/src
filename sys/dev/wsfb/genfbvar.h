@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.14 2010/02/24 22:38:09 dyoung Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.14.2.1 2011/03/05 20:54:20 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.14 2010/02/24 22:38:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.14.2.1 2011/03/05 20:54:20 rmind Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -46,13 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.14 2010/02/24 22:38:09 dyoung Exp $")
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include "opt_genfb.h"
 
 #ifdef SPLASHSCREEN
 #define GENFB_DISABLE_TEXT
 #include <dev/splash/splash.h>
-/* XXX */
-extern const char _splash_header_data_cmap[64+32][3];
 #endif
+
+struct genfb_softc;
 
 struct genfb_ops {
 	int (*genfb_ioctl)(void *, void *, u_long, void *, int, struct lwp *);
@@ -65,13 +66,23 @@ struct genfb_colormap_callback {
 	void (*gcc_set_mapreg)(void *, int, int, int, int);
 };
 
+struct genfb_parameter_callback{
+	void *gpc_cookie;
+	void (*gpc_set_parameter)(void *, int);
+	int (*gpc_get_parameter)(void *);
+};
+
 struct genfb_pmf_callback {
 	bool (*gpc_suspend)(device_t, const pmf_qual_t *);
 	bool (*gpc_resume)(device_t, const pmf_qual_t *);
 };
 
+struct genfb_mode_callback {
+	bool (*gmc_setmode)(struct genfb_softc *, int);
+};
+
 struct genfb_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct vcons_data vd;
 	struct genfb_ops sc_ops;
 	struct vcons_screen sc_console_screen;
@@ -80,8 +91,13 @@ struct genfb_softc {
 	struct wsscreen_list sc_screenlist;
 	struct genfb_colormap_callback *sc_cmcb;
 	struct genfb_pmf_callback *sc_pmfcb;
+	struct genfb_parameter_callback *sc_backlight;
+	struct genfb_mode_callback *sc_modecb;
+	int sc_backlight_level, sc_backlight_on;
 	void *sc_fbaddr;	/* kva */
-	void *sc_shadowfb; 
+#ifdef GENFB_SHADOWFB
+	void *sc_shadowfb;
+#endif
 	bus_addr_t sc_fboffset;	/* bus address */
 	int sc_width, sc_height, sc_stride, sc_depth;
 	size_t sc_fbsize;
@@ -92,9 +108,6 @@ struct genfb_softc {
 	bool sc_want_clear;
 #ifdef SPLASHSCREEN
 	struct splash_info sc_splash;
-#ifdef SPLASHSCREEN_PROGRESS
-	struct splash_progress sc_progress;
-#endif
 #endif
 };
 
@@ -106,6 +119,7 @@ void	genfb_init(struct genfb_softc *);
 int	genfb_attach(struct genfb_softc *, struct genfb_ops *);
 int	genfb_borrow(bus_addr_t, bus_space_handle_t *);
 void	genfb_restore_palette(struct genfb_softc *);
-
+void	genfb_enable_polling(device_t);
+void	genfb_disable_polling(device_t);
 
 #endif /* GENFBVAR_H */

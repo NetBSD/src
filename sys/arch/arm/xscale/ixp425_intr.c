@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.20.4.1 2010/07/03 01:19:15 rmind Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.20.4.2 2011/03/05 20:49:40 rmind Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.20.4.1 2010/07/03 01:19:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.20.4.2 2011/03/05 20:49:40 rmind Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.20.4.1 2010/07/03 01:19:15 rmind E
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -413,7 +411,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
-		uvmexp.intrs++;
+		ci->ci_data.cpu_nintr++;
 
 		/* Clear down non-level triggered GPIO interrupts now */
 		if ((ibit & IXP425_INT_GPIOMASK) && iq->iq_ist != IST_LEVEL) {

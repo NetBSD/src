@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.135.4.2 2010/05/30 05:18:08 rmind Exp $	*/
+/*	$NetBSD: conf.h,v 1.135.4.3 2011/03/05 20:56:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,7 +53,7 @@ struct uio;
 struct vnode;
 
 /*
- * Types for d_type
+ * Types for d_flag
  */
 #define D_OTHER		0x0000
 #define	D_TAPE		0x0001
@@ -231,9 +231,13 @@ int	seltrue_kqfilter(dev_t, struct knote *);
 enum devnode_class {
 	DEVNODE_DONTBOTHER,
 	DEVNODE_SINGLE,
-	DEVNODE_VECTOR
+	DEVNODE_VECTOR,
 };
 #define DEVNODE_FLAG_LINKZERO	0x01	/* create name -> name0 link */
+#define DEVNODE_FLAG_ISMINOR0	0x02	/* vector[0] specifies minor */
+#ifdef notyet
+#define DEVNODE_FLAG_ISMINOR1	0x04	/* vector[1] specifies starting minor */
+#endif
 
 struct devsw_conv {
 	const char *d_name;

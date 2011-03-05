@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10.2.1 2010/05/30 05:17:14 rmind Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10.2.2 2011/03/05 20:52:34 rmind Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10.2.1 2010/05/30 05:17:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10.2.2 2011/03/05 20:52:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10.2.1 2010/05/30 05:17:14 rmind Exp $
 #include <dev/pci/pcivar.h>
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_madt.h>       
 #include <xen/mpacpi.h>       
 #endif /* NACPICA > 0 */
 #ifdef MPBIOS
@@ -134,7 +133,7 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
-#if NPCI > 0
+#if defined(DOM0OPS) && NPCI > 0
 	int mode;
 #endif
 	union mainbus_attach_args mba;

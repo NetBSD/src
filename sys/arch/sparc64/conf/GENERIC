@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123.2.1 2010/05/30 05:17:08 rmind Exp $
+# $NetBSD: GENERIC,v 1.123.2.2 2011/03/05 20:52:05 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123.2.1 $"
+#ident 		"GENERIC-$Revision: 1.123.2.2 $"
 
 maxusers	64
 
@@ -453,7 +453,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-pseudo-device	md	1
+pseudo-device	md	
 
 
 #### Network interfaces
@@ -487,6 +487,7 @@ qe*		at qec?
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
 bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+bnx*	at pci? dev ? function ?	# Broadcom NetXtreme II Ethernet
 cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
@@ -926,7 +927,8 @@ spdmem*		at iic? addr?
 admtemp*	at iic? addr?
 ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
 lmtemp*		at iic? addr?
-tda*		at iic? addr?	# fan controll on SB1000/2000
+tda*		at iic? addr?	# fan control on SB1000/2000
+dbcool*		at iic? addr?	# SB25000
 
 ### Other pseudo-devices
 

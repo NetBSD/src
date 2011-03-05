@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.12 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.12.26.1 2011/03/05 20:51:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -32,14 +32,6 @@
 #define	SN_REGSIZE	(SN_NREGS * 4)
 
 #include <mips/locore.h>
-#undef wbflush	/* XXX */
-
-static inline void
-wbflush(void)
-{
-	mips3_wbflush();
-	apbus_wbflush();
-};
 
 /*
  * buffer sizes in 32 bit mode

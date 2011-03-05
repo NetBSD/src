@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.61.4.3 2010/07/03 01:19:50 rmind Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.61.4.4 2011/03/05 20:55:05 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.61.4.3 2010/07/03 01:19:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.61.4.4 2011/03/05 20:55:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.61.4.3 2010/07/03 01:19:50 rmind
 
 /*
  * Create a regular file. On entry the directory to contain the file being
- * created is locked.  We must release before we return. We must also free
- * the pathname buffer pointed at by cnp->cn_pnbuf, always on error, or
- * only if the SAVESTART bit in cn_flags is clear on success.
+ * created is locked.  We must release before we return.
  */
 int
 msdosfs_create(void *v)
@@ -140,10 +138,6 @@ msdosfs_create(void *v)
 	 * use the absence of the owner write bit to make the file
 	 * readonly.
 	 */
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("msdosfs_create: no name");
-#endif
 	memset(&ndirent, 0, sizeof(ndirent));
 	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
@@ -159,8 +153,6 @@ msdosfs_create(void *v)
 	DETIMES(&ndirent, NULL, NULL, NULL, pdep->de_pmp->pm_gmtoff);
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
-	if ((cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	fstrans_done(ap->a_dvp->v_mount);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vput(ap->a_dvp);
@@ -169,7 +161,6 @@ msdosfs_create(void *v)
 
 bad:
 	fstrans_done(ap->a_dvp->v_mount);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (error);
 }
@@ -358,7 +349,7 @@ msdosfs_setattr(void *v)
 		    vap->va_type, vap->va_nlink, vap->va_fsid,
 		    (unsigned long long)vap->va_fileid);
 		printf("    va_blocksize %lx, va_rdev %"PRIx64", va_bytes %"PRIx64", va_gen %lx\n",
-		    vap->va_blocksize, vap->va_rdev, (long long)vap->va_bytes, vap->va_gen);
+		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
 #endif
 		return (EINVAL);
 	}
@@ -828,7 +819,7 @@ msdosfs_rename(void *v)
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	struct denode *ip, *xp, *dp, *zp;
-	u_char toname[11], oldname[11];
+	u_char toname[12], oldname[12];
 	u_long from_diroffset, to_diroffset;
 	u_char to_count;
 	int doingdirectory = 0, newparent = 0;
@@ -838,15 +829,9 @@ msdosfs_rename(void *v)
 	struct msdosfsmount *pmp;
 	struct direntry *dotdotp;
 	struct buf *bp;
-	int fdvp_dorele = 0;
 
 	pmp = VFSTOMSDOSFS(fdvp->v_mount);
 
-#ifdef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("msdosfs_rename: no name");
-#endif
 	/*
 	 * Check for cross-device rename.
 	 */
@@ -936,16 +921,6 @@ abortit:
 	if (VTODE(fdvp)->de_StartCluster != VTODE(tdvp)->de_StartCluster)
 		newparent = 1;
 
-	/*
-	 * XXX: We can do this here because rename uses SAVEFART and
-	 * therefore fdvp has at least two references (one doesn't
-	 * belong to us, though, and that's evil).  We'll get
-	 * another "extra" reference when we do relookup(), so we
-	 * need to compensate.  We should *NOT* be doing this, but
-	 * it works, so whatever.
-	 */
-	vrele(fdvp);
-
 	if (doingdirectory && newparent) {
 		if (error)	/* write access check above */
 			goto tdvpbad;
@@ -953,22 +928,19 @@ abortit:
 			vput(tvp);
 		tvp = NULL;
 		/*
-		 * doscheckpath() vput()'s dp,
-		 * so we have to do a relookup afterwards
+		 * doscheckpath() vput()'s tdvp (dp == VTODE(tdvp)),
+		 * so we have to get an extra ref to it first, and
+		 * because it's been unlocked we need to do a relookup
+		 * afterwards in case tvp has changed.
 		 */
+		vref(tdvp);
 		if ((error = doscheckpath(ip, dp)) != 0)
 			goto out;
-		if ((tcnp->cn_flags & SAVESTART) == 0)
-			panic("msdosfs_rename: lost to startdir");
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0) {
+		if ((error = relookup(tdvp, &tvp, tcnp, 0)) != 0) {
 			VOP_UNLOCK(tdvp);
 			goto out;
 		}
-		/*
-		 * XXX: SAVESTART causes us to get a reference, but
-		 * that's released already above in doscheckpath()
-		 */
 		dp = VTODE(tdvp);
 		xp = tvp ? VTODE(tvp) : NULL;
 	}
@@ -1018,11 +990,9 @@ abortit:
 	 */
 	fcnp->cn_flags &= ~MODMASK;
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-	if ((fcnp->cn_flags & SAVESTART) == 0)
-		panic("msdosfs_rename: lost from startdir");
 	VOP_UNLOCK(tdvp);
 	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-	if ((error = relookup(fdvp, &fvp, fcnp))) {
+	if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 		VOP_UNLOCK(fdvp);
 		vrele(ap->a_fvp);
 		vrele(tdvp);
@@ -1041,7 +1011,6 @@ abortit:
 		fstrans_done(fdvp->v_mount);
 		return 0;
 	}
-	fdvp_dorele = 1;
 	VOP_UNLOCK(fdvp);
 	xp = VTODE(fvp);
 	zp = VTODE(fdvp);
@@ -1147,8 +1116,7 @@ bad:
 	vrele(tdvp);
 out:
 	ip->de_flag &= ~DE_RENAME;
-	if (fdvp_dorele)
-		vrele(fdvp);
+	vrele(fdvp);
 	vrele(fvp);
 	fstrans_done(fdvp->v_mount);
 	return (error);
@@ -1278,10 +1246,6 @@ msdosfs_mkdir(void *v)
 	 * cluster.  This will be written to an empty slot in the parent
 	 * directory.
 	 */
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("msdosfs_mkdir: no name");
-#endif
 	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
 
@@ -1292,8 +1256,6 @@ msdosfs_mkdir(void *v)
 	ndirent.de_devvp = pdep->de_devvp;
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
-	if ((cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
 	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
@@ -1303,7 +1265,6 @@ msdosfs_mkdir(void *v)
 bad:
 	clusterfree(pmp, newcluster, NULL);
 bad2:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	fstrans_done(ap->a_dvp->v_mount);
 	return (error);

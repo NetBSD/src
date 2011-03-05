@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.7.6.1 2010/07/03 01:19:15 rmind Exp $	*/
+/*	$Id: omap2_obio.c,v 1.7.6.2 2011/03/05 20:49:38 rmind Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.7.6.1 2010/07/03 01:19:15 rmind Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.7.6.2 2011/03/05 20:49:38 rmind Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.7.6.1 2010/07/03 01:19:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.7.6.2 2011/03/05 20:49:38 rmind Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -202,9 +202,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": On-Board IO\n");
 
 	sc->sc_ioh = 0;
-#ifdef NOTYET
 	sc->sc_dmat = &omap_bus_dma_tag;
-#endif
 	sc->sc_base = mb->mb_iobase;
 	sc->sc_size = mb->mb_iosize;
 
@@ -389,15 +387,18 @@ obio_attach_critical(struct obio_softc *sc)
 		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
 		if (cf == NULL) {
 			if (critical_devs[i].required)
-				panic("obio_attach_critical: failed to find %s!",
+				panic(
+				    "obio_attach_critical: failed to find %s!",
 				    critical_devs[i].name);
 			continue;
 		}
 
-		oa.obio_addr = cf->cf_loc[OBIOCF_ADDR];
-		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
-		oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
-		oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
+		if (oa.obio_size == OBIOCF_SIZE_DEFAULT)
+			oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
+		if (oa.obio_intr == OBIOCF_INTR_DEFAULT)
+			oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
+		if (oa.obio_intrbase == OBIOCF_INTRBASE_DEFAULT)
+			oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
 		config_attach(sc->sc_dev, cf, &oa, obio_print);
 	}
 }

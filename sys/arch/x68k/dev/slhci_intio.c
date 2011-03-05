@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.12.6.1 2010/05/30 05:17:11 rmind Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.12.6.2 2011/03/05 20:52:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.12.6.1 2010/05/30 05:17:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.12.6.2 2011/03/05 20:52:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,10 @@ slhci_intio_match(device_t parent, cfdata_t cf, void *aux)
 	       ia->ia_intr == SLHCI_INTIO_INTR1   ) &&
 	     !(ia->ia_addr == SLHCI_INTIO_ADDR2 &&
 	       ia->ia_intr == SLHCI_INTIO_INTR2   ) )
+		return 0;
+
+	/* Whether the SL811 port is accessible or not */
+	if (badaddr((void *)IIOV(ia->ia_addr)))
 		return 0;
 
 	/* Whether the control port is accessible or not */

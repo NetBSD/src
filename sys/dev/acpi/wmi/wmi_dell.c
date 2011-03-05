@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.3.4.3 2010/07/03 01:19:35 rmind Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.3.4.4 2011/03/05 20:53:05 rmind Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.3.4.3 2010/07/03 01:19:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.3.4.4 2011/03/05 20:53:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -121,7 +122,7 @@ wmi_dell_detach(device_t self, int flags)
 {
 	struct wmi_dell_softc *sc = device_private(self);
 	device_t parent = sc->sc_parent;
-	int i;
+	size_t i;
 
 	(void)pmf_device_deregister(self);
 	(void)acpi_wmi_event_deregister(parent);
@@ -230,4 +231,40 @@ out:
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(sc->sc_dev, "failed to get data for "
 		    "event 0x%02X: %s\n", evt, AcpiFormatException(rv));
+}
+
+MODULE(MODULE_CLASS_DRIVER, wmidell, "acpiwmi");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+wmidell_modcmd(modcmd_t cmd, void *aux)
+{
+	int rv = 0;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_wmidell,
+		    cfattach_ioconf_wmidell, cfdata_ioconf_wmidell);
+#endif
+		break;
+
+	case MODULE_CMD_FINI:
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_wmidell,
+		    cfattach_ioconf_wmidell, cfdata_ioconf_wmidell);
+#endif
+		break;
+
+	default:
+		rv = ENOTTY;
+	}
+
+	return rv;
 }

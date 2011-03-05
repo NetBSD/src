@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.24.8.1 2010/05/30 05:17:59 rmind Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.24.8.2 2011/03/05 20:55:28 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -196,13 +196,14 @@ cd9660_open(const char *path, struct open_file *f)
 	bno = isonum_732(pp->block) + isonum_711(pp->extlen);
 
 	rc = ENOENT;
-	/*
-	 * Remove extra separators
-	 */
-	while (*path == '/')
-		path++;
 
 	while (*path) {
+		/*
+		 * Remove extra separators
+		 */
+		while (*path == '/')
+			path++;
+
 		if ((char *)pp >= (char *)buf + psize)
 			break;
 		if (isonum_722(pp->parent) != parent)

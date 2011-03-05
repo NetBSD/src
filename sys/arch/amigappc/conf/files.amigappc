@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.22 2010/02/02 19:07:05 phx Exp $
+#	$NetBSD: files.amigappc,v 1.22.4.1 2011/03/05 20:49:24 rmind Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -30,6 +30,8 @@ defflag	opt_retina.h		RETINA_SPEED_HACK
 defflag				BB060STUPIDROM
 defflag				P5PPC68KBOARD
 defflag				LEV6_DEFER
+
+defparam			IOBZCLOCK
 
 file	dev/cons.c				ite | ser
 file	dev/cninit.c				ite | ser
@@ -351,6 +353,11 @@ file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
 device	wesc: scsi, asiop
 attach	wesc at zbus
 file	arch/amiga/dev/wesc.c		wesc needs-flag
+
+# Phase5 Blizzard 603e+ SCSI
+device	bppcsc: scsi, asiop
+attach	bppcsc at zbus
+file	arch/amiga/dev/bppcsc.c		bppcsc needs-flag
 
 # C= A4091 & A4000T
 device	afsc: scsi, asiop

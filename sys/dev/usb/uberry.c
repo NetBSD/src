@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.5 2009/12/06 21:39:45 dyoung Exp $	*/
+/*	$NetBSD: uberry.c,v 1.5.4.1 2011/03/05 20:54:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.5 2009/12/06 21:39:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.5.4.1 2011/03/05 20:54:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.5 2009/12/06 21:39:45 dyoung Exp $");
 #include <dev/usb/usbdevs.h>
 
 #ifdef UBERRY_DEBUG
-#define DPRINTF(x)	if (uberrydebug) logprintf x
-#define DPRINTFN(n, x)	if (uberrydebug > n) logprintf x
+#define DPRINTF(x)	if (uberrydebug) printf x
+#define DPRINTFN(n, x)	if (uberrydebug > n) printf x
 int	uberrydebug = 0;
 #else
 #define DPRINTF(x)
@@ -70,7 +70,7 @@ int	uberrydebug = 0;
 #endif
 
 struct uberry_softc {
- 	USBBASEDEVICE		sc_dev;
+ 	device_t		sc_dev;
 	usbd_device_handle	sc_udev;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.39.2.3 2010/07/03 01:19:30 rmind Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.39.2.4 2011/03/05 20:52:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.3 2010/07/03 01:19:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.4 2011/03/05 20:52:32 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
+#include "opt_splash.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,8 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.3 2010/07/03 01:19:30 rmind E
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 #include <x86/machdep.h>
+#include <x86/nmi.h>
 #include <x86/pio.h>
 
+#include <dev/splash/splash.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
 #include <dev/mm.h>
@@ -63,6 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.3 2010/07/03 01:19:30 rmind E
 #include <machine/vmparam.h>
 
 #include <uvm/uvm_extern.h>
+
+void (*x86_cpu_idle)(void);
+static bool x86_cpu_idle_ipi;
+static char x86_cpu_idle_text[16];
 
 /* --------------------------------------------------------------------- */
 
@@ -143,15 +150,27 @@ module_init_md(void)
 	bi = (struct bi_modulelist_entry *)((uint8_t *)biml + sizeof(*biml));
 	bimax = bi + biml->num;
 	for (; bi < bimax; bi++) {
-		if (bi->type != BI_MODULE_ELF) {
+		switch (bi->type) {
+		case BI_MODULE_ELF:
+			aprint_debug("Prep module path=%s len=%d pa=%x\n", 
+			    bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+			module_prime((void *)((uintptr_t)bi->base + KERNBASE),
+			    bi->len);
+			break;
+		case BI_MODULE_IMAGE:
+#ifdef SPLASHSCREEN
+			aprint_debug("Splash image path=%s len=%d pa=%x\n", 
+			    bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+			splash_setimage(
+			    (void *)((uintptr_t)bi->base + KERNBASE), bi->len);
+#endif
+			break;
+		default:
 			aprint_debug("Skipping non-ELF module\n");
-			continue;
+			break;
 		}
-		aprint_debug("Prep module path=%s len=%d pa=%x\n", bi->path,
-		    bi->len, bi->base);
-		KASSERT(trunc_page(bi->base) == bi->base);
-		(void)module_prime((void *)((uintptr_t)bi->base + KERNBASE),
-		    bi->len);
 	}
 }
 #endif	/* MODULAR */
@@ -181,7 +200,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		if (ci == cur)
 			return;
 #ifndef XEN /* XXX review when Xen gets MP support */
-		if (x86_cpu_idle == x86_cpu_idle_halt)
+		if (x86_cpu_idle_ipi != false)
 			x86_send_ipi(ci, 0);
 #endif
 		return;
@@ -312,9 +331,6 @@ cpu_kpreempt_disabled(void)
 }
 #endif	/* __HAVE_PREEMPTION */
 
-void (*x86_cpu_idle)(void);
-static char x86_cpu_idle_text[16];
-
 SYSCTL_SETUP(sysctl_machdep_cpu_idle, "sysctl machdep cpu_idle")
 {
 	const struct sysctlnode	*mnode, *node;
@@ -333,21 +349,36 @@ SYSCTL_SETUP(sysctl_machdep_cpu_idle, "sysctl machdep cpu_idle")
 void
 x86_cpu_idle_init(void)
 {
+
 #ifndef XEN
 	if ((cpu_feature[1] & CPUID2_MONITOR) == 0 ||
-	    cpu_vendor == CPUVENDOR_AMD) {
-		strlcpy(x86_cpu_idle_text, "halt", sizeof(x86_cpu_idle_text));
-		x86_cpu_idle = x86_cpu_idle_halt;
-	} else {
-		strlcpy(x86_cpu_idle_text, "mwait", sizeof(x86_cpu_idle_text));
-		x86_cpu_idle = x86_cpu_idle_mwait;
-	}
+	    cpu_vendor == CPUVENDOR_AMD)
+		x86_cpu_idle_set(x86_cpu_idle_halt, "halt", true);
+	else
+		x86_cpu_idle_set(x86_cpu_idle_mwait, "mwait", false);
 #else
-	strlcpy(x86_cpu_idle_text, "xen", sizeof(x86_cpu_idle_text));
-	x86_cpu_idle = x86_cpu_idle_xen;
+	x86_cpu_idle_set(x86_cpu_idle_xen, "xen", false);
 #endif
 }
 
+void
+x86_cpu_idle_get(void (**func)(void), char *text, size_t len)
+{
+
+	*func = x86_cpu_idle;
+
+	(void)strlcpy(text, x86_cpu_idle_text, len);
+}
+
+void
+x86_cpu_idle_set(void (*func)(void), const char *text, bool ipi)
+{
+
+	x86_cpu_idle = func;
+	x86_cpu_idle_ipi = ipi;
+
+	(void)strlcpy(x86_cpu_idle_text, text, sizeof(x86_cpu_idle_text));
+}
 
 #ifndef XEN
 
@@ -932,4 +963,19 @@ machdep_init(void)
 
 	x86_listener = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
 	    x86_listener_cb, NULL);
+}
+
+/*
+ * x86_startup: x86 common startup routine
+ *
+ * called by cpu_startup.
+ */
+
+void
+x86_startup(void)
+{
+
+#if !defined(XEN)
+	nmi_init();
+#endif /* !defined(XEN) */
 }

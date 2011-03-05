@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.49 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.49.4.1 2011/03/05 20:56:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,12 +37,13 @@
 
 #ifndef _NFS_NFSMOUNT_H_
 #define _NFS_NFSMOUNT_H_
-#ifdef _KERNEL
+
+#if defined(_KERNEL) && !defined(NFS_ARGS_ONLY)
 #include <sys/condvar.h>
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/disk.h>
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 #endif
 
 /*
@@ -121,7 +122,7 @@ struct nfs_args {
 #define NFSMNT_STALEWRITEVERF	0x00008000  /* Write verifier is changing */
 #define NFSMNT_WCCKLUDGE	0x00010000  /* see nfs_check_wccdata() */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(NFS_ARGS_ONLY)
 /*
  * Mount structure.
  * One allocated on every NFS mount.

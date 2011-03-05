@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.23.22.1 2010/07/03 01:19:42 rmind Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.23.22.2 2011/03/05 20:54:16 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -47,6 +47,8 @@ struct usbd_quirks {
 #define UQ_BROKEN_BIDIR	0x2000	/* printer has broken bidir mode */
 #define UQ_HID_IGNORE	0x4000	/* device should be ignored by hid class */
 #define UQ_NO_UNION_NRM 0x8000  /* has no normal UNION descriptor */
+#define UQ_LOST_CS_DESC 0x10000 /* look everywhere for the CS descriptors */
+#define UQ_APPLE_ISO	0x20000	/* force ISO layout on Apple keyboards */
 };
 
 extern const struct usbd_quirks usbd_no_quirk;

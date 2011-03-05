@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72.2.1 2010/05/30 05:16:52 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.2.2 2011/03/05 20:50:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.1 2010/05/30 05:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.2 2011/03/05 20:50:35 rmind Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.1 2010/05/30 05:16:52 rmind Exp $
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.1 2010/05/30 05:16:52 rmind Exp $
 #include <sh3/cache.h>
 #include <sh3/clock.h>
 #include <sh3/intcreg.h>
+#include <sh3/proc.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -594,6 +596,8 @@ intc_intr(int ssr, int spc, int ssp)
 	struct intc_intrhand *ih;
 	int evtcode;
 	uint16_t r;
+
+	curcpu()->ci_data.cpu_nintr++;
 
 	evtcode = _reg_read_4(CPU_IS_SH3 ? SH7709_INTEVT2 : SH4_INTEVT);
 

@@ -2,10 +2,10 @@
 #
 #	create IOCS call interface from iocs.h
 #
-#	written by Yasha (ITOH Yasufumi)
+#	written by ITOH Yasufumi
 #	public domain
 #
-#	$NetBSD: makeiocscalls.awk,v 1.2 1999/11/11 08:16:20 itohy Exp $
+#	$NetBSD: makeiocscalls.awk,v 1.2.156.1 2011/03/05 20:52:25 rmind Exp $
 
 BEGIN {
 	argsiz["l"] = 4; argsiz["w"] = 2

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.11 2009/02/06 18:50:27 jym Exp $
+# 	$NetBSD: LCARD,v 1.11.6.1 2011/03/05 20:50:32 rmind Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -69,10 +69,10 @@ pcmcia*	at pcic? controller 0 socket 0
 
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 
-flash0	at vr4181ip? addr 0x1f800000 size 0x800000
-flash1	at vr4181ip? addr 0x1e000000 size 0x800000
+vrflash0	at vr4181ip? addr 0x1f800000 size 0x800000
+vrflash1	at vr4181ip? addr 0x1e000000 size 0x800000
 
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # network pseudo-devices

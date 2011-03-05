@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.5 2010/02/24 22:38:08 dyoung Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.5.2.1 2011/03/05 20:54:00 rmind Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,11 +30,11 @@
  */
 
 /*
- * Intel High Definition Audio (Revision 1.0) device driver.
+ * Intel High Definition Audio (Revision 1.0a) device driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.5 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.5.2.1 2011/03/05 20:54:00 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,8 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.5 2010/02/24 22:38:08 dyoung Exp $
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/pci/hdaudio/hdaudioreg.h>
-#include <dev/pci/hdaudio/hdaudiovar.h>
+#include "hdaudioreg.h"
+#include "hdaudiovar.h"
+#include "hdaudio_pci.h"
 
 struct hdaudio_pci_softc {
 	struct hdaudio_softc	sc_hdaudio;	/* must be first */
@@ -60,6 +61,7 @@ struct hdaudio_pci_softc {
 static int		hdaudio_pci_match(device_t, cfdata_t, void *);
 static void		hdaudio_pci_attach(device_t, device_t, void *);
 static int		hdaudio_pci_detach(device_t, int);
+static int		hdaudio_pci_rescan(device_t, const char *, const int *);
 static void		hdaudio_pci_childdet(device_t, device_t);
 
 static int		hdaudio_pci_intr(void *);
@@ -74,7 +76,7 @@ CFATTACH_DECL2_NEW(
     hdaudio_pci_attach,
     hdaudio_pci_detach,
     NULL,
-    NULL,
+    hdaudio_pci_rescan,
     hdaudio_pci_childdet
 );
 
@@ -153,18 +155,36 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	if (!pmf_device_register(self, NULL, hdaudio_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_NVIDIA:
+		/* enable snooping */
+		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_NV_REG_SNOOP);
+		csr &= ~HDAUDIO_NV_SNOOP_MASK;
+		csr |= HDAUDIO_NV_SNOOP_ENABLE;
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_NV_REG_SNOOP, csr);
+		break;
+	}
+
 	/* Attach bus-independent HD audio layer */
 	hdaudio_attach(self, &sc->sc_hdaudio);
+}
+
+static int
+hdaudio_pci_rescan(device_t self, const char *ifattr, const int *locs)
+{
+	struct hdaudio_pci_softc *sc = device_private(self);
+
+	return hdaudio_rescan(&sc->sc_hdaudio, ifattr, locs);
 }
 
 void
 hdaudio_pci_childdet(device_t self, device_t child)
 {
-#if notyet
 	struct hdaudio_pci_softc *sc = device_private(self);
 
 	hdaudio_childdet(&sc->sc_hdaudio, child);
-#endif
 }
 
 static int

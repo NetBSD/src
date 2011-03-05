@@ -229,7 +229,8 @@ static inline void set_curcpl(int);
 static inline void cpu_dosoftints(void);
 #endif
 
-#include <sys/device.h>
+#include <sys/device_if.h>
+#include <sys/evcnt.h>
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
@@ -384,7 +385,7 @@ void	savectx(struct pcb *);
 /* ast.c */
 void userret(register struct lwp *);
 
-/* machdep.h */
+/* *_machdep.c */
 void bootsync(void);
 
 /* fault.c */
@@ -392,6 +393,9 @@ int badaddr_read(void *, size_t, void *);
 
 /* syscall.c */
 void swi_handler(trapframe_t *);
+
+/* arm_machdep.c */
+void ucas_ras_check(trapframe_t *);
 
 #endif	/* !_LOCORE */
 

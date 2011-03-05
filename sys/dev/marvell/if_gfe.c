@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.34.4.1 2010/05/30 05:17:30 rmind Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.34.4.2 2011/03/05 20:53:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.34.4.1 2010/05/30 05:17:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.34.4.2 2011/03/05 20:53:26 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.34.4.1 2010/05/30 05:17:30 rmind Exp $"
 #include <sys/socket.h>
 
 #include <uvm/uvm.h>
-#include <uvm/uvm_extern.h>
-
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
@@ -218,15 +216,7 @@ gfec_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (strcmp(mva->mva_name, cf->cf_name) != 0)
 		return 0;
-
-	switch (mva->mva_model) {
-	case MARVELL_DISCOVERY:
-		break;
-
-	default:
-		return 0;
-	}
-	if (mva->mva_offset == GTCF_OFFSET_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
 
 	mva->mva_size = ETHC_SIZE;

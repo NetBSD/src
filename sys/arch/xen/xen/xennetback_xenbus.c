@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.33.4.1 2010/05/30 05:17:14 rmind Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.33.4.2 2011/03/05 20:52:35 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -242,13 +242,13 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "frontend-id", &domid, 10)) != 0) {
-		aprint_error("xvif: can' read %s/frontend-id: %d\n",
+		aprint_error("xvif: can't read %s/frontend-id: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "handle", &handle, 10)) != 0) {
-		aprint_error("xvif: can' read %s/handle: %d\n",
+		aprint_error("xvif: can't read %s/handle: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
@@ -271,18 +271,20 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	ifp = &xneti->xni_if;
 	ifp->if_softc = xneti;
+	snprintf(ifp->if_xname, IFNAMSIZ, "xvif%d.%d",
+	    (int)domid, (int)handle);
 
 	/* read mac address */
 	if ((err = xenbus_read(NULL, xbusd->xbusd_path, "mac", NULL, &val))) {
-		aprint_error("xvif: can' read %s/mac: %d\n",
+		aprint_error_ifnet(ifp, "can't read %s/mac: %d\n",
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
 	for (i = 0, p = val; i < 6; i++) {
 		xneti->xni_enaddr[i] = strtoul(p, &e, 16);
 		if ((e[0] == '\0' && i != 5) && e[0] != ':') {
-			aprint_error("xvif: %s is not a valid mac address\n",
-			    val);
+			aprint_error_ifnet(ifp,
+			    "%s is not a valid mac address\n", val);
 			err = EINVAL;
 			goto fail;
 		}
@@ -293,8 +295,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	/* we can't use the same MAC addr as our guest */
 	xneti->xni_enaddr[3]++;
 	/* create pseudo-interface */
-	snprintf(xneti->xni_if.if_xname, IFNAMSIZ, "xvif%d.%d",
-	    (int)domid, (int)handle);
 	aprint_verbose_ifnet(ifp, "Ethernet address %s\n",
 	    ether_sprintf(xneti->xni_enaddr));
 	ifp->if_flags =
@@ -319,33 +319,46 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	do {
 		xbt = xenbus_transaction_start();
 		if (xbt == NULL) {
-			printf("xbdback %s: can't start transaction\n",
+			aprint_error_ifnet(ifp,
+			    "%s: can't start transaction\n",
 			    xbusd->xbusd_path);
 			goto fail;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
+		    "vifname", ifp->if_xname);
+		if (err) {
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/vifname: %d\n",
+			    xbusd->xbusd_path, err);
+			goto abort_xbt;
+		}
+		err = xenbus_printf(xbt, xbusd->xbusd_path,
 		    "feature-rx-copy", "%d", 1);
 		if (err) {
-			printf("xbdback: failed to write %s/feature-rx-copy: "
-			    "%d\n", xbusd->xbusd_path, err);
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-rx-copy: %d\n",
+			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
 		    "feature-rx-flip", "%d", 1);
 		if (err) {
-			printf("xbdback: failed to write %s/feature-rx-flip: "
-			    "%d\n", xbusd->xbusd_path, err);
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-rx-flip: %d\n",
+			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
 	} while ((err = xenbus_transaction_end(xbt, 0)) == EAGAIN);
 	if (err) {
-		printf("xbdback %s: can't end transaction: %d\n",
+		aprint_error_ifnet(ifp,
+		    "%s: can't end transaction: %d\n",
 		    xbusd->xbusd_path, err);
 	}
 
 	err = xenbus_switch_state(xbusd, NULL, XenbusStateInitWait);
 	if (err) {
-		printf("failed to switch state on %s: %d\n",
+		aprint_error_ifnet(ifp,
+		    "failed to switch state on %s: %d\n",
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}

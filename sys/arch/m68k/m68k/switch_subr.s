@@ -1,7 +1,8 @@
-/*	$NetBSD: switch_subr.s,v 1.23.4.1 2010/07/03 01:19:22 rmind Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.23.4.2 2011/03/05 20:50:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -18,44 +19,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * Split from: Utah $Hdr: locore.s 1.66 92/12/22$
- */
-
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -191,11 +154,12 @@ Lcpu_switch_noctxsave:
 	tstl	%a2			| vm == VM_MAP_NULL?
 	jeq	Lcpu_switch_badsw	| panic
 #endif
+	pea	%a0@			| save newlwp
 #if !defined(_SUN3X_) || defined(PMAP_DEBUG)
 	movl	%a2@(VM_PMAP),%sp@-	| push vm->vm_map.pmap
 	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
 	addql	#4,%sp
-	movl	_C_LABEL(curpcb),%a1	| restore p_addr
+	movl	_C_LABEL(curpcb),%a1	| restore curpcb
 | Note: _pmap_switch() will clear the cache if needed.
 #else
 	/* Use this inline version on sun3x when not debugging the pmap. */
@@ -220,6 +184,9 @@ Lsame_mmuctx:
 	 */
 	pea	%a0@			| push newlwp
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(newlwp)
+	/* Note that newlwp will be popped off the stack later. */
+#endif
+
 	/*
 	 *  Check for restartable atomic sequences (RAS)
 	 */
@@ -237,11 +204,10 @@ Lsame_mmuctx:
 	jeq	1f
 	movl	_C_LABEL(curlwp),%a1
 	movl	%a1@(L_MD_REGS),%a1
-	movel	%a0,%a1@(TF_PC)
+	movl	%a0,%a1@(TF_PC)
 1:
 	movl	%sp@+,%d0		| restore newlwp
 	movl	_C_LABEL(curpcb),%a1	| restore pcb
-#endif
 
 	movl	%sp@(4),%d1		| restore oldlwp for a return value
 	lea     _ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI
@@ -410,5 +376,3 @@ ENTRY_NOPROFILE(setfunc_trampoline)
 	moveml	%sp@+,#0x7FFF		| restore most user regs
 	addql	#8,%sp			| toss SP and stack adjust
 	jra	_ASM_LABEL(rei)		| and return
-
-

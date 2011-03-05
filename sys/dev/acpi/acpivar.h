@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.43.2.2 2010/07/03 01:19:34 rmind Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.43.2.3 2011/03/05 20:53:03 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,15 +66,38 @@ struct acpibus_attach_args {
 
 /*
  * PCI information for ACPI device nodes that correspond to PCI devices.
+ *
+ * Remarks:
+ *
+ *	ap_bus		<= 255
+ *	ap_device	<= 31
+ *	ap_function	<= 7		or	ap_function == 0xFFFF
+ *	ap_downbus	<= 255
+ *
+ * Validity of some fields depends on the value of ap_flags:
+ *
+ *	ap_segment				always valid
+ *	ap_bus, ap_device, ap_function		valid for PCI devices
+ *	ap_downbus				valid for PCI bridges
+ *
+ * The device and function numbers are encoded in the value returned by
+ * _ADR.  A function number of 0xFFFF is used to refer to all the
+ * functions on a PCI device (ACPI 4.0a, p. 200).
  */
 struct acpi_pci_info {
+	uint16_t		 ap_flags;	/* Flags (cf. below) */
 	uint16_t		 ap_segment;	/* PCI segment group */
 	uint16_t		 ap_bus;	/* PCI bus */
 	uint16_t		 ap_device;	/* PCI device */
 	uint16_t		 ap_function;	/* PCI function */
-	bool			 ap_bridge;	/* PCI bridge (PHB or PPB) */
 	uint16_t		 ap_downbus;	/* PCI bridge downstream bus */
 };
+
+/*
+ * Flags for PCI information.
+ */
+#define ACPI_PCI_INFO_DEVICE	__BIT(0)	/* PCI device */
+#define ACPI_PCI_INFO_BRIDGE	__BIT(1)	/* PCI bridge */
 
 /*
  * An ACPI device node.
@@ -85,6 +108,7 @@ struct acpi_pci_info {
  *	ad_root		never NULL
  *	ad_parent	only NULL if root of the tree ("\")
  *	ad_pciinfo	NULL if not a PCI device
+ *	ad_wakedev	NULL if no wakeup capabilities
  *	ad_notify	NULL if there is no notify handler
  *	ad_devinfo	never NULL
  *	ad_handle	never NULL
@@ -97,6 +121,7 @@ struct acpi_devnode {
 	device_t		 ad_root;	/* Backpointer to acpi_softc */
 	struct acpi_devnode	*ad_parent;	/* Backpointer to parent */
 	struct acpi_pci_info	*ad_pciinfo;	/* PCI info */
+	struct acpi_wakedev	*ad_wakedev;	/* Device wake */
 	ACPI_NOTIFY_HANDLER	 ad_notify;	/* Device notify */
 	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
 	ACPI_HANDLE		 ad_handle;	/* Device handle */
@@ -104,7 +129,6 @@ struct acpi_devnode {
 	uint32_t		 ad_flags;	/* Device flags */
 	uint32_t		 ad_type;	/* Device type */
 	int			 ad_state;	/* Device power state */
-	int			 ad_wake;	/* Device wakeup */
 
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_list;
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
@@ -112,11 +136,12 @@ struct acpi_devnode {
 };
 
 /*
- * ACPI driver capabilities.
+ * ACPI driver capabilities (ad_flags).
  */
 #define ACPI_DEVICE_POWER	__BIT(0)	/* Support for D-states  */
 #define ACPI_DEVICE_WAKEUP	__BIT(1)	/* Support for wake-up */
 #define ACPI_DEVICE_EJECT	__BIT(2)	/* Support for "ejection" */
+#define ACPI_DEVICE_DOCK	__BIT(3)	/* Support for docking */
 
 /*
  * Software state of the ACPI subsystem.
@@ -124,6 +149,8 @@ struct acpi_devnode {
 struct acpi_softc {
 	device_t		 sc_dev;	/* base device info */
 	device_t		 sc_apmbus;	/* APM pseudo-bus */
+
+	device_t		 sc_wdrt;	/* WDRT watchdog */
 
 	struct acpi_devnode	*sc_root;	/* root of the device tree */
 
@@ -266,6 +293,7 @@ extern int acpi_active;
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_probe(void);
+void		acpi_disable(void);
 int		acpi_check(device_t, const char *);
 
 ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
@@ -297,40 +325,51 @@ struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
 /*
  * Sleep state transition.
  */
-void			acpi_enter_sleep_state(struct acpi_softc *, int);
+void			acpi_enter_sleep_state(int);
+
+/*
+ * MADT.
+ */
+#define ACPI_PLATFORM_INT_PMI	1
+#define ACPI_PLATFORM_INT_INIT	2
+#define ACPI_PLATFORM_INT_CERR	3
+
+ACPI_STATUS		acpi_madt_map(void);
+void			acpi_madt_unmap(void);
+void			acpi_madt_walk(ACPI_STATUS (*)(ACPI_SUBTABLE_HEADER *,
+				       void *), void *);
 
 /*
  * Quirk handling.
  */
 struct acpi_quirk {
-	const char *aq_tabletype; /* what type of table (FADT, DSDT, etc) */
-	const char *aq_oemid;	/* compared against the table OemId */
-	int aq_oemrev;		/* compared against the table OemRev */
-	int aq_cmpop;		/* how to compare the oemrev number */
-	const char *aq_tabid;	/* compared against the table TableId */
-	int aq_quirks;		/* the actual quirks */
+	const char	*aq_tabletype;		/* Type of table */
+	const char	*aq_oemid;		/* "OemId" field */
+	int		 aq_oemrev;		/* "OemRev" field */
+	int		 aq_cmpop;		/* "OemRev" comparison */
+	const char	*aq_tabid;		/* "TableId */
+	int		 aq_quirks;		/* The actual quirk */
 };
 
 #define ACPI_QUIRK_BROKEN	0x00000001	/* totally broken */
 #define ACPI_QUIRK_BADPCI	0x00000002	/* bad PCI hierarchy */
 #define ACPI_QUIRK_BADBBN	0x00000004	/* _BBN broken */
 #define ACPI_QUIRK_IRQ0		0x00000008	/* bad 0->2 irq override */
+#define ACPI_QUIRK_OLDBIOS	0x00000010	/* BIOS date blacklisted */
 
-int acpi_find_quirks(void);
+int	acpi_find_quirks(void);
+int	acpi_quirks_osi_add(const char *);
+int	acpi_quirks_osi_del(const char *);
 
 #ifdef ACPI_DEBUG
-void acpi_debug_init(void);
+void	acpi_debug_init(void);
 #endif
 
-/* Misc routines with vectors updated by acpiverbose module */
-extern void	(*acpi_print_devnodes)(struct acpi_softc *);
-extern void	(*acpi_print_tree)(struct acpi_devnode *, uint32_t);
+/*
+ * Misc routines with vectors updated by acpiverbose module.
+ */
+extern void	(*acpi_print_verbose)(struct acpi_softc *);
 extern void	(*acpi_print_dev)(const char *);
-extern void	(*acpi_wmidump)(void *);
-
-void		acpi_wmidump_real(void *);
-
-void		acpi_null(void);
 
 void		acpi_load_verbose(void);
 extern int	acpi_verbose_loaded;

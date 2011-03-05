@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.203.2.2 2010/07/03 01:19:54 rmind Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.203.2.3 2011/03/05 20:55:17 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203.2.2 2010/07/03 01:19:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203.2.3 2011/03/05 20:55:17 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -111,14 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203.2.2 2010/07/03 01:19:54 rmin
 #include <sys/disk.h>
 
 #include <machine/limits.h>
-
-#if defined(__i386__) && defined(_KERNEL_OPT)
-#include "opt_splash.h"
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-#include <dev/splash/splash.h>
-extern struct splash_progress *splash_progress_state;
-#endif
-#endif
 
 /*
  * Autoconfiguration subroutines.
@@ -228,7 +220,7 @@ static int config_pending;		/* semaphore for mountroot */
 static kmutex_t config_misc_lock;
 static kcondvar_t config_misc_cv;
 
-static int detachall = 0;
+static bool detachall = false;
 
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
@@ -832,6 +824,8 @@ rescan_with_cfdata(const struct cfdata *cf)
 
 			(*d->dv_cfattach->ca_rescan)(d,
 				cfdata_ifattr(cf1), cf1->cf_loc);
+
+			config_deferred(d);
 		}
 	}
 	deviter_release(&di);
@@ -1046,11 +1040,6 @@ config_found_sm_loc(device_t parent,
 {
 	cfdata_t cf;
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
-
 	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
@@ -1058,11 +1047,6 @@ config_found_sm_loc(device_t parent,
 			twiddle();
 		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
 	}
-
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 
 	return NULL;
 }
@@ -1416,11 +1400,6 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	struct cftable *ct;
 	const char *drvname;
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
-
 	dev = config_devalloc(parent, cf, locs);
 	if (!dev)
 		panic("config_attach: allocation of device softc failed");
@@ -1466,31 +1445,19 @@ config_attach_loc(device_t parent, cfdata_t cf,
 			}
 		}
 	}
-#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
-#endif
 
 	/* Let userland know */
 	devmon_report_device(dev, true);
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 	(*dev->dv_cfattach->ca_attach)(parent, dev, aux);
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-	if (splash_progress_state)
-		splash_progress_update(splash_progress_state);
-#endif
 
 	if (!device_pmf_is_registered(dev))
 		aprint_debug_dev(dev, "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
 
-#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
 	device_register_post_config(dev, aux);
-#endif
 	return dev;
 }
 
@@ -1529,9 +1496,7 @@ config_attach_pseudo(cfdata_t cf)
 	config_devlink(dev);
 
 #if 0	/* XXXJRT not yet */
-#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, NULL);	/* like a root node */
-#endif
 #endif
 	(*dev->dv_cfattach->ca_attach)(ROOT, dev, NULL);
 	config_process_deferred(&deferred_config_queue, dev);
@@ -1698,8 +1663,14 @@ out:
 	config_alldevs_enter(&af);
 	KASSERT(alldevs_nwrite != 0);
 	--alldevs_nwrite;
-	if (rv == 0 && dev->dv_del_gen == 0)
-		config_devunlink(dev, &af.af_garbage);
+	if (rv == 0 && dev->dv_del_gen == 0) {
+		if (alldevs_nwrite == 0 && alldevs_nread == 0)
+			config_devunlink(dev, &af.af_garbage);
+		else {
+			dev->dv_del_gen = alldevs_gen;
+			alldevs_garbage = true;
+		}
+	}
 	config_alldevs_exit(&af);
 
 	return rv;

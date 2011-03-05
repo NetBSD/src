@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.25 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.25.22.1 2011/03/05 20:50:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -135,9 +135,9 @@
 #define ALTENTRY(name, rname)	_ENTRY(_C_LABEL(name))
 #endif
 
-#define RCSID(x)	.text			;	\
+#define RCSID(x)	.pushsection ".ident"	;	\
 			.asciz x		;	\
-			.even
+			.popsection
 
 /*
  * Global variables of whatever sort.
@@ -179,6 +179,31 @@
 	9:	.asciz	x			;	\
 		.even
 
+/*
+ * Need a better place for these but these are common across
+ * all m68k ports so let's define just once.
+ */
+#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
+#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
+
+/* 64-bit counter increments */
+#define CPUINFO_INCREMENT(n)					\
+	lea	_C_LABEL(cpu_info_store)+(n)+4,%a1;		\
+	addq.l	#1,(%a1);					\
+	clr.l	%d0;		/* doesn't change CCR[X] */	\
+	move.l	-(%a1),%d1;	/* doesn't change CCR[X] */	\
+	addx.l	%d0,%d1;					\
+	move.l	%d1,(%a1)
+
+/* 64-bit counter increments */
+#define CPUINFO_ADD(n, addend)					\
+	lea	_C_LABEL(cpu_info_store)+(n)+4,%a1;		\
+	add.l	addend,(%a1);					\
+	clr.l	%d0;		/* doesn't change CCR[X] */	\
+	move.l	-(%a1),%d1;	/* doesn't change CCR[X] */	\
+	addx.l	%d0,%d1;					\
+	move.l	%d1,(%a1)
+
 #endif /* _KERNEL */
 
 /*
@@ -206,15 +231,15 @@
 	alias = sym
 
 #ifdef __STDC__
-#define	__STRING(x)			#x
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_ ## sym) ## ,1,0,0,0
+	.pushsection .gnu.warning. ## sym;				\
+	.ascii msg;							\
+	.popsection
 #else
-#define	__STRING(x)			"x"
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_/**/sym),1,0,0,0
+	.pushsection .gnu.warning./**/sym;				\
+	.ascii msg;							\
+	.popsection
 #endif /* __STDC__ */
 
 /*

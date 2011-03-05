@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.28.4.2 2010/07/03 01:19:57 rmind Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.28.4.3 2011/03/05 20:55:30 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.28.4.2 2010/07/03 01:19:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.28.4.3 2011/03/05 20:55:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ loop:
 		 * the lower vp is already locked and locking the layer vp
 		 * will involve locking the lower vp.
 		 */
-		error = vget(vp, LK_INTERLOCK | LK_NOWAIT);
+		error = vget(vp, LK_NOWAIT);
 		if (error) {
 			kpause("layerfs", false, 1, NULL);
 			mutex_enter(&lmp->layerm_hashlock);

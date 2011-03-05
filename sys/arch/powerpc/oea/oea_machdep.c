@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.53 2010/02/25 23:31:47 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.53.2.1 2011/03/05 20:51:39 rmind Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.53 2010/02/25 23:31:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.53.2.1 2011/03/05 20:51:39 rmind Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.53 2010/02/25 23:31:47 matt Exp $"
 #include <powerpc/spr.h>
 #include <powerpc/pte.h>
 #include <powerpc/altivec.h>
+#include <powerpc/pcb.h>
 #include <machine/powerpc.h>
 
 #include <powerpc/oea/spr.h>
@@ -142,15 +143,17 @@ oea_init(void (*handler)(void))
 #else
 	exc_base = 0;
 #endif
-	mtspr(SPR_SPRG0, ci);
+	KASSERT(mfspr(SPR_SPRG0) == (uintptr_t)ci);
+
 	cpuvers = mfpvr() >> 16;
 
 	/*
 	 * Initialize proc0 and current pcb and pmap pointers.
 	 */
+	(void) ci;
 	KASSERT(ci != NULL);
 	KASSERT(curcpu() == ci);
-	lwp0.l_cpu = ci;
+	KASSERT(lwp0.l_cpu == ci);
 
 	curpcb = lwp_getpcb(&lwp0);
 	memset(curpcb, 0, sizeof(struct pcb));
@@ -165,8 +168,6 @@ oea_init(void (*handler)(void))
 		curpcb->pcb_vr.vreg[scratch][2] = 0x7FFFDEAD;
 		curpcb->pcb_vr.vreg[scratch][3] = 0x7FFFDEAD;
 	}
-	curpcb->pcb_vr.vscr = 0;
-	curpcb->pcb_vr.vrsave = 0;
 #endif
 	curpm = curpcb->pcb_pm = pmap_kernel();
 
@@ -723,8 +724,7 @@ oea_startup(const char *model)
 
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
-	KASSERT(curcpu()->ci_intstk != 0);
-	KASSERT(curcpu()->ci_intrdepth == -1);
+	KASSERT(curcpu()->ci_idepth == -1);
 
 	sz = round_page(MSGBUFSIZE);
 #ifdef MSGBUFADDR

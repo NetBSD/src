@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43.4.2 2010/05/30 05:16:35 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.43.4.3 2011/03/05 20:49:15 rmind Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -179,9 +179,6 @@ define	M_NEXT			offsetof(struct mbuf, m_next)
 define	IP_SRC			offsetof(struct ip, ip_src)
 define	IP_DST			offsetof(struct ip, ip_dst)
 
-define	V_TRAP			offsetof(struct uvmexp, traps)
-define	V_INTR			offsetof(struct uvmexp, intrs)
-
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_RBP			offsetof(struct pcb, pcb_rbp)
 define	PCB_RSP			offsetof(struct pcb, pcb_rsp)
@@ -190,6 +187,10 @@ define	PCB_RSP0		offsetof(struct pcb, pcb_rsp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
+define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
+define	PCB_COMPAT32		PCB_COMPAT32
+define	PCB_FS			offsetof(struct pcb, pcb_fs)
+define	PCB_GS			offsetof(struct pcb, pcb_gs)
 
 define	TF_RDI			offsetof(struct trapframe, tf_rdi)
 define	TF_RSI			offsetof(struct trapframe, tf_rsi)
@@ -240,6 +241,7 @@ define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
 define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
+define	CPU_INFO_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 
@@ -299,7 +301,7 @@ define  LINUX32_RT_SF_HANDLER	offsetof(struct linux32_rt_sigframe, sf_handler)
 define  LINUX32_RT_SF_UC	offsetof(struct linux32_rt_sigframe, sf_uc)
 define  LINUX32_SYS_rt_sigreturn	LINUX32_SYS_rt_sigreturn
 define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
-define  LINUX32_SYS_exit		LINUX32_SYS_netbsd32_exit
+define  LINUX32_SYS_exit		LINUX32_SYS_exit
 endif
 
 ifdef XEN

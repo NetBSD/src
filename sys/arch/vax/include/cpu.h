@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.87.4.1 2010/07/03 01:19:28 rmind Exp $      */
+/*      $NetBSD: cpu.h,v 1.87.4.2 2011/03/05 20:52:16 rmind Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/queue.h>
-#include <sys/device.h>
+#include <sys/device_if.h>
 #include <sys/cpu_data.h>
 
 #include <machine/mtpr.h>
@@ -145,6 +145,7 @@ struct cpu_info {
 	struct trapframe *ci_ddb_regs;	/* Used by DDB */
 	SIMPLEQ_ENTRY(cpu_info) ci_next; /* next cpu_info */
 #endif
+	uintptr_t ci_cas_addr;		/* current address doing CAS in a RAS */
 };
 #define	CI_MASTERCPU	1		/* Set if master CPU */
 #define	CI_RUNNING	2		/* Set when a slave CPU is running */

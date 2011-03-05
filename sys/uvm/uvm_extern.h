@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_extern.h,v 1.162.2.5 2010/05/30 05:18:09 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.162.2.6 2011/03/05 20:56:35 rmind Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -148,6 +141,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_FLAG_QUANTUM 0x800000 /* entry can never be split later */
 #define UVM_FLAG_WAITVA  0x1000000 /* wait for va */
 #define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
+#define UVM_FLAG_COLORMATCH 0x4000000 /* match color given in off */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
@@ -314,12 +308,12 @@ struct uvmexp {
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 
 	/* stat counters.  XXX: should be 64-bit counters */
-	int faults;		/* page fault count */
-	int traps;		/* trap count */
-	int intrs;		/* interrupt count */
-	int swtch;		/* context switch count */
-	int softs;		/* software interrupt count */
-	int syscalls;		/* system calls */
+	int _unused_faults;	/* page fault count */
+	int _unused_traps;	/* trap count */
+	int _unused_intrs;	/* interrupt count */
+	int _unused_swtch;	/* context switch count */
+	int _unused_softs;	/* software interrupt count */
+	int _unused_syscalls;	/* system calls */
 	int pageins;		/* pagein operation count */
 				/* pageouts are in pdpageouts below */
 	int _unused1;
@@ -466,6 +460,8 @@ struct uvmexp_sysctl {
 #ifdef _KERNEL
 /* we need this before including uvm_page.h on some platforms */
 extern struct uvmexp uvmexp;
+/* MD code needs this without including <uvm/uvm.h> */
+extern bool vm_page_zero_enable;
 #endif
 
 /*
@@ -476,7 +472,6 @@ extern struct uvmexp uvmexp;
 #include <sys/lock.h>
 #include <uvm/uvm_param.h>
 #include <uvm/uvm_prot.h>
-#include <uvm/uvm_page.h>
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_pager.h>
@@ -564,7 +559,7 @@ MALLOC_DECLARE(M_VMMAP);
 MALLOC_DECLARE(M_VMPMAP);
 
 /* vm_machdep.c */
-void		vmapbuf(struct buf *, vsize_t);
+int		vmapbuf(struct buf *, vsize_t);
 void		vunmapbuf(struct buf *, vsize_t);
 
 /* uvm_aobj.c */
@@ -629,6 +624,8 @@ bool			uvm_kernacc(void *, size_t, vm_prot_t);
 __dead void		uvm_scheduler(void);
 vaddr_t			uvm_uarea_alloc(void);
 void			uvm_uarea_free(vaddr_t);
+vaddr_t			uvm_uarea_system_alloc(void);
+void			uvm_uarea_system_free(vaddr_t);
 vaddr_t			uvm_lwp_getuarea(lwp_t *);
 void			uvm_lwp_setuarea(lwp_t *, vaddr_t);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);

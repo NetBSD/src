@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.98.4.1 2010/07/03 01:19:31 rmind Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.98.4.2 2011/03/05 20:52:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.98.4.1 2010/07/03 01:19:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.98.4.2 2011/03/05 20:52:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ linux_to_bsd_ioflags(int lflags)
 	res |= cvtto_bsd_mask(lflags, LINUX_O_SYNC, O_FSYNC);
 	res |= cvtto_bsd_mask(lflags, LINUX_FASYNC, O_ASYNC);
 	res |= cvtto_bsd_mask(lflags, LINUX_O_APPEND, O_APPEND);
+	res |= cvtto_bsd_mask(lflags, LINUX_O_DIRECTORY, O_DIRECTORY);
 
 	return res;
 }
@@ -121,6 +122,7 @@ bsd_to_linux_ioflags(int bflags)
 	res |= cvtto_linux_mask(bflags, O_FSYNC, LINUX_O_SYNC);
 	res |= cvtto_linux_mask(bflags, O_ASYNC, LINUX_FASYNC);
 	res |= cvtto_linux_mask(bflags, O_APPEND, LINUX_O_APPEND);
+	res |= cvtto_linux_mask(bflags, O_DIRECTORY, LINUX_O_DIRECTORY);
 
 	return res;
 }
@@ -491,7 +493,8 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 	/* {
 		syscallarg(const char *) path;
 	} */
-	int error;
+	int error, error2;
+	struct pathbuf *pb;
 	struct nameidata nd;
 
 	error = sys_unlink(l, (const void *)uap, retval);
@@ -503,9 +506,14 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 	 * We return EPERM in such cases. To emulate correct behaviour,
 	 * check if the path points to directory and return EISDIR if this
 	 * is the case.
+	 *
+	 * XXX this should really not copy in the path buffer twice...
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
+	error2 = pathbuf_copyin(SCARG(uap, path), &pb);
+	if (error2) {
+		return error2;
+	}
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 	if (namei(&nd) == 0) {
 		struct stat sb;
 
@@ -515,6 +523,7 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 
 		vput(nd.ni_vp);
 	}
+	pathbuf_destroy(pb);
 
 	return (error);
 }
@@ -632,4 +641,3 @@ LINUX_NOT_SUPPORTED(linux_sys_flistxattr)
 LINUX_NOT_SUPPORTED(linux_sys_removexattr)
 LINUX_NOT_SUPPORTED(linux_sys_lremovexattr)
 LINUX_NOT_SUPPORTED(linux_sys_fremovexattr)
-

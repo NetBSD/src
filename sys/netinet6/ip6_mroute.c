@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.98 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.98.4.1 2011/03/05 20:55:59 rmind Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.98 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.98.4.1 2011/03/05 20:55:59 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -567,7 +567,7 @@ ip6_mrouter_done(void)
 			for (rte = rt->mf6c_stall; rte != NULL; ) {
 				struct rtdetq *n = rte->next;
 
-				m_free(rte->m);
+				m_freem(rte->m);
 				free(rte, M_MRTABLE);
 				rte = n;
 			}
@@ -1574,7 +1574,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)
-			log(LOG_DEBUG, "phyint_send on mif %d err %d\n",
+			log(LOG_DEBUG, "phyint_send on mif %td err %d\n",
 			    mifp - mif6table, error);
 #endif
 		splx(s);
@@ -1611,7 +1611,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 		error = nd6_output(ifp, ifp, mb_copy, &dst6, NULL);
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)
-			log(LOG_DEBUG, "phyint_send on mif %d err %d\n",
+			log(LOG_DEBUG, "phyint_send on mif %td err %d\n",
 			    mifp - mif6table, error);
 #endif
 	} else {

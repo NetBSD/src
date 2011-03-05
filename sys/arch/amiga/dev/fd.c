@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.84 2010/01/15 23:49:22 dyoung Exp $ */
+/*	$NetBSD: fd.c,v 1.84.4.1 2011/03/05 20:49:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84 2010/01/15 23:49:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.4.1 2011/03/05 20:49:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84 2010/01/15 23:49:22 dyoung Exp $");
 #include <sys/dkbad.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>

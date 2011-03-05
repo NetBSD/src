@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.33.2.1 2010/05/30 05:17:43 rmind Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.33.2.2 2011/03/05 20:54:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -239,6 +239,7 @@ int	sysmonopen_wdog(dev_t, int, int, struct lwp *);
 int	sysmonclose_wdog(dev_t, int, int, struct lwp *);
 int	sysmonioctl_wdog(dev_t, u_long, void *, int, struct lwp *);
 
+int     sysmon_wdog_setmode(struct sysmon_wdog *, int, u_int);
 int     sysmon_wdog_register(struct sysmon_wdog *);
 int     sysmon_wdog_unregister(struct sysmon_wdog *);
 

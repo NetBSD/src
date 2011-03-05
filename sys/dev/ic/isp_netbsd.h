@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.71.4.1 2010/05/30 05:17:23 rmind Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.71.4.2 2011/03/05 20:53:17 rmind Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -129,6 +129,7 @@ struct isposinfo {
 	if (!ISP_MUSTPOLL(isp))		\
 		ISP_LOCK(isp)
 
+#define	ISP_MIN	imin
 #define	ISP_INLINE
 
 #define	NANOTIME_T		struct timeval
@@ -139,7 +140,7 @@ struct isposinfo {
 #define	MAXISPREQUEST(isp)	256
 
 
-#define	MEMORYBARRIER(isp, type, offset, size)			\
+#define	MEMORYBARRIER(isp, type, offset, size, c)		\
 switch (type) {							\
 case SYNC_REQUEST:						\
 {								\

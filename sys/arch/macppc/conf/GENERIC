@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.279.2.1 2010/05/30 05:16:57 rmind Exp $
+# $NetBSD: GENERIC,v 1.279.2.2 2011/03/05 20:50:58 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.279.2.1 $"
+#ident 		"GENERIC-$Revision: 1.279.2.2 $"
 
 maxusers	32
 
@@ -40,7 +40,7 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-options 	MODULAR		# new style module framework
+options 	MODULAR		# new style module(7) framework
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -303,16 +303,19 @@ wsdisplay*	at wsemuldisplaydev?
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at pci? dev ? function ?	# Acard IDE controllers
 aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+iteide* at pci? dev ? function ?	# IT Express IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 wdc*	at pci? dev ? function ?	# Kauai ATA
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
@@ -368,7 +371,7 @@ nvram*	at obio?			# nvram
 #ams*	at adb?				# ADB mouse
 #abtn*	at adb?
 
-# the new, improved, experimental ADB subsystem
+# the new, improved ADB subsystem
 
 cuda*	at obio?			# CUDA, for Old World PowerMacs
 pmu*	at obio?			# PMU, *Books and newer PowerMacs
@@ -381,7 +384,7 @@ wskbd*		at wskbddev? console ?
 wsmouse*	at wsmousedev?
 
 battery* at pmu?		# legacy battery, for ohare-based PowerBooks
-smartbat* at pmu?		# Smart battery, sound in newer *Books
+smartbat* at pmu?		# Smart battery, found in newer *Books
 
 iic0	at cuda0		# CUDA's IIC bus
 sgsmix0 at iic0 addr 0x8a	# additional mixer found in beige G3
@@ -474,6 +477,8 @@ ums*	at uhidev? reportid ?				# USB Mice
 
 ukbd*	at uhidev? reportid ?				# USB Keyboards
 
+uthum*	at uhidev? reportid ?				# TEMPerHUM sensors
+
 ucycom*	at uhidev? reportid ?				# USB serial adapter
 
 uhid*	at uhidev? reportid ?				# USB Generic HID
@@ -482,6 +487,9 @@ ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 
 umodem*	at uhub? port ? configuration ?			# USB Modem
 ucom*	at umodem?
+
+ubsa*	at uhub? port ?					# Belkin serial adapter
+ucom*	at ubsa? portno ?
 
 uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 
@@ -511,6 +519,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 #zyd*	at uhub? port ?		# Zydas ZD1211
 
 # PCI IEEE1394 controllers
@@ -573,7 +582,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

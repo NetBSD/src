@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.7 2010/01/19 22:07:44 pooka Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.7.4.1 2011/03/05 20:54:11 rmind Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #define RUM_RX_LIST_COUNT	1
-#define RUM_TX_LIST_COUNT	1
+#define RUM_TX_LIST_COUNT	8
 
 struct rum_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
@@ -71,7 +71,7 @@ struct rum_rx_data {
 };
 
 struct rum_softc {
-	USBBASEDEVICE			sc_dev;
+	device_t			sc_dev;
 	struct ethercom			sc_ec;
 #define sc_if	sc_ec.ec_if
 	struct ieee80211com		sc_ic;
@@ -98,6 +98,7 @@ struct rum_softc {
 	usbd_pipe_handle		sc_tx_pipeh;
 
 	enum ieee80211_state		sc_state;
+	int				sc_arg;
 	struct usb_task			sc_task;
 
 	struct ieee80211_amrr		amrr;
@@ -106,11 +107,12 @@ struct rum_softc {
 	struct rum_rx_data		rx_data[RUM_RX_LIST_COUNT];
 	struct rum_tx_data		tx_data[RUM_TX_LIST_COUNT];
 	int				tx_queued;
+	int				tx_cur;
 
 	struct ieee80211_beacon_offsets	sc_bo;
 
-	usb_callout_t			sc_scan_ch;
-	usb_callout_t			sc_amrr_ch;
+	struct callout			sc_scan_ch;
+	struct callout			sc_amrr_ch;
 
 	int				sc_tx_timer;
 

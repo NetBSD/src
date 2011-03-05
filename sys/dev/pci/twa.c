@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.33 2009/08/18 11:15:43 drochner Exp $ */
+/*	$NetBSD: twa.c,v 1.33.4.1 2011/03/05 20:53:58 rmind Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.33 2009/08/18 11:15:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.33.4.1 2011/03/05 20:53:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.33 2009/08/18 11:15:43 drochner Exp $");
 #if 1
 #include <sys/ktrace.h>
 #endif
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 
@@ -986,7 +984,7 @@ twa_request_bus_scan(struct twa_softc *sc)
 
 		if (twa_inquiry(tr, unit) == 0) {
 			if (td->td_dev == NULL) {
-            			twa_print_inquiry_data(sc,
+	    			twa_print_inquiry_data(sc,
 				   ((struct scsipi_inquiry_data *)tr->tr_data));
 
 				sc->sc_units[unit].td_size =
@@ -1056,16 +1054,18 @@ twa_start(struct twa_request *tr)
 	s = splbio();
 
 	/*
-	 * The 9650 has a bug in the detection of the full queue condition.
+	 * The 9650 and 9690 have a bug in the detection of the full queue
+	 * condition.
+	 *
 	 * If a write operation has filled the queue and is directly followed
 	 * by a status read, it sometimes doesn't return the correct result.
 	 * To work around this, the upper 32bit are written first.
 	 * This effectively serialises the hardware, but does not change
 	 * the state of the queue.
 	 */
-	if (sc->sc_product_id == PCI_PRODUCT_3WARE_9650) {
+	if (sc->sc_quirks & TWA_QUIRK_QUEUEFULL_BUG) {
 		/* Write lower 32 bits of address */
-		TWA_WRITE_9650_COMMAND_QUEUE_LOW(sc, tr->tr_cmd_phys +
+		TWA_WRITE_COMMAND_QUEUE_LOW(sc, tr->tr_cmd_phys +
 			sizeof(struct twa_command_header));
 	}
 
@@ -1089,12 +1089,12 @@ twa_start(struct twa_request *tr)
 			sizeof(struct twa_command_packet),
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-		if (sc->sc_product_id == PCI_PRODUCT_3WARE_9650) {
+		if (sc->sc_quirks & TWA_QUIRK_QUEUEFULL_BUG) {
 			/*
-			 * Cmd queue is not full.  Post the command to 9650
+			 * Cmd queue is not full.  Post the command
 			 * by writing upper 32 bits of address.
 			 */
-			TWA_WRITE_9650_COMMAND_QUEUE_HIGH(sc, tr->tr_cmd_phys +
+			TWA_WRITE_COMMAND_QUEUE_HIGH(sc, tr->tr_cmd_phys +
 				sizeof(struct twa_command_header));
 		} else {
 			/* Cmd queue is not full.  Post the command. */
@@ -1144,24 +1144,24 @@ twa_drain_response_queue(struct twa_softc *sc)
 static int
 twa_drain_response_queue_large(struct twa_softc *sc, uint32_t timeout)
 {
-        uint32_t        start_time = 0, end_time;
-        uint32_t        response = 0;
+	uint32_t	start_time = 0, end_time;
+	uint32_t	response = 0;
 
-        if (sc->sc_product_id == PCI_PRODUCT_3WARE_9550 ||
-            sc->sc_product_id == PCI_PRODUCT_3WARE_9650 ) {
-               start_time = 0;
-               end_time = (timeout * TWA_MICROSECOND);
+	if (sc->sc_product_id == PCI_PRODUCT_3WARE_9550 ||
+	    sc->sc_product_id == PCI_PRODUCT_3WARE_9650 ) {
+	       start_time = 0;
+	       end_time = (timeout * TWA_MICROSECOND);
 
-               while ((response &
-                   TWA_9550SX_DRAIN_COMPLETE) != TWA_9550SX_DRAIN_COMPLETE) {
+	       while ((response &
+		   TWA_9550SX_DRAIN_COMPLETE) != TWA_9550SX_DRAIN_COMPLETE) {
 			response = twa_inl(sc, TWA_RESPONSE_QUEUE_LARGE_OFFSET);
 			if (start_time >= end_time)
-                               return (1);
-                        DELAY(1);
-                        start_time++;
-               }
-               /* P-chip delay */
-               DELAY(500000);
+			       return (1);
+			DELAY(1);
+			start_time++;
+	       }
+	       /* P-chip delay */
+	       DELAY(500000);
        }
        return (0);
 }
@@ -1494,7 +1494,6 @@ twa_attach(device_t parent, device_t self, void *aux)
 	pcireg_t csr;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	struct ctlname ctlnames[] = CTL_NAMES;
 	const struct sysctlnode *node; 
 	int i;
 	bool use_64bit;
@@ -1508,6 +1507,8 @@ twa_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": RAID controller\n");
 	aprint_normal(": 3ware Apache\n");
+
+	sc->sc_quirks = 0;
 		
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9000) {
 		sc->sc_nunits = TWA_MAX_UNITS;
@@ -1535,6 +1536,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(&sc->twa_dv, "can't map mem space\n");
 			return;
 		}
+		sc->sc_quirks |= TWA_QUIRK_QUEUEFULL_BUG;
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9690) {
 		sc->sc_nunits = TWA_9690_MAX_UNITS;
 		use_64bit = true;
@@ -1544,6 +1546,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(&sc->twa_dv, "can't map mem space\n");
 			return;
 		}
+		sc->sc_quirks |= TWA_QUIRK_QUEUEFULL_BUG;
 	} else {
 		sc->sc_nunits = 0;
 		use_64bit = false;
@@ -1596,27 +1599,27 @@ twa_attach(device_t parent, device_t self, void *aux)
 				NULL, NULL, 0, NULL, 0,
 				CTL_HW, CTL_EOL) != 0) {
 		aprint_error_dev(&sc->twa_dv, "could not create %s sysctl node\n",
-			ctlnames[CTL_HW].ctl_name);
+			"hw");
 		return;
 	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
-        			0, CTLTYPE_NODE, device_xname(&sc->twa_dv),
-        			SYSCTL_DESCR("twa driver information"),
-        			NULL, 0, NULL, 0,
+				0, CTLTYPE_NODE, device_xname(&sc->twa_dv),
+				SYSCTL_DESCR("twa driver information"),
+				NULL, 0, NULL, 0,
 				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
-                aprint_error_dev(&sc->twa_dv, "could not create %s.%s sysctl node\n",
-			ctlnames[CTL_HW].ctl_name,
+		aprint_error_dev(&sc->twa_dv, "could not create %s.%s sysctl node\n",
+			"hw",
 			device_xname(&sc->twa_dv));
 		return;
 	}
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
-        			0, CTLTYPE_STRING, "driver_version",
-        			SYSCTL_DESCR("twa driver version"),
-        			NULL, 0, &twaver, 0,
+				0, CTLTYPE_STRING, "driver_version",
+				SYSCTL_DESCR("twa driver version"),
+				NULL, 0, &twaver, 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
-                aprint_error_dev(&sc->twa_dv, "could not create %s.%s.driver_version sysctl\n",
-			ctlnames[CTL_HW].ctl_name,
+		aprint_error_dev(&sc->twa_dv, "could not create %s.%s.driver_version sysctl\n",
+			"hw",
 			device_xname(&sc->twa_dv));
 		return;
 	}

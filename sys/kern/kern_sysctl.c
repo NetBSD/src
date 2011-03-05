@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.228.4.1 2010/05/30 05:17:57 rmind Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.228.4.2 2011/03/05 20:55:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.228.4.1 2010/05/30 05:17:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.228.4.2 2011/03/05 20:55:16 rmind Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -167,7 +167,7 @@ char defcorename[MAXPATHLEN] = DEFCORENAME;
  * stop caring about who's calling us and simplify some code a bunch.
  * ********************************************************************
  */
-static inline int
+int
 sysctl_copyin(struct lwp *l, const void *uaddr, void *kaddr, size_t len)
 {
 	int error;
@@ -182,7 +182,7 @@ sysctl_copyin(struct lwp *l, const void *uaddr, void *kaddr, size_t len)
 	return error;
 }
 
-static inline int
+int
 sysctl_copyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 {
 	int error;
@@ -197,7 +197,7 @@ sysctl_copyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 	return error;
 }
 
-static inline int
+int
 sysctl_copyinstr(struct lwp *l, const void *uaddr, void *kaddr,
 		 size_t len, size_t *done)
 {
@@ -2579,6 +2579,18 @@ sysctl_null(SYSCTLFN_ARGS)
 	*oldlenp = 0;
 
 	return (0);
+}
+
+u_int
+sysctl_map_flags(const u_int *map, u_int word)
+{
+	u_int rv;
+
+	for (rv = 0; *map != 0; map += 2)
+		if ((word & map[0]) != 0)
+			rv |= map[1];
+
+	return rv;
 }
 
 /*

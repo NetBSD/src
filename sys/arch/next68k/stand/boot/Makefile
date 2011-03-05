@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2009/12/29 20:21:46 elad Exp $
+#	$NetBSD: Makefile,v 1.23.4.1 2011/03/05 20:51:27 rmind Exp $
 
 NOMAN=	# defined
 
@@ -81,7 +81,7 @@ build.c:
 	${HOST_SH} ${.CURDIR}/newvers.sh
 
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "next68k"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "next68k"
 
 #installboot: ${.CURDIR}/installboot.sh
 #	@rm -f installboot

@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspcivar.h,v 1.2 2001/02/01 19:35:04 marcus Exp $	*/
+/*	$NetBSD: gapspcivar.h,v 1.2.154.1 2011/03/05 20:49:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -36,7 +36,7 @@
 #define	_DREAMCAST_GAPSPCIVAR_H_
 
 struct gaps_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_gaps_memh;
 	bus_space_handle_t sc_pci_memh;

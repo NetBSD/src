@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2003/05/21 18:04:43 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.8.132.1 2011/03/05 20:49:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -47,5 +47,7 @@
 #endif
 
 #include <arm/types.h>		/* pull in generic ARM definitions */
+
+#define	__HAVE_CPU_LWP_SETPRIVATE
 
 #endif /* _ARM_ARM32_TYPES_H_ */

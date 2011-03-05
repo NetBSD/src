@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.2.1 2010/05/30 05:16:44 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.2.2 2011/03/05 20:50:18 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45.2.1 2010/05/30 05:16:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45.2.2 2011/03/05 20:50:18 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45.2.1 2010/05/30 05:16:44 rmind Exp $
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/walnut.h>
+#include <machine/pcb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>

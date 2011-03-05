@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.27 2008/05/30 19:26:35 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.27.20.1 2011/03/05 20:49:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27 2008/05/30 19:26:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27.20.1 2011/03/05 20:49:49 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,6 +108,8 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 	int bus, dev, func;
+
+	KASSERT(pc != NULL);
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 

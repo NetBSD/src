@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.1 2009/12/17 00:29:46 pooka Exp $	*/
+/*	$NetBSD: devnull.c,v 1.1.6.1 2011/03/05 20:56:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.1 2009/12/17 00:29:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.1.6.1 2011/03/05 20:56:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.1 2009/12/17 00:29:46 pooka Exp $");
 #include <sys/stat.h>
 
 #include "rump_vfs_private.h"
-
-static devmajor_t null_bmaj, null_cmaj;
 
 static dev_type_open(rump_devnullopen);
 static dev_type_read(rump_devnullrw);
@@ -55,28 +53,52 @@ static struct cdevsw null_cdevsw = {
 int
 rump_devnull_init()
 {
+	devmajor_t null_bmaj, null_cmaj;
 	int error;
 
 	null_bmaj = null_cmaj = NODEVMAJOR;
 	error = devsw_attach("null", NULL, &null_bmaj, &null_cdevsw,&null_cmaj);
-	if (error != 0)
-		return error;
+	KASSERT(error || null_cmaj == 2);
 
-	return rump_vfs_makeonedevnode(S_IFCHR, "/dev/null", null_cmaj, 0);
+	return error;
 }
 
 static int
 rump_devnullopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
-	return 0;
+	if (minor(dev) == DEV_ZERO || minor(dev) == DEV_NULL)
+		return 0;
+	return ENXIO;
 }
 
 static int
 rump_devnullrw(dev_t dev, struct uio *uio, int flags)
 {
+	char zeros[512];
+	int error;
 
-	if (uio->uio_rw == UIO_WRITE)
-		uio->uio_resid = 0;
+	switch (minor(dev)) {
+	case DEV_NULL:
+		if (uio->uio_rw == UIO_WRITE)
+			uio->uio_resid = 0;
+		break;
+	case DEV_ZERO:
+		if (uio->uio_rw == UIO_WRITE) {
+			uio->uio_resid = 0;
+			break;
+		}
+		memset(zeros, 0, sizeof(zeros));
+		while (uio->uio_resid > 0) {
+			error = uiomove(zeros,
+			    min(sizeof(zeros), uio->uio_resid), uio);
+			if (error)
+				return error;
+		}
+		break;
+	default:
+		return ENXIO; /* how? */
+	}
+
 	return 0;
 }

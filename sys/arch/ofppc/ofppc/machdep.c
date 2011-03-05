@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2010/03/10 18:18:47 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.2.1 2011/03/05 20:51:28 rmind Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2010/03/10 18:18:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.2.1 2011/03/05 20:51:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,11 +118,10 @@ model_init(void)
 		char buf[32];
 		int i;
 
-		modeldata.ranges_offset = 1;
 		modeldata.pciiodata[0].start = 0x00001400;
 		modeldata.pciiodata[0].limit = 0x0000ffff;
 		
-		/* the pegasos doesn't bother to set the L2 cache up*/
+		/* the pegasos doesn't bother to set the L2 cache up */
 		l2cr_config = L2CR_L2PE;
 		
 		/* fix the device_type property of a graphics card */
@@ -161,7 +160,7 @@ model_init(void)
 			}
 		}
 		if (!mode) {
-			mode = 0x102;
+			mode = 0x103;
 			width = 800;
 			height = 600;
 		}

@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.40.8.1 2010/05/30 05:17:09 rmind Exp $
+# $NetBSD: DISKLESS,v 1.40.8.2 2011/03/05 20:52:09 rmind Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.40.8.1 $"
+#ident 		"DISKLESS-$Revision: 1.40.8.2 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -187,7 +187,7 @@ ms0	at zstty?		# mouse
 #xy*	at xyc? drive ?
 
 ## Memory-disk device.
-pseudo-device	md		2
+pseudo-device	md		
 
 #### Network interfaces.
 

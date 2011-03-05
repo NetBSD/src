@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.71.2.1 2010/07/03 01:19:33 rmind Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.71.2.2 2011/03/05 20:52:56 rmind Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.71.2.1 2010/07/03 01:19:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.71.2.2 2011/03/05 20:52:56 rmind Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -298,6 +298,7 @@ sunos32_sys_lstat(struct lwp *l, const struct sunos32_sys_lstat_args *uap, regis
 	struct stat sb, sb1;
 	struct netbsd32_stat43 sb32;
 	int error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int ndflags;
 	const char *path;
@@ -306,8 +307,14 @@ sunos32_sys_lstat(struct lwp *l, const struct sunos32_sys_lstat_args *uap, regis
 
 	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT | TRYEMULROOT;
 again:
-	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, path);
+	error = pathbuf_copyin(path, &pb);
+	if (error) {
+		return error;
+	}
+
+	NDINIT(&nd, LOOKUP, ndflags, pb);
 	if ((error = namei(&nd))) {
+		pathbuf_destroy(pb);
 		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
 			/*
 			 * Should only happen on '/'. Retry without LOCKPARENT;
@@ -324,6 +331,7 @@ again:
 	 */
 	vp = nd.ni_vp;
 	dvp = nd.ni_dvp;
+	pathbuf_destroy(pb);
 	if (vp->v_type != VLNK) {
 		if ((ndflags & LOCKPARENT) != 0) {
 			if (dvp == vp)

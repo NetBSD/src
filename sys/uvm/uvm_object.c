@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.7.4.4 2010/04/26 02:20:59 rmind Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.7.4.5 2011/03/05 20:56:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.4 2010/04/26 02:20:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.5 2011/03/05 20:56:37 rmind Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>

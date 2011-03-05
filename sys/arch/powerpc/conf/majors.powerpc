@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.5.2.1 2010/05/30 05:17:02 rmind Exp $
+#	$NetBSD: majors.powerpc,v 1.5.2.2 2011/03/05 20:51:35 rmind Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -90,6 +90,7 @@ device-major	satlink		char 81			satlink
 
 device-major	nsmb		char 98			nsmb
 device-major	xlcom		char 99			xlcom
+device-major	satmgr		char 100		satmgr
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independent driver majors are assigned in 

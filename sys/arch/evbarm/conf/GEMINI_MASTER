@@ -244,7 +244,7 @@ geminigpio2	at obio0 addr 0x4f000000 intrbase 96  intr 24
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md	1		# memory disk
+pseudo-device	md			# memory disk
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.39.2.2 2010/07/03 01:19:20 rmind Exp $
+#	$NetBSD: majors.i386,v 1.39.2.3 2011/03/05 20:50:39 rmind Exp $
 #
 # Device majors for i386
 #
@@ -27,7 +27,7 @@ device-major	uk		char 20			uk
 device-major	apm		char 21			apm
 device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter  vector=8,linkzero
-device-major	md		char 24  block 17	md
+device-major	md		char 24  block 17	md	vector=4:8
 
 device-major	joy		char 26			joy
 device-major	spkr		char 27			spkr

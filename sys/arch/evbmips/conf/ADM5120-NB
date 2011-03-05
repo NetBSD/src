@@ -1,17 +1,17 @@
-#	$NetBSD: ADM5120-NB,v 1.5 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: ADM5120-NB,v 1.5.4.1 2011/03/05 20:50:11 rmind Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.5.4.1 $"
 
 maxusers	32
 
 options 	MIPS32
 options 	NOFPU		# No FPU
-options 	SOFTFLOAT	# emulate FPU insn
+options 	FPEMUL		# emulate FPU insn
 #options 	CONSPEED=115200	# YAMON default
 options 	HZ=512		# for profiling
 options 	MEMSIZE="(16*1024*1024)"

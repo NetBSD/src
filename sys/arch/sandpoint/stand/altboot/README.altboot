@@ -1,0 +1,48 @@
+/// notes about altboot ///
+
+$NetBSD: README.altboot,v 1.1.2.2 2011/03/05 20:51:47 rmind Exp $
+
+Altboot is a functional bridge to fill the gap between a NAS product
+custom bootloader and the NetBSD kernel startup environment.  Altboot
+irons out and rectifies erroneously configured HW by product
+bootloaders and prepares a sane runtime better suited for booting
+NetBSD kernels.
+
+- provides the foundation of a fast NetBSD porting cycle with functionalities
+  product bootloaders don't have.
+- facilitates a flexible and clean NetBSD implementation tailoured
+  to target HW in detail, minimizing bumpy adjustments and hacks in
+  locore asm and machdeps in very early kernel startup stage.
+- levels out differences among similar-but-not-the-same porting
+  targets to make it possible having common NetBSD kernels for them.
+- builds and hands a bootinfo list to the NetBSD kernel.
+
+Altboot is known working on two models.
+- KuroBox with a popular U-Boot as the replacement of vendor proprietary
+
+   U-Boot 1.1.4 LiSt 2.1.0 (Sep 21 2006 - 00:22:56) LinkStation / KuroBox
+
+- Synology 101g+ with vendor custom PPCboot
+
+   PPCBoot 2.0.0 (Mar  1 2005 - 15:31:41)
+
+The standard use of altboot is to invoke it with a short script from
+U-Boot/PPCboot, where the altboot image is stored in an unoccupied 128KB
+section of the target's HW NOR flash.  Combined with standard
+U-Boot/PPCboot functions, it is possible to boot a NetBSD kernel off
+it right after power-on, without the help of manual intervention.  Note
+that the original U-Boot/PPCboot still remains useful and altboot works
+as a functional extension for them.
+
+Altboot hands the following bootinfo records to the NetBSD/sandpoint
+kernel.
+- processor clock tick value driving MPC8241/8245.
+- serial console selection.
+- booted kernel filename and which device it was fetched from.
+- Ethernet MAC address, if target HW lacks SEEPROM to store a unit unique
+  value.
+- product family indication.
+- preloaded kernel module names (under development).
+
+                             ### ### ###
+

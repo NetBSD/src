@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8.4.1 2010/05/30 05:16:52 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.8.4.2 2011/03/05 20:50:37 rmind Exp $	*/
 
 /*	$OpenBSD: proc.h,v 1.4 2009/12/29 13:11:40 jsing Exp $ */
 
@@ -35,8 +35,6 @@
 
 #ifndef _HPPA_PROC_H_
 #define _HPPA_PROC_H_
-
-#include <sys/user.h> /* for sizeof(struct user) */
 
 /*
  * Machine-dependent part of the lwp structure for hppa.

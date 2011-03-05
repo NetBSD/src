@@ -1,8 +1,12 @@
-#	$NetBSD: files.xen,v 1.106.4.3 2010/05/31 01:12:14 rmind Exp $
+#	$NetBSD: files.xen,v 1.106.4.4 2011/03/05 20:52:33 rmind Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
+ifdef i386
 maxpartitions 8
+else
+maxpartitions 16
+endif
 
 maxusers 2 16 128
 
@@ -29,18 +33,6 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 
 defparam		PCI_CONF_MODE
 
-# Intel Enhanced Speedstep
-defflag					ENHANCED_SPEEDSTEP
-defflag	opt_est.h			EST_FREQ_USERWRITE
-file	arch/x86/x86/est.c		enhanced_speedstep
-file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
-
-# AMD Powernow/Cool`n'Quiet Technology
-defflag opt_powernow_k8.h	POWERNOW_K8
-# Powernow common functions
-file	arch/x86/x86/powernow_k8.c	powernow_k8
-file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
-
 file	arch/xen/x86/autoconf.c
 ifdef i386
 file	arch/i386/i386/aout_machdep.c	exec_aout
@@ -61,7 +53,6 @@ file	arch/i386/i386/machdep.c
 file	arch/i386/i386/longrun.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
-file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/lock_stubs.S
 
@@ -74,10 +65,6 @@ file	crypto/des/arch/i386/des_cbc.S		des
 
 file	crypto/blowfish/arch/i386/bf_enc.S	blowfish
 file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
-
-# AMD PowerNow K7
-defflag					POWERNOW_K7
-file	arch/i386/i386/powernow_k7.c		powernow_k7
 
 elifdef amd64
 file	arch/amd64/amd64/busfunc.S
@@ -92,7 +79,6 @@ file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/process_machdep.c
-file	arch/amd64/amd64/procfs_machdep.c	procfs
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/lock_stubs.S
@@ -145,6 +131,7 @@ file	arch/xen/x86/intr.c
 file	arch/x86/x86/ipi.c
 file	arch/x86/x86/pmap.c
 file	arch/x86/x86/pmap_tlb.c
+file	arch/x86/x86/procfs_machdep.c	procfs
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/tsc.c
 file	arch/x86/x86/vm_machdep.c
@@ -163,6 +150,7 @@ endif
 
 # xen specific mainbus attributes
 define cpubus { [apid = -1] }
+define cpufeaturebus {}
 define ioapicbus { [apid = -1] }
 define apmbus {}
 define pnpbiosbus {}
@@ -286,15 +274,26 @@ device ipmi : sysmon_envsys, sysmon_wdog
 attach ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
-# CPUS
-
-device cpu
+# CPUs
+#
+device cpu: cpufeaturebus
 attach cpu at cpubus
 
 device vcpu
 attach vcpu at xendevbus
 
 file	arch/xen/x86/cpu.c		cpu | vcpu
+
+# CPU features
+#
+device	est
+attach	est at cpufeaturebus
+file	arch/x86/x86/est.c		est
+file	arch/x86/x86/intel_busclock.c	est
+
+device	powernow
+attach	powernow at cpufeaturebus
+file	arch/x86/x86/powernow.c		powernow
 
 #
 # Compatibility modules
@@ -395,7 +394,7 @@ endif
 include	"dev/pcmcia/files.pcmcia"
 
 # Domain-0 operations
-defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001
+defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001 XEN_BALLOON
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
@@ -405,6 +404,7 @@ file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xennet_checksum.c	xvif | xennet
 file	arch/xen/xen/xbdback_xenbus.c xbdback
+file    arch/xen/xen/balloon.c          hypervisor
 
 ifdef i386
 include "arch/i386/conf/majors.i386"

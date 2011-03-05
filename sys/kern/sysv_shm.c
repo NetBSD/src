@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.117.4.1 2010/04/23 21:18:00 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.117.4.2 2011/03/05 20:55:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.117.4.1 2010/04/23 21:18:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.117.4.2 2011/03/05 20:55:24 rmind Exp $");
 
 #define SYSVSHM
 
@@ -664,7 +664,7 @@ sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 	if (SCARG(uap, shmflg) & _SHM_RMLINGER)
 		mode |= SHMSEG_RMLINGER;
 
-	SHMPRINTF(("shmget: key 0x%lx size 0x%x shmflg 0x%x mode 0x%x\n",
+	SHMPRINTF(("shmget: key 0x%lx size 0x%zx shmflg 0x%x mode 0x%x\n",
 	    SCARG(uap, key), SCARG(uap, size), SCARG(uap, shmflg), mode));
 
 	mutex_enter(&shm_lock);

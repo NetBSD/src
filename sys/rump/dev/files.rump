@@ -1,4 +1,4 @@
-#	$NetBSD: files.rump,v 1.2 2010/03/08 10:24:37 pooka Exp $
+#	$NetBSD: files.rump,v 1.2.4.1 2011/03/05 20:56:05 rmind Exp $
 #
 
 device mainbus { }
@@ -6,3 +6,6 @@ attach mainbus at root
 
 device ugenhc: usbus, usbroothub
 attach ugenhc at mainbus
+
+device scsitest: scsi
+attach scsitest at mainbus

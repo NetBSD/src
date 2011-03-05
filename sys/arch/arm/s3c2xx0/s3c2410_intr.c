@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.11 2008/11/24 11:29:52 dogcow Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.11.8.1 2011/03/05 20:49:39 rmind Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,14 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.11 2008/11/24 11:29:52 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.11.8.1 2011/03/05 20:49:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 #include <machine/intr.h>
+
 #include <arm/cpufunc.h>
 
 #include <arm/s3c2xx0/s3c2410reg.h>

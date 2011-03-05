@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.30.16.1 2010/07/03 01:20:03 rmind Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.30.16.2 2011/03/05 20:56:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,10 +29,6 @@
 
 #ifndef _SYS_CDEFS_ELF_H_
 #define	_SYS_CDEFS_ELF_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#endif
 
 #ifdef __LEADING_UNDERSCORE
 #define	_C_LABEL(x)	__CONCAT(_,x)
@@ -69,9 +65,15 @@
     __asm(".weak " _C_LABEL_STRING(#sym));
 
 #if __GNUC_PREREQ__(4, 0)
-#define	__weak_reference(sym)	__attribute__((__weakref__))
+#define	__weak_reference(sym)	__attribute__((__weakref__(#sym)))
 #else
 #define	__weak_reference(sym)	; __asm(".weak " _C_LABEL_STRING(#sym))
+#endif
+
+#if __GNUC_PREREQ__(4, 2)
+#define	__weakref_visible	static
+#else
+#define	__weakref_visible	extern
 #endif
 
 #define	__warn_references(sym,msg)					\

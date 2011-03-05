@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.16 2010/02/24 22:38:01 dyoung Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.16.2.1 2011/03/05 20:53:46 rmind Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.16 2010/02/24 22:38:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.16.2.1 2011/03/05 20:53:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ static void	ixp_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	ixp_setup_channel(struct ata_channel *);
 
 CFATTACH_DECL_NEW(ixpide, sizeof(struct pciide_softc),
-    ixpide_match, ixpide_attach, NULL, NULL);
+    ixpide_match, ixpide_attach, pciide_detach, NULL);
 
 static const char ixpdesc[] = "ATI Technologies IXP IDE Controller";
 
@@ -99,7 +99,6 @@ ixp_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int channel;
 	pcireg_t interface;
-	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -131,8 +130,7 @@ ixp_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 

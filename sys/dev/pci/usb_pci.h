@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_pci.h,v 1.5 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: usb_pci.h,v 1.5.22.1 2011/03/05 20:53:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ struct usb_pci {
 	u_int		device;
 	u_int		function;
 	device_t	usb;
+	bool		claimed;
 };
 
 TAILQ_HEAD(usb_pci_alldevs, usb_pci);

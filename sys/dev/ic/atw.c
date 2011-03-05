@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.150.2.1 2010/05/30 05:17:21 rmind Exp $  */
+/*	$NetBSD: atw.c,v 1.150.2.2 2011/03/05 20:53:13 rmind Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.150.2.1 2010/05/30 05:17:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.150.2.2 2011/03/05 20:53:13 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -49,11 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.150.2.1 2010/05/30 05:17:21 rmind Exp $");
 #include <sys/device.h>
 #include <sys/kauth.h>
 #include <sys/time.h>
+#include <sys/proc.h>
 #include <lib/libkern/libkern.h>
 
 #include <machine/endian.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.28.4.1 2010/07/03 01:19:21 rmind Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.28.4.2 2011/03/05 20:50:54 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -245,6 +245,9 @@ extern vaddr_t		virtual_avail, virtual_end;
 extern u_int		protection_codes[];
 #if defined(M68040) || defined(M68060)
 extern u_int		protostfree;
+#endif
+#ifdef CACHE_HAVE_VAC
+extern u_int		pmap_aliasmask;
 #endif
 
 extern char		*vmmap;		/* map for mem, dumps, etc. */

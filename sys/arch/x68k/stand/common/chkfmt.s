@@ -1,10 +1,10 @@
 |
 |	check FD format
 |
-|	Written by Yasha (ITOH Yasufumi)
+|	Written by ITOH Yasufumi
 |	This code is in the public domain
 |
-| $NetBSD: chkfmt.s,v 1.1 2001/09/27 10:03:27 minoura Exp $
+| $NetBSD: chkfmt.s,v 1.1.152.1 2011/03/05 20:52:24 rmind Exp $
 
 /* FDC address */
 #define FDC_STATUS		0xE94001	/* status register */

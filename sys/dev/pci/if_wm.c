@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.205.2.2 2010/07/03 01:19:37 rmind Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.205.2.3 2011/03/05 20:53:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.205.2.2 2010/07/03 01:19:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.205.2.3 2011/03/05 20:53:45 rmind Exp $");
 
 #include "rnd.h"
 
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.205.2.2 2010/07/03 01:19:37 rmind Exp $"
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
-
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #if NRND > 0
 #include <sys/rnd.h>
@@ -252,6 +250,7 @@ struct wm_softc {
 	bus_size_t sc_ss;		/* bus space size */
 	bus_space_tag_t sc_iot;		/* I/O space tag */
 	bus_space_handle_t sc_ioh;	/* I/O space handle */
+	bus_size_t sc_ios;		/* I/O space size */
 	bus_space_tag_t sc_flasht;	/* flash registers space tag */
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
@@ -498,6 +497,7 @@ do {									\
 
 static void	wm_start(struct ifnet *);
 static void	wm_watchdog(struct ifnet *);
+static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
@@ -510,10 +510,12 @@ static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_read_eeprom_eerd(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_validate_eeprom_checksum(struct wm_softc *);
+static int	wm_check_alt_mac_addr(struct wm_softc *);
 static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_tick(void *);
 
 static void	wm_set_filter(struct wm_softc *);
+static void	wm_set_vlan(struct wm_softc *);
 
 static int	wm_intr(void *);
 static void	wm_txintr(struct wm_softc *);
@@ -785,7 +787,7 @@ static const struct wm_product {
 	  WM_T_82572,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
-	  "Intel® PRO/1000 PT Quad Port Server Adapter",
+	  "Intel PRO/1000 PT Quad Port Server Adapter",
 	  WM_T_82571,		WMP_F_1000T, },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
@@ -1185,11 +1187,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 			    PCI_MAPREG_TYPE_IO)
 				break;
 		}
-		if (i == PCI_MAPREG_END)
-			aprint_error_dev(sc->sc_dev,
-			    "WARNING: unable to find I/O BAR\n");
-		else {
+		if (i != PCI_MAPREG_END) {
 			/*
+			 * We found PCI_MAPREG_TYPE_IO. Note that 82580
+			 * (and newer?) chip has no PCI_MAPREG_TYPE_IO.
+			 * It's no problem because newer chips has no this
+			 * bug.
+			 *
 			 * The i8254x doesn't apparently respond when the
 			 * I/O BAR is 0, which looks somewhat like it's not
 			 * been configured.
@@ -1200,7 +1204,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 				    "WARNING: I/O BAR at zero.\n");
 			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
-					NULL, NULL) == 0) {
+					NULL, &sc->sc_ios) == 0) {
 				sc->sc_flags |= WM_F_IOH_VALID;
 			} else {
 				aprint_error_dev(sc->sc_dev,
@@ -1924,6 +1928,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, wm_ifflags_cb);
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET, 0);
 #endif
@@ -2038,6 +2043,7 @@ wm_detach(device_t self, int flags __unused)
 
 	/* Tell the firmware about the release */
 	wm_release_manageability(sc);
+	wm_release_hw_control(sc);
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -2074,13 +2080,16 @@ wm_detach(device_t self, int flags __unused)
 		sc->sc_ih = NULL;
 	}
 
-	/* Unmap the register */
+	/* Unmap the registers */
 	if (sc->sc_ss) {
 		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_ss);
 		sc->sc_ss = 0;
 	}
 
-	wm_release_hw_control(sc);
+	if (sc->sc_ios) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+		sc->sc_ios = 0;
+	}
 
 	return 0;
 }
@@ -2620,10 +2629,10 @@ wm_start(struct ifnet *ifp)
 				lasttx = nexttx;
 
 				DPRINTF(WM_DEBUG_TX,
-				    ("%s: TX: desc %d: low 0x%08lx, "
-				     "len 0x%04x\n",
+				    ("%s: TX: desc %d: low %#" PRIxPADDR ", "
+				     "len %#04zx\n",
 				    device_xname(sc->sc_dev), nexttx,
-				    curaddr & 0xffffffffUL, (unsigned)curlen));
+				    curaddr & 0xffffffffUL, curlen));
 			}
 		}
 
@@ -2724,6 +2733,27 @@ wm_watchdog(struct ifnet *ifp)
 	wm_start(ifp);
 }
 
+static int
+wm_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct wm_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if (change != 0)
+		sc->sc_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+
+	if ((change & (IFF_PROMISC | IFF_ALLMULTI)) != 0)
+		wm_set_filter(sc);
+
+	wm_set_vlan(sc);
+
+	return 0;
+}
+
 /*
  * wm_ioctl:		[ifnet interface function]
  *
@@ -2736,40 +2766,11 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr_dl *sdl;
-	int diff, s, error;
+	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
-		if (ifp->if_flags & IFF_UP) {
-			diff = (ifp->if_flags ^ sc->sc_if_flags)
-			    & (IFF_PROMISC | IFF_ALLMULTI);
-			if ((diff & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
-				/*
-				 * If the difference bettween last flag and
-				 * new flag is only IFF_PROMISC or
-				 * IFF_ALLMULTI, set multicast filter only
-				 * (don't reset to prevent link down).
-				 */
-				wm_set_filter(sc);
-			} else {
-				/*
-				 * Reset the interface to pick up changes in
-				 * any other flags that affect the hardware
-				 * state.
-				 */
-				wm_init(ifp);
-			}
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				wm_stop(ifp, 1);
-		}
-		sc->sc_if_flags = ifp->if_flags;
-		error = 0;
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		/* Flow control requires full-duplex mode. */
@@ -2796,7 +2797,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 			break;
 		}
-		/* Fall through for rest */
+		/*FALLTHROUGH*/
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
@@ -3708,6 +3709,19 @@ wm_reset(struct wm_softc *sc)
 	/* XXX need special handling for 82580 */
 }
 
+static void
+wm_set_vlan(struct wm_softc *sc)
+{
+	/* Deal with VLAN enables. */
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
+		sc->sc_ctrl |= CTRL_VME;
+	else
+		sc->sc_ctrl &= ~CTRL_VME;
+
+	/* Write the control registers. */
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+}
+
 /*
  * wm_init:		[ifnet interface function]
  *
@@ -3786,26 +3800,30 @@ wm_init(struct ifnet *ifp)
 	sc->sc_txnext = 0;
 
 	if (sc->sc_type < WM_T_82543) {
-		CSR_WRITE(sc, WMREG_OLD_TBDAH, WM_CDTXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_OLD_TBDAL, WM_CDTXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TDBAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TDBAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_OLD_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
 		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
 	} else {
-		CSR_WRITE(sc, WMREG_TBDAH, WM_CDTXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_TBDAL, WM_CDTXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_TDBAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_TDBAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
-		CSR_WRITE(sc, WMREG_TDT, 0);
 		CSR_WRITE(sc, WMREG_TIDV, 375);		/* ITR / 4 */
 		CSR_WRITE(sc, WMREG_TADV, 375);		/* should be same */
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+			/*
+			 * Don't write TDT before TCTL.EN is set.
+			 * See the document.
+			 */
 			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_QUEUE_ENABLE
 			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
 			    | TXDCTL_WTHRESH(0));
 		else {
+			CSR_WRITE(sc, WMREG_TDT, 0);
 			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
 			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
@@ -3877,6 +3895,11 @@ wm_init(struct ifnet *ifp)
 		} else {
 			if ((sc->sc_flags & WM_F_NEWQUEUE) == 0)
 				WM_INIT_RXDESC(sc, i);
+			/*
+			 * For 82575 and newer device, the RX descriptors
+			 * must be initialized after the setting of RCTL.EN in
+			 * wm_set_filter()
+			 */
 		}
 	}
 	sc->sc_rxptr = 0;
@@ -3916,14 +3939,8 @@ wm_init(struct ifnet *ifp)
 	else
 		CSR_WRITE(sc, WMREG_FCTTV, FCTTV_DFLT);
 
-	/* Deal with VLAN enables. */
-	if (VLAN_ATTACHED(&sc->sc_ethercom))
-		sc->sc_ctrl |= CTRL_VME;
-	else
-		sc->sc_ctrl &= ~CTRL_VME;
-
-	/* Write the control registers. */
-	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	/* Writes the control register. */
+	wm_set_vlan(sc);
 
 	if (sc->sc_flags & WM_F_HAS_MII) {
 		int val;
@@ -4045,6 +4062,14 @@ wm_init(struct ifnet *ifp)
 		sc->sc_tctl |= TCTL_MULR;
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+		/*
+		 * Write TDT after TCTL.EN is set.
+		 * See the document.
+		 */
+		CSR_WRITE(sc, WMREG_TDT, 0);
+	}
+
 	if (sc->sc_type == WM_T_80003) {
 		reg = CSR_READ(sc, WMREG_TCTL_EXT);
 		reg &= ~TCTL_EXT_GCEX_MASK;
@@ -4103,7 +4128,7 @@ wm_init(struct ifnet *ifp)
 	/* Set the receive filter. */
 	wm_set_filter(sc);
 
-	/* On 575 and later set RDT only if RX enabled... */
+	/* On 575 and later set RDT only if RX enabled */
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 		for (i = 0; i < WM_NRXDESC; i++)
 			WM_INIT_RXDESC(sc, i);
@@ -4116,6 +4141,7 @@ wm_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
+	sc->sc_if_flags = ifp->if_flags;
 	if (error)
 		log(LOG_ERR, "%s: interface not running\n",
 		    device_xname(sc->sc_dev));
@@ -4699,69 +4725,101 @@ wm_poll_eerd_eewr_done(struct wm_softc *sc, int rw)
 }
 
 static int
+wm_check_alt_mac_addr(struct wm_softc *sc)
+{
+	uint16_t myea[ETHER_ADDR_LEN / 2];
+	uint16_t offset = EEPROM_OFF_MACADDR;
+
+	/* Try to read alternative MAC address pointer */
+	if (wm_read_eeprom(sc, EEPROM_ALT_MAC_ADDR_PTR, 1, &offset) != 0)
+		return -1;
+
+	/* Check pointer */
+	if (offset == 0xffff)
+		return -1;
+
+	/*
+	 * Check whether alternative MAC address is valid or not.
+	 * Some cards have non 0xffff pointer but those don't use
+	 * alternative MAC address in reality.
+	 *
+	 * Check whether the broadcast bit is set or not.
+	 */
+	if (wm_read_eeprom(sc, offset, 1, myea) == 0)
+		if (((myea[0] & 0xff) & 0x01) == 0)
+			return 0; /* found! */
+
+	/* not found */
+	return -1;
+}
+
+static int
 wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
 	uint16_t offset = EEPROM_OFF_MACADDR;
 	int do_invert = 0;
 
-	if (sc->sc_funcid != 0)
-		switch (sc->sc_type) {
-		case WM_T_82580:
-		case WM_T_82580ER:
-			switch (sc->sc_funcid) {
-			case 1:
-				offset = EEPROM_OFF_LAN1;
-				break;
-			case 2:
-				offset = EEPROM_OFF_LAN2;
-				break;
-			case 3:
-				offset = EEPROM_OFF_LAN3;
-				break;
-			default:
-				goto bad;
-				/* NOTREACHED */
-				break;
-			}
+	switch (sc->sc_type) {
+	case WM_T_82580:
+	case WM_T_82580ER:
+		switch (sc->sc_funcid) {
+		case 0:
+			/* default value (== EEPROM_OFF_MACADDR) */
 			break;
-		case WM_T_82571:
-		case WM_T_82575:
-		case WM_T_82576:
-		case WM_T_80003:
-			if (wm_read_eeprom(sc, EEPROM_ALT_MAC_ADDR_PTR, 1,
-				&offset) != 0) {
-				goto bad;
-			}
-
-			/* no pointer */
-			if (offset == 0xffff) {
-				/* reset the offset to LAN0 */
-				offset = EEPROM_OFF_MACADDR;
-				do_invert = 1;
-				goto do_read;
-			}
-
-			switch (sc->sc_funcid) {
-			case 1:
-				offset += EEPROM_OFF_MACADDR_LAN1;
-				break;
-			case 2:
-				offset += EEPROM_OFF_MACADDR_LAN2;
-				break;
-			case 3:
-				offset += EEPROM_OFF_MACADDR_LAN3;
-				break;
-			default:
-				goto bad;
-				/* NOTREACHED */
-				break;
-			}
+		case 1:
+			offset = EEPROM_OFF_LAN1;
+			break;
+		case 2:
+			offset = EEPROM_OFF_LAN2;
+			break;
+		case 3:
+			offset = EEPROM_OFF_LAN3;
 			break;
 		default:
-			do_invert = 1;
+			goto bad;
+			/* NOTREACHED */
 			break;
 		}
+		break;
+	case WM_T_82571:
+	case WM_T_82575:
+	case WM_T_82576:
+	case WM_T_80003:
+		if (wm_check_alt_mac_addr(sc) != 0) {
+			/* reset the offset to LAN0 */
+			offset = EEPROM_OFF_MACADDR;
+			if ((sc->sc_funcid & 0x01) == 1)
+				do_invert = 1;
+			goto do_read;
+		}
+		switch (sc->sc_funcid) {
+		case 0:
+			/*
+			 * The offset is the value in EEPROM_ALT_MAC_ADDR_PTR
+			 * itself.
+			 */
+			break;
+		case 1:
+			offset += EEPROM_OFF_MACADDR_LAN1;
+			break;
+		case 2:
+			offset += EEPROM_OFF_MACADDR_LAN2;
+			break;
+		case 3:
+			offset += EEPROM_OFF_MACADDR_LAN3;
+			break;
+		default:
+			goto bad;
+			/* NOTREACHED */
+			break;
+		}
+		break;
+	default:
+		if ((sc->sc_funcid & 0x01) == 1)
+			do_invert = 1;
+		break;
+	}
 
  do_read:
 	if (wm_read_eeprom(sc, offset, sizeof(myea) / sizeof(myea[0]),
@@ -5384,9 +5442,9 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_80003:
 		/* generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
-		delay((sc->sc_type >= WM_T_82571) ? 100 : 10*1000);
+		delay(20000);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		delay(150);
+		delay(20000);
 
 		if ((sc->sc_type == WM_T_82541)
 		    || (sc->sc_type == WM_T_82541_2)
@@ -6350,7 +6408,7 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 			    "%s: failed to get semaphore\n", __func__);
 			return 0;
 		}
-	} else 	if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
+	} else if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
 		if (wm_get_swfwhw_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
@@ -6388,7 +6446,7 @@ wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 			    "%s: failed to get semaphore\n", __func__);
 			return;
 		}
-	} else 	if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
+	} else if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
 		if (wm_get_swfwhw_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
@@ -6663,8 +6721,8 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 	 * against, in order to start a new cycle or FDONE bit should be
 	 * changed in the hardware so that it is 1 after harware reset, which
 	 * can then be used as an indication whether a cycle is in progress or
-	 * has been completed .. we should also have some software semaphore me
-	 * chanism to guard FDONE or the cycle in progress bit so that two
+	 * has been completed .. we should also have some software semaphore
+	 * mechanism to guard FDONE or the cycle in progress bit so that two
 	 * threads access to those bits can be sequentiallized or a way so that
 	 * 2 threads dont start the cycle at the same time
 	 */

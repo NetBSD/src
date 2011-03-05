@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.127 2009/12/20 09:36:06 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.127.4.1 2011/03/05 20:55:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.127 2009/12/20 09:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.127.4.1 2011/03/05 20:55:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.127 2009/12/20 09:36:06 dsl Exp $");
 #include <sys/atomic.h>
 #include <sys/pipe.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Use this to disable direct I/O and decrease the code size:
@@ -211,10 +211,10 @@ pipe_ctor(void *arg, void *obj, int flags)
 		pipe->pipe_kmem = va;
 		atomic_add_int(&amountpipekva, PIPE_SIZE);
 	}
-	cv_init(&pipe->pipe_rcv, "piperd");
-	cv_init(&pipe->pipe_wcv, "pipewr");
-	cv_init(&pipe->pipe_draincv, "pipedrain");
-	cv_init(&pipe->pipe_lkcv, "pipelk");
+	cv_init(&pipe->pipe_rcv, "pipe_rd");
+	cv_init(&pipe->pipe_wcv, "pipe_wr");
+	cv_init(&pipe->pipe_draincv, "pipe_drn");
+	cv_init(&pipe->pipe_lkcv, "pipe_lk");
 	selinit(&pipe->pipe_sel);
 	pipe->pipe_state = PIPE_SIGNALR;
 

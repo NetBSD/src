@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.rumpdevcomp,v 1.5.6.2 2011/03/05 20:56:05 rmind Exp $
+#
+
+RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad putter	\
+		raidframe rnd scsipi scsitest sysmon wscons
+
+RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
+
+.for var in ${RUMPDEVCOMP}
+RUMPDEVLIBS+=lib${var}
+RUMPDEVLDADD+=-lrumpdev_${var}
+.endfor
+
+.for var in ${RUMPUSBDEVS}
+RUMPDEVLIBS+=lib${var}
+.endfor

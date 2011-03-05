@@ -1,6 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.11 2005/12/11 12:17:53 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11.100.1 2011/03/05 20:50:53 rmind Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -17,45 +18,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: cpu.h 1.16 91/03/25$
- *
- *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
- */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -197,11 +159,32 @@
 #define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+#include <sys/cpu_data.h>
+
+struct cpu_info {
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	cpuid_t	ci_cpuid;
+	int	ci_mtx_count;
+	int	ci_mtx_oldspl;
+	volatile int	ci_want_resched;
+	volatile int	ci_idepth;
+};
+#endif /* _KERNEL || _KMEMUSER */
+
 #ifdef _KERNEL
+extern struct cpu_info cpu_info_store;
+
+struct	proc;
+void	cpu_proc_fork(struct proc *, struct proc *);
+
+#define	curcpu()	(&cpu_info_store)
+
 /*
- * From m68k/syscall.c
+ * definitions of cpu-dependent requirements
+ * referenced in generic code
  */
-/* extern void syscall(register_t, struct frame); Only called from locore.s */
+#define cpu_number()			0
 
 #define LWP_PC(l)	(((struct trapframe *)((l)->l_md.md_regs))->tf_pc)
 #endif /* _KERNEL */

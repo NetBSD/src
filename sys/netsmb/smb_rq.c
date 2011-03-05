@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.33 2009/09/12 12:52:21 pooka Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.33.4.1 2011/03/05 20:56:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.33 2009/09/12 12:52:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.33.4.1 2011/03/05 20:56:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.33 2009/09/12 12:52:21 pooka Exp $");
 #include <netsmb/smb_subr.h>
 #include <netsmb/smb_tran.h>
 
-#ifndef __NetBSD__
-MODULE_DEPEND(netsmb, libmchain, 1, 1, 1);
-#endif
 
 static int  smb_rq_init(struct smb_rq *, struct smb_connobj *, u_char,
 		struct smb_cred *);

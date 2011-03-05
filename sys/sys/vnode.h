@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.214.2.3 2010/07/03 01:20:04 rmind Exp $	*/
+/*	$NetBSD: vnode.h,v 1.214.2.4 2011/03/05 20:56:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -211,7 +211,6 @@ typedef struct vnode vnode_t;
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
-#define	VI_FREEING	0x00400000	/* vnode is being freed */
 #define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
 
 /*
@@ -222,7 +221,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
+    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO" \
     "\30INACTNOW\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
@@ -239,7 +238,6 @@ typedef struct vnode vnode_t;
 #define	LK_SHARED	0x00000001	/* shared lock */
 #define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
 #define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
-#define	LK_INTERLOCK	0x00010000	/* caller holds v_interlock */
 #define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.33.2.2 2010/04/26 17:06:21 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.33.2.3 2011/03/05 20:49:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -152,17 +152,15 @@ IDTVEC(trap02)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
-	swapgs
-	movw	TF_GS(%rsp),%gs
-	movw	TF_FS(%rsp),%fs
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
+	swapgs
 	jmp	2f
 1:
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 2:
 	INTR_RESTORE_GPRS
@@ -328,7 +326,7 @@ calltrap:
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
@@ -343,7 +341,7 @@ calltrap:
   	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
@@ -392,13 +390,11 @@ calltrap:
  *
  */
 
-#define MY_COUNT _C_LABEL(uvmexp)
-
 /* XXX See comment in locore.s */
 #ifdef __ELF__
-#define	XINTR(name,num)		Xintr_/**/name/**/num
+#define	XINTR(name,num)		Xintr_ ## name ## num
 #else
-#define	XINTR(name,num)		_Xintr_/**/name/**/num
+#define	XINTR(name,num)		_Xintr_ ## name ## num
 #endif
 
 #if NLAPIC > 0
@@ -587,18 +583,18 @@ IDTVEC(intr_lapic_tlb)
  */
 
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_/**/name/**/num)						;\
+IDTVEC(recurse_ ## name ## num)						;\
 	INTR_RECURSE_HWFRAME						;\
 	subq	$8,%rsp							;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-IDTVEC(resume_/**/name/**/num)						\
+IDTVEC(resume_ ## name ## num)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
 	movl	IS_MAXLEVEL(%r14),%ebx					;\
 	jmp	1f							;\
-IDTVEC(intr_/**/name/**/num)						;\
+IDTVEC(intr_ ## name ## num)						;\
 	pushq	$0			/* dummy error code */		;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
@@ -611,7 +607,7 @@ IDTVEC(intr_/**/name/**/num)						;\
 	movl	CPUVAR(ILEVEL),%r13d					;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	incq	CPUVAR(NINTR)		/* statistical info */		;\
 	incq	IS_EVCNT(%r14)						;\
 1:									\
 	pushq	%r13							;\
@@ -936,12 +932,12 @@ _C_LABEL(ioapic_level_stubs):
 #else	/* !XEN */
 /* Resume/recurse procedures for spl() */
 #define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_/**/name/**/num)						;\
+IDTVEC(recurse_ ## name ## num)						;\
   	INTR_RECURSE_HWFRAME						;\
   	subq	$8,%rsp							;\
   	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
   	INTRENTRY							;\
-IDTVEC(resume_/**/name/**/num)						\
+IDTVEC(resume_ ## name ## num)						\
   	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
   	movl	%ebx,%r13d						;\
   	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\

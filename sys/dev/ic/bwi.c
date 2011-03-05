@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.14.2.1 2010/05/30 05:17:21 rmind Exp $	*/
+/*	$NetBSD: bwi.c,v 1.14.2.2 2011/03/05 20:53:13 rmind Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.14.2.1 2010/05/30 05:17:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.14.2.2 2011/03/05 20:53:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -81,12 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.14.2.1 2010/05/30 05:17:21 rmind Exp $");
 #include <dev/ic/bwireg.h>
 #include <dev/ic/bwivar.h>
 
-#define BWI_DEBUG 1
 #ifdef BWI_DEBUG
-
-int bwi_debug = ~BWI_DBG_INTR;
-
-/* [TRC: XXX I think this is wrong.] */
+int bwi_debug = 0;
 
 #define DPRINTF(sc, dbg, fmt, ...)					\
 do {									\

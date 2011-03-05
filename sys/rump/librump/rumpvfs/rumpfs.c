@@ -1,7 +1,7 @@
-/*	$NetBSD: rumpfs.c,v 1.37.2.3 2010/07/03 01:20:03 rmind Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.37.2.4 2011/03/05 20:56:16 rmind Exp $	*/
 
 /*
- * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,10 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.3 2010/07/03 01:20:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.4 2011/03/05 20:56:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/errno.h>
 #include <sys/filedesc.h>
@@ -45,10 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.3 2010/07/03 01:20:03 rmind Exp $"
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>
+#include <sys/unistd.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/genfs/genfs_node.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <rump/rumpuser.h>
 
@@ -57,8 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.3 2010/07/03 01:20:03 rmind Exp $"
 
 static int rump_vop_lookup(void *);
 static int rump_vop_getattr(void *);
+static int rump_vop_setattr(void *);
 static int rump_vop_mkdir(void *);
 static int rump_vop_rmdir(void *);
+static int rump_vop_remove(void *);
 static int rump_vop_mknod(void *);
 static int rump_vop_create(void *);
 static int rump_vop_inactive(void *);
@@ -71,6 +78,12 @@ static int rump_vop_write(void *);
 static int rump_vop_open(void *);
 static int rump_vop_symlink(void *);
 static int rump_vop_readlink(void *);
+static int rump_vop_whiteout(void *);
+static int rump_vop_pathconf(void *);
+static int rump_vop_bmap(void *);
+static int rump_vop_strategy(void *);
+static int rump_vop_advlock(void *);
+static int rump_vop_access(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -85,25 +98,35 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, rump_vop_lookup },
 	{ &vop_getattr_desc, rump_vop_getattr },
+	{ &vop_setattr_desc, rump_vop_setattr },
 	{ &vop_mkdir_desc, rump_vop_mkdir },
 	{ &vop_rmdir_desc, rump_vop_rmdir },
+	{ &vop_remove_desc, rump_vop_remove },
 	{ &vop_mknod_desc, rump_vop_mknod },
 	{ &vop_create_desc, rump_vop_create },
 	{ &vop_symlink_desc, rump_vop_symlink },
 	{ &vop_readlink_desc, rump_vop_readlink },
-	{ &vop_access_desc, rump_vop_success },
+	{ &vop_access_desc, rump_vop_access },
 	{ &vop_readdir_desc, rump_vop_readdir },
 	{ &vop_read_desc, rump_vop_read },
 	{ &vop_write_desc, rump_vop_write },
 	{ &vop_open_desc, rump_vop_open },
+	{ &vop_close_desc, genfs_nullop },
 	{ &vop_seek_desc, genfs_seek },
-	{ &vop_putpages_desc, genfs_null_putpages },
+	{ &vop_getpages_desc, genfs_getpages },
+	{ &vop_putpages_desc, genfs_putpages },
+	{ &vop_whiteout_desc, rump_vop_whiteout },
 	{ &vop_fsync_desc, rump_vop_success },
 	{ &vop_lock_desc, genfs_lock },
 	{ &vop_unlock_desc, genfs_unlock },
 	{ &vop_islocked_desc, genfs_islocked },
 	{ &vop_inactive_desc, rump_vop_inactive },
 	{ &vop_reclaim_desc, rump_vop_reclaim },
+	{ &vop_link_desc, genfs_eopnotsupp },
+	{ &vop_pathconf_desc, rump_vop_pathconf },
+	{ &vop_bmap_desc, rump_vop_bmap },
+	{ &vop_strategy_desc, rump_vop_strategy },
+	{ &vop_advlock_desc, rump_vop_advlock },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
@@ -123,6 +146,8 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 	NULL
 };
 
+#define RUMPFS_WHITEOUT ((void *)-1)
+#define RDENT_ISWHITEOUT(rdp) (rdp->rd_node == RUMPFS_WHITEOUT)
 struct rumpfs_dent {
 	char *rd_name;
 	int rd_namelen;
@@ -131,11 +156,22 @@ struct rumpfs_dent {
 	LIST_ENTRY(rumpfs_dent) rd_entries;
 };
 
+struct genfs_ops rumpfs_genfsops = {
+	.gop_size = genfs_size,
+	.gop_write = genfs_gop_write,
+
+	/* optional */
+	.gop_alloc = NULL,
+	.gop_markupdate = NULL,
+};
+
 struct rumpfs_node {
+	struct genfs_node rn_gn;
 	struct vattr rn_va;
 	struct vnode *rn_vp;
 	char *rn_hostpath;
 	int rn_flags;
+	struct lockf *rn_lockf;
 
 	union {
 		struct {		/* VREG */
@@ -143,8 +179,13 @@ struct rumpfs_node {
 			int writefd;
 			uint64_t offset;
 		} reg;
+		struct {
+			void *data;
+			size_t dlen;
+		} reg_noet;
 		struct {		/* VDIR */
 			LIST_HEAD(, rumpfs_dent) dents;
+			struct rumpfs_node *parent;
 			int flags;
 		} dir;
 		struct {
@@ -156,19 +197,27 @@ struct rumpfs_node {
 #define rn_readfd	rn_u.reg.readfd
 #define rn_writefd	rn_u.reg.writefd
 #define rn_offset	rn_u.reg.offset
+#define rn_data		rn_u.reg_noet.data
+#define rn_dlen		rn_u.reg_noet.dlen
 #define rn_dir		rn_u.dir.dents
+#define rn_parent	rn_u.dir.parent
 #define rn_linktarg	rn_u.link.target
 #define rn_linklen	rn_u.link.len
 
 #define RUMPNODE_CANRECLAIM	0x01
 #define RUMPNODE_DIR_ET		0x02
 #define RUMPNODE_DIR_ETSUBS	0x04
+#define RUMPNODE_ET_PHONE_HOST	0x10
 
 struct rumpfs_mount {
 	struct vnode *rfsmp_rvp;
 };
 
-static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t);
+#define INO_WHITEOUT 1
+static int lastino = 2;
+static kmutex_t reclock;
+
+static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t, bool);
 
 /*
  * Extra Terrestrial stuff.  We map a given key (pathname) to a file on
@@ -275,12 +324,20 @@ static int
 doregister(const char *key, const char *hostpath, 
 	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
 {
+	char buf[9];
 	struct etfs *et;
 	struct rumpfs_node *rn;
 	uint64_t fsize;
 	dev_t rdev = NODEV;
 	devminor_t dmin = -1;
 	int hft, error;
+
+	if (key[0] != '/') {
+		return EINVAL;
+	}
+	while (key[0] == '/') {
+		key++;
+	}
 
 	if (rumpuser_getfileinfo(hostpath, &fsize, &hft, &error))
 		return error;
@@ -314,9 +371,11 @@ doregister(const char *key, const char *hostpath,
 	et = kmem_alloc(sizeof(*et), KM_SLEEP);
 	strcpy(et->et_key, key);
 	et->et_keylen = strlen(et->et_key);
-	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size);
+	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size, true);
 	et->et_removing = false;
 	et->et_blkmin = dmin;
+
+	rn->rn_flags |= RUMPNODE_ET_PHONE_HOST;
 
 	if (ftype == RUMP_ETFS_REG || REGDIR(ftype) || et->et_blkmin != -1) {
 		size_t len = strlen(hostpath)+1;
@@ -350,6 +409,11 @@ doregister(const char *key, const char *hostpath,
 	LIST_INSERT_HEAD(&etfs_list, et, et_entries);
 	mutex_exit(&etfs_lock);
 
+	if (ftype == RUMP_ETFS_BLK) {
+		format_bytes(buf, sizeof(buf), size);
+		aprint_verbose("/%s: hostpath %s (%s)\n", key, hostpath, buf);
+	}
+
 	return 0;
 }
 #undef REGDIR
@@ -375,8 +439,17 @@ int
 rump_etfs_remove(const char *key)
 {
 	struct etfs *et;
-	size_t keylen = strlen(key);
+	size_t keylen;
 	int rv;
+
+	if (key[0] != '/') {
+		return EINVAL;
+	}
+	while (key[0] == '/') {
+		key++;
+	}
+
+	keylen = strlen(key);
 
 	mutex_enter(&etfs_lock);
 	LIST_FOREACH(et, &etfs_list, et_entries) {
@@ -409,8 +482,18 @@ rump_etfs_remove(const char *key)
 	mutex_exit(&etfs_lock);
 
 	/* node is unreachable, safe to nuke all device copies */
-	if (et->et_blkmin != -1)
+	if (et->et_blkmin != -1) {
 		vdevgone(RUMPBLK_DEVMAJOR, et->et_blkmin, et->et_blkmin, VBLK);
+	} else {
+		struct vnode *vp;
+
+		mutex_enter(&reclock);
+		if ((vp = et->et_rn->rn_vp) != NULL)
+			mutex_enter(&vp->v_interlock);
+		mutex_exit(&reclock);
+		if (vp && vget(vp, 0) == 0)
+			vgone(vp);
+	}
 
 	if (et->et_rn->rn_hostpath != NULL)
 		free(et->et_rn->rn_hostpath, M_TEMP);
@@ -424,11 +507,8 @@ rump_etfs_remove(const char *key)
  * rumpfs
  */
 
-static int lastino = 1;
-static kmutex_t reclock;
-
 static struct rumpfs_node *
-makeprivate(enum vtype vt, dev_t rdev, off_t size)
+makeprivate(enum vtype vt, dev_t rdev, off_t size, bool et)
 {
 	struct rumpfs_node *rn;
 	struct vattr *va;
@@ -441,8 +521,10 @@ makeprivate(enum vtype vt, dev_t rdev, off_t size)
 		LIST_INIT(&rn->rn_dir);
 		break;
 	case VREG:
-		rn->rn_readfd = -1;
-		rn->rn_writefd = -1;
+		if (et) {
+			rn->rn_readfd = -1;
+			rn->rn_writefd = -1;
+		}
 		break;
 	default:
 		break;
@@ -492,10 +574,6 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	} else {
 		vpops = rump_vnodeop_p;
 	}
-	if (vpops != rump_specop_p && va->va_type != VDIR
-	    && !(va->va_type == VREG && rn->rn_hostpath != NULL)
-	    && va->va_type != VSOCK && va->va_type != VLNK)
-		return EOPNOTSUPP;
 
 	rv = getnewvnode(VT_RUMP, mp, vpops, &vp);
 	if (rv)
@@ -509,6 +587,7 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	}
 	vp->v_data = rn;
 
+	genfs_node_init(vp, &rumpfs_genfsops);
 	vn_lock(vp, LK_RETRY | LK_EXCLUSIVE);
 	mutex_enter(&reclock);
 	rn->rn_vp = vp;
@@ -549,9 +628,13 @@ freedir(struct rumpfs_node *rnd, struct componentname *cnp)
 	if (rd == NULL)
 		panic("could not find directory entry: %s", cnp->cn_nameptr);
 
-	LIST_REMOVE(rd, rd_entries);
-	kmem_free(rd->rd_name, rd->rd_namelen+1);
-	kmem_free(rd, sizeof(*rd));
+	if (cnp->cn_flags & DOWHITEOUT) {
+		rd->rd_node = RUMPFS_WHITEOUT;
+	} else {
+		LIST_REMOVE(rd, rd_entries);
+		kmem_free(rd->rd_name, rd->rd_namelen+1);
+		kmem_free(rd, sizeof(*rd));
+	}
 }
 
 /*
@@ -574,13 +657,15 @@ rump_vop_lookup(void *v)
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	struct rumpfs_dent *rd = NULL;
 	struct etfs *et;
-	int rv;
+	bool dotdot = (cnp->cn_flags & ISDOTDOT) != 0;
+	int rv = 0;
 
-	/* we handle only some "non-special" cases */
-	if (!(((cnp->cn_flags & ISLASTCN) == 0) || (cnp->cn_nameiop != RENAME)))
-		return EOPNOTSUPP;
-	if (!((cnp->cn_flags & ISDOTDOT) == 0))
-		return EOPNOTSUPP;
+	*vpp = NULL;
+
+	if ((cnp->cn_flags & ISLASTCN)
+	    && (dvp->v_mount->mnt_flag & MNT_RDONLY)
+	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return EROFS;
 
 	/* check for dot, return directly if the case */
 	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
@@ -589,22 +674,21 @@ rump_vop_lookup(void *v)
 		return 0;
 	}
 
+	/* we don't do rename */
+	if (!(((cnp->cn_flags & ISLASTCN) == 0) || (cnp->cn_nameiop != RENAME)))
+		return EOPNOTSUPP;
+
 	/* check for etfs */
-	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
+	if (dvp == rootvnode &&
+	    (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE)) {
 		bool found;
 		mutex_enter(&etfs_lock);
-		found = etfs_find(cnp->cn_pnbuf, &et, false);
+		found = etfs_find(cnp->cn_nameptr, &et, false);
 		mutex_exit(&etfs_lock);
 
 		if (found) {
-			char *offset;
-
-			offset = strstr(cnp->cn_pnbuf, et->et_key);
-			KASSERT(offset);
-
 			rn = et->et_rn;
-			cnp->cn_consume += et->et_keylen
-			    - (cnp->cn_nameptr - offset) - cnp->cn_namelen;
+			cnp->cn_consume += et->et_keylen - cnp->cn_namelen;
 			if (rn->rn_va.va_type != VDIR)
 				cnp->cn_flags &= ~REQUIREDIR;
 			goto getvnode;
@@ -616,6 +700,9 @@ rump_vop_lookup(void *v)
 		char *newpath;
 		size_t newpathlen;
 		int hft, error;
+
+		if (dotdot)
+			return EOPNOTSUPP;
 
 		newpathlen = strlen(rnd->rn_hostpath) + 1 + cnp->cn_namelen + 1;
 		newpath = malloc(newpathlen, M_TEMP, M_WAITOK);
@@ -635,20 +722,26 @@ rump_vop_lookup(void *v)
 			return ENOENT;
 		}
 
-		rn = makeprivate(hft_to_vtype(hft), NODEV, fsize);
+		rn = makeprivate(hft_to_vtype(hft), NODEV, fsize, true);
 		rn->rn_flags |= RUMPNODE_CANRECLAIM;
 		if (rnd->rn_flags & RUMPNODE_DIR_ETSUBS) {
 			rn->rn_flags |= RUMPNODE_DIR_ET | RUMPNODE_DIR_ETSUBS;
+			rn->rn_flags |= RUMPNODE_ET_PHONE_HOST;
 		}
 		rn->rn_hostpath = newpath;
 
 		goto getvnode;
 	} else {
-		LIST_FOREACH(rd, &rnd->rn_dir, rd_entries) {
-			if (rd->rd_namelen == cnp->cn_namelen &&
-			    strncmp(rd->rd_name, cnp->cn_nameptr,
-			      cnp->cn_namelen) == 0)
-				break;
+		if (dotdot) {
+			if ((rn = rnd->rn_parent) != NULL)
+				goto getvnode;
+		} else {
+			LIST_FOREACH(rd, &rnd->rn_dir, rd_entries) {
+				if (rd->rd_namelen == cnp->cn_namelen &&
+				    strncmp(rd->rd_name, cnp->cn_nameptr,
+				      cnp->cn_namelen) == 0)
+					break;
+			}
 		}
 	}
 
@@ -656,28 +749,64 @@ rump_vop_lookup(void *v)
 		return ENOENT;
 
 	if (!rd && (cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == CREATE) {
-		cnp->cn_flags |= SAVENAME;
+		if (dvp->v_mount->mnt_flag & MNT_RDONLY)
+			return EROFS;
 		return EJUSTRETURN;
 	}
-	if ((cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == DELETE)
-		cnp->cn_flags |= SAVENAME;
+
+	if (RDENT_ISWHITEOUT(rd)) {
+		cnp->cn_flags |= ISWHITEOUT;
+		return ENOENT;
+	}
 
 	rn = rd->rd_node;
 
  getvnode:
 	KASSERT(rn);
+	if (dotdot)
+		VOP_UNLOCK(dvp);
 	mutex_enter(&reclock);
 	if ((vp = rn->rn_vp)) {
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&reclock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+		if (vget(vp, LK_EXCLUSIVE)) {
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			goto getvnode;
+		}
 		*vpp = vp;
 	} else {
 		mutex_exit(&reclock);
 		rv = makevnode(dvp->v_mount, rn, vpp);
-		if (rv)
-			return rv;
+	}
+	if (dotdot)
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+
+	return rv;
+}
+
+int
+rump_vop_access(void *v)
+{
+	struct vop_access_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int mode = ap->a_mode;
+
+	if (mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			if ((vp->v_mount->mnt_flag & MNT_RDONLY))
+				return EROFS;
+			break;
+		default:
+			break;
+		}
 	}
 
 	return 0;
@@ -691,9 +820,60 @@ rump_vop_getattr(void *v)
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	struct rumpfs_node *rn = ap->a_vp->v_data;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+	struct vattr *vap = ap->a_vap;
 
-	memcpy(ap->a_vap, &rn->rn_va, sizeof(struct vattr));
+	memcpy(vap, &rn->rn_va, sizeof(struct vattr));
+	vap->va_size = vp->v_size;
+	return 0;
+}
+
+static int
+rump_vop_setattr(void *v)
+{
+	struct vop_getattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vattr *vap = ap->a_vap;
+	struct rumpfs_node *rn = vp->v_data;
+
+#define SETIFVAL(a,t) if (vap->a != (t)VNOVAL) rn->rn_va.a = vap->a
+	SETIFVAL(va_mode, mode_t);
+	SETIFVAL(va_uid, uid_t);
+	SETIFVAL(va_gid, gid_t);
+	SETIFVAL(va_atime.tv_sec, time_t);
+	SETIFVAL(va_ctime.tv_sec, time_t);
+	SETIFVAL(va_mtime.tv_sec, time_t);
+	SETIFVAL(va_birthtime.tv_sec, time_t);
+	SETIFVAL(va_atime.tv_nsec, long);
+	SETIFVAL(va_ctime.tv_nsec, long);
+	SETIFVAL(va_mtime.tv_nsec, long);
+	SETIFVAL(va_birthtime.tv_nsec, long);
+	SETIFVAL(va_flags, u_long);
+#undef  SETIFVAL
+
+	if (vp->v_type == VREG &&
+	    vap->va_size != VSIZENOTSET &&
+	    vap->va_size != rn->rn_dlen) {
+		void *newdata;
+		size_t copylen, newlen;
+
+		newlen = vap->va_size;
+		newdata = rump_hypermalloc(newlen, 0, true, "rumpfs");
+
+		copylen = MIN(rn->rn_dlen, newlen);
+		memset(newdata, 0, newlen);
+		memcpy(newdata, rn->rn_data, copylen);
+		rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+
+		rn->rn_data = newdata;
+		rn->rn_dlen = newlen;
+		uvm_vnp_setsize(vp, newlen);
+	}
 	return 0;
 }
 
@@ -712,7 +892,8 @@ rump_vop_mkdir(void *v)
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	int rv = 0;
 
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
+	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
+	rn->rn_parent = rnd;
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -720,7 +901,6 @@ rump_vop_mkdir(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return rv;
 }
@@ -747,9 +927,40 @@ rump_vop_rmdir(void *v)
 
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
+	rn->rn_parent = NULL;
 
 out:
-	PNBUF_PUT(cnp->cn_pnbuf);
+	vput(dvp);
+	vput(vp);
+
+	return rv;
+}
+
+static int
+rump_vop_remove(void *v)
+{
+        struct vop_rmdir_args /* {
+                struct vnode *a_dvp;
+                struct vnode *a_vp;
+                struct componentname *a_cnp;
+        }; */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
+	struct componentname *cnp = ap->a_cnp;
+	struct rumpfs_node *rnd = dvp->v_data;
+	struct rumpfs_node *rn = vp->v_data;
+	int rv = 0;
+
+	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
+		return EOPNOTSUPP;
+
+	if (vp->v_type == VREG) {
+		rump_hyperfree(rn->rn_data, rn->rn_dlen);
+	}
+
+	freedir(rnd, cnp);
+	rn->rn_flags |= RUMPNODE_CANRECLAIM;
+
 	vput(dvp);
 	vput(vp);
 
@@ -772,7 +983,7 @@ rump_vop_mknod(void *v)
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	int rv;
 
-	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE);
+	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE, false);
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -780,7 +991,6 @@ rump_vop_mknod(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return rv;
 }
@@ -799,13 +1009,11 @@ rump_vop_create(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vattr *va = ap->a_vap;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
+	off_t newsize;
 	int rv;
 
-	if (va->va_type != VSOCK) {
-		rv = EOPNOTSUPP;
-		goto out;
-	}
-	rn = makeprivate(VSOCK, NODEV, DEV_BSIZE);
+	newsize = va->va_type == VSOCK ? DEV_BSIZE : 0;
+	rn = makeprivate(va->va_type, NODEV, newsize, false);
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -813,7 +1021,6 @@ rump_vop_create(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return rv;
 }
@@ -838,7 +1045,7 @@ rump_vop_symlink(void *v)
 
 	linklen = strlen(target);
 	KASSERT(linklen < MAXPATHLEN);
-	rn = makeprivate(VLNK, NODEV, linklen);
+	rn = makeprivate(VLNK, NODEV, linklen, false);
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -871,6 +1078,36 @@ rump_vop_readlink(void *v)
 }
 
 static int
+rump_vop_whiteout(void *v)
+{
+	struct vop_whiteout_args /* {
+		struct vnode            *a_dvp;
+		struct componentname    *a_cnp;
+		int                     a_flags;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct rumpfs_node *rnd = dvp->v_data;
+	struct componentname *cnp = ap->a_cnp;
+	int flags = ap->a_flags;
+
+	switch (flags) {
+	case LOOKUP:
+		break;
+	case CREATE:
+		makedir(rnd, cnp, RUMPFS_WHITEOUT);
+		break;
+	case DELETE:
+		cnp->cn_flags &= ~DOWHITEOUT; /* cargo culting never fails ? */
+		freedir(rnd, cnp);
+		break;
+	default:
+		panic("unknown whiteout op %d", flags);
+	}
+
+	return 0;
+}
+
+static int
 rump_vop_open(void *v)
 {
 	struct vop_open_args /* {
@@ -883,7 +1120,7 @@ rump_vop_open(void *v)
 	int mode = ap->a_mode;
 	int error = EINVAL;
 
-	if (vp->v_type != VREG)
+	if (vp->v_type != VREG || (rn->rn_flags & RUMPNODE_ET_PHONE_HOST) == 0)
 		return 0;
 
 	if (mode & FREAD) {
@@ -935,11 +1172,17 @@ rump_vop_readdir(void *v)
 	    rdent = LIST_NEXT(rdent, rd_entries), i++) {
 		struct dirent dent;
 
-		dent.d_fileno = rdent->rd_node->rn_va.va_fileid;
 		strlcpy(dent.d_name, rdent->rd_name, sizeof(dent.d_name));
 		dent.d_namlen = strlen(dent.d_name);
-		dent.d_type = vtype2dt(rdent->rd_node->rn_va.va_type);
 		dent.d_reclen = _DIRENT_RECLEN(&dent, dent.d_namlen);
+
+		if (__predict_false(RDENT_ISWHITEOUT(rdent))) {
+			dent.d_fileno = INO_WHITEOUT;
+			dent.d_type = DT_WHT;
+		} else {
+			dent.d_fileno = rdent->rd_node->rn_va.va_fileid;
+			dent.d_type = vtype2dt(rdent->rd_node->rn_va.va_type);
+		}
 
 		if (uio->uio_resid < dent.d_reclen) {
 			i--;
@@ -968,17 +1211,8 @@ rump_vop_readdir(void *v)
 }
 
 static int
-rump_vop_read(void *v)
+etread(struct rumpfs_node *rn, struct uio *uio)
 {
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int ioflags a_ioflag;
-		kauth_cred_t a_cred;
-	}; */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct rumpfs_node *rn = vp->v_data;
-	struct uio *uio = ap->a_uio;
 	uint8_t *buf;
 	size_t bufsize;
 	ssize_t n;
@@ -995,10 +1229,11 @@ rump_vop_read(void *v)
  out:
 	kmem_free(buf, bufsize);
 	return error;
+
 }
 
 static int
-rump_vop_write(void *v)
+rump_vop_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -1009,6 +1244,31 @@ rump_vop_write(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
 	struct uio *uio = ap->a_uio;
+	const int advice = IO_ADV_DECODE(ap->a_ioflag);
+	off_t chunk;
+	int error = 0;
+
+	/* et op? */
+	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
+		return etread(rn, uio);
+
+	/* otherwise, it's off to ubc with us */
+	while (uio->uio_resid > 0) {
+		chunk = MIN(uio->uio_resid, (off_t)rn->rn_dlen-uio->uio_offset);
+		if (chunk == 0)
+			break;
+		error = ubc_uiomove(&vp->v_uobj, uio, chunk, advice,
+		    UBC_READ | UBC_PARTIALOK | UBC_WANT_UNMAP(vp)?UBC_UNMAP:0);
+		if (error)
+			break;
+	}
+
+	return error;
+}
+
+static int
+etwrite(struct rumpfs_node *rn, struct uio *uio)
+{
 	uint8_t *buf;
 	size_t bufsize;
 	ssize_t n;
@@ -1033,6 +1293,186 @@ rump_vop_write(void *v)
 }
 
 static int
+rump_vop_write(void *v)
+{
+	struct vop_read_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int ioflags a_ioflag;
+		kauth_cred_t a_cred;
+	}; */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+	struct uio *uio = ap->a_uio;
+	const int advice = IO_ADV_DECODE(ap->a_ioflag);
+	void *olddata;
+	size_t oldlen, newlen;
+	off_t chunk;
+	int error = 0;
+	bool allocd = false;
+
+	if (ap->a_ioflag & IO_APPEND)
+		uio->uio_offset = vp->v_size;
+
+	/* consult et? */
+	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
+		return etwrite(rn, uio);
+
+	/*
+	 * Otherwise, it's a case of ubcmove.
+	 */
+
+	/*
+	 * First, make sure we have enough storage.
+	 *
+	 * No, you don't need to tell me it's not very efficient.
+	 * No, it doesn't really support sparse files, just fakes it.
+	 */
+	newlen = uio->uio_offset + uio->uio_resid;
+	oldlen = 0; /* XXXgcc */
+	olddata = NULL;
+	if (rn->rn_dlen < newlen) {
+		oldlen = rn->rn_dlen;
+		olddata = rn->rn_data;
+
+		rn->rn_data = rump_hypermalloc(newlen, 0, true, "rumpfs");
+		rn->rn_dlen = newlen;
+		memset(rn->rn_data, 0, newlen);
+		memcpy(rn->rn_data, olddata, oldlen);
+		allocd = true;
+		uvm_vnp_setsize(vp, newlen);
+	}
+
+	/* ok, we have enough stooorage.  write */
+	while (uio->uio_resid > 0) {
+		chunk = MIN(uio->uio_resid, (off_t)rn->rn_dlen-uio->uio_offset);
+		if (chunk == 0)
+			break;
+		error = ubc_uiomove(&vp->v_uobj, uio, chunk, advice,
+		    UBC_WRITE | UBC_PARTIALOK | UBC_WANT_UNMAP(vp)?UBC_UNMAP:0);
+		if (error)
+			break;
+	}
+
+	if (allocd) {
+		if (error) {
+			rump_hyperfree(rn->rn_data, newlen);
+			rn->rn_data = olddata;
+			rn->rn_dlen = oldlen;
+			uvm_vnp_setsize(vp, oldlen);
+		} else {
+			rump_hyperfree(olddata, oldlen);
+		}
+	}
+
+	return error;
+}
+
+static int
+rump_vop_bmap(void *v)
+{
+	struct vop_bmap_args /* {
+		struct vnode *a_vp;
+		daddr_t a_bn;
+		struct vnode **a_vpp;
+		daddr_t *a_bnp;
+		int *a_runp;
+	} */ *ap = v;
+
+	/* 1:1 mapping */
+	if (ap->a_vpp)
+		*ap->a_vpp = ap->a_vp;
+	if (ap->a_bnp)
+		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp)
+		*ap->a_runp = 16;
+
+	return 0;
+}
+
+static int
+rump_vop_strategy(void *v)
+{
+	struct vop_strategy_args /* {
+		struct vnode *a_vp;
+		struct buf *a_bp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+	struct buf *bp = ap->a_bp;
+	off_t copylen, copyoff;
+	int error;
+
+	if (vp->v_type != VREG || rn->rn_flags & RUMPNODE_ET_PHONE_HOST) {
+		error = EINVAL;
+		goto out;
+	}
+
+	copyoff = bp->b_blkno << DEV_BSHIFT;
+	copylen = MIN(rn->rn_dlen - copyoff, bp->b_bcount);
+	if (BUF_ISWRITE(bp)) {
+		memcpy((uint8_t *)rn->rn_data + copyoff, bp->b_data, copylen);
+	} else {
+		memset((uint8_t*)bp->b_data + copylen, 0, bp->b_bcount-copylen);
+		memcpy(bp->b_data, (uint8_t *)rn->rn_data + copyoff, copylen);
+	}
+	bp->b_resid = 0;
+	error = 0;
+
+ out:
+	bp->b_error = error;
+	biodone(bp);
+	return 0;
+}
+
+static int
+rump_vop_pathconf(void *v)
+{
+	struct vop_pathconf_args /* {
+		struct vnode *a_vp;
+		int a_name;
+		register_t *a_retval;
+	}; */ *ap = v;
+	int name = ap->a_name;
+	register_t *retval = ap->a_retval;
+
+	switch (name) {
+	case _PC_LINK_MAX:
+		*retval = LINK_MAX;
+		return 0;
+	case _PC_NAME_MAX:
+		*retval = NAME_MAX;
+		return 0;
+	case _PC_PATH_MAX:
+		*retval = PATH_MAX;
+		return 0;
+	case _PC_PIPE_BUF:
+		*retval = PIPE_BUF;
+		return 0;
+	case _PC_CHOWN_RESTRICTED:
+		*retval = 1;
+		return 0;
+	case _PC_NO_TRUNC:
+		*retval = 1;
+		return 0;
+	case _PC_SYNC_IO:
+		*retval = 1;
+		return 0;
+	case _PC_FILESIZEBITS:
+		*retval = 43; /* this one goes to 11 */
+		return 0;
+	case _PC_SYMLINK_MAX:
+		*retval = MAXPATHLEN;
+		return 0;
+	case _PC_2_SYMLINKS:
+		*retval = 1;
+		return 0;
+	default:
+		return EINVAL;
+	}
+}
+
+static int
 rump_vop_success(void *v)
 {
 
@@ -1050,7 +1490,7 @@ rump_vop_inactive(void *v)
 	struct rumpfs_node *rn = vp->v_data;
 	int error;
 
-	if (vp->v_type == VREG) {
+	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST && vp->v_type == VREG) {
 		if (rn->rn_readfd != -1) {
 			rumpuser_close(rn->rn_readfd, &error);
 			rn->rn_readfd = -1;
@@ -1061,7 +1501,7 @@ rump_vop_inactive(void *v)
 		}
 	}
 	*ap->a_recycle = (rn->rn_flags & RUMPNODE_CANRECLAIM) ? true : false;
-		
+
 	VOP_UNLOCK(vp);
 	return 0;
 }
@@ -1078,6 +1518,7 @@ rump_vop_reclaim(void *v)
 	mutex_enter(&reclock);
 	rn->rn_vp = NULL;
 	mutex_exit(&reclock);
+	genfs_node_destroy(vp);
 	vp->v_data = NULL;
 
 	if (rn->rn_flags & RUMPNODE_CANRECLAIM) {
@@ -1100,8 +1541,10 @@ rump_vop_spec(void *v)
 	switch (ap->a_desc->vdesc_offset) {
 	case VOP_ACCESS_DESCOFFSET:
 	case VOP_GETATTR_DESCOFFSET:
+	case VOP_SETATTR_DESCOFFSET:
 	case VOP_LOCK_DESCOFFSET:
 	case VOP_UNLOCK_DESCOFFSET:
+	case VOP_ISLOCKED_DESCOFFSET:
 	case VOP_RECLAIM_DESCOFFSET:
 		opvec = rump_vnodeop_p;
 		break;
@@ -1111,6 +1554,23 @@ rump_vop_spec(void *v)
 	}
 
 	return VOCALL(opvec, ap->a_desc->vdesc_offset, v);
+}
+
+static int
+rump_vop_advlock(void *v)
+{
+	struct vop_advlock_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		void *a_id;
+		int a_op;
+		struct flock *a_fl;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+
+	return lf_advlock(ap, &rn->rn_lockf, vp->v_size);
 }
 
 /*
@@ -1138,27 +1598,74 @@ struct vfsops rumpfs_vfsops = {
 	.vfs_snapshot =		(void *)eopnotsupp,
 	.vfs_extattrctl =	(void *)eopnotsupp,
 	.vfs_suspendctl =	(void *)eopnotsupp,
+	.vfs_renamelock_enter =	genfs_renamelock_enter,
+	.vfs_renamelock_exit =	genfs_renamelock_exit,
 	.vfs_opv_descs =	rump_opv_descs,
 	/* vfs_refcount */
 	/* vfs_list */
 };
 
-int
-rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
+static int
+rumpfs_mountfs(struct mount *mp)
 {
+	struct rumpfs_mount *rfsmp;
+	struct rumpfs_node *rn;
+	int error;
 
-	return EOPNOTSUPP;
+	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
+
+	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
+	rn->rn_parent = rn;
+	if ((error = makevnode(mp, rn, &rfsmp->rfsmp_rvp)) != 0)
+		return error;
+
+	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
+	VOP_UNLOCK(rfsmp->rfsmp_rvp);
+
+	mp->mnt_data = rfsmp;
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_iosize = 512;
+	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
+	mp->mnt_fs_bshift = DEV_BSHIFT;
+	vfs_getnewfsid(mp);
+
+	return 0;
 }
 
 int
-rumpfs_unmount(struct mount *mp, int flags)
+rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
+	int error;
 
-	/* if going for it, just lie about it */
-	if (panicstr)
+	if (mp->mnt_flag & MNT_UPDATE) {
 		return 0;
+	}
 
-	return EOPNOTSUPP; /* ;) */
+	error = set_statvfs_info(mntpath, UIO_USERSPACE, "rumpfs", UIO_SYSSPACE,
+	    mp->mnt_op->vfs_name, mp, curlwp);
+	if (error)
+		return error;
+
+	return rumpfs_mountfs(mp);
+}
+
+int
+rumpfs_unmount(struct mount *mp, int mntflags)
+{
+	struct rumpfs_mount *rfsmp = mp->mnt_data;
+	int flags = 0, error;
+
+	if (panicstr || mntflags & MNT_FORCE)
+		flags |= FORCECLOSE;
+
+	if ((error = vflush(mp, rfsmp->rfsmp_rvp, flags)) != 0)
+		return error;
+	vgone(rfsmp->rfsmp_rvp); /* XXX */
+
+	kmem_free(rfsmp, sizeof(*rfsmp));
+
+	return 0;
 }
 
 int
@@ -1166,7 +1673,8 @@ rumpfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct rumpfs_mount *rfsmp = mp->mnt_data;
 
-	vget(rfsmp->rfsmp_rvp, LK_EXCLUSIVE | LK_RETRY);
+	vref(rfsmp->rfsmp_rvp);
+	vn_lock(rfsmp->rfsmp_rvp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = rfsmp->rfsmp_rvp;
 	return 0;
 }
@@ -1200,8 +1708,6 @@ int
 rumpfs_mountroot()
 {
 	struct mount *mp;
-	struct rumpfs_mount *rfsmp;
-	struct rumpfs_node *rn;
 	int error;
 
 	if ((error = vfs_rootmountalloc(MOUNT_RUMPFS, "rootdev", &mp)) != 0) {
@@ -1209,31 +1715,19 @@ rumpfs_mountroot()
 		return error;
 	}
 
-	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
-
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
-	error = makevnode(mp, rn, &rfsmp->rfsmp_rvp);
-	if (error)
-		panic("could not create root vnode: %d", error);
-	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(rfsmp->rfsmp_rvp);
+	if ((error = rumpfs_mountfs(mp)) != 0)
+		panic("mounting rootfs failed: %d", error);
 
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 
-	mp->mnt_data = rfsmp;
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
-	mp->mnt_stat.f_iosize = 512;
-	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_MPSAFE;
-	vfs_getnewfsid(mp);
-
 	error = set_statvfs_info("/", UIO_SYSSPACE, "rumpfs", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, curlwp);
 	if (error)
-		panic("set statvfsinfo for rootfs failed");
+		panic("set_statvfs_info failed for rootfs: %d", error);
 
+	mp->mnt_flag &= ~MNT_RDONLY;
 	vfs_unbusy(mp, false, NULL);
 
 	return 0;

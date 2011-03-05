@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.20 2009/03/16 23:11:09 dsl Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.20.4.1 2011/03/05 20:49:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.20 2009/03/16 23:11:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.20.4.1 2011/03/05 20:49:13 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.20 2009/03/16 23:11:09 dsl Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 

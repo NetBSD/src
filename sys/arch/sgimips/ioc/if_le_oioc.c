@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_oioc.c,v 1.2 2010/01/19 22:06:22 pooka Exp $	*/
+/*	$NetBSD: if_le_oioc.c,v 1.2.4.1 2011/03/05 20:51:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.2 2010/01/19 22:06:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.2.4.1 2011/03/05 20:51:54 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -113,7 +113,6 @@ CFATTACH_DECL_NEW(le, sizeof(struct le_softc),
 
 static void	lewrcsr(struct lance_softc *, uint16_t, uint16_t);
 static uint16_t	lerdcsr(struct lance_softc *, uint16_t);  
-static void	enaddr_aton(const char *, u_int8_t *);
 
 static void
 lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
@@ -151,21 +150,19 @@ le_match(device_t parent, cfdata_t cf, void *aux)
 void
 le_attach(device_t parent, device_t self, void *aux)
 {
-	extern paddr_t avail_start, avail_end;
-
 	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct oioc_attach_args *oa = aux;
 	struct pglist mlist;
 	const char *enaddrstr;
-	char enaddr[6];
+	char enaddr[ETHER_ADDR_LEN];
 	char pbuf[9];
 	int i, error;
 
 	sc->sc_dev = self;
 	lesc->sc_st = oa->oa_st;
 
-	enaddrstr = ARCBIOS->GetEnvironmentVariable("eaddr");
+	enaddrstr = arcbios_GetEnvironmentVariable("eaddr");
 	if (enaddrstr == NULL) {
 		aprint_error(": failed to obtain MAC address\n");
 		return;
@@ -191,7 +188,7 @@ le_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocate a contiguous chunk of physical memory for the le buffer. */
 	error = uvm_pglistalloc(OIOC_LANCE_NPAGES * PAGE_SIZE,
-	    avail_start, avail_end, PAGE_SIZE, 0, &mlist, 1, 0);
+	    mips_avail_start, mips_avail_end, PAGE_SIZE, 0, &mlist, 1, 0);
 	if (error) {
 		aprint_error(": failed to allocate ioc<->lance buffer space, "
 		    "error = %d\n", error);
@@ -211,7 +208,7 @@ le_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = 0;
 	sc->sc_conf3 = LE_C3_BSWP;
 
-	enaddr_aton(enaddrstr, enaddr);
+	ether_aton_r(enaddr, sizeof(enaddr), enaddrstr);
 	memcpy(sc->sc_enaddr, enaddr, sizeof(sc->sc_enaddr));
 
 	if (cpu_intr_establish(oa->oa_irq, IPL_NET, am7990_intr, sc) == NULL) {
@@ -247,31 +244,4 @@ fail_1:
 	bus_space_unmap(oa->oa_st, oa->oa_sh, lesc->sc_rdph);
 fail_0:
 	return;
-}
-
-/* stolen from sgimips/hpc/if_sq.c */
-static void
-enaddr_aton(const char *str, u_int8_t *eaddr)
-{
-	int i;
-	char c;
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		if (*str == ':')
-			str++;
-
-		c = *str++;
-		if (isdigit(c)) {
-			eaddr[i] = (c - '0');
-		} else if (isxdigit(c)) {
-			eaddr[i] = (toupper(c) + 10 - 'A');
-		}
-
-		c = *str++;
-		if (isdigit(c)) {
-			eaddr[i] = (eaddr[i] << 4) | (c - '0');
-		} else if (isxdigit(c)) {
-			eaddr[i] = (eaddr[i] << 4) | (toupper(c) + 10 - 'A');
-		}
-	}
 }

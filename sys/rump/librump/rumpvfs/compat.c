@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.5 2009/10/14 18:18:53 pooka Exp $	*/
+/*	$NetBSD: compat.c,v 1.5.4.1 2011/03/05 20:56:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.5 2009/10/14 18:18:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.5.4.1 2011/03/05 20:56:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.5 2009/10/14 18:18:53 pooka Exp $");
 #include <compat/sys/time.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscalls_compat.h>
 #include <rump/rumpuser.h>
 
 #include "rump_vfs_private.h"
@@ -78,42 +79,6 @@ struct vattr50 {
 	u_int		va_vaflags;	/* operations flags, see below */
 	long		va_spare;	/* remain quad aligned */
 };
-
-int
-rump_sys___stat30(const char *path, struct stat *sb)
-{
-	struct compat_50_sys___stat30_args args;
-	register_t retval = 0;
-	int error = 0;
-
-	SPARG(&args, path) = path;
-	SPARG(&args, ub) = (struct stat30 *)sb;
-
-	error = compat_50_sys___stat30(curlwp, &args, &retval);
-	if (error) {
-		retval = -1;
-		rumpuser_seterrno(error);
-	}
-	return retval;
-}
-
-int
-rump_sys___lstat30(const char *path, struct stat *sb)
-{
-	struct compat_50_sys___lstat30_args args;
-	register_t retval = 0;
-	int error = 0;
-
-	SPARG(&args, path) = path;
-	SPARG(&args, ub) = (struct stat30 *)sb;
-
-	error = compat_50_sys___lstat30(curlwp, &args, &retval);
-	if (error) {
-		retval = -1;
-		rumpuser_seterrno(error);
-	}
-	return retval;
-}
 
 /*
  * XXX: types.  But I don't want to start playing compat games in

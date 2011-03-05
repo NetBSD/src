@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.176.4.3 2010/07/03 01:19:57 rmind Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.176.4.4 2011/03/05 20:55:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,13 +57,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.176.4.3 2010/07/03 01:19:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.176.4.4 2011/03/05 20:55:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
@@ -121,8 +122,8 @@ genfs_abortop(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+	(void)ap;
+
 	return (0);
 }
 
@@ -188,7 +189,7 @@ genfs_eopnotsupp(void *v)
 	KASSERT(desc->vdesc_offset != VOP_ABORTOP_DESCOFFSET);
 
 	/*
-	 * Free componentname that lookup potentially SAVENAMEd.
+	 * Abort any componentname that lookup potentially left state in.
 	 *
 	 * As is logical, componentnames for VOP_RENAME are handled by
 	 * the caller of VOP_RENAME.  Yay, rename!
@@ -293,10 +294,17 @@ genfs_lock(void *v)
 	KASSERT((flags & ~(LK_EXCLUSIVE | LK_SHARED | LK_NOWAIT)) == 0);
 
 	op = ((flags & LK_EXCLUSIVE) != 0 ? RW_WRITER : RW_READER);
+	if ((flags & LK_NOWAIT) != 0) {
+		if (fstrans_start_nowait(vp->v_mount, FSTRANS_SHARED))
+			return EBUSY;
+		if (! rw_tryenter(&vp->v_lock, op)) {
+			fstrans_done(vp->v_mount);
+			return EBUSY;
+		}
+		return 0;
+	}
 
-	if ((flags & LK_NOWAIT) != 0)
-		return (rw_tryenter(&vp->v_lock, op) ? 0 : EBUSY);
-
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	rw_enter(&vp->v_lock, op);
 
 	return 0;
@@ -314,6 +322,7 @@ genfs_unlock(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	rw_exit(&vp->v_lock);
+	fstrans_done(vp->v_mount);
 
 	return 0;
 }
@@ -549,6 +558,14 @@ genfs_node_unlock(struct vnode *vp)
 	struct genfs_node *gp = VTOG(vp);
 
 	rw_exit(&gp->g_glock);
+}
+
+int
+genfs_node_wrlocked(struct vnode *vp)
+{
+	struct genfs_node *gp = VTOG(vp);
+
+	return rw_write_held(&gp->g_glock);
 }
 
 /*

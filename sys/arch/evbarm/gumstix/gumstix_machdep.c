@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.26 2010/03/07 09:29:26 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.26.2.1 2011/03/05 20:50:05 rmind Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -137,14 +137,19 @@
  * boards using RedBoot firmware.
  */
 
+#include "opt_evbarm_boardtype.h"
+#include "opt_cputypes.h"
 #include "opt_gumstix.h"
+#ifdef OVERO
+#include "opt_omap.h"
+#include "prcm.h"
+#endif
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_modular.h"
 #include "opt_com.h"
-#include "md.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -158,6 +163,7 @@
 #include <sys/systm.h>
 #include <sys/termios.h>
 
+#include <machine/autoconf.h>
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -165,6 +171,11 @@
 #include <machine/frame.h>
 
 #include <arm/arm32/machdep.h>
+#include <arm/omap/omap2_gpmcreg.h>
+#include <arm/omap/omap2_prcm.h>
+#include <arm/omap/omap2_reg.h>
+#include <arm/omap/omap_var.h>
+#include <arm/omap/omap_com.h>
 #include <arm/undefined.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
@@ -255,12 +266,15 @@ extern int pmap_debug_level;
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 /* Prototypes */
+#if defined(GUMSTIX)
 static void	read_system_serial(void);
+#endif
 static void	process_kernel_args(int, char *[]);
 static void	process_kernel_args_liner(char *);
 #ifdef KGDB
 static void	kgdb_port_init(void);
 #endif
+static void	gumstix_device_register(device_t, void *);
 
 bs_protos(bs_notimpl);
 
@@ -270,7 +284,9 @@ bs_protos(bs_notimpl);
 #include <dev/ic/comvar.h>
 #endif
 
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 #include "lcd.h"
+#endif
 
 #ifndef CONSPEED
 #define CONSPEED B115200	/* It's a setting of the default of u-boot */
@@ -315,6 +331,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 		printf("rebooting...\n");
+#if defined(OMAP_3530) && NPRCM > 0
+		prcm_cold_reset();
+#endif
 		cpu_reset();
 		/*NOTREACHED*/
 	}
@@ -335,7 +354,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -351,6 +370,9 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\n");
+#if defined(OMAP_3530) && NPRCM > 0
+	prcm_cold_reset();
+#endif
 	cpu_reset();
 	/*NOTREACHED*/
 }
@@ -358,12 +380,11 @@ cpu_reboot(int howto, char *bootstr)
 static inline pd_entry_t *
 read_ttb(void)
 {
-  long ttb;
+	long ttb;
 
-  __asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
+	__asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
 
-
-  return (pd_entry_t *)(ttb & ~((1<<14)-1));
+	return (pd_entry_t *)(ttb & ~((1<<14)-1));
 }
 
 /*
@@ -385,55 +406,80 @@ read_ttb(void)
 #define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 
 static const struct pmap_devmap gumstix_devmap[] = {
+#if defined(GUMSTIX)
 	{
 		GUMSTIX_GPIO_VBASE,
 		_A(PXA2X0_GPIO_BASE),
 		_S(PXA250_GPIO_SIZE),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE,
 	},
 	{
 		GUMSTIX_CLKMAN_VBASE,
 		_A(PXA2X0_CLKMAN_BASE),
 		_S(PXA2X0_CLKMAN_SIZE),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE,
 	},
 	{
 		GUMSTIX_INTCTL_VBASE,
 		_A(PXA2X0_INTCTL_BASE),
 		_S(PXA2X0_INTCTL_SIZE),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE,
 	},
 	{
 		GUMSTIX_FFUART_VBASE,
 		_A(PXA2X0_FFUART_BASE),
 		_S(4 * COM_NPORTS),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE,
 	},
 	{
 		GUMSTIX_STUART_VBASE,
 		_A(PXA2X0_STUART_BASE),
 		_S(4 * COM_NPORTS),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE,
 	},
 	{
 		GUMSTIX_BTUART_VBASE,
 		_A(PXA2X0_BTUART_BASE),
 		_S(4 * COM_NPORTS),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE,
 	},
 	{
 		GUMSTIX_HWUART_VBASE,
 		_A(PXA2X0_HWUART_BASE),
 		_S(4 * COM_NPORTS),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE,
 	},
 	{
 		GUMSTIX_LCDC_VBASE,
 		_A(PXA2X0_LCDC_BASE),
 		_S(4 * COM_NPORTS),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE,
 	},
-	{0, 0, 0, 0, 0}
+#elif defined(OVERO)
+	{
+		OVERO_L4_PERIPHERAL_VBASE,
+		_A(OMAP3530_L4_PERIPHERAL_BASE),
+		_S(OMAP3530_L4_PERIPHERAL_SIZE),
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE
+	},
+	{
+		OVERO_GPMC_VBASE,
+		_A(GPMC_BASE),
+		_S(GPMC_SIZE),
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE
+	},
+#endif
+	{ 0, 0, 0, 0, 0 }
 };
 
 #undef	_A
@@ -456,7 +502,12 @@ static const struct pmap_devmap gumstix_devmap[] = {
 u_int
 initarm(void *arg)
 {
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
+#ifdef DIAGNOSTIC
+	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
+#endif
 	extern vaddr_t xscale_cache_clean_addr;
+#endif
 	extern uint32_t *u_boot_args[];
 	extern uint32_t ram_size;
 	enum { r0 = 0, r1 = 1, r2 = 2, r3 = 3 }; /* args from u-boot */
@@ -465,18 +516,21 @@ initarm(void *arg)
 	u_int l1pagetable;
 	paddr_t memstart;
 	psize_t memsize;
-#ifdef DIAGNOSTIC
-	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
-#endif
 
-	/* map some peripheral registers at static I/O area */
-	pmap_devmap_bootstrap((vaddr_t)read_ttb(), gumstix_devmap);
-
-	/* start 32.768kHz OSC */
-	ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_OSCC, OSCC_OON);
-
-	/* Get ready for splfoo() */
-	pxa2x0_intr_bootstrap(GUMSTIX_INTCTL_VBASE);
+	/*
+	 * U-Boot doesn't use the virtual memory.
+	 *
+	 * Gumstix (basix, connex, verdex, verdex-pro):
+	 * Physical Address Range     Description
+	 * -----------------------    ----------------------------------
+	 * 0x00000000 - 0x00ffffff    flash Memory   (16MB or 4MB)
+	 * 0x40000000 - 0x480fffff    Processor Registers
+	 * 0xa0000000 - 0xa3ffffff    SDRAM Bank 0 (64MB or 128MB)
+	 *
+	 * Overo:
+	 * Physical Address Range     Description
+	 * -----------------------    ----------------------------------
+	 */
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -484,25 +538,33 @@ initarm(void *arg)
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	/*
-	 * U-Boot doesn't use the virtual memory.
-	 *
-	 * Physical Address Range     Description
-	 * -----------------------    ----------------------------------
-	 * 0x00000000 - 0x00ffffff    flash Memory   (16MB or 4MB)
-	 * 0x40000000 - 0x480fffff    Processor Registers
-	 * 0xa0000000 - 0xa3ffffff    SDRAM Bank 0 (64MB)
-	 */
+	/* map some peripheral registers at static I/O area */
+	pmap_devmap_bootstrap((vaddr_t)read_ttb(), gumstix_devmap);
 
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
+	/* start 32.768kHz OSC */
+	ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_OSCC, OSCC_OON);
+
+	/* Get ready for splfoo() */
+	pxa2x0_intr_bootstrap(GUMSTIX_INTCTL_VBASE);
 
 	/* setup GPIO for {FF,ST,HW}UART. */
 	pxa2x0_gpio_bootstrap(GUMSTIX_GPIO_VBASE);
 
+	pxa2x0_clkman_bootstrap(GUMSTIX_CLKMAN_VBASE);
+#elif defined(CPU_CORTEXA8)
+	{
+		void cortexa8_pmc_ccnt_init(void);
+
+		cortexa8_pmc_ccnt_init();
+	}
+#endif
+
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+
 	/* configure GPIOs. */
 	gxio_config_pin();
 
-	pxa2x0_clkman_bootstrap(GUMSTIX_CLKMAN_VBASE);
 
 #ifndef GUMSTIX_NETBSD_ARGS_CONSOLE
 	consinit();
@@ -515,7 +577,11 @@ initarm(void *arg)
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
+#if defined(GUMSTIX)
 #define SDRAM_START	0xa0000000UL
+#elif defined(OVERO)
+#define SDRAM_START	0x80000000UL
+#endif
 	if (((uint32_t)u_boot_args[r0] & 0xf0000000) != SDRAM_START)
 		/* Maybe r0 is 'argc'.  We are booted by command 'go'. */
 		process_kernel_args((int)u_boot_args[r0],
@@ -531,10 +597,14 @@ initarm(void *arg)
 #endif
 
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (gumstix) booting ...\n");
+#define BDSTR(s)	_BDSTR(s)
+#define _BDSTR(s)	#s
+	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
 	/* Read system serial */
+#if defined(GUMSTIX)
 	read_system_serial();
+#endif
 
 	memstart = SDRAM_START;
 	memsize = ram_size;
@@ -564,8 +634,13 @@ initarm(void *arg)
 	physical_start = bootconfig.dram[0].address;
 	physical_end = physical_start + memsize;
 
+#if defined(GUMSTIX)
 	physical_freestart = 0xa0009000UL;
 	physical_freeend = 0xa0200000UL;
+#elif defined(OVERO)
+	physical_freestart = 0x80009000UL;
+	physical_freeend = 0x80200000UL;
+#endif
 
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
@@ -640,6 +715,9 @@ initarm(void *arg)
 	 * shared by all processes.
 	 */
 	alloc_pages(systempage.pv_pa, 1);
+#if defined(CPU_CORTEXA8)
+	systempage.pv_va = ARM_VECTORS_HIGH;
+#endif
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -648,7 +726,9 @@ initarm(void *arg)
 	valloc_pages(kernelstack, UPAGES);
 
 	/* Allocate enough pages for cleaning the Mini-Data cache. */
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 	KASSERT(xscale_minidata_clean_size <= PAGE_SIZE);
+#endif
 	valloc_pages(minidataclean, 1);
 
 #ifdef VERBOSE_INIT_ARM
@@ -685,8 +765,13 @@ initarm(void *arg)
 	l1pagetable = kernel_l1pt.pv_va;
 
 	/* Map the L2 pages tables in the L1 page table */
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 	pmap_link_l2pt(l1pagetable, 0x00000000,
 	    &kernel_pt_table[KERNEL_PT_SYS]);
+#elif defined(CPU_CORTEXA8)
+	pmap_link_l2pt(l1pagetable, ARM_VECTORS_HIGH & ~(0x00400000 - 1),
+	    &kernel_pt_table[KERNEL_PT_SYS]);
+#endif
 	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
 		pmap_link_l2pt(l1pagetable, KERNEL_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_KERNEL + loop]);
@@ -711,7 +796,7 @@ initarm(void *arg)
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-		
+
 		logical = 0x00200000;	/* offset of kernel in RAM */
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
@@ -746,10 +831,13 @@ initarm(void *arg)
 	}
 
 	/* Map the Mini-Data cache clean area. */
+#if defined(GUMSTIX)
 	xscale_setup_minidata(l1pagetable, minidataclean.pv_va,
 	    minidataclean.pv_pa);
+#endif
 
 	/* Map the vector page. */
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 #if 1
 	/* MULTI-ICE requires that page 0 is NC/NB so that it can download the
 	 * cache-clean code there.  */
@@ -759,6 +847,10 @@ initarm(void *arg)
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
+#elif defined(CPU_CORTEXA8)
+	pmap_map_entry(l1pagetable, ARM_VECTORS_HIGH, systempage.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif
 
 	/*
 	 * map integrated peripherals at same address in l1pagetable
@@ -766,12 +858,14 @@ initarm(void *arg)
 	 */
 	pmap_devmap_bootstrap(l1pagetable, gumstix_devmap);
 
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 	/*
 	 * Give the XScale global cache clean code an appropriately
 	 * sized chunk of unmapped VA space starting at 0xff000000
 	 * (our device mappings end before this address).
 	 */
 	xscale_cache_clean_addr = 0xff000000U;
+#endif
 
 	/*
 	 * Now we have the real page tables in place so we can switch to them.
@@ -815,7 +909,11 @@ initarm(void *arg)
 	printf("bootstrap done.\n");
 #endif
 
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
+#elif defined(CPU_CORTEXA8)
+	arm32_vector_init(ARM_VECTORS_HIGH, ARM_VEC_ALL);
+#endif
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -899,10 +997,14 @@ initarm(void *arg)
 		Debugger();
 #endif
 
+	/* We have our own device_register() */
+	evbarm_device_register = gumstix_device_register;
+
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
+#if defined(GUMSTIX)
 static void
 read_system_serial(void)
 {
@@ -946,9 +1048,14 @@ read_system_serial(void)
 		printf("%02x", system_serial[i]);
 	printf("\n");
 }
+#endif
 
 #ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 static const char busheader_name[] = "busheader=";
+#endif
+#if defined(GUMSTIX_NETBSD_ARGS_BUSHEADER) || \
+    defined(GUMSTIX_NETBSD_ARGS_EXPANSION)
+static const char expansion_name[] = "expansion=";
 #endif
 #ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
 static const char console_name[] = "console=";
@@ -963,8 +1070,17 @@ process_kernel_args(int argc, char *argv[])
 	for (i = 1, j = 0; i < argc; i++) {
 #ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 		if (!strncmp(argv[i], busheader_name, strlen(busheader_name))) {
-			/* configure for GPIOs of busheader side */
+			/* Configure for GPIOs of busheader side */
 			gxio_config_expansion(argv[i] + strlen(busheader_name));
+			gxio_configured = 1;
+			continue;
+		}
+#endif
+#if defined(GUMSTIX_NETBSD_ARGS_BUSHEADER) || \
+    defined(GUMSTIX_NETBSD_ARGS_EXPANSION)
+		if (!strncmp(argv[i], expansion_name, strlen(expansion_name))) {
+			/* Configure expansion */
+			gxio_config_expansion(argv[i] + strlen(expansion_name));
 			gxio_configured = 1;
 			continue;
 		}
@@ -996,31 +1112,40 @@ process_kernel_args(int argc, char *argv[])
 static void
 process_kernel_args_liner(char *args)
 {
-	int i;
+	int i = 0;
 	char *p = NULL;
 
 	boothowto = 0;
 
 	strncpy(bootargs, args, sizeof(bootargs));
-#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
-	p = strstr(bootargs, busheader_name);
-	if (p) {
-		char expansion[256], c;
+#if defined(GUMSTIX_NETBSD_ARGS_BUSHEADER) || \
+    defined(GUMSTIX_NETBSD_ARGS_EXPANSION)
+	{
+		char *q;
 
-		i = 0;
-		do {
-			c = *(p + strlen(busheader_name) + i);
-			if (c == ' ')
-				c = '\0';
-			expansion[i++] = c;
-		} while (c != '\0' && i < sizeof(expansion));
-		gxio_config_expansion(expansion);
-		strcpy(p, p + i);
+		if ((p = strstr(bootargs, expansion_name)))
+			q = p + strlen(expansion_name);
+#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
+		else if ((p = strstr(bootargs, busheader_name)))
+			q = p + strlen(busheader_name);
+#endif
+		if (p) {
+			char expansion[256], c;
+
+			i = 0;
+			do {
+				c = *(q + i);
+				if (c == ' ')
+					c = '\0';
+				expansion[i++] = c;
+			} while (c != '\0' && i < sizeof(expansion));
+			gxio_config_expansion(expansion);
+			strcpy(p, q + i);
+		}
 	}
 #endif
-	if (p == NULL) {
+	if (p == NULL)
 		gxio_config_expansion(NULL);
-	}
 #ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
 	p = strstr(bootargs, console_name);
 	if (p != NULL) {
@@ -1034,7 +1159,7 @@ process_kernel_args_liner(char *args)
 			console[i++] = c;
 		} while (c != '\0' && i < sizeof(console));
 		consinit();
-		strcpy(p, p + i);
+		strcpy(p, p + strlen(console_name) + i);
 	}
 #endif
 	boot_args = bootargs;
@@ -1067,7 +1192,6 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-	int rv;
 
 	if (consinit_called != 0)
 		return;
@@ -1076,6 +1200,19 @@ consinit(void)
 
 #if NCOM > 0
 
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+	/* Maybe passed Linux's bootargs 'console=ttyS?,<speed>...' */
+	if (strncmp(console, "ttyS", 4) == 0 && console[5] == ',') {
+		int i;
+
+		comcnspeed = 0;
+		for (i = 6; i < strlen(console) && isdigit(console[i]); i++)
+			comcnspeed = comcnspeed * 10 + (console[i] - '0');
+	}
+#endif
+
+#if defined(GUMSTIX)
+
 #ifdef FFUARTCONSOLE
 #ifdef KGDB
 	if (strcmp(kgdb_devname, "ffuart") == 0){
@@ -1083,9 +1220,12 @@ consinit(void)
 	} else
 #endif
 #if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
-	if (console[0] == '\0' || strcasecmp(console, "ffuart") == 0)
+	if (console[0] == '\0' || strcasecmp(console, "ffuart") == 0 ||
+	    strncmp(console, "ttyS0,", 6) == 0)
 #endif
 	{
+		int rv;
+
 		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
 		if (rv == 0) {
@@ -1105,6 +1245,8 @@ consinit(void)
 	if (console[0] == '\0' || strcasecmp(console, "stuart") == 0)
 #endif
 	{
+		int rv;
+
 		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_STUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
 		if (rv == 0) {
@@ -1124,6 +1266,8 @@ consinit(void)
 	if (console[0] == '\0' || strcasecmp(console, "btuart") == 0)
 #endif
 	{
+		int rv;
+
 		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
 		if (rv == 0) {
@@ -1151,6 +1295,14 @@ consinit(void)
 		}
 	}
 #endif /* HWUARTCONSOLE */
+
+#elif defined(OVERO)
+
+	if (comcnattach(&omap_a4x_bs_tag, 0x49020000, comcnspeed,
+	    OMAP_COM_FREQ, COM_TYPE_NORMAL, comcnmode) == 0)
+		return;
+
+#endif /* GUMSTIX or OVERO */
 
 #endif /* NCOM */
 
@@ -1196,3 +1348,26 @@ kgdb_port_init(void)
 #endif
 }
 #endif
+
+static void
+gumstix_device_register(device_t dev, void *aux)
+{
+
+	if (device_is_a(dev, "ohci")) {
+		if (prop_dictionary_set_bool(device_properties(dev),
+		    "Ganged-power-mask-on-port1", 1) == false) {
+			printf("WARNING: unable to set power-mask for port1"
+			    " property for %s\n", dev->dv_xname);
+		}
+		if (prop_dictionary_set_bool(device_properties(dev),
+		    "Ganged-power-mask-on-port2", 1) == false) {
+			printf("WARNING: unable to set power-mask for port2"
+			    " property for %s\n", dev->dv_xname);
+		}
+		if (prop_dictionary_set_bool(device_properties(dev),
+		    "Ganged-power-mask-on-port3", 1) == false) {
+			printf("WARNING: unable to set power-mask for port3"
+			    " property for %s\n", dev->dv_xname);
+		}
+	}
+}

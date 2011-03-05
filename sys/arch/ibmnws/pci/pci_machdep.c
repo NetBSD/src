@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2008/06/14 12:05:39 mjf Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5.18.1 2011/03/05 20:50:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,7 +92,7 @@ ibmnws_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
 }
 
 int
-ibmnws_pci_bus_maxdevs(pci_chipset_tag_t pct, int busno)
+ibmnws_pci_bus_maxdevs(void *v, int busno)
 {
 
 	/*

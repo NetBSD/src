@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.2 2009/03/17 00:08:10 dyoung Exp $	*/
+/*	$NetBSD: if_43.c,v 1.2.6.1 2011/03/05 20:52:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.2 2009/03/17 00:08:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.2.6.1 2011/03/05 20:52:38 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.2 2009/03/17 00:08:10 dyoung Exp $");
 #include <sys/mbuf.h>		/* for MLEN */
 #include <sys/protosw.h>
 
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <net/if.h>
@@ -86,80 +85,130 @@ compat_cvtcmd(u_long cmd)
 	if (IOCPARM_LEN(cmd) != sizeof(struct oifreq))
 		return cmd;
 
-	ncmd = ((cmd) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) | 
-		(sizeof(struct ifreq) << IOCPARM_SHIFT);
-
-	switch (ncmd) {
-	case BIOCGETIF:
-	case BIOCSETIF:
-	case GREDSOCK:
-	case GREGADDRD:
-	case GREGADDRS:
-	case GREGPROTO:
-	case GRESADDRD:
-	case GRESADDRS:
-	case GRESPROTO:
-	case GRESSOCK:
+	switch (cmd) {
+	case OSIOCSIFADDR:
+		return SIOCSIFADDR;
+	case OOSIOCGIFADDR:
+		return SIOCGIFADDR;
+	case OSIOCSIFDSTADDR:
+		return SIOCSIFDSTADDR;
+	case OOSIOCGIFDSTADDR:
+		return SIOCGIFDSTADDR;
+	case OSIOCSIFFLAGS:
+		return SIOCSIFFLAGS;
+	case OSIOCGIFFLAGS:
+		return SIOCGIFFLAGS;
+	case OOSIOCGIFBRDADDR:
+		return SIOCGIFBRDADDR;
+	case OSIOCSIFBRDADDR:
+		return SIOCSIFBRDADDR;
+	case OOSIOCGIFCONF:
+		return SIOCGIFCONF;
+	case OOSIOCGIFNETMASK:
+		return SIOCGIFNETMASK;
+	case OSIOCSIFNETMASK:
+		return SIOCSIFNETMASK;
+	case OSIOCGIFCONF:
+		return SIOCGIFCONF;
+	case OSIOCADDMULTI:
+		return SIOCADDMULTI;
+	case OSIOCDELMULTI:
+		return SIOCDELMULTI;
+	case OSIOCSIFMEDIA:
+		return SIOCSIFMEDIA;
+	case OSIOCGIFMTU:
+		return SIOCGIFMTU;
+	case OSIOCGIFDATA:
+		return SIOCGIFDATA;
+	case OSIOCZIFDATA:
+		return SIOCZIFDATA;
+	case OBIOCGETIF:
+		return BIOCGETIF;
+	case OBIOCSETIF:
+		return BIOCSETIF;
+	case OTAPGIFNAME:
+		return TAPGIFNAME;
+	default:
+		/*
+		 * XXX: the following code should be removed and the
+		 * needing treatment ioctls should move to the switch
+		 * above.
+		 */
+		ncmd = ((cmd) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) | 
+		    (sizeof(struct ifreq) << IOCPARM_SHIFT);
+		switch (ncmd) {
+		case BIOCGETIF:
+		case BIOCSETIF:
+		case GREDSOCK:
+		case GREGADDRD:
+		case GREGADDRS:
+		case GREGPROTO:
+		case GRESADDRD:
+		case GRESADDRS:
+		case GRESPROTO:
+		case GRESSOCK:
 #ifdef COMPAT_20
-	case OSIOCG80211STATS:
-	case OSIOCG80211ZSTATS:
+		case OSIOCG80211STATS:
+		case OSIOCG80211ZSTATS:
 #endif /* COMPAT_20 */
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCDIFADDR:
-	case SIOCDIFADDR_IN6:
-	case SIOCDIFPHYADDR:
-	case SIOCGDEFIFACE_IN6:
-	case SIOCG80211NWID:
-	case SIOCG80211STATS:
-	case SIOCG80211ZSTATS:
-	case SIOCGIFADDR:
-	case SIOCGIFADDR_IN6:
-	case SIOCGIFAFLAG_IN6:
-	case SIOCGIFALIFETIME_IN6:
-	case SIOCGIFBRDADDR:
-	case SIOCGIFDLT:
-	case SIOCGIFDSTADDR:
-	case SIOCGIFDSTADDR_IN6:
-	case SIOCGIFFLAGS:
-	case SIOCGIFGENERIC:
-	case SIOCGIFMETRIC:
-	case SIOCGIFMTU:
-	case SIOCGIFNETMASK:
-	case SIOCGIFNETMASK_IN6:
-	case SIOCGIFPDSTADDR:
-	case SIOCGIFPDSTADDR_IN6:
-	case SIOCGIFPSRCADDR:
-	case SIOCGIFPSRCADDR_IN6:
-	case SIOCGIFSTAT_ICMP6:
-	case SIOCGIFSTAT_IN6:
-	case SIOCGPVCSIF:
-	case SIOCGVH:
-	case SIOCIFCREATE:
-	case SIOCIFDESTROY:
-	case SIOCS80211NWID:
-	case SIOCSDEFIFACE_IN6:
-	case SIOCSIFADDR:
-	case SIOCSIFADDR_IN6:
-	case SIOCSIFBRDADDR:
-	case SIOCSIFDSTADDR:
-	case SIOCSIFDSTADDR_IN6:
-	case SIOCSIFFLAGS:
-	case SIOCSIFGENERIC:
-	case SIOCSIFMEDIA:
-	case SIOCSIFMETRIC:
-	case SIOCSIFMTU:
-	case SIOCSIFNETMASK:
-	case SIOCSIFNETMASK_IN6:
-	case SIOCSNDFLUSH_IN6:
-	case SIOCSPFXFLUSH_IN6:
-	case SIOCSPVCSIF:
-	case SIOCSRTRFLUSH_IN6:
-	case SIOCSVH:
-	case TAPGIFNAME:
-		return ncmd;
+		case SIOCADDMULTI:
+		case SIOCDELMULTI:
+		case SIOCDIFADDR:
+		case SIOCDIFADDR_IN6:
+		case SIOCDIFPHYADDR:
+		case SIOCGDEFIFACE_IN6:
+		case SIOCG80211NWID:
+		case SIOCG80211STATS:
+		case SIOCG80211ZSTATS:
+		case SIOCGIFADDR:
+		case SIOCGIFADDR_IN6:
+		case SIOCGIFAFLAG_IN6:
+		case SIOCGIFALIFETIME_IN6:
+		case SIOCGIFBRDADDR:
+		case SIOCGIFDLT:
+		case SIOCGIFDSTADDR:
+		case SIOCGIFDSTADDR_IN6:
+		case SIOCGIFFLAGS:
+		case SIOCGIFGENERIC:
+		case SIOCGIFMETRIC:
+		case SIOCGIFMTU:
+		case SIOCGIFNETMASK:
+		case SIOCGIFNETMASK_IN6:
+		case SIOCGIFPDSTADDR:
+		case SIOCGIFPDSTADDR_IN6:
+		case SIOCGIFPSRCADDR:
+		case SIOCGIFPSRCADDR_IN6:
+		case SIOCGIFSTAT_ICMP6:
+		case SIOCGIFSTAT_IN6:
+		case SIOCGPVCSIF:
+		case SIOCGVH:
+		case SIOCIFCREATE:
+		case SIOCIFDESTROY:
+		case SIOCS80211NWID:
+		case SIOCSDEFIFACE_IN6:
+		case SIOCSIFADDR:
+		case SIOCSIFADDR_IN6:
+		case SIOCSIFBRDADDR:
+		case SIOCSIFDSTADDR:
+		case SIOCSIFDSTADDR_IN6:
+		case SIOCSIFFLAGS:
+		case SIOCSIFGENERIC:
+		case SIOCSIFMEDIA:
+		case SIOCSIFMETRIC:
+		case SIOCSIFMTU:
+		case SIOCSIFNETMASK:
+		case SIOCSIFNETMASK_IN6:
+		case SIOCSNDFLUSH_IN6:
+		case SIOCSPFXFLUSH_IN6:
+		case SIOCSPVCSIF:
+		case SIOCSRTRFLUSH_IN6:
+		case SIOCSVH:
+		case TAPGIFNAME:
+			return ncmd;
+		default:
+			return cmd;
+		}
 	}
-	return cmd;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.18.4.2 2010/07/03 01:19:50 rmind Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.18.4.3 2011/03/05 20:55:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.18.4.2 2010/07/03 01:19:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.18.4.3 2011/03/05 20:55:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,10 +129,12 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 
 	if (ptyfs_save_ptm != NULL && ptyfs_save_ptm != &ptm_ptyfspty) {
 		int error;
+		struct pathbuf *pb;
 		struct nameidata nd;
 		char ttyname[64];
 		kauth_cred_t cred;
 		struct vattr va;
+
 		/*
 		 * We support traditional ptys, so we copy the info
 		 * from the inode
@@ -142,14 +144,22 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 			ptyfs->ptyfs_pty, ptyfs->ptyfs_type == PTYFSpts ? 't'
 			: 'p')) != 0)
 				goto out;
-		NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, ttyname);
-		if ((error = namei(&nd)) != 0)
+		pb = pathbuf_create(ttyname);
+		if (pb == NULL) {
+			error = ENOMEM;
+ 			goto out;
+		}
+		NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, pb);
+		if ((error = namei(&nd)) != 0) {
+			pathbuf_destroy(pb);
 			goto out;
+		}
 		cred = kauth_cred_alloc();
 		error = VOP_GETATTR(nd.ni_vp, &va, cred);
 		kauth_cred_free(cred);
 		VOP_UNLOCK(nd.ni_vp);
 		vrele(nd.ni_vp);
+		pathbuf_destroy(pb);
 		if (error)
 			goto out;
 		ptyfs->ptyfs_uid = va.va_uid;
@@ -369,7 +379,7 @@ loop:
 			} else {
 				mutex_enter(vp->v_interlock);
 				mutex_exit(&ptyfs_used_slock);
-				if (vget(vp, flags | LK_INTERLOCK))
+				if (vget(vp, flags))
 					goto loop;
 			}
 			return vp;

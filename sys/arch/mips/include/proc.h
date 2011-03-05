@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.25 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.25.4.1 2011/03/05 20:51:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,6 @@
 #define _MIPS_PROC_H_
 
 #include <sys/param.h>
-#include <sys/user.h> /* for sizeof(struct user) */
 #include <mips/vmparam.h>
 
 struct lwp;
@@ -46,16 +45,17 @@ struct lwp;
 /*
  * Machine-dependent part of the lwp structure for MIPS
  */
-struct frame;
+struct trapframe;
 
 struct mdlwp {
-	struct frame *md_regs;		/* registers on current frame */
-	int	md_flags;		/* machine-dependent flags */
+	struct trapframe *md_utf;	/* trapframe from userspace */
 	vaddr_t	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 	volatile int md_astpending;	/* AST pending on return to userland */
 #if USPACE > PAGE_SIZE
-	int	md_upte[UPAGES];	/* ptes for mapping u page */
+	int	md_upte[USPACE/4096];	/* ptes for mapping u page */
+#else
+	int	md_dpte[USPACE/4096];	/* dummy ptes to keep the same */
 #endif
 };
 
@@ -66,20 +66,14 @@ struct mdproc {
 };
 
 /* md_flags */
-#define	MDP_FPUSED	0x0001	/* floating point coprocessor used */
-
-/*
- * MIPS trapframe
- */
-struct frame {
-	mips_reg_t f_regs[38];
-	u_int32_t f_ppl;	/* previous priority level */
-	mips_reg_t f_pad;	/* for quadword alignment */
-};
 
 #ifdef _KERNEL
+struct lwp;
+
 /* kernel single-step emulation */
-int mips_singlestep(struct lwp *l);
+int	mips_singlestep(struct lwp *);
+
+#define	LWP0_CPU_INFO	&cpu_info_store	/* staticly set in lwp0 */
 #endif /* _KERNEL */
 
 #endif /* _MIPS_PROC_H_ */

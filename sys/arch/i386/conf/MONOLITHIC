@@ -1,4 +1,4 @@
-# $NetBSD: MONOLITHIC,v 1.10.4.1 2010/05/30 05:16:53 rmind Exp $
+# $NetBSD: MONOLITHIC,v 1.10.4.2 2011/03/05 20:50:38 rmind Exp $
 #
 # Non MODULAR, used mostly as a reference as to what we modularized.
 #
@@ -21,12 +21,12 @@ options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
+#file-system 	FFS		# UFS
+#file-system 	NFS		# Network File System client
 # File systems
-file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
 file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
 file-system 	NTFS		# Windows/NT file system (experimental)
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
@@ -50,6 +50,9 @@ options 	NFSSERVER
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 
+# NPF
+#pseudo-device	npf
+
 pseudo-device	accf_data	# "dataready" accept filter
 pseudo-device	accf_http	# "httpready" accept filter
 
@@ -61,3 +64,4 @@ pseudo-device	putter		# for puffs and pud
 
 pseudo-device	pad		# pseudo audio device driver
 
+pseudo-device 	dm		# device-mapper device driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.50 2010/02/24 22:37:55 dyoung Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.50.2.1 2011/03/05 20:52:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.50 2010/02/24 22:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.50.2.1 2011/03/05 20:52:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,21 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.50 2010/02/24 22:37:55 dyoung Exp
 
 #include "acpica.h"
 #include "pci.h"
+#include "isa.h"
 #include "genfb.h"
 #include "wsdisplay.h"
 #include "opt_vga.h"
+#include "opt_ddb.h"
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
+
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#endif
 
 #ifdef VGA_POST
 #include <x86/vga_post.h>
@@ -67,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.50 2010/02/24 22:37:55 dyoung Exp
 #include <dev/pci/pcivar.h>
 #endif
 #include <dev/wsfb/genfbvar.h>
+#include <arch/x86/include/genfb_machdep.h>
 #if NPCI > 0
 #include <dev/pci/genfb_pcivar.h>
 #endif
@@ -75,9 +88,14 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.50 2010/02/24 22:37:55 dyoung Exp
 #if NPCI > 0
 static struct genfb_colormap_callback gfb_cb;
 static struct genfb_pmf_callback pmf_cb;
-#endif
+static struct genfb_mode_callback mode_cb;
 #ifdef VGA_POST
 static struct vga_post *vga_posth = NULL;
+#endif
+#endif
+#if NGENFB > 0 && NACPICA > 0 && defined(VGA_POST)
+extern int acpi_md_vbios_reset;
+extern int acpi_md_vesa_modenum;
 #endif
 
 struct disklist *x86_alldisks;
@@ -94,6 +112,32 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 }
 
 static bool
+x86_genfb_setmode(struct genfb_softc *sc, int newmode)
+{
+#if NGENFB > 0
+	static int curmode = WSDISPLAYIO_MODE_EMUL;
+
+	switch (newmode) {
+	case WSDISPLAYIO_MODE_EMUL:
+		x86_genfb_mtrr_init(sc->sc_fboffset,
+		    sc->sc_height * sc->sc_stride);
+#if NACPICA > 0 && defined(VGA_POST)
+		if (curmode != newmode) {
+			if (vga_posth != NULL && acpi_md_vesa_modenum != 0) {
+				vga_post_set_vbe(vga_posth,
+				    acpi_md_vesa_modenum);
+			}
+		}
+#endif
+		break;
+	}
+
+	curmode = newmode;
+#endif
+	return true;
+}
+
+static bool
 x86_genfb_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	return true;
@@ -104,10 +148,6 @@ x86_genfb_resume(device_t dev, const pmf_qual_t *qual)
 {
 #if NGENFB > 0
 	struct pci_genfb_softc *psc = device_private(dev);
-#if NACPICA > 0 && defined(VGA_POST)
-	extern int acpi_md_vbios_reset;
-	extern int acpi_md_vesa_modenum;
-#endif
 
 #if NACPICA > 0 && defined(VGA_POST)
 	if (vga_posth != NULL && acpi_md_vbios_reset == 2) {
@@ -213,7 +253,6 @@ matchbiosdisks(void)
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
-			/* XXXJRT why not just dv_xname?? */
 			snprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
 			    sizeof(x86_alldisks->dl_nativedisks[n].ni_devname),
 			    "%s", device_xname(dv));
@@ -294,8 +333,8 @@ match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
 		    0, NOCRED, NULL, NULL);
 		if (error) {
-			printf("findroot: unable to read block %" PRIu64 "\n",
-			    blk);
+			printf("findroot: unable to read block %" PRId64 " "
+			    "of dev %s (%d)\n", blk, device_xname(dv), error);
 			goto closeout;
 		}
 		MD5Update(&ctx, bf, sizeof(bf));
@@ -618,6 +657,15 @@ device_register(device_t dev, void *aux)
 		}
 #endif /* NPCI > 0 */
 	}
+#if NISA > 0 && NACPICA > 0
+#if notyet
+	if (device_is_a(dev, "isa") && acpi_active) {
+		if (!(AcpiGbl_FADT.BootFlags & ACPI_FADT_LEGACY_DEVICES))
+			prop_dictionary_set_bool(device_properties(dev),
+			    "no-legacy-devices", true);
+	}
+#endif
+#endif /* NISA > 0 && NACPICA > 0 */
 #if NPCI > 0
 	if (device_parent(dev) && device_is_a(device_parent(dev), "pci") &&
 	    found_console == false) {
@@ -662,6 +710,22 @@ device_register(device_t dev, void *aux)
 					prop_dictionary_set_uint64(dict,
 					    "cmap_callback", (uint64_t)&gfb_cb);
 				}
+				if (fbinfo->physaddr != 0) {
+					mode_cb.gmc_setmode = x86_genfb_setmode;
+					prop_dictionary_set_uint64(dict,
+					    "mode_callback",
+					    (uint64_t)&mode_cb);
+				}
+
+#if NWSDISPLAY > 0 && NGENFB > 0
+				if (device_is_a(dev, "genfb")) {
+					x86_genfb_set_console_dev(dev);
+#ifdef DDB
+					db_trap_callback =
+					    x86_genfb_ddb_trap_callback;
+#endif
+				}
+#endif
 			}
 			prop_dictionary_set_bool(dict, "is_console", true);
 			prop_dictionary_set_bool(dict, "clear-screen", false);

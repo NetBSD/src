@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.51.4.1 2010/05/30 05:17:44 rmind Exp $ */
+/* $NetBSD: xcfb.c,v 1.51.4.2 2011/03/05 20:54:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.51.4.1 2010/05/30 05:17:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.51.4.2 2011/03/05 20:54:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.51.4.1 2010/05/30 05:17:44 rmind Exp $");
 #include <dev/tc/ioasicreg.h>
 #include <dev/ic/ims332reg.h>
 #include <pmax/pmax/maxine.h>
-
-#include <uvm/uvm_extern.h>
 
 struct hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */

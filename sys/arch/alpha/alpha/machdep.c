@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.326.2.2 2010/04/25 15:27:36 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.326.2.3 2011/03/05 20:49:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326.2.2 2010/04/25 15:27:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326.2.3 2011/03/05 20:49:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326.2.2 2010/04/25 15:27:36 rmind Exp 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <sys/sysctl.h>
 
 #include <dev/cons.h>
@@ -605,7 +605,7 @@ nobootinfo:
 		vsize_t sz = (vsize_t)round_page(MSGBUFSIZE);
 		vsize_t reqsz = sz;
 
-		vps = &vm_physmem[vm_nphysseg - 1];
+		vps = VM_PHYSMEM_PTR(vm_nphysseg - 1);
 
 		/* shrink so that it'll fit in the last segment */
 		if ((vps->avail_end - vps->avail_start) < atop(sz))
@@ -1620,7 +1620,7 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tfp->tf_regs[FRAME_A0] = stack;			/* a0 = sp */
 	tfp->tf_regs[FRAME_A1] = 0;			/* a1 = rtld cleanup */
 	tfp->tf_regs[FRAME_A2] = 0;			/* a2 = rtld object */
-	tfp->tf_regs[FRAME_A3] = (u_int64_t)l->l_proc->p_psstr;	/* a3 = ps_strings */
+	tfp->tf_regs[FRAME_A3] = l->l_proc->p_psstrp;	/* a3 = ps_strings */
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	l->l_md.md_flags &= ~MDP_FPUSED;
@@ -1942,12 +1942,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		frame->tf_regs[FRAME_PC] = gr[_REG_PC];
 		frame->tf_regs[FRAME_PS] = gr[_REG_PS];
 	}
-	if (flags & _UC_UNIQUE) {
-		if (l == curlwp)
-			alpha_pal_wrunique(gr[_REG_UNIQUE]);
-		else
-			pcb->pcb_hw.apcb_unique = gr[_REG_UNIQUE];
-	}
+	if (flags & _UC_UNIQUE)
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_UNIQUE]);
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
 		/* If we have an FP register context, get rid of it. */

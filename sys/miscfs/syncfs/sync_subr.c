@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.41.4.2 2010/05/30 05:17:59 rmind Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.41.4.3 2011/03/05 20:55:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.41.4.2 2010/05/30 05:17:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.41.4.3 2011/03/05 20:55:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,8 +248,7 @@ sched_sync(void *v)
 			synced = false;
 			if (mutex_tryenter(vp->v_interlock)) {
 				mutex_exit(&syncer_data_lock);
-				if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT |
-				    LK_INTERLOCK) == 0) {
+				if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
 					synced = true;
 					(void) VOP_FSYNC(vp, curlwp->l_cred,
 					    FSYNC_LAZY, 0, 0);

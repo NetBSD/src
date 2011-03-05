@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_hammerhead.c,v 1.3 2008/04/28 20:23:27 martin Exp $ */
+/* $NetBSD: ipi_hammerhead.c,v 1.3.22.1 2011/03/05 20:50:59 rmind Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,14 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_hammerhead.c,v 1.3 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_hammerhead.c,v 1.3.22.1 2011/03/05 20:50:59 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
 #include <powerpc/atomic.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2010/03/14 00:26:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2011/03/05 20:49:23 rmind Exp $
 
 ### what we need:
 
@@ -49,7 +49,7 @@ CLEANFILES += bootxx_ffs bootxx_fd x.out f.out xxstart.o fdstart.o libboot.a ver
 
 INCPATH = -nostdinc -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${.CURDIR}
 INCPATH += -I${.CURDIR}/../boot -I${.CURDIR}/../../..
-INCPATH += -I${.CURDIR}/../aout2bb -I${.OBJDIR}
+INCPATH += -I${.CURDIR}/../elf2bb -I${.OBJDIR}
 
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH} -D_PRIMARY_BOOT
@@ -101,7 +101,8 @@ libboot.a: ${OBJS}
 
 .PHONY:	vers.c
 vers.c:	${.CURDIR}/../boot/version
-	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -NDM ${.CURDIR}/../boot/version "amiga"
+	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -N \
+	    ${.CURDIR}/../boot/version "amiga"
 
 .if !make(obj) && !make(clean) && !make(cleandir)
 .NOPATH: machine m68k

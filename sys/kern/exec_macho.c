@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.42.22.1 2010/07/03 01:19:52 rmind Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.42.22.2 2011/03/05 20:55:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.42.22.1 2010/07/03 01:19:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.42.22.2 2011/03/05 20:55:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.42.22.1 2010/07/03 01:19:52 rmind E
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef DEBUG_MACHO
 #define DPRINTF(a) printf a
@@ -284,6 +284,7 @@ exec_macho_load_file(struct lwp *l, struct exec_package *epp,
     const char *path, u_long *entry, int type, int recursive, int depth)
 {
 	int error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr attr;
@@ -300,10 +301,17 @@ exec_macho_load_file(struct lwp *l, struct exec_package *epp,
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path);
-	if ((error = namei(&nd)) != 0)
+	pb = pathbuf_create(path);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, pb);
+	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
 		return error;
+	}
 	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
 
 	/*
 	 * Similarly, if it's not marked as executable, or it's not a regular

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.89.2.1 2010/05/30 05:17:08 rmind Exp $ */
+/*	$NetBSD: cpu.h,v 1.89.2.2 2011/03/05 20:52:06 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,6 +88,8 @@
  */
 
 struct cpu_info {
+	struct cpu_data		ci_data;	/* MI per-cpu data */
+
 
 	/*
 	 * SPARC cpu_info structures live at two VAs: one global
@@ -166,8 +168,6 @@ struct cpu_info {
 	 */
 	pte_t			*ci_tsb_dmmu;
 	pte_t			*ci_tsb_immu;
-
-	struct cpu_data		ci_data;	/* MI per-cpu data */
 
 	volatile void		*ci_ddb_regs;	/* DDB regs */
 };
@@ -263,6 +263,9 @@ typedef void (*ipi_c_call_func_t)(void*);
 void	sparc64_generic_xcall(struct cpu_info*, ipi_c_call_func_t, void*);
 
 #endif
+
+/* Provide %pc of a lwp */
+#define	LWP_PC(l)	((l)->l_md.md_tf->tf_pc)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the

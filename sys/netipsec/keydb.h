@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.6 2007/07/07 18:38:23 degroote Exp $	*/
+/*	$NetBSD: keydb.h,v 1.6.56.1 2011/03/05 20:56:00 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -54,7 +54,7 @@ union sockaddr_union {
 /* Security Assocciation Index */
 /* NOTE: Ensure to be same address family */
 struct secasindex {
-	union sockaddr_union src;	/* srouce address for SA */
+	union sockaddr_union src;	/* source address for SA */
 	union sockaddr_union dst;	/* destination address for SA */
 	u_int16_t proto;		/* IPPROTO_ESP or IPPROTO_AH */
 	u_int8_t mode;			/* mode of protocol, see ipsec.h */
@@ -122,10 +122,10 @@ struct secasvar {
 	 *     to interface to the OpenBSD crypto support.  This was done
 	 *     to distinguish this code from the mainline KAME code.
 	 */
-	struct xformsw *tdb_xform;	/* transform */
-	struct enc_xform *tdb_encalgxform;	/* encoding algorithm */
-	struct auth_hash *tdb_authalgxform;	/* authentication algorithm */
-	struct comp_algo *tdb_compalgxform;	/* compression algorithm */
+	const struct xformsw *tdb_xform;	/* transform */
+	const struct enc_xform *tdb_encalgxform; /* encoding algorithm */
+	const struct auth_hash *tdb_authalgxform; /* authentication algorithm */
+	const struct comp_algo *tdb_compalgxform; /* compression algorithm */
 	u_int64_t tdb_cryptoid;		/* crypto session id */
 
 #ifdef IPSEC_NAT_T

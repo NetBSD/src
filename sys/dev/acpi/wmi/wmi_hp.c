@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.1.4.3 2010/07/03 01:19:35 rmind Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.1.4.4 2011/03/05 20:53:05 rmind Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,11 +57,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.1.4.3 2010/07/03 01:19:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.1.4.4 2011/03/05 20:53:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -528,4 +529,40 @@ wmi_hp_sensor_update(void *aux)
 
 		sc->sc_sensor[WMI_HP_SENSOR_WWAN].state = ENVSYS_SVALID;
 	}
+}
+
+MODULE(MODULE_CLASS_DRIVER, wmihp, "acpiwmi");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+wmihp_modcmd(modcmd_t cmd, void *aux)
+{
+	int rv = 0;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_wmihp,
+		    cfattach_ioconf_wmihp, cfdata_ioconf_wmihp);
+#endif
+		break;
+
+	case MODULE_CMD_FINI:
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_wmihp,
+		    cfattach_ioconf_wmihp, cfdata_ioconf_wmihp);
+#endif
+		break;
+
+	default:
+		rv = ENOTTY;
+	}
+
+	return rv;
 }

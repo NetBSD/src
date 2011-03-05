@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.1.2.1 2010/05/30 05:17:12 rmind Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.1.2.2 2011/03/05 20:52:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,6 +37,9 @@
  * Machine-specific definitions for PCI autoconfiguration.
  */
 #define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+#ifndef XEN
+#define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
+#endif
 
 /*
  * i386-specific PCI structure and type definitions.

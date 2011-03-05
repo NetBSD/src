@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.208.2.2 2010/07/03 01:19:33 rmind Exp $	*/
+/*	$NetBSD: vnd.c,v 1.208.2.3 2011/03/05 20:53:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -46,46 +47,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: vn.c 1.13 94/04/02$
- *
- *	@(#)vn.c	8.9 (Berkeley) 5/14/95
- */
-
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -130,10 +91,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.208.2.2 2010/07/03 01:19:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.208.2.3 2011/03/05 20:53:01 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -1014,6 +976,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct vnd_softc *vnd;
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int error, part, pmask;
 	size_t geomsize;
@@ -1032,7 +995,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	vnd = device_lookup_private(&vnd_cd, unit);
 	if (vnd == NULL &&
 #ifdef COMPAT_30
-	    cmd != VNDIOOCGET &&
+	    cmd != VNDIOCGET30 &&
+#endif
+#ifdef COMPAT_50
+	    cmd != VNDIOCGET50 &&
 #endif
 	    cmd != VNDIOCGET)
 		return ENXIO;
@@ -1042,9 +1008,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case VNDIOCSET:
 	case VNDIOCCLR:
-#ifdef VNDIOOCSET
-	case VNDIOOCSET:
-	case VNDIOOCCLR:
+#ifdef COMPAT_50
+	case VNDIOCSET50:
+	case VNDIOCCLR50:
 #endif
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -1061,8 +1027,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case VNDIOCCLR:
-#ifdef VNDIOOCCLR
-	case VNDIOOCCLR:
+#ifdef VNDIOCCLR50
+	case VNDIOCCLR50:
 #endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
@@ -1083,8 +1049,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	switch (cmd) {
-#ifdef VNDIOOCSET
-	case VNDIOOCSET:
+#ifdef VNDIOCSET50
+	case VNDIOCSET50:
 #endif
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
@@ -1096,9 +1062,15 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
 			fflags |= FWRITE;
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file);
-		if ((error = vn_open(&nd, fflags, 0)) != 0)
+		error = pathbuf_copyin(vio->vnd_file, &pb);
+		if (error) {
 			goto unlock_and_exit;
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW, pb);
+		if ((error = vn_open(&nd, fflags, 0)) != 0) {
+			pathbuf_destroy(pb);
+			goto unlock_and_exit;
+		}
 		KASSERT(l);
 		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred);
 		if (!error && nd.ni_vp->v_type != VREG)
@@ -1291,8 +1263,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_osize = dbtob(vnd->sc_size);
-#ifdef VNDIOOCSET
-		if (cmd != VNDIOOCSET)
+#ifdef VNDIOCSET50
+		if (cmd != VNDIOCSET50)
 #endif
 			vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
@@ -1328,10 +1300,12 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		vndunlock(vnd);
 
+		pathbuf_destroy(pb);
 		break;
 
 close_and_exit:
 		(void) vn_close(nd.ni_vp, fflags, l->l_cred);
+		pathbuf_destroy(pb);
 unlock_and_exit:
 #ifdef VND_COMPRESSION
 		/* free any allocated memory (for compressed file) */
@@ -1351,8 +1325,8 @@ unlock_and_exit:
 		vndunlock(vnd);
 		return error;
 
-#ifdef VNDIOOCCLR
-	case VNDIOOCCLR:
+#ifdef VNDIOCCLR50
+	case VNDIOCCLR50:
 #endif
 	case VNDIOCCLR:
 		part = DISKPART(dev);
@@ -1365,10 +1339,10 @@ unlock_and_exit:
 		break;
 
 #ifdef COMPAT_30
-	case VNDIOOCGET: {
-		struct vnd_ouser *vnu;
+	case VNDIOCGET30: {
+		struct vnd_user30 *vnu;
 		struct vattr va;
-		vnu = (struct vnd_ouser *)data;
+		vnu = (struct vnd_user30 *)data;
 		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
@@ -1386,6 +1360,30 @@ unlock_and_exit:
 		break;
 	}
 #endif
+
+#ifdef COMPAT_50
+	case VNDIOCGET50: {
+		struct vnd_user50 *vnu;
+		struct vattr va;
+		vnu = (struct vnd_user50 *)data;
+		KASSERT(l);
+		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
+		case 0:
+			vnu->vnu_dev = va.va_fsid;
+			vnu->vnu_ino = va.va_fileid;
+			break;
+		case -1:
+			/* unused is not an error */
+			vnu->vnu_dev = 0;
+			vnu->vnu_ino = 0;
+			break;
+		default:
+			return error;
+		}
+		break;
+	}
+#endif
+
 	case VNDIOCGET: {
 		struct vnd_user *vnu;
 		struct vattr va;

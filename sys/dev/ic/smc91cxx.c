@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.77.4.1 2010/05/30 05:17:25 rmind Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.77.4.2 2011/03/05 20:53:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.77.4.1 2010/05/30 05:17:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.77.4.2 2011/03/05 20:53:21 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.77.4.1 2010/05/30 05:17:25 rmind Exp 
 
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

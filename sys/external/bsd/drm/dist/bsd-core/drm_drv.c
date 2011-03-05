@@ -401,7 +401,7 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
 
-	dev->irq = pa->pa_intrline;
+	dev->irq = pa->pa_intrpin;
 	dev->pci_domain = parent_unit;
 	dev->pci_bus = pa->pa_bus;
 	dev->pci_slot = pa->pa_device;
@@ -659,9 +659,7 @@ static int drm_load(struct drm_device *dev)
 	return 0;
 
 error:
-#if defined(__FreeBSD__)
 	drm_sysctl_cleanup(dev);
-#endif
 	DRM_LOCK();
 	drm_lastclose(dev);
 	DRM_UNLOCK();
@@ -685,8 +683,8 @@ static void drm_unload(struct drm_device *dev)
 
 	DRM_DEBUG("\n");
 
-#if defined(__FreeBSD__)
 	drm_sysctl_cleanup(dev);
+#if defined(__FreeBSD__)
 	destroy_dev(dev->devnode);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.226.4.3 2010/07/03 01:20:05 rmind Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.226.4.4 2011/03/05 20:56:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.226.4.3 2010/07/03 01:20:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.226.4.4 2011/03/05 20:56:33 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -275,6 +275,10 @@ lfs_fsync(void *v)
 
 	/* If we're mounted read-only, don't try to sync. */
 	if (fs->lfs_ronly)
+		return 0;
+
+	/* If a removed vnode is being cleaned, no need to sync here. */
+	if ((ap->a_flags & FSYNC_RECLAIM) != 0 && ip->i_mode == 0)
 		return 0;
 
 	/*
@@ -848,11 +852,11 @@ lfs_rename(void *v)
 
 		/* Delete source. */
 		vrele(fvp);
-		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+		fcnp->cn_flags &= ~(MODMASK);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
-		if ((error = relookup(fdvp, &fvp, fcnp))) {
+		if ((error = relookup(fdvp, &fvp, fcnp, 0))) {
 			vput(fdvp);
 			return (error);
 		}
@@ -1074,6 +1078,14 @@ lfs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 	int error;
+
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		lfs_vfree(vp, ip->i_number, ip->i_omode);
 
 	mutex_enter(&lfs_lock);
 	LFS_CLR_UINO(ip, IN_ALLMOD);
@@ -1848,12 +1860,17 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			 * blocks outside our area of interest or beyond
 			 * the end of file.
 			 */
+			KASSERT(curpg == NULL
+			    || (curpg->flags & PG_MARKER) == 0);
 			if (pages_per_block > 1) {
 				while (curpg &&
-				       ((curpg->offset & fs->lfs_bmask) ||
-					curpg->offset >= vp->v_size ||
-					curpg->offset >= endoffset))
+				    ((curpg->offset & fs->lfs_bmask) ||
+				    curpg->offset >= vp->v_size ||
+				    curpg->offset >= endoffset)) {
 					curpg = TAILQ_NEXT(curpg, listq.queue);
+					KASSERT(curpg == NULL ||
+					    (curpg->flags & PG_MARKER) == 0);
+				}
 			}
 			if (curpg == NULL)
 				break;
@@ -2189,16 +2206,19 @@ lfs_putpages(void *v)
 	 * Pagedaemon can't actually write LFS pages; wake up
 	 * the writer to take care of that.  The writer will
 	 * notice the pager inode queue and act on that.
+	 *
+	 * XXX We must drop the vp->interlock before taking the lfs_lock or we
+	 * get a nasty deadlock with lfs_flush_pchain().
 	 */
 	if (pagedaemon) {
+		mutex_exit(vp->v_interlock);
 		mutex_enter(&lfs_lock);
 		if (!(ip->i_flags & IN_PAGING)) {
 			ip->i_flags |= IN_PAGING;
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
-		}
+		} 
 		wakeup(&lfs_writer_daemon);
 		mutex_exit(&lfs_lock);
-		mutex_exit(vp->v_interlock);
 		preempt();
 		return EWOULDBLOCK;
 	}

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.116.2.2 2010/05/30 05:16:39 rmind Exp $
+#	$NetBSD: files.atari,v 1.116.2.3 2011/03/05 20:49:42 rmind Exp $
 
 maxpartitions 16
 
@@ -101,9 +101,9 @@ attach	leo at vme
 file	arch/atari/vme/leo.c		leo needs-count
 
 # ET4000 (Crazy Dots II) color video
-device	et
-attach	et at vme
-file	arch/atari/vme/et4000.c		et needs-count
+device	et4k
+attach	et4k at vme
+file	arch/atari/vme/et4000.c		et4k needs-count
 
 # graphic devices
 define	grfb {}

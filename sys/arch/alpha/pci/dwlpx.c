@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.34 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: dwlpx.c,v 1.34.4.1 2011/03/05 20:49:12 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,14 +32,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.34 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.34.4.1 2011/03/05 20:49:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.43.4.1 2010/05/30 05:17:56 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.43.4.2 2011/03/05 20:55:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.43.4.1 2010/05/30 05:17:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.43.4.2 2011/03/05 20:55:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.43.4.1 2010/05/30 05:17:56 rmind Exp 
 #include <sys/callout.h>
 
 #include <uvm/uvm_extern.h>
+
+/*
+ * If the port has state that cpu_data is the first thing in cpu_info,
+ * verify the claim is true.  This will prevent the from getting out
+ * of sync.
+ */
+#ifdef __HAVE_CPU_DATA_FIRST
+CTASSERT(offsetof(struct cpu_info, ci_data) == 0);
+#else
+CTASSERT(offsetof(struct cpu_info, ci_data) != 0);
+#endif
 
 void	cpuctlattach(int);
 

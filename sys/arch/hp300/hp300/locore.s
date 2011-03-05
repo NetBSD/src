@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.153.2.1 2010/07/03 01:19:17 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.153.2.2 2011/03/05 20:50:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -114,7 +114,7 @@ GLOBAL(kernel_text)
  * VA 0.
  *
  * The bootloader places the bootinfo in this page, and we allocate
- * a VA for it and map it in pmap_bootstrap().
+ * a VA for it and map it later.
  */
 	.fill	PAGE_SIZE/4,4,0
 
@@ -251,14 +251,20 @@ Lnot370:
 Lisa36x:
 	/*
 	 * If we found a 360, we need to check for a 362 (neither the 360
-	 * nor the 362 have a nonzero mmuid). Since the 362 has a frodo
-	 * utility chip in the DIO hole, check for it.
+	 * nor the 362 have a nonzero mmuid). Identify 362 by checking
+	 * on-board VRX framebuffer which has secid 0x11 at dio scode 132.
 	 */
-	movl	#(INTIOBASE + FRODO_BASE),%a0
+	movl	#DIOII_BASE,%a0		| probe dio scode 132
 	ASRELOC(phys_badaddr,%a3)
 	jbsr	%a3@
-	tstl	%d0			| found a frodo?
-	jne	Lstart1			| no, really a 360
+	tstl	%d0			| device at scode 132?
+	jne	Lstart1			| no, not 362, assume 360
+	movb	%a0@(DIO_IDOFF),%d0
+	cmpb	#DIO_DEVICE_ID_FRAMEBUFFER,%d0	| framebuffer?
+	jne	Lstart1			| no, not 362, assume 360
+	movb	%a0@(DIO_SECIDOFF),%d0
+	cmpb	#0x11,%d0		| VRX sti on 362?
+	jne	Lstart1			| no, not 362, assume 360
 	RELOC(machineid,%a0)
 	movl	#HP_362,%a0@
 	jra	Lstart1
@@ -414,14 +420,17 @@ Lstart2:
 	moveq	#FC_USERD,%d0		| user space
 	movc	%d0,%sfc		|   as source
 	movc	%d0,%dfc		|   and destination of transfers
+/* save the first PA as bootinfo_pa to map it to a virtual address later. */
+	movl	%a5,%d0			| lowram value from ROM via boot
+	RELOC(bootinfo_pa, %a0)
+	movl	%d0,%a0@		| save the lowram as bootinfo PA
 /* initialize memory sizes (for pmap_bootstrap) */
 	movl	#MAXADDR,%d1		| last page
 	moveq	#PGSHIFT,%d2
 	lsrl	%d2,%d1			| convert to page (click) number
 	RELOC(maxmem, %a0)
 	movl	%d1,%a0@		| save as maxmem
-	movl	%a5,%d0			| lowram value from ROM via boot
-	lsrl	%d2,%d0			| convert to page number
+	lsrl	%d2,%d0			| convert the lowram to page number
 	subl	%d0,%d1			| compute amount of RAM present
 	RELOC(physmem, %a0)
 	movl	%d1,%a0@		| and physmem
@@ -1037,25 +1046,21 @@ Lbrkpt3:
  * we don't do anything else with them.
  */
 
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
-
 /* 64-bit evcnt counter increments */
 #define EVCNT_COUNTER(ipl)					\
 	_C_LABEL(hp300_intr_list) + (ipl)*SIZEOF_HI + HI_EVCNT
 #define EVCNT_INCREMENT(ipl)					\
-	movel	%d2,-(%sp);					\
 	clrl	%d0;						\
-	moveql	#1,%d1;						\
-	addl	%d1,EVCNT_COUNTER(ipl)+4;			\
-	movel	EVCNT_COUNTER(ipl),%d2;				\
-	addxl	%d0,%d2;					\
-	movel	%d2,EVCNT_COUNTER(ipl);				\
-	movel	(%sp)+,%d2
+	addql	#1,EVCNT_COUNTER(ipl)+4;			\
+	movel	EVCNT_COUNTER(ipl),%d1;				\
+	addxl	%d0,%d1;					\
+	movel	%d1,EVCNT_COUNTER(ipl)
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
+	INTERRUPT_SAVEREG
 	EVCNT_INCREMENT(0)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+	CPUINFO_INCREMENT(CI_NINTR)
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
@@ -1128,9 +1133,9 @@ Lnoleds0:
 #endif /* USELEDS */
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
-	CLKADDR(%a0)
 Lrecheck:
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
+	CPUINFO_INCREMENT(CI_NINTR)	| chalk up another interrupt
+	CLKADDR(%a0)
 	movb	%a0@(CLKSR),%d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
 	INTERRUPT_RESTOREREG
@@ -1138,9 +1143,9 @@ Lrecheck:
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
-	EVCNT_INCREMENT(7)
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
+	EVCNT_INCREMENT(7)
 	movl	%usp,%a0		| and save
 	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
 	jbsr	_C_LABEL(nmihand)	| call handler
@@ -1341,7 +1346,7 @@ Lploadwskp:
 /*
  * _delay(u_int N)
  *
- * Delay for at least (N/256) microsecends.
+ * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
  */

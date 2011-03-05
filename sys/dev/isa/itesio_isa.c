@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.17.24.1 2010/05/30 05:17:28 rmind Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.17.24.2 2011/03/05 20:53:25 rmind Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.17.24.1 2010/05/30 05:17:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.17.24.2 2011/03/05 20:53:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,6 +92,7 @@ static void	itesio_refresh_fans(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 /* sysmon_wdog glue */
+static bool	itesio_wdt_suspend(device_t, const pmf_qual_t *);
 static int	itesio_wdt_setmode(struct sysmon_wdog *);
 static int 	itesio_wdt_tickle(struct sysmon_wdog *);
 
@@ -139,6 +140,7 @@ itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 	case ITESIO_ID8712:
 	case ITESIO_ID8716:
 	case ITESIO_ID8718:
+	case ITESIO_ID8721:
 	case ITESIO_ID8726:
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = 2;
@@ -272,6 +274,11 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_wdt_enabled = true;
 	aprint_normal_dev(self, "Watchdog Timer present\n");
+
+	pmf_device_deregister(self);
+	if (!pmf_device_register(self, itesio_wdt_suspend, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 out:
@@ -295,6 +302,17 @@ itesio_isa_detach(device_t self, int flags)
 	}
 
 	return 0;
+}
+
+static bool
+itesio_wdt_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	struct itesio_softc *sc = device_private(dev);
+
+	/* Don't allow suspend if watchdog is armed */
+	if ((sc->sc_smw.smw_mode & WDOG_MODE_MASK) != WDOG_MODE_DISARMED)
+		return false;
+	return true;
 }
 
 /*
@@ -445,9 +463,10 @@ itesio_refresh_volts(struct itesio_softc *sc, envsys_data_t *edata)
 	if (i == 5 || i == 6)
 		edata->value_cur -= ITESIO_EC_VREF;
 	/* rfact is (factor * 10^4) */
-	edata->value_cur *= itesio_vrfact[i];
 	if (edata->rfact)
-		edata->value_cur += edata->rfact;
+		edata->value_cur *= edata->rfact;
+	else
+		edata->value_cur *= itesio_vrfact[i];
 	/* division by 10 gets us back to uVDC */
 	edata->value_cur /= 10;
 	if (i == 5 || i == 6)

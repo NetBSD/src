@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.219.2.1 2010/03/16 15:38:12 rmind Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.219.2.2 2011/03/05 20:56:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.219.2.1 2010/03/16 15:38:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.219.2.2 2011/03/05 20:56:04 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.219.2.1 2010/03/16 15:38:12 rmind Exp
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>

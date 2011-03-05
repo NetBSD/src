@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.123.2.2 2010/07/03 01:20:02 rmind Exp $	*/
+/*	$NetBSD: emul.c,v 1.123.2.3 2011/03/05 20:56:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123.2.2 2010/07/03 01:20:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123.2.3 2011/03/05 20:56:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123.2.2 2010/07/03 01:20:02 rmind Exp $")
 #include <sys/reboot.h>
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
+#include <sys/sleepq.h>
 
 #include <dev/cons.h>
 
@@ -61,11 +62,21 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123.2.2 2010/07/03 01:20:02 rmind Exp $")
 
 #include "rump_private.h"
 
+/*
+ * physmem is largely unused (except for nmbcluster calculations),
+ * so pick a default value which suits ZFS.  if an application wants
+ * a very small memory footprint, it can still adjust this before
+ * calling rump_init()
+ */
+#define PHYSMEM 512*256
+int physmem = PHYSMEM;
+int nkmempages = PHYSMEM/2; /* from le chapeau */
+#undef PHYSMEM
+
 struct lwp lwp0;
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
-int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
-int nkmempages = 256*256/2; /* from le chapeau */
+
 const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
@@ -103,9 +114,10 @@ int pgofset = 4096-1;
 int pgshift = 12;
 #endif
 
-/* sun3 is sun3 with broken kernel modules */
+/* on sun3 VM_MAX_ADDRESS is a const variable */
+/* XXX: should be moved into rump.c and initialize for sun3 and sun3x? */
 #ifdef sun3
-char KERNBASE[1]; /* this is completely random ... */
+const vaddr_t kernbase = KERNBASE3;
 #endif
 
 struct loadavg averunnable = {
@@ -156,6 +168,25 @@ lwp_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+void
+lwp_update_creds(struct lwp *l)
+{
+	struct proc *p;
+	kauth_cred_t oldcred;
+
+	p = l->l_proc;
+	oldcred = l->l_cred;
+	l->l_prflag &= ~LPR_CRMOD;
+
+	mutex_enter(p->p_lock);
+	kauth_cred_hold(p->p_cred);
+	l->l_cred = p->p_cred;
+	mutex_exit(p->p_lock);
+
+	if (oldcred != NULL)
+		kauth_cred_free(oldcred);
 }
 
 vaddr_t
@@ -243,16 +274,6 @@ cnflush(void)
 	/* done */
 }
 
-void
-cpu_reboot(int howto, char *bootstr)
-{
-
-	rump_reboot(howto);
-
-	/* this function is __dead, we must exit */
-	rumpuser_exit(0);
-}
-
 #ifdef __HAVE_SYSCALL_INTERN
 void
 syscall_intern(struct proc *p)
@@ -269,3 +290,26 @@ xc_send_ipi(struct cpu_info *ci)
 	/* I'll think about the implementation if this is ever used */
 	panic("not implemented");
 }
+
+int
+trace_enter(register_t code, const register_t *args, int narg)
+{
+
+	return 0;
+}
+
+void
+trace_exit(register_t code, register_t rval[], int error)
+{
+
+	/* nada */
+}
+
+#ifdef LOCKDEBUG
+void
+turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
+{
+
+	/* nada */
+}
+#endif
