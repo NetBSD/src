@@ -763,15 +763,15 @@ Boolean
 meta_oodate(GNode *gn, Boolean oodate)
 {
     static char *tmpdir = NULL;
+    static char cwd[MAXPATHLEN];
     char ldir_vname[64];
-    char cwd[MAXPATHLEN];
     char latestdir[MAXPATHLEN];
     char fname[MAXPATHLEN];
     char fname1[MAXPATHLEN];
     char fname2[MAXPATHLEN];
     char *p;
     char *cp;
-    size_t cwdlen;
+    static size_t cwdlen = 0;
     static size_t tmplen = 0;
     FILE *fp;
     Boolean ignoreOODATE = FALSE;
@@ -786,9 +786,6 @@ meta_oodate(GNode *gn, Boolean oodate)
      * would be if the target needs to be re-built.
      */
     Make_DoAllVar(gn);
-
-    if (getcwd(cwd, sizeof(cwd)) == NULL)
-	err(1, "Could not get current working directory");
 
     meta_name(gn, fname, sizeof(fname), NULL, NULL);
 
@@ -813,6 +810,12 @@ meta_oodate(GNode *gn, Boolean oodate)
 	    buf = bmake_malloc(bufsz);
 	}
 
+	if (!cwdlen) {
+	    if (getcwd(cwd, sizeof(cwd)) == NULL)
+		err(1, "Could not get current working directory");
+	    cwdlen = strlen(cwd);
+	}
+
 	if (!tmpdir) {
 	    tmpdir = getTmpdir();
 	    tmplen = strlen(tmpdir);
@@ -820,8 +823,6 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 	/* we want to track all the .meta we read */
 	Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
-
-	cwdlen = strlen(cwd);
 
 	ln = Lst_First(gn->commands);
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
@@ -1091,7 +1092,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    ln = Lst_Succ(ln);
 		}
 	    } else if (strcmp(buf, "CWD") == 0) {
-		    if (strcmp(p, cwd) != 0) {
+		if (strcmp(p, cwd) != 0) {
 		    if (DEBUG(META))
 			fprintf(debug_file, "%s: %d: the current working directory has changed from '%s' to '%s'\n", fname, lineno, p, curdir);
 		    oodate = TRUE;
