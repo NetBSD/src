@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2010/11/23 08:22:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2011/03/06 22:15:30 mrg Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dri2 i2c loader \
 		xf86modes exa \
@@ -130,6 +130,12 @@ SYMLINKS=	${X11BINDIR}/Xorg ${X11BINDIR}/X
 #	cp ${.ALLSRC} ${.TARGET}
 MKMAN=	no
 
+FILES=		xorg-server.m4
+FILESDIR=	${X11ROOTDIR}/share/aclocal
+
+.PATH:		${X11SRCDIR.xorg-server}
+
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
+.include <bsd.files.mk>
