@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.59 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: INTEGRATOR,v 1.60 2011/03/06 02:18:36 jakllsch Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -135,7 +135,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	UVMHIST
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=360000
 options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=38400,PLCONMODE=0xB00
 
 config		netbsd		root on ? type ?
