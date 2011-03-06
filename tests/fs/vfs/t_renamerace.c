@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.20 2011/03/03 11:01:27 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.21 2011/03/06 16:00:16 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -158,6 +158,12 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
 	    FSTYPE_MSDOS(tc) || FSTYPE_FFSLOG(tc))
 		abort();
+
+	if (FSTYPE_P2K_FFS(tc)) {
+		/* XXX: some races may hang test run if we don't unmount */
+		puffs_fstest_unmount(tc, mp, MNT_FORCE);
+		atf_tc_fail("problem did not trigger");
+	}
 }
 
 ATF_TC_FSAPPLY(renamerace, "rename(2) race with file unlinked mid-operation");
