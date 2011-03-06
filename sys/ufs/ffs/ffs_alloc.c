@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.126 2011/03/06 04:46:26 rmind Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.127 2011/03/06 17:08:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.126 2011/03/06 04:46:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.127 2011/03/06 17:08:38 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -174,7 +174,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 	struct fs *fs;
 	daddr_t bno;
 	int cg;
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	int error;
 #endif
 
@@ -218,7 +218,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 	    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_RESERVEDSPACE, 0, NULL,
 	    NULL, NULL) != 0)
 		goto nospace;
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	mutex_exit(&ump->um_lock);
 	if ((error = chkdq(ip, btodb(size), cred, 0)) != 0)
 		return (error);
@@ -238,7 +238,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 		*bnp = bno;
 		return (0);
 	}
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	/*
 	 * Restore user's disk quota because allocation failed.
 	 */
@@ -348,7 +348,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		brelse(bp, 0);
 		return (error);
 	}
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	if ((error = chkdq(ip, btodb(nsize - osize), cred, 0)) != 0) {
 		if (bpp != NULL) {
 			brelse(bp, 0);
@@ -481,7 +481,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	}
 	mutex_exit(&ump->um_lock);
 
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	/*
 	 * Restore user's disk quota because allocation failed.
 	 */
@@ -1976,100 +1976,6 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
 	printf("bno = %d, fs = %s\n", bno, fs->fs_fsmnt);
 	panic("ffs_alloccg: block not in map");
 	/* return (-1); */
-}
-
-/*
- * Update the cluster map because of an allocation or free.
- *
- * Cnt == 1 means free; cnt == -1 means allocating.
- */
-void
-ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
-{
-	int32_t *sump;
-	int32_t *lp;
-	u_char *freemapp, *mapp;
-	int i, start, end, forw, back, map, bit;
-#ifdef FFS_EI
-	const int needswap = UFS_FSNEEDSWAP(fs);
-#endif
-
-	/* KASSERT(mutex_owned(&ump->um_lock)); */
-
-	if (fs->fs_contigsumsize <= 0)
-		return;
-	freemapp = cg_clustersfree(cgp, needswap);
-	sump = cg_clustersum(cgp, needswap);
-	/*
-	 * Allocate or clear the actual block.
-	 */
-	if (cnt > 0)
-		setbit(freemapp, blkno);
-	else
-		clrbit(freemapp, blkno);
-	/*
-	 * Find the size of the cluster going forward.
-	 */
-	start = blkno + 1;
-	end = start + fs->fs_contigsumsize;
-	if (end >= ufs_rw32(cgp->cg_nclusterblks, needswap))
-		end = ufs_rw32(cgp->cg_nclusterblks, needswap);
-	mapp = &freemapp[start / NBBY];
-	map = *mapp++;
-	bit = 1 << (start % NBBY);
-	for (i = start; i < end; i++) {
-		if ((map & bit) == 0)
-			break;
-		if ((i & (NBBY - 1)) != (NBBY - 1)) {
-			bit <<= 1;
-		} else {
-			map = *mapp++;
-			bit = 1;
-		}
-	}
-	forw = i - start;
-	/*
-	 * Find the size of the cluster going backward.
-	 */
-	start = blkno - 1;
-	end = start - fs->fs_contigsumsize;
-	if (end < 0)
-		end = -1;
-	mapp = &freemapp[start / NBBY];
-	map = *mapp--;
-	bit = 1 << (start % NBBY);
-	for (i = start; i > end; i--) {
-		if ((map & bit) == 0)
-			break;
-		if ((i & (NBBY - 1)) != 0) {
-			bit >>= 1;
-		} else {
-			map = *mapp--;
-			bit = 1 << (NBBY - 1);
-		}
-	}
-	back = start - i;
-	/*
-	 * Account for old cluster and the possibly new forward and
-	 * back clusters.
-	 */
-	i = back + forw + 1;
-	if (i > fs->fs_contigsumsize)
-		i = fs->fs_contigsumsize;
-	ufs_add32(sump[i], cnt, needswap);
-	if (back > 0)
-		ufs_add32(sump[back], -cnt, needswap);
-	if (forw > 0)
-		ufs_add32(sump[forw], -cnt, needswap);
-
-	/*
-	 * Update cluster summary information.
-	 */
-	lp = &sump[fs->fs_contigsumsize];
-	for (i = fs->fs_contigsumsize; i > 0; i--)
-		if (ufs_rw32(*lp--, needswap) > 0)
-			break;
-	fs->fs_maxcluster[ufs_rw32(cgp->cg_cgx, needswap)] = i;
 }
 
 /*

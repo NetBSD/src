@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.90 2010/11/23 11:14:07 hannken Exp $
+#	$NetBSD: INSTALL,v 1.91 2011/03/06 17:08:33 bouyer Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.90 $"
+#ident 		"INSTALL-$Revision: 1.91 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -173,7 +173,8 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 
 ## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space

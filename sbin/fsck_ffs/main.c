@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.77 2011/02/06 12:02:59 njoly Exp $	*/
+/*	$NetBSD: main.c,v 1.78 2011/03/06 17:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.77 2011/02/06 12:02:59 njoly Exp $");
+__RCSID("$NetBSD: main.c,v 1.78 2011/03/06 17:08:16 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -390,6 +390,11 @@ checkfilesys(const char *filesys, const char *origfs, int child)
 		progress_sethighlim(progress_limits[5]);
 #endif /* PROGRESS */
 	pass5();
+	if (uquot_user_hash != NULL) {
+		if (preen == 0)
+			pwarn("** Phase 6 - Check Quotas\n");
+		pass6();
+	}
 
 	/*
 	 * print out summary statistics

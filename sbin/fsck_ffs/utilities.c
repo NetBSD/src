@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.58 2010/01/07 01:39:56 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.59 2011/03/06 17:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.58 2010/01/07 01:39:56 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.59 2011/03/06 17:08:16 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: utilities.c,v 1.58 2010/01/07 01:39:56 christos Exp $");
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/quota2.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -419,10 +420,18 @@ allocblk(long frags)
 				clrbit(cg_blksfree(cgp, 0), baseblk + k);
 			}
 			n_blks += frags;
-			if (frags == sblock->fs_frag)
+			if (frags == sblock->fs_frag) {
 				cgp->cg_cs.cs_nbfree--;
-			else
+				sblock->fs_cstotal.cs_nbfree--;
+				sblock->fs_cs(fs, cg).cs_nbfree--;
+				ffs_clusteracct(sblock, cgp,
+				    fragstoblks(sblock, baseblk), -1);
+			} else {
 				cgp->cg_cs.cs_nffree -= frags;
+				sblock->fs_cstotal.cs_nffree -= frags;
+				sblock->fs_cs(fs, cg).cs_nffree -= frags;
+			}
+			sbdirty();
 			cgdirty();
 			return (i + j);
 		}
@@ -438,6 +447,7 @@ freeblk(daddr_t blkno, long frags)
 {
 	struct inodesc idesc;
 
+	memset(&idesc, 0, sizeof(idesc));
 	idesc.id_blkno = blkno;
 	idesc.id_numfrags = frags;
 	(void)pass4check(&idesc);
@@ -727,4 +737,76 @@ sb_oldfscompat_write(struct fs *fs, struct fs *fssave)
 	memmove(&fs->fs_old_postbl_start, &fssave->fs_old_postbl_start,
 	    ((fs->fs_old_postblformat == FS_42POSTBLFMT) ?
 	    512 : 256));
+}
+
+struct uquot *
+find_uquot(struct uquot_hash *uq_hash, uint32_t uid, int alloc)
+{
+	struct uquot *uq;
+	SLIST_FOREACH(uq, &uq_hash[uid & q2h_hash_mask], uq_entries) {
+		if (uq->uq_uid == uid)
+			return uq;
+	}
+	if (!alloc)
+		return NULL;
+	uq = malloc(sizeof(struct uquot));
+	if (uq == NULL)
+		errexit("cannot allocate quota entry");
+	memset(uq, 0, sizeof(struct uquot));
+	uq->uq_uid = uid;
+	SLIST_INSERT_HEAD(&uq_hash[uid & q2h_hash_mask], uq, uq_entries);
+	return uq;
+}
+
+void
+remove_uquot(struct uquot_hash *uq_hash, struct uquot *uq)
+{
+	SLIST_REMOVE(&uq_hash[uq->uq_uid & q2h_hash_mask],
+	    uq, uquot, uq_entries);
+}
+
+void
+update_uquot(ino_t inum, uid_t uid, gid_t gid, int64_t bchange, int64_t ichange)
+{
+	/* simple uquot cache: remember the last used */
+	static struct uquot *uq_u = NULL;
+	static struct uquot *uq_g = NULL;
+
+	if (inum < ROOTINO)
+		return;
+	if (is_journal_inode(inum))
+		return;
+	if (is_quota_inode(inum))
+		return;
+	
+	if (uquot_user_hash == NULL)
+		return;
+		
+	if (uq_u == NULL || uq_u->uq_uid != uid)
+		uq_u = find_uquot(uquot_user_hash, uid, 1);
+	uq_u->uq_b += bchange;
+	uq_u->uq_i += ichange;
+	if (uq_g == NULL || uq_g->uq_uid != gid)
+		uq_g = find_uquot(uquot_group_hash, gid, 1);
+	uq_g->uq_b += bchange;    
+	uq_g->uq_i += ichange;
+}
+
+int
+is_quota_inode(ino_t inum)
+{
+
+	if ((sblock->fs_flags & FS_DOQUOTA2) == 0)
+		return 0;
+
+	if (sblock->fs_quota_magic != Q2_HEAD_MAGIC)
+		return 0;
+	
+	if (sblock->fs_quotafile[USRQUOTA] == inum)
+		return 1;
+
+	if (sblock->fs_quotafile[GRPQUOTA] == inum) 
+		return 1;
+
+	return 0;
 }

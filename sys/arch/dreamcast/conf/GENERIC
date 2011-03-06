@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.100 2011/01/03 06:07:42 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.101 2011/03/06 17:08:22 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -90,7 +90,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent supoprt
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

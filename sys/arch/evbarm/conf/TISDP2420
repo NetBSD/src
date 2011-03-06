@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.15 2011/03/06 02:22:27 jakllsch Exp $
+#	$NetBSD: TISDP2420,v 1.16 2011/03/06 17:08:23 bouyer Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -43,7 +43,8 @@ file-system	TMPFS		# memory file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
