@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.35 2011/03/06 20:47:59 christos Exp $	*/
+/*	$NetBSD: quota.c,v 1.36 2011/03/06 22:36:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.35 2011/03/06 20:47:59 christos Exp $");
+__RCSID("$NetBSD: quota.c,v 1.36 2011/03/06 22:36:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,9 @@ __RCSID("$NetBSD: quota.c,v 1.35 2011/03/06 20:47:59 christos Exp $");
 #include <rpc/pmap_prot.h>
 #include <rpcsvc/rquota.h>
 
-#include <printquota.h>
-#include <getvfsquota.h>
+#include "printquota.h"
+#include "quotautil.h"
+#include "getvfsquota.h"
 
 struct quotause {
 	struct	quotause *next;
@@ -88,7 +89,6 @@ struct quotause {
 #define	FOUND	0x01
 #define	QUOTA2	0x02
 
-static int	alldigits(const char *);
 static int	callaurpc(const char *, rpcprog_t, rpcvers_t, rpcproc_t,
     xdrproc_t, void *, xdrproc_t, void *);
 static int	getnfsquota(struct statvfs *, struct quotause *, uint32_t, int);
@@ -335,14 +335,14 @@ showquotas(int type, uint32_t id, const char *name)
 	quplist = getprivs(id, type);
 	for (qup = quplist; qup; qup = qup->next) {
 		int ql_stat;
+		struct quota2_val *q = qup->q2e.q2e_val;
 		if (!vflag &&
-		    qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit == UQUAD_MAX &&
-		    qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit == UQUAD_MAX &&
-		    qup->q2e.q2e_val[QL_FILE].q2v_softlimit == UQUAD_MAX &&
-		    qup->q2e.q2e_val[QL_FILE].q2v_hardlimit == UQUAD_MAX)
+		    q[QL_BLOCK].q2v_softlimit == UQUAD_MAX &&
+		    q[QL_BLOCK].q2v_hardlimit == UQUAD_MAX &&
+		    q[QL_FILE].q2v_softlimit == UQUAD_MAX &&
+		    q[QL_FILE].q2v_hardlimit == UQUAD_MAX)
 			continue;
-		ql_stat = quota2_check_limit(&qup->q2e.q2e_val[QL_FILE],
-		    1, now);
+		ql_stat = quota2_check_limit(&q[QL_FILE], 1, now);
 		switch(QL_STATUS(ql_stat)) {
 		case QL_S_DENY_HARD:
 			msgi = "File limit reached on";
@@ -356,8 +356,7 @@ showquotas(int type, uint32_t id, const char *name)
 		default:
 			msgi = NULL;
 		}
-		ql_stat = quota2_check_limit(&qup->q2e.q2e_val[QL_BLOCK],
-		    1, now);
+		ql_stat = quota2_check_limit(&q[QL_BLOCK], 1, now);
 		switch(QL_STATUS(ql_stat)) {
 		case QL_S_DENY_HARD:
 			msgb = "Block limit reached on";
@@ -381,9 +380,8 @@ showquotas(int type, uint32_t id, const char *name)
 				printf("\t%s %s\n", msgb, qup->fsname);
 			continue;
 		}
-		if (vflag || dflag || msgi || msgb ||
-		    qup->q2e.q2e_val[QL_BLOCK].q2v_cur ||
-		    qup->q2e.q2e_val[QL_FILE].q2v_cur) {
+		if (vflag || dflag || msgi || msgb || q[QL_BLOCK].q2v_cur ||
+		    q[QL_FILE].q2v_cur) {
 			if (lines++ == 0)
 				heading(type, id, name, "");
 			nam = qup->fsname;
@@ -393,46 +391,38 @@ showquotas(int type, uint32_t id, const char *name)
 			} 
 			if (msgb)
 				timemsg = timeprt(b0, 9, now,
-				    qup->q2e.q2e_val[QL_BLOCK].q2v_time);
+				    q[QL_BLOCK].q2v_time);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
 				timemsg = timeprt(b0, 9, 0,
-				    qup->q2e.q2e_val[QL_BLOCK].q2v_grace);
+				    q[QL_BLOCK].q2v_grace);
 			else
 				timemsg = "";
 				
 			printf("%12s%9s%c%8s%9s%8s",
 			    nam,
-			    intprt(b1, 9,
-			    qup->q2e.q2e_val[QL_BLOCK].q2v_cur,
+			    intprt(b1, 9, q[QL_BLOCK].q2v_cur,
 			    HN_B, hflag),
 			    (msgb == NULL) ? ' ' : '*',
-			    intprt(b2, 9,
-			    qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit,
+			    intprt(b2, 9, q[QL_BLOCK].q2v_softlimit,
 			    HN_B, hflag),
-			    intprt(b3, 9,
-			    qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit,
+			    intprt(b3, 9, q[QL_BLOCK].q2v_hardlimit,
 			    HN_B, hflag),
 			    timemsg);
 
 			if (msgi)
 				timemsg = timeprt(b0, 9, now, 
-				    qup->q2e.q2e_val[QL_FILE].q2v_time);
+				    q[QL_FILE].q2v_time);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
 				timemsg = timeprt(b0, 9, 0,
-				    qup->q2e.q2e_val[QL_FILE].q2v_grace);
+				    q[QL_FILE].q2v_grace);
 			else
 				timemsg = "";
 				
 			printf("%8s%c%7s%8s%8s\n",
-			    intprt(b1, 8,
-			    qup->q2e.q2e_val[QL_FILE].q2v_cur, 0, hflag),
+			    intprt(b1, 8, q[QL_FILE].q2v_cur, 0, hflag),
 			    (msgi == NULL) ? ' ' : '*',
-			    intprt(b2, 8,
-			    qup->q2e.q2e_val[QL_FILE].q2v_softlimit,
-			    0, hflag),
-			    intprt(b3, 8,
-			    qup->q2e.q2e_val[QL_FILE].q2v_hardlimit,
-			    0, hflag),
+			    intprt(b2, 8, q[QL_FILE].q2v_softlimit, 0, hflag),
+			    intprt(b3, 8, q[QL_FILE].q2v_hardlimit, 0, hflag),
 			    timemsg);
 			continue;
 		}
@@ -647,17 +637,4 @@ callaurpc(const char *host, rpcprog_t prognum, rpcvers_t versnum,
 	    outproc, out, tottimeout);
  
 	return (int) clnt_stat;
-}
-
-static int
-alldigits(const char *s)
-{
-	unsigned char c;
-
-	c = *s++;
-	do {
-		if (!isdigit(c))
-			return 0;
-	} while ((c = *s++) != 0);
-	return 1;
 }

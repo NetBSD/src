@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2011/03/06 20:47:59 christos Exp $	
+#	$NetBSD: Makefile,v 1.9 2011/03/06 22:36:07 christos Exp $	
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 WARNS ?= 4
 .include <bsd.own.mk>
 PROG=	quota
-SRCS=	quota.c printquota.c getvfsquota.c
+SRCS=	quota.c printquota.c getvfsquota.c quotautil.c
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/usr.bin/quota
 DPADD=	${LIBRPCSVC} ${LIBPROP}

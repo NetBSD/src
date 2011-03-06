@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.3 2011/03/06 20:47:59 christos Exp $ */
+/*	$NetBSD: printquota.c,v 1.4 2011/03/06 22:36:07 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.3 2011/03/06 20:47:59 christos Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.4 2011/03/06 22:36:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: printquota.c,v 1.3 2011/03/06 20:47:59 christos Exp $");
 #include <limits.h>
 #include <inttypes.h>
 
-#include <printquota.h>
+#include "printquota.h"
 
 /*
  * convert 64bit value to a printable string
@@ -138,13 +138,12 @@ timeprt(char *buf, size_t len, time_t now, time_t seconds)
 	return buf;
 }
 
-#if 0
 /*
  * Calculate the grace period and return a precise string for it,
  * either in seconds or in format xWyDzHtMuS
  */
 const char *
-timepprt(char *buf, size_t len, time_t seconds, int hflag, int space)
+timepprt(char *buf, size_t len, time_t seconds, int hflag)
 {
 	ssize_t i = 0;
 
@@ -158,7 +157,7 @@ timepprt(char *buf, size_t len, time_t seconds, int hflag, int space)
 		seconds = seconds % WEEK;
 	}
 
-	if (remain < 3 || seconds == 0)
+	if (len - i < 3 || seconds == 0)
 		return buf;
 
 	if ((seconds / DAY) > 0) {
@@ -166,7 +165,7 @@ timepprt(char *buf, size_t len, time_t seconds, int hflag, int space)
 		seconds = seconds % DAY;
 	}
 
-	if (remain < 4 || seconds == 0)
+	if (len - i < 4 || seconds == 0)
 		return buf;
 
 	if ((seconds / HOUR) > 0) {
@@ -174,7 +173,7 @@ timepprt(char *buf, size_t len, time_t seconds, int hflag, int space)
 		seconds = seconds % HOUR;
 	}
 
-	if (remain < 4 || seconds == 0)
+	if (len - i < 4 || seconds == 0)
 		return buf;
 
 	if ((seconds / MINUTE) > 0) {
@@ -183,7 +182,7 @@ timepprt(char *buf, size_t len, time_t seconds, int hflag, int space)
 		seconds = seconds % MINUTE;
 	}
 
-	if (remain < 4 || seconds == 0)
+	if (len - i < 4 || seconds == 0)
 		return buf;
 
 	(void)snprintf(buf + i, len - i, "%" PRId64 "S", seconds);
@@ -272,4 +271,3 @@ intrd(char *str, uint64_t *val, u_int flags)
 		*val = btodb(*val);
 	return ret;
 }
-#endif
