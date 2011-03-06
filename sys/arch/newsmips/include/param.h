@@ -1,4 +1,4 @@
-/*	from $NetBSD: param.h,v 1.19 2011/02/08 20:20:21 rmind Exp $	*/
+/*	from $NetBSD: param.h,v 1.20 2011/03/06 20:34:57 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,9 @@
  */
 
 #define	_MACHINE	newsmips
+#ifdef _KERNEL
 #define	MACHINE		"newsmips"
+#endif
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */
