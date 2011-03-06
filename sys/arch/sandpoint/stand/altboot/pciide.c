@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.2 2011/02/08 00:33:05 nisimura Exp $ */
+/* $NetBSD: pciide.c,v 1.3 2011/03/06 13:55:12 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,18 +35,17 @@
 
 #include "globals.h"
 
+static int cmdidefix(struct dkdev_ata *);
+
 static uint32_t pciiobase = PCI_XIOBASE;
 
 struct myops {
 	int (*chipfix)(struct dkdev_ata *);
 	int (*presense)(struct dkdev_ata *, int);
 };
-static int cmdidefix(struct dkdev_ata *);
+static struct myops defaultops = { NULL, NULL };
 static struct myops cmdideops = { cmdidefix, NULL };
 static struct myops *myops;
-
-int pciide_match(unsigned, void *);
-void *pciide_init(unsigned, void *);
 
 int
 pciide_match(unsigned tag, void *data)
@@ -63,6 +62,7 @@ pciide_match(unsigned tag, void *data)
 	case PCI_DEVICE(0x10ad, 0x0105): /* Symphony Labs 82C105 IDE */
 	case PCI_DEVICE(0x10b8, 0x5229): /* ALi IDE */
 	case PCI_DEVICE(0x1191, 0x0008): /* ACARD ATP865 */
+		myops = &defaultops;
 		return 1;
 	}
 	return 0;
