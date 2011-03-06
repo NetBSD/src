@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 2011/02/08 20:20:23 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.14 2011/03/06 20:34:55 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,9 @@
 #include <mips/mips_param.h>
 
 #define	_MACHINE	sgimips
+#ifdef _KERNEL
 #define	MACHINE		"sgimips"
+#endif
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
