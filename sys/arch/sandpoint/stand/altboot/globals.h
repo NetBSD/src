@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.7 2011/03/06 13:55:12 phx Exp $ */
+/* $NetBSD: globals.h,v 1.8 2011/03/06 18:22:13 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -116,6 +116,9 @@ void  pcicfgwrite(unsigned, int, unsigned);
 void _wb(uint32_t, uint32_t);
 void _wbinv(uint32_t, uint32_t);
 void _inv(uint32_t, uint32_t);
+
+/* parsing */
+uint32_t read_hex(const char *);
 
 /* heap */
 void *allocaligned(size_t, size_t);
