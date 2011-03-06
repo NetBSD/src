@@ -185,7 +185,7 @@ sackbc0 at sacc0 addr 0x0a00 intr 21
 sackbc1 at sacc0 addr 0x0c00 intr 18
 
 # PS/2 controller of SA-1111 doesn't have "slot"; One device is attached
-# to one controller.  However, pckbd driver requires "slot 0" and pms driver 
+# to one controller.  However, pckbd driver requires "slot 0" and pms driver
 # requires "slot 1"
 pckbd*	at sackbc0 slot 0
 wskbd* 		at pckbd? # console ?
