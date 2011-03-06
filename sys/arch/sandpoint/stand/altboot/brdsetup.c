@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.5 2011/02/14 06:21:29 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.6 2011/03/06 13:55:12 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -959,6 +959,22 @@ redboot_fis_lookup(const char *filename)
 	return NULL;
 }
 
+static uint8_t hex2nibble(char c)
+{
+	if (c >= 'a')
+		c &= ~0x20;
+	return c > '9' ? c - 'A' + 10 : c - '0';
+}
+
+static void
+read_mac_string(uint8_t *mac, char *p)
+{
+	int i;
+
+	for (i = 0; i < 6; i++, p += 3)
+		*mac++ = (hex2nibble(p[0]) << 4) | hex2nibble(p[1]);
+}
+
 /*
  * For cost saving reasons some NAS boxes are missing the ROM for the
  * NIC's ethernet address and keep it in their Flash memory.
@@ -974,7 +990,11 @@ read_mac_from_flash(uint8_t *mac)
 			memcpy(mac, p, 6);
 			return;
 		}
-	} else
+	} else if (brdtype == BRD_DLINKDSM) {
+		read_mac_string(mac, (char *)0xfff0ff80);
+		return;
+	}
+	else
 		printf("Warning: This board has no known method defined "
 		    "to determine its MAC address!\n");
 
