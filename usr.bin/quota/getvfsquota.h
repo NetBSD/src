@@ -1,6 +1,6 @@
-/*	$NetBSD: getvfsquota.h,v 1.2 2011/03/06 17:08:42 bouyer Exp $ */
+/*	$NetBSD: getvfsquota.h,v 1.3 2011/03/06 20:47:59 christos Exp $ */
 
 int getvfsquota(const char *, struct quota2_entry *, int8_t *,
-    long, int, int, int);
+    uint32_t, int, int, int);
 
 extern const char *qfextension[];
