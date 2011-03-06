@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.7 2011/02/26 20:11:24 phx Exp $ */
+/* $NetBSD: main.c,v 1.8 2011/03/06 13:55:12 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -125,6 +125,8 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	nata = pcilookup(PCI_CLASS_IDE, lata, 2);
 	if (nata == 0)
 		nata = pcilookup(PCI_CLASS_MISCSTORAGE, lata, 2);
+	if (nata == 0)
+		nata = pcilookup(PCI_CLASS_SCSI, lata, 2);
 	nnif = pcilookup(PCI_CLASS_ETH, lnif, 1);
 	nusb = pcilookup(PCI_CLASS_USB, lusb, 3);
 
@@ -231,8 +233,8 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	bi_add(&bi_path, BTINFO_BOOTPATH, sizeof(bi_path));
 	bi_add(&bi_rdev, BTINFO_ROOTDEVICE, sizeof(bi_rdev));
 	bi_add(&bi_fam, BTINFO_PRODFAMILY, sizeof(bi_fam));
-	if (brdtype == BRD_SYNOLOGY) {
-		/* need to set MAC address for Marvell-SKnet */
+	if (brdtype == BRD_SYNOLOGY || brdtype == BRD_DLINKDSM) {
+		/* need to set this MAC address in kernel driver later */
 		bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
 	}
 
