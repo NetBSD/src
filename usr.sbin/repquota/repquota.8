@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)repquota.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: repquota.8,v 1.10 2011/03/06 17:08:43 bouyer Exp $
+.\"	$NetBSD: repquota.8,v 1.11 2011/03/06 17:36:32 wiz Exp $
 .\"
 .Dd February 10, 2011
 .Dt REPQUOTA 8
@@ -39,25 +39,15 @@
 .Nd summarize quotas for a file system
 .Sh SYNOPSIS
 .Nm
-.Op Fl h
-.Op Fl D
-.Op Fl g
-.Op Fl u
-.Op Fl v
-.Ar filesystem Ar ...
+.Op Fl Dghuv
+.Ar file-system Ar ...
 .Nm
-.Op Fl h
-.Op Fl D
-.Op Fl g
-.Op Fl u
-.Op Fl v
+.Op Fl Dghuv
 .Fl a
 .Nm
 .Fl x
-.Op Fl D
-.Op Fl g
-.Op Fl u
-.Ar filesystem
+.Op Fl Dgu
+.Ar file-system
 .Sh DESCRIPTION
 .Nm
 prints a summary of the disk usage and quotas for the
@@ -66,24 +56,24 @@ specified file systems.
 Available options:
 .Bl -tag -width Ds
 .It Fl a
-Print the quotas of all the mounted filesystems.
+Print the quotas of all the mounted file systems.
+.It Fl D
+Debug: print plist sent to and received from kernel.
 .It Fl g
 Print only group quotas (the default is to print both
 group and user quotas if they exist).
+.It Fl h
+Numbers are displayed in a human readable format.
 .It Fl u
 Print only user quotas (the default is to print both
 group and user quotas if they exist).
 .It Fl v
-Print a header line before printing each filesystem quotas.
+Print a header line before printing each file system quotas.
 Print all exiting quotas, including those whose current usage is 0.
-.It Fl D
-Debug: print plist sent to and received from kernel.
-.It Fl h
-Numbers are displayed in a human readable format.
 .It Fl x
-export filesystem quota in a plist format suitable for
+export file system quota in a plist format suitable for
 .Xr quotactl 8 .
-A single filesystem should be specified.
+A single file system should be specified.
 .El
 .Pp
 For each user or group, the current
