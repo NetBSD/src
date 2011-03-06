@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.41 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: IXM1200,v 1.42 2011/03/06 02:18:36 jakllsch Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -133,7 +133,7 @@ options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=310000
+options 	SYMTAB_SPACE=330000
 
 config		netbsd		root on ? type ?
 
