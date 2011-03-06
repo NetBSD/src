@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.418.4.4 2011/03/05 20:55:12 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.418.4.5 2011/03/06 01:38:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.4 2011/03/05 20:55:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.5 2011/03/06 01:38:45 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -308,6 +308,9 @@ main(void)
 	/* Initialize the device switch tables. */
 	devsw_init();
 
+	/* Initialize event counters. */
+	evcnt_init();
+
 	uvm_init();
 
 	prop_kern_init();
@@ -325,9 +328,6 @@ main(void)
 
 	/* Initialize the extent manager. */
 	extent_init();
-
-	/* Initialize event counters */
-	evcnt_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
