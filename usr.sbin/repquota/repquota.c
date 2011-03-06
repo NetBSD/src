@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.27 2011/03/06 22:33:55 christos Exp $	*/
+/*	$NetBSD: repquota.c,v 1.28 2011/03/06 23:25:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.27 2011/03/06 22:33:55 christos Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.28 2011/03/06 23:25:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,6 @@ static int	xflag = 0;		/* export */
 static struct fileusage *addid(uint32_t, int, const char *);
 static struct fileusage *lookup(uint32_t, int);
 static struct fileusage *qremove(uint32_t, int);
-static int	oneof(const char *, char **, int);
 static int	repquota(const struct statvfs *, int);
 static int	repquota2(const struct statvfs *, int);
 static int	repquota1(const struct statvfs *, int);
@@ -525,20 +524,6 @@ exportquotas(void)
 }
 
 /*
- * Check to see if target appears in list of size cnt.
- */
-static int
-oneof(const char *target, char *list[], int cnt)
-{
-	int i;
-
-	for (i = 0; i < cnt; i++)
-		if (strcmp(target, list[i]) == 0)
-			return i;
-	return -1;
-}
-
-/*
  * Routines to manage the file usage table.
  *
  * Lookup an id of a specific type.
@@ -619,7 +604,7 @@ addid(uint32_t id, int type, const char *name)
 	if (name) {
 		memmove(fup->fu_name, name, len + 1);
 	} else {
-		snprintf(fup->fu_name, sizeof(fup->fu_name), "%u", id);
+		snprintf(fup->fu_name, len + 1, "%u", id);
 	}
 	fup->fu_q2e = defaultq2e[type];
 	return fup;
