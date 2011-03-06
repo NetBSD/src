@@ -1,4 +1,4 @@
-.\"	$NetBSD: quota.1,v 1.15 2011/03/06 17:08:42 bouyer Exp $
+.\"	$NetBSD: quota.1,v 1.16 2011/03/06 17:25:32 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)quota.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd March 6, 2011
 .Dt QUOTA 1
 .Os
 .Sh NAME
@@ -40,28 +40,19 @@
 .Nd display disk usage and limits
 .Sh SYNOPSIS
 .Nm
-.Op Fl D
-.Op Fl h
-.Op Fl g
-.Op Fl u
+.Op Fl Dghu
 .Op Fl v | Fl q
 .Nm
-.Op Fl D
-.Op Fl h
-.Op Fl u
+.Op Fl Dhu
 .Op Fl v | Fl q
 .Ar user
 .Nm
-.Op Fl D
-.Op Fl h
-.Op Fl g
+.Op Fl Dgh
 .Op Fl v | Fl q
 .Ar group
 .Nm
 .Fl d
-.Op Fl D
-.Op Fl h
-.Op Fl g
+.Op Fl Dgh
 .Op Fl v | Fl q
 .Sh DESCRIPTION
 .Nm
@@ -71,27 +62,24 @@ By default only the user quotas are printed.
 Options:
 .Pp
 .Bl -tag -width Ds
-.It Fl h
-Numbers are displayed in a human readable format.
+.It Fl D
+Debug: print plist sent to and received from kernel.
+.It Fl d
+Query the kernel for default user or group quota instead of a specific
+user or group.
 .It Fl g
-Print group quotas for the group
-of which the user is a member.
+Print group quotas for the group of which the user is a member.
 The optional
 .Fl u
 flag is equivalent to the default.
+.It Fl h
+Numbers are displayed in a human readable format.
+.It Fl q
+Print a more terse message, containing only information
+on file systems where usage is over quota.
 .It Fl v
 .Nm
-will display quotas on filesystems
-where no storage is allocated.
-.It Fl q
-Print a more terse message,
-containing only information
-on filesystems where usage is over quota.
-.It Fl d
-Query the kernel for default user or group quota instead of a specific
-user or group
-.It Fl D
-Debug: print plist sent to and received from kernel.
+will display quotas on file systems where no storage is allocated.
 .El
 .Pp
 Specifying both
@@ -123,8 +111,8 @@ flag takes precedence over the
 flag.
 .Pp
 .Nm
-tries to report the quotas of all mounted filesystems.
-If the filesystem is mounted via
+tries to report the quotas of all mounted file systems.
+If the file system is mounted via
 .Em NFS
 it will attempt to contact the
 .Xr rpc.rquotad 8
@@ -133,7 +121,7 @@ daemon on the
 server.
 If
 .Nm
-exits with a non-zero status, one or more filesystems
+exits with a non-zero status, one or more file systems
 are over quota.
 .Sh SEE ALSO
 .Xr quotactl 2 ,
