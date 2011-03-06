@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.3 2011/03/06 13:55:12 phx Exp $ */
+/* $NetBSD: nif.c,v 1.4 2011/03/06 20:36:29 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,11 +54,11 @@ struct nifdv {
 static struct iodesc netdesc;
 
 static struct nifdv lnifdv[] = {
-	{ "fxp", fxp_match, fxp_init, fxp_send, fxp_recv },
-	{ "tlp", tlp_match, tlp_init, tlp_send, tlp_recv },
-	{ "re",  rge_match, rge_init, rge_send, rge_recv },
-	{ "sk",  skg_match, skg_init, skg_send, skg_recv },
-	{ "stg", stg_match, stg_init, stg_send, stg_recv },
+	{ "fxp",  fxp_match, fxp_init, fxp_send, fxp_recv },
+	{ "tlp",  tlp_match, tlp_init, tlp_send, tlp_recv },
+	{ "re",   rge_match, rge_init, rge_send, rge_recv },
+	{ "sk",   skg_match, skg_init, skg_send, skg_recv },
+	{ "stge", stg_match, stg_init, stg_send, stg_recv },
 };
 static int nnifdv = sizeof(lnifdv)/sizeof(lnifdv[0]);
 
