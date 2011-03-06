@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.49 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: IQ31244,v 1.50 2011/03/06 02:22:27 jakllsch Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -149,8 +149,8 @@ cpu0		at mainbus?
 
 # On-board device support
 obio*		at mainbus?
-com0		at obio? addr 0xfe800000 xint 1	# on-board TI 165C50 UART
-# Default setting of J7 is open, which means that the interrupt is not 
+com0		at obio? addr 0xfe800000 xint 1	# on-board TI 16C550 UART
+# Default setting of J7 is open, which means that the interrupt is not
 # connected
 wdc0		at obio? addr 0xfe8f0000 width 16 # on-board CF reader
 #wdc0		at obio? addr 0xfe8f0000 width 16 xint 1 # on-board CF reader

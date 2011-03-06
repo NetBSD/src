@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.15 2011/02/26 18:07:18 ahoka Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.16 2011/03/06 02:22:27 jakllsch Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -146,8 +146,8 @@ options 	SYMTAB_SPACE=300000
 ## USB Debugging options
 options USB_DEBUG
 options EHCI_DEBUG
-options OHCI_DEBUG 
-options UHUB_DEBUG 
+options OHCI_DEBUG
+options UHUB_DEBUG
 
 
 # Valid options for BOOT_ARGS:
@@ -175,10 +175,10 @@ options		MEMSIZE=256
 L3i0		at mainbus?
 
 # OBIO
-obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE 
-obio1		at mainbus? base 0x48300000 size 0x0040000	# L4 WAKEUP 
-obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL 
-#obio3		at mainbus? base 0x54000000 size 0x0800000	# L4 EMUL 
+obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE
+obio1		at mainbus? base 0x48300000 size 0x0040000	# L4 WAKEUP
+obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
+#obio3		at mainbus? base 0x54000000 size 0x0800000	# L4 EMUL
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6e000000
