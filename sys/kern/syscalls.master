@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.245 2011/02/21 23:20:19 pooka Exp $
+	$NetBSD: syscalls.master,v 1.246 2011/03/06 17:08:36 bouyer Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -282,7 +282,7 @@
 			    const struct orlimit *rlp); } osetrlimit
 146	COMPAT_43 MODULAR { int|sys||killpg(int pgid, int signum); } okillpg
 147	STD 	RUMP 	{ int|sys||setsid(void); }
-148	STD 		{ int|sys||quotactl(const char *path, int cmd, \
+148	COMPAT_50 MODULAR { int|sys||quotactl(const char *path, int cmd, \
 			    int uid, void *arg); }
 149	COMPAT_43 MODULAR { int|sys||quota(void); } oquota
 150	COMPAT_43 MODULAR { int|sys||getsockname(int fdec, void *asa, \
@@ -884,3 +884,5 @@
 			    dev_t dev); }
 451	STD  RUMP 	{ int|sys|50|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat *sb); }
+452	STD  RUMP	{ int|sys|50|quotactl(const char *path, \
+			    struct plistref *pref); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.27 2011/01/10 11:11:03 hannken Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.28 2011/03/06 17:08:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -88,7 +88,7 @@ struct vnode *layer_node_find(struct mount *, struct vnode *);
 /* VFS routines */
 int	layerfs_start(struct mount *, int);
 int	layerfs_root(struct mount *, struct vnode **);
-int	layerfs_quotactl(struct mount *, int, uid_t, void *);
+int	layerfs_quotactl(struct mount *, prop_dictionary_t);
 int	layerfs_statvfs(struct mount *, struct statvfs *);
 int	layerfs_sync(struct mount *, int, struct kauth_cred *);
 int	layerfs_vget(struct mount *, ino_t, struct vnode **);

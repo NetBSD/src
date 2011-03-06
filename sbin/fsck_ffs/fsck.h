@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.48 2010/09/12 16:03:39 drochner Exp $	*/
+/*	$NetBSD: fsck.h,v 1.49 2011/03/06 17:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,6 +39,7 @@
  */
 
 #include <stdio.h>
+#include <sys/queue.h>
 #include <machine/bswap.h>
 
 #ifdef PROGRESS
@@ -189,6 +190,8 @@ struct inodesc {
 	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
 	const char *id_name;	/* for DATA nodes, name to find or enter */
 	char id_type;		/* type of descriptor, DATA or ADDR */
+	uid_t id_uid;		/* ownerchip of inode described */
+	gid_t id_gid;
 };
 /* file types */
 #define	DATA	1
@@ -246,6 +249,21 @@ struct inoinfo {
 	int64_t i_blks[1];		/* actually longer */
 } **inphead, **inpsort;
 long numdirs, dirhash, listmax, inplast;
+
+/*
+ * quota usage structures
+ */
+struct uquot {
+	uint64_t  uq_b; /* block usage */
+	uint64_t  uq_i; /* inode usage */
+	SLIST_ENTRY(uquot) uq_entries;
+	uint32_t uq_uid; /* uid/gid of the owner */
+};
+SLIST_HEAD(uquot_hash, uquot);
+struct uquot_hash *uquot_user_hash;
+struct uquot_hash *uquot_group_hash;
+uint8_t q2h_hash_shift;
+uint16_t q2h_hash_mask;
 
 long	dev_bsize;		/* computed value of DEV_BSIZE */
 long	secsize;		/* actual disk sector size */
