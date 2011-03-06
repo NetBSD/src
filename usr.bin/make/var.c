@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.161 2010/12/02 16:46:22 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.162 2011/03/06 00:02:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.161 2010/12/02 16:46:22 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.162 2011/03/06 00:02:15 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.161 2010/12/02 16:46:22 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.162 2011/03/06 00:02:15 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3346,9 +3346,13 @@ ApplyModifiers(char *nstr, const char *tstr,
 		 */
 		termc = *--cp;
 		delim = '\0';
-		newStr = VarModify(ctxt, &parsestate, nstr,
-				   VarSYSVMatch,
-				   &pattern);
+		if (pattern.leftLen == 0 && *nstr == '\0') {
+		    newStr = nstr;	/* special case */
+		} else {
+		    newStr = VarModify(ctxt, &parsestate, nstr,
+				       VarSYSVMatch,
+				       &pattern);
+		}
 		free(UNCONST(pattern.lhs));
 		free(UNCONST(pattern.rhs));
 	    } else
@@ -3746,7 +3750,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		nstr = bmake_strndup(start, *lengthPtr);
 		*freePtr = nstr;
 	    } else {
-		nstr = var_Error;
+		nstr = errnum ? var_Error : varNoError;
 	    }
 	}
 	if (nstr != Buf_GetAll(&v->val, NULL))
