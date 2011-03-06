@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.106 2011/02/21 05:10:46 mrg Exp $
+# $NetBSD: mi,v 1.107 2011/03/06 22:15:29 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2880,6 +2880,7 @@
 ./usr/X11R7/man/man7/Xsecurity.7			-unknown-	.man,xorg
 ./usr/X11R7/man/whatis.db				-unknown-	man,xorg
 ./usr/X11R7/share					base-x11-root	xorg
+./usr/X11R7/share/aclocal				base-x11-root	xorg
 ./usr/X11R7/share/examples				base-x11-root	xorg
 ./usr/X11R7/share/examples/ssh-askpass			base-x11-root	xorg
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-1337.ad	-unknown-	xorg
