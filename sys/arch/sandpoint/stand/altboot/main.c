@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.8 2011/03/06 13:55:12 phx Exp $ */
+/* $NetBSD: main.c,v 1.9 2011/03/06 18:22:13 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -482,6 +482,31 @@ allocaligned(size_t size, size_t align)
 	return (void *)((p + align) & ~align);
 }
 
+static int hex2nibble(char c)
+{
+
+	if (c >= 'a')
+		c &= ~0x20;
+	if (c >= 'A' && c <= 'F')
+		c -= 'A' - ('9' + 1);
+	else if (c < '0' || c > '9')
+		return -1;
+
+	return c - '0';
+}
+
+uint32_t
+read_hex(const char *s)
+{
+	int n;
+	uint32_t val;
+
+	val = 0;
+	while ((n = hex2nibble(*s++)) >= 0)
+		val = (val << 4) | n;
+	return val;
+}
+
 static int
 check_bootname(char *s)
 {
@@ -491,12 +516,12 @@ check_bootname(char *s)
 	 * tftp:
 	 * tftp:<bootfile>
 	 * wd[N[P]]:<bootfile>
+	 * mem:<address>
 	 *
 	 * net is a synonym of nfs.
 	 */
-	if (strncmp(s, "nfs:", 4) == 0 || strncmp(s, "net:", 4) == 0)
-		return 1;
-	if (strncmp(s, "tftp:", 5) == 0)
+	if (strncmp(s, "nfs:", 4) == 0 || strncmp(s, "net:", 4) == 0 ||
+	    strncmp(s, "tftp:", 5) == 0 || strncmp(s, "mem:", 4) == 0)
 		return 1;
 	if (s[0] == 'w' && s[1] == 'd') {
 		s += 2;
