@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.125 2010/02/21 13:55:58 mlelstv Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.126 2011/03/06 04:46:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.125 2010/02/21 13:55:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.126 2011/03/06 04:46:26 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1330,17 +1330,13 @@ retry:
 		}
 	}
 	i = start + len - loc;
-	map = inosused[i];
-	ipref = i * NBBY;
-	for (i = 1; i < (1 << NBBY); i <<= 1, ipref++) {
-		if ((map & i) == 0) {
-			cgp->cg_irotor = ufs_rw32(ipref, needswap);
-			goto gotit;
-		}
+	map = inosused[i] ^ 0xff;
+	if (map == 0) {
+		printf("fs = %s\n", fs->fs_fsmnt);
+		panic("ffs_nodealloccg: block not in map");
 	}
-	printf("fs = %s\n", fs->fs_fsmnt);
-	panic("ffs_nodealloccg: block not in map");
-	/* NOTREACHED */
+	ipref = i * NBBY + ffs(map) - 1;
+	cgp->cg_irotor = ufs_rw32(ipref, needswap);
 gotit:
 	UFS_WAPBL_REGISTER_INODE(ip->i_ump->um_mountp, cg * fs->fs_ipg + ipref,
 	    mode);
