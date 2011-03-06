@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.108 2010/08/09 17:20:57 pooka Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.109 2011/03/06 17:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.108 2010/08/09 17:20:57 pooka Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.109 2011/03/06 17:08:16 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.108 2010/08/09 17:20:57 pooka Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/quota2.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <sys/ioctl.h>
@@ -527,6 +528,12 @@ mkfs(const char *fsys, int fi, int fo,
 		sblock.fs_old_cstotal.cs_nbfree = sblock.fs_cstotal.cs_nbfree;
 		sblock.fs_old_cstotal.cs_nifree = sblock.fs_cstotal.cs_nifree;
 		sblock.fs_old_cstotal.cs_nffree = sblock.fs_cstotal.cs_nffree;
+	}
+	/* add quota data in superblock */
+	if (quotas) {
+		sblock.fs_flags |= FS_DOQUOTA2;
+		sblock.fs_quota_magic = Q2_HEAD_MAGIC;
+		sblock.fs_quota_flags = quotas;
 	}
 	/*
 	 * Dump out summary information about file system.
@@ -1008,11 +1015,18 @@ int
 fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	union dinode node;
-#ifdef LOSTDIR
 	int i;
+	int qblocks = 0;
+	int qinos = 0;
+	uint8_t q2h_hash_shift;
+	uint16_t q2h_hash_mask;
+#ifdef LOSTDIR
 	int dirblksiz = DIRBLKSIZ;
 	if (isappleufs)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
+	int nextino = LOSTFOUNDINO+1;
+#else
+	int nextino = ROOTINO+1;
 #endif
 
 	/*
@@ -1049,6 +1063,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			return (0);
 		node.dp1.di_blocks = btodb(fragroundup(&sblock,
 		    node.dp1.di_size));
+		qblocks += node.dp1.di_blocks;
 		node.dp1.di_uid = geteuid();
 		node.dp1.di_gid = getegid();
 		wtfs(fsbtodb(&sblock, node.dp1.di_db[0]), node.dp1.di_size,
@@ -1070,11 +1085,13 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			return (0);
 		node.dp2.di_blocks = btodb(fragroundup(&sblock,
 		    node.dp2.di_size));
+		qblocks += node.dp2.di_blocks;
 		node.dp2.di_uid = geteuid();
 		node.dp2.di_gid = getegid();
 		wtfs(fsbtodb(&sblock, node.dp2.di_db[0]), node.dp2.di_size,
 		    buf);
 	}
+	qinos++;
 	iput(&node, LOSTFOUNDINO);
 #endif
 	/*
@@ -1102,6 +1119,7 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			return (0);
 		node.dp1.di_blocks = btodb(fragroundup(&sblock,
 		    node.dp1.di_size));
+		qblocks += node.dp1.di_blocks;
 		wtfs(fsbtodb(&sblock, node.dp1.di_db[0]), sblock.fs_fsize, buf);
 	} else {
 		if (mfs) {
@@ -1128,9 +1146,97 @@ fsinit(const struct timeval *tv, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 			return (0);
 		node.dp2.di_blocks = btodb(fragroundup(&sblock,
 		    node.dp2.di_size));
+		qblocks += node.dp2.di_blocks;
 		wtfs(fsbtodb(&sblock, node.dp2.di_db[0]), sblock.fs_fsize, buf);
 	}
+	qinos++;
 	iput(&node, ROOTINO);
+	/*
+	 * compute the size of the hash table
+	 * We know the smallest block size is 4k, so we can use 2k
+	 * for the hash table; as an entry is 8 bytes we can store
+	 * 256 entries. So let start q2h_hash_shift at 8
+	 */
+	for (q2h_hash_shift = 8;
+	    q2h_hash_shift < 15;
+	    q2h_hash_shift++) {
+		if ((sizeof(uint64_t) << (q2h_hash_shift + 1)) +
+		    sizeof(struct quota2_header) > (u_int)sblock.fs_bsize)
+			break;
+	}
+	q2h_hash_mask = (1 << q2h_hash_shift) - 1;
+	for (i = 0; i < MAXQUOTAS; i++) {
+		struct quota2_header *q2h;
+		struct quota2_entry *q2e;
+		uint64_t offset;
+		uid_t uid = (i == USRQUOTA ? geteuid() : getegid());
+
+		if ((quotas & FS_Q2_DO_TYPE(i)) == 0)
+			continue;
+		quota2_create_blk0(sblock.fs_bsize, buf, q2h_hash_shift,
+		    i, needswap);
+		/* grab an entry from header for root dir */
+		q2h = (void *)buf;
+		offset = ufs_rw64(q2h->q2h_free, needswap);
+		q2e = (void *)((char *)buf + offset);
+		q2h->q2h_free = q2e->q2e_next;
+		memcpy(q2e, &q2h->q2h_defentry, sizeof(*q2e));
+		q2e->q2e_uid = ufs_rw32(uid, needswap);
+		q2e->q2e_val[QL_BLOCK].q2v_cur = ufs_rw64(qblocks, needswap);
+		q2e->q2e_val[QL_FILE].q2v_cur = ufs_rw64(qinos, needswap);
+		/* add to the hash entry */
+		q2e->q2e_next = q2h->q2h_entries[uid & q2h_hash_mask];
+		q2h->q2h_entries[uid & q2h_hash_mask] =
+		    ufs_rw64(offset, needswap);
+
+		memset(&node, 0, sizeof(node));
+		if (sblock.fs_magic == FS_UFS1_MAGIC) {
+			node.dp1.di_atime = tv->tv_sec;
+			node.dp1.di_atimensec = tv->tv_usec * 1000;
+			node.dp1.di_mtime = tv->tv_sec;
+			node.dp1.di_mtimensec = tv->tv_usec * 1000;
+			node.dp1.di_ctime = tv->tv_sec;
+			node.dp1.di_ctimensec = tv->tv_usec * 1000;
+			node.dp1.di_mode = IFREG;
+			node.dp1.di_nlink = 1;
+			node.dp1.di_size = sblock.fs_bsize;
+			node.dp1.di_db[0] =
+			    alloc(node.dp1.di_size, node.dp1.di_mode);
+			if (node.dp1.di_db[0] == 0)
+				return (0);
+			node.dp1.di_blocks = btodb(fragroundup(&sblock,
+			    node.dp1.di_size));
+			node.dp1.di_uid = geteuid();
+			node.dp1.di_gid = getegid();
+			wtfs(fsbtodb(&sblock, node.dp1.di_db[0]),
+			     node.dp1.di_size, buf);
+		} else {
+			node.dp2.di_atime = tv->tv_sec;
+			node.dp2.di_atimensec = tv->tv_usec * 1000;
+			node.dp2.di_mtime = tv->tv_sec;
+			node.dp2.di_mtimensec = tv->tv_usec * 1000;
+			node.dp2.di_ctime = tv->tv_sec;
+			node.dp2.di_ctimensec = tv->tv_usec * 1000;
+			node.dp2.di_birthtime = tv->tv_sec;
+			node.dp2.di_birthnsec = tv->tv_usec * 1000;
+			node.dp2.di_mode = IFREG;
+			node.dp2.di_nlink = 1;
+			node.dp2.di_size = sblock.fs_bsize;
+			node.dp2.di_db[0] =
+			    alloc(node.dp2.di_size, node.dp2.di_mode);
+			if (node.dp2.di_db[0] == 0)
+				return (0);
+			node.dp2.di_blocks = btodb(fragroundup(&sblock,
+			    node.dp2.di_size));
+			node.dp2.di_uid = geteuid();
+			node.dp2.di_gid = getegid();
+			wtfs(fsbtodb(&sblock, node.dp2.di_db[0]),
+			    node.dp2.di_size, buf);
+		}
+		iput(&node, nextino);
+		sblock.fs_quotafile[i] = nextino;
+		nextino++;
+	}
 	return (1);
 }
 

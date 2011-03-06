@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.21 2011/03/06 02:18:36 jakllsch Exp $
+# $NetBSD: HDL_G,v 1.22 2011/03/06 17:08:22 bouyer Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -48,7 +48,8 @@ file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental

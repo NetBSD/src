@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.58 2011/02/20 07:48:33 matt Exp $
+#	$NetBSD: MALTA,v 1.59 2011/03/06 17:08:23 bouyer Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.58 $"
+#ident 		"MALTA-$Revision: 1.59 $"
 
 maxusers	32
 
@@ -78,7 +78,8 @@ file-system	TMPFS		# Efficient memory file system
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

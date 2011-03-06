@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.83 2010/09/01 16:56:19 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.84 2011/03/06 17:08:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.83 2010/09/01 16:56:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.84 2011/03/06 17:08:39 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -103,9 +103,6 @@ ufs_inactive(void *v)
 		if (error)
 			goto out;
 		logged = 1;
-#ifdef QUOTA
-		(void)chkiq(ip, -1, NOCRED, 0);
-#endif
 #ifdef UFS_EXTATTR
 		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
@@ -140,6 +137,9 @@ ufs_inactive(void *v)
 			if (!error)
 				error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
+#if defined(QUOTA) || defined(QUOTA2)
+		(void)chkiq(ip, -1, NOCRED, 0);
+#endif
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
@@ -202,7 +202,7 @@ ufs_reclaim(struct vnode *vp)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	ufsquota_free(ip);
 #endif
 #ifdef UFS_DIRHASH

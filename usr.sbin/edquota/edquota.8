@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)edquota.8	8.2 (Berkeley) 4/27/95
-.\"	$NetBSD: edquota.8,v 1.12 2003/08/07 11:25:20 agc Exp $
+.\"	$NetBSD: edquota.8,v 1.13 2011/03/06 17:08:42 bouyer Exp $
 .\"
-.Dd December 4, 2002
+.Dd February 6, 2011
 .Dt EDQUOTA 8
 .Os
 .Sh NAME
@@ -39,35 +39,55 @@
 .Nd edit user quotas
 .Sh SYNOPSIS
 .Nm
+.Op Fl D
+.Op Fl H
 .Op Fl u
 .Op Fl f Ar filesystem
 .Op Fl p Ar proto-username
+.Ar -d |
 .Ar username ...
 .Nm
+.Op Fl D
+.Op Fl H
 .Fl g
 .Op Fl f Ar filesystem
 .Op Fl p Ar proto-groupname
+.Ar -d |
 .Ar groupname ...
 .Nm
+.Op Fl D
+.Op Fl H
 .Op Fl u
 .Op Fl f Ar filesystem
 .Op Fl h Ar block#/inode#
 .Op Fl s Ar block#/inode#
+.Op Fl t Ar block grace time/inode grace time
+.Ar -d |
 .Ar username ...
 .Nm
+.Op Fl D
+.Op Fl H
 .Fl g
 .Op Fl f Ar filesystem
 .Op Fl h Ar block#/inode#
 .Op Fl s Ar block#/inode#
+.Op Fl t Ar block grace time/inode grace time
+.Ar -d |
 .Ar groupname ...
 .Nm
+.Op Fl D
+.Op Fl H
 .Op Fl u
+.Fl c
 .Op Fl f Ar filesystem
-.Fl t
+.Ar username ...
 .Nm
+.Op Fl D
+.Op Fl H
 .Fl g
+.Fl c
 .Op Fl f Ar filesystem
-.Fl t
+.Ar groupname ...
 .Sh DESCRIPTION
 .Nm
 is a quota editor.
@@ -76,13 +96,12 @@ By default, or if the
 flag is specified,
 one or more users may be specified on the command line.
 Unless
-.Fl h
-or
+.Fl h,
 .Fl s
+or
+.Fl t
 are used, a temporary file is created for each user with an ASCII
-representation of the current disk quotas for that user.
-The list of filesystems with user quotas is determined from
-.Pa /etc/fstab .
+representation of the current disk quotas and grace time for that user.
 By default, quota for all quota-enabled filesystems are edited; the
 .Fl f
 option can be used to restrict it to a single filesystem.
@@ -94,21 +113,35 @@ unless the environment variable
 specifies otherwise.
 .Pp
 The quotas may then be modified, new quotas added, etc.
-Setting a quota to zero indicates that no quota should be imposed.
-Setting a hard limit to one indicates that no allocations should
-be permitted.
-Setting a soft limit to one with a hard limit of zero
-indicates that allocations should be permitted on
-only a temporary basis (see
-.Fl t
-below).
+Setting a quota to - or unlimited indicates that no quota should be imposed.
+Setting a quota to zero indicates that no allocation is permited.
+Setting a soft limit to zero  with a unlimited hard limit
+indicates that allocations should be permitted on only a temporary basis.
 The current usage information in the file is for informational purposes;
-only the hard and soft limits can be changed.
+only the hard and soft limits, and grace time can be changed.
+.Pp
+Users are permitted to exceed their soft limits
+for a grace period that may be specified per user (or per-filesystem
+for quota version 1).
+Once the grace period has expired,
+the soft limit is enforced as a hard limit.
+The default grace period is one week.
+.Pp
+By default, disk quotas are in KB, grace time in seconds.
+Disk and inodes quota can be entered with a
+.Xr humanize_number 9
+suffix (K for kilo, M for mega, G for giga, T for tera).
+Time can be entered with Y (year), W (week), D (day), H (hour) and M (minute)
+suffixes. Suffixes can be mixed (see EXAMPLES below).
+If the
+.Fl H
+option if used, current quota, disk usage and time are displayed in
+a human-readable format.
 .Pp
 On leaving the editor,
 .Nm
-reads the temporary file and modifies the binary
-quota files to reflect the changes made.
+reads the temporary file and modifies the on-disk quotas
+to reflect the changes made.
 .Pp
 If the
 .Fl p
@@ -116,15 +149,17 @@ flag is specified,
 .Nm
 will duplicate the quotas of the prototypical user
 specified for each user specified.
-This is the normal mechanism used to initialize quotas for groups of users.
 .Pp
 The
-.Fl h
-and
+.Fl h ,
 .Fl s
-flags can be used to change quota limits (hard and soft, respectively)
-without user interaction, for usage in e.g. batch scripts.
-The arguments are the new block and inode number limit, separated by a slash.
+and
+.Fl t
+flags can be used to change quota limits (hard, soft and grace time,
+respectively) without user interaction, for usage in e.g. batch scripts.
+The arguments are the new block and inode number limit or grace time,
+separated by a slash. Units suffix may be used, as in the editor
+above.
 .Pp
 If the
 .Fl g
@@ -132,54 +167,47 @@ flag is specified,
 .Nm
 is invoked to edit the quotas of
 one or more groups specified on the command line.
-The
-.Fl p
-flag can be specified in conjunction with the
-.Fl g
-flag to specify a prototypical group
-to be duplicated among the listed set of groups.
 .Pp
-Users are permitted to exceed their soft limits
-for a grace period that may be specified per filesystem.
-Once the grace period has expired,
-the soft limit is enforced as a hard limit.
-The default grace period for a filesystem is specified in
-.Pa /usr/include/ufs/ufs/quota.h .
+With quota version 2, there is a per-filesystem user or group
+default quota to be copied to a user or group quota on the first
+allocation.
 The
-.Fl t
-flag can be used to change the grace period.
-By default, or when invoked with the
-.Fl u
-flag, the grace period is set for all the filesystems with user
-quotas specified in
-.Pa /etc/fstab .
-When invoked with the
-.Fl g
-flag the grace period is
-set for all the filesystems with group quotas specified in
-.Pa /etc/fstab .
-The grace period may be specified in days, hours, minutes, or seconds.
-Setting a grace period to zero indicates that the default
-grace period should be imposed.
-Setting a grace period to one second indicates that no
-grace period should be granted.
+.Fl d
+flag adds the default quota to the list of users or groups to edit.
+.Pp
+For quota version 1, there is no default block/inode quota, and no
+per-user/group grace time. To edit the filesystem-wide grace time, use
+.Fl d .
+.Pp
+On quota2-enabled filesystems, the
+.Fl c
+flag cause edquota to clear quota entries for the specified users or groups.
+If disk or inode usages is not 0, limits are reverted to the default quota. 
+If disk and inode usages are 0, the existing quota entries are freed.
+.Pp
+The
+.Fl D
+flag cause edquota to print to the standard error property lists sent to
+and received from the kernel.
 .Pp
 Only the super-user may edit quotas.
-.Sh FILES
-.Bl -tag -width 24n -compact
-.It Pa quota.user
-at the filesystem root with user quotas
-.It Pa quota.group
-at the filesystem root with group quotas
-.It Pa /etc/fstab
-to find filesystem names and locations
-.El
-.Sh DIAGNOSTICS
-Various messages about inaccessible files; self-explanatory.
+.Sh EXAMPLES
+Edit quotas for group games on all quota-enabled filesystems:
+.Bd -literal
+	edquota -g
+.Ed
+Set 4MB hard block limit, 2MB soft block limit, 2048 inode hard limit,
+1024 inode soft limit, 2 weeks and 3 days (or 17 days) block and inode grace
+time for the default quotas on filesystem /home:
+.Bd -literal
+	edquota -h 4M/2k -s 2M/1k -t 2W3D/2W3D -f /home -u -d
+.Ed
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr quotactl 2 ,
+.Xr humanize_number 3 ,
 .Xr fstab 5 ,
 .Xr quotacheck 8 ,
+.Xr quotactl 8 ,
 .Xr quotaon 8 ,
 .Xr repquota 8

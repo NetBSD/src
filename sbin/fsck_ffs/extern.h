@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25 2009/09/13 14:25:28 bouyer Exp $	*/
+/*	$NetBSD: extern.h,v 1.26 2011/03/06 17:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -75,18 +75,34 @@ void		pass3(void);
 void		pass4(void);
 int		pass4check(struct inodesc *);
 void		pass5(void);
+void		pass6(void);
 void		pinode(ino_t);
 void		propagate(ino_t);
 int		reply(const char *);
 void		setinodebuf(ino_t);
 int		setup(const char *, const char *);
 void		voidquit(int);
+ssize_t		readblk(union dinode *, off_t, struct bufarea **);
+struct bufarea *expandfile(union dinode *);
+
+struct uquot *	find_uquot(struct uquot_hash *, uint32_t, int);
+void		remove_uquot(struct uquot_hash *,struct uquot *);
+void		update_uquot(ino_t, uid_t, gid_t, int64_t, int64_t);
+int		is_quota_inode(ino_t);
+
 
 int		check_wapbl(void);
 void		replay_wapbl(void);
 void		cleanup_wapbl(void);
 int		read_wapbl(char *, long, daddr_t);
 int		is_journal_inode(ino_t);
+
+void		quota2_create_inode(struct fs *, int);
+int		quota2_check_inode(int);
+int		quota2_check_usage(int);
+int		quota2_check_doquota(void);
+int		quota2_alloc_quota(union dinode *, struct bufarea *,
+					uid_t, uint64_t, uint64_t);
 
 void		swap_cg(struct cg *, struct cg *);
 void		copyback_cg(struct bufarea *);
