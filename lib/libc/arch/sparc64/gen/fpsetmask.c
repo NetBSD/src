@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.4 2005/12/24 23:10:08 perry Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.5 2011/03/06 10:32:47 martin Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetmask.c,v 1.4 2005/12/24 23:10:08 perry Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.5 2011/03/06 10:32:47 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -16,6 +16,10 @@ __RCSID("$NetBSD: fpsetmask.c,v 1.4 2005/12/24 23:10:08 perry Exp $");
 
 #ifdef __weak_alias
 __weak_alias(fpsetmask,_fpsetmask)
+#endif
+
+#ifdef EXCEPTIONS_WITH_SOFTFLOAT
+extern fp_except _softfloat_float_exception_mask;
 #endif
 
 fp_except
@@ -33,5 +37,13 @@ fpsetmask(mask)
 
 	__asm("ld %0,%%fsr" : : "m" (*&new));
 
-	return (old >> 23) & 0x1f;
+	old = (old >> 23) & 0x1f;
+
+#ifdef EXCEPTIONS_WITH_SOFTFLOAT
+	/* update softfloat mask as well */
+	old |= _softfloat_float_exception_mask;
+	_softfloat_float_exception_mask = mask;
+#endif
+
+	return old;
 }
