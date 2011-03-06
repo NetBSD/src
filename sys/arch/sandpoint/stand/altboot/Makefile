@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/02/26 20:11:24 phx Exp $
+#	$NetBSD: Makefile,v 1.9 2011/03/06 13:55:12 phx Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -6,8 +6,8 @@ PROG=		altboot
 FILES+=		${PROG}.bin ${PROG}.img
 NOMAN=		# defined
 SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c nif.c
-SRCS+=		fxp.c tlp.c rge.c skg.c dsk.c pciide.c siisata.c printf.c
-SRCS+=		vers.c
+SRCS+=		fxp.c tlp.c rge.c skg.c stg.c dsk.c pciide.c siisata.c
+SRCS+=		printf.c vers.c
 CLEANFILES+=	vers.c ${PROG} ${PROG}.bin ${PROG}.img
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith

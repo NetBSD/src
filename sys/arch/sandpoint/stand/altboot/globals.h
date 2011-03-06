@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.6 2011/02/14 06:21:29 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.7 2011/03/06 13:55:12 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -88,6 +88,7 @@ void  pcicfgwrite(unsigned, int, unsigned);
 #define PCI_CLASS_REG			0x08
 #define  PCI_CLASS_PPB			0x0604
 #define  PCI_CLASS_ETH			0x0200
+#define  PCI_CLASS_SCSI			0x0100
 #define  PCI_CLASS_IDE			0x0101
 #define  PCI_CLASS_RAID			0x0104
 #define  PCI_CLASS_SATA			0x0106
@@ -138,6 +139,7 @@ NIF_DECL(fxp);
 NIF_DECL(tlp);
 NIF_DECL(rge);
 NIF_DECL(skg);
+NIF_DECL(stg);
 
 /* DSK support */
 int dskdv_init(void *);
@@ -146,6 +148,13 @@ int dsk_open(struct open_file *, ...);
 int dsk_close(struct open_file *);
 int dsk_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 struct fs_ops *dsk_fsops(struct open_file *);
+
+#define DSK_DECL(xxx) \
+    int xxx ## _match(unsigned, void *); \
+    void * xxx ## _init(unsigned, void *)
+
+DSK_DECL(pciide);
+DSK_DECL(siisata);
 
 /* status */
 #define ATA_STS_BUSY		0x80
