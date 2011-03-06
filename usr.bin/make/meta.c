@@ -1091,7 +1091,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    ln = Lst_Succ(ln);
 		}
 	    } else if (strcmp(buf, "CWD") == 0) {
-		    if (strcmp(p, curdir) != 0) {
+		    if (strcmp(p, cwd) != 0) {
 		    if (DEBUG(META))
 			fprintf(debug_file, "%s: %d: the current working directory has changed from '%s' to '%s'\n", fname, lineno, p, curdir);
 		    oodate = TRUE;
