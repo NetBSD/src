@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.316 2011/03/04 04:48:40 jruoho Exp $
+# $NetBSD: GENERIC,v 1.317 2011/03/06 17:08:19 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.316 $"
+#ident 		"GENERIC-$Revision: 1.317 $"
 
 maxusers	64		# estimated number of users
 
@@ -160,7 +160,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	NILFS		# experimental - NTT's NiLFS(2)
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: quota.1,v 1.14 2003/08/07 11:15:34 agc Exp $
+.\"	$NetBSD: quota.1,v 1.15 2011/03/06 17:08:42 bouyer Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,17 +40,29 @@
 .Nd display disk usage and limits
 .Sh SYNOPSIS
 .Nm
+.Op Fl D
+.Op Fl h
 .Op Fl g
 .Op Fl u
 .Op Fl v | Fl q
 .Nm
+.Op Fl D
+.Op Fl h
 .Op Fl u
 .Op Fl v | Fl q
 .Ar user
 .Nm
+.Op Fl D
+.Op Fl h
 .Op Fl g
 .Op Fl v | Fl q
 .Ar group
+.Nm
+.Fl d
+.Op Fl D
+.Op Fl h
+.Op Fl g
+.Op Fl v | Fl q
 .Sh DESCRIPTION
 .Nm
 displays users' disk usage and limits.
@@ -59,6 +71,8 @@ By default only the user quotas are printed.
 Options:
 .Pp
 .Bl -tag -width Ds
+.It Fl h
+Numbers are displayed in a human readable format.
 .It Fl g
 Print group quotas for the group
 of which the user is a member.
@@ -73,6 +87,11 @@ where no storage is allocated.
 Print a more terse message,
 containing only information
 on filesystems where usage is over quota.
+.It Fl d
+Query the kernel for default user or group quota instead of a specific
+user or group
+.It Fl D
+Debug: print plist sent to and received from kernel.
 .El
 .Pp
 Specifying both
@@ -93,6 +112,10 @@ flag and optional
 .Ar group
 argument to view only the limits of groups of which they are members.
 .Pp
+Only the super-user may use the
+.Fl d
+flag.
+.Pp
 The
 .Fl q
 flag takes precedence over the
@@ -108,23 +131,10 @@ it will attempt to contact the
 daemon on the
 .Em NFS
 server.
-For
-.Em FFS
-filesystems, quotas must be turned on in
-.Pa /etc/fstab .
 If
 .Nm
 exits with a non-zero status, one or more filesystems
 are over quota.
-.Sh FILES
-.Bl -tag -width quota.group -compact
-.It Pa quota.user
-located at the filesystem root with user quotas
-.It Pa quota.group
-located at the filesystem root with group quotas
-.It Pa /etc/fstab
-to find filesystem names and locations
-.El
 .Sh SEE ALSO
 .Xr quotactl 2 ,
 .Xr fstab 5 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.23 2009/04/18 08:20:41 lukem Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.24 2011/03/06 17:08:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.23 2009/04/18 08:20:41 lukem Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.24 2011/03/06 17:08:43 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,11 @@ __RCSID("$NetBSD: quotaon.c,v 1.23 2009/04/18 08:20:41 lukem Exp $");
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/mount.h>
-#include <ufs/ufs/quota.h>
+
+#include <ufs/ufs/quota2_prop.h>
+#include <ufs/ufs/quota1.h>
+#include <sys/quota.h>
+
 
 #include <err.h>
 #include <fstab.h>
@@ -168,27 +172,78 @@ quotaonoff(fs, offmode, type, qfpathname)
 	int offmode, type;
 	char *qfpathname;
 {
+	const char *mode = (offmode == 1) ? "off" : "on";
+	prop_dictionary_t dict, data, cmd;
+	prop_array_t cmds, datas;
+	struct plistref pref;
+	int error;
+	int8_t error8;
+
+	dict = quota2_prop_create();
+	cmds = prop_array_create();
+	datas = prop_array_create();
 
 	if (strcmp(fs->fs_file, "/") && readonly(fs))
 		return (1);
+
+	if (dict == NULL || cmds == NULL || datas == NULL)
+		errx(1, "can't allocate proplist");
+
 	if (offmode) {
-		if (quotactl(fs->fs_file, QCMD(Q_QUOTAOFF, type), 0, 0) < 0) {
-			warn("%s", fs->fs_file);
-			return (1);
-		}
-		if (vflag)
-			printf("%s: %s quotas turned off\n",
-			    fs->fs_file, qfextension[type]);
-		return (0);
+		if (!quota2_prop_add_command(cmds, "quotaoff",
+		    qfextension[type], datas))
+			err(1, "prop_add_command");
+	} else {
+		data = prop_dictionary_create();
+		if (data == NULL)
+			errx(1, "can't allocate proplist");
+		if (!prop_dictionary_set_cstring(data, "quotafile", 
+		    qfpathname))
+			err(1, "prop_dictionary_set(quotafile)");
+		if (!prop_array_add_and_rel(datas, data))
+			err(1, "prop_array_add(data)");
+		if (!quota2_prop_add_command(cmds, "quotaon",
+		    qfextension[type], datas))
+			err(1, "prop_add_command");
 	}
-	if (quotactl(fs->fs_file, QCMD(Q_QUOTAON, type), 0, qfpathname) < 0) {
-		warn("%s quotas using %s on %s",
-		    qfextension[type], qfpathname, fs->fs_file);
-		return (1);
+	if (!prop_dictionary_set(dict, "commands", cmds))
+		err(1, "prop_dictionary_set(command)");
+
+	if (!prop_dictionary_send_syscall(dict, &pref))
+		err(1, "prop_dictionary_send_syscall");
+	prop_object_release(dict);
+
+	if (quotactl(fs->fs_file, &pref) != 0) {
+		warn("quotactl(%s)", fs->fs_file);
+		return(1);
 	}
-	if (vflag)
-		printf("%s: %s quotas turned on\n", fs->fs_file,
-		    qfextension[type]);
+
+	if ((error = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
+		errx(1, "prop_dictionary_recv_syscall: %s\n",
+		    strerror(error));
+	}
+
+	if ((error = quota2_get_cmds(dict, &cmds)) != 0) {
+		errx(1, "quota2_get_cmds: %s\n", strerror(error));
+	}
+	/* only one command, no need to iter */
+	cmd = prop_array_get(cmds, 0);
+	if (cmd == NULL)
+		err(1, "prop_array_get(cmd)");
+
+	if (!prop_dictionary_get_int8(cmd, "return", &error8))
+		err(1, "prop_get(return)");
+
+	if (error8) {
+		warnx("quota%s for %s: %s", mode, fs->fs_file,
+		    strerror(error8));
+		return 1;
+	}
+
+	if (vflag) {
+		printf("%s: %s quotas turned %s\n",
+		    fs->fs_file, qfextension[type], mode);
+	}
 	return (0);
 }
 

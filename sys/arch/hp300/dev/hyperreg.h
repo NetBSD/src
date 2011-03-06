@@ -1,5 +1,4 @@
-/*	$OpenBSD: hyperreg.h,v 1.3 2005/01/24 21:36:39 miod Exp $	*/
-/*	$NetBSD: hyperreg.h,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: hyperreg.h,v 1.3 2011/03/06 17:08:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
