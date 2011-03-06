@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2430,v 1.13 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: TISDP2430,v 1.14 2011/03/06 02:22:27 jakllsch Exp $
 #
 #	TISDP2430 -- TI OMAP 2430 Eval Board Kernel
 #
@@ -144,8 +144,8 @@ options 	SYMTAB_SPACE=300000
 
 ## USB Debugging options
 options USB_DEBUG
-options OHCI_DEBUG 
-options UHUB_DEBUG 
+options OHCI_DEBUG
+options UHUB_DEBUG
 
 
 # Valid options for BOOT_ARGS:
@@ -177,12 +177,11 @@ options		MEMSIZE=128
 L3i0		at mainbus?
 
 # OBIO
-obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE 
+obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE
 obio1		at mainbus? base 0x49000000 size 0x0800000	# L4 WAKEUP
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6e000000
-
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x4900c000 size 0x1000 intrbase 0

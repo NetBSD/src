@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.37 2010/12/16 12:49:19 uebayasi Exp $
+#	$NetBSD: NAPPI,v 1.38 2011/03/06 02:22:27 jakllsch Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -159,7 +159,7 @@ pci0		at ixpio? bus ?
 #
 # Networking devices
 #
-fxp*	at pci? dev ? function ?	# Intel 82559ER Fast Ethernet LAN Controller 
+fxp*	at pci? dev ? function ?	# Intel 82559ER Fast Ethernet LAN Controller
 
 # MII/PHY support
 inphy*  at mii? phy ?                   # Intel 82555 PHYs

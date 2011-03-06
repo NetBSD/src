@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.65 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.66 2011/03/06 02:22:27 jakllsch Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -158,7 +158,7 @@ cpu0		at mainbus?
 obio*		at mainbus?
 
 # On-board 16550 UART
-com0		at obio? addr 0xfe810000 xint3 3   
+com0		at obio? addr 0xfe810000 xint3 3
 
 # i80312 Companion I/O support
 iopxs*		at mainbus?

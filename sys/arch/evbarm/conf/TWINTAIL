@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.38 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: TWINTAIL,v 1.39 2011/03/06 02:22:27 jakllsch Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -194,7 +194,7 @@ options G4250_LCD_TOSHIBA_LTM035
 kmkbd* at obio?
 wskbd* at kmkbd? # console ?
 
-# GB-225 option board 
+# GB-225 option board
 opio0 	at obio?  intr 2
 
 # USB host
