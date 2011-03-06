@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/05/22 02:41:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/03/06 04:10:55 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -6,15 +6,62 @@ LIB=	Xi
 .PATH:	${X11SRCDIR.${LIB}}/src
 .PATH:	${X11SRCDIR.${LIB}}/include/X11/extensions
 
-SRCS=	XAllowDv.c XChgDCtl.c XChgFCtl.c XChgKMap.c XChgKbd.c \
-	XChgPnt.c XChgProp.c XCloseDev.c XDevBell.c XExtInt.c \
-	XExtToWire.c XGMotion.c XGetBMap.c XGetDCtl.c XGetFCtl.c \
-	XGetKMap.c XGetMMap.c XGetProp.c XGetVers.c XGrDvBut.c \
-	XGrDvKey.c XGrabDev.c XGtFocus.c XGtSelect.c XListDev.c \
-	XOpenDev.c XQueryDv.c XSelect.c XSetBMap.c XSetDVal.c \
-	XSetMMap.c XSetMode.c XSndExEv.c XStFocus.c XUngrDev.c \
-	XUngrDvB.c XUngrDvK.c XChDProp.c XGetDProp.c XDelDProp.c \
-	XListDProp.c
+SRCS=	XIAllowEvents.c \
+	XIGrabDevice.c \
+	XIQueryVersion.c \
+	XIQueryDevice.c \
+	XISetDevFocus.c \
+	XIGetDevFocus.c \
+	XIPassiveGrab.c \
+	XIProperties.c \
+	XISelEv.c \
+	XIWarpPointer.c \
+	XIHierarchy.c \
+	XIDefineCursor.c \
+	XIQueryPointer.c
+SRCS+=	XAllowDv.c \
+	XChDProp.c \
+	XChgDCtl.c \
+	XChgFCtl.c \
+	XChgKbd.c \
+	XChgKMap.c \
+	XChgPnt.c \
+	XChgProp.c \
+	XCloseDev.c \
+	XDelDProp.c \
+	XDevBell.c \
+	XExtToWire.c \
+	XGetBMap.c \
+	XGetCPtr.c \
+	XGetDCtl.c \
+	XGetDProp.c \
+	XGetFCtl.c \
+	XGetKMap.c \
+	XGetMMap.c \
+	XGetProp.c \
+	XGetVers.c \
+	XGMotion.c \
+	XGrabDev.c \
+	XGrDvBut.c \
+	XGrDvKey.c \
+	XGtFocus.c \
+	XGtSelect.c \
+	XListDev.c \
+	XListDProp.c \
+	XOpenDev.c \
+	XQueryDv.c \
+	XSelect.c \
+	XSetBMap.c \
+	XSetCPtr.c \
+	XSetDVal.c \
+	XSetMMap.c \
+	XSetMode.c \
+	XSndExEv.c \
+	XStFocus.c \
+	XUngrDev.c \
+	XUngrDvB.c \
+	XUngrDvK.c \
+	XExtInt.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
