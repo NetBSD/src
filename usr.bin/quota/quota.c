@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.34 2011/03/06 17:08:42 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.35 2011/03/06 20:47:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.34 2011/03/06 17:08:42 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.35 2011/03/06 20:47:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,31 +88,28 @@ struct quotause {
 #define	FOUND	0x01
 #define	QUOTA2	0x02
 
-int	alldigits(char *);
-int	callaurpc(char *, int, int, int, xdrproc_t, void *, xdrproc_t, void *);
-int	main(int, char **);
-int	getnfsquota(struct statvfs *, struct fstab *, struct quotause *,
-	    long, int);
-struct quotause	*getprivs(long id, int quotatype);
-void	heading(int, u_long, const char *, const char *);
-void	showgid(gid_t);
-void	showgrpname(const char *);
-void	showquotas(int, u_long, const char *);
-void	showuid(uid_t);
-void	showusrname(const char *);
-void	usage(void);
+static int	alldigits(const char *);
+static int	callaurpc(const char *, rpcprog_t, rpcvers_t, rpcproc_t,
+    xdrproc_t, void *, xdrproc_t, void *);
+static int	getnfsquota(struct statvfs *, struct quotause *, uint32_t, int);
+static struct quotause	*getprivs(uint32_t, int);
+static void	heading(int, uint32_t, const char *, const char *);
+static void	showgid(gid_t);
+static void	showgrpname(const char *);
+static void	showquotas(int, uint32_t, const char *);
+static void	showuid(uid_t);
+static void	showusrname(const char *);
+static void	usage(void) __attribute__((__noreturn__));
 
-int	qflag = 0;
-int	vflag = 0;
-int	hflag = 0;
-int	dflag = 0;
-int	Dflag = 0;
-uid_t	myuid;
+static int	qflag = 0;
+static int	vflag = 0;
+static int	hflag = 0;
+static int	dflag = 0;
+static int	Dflag = 0;
+static uid_t	myuid;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ngroups; 
 	gid_t mygid, gidset[NGROUPS];
@@ -153,16 +150,14 @@ main(argc, argv)
 		uflag++;
 	if (dflag) {
 #if 0
-		if (myuid != 0) {
-			printf("quota: -d: permission denied\n");
-			exit(1);
-		}
+		if (myuid != 0)
+			errx(1, "-d: permission denied");
 #endif
 		if (uflag)
 			showquotas(USRQUOTA, 0, "");
 		if (gflag)
 			showquotas(GRPQUOTA, 0, "");
-		exit(0);
+		return 0;
 	}
 	if (argc == 0) {
 		if (uflag)
@@ -181,50 +176,48 @@ main(argc, argv)
 						showgid(gidset[i]);
 			}
 		}
-		exit(0);
+		return 0;
 	}
 	if (uflag && gflag)
 		usage();
 	if (uflag) {
 		for (; argc > 0; argc--, argv++) {
 			if (alldigits(*argv))
-				showuid(atoi(*argv));
+				showuid((uid_t)atoi(*argv));
 			else
 				showusrname(*argv);
 		}
-		exit(0);
+		return 0;
 	}
 	if (gflag) {
 		for (; argc > 0; argc--, argv++) {
 			if (alldigits(*argv))
-				showgid(atoi(*argv));
+				showgid((gid_t)atoi(*argv));
 			else
 				showgrpname(*argv);
 		}
-		exit(0);
+		return 0;
 	}
 	/* NOTREACHED */
-	return (0);
+	return 0;
 }
 
-void
-usage()
+static void
+usage(void)
 {
-
-	fprintf(stderr, "%s\n%s\n%s\n%s\n",
-	    "usage: quota [-Dhguqv]",
-	    "\tquota [-Dhqv] -u username ...",
-	    "\tquota [-Dhqv] -g groupname ...",
-	    "\tquota -d [-Dhguqv]");
+	const char *p = getprogname();
+	fprintf(stderr, "Usage: %s [-Dhguqv]\n"
+	    "\t%s [-Dhqv] -u username ...\n"
+	    "\t%s [-Dhqv] -g groupname ...\n"
+	    "\t%s -d [-Dhguqv]\n", p, p, p, p);
 	exit(1);
 }
 
 /*
  * Print out quotas for a specified user identifier.
  */
-void
-showuid(uid)
-	uid_t uid;
+static void
+showuid(uid_t uid)
 {
 	struct passwd *pwd = getpwuid(uid);
 	const char *name;
@@ -234,7 +227,7 @@ showuid(uid)
 	else
 		name = pwd->pw_name;
 	if (uid != myuid && myuid != 0) {
-		printf("quota: %s (uid %d): permission denied\n", name, uid);
+		warnx("%s (uid %d): permission denied", name, uid);
 		return;
 	}
 	showquotas(USRQUOTA, uid, name);
@@ -243,9 +236,8 @@ showuid(uid)
 /*
  * Print out quotas for a specified user name.
  */
-void
-showusrname(name)
-	const char *name;
+static void
+showusrname(const char *name)
 {
 	struct passwd *pwd = getpwnam(name);
 
@@ -263,9 +255,8 @@ showusrname(name)
 /*
  * Print out quotas for a specified group identifier.
  */
-void
-showgid(gid)
-	gid_t gid;
+static void
+showgid(gid_t gid)
 {
 	struct group *grp = getgrgid(gid);
 	int ngroups;
@@ -298,9 +289,8 @@ showgid(gid)
 /*
  * Print out quotas for a specified group name.
  */
-void
-showgrpname(name)
-	const char *name;
+static void
+showgrpname(const char *name)
 {
 	struct group *grp = getgrnam(name);
 	int ngroups;
@@ -330,17 +320,15 @@ showgrpname(name)
 	showquotas(GRPQUOTA, grp->gr_gid, name);
 }
 
-void
-showquotas(type, id, name)
-	int type;
-	u_long id;
-	const char *name;
+static void
+showquotas(int type, uint32_t id, const char *name)
 {
 	struct quotause *qup;
 	struct quotause *quplist;
 	const char *msgi, *msgb, *nam, *timemsg;
 	int lines = 0;
 	static time_t now;
+	char b0[20], b1[20], b2[20], b3[20];
 
 	if (now == 0)
 		time(&now);
@@ -404,43 +392,48 @@ showquotas(type, id, name)
 				nam = "";
 			} 
 			if (msgb)
-				timemsg = timeprt(now, 
-				    qup->q2e.q2e_val[QL_BLOCK].q2v_time, 8);
+				timemsg = timeprt(b0, 9, now,
+				    qup->q2e.q2e_val[QL_BLOCK].q2v_time);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
-				timemsg = timeprt(0,
-				    qup->q2e.q2e_val[QL_BLOCK].q2v_grace, 8);
+				timemsg = timeprt(b0, 9, 0,
+				    qup->q2e.q2e_val[QL_BLOCK].q2v_grace);
 			else
 				timemsg = "";
 				
-			printf("%12s%9s%c%8s%9s%8s"
-			    , nam
-			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_cur
-				,HN_B, hflag, 8)
-			    , (msgb == NULL) ? ' ' : '*'
-			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit
-				, HN_B, hflag, 8)
-			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit
-				, HN_B, hflag, 8)
-			    , timemsg);
+			printf("%12s%9s%c%8s%9s%8s",
+			    nam,
+			    intprt(b1, 9,
+			    qup->q2e.q2e_val[QL_BLOCK].q2v_cur,
+			    HN_B, hflag),
+			    (msgb == NULL) ? ' ' : '*',
+			    intprt(b2, 9,
+			    qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit,
+			    HN_B, hflag),
+			    intprt(b3, 9,
+			    qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit,
+			    HN_B, hflag),
+			    timemsg);
 
 			if (msgi)
-				timemsg = timeprt(now, 
-				    qup->q2e.q2e_val[QL_FILE].q2v_time, 8);
+				timemsg = timeprt(b0, 9, now, 
+				    qup->q2e.q2e_val[QL_FILE].q2v_time);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
-				timemsg = timeprt(0,
-				    qup->q2e.q2e_val[QL_FILE].q2v_grace, 8);
+				timemsg = timeprt(b0, 9, 0,
+				    qup->q2e.q2e_val[QL_FILE].q2v_grace);
 			else
 				timemsg = "";
 				
-			printf("%8s%c%7s%8s%8s\n"
-			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_cur
-				, 0, hflag, 7)
-			    , (msgi == NULL) ? ' ' : '*'
-			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_softlimit
-				, 0, hflag, 7)
-			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_hardlimit
-				, 0, hflag, 7)
-			    , timemsg);
+			printf("%8s%c%7s%8s%8s\n",
+			    intprt(b1, 8,
+			    qup->q2e.q2e_val[QL_FILE].q2v_cur, 0, hflag),
+			    (msgi == NULL) ? ' ' : '*',
+			    intprt(b2, 8,
+			    qup->q2e.q2e_val[QL_FILE].q2v_softlimit,
+			    0, hflag),
+			    intprt(b3, 8,
+			    qup->q2e.q2e_val[QL_FILE].q2v_hardlimit,
+			    0, hflag),
+			    timemsg);
 			continue;
 		}
 	}
@@ -448,19 +441,16 @@ showquotas(type, id, name)
 		heading(type, id, name, "none");
 }
 
-void
-heading(type, id, name, tag)
-	int type;
-	u_long id;
-	const char *name, *tag;
+static void
+heading(int type, uint32_t id, const char *name, const char *tag)
 {
 	if (dflag)
 		printf("Default %s disk quotas: %s\n",
 		    qfextension[type], tag);
 	else
-		printf("Disk quotas for %s %s (%cid %ld): %s\n",
+		printf("Disk quotas for %s %s (%cid %u): %s\n",
 		    qfextension[type], name, *qfextension[type],
-		    (u_long)id, tag);
+		    id, tag);
 
 	if (!qflag && tag[0] == '\0') {
 		printf("%12s%9s %8s%9s%8s%8s %7s%8s%8s\n"
@@ -480,10 +470,8 @@ heading(type, id, name, tag)
 /*
  * Collect the requested quota information.
  */
-struct quotause *
-getprivs(id, quotatype)
-	long id;
-	int quotatype;
+static struct quotause *
+getprivs(uint32_t id, int quotatype)
 {
 	struct quotause *qup, *quptail;
 	struct quotause *quphead;
@@ -498,14 +486,13 @@ getprivs(id, quotatype)
 		errx(2, "no filesystems mounted!");
 	for (i = 0; i < nfst; i++) {
 		if (qup == NULL) {
-			if ((qup =
-			    (struct quotause *)malloc(sizeof *qup)) == NULL)
-				errx(2, "out of memory");
+			if ((qup = malloc(sizeof *qup)) == NULL)
+				err(1, "out of memory");
 		}
 		if (strncmp(fst[i].f_fstypename, "nfs", 
 		    sizeof(fst[i].f_fstypename)) == 0) {
 			version = 0;
-			if (getnfsquota(&fst[i], NULL, qup, id, quotatype) == 0)
+			if (getnfsquota(&fst[i], qup, id, quotatype) == 0)
 				continue;
 		} else if ((fst[i].f_flag & ST_QUOTA) != 0) {
 			if (getvfsquota(fst[i].f_mntonname, &qup->q2e, &version,
@@ -525,18 +512,13 @@ getprivs(id, quotatype)
 		quptail->next = 0;
 		qup = NULL;
 	}
-	if (qup)
-		free(qup);
-	return (quphead);
+	free(qup);
+	return quphead;
 }
 
-int
-getnfsquota(fst, fs, qup, id, quotatype)
-	struct statvfs *fst;
-	struct fstab *fs; 
-	struct quotause *qup;
-	long id;
-	int quotatype;
+static int
+getnfsquota(struct statvfs *fst, struct quotause *qup,
+    uint32_t id, int quotatype)
 {
 	struct getquota_args gq_args;
 	struct ext_getquota_args ext_gq_args;
@@ -548,7 +530,7 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	int ret;
 
 	if (fst->f_flag & MNT_LOCAL)
-		return (0);
+		return 0;
 
 	/*
 	 * must be some form of "hostname:/path"
@@ -556,13 +538,13 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	cp = strchr(fst->f_mntfromname, ':');
 	if (cp == NULL) {
 		warnx("cannot find hostname for %s", fst->f_mntfromname);
-		return (0);
+		return 0;
 	}
  
 	*cp = '\0';
 	if (*(cp+1) != '/') {
 		*cp = ':';
-		return (0);
+		return 0;
 	}
 
 	ext_gq_args.gqa_pathp = cp + 1;
@@ -575,18 +557,18 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	if (ret == RPC_PROGVERSMISMATCH) {
 		if (quotatype != USRQUOTA) {
 			*cp = ':';
-			return (0);
+			return 0;
 		}
 		/* try RQUOTAVERS */
 		gq_args.gqa_pathp = cp + 1;
 		gq_args.gqa_uid = id;
 		ret = callaurpc(fst->f_mntfromname, RQUOTAPROG, RQUOTAVERS,
 		    RQUOTAPROC_GETQUOTA, xdr_getquota_args, &gq_args,
-			    xdr_getquota_rslt, &gq_rslt);
+		    xdr_getquota_rslt, &gq_rslt);
 	}
 	if (ret != RPC_SUCCESS) {
 		*cp = ':';
-		return (0);
+		return 0;
 	}
 
 	switch (gq_rslt.status) {
@@ -597,7 +579,8 @@ getnfsquota(fst, fs, qup, id, quotatype)
 		break;
 	case Q_OK:
 		gettimeofday(&tv, NULL);
-			/* blocks*/
+
+		/* blocks*/
 		q2e->q2e_val[QL_BLOCK].q2v_hardlimit =
 		dqblk.dqb_bhardlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
@@ -608,37 +591,34 @@ getnfsquota(fst, fs, qup, id, quotatype)
 		dqblk.dqb_curblocks =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-			/* inodes */
+
+		/* inodes */
 		dqblk.dqb_ihardlimit =
-			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit;
+		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit;
 		dqblk.dqb_isoftlimit =
-			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit;
+		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit;
 		dqblk.dqb_curinodes =
-			gq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles;
-			/* grace times */
-		dqblk.dqb_btime =
-		    tv.tv_sec + gq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft;
-		dqblk.dqb_itime =
-		    tv.tv_sec + gq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft;
+		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles;
+
+		/* grace times */
+		dqblk.dqb_btime = (int)(tv.tv_sec +
+		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft);
+		dqblk.dqb_itime = (int)(tv.tv_sec +
+		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft);
 		dqblk2q2e(&dqblk, q2e);
 		*cp = ':';
-		return (1);
+		return 1;
 	default:
 		warnx("bad rpc result, host: %s", fst->f_mntfromname);
 		break;
 	}
 	*cp = ':';
-	return (0);
+	return 0;
 }
  
-int
-callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
-	char *host;
-	int prognum, versnum, procnum;
-	xdrproc_t inproc;
-	void *in;
-	xdrproc_t outproc;
-	void *out;
+static int
+callaurpc(const char *host, rpcprog_t prognum, rpcvers_t versnum,
+    rpcproc_t procnum, xdrproc_t inproc, void *in, xdrproc_t outproc, void *out)
 {
 	struct sockaddr_in server_addr;
 	enum clnt_stat clnt_stat;
@@ -649,7 +629,7 @@ callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	int sock = RPC_ANYSOCK;
  
 	if ((hp = gethostbyname(host)) == NULL)
-		return ((int) RPC_UNKNOWNHOST);
+		return (int) RPC_UNKNOWNHOST;
 	timeout.tv_usec = 0;
 	timeout.tv_sec = 6;
 	memmove(&server_addr.sin_addr, hp->h_addr, hp->h_length);
@@ -658,7 +638,7 @@ callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 
 	if ((client = clntudp_create(&server_addr, prognum,
 	    versnum, timeout, &sock)) == NULL)
-		return ((int) rpc_createerr.cf_stat);
+		return (int) rpc_createerr.cf_stat;
 
 	client->cl_auth = authunix_create_default();
 	tottimeout.tv_sec = 25;
@@ -666,19 +646,18 @@ callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	clnt_stat = clnt_call(client, procnum, inproc, in,
 	    outproc, out, tottimeout);
  
-	return ((int) clnt_stat);
+	return (int) clnt_stat;
 }
 
-int
-alldigits(s)
-	char *s;
+static int
+alldigits(const char *s)
 {
-	int c;
+	unsigned char c;
 
 	c = *s++;
 	do {
 		if (!isdigit(c))
-			return (0);
+			return 0;
 	} while ((c = *s++) != 0);
-	return (1);
+	return 1;
 }
