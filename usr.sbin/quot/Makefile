@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2009/04/22 15:23:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2011/03/06 23:41:47 christos Exp $
 
-WARNS?=	3	# XXX -Wsign-compare
+WARNS?=	4
 
 PROG=	quot
 MAN=	quot.8
