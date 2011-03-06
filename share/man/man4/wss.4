@@ -1,4 +1,4 @@
-.\"   $NetBSD: wss.4,v 1.19 2005/06/22 04:30:08 kent Exp $
+.\"   $NetBSD: wss.4,v 1.20 2011/03/06 17:39:05 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
 .\" All rights reserved.
@@ -53,11 +53,13 @@ the DMA channel may be set to 0, 1, or 3.
 .Pp
 The device
 .Cm flags
-must have bit 0 (value 1) set to enable the MAD16 support.  This is to
+must have bit 0 (value 1) set to enable the MAD16 support.
+This is to
 avoid potential conflicts with other devices when probing the MAD16
 because it requires use of extra I/O ports not in the base port range.
 Chips needing this flag include the OPTi 82C928, 82C929, 82C831, and
-the OAK OTI-601D.  Setting bit 1 (value 2) in
+the OAK OTI-601D.
+Setting bit 1 (value 2) in
 .Cm flags
 disables the joystick port on MAD16 hardware.
 .Sh SEE ALSO
