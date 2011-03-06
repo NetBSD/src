@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.27 2011/03/06 17:08:15 bouyer Exp $
+.\"	$NetBSD: quotactl.2,v 1.28 2011/03/06 17:19:25 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm quotactl
-.Nd manipulate filesystem quotas
+.Nd manipulate file system quotas
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -48,32 +48,33 @@
 .Sh DESCRIPTION
 The
 .Fn quotactl
-call manipulates filesystem quotas.
-A quota control command described by 
+call manipulates file system quotas.
+A quota control command described by
 .Fa "struct plistref *"
 operates on the given filename
 .Fa path .
 .Pp
 The top-level object of the property list sent to the kernel is a dictionary.
-It holds an integer with key "interface version", which must be 1 at this 
+It holds an integer with key "interface version", which must be 1 at this
 time.
 The key "commands" holds an array of dictionaries, each dictionary
 describe a command.
 .Pp
 A command dictionary has the following keys:
 .Bl -tag -width command
-.It Dv command 
+.It Dv command
 A string describing the command to execute.
 .It Dv data
 An array of arguments to the command.
 .It Dv type
-A string describing the type of quota to address. At this time this can
+A string describing the type of quota to address.
+At this time this can
 be either "user" or "group".
 .El
 .Pp
 The data array is an array of dictionaries, the dictionary structure
 depends on the command.
-If the comman takes no arguments, the array must be present and empty.
+If the command takes no arguments, the array must be present and empty.
 A dictionary describing a quota entry is common to many commands arguments
 or replies.
 It has the following keys:
@@ -83,11 +84,11 @@ A dictionary describing quota values and limits for block usage.
 .It Dv file
 A dictionary describing quota values and limits for inode usage.
 .It Dv id
-either an unigned integer, or the string "default".
+either an unsigned integer, or the string "default".
 If this key is an integer, the value is the user or group id this quota entry
 belongs to.
 If this key is the string "default", this quota entry describe the
-default quotas for this filesystem.
+default quotas for this file system.
 .El
 .Pp
 The block or file dictionaries have the following structures:
@@ -96,10 +97,14 @@ The block or file dictionaries have the following structures:
 an unsigned integer which contains the current usage.
 .It Dv soft
 unsigned integer containing the soft limit.
-The value defined by the macro UQUAD_MAX means there is no limit.
+The value defined by the macro
+.Dv UQUAD_MAX
+means there is no limit.
 .It Dv hard
 unsigned integer containing the hard limit.
-The value defined by the macro UQUAD_MAX means there is no limit.
+The value defined by the macro
+.Dv UQUAD_MAX
+means there is no limit.
 .It Dv grace time
 integer, the grace delay in seconds which should be applied when usage
 goes over the soft limit.
@@ -110,20 +115,20 @@ This key is only valid when usage is over the soft limit.
 .Pp
 On return the "struct plistref *" contains an updated plist.
 It has the same structure as the plist sent to the kernel.
-The command dictionary gains an additionnal key "return", and integer holding
-an errno which is the status of the comamnd.
+The command dictionary gains an additional key "return", and integer holding
+an errno which is the status of the command.
 The data array is updated with replies from the command.
 .Pp
 Commands are:
 .Bl -tag -width "get version"
 .It Dv "get version"
-get the kernel quota version implementation for the specified filesystem and
+get the kernel quota version implementation for the specified file system and
 type.
 The data array in the reply has a single dictionary, which has a single
 integer key "version".
 At this time version can be "1" (the legacy quota implementation, with usages
 and limits stored in an external file) or "2" (the new quota implementation,
-where usages and limits are integrated in the filesystem metadatas).
+where usages and limits are integrated in the file system metadata).
 .It Dv "get"
 Get a quota entry for the specified id.
 The command argument is one or more "id" keys.
@@ -131,7 +136,7 @@ The command reply is the requested quota entries, as described above.
 .It Dv "getall"
 Get all quota entries (kernel quota version 2 only).
 This command takes no arguments, the reply is all the existing quota entries
-for this filesystem and type.
+for this file system and type.
 .It Dv "set"
 create or update quota limits.
 Argument is one or more quota entries holding the updated quota limits.
@@ -143,13 +148,13 @@ file usage is 0, or limits are reverted to the default values otherwise.
 The command argument is one or more "id" keys.
 There is no reply.
 .It Dv quotaon
-enable the specifed quota type on the specified filesystem (kernel quota
+enable the specified quota type on the specified file system (kernel quota
 version 1 only).
 Argument is a string with key "quotafile", which contains the path
 to the external file holding usages and limits.
 There is no reply.
 .It Dv quotaoff
-disable the specifed quota type on the specified filesystem (kernel quota
+disable the specified quota type on the specified file system (kernel quota
 version 1 only).
 There is no arguments and no replies.
 .El
@@ -158,29 +163,6 @@ A successful call returns 0,
 otherwise the value \-1 is returned and the global variable
 .Va errno
 indicates the reason for the failure.
-.Sh ERRORS
-A
-.Fn quotactl
-call will fail if:
-.Bl -tag -width Er
-.It Bq Er EOPNOTSUPP
-Either the kernel has not been compiled with the
-.Dv QUOTA
-or
-.Dv QUOTA2
-options, or the mounted filesystem doesn't support quota.
-.It Bq Er ENOMEM
-Memory could not be allocated to handle the plist.
-.It Bq Er EINVAL
-The plist is invalid.
-.It Bq Er EFAULT
-.Fa struct plistref *
-points outside the process's allocated address space, or
-an invalid
-.Fa addr
-was supplied; the associated structure could not be copied in or out
-of the kernel.
-.El
 .Sh FILES
 Example of usage of the
 .Nm
@@ -195,10 +177,33 @@ source files:
 .It src/usr.sbin/quotaon/quotaon.c
 .It src/sys/ufs/ufs/quota2_prop.c
 .El
+.Sh ERRORS
+A
+.Fn quotactl
+call will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+.Fa struct plistref *
+points outside the process's allocated address space, or
+an invalid
+.Fa addr
+was supplied; the associated structure could not be copied in or out
+of the kernel.
+.It Bq Er EINVAL
+The plist is invalid.
+.It Bq Er ENOMEM
+Memory could not be allocated to handle the plist.
+.It Bq Er EOPNOTSUPP
+Either the kernel has not been compiled with the
+.Dv QUOTA
+or
+.Dv QUOTA2
+options, or the mounted file system doesn't support quota.
+.El
 .Sh SEE ALSO
 .Xr quota 1 ,
-.Xr proplib 3 ,
 .Xr prop_send_syscall 3 ,
+.Xr proplib 3 ,
 .Xr fstab 5 ,
 .Xr edquota 8 ,
 .Xr quotacheck 8 ,
