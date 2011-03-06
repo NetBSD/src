@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.39 2011/03/06 17:08:17 bouyer Exp $
+.\"	$NetBSD: tunefs.8,v 1.40 2011/03/06 17:21:08 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,12 +136,13 @@ or
 enable or disable a quota.
 .Ar quota
 can be one of
-.Li user,
-.Li group,
+.Li user ,
+.Li group ,
 .Li nouser
 or
 .Li nogroup
-to enable or disable the specified quota type. Multiple
+to enable or disable the specified quota type.
+Multiple
 .Fl q
 can be used to enable/disable all types at once.
 .Pp
