@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: siisata.c,v 1.3 2011/03/06 13:55:12 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,9 +36,6 @@
 #include "globals.h"
 
 static uint32_t pciiobase = PCI_XIOBASE;
-
-int siisata_match(unsigned, void *);
-void *siisata_init(unsigned, void *);
 
 int
 siisata_match(unsigned tag, void *data)
