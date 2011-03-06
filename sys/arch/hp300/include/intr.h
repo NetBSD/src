@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.33 2009/04/09 10:29:09 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.34 2011/03/06 14:51:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -65,9 +65,9 @@
 extern int idepth;
 
 static inline bool
-cpu_intr_p(void) 
+cpu_intr_p(void)
 {
- 
+
 	return idepth != 0;
 }
 
