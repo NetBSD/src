@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.29 2011/02/24 10:29:04 pooka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.30 2011/03/06 17:08:12 bouyer Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -213,6 +213,8 @@
 ./usr/tests/rump/rumpkern/h_server
 ./usr/tests/rump/rumpvfs
 ./usr/tests/sbin
+./usr/tests/sbin/fsck_ffs
+./usr/tests/sbin/newfs
 ./usr/tests/sbin/resize_ffs
 ./usr/tests/sys
 ./usr/tests/sys/rc

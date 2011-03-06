@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.60 2011/03/06 02:18:36 jakllsch Exp $
+#	$NetBSD: INTEGRATOR,v 1.61 2011/03/06 17:08:22 bouyer Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -45,7 +45,8 @@ file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
