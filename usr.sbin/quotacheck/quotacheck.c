@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.42 2011/03/06 23:07:23 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.43 2011/03/06 23:13:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.42 2011/03/06 23:07:23 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.43 2011/03/06 23:13:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,11 +225,11 @@ main(int argc, char *argv[])
 		i = 0;
 		while ((fs = getfsent()) != NULL) {
 			if (needchk(fs))
-				i=1;
+				i = 1;
 		}
 		endfsent();
 		if (!i)	/* No filesystems with quotas */
-			exit(0);
+			return 0;
 	}
 
 	if (gflag) {
@@ -261,24 +261,21 @@ main(int argc, char *argv[])
 	endfsent();
 	for (i = 0; i < argc; i++)
 		if ((done & (1 << i)) == 0)
-			fprintf(stderr, "%s not found in %s\n",
-				argv[i], FSTAB);
-	exit(errs);
+			warnx("%s not found in %s\n", argv[i], FSTAB);
+	return errs;
 }
 
 static void
-usage()
+usage(void)
 {
-
-	(void)fprintf(stderr,
-	    "usage:\t%s -a [-gquv] [-l maxparallel]\n\t%s [-gquv] filesys ...\n", getprogname(),
-	    getprogname());
+	const char *p = getprogname();
+	(void)fprintf(stderr, "Usage: %s -a [-gquv] [-l <maxparallel>]\n"
+	    "\t%s [-gquv] <filesys> ...\n", p, p);
 	exit(1);
 }
 
 static void *
-needchk(fs)
-	struct fstab *fs;
+needchk(struct fstab *fs)
 {
 	struct quotaname *qnp;
 	char qfnp[MAXPATHLEN];
@@ -303,16 +300,14 @@ needchk(fs)
 	return (NULL);
 }
 
-off_t sblock_try[] = SBLOCKSEARCH;
+static off_t sblock_try[] = SBLOCKSEARCH;
 
 /*
  * Scan the specified filesystem to check quota(s) present on it.
  */
 static int
-chkquota(type, fsname, mntpt, v, pid)
-	const char *type, *fsname, *mntpt;
-	void *v;
-	pid_t *pid;
+chkquota(const char *type, const char *fsname, const char *mntpt, void *v,
+    pid_t *pid)
 {
 	struct quotaname *qnp = v;
 	struct fileusage *fup;
@@ -468,9 +463,7 @@ chkquota(type, fsname, mntpt, v, pid)
  * Update a specified quota file.
  */
 static int
-update(fsname, quotafile, type)
-	const char *fsname, *quotafile;
-	int type;
+update(const char *fsname, const char *quotafile, int type)
 {
 	struct fileusage *fup;
 	FILE *qfi, *qfo;
@@ -526,13 +519,17 @@ update(fsname, quotafile, type)
 			fup = &zerofileusage;
 
 		nextid = subsequent(id, type);
-		if (nextid > 0 && nextid != id + 1) /* watch out for id == UINT32_MAX */
+		/* watch out for id == UINT32_MAX */
+		if (nextid > 0 && nextid != id + 1)
 			nextid = skipforward(id, nextid, qfi);
 
 		if (got_siginfo) {
-			/* XXX this could try to show percentage through the ID list */
-			fprintf(stderr,
-			    "%s: updating %s quotas for id=%" PRIu32 " (%s)\n", fsname,
+			/*
+			 * XXX this could try to show percentage through
+			 * the ID list
+			 */
+			fprintf(stderr, "%s: updating %s quotas for id=%"
+			    PRIu32 " (%s)\n", fsname,
 			    qfextension[type < MAXQUOTAS ? type : MAXQUOTAS],
 			    id, fup->fu_name);
 			got_siginfo = 0;
@@ -543,7 +540,8 @@ update(fsname, quotafile, type)
 			fup->fu_curblocks = 0;	/* for next filesystem */
 
 			need_seek = 1;
-			if (id == UINT32_MAX || nextid == 0) {	/* infinite loop avoidance (OR do as "nextid < id"?) */
+			/* infinite loop avoidance (OR do as "nextid < id"?) */
+			if (id == UINT32_MAX || nextid == 0) {
 				break;
 			}
 			continue;
@@ -580,33 +578,32 @@ update(fsname, quotafile, type)
 			    SEEK_SET);
 			need_seek = nextid != id + 1;
 		}
-		(void) fwrite((char *)&dqbuf, sizeof(struct dqblk), 1, qfo);
+		(void) fwrite(&dqbuf, sizeof(struct dqblk), 1, qfo);
 
 		fup->fu_curinodes = 0;
 		fup->fu_curblocks = 0;
-		if (id == UINT32_MAX || nextid == 0) {	/* infinite loop avoidance (OR do as "nextid < id"?) */
+		/* infinite loop avoidance (OR do as "nextid < id"?) */
+		if (id == UINT32_MAX || nextid == 0) {
 			break;
 		}
 	}
-	(void) fclose(qfi);
-	(void) fflush(qfo);
+	(void)fclose(qfi);
+	(void)fflush(qfo);
 	if (highid[type] != UINT32_MAX)
-		(void) ftruncate(fileno(qfo),
+		(void)ftruncate(fileno(qfo),
 		    (off_t)((highid[type] + 1) * sizeof(struct dqblk)));
-	(void) fclose(qfo);
-	return (0);
+	(void)fclose(qfo);
+	return 0;
 }
 
-uint32_t
-skipforward(cur, to, qfi)
-	uint32_t cur, to;
-	FILE *qfi;
+static uint32_t
+skipforward(uint32_t cur, uint32_t to, FILE *qfi)
 {
 	struct dqblk dqbuf;
 
 	if (qflag) {
-		(void) fseeko(qfi, (off_t)to * sizeof(struct dqblk), SEEK_SET);
-		return (to);
+		(void)fseeko(qfi, (off_t)to * sizeof(struct dqblk), SEEK_SET);
+		return to;
 	}
 
 	while (++cur < to) {
@@ -623,20 +620,17 @@ skipforward(cur, to, qfi)
 		 */
 		if (dqbuf.dqb_curinodes != 0 || dqbuf.dqb_curblocks != 0) {
 			(void)fseek(qfi, -(long)sizeof(struct dqblk), SEEK_CUR);
-			return (cur);
+			return cur;
 		}
 	}
-	return (to);
+	return to;
 }
 
 /*
  * Check to see if target appears in list of size cnt.
  */
 static int
-oneof(target, list, cnt)
-	const char *target;
-	char *list[];
-	int cnt;
+oneof(const char *target, char *list[], int cnt)
 {
 	int i;
 
