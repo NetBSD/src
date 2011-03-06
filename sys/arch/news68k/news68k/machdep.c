@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2011/03/04 22:25:28 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 2011/03/06 14:54:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2011/03/04 22:25:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2011/03/06 14:54:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -716,7 +716,7 @@ badbaddr(void *addr)
 /*
  * cpu_exec_aout_makecmds():
  *	CPU-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *
