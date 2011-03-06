@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2009/06/22 15:34:54 mrg Exp $
+# $NetBSD: Makefile,v 1.7.4.1 2011/03/06 00:27:08 rmind Exp $
 
 .include "../Makefile.inc"
 
@@ -12,7 +12,9 @@ SRCS=	radeon_drv.c
 SRCS+=	ati_pcigart.c
 SRCS+=	r300_cmdbuf.c
 SRCS+=	r600_cp.c
+SRCS+=	r600_blit.c
 SRCS+=	radeon_cp.c
+SRCS+=	radeon_cs.c
 SRCS+=	radeon_irq.c
 SRCS+=	radeon_mem.c
 SRCS+=	radeon_state.c

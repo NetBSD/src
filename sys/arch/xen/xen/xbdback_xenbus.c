@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.31.4.2 2010/07/03 01:19:30 rmind Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.31.4.3 2011/03/06 00:26:59 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.31.4.2 2010/07/03 01:19:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.31.4.3 2011/03/06 00:26:59 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1370,6 +1370,7 @@ xbdback_iodone(struct buf *bp)
 	struct xbdback_io *xbd_io;
 	struct xbdback_instance *xbdi;
 	int errp;
+	int s;
 
 	xbd_io = bp->b_private;
 	xbdi = xbd_io->xio_xbdi;
@@ -1424,11 +1425,13 @@ xbdback_iodone(struct buf *bp)
 	atomic_dec_uint(&xbdi->xbdi_pendingreqs);
 	buf_destroy(&xbd_io->xio_buf);
 	xbdback_pool_put(&xbdback_io_pool, xbd_io);
+	s = splbio();
 	if (xbdi->xbdi_cont == NULL) {
 		/* check if there is more work to do */
 		xbdi->xbdi_cont = xbdback_co_main;
 		xbdback_trampoline(xbdi, xbdi);
 	}
+	splx(s);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.21.2.2 2011/03/05 20:51:40 rmind Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.21.2.3 2011/03/06 00:26:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.2 2011/03/05 20:51:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.3 2011/03/06 00:26:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,7 +684,8 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		printf("memio_unmap: can't free region\n");
 	}
 
-	unmapiodev(va, size);
+	if (va)
+		unmapiodev(va, size);
 }
 
 int

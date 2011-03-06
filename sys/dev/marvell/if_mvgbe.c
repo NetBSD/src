@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.1.2.3 2011/03/05 20:53:26 rmind Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.1.2.4 2011/03/06 00:27:00 rmind Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.1.2.3 2011/03/05 20:53:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.1.2.4 2011/03/06 00:27:00 rmind Exp $");
 
 #include "rnd.h"
 
@@ -184,6 +184,7 @@ struct mvgbe_ring_data {
 
 struct mvgbec_softc {
 	device_t sc_dev;
+	int sc_unit;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -277,6 +278,7 @@ CFATTACH_DECL_NEW(mvgbec_mbus, sizeof(struct mvgbec_softc),
 CFATTACH_DECL_NEW(mvgbe, sizeof(struct mvgbe_softc),
     mvgbe_match, mvgbe_attach, NULL, NULL);
 
+device_t mvgbec0 = NULL;
 
 struct mvgbe_port {
 	int model;
@@ -305,7 +307,7 @@ struct mvgbe_port {
 	{ MARVELL_KIRKWOOD_88F6192,	0, 1, { 11 }, FLAGS_FIX_TQTB },
 	{ MARVELL_KIRKWOOD_88F6192,	1, 1, { 14 }, FLAGS_FIX_TQTB },
 	{ MARVELL_KIRKWOOD_88F6281,	0, 1, { 11 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6281,	1, 1, { 14 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6281,	1, 1, { 15 }, FLAGS_FIX_TQTB },
 
 	{ MARVELL_MV78XX0_MV78100,	0, 1, { 40 }, FLAGS_FIX_TQTB },
 	{ MARVELL_MV78XX0_MV78100,	1, 1, { 44 }, FLAGS_FIX_TQTB },
@@ -353,11 +355,17 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = mva->mva_iot;
+	sc->sc_unit = mva->mva_unit;
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
 	    mva->mva_size, &sc->sc_ioh)) {
 		aprint_error_dev(self, "Cannot map registers\n");
 		return;
 	}
+
+	if (sc->sc_unit == 0) {
+		mvgbec0 = self;
+	}
+		
 	phyaddr = 0;
 	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
 
@@ -432,10 +440,16 @@ static int
 mvgbec_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct mvgbe_softc *sc = device_private(dev);
-	struct mvgbec_softc *csc = device_private(device_parent(dev));
+	struct mvgbec_softc *csc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t smi, val;
 	int i;
+
+	if (mvgbec0 == NULL) {
+		aprint_error_ifnet(ifp, "SMI mvgbec0 not found\n");
+		return -1;
+	}
+	csc = device_private(mvgbec0);
 
 	mutex_enter(&csc->sc_mtx);
 
@@ -478,10 +492,16 @@ static void
 mvgbec_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
 	struct mvgbe_softc *sc = device_private(dev);
-	struct mvgbec_softc *csc = device_private(device_parent(dev));
+	struct mvgbec_softc *csc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t smi;
 	int i;
+
+	if (mvgbec0 == NULL) {
+		aprint_error_ifnet(ifp, "SMI mvgbec0 not found\n");
+		return;
+	}
+	csc = device_private(mvgbec0);
 
 	DPRINTFN(9, ("mvgbec_miibus_writereg phy=%d reg=%#x val=%#x\n",
 	     phy, reg, val));
@@ -602,6 +622,7 @@ static void
 mvgbe_attach(device_t parent, device_t self, void *aux)
 {
 	struct mvgbe_softc *sc = device_private(self);
+	struct mvgbec_softc *csc = device_private(parent);
 	struct marvell_attach_args *mva = aux;
 	struct mvgbe_txmap_entry *entry;
 	struct ifnet *ifp;
@@ -749,7 +770,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    mvgbe_mediachange, mvgbe_mediastatus);
 	mii_attach(self, &sc->sc_mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	    csc->sc_unit, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media,

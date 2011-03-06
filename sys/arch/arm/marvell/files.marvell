@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.3.2.2 2011/03/05 20:49:37 rmind Exp $
+#       $NetBSD: files.marvell,v 1.3.2.3 2011/03/06 00:26:57 rmind Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -28,6 +28,11 @@ device	mvsoctmr
 attach	mvsoctmr at mvsoc
 file	arch/arm/marvell/mvsoctmr.c		mvsoctmr
 
+
+# RTC
+device	mvsocrtc
+attach	mvsocrtc at mvsoc
+file	arch/arm/marvell/mvsocrtc.c		mvsocrtc
 
 # PCI Express Interface
 attach	mvpex at mvsoc with mvpex_mbus

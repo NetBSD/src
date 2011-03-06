@@ -1,11 +1,8 @@
-/*	$NetBSD: darwin_exec.h,v 1.16.8.1 2011/03/06 00:26:59 rmind Exp $ */
+/*	$NetBSD: mvsocrtcreg.h,v 1.1.2.2 2011/03/06 00:26:57 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,32 +26,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DARWIN_EXEC_H_
-#define	_DARWIN_EXEC_H_
+#ifndef _MVSOCRTCREG_H_
+#define _MVSOCRTCREG_H_
 
-#include <compat/mach/mach_exec.h>
+#define MVSOCRTC_SIZE			0x18
 
-/*
- * Because it can be used by Mach emulation code as well as Darwin emulation
- * code, this structure must begin with a struct mach_emuldata.
- */
-struct darwin_emuldata {
-	struct mach_emuldata ded_mach_emuldata;
-	pid_t ded_fakepid;
-	dev_t ded_wsdev;		/* display to restore on exit */
-	int *ded_hidsystem_finished;	/* iohidsystem thread finished flag */
-	int ded_flags;			/* flags, see below */
-	void *ded_vramoffset;		/* Where VRAM was mapped? */
-};
+#define MVSOCRTC_TIME			0x00
+#define   MVSOCRTC_SECOND_OFFSET	0
+#define   MVSOCRTC_SECOND_MASK		0x7f
+#define   MVSOCRTC_MINUTE_OFFSET	8
+#define   MVSOCRTC_MINUTE_MASK		0x7f
+#define   MVSOCRTC_HOUR_OFFSET		16
+#define   MVSOCRTC_HOUR_MASK		0x3f
+#define   MVSOCRTC_WDAY_OFFSET		24
+#define   MVSOCRTC_WDAY_MASK		0x07
 
-#define DARWIN_DED_SIGEXC	1	/* Mach exceptions instead of signals */
+#define MVSOCRTC_DATE			0x04
+#define   MVSOCRTC_DAY_OFFSET		0
+#define   MVSOCRTC_DAY_MASK		0x3f
+#define   MVSOCRTC_MONTH_OFFSET		8
+#define   MVSOCRTC_MONTH_MASK		0x3f
+#define   MVSOCRTC_YEAR_OFFSET		16
+#define   MVSOCRTC_YEAR_MASK		0xff
 
-struct ps_strings;
-int exec_darwin_copyargs(struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *);
-int exec_darwin_probe(const char **);
-int darwin_exec_setup_stack(struct lwp *, struct exec_package *);
+#define MVSOCRTC_ALARMTIME		0x08
+#define MVSOCRTC_ALARMDATE		0x0c
+#define MVSOCRTC_INTMASK		0x10
+#define MVSOCRTC_INTCAUSE		0x14
 
-extern struct emul emul_darwin;
-
-#endif /* !_DARWIN_EXEC_H_ */
+#endif /* ! _MVSOCRTCREG_H_ */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1022.2.3 2011/03/05 20:53:48 rmind Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1022.2.4 2011/03/06 00:27:01 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1066 2011/02/25 01:36:18 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.1067 2011/03/05 15:36:27 matt Exp
  */
 
 /*
@@ -1450,6 +1450,8 @@
 #define	PCI_PRODUCT_ATHEROS_AR5211	0x0012		/* AR5211 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5212	0x0013		/* AR5212 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR9285	0x002b		/* AR9285 Wireless LAN */
+#define	PCI_PRODUCT_ATHEROS_AR2427	0x002c		/* AR2427 Wireless LAN */
+#define	PCI_PRODUCT_ATHEROS_AR9287	0x002e		/* AR9287 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5201_AP	0x0207		/* AR5201 Wireless LAN Reference Card (Early AP11) */
 #define	PCI_PRODUCT_ATHEROS_AR5201_DEFAULT	0x1107		/* AR5201 Wireless LAN (no eeprom) */
 #define	PCI_PRODUCT_ATHEROS_AR5212_DEFAULT	0x1113		/* AR5212 Wireless LAN (no eeprom) */

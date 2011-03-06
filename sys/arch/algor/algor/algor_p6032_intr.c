@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.16.20.1 2011/03/05 20:49:07 rmind Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.16.20.2 2011/03/06 00:26:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.20.1 2011/03/05 20:49:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.20.2 2011/03/06 00:26:56 rmind Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.20.1 2011/03/05 20:49:07 r
 
 #define	NIRQMAPS	10
 
-const char *p6032_intrnames[NIRQMAPS] = {
+const char * const p6032_intrnames[NIRQMAPS] = {
 	"gpin 0",
 	"gpin 1",
 	"gpin 2",
@@ -167,7 +167,7 @@ struct p6032_cpuintr {
 };
 
 struct p6032_cpuintr p6032_cpuintrs[NINTRS];
-const char *p6032_cpuintrnames[NINTRS] = {
+const char * const p6032_cpuintrnames[NINTRS] = {
 	"int 0 (pci)",
 	"int 1 (isa)",
 };
@@ -198,7 +198,7 @@ algor_p6032_intr_init(struct p6032_config *acp)
 		    EVCNT_TYPE_INTR, NULL, "mips", p6032_cpuintrnames[i]);
 	}
 
-	for (i = 0; i <= NIRQMAPS; i++) {
+	for (i = 0; i < __arraycount(p6032_irqmap); i++) {
 		irqmap = &p6032_irqmap[i];
 
 		evcnt_attach_dynamic(&p6032_intrtab[i].intr_count,

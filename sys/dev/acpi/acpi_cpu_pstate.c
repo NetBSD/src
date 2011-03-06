@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.45.2.2 2011/03/05 20:53:02 rmind Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.45.2.3 2011/03/06 00:27:00 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.45.2.2 2011/03/05 20:53:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.45.2.3 2011/03/06 00:27:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -114,10 +114,9 @@ acpicpu_pstate_attach(device_t self)
 		aprint_debug_dev(self, "_PPC missing\n");
 
 	/*
-	 * Employ the XPSS structure by filling
-	 * it with MD information required for FFH.
+	 * Carry out MD initialization.
 	 */
-	rv = acpicpu_md_pstate_pss(sc);
+	rv = acpicpu_md_pstate_init(sc);
 
 	if (rv != 0) {
 		rv = AE_SUPPORT;
@@ -209,7 +208,6 @@ acpicpu_pstate_start(device_t self)
 
 fail:
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
-
 	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
 
@@ -641,10 +639,8 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 		goto out;
 
 	/*
-	 * In XPSS the control address can not be zero,
-	 * but the status address may be. In this case,
-	 * comparable to T-states, we can ignore the status
-	 * check during the P-state (FFH) transition.
+	 * At the very least, mandate that
+	 * XPSS supplies the control address.
 	 */
 	if (sc->sc_pstate_control.reg_addr == 0) {
 		rv = AE_AML_BAD_RESOURCE_LENGTH;

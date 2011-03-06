@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.93.4.3 2011/03/05 20:55:27 rmind Exp $	*/
+/*	$NetBSD: libkern.h,v 1.93.4.4 2011/03/06 00:27:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -206,7 +206,7 @@ tolower(int ch)
 #else /* DIAGNOSTIC */
 #define _DIAGASSERT(a)	assert(a)
 #define	KASSERTMSG(e, msg) do {		\
-	if (__predict_false((e)))	\
+	if (__predict_false(!(e)))	\
 		panic msg;		\
 	} while (/*CONSTCOND*/ 0)
 #ifdef __STDC__
