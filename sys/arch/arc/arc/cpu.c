@@ -1,9 +1,9 @@
-/*	$NetBSD: cpu.c,v 1.18 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 2011/03/06 14:58:42 tsutsui Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2011/03/06 14:58:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
