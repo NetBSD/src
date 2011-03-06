@@ -1,7 +1,9 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.6 2011/03/06 17:08:42 bouyer Exp $
+#	$NetBSD: Makefile,v 1.7 2011/03/06 22:34:57 christos Exp $
 
 .include <bsd.own.mk>
+
+WARNS ?= 4
 PROG=	edquota
 SRCS=	edquota.c
 MAN=	edquota.8
@@ -11,7 +13,7 @@ DPADD=	${LIBPROP}
 LDADD=	-lprop
 
 .PATH:	${NETBSDSRCDIR}/usr.bin/quota
-SRCS+=	getvfsquota.c printquota.c
+SRCS+=	getvfsquota.c printquota.c quotautil.c
 .PATH:	${NETBSDSRCDIR}/sys/ufs/ufs 
 SRCS+=	quota2_prop.c quota1_subr.c
 
