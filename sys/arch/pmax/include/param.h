@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.43 2011/02/20 07:50:25 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.44 2011/03/06 20:34:56 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,9 @@
  */
 
 #define	_MACHINE	pmax
+#ifdef _KERNEL
 #define	MACHINE		"pmax"
+#endif
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
