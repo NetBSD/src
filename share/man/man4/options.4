@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.399 2010/12/21 08:11:21 jruoho Exp $
+.\"	$NetBSD: options.4,v 1.400 2011/03/06 17:11:19 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 21, 2010
+.Dd March 6, 2011
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -952,6 +952,21 @@ file systems, although
 .Xr rpc.rquotad 8
 permits them to be accessed over
 .Em NFS .
+.It Cd options QUOTA2
+Enables kernel support for the new file system quotas format.
+See
+.Xr tunefs 8 ,
+.Xr newfs 8 ,
+.Xr mount_mfs 8 ,
+.Xr edquota 8 ,
+and
+.Xr quota 1
+for details.
+Note that quota2 is only supported by
+.Dq ffs
+and
+.Dq mfs
+file system at this time.
 .It Cd options FFS_EI
 Enable ``Endian-Independent'' FFS support.
 This allows a system to mount an FFS file system created for another
