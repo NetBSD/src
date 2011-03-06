@@ -1,4 +1,4 @@
-/*	$NetBSD: quotautil.c,v 1.1 2011/03/06 22:36:07 christos Exp $ */
+/*	$NetBSD: quotautil.c,v 1.2 2011/03/06 23:26:05 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotautil.c,v 1.1 2011/03/06 22:36:07 christos Exp $");
+__RCSID("$NetBSD: quotautil.c,v 1.2 2011/03/06 23:26:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,4 +116,18 @@ alldigits(const char *s)
 			return 0;
 	} while ((c = *s++) != 0);
 	return 1;
+}
+
+/*
+ * Check to see if target appears in list of size cnt.
+ */
+int
+oneof(const char *target, char *list[], int cnt)
+{
+	int i;
+
+	for (i = 0; i < cnt; i++)
+		if (strcmp(target, list[i]) == 0)
+			return i;
+	return -1;
 }
