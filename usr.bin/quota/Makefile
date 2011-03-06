@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 2011/03/06 17:08:42 bouyer Exp $	
+#	$NetBSD: Makefile,v 1.8 2011/03/06 20:47:59 christos Exp $	
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
+WARNS ?= 4
 .include <bsd.own.mk>
 PROG=	quota
 SRCS=	quota.c printquota.c getvfsquota.c
