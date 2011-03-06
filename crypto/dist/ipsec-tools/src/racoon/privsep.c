@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.20 2010/03/05 06:47:58 tteras Exp $	*/
+/*	$NetBSD: privsep.c,v 1.21 2011/03/06 08:28:10 tteras Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -1544,6 +1544,7 @@ rec_fd(s)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmsg;
+	int *fdptr;
 	int fd;
 	char cmsbuf[1024];
 	struct iovec iov;
@@ -1569,7 +1570,8 @@ rec_fd(s)
 		return -1;
 
 	cmsg = CMSG_FIRSTHDR(&msg);
-	return *(int *)CMSG_DATA(cmsg);
+	fdptr = (int *) CMSG_DATA(cmsg);
+	return fdptr[0];
 }
 
 /* Send the file descriptor fd through the argument socket s */
@@ -1582,6 +1584,7 @@ send_fd(s, fd)
 	struct cmsghdr *cmsg;
 	char cmsbuf[1024];
 	struct iovec iov;
+	int *fdptr;
 
 	iov.iov_base = " ";
 	iov.iov_len = 1;
@@ -1604,7 +1607,8 @@ send_fd(s, fd)
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
 	cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
-	*(int *)CMSG_DATA(cmsg) = fd;
+	fdptr = (int *)CMSG_DATA(cmsg);
+	fdptr[0] = fd;
 	msg.msg_controllen = cmsg->cmsg_len;
 
 	if (sendmsg(s, &msg, 0) == -1)
