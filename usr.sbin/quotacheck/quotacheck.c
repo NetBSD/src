@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.43 2011/03/06 23:13:22 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.44 2011/03/06 23:25:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.43 2011/03/06 23:13:22 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.44 2011/03/06 23:25:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,6 @@ static void *needchk(struct fstab *);
 static int chkquota(const char *, const char *, const char *, void *, pid_t *);
 static int update(const char *, const char *, int);
 static uint32_t skipforward(uint32_t, uint32_t, FILE *);
-static int oneof(const char *, char *[], int);
 static int getquotagid(void);
 static struct fileusage *lookup(uint32_t, int);
 static struct fileusage *addid(uint32_t, int, const char *);
@@ -624,20 +623,6 @@ skipforward(uint32_t cur, uint32_t to, FILE *qfi)
 		}
 	}
 	return to;
-}
-
-/*
- * Check to see if target appears in list of size cnt.
- */
-static int
-oneof(const char *target, char *list[], int cnt)
-{
-	int i;
-
-	for (i = 0; i < cnt; i++)
-		if (strcmp(target, list[i]) == 0)
-			return (i);
-	return (-1);
 }
 
 /*
