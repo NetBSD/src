@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.33 2009/04/13 04:16:38 lukem Exp $	*/
+/*	$NetBSD: quota.c,v 1.34 2011/03/06 17:08:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.33 2009/04/13 04:16:38 lukem Exp $");
+__RCSID("$NetBSD: quota.c,v 1.34 2011/03/06 17:08:42 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,7 @@ __RCSID("$NetBSD: quota.c,v 1.33 2009/04/13 04:16:38 lukem Exp $");
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
-#include <sys/queue.h>
 
-#include <ufs/ufs/quota.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -71,42 +69,44 @@ __RCSID("$NetBSD: quota.c,v 1.33 2009/04/13 04:16:38 lukem Exp $");
 #include <time.h>
 #include <unistd.h>
 
+#include <ufs/ufs/quota2.h>
+#include <ufs/ufs/quota1.h>
+
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpcsvc/rquota.h>
 
-const char *qfname = QUOTAFILENAME;
-const char *qfextension[] = INITQFNAMES;
+#include <printquota.h>
+#include <getvfsquota.h>
 
 struct quotause {
 	struct	quotause *next;
 	long	flags;
-	struct	dqblk dqblk;
+	struct	quota2_entry q2e;
 	char	fsname[MAXPATHLEN + 1];
 };
 #define	FOUND	0x01
+#define	QUOTA2	0x02
 
-int	alldigits __P((char *));
-int	callaurpc __P((char *, int, int, int, xdrproc_t, void *,
-	    xdrproc_t, void *));
-int	main __P((int, char **));
-int	getnfsquota __P((struct statvfs *, struct fstab *, struct quotause *,
-	    long, int));
-struct quotause	*getprivs __P((long id, int quotatype));
-int	getufsquota __P((struct statvfs *, struct fstab *, struct quotause *,
-	    long, int));
-void	heading __P((int, u_long, const char *, const char *));
-void	showgid __P((gid_t));
-void	showgrpname __P((const char *));
-void	showquotas __P((int, u_long, const char *));
-void	showuid __P((uid_t));
-void	showusrname __P((const char *));
-const char *timeprt __P((time_t seconds));
-int	ufshasquota __P((struct fstab *, int, char **));
-void	usage __P((void));
+int	alldigits(char *);
+int	callaurpc(char *, int, int, int, xdrproc_t, void *, xdrproc_t, void *);
+int	main(int, char **);
+int	getnfsquota(struct statvfs *, struct fstab *, struct quotause *,
+	    long, int);
+struct quotause	*getprivs(long id, int quotatype);
+void	heading(int, u_long, const char *, const char *);
+void	showgid(gid_t);
+void	showgrpname(const char *);
+void	showquotas(int, u_long, const char *);
+void	showuid(uid_t);
+void	showusrname(const char *);
+void	usage(void);
 
-int	qflag;
-int	vflag;
+int	qflag = 0;
+int	vflag = 0;
+int	hflag = 0;
+int	dflag = 0;
+int	Dflag = 0;
 uid_t	myuid;
 
 int
@@ -120,7 +120,7 @@ main(argc, argv)
 	int ch;
 
 	myuid = getuid();
-	while ((ch = getopt(argc, argv, "ugvq")) != -1) {
+	while ((ch = getopt(argc, argv, "Ddhugvq")) != -1) {
 		switch(ch) {
 		case 'g':
 			gflag++;
@@ -134,6 +134,15 @@ main(argc, argv)
 		case 'q':
 			qflag++;
 			break;
+		case 'h':
+			hflag++;
+			break;
+		case 'd':
+			dflag++;
+			break;
+		case 'D':
+			Dflag++;
+			break;
 		default:
 			usage();
 		}
@@ -142,18 +151,35 @@ main(argc, argv)
 	argv += optind;
 	if (!uflag && !gflag)
 		uflag++;
+	if (dflag) {
+#if 0
+		if (myuid != 0) {
+			printf("quota: -d: permission denied\n");
+			exit(1);
+		}
+#endif
+		if (uflag)
+			showquotas(USRQUOTA, 0, "");
+		if (gflag)
+			showquotas(GRPQUOTA, 0, "");
+		exit(0);
+	}
 	if (argc == 0) {
 		if (uflag)
 			showuid(myuid);
 		if (gflag) {
-			mygid = getgid();
-			ngroups = getgroups(NGROUPS, gidset);
-			if (ngroups < 0)
-				err(1, "getgroups");
-			showgid(mygid);
-			for (i = 0; i < ngroups; i++)
-				if (gidset[i] != mygid)
-					showgid(gidset[i]);
+			if (dflag)
+				showgid(0);
+			else {
+				mygid = getgid();
+				ngroups = getgroups(NGROUPS, gidset);
+				if (ngroups < 0)
+					err(1, "getgroups");
+				showgid(mygid);
+				for (i = 0; i < ngroups; i++)
+					if (gidset[i] != mygid)
+						showgid(gidset[i]);
+			}
 		}
 		exit(0);
 	}
@@ -185,10 +211,11 @@ void
 usage()
 {
 
-	fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: quota [-guqv]",
-	    "\tquota [-qv] -u username ...",
-	    "\tquota [-qv] -g groupname ...");
+	fprintf(stderr, "%s\n%s\n%s\n%s\n",
+	    "usage: quota [-Dhguqv]",
+	    "\tquota [-Dhqv] -u username ...",
+	    "\tquota [-Dhqv] -g groupname ...",
+	    "\tquota -d [-Dhguqv]");
 	exit(1);
 }
 
@@ -311,7 +338,7 @@ showquotas(type, id, name)
 {
 	struct quotause *qup;
 	struct quotause *quplist;
-	const char *msgi, *msgb, *nam;
+	const char *msgi, *msgb, *nam, *timemsg;
 	int lines = 0;
 	static time_t now;
 
@@ -319,36 +346,42 @@ showquotas(type, id, name)
 		time(&now);
 	quplist = getprivs(id, type);
 	for (qup = quplist; qup; qup = qup->next) {
+		int ql_stat;
 		if (!vflag &&
-		    qup->dqblk.dqb_isoftlimit == 0 &&
-		    qup->dqblk.dqb_ihardlimit == 0 &&
-		    qup->dqblk.dqb_bsoftlimit == 0 &&
-		    qup->dqblk.dqb_bhardlimit == 0)
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit == UQUAD_MAX &&
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit == UQUAD_MAX &&
+		    qup->q2e.q2e_val[QL_FILE].q2v_softlimit == UQUAD_MAX &&
+		    qup->q2e.q2e_val[QL_FILE].q2v_hardlimit == UQUAD_MAX)
 			continue;
-		msgi = NULL;
-		if (qup->dqblk.dqb_ihardlimit &&
-		    qup->dqblk.dqb_curinodes >= qup->dqblk.dqb_ihardlimit)
+		ql_stat = quota2_check_limit(&qup->q2e.q2e_val[QL_FILE],
+		    1, now);
+		switch(QL_STATUS(ql_stat)) {
+		case QL_S_DENY_HARD:
 			msgi = "File limit reached on";
-		else if (qup->dqblk.dqb_isoftlimit &&
-		    qup->dqblk.dqb_curinodes >= qup->dqblk.dqb_isoftlimit) {
-			if (qup->dqblk.dqb_itime > now)
-				msgi = "In file grace period on";
-			else
-				msgi = "Over file quota on";
+			break;
+		case QL_S_DENY_GRACE:
+			msgi = "Over file quota on";
+			break;
+		case QL_S_ALLOW_SOFT:
+			msgi = "In file grace period on";
+			break;
+		default:
+			msgi = NULL;
 		}
-		msgb = NULL;
-		if (qup->dqblk.dqb_bhardlimit &&
-		    qup->dqblk.dqb_curblocks >= qup->dqblk.dqb_bhardlimit)
+		ql_stat = quota2_check_limit(&qup->q2e.q2e_val[QL_BLOCK],
+		    1, now);
+		switch(QL_STATUS(ql_stat)) {
+		case QL_S_DENY_HARD:
 			msgb = "Block limit reached on";
-		else {
-			if (qup->dqblk.dqb_bsoftlimit
-			&&  qup->dqblk.dqb_curblocks
-			    >= qup->dqblk.dqb_bsoftlimit) {
-				if (qup->dqblk.dqb_btime > now)
-					msgb = "In block grace period on";
-				else
-					msgb = "Over block quota on";
-			}
+			break;
+		case QL_S_DENY_GRACE:
+			msgb = "Over block quota on";
+			break;
+		case QL_S_ALLOW_SOFT:
+			msgb = "In block grace period on";
+			break;
+		default:
+			msgb = NULL;
 		}
 		if (qflag) {
 			if ((msgi != NULL || msgb != NULL) &&
@@ -360,35 +393,54 @@ showquotas(type, id, name)
 				printf("\t%s %s\n", msgb, qup->fsname);
 			continue;
 		}
-		if (vflag ||
-		    qup->dqblk.dqb_curblocks ||
-		    qup->dqblk.dqb_curinodes) {
+		if (vflag || dflag || msgi || msgb ||
+		    qup->q2e.q2e_val[QL_BLOCK].q2v_cur ||
+		    qup->q2e.q2e_val[QL_FILE].q2v_cur) {
 			if (lines++ == 0)
 				heading(type, id, name, "");
 			nam = qup->fsname;
-			if (strlen(qup->fsname) > 15) {
+			if (strlen(qup->fsname) > 4) {
 				printf("%s\n", qup->fsname);
 				nam = "";
 			} 
-			printf("%12s%9d%c%8d%9d%8s"
+			if (msgb)
+				timemsg = timeprt(now, 
+				    qup->q2e.q2e_val[QL_BLOCK].q2v_time, 8);
+			else if ((qup->flags & QUOTA2) != 0 && vflag)
+				timemsg = timeprt(0,
+				    qup->q2e.q2e_val[QL_BLOCK].q2v_grace, 8);
+			else
+				timemsg = "";
+				
+			printf("%12s%9s%c%8s%9s%8s"
 			    , nam
-			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks)
-				/ 1024)
+			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_cur
+				,HN_B, hflag, 8)
 			    , (msgb == NULL) ? ' ' : '*'
-			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit)
-				/ 1024)
-			    , (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit)
-				/ 1024)
-			    , (msgb == NULL) ? ""
-			        : timeprt(qup->dqblk.dqb_btime));
-			printf("%8d%c%7d%8d%8s\n"
-			    , qup->dqblk.dqb_curinodes
+			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_softlimit
+				, HN_B, hflag, 8)
+			    , intprt(qup->q2e.q2e_val[QL_BLOCK].q2v_hardlimit
+				, HN_B, hflag, 8)
+			    , timemsg);
+
+			if (msgi)
+				timemsg = timeprt(now, 
+				    qup->q2e.q2e_val[QL_FILE].q2v_time, 8);
+			else if ((qup->flags & QUOTA2) != 0 && vflag)
+				timemsg = timeprt(0,
+				    qup->q2e.q2e_val[QL_FILE].q2v_grace, 8);
+			else
+				timemsg = "";
+				
+			printf("%8s%c%7s%8s%8s\n"
+			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_cur
+				, 0, hflag, 7)
 			    , (msgi == NULL) ? ' ' : '*'
-			    , qup->dqblk.dqb_isoftlimit
-			    , qup->dqblk.dqb_ihardlimit
-			    , (msgi == NULL) ? ""
-			        : timeprt(qup->dqblk.dqb_itime)
-			);
+			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_softlimit
+				, 0, hflag, 7)
+			    , intprt(qup->q2e.q2e_val[QL_FILE].q2v_hardlimit
+				, 0, hflag, 7)
+			    , timemsg);
 			continue;
 		}
 	}
@@ -402,9 +454,14 @@ heading(type, id, name, tag)
 	u_long id;
 	const char *name, *tag;
 {
+	if (dflag)
+		printf("Default %s disk quotas: %s\n",
+		    qfextension[type], tag);
+	else
+		printf("Disk quotas for %s %s (%cid %ld): %s\n",
+		    qfextension[type], name, *qfextension[type],
+		    (u_long)id, tag);
 
-	printf("Disk quotas for %s %s (%cid %ld): %s\n", qfextension[type],
-	    name, *qfextension[type], (u_long)id, tag);
 	if (!qflag && tag[0] == '\0') {
 		printf("%12s%9s %8s%9s%8s%8s %7s%8s%8s\n"
 		    , "Filesystem"
@@ -421,38 +478,6 @@ heading(type, id, name, tag)
 }
 
 /*
- * Calculate the grace period and return a printable string for it.
- */
-const char *
-timeprt(seconds)
-	time_t seconds;
-{
-	time_t hours, minutes;
-	static char buf[20];
-	static time_t now;
-
-	if (now == 0)
-		time(&now);
-	if (now > seconds)
-		return ("none");
-	seconds -= now;
-	minutes = (seconds + 30) / 60;
-	hours = (minutes + 30) / 60;
-	if (hours >= 36) {
-		(void)snprintf(buf, sizeof buf, "%ddays",
-		    (int)((hours + 12) / 24));
-		return (buf);
-	}
-	if (minutes >= 60) {
-		(void)snprintf(buf, sizeof buf, "%2d:%d",
-		    (int)(minutes / 60), (int)(minutes % 60));
-		return (buf);
-	}
-	(void)snprintf(buf, sizeof buf, "%2d", (int)minutes);
-	return (buf);
-}
-
-/*
  * Collect the requested quota information.
  */
 struct quotause *
@@ -461,17 +486,16 @@ getprivs(id, quotatype)
 	int quotatype;
 {
 	struct quotause *qup, *quptail;
-	struct fstab *fs;
 	struct quotause *quphead;
 	struct statvfs *fst;
 	int nfst, i;
+	int8_t version;
 
 	qup = quphead = quptail = NULL;
 
 	nfst = getmntinfo(&fst, MNT_WAIT);
 	if (nfst == 0)
 		errx(2, "no filesystems mounted!");
-	setfsent();
 	for (i = 0; i < nfst; i++) {
 		if (qup == NULL) {
 			if ((qup =
@@ -480,26 +504,19 @@ getprivs(id, quotatype)
 		}
 		if (strncmp(fst[i].f_fstypename, "nfs", 
 		    sizeof(fst[i].f_fstypename)) == 0) {
+			version = 0;
 			if (getnfsquota(&fst[i], NULL, qup, id, quotatype) == 0)
 				continue;
-		} else if (strncmp(fst[i].f_fstypename, "ffs",
-		    sizeof(fst[i].f_fstypename)) == 0) {
-			/*
-			 * XXX
-			 * UFS filesystems must be in /etc/fstab, and must
-			 * indicate that they have quotas on (?!) This is quite
-			 * unlike SunOS where quotas can be enabled/disabled
-			 * on a filesystem independent of /etc/fstab, and it
-			 * will still print quotas for them.
-			 */
-			if ((fs = getfsspec(fst[i].f_mntfromname)) == NULL)
-				continue;
-			if (getufsquota(&fst[i], fs, qup, id, quotatype) == 0)
+		} else if ((fst[i].f_flag & ST_QUOTA) != 0) {
+			if (getvfsquota(fst[i].f_mntonname, &qup->q2e, &version,
+			    id, quotatype, dflag, Dflag) == 0)
 				continue;
 		} else
 			continue;
 		(void)strncpy(qup->fsname, fst[i].f_mntonname,
 		    sizeof(qup->fsname) - 1);
+		if (version == 2)
+			qup->flags |= QUOTA2;
 		if (quphead == NULL)
 			quphead = qup;
 		else
@@ -510,91 +527,7 @@ getprivs(id, quotatype)
 	}
 	if (qup)
 		free(qup);
-	endfsent();
 	return (quphead);
-}
-
-/*
- * Check to see if a particular quota is to be enabled.
- */
-int
-ufshasquota(fs, type, qfnamep)
-	struct fstab *fs;
-	int type;
-	char **qfnamep;
-{
-	static char initname, usrname[100], grpname[100];
-	static char buf[BUFSIZ];
-	char *opt, *cp;
-
-	cp = NULL;
-	if (!initname) {
-		(void)snprintf(usrname, sizeof usrname, "%s%s",
-		    qfextension[USRQUOTA], qfname);
-		(void)snprintf(grpname, sizeof grpname, "%s%s",
-		    qfextension[GRPQUOTA], qfname);
-		initname = 1;
-	}
-	(void)strlcpy(buf, fs->fs_mntops, sizeof(buf));
-	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if ((cp = strchr(opt, '=')) != NULL)
-			*cp++ = '\0';
-		if (type == USRQUOTA && strcmp(opt, usrname) == 0)
-			break;
-		if (type == GRPQUOTA && strcmp(opt, grpname) == 0)
-			break;
-	}
-	if (!opt)
-		return (0);
-	if (cp) {
-		*qfnamep = cp;
-		return (1);
-	}
-	(void)snprintf(buf, sizeof buf, "%s/%s.%s", fs->fs_file, qfname,
-	    qfextension[type]);
-	*qfnamep = buf;
-	return (1);
-}
-
-int
-getufsquota(fst, fs, qup, id, quotatype)
-	struct statvfs *fst;
-	struct fstab *fs;
-	struct quotause *qup;
-	long id;
-	int quotatype;
-{
-	char *qfpathname;
-	int fd, qcmd;
-
-	qcmd = QCMD(Q_GETQUOTA, quotatype);
-	if (!ufshasquota(fs, quotatype, &qfpathname))
-		return (0);
-
-	if (quotactl(fs->fs_file, qcmd, id, &qup->dqblk) != 0) {
-		if ((fd = open(qfpathname, O_RDONLY)) < 0) {
-			warn("%s", qfpathname);
-			return (0);
-		}
-		(void)lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET);
-		switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
-		case 0:				/* EOF */
-			/*
-			 * Convert implicit 0 quota (EOF)
-			 * into an explicit one (zero'ed dqblk)
-			 */
-			memset((caddr_t)&qup->dqblk, 0, sizeof(struct dqblk));
-			break;
-		case sizeof(struct dqblk):	/* OK */
-			break;
-		default:		/* ERROR */
-			warn("read error `%s'", qfpathname);
-			close(fd);
-			return (0);
-		}
-		close(fd);
-	}
-	return (1);
 }
 
 int
@@ -608,7 +541,8 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	struct getquota_args gq_args;
 	struct ext_getquota_args ext_gq_args;
 	struct getquota_rslt gq_rslt;
-	struct dqblk *dqp = &qup->dqblk;
+	struct quota2_entry *q2e = &qup->q2e;
+	struct dqblk dqblk;
 	struct timeval tv;
 	char *cp;
 	int ret;
@@ -664,27 +598,29 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	case Q_OK:
 		gettimeofday(&tv, NULL);
 			/* blocks*/
-		dqp->dqb_bhardlimit =
+		q2e->q2e_val[QL_BLOCK].q2v_hardlimit =
+		dqblk.dqb_bhardlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		dqp->dqb_bsoftlimit =
+		dqblk.dqb_bsoftlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		dqp->dqb_curblocks =
+		dqblk.dqb_curblocks =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
 		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 			/* inodes */
-		dqp->dqb_ihardlimit =
+		dqblk.dqb_ihardlimit =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit;
-		dqp->dqb_isoftlimit =
+		dqblk.dqb_isoftlimit =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit;
-		dqp->dqb_curinodes =
+		dqblk.dqb_curinodes =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles;
 			/* grace times */
-		dqp->dqb_btime =
+		dqblk.dqb_btime =
 		    tv.tv_sec + gq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft;
-		dqp->dqb_itime =
+		dqblk.dqb_itime =
 		    tv.tv_sec + gq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft;
+		dqblk2q2e(&dqblk, q2e);
 		*cp = ':';
 		return (1);
 	default:

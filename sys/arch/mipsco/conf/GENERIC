@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2010/04/29 22:40:52 chs Exp $
+# $NetBSD: GENERIC,v 1.76 2011/03/06 17:08:27 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -91,7 +91,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 #
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2011/02/13 20:37:26 phx Exp $
+# $NetBSD: GENERIC,v 1.55 2011/03/06 17:08:30 bouyer Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+#ident 		"GENERIC-$Revision: 1.55 $"
 
 maxusers	32
 
@@ -94,7 +94,8 @@ file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server

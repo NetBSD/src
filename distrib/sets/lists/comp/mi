@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1592 2011/03/02 22:25:53 tron Exp $
+#	$NetBSD: mi,v 1.1593 2011/03/06 17:08:10 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2119,6 +2119,7 @@
 ./usr/include/sys/ptrace.h			comp-c-include
 ./usr/include/sys/ptree.h			comp-c-include
 ./usr/include/sys/queue.h			comp-c-include
+./usr/include/sys/quota.h			comp-c-include
 ./usr/include/sys/radioio.h			comp-c-include
 ./usr/include/sys/ras.h				comp-c-include
 ./usr/include/sys/rb.h				comp-obsolete		obsolete
@@ -2232,6 +2233,8 @@
 ./usr/include/ufs/ufs/extattr.h			comp-c-include
 ./usr/include/ufs/ufs/inode.h			comp-c-include
 ./usr/include/ufs/ufs/quota.h			comp-c-include
+./usr/include/ufs/ufs/quota1.h			comp-c-include
+./usr/include/ufs/ufs/quota2.h			comp-c-include
 ./usr/include/ufs/ufs/ufs_bswap.h		comp-c-include
 ./usr/include/ufs/ufs/ufs_extern.h		comp-c-include
 ./usr/include/ufs/ufs/ufs_wapbl.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1299 2011/03/04 05:56:49 jruoho Exp $
+# $NetBSD: mi,v 1.1300 2011/03/06 17:08:11 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2611,6 +2611,7 @@
 ./usr/share/man/cat8/qmqpd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/quot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotacheck.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/quotactl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotaoff.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotaon.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/racoon.0			man-netutil-catman	crypto,.cat
@@ -5133,6 +5134,7 @@
 ./usr/share/man/html8/qmgr.html			man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/quot.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/quotacheck.html		man-sysutil-htmlman	html
+./usr/share/man/html8/quotactl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/quotaoff.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/quotaon.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/racoon.html		man-netutil-htmlman	crypto,html
@@ -7932,6 +7934,7 @@
 ./usr/share/man/man8/qmqpd.8			man-obsolete		obsolete
 ./usr/share/man/man8/quot.8			man-sysutil-man		.man
 ./usr/share/man/man8/quotacheck.8		man-sysutil-man		.man
+./usr/share/man/man8/quotactl.8			man-sysutil-man		.man
 ./usr/share/man/man8/quotaoff.8			man-sysutil-man		.man
 ./usr/share/man/man8/quotaon.8			man-sysutil-man		.man
 ./usr/share/man/man8/racoon.8			man-netutil-man		crypto,.man

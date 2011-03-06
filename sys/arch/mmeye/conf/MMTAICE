@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.46 2011/02/19 10:46:27 kiyohara Exp $
+#	$NetBSD: MMTAICE,v 1.47 2011/03/06 17:08:28 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -108,7 +108,8 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	NFSSERVER	# Network File System server
 #options 	FIFO		# FIFOs; RECOMMENDED
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

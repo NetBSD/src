@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.46 2008/10/12 23:26:12 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.47 2011/03/06 17:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.46 2008/10/12 23:26:12 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.47 2011/03/06 17:08:16 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,11 +234,15 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	int64_t blocks;
 	char symbuf[MAXBSIZE];
 	struct inostat *info;
+	uid_t uid;
+	gid_t gid;
 
 	dp = getnextinode(inumber);
 	info = inoinfo(inumber);
 	mode = iswap16(DIP(dp, mode)) & IFMT;
 	size = iswap64(DIP(dp, size));
+	uid = iswap32(DIP(dp, uid));
+	gid = iswap32(DIP(dp, gid));
 	if (mode == 0) {
 		if ((is_ufs2 && 
 		    (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
@@ -412,6 +416,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
+	idesc->id_uid = iswap32(DIP(dp, uid));
+	idesc->id_gid = iswap32(DIP(dp, gid));
 	if (iswap32(DIP(dp, flags)) & SF_SNAPSHOT)
 		idesc->id_type = SNAP;
 	else
@@ -460,6 +466,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			dp->dp1.di_blocks = iswap32((int32_t)idesc->id_entryno);
 		inodirty();
 	}
+	if (idesc->id_type != SNAP)
+		update_uquot(inumber, idesc->id_uid, idesc->id_gid,
+		    idesc->id_entryno, 1);
 	return;
 unknown:
 	pfatal("UNKNOWN FILE TYPE I=%llu", (unsigned long long)inumber);

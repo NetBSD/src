@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1516 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1517 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -875,3 +875,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	nand(9): Add subsystem to handle NAND controllers. [ahoka 20110226]
 	evbarm: Add driver for OMAP NAND controllers. [ahoka 20110226]
 	postfix(1): Import version 2.8.1 [tron 20110302]
+	kernel: merge the bouyer-quota2 branch. This adds a new on-disk format
+		to store disk quota usage and limits, integrated with ffs
+		metadata. Usage is checked by fsck_ffs (no more quotacheck)
+		and is covered by the WAPBL journal. Enabled with kernel
+		option QUOTA2, turned on with tunefs(8) on a per-filesystem
+		basis. mount_mfs(8) can also turn quotas on.
+		[bouyer 20110306]

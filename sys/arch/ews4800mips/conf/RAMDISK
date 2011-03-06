@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.13 2011/02/08 11:09:14 tsutsui Exp $
+# 	$NetBSD: RAMDISK,v 1.14 2011/03/06 17:08:24 bouyer Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -46,6 +46,7 @@ no file-system	UNION
 no file-system	PTYFS
 
 no options 	QUOTA
+no options 	QUOTA2
 no options 	NFSSERVER
 no options 	NETATALK
 no options 	PPP_FILTER

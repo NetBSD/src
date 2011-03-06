@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2009/06/05 21:52:31 haad Exp $
+#	$NetBSD: Makefile,v 1.41 2011/03/06 17:08:16 bouyer Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 WARNS?=	3	# XXX: sign-compare issues
@@ -8,8 +8,8 @@ WARNS?=	3	# XXX: sign-compare issues
 PROG=	fsck_ffs
 MAN=	fsck_ffs.8
 SRCS=	dir.c inode.c main.c pass1.c pass1b.c pass2.c pass3.c pass4.c \
-	pass5.c fsutil.c setup.c utilities.c ffs_bswap.c ffs_subr.c \
-	ffs_tables.c ffs_appleufs.c partutil.c snapshot.c
+	pass5.c pass6.c fsutil.c setup.c utilities.c ffs_bswap.c ffs_subr.c \
+	ffs_tables.c ffs_appleufs.c partutil.c snapshot.c quota2.c quota2_subr.c
 
 FSCK=	${NETBSDSRCDIR}/sbin/fsck
 DUMP=	${NETBSDSRCDIR}/sbin/dump
@@ -20,7 +20,7 @@ CPPFLAGS+=-DPROGRESS
 SRCS+=	progress.c
 .PATH:	${FSCK}
 
-.PATH:	${NETBSDSRCDIR}/sys/ufs/ffs ${FSCK} ${DUMP}
+.PATH:	${NETBSDSRCDIR}/sys/ufs/ffs ${NETBSDSRCDIR}/sys/ufs/ufs ${FSCK} ${DUMP}
 
 SRCS+= vfs_wapbl.c wapbl.c
 .PATH:	${NETBSDSRCDIR}/sys/kern
