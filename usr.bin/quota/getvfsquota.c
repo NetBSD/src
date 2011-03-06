@@ -1,4 +1,4 @@
-/*	$NetBSD: getvfsquota.c,v 1.2 2011/03/06 17:08:42 bouyer Exp $ */
+/*	$NetBSD: getvfsquota.c,v 1.3 2011/03/06 20:47:59 christos Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getvfsquota.c,v 1.2 2011/03/06 17:08:42 bouyer Exp $");
+__RCSID("$NetBSD: getvfsquota.c,v 1.3 2011/03/06 20:47:59 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,13 +49,12 @@ const char *qfextension[] = INITQFNAMES;
 /* retrieve quotas from vfs, for the given user id */
 int
 getvfsquota(const char *mp, struct quota2_entry *q2e, int8_t *versp,
-    long id, int type, int defaultq, int debug)
+    uint32_t id, int type, int defaultq, int debug)
 {
 	prop_dictionary_t dict, data, cmd;
 	prop_array_t cmds, datas;
 	prop_object_iterator_t iter;
 	struct plistref pref;
-	int error;
 	int8_t error8;
 	bool ret;
 	int retval = 0;
@@ -95,17 +94,14 @@ getvfsquota(const char *mp, struct quota2_entry *q2e, int8_t *versp,
 	if (quotactl(mp, &pref) != 0)
 		err(1, "quotactl");
 	
-	if ((error = prop_dictionary_recv_syscall(&pref, &dict)) != 0) {
-		errx(1, "prop_dictionary_recv_syscall: %s\n",
-		    strerror(error));
-	}
+	if ((errno = prop_dictionary_recv_syscall(&pref, &dict)) != 0)
+		err(1, "prop_dictionary_recv_syscall");
 	if (debug)
 		printf("reply from kernel:\n%s\n",
 		    prop_dictionary_externalize(dict));
-	if ((error = quota2_get_cmds(dict, &cmds)) != 0) {
-		errx(1, "quota2_get_cmds: %s\n",
-		    strerror(error));
-	}
+	if ((errno = quota2_get_cmds(dict, &cmds)) != 0)
+		err(1, "quota2_get_cmds");
+
 	iter = prop_array_iterator(cmds);
 	if (iter == NULL)
 		err(1, "prop_array_iterator(cmds)");
@@ -120,20 +116,17 @@ getvfsquota(const char *mp, struct quota2_entry *q2e, int8_t *versp,
 
 		if (error8) {
 			if (error8 != ENOENT && error8 != ENODEV) {
+				errno = error8;
 				if (defaultq) {
-					fprintf(stderr,
-					    "get default %s quota: %s\n",
-					    qfextension[type],
-					    strerror(error8));
+					warn("get default %s quota",
+					    qfextension[type]);
 				} else {
-					fprintf(stderr,
-					    "get %s quota for %ld: %s\n",
-					    qfextension[type], id,
-					    strerror(error8));
+					warn("get %s quota for %u",
+					    qfextension[type], id);
 				}
 			}
 			prop_object_release(dict);
-			return (0);
+			return 0;
 		}
 		datas = prop_dictionary_get(cmd, "data");
 		if (datas == NULL)
@@ -156,11 +149,9 @@ getvfsquota(const char *mp, struct quota2_entry *q2e, int8_t *versp,
 			if (data == NULL)
 				err(1, "prop_array_get(data)");
 
-			error = quota2_dict_get_q2e_usage(data, q2e);
-			if (error) {
-				errx(1, "quota2_dict_get_q2e_usage: %s\n",
-				    strerror(error));
-			}
+			errno = quota2_dict_get_q2e_usage(data, q2e);
+			if (errno)
+				err(1, "quota2_dict_get_q2e_usage");
 			retval = 1;
 		}
 	}
