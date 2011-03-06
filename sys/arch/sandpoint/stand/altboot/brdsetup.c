@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.6 2011/03/06 13:55:12 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.7 2011/03/06 18:22:13 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -959,20 +959,13 @@ redboot_fis_lookup(const char *filename)
 	return NULL;
 }
 
-static uint8_t hex2nibble(char c)
-{
-	if (c >= 'a')
-		c &= ~0x20;
-	return c > '9' ? c - 'A' + 10 : c - '0';
-}
-
 static void
 read_mac_string(uint8_t *mac, char *p)
 {
 	int i;
 
 	for (i = 0; i < 6; i++, p += 3)
-		*mac++ = (hex2nibble(p[0]) << 4) | hex2nibble(p[1]);
+		*mac++ = read_hex(p);
 }
 
 /*
