@@ -306,6 +306,8 @@ Now we expect an error...
 *** Error code 1 (continuing)
 `all' not remade because of errors.
 V.i386 ?= OK
+FOOBAR =
+FOOBAR = foobar fubar
 The answer is unknown
 The answer is unknown
 The answer is empty

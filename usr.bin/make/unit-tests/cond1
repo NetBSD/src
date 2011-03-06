@@ -1,4 +1,4 @@
-# $Id: cond1,v 1.4 2008/10/29 15:37:08 sjg Exp $
+# $Id: cond1,v 1.5 2011/03/06 00:02:14 sjg Exp $
 
 # hard code these!
 TEST_UNAME_S= NetBSD
@@ -93,6 +93,11 @@ B=unknown
 C=clever
 .else
 C=dim
+.endif
+
+.if defined(nosuch) && ${nosuch:Mx} != ""
+# this should not happen
+.info nosuch is x
 .endif
 
 all:
