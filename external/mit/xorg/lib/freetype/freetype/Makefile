@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/04/13 18:58:08 snj Exp $
+#	$NetBSD: Makefile,v 1.7 2011/03/06 00:59:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,7 @@ CONFIG_SUBST=	${TOOL_SED} -e 's%@prefix@%${X11ROOTDIR}%' \
 		-e 's%@includedir@%${X11INCDIR}%' \
 		-e 's%@ft_version@%9.17.3%' \
 		-e 's%@FT2_EXTRA_LIBS@%%' \
+		-e 's%@build_libtool_libs@%yes%' \
 		-e 's%@hardcode_libdir_flag_spec@%-Wl,-rpath,${X11USRLIBDIR}%' \
 		-e 's%@LIBZ@%-lz%'
 
