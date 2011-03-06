@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1517 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1518 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -881,4 +881,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		and is covered by the WAPBL journal. Enabled with kernel
 		option QUOTA2, turned on with tunefs(8) on a per-filesystem
 		basis. mount_mfs(8) can also turn quotas on.
+		See repquota(8) and quotactl(8) for a way to migrate
+		limits from QUOTA to QUOTA2.
 		[bouyer 20110306]
