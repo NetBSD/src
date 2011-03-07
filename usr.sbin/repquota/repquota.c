@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.28 2011/03/06 23:25:42 christos Exp $	*/
+/*	$NetBSD: repquota.c,v 1.29 2011/03/07 11:56:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.28 2011/03/06 23:25:42 christos Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.29 2011/03/07 11:56:31 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -387,7 +387,7 @@ printquotas(int type, const struct statvfs *vfs, int version)
 	const char *timemsg[N_QL];
 	char overchar[N_QL];
 	time_t now;
-	char b0[20], b1[20], b2[20], b3[20];
+	char b0[2][20], b1[20], b2[20], b3[20];
 
 	switch(type) {
 	case  GRPQUOTA:
@@ -435,12 +435,13 @@ printquotas(int type, const struct statvfs *vfs, int version)
 			case QL_S_DENY_HARD:
 			case QL_S_DENY_GRACE:
 			case QL_S_ALLOW_SOFT:
-				timemsg[i] = timeprt(b0, 8, now, q[i].q2v_time);
+				timemsg[i] = timeprt(b0[i], 8, now,
+				    q[i].q2v_time);
 				overchar[i] = '+';
 				break;
 			default:
 				timemsg[i] =  (vflag && version == 2) ?
-				    timeprt(b0, 8, 0, q[i].q2v_grace) : "";
+				    timeprt(b0[i], 8, 0, q[i].q2v_grace) : "";
 				overchar[i] = '-';
 				break;
 			}
