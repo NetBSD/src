@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.215 2011/01/23 21:55:04 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.216 2011/03/07 17:08:58 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4323,4 +4323,9 @@ lib/libc/inet/inet_addr.c 					new file
 
 	Update bind to 9.4-ESV-R4, latest version of the 9.4 line.
 	[spz, ticket #1413]
+
+sys/kern/init_sysctl.c				1.15
+
+	Sanitize arguments before memory allocation.
+	[joerg, ticket #1419]
 
