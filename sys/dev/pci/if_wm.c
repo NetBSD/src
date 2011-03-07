@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.162.4.14 2010/11/19 23:40:28 riz Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.162.4.15 2011/03/07 04:14:19 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.14 2010/11/19 23:40:28 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.162.4.15 2011/03/07 04:14:19 riz Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -5147,9 +5147,9 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_80003:
 		/* generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
-		delay((sc->sc_type >= WM_T_82571) ? 100 : 10*1000);
+		delay(20000);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		delay(150);
+		delay(20000);
 
 		if ((sc->sc_type == WM_T_82541)
 		    || (sc->sc_type == WM_T_82541_2)
