@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.61 2011/03/07 04:20:09 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.62 2011/03/07 17:10:13 snj Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4764,4 +4764,9 @@ sys/arch/xen/xen/xbdback_xenbus.c		1.33
 
 	Prevent dom0 pool corruption.
 	[bouyer, ticket #1573]
+
+sys/kern/init_sysctl.c				1.15
+
+	Sanitize arguments before memory allocation.
+	[joerg, ticket #1575]
 
