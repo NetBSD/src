@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212reg.h,v 1.1.1.1 2008/12/11 04:46:44 alc Exp $
+ * $FreeBSD: src/sys/dev/ath/ath_hal/ar5212/ar5212reg.h,v 1.4 2010/01/29 10:10:14 rpaulo Exp $
  */
 #ifndef _DEV_ATH_AR5212REG_H_
 #define _DEV_ATH_AR5212REG_H_
@@ -463,7 +463,8 @@
 #define	AR_ISR_S2_BCNTO		0x08000000 /* BCNTO */
 #define	AR_ISR_S2_CABTO		0x10000000 /* CABTO */
 #define	AR_ISR_S2_DTIM		0x20000000 /* DTIM */
-#define	AR_ISR_S2_RESV0		0xE0F8FC00 /* Reserved */
+#define	AR_ISR_S2_TSFOOR	0x40000000 /* TSF OOR */
+#define	AR_ISR_S2_TBTT		0x80000000 /* TBTT timer */
 
 #define	AR_ISR_S3_QCU_QCBROVF	0x000003FF /* Mask for QCBROVF (QCU 0-9) */
 #define	AR_ISR_S3_QCU_QCBRURN	0x03FF0000 /* Mask for QCBRURN (QCU 0-9) */
@@ -531,8 +532,14 @@
 #define	AR_IMR_S2_BCNTO		0x08000000 /* BCNTO */
 #define	AR_IMR_S2_CABTO		0x10000000 /* CABTO */
 #define	AR_IMR_S2_DTIM		0x20000000 /* DTIM */
-#define	AR_IMR_S2_TSFOOR	0x80000000 /* TSF OOR */
-#define	AR_IMR_S2_RESV0		0xE0F8FC00 /* Reserved */
+#define	AR_IMR_S2_TSFOOR	0x40000000 /* TSF OOR */
+#define	AR_IMR_S2_TBTT		0x80000000 /* TBTT timer */
+
+/* AR_IMR_SR2 bits that correspond to AR_IMR_BCNMISC */
+#define	AR_IMR_SR2_BCNMISC \
+	(AR_IMR_S2_TIM | AR_IMR_S2_DTIM | AR_IMR_S2_DTIMSYNC | \
+	 AR_IMR_S2_CABEND | AR_IMR_S2_CABTO  | AR_IMR_S2_TSFOOR | \
+	 AR_IMR_S2_TBTT)
 
 #define	AR_IMR_S3_QCU_QCBROVF	0x000003FF /* Mask for QCBROVF (QCU 0-9) */
 #define	AR_IMR_S3_QCU_QCBRURN	0x03FF0000 /* Mask for QCBRURN (QCU 0-9) */
@@ -693,6 +700,7 @@
 #define	AR_SCR_SLDWP		0x00080000 /* sleep duration write policy */
 #define	AR_SCR_SLEPOL		0x00100000 /* sleep policy mode */
 #define	AR_SCR_MIBIE		0x00200000 /* sleep perf cntrs MIB intr ena */
+#define	AR_SCR_UNKNOWN		0x00400000
 
 #define	AR_INTPEND_TRUE		0x00000001 /* interrupt pending */
 

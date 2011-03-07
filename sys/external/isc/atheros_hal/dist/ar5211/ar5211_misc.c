@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5211_misc.c,v 1.1.1.1 2008/12/11 04:46:32 alc Exp $
+ * $Id: ar5211_misc.c,v 1.2 2011/03/07 11:25:42 cegger Exp $
  */
 #include "opt_ah.h"
 
@@ -192,7 +192,7 @@ ar5211EnableRfKill(struct ath_hal *ah)
  * Configure GPIO Output lines
  */
 HAL_BOOL
-ar5211GpioCfgOutput(struct ath_hal *ah, uint32_t gpio)
+ar5211GpioCfgOutput(struct ath_hal *ah, uint32_t gpio, HAL_GPIO_MUX_TYPE type)
 {
 	uint32_t reg;
 
