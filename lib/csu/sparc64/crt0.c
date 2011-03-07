@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.25 2011/02/22 05:45:07 joerg Exp $ */
+/* $NetBSD: crt0.c,v 1.26 2011/03/07 05:09:11 joerg Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -98,6 +98,8 @@ ___start(char **sp,
 		_rtld_setup(cleanup, obj);
 #endif
 
+	_libc_init();
+
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&_eprol, (u_long)&_etext);
@@ -113,7 +115,7 @@ ___start(char **sp,
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.25 2011/02/22 05:45:07 joerg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.26 2011/03/07 05:09:11 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

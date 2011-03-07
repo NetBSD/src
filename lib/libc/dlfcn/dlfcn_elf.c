@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.7 2010/10/16 10:27:07 skrll Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.8 2011/03/07 05:09:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,10 +27,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.7 2010/10/16 10:27:07 skrll Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.8 2011/03/07 05:09:11 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "reentrant.h"
 #include "namespace.h"
+#include <elf.h>
+#include <errno.h>
+#include <string.h>
 
 #undef dlopen
 #undef dlclose
@@ -128,11 +132,61 @@ dlinfo(void *handle, int req, void *v)
 	return -1;
 }
 
+static once_t dl_iterate_phdr_once = ONCE_INITIALIZER;
+static const char *dlpi_name;
+static Elf_Addr dlpi_addr;
+static const Elf_Phdr *dlpi_phdr;
+static Elf_Half dlpi_phnum;
+
+/*
+ * Declare as common symbol to allow new libc with older binaries to
+ * not trigger an undefined reference.
+ */
+extern __dso_hidden void *__auxinfo;
+
+static void
+dl_iterate_phdr_setup(void)
+{
+	const AuxInfo *aux;
+
+	if (__auxinfo == NULL)
+		return;
+
+	for (aux = __auxinfo; aux->a_type != AT_NULL; ++aux) {
+		switch (aux->a_type) {
+		case AT_BASE:
+			dlpi_addr = aux->a_v;
+			break;
+		case AT_PHDR:
+			dlpi_phdr = (void *)aux->a_v;
+			break;
+		case AT_PHNUM:
+			dlpi_phnum = aux->a_v;
+			break;
+		case AT_SUN_EXECNAME:
+			dlpi_name = (void *)aux->a_v;
+			break;
+		}
+	}
+}
+
 /*ARGSUSED*/
 int
 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
     void *data)
 {
+	struct dl_phdr_info phdr_info;
 
-	return 0;
+	if (__auxinfo == NULL)
+		return EOPNOTSUPP;
+
+	thr_once(&dl_iterate_phdr_once, dl_iterate_phdr_setup);
+
+	memset(&phdr_info, 0, sizeof(phdr_info));
+	phdr_info.dlpi_addr = dlpi_addr;
+	phdr_info.dlpi_phdr = dlpi_phdr;
+	phdr_info.dlpi_phnum = dlpi_phnum;
+	phdr_info.dlpi_name = dlpi_name;
+
+	return callback(&phdr_info, sizeof(phdr_info), data);
 }

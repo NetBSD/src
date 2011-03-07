@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.4 2011/02/22 05:45:06 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.5 2011/03/07 05:09:09 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.4 2011/02/22 05:45:06 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.5 2011/03/07 05:09:09 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/syscall.h>
@@ -50,6 +50,7 @@ extern int main(int, char **, char **);
 
 extern void	_init(void);
 extern void	_fini(void);
+extern void	_libc_init(void);
 
 /*
  * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
@@ -114,6 +115,8 @@ ___start(int argc, char **argv, char **envp,
 			_FATAL("Dynamic linker version mismatch\n");
 		atexit(cleanup);
 	}
+
+	_libc_init();
 
 #ifdef MCRT0
 	atexit(_mcleanup);
