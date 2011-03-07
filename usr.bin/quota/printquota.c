@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.4 2011/03/06 22:36:07 christos Exp $ */
+/*	$NetBSD: printquota.c,v 1.5 2011/03/07 11:46:55 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.4 2011/03/06 22:36:07 christos Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.5 2011/03/07 11:46:55 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ const char *
 intprt(char *buf, size_t len, uint64_t val, int flags, int hflag)
 {
 	if (val == UQUAD_MAX)
-		return (len >= sizeof("unlimited")) ? "unlimited" : "-";
+		return (len > sizeof("unlimited")) ? "unlimited" : "-";
 
 	if (flags & HN_B)
 		val = dbtob(val);
