@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.3.2.3 2010/03/06 21:05:29 sborrill Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.3.2.4 2011/03/07 17:38:22 snj Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.3.2.3 2010/03/06 21:05:29 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.3.2.4 2011/03/07 17:38:22 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -409,6 +409,8 @@ rf_paritymap_nreg(RF_Raid_t *raid)
 	nreg = bytes_per_disk / REGION_MINSIZE;
 	if (nreg > RF_PARITYMAP_NREG)
 		nreg = RF_PARITYMAP_NREG;
+	if (nreg < 1)
+		nreg = 1;
 
 	return (u_int)nreg;
 }
