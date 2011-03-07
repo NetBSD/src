@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.110 2011/02/20 03:55:56 jmcneill Exp $	*/
+/*	$NetBSD: ath.c,v 1.111 2011/03/07 11:25:41 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.110 2011/02/20 03:55:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.111 2011/03/07 11:25:41 cegger Exp $");
 #endif
 
 /*
@@ -468,7 +468,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 */
 	sc->sc_softled = (devid == AR5212_DEVID_IBM || devid == AR5211_DEVID);
 	if (sc->sc_softled) {
-		ath_hal_gpioCfgOutput(ah, sc->sc_ledpin);
+		ath_hal_gpioCfgOutput(ah, sc->sc_ledpin,
+		    HAL_GPIO_MUX_MAC_NETWORK_LED);
 		ath_hal_gpioset(ah, sc->sc_ledpin, !sc->sc_ledon);
 	}
 
@@ -723,7 +724,8 @@ ath_resume(struct ath_softc *sc)
 			ath_hal_resettxqueue(ah, i);
 
 	if (sc->sc_softled) {
-		ath_hal_gpioCfgOutput(sc->sc_ah, sc->sc_ledpin);
+		ath_hal_gpioCfgOutput(sc->sc_ah, sc->sc_ledpin,
+		    HAL_GPIO_MUX_MAC_NETWORK_LED);
 		ath_hal_gpioset(sc->sc_ah, sc->sc_ledpin, !sc->sc_ledon);
 	}
 	return true;
