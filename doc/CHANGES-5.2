@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.59 2011/02/16 21:36:01 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.60 2011/03/07 04:15:34 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -812,7 +812,7 @@ usr.bin/passwd/yp_passwd.c			1.34
 sys/kern/vfs_wapbl.c				1.38 via patch
 
 	Fix an error that can lead to file system corruption and 
-	freeing free block" panics.
+	"freeing free block" panics.
 	[hannken, ticket #1477]
 
 sys/dev/usb/if_kuereg.h				1.12
@@ -4747,4 +4747,16 @@ sys/arch/sparc/sparc/timer_sun4m.c		patch
 	- Make sure to initialize cpus[0] which will also be used as cpuinfo
 	for sun4 and sun4c, not only for sun4m. Okay'ed by mrg@.
 	[mrg, ticket 1553]
+
+sys/kern/vfs_wapbl.c				1.27-1.28 via patch
+
+	Fix WAPBL-related panic in DIAGNOSTIC kernels, and possible
+	corruption elsewhere. 
+	[bouyer, ticket #1543]
+
+sys/dev/pci/if_wm.c				1.219
+
+	Allow Intel i82541GI to properly find its PHY, fixing a regression
+	from NetBSD 5.0.
+	[bouyer, ticket #1544]
 
