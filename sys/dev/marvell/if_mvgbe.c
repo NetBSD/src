@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.7 2011/03/06 17:00:16 christos Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.8 2011/03/07 13:58:32 christos Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.7 2011/03/06 17:00:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.8 2011/03/07 13:58:32 christos Exp $");
 
 #include "rnd.h"
 
@@ -619,7 +619,6 @@ static void
 mvgbe_attach(device_t parent, device_t self, void *aux)
 {
 	struct mvgbe_softc *sc = device_private(self);
-	struct mvgbec_softc *csc = device_private(parent);
 	struct marvell_attach_args *mva = aux;
 	struct mvgbe_txmap_entry *entry;
 	struct ifnet *ifp;
@@ -767,7 +766,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    mvgbe_mediachange, mvgbe_mediastatus);
 	mii_attach(self, &sc->sc_mii, 0xffffffff,
-	    parent == mvgebc0 ? 0 : 1, MII_OFFSET_ANY, 0);
+	    MII_PHY_ANY, parent == mvgbec0 ? 0 : 1, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media,
