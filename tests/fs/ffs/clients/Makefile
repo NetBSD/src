@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/06 17:08:41 bouyer Exp $
+#	$NetBSD: Makefile,v 1.3 2011/03/07 03:29:26 enami Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,8 +9,9 @@ WARNS=		4
 PROGS=			rump_quota rump_repquota rump_edquota rump_quotactl
 
 .PATH: ${NETBSDSRCDIR}/usr.bin/quota
-SRCS.rump_quota=	quota.c printquota.c getvfsquota.c quota_rumpops.c 
-SRCS.rump_repquota=	printquota.c quota_rumpops.c
+SRCS.rump_quota=	quota.c printquota.c getvfsquota.c quota_rumpops.c \
+			    quotautil.c
+SRCS.rump_repquota=	printquota.c quota_rumpops.c quotautil.c
 SRCS.rump_edquota=	printquota.c getvfsquota.c quota_rumpops.c
 CPPFLAGS.quota.c+=	-I${NETBSDSRCDIR}/usr.bin/quota
 CPPFLAGS.printquota.c+=	-I${NETBSDSRCDIR}/usr.bin/quota
@@ -21,7 +22,7 @@ SRCS.rump_repquota+=	repquota.c
 CPPFLAGS.repquota.c+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/usr.bin/quota
 
 .PATH: ${NETBSDSRCDIR}/usr.sbin/edquota
-SRCS.rump_edquota+=	edquota.c
+SRCS.rump_edquota+=	edquota.c quotautil.c
 CPPFLAGS.edquota.c+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/usr.bin/quota
 
 .PATH: ${NETBSDSRCDIR}/usr.sbin/quotactl
