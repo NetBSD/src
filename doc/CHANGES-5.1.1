@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.11 2011/03/07 04:10:14 riz Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.12 2011/03/07 04:15:21 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2257,4 +2257,10 @@ sys/kern/vfs_wapbl.c				1.27-1.28 via patch
 	Fix WAPBL-related panic in DIAGNOSTIC kernels, and possible
 	corruption elsewhere. 
 	[bouyer, ticket #1543]
+
+sys/dev/pci/if_wm.c				1.219
+
+	Allow Intel i82541GI to properly find its PHY, fixing a regression
+	from NetBSD 5.0.
+	[bouyer, ticket #1544]
 
