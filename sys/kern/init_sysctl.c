@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.149.4.7 2009/07/01 22:42:28 snj Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.149.4.7.2.1 2011/03/07 17:08:18 snj Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.4.7 2009/07/01 22:42:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149.4.7.2.1 2011/03/07 17:08:18 snj Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2527,6 +2527,11 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	else
 #endif
 		len = sizeof(char *) * nargv;
+
+	if (nargv < 0 || len > ARG_MAX || len < (size_t)nargv) {
+		error = EINVAL;
+		goto done;
+	}
 
 	if ((argvlen = len) != 0)
 		argv = kmem_alloc(len, KM_SLEEP);
