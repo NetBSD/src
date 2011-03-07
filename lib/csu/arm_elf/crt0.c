@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.8 2011/02/22 05:45:05 joerg Exp $	*/
+/*	$NetBSD: crt0.c,v 1.9 2011/03/07 05:09:09 joerg Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -68,7 +68,7 @@ __asm("	.text			\n"
 "	b	" ___STRING(_C_LABEL(___start)) " ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.8 2011/02/22 05:45:05 joerg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.9 2011/03/07 05:09:09 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -92,6 +92,8 @@ ___start(int argc, char **argv, char **envp, struct ps_strings *ps_strings,
 	if (&rtld_DYNAMIC)
                 _rtld_setup(cleanup, obj);
 #endif	/* DYNAMIC */
+
+	_libc_init();
 
 #ifdef MCRT0
 	atexit(_mcleanup);
