@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: npf,v 1.1 2011/02/02 02:20:28 rmind Exp $
+# $NetBSD: npf,v 1.2 2011/03/07 23:21:13 jmcneill Exp $
 #
 # Public Domain.
 #
@@ -55,6 +55,7 @@ npf_reload()
 
 npf_status()
 {
+	:
 }
 
 load_rc_config $name
