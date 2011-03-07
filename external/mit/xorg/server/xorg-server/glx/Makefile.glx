@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.3.2.3 2009/10/10 19:53:24 sborrill Exp $
+#	$NetBSD: Makefile.glx,v 1.3.2.4 2011/03/07 18:50:48 riz Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/glx
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
@@ -59,7 +59,8 @@ CPPFLAGS+= \
 CPPFLAGS+= \
 	-DGLXEXT \
 	-DGLX_USE_MESA \
-	${X11FLAGS.DIX}
+	-I${X11SRCDIR.xorg-server}/../include \
+	${X11FLAGS.DIX} ${X11INCS.DIX}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
