@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.7 2010/11/14 18:11:42 tron Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.8 2011/03/07 05:09:11 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,13 +30,17 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.7 2010/11/14 18:11:42 tron Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.8 2011/03/07 05:09:11 joerg Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
 #endif
 
-void	__libc_init(void) __attribute__((__constructor__, __used__));
+#include <sys/param.h>
+#include <sys/exec.h>
+#include <stdbool.h>
+
+void	_libc_init(void) __attribute__((__constructor__, __used__));
 
 void	__guard_setup(void);
 void	__libc_thr_init(void);
@@ -44,10 +48,29 @@ void	__libc_atomic_init(void);
 void	__libc_atexit_init(void);
 void	__libc_env_init(void);
 
-/* LINTED used */
+static bool libc_initialised;
+
+void _libc_init(void);
+
+__dso_hidden void	*__auxinfo;
+struct ps_strings *__ps_strings;
+
+/*
+ * _libc_init is called twice.  The first time explicitly by crt0.o
+ * (for newer versions) and the second time as indirectly via _init().
+ */
 void
-__libc_init(void)
+_libc_init(void)
 {
+
+	if (libc_initialised)
+		return;
+
+	libc_initialised = 1;
+
+	if (__ps_strings != NULL)
+		__auxinfo = __ps_strings->ps_argvstr +
+		    __ps_strings->ps_nargvstr + __ps_strings->ps_nenvstr + 2;
 
 	/* For -fstack-protector */
 	__guard_setup();

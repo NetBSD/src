@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.14 2011/02/22 05:45:06 joerg Exp $ */
+/* $NetBSD: common.h,v 1.15 2011/03/07 05:09:09 joerg Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -71,6 +71,7 @@ struct ps_strings *__ps_strings = 0;
 
 extern void	_init(void);
 extern void	_fini(void);
+extern void	_libc_init(void);
 
 #ifdef DYNAMIC
 void	_rtld_setup(void (*)(void), const Obj_Entry *obj);
