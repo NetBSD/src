@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.63 2011/03/07 17:13:18 snj Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.64 2011/03/07 17:39:10 snj Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4769,4 +4769,9 @@ sys/kern/init_sysctl.c				patch
 
 	Sanitize arguments before memory allocation.
 	[joerg, ticket #1575]
+
+sys/dev/raidframe/rf_paritymap.c		1.6
+
+	Always return at least one parity region.  Fixes PR#44239.
+	[riz, ticket #1569]
 
