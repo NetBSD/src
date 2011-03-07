@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.42 2011/02/15 16:10:41 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.43 2011/03/07 21:57:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.42 2011/02/15 16:10:41 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.43 2011/03/07 21:57:15 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -623,7 +623,7 @@ serv_syscallbouncer(void *arg)
 
 	for (;;) {
 		pthread_mutex_lock(&sbamtx);
-		if (__predict_false(idleworker >= rumpsp_idleworker)) {
+		if (__predict_false(idleworker - nwork >= rumpsp_idleworker)) {
 			nworker--;
 			pthread_mutex_unlock(&sbamtx);
 			break;
