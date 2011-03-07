@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.3.8.2.2.1 2010/11/22 02:53:19 riz Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.3.8.2.2.2 2011/03/07 04:09:55 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.2.2.1 2010/11/22 02:53:19 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.2.2.2 2011/03/07 04:09:55 riz Exp $");
 
 #include <sys/param.h>
 
@@ -787,16 +787,20 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 		   wl->wl_bufbytes_max / 2) ||
 		  ((wl->wl_bufcount + (lockcount * 10)) >
 		   wl->wl_bufcount_max / 2) ||
-		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2);
+		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2) ||
+		  (wl->wl_dealloccnt >=
+		   (wl->wl_dealloclim - (wl->wl_dealloclim >> 8)));
 	mutex_exit(&wl->wl_mtx);
 
 	if (doflush) {
 		WAPBL_PRINTF(WAPBL_PRINT_FLUSH,
 		    ("force flush lockcnt=%d bufbytes=%zu "
-		    "(max=%zu) bufcount=%zu (max=%zu)\n",
+		    "(max=%zu) bufcount=%zu (max=%zu) "
+		    "dealloccnt %d (lim=%d)\n",
 		    lockcount, wl->wl_bufbytes,
 		    wl->wl_bufbytes_max, wl->wl_bufcount,
-		    wl->wl_bufcount_max));
+		    wl->wl_bufcount_max,
+		    wl->wl_dealloccnt, wl->wl_dealloclim));
 	}
 
 	if (doflush) {
@@ -1671,8 +1675,14 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 
 	mutex_enter(&wl->wl_mtx);
 	/* XXX should eventually instead tie this into resource estimation */
-	/* XXX this KASSERT needs locking/mutex analysis */
-	KASSERT(wl->wl_dealloccnt < wl->wl_dealloclim);
+	/*
+	 * XXX this panic needs locking/mutex analysis and the
+	 * ability to cope with the failure.
+	 */
+	/* XXX this XXX doesn't have enough XXX */
+	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim))
+		panic("wapbl_register_deallocation: out of resources");
+
 	wl->wl_deallocblks[wl->wl_dealloccnt] = blk;
 	wl->wl_dealloclens[wl->wl_dealloccnt] = len;
 	wl->wl_dealloccnt++;
