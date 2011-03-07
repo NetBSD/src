@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.60 2011/03/07 04:15:34 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.61 2011/03/07 04:20:09 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4759,4 +4759,9 @@ sys/dev/pci/if_wm.c				1.219
 	Allow Intel i82541GI to properly find its PHY, fixing a regression
 	from NetBSD 5.0.
 	[bouyer, ticket #1544]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.33
+
+	Prevent dom0 pool corruption.
+	[bouyer, ticket #1573]
 
