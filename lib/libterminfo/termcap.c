@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.10 2010/10/12 12:49:27 christos Exp $ */
+/* $NetBSD: termcap.c,v 1.11 2011/03/07 00:27:51 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.10 2010/10/12 12:49:27 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.11 2011/03/07 00:27:51 christos Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -178,9 +178,12 @@ tgetstr(const char *id, char **area)
 char *
 tgoto(const char *cm, int destcol, int destline)
 {
-	
+	static char OOPS[] = "OOPS";	
+	char *p;
+
 	_DIAGASSERT(cm != NULL);
-	return vtparm(cm, destline, destcol);
+	p = vtparm(cm, destline, destcol);
+	return p ? p : OOPS;
 }
 
 static const char *
