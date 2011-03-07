@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.259 2011/03/06 17:08:12 bouyer Exp $
+# $NetBSD: mi,v 1.260 2011/03/07 15:51:40 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -225,8 +225,16 @@
 ./usr/libdata/debug/usr/tests/dev/sysmon					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/sysmon/t_swwdog.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_server.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_tests.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/rump_edquota.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/rump_quota.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/rump_quotactl.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/rump_repquota.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_mount.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/t_quota2_1.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/t_quota2_remount.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot_log.debug			tests-fs-debug		debug,atf
