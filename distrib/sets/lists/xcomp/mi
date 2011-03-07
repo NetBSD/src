@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.125 2011/03/06 22:15:30 mrg Exp $
+#	 $NetBSD: mi,v 1.126 2011/03/07 18:37:46 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9225,7 +9225,6 @@
 ./usr/X11R7/man/man3/XvUngrabPort.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XvVideoNotify.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/libXp.3				-obsolete-	obsolete
-./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
 ./usr/X11R7/share/xcb/bigreq.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/composite.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/damage.xml			-unknown-	xorg
