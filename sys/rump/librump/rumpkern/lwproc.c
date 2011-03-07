@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.15 2011/02/10 13:40:35 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.16 2011/03/07 21:04:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.15 2011/02/10 13:40:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.16 2011/03/07 21:04:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -229,9 +229,6 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 
 	l->l_lid = p->p_nlwpid++;
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
-	mutex_exit(p->p_lock);
-
-	lwp_update_creds(l);
 
 	l->l_fd = p->p_fd;
 	l->l_cpu = rump_cpu;
@@ -239,7 +236,9 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	l->l_stat = LSRUN;
 	l->l_mutex = &unruntime_lock;
 	TAILQ_INIT(&l->l_ld_locks);
+	mutex_exit(p->p_lock);
 
+	lwp_update_creds(l);
 	lwp_initspecific(l);
 
 	if (doswitch) {
