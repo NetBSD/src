@@ -1,4 +1,4 @@
-/*	$NetBSD: h_execthr.c,v 1.1 2011/03/08 12:40:25 pooka Exp $	*/
+/*	$NetBSD: h_execthr.c,v 1.2 2011/03/08 15:35:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -164,7 +164,6 @@ main(int argc, char *argv[], char *envp[])
 		usleep(10000);
 	}
 
-#ifdef notyet
 	/*
 	 * load up one more (big) set.  these won't start executing, though,
 	 * but we're interested in if they create blockage
@@ -173,7 +172,6 @@ main(int argc, char *argv[], char *envp[])
 		if (pthread_create(&pt, NULL,
 		    wrk, (void *)(uintptr_t)p1[0]) != 0)
 			errx(1, "pthread_create 1 %d", i);
-#endif
 
 	/* then, we exec! */
 	execarg[0] = argv[0];
