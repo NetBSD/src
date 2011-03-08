@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.23 2007/12/03 15:34:22 ad Exp $ */
+/*	$NetBSD: timer.c,v 1.23.28.1 2011/03/08 17:29:46 riz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.23 2007/12/03 15:34:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.23.28.1 2011/03/08 17:29:46 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -153,6 +153,7 @@ void
 timerattach(volatile int *cntreg, volatile int *limreg)
 {
 	u_int prec = 0, t0;
+	void    (*sched_intr_fn)(void *);
 
 	/*
 	 * Calibrate delay() by tweaking the magic constant
@@ -192,11 +193,13 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	cntr.mask = (1 << (31-t0))-1;
 	counter_timecounter.tc_frequency = 1000000 * (TMR_SHIFT - t0 + 1);
 	
-	printf(": delay constant %d, frequency = %" PRIu64 " Hz\n", timerblurb, counter_timecounter.tc_frequency);
+	printf(": delay constant %d, frequency = %" PRIu64 " Hz\n",
+	       timerblurb, counter_timecounter.tc_frequency);
 
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		timer_init = timer_init_4;
+		sched_intr_fn = schedintr;
 		level10.ih_fun = clockintr_4;
 		level14.ih_fun = statintr_4;
 		cntr.limit = tmr_ustolim(tick);
@@ -205,6 +208,12 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		timer_init = timer_init_4m;
+#if defined(MULTIPROCESSOR)
+		if (sparc_ncpus > 1)
+			sched_intr_fn = schedintr_4m;
+		else
+#endif
+			sched_intr_fn = schedintr;
 		level10.ih_fun = clockintr_4m;
 		level14.ih_fun = statintr_4m;
 		cntr.limit = tmr_ustolim4m(tick);
@@ -215,7 +224,7 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	intr_establish(14, 0, &level14, NULL);
 
 	/* Establish a soft interrupt at a lower level for schedclock */
-	sched_cookie = sparc_softintr_establish(IPL_SCHED, schedintr, NULL);
+	sched_cookie = sparc_softintr_establish(IPL_SCHED, sched_intr_fn, NULL);
 	if (sched_cookie == NULL)
 		panic("timerattach: cannot establish schedintr");
 

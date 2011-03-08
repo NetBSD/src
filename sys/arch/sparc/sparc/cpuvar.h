@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.75.10.4 2011/02/16 21:33:25 bouyer Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.75.10.5 2011/03/08 17:29:46 riz Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -127,6 +127,13 @@ struct xpmsg {
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
+	/*
+	 * Primary Inter-processor message area.  Keep this aligned
+	 * to a cache line boundary if possible, as the structure
+	 * itself is one (normal 32 byte) cache-line.
+	 */
+	struct xpmsg	msg __aligned(32);
+
 	/* Scheduler flags */
 	int	ci_want_ast;
 	int	ci_want_resched;
@@ -141,9 +148,6 @@ struct cpu_info {
 	 * in the curcpu() macro.
 	 */
 	struct cpu_info * volatile ci_self;
-
-	/* Primary Inter-processor message area */
-	struct xpmsg	msg;
 
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 
@@ -333,8 +337,11 @@ struct cpu_info {
 	vaddr_t	ci_free_sva1, ci_free_eva1, ci_free_sva2, ci_free_eva2;
 
 	char ci_cpuname[8];	/* "cpu/0", etc. */
-	struct evcnt ci_lev10;
-	struct evcnt ci_lev14;
+	struct evcnt ci_savefpstate;
+	struct evcnt ci_xpmsg_mutex_fail;
+	struct evcnt ci_xpmsg_mutex_fail_call;
+	struct evcnt ci_intrcnt[16];
+	struct evcnt ci_sintrcnt[16];
 };
 
 /*
@@ -448,6 +455,8 @@ void cpu_init_system(void);
 typedef void (*xcall_func_t)(int, int, int);
 typedef void (*xcall_trap_t)(int, int, int);
 void xcall(xcall_func_t, xcall_trap_t, int, int, int, u_int);
+/* from intr.c */
+void xcallintr(void *);
 /* Shorthand */
 #define XCALL0(f,cpuset)		\
 	xcall((xcall_func_t)f, NULL, 0, 0, 0, cpuset)
@@ -487,5 +496,12 @@ extern u_int cpu_ready_mask;		/* the set of CPUs marked as READY */
 
 #define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
 
+#if defined(DDB) || defined(MULTIPROCESSOR)
+/*
+ * These are called by ddb mach functions.
+ */
+void cpu_debug_dump(void);
+void cpu_xcall_dump(void);
+#endif
 
 #endif	/* _sparc_cpuvar_h */
