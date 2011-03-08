@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.385.2.1 2009/01/15 03:24:06 snj Exp $
+#	$NetBSD: NetBSD.dist,v 1.385.2.1.2.1 2011/03/08 17:43:51 riz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1424,6 +1424,7 @@
 ./var/chroot/named/etc
 ./var/chroot/named/etc/namedb
 ./var/chroot/named/etc/namedb/cache	mode=0775 uname=named gname=named
+./var/chroot/named/etc/namedb/keys	mode=0775 uname=named gname=named
 ./var/chroot/named/usr
 ./var/chroot/named/usr/libexec
 ./var/chroot/named/var
