@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.74 2011/03/08 15:05:40 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.75 2011/03/08 15:12:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -452,6 +452,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	REG_S	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
+	move	ta0, ra				# save across spl* calls
 
 #ifdef PARANOIA
 	INT_L	s0, CPU_INFO_CPL(s2)
@@ -506,7 +507,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	/*
 	 * Now hard interrupts can be processed.
 	 */
-	move	a1, ra				# 2nd arg is exception PC
+	move	a1, ta0				# 2nd arg is exception PC
 	move	a2, s1				# 3rd arg is status
 	jal	_C_LABEL(cpu_intr)		# cpu_intr(ppl, pc, status)
 	 srl	a0, s0, 8			# 1st arg is previous pri level
@@ -763,6 +764,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
+	move	ta0, ra				# save across spl* calls
 
 	/*
 	 * We first need to get to IPL_HIGH so that interrupts are masked.
@@ -797,7 +799,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	/*
 	 * Now hard interrupts can be processed.
 	 */
-	move	a1, ra				# 2nd arg is exception pc
+	move	a1, ta0				# 2nd arg is exception pc
 	move	a2, s1				# 3rd arg is status
 	jal	_C_LABEL(cpu_intr)		# cpu_intr(ppl, pc, status)
 	 move	a0, s0				# 1st arg is previous pri level
