@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.12 2010/04/19 19:22:41 martin Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.13 2011/03/08 11:24:28 adam Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,7 +157,7 @@ message Other_kind
 {Inny typ, podaj identyfikator liczbowy}
 
 
-message reeditpart	/* XXX translate */
+message reeditpart
 {
 
 Czy chcesz zmienic tablice partycji (MBR)? Brak zgody przerwie instalacje.
