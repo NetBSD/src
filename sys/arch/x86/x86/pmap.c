@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.10 2011/03/05 20:52:31 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.11 2011/03/08 20:07:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.10 2011/03/05 20:52:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.11 2011/03/08 20:07:30 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3121,9 +3121,7 @@ static void
 pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		 vaddr_t startva, vaddr_t endva, struct pv_entry **pv_tofree)
 {
-	struct pv_entry *pve;
-	pt_entry_t *pte = (pt_entry_t *) ptpva;
-	pt_entry_t opte;
+	pt_entry_t *pte = (pt_entry_t *)ptpva;
 
 	KASSERT(pmap == pmap_kernel() || mutex_owned(pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
@@ -3136,74 +3134,16 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 	 * and the wire_count is greater than 1 (because we use the wire_count
 	 * to keep track of the number of real PTEs in the PTP).
 	 */
-
-	for (/*null*/; startva < endva && (ptp == NULL || ptp->wire_count > 1)
-			     ; pte++, startva += PAGE_SIZE) {
-		struct vm_page *pg;
-		struct pmap_page *pp;
-
-		if (!pmap_valid_entry(*pte))
-			continue;			/* VA not mapped */
-
-		/* atomically save the old PTE and zap! it */
-		opte = pmap_pte_testset(pte, 0);
-		if (!pmap_valid_entry(opte)) {
-			continue;
-		}
-
-		pmap_exec_account(pmap, startva, opte, 0);
-		pmap_stats_update_bypte(pmap, 0, opte);
-
-		if (ptp) {
-			ptp->wire_count--;		/* dropping a PTE */
-			/* Make sure that the PDE is flushed */
-			if (ptp->wire_count <= 1)
-				opte |= PG_U;
-		}
-
-		if ((opte & PG_U) != 0) {
-			pmap_tlb_shootdown(pmap, startva, opte,
-			    TLBSHOOT_REMOVE_PTES);
-		}
-
-		/*
-		 * if we are not on a pv_head list we are done.
-		 */
-
-		if ((opte & PG_PVLIST) == 0) {
-#if defined(DIAGNOSTIC) && !defined(DOM0OPS)
-			if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
-				panic("pmap_remove_ptes: managed page without "
-				      "PG_PVLIST for %#" PRIxVADDR, startva);
-#endif
-			continue;
-		}
-
-		pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
-
-		KASSERTMSG(pg != NULL, ("pmap_remove_ptes: unmanaged page "
-		    "marked PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
-		    startva, (paddr_t)pmap_pte2pa(opte)));
-
-		KASSERT(uvm_page_locked_p(pg));
-
-		/* sync R/M bits */
-		pp = VM_PAGE_TO_PP(pg);
-		pp->pp_attrs |= opte;
-		pve = pmap_remove_pv(pp, ptp, startva);
-
-		if (pve != NULL) {
-			pve->pve_next = *pv_tofree;
-			*pv_tofree = pve;
-		}
-
-		/* end of "for" loop: time for next pte */
+	while (startva < endva && (ptp == NULL || ptp->wire_count > 1)) {
+		(void)pmap_remove_pte(pmap, ptp, pte, startva, pv_tofree);
+		startva += PAGE_SIZE;
+		pte++;
 	}
 }
 
 
 /*
- * pmap_remove_pte: remove a single PTE from a PTP
+ * pmap_remove_pte: remove a single PTE from a PTP.
  *
  * => caller must hold pmap's lock
  * => PTP must be mapped into KVA
@@ -3211,23 +3151,24 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
  * => returns true if we removed a mapping
  * => must be called with kernel preemption disabled
  */
-
 static bool
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		vaddr_t va, struct pv_entry **pv_tofree)
 {
-	pt_entry_t opte;
 	struct pv_entry *pve;
 	struct vm_page *pg;
 	struct pmap_page *pp;
+	pt_entry_t opte;
 
 	KASSERT(pmap == pmap_kernel() || mutex_owned(pmap->pm_lock));
-	KASSERT(pmap == pmap_kernel() || kpreempt_disabled());
+	KASSERT(kpreempt_disabled());
 
-	if (!pmap_valid_entry(*pte))
-		return(false);		/* VA not mapped */
+	if (!pmap_valid_entry(*pte)) {
+		/* VA not mapped. */
+		return false;
+	}
 
-	/* atomically save the old PTE and zap! it */
+	/* Atomically save the old PTE and zap it. */
 	opte = pmap_pte_testset(pte, 0);
 	if (!pmap_valid_entry(opte)) {
 		return false;
@@ -3237,10 +3178,13 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	pmap_stats_update_bypte(pmap, 0, opte);
 
 	if (ptp) {
-		ptp->wire_count--;		/* dropping a PTE */
-		/* Make sure that the PDE is flushed */
-		if (ptp->wire_count <= 1)
+		/*
+		 * Dropping a PTE.  Make sure that the PDE is flushed.
+		 */
+		ptp->wire_count--;
+		if (ptp->wire_count <= 1) {
 			opte |= PG_U;
+		}
 	}
 
 	if ((opte & PG_U) != 0) {
@@ -3248,16 +3192,15 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	/*
-	 * if we are not on a pv_head list we are done.
+	 * If we are not on a pv_head list - we are done.
 	 */
-
 	if ((opte & PG_PVLIST) == 0) {
 #if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 		if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for %#" PRIxVADDR, va);
 #endif
-		return(true);
+		return true;
 	}
 
 	pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
@@ -3266,9 +3209,9 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	    "PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
 	    va, (paddr_t)pmap_pte2pa(opte)));
 
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(pmap == pmap_kernel() || uvm_page_locked_p(pg));
 
-	/* sync R/M bits */
+	/* Sync R/M bits. */
 	pp = VM_PAGE_TO_PP(pg);
 	pp->pp_attrs |= opte;
 	pve = pmap_remove_pv(pp, ptp, va);
@@ -3277,8 +3220,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		pve->pve_next = *pv_tofree;
 		*pv_tofree = pve;
 	}
-
-	return(true);
+	return true;
 }
 
 /*
@@ -3314,20 +3256,17 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			/* PA of the PTP */
 			ptppa = pmap_pte2pa(pde);
 
-			/* get PTP if non-kernel mapping */
-			if (pmap == pmap_kernel()) {
-				/* we never free kernel PTPs */
-				ptp = NULL;
-			} else {
+			/* Get PTP if non-kernel mapping. */
+			if (pmap != pmap_kernel()) {
 				ptp = pmap_find_ptp(pmap, va, ptppa, 1);
-#ifdef DIAGNOSTIC
-				if (ptp == NULL)
-					panic("pmap_remove: unmanaged "
-					      "PTP detected");
-#endif
+				KASSERTMSG(ptp != NULL,
+				    ("pmap_remove: unmanaged PTP detected")
+				);
+			} else {
+				/* Never free kernel PTPs. */
+				ptp = NULL;
 			}
 
-			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
 			    &ptes[pl1_i(va)], va, &pv_tofree);
 
@@ -3379,18 +3318,17 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		/* PA of the PTP */
 		ptppa = pmap_pte2pa(pde);
 
-		/* get PTP if non-kernel mapping */
-		if (pmap == pmap_kernel()) {
-			/* we never free kernel PTPs */
-			ptp = NULL;
-		} else {
+		/* Get PTP if non-kernel mapping. */
+		if (pmap != pmap_kernel()) {
 			ptp = pmap_find_ptp(pmap, va, ptppa, 1);
-#ifdef DIAGNOSTIC
-			if (ptp == NULL)
-				panic("pmap_remove: unmanaged PTP "
-				      "detected");
-#endif
+			KASSERTMSG(ptp != NULL,
+			    ("pmap_remove: unmanaged PTP detected")
+			);
+		} else {
+			/* Never free kernel PTPs. */
+			ptp = NULL;
 		}
+
 		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[pl1_i(va)], va,
 		    blkendva, &pv_tofree);
 
