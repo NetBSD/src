@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.30 2011/03/08 12:39:28 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.31 2011/03/08 15:34:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -74,9 +74,13 @@ mydprintf(const char *fmt, ...)
 #ifndef HOSTOPS
 #define host_poll poll
 #define host_read read
-#define host_sendto sendto
+#define host_sendmsg sendmsg
 #define host_setsockopt setsockopt
 #endif
+
+#define IOVPUT(_io_, _b_) _io_.iov_base = &_b_; _io_.iov_len = sizeof(_b_);
+#define IOVPUT_WITHSIZE(_io_, _b_, _l_) _io_.iov_base = _b_; _io_.iov_len = _l_;
+#define SENDIOV(_spc_, _iov_) dosend(_spc_, _iov_, __arraycount(_iov_))
 
 /*
  * Bah, I hate writing on-off-wire conversions in C
@@ -254,18 +258,20 @@ sendunlock(struct spclient *spc)
 }
 
 static int
-dosend(struct spclient *spc, const void *data, size_t dlen)
+dosend(struct spclient *spc, struct iovec *iov, size_t iovlen)
 {
+	struct msghdr msg;
 	struct pollfd pfd;
-	const uint8_t *sdata = data;
-	ssize_t n;
-	size_t sent;
+	ssize_t n = 0;
 	int fd = spc->spc_fd;
 
 	pfd.fd = fd;
 	pfd.events = POLLOUT;
 
-	for (sent = 0, n = 0; sent < dlen; ) {
+	memset(&msg, 0, sizeof(msg));
+
+	for (;;) {
+		/* not first round?  poll */
 		if (n) {
 			if (host_poll(&pfd, 1, INFTIM) == -1) {
 				if (errno == EINTR)
@@ -274,8 +280,9 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 			}
 		}
 
-		n = host_sendto(fd, sdata + sent, dlen - sent,
-		    MSG_NOSIGNAL, NULL, 0);
+		msg.msg_iov = iov;
+		msg.msg_iovlen = iovlen;
+		n = host_sendmsg(fd, &msg, MSG_NOSIGNAL);
 		if (n == -1)  {
 			if (errno == EPIPE)
 				return ENOTCONN;
@@ -286,7 +293,21 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 		if (n == 0) {
 			return ENOTCONN;
 		}
-		sent += n;
+
+		/* ok, need to adjust iovec for potential next round */
+		while (n >= (ssize_t)iov[0].iov_len && iovlen) {
+			n -= iov[0].iov_len;
+			iov++;
+			iovlen--;
+		}
+
+		if (iovlen == 0) {
+			_DIAGASSERT(n == 0);
+			break;
+		} else {
+			iov[0].iov_base = (uint8_t *)iov[0].iov_base + n;
+			iov[0].iov_len -= n;
+		}
 	}
 
 	return 0;
