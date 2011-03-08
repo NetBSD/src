@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/02/22 17:32:49 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2011/03/08 18:30:24 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
@@ -16,6 +16,14 @@ CPPFLAGS+=	-DRUMP_CLIENT -I${.CURDIR} -I${.CURDIR}/../librumpuser
 SRCS=		rumpclient.c
 SRCS+=		rump_syscalls.c
 
+CLEANFILES+=	srcsys
+
 COPTS.rump_syscalls.c+= -fno-strict-aliasing
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@rm -f srcsys
+	@ln -s ${NETBSDSRCDIR}/sys/sys srcsys
+.endif
 
 .include <bsd.lib.mk>
