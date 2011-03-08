@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.2.7 2011/03/05 20:52:28 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.8 2011/03/08 23:27:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -465,23 +465,25 @@ bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 
 struct pmap_tlb_packet {
 #ifdef _LP64
-	uintptr_t	tp_va[14];	/* whole struct: 128 bytes */
+	uintptr_t		tp_va[14];	/* whole struct: 128 bytes */
 #else
-	uintptr_t	tp_va[13];	/* whole struct: 64 bytes */
+	uintptr_t		tp_va[13];	/* whole struct: 64 bytes */
 #endif
-	uint16_t	tp_count;
-	uint16_t	tp_pte;
-	uint32_t	tp_cpumask;
-	uint32_t	tp_usermask;
+	uint16_t		tp_count;
+	uint16_t		tp_pte;
+	uint32_t		tp_cpumask;
+	uint32_t		tp_usermask;
 };
-#define	TP_MAXVA	6		/* no more than N seperate invlpg */
+
+/* No more than N seperate invlpg. */
+#define	TP_MAXVA		6
 
 struct pmap_tlb_mailbox {
-	uint32_t	tm_pending;
-	uint32_t	tm_gen;
-	uint32_t	tm_usergen;
-	uint32_t	tm_globalgen;
-	char		tm_pad[64 - sizeof(uintptr_t) * 4];
+	volatile uint32_t	tm_pending;
+	volatile uint32_t	tm_gen;
+	uint32_t		tm_usergen;
+	uint32_t		tm_globalgen;
+	char			tm_pad[64 - sizeof(uintptr_t) * 4];
 };
 
 #endif /* _KERNEL */
