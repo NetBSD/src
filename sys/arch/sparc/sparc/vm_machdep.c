@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.95.4.2 2010/01/09 01:43:51 snj Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.95.4.3 2011/03/08 17:29:46 riz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.95.4.2 2010/01/09 01:43:51 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.95.4.3 2011/03/08 17:29:46 riz Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -230,7 +230,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 				savefpstate(l1->l_md.md_fpstate);
 #if defined(MULTIPROCESSOR)
 			else
-				XCALL1(savefpstate, l1->l_md.md_fpstate,
+				XCALL1(ipi_savefpstate, l1->l_md.md_fpstate,
 					1 << cpi->ci_cpuid);
 #endif
 		}
@@ -308,7 +308,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 				savefpstate(fs);
 #if defined(MULTIPROCESSOR)
 			else
-				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
+				XCALL1(ipi_savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
 			cpi->fplwp = NULL;
 		}

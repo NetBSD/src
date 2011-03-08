@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.8 2006/06/07 22:38:50 kardel Exp $	*/
+/*	$NetBSD: timervar.h,v 1.8.74.1 2011/03/08 17:29:46 riz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@ void	timerattach_mainbus_4c(struct device *, struct device *, void *);
 #endif /* SUN4 || SUN4C */
 
 #if defined(SUN4M)
+void	schedintr_4m(void *);
 int	clockintr_4m(void *);
 int	statintr_4m(void *);
 void	timer_init_4m(void);
