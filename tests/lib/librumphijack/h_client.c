@@ -1,4 +1,4 @@
-/*	$NetBSD: h_client.c,v 1.4 2011/03/01 08:54:18 pooka Exp $	*/
+/*	$NetBSD: h_client.c,v 1.5 2011/03/08 14:53:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 		exit(0);
 	} else if (strcmp(argv[1], "invafd") == 0) {
 		struct pollfd pfd[2];
-		int fd;
+		int fd, rv;
 
 		fd = open("/rump/dev/null", O_RDWR);
 		if (fd == -1)
@@ -107,8 +107,8 @@ main(int argc, char *argv[])
 		pfd[1].fd = fd;
 		pfd[1].events = POLLIN;
 
-		if (poll(pfd, 2, INFTIM) != 1)
-			errx(1, "poll unexpected rv");
+		if ((rv = poll(pfd, 2, INFTIM)) != 1)
+			errx(1, "poll unexpected rv %d (%d)", rv, errno);
 		if (pfd[1].revents != POLLNVAL || pfd[0].revents != 0)
 			errx(1, "poll unexpected revents");
 
