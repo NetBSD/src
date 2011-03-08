@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.43 2011/03/07 21:57:15 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.44 2011/03/08 12:39:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.43 2011/03/07 21:57:15 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.44 2011/03/08 12:39:28 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -195,6 +195,7 @@ lwproc_getpid(void)
 
 	return p;
 }
+
 static void
 lwproc_execnotify(const char *comm)
 {
@@ -205,11 +206,11 @@ lwproc_execnotify(const char *comm)
 }
 
 static void
-lwproc_procexit(void)
+lwproc_lwpexit(void)
 {
 
 	spops.spop_schedule();
-	spops.spop_procexit();
+	spops.spop_lwpexit();
 	spops.spop_unschedule();
 }
 
@@ -453,6 +454,8 @@ spcrelease(struct spclient *spc)
 
 	pthread_mutex_lock(&spc->spc_mtx);
 	ref = --spc->spc_refcnt;
+	if (__predict_false(spc->spc_inexec && ref <= 2))
+		pthread_cond_broadcast(&spc->spc_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
 
 	if (ref > 0)
@@ -480,6 +483,7 @@ static void
 serv_handledisco(unsigned int idx)
 {
 	struct spclient *spc = &spclist[idx];
+	int dolwpexit;
 
 	DPRINTF(("rump_sp: disconnecting [%u]\n", idx));
 
@@ -489,11 +493,13 @@ serv_handledisco(unsigned int idx)
 	spc->spc_state = SPCSTATE_DYING;
 	kickall(spc);
 	sendunlockl(spc);
+	/* exec uses mainlwp in another thread, but also nuked all lwps */
+	dolwpexit = !spc->spc_inexec;
 	pthread_mutex_unlock(&spc->spc_mtx);
 
-	if (spc->spc_mainlwp) {
+	if (dolwpexit && spc->spc_mainlwp) {
 		lwproc_switch(spc->spc_mainlwp);
-		lwproc_procexit();
+		lwproc_lwpexit();
 		lwproc_switch(NULL);
 	}
 
@@ -591,7 +597,11 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	DPRINTF(("rump_sp: handling syscall %d from client %d\n",
 	    sysnum, spc->spc_pid));
 
-	lwproc_newlwp(spc->spc_pid);
+	if (__predict_false((rv = lwproc_newlwp(spc->spc_pid)) != 0)) {
+		retval[0] = -1;
+		send_syscall_resp(spc, rhdr->rsp_reqno, rv, retval);
+		return;
+	}
 	spc->spc_syscallreq = rhdr->rsp_reqno;
 	rv = rumpsyscall(sysnum, data, retval);
 	spc->spc_syscallreq = 0;
@@ -603,23 +613,57 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	send_syscall_resp(spc, rhdr->rsp_reqno, rv, retval);
 }
 
-struct sysbouncearg {
+static void
+serv_handleexec(struct spclient *spc, struct rsp_hdr *rhdr, char *comm)
+{
+	size_t commlen = rhdr->rsp_len - HDRSZ;
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	/* one for the connection and one for us */
+	while (spc->spc_refcnt > 2)
+		pthread_cond_wait(&spc->spc_cv, &spc->spc_mtx);
+	pthread_mutex_unlock(&spc->spc_mtx);
+
+	/*
+	 * ok, all the threads are dead (or one is still alive and
+	 * the connection is dead, in which case this doesn't matter
+	 * very much).  proceed with exec.
+	 */
+
+	/* ensure comm is 0-terminated */
+	/* TODO: make sure it contains sensible chars? */
+	comm[commlen] = '\0';
+
+	lwproc_switch(spc->spc_mainlwp);
+	lwproc_execnotify(comm);
+	lwproc_switch(NULL);
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	spc->spc_inexec = 0;
+	pthread_mutex_unlock(&spc->spc_mtx);
+	send_handshake_resp(spc, rhdr->rsp_reqno, 0);
+}
+
+enum sbatype { SBA_SYSCALL, SBA_EXEC };
+
+struct servbouncearg {
 	struct spclient *sba_spc;
 	struct rsp_hdr sba_hdr;
+	enum sbatype sba_type;
 	uint8_t *sba_data;
 
-	TAILQ_ENTRY(sysbouncearg) sba_entries;
+	TAILQ_ENTRY(servbouncearg) sba_entries;
 };
 static pthread_mutex_t sbamtx;
 static pthread_cond_t sbacv;
 static int nworker, idleworker, nwork;
-static TAILQ_HEAD(, sysbouncearg) syslist = TAILQ_HEAD_INITIALIZER(syslist);
+static TAILQ_HEAD(, servbouncearg) wrklist = TAILQ_HEAD_INITIALIZER(wrklist);
 
 /*ARGSUSED*/
 static void *
-serv_syscallbouncer(void *arg)
+serv_workbouncer(void *arg)
 {
-	struct sysbouncearg *sba;
+	struct servbouncearg *sba;
 
 	for (;;) {
 		pthread_mutex_lock(&sbamtx);
@@ -629,19 +673,25 @@ serv_syscallbouncer(void *arg)
 			break;
 		}
 		idleworker++;
-		while (TAILQ_EMPTY(&syslist)) {
+		while (TAILQ_EMPTY(&wrklist)) {
 			_DIAGASSERT(nwork == 0);
 			pthread_cond_wait(&sbacv, &sbamtx);
 		}
 		idleworker--;
 
-		sba = TAILQ_FIRST(&syslist);
-		TAILQ_REMOVE(&syslist, sba, sba_entries);
+		sba = TAILQ_FIRST(&wrklist);
+		TAILQ_REMOVE(&wrklist, sba, sba_entries);
 		nwork--;
 		pthread_mutex_unlock(&sbamtx);
 
-		serv_handlesyscall(sba->sba_spc,
-		    &sba->sba_hdr, sba->sba_data);
+		if (__predict_true(sba->sba_type == SBA_SYSCALL)) {
+			serv_handlesyscall(sba->sba_spc,
+			    &sba->sba_hdr, sba->sba_data);
+		} else {
+			_DIAGASSERT(sba->sba_type == SBA_EXEC);
+			serv_handleexec(sba->sba_spc, &sba->sba_hdr,
+			    (char *)sba->sba_data);
+		}
 		spcrelease(sba->sba_spc);
 		free(sba->sba_data);
 		free(sba);
@@ -761,6 +811,54 @@ rumpuser_sp_raise(void *arg, int signo)
 	return rv;
 }
 
+static pthread_attr_t pattr_detached;
+static void
+schedulework(struct spclient *spc, enum sbatype sba_type)
+{
+	struct servbouncearg *sba;
+	pthread_t pt;
+	uint64_t reqno;
+	int retries = 0;
+
+	reqno = spc->spc_hdr.rsp_reqno;
+	while ((sba = malloc(sizeof(*sba))) == NULL) {
+		if (nworker == 0 || retries > 10) {
+			send_error_resp(spc, reqno, EAGAIN);
+			spcfreebuf(spc);
+			return;
+		}
+		/* slim chance of more memory? */
+		usleep(10000);
+	}
+
+	sba->sba_spc = spc;
+	sba->sba_type = sba_type;
+	sba->sba_hdr = spc->spc_hdr;
+	sba->sba_data = spc->spc_buf;
+	spcresetbuf(spc);
+
+	spcref(spc);
+
+	pthread_mutex_lock(&sbamtx);
+	TAILQ_INSERT_TAIL(&wrklist, sba, sba_entries);
+	nwork++;
+	if (nwork <= idleworker) {
+		/* do we have a daemon's tool (i.e. idle threads)? */
+		pthread_cond_signal(&sbacv);
+	} else if (nworker < rumpsp_maxworker) {
+		/*
+		 * Else, need to create one
+		 * (if we can, otherwise just expect another
+		 * worker to pick up the syscall)
+		 */
+		if (pthread_create(&pt, &pattr_detached,
+		    serv_workbouncer, NULL) == 0) {
+			nworker++;
+		}
+	}
+	pthread_mutex_unlock(&sbamtx);
+}
+
 /*
  *
  * Startup routines and mainloop for server.
@@ -772,14 +870,11 @@ struct spservarg {
 	connecthook_fn sps_connhook;
 };
 
-static pthread_attr_t pattr_detached;
 static void
 handlereq(struct spclient *spc)
 {
-	struct sysbouncearg *sba;
-	pthread_t pt;
 	uint64_t reqno;
-	int retries, error, i;
+	int error, i;
 
 	reqno = spc->spc_hdr.rsp_reqno;
 	if (__predict_false(spc->spc_state == SPCSTATE_NEW)) {
@@ -874,6 +969,11 @@ handlereq(struct spclient *spc)
 			lwproc_switch(spc->spc_mainlwp);
 
 			send_handshake_resp(spc, reqno, 0);
+		} else {
+			send_error_resp(spc, reqno, EAUTH);
+			shutdown(spc->spc_fd, SHUT_RDWR);
+			spcfreebuf(spc);
+			return;
 		}
 
 		spc->spc_pid = lwproc_getpid();
@@ -889,9 +989,19 @@ handlereq(struct spclient *spc)
 	if (__predict_false(spc->spc_hdr.rsp_type == RUMPSP_PREFORK)) {
 		struct prefork *pf;
 		uint32_t auth[AUTHLEN];
+		int inexec;
 
 		DPRINTF(("rump_sp: prefork handler executing for %p\n", spc));
 		spcfreebuf(spc);
+
+		pthread_mutex_lock(&spc->spc_mtx);
+		inexec = spc->spc_inexec;
+		pthread_mutex_unlock(&spc->spc_mtx);
+		if (inexec) {
+			send_error_resp(spc, reqno, EBUSY);
+			shutdown(spc->spc_fd, SHUT_RDWR);
+			return;
+		}
 
 		pf = malloc(sizeof(*pf));
 		if (pf == NULL) {
@@ -901,8 +1011,8 @@ handlereq(struct spclient *spc)
 
 		/*
 		 * Use client main lwp to fork.  this is never used by
-		 * worker threads (except if spc refcount goes to 0),
-		 * so we can safely use it here.
+		 * worker threads (except in exec, but we checked for that
+		 * above) so we can safely use it here.
 		 */
 		lwproc_switch(spc->spc_mainlwp);
 		if ((error = lwproc_rfork(spc, RUMP_RFFDG, NULL)) != 0) {
@@ -932,25 +1042,42 @@ handlereq(struct spclient *spc)
 	}
 
 	if (__predict_false(spc->spc_hdr.rsp_type == RUMPSP_HANDSHAKE)) {
-		char *comm = (char *)spc->spc_buf;
-		size_t commlen = spc->spc_hdr.rsp_len - HDRSZ;
+		int inexec;
 
 		if (spc->spc_hdr.rsp_handshake != HANDSHAKE_EXEC) {
 			send_error_resp(spc, reqno, EINVAL);
+			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
 		}
 
-		/* ensure it's 0-terminated */
-		/* XXX make sure it contains sensible chars? */
-		comm[commlen] = '\0';
+		pthread_mutex_lock(&spc->spc_mtx);
+		inexec = spc->spc_inexec;
+		pthread_mutex_unlock(&spc->spc_mtx);
+		if (inexec) {
+			send_error_resp(spc, reqno, EBUSY);
+			shutdown(spc->spc_fd, SHUT_RDWR);
+			spcfreebuf(spc);
+			return;
+		}
 
+		pthread_mutex_lock(&spc->spc_mtx);
+		spc->spc_inexec = 1;
+		pthread_mutex_unlock(&spc->spc_mtx);
+
+		/*
+		 * start to drain lwps.  we will wait for it to finish
+		 * in another thread
+		 */
 		lwproc_switch(spc->spc_mainlwp);
-		lwproc_execnotify(comm);
+		lwproc_lwpexit();
 		lwproc_switch(NULL);
 
-		send_handshake_resp(spc, reqno, 0);
-		spcfreebuf(spc);
+		/*
+		 * exec has to wait for lwps to drain, so finish it off
+		 * in another thread
+		 */
+		schedulework(spc, SBA_EXEC);
 		return;
 	}
 
@@ -960,42 +1087,7 @@ handlereq(struct spclient *spc)
 		return;
 	}
 
-	retries = 0;
-	while ((sba = malloc(sizeof(*sba))) == NULL) {
-		if (nworker == 0 || retries > 10) {
-			send_error_resp(spc, reqno, EAGAIN);
-			spcfreebuf(spc);
-			return;
-		}
-		/* slim chance of more memory? */
-		usleep(10000);
-	}
-
-	sba->sba_spc = spc;
-	sba->sba_hdr = spc->spc_hdr;
-	sba->sba_data = spc->spc_buf;
-	spcresetbuf(spc);
-
-	spcref(spc);
-
-	pthread_mutex_lock(&sbamtx);
-	TAILQ_INSERT_TAIL(&syslist, sba, sba_entries);
-	nwork++;
-	if (nwork <= idleworker) {
-		/* do we have a daemon's tool (i.e. idle threads)? */
-		pthread_cond_signal(&sbacv);
-	} else if (nworker < rumpsp_maxworker) {
-		/*
-		 * Else, need to create one
-		 * (if we can, otherwise just expect another
-		 * worker to pick up the syscall)
-		 */
-		if (pthread_create(&pt, &pattr_detached,
-		    serv_syscallbouncer, NULL) == 0) {
-			nworker++;
-		}
-	}
-	pthread_mutex_unlock(&sbamtx);
+	schedulework(spc, SBA_SYSCALL);
 }
 
 static void *

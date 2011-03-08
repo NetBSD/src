@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.50 2011/01/28 17:04:39 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.51 2011/03/08 12:39:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.50 2011/01/28 17:04:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.51 2011/03/08 12:39:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -283,7 +283,7 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 	struct lwp *l = curlwp;
 	int rv;
 
-	if (__predict_false(l->l_flag & LW_RUMP_DYING)) {
+	if (__predict_false(l->l_flag & LW_RUMP_QEXIT)) {
 		/*
 		 * yield() here, someone might want the cpu
 		 * to set a condition.  otherwise we'll just
@@ -306,21 +306,21 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 	}
 
 	/*
-	 * Check for DYING.  if so, we need to wait here until we
+	 * Check for QEXIT.  if so, we need to wait here until we
 	 * are allowed to exit.
 	 */
-	if (__predict_false(l->l_flag & LW_RUMP_DYING)) {
+	if (__predict_false(l->l_flag & LW_RUMP_QEXIT)) {
 		struct proc *p = l->l_proc;
 
 		mutex_exit(mtx); /* drop and retake later */
 
 		mutex_enter(p->p_lock);
-		while (p->p_stat != SDYING) {
+		while ((p->p_sflag & PS_RUMP_LWPEXIT) == 0) {
 			/* avoid recursion */
 			rumpuser_cv_wait(RUMPCV(&p->p_waitcv),
 			    RUMPMTX(p->p_lock));
 		}
-		KASSERT(p->p_stat == SDYING);
+		KASSERT(p->p_sflag & PS_RUMP_LWPEXIT);
 		mutex_exit(p->p_lock);
 
 		/* ok, we can exit and remove "reference" to l->private */
