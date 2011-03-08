@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79.2.8 2011/03/08 16:19:48 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79.2.9 2011/03/08 16:21:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.8 2011/03/08 16:19:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.9 2011/03/08 16:21:32 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2088,8 +2088,9 @@ bool
 mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 {
 
-	if (atop(paddr) > physmem)
+	if (atop(paddr) > physmem) {
 		return false;
+	}
         *vaddr = paddr;
 
 	return true;
