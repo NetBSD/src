@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.3 2011/02/25 14:57:45 tsutsui Exp $	*/
+/*	$NetBSD: spl.S,v 1.4 2011/03/08 15:05:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.3 2011/02/25 14:57:45 tsutsui Exp $")
+RCSID("$NetBSD: spl.S,v 1.4 2011/03/08 15:05:40 tsutsui Exp $")
 
 #include "assym.h"
 
@@ -88,8 +88,9 @@ _splraise:
 	 * Can only use a0-a3 and v0-v1
 	 */
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
-	NOP_L
+	NOP_L					# load delay
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
+	NOP_L					# load delay
 	sltu	v1, a1, v0			# newipl < curipl
 	bnez	v1, 1f				# yes, don't change.
 	 nop					#  branch delay
@@ -132,6 +133,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		# get cpu_info
 	NOP_L					# load delay
 	INT_L	a2, CPU_INFO_CPL(a3)		# get IPL from cpu_info
+	NOP_L					# load delay
 	beq	a0, a2, 2f			# if same, nothing to do
 	 nop					#  branch delay
 #ifdef PARANOIA
@@ -143,7 +145,6 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	sll	a2, a0, INT_SCALESHIFT		# convert IPL to array offset
 	PTR_ADDU v1, a2				# add to table addr
 	INT_L	a1, (v1)			# load SR bits for this IPL
-	NOP_L					# load delay
 1:
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
 	NOP_L					# load delay

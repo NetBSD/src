@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.183 2011/02/26 13:58:34 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.184 2011/03/08 15:05:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,12 @@
 #include <mips/trap.h>
 
 #include "assym.h"
+
+#if defined(MIPS1) || defined(MIPS2)
+#define	NOP_L		nop
+#else
+#define	NOP_L		/* nothing */
+#endif
 
 	.set	noreorder
 
@@ -252,6 +258,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	PTR_L	a0, L_PROC(MIPS_CURLWP)		# argument to ras_lookup
 	PTR_L	s5, L_PCB(MIPS_CURLWP)		# XXXuvm_lwp_getuarea
 	PTR_L	v1, P_RASLIST(a0)		# get raslist
+	NOP_L					# load delay
 	beqz	v1, 1f				#   skip call if empty
 	 nop
 	jal	_C_LABEL(ras_lookup)		# ras_lookup(p, pc)
@@ -316,11 +323,14 @@ softint_cleanup:
 	 nop
 #endif /* PARANOIA */
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	NOP_L					# load delay
 	INT_L	t1, CPU_INFO_MTX_COUNT(t0)
+	NOP_L					# load delay
 	INT_ADDU t1, 1
 	INT_S	t1, CPU_INFO_MTX_COUNT(t0)
 	REG_L	ra, CALLFRAME_RA(sp)
 	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
+	NOP_L					# load delay
 	PTR_S	zero, L_CTXSWITCH(v0)		# clear l_ctxswtch
 #if IPL_SCHED != IPL_HIGH
 	j	_C_LABEL(splhigh_noprof)
@@ -419,6 +429,7 @@ LEAF(lwp_oncpu)
 	PTR_LA	t1, 1f				# load addr of cleanup
 	PTR_S	t1, PCB_ONFAULT(t0)		# save onfault handler
 	PTR_L	t2, L_CPU(a0)			# grab cpu of supplied lwp
+	NOP_L					# load delay
 	PTR_L	t3, CPU_INFO_CURLWP(t2)		# grab curlwp of that cpu
 	li	v0, ESRCH			# assume the lwp isn't curlwp
 	bne	a0, t3, 1f			# branch if true (not equal)
@@ -640,6 +651,7 @@ XNESTED(mips_fpu_trap)
 1:
 	INT_L		a0, 0(a0)		# a0 = coproc instruction
 2:
+	NOP_L					# load delay
 
 /*
  * Check to see if the instruction to be emulated is a floating-point
