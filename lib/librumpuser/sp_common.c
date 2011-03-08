@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.28 2011/02/15 10:37:07 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.29 2011/03/08 10:02:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -419,8 +419,9 @@ readframe(struct spclient *spc)
 		}
 
 		spc->spc_off += n;
-		if (spc->spc_off < HDRSZ)
-			return -1;
+		if (spc->spc_off < HDRSZ) {
+			return 0;
+		}
 
 		/*LINTED*/
 		framelen = spc->spc_hdr.rsp_len;
