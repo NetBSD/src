@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.18 2011/02/16 19:27:15 bouyer Exp $
+# $NetBSD: mi,v 1.780.2.19 2011/03/08 17:38:30 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4943,6 +4943,7 @@
 ./var/chroot/named/etc				base-bind-root
 ./var/chroot/named/etc/namedb			base-bind-root
 ./var/chroot/named/etc/namedb/cache		base-bind-root
+./var/chroot/named/etc/namedb/keys		base-bind-root
 ./var/chroot/named/usr				base-bind-root
 ./var/chroot/named/usr/libexec			base-bind-root
 ./var/chroot/named/var				base-bind-root
