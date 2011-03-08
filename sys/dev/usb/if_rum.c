@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.23 2008/10/21 12:21:46 jun Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.23.4.1 2011/03/08 17:09:13 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.23 2008/10/21 12:21:46 jun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.23.4.1 2011/03/08 17:09:13 riz Exp $");
 
 #include "bpfilter.h"
 
@@ -629,7 +629,7 @@ rum_alloc_rx_list(struct rum_softc *sc)
 
 	return 0;
 
-fail:	rum_free_tx_list(sc);
+fail:	rum_free_rx_list(sc);
 	return error;
 }
 
