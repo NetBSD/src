@@ -1,4 +1,4 @@
-#       $NetBSD: t_vfs.sh,v 1.3 2011/03/08 21:36:25 pooka Exp $
+#       $NetBSD: t_vfs.sh,v 1.4 2011/03/08 22:21:52 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -137,6 +137,8 @@ mv_nox()
 
 simpletest mv_x
 simpletest runonprefix
+simpletest blanket
+simpletest doubleblanket
 
 #
 # do a cross-kernel mv
@@ -152,9 +154,31 @@ mv_x()
 
 runonprefix()
 {
-
 	atf_check -s exit:0 -o ignore stat /rump/dev
 	atf_check -s exit:1 -e ignore stat /rumpdev
+}
+
+blanket()
+{
+	export RUMPHIJACK='blanket=/dev,path=/rump'
+	atf_check -s exit:0 -o save:stat.out \
+	    stat -f "${statstr}" /rump/dev/null
+	atf_check -s exit:0 -o file:stat.out \
+	    stat -f "${statstr}" /dev/null
+}
+
+doubleblanket()
+{
+	atf_check -s exit:0 mkdir /rump/dir
+	atf_check -s exit:0 ln -s dir /rump/dirtoo
+
+	export RUMPHIJACK='blanket=/dirtoo:/dir'
+	atf_check -s exit:0 touch /dir/file
+
+	atf_check -s exit:0 -o save:stat.out \
+	    stat -f "${statstr}" /dir/file
+	atf_check -s exit:0 -o file:stat.out \
+	    stat -f "${statstr}" /dirtoo/file
 }
 
 atf_init_test_cases()
@@ -165,4 +189,6 @@ atf_init_test_cases()
 	atf_add_test_case mv_x
 	atf_add_test_case mv_nox
 	atf_add_test_case runonprefix
+	atf_add_test_case blanket
+	atf_add_test_case doubleblanket
 }
