@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.73 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.74 2011/03/08 15:05:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -205,10 +205,12 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 #ifdef PARANOIA
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	nop
 	slt	k0, k0, sp		# k0 = L_PCB(MIPS_CURLWP) < sp
 1:	beqz	k0, 1b			# loop forever if false
 	 nop
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	nop
 	PTR_ADDU k0, USPACE
 	slt	k0, sp, k0		# k0 = sp < L_PCB(MIPS_CURLWP) + USPACE
 2:	beqz	k0, 2b			# loop forever if false
@@ -270,7 +272,9 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	 * save PPL in trapframe
 	 */
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	nop
 	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+	nop
 	INT_S	t1, TF_BASE+TF_PPL(sp)		# save priority level
 #endif /* PARANOIA */
 
@@ -297,6 +301,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	 * Restore registers and return from the exception.
 	 */
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)
+	nop
 	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 
 	/*
@@ -313,7 +318,9 @@ MIPSX(kern_return):
 #ifdef PARANOIA
 	INT_L	t2, TF_BASE+TF_PPL(sp)		# get saved priority level
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	nop
 	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+	nop
 11:	bne	t2, t1, 11b			# loop forever if unequal
 	 nop
 
@@ -384,16 +391,20 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 #ifdef PARANOIA
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	nop
 	slt	k0, k0, sp			# k0 = L_PCB(MIPS_CURLWP) < sp
 1:	beqz	k0, 1b				# loop forever if false
 	 nop
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	nop
 	PTR_ADDU k0, USPACE
 	slt	k0, sp, k0			# k0 = sp < L_PCB(MIPS_CURLWP) + USPACE
 2:	beqz	k0, 2b				# loop forever if false
 	 nop
 	PTR_L	k0, L_CPU(MIPS_CURLWP)
+	nop
 	INT_L	k0, CPU_INFO_IDEPTH(k0)		# grab interrupt depth
+	nop
 	sltu	k0, k0, 3			# must be < 3
 3:	beqz	k0, 3b				# loop forever if false
 	 nop
@@ -795,6 +806,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	 * Interrupt depth is now back to 0.
 	 */
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	nop
 	INT_S	zero, CPU_INFO_IDEPTH(t0)
 
 #ifdef __HAVE_FAST_SOFTINTS
