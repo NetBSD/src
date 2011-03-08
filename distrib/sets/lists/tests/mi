@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.260 2011/03/07 15:51:40 njoly Exp $
+# $NetBSD: mi,v 1.261 2011/03/08 12:42:14 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -483,6 +483,7 @@
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumpclient					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librumpclient/h_exec.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/librumpclient/h_execthr.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumpclient/h_ution.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librumpclient/t_fd.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumphijack					tests-lib-debug
@@ -1936,6 +1937,7 @@
 ./usr/tests/lib/librumpclient				tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/h_exec			tests-lib-tests		atf
+./usr/tests/lib/librumpclient/h_execthr			tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/h_ution			tests-obsolete		obsolete
 ./usr/tests/lib/librumpclient/t_exec			tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/t_fd			tests-lib-tests		atf
