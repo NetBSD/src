@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.39 2011/03/08 03:16:30 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.40 2011/03/08 04:47:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.39 2011/03/08 03:16:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.40 2011/03/08 04:47:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ genfb_init(struct genfb_softc *sc)
 
 	sc->sc_fbaddr = NULL;
 	if (prop_dictionary_get_uint64(dict, "virtual_address", &fbaddr)) {
-		sc->sc_fbaddr = (void *)fbaddr;
+		sc->sc_fbaddr = (void *)(uintptr_t)fbaddr;
 	}
 
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
