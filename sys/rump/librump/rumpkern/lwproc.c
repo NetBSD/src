@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.16 2011/03/07 21:04:47 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.17 2011/03/08 12:39:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.16 2011/03/07 21:04:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.17 2011/03/08 12:39:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -269,6 +269,7 @@ rump__lwproc_alloclwp(struct proc *p)
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 
 	mutex_enter(p->p_lock);
+	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	lwproc_makelwp(p, l, false, newproc);
 
 	return l;
@@ -289,6 +290,12 @@ rump_lwproc_newlwp(pid_t pid)
 		return ESRCH;
 	}
 	mutex_enter(p->p_lock);
+	if (p->p_sflag & PS_RUMP_LWPEXIT) {
+		mutex_exit(proc_lock);
+		mutex_exit(p->p_lock);
+		kmem_free(l, sizeof(*l));
+		return EBUSY;
+	}
 	mutex_exit(proc_lock);
 	lwproc_makelwp(p, l, true, false);
 
@@ -308,6 +315,7 @@ rump_lwproc_rfork(int flags)
 	p = lwproc_newproc(curproc, flags);
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	mutex_enter(p->p_lock);
+	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	lwproc_makelwp(p, l, true, true);
 
 	return 0;
