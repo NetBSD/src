@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.44 2011/03/08 12:39:28 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.45 2011/03/08 15:34:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.44 2011/03/08 12:39:28 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.45 2011/03/08 15:34:37 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -238,10 +238,16 @@ nextreq(struct spclient *spc)
 	return nw;
 }
 
+/*
+ * XXX: we send responses with "blocking" I/O.  This is not
+ * ok for the main thread.  XXXFIXME
+ */
+
 static void
 send_error_resp(struct spclient *spc, uint64_t reqno, int error)
 {
 	struct rsp_hdr rhdr;
+	struct iovec iov[1];
 
 	rhdr.rsp_len = sizeof(rhdr);
 	rhdr.rsp_reqno = reqno;
@@ -249,8 +255,10 @@ send_error_resp(struct spclient *spc, uint64_t reqno, int error)
 	rhdr.rsp_type = 0;
 	rhdr.rsp_error = error;
 
+	IOVPUT(iov[0], rhdr);
+
 	sendlock(spc);
-	(void)dosend(spc, &rhdr, sizeof(rhdr));
+	(void)SENDIOV(spc, iov);
 	sendunlock(spc);
 }
 
@@ -258,6 +266,7 @@ static int
 send_handshake_resp(struct spclient *spc, uint64_t reqno, int error)
 {
 	struct rsp_hdr rhdr;
+	struct iovec iov[2];
 	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr) + sizeof(error);
@@ -266,9 +275,11 @@ send_handshake_resp(struct spclient *spc, uint64_t reqno, int error)
 	rhdr.rsp_type = RUMPSP_HANDSHAKE;
 	rhdr.rsp_error = 0;
 
+	IOVPUT(iov[0], rhdr);
+	IOVPUT(iov[1], error);
+
 	sendlock(spc);
-	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	rv = dosend(spc, &error, sizeof(error));
+	rv = SENDIOV(spc, iov);
 	sendunlock(spc);
 
 	return rv;
@@ -280,6 +291,7 @@ send_syscall_resp(struct spclient *spc, uint64_t reqno, int error,
 {
 	struct rsp_hdr rhdr;
 	struct rsp_sysresp sysresp;
+	struct iovec iov[2];
 	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr) + sizeof(sysresp);
@@ -291,9 +303,11 @@ send_syscall_resp(struct spclient *spc, uint64_t reqno, int error,
 	sysresp.rsys_error = error;
 	memcpy(sysresp.rsys_retval, retval, sizeof(sysresp.rsys_retval));
 
+	IOVPUT(iov[0], rhdr);
+	IOVPUT(iov[1], sysresp);
+
 	sendlock(spc);
-	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	rv = dosend(spc, &sysresp, sizeof(sysresp));
+	rv = SENDIOV(spc, iov);
 	sendunlock(spc);
 
 	return rv;
@@ -303,6 +317,7 @@ static int
 send_prefork_resp(struct spclient *spc, uint64_t reqno, uint32_t *auth)
 {
 	struct rsp_hdr rhdr;
+	struct iovec iov[2];
 	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr) + AUTHLEN*sizeof(*auth);
@@ -311,9 +326,11 @@ send_prefork_resp(struct spclient *spc, uint64_t reqno, uint32_t *auth)
 	rhdr.rsp_type = RUMPSP_PREFORK;
 	rhdr.rsp_sysnum = 0;
 
+	IOVPUT(iov[0], rhdr);
+	IOVPUT_WITHSIZE(iov[1], auth, AUTHLEN*sizeof(*auth));
+
 	sendlock(spc);
-	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	rv = dosend(spc, auth, AUTHLEN*sizeof(*auth));
+	rv = SENDIOV(spc, iov);
 	sendunlock(spc);
 
 	return rv;
@@ -326,6 +343,7 @@ copyin_req(struct spclient *spc, const void *remaddr, size_t *dlen,
 	struct rsp_hdr rhdr;
 	struct rsp_copydata copydata;
 	struct respwait rw;
+	struct iovec iov[2];
 	int rv;
 
 	DPRINTF(("copyin_req: %zu bytes from %p\n", *dlen, remaddr));
@@ -341,9 +359,11 @@ copyin_req(struct spclient *spc, const void *remaddr, size_t *dlen,
 	copydata.rcp_addr = __UNCONST(remaddr);
 	copydata.rcp_len = *dlen;
 
+	IOVPUT(iov[0], rhdr);
+	IOVPUT(iov[1], copydata);
+
 	putwait(spc, &rw, &rhdr);
-	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	rv = dosend(spc, &copydata, sizeof(copydata));
+	rv = SENDIOV(spc, iov);
 	if (rv) {
 		unputwait(spc, &rw);
 		return rv;
@@ -367,6 +387,7 @@ send_copyout_req(struct spclient *spc, const void *remaddr,
 {
 	struct rsp_hdr rhdr;
 	struct rsp_copydata copydata;
+	struct iovec iov[3];
 	int rv;
 
 	DPRINTF(("copyout_req (async): %zu bytes to %p\n", dlen, remaddr));
@@ -380,10 +401,12 @@ send_copyout_req(struct spclient *spc, const void *remaddr,
 	copydata.rcp_addr = __UNCONST(remaddr);
 	copydata.rcp_len = dlen;
 
+	IOVPUT(iov[0], rhdr);
+	IOVPUT(iov[1], copydata);
+	IOVPUT_WITHSIZE(iov[2], __UNCONST(data), dlen);
+
 	sendlock(spc);
-	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	rv = dosend(spc, &copydata, sizeof(copydata));
-	rv = dosend(spc, data, dlen);
+	rv = SENDIOV(spc, iov);
 	sendunlock(spc);
 
 	return rv;
@@ -394,6 +417,7 @@ anonmmap_req(struct spclient *spc, size_t howmuch, void **resp)
 {
 	struct rsp_hdr rhdr;
 	struct respwait rw;
+	struct iovec iov[2];
 	int rv;
 
 	DPRINTF(("anonmmap_req: %zu bytes\n", howmuch));
@@ -403,9 +427,11 @@ anonmmap_req(struct spclient *spc, size_t howmuch, void **resp)
 	rhdr.rsp_type = RUMPSP_ANONMMAP;
 	rhdr.rsp_sysnum = 0;
 
+	IOVPUT(iov[0], rhdr);
+	IOVPUT(iov[1], howmuch);
+
 	putwait(spc, &rw, &rhdr);
-	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	rv = dosend(spc, &howmuch, sizeof(howmuch));
+	rv = SENDIOV(spc, iov);
 	if (rv) {
 		unputwait(spc, &rw);
 		return rv;
@@ -424,6 +450,7 @@ static int
 send_raise_req(struct spclient *spc, int signo)
 {
 	struct rsp_hdr rhdr;
+	struct iovec iov[1];
 	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr);
@@ -431,8 +458,10 @@ send_raise_req(struct spclient *spc, int signo)
 	rhdr.rsp_type = RUMPSP_RAISE;
 	rhdr.rsp_signo = signo;
 
+	IOVPUT(iov[0], rhdr);
+
 	sendlock(spc);
-	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	rv = SENDIOV(spc, iov);
 	sendunlock(spc);
 
 	return rv;
