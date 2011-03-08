@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.3 2010/07/02 02:11:21 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.4 2011/03/08 23:41:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.3 2010/07/02 02:11:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.4 2011/03/08 23:41:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.3 2010/07/02 02:11:21 rmind Exp $
 /*
  * TLB shootdown state.
  */
-static struct evcnt		pmap_tlb_evcnt __aligned(64);
-struct pmap_tlb_packet		pmap_tlb_packet __aligned(64);
-struct pmap_tlb_mailbox		pmap_tlb_mailbox __aligned(64);
+static struct evcnt		pmap_tlb_evcnt		__cacheline_aligned;
+struct pmap_tlb_packet		pmap_tlb_packet		__cacheline_aligned;
+struct pmap_tlb_mailbox		pmap_tlb_mailbox	__cacheline_aligned;
 
 /*
  * TLB shootdown statistics.
@@ -93,6 +93,10 @@ static const char *		tlbstat_name[ ] = {
 void
 pmap_tlb_init(void)
 {
+	int i = 0;
+
+	memset(&pmap_tlb_packet, 0, sizeof(struct pmap_tlb_packet));
+	memset(&pmap_tlb_mailbox, 0, sizeof(struct pmap_tlb_mailbox));
 
 	evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 	    NULL, "TLB", "shootdown");
@@ -177,9 +181,14 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	CTASSERT(PG_G == (uint16_t)PG_G);
 	tp->tp_pte |= (uint16_t)pte;
 
-	if (tp->tp_count < TP_MAXVA && va != (vaddr_t)-1LL) {
+	if (tp->tp_count == (uint16_t)-1) {
+		/*
+		 * Already flushing everything.
+		 */
+	} else if (tp->tp_count < TP_MAXVA && va != (vaddr_t)-1LL) {
 		/* Flush a single page. */
 		tp->tp_va[tp->tp_count++] = va;
+		KASSERT(tp->tp_count > 0);
 	} else {
 		/* Flush everything. */
 		tp->tp_count = (uint16_t)-1;
