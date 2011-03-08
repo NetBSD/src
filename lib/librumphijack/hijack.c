@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.75 2011/03/08 20:59:01 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.76 2011/03/08 21:36:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.75 2011/03/08 20:59:01 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.76 2011/03/08 21:36:01 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -692,14 +692,18 @@ fd_isrump(int fd)
 static enum pathtype
 path_isrump(const char *path)
 {
+	size_t plen;
 	int i;
 
 	if (rumpprefix == NULL && nblanket == 0)
 		return PATH_HOST;
 
 	if (*path == '/') {
-		if (rumpprefix) {
-			if (strncmp(path, rumpprefix, rumpprefixlen) == 0) {
+		plen = strlen(path);
+		if (rumpprefix && plen >= rumpprefixlen) {
+			if (strncmp(path, rumpprefix, rumpprefixlen) == 0
+			    && (plen == rumpprefixlen
+			      || *(path + rumpprefixlen) == '/')) {
 				return PATH_RUMP;
 			}
 		}
