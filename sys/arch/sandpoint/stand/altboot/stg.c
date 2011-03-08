@@ -1,4 +1,4 @@
-/* $NetBSD: stg.c,v 1.1 2011/03/06 13:55:12 phx Exp $ */
+/* $NetBSD: stg.c,v 1.2 2011/03/08 19:00:38 phx Exp $ */
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -52,17 +52,15 @@
 #define ALLOC(T,A)		(T *)allocaligned(sizeof(T),(A))
 
 struct desc {
-	uint64_t xd0, xd1, xd2;
+	uint64_t xd0, xd1, xd2, dummy;
 };
-/* xd1 */
-#define RXLEN(x)		((x) & 0xffff)
-#define RXERRORMASK		0x3f0000LL
-#define TXNOALIGN		(1ULL << 16)
-#define TXFRAGCOUNT(x)		(((uint64_t)((x) & 0xf)) << 48)
-#define DONE			(1ULL << 31)
-/* xd2 */
-#define FRAGADDR(x)		((uint64_t)(x))
-#define FRAGLEN(x)		(((uint64_t)((x) & 0xffff)) << 48)
+#define T1_EMPTY		(1U << 31)	/* no Tx frame available */
+#define T1_NOALIGN		(03 << 16)	/* allow any Tx alignment */
+#define T1_CNTSHIFT		24		/* Tx fragment count */
+#define T2_LENSHIFT		48		/* Tx frame length */
+#define R1_DONE			(1U << 31)	/* desc has a Rx frame */
+#define R1_FL_MASK		0xffff		/* Rx frame length */
+#define R1_ER_MASK		0x3f0000	/* Rx error indication */
 
 #define STGE_DMACtrl		0x00
 #define  DMAC_RxDMAComplete	(1U << 3)
@@ -73,6 +71,7 @@ struct desc {
 #define STGE_TFDListPtrHi	0x14
 #define STGE_RFDListPtrLo	0x1c
 #define STGE_RFDListPtrHi	0x20
+#define STGE_DebugCtrl		0x2c
 #define STGE_AsicCtrl		0x30
 #define  AC_PhyMedia		(1U << 7)
 #define  AC_GlobalReset		(1U << 16)
@@ -93,6 +92,8 @@ struct desc {
 #define  EC_EepromBusy		(1U << 15)
 #define STGE_IntEnable		0x5c
 #define STGE_MACCtrl		0x6c
+#define  MC_DuplexSelect	(1U << 5)
+#define  MC_StatisticsDisable	(1U << 22)
 #define  MC_TxEnable		(1U << 24)
 #define  MC_RxEnable		(1U << 27)
 #define STGE_PhyCtrl		0x76
@@ -110,17 +111,16 @@ struct desc {
 #define STGE_StationAddress0	0x78
 #define STGE_StationAddress1	0x7a
 #define STGE_StationAddress2	0x7c
+#define STGE_MaxFrameSize	0x84
+#define STGE_ReceiveMode	0x88
+#define  RM_ReceiveUnicast	(1U << 0)
+#define  RM_ReceiveMulticast	(1U << 1)
+#define  RM_ReceiveBroadcast	(1U << 2)
+#define  RM_ReceiveAllFrames	(1U << 3)
+#define  RM_ReceiveMulticastHash (1U << 4)
+#define  RM_ReceiveIPMulticast	(1U << 5)
 
 #define STGE_EEPROM_SA0		0x10
-
-#define MII_PSSR		0x11	/* MAKPHY status register */
-#define  PSSR_DUPLEX		0x2000	/* FDX */
-#define  PSSR_RESOLVED		0x0800	/* speed and duplex resolved */
-#define  PSSR_LINK		0x0400  /* link indication */
-#define  PSSR_SPEED(x)		(((x) >> 14) & 0x3)
-#define  SPEED10		0
-#define  SPEED100		1
-#define  SPEED1000 		2
 
 #define FRAMESIZE	1536
 
@@ -162,7 +162,7 @@ stg_init(unsigned tag, void *data)
 	struct desc *txd, *rxd;
 	uint8_t *en;
 	unsigned i;
-	uint32_t reg;
+	uint32_t macctl, reg;
 
 	l = ALLOC(struct local, 32);		/* desc alignment */
 	memset(l, 0, sizeof(struct local));
@@ -231,6 +231,43 @@ stg_init(unsigned tag, void *data)
 	DPRINTF(("PHY %d (%04x.%04x)\n", l->phy,
 	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3)));
 
+	/* setup descriptors */
+	txd = &l->txd[0];
+	txd[0].xd0 = htole64(VTOPHYS(&txd[1]));
+	txd[0].xd1 = htole64(T1_EMPTY);
+	txd[1].xd0 = htole64(VTOPHYS(&txd[0]));
+	txd[1].xd1 = htole64(T1_EMPTY);
+	rxd = &l->rxd[0];
+	rxd[0].xd0 = htole64(VTOPHYS(&rxd[1]));
+	rxd[0].xd2 = htole64((uint64_t)VTOPHYS(l->rxstore[0]) |
+	    ((uint64_t)FRAMESIZE << 48));
+	rxd[1].xd0 = htole64(VTOPHYS(&rxd[0]));
+	rxd[1].xd2 = htole64((uint64_t)VTOPHYS(l->rxstore[1]) |
+	    ((uint64_t)FRAMESIZE << 48));
+	wbinv(l, sizeof(struct local));
+
+	CSR_WRITE_2(l, STGE_IntEnable, 0);
+	CSR_WRITE_2(l, STGE_ReceiveMode, RM_ReceiveUnicast |
+	    RM_ReceiveBroadcast | RM_ReceiveAllFrames | RM_ReceiveMulticast);
+	CSR_WRITE_4(l, STGE_TFDListPtrHi, 0);
+	CSR_WRITE_4(l, STGE_TFDListPtrLo, VTOPHYS(txd));
+	CSR_WRITE_4(l, STGE_RFDListPtrHi, 0);
+	CSR_WRITE_4(l, STGE_RFDListPtrLo, VTOPHYS(rxd));
+	CSR_WRITE_2(l, STGE_MaxFrameSize, FRAMESIZE);
+	CSR_WRITE_4(l, STGE_MACCtrl, 0);	/* do IFSSelect(0) first */
+	macctl = MC_StatisticsDisable | MC_TxEnable | MC_RxEnable;
+
+	if ((pcicfgread(tag, PCI_CLASS_REG) & 0xff) >= 6) {
+		/* some workarounds for revisions >= 6 */
+		CSR_WRITE_2(l, STGE_DebugCtrl,
+		    CSR_READ_2(l, STGE_DebugCtrl) | 0x0200);
+		CSR_WRITE_2(l, STGE_DebugCtrl,
+		    CSR_READ_2(l, STGE_DebugCtrl) | 0x0010);
+		CSR_WRITE_2(l, STGE_DebugCtrl,
+		    CSR_READ_2(l, STGE_DebugCtrl) | 0x0020);
+	}
+
+	/* auto negotiation, set the current media */
 	mii_dealan(l, 5);
 
 	reg = CSR_READ_1(l, STGE_PhyCtrl);
@@ -245,34 +282,13 @@ stg_init(unsigned tag, void *data)
 		printf("10Mbps");
 		break;
 	}
-	if (reg & PC_PhyDuplexStatus)
+	if (reg & PC_PhyDuplexStatus) {
+		macctl |= MC_DuplexSelect;
 		printf("-FDX");
+	}
 	printf("\n");
+	CSR_WRITE_4(l, STGE_MACCtrl, macctl);
 
-	/* setup descriptors */
-	txd = &l->txd[0];
-	txd[0].xd0 = htole64(VTOPHYS(&txd[1]));
-	txd[0].xd1 = htole64(DONE);
-	txd[1].xd0 = htole64(VTOPHYS(&txd[0]));
-	txd[1].xd1 = htole64(DONE);
-	rxd = &l->rxd[0];
-	rxd[0].xd0 = htole64(VTOPHYS(&rxd[1]));
-	rxd[0].xd2 = htole64(FRAGADDR(VTOPHYS(l->rxstore[0])) |
-	    FRAGLEN(FRAMESIZE));
-	rxd[1].xd0 = htole64(VTOPHYS(&rxd[0]));
-	rxd[1].xd2 = htole64(FRAGADDR(VTOPHYS(l->rxstore[1])) |
-	    FRAGLEN(FRAMESIZE));
-	wbinv(l, sizeof(struct local));
-
-	CSR_WRITE_2(l, STGE_IntEnable, 0);
-	CSR_WRITE_4(l, STGE_TFDListPtrHi, 0);
-	CSR_WRITE_4(l, STGE_TFDListPtrLo, VTOPHYS(txd));
-	CSR_WRITE_4(l, STGE_RFDListPtrHi, 0);
-	CSR_WRITE_4(l, STGE_RFDListPtrLo, VTOPHYS(rxd));
-	CSR_WRITE_4(l, STGE_MACCtrl, MC_TxEnable | MC_RxEnable);
-#if 0
-	CSR_WRITE_4(l, STGE_DMACtrl, DMAC_RxDMAPollNow | DMAC_TxDMAPollNow);
-#endif
 	return l;
 }
 
@@ -285,16 +301,13 @@ stg_send(void *dev, char *buf, unsigned len)
 
 	wbinv(buf, len);
 	txd = &l->txd[l->tx];
-	txd->xd1 = htole64(DONE);
+	txd->xd2 = htole64(VTOPHYS(buf) | ((uint64_t)len << 48));
+	txd->xd1 = htole64(T1_NOALIGN | (1 << 24));
 	wbinv(txd, sizeof(struct desc));
-	txd->xd2 = htole64(FRAGADDR(VTOPHYS(buf)) | FRAGLEN(len));
-	txd->xd1 = htole64(DONE | TXNOALIGN | 0x400000 | TXFRAGCOUNT(1));
-	txd->xd1 = htole64(TXNOALIGN | 0x400000 | TXFRAGCOUNT(1));
-	wbinv(txd, sizeof(struct desc));
-	CSR_WRITE_4(l, STGE_DMACtrl, DMAC_TxDMAPollNow);	/* XXX ? */
+	CSR_WRITE_4(l, STGE_DMACtrl, DMAC_TxDMAPollNow);
 	loop = 100;
 	do {
-		if ((le64toh(txd->xd1) & DONE) != 0)
+		if ((le64toh(txd->xd1) & T1_EMPTY) != 0)
 			goto done;
 		DELAY(10);
 		inv(txd, sizeof(struct desc));
@@ -311,7 +324,7 @@ stg_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
 	volatile struct desc *rxd;
-	uint64_t sts;
+	uint32_t sts;
 	unsigned bound, len;
 	uint8_t *ptr;
 
@@ -320,21 +333,21 @@ stg_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 	rxd = &l->rxd[l->rx];
 	do {
 		inv(rxd, sizeof(struct desc));
-		sts = le64toh(rxd->xd1);
-		if ((sts & DONE) != 0)
+		sts = (uint32_t)le64toh(rxd->xd1);
+		if ((sts & R1_DONE) != 0)
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
 	} while (--bound > 0);
 	errno = 0;
 	return -1;
   gotone:
-	if ((sts & RXERRORMASK) != 0) {
+	if ((sts & R1_ER_MASK) != 0) {
 		rxd->xd1 = 0;
 		wbinv(rxd, sizeof(struct desc));
 		l->rx ^= 1;
 		goto again;
 	}
-	len = RXLEN(sts);
+	len = sts & R1_FL_MASK;
 	if (len > maxlen)
 		len = maxlen;
 	ptr = l->rxstore[l->rx];
@@ -346,64 +359,49 @@ stg_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 	return len;
 }
 
-#define MIICMD_START	1
-#define MIICMD_READ	2
-#define MIICMD_WRITE	1
-#define MIICMD_ACK	2
+#define R0110	6		/* 0110b read op */
+#define W0101	5		/* 0101b write op */
+#define A10	2		/* 10b ack turn around */
 
 /* read the MII by bitbanging STGE_PhyCtrl */
 static int
 mii_read(struct local *l, int phy, int reg)
 {
-	int data, i;
+	unsigned data;
+	int i;
 	uint8_t v;
 
 	/* initiate read access */
-	data = 0;
+	data = (R0110 << 10) | (phy << 5) | reg;
 	mii_bitbang_sync(l);
-	mii_bitbang_send(l, MIICMD_START, 2);
-	mii_bitbang_send(l, MIICMD_READ, 2);
-	mii_bitbang_send(l, phy, 5);
-	mii_bitbang_send(l, reg, 5);
+	mii_bitbang_send(l, data, 14); /* 4OP + 5PHY + 5REG */
 
 	/* switch direction to PHY->host */
 	v = l->phyctrl_saved;
 	CSR_WRITE_1(l, STGE_PhyCtrl, v);
-	DELAY(1);
-	mii_bitbang_clk(l, v);
-	if (CSR_READ_1(l, STGE_PhyCtrl) & PC_MgmtData)
-		printf("MII: read error\n");
-	mii_bitbang_clk(l, v);
 
 	/* read data */
-	for (i = 0; i < 16; i++) {
+	data = 0;
+	for (i = 0; i < 18; i++) { /* 2TA + 16DATA */
 		data <<= 1;
-		if ((CSR_READ_1(l, STGE_PhyCtrl) & PC_MgmtData) != 0)
-			data |= 1;
+		data |= !!(CSR_READ_1(l, STGE_PhyCtrl) & PC_MgmtData);
 		mii_bitbang_clk(l, v);
 	}
-	/* reset direction to host->PHY */
-	CSR_WRITE_1(l, STGE_PhyCtrl, v | PC_MgmtDir);
-	return data;
+
+	return data & 0xffff;
 }
 
 /* write the MII by bitbanging STGE_PhyCtrl */
 static void
 mii_write(struct local *l, int phy, int reg, int val)
 {
+	unsigned data;
 
-	/* initiate write access */
+	data = (W0101 << 28) | (phy << 23) | (reg << 18) | (A10 << 16);
+	data |= val;
+
 	mii_bitbang_sync(l);
-	mii_bitbang_send(l, MIICMD_START, 2);
-	mii_bitbang_send(l, MIICMD_WRITE, 2);
-	mii_bitbang_send(l, phy, 5);
-	mii_bitbang_send(l, reg, 5);
-
-	/* send data */
-	mii_bitbang_send(l, MIICMD_ACK, 2);
-	mii_bitbang_send(l, val, 16);
-
-	CSR_WRITE_1(l, STGE_PhyCtrl, l->phyctrl_saved | PC_MgmtDir);
+	mii_bitbang_send(l, data, 32); /* 4OP + 5PHY + 5REG + 2TA + 16DATA */
 }
 
 #define MII_BMCR	0x00	/* Basic mode control register (rw) */
