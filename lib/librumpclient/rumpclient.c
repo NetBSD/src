@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.39 2011/03/08 15:34:37 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.40 2011/03/08 15:55:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.39 2011/03/08 15:34:37 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.40 2011/03/08 15:55:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -202,37 +202,48 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 
 			dosig = 0;
 			for (gotresp = 0; !gotresp; ) {
+				/*
+				 * typically we don't have a frame waiting
+				 * when we come in here, so call kevent now
+				 */
+				rv = host_kevent(kq, NULL, 0,
+				    kev, __arraycount(kev), NULL);
+
+				if (__predict_false(rv == -1)) {
+					goto activity;
+				}
+
+				/*
+				 * XXX: don't know how this can happen
+				 * (timeout cannot expire since there
+				 * isn't one), but it does happen.
+				 * treat it as an expectional condition
+				 * and go through tryread to determine
+				 * alive status.
+				 */
+				if (__predict_false(rv == 0))
+					goto activity;
+
+				for (i = 0; i < rv; i++) {
+					if (kev[i].filter == EVFILT_SIGNAL)
+						dosig++;
+				}
+				if (dosig)
+					goto cleanup;
+
+				/*
+				 * ok, activity.  try to read a frame to
+				 * determine what happens next.
+				 */
+ activity:
 				switch (readframe(spc)) {
 				case 0:
-					rv = host_kevent(kq, NULL, 0,
-					    kev, __arraycount(kev), NULL);
-
-					if (__predict_false(rv == -1)) {
-						goto cleanup;
-					}
-
-					/*
-					 * XXX: don't know how this can
-					 * happen (timeout cannot expire
-					 * since there isn't one), but
-					 * it does happen
-					 */
-					if (__predict_false(rv == 0))
-						continue;
-
-					for (i = 0; i < rv; i++) {
-						if (kev[i].filter
-						    == EVFILT_SIGNAL)
-							dosig++;
-					}
-					if (dosig)
-						goto cleanup;
-
 					continue;
 				case -1:
 					imalive = false;
 					goto cleanup;
 				default:
+					/* case 1 */
 					break;
 				}
 
