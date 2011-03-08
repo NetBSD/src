@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumphijack.3,v 1.5 2011/02/20 14:21:04 pooka Exp $
+.\"     $NetBSD: rumphijack.3,v 1.6 2011/03/08 20:59:01 pooka Exp $
 .\"
 .\" Copyright (c) 2011 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 18, 2011
+.Dd March 8, 2011
 .Dt RUMPHIJACK 3
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ The string is parsed as a comma-separated list of
 .Dq name=value
 tuples.
 The possible lefthandside names are:
-.Bl -tag -width xxsocketxx
+.Bl -tag -width xxblanketxx
 .It Dq path
 Pathname-based system calls are hijacked if the path the system
 call is directed to resides under
@@ -64,6 +64,45 @@ examined.
 This also implies that neither
 .Dq ..
 nor symbolic links will cause the namespace to be switched.
+.It Dq blanket
+A colon-separated list of rump path prefixes.
+This acts almost like
+.Dq path
+with the difference that the prefix does not get removed when
+passing the path to the rump kernel.
+For example, if
+.Dq path
+is
+.Pa /rump ,
+accessing
+.Pa /rump/dev/bpf
+will cause
+.Pa /dev/bpf
+to be accessed in the rump kernel.
+In contrast, if
+.Dq blanket
+contains
+.Pa /dev/bpf ,
+accessing
+.Pa /dev/bpf
+will cause an access to
+.Pa /dev/bpf
+in the rump kernel.
+.Pp
+In case the current working directory is changed to a blanketed
+directory, the current working directory will still be reported
+with the rump prefix, if available.
+Note, though, that some shells cache the directory and maybe report
+something else.
+In case no rump path prefix has been configured, the raw rump
+directory is reported.
+.Pp
+It is recommended to supply blanketed pathnames as specific as
+possible, i.e. use
+.Pa /dev/bpf
+instead of
+.Pa /dev
+unless necessary to do otherwise.
 .It Dq socket
 The specifier
 .Ar value
