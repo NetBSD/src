@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.106 2011/01/12 23:03:24 joerg Exp $
+#	$NetBSD: bsd.man.mk,v 1.107 2011/03/08 12:20:17 njoly Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -189,13 +189,17 @@ htmlinstall:	htmlpages htmllinks
 htmlpages::	# ensure target exists
 HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
 
+HTMLLINKS=	${MANSUBDIR:?../:}../html%S/%N.html
+HTMLSTYLE=	${MANSUBDIR:?../:}../style.css
+
 realall:	${HTMLPAGES}
 .NOPATH:	${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
 
 ${_MNUMBERS:@N@.$N.html$N@}: 				# build rule
 	${_MKTARGET_FORMAT}
-	${TOOL_MANDOC_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
+	${TOOL_MANDOC_HTML} -Oman=${HTMLLINKS} -Ostyle=${HTMLSTYLE} \
+	    ${.IMPSRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 .for F in ${HTMLPAGES:O:u}
