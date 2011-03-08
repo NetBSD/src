@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.261 2011/03/07 19:05:03 jmmv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.262 2011/03/08 07:53:43 jmmv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -262,8 +262,7 @@ _APPEND_SRCS=	no
 .if !defined(RUMPPRG)
 .  if defined(PROG_CXX) && !defined(PROGS_CXX)
 PROGS_CXX=	${PROG_CXX}
-.  endif
-.  if defined(PROG) && !defined(PROGS)
+.  elif defined(PROG) && !defined(PROGS)
 PROGS=		${PROG}
 .  endif
 .endif
