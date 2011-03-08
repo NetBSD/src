@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.31 2009/04/07 10:45:05 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.32 2011/03/08 11:24:28 adam Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -57,19 +57,19 @@ message getboottype
 
 Selected bootblock: }
 
-message console_PC {BIOS console}
-message console_com {Serial port com%d, baud rate %d}
-message console_unchanged {Unchanged}
+message console_PC {Konsola BIOS}
+message console_com {Port szeregowy com%d, %d bodow}
+message console_unchanged {Bez zmian}
 
 message Bootblocks_selection
 {Wybor bootblokow}
-message Use_normal_bootblocks	{Use BIOS console}
-message Use_serial_com0		{Use serial port com0}
-message Use_serial_com1		{Use serial port com1}
-message Use_serial_com2		{Use serial port com2}
-message Use_serial_com3		{Use serial port com3}
-message serial_baud_rate	{Serial baud rate}
-message Use_existing_bootblocks	{Use existing bootblocks}
+message Use_normal_bootblocks	{Uzyj konsoli BIOS}
+message Use_serial_com0		{Uzyj portu szeregowego com0}
+message Use_serial_com1		{Uzyj portu szeregowego com1}
+message Use_serial_com2		{Uzyj portu szeregowego com2}
+message Use_serial_com3		{Uzyj portu szeregowego com3}
+message serial_baud_rate	{Liczba bodow}
+message Use_existing_bootblocks	{Uzyj istniejacych bootblokow}
 
 message dobootblks
 {Instalowanie bootblokow na %s....
@@ -80,8 +80,8 @@ message onebiosmatch
 
 }
 
-message onebiosmatch_header	/* XXX translate total */
-{BIOS # cylindry glowice sektory total sektory  GB
+message onebiosmatch_header
+{BIOS # cylindry glowice sektory razem sektory  GB
 ------ -------- ------- ------- ------------- ---
 }
 
@@ -100,8 +100,8 @@ message biosmultmatch
 
 }
 
-message biosmultmatch_header	/* XXX translate total */
-{   BIOS # cylindry glowice sektory total sektory  GB
+message biosmultmatch_header
+{   BIOS # cylindry glowice sektory razem sektory  GB
    ------ -------- ------- ------- ------------- ---
 }
 
@@ -126,34 +126,34 @@ chcesz to zrobic?
 
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
 
-message missing_bootmenu_text	/* XXX translate */
-{You have more than one operating system on this disk, but have not
-specified a 'bootmenu' for either the active partition or the
-NetBSD partition that you are going to install into. 
+message missing_bootmenu_text
+{Masz wiecej niz jeden system operacyjny na tym dysku, ale nie 
+zostalo wskazane menu ani dla aktywnej partycji ani dla partycji
+NetBSD, ktora bedzie zainstalowana.
 
-Do you want to re-edit the partition to add a bootmenu entry?}
+Chcesz zmienic partycje, aby dodac wpis do menu?}
 
-message no_extended_bootmenu	/* XXX translate */
-{You have requested that an extended partition be included in the bootmenu.
-However your system BIOS doesn't appear to support the read command used
-by that version of the bootmenu code. 
-Are you sure you that you want to do this?
+message no_extended_bootmenu
+{Wskazane zostalo, ze w menu zostanie zawarta partycja rozszerzona.
+Nie wyglada na to, ze system BIOS wspiera polecenie odczytu uzywane
+przez te wersje kodu menu.
+Czy na pewno chcesz tak zrobic?
 
-(Answering 'no' will take you back to the partition edit menu.)}
+(Odpowiedz 'nie' przeniesie z powrotem do menu zmiany partycji.)}
 
-message installbootsel	/* XXX translate */
-{Your configuration requires the NetBSD bootselect code to
-select which operating system to use. 
+message installbootsel
+{Twoje konfiguracja wymaga kodu rozruchowego NetBSD, aby
+wybierac, ktorego systemu operacyjnego uzywac.
 
-It is not currently installed, do you want to install it now?}
+Nie jest on obecnie zainstalowany. Czy zainstalowac go teraz?}
 
-message installmbr	/* XXX translate */
-{The bootcode in the Master Boot Record does not appear to be valid.
+message installmbr
+{Kod rozruchowy w MBR nie wyglada na poprawny.
 
-Do you want to install the NetBSD bootcode?}
+Chcesz zainstalowac kod rozruchowy NetBSD?}
 
-message updatembr	/* XXX translate */
-{Do you want to update the bootcode in the Master Boot Record to
-the latest version of the NetBSD bootcode?}
+message updatembr
+{Chcesz uaktualnic kod rozruchowy w MBR do najnowszej wersji
+kodu rozruchowego NetBSD?}
 
 message set_kernel_1	{Kernel (GENERIC)}
