@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.28 2011/03/07 17:12:40 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.29 2011/03/08 17:44:16 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2581,4 +2581,10 @@ sys/kern/init_sysctl.c				patch
 
 	Sanitize arguments before memory allocation.
 	[joerg, ticket #1575]
+
+distrib/sets/lists/base/mi			1.881 via patch
+etc/mtree/NetBSD.dist				patch
+
+	Add keys directory for recently updated BIND.
+	[spz, ticket #1566]
 
