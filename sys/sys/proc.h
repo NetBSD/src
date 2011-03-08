@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.301 2011/03/04 22:25:32 joerg Exp $	*/
+/*	$NetBSD: proc.h,v 1.302 2011/03/08 12:39:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -367,6 +367,7 @@ struct proc {
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
 #define	PS_NOSA 	0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
+#define	PS_RUMP_LWPEXIT PS_SA      /* LWPs in rump kernel should exit for g/c */
 
 /*
  * These flags are kept in p_sflag and are protected by the proc_lock
