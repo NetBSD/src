@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.11 2011/03/08 20:07:30 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.12 2011/03/08 23:26:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.11 2011/03/08 20:07:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.12 2011/03/08 23:26:35 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2712,11 +2712,10 @@ pmap_load(void)
 }
 
 /*
- * pmap_deactivate: deactivate a process' pmap
+ * pmap_deactivate: deactivate a process' pmap.
  *
- * => must be called with kernel preemption disabled (high SPL is enough)
+ * => Must be called with kernel preemption disabled (high IPL is enough).
  */
-
 void
 pmap_deactivate(struct lwp *l)
 {
@@ -2730,10 +2729,10 @@ pmap_deactivate(struct lwp *l)
 	}
 
 	/*
-	 * wait for pending TLB shootdowns to complete.  necessary
-	 * because TLB shootdown state is per-CPU, and the LWP may
-	 * be coming off the CPU before it has a chance to call
-	 * pmap_update().
+	 * Wait for pending TLB shootdowns to complete.  Necessary because
+	 * TLB shootdown state is per-CPU, and the LWP may be coming off
+	 * the CPU before it has a chance to call pmap_update(), e.g. due
+	 * to kernel preemption or blocking routine in between.
 	 */
 	pmap_tlb_shootnow();
 
