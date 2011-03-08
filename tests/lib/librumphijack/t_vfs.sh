@@ -1,4 +1,4 @@
-#       $NetBSD: t_vfs.sh,v 1.2 2011/02/23 16:38:08 pooka Exp $
+#       $NetBSD: t_vfs.sh,v 1.3 2011/03/08 21:36:25 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -136,6 +136,7 @@ mv_nox()
 }
 
 simpletest mv_x
+simpletest runonprefix
 
 #
 # do a cross-kernel mv
@@ -149,6 +150,13 @@ mv_x()
 	atf_check -s exit:0 diff -ru ${thedir}.2 /rump/${thedir}
 }
 
+runonprefix()
+{
+
+	atf_check -s exit:0 -o ignore stat /rump/dev
+	atf_check -s exit:1 -e ignore stat /rumpdev
+}
+
 atf_init_test_cases()
 {
 
@@ -156,4 +164,5 @@ atf_init_test_cases()
 	atf_add_test_case cpcopy
 	atf_add_test_case mv_x
 	atf_add_test_case mv_nox
+	atf_add_test_case runonprefix
 }
