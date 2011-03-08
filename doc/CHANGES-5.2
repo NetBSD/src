@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.65 2011/03/07 18:58:30 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.66 2011/03/08 17:49:22 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4788,4 +4788,51 @@ external/mit/xorg/server/xorg-server/glx/Makefile.glx 1.8
 
 	Fix trouble with Composite and DAMAGE extensions.
 	[jmcneill, ticket #1558]
+
+sbin/disklabel/Makefile				1.67
+
+	Disable COMPAT_386BSD_MBRPART.  PR#44496.
+	[dholland, ticket #1561]
+
+sys/dev/usb/if_rum.c				1.34
+
+	On failure setting up the rx list, clean _it_ up, not the tx list.
+	[dholland, ticket #1562]
+
+dist/atf/tests/atf/tools/t_atf_config.sh	patch
+lib/libatf-c/Makefile				patch
+
+	Fix the values of atf_arch and atf_machine.  Addresses PR bin/44305.
+	[jmmv, ticket #1563]
+
+sys/arch/sparc/dev/zs.c				patch
+sys/arch/sparc/include/cpu.h			patch
+sys/arch/sparc/include/z8530var.h		patch
+sys/arch/sparc/sparc/cpu.c			patch
+sys/arch/sparc/sparc/cpuvar.h			patch
+sys/arch/sparc/sparc/db_interface.c		patch
+sys/arch/sparc/sparc/genassym.cf		patch
+sys/arch/sparc/sparc/intr.c			patch
+sys/arch/sparc/sparc/locore.s			patch
+sys/arch/sparc/sparc/machdep.c			patch
+sys/arch/sparc/sparc/timer.c			patch
+sys/arch/sparc/sparc/timer_sun4m.c		patch
+sys/arch/sparc/sparc/timervar.h			patch
+sys/arch/sparc/sparc/trap.c			patch
+sys/arch/sparc/sparc/vm_machdep.c		patch
+
+	Improve the stability of sparc SMP.
+	[mrg, ticket #1564]
+
+distrib/sets/lists/base/mi			1.881 via patch
+etc/mtree/NetBSD.dist				patch
+
+	Add keys directory for recently updated BIND.
+	[spz, ticket #1566]
+
+BUILDING					1.92 via patch
+Makefile					1.282 via patch
+
+	Pass down INSTALLSETS variable to installsets target.
+	[jym, ticket #1565]
 
