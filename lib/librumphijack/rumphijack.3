@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumphijack.3,v 1.7 2011/03/08 21:02:22 pooka Exp $
+.\"     $NetBSD: rumphijack.3,v 1.8 2011/03/08 21:09:18 pooka Exp $
 .\"
 .\" Copyright (c) 2011 Antti Kantee.  All rights reserved.
 .\"
@@ -103,6 +103,13 @@ possible, i.e. use
 instead of
 .Pa /dev
 unless necessary to do otherwise.
+Also, note that the blanket prefix does not follow directory borders. 
+In other words, setting the blanket for
+.Pa /dev/bpf
+means it is set for
+.Em all
+pathnames with the given prefix, not just ones in
+.Pa /dev .
 .It Dq socket
 The specifier
 .Ar value
