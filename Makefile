@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.262.2.4 2011/01/06 05:19:54 riz Exp $
+#	$NetBSD: Makefile,v 1.262.2.5 2011/03/08 17:47:59 riz Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -320,7 +320,7 @@ installworld: .PHONY .MAKE
 .endif
 .endif
 	${MAKEDIRTARGET} distrib/sets installsets \
-	    INSTALLDIR=${INSTALLWORLDDIR:U/} INSTALLSETS=
+		INSTALLDIR=${INSTALLWORLDDIR:U/} INSTALLSETS=${INSTALLSETS:Q}
 	${MAKEDIRTARGET} . postinstall-check DESTDIR=${INSTALLWORLDDIR}
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
