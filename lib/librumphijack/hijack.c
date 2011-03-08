@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.74 2011/03/01 10:54:06 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.75 2011/03/08 20:59:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.74 2011/03/01 10:54:06 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.75 2011/03/08 20:59:01 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -237,8 +237,16 @@ static int	(*host_daemon)(int, int);
 static int	(*host_execve)(const char *, char *const[], char *const[]);
 static void *	(*host_mmap)(void *, size_t, int, int, int, off_t);
 
-static bool	fd_isrump(int);
-static bool	path_isrump(const char *);
+/*
+ * This tracks if our process is in a subdirectory of /rump.
+ * It's preserved over exec.
+ */
+static bool pwdinrump;
+
+enum pathtype { PATH_HOST, PATH_RUMP, PATH_RUMPBLANKET };
+
+static bool		fd_isrump(int);
+static enum pathtype	path_isrump(const char *);
 
 /*
  * Maintain a mapping table for the usual dup2 suspects.
@@ -381,24 +389,20 @@ type name args								\
 type name args								\
 {									\
 	type (*fun) proto;						\
+	enum pathtype pt;						\
 									\
 	DPRINTF(("%s -> %s (%s)\n", __STRING(name), path,		\
 	    whichpath(path)));						\
-	if (path_isrump(path)) {					\
+	if ((pt = path_isrump(path)) != PATH_HOST) {			\
 		fun = syscalls[rcname].bs_rump;				\
-		path = path_host2rump(path);				\
+		if (pt == PATH_RUMP)					\
+			path = path_host2rump(path);			\
 	} else {							\
 		fun = syscalls[rcname].bs_host;				\
 	}								\
 									\
 	return fun vars;						\
 }
-
-/*
- * This tracks if our process is in a subdirectory of /rump.
- * It's preserved over exec.
- */
-static bool pwdinrump = false;
 
 /*
  * These variables are set from the RUMPHIJACK string and control
@@ -483,12 +487,46 @@ pathparser(char *buf)
 	rumpprefixlen = strlen(rumpprefix);
 }
 
+static struct blanket {
+	const char *pfx;
+	size_t len;
+} *blanket;
+static int nblanket;
+
+static void
+blanketparser(char *buf)
+{
+	char *p, *l;
+	int i;
+
+	for (nblanket = 0, p = buf; p; p = strchr(p+1, ':'), nblanket++)
+		continue;
+
+	blanket = malloc(nblanket * sizeof(*blanket));
+	if (blanket == NULL)
+		err(1, "alloc blanket %d", nblanket);
+
+	for (p = strtok_r(buf, ":", &l), i = 0; p;
+	    p = strtok_r(NULL, ":", &l), i++) {
+		blanket[i].pfx = strdup(p);
+		if (blanket[i].pfx == NULL)
+			err(1, "strdup blanket");
+		blanket[i].len = strlen(p);
+
+		if (blanket[i].len == 0 || *blanket[i].pfx != '/')
+			errx(1, "invalid blanket specifier %s", p);
+		if (*(blanket[i].pfx + blanket[i].len-1) == '/')
+			errx(1, "invalid blanket specifier %s", p);
+	}
+}
+
 static struct {
 	void (*parsefn)(char *);
 	const char *name;
 } hijackparse[] = {
 	{ sockparser, "socket" },
 	{ pathparser, "path" },
+	{ blanketparser, "blanket" },
 	{ NULL, NULL },
 };
 
@@ -651,19 +689,28 @@ fd_isrump(int fd)
 
 #define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_FDOFF)
 
-static bool
+static enum pathtype
 path_isrump(const char *path)
 {
+	int i;
 
-	if (rumpprefix == NULL)
-		return false;
+	if (rumpprefix == NULL && nblanket == 0)
+		return PATH_HOST;
 
 	if (*path == '/') {
-		if (strncmp(path, rumpprefix, rumpprefixlen) == 0)
-			return true;
-		return false;
+		if (rumpprefix) {
+			if (strncmp(path, rumpprefix, rumpprefixlen) == 0) {
+				return PATH_RUMP;
+			}
+		}
+		for (i = 0; i < nblanket; i++) {
+			if (strncmp(path, blanket[i].pfx, blanket[i].len) == 0)
+				return PATH_RUMPBLANKET;
+		}
+
+		return PATH_HOST;
 	} else {
-		return pwdinrump;
+		return pwdinrump ? PATH_RUMP : PATH_HOST;
 	}
 }
 
@@ -737,12 +784,14 @@ open(const char *path, int flags, ...)
 	int (*op_open)(const char *, int, ...);
 	bool isrump;
 	va_list ap;
+	enum pathtype pt;
 	int fd;
 
 	DPRINTF(("open -> %s (%s)\n", path, whichpath(path)));
 
-	if (path_isrump(path)) {
-		path = path_host2rump(path);
+	if ((pt = path_isrump(path)) != PATH_HOST) {
+		if (pt == PATH_RUMP)
+			path = path_host2rump(path);
 		op_open = GETSYSCALL(rump, OPEN);
 		isrump = true;
 	} else {
@@ -767,25 +816,20 @@ int
 chdir(const char *path)
 {
 	int (*op_chdir)(const char *);
-	bool isrump;
+	enum pathtype pt;
 	int rv;
 
-	if (path_isrump(path)) {
+	if ((pt = path_isrump(path)) != PATH_HOST) {
 		op_chdir = GETSYSCALL(rump, CHDIR);
-		isrump = true;
-		path = path_host2rump(path);
+		if (pt == PATH_RUMP)
+			path = path_host2rump(path);
 	} else {
 		op_chdir = GETSYSCALL(host, CHDIR);
-		isrump = false;
 	}
 
 	rv = op_chdir(path);
-	if (rv == 0) {
-		if (isrump)
-			pwdinrump = true;
-		else
-			pwdinrump = false;
-	}
+	if (rv == 0)
+		pwdinrump = pt != PATH_HOST;
 
 	return rv;
 }
@@ -808,10 +852,7 @@ fchdir(int fd)
 
 	rv = op_fchdir(fd);
 	if (rv == 0) {
-		if (isrump)
-			pwdinrump = true;
-		else
-			pwdinrump = false;
+		pwdinrump = isrump;
 	}
 
 	return rv;
@@ -821,12 +862,11 @@ int
 __getcwd(char *bufp, size_t len)
 {
 	int (*op___getcwd)(char *, size_t);
+	size_t prefixgap;
+	bool iamslash;
 	int rv;
 
-	if (pwdinrump) {
-		size_t prefixgap;
-		bool iamslash;
-
+	if (pwdinrump && rumpprefix) {
 		if (rumpprefix[rumpprefixlen-1] == '/')
 			iamslash = true;
 		else
@@ -856,30 +896,37 @@ __getcwd(char *bufp, size_t len)
 		/* don't append extra slash in the purely-slash case */
 		if (rv == 2 && !iamslash)
 			bufp[rumpprefixlen] = '\0';
-
-		return rv;
+	} else if (pwdinrump) {
+		/* assume blanket.  we can't provide a prefix here */
+		op___getcwd = GETSYSCALL(rump, __GETCWD);
+		rv = op___getcwd(bufp, len);
 	} else {
 		op___getcwd = GETSYSCALL(host, __GETCWD);
-		return op___getcwd(bufp, len);
+		rv = op___getcwd(bufp, len);
 	}
+
+	return rv;
 }
 
 int
 rename(const char *from, const char *to)
 {
 	int (*op_rename)(const char *, const char *);
+	enum pathtype ptf, ptt;
 
-	if (path_isrump(from)) {
-		if (!path_isrump(to)) {
+	if ((ptf = path_isrump(from)) != PATH_HOST) {
+		if ((ptt = path_isrump(to)) == PATH_HOST) {
 			errno = EXDEV;
 			return -1;
 		}
 
-		from = path_host2rump(from);
-		to = path_host2rump(to);
+		if (ptf == PATH_RUMP)
+			from = path_host2rump(from);
+		if (ptt == PATH_RUMP)
+			to = path_host2rump(to);
 		op_rename = GETSYSCALL(rump, RENAME);
 	} else {
-		if (path_isrump(to)) {
+		if (path_isrump(to) != PATH_HOST) {
 			errno = EXDEV;
 			return -1;
 		}
