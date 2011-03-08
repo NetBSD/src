@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.70 2011/02/01 01:42:07 joerg Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.71 2011/03/08 11:24:28 adam Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -239,9 +239,9 @@ twojej partycji zostal zmniejszony do %d %s.
 
 message toobigdisklabel
 {
-This disk is too large for a disklabel partition table to be used
-and hence cannot be used as a bootable disk or to hold the root
-partition.
+Ten dysk jest zbyt duzy dla tablicy partycji disklabel i dlatego
+nie moze zostac uzyty jako dysk starowy ani nie moze przechowywac
+glownej partycji.
 }
 
 message fspart
@@ -354,7 +354,7 @@ message lastchance
 nie zostalo jeszcze zapisane. Masz teraz ostatnia szanse na przerwanie tego
 procesu poki nic nie zostalo jeszcze zmienione.
 
-Czy kontynuowac ?
+Czy kontynuowac?
 }
 
 message disksetupdone
@@ -374,7 +374,7 @@ message openfail
 }
 
 message mountfail
-{zamountowanie urzadzenia /dev/%s%c na %s nie powiodlo sie.
+{zamontowanie urzadzenia /dev/%s%c na %s nie powiodlo sie.
 }
 
 message extractcomplete
@@ -466,14 +466,14 @@ Pamietaj, ze katalog musi zawierac pliki .tgz.
 }
 
 message Available_cds
-{Available CDs}
+{Dostepne CD}
 
 message ask_cd
-{Multiple CDs found, please select the one containing the install CD.}
+{Znaleziono kilka CD, prosze wybrac CD zawierajcy instalacje.}
 
 message cd_path_not_found
-{The installation sets have not been found at the default location on this
-CD. Please check device and path name.}
+{Zbiory instalacyjne nie zostaly znalezione w domyslnym polozeniu na tym
+CD. Prosze sprawdzic urzadzenie i sciezke.}
 
 message localfssource
 {Podaj niezamountowane lokalne urzadzenie oraz katalog na nim, gdzie
@@ -673,7 +673,7 @@ siec jeszcze raz? (Nie pozwala ci kontynuowac lub przerwac instalacje.)
 
 message netnotup_continueanyway
 {Czy chcesz kontynuowac proces instalacji i zalozyc, ze twoja siec dziala?
-(Nie przerywa proces instalacji.)
+(Nie przerywa procesu instalacji.)
 }
 
 message makedev
@@ -746,10 +746,10 @@ message set_misc
 {Inne}
 
 message set_modules
-{Kernel Modules}
+{Moduly kernela}
 
 message set_tests
-{Test programs}
+{Programy testujace}
 
 message set_text_tools
 {Narzedzia Przetwarzania Tekstu}
@@ -764,7 +764,7 @@ message set_X11_etc
 {Konfiguracja X11}
 
 message set_X11_fonts
-{Fonty X11}
+{Czcionki X11}
 
 message set_X11_servers
 {Serwery X11}
@@ -798,11 +798,11 @@ message partitions_overlap
 {partycje %c i %c pokrycia.}
 
 message No_Bootcode
-{No bootcode for root partition}
+{Brak kodu startowego dla glownej partycji}
 
 message cannot_ufs2_root
-{Sorry, the root file system can't be FFSv2 due to lack of bootloader support
-on this port.}
+{Glowny system plikow nie moze byc FFSv2 poniewaz nie ma kodu startowego dla
+tej platformy.}
 
 message edit_partitions_again
 {
@@ -941,14 +941,14 @@ zajac sie polaczeniem nowo utworzonego /emul/aout ze starym.
 .endif
 
 message oldsendmail
-{Sendmail is no longer in this release of NetBSD, default MTA is
-postfix. The file /etc/mailer.conf still chooses the removed
-sendmail. Do you want to upgrade /etc/mailer.conf automatically for
-postfix? If you choose "No" you will have to update /etc/mailer.conf
-yourself to ensure proper email delivery.}
+{Sendmail nie jest dostepny w tym wydaniu NetBSD. Domyslnym MTA jest
+postfix. Plik /etc/mailer.conf ciagle wskazuje usuniety program
+sendmail. Chcesz automatycznie uaktualnic /etc/mailer.conf dla
+postfix? Jesli wybierzesz "Nie", trzeba bedzie recznie zmienic
+/etc/mailer.conf, aby dzialalo dostarczanie poczty.}
 
 message license
-{To use the network interface %s, you must agree to the license in
-file %s.
-To view this file now, you can type ^Z, look at the contents of
-the file and then type "fg" to resume.}
+{Aby uzywac interfejsu sieciowego %s, musisz zgodzic sie na licencje
+zawarta w pliku %s.
+Aby obejrzec ten plik, mozesz wpisac ^Z, przejrzec jego zawartosc,
+a nastepnie wpisac "fg".}

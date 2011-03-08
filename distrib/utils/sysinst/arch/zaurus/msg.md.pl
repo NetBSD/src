@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2008/03/31 23:55:30 chris Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.2 2011/03/08 11:24:28 adam Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/02/11 13:50:18 skrll Exp */
 
@@ -48,8 +48,8 @@ message dobootblks
 {Instalowanie bootblokow na %s....
 }
 
-message zaurusfspart	/* XXX translate */
-{We now have your NetBSD partitions on %s as follows (Size and Offset in %s):
+message zaurusfspart
+{Twoje partycje NetBSD na %s wygladaja nastepujaco (Rozmiar i offset w %s):
 }
 
 message set_kernel_1
