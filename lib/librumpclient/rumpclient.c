@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.40 2011/03/08 15:55:12 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.41 2011/03/08 18:25:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.40 2011/03/08 15:55:12 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.41 2011/03/08 18:25:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -920,6 +920,7 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 	return 0;
 }
 
+/*ARGUSED*/
 void
 rumpclient_fork_cancel(struct rumpclient_fork *rpf)
 {
