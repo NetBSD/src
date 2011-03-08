@@ -1,4 +1,4 @@
-#       $NetBSD: t_exec.sh,v 1.7 2011/02/19 09:59:12 pooka Exp $
+#       $NetBSD: t_exec.sh,v 1.8 2011/03/08 12:40:25 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -127,6 +127,22 @@ vfork_cleanup()
 	rump.halt
 }
 
+atf_test_case threxec cleanup
+threxec_head()
+{
+	atf_set "descr" "check that threads are killed before exec continues"
+}
+
+threxec_body()
+{
+	atf_check -s exit:0 rump_server ${RUMP_SERVER}
+	atf_check -s exit:0 $(atf_get_srcdir)/h_execthr
+}
+
+threxec_cleanup()
+{
+	rump.halt
+}
 
 atf_init_test_cases()
 {
@@ -134,4 +150,5 @@ atf_init_test_cases()
 	atf_add_test_case exec
 	atf_add_test_case cloexec
 	atf_add_test_case vfork
+	atf_add_test_case threxec
 }
