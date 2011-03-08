@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/03/08 18:30:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2011/03/08 19:11:27 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
@@ -12,7 +12,8 @@ MAN=		rumpclient.3
 INCS=		rumpclient.h
 INCSDIR=	/usr/include/rump
 
-CPPFLAGS+=	-DRUMP_CLIENT -I${.CURDIR} -I${.CURDIR}/../librumpuser
+CPPFLAGS+=	-DRUMP_CLIENT
+CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../librumpuser
 SRCS=		rumpclient.c
 SRCS+=		rump_syscalls.c
 
