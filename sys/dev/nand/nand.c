@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.2 2011/03/09 07:49:15 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.3 2011/03/09 10:05:08 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.2 2011/03/09 07:49:15 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.3 2011/03/09 10:05:08 ahoka Exp $");
 
 #include "locators.h"
 
@@ -117,8 +117,10 @@ nand_attach(device_t parent, device_t self, void *aux)
 		aprint_error("NAND chip is write protected!\n");
 		return;
 	}
-	if (nand_scan_media(self, chip))
+	
+	if (nand_scan_media(self, chip)) {
 		return;
+	}
 
 	/* allocate cache */
 	chip->nc_oob_cache = kmem_alloc(chip->nc_spare_size, KM_SLEEP);
@@ -281,6 +283,19 @@ nand_quirks(device_t self, struct nand_chip *chip)
 }
 #endif
 
+static int
+nand_read_legacy_parameters(device_t self, struct nand_chip *chip)
+{
+	switch (chip->nc_manf_id) {
+	case NAND_MFR_MICRON:
+		return nand_read_parameters_micron(self, chip);
+	default:
+		return 1;
+	}
+	
+	return 0;
+}
+
 /**
  * scan media to determine the chip's properties
  * this function resets the device
@@ -296,6 +311,7 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 	nand_command(self, ONFI_RESET);
 	nand_select(self, false);
 
+	/* check if the device implements the ONFI standard */
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_ID);
 	nand_address(self, 0x20);
@@ -307,24 +323,48 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 
 	if (onfi_signature[0] != 'O' || onfi_signature[1] != 'N' ||
 	    onfi_signature[2] != 'F' || onfi_signature[3] != 'I') {
-		aprint_error_dev(self,
-		    "device does not support the ONFI specification\n");
+		chip->nc_isonfi = false;
+		
+		aprint_normal(": Legacy NAND Flash\n");
+		
+		nand_readid(self, chip);
 
-		return 1;
+		if (nand_read_legacy_parameters(self, chip)) {
+			aprint_error_dev(self,
+			    "can't read device parameters for legacy chip\n");
+			return 1;
+		}
+	} else {
+		chip->nc_isonfi = true;
+
+		aprint_normal(": ONFI NAND Flash\n");
+
+		nand_readid(self, chip);
+		nand_read_parameter_page(self, chip);
 	}
 
-	nand_readid(self, chip);
-
-	aprint_normal(": NAND Flash\n");
-
-	aprint_debug_dev(self,
+#ifdef NAND_VERBOSE
+	aprint_normal_dev(self,
 	    "manufacturer id: 0x%.2x (%s), device id: 0x%.2x\n",
 	    chip->nc_manf_id,
 	    nand_midtoname(chip->nc_manf_id),
 	    chip->nc_dev_id);
+#endif
 
-	nand_read_parameter_page(self, chip);
+	aprint_normal_dev(self,
+	   "page size: %u bytes, spare size: %u bytes, block size: %u bytes\n",
+	    chip->nc_page_size, chip->nc_spare_size, chip->nc_block_size);
 
+	aprint_normal_dev(self,
+	    "LUN size: %u blocks, LUNs: %u, total storage size: %u MB\n",
+	    chip->nc_lun_blocks, chip->nc_num_luns,
+	    chip->nc_size / 1024 / 1024);
+
+#ifdef NAND_VERBOSE
+	aprint_normal_dev(self, "column cycles: %d, row cycles: %d\n",
+	    chip->nc_addr_cycles_column, chip->nc_addr_cycles_row);
+#endif
+		
 	ecc = chip->nc_ecc = &sc->nand_if->ecc;
 
 	/*
@@ -388,12 +428,13 @@ nand_readid(device_t self, struct nand_chip *chip)
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_ID);
 	nand_address(self, 0x00);
+	
 	nand_read_byte(self, &chip->nc_manf_id);
 	nand_read_byte(self, &chip->nc_dev_id);
+	
 	nand_select(self, false);
 }
 
-/* read the parameter page. TODO: check CRC! */
 static void
 nand_read_parameter_page(device_t self, struct nand_chip *chip)
 {
@@ -435,20 +476,10 @@ nand_read_parameter_page(device_t self, struct nand_chip *chip)
 
 	aprint_normal_dev(self, "vendor: %s, model: %s\n", vendor, model);
 
-	aprint_normal_dev(self,
-	   "page size: %u bytes, spare size: %u bytes, block size: %u bytes\n",
-	    params.param_pagesize, params.param_sparesize,
-	    params.param_blocksize * params.param_pagesize);
-
-	aprint_normal_dev(self,
-	    "LUN size: %u blocks, LUNs: %u, total storage size: %u MB\n",
-	    params.param_lunsize, params.param_numluns,
-	    params.param_blocksize * params.param_pagesize *
-	    params.param_lunsize * params.param_numluns / 1024 / 1024);
-
 	/* XXX TODO multiple LUNs */
-	if (__predict_false(params.param_numluns != 1))
+	if (__predict_false(params.param_numluns != 1)) {
 		panic("more than one LUNs are not supported yet!\n");
+	}
 
 	chip->nc_size = params.param_pagesize * params.param_blocksize *
 	    params.param_lunsize * params.param_numluns;
@@ -457,16 +488,13 @@ nand_read_parameter_page(device_t self, struct nand_chip *chip)
 	chip->nc_block_pages = params.param_blocksize;
 	chip->nc_block_size = params.param_blocksize * params.param_pagesize;
 	chip->nc_spare_size = params.param_sparesize;
+	chip->nc_lun_blocks = params.param_lunsize;
+	chip->nc_num_luns = params.param_numluns;
 
 	/* the lower 4 bits contain the row address cycles */
 	chip->nc_addr_cycles_row = params.param_addr_cycles & 0x07;
 	/* the upper 4 bits contain the column address cycles */
 	chip->nc_addr_cycles_column = (params.param_addr_cycles & ~0x07) >> 4;
-
-#ifdef NAND_VERBOSE
-	aprint_normal_dev(self, "column cycles: %d, row cycles: %d\n",
-	    chip->nc_addr_cycles_column, chip->nc_addr_cycles_row);
-#endif
 
 	if (params.param_features & ONFI_FEATURE_16BIT)
 		chip->nc_flags |= NC_BUSWIDTH_16;
