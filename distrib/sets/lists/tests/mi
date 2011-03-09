@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.261 2011/03/08 12:42:14 pooka Exp $
+# $NetBSD: mi,v 1.262 2011/03/09 19:04:57 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1193,10 +1193,10 @@
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/ffs/h_quota2_server		tests-fs-tests		atf
 ./usr/tests/fs/ffs/h_quota2_tests		tests-fs-tests		atf
-./usr/tests/fs/ffs/rump_edquota			tests-fs-tests		atf
-./usr/tests/fs/ffs/rump_quota			tests-fs-tests		atf
-./usr/tests/fs/ffs/rump_quotactl		tests-fs-tests		atf
-./usr/tests/fs/ffs/rump_repquota		tests-fs-tests		atf
+./usr/tests/fs/ffs/rump_edquota			tests-obsolete		obsolete
+./usr/tests/fs/ffs/rump_quota			tests-obsolete		obsolete
+./usr/tests/fs/ffs/rump_quotactl		tests-obsolete		obsolete
+./usr/tests/fs/ffs/rump_repquota		tests-obsolete		obsolete
 ./usr/tests/fs/ffs/t_fifos			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_mount			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_renamerace			tests-obsolete		obsolete
