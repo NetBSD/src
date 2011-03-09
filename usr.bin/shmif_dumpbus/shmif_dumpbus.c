@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.1 2011/01/12 16:14:24 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.2 2011/03/09 12:56:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 		if (write(pfd, &phdr, sizeof(phdr)) != sizeof(phdr))
 			err(1, "phdr write");
 	} else {
-		pfd = 0; /* XXXgcc */
+		pfd = -1; /* XXXgcc */
 	}
 	
 	curbus = bmem->shm_first;
@@ -167,8 +167,10 @@ main(int argc, char *argv[])
 		if (sp.sp_len == 0)
 			continue;
 
-		printf("packet %d, offset 0x%04x, length 0x%04x, ts %d/%06d\n",
-		    i++, curbus, sp.sp_len, sp.sp_sec, sp.sp_usec);
+		if (pfd != STDOUT_FILENO)
+			printf("packet %d, offset 0x%04x, length 0x%04x, "
+			    "ts %d/%06d\n", i++, curbus,
+			    sp.sp_len, sp.sp_sec, sp.sp_usec);
 
 		if (!pcapfile || sp.sp_len == 0) {
 			curbus = shmif_busread(bmem,
