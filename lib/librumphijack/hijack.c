@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.77 2011/03/09 09:17:12 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.78 2011/03/09 15:03:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.77 2011/03/09 09:17:12 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.78 2011/03/09 15:03:18 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -94,6 +94,9 @@ enum dualcall {
 	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
 	DUALCALL_ACCESS,
 	DUALCALL_MKNOD,
+	DUALCALL___SYSCTL,
+	DUALCALL_GETVFSSTAT, DUALCALL_NFSSVC,
+	DUALCALL_GETFH, DUALCALL_FHOPEN, DUALCALL_FHSTAT, DUALCALL_FHSTATVFS1,
 	DUALCALL__NUM
 };
 
@@ -115,6 +118,7 @@ enum dualcall {
 #define REALLUTIMES lutimes
 #define REALFUTIMES futimes
 #define REALMKNOD mknod
+#define REALFHSTAT __fhstat40
 #else
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
@@ -126,12 +130,16 @@ enum dualcall {
 #define REALLUTIMES __lutimes50
 #define REALFUTIMES __futimes50
 #define REALMKNOD __mknod50
+#define REALFHSTAT __fhstat50
 #endif
 #define REALREAD _sys_read
 #define REALPREAD _sys_pread
 #define REALPWRITE _sys_pwrite
 #define REALGETDENTS __getdents30
 #define REALMOUNT __mount50
+#define REALGETFH __getfh30
+#define REALFHOPEN __fhopen40
+#define REALFHSTATVFS1 __fhstatvfs140
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -151,6 +159,10 @@ int REALFUTIMES(int, const struct timeval [2]);
 int REALMOUNT(const char *, const char *, int, void *, size_t);
 int __getcwd(char *, size_t);
 int REALMKNOD(const char *, mode_t, dev_t);
+int REALGETFH(const char *, void *, size_t *);
+int REALFHOPEN(const void *, size_t, int);
+int REALFHSTAT(const void *, size_t, struct stat *);
+int REALFHSTATVFS1(const void *, size_t, struct statvfs *, int);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -223,6 +235,13 @@ struct sysnames {
 	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
 	{ DUALCALL_ACCESS,	"access",	RSYS_NAME(ACCESS)	},
 	{ DUALCALL_MKNOD,	S(REALMKNOD),	RSYS_NAME(MKNOD)	},
+	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
+	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
+	{ DUALCALL_NFSSVC,	"nfssvc",	RSYS_NAME(NFSSVC)	},
+	{ DUALCALL_GETFH,	"S(REALGETFH)",	RSYS_NAME(GETFH)	},
+	{ DUALCALL_FHOPEN,	"S(REALFHOPEN)",RSYS_NAME(FHOPEN)	},
+	{ DUALCALL_FHSTAT,	"S(REALFHSTAT)",RSYS_NAME(FHSTAT)	},
+	{ DUALCALL_FHSTATVFS1,	"S(REALSTATVFS1)",RSYS_NAME(FHSTATVFS1)	},
 };
 #undef S
 
@@ -403,6 +422,21 @@ type name args								\
 	return fun vars;						\
 }
 
+#define VFSCALL(bit, type, name, rcname, args, proto, vars)		\
+type name args								\
+{									\
+	type (*fun) proto;						\
+									\
+	DPRINTF(("%s (0x%x, 0x%x)\n", __STRING(name), bit, vfsbits));	\
+	if (vfsbits & bit) {						\
+		fun = syscalls[rcname].bs_rump;				\
+	} else {							\
+		fun = syscalls[rcname].bs_host;				\
+	}								\
+									\
+	return fun vars;						\
+}
+
 /*
  * These variables are set from the RUMPHIJACK string and control
  * which operations can product rump kernel file descriptors.
@@ -462,7 +496,7 @@ sockparser(char *buf)
 			}
 		}
 		if (socketmap[i].name == NULL) {
-			warnx("invalid socket specifier %s", p);
+			errx(1, "invalid socket specifier %s", p);
 		}
 	}
 }
@@ -519,14 +553,103 @@ blanketparser(char *buf)
 	}
 }
 
+#define VFSBIT_NFSSVC		0x01
+#define VFSBIT_GETVFSSTAT	0x02
+#define VFSBIT_FHCALLS		0x04
+static unsigned vfsbits;
+
+static struct {
+	int bit;
+	const char *name;
+} vfscalls[] = {
+	{ VFSBIT_NFSSVC, "nfssvc" },
+	{ VFSBIT_GETVFSSTAT, "getvfsstat" },
+	{ VFSBIT_FHCALLS, "fhcalls" },
+	{ -1, NULL }
+};
+
+static void
+vfsparser(char *buf)
+{
+	char *p, *l;
+	bool turnon;
+	unsigned int fullmask;
+	int i;
+
+	/* build the full mask and sanity-check while we're at it */
+	fullmask = 0;
+	for (i = 0; vfscalls[i].name != NULL; i++) {
+		if (fullmask & vfscalls[i].bit)
+			errx(1, "problem exists between vi and chair");
+		fullmask |= vfscalls[i].bit;
+	}
+
+
+	/* if "all" is present, it must be specified first */
+	if (strncmp(buf, "all", strlen("all")) == 0) {
+		vfsbits = fullmask;
+		buf += strlen("all");
+		if (*buf == ':')
+			buf++;
+	}
+
+	for (p = strtok_r(buf, ":", &l); p; p = strtok_r(NULL, ":", &l)) {
+		turnon = true;
+		if (strncmp(p, "no", strlen("no")) == 0) {
+			turnon = false;
+			p += strlen("no");
+		}
+
+		for (i = 0; vfscalls[i].name; i++) {
+			if (strcmp(p, vfscalls[i].name) == 0) {
+				if (turnon)
+					vfsbits |= vfscalls[i].bit;
+				else
+					vfsbits &= ~vfscalls[i].bit;
+				break;
+			}
+		}
+		if (vfscalls[i].name == NULL) {
+			errx(1, "invalid vfscall specifier %s", p);
+		}
+	}
+}
+
+static bool rumpsysctl = false;
+
+static void
+sysctlparser(char *buf)
+{
+
+	if (buf == NULL) {
+		rumpsysctl = true;
+		return;
+	}
+
+	if (strcasecmp(buf, "y") == 0 || strcasecmp(buf, "yes") == 0 ||
+	    strcasecmp(buf, "yep") == 0 || strcasecmp(buf, "tottakai") == 0) {
+		rumpsysctl = true;
+		return;
+	}
+	if (strcasecmp(buf, "n") == 0 || strcasecmp(buf, "no") == 0) {
+		rumpsysctl = false;
+		return;
+	}
+
+	errx(1, "sysctl value should be y(es)/n(o), gave: %s", buf);
+}
+
 static struct {
 	void (*parsefn)(char *);
 	const char *name;
+	bool needvalues;
 } hijackparse[] = {
-	{ sockparser, "socket" },
-	{ pathparser, "path" },
-	{ blanketparser, "blanket" },
-	{ NULL, NULL },
+	{ sockparser, "socket", true },
+	{ pathparser, "path", true },
+	{ blanketparser, "blanket", true },
+	{ vfsparser, "vfs", true },
+	{ sysctlparser, "sysctl", false },
+	{ NULL, NULL, false },
 };
 
 static void
@@ -534,6 +657,7 @@ parsehijack(char *hijack)
 {
 	char *p, *p2, *l;
 	const char *hijackcopy;
+	bool nop2;
 	int i;
 
 	if ((hijackcopy = strdup(hijack)) == NULL)
@@ -544,14 +668,20 @@ parsehijack(char *hijack)
 		rumpsockets[i] = false;
 
 	for (p = strtok_r(hijack, ",", &l); p; p = strtok_r(NULL, ",", &l)) {
+		nop2 = false;
 		p2 = strchr(p, '=');
-		if (!p2)
-			errx(1, "invalid hijack specifier: %s", hijackcopy);
+		if (!p2) {
+			nop2 = true;
+			p2 = p + strlen(p);
+		}
 
 		for (i = 0; hijackparse[i].parsefn; i++) {
 			if (strncmp(hijackparse[i].name, p,
 			    (size_t)(p2-p)) == 0) {
-				hijackparse[i].parsefn(p2+1);
+				if (nop2 && hijackparse[i].needvalues)
+					errx(1, "invalid hijack specifier: %s",
+					    hijackcopy);
+				hijackparse[i].parsefn(nop2 ? NULL : p2+1);
 				break;
 			}
 		}
@@ -1713,6 +1843,30 @@ mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 }
 
 /*
+ * these go to one or the other on a per-process configuration
+ */
+int __sysctl(const int *, unsigned int, void *, size_t *, const void *, size_t);
+int
+__sysctl(const int *name, unsigned int namelen, void *old, size_t *oldlenp,
+	const void *new, size_t newlen)
+{
+	int (*op___sysctl)(const int *, unsigned int, void *, size_t *,
+	    const void *, size_t);
+
+	if (rumpsysctl) {
+		op___sysctl = GETSYSCALL(rump, __SYSCTL);
+	} else {
+		op___sysctl = GETSYSCALL(host, __SYSCTL);
+		/* we haven't inited yet */
+		if (__predict_false(op___sysctl == NULL)) {
+			op___sysctl = dlsym(RTLD_NEXT, "__sysctl");
+		}
+	}
+
+	return op___sysctl(name, namelen, old, oldlenp, new, newlen);
+}
+
+/*
  * Rest are std type calls.
  */
 
@@ -2006,3 +2160,57 @@ PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
 	(const char *path, int flags),					\
 	(const char *, int),						\
 	(path, flags))
+
+/*
+ * These act different on a per-process vfs configuration
+ */
+
+VFSCALL(VFSBIT_GETVFSSTAT, int, getvfsstat, DUALCALL_GETVFSSTAT,	\
+	(struct statvfs *buf, size_t buflen, int flags),		\
+	(struct statvfs *, size_t, int),				\
+	(buf, buflen, flags))
+
+VFSCALL(VFSBIT_FHCALLS, int, REALGETFH, DUALCALL_GETFH,			\
+	(const char *path, void *fhp, size_t *fh_size),			\
+	(const char *, void *, size_t *),				\
+	(path, fhp, fh_size))
+
+VFSCALL(VFSBIT_FHCALLS, int, REALFHOPEN, DUALCALL_FHOPEN,		\
+	(const void *fhp, size_t fh_size, int flags),			\
+	(const char *, size_t, int),					\
+	(fhp, fh_size, flags))
+
+VFSCALL(VFSBIT_FHCALLS, int, REALFHSTAT, DUALCALL_FHSTAT,		\
+	(const void *fhp, size_t fh_size, struct stat *sb),		\
+	(const char *, size_t, struct stat *),				\
+	(fhp, fh_size, sb))
+
+VFSCALL(VFSBIT_FHCALLS, int, REALFHSTATVFS1, DUALCALL_FHSTATVFS1,	\
+	(const void *fhp, size_t fh_size, struct statvfs *sb, int flgs),\
+	(const char *, size_t, struct statvfs *, int),			\
+	(fhp, fh_size, sb, flgs))
+
+/* finally, put nfssvc here.  "keep the namespace clean" */
+
+#include <nfs/rpcv2.h>
+#include <nfs/nfs.h>
+
+int
+nfssvc(int flags, void *argstructp)
+{
+	int (*op_nfssvc)(int, void *);
+
+	if (vfsbits & VFSBIT_NFSSVC){
+		struct nfsd_args *nfsdargs;
+
+		/* massage the socket descriptor if necessary */
+		if (flags == NFSSVC_ADDSOCK) {
+			nfsdargs = argstructp;
+			nfsdargs->sock = fd_host2rump(nfsdargs->sock);
+		}
+		op_nfssvc = GETSYSCALL(rump, NFSSVC);
+	} else
+		op_nfssvc = GETSYSCALL(host, NFSSVC);
+
+	return op_nfssvc(flags, argstructp);
+}
