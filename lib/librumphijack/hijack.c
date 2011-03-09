@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.79 2011/03/09 18:06:22 bouyer Exp $	*/
+/*      $NetBSD: hijack.c,v 1.80 2011/03/09 18:45:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.79 2011/03/09 18:06:22 bouyer Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.80 2011/03/09 18:45:30 bouyer Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: hijack.c,v 1.79 2011/03/09 18:06:22 bouyer Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/quota.h>
 
 #include "hijack.h"
 
@@ -97,6 +98,7 @@ enum dualcall {
 	DUALCALL___SYSCTL,
 	DUALCALL_GETVFSSTAT, DUALCALL_NFSSVC,
 	DUALCALL_GETFH, DUALCALL_FHOPEN, DUALCALL_FHSTAT, DUALCALL_FHSTATVFS1,
+	DUALCALL_QUOTACTL,
 	DUALCALL__NUM
 };
 
@@ -140,6 +142,7 @@ enum dualcall {
 #define REALGETFH __getfh30
 #define REALFHOPEN __fhopen40
 #define REALFHSTATVFS1 __fhstatvfs140
+#define REALQUOTACTL __quotactl50
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -163,6 +166,7 @@ int REALGETFH(const char *, void *, size_t *);
 int REALFHOPEN(const void *, size_t, int);
 int REALFHSTAT(const void *, size_t, struct stat *);
 int REALFHSTATVFS1(const void *, size_t, struct statvfs *, int);
+int REALQUOTACTL(const char *, struct plistref *);
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -242,6 +246,7 @@ struct sysnames {
 	{ DUALCALL_FHOPEN,	S(REALFHOPEN),RSYS_NAME(FHOPEN)	},
 	{ DUALCALL_FHSTAT,	S(REALFHSTAT),RSYS_NAME(FHSTAT)	},
 	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
+	{ DUALCALL_QUOTACTL,	S(REALQUOTACTL),RSYS_NAME(QUOTACTL)	},
 };
 #undef S
 
@@ -2160,6 +2165,11 @@ PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
 	(const char *path, int flags),					\
 	(const char *, int),						\
 	(path, flags))
+
+PATHCALL(int, REALQUOTACTL, DUALCALL_QUOTACTL,				\
+	(const char *path, struct plistref *p),				\
+	(const char *, struct plistref *),				\
+	(path, p))
 
 /*
  * These act different on a per-process vfs configuration
