@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.51 2011/03/08 18:35:10 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.52 2011/03/09 10:10:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -124,5 +124,54 @@ int	rump_daemonize_done(int);
 #ifdef _END_DECLS
 _END_DECLS
 #endif
+
+/*
+ * Begin rump syscall conditionals.  Yes, something a little better
+ * is required here.
+ */
+#ifdef RUMP_SYS_NETWORKING
+#define socket(a,b,c) rump_sys_socket(a,b,c)
+#define accept(a,b,c) rump_sys_accept(a,b,c)
+#define bind(a,b,c) rump_sys_bind(a,b,c)
+#define connect(a,b,c) rump_sys_connect(a,b,c)
+#define getpeername(a,b,c) rump_sys_getpeername(a,b,c)
+#define getsockname(a,b,c) rump_sys_getsockname(a,b,c)
+#define listen(a,b) rump_sys_listen(a,b)
+#define recvfrom(a,b,c,d,e,f) rump_sys_recvfrom(a,b,c,d,e,f)
+#define recvmsg(a,b,c) rump_sys_recvmsg(a,b,c)
+#define sendto(a,b,c,d,e,f) rump_sys_sendto(a,b,c,d,e,f)
+#define sendmsg(a,b,c) rump_sys_sendmsg(a,b,c)
+#define getsockopt(a,b,c,d,e) rump_sys_getsockopt(a,b,c,d,e)
+#define setsockopt(a,b,c,d,e) rump_sys_setsockopt(a,b,c,d,e)
+#define shutdown(a,b) rump_sys_shutdown(a,b)
+#endif /* RUMP_SYS_NETWORKING */
+
+#ifdef RUMP_SYS_IOCTL
+#error deprecated syscall selection.  use rumphijack
+#endif /* RUMP_SYS_IOCTL */
+
+#ifdef RUMP_SYS_CLOSE
+#error deprecated syscall selection.  use rumphijack
+#endif /* RUMP_SYS_CLOSE */
+
+#ifdef RUMP_SYS_OPEN
+#error deprecated syscall selection.  use rumphijack
+#endif /* RUMP_SYS_OPEN */
+
+#ifdef RUMP_SYS_READWRITE
+#error deprecated syscall selection.  use rumphijack
+#endif /* RUMP_SYS_READWRITE */
+
+#ifdef RUMP_SYS_FILEOPS
+#error deprecated syscall selection.  use rumphijack
+#endif /* RUMP_SYS_FILEOPS */
+
+#ifdef RUMP_SYS_STAT
+#error deprecated syscall selection.  use rumphijack
+#endif /* RUMP_SYS_STAT */
+
+#ifdef RUMP_SYS_PROCOPS
+#error deprecated syscall selection.  use rumphijack
+#endif /* RUMP_SYS_PROCOPS */
 
 #endif /* _RUMP_RUMP_H_ */
