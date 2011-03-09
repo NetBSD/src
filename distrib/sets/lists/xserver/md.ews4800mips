@@ -1,4 +1,4 @@
-# $NetBSD: md.ews4800mips,v 1.7 2011/02/09 13:41:00 tsutsui Exp $
+# $NetBSD: md.ews4800mips,v 1.8 2011/03/09 18:55:55 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/Xews4800mips				-unknown-	x11
 ./usr/X11R6/man/cat1/Xews4800mips.0			-unknown-	.cat,x11
@@ -118,3 +118,4 @@
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
+./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
