@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.2 2011/03/05 06:28:29 jruoho Exp $	*/
+/*	$NetBSD: nand.h,v 1.3 2011/03/09 10:05:08 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -64,7 +64,7 @@ bool nand_isbad(device_t, flash_addr_t);
 void nand_markbad(device_t, size_t);
 
 int nand_read_page(device_t, size_t, uint8_t *);
-int nand_read_oob(device_t self, size_t page, void *oob);
+int nand_read_oob(device_t, size_t, void *);
 
 /*
  * default functions for driver development
@@ -154,6 +154,7 @@ struct nand_ecc {
  *	      about the NAND chip.
  */
 struct nand_chip {
+	struct nand_ecc *nc_ecc; 	/* ecc information */
 	uint8_t	*nc_oob_cache;		/* buffer for oob cache */
 	uint8_t *nc_page_cache;		/* buffer for page cache */
 	uint8_t *nc_ecc_cache;
@@ -162,19 +163,20 @@ struct nand_chip {
 	size_t nc_block_pages;		/* block size in pages */
 	size_t nc_block_size;		/* block size in bytes */
 	size_t nc_spare_size;		/* spare (oob) size in bytes */
+	uint32_t nc_lun_blocks;		/* LUN size in blocks */
 	uint32_t nc_flags;		/* bitfield flags */
 	uint32_t nc_quirks;		/* bitfield quirks */
 	unsigned int nc_page_shift;	/* page shift for page alignment */
 	unsigned int nc_page_mask;	/* page mask for page alignment */
 	unsigned int nc_block_shift;	/* write shift */
 	unsigned int nc_block_mask;	/* write mask */
+	uint8_t nc_num_luns;		/* number of LUNs */
 	uint8_t nc_manf_id;		/* manufacturer id */
 	uint8_t nc_dev_id;		/* device id  */
 	uint8_t nc_addr_cycles_row;	/* row cycles for addressing */
 	uint8_t nc_addr_cycles_column;	/* column cycles for addressing */
 	uint8_t nc_badmarker_offs;	/* offset for marking bad blocks */
-	
-	struct nand_ecc *nc_ecc;
+	bool nc_isonfi;			/* if the device is onfi compliant */
 };
 
 struct nand_write_cache {
@@ -449,6 +451,13 @@ struct nand_manufacturer {
 };
 
 extern const struct nand_manufacturer nand_mfrs[];
+
+/*
+ * Manufacturer specific parameter functions
+ */
+int nand_read_parameters_micron(device_t, struct nand_chip *);
+
+/* debug inlines */
 
 static inline void
 nand_dump_data(const char *name, void *data, size_t len)
