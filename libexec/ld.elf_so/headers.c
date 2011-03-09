@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.39 2011/01/16 01:22:29 matt Exp $	 */
+/*	$NetBSD: headers.c,v 1.40 2011/03/09 23:10:07 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.39 2011/01/16 01:22:29 matt Exp $");
+__RCSID("$NetBSD: headers.c,v 1.40 2011/03/09 23:10:07 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -360,6 +360,16 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		case PT_DYNAMIC:
 			obj->dynamic = (Elf_Dyn *)(uintptr_t)vaddr;
 			break;
+
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+		case PT_TLS:
+			obj->tlsindex = 1;
+			obj->tlssize = ph->p_memsz;
+			obj->tlsalign = ph->p_align;
+			obj->tlsinitsize = ph->p_filesz;
+			obj->tlsinit = (void *)(uintptr_t)ph->p_vaddr;
+			break;
+#endif
 		}
 	}
 	assert(nsegs == 2);
