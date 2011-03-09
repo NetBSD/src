@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.15 2010/10/16 10:27:08 skrll Exp $	*/
+/*	$NetBSD: ldd.c,v 1.16 2011/03/09 23:10:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.15 2010/10/16 10:27:08 skrll Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.16 2011/03/09 23:10:08 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -302,4 +302,14 @@ print_needed(Obj_Entry *obj, const char *fmt1, const char *fmt2)
 			fmtprint(libname, needed->obj, fmt1, fmt2);
 		}
 	}
+}
+
+void
+_rtld_die(void)
+{
+	const char *msg = dlerror();
+
+	if (msg == NULL)
+		msg = "Fatal error";
+	xerrx(1, "%s", msg);
 }

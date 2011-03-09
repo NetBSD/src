@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.138 2011/02/24 10:58:54 pooka Exp $	 */
+/*	$NetBSD: rtld.c,v 1.139 2011/03/09 23:10:07 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.138 2011/02/24 10:58:54 pooka Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.139 2011/03/09 23:10:07 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -315,6 +315,9 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	char          **env, **oenvp;
 	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	Obj_Entry      *obj;
+#endif
 	Elf_Addr       *const osp = sp;
 	bool            bind_now = 0;
 	const char     *ld_bind_now, *ld_preload, *ld_library_path;
@@ -572,6 +575,16 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	dbg(("loading needed objects"));
 	if (_rtld_load_needed_objects(_rtld_objmain, _RTLD_MAIN) == -1)
 		_rtld_die();
+
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	dbg(("initializing initial Thread Local Storage"));
+	/*
+	 * All initial objects get the TLS space from the static block.
+	 */
+	for (obj = _rtld_objlist; obj != NULL; obj = obj->next)
+		_rtld_tls_offset_allocate(obj);
+	_rtld_tls_initial_allocation();
+#endif
 
 	dbg(("relocating objects"));
 	if (_rtld_relocate_objects(_rtld_objmain, bind_now) == -1)

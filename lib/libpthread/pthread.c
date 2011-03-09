@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.120 2010/12/22 22:41:45 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.121 2011/03/09 23:10:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.120 2010/12/22 22:41:45 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.121 2011/03/09 23:10:06 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: pthread.c,v 1.120 2010/12/22 22:41:45 christos Exp $");
 #include <sys/mman.h>
 #include <sys/sysctl.h>
 #include <sys/lwpctl.h>
+#include <sys/tls.h>
 
 #include <err.h>
 #include <errno.h>
@@ -194,6 +195,11 @@ pthread__init(void)
 	pthread__initthread(first);
 	pthread__scrubthread(first, NULL, 0);
 
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	first->pt_tls = _lwp_getprivate();
+	first->pt_tls->tcb_pthread = first;
+#endif
+
 	first->pt_lid = _lwp_self();
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
@@ -284,6 +290,9 @@ pthread__initthread(pthread_t t)
 {
 
 	t->pt_self = t;
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	t->pt_tls = NULL;
+#endif
 	t->pt_magic = PT_MAGIC;
 	t->pt_willpark = 0;
 	t->pt_unpark = 0;
@@ -307,6 +316,12 @@ static void
 pthread__scrubthread(pthread_t t, char *name, int flags)
 {
 
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	if (t->pt_tls) {
+		_rtld_tls_free(t->pt_tls);
+		t->pt_tls = NULL;
+	}
+#endif
 	t->pt_state = PT_STATE_RUNNING;
 	t->pt_exitval = NULL;
 	t->pt_flags = flags;
@@ -326,6 +341,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	struct pthread_attr_private *p;
 	char * volatile name;
 	unsigned long flag;
+	void *private_area;
 	int ret;
 
 	/*
@@ -407,8 +423,15 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	pthread__scrubthread(newthread, name, nattr.pta_flags);
 	newthread->pt_func = startfunc;
 	newthread->pt_arg = arg;
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	private_area = newthread->pt_tls = _rtld_tls_allocate();
+	newthread->pt_tls->tcb_pthread = newthread;
+#else
+	private_area = newthread;
+#endif
+
 	_lwp_makecontext(&newthread->pt_uc, pthread__create_tramp,
-	    newthread, newthread, newthread->pt_stack.ss_sp,
+	    newthread, private_area, newthread->pt_stack.ss_sp,
 	    newthread->pt_stack.ss_size);
 
 	flag = LWP_DETACHED;
@@ -1240,9 +1263,9 @@ pthread__initmain(pthread_t *newt)
 	}
 
 	*newt = t;
-
-	/* Set up identity register. */
-	(void)_lwp_setprivate(t);
+#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+	_lwp_setprivate(t);
+#endif
 }
 
 static int

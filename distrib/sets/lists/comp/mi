@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1594 2011/03/07 15:49:56 njoly Exp $
+#	$NetBSD: mi,v 1.1595 2011/03/09 23:10:05 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2173,6 +2173,7 @@
 ./usr/include/sys/timepps.h			comp-c-include
 ./usr/include/sys/times.h			comp-c-include
 ./usr/include/sys/timex.h			comp-c-include
+./usr/include/sys/tls.h				comp-c-include
 ./usr/include/sys/tprintf.h			comp-obsolete		obsolete
 ./usr/include/sys/trace.h			comp-c-include
 ./usr/include/sys/tree.h			comp-c-include

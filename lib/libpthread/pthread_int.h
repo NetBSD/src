@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.75 2011/02/25 14:32:38 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.76 2011/03/09 23:10:06 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 
 #ifndef _LIB_PTHREAD_INT_H
 #define _LIB_PTHREAD_INT_H
+
+#include <sys/tls.h>
 
 /* #define PTHREAD__DEBUG */
 #define ERRORCHECK
@@ -92,6 +94,9 @@ struct pthread_lock_ops {
 
 struct	__pthread_st {
 	pthread_t	pt_self;	/* Must be first. */
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	struct tls_tcb	*pt_tls;	/* Thread Local Storage area */
+#endif
 	unsigned int	pt_magic;	/* Magic number */
 	int		pt_state;	/* running, blocked, etc. */
 	pthread_mutex_t	pt_lock;	/* lock on state */
@@ -251,11 +256,20 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 
 
 #if 0 && defined(__HAVE___LWP_GETPRIVATE_FAST)
+#  if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+static inline pthread_t __constfunc
+pthread__self(void)
+{
+	struct tls_tcb *tcb = __lwp_getprivate_fast()
+	return (pthread_t)tcb->tcb_pthread;
+}
+#  else
 static inline pthread_t __constfunc
 pthread__self(void)
 {
 	return (pthread_t)__lwp_getprivate_fast();
 }
+#  endif
 #else
 /* Stack location of pointer to a particular thread */
 extern vaddr_t	pthread__mainbase;

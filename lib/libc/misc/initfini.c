@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.8 2011/03/07 05:09:11 joerg Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.9 2011/03/09 23:10:06 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.8 2011/03/07 05:09:11 joerg Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.9 2011/03/09 23:10:06 joerg Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: initfini.c,v 1.8 2011/03/07 05:09:11 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/exec.h>
+#include <sys/tls.h>
 #include <stdbool.h>
 
 void	_libc_init(void) __attribute__((__constructor__, __used__));
@@ -47,6 +48,10 @@ void	__libc_thr_init(void);
 void	__libc_atomic_init(void);
 void	__libc_atexit_init(void);
 void	__libc_env_init(void);
+
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+__dso_hidden void	__libc_static_tls_setup(void);
+#endif
 
 static bool libc_initialised;
 
@@ -77,6 +82,11 @@ _libc_init(void)
 
 	/* Atomic operations */
 	__libc_atomic_init();
+
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	/* Initialize TLS for statically linked programs. */
+	__libc_static_tls_setup();
+#endif
 
 	/* Threads */
 	__libc_thr_init();

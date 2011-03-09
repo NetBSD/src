@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.100 2011/01/25 12:25:43 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.101 2011/03/09 23:10:07 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/exec_elf.h>
+#include <sys/tls.h>
 #include "rtldenv.h"
 #include "link.h"
 
@@ -211,6 +212,10 @@ typedef struct Struct_Obj_Entry {
 					   dlopen'ed */
 			phdr_loaded:1,	/* Phdr is loaded and doesn't need to
 					 * be freed. */
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+			tls_done:1,	/* True if static TLS offset
+					 * has been allocated */
+#endif
 			ref_nodel:1;	/* Refcount increased to prevent dlclose */
 
 	struct link_map linkmap;	/* for GDB */
@@ -231,8 +236,19 @@ typedef struct Struct_Obj_Entry {
 	size_t		pathlen;	/* Pathname length */
 	STAILQ_HEAD(, Struct_Name_Entry) names;	/* List of names for this object we
 						   know about. */
+
 #ifdef __powerpc__
 	Elf_Addr       *gotptr;		/* GOT table (secure-plt only) */
+#endif
+
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+	/* Thread Local Storage support for this module */
+	size_t		tlsindex;	/* Index in DTV */
+	void		*tlsinit;	/* Base address of TLS init block */
+	size_t		tlsinitsize;	/* Size of TLS init block */
+	size_t		tlssize;	/* Size of TLS block */
+	size_t		tlsoffset;	/* Offset in the static TLS block */
+	size_t		tlsalign;	/* Needed alignment for static TLS */
 #endif
 } Obj_Entry;
 
@@ -267,6 +283,9 @@ extern Elf_Sym _rtld_sym_zero;
 #define	_RTLD_MAIN	0x02
 #define	_RTLD_NOLOAD	0x04	/* dlopen() specified RTLD_NOLOAD. */
 #define	_RTLD_DLOPEN	0x08	/* Load_object() called from dlopen(). */
+
+/* Preallocation for static TLS model */
+#define	RTLD_STATIC_TLS_RESERVATION	64
 
 /* rtld.c */
 
@@ -342,6 +361,20 @@ const Elf_Sym *_rtld_symlook_needed(const char *, unsigned long,
     DoneList *, DoneList *);
 #ifdef COMBRELOC
 void _rtld_combreloc_reset(const Obj_Entry *);
+#endif
+
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+/* tls.c */
+void *_rtld_tls_get_addr(void *, size_t, size_t);
+void _rtld_tls_initial_allocation(void);
+void *_rtld_tls_module_allocate(size_t index);
+int _rtld_tls_offset_allocate(Obj_Entry *);
+void _rtld_tls_offset_free(Obj_Entry *);
+
+extern size_t _rtld_tls_dtv_generation;
+extern size_t _rtld_tls_max_index;
+
+__dso_public extern void __tls_get_addr(void *);
 #endif
 
 /* map_object.c */
