@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.4 2011/02/24 19:32:34 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.5 2011/03/09 20:33:57 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -76,8 +76,9 @@ struct satmgr_softc {
 	char			sc_wr_buf[16];
 	char			*sc_wr_lim, *sc_wr_cur, *sc_wr_ptr;
 	int			sc_rd_cnt, sc_wr_cnt;
-	int			sc_btnstate;
 	struct satops		*sc_ops;
+	char			sc_btn_buf[8];
+	int			sc_btn_cnt;
 };
 
 static int  satmgr_match(device_t, cfdata_t, void *);
@@ -114,12 +115,15 @@ static void swintr(void *);
 static void kreboot(struct satmgr_softc *);
 static void sreboot(struct satmgr_softc *);
 static void qreboot(struct satmgr_softc *);
+static void dreboot(struct satmgr_softc *);
 static void kpwroff(struct satmgr_softc *);
 static void spwroff(struct satmgr_softc *);
 static void qpwroff(struct satmgr_softc *);
+static void dpwroff(struct satmgr_softc *);
 static void kbutton(struct satmgr_softc *, int);
 static void sbutton(struct satmgr_softc *, int);
 static void qbutton(struct satmgr_softc *, int);
+static void dbutton(struct satmgr_softc *, int);
 static void guarded_pbutton(void *);
 static void sched_sysmon_pbutton(void *);
 
@@ -133,7 +137,8 @@ struct satops {
 static struct satops satmodel[] = {
     { "kurobox",  kreboot, kpwroff, kbutton },
     { "synology", sreboot, spwroff, sbutton },
-    { "qnap",     qreboot, qpwroff, qbutton }
+    { "qnap",     qreboot, qpwroff, qbutton },
+    { "dlink",    dreboot, dpwroff, dbutton }
 };
 
 /* single byte stride register layout */
@@ -206,7 +211,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	cv_init(&sc->sc_rdcv, "satrd");
 	cv_init(&sc->sc_wrcv, "satwr");
-	sc->sc_btnstate = 0;
+	sc->sc_btn_cnt = 0;
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
 	intr_establish(epicirq + 16, IST_LEVEL, IPL_SERIAL, hwintr, sc);
@@ -663,7 +668,7 @@ sbutton(struct satmgr_softc *sc, int ch)
 
 	switch (ch) {
 	case '0':
-		/* notified after 3 secord guard time */
+		/* notified after 5 seconds guard time */
 		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
 		break;
 	case 'a':
@@ -689,7 +694,41 @@ qpwroff(struct satmgr_softc *sc)
 static void
 qbutton(struct satmgr_softc *sc, int ch)
 {
+
 	/* research in progress */
+}
+
+static void
+dreboot(struct satmgr_softc *sc)
+{
+
+	/* XXX cause a machine check exception? */
+}
+
+static void
+dpwroff(struct satmgr_softc *sc)
+{
+
+	/* not possible */
+}
+
+static void
+dbutton(struct satmgr_softc *sc, int ch)
+{
+
+	if (ch == '\n' || ch == '\r') {
+		if (sc->sc_btn_cnt == 3) {
+			if (strncmp(sc->sc_btn_buf, "PKO", 3) == 0) {
+				/* notified after 5 seconds guard time */
+				sysmon_task_queue_sched(0,
+				    sched_sysmon_pbutton, sc);
+			} else if (strncmp(sc->sc_btn_buf, "RKO", 3) == 0) {
+				/* notified after 5 seconds guard time */
+			}
+		}
+		sc->sc_btn_cnt = 0;
+	} else if (sc->sc_btn_cnt < 7)
+		sc->sc_btn_buf[sc->sc_btn_cnt++] = ch;
 }
 
 static void
