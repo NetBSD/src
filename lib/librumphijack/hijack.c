@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.76 2011/03/08 21:36:01 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.77 2011/03/09 09:17:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.76 2011/03/08 21:36:01 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.77 2011/03/09 09:17:12 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -234,7 +234,6 @@ struct bothsys {
 
 static pid_t	(*host_fork)(void);
 static int	(*host_daemon)(int, int);
-static int	(*host_execve)(const char *, char *const[], char *const[]);
 static void *	(*host_mmap)(void *, size_t, int, int, int, off_t);
 
 /*
@@ -568,7 +567,6 @@ rcinit(void)
 
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_daemon = dlsym(RTLD_NEXT, "daemon");
-	host_execve = dlsym(RTLD_NEXT, "execve");
 	host_mmap = dlsym(RTLD_NEXT, "mmap");
 
 	/*
