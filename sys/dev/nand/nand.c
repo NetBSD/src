@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.2 2011/03/09 07:49:15 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.2 2011/03/09 07:49:15 ahoka Exp $");
 
 #include "locators.h"
 
@@ -53,22 +53,21 @@ __KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $");
 
 #include "opt_nand.h"
 
-int nand_match(device_t parent, cfdata_t match, void *aux);
-void nand_attach(device_t parent, device_t self, void *aux);
-int nand_detach(device_t device, int flags);
-bool nand_shutdown(device_t self, int howto);
+int nand_match(device_t, cfdata_t, void *);
+void nand_attach(device_t, device_t, void *);
+int nand_detach(device_t, int);
+bool nand_shutdown(device_t, int);
 
-int nand_print(void *aux, const char *pnp);
+int nand_print(void *, const char *);
 
-static int nand_search(device_t parent, cfdata_t cf, const int *ldesc,
-    void *aux);
-static void nand_address_row(device_t self, size_t row);
-static void nand_address_column(device_t self, size_t row, size_t column);
-static void nand_readid(device_t self, struct nand_chip *chip);
-static void nand_read_parameter_page(device_t self, struct nand_chip *chip);
-static const char *nand_midtoname(int id);
-static int nand_scan_media(device_t self, struct nand_chip *chip);
-static bool nand_check_wp(device_t self);
+static int nand_search(device_t, cfdata_t, const int *, void *);
+static void nand_address_row(device_t, size_t);
+static void nand_address_column(device_t, size_t, size_t);
+static void nand_readid(device_t, struct nand_chip *);
+static void nand_read_parameter_page(device_t, struct nand_chip *);
+static const char *nand_midtoname(int);
+static int nand_scan_media(device_t, struct nand_chip *);
+static bool nand_check_wp(device_t);
 
 CFATTACH_DECL_NEW(nand, sizeof(struct nand_softc),
     nand_match, nand_attach, nand_detach, NULL);
@@ -107,17 +106,12 @@ nand_attach(device_t parent, device_t self, void *aux)
 	struct nand_softc *sc = device_private(self);
 	struct nand_attach_args *naa = aux;
 	struct nand_chip *chip = &sc->sc_chip;
-//	struct flash_interface *flash_if;
-//	int i;
 
 	sc->sc_dev = self;
 	sc->nand_dev = parent;
 	sc->nand_if = naa->naa_nand_if;
 
-//	sc->nand_softc = device_private(parent);
-
 	aprint_naive("\n");
-//	aprint_normal(": NAND flash memory\n");
 
 	if (nand_check_wp(self)) {
 		aprint_error("NAND chip is write protected!\n");
@@ -500,7 +494,6 @@ nand_address_column(device_t self, size_t row, size_t column)
 
 	/* XXX TODO */
 	row >>= chip->nc_page_shift;
-//	DPRINTF(("row address is: 0x%jx\n", (uintmax_t )row));
 
 	/* Write the column (subpage) address */
 	if (chip->nc_flags & NC_BUSWIDTH_16)
@@ -519,8 +512,6 @@ nand_address_row(device_t self, size_t row)
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
 	off_t i;
-
-//	DPRINTF(("addressing row: %zu\n", row));
 
 	/* XXX TODO */
 	row >>= chip->nc_page_shift;
@@ -571,8 +562,6 @@ nand_read_page(device_t self, size_t offset, uint8_t *data)
 	uint8_t *ecc;
 	int result;
 
-	DPRINTF(("nand read page\n"));
-
 	nand_prepare_read(self, offset, 0);
 
 	bs = chip->nc_ecc->necc_block_size;
@@ -595,7 +584,10 @@ nand_read_page(device_t self, size_t offset, uint8_t *data)
 		}
 	}
 
-//	nand_dump_data("page", data, chip->nc_page_size);
+	/* for debugging new drivers */
+#if 0
+	nand_dump_data("page", data, chip->nc_page_size);
+#endif
 
 	nand_read_oob(self, offset, chip->nc_oob_cache);
 	ecc = chip->nc_oob_cache + chip->nc_ecc->necc_offset;
@@ -693,6 +685,7 @@ nand_program_page(device_t self, size_t page, const uint8_t *data)
 
 	nand_busy(self);
 
+	/* for debugging ecc */
 #if 0
 	printf("dumping ecc %d\n--------------\n", chip->nc_ecc->necc_steps);
 	for (e = 0; e < chip->nc_ecc->necc_steps; e++) {
@@ -728,7 +721,10 @@ nand_read_oob(device_t self, size_t page, void *oob)
 	else
 		nand_read_buf_byte(self, oob, chip->nc_spare_size);
 
-//	nand_dump_data("oob", oob, chip->nc_spare_size);
+	/* for debugging drivers */
+#if 0
+	nand_dump_data("oob", oob, chip->nc_spare_size);
+#endif
 
 	return 0;
 }
@@ -888,8 +884,6 @@ nand_isbad(device_t self, flash_addr_t offset)
 int
 nand_erase_block(device_t self, size_t offset)
 {
-//	struct nand_softc *sc = device_private(self);
-//	struct nand_chip *chip = &sc->sc_chip;
 	uint8_t status;
 
 	/* xxx calculate first page of block for address? */
@@ -952,9 +946,6 @@ nand_flash_write_unaligned(device_t self, off_t offset, size_t len,
 	flash_addr_t addr;
 	size_t left, count;
 	int error, i;
-
-	/* to debug chfs */
-//	printf("unaligned write to nand\n");
 
 	first = offset & chip->nc_page_mask;
 	firstoff = offset & ~chip->nc_page_mask;
@@ -1131,13 +1122,9 @@ nand_flash_read_unaligned(device_t self, size_t offset,
 	size_t left;
 	int error = 0, i;
 
-	/* to debug chfs */
-//	printf("unaligned read from nand\n");
-
 	first = offset & chip->nc_page_mask;
 	firstoff = offset & ~chip->nc_page_mask;
 	last = (offset + len) & chip->nc_page_mask;
-//	lastoff = chip->nc_page_size - (offset + len) & ~chip->nc_page_mask;
 	count = (last - first) / chip->nc_page_size + 1;
 
 	addr = first;
@@ -1221,8 +1208,12 @@ nand_flash_read(device_t self, off_t offset, size_t len, size_t *retlen,
 	 * block device, as strategy handles it, so only low level
 	 * accesses will use this path
 	 */
-//	if (len < chip->nc_page_size)
-//		panic("TODO page size is larger than read size");
+	/* XXX^2 */
+#if 0
+	if (len < chip->nc_page_size)
+		panic("TODO page size is larger than read size");
+#endif
+	
 
 	if (len % chip->nc_page_size != 0 ||
 	    offset % chip->nc_page_size != 0) {
@@ -1236,7 +1227,7 @@ nand_flash_read(device_t self, off_t offset, size_t len, size_t *retlen,
 
 	mutex_enter(&sc->sc_device_lock);
 	for (i = 0; i < pages; i++) {
-		/* do we need this check here? */
+		/* XXX do we need this check here? */
 		if (nand_isbad(self, addr)) {
 			aprint_error_dev(self, "bad block encountered\n");
 			error = EIO;
@@ -1263,7 +1254,6 @@ nand_flash_isbad(device_t self, uint64_t ofs)
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
 	bool result;
-//	uint64_t block_num;
 
 	if (ofs > chip->nc_size) {
 		DPRINTF(("nand_flash_isbad: offset 0x%jx is larger than"
@@ -1276,7 +1266,6 @@ nand_flash_isbad(device_t self, uint64_t ofs)
 		panic("offset (0x%jx) is not the multiple of block size (%ju)",
 		    (uintmax_t)ofs, (uintmax_t)chip->nc_block_size);
 	}
-//	block_num = ofs / fl->flash_if.erasesize;
 
 	mutex_enter(&sc->sc_device_lock);
 	result = nand_isbad(self, ofs);
@@ -1294,8 +1283,6 @@ nand_flash_markbad(device_t self, uint64_t ofs)
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
 
-//	uint64_t block_num;
-
 	if (ofs > chip->nc_size) {
 		DPRINTF(("nand_flash_markbad: offset 0x%jx is larger than"
 			" device size (0x%jx)\n", ofs,
@@ -1307,8 +1294,6 @@ nand_flash_markbad(device_t self, uint64_t ofs)
 		panic("offset (%ju) is not the multiple of block size (%ju)",
 		    (uintmax_t)ofs, (uintmax_t)chip->nc_block_size);
 	}
-
-//	block_num = ofs / fl->flash_if->erasesize;
 
 	mutex_enter(&sc->sc_device_lock);
 	nand_markbad(self, ofs);
@@ -1325,10 +1310,6 @@ nand_flash_erase(device_t self,
 	struct nand_chip *chip = &sc->sc_chip;
 	flash_addr_t addr;
 	int error;
-//	off_t block_num;
-
-//	if (FLASH_CLOSED == sc->sc_flash.status)
-//		return FLASH_CLOSED;
 
 	if (ei->ei_addr < 0 || ei->ei_len < chip->nc_block_size)
 		return EINVAL;
