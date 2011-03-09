@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.81 2011/03/09 20:48:57 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.82 2011/03/09 23:26:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.81 2011/03/09 20:48:57 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.82 2011/03/09 23:26:19 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -2199,6 +2199,11 @@ PATHCALL(int, REALQUOTACTL, DUALCALL_QUOTACTL,				\
 	(const char *, struct plistref *),				\
 	(path, p))
 
+PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
+	(const char *path, void *fhp, size_t *fh_size),			\
+	(const char *, void *, size_t *),				\
+	(path, fhp, fh_size))
+
 /*
  * These act different on a per-process vfs configuration
  */
@@ -2207,11 +2212,6 @@ VFSCALL(VFSBIT_GETVFSSTAT, int, getvfsstat, DUALCALL_GETVFSSTAT,	\
 	(struct statvfs *buf, size_t buflen, int flags),		\
 	(struct statvfs *, size_t, int),				\
 	(buf, buflen, flags))
-
-VFSCALL(VFSBIT_FHCALLS, int, REALGETFH, DUALCALL_GETFH,			\
-	(const char *path, void *fhp, size_t *fh_size),			\
-	(const char *, void *, size_t *),				\
-	(path, fhp, fh_size))
 
 VFSCALL(VFSBIT_FHCALLS, int, REALFHOPEN, DUALCALL_FHOPEN,		\
 	(const void *fhp, size_t fh_size, int flags),			\
