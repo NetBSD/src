@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.143 2010/09/04 12:17:58 ahoka Exp $
+#	$NetBSD: Makefile,v 1.144 2011/03/09 23:10:06 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -92,6 +92,7 @@ COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/termios/Makefile.inc"
 .include "${.CURDIR}/thread-stub/Makefile.inc"
 .include "${.CURDIR}/time/Makefile.inc"
+.include "${.CURDIR}/tls/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
 .include "${.CURDIR}/uuid/Makefile.inc"
 .if (${MKYP} != "no")
