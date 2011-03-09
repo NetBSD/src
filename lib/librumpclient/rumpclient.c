@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.42 2011/03/08 18:28:01 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.43 2011/03/09 15:09:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.42 2011/03/08 18:28:01 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.43 2011/03/09 15:09:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -111,7 +111,7 @@ send_with_recon(struct spclient *spc, struct iovec *iov, size_t iovlen)
 				break;
 			}
 			if (retrytimo == RUMPCLIENT_RETRYCONN_DIE)
-				exit(1);
+				_exit(1);
 
 			if (!prevreconmsg) {
 				prevreconmsg = time(NULL);
@@ -329,7 +329,7 @@ handshake_req(struct spclient *spc, int type, void *data,
 	int cancel, bool haslock)
 {
 	struct handshake_fork rf;
-	const char *myprogname;
+	const char *myprogname = NULL; /* XXXgcc */
 	struct rsp_hdr rhdr;
 	struct respwait rw;
 	sigset_t omask;
@@ -362,7 +362,7 @@ handshake_req(struct spclient *spc, int type, void *data,
 		rf.rf_cancel = cancel;
 		IOVPUT(iov[1], rf);
 	} else {
-		IOVPUT_WITHSIZE(iov[1], __UNCONST(getprogname()), bonus);
+		IOVPUT_WITHSIZE(iov[1], __UNCONST(myprogname), bonus);
 	}
 	rv = send_with_recon(spc, iov, __arraycount(iov));
 	if (rv || cancel) {
