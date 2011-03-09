@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.40 2010/11/23 10:24:04 mrg Exp $	x11
+# $NetBSD: md.sgimips,v 1.41 2011/03/09 18:55:56 mrg Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -594,3 +594,4 @@
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
+./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
