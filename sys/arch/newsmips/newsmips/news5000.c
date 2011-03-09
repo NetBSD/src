@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.18 2011/02/20 07:56:32 matt Exp $	*/
+/*	$NetBSD: news5000.c,v 1.19 2011/03/09 13:21:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.18 2011/02/20 07:56:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.19 2011/03/09 13:21:36 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -51,6 +51,27 @@ static void news5000_enable_timer(void);
 static void news5000_readidrom(uint8_t *);
 static void news5000_tc_init(void);
 static uint32_t news5000_getfreerun(struct timecounter *);
+
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+static const struct ipl_sr_map news5000_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1
+				| MIPS_INT_MASK_2,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
+};
 
 /*
  * Handle news5000 interrupts.
@@ -258,6 +279,8 @@ extern struct idrom idrom;
 void
 news5000_init(void)
 {
+
+	ipl_sr_map = news5000_ipl_sr_map;
 
 	enable_intr = news5000_enable_intr;
 	disable_intr = news5000_disable_intr;
