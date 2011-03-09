@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.78 2011/03/09 15:03:18 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.79 2011/03/09 18:06:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.78 2011/03/09 15:03:18 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.79 2011/03/09 18:06:22 bouyer Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -238,10 +238,10 @@ struct sysnames {
 	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
 	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
 	{ DUALCALL_NFSSVC,	"nfssvc",	RSYS_NAME(NFSSVC)	},
-	{ DUALCALL_GETFH,	"S(REALGETFH)",	RSYS_NAME(GETFH)	},
-	{ DUALCALL_FHOPEN,	"S(REALFHOPEN)",RSYS_NAME(FHOPEN)	},
-	{ DUALCALL_FHSTAT,	"S(REALFHSTAT)",RSYS_NAME(FHSTAT)	},
-	{ DUALCALL_FHSTATVFS1,	"S(REALSTATVFS1)",RSYS_NAME(FHSTATVFS1)	},
+	{ DUALCALL_GETFH,	S(REALGETFH),	RSYS_NAME(GETFH)	},
+	{ DUALCALL_FHOPEN,	S(REALFHOPEN),RSYS_NAME(FHOPEN)	},
+	{ DUALCALL_FHSTAT,	S(REALFHSTAT),RSYS_NAME(FHSTAT)	},
+	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
 };
 #undef S
 
