@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.5 2011/02/16 19:31:31 pooka Exp $
+#       $NetBSD: t_tcpip.sh,v 1.6 2011/03/09 21:25:59 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -146,8 +146,94 @@ ssh_cleanup()
 	# sshd dies due to RUMPHIJACK_RETRYCONNECT=1d6
 }
 
+
+atf_test_case nfs cleanup
+nfs_head()
+{
+        atf_set "descr" "Test hijacked nfsd and mount_nfs"
+}
+
+nfs_body()
+{
+
+	magicstr='wind in my hair'
+	# create ffs file system we'll be serving from
+	atf_check -s exit:0 -o ignore newfs -F -s 10000 ffs.img
+
+	# start nfs kernel server.  this is a mouthful
+	export RUMP_SERVER=unix://serversock
+	atf_check -s exit:0 rump_server -lrumpvfs -lrumpdev -lrumpnet	\
+	    -lrumpnet_net -lrumpnet_netinet -lrumpnet_local		\
+	    -lrumpnet_shmif -lrumpdev_disk -lrumpfs_ffs -lrumpfs_nfs	\
+	    -lrumpfs_nfsserver						\
+	    -d key=/dk,hostpath=ffs.img,size=host ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr shmbus
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.1.1.1
+
+	export RUMPHIJACK_RETRYCONNECT=die
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+
+	atf_check -s exit:0 mkdir -p /rump/var/run
+	atf_check -s exit:0 mkdir -p /rump/var/db
+	atf_check -s exit:0 touch /rump/var/db/mountdtab
+	atf_check -s exit:0 mkdir /rump/etc
+	atf_check -s exit:0 mkdir /rump/export
+
+	atf_check -s exit:0 sh -c	\
+	    'echo "/export -noresvport -noresvmnt 10.1.1.100" | \
+		dd of=/rump/etc/exports 2> /dev/null'
+
+	atf_check -s exit:0 -e ignore mount_ffs /dk /rump/export
+	atf_check -s exit:0 sh -c "echo ${magicstr} > /rump/export/im_alive"
+
+	# start rpcbind.  we want /var/run/rpcbind.sock
+	export RUMPHIJACK='blanket=/var/run,socket=all' 
+	atf_check -s exit:0 rpcbind
+
+	# ok, then we want mountd in the similar fashion
+	export RUMPHIJACK='blanket=/var/run:/var/db:/export,socket=all,path=/rump,vfs=all'
+	atf_check -s exit:0 mountd /rump/etc/exports
+
+	# finally, le nfschuck
+	export RUMPHIJACK='blanket=/var/run,socket=all,vfs=all'
+	atf_check -s exit:0 nfsd -tu &
+
+	# now, time for the client server and associated madness.
+	export RUMP_SERVER=unix://clientsock
+	unset LD_PRELOAD
+
+	# at least the kernel server is easier
+	atf_check -s exit:0 rump_server -lrumpvfs -lrumpnet		\
+	    -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpfs_nfs\
+	    ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr shmbus
+	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.1.1.100
+
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	unset RUMPHIJACK
+
+	atf_check -s exit:0 mkdir /rump/mnt
+	atf_check -s exit:0 mount_nfs 10.1.1.1:/export /rump/mnt
+
+	atf_check -s exit:0 -o inline:"${magicstr}\n" cat /rump/mnt/im_alive
+}
+
+nfs_cleanup()
+{
+
+	RUMP_SERVER=unix://serversock rump.halt 2> /dev/null
+	RUMP_SERVER=unix://clientsock rump.halt 2> /dev/null
+	:
+}
+
+
 atf_init_test_cases()
 {
 	atf_add_test_case http
 	atf_add_test_case ssh
+	atf_add_test_case nfs
 }
