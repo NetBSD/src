@@ -1,4 +1,4 @@
-# $NetBSD: t_clearquota.sh,v 1.2 2011/03/06 17:08:40 bouyer Exp $ 
+# $NetBSD: t_clearquota.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -67,17 +67,17 @@ clear_quota()
 #set and check the expected quota
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s10k/20 -h40M/50k \
 		   -t 2W/3D ${id}
 		atf_check -s exit:0 \
 -o "match:/mnt        0       10    40960  2weeks       0      20   51200   3days" \
 -o "match:Disk quotas for .*: $" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
 #now clear the quotas
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -c ${id}
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -c ${id}
 	done;
 
 #check that we do not get positive reply for any quota type
@@ -85,7 +85,7 @@ clear_quota()
 		atf_check -s exit:0 -o "not-match:/mnt" \
 		    -o "not-match:Disk quotas for .*: $" \
 		    -o "match:Disk quotas for .*: none$" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
 	rump_shutdown
 }

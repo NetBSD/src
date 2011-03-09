@@ -1,4 +1,4 @@
-# $NetBSD: t_miscquota.sh,v 1.2 2011/03/06 17:08:40 bouyer Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -77,13 +77,13 @@ quota_walk_list()
 	local i=1;
 	while [ $i -lt 101 ]; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -${expect} \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -${expect} \
 		   -s10k/20 -h40M/50k -t 2W/3D $((i * 4096))
 		i=$((i + 1))
 	done
 	# do a repquota
 	atf_check -s exit:0 -o 'match:<integer>0x64000' \
-	    $(atf_get_srcdir)/rump_repquota -x -${expect} /mnt
+	    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -x -${expect} /mnt
 	rump_shutdown
 }
 
@@ -115,14 +115,14 @@ quota_snap()
 	local i=1;
 	while [ $i -lt 11 ]; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -${expect} \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -${expect} \
 		   -s10k/20 -h40M/50k -t 2W/3D $i
 		i=$((i + 1))
 	done
 	# we should have 5 files (root + 4 regular files)
 	atf_check -s exit:0 \
 	    -o 'match:-        -  7days         5       -       -  7days' \
-	    $(atf_get_srcdir)/rump_repquota -av
+	    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -av
 	#shutdown and check filesystem
 	rump_shutdown
 }

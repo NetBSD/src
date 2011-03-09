@@ -1,4 +1,4 @@
-# $NetBSD: t_setquota.sh,v 1.2 2011/03/06 17:08:40 bouyer Exp $ 
+# $NetBSD: t_setquota.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -75,29 +75,29 @@ set_quota()
 	for q in ${expect} ; do
 		local id=$(id -${q})
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s10k/20 -h40M/50k \
 		   -t 2W/3D ${id}
 		atf_check -s exit:0 \
 -o "match:/mnt        0       10    40960  2weeks       1      20   51200   3days" \
 -o "match:Disk quotas for .*: $" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v
 		atf_check -s exit:0 \
 -o "match:--        0       10    40960                1      20   51200" \
-		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -${q} /mnt
 	done
 
 #check that we do not get positive reply for non-expected quota
 	for q in ${fail} ; do
 		local id=$(id -${q})
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s10k/20 -h40M/50k ${id}
 		atf_check -s exit:0 -o "not-match:/mnt" \
 		    -o "not-match:Disk quotas for .*: $" \
 		    -o "match:Disk quotas for .*: none$" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v
 		atf_check -s exit:0 \
 -o "not-match:--        0        -        -" \
-		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -${q} /mnt
 	done
 	rump_shutdown
 }
@@ -131,23 +131,23 @@ set_quota_new()
 	for q in ${expect} ; do
 		local id=1
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s10k/20 -h40M/50k \
 		   -t 120W/255D ${id}
 		atf_check -s exit:0 \
 -o "match:/mnt        0       10    40960  2years       0      20   51200 9months" \
 -o "match:Disk quotas for .*: $" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
 
 #check that we do not get positive reply for non-expected quota
 	for q in ${fail} ; do
 		local id=$(id -${q})
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s10k/20 -h40M/50k ${id}
 		atf_check -s exit:0 -o "not-match:/mnt" \
 		    -o "not-match:Disk quotas for .*: $" \
 		    -o "match:Disk quotas for .*: none$" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
 	rump_shutdown
 }
@@ -181,23 +181,23 @@ set_quota_default()
 	for q in ${expect} ; do
 		local id="-d"
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s10k/20 -h40M/50k \
 		   -t 2H2M/3540 ${id}
 		atf_check -s exit:0 \
 -o "match:/mnt        0       10    40960     2:2       0      20   51200      59" \
 -o "match:Default (user|group) disk quotas: $" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
 
 #check that we do not get positive reply for non-expected quota
 	for q in ${fail} ; do
 		local id="-d"
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s10k/20 -h40M/50k ${id}
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s10k/20 -h40M/50k ${id}
 		atf_check -s exit:0 -o "not-match:/mnt" \
 		    -o "not-match:Default (user|group) disk quotas: $" \
 		    -o "match:Default (user|group) disk quotas: none$" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v ${id}
 	done
 	rump_shutdown
 }
