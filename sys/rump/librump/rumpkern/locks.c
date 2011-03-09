@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.51 2011/03/08 12:39:29 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.52 2011/03/09 18:15:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.51 2011/03/08 12:39:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.52 2011/03/09 18:15:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -305,6 +305,8 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 		rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
 	}
 
+	LOCKED(mtx, false);
+
 	/*
 	 * Check for QEXIT.  if so, we need to wait here until we
 	 * are allowed to exit.
@@ -329,8 +331,6 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 		rv = EINTR;
 	}
 	l->l_private = NULL;
-
-	LOCKED(mtx, false);
 
 	return rv;
 }
