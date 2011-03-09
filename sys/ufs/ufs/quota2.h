@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.2 2011/03/06 17:08:39 bouyer Exp $ */
+/* $NetBSD: quota2.h,v 1.3 2011/03/09 18:12:04 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -67,7 +67,7 @@ struct quota2_entry {
 	struct quota2_val q2e_val[N_QL];
 	/* pointer to next entry for this list (offset in the file) */
 	uint64_t q2e_next;
-	/* ownerchip information */
+	/* ownership information */
 	uint32_t q2e_uid;
 	uint32_t q2e_pad;
 };
