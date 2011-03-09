@@ -1,4 +1,4 @@
-# $NetBSD: t_getquota.sh,v 1.2 2011/03/06 17:08:40 bouyer Exp $ 
+# $NetBSD: t_getquota.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -66,11 +66,11 @@ get_quota()
 		atf_check -s exit:0 \
 -o "match:/mnt        0        -        -   7days       1       -       -   7days" \
 -o "match:Disk quotas for .*: $" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v
 		atf_check -s exit:0 \
 -o "match:--        0        -        -                1       -       -" \
 -o "not-match:\+\+"							  \
-		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -${q} /mnt
 	done
 
 #check that we do not get positive reply for non-expected quota
@@ -78,10 +78,10 @@ get_quota()
 		atf_check -s exit:0 -o "not-match:/mnt" \
 		    -o "not-match:Disk quotas for .*: $" \
 		    -o "match:Disk quotas for .*: none$" \
-		    $(atf_get_srcdir)/rump_quota -${q} -v
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -${q} -v
 		atf_check -s exit:0 \
 -o "not-match:--        0        -        -                1       -       -" \
-		    $(atf_get_srcdir)/rump_repquota -${q} /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -${q} /mnt
 	done
 	rump_shutdown
 }

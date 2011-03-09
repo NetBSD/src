@@ -1,4 +1,4 @@
-# $NetBSD: t_quotalimit.sh,v 1.2 2011/03/06 17:08:40 bouyer Exp $ 
+# $NetBSD: t_quotalimit.sh,v 1.3 2011/03/09 19:04:58 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -79,7 +79,7 @@ limit_quota()
 
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s2k/4 -h3k/6 \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s2k/4 -h3k/6 \
 		   -t 2h/2h ${id}
 	done
 	atf_check -s exit:0 rump.halt
@@ -91,10 +91,10 @@ limit_quota()
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
 		    -o match:'/mnt   3072 B\*  2048 B   3072 B     2:0      2       4       6         ' \
-		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -$q -h ${id}
 		atf_check -s exit:0 \
 		    -o match:'daemon    \+-        3        2        3    2:0         2       4       6' \
-		    $(atf_get_srcdir)/rump_repquota -$q /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
 	rump_shutdown
 }
@@ -126,7 +126,7 @@ limit_softquota()
 
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s2k/4 -h3k/6 \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s2k/4 -h3k/6 \
 		   -t 1s/1d ${id}
 	done
 	atf_check -s exit:0 rump.halt
@@ -138,10 +138,10 @@ limit_softquota()
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
 		    -o match:'/mnt   2560 B\*  2048 B   3072 B    none      2       4       6         ' \
-		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -$q -h ${id}
 		atf_check -s exit:0 \
 		    -o match:'daemon    \+-        2        2        3   none         2       4       6' \
-		    $(atf_get_srcdir)/rump_repquota -$q /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
 	rump_shutdown
 }
@@ -173,7 +173,7 @@ limit_iquota()
 
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s2m/4 -h3m/6 \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s2m/4 -h3m/6 \
 		   -t 2h/2h ${id}
 	done
 	atf_check -s exit:0 rump.halt
@@ -185,10 +185,10 @@ limit_iquota()
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
 		    -o match:'/mnt   3072 B   2048 K   3072 K              6 \*     4       6      2:0' \
-		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -$q -h ${id}
 		atf_check -s exit:0 \
 		    -o match:'daemon    -\+        3     2048     3072                6       4       6    2:0' \
-		    $(atf_get_srcdir)/rump_repquota -$q /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
 	rump_shutdown
 }
@@ -220,7 +220,7 @@ limit_softiquota()
 
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s2m/4 -h3m/6 \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s2m/4 -h3m/6 \
 		   -t 1d/1s ${id}
 	done
 	atf_check -s exit:0 rump.halt
@@ -232,10 +232,10 @@ limit_softiquota()
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
 		    -o match:'/mnt   2560 B   2048 K   3072 K              5 \*     4       6     none' \
-		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -$q -h ${id}
 		atf_check -s exit:0 \
 		    -o match:'daemon    -\+        2     2048     3072                5       4       6   none' \
-		    $(atf_get_srcdir)/rump_repquota -$q /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
 	rump_shutdown
 }
@@ -267,13 +267,13 @@ inherit_defaultquota()
 
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s2k/4 -h3k/6 \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s2k/4 -h3k/6 \
 		   -t 2h/2h -d
 	done
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
 		    -o match:'Disk quotas for .*id 1\): none' \
-		    $(atf_get_srcdir)/rump_quota -$q -v ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -$q -v ${id}
 	done
 	atf_check -s exit:0 rump.halt
 
@@ -284,10 +284,10 @@ inherit_defaultquota()
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
 		    -o match:'/mnt   3072 B\*  2048 B   3072 B     2:0      2       4       6         ' \
-		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -$q -h ${id}
 		atf_check -s exit:0 \
 		    -o match:'daemon    \+-        3        2        3    2:0         2       4       6' \
-		    $(atf_get_srcdir)/rump_repquota -$q /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
 	rump_shutdown
 }
@@ -319,13 +319,13 @@ inherit_defaultiquota()
 
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
-		   $(atf_get_srcdir)/rump_edquota -$q -s2m/4 -h3m/6 \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt edquota -$q -s2m/4 -h3m/6 \
 		   -t 2h/2h -d
 	done
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
 		    -o match:'Disk quotas for .*id 1\): none' \
-		    $(atf_get_srcdir)/rump_quota -$q -v ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -$q -v ${id}
 	done
 	atf_check -s exit:0 rump.halt
 
@@ -336,10 +336,10 @@ inherit_defaultiquota()
 	for q in ${expect} ; do
 		atf_check -s exit:0 \
 		    -o match:'/mnt   3072 B   2048 K   3072 K              6 \*     4       6      2:0' \
-		    $(atf_get_srcdir)/rump_quota -$q -h ${id}
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quota -$q -h ${id}
 		atf_check -s exit:0 \
 		    -o match:'daemon    -\+        3     2048     3072                6       4       6    2:0' \
-		    $(atf_get_srcdir)/rump_repquota -$q /mnt
+		    env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt repquota -$q /mnt
 	done
 	rump_shutdown
 }
