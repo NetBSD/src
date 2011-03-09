@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.15 2011/03/06 17:08:39 bouyer Exp $
+#	$NetBSD: Makefile,v 1.16 2011/03/09 20:13:47 tron Exp $
 #
 
 .include <bsd.own.mk>
-
-SUBDIR=		clients
 
 TESTSDIR=	${TESTSBASE}/fs/ffs
 WARNS=		4
