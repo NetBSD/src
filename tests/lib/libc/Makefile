@@ -1,10 +1,12 @@
-# $NetBSD: Makefile,v 1.37 2011/01/13 14:32:35 pgoyette Exp $
+# $NetBSD: Makefile,v 1.38 2011/03/09 23:10:07 joerg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
 
+SUBDIR+=	tls_dso .WAIT
+
 TESTS_SUBDIRS+=	db gen hash ieeefp inet net regex rpc setjmp stdlib
-TESTS_SUBDIRS+=	stdio string sys time ttyio
+TESTS_SUBDIRS+=	stdio string sys time tls ttyio
 
 .if ${HAS_SSP} == "yes"
 TESTS_SUBDIRS+=	ssp
