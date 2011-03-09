@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.4 2011/03/09 12:13:42 martin Exp $	*/
+/*	$NetBSD: nand.c,v 1.5 2011/03/09 12:33:59 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.4 2011/03/09 12:13:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.5 2011/03/09 12:33:59 ahoka Exp $");
 
 #include "locators.h"
 
@@ -352,16 +352,19 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 #endif
 
 	aprint_normal_dev(self,
-	   "page size: %zu bytes, spare size: %zu bytes, block size: %zu bytes\n",
+	    "page size: %zu bytes, spare size: %zu bytes, "
+	    "block size: %zu bytes\n",
 	    chip->nc_page_size, chip->nc_spare_size, chip->nc_block_size);
 
 	aprint_normal_dev(self,
-	    "LUN size: %u blocks, LUNs: %u, total storage size: %zu MB\n",
+	    "LUN size: %" PRIu32 " blocks, LUNs: %" PRIu8
+	    ", total storage size: %zu MB\n",
 	    chip->nc_lun_blocks, chip->nc_num_luns,
 	    chip->nc_size / 1024 / 1024);
 
 #ifdef NAND_VERBOSE
-	aprint_normal_dev(self, "column cycles: %d, row cycles: %d\n",
+	aprint_normal_dev(self, "column cycles: %" PRIu8 ", row cycles: %"
+	    PRIu8 "\n",
 	    chip->nc_addr_cycles_column, chip->nc_addr_cycles_row);
 #endif
 		
