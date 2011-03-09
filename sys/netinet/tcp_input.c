@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.306 2010/12/02 19:07:27 plunky Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.307 2011/03/09 00:44:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.306 2010/12/02 19:07:27 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.307 2011/03/09 00:44:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2344,7 +2344,7 @@ after_listen:
 
 		if (SEQ_LEQ(th->th_ack, tp->snd_una)) {
 			if (tlen == 0 && !dupseg && tiwin == tp->snd_wnd) {
-				TCP_STATINC(TCP_STAT_RCVDUPPACK);
+				TCP_STATINC(TCP_STAT_RCVDUPACK);
 				/*
 				 * If we have outstanding data (other than
 				 * a window probe), this is a completely
