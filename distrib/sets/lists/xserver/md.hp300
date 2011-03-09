@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.9 2011/02/09 13:41:00 tsutsui Exp $
+# $NetBSD: md.hp300,v 1.10 2011/03/09 18:55:55 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -112,3 +112,4 @@
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
+./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg

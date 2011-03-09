@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.80 2010/11/23 10:24:04 mrg Exp $
+# $NetBSD: md.i386,v 1.81 2011/03/09 18:55:55 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -838,3 +838,4 @@
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
+./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
