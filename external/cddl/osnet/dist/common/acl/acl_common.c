@@ -26,6 +26,7 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/types.h>
+#include <sys/debug.h>
 #include <sys/stat.h>
 #include <sys/avl.h>
 #if defined(_KERNEL)
