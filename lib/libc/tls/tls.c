@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.1 2011/03/09 23:10:06 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.2 2011/03/09 23:50:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.1 2011/03/09 23:10:06 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.2 2011/03/09 23:50:40 joerg Exp $");
 
 #include "namespace.h"
+
+#define	_rtld_tls_allocate	__libc_rtld_tls_allocate
+#define	_rtld_tls_free		__libc_rtld_tls_free
 
 #include <sys/tls.h>
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-
-#define	_rtld_tls_allocate	__libc_rtld_tls_allocate
-#define	_rtld_tls_free		__libc_rtld_tls_free
 
 #include <sys/param.h>
 #include <sys/mman.h>
