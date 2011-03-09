@@ -95,6 +95,9 @@ spa_config_load(void)
 	if (kobj_get_filesize(file, &fsize) != 0)
 		goto out;
 
+	if (fsize == 0)
+		goto out;
+
 	buf = kmem_alloc(fsize, KM_SLEEP);
 
 	/*
