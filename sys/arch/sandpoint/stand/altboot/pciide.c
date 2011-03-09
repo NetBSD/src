@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.3 2011/03/06 13:55:12 phx Exp $ */
+/* $NetBSD: pciide.c,v 1.4 2011/03/09 20:35:56 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ pciide_init(unsigned tag, void *data)
 	l->tag = tag;
 
 	val = pcicfgread(tag, PCI_CLASS_REG);
-	native = val & 03;
+	native = ((val >> 8) & 05) != 0;
 	if (native) {
 		/* native, use BAR 01234 */
 		l->bar[0] = pciiobase + (pcicfgread(tag, 0x10) &~ 01);
