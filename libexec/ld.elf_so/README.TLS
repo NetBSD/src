@@ -13,8 +13,13 @@ everything using ucontext_t. Debug support depends on getting the data from
 ucontext_t, so the second option is possibly required.
 
 (3) _lwp_setprivate(2) has to update the same register as
-_lwp_makecontext. cpu_lwp_setprivate has to call _lwp_setprivate(2) to
-reflect the kernel view. cpu_switch has to update the mapping.
+_lwp_makecontext uses for the private area pointer. Normally
+cpu_lwp_setprivate is provided by MD to reflect the kernel view and
+enabled by defining __HAVE_CPU_LWP_SETPRIVATE in machine/types.h.
+cpu_setmcontext is responsible for keeping the MI l_private field
+synchronised by calling lwp_setprivate as needed.
+
+cpu_switchto has to update the mapping.
 
 _lwp_setprivate is used for the initial thread, all other threads
 created by libpthread use _lwp_makecontext for this purpose.
@@ -24,7 +29,8 @@ TLS offset computation. If such alternative entry points exist (currently
 only i386), also add a weak reference to 0 in src/lib/libc/tls/tls.c.
 
 The generic implementation can be found in tls.c and is used with
-__HAVE_COMMON___TLS_GET_ADDR. It depends on ___lwp_getprivate_fast.
+__HAVE_COMMON___TLS_GET_ADDR. It depends on ___lwp_getprivate_fast
+(see below).
 
 (5) Implement the necessary relocation records in mdreloc.c.  There are
 typically three relocation types found in dynamic binaries:
