@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.102 2011/03/10 07:47:14 bsh Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.103 2011/03/10 08:06:27 bsh Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.102 2011/03/10 07:47:14 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103 2011/03/10 08:06:27 bsh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2648,6 +2648,8 @@ struct cpu_option arm11_options[] = {
 	{ "arm11.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "arm11.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
 	{ "arm11.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
+	{ "cpu.branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
+	{ "arm11.branchpredict", BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
 	{ NULL,			IGN, IGN, 0 }
 };
 
