@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.3 2011/03/10 09:45:32 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.4 2011/03/10 10:46:33 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.3 2011/03/10 09:45:32 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.4 2011/03/10 10:46:33 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -338,14 +338,12 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		case 'P':
 			if (pop(&val, NULL, &stack))
 				return NULL;
-			str++;
 			if (*str >= 'a' && *str <= 'z')
 				dnums[*str - 'a'] = val;
 			else if (*str >= 'A' && *str <= 'Z')
 				term->_snums[*str - 'A'] = val;
 			break;
 		case 'g':
-			str++;
 			if (*str >= 'a' && *str <= 'z') {
 				if (push(dnums[*str - 'a'], NULL, &stack))
 					return NULL;
