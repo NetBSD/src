@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.14 2011/02/24 14:40:43 tsutsui Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.15 2011/03/10 17:05:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.14 2011/02/24 14:40:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.15 2011/03/10 17:05:41 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -183,7 +183,7 @@ tr2a_intr(int ppl, vaddr_t pc, uint32_t status)
 		if ((ipending & MIPS_INT_MASK_5) && (intc_cause & INTC_INT5)) {
 			cf.pc = pc;
 			cf.sr = status;
-			cf.intr = (curcpu()->ci_idepth > 0);
+			cf.intr = (curcpu()->ci_idepth > 1);
 			tr2a_wbflush();
 			*INTC_CLEAR_REG = 0x7c;
 			*INTC_STATUS_REG;
