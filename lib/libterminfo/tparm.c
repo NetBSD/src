@@ -1,7 +1,7 @@
-/* $NetBSD: tparm.c,v 1.4 2011/03/10 10:46:33 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.5 2011/03/10 13:39:26 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.4 2011/03/10 10:46:33 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.5 2011/03/10 13:39:26 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -70,6 +70,10 @@ static int
 pop(long *num, char **string, TPSTACK *stack)
 {
 	if (stack->offset == 0) {
+		if (num)
+			*num = 0;
+		if (string)
+			*string = NULL;
 		errno = E2BIG;
 		return -1;
 	}
@@ -184,7 +188,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		c = *sp++;
 		if (c < '1' || c > '9') {
 			errno = EINVAL;
-			return NULL;
+			continue;
 		}
 		l = c - '0';
 		if (l > max)
@@ -288,14 +292,12 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		/* Handle commands */
 		switch (c) {
 		case 'c':
-			if (pop(&val, NULL, &stack))
-			    return NULL;
+			pop(&val, NULL, &stack);
 			if (ochar(term, (unsigned char)val) == 0)
 				return NULL;
 			break;
 		case 's':
-			if (pop(NULL, &ostr, &stack))
-				return NULL;
+			pop(NULL, &ostr, &stack);
 			if (ostr != NULL) {
 				l = strlen(ostr);
 				if (l < (size_t)olen)
@@ -308,8 +310,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 			}
 			break;
 		case 'l':
-			if (pop(NULL, &ostr, &stack))
-				return NULL;
+			pop(NULL, &ostr, &stack);
 			if (ostr == NULL)
 				l = 0;
 			else
@@ -321,23 +322,19 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		case 'o': /* FALLTHROUGH */
 		case 'x': /* FALLTHROUGH */
 		case 'X':
-			if (pop(&val, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
 			if (onum(term, fmt, val, olen) == 0)
 				return NULL;
 			break;
 		case 'p':
-			if (*str < '1' || *str > '9') {
-				errno = EINVAL;
-				return NULL;
-			}
+			if (*str < '1' || *str > '9')
+				break;
 			l = *str++ - '1';
 			if (push(params[l].num, params[l].string, &stack))
 				return NULL;
 			break;
 		case 'P':
-			if (pop(&val, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
 			if (*str >= 'a' && *str <= 'z')
 				dnums[*str - 'a'] = val;
 			else if (*str >= 'A' && *str <= 'Z')
@@ -391,9 +388,8 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		case '=': /* FALLTHROUGH */
 		case '<': /* FALLTHROUGH */
 		case '>':
-			if (pop(&val, NULL, &stack) ||
-			    pop(&val2, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
+			pop(&val2, NULL, &stack);
 			switch (c) {
 			case '+':
 				val = val + val2;
@@ -440,8 +436,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 			break;
 		case '!':
 		case '~':
-			if (pop(&val, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
 			switch (*str) {
 			case '!':
 				val = !val;
@@ -456,8 +451,7 @@ _ti_vtparm(TERMINAL *term, const char *str, va_list parms)
 		case '?': /* if */
 			break;
 		case 't': /* then */
-			if (pop(&val, NULL, &stack))
-				return NULL;
+			pop(&val, NULL, &stack);
 			if (val != 0) {
 				l = 0;
 				for (; *str != '\0'; str++) {
