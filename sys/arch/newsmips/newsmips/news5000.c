@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.19 2011/03/09 13:21:36 tsutsui Exp $	*/
+/*	$NetBSD: news5000.c,v 1.20 2011/03/10 15:40:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.19 2011/03/09 13:21:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.20 2011/03/10 15:40:36 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -89,7 +89,6 @@ news5000_intr(int ppl, vaddr_t pc, uint32_t status)
 			static int l2cnt = 0;
 #endif
 			uint32_t int2stat;
-			struct clockframe cf;
 
 			int2stat = *(volatile uint32_t *)NEWS5000_INTST2;
 
@@ -105,11 +104,12 @@ news5000_intr(int ppl, vaddr_t pc, uint32_t status)
 #endif
 
 			if (int2stat & NEWS5000_INT2_TIMER0) {
+				struct clockframe cf = {
+					.pc = pc,
+					.sr = status,
+					.intr = (curcpu()->ci_idepth > 1),
+				};
 				*(volatile uint32_t *)NEWS5000_TIMER0 = 1;
-
-				cf.pc = pc;
-				cf.sr = status;
-
 				hardclock(&cf);
 				intrcnt[HARDCLOCK_INTR]++;
 			}
