@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1595 2011/03/09 23:10:05 joerg Exp $
+#	$NetBSD: mi,v 1.1596 2011/03/10 16:50:10 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3422,6 +3422,7 @@
 ./usr/libdata/debug/usr/bin/tic.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/time.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tip.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/tmux.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/top.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/touch.debug		comp-util-debug		debug
