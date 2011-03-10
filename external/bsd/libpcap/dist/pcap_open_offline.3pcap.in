@@ -47,7 +47,7 @@ specifies the name of the file to open. The file can have the pcap file
 format as described in
 .BR pcap-savefile (@MAN_FILE_FORMATS@),
 which is the file format used by, among other programs,
-.BR tcpdump (1)
+.BR tcpdump (8)
 and
 .BR tcpslice (1),
 or can have the pcap-ng file format, although not all pcap-ng files can
