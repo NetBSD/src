@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 2011/03/10 19:35:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,8 @@ thread_create(void * stk, size_t stksize, void (*proc)(), void *arg,
 	int error;
 	lwp_t *thr;
 
-	ASSERT(stk == NULL && stksize == 0 && len == 0);
+	//ASSERT(stk == NULL && stksize == 0 && len == 0);
+	ASSERT(stk == NULL && len == 0);
 	ASSERT(state == TS_RUN);
 
 	error = kthread_create(pri, KTHREAD_MPSAFE, NULL,
