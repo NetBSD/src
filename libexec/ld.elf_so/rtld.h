@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.101 2011/03/09 23:10:07 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.102 2011/03/10 14:27:31 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -374,7 +374,7 @@ void _rtld_tls_offset_free(Obj_Entry *);
 extern size_t _rtld_tls_dtv_generation;
 extern size_t _rtld_tls_max_index;
 
-__dso_public extern void __tls_get_addr(void *);
+__dso_public extern void *__tls_get_addr(void *);
 #endif
 
 /* map_object.c */
