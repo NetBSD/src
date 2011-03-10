@@ -4,7 +4,8 @@ Steps for adding TLS support for a new platform:
 __HAVE_TLS_VARIANT_I or __HAVE_TLS_VARIANT_II.
 
 (2) _lwp_makecontext has to set the reserved register or kernel transfer
-variable in uc_mcontext to the provided value of 'private'.
+variable in uc_mcontext to the provided value of 'private'. See
+src/lib/libc/arch/$PLATFORM/gen/_lwp.c.
 
 This is not possible on the VAX as there is no free space in ucontext_t.
 This requires either a special version of _lwp_create or versioning
@@ -53,8 +54,8 @@ def->st_value - defobj->tlsoffset + rela->r_addend
 e.g. starting offset is counting down from the TCB.
 
 (6) Implement _lwp_getprivate_fast() in machine/mcontext.h and set
-__HAVE___LWP_GETPRIVATE_FAST.
+__HAVE___LWP_GETPRIVATE_FAST in machine/types.h.
 
-(8) Test using src/tests/lib/libc/tls.  Make sure with "objdump -R" that
+(7) Test using src/tests/lib/libc/tls.  Make sure with "objdump -R" that
 t_tls_dynamic has two TPOFF relocations and h_tls_dlopen.so.1 and
 libh_tls_dynamic.so.1 have both two DTPMOD and DTPOFF relocations.
